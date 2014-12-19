@@ -23,12 +23,12 @@ static const char *MaybeCallUbsanDefaultOptions() {
 
 void InitializeCommonFlags() {
   CommonFlags *cf = common_flags();
-  SetCommonFlagsDefaults(cf);
+  SetCommonFlagsDefaults();
   cf->print_summary = false;
   // Override from user-specified string.
-  ParseCommonFlagsFromString(cf, MaybeCallUbsanDefaultOptions());
+  ParseCommonFlagsFromString(MaybeCallUbsanDefaultOptions());
   // Override from environment variable.
-  ParseCommonFlagsFromString(cf, GetEnv("UBSAN_OPTIONS"));
+  ParseCommonFlagsFromString(GetEnv("UBSAN_OPTIONS"));
 }
 
 Flags ubsan_flags;

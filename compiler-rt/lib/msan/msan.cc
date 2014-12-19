@@ -97,8 +97,6 @@ static uptr StackOriginPC[kNumStackOriginDescrs];
 static atomic_uint32_t NumStackOriginDescrs;
 
 static void ParseFlagsFromString(Flags *f, const char *str) {
-  CommonFlags *cf = common_flags();
-  ParseCommonFlagsFromString(cf, str);
   ParseFlag(str, &f->poison_heap_with_zeroes, "poison_heap_with_zeroes", "");
   ParseFlag(str, &f->poison_stack_with_zeroes, "poison_stack_with_zeroes", "");
   ParseFlag(str, &f->poison_in_malloc, "poison_in_malloc", "");
@@ -147,7 +145,7 @@ static void ParseFlagsFromString(Flags *f, const char *str) {
 
 static void InitializeFlags(Flags *f, const char *options) {
   CommonFlags *cf = common_flags();
-  SetCommonFlagsDefaults(cf);
+  SetCommonFlagsDefaults();
   cf->external_symbolizer_path = GetEnv("MSAN_SYMBOLIZER_PATH");
   cf->malloc_context_size = 20;
   cf->handle_ioctl = true;
@@ -171,9 +169,13 @@ static void InitializeFlags(Flags *f, const char *options) {
   f->store_context_size = 20;
 
   // Override from user-specified string.
-  if (__msan_default_options)
+  if (__msan_default_options) {
     ParseFlagsFromString(f, __msan_default_options());
+    ParseCommonFlagsFromString(__msan_default_options());
+  }
+
   ParseFlagsFromString(f, options);
+  ParseCommonFlagsFromString(options);
 }
 
 void GetStackTrace(BufferedStackTrace *stack, uptr max_s, uptr pc, uptr bp,

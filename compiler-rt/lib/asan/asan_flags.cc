@@ -177,7 +177,7 @@ void ParseFlagsFromString(Flags *f, const char *str) {
 
 void InitializeFlags(Flags *f) {
   CommonFlags *cf = common_flags();
-  SetCommonFlagsDefaults(cf);
+  SetCommonFlagsDefaults();
   cf->detect_leaks = CAN_SANITIZE_LEAKS;
   cf->external_symbolizer_path = GetEnv("ASAN_SYMBOLIZER_PATH");
   cf->malloc_context_size = kDefaultMallocContextSize;
@@ -230,19 +230,19 @@ void InitializeFlags(Flags *f) {
 
   // Override from compile definition.
   const char *compile_def = MaybeUseAsanDefaultOptionsCompileDefinition();
-  ParseCommonFlagsFromString(cf, compile_def);
+  ParseCommonFlagsFromString(compile_def);
   ParseFlagsFromString(f, compile_def);
 
   // Override from user-specified string.
   const char *default_options = MaybeCallAsanDefaultOptions();
-  ParseCommonFlagsFromString(cf, default_options);
+  ParseCommonFlagsFromString(default_options);
   ParseFlagsFromString(f, default_options);
   VReport(1, "Using the defaults from __asan_default_options: %s\n",
           MaybeCallAsanDefaultOptions());
 
   // Override from command line.
   if (const char *env = GetEnv("ASAN_OPTIONS")) {
-    ParseCommonFlagsFromString(cf, env);
+    ParseCommonFlagsFromString(env);
     ParseFlagsFromString(f, env);
     VReport(1, "Parsed ASAN_OPTIONS: %s\n", env);
   }
@@ -252,7 +252,7 @@ void InitializeFlags(Flags *f) {
   if (!flags()->start_deactivated) {
     char buf[100];
     GetExtraActivationFlags(buf, sizeof(buf));
-    ParseCommonFlagsFromString(cf, buf);
+    ParseCommonFlagsFromString(buf);
     ParseFlagsFromString(f, buf);
     if (buf[0] != '\0')
       VReport(1, "Parsed activation flags: %s\n", buf);

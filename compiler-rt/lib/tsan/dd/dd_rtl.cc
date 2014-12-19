@@ -71,13 +71,13 @@ void InitializeFlags(Flags *f, const char *env) {
   f->second_deadlock_stack = false;
 
   CommonFlags *cf = common_flags();
-  SetCommonFlagsDefaults(cf);
+  SetCommonFlagsDefaults();
   // Override some common flags defaults.
   cf->allow_addr2line = true;
 
   // Override from command line.
   ParseFlag(env, &f->second_deadlock_stack, "second_deadlock_stack", "");
-  ParseCommonFlagsFromString(cf, env);
+  ParseCommonFlagsFromString(env);
 }
 
 void Initialize() {

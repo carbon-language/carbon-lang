@@ -76,12 +76,12 @@ static void InitializeFlags(bool standalone) {
   // them from LSAN_OPTIONS.
   CommonFlags *cf = common_flags();
   if (standalone) {
-    SetCommonFlagsDefaults(cf);
+    SetCommonFlagsDefaults();
     cf->external_symbolizer_path = GetEnv("LSAN_SYMBOLIZER_PATH");
     cf->malloc_context_size = 30;
     cf->detect_leaks = true;
   }
-  ParseCommonFlagsFromString(cf, options);
+  ParseCommonFlagsFromString(options);
 }
 
 #define LOG_POINTERS(...)                           \

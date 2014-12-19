@@ -41,7 +41,7 @@ static struct AsanDeactivatedFlags {
     // contain any other flags.
     char buf[100];
     GetExtraActivationFlags(buf, sizeof(buf));
-    ParseCommonFlagsFromString(&cf, buf);
+    cf.ParseFromString(buf);
     ParseFlagsFromString(&f, buf);
 
     allocator_options.SetFrom(&f, &cf);

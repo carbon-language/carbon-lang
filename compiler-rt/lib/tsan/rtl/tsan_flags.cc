@@ -94,7 +94,7 @@ void InitializeFlags(Flags *f, const char *env) {
   f->second_deadlock_stack = false;
 
   CommonFlags *cf = common_flags();
-  SetCommonFlagsDefaults(cf);
+  SetCommonFlagsDefaults();
   // Override some common flags defaults.
   cf->allow_addr2line = true;
   cf->detect_deadlocks = true;
@@ -103,10 +103,10 @@ void InitializeFlags(Flags *f, const char *env) {
 
   // Let a frontend override.
   ParseFlags(f, __tsan_default_options());
-  ParseCommonFlagsFromString(cf, __tsan_default_options());
+  ParseCommonFlagsFromString(__tsan_default_options());
   // Override from command line.
   ParseFlags(f, env);
-  ParseCommonFlagsFromString(cf, env);
+  ParseCommonFlagsFromString(env);
 
   // Sanity check.
   if (!f->report_bugs) {
