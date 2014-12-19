@@ -147,3 +147,8 @@ void test() {
 namespace PR21905 {
 int (*a) () = (void)Z;  // expected-error-re {{use of undeclared identifier 'Z'{{$}}}}
 }
+
+namespace PR21947 {
+int blue;  // expected-note {{'blue' declared here}}
+__typeof blur y;  // expected-error {{use of undeclared identifier 'blur'; did you mean 'blue'?}}
+}
