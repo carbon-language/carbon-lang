@@ -614,11 +614,6 @@ let isExtendable = 1, opExtendable = 1, opExtentBits = 6 in
 def TFRI64_V4 : ALU64_rr<(outs DoubleRegs:$dst), (ins u6Ext:$src1),
                          "$dst = #$src1">;
 
-// Transfer control register.
-let hasSideEffects = 0 in
-def TFCR : CRInst<(outs CtrRegs:$dst), (ins IntRegs:$src1),
-           "$dst = $src1",
-           []>;
 //===----------------------------------------------------------------------===//
 // ALU32/ALU -
 //===----------------------------------------------------------------------===//
@@ -835,14 +830,6 @@ def DEC_CONST_UNSIGNED : SDNodeXForm<imm, [{
    return XformUToUM1Imm(imm);
 }]>;
 
-def CTLZ_rr : SInst<(outs IntRegs:$dst), (ins IntRegs:$src1),
-    "$dst = cl0($src1)",
-    [(set (i32 IntRegs:$dst), (ctlz (i32 IntRegs:$src1)))]>;
-
-def CTTZ_rr : SInst<(outs IntRegs:$dst), (ins IntRegs:$src1),
-    "$dst = ct0($src1)",
-    [(set (i32 IntRegs:$dst), (cttz (i32 IntRegs:$src1)))]>;
-
 def CTLZ64_rr : SInst<(outs IntRegs:$dst), (ins DoubleRegs:$src1),
     "$dst = cl0($src1)",
     [(set (i32 IntRegs:$dst), (i32 (trunc (ctlz (i64 DoubleRegs:$src1)))))]>;
@@ -850,11 +837,6 @@ def CTLZ64_rr : SInst<(outs IntRegs:$dst), (ins DoubleRegs:$src1),
 def CTTZ64_rr : SInst<(outs IntRegs:$dst), (ins DoubleRegs:$src1),
     "$dst = ct0($src1)",
     [(set (i32 IntRegs:$dst), (i32 (trunc (cttz (i64 DoubleRegs:$src1)))))]>;
-
-def TSTBIT_rr : SInst<(outs PredRegs:$dst), (ins IntRegs:$src1, IntRegs:$src2),
-    "$dst = tstbit($src1, $src2)",
-    [(set (i1 PredRegs:$dst),
-          (setne (and (shl 1, (i32 IntRegs:$src2)), (i32 IntRegs:$src1)), 0))]>;
 
 //===----------------------------------------------------------------------===//
 // ALU32/PRED -
@@ -3160,58 +3142,6 @@ def S2_addasl_rrri: SInst <(outs IntRegs:$Rd),
     let Inst{4-0}   = Rd;
   }
 
-// Shift by immediate and add.
-let AddedComplexity = 100 in
-def ADDASL : SInst<(outs IntRegs:$dst), (ins IntRegs:$src1, IntRegs:$src2,
-                                             u3Imm:$src3),
-             "$dst = addasl($src1, $src2, #$src3)",
-             [(set (i32 IntRegs:$dst), (add (i32 IntRegs:$src1),
-                                       (shl (i32 IntRegs:$src2),
-                                            u3ImmPred:$src3)))]>;
-
-// Shift by register.
-def ASL_rr : SInst<(outs IntRegs:$dst), (ins IntRegs:$src1, IntRegs:$src2),
-             "$dst = asl($src1, $src2)",
-             [(set (i32 IntRegs:$dst), (shl (i32 IntRegs:$src1),
-                                            (i32 IntRegs:$src2)))]>;
-
-def ASR_rr : SInst<(outs IntRegs:$dst), (ins IntRegs:$src1, IntRegs:$src2),
-             "$dst = asr($src1, $src2)",
-             [(set (i32 IntRegs:$dst), (sra (i32 IntRegs:$src1),
-                                            (i32 IntRegs:$src2)))]>;
-
-def LSL_rr : SInst<(outs IntRegs:$dst), (ins IntRegs:$src1, IntRegs:$src2),
-             "$dst = lsl($src1, $src2)",
-             [(set (i32 IntRegs:$dst), (shl (i32 IntRegs:$src1),
-                                            (i32 IntRegs:$src2)))]>;
-
-def LSR_rr : SInst<(outs IntRegs:$dst), (ins IntRegs:$src1, IntRegs:$src2),
-             "$dst = lsr($src1, $src2)",
-             [(set (i32 IntRegs:$dst), (srl (i32 IntRegs:$src1),
-                                            (i32 IntRegs:$src2)))]>;
-
-def ASLd : SInst<(outs DoubleRegs:$dst), (ins DoubleRegs:$src1, IntRegs:$src2),
-           "$dst = asl($src1, $src2)",
-           [(set (i64 DoubleRegs:$dst), (shl (i64 DoubleRegs:$src1),
-                                             (i32 IntRegs:$src2)))]>;
-
-def LSLd : SInst<(outs DoubleRegs:$dst), (ins DoubleRegs:$src1, IntRegs:$src2),
-           "$dst = lsl($src1, $src2)",
-           [(set (i64 DoubleRegs:$dst), (shl (i64 DoubleRegs:$src1),
-                                             (i32 IntRegs:$src2)))]>;
-
-def ASRd_rr : SInst<(outs DoubleRegs:$dst), (ins DoubleRegs:$src1,
-                                                 IntRegs:$src2),
-              "$dst = asr($src1, $src2)",
-              [(set (i64 DoubleRegs:$dst), (sra (i64 DoubleRegs:$src1),
-                                                (i32 IntRegs:$src2)))]>;
-
-def LSRd_rr : SInst<(outs DoubleRegs:$dst), (ins DoubleRegs:$src1,
-                                                 IntRegs:$src2),
-              "$dst = lsr($src1, $src2)",
-              [(set (i64 DoubleRegs:$dst), (srl (i64 DoubleRegs:$src1),
-                                                (i32 IntRegs:$src2)))]>;
-
 //===----------------------------------------------------------------------===//
 // STYPE/SHIFT -
 //===----------------------------------------------------------------------===//
@@ -3237,14 +3167,15 @@ def LSRd_rr : SInst<(outs DoubleRegs:$dst), (ins DoubleRegs:$src1,
 //===----------------------------------------------------------------------===//
 // SYSTEM/USER +
 //===----------------------------------------------------------------------===//
-def SDHexagonBARRIER: SDTypeProfile<0, 0, []>;
-def HexagonBARRIER: SDNode<"HexagonISD::BARRIER", SDHexagonBARRIER,
-                           [SDNPHasChain]>;
+def HexagonBARRIER: SDNode<"HexagonISD::BARRIER", SDTNone, [SDNPHasChain]>;
 
-let hasSideEffects = 1, isSolo = 1 in
+let hasSideEffects = 1, isSoloAX = 1, isCodeGenOnly = 0 in
 def BARRIER : SYSInst<(outs), (ins),
                      "barrier",
-                     [(HexagonBARRIER)]>;
+                     [(HexagonBARRIER)],"",ST_tc_st_SLOT0> {
+  let Inst{31-28} = 0b1010;
+  let Inst{27-21} = 0b1000000;
+}
 
 //===----------------------------------------------------------------------===//
 // SYSTEM/SUPER -
@@ -3420,12 +3351,6 @@ def Y4_trace: CRInst <(outs), (ins IntRegs:$Rs),
     let Inst{27-21} = 0b0010010;
     let Inst{20-16} = Rs;
   }
-
-// TFRI64 - assembly mapped.
-let isReMaterializable = 1 in
-def TFRI64 : ALU64_rr<(outs DoubleRegs:$dst), (ins s8Imm64:$src1),
-             "$dst = #$src1",
-             [(set (i64 DoubleRegs:$dst), s8Imm64Pred:$src1)]>;
 
 let AddedComplexity = 100, isPredicated = 1 in
 def TFR_condset_ri : ALU32_rr<(outs IntRegs:$dst),
@@ -4750,79 +4675,6 @@ def S2_tableidxh : tableidxRaw<"tableidxh", 0b01>;
 def S2_tableidxw : tableidxRaw<"tableidxw", 0b10>;
 def S2_tableidxd : tableidxRaw<"tableidxd", 0b11>;
 }
-
-// Multi-class for logical operators :
-// Shift by immediate/register and accumulate/logical
-multiclass xtype_imm<string OpcStr, SDNode OpNode1, SDNode OpNode2> {
-  def _ri : SInst_acc<(outs IntRegs:$dst),
-            (ins IntRegs:$src1, IntRegs:$src2, u5Imm:$src3),
-            !strconcat("$dst ", !strconcat(OpcStr, "($src2, #$src3)")),
-            [(set (i32 IntRegs:$dst),
-                  (OpNode2 (i32 IntRegs:$src1),
-                           (OpNode1 (i32 IntRegs:$src2),
-                                    u5ImmPred:$src3)))],
-            "$src1 = $dst">;
-
-  def d_ri : SInst_acc<(outs DoubleRegs:$dst),
-            (ins DoubleRegs:$src1, DoubleRegs:$src2, u6Imm:$src3),
-            !strconcat("$dst ", !strconcat(OpcStr, "($src2, #$src3)")),
-            [(set (i64 DoubleRegs:$dst), (OpNode2 (i64 DoubleRegs:$src1),
-                          (OpNode1 (i64 DoubleRegs:$src2), u6ImmPred:$src3)))],
-            "$src1 = $dst">;
-}
-
-// Multi-class for logical operators :
-// Shift by register and accumulate/logical (32/64 bits)
-multiclass xtype_reg<string OpcStr, SDNode OpNode1, SDNode OpNode2> {
-  def _rr : SInst_acc<(outs IntRegs:$dst),
-            (ins IntRegs:$src1, IntRegs:$src2, IntRegs:$src3),
-            !strconcat("$dst ", !strconcat(OpcStr, "($src2, $src3)")),
-            [(set (i32 IntRegs:$dst),
-                  (OpNode2 (i32 IntRegs:$src1),
-                           (OpNode1 (i32 IntRegs:$src2),
-                                    (i32 IntRegs:$src3))))],
-            "$src1 = $dst">;
-
-  def d_rr : SInst_acc<(outs DoubleRegs:$dst),
-            (ins DoubleRegs:$src1, DoubleRegs:$src2, IntRegs:$src3),
-            !strconcat("$dst ", !strconcat(OpcStr, "($src2, $src3)")),
-            [(set (i64 DoubleRegs:$dst),
-                  (OpNode2 (i64 DoubleRegs:$src1),
-                           (OpNode1 (i64 DoubleRegs:$src2),
-                                    (i32 IntRegs:$src3))))],
-            "$src1 = $dst">;
-
-}
-
-multiclass basic_xtype_imm<string OpcStr, SDNode OpNode> {
-let AddedComplexity = 100 in
-  defm _ADD : xtype_imm< !strconcat("+= ", OpcStr), OpNode, add>;
-  defm _SUB : xtype_imm< !strconcat("-= ", OpcStr), OpNode, sub>;
-  defm _AND : xtype_imm< !strconcat("&= ", OpcStr), OpNode, and>;
-  defm _OR  : xtype_imm< !strconcat("|= ", OpcStr), OpNode, or>;
-}
-
-multiclass basic_xtype_reg<string OpcStr, SDNode OpNode> {
-let AddedComplexity = 100 in
-  defm _ADD : xtype_reg< !strconcat("+= ", OpcStr), OpNode, add>;
-  defm _SUB : xtype_reg< !strconcat("-= ", OpcStr), OpNode, sub>;
-  defm _AND : xtype_reg< !strconcat("&= ", OpcStr), OpNode, and>;
-  defm _OR  : xtype_reg< !strconcat("|= ", OpcStr), OpNode, or>;
-}
-
-multiclass xtype_xor_imm<string OpcStr, SDNode OpNode> {
-let AddedComplexity = 100 in
-  defm _XOR : xtype_imm< !strconcat("^= ", OpcStr), OpNode, xor>;
-}
-
-defm ASL : basic_xtype_imm<"asl", shl>, basic_xtype_reg<"asl", shl>,
-           xtype_xor_imm<"asl", shl>;
-
-defm LSR : basic_xtype_imm<"lsr", srl>, basic_xtype_reg<"lsr", srl>,
-           xtype_xor_imm<"lsr", srl>;
-
-defm ASR : basic_xtype_imm<"asr", sra>, basic_xtype_reg<"asr", sra>;
-defm LSL : basic_xtype_reg<"lsl", shl>;
 
 // Change the sign of the immediate for Rd=-mpyi(Rs,#u8)
 def : Pat <(mul (i32 IntRegs:$src1), (ineg n8ImmPred:$src2)),

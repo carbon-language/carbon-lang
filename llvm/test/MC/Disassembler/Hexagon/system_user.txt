@@ -1,4 +1,6 @@
 # RUN: llvm-mc --triple hexagon -disassemble < %s | FileCheck %s
 
+0x00 0xc0 0x00 0xa8
+# CHECK: barrier
 0x00 0xc0 0x51 0x62
 # CHECK: trace(r17)

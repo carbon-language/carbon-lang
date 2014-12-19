@@ -168,18 +168,18 @@ void HexagonFixupHwLoops::convertLoopInstr(MachineFunction &MF,
   // First, set the LC0 with the trip count.
   if (MII->getOperand(1).isReg()) {
     // Trip count is a register
-    BuildMI(*MBB, MII, DL, TII->get(Hexagon::TFCR), Hexagon::LC0)
+    BuildMI(*MBB, MII, DL, TII->get(Hexagon::A2_tfrrcr), Hexagon::LC0)
       .addReg(MII->getOperand(1).getReg());
   } else {
     // Trip count is an immediate.
     BuildMI(*MBB, MII, DL, TII->get(Hexagon::A2_tfrsi), Scratch)
       .addImm(MII->getOperand(1).getImm());
-    BuildMI(*MBB, MII, DL, TII->get(Hexagon::TFCR), Hexagon::LC0)
+    BuildMI(*MBB, MII, DL, TII->get(Hexagon::A2_tfrrcr), Hexagon::LC0)
       .addReg(Scratch);
   }
   // Then, set the SA0 with the loop start address.
   BuildMI(*MBB, MII, DL, TII->get(Hexagon::CONST32_Label), Scratch)
     .addMBB(MII->getOperand(0).getMBB());
-  BuildMI(*MBB, MII, DL, TII->get(Hexagon::TFCR), Hexagon::SA0)
+  BuildMI(*MBB, MII, DL, TII->get(Hexagon::A2_tfrrcr), Hexagon::SA0)
     .addReg(Scratch);
 }

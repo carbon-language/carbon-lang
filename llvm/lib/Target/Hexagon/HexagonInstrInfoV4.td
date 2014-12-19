@@ -118,7 +118,7 @@ def V4_A4_rcmpeqi : ALU32_ri<(outs IntRegs:$Rd),
 // Preserve the TSTBIT generation
 def : Pat <(i32 (zext (i1 (setne (i32 (and (i32 (shl 1, (i32 IntRegs:$src2))),
                                            (i32 IntRegs:$src1))), 0)))),
-      (i32 (C2_muxii (i1 (TSTBIT_rr (i32 IntRegs:$src1), (i32 IntRegs:$src2))),
+      (i32 (C2_muxii (i1 (S2_tstbit_r (i32 IntRegs:$src1), (i32 IntRegs:$src2))),
                    1, 0))>;
 
 // Interfered with tstbit generation, above pattern preserves, see : tstbit.ll

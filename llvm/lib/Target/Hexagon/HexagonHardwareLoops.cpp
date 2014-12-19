@@ -1195,7 +1195,7 @@ MachineInstr *HexagonHardwareLoops::defWithImmediate(unsigned R) {
   unsigned DOpc = DI->getOpcode();
   switch (DOpc) {
     case Hexagon::A2_tfrsi:
-    case Hexagon::TFRI64:
+    case Hexagon::A2_tfrpi:
     case Hexagon::CONST32_Int_Real:
     case Hexagon::CONST64_Int_Real:
       return DI;

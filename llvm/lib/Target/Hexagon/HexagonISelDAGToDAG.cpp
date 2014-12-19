@@ -1334,7 +1334,7 @@ SDNode *HexagonDAGToDAGISel::SelectAdd(SDNode *N) {
 
   // Build Rd = Rd' + asr(Rs, Rt). The machine constraints will ensure that
   // Rd and Rd' are assigned to the same register
-  SDNode* Result = CurDAG->getMachineNode(Hexagon::ASR_ADD_rr, dl, MVT::i32,
+  SDNode* Result = CurDAG->getMachineNode(Hexagon::S2_asr_r_r_acc, dl, MVT::i32,
                                           N->getOperand(1),
                                           Src1->getOperand(0),
                                           Src1->getOperand(1));
