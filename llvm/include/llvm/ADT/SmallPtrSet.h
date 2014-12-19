@@ -257,8 +257,10 @@ public:
   typedef SmallPtrSetIterator<PtrType> iterator;
   typedef SmallPtrSetIterator<PtrType> const_iterator;
 
-  /// insert - This returns true if the pointer was new to the set, false if it
-  /// was already in the set.
+  /// Inserts Ptr if and only if there is no element in the container equal to
+  /// Ptr. The bool component of the returned pair is true if and only if the
+  /// insertion takes place, and the iterator component of the pair points to
+  /// the element equal to Ptr.
   std::pair<iterator, bool> insert(PtrType Ptr) {
     auto p = insert_imp(PtrTraits::getAsVoidPointer(Ptr));
     return std::make_pair(iterator(p.first, CurArray + CurArraySize), p.second);
