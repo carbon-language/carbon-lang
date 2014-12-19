@@ -50,11 +50,6 @@ void ParseFlagsFromString(Flags *f, const char *str) {
             "Requirement: redzone >= 16, is a power of two.");
   ParseFlag(str, &f->max_redzone, "max_redzone",
             "Maximal size (in bytes) of redzones around heap objects.");
-  CHECK_GE(f->redzone, 16);
-  CHECK_GE(f->max_redzone, f->redzone);
-  CHECK_LE(f->max_redzone, 2048);
-  CHECK(IsPowerOfTwo(f->redzone));
-  CHECK(IsPowerOfTwo(f->max_redzone));
 
   ParseFlag(str, &f->debug, "debug",
       "If set, prints some debugging information and does additional checks.");
@@ -285,6 +280,11 @@ void InitializeFlags(Flags *f) {
   }
   CHECK_LE((uptr)cf->malloc_context_size, kStackTraceMax);
   CHECK_LE(f->min_uar_stack_size_log, f->max_uar_stack_size_log);
+  CHECK_GE(f->redzone, 16);
+  CHECK_GE(f->max_redzone, f->redzone);
+  CHECK_LE(f->max_redzone, 2048);
+  CHECK(IsPowerOfTwo(f->redzone));
+  CHECK(IsPowerOfTwo(f->max_redzone));
 }
 
 }  // namespace __asan
