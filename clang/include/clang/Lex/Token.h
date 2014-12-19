@@ -23,7 +23,6 @@
 
 namespace clang {
 
-class Decl;
 class IdentifierInfo;
 
 /// Token - This structure provides full information about a lexed token.
@@ -174,14 +173,14 @@ public:
     PtrData = (void*) II;
   }
 
-  const Decl *getDecl() const {
+  const void *getEofData() const {
     assert(is(tok::eof));
-    return reinterpret_cast<const Decl *>(PtrData);
+    return reinterpret_cast<const void *>(PtrData);
   }
-  void setDecl(const Decl *D) {
+  void setEofData(const void *D) {
     assert(is(tok::eof));
     assert(!PtrData);
-    PtrData = const_cast<Decl *>(D);
+    PtrData = const_cast<void *>(D);
   }
 
   /// getRawIdentifier - For a raw identifier token (i.e., an identifier
