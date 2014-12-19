@@ -208,6 +208,8 @@ computeCallSiteTable(SmallVectorImpl<CallSiteEntry> &CallSites,
   // Whether the last CallSite entry was for an invoke.
   bool PreviousIsInvoke = false;
 
+  bool IsSJLJ = Asm->MAI->getExceptionHandlingType() == ExceptionHandling::SjLj;
+
   // Visit all instructions in order of address.
   for (const auto &MBB : *Asm->MF) {
     for (const auto &MI : MBB) {
@@ -237,7 +239,7 @@ computeCallSiteTable(SmallVectorImpl<CallSiteEntry> &CallSites,
       // instruction between the previous try-range and this one may throw,
       // create a call-site entry with no landing pad for the region between the
       // try-ranges.
-      if (SawPotentiallyThrowing && Asm->MAI->usesItaniumLSDAForExceptions()) {
+      if (SawPotentiallyThrowing && !IsSJLJ) {
         CallSiteEntry Site = { LastLabel, BeginLabel, nullptr, 0 };
         CallSites.push_back(Site);
         PreviousIsInvoke = false;
@@ -259,7 +261,7 @@ computeCallSiteTable(SmallVectorImpl<CallSiteEntry> &CallSites,
         };
 
         // Try to merge with the previous call-site. SJLJ doesn't do this
-        if (PreviousIsInvoke && Asm->MAI->usesItaniumLSDAForExceptions()) {
+        if (PreviousIsInvoke && !IsSJLJ) {
           CallSiteEntry &Prev = CallSites.back();
           if (Site.PadLabel == Prev.PadLabel && Site.Action == Prev.Action) {
             // Extend the range of the previous entry.
@@ -269,7 +271,7 @@ computeCallSiteTable(SmallVectorImpl<CallSiteEntry> &CallSites,
         }
 
         // Otherwise, create a new call-site.
-        if (Asm->MAI->usesItaniumLSDAForExceptions())
+        if (!IsSJLJ)
           CallSites.push_back(Site);
         else {
           // SjLj EH must maintain the call sites in the order assigned
@@ -287,7 +289,7 @@ computeCallSiteTable(SmallVectorImpl<CallSiteEntry> &CallSites,
   // If some instruction between the previous try-range and the end of the
   // function may throw, create a call-site entry with no landing pad for the
   // region following the try-range.
-  if (SawPotentiallyThrowing && Asm->MAI->usesItaniumLSDAForExceptions()) {
+  if (SawPotentiallyThrowing && !IsSJLJ) {
     CallSiteEntry Site = { LastLabel, nullptr, nullptr, 0 };
     CallSites.push_back(Site);
   }
@@ -519,8 +521,7 @@ void EHStreamer::emitExceptionTable() {
       Asm->EmitULEB128(S.Action);
     }
   } else {
-    // DWARF Exception handling
-    assert(Asm->MAI->usesItaniumLSDAForExceptions());
+    // Itanium LSDA exception handling
 
     // The call-site table is a list of all call sites that may throw an
     // exception (including C++ 'throw' statements) in the procedure

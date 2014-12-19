@@ -47,6 +47,7 @@ enum class ExceptionHandling {
   SjLj,         /// setjmp/longjmp based exceptions
   ARM,          /// ARM EHABI
   ItaniumWinEH, /// Itanium EH built on Windows unwind info (.pdata and .xdata)
+  MSVC,         /// MSVC compatible exception handling
 };
 
 namespace LCOMM {
@@ -490,6 +491,11 @@ public:
             ExceptionsType == ExceptionHandling::ARM ||
             // This Windows EH type uses the Itanium LSDA encoding.
             ExceptionsType == ExceptionHandling::ItaniumWinEH);
+  }
+
+  bool usesWindowsCFI() const {
+    return ExceptionsType == ExceptionHandling::ItaniumWinEH ||
+           ExceptionsType == ExceptionHandling::MSVC;
   }
 
   bool doesDwarfUseRelocationsAcrossSections() const {

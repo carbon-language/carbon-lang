@@ -1,5 +1,5 @@
 ; RUN: llc -O0 -mtriple=x86_64-linux -asm-verbose=false < %s | FileCheck %s
-; RUN: llc -O0 -mtriple=x86_64-win32 -asm-verbose=false < %s | FileCheck %s
+; RUN: llc -O0 -mtriple=x86_64-windows-itanium -asm-verbose=false < %s | FileCheck %s
 ; rdar://8337108
 
 ; Fast-isel shouldn't try to look through the compare because it's in a

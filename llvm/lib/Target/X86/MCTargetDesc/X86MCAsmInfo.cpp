@@ -137,7 +137,9 @@ X86MCAsmInfoMicrosoft::X86MCAsmInfoMicrosoft(const Triple &Triple) {
     PrivateLabelPrefix = ".L";
     PointerSize = 8;
     WinEHEncodingType = WinEH::EncodingType::Itanium;
-    ExceptionsType = ExceptionHandling::ItaniumWinEH;
+
+    // Use MSVC-compatible EH data.
+    ExceptionsType = ExceptionHandling::MSVC;
   }
 
   AssemblerDialect = AsmWriterFlavor;

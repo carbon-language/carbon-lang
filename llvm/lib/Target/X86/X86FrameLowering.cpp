@@ -495,8 +495,7 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF) const {
   const bool Uses64BitFramePtr = STI.isTarget64BitLP64() || STI.isTargetNaCl64();
   bool IsWin64 = STI.isTargetWin64();
   // Not necessarily synonymous with IsWin64.
-  bool IsWinEH = MF.getTarget().getMCAsmInfo()->getExceptionHandlingType() ==
-                 ExceptionHandling::ItaniumWinEH;
+  bool IsWinEH = MF.getTarget().getMCAsmInfo()->usesWindowsCFI();
   bool NeedsWinEH = IsWinEH && Fn->needsUnwindTableEntry();
   bool NeedsDwarfCFI =
       !IsWinEH && (MMI.hasDebugInfo() || Fn->needsUnwindTableEntry());
@@ -906,8 +905,7 @@ void X86FrameLowering::emitEpilogue(MachineFunction &MF,
              getX86SubSuperRegister(FramePtr, MVT::i64, false) : FramePtr;
   unsigned StackPtr = RegInfo->getStackRegister();
 
-  bool IsWinEH = MF.getTarget().getMCAsmInfo()->getExceptionHandlingType() ==
-                 ExceptionHandling::ItaniumWinEH;
+  bool IsWinEH = MF.getTarget().getMCAsmInfo()->usesWindowsCFI();
   bool NeedsWinEH = IsWinEH && MF.getFunction()->needsUnwindTableEntry();
 
   switch (RetOpcode) {
