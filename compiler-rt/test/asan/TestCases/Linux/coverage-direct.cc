@@ -1,4 +1,5 @@
-// Test for direct coverage writing with dlopen.
+// Test for direct coverage writing with dlopen at coverage level 1 to 3.
+
 // RUN: %clangxx_asan -fsanitize-coverage=1 -DSHARED %s -shared -o %T/libcoverage_direct_test_1.so -fPIC
 // RUN: %clangxx_asan -fsanitize-coverage=1 -DSO_DIR=\"%T\" %s %libdl -o %t
 
@@ -16,7 +17,45 @@
 // RUN: cd ../..
 
 // RUN: diff -u coverage-direct/normal/out.txt coverage-direct/direct/out.txt
-//
+
+
+// RUN: %clangxx_asan -fsanitize-coverage=2 -DSHARED %s -shared -o %T/libcoverage_direct_test_1.so -fPIC
+// RUN: %clangxx_asan -fsanitize-coverage=2 -DSO_DIR=\"%T\" %s %libdl -o %t
+
+// RUN: rm -rf %T/coverage-direct
+
+// RUN: mkdir -p %T/coverage-direct/normal
+// RUN: ASAN_OPTIONS=coverage=1:coverage_direct=0:coverage_dir=%T/coverage-direct/normal:verbosity=1 %run %t
+// RUN: %sancov print %T/coverage-direct/normal/*.sancov >%T/coverage-direct/normal/out.txt
+
+// RUN: mkdir -p %T/coverage-direct/direct
+// RUN: ASAN_OPTIONS=coverage=1:coverage_direct=1:coverage_dir=%T/coverage-direct/direct:verbosity=1 %run %t
+// RUN: cd %T/coverage-direct/direct
+// RUN: %sancov rawunpack *.sancov.raw
+// RUN: %sancov print *.sancov >out.txt
+// RUN: cd ../..
+
+// RUN: diff -u coverage-direct/normal/out.txt coverage-direct/direct/out.txt
+
+
+// RUN: %clangxx_asan -fsanitize-coverage=3 -DSHARED %s -shared -o %T/libcoverage_direct_test_1.so -fPIC
+// RUN: %clangxx_asan -fsanitize-coverage=3 -DSO_DIR=\"%T\" %s %libdl -o %t
+
+// RUN: rm -rf %T/coverage-direct
+
+// RUN: mkdir -p %T/coverage-direct/normal
+// RUN: ASAN_OPTIONS=coverage=1:coverage_direct=0:coverage_dir=%T/coverage-direct/normal:verbosity=1 %run %t
+// RUN: %sancov print %T/coverage-direct/normal/*.sancov >%T/coverage-direct/normal/out.txt
+
+// RUN: mkdir -p %T/coverage-direct/direct
+// RUN: ASAN_OPTIONS=coverage=1:coverage_direct=1:coverage_dir=%T/coverage-direct/direct:verbosity=1 %run %t
+// RUN: cd %T/coverage-direct/direct
+// RUN: %sancov rawunpack *.sancov.raw
+// RUN: %sancov print *.sancov >out.txt
+// RUN: cd ../..
+
+// RUN: diff -u coverage-direct/normal/out.txt coverage-direct/direct/out.txt
+
 // XFAIL: android
 
 #include <assert.h>
