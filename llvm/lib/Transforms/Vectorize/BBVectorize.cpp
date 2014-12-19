@@ -2627,7 +2627,6 @@ namespace {
           NewI2->insertBefore(IBeforeJ ? J : I);
           I2 = NewI2;
           I2T = I1T;
-          I2Elem = I1Elem;
         }
 
         // Now that both I1 and I2 are the same length we can shuffle them
