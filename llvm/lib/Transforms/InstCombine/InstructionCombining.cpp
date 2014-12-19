@@ -2115,8 +2115,10 @@ Instruction *InstCombiner::visitSwitchInst(SwitchInst &SI) {
         for (SwitchInst::CaseIt i = SI.case_begin(), e = SI.case_end();
              i != e; ++i) {
           ConstantInt* CaseVal = i.getCaseValue();
-          Constant* NewCaseVal = ConstantExpr::getSub(cast<Constant>(CaseVal),
-                                                      AddRHS);
+          Constant *LHS = LeadingKnownZeros
+                              ? ConstantExpr::getZExt(CaseVal, Cond->getType())
+                              : ConstantExpr::getSExt(CaseVal, Cond->getType());
+          Constant* NewCaseVal = ConstantExpr::getSub(LHS, AddRHS);
           assert(isa<ConstantInt>(NewCaseVal) &&
                  "Result of expression should be constant");
           i.setValue(cast<ConstantInt>(NewCaseVal));

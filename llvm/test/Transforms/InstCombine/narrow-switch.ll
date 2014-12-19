@@ -91,3 +91,33 @@ return:
   %retval.0 = phi i32 [ 24, %sw.default ], [ 123, %sw.bb2 ], [ 213, %sw.bb1 ], [ 231, %entry ]
   ret i32 %retval.0
 }
+
+; Make sure to avoid assertion crashes and use the type before
+; truncation to generate the sub constant expressions that leads
+; to the recomputed condition.
+;
+; CHECK-LABEL: @trunc64to59
+; CHECK: switch i59
+; CHECK: i59 0, label
+; CHECK: i59 18717182647723699, label
+
+define void @trunc64to59(i64 %a) {
+entry:
+  %tmp0 = and i64 %a, 15
+  %tmp1 = mul i64 %tmp0, -6425668444178048401
+  %tmp2 = add i64 %tmp1, 5170979678563097242
+  %tmp3 = mul i64 %tmp2, 1627972535142754813
+  switch i64 %tmp3, label %sw.default [
+    i64 847514119312061490, label %sw.bb1
+    i64 866231301959785189, label %sw.bb2
+  ]
+
+sw.bb1:
+  br label %sw.default
+
+sw.bb2:
+  br label %sw.default
+
+sw.default:
+  ret void
+}
