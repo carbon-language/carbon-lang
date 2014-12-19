@@ -93,7 +93,7 @@ define float @fold9(float %f1, float %f2) {
   ret float %t3
 
 ; CHECK-LABEL: @fold9(
-; CHECK: fsub fast float 0.000000e+00, %f2
+; CHECK: fsub fast float -0.000000e+00, %f2
 }
 
 ; Let C3 = C1 + C2. (f1 + C1) + (f2 + C2) => (f1 + f2) + C3 instead of
