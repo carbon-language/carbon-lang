@@ -7842,6 +7842,7 @@ void visualstudio::Link::ConstructJob(Compilation &C, const JobAction &JA,
                                       const ArgList &Args,
                                       const char *LinkingOutput) const {
   ArgStringList CmdArgs;
+  const ToolChain &TC = getToolChain();
 
   if (Output.isFilename()) {
     CmdArgs.push_back(Args.MakeArgString(std::string("-out:") +
@@ -7862,7 +7863,7 @@ void visualstudio::Link::ConstructJob(Compilation &C, const JobAction &JA,
     // the environment variable is set however, assume the user knows what he's
     // doing.
     std::string VisualStudioDir;
-    const auto &MSVC = static_cast<const toolchains::MSVCToolChain &>(getToolChain());
+    const auto &MSVC = static_cast<const toolchains::MSVCToolChain &>(TC);
     if (MSVC.getVisualStudioInstallDir(VisualStudioDir)) {
       SmallString<128> LibDir(VisualStudioDir);
       llvm::sys::path::append(LibDir, "VC", "lib");
@@ -7906,23 +7907,22 @@ void visualstudio::Link::ConstructJob(Compilation &C, const JobAction &JA,
                                          ImplibName.str()));
   }
 
-  if (getToolChain().getSanitizerArgs().needsAsanRt()) {
+  if (TC.getSanitizerArgs().needsAsanRt()) {
     CmdArgs.push_back(Args.MakeArgString("-debug"));
     CmdArgs.push_back(Args.MakeArgString("-incremental:no"));
     // FIXME: Handle 64-bit.
     if (Args.hasArg(options::OPT__SLASH_MD, options::OPT__SLASH_MDd)) {
-      addSanitizerRTWindows(getToolChain(), Args, CmdArgs, "asan_dynamic-i386");
-      addSanitizerRTWindows(getToolChain(), Args, CmdArgs,
+      addSanitizerRTWindows(TC, Args, CmdArgs, "asan_dynamic-i386");
+      addSanitizerRTWindows(TC, Args, CmdArgs,
                             "asan_dynamic_runtime_thunk-i386");
       // Make sure the dynamic runtime thunk is not optimized out at link time
       // to ensure proper SEH handling.
       CmdArgs.push_back(Args.MakeArgString("-include:___asan_seh_interceptor"));
     } else if (DLL) {
-      addSanitizerRTWindows(getToolChain(), Args, CmdArgs,
-                            "asan_dll_thunk-i386");
+      addSanitizerRTWindows(TC, Args, CmdArgs, "asan_dll_thunk-i386");
     } else {
-      addSanitizerRTWindows(getToolChain(), Args, CmdArgs, "asan-i386");
-      addSanitizerRTWindows(getToolChain(), Args, CmdArgs, "asan_cxx-i386");
+      addSanitizerRTWindows(TC, Args, CmdArgs, "asan-i386");
+      addSanitizerRTWindows(TC, Args, CmdArgs, "asan_cxx-i386");
     }
   }
 
@@ -7966,12 +7966,12 @@ void visualstudio::Link::ConstructJob(Compilation &C, const JobAction &JA,
     // If we're using the MSVC linker, it's not sufficient to just use link
     // from the program PATH, because other environments like GnuWin32 install
     // their own link.exe which may come first.
-    linkPath = FindVisualStudioExecutable(getToolChain(), "link.exe",
+    linkPath = FindVisualStudioExecutable(TC, "link.exe",
                                           C.getDriver().getClangProgramPath());
   } else {
     linkPath = Linker;
     llvm::sys::path::replace_extension(linkPath, "exe");
-    linkPath = getToolChain().GetProgramPath(linkPath.c_str());
+    linkPath = TC.GetProgramPath(linkPath.c_str());
   }
 
   const char *Exec = Args.MakeArgString(linkPath);
