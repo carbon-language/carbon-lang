@@ -40,7 +40,7 @@ for.end:                                          ; preds = %for.end.loopexit, %
 declare double @invalidCall(double*) #1
 
 ; CHECK: remark: ReportFuncCall.c:4:8: The following errors keep this region from being a Scop.
-; CHECK: remark: ReportFuncCall.c:5:12: This function call cannot be handeled. Try to inline it.
+; CHECK: remark: ReportFuncCall.c:5:12: This function call cannot be handled. Try to inline it.
 
 !llvm.dbg.cu = !{!0}
 !llvm.module.flags = !{!7, !8}
