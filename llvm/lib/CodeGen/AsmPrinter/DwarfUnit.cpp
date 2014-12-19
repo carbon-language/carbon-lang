@@ -1118,6 +1118,8 @@ void DwarfUnit::constructTypeDIE(DIE &Buffer, DICompositeType CTy) {
     if (CTy.isAppleBlockExtension())
       addFlag(Buffer, dwarf::DW_AT_APPLE_block);
 
+    // This is outside the DWARF spec, but GDB expects a DW_AT_containing_type
+    // inside C++ composite types to point to the base class with the vtable.
     DICompositeType ContainingType(resolve(CTy.getContainingType()));
     if (ContainingType)
       addDIEEntry(Buffer, dwarf::DW_AT_containing_type,
