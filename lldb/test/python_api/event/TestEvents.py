@@ -20,6 +20,9 @@ class EventAPITestCase(TestBase):
         self.buildDsym()
         self.do_listen_for_and_print_event()
 
+    @unittest2.skipUnless((sys.platform.startswith("darwin") or
+                           sys.platform.startswith("freebsd")),
+                          "requires Darwin or FreeBSD")
     @python_api_test
     @dwarf_test
     def test_listen_for_and_print_event_with_dwarf(self):
@@ -35,7 +38,7 @@ class EventAPITestCase(TestBase):
         self.buildDsym()
         self.do_wait_for_event()
 
-    @expectedFailureLinux # non-core functionality, need to reenable and fix later (DES 2014.11.07)
+    @skipIfLinux # non-core functionality, need to reenable and fix later (DES 2014.11.07)
     @python_api_test
     @dwarf_test
     def test_wait_for_event_with_dwarf(self):
@@ -52,7 +55,7 @@ class EventAPITestCase(TestBase):
         self.do_add_listener_to_broadcaster()
 
     @skipIfFreeBSD # llvm.org/pr21325
-    @expectedFailureLinux # non-core functionality, need to reenable and fix later (DES 2014.11.07)
+    @skipIfLinux # non-core functionality, need to reenable and fix later (DES 2014.11.07)
     @python_api_test
     @dwarf_test
     def test_add_listener_to_broadcaster_with_dwarf(self):
