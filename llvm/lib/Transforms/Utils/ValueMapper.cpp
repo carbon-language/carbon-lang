@@ -64,7 +64,7 @@ Value *llvm::MapValue(const Value *V, ValueToValueMapTy &VM, RemapFlags Flags,
     if (!isa<LocalAsMetadata>(MD) && (Flags & RF_NoModuleLevelChanges))
       return VM[V] = const_cast<Value *>(V);
 
-    auto *MappedMD = MapValue(MD, VM, Flags, TypeMapper, Materializer);
+    auto *MappedMD = MapMetadata(MD, VM, Flags, TypeMapper, Materializer);
     if (MD == MappedMD || (!MappedMD && (Flags & RF_IgnoreMissingEntries)))
       return VM[V] = const_cast<Value *>(V);
 
@@ -154,10 +154,10 @@ static Metadata *mapToSelf(ValueToValueMapTy &VM, const Metadata *MD) {
   return mapToMetadata(VM, MD, const_cast<Metadata *>(MD));
 }
 
-static Metadata *MapValueImpl(const Metadata *MD, ValueToValueMapTy &VM,
-                              RemapFlags Flags,
-                              ValueMapTypeRemapper *TypeMapper,
-                              ValueMaterializer *Materializer) {
+static Metadata *MapMetadataImpl(const Metadata *MD, ValueToValueMapTy &VM,
+                                 RemapFlags Flags,
+                                 ValueMapTypeRemapper *TypeMapper,
+                                 ValueMaterializer *Materializer) {
   // If the value already exists in the map, use it.
   if (Metadata *NewMD = VM.MD().lookup(MD).get())
     return NewMD;
@@ -193,7 +193,7 @@ static Metadata *MapValueImpl(const Metadata *MD, ValueToValueMapTy &VM,
     if (!Op)
       return nullptr;
     if (Metadata *MappedOp =
-            MapValueImpl(Op, VM, Flags, TypeMapper, Materializer))
+            MapMetadataImpl(Op, VM, Flags, TypeMapper, Materializer))
       return MappedOp;
     // Use identity map if MappedOp is null and we can ignore missing entries.
     if (Flags & RF_IgnoreMissingEntries)
@@ -241,21 +241,21 @@ static Metadata *MapValueImpl(const Metadata *MD, ValueToValueMapTy &VM,
   return const_cast<Metadata *>(MD);
 }
 
-Metadata *llvm::MapValue(const Metadata *MD, ValueToValueMapTy &VM,
-                         RemapFlags Flags, ValueMapTypeRemapper *TypeMapper,
-                         ValueMaterializer *Materializer) {
-  Metadata *NewMD = MapValueImpl(MD, VM, Flags, TypeMapper, Materializer);
+Metadata *llvm::MapMetadata(const Metadata *MD, ValueToValueMapTy &VM,
+                            RemapFlags Flags, ValueMapTypeRemapper *TypeMapper,
+                            ValueMaterializer *Materializer) {
+  Metadata *NewMD = MapMetadataImpl(MD, VM, Flags, TypeMapper, Materializer);
   if (NewMD && NewMD != MD)
     if (auto *G = dyn_cast<GenericMDNode>(NewMD))
       G->resolveCycles();
   return NewMD;
 }
 
-MDNode *llvm::MapValue(const MDNode *MD, ValueToValueMapTy &VM,
-                       RemapFlags Flags, ValueMapTypeRemapper *TypeMapper,
-                       ValueMaterializer *Materializer) {
-  return cast<MDNode>(MapValue(static_cast<const Metadata *>(MD), VM, Flags,
-                               TypeMapper, Materializer));
+MDNode *llvm::MapMetadata(const MDNode *MD, ValueToValueMapTy &VM,
+                          RemapFlags Flags, ValueMapTypeRemapper *TypeMapper,
+                          ValueMaterializer *Materializer) {
+  return cast<MDNode>(MapMetadata(static_cast<const Metadata *>(MD), VM, Flags,
+                                  TypeMapper, Materializer));
 }
 
 /// RemapInstruction - Convert the instruction operands from referencing the
@@ -296,7 +296,7 @@ void llvm::RemapInstruction(Instruction *I, ValueToValueMapTy &VMap,
            ME = MDs.end();
        MI != ME; ++MI) {
     MDNode *Old = MI->second;
-    MDNode *New = MapValue(Old, VMap, Flags, TypeMapper, Materializer);
+    MDNode *New = MapMetadata(Old, VMap, Flags, TypeMapper, Materializer);
     if (New != Old)
       I->setMetadata(MI->first, New);
   }

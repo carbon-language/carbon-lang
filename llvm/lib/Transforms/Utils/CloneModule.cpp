@@ -118,7 +118,7 @@ Module *llvm::CloneModule(const Module *M, ValueToValueMapTy &VMap) {
     const NamedMDNode &NMD = *I;
     NamedMDNode *NewNMD = New->getOrInsertNamedMetadata(NMD.getName());
     for (unsigned i = 0, e = NMD.getNumOperands(); i != e; ++i)
-      NewNMD->addOperand(MapValue(NMD.getOperand(i), VMap));
+      NewNMD->addOperand(MapMetadata(NMD.getOperand(i), VMap));
   }
 
   return New;

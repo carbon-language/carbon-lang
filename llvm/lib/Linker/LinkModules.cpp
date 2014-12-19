@@ -1248,8 +1248,8 @@ void ModuleLinker::linkNamedMDNodes() {
     NamedMDNode *DestNMD = DstM->getOrInsertNamedMetadata(I->getName());
     // Add Src elements into Dest node.
     for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i)
-      DestNMD->addOperand(MapValue(I->getOperand(i), ValueMap,
-                                   RF_None, &TypeMap, &ValMaterializer));
+      DestNMD->addOperand(MapMetadata(I->getOperand(i), ValueMap, RF_None,
+                                      &TypeMap, &ValMaterializer));
   }
 }
 
@@ -1257,7 +1257,7 @@ void ModuleLinker::linkNamedMDNodes() {
 ///
 /// FIXME: this creates an asymmetric result: we strip losing subprograms from
 /// DstM, but leave losing subprograms in SrcM.  Instead we should also strip
-/// losers from SrcM, but this requires extra plumbing in MapValue.
+/// losers from SrcM, but this requires extra plumbing in MapMetadata.
 void ModuleLinker::stripReplacedSubprograms() {
   // Avoid quadratic runtime by returning early when there's nothing to do.
   if (OverridingFunctions.empty())
