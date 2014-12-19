@@ -411,7 +411,7 @@ const DebugLoc &ReportFuncCall::getDebugLoc() const {
 }
 
 std::string ReportFuncCall::getEndUserMessage() const {
-  return "This function call cannot be handeled. "
+  return "This function call cannot be handled. "
          "Try to inline it.";
 }
 
