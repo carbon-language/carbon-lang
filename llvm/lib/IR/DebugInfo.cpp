@@ -166,7 +166,7 @@ uint64_t DIExpression::getPieceSize() const {
 //===----------------------------------------------------------------------===//
 
 bool DIDescriptor::isSubroutineType() const {
-  return isCompositeType() && getTag() == dwarf::DW_TAG_subroutine_type;
+  return DbgNode && getTag() == dwarf::DW_TAG_subroutine_type;
 }
 
 bool DIDescriptor::isBasicType() const {
