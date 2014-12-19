@@ -195,9 +195,22 @@ bool EHStreamer::callToNoUnwindFunction(const MachineInstr *MI) {
 /// table.  Entries must be ordered by try-range address.
 void EHStreamer::
 computeCallSiteTable(SmallVectorImpl<CallSiteEntry> &CallSites,
-                     const RangeMapType &PadMap,
                      const SmallVectorImpl<const LandingPadInfo *> &LandingPads,
                      const SmallVectorImpl<unsigned> &FirstActions) {
+  // Invokes and nounwind calls have entries in PadMap (due to being bracketed
+  // by try-range labels when lowered).  Ordinary calls do not, so appropriate
+  // try-ranges for them need be deduced so we can put them in the LSDA.
+  RangeMapType PadMap;
+  for (unsigned i = 0, N = LandingPads.size(); i != N; ++i) {
+    const LandingPadInfo *LandingPad = LandingPads[i];
+    for (unsigned j = 0, E = LandingPad->BeginLabels.size(); j != E; ++j) {
+      MCSymbol *BeginLabel = LandingPad->BeginLabels[j];
+      assert(!PadMap.count(BeginLabel) && "Duplicate landing pad labels!");
+      PadRange P = { i, j };
+      PadMap[BeginLabel] = P;
+    }
+  }
+
   // The end label of the previous invoke or nounwind try-range.
   MCSymbol *LastLabel = nullptr;
 
@@ -340,23 +353,9 @@ void EHStreamer::emitExceptionTable() {
   unsigned SizeActions =
     computeActionsTable(LandingPads, Actions, FirstActions);
 
-  // Invokes and nounwind calls have entries in PadMap (due to being bracketed
-  // by try-range labels when lowered).  Ordinary calls do not, so appropriate
-  // try-ranges for them need be deduced when using DWARF exception handling.
-  RangeMapType PadMap;
-  for (unsigned i = 0, N = LandingPads.size(); i != N; ++i) {
-    const LandingPadInfo *LandingPad = LandingPads[i];
-    for (unsigned j = 0, E = LandingPad->BeginLabels.size(); j != E; ++j) {
-      MCSymbol *BeginLabel = LandingPad->BeginLabels[j];
-      assert(!PadMap.count(BeginLabel) && "Duplicate landing pad labels!");
-      PadRange P = { i, j };
-      PadMap[BeginLabel] = P;
-    }
-  }
-
   // Compute the call-site table.
   SmallVector<CallSiteEntry, 64> CallSites;
-  computeCallSiteTable(CallSites, PadMap, LandingPads, FirstActions);
+  computeCallSiteTable(CallSites, LandingPads, FirstActions);
 
   // Final tallies.
 

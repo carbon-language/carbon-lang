@@ -86,7 +86,6 @@ protected:
   /// form gaps in the table.  Entries must be ordered by try-range address.
 
   void computeCallSiteTable(SmallVectorImpl<CallSiteEntry> &CallSites,
-                            const RangeMapType &PadMap,
                             const SmallVectorImpl<const LandingPadInfo *> &LPs,
                             const SmallVectorImpl<unsigned> &FirstActions);
 
