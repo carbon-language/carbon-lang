@@ -391,8 +391,9 @@ static void AsanInitInternal() {
   AsanTSDInit(PlatformTSDDtor);
   InstallDeadlySignalHandlers(AsanOnSIGSEGV);
 
-  InitializeAllocator(common_flags()->allocator_may_return_null,
-                      flags()->quarantine_size);
+  AllocatorOptions allocator_options;
+  allocator_options.SetFrom(flags(), common_flags());
+  InitializeAllocator(allocator_options);
 
   MaybeStartBackgroudThread();
 

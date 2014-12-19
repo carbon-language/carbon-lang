@@ -205,6 +205,14 @@ QuarantineCache *GetQuarantineCache(AsanThreadLocalMallocStorage *ms) {
   return reinterpret_cast<QuarantineCache *>(ms->quarantine_cache);
 }
 
+void AllocatorOptions::SetFrom(const Flags *f, const CommonFlags *cf) {
+  quarantine_size_mb = f->quarantine_size >> 20;
+  min_redzone = f->redzone;
+  max_redzone = f->max_redzone;
+  may_return_null = cf->allocator_may_return_null;
+  alloc_dealloc_mismatch = f->alloc_dealloc_mismatch;
+}
+
 struct Allocator {
   static const uptr kMaxAllowedMallocSize =
       FIRST_32_SECOND_64(3UL << 30, 64UL << 30);
@@ -217,19 +225,42 @@ struct Allocator {
   AllocatorCache fallback_allocator_cache;
   QuarantineCache fallback_quarantine_cache;
 
+  // ------------------- Options --------------------------
+  atomic_uint16_t min_redzone;
+  atomic_uint16_t max_redzone;
+  atomic_uint8_t alloc_dealloc_mismatch;
+
+  // ------------------- Initialization ------------------------
   explicit Allocator(LinkerInitialized)
       : quarantine(LINKER_INITIALIZED),
         fallback_quarantine_cache(LINKER_INITIALIZED) {}
 
-  // ------------------- Initialization ------------------------
-  void Initialize(bool may_return_null, uptr quarantine_size) {
-    allocator.Init(may_return_null);
-    quarantine.Init(quarantine_size, kMaxThreadLocalQuarantine);
+  void CheckOptions(const AllocatorOptions &options) const {
+    CHECK_GE(options.min_redzone, 16);
+    CHECK_GE(options.max_redzone, options.min_redzone);
+    CHECK_LE(options.max_redzone, 2048);
+    CHECK(IsPowerOfTwo(options.min_redzone));
+    CHECK(IsPowerOfTwo(options.max_redzone));
   }
 
-  void ReInitialize(bool may_return_null, uptr quarantine_size) {
-    allocator.SetMayReturnNull(may_return_null);
-    quarantine.Init(quarantine_size, kMaxThreadLocalQuarantine);
+  void SharedInitCode(const AllocatorOptions &options) {
+    CheckOptions(options);
+    quarantine.Init((uptr)options.quarantine_size_mb << 20,
+                    kMaxThreadLocalQuarantine);
+    atomic_store(&alloc_dealloc_mismatch, options.alloc_dealloc_mismatch,
+                 memory_order_release);
+    atomic_store(&min_redzone, options.min_redzone, memory_order_release);
+    atomic_store(&max_redzone, options.max_redzone, memory_order_release);
+  }
+
+  void Initialize(const AllocatorOptions &options) {
+    allocator.Init(options.may_return_null);
+    SharedInitCode(options);
+  }
+
+  void ReInitialize(const AllocatorOptions &options) {
+    allocator.SetMayReturnNull(options.may_return_null);
+    SharedInitCode(options);
   }
 
   // -------------------- Helper methods. -------------------------
@@ -242,8 +273,9 @@ struct Allocator {
       user_requested_size <= (1 << 14) - 256  ? 4 :
       user_requested_size <= (1 << 15) - 512  ? 5 :
       user_requested_size <= (1 << 16) - 1024 ? 6 : 7;
-    return Min(Max(rz_log, RZSize2Log(flags()->redzone)),
-               RZSize2Log(flags()->max_redzone));
+    u32 min_rz = atomic_load(&min_redzone, memory_order_acquire);
+    u32 max_rz = atomic_load(&max_redzone, memory_order_acquire);
+    return Min(Max(rz_log, RZSize2Log(min_rz)), RZSize2Log(max_rz));
   }
 
   // We have an address between two chunks, and we want to report just one.
@@ -419,9 +451,12 @@ struct Allocator {
                        AllocType alloc_type) {
     CHECK_EQ(m->chunk_state, CHUNK_QUARANTINE);
 
-    if (m->alloc_type != alloc_type && flags()->alloc_dealloc_mismatch)
-      ReportAllocTypeMismatch((uptr)ptr, stack,
-                              (AllocType)m->alloc_type, (AllocType)alloc_type);
+    if (m->alloc_type != alloc_type) {
+      if (atomic_load(&alloc_dealloc_mismatch, memory_order_acquire)) {
+        ReportAllocTypeMismatch((uptr)ptr, stack, (AllocType)m->alloc_type,
+                                (AllocType)alloc_type);
+      }
+    }
 
     CHECK_GE(m->alloc_tid, 0);
     if (SANITIZER_WORDSIZE == 64)  // On 32-bits this resides in user area.
@@ -619,12 +654,12 @@ StackTrace AsanChunkView::GetFreeStack() {
   return GetStackTraceFromId(chunk_->free_context_id);
 }
 
-void InitializeAllocator(bool may_return_null, uptr quarantine_size) {
-  instance.Initialize(may_return_null, quarantine_size);
+void InitializeAllocator(const AllocatorOptions &options) {
+  instance.Initialize(options);
 }
 
-void ReInitializeAllocator(bool may_return_null, uptr quarantine_size) {
-  instance.ReInitialize(may_return_null, quarantine_size);
+void ReInitializeAllocator(const AllocatorOptions &options) {
+  instance.ReInitialize(options);
 }
 
 AsanChunkView FindHeapChunkByAddress(uptr addr) {

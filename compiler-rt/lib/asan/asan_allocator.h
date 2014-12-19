@@ -15,6 +15,7 @@
 #ifndef ASAN_ALLOCATOR_H
 #define ASAN_ALLOCATOR_H
 
+#include "asan_flags.h"
 #include "asan_internal.h"
 #include "asan_interceptors.h"
 #include "sanitizer_common/sanitizer_allocator.h"
@@ -31,8 +32,18 @@ enum AllocType {
 static const uptr kNumberOfSizeClasses = 255;
 struct AsanChunk;
 
-void InitializeAllocator(bool may_return_null, uptr quarantine_size);
-void ReInitializeAllocator(bool may_return_null, uptr quarantine_size);
+struct AllocatorOptions {
+  u32 quarantine_size_mb;
+  u16 min_redzone;
+  u16 max_redzone;
+  u8 may_return_null;
+  u8 alloc_dealloc_mismatch;
+
+  void SetFrom(const Flags *f, const CommonFlags *cf);
+};
+
+void InitializeAllocator(const AllocatorOptions &options);
+void ReInitializeAllocator(const AllocatorOptions &options);
 
 class AsanChunkView {
  public:

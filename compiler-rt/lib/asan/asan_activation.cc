@@ -23,20 +23,14 @@
 namespace __asan {
 
 static struct AsanDeactivatedFlags {
-  int quarantine_size;
-  int max_redzone;
+  AllocatorOptions allocator_options;
   int malloc_context_size;
   bool poison_heap;
-  bool alloc_dealloc_mismatch;
-  bool allocator_may_return_null;
 
   void CopyFrom(const Flags *f, const CommonFlags *cf) {
-    quarantine_size = f->quarantine_size;
-    max_redzone = f->max_redzone;
+    allocator_options.SetFrom(f, cf);
     malloc_context_size = cf->malloc_context_size;
     poison_heap = f->poison_heap;
-    alloc_dealloc_mismatch = f->alloc_dealloc_mismatch;
-    allocator_may_return_null = cf->allocator_may_return_null;
   }
 
   void OverrideFromActivationFlags() {
@@ -44,12 +38,14 @@ static struct AsanDeactivatedFlags {
     CommonFlags cf;
 
     // Copy the current activation flags.
-    f.quarantine_size = quarantine_size;
-    f.max_redzone = max_redzone;
+    f.quarantine_size = allocator_options.quarantine_size_mb << 20;
+    f.redzone = allocator_options.min_redzone;
+    f.max_redzone = allocator_options.max_redzone;
+    cf.allocator_may_return_null = allocator_options.may_return_null;
+    f.alloc_dealloc_mismatch = allocator_options.alloc_dealloc_mismatch;
+
     cf.malloc_context_size = malloc_context_size;
     f.poison_heap = poison_heap;
-    f.alloc_dealloc_mismatch = alloc_dealloc_mismatch;
-    cf.allocator_may_return_null = allocator_may_return_null;
 
     // Check if activation flags need to be overriden.
     // FIXME: Add diagnostic to check that activation flags string doesn't
@@ -63,11 +59,13 @@ static struct AsanDeactivatedFlags {
   }
 
   void Print() {
-    Report("quarantine_size %d, max_redzone %d, poison_heap %d, "
+    Report("quarantine_size_mb %d, max_redzone %d, poison_heap %d, "
            "malloc_context_size %d, alloc_dealloc_mismatch %d, "
            "allocator_may_return_null %d\n",
-           quarantine_size, max_redzone, poison_heap, malloc_context_size,
-           alloc_dealloc_mismatch, allocator_may_return_null);
+           allocator_options.quarantine_size_mb, allocator_options.max_redzone,
+           poison_heap, malloc_context_size,
+           allocator_options.alloc_dealloc_mismatch,
+           allocator_options.may_return_null);
   }
 } asan_deactivated_flags;
 
@@ -97,16 +95,9 @@ void AsanActivate() {
 
   asan_deactivated_flags.OverrideFromActivationFlags();
 
-  // Restore flag values.
-  // FIXME: this is not atomic, and there may be other threads alive.
-  flags()->max_redzone = asan_deactivated_flags.max_redzone;
-  flags()->alloc_dealloc_mismatch =
-      asan_deactivated_flags.alloc_dealloc_mismatch;
-
   SetCanPoisonMemory(asan_deactivated_flags.poison_heap);
   SetMallocContextSize(asan_deactivated_flags.malloc_context_size);
-  ReInitializeAllocator(asan_deactivated_flags.allocator_may_return_null,
-                        asan_deactivated_flags.quarantine_size);
+  ReInitializeAllocator(asan_deactivated_flags.allocator_options);
 
   asan_is_deactivated = false;
   if (common_flags()->verbosity) {
