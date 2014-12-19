@@ -6110,10 +6110,10 @@ def warn_unused_call : Warning<
   InGroup<UnusedValue>;
 def warn_side_effects_unevaluated_context : Warning<
   "expression with side effects has no effect in an unevaluated context">,
-  InGroup<UnusedValue>;
+  InGroup<UnevaluatedExpression>;
 def warn_side_effects_typeid : Warning<
   "expression with side effects will be evaluated despite being used as an "
-  "operand to 'typeid'">, InGroup<UnusedValue>;
+  "operand to 'typeid'">, InGroup<PotentiallyEvaluatedExpression>;
 def warn_unused_result : Warning<
   "ignoring return value of function declared with warn_unused_result "
   "attribute">, InGroup<DiagGroup<"unused-result">>;

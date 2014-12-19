@@ -409,7 +409,11 @@ def UnusedMemberFunction : DiagGroup<"unused-member-function",
 def UnusedLabel : DiagGroup<"unused-label">;
 def UnusedParameter : DiagGroup<"unused-parameter">;
 def UnusedResult : DiagGroup<"unused-result">;
-def UnusedValue : DiagGroup<"unused-value", [UnusedComparison, UnusedResult]>;
+def PotentiallyEvaluatedExpression : DiagGroup<"potentially-evaluated-expression">;
+def UnevaluatedExpression : DiagGroup<"unevaluated-expression",
+                                      [PotentiallyEvaluatedExpression]>;
+def UnusedValue : DiagGroup<"unused-value", [UnusedComparison, UnusedResult,
+                                             UnevaluatedExpression]>;
 def UnusedConstVariable : DiagGroup<"unused-const-variable">;
 def UnusedVariable : DiagGroup<"unused-variable",
                                [UnusedConstVariable]>;
