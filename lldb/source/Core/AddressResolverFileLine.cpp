@@ -96,7 +96,7 @@ AddressResolverFileLine::GetDepth()
 void
 AddressResolverFileLine::GetDescription (Stream *s)
 {
-    s->Printf ("File and line address - file: \"%s\" line: %u", m_file_spec.GetFilename().AsCString(), m_line_number);
+    s->Printf ("File and line address - file: \"%s\" line: %u", m_file_spec.GetFilename().AsCString("<Unknown>"), m_line_number);
 }
 
 

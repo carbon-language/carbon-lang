@@ -179,7 +179,7 @@ AddressRange::Dump(Stream *s, Target *target, Address::DumpStyle style, Address:
         {
             ModuleSP module_sp (GetBaseAddress().GetModule());
             if (module_sp)
-                s->Printf("%s", module_sp->GetFileSpec().GetFilename().AsCString());
+                s->Printf("%s", module_sp->GetFileSpec().GetFilename().AsCString("<Unknown>"));
         }
         s->AddressRange(vmaddr, vmaddr + GetByteSize(), addr_size);
         return true;

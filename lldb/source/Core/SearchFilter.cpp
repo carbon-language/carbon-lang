@@ -450,7 +450,7 @@ SearchFilterByModule::GetDescription (Stream *s)
     }
     else
     {
-        s->PutCString(m_module_spec.GetFilename().AsCString("<unknown>"));
+        s->PutCString(m_module_spec.GetFilename().AsCString("<Unknown>"));
     }
 }
 
@@ -612,7 +612,7 @@ SearchFilterByModuleList::GetDescription (Stream *s)
         }
         else
         {
-            s->PutCString(m_module_spec_list.GetFileSpecAtIndex(0).GetFilename().AsCString("<unknown>"));
+            s->PutCString(m_module_spec_list.GetFileSpecAtIndex(0).GetFilename().AsCString("<Unknown>"));
         }
     }
     else
@@ -628,7 +628,7 @@ SearchFilterByModuleList::GetDescription (Stream *s)
             }
             else
             {
-                s->PutCString(m_module_spec_list.GetFileSpecAtIndex(i).GetFilename().AsCString("<unknown>"));
+                s->PutCString(m_module_spec_list.GetFileSpecAtIndex(i).GetFilename().AsCString("<Unknown>"));
             }
             if (i != num_modules - 1)
                 s->PutCString (", ");
@@ -811,7 +811,7 @@ SearchFilterByModuleListAndCU::GetDescription (Stream *s)
         }
         else
         {
-            s->PutCString(m_module_spec_list.GetFileSpecAtIndex(0).GetFilename().AsCString("<unknown>"));
+            s->PutCString(m_module_spec_list.GetFileSpecAtIndex(0).GetFilename().AsCString("<Unknown>"));
         }
     }
     else if (num_modules > 0)
@@ -827,7 +827,7 @@ SearchFilterByModuleListAndCU::GetDescription (Stream *s)
             }
             else
             {
-                s->PutCString(m_module_spec_list.GetFileSpecAtIndex(i).GetFilename().AsCString("<unknown>"));
+                s->PutCString(m_module_spec_list.GetFileSpecAtIndex(i).GetFilename().AsCString("<Unknown>"));
             }
             if (i != num_modules - 1)
                 s->PutCString (", ");

@@ -3033,7 +3033,7 @@ SymbolFileDWARF::Index ()
     m_indexed = true;
     Timer scoped_timer (__PRETTY_FUNCTION__,
                         "SymbolFileDWARF::Index (%s)",
-                        GetObjectFile()->GetFileSpec().GetFilename().AsCString());
+                        GetObjectFile()->GetFileSpec().GetFilename().AsCString("<Unknown>"));
 
     DWARFDebugInfo* debug_info = DebugInfo();
     if (debug_info)
@@ -4929,7 +4929,7 @@ SymbolFileDWARF::FindCompleteObjCDefinitionTypeForDIE (const DWARFDebugInfoEntry
                         {
                             DEBUG_PRINTF ("resolved 0x%8.8" PRIx64 " from %s to 0x%8.8" PRIx64 " (cu 0x%8.8" PRIx64 ")\n",
                                           MakeUserID(die->GetOffset()), 
-                                          m_obj_file->GetFileSpec().GetFilename().AsCString(),
+                                          m_obj_file->GetFileSpec().GetFilename().AsCString("<Unknown>"),
                                           MakeUserID(type_die->GetOffset()), 
                                           MakeUserID(type_cu->GetOffset()));
                             

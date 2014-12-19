@@ -433,7 +433,9 @@ Address::Dump (Stream *s, ExecutionContextScope *exe_scope, DumpStyle style, Dum
 
     case DumpStyleModuleWithFileAddress:
         if (section_sp)
-            s->Printf("%s[", section_sp->GetModule()->GetFileSpec().GetFilename().AsCString());
+        {
+            s->Printf("%s[", section_sp->GetModule()->GetFileSpec().GetFilename().AsCString("<Unknown>"));
+        }
         // Fall through
     case DumpStyleFileAddress:
         {

@@ -1030,7 +1030,7 @@ DWARFDebugInfoEntry::DumpLocation
     const char *obj_file_name = NULL;
     ObjectFile *obj_file = dwarf2Data->GetObjectFile();
     if (obj_file)
-        obj_file_name = obj_file->GetFileSpec().GetFilename().AsCString();
+        obj_file_name = obj_file->GetFileSpec().GetFilename().AsCString("<Unknown>");
     const char *die_name = GetName (dwarf2Data, cu);
     s.Printf ("0x%8.8x/0x%8.8x: %-30s (from %s in %s)", 
               cu->GetOffset(),

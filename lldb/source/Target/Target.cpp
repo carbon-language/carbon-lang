@@ -1383,9 +1383,9 @@ Target::ReadMemory (const Address& addr,
             ModuleSP addr_module_sp (resolved_addr.GetModule());
             if (addr_module_sp && addr_module_sp->GetFileSpec())
                 error.SetErrorStringWithFormat("%s[0x%" PRIx64 "] can't be resolved, %s in not currently loaded",
-                                               addr_module_sp->GetFileSpec().GetFilename().AsCString(), 
+                                               addr_module_sp->GetFileSpec().GetFilename().AsCString("<Unknown>"),
                                                resolved_addr.GetFileAddress(),
-                                               addr_module_sp->GetFileSpec().GetFilename().AsCString());
+                                               addr_module_sp->GetFileSpec().GetFilename().AsCString("<Unknonw>"));
             else
                 error.SetErrorStringWithFormat("0x%" PRIx64 " can't be resolved", resolved_addr.GetFileAddress());
         }
