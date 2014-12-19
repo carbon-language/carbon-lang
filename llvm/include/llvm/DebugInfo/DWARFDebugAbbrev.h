@@ -10,7 +10,7 @@
 #ifndef LLVM_LIB_DEBUGINFO_DWARFDEBUGABBREV_H
 #define LLVM_LIB_DEBUGINFO_DWARFDEBUGABBREV_H
 
-#include "DWARFAbbreviationDeclaration.h"
+#include "llvm/DebugInfo/DWARFAbbreviationDeclaration.h"
 #include <list>
 #include <map>
 #include <vector>

@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "DWARFDebugFrame.h"
+#include "llvm/DebugInfo/DWARFDebugFrame.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/Dwarf.h"

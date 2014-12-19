@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "DWARFAcceleratorTable.h"
+#include "llvm/DebugInfo/DWARFAcceleratorTable.h"
 
 #include "llvm/Support/Dwarf.h"
 #include "llvm/Support/Format.h"

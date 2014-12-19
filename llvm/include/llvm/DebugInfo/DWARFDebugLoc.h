@@ -10,8 +10,8 @@
 #ifndef LLVM_LIB_DEBUGINFO_DWARFDEBUGLOC_H
 #define LLVM_LIB_DEBUGINFO_DWARFDEBUGLOC_H
 
-#include "DWARFRelocMap.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/DebugInfo/DWARFRelocMap.h"
 #include "llvm/Support/DataExtractor.h"
 
 namespace llvm {

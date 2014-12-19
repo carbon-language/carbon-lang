@@ -10,16 +10,16 @@
 #ifndef LLVM_LIB_DEBUGINFO_DWARFCONTEXT_H
 #define LLVM_LIB_DEBUGINFO_DWARFCONTEXT_H
 
-#include "DWARFCompileUnit.h"
-#include "DWARFDebugAranges.h"
-#include "DWARFDebugFrame.h"
-#include "DWARFDebugLine.h"
-#include "DWARFDebugLoc.h"
-#include "DWARFDebugRangeList.h"
-#include "DWARFSection.h"
-#include "DWARFTypeUnit.h"
 #include "llvm/ADT/MapVector.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/DebugInfo/DWARFCompileUnit.h"
+#include "llvm/DebugInfo/DWARFDebugAranges.h"
+#include "llvm/DebugInfo/DWARFDebugFrame.h"
+#include "llvm/DebugInfo/DWARFDebugLine.h"
+#include "llvm/DebugInfo/DWARFDebugLoc.h"
+#include "llvm/DebugInfo/DWARFDebugRangeList.h"
+#include "llvm/DebugInfo/DWARFSection.h"
+#include "llvm/DebugInfo/DWARFTypeUnit.h"
 #include "llvm/DebugInfo/DIContext.h"
 #include <vector>
 

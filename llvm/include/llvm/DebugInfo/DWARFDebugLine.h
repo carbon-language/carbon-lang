@@ -10,8 +10,8 @@
 #ifndef LLVM_LIB_DEBUGINFO_DWARFDEBUGLINE_H
 #define LLVM_LIB_DEBUGINFO_DWARFDEBUGLINE_H
 
-#include "DWARFRelocMap.h"
 #include "llvm/DebugInfo/DIContext.h"
+#include "llvm/DebugInfo/DWARFRelocMap.h"
 #include "llvm/Support/DataExtractor.h"
 #include <map>
 #include <string>

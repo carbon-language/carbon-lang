@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/DebugInfo/DIContext.h"
-#include "DWARFContext.h"
+#include "llvm/DebugInfo/DWARFContext.h"
 using namespace llvm;
 
 DIContext::~DIContext() {}

@@ -10,11 +10,11 @@
 #ifndef LLVM_LIB_DEBUGINFO_DWARFUNIT_H
 #define LLVM_LIB_DEBUGINFO_DWARFUNIT_H
 
-#include "DWARFDebugAbbrev.h"
-#include "DWARFDebugInfoEntry.h"
-#include "DWARFDebugRangeList.h"
-#include "DWARFRelocMap.h"
-#include "DWARFSection.h"
+#include "llvm/DebugInfo/DWARFDebugAbbrev.h"
+#include "llvm/DebugInfo/DWARFDebugInfoEntry.h"
+#include "llvm/DebugInfo/DWARFDebugRangeList.h"
+#include "llvm/DebugInfo/DWARFRelocMap.h"
+#include "llvm/DebugInfo/DWARFSection.h"
 #include <vector>
 
 namespace llvm {

@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "DWARFRelocMap.h"
+#include "llvm/DebugInfo/DWARFRelocMap.h"
 
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/DebugInfo/DWARFFormValue.h"
