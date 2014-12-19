@@ -51,6 +51,8 @@ void CommonFlags::SetDefaults() {
   allocator_may_return_null = false;
   print_summary = true;
   check_printf = true;
+  mmap_limit_mb = 0;
+  hard_rss_limit_mb = 0;
   // TODO(glider): tools may want to set different defaults for handle_segv.
   handle_segv = SANITIZER_NEEDS_SEGV;
   allow_user_segv_handler = false;
