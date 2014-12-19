@@ -1216,7 +1216,6 @@ private:
     NewLoopID->replaceOperandWith(0, NewLoopID);
 
     TheLoop->setLoopID(NewLoopID);
-    LoopID = NewLoopID;
   }
 
   /// The loop these hints belong to.
