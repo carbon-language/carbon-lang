@@ -427,15 +427,24 @@ unsigned parseArgValues(const Driver &D, const llvm::opt::Arg *A,
   assert((A->getOption().matches(options::OPT_fsanitize_EQ) ||
           A->getOption().matches(options::OPT_fno_sanitize_EQ)) &&
          "Invalid argument in parseArgValues!");
-  unsigned Kind = 0;
+  unsigned Kinds = 0;
   for (unsigned I = 0, N = A->getNumValues(); I != N; ++I) {
-    if (unsigned K = parseValue(A->getValue(I)))
-      Kind |= K;
+    const char *Value = A->getValue(I);
+    unsigned Kind;
+    // Special case: don't accept -fsanitize=all.
+    if (A->getOption().matches(options::OPT_fsanitize_EQ) &&
+        0 == strcmp("all", Value))
+      Kind = 0;
+    else
+      Kind = parseValue(Value);
+
+    if (Kind)
+      Kinds |= Kind;
     else if (DiagnoseErrors)
       D.Diag(clang::diag::err_drv_unsupported_option_argument)
-        << A->getOption().getName() << A->getValue(I);
+          << A->getOption().getName() << Value;
   }
-  return Kind;
+  return Kinds;
 }
 
 std::string lastArgumentForMask(const Driver &D, const llvm::opt::ArgList &Args,
