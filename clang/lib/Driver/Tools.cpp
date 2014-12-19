@@ -7844,18 +7844,14 @@ void visualstudio::Link::ConstructJob(Compilation &C, const JobAction &JA,
   ArgStringList CmdArgs;
   const ToolChain &TC = getToolChain();
 
-  if (Output.isFilename()) {
+  assert((Output.isFilename() || Output.isNothing()) && "invalid output");
+  if (Output.isFilename())
     CmdArgs.push_back(Args.MakeArgString(std::string("-out:") +
                                          Output.getFilename()));
-  } else {
-    assert(Output.isNothing() && "Invalid output.");
-  }
 
   if (!Args.hasArg(options::OPT_nostdlib) &&
-      !Args.hasArg(options::OPT_nostartfiles) &&
-      !C.getDriver().IsCLMode()) {
+      !Args.hasArg(options::OPT_nostartfiles) && !C.getDriver().IsCLMode())
     CmdArgs.push_back("-defaultlib:libcmt");
-  }
 
   if (!llvm::sys::Process::GetEnv("LIB")) {
     // If the VC environment hasn't been configured (perhaps because the user
@@ -7892,12 +7888,10 @@ void visualstudio::Link::ConstructJob(Compilation &C, const JobAction &JA,
 
   CmdArgs.push_back("-nologo");
 
-  if (Args.hasArg(options::OPT_g_Group)) {
+  if (Args.hasArg(options::OPT_g_Group))
     CmdArgs.push_back("-debug");
-  }
 
   bool DLL = Args.hasArg(options::OPT__SLASH_LD, options::OPT__SLASH_LDd);
-
   if (DLL) {
     CmdArgs.push_back(Args.MakeArgString("-dll"));
 
