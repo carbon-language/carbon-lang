@@ -4478,6 +4478,113 @@ defm S2_lsr : xtype_reg_acc<"lsr", srl, 0b01>;
 defm S2_lsl : xtype_reg_acc<"lsl", shl, 0b11>;
 }
 
+//===----------------------------------------------------------------------===//
+let hasSideEffects = 0 in
+class T_S3op_1 <string mnemonic, RegisterClass RC, bits<2> MajOp, bits<3> MinOp,
+                bit SwapOps, bit isSat = 0, bit isRnd = 0, bit hasShift = 0>
+  : SInst <(outs RC:$dst),
+           (ins DoubleRegs:$src1, DoubleRegs:$src2),
+  "$dst = "#mnemonic#"($src1, $src2)"#!if(isRnd, ":rnd", "")
+                                     #!if(hasShift,":>>1","")
+                                     #!if(isSat, ":sat", ""),
+  [], "", S_3op_tc_2_SLOT23 > {
+    bits<5> dst;
+    bits<5> src1;
+    bits<5> src2;
+
+    let IClass = 0b1100;
+
+    let Inst{27-24} = 0b0001;
+    let Inst{23-22} = MajOp;
+    let Inst{20-16} = !if (SwapOps, src2, src1);
+    let Inst{12-8}  = !if (SwapOps, src1, src2);
+    let Inst{7-5}   = MinOp;
+    let Inst{4-0}   = dst;
+  }
+
+class T_S3op_64 <string mnemonic, bits<2> MajOp, bits<3> MinOp, bit SwapOps,
+                 bit isSat = 0, bit isRnd = 0, bit hasShift = 0 >
+  : T_S3op_1 <mnemonic, DoubleRegs, MajOp, MinOp, SwapOps,
+              isSat, isRnd, hasShift>;
+
+let isCodeGenOnly = 0 in
+def S2_lfsp : T_S3op_64 < "lfs", 0b10, 0b110, 0>;
+
+//===----------------------------------------------------------------------===//
+// Template class used by vector shift, vector rotate, vector neg,
+// 32-bit shift, 64-bit shifts, etc.
+//===----------------------------------------------------------------------===//
+
+let hasSideEffects = 0 in
+class T_S3op_3 <string mnemonic, RegisterClass RC, bits<2> MajOp,
+                 bits<2> MinOp, bit isSat = 0, list<dag> pattern = [] >
+  : SInst <(outs RC:$dst),
+           (ins RC:$src1, IntRegs:$src2),
+  "$dst = "#mnemonic#"($src1, $src2)"#!if(isSat, ":sat", ""),
+  pattern, "", S_3op_tc_1_SLOT23> {
+    bits<5> dst;
+    bits<5> src1;
+    bits<5> src2;
+
+    let IClass = 0b1100;
+
+    let Inst{27-24} = !if(!eq(!cast<string>(RC), "IntRegs"), 0b0110, 0b0011);
+    let Inst{23-22} = MajOp;
+    let Inst{20-16} = src1;
+    let Inst{12-8} = src2;
+    let Inst{7-6} = MinOp;
+    let Inst{4-0} = dst;
+  }
+
+let hasNewValue = 1 in
+class T_S3op_shift32 <string mnemonic, SDNode OpNode, bits<2> MinOp>
+  : T_S3op_3 <mnemonic, IntRegs, 0b01, MinOp, 0,
+    [(set (i32 IntRegs:$dst), (OpNode (i32 IntRegs:$src1),
+                                      (i32 IntRegs:$src2)))]>;
+
+let hasNewValue = 1, Itinerary = S_3op_tc_2_SLOT23 in
+class T_S3op_shift32_Sat <string mnemonic, bits<2> MinOp>
+  : T_S3op_3 <mnemonic, IntRegs, 0b00, MinOp, 1, []>;
+
+
+class T_S3op_shift64 <string mnemonic, SDNode OpNode, bits<2> MinOp>
+  : T_S3op_3 <mnemonic, DoubleRegs, 0b10, MinOp, 0,
+    [(set (i64 DoubleRegs:$dst), (OpNode (i64 DoubleRegs:$src1),
+                                         (i32 IntRegs:$src2)))]>;
+
+
+class T_S3op_shiftVect <string mnemonic, bits<2> MajOp, bits<2> MinOp>
+  : T_S3op_3 <mnemonic, DoubleRegs, MajOp, MinOp, 0, []>;
+
+
+// Shift by register
+// Rdd=[asr|lsr|asl|lsl](Rss,Rt)
+
+let isCodeGenOnly = 0 in {
+def S2_asr_r_p : T_S3op_shift64 < "asr", sra, 0b00>;
+def S2_lsr_r_p : T_S3op_shift64 < "lsr", srl, 0b01>;
+def S2_asl_r_p : T_S3op_shift64 < "asl", shl, 0b10>;
+def S2_lsl_r_p : T_S3op_shift64 < "lsl", shl, 0b11>;
+}
+
+// Rd=[asr|lsr|asl|lsl](Rs,Rt)
+
+let isCodeGenOnly = 0 in {
+def S2_asr_r_r : T_S3op_shift32<"asr", sra, 0b00>;
+def S2_lsr_r_r : T_S3op_shift32<"lsr", srl, 0b01>;
+def S2_asl_r_r : T_S3op_shift32<"asl", shl, 0b10>;
+def S2_lsl_r_r : T_S3op_shift32<"lsl", shl, 0b11>;
+}
+
+// Shift by register with saturation
+// Rd=asr(Rs,Rt):sat
+// Rd=asl(Rs,Rt):sat
+
+let Defs = [USR_OVF], isCodeGenOnly = 0 in {
+  def S2_asr_r_r_sat : T_S3op_shift32_Sat<"asr", 0b00>;
+  def S2_asl_r_r_sat : T_S3op_shift32_Sat<"asl", 0b10>;
+}
+
 // Multi-class for logical operators :
 // Shift by immediate/register and accumulate/logical
 multiclass xtype_imm<string OpcStr, SDNode OpNode1, SDNode OpNode2> {
