@@ -28,20 +28,14 @@
 #include <stdint.h>
 #include <string.h>
 
+#include "assembly.h"
+
 // Clang objects if you redefine a builtin.  This little hack allows us to
 // define a function with the same name as an intrinsic.
-#if __APPLE__
-// mach-o has extra leading underscore
-#pragma redefine_extname __atomic_load_c ___atomic_load
-#pragma redefine_extname __atomic_store_c ___atomic_store
-#pragma redefine_extname __atomic_exchange_c ___atomic_exchange
-#pragma redefine_extname __atomic_compare_exchange_c ___atomic_compare_exchange
-#else
-#pragma redefine_extname __atomic_load_c __atomic_load
-#pragma redefine_extname __atomic_store_c __atomic_store
-#pragma redefine_extname __atomic_exchange_c __atomic_exchange
-#pragma redefine_extname __atomic_compare_exchange_c __atomic_compare_exchange
-#endif
+#pragma redefine_extname __atomic_load_c SYMBOL_NAME(__atomic_load)
+#pragma redefine_extname __atomic_store_c SYMBOL_NAME(__atomic_store)
+#pragma redefine_extname __atomic_exchange_c SYMBOL_NAME(__atomic_exchange)
+#pragma redefine_extname __atomic_compare_exchange_c SYMBOL_NAME(__atomic_compare_exchange)
 
 /// Number of locks.  This allocates one page on 32-bit platforms, two on
 /// 64-bit.  This can be specified externally if a different trade between
