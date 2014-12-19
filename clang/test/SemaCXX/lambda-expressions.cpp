@@ -258,9 +258,7 @@ namespace TypeDeduction {
   void f() {
     const S s {};
     S &&t = [&] { return s; } ();
-#if __cplusplus <= 201103L
-    // expected-error@-2 {{drops qualifiers}}
-#else
+#if __cplusplus > 201103L
     S &&u = [&] () -> auto { return s; } ();
 #endif
   }

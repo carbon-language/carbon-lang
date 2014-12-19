@@ -34,15 +34,12 @@ X infer_X_return_type(X x) {
   }(5);
 }
 
-X infer_X_return_type_fail(X x) {
+X infer_X_return_type_2(X x) {
   return [x](int y) {
     if (y > 0)
       return X();
     else
-      return x;
-#if __cplusplus <= 201103L
-    // expected-error@-2 {{return type 'const X' must match previous return type 'X' when lambda expression has unspecified explicit return type}}
-#endif
+      return x; // ok even in c++11, per dr1048.
   }(5);
 }
 
