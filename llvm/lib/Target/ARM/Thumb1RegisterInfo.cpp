@@ -234,7 +234,6 @@ void llvm::emitThumbRegPlusImmediate(MachineBasicBlock &MBB,
   // If we would emit the copy with an immediate of 0, just use tMOVr.
   if (CopyOpc && Bytes < CopyScale) {
     CopyOpc = ARM::tMOVr;
-    CopyBits = 0;
     CopyScale = 1;
     CopyNeedsCC = false;
     CopyRange = 0;
