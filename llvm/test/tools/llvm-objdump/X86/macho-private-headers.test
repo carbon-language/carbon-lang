@@ -13,6 +13,8 @@
 // RUN:     | FileCheck %s -check-prefix=SUB_LIB
 // RUN: llvm-objdump -p %p/Inputs/dylibSubClient.macho-x86_64 \
 // RUN:     | FileCheck %s -check-prefix=SUB_CLI
+// RUN: llvm-objdump -p %p/Inputs/dylibRoutines.macho-x86_64 \
+// RUN:     | FileCheck %s -check-prefix=ROUTINE
 
 CHECK: Mach header
 CHECK:       magic cputype cpusubtype  caps    filetype ncmds sizeofcmds      flags
@@ -407,3 +409,15 @@ SUB_CLI: Load command 10
 SUB_CLI:           cmd LC_SUB_CLIENT
 SUB_CLI:       cmdsize 16
 SUB_CLI:        client bar (offset 12)
+
+ROUTINE: Load command 6
+ROUTINE:           cmd LC_ROUTINES_64
+ROUTINE:       cmdsize 72
+ROUTINE:  init_address 0x0000000000000f80
+ROUTINE:   init_module 0
+ROUTINE:     reserved1 0
+ROUTINE:     reserved2 0
+ROUTINE:     reserved3 0
+ROUTINE:     reserved4 0
+ROUTINE:     reserved5 0
+ROUTINE:     reserved6 0

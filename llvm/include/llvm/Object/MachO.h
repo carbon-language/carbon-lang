@@ -376,6 +376,10 @@ public:
   getSubLibraryCommand(const LoadCommandInfo &L) const;
   MachO::sub_client_command
   getSubClientCommand(const LoadCommandInfo &L) const;
+  MachO::routines_command
+  getRoutinesCommand(const LoadCommandInfo &L) const;
+  MachO::routines_command_64
+  getRoutinesCommand64(const LoadCommandInfo &L) const;
 
   MachO::any_relocation_info getRelocation(DataRefImpl Rel) const;
   MachO::data_in_code_entry getDice(DataRefImpl Rel) const;

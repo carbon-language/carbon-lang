@@ -2332,6 +2332,16 @@ MachOObjectFile::getSubClientCommand(const LoadCommandInfo &L) const {
   return getStruct<MachO::sub_client_command>(this, L.Ptr);
 }
 
+MachO::routines_command
+MachOObjectFile::getRoutinesCommand(const LoadCommandInfo &L) const {
+  return getStruct<MachO::routines_command>(this, L.Ptr);
+}
+
+MachO::routines_command_64
+MachOObjectFile::getRoutinesCommand64(const LoadCommandInfo &L) const {
+  return getStruct<MachO::routines_command_64>(this, L.Ptr);
+}
+
 MachO::any_relocation_info
 MachOObjectFile::getRelocation(DataRefImpl Rel) const {
   DataRefImpl Sec;

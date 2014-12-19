@@ -3738,6 +3738,40 @@ static void PrintSubClientCommand(MachO::sub_client_command sub,
   }
 }
 
+static void PrintRoutinesCommand(MachO::routines_command r) {
+  outs() << "          cmd LC_ROUTINES\n";
+  outs() << "      cmdsize " << r.cmdsize;
+  if (r.cmdsize != sizeof(struct MachO::routines_command))
+    outs() << " Incorrect size\n";
+  else
+    outs() << "\n";
+  outs() << " init_address " << format("0x%08" PRIx32, r.init_address) << "\n";
+  outs() << "  init_module " << r.init_module << "\n";
+  outs() << "    reserved1 " << r.reserved1 << "\n";
+  outs() << "    reserved2 " << r.reserved2 << "\n";
+  outs() << "    reserved3 " << r.reserved3 << "\n";
+  outs() << "    reserved4 " << r.reserved4 << "\n";
+  outs() << "    reserved5 " << r.reserved5 << "\n";
+  outs() << "    reserved6 " << r.reserved6 << "\n";
+}
+
+static void PrintRoutinesCommand64(MachO::routines_command_64 r) {
+  outs() << "          cmd LC_ROUTINES_64\n";
+  outs() << "      cmdsize " << r.cmdsize;
+  if (r.cmdsize != sizeof(struct MachO::routines_command_64))
+    outs() << " Incorrect size\n";
+  else
+    outs() << "\n";
+  outs() << " init_address " << format("0x%016" PRIx64, r.init_address) << "\n";
+  outs() << "  init_module " << r.init_module << "\n";
+  outs() << "    reserved1 " << r.reserved1 << "\n";
+  outs() << "    reserved2 " << r.reserved2 << "\n";
+  outs() << "    reserved3 " << r.reserved3 << "\n";
+  outs() << "    reserved4 " << r.reserved4 << "\n";
+  outs() << "    reserved5 " << r.reserved5 << "\n";
+  outs() << "    reserved6 " << r.reserved6 << "\n";
+}
+
 static void PrintDylibCommand(MachO::dylib_command dl, const char *Ptr) {
   if (dl.cmd == MachO::LC_ID_DYLIB)
     outs() << "          cmd LC_ID_DYLIB\n";
@@ -3906,6 +3940,12 @@ static void PrintLoadCommands(const MachOObjectFile *Obj, uint32_t ncmds,
     } else if (Command.C.cmd == MachO::LC_SUB_CLIENT) {
       MachO::sub_client_command Sc = Obj->getSubClientCommand(Command);
       PrintSubClientCommand(Sc, Command.Ptr);
+    } else if (Command.C.cmd == MachO::LC_ROUTINES) {
+      MachO::routines_command Rc = Obj->getRoutinesCommand(Command);
+      PrintRoutinesCommand(Rc);
+    } else if (Command.C.cmd == MachO::LC_ROUTINES_64) {
+      MachO::routines_command_64 Rc = Obj->getRoutinesCommand64(Command);
+      PrintRoutinesCommand64(Rc);
     } else if (Command.C.cmd == MachO::LC_LOAD_DYLIB ||
                Command.C.cmd == MachO::LC_ID_DYLIB ||
                Command.C.cmd == MachO::LC_LOAD_WEAK_DYLIB ||

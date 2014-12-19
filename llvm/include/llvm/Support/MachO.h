@@ -1131,6 +1131,32 @@ namespace llvm {
       sys::swapByteOrder(s.client);
     }
 
+    inline void swapStruct(routines_command &r) {
+      sys::swapByteOrder(r.cmd);
+      sys::swapByteOrder(r.cmdsize);
+      sys::swapByteOrder(r.init_address);
+      sys::swapByteOrder(r.init_module);
+      sys::swapByteOrder(r.reserved1);
+      sys::swapByteOrder(r.reserved2);
+      sys::swapByteOrder(r.reserved3);
+      sys::swapByteOrder(r.reserved4);
+      sys::swapByteOrder(r.reserved5);
+      sys::swapByteOrder(r.reserved6);
+    }
+
+    inline void swapStruct(routines_command_64 &r) {
+      sys::swapByteOrder(r.cmd);
+      sys::swapByteOrder(r.cmdsize);
+      sys::swapByteOrder(r.init_address);
+      sys::swapByteOrder(r.init_module);
+      sys::swapByteOrder(r.reserved1);
+      sys::swapByteOrder(r.reserved2);
+      sys::swapByteOrder(r.reserved3);
+      sys::swapByteOrder(r.reserved4);
+      sys::swapByteOrder(r.reserved5);
+      sys::swapByteOrder(r.reserved6);
+    }
+
     inline void swapStruct(dylinker_command &d) {
       sys::swapByteOrder(d.cmd);
       sys::swapByteOrder(d.cmdsize);
