@@ -67,6 +67,9 @@ class CommandParser:
                 return
 
 def BuildMakefile(mydir):
+    if os.path.exists("Makefile"):
+        return
+
     categories = {}
 
     for f in os.listdir(os.getcwd()):
@@ -98,8 +101,8 @@ def BuildMakefile(mydir):
     makefile.close()
 
 def CleanMakefile():
-    if (os.path.isfile("Makefile")):
-        os.unlink("Makefile")
+    # Do nothing for now, since the Makefile on disk could be checked into the repo.
+    pass
 
 class InlineTest(TestBase):
     # Internal implementation
