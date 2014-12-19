@@ -112,7 +112,7 @@ struct ProfileData {
   llvm::StringMap<llvm::TimeRecord> Records;
 };
 
-/// \brief Every \c ClangTidyCheck reports errors through a \c DiagnosticEngine
+/// \brief Every \c ClangTidyCheck reports errors through a \c DiagnosticsEngine
 /// provided by this context.
 ///
 /// A \c ClangTidyCheck always has access to the active context to report
