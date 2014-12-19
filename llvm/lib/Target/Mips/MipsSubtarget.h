@@ -223,7 +223,6 @@ public:
   bool hasDSP() const { return HasDSP; }
   bool hasDSPR2() const { return HasDSPR2; }
   bool hasMSA() const { return HasMSA; }
-  bool isLinux() const { return IsLinux; }
   bool useSmallSection() const { return UseSmallSection; }
 
   bool hasStandardEncoding() const { return !inMips16Mode(); }
