@@ -166,7 +166,8 @@ class CommandLineCompletionTestCase(TestBase):
         prompt = "(lldb) "
 
         # So that the child gets torn down after the test.
-        self.child = pexpect.spawn('%s %s' % (self.lldbHere, self.lldbOption))
+        self.child = pexpect.spawn(self.lldbHere,
+                                   [self.lldbOption] + ['--no-use-colors'])
         child = self.child
         # Turn on logging for input/output to/from the child.
         with open('child_send.txt', 'w') as f_send:
