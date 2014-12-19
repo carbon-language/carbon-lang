@@ -372,6 +372,8 @@ public:
   getSubFrameworkCommand(const LoadCommandInfo &L) const;
   MachO::sub_umbrella_command
   getSubUmbrellaCommand(const LoadCommandInfo &L) const;
+  MachO::sub_library_command
+  getSubLibraryCommand(const LoadCommandInfo &L) const;
 
   MachO::any_relocation_info getRelocation(DataRefImpl Rel) const;
   MachO::data_in_code_entry getDice(DataRefImpl Rel) const;
