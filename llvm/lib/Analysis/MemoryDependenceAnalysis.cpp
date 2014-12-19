@@ -1145,7 +1145,6 @@ getNonLocalPointerDepFromBB(const PHITransAddr &Pointer,
       // cache value will only see properly sorted cache arrays.
       if (Cache && NumSortedEntries != Cache->size()) {
         SortNonLocalDepInfoCache(*Cache, NumSortedEntries);
-        NumSortedEntries = Cache->size();
       }
       // Since we bail out, the "Cache" set won't contain all of the
       // results for the query.  This is ok (we can still use it to accelerate
