@@ -72,6 +72,7 @@ extern "C" void *__libc_malloc(uptr size);
 extern "C" void *__libc_calloc(uptr size, uptr n);
 extern "C" void *__libc_realloc(void *ptr, uptr size);
 extern "C" void __libc_free(void *ptr);
+extern "C" int dirfd(void *dirp);
 #if !SANITIZER_FREEBSD
 extern "C" int mallopt(int param, int value);
 #endif
@@ -1833,6 +1834,13 @@ TSAN_INTERCEPTOR(void*, opendir, char *path) {
   return res;
 }
 
+TSAN_INTERCEPTOR(int, closedir, void *dirp) {
+  SCOPED_TSAN_INTERCEPTOR(closedir, dirp);
+  int fd = dirfd(dirp);
+  FdClose(thr, pc, fd);
+  return REAL(closedir)(dirp);
+}
+
 #if !SANITIZER_FREEBSD
 TSAN_INTERCEPTOR(int, epoll_ctl, int epfd, int op, int fd, void *ev) {
   SCOPED_TSAN_INTERCEPTOR(epoll_ctl, epfd, op, fd, ev);
@@ -2554,6 +2562,7 @@ void InitializeInterceptors() {
   TSAN_INTERCEPT(puts);
   TSAN_INTERCEPT(rmdir);
   TSAN_INTERCEPT(opendir);
+  TSAN_INTERCEPT(closedir);
 
   TSAN_MAYBE_INTERCEPT_EPOLL_CTL;
   TSAN_MAYBE_INTERCEPT_EPOLL_WAIT;
