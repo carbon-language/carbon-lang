@@ -14,6 +14,7 @@
 
 #include "llvm-c/lto.h"
 #include "llvm/CodeGen/CommandFlags.h"
+#include "llvm/IR/LLVMContext.h"
 #include "llvm/LTO/LTOCodeGenerator.h"
 #include "llvm/LTO/LTOModule.h"
 #include "llvm/Support/MemoryBuffer.h"
@@ -213,15 +214,25 @@ void lto_codegen_set_diagnostic_handler(lto_code_gen_t cg,
   unwrap(cg)->setDiagnosticHandler(diag_handler, ctxt);
 }
 
-lto_code_gen_t lto_codegen_create(void) {
+static lto_code_gen_t createCodeGen(bool InLocalContext) {
   lto_initialize();
 
   TargetOptions Options = InitTargetOptionsFromCodeGenFlags();
 
-  LTOCodeGenerator *CodeGen = new LTOCodeGenerator();
+  LTOCodeGenerator *CodeGen =
+      InLocalContext ? new LTOCodeGenerator(make_unique<LLVMContext>())
+                     : new LTOCodeGenerator();
   if (CodeGen)
     CodeGen->setTargetOptions(Options);
   return wrap(CodeGen);
+}
+
+lto_code_gen_t lto_codegen_create(void) {
+  return createCodeGen(/* InLocalContext */ false);
+}
+
+lto_code_gen_t lto_codegen_create_in_local_context(void) {
+  return createCodeGen(/* InLocalContext */ true);
 }
 
 void lto_codegen_dispose(lto_code_gen_t cg) { delete unwrap(cg); }
