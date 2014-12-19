@@ -97,3 +97,24 @@ define void @s_test_umin_ult_i32(i32 addrspace(1)* %out, i32 %a, i32 %b) nounwin
   store i32 %val, i32 addrspace(1)* %out, align 4
   ret void
 }
+
+; FUNC-LABEL: @v_test_umin_ult_i32_multi_use
+; SI-NOT: v_min
+; SI: v_cmp_lt_u32
+; SI-NEXT: v_cndmask_b32
+; SI-NOT: v_min
+; SI: s_endpgm
+define void @v_test_umin_ult_i32_multi_use(i32 addrspace(1)* %out0, i1 addrspace(1)* %out1, i32 addrspace(1)* %aptr, i32 addrspace(1)* %bptr) nounwind {
+  %tid = call i32 @llvm.r600.read.tidig.x() nounwind readnone
+  %gep0 = getelementptr i32 addrspace(1)* %aptr, i32 %tid
+  %gep1 = getelementptr i32 addrspace(1)* %bptr, i32 %tid
+  %outgep0 = getelementptr i32 addrspace(1)* %out0, i32 %tid
+  %outgep1 = getelementptr i1 addrspace(1)* %out1, i32 %tid
+  %a = load i32 addrspace(1)* %gep0, align 4
+  %b = load i32 addrspace(1)* %gep1, align 4
+  %cmp = icmp ult i32 %a, %b
+  %val = select i1 %cmp, i32 %a, i32 %b
+  store i32 %val, i32 addrspace(1)* %outgep0, align 4
+  store i1 %cmp, i1 addrspace(1)* %outgep1
+  ret void
+}

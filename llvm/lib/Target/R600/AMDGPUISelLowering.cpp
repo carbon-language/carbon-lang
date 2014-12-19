@@ -2300,7 +2300,7 @@ SDValue AMDGPUTargetLowering::PerformDAGCombine(SDNode *N,
     }
   case ISD::SELECT: {
     SDValue Cond = N->getOperand(0);
-    if (Cond.getOpcode() == ISD::SETCC) {
+    if (Cond.getOpcode() == ISD::SETCC && Cond.hasOneUse()) {
       SDLoc DL(N);
       EVT VT = N->getValueType(0);
       SDValue LHS = Cond.getOperand(0);
