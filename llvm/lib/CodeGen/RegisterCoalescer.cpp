@@ -204,7 +204,7 @@ namespace {
     void updateRegDefsUses(unsigned SrcReg, unsigned DstReg, unsigned SubIdx);
 
     /// Handle copies of undef values.
-    bool eliminateUndefCopy(MachineInstr *CopyMI, const CoalescerPair &CP);
+    bool eliminateUndefCopy(MachineInstr *CopyMI);
 
   public:
     static char ID; // Class identification, replacement for typeinfo
@@ -1026,6 +1026,13 @@ bool RegisterCoalescer::reMaterializeTrivialDef(CoalescerPair &CP,
   return true;
 }
 
+static void removeUndefValue(LiveRange &LR, SlotIndex At)
+{
+  VNInfo *VNInfo = LR.getVNInfoAt(At);
+  assert(VNInfo != nullptr && SlotIndex::isSameInstr(VNInfo->def, At));
+  LR.removeValNo(VNInfo);
+}
+
 /// ProcessImpicitDefs may leave some copies of <undef>
 /// values, it only removes local variables. When we have a copy like:
 ///
@@ -1033,43 +1040,72 @@ bool RegisterCoalescer::reMaterializeTrivialDef(CoalescerPair &CP,
 ///
 /// We delete the copy and remove the corresponding value number from %vreg1.
 /// Any uses of that value number are marked as <undef>.
-bool RegisterCoalescer::eliminateUndefCopy(MachineInstr *CopyMI,
-                                           const CoalescerPair &CP) {
+bool RegisterCoalescer::eliminateUndefCopy(MachineInstr *CopyMI) {
+  // Note that we do not query CoalescerPair here but redo isMoveInstr as the
+  // CoalescerPair may have a new register class with adjusted subreg indices
+  // at this point.
+  unsigned SrcReg, DstReg, SrcSubIdx, DstSubIdx;
+  isMoveInstr(*TRI, CopyMI, SrcReg, DstReg, SrcSubIdx, DstSubIdx);
+
   SlotIndex Idx = LIS->getInstructionIndex(CopyMI);
-  LiveInterval *SrcInt = &LIS->getInterval(CP.getSrcReg());
-  if (SrcInt->liveAt(Idx))
-    return false;
-  LiveInterval *DstInt = &LIS->getInterval(CP.getDstReg());
-  if (DstInt->liveAt(Idx))
+  const LiveInterval &SrcLI = LIS->getInterval(SrcReg);
+  // CopyMI is undef iff SrcReg is not live before the instruction.
+  if (SrcSubIdx != 0 && SrcLI.hasSubRanges()) {
+    unsigned SrcMask = TRI->getSubRegIndexLaneMask(SrcSubIdx);
+    for (const LiveInterval::SubRange &SR : SrcLI.subranges()) {
+      if ((SR.LaneMask & SrcMask) == 0)
+        continue;
+      if (SR.liveAt(Idx))
+        return false;
+    }
+  } else if (SrcLI.liveAt(Idx))
     return false;
 
-  // No intervals are live-in to CopyMI - it is undef.
-  if (CP.isFlipped())
-    DstInt = SrcInt;
-  SrcInt = nullptr;
+  DEBUG(dbgs() << "\tEliminating copy of <undef> value\n");
 
+  // Remove any DstReg segments starting at the instruction.
+  LiveInterval &DstLI = LIS->getInterval(DstReg);
+  unsigned DstMask = TRI->getSubRegIndexLaneMask(DstSubIdx);
   SlotIndex RegIndex = Idx.getRegSlot();
-  VNInfo *DeadVNI = DstInt->getVNInfoAt(RegIndex);
-  assert(DeadVNI && "No value defined in DstInt");
-  DstInt->removeValNo(DeadVNI);
-  // Eliminate the corresponding values in the subregister ranges.
-  for (LiveInterval::SubRange &S : DstInt->subranges()) {
-    VNInfo *DeadVNI = S.getVNInfoAt(RegIndex);
-    if (DeadVNI == nullptr)
+  for (LiveInterval::SubRange &SR : DstLI.subranges()) {
+    if ((SR.LaneMask & DstMask) == 0)
       continue;
-    S.removeValNo(DeadVNI);
+    removeUndefValue(SR, RegIndex);
+
+    DstLI.removeEmptySubRanges();
+  }
+  // Remove value or merge with previous one in case of a subregister def.
+  if (VNInfo *PrevVNI = DstLI.getVNInfoAt(Idx)) {
+    VNInfo *VNInfo = DstLI.getVNInfoAt(RegIndex);
+    DstLI.MergeValueNumberInto(VNInfo, PrevVNI);
+  } else {
+    removeUndefValue(DstLI, RegIndex);
   }
 
-  // Find new undef uses.
-  for (MachineOperand &MO : MRI->reg_nodbg_operands(DstInt->reg)) {
-    if (MO.isDef() || MO.isUndef())
+  // Mark uses as undef.
+  for (MachineOperand &MO : MRI->reg_nodbg_operands(DstReg)) {
+    if (MO.isDef() /*|| MO.isUndef()*/)
       continue;
-    MachineInstr *MI = MO.getParent();
-    SlotIndex Idx = LIS->getInstructionIndex(MI);
-    if (DstInt->liveAt(Idx))
+    const MachineInstr &MI = *MO.getParent();
+    SlotIndex UseIdx = LIS->getInstructionIndex(&MI);
+    unsigned UseMask = TRI->getSubRegIndexLaneMask(MO.getSubReg());
+    bool isLive;
+    if (UseMask != ~0u && DstLI.hasSubRanges()) {
+      isLive = false;
+      for (const LiveInterval::SubRange &SR : DstLI.subranges()) {
+        if ((SR.LaneMask & UseMask) == 0)
+          continue;
+        if (SR.liveAt(UseIdx)) {
+          isLive = true;
+          break;
+        }
+      }
+    } else
+      isLive = DstLI.liveAt(UseIdx);
+    if (isLive)
       continue;
     MO.setIsUndef(true);
-    DEBUG(dbgs() << "\tnew undef: " << Idx << '\t' << *MI);
+    DEBUG(dbgs() << "\tnew undef: " << UseIdx << '\t' << MI);
   }
   return true;
 }
@@ -1227,8 +1263,7 @@ bool RegisterCoalescer::joinCopy(MachineInstr *CopyMI, bool &Again) {
   }
 
   // Eliminate undefs.
-  if (!CP.isPhys() && eliminateUndefCopy(CopyMI, CP)) {
-    DEBUG(dbgs() << "\tEliminated copy of <undef> value.\n");
+  if (!CP.isPhys() && eliminateUndefCopy(CopyMI)) {
     LIS->RemoveMachineInstrFromMaps(CopyMI);
     CopyMI->eraseFromParent();
     return false;  // Not coalescable.
