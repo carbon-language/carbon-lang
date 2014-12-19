@@ -3469,7 +3469,6 @@ bool Parser::ParseCXX11AttributeArgs(IdentifierInfo *AttrName,
       if (Attr->getMaxArgs() && !NumArgs) {
         // The attribute was allowed to have arguments, but none were provided
         // even though the attribute parsed successfully. This is an error.
-        // FIXME: This is a good place for a fixit which removes the parens.
         Diag(LParenLoc, diag::err_attribute_requires_arguments) << AttrName;
         return false;
       } else if (!Attr->getMaxArgs()) {
@@ -3477,7 +3476,8 @@ bool Parser::ParseCXX11AttributeArgs(IdentifierInfo *AttrName,
         // arguments. It doesn't matter whether any were provided -- the
         // presence of the argument list (even if empty) is diagnosed.
         Diag(LParenLoc, diag::err_cxx11_attribute_forbids_arguments)
-            << AttrName;
+            << AttrName
+            << FixItHint::CreateRemoval(SourceRange(LParenLoc, *EndLoc));
         return false;
       }
     }
