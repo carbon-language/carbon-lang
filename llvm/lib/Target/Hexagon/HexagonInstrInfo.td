@@ -3249,6 +3249,124 @@ def BARRIER : SYSInst<(outs), (ins),
 //===----------------------------------------------------------------------===//
 // SYSTEM/SUPER -
 //===----------------------------------------------------------------------===//
+//===----------------------------------------------------------------------===//
+// CRUSER - Type.
+//===----------------------------------------------------------------------===//
+// HW loop
+let isExtendable = 1, isExtentSigned = 1, opExtentBits = 9, opExtentAlign = 2,
+    opExtendable = 0, hasSideEffects = 0 in
+class LOOP_iBase<string mnemonic, Operand brOp, bit mustExtend = 0>
+         : CRInst<(outs), (ins brOp:$offset, u10Imm:$src2),
+           #mnemonic#"($offset, #$src2)",
+           [], "" , CR_tc_3x_SLOT3> {
+    bits<9> offset;
+    bits<10> src2;
+
+    let IClass = 0b0110;
+
+    let Inst{27-22} = 0b100100;
+    let Inst{21} = !if (!eq(mnemonic, "loop0"), 0b0, 0b1);
+    let Inst{20-16} = src2{9-5};
+    let Inst{12-8} = offset{8-4};
+    let Inst{7-5} = src2{4-2};
+    let Inst{4-3} = offset{3-2};
+    let Inst{1-0} = src2{1-0};
+}
+
+let isExtendable = 1, isExtentSigned = 1, opExtentBits = 9, opExtentAlign = 2,
+    opExtendable = 0, hasSideEffects = 0 in
+class LOOP_rBase<string mnemonic, Operand brOp, bit mustExtend = 0>
+         : CRInst<(outs), (ins brOp:$offset, IntRegs:$src2),
+           #mnemonic#"($offset, $src2)",
+           [], "" ,CR_tc_3x_SLOT3> {
+    bits<9> offset;
+    bits<5> src2;
+
+    let IClass = 0b0110;
+
+    let Inst{27-22} = 0b000000;
+    let Inst{21} = !if (!eq(mnemonic, "loop0"), 0b0, 0b1);
+    let Inst{20-16} = src2;
+    let Inst{12-8} = offset{8-4};
+    let Inst{4-3} = offset{3-2};
+  }
+
+multiclass LOOP_ri<string mnemonic> {
+  def i : LOOP_iBase<mnemonic, brtarget>;
+  def r : LOOP_rBase<mnemonic, brtarget>;
+}
+
+
+let Defs = [SA0, LC0, USR], isCodeGenOnly = 0 in
+defm J2_loop0 : LOOP_ri<"loop0">;
+
+// Interestingly only loop0's appear to set usr.lpcfg
+let Defs = [SA1, LC1], isCodeGenOnly = 0 in
+defm J2_loop1 : LOOP_ri<"loop1">;
+
+let isBranch = 1, isTerminator = 1, hasSideEffects = 0,
+    Defs = [PC, LC0], Uses = [SA0, LC0] in {
+def ENDLOOP0 : Endloop<(outs), (ins brtarget:$offset),
+                       ":endloop0",
+                       []>;
+}
+
+let isBranch = 1, isTerminator = 1, hasSideEffects = 0,
+    Defs = [PC, LC1], Uses = [SA1, LC1] in {
+def ENDLOOP1 : Endloop<(outs), (ins brtarget:$offset),
+                       ":endloop1",
+                       []>;
+}
+
+// Pipelined loop instructions, sp[123]loop0
+let Defs = [LC0, SA0, P3, USR], hasSideEffects = 0,
+    isExtentSigned = 1, isExtendable = 1, opExtentBits = 9, opExtentAlign = 2,
+    opExtendable = 0, isPredicateLate = 1 in
+class SPLOOP_iBase<string SP, bits<2> op>
+  : CRInst <(outs), (ins brtarget:$r7_2, u10Imm:$U10),
+  "p3 = sp"#SP#"loop0($r7_2, #$U10)" > {
+    bits<9> r7_2;
+    bits<10> U10;
+
+    let IClass = 0b0110;
+
+    let Inst{22-21} = op;
+    let Inst{27-23} = 0b10011;
+    let Inst{20-16} = U10{9-5};
+    let Inst{12-8} = r7_2{8-4};
+    let Inst{7-5} = U10{4-2};
+    let Inst{4-3} = r7_2{3-2};
+    let Inst{1-0} = U10{1-0};
+  }
+
+let Defs = [LC0, SA0, P3, USR], hasSideEffects = 0,
+    isExtentSigned = 1, isExtendable = 1, opExtentBits = 9, opExtentAlign = 2,
+    opExtendable = 0, isPredicateLate = 1 in
+class SPLOOP_rBase<string SP, bits<2> op>
+  : CRInst <(outs), (ins brtarget:$r7_2, IntRegs:$Rs),
+  "p3 = sp"#SP#"loop0($r7_2, $Rs)" > {
+    bits<9> r7_2;
+    bits<5> Rs;
+
+    let IClass = 0b0110;
+
+    let Inst{22-21} = op;
+    let Inst{27-23} = 0b00001;
+    let Inst{20-16} = Rs;
+    let Inst{12-8} = r7_2{8-4};
+    let Inst{4-3} = r7_2{3-2};
+  }
+
+multiclass SPLOOP_ri<string mnemonic, bits<2> op> {
+  def i : SPLOOP_iBase<mnemonic, op>;
+  def r : SPLOOP_rBase<mnemonic, op>;
+}
+
+let isCodeGenOnly = 0 in {
+defm J2_ploop1s : SPLOOP_ri<"1", 0b01>;
+defm J2_ploop2s : SPLOOP_ri<"2", 0b10>;
+defm J2_ploop3s : SPLOOP_ri<"3", 0b11>;
+}
 
 // TFRI64 - assembly mapped.
 let isReMaterializable = 1 in
@@ -3285,28 +3403,6 @@ let isReMaterializable = 1 in
 def TFR_FI : ALU32_ri<(outs IntRegs:$dst), (ins FrameIndex:$src1),
              "$dst = add($src1)",
              [(set (i32 IntRegs:$dst), ADDRri:$src1)]>;
-
-//
-// CR - Type.
-//
-let hasSideEffects = 0, Defs = [SA0, LC0] in {
-def LOOP0_i : CRInst<(outs), (ins brtarget:$offset, u10Imm:$src2),
-                      "loop0($offset, #$src2)",
-                      []>;
-}
-
-let hasSideEffects = 0, Defs = [SA0, LC0] in {
-def LOOP0_r : CRInst<(outs), (ins brtarget:$offset, IntRegs:$src2),
-                      "loop0($offset, $src2)",
-                      []>;
-}
-
-let isBranch = 1, isTerminator = 1, hasSideEffects = 0,
-    Defs = [PC, LC0], Uses = [SA0, LC0] in {
-def ENDLOOP0 : Endloop<(outs), (ins brtarget:$offset),
-                       ":endloop0",
-                       []>;
-}
 
 // Support for generating global address.
 // Taken from X86InstrInfo.td.

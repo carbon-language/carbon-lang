@@ -57,6 +57,7 @@ let Namespace = "Hexagon" in {
 
   def subreg_loreg  : SubRegIndex<32>;
   def subreg_hireg  : SubRegIndex<32, 32>;
+  def subreg_overflow : SubRegIndex<1, 0>;
 
   // Integer registers.
   foreach i = 0-28 in {
@@ -109,6 +110,10 @@ let Namespace = "Hexagon" in {
   def M0 : Rc<6, "m0">, DwarfRegNum<[71]>;
   def M1 : Rc<7, "m1">, DwarfRegNum<[72]>;
 
+  def USR  : Rc<8,  "usr">,   DwarfRegNum<[74]> {
+    let SubRegIndices = [subreg_overflow];
+    let SubRegs = [USR_OVF];
+  }
   def PC : Rc<9,  "pc">, DwarfRegNum<[32]>; // is the Dwarf number correct?
   def GP : Rc<11, "gp">, DwarfRegNum<[33]>; // is the Dwarf number correct?
 }
@@ -135,9 +140,9 @@ def PredRegs : RegisterClass<"Hexagon", [i1], 32, (add (sequence "P%u", 0, 3))>
 }
 
 def CRRegs : RegisterClass<"Hexagon", [i32], 32,
-                           (add (sequence "LC%u", 0, 1),
-                                (sequence "SA%u", 0, 1),
-                                (sequence "M%u", 0, 1), PC, GP)> {
+                           (add LC0, SA0, LC1, SA1,
+                                M0, M1,
+                                USR, USR_OVF, PC, GP)> {
   let Size = 32;
 }
 
@@ -146,7 +151,7 @@ def VolatileV3 {
                          R28, R31,
                          P0, P1, P2, P3,
                          M0, M1,
-                         LC0, LC1, SA0, SA1, USR_OVF];
+                         LC0, LC1, SA0, SA1, USR, USR_OVF];
 }
 
 def PositiveHalfWord : PatLeaf<(i32 IntRegs:$a),

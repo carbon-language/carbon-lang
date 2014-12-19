@@ -81,8 +81,8 @@ FunctionPass *llvm::createHexagonFixupHwLoops() {
 
 /// \brief Returns true if the instruction is a hardware loop instruction.
 static bool isHardwareLoop(const MachineInstr *MI) {
-  return MI->getOpcode() == Hexagon::LOOP0_r ||
-         MI->getOpcode() == Hexagon::LOOP0_i;
+  return MI->getOpcode() == Hexagon::J2_loop0r ||
+         MI->getOpcode() == Hexagon::J2_loop0i;
 }
 
 
