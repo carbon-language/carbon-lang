@@ -1,0 +1,4 @@
+RUN: llvm-objdump -exports-trie %p/Inputs/macho-no-exports.dylib | FileCheck %s
+
+; Test that we don't crash with an empty export list.
+CHECK: macho-no-exports.dylib: file format Mach-O 64-bit x86-64

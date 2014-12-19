@@ -1640,7 +1640,10 @@ void ExportEntry::moveNext() {
 iterator_range<export_iterator> 
 MachOObjectFile::exports(ArrayRef<uint8_t> Trie) {
   ExportEntry Start(Trie);
-  Start.moveToFirst();
+  if (Trie.size() == 0)
+    Start.moveToEnd();
+  else
+    Start.moveToFirst();
 
   ExportEntry Finish(Trie);
   Finish.moveToEnd();
