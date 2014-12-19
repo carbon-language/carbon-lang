@@ -206,6 +206,9 @@ public:
       return;
 
     unsigned Reg = It->second;
+    if (Reg == 0)
+      return;
+
     LiveOutRegInfo.grow(Reg);
     LiveOutRegInfo[Reg].IsValid = false;
   }
