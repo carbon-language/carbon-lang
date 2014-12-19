@@ -1,8 +1,8 @@
 // Test for direct coverage writing with dlopen.
 
 // Test normal exit.
-// RUN: %clangxx_asan -mllvm -asan-coverage=1 -DSHARED %s -shared -o %T/libcoverage_android_test_1.so -fPIC
-// RUN: %clangxx_asan -mllvm -asan-coverage=1 -DSO_DIR=\"%device\" %s -o %t
+// RUN: %clangxx_asan -fsanitize-coverage=1 -DSHARED %s -shared -o %T/libcoverage_android_test_1.so -fPIC
+// RUN: %clangxx_asan -fsanitize-coverage=1 -DSO_DIR=\"%device\" %s -o %t
 
 // RUN: adb shell rm -rf %device/coverage-android
 // RUN: rm -rf %T/coverage-android
@@ -18,8 +18,8 @@
 
 
 // Test sudden death.
-// RUN: %clangxx_asan -mllvm -asan-coverage=1 -DSHARED -DKILL %s -shared -o %T/libcoverage_android_test_1.so -fPIC
-// RUN: %clangxx_asan -mllvm -asan-coverage=1 -DSO_DIR=\"%device\" %s -o %t
+// RUN: %clangxx_asan -fsanitize-coverage=1 -DSHARED -DKILL %s -shared -o %T/libcoverage_android_test_1.so -fPIC
+// RUN: %clangxx_asan -fsanitize-coverage=1 -DSO_DIR=\"%device\" %s -o %t
 
 // RUN: adb shell rm -rf %device/coverage-android-kill
 // RUN: rm -rf %T/coverage-android-kill
