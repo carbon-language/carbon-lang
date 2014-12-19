@@ -164,3 +164,19 @@ template void Foo(float a);
 // expected-error@+1 0-1 {{exception specification in explicit instantiation does not match instantiated one}}
 template void Foo(double a) noexcept;
 #endif
+
+#if __cplusplus >= 201103L
+namespace PR21942 {
+template <int>
+struct A {
+  virtual void foo() final;
+};
+
+template <>
+void A<0>::foo() {} // expected-note{{overridden virtual function is here}}
+
+struct B : A<0> {
+  virtual void foo() override; // expected-error{{declaration of 'foo' overrides a 'final' function}}
+};
+}
+#endif

@@ -6434,14 +6434,11 @@ Decl *Sema::ActOnStartOfFunctionTemplateDef(Scope *FnBodyScope,
 /// \brief Strips various properties off an implicit instantiation
 /// that has just been explicitly specialized.
 static void StripImplicitInstantiation(NamedDecl *D) {
-  D->dropAttrs();
+  D->dropAttr<DLLImportAttr>();
+  D->dropAttr<DLLExportAttr>();
 
-  if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
+  if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D))
     FD->setInlineSpecified(false);
-
-    for (auto I : FD->params())
-      I->dropAttrs();
-  }
 }
 
 /// \brief Compute the diagnostic location for an explicit instantiation
