@@ -3396,7 +3396,7 @@ void CGDebugInfo::finalize() {
     llvm::Metadata *Repl;
 
     auto it = DeclCache.find(p.first);
-    // If there has been no definition for the declaration, call RAUV
+    // If there has been no definition for the declaration, call RAUW
     // with ourselves, that will destroy the temporary MDNode and
     // replace it with a standard one, avoiding leaking memory.
     if (it == DeclCache.end())
