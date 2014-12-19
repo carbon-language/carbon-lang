@@ -39,6 +39,8 @@ class StaticVariableTestCase(TestBase):
         self.static_variable_python()
 
     @expectedFailureDarwin(9980907)
+    @expectedFailureClang('Clang emits incomplete debug info.')
+    @expectedFailureGcc('GCC emits incomplete debug info.')
     @python_api_test
     @dwarf_test
     def test_with_dwarf_and_python_api(self):
@@ -114,8 +116,7 @@ class StaticVariableTestCase(TestBase):
             if name == 'g_points':
                 self.assertTrue(val.GetValueType() == lldb.eValueTypeVariableStatic)
                 self.assertTrue(val.GetNumChildren() == 2)
-            elif name == 'A::g_points' and self.getCompiler() in ['clang', 'llvm-gcc']:
-                # On Mac OS X, gcc 4.2 emits the wrong debug info for A::g_points.        
+            elif name == 'A::g_points':
                 self.assertTrue(val.GetValueType() == lldb.eValueTypeVariableGlobal)
                 self.assertTrue(val.GetNumChildren() == 2)
                 child1 = val.GetChildAtIndex(1)
