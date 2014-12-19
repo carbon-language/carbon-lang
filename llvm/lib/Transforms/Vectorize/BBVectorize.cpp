@@ -2609,7 +2609,6 @@ namespace {
                                                      true, o, 1));
           NewI1->insertBefore(IBeforeJ ? J : I);
           I1 = NewI1;
-          I1T = I2T;
           I1Elem = I2Elem;
         } else if (I1Elem > I2Elem) {
           std::vector<Constant *> Mask(I1Elem);
@@ -2626,7 +2625,6 @@ namespace {
                                                      true, o, 1));
           NewI2->insertBefore(IBeforeJ ? J : I);
           I2 = NewI2;
-          I2T = I1T;
         }
 
         // Now that both I1 and I2 are the same length we can shuffle them
