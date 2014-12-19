@@ -616,7 +616,7 @@ def TFRI64_V4 : ALU64_rr<(outs DoubleRegs:$dst), (ins u6Ext:$src1),
 
 // Transfer control register.
 let hasSideEffects = 0 in
-def TFCR : CRInst<(outs CRRegs:$dst), (ins IntRegs:$src1),
+def TFCR : CRInst<(outs CtrRegs:$dst), (ins IntRegs:$src1),
            "$dst = $src1",
            []>;
 //===----------------------------------------------------------------------===//

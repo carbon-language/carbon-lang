@@ -1854,7 +1854,7 @@ class T_RI_pat <InstHexagon MI, Intrinsic IntID>
 let mayLoad = 1, hasSideEffects = 0 in
 class di_LDInstPI_diu4<string opc, Intrinsic IntID>
   : LDInstPI<(outs IntRegs:$dst, DoubleRegs:$dst2),
-           (ins IntRegs:$src1, IntRegs:$src2, CRRegs:$src3, s4Imm:$offset),
+           (ins IntRegs:$src1, IntRegs:$src2, CtrRegs:$src3, s4Imm:$offset),
            "$dst2 = memd($src1++#$offset:circ($src3))",
            [],
            "$src1 = $dst">;

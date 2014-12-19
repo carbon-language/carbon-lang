@@ -20,9 +20,12 @@ let Namespace = "Hexagon" in {
     let HWEncoding{4-0} = num;
   }
 
-  class HexagonDoubleReg<bits<5> num, string n, list<Register> subregs> :
+  class HexagonDoubleReg<bits<5> num, string n, list<Register> subregs,
+                         list<string> alt = []> :
         RegisterWithSubRegs<n, subregs> {
     field bits<5> Num;
+
+    let AltNames = alt;
     let HWEncoding{4-0} = num;
   }
 
@@ -51,8 +54,23 @@ let Namespace = "Hexagon" in {
   }
 
   // Rc - control registers
-  class Rc<bits<5> num, string n> : HexagonReg<num, n> {
+  class Rc<bits<5> num, string n,
+           list<string> alt = [], list<Register> alias = []> : 
+        HexagonReg<num, n, alt, alias> {
     let Num = num;
+  }
+
+  // Rcc - 64-bit control registers.
+  class Rcc<bits<5> num, string n, list<Register> subregs,
+            list<string> alt = []> :
+        HexagonDoubleReg<num, n, subregs, alt> {
+    let Num = num;
+    let SubRegs = subregs;
+  }
+
+  // Mx - address modifier registers
+  class Mx<bits<1> num, string n> : HexagonReg<{0b0000, num}, n> {
+    let Num = !cast<bits<5>>(num);
   }
 
   def subreg_loreg  : SubRegIndex<32>;
@@ -94,6 +112,12 @@ let Namespace = "Hexagon" in {
   def P2 : Rp<2, "p2">, DwarfRegNum<[65]>;
   def P3 : Rp<3, "p3">, DwarfRegNum<[66]>;
 
+  // Modifier registers.
+  // C6 and C7 can also be M0 and M1, but register names must be unique, even
+  // if belonging to different register classes.
+  def M0 : Mx<0, "m0">, DwarfRegNum<[72]>;
+  def M1 : Mx<1, "m1">, DwarfRegNum<[73]>;
+
   // Fake register to represent USR.OVF bit. Artihmetic/saturating instruc-
   // tions modify this bit, and multiple such instructions are allowed in the
   // same packet. We need to ignore output dependencies on this bit, but not
@@ -101,22 +125,38 @@ let Namespace = "Hexagon" in {
   def USR_OVF : Rc<?, "usr.ovf">;
 
   // Control registers.
-  def SA0 : Rc<0, "sa0">, DwarfRegNum<[67]>;
-  def LC0 : Rc<1, "lc0">, DwarfRegNum<[68]>;
+  def SA0  : Rc<0,  "sa0",       ["c0"]>,   DwarfRegNum<[67]>;
+  def LC0  : Rc<1,  "lc0",       ["c1"]>,   DwarfRegNum<[68]>;
+  def SA1  : Rc<2,  "sa1",       ["c2"]>,   DwarfRegNum<[69]>;
+  def LC1  : Rc<3,  "lc1",       ["c3"]>,   DwarfRegNum<[70]>;
+  def P3_0 : Rc<4,  "p3:0",      ["c4"], [P0, P1, P2, P3]>,
+                                            DwarfRegNum<[71]>;
+  def C6   : Rc<6,  "c6",        [], [M0]>, DwarfRegNum<[72]>;
+  def C7   : Rc<7,  "c7",        [], [M1]>, DwarfRegNum<[73]>;
 
-  def SA1 : Rc<2, "sa1">, DwarfRegNum<[69]>;
-  def LC1 : Rc<3, "lc1">, DwarfRegNum<[70]>;
-
-  def M0 : Rc<6, "m0">, DwarfRegNum<[71]>;
-  def M1 : Rc<7, "m1">, DwarfRegNum<[72]>;
-
-  def USR  : Rc<8,  "usr">,   DwarfRegNum<[74]> {
+  def USR  : Rc<8,  "usr",       ["c8"]>,   DwarfRegNum<[74]> {
     let SubRegIndices = [subreg_overflow];
     let SubRegs = [USR_OVF];
   }
-  def PC : Rc<9,  "pc">, DwarfRegNum<[32]>; // is the Dwarf number correct?
-  def GP : Rc<11, "gp">, DwarfRegNum<[33]>; // is the Dwarf number correct?
+  def PC   : Rc<9,  "pc">,                  DwarfRegNum<[75]>;
+  def UGP  : Rc<10, "ugp",       ["c10"]>,  DwarfRegNum<[76]>;
+  def GP   : Rc<11, "gp">,                  DwarfRegNum<[77]>;
+  def CS0  : Rc<12, "cs0",       ["c12"]>,  DwarfRegNum<[78]>;
+  def CS1  : Rc<13, "cs1",       ["c13"]>,  DwarfRegNum<[79]>;
+  def UPCL : Rc<14, "upcyclelo", ["c14"]>,  DwarfRegNum<[80]>;
+  def UPCH : Rc<15, "upcyclehi", ["c15"]>,  DwarfRegNum<[81]>;
 }
+
+  // Control registers pairs.
+  let SubRegIndices = [subreg_loreg, subreg_hireg], CoveredBySubRegs = 1 in {
+    def C1_0   : Rcc<0,   "c1:0",  [SA0, LC0], ["lc0:sa0"]>, DwarfRegNum<[67]>;
+    def C3_2   : Rcc<2,   "c3:2",  [SA1, LC1], ["lc1:sa1"]>, DwarfRegNum<[69]>;
+    def C7_6   : Rcc<6,   "c7:6",  [C6, C7],   ["m1:0"]>,    DwarfRegNum<[72]>;
+    def C9_8   : Rcc<8,   "c9:8",  [USR, PC]>,               DwarfRegNum<[74]>;
+    def C11_10 : Rcc<10, "c11:10", [UGP, GP]>,               DwarfRegNum<[76]>;
+    def CS     : Rcc<12, "c13:12", [CS0, CS1], ["cs1:0"]>,   DwarfRegNum<[78]>;
+    def UPC    : Rcc<14, "c15:14", [UPCL, UPCH]>,            DwarfRegNum<[80]>;
+  }
 
 // Register classes.
 //
@@ -139,12 +179,16 @@ def PredRegs : RegisterClass<"Hexagon", [i1], 32, (add (sequence "P%u", 0, 3))>
   let Size = 32;
 }
 
-def CRRegs : RegisterClass<"Hexagon", [i32], 32,
+let Size = 32, isAllocatable = 0 in
+def CtrRegs : RegisterClass<"Hexagon", [i32], 32,
                            (add LC0, SA0, LC1, SA1,
-                                M0, M1,
-                                USR, USR_OVF, PC, GP)> {
-  let Size = 32;
-}
+                                P3_0,
+                                 M0, M1, C6, C7, CS0, CS1, UPCL, UPCH,
+                                 USR, USR_OVF, UGP, GP, PC)>;
+
+let Size = 64, isAllocatable = 0 in
+def CtrRegs64 : RegisterClass<"Hexagon", [i64], 64,
+                              (add C1_0, C3_2, C7_6, C9_8, C11_10, CS, UPC)>;
 
 def VolatileV3 {
   list<Register> Regs = [D0, D1, D2, D3, D4, D5, D6, D7,

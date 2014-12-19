@@ -447,7 +447,7 @@ void HexagonInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
     }
     return;
   }
-  if (Hexagon::CRRegsRegClass.contains(DestReg) &&
+  if (Hexagon::CtrRegsRegClass.contains(DestReg) &&
       Hexagon::IntRegsRegClass.contains(SrcReg)) {
     BuildMI(MBB, I, DL, get(Hexagon::TFCR), DestReg).addReg(SrcReg);
     return;
