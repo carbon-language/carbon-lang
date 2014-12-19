@@ -4650,6 +4650,107 @@ def S2_insertp_rp : T_S3op_insert<"insert", DoubleRegs>;
 def S2_insertp    : T_S2op_insert <0b0011, DoubleRegs, u6Imm>;
 }
 
+//===----------------------------------------------------------------------===//
+// Template class for 'extract bitfield' instructions
+//===----------------------------------------------------------------------===//
+let hasNewValue = 1, hasSideEffects = 0 in
+class T_S3op_extract <string mnemonic, bits<2> MinOp>
+  : SInst <(outs IntRegs:$Rd), (ins IntRegs:$Rs, DoubleRegs:$Rtt),
+  "$Rd = "#mnemonic#"($Rs, $Rtt)",
+  [], "", S_3op_tc_2_SLOT23 > {
+    bits<5> Rd;
+    bits<5> Rs;
+    bits<5> Rtt;
+
+    let IClass = 0b1100;
+
+    let Inst{27-22} = 0b100100;
+    let Inst{20-16} = Rs;
+    let Inst{12-8}  = Rtt;
+    let Inst{7-6}   = MinOp;
+    let Inst{4-0}   = Rd;
+  }
+
+let hasSideEffects = 0 in
+class T_S2op_extract <string mnemonic, bits<4> RegTyBits,
+                      RegisterClass RC, Operand ImmOp>
+  : SInst <(outs RC:$dst), (ins RC:$src1, ImmOp:$src2, ImmOp:$src3),
+  "$dst = "#mnemonic#"($src1, #$src2, #$src3)",
+  [], "", S_2op_tc_2_SLOT23> {
+    bits<5> dst;
+    bits<5> src1;
+    bits<6> src2;
+    bits<6> src3;
+    bit bit23;
+    bit bit13;
+    string ImmOpStr = !cast<string>(ImmOp);
+
+    let bit23 = !if (!eq(ImmOpStr, "u6Imm"), src3{5},
+                !if (!eq(mnemonic, "extractu"), 0, 1));
+
+    let bit13 = !if (!eq(ImmOpStr, "u6Imm"), src2{5}, 0);
+
+    let IClass = 0b1000;
+
+    let Inst{27-24} = RegTyBits;
+    let Inst{23}    = bit23;
+    let Inst{22-21} = src3{4-3};
+    let Inst{20-16} = src1;
+    let Inst{13}    = bit13;
+    let Inst{12-8}  = src2{4-0};
+    let Inst{7-5}   = src3{2-0};
+    let Inst{4-0}   = dst;
+  }
+
+// Extract bitfield
+
+// Rdd=extractu(Rss,Rtt)
+// Rdd=extractu(Rss,#u6,#U6)
+let isCodeGenOnly = 0 in {
+def S2_extractup_rp : T_S3op_64 < "extractu", 0b00, 0b000, 0>;
+def S2_extractup    : T_S2op_extract <"extractu", 0b0001, DoubleRegs, u6Imm>;
+}
+
+// Rd=extractu(Rs,Rtt)
+// Rd=extractu(Rs,#u5,#U5)
+let hasNewValue = 1, isCodeGenOnly = 0 in {
+  def S2_extractu_rp : T_S3op_extract<"extractu", 0b00>;
+  def S2_extractu    : T_S2op_extract <"extractu", 0b1101, IntRegs, u5Imm>;
+}
+
+//===----------------------------------------------------------------------===//
+// :raw for of tableindx[bdhw] insns
+//===----------------------------------------------------------------------===//
+
+let hasSideEffects = 0, hasNewValue = 1, opNewValue = 0 in
+class tableidxRaw<string OpStr, bits<2>MinOp>
+  : SInst <(outs IntRegs:$Rx),
+           (ins IntRegs:$_dst_, IntRegs:$Rs, u4Imm:$u4, s6Imm:$S6),
+           "$Rx = "#OpStr#"($Rs, #$u4, #$S6):raw",
+    [], "$Rx = $_dst_" > {
+    bits<5> Rx;
+    bits<5> Rs;
+    bits<4> u4;
+    bits<6> S6;
+
+    let IClass = 0b1000;
+
+    let Inst{27-24} = 0b0111;
+    let Inst{23-22} = MinOp;
+    let Inst{21}    = u4{3};
+    let Inst{20-16} = Rs;
+    let Inst{13-8}  = S6;
+    let Inst{7-5}   = u4{2-0};
+    let Inst{4-0}   = Rx;
+  }
+
+let isCodeGenOnly = 0 in {
+def S2_tableidxb : tableidxRaw<"tableidxb", 0b00>;
+def S2_tableidxh : tableidxRaw<"tableidxh", 0b01>;
+def S2_tableidxw : tableidxRaw<"tableidxw", 0b10>;
+def S2_tableidxd : tableidxRaw<"tableidxd", 0b11>;
+}
+
 // Multi-class for logical operators :
 // Shift by immediate/register and accumulate/logical
 multiclass xtype_imm<string OpcStr, SDNode OpNode1, SDNode OpNode2> {
