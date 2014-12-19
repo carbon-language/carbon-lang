@@ -4585,6 +4585,71 @@ let Defs = [USR_OVF], isCodeGenOnly = 0 in {
   def S2_asl_r_r_sat : T_S3op_shift32_Sat<"asl", 0b10>;
 }
 
+//===----------------------------------------------------------------------===//
+// Template class for 'insert bitfield' instructions
+//===----------------------------------------------------------------------===//
+let hasSideEffects = 0 in
+class T_S3op_insert <string mnemonic, RegisterClass RC>
+  : SInst <(outs RC:$dst),
+           (ins RC:$src1, RC:$src2, DoubleRegs:$src3),
+  "$dst = "#mnemonic#"($src2, $src3)" ,
+  [], "$src1 = $dst", S_3op_tc_1_SLOT23 > {
+    bits<5> dst;
+    bits<5> src2;
+    bits<5> src3;
+
+    let IClass = 0b1100;
+
+    let Inst{27-26} = 0b10;
+    let Inst{25-24} = !if(!eq(!cast<string>(RC), "IntRegs"), 0b00, 0b10);
+    let Inst{23}    = 0b0;
+    let Inst{20-16} = src2;
+    let Inst{12-8}  = src3;
+    let Inst{4-0}   = dst;
+  }
+
+let hasSideEffects = 0 in
+class T_S2op_insert <bits<4> RegTyBits, RegisterClass RC, Operand ImmOp>
+  : SInst <(outs RC:$dst), (ins RC:$dst2, RC:$src1, ImmOp:$src2, ImmOp:$src3),
+  "$dst = insert($src1, #$src2, #$src3)",
+  [], "$dst2 = $dst", S_2op_tc_2_SLOT23> {
+    bits<5> dst;
+    bits<5> src1;
+    bits<6> src2;
+    bits<6> src3;
+    bit bit23;
+    bit bit13;
+    string ImmOpStr = !cast<string>(ImmOp);
+
+    let bit23 = !if (!eq(ImmOpStr, "u6Imm"), src3{5}, 0);
+    let bit13 = !if (!eq(ImmOpStr, "u6Imm"), src2{5}, 0);
+
+    let IClass = 0b1000;
+
+    let Inst{27-24} = RegTyBits;
+    let Inst{23}    = bit23;
+    let Inst{22-21} = src3{4-3};
+    let Inst{20-16} = src1;
+    let Inst{13}    = bit13;
+    let Inst{12-8}  = src2{4-0};
+    let Inst{7-5}   = src3{2-0};
+    let Inst{4-0}   = dst;
+  }
+
+// Rx=insert(Rs,Rtt)
+// Rx=insert(Rs,#u5,#U5)
+let hasNewValue = 1, isCodeGenOnly = 0 in {
+  def S2_insert_rp : T_S3op_insert <"insert", IntRegs>;
+  def S2_insert    : T_S2op_insert <0b1111, IntRegs, u5Imm>;
+}
+
+// Rxx=insert(Rss,Rtt)
+// Rxx=insert(Rss,#u6,#U6)
+let isCodeGenOnly = 0 in {
+def S2_insertp_rp : T_S3op_insert<"insert", DoubleRegs>;
+def S2_insertp    : T_S2op_insert <0b0011, DoubleRegs, u6Imm>;
+}
+
 // Multi-class for logical operators :
 // Shift by immediate/register and accumulate/logical
 multiclass xtype_imm<string OpcStr, SDNode OpNode1, SDNode OpNode2> {
