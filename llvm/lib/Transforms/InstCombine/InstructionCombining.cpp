@@ -2095,8 +2095,10 @@ Instruction *InstCombiner::visitSwitchInst(SwitchInst &SI) {
   // the largest legal integer type. We need to be conservative here since
   // x86 generates redundant zero-extenstion instructions if the operand is
   // truncated to i8 or i16.
+  bool TruncCond = false;
   if (DL && BitWidth > NewWidth &&
       NewWidth >= DL->getLargestLegalIntTypeSize()) {
+    TruncCond = true;
     IntegerType *Ty = IntegerType::get(SI.getContext(), NewWidth);
     Builder->SetInsertPoint(&SI);
     Value *NewCond = Builder->CreateTrunc(SI.getCondition(), Ty, "trunc");
@@ -2115,8 +2117,12 @@ Instruction *InstCombiner::visitSwitchInst(SwitchInst &SI) {
         for (SwitchInst::CaseIt i = SI.case_begin(), e = SI.case_end();
              i != e; ++i) {
           ConstantInt* CaseVal = i.getCaseValue();
-          Constant* NewCaseVal = ConstantExpr::getSub(cast<Constant>(CaseVal),
-                                                      AddRHS);
+          Constant *LHS = CaseVal;
+          if (TruncCond)
+            LHS = LeadingKnownZeros
+                      ? ConstantExpr::getZExt(CaseVal, Cond->getType())
+                      : ConstantExpr::getSExt(CaseVal, Cond->getType());
+          Constant* NewCaseVal = ConstantExpr::getSub(LHS, AddRHS);
           assert(isa<ConstantInt>(NewCaseVal) &&
                  "Result of expression should be constant");
           i.setValue(cast<ConstantInt>(NewCaseVal));
@@ -2126,7 +2132,8 @@ Instruction *InstCombiner::visitSwitchInst(SwitchInst &SI) {
         return &SI;
       }
   }
-  return nullptr;
+
+  return TruncCond ? &SI : nullptr;
 }
 
 Instruction *InstCombiner::visitExtractValueInst(ExtractValueInst &EV) {
