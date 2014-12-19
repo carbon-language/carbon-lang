@@ -397,6 +397,11 @@ static void AsanInitInternal() {
 
   MaybeStartBackgroudThread();
 
+  // Now that ASan runtime is (mostly) initialized, deactivate it if
+  // necessary, so that it can be re-activated when requested.
+  if (flags()->start_deactivated)
+    AsanDeactivate();
+
   // On Linux AsanThread::ThreadStart() calls malloc() that's why asan_inited
   // should be set to 1 prior to initializing the threads.
   asan_inited = 1;

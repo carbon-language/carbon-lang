@@ -247,14 +247,9 @@ void InitializeFlags(Flags *f) {
     VReport(1, "Parsed ASAN_OPTIONS: %s\n", env);
   }
 
-  // If ASan starts in deactivated state, stash and clear some flags.
-  // Otherwise, let activation flags override current settings.
-  if (flags()->start_deactivated) {
-    AsanStartDeactivated();
-  } else {
-    // Parse flags that may change between startup and activation.
-    // On Android they come from a system property.
-    // On other platforms this is no-op.
+  // Let activation flags override current settings. On Android they come
+  // from a system property. On other platforms this is no-op.
+  if (!flags()->start_deactivated) {
     char buf[100];
     GetExtraActivationFlags(buf, sizeof(buf));
     ParseCommonFlagsFromString(cf, buf);

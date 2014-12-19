@@ -213,6 +213,14 @@ void AllocatorOptions::SetFrom(const Flags *f, const CommonFlags *cf) {
   alloc_dealloc_mismatch = f->alloc_dealloc_mismatch;
 }
 
+void AllocatorOptions::CopyTo(Flags *f, CommonFlags *cf) {
+  f->quarantine_size = (int)quarantine_size_mb << 20;
+  f->redzone = min_redzone;
+  f->max_redzone = max_redzone;
+  cf->allocator_may_return_null = may_return_null;
+  f->alloc_dealloc_mismatch = alloc_dealloc_mismatch;
+}
+
 struct Allocator {
   static const uptr kMaxAllowedMallocSize =
       FIRST_32_SECOND_64(3UL << 30, 64UL << 30);
@@ -261,6 +269,15 @@ struct Allocator {
   void ReInitialize(const AllocatorOptions &options) {
     allocator.SetMayReturnNull(options.may_return_null);
     SharedInitCode(options);
+  }
+
+  void GetOptions(AllocatorOptions *options) const {
+    options->quarantine_size_mb = quarantine.GetSize() >> 20;
+    options->min_redzone = atomic_load(&min_redzone, memory_order_acquire);
+    options->max_redzone = atomic_load(&max_redzone, memory_order_acquire);
+    options->may_return_null = allocator.MayReturnNull();
+    options->alloc_dealloc_mismatch =
+        atomic_load(&alloc_dealloc_mismatch, memory_order_acquire);
   }
 
   // -------------------- Helper methods. -------------------------
@@ -660,6 +677,10 @@ void InitializeAllocator(const AllocatorOptions &options) {
 
 void ReInitializeAllocator(const AllocatorOptions &options) {
   instance.ReInitialize(options);
+}
+
+void GetAllocatorOptions(AllocatorOptions *options) {
+  instance.GetOptions(options);
 }
 
 AsanChunkView FindHeapChunkByAddress(uptr addr) {

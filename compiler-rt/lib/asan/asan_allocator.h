@@ -40,10 +40,12 @@ struct AllocatorOptions {
   u8 alloc_dealloc_mismatch;
 
   void SetFrom(const Flags *f, const CommonFlags *cf);
+  void CopyTo(Flags *f, CommonFlags *cf);
 };
 
 void InitializeAllocator(const AllocatorOptions &options);
 void ReInitializeAllocator(const AllocatorOptions &options);
+void GetAllocatorOptions(AllocatorOptions *options);
 
 class AsanChunkView {
  public:

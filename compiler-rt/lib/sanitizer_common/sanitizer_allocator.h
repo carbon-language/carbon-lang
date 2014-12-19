@@ -1300,8 +1300,12 @@ class CombinedAllocator {
     return res;
   }
 
+  bool MayReturnNull() const {
+    return atomic_load(&may_return_null_, memory_order_acquire);
+  }
+
   void *ReturnNullOrDie() {
-    if (atomic_load(&may_return_null_, memory_order_acquire))
+    if (MayReturnNull())
       return 0;
     ReportAllocatorCannotReturnNull();
   }

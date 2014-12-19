@@ -27,23 +27,12 @@ static struct AsanDeactivatedFlags {
   int malloc_context_size;
   bool poison_heap;
 
-  void CopyFrom(const Flags *f, const CommonFlags *cf) {
-    allocator_options.SetFrom(f, cf);
-    malloc_context_size = cf->malloc_context_size;
-    poison_heap = f->poison_heap;
-  }
-
   void OverrideFromActivationFlags() {
     Flags f;
     CommonFlags cf;
 
     // Copy the current activation flags.
-    f.quarantine_size = allocator_options.quarantine_size_mb << 20;
-    f.redzone = allocator_options.min_redzone;
-    f.max_redzone = allocator_options.max_redzone;
-    cf.allocator_may_return_null = allocator_options.may_return_null;
-    f.alloc_dealloc_mismatch = allocator_options.alloc_dealloc_mismatch;
-
+    allocator_options.CopyTo(&f, &cf);
     cf.malloc_context_size = malloc_context_size;
     f.poison_heap = poison_heap;
 
@@ -55,7 +44,9 @@ static struct AsanDeactivatedFlags {
     ParseCommonFlagsFromString(&cf, buf);
     ParseFlagsFromString(&f, buf);
 
-    CopyFrom(&f, &cf);
+    allocator_options.SetFrom(&f, &cf);
+    malloc_context_size = cf.malloc_context_size;
+    poison_heap = f.poison_heap;
   }
 
   void Print() {
@@ -71,20 +62,25 @@ static struct AsanDeactivatedFlags {
 
 static bool asan_is_deactivated;
 
-void AsanStartDeactivated() {
+void AsanDeactivate() {
+  CHECK(!asan_is_deactivated);
   VReport(1, "Deactivating ASan\n");
-  // Save flag values.
-  asan_deactivated_flags.CopyFrom(flags(), common_flags());
 
-  // FIXME: Don't overwrite commandline flags. Instead, make the flags store
-  // the original values calculated during flag parsing, and re-initialize
-  // the necessary runtime objects.
-  flags()->quarantine_size = 0;
-  flags()->max_redzone = 16;
-  flags()->poison_heap = false;
-  common_flags()->malloc_context_size = 0;
-  flags()->alloc_dealloc_mismatch = false;
-  common_flags()->allocator_may_return_null = true;
+  // Stash runtime state.
+  GetAllocatorOptions(&asan_deactivated_flags.allocator_options);
+  asan_deactivated_flags.malloc_context_size = GetMallocContextSize();
+  asan_deactivated_flags.poison_heap = CanPoisonMemory();
+
+  // Deactivate the runtime.
+  SetCanPoisonMemory(false);
+  SetMallocContextSize(1);
+  AllocatorOptions disabled = asan_deactivated_flags.allocator_options;
+  disabled.quarantine_size_mb = 0;
+  disabled.min_redzone = 16;  // Redzone must be at least 16 bytes long.
+  disabled.max_redzone = 16;
+  disabled.alloc_dealloc_mismatch = false;
+  disabled.may_return_null = true;
+  ReInitializeAllocator(disabled);
 
   asan_is_deactivated = true;
 }
