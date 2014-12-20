@@ -212,20 +212,16 @@ bool StackProtector::RequiresStackProtector() {
                                             Attribute::StackProtect))
     return false;
 
-  for (Function::iterator I = F->begin(), E = F->end(); I != E; ++I) {
-    BasicBlock *BB = I;
-
-    for (BasicBlock::iterator II = BB->begin(), IE = BB->end(); II != IE;
-         ++II) {
-      if (AllocaInst *AI = dyn_cast<AllocaInst>(II)) {
+  for (const BasicBlock &BB : *F) {
+    for (const Instruction &I : BB) {
+      if (const AllocaInst *AI = dyn_cast<AllocaInst>(&I)) {
         if (AI->isArrayAllocation()) {
           // SSP-Strong: Enable protectors for any call to alloca, regardless
           // of size.
           if (Strong)
             return true;
 
-          if (const ConstantInt *CI =
-                  dyn_cast<ConstantInt>(AI->getArraySize())) {
+          if (const auto *CI = dyn_cast<ConstantInt>(AI->getArraySize())) {
             if (CI->getLimitedValue(SSPBufferSize) >= SSPBufferSize) {
               // A call to alloca with size >= SSPBufferSize requires
               // stack protectors.
