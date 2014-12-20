@@ -3153,72 +3153,56 @@ static Value *SimplifySelectInst(Value *CondVal, Value *TrueVal,
     return TrueVal;
 
   if (const auto *ICI = dyn_cast<ICmpInst>(CondVal)) {
+    ICmpInst::Predicate Pred = ICI->getPredicate();
+    APInt MinSignedValue =
+        APInt::getSignBit(TrueVal->getType()->getScalarSizeInBits());
     Value *X;
     const APInt *Y;
-    ICmpInst::Predicate Pred = ICI->getPredicate();
+    bool IsBitTest = false;
+    bool TrueWhenUnset;
     if (ICmpInst::isEquality(Pred) &&
         match(ICI->getOperand(0), m_And(m_Value(X), m_APInt(Y))) &&
         match(ICI->getOperand(1), m_Zero())) {
+      IsBitTest = true;
+      TrueWhenUnset = Pred == ICmpInst::ICMP_EQ;
+    } else if (Pred == ICmpInst::ICMP_SLT &&
+               match(ICI->getOperand(1), m_Zero())) {
+      X = ICI->getOperand(0);
+      Y = &MinSignedValue;
+      IsBitTest = true;
+      TrueWhenUnset = false;
+    } else if (Pred == ICmpInst::ICMP_SGT &&
+               match(ICI->getOperand(1), m_AllOnes())) {
+      X = ICI->getOperand(0);
+      Y = &MinSignedValue;
+      IsBitTest = true;
+      TrueWhenUnset = true;
+    }
+    if (IsBitTest) {
       const APInt *C;
       // (X & Y) == 0 ? X & ~Y : X  --> X
       // (X & Y) != 0 ? X & ~Y : X  --> X & ~Y
       if (FalseVal == X && match(TrueVal, m_And(m_Specific(X), m_APInt(C))) &&
           *Y == ~*C)
-        return Pred == ICmpInst::ICMP_EQ ? FalseVal : TrueVal;
+        return TrueWhenUnset ? FalseVal : TrueVal;
       // (X & Y) == 0 ? X : X & ~Y  --> X & ~Y
       // (X & Y) != 0 ? X : X & ~Y  --> X
       if (TrueVal == X && match(FalseVal, m_And(m_Specific(X), m_APInt(C))) &&
           *Y == ~*C)
-        return Pred == ICmpInst::ICMP_EQ ? FalseVal : TrueVal;
+        return TrueWhenUnset ? FalseVal : TrueVal;
 
       if (Y->isPowerOf2()) {
         // (X & Y) == 0 ? X | Y : X  --> X | Y
         // (X & Y) != 0 ? X | Y : X  --> X
         if (FalseVal == X && match(TrueVal, m_Or(m_Specific(X), m_APInt(C))) &&
             *Y == *C)
-          return Pred == ICmpInst::ICMP_EQ ? TrueVal : FalseVal;
+          return TrueWhenUnset ? TrueVal : FalseVal;
         // (X & Y) == 0 ? X : X | Y  --> X
         // (X & Y) != 0 ? X : X | Y  --> X | Y
         if (TrueVal == X && match(FalseVal, m_Or(m_Specific(X), m_APInt(C))) &&
             *Y == *C)
-          return Pred == ICmpInst::ICMP_EQ ? TrueVal : FalseVal;
+          return TrueWhenUnset ? TrueVal : FalseVal;
       }
-    }
-    if (Pred == ICmpInst::ICMP_SLT && match(ICI->getOperand(1), m_Zero())) {
-      // (X < 0) ? X : X | SignBit  --> X | SignBit
-      if (TrueVal == ICI->getOperand(0) &&
-          match(FalseVal, m_Or(m_Specific(TrueVal), m_SignBit())))
-        return FalseVal;
-      // (X < 0) ? X | SignBit : X  --> X
-      if (FalseVal == ICI->getOperand(0) &&
-          match(TrueVal, m_Or(m_Specific(FalseVal), m_SignBit())))
-        return FalseVal;
-      // (X < 0) ? X & INT_MAX : X  --> X & INT_MAX
-      if (FalseVal == ICI->getOperand(0) &&
-          match(TrueVal, m_And(m_Specific(FalseVal), m_MaxSignedValue())))
-        return TrueVal;
-      // (X < 0) ? X : X & INT_MAX  --> X
-      if (TrueVal == ICI->getOperand(0) &&
-          match(FalseVal, m_And(m_Specific(TrueVal), m_MaxSignedValue())))
-        return TrueVal;
-    }
-    if (Pred == ICmpInst::ICMP_SGT && match(ICI->getOperand(1), m_AllOnes())) {
-      // (X > -1) ? X : X | SignBit  --> X
-      if (TrueVal == ICI->getOperand(0) &&
-          match(FalseVal, m_Or(m_Specific(TrueVal), m_SignBit())))
-        return TrueVal;
-      // (X > -1) ? X | SignBit : X  --> X | SignBit
-      if (FalseVal == ICI->getOperand(0) &&
-          match(TrueVal, m_Or(m_Specific(FalseVal), m_SignBit())))
-        return TrueVal;
-      // (X > -1) ? X & INT_MAX : X  --> X
-      if (FalseVal == ICI->getOperand(0) &&
-          match(TrueVal, m_And(m_Specific(FalseVal), m_MaxSignedValue())))
-        return FalseVal;
-      // (X > -1) ? X : X & INT_MAX  --> X & INT_MAX
-      if (TrueVal == ICI->getOperand(0) &&
-          match(FalseVal, m_And(m_Specific(TrueVal), m_MaxSignedValue())))
-        return FalseVal;
     }
   }
 
