@@ -3155,10 +3155,10 @@ static Value *SimplifySelectInst(Value *CondVal, Value *TrueVal,
   if (const auto *ICI = dyn_cast<ICmpInst>(CondVal)) {
     Value *X;
     const APInt *Y;
-    if (ICI->isEquality() &&
+    ICmpInst::Predicate Pred = ICI->getPredicate();
+    if (ICmpInst::isEquality(Pred) &&
         match(ICI->getOperand(0), m_And(m_Value(X), m_APInt(Y))) &&
         match(ICI->getOperand(1), m_Zero())) {
-      ICmpInst::Predicate Pred = ICI->getPredicate();
       const APInt *C;
       // (X & Y) == 0 ? X & ~Y : X  --> X
       // (X & Y) != 0 ? X & ~Y : X  --> X & ~Y
@@ -3183,6 +3183,42 @@ static Value *SimplifySelectInst(Value *CondVal, Value *TrueVal,
             *Y == *C)
           return Pred == ICmpInst::ICMP_EQ ? TrueVal : FalseVal;
       }
+    }
+    if (Pred == ICmpInst::ICMP_SLT && match(ICI->getOperand(1), m_Zero())) {
+      // (X < 0) ? X : X | SignBit  --> X | SignBit
+      if (TrueVal == ICI->getOperand(0) &&
+          match(FalseVal, m_Or(m_Specific(TrueVal), m_SignBit())))
+        return FalseVal;
+      // (X < 0) ? X | SignBit : X  --> X
+      if (FalseVal == ICI->getOperand(0) &&
+          match(TrueVal, m_Or(m_Specific(FalseVal), m_SignBit())))
+        return FalseVal;
+      // (X < 0) ? X & INT_MAX : X  --> X & INT_MAX
+      if (FalseVal == ICI->getOperand(0) &&
+          match(TrueVal, m_And(m_Specific(FalseVal), m_MaxSignedValue())))
+        return TrueVal;
+      // (X < 0) ? X : X & INT_MAX  --> X
+      if (TrueVal == ICI->getOperand(0) &&
+          match(FalseVal, m_And(m_Specific(TrueVal), m_MaxSignedValue())))
+        return TrueVal;
+    }
+    if (Pred == ICmpInst::ICMP_SGT && match(ICI->getOperand(1), m_AllOnes())) {
+      // (X > -1) ? X : X | SignBit  --> X
+      if (TrueVal == ICI->getOperand(0) &&
+          match(FalseVal, m_Or(m_Specific(TrueVal), m_SignBit())))
+        return TrueVal;
+      // (X > -1) ? X | SignBit : X  --> X | SignBit
+      if (FalseVal == ICI->getOperand(0) &&
+          match(TrueVal, m_Or(m_Specific(FalseVal), m_SignBit())))
+        return TrueVal;
+      // (X > -1) ? X & INT_MAX : X  --> X
+      if (FalseVal == ICI->getOperand(0) &&
+          match(TrueVal, m_And(m_Specific(FalseVal), m_MaxSignedValue())))
+        return FalseVal;
+      // (X > -1) ? X : X & INT_MAX  --> X & INT_MAX
+      if (TrueVal == ICI->getOperand(0) &&
+          match(FalseVal, m_And(m_Specific(TrueVal), m_MaxSignedValue())))
+        return FalseVal;
     }
   }
 

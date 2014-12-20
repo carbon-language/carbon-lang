@@ -31,6 +31,82 @@ define i32 @test3(i32 %x) {
 ; CHECK: ret i32 %[[and]]
 }
 
+define i32 @test4(i32 %X) {
+  %cmp = icmp slt i32 %X, 0
+  %or = or i32 %X, -2147483648
+  %cond = select i1 %cmp, i32 %X, i32 %or
+  ret i32 %cond
+; CHECK-LABEL: @test4
+; CHECK: %[[or:.*]] = or i32 %X, -2147483648
+; CHECK: ret i32 %[[or]]
+}
+
+define i32 @test5(i32 %X) {
+  %cmp = icmp slt i32 %X, 0
+  %or = or i32 %X, -2147483648
+  %cond = select i1 %cmp, i32 %or, i32 %X
+  ret i32 %cond
+; CHECK-LABEL: @test5
+; CHECK: ret i32 %X
+}
+
+define i32 @test6(i32 %X) {
+  %cmp = icmp slt i32 %X, 0
+  %and = and i32 %X, 2147483647
+  %cond = select i1 %cmp, i32 %and, i32 %X
+  ret i32 %cond
+; CHECK-LABEL: @test6
+; CHECK: %[[and:.*]] = and i32 %X, 2147483647
+; CHECK: ret i32 %[[and]]
+}
+
+define i32 @test7(i32 %X) {
+  %cmp = icmp slt i32 %X, 0
+  %and = and i32 %X, 2147483647
+  %cond = select i1 %cmp, i32 %X, i32 %and
+  ret i32 %cond
+; CHECK-LABEL: @test7
+; CHECK: ret i32 %X
+}
+
+define i32 @test8(i32 %X) {
+  %cmp = icmp sgt i32 %X, -1
+  %or = or i32 %X, -2147483648
+  %cond = select i1 %cmp, i32 %X, i32 %or
+  ret i32 %cond
+; CHECK-LABEL: @test8
+; CHECK: ret i32 %X
+}
+
+define i32 @test9(i32 %X) {
+  %cmp = icmp sgt i32 %X, -1
+  %or = or i32 %X, -2147483648
+  %cond = select i1 %cmp, i32 %or, i32 %X
+  ret i32 %cond
+; CHECK-LABEL: @test9
+; CHECK: %[[or:.*]] = or i32 %X, -2147483648
+; CHECK: ret i32 %[[or]]
+}
+
+define i32 @test10(i32 %X) {
+  %cmp = icmp sgt i32 %X, -1
+  %and = and i32 %X, 2147483647
+  %cond = select i1 %cmp, i32 %and, i32 %X
+  ret i32 %cond
+; CHECK-LABEL: @test10
+; CHECK: ret i32 %X
+}
+
+define i32 @test11(i32 %X) {
+  %cmp = icmp sgt i32 %X, -1
+  %and = and i32 %X, 2147483647
+  %cond = select i1 %cmp, i32 %X, i32 %and
+  ret i32 %cond
+; CHECK-LABEL: @test11
+; CHECK: %[[and:.*]] = and i32 %X, 2147483647
+; CHECK: ret i32 %[[and]]
+}
+
 ; CHECK-LABEL: @select_icmp_and_8_eq_0_or_8(
 ; CHECK-NEXT: [[OR:%[a-z0-9]+]] = or i32 %x, 8
 ; CHECK-NEXT: ret i32 [[OR]]

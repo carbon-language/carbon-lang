@@ -272,6 +272,13 @@ struct is_power2 {
 inline cst_pred_ty<is_power2> m_Power2() { return cst_pred_ty<is_power2>(); }
 inline api_pred_ty<is_power2> m_Power2(const APInt *&V) { return V; }
 
+struct is_maxsignedvalue {
+  bool isValue(const APInt &C) { return C.isMaxSignedValue(); }
+};
+
+inline cst_pred_ty<is_maxsignedvalue> m_MaxSignedValue() { return cst_pred_ty<is_maxsignedvalue>(); }
+inline api_pred_ty<is_maxsignedvalue> m_MaxSignedValue(const APInt *&V) { return V; }
+
 template <typename Class> struct bind_ty {
   Class *&VR;
   bind_ty(Class *&V) : VR(V) {}
