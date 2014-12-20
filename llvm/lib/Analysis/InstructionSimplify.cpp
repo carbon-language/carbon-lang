@@ -3152,14 +3152,15 @@ static Value *SimplifySelectInst(Value *CondVal, Value *TrueVal,
   if (isa<UndefValue>(FalseVal))   // select C, X, undef -> X
     return TrueVal;
 
-  if (const auto *ICI = dyn_cast<ICmpInst>(CondVal)) {
+  const auto *ICI = dyn_cast<ICmpInst>(CondVal);
+  unsigned BitWidth = TrueVal->getType()->getScalarSizeInBits();
+  if (ICI && BitWidth) {
     ICmpInst::Predicate Pred = ICI->getPredicate();
-    APInt MinSignedValue =
-        APInt::getSignBit(TrueVal->getType()->getScalarSizeInBits());
+    APInt MinSignedValue = APInt::getSignBit(BitWidth);
     Value *X;
     const APInt *Y;
-    bool IsBitTest = false;
     bool TrueWhenUnset;
+    bool IsBitTest = false;
     if (ICmpInst::isEquality(Pred) &&
         match(ICI->getOperand(0), m_And(m_Value(X), m_APInt(Y))) &&
         match(ICI->getOperand(1), m_Zero())) {
