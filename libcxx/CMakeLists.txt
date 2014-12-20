@@ -91,6 +91,11 @@ get_target_triple(LIBCXX_TARGET_TRIPLE
 set(LIBCXX_TARGET_TRIPLE ${LIBCXX_TARGET_TRIPLE} CACHE STRING "Target triple.")
 
 
+set(LIBCXX_COMPILER    ${CMAKE_CXX_COMPILER})
+set(LIBCXX_SOURCE_DIR  ${CMAKE_CURRENT_SOURCE_DIR})
+set(LIBCXX_BINARY_DIR  ${CMAKE_CURRENT_BINARY_DIR})
+set(LIBCXX_LIBRARY_DIR ${CMAKE_BINARY_DIR}/lib)
+
 # Declare libc++ configuration variables.
 # They are intended for use as follows:
 # LIBCXX_CXX_FLAGS: General flags for both the compiler and linker.

@@ -216,8 +216,9 @@
   <ul>
     <li><code>cd path/to/libcxx/libcxx</code></li>
     <li><code>alias lit='python path/to/llvm/utils/lit/lit.py'</code></li>
-    <li><code>ln -s path/to/build/dir/projects/libcxx/test/lit.site.cfg
-        test/lit.site.cfg</code></li>
+    <li><code>export
+        LIBCXX_SITE_CONFIG=path/to/build/dir/projects/libcxx/test/lit.site.cfg
+        </code></li>
     <li><code>lit -sv test/re/ # or whichever subset of tests you're interested
         in</code></li>
   </ul>
