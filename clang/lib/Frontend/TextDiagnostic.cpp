@@ -176,7 +176,7 @@ static void expandTabs(std::string &SourceLine, unsigned TabStop) {
 ///  of the printable representation of the line to the columns those printable
 ///  characters will appear at (numbering the first column as 0).
 ///
-/// If a byte 'i' corresponds to muliple columns (e.g. the byte contains a tab
+/// If a byte 'i' corresponds to multiple columns (e.g. the byte contains a tab
 ///  character) then the array will map that byte to the first column the
 ///  tab appears at and the next value in the map will have been incremented
 ///  more than once.
@@ -487,7 +487,7 @@ static void selectInterestingSourceRegion(std::string &SourceLine,
   // We checked up front that the line needed truncation
   assert(FrontColumnsRemoved+ColumnsKept+BackColumnsRemoved > Columns);
 
-  // The line needs some trunctiona, and we'd prefer to keep the front
+  // The line needs some truncation, and we'd prefer to keep the front
   //  if possible, so remove the back
   if (BackColumnsRemoved > strlen(back_ellipse))
     SourceLine.replace(SourceEnd, std::string::npos, back_ellipse);
