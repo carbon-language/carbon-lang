@@ -12,14 +12,16 @@
 // C++ Includes
 #include <algorithm>
 
-#include "lldb/Core/Log.h"
-#include "lldb/Core/Section.h"
 #include "lldb/Core/ArchSpec.h"
+#include "lldb/Core/Log.h"
 #include "lldb/Core/Module.h"
+#include "lldb/Core/Section.h"
 #include "lldb/Core/Section.h"
 #include "lldb/Symbol/CompactUnwindInfo.h"
 #include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Symbol/UnwindPlan.h"
+#include "lldb/Target/Process.h"
+#include "lldb/Target/Target.h"
 
 #include "llvm/Support/MathExtras.h"
 
@@ -124,6 +126,7 @@ namespace lldb_private {
 CompactUnwindInfo::CompactUnwindInfo(ObjectFile& objfile, SectionSP& section_sp) :
     m_objfile (objfile),
     m_section_sp (section_sp),
+    m_section_contents_if_encrypted (),
     m_mutex (),
     m_indexes (),
     m_indexes_computed (eLazyBoolCalculate),
@@ -145,7 +148,7 @@ CompactUnwindInfo::~CompactUnwindInfo()
 bool
 CompactUnwindInfo::GetUnwindPlan (Target &target, Address addr, UnwindPlan& unwind_plan)
 {
-    if (!IsValid ())
+    if (!IsValid (target.GetProcessSP()))
     {
         return false;
     }
@@ -173,21 +176,21 @@ CompactUnwindInfo::GetUnwindPlan (Target &target, Address addr, UnwindPlan& unwi
 }
 
 bool
-CompactUnwindInfo::IsValid ()
+CompactUnwindInfo::IsValid (const ProcessSP &process_sp)
 {
-    if (m_section_sp.get() == nullptr || m_section_sp->IsEncrypted())
+    if (m_section_sp.get() == nullptr)
         return false;
 
     if (m_indexes_computed == eLazyBoolYes && m_unwindinfo_data_computed)
         return true;
 
-    ScanIndex ();
+    ScanIndex (process_sp);
 
     return m_indexes_computed == eLazyBoolYes && m_unwindinfo_data_computed;
 }
 
 void
-CompactUnwindInfo::ScanIndex ()
+CompactUnwindInfo::ScanIndex (const ProcessSP &process_sp)
 {
     Mutex::Locker locker(m_mutex);
     if (m_indexes_computed == eLazyBoolYes && m_unwindinfo_data_computed)
@@ -201,7 +204,30 @@ CompactUnwindInfo::ScanIndex ()
 
     if (m_unwindinfo_data_computed == false)
     {
-        m_objfile.ReadSectionData (m_section_sp.get(), m_unwindinfo_data);
+        if (m_section_sp->IsEncrypted())
+        {
+            // Can't get section contents of a protected/encrypted section until we have a live
+            // process and can read them out of memory.
+            if (process_sp.get() == nullptr)
+                return;
+            m_section_contents_if_encrypted.reset (new DataBufferHeap (m_section_sp->GetByteSize(), 0));
+            Error error;
+            if (process_sp->ReadMemory (
+                        m_section_sp->GetLoadBaseAddress (&process_sp->GetTarget()), 
+                        m_section_contents_if_encrypted->GetBytes(), 
+                        m_section_sp->GetByteSize(), error) == m_section_sp->GetByteSize() && error.Success())
+            {
+                m_unwindinfo_data.SetAddressByteSize (process_sp->GetTarget().GetArchitecture().GetAddressByteSize());
+                m_unwindinfo_data.SetByteOrder (process_sp->GetTarget().GetArchitecture().GetByteOrder());
+                m_unwindinfo_data.SetData (m_section_contents_if_encrypted, 0);
+            }
+        }
+        else
+        {
+            m_objfile.ReadSectionData (m_section_sp.get(), m_unwindinfo_data);
+        }
+        if (m_unwindinfo_data.GetByteSize() != m_section_sp->GetByteSize())
+            return;
         m_unwindinfo_data_computed = true;
     }
 
@@ -409,13 +435,8 @@ CompactUnwindInfo::GetCompactUnwindInfoForFunction (Target &target, Address addr
     unwind_info.lsda_address.Clear();
     unwind_info.personality_ptr_address.Clear();
 
-    if (!IsValid ())
+    if (!IsValid (target.GetProcessSP()))
         return false;
-
-    // FIXME looking into a problem with getting the wrong compact unwind entry for
-    // _CFRunLoopRun from CoreFoundation in a live process; disabling the Compact 
-    // Unwind plans until I get to the bottom of what's going on there.
-    return false;
 
     addr_t text_section_file_address = LLDB_INVALID_ADDRESS;
     SectionList *sl = m_objfile.GetSectionList ();

@@ -42,7 +42,7 @@ public:
     GetUnwindPlan (Target &target, Address addr, UnwindPlan& unwind_plan);
 
     bool
-    IsValid ();
+    IsValid (const lldb::ProcessSP &process_sp);
 
 private:
 
@@ -104,7 +104,7 @@ private:
     };
 
     void
-    ScanIndex();
+    ScanIndex(const lldb::ProcessSP &process_sp);
 
     bool
     GetCompactUnwindInfoForFunction (Target &target, Address address, FunctionInfo &unwind_info);
@@ -126,7 +126,8 @@ private:
 
     ObjectFile                  &m_objfile;
     lldb::SectionSP             m_section_sp;
-
+    lldb::DataBufferSP          m_section_contents_if_encrypted; // if the binary is encrypted, read the sect contents
+                                                                 // out of live memory and cache them here
     Mutex                       m_mutex;
     std::vector<UnwindIndex>    m_indexes;
 
