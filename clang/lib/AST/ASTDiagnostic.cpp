@@ -1655,11 +1655,14 @@ class TemplateDiff {
     }
     Unbold();
   }
-  
+
   /// HasExtraInfo - Returns true if E is not an integer literal or the
   /// negation of an integer literal
   bool HasExtraInfo(Expr *E) {
     if (!E) return false;
+
+    E = E->IgnoreImpCasts();
+
     if (isa<IntegerLiteral>(E)) return false;
 
     if (UnaryOperator *UO = dyn_cast<UnaryOperator>(E))

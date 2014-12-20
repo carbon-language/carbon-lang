@@ -3433,6 +3433,13 @@ bool Sema::CheckTemplateArgument(NamedDecl *Param,
       if (Res.isInvalid())
         return true;
 
+      // If the resulting expression is new, then use it in place of the
+      // old expression in the template argument.
+      if (Res.get() != Arg.getArgument().getAsExpr()) {
+        TemplateArgument TA(Res.get());
+        Arg = TemplateArgumentLoc(TA, Res.get());
+      }
+
       Converted.push_back(Result);
       break;
     }
