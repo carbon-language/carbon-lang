@@ -3545,9 +3545,7 @@ ValueObject::LogValueObject (Log *log, const DumpValueObjectOptions& options)
 void
 ValueObject::Dump (Stream &s)
 {
-    
-    ValueObjectPrinter printer(this,&s,DumpValueObjectOptions::DefaultOptions());
-    printer.PrintValueObject();
+    Dump (s, DumpValueObjectOptions::DefaultOptions());
 }
 
 void
