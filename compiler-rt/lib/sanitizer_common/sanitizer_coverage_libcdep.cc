@@ -234,15 +234,15 @@ void CoverageData::Extend(uptr npcs) {
 // If the function is called more than once for a given PC it will
 // be inserted multiple times, which is fine.
 void CoverageData::Add(uptr pc, u8 *guard) {
+  // Set the guard.
+  atomic_uint8_t *atomic_guard = reinterpret_cast<atomic_uint8_t*>(guard);
+  atomic_store(atomic_guard, 1, memory_order_relaxed);
   if (!pc_array) return;
   uptr idx = atomic_fetch_add(&pc_array_index, 1, memory_order_relaxed);
   CHECK_LT(idx * sizeof(uptr),
            atomic_load(&pc_array_size, memory_order_acquire));
   pc_array[idx] = pc;
   atomic_fetch_add(&coverage_counter, 1, memory_order_relaxed);
-  // Set the guard.
-  atomic_uint8_t *atomic_guard = reinterpret_cast<atomic_uint8_t*>(guard);
-  atomic_store(atomic_guard, 1, memory_order_relaxed);
 }
 
 // Registers a pair caller=>callee.

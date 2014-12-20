@@ -57,11 +57,28 @@ struct StackTrace {
   }
 
   static uptr GetCurrentPc();
-  static uptr GetPreviousInstructionPc(uptr pc);
+  static inline uptr GetPreviousInstructionPc(uptr pc);
   static uptr GetNextInstructionPc(uptr pc);
   typedef bool (*SymbolizeCallback)(const void *pc, char *out_buffer,
                                     int out_size);
 };
+
+// Performance-critical, must be in the header.
+ALWAYS_INLINE
+uptr StackTrace::GetPreviousInstructionPc(uptr pc) {
+#if defined(__arm__)
+  // Cancel Thumb bit.
+  pc = pc & (~1);
+#endif
+#if defined(__powerpc__) || defined(__powerpc64__)
+  // PCs are always 4 byte aligned.
+  return pc - 4;
+#elif defined(__sparc__) || defined(__mips__)
+  return pc - 8;
+#else
+  return pc - 1;
+#endif
+}
 
 // StackTrace that owns the buffer used to store the addresses.
 struct BufferedStackTrace : public StackTrace {
