@@ -437,6 +437,8 @@ readBinary(std::unique_ptr<MemoryBuffer> &mb,
     case LC_ID_DYLIB: {
       const dylib_command *dl = reinterpret_cast<const dylib_command*>(lc);
       f->installName = lc + read32(&dl->dylib.name, isBig);
+      f->currentVersion = read32(&dl->dylib.current_version, isBig);
+      f->compatVersion = read32(&dl->dylib.compatibility_version, isBig);
       }
       break;
     case LC_DATA_IN_CODE: {

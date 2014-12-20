@@ -741,7 +741,8 @@ std::error_code MachOFileLayout::writeLoadCommands() {
       dc->cmd                         = LC_ID_DYLIB;
       dc->cmdsize                     = size;
       dc->dylib.name                  = sizeof(dylib_command); // offset
-      dc->dylib.timestamp             = 2;
+      // needs to be some constant value different than the one in LC_LOAD_DYLIB
+      dc->dylib.timestamp             = 1;
       dc->dylib.current_version       = _file.currentVersion;
       dc->dylib.compatibility_version = _file.compatVersion;
       if (_swap)
@@ -841,6 +842,7 @@ std::error_code MachOFileLayout::writeLoadCommands() {
       dc->cmd                         = dep.kind;
       dc->cmdsize                     = size;
       dc->dylib.name                  = sizeof(dylib_command); // offset
+      // needs to be some constant value different than the one in LC_ID_DYLIB
       dc->dylib.timestamp             = 2;
       dc->dylib.current_version       = dep.currentVersion;
       dc->dylib.compatibility_version = dep.compatVersion;

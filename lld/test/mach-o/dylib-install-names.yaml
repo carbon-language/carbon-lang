@@ -2,24 +2,25 @@
 # RUN: lld -flavor darwin -arch x86_64 -install_name libwibble.dylib -dylib \
 # RUN:     -compatibility_version 2.0 -current_version 5.3 \
 # RUN:     %p/Inputs/libSystem.yaml %s -o %t.dylib
-# RUN: macho-dump %t.dylib | FileCheck %s --check-prefix=CHECK-BINARY-WRITE
+# RUN: llvm-objdump -private-headers %t.dylib | FileCheck %s --check-prefix=CHECK-BINARY-WRITE
 
 # Check we read LC_ID_DYLIB correctly:
 # RUN: lld -flavor darwin -arch x86_64 %p/Inputs/use-dylib-install-names.yaml \
-# RUN:      %t.dylib -r -print_atoms | FileCheck %s --check-prefix=CHECK-BINARY-READ
+# RUN:      %p/Inputs/libSystem.yaml %t.dylib -dylib -o %t2.dylib
+# RUN: llvm-objdump -private-headers %t2.dylib | FileCheck %s --check-prefix=CHECK-BINARY-READ
 
 # Check we default the install-name to the output file:
 # RUN: lld -flavor darwin -arch x86_64 -dylib %s -o libwibble.dylib \
 # RUN:     -compatibility_version 2.0 -current_version 5.3 \
 # RUN:     %p/Inputs/libSystem.yaml
-# RUN: macho-dump libwibble.dylib | FileCheck %s --check-prefix=CHECK-BINARY-WRITE
+# RUN: llvm-objdump -private-headers libwibble.dylib | FileCheck %s --check-prefix=CHECK-BINARY-WRITE
 # RUN: rm -f libwibble.dylib
 
 # Check -single_module does nothing
 # RUN: lld -flavor darwin -arch x86_64 -dylib %s -install_name libwibble.dylib \
 # RUN:     -compatibility_version 2.0 -current_version 5.3 \
 # RUN:     -single_module -o %t2.dylib %p/Inputs/libSystem.yaml
-# RUN: macho-dump %t2.dylib | FileCheck %s --check-prefix=CHECK-BINARY-WRITE
+# RUN: llvm-objdump -private-headers %t2.dylib | FileCheck %s --check-prefix=CHECK-BINARY-WRITE
 
 --- !mach-o
 arch:            x86_64
@@ -51,13 +52,23 @@ global-symbols:
 ...
 
 
-# CHECK-BINARY-WRITE: (('command', 13)
-# CHECK-BINARY-WRITE-NEXT:  ('size', 40)
-# CHECK-BINARY-WRITE-NEXT:  ('install_name', 'libwibble.dylib')
-# CHECK-BINARY-WRITE-NEXT:    ('timestamp,
-# CHECK-BINARY-WRITE-NEXT:    ('cur_version, 328448)
-# CHECK-BINARY-WRITE-NEXT:    ('compat_version, 131072)
+# CHECK-BINARY-WRITE: cmd LC_ID_DYLIB
+# CHECK-BINARY-WRITE-NEXT: cmdsize 40
+# CHECK-BINARY-WRITE-NEXT:  name libwibble.dylib (offset 24)
+# CHECK-BINARY-WRITE-NEXT:  time stamp 1
+# CHECK-BINARY-WRITE-NEXT:  current version 5.3.0
+# CHECK-BINARY-WRITE-NEXT:  compatibility version 2.0.0
 
-# CHECK-BINARY-READ: shared-library-atoms:
-# CHECK-BINARY-READ:     - name:          _myGlobal
-# CHECK-BINARY-READ:       load-name:     libwibble.dylib
+# CHECK-BINARY-READ: cmd LC_LOAD_DYLIB
+# CHECK-BINARY-READ-NEXT: cmdsize 56
+# CHECK-BINARY-READ-NEXT:  name /usr/lib/libSystem.B.dylib (offset 24)
+# CHECK-BINARY-READ-NEXT:  time stamp 2
+# CHECK-BINARY-READ-NEXT:  current version 0.16.0
+# CHECK-BINARY-READ-NEXT:  compatibility version 0.16.0
+
+# CHECK-BINARY-READ: cmd LC_LOAD_DYLIB
+# CHECK-BINARY-READ-NEXT: cmdsize 40
+# CHECK-BINARY-READ-NEXT:  name libwibble.dylib (offset 24)
+# CHECK-BINARY-READ-NEXT:  time stamp 2
+# CHECK-BINARY-READ-NEXT:  current version 5.3.0
+# CHECK-BINARY-READ-NEXT:  compatibility version 2.0.0
