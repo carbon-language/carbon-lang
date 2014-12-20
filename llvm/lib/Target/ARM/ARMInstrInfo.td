@@ -3163,7 +3163,7 @@ let hasSideEffects = 0 in {
 
 let mayLoad = 1, hasExtraDefRegAllocReq = 1 in
 defm LDM : arm_ldst_mult<"ldm", "", 1, 0, LdStMulFrm, IIC_iLoad_m,
-                         IIC_iLoad_mu>;
+                         IIC_iLoad_mu>, ComplexDeprecationPredicate<"ARMLoad">;
 
 let mayStore = 1, hasExtraSrcRegAllocReq = 1 in
 defm STM : arm_ldst_mult<"stm", "", 0, 0, LdStMulFrm, IIC_iStore_m,

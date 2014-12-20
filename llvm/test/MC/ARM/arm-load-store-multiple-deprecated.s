@@ -1,5 +1,8 @@
-@ RUN: llvm-mc -triple armv7-linux-eabi -filetype asm -o /dev/null %s 2>&1 \
+@ RUN: llvm-mc -triple armv6t2-linux-eabi -filetype asm -o - %s 2>&1 \
 @ RUN:   | FileCheck %s
+
+@ RUN: not llvm-mc -triple armv7-linux-eabi -filetype asm -o - %s 2>&1 \
+@ RUN:   | FileCheck %s -check-prefix CHECK -check-prefix CHECK-V7
 
 	.syntax unified
 	.arm
@@ -145,9 +148,75 @@ push:
 @ CHECK: push {sp}
 @ CHECK: ^
 
-	.global single
-	.type single,%function
-single:
+	.global ldm
+	.type ldm,%function
+ldm:
+	ldm r0!, {r1, sp}
+@ CHECK: warning: use of SP in the list is deprecated
+	ldm r0!, {sp}
+@ CHECK: warning: use of SP in the list is deprecated
+	ldm r0!, {r1, lr, pc}
+@ CHECK: warning: use of LR and PC simultaneously in the list is deprecated
+	ldm r0!, {lr, pc}
+@ CHECK: warning: use of LR and PC simultaneously in the list is deprecated
+
+	.global ldmda
+	.type ldmda,%function
+ldmda:
+	ldmda r0!, {r1, sp}
+@ CHECK: warning: use of SP in the list is deprecated
+	ldmda r0!, {sp}
+@ CHECK: warning: use of SP in the list is deprecated
+	ldmda r0!, {r1, lr, pc}
+@ CHECK: warning: use of LR and PC simultaneously in the list is deprecated
+	ldmda r0!, {lr, pc}
+@ CHECK: warning: use of LR and PC simultaneously in the list is deprecated
+
+	.global ldmdb
+	.type ldmdb,%function
+ldmdb:
+	ldmdb r0!, {r1, sp}
+@ CHECK: warning: use of SP in the list is deprecated
+	ldmdb r0!, {sp}
+@ CHECK: warning: use of SP in the list is deprecated
+	ldmdb r0!, {r1, lr, pc}
+@ CHECK: warning: use of LR and PC simultaneously in the list is deprecated
+	ldmdb r0!, {lr, pc}
+@ CHECK: warning: use of LR and PC simultaneously in the list is deprecated
+
+	.global ldmib
+	.type ldmib,%function
+ldmib:
+	ldmib r0!, {r1, sp}
+@ CHECK: warning: use of SP in the list is deprecated
+	ldmib r0!, {sp}
+@ CHECK: warning: use of SP in the list is deprecated
+	ldmib r0!, {r1, lr, pc}
+@ CHECK: warning: use of LR and PC simultaneously in the list is deprecated
+	ldmib r0!, {lr, pc}
+@ CHECK: warning: use of LR and PC simultaneously in the list is deprecated
+
+	.global pop
+	.type pop,%function
+pop:
+	pop {r0, sp}
+@ CHECK: warning: use of SP in the list is deprecated
+@ CHECK-V7: error: writeback register not allowed in register list
+	pop {sp}
+@ CHECK: warning: use of SP in the list is deprecated
+@ CHECK-V7: error: writeback register not allowed in register list
+	pop {r0, lr, pc}
+@ CHECK: warning: use of LR and PC simultaneously in the list is deprecated
+	pop {lr, pc}
+@ CHECK: warning: use of LR and PC simultaneously in the list is deprecated
+
+	.global valid
+	.type valid,%function
+valid:
 	stmdaeq r0, {r0}
-@ CHECK-NOT: warning
+@ CHECK: stmdaeq r0, {r0}
+	ldmdaeq r0, {r0}
+@ CHECK: ldmdaeq r0, {r0}
+	pop {r0, pc}
+@ CHECK: pop {r0, pc}
 
