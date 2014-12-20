@@ -489,19 +489,8 @@ def parseIntegratedTestScript(test, normalize_slashes=False,
 
     return script,tmpBase,execdir
 
-def executeShTest(test, litConfig, useExternalSh,
-                  extra_substitutions=[]):
-    if test.config.unsupported:
-        return (Test.UNSUPPORTED, 'Test is unsupported')
-
-    res = parseIntegratedTestScript(test, useExternalSh, extra_substitutions)
-    if isinstance(res, lit.Test.Result):
-        return res
-    if litConfig.noExecute:
-        return lit.Test.Result(Test.PASS)
-
-    script, tmpBase, execdir = res
-
+def _runShTest(test, litConfig, useExternalSh,
+                   script, tmpBase, execdir):
     # Create the output directory if it does not already exist.
     lit.util.mkdir_p(os.path.dirname(tmpBase))
 
@@ -529,3 +518,19 @@ def executeShTest(test, litConfig, useExternalSh,
         output += """Command Output (stderr):\n--\n%s\n--\n""" % (err,)
 
     return lit.Test.Result(status, output)
+
+
+def executeShTest(test, litConfig, useExternalSh,
+                  extra_substitutions=[]):
+    if test.config.unsupported:
+        return (Test.UNSUPPORTED, 'Test is unsupported')
+
+    res = parseIntegratedTestScript(test, useExternalSh, extra_substitutions)
+    if isinstance(res, lit.Test.Result):
+        return res
+    if litConfig.noExecute:
+        return lit.Test.Result(Test.PASS)
+
+    script, tmpBase, execdir = res
+    return _runShTest(test, litConfig, useExternalSh, script, tmpBase, execdir)
+
