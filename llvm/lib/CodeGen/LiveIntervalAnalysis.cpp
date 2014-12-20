@@ -624,14 +624,14 @@ void LiveIntervals::pruneValue(LiveInterval &LI, SlotIndex Kill,
 
 void LiveIntervals::addKillFlags(const VirtRegMap *VRM) {
   // Keep track of regunit ranges.
-  SmallVector<std::pair<LiveRange*, LiveRange::iterator>, 8> RU;
+  SmallVector<std::pair<const LiveRange*, LiveRange::const_iterator>, 8> RU;
 
   for (unsigned i = 0, e = MRI->getNumVirtRegs(); i != e; ++i) {
     unsigned Reg = TargetRegisterInfo::index2VirtReg(i);
     if (MRI->reg_nodbg_empty(Reg))
       continue;
-    LiveInterval *LI = &getInterval(Reg);
-    if (LI->empty())
+    const LiveInterval &LI = getInterval(Reg);
+    if (LI.empty())
       continue;
 
     // Find the regunit intervals for the assigned register. They may overlap
@@ -639,15 +639,15 @@ void LiveIntervals::addKillFlags(const VirtRegMap *VRM) {
     RU.clear();
     for (MCRegUnitIterator Units(VRM->getPhys(Reg), TRI); Units.isValid();
          ++Units) {
-      LiveRange &RURanges = getRegUnit(*Units);
-      if (RURanges.empty())
+      const LiveRange &RURange = getRegUnit(*Units);
+      if (RURange.empty())
         continue;
-      RU.push_back(std::make_pair(&RURanges, RURanges.find(LI->begin()->end)));
+      RU.push_back(std::make_pair(&RURange, RURange.find(LI.begin()->end)));
     }
 
     // Every instruction that kills Reg corresponds to a segment range end
     // point.
-    for (LiveInterval::iterator RI = LI->begin(), RE = LI->end(); RI != RE;
+    for (LiveInterval::const_iterator RI = LI.begin(), RE = LI.end(); RI != RE;
          ++RI) {
       // A block index indicates an MBB edge.
       if (RI->end.isBlock())
@@ -665,13 +665,13 @@ void LiveIntervals::addKillFlags(const VirtRegMap *VRM) {
       //
       // There should be no kill flag on FOO when %vreg5 is rewritten as %EAX.
       bool CancelKill = false;
-      for (unsigned u = 0, e = RU.size(); u != e; ++u) {
-        LiveRange &RRanges = *RU[u].first;
-        LiveRange::iterator &I = RU[u].second;
-        if (I == RRanges.end())
+      for (auto &RUP : RU) {
+        const LiveRange &RURange = *RUP.first;
+        LiveRange::const_iterator I = RUP.second;
+        if (I == RURange.end())
           continue;
-        I = RRanges.advanceTo(I, RI->end);
-        if (I == RRanges.end() || I->start >= RI->end)
+        I = RURange.advanceTo(I, RI->end);
+        if (I == RURange.end() || I->start >= RI->end)
           continue;
         // I is overlapping RI.
         CancelKill = true;
@@ -684,14 +684,13 @@ void LiveIntervals::addKillFlags(const VirtRegMap *VRM) {
       // what we do when subregister liveness tracking is enabled.
       if (MRI->tracksSubRegLiveness()) {
         // Next segment has to be adjacent in the subregister write case.
-        LiveRange::iterator N = std::next(RI);
-        if (N != LI->end() && N->start == RI->end) {
+        LiveRange::const_iterator N = std::next(RI);
+        if (N != LI.end() && N->start == RI->end) {
           // See if we have a partial write operand
           bool IsFullWrite = false;
-          for (MachineInstr::const_mop_iterator MOp = MI->operands_begin(),
-               MOpE = MI->operands_end(); MOp != MOpE; ++MOp) {
-            if (MOp->isReg() && !MOp->isDef() && MOp->getReg() == Reg
-                && MOp->getSubReg() == 0) {
+          for (const MachineOperand &MO : MI->operands()) {
+            if (MO.isReg() && MO.isUse() && MO.getReg() == Reg
+                && MO.getSubReg() == 0) {
               IsFullWrite = true;
               break;
             }
