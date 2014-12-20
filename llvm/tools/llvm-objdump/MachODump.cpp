@@ -3664,7 +3664,8 @@ static void PrintLinkerOptionCommand(MachO::linker_option_command lo,
     if (left > 0) {
       i++;
       outs() << "  string #" << i << " " << format("%.*s\n", left, string);
-      uint32_t len = strnlen(string, left) + 1;
+      uint32_t NullPos = StringRef(string, left).find('\0');
+      uint32_t len = std::min(NullPos, left) + 1;
       string += len;
       left -= len;
     }
