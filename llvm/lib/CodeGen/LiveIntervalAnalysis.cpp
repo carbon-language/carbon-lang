@@ -625,6 +625,9 @@ void LiveIntervals::pruneValue(LiveInterval &LI, SlotIndex Kill,
 void LiveIntervals::addKillFlags(const VirtRegMap *VRM) {
   // Keep track of regunit ranges.
   SmallVector<std::pair<const LiveRange*, LiveRange::const_iterator>, 8> RU;
+  // Keep track of subregister ranges.
+  SmallVector<std::pair<const LiveInterval::SubRange*,
+                        LiveRange::const_iterator>, 4> SRs;
 
   for (unsigned i = 0, e = MRI->getNumVirtRegs(); i != e; ++i) {
     unsigned Reg = TargetRegisterInfo::index2VirtReg(i);
@@ -643,6 +646,13 @@ void LiveIntervals::addKillFlags(const VirtRegMap *VRM) {
       if (RURange.empty())
         continue;
       RU.push_back(std::make_pair(&RURange, RURange.find(LI.begin()->end)));
+    }
+
+    if (MRI->tracksSubRegLiveness()) {
+      SRs.clear();
+      for (const LiveInterval::SubRange &SR : LI.subranges()) {
+        SRs.push_back(std::make_pair(&SR, SR.find(LI.begin()->end)));
+      }
     }
 
     // Every instruction that kills Reg corresponds to a segment range end
@@ -664,7 +674,6 @@ void LiveIntervals::addKillFlags(const VirtRegMap *VRM) {
       //   BAR %EAX<kill>
       //
       // There should be no kill flag on FOO when %vreg5 is rewritten as %EAX.
-      bool CancelKill = false;
       for (auto &RUP : RU) {
         const LiveRange &RURange = *RUP.first;
         LiveRange::const_iterator I = RUP.second;
@@ -674,36 +683,71 @@ void LiveIntervals::addKillFlags(const VirtRegMap *VRM) {
         if (I == RURange.end() || I->start >= RI->end)
           continue;
         // I is overlapping RI.
-        CancelKill = true;
-        break;
+        goto CancelKill;
       }
 
-      // If an instruction writes to a subregister, a new segment starts in the
-      // LiveInterval. In this case adding Kill-Flags is incorrect if no
-      // super registers defs/uses are appended to the instruction which is
-      // what we do when subregister liveness tracking is enabled.
       if (MRI->tracksSubRegLiveness()) {
-        // Next segment has to be adjacent in the subregister write case.
-        LiveRange::const_iterator N = std::next(RI);
-        if (N != LI.end() && N->start == RI->end) {
-          // See if we have a partial write operand
-          bool IsFullWrite = false;
-          for (const MachineOperand &MO : MI->operands()) {
-            if (MO.isReg() && MO.isUse() && MO.getReg() == Reg
-                && MO.getSubReg() == 0) {
-              IsFullWrite = true;
-              break;
-            }
+        // When reading a partial undefined value we must not add a kill flag.
+        // The regalloc might have used the undef lane for something else.
+        // Example:
+        //     %vreg1 = ...              ; R32: %vreg1
+        //     %vreg2:high16 = ...       ; R64: %vreg2
+        //        = read %vreg2<kill>    ; R64: %vreg2
+        //        = read %vreg1          ; R32: %vreg1
+        // The <kill> flag is correct for %vreg2, but the register allocator may
+        // assign R0L to %vreg1, and R0 to %vreg2 because the low 32bits of R0
+        // are actually never written by %vreg2. After assignment the <kill>
+        // flag at the read instruction is invalid.
+        unsigned DefinedLanesMask;
+        if (!SRs.empty()) {
+          // Compute a mask of lanes that are defined.
+          DefinedLanesMask = 0;
+          for (auto &SRP : SRs) {
+            const LiveInterval::SubRange &SR = *SRP.first;
+            LiveRange::const_iterator I = SRP.second;
+            if (I == SR.end())
+              continue;
+            I = SR.advanceTo(I, RI->end);
+            if (I == SR.end() || I->start >= RI->end)
+              continue;
+            // I is overlapping RI
+            DefinedLanesMask |= SR.LaneMask;
           }
-          if (!IsFullWrite)
-            CancelKill = true;
+        } else
+          DefinedLanesMask = ~0u;
+
+        bool IsFullWrite = false;
+        for (const MachineOperand &MO : MI->operands()) {
+          if (!MO.isReg() || MO.getReg() != Reg)
+            continue;
+          if (MO.isUse()) {
+            // Reading any undefined lanes?
+            unsigned UseMask = TRI->getSubRegIndexLaneMask(MO.getSubReg());
+            if ((UseMask & ~DefinedLanesMask) != 0)
+              goto CancelKill;
+          } else if (MO.getSubReg() == 0) {
+            // Writing to the full register?
+            assert(MO.isDef());
+            IsFullWrite = true;
+          }
+        }
+
+        // If an instruction writes to a subregister, a new segment starts in
+        // the LiveInterval. But as this is only overriding part of the register
+        // adding kill-flags is not correct here after registers have been
+        // assigned.
+        if (!IsFullWrite) {
+          // Next segment has to be adjacent in the subregister write case.
+          LiveRange::const_iterator N = std::next(RI);
+          if (N != LI.end() && N->start == RI->end)
+            goto CancelKill;
         }
       }
 
-      if (CancelKill)
-        MI->clearRegisterKills(Reg, nullptr);
-      else
-        MI->addRegisterKilled(Reg, nullptr);
+      MI->addRegisterKilled(Reg, nullptr);
+      continue;
+CancelKill:
+      MI->clearRegisterKills(Reg, nullptr);
     }
   }
 }
