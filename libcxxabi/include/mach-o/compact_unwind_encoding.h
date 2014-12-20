@@ -413,7 +413,7 @@ struct unwind_info_section_header
     uint32_t    indexSectionOffset;
     uint32_t    indexCount;
     // compact_unwind_encoding_t[]
-    // uintptr_t personalities[]
+    // uint32_t personalities[]
     // unwind_info_section_header_index_entry[]
     // unwind_info_section_header_lsda_index_entry[]
 };
