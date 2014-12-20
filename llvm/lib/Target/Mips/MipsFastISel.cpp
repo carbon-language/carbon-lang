@@ -59,7 +59,6 @@ class MipsFastISel final : public FastISel {
 
   /// Subtarget - Keep a pointer to the MipsSubtarget around so that we can
   /// make the right decision when generating code for different targets.
-  Module &M;
   const TargetMachine &TM;
   const TargetInstrInfo &TII;
   const TargetLowering &TLI;
@@ -157,9 +156,7 @@ public:
   // Backend specific FastISel code.
   explicit MipsFastISel(FunctionLoweringInfo &funcInfo,
                         const TargetLibraryInfo *libInfo)
-      : FastISel(funcInfo, libInfo),
-        M(const_cast<Module &>(*funcInfo.Fn->getParent())),
-        TM(funcInfo.MF->getTarget()),
+      : FastISel(funcInfo, libInfo), TM(funcInfo.MF->getTarget()),
         TII(*TM.getSubtargetImpl()->getInstrInfo()),
         TLI(*TM.getSubtargetImpl()->getTargetLowering()),
         Subtarget(&TM.getSubtarget<MipsSubtarget>()) {
