@@ -1073,8 +1073,8 @@ define i32 @select_icmp_and_2147483648_eq_0_xor_2147483648(i32 %x) {
 }
 
 ; CHECK-LABEL: @select_icmp_x_and_2147483648_ne_0_or_2147483648(
-; CHECK: xor i32 %1, -2147483648
-; CHECK: or i32 %2, %x
+; CHECK-NEXT: [[OR:%[a-z0-9]+]] = or i32 %x, -2147483648
+; CHECK-NEXT: ret i32 [[OR]]
 define i32 @select_icmp_x_and_2147483648_ne_0_or_2147483648(i32 %x) {
   %and = and i32 %x, 2147483648
   %cmp = icmp eq i32 %and, 0
