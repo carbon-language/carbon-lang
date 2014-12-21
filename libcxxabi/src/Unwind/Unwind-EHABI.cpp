@@ -249,7 +249,7 @@ decode_eht_entry(const uint32_t* data, size_t* off, size_t* len) {
                                              _Unwind_Exception* unwind_exception,
                                              _Unwind_Context* context);
     void *PR = (void*)signExtendPrel31(*data);
-    if (PR == &__gxx_personality_v0) {
+    if (PR == (void*)&__gxx_personality_v0) {
       *off = 1; // First byte is size data.
       *len = (((data[1] >> 24) & 0xff) + 1) * 4;
     } else
