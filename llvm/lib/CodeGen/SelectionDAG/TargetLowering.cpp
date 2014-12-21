@@ -1283,36 +1283,53 @@ TargetLowering::SimplifySetCC(EVT VT, SDValue N0, SDValue N1,
     }
 
     // (zext x) == C --> x == (trunc C)
-    if (DCI.isBeforeLegalize() && N0->hasOneUse() &&
-        (Cond == ISD::SETEQ || Cond == ISD::SETNE)) {
+    // (sext x) == C --> x == (trunc C)
+    if ((Cond == ISD::SETEQ || Cond == ISD::SETNE) &&
+        DCI.isBeforeLegalize() && N0->hasOneUse()) {
       unsigned MinBits = N0.getValueSizeInBits();
-      SDValue PreZExt;
+      SDValue PreExt;
+      bool Signed = false;
       if (N0->getOpcode() == ISD::ZERO_EXTEND) {
         // ZExt
         MinBits = N0->getOperand(0).getValueSizeInBits();
-        PreZExt = N0->getOperand(0);
+        PreExt = N0->getOperand(0);
       } else if (N0->getOpcode() == ISD::AND) {
         // DAGCombine turns costly ZExts into ANDs
         if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(N0->getOperand(1)))
           if ((C->getAPIntValue()+1).isPowerOf2()) {
             MinBits = C->getAPIntValue().countTrailingOnes();
-            PreZExt = N0->getOperand(0);
+            PreExt = N0->getOperand(0);
           }
+      } else if (N0->getOpcode() == ISD::SIGN_EXTEND) {
+        // SExt
+        MinBits = N0->getOperand(0).getValueSizeInBits();
+        PreExt = N0->getOperand(0);
+        Signed = true;
       } else if (LoadSDNode *LN0 = dyn_cast<LoadSDNode>(N0)) {
-        // ZEXTLOAD
+        // ZEXTLOAD / SEXTLOAD
         if (LN0->getExtensionType() == ISD::ZEXTLOAD) {
           MinBits = LN0->getMemoryVT().getSizeInBits();
-          PreZExt = N0;
+          PreExt = N0;
+        } else if (LN0->getExtensionType() == ISD::SEXTLOAD) {
+          Signed = true;
+          MinBits = LN0->getMemoryVT().getSizeInBits();
+          PreExt = N0;
         }
       }
 
+      // Figure out how many bits we need to preserve this constant.
+      unsigned ReqdBits = Signed ?
+        C1.getBitWidth() - C1.getNumSignBits() + 1 :
+        C1.getActiveBits();
+
       // Make sure we're not losing bits from the constant.
       if (MinBits > 0 &&
-          MinBits < C1.getBitWidth() && MinBits >= C1.getActiveBits()) {
+          MinBits < C1.getBitWidth() &&
+          MinBits >= ReqdBits) {
         EVT MinVT = EVT::getIntegerVT(*DAG.getContext(), MinBits);
         if (isTypeDesirableForOp(ISD::SETCC, MinVT)) {
           // Will get folded away.
-          SDValue Trunc = DAG.getNode(ISD::TRUNCATE, dl, MinVT, PreZExt);
+          SDValue Trunc = DAG.getNode(ISD::TRUNCATE, dl, MinVT, PreExt);
           SDValue C = DAG.getConstant(C1.trunc(MinBits), MinVT);
           return DAG.getSetCC(dl, VT, Trunc, C, Cond);
         }

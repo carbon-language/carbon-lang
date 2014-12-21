@@ -89,3 +89,151 @@ if.end:
 ; CHECK-NOT: cmpl $1,{{.*}}x+4
 ; CHECK: ret
 }
+
+; CHECK-LABEL: test2_1:
+; CHECK: movzbl
+; CHECK: cmpl $256
+; CHECK: jne
+define void @test2_1(i32 %X) nounwind minsize {
+entry:
+  %and = and i32 %X, 255
+  %cmp = icmp eq i32 %and, 256
+  br i1 %cmp, label %if.then, label %if.end
+
+if.then:
+  tail call void @bar() nounwind
+  br label %if.end
+
+if.end:
+  ret void
+}
+
+; CHECK-LABEL: test_sext_i8_icmp_1:
+; CHECK: cmpb $1, %{{dil|cl}}
+define void @test_sext_i8_icmp_1(i8 %x) nounwind minsize {
+entry:
+  %sext = sext i8 %x to i32
+  %cmp = icmp eq i32 %sext, 1
+  br i1 %cmp, label %if.then, label %if.end
+
+if.then:
+  tail call void @bar() nounwind
+  br label %if.end
+
+if.end:
+  ret void
+}
+
+; CHECK-LABEL: test_sext_i8_icmp_47:
+; CHECK: cmpb $47, %{{dil|cl}}
+define void @test_sext_i8_icmp_47(i8 %x) nounwind minsize {
+entry:
+  %sext = sext i8 %x to i32
+  %cmp = icmp eq i32 %sext, 47
+  br i1 %cmp, label %if.then, label %if.end
+
+if.then:
+  tail call void @bar() nounwind
+  br label %if.end
+
+if.end:
+  ret void
+}
+
+; CHECK-LABEL: test_sext_i8_icmp_127:
+; CHECK: cmpb $127, %{{dil|cl}}
+define void @test_sext_i8_icmp_127(i8 %x) nounwind minsize {
+entry:
+  %sext = sext i8 %x to i32
+  %cmp = icmp eq i32 %sext, 127
+  br i1 %cmp, label %if.then, label %if.end
+
+if.then:
+  tail call void @bar() nounwind
+  br label %if.end
+
+if.end:
+  ret void
+}
+
+; CHECK-LABEL: test_sext_i8_icmp_neg1:
+; CHECK: cmpb $-1, %{{dil|cl}}
+define void @test_sext_i8_icmp_neg1(i8 %x) nounwind minsize {
+entry:
+  %sext = sext i8 %x to i32
+  %cmp = icmp eq i32 %sext, -1
+  br i1 %cmp, label %if.then, label %if.end
+
+if.then:
+  tail call void @bar() nounwind
+  br label %if.end
+
+if.end:
+  ret void
+}
+
+; CHECK-LABEL: test_sext_i8_icmp_neg2:
+; CHECK: cmpb $-2, %{{dil|cl}}
+define void @test_sext_i8_icmp_neg2(i8 %x) nounwind minsize {
+entry:
+  %sext = sext i8 %x to i32
+  %cmp = icmp eq i32 %sext, -2
+  br i1 %cmp, label %if.then, label %if.end
+
+if.then:
+  tail call void @bar() nounwind
+  br label %if.end
+
+if.end:
+  ret void
+}
+
+; CHECK-LABEL: test_sext_i8_icmp_neg127:
+; CHECK: cmpb $-127, %{{dil|cl}}
+define void @test_sext_i8_icmp_neg127(i8 %x) nounwind minsize {
+entry:
+  %sext = sext i8 %x to i32
+  %cmp = icmp eq i32 %sext, -127
+  br i1 %cmp, label %if.then, label %if.end
+
+if.then:
+  tail call void @bar() nounwind
+  br label %if.end
+
+if.end:
+  ret void
+}
+
+; CHECK-LABEL: test_sext_i8_icmp_neg128:
+; CHECK: cmpb $-128, %{{dil|cl}}
+define void @test_sext_i8_icmp_neg128(i8 %x) nounwind minsize {
+entry:
+  %sext = sext i8 %x to i32
+  %cmp = icmp eq i32 %sext, -128
+  br i1 %cmp, label %if.then, label %if.end
+
+if.then:
+  tail call void @bar() nounwind
+  br label %if.end
+
+if.end:
+  ret void
+}
+
+; CHECK-LABEL: test_sext_i8_icmp_255:
+; CHECK: movb $1,
+; CHECK: testb
+; CHECK: jne
+define void @test_sext_i8_icmp_255(i8 %x) nounwind minsize {
+entry:
+  %sext = sext i8 %x to i32
+  %cmp = icmp eq i32 %sext, 255
+  br i1 %cmp, label %if.then, label %if.end
+
+if.then:
+  tail call void @bar() nounwind
+  br label %if.end
+
+if.end:
+  ret void
+}

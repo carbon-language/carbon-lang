@@ -1361,29 +1361,10 @@ SDValue SITargetLowering::PerformDAGCombine(SDNode *N,
                                             DAGCombinerInfo &DCI) const {
   SelectionDAG &DAG = DCI.DAG;
   SDLoc DL(N);
-  EVT VT = N->getValueType(0);
 
   switch (N->getOpcode()) {
-    default: return AMDGPUTargetLowering::PerformDAGCombine(N, DCI);
-    case ISD::SETCC: {
-      SDValue Arg0 = N->getOperand(0);
-      SDValue Arg1 = N->getOperand(1);
-      SDValue CC = N->getOperand(2);
-      ConstantSDNode * C = nullptr;
-      ISD::CondCode CCOp = dyn_cast<CondCodeSDNode>(CC)->get();
-
-      // i1 setcc (sext(i1), 0, setne) -> i1 setcc(i1, 0, setne)
-      if (VT == MVT::i1
-          && Arg0.getOpcode() == ISD::SIGN_EXTEND
-          && Arg0.getOperand(0).getValueType() == MVT::i1
-          && (C = dyn_cast<ConstantSDNode>(Arg1))
-          && C->isNullValue()
-          && CCOp == ISD::SETNE) {
-        return SimplifySetCC(VT, Arg0.getOperand(0),
-                             DAG.getConstant(0, MVT::i1), CCOp, true, DCI, DL);
-      }
-      break;
-    }
+  default:
+    return AMDGPUTargetLowering::PerformDAGCombine(N, DCI);
   case ISD::FMAXNUM: // TODO: What about fmax_legacy?
   case ISD::FMINNUM:
   case AMDGPUISD::SMAX:
