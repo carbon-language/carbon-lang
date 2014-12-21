@@ -84,6 +84,7 @@ public:
   const ToolChain &getToolChain() const { return TheToolChain; }
 
   virtual bool hasIntegratedAssembler() const { return false; }
+  virtual bool canEmitIR() const { return false; }
   virtual bool hasIntegratedCPP() const = 0;
   virtual bool isLinkJob() const { return false; }
   virtual bool isDsymutilJob() const { return false; }

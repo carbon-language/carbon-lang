@@ -95,6 +95,7 @@ using llvm::opt::ArgStringList;
     bool hasGoodDiagnostics() const override { return true; }
     bool hasIntegratedAssembler() const override { return true; }
     bool hasIntegratedCPP() const override { return true; }
+    bool canEmitIR() const override { return true; }
 
     void ConstructJob(Compilation &C, const JobAction &JA,
                       const InputInfo &Output, const InputInfoList &Inputs,

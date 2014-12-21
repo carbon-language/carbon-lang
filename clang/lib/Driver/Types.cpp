@@ -203,6 +203,7 @@ void types::getCompilationPhases(ID Id, llvm::SmallVectorImpl<phases::ID> &P) {
     } else {
       if (!onlyAssembleType(Id)) {
         P.push_back(phases::Compile);
+        P.push_back(phases::Backend);
       }
       P.push_back(phases::Assemble);
     }

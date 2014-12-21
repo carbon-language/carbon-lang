@@ -6,13 +6,14 @@
 //
 // CHECK-MULTIARCH-ACTIONS: 0: input, "{{.*}}darwin-dsymutil.c", c
 // CHECK-MULTIARCH-ACTIONS: 1: preprocessor, {0}, cpp-output
-// CHECK-MULTIARCH-ACTIONS: 2: compiler, {1}, assembler
-// CHECK-MULTIARCH-ACTIONS: 3: assembler, {2}, object
-// CHECK-MULTIARCH-ACTIONS: 4: linker, {3}, image
-// CHECK-MULTIARCH-ACTIONS: 5: bind-arch, "i386", {4}, image
-// CHECK-MULTIARCH-ACTIONS: 6: bind-arch, "x86_64", {4}, image
-// CHECK-MULTIARCH-ACTIONS: 7: lipo, {5, 6}, image
-// CHECK-MULTIARCH-ACTIONS: 8: dsymutil, {7}, dSYM
+// CHECK-MULTIARCH-ACTIONS: 2: compiler, {1}, ir
+// CHECK-MULTIARCH-ACTIONS: 3: backend, {2}, assembler
+// CHECK-MULTIARCH-ACTIONS: 4: assembler, {3}, object
+// CHECK-MULTIARCH-ACTIONS: 5: linker, {4}, image
+// CHECK-MULTIARCH-ACTIONS: 6: bind-arch, "i386", {5}, image
+// CHECK-MULTIARCH-ACTIONS: 7: bind-arch, "x86_64", {5}, image
+// CHECK-MULTIARCH-ACTIONS: 8: lipo, {6, 7}, image
+// CHECK-MULTIARCH-ACTIONS: 9: dsymutil, {8}, dSYM
 //
 // RUN: %clang -target x86_64-apple-darwin10 -ccc-print-bindings \
 // RUN:   -arch i386 -arch x86_64 %s -g 2> %t
