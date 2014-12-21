@@ -188,10 +188,11 @@ let isCall = 1 in
                            (outs), (ins i32imm_pcrel:$dst),
                            "call{l}\t$dst", [], IIC_CALL_RI>, OpSize32,
                       Requires<[Not64BitMode]>, Sched<[WriteJump]>;
-    def CALLpcrel16 : Ii16PCRel<0xE8, RawFrm,
-                           (outs), (ins i16imm_pcrel:$dst),
-                           "call{w}\t$dst", [], IIC_CALL_RI>, OpSize16,
-                      Sched<[WriteJump]>;
+    let hasSideEffects = 0 in
+      def CALLpcrel16 : Ii16PCRel<0xE8, RawFrm,
+                             (outs), (ins i16imm_pcrel:$dst),
+                             "call{w}\t$dst", [], IIC_CALL_RI>, OpSize16,
+                        Sched<[WriteJump]>;
     def CALL16r     : I<0xFF, MRM2r, (outs), (ins GR16:$dst),
                         "call{w}\t{*}$dst", [(X86call GR16:$dst)], IIC_CALL_RI>,
                       OpSize16, Requires<[Not64BitMode]>, Sched<[WriteJump]>;
