@@ -29,6 +29,11 @@ namespace lldb_private {
 // i386/x86_64 for instance.  When a function is too complex to be represented in
 // the compact unwind format, it calls out to eh_frame unwind instructions.
 
+// On Mac OS X / iOS, a function will have either a compact unwind representation 
+// or an eh_frame representation.  If lldb is going to benefit  from the compiler's 
+// description about saved register locations, it must be able to read both 
+// sources of information.
+
 class CompactUnwindInfo
 {
 public:
@@ -83,13 +88,17 @@ private:
 
     };
 
+    // An internal object used to store the information we retrieve about a function --
+    // the encoding bits and possibly the LSDA/personality function.  
     struct FunctionInfo
     {
         uint32_t  encoding;                   // compact encoding 32-bit value for this function
         Address   lsda_address;               // the address of the LSDA data for this function
         Address   personality_ptr_address;    // the address where the personality routine addr can be found
 
-        FunctionInfo () : encoding(0), lsda_address(), personality_ptr_address() { }
+        uint32_t  valid_range_offset_start;   // first offset that this encoding is valid for (start of the function)
+        uint32_t  valid_range_offset_end;     // the offset of the start of the next function
+        FunctionInfo () : encoding(0), lsda_address(), personality_ptr_address(), valid_range_offset_start(0), valid_range_offset_end(0) { }
     };
 
     struct UnwindHeader
@@ -110,10 +119,10 @@ private:
     GetCompactUnwindInfoForFunction (Target &target, Address address, FunctionInfo &unwind_info);
 
     lldb::offset_t
-    BinarySearchRegularSecondPage (uint32_t entry_page_offset, uint32_t entry_count, uint32_t function_offset);
+    BinarySearchRegularSecondPage (uint32_t entry_page_offset, uint32_t entry_count, uint32_t function_offset, uint32_t *entry_func_start_offset, uint32_t *entry_func_end_offset);
 
     uint32_t
-    BinarySearchCompressedSecondPage (uint32_t entry_page_offset, uint32_t entry_count, uint32_t function_offset_to_find, uint32_t function_offset_base);
+    BinarySearchCompressedSecondPage (uint32_t entry_page_offset, uint32_t entry_count, uint32_t function_offset_to_find, uint32_t function_offset_base, uint32_t *entry_func_start_offset, uint32_t *entry_func_end_offset);
 
     uint32_t
     GetLSDAForFunctionOffset (uint32_t lsda_offset, uint32_t lsda_count, uint32_t function_offset);

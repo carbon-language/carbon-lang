@@ -1259,9 +1259,41 @@ UnwindAssembly_x86::AugmentUnwindPlanFromCallSite (AddressRange& func, Thread& t
 bool
 UnwindAssembly_x86::GetFastUnwindPlan (AddressRange& func, Thread& thread, UnwindPlan &unwind_plan)
 {
-    ExecutionContext exe_ctx (thread.shared_from_this());
-    AssemblyParse_x86 asm_parse(exe_ctx, m_cpu, m_arch, func);
-    return asm_parse.get_fast_unwind_plan (func, unwind_plan);
+    // if prologue is
+    //   55     pushl %ebp
+    //   89 e5  movl %esp, %ebp
+    //  or
+    //   55        pushq %rbp
+    //   48 89 e5  movq %rsp, %rbp
+
+    // We should pull in the ABI architecture default unwind plan and return that
+
+    llvm::SmallVector <uint8_t, 4> opcode_data;
+
+    ProcessSP process_sp = thread.GetProcess();
+    if (process_sp)
+    {
+        Target &target (process_sp->GetTarget());
+        const bool prefer_file_cache = true;
+        Error error;
+        if (target.ReadMemory (func.GetBaseAddress (), prefer_file_cache, opcode_data.data(),
+                               4, error) == 4)
+        {
+            uint8_t i386_push_mov[] = {0x55, 0x89, 0xe5};
+            uint8_t x86_64_push_mov[] = {0x55, 0x48, 0x89, 0xe5};
+
+            if (memcmp (opcode_data.data(), i386_push_mov, sizeof (i386_push_mov)) == 0
+                || memcmp (opcode_data.data(), x86_64_push_mov, sizeof (x86_64_push_mov)) == 0)
+            {
+                ABISP abi_sp = process_sp->GetABI();
+                if (abi_sp)
+                {
+                    return abi_sp->CreateDefaultUnwindPlan (unwind_plan);
+                }
+            }
+        }
+    }
+    return false;
 }
 
 bool

@@ -17,6 +17,7 @@
 #include "lldb/Core/Module.h"
 #include "lldb/Core/Section.h"
 #include "lldb/Core/Section.h"
+#include "lldb/Core/StreamString.h"
 #include "lldb/Symbol/CompactUnwindInfo.h"
 #include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Symbol/UnwindPlan.h"
@@ -162,6 +163,29 @@ CompactUnwindInfo::GetUnwindPlan (Target &target, Address addr, UnwindPlan& unwi
         ArchSpec arch;
         if (m_objfile.GetArchitecture (arch))
         {
+
+            Log *log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_UNWIND));
+            if (log && log->GetVerbose())
+            {
+                StreamString strm;
+                addr.Dump (&strm, NULL, Address::DumpStyle::DumpStyleResolvedDescriptionNoFunctionArguments, Address::DumpStyle::DumpStyleFileAddress, arch.GetAddressByteSize()); 
+                log->Printf ("Got compact unwind encoding 0x%x for function %s", function_info.encoding, strm.GetData());
+            }
+
+            if (function_info.valid_range_offset_start != 0 && function_info.valid_range_offset_end != 0)
+            {
+                SectionList *sl = m_objfile.GetSectionList ();
+                if (sl)
+                {
+                    addr_t func_range_start_file_addr = 
+                              function_info.valid_range_offset_start + m_objfile.GetHeaderAddress().GetFileAddress();
+                    AddressRange func_range (func_range_start_file_addr,
+                                      function_info.valid_range_offset_end - function_info.valid_range_offset_start,
+                                      sl);
+                    unwind_plan.SetPlanValidAddressRange (func_range);
+                }
+            }
+
             if (arch.GetTriple().getArch() == llvm::Triple::x86_64)
             {
                 return CreateUnwindPlan_x86_64 (target, function_info, unwind_plan, addr);
@@ -201,6 +225,10 @@ CompactUnwindInfo::ScanIndex (const ProcessSP &process_sp)
     {
         return;
     }
+
+    Log *log (GetLogIfAllCategoriesSet (LIBLLDB_LOG_UNWIND));
+    if (log)
+        m_objfile.GetModule()->LogMessage(log, "Reading compact unwind first-level indexes");
 
     if (m_unwindinfo_data_computed == false)
     {
@@ -341,7 +369,7 @@ CompactUnwindInfo::GetLSDAForFunctionOffset (uint32_t lsda_offset, uint32_t lsda
 }
 
 lldb::offset_t
-CompactUnwindInfo::BinarySearchRegularSecondPage (uint32_t entry_page_offset, uint32_t entry_count, uint32_t function_offset)
+CompactUnwindInfo::BinarySearchRegularSecondPage (uint32_t entry_page_offset, uint32_t entry_count, uint32_t function_offset, uint32_t *entry_func_start_offset, uint32_t *entry_func_end_offset)
 {
     // typedef uint32_t compact_unwind_encoding_t;
     // struct unwind_info_regular_second_level_entry 
@@ -369,6 +397,10 @@ CompactUnwindInfo::BinarySearchRegularSecondPage (uint32_t entry_page_offset, ui
         {
             if (mid == last || (next_func_offset > function_offset))
             {
+                if (entry_func_start_offset)
+                    *entry_func_start_offset = mid_func_offset;
+                if (mid != last && entry_func_end_offset)
+                    *entry_func_end_offset = next_func_offset;
                 return first_entry + (mid * 8);
             }
             else
@@ -385,7 +417,7 @@ CompactUnwindInfo::BinarySearchRegularSecondPage (uint32_t entry_page_offset, ui
 }
 
 uint32_t
-CompactUnwindInfo::BinarySearchCompressedSecondPage (uint32_t entry_page_offset, uint32_t entry_count, uint32_t function_offset_to_find, uint32_t function_offset_base)
+CompactUnwindInfo::BinarySearchCompressedSecondPage (uint32_t entry_page_offset, uint32_t entry_count, uint32_t function_offset_to_find, uint32_t function_offset_base, uint32_t *entry_func_start_offset, uint32_t *entry_func_end_offset)
 {
     offset_t first_entry = entry_page_offset;
 
@@ -411,6 +443,10 @@ CompactUnwindInfo::BinarySearchCompressedSecondPage (uint32_t entry_page_offset,
         {
             if (mid == last || (next_func_offset > function_offset_to_find))
             {
+                if (entry_func_start_offset)
+                    *entry_func_start_offset = mid_func_offset;
+                if (mid != last && entry_func_end_offset)
+                    *entry_func_end_offset = next_func_offset;
                 return UNWIND_INFO_COMPRESSED_ENTRY_ENCODING_INDEX (entry);
             }
             else
@@ -426,7 +462,6 @@ CompactUnwindInfo::BinarySearchCompressedSecondPage (uint32_t entry_page_offset,
 
     return UINT32_MAX;
 }
-
 
 bool
 CompactUnwindInfo::GetCompactUnwindInfoForFunction (Target &target, Address address, FunctionInfo &unwind_info)
@@ -474,6 +509,15 @@ CompactUnwindInfo::GetCompactUnwindInfoForFunction (Target &target, Address addr
         return false;
     }
 
+    auto next_it = it + 1;
+    if (next_it != m_indexes.begin())
+    {
+        // initialize the function offset end range to be the start of the 
+        // next index offset.  If we find an entry which is at the end of
+        // the index table, this will establish the range end.
+        unwind_info.valid_range_offset_end = next_it->function_offset;
+    }
+
     offset_t second_page_offset = it->second_level;
     offset_t lsda_array_start = it->lsda_array_start;
     offset_t lsda_array_count = (it->lsda_array_end - it->lsda_array_start) / 8;
@@ -498,7 +542,7 @@ CompactUnwindInfo::GetCompactUnwindInfoForFunction (Target &target, Address addr
         uint16_t entry_page_offset = m_unwindinfo_data.GetU16(&offset); // entryPageOffset
         uint16_t entry_count = m_unwindinfo_data.GetU16(&offset);       // entryCount
 
-        offset_t entry_offset = BinarySearchRegularSecondPage (second_page_offset + entry_page_offset, entry_count, function_offset);
+        offset_t entry_offset = BinarySearchRegularSecondPage (second_page_offset + entry_page_offset, entry_count, function_offset, &unwind_info.valid_range_offset_start, &unwind_info.valid_range_offset_end);
         if (entry_offset == LLDB_INVALID_OFFSET)
         {
             return false;
@@ -556,7 +600,7 @@ CompactUnwindInfo::GetCompactUnwindInfoForFunction (Target &target, Address addr
         uint16_t encodings_page_offset = m_unwindinfo_data.GetU16(&offset); // encodingsPageOffset
         uint16_t encodings_count = m_unwindinfo_data.GetU16(&offset);       // encodingsCount
 
-        uint32_t encoding_index = BinarySearchCompressedSecondPage (second_page_offset + entry_page_offset, entry_count, function_offset, it->function_offset);
+        uint32_t encoding_index = BinarySearchCompressedSecondPage (second_page_offset + entry_page_offset, entry_count, function_offset, it->function_offset, &unwind_info.valid_range_offset_start, &unwind_info.valid_range_offset_end);
         if (encoding_index == UINT32_MAX || encoding_index >= encodings_count + m_unwind_header.common_encodings_array_count)
         {
             return false;
@@ -575,7 +619,6 @@ CompactUnwindInfo::GetCompactUnwindInfoForFunction (Target &target, Address addr
         }
         if (encoding == 0)
             return false;
-        unwind_info.encoding = encoding;
 
         unwind_info.encoding = encoding;
         if (unwind_info.encoding & UNWIND_HAS_LSDA)
