@@ -2069,9 +2069,13 @@ Value *TypePromotionHelper::promoteOperandForOther(
     if (!ExtForOpnd) {
       // If yes, create a new one.
       DEBUG(dbgs() << "More operands to ext\n");
-      ExtForOpnd =
-          cast<Instruction>(IsSExt ? TPT.createSExt(Ext, Opnd, Ext->getType())
-                                   : TPT.createZExt(Ext, Opnd, Ext->getType()));
+      Value *ValForExtOpnd = IsSExt ? TPT.createSExt(Ext, Opnd, Ext->getType())
+        : TPT.createZExt(Ext, Opnd, Ext->getType());
+      if (!isa<Instruction>(ValForExtOpnd)) {
+        TPT.setOperand(ExtOpnd, OpIdx, ValForExtOpnd);
+        continue;
+      }
+      ExtForOpnd = cast<Instruction>(ValForExtOpnd);
       ++CreatedInsts;
     }
     if (Exts)
