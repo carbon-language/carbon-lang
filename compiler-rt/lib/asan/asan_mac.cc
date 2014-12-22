@@ -403,6 +403,10 @@ INTERCEPTOR(void, dispatch_after,
 
 INTERCEPTOR(void, dispatch_source_set_cancel_handler,
             dispatch_source_t ds, void(^work)(void)) {
+  if (!work) {
+    REAL(dispatch_source_set_cancel_handler)(ds, work);
+    return;
+  }
   ENABLE_FRAME_POINTER;
   GET_ASAN_BLOCK(work);
   REAL(dispatch_source_set_cancel_handler)(ds, asan_block);
