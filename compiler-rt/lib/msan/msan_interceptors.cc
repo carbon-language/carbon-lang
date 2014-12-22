@@ -849,14 +849,29 @@ INTERCEPTOR(int, getrlimit64, int resource, void *rlim) {
 #define MSAN_MAYBE_INTERCEPT_GETRLIMIT64
 #endif
 
-INTERCEPTOR(int, uname, void *utsname) {
+#if SANITIZER_FREEBSD
+// FreeBSD's <sys/utsname.h> define uname() as
+// static __inline int uname(struct utsname *name) {
+//   return __xuname(SYS_NMLN, (void*)name);
+// }
+INTERCEPTOR(int, __xuname, int size, void *utsname) {
   ENSURE_MSAN_INITED();
-  int res = REAL(uname)(utsname);
-  if (!res) {
+  int res = REAL(__xuname)(size, utsname);
+  if (!res)
     __msan_unpoison(utsname, __sanitizer::struct_utsname_sz);
-  }
   return res;
 }
+#define MSAN_INTERCEPT_UNAME INTERCEPT_FUNCTION(__xuname)
+#else
+INTERCEPTOR(int, uname, struct utsname *utsname) {
+  ENSURE_MSAN_INITED();
+  int res = REAL(uname)(utsname);
+  if (!res)
+    __msan_unpoison(utsname, __sanitizer::struct_utsname_sz);
+  return res;
+}
+#define MSAN_INTERCEPT_UNAME INTERCEPT_FUNCTION(uname)
+#endif
 
 INTERCEPTOR(int, gethostname, char *name, SIZE_T len) {
   ENSURE_MSAN_INITED();
@@ -1629,7 +1644,7 @@ void InitializeInterceptors() {
   MSAN_MAYBE_INTERCEPT_FGETS_UNLOCKED;
   INTERCEPT_FUNCTION(getrlimit);
   MSAN_MAYBE_INTERCEPT_GETRLIMIT64;
-  INTERCEPT_FUNCTION(uname);
+  MSAN_INTERCEPT_UNAME;
   INTERCEPT_FUNCTION(gethostname);
   MSAN_MAYBE_INTERCEPT_EPOLL_WAIT;
   MSAN_MAYBE_INTERCEPT_EPOLL_PWAIT;
