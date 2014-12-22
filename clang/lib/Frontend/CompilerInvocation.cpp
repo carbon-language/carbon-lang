@@ -1207,11 +1207,6 @@ void CompilerInvocation::setLangDefaults(LangOptions &Opts, InputKind IK,
   Opts.GNUKeywords = Opts.GNUMode;
   Opts.CXXOperatorNames = Opts.CPlusPlus;
 
-  // Mimicing gcc's behavior, trigraphs are only enabled if -trigraphs
-  // is specified, or -std is set to a conforming mode.
-  // Trigraphs are disabled by default in c++1z onwards.
-  Opts.Trigraphs = !Opts.GNUMode && !Opts.CPlusPlus1z;
-
   Opts.DollarIdents = !Opts.AsmPreprocessor;
 
   // C++14 onwards has sized global deallocation functions.
@@ -1436,6 +1431,15 @@ static void ParseLangArgs(LangOptions &Opts, ArgList &Args, InputKind IK,
   else if (Args.hasArg(OPT_fwrapv))
     Opts.setSignedOverflowBehavior(LangOptions::SOB_Defined);
 
+  Opts.MSVCCompat = Args.hasArg(OPT_fms_compatibility);
+  Opts.MicrosoftExt = Opts.MSVCCompat || Args.hasArg(OPT_fms_extensions);
+  Opts.AsmBlocks = Args.hasArg(OPT_fasm_blocks) || Opts.MicrosoftExt;
+  Opts.MSCompatibilityVersion = parseMSCVersion(Args, Diags);
+
+  // Mimicing gcc's behavior, trigraphs are only enabled if -trigraphs
+  // is specified, or -std is set to a conforming mode.
+  // Trigraphs are disabled by default in c++1z onwards.
+  Opts.Trigraphs = !Opts.GNUMode && !Opts.MSVCCompat && !Opts.CPlusPlus1z;
   if (Args.hasArg(OPT_trigraphs))
     Opts.Trigraphs = 1;
 
@@ -1443,10 +1447,6 @@ static void ParseLangArgs(LangOptions &Opts, ArgList &Args, InputKind IK,
                                    OPT_fno_dollars_in_identifiers,
                                    Opts.DollarIdents);
   Opts.PascalStrings = Args.hasArg(OPT_fpascal_strings);
-  Opts.MSVCCompat = Args.hasArg(OPT_fms_compatibility);
-  Opts.MicrosoftExt = Opts.MSVCCompat || Args.hasArg(OPT_fms_extensions);
-  Opts.AsmBlocks = Args.hasArg(OPT_fasm_blocks) || Opts.MicrosoftExt;
-  Opts.MSCompatibilityVersion = parseMSCVersion(Args, Diags);
   Opts.VtorDispMode = getLastArgIntValue(Args, OPT_vtordisp_mode_EQ, 1, Diags);
   Opts.Borland = Args.hasArg(OPT_fborland_extensions);
   Opts.WritableStrings = Args.hasArg(OPT_fwritable_strings);
