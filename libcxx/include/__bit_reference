@@ -705,7 +705,7 @@ inline _LIBCPP_INLINE_VISIBILITY
 __bit_iterator<_Cp, false>
 move_backward(__bit_iterator<_Cp, _IsConst> __first, __bit_iterator<_Cp, _IsConst> __last, __bit_iterator<_Cp, false> __result)
 {
-    return _VSTD::copy(__first, __last, __result);
+    return _VSTD::copy_backward(__first, __last, __result);
 }
 
 // swap_ranges
