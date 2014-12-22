@@ -2521,42 +2521,16 @@ void MicrosoftMangleContextImpl::mangleStringLiteral(const StringLiteral *SL,
     } else if (isLetter(Byte & 0x7f)) {
       Mangler.getStream() << '?' << static_cast<char>(Byte & 0x7f);
     } else {
-      switch (Byte) {
-        case ',':
-          Mangler.getStream() << "?0";
-          break;
-        case '/':
-          Mangler.getStream() << "?1";
-          break;
-        case '\\':
-          Mangler.getStream() << "?2";
-          break;
-        case ':':
-          Mangler.getStream() << "?3";
-          break;
-        case '.':
-          Mangler.getStream() << "?4";
-          break;
-        case ' ':
-          Mangler.getStream() << "?5";
-          break;
-        case '\n':
-          Mangler.getStream() << "?6";
-          break;
-        case '\t':
-          Mangler.getStream() << "?7";
-          break;
-        case '\'':
-          Mangler.getStream() << "?8";
-          break;
-        case '-':
-          Mangler.getStream() << "?9";
-          break;
-        default:
-          Mangler.getStream() << "?$";
-          Mangler.getStream() << static_cast<char>('A' + ((Byte >> 4) & 0xf));
-          Mangler.getStream() << static_cast<char>('A' + (Byte & 0xf));
-          break;
+      const char SpecialChars[] = {',', '/',  '\\', ':',  '.',
+                                   ' ', '\n', '\t', '\'', '-'};
+      const char *Pos =
+          std::find(std::begin(SpecialChars), std::end(SpecialChars), Byte);
+      if (Pos != std::end(SpecialChars)) {
+        Mangler.getStream() << '?' << (Pos - std::begin(SpecialChars));
+      } else {
+        Mangler.getStream() << "?$";
+        Mangler.getStream() << static_cast<char>('A' + ((Byte >> 4) & 0xf));
+        Mangler.getStream() << static_cast<char>('A' + (Byte & 0xf));
       }
     }
   };
