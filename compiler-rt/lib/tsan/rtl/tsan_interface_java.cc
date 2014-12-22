@@ -219,3 +219,33 @@ int __tsan_java_mutex_unlock_rec(jptr addr) {
 
   return MutexUnlock(thr, pc, addr, true);
 }
+
+void __tsan_java_acquire(jptr addr) {
+  SCOPED_JAVA_FUNC(__tsan_java_acquire);
+  DPrintf("#%d: java_acquire(%p)\n", thr->tid, addr);
+  CHECK_NE(jctx, 0);
+  CHECK_GE(addr, jctx->heap_begin);
+  CHECK_LT(addr, jctx->heap_begin + jctx->heap_size);
+
+  Acquire(thr, caller_pc, addr);
+}
+
+void __tsan_java_release(jptr addr) {
+  SCOPED_JAVA_FUNC(__tsan_java_release);
+  DPrintf("#%d: java_release(%p)\n", thr->tid, addr);
+  CHECK_NE(jctx, 0);
+  CHECK_GE(addr, jctx->heap_begin);
+  CHECK_LT(addr, jctx->heap_begin + jctx->heap_size);
+
+  Release(thr, caller_pc, addr);
+}
+
+void __tsan_java_release_store(jptr addr) {
+  SCOPED_JAVA_FUNC(__tsan_java_release);
+  DPrintf("#%d: java_release_store(%p)\n", thr->tid, addr);
+  CHECK_NE(jctx, 0);
+  CHECK_GE(addr, jctx->heap_begin);
+  CHECK_LT(addr, jctx->heap_begin + jctx->heap_size);
+
+  ReleaseStore(thr, caller_pc, addr);
+}
