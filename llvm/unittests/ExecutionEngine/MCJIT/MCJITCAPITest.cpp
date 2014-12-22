@@ -347,6 +347,44 @@ TEST_F(MCJITCAPITest, simple_function) {
   EXPECT_EQ(42, functionPointer.usable());
 }
 
+TEST_F(MCJITCAPITest, gva) {
+  SKIP_UNSUPPORTED_PLATFORM;
+
+  Module = LLVMModuleCreateWithName("simple_module");
+  LLVMSetTarget(Module, HostTriple.c_str());
+  LLVMValueRef GlobalVar = LLVMAddGlobal(Module, LLVMInt32Type(), "simple_value");
+  LLVMSetInitializer(GlobalVar, LLVMConstInt(LLVMInt32Type(), 42, 0));
+
+  buildMCJITOptions();
+  buildMCJITEngine();
+  buildAndRunPasses();
+
+  union {
+    uint64_t raw;
+    int32_t *usable;
+  } valuePointer;
+  valuePointer.raw = LLVMGetGlobalValueAddress(Engine, "simple_value");
+
+  EXPECT_EQ(42, *valuePointer.usable);
+}
+
+TEST_F(MCJITCAPITest, gfa) {
+  SKIP_UNSUPPORTED_PLATFORM;
+
+  buildSimpleFunction();
+  buildMCJITOptions();
+  buildMCJITEngine();
+  buildAndRunPasses();
+
+  union {
+    uint64_t raw;
+    int (*usable)();
+  } functionPointer;
+  functionPointer.raw = LLVMGetFunctionAddress(Engine, "simple_function");
+
+  EXPECT_EQ(42, functionPointer.usable());
+}
+
 TEST_F(MCJITCAPITest, custom_memory_manager) {
   SKIP_UNSUPPORTED_PLATFORM;
   
