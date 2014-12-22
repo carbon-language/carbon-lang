@@ -366,12 +366,12 @@ class SymbolizationLoop(object):
     #  3. otherwise create a new symbolizer and pass all currently known
     #     .dSYM hints to it.
     if not binary in self.llvm_symbolizers:
-      use_last_symbolizer = True
+      use_new_symbolizer = True
       if self.system == 'Darwin' and self.dsym_hint_producer:
         dsym_hints_for_binary = set(self.dsym_hint_producer(binary))
-        use_last_symbolizer = bool(dsym_hints_for_binary - self.dsym_hints)
+        use_new_symbolizer = bool(dsym_hints_for_binary - self.dsym_hints)
         self.dsym_hints |= dsym_hints_for_binary
-      if self.last_llvm_symbolizer and use_last_symbolizer:
+      if self.last_llvm_symbolizer and not use_new_symbolizer:
           self.llvm_symbolizers[binary] = self.last_llvm_symbolizer
       else:
         self.last_llvm_symbolizer = LLVMSymbolizerFactory(
