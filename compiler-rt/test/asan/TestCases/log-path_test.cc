@@ -13,7 +13,7 @@
 // RUN: FileCheck %s --check-prefix=CHECK-ERROR < %t.log.*
 
 // Invalid log_path.
-// RUN: env ASAN_OPTIONS=log_path=/INVALID not %run %t 2> %t.out
+// RUN: env ASAN_OPTIONS=log_path=/dev/null/INVALID not %run %t 2> %t.out
 // RUN: FileCheck %s --check-prefix=CHECK-INVALID < %t.out
 
 // Too long log_path.
@@ -40,5 +40,5 @@ int main(int argc, char **argv) {
   return res;
 }
 // CHECK-ERROR: ERROR: AddressSanitizer
-// CHECK-INVALID: ERROR: Can't open file: /INVALID
+// CHECK-INVALID: ERROR: Can't open file: /dev/null/INVALID
 // CHECK-LONG: ERROR: Path is too long: 01234
