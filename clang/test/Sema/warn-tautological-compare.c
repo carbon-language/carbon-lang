@@ -78,17 +78,9 @@ void test3() {
  }
 
 // rdar://19256338
-#define SAVE_READ(PTR, RESULT) if( (PTR) && *(PTR) ) *RESULT=*PTR;
- 
-// Source
-typedef unsigned char Boolean;
-struct HTTPClientPrivate
+#define SAVE_READ(PTR) if( (PTR) && (&result) ) *result=*PTR;
+void _HTTPClientErrorHandler(int me)
 {
-   Boolean readSuspended;
-};
-typedef struct HTTPClientPrivate * HTTPClientRef;
-static void _HTTPClientErrorHandler( HTTPClientRef me)
-{
-  Boolean result;
-  SAVE_READ(&me->readSuspended, &result);
+  int *result;
+  SAVE_READ(&me);
 }
