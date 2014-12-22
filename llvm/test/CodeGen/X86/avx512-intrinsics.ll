@@ -340,7 +340,7 @@ define <8 x i64> @test_ctlz_q(<8 x i64> %a) {
 declare <8 x i64> @llvm.ctlz.v8i64(<8 x i64>, i1) nounwind readonly
 
 define <16 x float> @test_x86_mask_blend_ps_512(i16 %a0, <16 x float> %a1, <16 x float> %a2) {
-  ; CHECK: vblendmps
+  ; CHECK: vblendmps %zmm1, %zmm0
   %res = call <16 x float> @llvm.x86.avx512.mask.blend.ps.512(<16 x float> %a1, <16 x float> %a2, i16 %a0) ; <<16 x float>> [#uses=1]
   ret <16 x float> %res
 }
@@ -348,7 +348,7 @@ define <16 x float> @test_x86_mask_blend_ps_512(i16 %a0, <16 x float> %a1, <16 x
 declare <16 x float> @llvm.x86.avx512.mask.blend.ps.512(<16 x float>, <16 x float>, i16) nounwind readonly
 
 define <8 x double> @test_x86_mask_blend_pd_512(i8 %a0, <8 x double> %a1, <8 x double> %a2) {
-  ; CHECK: vblendmpd
+  ; CHECK: vblendmpd %zmm1, %zmm0
   %res = call <8 x double> @llvm.x86.avx512.mask.blend.pd.512(<8 x double> %a1, <8 x double> %a2, i8 %a0) ; <<8 x double>> [#uses=1]
   ret <8 x double> %res
 }
