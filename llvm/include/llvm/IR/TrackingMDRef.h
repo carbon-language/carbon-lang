@@ -1,4 +1,4 @@
-//===- llvm/IR/TrackingMDRef.h - Tracking Metadata references -------------===//
+//===- llvm/IR/TrackingMDRef.h - Tracking Metadata references ---*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
