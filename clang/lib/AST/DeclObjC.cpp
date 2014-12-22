@@ -93,13 +93,13 @@ ObjCContainerDecl::getMethod(Selector Sel, bool isInstance,
   return nullptr;
 }
 
-/// HasUserDeclaredSetterMethod - This routine returns 'true' if a user declared setter
-/// method was found in the class, its protocols, its super classes or categories.
-/// It also returns 'true' if one of its categories has declared a 'readwrite' property.
-/// This is because, user must provide a setter method for the category's 'readwrite'
-/// property.
-bool
-ObjCContainerDecl::HasUserDeclaredSetterMethod(const ObjCPropertyDecl *Property) const {
+/// \brief This routine returns 'true' if a user declared setter method was
+/// found in the class, its protocols, its super classes or categories.
+/// It also returns 'true' if one of its categories has declared a 'readwrite'
+/// property.  This is because, user must provide a setter method for the
+/// category's 'readwrite' property.
+bool ObjCContainerDecl::HasUserDeclaredSetterMethod(
+    const ObjCPropertyDecl *Property) const {
   Selector Sel = Property->getSetterName();
   lookup_const_result R = lookup(Sel);
   for (lookup_const_iterator Meth = R.begin(), MethEnd = R.end();
@@ -118,9 +118,10 @@ ObjCContainerDecl::HasUserDeclaredSetterMethod(const ObjCPropertyDecl *Property)
           return true;
       if (Cat->IsClassExtension())
         continue;
-      // Also search through the categories looking for a 'readwrite' declaration
-      // of this property. If one found, presumably a setter will be provided
-      // (properties declared in categories will not get auto-synthesized).
+      // Also search through the categories looking for a 'readwrite'
+      // declaration of this property. If one found, presumably a setter will
+      // be provided (properties declared in categories will not get
+      // auto-synthesized).
       for (const auto *P : Cat->properties())
         if (P->getIdentifier() == Property->getIdentifier()) {
           if (P->getPropertyAttributes() & ObjCPropertyDecl::OBJC_PR_readwrite)
