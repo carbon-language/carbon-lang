@@ -124,7 +124,8 @@ void Thumb1FrameLowering::emitPrologue(MachineFunction &MF) const {
     unsigned CFIIndex = MMI.addFrameInst(
         MCCFIInstruction::createDefCfaOffset(nullptr, CFAOffset));
     BuildMI(MBB, MBBI, dl, TII.get(TargetOpcode::CFI_INSTRUCTION))
-        .addCFIIndex(CFIIndex);
+        .addCFIIndex(CFIIndex)
+        .setMIFlags(MachineInstr::FrameSetup);
   }
 
   if (!AFI->hasStackFrame()) {
@@ -135,7 +136,8 @@ void Thumb1FrameLowering::emitPrologue(MachineFunction &MF) const {
       unsigned CFIIndex = MMI.addFrameInst(
           MCCFIInstruction::createDefCfaOffset(nullptr, CFAOffset));
       BuildMI(MBB, MBBI, dl, TII.get(TargetOpcode::CFI_INSTRUCTION))
-          .addCFIIndex(CFIIndex);
+          .addCFIIndex(CFIIndex)
+          .setMIFlags(MachineInstr::FrameSetup);
     }
     return;
   }
@@ -199,7 +201,8 @@ void Thumb1FrameLowering::emitPrologue(MachineFunction &MF) const {
     unsigned CFIIndex = MMI.addFrameInst(
         MCCFIInstruction::createDefCfaOffset(nullptr, CFAOffset));
     BuildMI(MBB, MBBI, dl, TII.get(TargetOpcode::CFI_INSTRUCTION))
-        .addCFIIndex(CFIIndex);
+        .addCFIIndex(CFIIndex)
+        .setMIFlags(MachineInstr::FrameSetup);
   }
   for (std::vector<CalleeSavedInfo>::const_iterator I = CSI.begin(),
          E = CSI.end(); I != E; ++I) {
@@ -226,7 +229,8 @@ void Thumb1FrameLowering::emitPrologue(MachineFunction &MF) const {
       unsigned CFIIndex = MMI.addFrameInst(MCCFIInstruction::createOffset(
           nullptr, MRI->getDwarfRegNum(Reg, true), MFI->getObjectOffset(FI)));
       BuildMI(MBB, MBBI, dl, TII.get(TargetOpcode::CFI_INSTRUCTION))
-          .addCFIIndex(CFIIndex);
+          .addCFIIndex(CFIIndex)
+          .setMIFlags(MachineInstr::FrameSetup);
       break;
     }
   }
@@ -244,13 +248,15 @@ void Thumb1FrameLowering::emitPrologue(MachineFunction &MF) const {
       unsigned CFIIndex = MMI.addFrameInst(MCCFIInstruction::createDefCfa(
           nullptr, MRI->getDwarfRegNum(FramePtr, true), CFAOffset));
       BuildMI(MBB, MBBI, dl, TII.get(TargetOpcode::CFI_INSTRUCTION))
-          .addCFIIndex(CFIIndex);
+          .addCFIIndex(CFIIndex)
+          .setMIFlags(MachineInstr::FrameSetup);
     } else {
       unsigned CFIIndex =
           MMI.addFrameInst(MCCFIInstruction::createDefCfaRegister(
               nullptr, MRI->getDwarfRegNum(FramePtr, true)));
       BuildMI(MBB, MBBI, dl, TII.get(TargetOpcode::CFI_INSTRUCTION))
-          .addCFIIndex(CFIIndex);
+          .addCFIIndex(CFIIndex)
+          .setMIFlags(MachineInstr::FrameSetup);
     }
     if (NumBytes > 508)
       // If offset is > 508 then sp cannot be adjusted in a single instruction,
@@ -267,7 +273,8 @@ void Thumb1FrameLowering::emitPrologue(MachineFunction &MF) const {
       unsigned CFIIndex = MMI.addFrameInst(
           MCCFIInstruction::createDefCfaOffset(nullptr, CFAOffset));
       BuildMI(MBB, MBBI, dl, TII.get(TargetOpcode::CFI_INSTRUCTION))
-          .addCFIIndex(CFIIndex);
+          .addCFIIndex(CFIIndex)
+          .setMIFlags(MachineInstr::FrameSetup);
     }
   }
 

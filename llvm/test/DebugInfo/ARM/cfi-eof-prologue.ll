@@ -14,7 +14,8 @@
 ; The location of the prologue_end marker should not be affected by the presence
 ; of CFI instructions.
 
-; RUN: llc -O0 -filetype=asm < %s | FileCheck %s
+; RUN: llc -O0 -filetype=asm -mtriple=thumbv7-apple-ios < %s | FileCheck %s
+; RUN: llc -O0 -filetype=asm -mtriple=thumbv6-apple-ios < %s | FileCheck %s
 
 ; ModuleID = 'test1.cpp'
 target datalayout = "e-m:o-p:32:32-f64:32:64-v64:32:64-v128:32:128-a:0:32-n32-S32"
