@@ -113,10 +113,6 @@ void ParseFlagsFromString(Flags *f, const char *str) {
       "If set, prints ASan exit stats even after program terminates "
       "successfully.");
 
-  ParseFlag(str, &f->allow_reexec, "allow_reexec",
-      "Allow the tool to re-exec the program. This may interfere badly with "
-      "the debugger.");
-
   ParseFlag(str, &f->print_full_thread_history,
       "print_full_thread_history",
       "If set, prints thread creation stacks for the threads involved in the "
@@ -209,7 +205,6 @@ void InitializeFlags(Flags *f) {
   f->print_stats = false;
   f->print_legend = true;
   f->atexit = false;
-  f->allow_reexec = true;
   f->print_full_thread_history = true;
   f->poison_heap = true;
   f->poison_array_cookie = true;

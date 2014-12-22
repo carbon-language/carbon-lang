@@ -31,15 +31,6 @@
 // in this test. The static runtime library is linked explicitly (without
 // -fsanitize=address), thus the interceptors do not work correctly on OS X.
 
-#if !defined(_WIN32)
-extern "C" {
-// Set specific ASan options for uninstrumented unittest.
-const char* __asan_default_options() {
-  return "allow_reexec=0";
-}
-}  // extern "C"
-#endif
-
 // Make sure __asan_init is called before any test case is run.
 struct AsanInitCaller {
   AsanInitCaller() { __asan_init(); }

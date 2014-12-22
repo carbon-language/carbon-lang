@@ -102,7 +102,6 @@ void LeakyResetEnv(const char *name, const char *name_value) {
 }
 
 void MaybeReexec() {
-  if (!flags()->allow_reexec) return;
   // Make sure the dynamic ASan runtime library is preloaded so that the
   // wrappers work. If it is not, set DYLD_INSERT_LIBRARIES and re-exec
   // ourselves.
@@ -140,8 +139,15 @@ void MaybeReexec() {
     VReport(1, "exec()-ing the program with\n");
     VReport(1, "%s=%s\n", kDyldInsertLibraries, new_env);
     VReport(1, "to enable ASan wrappers.\n");
-    VReport(1, "Set ASAN_OPTIONS=allow_reexec=0 to disable this.\n");
     execv(program_name, *_NSGetArgv());
+
+    // We get here only if execv() failed.
+    Report("ERROR: The process is launched without DYLD_INSERT_LIBRARIES, "
+           "which is required for ASan to work. ASan tried to set the "
+           "environment variable and re-execute itself, but execv() failed, "
+           "possibly because of sandbox restrictions. Make sure to launch the "
+           "executable with:\n%s=%s\n", kDyldInsertLibraries, new_env);
+    CHECK("execv failed" && 0);
   } else {
     // DYLD_INSERT_LIBRARIES is set and contains the runtime library.
     if (old_env_len == fname_len) {
