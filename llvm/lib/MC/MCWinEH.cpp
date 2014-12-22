@@ -17,52 +17,45 @@
 
 namespace llvm {
 namespace WinEH {
-static StringRef getSectionSuffix(const MCSymbol *Function) {
-  if (!Function || !Function->isInSection())
-    return "";
 
-  const MCSection *FunctionSection = &Function->getSection();
-  if (const auto Section = dyn_cast<MCSectionCOFF>(FunctionSection)) {
-    StringRef Name = Section->getSectionName();
-    size_t Dollar = Name.find('$');
-    size_t Dot = Name.find('.', 1);
-
-    if (Dollar == StringRef::npos && Dot == StringRef::npos)
-      return "";
-    if (Dot == StringRef::npos)
-      return Name.substr(Dollar);
-    if (Dollar == StringRef::npos || Dot < Dollar)
-      return Name.substr(Dot);
-
-    return Name.substr(Dollar);
-  }
-
-  return "";
-}
-
+/// We can't have one section for all .pdata or .xdata because the Microsoft
+/// linker seems to want all code relocations to refer to the same object file
+/// section. If the code described is comdat, create a new comdat section
+/// associated with that comdat. If the code described is not in the main .text
+/// section, make a new section for it. Otherwise use the main unwind info
+/// section.
 static const MCSection *getUnwindInfoSection(
     StringRef SecName, const MCSectionCOFF *UnwindSec, const MCSymbol *Function,
     MCContext &Context) {
-  // If Function is in a COMDAT, get or create an unwind info section in that
-  // COMDAT group.
   if (Function && Function->isInSection()) {
+    // If Function is in a COMDAT, get or create an unwind info section in that
+    // COMDAT group.
     const MCSectionCOFF *FunctionSection =
         cast<MCSectionCOFF>(&Function->getSection());
     if (FunctionSection->getCharacteristics() & COFF::IMAGE_SCN_LNK_COMDAT) {
       return Context.getAssociativeCOFFSection(
           UnwindSec, FunctionSection->getCOMDATSymbol());
     }
+
+    // If Function is in a section other than .text, create a new .pdata section.
+    // Otherwise use the plain .pdata section.
+    if (const auto *Section = dyn_cast<MCSectionCOFF>(FunctionSection)) {
+      StringRef CodeSecName = Section->getSectionName();
+      if (CodeSecName == ".text")
+        return UnwindSec;
+
+      if (CodeSecName.startswith(".text$"))
+        CodeSecName = CodeSecName.substr(6);
+
+      return Context.getCOFFSection(
+          (SecName + Twine('$') + CodeSecName).str(),
+          COFF::IMAGE_SCN_CNT_INITIALIZED_DATA | COFF::IMAGE_SCN_MEM_READ,
+          SectionKind::getDataRel());
+    }
   }
 
-  // If Function is in a section other than .text, create a new .pdata section.
-  // Otherwise use the plain .pdata section.
-  StringRef Suffix = getSectionSuffix(Function);
-  if (Suffix.empty())
-    return UnwindSec;
-  return Context.getCOFFSection((SecName + Suffix).str(),
-                                COFF::IMAGE_SCN_CNT_INITIALIZED_DATA |
-                                COFF::IMAGE_SCN_MEM_READ,
-                                SectionKind::getDataRel());
+  return UnwindSec;
+
 }
 
 const MCSection *UnwindEmitter::getPDataSection(const MCSymbol *Function,
