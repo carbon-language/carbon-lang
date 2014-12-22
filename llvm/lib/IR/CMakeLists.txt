@@ -27,7 +27,6 @@ add_llvm_library(LLVMCore
   IntrinsicInst.cpp
   LLVMContext.cpp
   LLVMContextImpl.cpp
-  LeakDetector.cpp
   LegacyPassManager.cpp
   MDBuilder.cpp
   Mangler.cpp

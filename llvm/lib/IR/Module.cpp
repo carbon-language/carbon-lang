@@ -22,7 +22,6 @@
 #include "llvm/IR/GVMaterializer.h"
 #include "llvm/IR/InstrTypes.h"
 #include "llvm/IR/LLVMContext.h"
-#include "llvm/IR/LeakDetector.h"
 #include "llvm/IR/TypeFinder.h"
 #include "llvm/Support/Dwarf.h"
 #include "llvm/Support/Path.h"

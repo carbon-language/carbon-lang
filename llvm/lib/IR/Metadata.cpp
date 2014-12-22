@@ -22,7 +22,6 @@
 #include "llvm/IR/ConstantRange.h"
 #include "llvm/IR/Instruction.h"
 #include "llvm/IR/LLVMContext.h"
-#include "llvm/IR/LeakDetector.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/ValueHandle.h"
 
@@ -596,13 +595,11 @@ MDNode *MDNode::getMDNode(LLVMContext &Context, ArrayRef<Metadata *> MDs,
 MDNodeFwdDecl *MDNode::getTemporary(LLVMContext &Context,
                                     ArrayRef<Metadata *> MDs) {
   MDNodeFwdDecl *N = new (MDs.size()) MDNodeFwdDecl(Context, MDs);
-  LeakDetector::addGarbageObject(N);
   return N;
 }
 
 void MDNode::deleteTemporary(MDNode *N) {
   assert(isa<MDNodeFwdDecl>(N) && "Expected forward declaration");
-  LeakDetector::removeGarbageObject(N);
   delete cast<MDNodeFwdDecl>(N);
 }
 

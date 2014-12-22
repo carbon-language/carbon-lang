@@ -24,7 +24,6 @@
 #include "llvm/CodeGen/SlotIndexes.h"
 #include "llvm/IR/BasicBlock.h"
 #include "llvm/IR/DataLayout.h"
-#include "llvm/IR/LeakDetector.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/Support/Debug.h"
@@ -45,7 +44,6 @@ MachineBasicBlock::MachineBasicBlock(MachineFunction &mf, const BasicBlock *bb)
 }
 
 MachineBasicBlock::~MachineBasicBlock() {
-  LeakDetector::removeGarbageObject(this);
 }
 
 /// getSymbol - Return the MCSymbol for this basic block.
@@ -85,14 +83,11 @@ void ilist_traits<MachineBasicBlock>::addNodeToList(MachineBasicBlock *N) {
   for (MachineBasicBlock::instr_iterator
          I = N->instr_begin(), E = N->instr_end(); I != E; ++I)
     I->AddRegOperandsToUseLists(RegInfo);
-
-  LeakDetector::removeGarbageObject(N);
 }
 
 void ilist_traits<MachineBasicBlock>::removeNodeFromList(MachineBasicBlock *N) {
   N->getParent()->removeFromMBBNumbering(N->Number);
   N->Number = -1;
-  LeakDetector::addGarbageObject(N);
 }
 
 

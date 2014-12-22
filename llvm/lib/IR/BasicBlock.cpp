@@ -19,7 +19,6 @@
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/IntrinsicInst.h"
 #include "llvm/IR/LLVMContext.h"
-#include "llvm/IR/LeakDetector.h"
 #include "llvm/IR/Type.h"
 #include <algorithm>
 using namespace llvm;
@@ -46,9 +45,6 @@ template class llvm::SymbolTableListTraits<Instruction, BasicBlock>;
 BasicBlock::BasicBlock(LLVMContext &C, const Twine &Name, Function *NewParent,
                        BasicBlock *InsertBefore)
   : Value(Type::getLabelTy(C), Value::BasicBlockVal), Parent(nullptr) {
-
-  // Make sure that we get added to a function
-  LeakDetector::addGarbageObject(this);
 
   if (NewParent)
     insertInto(NewParent, InsertBefore);
@@ -94,14 +90,8 @@ BasicBlock::~BasicBlock() {
 }
 
 void BasicBlock::setParent(Function *parent) {
-  if (getParent())
-    LeakDetector::addGarbageObject(this);
-
   // Set Parent=parent, updating instruction symtab entries as appropriate.
   InstList.setSymTabObject(&Parent, parent);
-
-  if (getParent())
-    LeakDetector::removeGarbageObject(this);
 }
 
 void BasicBlock::removeFromParent() {

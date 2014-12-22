@@ -14,7 +14,6 @@ set(IRSources
   DominatorTreeTest.cpp
   IRBuilderTest.cpp
   InstructionsTest.cpp
-  LeakDetectorTest.cpp
   LegacyPassManagerTest.cpp
   MDBuilderTest.cpp
   MetadataTest.cpp

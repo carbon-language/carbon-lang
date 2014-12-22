@@ -23,7 +23,6 @@
 #include "llvm/IR/GetElementPtrTypeIterator.h"
 #include "llvm/IR/InstrTypes.h"
 #include "llvm/IR/Instructions.h"
-#include "llvm/IR/LeakDetector.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/Operator.h"
 #include "llvm/IR/ValueHandle.h"
@@ -84,9 +83,6 @@ Value::~Value() {
   // If this value is named, destroy the name.  This should not be in a symtab
   // at this point.
   destroyValueName();
-
-  // There should be no uses of this object anymore, remove it.
-  LeakDetector::removeGarbageObject(this);
 }
 
 void Value::destroyValueName() {

@@ -23,7 +23,6 @@
 #include "llvm/IR/InstIterator.h"
 #include "llvm/IR/IntrinsicInst.h"
 #include "llvm/IR/LLVMContext.h"
-#include "llvm/IR/LeakDetector.h"
 #include "llvm/IR/Module.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/RWMutex.h"
@@ -46,20 +45,13 @@ Argument::Argument(Type *Ty, const Twine &Name, Function *Par)
   : Value(Ty, Value::ArgumentVal) {
   Parent = nullptr;
 
-  // Make sure that we get added to a function
-  LeakDetector::addGarbageObject(this);
-
   if (Par)
     Par->getArgumentList().push_back(this);
   setName(Name);
 }
 
 void Argument::setParent(Function *parent) {
-  if (getParent())
-    LeakDetector::addGarbageObject(this);
   Parent = parent;
-  if (getParent())
-    LeakDetector::removeGarbageObject(this);
 }
 
 /// getArgNo - Return the index of this formal argument in its containing
@@ -260,9 +252,6 @@ Function::Function(FunctionType *Ty, LinkageTypes Linkage, const Twine &name,
   if (Ty->getNumParams())
     setValueSubclassData(1);   // Set the "has lazy arguments" bit.
 
-  // Make sure that we get added to a function
-  LeakDetector::addGarbageObject(this);
-
   if (ParentModule)
     ParentModule->getFunctionList().push_back(this);
 
@@ -309,11 +298,7 @@ bool Function::arg_empty() const {
 }
 
 void Function::setParent(Module *parent) {
-  if (getParent())
-    LeakDetector::addGarbageObject(this);
   Parent = parent;
-  if (getParent())
-    LeakDetector::removeGarbageObject(this);
 }
 
 // dropAllReferences() - This function causes all the subinstructions to "let
