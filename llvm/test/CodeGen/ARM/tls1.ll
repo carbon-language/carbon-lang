@@ -1,10 +1,12 @@
-; RUN: llc < %s -march=arm -mtriple=arm-linux-gnueabi | \
-; RUN:     grep "i(TPOFF)"
-; RUN: llc < %s -march=arm -mtriple=arm-linux-gnueabi | \
-; RUN:     grep "__aeabi_read_tp"
-; RUN: llc < %s -march=arm -mtriple=arm-linux-gnueabi \
-; RUN:     -relocation-model=pic | grep "__tls_get_addr"
+; RUN: llc < %s -march=arm -mtriple=arm-linux-gnueabi | FileCheck %s
+; RUN: llc < %s -march=arm -mtriple=arm-linux-gnueabi -relocation-model=pic | \
+; RUN:   FileCheck %s --check-prefix=PIC
 
+
+; CHECK: i(TPOFF)
+; CHECK: __aeabi_read_tp
+
+; PIC: __tls_get_addr
 
 @i = thread_local global i32 15		; <i32*> [#uses=2]
 

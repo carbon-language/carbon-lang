@@ -1,9 +1,22 @@
-; RUN: llc < %s -march=arm | grep bl.*baz | count 1
-; RUN: llc < %s -march=arm | grep bl.*quux | count 1
-; RUN: llc < %s -march=arm -enable-tail-merge=0 | grep bl.*baz | count 2
-; RUN: llc < %s -march=arm -enable-tail-merge=0 | grep bl.*quux | count 2
-; Check that tail merging is the default on ARM, and that -enable-tail-merge=0 works.
+; RUN: llc < %s -march=arm | FileCheck %s
+; RUN: llc < %s -march=arm -enable-tail-merge=0 | \
+; RUN:   FileCheck --check-prefix=NOMERGE %s
+
+; Check that tail merging is the default on ARM, and that -enable-tail-merge=0
+; works.
 ; PR1628
+
+; CHECK: bl _baz
+; CHECK-NOT: bl _baz
+
+; CHECK: bl _quux
+; CHECK-NOT: bl _quux
+
+; NOMERGE: bl _baz
+; NOMERGE: bl _baz
+
+; NOMERGE: bl _quux
+; NOMERGE: bl _quux
 
 ; ModuleID = 'tail.c'
 target datalayout = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-f32:32:32-f64:32:64-v64:64:64-v128:128:128-a0:0:64"

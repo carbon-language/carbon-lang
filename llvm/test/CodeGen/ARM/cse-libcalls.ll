@@ -1,8 +1,12 @@
-; RUN: llc < %s -march=arm | grep "bl.*__ltdf" | count 1
+; RUN: llc < %s -march=arm | FileCheck %s
+
 target datalayout = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-f32:32:32-f64:32:64-v64:64:64-v128:128:128-a0:0:64-f80:128:128"
 target triple = "i386-apple-darwin8"
 
 ; Without CSE of libcalls, there are two calls in the output instead of one.
+
+; CHECK: bl ___ltdf
+; CHECK-NOT: bl ___ltdf
 
 define double @u_f_nonbon(double %lambda) nounwind {
 entry:

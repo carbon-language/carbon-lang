@@ -1,6 +1,11 @@
-; RUN: llc < %s -march=arm -enable-tail-merge | grep bl.*baz | count 1
-; RUN: llc < %s -march=arm -enable-tail-merge | grep bl.*quux | count 1
+; RUN: llc < %s -march=arm  | FileCheck %s
+
 ; Check that calls to baz and quux are tail-merged.
+; CHECK: bl _baz
+; CHECK-NOT: bl _baz
+; CHECK: bl _quux
+; CHECK-NOT: bl _quux
+
 ; PR1628
 
 ; ModuleID = 'tail.c'
