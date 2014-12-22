@@ -116,7 +116,10 @@ void ThreadContext::OnStarted(void *arg) {
   thr->fast_state.SetHistorySize(flags()->history_size);
   const uptr trace = (epoch0 / kTracePartSize) % TraceParts();
   Trace *thr_trace = ThreadTrace(thr->tid);
-  thr_trace->headers[trace].epoch0 = epoch0;
+  TraceHeader *hdr = &thr_trace->headers[trace];
+  hdr->epoch0 = epoch0;
+  ObtainCurrentStack(thr, 0, &hdr->stack0);
+  hdr->mset0 = thr->mset;
   StatInc(thr, StatSyncAcquire);
   sync.Reset(&thr->clock_cache);
   DPrintf("#%d: ThreadStart epoch=%zu stk_addr=%zx stk_size=%zx "
