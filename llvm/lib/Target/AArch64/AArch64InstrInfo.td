@@ -657,6 +657,10 @@ def : Pat<(i32 (ineg (mul GPR32:$Rn, GPR32:$Rm))),
           (MSUBWrrr GPR32:$Rn, GPR32:$Rm, WZR)>;
 def : Pat<(i64 (ineg (mul GPR64:$Rn, GPR64:$Rm))),
           (MSUBXrrr GPR64:$Rn, GPR64:$Rm, XZR)>;
+def : Pat<(i32 (mul (ineg GPR32:$Rn), GPR32:$Rm)),
+          (MSUBWrrr GPR32:$Rn, GPR32:$Rm, WZR)>;
+def : Pat<(i64 (mul (ineg GPR64:$Rn), GPR64:$Rm)),
+          (MSUBXrrr GPR64:$Rn, GPR64:$Rm, XZR)>;
 } // AddedComplexity = 7
 
 let AddedComplexity = 5 in {
