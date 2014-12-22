@@ -544,7 +544,7 @@ bool llvm::UnrollLoop(Loop *L, unsigned Count, unsigned TripCount,
         while (OuterL->getParentLoop() != LatchLoop)
           OuterL = OuterL->getParentLoop();
 
-      formLCSSARecursively(*OuterL, *DT, SE);
+      formLCSSARecursively(*OuterL, *DT, LI, SE);
     }
   }
 

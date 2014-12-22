@@ -1,11 +1,11 @@
-; RUN: opt < %s -lcssa -verify-loop-info -verify-dom-info -disable-output
-; PR5437
+; RUN: opt < %s -loop-simplify -lcssa -verify-loop-info -verify-dom-info -S | FileCheck %s
 
 ; LCSSA should work correctly in the case of an indirectbr that exits
 ; the loop, and the loop has exits with predecessors not within the loop
 ; (and btw these edges are unsplittable due to the indirectbr).
-
-define i32 @js_Interpret() nounwind {
+; PR5437
+define i32 @test0() nounwind {
+; CHECK-LABEL: @test0
 entry:
   br i1 undef, label %"4", label %"3"
 
@@ -539,4 +539,36 @@ entry:
 
 "1862":                                           ; preds = %"1836", %"692"
   unreachable
+}
+
+; An exit for Loop L1 may be the header of a disjoint Loop L2.  Thus, when we
+; create PHIs in one of such exits we are also inserting PHIs in L2 header. This
+; could break LCSSA form for L2 because these inserted PHIs can also have uses
+; in L2 exits. Test that we don't assert/crash on that.
+define void @test1() {
+; CHECK-LABEL: @test1
+  br label %lab1
+
+lab1:
+  %tmp21 = add i32 undef, 677038203
+  br i1 undef, label %lab2, label %exit
+
+lab2:
+  indirectbr i8* undef, [label %lab1, label %lab3]
+
+lab3:
+; CHECK: %tmp21.lcssa1 = phi i32 [ %tmp21.lcssa1, %lab4 ], [ %tmp21, %lab2 ]
+  %tmp12 = phi i32 [ %tmp21, %lab2 ], [ %tmp12, %lab4 ]
+  br i1 undef, label %lab5, label %lab4
+
+lab4:
+  br label %lab3
+
+lab5:
+; CHECK:  %tmp21.lcssa1.lcssa = phi i32 [ %tmp21.lcssa1, %lab3 ]
+  %tmp15 = add i32 %tmp12, undef
+  br label %exit
+
+exit:
+  ret void
 }
