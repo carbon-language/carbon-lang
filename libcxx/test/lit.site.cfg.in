@@ -11,7 +11,7 @@ config.enable_32bit             = "@LIBCXX_BUILD_32_BITS@"
 config.enable_threads           = "@LIBCXX_ENABLE_THREADS@"
 config.enable_monotonic_clock   = "@LIBCXX_ENABLE_MONOTONIC_CLOCK@"
 config.cxx_abi                  = "@LIBCXX_CXX_ABI_LIBNAME@"
-config.llvm_use_sanitizer       = "@LLVM_USE_SANITIZER@"
+config.use_sanitizer            = "@LLVM_USE_SANITIZER@"
 config.abi_library_path         = "@LIBCXX_CXX_ABI_LIBRARY_PATH@"
 
 # Let the main config do the real work.
