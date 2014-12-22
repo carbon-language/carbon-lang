@@ -27,7 +27,6 @@
 #include <stdio.h>
 #include <wchar.h>
 #include <math.h>
-#include <malloc.h>
 
 #include <arpa/inet.h>
 #include <dlfcn.h>
@@ -43,19 +42,25 @@
 #include <sys/resource.h>
 #include <sys/ioctl.h>
 #include <sys/statvfs.h>
-#include <sys/sysinfo.h>
 #include <sys/utsname.h>
 #include <sys/mman.h>
-#include <sys/vfs.h>
 #include <dirent.h>
 #include <pwd.h>
 #include <sys/socket.h>
 #include <netdb.h>
 #include <wordexp.h>
-#include <mntent.h>
-#include <netinet/ether.h>
 #include <sys/ipc.h>
 #include <sys/shm.h>
+
+#if !defined(__FreeBSD__)
+# include <malloc.h>
+# include <sys/sysinfo.h>
+# include <sys/vfs.h>
+# include <mntent.h>
+# include <netinet/ether.h>
+#else
+# include <netinet/in.h>
+#endif
 
 #if defined(__i386__) || defined(__x86_64__)
 # include <emmintrin.h>
@@ -973,7 +978,6 @@ TEST(MemorySanitizer, recvmsg) {
   ASSERT_EQ(0, res);
   ASSERT_EQ(sizeof(client_sai), sz);
 
-  
   const char *s = "message text";
   struct iovec iov;
   iov.iov_base = (void *)s;
