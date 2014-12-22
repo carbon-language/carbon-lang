@@ -32,7 +32,6 @@
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/Path.h"
 #include <cctype>
-#include <unordered_map>
 using namespace llvm;
 
 namespace {
