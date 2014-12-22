@@ -158,6 +158,16 @@ public:
   }
 };
 
+/// Describes a register that needs to be forwarded from the prologue to a
+/// musttail call.
+struct ForwardedRegister {
+  ForwardedRegister(unsigned VReg, MCPhysReg PReg, MVT VT)
+      : VReg(VReg), PReg(PReg), VT(VT) {}
+  unsigned VReg;
+  MCPhysReg PReg;
+  MVT VT;
+};
+
 /// CCAssignFn - This function assigns a location for Val, updating State to
 /// reflect the change.  It returns 'true' if it failed to handle Val.
 typedef bool CCAssignFn(unsigned ValNo, MVT ValVT,
@@ -469,6 +479,19 @@ public:
   SmallVectorImpl<llvm::CCValAssign> &getPendingLocs() {
     return PendingLocs;
   }
+
+  /// Compute the remaining unused register parameters that would be used for
+  /// the given value type. This is useful when varargs are passed in the
+  /// registers that normal prototyped parameters would be passed in, or for
+  /// implementing perfect forwarding.
+  void getRemainingRegParmsForType(SmallVectorImpl<MCPhysReg> &Regs, MVT VT,
+                                   CCAssignFn Fn);
+
+  /// Compute the set of registers that need to be preserved and forwarded to
+  /// any musttail calls.
+  void analyzeMustTailForwardedRegisters(
+      SmallVectorImpl<ForwardedRegister> &Forwards, ArrayRef<MVT> RegParmTypes,
+      CCAssignFn Fn);
 
 private:
   /// MarkAllocated - Mark a register and all of its aliases as allocated.

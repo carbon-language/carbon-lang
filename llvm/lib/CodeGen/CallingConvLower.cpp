@@ -14,9 +14,11 @@
 
 #include "llvm/CodeGen/CallingConvLower.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
+#include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/SaveAndRestore.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/Target/TargetRegisterInfo.h"
@@ -176,5 +178,59 @@ void CCState::AnalyzeCallResult(MVT VT, CCAssignFn Fn) {
            << EVT(VT).getEVTString() << '\n';
 #endif
     llvm_unreachable(nullptr);
+  }
+}
+
+void CCState::getRemainingRegParmsForType(SmallVectorImpl<MCPhysReg> &Regs,
+                                          MVT VT, CCAssignFn Fn) {
+  unsigned SavedStackOffset = StackOffset;
+  unsigned NumLocs = Locs.size();
+
+  // Allocate something of this value type repeatedly with just the inreg flag
+  // set until we get assigned a location in memory.
+  ISD::ArgFlagsTy Flags;
+  Flags.setInReg();
+  bool HaveRegParm = true;
+  while (HaveRegParm) {
+    if (Fn(0, VT, VT, CCValAssign::Full, Flags, *this)) {
+#ifndef NDEBUG
+      dbgs() << "Call has unhandled type " << EVT(VT).getEVTString()
+             << " while computing remaining regparms\n";
+#endif
+      llvm_unreachable(nullptr);
+    }
+    HaveRegParm = Locs.back().isRegLoc();
+  }
+
+  // Copy all the registers from the value locations we added.
+  assert(NumLocs < Locs.size() && "CC assignment failed to add location");
+  for (unsigned I = NumLocs, E = Locs.size(); I != E; ++I)
+    if (Locs[I].isRegLoc())
+      Regs.push_back(MCPhysReg(Locs[I].getLocReg()));
+
+  // Clear the assigned values and stack memory. We leave the registers marked
+  // as allocated so that future queries don't return the same registers, i.e.
+  // when i64 and f64 are both passed in GPRs.
+  StackOffset = SavedStackOffset;
+  Locs.resize(NumLocs);
+}
+
+void CCState::analyzeMustTailForwardedRegisters(
+    SmallVectorImpl<ForwardedRegister> &Forwards, ArrayRef<MVT> RegParmTypes,
+    CCAssignFn Fn) {
+  // Oftentimes calling conventions will not user register parameters for
+  // variadic functions, so we need to assume we're not variadic so that we get
+  // all the registers that might be used in a non-variadic call.
+  SaveAndRestore<bool> SavedVarArg(IsVarArg, false);
+
+  for (MVT RegVT : RegParmTypes) {
+    SmallVector<MCPhysReg, 8> RemainingRegs;
+    getRemainingRegParmsForType(RemainingRegs, RegVT, Fn);
+    const TargetLowering *TL = MF.getSubtarget().getTargetLowering();
+    const TargetRegisterClass *RC = TL->getRegClassFor(RegVT);
+    for (MCPhysReg PReg : RemainingRegs) {
+      unsigned VReg = MF.addLiveIn(PReg, RC);
+      Forwards.push_back(ForwardedRegister(VReg, PReg, RegVT));
+    }
   }
 }

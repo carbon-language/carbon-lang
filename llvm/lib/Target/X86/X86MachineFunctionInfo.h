@@ -14,6 +14,7 @@
 #ifndef LLVM_LIB_TARGET_X86_X86MACHINEFUNCTIONINFO_H
 #define LLVM_LIB_TARGET_X86_X86MACHINEFUNCTIONINFO_H
 
+#include "llvm/CodeGen/CallingConvLower.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineValueType.h"
 #include <vector>
@@ -77,21 +78,10 @@ class X86MachineFunctionInfo : public MachineFunctionInfo {
   /// NumLocalDynamics - Number of local-dynamic TLS accesses.
   unsigned NumLocalDynamics;
 
-public:
-  /// Describes a register that needs to be forwarded from the prologue to a
-  /// musttail call.
-  struct Forward {
-    Forward(unsigned VReg, MCPhysReg PReg, MVT VT)
-        : VReg(VReg), PReg(PReg), VT(VT) {}
-    unsigned VReg;
-    MCPhysReg PReg;
-    MVT VT;
-  };
-
 private:
   /// ForwardedMustTailRegParms - A list of virtual and physical registers
   /// that must be forwarded to every musttail call.
-  std::vector<Forward> ForwardedMustTailRegParms;
+  SmallVector<ForwardedRegister, 1> ForwardedMustTailRegParms;
 
 public:
   X86MachineFunctionInfo() : ForceFramePointer(false),
@@ -168,7 +158,7 @@ public:
   unsigned getNumLocalDynamicTLSAccesses() const { return NumLocalDynamics; }
   void incNumLocalDynamicTLSAccesses() { ++NumLocalDynamics; }
 
-  std::vector<Forward> &getForwardedMustTailRegParms() {
+  SmallVectorImpl<ForwardedRegister> &getForwardedMustTailRegParms() {
     return ForwardedMustTailRegParms;
   }
 };
