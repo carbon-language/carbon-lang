@@ -13,25 +13,10 @@
 
 // template<class T, class... Args> shared_ptr<T> make_shared(Args&&... args);
 
-// UNSUPPORTED: asan, msan
-
 #include <memory>
-#include <new>
-#include <cstdlib>
 #include <cassert>
 
-int new_count = 0;
-
-void* operator new(std::size_t s) throw(std::bad_alloc)
-{
-    ++new_count;
-    return std::malloc(s);
-}
-
-void  operator delete(void* p) throw()
-{
-    std::free(p);
-}
+#include "count_new.hpp"
 
 struct A
 {
@@ -54,22 +39,22 @@ int A::count = 0;
 
 int main()
 {
-    int nc = new_count;
+    int nc = globalMemCounter.outstanding_new;
     {
     int i = 67;
     char c = 'e';
     std::shared_ptr<A> p = std::make_shared<A>(i, c);
-    assert(new_count == nc+1);
+    assert(globalMemCounter.checkOutstandingNewEq(nc+1));
     assert(A::count == 1);
     assert(p->get_int() == 67);
     assert(p->get_char() == 'e');
     }
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
-    nc = new_count;
+    nc = globalMemCounter.outstanding_new;
     {
     char c = 'e';
     std::shared_ptr<A> p = std::make_shared<A>(67, c);
-    assert(new_count == nc+1);
+    assert(globalMemCounter.checkOutstandingNewEq(nc+1));
     assert(A::count == 1);
     assert(p->get_int() == 67);
     assert(p->get_char() == 'e');

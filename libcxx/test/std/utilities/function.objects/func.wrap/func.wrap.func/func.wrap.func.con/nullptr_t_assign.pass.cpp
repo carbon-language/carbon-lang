@@ -13,26 +13,10 @@
 
 // function& operator=(nullptr_t);
 
-// UNSUPPORTED: asan, msan
-
 #include <functional>
-#include <new>
-#include <cstdlib>
 #include <cassert>
 
-int new_called = 0;
-
-void* operator new(std::size_t s) throw(std::bad_alloc)
-{
-    ++new_called;
-    return std::malloc(s);
-}
-
-void  operator delete(void* p) throw()
-{
-    --new_called;
-    std::free(p);
-}
+#include "count_new.hpp"
 
 class A
 {
@@ -65,24 +49,24 @@ int g(int) {return 0;}
 
 int main()
 {
-    assert(new_called == 0);
+    assert(globalMemCounter.checkOutstandingNewEq(0));
     {
     std::function<int(int)> f = A();
     assert(A::count == 1);
-    assert(new_called == 1);
+    assert(globalMemCounter.checkOutstandingNewEq(1));
     assert(f.target<A>());
     f = nullptr;
     assert(A::count == 0);
-    assert(new_called == 0);
+    assert(globalMemCounter.checkOutstandingNewEq(0));
     assert(f.target<A>() == 0);
     }
     {
     std::function<int(int)> f = g;
-    assert(new_called == 0);
+    assert(globalMemCounter.checkOutstandingNewEq(0));
     assert(f.target<int(*)(int)>());
     assert(f.target<A>() == 0);
     f = nullptr;
-    assert(new_called == 0);
+    assert(globalMemCounter.checkOutstandingNewEq(0));
     assert(f.target<int(*)(int)>() == 0);
     }
 }

@@ -13,26 +13,11 @@
 
 // template<class A> function(allocator_arg_t, const A&, function&&);
 
-// UNSUPPORTED: asan, msan
-
 #include <functional>
 #include <cassert>
 
 #include "test_allocator.h"
-
-int new_called = 0;
-
-void* operator new(std::size_t s) throw(std::bad_alloc)
-{
-    ++new_called;
-    return std::malloc(s);
-}
-
-void  operator delete(void* p) throw()
-{
-    --new_called;
-    std::free(p);
-}
+#include "count_new.hpp"
 
 class A
 {
@@ -64,16 +49,16 @@ int A::count = 0;
 int main()
 {
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
-    assert(new_called == 0);
+    assert(globalMemCounter.checkOutstandingNewEq(0));
     {
     std::function<int(int)> f = A();
     assert(A::count == 1);
-    assert(new_called == 1);
+    assert(globalMemCounter.checkOutstandingNewEq(1));
     assert(f.target<A>());
     assert(f.target<int(*)(int)>() == 0);
     std::function<int(int)> f2(std::allocator_arg, test_allocator<A>(), std::move(f));
     assert(A::count == 1);
-    assert(new_called == 1);
+    assert(globalMemCounter.checkOutstandingNewEq(1));
     assert(f2.target<A>());
     assert(f2.target<int(*)(int)>() == 0);
     assert(f.target<A>() == 0);

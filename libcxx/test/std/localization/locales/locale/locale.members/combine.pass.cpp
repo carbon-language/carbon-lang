@@ -11,25 +11,10 @@
 
 // template <class Facet> locale combine(const locale& other) const;
 
-// UNSUPPORTED: asan, msan
-
 #include <locale>
-#include <new>
 #include <cassert>
 
-int new_called = 0;
-
-void* operator new(std::size_t s) throw(std::bad_alloc)
-{
-    ++new_called;
-    return std::malloc(s);
-}
-
-void  operator delete(void* p) throw()
-{
-    --new_called;
-    std::free(p);
-}
+#include "count_new.hpp"
 
 void check(const std::locale& loc)
 {
@@ -89,7 +74,7 @@ int main()
         const my_facet& f = std::use_facet<my_facet>(loc3);
         assert(f.test() == 5);
     }
-    assert(new_called == 0);
+    assert(globalMemCounter.checkOutstandingNewEq(0));
 }
 {
     {
@@ -104,6 +89,6 @@ int main()
         {
         }
     }
-    assert(new_called == 0);
+    assert(globalMemCounter.checkOutstandingNewEq(0));
 }
 }

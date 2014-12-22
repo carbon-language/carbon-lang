@@ -12,27 +12,10 @@
 // allocator:
 // template <class... Args> void construct(pointer p, Args&&... args);
 
-// UNSUPPORTED: asan, msan
-
 #include <memory>
-#include <new>
-#include <cstdlib>
 #include <cassert>
 
-int new_called = 0;
-
-void* operator new(std::size_t s) throw(std::bad_alloc)
-{
-    ++new_called;
-    assert(s == 3 * sizeof(int));
-    return std::malloc(s);
-}
-
-void  operator delete(void* p) throw()
-{
-    --new_called;
-    std::free(p);
-}
+#include "count_new.hpp"
 
 int A_constructed = 0;
 
@@ -80,76 +63,80 @@ int main()
 {
     {
     std::allocator<A> a;
-    assert(new_called == 0);
+    assert(globalMemCounter.checkOutstandingNewEq(0));
     assert(A_constructed == 0);
 
+    globalMemCounter.last_new_size = 0;
     A* ap = a.allocate(3);
-    assert(new_called == 1);
+    assert(globalMemCounter.checkOutstandingNewEq(1));
+    assert(globalMemCounter.checkLastNewSizeEq(3 * sizeof(int)));
     assert(A_constructed == 0);
 
     a.construct(ap);
-    assert(new_called == 1);
+    assert(globalMemCounter.checkOutstandingNewEq(1));
     assert(A_constructed == 1);
 
     a.destroy(ap);
-    assert(new_called == 1);
+    assert(globalMemCounter.checkOutstandingNewEq(1));
     assert(A_constructed == 0);
 
     a.construct(ap, A());
-    assert(new_called == 1);
+    assert(globalMemCounter.checkOutstandingNewEq(1));
     assert(A_constructed == 1);
 
     a.destroy(ap);
-    assert(new_called == 1);
+    assert(globalMemCounter.checkOutstandingNewEq(1));
     assert(A_constructed == 0);
 
     a.construct(ap, 5);
-    assert(new_called == 1);
+    assert(globalMemCounter.checkOutstandingNewEq(1));
     assert(A_constructed == 1);
 
     a.destroy(ap);
-    assert(new_called == 1);
+    assert(globalMemCounter.checkOutstandingNewEq(1));
     assert(A_constructed == 0);
 
     a.construct(ap, 5, (int*)0);
-    assert(new_called == 1);
+    assert(globalMemCounter.checkOutstandingNewEq(1));
     assert(A_constructed == 1);
 
     a.destroy(ap);
-    assert(new_called == 1);
+    assert(globalMemCounter.checkOutstandingNewEq(1));
     assert(A_constructed == 0);
 
     a.deallocate(ap, 3);
-    assert(new_called == 0);
+    assert(globalMemCounter.checkOutstandingNewEq(0));
     assert(A_constructed == 0);
     }
     {
     std::allocator<move_only> a;
-    assert(new_called == 0);
+    assert(globalMemCounter.checkOutstandingNewEq(0));
     assert(move_only_constructed == 0);
 
+    globalMemCounter.last_new_size = 0;
     move_only* ap = a.allocate(3);
-    assert(new_called == 1);
+    assert(globalMemCounter.checkOutstandingNewEq(1));
+    assert(globalMemCounter.checkLastNewSizeEq(3 * sizeof(int)));
     assert(move_only_constructed == 0);
 
     a.construct(ap);
-    assert(new_called == 1);
+    assert(globalMemCounter.checkOutstandingNewEq(1));
     assert(move_only_constructed == 1);
 
     a.destroy(ap);
-    assert(new_called == 1);
+    assert(globalMemCounter.checkOutstandingNewEq(1));
     assert(move_only_constructed == 0);
 
     a.construct(ap, move_only());
-    assert(new_called == 1);
+    assert(globalMemCounter.checkOutstandingNewEq(1));
     assert(move_only_constructed == 1);
 
     a.destroy(ap);
-    assert(new_called == 1);
+    assert(globalMemCounter.checkOutstandingNewEq(1));
     assert(move_only_constructed == 0);
 
     a.deallocate(ap, 3);
-    assert(new_called == 0);
+    assert(globalMemCounter.checkOutstandingNewEq(0));
     assert(move_only_constructed == 0);
     }
 }

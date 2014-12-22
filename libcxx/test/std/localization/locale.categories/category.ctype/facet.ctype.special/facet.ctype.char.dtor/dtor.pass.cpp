@@ -13,45 +13,28 @@
 
 // ~ctype();
 
-// UNSUPPORTED: asan, msan
-
 #include <locale>
 #include <cassert>
-#include <new>
 
-unsigned delete_called = 0;
-
-void* operator new[](size_t sz) throw(std::bad_alloc)
-{
-    return operator new(sz);
-}
-
-void operator delete[](void* p) throw()
-{
-    operator delete(p);
-    ++delete_called;
-}
+#include "count_new.hpp"
 
 int main()
 {
     {
-        delete_called = 0;
         std::locale l(std::locale::classic(), new std::ctype<char>);
-        assert(delete_called == 0);
+        assert(globalMemCounter.checkDeleteArrayCalledEq(0));
     }
-    assert(delete_called == 0);
+    assert(globalMemCounter.checkDeleteArrayCalledEq(0));
     {
         std::ctype<char>::mask table[256];
-        delete_called = 0;
         std::locale l(std::locale::classic(), new std::ctype<char>(table));
-        assert(delete_called == 0);
+        assert(globalMemCounter.checkDeleteArrayCalledEq(0));
     }
-    assert(delete_called == 0);
+    assert(globalMemCounter.checkDeleteArrayCalledEq(0));
     {
-        delete_called = 0;
         std::locale l(std::locale::classic(),
             new std::ctype<char>(new std::ctype<char>::mask[256], true));
-        assert(delete_called == 0);
+        assert(globalMemCounter.checkDeleteArrayCalledEq(0));
     }
-    assert(delete_called == 1);
+    assert(globalMemCounter.checkDeleteArrayCalledEq(1));
 }

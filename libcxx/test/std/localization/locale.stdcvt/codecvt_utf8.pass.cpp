@@ -17,43 +17,26 @@
 //     // unspecified
 // };
 
-// UNSUPPORTED: asan, msan
-
 // Not a portable test
 
 #include <codecvt>
 #include <cstdlib>
 #include <cassert>
 
-int outstanding_news = 0;
-
-void* operator new(std::size_t s) throw(std::bad_alloc)
-{
-    ++outstanding_news;
-    return std::malloc(s);
-}
-
-void  operator delete(void* p) throw()
-{
-    if (p)
-    {
-        --outstanding_news;
-        std::free(p);
-    }
-}
+#include "count_new.hpp"
 
 int main()
 {
-    assert(outstanding_news == 0);
+    assert(globalMemCounter.checkOutstandingNewEq(0));
     {
         typedef std::codecvt_utf8<wchar_t> C;
         C c;
-        assert(outstanding_news == 0);
+        assert(globalMemCounter.checkOutstandingNewEq(0));
     }
     {
         typedef std::codecvt_utf8<wchar_t> C;
         std::locale loc(std::locale::classic(), new C);
-        assert(outstanding_news != 0);
+        assert(globalMemCounter.checkOutstandingNewNotEq(0));
     }
-    assert(outstanding_news == 0);
+    assert(globalMemCounter.checkOutstandingNewEq(0));
 }

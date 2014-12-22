@@ -11,27 +11,11 @@
 
 // locale() throw();
 
-// UNSUPPORTED: asan, msan
-
 #include <locale>
-#include <new>
 #include <cassert>
 
 #include "platform_support.h" // locale name macros
-
-int new_called = 0;
-
-void* operator new(std::size_t s) throw(std::bad_alloc)
-{
-    ++new_called;
-    return std::malloc(s);
-}
-
-void  operator delete(void* p) throw()
-{
-    --new_called;
-    std::free(p);
-}
+#include "count_new.hpp"
 
 void check(const std::locale& loc)
 {
@@ -73,19 +57,19 @@ int main()
     int ok;
     {
         std::locale loc;
-        assert(new_called == 0);
+        assert(globalMemCounter.checkOutstandingNewEq(0));
         assert(loc.name() == "C");
-        assert(new_called == 0);
+        assert(globalMemCounter.checkOutstandingNewEq(0));
         check(loc);
-        assert(new_called == 0);
+        assert(globalMemCounter.checkOutstandingNewEq(0));
         assert(std::locale::global(std::locale(LOCALE_en_US_UTF_8)) == loc);
-        ok = new_called;
+        ok = globalMemCounter.outstanding_new;
         std::locale loc2;
-        assert(new_called == ok);
+        assert(globalMemCounter.checkOutstandingNewEq(ok));
         check(loc2);
-        assert(new_called == ok);
+        assert(globalMemCounter.checkOutstandingNewEq(ok));
         assert(loc2 == std::locale(LOCALE_en_US_UTF_8));
-        assert(new_called == ok);
+        assert(globalMemCounter.checkOutstandingNewEq(ok));
     }
-    assert(new_called == ok);
+    assert(globalMemCounter.checkOutstandingNewEq(ok));
 }
