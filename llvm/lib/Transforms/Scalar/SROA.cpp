@@ -953,6 +953,10 @@ class SROA : public FunctionPass {
   /// currently in the promotable queue.
   SetVector<SelectInst *, SmallVector<SelectInst *, 2>> SpeculatableSelects;
 
+  /// Debug intrinsics do not show up as regular uses in the
+  /// IR. This side-table holds the missing use edges.
+  DenseMap<AllocaInst *, DbgDeclareInst *> DbgDeclares;
+
 public:
   SROA(bool RequiresDomTree = true)
       : FunctionPass(ID), RequiresDomTree(RequiresDomTree), C(nullptr),
@@ -3230,6 +3234,27 @@ bool SROA::rewritePartition(AllocaInst &AI, AllocaSlices &AS,
         new AllocaInst(SliceTy, nullptr, Alignment,
                        AI.getName() + ".sroa." + Twine(B - AS.begin()), &AI);
     ++NumNewAllocas;
+
+    // Migrate debug information from the old alloca to the new alloca
+    // and the individial slices.
+    if (DbgDeclareInst *DbgDecl = DbgDeclares.lookup(&AI)) {
+      DIVariable Var(DbgDecl->getVariable());
+      DIExpression Piece;
+      DIBuilder DIB(*AI.getParent()->getParent()->getParent(),
+                    /*AllowUnresolved*/ false);
+      // Create a piece expression describing the slice, if the new slize is
+      // smaller than the old alloca or the old alloca already was described
+      // with a piece. It would be even better to just compare against the size
+      // of the type described in the debug info, but then we would need to
+      // build an expensive DIRefMap.
+      if (SliceSize < DL->getTypeAllocSize(AI.getAllocatedType()) ||
+          DIExpression(DbgDecl->getExpression()).isVariablePiece())
+        Piece = DIB.createPieceExpression(BeginOffset, SliceSize);
+      Instruction *NewDDI = DIB.insertDeclare(NewAI, Var, Piece, &AI);
+      NewDDI->setDebugLoc(DbgDecl->getDebugLoc());
+      DbgDeclares.insert(std::make_pair(NewAI, cast<DbgDeclareInst>(NewDDI)));
+      DeadInsts.insert(DbgDecl);
+    }
   }
 
   DEBUG(dbgs() << "Rewriting alloca partition "
@@ -3680,9 +3705,13 @@ bool SROA::runOnFunction(Function &F) {
 
   BasicBlock &EntryBB = F.getEntryBlock();
   for (BasicBlock::iterator I = EntryBB.begin(), E = std::prev(EntryBB.end());
-       I != E; ++I)
+       I != E; ++I) {
     if (AllocaInst *AI = dyn_cast<AllocaInst>(I))
       Worklist.insert(AI);
+    else if (DbgDeclareInst *DDI = dyn_cast<DbgDeclareInst>(I))
+      if (auto AI = dyn_cast_or_null<AllocaInst>(DDI->getAddress()))
+        DbgDeclares.insert(std::make_pair(AI, DDI));
+  }
 
   bool Changed = false;
   // A set of deleted alloca instruction pointers which should be removed from
