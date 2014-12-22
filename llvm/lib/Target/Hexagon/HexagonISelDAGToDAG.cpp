@@ -612,7 +612,7 @@ SDNode *HexagonDAGToDAGISel::SelectIndexedLoad(LoadSDNode *LD, SDLoc dl) {
     if (TII->isValidAutoIncImm(LoadedVT, Val))
       Opcode = zextval ? Hexagon::POST_LDriub : Hexagon::POST_LDrib;
     else
-      Opcode = zextval ? Hexagon::LDriub : Hexagon::LDrib;
+      Opcode = zextval ? Hexagon::L2_loadrub_io : Hexagon::LDrib;
   } else
     llvm_unreachable("unknown memory type");
 

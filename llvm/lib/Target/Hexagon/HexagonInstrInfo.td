@@ -1451,6 +1451,101 @@ def: Pat<(brind (i32 IntRegs:$dst)),
 //===----------------------------------------------------------------------===//
 // LD +
 //===----------------------------------------------------------------------===//
+let isExtendable = 1, opExtendable = 2, isExtentSigned = 1, AddedComplexity = 20 in
+class T_load_io <string mnemonic, RegisterClass RC, bits<4> MajOp,
+                 Operand ImmOp>
+  : LDInst<(outs RC:$dst), (ins IntRegs:$src1, ImmOp:$offset),
+  "$dst = "#mnemonic#"($src1 + #$offset)", []>, AddrModeRel {
+    bits<4> name;
+    bits<5> dst;
+    bits<5> src1;
+    bits<14> offset;
+    bits<11> offsetBits;
+
+    string ImmOpStr = !cast<string>(ImmOp);
+    let offsetBits = !if (!eq(ImmOpStr, "s11_3Ext"), offset{13-3},
+                     !if (!eq(ImmOpStr, "s11_2Ext"), offset{12-2},
+                     !if (!eq(ImmOpStr, "s11_1Ext"), offset{11-1},
+                                      /* s11_0Ext */ offset{10-0})));
+    let opExtentBits = !if (!eq(ImmOpStr, "s11_3Ext"), 14,
+                       !if (!eq(ImmOpStr, "s11_2Ext"), 13,
+                       !if (!eq(ImmOpStr, "s11_1Ext"), 12,
+                                        /* s11_0Ext */ 11)));
+    let hasNewValue = !if (!eq(ImmOpStr, "s11_3Ext"), 0, 1);
+
+    let IClass = 0b1001;
+
+    let Inst{27}    = 0b0;
+    let Inst{26-25} = offsetBits{10-9};
+    let Inst{24-21} = MajOp;
+    let Inst{20-16} = src1;
+    let Inst{13-5}  = offsetBits{8-0};
+    let Inst{4-0}   = dst;
+  }
+
+let opExtendable = 3, isExtentSigned = 0, isPredicated = 1 in
+class T_pload_io <string mnemonic, RegisterClass RC, bits<4>MajOp,
+                  Operand ImmOp, bit isNot, bit isPredNew>
+  : LDInst<(outs RC:$dst),
+           (ins PredRegs:$src1, IntRegs:$src2, ImmOp:$offset),
+  "if ("#!if(isNot, "!$src1", "$src1")
+       #!if(isPredNew, ".new", "")
+       #") $dst = "#mnemonic#"($src2 + #$offset)",
+  [],"", V2LDST_tc_ld_SLOT01> , AddrModeRel {
+    bits<5> dst;
+    bits<2> src1;
+    bits<5> src2;
+    bits<9> offset;
+    bits<6> offsetBits;
+    string ImmOpStr = !cast<string>(ImmOp);
+
+    let offsetBits = !if (!eq(ImmOpStr, "u6_3Ext"), offset{8-3},
+                     !if (!eq(ImmOpStr, "u6_2Ext"), offset{7-2},
+                     !if (!eq(ImmOpStr, "u6_1Ext"), offset{6-1},
+                                      /* u6_0Ext */ offset{5-0})));
+    let opExtentBits = !if (!eq(ImmOpStr, "u6_3Ext"), 9,
+                       !if (!eq(ImmOpStr, "u6_2Ext"), 8,
+                       !if (!eq(ImmOpStr, "u6_1Ext"), 7,
+                                        /* u6_0Ext */ 6)));
+    let hasNewValue = !if (!eq(ImmOpStr, "u6_3Ext"), 0, 1);
+    let isPredicatedNew = isPredNew;
+    let isPredicatedFalse = isNot;
+
+    let IClass = 0b0100;
+
+    let Inst{27}    = 0b0;
+    let Inst{27}    = 0b0;
+    let Inst{26}    = isNot;
+    let Inst{25}    = isPredNew;
+    let Inst{24-21} = MajOp;
+    let Inst{20-16} = src2;
+    let Inst{13}    = 0b0;
+    let Inst{12-11} = src1;
+    let Inst{10-5}  = offsetBits;
+    let Inst{4-0}   = dst;
+  }
+
+let isExtendable = 1, hasSideEffects = 0, addrMode = BaseImmOffset in
+multiclass LD_Idxd<string mnemonic, string CextOp, RegisterClass RC,
+                   Operand ImmOp, Operand predImmOp, bits<4>MajOp> {
+  let CextOpcode = CextOp, BaseOpcode = CextOp#_indexed in {
+    let isPredicable = 1 in
+    def L2_#NAME#_io : T_load_io <mnemonic, RC, MajOp, ImmOp>;
+
+    // Predicated
+    def L2_p#NAME#t_io : T_pload_io <mnemonic, RC, MajOp, predImmOp, 0, 0>;
+    def L2_p#NAME#f_io : T_pload_io <mnemonic, RC, MajOp, predImmOp, 1, 0>;
+
+    // Predicated new
+    def L2_p#NAME#tnew_io : T_pload_io <mnemonic, RC, MajOp, predImmOp, 0, 1>;
+    def L2_p#NAME#fnew_io : T_pload_io <mnemonic, RC, MajOp, predImmOp, 1, 1>;
+  }
+}
+
+let accessSize = ByteAccess, isCodeGenOnly = 0 in {
+  defm loadrub: LD_Idxd <"memub", "LDriub", IntRegs, s11_0Ext, u6_0Ext, 0b1001>;
+}
+
 ///
 // Load -- MEMri operand
 multiclass LD_MEMri_Pbase<string mnemonic, RegisterClass RC,
@@ -1493,7 +1588,6 @@ multiclass LD_MEMri<string mnemonic, string CextOp, RegisterClass RC,
 let addrMode = BaseImmOffset, isMEMri = "true" in {
   let accessSize = ByteAccess in {
     defm LDrib: LD_MEMri < "memb", "LDrib", IntRegs, 11, 6>, AddrModeRel;
-    defm LDriub: LD_MEMri < "memub" , "LDriub", IntRegs, 11, 6>, AddrModeRel;
  }
 
   let accessSize = HalfWordAccess in {
@@ -1512,7 +1606,7 @@ def : Pat < (i32 (sextloadi8 ADDRriS11_0:$addr)),
             (LDrib ADDRriS11_0:$addr) >;
 
 def : Pat < (i32 (zextloadi8 ADDRriS11_0:$addr)),
-            (LDriub ADDRriS11_0:$addr) >;
+            (L2_loadrub_io AddrFI:$addr, 0) >;
 
 def : Pat < (i32 (sextloadi16 ADDRriS11_1:$addr)),
             (LDrih ADDRriS11_1:$addr) >;
@@ -1571,8 +1665,6 @@ let addrMode = BaseImmOffset in {
   let accessSize = ByteAccess in {
     defm LDrib_indexed: LD_Idxd2 <"memb", "LDrib", IntRegs, s11_0Ext, u6_0Ext,
                                   11, 6>, AddrModeRel;
-    defm LDriub_indexed: LD_Idxd2 <"memub" , "LDriub", IntRegs, s11_0Ext, u6_0Ext,
-                                   11, 6>, AddrModeRel;
   }
   let accessSize = HalfWordAccess in {
     defm LDrih_indexed: LD_Idxd2 <"memh", "LDrih", IntRegs, s11_1Ext, u6_1Ext,
@@ -1594,7 +1686,7 @@ def : Pat < (i32 (sextloadi8 (add IntRegs:$src1, s11_0ExtPred:$offset))),
             (LDrib_indexed IntRegs:$src1, s11_0ExtPred:$offset) >;
 
 def : Pat < (i32 (zextloadi8 (add IntRegs:$src1, s11_0ExtPred:$offset))),
-            (LDriub_indexed IntRegs:$src1, s11_0ExtPred:$offset) >;
+            (L2_loadrub_io IntRegs:$src1, s11_0ExtPred:$offset) >;
 
 def : Pat < (i32 (sextloadi16 (add IntRegs:$src1, s11_1ExtPred:$offset))),
             (LDrih_indexed IntRegs:$src1, s11_1ExtPred:$offset) >;
@@ -1688,11 +1780,11 @@ def : Pat < (i32 (extloadi16 (add IntRegs:$src1, s11_1ImmPred:$offset))),
 
 let AddedComplexity = 10 in
 def : Pat < (i32 (zextloadi1 ADDRriS11_0:$addr)),
-            (i32 (LDriub ADDRriS11_0:$addr))>;
+            (i32 (L2_loadrub_io AddrFI:$addr, 0))>;
 
 let AddedComplexity = 20 in
 def : Pat < (i32 (zextloadi1 (add IntRegs:$src1, s11_0ImmPred:$offset))),
-            (i32 (LDriub_indexed IntRegs:$src1, s11_0ImmPred:$offset))>;
+            (i32 (L2_loadrub_io IntRegs:$src1, s11_0ImmPred:$offset))>;
 
 // Load predicate.
 let isExtendable = 1, opExtendable = 2, isExtentSigned = 1, opExtentBits = 13,
@@ -3569,10 +3661,10 @@ def : Pat<(HexagonTCRet (i32 IntRegs:$dst)),
 // Atomic load and store support
 // 8 bit atomic load
 def : Pat<(atomic_load_8 ADDRriS11_0:$src1),
-          (i32 (LDriub ADDRriS11_0:$src1))>;
+          (i32 (L2_loadrub_io AddrFI:$src1, 0))>;
 
 def : Pat<(atomic_load_8 (add (i32 IntRegs:$src1), s11_0ImmPred:$offset)),
-          (i32 (LDriub_indexed (i32 IntRegs:$src1), s11_0ImmPred:$offset))>;
+          (i32 (L2_loadrub_io (i32 IntRegs:$src1), s11_0ImmPred:$offset))>;
 
 // 16 bit atomic load
 def : Pat<(atomic_load_16 ADDRriS11_1:$src1),
@@ -3675,7 +3767,7 @@ def : Pat <(and (i1 PredRegs:$src1), (not (i1 PredRegs:$src2))),
 let AddedComplexity = 100 in
 def : Pat <(i64 (zextloadi1 (HexagonCONST32 tglobaladdr:$global))),
       (i64 (A2_combinew (A2_tfrsi 0),
-                       (LDriub_indexed (CONST32_set tglobaladdr:$global), 0)))>,
+                       (L2_loadrub_io (CONST32_set tglobaladdr:$global), 0)))>,
       Requires<[NoV4T]>;
 
 // Map from i1 loads to 32 bits. This assumes that the i1* is byte aligned.
@@ -3969,25 +4061,25 @@ def : Pat <(i64 (zext (i32 IntRegs:$src1))),
 
 // i8 -> i64
 def:  Pat <(i64 (zextloadi8 ADDRriS11_0:$src1)),
-      (i64 (A2_combinew (A2_tfrsi 0), (LDriub ADDRriS11_0:$src1)))>,
+      (i64 (A2_combinew (A2_tfrsi 0), (L2_loadrub_io AddrFI:$src1, 0)))>,
       Requires<[NoV4T]>;
 
 let AddedComplexity = 20 in
 def:  Pat <(i64 (zextloadi8 (add (i32 IntRegs:$src1),
                                 s11_0ExtPred:$offset))),
-      (i64 (A2_combinew (A2_tfrsi 0), (LDriub_indexed IntRegs:$src1,
+      (i64 (A2_combinew (A2_tfrsi 0), (L2_loadrub_io IntRegs:$src1,
                                   s11_0ExtPred:$offset)))>,
       Requires<[NoV4T]>;
 
 // i1 -> i64
 def:  Pat <(i64 (zextloadi1 ADDRriS11_0:$src1)),
-      (i64 (A2_combinew (A2_tfrsi 0), (LDriub ADDRriS11_0:$src1)))>,
+      (i64 (A2_combinew (A2_tfrsi 0), (L2_loadrub_io AddrFI:$src1, 0)))>,
       Requires<[NoV4T]>;
 
 let AddedComplexity = 20 in
 def:  Pat <(i64 (zextloadi1 (add (i32 IntRegs:$src1),
                                 s11_0ExtPred:$offset))),
-      (i64 (A2_combinew (A2_tfrsi 0), (LDriub_indexed IntRegs:$src1,
+      (i64 (A2_combinew (A2_tfrsi 0), (L2_loadrub_io IntRegs:$src1,
                                   s11_0ExtPred:$offset)))>,
       Requires<[NoV4T]>;
 

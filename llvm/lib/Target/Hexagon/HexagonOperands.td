@@ -800,6 +800,12 @@ def u6_3ExtPred  : PatLeaf<(i32 imm), [{
   }
 }]>;
 
+
+// This complex pattern exists only to create a machine instruction operand
+// of type "frame index". There doesn't seem to be a way to do that directly
+// in the patterns.
+def AddrFI : ComplexPattern<i32, 1, "SelectAddrFI", [frameindex], []>;
+
 // Addressing modes.
 
 def ADDRrr : ComplexPattern<i32, 2, "SelectADDRrr", [], []>;
