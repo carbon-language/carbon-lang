@@ -2606,10 +2606,11 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
   // Check for ambiguous matchables.
   DEBUG_WITH_TYPE("ambiguous_instrs", {
     unsigned NumAmbiguous = 0;
-    for (unsigned i = 0, e = Info.Matchables.size(); i != e; ++i) {
-      for (unsigned j = i + 1; j != e; ++j) {
-        const MatchableInfo &A = *Info.Matchables[i];
-        const MatchableInfo &B = *Info.Matchables[j];
+    for (auto I = Info.Matchables.begin(), E = Info.Matchables.end(); I != E;
+         ++I) {
+      for (auto J = std::next(I); J != E; ++J) {
+        const MatchableInfo &A = **I;
+        const MatchableInfo &B = **J;
 
         if (A.couldMatchAmbiguouslyWith(B)) {
           errs() << "warning: ambiguous matchables:\n";
