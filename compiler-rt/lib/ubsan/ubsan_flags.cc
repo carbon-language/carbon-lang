@@ -22,9 +22,10 @@ static const char *MaybeCallUbsanDefaultOptions() {
 }
 
 void InitializeCommonFlags() {
-  CommonFlags *cf = common_flags();
   SetCommonFlagsDefaults();
-  cf->print_summary = false;
+  CommonFlags cf = *common_flags();
+  cf.print_summary = false;
+  OverrideCommonFlags(cf);
   // Override from user-specified string.
   ParseCommonFlagsFromString(MaybeCallUbsanDefaultOptions());
   // Override from environment variable.
