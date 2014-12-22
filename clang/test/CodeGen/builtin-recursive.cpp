@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -nostdsysteminc -nobuiltininc -isystem Inputs -emit-llvm-only %s
+// RUN: %clang_cc1 -nostdsysteminc -nobuiltininc -isystem %S/Inputs -emit-llvm-only %s
 
 // This used to cause a read past the end of a global variable.
 

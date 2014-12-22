@@ -41,7 +41,7 @@ namespace PR9325 {
 
   void f()
   {
-    Target<int*>* traits = &Provider<int*>::Instance;
+    Target<int*>* traits = &Provider<int*>::Instance; // expected-note{{requested here}}
   }
 }
 
@@ -60,7 +60,7 @@ namespace PR10020 {
   };
 
   template <typename Type>
-  GMG<Type> GMG<Type>::singleton;
+  GMG<Type> GMG<Type>::singleton; // expected-note{{requested here}}
 
   void test(void) {
     GMG<int>::Method(); // expected-note{{in instantiation of}}
