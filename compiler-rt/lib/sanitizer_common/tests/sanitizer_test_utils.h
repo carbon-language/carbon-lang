@@ -118,4 +118,10 @@ static inline uint32_t my_rand() {
 # define SANITIZER_TEST_HAS_STRNLEN 0
 #endif
 
+#if defined(__FreeBSD__)
+# define SANITIZER_TEST_HAS_PRINTF_L 1
+#else
+# define SANITIZER_TEST_HAS_PRINTF_L 0
+#endif
+
 #endif  // SANITIZER_TEST_UTILS_H

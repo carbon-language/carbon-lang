@@ -1284,3 +1284,33 @@ TEST(AddressSanitizer, pthread_getschedparam) {
   ASSERT_EQ(0, res);
 }
 #endif
+
+#if SANITIZER_TEST_HAS_PRINTF_L
+static int vsnprintf_l_wrapper(char *s, size_t n,
+                               locale_t l, const char *format, ...) {
+  va_list va;
+  va_start(va, format);
+  int res = vsnprintf_l(s, n , l, format, va);
+  va_end(va);
+  return res;
+}
+
+TEST(AddressSanitizer, snprintf_l) {
+  char buff[5];
+  // Check that snprintf_l() works fine with Asan.
+  int res = snprintf_l(buff, 5,
+                       _LIBCPP_GET_C_LOCALE, "%s", "snprintf_l()");
+  EXPECT_EQ(12, res);
+  // Check that vsnprintf_l() works fine with Asan.
+  res = vsnprintf_l_wrapper(buff, 5,
+                            _LIBCPP_GET_C_LOCALE, "%s", "vsnprintf_l()");
+  EXPECT_EQ(13, res);
+
+  EXPECT_DEATH(snprintf_l(buff, 10,
+                          _LIBCPP_GET_C_LOCALE, "%s", "snprintf_l()"),
+                "AddressSanitizer: stack-buffer-overflow");
+  EXPECT_DEATH(vsnprintf_l_wrapper(buff, 10,
+                                  _LIBCPP_GET_C_LOCALE, "%s", "vsnprintf_l()"),
+                "AddressSanitizer: stack-buffer-overflow");
+}
+#endif

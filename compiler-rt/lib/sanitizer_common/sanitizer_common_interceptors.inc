@@ -915,6 +915,16 @@ INTERCEPTOR(int, vsnprintf, char *str, SIZE_T size, const char *format,
             va_list ap)
 VSNPRINTF_INTERCEPTOR_IMPL(vsnprintf, str, size, format, ap)
 
+#if SANITIZER_INTERCEPT_PRINTF_L
+INTERCEPTOR(int, vsnprintf_l, char *str, SIZE_T size, void *loc,
+            const char *format, va_list ap)
+VSNPRINTF_INTERCEPTOR_IMPL(vsnprintf_l, str, size, loc, format, ap)
+
+INTERCEPTOR(int, snprintf_l, char *str, SIZE_T size, void *loc,
+            const char *format, ...)
+FORMAT_INTERCEPTOR_IMPL(snprintf_l, vsnprintf_l, str, size, loc, format)
+#endif  // SANITIZER_INTERCEPT_PRINTF_L
+
 INTERCEPTOR(int, vsprintf, char *str, const char *format, va_list ap)
 VSPRINTF_INTERCEPTOR_IMPL(vsprintf, str, format, ap)
 
@@ -989,6 +999,14 @@ FORMAT_INTERCEPTOR_IMPL(__isoc99_snprintf, __isoc99_vsnprintf, str, size,
   COMMON_INTERCEPT_FUNCTION(vfprintf);
 #else
 #define INIT_PRINTF
+#endif
+
+#if SANITIZER_INTERCEPT_PRINTF_L
+#define INIT_PRINTF_L                     \
+  COMMON_INTERCEPT_FUNCTION(snprintf_l);  \
+  COMMON_INTERCEPT_FUNCTION(vsnprintf_l);
+#else
+#define INIT_PRINTF_L
 #endif
 
 #if SANITIZER_INTERCEPT_ISOC99_PRINTF
@@ -4768,6 +4786,7 @@ static void InitializeCommonInterceptors() {
   INIT_SCANF;
   INIT_ISOC99_SCANF;
   INIT_PRINTF;
+  INIT_PRINTF_L;
   INIT_ISOC99_PRINTF;
   INIT_FREXP;
   INIT_FREXPF_FREXPL;
