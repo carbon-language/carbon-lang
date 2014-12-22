@@ -759,46 +759,63 @@ CompactUnwindInfo::CreateUnwindPlan_x86_64 (Target &target, FunctionInfo &functi
         case UNWIND_X86_64_MODE_STACK_IND:
         {
             // The clang in Xcode 6 is emitting incorrect compact unwind encodings for this
-            // style of unwind.  It was fixed in llvm r217020 although the algorith being
-            // used to compute this style of unwind in generateCompactUnwindEncodingImpl()
-            // isn't as foolproof as I'm comfortable with -- if any instructions other than
-            // a push are scheduled before the subq, it will give bogus encoding results.
-
-            // The target and pc_or_function_start arguments will be needed to handle this
-            // encoding style correctly -- to find the start address of the function and 
-            // read memory offset from there.
+            // style of unwind.  It was fixed in llvm r217020.
             return false;
         }
         break;
 
-#if 0
         case UNWIND_X86_64_MODE_STACK_IMMD:
         {
-            uint32_t stack_size = EXTRACT_BITS (encoding, UNWIND_X86_64_FRAMELESS_STACK_SIZE);
-            uint32_t register_count = EXTRACT_BITS (encoding, UNWIND_X86_64_FRAMELESS_STACK_REG_COUNT);
-            uint32_t permutation = EXTRACT_BITS (encoding, UNWIND_X86_64_FRAMELESS_STACK_REG_PERMUTATION);
+            uint32_t stack_size = EXTRACT_BITS (function_info.encoding, UNWIND_X86_64_FRAMELESS_STACK_SIZE);
+            uint32_t register_count = EXTRACT_BITS (function_info.encoding, UNWIND_X86_64_FRAMELESS_STACK_REG_COUNT);
+            uint32_t permutation = EXTRACT_BITS (function_info.encoding, UNWIND_X86_64_FRAMELESS_STACK_REG_PERMUTATION);
 
-            if (mode == UNWIND_X86_64_MODE_STACK_IND && function_start)
+            if (mode == UNWIND_X86_64_MODE_STACK_IND && function_info.valid_range_offset_start != 0)
             {
-                uint32_t stack_adjust = EXTRACT_BITS (encoding, UNWIND_X86_64_FRAMELESS_STACK_ADJUST);
+                uint32_t stack_adjust = EXTRACT_BITS (function_info.encoding, UNWIND_X86_64_FRAMELESS_STACK_ADJUST);
 
                 // offset into the function instructions; 0 == beginning of first instruction
-                uint32_t offset_to_subl_insn = EXTRACT_BITS (encoding, UNWIND_X86_64_FRAMELESS_STACK_SIZE);
+                uint32_t offset_to_subl_insn = EXTRACT_BITS (function_info.encoding, UNWIND_X86_64_FRAMELESS_STACK_SIZE);
 
-                stack_size = *((uint32_t*) (function_start + offset_to_subl_insn));
-
-                stack_size += stack_adjust * 8;
-
-                printf ("large stack ");
+                SectionList *sl = m_objfile.GetSectionList ();
+                if (sl)
+                {
+                    ProcessSP process_sp = target.GetProcessSP();
+                    if (process_sp)
+                    {
+                        Address subl_payload_addr (function_info.valid_range_offset_start, sl);
+                        subl_payload_addr.Slide (offset_to_subl_insn);
+                        Error error;
+                        uint64_t large_stack_size = process_sp->ReadUnsignedIntegerFromMemory (subl_payload_addr.GetLoadAddress (&target),
+                                4, 0, error);
+                        if (large_stack_size != 0 && error.Success ())
+                        {
+                            // Got the large stack frame size correctly - use it
+                            stack_size = large_stack_size + (stack_adjust * wordsize);
+                        }
+                        else
+                        {
+                            return false;
+                        }
+                    }
+                    else
+                    {
+                        return false;
+                    }
+                }
+                else
+                {
+                    return false;
+                }
             }
-            
-            printf ("frameless function: stack size %d, register count %d ", stack_size * 8, register_count);
 
-            if (register_count == 0)
-            {
-                printf (" no registers saved");
-            }
-            else
+            row->SetCFARegister (x86_64_eh_regnum::rsp);
+            row->SetCFAOffset (stack_size * wordsize);
+            row->SetOffset (0);
+            row->SetRegisterLocationToAtCFAPlusOffset (x86_64_eh_regnum::rip, wordsize * -1, true);
+            row->SetRegisterLocationToIsCFAPlusOffset (x86_64_eh_regnum::rsp, 0, true);
+
+            if (register_count > 0)
             {
 
                 // We need to include (up to) 6 registers in 10 bits.
@@ -887,11 +904,7 @@ CompactUnwindInfo::CreateUnwindPlan_x86_64 (Target &target, FunctionInfo &functi
                     }
                 }
 
-
-                printf (" CFA is rsp+%d ", stack_size * 8);
-
                 uint32_t saved_registers_offset = 1;
-                printf (" rip=[CFA-%d]", saved_registers_offset * 8);
                 saved_registers_offset++;
 
                 for (int i = (sizeof (registers) / sizeof (int)) - 1; i >= 0; i--)
@@ -901,32 +914,21 @@ CompactUnwindInfo::CreateUnwindPlan_x86_64 (Target &target, FunctionInfo &functi
                         case UNWIND_X86_64_REG_NONE:
                             break;
                         case UNWIND_X86_64_REG_RBX:
-                            printf (" rbx=[CFA-%d]", saved_registers_offset * 8);
-                            break;
                         case UNWIND_X86_64_REG_R12:
-                            printf (" r12=[CFA-%d]", saved_registers_offset * 8);
-                            break;
                         case UNWIND_X86_64_REG_R13:
-                            printf (" r13=[CFA-%d]", saved_registers_offset * 8);
-                            break;
                         case UNWIND_X86_64_REG_R14:
-                            printf (" r14=[CFA-%d]", saved_registers_offset * 8);
-                            break;
                         case UNWIND_X86_64_REG_R15:
-                            printf (" r15=[CFA-%d]", saved_registers_offset * 8);
-                            break;
                         case UNWIND_X86_64_REG_RBP:
-                            printf (" rbp=[CFA-%d]", saved_registers_offset * 8);
-                            break;
+                             row->SetRegisterLocationToAtCFAPlusOffset (translate_to_eh_frame_regnum_x86_64 (registers[i]), wordsize * -saved_registers_offset, true);
+                        break;
                     }
                     saved_registers_offset++;
                 }
-
             }
-
+            unwind_plan.AppendRow (row);
+            return true;
         }
         break;
-#endif
 
         case UNWIND_X86_64_MODE_DWARF:
         {
@@ -1037,6 +1039,172 @@ CompactUnwindInfo::CreateUnwindPlan_i386 (Target &target, FunctionInfo &function
 
         case UNWIND_X86_MODE_STACK_IND:
         case UNWIND_X86_MODE_STACK_IMMD:
+        {
+            uint32_t stack_size = EXTRACT_BITS (function_info.encoding, UNWIND_X86_FRAMELESS_STACK_SIZE);
+            uint32_t register_count = EXTRACT_BITS (function_info.encoding, UNWIND_X86_FRAMELESS_STACK_REG_COUNT);
+            uint32_t permutation = EXTRACT_BITS (function_info.encoding, UNWIND_X86_FRAMELESS_STACK_REG_PERMUTATION);
+
+            if (mode == UNWIND_X86_MODE_STACK_IND && function_info.valid_range_offset_start != 0)
+            {
+                uint32_t stack_adjust = EXTRACT_BITS (function_info.encoding, UNWIND_X86_FRAMELESS_STACK_ADJUST);
+
+                // offset into the function instructions; 0 == beginning of first instruction
+                uint32_t offset_to_subl_insn = EXTRACT_BITS (function_info.encoding, UNWIND_X86_FRAMELESS_STACK_SIZE);
+
+                SectionList *sl = m_objfile.GetSectionList ();
+                if (sl)
+                {
+                    ProcessSP process_sp = target.GetProcessSP();
+                    if (process_sp)
+                    {
+                        Address subl_payload_addr (function_info.valid_range_offset_start, sl);
+                        subl_payload_addr.Slide (offset_to_subl_insn);
+                        Error error;
+                        uint64_t large_stack_size = process_sp->ReadUnsignedIntegerFromMemory (subl_payload_addr.GetLoadAddress (&target),
+                                4, 0, error);
+                        if (large_stack_size != 0 && error.Success ())
+                        {
+                            // Got the large stack frame size correctly - use it
+                            stack_size = large_stack_size + (stack_adjust * wordsize);
+                        }
+                        else
+                        {
+                            return false;
+                        }
+                    }
+                    else
+                    {
+                        return false;
+                    }
+                }
+                else
+                {
+                    return false;
+                }
+            }
+
+            row->SetCFARegister (i386_eh_regnum::esp);
+            row->SetCFAOffset (stack_size * wordsize);
+            row->SetOffset (0);
+            row->SetRegisterLocationToAtCFAPlusOffset (i386_eh_regnum::eip, wordsize * -1, true);
+            row->SetRegisterLocationToIsCFAPlusOffset (i386_eh_regnum::esp, 0, true);
+            
+            if (register_count > 0)
+            {
+
+                // We need to include (up to) 6 registers in 10 bits.
+                // That would be 18 bits if we just used 3 bits per reg to indicate
+                // the order they're saved on the stack. 
+                //
+                // This is done with Lehmer code permutation, e.g. see
+                // http://stackoverflow.com/questions/1506078/fast-permutation-number-permutation-mapping-algorithms
+                int permunreg[6];
+
+                // This decodes the variable-base number in the 10 bits
+                // and gives us the Lehmer code sequence which can then
+                // be decoded.
+
+                switch (register_count) 
+                {
+                    case 6:
+                        permunreg[0] = permutation/120;    // 120 == 5!
+                        permutation -= (permunreg[0]*120);
+                        permunreg[1] = permutation/24;     // 24 == 4!
+                        permutation -= (permunreg[1]*24);
+                        permunreg[2] = permutation/6;      // 6 == 3!
+                        permutation -= (permunreg[2]*6);
+                        permunreg[3] = permutation/2;      // 2 == 2!
+                        permutation -= (permunreg[3]*2);
+                        permunreg[4] = permutation;        // 1 == 1!
+                        permunreg[5] = 0;
+                        break;
+                    case 5:
+                        permunreg[0] = permutation/120;
+                        permutation -= (permunreg[0]*120);
+                        permunreg[1] = permutation/24;
+                        permutation -= (permunreg[1]*24);
+                        permunreg[2] = permutation/6;
+                        permutation -= (permunreg[2]*6);
+                        permunreg[3] = permutation/2;
+                        permutation -= (permunreg[3]*2);
+                        permunreg[4] = permutation;
+                        break;
+                    case 4:
+                        permunreg[0] = permutation/60;
+                        permutation -= (permunreg[0]*60);
+                        permunreg[1] = permutation/12;
+                        permutation -= (permunreg[1]*12);
+                        permunreg[2] = permutation/3;
+                        permutation -= (permunreg[2]*3);
+                        permunreg[3] = permutation;
+                        break;
+                    case 3:
+                        permunreg[0] = permutation/20;
+                        permutation -= (permunreg[0]*20);
+                        permunreg[1] = permutation/4;
+                        permutation -= (permunreg[1]*4);
+                        permunreg[2] = permutation;
+                        break;
+                    case 2:
+                        permunreg[0] = permutation/5;
+                        permutation -= (permunreg[0]*5);
+                        permunreg[1] = permutation;
+                        break;
+                    case 1:
+                        permunreg[0] = permutation;
+                        break;
+                }
+                
+                // Decode the Lehmer code for this permutation of
+                // the registers v. http://en.wikipedia.org/wiki/Lehmer_code
+
+                int registers[6];
+                bool used[7] = { false, false, false, false, false, false, false };
+                for (int i = 0; i < register_count; i++)
+                {
+                    int renum = 0;
+                    for (int j = 1; j < 7; j++)
+                    {
+                        if (used[j] == false)
+                        {
+                            if (renum == permunreg[i])
+                            {
+                                registers[i] = j;
+                                used[j] = true;
+                                break;
+                            }
+                            renum++;
+                        }
+                    }
+                }
+
+                uint32_t saved_registers_offset = 1;
+                saved_registers_offset++;
+
+                for (int i = (sizeof (registers) / sizeof (int)) - 1; i >= 0; i--)
+                {
+                    switch (registers[i])
+                    {
+                        case UNWIND_X86_REG_NONE:
+                            break;
+                        case UNWIND_X86_REG_EBX:
+                        case UNWIND_X86_REG_ECX:
+                        case UNWIND_X86_REG_EDX:
+                        case UNWIND_X86_REG_EDI:
+                        case UNWIND_X86_REG_ESI:
+                        case UNWIND_X86_REG_EBP:
+                             row->SetRegisterLocationToAtCFAPlusOffset (translate_to_eh_frame_regnum_i386 (registers[i]), wordsize * -saved_registers_offset, true);
+                        break;
+                    }
+                    saved_registers_offset++;
+                }
+            }
+
+            unwind_plan.AppendRow (row);
+            return true;
+        }
+        break;
+
         case UNWIND_X86_MODE_DWARF:
         {
             return false;
