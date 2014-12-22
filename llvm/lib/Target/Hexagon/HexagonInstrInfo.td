@@ -1543,6 +1543,7 @@ multiclass LD_Idxd<string mnemonic, string CextOp, RegisterClass RC,
 }
 
 let accessSize = ByteAccess, isCodeGenOnly = 0 in {
+  defm loadrb:  LD_Idxd <"memb", "LDrib", IntRegs, s11_0Ext, u6_0Ext, 0b1000>;
   defm loadrub: LD_Idxd <"memub", "LDriub", IntRegs, s11_0Ext, u6_0Ext, 0b1001>;
 }
 
@@ -1586,10 +1587,6 @@ multiclass LD_MEMri<string mnemonic, string CextOp, RegisterClass RC,
 }
 
 let addrMode = BaseImmOffset, isMEMri = "true" in {
-  let accessSize = ByteAccess in {
-    defm LDrib: LD_MEMri < "memb", "LDrib", IntRegs, 11, 6>, AddrModeRel;
- }
-
   let accessSize = HalfWordAccess in {
     defm LDrih: LD_MEMri < "memh", "LDrih", IntRegs, 12, 7>, AddrModeRel;
     defm LDriuh: LD_MEMri < "memuh", "LDriuh", IntRegs, 12, 7>, AddrModeRel;
@@ -1603,7 +1600,7 @@ let addrMode = BaseImmOffset, isMEMri = "true" in {
 }
 
 def : Pat < (i32 (sextloadi8 ADDRriS11_0:$addr)),
-            (LDrib ADDRriS11_0:$addr) >;
+            (L2_loadrb_io AddrFI:$addr, 0) >;
 
 def : Pat < (i32 (zextloadi8 ADDRriS11_0:$addr)),
             (L2_loadrub_io AddrFI:$addr, 0) >;
@@ -1662,10 +1659,6 @@ multiclass LD_Idxd2<string mnemonic, string CextOp, RegisterClass RC,
 }
 
 let addrMode = BaseImmOffset in {
-  let accessSize = ByteAccess in {
-    defm LDrib_indexed: LD_Idxd2 <"memb", "LDrib", IntRegs, s11_0Ext, u6_0Ext,
-                                  11, 6>, AddrModeRel;
-  }
   let accessSize = HalfWordAccess in {
     defm LDrih_indexed: LD_Idxd2 <"memh", "LDrih", IntRegs, s11_1Ext, u6_1Ext,
                                  12, 7>, AddrModeRel;
@@ -1683,7 +1676,7 @@ let addrMode = BaseImmOffset in {
 
 let AddedComplexity = 20 in {
 def : Pat < (i32 (sextloadi8 (add IntRegs:$src1, s11_0ExtPred:$offset))),
-            (LDrib_indexed IntRegs:$src1, s11_0ExtPred:$offset) >;
+            (L2_loadrb_io IntRegs:$src1, s11_0ExtPred:$offset) >;
 
 def : Pat < (i32 (zextloadi8 (add IntRegs:$src1, s11_0ExtPred:$offset))),
             (L2_loadrub_io IntRegs:$src1, s11_0ExtPred:$offset) >;
@@ -1760,16 +1753,16 @@ let hasCtrlDep = 1, hasSideEffects = 0, addrMode = PostInc in {
 }
 
 def : Pat< (i32 (extloadi1 ADDRriS11_0:$addr)),
-           (i32 (LDrib ADDRriS11_0:$addr)) >;
+           (i32 (L2_loadrb_io AddrFI:$addr, 0)) >;
 
 // Load byte any-extend.
 def : Pat < (i32 (extloadi8 ADDRriS11_0:$addr)),
-            (i32 (LDrib ADDRriS11_0:$addr)) >;
+            (i32 (L2_loadrb_io AddrFI:$addr, 0)) >;
 
 // Indexed load byte any-extend.
 let AddedComplexity = 20 in
 def : Pat < (i32 (extloadi8 (add IntRegs:$src1, s11_0ImmPred:$offset))),
-            (i32 (LDrib_indexed IntRegs:$src1, s11_0ImmPred:$offset)) >;
+            (i32 (L2_loadrb_io IntRegs:$src1, s11_0ImmPred:$offset)) >;
 
 def : Pat < (i32 (extloadi16 ADDRriS11_1:$addr)),
             (i32 (LDrih ADDRriS11_1:$addr))>;
@@ -3773,7 +3766,7 @@ def : Pat <(i64 (zextloadi1 (HexagonCONST32 tglobaladdr:$global))),
 // Map from i1 loads to 32 bits. This assumes that the i1* is byte aligned.
 let AddedComplexity = 10 in
 def : Pat <(i32 (zextloadi1 ADDRriS11_0:$addr)),
-      (i32 (A2_and (i32 (LDrib ADDRriS11_0:$addr)), (A2_tfrsi 0x1)))>;
+      (i32 (A2_and (i32 (L2_loadrb_io AddrFI:$addr, 0)), (A2_tfrsi 0x1)))>;
 
 // Map from Rdd = sign_extend_inreg(Rss, i32) -> Rdd = A2_sxtw(Rss.lo).
 def : Pat <(i64 (sext_inreg (i64 DoubleRegs:$src1), i32)),
@@ -3856,7 +3849,7 @@ def : Pat <(select (i1 PredRegs:$src1), (i1 PredRegs:$src2),
 
 // Map Pd = load(addr) -> Rs = load(addr); Pd = Rs.
 def : Pat<(i1 (load ADDRriS11_2:$addr)),
-      (i1 (C2_tfrrp (i32 (LDrib ADDRriS11_2:$addr))))>;
+      (i1 (C2_tfrrp (i32 (L2_loadrb_io AddrFI:$addr, 0))))>;
 
 // Map for truncating from 64 immediates to 32 bit immediates.
 def : Pat<(i32 (trunc (i64 DoubleRegs:$src))),
@@ -4026,12 +4019,12 @@ def : Pat <(i64 (sext (i1 PredRegs:$src1))),
 // Convert sign-extended load back to load and sign extend.
 // i8 -> i64
 def:  Pat <(i64 (sextloadi8 ADDRriS11_0:$src1)),
-      (i64 (A2_sxtw (LDrib ADDRriS11_0:$src1)))>;
+      (i64 (A2_sxtw (L2_loadrb_io AddrFI:$src1, 0)))>;
 
 // Convert any-extended load back to load and sign extend.
 // i8 -> i64
 def:  Pat <(i64 (extloadi8 ADDRriS11_0:$src1)),
-      (i64 (A2_sxtw (LDrib ADDRriS11_0:$src1)))>;
+      (i64 (A2_sxtw (L2_loadrb_io AddrFI:$src1, 0)))>;
 
 // Convert sign-extended load back to load and sign extend.
 // i16 -> i64
