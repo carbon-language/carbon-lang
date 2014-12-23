@@ -793,22 +793,11 @@ void computeKnownBits(Value *V, APInt &KnownZero, APInt &KnownOne,
     return;
   }
 
-  // A weak GlobalAlias is totally unknown. A non-weak GlobalAlias has
-  // the bits of its aliasee.
-  if (GlobalAlias *GA = dyn_cast<GlobalAlias>(V)) {
-    if (GA->mayBeOverridden()) {
-      KnownZero.clearAllBits(); KnownOne.clearAllBits();
-    } else {
-      computeKnownBits(GA->getAliasee(), KnownZero, KnownOne, TD, Depth+1, Q);
-    }
-    return;
-  }
-
   // The address of an aligned GlobalValue has trailing zeros.
-  if (GlobalValue *GV = dyn_cast<GlobalValue>(V)) {
-    unsigned Align = GV->getAlignment();
+  if (auto *GO = dyn_cast<GlobalObject>(V)) {
+    unsigned Align = GO->getAlignment();
     if (Align == 0 && TD) {
-      if (GlobalVariable *GVar = dyn_cast<GlobalVariable>(GV)) {
+      if (auto *GVar = dyn_cast<GlobalVariable>(GO)) {
         Type *ObjectType = GVar->getType()->getElementType();
         if (ObjectType->isSized()) {
           // If the object is defined in the current Module, we'll be giving
@@ -852,8 +841,18 @@ void computeKnownBits(Value *V, APInt &KnownZero, APInt &KnownOne,
   // Start out not knowing anything.
   KnownZero.clearAllBits(); KnownOne.clearAllBits();
 
+  // Limit search depth.
+  // All recursive calls that increase depth must come after this.
   if (Depth == MaxDepth)
-    return;  // Limit search depth.
+    return;  
+
+  // A weak GlobalAlias is totally unknown. A non-weak GlobalAlias has
+  // the bits of its aliasee.
+  if (GlobalAlias *GA = dyn_cast<GlobalAlias>(V)) {
+    if (!GA->mayBeOverridden())
+      computeKnownBits(GA->getAliasee(), KnownZero, KnownOne, TD, Depth + 1, Q);
+    return;
+  }
 
   // Check whether a nearby assume intrinsic can determine some known bits.
   computeKnownBitsFromAssume(V, KnownZero, KnownOne, TD, Depth, Q);
