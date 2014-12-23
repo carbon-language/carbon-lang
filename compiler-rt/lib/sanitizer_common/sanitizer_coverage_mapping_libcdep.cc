@@ -99,8 +99,8 @@ void CovUpdateMapping(uptr caller_pc) {
                     internal_getpid());
   CHECK_LE(res, tmp_path.size());
   uptr map_fd = OpenFile(tmp_path.data(), true);
-  if (internal_iserror(map_fd)) {
-    Report(" Coverage: failed to open %s for writing\n", tmp_path.data());
+  if (internal_iserror(map_fd, &err)) {
+    Report(" Coverage: failed to open %s for writing: %d\n", tmp_path.data(), err);
     Die();
   }
 
