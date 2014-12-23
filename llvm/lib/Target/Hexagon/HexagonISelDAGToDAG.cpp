@@ -607,7 +607,7 @@ SDNode *HexagonDAGToDAGISel::SelectIndexedLoad(LoadSDNode *LD, SDLoc dl) {
     if (TII->isValidAutoIncImm(LoadedVT, Val))
       Opcode = zextval ? Hexagon::POST_LDriuh : Hexagon::POST_LDrih;
     else
-      Opcode = zextval ? Hexagon::LDriuh : Hexagon::LDrih;
+      Opcode = zextval ? Hexagon::L2_loadruh_io : Hexagon::LDrih;
   } else if (LoadedVT == MVT::i8) {
     if (TII->isValidAutoIncImm(LoadedVT, Val))
       Opcode = zextval ? Hexagon::POST_LDriub : Hexagon::POST_LDrib;

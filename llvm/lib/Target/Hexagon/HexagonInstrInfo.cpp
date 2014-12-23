@@ -679,9 +679,8 @@ bool HexagonInstrInfo::isPredicable(MachineInstr *MI) const {
     return isShiftedUInt<6,2>(MI->getOperand(2).getImm());
 
   case Hexagon::LDrih:
-  case Hexagon::LDriuh:
+  case Hexagon::L2_loadruh_io:
   case Hexagon::LDrih_indexed:
-  case Hexagon::LDriuh_indexed:
     return isShiftedUInt<6,1>(MI->getOperand(2).getImm());
 
   case Hexagon::L2_loadrb_io:
@@ -1124,7 +1123,7 @@ isValidOffset(const int Opcode, const int Offset) const {
       (Offset <= Hexagon_MEMD_OFFSET_MAX);
 
   case Hexagon::LDrih:
-  case Hexagon::LDriuh:
+  case Hexagon::L2_loadruh_io:
   case Hexagon::STrih:
     return (Offset >= Hexagon_MEMH_OFFSET_MIN) &&
       (Offset <= Hexagon_MEMH_OFFSET_MAX);
@@ -1364,10 +1363,8 @@ isConditionalLoad (const MachineInstr* MI) const {
     case Hexagon::LDrih_indexed_cNotPt :
     case Hexagon::L2_ploadrbt_io:
     case Hexagon::L2_ploadrbf_io:
-    case Hexagon::LDriuh_cPt :
-    case Hexagon::LDriuh_cNotPt :
-    case Hexagon::LDriuh_indexed_cPt :
-    case Hexagon::LDriuh_indexed_cNotPt :
+    case Hexagon::L2_ploadruht_io:
+    case Hexagon::L2_ploadruhf_io:
     case Hexagon::L2_ploadrubt_io:
     case Hexagon::L2_ploadrubf_io:
       return true;

@@ -1547,6 +1547,10 @@ let accessSize = ByteAccess, isCodeGenOnly = 0 in {
   defm loadrub: LD_Idxd <"memub", "LDriub", IntRegs, s11_0Ext, u6_0Ext, 0b1001>;
 }
 
+let accessSize = HalfWordAccess, opExtentAlign = 1 in {
+  defm loadruh: LD_Idxd <"memuh", "LDriuh", IntRegs, s11_1Ext, u6_1Ext, 0b1011>;
+}
+
 ///
 // Load -- MEMri operand
 multiclass LD_MEMri_Pbase<string mnemonic, RegisterClass RC,
@@ -1589,7 +1593,6 @@ multiclass LD_MEMri<string mnemonic, string CextOp, RegisterClass RC,
 let addrMode = BaseImmOffset, isMEMri = "true" in {
   let accessSize = HalfWordAccess in {
     defm LDrih: LD_MEMri < "memh", "LDrih", IntRegs, 12, 7>, AddrModeRel;
-    defm LDriuh: LD_MEMri < "memuh", "LDriuh", IntRegs, 12, 7>, AddrModeRel;
  }
 
   let accessSize = WordAccess in
@@ -1609,7 +1612,7 @@ def : Pat < (i32 (sextloadi16 ADDRriS11_1:$addr)),
             (LDrih ADDRriS11_1:$addr) >;
 
 def : Pat < (i32 (zextloadi16 ADDRriS11_1:$addr)),
-            (LDriuh ADDRriS11_1:$addr) >;
+            (L2_loadrub_io AddrFI:$addr, 0) >;
 
 def : Pat < (i32 (load ADDRriS11_2:$addr)),
             (LDriw ADDRriS11_2:$addr) >;
@@ -1662,8 +1665,6 @@ let addrMode = BaseImmOffset in {
   let accessSize = HalfWordAccess in {
     defm LDrih_indexed: LD_Idxd2 <"memh", "LDrih", IntRegs, s11_1Ext, u6_1Ext,
                                  12, 7>, AddrModeRel;
-    defm LDriuh_indexed: LD_Idxd2 <"memuh", "LDriuh", IntRegs, s11_1Ext, u6_1Ext,
-                                  12, 7>, AddrModeRel;
   }
   let accessSize = WordAccess in
     defm LDriw_indexed: LD_Idxd2 <"memw", "LDriw", IntRegs, s11_2Ext, u6_2Ext,
@@ -1685,7 +1686,7 @@ def : Pat < (i32 (sextloadi16 (add IntRegs:$src1, s11_1ExtPred:$offset))),
             (LDrih_indexed IntRegs:$src1, s11_1ExtPred:$offset) >;
 
 def : Pat < (i32 (zextloadi16 (add IntRegs:$src1, s11_1ExtPred:$offset))),
-            (LDriuh_indexed IntRegs:$src1, s11_1ExtPred:$offset) >;
+            (L2_loadruh_io IntRegs:$src1, s11_1ExtPred:$offset) >;
 
 def : Pat < (i32 (load (add IntRegs:$src1, s11_2ExtPred:$offset))),
             (LDriw_indexed IntRegs:$src1, s11_2ExtPred:$offset) >;
@@ -3661,10 +3662,10 @@ def : Pat<(atomic_load_8 (add (i32 IntRegs:$src1), s11_0ImmPred:$offset)),
 
 // 16 bit atomic load
 def : Pat<(atomic_load_16 ADDRriS11_1:$src1),
-          (i32 (LDriuh ADDRriS11_1:$src1))>;
+          (i32 (L2_loadruh_io AddrFI:$src1, 0))>;
 
 def : Pat<(atomic_load_16 (add (i32 IntRegs:$src1), s11_1ImmPred:$offset)),
-          (i32 (LDriuh_indexed (i32 IntRegs:$src1), s11_1ImmPred:$offset))>;
+          (i32 (L2_loadruh_io (i32 IntRegs:$src1), s11_1ImmPred:$offset))>;
 
 def : Pat<(atomic_load_32 ADDRriS11_2:$src1),
           (i32 (LDriw ADDRriS11_2:$src1))>;
@@ -4078,13 +4079,13 @@ def:  Pat <(i64 (zextloadi1 (add (i32 IntRegs:$src1),
 
 // i16 -> i64
 def:  Pat <(i64 (zextloadi16 ADDRriS11_1:$src1)),
-      (i64 (A2_combinew (A2_tfrsi 0), (LDriuh ADDRriS11_1:$src1)))>,
+      (i64 (A2_combinew (A2_tfrsi 0), (L2_loadruh_io AddrFI:$src1, 0)))>,
       Requires<[NoV4T]>;
 
 let AddedComplexity = 20 in
 def:  Pat <(i64 (zextloadi16 (add (i32 IntRegs:$src1),
                                   s11_1ExtPred:$offset))),
-      (i64 (A2_combinew (A2_tfrsi 0), (LDriuh_indexed IntRegs:$src1,
+      (i64 (A2_combinew (A2_tfrsi 0), (L2_loadruh_io IntRegs:$src1,
                                   s11_1ExtPred:$offset)))>,
       Requires<[NoV4T]>;
 
