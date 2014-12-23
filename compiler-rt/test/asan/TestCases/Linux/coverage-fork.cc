@@ -33,6 +33,7 @@ int main(int argc, char **argv) {
 }
 
 // CHECK-DAG: Child PID: [[ChildPID:[0-9]+]]
-// CHECK-DAG: [[ChildPID]].sancov: 1 PCs written
+// Coverage in the child (after fork,before exec) is not expected to work.
+// (disabled): [[ChildPID]].sancov: 1 PCs written
 // CHECK-DAG: Parent PID: [[ParentPID:[0-9]+]]
 // CHECK-DAG: [[ParentPID]].sancov: 3 PCs written

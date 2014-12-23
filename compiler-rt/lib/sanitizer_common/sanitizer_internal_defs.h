@@ -120,7 +120,7 @@ extern "C" {
 
   SANITIZER_INTERFACE_ATTRIBUTE void __sanitizer_cov_dump();
   SANITIZER_INTERFACE_ATTRIBUTE void __sanitizer_cov_init();
-  SANITIZER_INTERFACE_ATTRIBUTE void __sanitizer_cov(__sanitizer::u8 *guard);
+  SANITIZER_INTERFACE_ATTRIBUTE void __sanitizer_cov(__sanitizer::u32 *guard);
   SANITIZER_INTERFACE_ATTRIBUTE
   void __sanitizer_annotate_contiguous_container(const void *beg,
                                                  const void *end,

@@ -12,14 +12,16 @@
 //
 // Compiler instrumentation:
 // For every interesting basic block the compiler injects the following code:
-// if (Guard) {
+// if (Guard < 0) {
 //    __sanitizer_cov(&Guard);
 // }
+// At the module start up time __sanitizer_cov_module_init sets the guards
+// to consecutive negative numbers (-1, -2, -3, ...).
 // It's fine to call __sanitizer_cov more than once for a given block.
 //
 // Run-time:
 //  - __sanitizer_cov(): record that we've executed the PC (GET_CALLER_PC).
-//    and atomically set Guard to 1.
+//    and atomically set Guard to -Guard.
 //  - __sanitizer_cov_dump: dump the coverage data to disk.
 //  For every module of the current process that has coverage data
 //  this will create a file module_name.PID.sancov. The file format is simple:
@@ -65,14 +67,16 @@ class CoverageData {
   void BeforeFork();
   void AfterFork(int child_pid);
   void Extend(uptr npcs);
-  void Add(uptr pc, u8 *guard);
+  void Add(uptr pc, u32 *guard);
   void IndirCall(uptr caller, uptr callee, uptr callee_cache[],
                  uptr cache_size);
   void DumpCallerCalleePairs();
   void DumpTrace();
 
   ALWAYS_INLINE
-  void TraceBasicaBlock(uptr *cache);
+  void TraceBasicBlock(uptr *cache);
+
+  void InitializeGuards(s32 **guards, uptr n);
 
   uptr *data();
   uptr size();
@@ -149,12 +153,11 @@ void CoverageData::Init() {
   pc_array = reinterpret_cast<uptr *>(
       MmapNoReserveOrDie(sizeof(uptr) * kPcArrayMaxSize, "CovInit"));
   pc_fd = kInvalidFd;
+  atomic_store(&pc_array_index, 0, memory_order_relaxed);
   if (common_flags()->coverage_direct) {
     atomic_store(&pc_array_size, 0, memory_order_relaxed);
-    atomic_store(&pc_array_index, 0, memory_order_relaxed);
   } else {
     atomic_store(&pc_array_size, kPcArrayMaxSize, memory_order_relaxed);
-    atomic_store(&pc_array_index, 0, memory_order_relaxed);
   }
 
   cc_array = reinterpret_cast<uptr **>(MmapNoReserveOrDie(
@@ -230,15 +233,27 @@ void CoverageData::Extend(uptr npcs) {
   atomic_store(&pc_array_size, size, memory_order_release);
 }
 
+void CoverageData::InitializeGuards(s32 **guards, uptr n) {
+  for (uptr i = 0; i < n; i++) {
+    uptr idx = atomic_fetch_add(&pc_array_index, 1, memory_order_relaxed);
+    *guards[i] = -static_cast<s32>(idx + 1);
+  }
+}
+
 // Atomically add the pc to the vector. The atomically set the guard to 1.
 // If the function is called more than once for a given PC it will
 // be inserted multiple times, which is fine.
-void CoverageData::Add(uptr pc, u8 *guard) {
-  // Set the guard.
-  atomic_uint8_t *atomic_guard = reinterpret_cast<atomic_uint8_t*>(guard);
-  atomic_store(atomic_guard, 1, memory_order_relaxed);
+void CoverageData::Add(uptr pc, u32 *guard) {
+  atomic_uint32_t *atomic_guard = reinterpret_cast<atomic_uint32_t*>(guard);
+  s32 guard_value = atomic_load(atomic_guard, memory_order_relaxed);
+  if (guard_value >= 0) return;
+
+  atomic_store(atomic_guard, -guard_value, memory_order_relaxed);
   if (!pc_array) return;
-  uptr idx = atomic_fetch_add(&pc_array_index, 1, memory_order_relaxed);
+
+  uptr idx = -guard_value - 1;
+  if (idx >= atomic_load(&pc_array_index, memory_order_acquire))
+    return;  // May happen after fork when pc_array_index becomes 0.
   CHECK_LT(idx * sizeof(uptr),
            atomic_load(&pc_array_size, memory_order_acquire));
   pc_array[idx] = pc;
@@ -338,18 +353,20 @@ static void CovWritePacked(int pid, const char *module, const void *blob,
 // If packed = true and name == 0: <pid>.<sancov>.<packed>.
 // If packed = true and name != 0: <name>.<sancov>.<packed> (name is
 // user-supplied).
-static int CovOpenFile(bool packed, const char* name) {
+static int CovOpenFile(bool packed, const char *name,
+                       const char *extension = "sancov") {
   InternalScopedString path(kMaxPathLength);
   if (!packed) {
     CHECK(name);
-    path.append("%s/%s.%zd.sancov", common_flags()->coverage_dir, name,
-                internal_getpid());
+    path.append("%s/%s.%zd.%s", common_flags()->coverage_dir, name,
+                internal_getpid(), extension);
   } else {
     if (!name)
-      path.append("%s/%zd.sancov.packed", common_flags()->coverage_dir,
-                  internal_getpid());
+      path.append("%s/%zd.%s.packed", common_flags()->coverage_dir,
+                  internal_getpid(), extension);
     else
-      path.append("%s/%s.sancov.packed", common_flags()->coverage_dir, name);
+      path.append("%s/%s.%s.packed", common_flags()->coverage_dir, name,
+                  extension);
   }
   uptr fd = OpenFile(path.data(), true);
   if (internal_iserror(fd)) {
@@ -434,7 +451,7 @@ void CoverageData::DumpCallerCalleePairs() {
 // Record the current PC into the event buffer.
 // Every event is a u32 value (index in tr_pc_array_index) so we compute
 // it once and then cache in the provided 'cache' storage.
-void CoverageData::TraceBasicaBlock(uptr *cache) {
+void CoverageData::TraceBasicBlock(uptr *cache) {
   CHECK(common_flags()->coverage);
   uptr idx = *cache;
   if (!idx) {
@@ -450,12 +467,33 @@ void CoverageData::TraceBasicaBlock(uptr *cache) {
   tr_event_array_index++;
 }
 
+static void CovDumpAsBitSet() {
+  if (!common_flags()->coverage_bitset) return;
+  if (!coverage_data.size()) return;
+  int fd = CovOpenFile(/* packed */false, "combined", "bitset-sancov");
+  if (fd < 0) return;
+  uptr n = coverage_data.size();
+  uptr n_set_bits = 0;
+  InternalScopedBuffer<char> out(n);
+  for (uptr i = 0; i < n; i++) {
+    uptr pc = coverage_data.data()[i];
+    out[i] = pc ? '1' : '0';
+    if (pc)
+      n_set_bits++;
+  }
+  internal_write(fd, out.data(), n);
+  internal_close(fd);
+  VReport(1, " CovDump: bitset of %zd bits written, %zd bits are set\n", n,
+          n_set_bits);
+}
+
 // Dump the coverage on disk.
 static void CovDump() {
   if (!common_flags()->coverage || common_flags()->coverage_direct) return;
 #if !SANITIZER_WINDOWS
   if (atomic_fetch_add(&dump_once_guard, 1, memory_order_relaxed))
     return;
+  CovDumpAsBitSet();
   uptr size = coverage_data.size();
   InternalMmapVector<u32> offsets(size);
   uptr *vb = coverage_data.data();
@@ -539,7 +577,7 @@ void CovAfterFork(int child_pid) {
 }  // namespace __sanitizer
 
 extern "C" {
-SANITIZER_INTERFACE_ATTRIBUTE void __sanitizer_cov(u8 *guard) {
+SANITIZER_INTERFACE_ATTRIBUTE void __sanitizer_cov(u32 *guard) {
   coverage_data.Add(StackTrace::GetPreviousInstructionPc(GET_CALLER_PC()),
                     guard);
 }
@@ -552,8 +590,11 @@ SANITIZER_INTERFACE_ATTRIBUTE void __sanitizer_cov_dump() { CovDump(); }
 SANITIZER_INTERFACE_ATTRIBUTE void __sanitizer_cov_init() {
   coverage_data.Init();
 }
-SANITIZER_INTERFACE_ATTRIBUTE void __sanitizer_cov_module_init(uptr npcs) {
-  if (!common_flags()->coverage || !common_flags()->coverage_direct) return;
+SANITIZER_INTERFACE_ATTRIBUTE void __sanitizer_cov_module_init(s32 **guards,
+                                                               uptr npcs) {
+  coverage_data.InitializeGuards(guards, npcs);
+  if (!common_flags()->coverage || !common_flags()->coverage_direct)
+    return;
   if (SANITIZER_ANDROID) {
     // dlopen/dlclose interceptors do not work on Android, so we rely on
     // Extend() calls to update .sancov.map.
@@ -572,10 +613,10 @@ uptr __sanitizer_get_total_unique_coverage() {
 
 SANITIZER_INTERFACE_ATTRIBUTE
 void __sanitizer_cov_trace_func_enter(uptr *cache) {
-  coverage_data.TraceBasicaBlock(cache);
+  coverage_data.TraceBasicBlock(cache);
 }
 SANITIZER_INTERFACE_ATTRIBUTE
 void __sanitizer_cov_trace_basic_block(uptr *cache) {
-  coverage_data.TraceBasicaBlock(cache);
+  coverage_data.TraceBasicBlock(cache);
 }
 }  // extern "C"

@@ -56,6 +56,7 @@ struct CommonFlags {
   uptr mmap_limit_mb;
   uptr hard_rss_limit_mb;
   bool coverage;
+  bool coverage_bitset;
   bool coverage_direct;
   const char *coverage_dir;
   bool full_address_space;

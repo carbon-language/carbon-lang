@@ -15,7 +15,7 @@
 ; and add sanitize_address to @_ZN1A1fEv
 
 ; Test that __sanitizer_cov call has !dbg pointing to the opening { of A::f().
-; CHECK: call void @__sanitizer_cov(i8*{{.*}}), !dbg [[A:!.*]]
+; CHECK: call void @__sanitizer_cov(i32*{{.*}}), !dbg [[A:!.*]]
 ; CHECK: [[A]] = !{i32 6, i32 0, !{{.*}}, null}
 
 
