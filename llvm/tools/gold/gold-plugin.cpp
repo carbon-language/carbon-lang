@@ -532,6 +532,13 @@ static Constant *mapConstantToLocalCopy(Constant *C, ValueToValueMapTy &VM,
   return MapValue(C, VM, RF_IgnoreMissingEntries, nullptr, Materializer);
 }
 
+static void freeSymName(ld_plugin_symbol &Sym) {
+  free(Sym.name);
+  free(Sym.comdat_key);
+  Sym.name = nullptr;
+  Sym.comdat_key = nullptr;
+}
+
 static std::unique_ptr<Module>
 getModuleForFile(LLVMContext &Context, claimed_file &F, raw_fd_ostream *ApiFile,
                  StringSet<> &Internalize, StringSet<> &Maybe) {
@@ -581,8 +588,10 @@ getModuleForFile(LLVMContext &Context, claimed_file &F, raw_fd_ostream *ApiFile,
       *ApiFile << Sym.name << ' ' << getResolutionName(Resolution) << '\n';
 
     GlobalValue *GV = Obj.getSymbolGV(ObjSym.getRawDataRefImpl());
-    if (!GV)
+    if (!GV) {
+      freeSymName(Sym);
       continue; // Asm symbol.
+    }
 
     if (Resolution != LDPR_PREVAILING_DEF_IRONLY && GV->hasCommonLinkage()) {
       // Common linkage is special. There is no single symbol that wins the
@@ -590,6 +599,7 @@ getModuleForFile(LLVMContext &Context, claimed_file &F, raw_fd_ostream *ApiFile,
       // The IR linker does that for us if we just pass it every common GV.
       // We still have to keep track of LDPR_PREVAILING_DEF_IRONLY so we
       // internalize once the IR linker has done its job.
+      freeSymName(Sym);
       continue;
     }
 
@@ -642,10 +652,7 @@ getModuleForFile(LLVMContext &Context, claimed_file &F, raw_fd_ostream *ApiFile,
     }
     }
 
-    free(Sym.name);
-    free(Sym.comdat_key);
-    Sym.name = nullptr;
-    Sym.comdat_key = nullptr;
+    freeSymName(Sym);
   }
 
   ValueToValueMapTy VM;
