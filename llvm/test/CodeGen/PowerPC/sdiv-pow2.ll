@@ -1,4 +1,5 @@
 ; RUN: llc -mcpu=ppc64 < %s | FileCheck %s
+; RUN: llc -mtriple=powerpc-unknown-linux-gnu -mcpu=ppc < %s | FileCheck -check-prefix=CHECK-32 %s
 target datalayout = "E-m:e-i64:64-n32:64"
 target triple = "powerpc64-unknown-linux-gnu"
 
@@ -25,6 +26,10 @@ entry:
 ; CHECK: sradi [[REG1:[0-9]+]], 3, 3
 ; CHECK: addze 3, [[REG1]]
 ; CHECK: blr
+
+; CHECK-32-LABEL @foo8
+; CHECK-32-NOT: sradi
+; CHECK-32: blr
 }
 
 ; Function Attrs: nounwind readnone
@@ -52,6 +57,10 @@ entry:
 ; CHECK: addze [[REG2:[0-9]+]], [[REG1]]
 ; CHECK: neg 3, [[REG2]]
 ; CHECK: blr
+
+; CHECK-32-LABEL @foo8n
+; CHECK-32-NOT: sradi
+; CHECK-32: blr
 }
 
 attributes #0 = { nounwind readnone }
