@@ -192,8 +192,10 @@ public:
     : RS(Other.RS), NumOpts(Other.NumOpts), DeniedOpts(Other.DeniedOpts),
       OptUnsafeEdges(new unsigned[NumOpts]), VReg(Other.VReg),
       AllowedRegs(Other.AllowedRegs) {
-    std::copy(&Other.OptUnsafeEdges[0], &Other.OptUnsafeEdges[NumOpts],
-              &OptUnsafeEdges[0]);
+    if (NumOpts > 0) {
+      std::copy(&Other.OptUnsafeEdges[0], &Other.OptUnsafeEdges[NumOpts],
+                &OptUnsafeEdges[0]);
+    }
   }
 
   // FIXME: Re-implementing default behavior to work around MSVC. Remove once
