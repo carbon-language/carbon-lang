@@ -940,6 +940,10 @@ def freroll_loops : Flag<["-"], "freroll-loops">, Group<f_Group>,
   HelpText<"Turn on loop reroller">, Flags<[CC1Option]>;
 def fno_reroll_loops : Flag<["-"], "fno-reroll-loops">, Group<f_Group>,
   HelpText<"Turn off loop reroller">;
+def ftrigraphs : Flag<["-"], "ftrigraphs">, Group<f_Group>,
+  HelpText<"Process trigraph sequences">, Flags<[CC1Option]>;
+def fno_trigraphs : Flag<["-"], "fno-trigraphs">, Group<f_Group>,
+  HelpText<"Do not process trigraph sequences">, Flags<[CC1Option]>;
 def funsigned_bitfields : Flag<["-"], "funsigned-bitfields">, Group<f_Group>;
 def funsigned_char : Flag<["-"], "funsigned-char">, Group<f_Group>;
 def fno_unsigned_char : Flag<["-"], "fno-unsigned-char">, Group<clang_ignored_f_Group>;
@@ -1471,7 +1475,7 @@ def time : Flag<["-"], "time">,
 def traditional_cpp : Flag<["-", "--"], "traditional-cpp">, Flags<[CC1Option]>,
   HelpText<"Enable some traditional CPP emulation">;
 def traditional : Flag<["-", "--"], "traditional">;
-def trigraphs : Flag<["-", "--"], "trigraphs">, Flags<[CC1Option]>,
+def trigraphs : Flag<["-", "--"], "trigraphs">, Alias<ftrigraphs>,
   HelpText<"Process trigraph sequences">;
 def twolevel__namespace__hints : Flag<["-"], "twolevel_namespace_hints">;
 def twolevel__namespace : Flag<["-"], "twolevel_namespace">;

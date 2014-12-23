@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -trigraphs -Wtrigraphs -verify %s
+// RUN: %clang_cc1 -fsyntax-only -ftrigraphs -Wtrigraphs -verify %s
 
 ??=pragma // expected-warning {{trigraph converted to '#' character}}
 

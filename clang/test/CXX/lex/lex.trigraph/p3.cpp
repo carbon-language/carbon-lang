@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -trigraphs -Wtrigraphs -verify %s
+// RUN: %clang_cc1 -fsyntax-only -ftrigraphs -Wtrigraphs -verify %s
 // expected-no-diagnostics
 
 char a[] =

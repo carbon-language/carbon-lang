@@ -1,5 +1,5 @@
 // RUN: %clang_cc1 -std=c++1z %s -verify
-// RUN: %clang_cc1 -std=c++1z %s -trigraphs -fsyntax-only
+// RUN: %clang_cc1 -std=c++1z %s -ftrigraphs -fsyntax-only
 
 ??= define foo ; // expected-error {{}} expected-warning {{trigraph ignored}}
 

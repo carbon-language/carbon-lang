@@ -3412,8 +3412,10 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     else
       Std->render(Args, CmdArgs);
 
+    // If -f(no-)trigraphs appears after the language standard flag, honor it.
     if (Arg *A = Args.getLastArg(options::OPT_std_EQ, options::OPT_ansi,
-                                 options::OPT_trigraphs))
+                                 options::OPT_ftrigraphs,
+                                 options::OPT_fno_trigraphs))
       if (A != Std)
         A->render(Args, CmdArgs);
   } else {
@@ -3429,7 +3431,8 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     else if (IsWindowsMSVC)
       CmdArgs.push_back("-std=c++11");
 
-    Args.AddLastArg(CmdArgs, options::OPT_trigraphs);
+    Args.AddLastArg(CmdArgs, options::OPT_ftrigraphs,
+                    options::OPT_fno_trigraphs);
   }
 
   // GCC's behavior for -Wwrite-strings is a bit strange:

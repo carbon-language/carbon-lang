@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -Eonly -trigraphs %s
+// RUN: %clang_cc1 -Eonly -ftrigraphs %s
 // RUN: %clang_cc1 -Eonly -verify %s
 
 //\
