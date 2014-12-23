@@ -172,8 +172,12 @@ namespace llvm {
 
     /// \brief Create debugging information entry for a pointer to member.
     /// @param PointeeTy Type pointed to by this pointer.
+    /// @param SizeInBits  Size.
+    /// @param AlignInBits Alignment. (optional)
     /// @param Class Type for which this pointer points to members of.
-    DIDerivedType createMemberPointerType(DIType PointeeTy, DIType Class);
+    DIDerivedType createMemberPointerType(DIType PointeeTy, DIType Class,
+                                          uint64_t SizeInBits,
+                                          uint64_t AlignInBits = 0);
 
     /// createReferenceType - Create debugging information entry for a c++
     /// style reference or rvalue reference type.
