@@ -1614,7 +1614,7 @@ static DecodeStatus DecodeSimm9SP(MCInst &Inst, unsigned Insn,
   case 511: DecodedValue = -257; break;
   default: DecodedValue = SignExtend32<9>(Insn); break;
   }
-  Inst.addOperand(MCOperand::CreateImm(DecodedValue << 2));
+  Inst.addOperand(MCOperand::CreateImm(DecodedValue * 4));
   return MCDisassembler::Success;
 }
 
