@@ -1244,14 +1244,13 @@ static bool SinkThenElseCodeToEnd(BranchInst *BI1) {
     return false;
 
   // Gather the PHI nodes in BBEnd.
-  std::map<Value*, std::pair<Value*, PHINode*> > MapValueFromBB1ToBB2;
+  SmallDenseMap<std::pair<Value *, Value *>, PHINode *> JointValueMap;
   Instruction *FirstNonPhiInBBEnd = nullptr;
-  for (BasicBlock::iterator I = BBEnd->begin(), E = BBEnd->end();
-       I != E; ++I) {
+  for (BasicBlock::iterator I = BBEnd->begin(), E = BBEnd->end(); I != E; ++I) {
     if (PHINode *PN = dyn_cast<PHINode>(I)) {
       Value *BB1V = PN->getIncomingValueForBlock(BB1);
       Value *BB2V = PN->getIncomingValueForBlock(BB2);
-      MapValueFromBB1ToBB2[BB1V] = std::make_pair(BB2V, PN);
+      JointValueMap[std::make_pair(BB1V, BB2V)] = PN;
     } else {
       FirstNonPhiInBBEnd = &*I;
       break;
@@ -1260,13 +1259,13 @@ static bool SinkThenElseCodeToEnd(BranchInst *BI1) {
   if (!FirstNonPhiInBBEnd)
     return false;
 
-
   // This does very trivial matching, with limited scanning, to find identical
   // instructions in the two blocks.  We scan backward for obviously identical
   // instructions in an identical order.
   BasicBlock::InstListType::reverse_iterator RI1 = BB1->getInstList().rbegin(),
-      RE1 = BB1->getInstList().rend(), RI2 = BB2->getInstList().rbegin(),
-      RE2 = BB2->getInstList().rend();
+                                             RE1 = BB1->getInstList().rend(),
+                                             RI2 = BB2->getInstList().rbegin(),
+                                             RE2 = BB2->getInstList().rend();
   // Skip debug info.
   while (RI1 != RE1 && isa<DbgInfoIntrinsic>(&*RI1)) ++RI1;
   if (RI1 == RE1)
@@ -1289,6 +1288,7 @@ static bool SinkThenElseCodeToEnd(BranchInst *BI1) {
       return Changed;
 
     Instruction *I1 = &*RI1, *I2 = &*RI2;
+    auto InstPair = std::make_pair(I1, I2);
     // I1 and I2 should have a single use in the same PHI node, and they
     // perform the same operation.
     // Cannot move control-flow-involving, volatile loads, vaarg, etc.
@@ -1299,11 +1299,11 @@ static bool SinkThenElseCodeToEnd(BranchInst *BI1) {
         I1->mayHaveSideEffects() || I2->mayHaveSideEffects() ||
         I1->mayReadOrWriteMemory() || I2->mayReadOrWriteMemory() ||
         !I1->hasOneUse() || !I2->hasOneUse() ||
-        MapValueFromBB1ToBB2.find(I1) == MapValueFromBB1ToBB2.end() ||
-        MapValueFromBB1ToBB2[I1].first != I2)
+        !JointValueMap.count(InstPair))
       return Changed;
 
     // Check whether we should swap the operands of ICmpInst.
+    // TODO: Add support of communativity.
     ICmpInst *ICmp1 = dyn_cast<ICmpInst>(I1), *ICmp2 = dyn_cast<ICmpInst>(I2);
     bool SwapOpnds = false;
     if (ICmp1 && ICmp2 &&
@@ -1324,16 +1324,13 @@ static bool SinkThenElseCodeToEnd(BranchInst *BI1) {
     // with a PHI node after sinking. We only handle the case where there is
     // a single pair of different operands.
     Value *DifferentOp1 = nullptr, *DifferentOp2 = nullptr;
-    unsigned Op1Idx = 0;
+    unsigned Op1Idx = ~0U;
     for (unsigned I = 0, E = I1->getNumOperands(); I != E; ++I) {
       if (I1->getOperand(I) == I2->getOperand(I))
         continue;
-      // Early exit if we have more-than one pair of different operands or
-      // the different operand is already in MapValueFromBB1ToBB2.
-      // Early exit if we need a PHI node to replace a constant.
-      if (DifferentOp1 ||
-          MapValueFromBB1ToBB2.find(I1->getOperand(I)) !=
-          MapValueFromBB1ToBB2.end() ||
+      // Early exit if we have more-than one pair of different operands or if
+      // we need a PHI node to replace a constant.
+      if (Op1Idx != ~0U ||
           isa<Constant>(I1->getOperand(I)) ||
           isa<Constant>(I2->getOperand(I))) {
         // If we can't sink the instructions, undo the swapping.
@@ -1346,24 +1343,27 @@ static bool SinkThenElseCodeToEnd(BranchInst *BI1) {
       DifferentOp2 = I2->getOperand(I);
     }
 
-    // We insert the pair of different operands to MapValueFromBB1ToBB2 and
-    // remove (I1, I2) from MapValueFromBB1ToBB2.
-    if (DifferentOp1) {
-      PHINode *NewPN = PHINode::Create(DifferentOp1->getType(), 2,
-                                       DifferentOp1->getName() + ".sink",
-                                       BBEnd->begin());
-      MapValueFromBB1ToBB2[DifferentOp1] = std::make_pair(DifferentOp2, NewPN);
+    DEBUG(dbgs() << "SINK common instructions " << *I1 << "\n");
+    DEBUG(dbgs() << "                         " << *I2 << "\n");
+
+    // We insert the pair of different operands to JointValueMap and
+    // remove (I1, I2) from JointValueMap.
+    if (Op1Idx != ~0U) {
+      auto &NewPN = JointValueMap[std::make_pair(DifferentOp1, DifferentOp2)];
+      if (!NewPN) {
+        NewPN =
+            PHINode::Create(DifferentOp1->getType(), 2,
+                            DifferentOp1->getName() + ".sink", BBEnd->begin());
+        NewPN->addIncoming(DifferentOp1, BB1);
+        NewPN->addIncoming(DifferentOp2, BB2);
+        DEBUG(dbgs() << "Create PHI node " << *NewPN << "\n";);
+      }
       // I1 should use NewPN instead of DifferentOp1.
       I1->setOperand(Op1Idx, NewPN);
-      NewPN->addIncoming(DifferentOp1, BB1);
-      NewPN->addIncoming(DifferentOp2, BB2);
-      DEBUG(dbgs() << "Create PHI node " << *NewPN << "\n";);
     }
-    PHINode *OldPN = MapValueFromBB1ToBB2[I1].second;
-    MapValueFromBB1ToBB2.erase(I1);
+    PHINode *OldPN = JointValueMap[InstPair];
+    JointValueMap.erase(InstPair);
 
-    DEBUG(dbgs() << "SINK common instructions " << *I1 << "\n";);
-    DEBUG(dbgs() << "                         " << *I2 << "\n";);
     // We need to update RE1 and RE2 if we are going to sink the first
     // instruction in the basic block down.
     bool UpdateRE1 = (I1 == BB1->begin()), UpdateRE2 = (I2 == BB2->begin());
