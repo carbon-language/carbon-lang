@@ -17032,6 +17032,16 @@ static SDValue LowerINTRINSIC_WO_CHAIN(SDValue Op, const X86Subtarget *Subtarget
       return DAG.getNode(IntrData->Opc0, dl, VT, VMask, Op.getOperand(1),
                          Op.getOperand(2));
     }
+    case FMA_OP_MASK:
+    {
+        return getVectorMaskingNode(DAG.getNode(IntrData->Opc0,
+            dl, Op.getValueType(),
+            Op.getOperand(1),
+            Op.getOperand(2),
+            Op.getOperand(3)),
+            Op.getOperand(4), Op.getOperand(1),
+            Subtarget, DAG);
+    }
     default:
       break;
     }

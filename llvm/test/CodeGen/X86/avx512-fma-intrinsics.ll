@@ -8,6 +8,13 @@ define <16 x float> @test_x86_vfmadd_ps_z(<16 x float> %a0, <16 x float> %a1, <1
 }
 declare <16 x float> @llvm.x86.fma.mask.vfmadd.ps.512(<16 x float>, <16 x float>, <16 x float>, i16, i32) nounwind readnone
 
+define <16 x float> @test_mask_vfmadd_ps(<16 x float> %a0, <16 x float> %a1, <16 x float> %a2, i16 %mask) {
+  ; CHECK-LABEL: test_mask_vfmadd_ps
+  ; CHECK: vfmadd213ps %zmm
+  %res = call <16 x float> @llvm.x86.fma.mask.vfmadd.ps.512(<16 x float> %a0, <16 x float> %a1, <16 x float> %a2, i16 %mask, i32 4) nounwind
+  ret <16 x float> %res
+}
+
 define <8 x double> @test_x86_vfmadd_pd_z(<8 x double> %a0, <8 x double> %a1, <8 x double> %a2) {
   ; CHECK-LABEL: test_x86_vfmadd_pd_z
   ; CHECK: vfmadd213pd %zmm
@@ -32,6 +39,13 @@ define <16 x float> @test_x86_vfmsubps_z(<16 x float> %a0, <16 x float> %a1, <16
 }
 declare <16 x float> @llvm.x86.fma.mask.vfmsub.ps.512(<16 x float>, <16 x float>, <16 x float>, i16, i32) nounwind readnone
 
+define <16 x float> @test_mask_vfmsub_ps(<16 x float> %a0, <16 x float> %a1, <16 x float> %a2, i16 %mask) {
+  ; CHECK-LABEL: test_mask_vfmsub_ps
+  ; CHECK: vfmsub213ps %zmm
+  %res = call <16 x float> @llvm.x86.fma.mask.vfmsub.ps.512(<16 x float> %a0, <16 x float> %a1, <16 x float> %a2, i16 %mask, i32 4) nounwind
+  ret <16 x float> %res
+}
+
 define <8 x double> @test_x86_vfmsubpd_z(<8 x double> %a0, <8 x double> %a1, <8 x double> %a2) {
   ; CHECK-LABEL: test_x86_vfmsubpd_z
   ; CHECK: vfmsub213pd %zmm
@@ -39,6 +53,13 @@ define <8 x double> @test_x86_vfmsubpd_z(<8 x double> %a0, <8 x double> %a1, <8 
   ret <8 x double> %res
 }
 declare <8 x double> @llvm.x86.fma.mask.vfmsub.pd.512(<8 x double>, <8 x double>, <8 x double>, i8, i32) nounwind readnone
+
+define <8 x double> @test_mask_vfmsub_pd(<8 x double> %a0, <8 x double> %a1, <8 x double> %a2, i8 %mask) {
+  ; CHECK-LABEL: test_mask_vfmsub_pd
+  ; CHECK: vfmsub213pd %zmm
+  %res = call <8 x double> @llvm.x86.fma.mask.vfmsub.pd.512(<8 x double> %a0, <8 x double> %a1, <8 x double> %a2, i8 %mask, i32 4) nounwind
+  ret <8 x double> %res
+}
 
 define <16 x float> @test_x86_vfnmadd_ps_z(<16 x float> %a0, <16 x float> %a1, <16 x float> %a2) {
   ; CHECK-LABEL: test_x86_vfnmadd_ps_z
@@ -48,6 +69,13 @@ define <16 x float> @test_x86_vfnmadd_ps_z(<16 x float> %a0, <16 x float> %a1, <
 }
 declare <16 x float> @llvm.x86.fma.mask.vfnmadd.ps.512(<16 x float>, <16 x float>, <16 x float>, i16, i32) nounwind readnone
 
+define <16 x float> @test_mask_vfnmadd_ps(<16 x float> %a0, <16 x float> %a1, <16 x float> %a2, i16 %mask) {
+  ; CHECK-LABEL: test_mask_vfnmadd_ps
+  ; CHECK: vfnmadd213ps %zmm
+  %res = call <16 x float> @llvm.x86.fma.mask.vfnmadd.ps.512(<16 x float> %a0, <16 x float> %a1, <16 x float> %a2, i16 %mask, i32 4) nounwind
+  ret <16 x float> %res
+}
+
 define <8 x double> @test_x86_vfnmadd_pd_z(<8 x double> %a0, <8 x double> %a1, <8 x double> %a2) {
   ; CHECK-LABEL: test_x86_vfnmadd_pd_z
   ; CHECK: vfnmadd213pd %zmm
@@ -55,6 +83,13 @@ define <8 x double> @test_x86_vfnmadd_pd_z(<8 x double> %a0, <8 x double> %a1, <
   ret <8 x double> %res
 }
 declare <8 x double> @llvm.x86.fma.mask.vfnmadd.pd.512(<8 x double>, <8 x double>, <8 x double>, i8, i32) nounwind readnone
+
+define <8 x double> @test_mask_vfnmadd_pd(<8 x double> %a0, <8 x double> %a1, <8 x double> %a2, i8 %mask) {
+  ; CHECK-LABEL: test_mask_vfnmadd_pd
+  ; CHECK: vfnmadd213pd %zmm
+  %res = call <8 x double> @llvm.x86.fma.mask.vfnmadd.pd.512(<8 x double> %a0, <8 x double> %a1, <8 x double> %a2, i8 %mask, i32 4) nounwind
+  ret <8 x double> %res
+}
 
 define <16 x float> @test_x86_vfnmsubps_z(<16 x float> %a0, <16 x float> %a1, <16 x float> %a2) {
   ; CHECK-LABEL: test_x86_vfnmsubps_z
@@ -64,6 +99,13 @@ define <16 x float> @test_x86_vfnmsubps_z(<16 x float> %a0, <16 x float> %a1, <1
 }
 declare <16 x float> @llvm.x86.fma.mask.vfnmsub.ps.512(<16 x float>, <16 x float>, <16 x float>, i16, i32) nounwind readnone
 
+define <16 x float> @test_mask_vfnmsub_ps(<16 x float> %a0, <16 x float> %a1, <16 x float> %a2, i16 %mask) {
+  ; CHECK-LABEL: test_mask_vfnmsub_ps
+  ; CHECK: vfnmsub213ps %zmm
+  %res = call <16 x float> @llvm.x86.fma.mask.vfnmsub.ps.512(<16 x float> %a0, <16 x float> %a1, <16 x float> %a2, i16 %mask, i32 4) nounwind
+  ret <16 x float> %res
+}
+
 define <8 x double> @test_x86_vfnmsubpd_z(<8 x double> %a0, <8 x double> %a1, <8 x double> %a2) {
   ; CHECK-LABEL: test_x86_vfnmsubpd_z
   ; CHECK: vfnmsub213pd %zmm
@@ -71,6 +113,13 @@ define <8 x double> @test_x86_vfnmsubpd_z(<8 x double> %a0, <8 x double> %a1, <8
   ret <8 x double> %res
 }
 declare <8 x double> @llvm.x86.fma.mask.vfnmsub.pd.512(<8 x double>, <8 x double>, <8 x double>, i8, i32) nounwind readnone
+
+define <8 x double> @test_mask_vfnmsub_pd(<8 x double> %a0, <8 x double> %a1, <8 x double> %a2, i8 %mask) {
+  ; CHECK-LABEL: test_mask_vfnmsub_pd
+  ; CHECK: vfnmsub213pd %zmm
+  %res = call <8 x double> @llvm.x86.fma.mask.vfnmsub.pd.512(<8 x double> %a0, <8 x double> %a1, <8 x double> %a2, i8 %mask, i32 4) nounwind
+  ret <8 x double> %res
+}
 
 define <16 x float> @test_x86_vfmaddsubps_z(<16 x float> %a0, <16 x float> %a1, <16 x float> %a2) {
   ; CHECK-LABEL: test_x86_vfmaddsubps_z
@@ -96,6 +145,13 @@ define <8 x double> @test_x86_vfmaddsubpd_z(<8 x double> %a0, <8 x double> %a1, 
 }
 declare <8 x double> @llvm.x86.fma.mask.vfmaddsub.pd.512(<8 x double>, <8 x double>, <8 x double>, i8, i32) nounwind readnone
 
+define <8 x double> @test_mask_vfmaddsub_pd(<8 x double> %a0, <8 x double> %a1, <8 x double> %a2, i8 %mask) {
+  ; CHECK-LABEL: test_mask_vfmaddsub_pd
+  ; CHECK: vfmaddsub213pd %zmm
+  %res = call <8 x double> @llvm.x86.fma.mask.vfmaddsub.pd.512(<8 x double> %a0, <8 x double> %a1, <8 x double> %a2, i8 %mask, i32 4) nounwind
+  ret <8 x double> %res
+}
+
 define <16 x float> @test_x86_vfmsubaddps_z(<16 x float> %a0, <16 x float> %a1, <16 x float> %a2) {
   ; CHECK-LABEL: test_x86_vfmsubaddps_z
   ; CHECK: vfmsubadd213ps %zmm
@@ -104,6 +160,13 @@ define <16 x float> @test_x86_vfmsubaddps_z(<16 x float> %a0, <16 x float> %a1, 
 }
 declare <16 x float> @llvm.x86.fma.mask.vfmsubadd.ps.512(<16 x float>, <16 x float>, <16 x float>, i16, i32) nounwind readnone
 
+define <16 x float> @test_mask_vfmsubadd_ps(<16 x float> %a0, <16 x float> %a1, <16 x float> %a2, i16 %mask) {
+  ; CHECK-LABEL: test_mask_vfmsubadd_ps
+  ; CHECK: vfmsubadd213ps %zmm
+  %res = call <16 x float> @llvm.x86.fma.mask.vfmsubadd.ps.512(<16 x float> %a0, <16 x float> %a1, <16 x float> %a2, i16 %mask, i32 4) nounwind
+  ret <16 x float> %res
+}
+
 define <8 x double> @test_x86_vfmsubaddpd_z(<8 x double> %a0, <8 x double> %a1, <8 x double> %a2) {
   ; CHECK-LABEL: test_x86_vfmsubaddpd_z
   ; CHECK: vfmsubadd213pd %zmm
@@ -111,3 +174,11 @@ define <8 x double> @test_x86_vfmsubaddpd_z(<8 x double> %a0, <8 x double> %a1, 
   ret <8 x double> %res
 }
 declare <8 x double> @llvm.x86.fma.mask.vfmsubadd.pd.512(<8 x double>, <8 x double>, <8 x double>, i8, i32) nounwind readnone
+
+define <8 x double> @test_mask_vfmsubadd_pd(<8 x double> %a0, <8 x double> %a1, <8 x double> %a2, i8 %mask) {
+  ; CHECK-LABEL: test_mask_vfmsubadd_pd
+  ; CHECK: vfmsubadd213pd %zmm
+  %res = call <8 x double> @llvm.x86.fma.mask.vfmsubadd.pd.512(<8 x double> %a0, <8 x double> %a1, <8 x double> %a2, i8 %mask, i32 4) nounwind
+  ret <8 x double> %res
+}
+
