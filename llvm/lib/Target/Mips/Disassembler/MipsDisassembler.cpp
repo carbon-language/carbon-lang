@@ -265,6 +265,11 @@ static DecodeStatus DecodeMemMMImm4(MCInst &Inst,
                                     uint64_t Address,
                                     const void *Decoder);
 
+static DecodeStatus DecodeMemMMSPImm5Lsl2(MCInst &Inst,
+                                          unsigned Insn,
+                                          uint64_t Address,
+                                          const void *Decoder);
+
 static DecodeStatus DecodeMemMMImm12(MCInst &Inst,
                                      unsigned Insn,
                                      uint64_t Address,
@@ -1193,6 +1198,22 @@ static DecodeStatus DecodeMemMMImm4(MCInst &Inst,
       Inst.addOperand(MCOperand::CreateImm(Offset << 2));
       break;
   }
+
+  return MCDisassembler::Success;
+}
+
+static DecodeStatus DecodeMemMMSPImm5Lsl2(MCInst &Inst,
+                                          unsigned Insn,
+                                          uint64_t Address,
+                                          const void *Decoder) {
+  unsigned Offset = Insn & 0x1F;
+  unsigned Reg = fieldFromInstruction(Insn, 5, 5);
+
+  Reg = getReg(Decoder, Mips::GPR32RegClassID, Reg);
+
+  Inst.addOperand(MCOperand::CreateReg(Reg));
+  Inst.addOperand(MCOperand::CreateReg(Mips::SP));
+  Inst.addOperand(MCOperand::CreateImm(Offset << 2));
 
   return MCDisassembler::Success;
 }

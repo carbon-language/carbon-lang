@@ -81,6 +81,21 @@ def mem_mm_4_lsl2 : mem_mm_4_generic {
   let EncoderMethod = "getMemEncodingMMImm4Lsl2";
 }
 
+def MicroMipsMemSPAsmOperand : AsmOperandClass {
+  let Name = "MicroMipsMemSP";
+  let RenderMethod = "addMemOperands";
+  let ParserMethod = "parseMemOperand";
+  let PredicateMethod = "isMemWithUimmWordAlignedOffsetSP<7>";
+}
+
+def mem_mm_sp_imm5_lsl2 : Operand<i32> {
+  let PrintMethod = "printMemOperand";
+  let MIOperandInfo = (ops GPR32:$base, simm5:$offset);
+  let OperandType = "OPERAND_MEMORY";
+  let ParserMatchClass = MicroMipsMemSPAsmOperand;
+  let EncoderMethod = "getMemEncodingMMSPImm5Lsl2";
+}
+
 def mem_mm_12 : Operand<i32> {
   let PrintMethod = "printMemOperand";
   let MIOperandInfo = (ops GPR32, simm12);
@@ -252,6 +267,23 @@ class StoreMM16<string opstr, DAGOperand RTOpnd, DAGOperand RO,
   MicroMipsInst16<(outs), (ins RTOpnd:$rt, MemOpnd:$addr),
                   !strconcat(opstr, "\t$rt, $addr"), [], Itin, FrmI> {
   let DecoderMethod = "DecodeMemMMImm4";
+  let mayStore = 1;
+}
+
+class LoadSPMM16<string opstr, DAGOperand RO, InstrItinClass Itin,
+                 Operand MemOpnd> :
+  MicroMipsInst16<(outs RO:$rt), (ins MemOpnd:$offset),
+                  !strconcat(opstr, "\t$rt, $offset"), [], Itin, FrmI> {
+  let DecoderMethod = "DecodeMemMMSPImm5Lsl2";
+  let canFoldAsLoad = 1;
+  let mayLoad = 1;
+}
+
+class StoreSPMM16<string opstr, DAGOperand RO, InstrItinClass Itin,
+                  Operand MemOpnd> :
+  MicroMipsInst16<(outs), (ins RO:$rt, MemOpnd:$offset),
+                  !strconcat(opstr, "\t$rt, $offset"), [], Itin, FrmI> {
+  let DecoderMethod = "DecodeMemMMSPImm5Lsl2";
   let mayStore = 1;
 }
 
@@ -462,6 +494,10 @@ def SH16_MM : StoreMM16<"sh16", GPRMM16OpndZero, GPRMM16Opnd, truncstorei16,
                         LOAD_STORE_FM_MM16<0x2a>;
 def SW16_MM : StoreMM16<"sw16", GPRMM16OpndZero, GPRMM16Opnd, store, II_SW,
                         mem_mm_4_lsl2>, LOAD_STORE_FM_MM16<0x3a>;
+def LWSP_MM : LoadSPMM16<"lw", GPR32Opnd, II_LW, mem_mm_sp_imm5_lsl2>,
+              LOAD_STORE_SP_FM_MM16<0x12>;
+def SWSP_MM : StoreSPMM16<"sw", GPR32Opnd, II_SW, mem_mm_sp_imm5_lsl2>,
+              LOAD_STORE_SP_FM_MM16<0x32>;
 def ADDIUR1SP_MM : AddImmUR1SP<"addiur1sp", GPRMM16Opnd>, ADDIUR1SP_FM_MM16;
 def ADDIUR2_MM : AddImmUR2<"addiur2", GPRMM16Opnd>, ADDIUR2_FM_MM16;
 def ADDIUS5_MM : AddImmUS5<"addius5", GPR32Opnd>, ADDIUS5_FM_MM16;

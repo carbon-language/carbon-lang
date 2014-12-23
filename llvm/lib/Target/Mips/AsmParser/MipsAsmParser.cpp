@@ -824,6 +824,11 @@ public:
     return isMem() && isConstantMemOff() && isUInt<Bits>(getConstantMemOff())
       && getMemBase()->isRegIdx() && (getMemBase()->getGPR32Reg() == Mips::SP);
   }
+  template <unsigned Bits> bool isMemWithUimmWordAlignedOffsetSP() const {
+    return isMem() && isConstantMemOff() && isUInt<Bits>(getConstantMemOff())
+      && (getConstantMemOff() % 4 == 0) && getMemBase()->isRegIdx()
+      && (getMemBase()->getGPR32Reg() == Mips::SP);
+  }
   bool isRegList16() const {
     if (!isRegList())
       return false;
