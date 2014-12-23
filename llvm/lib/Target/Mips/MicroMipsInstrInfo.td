@@ -740,6 +740,16 @@ let DecoderNamespace = "MicroMips", Predicates = [InMicroMips] in {
   def LL_MM : LLBaseMM<"ll", GPR32Opnd>, LL_FM_MM<0x3>;
   def SC_MM : SCBaseMM<"sc", GPR32Opnd>, LL_FM_MM<0xb>;
 
+  let DecoderMethod = "DecodeCacheOpMM" in {
+  def CACHE_MM : MMRel, CacheOp<"cache", mem_mm_12>,
+                 CACHE_PREF_FM_MM<0x08, 0x6>;
+  def PREF_MM  : MMRel, CacheOp<"pref", mem_mm_12>,
+                 CACHE_PREF_FM_MM<0x18, 0x2>;
+  }
+  def SSNOP_MM : MMRel, Barrier<"ssnop">, BARRIER_FM_MM<0x1>;
+  def EHB_MM   : MMRel, Barrier<"ehb">, BARRIER_FM_MM<0x3>;
+  def PAUSE_MM : MMRel, Barrier<"pause">, BARRIER_FM_MM<0x5>;
+
   def TLBP_MM : MMRel, TLB<"tlbp">, COP0_TLB_FM_MM<0x0d>;
   def TLBR_MM : MMRel, TLB<"tlbr">, COP0_TLB_FM_MM<0x4d>;
   def TLBWI_MM : MMRel, TLB<"tlbwi">, COP0_TLB_FM_MM<0x8d>;

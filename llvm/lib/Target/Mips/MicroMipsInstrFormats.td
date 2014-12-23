@@ -861,3 +861,29 @@ class LWM_FM_MM16<bits<4> funct> : MMArch {
   let Inst{5-4}   = rt;
   let Inst{3-0}   = addr;
 }
+
+class CACHE_PREF_FM_MM<bits<6> op, bits<4> funct> : MMArch {
+  bits<21> addr;
+  bits<5> hint;
+  bits<5> base = addr{20-16};
+  bits<12> offset = addr{11-0};
+
+  bits<32> Inst;
+
+  let Inst{31-26} = op;
+  let Inst{25-21} = hint;
+  let Inst{20-16} = base;
+  let Inst{15-12} = funct;
+  let Inst{11-0}  = offset;
+}
+
+class BARRIER_FM_MM<bits<5> op> : MMArch {
+  bits<32> Inst;
+
+  let Inst{31-26} = 0x0;
+  let Inst{25-21} = 0x0;
+  let Inst{20-16} = 0x0;
+  let Inst{15-11} = op;
+  let Inst{10-6}  = 0x0;
+  let Inst{5-0}   = 0x0;
+}

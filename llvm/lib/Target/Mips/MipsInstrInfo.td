@@ -1466,10 +1466,10 @@ def MFC2 : MFC3OP<"mfc2", GPR32Opnd>, MFC3OP_FM<0x12, 0>;
 def MTC2 : MFC3OP<"mtc2", GPR32Opnd>, MFC3OP_FM<0x12, 4>;
 
 class Barrier<string asmstr> : InstSE<(outs), (ins), asmstr, [], NoItinerary,
-                                      FrmOther>;
-def SSNOP : Barrier<"ssnop">, BARRIER_FM<1>;
-def EHB : Barrier<"ehb">, BARRIER_FM<3>;
-def PAUSE : Barrier<"pause">, BARRIER_FM<5>, ISA_MIPS32R2;
+                                      FrmOther, asmstr>;
+def SSNOP : MMRel, Barrier<"ssnop">, BARRIER_FM<1>;
+def EHB : MMRel, Barrier<"ehb">, BARRIER_FM<3>;
+def PAUSE : MMRel, Barrier<"pause">, BARRIER_FM<5>, ISA_MIPS32R2;
 
 // JR_HB and JALR_HB are defined here using the new style naming
 // scheme because some of this code is shared with Mips32r6InstrInfo.td
@@ -1520,13 +1520,14 @@ def TLBWR : MMRel, TLB<"tlbwr">, COP0_TLB_FM<0x06>;
 
 class CacheOp<string instr_asm, Operand MemOpnd> :
     InstSE<(outs), (ins  MemOpnd:$addr, uimm5:$hint),
-           !strconcat(instr_asm, "\t$hint, $addr"), [], NoItinerary, FrmOther> {
+           !strconcat(instr_asm, "\t$hint, $addr"), [], NoItinerary, FrmOther,
+           instr_asm> {
   let DecoderMethod = "DecodeCacheOp";
 }
 
-def CACHE : CacheOp<"cache", mem>, CACHEOP_FM<0b101111>,
+def CACHE : MMRel, CacheOp<"cache", mem>, CACHEOP_FM<0b101111>,
             INSN_MIPS3_32_NOT_32R6_64R6;
-def PREF :  CacheOp<"pref", mem>, CACHEOP_FM<0b110011>,
+def PREF :  MMRel, CacheOp<"pref", mem>, CACHEOP_FM<0b110011>,
             INSN_MIPS3_32_NOT_32R6_64R6;
 
 //===----------------------------------------------------------------------===//

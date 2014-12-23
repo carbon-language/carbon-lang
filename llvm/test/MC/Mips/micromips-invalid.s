@@ -62,3 +62,5 @@
   sb16  $7, 4($9)   # CHECK: :[[@LINE]]:{{[0-9]+}}: error: invalid operand for instruction
   sh16  $7, 8($9)   # CHECK: :[[@LINE]]:{{[0-9]+}}: error: invalid operand for instruction
   sw16  $7, 4($10)  # CHECK: :[[@LINE]]:{{[0-9]+}}: error: invalid operand for instruction
+  cache 256, 8($5)  # CHECK: :[[@LINE]]:{{[0-9]+}}: error: immediate operand value out of range
+  pref 256, 8($5)   # CHECK: :[[@LINE]]:{{[0-9]+}}: error: immediate operand value out of range
