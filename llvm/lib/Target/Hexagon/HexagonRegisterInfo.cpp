@@ -159,7 +159,7 @@ void HexagonRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
       //
       // r0 = add(r30, #10000)
       // r0 = memw(r0)
-      if ( (MI.getOpcode() == Hexagon::L2_loadri_io)  ||
+      if ( (MI.getOpcode() == Hexagon::LDriw)  ||
            (MI.getOpcode() == Hexagon::LDrid)   ||
            (MI.getOpcode() == Hexagon::L2_loadrh_io) ||
            (MI.getOpcode() == Hexagon::L2_loadruh_io) ||

@@ -141,7 +141,7 @@ bool HexagonExpandPredSpillCode::runOnMachineFunction(MachineFunction &Fn) {
             "Not a Frame Pointer, Nor a Spill Slot");
         assert(MI->getOperand(2).isImm() && "Not an offset");
         int Offset = MI->getOperand(2).getImm();
-        if (!TII->isValidOffset(Hexagon::L2_loadri_io, Offset)) {
+        if (!TII->isValidOffset(Hexagon::LDriw, Offset)) {
           if (!TII->isValidOffset(Hexagon::ADD_ri, Offset)) {
             BuildMI(*MBB, MII, MI->getDebugLoc(),
                     TII->get(Hexagon::CONST32_Int_Real),
@@ -150,7 +150,7 @@ bool HexagonExpandPredSpillCode::runOnMachineFunction(MachineFunction &Fn) {
                     HEXAGON_RESERVED_REG_1)
               .addReg(FP)
               .addReg(HEXAGON_RESERVED_REG_1);
-            BuildMI(*MBB, MII, MI->getDebugLoc(), TII->get(Hexagon::L2_loadri_io),
+            BuildMI(*MBB, MII, MI->getDebugLoc(), TII->get(Hexagon::LDriw),
                       HEXAGON_RESERVED_REG_2)
               .addReg(HEXAGON_RESERVED_REG_1)
               .addImm(0);
@@ -159,7 +159,7 @@ bool HexagonExpandPredSpillCode::runOnMachineFunction(MachineFunction &Fn) {
           } else {
             BuildMI(*MBB, MII, MI->getDebugLoc(), TII->get(Hexagon::ADD_ri),
                       HEXAGON_RESERVED_REG_1).addReg(FP).addImm(Offset);
-            BuildMI(*MBB, MII, MI->getDebugLoc(), TII->get(Hexagon::L2_loadri_io),
+            BuildMI(*MBB, MII, MI->getDebugLoc(), TII->get(Hexagon::LDriw),
                       HEXAGON_RESERVED_REG_2)
               .addReg(HEXAGON_RESERVED_REG_1)
               .addImm(0);
@@ -167,7 +167,7 @@ bool HexagonExpandPredSpillCode::runOnMachineFunction(MachineFunction &Fn) {
                       DstReg).addReg(HEXAGON_RESERVED_REG_2);
           }
         } else {
-          BuildMI(*MBB, MII, MI->getDebugLoc(), TII->get(Hexagon::L2_loadri_io),
+          BuildMI(*MBB, MII, MI->getDebugLoc(), TII->get(Hexagon::LDriw),
                     HEXAGON_RESERVED_REG_2).addReg(FP).addImm(Offset);
           BuildMI(*MBB, MII, MI->getDebugLoc(), TII->get(Hexagon::C2_tfrrp),
                     DstReg).addReg(HEXAGON_RESERVED_REG_2);
