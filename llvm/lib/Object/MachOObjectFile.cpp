@@ -2342,6 +2342,11 @@ MachOObjectFile::getRoutinesCommand64(const LoadCommandInfo &L) const {
   return getStruct<MachO::routines_command_64>(this, L.Ptr);
 }
 
+MachO::thread_command
+MachOObjectFile::getThreadCommand(const LoadCommandInfo &L) const {
+  return getStruct<MachO::thread_command>(this, L.Ptr);
+}
+
 MachO::any_relocation_info
 MachOObjectFile::getRelocation(DataRefImpl Rel) const {
   DataRefImpl Sec;

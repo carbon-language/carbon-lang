@@ -1157,6 +1157,11 @@ namespace llvm {
       sys::swapByteOrder(r.reserved6);
     }
 
+    inline void swapStruct(thread_command &t) {
+      sys::swapByteOrder(t.cmd);
+      sys::swapByteOrder(t.cmdsize);
+    }
+
     inline void swapStruct(dylinker_command &d) {
       sys::swapByteOrder(d.cmd);
       sys::swapByteOrder(d.cmdsize);
@@ -1413,6 +1418,262 @@ namespace llvm {
       CPU_SUBTYPE_MC980000_ALL  = CPU_SUBTYPE_POWERPC_ALL,
       CPU_SUBTYPE_MC98601       = CPU_SUBTYPE_POWERPC_601
     };
+
+    struct x86_thread_state64_t {
+      uint64_t rax;
+      uint64_t rbx;
+      uint64_t rcx;
+      uint64_t rdx;
+      uint64_t rdi;
+      uint64_t rsi;
+      uint64_t rbp;
+      uint64_t rsp;
+      uint64_t r8;
+      uint64_t r9;
+      uint64_t r10;
+      uint64_t r11;
+      uint64_t r12;
+      uint64_t r13;
+      uint64_t r14;
+      uint64_t r15;
+      uint64_t rip;
+      uint64_t rflags;
+      uint64_t cs;
+      uint64_t fs;
+      uint64_t gs;
+    };
+
+    enum x86_fp_control_precis {
+      x86_FP_PREC_24B = 0,
+      x86_FP_PREC_53B = 2,
+      x86_FP_PREC_64B = 3
+    };
+
+    enum x86_fp_control_rc {
+      x86_FP_RND_NEAR = 0,
+      x86_FP_RND_DOWN = 1,
+      x86_FP_RND_UP = 2,
+      x86_FP_CHOP = 3
+    };
+
+    struct fp_control_t {
+      unsigned short
+       invalid :1,
+       denorm  :1,
+       zdiv    :1,
+       ovrfl   :1,
+       undfl   :1,
+       precis  :1,
+               :2,
+       pc      :2,
+       rc      :2,
+               :1,
+               :3;
+    };
+
+    struct fp_status_t {
+      unsigned short
+        invalid :1,
+        denorm  :1,
+        zdiv    :1,
+        ovrfl   :1,
+        undfl   :1,
+        precis  :1,
+        stkflt  :1,
+        errsumm :1,
+        c0      :1,
+        c1      :1,
+        c2      :1,
+        tos     :3,
+        c3      :1,
+        busy    :1;
+    };
+
+    struct mmst_reg {
+      char mmst_reg[10];
+      char mmst_rsrv[6];
+    };
+
+    struct xmm_reg {
+      char xmm_reg[16];
+    };
+
+    struct x86_float_state64_t {
+      int32_t fpu_reserved[2];
+      fp_control_t fpu_fcw;
+      fp_status_t fpu_fsw;
+      uint8_t fpu_ftw;
+      uint8_t fpu_rsrv1;
+      uint16_t fpu_fop;
+      uint32_t fpu_ip;
+      uint16_t fpu_cs;
+      uint16_t fpu_rsrv2;
+      uint32_t fpu_dp;
+      uint16_t fpu_ds;
+      uint16_t fpu_rsrv3;
+      uint32_t fpu_mxcsr;
+      uint32_t fpu_mxcsrmask;
+      mmst_reg fpu_stmm0;
+      mmst_reg fpu_stmm1;
+      mmst_reg fpu_stmm2;
+      mmst_reg fpu_stmm3;
+      mmst_reg fpu_stmm4;
+      mmst_reg fpu_stmm5;
+      mmst_reg fpu_stmm6;
+      mmst_reg fpu_stmm7;
+      xmm_reg fpu_xmm0;
+      xmm_reg fpu_xmm1;
+      xmm_reg fpu_xmm2;
+      xmm_reg fpu_xmm3;
+      xmm_reg fpu_xmm4;
+      xmm_reg fpu_xmm5;
+      xmm_reg fpu_xmm6;
+      xmm_reg fpu_xmm7;
+      xmm_reg fpu_xmm8;
+      xmm_reg fpu_xmm9;
+      xmm_reg fpu_xmm10;
+      xmm_reg fpu_xmm11;
+      xmm_reg fpu_xmm12;
+      xmm_reg fpu_xmm13;
+      xmm_reg fpu_xmm14;
+      xmm_reg fpu_xmm15;
+      char fpu_rsrv4[6*16];
+      uint32_t fpu_reserved1;
+    };
+
+    struct x86_exception_state64_t {
+      uint16_t trapno;
+      uint16_t cpu;
+      uint32_t err;
+      uint64_t faultvaddr;
+    };
+
+    inline void swapStruct(x86_thread_state64_t &x) {
+      sys::swapByteOrder(x.rax);
+      sys::swapByteOrder(x.rbx);
+      sys::swapByteOrder(x.rcx);
+      sys::swapByteOrder(x.rdx);
+      sys::swapByteOrder(x.rdi);
+      sys::swapByteOrder(x.rsi);
+      sys::swapByteOrder(x.rbp);
+      sys::swapByteOrder(x.rsp);
+      sys::swapByteOrder(x.r8);
+      sys::swapByteOrder(x.r9);
+      sys::swapByteOrder(x.r10);
+      sys::swapByteOrder(x.r11);
+      sys::swapByteOrder(x.r12);
+      sys::swapByteOrder(x.r13);
+      sys::swapByteOrder(x.r14);
+      sys::swapByteOrder(x.r15);
+      sys::swapByteOrder(x.rip);
+      sys::swapByteOrder(x.rflags);
+      sys::swapByteOrder(x.cs);
+      sys::swapByteOrder(x.fs);
+      sys::swapByteOrder(x.gs);
+    }
+
+    inline void swapStruct(x86_float_state64_t &x) {
+      sys::swapByteOrder(x.fpu_reserved[0]);
+      sys::swapByteOrder(x.fpu_reserved[1]);
+      // TODO swap: fp_control_t fpu_fcw;
+      // TODO swap: fp_status_t fpu_fsw;
+      sys::swapByteOrder(x.fpu_fop);
+      sys::swapByteOrder(x.fpu_ip);
+      sys::swapByteOrder(x.fpu_cs);
+      sys::swapByteOrder(x.fpu_rsrv2);
+      sys::swapByteOrder(x.fpu_dp);
+      sys::swapByteOrder(x.fpu_ds);
+      sys::swapByteOrder(x.fpu_rsrv3);
+      sys::swapByteOrder(x.fpu_mxcsr);
+      sys::swapByteOrder(x.fpu_mxcsrmask);
+      sys::swapByteOrder(x.fpu_reserved1);
+    }
+
+    inline void swapStruct(x86_exception_state64_t &x) {
+      sys::swapByteOrder(x.trapno);
+      sys::swapByteOrder(x.cpu);
+      sys::swapByteOrder(x.err);
+      sys::swapByteOrder(x.faultvaddr);
+    }
+
+    struct x86_state_hdr_t {
+      uint32_t flavor;
+      uint32_t count;
+    };
+
+    struct x86_thread_state_t {
+      x86_state_hdr_t tsh;
+      union {
+        x86_thread_state64_t ts64;
+      } uts;
+    };
+
+    struct x86_float_state_t {
+      x86_state_hdr_t fsh;
+      union {
+        x86_float_state64_t fs64;
+      } ufs;
+    };
+
+    struct x86_exception_state_t {
+      x86_state_hdr_t esh;
+      union {
+        x86_exception_state64_t es64;
+      } ues;
+    };
+
+    inline void swapStruct(x86_state_hdr_t &x) {
+      sys::swapByteOrder(x.flavor);
+      sys::swapByteOrder(x.count);
+    }
+
+    enum X86ThreadFlavors {
+      x86_THREAD_STATE32    = 1,
+      x86_FLOAT_STATE32     = 2,
+      x86_EXCEPTION_STATE32 = 3,
+      x86_THREAD_STATE64    = 4,
+      x86_FLOAT_STATE64     = 5,
+      x86_EXCEPTION_STATE64 = 6,
+      x86_THREAD_STATE      = 7,
+      x86_FLOAT_STATE       = 8,
+      x86_EXCEPTION_STATE   = 9,
+      x86_DEBUG_STATE32     = 10,
+      x86_DEBUG_STATE64     = 11,
+      x86_DEBUG_STATE       = 12
+    };
+
+    inline void swapStruct(x86_thread_state_t &x) {
+      swapStruct(x.tsh);
+      if (x.tsh.flavor == x86_THREAD_STATE64)
+        swapStruct(x.uts.ts64);
+    }
+
+    inline void swapStruct(x86_float_state_t &x) {
+      swapStruct(x.fsh);
+      if (x.fsh.flavor == x86_FLOAT_STATE64)
+        swapStruct(x.ufs.fs64);
+    }
+
+    inline void swapStruct(x86_exception_state_t &x) {
+      swapStruct(x.esh);
+      if (x.esh.flavor == x86_EXCEPTION_STATE64)
+        swapStruct(x.ues.es64);
+    }
+
+    const uint32_t x86_THREAD_STATE64_COUNT =
+      sizeof(x86_thread_state64_t) / sizeof(uint32_t);
+    const uint32_t x86_FLOAT_STATE64_COUNT =
+      sizeof(x86_float_state64_t) / sizeof(uint32_t);
+    const uint32_t x86_EXCEPTION_STATE64_COUNT =
+      sizeof(x86_exception_state64_t) / sizeof(uint32_t);
+
+    const uint32_t x86_THREAD_STATE_COUNT =
+      sizeof(x86_thread_state_t) / sizeof(uint32_t);
+    const uint32_t x86_FLOAT_STATE_COUNT =
+      sizeof(x86_float_state_t) / sizeof(uint32_t);
+    const uint32_t x86_EXCEPTION_STATE_COUNT =
+      sizeof(x86_exception_state_t) / sizeof(uint32_t);
+
   } // end namespace MachO
 } // end namespace llvm
 

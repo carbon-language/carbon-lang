@@ -15,6 +15,8 @@
 // RUN:     | FileCheck %s -check-prefix=SUB_CLI
 // RUN: llvm-objdump -p %p/Inputs/dylibRoutines.macho-x86_64 \
 // RUN:     | FileCheck %s -check-prefix=ROUTINE
+// RUN: llvm-objdump -p %p/Inputs/exeThread.macho-x86_64 \
+// RUN:     | FileCheck %s -check-prefix=THREAD
 
 CHECK: Mach header
 CHECK:       magic cputype cpusubtype  caps    filetype ncmds sizeofcmds      flags
@@ -421,3 +423,17 @@ ROUTINE:     reserved3 0
 ROUTINE:     reserved4 0
 ROUTINE:     reserved5 0
 ROUTINE:     reserved6 0
+
+THREAD: Load command 10
+THREAD:         cmd LC_UNIXTHREAD
+THREAD:     cmdsize 184
+THREAD:      flavor x86_THREAD_STATE64
+THREAD:       count x86_THREAD_STATE64_COUNT
+THREAD:    rax  0x0000000000000000 rbx 0x0000000000000000 rcx  0x0000000000000000
+THREAD:    rdx  0x0000000000000000 rdi 0x0000000000000000 rsi  0x0000000000000000
+THREAD:    rbp  0x0000000000000000 rsp 0x0000000000000000 r8   0x0000000000000000
+THREAD:     r9  0x0000000000000000 r10 0x0000000000000000 r11  0x0000000000000000
+THREAD:    r12  0x0000000000000000 r13 0x0000000000000000 r14  0x0000000000000000
+THREAD:    r15  0x0000000000000000 rip 0x0000000100000d00
+THREAD: rflags  0x0000000000000000 cs  0x0000000000000000 fs   0x0000000000000000
+THREAD:     gs  0x0000000000000000
