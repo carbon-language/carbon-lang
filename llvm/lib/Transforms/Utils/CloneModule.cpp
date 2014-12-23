@@ -109,7 +109,7 @@ Module *llvm::CloneModule(const Module *M, ValueToValueMapTy &VMap) {
        I != E; ++I) {
     GlobalAlias *GA = cast<GlobalAlias>(VMap[I]);
     if (const Constant *C = I->getAliasee())
-      GA->setAliasee(cast<GlobalObject>(MapValue(C, VMap)));
+      GA->setAliasee(MapValue(C, VMap));
   }
 
   // And named metadata....
