@@ -14,13 +14,6 @@
 
 exception Error of string
 
-(** Linking mode. *)
-module Mode : sig
-  type t =
-  | DestroySource
-  | PreserveSource
-end
-
 (** [link_modules dst src mode] links [src] into [dst], raising [Error]
     if the linking fails. *)
-val link_modules : Llvm.llmodule -> Llvm.llmodule -> Mode.t -> unit
+val link_modules : Llvm.llmodule -> Llvm.llmodule -> unit

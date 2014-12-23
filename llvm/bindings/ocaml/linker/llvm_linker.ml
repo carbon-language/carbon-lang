@@ -11,11 +11,5 @@ exception Error of string
 
 let () = Callback.register_exception "Llvm_linker.Error" (Error "")
 
-module Mode = struct
-  type t =
-  | DestroySource
-  | PreserveSource
-end
-
-external link_modules : Llvm.llmodule -> Llvm.llmodule -> Mode.t -> unit
+external link_modules : Llvm.llmodule -> Llvm.llmodule -> unit
                       = "llvm_link_modules"

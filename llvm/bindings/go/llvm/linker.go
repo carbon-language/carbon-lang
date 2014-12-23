@@ -20,16 +20,9 @@ package llvm
 import "C"
 import "errors"
 
-type LinkerMode C.LLVMLinkerMode
-
-const (
-	LinkerDestroySource  = C.LLVMLinkerDestroySource
-	LinkerPreserveSource = C.LLVMLinkerPreserveSource
-)
-
-func LinkModules(Dest, Src Module, Mode LinkerMode) error {
+func LinkModules(Dest, Src Module) error {
 	var cmsg *C.char
-	failed := C.LLVMLinkModules(Dest.C, Src.C, C.LLVMLinkerMode(Mode), &cmsg)
+	failed := C.LLVMLinkModules(Dest.C, Src.C, 0, &cmsg)
 	if failed != 0 {
 		err := errors.New(C.GoString(cmsg))
 		C.LLVMDisposeMessage(cmsg)

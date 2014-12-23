@@ -1739,7 +1739,7 @@ bool Linker::LinkModules(Module *Dest, Module *Src) {
 //===----------------------------------------------------------------------===//
 
 LLVMBool LLVMLinkModules(LLVMModuleRef Dest, LLVMModuleRef Src,
-                         LLVMLinkerMode Mode, char **OutMessages) {
+                         unsigned Unused, char **OutMessages) {
   Module *D = unwrap(Dest);
   std::string Message;
   raw_string_ostream Stream(Message);
