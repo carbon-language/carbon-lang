@@ -1584,6 +1584,26 @@ define <4 x i32> @combine_test21(<8 x i32> %a, <4 x i32>* %ptr) {
   ret <4 x i32> %2
 }
 
+define <8 x float> @combine_test22(<2 x float>* %a, <2 x float>* %b) {
+; SSE-LABEL: combine_test22:
+; SSE:       # BB#0:
+; SSE-NEXT:    movq    (%rdi), %xmm0
+; SSE-NEXT:    movhpd  (%rsi), %xmm0
+; SSE-NEXT:    retq
+;
+; AVX1-LABEL: combine_test22:
+; AVX1:       # BB#0:
+; AVX1-NEXT:    vmovq    (%rdi), %xmm0
+; AVX1-NEXT:    vmovhpd  (%rsi), %xmm0, %xmm0
+; AVX1-NEXT:    retq
+;
+; Current AVX2 lowering of this is still awful, not adding a test case.
+  %1 = load <2 x float>* %a, align 8
+  %2 = load <2 x float>* %b, align 8
+  %3 = shufflevector <2 x float> %1, <2 x float> %2, <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 undef, i32 undef, i32 undef, i32 undef>
+  ret <8 x float> %3
+}
+
 ; Check some negative cases.
 ; FIXME: Do any of these really make sense? Are they redundant with the above tests?
 
