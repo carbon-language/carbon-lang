@@ -237,8 +237,8 @@ uninstall-local:: uninstall-shared
 
 $(SharedLib): $(ObjectsO) $(OcamlDir)/.dir
 	$(Echo) "Building $(BuildMode) $(notdir $@)"
-	$(Verb) $(Link) $(SharedLinkOptions) $(OCAMLRPATH) $(LLVMLibsOptions) \
-			-o $@ $(ObjectsO)
+	$(Verb) $(Link) $(SharedLinkOptions) $(OCAMLRPATH) -o $@ $(ObjectsO) \
+			$(LLVMLibsOptions)
 
 clean-shared::
 	-$(Verb) $(RM) -f $(SharedLib)
