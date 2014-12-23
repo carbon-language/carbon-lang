@@ -1133,14 +1133,14 @@ multiclass avx512_blendmask_rmb<bits<8> opc, string OpcodeStr, X86VectorVTInfo _
             "$dst {${mask}}, $src1, ${src2}", _.BroadcastStr, "}"),
       [(set _.RC:$dst,(X86select _.KRCWM:$mask, (_.VT _.RC:$src1),
                        (X86VBroadcast (_.ScalarLdFrag addr:$src2))))]>,
-      EVEX_4V, EVEX_K, EVEX_B;
+      EVEX_4V, EVEX_K, EVEX_B, EVEX_CD8<_.EltSize, CD8VF>;
 
   def rmb : AVX5128I<opc, MRMSrcMem, (outs _.RC:$dst),
       (ins _.RC:$src1, _.ScalarMemOp:$src2),
        !strconcat(OpcodeStr,
             "\t{${src2}", _.BroadcastStr, ", $src1, $dst|",
             "$dst, $src1, ${src2}", _.BroadcastStr, "}"),
-      []>,  EVEX_4V, EVEX_B;
+      []>,  EVEX_4V, EVEX_B, EVEX_CD8<_.EltSize, CD8VF>;
 
 }
 

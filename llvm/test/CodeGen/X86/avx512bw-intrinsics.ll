@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=x86_64-apple-darwin -mcpu=knl -mattr=+avx512bw --show-mc-encoding| FileCheck %s
+; RUN: llc < %s -mtriple=x86_64-apple-darwin -mcpu=skx --show-mc-encoding| FileCheck %s
 
 define i64 @test_pcmpeq_b(<64 x i8> %a, <64 x i8> %b) {
 ; CHECK-LABEL: test_pcmpeq_b
@@ -303,3 +303,51 @@ define <8 x i32> @test_mask_ucmp_w_512(<32 x i16> %a0, <32 x i16> %a1, i32 %mask
 }
 
 declare i32 @llvm.x86.avx512.mask.ucmp.w.512(<32 x i16>, <32 x i16>, i32, i32) nounwind readnone
+
+; CHECK-LABEL: test_x86_mask_blend_b_256
+; CHECK: vpblendmb
+define <32 x i8> @test_x86_mask_blend_b_256(i32 %a0, <32 x i8> %a1, <32 x i8> %a2) {
+  %res = call <32 x i8> @llvm.x86.avx512.mask.blend.b.256(<32 x i8> %a1, <32 x i8> %a2, i32 %a0) ; <<32 x i8>> [#uses=1]
+  ret <32 x i8> %res
+}
+declare <32 x i8> @llvm.x86.avx512.mask.blend.b.256(<32 x i8>, <32 x i8>, i32) nounwind readonly
+
+; CHECK-LABEL: test_x86_mask_blend_w_256
+define <16 x i16> @test_x86_mask_blend_w_256(i16 %mask, <16 x i16> %a1, <16 x i16> %a2) {
+  ; CHECK: vpblendmw
+  %res = call <16 x i16> @llvm.x86.avx512.mask.blend.w.256(<16 x i16> %a1, <16 x i16> %a2, i16 %mask) ; <<16 x i16>> [#uses=1]
+  ret <16 x i16> %res
+}
+declare <16 x i16> @llvm.x86.avx512.mask.blend.w.256(<16 x i16>, <16 x i16>, i16) nounwind readonly
+
+; CHECK-LABEL: test_x86_mask_blend_b_512
+; CHECK: vpblendmb
+define <64 x i8> @test_x86_mask_blend_b_512(i64 %a0, <64 x i8> %a1, <64 x i8> %a2) {
+  %res = call <64 x i8> @llvm.x86.avx512.mask.blend.b.512(<64 x i8> %a1, <64 x i8> %a2, i64 %a0) ; <<64 x i8>> [#uses=1]
+  ret <64 x i8> %res
+}
+declare <64 x i8> @llvm.x86.avx512.mask.blend.b.512(<64 x i8>, <64 x i8>, i64) nounwind readonly
+
+; CHECK-LABEL: test_x86_mask_blend_w_512
+define <32 x i16> @test_x86_mask_blend_w_512(i32 %mask, <32 x i16> %a1, <32 x i16> %a2) {
+  ; CHECK: vpblendmw
+  %res = call <32 x i16> @llvm.x86.avx512.mask.blend.w.512(<32 x i16> %a1, <32 x i16> %a2, i32 %mask) ; <<32 x i16>> [#uses=1]
+  ret <32 x i16> %res
+}
+declare <32 x i16> @llvm.x86.avx512.mask.blend.w.512(<32 x i16>, <32 x i16>, i32) nounwind readonly
+
+; CHECK-LABEL: test_x86_mask_blend_b_128
+; CHECK: vpblendmb
+define <16 x i8> @test_x86_mask_blend_b_128(i16 %a0, <16 x i8> %a1, <16 x i8> %a2) {
+  %res = call <16 x i8> @llvm.x86.avx512.mask.blend.b.128(<16 x i8> %a1, <16 x i8> %a2, i16 %a0) ; <<16 x i8>> [#uses=1]
+  ret <16 x i8> %res
+}
+declare <16 x i8> @llvm.x86.avx512.mask.blend.b.128(<16 x i8>, <16 x i8>, i16) nounwind readonly
+
+; CHECK-LABEL: test_x86_mask_blend_w_128
+define <8 x i16> @test_x86_mask_blend_w_128(i8 %mask, <8 x i16> %a1, <8 x i16> %a2) {
+  ; CHECK: vpblendmw
+  %res = call <8 x i16> @llvm.x86.avx512.mask.blend.w.128(<8 x i16> %a1, <8 x i16> %a2, i8 %mask) ; <<8 x i16>> [#uses=1]
+  ret <8 x i16> %res
+}
+declare <8 x i16> @llvm.x86.avx512.mask.blend.w.128(<8 x i16>, <8 x i16>, i8) nounwind readonly
