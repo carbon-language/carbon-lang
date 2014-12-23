@@ -23,7 +23,8 @@ class TestingConfig:
             }
 
         pass_vars = ['LIBRARY_PATH', 'LD_LIBRARY_PATH', 'SYSTEMROOT', 'TERM',
-                     'LD_PRELOAD', 'ASAN_OPTIONS', 'UBSAN_OPTIONS']
+                     'LD_PRELOAD', 'ASAN_OPTIONS', 'UBSAN_OPTIONS',
+                     'LSAN_OPTIONS']
         for var in pass_vars:
             environment[var] = os.environ.get(var, '')
 
