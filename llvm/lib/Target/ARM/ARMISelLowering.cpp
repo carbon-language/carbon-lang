@@ -8976,13 +8976,42 @@ static SDValue CombineBaseUpdate(SDNode *N,
       continue;
     }
 
+    EVT AlignedVecTy = VecTy;
+
+    // If this is a less-than-standard-aligned load/store, change the type to
+    // match the standard alignment.
+    // The alignment is overlooked when selecting _UPD variants; and it's
+    // easier to introduce bitcasts here than fix that.
+    // There are 3 ways to get to this base-update combine:
+    // - intrinsics: they are assumed to be properly aligned (to the standard
+    //   alignment of the memory type), so we don't need to do anything.
+    // - ARMISD::VLDx nodes: they are only generated from the aforementioned
+    //   intrinsics, so, likewise, there's nothing to do.
+    // - generic load/store instructions: the alignment is specified as an
+    //   explicit operand, rather than implicitly as the standard alignment
+    //   of the memory type (like the intrisics).  We need to change the
+    //   memory type to match the explicit alignment.  That way, we don't
+    //   generate non-standard-aligned ARMISD::VLDx nodes.
+    if (LSBaseSDNode *LSN = dyn_cast<LSBaseSDNode>(N)) {
+      unsigned Alignment = LSN->getAlignment();
+      if (Alignment == 0)
+        Alignment = 1;
+      if (Alignment < VecTy.getScalarSizeInBits() / 8) {
+        MVT EltTy = MVT::getIntegerVT(Alignment * 8);
+        assert(NumVecs == 1 && "Unexpected multi-element generic load/store.");
+        assert(!isLaneOp && "Unexpected generic load/store lane.");
+        unsigned NumElts = NumBytes / (EltTy.getSizeInBits() / 8);
+        AlignedVecTy = MVT::getVectorVT(EltTy, NumElts);
+      }
+    }
+
     // Create the new updating load/store node.
     // First, create an SDVTList for the new updating node's results.
     EVT Tys[6];
     unsigned NumResultVecs = (isLoad ? NumVecs : 0);
     unsigned n;
     for (n = 0; n < NumResultVecs; ++n)
-      Tys[n] = VecTy;
+      Tys[n] = AlignedVecTy;
     Tys[n++] = MVT::i32;
     Tys[n] = MVT::Other;
     SDVTList SDTys = DAG.getVTList(makeArrayRef(Tys, NumResultVecs+2));
@@ -9000,9 +9029,17 @@ static SDValue CombineBaseUpdate(SDNode *N,
       for (unsigned i = AddrOpIdx + 1; i < N->getNumOperands(); ++i)
         Ops.push_back(N->getOperand(i));
     }
+
+    // If this is a non-standard-aligned store, the penultimate operand is the
+    // stored value.  Bitcast it to the aligned type.
+    if (AlignedVecTy != VecTy && N->getOpcode() == ISD::STORE) {
+      SDValue &StVal = Ops[Ops.size()-2];
+      StVal = DAG.getNode(ISD::BITCAST, SDLoc(N), AlignedVecTy, StVal);
+    }
+
     MemSDNode *MemInt = cast<MemSDNode>(N);
     SDValue UpdN = DAG.getMemIntrinsicNode(NewOpc, SDLoc(N), SDTys,
-                                           Ops, MemInt->getMemoryVT(),
+                                           Ops, AlignedVecTy,
                                            MemInt->getMemOperand());
 
     // Update the uses.
@@ -9010,6 +9047,14 @@ static SDValue CombineBaseUpdate(SDNode *N,
     for (unsigned i = 0; i < NumResultVecs; ++i) {
       NewResults.push_back(SDValue(UpdN.getNode(), i));
     }
+
+    // If this is an non-standard-aligned load, the first result is the loaded
+    // value.  Bitcast it to the expected result type.
+    if (AlignedVecTy != VecTy && N->getOpcode() == ISD::LOAD) {
+      SDValue &LdVal = NewResults[0];
+      LdVal = DAG.getNode(ISD::BITCAST, SDLoc(N), VecTy, LdVal);
+    }
+
     NewResults.push_back(SDValue(UpdN.getNode(), NumResultVecs+1)); // chain
     DCI.CombineTo(N, NewResults);
     DCI.CombineTo(User, SDValue(UpdN.getNode(), NumResultVecs));

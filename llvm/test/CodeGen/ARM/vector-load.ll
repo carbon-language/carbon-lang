@@ -31,7 +31,7 @@ define <4 x i16> @load_v4i16(<4 x i16>** %ptr) {
 
 define <4 x i16> @load_v4i16_update(<4 x i16>** %ptr) {
 ;CHECK-LABEL: load_v4i16_update:
-;CHECK: vld1.16 {{{d[0-9]+}}}, [{{r[0-9]+}}]!
+;CHECK: vld1.8 {{{d[0-9]+}}}, [{{r[0-9]+}}]!
 	%A = load <4 x i16>** %ptr
 	%lA = load <4 x i16>* %A, align 1
 	%inc = getelementptr <4 x i16>* %A, i34 1
@@ -49,7 +49,7 @@ define <2 x i32> @load_v2i32(<2 x i32>** %ptr) {
 
 define <2 x i32> @load_v2i32_update(<2 x i32>** %ptr) {
 ;CHECK-LABEL: load_v2i32_update:
-;CHECK: vld1.32 {{{d[0-9]+}}}, [{{r[0-9]+}}]!
+;CHECK: vld1.8 {{{d[0-9]+}}}, [{{r[0-9]+}}]!
 	%A = load <2 x i32>** %ptr
 	%lA = load <2 x i32>* %A, align 1
 	%inc = getelementptr <2 x i32>* %A, i32 1
@@ -67,7 +67,7 @@ define <2 x float> @load_v2f32(<2 x float>** %ptr) {
 
 define <2 x float> @load_v2f32_update(<2 x float>** %ptr) {
 ;CHECK-LABEL: load_v2f32_update:
-;CHECK: vld1.32 {{{d[0-9]+}}}, [{{r[0-9]+}}]!
+;CHECK: vld1.8 {{{d[0-9]+}}}, [{{r[0-9]+}}]!
 	%A = load <2 x float>** %ptr
 	%lA = load <2 x float>* %A, align 1
 	%inc = getelementptr <2 x float>* %A, i32 1
@@ -85,7 +85,7 @@ define <1 x i64> @load_v1i64(<1 x i64>** %ptr) {
 
 define <1 x i64> @load_v1i64_update(<1 x i64>** %ptr) {
 ;CHECK-LABEL: load_v1i64_update:
-;CHECK: vld1.64 {{{d[0-9]+}}}, [{{r[0-9]+}}]!
+;CHECK: vld1.8 {{{d[0-9]+}}}, [{{r[0-9]+}}]!
 	%A = load <1 x i64>** %ptr
 	%lA = load <1 x i64>* %A, align 1
 	%inc = getelementptr <1 x i64>* %A, i31 1
@@ -121,7 +121,7 @@ define <8 x i16> @load_v8i16(<8 x i16>** %ptr) {
 
 define <8 x i16> @load_v8i16_update(<8 x i16>** %ptr) {
 ;CHECK-LABEL: load_v8i16_update:
-;CHECK: vld1.16 {{{d[0-9]+, d[0-9]+}}}, [{{r[0-9]+}}]!
+;CHECK: vld1.8 {{{d[0-9]+, d[0-9]+}}}, [{{r[0-9]+}}]!
 	%A = load <8 x i16>** %ptr
 	%lA = load <8 x i16>* %A, align 1
 	%inc = getelementptr <8 x i16>* %A, i38 1
@@ -139,7 +139,7 @@ define <4 x i32> @load_v4i32(<4 x i32>** %ptr) {
 
 define <4 x i32> @load_v4i32_update(<4 x i32>** %ptr) {
 ;CHECK-LABEL: load_v4i32_update:
-;CHECK: vld1.32 {{{d[0-9]+, d[0-9]+}}}, [{{r[0-9]+}}]!
+;CHECK: vld1.8 {{{d[0-9]+, d[0-9]+}}}, [{{r[0-9]+}}]!
 	%A = load <4 x i32>** %ptr
 	%lA = load <4 x i32>* %A, align 1
 	%inc = getelementptr <4 x i32>* %A, i34 1
@@ -157,7 +157,7 @@ define <4 x float> @load_v4f32(<4 x float>** %ptr) {
 
 define <4 x float> @load_v4f32_update(<4 x float>** %ptr) {
 ;CHECK-LABEL: load_v4f32_update:
-;CHECK: vld1.32 {{{d[0-9]+, d[0-9]+}}}, [{{r[0-9]+}}]!
+;CHECK: vld1.8 {{{d[0-9]+, d[0-9]+}}}, [{{r[0-9]+}}]!
 	%A = load <4 x float>** %ptr
 	%lA = load <4 x float>* %A, align 1
 	%inc = getelementptr <4 x float>* %A, i34 1
@@ -175,9 +175,50 @@ define <2 x i64> @load_v2i64(<2 x i64>** %ptr) {
 
 define <2 x i64> @load_v2i64_update(<2 x i64>** %ptr) {
 ;CHECK-LABEL: load_v2i64_update:
-;CHECK: vld1.64 {{{d[0-9]+, d[0-9]+}}}, [{{r[0-9]+}}]!
+;CHECK: vld1.8 {{{d[0-9]+, d[0-9]+}}}, [{{r[0-9]+}}]!
 	%A = load <2 x i64>** %ptr
 	%lA = load <2 x i64>* %A, align 1
+	%inc = getelementptr <2 x i64>* %A, i32 1
+        store <2 x i64>* %inc, <2 x i64>** %ptr
+	ret <2 x i64> %lA
+}
+
+; Make sure we change the type to match alignment if necessary.
+define <2 x i64> @load_v2i64_update_aligned2(<2 x i64>** %ptr) {
+;CHECK-LABEL: load_v2i64_update_aligned2:
+;CHECK: vld1.16 {{{d[0-9]+, d[0-9]+}}}, [{{r[0-9]+}}]!
+	%A = load <2 x i64>** %ptr
+	%lA = load <2 x i64>* %A, align 2
+	%inc = getelementptr <2 x i64>* %A, i32 1
+        store <2 x i64>* %inc, <2 x i64>** %ptr
+	ret <2 x i64> %lA
+}
+
+define <2 x i64> @load_v2i64_update_aligned4(<2 x i64>** %ptr) {
+;CHECK-LABEL: load_v2i64_update_aligned4:
+;CHECK: vld1.32 {{{d[0-9]+, d[0-9]+}}}, [{{r[0-9]+}}]!
+	%A = load <2 x i64>** %ptr
+	%lA = load <2 x i64>* %A, align 4
+	%inc = getelementptr <2 x i64>* %A, i32 1
+        store <2 x i64>* %inc, <2 x i64>** %ptr
+	ret <2 x i64> %lA
+}
+
+define <2 x i64> @load_v2i64_update_aligned8(<2 x i64>** %ptr) {
+;CHECK-LABEL: load_v2i64_update_aligned8:
+;CHECK: vld1.64 {{{d[0-9]+, d[0-9]+}}}, [{{r[0-9]+}}:64]!
+	%A = load <2 x i64>** %ptr
+	%lA = load <2 x i64>* %A, align 8
+	%inc = getelementptr <2 x i64>* %A, i32 1
+        store <2 x i64>* %inc, <2 x i64>** %ptr
+	ret <2 x i64> %lA
+}
+
+define <2 x i64> @load_v2i64_update_aligned16(<2 x i64>** %ptr) {
+;CHECK-LABEL: load_v2i64_update_aligned16:
+;CHECK: vld1.64 {{{d[0-9]+, d[0-9]+}}}, [{{r[0-9]+}}:128]!
+	%A = load <2 x i64>** %ptr
+	%lA = load <2 x i64>* %A, align 16
 	%inc = getelementptr <2 x i64>* %A, i32 1
         store <2 x i64>* %inc, <2 x i64>** %ptr
 	ret <2 x i64> %lA
@@ -190,7 +231,7 @@ define <4 x i32> @zextload_v8i8tov8i32(<4 x i8>** %ptr) {
 ;CHECK: vmovl.u8        {{q[0-9]+}}, {{d[0-9]+}}
 ;CHECK: vmovl.u16       {{q[0-9]+}}, {{d[0-9]+}}
 	%A = load <4 x i8>** %ptr
-	%lA = load <4 x i8>* %A, align 1
+	%lA = load <4 x i8>* %A, align 4
         %zlA = zext <4 x i8> %lA to <4 x i32>
 	ret <4 x i32> %zlA
 }
