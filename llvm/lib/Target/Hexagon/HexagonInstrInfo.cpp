@@ -79,7 +79,7 @@ unsigned HexagonInstrInfo::isLoadFromStackSlot(const MachineInstr *MI,
   switch (MI->getOpcode()) {
   default: break;
   case Hexagon::L2_loadri_io:
-  case Hexagon::LDrid:
+  case Hexagon::L2_loadrd_io:
   case Hexagon::L2_loadrh_io:
   case Hexagon::L2_loadrb_io:
   case Hexagon::L2_loadrub_io:
@@ -536,7 +536,7 @@ loadRegFromStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
     BuildMI(MBB, I, DL, get(Hexagon::L2_loadri_io), DestReg)
           .addFrameIndex(FI).addImm(0).addMemOperand(MMO);
   } else if (RC == &Hexagon::DoubleRegsRegClass) {
-    BuildMI(MBB, I, DL, get(Hexagon::LDrid), DestReg)
+    BuildMI(MBB, I, DL, get(Hexagon::L2_loadrd_io), DestReg)
           .addFrameIndex(FI).addImm(0).addMemOperand(MMO);
   } else if (RC == &Hexagon::PredRegsRegClass) {
     BuildMI(MBB, I, DL, get(Hexagon::LDriw_pred), DestReg)
@@ -670,8 +670,7 @@ bool HexagonInstrInfo::isPredicable(MachineInstr *MI) const {
   case Hexagon::STrib_nv_V4:
     return isUInt<6>(MI->getOperand(1).getImm());
 
-  case Hexagon::LDrid:
-  case Hexagon::LDrid_indexed:
+  case Hexagon::L2_loadrd_io:
     return isShiftedUInt<6,3>(MI->getOperand(2).getImm());
 
   case Hexagon::L2_loadri_io:
@@ -1110,8 +1109,7 @@ isValidOffset(const int Opcode, const int Offset) const {
     return (Offset >= Hexagon_MEMW_OFFSET_MIN) &&
       (Offset <= Hexagon_MEMW_OFFSET_MAX);
 
-  case Hexagon::LDrid:
-  case Hexagon::LDrid_indexed:
+  case Hexagon::L2_loadrd_io:
   case Hexagon::LDrid_f:
   case Hexagon::STrid:
   case Hexagon::STrid_indexed:
@@ -1346,10 +1344,8 @@ isConditionalLoad (const MachineInstr* MI) const {
   switch (MI->getOpcode())
   {
     default: return false;
-    case Hexagon::LDrid_cPt :
-    case Hexagon::LDrid_cNotPt :
-    case Hexagon::LDrid_indexed_cPt :
-    case Hexagon::LDrid_indexed_cNotPt :
+    case Hexagon::L2_ploadrdt_io :
+    case Hexagon::L2_ploadrdf_io:
     case Hexagon::L2_ploadrit_io:
     case Hexagon::L2_ploadrif_io:
     case Hexagon::L2_ploadrht_io:

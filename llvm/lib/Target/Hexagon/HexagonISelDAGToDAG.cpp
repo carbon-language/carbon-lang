@@ -404,7 +404,7 @@ SDNode *HexagonDAGToDAGISel::SelectBaseOffsetLoad(LoadSDNode *LD, SDLoc dl) {
                                                dl, PointerTy,
                                                TargAddr);
       // Figure out base + offset opcode
-      if (LoadedVT == MVT::i64) Opcode = Hexagon::LDrid_indexed;
+      if (LoadedVT == MVT::i64) Opcode = Hexagon::L2_loadrd_io;
       else if (LoadedVT == MVT::i32) Opcode = Hexagon::L2_loadri_io;
       else if (LoadedVT == MVT::i16) Opcode = Hexagon::L2_loadrh_io;
       else if (LoadedVT == MVT::i8) Opcode = Hexagon::L2_loadrb_io;
@@ -597,7 +597,7 @@ SDNode *HexagonDAGToDAGISel::SelectIndexedLoad(LoadSDNode *LD, SDLoc dl) {
     if (TII->isValidAutoIncImm(LoadedVT, Val))
       Opcode = Hexagon::POST_LDrid;
     else
-      Opcode = Hexagon::LDrid;
+      Opcode = Hexagon::L2_loadrd_io;
   } else if (LoadedVT == MVT::i32) {
     if (TII->isValidAutoIncImm(LoadedVT, Val))
       Opcode = Hexagon::POST_LDriw;

@@ -1555,6 +1555,9 @@ let accessSize = HalfWordAccess, opExtentAlign = 1, isCodeGenOnly = 0 in {
 let accessSize = WordAccess, opExtentAlign = 2, isCodeGenOnly = 0 in
 defm loadri: LD_Idxd <"memw", "LDriw", IntRegs, s11_2Ext, u6_2Ext, 0b1100>;
 
+let accessSize = DoubleWordAccess, opExtentAlign = 3, isCodeGenOnly = 0 in
+defm loadrd: LD_Idxd <"memd", "LDrid", DoubleRegs, s11_3Ext, u6_3Ext, 0b1110>;
+
 ///
 // Load -- MEMri operand
 multiclass LD_MEMri_Pbase<string mnemonic, RegisterClass RC,
@@ -1594,11 +1597,6 @@ multiclass LD_MEMri<string mnemonic, string CextOp, RegisterClass RC,
   }
 }
 
-let addrMode = BaseImmOffset, isMEMri = "true" in {
-  let accessSize = DoubleWordAccess in
-    defm LDrid: LD_MEMri < "memd", "LDrid", DoubleRegs, 14, 9>, AddrModeRel;
-}
-
 def : Pat < (i32 (sextloadi8 ADDRriS11_0:$addr)),
             (L2_loadrb_io AddrFI:$addr, 0) >;
 
@@ -1615,7 +1613,7 @@ def : Pat < (i32 (load ADDRriS11_2:$addr)),
             (L2_loadri_io AddrFI:$addr, 0) >;
 
 def : Pat < (i64 (load ADDRriS11_3:$addr)),
-            (LDrid ADDRriS11_3:$addr) >;
+            (L2_loadrd_io AddrFI:$addr, 0) >;
 
 
 // Load - Base with Immediate offset addressing mode
@@ -1658,12 +1656,6 @@ multiclass LD_Idxd2<string mnemonic, string CextOp, RegisterClass RC,
   }
 }
 
-let addrMode = BaseImmOffset in {
-  let accessSize = DoubleWordAccess in
-    defm LDrid_indexed: LD_Idxd2 <"memd", "LDrid", DoubleRegs, s11_3Ext, u6_3Ext,
-                                 14, 9>, AddrModeRel;
-}
-
 let AddedComplexity = 20 in {
 def : Pat < (i32 (sextloadi8 (add IntRegs:$src1, s11_0ExtPred:$offset))),
             (L2_loadrb_io IntRegs:$src1, s11_0ExtPred:$offset) >;
@@ -1681,7 +1673,7 @@ def : Pat < (i32 (load (add IntRegs:$src1, s11_2ExtPred:$offset))),
             (L2_loadri_io IntRegs:$src1, s11_2ExtPred:$offset) >;
 
 def : Pat < (i64 (load (add IntRegs:$src1, s11_3ExtPred:$offset))),
-            (LDrid_indexed IntRegs:$src1, s11_3ExtPred:$offset) >;
+            (L2_loadrd_io IntRegs:$src1, s11_3ExtPred:$offset) >;
 }
 
 //===----------------------------------------------------------------------===//
@@ -3664,10 +3656,10 @@ def : Pat<(atomic_load_32 (add (i32 IntRegs:$src1), s11_2ImmPred:$offset)),
 
 // 64 bit atomic load
 def : Pat<(atomic_load_64 ADDRriS11_3:$src1),
-          (i64 (LDrid ADDRriS11_3:$src1))>;
+          (i64 (L2_loadrd_io AddrFI:$src1, 0))>;
 
 def : Pat<(atomic_load_64 (add (i32 IntRegs:$src1), s11_3ImmPred:$offset)),
-          (i64 (LDrid_indexed (i32 IntRegs:$src1), s11_3ImmPred:$offset))>;
+          (i64 (L2_loadrd_io (i32 IntRegs:$src1), s11_3ImmPred:$offset))>;
 
 
 def : Pat<(atomic_store_8 ADDRriS11_0:$src2, (i32 IntRegs:$src1)),

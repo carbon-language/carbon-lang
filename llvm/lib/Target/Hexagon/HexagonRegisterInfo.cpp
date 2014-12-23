@@ -160,14 +160,14 @@ void HexagonRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
       // r0 = add(r30, #10000)
       // r0 = memw(r0)
       if ( (MI.getOpcode() == Hexagon::L2_loadri_io)  ||
-           (MI.getOpcode() == Hexagon::LDrid)   ||
+           (MI.getOpcode() == Hexagon::L2_loadrd_io)   ||
            (MI.getOpcode() == Hexagon::L2_loadrh_io) ||
            (MI.getOpcode() == Hexagon::L2_loadruh_io) ||
            (MI.getOpcode() == Hexagon::L2_loadrb_io) ||
            (MI.getOpcode() == Hexagon::L2_loadrub_io) ||
            (MI.getOpcode() == Hexagon::LDriw_f) ||
            (MI.getOpcode() == Hexagon::LDrid_f)) {
-        unsigned dstReg = (MI.getOpcode() == Hexagon::LDrid) ?
+        unsigned dstReg = (MI.getOpcode() == Hexagon::L2_loadrd_io) ?
           getSubReg(MI.getOperand(0).getReg(), Hexagon::subreg_loreg) :
           MI.getOperand(0).getReg();
 
