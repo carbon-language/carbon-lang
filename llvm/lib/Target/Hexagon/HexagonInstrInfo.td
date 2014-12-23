@@ -1552,6 +1552,9 @@ let accessSize = HalfWordAccess, opExtentAlign = 1, isCodeGenOnly = 0 in {
   defm loadruh: LD_Idxd <"memuh", "LDriuh", IntRegs, s11_1Ext, u6_1Ext, 0b1011>;
 }
 
+let accessSize = WordAccess, opExtentAlign = 2, isCodeGenOnly = 0 in
+defm loadri: LD_Idxd <"memw", "LDriw", IntRegs, s11_2Ext, u6_2Ext, 0b1100>;
+
 ///
 // Load -- MEMri operand
 multiclass LD_MEMri_Pbase<string mnemonic, RegisterClass RC,
@@ -1592,9 +1595,6 @@ multiclass LD_MEMri<string mnemonic, string CextOp, RegisterClass RC,
 }
 
 let addrMode = BaseImmOffset, isMEMri = "true" in {
-  let accessSize = WordAccess in
-    defm LDriw: LD_MEMri < "memw", "LDriw", IntRegs, 13, 8>, AddrModeRel;
-
   let accessSize = DoubleWordAccess in
     defm LDrid: LD_MEMri < "memd", "LDrid", DoubleRegs, 14, 9>, AddrModeRel;
 }
@@ -1612,7 +1612,7 @@ def : Pat < (i32 (zextloadi16 ADDRriS11_1:$addr)),
             (L2_loadruh_io AddrFI:$addr, 0) >;
 
 def : Pat < (i32 (load ADDRriS11_2:$addr)),
-            (LDriw ADDRriS11_2:$addr) >;
+            (L2_loadri_io AddrFI:$addr, 0) >;
 
 def : Pat < (i64 (load ADDRriS11_3:$addr)),
             (LDrid ADDRriS11_3:$addr) >;
@@ -1659,10 +1659,6 @@ multiclass LD_Idxd2<string mnemonic, string CextOp, RegisterClass RC,
 }
 
 let addrMode = BaseImmOffset in {
-  let accessSize = WordAccess in
-    defm LDriw_indexed: LD_Idxd2 <"memw", "LDriw", IntRegs, s11_2Ext, u6_2Ext,
-                                 13, 8>, AddrModeRel;
-
   let accessSize = DoubleWordAccess in
     defm LDrid_indexed: LD_Idxd2 <"memd", "LDrid", DoubleRegs, s11_3Ext, u6_3Ext,
                                  14, 9>, AddrModeRel;
@@ -1682,7 +1678,7 @@ def : Pat < (i32 (zextloadi16 (add IntRegs:$src1, s11_1ExtPred:$offset))),
             (L2_loadruh_io IntRegs:$src1, s11_1ExtPred:$offset) >;
 
 def : Pat < (i32 (load (add IntRegs:$src1, s11_2ExtPred:$offset))),
-            (LDriw_indexed IntRegs:$src1, s11_2ExtPred:$offset) >;
+            (L2_loadri_io IntRegs:$src1, s11_2ExtPred:$offset) >;
 
 def : Pat < (i64 (load (add IntRegs:$src1, s11_3ExtPred:$offset))),
             (LDrid_indexed IntRegs:$src1, s11_3ExtPred:$offset) >;
@@ -3661,10 +3657,10 @@ def : Pat<(atomic_load_16 (add (i32 IntRegs:$src1), s11_1ImmPred:$offset)),
           (i32 (L2_loadruh_io (i32 IntRegs:$src1), s11_1ImmPred:$offset))>;
 
 def : Pat<(atomic_load_32 ADDRriS11_2:$src1),
-          (i32 (LDriw ADDRriS11_2:$src1))>;
+          (i32 (L2_loadri_io AddrFI:$src1, 0))>;
 
 def : Pat<(atomic_load_32 (add (i32 IntRegs:$src1), s11_2ImmPred:$offset)),
-          (i32 (LDriw_indexed (i32 IntRegs:$src1), s11_2ImmPred:$offset))>;
+          (i32 (L2_loadri_io (i32 IntRegs:$src1), s11_2ImmPred:$offset))>;
 
 // 64 bit atomic load
 def : Pat<(atomic_load_64 ADDRriS11_3:$src1),
@@ -4028,7 +4024,7 @@ def:  Pat <(i64 (sextloadi16 ADDRriS11_1:$src1)),
 // Convert sign-extended load back to load and sign extend.
 // i32 -> i64
 def:  Pat <(i64 (sextloadi32 ADDRriS11_2:$src1)),
-      (i64 (A2_sxtw (LDriw ADDRriS11_2:$src1)))>;
+      (i64 (A2_sxtw (L2_loadri_io AddrFI:$src1, 0)))>;
 
 
 // Zero extends.
@@ -4084,18 +4080,18 @@ def:  Pat <(i64 (zextloadi16 (add (i32 IntRegs:$src1),
 
 // i32 -> i64
 def:  Pat <(i64 (zextloadi32 ADDRriS11_2:$src1)),
-      (i64 (A2_combinew (A2_tfrsi 0), (LDriw ADDRriS11_2:$src1)))>,
+      (i64 (A2_combinew (A2_tfrsi 0), (L2_loadri_io AddrFI:$src1, 0)))>,
       Requires<[NoV4T]>;
 
 let AddedComplexity = 100 in
 def:  Pat <(i64 (zextloadi32 (i32 (add IntRegs:$src1, s11_2ExtPred:$offset)))),
-      (i64 (A2_combinew (A2_tfrsi 0), (LDriw_indexed IntRegs:$src1,
+      (i64 (A2_combinew (A2_tfrsi 0), (L2_loadri_io IntRegs:$src1,
                                   s11_2ExtPred:$offset)))>,
       Requires<[NoV4T]>;
 
 let AddedComplexity = 10 in
 def:  Pat <(i32 (zextloadi1 ADDRriS11_0:$src1)),
-      (i32 (LDriw ADDRriS11_0:$src1))>;
+      (i32 (L2_loadri_io AddrFI:$src1, 0))>;
 
 // Map from Rs = Pd to Pd = mux(Pd, #1, #0)
 def : Pat <(i32 (zext (i1 PredRegs:$src1))),
@@ -4116,14 +4112,14 @@ def: Pat<(i64 (or (i64 (shl (i64 DoubleRegs:$srcHigh),
                (i64 (zextloadi32 (i32 (add IntRegs:$src2,
                                          s11_2ExtPred:$offset2)))))),
         (i64 (A2_combinew (EXTRACT_SUBREG (i64 DoubleRegs:$srcHigh), subreg_loreg),
-                        (LDriw_indexed IntRegs:$src2,
+                        (L2_loadri_io IntRegs:$src2,
                                        s11_2ExtPred:$offset2)))>;
 
 def: Pat<(i64 (or (i64 (shl (i64 DoubleRegs:$srcHigh),
                            (i32 32))),
                (i64 (zextloadi32 ADDRriS11_2:$srcLow)))),
         (i64 (A2_combinew (EXTRACT_SUBREG (i64 DoubleRegs:$srcHigh), subreg_loreg),
-                        (LDriw ADDRriS11_2:$srcLow)))>;
+                        (L2_loadri_io AddrFI:$srcLow, 0)))>;
 
 def: Pat<(i64 (or (i64 (shl (i64 DoubleRegs:$srcHigh),
                            (i32 32))),
@@ -4137,14 +4133,14 @@ def: Pat<(i64 (or (i64 (shl (i64 DoubleRegs:$srcHigh),
                (i64 (zextloadi32 (i32 (add IntRegs:$src2,
                                          s11_2ExtPred:$offset2)))))),
         (i64 (A2_combinew (EXTRACT_SUBREG (i64 DoubleRegs:$srcHigh), subreg_loreg),
-                        (LDriw_indexed IntRegs:$src2,
+                        (L2_loadri_io IntRegs:$src2,
                                        s11_2ExtPred:$offset2)))>;
 
 def: Pat<(i64 (or (i64 (shl (i64 DoubleRegs:$srcHigh),
                            (i32 32))),
                (i64 (zextloadi32 ADDRriS11_2:$srcLow)))),
         (i64 (A2_combinew (EXTRACT_SUBREG (i64 DoubleRegs:$srcHigh), subreg_loreg),
-                        (LDriw ADDRriS11_2:$srcLow)))>;
+                        (L2_loadri_io AddrFI:$srcLow, 0)))>;
 
 def: Pat<(i64 (or (i64 (shl (i64 DoubleRegs:$srcHigh),
                            (i32 32))),
@@ -4155,7 +4151,7 @@ def: Pat<(i64 (or (i64 (shl (i64 DoubleRegs:$srcHigh),
 // Any extended 64-bit load.
 // anyext i32 -> i64
 def:  Pat <(i64 (extloadi32 ADDRriS11_2:$src1)),
-      (i64 (A2_combinew (A2_tfrsi 0), (LDriw ADDRriS11_2:$src1)))>,
+      (i64 (A2_combinew (A2_tfrsi 0), (L2_loadri_io AddrFI:$src1, 0)))>,
       Requires<[NoV4T]>;
 
 // When there is an offset we should prefer the pattern below over the pattern above.
@@ -4170,7 +4166,7 @@ def:  Pat <(i64 (extloadi32 ADDRriS11_2:$src1)),
 // ********************************************
 let AddedComplexity = 100 in
 def:  Pat <(i64 (extloadi32 (i32 (add IntRegs:$src1, s11_2ExtPred:$offset)))),
-      (i64 (A2_combinew (A2_tfrsi 0), (LDriw_indexed IntRegs:$src1,
+      (i64 (A2_combinew (A2_tfrsi 0), (L2_loadri_io IntRegs:$src1,
                                   s11_2ExtPred:$offset)))>,
       Requires<[NoV4T]>;
 
