@@ -1489,7 +1489,7 @@ namespace llvm {
         busy    :1;
     };
 
-    struct mmst_reg {
+    struct mmst_reg_t {
       char mmst_reg[10];
       char mmst_rsrv[6];
     };
@@ -1513,14 +1513,14 @@ namespace llvm {
       uint16_t fpu_rsrv3;
       uint32_t fpu_mxcsr;
       uint32_t fpu_mxcsrmask;
-      mmst_reg fpu_stmm0;
-      mmst_reg fpu_stmm1;
-      mmst_reg fpu_stmm2;
-      mmst_reg fpu_stmm3;
-      mmst_reg fpu_stmm4;
-      mmst_reg fpu_stmm5;
-      mmst_reg fpu_stmm6;
-      mmst_reg fpu_stmm7;
+      mmst_reg_t fpu_stmm0;
+      mmst_reg_t fpu_stmm1;
+      mmst_reg_t fpu_stmm2;
+      mmst_reg_t fpu_stmm3;
+      mmst_reg_t fpu_stmm4;
+      mmst_reg_t fpu_stmm5;
+      mmst_reg_t fpu_stmm6;
+      mmst_reg_t fpu_stmm7;
       xmm_reg fpu_xmm0;
       xmm_reg fpu_xmm1;
       xmm_reg fpu_xmm2;

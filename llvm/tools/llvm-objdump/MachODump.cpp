@@ -3797,7 +3797,7 @@ static void Print_x86_thread_state64_t(MachO::x86_thread_state64_t &cpu64) {
   outs() << "    gs  " << format("0x%016" PRIx64, cpu64.gs) << "\n";
 }
 
-static void Print_mmst_reg(MachO::mmst_reg &r) {
+static void Print_mmst_reg(MachO::mmst_reg_t &r) {
   uint32_t f;
   outs() << "\t      mmst_reg  ";
   for (f = 0; f < 10; f++)
