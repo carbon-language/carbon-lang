@@ -406,7 +406,7 @@ SDNode *HexagonDAGToDAGISel::SelectBaseOffsetLoad(LoadSDNode *LD, SDLoc dl) {
       // Figure out base + offset opcode
       if (LoadedVT == MVT::i64) Opcode = Hexagon::LDrid_indexed;
       else if (LoadedVT == MVT::i32) Opcode = Hexagon::LDriw_indexed;
-      else if (LoadedVT == MVT::i16) Opcode = Hexagon::LDrih_indexed;
+      else if (LoadedVT == MVT::i16) Opcode = Hexagon::L2_loadrh_io;
       else if (LoadedVT == MVT::i8) Opcode = Hexagon::L2_loadrb_io;
       else llvm_unreachable("unknown memory type");
 
@@ -607,7 +607,7 @@ SDNode *HexagonDAGToDAGISel::SelectIndexedLoad(LoadSDNode *LD, SDLoc dl) {
     if (TII->isValidAutoIncImm(LoadedVT, Val))
       Opcode = zextval ? Hexagon::POST_LDriuh : Hexagon::POST_LDrih;
     else
-      Opcode = zextval ? Hexagon::L2_loadruh_io : Hexagon::LDrih;
+      Opcode = zextval ? Hexagon::L2_loadruh_io : Hexagon::L2_loadrh_io;
   } else if (LoadedVT == MVT::i8) {
     if (TII->isValidAutoIncImm(LoadedVT, Val))
       Opcode = zextval ? Hexagon::POST_LDriub : Hexagon::POST_LDrib;

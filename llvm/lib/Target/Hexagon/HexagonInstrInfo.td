@@ -1547,7 +1547,8 @@ let accessSize = ByteAccess, isCodeGenOnly = 0 in {
   defm loadrub: LD_Idxd <"memub", "LDriub", IntRegs, s11_0Ext, u6_0Ext, 0b1001>;
 }
 
-let accessSize = HalfWordAccess, opExtentAlign = 1 in {
+let accessSize = HalfWordAccess, opExtentAlign = 1, isCodeGenOnly = 0 in {
+  defm loadrh:  LD_Idxd <"memh", "LDrih", IntRegs, s11_1Ext, u6_1Ext, 0b1010>;
   defm loadruh: LD_Idxd <"memuh", "LDriuh", IntRegs, s11_1Ext, u6_1Ext, 0b1011>;
 }
 
@@ -1591,10 +1592,6 @@ multiclass LD_MEMri<string mnemonic, string CextOp, RegisterClass RC,
 }
 
 let addrMode = BaseImmOffset, isMEMri = "true" in {
-  let accessSize = HalfWordAccess in {
-    defm LDrih: LD_MEMri < "memh", "LDrih", IntRegs, 12, 7>, AddrModeRel;
- }
-
   let accessSize = WordAccess in
     defm LDriw: LD_MEMri < "memw", "LDriw", IntRegs, 13, 8>, AddrModeRel;
 
@@ -1609,10 +1606,10 @@ def : Pat < (i32 (zextloadi8 ADDRriS11_0:$addr)),
             (L2_loadrub_io AddrFI:$addr, 0) >;
 
 def : Pat < (i32 (sextloadi16 ADDRriS11_1:$addr)),
-            (LDrih ADDRriS11_1:$addr) >;
+            (L2_loadrh_io AddrFI:$addr, 0) >;
 
 def : Pat < (i32 (zextloadi16 ADDRriS11_1:$addr)),
-            (L2_loadrub_io AddrFI:$addr, 0) >;
+            (L2_loadruh_io AddrFI:$addr, 0) >;
 
 def : Pat < (i32 (load ADDRriS11_2:$addr)),
             (LDriw ADDRriS11_2:$addr) >;
@@ -1662,10 +1659,6 @@ multiclass LD_Idxd2<string mnemonic, string CextOp, RegisterClass RC,
 }
 
 let addrMode = BaseImmOffset in {
-  let accessSize = HalfWordAccess in {
-    defm LDrih_indexed: LD_Idxd2 <"memh", "LDrih", IntRegs, s11_1Ext, u6_1Ext,
-                                 12, 7>, AddrModeRel;
-  }
   let accessSize = WordAccess in
     defm LDriw_indexed: LD_Idxd2 <"memw", "LDriw", IntRegs, s11_2Ext, u6_2Ext,
                                  13, 8>, AddrModeRel;
@@ -1683,7 +1676,7 @@ def : Pat < (i32 (zextloadi8 (add IntRegs:$src1, s11_0ExtPred:$offset))),
             (L2_loadrub_io IntRegs:$src1, s11_0ExtPred:$offset) >;
 
 def : Pat < (i32 (sextloadi16 (add IntRegs:$src1, s11_1ExtPred:$offset))),
-            (LDrih_indexed IntRegs:$src1, s11_1ExtPred:$offset) >;
+            (L2_loadrh_io IntRegs:$src1, s11_1ExtPred:$offset) >;
 
 def : Pat < (i32 (zextloadi16 (add IntRegs:$src1, s11_1ExtPred:$offset))),
             (L2_loadruh_io IntRegs:$src1, s11_1ExtPred:$offset) >;
@@ -1766,11 +1759,11 @@ def : Pat < (i32 (extloadi8 (add IntRegs:$src1, s11_0ImmPred:$offset))),
             (i32 (L2_loadrb_io IntRegs:$src1, s11_0ImmPred:$offset)) >;
 
 def : Pat < (i32 (extloadi16 ADDRriS11_1:$addr)),
-            (i32 (LDrih ADDRriS11_1:$addr))>;
+            (i32 (L2_loadrh_io AddrFI:$addr, 0))>;
 
 let AddedComplexity = 20 in
 def : Pat < (i32 (extloadi16 (add IntRegs:$src1, s11_1ImmPred:$offset))),
-            (i32 (LDrih_indexed IntRegs:$src1, s11_1ImmPred:$offset)) >;
+            (i32 (L2_loadrh_io IntRegs:$src1, s11_1ImmPred:$offset)) >;
 
 let AddedComplexity = 10 in
 def : Pat < (i32 (zextloadi1 ADDRriS11_0:$addr)),
@@ -4030,7 +4023,7 @@ def:  Pat <(i64 (extloadi8 ADDRriS11_0:$src1)),
 // Convert sign-extended load back to load and sign extend.
 // i16 -> i64
 def:  Pat <(i64 (sextloadi16 ADDRriS11_1:$src1)),
-      (i64 (A2_sxtw (LDrih ADDRriS11_1:$src1)))>;
+      (i64 (A2_sxtw (L2_loadrh_io AddrFI:$src1, 0)))>;
 
 // Convert sign-extended load back to load and sign extend.
 // i32 -> i64
@@ -4183,13 +4176,13 @@ def:  Pat <(i64 (extloadi32 (i32 (add IntRegs:$src1, s11_2ExtPred:$offset)))),
 
 // anyext i16 -> i64.
 def:  Pat <(i64 (extloadi16 ADDRriS11_2:$src1)),
-      (i64 (A2_combinew (A2_tfrsi 0), (LDrih ADDRriS11_2:$src1)))>,
+      (i64 (A2_combinew (A2_tfrsi 0), (L2_loadrh_io AddrFI:$src1, 0)))>,
       Requires<[NoV4T]>;
 
 let AddedComplexity = 20 in
 def:  Pat <(i64 (extloadi16 (add (i32 IntRegs:$src1),
                                   s11_1ExtPred:$offset))),
-      (i64 (A2_combinew (A2_tfrsi 0), (LDrih_indexed IntRegs:$src1,
+      (i64 (A2_combinew (A2_tfrsi 0), (L2_loadrh_io IntRegs:$src1,
                                   s11_1ExtPred:$offset)))>,
       Requires<[NoV4T]>;
 

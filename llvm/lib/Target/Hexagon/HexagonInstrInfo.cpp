@@ -80,7 +80,7 @@ unsigned HexagonInstrInfo::isLoadFromStackSlot(const MachineInstr *MI,
   default: break;
   case Hexagon::LDriw:
   case Hexagon::LDrid:
-  case Hexagon::LDrih:
+  case Hexagon::L2_loadrh_io:
   case Hexagon::L2_loadrb_io:
   case Hexagon::L2_loadrub_io:
     if (MI->getOperand(2).isFI() &&
@@ -678,9 +678,8 @@ bool HexagonInstrInfo::isPredicable(MachineInstr *MI) const {
   case Hexagon::LDriw_indexed:
     return isShiftedUInt<6,2>(MI->getOperand(2).getImm());
 
-  case Hexagon::LDrih:
+  case Hexagon::L2_loadrh_io:
   case Hexagon::L2_loadruh_io:
-  case Hexagon::LDrih_indexed:
     return isShiftedUInt<6,1>(MI->getOperand(2).getImm());
 
   case Hexagon::L2_loadrb_io:
@@ -1122,7 +1121,7 @@ isValidOffset(const int Opcode, const int Offset) const {
     return (Offset >= Hexagon_MEMD_OFFSET_MIN) &&
       (Offset <= Hexagon_MEMD_OFFSET_MAX);
 
-  case Hexagon::LDrih:
+  case Hexagon::L2_loadrh_io:
   case Hexagon::L2_loadruh_io:
   case Hexagon::STrih:
     return (Offset >= Hexagon_MEMH_OFFSET_MIN) &&
@@ -1357,10 +1356,8 @@ isConditionalLoad (const MachineInstr* MI) const {
     case Hexagon::LDriw_cNotPt :
     case Hexagon::LDriw_indexed_cPt :
     case Hexagon::LDriw_indexed_cNotPt :
-    case Hexagon::LDrih_cPt :
-    case Hexagon::LDrih_cNotPt :
-    case Hexagon::LDrih_indexed_cPt :
-    case Hexagon::LDrih_indexed_cNotPt :
+    case Hexagon::L2_ploadrht_io:
+    case Hexagon::L2_ploadrhf_io:
     case Hexagon::L2_ploadrbt_io:
     case Hexagon::L2_ploadrbf_io:
     case Hexagon::L2_ploadruht_io:
