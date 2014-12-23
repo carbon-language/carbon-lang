@@ -1889,7 +1889,8 @@ llvm::DIType CGDebugInfo::CreateType(const MemberPointerType *Ty,
   llvm::DIType ClassType = getOrCreateType(QualType(Ty->getClass(), 0), U);
   if (!Ty->getPointeeType()->isFunctionType())
     return DBuilder.createMemberPointerType(
-        getOrCreateType(Ty->getPointeeType(), U), ClassType);
+      getOrCreateType(Ty->getPointeeType(), U), ClassType,
+      CGM.PointerWidthInBits);
 
   const FunctionProtoType *FPT =
       Ty->getPointeeType()->getAs<FunctionProtoType>();
@@ -1897,7 +1898,7 @@ llvm::DIType CGDebugInfo::CreateType(const MemberPointerType *Ty,
       getOrCreateInstanceMethodType(CGM.getContext().getPointerType(QualType(
                                         Ty->getClass(), FPT->getTypeQuals())),
                                     FPT, U),
-      ClassType);
+      ClassType, CGM.PointerWidthInBits);
 }
 
 llvm::DIType CGDebugInfo::CreateType(const AtomicType *Ty, llvm::DIFile U) {
