@@ -167,6 +167,17 @@ let isCall = 1, PPC970_Unit = 7, Defs = [LR8] in {
     }
   }
 }
+
+let isCall = 1, PPC970_Unit = 7, isCodeGenOnly = 1,
+    Defs = [LR8, X2], Uses = [CTR8, RM], RST = 2 in {
+  def BCTRL8_LDinto_toc :
+    XLForm_2_ext_and_DSForm_1<19, 528, 20, 0, 1, 58, 0, (outs),
+                              (ins memrix:$src),
+                              "bctrl\n\tld 2, $src", IIC_BrB,
+                              [(PPCbctrl_load_toc ixaddr:$src)]>,
+    Requires<[In64BitMode]>;
+}
+
 } // Interpretation64Bit
 
 // FIXME: Duplicating this for the asm parser should be unnecessary, but the

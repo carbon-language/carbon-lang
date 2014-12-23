@@ -945,6 +945,45 @@ class XLForm_3<bits<6> opcode, bits<10> xo, dag OOL, dag IOL, string asmstr,
   let Inst{31}    = 0;
 }
 
+class XLForm_2_and_DSForm_1<bits<6> opcode1, bits<10> xo1, bit lk,
+                            bits<6> opcode2, bits<2> xo2,
+                            dag OOL, dag IOL, string asmstr,
+                            InstrItinClass itin, list<dag> pattern>
+        : I2<opcode1, opcode2, OOL, IOL, asmstr, itin> {
+  bits<5> BO;
+  bits<5> BI;
+  bits<2> BH;
+
+  bits<5>  RST;
+  bits<19> DS_RA;
+
+  let Pattern = pattern;
+
+  let Inst{6-10}  = BO;
+  let Inst{11-15} = BI;
+  let Inst{16-18} = 0;
+  let Inst{19-20} = BH;
+  let Inst{21-30} = xo1;
+  let Inst{31}    = lk;
+
+  let Inst{38-42} = RST;
+  let Inst{43-47} = DS_RA{18-14};  // Register #
+  let Inst{48-61} = DS_RA{13-0};   // Displacement.
+  let Inst{62-63} = xo2;
+}
+
+class XLForm_2_ext_and_DSForm_1<bits<6> opcode1, bits<10> xo1,
+                                bits<5> bo, bits<5> bi, bit lk,
+                                bits<6> opcode2, bits<2> xo2,
+                                dag OOL, dag IOL, string asmstr,
+                                InstrItinClass itin, list<dag> pattern>
+  : XLForm_2_and_DSForm_1<opcode1, xo1, lk, opcode2, xo2,
+                          OOL, IOL, asmstr, itin, pattern> {
+  let BO = bo;
+  let BI = bi;
+  let BH = 0;
+}
+
 // 1.7.8 XFX-Form
 class XFXForm_1<bits<6> opcode, bits<10> xo, dag OOL, dag IOL, string asmstr,
                 InstrItinClass itin>

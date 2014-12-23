@@ -153,6 +153,10 @@ def PPCmtctr      : SDNode<"PPCISD::MTCTR", SDT_PPCCall,
 def PPCbctrl : SDNode<"PPCISD::BCTRL", SDTNone,
                       [SDNPHasChain, SDNPOptInGlue, SDNPOutGlue,
                        SDNPVariadic]>;
+def PPCbctrl_load_toc : SDNode<"PPCISD::BCTRL_LOAD_TOC",
+                               SDTypeProfile<0, 1, []>,
+                               [SDNPHasChain, SDNPOptInGlue, SDNPOutGlue,
+                                SDNPVariadic]>;
 
 def retflag       : SDNode<"PPCISD::RET_FLAG", SDTNone,
                            [SDNPHasChain, SDNPOptInGlue, SDNPVariadic]>;

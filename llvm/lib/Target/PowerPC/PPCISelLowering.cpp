@@ -775,6 +775,7 @@ const char *PPCTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case PPCISD::CALL_NOP_TLS:    return "PPCISD::CALL_NOP_TLS";
   case PPCISD::MTCTR:           return "PPCISD::MTCTR";
   case PPCISD::BCTRL:           return "PPCISD::BCTRL";
+  case PPCISD::BCTRL_LOAD_TOC:  return "PPCISD::BCTRL_LOAD_TOC";
   case PPCISD::RET_FLAG:        return "PPCISD::RET_FLAG";
   case PPCISD::READ_TIME_BASE:  return "PPCISD::READ_TIME_BASE";
   case PPCISD::EH_SJLJ_SETJMP:  return "PPCISD::EH_SJLJ_SETJMP";
@@ -3864,7 +3865,6 @@ PPCTargetLowering::FinishCall(CallingConv::ID CallConv, SDLoc dl,
   // stack frame. If caller and callee belong to the same module (and have the
   // same TOC), the NOP will remain unchanged.
 
-  bool needsTOCRestore = false;
   if (!isTailCall && Subtarget.isSVR4ABI()&& Subtarget.isPPC64()) {
     if (CallOpc == PPCISD::BCTRL) {
       // This is a call through a function pointer.
@@ -3876,7 +3876,17 @@ PPCTargetLowering::FinishCall(CallingConv::ID CallConv, SDLoc dl,
       // since r2 is a reserved register (which prevents the register allocator
       // from allocating it), resulting in an additional register being
       // allocated and an unnecessary move instruction being generated.
-      needsTOCRestore = true;
+      CallOpc = PPCISD::BCTRL_LOAD_TOC;
+
+      EVT PtrVT = DAG.getTargetLoweringInfo().getPointerTy();
+      SDValue StackPtr = DAG.getRegister(PPC::X1, PtrVT);
+      unsigned TOCSaveOffset = PPCFrameLowering::getTOCSaveOffset(isELFv2ABI);
+      SDValue TOCOff = DAG.getIntPtrConstant(TOCSaveOffset);
+      SDValue AddTOC = DAG.getNode(ISD::ADD, dl, MVT::i64, StackPtr, TOCOff);
+
+      // The address needs to go after the chain input but before the flag (or
+      // any other variadic arguments).
+      Ops.insert(std::next(Ops.begin()), AddTOC);
     } else if ((CallOpc == PPCISD::CALL) &&
                (!isLocalCall(Callee) ||
                 DAG.getTarget().getRelocationModel() == Reloc::PIC_)) {
@@ -3889,17 +3899,6 @@ PPCTargetLowering::FinishCall(CallingConv::ID CallConv, SDLoc dl,
 
   Chain = DAG.getNode(CallOpc, dl, NodeTys, Ops);
   InFlag = Chain.getValue(1);
-
-  if (needsTOCRestore) {
-    SDVTList VTs = DAG.getVTList(MVT::Other, MVT::Glue);
-    EVT PtrVT = DAG.getTargetLoweringInfo().getPointerTy();
-    SDValue StackPtr = DAG.getRegister(PPC::X1, PtrVT);
-    unsigned TOCSaveOffset = PPCFrameLowering::getTOCSaveOffset(isELFv2ABI);
-    SDValue TOCOff = DAG.getIntPtrConstant(TOCSaveOffset);
-    SDValue AddTOC = DAG.getNode(ISD::ADD, dl, MVT::i64, StackPtr, TOCOff);
-    Chain = DAG.getNode(PPCISD::LOAD_TOC, dl, VTs, Chain, AddTOC, InFlag);
-    InFlag = Chain.getValue(1);
-  }
 
   Chain = DAG.getCALLSEQ_END(Chain, DAG.getIntPtrConstant(NumBytes, true),
                              DAG.getIntPtrConstant(BytesCalleePops, true),
