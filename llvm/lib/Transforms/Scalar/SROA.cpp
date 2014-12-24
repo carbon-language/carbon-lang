@@ -260,8 +260,8 @@ public:
     /// \brief The start end end iterators of this partition.
     iterator SI, SJ;
 
-    /// \brief A collection of split slices.
-    SmallVector<Slice *, 4> SplitSlices;
+    /// \brief A collection of split slice tails overlapping the partition.
+    SmallVector<Slice *, 4> SplitTails;
 
     /// \brief Raw constructor builds an empty partition starting and ending at
     /// the given iterator.
@@ -290,16 +290,25 @@ public:
     /// a region occupied by split slices.
     bool empty() const { return SI == SJ; }
 
-    /// \name Iterate contained slices.
-    /// All of these slices are fully contained in the partition. They may be
-    /// splittable or unsplittable.
+    /// \name Iterate slices that start within the partition.
+    /// These may be splittable or unsplittable. They have a begin offset >= the
+    /// partition begin offset.
     /// @{
+    // FIXME: We should probably define a "concat_iterator" helper and use that
+    // to stitch together pointee_iterators over the split tails and the
+    // contiguous iterators of the partition. That would give a much nicer
+    // interface here. We could then additionally expose filtered iterators for
+    // split, unsplit, and unsplittable splices based on the usage patterns.
     iterator begin() const { return SI; }
     iterator end() const { return SJ; }
     /// @}
 
-    /// \brief Get the sequence of split slices.
-    ArrayRef<Slice *> splitSlices() const { return SplitSlices; }
+    /// \brief Get the sequence of split slice tails.
+    ///
+    /// These tails are of slices which start before this partition but are
+    /// split and overlap into the partition. We accumulate these while forming
+    /// partitions.
+    ArrayRef<Slice *> splitSliceTails() const { return SplitTails; }
   };
 
   /// \brief An iterator over partitions of the alloca's slices.
@@ -341,30 +350,30 @@ public:
     ///
     /// Requires that the iterator not be at the end of the slices.
     void advance() {
-      assert((P.SI != SE || !P.SplitSlices.empty()) &&
+      assert((P.SI != SE || !P.SplitTails.empty()) &&
              "Cannot advance past the end of the slices!");
 
       // Clear out any split uses which have ended.
-      if (!P.SplitSlices.empty()) {
+      if (!P.SplitTails.empty()) {
         if (P.EndOffset >= MaxSplitSliceEndOffset) {
           // If we've finished all splits, this is easy.
-          P.SplitSlices.clear();
+          P.SplitTails.clear();
           MaxSplitSliceEndOffset = 0;
         } else {
           // Remove the uses which have ended in the prior partition. This
           // cannot change the max split slice end because we just checked that
           // the prior partition ended prior to that max.
-          P.SplitSlices.erase(
+          P.SplitTails.erase(
               std::remove_if(
-                  P.SplitSlices.begin(), P.SplitSlices.end(),
+                  P.SplitTails.begin(), P.SplitTails.end(),
                   [&](Slice *S) { return S->endOffset() <= P.EndOffset; }),
-              P.SplitSlices.end());
-          assert(std::any_of(P.SplitSlices.begin(), P.SplitSlices.end(),
+              P.SplitTails.end());
+          assert(std::any_of(P.SplitTails.begin(), P.SplitTails.end(),
                              [&](Slice *S) {
                                return S->endOffset() == MaxSplitSliceEndOffset;
                              }) &&
                  "Could not find the current max split slice offset!");
-          assert(std::all_of(P.SplitSlices.begin(), P.SplitSlices.end(),
+          assert(std::all_of(P.SplitTails.begin(), P.SplitTails.end(),
                              [&](Slice *S) {
                                return S->endOffset() <= MaxSplitSliceEndOffset;
                              }) &&
@@ -375,7 +384,7 @@ public:
       // If P.SI is already at the end, then we've cleared the split tail and
       // now have an end iterator.
       if (P.SI == SE) {
-        assert(P.SplitSlices.empty() && "Failed to clear the split slices!");
+        assert(P.SplitTails.empty() && "Failed to clear the split slices!");
         return;
       }
 
@@ -386,7 +395,7 @@ public:
         // partition into the split list.
         for (Slice &S : P)
           if (S.isSplittable() && S.endOffset() > P.EndOffset) {
-            P.SplitSlices.push_back(&S);
+            P.SplitTails.push_back(&S);
             MaxSplitSliceEndOffset =
                 std::max(S.endOffset(), MaxSplitSliceEndOffset);
           }
@@ -404,7 +413,7 @@ public:
         // If the we have split slices and the next slice is after a gap and is
         // not splittable immediately form an empty partition for the split
         // slices up until the next slice begins.
-        if (!P.SplitSlices.empty() && P.SI->beginOffset() != P.EndOffset &&
+        if (!P.SplitTails.empty() && P.SI->beginOffset() != P.EndOffset &&
             !P.SI->isSplittable()) {
           P.BeginOffset = P.EndOffset;
           P.EndOffset = P.SI->beginOffset();
@@ -417,7 +426,7 @@ public:
       // parttion is the beginning offset of the next slice unless we have
       // pre-existing split slices that are continuing, in which case we begin
       // at the prior end offset.
-      P.BeginOffset = P.SplitSlices.empty() ? P.SI->beginOffset() : P.EndOffset;
+      P.BeginOffset = P.SplitTails.empty() ? P.SI->beginOffset() : P.EndOffset;
       P.EndOffset = P.SI->endOffset();
       ++P.SJ;
 
@@ -473,12 +482,12 @@ public:
       // slices list, but the prior may have the same P.SI and a tail of split
       // slices.
       if (P.SI == RHS.P.SI &&
-          P.SplitSlices.empty() == RHS.P.SplitSlices.empty()) {
+          P.SplitTails.empty() == RHS.P.SplitTails.empty()) {
         assert(P.SJ == RHS.P.SJ &&
                "Same set of slices formed two different sized partitions!");
-        assert(P.SplitSlices.size() == RHS.P.SplitSlices.size() &&
+        assert(P.SplitTails.size() == RHS.P.SplitTails.size() &&
                "Same slice position with differently sized non-empty split "
-               "slices sets!");
+               "slice tails!");
         return true;
       }
       return false;
@@ -2044,7 +2053,7 @@ static VectorType *isVectorPromotionViable(AllocaSlices::Partition &P,
       if (!isVectorPromotionViableForSlice(P, S, VTy, ElementSize, DL))
         return false;
 
-    for (const Slice *S : P.splitSlices())
+    for (const Slice *S : P.splitSliceTails())
       if (!isVectorPromotionViableForSlice(P, *S, VTy, ElementSize, DL))
         return false;
 
@@ -2169,7 +2178,7 @@ static bool isIntegerWideningViable(AllocaSlices::Partition &P, Type *AllocaTy,
                                          WholeAllocaOp))
       return false;
 
-  for (const Slice *S : P.splitSlices())
+  for (const Slice *S : P.splitSliceTails())
     if (!isIntegerWideningViableForSlice(*S, P.beginOffset(), AllocaTy, DL,
                                          WholeAllocaOp))
       return false;
@@ -2401,6 +2410,8 @@ public:
     IsSplittable = I->isSplittable();
     IsSplit =
         BeginOffset < NewAllocaBeginOffset || EndOffset > NewAllocaEndOffset;
+    DEBUG(dbgs() << "  rewriting " << (IsSplit ? "split " : ""));
+    DEBUG(AS.printSlice(dbgs(), I, ""));
 
     // Compute the intersecting offset range.
     assert(BeginOffset < NewAllocaEndOffset);
@@ -3499,15 +3510,11 @@ bool SROA::rewritePartition(AllocaInst &AI, AllocaSlices &AS,
                                P.endOffset(), IsIntegerPromotable, VecTy,
                                PHIUsers, SelectUsers);
   bool Promotable = true;
-  for (Slice *S : P.splitSlices()) {
-    DEBUG(dbgs() << "  rewriting split ");
-    DEBUG(AS.printSlice(dbgs(), S, ""));
+  for (Slice *S : P.splitSliceTails()) {
     Promotable &= Rewriter.visit(S);
     ++NumUses;
   }
   for (Slice &S : P) {
-    DEBUG(dbgs() << "  rewriting ");
-    DEBUG(AS.printSlice(dbgs(), &S, ""));
     Promotable &= Rewriter.visit(&S);
     ++NumUses;
   }
