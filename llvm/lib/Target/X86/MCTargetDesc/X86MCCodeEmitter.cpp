@@ -1199,16 +1199,10 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
 
   // Emit the address size opcode prefix as needed.
   bool need_address_override;
-  // The AdSize prefix is only for 32-bit and 64-bit modes. Hm, perhaps we
-  // should introduce an AdSize16 bit instead of having seven special cases?
-  if ((!is16BitMode(STI) && TSFlags & X86II::AdSize) ||
-      (is16BitMode(STI) && (MI.getOpcode() == X86::JECXZ_32 ||
-                         MI.getOpcode() == X86::MOV8o8a ||
-                         MI.getOpcode() == X86::MOV16o16a ||
-                         MI.getOpcode() == X86::MOV32o32a ||
-                         MI.getOpcode() == X86::MOV8ao8 ||
-                         MI.getOpcode() == X86::MOV16ao16 ||
-                         MI.getOpcode() == X86::MOV32ao32))) {
+  uint64_t AdSize = TSFlags & X86II::AdSizeMask;
+  if ((is16BitMode(STI) && AdSize == X86II::AdSize32) ||
+      (is32BitMode(STI) && AdSize == X86II::AdSize16) ||
+      (is64BitMode(STI) && AdSize == X86II::AdSize32)) {
     need_address_override = true;
   } else if (MemoryOperand < 0) {
     need_address_override = false;

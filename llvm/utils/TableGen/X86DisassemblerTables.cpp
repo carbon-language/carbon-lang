@@ -822,6 +822,9 @@ void DisassemblerTables::setTableFields(ModRMDecision     &decision,
         InstructionSpecifier &previousInfo =
           InstructionSpecifiers[decision.instructionIDs[index]];
 
+        // FIXME this doesn't actually work. The MCInsts the disassembler
+        // create don't encode re-encode correctly. They just manage to mostly
+        // print correctly.
         // Instructions such as MOV8ao8 and MOV8ao8_16 differ only in the
         // presence of the AdSize prefix. However, the disassembler doesn't
         // care about that difference in the instruction definition; it

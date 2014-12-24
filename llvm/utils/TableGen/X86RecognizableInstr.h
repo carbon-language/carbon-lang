@@ -50,8 +50,8 @@ private:
   uint8_t Encoding;
   /// The OpSize field from the record
   uint8_t OpSize;
-  /// The hasAdSizePrefix field from the record
-  bool HasAdSizePrefix;
+  /// The AdSize field from the record
+  uint8_t AdSize;
   /// The hasREX_WPrefix field from the record
   bool HasREX_WPrefix;
   /// The hasVEX_4V field from the record

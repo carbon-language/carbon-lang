@@ -119,6 +119,10 @@ namespace X86Local {
   enum {
     OpSize16 = 1, OpSize32 = 2
   };
+
+  enum {
+    AdSize16 = 1, AdSize32 = 2, AdSize64 = 3
+  };
 }
 
 using namespace X86Disassembler;
@@ -194,7 +198,7 @@ RecognizableInstr::RecognizableInstr(DisassemblerTables &tables,
   Encoding = byteFromRec(Rec, "OpEncBits");
 
   OpSize           = byteFromRec(Rec, "OpSizeBits");
-  HasAdSizePrefix  = Rec->getValueAsBit("hasAdSizePrefix");
+  AdSize           = byteFromRec(Rec, "AdSizeBits");
   HasREX_WPrefix   = Rec->getValueAsBit("hasREX_WPrefix");
   HasVEX_4V        = Rec->getValueAsBit("hasVEX_4V");
   HasVEX_4VOp3     = Rec->getValueAsBit("hasVEX_4VOp3");
@@ -410,7 +414,7 @@ InstructionContext RecognizableInstr::insnContext() const {
       insnContext = IC_64BIT_XS_OPSIZE;
     else if (OpSize == X86Local::OpSize16 || OpPrefix == X86Local::PD)
       insnContext = IC_64BIT_OPSIZE;
-    else if (HasAdSizePrefix)
+    else if (AdSize == X86Local::AdSize32)
       insnContext = IC_64BIT_ADSIZE;
     else if (HasREX_WPrefix && OpPrefix == X86Local::XS)
       insnContext = IC_64BIT_REXW_XS;
@@ -431,7 +435,7 @@ InstructionContext RecognizableInstr::insnContext() const {
       insnContext = IC_XS_OPSIZE;
     else if (OpSize == X86Local::OpSize16 || OpPrefix == X86Local::PD)
       insnContext = IC_OPSIZE;
-    else if (HasAdSizePrefix)
+    else if (AdSize == X86Local::AdSize16)
       insnContext = IC_ADSIZE;
     else if (OpPrefix == X86Local::XD)
       insnContext = IC_XD;

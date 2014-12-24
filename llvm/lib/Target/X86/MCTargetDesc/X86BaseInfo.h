@@ -328,21 +328,28 @@ namespace X86II {
     OpSizeShift = 7,
     OpSizeMask = 0x3 << OpSizeShift,
 
-    OpSize16 = 1 << OpSizeShift,
-    OpSize32 = 2 << OpSizeShift,
+    OpSizeFixed = 0 << OpSizeShift,
+    OpSize16    = 1 << OpSizeShift,
+    OpSize32    = 2 << OpSizeShift,
 
-    // AsSize - Set if this instruction requires an operand size prefix (0x67),
-    // which most often indicates that the instruction address 16 bit address
-    // instead of 32 bit address (or 32 bit address in 64 bit mode).
+    // AsSize - AdSizeX implies this instruction determines its need of 0x67
+    // prefix from a normal ModRM memory operand. The other types indicate that
+    // an operand is encoded with a specific width and a prefix is needed if
+    // it differs from the current mode.
     AdSizeShift = OpSizeShift + 2,
-    AdSize      = 1 << AdSizeShift,
+    AdSizeMask  = 0x3 << AdSizeShift,
+
+    AdSizeX  = 1 << AdSizeShift,
+    AdSize16 = 1 << AdSizeShift,
+    AdSize32 = 2 << AdSizeShift,
+    AdSize64 = 3 << AdSizeShift,
 
     //===------------------------------------------------------------------===//
     // OpPrefix - There are several prefix bytes that are used as opcode
     // extensions. These are 0x66, 0xF3, and 0xF2. If this field is 0 there is
     // no prefix.
     //
-    OpPrefixShift = AdSizeShift + 1,
+    OpPrefixShift = AdSizeShift + 2,
     OpPrefixMask  = 0x7 << OpPrefixShift,
 
     // PS, PD - Prefix code for packed single and double precision vector
