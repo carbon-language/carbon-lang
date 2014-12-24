@@ -167,13 +167,13 @@ private:
           &*rit, rit->r_offset - symbol.st_value, this->kindArch(),
           rit->getType(isMips64EL()), rit->getSymbol(isMips64EL())));
 
-      auto addend = readAddend(*rit, secContent);
+      auto addend = getAddend(*rit, secContent);
       auto pairRelType = getPairRelocation(*rit);
       if (pairRelType != llvm::ELF::R_MIPS_NONE) {
         addend <<= 16;
         auto mit = findMatchingRelocation(pairRelType, rit, eit);
         if (mit != eit)
-          addend += int16_t(readAddend(*mit, secContent));
+          addend += int16_t(getAddend(*mit, secContent));
         else
           // FIXME (simon): Show detailed warning.
           llvm::errs() << "lld warning: cannot matching LO16 relocation\n";
@@ -182,8 +182,8 @@ private:
     }
   }
 
-  Reference::Addend readAddend(const Elf_Rel &ri,
-                               const ArrayRef<uint8_t> content) const {
+  Reference::Addend getAddend(const Elf_Rel &ri,
+                              const ArrayRef<uint8_t> content) const {
     using namespace llvm::support;
     const uint8_t *ap = content.data() + ri.r_offset;
     switch (ri.getType(isMips64EL())) {
