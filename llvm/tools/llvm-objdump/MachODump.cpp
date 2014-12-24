@@ -3809,7 +3809,7 @@ static void Print_mmst_reg(MachO::mmst_reg_t &r) {
   outs() << "\n";
 }
 
-static void Print_xmm_reg(MachO::xmm_reg &r) {
+static void Print_xmm_reg(MachO::xmm_reg_t &r) {
   uint32_t f;
   outs() << "\t      xmm_reg ";
   for (f = 0; f < 16; f++)

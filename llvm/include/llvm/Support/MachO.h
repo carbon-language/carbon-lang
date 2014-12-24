@@ -1494,7 +1494,7 @@ namespace llvm {
       char mmst_rsrv[6];
     };
 
-    struct xmm_reg {
+    struct xmm_reg_t {
       char xmm_reg[16];
     };
 
@@ -1521,22 +1521,22 @@ namespace llvm {
       mmst_reg_t fpu_stmm5;
       mmst_reg_t fpu_stmm6;
       mmst_reg_t fpu_stmm7;
-      xmm_reg fpu_xmm0;
-      xmm_reg fpu_xmm1;
-      xmm_reg fpu_xmm2;
-      xmm_reg fpu_xmm3;
-      xmm_reg fpu_xmm4;
-      xmm_reg fpu_xmm5;
-      xmm_reg fpu_xmm6;
-      xmm_reg fpu_xmm7;
-      xmm_reg fpu_xmm8;
-      xmm_reg fpu_xmm9;
-      xmm_reg fpu_xmm10;
-      xmm_reg fpu_xmm11;
-      xmm_reg fpu_xmm12;
-      xmm_reg fpu_xmm13;
-      xmm_reg fpu_xmm14;
-      xmm_reg fpu_xmm15;
+      xmm_reg_t fpu_xmm0;
+      xmm_reg_t fpu_xmm1;
+      xmm_reg_t fpu_xmm2;
+      xmm_reg_t fpu_xmm3;
+      xmm_reg_t fpu_xmm4;
+      xmm_reg_t fpu_xmm5;
+      xmm_reg_t fpu_xmm6;
+      xmm_reg_t fpu_xmm7;
+      xmm_reg_t fpu_xmm8;
+      xmm_reg_t fpu_xmm9;
+      xmm_reg_t fpu_xmm10;
+      xmm_reg_t fpu_xmm11;
+      xmm_reg_t fpu_xmm12;
+      xmm_reg_t fpu_xmm13;
+      xmm_reg_t fpu_xmm14;
+      xmm_reg_t fpu_xmm15;
       char fpu_rsrv4[6*16];
       uint32_t fpu_reserved1;
     };
