@@ -66,7 +66,7 @@ std::error_code MipsExecutableWriter<ELFT>::setELFHeader() {
     if (ea->codeModel() == DefinedAtom::codeMipsMicro ||
         ea->codeModel() == DefinedAtom::codeMipsMicroPIC)
       // Adjust entry symbol value if this symbol is microMIPS encoded.
-      this->_elfHeader->e_entry(al->_virtualAddr + 1);
+      this->_elfHeader->e_entry(al->_virtualAddr | 1);
   }
 
   _writeHelper.setELFHeader(*this->_elfHeader);

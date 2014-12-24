@@ -97,7 +97,7 @@ protected:
     if (const auto *da = dyn_cast<DefinedAtom>(al->_atom))
       if (da->codeModel() == DefinedAtom::codeMipsMicro ||
           da->codeModel() == DefinedAtom::codeMipsMicroPIC)
-        return al->_virtualAddr + 1;
+        return al->_virtualAddr | 1;
     return al->_virtualAddr;
   }
 
