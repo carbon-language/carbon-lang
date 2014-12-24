@@ -552,6 +552,10 @@ namespace llvm {
     void verify() const;
 #endif
 
+  protected:
+    /// Append a segment to the list of segments.
+    void append(const LiveRange::Segment S);
+
   private:
 
     iterator addSegmentFrom(Segment S, iterator From);
@@ -684,6 +688,10 @@ namespace llvm {
     /// Removes all subranges without any segments (subranges without segments
     /// are not considered valid and should only exist temporarily).
     void removeEmptySubRanges();
+
+    /// Construct main live range by merging the SubRanges of @p LI.
+    void constructMainRangeFromSubranges(const SlotIndexes &Indexes,
+                                         VNInfo::Allocator &VNIAllocator);
 
     /// getSize - Returns the sum of sizes of all the LiveRange's.
     ///

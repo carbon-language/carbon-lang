@@ -105,8 +105,9 @@ void LiveRangeCalc::calculate(LiveInterval &LI) {
       }
     }
 
-    // Create the def in the main liverange.
-    if (MO.isDef())
+    // Create the def in the main liverange. We do not have to do this if
+    // subranges are tracked as we recreate the main range later in this case.
+    if (MO.isDef() && !LI.hasSubRanges())
       createDeadDef(*Indexes, *Alloc, LI, MO);
   }
 
@@ -116,13 +117,17 @@ void LiveRangeCalc::calculate(LiveInterval &LI) {
 
   // Step 2: Extend live segments to all uses, constructing SSA form as
   // necessary.
-  for (LiveInterval::SubRange &S : LI.subranges()) {
+  if (LI.hasSubRanges()) {
+    for (LiveInterval::SubRange &S : LI.subranges()) {
+      resetLiveOutMap();
+      extendToUses(S, Reg, S.LaneMask);
+    }
+    LI.clear();
+    LI.constructMainRangeFromSubranges(*Indexes, *Alloc);
+  } else {
     resetLiveOutMap();
-    extendToUses(S, Reg, S.LaneMask);
+    extendToUses(LI, Reg, ~0u);
   }
-
-  resetLiveOutMap();
-  extendToUses(LI, Reg, ~0u);
 }
 
 

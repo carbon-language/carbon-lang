@@ -300,6 +300,12 @@ LiveRange::extendSegmentStartTo(iterator I, SlotIndex NewStart) {
   return MergeTo;
 }
 
+void LiveRange::append(const Segment S) {
+  // Check that the segment belongs to the back of the list.
+  assert(segments.empty() || segments.back().end <= S.start);
+  segments.push_back(S);
+}
+
 LiveRange::iterator LiveRange::addSegmentFrom(Segment S, iterator From) {
   SlotIndex Start = S.start, End = S.end;
   iterator it = std::upper_bound(From, end(), Start);
@@ -607,6 +613,214 @@ void LiveInterval::removeEmptySubRanges() {
     } while (I != nullptr && I->empty());
     *NextPtr = I;
   }
+}
+
+/// Helper function for constructMainRangeFromSubranges(): Search the CFG
+/// backwards until we find a place covered by a LiveRange segment that actually
+/// has a valno set.
+static VNInfo *searchForVNI(const SlotIndexes &Indexes, LiveRange &LR,
+    const MachineBasicBlock *MBB,
+    SmallPtrSetImpl<const MachineBasicBlock*> &Visited) {
+  // We start the search at the end of MBB.
+  SlotIndex EndIdx = Indexes.getMBBEndIdx(MBB);
+  // In our use case we can't live the area covered by the live segments without
+  // finding an actual VNI def.
+  LiveRange::iterator I = LR.find(EndIdx.getPrevSlot());
+  assert(I != LR.end());
+  LiveRange::Segment &S = *I;
+  if (S.valno != nullptr)
+    return S.valno;
+
+  VNInfo *VNI = nullptr;
+  // Continue at predecessors (we could even go to idom with domtree available).
+  for (const MachineBasicBlock *Pred : MBB->predecessors()) {
+    // Avoid going in circles.
+    if (Visited.count(Pred))
+      continue;
+    Visited.insert(Pred);
+
+    VNI = searchForVNI(Indexes, LR, Pred, Visited);
+    if (VNI != nullptr) {
+      S.valno = VNI;
+      break;
+    }
+  }
+
+  return VNI;
+}
+
+void LiveInterval::constructMainRangeFromSubranges(
+    const SlotIndexes &Indexes, VNInfo::Allocator &VNIAllocator) {
+  // The basic observations on which this algorithm is based:
+  // - Each Def/ValNo in a subrange must have a corresponding def on the main
+  //   range, but not further defs/valnos are necessary.
+  // - If any of the subranges is live at a point the main liverange has to be
+  //   live too, conversily if no subrange is live the main range mustn't be
+  //   live either.
+  // We do this by scannig through all the subranges simultaneously creating new
+  // segments in the main range as segments start/ends come up in the subranges.
+  assert(hasSubRanges());
+  assert(segments.empty() && valnos.empty() && "expected empty main range");
+
+  // Collect subrange, iterator pairs for the walk and determine first and last
+  // SlotIndex involved.
+  SmallVector<std::pair<const SubRange*, const_iterator>, 4> SRs;
+  SlotIndex First;
+  SlotIndex Last;
+  for (const SubRange &SR : subranges()) {
+    if (SR.empty())
+      continue;
+    SRs.push_back(std::make_pair(&SR, SR.begin()));
+    if (!First.isValid() || SR.segments.front().start < First)
+      First = SR.segments.front().start;
+    if (!Last.isValid() || SR.segments.back().end > Last)
+      Last = SR.segments.back().end;
+  }
+
+  errs() << "Compute: " << *this << "\n";
+
+  // Walk over all subranges simultaneously.
+  Segment CurrentSegment;
+  bool ConstructingSegment = false;
+  bool NeedVNIFixup = false;
+  unsigned ActiveMask = 0;
+  SlotIndex Pos = First;
+  while (true) {
+    SlotIndex NextPos = Last;
+    enum {
+      NOTHING,
+      BEGIN_SEGMENT,
+      END_SEGMENT,
+    } Event = NOTHING;
+    unsigned EventMask = 0;
+    bool IsDef = false;
+    // Find the next begin or end of a subrange segment. Combine masks if we
+    // have multiple begins/ends at the same position. Ends take precedence over
+    // Begins.
+    for (auto &SRP : SRs) {
+      const SubRange &SR = *SRP.first;
+      const_iterator &I = SRP.second;
+      while (I != SR.end() &&
+             (I->end < Pos ||
+              (I->end == Pos && (ActiveMask & SR.LaneMask) == 0)))
+        ++I;
+      if (I == SR.end())
+        continue;
+      if ((ActiveMask & SR.LaneMask) == 0 &&
+          Pos <= I->start && I->start <= NextPos) {
+        // Merge multiple begins at the same position
+        if (I->start == NextPos && Event == BEGIN_SEGMENT) {
+          EventMask |= SR.LaneMask;
+          IsDef |= I->valno->def == I->start;
+        } else if (I->start < NextPos || Event != END_SEGMENT) {
+          Event = BEGIN_SEGMENT;
+          NextPos = I->start;
+          EventMask = SR.LaneMask;
+          IsDef = I->valno->def == I->start;
+        }
+      }
+      if ((ActiveMask & SR.LaneMask) != 0 &&
+          Pos <= I->end && I->end <= NextPos) {
+        // Merge multiple ends at the same position.
+        if (I->end == NextPos && Event == END_SEGMENT)
+          EventMask |= SR.LaneMask;
+        else {
+          Event = END_SEGMENT;
+          NextPos = I->end;
+          EventMask = SR.LaneMask;
+        }
+      }
+    }
+
+#if 1
+    errs() << '\t' << (Event == NOTHING ? "nothing "
+            : Event == BEGIN_SEGMENT ? "begin "
+            : "end ")
+           << NextPos << " mask " << ActiveMask << " evmask " << EventMask << " def " << IsDef << "\n";
+#endif
+
+    // Advance scan position.
+    Pos = NextPos;
+    if (Event == BEGIN_SEGMENT) {
+      if (ConstructingSegment && IsDef) {
+        // Finish previous segment because we have to start a new one.
+        CurrentSegment.end = Pos;
+        append(CurrentSegment);
+        ConstructingSegment = false;
+      }
+
+      // Start a new segment if necessary.
+      if (!ConstructingSegment) {
+        // Determine value number for the segment.
+        VNInfo *VNI;
+        if (IsDef) {
+          VNI = getNextValue(Pos, VNIAllocator);
+        } else {
+          // We have to reuse an existing value number, if we are lucky
+          // then we already passed one of the predecessor blocks and determined
+          // its value number (with blocks in reverse postorder this would be
+          // always true but we have no such guarantee).
+          assert(Pos.isBlock());
+          const MachineBasicBlock *MBB = Indexes.getMBBFromIndex(Pos);
+          // See if any of the predecessor blocks has a lower number and a VNI
+          for (const MachineBasicBlock *Pred : MBB->predecessors()) {
+            SlotIndex PredEnd = Indexes.getMBBEndIdx(Pred);
+            VNI = getVNInfoBefore(PredEnd);
+            if (VNI != nullptr)
+              break;
+          }
+          // Def will come later: We have to do an extra fixup pass.
+          if (VNI == nullptr)
+            NeedVNIFixup = true;
+        }
+
+        CurrentSegment.start = Pos;
+        CurrentSegment.valno = VNI;
+        ConstructingSegment = true;
+      }
+      ActiveMask |= EventMask;
+    } else if (Event == END_SEGMENT) {
+      assert(ConstructingSegment);
+      // Finish segment if no lane is active anymore.
+      ActiveMask &= ~EventMask;
+      if (ActiveMask == 0) {
+        CurrentSegment.end = Pos;
+        append(CurrentSegment);
+        ConstructingSegment = false;
+      }
+    } else {
+      // We reached the end of the last subranges and can stop.
+      assert(Event == NOTHING);
+      break;
+    }
+  }
+
+  // We might not be able to assign new valnos for all segments if the basic
+  // block containing the definition comes after a segment using the valno.
+  // Do a fixup pass for this uncommon case.
+  if (NeedVNIFixup) {
+    SmallPtrSet<const MachineBasicBlock*, 5> Visited;
+    for (Segment &S : segments) {
+      if (S.valno != nullptr)
+        continue;
+      // This can only happen at the begin of a basic block.
+      assert(S.start.isBlock());
+
+      Visited.clear();
+      const MachineBasicBlock *MBB = Indexes.getMBBFromIndex(S.start);
+      for (const MachineBasicBlock *Pred : MBB->predecessors()) {
+        VNInfo *VNI = searchForVNI(Indexes, *this, Pred, Visited);
+        if (VNI != nullptr) {
+          S.valno = VNI;
+          break;
+        }
+      }
+      assert(S.valno != nullptr);
+    }
+  }
+  assert(ActiveMask == 0 && !ConstructingSegment);
+  errs() << "Result: " << *this << "\n";
+  verify();
 }
 
 unsigned LiveInterval::getSize() const {
