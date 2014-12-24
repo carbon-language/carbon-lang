@@ -39,7 +39,7 @@ let test_linker () =
 
   let m1 = make_module "one"
   and m2 = make_module "two" in
-  link_modules m1 m2 Mode.PreserveSource;
+  link_modules m1 m2;
   dispose_module m1;
   dispose_module m2;
 
@@ -51,7 +51,7 @@ let test_linker () =
   let m1 = make_module "one"
   and m2 = make_module "one" in
   try
-    link_modules m1 m2 Mode.PreserveSource;
+    link_modules m1 m2;
     failwith "must raise"
   with Error _ ->
     dispose_module m1;
