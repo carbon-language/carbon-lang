@@ -20,6 +20,10 @@ bar5 = bar4
 
         .long foo2
 
+// Test that bar6 is a function that doesn't have the same value as foo4.
+bar6 = bar5
+bar6:
+
 // CHECK:      Symbols [
 // CHECK-NEXT:   Symbol {
 // CHECK-NEXT:     Name:  (0)
@@ -54,6 +58,15 @@ bar5 = bar4
 // CHECK-NEXT:     Size: 0
 // CHECK-NEXT:     Binding: Local
 // CHECK-NEXT:     Type: Function
+// CHECK-NEXT:     Other: 0
+// CHECK-NEXT:     Section: .text
+// CHECK-NEXT:   }
+// CHECK-NEXT:   Symbol {
+// CHECK-NEXT:     Name: bar6
+// CHECK-NEXT:     Value: 0x5
+// CHECK-NEXT:     Size: 0
+// CHECK-NEXT:     Binding: Local
+// CHECK-NEXT:     Type: None
 // CHECK-NEXT:     Other: 0
 // CHECK-NEXT:     Section: .text
 // CHECK-NEXT:   }

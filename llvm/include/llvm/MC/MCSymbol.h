@@ -53,6 +53,9 @@ namespace llvm {
     /// "Lfoo" or ".foo".
     unsigned IsTemporary : 1;
 
+    /// \brief True if this symbol can be redefined.
+    unsigned IsRedefinable : 1;
+
     /// IsUsed - True if this symbol has been used.
     mutable unsigned IsUsed : 1;
 
@@ -61,7 +64,7 @@ namespace llvm {
     friend class MCContext;
     MCSymbol(StringRef name, bool isTemporary)
       : Name(name), Section(nullptr), Value(nullptr),
-        IsTemporary(isTemporary), IsUsed(false) {}
+        IsTemporary(isTemporary), IsRedefinable(false), IsUsed(false) {}
 
     MCSymbol(const MCSymbol&) LLVM_DELETED_FUNCTION;
     void operator=(const MCSymbol&) LLVM_DELETED_FUNCTION;
@@ -78,6 +81,19 @@ namespace llvm {
     /// isUsed - Check if this is used.
     bool isUsed() const { return IsUsed; }
     void setUsed(bool Value) const { IsUsed = Value; }
+
+    /// \brief Check if this symbol is redefinable.
+    bool isRedefinable() const { return IsRedefinable; }
+    /// \brief Mark this symbol as redefinable.
+    void setRedefinable(bool Value) { IsRedefinable = Value; }
+    /// \brief Prepare this symbol to be redefined.
+    void redefineIfPossible() {
+      if (IsRedefinable) {
+        Value = nullptr;
+        Section = nullptr;
+        IsRedefinable = false;
+      }
+    }
 
     /// @}
     /// @name Associated Sections

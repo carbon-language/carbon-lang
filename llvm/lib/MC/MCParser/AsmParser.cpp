@@ -1298,6 +1298,9 @@ bool AsmParser::parseStatement(ParseStatementInfo &Info,
       Sym = getContext().GetOrCreateSymbol(IDVal);
     } else
       Sym = Ctx.CreateDirectionalLocalSymbol(LocalLabelVal);
+
+    Sym->redefineIfPossible();
+
     if (!Sym->isUndefined() || Sym->isVariable())
       return Error(IDLoc, "invalid symbol redefinition");
 
@@ -2216,6 +2219,8 @@ bool AsmParser::parseAssignment(StringRef Name, bool allow_redef,
     return false;
   } else
     Sym = getContext().GetOrCreateSymbol(Name);
+
+  Sym->setRedefinable(allow_redef);
 
   // Do the assignment.
   Out.EmitAssignment(Sym, Value);

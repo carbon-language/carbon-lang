@@ -541,6 +541,8 @@ void AsmPrinter::EmitFunctionHeader() {
 /// EmitFunctionEntryLabel - Emit the label that is the entrypoint for the
 /// function.  This can be overridden by targets as required to do custom stuff.
 void AsmPrinter::EmitFunctionEntryLabel() {
+  CurrentFnSym->redefineIfPossible();
+
   // The function label could have already been emitted if two symbols end up
   // conflicting due to asm renaming.  Detect this and emit an error.
   if (CurrentFnSym->isUndefined())
