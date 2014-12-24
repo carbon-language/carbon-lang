@@ -677,8 +677,6 @@ void LiveInterval::constructMainRangeFromSubranges(
       Last = SR.segments.back().end;
   }
 
-  errs() << "Compute: " << *this << "\n";
-
   // Walk over all subranges simultaneously.
   Segment CurrentSegment;
   bool ConstructingSegment = false;
@@ -731,13 +729,6 @@ void LiveInterval::constructMainRangeFromSubranges(
         }
       }
     }
-
-#if 1
-    errs() << '\t' << (Event == NOTHING ? "nothing "
-            : Event == BEGIN_SEGMENT ? "begin "
-            : "end ")
-           << NextPos << " mask " << ActiveMask << " evmask " << EventMask << " def " << IsDef << "\n";
-#endif
 
     // Advance scan position.
     Pos = NextPos;
@@ -819,7 +810,6 @@ void LiveInterval::constructMainRangeFromSubranges(
     }
   }
   assert(ActiveMask == 0 && !ConstructingSegment);
-  errs() << "Result: " << *this << "\n";
   verify();
 }
 
