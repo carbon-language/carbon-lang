@@ -1817,9 +1817,12 @@ JoinVals::analyzeValue(unsigned ValNo, JoinVals &Other) {
       // not important.
       if (Redef) {
         V.RedefVNI = LR.Query(VNI->def).valueIn();
-        assert(V.RedefVNI && "Instruction is reading nonexistent value");
-        computeAssignment(V.RedefVNI->id, Other);
-        V.ValidLanes |= Vals[V.RedefVNI->id].ValidLanes;
+        assert(TrackSubRegLiveness || V.RedefVNI &&
+               "Instruction is reading nonexistent value");
+        if (V.RedefVNI != nullptr) {
+          computeAssignment(V.RedefVNI->id, Other);
+          V.ValidLanes |= Vals[V.RedefVNI->id].ValidLanes;
+        }
       }
 
       // An IMPLICIT_DEF writes undef values.
