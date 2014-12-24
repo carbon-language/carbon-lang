@@ -39,6 +39,12 @@ static struct AsanDeactivatedFlags {
     // Check if activation flags need to be overriden.
     // FIXME: Add diagnostic to check that activation flags string doesn't
     // contain any other flags.
+    if (const char *env = GetEnv("ASAN_ACTIVATION_OPTIONS")) {
+      cf.ParseFromString(env);
+      ParseFlagsFromString(&f, env);
+    }
+
+    // Override from getprop asan.options.
     char buf[100];
     GetExtraActivationFlags(buf, sizeof(buf));
     cf.ParseFromString(buf);
