@@ -215,12 +215,9 @@ private:
     switch (rel.getType(isMips64EL())) {
     case llvm::ELF::R_MIPS_HI16:
       return llvm::ELF::R_MIPS_LO16;
-    case llvm::ELF::R_MIPS_GOT16: {
-      const Elf_Sym *symbol =
-          this->_objFile->getSymbol(rel.getSymbol(isMips64EL()));
-      if (symbol->getBinding() == llvm::ELF::STB_LOCAL)
+    case llvm::ELF::R_MIPS_GOT16:
+      if (isLocalBinding(rel))
         return llvm::ELF::R_MIPS_LO16;
-    }
     }
     return llvm::ELF::R_MIPS_NONE;
   }
@@ -234,6 +231,10 @@ private:
   }
 
   bool isMips64EL() const { return this->_objFile->isMips64EL(); }
+  bool isLocalBinding(const Elf_Rel &rel) {
+    return this->_objFile->getSymbol(rel.getSymbol(isMips64EL()))
+               ->getBinding() == llvm::ELF::STB_LOCAL;
+  }
 };
 
 template <class ELFT> class MipsDynamicFile : public DynamicFile<ELFT> {
