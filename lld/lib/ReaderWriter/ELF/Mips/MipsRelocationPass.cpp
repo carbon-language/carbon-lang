@@ -297,9 +297,7 @@ void RelocationPass<ELFT>::perform(std::unique_ptr<MutableFile> &mf) {
 
   // Create R_MIPS_REL32 relocations.
   for (auto *ref : _rel32Candidates) {
-    if (!isDynamic(ref->target()))
-      continue;
-    if (_pltMap.count(ref->target()))
+    if (!isDynamic(ref->target()) || _pltMap.count(ref->target()))
       continue;
     ref->setKindValue(R_MIPS_REL32);
     if (!isLocalCall(ref->target()))
