@@ -1558,45 +1558,6 @@ defm loadri: LD_Idxd <"memw", "LDriw", IntRegs, s11_2Ext, u6_2Ext, 0b1100>;
 let accessSize = DoubleWordAccess, opExtentAlign = 3, isCodeGenOnly = 0 in
 defm loadrd: LD_Idxd <"memd", "LDrid", DoubleRegs, s11_3Ext, u6_3Ext, 0b1110>;
 
-///
-// Load -- MEMri operand
-multiclass LD_MEMri_Pbase<string mnemonic, RegisterClass RC,
-                          bit isNot, bit isPredNew> {
-  let isPredicatedNew = isPredNew in
-  def NAME : LDInst2<(outs RC:$dst),
-                       (ins PredRegs:$src1, MEMri:$addr),
-            !if(isNot, "if (!$src1", "if ($src1")#!if(isPredNew, ".new) ",
-            ") ")#"$dst = "#mnemonic#"($addr)",
-            []>;
-}
-
-multiclass LD_MEMri_Pred<string mnemonic, RegisterClass RC, bit PredNot> {
-  let isPredicatedFalse = PredNot in {
-    defm _c#NAME : LD_MEMri_Pbase<mnemonic, RC, PredNot, 0>;
-    // Predicate new
-    defm _cdn#NAME : LD_MEMri_Pbase<mnemonic, RC, PredNot, 1>;
-  }
-}
-
-let isExtendable = 1, hasSideEffects = 0 in
-multiclass LD_MEMri<string mnemonic, string CextOp, RegisterClass RC,
-                    bits<5> ImmBits, bits<5> PredImmBits> {
-
-  let CextOpcode = CextOp, BaseOpcode = CextOp in {
-    let opExtendable = 2, isExtentSigned = 1, opExtentBits = ImmBits,
-        isPredicable = 1 in
-      def NAME : LDInst2<(outs RC:$dst), (ins MEMri:$addr),
-                   "$dst = "#mnemonic#"($addr)",
-                   []>;
-
-    let opExtendable = 3, isExtentSigned = 0, opExtentBits = PredImmBits,
-        isPredicated = 1 in {
-      defm Pt : LD_MEMri_Pred<mnemonic, RC, 0 >;
-      defm NotPt : LD_MEMri_Pred<mnemonic, RC, 1 >;
-    }
-  }
-}
-
 def : Pat < (i32 (sextloadi8 ADDRriS11_0:$addr)),
             (L2_loadrb_io AddrFI:$addr, 0) >;
 
@@ -1614,47 +1575,6 @@ def : Pat < (i32 (load ADDRriS11_2:$addr)),
 
 def : Pat < (i64 (load ADDRriS11_3:$addr)),
             (L2_loadrd_io AddrFI:$addr, 0) >;
-
-
-// Load - Base with Immediate offset addressing mode
-multiclass LD_Idxd_Pbase2<string mnemonic, RegisterClass RC, Operand predImmOp,
-                        bit isNot, bit isPredNew> {
-  let isPredicatedNew = isPredNew in
-  def NAME : LDInst2<(outs RC:$dst),
-                     (ins PredRegs:$src1, IntRegs:$src2, predImmOp:$src3),
-            !if(isNot, "if (!$src1", "if ($src1")#!if(isPredNew, ".new) ",
-            ") ")#"$dst = "#mnemonic#"($src2+#$src3)",
-            []>;
-}
-
-multiclass LD_Idxd_Pred2<string mnemonic, RegisterClass RC, Operand predImmOp,
-                        bit PredNot> {
-  let isPredicatedFalse = PredNot in {
-    defm _c#NAME : LD_Idxd_Pbase2<mnemonic, RC, predImmOp, PredNot, 0>;
-    // Predicate new
-    defm _cdn#NAME : LD_Idxd_Pbase2<mnemonic, RC, predImmOp, PredNot, 1>;
-  }
-}
-
-let isExtendable = 1, hasSideEffects = 0 in
-multiclass LD_Idxd2<string mnemonic, string CextOp, RegisterClass RC,
-                   Operand ImmOp, Operand predImmOp, bits<5> ImmBits,
-                   bits<5> PredImmBits> {
-
-  let CextOpcode = CextOp, BaseOpcode = CextOp#_indexed in {
-    let opExtendable = 2, isExtentSigned = 1, opExtentBits = ImmBits,
-        isPredicable = 1, AddedComplexity = 20 in
-      def NAME : LDInst2<(outs RC:$dst), (ins IntRegs:$src1, ImmOp:$offset),
-                   "$dst = "#mnemonic#"($src1+#$offset)",
-                   []>;
-
-    let opExtendable = 3, isExtentSigned = 0, opExtentBits = PredImmBits,
-        isPredicated = 1 in {
-      defm Pt : LD_Idxd_Pred2<mnemonic, RC, predImmOp, 0 >;
-      defm NotPt : LD_Idxd_Pred2<mnemonic, RC, predImmOp, 1 >;
-    }
-  }
-}
 
 let AddedComplexity = 20 in {
 def : Pat < (i32 (sextloadi8 (add IntRegs:$src1, s11_0ExtPred:$offset))),
