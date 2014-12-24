@@ -292,6 +292,7 @@ void LiveRangeEdit::eliminateDeadDef(MachineInstr *MI, ToShrinkSet &ToShrink) {
             if (VNInfo *SVNI = S.getVNInfoAt(Idx))
               S.removeValNo(SVNI);
           }
+          LI.removeEmptySubRanges();
         }
       }
     }
