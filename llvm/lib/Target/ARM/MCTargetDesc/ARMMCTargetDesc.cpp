@@ -77,8 +77,8 @@ static bool getITDeprecationInfo(MCInst &MI, MCSubtargetInfo &STI,
 
 static bool getARMStoreDeprecationInfo(MCInst &MI, MCSubtargetInfo &STI,
                                        std::string &Info) {
-  if (STI.getFeatureBits() & llvm::ARM::ModeThumb)
-    return false;
+  assert((~STI.getFeatureBits() & llvm::ARM::ModeThumb) &&
+         "cannot predicate thumb instructions");
 
   assert(MI.getNumOperands() >= 4 && "expected >= 4 arguments");
   for (unsigned OI = 4, OE = MI.getNumOperands(); OI < OE; ++OI) {
@@ -94,8 +94,8 @@ static bool getARMStoreDeprecationInfo(MCInst &MI, MCSubtargetInfo &STI,
 
 static bool getARMLoadDeprecationInfo(MCInst &MI, MCSubtargetInfo &STI,
                                       std::string &Info) {
-  if (STI.getFeatureBits() & llvm::ARM::ModeThumb)
-    return false;
+  assert((~STI.getFeatureBits() & llvm::ARM::ModeThumb) &&
+         "cannot predicate thumb instructions");
 
   assert(MI.getNumOperands() >= 4 && "expected >= 4 arguments");
   bool ListContainsPC = false, ListContainsLR = false;
