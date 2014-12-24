@@ -676,7 +676,7 @@ void LiveIntervals::addKillFlags(const VirtRegMap *VRM) {
       // There should be no kill flag on FOO when %vreg5 is rewritten as %EAX.
       for (auto &RUP : RU) {
         const LiveRange &RURange = *RUP.first;
-        LiveRange::const_iterator I = RUP.second;
+        LiveRange::const_iterator &I = RUP.second;
         if (I == RURange.end())
           continue;
         I = RURange.advanceTo(I, RI->end);
@@ -704,7 +704,7 @@ void LiveIntervals::addKillFlags(const VirtRegMap *VRM) {
           DefinedLanesMask = 0;
           for (auto &SRP : SRs) {
             const LiveInterval::SubRange &SR = *SRP.first;
-            LiveRange::const_iterator I = SRP.second;
+            LiveRange::const_iterator &I = SRP.second;
             if (I == SR.end())
               continue;
             I = SR.advanceTo(I, RI->end);
