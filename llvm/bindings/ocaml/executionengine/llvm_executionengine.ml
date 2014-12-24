@@ -45,15 +45,27 @@ external data_layout : llexecutionengine -> Llvm_target.DataLayout.t
   = "llvm_ee_get_data_layout"
 external add_global_mapping_ : Llvm.llvalue -> int64 -> llexecutionengine -> unit
   = "llvm_ee_add_global_mapping"
-external get_pointer_to_global_ : Llvm.llvalue -> llexecutionengine -> int64
-  = "llvm_ee_get_pointer_to_global"
+external get_global_value_address_ : string -> llexecutionengine -> int64
+  = "llvm_ee_get_global_value_address"
+external get_function_address_ : string -> llexecutionengine -> int64
+  = "llvm_ee_get_function_address"
 
 let add_global_mapping llval ptr ee =
   add_global_mapping_ llval (Ctypes.raw_address_of_ptr (Ctypes.to_voidp ptr)) ee
 
-let get_pointer_to_global llval typ ee =
-  Ctypes.coerce (let open Ctypes in ptr void) typ
-                (Ctypes.ptr_of_raw_address (get_pointer_to_global_ llval ee))
+let get_global_value_address name typ ee =
+  let vptr = get_global_value_address_ name ee in
+  if Int64.to_int vptr <> 0 then
+    let open Ctypes in !@ (coerce (ptr void) (ptr typ) (ptr_of_raw_address vptr))
+  else
+    raise (Error ("Value " ^ name ^ " not found"))
+
+let get_function_address name typ ee =
+  let fptr = get_function_address_ name ee in
+  if Int64.to_int fptr <> 0 then
+    let open Ctypes in coerce (ptr void) typ (ptr_of_raw_address fptr)
+  else
+    raise (Error ("Function " ^ name ^ " not found"))
 
 (* The following are not bound. Patches are welcome.
 target_machine : llexecutionengine -> Llvm_target.TargetMachine.t

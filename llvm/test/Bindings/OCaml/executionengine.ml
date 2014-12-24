@@ -50,7 +50,10 @@ let test_executionengine () =
   let ee = create m in
 
   (* add plus *)
-  let plus = define_plus m in
+  ignore (define_plus m);
+
+  (* declare global variable *)
+  ignore (define_global "globvar" (const_int i32_type 23) m);
 
   (* add module *)
   let m2 = create_module (global_context ()) "test_module2" in
@@ -73,9 +76,13 @@ let test_executionengine () =
   (* run_static_ctors *)
   run_static_ctors ee;
 
+  (* get a handle on globvar *)
+  let varh    = get_global_value_address "globvar" int32_t ee in
+  if 23l <> varh then bomb "get_global_value_address didn't work";
+
   (* call plus *)
   let cplusty = Foreign.funptr (int32_t @-> int32_t @-> returning int32_t) in
-  let cplus   = get_pointer_to_global plus cplusty ee in
+  let cplus   = get_function_address "plus" cplusty ee in
   if 4l <> cplus 2l 2l then bomb "plus didn't work";
 
   (* call getglobal *)

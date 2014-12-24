@@ -115,8 +115,12 @@ CAMLprim value llvm_ee_add_global_mapping(LLVMValueRef Global, value Ptr,
   return Val_unit;
 }
 
-/* Llvm.llvalue -> llexecutionengine -> int64 */
-CAMLprim value llvm_ee_get_pointer_to_global(LLVMValueRef Global,
-                                             LLVMExecutionEngineRef EE) {
-  return caml_copy_int64((int64_t) LLVMGetPointerToGlobal(EE, Global));
+CAMLprim value llvm_ee_get_global_value_address(value Name,
+						LLVMExecutionEngineRef EE) {
+  return caml_copy_int64((int64_t) LLVMGetGlobalValueAddress(EE, String_val(Name)));
+}
+
+CAMLprim value llvm_ee_get_function_address(value Name,
+					    LLVMExecutionEngineRef EE) {
+  return caml_copy_int64((int64_t) LLVMGetFunctionAddress(EE, String_val(Name)));
 }

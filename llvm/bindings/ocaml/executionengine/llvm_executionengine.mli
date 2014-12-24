@@ -76,9 +76,18 @@ val data_layout : llexecutionengine -> Llvm_target.DataLayout.t
     All uses of [gv] in the compiled code will refer to [ptr]. *)
 val add_global_mapping : Llvm.llvalue -> 'a Ctypes.ptr -> llexecutionengine -> unit
 
-(** [get_pointer_to_global gv typ ee] returns the value of the global
-    variable [gv] in the execution engine [ee] as type [typ], which may
-    be a pointer type (e.g. [int ptr typ]) for global variables or
-    a function (e.g. [(int -> int) typ]) type for functions, and which
-    will be live as long as [gv] and [ee] are. *)
-val get_pointer_to_global : Llvm.llvalue -> 'a Ctypes.typ -> llexecutionengine -> 'a
+(** [get_global_value_address id typ ee] returns a pointer to the
+    identifier [id] as type [typ], which will be a pointer type for a
+    value, and which will be live as long as [id] and [ee]
+    are. Caution: this function finalizes, i.e. forces code
+    generation, all loaded modules.  Further modifications to the
+    modules will not have any effect. *)
+val get_global_value_address : string -> 'a Ctypes.typ -> llexecutionengine -> 'a
+
+(** [get_function_address fn typ ee] returns a pointer to the function
+    [fn] as type [typ], which will be a pointer type for a function
+    (e.g. [(int -> int) typ]), and which will be live as long as [fn]
+    and [ee] are. Caution: this function finalizes, i.e. forces code
+    generation, all loaded modules.  Further modifications to the
+    modules will not have any effect. *)
+val get_function_address : string -> 'a Ctypes.typ -> llexecutionengine -> 'a
