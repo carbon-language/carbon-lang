@@ -33,7 +33,7 @@ static const uint8_t mipsGotTlsGdAtomContent[] = {
   0x00, 0x00, 0x00, 0x00
 };
 
-// PLT0 entry
+// Regular PLT0 entry
 static const uint8_t mipsPlt0AtomContent[] = {
   0x00, 0x00, 0x1c, 0x3c, // lui   $28, %hi(&GOTPLT[0])
   0x00, 0x00, 0x99, 0x8f, // lw    $25, %lo(&GOTPLT[0])($28)
