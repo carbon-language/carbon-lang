@@ -337,6 +337,8 @@ void AsmPrinter::EmitGlobalVariable(const GlobalVariable *GV) {
   if (!GV->hasInitializer())   // External globals require no extra code.
     return;
 
+  GVSym->redefineIfPossible();
+
   if (MAI->hasDotTypeDotSizeDirective())
     OutStreamer.EmitSymbolAttribute(GVSym, MCSA_ELF_TypeObject);
 
