@@ -87,6 +87,10 @@ class MipsTargetHandler final : public DefaultTargetHandler<Mips32ElELFType> {
 public:
   MipsTargetHandler(MipsLinkingContext &ctx);
 
+  const MipsELFFlagsMerger &getELFFlagsMerger() const {
+    return _elfFlagsMerger;
+  }
+
   MipsTargetLayout<Mips32ElELFType> &getTargetLayout() override {
     return *_targetLayout;
   }
@@ -187,9 +191,11 @@ public:
     const auto &pltSection = _targetLayout.getPLTSection();
 
     for (auto &ste : this->_symbolTable) {
-      if (!ste._atom)
+      const Atom *a = ste._atom;
+      if (!a)
         continue;
-      if (auto *layout = pltSection.findPLTLayout(ste._atom)) {
+      if (auto *layout = pltSection.findPLTLayout(a)) {
+        a = layout->_atom;
         // Under some conditions a dynamic symbol table record should hold
         // a symbol value of the corresponding PLT entry. For details look
         // at the PLT entry creation code in the class MipsRelocationPass.
@@ -197,7 +203,9 @@ public:
         assert(!ste._atomLayout);
         ste._symbol.st_value = layout->_virtualAddr;
         ste._symbol.st_other |= ELF::STO_MIPS_PLT;
-      } else if (const auto *da = dyn_cast<DefinedAtom>(ste._atom)) {
+      }
+
+      if (const auto *da = dyn_cast<DefinedAtom>(a)) {
         if (da->codeModel() == DefinedAtom::codeMipsMicro ||
             da->codeModel() == DefinedAtom::codeMipsMicroPIC) {
           // Adjust dynamic microMIPS symbol value. That allows a dynamic

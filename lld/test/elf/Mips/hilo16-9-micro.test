@@ -1,0 +1,68 @@
+# REQUIRES: mips
+
+# Check calculation of AHL addendums for R_MICROMIPS_HI16 / R_MICROMIPS_LO16
+# relocations for the _gp_disp symbol.
+#
+# RUN: llvm-mc -triple=mipsel -mattr=micromips -filetype=obj -o=%t-obj %s
+# RUN: lld -flavor gnu -target mipsel -shared -o %t-so %t-obj
+# RUN: llvm-objdump -t -d -mattr=micromips %t-so | FileCheck %s
+
+# CHECK:      Disassembly of section .text:
+# CHECK-NEXT: glob1:
+# CHECK-NEXT:      130:   a8 41 01 00   lui   $8, 1
+# CHECK-NEXT:      134:   08 3d c0 9e   lh    $8, -24896($8)
+# CHECK-NEXT:      138:   a8 41 01 00   lui   $8, 1
+# CHECK-NEXT:      13c:   08 3d b6 1e   lh    $8, 7862($8)
+# CHECK-NEXT:      140:   a8 41 01 00   lui   $8, 1
+# CHECK-NEXT:      144:   08 3d 2f 1f   lh    $8, 7983($8)
+# CHECK-NEXT:      148:   a8 41 02 00   lui   $8, 2
+# CHECK-NEXT:      14c:   08 3d a7 1e   lh    $8, 7847($8)
+# CHECK-NEXT:      150:   a8 41 01 40   lui   $8, 16385
+# CHECK-NEXT:      154:   08 3d 9f 9e   lh    $8, -24929($8)
+
+# CHECK:      glob2:
+# CHECK-NEXT:      158:   a8 41 01 00   lui   $8, 1
+# CHECK-NEXT:      15c:   a8 41 01 00   lui   $8, 1
+# CHECK-NEXT:      160:   a8 41 02 00   lui   $8, 2
+# CHECK-NEXT:      164:   a8 41 03 00   lui   $8, 3
+# CHECK-NEXT:      168:   a8 41 01 40   lui   $8, 16385
+# CHECK-NEXT:      16c:   08 3d 87 9e   lh    $8, -24953($8)
+
+# CHECK: SYMBOL TABLE:
+# CHECK: 00000130 g F .text 00000028 glob1
+# CHECK: 00000158 g F .text 00000018 glob2
+# CHECK: 00009ff0 g   *ABS* 00000000 _gp_disp
+
+    .globl glob1
+    .type  glob1, @function
+    .set   micromips
+    .ent   glob1
+glob1:
+    lui     $t0,%hi(_gp_disp+0x00000001)
+    lh      $t0,%lo(_gp_disp+0x00000001)($t0)
+
+    lui     $t0,%hi(_gp_disp+0x00007fff)
+    lh      $t0,%lo(_gp_disp+0x00007fff)($t0)
+
+    lui     $t0,%hi(_gp_disp+0x00008080)
+    lh      $t0,%lo(_gp_disp+0x00008080)($t0)
+
+    lui     $t0,%hi(_gp_disp+0x00018000)
+    lh      $t0,%lo(_gp_disp+0x00018000)($t0)
+
+    lui     $t0,%hi(_gp_disp+0x40000000)
+    lh      $t0,%lo(_gp_disp+0x40000000)($t0)
+    .end    glob1
+
+    .globl glob2
+    .type  glob2, @function
+    .set   micromips
+    .ent   glob2
+glob2:
+    lui     $t0,%hi(_gp_disp+0x00000001)
+    lui     $t0,%hi(_gp_disp+0x00007fff)
+    lui     $t0,%hi(_gp_disp+0x00008080)
+    lui     $t0,%hi(_gp_disp+0x00018000)
+    lui     $t0,%hi(_gp_disp+0x40000000)
+    lh      $t0,%lo(_gp_disp+0x40000000)($t0)
+    .end    glob2

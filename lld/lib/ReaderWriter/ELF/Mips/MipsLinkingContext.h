@@ -27,7 +27,9 @@ enum {
   /// \brief Setup low 16 bits using the symbol this reference refers to.
   LLD_R_MIPS_LO16 = 1028,
   /// \brief Represents a reference between PLT and dynamic symbol.
-  LLD_R_MIPS_STO_PLT = 1029
+  LLD_R_MIPS_STO_PLT = 1029,
+  /// \brief The same as R_MICROMIPS_26_S1 but for global symbols.
+  LLD_R_MICROMIPS_GLOBAL_26_S1 = 1030,
 };
 
 typedef llvm::object::ELFType<llvm::support::little, 2, false> Mips32ElELFType;
@@ -37,6 +39,8 @@ template <class ELFType> class MipsTargetLayout;
 class MipsLinkingContext final : public ELFLinkingContext {
 public:
   MipsLinkingContext(llvm::Triple triple);
+
+  uint32_t getMergedELFFlags() const;
 
   // ELFLinkingContext
   uint64_t getBaseAddress() const override;

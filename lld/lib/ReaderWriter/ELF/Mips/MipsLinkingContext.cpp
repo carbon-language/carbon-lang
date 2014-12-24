@@ -20,6 +20,12 @@ MipsLinkingContext::MipsLinkingContext(llvm::Triple triple)
     : ELFLinkingContext(triple, std::unique_ptr<TargetHandlerBase>(
                                     new MipsTargetHandler(*this))) {}
 
+uint32_t MipsLinkingContext::getMergedELFFlags() const {
+  const auto &handler = static_cast<MipsTargetHandler &>(
+      ELFLinkingContext::getTargetHandler<Mips32ElELFType>());
+  return handler.getELFFlagsMerger().getMergedELFFlags();
+}
+
 uint64_t MipsLinkingContext::getBaseAddress() const {
   if (_baseAddress == 0 && getOutputELFType() == llvm::ELF::ET_EXEC)
     return 0x400000;

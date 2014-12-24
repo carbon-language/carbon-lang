@@ -45,6 +45,19 @@ static const uint8_t mipsPlt0AtomContent[] = {
   0xfe, 0xff, 0x18, 0x27  // subu  $24, $24, 2
 };
 
+// microMIPS PLT0 entry
+static const uint8_t micromipsPlt0AtomContent[] = {
+  0x80, 0x79, 0x00, 0x00, // addiupc $3,  (&GOTPLT[0]) - .
+  0x23, 0xff, 0x00, 0x00, // lw      $25, 0($3)
+  0x35, 0x05,             // subu    $2,  $2, $3
+  0x25, 0x25,             // srl     $2,  $2, 2
+  0x02, 0x33, 0xfe, 0xff, // subu    $24, $2, 2
+  0xff, 0x0d,             // move    $15, $31
+  0xf9, 0x45,             // jalrs   $25
+  0x83, 0x0f,             // move    $28, $3
+  0x00, 0x0c              // nop
+};
+
 // Regular PLT entry
 static const uint8_t mipsPltAAtomContent[] = {
   0x00, 0x00, 0x0f, 0x3c, // lui   $15, %hi(.got.plt entry)
@@ -53,11 +66,27 @@ static const uint8_t mipsPltAAtomContent[] = {
   0x00, 0x00, 0xf8, 0x25  // addiu $24, $15, %lo(.got.plt entry)
 };
 
+// microMIPS PLT entry
+static const uint8_t micromipsPltAtomContent[] = {
+  0x00, 0x79, 0x00, 0x00, // addiupc $2, (.got.plt entry) - .
+  0x22, 0xff, 0x00, 0x00, // lw $25, 0($2)
+  0x99, 0x45,             // jr $25
+  0x02, 0x0f              // move $24, $2
+};
+
 // LA25 stub entry
 static const uint8_t mipsLA25AtomContent[] = {
   0x00, 0x00, 0x19, 0x3c, // lui   $25, %hi(func)
   0x00, 0x00, 0x00, 0x08, // j     func
   0x00, 0x00, 0x39, 0x27, // addiu $25, $25, %lo(func)
+  0x00, 0x00, 0x00, 0x00  // nop
+};
+
+// microMIPS LA25 stub entry
+static const uint8_t micromipsLA25AtomContent[] = {
+  0xb9, 0x41, 0x00, 0x00, // lui   $25, %hi(func)
+  0x00, 0xd4, 0x00, 0x00, // j     func
+  0x39, 0x33, 0x00, 0x00, // addiu $25, $25, %lo(func)
   0x00, 0x00, 0x00, 0x00  // nop
 };
 
@@ -101,6 +130,26 @@ public:
   }
 };
 
+class GOTPLTAtom : public GOTAtom {
+public:
+  GOTPLTAtom(const File &f) : GOTAtom(f, ".got.plt") {}
+  GOTPLTAtom(const Atom *a, const File &f) : GOTAtom(f, ".got.plt") {
+    // Create dynamic relocation to adjust the .got.plt entry at runtime.
+    addReferenceELF_Mips(R_MIPS_JUMP_SLOT, 0, a, 0);
+  }
+
+  /// Setup reference to assign initial value to the .got.plt entry.
+  void setPLT0(const PLTAtom *plt0) {
+    addReferenceELF_Mips(R_MIPS_32, 0, plt0, 0);
+  }
+
+  Alignment alignment() const override { return Alignment(2); }
+
+  ArrayRef<uint8_t> rawContent() const override {
+    return llvm::makeArrayRef(mipsGot0AtomContent);
+  }
+};
+
 class PLT0Atom : public PLTAtom {
 public:
   PLT0Atom(const Atom *got, const File &f) : PLTAtom(f, ".plt") {
@@ -115,9 +164,23 @@ public:
   }
 };
 
+class PLT0MicroAtom : public PLTAtom {
+public:
+  PLT0MicroAtom(const Atom *got, const File &f) : PLTAtom(f, ".plt") {
+    // Setup reference to fixup the PLT0 entry.
+    addReferenceELF_Mips(R_MICROMIPS_PC23_S2, 0, got, 0);
+  }
+
+  CodeModel codeModel() const override { return codeMipsMicro; }
+
+  ArrayRef<uint8_t> rawContent() const override {
+    return llvm::makeArrayRef(micromipsPlt0AtomContent);
+  }
+};
+
 class PLTAAtom : public PLTAtom {
 public:
-  PLTAAtom(const Atom *got, const File &f) : PLTAtom(f, ".plt") {
+  PLTAAtom(const GOTPLTAtom *got, const File &f) : PLTAtom(f, ".plt") {
     // Setup reference to fixup the PLT entry.
     addReferenceELF_Mips(LLD_R_MIPS_HI16, 0, got, 0);
     addReferenceELF_Mips(LLD_R_MIPS_LO16, 4, got, 0);
@@ -129,29 +192,29 @@ public:
   }
 };
 
-/// \brief MIPS GOT PLT entry
-class GOTPLTAtom : public GOTAtom {
+class PLTMicroAtom : public PLTAtom {
 public:
-  GOTPLTAtom(const File &f) : GOTAtom(f, ".got.plt") {}
-  GOTPLTAtom(const PLTAtom *plt0, const Atom *a, const File &f)
-      : GOTAtom(f, ".got.plt") {
-    // Setup reference to assign initial value to the .got.plt entry.
-    addReferenceELF_Mips(R_MIPS_32, 0, plt0, 0);
-    // Create dynamic relocation to adjust the .got.plt entry at runtime.
-    addReferenceELF_Mips(R_MIPS_JUMP_SLOT, 0, a, 0);
+  PLTMicroAtom(const GOTPLTAtom *got, const File &f) : PLTAtom(f, ".plt") {
+    // Setup reference to fixup the microMIPS PLT entry.
+    addReferenceELF_Mips(R_MICROMIPS_PC23_S2, 0, got, 0);
   }
 
-  Alignment alignment() const override { return Alignment(2); }
+  Alignment alignment() const override { return Alignment(1); }
+  CodeModel codeModel() const override { return codeMipsMicro; }
 
   ArrayRef<uint8_t> rawContent() const override {
-    return llvm::makeArrayRef(mipsGot0AtomContent);
+    return llvm::makeArrayRef(micromipsPltAtomContent);
   }
 };
 
-/// \brief LA25 stub atom
 class LA25Atom : public PLTAtom {
 public:
-  LA25Atom(const Atom *a, const File &f) : PLTAtom(f, ".text") {
+  LA25Atom(const File &f) : PLTAtom(f, ".text") {}
+};
+
+class LA25RegAtom : public LA25Atom {
+public:
+  LA25RegAtom(const Atom *a, const File &f) : LA25Atom(f) {
     // Setup reference to fixup the LA25 stub entry.
     addReferenceELF_Mips(R_MIPS_HI16, 0, a, 0);
     addReferenceELF_Mips(R_MIPS_26, 4, a, 0);
@@ -160,6 +223,22 @@ public:
 
   ArrayRef<uint8_t> rawContent() const override {
     return llvm::makeArrayRef(mipsLA25AtomContent);
+  }
+};
+
+class LA25MicroAtom : public LA25Atom {
+public:
+  LA25MicroAtom(const Atom *a, const File &f) : LA25Atom(f) {
+    // Setup reference to fixup the microMIPS LA25 stub entry.
+    addReferenceELF_Mips(R_MICROMIPS_HI16, 0, a, 0);
+    addReferenceELF_Mips(R_MICROMIPS_26_S1, 4, a, 0);
+    addReferenceELF_Mips(R_MICROMIPS_LO16, 8, a, 0);
+  }
+
+  CodeModel codeModel() const override { return codeMipsMicro; }
+
+  ArrayRef<uint8_t> rawContent() const override {
+    return llvm::makeArrayRef(micromipsLA25AtomContent);
   }
 };
 
@@ -199,7 +278,7 @@ private:
   /// \brief Map Atoms to TLS GD GOT entries.
   llvm::DenseMap<const Atom *, GOTAtom *> _gotTLSGdMap;
 
-  /// \brief GOT entry for the R_MIPS_TLS_LDM relocation.
+  /// \brief GOT entry for the R_xxxMIPS_TLS_LDM relocations.
   GOTTLSGdAtom *_gotLDMEntry;
 
   /// \brief the list of local GOT atoms.
@@ -211,14 +290,19 @@ private:
   /// \brief the list of TLS GOT atoms.
   std::vector<GOTAtom *> _tlsGotVector;
 
+  /// \brief Map Atoms to their GOTPLT entries.
+  llvm::DenseMap<const Atom *, GOTPLTAtom *> _gotpltMap;
+
   /// \brief Map Atoms to their PLT entries.
-  llvm::DenseMap<const Atom *, PLTAtom *> _pltMap;
+  llvm::DenseMap<const Atom *, PLTAAtom *> _pltRegMap;
+  llvm::DenseMap<const Atom *, PLTMicroAtom *> _pltMicroMap;
 
   /// \brief Map Atoms to their Object entries.
   llvm::DenseMap<const Atom *, ObjectAtom *> _objectMap;
 
   /// \brief Map Atoms to their LA25 entries.
-  llvm::DenseMap<const Atom *, LA25Atom *> _la25Map;
+  llvm::DenseMap<const Atom *, LA25RegAtom *> _la25RegMap;
+  llvm::DenseMap<const Atom *, LA25MicroAtom *> _la25MicroMap;
 
   /// \brief Atoms referenced by static relocations.
   llvm::DenseSet<const Atom *> _hasStaticRelocations;
@@ -231,10 +315,11 @@ private:
   std::vector<Reference *> _rel32Candidates;
 
   /// \brief the list of PLT atoms.
-  std::vector<PLTAtom *> _pltVector;
+  std::vector<PLTAtom *> _pltRegVector;
+  std::vector<PLTAtom *> _pltMicroVector;
 
   /// \brief the list of GOTPLT atoms.
-  std::vector<GOTAtom *> _gotpltVector;
+  std::vector<GOTPLTAtom *> _gotpltVector;
 
   /// \brief the list of Object entries.
   std::vector<ObjectAtom *> _objectVector;
@@ -250,8 +335,8 @@ private:
   void collectReferenceInfo(const MipsELFDefinedAtom<ELFT> &atom,
                             Reference &ref);
 
-  void handlePlain(Reference &ref);
-  void handle26(Reference &ref);
+  void handlePlain(const MipsELFDefinedAtom<ELFT> &atom, Reference &ref);
+  void handle26(const MipsELFDefinedAtom<ELFT> &atom, Reference &ref);
   void handleGOT(Reference &ref);
   void handleGPRel(const MipsELFDefinedAtom<ELFT> &atom, Reference &ref);
 
@@ -260,9 +345,16 @@ private:
   const GOTAtom *getTLSGOTEntry(const Atom *a);
   const GOTAtom *getTLSGdGOTEntry(const Atom *a);
   const GOTAtom *getTLSLdmGOTEntry(const Atom *a);
+  const GOTPLTAtom *getGOTPLTEntry(const Atom *a);
   const PLTAtom *getPLTEntry(const Atom *a);
-  const LA25Atom *getLA25Entry(const Atom *a);
+  const PLTAtom *getPLTRegEntry(const Atom *a);
+  const PLTAtom *getPLTMicroEntry(const Atom *a);
+  const LA25Atom *getLA25Entry(const Atom *target, bool isMicroMips);
+  const LA25Atom *getLA25RegEntry(const Atom *a);
+  const LA25Atom *getLA25MicroEntry(const Atom *a);
   const ObjectAtom *getObjectEntry(const SharedLibraryAtom *a);
+
+  PLTAtom *createPLTHeader(bool isMicroMips);
 
   bool isLocal(const Atom *a) const;
   bool isLocalCall(const Atom *a) const;
@@ -270,9 +362,9 @@ private:
   bool requireLA25Stub(const Atom *a) const;
   bool requirePLTEntry(Reference &ref);
   bool requireCopy(Reference &ref);
-  void createPLTHeader();
   bool mightBeDynamic(const MipsELFDefinedAtom<ELFT> &atom,
                       const Reference &ref) const;
+  bool hasPLTEntry(const Atom *atom) const;
 };
 
 template <typename ELFT>
@@ -297,7 +389,7 @@ void RelocationPass<ELFT>::perform(std::unique_ptr<MutableFile> &mf) {
 
   // Create R_MIPS_REL32 relocations.
   for (auto *ref : _rel32Candidates) {
-    if (!isDynamic(ref->target()) || _pltMap.count(ref->target()))
+    if (!isDynamic(ref->target()) || hasPLTEntry(ref->target()))
       continue;
     ref->setKindValue(R_MIPS_REL32);
     if (!isLocalCall(ref->target()))
@@ -321,10 +413,34 @@ void RelocationPass<ELFT>::perform(std::unique_ptr<MutableFile> &mf) {
     mf->addAtom(*got);
   }
 
-  for (auto &plt : _pltVector) {
+  // Create and emit PLT0 entry.
+  PLTAtom *plt0Atom = nullptr;
+  if (!_pltRegVector.empty())
+    plt0Atom = createPLTHeader(false);
+  else if (!_pltMicroVector.empty())
+    plt0Atom = createPLTHeader(true);
+
+  if (plt0Atom) {
+    plt0Atom->setOrdinal(ordinal++);
+    mf->addAtom(*plt0Atom);
+  }
+
+  // Emit regular PLT entries firts.
+  for (auto &plt : _pltRegVector) {
     plt->setOrdinal(ordinal++);
     mf->addAtom(*plt);
   }
+
+  // microMIPS PLT entries come after regular ones.
+  for (auto &plt : _pltMicroVector) {
+    plt->setOrdinal(ordinal++);
+    mf->addAtom(*plt);
+  }
+
+  // Assign PLT0 to GOTPLT entries.
+  assert(_gotpltMap.empty() || plt0Atom);
+  for (auto &a: _gotpltMap)
+    a.second->setPLT0(plt0Atom);
 
   for (auto &gotplt : _gotpltVector) {
     gotplt->setOrdinal(ordinal++);
@@ -355,14 +471,19 @@ void RelocationPass<ELFT>::handleReference(const MipsELFDefinedAtom<ELFT> &atom,
   case R_MIPS_PC32:
   case R_MIPS_HI16:
   case R_MIPS_LO16:
+  case R_MICROMIPS_HI16:
+  case R_MICROMIPS_LO16:
     // FIXME (simon): Handle dynamic/static linking differently.
-    handlePlain(ref);
+    handlePlain(atom, ref);
     break;
   case R_MIPS_26:
-    handle26(ref);
+  case R_MICROMIPS_26_S1:
+    handle26(atom, ref);
     break;
   case R_MIPS_GOT16:
   case R_MIPS_CALL16:
+  case R_MICROMIPS_GOT16:
+  case R_MICROMIPS_CALL16:
     handleGOT(ref);
     break;
   case R_MIPS_GPREL32:
@@ -370,19 +491,26 @@ void RelocationPass<ELFT>::handleReference(const MipsELFDefinedAtom<ELFT> &atom,
     break;
   case R_MIPS_TLS_DTPREL_HI16:
   case R_MIPS_TLS_DTPREL_LO16:
+  case R_MICROMIPS_TLS_DTPREL_HI16:
+  case R_MICROMIPS_TLS_DTPREL_LO16:
     ref.setAddend(ref.addend() - atom.file().getDTPOffset());
     break;
   case R_MIPS_TLS_TPREL_HI16:
   case R_MIPS_TLS_TPREL_LO16:
+  case R_MICROMIPS_TLS_TPREL_HI16:
+  case R_MICROMIPS_TLS_TPREL_LO16:
     ref.setAddend(ref.addend() - atom.file().getTPOffset());
     break;
   case R_MIPS_TLS_GD:
+  case R_MICROMIPS_TLS_GD:
     ref.setTarget(getTLSGdGOTEntry(ref.target()));
     break;
   case R_MIPS_TLS_LDM:
+  case R_MICROMIPS_TLS_LDM:
     ref.setTarget(getTLSLdmGOTEntry(ref.target()));
     break;
   case R_MIPS_TLS_GOTTPREL:
+  case R_MICROMIPS_TLS_GOTTPREL:
     ref.setTarget(getTLSGOTEntry(ref.target()));
     break;
   }
@@ -395,6 +523,7 @@ static bool isConstrainSym(const MipsELFDefinedAtom<ELFT> &atom, Reference &ref)
   switch (ref.kindValue()) {
   case R_MIPS_NONE:
   case R_MIPS_JALR:
+  case R_MICROMIPS_JALR:
   case R_MIPS_GPREL32:
     return false;
   default:
@@ -418,7 +547,9 @@ RelocationPass<ELFT>::collectReferenceInfo(const MipsELFDefinedAtom<ELFT> &atom,
   else
     _hasStaticRelocations.insert(ref.target());
 
-  if (ref.kindValue() != R_MIPS_CALL16 && ref.kindValue() != R_MIPS_26)
+  if (ref.kindValue() != R_MIPS_CALL16 &&
+      ref.kindValue() != R_MICROMIPS_CALL16 && ref.kindValue() != R_MIPS_26 &&
+      ref.kindValue() != R_MICROMIPS_26_S1)
     _requiresPtrEquality.insert(ref.target());
 }
 
@@ -448,7 +579,8 @@ bool RelocationPass<ELFT>::mightBeDynamic(const MipsELFDefinedAtom<ELFT> &atom,
                                           const Reference &ref) const {
   auto refKind = ref.kindValue();
 
-  if (refKind == R_MIPS_CALL16 || refKind == R_MIPS_GOT16)
+  if (refKind == R_MIPS_CALL16 || refKind == R_MIPS_GOT16 ||
+      refKind == R_MICROMIPS_CALL16 || refKind == R_MICROMIPS_GOT16)
     return true;
 
   if (refKind != R_MIPS_32)
@@ -464,6 +596,11 @@ bool RelocationPass<ELFT>::mightBeDynamic(const MipsELFDefinedAtom<ELFT> &atom,
     return true;
 
   return false;
+}
+
+template <typename ELFT>
+bool RelocationPass<ELFT>::hasPLTEntry(const Atom *atom) const {
+  return _pltRegMap.count(atom) || _pltMicroMap.count(atom);
 }
 
 template <typename ELFT>
@@ -512,7 +649,40 @@ bool RelocationPass<ELFT>::isDynamic(const Atom *atom) const {
 }
 
 template <typename ELFT>
-void RelocationPass<ELFT>::handlePlain(Reference &ref) {
+static bool isMicroMips(const MipsELFDefinedAtom<ELFT> &atom) {
+  return atom.codeModel() == DefinedAtom::codeMipsMicro ||
+         atom.codeModel() == DefinedAtom::codeMipsMicroPIC;
+}
+
+template <typename ELFT>
+const LA25Atom *RelocationPass<ELFT>::getLA25Entry(const Atom *target,
+                                                   bool isMicroMips) {
+  return isMicroMips ? getLA25MicroEntry(target) : getLA25RegEntry(target);
+}
+
+template <typename ELFT>
+const PLTAtom *RelocationPass<ELFT>::getPLTEntry(const Atom *a) {
+  bool hasMicroCode = _ctx.getMergedELFFlags() & EF_MIPS_MICROMIPS;
+
+  // If file contains microMIPS code try to reuse compressed PLT entry...
+  if (hasMicroCode) {
+    auto microPLT = _pltMicroMap.find(a);
+    if (microPLT != _pltMicroMap.end())
+      return microPLT->second;
+  }
+
+  // ... then try to reuse a regular PLT entry ...
+  auto regPLT = _pltRegMap.find(a);
+  if (regPLT != _pltRegMap.end())
+    return regPLT->second;
+
+  // ... and finally prefer to create new compressed PLT entry.
+  return hasMicroCode ? getPLTMicroEntry(a) : getPLTRegEntry(a);
+}
+
+template <typename ELFT>
+void RelocationPass<ELFT>::handlePlain(const MipsELFDefinedAtom<ELFT> &atom,
+                                       Reference &ref) {
   if (!isDynamic(ref.target()))
       return;
 
@@ -522,17 +692,29 @@ void RelocationPass<ELFT>::handlePlain(Reference &ref) {
     ref.setTarget(getObjectEntry(cast<SharedLibraryAtom>(ref.target())));
 }
 
-template <typename ELFT> void RelocationPass<ELFT>::handle26(Reference &ref) {
-  if (ref.kindValue() == R_MIPS_26 && !isLocal(ref.target())) {
-    ref.setKindValue(LLD_R_MIPS_GLOBAL_26);
-
-    if (requireLA25Stub(ref.target()))
-      ref.setTarget(getLA25Entry(ref.target()));
-  }
+template <typename ELFT>
+void RelocationPass<ELFT>::handle26(const MipsELFDefinedAtom<ELFT> &atom,
+                                    Reference &ref) {
+  bool isMicro = ref.kindValue() == R_MICROMIPS_26_S1;
 
   const auto *sla = dyn_cast<SharedLibraryAtom>(ref.target());
   if (sla && sla->type() == SharedLibraryAtom::Type::Code)
-    ref.setTarget(getPLTEntry(ref.target()));
+    ref.setTarget(isMicro ? getPLTMicroEntry(sla) : getPLTRegEntry(sla));
+
+  if (requireLA25Stub(ref.target()))
+    ref.setTarget(getLA25Entry(ref.target(), isMicro));
+
+  if (!isLocal(ref.target()))
+    switch (ref.kindValue()) {
+    case R_MIPS_26:
+      ref.setKindValue(LLD_R_MIPS_GLOBAL_26);
+      break;
+    case R_MICROMIPS_26_S1:
+      ref.setKindValue(LLD_R_MICROMIPS_GLOBAL_26_S1);
+      break;
+    default:
+      llvm_unreachable("Unexpected relocation kind");
+    }
 }
 
 template <typename ELFT> void RelocationPass<ELFT>::handleGOT(Reference &ref) {
@@ -572,6 +754,8 @@ bool RelocationPass<ELFT>::isLocalCall(const Atom *a) const {
 
 template <typename ELFT>
 bool RelocationPass<ELFT>::requireLA25Stub(const Atom *a) const {
+  if (isLocal(a))
+    return false;
   if (auto *da = dyn_cast<DefinedAtom>(a))
     return static_cast<const MipsELFDefinedAtom<ELFT> *>(da)->file().isPIC();
   return false;
@@ -660,33 +844,40 @@ const GOTAtom *RelocationPass<ELFT>::getTLSLdmGOTEntry(const Atom *a) {
   return _gotLDMEntry;
 }
 
-template <typename ELFT> void RelocationPass<ELFT>::createPLTHeader() {
-  assert(_pltVector.empty() && _gotpltVector.empty());
-
-  auto ga0 = new (_file._alloc) GOTPLTAtom(_file);
-  _gotpltVector.push_back(ga0);
+template <typename ELFT>
+PLTAtom *RelocationPass<ELFT>::createPLTHeader(bool isMicroMips) {
   auto ga1 = new (_file._alloc) GOTPLTAtom(_file);
-  _gotpltVector.push_back(ga1);
+  _gotpltVector.insert(_gotpltVector.begin(), ga1);
+  auto ga0 = new (_file._alloc) GOTPLTAtom(_file);
+  _gotpltVector.insert(_gotpltVector.begin(), ga0);
 
-  auto pa = new (_file._alloc) PLT0Atom(ga0, _file);
-  _pltVector.push_back(pa);
+  if (isMicroMips)
+    return new (_file._alloc) PLT0MicroAtom(ga0, _file);
+  else
+    return new (_file._alloc) PLT0Atom(ga0, _file);
 }
 
 template <typename ELFT>
-const PLTAtom *RelocationPass<ELFT>::getPLTEntry(const Atom *a) {
-  auto plt = _pltMap.find(a);
-  if (plt != _pltMap.end())
+const GOTPLTAtom *RelocationPass<ELFT>::getGOTPLTEntry(const Atom *a) {
+  auto it = _gotpltMap.find(a);
+  if (it != _gotpltMap.end())
+    return it->second;
+
+  auto ga = new (_file._alloc) GOTPLTAtom(a, _file);
+  _gotpltMap[a] = ga;
+  _gotpltVector.push_back(ga);
+  return ga;
+}
+
+template <typename ELFT>
+const PLTAtom *RelocationPass<ELFT>::getPLTRegEntry(const Atom *a) {
+  auto plt = _pltRegMap.find(a);
+  if (plt != _pltRegMap.end())
     return plt->second;
 
-  if (_pltVector.empty())
-    createPLTHeader();
-
-  auto ga = new (_file._alloc) GOTPLTAtom(_pltVector.front(), a, _file);
-  _gotpltVector.push_back(ga);
-
-  auto pa = new (_file._alloc) PLTAAtom(ga, _file);
-  _pltMap[a] = pa;
-  _pltVector.push_back(pa);
+  auto pa = new (_file._alloc) PLTAAtom(getGOTPLTEntry(a), _file);
+  _pltRegMap[a] = pa;
+  _pltRegVector.push_back(pa);
 
   // Check that 'a' dynamic symbol table record should point to the PLT.
   if (_hasStaticRelocations.count(a) && _requiresPtrEquality.count(a))
@@ -696,13 +887,43 @@ const PLTAtom *RelocationPass<ELFT>::getPLTEntry(const Atom *a) {
 }
 
 template <typename ELFT>
-const LA25Atom *RelocationPass<ELFT>::getLA25Entry(const Atom *a) {
-  auto la25 = _la25Map.find(a);
-  if (la25 != _la25Map.end())
+const PLTAtom *RelocationPass<ELFT>::getPLTMicroEntry(const Atom *a) {
+  auto plt = _pltMicroMap.find(a);
+  if (plt != _pltMicroMap.end())
+    return plt->second;
+
+  auto pa = new (_file._alloc) PLTMicroAtom(getGOTPLTEntry(a), _file);
+  _pltMicroMap[a] = pa;
+  _pltMicroVector.push_back(pa);
+
+  // Check that 'a' dynamic symbol table record should point to the PLT.
+  if (_hasStaticRelocations.count(a) && _requiresPtrEquality.count(a))
+    pa->addReferenceELF_Mips(LLD_R_MIPS_STO_PLT, 0, a, 0);
+
+  return pa;
+}
+
+template <typename ELFT>
+const LA25Atom *RelocationPass<ELFT>::getLA25RegEntry(const Atom *a) {
+  auto la25 = _la25RegMap.find(a);
+  if (la25 != _la25RegMap.end())
     return la25->second;
 
-  auto sa = new (_file._alloc) LA25Atom(a, _file);
-  _la25Map[a] = sa;
+  auto sa = new (_file._alloc) LA25RegAtom(a, _file);
+  _la25RegMap[a] = sa;
+  _la25Vector.push_back(sa);
+
+  return sa;
+}
+
+template <typename ELFT>
+const LA25Atom *RelocationPass<ELFT>::getLA25MicroEntry(const Atom *a) {
+  auto la25 = _la25MicroMap.find(a);
+  if (la25 != _la25MicroMap.end())
+    return la25->second;
+
+  auto sa = new (_file._alloc) LA25MicroAtom(a, _file);
+  _la25MicroMap[a] = sa;
   _la25Vector.push_back(sa);
 
   return sa;

@@ -1,0 +1,137 @@
+# REQUIRES: mips
+
+# Check handling of R_MICROMIPS_26_S1 relocation.
+
+# Build shared library
+# RUN: yaml2obj -format=elf -docnum 1 %s > %t-so.o
+# RUN: lld -flavor gnu -target mipsel -shared -o %t.so %t-so.o
+
+# Build executable
+# RUN: yaml2obj -format=elf -docnum 2 %s > %t-o.o
+# RUN: llvm-readobj -relocations %t-o.o | \
+# RUN:   FileCheck -check-prefix=OBJ-REL %s
+# RUN: lld -flavor gnu -target mipsel -e glob -o %t.exe %t-o.o %t.so
+# RUN: llvm-objdump -section-headers -s %t.exe | \
+# RUN:   FileCheck -check-prefix=EXE %s
+# RUN: llvm-readobj -relocations %t.exe | FileCheck -check-prefix=EXE-REL %s
+
+# Object file has three R_MICROMIPS_26_S1 relocations
+# OBJ-REL: Relocations [
+# OBJ-REL-NEXT:   Section (2) .rel.text {
+# OBJ-REL-NEXT:      0x8 R_MICROMIPS_26_S1 .text 0x0
+# OBJ-REL-NEXT:     0x10 R_MICROMIPS_26_S1 glob  0x0
+# OBJ-REL-NEXT:     0x18 R_MICROMIPS_26_S1 T1  0x0
+# OBJ-REL-NEXT:   }
+# OBJ-REL-NEXT: ]
+
+# Executable file has the only relocation for external symbol
+# EXE-REL: Relocations [
+# EXE-REL-NEXT:   Section (5) .rel.plt {
+# EXE-REL-NEXT:     0x402008 R_MIPS_JUMP_SLOT T1 0x0
+# EXE-REL-NEXT:   }
+# EXE-REL-NEXT: ]
+
+# FIXME (simon): Check the disassembler output when llvm-objdump starts
+#                to support microMIPS instruction encoding.
+# DIS: Disassembly of section .plt:
+# DIS: .plt:
+# T1@micromipsplt
+# DIS-NEXT:   400178:   7900 07a4   addiu   v0,$pc,7824
+# DIS-NEXT:   40017c:   ff22 0000   lw      t9,0(v0)
+# DIS-NEXT:   400180:   4599        jr      t9
+# DIS-NEXT:   400182:   0f02        move    t8,v0
+
+# DIS: Disassembly of section .text:
+# DIS: glob:
+# DIS-NEXT:   400184:   f809 0320   sw      zero,800(t1)
+# DIS-NEXT:   400188:   0000 0000   nop
+# DIS-NEXT:   40018c:   0012 0661   0x120661
+# DIS-NEXT:   400182:   0f02        move    t8,v0
+#
+# DIS: loc:
+# DIS-NEXT:   400194:   0020 0cc2   cop2    0x40198
+# DIS-NEXT:   400198:   0000 0000   nop
+# DIS-NEXT:   40019c:   0020 0cbc   mult    $ac0,zero,at
+# DIS-NEXT:   4001a0:   0000 0000   nop
+
+# EXE: Sections:
+# EXE: Idx Name          Size      Address          Type
+# EXE:   6 .plt          00000024 0000000000400160 TEXT DATA
+# EXE:  10 .got.plt      0000000c 0000000000402000 DATA
+
+# EXE: Contents of section .plt:
+# EXE-NEXT:  400160 8079a807 23ff0000 35052525 0233feff  .y..#...5.%%.3..
+# EXE-NEXT:  400170 ff0df945 830f000c 0079a407 22ff0000  ...E.....y.."...
+# EXE-NEXT:  400180 9945020f                             .E..
+
+# so.o
+---
+FileHeader:
+  Class:   ELFCLASS32
+  Data:    ELFDATA2LSB
+  Type:    ET_REL
+  Machine: EM_MIPS
+  Flags:   [EF_MIPS_PIC, EF_MIPS_CPIC, EF_MIPS_ABI_O32, EF_MIPS_ARCH_32]
+
+Sections:
+- Name:         .text
+  Type:         SHT_PROGBITS
+  Size:         0x0C
+  AddressAlign: 16
+  Flags:        [SHF_EXECINSTR, SHF_ALLOC]
+
+Symbols:
+  Global:
+    - Name:    T1
+      Section: .text
+      Type:    STT_FUNC
+      Value:   0x0
+      Size:    4
+
+# o.o
+---
+FileHeader:
+  Class:           ELFCLASS32
+  Data:            ELFDATA2LSB
+  Type:            ET_REL
+  Machine:         EM_MIPS
+  Flags:           [ EF_MIPS_CPIC, EF_MIPS_ABI_O32,
+                     EF_MIPS_ARCH_32R2, EF_MIPS_MICROMIPS ]
+
+Sections:
+  - Name:            .text
+    Type:            SHT_PROGBITS
+    Flags:           [ SHF_ALLOC, SHF_EXECINSTR ]
+    AddressAlign:    0x04
+    Content:         '09F82003000000000400000C000000000000000C000000000000000C00000000'
+  - Name:            .rel.text
+    Type:            SHT_REL
+    Link:            .symtab
+    AddressAlign:    0x04
+    Info:            .text
+    Relocations:
+      - Offset:          0x08
+        Symbol:          .text
+        Type:            R_MICROMIPS_26_S1
+      - Offset:          0x10
+        Symbol:          glob
+        Type:            R_MICROMIPS_26_S1
+      - Offset:          0x18
+        Symbol:          T1
+        Type:            R_MICROMIPS_26_S1
+
+Symbols:
+  Local:
+    - Name:            loc
+      Section:         .text
+      Value:           0x10
+      Other:           [ STO_MIPS_MICROMIPS ]
+    - Name:            .text
+      Type:            STT_SECTION
+      Section:         .text
+  Global:
+    - Name:            glob
+      Section:         .text
+      Other:           [ STO_MIPS_MICROMIPS ]
+    - Name:            T1
+...
