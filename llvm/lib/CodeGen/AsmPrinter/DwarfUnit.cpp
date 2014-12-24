@@ -985,7 +985,8 @@ void DwarfUnit::constructTypeDIE(DIE &Buffer, DIDerivedType DTy) {
     addString(Buffer, dwarf::DW_AT_name, Name);
 
   // Add size if non-zero (derived types might be zero-sized.)
-  if (Size && Tag != dwarf::DW_TAG_pointer_type)
+  if (Size && Tag != dwarf::DW_TAG_pointer_type
+           && Tag != dwarf::DW_TAG_ptr_to_member_type)
     addUInt(Buffer, dwarf::DW_AT_byte_size, None, Size);
 
   if (Tag == dwarf::DW_TAG_ptr_to_member_type)
