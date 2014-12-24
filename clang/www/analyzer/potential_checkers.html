@@ -104,6 +104,31 @@ void test() {
 </pre></div></div></td>
 <td class="aligned"></td></tr>
 
+<tr><td><div class="namedescr expandable"><span class="name">
+memory.ZeroAlloc</span><span class="lang">
+(C, C++)</span><div class="descr">
+Allocation of zero bytes.
+<br>Note: an enhancement to <span class="name">unix.Malloc</span>.
+<br>Note: <span class="name">unix.API</span> perform C-checks for zero 
+allocation. This should be moved to <span class="name">unix.Malloc</span>.
+<p>Source: C++03 3.7.3.1p2; C++11 3.7.4.1p2.</p></div></div></td>
+<td><div class="exampleContainer expandable">
+<div class="example"><pre>
+#include &lt;stdlib.h&gt;
+
+void test() {
+  int *p = malloc(0); // warn
+  free(p);
+}
+</pre></div>
+<div class="example"><pre>
+void test() {
+  int *p = new int[0]; // warn
+  delete[] p;
+}
+</pre></div></div></td>
+<td class="aligned"></td></tr>
+
 </table>
 
 <!-- ======================= constructors/destructors ====================== -->
@@ -461,7 +486,7 @@ unix.Malloc</span>.
 <p>Source: C++03 3.7.3.1p2; C++11 3.7.4.1p2.</p></div></div></td>
 <td><div class="exampleContainer expandable">
 <div class="example"><pre>
-#include &lt;memory&gt;
+#include &lt;stdlib.h&gt;
 
 void test() {
   int *p = (int *)malloc(0);
