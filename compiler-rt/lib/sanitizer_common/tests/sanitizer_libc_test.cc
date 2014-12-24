@@ -128,6 +128,8 @@ TEST(SanitizerCommon, InternalStrFunctions) {
   EXPECT_EQ(haystack + 8, internal_strchrnul(haystack, 'z'));
 }
 
+// FIXME: File manipulations are not yet supported on Windows
+#if !defined(_WIN32)
 TEST(SanitizerCommon, InternalMmapWithOffset) {
   char tmpfile[128];
   temp_file_name(tmpfile, sizeof(tmpfile),
@@ -153,3 +155,4 @@ TEST(SanitizerCommon, InternalMmapWithOffset) {
   internal_munmap(p, page_size);
   internal_unlink(tmpfile);
 }
+#endif
