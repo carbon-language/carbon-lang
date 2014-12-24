@@ -129,7 +129,7 @@ TEST(SanitizerCommon, InternalStrFunctions) {
 }
 
 // FIXME: File manipulations are not yet supported on Windows
-#if !defined(_WIN32)
+#if !defined(_WIN32) && !SANITIZER_MAC
 TEST(SanitizerCommon, InternalMmapWithOffset) {
   char tmpfile[128];
   temp_file_name(tmpfile, sizeof(tmpfile),
