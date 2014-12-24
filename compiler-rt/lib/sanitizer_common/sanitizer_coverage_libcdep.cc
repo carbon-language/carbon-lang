@@ -215,6 +215,7 @@ void CoverageData::Extend(uptr npcs) {
   if (size > pc_array_mapped_size) {
     uptr new_mapped_size = pc_array_mapped_size;
     while (size > new_mapped_size) new_mapped_size += kPcArrayMmapSize;
+    CHECK_LE(new_mapped_size, sizeof(uptr) * kPcArrayMaxSize);
 
     // Extend the file and map the new space at the end of pc_array.
     uptr res = internal_ftruncate(pc_fd, new_mapped_size);
@@ -223,10 +224,12 @@ void CoverageData::Extend(uptr npcs) {
       Printf("failed to extend raw coverage file: %d\n", err);
       Die();
     }
-    void *p = MapWritableFileToMemory(pc_array + pc_array_mapped_size,
+
+    uptr next_map_base = ((uptr)pc_array) + pc_array_mapped_size;
+    void *p = MapWritableFileToMemory((void *)next_map_base,
                                       new_mapped_size - pc_array_mapped_size,
                                       pc_fd, pc_array_mapped_size);
-    CHECK_EQ(p, pc_array + pc_array_mapped_size);
+    CHECK_EQ((uptr)p, next_map_base);
     pc_array_mapped_size = new_mapped_size;
   }
 
