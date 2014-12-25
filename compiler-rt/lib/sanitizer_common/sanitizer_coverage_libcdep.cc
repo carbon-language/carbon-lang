@@ -590,7 +590,9 @@ void InitializeCoverage(bool enabled, const char *dir) {
   coverage_enabled = enabled;
   coverage_dir = dir;
   if (enabled) coverage_data.Init();
+#if !SANITIZER_WINDOWS
   if (!common_flags()->coverage_direct) Atexit(__sanitizer_cov_dump);
+#endif
 }
 
 void ReInitializeCoverage(bool enabled, const char *dir) {
