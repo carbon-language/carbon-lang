@@ -59,7 +59,7 @@ namespace {
     CodeGeneratorImpl(DiagnosticsEngine &diags, const std::string& ModuleName,
                       const CodeGenOptions &CGO, llvm::LLVMContext& C,
                       CoverageSourceInfo *CoverageInfo = nullptr)
-      : Diags(diags), CodeGenOpts(CGO), HandlingTopLevelDecls(0),
+      : Diags(diags), Ctx(nullptr), CodeGenOpts(CGO), HandlingTopLevelDecls(0),
         CoverageInfo(CoverageInfo),
         M(new llvm::Module(ModuleName, C)) {}
 
