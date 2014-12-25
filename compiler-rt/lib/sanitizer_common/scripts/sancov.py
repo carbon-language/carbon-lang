@@ -118,7 +118,7 @@ def UnpackOneRawFile(path, map_path):
       if len(pc_list) == 0: continue
       assert path.endswith('.sancov.raw')
       dst_path = module_path + '.' + os.path.basename(path)[:-4]
-      print >> sys.stderr, "writing %d PCs to %s" % (len(pc_list), dst_path)
+      print >> sys.stderr, "%s: writing %d PCs to %s" % (prog_name, len(pc_list), dst_path)
       arr = array.array('I')
       arr.fromlist(sorted(pc_list))
       with open(dst_path, 'ab') as f2:
