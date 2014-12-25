@@ -1817,7 +1817,7 @@ JoinVals::analyzeValue(unsigned ValNo, JoinVals &Other) {
       // not important.
       if (Redef) {
         V.RedefVNI = LR.Query(VNI->def).valueIn();
-        assert(TrackSubRegLiveness || V.RedefVNI &&
+        assert((TrackSubRegLiveness || V.RedefVNI) &&
                "Instruction is reading nonexistent value");
         if (V.RedefVNI != nullptr) {
           computeAssignment(V.RedefVNI->id, Other);
