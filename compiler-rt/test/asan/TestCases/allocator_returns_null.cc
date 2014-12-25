@@ -24,14 +24,14 @@
 int main(int argc, char **argv) {
   volatile size_t size = std::numeric_limits<size_t>::max() - 10000;
   assert(argc == 2);
-  char *x = 0;
+  void *x = 0;
   if (!strcmp(argv[1], "malloc")) {
     fprintf(stderr, "malloc:\n");
-    x = (char*)malloc(size);
+    x = malloc(size);
   }
   if (!strcmp(argv[1], "calloc")) {
     fprintf(stderr, "calloc:\n");
-    x = (char*)calloc(size / 4, 4);
+    x = calloc(size / 4, 4);
   }
 
   if (!strcmp(argv[1], "calloc-overflow")) {
@@ -39,18 +39,18 @@ int main(int argc, char **argv) {
     volatile size_t kMaxSizeT = std::numeric_limits<size_t>::max();
     size_t kArraySize = 4096;
     volatile size_t kArraySize2 = kMaxSizeT / kArraySize + 10;
-    x = (char*)calloc(kArraySize, kArraySize2);
+    x = calloc(kArraySize, kArraySize2);
   }
 
   if (!strcmp(argv[1], "realloc")) {
     fprintf(stderr, "realloc:\n");
-    x = (char*)realloc(0, size);
+    x = realloc(0, size);
   }
   if (!strcmp(argv[1], "realloc-after-malloc")) {
     fprintf(stderr, "realloc-after-malloc:\n");
     char *t = (char*)malloc(100);
     *t = 42;
-    x = (char*)realloc(t, size);
+    x = realloc(t, size);
     assert(*t == 42);
     free(t);
   }
