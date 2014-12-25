@@ -187,7 +187,7 @@ CallInst *IRBuilderBase::CreateAssumption(Value *Cond) {
 /// Ops - an array of operands.
 CallInst *IRBuilderBase::CreateMaskedLoad(ArrayRef<Value *> Ops) {
   // The only one overloaded type - the type of passthru value in this case
-  Type *DataTy = Ops[1]->getType();
+  Type *DataTy = Ops[3]->getType();
   return CreateMaskedIntrinsic(Intrinsic::masked_load, Ops, DataTy);
 }
 
@@ -195,7 +195,7 @@ CallInst *IRBuilderBase::CreateMaskedLoad(ArrayRef<Value *> Ops) {
 /// Ops - an array of operands.
 CallInst *IRBuilderBase::CreateMaskedStore(ArrayRef<Value *> Ops) {
   // DataTy - type of the data to be stored - the only one overloaded type
-  Type *DataTy = Ops[1]->getType();
+  Type *DataTy = Ops[0]->getType();
   return CreateMaskedIntrinsic(Intrinsic::masked_store, Ops, DataTy);
 }
 

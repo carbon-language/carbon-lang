@@ -2441,6 +2441,13 @@ bool Verifier::VerifyIntrinsicType(Type *Ty,
     return VerifyIntrinsicType(ThisArgType->getVectorElementType(),
                                Infos, ArgTys);
   }
+  case IITDescriptor::PtrToArgument: {
+    if (D.getArgumentNumber() >= ArgTys.size())
+      return true;
+    Type * ReferenceType = ArgTys[D.getArgumentNumber()];
+    PointerType *ThisArgType = dyn_cast<PointerType>(Ty);
+    return (!ThisArgType || ThisArgType->getElementType() != ReferenceType);
+  }
   }
   llvm_unreachable("unhandled");
 }

@@ -1880,15 +1880,10 @@ void InnerLoopVectorizer::vectorizeMemoryInstruction(Instruction *Instr) {
 
       Instruction *NewSI;
       if (Legal->isMaskRequired(SI)) {
-        Type *I8PtrTy =
-        Builder.getInt8PtrTy(PartPtr->getType()->getPointerAddressSpace());
-
-        Value *I8Ptr = Builder.CreateBitCast(PartPtr, I8PtrTy);
-
         VectorParts Cond = createBlockInMask(SI->getParent());
         SmallVector <Value *, 8> Ops;
-        Ops.push_back(I8Ptr);
         Ops.push_back(StoredVal[Part]);
+        Ops.push_back(VecPtr);
         Ops.push_back(Builder.getInt32(Alignment));
         Ops.push_back(Cond[Part]);
         NewSI = Builder.CreateMaskedStore(Ops);
@@ -1915,23 +1910,18 @@ void InnerLoopVectorizer::vectorizeMemoryInstruction(Instruction *Instr) {
     }
 
     Instruction* NewLI;
+    Value *VecPtr = Builder.CreateBitCast(PartPtr,
+                                          DataTy->getPointerTo(AddressSpace));
     if (Legal->isMaskRequired(LI)) {
-      Type *I8PtrTy =
-        Builder.getInt8PtrTy(PartPtr->getType()->getPointerAddressSpace());
-
-      Value *I8Ptr = Builder.CreateBitCast(PartPtr, I8PtrTy);
-
       VectorParts SrcMask = createBlockInMask(LI->getParent());
       SmallVector <Value *, 8> Ops;
-      Ops.push_back(I8Ptr);
-      Ops.push_back(UndefValue::get(DataTy));
+      Ops.push_back(VecPtr);
       Ops.push_back(Builder.getInt32(Alignment));
       Ops.push_back(SrcMask[Part]);
+      Ops.push_back(UndefValue::get(DataTy));
       NewLI = Builder.CreateMaskedLoad(Ops);
     }
     else {
-      Value *VecPtr = Builder.CreateBitCast(PartPtr,
-                                            DataTy->getPointerTo(AddressSpace));
       NewLI = Builder.CreateAlignedLoad(VecPtr, Alignment, "wide.load");
     }
     propagateMetadata(NewLI, LI);
