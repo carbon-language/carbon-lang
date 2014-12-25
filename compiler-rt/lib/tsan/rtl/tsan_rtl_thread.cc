@@ -111,15 +111,13 @@ void ThreadContext::OnStarted(void *arg) {
     thr->dd_pt = ctx->dd->CreatePhysicalThread();
     thr->dd_lt = ctx->dd->CreateLogicalThread(unique_id);
   }
+  thr->fast_state.SetHistorySize(flags()->history_size);
+  // Commit switch to the new part of the trace.
+  // TraceAddEvent will reset stack0/mset0 in the new part for us.
+  TraceAddEvent(thr, thr->fast_state, EventTypeMop, 0);
+
   thr->fast_synch_epoch = epoch0;
   AcquireImpl(thr, 0, &sync);
-  thr->fast_state.SetHistorySize(flags()->history_size);
-  const uptr trace = (epoch0 / kTracePartSize) % TraceParts();
-  Trace *thr_trace = ThreadTrace(thr->tid);
-  TraceHeader *hdr = &thr_trace->headers[trace];
-  hdr->epoch0 = epoch0;
-  ObtainCurrentStack(thr, 0, &hdr->stack0);
-  hdr->mset0 = thr->mset;
   StatInc(thr, StatSyncAcquire);
   sync.Reset(&thr->clock_cache);
   DPrintf("#%d: ThreadStart epoch=%zu stk_addr=%zx stk_size=%zx "
