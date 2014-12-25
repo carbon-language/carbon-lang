@@ -9230,6 +9230,93 @@ intrinsic returns the executable address corresponding to ``tramp``
 after performing the required machine specific adjustments. The pointer
 returned can then be :ref:`bitcast and executed <int_trampoline>`.
 
+Masked Vector Load and Store Intrinsics
+---------------------------------------
+
+LLVM provides intrinsics for predicated vector load and store operations. The predicate is specified by a mask operand, which holds one bit per vector element, switching the associated vector lane on or off. The memory addresses corresponding to the "off" lanes are not accessed. When all bits of the mask are on, the intrinsic is identical to a regular vector load or store. When all bits are off, no memory is accessed.
+
+.. _int_mload:
+
+'``llvm.masked.load.*``' Intrinsics
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Syntax:
+"""""""
+This is an overloaded intrinsic. The loaded data is a vector of any integer or floating point data type.
+
+::
+
+      declare <16 x float> @llvm.masked.load.v16f32 (<16 x float>* <ptr>, i32 <alignment>, <16 x i1> <mask>, <16 x float> <passthru>)
+      declare <2 x double> @llvm.masked.load.v2f64  (<2 x double>* <ptr>, i32 <alignment>, <2 x i1>  <mask>, <2 x double> <passthru>)
+
+Overview:
+"""""""""
+
+Reads a vector from memory according to the provided mask. The mask holds a bit for each vector lane, and is used to prevent memory accesses to the masked-off lanes. The masked-off lanes in the result vector are taken from the corresponding lanes in the passthru operand.
+
+
+Arguments:
+""""""""""
+
+The first operand is the base pointer for the load. The second operand is the alignment of the source location. It must be a constant integer value. The third operand, mask, is a vector of boolean 'i1' values with the same number of elements as the return type. The fourth is a pass-through value that is used to fill the masked-off lanes of the result. The return type, underlying type of the base pointer and the type of passthru operand are the same vector types.
+
+
+Semantics:
+""""""""""
+
+The '``llvm.masked.load``' intrinsic is designed for conditional reading of selected vector elements in a single IR operation. It is useful for targets that support vector masked loads and allows vectorizing predicated basic blocks on these targets. Other targets may support this intrinsic differently, for example by lowering it into a sequence of branches that guard scalar load operations.
+The result of this operation is equivalent to a regular vector load instruction followed by a 'select' between the loaded and the passthru values, predicated on the same mask. However, using this intrinsic prevents exceptions on memory access to masked-off lanes.
+
+
+::
+
+       %res = call <16 x float> @llvm.masked.load.v16f32 (<16 x float>* %ptr, i32 4, <16 x i1>%mask, <16 x float> %passthru)
+       
+       ;; The result of the two following instructions is identical aside from potential memory access exception
+       %loadlal = load <16 x float>* %ptr, align 4
+       %res = select <16 x i1> %Mask, <16 x float> %loadlal, <16 x float> %passthru
+
+.. _int_mstore:
+
+'``llvm.masked.store.*``' Intrinsics
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Syntax:
+"""""""
+This is an overloaded intrinsic. The data stored in memory is a vector of any integer or floating point data type.
+
+::
+
+       declare void @llvm.masked.store.v8i32 (<8 x i32>  <value>, <8 x i32> * <ptr>, i32 <alignment>,  <8 x i1>  <mask>)
+       declare void @llvm.masked.store.v16f32(<16 x i32> <value>, <16 x i32>* <ptr>, i32 <alignment>,  <16 x i1> <mask>)
+
+Overview:
+"""""""""
+
+Writes a vector to memory according to the provided mask. The mask holds a bit for each vector lane, and is used to prevent memory accesses to the masked-off lanes.
+
+Arguments:
+""""""""""
+
+The first operand is the vector value to be written to memory. The second operand is the base pointer for the store, it has the same underlying type as the value operand. The third operand is the alignment of the destination location. The fourth operand, mask, is a vector of boolean values. The types of the mask and the value operand must have the same number of vector elements.
+
+
+Semantics:
+""""""""""
+
+The '``llvm.masked.store``' intrinsics is designed for conditional writing of selected vector elements in a single IR operation. It is useful for targets that support vector masked store and allows vectorizing predicated basic blocks on these targets. Other targets may support this intrinsic differently, for example by lowering it into a sequence of branches that guard scalar store operations.
+The result of this operation is equivalent to a load-modify-store sequence. However, using this intrinsic prevents exceptions and data races on memory access to masked-off lanes.
+
+::
+
+       call void @llvm.masked.store.v16f32(<16 x float> %value, <16 x float>* %ptr, i32 4,  <16 x i1> %mask)
+       
+       ;; The result of the following instructions is identcal aside from potential data races and memory access exceptions
+       %oldval = load <16 x float>* %ptr, align 4
+       %res = select <16 x i1> %mask, <16 x float> %value, <16 x float> %oldval
+       store <16 x float> %res, <16 x float>* %ptr, align 4
+
+
 Memory Use Markers
 ------------------
 
