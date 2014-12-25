@@ -135,13 +135,13 @@ static void fixJumpOpCode(uint32_t &ins, uint64_t tgt, bool isMicro) {
   uint32_t opNative = isMicro ? 0x3d : 0x03;
   uint32_t opCross = isMicro ? 0x3c : 0x1d;
 
+  // FIXME (simon): Convert this into the regular fatal error.
+  if ((tgt & 1) == isMicro)
+    llvm_unreachable("Incorrect bit 0 for the jalx target");
+
   if (tgt & 2)
     llvm::errs() << "The jalx target " << llvm::format_hex(tgt, 10)
                  << " is not word-aligned.\n";
-
-  if ((tgt & 1) == isMicro)
-    llvm::errs() << "Incorrect bit 0 for the jalx target "
-                 << llvm::format_hex(tgt, 10) << ".\n";
 
   uint8_t op = ins >> 26;
   if (op != opNative && op != opCross)
