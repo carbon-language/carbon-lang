@@ -65,7 +65,7 @@ namespace clang {
                     CoverageSourceInfo *CoverageInfo = nullptr)
         : Diags(_Diags), Action(action), CodeGenOpts(compopts),
           TargetOpts(targetopts), LangOpts(langopts), AsmOutStream(OS),
-          Context(), LLVMIRGeneration("LLVM IR Generation Time"),
+          Context(nullptr), LLVMIRGeneration("LLVM IR Generation Time"),
           Gen(CreateLLVMCodeGen(Diags, infile, compopts,
                                 targetopts, C, CoverageInfo)),
           LinkModule(LinkModule) {
