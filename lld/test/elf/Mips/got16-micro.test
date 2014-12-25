@@ -74,13 +74,13 @@
 
 # Function glob
 # YAML:      - name:         main
-# YAML-NEXT:   scope:        global
-# YAML-NEXT:   content:      [ 5C, FC, 00, 00, 42, 30, 00, 00, 5C, FC, 00, 00,
-# YAML-NEXT:                   42, 30, 00, 00, 5C, FC, 00, 00, 5C, FC, 00, 00,
-# YAML-NEXT:                   5C, FC, 00, 00 ]
-# YAML-NEXT:   alignment:    4 mod 2^4
-# YAML-NEXT:   code-model:   mips-micro
-# YAML-NEXT:   references:
+# YAML:        scope:        global
+# YAML:        content:      [ 5C, FC, 00, 00, 42, 30, 00, 00, 5C, FC, 00, 00,
+# YAML:                        42, 30, 00, 00, 5C, FC, 00, 00, 5C, FC, 00, 00,
+# YAML:                        5C, FC, 00, 00 ]
+# YAML:        alignment:    4 mod 2^4
+# YAML:        code-model:   mips-micro
+# YAML:        references:
 # YAML-NEXT:     - kind:         R_MICROMIPS_GOT16
 # YAML-NEXT:       offset:       0
 # YAML-NEXT:       target:       L002
