@@ -2109,7 +2109,7 @@ unsigned PPCFastISel::fastMaterializeConstant(const Constant *C) {
   else if (const GlobalValue *GV = dyn_cast<GlobalValue>(C))
     return PPCMaterializeGV(GV, VT);
   else if (isa<ConstantInt>(C))
-    return PPCMaterializeInt(C, VT);
+    return PPCMaterializeInt(C, VT, VT != MVT::i1);
 
   return 0;
 }
