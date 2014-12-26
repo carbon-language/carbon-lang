@@ -694,7 +694,7 @@ bool HexagonInstrInfo::isPredicable(MachineInstr *MI) const {
   case Hexagon::POST_LDriuh:
     return isShiftedInt<4,1>(MI->getOperand(3).getImm());
 
-  case Hexagon::POST_LDrib:
+  case Hexagon::L2_loadrb_pi:
   case Hexagon::POST_LDriub:
     return isInt<4>(MI->getOperand(3).getImm());
 
@@ -1363,8 +1363,8 @@ isConditionalLoad (const MachineInstr* MI) const {
     case Hexagon::POST_LDriw_cNotPt :
     case Hexagon::POST_LDrih_cPt :
     case Hexagon::POST_LDrih_cNotPt :
-    case Hexagon::POST_LDrib_cPt :
-    case Hexagon::POST_LDrib_cNotPt :
+    case Hexagon::L2_ploadrbt_pi :
+    case Hexagon::L2_ploadrbf_pi :
     case Hexagon::POST_LDriuh_cPt :
     case Hexagon::POST_LDriuh_cNotPt :
     case Hexagon::POST_LDriub_cPt :

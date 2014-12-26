@@ -1599,6 +1599,106 @@ def : Pat < (i64 (load (add IntRegs:$src1, s11_3ExtPred:$offset))),
 //===----------------------------------------------------------------------===//
 // Post increment load
 //===----------------------------------------------------------------------===//
+//===----------------------------------------------------------------------===//
+// Template class for non-predicated post increment loads with immediate offset.
+//===----------------------------------------------------------------------===//
+let hasSideEffects = 0, addrMode = PostInc in
+class T_load_pi <string mnemonic, RegisterClass RC, Operand ImmOp,
+                     bits<4> MajOp >
+  : LDInstPI <(outs RC:$dst, IntRegs:$dst2),
+  (ins IntRegs:$src1, ImmOp:$offset),
+  "$dst = "#mnemonic#"($src1++#$offset)" ,
+  [],
+  "$src1 = $dst2" > ,
+  PredNewRel {
+    bits<5> dst;
+    bits<5> src1;
+    bits<7> offset;
+    bits<4> offsetBits;
+
+    string ImmOpStr = !cast<string>(ImmOp);
+    let offsetBits = !if (!eq(ImmOpStr, "s4_3Imm"), offset{6-3},
+                     !if (!eq(ImmOpStr, "s4_2Imm"), offset{5-2},
+                     !if (!eq(ImmOpStr, "s4_1Imm"), offset{4-1},
+                                      /* s4_0Imm */ offset{3-0})));
+    let hasNewValue = !if (!eq(ImmOpStr, "s4_3Imm"), 0, 1);
+
+    let IClass = 0b1001;
+
+    let Inst{27-25} = 0b101;
+    let Inst{24-21} = MajOp;
+    let Inst{20-16} = src1;
+    let Inst{13-12} = 0b00;
+    let Inst{8-5} = offsetBits;
+    let Inst{4-0}   = dst;
+  }
+
+//===----------------------------------------------------------------------===//
+// Template class for predicated post increment loads with immediate offset.
+//===----------------------------------------------------------------------===//
+let isPredicated = 1, hasSideEffects = 0, addrMode = PostInc in
+class T_pload_pi <string mnemonic, RegisterClass RC, Operand ImmOp,
+                          bits<4> MajOp, bit isPredNot, bit isPredNew >
+  : LDInst <(outs RC:$dst, IntRegs:$dst2),
+            (ins PredRegs:$src1, IntRegs:$src2, ImmOp:$offset),
+  !if(isPredNot, "if (!$src1", "if ($src1")#!if(isPredNew, ".new) ",
+  ") ")#"$dst = "#mnemonic#"($src2++#$offset)",
+  [] ,
+  "$src2 = $dst2" > ,
+  PredNewRel {
+    bits<5> dst;
+    bits<2> src1;
+    bits<5> src2;
+    bits<7> offset;
+    bits<4> offsetBits;
+
+    let isPredicatedNew = isPredNew;
+    let isPredicatedFalse = isPredNot;
+
+    string ImmOpStr = !cast<string>(ImmOp);
+    let offsetBits = !if (!eq(ImmOpStr, "s4_3Imm"), offset{6-3},
+                     !if (!eq(ImmOpStr, "s4_2Imm"), offset{5-2},
+                     !if (!eq(ImmOpStr, "s4_1Imm"), offset{4-1},
+                                      /* s4_0Imm */ offset{3-0})));
+    let hasNewValue = !if (!eq(ImmOpStr, "s4_3Imm"), 0, 1);
+
+    let IClass = 0b1001;
+
+    let Inst{27-25} = 0b101;
+    let Inst{24-21} = MajOp;
+    let Inst{20-16} = src2;
+    let Inst{13} = 0b1;
+    let Inst{12} = isPredNew;
+    let Inst{11} = isPredNot;
+    let Inst{10-9} = src1;
+    let Inst{8-5}  = offsetBits;
+    let Inst{4-0}  = dst;
+  }
+
+//===----------------------------------------------------------------------===//
+// Multiclass for post increment loads with immediate offset.
+//===----------------------------------------------------------------------===//
+
+multiclass LD_PostInc <string mnemonic, string BaseOp, RegisterClass RC,
+                       Operand ImmOp, bits<4> MajOp> {
+  let BaseOpcode = "POST_"#BaseOp in {
+    let isPredicable = 1 in
+    def L2_#NAME#_pi : T_load_pi < mnemonic, RC, ImmOp, MajOp>;
+
+    // Predicated
+    def L2_p#NAME#t_pi : T_pload_pi < mnemonic, RC, ImmOp, MajOp, 0, 0>;
+    def L2_p#NAME#f_pi : T_pload_pi < mnemonic, RC, ImmOp, MajOp, 1, 0>;
+
+    // Predicated new
+    def L2_p#NAME#tnew_pi : T_pload_pi < mnemonic, RC, ImmOp, MajOp, 0, 1>;
+    def L2_p#NAME#fnew_pi : T_pload_pi < mnemonic, RC, ImmOp, MajOp, 1, 1>;
+  }
+}
+
+// post increment byte loads with immediate offset
+let accessSize = ByteAccess, isCodeGenOnly = 0 in {
+  defm loadrb  : LD_PostInc <"memb",  "LDrib", IntRegs, s4_0Imm, 0b1000>;
+}
 
 multiclass LD_PostInc_Pbase<string mnemonic, RegisterClass RC, Operand ImmOp,
                             bit isNot, bit isPredNew> {
@@ -1621,7 +1721,7 @@ multiclass LD_PostInc_Pred<string mnemonic, RegisterClass RC,
   }
 }
 
-multiclass LD_PostInc<string mnemonic, string BaseOp, RegisterClass RC,
+multiclass LD_PostInc2<string mnemonic, string BaseOp, RegisterClass RC,
                       Operand ImmOp> {
 
   let BaseOpcode = "POST_"#BaseOp in {
@@ -1640,17 +1740,15 @@ multiclass LD_PostInc<string mnemonic, string BaseOp, RegisterClass RC,
 }
 
 let hasCtrlDep = 1, hasSideEffects = 0, addrMode = PostInc in {
-  defm POST_LDrib : LD_PostInc<"memb", "LDrib", IntRegs, s4_0Imm>,
+  defm POST_LDriub : LD_PostInc2<"memub", "LDriub", IntRegs, s4_0Imm>,
                     PredNewRel;
-  defm POST_LDriub : LD_PostInc<"memub", "LDriub", IntRegs, s4_0Imm>,
+  defm POST_LDrih : LD_PostInc2<"memh", "LDrih", IntRegs, s4_1Imm>,
                     PredNewRel;
-  defm POST_LDrih : LD_PostInc<"memh", "LDrih", IntRegs, s4_1Imm>,
+  defm POST_LDriuh : LD_PostInc2<"memuh", "LDriuh", IntRegs, s4_1Imm>,
                     PredNewRel;
-  defm POST_LDriuh : LD_PostInc<"memuh", "LDriuh", IntRegs, s4_1Imm>,
+  defm POST_LDriw : LD_PostInc2<"memw", "LDriw", IntRegs, s4_2Imm>,
                     PredNewRel;
-  defm POST_LDriw : LD_PostInc<"memw", "LDriw", IntRegs, s4_2Imm>,
-                    PredNewRel;
-  defm POST_LDrid : LD_PostInc<"memd", "LDrid", DoubleRegs, s4_3Imm>,
+  defm POST_LDrid : LD_PostInc2<"memd", "LDrid", DoubleRegs, s4_3Imm>,
                     PredNewRel;
 }
 
