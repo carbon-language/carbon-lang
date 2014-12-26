@@ -222,7 +222,7 @@ void DumpProcessMap() {
              (void *)((uptr)mi.lpBaseOfDll + mi.SizeOfImage),
              got_module_name ? module_name : "[no name]");
     } else if (got_module_name) {
-      Printf("\t???-??? %s\n", module_name);
+      Printf("\t??\?-??? %s\n", module_name);
     } else {
       Printf("\t???\n");
     }
