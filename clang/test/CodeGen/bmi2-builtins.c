@@ -24,9 +24,9 @@ unsigned int test_pext_u32(unsigned int __X, unsigned int __Y) {
 unsigned int test_mulx_u32(unsigned int __X, unsigned int __Y,
                                  unsigned int *__P) {
   // CHECK: @test_mulx_u32
-  // CHECK-NOT: mul i64
+  // CHECK-NOT: mul nuw i64
   // B32: @test_mulx_u32
-  // B32: mul i64
+  // B32: mul nuw i64
   return _mulx_u32(__X, __Y, __P);
 }
 
