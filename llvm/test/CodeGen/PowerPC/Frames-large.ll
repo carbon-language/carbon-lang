@@ -1,9 +1,8 @@
-; RUN: llvm-as < %s > %t.bc
-; RUN: llc < %t.bc -march=ppc32 | FileCheck %s -check-prefix=PPC32-NOFP
-; RUN: llc < %t.bc -march=ppc32 -disable-fp-elim | FileCheck %s -check-prefix=PPC32-FP
+; RUN: llc < %s -march=ppc32 | FileCheck %s -check-prefix=PPC32-NOFP
+; RUN: llc < %s -march=ppc32 -disable-fp-elim | FileCheck %s -check-prefix=PPC32-FP
 
-; RUN: llc < %t.bc -march=ppc64 | FileCheck %s -check-prefix=PPC64-NOFP
-; RUN: llc < %t.bc -march=ppc64 -disable-fp-elim | FileCheck %s -check-prefix=PPC64-FP
+; RUN: llc < %s -march=ppc64 | FileCheck %s -check-prefix=PPC64-NOFP
+; RUN: llc < %s -march=ppc64 -disable-fp-elim | FileCheck %s -check-prefix=PPC64-FP
 
 
 target triple = "powerpc-apple-darwin8"
