@@ -1698,6 +1698,7 @@ multiclass LD_PostInc <string mnemonic, string BaseOp, RegisterClass RC,
 // post increment byte loads with immediate offset
 let accessSize = ByteAccess, isCodeGenOnly = 0 in {
   defm loadrb  : LD_PostInc <"memb",  "LDrib", IntRegs, s4_0Imm, 0b1000>;
+  defm loadrub : LD_PostInc <"memub", "LDriub", IntRegs, s4_0Imm, 0b1001>;
 }
 
 multiclass LD_PostInc_Pbase<string mnemonic, RegisterClass RC, Operand ImmOp,
@@ -1740,8 +1741,6 @@ multiclass LD_PostInc2<string mnemonic, string BaseOp, RegisterClass RC,
 }
 
 let hasCtrlDep = 1, hasSideEffects = 0, addrMode = PostInc in {
-  defm POST_LDriub : LD_PostInc2<"memub", "LDriub", IntRegs, s4_0Imm>,
-                    PredNewRel;
   defm POST_LDrih : LD_PostInc2<"memh", "LDrih", IntRegs, s4_1Imm>,
                     PredNewRel;
   defm POST_LDriuh : LD_PostInc2<"memuh", "LDriuh", IntRegs, s4_1Imm>,
