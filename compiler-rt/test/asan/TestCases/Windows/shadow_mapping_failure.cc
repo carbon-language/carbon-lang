@@ -9,6 +9,9 @@ int main() {
   printf("Hello, world!\n");
   scanf("%s", bigchunk);
 // CHECK-NOT: Hello, world!
-// CHECK: ERROR: AddressSanitizer failed to allocate
-// CHECK: ReserveShadowMemoryRange failed
+// CHECK: Shadow memory range interleaves with an existing memory mapping.
+// CHECK: Dumping process modules:
+// CHECK-DAG: 0x{{[0-9a-f]*}}-0x{{[0-9a-f]*}} {{.*}}shadow_mapping_failure
+// CHECK-DAG: 0x{{[0-9a-f]*}}-0x{{[0-9a-f]*}} {{.*}}kernel32.dll
+// CHECK-DAG: 0x{{[0-9a-f]*}}-0x{{[0-9a-f]*}} {{.*}}ntdll.dll
 }

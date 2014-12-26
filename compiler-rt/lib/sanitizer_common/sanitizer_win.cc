@@ -20,6 +20,7 @@
 #include <windows.h>
 #include <dbghelp.h>
 #include <io.h>
+#include <psapi.h>
 #include <stdlib.h>
 
 #include "sanitizer_common.h"
@@ -132,8 +133,10 @@ void FlushUnneededShadowMemory(uptr addr, uptr size) {
 }
 
 bool MemoryRangeIsAvailable(uptr range_start, uptr range_end) {
-  // FIXME: shall we do anything here on Windows?
-  return true;
+  MEMORY_BASIC_INFORMATION mbi;
+  CHECK(VirtualQuery((void *)range_start, &mbi, sizeof(mbi)));
+  return mbi.Protect & PAGE_NOACCESS &&
+         (uptr)mbi.BaseAddress + mbi.RegionSize >= range_end;
 }
 
 void *MapFileToMemory(const char *file_name, uptr *buff_size) {
@@ -188,7 +191,43 @@ u32 GetUid() {
 }
 
 void DumpProcessMap() {
-  UNIMPLEMENTED();
+  Report("Dumping process modules:\n");
+  HANDLE cur_process = GetCurrentProcess();
+
+  // Query the list of modules.  Start by assuming there are no more than 256
+  // modules and retry if that's not sufficient.
+  HMODULE *modules = 0;
+  uptr modules_buffer_size = sizeof(HMODULE) * 256;
+  DWORD bytes_required;
+  while (!modules) {
+    modules = (HMODULE *)MmapOrDie(modules_buffer_size, __FUNCTION__);
+    CHECK(EnumProcessModules(cur_process, modules, modules_buffer_size,
+                             &bytes_required));
+    if (bytes_required > modules_buffer_size) {
+      // Either there turned out to be more than 256 modules, or new modules
+      // could have loaded since the last try.  Retry.
+      UnmapOrDie(modules, modules_buffer_size);
+      modules = 0;
+      modules_buffer_size = bytes_required;
+    }
+  }
+
+  for (size_t i = 0; i < bytes_required / sizeof(HMODULE); ++i) {
+    char module_name[MAX_PATH];
+    bool got_module_name = GetModuleFileNameEx(
+        cur_process, modules[i], module_name, sizeof(module_name));
+    MODULEINFO mi;
+    if (GetModuleInformation(cur_process, modules[i], &mi, sizeof(mi))) {
+      Printf("\t%p-%p %s\n", mi.lpBaseOfDll,
+             (void *)((uptr)mi.lpBaseOfDll + mi.SizeOfImage),
+             got_module_name ? module_name : "[no name]");
+    } else if (got_module_name) {
+      Printf("\t???-??? %s\n", module_name);
+    } else {
+      Printf("\t???\n");
+    }
+  }
+  UnmapOrDie(modules, modules_buffer_size);
 }
 
 void DisableCoreDumperIfNecessary() {
