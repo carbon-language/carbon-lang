@@ -238,8 +238,9 @@ u64 NanoTime() {
 }
 
 void Abort() {
-  abort();
-  internal__exit(-1);  // abort is not NORETURN on Windows.
+  if (::IsDebuggerPresent())
+    __debugbreak();
+  internal__exit(3);
 }
 
 uptr GetListOfModules(LoadedModule *modules, uptr max_modules,
