@@ -352,7 +352,14 @@ namespace X86Disassembler {
   ENTRY(CR5)          \
   ENTRY(CR6)          \
   ENTRY(CR7)          \
-  ENTRY(CR8)
+  ENTRY(CR8)          \
+  ENTRY(CR9)          \
+  ENTRY(CR10)         \
+  ENTRY(CR11)         \
+  ENTRY(CR12)         \
+  ENTRY(CR13)         \
+  ENTRY(CR14)         \
+  ENTRY(CR15)
 
 #define ALL_EA_BASES  \
   EA_BASES_16BIT      \

@@ -54,6 +54,15 @@
 # CHECK-NEXT: stosq
 0xf3 0xf3 0x48 0xab
 
+
+# Test that we can disassembler control registers above CR8
+# CHECK: movq %cr15, %rax
+0x44 0x0f 0x20 0xf8
+
+# Test that MMX ignore REX.R and REX.B.
+# CHECK: movq %mm0, %mm1
+0x46 0x0f 0x7f 0xc1
+
 # Test that a prefix on it's own works. It's debatable as to if this is 
 # something that is considered valid, but however as LLVM's own disassembler
 # has decided to disassemble prefixes as being separate opcodes, it therefore 

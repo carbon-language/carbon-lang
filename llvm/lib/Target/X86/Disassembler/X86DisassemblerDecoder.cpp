@@ -1447,9 +1447,7 @@ static int readModRM(struct InternalInstruction* insn) {
     case TYPE_MM64:                                       \
     case TYPE_MM32:                                       \
     case TYPE_MM:                                         \
-      if (index > 7)                                      \
-        *valid = 0;                                       \
-      return prefix##_MM0 + index;                        \
+      return prefix##_MM0 + (index & 0x7);                \
     case TYPE_SEGMENTREG:                                 \
       if (index > 5)                                      \
         *valid = 0;                                       \
@@ -1459,8 +1457,6 @@ static int readModRM(struct InternalInstruction* insn) {
         *valid = 0;                                       \
       return prefix##_DR0 + index;                        \
     case TYPE_CONTROLREG:                                 \
-      if (index > 8)                                      \
-        *valid = 0;                                       \
       return prefix##_CR0 + index;                        \
     }                                                     \
   }
