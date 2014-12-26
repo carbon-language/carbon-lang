@@ -165,6 +165,39 @@ bool InstCombiner::WillNotOverflowSignedMul(Value *LHS, Value *RHS,
   return false;
 }
 
+/// \brief Return true if we can prove that:
+///    (mul LHS, RHS)  === (mul nuw LHS, RHS)
+bool InstCombiner::WillNotOverflowUnsignedMul(Value *LHS, Value *RHS,
+                                              Instruction *CxtI) {
+  // Multiplying n * m significant bits yields a result of n + m significant
+  // bits. If the total number of significant bits does not exceed the
+  // result bit width (minus 1), there is no overflow.
+  // This means if we have enough leading zero bits in the operands
+  // we can guarantee that the result does not overflow.
+  // Ref: "Hacker's Delight" by Henry Warren
+  unsigned BitWidth = LHS->getType()->getScalarSizeInBits();
+  APInt LHSKnownZero(BitWidth, 0);
+  APInt RHSKnownZero(BitWidth, 0);
+  APInt TmpKnownOne(BitWidth, 0);
+  computeKnownBits(LHS, LHSKnownZero, TmpKnownOne, 0, CxtI);
+  computeKnownBits(RHS, RHSKnownZero, TmpKnownOne, 0, CxtI);
+  // Note that underestimating the number of zero bits gives a more
+  // conservative answer.
+  unsigned ZeroBits = LHSKnownZero.countLeadingOnes() +
+                      RHSKnownZero.countLeadingOnes();
+  // First handle the easy case: if we have enough zero bits there's
+  // definitely no overflow.
+  if (ZeroBits >= BitWidth)
+    return true;
+
+  // There is an ambiguous cases where there can be no overflow:
+  //   ZeroBits == BitWidth - 1
+  // However, determining overflow requires calculating the sign bit of
+  // LHS * RHS/2.
+
+  return false;
+}
+
 Instruction *InstCombiner::visitMul(BinaryOperator &I) {
   bool Changed = SimplifyAssociativeOrCommutative(I);
   Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
@@ -378,6 +411,11 @@ Instruction *InstCombiner::visitMul(BinaryOperator &I) {
   if (!I.hasNoSignedWrap() && WillNotOverflowSignedMul(Op0, Op1, &I)) {
     Changed = true;
     I.setHasNoSignedWrap(true);
+  }
+
+  if (!I.hasNoUnsignedWrap() && WillNotOverflowUnsignedMul(Op0, Op1, &I)) {
+    Changed = true;
+    I.setHasNoUnsignedWrap(true);
   }
 
   return Changed ? &I : nullptr;

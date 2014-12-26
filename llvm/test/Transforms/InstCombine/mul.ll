@@ -258,12 +258,24 @@ define i32 @test28(i32 %A) {
 
 define i64 @test29(i31 %A, i31 %B) {
 ; CHECK-LABEL: @test29(
-        %C = zext i31 %A to i64
-        %D = zext i31 %B to i64
+        %C = sext i31 %A to i64
+        %D = sext i31 %B to i64
         %E = mul i64 %C, %D
         ret i64 %E
-; CHECK:      %[[zext1:.*]] = zext i31 %A to i64
-; CHECK-NEXT: %[[zext2:.*]] = zext i31 %B to i64
-; CHECK-NEXT: %[[mul:.*]] = mul nsw i64 %[[zext1]], %[[zext2]]
+; CHECK:      %[[sext1:.*]] = sext i31 %A to i64
+; CHECK-NEXT: %[[sext2:.*]] = sext i31 %B to i64
+; CHECK-NEXT: %[[mul:.*]] = mul nsw i64 %[[sext1]], %[[sext2]]
+; CHECK-NEXT: ret i64 %[[mul]]
+}
+
+define i64 @test30(i32 %A, i32 %B) {
+; CHECK-LABEL: @test30(
+        %C = zext i32 %A to i64
+        %D = zext i32 %B to i64
+        %E = mul i64 %C, %D
+        ret i64 %E
+; CHECK:      %[[zext1:.*]] = zext i32 %A to i64
+; CHECK-NEXT: %[[zext2:.*]] = zext i32 %B to i64
+; CHECK-NEXT: %[[mul:.*]] = mul nuw i64 %[[zext1]], %[[zext2]]
 ; CHECK-NEXT: ret i64 %[[mul]]
 }

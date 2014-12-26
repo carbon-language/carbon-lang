@@ -148,7 +148,7 @@ define %ov.result.32 @smultest1_nsw(i32 %a, i32 %b) {
   %x = call %ov.result.32 @llvm.smul.with.overflow.i32(i32 %A, i32 %B)
   ret %ov.result.32 %x
 ; CHECK-LABEL: @smultest1_nsw
-; CHECK: %x = mul nsw i32 %A, %B
+; CHECK: %x = mul nuw nsw i32 %A, %B
 ; CHECK-NEXT: %1 = insertvalue %ov.result.32 { i32 undef, i1 false }, i32 %x, 0
 ; CHECK-NEXT:  ret %ov.result.32 %1
 }
