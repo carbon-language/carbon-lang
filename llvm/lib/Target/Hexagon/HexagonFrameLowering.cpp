@@ -161,7 +161,7 @@ void HexagonFrameLowering::emitEpilogue(MachineFunction &MF,
     // Handle EH_RETURN.
     if (MBBI->getOpcode() == Hexagon::EH_RETURN_JMPR) {
       assert(MBBI->getOperand(0).isReg() && "Offset should be in register!");
-      BuildMI(MBB, MBBI, dl, TII.get(Hexagon::DEALLOCFRAME));
+      BuildMI(MBB, MBBI, dl, TII.get(Hexagon::L2_deallocframe));
       BuildMI(MBB, MBBI, dl, TII.get(Hexagon::A2_add),
               Hexagon::R29).addReg(Hexagon::R29).addReg(Hexagon::R28);
       return;
@@ -198,7 +198,7 @@ void HexagonFrameLowering::emitEpilogue(MachineFunction &MF,
           I->getOpcode() == Hexagon::RESTORE_DEALLOC_BEFORE_TAILCALL_V4)
         return;
 
-      BuildMI(MBB, MBBI, dl, TII.get(Hexagon::DEALLOCFRAME));
+      BuildMI(MBB, MBBI, dl, TII.get(Hexagon::L2_deallocframe));
     }
   }
 }

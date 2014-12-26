@@ -49,6 +49,8 @@ public:
 };
 }
 
+static DecodeStatus DecodeModRegsRegisterClass(MCInst &Inst, unsigned RegNo,
+  uint64_t Address, const void *Decoder);
 static DecodeStatus DecodeCtrRegsRegisterClass(MCInst &Inst, unsigned RegNo,
   uint64_t Address, const void *Decoder);
 
@@ -101,6 +103,23 @@ static DecodeStatus DecodeCtrRegsRegisterClass(MCInst &Inst, unsigned RegNo,
     return MCDisassembler::Fail;
 
   unsigned Register = CtrlRegDecoderTable[RegNo];
+  Inst.addOperand(MCOperand::CreateReg(Register));
+  return MCDisassembler::Success;
+}
+
+static DecodeStatus DecodeModRegsRegisterClass(MCInst &Inst, unsigned RegNo,
+  uint64_t /*Address*/, const void *Decoder) {
+  unsigned Register = 0;
+  switch (RegNo) {
+  case 0:
+    Register = Hexagon::M0;
+    break;
+  case 1:
+    Register = Hexagon::M1;
+    break;
+  default:
+    return MCDisassembler::Fail;
+  }
   Inst.addOperand(MCOperand::CreateReg(Register));
   return MCDisassembler::Success;
 }

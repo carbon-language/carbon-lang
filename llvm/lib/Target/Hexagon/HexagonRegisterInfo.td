@@ -179,6 +179,9 @@ def PredRegs : RegisterClass<"Hexagon", [i1], 32, (add (sequence "P%u", 0, 3))>
   let Size = 32;
 }
 
+let Size = 32 in
+def ModRegs : RegisterClass<"Hexagon", [i32], 32, (add M0, M1)>;
+
 let Size = 32, isAllocatable = 0 in
 def CtrRegs : RegisterClass<"Hexagon", [i32], 32,
                            (add LC0, SA0, LC1, SA1,

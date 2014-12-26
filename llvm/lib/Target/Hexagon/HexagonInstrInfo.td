@@ -1750,14 +1750,108 @@ def LDriw_pred : LDInst2<(outs PredRegs:$dst),
             "Error; should not emit",
             []>;
 
-// Deallocate stack frame.
-let Defs = [R29, R30, R31], Uses = [R29], hasSideEffects = 0 in {
-  def DEALLOCFRAME : LDInst2<(outs), (ins),
+let Defs = [R29, R30, R31], Uses = [R30], hasSideEffects = 0, isCodeGenOnly = 0 in
+  def L2_deallocframe : LDInst<(outs), (ins),
                      "deallocframe",
-                     []>;
+                     []> {
+    let IClass = 0b1001;
+
+    let Inst{27-16} = 0b000000011110;
+    let Inst{13} = 0b0;
+    let Inst{4-0} = 0b11110;
 }
 
-// Load and unpack bytes to halfwords.
+// Load / Post increment circular addressing mode.
+let Uses = [CS], hasSideEffects = 0, hasNewValue = 1, opNewValue = 0 in
+class T_load_pcr<string mnemonic, RegisterClass RC, bits<4> MajOp>
+  : LDInst <(outs RC:$dst, IntRegs:$_dst_),
+            (ins IntRegs:$Rz, ModRegs:$Mu),
+  "$dst = "#mnemonic#"($Rz ++ I:circ($Mu))", [],
+  "$Rz = $_dst_" > {
+    bits<5> dst;
+    bits<5> Rz;
+    bit Mu;
+
+    let IClass = 0b1001;
+
+    let Inst{27-25} = 0b100;
+    let Inst{24-21} = MajOp;
+    let Inst{20-16} = Rz;
+    let Inst{13} = Mu;
+    let Inst{12} = 0b0;
+    let Inst{9} = 0b1;
+    let Inst{7} = 0b0;
+    let Inst{4-0} = dst;
+ }
+
+let accessSize = ByteAccess, isCodeGenOnly = 0 in {
+  def L2_loadrb_pcr  : T_load_pcr <"memb",  IntRegs, 0b1000>;
+  def L2_loadrub_pcr : T_load_pcr <"memub", IntRegs, 0b1001>;
+}
+
+let accessSize = HalfWordAccess, isCodeGenOnly = 0 in {
+  def L2_loadrh_pcr   : T_load_pcr <"memh",   IntRegs, 0b1010>;
+  def L2_loadruh_pcr  : T_load_pcr <"memuh",  IntRegs, 0b1011>;
+}
+
+let accessSize = WordAccess, isCodeGenOnly = 0 in {
+  def  L2_loadri_pcr  : T_load_pcr <"memw", IntRegs, 0b1100>;
+}
+
+let accessSize = DoubleWordAccess, isCodeGenOnly = 0 in
+def L2_loadrd_pcr  : T_load_pcr <"memd", DoubleRegs, 0b1110>;
+
+//===----------------------------------------------------------------------===//
+// Circular loads with immediate offset.
+//===----------------------------------------------------------------------===//
+let Uses = [CS], mayLoad = 1, hasSideEffects = 0, hasNewValue = 1 in
+class T_load_pci <string mnemonic, RegisterClass RC,
+                  Operand ImmOp, bits<4> MajOp>
+  : LDInstPI<(outs RC:$dst, IntRegs:$_dst_),
+             (ins IntRegs:$Rz, ImmOp:$offset, ModRegs:$Mu),
+  "$dst = "#mnemonic#"($Rz ++ #$offset:circ($Mu))", [],
+  "$Rz = $_dst_"> {
+    bits<5> dst;
+    bits<5> Rz;
+    bits<1> Mu;
+    bits<7> offset;
+    bits<4> offsetBits;
+
+    string ImmOpStr = !cast<string>(ImmOp);
+    let offsetBits = !if (!eq(ImmOpStr, "s4_3Imm"), offset{6-3},
+                     !if (!eq(ImmOpStr, "s4_2Imm"), offset{5-2},
+                     !if (!eq(ImmOpStr, "s4_1Imm"), offset{4-1},
+                                      /* s4_0Imm */ offset{3-0})));
+    let IClass      = 0b1001;
+    let Inst{27-25} = 0b100;
+    let Inst{24-21} = MajOp;
+    let Inst{20-16} = Rz;
+    let Inst{13}    = Mu;
+    let Inst{12}    = 0b0;
+    let Inst{9}     = 0b0;
+    let Inst{8-5}   = offsetBits;
+    let Inst{4-0}   = dst;
+  }
+
+// Byte variants of circ load
+let accessSize = ByteAccess, isCodeGenOnly = 0 in {
+  def L2_loadrb_pci  : T_load_pci <"memb",  IntRegs, s4_0Imm, 0b1000>;
+  def L2_loadrub_pci : T_load_pci <"memub", IntRegs, s4_0Imm, 0b1001>;
+}
+
+// Half word variants of circ load
+let accessSize = HalfWordAccess, isCodeGenOnly = 0 in {
+  def L2_loadrh_pci   : T_load_pci <"memh",   IntRegs, s4_1Imm, 0b1010>;
+  def L2_loadruh_pci  : T_load_pci <"memuh",  IntRegs, s4_1Imm, 0b1011>;
+}
+
+// Word variants of circ load
+let accessSize = WordAccess, isCodeGenOnly = 0 in
+def L2_loadri_pci   : T_load_pci <"memw",   IntRegs,    s4_2Imm, 0b1100>;
+
+let accessSize = DoubleWordAccess, hasNewValue = 0, isCodeGenOnly = 0 in
+def L2_loadrd_pci : T_load_pci <"memd", DoubleRegs, s4_3Imm, 0b1110>;
+
 //===----------------------------------------------------------------------===//
 // LD -
 //===----------------------------------------------------------------------===//

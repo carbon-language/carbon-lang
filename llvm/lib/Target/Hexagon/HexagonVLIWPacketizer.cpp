@@ -564,7 +564,7 @@ bool HexagonPacketizerList::CanPromoteToNewValueStore(
         // if we have mayStore = 1 set on ALLOCFRAME and DEALLOCFRAME,
         // then we don't need this
         PacketSU->getInstr()->getOpcode() == Hexagon::ALLOCFRAME ||
-        PacketSU->getInstr()->getOpcode() == Hexagon::DEALLOCFRAME)
+        PacketSU->getInstr()->getOpcode() == Hexagon::L2_deallocframe)
       return false;
   }
 
