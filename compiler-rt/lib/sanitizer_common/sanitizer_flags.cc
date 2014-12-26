@@ -216,7 +216,7 @@ static bool GetFlagValue(const char *env, const char *name,
       end = internal_strchr(pos, '\'');
     } else {
       // Read until the next space or colon.
-      end = pos + internal_strcspn(pos, " :");
+      end = pos + internal_strcspn(pos, " :\r\n\t");
     }
     if (end == 0)
       end = pos + internal_strlen(pos);

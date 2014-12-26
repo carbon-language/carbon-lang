@@ -81,6 +81,9 @@ TEST(SanitizerCommon, MultipleFlags) {
   TestTwoFlags("flag2='qxx' flag1=0", false, "qxx");
   TestTwoFlags("flag1=false:flag2='zzz'", false, "zzz");
   TestTwoFlags("flag2=qxx:flag1=yes", true, "qxx");
+  TestTwoFlags("flag2=qxx\nflag1=yes", true, "qxx");
+  TestTwoFlags("flag2=qxx\r\nflag1=yes", true, "qxx");
+  TestTwoFlags("flag2=qxx\tflag1=yes", true, "qxx");
 }
 
 TEST(SanitizerCommon, CommonFlags) {
