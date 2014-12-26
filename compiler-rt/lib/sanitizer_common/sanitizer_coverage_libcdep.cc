@@ -87,7 +87,7 @@ class CoverageData {
  private:
   // Maximal size pc array may ever grow.
   // We MmapNoReserve this space to ensure that the array is contiguous.
-  static const uptr kPcArrayMaxSize = FIRST_32_SECOND_64(1 << 22, 1 << 27);
+  static const uptr kPcArrayMaxSize = FIRST_32_SECOND_64(1 << 24, 1 << 27);
   // The amount file mapping for the pc array is grown by.
   static const uptr kPcArrayMmapSize = 64 * 1024;
 
