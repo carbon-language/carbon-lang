@@ -48,6 +48,6 @@ unsigned long long test_pext_u64(unsigned long long __X, unsigned long long __Y)
 unsigned long long test_mulx_u64(unsigned long long __X, unsigned long long __Y,
                                  unsigned long long *__P) {
   // CHECK: @test_mulx_u64
-  // CHECK: mul i128
+  // CHECK: mul nuw i128
   return _mulx_u64(__X, __Y, __P);
 }

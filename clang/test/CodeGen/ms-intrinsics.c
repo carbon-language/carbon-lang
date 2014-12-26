@@ -67,7 +67,7 @@ unsigned __int64 test__umulh(unsigned __int64 a, unsigned __int64 b) {
   return __umulh(a, b);
 }
 // CHECK-X64-LABEL: define i64 @test__umulh(i64 %a, i64 %b)
-// CHECK-X64: = mul i128 %
+// CHECK-X64: = mul nuw i128 %
 
 #endif
 
