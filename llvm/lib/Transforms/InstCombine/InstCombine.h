@@ -382,6 +382,11 @@ public:
                               Instruction *CxtI = nullptr) const {
     return llvm::ComputeNumSignBits(Op, DL, Depth, AT, CxtI, DT);
   }
+  void ComputeSignBit(Value *V, bool &KnownZero, bool &KnownOne,
+                      unsigned Depth = 0, Instruction *CxtI = nullptr) const {
+    return llvm::ComputeSignBit(V, KnownZero, KnownOne, DL, Depth, AT, CxtI,
+                                DT);
+  }
 
 private:
   /// SimplifyAssociativeOrCommutative - This performs a few simplifications for

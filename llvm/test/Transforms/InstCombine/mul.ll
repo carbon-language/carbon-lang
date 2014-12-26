@@ -255,3 +255,15 @@ define i32 @test28(i32 %A) {
 ; CHECK-NEXT: %[[shl2:.*]] = shl i32 %[[shl1]], %A
 ; CHECK-NEXT: ret i32 %[[shl2]]
 }
+
+define i64 @test29(i31 %A, i31 %B) {
+; CHECK-LABEL: @test29(
+        %C = zext i31 %A to i64
+        %D = zext i31 %B to i64
+        %E = mul i64 %C, %D
+        ret i64 %E
+; CHECK:      %[[zext1:.*]] = zext i31 %A to i64
+; CHECK-NEXT: %[[zext2:.*]] = zext i31 %B to i64
+; CHECK-NEXT: %[[mul:.*]] = mul nsw i64 %[[zext1]], %[[zext2]]
+; CHECK-NEXT: ret i64 %[[mul]]
+}
