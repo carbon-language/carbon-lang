@@ -1,4 +1,4 @@
-// Test for direct coverage writing enabled as activation time.
+// Test for direct coverage writing enabled at activation time.
 
 // RUN: %clangxx_asan -fsanitize-coverage=1 -DSHARED %s -shared -o %T/libcoverage_direct_activation_test_1.so -fPIC
 // RUN: %clangxx -c -DSO_DIR=\"%T\" %s -o %t.o
@@ -18,7 +18,19 @@
 // RUN: %sancov print *.sancov >out.txt
 // RUN: cd ../..
 
+// Test start_deactivated=1,coverage=1 in ASAN_OPTIONS.
+
 // RUN: diff -u coverage-direct-activation/normal/out.txt coverage-direct-activation/direct/out.txt
+
+// RUN: mkdir -p %T/coverage-direct-activation/direct2
+// RUN: ASAN_OPTIONS=start_deactivated=1,coverage=1,coverage_direct=1,verbosity=1 \
+// RUN:   ASAN_ACTIVATION_OPTIONS=coverage_dir=%T/coverage-direct-activation/direct2 %run %t
+// RUN: cd %T/coverage-direct-activation/direct2
+// RUN: %sancov rawunpack *.sancov.raw
+// RUN: %sancov print *.sancov >out.txt
+// RUN: cd ../..
+
+// RUN: diff -u coverage-direct-activation/normal/out.txt coverage-direct-activation/direct2/out.txt
 
 // XFAIL: android
 
