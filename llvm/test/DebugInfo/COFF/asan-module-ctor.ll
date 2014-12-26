@@ -13,6 +13,9 @@
 ; X86-NEXT: calll   ___asan_init_v3
 ; X86-NEXT: retl
 
+; Make sure we don't put any DWARF debug info for ASan-instrumented modules.
+; X86-NOT: DWARF
+
 ; ModuleID = 'asan.c'
 target datalayout = "e-m:w-p:32:32-i64:64-f80:32-n8:16:32-S32"
 target triple = "i686-pc-win32"
