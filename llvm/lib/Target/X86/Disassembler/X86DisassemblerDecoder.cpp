@@ -1453,8 +1453,6 @@ static int readModRM(struct InternalInstruction* insn) {
         *valid = 0;                                       \
       return prefix##_ES + index;                         \
     case TYPE_DEBUGREG:                                   \
-      if (index > 7)                                      \
-        *valid = 0;                                       \
       return prefix##_DR0 + index;                        \
     case TYPE_CONTROLREG:                                 \
       return prefix##_CR0 + index;                        \

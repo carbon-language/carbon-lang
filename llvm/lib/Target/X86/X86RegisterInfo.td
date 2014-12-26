@@ -263,14 +263,22 @@ def FS : X86Reg<"fs", 4>;
 def GS : X86Reg<"gs", 5>;
 
 // Debug registers
-def DR0 : X86Reg<"dr0", 0>;
-def DR1 : X86Reg<"dr1", 1>;
-def DR2 : X86Reg<"dr2", 2>;
-def DR3 : X86Reg<"dr3", 3>;
-def DR4 : X86Reg<"dr4", 4>;
-def DR5 : X86Reg<"dr5", 5>;
-def DR6 : X86Reg<"dr6", 6>;
-def DR7 : X86Reg<"dr7", 7>;
+def DR0  : X86Reg<"dr0",   0>;
+def DR1  : X86Reg<"dr1",   1>;
+def DR2  : X86Reg<"dr2",   2>;
+def DR3  : X86Reg<"dr3",   3>;
+def DR4  : X86Reg<"dr4",   4>;
+def DR5  : X86Reg<"dr5",   5>;
+def DR6  : X86Reg<"dr6",   6>;
+def DR7  : X86Reg<"dr7",   7>;
+def DR8  : X86Reg<"dr8",   8>;
+def DR9  : X86Reg<"dr9",   9>;
+def DR10 : X86Reg<"dr10", 10>;
+def DR11 : X86Reg<"dr11", 11>;
+def DR12 : X86Reg<"dr12", 12>;
+def DR13 : X86Reg<"dr13", 13>;
+def DR14 : X86Reg<"dr14", 14>;
+def DR15 : X86Reg<"dr15", 15>;
 
 // Control registers
 def CR0  : X86Reg<"cr0",   0>;

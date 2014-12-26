@@ -341,7 +341,15 @@ namespace X86Disassembler {
   ENTRY(DR4)        \
   ENTRY(DR5)        \
   ENTRY(DR6)        \
-  ENTRY(DR7)
+  ENTRY(DR7)        \
+  ENTRY(DR8)        \
+  ENTRY(DR9)        \
+  ENTRY(DR10)       \
+  ENTRY(DR11)       \
+  ENTRY(DR12)       \
+  ENTRY(DR13)       \
+  ENTRY(DR14)       \
+  ENTRY(DR15)
 
 #define REGS_CONTROL  \
   ENTRY(CR0)          \

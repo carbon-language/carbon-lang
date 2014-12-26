@@ -58,6 +58,8 @@
 # Test that we can disassembler control registers above CR8
 # CHECK: movq %cr15, %rax
 0x44 0x0f 0x20 0xf8
+# CHECK: movq %dr15, %rax
+0x44 0x0f 0x21 0xf8
 
 # Test that MMX ignore REX.R and REX.B.
 # CHECK: movq %mm0, %mm1
