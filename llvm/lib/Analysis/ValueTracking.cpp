@@ -1768,7 +1768,7 @@ unsigned ComputeNumSignBits(Value *V, const DataLayout *TD,
     if (Tmp == 1) return 1;  // Early out.
 
     // Special case decrementing a value (ADD X, -1):
-    if (ConstantInt *CRHS = dyn_cast<ConstantInt>(U->getOperand(1)))
+    if (const auto *CRHS = dyn_cast<Constant>(U->getOperand(1)))
       if (CRHS->isAllOnesValue()) {
         APInt KnownZero(TyBits, 0), KnownOne(TyBits, 0);
         computeKnownBits(U->getOperand(0), KnownZero, KnownOne, TD, Depth+1, Q);
@@ -1793,7 +1793,7 @@ unsigned ComputeNumSignBits(Value *V, const DataLayout *TD,
     if (Tmp2 == 1) return 1;
 
     // Handle NEG.
-    if (ConstantInt *CLHS = dyn_cast<ConstantInt>(U->getOperand(0)))
+    if (const auto *CLHS = dyn_cast<Constant>(U->getOperand(0)))
       if (CLHS->isNullValue()) {
         APInt KnownZero(TyBits, 0), KnownOne(TyBits, 0);
         computeKnownBits(U->getOperand(1), KnownZero, KnownOne, TD, Depth+1, Q);
