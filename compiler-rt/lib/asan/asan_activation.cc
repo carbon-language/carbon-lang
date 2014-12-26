@@ -37,6 +37,8 @@ static struct AsanDeactivatedFlags {
     allocator_options.CopyTo(&f, &cf);
     cf.malloc_context_size = malloc_context_size;
     f.poison_heap = poison_heap;
+    cf.coverage = coverage;
+    cf.coverage_dir = coverage_dir;
 
     // Check if activation flags need to be overriden.
     // FIXME: Add diagnostic to check that activation flags string doesn't
