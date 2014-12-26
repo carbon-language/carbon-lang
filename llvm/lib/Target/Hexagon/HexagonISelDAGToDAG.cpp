@@ -595,17 +595,17 @@ SDNode *HexagonDAGToDAGISel::SelectIndexedLoad(LoadSDNode *LD, SDLoc dl) {
       TM.getSubtargetImpl()->getInstrInfo());
   if (LoadedVT == MVT::i64) {
     if (TII->isValidAutoIncImm(LoadedVT, Val))
-      Opcode = Hexagon::POST_LDrid;
+      Opcode = Hexagon::L2_loadrd_pi;
     else
       Opcode = Hexagon::L2_loadrd_io;
   } else if (LoadedVT == MVT::i32) {
     if (TII->isValidAutoIncImm(LoadedVT, Val))
-      Opcode = Hexagon::POST_LDriw;
+      Opcode = Hexagon::L2_loadri_pi;
     else
       Opcode = Hexagon::L2_loadri_io;
   } else if (LoadedVT == MVT::i16) {
     if (TII->isValidAutoIncImm(LoadedVT, Val))
-      Opcode = zextval ? Hexagon::POST_LDriuh : Hexagon::POST_LDrih;
+      Opcode = zextval ? Hexagon::L2_loadruh_pi : Hexagon::L2_loadrh_pi;
     else
       Opcode = zextval ? Hexagon::L2_loadruh_io : Hexagon::L2_loadrh_io;
   } else if (LoadedVT == MVT::i8) {

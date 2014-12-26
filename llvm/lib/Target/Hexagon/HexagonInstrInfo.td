@@ -1701,55 +1701,19 @@ let accessSize = ByteAccess, isCodeGenOnly = 0 in {
   defm loadrub : LD_PostInc <"memub", "LDriub", IntRegs, s4_0Imm, 0b1001>;
 }
 
-multiclass LD_PostInc_Pbase<string mnemonic, RegisterClass RC, Operand ImmOp,
-                            bit isNot, bit isPredNew> {
-  let isPredicatedNew = isPredNew in
-  def NAME : LDInst2PI<(outs RC:$dst, IntRegs:$dst2),
-                       (ins PredRegs:$src1, IntRegs:$src2, ImmOp:$offset),
-            !if(isNot, "if (!$src1", "if ($src1")#!if(isPredNew, ".new) ",
-            ") ")#"$dst = "#mnemonic#"($src2++#$offset)",
-            [],
-            "$src2 = $dst2">;
+// post increment halfword loads with immediate offset
+let accessSize = HalfWordAccess, opExtentAlign = 1, isCodeGenOnly = 0 in {
+  defm loadrh  : LD_PostInc <"memh",  "LDrih", IntRegs, s4_1Imm, 0b1010>;
+  defm loadruh : LD_PostInc <"memuh", "LDriuh", IntRegs, s4_1Imm, 0b1011>;
 }
 
-multiclass LD_PostInc_Pred<string mnemonic, RegisterClass RC,
-                           Operand ImmOp, bit PredNot> {
-  let isPredicatedFalse = PredNot in {
-    defm _c#NAME : LD_PostInc_Pbase<mnemonic, RC, ImmOp, PredNot, 0>;
-    // Predicate new
-    let Predicates = [HasV4T], validSubTargets = HasV4SubT in
-    defm _cdn#NAME#_V4 : LD_PostInc_Pbase<mnemonic, RC, ImmOp, PredNot, 1>;
-  }
-}
+// post increment word loads with immediate offset
+let accessSize = WordAccess, opExtentAlign = 2, isCodeGenOnly = 0 in
+defm loadri : LD_PostInc <"memw", "LDriw", IntRegs, s4_2Imm, 0b1100>;
 
-multiclass LD_PostInc2<string mnemonic, string BaseOp, RegisterClass RC,
-                      Operand ImmOp> {
-
-  let BaseOpcode = "POST_"#BaseOp in {
-    let isPredicable = 1 in
-    def NAME : LDInst2PI<(outs RC:$dst, IntRegs:$dst2),
-                         (ins IntRegs:$src1, ImmOp:$offset),
-                 "$dst = "#mnemonic#"($src1++#$offset)",
-                 [],
-                 "$src1 = $dst2">;
-
-    let isPredicated = 1 in {
-      defm Pt : LD_PostInc_Pred<mnemonic, RC, ImmOp, 0 >;
-      defm NotPt : LD_PostInc_Pred<mnemonic, RC, ImmOp, 1 >;
-    }
-  }
-}
-
-let hasCtrlDep = 1, hasSideEffects = 0, addrMode = PostInc in {
-  defm POST_LDrih : LD_PostInc2<"memh", "LDrih", IntRegs, s4_1Imm>,
-                    PredNewRel;
-  defm POST_LDriuh : LD_PostInc2<"memuh", "LDriuh", IntRegs, s4_1Imm>,
-                    PredNewRel;
-  defm POST_LDriw : LD_PostInc2<"memw", "LDriw", IntRegs, s4_2Imm>,
-                    PredNewRel;
-  defm POST_LDrid : LD_PostInc2<"memd", "LDrid", DoubleRegs, s4_3Imm>,
-                    PredNewRel;
-}
+// post increment doubleword loads with immediate offset
+let accessSize = DoubleWordAccess, opExtentAlign = 3, isCodeGenOnly = 0 in
+defm loadrd : LD_PostInc <"memd", "LDrid", DoubleRegs, s4_3Imm, 0b1110>;
 
 def : Pat< (i32 (extloadi1 ADDRriS11_0:$addr)),
            (i32 (L2_loadrb_io AddrFI:$addr, 0)) >;

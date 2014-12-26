@@ -684,14 +684,14 @@ bool HexagonInstrInfo::isPredicable(MachineInstr *MI) const {
   case Hexagon::L2_loadrub_io:
     return isUInt<6>(MI->getOperand(2).getImm());
 
-  case Hexagon::POST_LDrid:
+  case Hexagon::L2_loadrd_pi:
     return isShiftedInt<4,3>(MI->getOperand(3).getImm());
 
-  case Hexagon::POST_LDriw:
+  case Hexagon::L2_loadri_pi:
     return isShiftedInt<4,2>(MI->getOperand(3).getImm());
 
-  case Hexagon::POST_LDrih:
-  case Hexagon::POST_LDriuh:
+  case Hexagon::L2_loadrh_pi:
+  case Hexagon::L2_loadruh_pi:
     return isShiftedInt<4,1>(MI->getOperand(3).getImm());
 
   case Hexagon::L2_loadrb_pi:
@@ -1357,16 +1357,16 @@ isConditionalLoad (const MachineInstr* MI) const {
     case Hexagon::L2_ploadrubt_io:
     case Hexagon::L2_ploadrubf_io:
       return true;
-    case Hexagon::POST_LDrid_cPt :
-    case Hexagon::POST_LDrid_cNotPt :
-    case Hexagon::POST_LDriw_cPt :
-    case Hexagon::POST_LDriw_cNotPt :
-    case Hexagon::POST_LDrih_cPt :
-    case Hexagon::POST_LDrih_cNotPt :
+    case Hexagon::L2_ploadrdt_pi :
+    case Hexagon::L2_ploadrdf_pi :
+    case Hexagon::L2_ploadrit_pi :
+    case Hexagon::L2_ploadrif_pi :
+    case Hexagon::L2_ploadrht_pi :
+    case Hexagon::L2_ploadrhf_pi :
     case Hexagon::L2_ploadrbt_pi :
     case Hexagon::L2_ploadrbf_pi :
-    case Hexagon::POST_LDriuh_cPt :
-    case Hexagon::POST_LDriuh_cNotPt :
+    case Hexagon::L2_ploadruht_pi :
+    case Hexagon::L2_ploadruhf_pi :
     case Hexagon::L2_ploadrubt_pi :
     case Hexagon::L2_ploadrubf_pi :
       return QRI.Subtarget.hasV4TOps();
