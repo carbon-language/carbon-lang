@@ -58,15 +58,12 @@ static atomic_uintptr_t coverage_counter;
 static bool cov_sandboxed = false;
 static int cov_fd = kInvalidFd;
 static unsigned int cov_max_block_size = 0;
-static bool coverage_enabled = false;
-static const char *coverage_dir;
 
 namespace __sanitizer {
 
 class CoverageData {
  public:
   void Init();
-  void ReInit();
   void BeforeFork();
   void AfterFork(int child_pid);
   void Extend(uptr npcs);
@@ -133,16 +130,15 @@ class CoverageData {
   StaticSpinMutex mu;
 
   void DirectOpen();
+  void ReInit();
 };
 
 static CoverageData coverage_data;
 
-void CovUpdateMapping(const char *path, uptr caller_pc = 0);
-
 void CoverageData::DirectOpen() {
   InternalScopedString path(kMaxPathLength);
   internal_snprintf((char *)path.data(), path.size(), "%s/%zd.sancov.raw",
-                    coverage_dir, internal_getpid());
+                    common_flags()->coverage_dir, internal_getpid());
   pc_fd = OpenFile(path.data(), true);
   if (internal_iserror(pc_fd)) {
     Report(" Coverage: failed to open %s for writing\n", path.data());
@@ -150,7 +146,7 @@ void CoverageData::DirectOpen() {
   }
 
   pc_array_mapped_size = 0;
-  CovUpdateMapping(coverage_dir);
+  CovUpdateMapping();
 }
 
 void CoverageData::Init() {
@@ -182,22 +178,16 @@ void CoverageData::Init() {
 }
 
 void CoverageData::ReInit() {
-  if (pc_array) {
-    internal_munmap(pc_array, sizeof(uptr) * kPcArrayMaxSize);
-    pc_array = nullptr;
-  }
+  internal_munmap(pc_array, sizeof(uptr) * kPcArrayMaxSize);
   if (pc_fd != kInvalidFd) internal_close(pc_fd);
-  if (coverage_enabled) {
-    if (common_flags()->coverage_direct) {
-      // In memory-mapped mode we must extend the new file to the known array
-      // size.
-      uptr size = atomic_load(&pc_array_size, memory_order_relaxed);
-      Init();
-      if (size) Extend(size);
-      if (coverage_enabled) CovUpdateMapping(coverage_dir);
-    } else {
-      Init();
-    }
+  if (common_flags()->coverage_direct) {
+    // In memory-mapped mode we must extend the new file to the known array
+    // size.
+    uptr size = atomic_load(&pc_array_size, memory_order_relaxed);
+    Init();
+    if (size) Extend(size);
+  } else {
+    Init();
   }
 }
 
@@ -216,13 +206,13 @@ void CoverageData::Extend(uptr npcs) {
   if (!common_flags()->coverage_direct) return;
   SpinMutexLock l(&mu);
 
+  if (pc_fd == kInvalidFd) DirectOpen();
+  CHECK_NE(pc_fd, kInvalidFd);
+
   uptr size = atomic_load(&pc_array_size, memory_order_relaxed);
   size += npcs * sizeof(uptr);
 
-  if (coverage_enabled && size > pc_array_mapped_size) {
-    if (pc_fd == kInvalidFd) DirectOpen();
-    CHECK_NE(pc_fd, kInvalidFd);
-
+  if (size > pc_array_mapped_size) {
     uptr new_mapped_size = pc_array_mapped_size;
     while (size > new_mapped_size) new_mapped_size += kPcArrayMmapSize;
     CHECK_LE(new_mapped_size, sizeof(uptr) * kPcArrayMaxSize);
@@ -371,14 +361,15 @@ static int CovOpenFile(bool packed, const char *name,
   InternalScopedString path(kMaxPathLength);
   if (!packed) {
     CHECK(name);
-    path.append("%s/%s.%zd.%s", coverage_dir, name, internal_getpid(),
-                extension);
+    path.append("%s/%s.%zd.%s", common_flags()->coverage_dir, name,
+                internal_getpid(), extension);
   } else {
     if (!name)
-      path.append("%s/%zd.%s.packed", coverage_dir, internal_getpid(),
-                  extension);
+      path.append("%s/%zd.%s.packed", common_flags()->coverage_dir,
+                  internal_getpid(), extension);
     else
-      path.append("%s/%s.%s.packed", coverage_dir, name, extension);
+      path.append("%s/%s.%s.packed", common_flags()->coverage_dir, name,
+                  extension);
   }
   uptr fd = OpenFile(path.data(), true);
   if (internal_iserror(fd)) {
@@ -464,7 +455,7 @@ void CoverageData::DumpCallerCalleePairs() {
 // Every event is a u32 value (index in tr_pc_array_index) so we compute
 // it once and then cache in the provided 'cache' storage.
 void CoverageData::TraceBasicBlock(uptr *cache) {
-  CHECK(coverage_enabled);
+  CHECK(common_flags()->coverage);
   uptr idx = *cache;
   if (!idx) {
     CHECK_LT(tr_pc_array_index, kTrPcArrayMaxSize);
@@ -501,7 +492,7 @@ static void CovDumpAsBitSet() {
 
 // Dump the coverage on disk.
 static void CovDump() {
-  if (!coverage_enabled || common_flags()->coverage_direct) return;
+  if (!common_flags()->coverage || common_flags()->coverage_direct) return;
 #if !SANITIZER_WINDOWS
   if (atomic_fetch_add(&dump_once_guard, 1, memory_order_relaxed))
     return;
@@ -541,8 +532,8 @@ static void CovDump() {
       } else {
         // One file per module per process.
         path.clear();
-        path.append("%s/%s.%zd.sancov", coverage_dir, module_name,
-                    internal_getpid());
+        path.append("%s/%s.%zd.sancov", common_flags()->coverage_dir,
+                    module_name, internal_getpid());
         int fd = CovOpenFile(false /* packed */, module_name);
         if (fd > 0) {
           internal_write(fd, offsets.data(), offsets.size() * sizeof(u32));
@@ -562,7 +553,7 @@ static void CovDump() {
 
 void CovPrepareForSandboxing(__sanitizer_sandbox_arguments *args) {
   if (!args) return;
-  if (!coverage_enabled) return;
+  if (!common_flags()->coverage) return;
   cov_sandboxed = args->coverage_sandboxed;
   if (!cov_sandboxed) return;
   cov_fd = args->coverage_fd;
@@ -574,7 +565,7 @@ void CovPrepareForSandboxing(__sanitizer_sandbox_arguments *args) {
 
 int MaybeOpenCovFile(const char *name) {
   CHECK(name);
-  if (!coverage_enabled) return -1;
+  if (!common_flags()->coverage) return -1;
   return CovOpenFile(true /* packed */, name);
 }
 
@@ -584,26 +575,6 @@ void CovBeforeFork() {
 
 void CovAfterFork(int child_pid) {
   coverage_data.AfterFork(child_pid);
-}
-
-void InitializeCoverage(bool enabled, const char *dir) {
-  coverage_enabled = enabled;
-  coverage_dir = dir;
-  if (enabled) coverage_data.Init();
-#if !SANITIZER_WINDOWS
-  if (!common_flags()->coverage_direct) Atexit(__sanitizer_cov_dump);
-#endif
-}
-
-void ReInitializeCoverage(bool enabled, const char *dir) {
-  coverage_enabled = enabled;
-  coverage_dir = dir;
-  coverage_data.ReInit();
-}
-
-void CoverageUpdateMapping() {
-  if (coverage_enabled)
-    CovUpdateMapping(coverage_dir);
 }
 
 }  // namespace __sanitizer
@@ -618,20 +589,19 @@ __sanitizer_cov_indir_call16(uptr callee, uptr callee_cache16[]) {
   coverage_data.IndirCall(StackTrace::GetPreviousInstructionPc(GET_CALLER_PC()),
                           callee, callee_cache16, 16);
 }
+SANITIZER_INTERFACE_ATTRIBUTE void __sanitizer_cov_dump() { CovDump(); }
 SANITIZER_INTERFACE_ATTRIBUTE void __sanitizer_cov_init() {
-  coverage_enabled = true;
-  coverage_dir = common_flags()->coverage_dir;
   coverage_data.Init();
 }
-SANITIZER_INTERFACE_ATTRIBUTE void __sanitizer_cov_dump() { CovDump(); }
 SANITIZER_INTERFACE_ATTRIBUTE void __sanitizer_cov_module_init(s32 **guards,
                                                                uptr npcs) {
   coverage_data.InitializeGuards(guards, npcs);
-  if (!common_flags()->coverage_direct) return;
-  if (SANITIZER_ANDROID && coverage_enabled) {
+  if (!common_flags()->coverage || !common_flags()->coverage_direct)
+    return;
+  if (SANITIZER_ANDROID) {
     // dlopen/dlclose interceptors do not work on Android, so we rely on
     // Extend() calls to update .sancov.map.
-    CovUpdateMapping(coverage_dir, GET_CALLER_PC());
+    CovUpdateMapping(GET_CALLER_PC());
   }
   coverage_data.Extend(npcs);
 }

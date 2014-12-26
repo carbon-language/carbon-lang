@@ -62,8 +62,8 @@ struct CachedMapping {
 static CachedMapping cached_mapping;
 static StaticSpinMutex mapping_mu;
 
-void CovUpdateMapping(const char *coverage_dir, uptr caller_pc) {
-  if (!common_flags()->coverage_direct) return;
+void CovUpdateMapping(uptr caller_pc) {
+  if (!common_flags()->coverage || !common_flags()->coverage_direct) return;
 
   SpinMutexLock l(&mapping_mu);
 
@@ -92,10 +92,11 @@ void CovUpdateMapping(const char *coverage_dir, uptr caller_pc) {
   }
 
   int err;
-  InternalScopedString tmp_path(64 + internal_strlen(coverage_dir));
+  InternalScopedString tmp_path(64 +
+                                internal_strlen(common_flags()->coverage_dir));
   uptr res = internal_snprintf((char *)tmp_path.data(), tmp_path.size(),
-                               "%s/%zd.sancov.map.tmp", coverage_dir,
-                               internal_getpid());
+                    "%s/%zd.sancov.map.tmp", common_flags()->coverage_dir,
+                    internal_getpid());
   CHECK_LE(res, tmp_path.size());
   uptr map_fd = OpenFile(tmp_path.data(), true);
   if (internal_iserror(map_fd, &err)) {
@@ -111,9 +112,9 @@ void CovUpdateMapping(const char *coverage_dir, uptr caller_pc) {
   }
   internal_close(map_fd);
 
-  InternalScopedString path(64 + internal_strlen(coverage_dir));
+  InternalScopedString path(64 + internal_strlen(common_flags()->coverage_dir));
   res = internal_snprintf((char *)path.data(), path.size(), "%s/%zd.sancov.map",
-                          coverage_dir, internal_getpid());
+                    common_flags()->coverage_dir, internal_getpid());
   CHECK_LE(res, path.size());
   res = internal_rename(tmp_path.data(), path.data());
   if (internal_iserror(res, &err)) {

@@ -377,7 +377,10 @@ void __msan_init() {
 
   Symbolizer::GetOrInit()->AddHooks(EnterSymbolizer, ExitSymbolizer);
 
-  InitializeCoverage(common_flags()->coverage, common_flags()->coverage_dir);
+  if (common_flags()->coverage) {
+    __sanitizer_cov_init();
+    Atexit(__sanitizer_cov_dump);
+  }
 
   MsanTSDInit(MsanTSDDtor);
 
