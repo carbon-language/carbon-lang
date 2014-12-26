@@ -1852,6 +1852,25 @@ def L2_loadri_pci   : T_load_pci <"memw",   IntRegs,    s4_2Imm, 0b1100>;
 let accessSize = DoubleWordAccess, hasNewValue = 0, isCodeGenOnly = 0 in
 def L2_loadrd_pci : T_load_pci <"memd", DoubleRegs, s4_3Imm, 0b1110>;
 
+// L[24]_load[wd]_locked: Load word/double with lock.
+let isSoloAX = 1 in
+class T_load_locked <string mnemonic, RegisterClass RC>
+  : LD0Inst <(outs RC:$dst),
+             (ins IntRegs:$src),
+    "$dst = "#mnemonic#"($src)"> {
+    bits<5> dst;
+    bits<5> src;
+    let IClass = 0b1001;
+    let Inst{27-21} = 0b0010000;
+    let Inst{20-16} = src;
+    let Inst{13-12} = !if (!eq(mnemonic, "memd_locked"), 0b01, 0b00);
+    let Inst{4-0} = dst;
+}
+let hasNewValue = 1, accessSize = WordAccess, opNewValue = 0, isCodeGenOnly = 0 in
+  def L2_loadw_locked : T_load_locked <"memw_locked", IntRegs>;
+let accessSize = DoubleWordAccess, isCodeGenOnly = 0 in
+  def L4_loadd_locked : T_load_locked <"memd_locked", DoubleRegs>;
+
 //===----------------------------------------------------------------------===//
 // LD -
 //===----------------------------------------------------------------------===//
