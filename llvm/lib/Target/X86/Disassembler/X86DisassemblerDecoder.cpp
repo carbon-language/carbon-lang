@@ -1737,12 +1737,6 @@ static int readOperands(struct InternalInstruction* insn) {
       }
       if (readImmediate(insn, 1))
         return -1;
-      if (Op.type == TYPE_IMM3 &&
-          insn->immediates[insn->numImmediatesConsumed - 1] > 7)
-        return -1;
-      if (Op.type == TYPE_IMM5 &&
-          insn->immediates[insn->numImmediatesConsumed - 1] > 31)
-        return -1;
       if (Op.type == TYPE_XMM128 ||
           Op.type == TYPE_XMM256)
         sawRegImm = 1;
