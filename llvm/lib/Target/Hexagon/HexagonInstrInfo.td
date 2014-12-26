@@ -1742,6 +1742,43 @@ let AddedComplexity = 20 in
 def : Pat < (i32 (zextloadi1 (add IntRegs:$src1, s11_0ImmPred:$offset))),
             (i32 (L2_loadrub_io IntRegs:$src1, s11_0ImmPred:$offset))>;
 
+//===----------------------------------------------------------------------===//
+// Template class for post increment loads with register offset.
+//===----------------------------------------------------------------------===//
+let hasSideEffects = 0, addrMode = PostInc in
+class T_load_pr <string mnemonic, RegisterClass RC, bits<4> MajOp,
+                       MemAccessSize AccessSz>
+  : LDInstPI <(outs RC:$dst, IntRegs:$_dst_),
+              (ins IntRegs:$src1, ModRegs:$src2),
+  "$dst = "#mnemonic#"($src1++$src2)" ,
+  [], "$src1 = $_dst_" > {
+    bits<5> dst;
+    bits<5> src1;
+    bits<1> src2;
+
+    let accessSize = AccessSz;
+    let IClass = 0b1001;
+
+    let Inst{27-25} = 0b110;
+    let Inst{24-21} = MajOp;
+    let Inst{20-16} = src1;
+    let Inst{13}    = src2;
+    let Inst{12}    = 0b0;
+    let Inst{7}     = 0b0;
+    let Inst{4-0}   = dst;
+  }
+
+let hasNewValue = 1, isCodeGenOnly = 0 in {
+  def L2_loadrb_pr  : T_load_pr <"memb",  IntRegs, 0b1000, ByteAccess>;
+  def L2_loadrub_pr : T_load_pr <"memub", IntRegs, 0b1001, ByteAccess>;
+  def L2_loadrh_pr  : T_load_pr <"memh",  IntRegs, 0b1010, HalfWordAccess>;
+  def L2_loadruh_pr : T_load_pr <"memuh", IntRegs, 0b1011, HalfWordAccess>;
+  def L2_loadri_pr  : T_load_pr <"memw",  IntRegs, 0b1100, WordAccess>;
+}
+
+let isCodeGenOnly = 0 in
+def L2_loadrd_pr   : T_load_pr <"memd", DoubleRegs, 0b1110, DoubleWordAccess>;
+
 // Load predicate.
 let isExtendable = 1, opExtendable = 2, isExtentSigned = 1, opExtentBits = 13,
 isPseudo = 1, Defs = [R10,R11,D5], hasSideEffects = 0 in
@@ -1870,6 +1907,45 @@ let hasNewValue = 1, accessSize = WordAccess, opNewValue = 0, isCodeGenOnly = 0 
   def L2_loadw_locked : T_load_locked <"memw_locked", IntRegs>;
 let accessSize = DoubleWordAccess, isCodeGenOnly = 0 in
   def L4_loadd_locked : T_load_locked <"memd_locked", DoubleRegs>;
+//===----------------------------------------------------------------------===//
+// Bit-reversed loads with auto-increment register
+//===----------------------------------------------------------------------===//
+let hasSideEffects = 0 in
+class T_load_pbr<string mnemonic, RegisterClass RC,
+                            MemAccessSize addrSize, bits<4> majOp>
+  : LDInst
+    <(outs RC:$dst, IntRegs:$_dst_),
+     (ins IntRegs:$Rz, ModRegs:$Mu),
+     "$dst = "#mnemonic#"($Rz ++ $Mu:brev)" ,
+      [] , "$Rz = $_dst_" > {
+
+      let accessSize = addrSize;
+
+      bits<5> dst;
+      bits<5> Rz;
+      bits<1> Mu;
+
+      let IClass = 0b1001;
+
+      let Inst{27-25} = 0b111;
+      let Inst{24-21} = majOp;
+      let Inst{20-16} = Rz;
+      let Inst{13} = Mu;
+      let Inst{12} = 0b0;
+      let Inst{7} = 0b0;
+      let Inst{4-0} = dst;
+  }
+
+let hasNewValue =1, opNewValue = 0, isCodeGenOnly = 0 in {
+  def L2_loadrb_pbr   : T_load_pbr <"memb",  IntRegs, ByteAccess, 0b1000>;
+  def L2_loadrub_pbr  : T_load_pbr <"memub", IntRegs, ByteAccess, 0b1001>;
+  def L2_loadrh_pbr   : T_load_pbr <"memh",  IntRegs, HalfWordAccess, 0b1010>;
+  def L2_loadruh_pbr  : T_load_pbr <"memuh", IntRegs, HalfWordAccess, 0b1011>;
+  def L2_loadri_pbr : T_load_pbr <"memw", IntRegs, WordAccess, 0b1100>;
+}
+
+let isCodeGenOnly = 0 in
+def L2_loadrd_pbr : T_load_pbr <"memd", DoubleRegs, DoubleWordAccess, 0b1110>;
 
 //===----------------------------------------------------------------------===//
 // LD -
