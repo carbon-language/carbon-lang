@@ -165,9 +165,9 @@ public:
     }
 
     unsigned ChooseFrameReg(MVT::SimpleValueType VT) const {
-      static const unsigned Candidates[] = { X86::RBP, X86::RAX, X86::RBX,
-                                             X86::RCX, X86::RDX, X86::RDI,
-                                             X86::RSI };
+      static const MCPhysReg Candidates[] = { X86::RBP, X86::RAX, X86::RBX,
+                                              X86::RCX, X86::RDX, X86::RDI,
+                                              X86::RSI };
       for (unsigned Reg : Candidates) {
         if (!std::count(BusyRegs.begin(), BusyRegs.end(), Reg))
           return convReg(Reg, VT);
