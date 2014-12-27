@@ -553,6 +553,10 @@ def AVXCC : Operand<i8> {
 def i8immZExt5 : ImmLeaf<i8, [{
   return Imm >= 0 && Imm < 32;
 }]>;
+// AVX-512 uses a 32-bit immediate in their intrinsics
+def i32immZExt5 : ImmLeaf<i32, [{
+  return Imm >= 0 && Imm < 32;
+}]>;
 
 class ImmSExtAsmOperandClass : AsmOperandClass {
   let SuperClasses = [ImmAsmOperand];
