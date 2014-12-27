@@ -2249,7 +2249,7 @@ void Sema::addMethodToGlobalList(ObjCMethodList *List,
     // Propagate the 'defined' bit.
     if (Method->isDefined())
       PrevObjCMethod->setDefined(true);
-    else if (!PrevObjCMethod->isDefined()) {
+    else {
       // Objective-C doesn't allow an @interface for a class after its
       // @implementation. So if Method is not defined and there already is
       // an entry for this type signature, Method has to be for a different

@@ -263,11 +263,24 @@ const char * func() {
 @end
 
 @interface InterfaceWithSameMethodAsUndeclaredImpl
-- (void)partiallyUnavailableMethod __attribute__((unavailable));  // expected-note{{explicitly marked unavailable here}}
+- (void)partiallyUnavailableMethod __attribute__((unavailable));
 @end
 
 void f(id a) {
-  // FIXME: Warning on this looks incorrect, since `a` could be an
-  // UndeclaredImpl object, where this method isn't inavailable.
-  [a partiallyUnavailableMethod]; // expected-error{{is unavailable}}
+  [a partiallyUnavailableMethod]; // no warning, `a` could be an UndeclaredImpl.
+}
+
+@interface InterfaceWithImplementation
+- (void)anotherPartiallyUnavailableMethod;
+@end
+@implementation InterfaceWithImplementation
+- (void)anotherPartiallyUnavailableMethod {}
+@end
+
+@interface InterfaceWithSameMethodAsInterfaceWithImplementation
+- (void)anotherPartiallyUnavailableMethod __attribute__((unavailable));
+@end
+
+void g(id a) {
+  [a anotherPartiallyUnavailableMethod]; // no warning, `a` could be an InterfaceWithImplementation.
 }
