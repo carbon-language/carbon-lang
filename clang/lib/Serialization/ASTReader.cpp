@@ -3457,7 +3457,7 @@ static void moveMethodToBackOfGlobalList(Sema &S, ObjCMethodDecl *Method) {
   bool Found = false;
   for (ObjCMethodList *List = &Start; List; List = List->getNext()) {
     if (!Found) {
-      if (List->Method == Method) {
+      if (List->getMethod() == Method) {
         Found = true;
       } else {
         // Keep searching.
@@ -3466,9 +3466,9 @@ static void moveMethodToBackOfGlobalList(Sema &S, ObjCMethodDecl *Method) {
     }
 
     if (List->getNext())
-      List->Method = List->getNext()->Method;
+      List->setMethod(List->getNext()->getMethod());
     else
-      List->Method = Method;
+      List->setMethod(Method);
   }
 }
 
@@ -7065,11 +7065,11 @@ namespace clang { namespace serialization {
     SmallVector<ObjCMethodDecl *, 4> FactoryMethods;
 
   public:
-    ReadMethodPoolVisitor(ASTReader &Reader, Selector Sel, 
+    ReadMethodPoolVisitor(ASTReader &Reader, Selector Sel,
                           unsigned PriorGeneration)
-      : Reader(Reader), Sel(Sel), PriorGeneration(PriorGeneration),
-        InstanceBits(0), FactoryBits(0) { }
-    
+        : Reader(Reader), Sel(Sel), PriorGeneration(PriorGeneration),
+          InstanceBits(0), FactoryBits(0) {}
+
     static bool visit(ModuleFile &M, void *UserData) {
       ReadMethodPoolVisitor *This
         = static_cast<ReadMethodPoolVisitor *>(UserData);

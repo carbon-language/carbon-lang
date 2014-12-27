@@ -987,7 +987,7 @@ static bool HelperToDiagnoseMismatchedMethodsInGlobalPool(Sema &S,
   ObjCMethodList *M = &MethList;
   bool Warned = false;
   for (M = M->getNext(); M; M=M->getNext()) {
-    ObjCMethodDecl *MatchingMethodDecl = M->Method;
+    ObjCMethodDecl *MatchingMethodDecl = M->getMethod();
     if (MatchingMethodDecl == Method ||
         isa<ObjCImplDecl>(MatchingMethodDecl->getDeclContext()) ||
         MatchingMethodDecl->getSelector() != Method->getSelector())
@@ -2458,8 +2458,9 @@ ExprResult Sema::BuildInstanceMessage(Expr *Receiver,
     } else if (ReceiverType->isObjCClassType() ||
                ReceiverType->isObjCQualifiedClassType()) {
       // Handle messages to Class.
-      // We allow sending a message to a qualified Class ("Class<foo>"), which 
-      // is ok as long as one of the protocols implements the selector (if not, warn).
+      // We allow sending a message to a qualified Class ("Class<foo>"), which
+      // is ok as long as one of the protocols implements the selector (if not,
+      // warn).
       if (const ObjCObjectPointerType *QClassTy 
             = ReceiverType->getAsObjCQualifiedClassType()) {
         // Search protocols for class methods.

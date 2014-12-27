@@ -2895,11 +2895,11 @@ public:
     unsigned DataLen = 4 + 2 + 2; // 2 bytes for each of the method counts
     for (const ObjCMethodList *Method = &Methods.Instance; Method;
          Method = Method->getNext())
-      if (Method->Method)
+      if (Method->getMethod())
         DataLen += 4;
     for (const ObjCMethodList *Method = &Methods.Factory; Method;
          Method = Method->getNext())
-      if (Method->Method)
+      if (Method->getMethod())
         DataLen += 4;
     LE.write<uint16_t>(DataLen);
     return std::make_pair(KeyLen, DataLen);
@@ -2929,13 +2929,13 @@ public:
     unsigned NumInstanceMethods = 0;
     for (const ObjCMethodList *Method = &Methods.Instance; Method;
          Method = Method->getNext())
-      if (Method->Method)
+      if (Method->getMethod())
         ++NumInstanceMethods;
 
     unsigned NumFactoryMethods = 0;
     for (const ObjCMethodList *Method = &Methods.Factory; Method;
          Method = Method->getNext())
-      if (Method->Method)
+      if (Method->getMethod())
         ++NumFactoryMethods;
 
     unsigned InstanceBits = Methods.Instance.getBits();
@@ -2949,12 +2949,12 @@ public:
     LE.write<uint16_t>(NumFactoryMethodsAndBits);
     for (const ObjCMethodList *Method = &Methods.Instance; Method;
          Method = Method->getNext())
-      if (Method->Method)
-        LE.write<uint32_t>(Writer.getDeclID(Method->Method));
+      if (Method->getMethod())
+        LE.write<uint32_t>(Writer.getDeclID(Method->getMethod()));
     for (const ObjCMethodList *Method = &Methods.Factory; Method;
          Method = Method->getNext())
-      if (Method->Method)
-        LE.write<uint32_t>(Writer.getDeclID(Method->Method));
+      if (Method->getMethod())
+        LE.write<uint32_t>(Writer.getDeclID(Method->getMethod()));
 
     assert(Out.tell() - Start == DataLen && "Data length is wrong");
   }
@@ -3000,19 +3000,19 @@ void ASTWriter::WriteSelectors(Sema &SemaRef) {
       if (Chain && I->second < FirstSelectorID) {
         // Selector already exists. Did it change?
         bool changed = false;
-        for (ObjCMethodList *M = &Data.Instance; !changed && M && M->Method;
-             M = M->getNext()) {
-          if (!M->Method->isFromASTFile())
+        for (ObjCMethodList *M = &Data.Instance;
+             !changed && M && M->getMethod(); M = M->getNext()) {
+          if (!M->getMethod()->isFromASTFile())
             changed = true;
         }
-        for (ObjCMethodList *M = &Data.Factory; !changed && M && M->Method;
+        for (ObjCMethodList *M = &Data.Factory; !changed && M && M->getMethod();
              M = M->getNext()) {
-          if (!M->Method->isFromASTFile())
+          if (!M->getMethod()->isFromASTFile())
             changed = true;
         }
         if (!changed)
           continue;
-      } else if (Data.Instance.Method || Data.Factory.Method) {
+      } else if (Data.Instance.getMethod() || Data.Factory.getMethod()) {
         // A new method pool entry.
         ++NumTableEntries;
       }

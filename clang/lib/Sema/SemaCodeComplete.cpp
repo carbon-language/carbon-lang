@@ -5404,13 +5404,13 @@ static void AddClassMessageCompletions(Sema &SemaRef, Scope *S,
                                        MEnd = SemaRef.MethodPool.end();
          M != MEnd; ++M) {
       for (ObjCMethodList *MethList = &M->second.second;
-           MethList && MethList->Method; 
+           MethList && MethList->getMethod(); 
            MethList = MethList->getNext()) {
-        if (!isAcceptableObjCMethod(MethList->Method, MK_Any, SelIdents))
+        if (!isAcceptableObjCMethod(MethList->getMethod(), MK_Any, SelIdents))
           continue;
 
-        Result R(MethList->Method, Results.getBasePriority(MethList->Method),
-                 nullptr);
+        Result R(MethList->getMethod(),
+                 Results.getBasePriority(MethList->getMethod()), nullptr);
         R.StartParameter = SelIdents.size();
         R.AllParametersAreInformative = false;
         Results.MaybeAddResult(R, SemaRef.CurContext);
@@ -5577,16 +5577,16 @@ void Sema::CodeCompleteObjCInstanceMessage(Scope *S, Expr *Receiver,
                                     MEnd = MethodPool.end();
          M != MEnd; ++M) {
       for (ObjCMethodList *MethList = &M->second.first;
-           MethList && MethList->Method; 
+           MethList && MethList->getMethod(); 
            MethList = MethList->getNext()) {
-        if (!isAcceptableObjCMethod(MethList->Method, MK_Any, SelIdents))
+        if (!isAcceptableObjCMethod(MethList->getMethod(), MK_Any, SelIdents))
           continue;
         
-        if (!Selectors.insert(MethList->Method->getSelector()).second)
+        if (!Selectors.insert(MethList->getMethod()->getSelector()).second)
           continue;
 
-        Result R(MethList->Method, Results.getBasePriority(MethList->Method),
-                 nullptr);
+        Result R(MethList->getMethod(),
+                 Results.getBasePriority(MethList->getMethod()), nullptr);
         R.StartParameter = SelIdents.size();
         R.AllParametersAreInformative = false;
         Results.MaybeAddResult(R, CurContext);
@@ -6994,16 +6994,18 @@ void Sema::CodeCompleteObjCMethodDeclSelector(Scope *S,
        M != MEnd; ++M) {
     for (ObjCMethodList *MethList = IsInstanceMethod ? &M->second.first :
                                                        &M->second.second;
-         MethList && MethList->Method; 
+         MethList && MethList->getMethod(); 
          MethList = MethList->getNext()) {
-      if (!isAcceptableObjCMethod(MethList->Method, MK_Any, SelIdents))
+      if (!isAcceptableObjCMethod(MethList->getMethod(), MK_Any, SelIdents))
         continue;
       
       if (AtParameterName) {
         // Suggest parameter names we've seen before.
         unsigned NumSelIdents = SelIdents.size();
-        if (NumSelIdents && NumSelIdents <= MethList->Method->param_size()) {
-          ParmVarDecl *Param = MethList->Method->parameters()[NumSelIdents-1];
+        if (NumSelIdents &&
+            NumSelIdents <= MethList->getMethod()->param_size()) {
+          ParmVarDecl *Param =
+              MethList->getMethod()->parameters()[NumSelIdents - 1];
           if (Param->getIdentifier()) {
             CodeCompletionBuilder Builder(Results.getAllocator(),
                                           Results.getCodeCompletionTUInfo());
@@ -7016,8 +7018,8 @@ void Sema::CodeCompleteObjCMethodDeclSelector(Scope *S,
         continue;
       }
 
-      Result R(MethList->Method, Results.getBasePriority(MethList->Method),
-               nullptr);
+      Result R(MethList->getMethod(),
+               Results.getBasePriority(MethList->getMethod()), nullptr);
       R.StartParameter = SelIdents.size();
       R.AllParametersAreInformative = false;
       R.DeclaringEntity = true;
