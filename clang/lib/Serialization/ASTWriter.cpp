@@ -2940,13 +2940,20 @@ public:
 
     unsigned InstanceBits = Methods.Instance.getBits();
     assert(InstanceBits < 4);
-    unsigned NumInstanceMethodsAndBits =
-        (NumInstanceMethods << 2) | InstanceBits;
+    unsigned InstanceHasMoreThanOneDeclBit =
+        Methods.Instance.hasMoreThanOneDecl();
+    unsigned FullInstanceBits = (NumInstanceMethods << 3) |
+                                (InstanceHasMoreThanOneDeclBit << 2) |
+                                InstanceBits;
     unsigned FactoryBits = Methods.Factory.getBits();
     assert(FactoryBits < 4);
-    unsigned NumFactoryMethodsAndBits = (NumFactoryMethods << 2) | FactoryBits;
-    LE.write<uint16_t>(NumInstanceMethodsAndBits);
-    LE.write<uint16_t>(NumFactoryMethodsAndBits);
+    unsigned FactoryHasMoreThanOneDeclBit =
+        Methods.Factory.hasMoreThanOneDecl();
+    unsigned FullFactoryBits = (NumFactoryMethods << 3) |
+                               (FactoryHasMoreThanOneDeclBit << 2) |
+                               FactoryBits;
+    LE.write<uint16_t>(FullInstanceBits);
+    LE.write<uint16_t>(FullFactoryBits);
     for (const ObjCMethodList *Method = &Methods.Instance; Method;
          Method = Method->getNext())
       if (Method->getMethod())

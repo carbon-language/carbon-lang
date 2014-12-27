@@ -23,6 +23,7 @@ class ObjCMethodDecl;
 /// \brief a linked list of methods with the same selector name but different
 /// signatures.
 struct ObjCMethodList {
+  // NOTE: If you add any members to this struct, make sure to serialize them.
   /// \brief If there is more than one decl with this signature.
   llvm::PointerIntPair<ObjCMethodDecl *, 1> MethodAndHasMoreThanOneDecl;
   /// \brief The next list object and 2 bits for extra info.

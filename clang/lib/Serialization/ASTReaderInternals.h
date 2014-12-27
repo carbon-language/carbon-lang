@@ -156,6 +156,8 @@ public:
     SelectorID ID;
     unsigned InstanceBits;
     unsigned FactoryBits;
+    bool InstanceHasMoreThanOneDecl;
+    bool FactoryHasMoreThanOneDecl;
     SmallVector<ObjCMethodDecl *, 2> Instance;
     SmallVector<ObjCMethodDecl *, 2> Factory;
   };
