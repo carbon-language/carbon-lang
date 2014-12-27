@@ -1,0 +1,19 @@
+; RUN: llc < %s -fast-isel -mcpu=core2 -O1 | FileCheck %s
+; See PR21557
+
+target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
+target triple = "x86_64-apple-darwin14.0.0"
+
+declare i64 @bar(i1)
+
+define i64 @foo(i8* %arg) {
+; CHECK-LABEL: foo:
+top:
+  %0 = load i8* %arg
+; CHECK: movb
+  %1 = trunc i8 %0 to i1
+; CHECK: andb $1,
+  %2 = call i64 @bar(i1 %1)
+; CHECK: callq
+  ret i64 %2
+}
