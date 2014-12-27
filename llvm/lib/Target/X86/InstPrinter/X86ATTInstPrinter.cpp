@@ -112,13 +112,15 @@ static void printSSEAVXCC(int64_t Imm, raw_ostream &O) {
 
 void X86ATTInstPrinter::printSSECC(const MCInst *MI, unsigned Op,
                                    raw_ostream &O) {
-  int64_t Imm = MI->getOperand(Op).getImm() & 0x7;
+  int64_t Imm = MI->getOperand(Op).getImm();
+  assert((Imm & 0x7) == Imm); // Ensure valid immediate.
   printSSEAVXCC(Imm, O);
 }
 
 void X86ATTInstPrinter::printAVXCC(const MCInst *MI, unsigned Op,
                                    raw_ostream &O) {
-  int64_t Imm = MI->getOperand(Op).getImm() & 0x1f;
+  int64_t Imm = MI->getOperand(Op).getImm();
+  assert((Imm & 0x1f) == Imm); // Ensure valid immediate.
   printSSEAVXCC(Imm, O);
 }
 
