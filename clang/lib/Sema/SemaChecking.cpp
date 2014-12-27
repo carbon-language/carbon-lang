@@ -836,12 +836,16 @@ bool Sema::CheckMipsBuiltinFunctionCall(unsigned BuiltinID, CallExpr *TheCall) {
 }
 
 bool Sema::CheckX86BuiltinFunctionCall(unsigned BuiltinID, CallExpr *TheCall) {
+  unsigned i = 0, l = 0, u = 0;
   switch (BuiltinID) {
-  case X86::BI_mm_prefetch:
-    // This is declared to take (const char*, int)
-    return SemaBuiltinConstantArgRange(TheCall, 1, 0, 3);
+  default: return false;
+  case X86::BI_mm_prefetch: i = 1; l = 0; u = 3; break;
+  case X86::BI__builtin_ia32_cmpps:
+  case X86::BI__builtin_ia32_cmpss:
+  case X86::BI__builtin_ia32_cmppd:
+  case X86::BI__builtin_ia32_cmpsd: i = 2; l = 0; u = 31; break;
   }
-  return false;
+  return SemaBuiltinConstantArgRange(TheCall, i, l, u);
 }
 
 /// Given a FunctionDecl's FormatAttr, attempts to populate the FomatStringInfo
