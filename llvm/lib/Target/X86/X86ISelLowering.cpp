@@ -2550,9 +2550,9 @@ X86TargetLowering::LowerFormalArguments(SDValue Chain,
   }
 
   // Figure out if XMM registers are in use.
-  bool NoImplicitFloatOps = Fn->getAttributes().hasAttribute(
-      AttributeSet::FunctionIndex, Attribute::NoImplicitFloat);
-  assert(!(MF.getTarget().Options.UseSoftFloat && NoImplicitFloatOps) &&
+  assert(!(MF.getTarget().Options.UseSoftFloat &&
+           Fn->getAttributes().hasAttribute(AttributeSet::FunctionIndex,
+                                            Attribute::NoImplicitFloat)) &&
          "SSE register cannot be used when SSE is disabled!");
 
   // 64-bit calling conventions support varargs and register parameters, so we
