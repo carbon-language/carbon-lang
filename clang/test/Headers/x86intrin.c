@@ -84,6 +84,24 @@
 #ifndef __RDRND__
 #define __RDRND__
 #endif
+#ifndef __SHA__
+#define __SHA__
+#endif
+#ifndef __ADX__
+#define __ADX__
+#endif
+#ifndef __TBM__
+#define __TBM__
+#endif
+#ifndef __RTM__
+#define __RTM__
+#endif
+#ifndef __PCLMUL__
+#define __PCLMUL__
+#endif
+#ifndef __FSGSBASE__
+#define __FSGSBASE__
+#endif
 #ifndef __AVX512F__
 #define __AVX512F__
 #endif
@@ -95,6 +113,15 @@
 #endif
 #ifndef __AVX512ER__
 #define __AVX512ER__
+#endif
+#ifndef __AVX512PF__
+#define __AVX512PF__
+#endif
+#ifndef __AVX512DQ__
+#define __AVX512DQ__
+#endif
+#ifndef __AVX512CD__
+#define __AVX512CD__
 #endif
 
 // Now include the metaheader that includes all x86 intrinsic headers.
