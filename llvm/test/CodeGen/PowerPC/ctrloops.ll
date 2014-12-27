@@ -1,6 +1,6 @@
 target datalayout = "E-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v128:128:128-n32:64"
 target triple = "powerpc64-unknown-freebsd10.0"
-; RUN: llc < %s -march=ppc64 | FileCheck %s
+; RUN: llc < %s -march=ppc64 -relocation-model=pic | FileCheck %s
 
 @a = common global i32 0, align 4
 
@@ -72,4 +72,27 @@ for.end:                                          ; preds = %for.body, %entry
 ; CHECK-NOT: addi {[0-9]+}
 ; CHECK-NOT: cmplwi
 ; CHECK: bdnz
+}
+
+@tls_var = external thread_local global i8
+
+define i32 @test4() {
+entry:
+  br label %for.body
+
+for.body:                                         ; preds = %for.body, %entry
+  %phi = phi i32 [ %dec, %for.body ], [ undef, %entry ]
+  %load = ptrtoint i8* @tls_var to i32
+  %dec = add i32 %phi, -1
+  %cmp = icmp sgt i32 %phi, 1
+  br i1 %cmp, label %for.body, label %return
+
+return:                                           ; preds = %for.body
+  ret i32 %load
+; CHECK-LABEL: @test4
+; CHECK-NOT: mtctr
+; CHECK: addi {{[0-9]+}}
+; CHECK: cmpwi
+; CHECK-NOT: bdnz
+; CHECK: bgt
 }

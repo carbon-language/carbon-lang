@@ -194,6 +194,21 @@ static bool isLargeIntegerTy(bool Is32Bit, Type *Ty) {
   return false;
 }
 
+// Determining the address of a TLS variable results in a function call in
+// certain TLS models.
+static bool memAddrUsesCTR(const PPCTargetMachine *TM,
+                           const llvm::Value *MemAddr) {
+  const auto *GV = dyn_cast<GlobalValue>(MemAddr);
+  if (!GV)
+    return false;
+  if (!GV->isThreadLocal())
+    return false;
+  if (!TM)
+    return true;
+  TLSModel::Model Model = TM->getTLSModel(GV);
+  return Model == TLSModel::GeneralDynamic || Model == TLSModel::LocalDynamic;
+}
+
 bool PPCCTRLoops::mightUseCTR(const Triple &TT, BasicBlock *BB) {
   for (BasicBlock::iterator J = BB->begin(), JE = BB->end();
        J != JE; ++J) {
@@ -389,6 +404,9 @@ bool PPCCTRLoops::mightUseCTR(const Triple &TT, BasicBlock *BB) {
       if (SI->getNumCases() + 1 >= (unsigned)TLI->getMinimumJumpTableEntries())
         return true;
     }
+    for (Value *Operand : J->operands())
+      if (memAddrUsesCTR(TM, Operand))
+        return true;
   }
 
   return false;
