@@ -2164,7 +2164,7 @@ Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
     if (BitWidth) {
       if (Member->isInvalidDecl()) {
         // don't emit another diagnostic.
-      } else if (isa<VarDecl>(Member)) {
+      } else if (isa<VarDecl>(Member) || isa<VarTemplateDecl>(Member)) {
         // C++ 9.6p3: A bit-field shall not be a static member.
         // "static member 'A' cannot be a bit-field"
         Diag(Loc, diag::err_static_not_bitfield)
