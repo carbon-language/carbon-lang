@@ -784,8 +784,23 @@ buffer uses this idiom and is subsequently ``#include``'d, the preprocessor can
 simply check to see whether the guarding condition is defined or not.  If so,
 the preprocessor can completely ignore the include of the header.
 
+.. _Parser:
+
 The Parser Library
 ==================
+
+This library contains a recursive-descent parser that polls tokens from the
+preprocessor and notifies a client of the parsing progress.
+
+Historically, the parser used to talk to an abstract ``Action`` interface that
+had virtual methods for parse events, for example ``ActOnBinOp()``.  When Clang
+grew C++ support, the parser stopped supporting general ``Action`` clients --
+it now always talks to the :ref:`Sema` library.  However, the Parser still
+accesses AST objects only through opaque types like ``ExprResult`` and
+``StmtResult``.  Only ::ref::`Sema` looks at the AST node contents of these
+wrappers.
+
+.. _AST:
 
 The AST Library
 ===============
@@ -1581,6 +1596,23 @@ interacts with constant evaluation:
   constant expressions.
 * ``__builtin_strlen`` and ``strlen``: These are constant folded as integer
   constant expressions if the argument is a string literal.
+
+.. _Sema:
+
+The Sema Library
+================
+
+This library is called by the :ref:`Parser` library during parsing to do
+semantic analysis of the input.  For valid programs, Sema builds an AST for
+parsed constructs.
+
+.. _CodeGen:
+
+The CodeGen Library
+===================
+
+CodeGen takes an :ref:`AST` as input and produces `LLVM IR code
+<//llvm.org/docs/LangRef.html>`_ from it.
 
 How to change Clang
 ===================
