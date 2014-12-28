@@ -1,11 +1,12 @@
-; RUN: llc < %s -mtriple=x86_64-linux -mattr=+sse2 -mcpu=nehalem | FileCheck %s
-; RUN: llc < %s -mtriple=x86_64-win32 -mattr=+sse2 -mcpu=nehalem | FileCheck %s
+; RUN: llc < %s -mtriple=x86_64-linux -mattr=+sse2 -mcpu=nehalem | FileCheck %s --check-prefix=SSE
+; RUN: llc < %s -mtriple=x86_64-win32 -mattr=+sse2 -mcpu=nehalem | FileCheck %s --check-prefix=SSE
+; RUN: llc < %s -mtriple=x86_64-win32 -mattr=+avx -mcpu=corei7-avx | FileCheck %s --check-prefix=AVX
 
 define double @t1(float* nocapture %x) nounwind readonly ssp {
 entry:
-; CHECK-LABEL: t1:
-; CHECK: movss ([[A0:%rdi|%rcx]]), %xmm0
-; CHECK: cvtss2sd %xmm0, %xmm0
+; SSE-LABEL: t1:
+; SSE: movss ([[A0:%rdi|%rcx]]), %xmm0
+; SSE: cvtss2sd %xmm0, %xmm0
 
   %0 = load float* %x, align 4
   %1 = fpext float %0 to double
@@ -14,8 +15,8 @@ entry:
 
 define float @t2(double* nocapture %x) nounwind readonly ssp optsize {
 entry:
-; CHECK-LABEL: t2:
-; CHECK: cvtsd2ss ([[A0]]), %xmm0
+; SSE-LABEL: t2:
+; SSE: cvtsd2ss ([[A0]]), %xmm0
   %0 = load double* %x, align 8
   %1 = fptrunc double %0 to float
   ret float %1
@@ -23,9 +24,9 @@ entry:
 
 define float @squirtf(float* %x) nounwind {
 entry:
-; CHECK-LABEL: squirtf:
-; CHECK: movss ([[A0]]), %xmm0
-; CHECK: sqrtss %xmm0, %xmm0
+; SSE-LABEL: squirtf:
+; SSE: movss ([[A0]]), %xmm0
+; SSE: sqrtss %xmm0, %xmm0
   %z = load float* %x
   %t = call float @llvm.sqrt.f32(float %z)
   ret float %t
@@ -33,9 +34,9 @@ entry:
 
 define double @squirt(double* %x) nounwind {
 entry:
-; CHECK-LABEL: squirt:
-; CHECK: movsd ([[A0]]), %xmm0
-; CHECK: sqrtsd %xmm0, %xmm0
+; SSE-LABEL: squirt:
+; SSE: movsd ([[A0]]), %xmm0
+; SSE: sqrtsd %xmm0, %xmm0
   %z = load double* %x
   %t = call double @llvm.sqrt.f64(double %z)
   ret double %t
@@ -43,8 +44,8 @@ entry:
 
 define float @squirtf_size(float* %x) nounwind optsize {
 entry:
-; CHECK-LABEL: squirtf_size:
-; CHECK: sqrtss ([[A0]]), %xmm0
+; SSE-LABEL: squirtf_size:
+; SSE: sqrtss ([[A0]]), %xmm0
   %z = load float* %x
   %t = call float @llvm.sqrt.f32(float %z)
   ret float %t
@@ -52,8 +53,8 @@ entry:
 
 define double @squirt_size(double* %x) nounwind optsize {
 entry:
-; CHECK-LABEL: squirt_size:
-; CHECK: sqrtsd ([[A0]]), %xmm0
+; SSE-LABEL: squirt_size:
+; SSE: sqrtsd ([[A0]]), %xmm0
   %z = load double* %x
   %t = call double @llvm.sqrt.f64(double %z)
   ret double %t
@@ -62,8 +63,8 @@ entry:
 declare float @llvm.sqrt.f32(float)
 declare double @llvm.sqrt.f64(double)
 
-; CHECK-LABEL: loopdep1
-; CHECK: for.body
+; SSE-LABEL: loopdep1
+; SSE: for.body
 ;
 ; This loop contains two cvtsi2ss instructions that update the same xmm
 ; register.  Verify that the execution dependency fix pass breaks those
@@ -71,12 +72,12 @@ declare double @llvm.sqrt.f64(double)
 ;
 ; If the register allocator chooses different registers for the two cvtsi2ss
 ; instructions, they are still dependent on themselves.
-; CHECK: xorps [[XMM1:%xmm[0-9]+]]
-; CHECK: , [[XMM1]]
-; CHECK: cvtsi2ssl %{{.*}}, [[XMM1]]
-; CHECK: xorps [[XMM2:%xmm[0-9]+]]
-; CHECK: , [[XMM2]]
-; CHECK: cvtsi2ssl %{{.*}}, [[XMM2]]
+; SSE: xorps [[XMM1:%xmm[0-9]+]]
+; SSE: , [[XMM1]]
+; SSE: cvtsi2ssl %{{.*}}, [[XMM1]]
+; SSE: xorps [[XMM2:%xmm[0-9]+]]
+; SSE: , [[XMM2]]
+; SSE: cvtsi2ssl %{{.*}}, [[XMM2]]
 ;
 define float @loopdep1(i32 %m) nounwind uwtable readnone ssp {
 entry:
@@ -104,6 +105,38 @@ for.end:                                          ; preds = %for.body, %entry
   ret float %sub
 }
 
+; rdar:15221834 False AVX register dependencies cause 5x slowdown on
+; flops-6. Make sure the unused register read by vcvtsi2sdq is zeroed
+; to avoid cyclic dependence on a write to the same register in a
+; previous iteration.
+
+; AVX-LABEL: loopdep2:
+; AVX-LABEL: %loop
+; AVX: vxorps %[[REG:xmm.]], %{{xmm.}}, %{{xmm.}}
+; AVX: vcvtsi2sdq %{{r[0-9a-x]+}}, %[[REG]], %{{xmm.}}
+; SSE-LABEL: loopdep2:
+; SSE-LABEL: %loop
+; SSE: xorps %[[REG:xmm.]], %[[REG]]
+; SSE: cvtsi2sdq %{{r[0-9a-x]+}}, %[[REG]]
+define i64 @loopdep2(i64* nocapture %x, double* nocapture %y) nounwind {
+entry:
+  %vx = load i64* %x
+  br label %loop
+loop:
+  %i = phi i64 [ 1, %entry ], [ %inc, %loop ]
+  %s1 = phi i64 [ %vx, %entry ], [ %s2, %loop ]
+  %fi = sitofp i64 %i to double
+  %vy = load double* %y
+  %fipy = fadd double %fi, %vy
+  %iipy = fptosi double %fipy to i64
+  %s2 = add i64 %s1, %iipy
+  %inc = add nsw i64 %i, 1
+  %exitcond = icmp eq i64 %inc, 156250000
+  br i1 %exitcond, label %ret, label %loop
+ret:
+  ret i64 %s2
+}
+
 ; This loop contains a cvtsi2sd instruction that has a loop-carried
 ; false dependency on an xmm that is modified by other scalar instructions
 ; that follow it in the loop. Additionally, the source of convert is a 
@@ -115,7 +148,7 @@ for.end:                                          ; preds = %for.body, %entry
 @w = common global [1024 x double] zeroinitializer, align 16
 @v = common global [1024 x i32] zeroinitializer, align 16
 
-define void @loopdep2() {
+define void @loopdep3() {
 entry:
   br label %for.cond1.preheader
 
@@ -151,11 +184,18 @@ for.inc14:                                        ; preds = %for.body3
 for.end16:                                        ; preds = %for.inc14
   ret void
 
-;CHECK-LABEL:@loopdep2
-;CHECK: xorps [[XMM0:%xmm[0-9]+]], [[XMM0]]
-;CHECK-NEXT: cvtsi2sdl {{.*}}, [[XMM0]]
-;CHECK-NEXT: mulsd {{.*}}, [[XMM0]]
-;CHECK-NEXT: mulsd {{.*}}, [[XMM0]]
-;CHECK-NEXT: mulsd {{.*}}, [[XMM0]]
-;CHECK-NEXT: movsd [[XMM0]],
+;SSE-LABEL:@loopdep3
+;SSE: xorps [[XMM0:%xmm[0-9]+]], [[XMM0]]
+;SSE-NEXT: cvtsi2sdl {{.*}}, [[XMM0]]
+;SSE-NEXT: mulsd {{.*}}, [[XMM0]]
+;SSE-NEXT: mulsd {{.*}}, [[XMM0]]
+;SSE-NEXT: mulsd {{.*}}, [[XMM0]]
+;SSE-NEXT: movsd [[XMM0]],
+;AVX-LABEL:@loopdep3
+;AVX: vxorps [[XMM0:%xmm[0-9]+]], [[XMM0]]
+;AVX-NEXT: vcvtsi2sdl {{.*}}, [[XMM0]], [[XMM0]]
+;AVX-NEXT: vmulsd {{.*}}, [[XMM0]], [[XMM0]]
+;AVX-NEXT: vmulsd {{.*}}, [[XMM0]], [[XMM0]]
+;AVX-NEXT: vmulsd {{.*}}, [[XMM0]], [[XMM0]]
+;AVX-NEXT: vmovsd [[XMM0]],
 }

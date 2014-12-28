@@ -4554,28 +4554,52 @@ getPartialRegUpdateClearance(const MachineInstr *MI, unsigned OpNum,
 static bool hasUndefRegUpdate(unsigned Opcode) {
   switch (Opcode) {
   case X86::VCVTSI2SSrr:
+  case X86::VCVTSI2SSrm:
   case X86::Int_VCVTSI2SSrr:
+  case X86::Int_VCVTSI2SSrm:
   case X86::VCVTSI2SS64rr:
+  case X86::VCVTSI2SS64rm:
   case X86::Int_VCVTSI2SS64rr:
+  case X86::Int_VCVTSI2SS64rm:
   case X86::VCVTSI2SDrr:
+  case X86::VCVTSI2SDrm:
   case X86::Int_VCVTSI2SDrr:
+  case X86::Int_VCVTSI2SDrm:
   case X86::VCVTSI2SD64rr:
+  case X86::VCVTSI2SD64rm:
   case X86::Int_VCVTSI2SD64rr:
+  case X86::Int_VCVTSI2SD64rm:
   case X86::VCVTSD2SSrr:
+  case X86::VCVTSD2SSrm:
   case X86::Int_VCVTSD2SSrr:
+  case X86::Int_VCVTSD2SSrm:
   case X86::VCVTSS2SDrr:
+  case X86::VCVTSS2SDrm:
   case X86::Int_VCVTSS2SDrr:
+  case X86::Int_VCVTSS2SDrm:
   case X86::VRCPSSr:
+  case X86::VRCPSSm:
+  case X86::VRCPSSm_Int:
   case X86::VROUNDSDr:
+  case X86::VROUNDSDm:
   case X86::VROUNDSDr_Int:
   case X86::VROUNDSSr:
+  case X86::VROUNDSSm:
   case X86::VROUNDSSr_Int:
   case X86::VRSQRTSSr:
+  case X86::VRSQRTSSm:
+  case X86::VRSQRTSSm_Int:
   case X86::VSQRTSSr:
-
-  // AVX-512
+  case X86::VSQRTSSm:
+  case X86::VSQRTSSm_Int:
+  case X86::VSQRTSDr:
+  case X86::VSQRTSDm:
+  case X86::VSQRTSDm_Int:
+    // AVX-512
   case X86::VCVTSD2SSZrr:
+  case X86::VCVTSD2SSZrm:
   case X86::VCVTSS2SDZrr:
+  case X86::VCVTSS2SDZrm:
     return true;
   }
 
