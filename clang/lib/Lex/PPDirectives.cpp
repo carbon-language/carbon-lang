@@ -798,7 +798,8 @@ void Preprocessor::HandleDirective(Token &Result) {
       case tok::pp_import:
       case tok::pp_include_next:
       case tok::pp___include_macros:
-        Diag(Result, diag::err_embedded_include) << II->getName();
+      case tok::pp_pragma:
+        Diag(Result, diag::err_embedded_directive) << II->getName();
         DiscardUntilEndOfDirective();
         return;
       default:

@@ -7,6 +7,11 @@ a(n =
   a);
 _Static_assert(n == 5, "");
 
+#define M(A)
+M(
+#pragma pack(pop) // expected-error {{embedding a #pragma directive within macro arguments is not supported}}
+)
+
 // header1.h
 void fail(const char *);
 #define MUNCH(...) \
