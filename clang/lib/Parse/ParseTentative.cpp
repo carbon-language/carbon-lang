@@ -195,7 +195,9 @@ Parser::TPResult Parser::TryConsumeDeclarationSpecifier() {
       }
     }
 
-    if (TryAnnotateCXXScopeToken())
+    if ((Tok.is(tok::identifier) || Tok.is(tok::coloncolon) ||
+         Tok.is(tok::kw_decltype) || Tok.is(tok::annot_template_id)) &&
+        TryAnnotateCXXScopeToken())
       return TPResult::Error;
     if (Tok.is(tok::annot_cxxscope))
       ConsumeToken();

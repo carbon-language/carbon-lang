@@ -79,3 +79,29 @@ namespace PR16480 {
     Errs(X<2>) : decltype(X<0> // expected-note {{to match this '('}}
   }; // expected-error {{expected ')'}}
 }
+
+template <class U, class V> struct C {
+  int f() { return 4; }
+  class C1 {};
+};
+
+class D {};
+namespace N {
+struct E {
+  class F {};
+};
+}
+
+class G {
+  // These are all valid:
+  void f(int x = C<int, D>().f()) {}
+  void g(int x = C<int, ::D>().f()) {}
+  void h(int x = C<int, N::E>().f()) {}
+  void i(int x = C<int, ::N::E>().f()) {}
+  void j(int x = C<int, decltype(N::E())::F>().f()) {}
+  void k(int x = C<int, C<int, int>>().f()) {}
+  void l(int x = C<int, C<int, int>::C1>().f()) {}
+
+  // This isn't, but it shouldn't crash. The diagnostics don't matter much.
+  void m(int x = C<int, union int>().f()) {} // expected-error {{declaration of anonymous union must be a definition}}
+}; // expected-error {{expected a type}}
