@@ -750,6 +750,20 @@ public:
     // initialise any elements that have not been initialised explicitly
     unsigned NumInitableElts = std::min(NumInitElements, NumElements);
 
+    // Initialize remaining array elements.
+    // FIXME: This doesn't handle member pointers correctly!
+    llvm::Constant *fillC;
+    if (Expr *filler = ILE->getArrayFiller())
+      fillC = CGM.EmitConstantExpr(filler, filler->getType(), CGF);
+    else
+      fillC = llvm::Constant::getNullValue(ElemTy);
+    if (!fillC)
+      return nullptr;
+
+    // Try to use a ConstantAggregateZero if we can.
+    if (fillC->isNullValue() && !NumInitableElts)
+      return llvm::ConstantAggregateZero::get(AType);
+
     // Copy initializer elements.
     std::vector<llvm::Constant*> Elts;
     Elts.reserve(NumInitableElts + NumElements);
@@ -764,15 +778,6 @@ public:
       Elts.push_back(C);
     }
 
-    // Initialize remaining array elements.
-    // FIXME: This doesn't handle member pointers correctly!
-    llvm::Constant *fillC;
-    if (Expr *filler = ILE->getArrayFiller())
-      fillC = CGM.EmitConstantExpr(filler, filler->getType(), CGF);
-    else
-      fillC = llvm::Constant::getNullValue(ElemTy);
-    if (!fillC)
-      return nullptr;
     RewriteType |= (fillC->getType() != ElemTy);
     Elts.resize(NumElements, fillC);
 
@@ -1207,9 +1212,6 @@ llvm::Constant *CodeGenModule::EmitConstantValue(const APValue &Value,
     unsigned NumElements = Value.getArraySize();
     unsigned NumInitElts = Value.getArrayInitializedElts();
 
-    std::vector<llvm::Constant*> Elts;
-    Elts.reserve(NumElements);
-
     // Emit array filler, if there is one.
     llvm::Constant *Filler = nullptr;
     if (Value.hasArrayFiller())
@@ -1219,6 +1221,16 @@ llvm::Constant *CodeGenModule::EmitConstantValue(const APValue &Value,
     // Emit initializer elements.
     llvm::Type *CommonElementType =
         getTypes().ConvertType(CAT->getElementType());
+
+    // Try to use a ConstantAggregateZero if we can.
+    if (Filler && Filler->isNullValue() && !NumInitElts) {
+      llvm::ArrayType *AType =
+          llvm::ArrayType::get(CommonElementType, NumElements);
+      return llvm::ConstantAggregateZero::get(AType);
+    }
+
+    std::vector<llvm::Constant*> Elts;
+    Elts.reserve(NumElements);
     for (unsigned I = 0; I < NumElements; ++I) {
       llvm::Constant *C = Filler;
       if (I < NumInitElts)
