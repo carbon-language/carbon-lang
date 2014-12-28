@@ -1,5 +1,6 @@
 ; RUN: llc -mtriple=x86_64-apple-darwin  -mcpu=knl < %s | FileCheck %s -check-prefix=AVX512
 ; RUN: llc -mtriple=x86_64-apple-darwin  -mcpu=core-avx2 < %s | FileCheck %s -check-prefix=AVX2
+; RUN: opt -mtriple=x86_64-apple-darwin -codegenprepare -mcpu=corei7-avx -S < %s | FileCheck %s -check-prefix=AVX_SCALAR
 
 ; AVX512-LABEL: test1
 ; AVX512: vmovdqu32       (%rdi), %zmm0 {%k1} {z}
@@ -9,6 +10,12 @@
 ; AVX2: vpmaskmovd      (%rdi)
 ; AVX2-NOT: blend
 
+; AVX_SCALAR-LABEL: test1
+; AVX_SCALAR-NOT: masked
+; AVX_SCALAR: extractelement
+; AVX_SCALAR: insertelement
+; AVX_SCALAR: extractelement
+; AVX_SCALAR: insertelement
 define <16 x i32> @test1(<16 x i32> %trigger, <16 x i32>* %addr) {
   %mask = icmp eq <16 x i32> %trigger, zeroinitializer
   %res = call <16 x i32> @llvm.masked.load.v16i32(<16 x i32>* %addr, i32 4, <16 x i1>%mask, <16 x i32>undef)
@@ -31,6 +38,14 @@ define <16 x i32> @test2(<16 x i32> %trigger, <16 x i32>* %addr) {
 ; AVX512-LABEL: test3
 ; AVX512: vmovdqu32       %zmm1, (%rdi) {%k1}
 
+; AVX_SCALAR-LABEL: test3
+; AVX_SCALAR-NOT: masked
+; AVX_SCALAR: extractelement
+; AVX_SCALAR: store
+; AVX_SCALAR: extractelement
+; AVX_SCALAR: store
+; AVX_SCALAR: extractelement
+; AVX_SCALAR: store
 define void @test3(<16 x i32> %trigger, <16 x i32>* %addr, <16 x i32> %val) {
   %mask = icmp eq <16 x i32> %trigger, zeroinitializer
   call void @llvm.masked.store.v16i32(<16 x i32>%val, <16 x i32>* %addr, i32 4, <16 x i1>%mask)
