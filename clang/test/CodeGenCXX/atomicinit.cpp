@@ -1,5 +1,9 @@
 // RUN: %clang_cc1 %s -emit-llvm -O1 -o - -triple=i686-apple-darwin9 -std=c++11 | FileCheck %s
 
+// CHECK-DAG: @PR22043 = global i32 0, align 4
+typedef _Atomic(int) AtomicInt;
+AtomicInt PR22043 = AtomicInt();
+
 // CHECK-DAG: @_ZN7PR180978constant1aE = global { i16, i8 } { i16 1, i8 6 }, align 4
 // CHECK-DAG: @_ZN7PR180978constant1bE = global { i16, i8 } { i16 2, i8 6 }, align 4
 // CHECK-DAG: @_ZN7PR180978constant1cE = global { i16, i8 } { i16 3, i8 6 }, align 4

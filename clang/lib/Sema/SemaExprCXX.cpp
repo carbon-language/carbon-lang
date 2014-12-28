@@ -2759,7 +2759,11 @@ Sema::PerformImplicitConversion(Expr *From, QualType ToType,
   // Perform the first implicit conversion.
   switch (SCS.First) {
   case ICK_Identity:
-    // Nothing to do.
+    if (const AtomicType *FromAtomic = FromType->getAs<AtomicType>()) {
+      FromType = FromAtomic->getValueType().getUnqualifiedType();
+      From = ImplicitCastExpr::Create(Context, FromType, CK_AtomicToNonAtomic,
+                                      From, /*BasePath=*/nullptr, VK_RValue);
+    }
     break;
 
   case ICK_Lvalue_To_Rvalue: {
