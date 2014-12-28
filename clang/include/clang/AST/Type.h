@@ -1707,6 +1707,11 @@ public:
   /// type of a class template or class template partial specialization.
   CXXRecordDecl *getAsCXXRecordDecl() const;
 
+  /// \brief Retrieves the TagDecl that this type refers to, either
+  /// because the type is a TagType or because it is the injected-class-name
+  /// type of a class template or class template partial specialization.
+  TagDecl *getAsTagDecl() const;
+
   /// If this is a pointer or reference to a RecordType, return the
   /// CXXRecordDecl that that type refers to.
   ///

@@ -541,10 +541,13 @@ const CXXRecordDecl *Type::getPointeeCXXRecordDecl() const {
 }
 
 CXXRecordDecl *Type::getAsCXXRecordDecl() const {
-  if (const RecordType *RT = getAs<RecordType>())
-    return dyn_cast<CXXRecordDecl>(RT->getDecl());
-  else if (const InjectedClassNameType *Injected
-                                  = getAs<InjectedClassNameType>())
+  return dyn_cast_or_null<CXXRecordDecl>(getAsTagDecl());
+}
+
+TagDecl *Type::getAsTagDecl() const {
+  if (const auto *TT = getAs<TagType>())
+    return cast<TagDecl>(TT->getDecl());
+  if (const auto *Injected = getAs<InjectedClassNameType>())
     return Injected->getDecl();
 
   return nullptr;

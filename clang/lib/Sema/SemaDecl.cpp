@@ -11599,9 +11599,8 @@ Decl *Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
             } else {
               // If the type is currently being defined, complain
               // about a nested redefinition.
-              const TagType *Tag
-                = cast<TagType>(Context.getTagDeclType(PrevTagDecl));
-              if (Tag->isBeingDefined()) {
+              auto *TD = Context.getTagDeclType(PrevTagDecl)->getAsTagDecl();
+              if (TD->isBeingDefined()) {
                 Diag(NameLoc, diag::err_nested_redefinition) << Name;
                 Diag(PrevTagDecl->getLocation(),
                      diag::note_previous_definition);
