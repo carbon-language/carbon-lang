@@ -1079,7 +1079,7 @@ func (fr *frame) instruction(instr ssa.Instruction) {
 
 	case *ssa.Panic:
 		arg := fr.value(instr.X)
-		fr.callPanic(arg)
+		fr.callPanic(arg, true)
 
 	case *ssa.Phi:
 		typ := instr.Type()
@@ -1190,7 +1190,7 @@ func (fr *frame) callBuiltin(typ types.Type, builtin *ssa.Builtin, args []ssa.Va
 		return nil
 
 	case "panic":
-		fr.callPanic(fr.value(args[0]))
+		fr.callPanic(fr.value(args[0]), false)
 		return nil
 
 	case "recover":

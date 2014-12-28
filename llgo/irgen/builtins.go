@@ -110,7 +110,9 @@ func (fr *frame) callRecover(isDeferredRecover bool) *govalue {
 	return newValue(llv, eface)
 }
 
-func (fr *frame) callPanic(arg *govalue) {
+func (fr *frame) callPanic(arg *govalue, term bool) {
 	fr.runtime.panic.call(fr, arg.value)
-	fr.builder.CreateUnreachable()
+	if term {
+		fr.builder.CreateUnreachable()
+	}
 }
