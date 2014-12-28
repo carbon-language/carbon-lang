@@ -249,6 +249,16 @@ public:
     return true;
   }
 
+  /// \brief Return true if it is cheap to speculate a call to intrinsic cttz.
+  virtual bool isCheapToSpeculateCttz() const {
+    return false;
+  }
+  
+  /// \brief Return true if it is cheap to speculate a call to intrinsic ctlz.
+  virtual bool isCheapToSpeculateCtlz() const {
+    return false;
+  }
+
   /// \brief Return if the target supports combining a
   /// chain like:
   /// \code

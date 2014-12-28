@@ -3882,6 +3882,16 @@ bool X86TargetLowering::isExtractSubvectorCheap(EVT ResVT,
   return (Index == 0 || Index == ResVT.getVectorNumElements());
 }
 
+bool X86TargetLowering::isCheapToSpeculateCttz() const {
+  // Don't try to speculate cttz if we can't directly use TZCNT.
+  return Subtarget->hasBMI();
+}
+
+bool X86TargetLowering::isCheapToSpeculateCtlz() const {
+  // Don't try to speculate ctlz if we can't directly use LZCNT.
+  return Subtarget->hasLZCNT();
+}
+
 /// isUndefOrInRange - Return true if Val is undef or if its value falls within
 /// the specified range (L, H].
 static bool isUndefOrInRange(int Val, int Low, int Hi) {

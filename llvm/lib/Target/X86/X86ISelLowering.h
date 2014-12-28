@@ -633,6 +633,10 @@ namespace llvm {
     /// This method returns the name of a target specific DAG node.
     const char *getTargetNodeName(unsigned Opcode) const override;
 
+    bool isCheapToSpeculateCttz() const override;
+
+    bool isCheapToSpeculateCtlz() const override;
+
     /// Return the value type to use for ISD::SETCC.
     EVT getSetCCResultType(LLVMContext &Context, EVT VT) const override;
 
