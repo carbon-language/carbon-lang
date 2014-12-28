@@ -2709,14 +2709,14 @@ bool X86FastISel::fastLowerCall(CallLoweringInfo &CLI) {
 
       ResultReg =
         fastEmit_ri(VT, VT, ISD::AND, ResultReg, hasTrivialKill(PrevVal), 1);
-
-      if (!ResultReg)
-        return false;
     } else {
       if (!isTypeLegal(Val->getType(), VT))
         return false;
       ResultReg = getRegForValue(Val);
     }
+
+    if (!ResultReg)
+      return false;
 
     ArgRegs.push_back(ResultReg);
     OutVTs.push_back(VT);
