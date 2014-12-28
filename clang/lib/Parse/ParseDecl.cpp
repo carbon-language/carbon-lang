@@ -143,7 +143,8 @@ void Parser::ParseGNUAttributes(ParsedAttributes &attrs,
         continue;
 
       // Expect an identifier or declaration specifier (const, int, etc.)
-      if (Tok.isNot(tok::identifier) && !isDeclarationSpecifier())
+      if (Tok.isNot(tok::identifier) && !isTypeQualifier() &&
+          !isKnownToBeTypeSpecifier(Tok))
         break;
 
       IdentifierInfo *AttrName = Tok.getIdentifierInfo();
