@@ -9274,7 +9274,7 @@ The result of this operation is equivalent to a regular vector load instruction 
        
        ;; The result of the two following instructions is identical aside from potential memory access exception
        %loadlal = load <16 x float>* %ptr, align 4
-       %res = select <16 x i1> %Mask, <16 x float> %loadlal, <16 x float> %passthru
+       %res = select <16 x i1> %mask, <16 x float> %loadlal, <16 x float> %passthru
 
 .. _int_mstore:
 
@@ -9311,7 +9311,7 @@ The result of this operation is equivalent to a load-modify-store sequence. Howe
 
        call void @llvm.masked.store.v16f32(<16 x float> %value, <16 x float>* %ptr, i32 4,  <16 x i1> %mask)
        
-       ;; The result of the following instructions is identcal aside from potential data races and memory access exceptions
+       ;; The result of the following instructions is identical aside from potential data races and memory access exceptions
        %oldval = load <16 x float>* %ptr, align 4
        %res = select <16 x i1> %mask, <16 x float> %value, <16 x float> %oldval
        store <16 x float> %res, <16 x float>* %ptr, align 4
