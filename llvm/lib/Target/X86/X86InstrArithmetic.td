@@ -710,15 +710,6 @@ class BinOpRR<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
         mnemonic, "{$src2, $src1|$src1, $src2}", pattern, itin>,
     Sched<[WriteALU]>;
 
-// BinOpRR_R - Instructions like "add reg, reg, reg", where the pattern has
-// just a regclass (no eflags) as a result.
-class BinOpRR_R<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
-                SDNode opnode>
-  : BinOpRR<opcode, mnemonic, typeinfo, (outs typeinfo.RegClass:$dst),
-            [(set typeinfo.RegClass:$dst,
-                  (opnode typeinfo.RegClass:$src1, typeinfo.RegClass:$src2))],
-                  IIC_BIN_NONMEM>;
-
 // BinOpRR_F - Instructions like "cmp reg, Reg", where the pattern has
 // just a EFLAGS as a result.
 class BinOpRR_F<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
@@ -825,13 +816,6 @@ class BinOpRI<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
   let ImmT = typeinfo.ImmEncoding;
 }
 
-// BinOpRI_R - Instructions like "add reg, reg, imm".
-class BinOpRI_R<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
-                SDNode opnode, Format f>
-  : BinOpRI<opcode, mnemonic, typeinfo, f, (outs typeinfo.RegClass:$dst),
-            [(set typeinfo.RegClass:$dst,
-                (opnode typeinfo.RegClass:$src1, typeinfo.ImmOperator:$src2))]>;
-
 // BinOpRI_F - Instructions like "cmp reg, imm".
 class BinOpRI_F<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
                 SDPatternOperator opnode, Format f>
@@ -863,13 +847,6 @@ class BinOpRI8<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
     Sched<[WriteALU]> {
   let ImmT = Imm8; // Always 8-bit immediate.
 }
-
-// BinOpRI8_R - Instructions like "add reg, reg, imm8".
-class BinOpRI8_R<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
-                  SDNode opnode, Format f>
-  : BinOpRI8<opcode, mnemonic, typeinfo, f, (outs typeinfo.RegClass:$dst),
-             [(set typeinfo.RegClass:$dst,
-               (opnode typeinfo.RegClass:$src1, typeinfo.Imm8Operator:$src2))]>;
 
 // BinOpRI8_F - Instructions like "cmp reg, imm8".
 class BinOpRI8_F<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
