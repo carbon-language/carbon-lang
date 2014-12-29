@@ -132,31 +132,54 @@ StmtResult Sema::ActOnGCCAsmStmt(SourceLocation AsmLoc, bool IsSimple,
                             diag::err_asm_invalid_output_constraint)
                        << Info.getConstraintStr());
 
+    ExprResult ER = CheckPlaceholderExpr(Exprs[i]);
+    if (ER.isInvalid())
+      return StmtError();
+    Exprs[i] = ER.get();
+
     // Check that the output exprs are valid lvalues.
     Expr *OutputExpr = Exprs[i];
-    if (CheckAsmLValue(OutputExpr, *this))
-      return StmtError(Diag(OutputExpr->getLocStart(),
-                            diag::err_asm_invalid_lvalue_in_output)
-                       << OutputExpr->getSourceRange());
 
     // Referring to parameters is not allowed in naked functions.
     if (CheckNakedParmReference(OutputExpr, *this))
       return StmtError();
 
-    if (RequireCompleteType(OutputExpr->getLocStart(), Exprs[i]->getType(),
-                            diag::err_dereference_incomplete_type))
-      return StmtError();
-
     OutputConstraintInfos.push_back(Info);
 
-    const Type *Ty = OutputExpr->getType().getTypePtr();
-
-    // If this is a dependent type, just continue. We don't know the size of a
-    // dependent type.
-    if (Ty->isDependentType())
+    // If this is dependent, just continue.
+    if (OutputExpr->isTypeDependent())
       continue;
 
-    unsigned Size = Context.getTypeSize(Ty);
+    Expr::isModifiableLvalueResult IsLV =
+        OutputExpr->isModifiableLvalue(Context, /*Loc=*/nullptr);
+    switch (IsLV) {
+    case Expr::MLV_Valid:
+      // Cool, this is an lvalue.
+      break;
+    case Expr::MLV_LValueCast: {
+      const Expr *LVal = OutputExpr->IgnoreParenNoopCasts(Context);
+      if (!getLangOpts().HeinousExtensions) {
+        Diag(LVal->getLocStart(), diag::err_invalid_asm_cast_lvalue)
+            << OutputExpr->getSourceRange();
+      } else {
+        Diag(LVal->getLocStart(), diag::warn_invalid_asm_cast_lvalue)
+            << OutputExpr->getSourceRange();
+      }
+      // Accept, even if we emitted an error diagnostic.
+      break;
+    }
+    case Expr::MLV_IncompleteType:
+    case Expr::MLV_IncompleteVoidType:
+      if (RequireCompleteType(OutputExpr->getLocStart(), Exprs[i]->getType(),
+                              diag::err_dereference_incomplete_type))
+        return StmtError();
+    default:
+      return StmtError(Diag(OutputExpr->getLocStart(),
+                            diag::err_asm_invalid_lvalue_in_output)
+                       << OutputExpr->getSourceRange());
+    }
+
+    unsigned Size = Context.getTypeSize(OutputExpr->getType());
     if (!Context.getTargetInfo().validateOutputSize(Literal->getString(),
                                                     Size))
       return StmtError(Diag(OutputExpr->getLocStart(),
@@ -181,6 +204,11 @@ StmtResult Sema::ActOnGCCAsmStmt(SourceLocation AsmLoc, bool IsSimple,
                             diag::err_asm_invalid_input_constraint)
                        << Info.getConstraintStr());
     }
+
+    ExprResult ER = CheckPlaceholderExpr(Exprs[i]);
+    if (ER.isInvalid())
+      return StmtError();
+    Exprs[i] = ER.get();
 
     Expr *InputExpr = Exprs[i];
 
