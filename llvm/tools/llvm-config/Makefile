@@ -59,6 +59,8 @@ $(ObjDir)/BuildVariables.inc: $(BUILDVARIABLES_SRCPATH) Makefile $(ObjDir)/.dir
 	  >> temp.sed
 	$(Verb) $(ECHO) 's/@LLVM_BUILDMODE@/$(subst /,\/,$(BuildMode))/' \
 	  >> temp.sed
+	$(Verb) $(ECHO) 's/@LLVM_LIBDIR_SUFFIX@//' \
+	  >> temp.sed
 	$(Verb) $(ECHO) 's/@LLVM_SYSTEM_LIBS@/$(subst /,\/,$(LLVM_SYSTEM_LIBS))/' \
 	  >> temp.sed
 	$(Verb) $(ECHO) 's/@LLVM_TARGETS_BUILT@/$(subst /,\/,$(TARGETS_TO_BUILD))/' \
