@@ -126,10 +126,6 @@ type compiler struct {
 	llvmtypes *llvmTypeMap
 	types     *TypeMap
 
-	// runtimetypespkg is the type-checked runtime/types.go file,
-	// which is used for evaluating the types of runtime functions.
-	runtimetypespkg *types.Package
-
 	// pnacl is set to true if the target triple was originally
 	// specified as "pnacl". This is necessary, as the TargetTriple
 	// field will have been updated to the true triple used to
