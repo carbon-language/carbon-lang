@@ -1437,8 +1437,8 @@ isConditionalStore (const MachineInstr* MI) const {
     case Hexagon::STrid_indexed_cPt :
     case Hexagon::STrid_indexed_cNotPt :
     case Hexagon::STrid_indexed_shl_cPt_V4 :
-    case Hexagon::POST_STdri_cPt :
-    case Hexagon::POST_STdri_cNotPt :
+    case Hexagon::S2_pstorerdt_pi:
+    case Hexagon::S2_pstorerdf_pi:
     case Hexagon::STrih_cPt :
     case Hexagon::STrih_cNotPt :
     case Hexagon::STrih_indexed_cPt :
@@ -1447,8 +1447,8 @@ isConditionalStore (const MachineInstr* MI) const {
     case Hexagon::STrih_imm_cNotPt_V4 :
     case Hexagon::STrih_indexed_shl_cPt_V4 :
     case Hexagon::STrih_indexed_shl_cNotPt_V4 :
-    case Hexagon::POST_SThri_cPt :
-    case Hexagon::POST_SThri_cNotPt :
+    case Hexagon::S2_pstorerht_pi:
+    case Hexagon::S2_pstorerhf_pi:
     case Hexagon::STriw_cPt :
     case Hexagon::STriw_cNotPt :
     case Hexagon::STriw_indexed_cPt :
@@ -1457,8 +1457,8 @@ isConditionalStore (const MachineInstr* MI) const {
     case Hexagon::STriw_imm_cNotPt_V4 :
     case Hexagon::STriw_indexed_shl_cPt_V4 :
     case Hexagon::STriw_indexed_shl_cNotPt_V4 :
-    case Hexagon::POST_STwri_cPt :
-    case Hexagon::POST_STwri_cNotPt :
+    case Hexagon::S2_pstorerit_pi:
+    case Hexagon::S2_pstorerif_pi:
       return QRI.Subtarget.hasV4TOps();
 
     // V4 global address store before promoting to dot new.

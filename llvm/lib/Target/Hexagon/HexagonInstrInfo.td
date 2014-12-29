@@ -2753,55 +2753,17 @@ multiclass ST_PostInc<string mnemonic, string BaseOp, RegisterClass RC,
 let accessSize = ByteAccess, isCodeGenOnly = 0 in
 defm storerb: ST_PostInc <"memb", "STrib", IntRegs, s4_0Imm, 0b1000>;
 
-//===----------------------------------------------------------------------===//
-// Post increment store
-//===----------------------------------------------------------------------===//
+let accessSize = HalfWordAccess, isCodeGenOnly = 0 in
+defm storerh: ST_PostInc <"memh", "STrih", IntRegs, s4_1Imm, 0b1010>;
 
-multiclass ST_PostInc_Pbase<string mnemonic, RegisterClass RC, Operand ImmOp,
-                            bit isNot, bit isPredNew> {
-  let isPredicatedNew = isPredNew in
-  def NAME : STInst2PI<(outs IntRegs:$dst),
-            (ins PredRegs:$src1, IntRegs:$src2, ImmOp:$offset, RC:$src3),
-            !if(isNot, "if (!$src1", "if ($src1")#!if(isPredNew, ".new) ",
-            ") ")#mnemonic#"($src2++#$offset) = $src3",
-            [],
-            "$src2 = $dst">;
-}
+let accessSize = WordAccess, isCodeGenOnly = 0 in
+defm storeri: ST_PostInc <"memw", "STriw", IntRegs, s4_2Imm, 0b1100>;
 
-multiclass ST_PostInc_Pred<string mnemonic, RegisterClass RC,
-                           Operand ImmOp, bit PredNot> {
-  let isPredicatedFalse = PredNot in {
-    defm _c#NAME : ST_PostInc_Pbase<mnemonic, RC, ImmOp, PredNot, 0>;
-    // Predicate new
-    let Predicates = [HasV4T], validSubTargets = HasV4SubT in
-    defm _cdn#NAME#_V4 : ST_PostInc_Pbase<mnemonic, RC, ImmOp, PredNot, 1>;
-  }
-}
+let accessSize = DoubleWordAccess, isCodeGenOnly = 0 in
+defm storerd: ST_PostInc <"memd", "STrid", DoubleRegs, s4_3Imm, 0b1110>;
 
-let hasCtrlDep = 1, isNVStorable = 1, hasSideEffects = 0 in
-multiclass ST_PostInc2<string mnemonic, string BaseOp, RegisterClass RC,
-                      Operand ImmOp> {
-
-  let hasCtrlDep = 1, BaseOpcode = "POST_"#BaseOp in {
-    let isPredicable = 1 in
-    def NAME : STInst2PI<(outs IntRegs:$dst),
-                (ins IntRegs:$src1, ImmOp:$offset, RC:$src2),
-                mnemonic#"($src1++#$offset) = $src2",
-                [],
-                "$src1 = $dst">;
-
-    let isPredicated = 1 in {
-      defm Pt : ST_PostInc_Pred<mnemonic, RC, ImmOp, 0 >;
-      defm NotPt : ST_PostInc_Pred<mnemonic, RC, ImmOp, 1 >;
-    }
-  }
-}
-
-defm POST_SThri: ST_PostInc2 <"memh", "STrih", IntRegs, s4_1Imm>, AddrModeRel;
-defm POST_STwri: ST_PostInc2 <"memw", "STriw", IntRegs, s4_2Imm>, AddrModeRel;
-
-let isNVStorable = 0 in
-defm POST_STdri: ST_PostInc2 <"memd", "STrid", DoubleRegs, s4_3Imm>, AddrModeRel;
+let accessSize = HalfWordAccess, isNVStorable = 0, isCodeGenOnly = 0 in
+defm storerf: ST_PostInc <"memh", "STrih_H", IntRegs, s4_1Imm, 0b1011, 1>;
 
 def : Pat<(post_truncsti8 (i32 IntRegs:$src1), IntRegs:$src2,
                            s4_3ImmPred:$offset),
@@ -2809,14 +2771,14 @@ def : Pat<(post_truncsti8 (i32 IntRegs:$src1), IntRegs:$src2,
 
 def : Pat<(post_truncsti16 (i32 IntRegs:$src1), IntRegs:$src2,
                             s4_3ImmPred:$offset),
-          (POST_SThri IntRegs:$src2, s4_1ImmPred:$offset, IntRegs:$src1)>;
+          (S2_storerh_pi IntRegs:$src2, s4_1ImmPred:$offset, IntRegs:$src1)>;
 
 def : Pat<(post_store (i32 IntRegs:$src1), IntRegs:$src2, s4_2ImmPred:$offset),
-          (POST_STwri IntRegs:$src2, s4_1ImmPred:$offset, IntRegs:$src1)>;
+          (S2_storeri_pi IntRegs:$src2, s4_1ImmPred:$offset, IntRegs:$src1)>;
 
 def : Pat<(post_store (i64 DoubleRegs:$src1), IntRegs:$src2,
                        s4_3ImmPred:$offset),
-          (POST_STdri IntRegs:$src2, s4_3ImmPred:$offset, DoubleRegs:$src1)>;
+          (S2_storerd_pi IntRegs:$src2, s4_3ImmPred:$offset, DoubleRegs:$src1)>;
 
 //===----------------------------------------------------------------------===//
 // multiclass for the store instructions with MEMri operand.
