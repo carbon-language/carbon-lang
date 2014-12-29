@@ -2656,6 +2656,102 @@ def: Pat<(i64 (sub (i64 DoubleRegs:$src1),
 //===----------------------------------------------------------------------===//
 ///
 // Store doubleword.
+//===----------------------------------------------------------------------===//
+// Template class for non-predicated post increment stores with immediate offset
+//===----------------------------------------------------------------------===//
+let isPredicable = 1, hasSideEffects = 0, addrMode = PostInc in
+class T_store_pi <string mnemonic, RegisterClass RC, Operand ImmOp,
+                 bits<4> MajOp, bit isHalf >
+  : STInst <(outs IntRegs:$_dst_),
+            (ins IntRegs:$src1, ImmOp:$offset, RC:$src2),
+  mnemonic#"($src1++#$offset) = $src2"#!if(isHalf, ".h", ""),
+  [], "$src1 = $_dst_" >,
+  AddrModeRel {
+    bits<5> src1;
+    bits<5> src2;
+    bits<7> offset;
+    bits<4> offsetBits;
+
+    string ImmOpStr = !cast<string>(ImmOp);
+    let offsetBits = !if (!eq(ImmOpStr, "s4_3Imm"), offset{6-3},
+                     !if (!eq(ImmOpStr, "s4_2Imm"), offset{5-2},
+                     !if (!eq(ImmOpStr, "s4_1Imm"), offset{4-1},
+                                      /* s4_0Imm */ offset{3-0})));
+    let isNVStorable = !if (!eq(ImmOpStr, "s4_3Imm"), 0, 1);
+
+    let IClass = 0b1010;
+
+    let Inst{27-25} = 0b101;
+    let Inst{24-21} = MajOp;
+    let Inst{20-16} = src1;
+    let Inst{13}    = 0b0;
+    let Inst{12-8}  = src2;
+    let Inst{7}     = 0b0;
+    let Inst{6-3}   = offsetBits;
+    let Inst{1}     = 0b0;
+  }
+
+//===----------------------------------------------------------------------===//
+// Template class for predicated post increment stores with immediate offset
+//===----------------------------------------------------------------------===//
+let isPredicated = 1, hasSideEffects = 0, addrMode = PostInc in
+class T_pstore_pi <string mnemonic, RegisterClass RC, Operand ImmOp,
+                      bits<4> MajOp, bit isHalf, bit isPredNot, bit isPredNew >
+  : STInst <(outs IntRegs:$_dst_),
+            (ins PredRegs:$src1, IntRegs:$src2, ImmOp:$offset, RC:$src3),
+  !if(isPredNot, "if (!$src1", "if ($src1")#!if(isPredNew, ".new) ",
+  ") ")#mnemonic#"($src2++#$offset) = $src3"#!if(isHalf, ".h", ""),
+  [], "$src2 = $_dst_" >,
+  AddrModeRel {
+    bits<2> src1;
+    bits<5> src2;
+    bits<7> offset;
+    bits<5> src3;
+    bits<4> offsetBits;
+
+    string ImmOpStr = !cast<string>(ImmOp);
+    let offsetBits = !if (!eq(ImmOpStr, "s4_3Imm"), offset{6-3},
+                     !if (!eq(ImmOpStr, "s4_2Imm"), offset{5-2},
+                     !if (!eq(ImmOpStr, "s4_1Imm"), offset{4-1},
+                                      /* s4_0Imm */ offset{3-0})));
+
+    let isNVStorable = !if (!eq(ImmOpStr, "s4_3Imm"), 0, 1);
+    let isPredicatedNew = isPredNew;
+    let isPredicatedFalse = isPredNot;
+
+    let IClass = 0b1010;
+
+    let Inst{27-25} = 0b101;
+    let Inst{24-21} = MajOp;
+    let Inst{20-16} = src2;
+    let Inst{13} = 0b1;
+    let Inst{12-8} = src3;
+    let Inst{7} = isPredNew;
+    let Inst{6-3} = offsetBits;
+    let Inst{2} = isPredNot;
+    let Inst{1-0} = src1;
+  }
+
+multiclass ST_PostInc<string mnemonic, string BaseOp, RegisterClass RC,
+                      Operand ImmOp, bits<4> MajOp, bit isHalf = 0 > {
+
+  let BaseOpcode = "POST_"#BaseOp in {
+    def S2_#NAME#_pi : T_store_pi <mnemonic, RC, ImmOp, MajOp, isHalf>;
+
+    // Predicated
+    def S2_p#NAME#t_pi : T_pstore_pi <mnemonic, RC, ImmOp, MajOp, isHalf, 0, 0>;
+    def S2_p#NAME#f_pi : T_pstore_pi <mnemonic, RC, ImmOp, MajOp, isHalf, 1, 0>;
+
+    // Predicated new
+    def S2_p#NAME#tnew_pi : T_pstore_pi <mnemonic, RC, ImmOp, MajOp,
+                                          isHalf, 0, 1>;
+    def S2_p#NAME#fnew_pi : T_pstore_pi <mnemonic, RC, ImmOp, MajOp,
+                                          isHalf, 1, 1>;
+  }
+}
+
+let accessSize = ByteAccess, isCodeGenOnly = 0 in
+defm storerb: ST_PostInc <"memb", "STrib", IntRegs, s4_0Imm, 0b1000>;
 
 //===----------------------------------------------------------------------===//
 // Post increment store
@@ -2683,7 +2779,7 @@ multiclass ST_PostInc_Pred<string mnemonic, RegisterClass RC,
 }
 
 let hasCtrlDep = 1, isNVStorable = 1, hasSideEffects = 0 in
-multiclass ST_PostInc<string mnemonic, string BaseOp, RegisterClass RC,
+multiclass ST_PostInc2<string mnemonic, string BaseOp, RegisterClass RC,
                       Operand ImmOp> {
 
   let hasCtrlDep = 1, BaseOpcode = "POST_"#BaseOp in {
@@ -2701,16 +2797,15 @@ multiclass ST_PostInc<string mnemonic, string BaseOp, RegisterClass RC,
   }
 }
 
-defm POST_STbri: ST_PostInc <"memb", "STrib", IntRegs, s4_0Imm>, AddrModeRel;
-defm POST_SThri: ST_PostInc <"memh", "STrih", IntRegs, s4_1Imm>, AddrModeRel;
-defm POST_STwri: ST_PostInc <"memw", "STriw", IntRegs, s4_2Imm>, AddrModeRel;
+defm POST_SThri: ST_PostInc2 <"memh", "STrih", IntRegs, s4_1Imm>, AddrModeRel;
+defm POST_STwri: ST_PostInc2 <"memw", "STriw", IntRegs, s4_2Imm>, AddrModeRel;
 
 let isNVStorable = 0 in
-defm POST_STdri: ST_PostInc <"memd", "STrid", DoubleRegs, s4_3Imm>, AddrModeRel;
+defm POST_STdri: ST_PostInc2 <"memd", "STrid", DoubleRegs, s4_3Imm>, AddrModeRel;
 
 def : Pat<(post_truncsti8 (i32 IntRegs:$src1), IntRegs:$src2,
                            s4_3ImmPred:$offset),
-          (POST_STbri IntRegs:$src2, s4_0ImmPred:$offset, IntRegs:$src1)>;
+          (S2_storerb_pi IntRegs:$src2, s4_0ImmPred:$offset, IntRegs:$src1)>;
 
 def : Pat<(post_truncsti16 (i32 IntRegs:$src1), IntRegs:$src2,
                             s4_3ImmPred:$offset),

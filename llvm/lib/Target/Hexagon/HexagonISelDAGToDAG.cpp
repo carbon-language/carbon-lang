@@ -712,7 +712,7 @@ SDNode *HexagonDAGToDAGISel::SelectIndexedStore(StoreSDNode *ST, SDLoc dl) {
     if (StoredVT == MVT::i64) Opcode = Hexagon::POST_STdri;
     else if (StoredVT == MVT::i32) Opcode = Hexagon::POST_STwri;
     else if (StoredVT == MVT::i16) Opcode = Hexagon::POST_SThri;
-    else if (StoredVT == MVT::i8) Opcode = Hexagon::POST_STbri;
+    else if (StoredVT == MVT::i8) Opcode = Hexagon::S2_storerb_pi;
     else llvm_unreachable("unknown memory type");
 
     // Build post increment store.

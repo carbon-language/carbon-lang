@@ -1432,8 +1432,8 @@ isConditionalStore (const MachineInstr* MI) const {
     case Hexagon::STrib_indexed_shl_cNotPt_V4 :
     case Hexagon::STrib_cPt :
     case Hexagon::STrib_cNotPt :
-    case Hexagon::POST_STbri_cPt :
-    case Hexagon::POST_STbri_cNotPt :
+    case Hexagon::S2_pstorerbt_pi:
+    case Hexagon::S2_pstorerbf_pi:
     case Hexagon::STrid_indexed_cPt :
     case Hexagon::STrid_indexed_cNotPt :
     case Hexagon::STrid_indexed_shl_cPt_V4 :
