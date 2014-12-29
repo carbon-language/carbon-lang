@@ -193,6 +193,9 @@ endif()
 set(CLANG_VENDOR_UTI "org.llvm.clang" CACHE STRING
   "Vendor-specific uti.")
 
+# The libdir suffix must exactly match whatever LLVM's configuration used.
+set(CLANG_LIBDIR_SUFFIX "${LLVM_LIBDIR_SUFFIX}")
+
 set(CLANG_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 set(CLANG_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR})
 

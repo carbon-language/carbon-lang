@@ -8,6 +8,9 @@
 /* Bug report URL. */
 #undef BUG_REPORT_URL
 
+/* Multilib suffix for libdir. */
+#undef CLANG_LIBDIR_SUFFIX
+
 /* Relative directory for resource files */
 #undef CLANG_RESOURCE_DIR
 
