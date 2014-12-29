@@ -330,3 +330,7 @@ namespace {
   [[deprecated()]] void foo(); // expected-error {{parentheses must be omitted if 'deprecated' attribute's argument list is empty}}
   [[gnu::deprecated()]] void quux();
 }
+
+// The diagnostics here don't matter much, this just shouldn't crash:
+class C final [[deprecated(l]] {}; // expected-error {{use of undeclared identifier}} expected-error {{expected ']'}} expected-error {{an attribute list cannot appear here}}
+class C final alignas ([l) {}; // expected-error {{expected ';' after class}}
