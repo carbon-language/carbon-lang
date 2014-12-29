@@ -150,7 +150,7 @@ std::string getMainExecutable(const char *argv0, void *MainAddr) {
       // /proc is not always mounted under Linux (chroot for example).
       ssize_t len = readlink(aPath.str().c_str(), exe_path, sizeof(exe_path));
       if (len >= 0)
-          return StringRef(exe_path, len);
+          return std::string(exe_path, len);
   } else {
       // Fall back to the classical detection.
       if (getprogpath(exe_path, argv0) != NULL)
