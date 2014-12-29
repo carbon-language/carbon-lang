@@ -874,7 +874,7 @@ llvm::Value *CodeGenFunction::EmitBlockLiteral(const CGBlockInfo &blockInfo) {
       // locations of subexpressions in the initialization.
       EmitExprAsInit(&l2r, &blockFieldPseudoVar,
                      MakeAddrLValue(blockField, type, align),
-                     /*captured by init*/ false);
+                     /*captured by init*/ false, SourceLocation());
     }
 
     // Activate the cleanup if layout pushed one.
@@ -1175,7 +1175,7 @@ CodeGenFunction::GenerateBlockFunction(GlobalDecl GD,
     Alloca->setAlignment(Align);
     // Set the DebugLocation to empty, so the store is recognized as a
     // frame setup instruction by llvm::DwarfDebug::beginFunction().
-    ApplyDebugLocation NL(*this);
+    NoLocation NL(*this, Builder);
     Builder.CreateAlignedStore(BlockPointer, Alloca, Align);
     BlockPointerDbgLoc = Alloca;
   }
@@ -1326,9 +1326,9 @@ CodeGenFunction::GenerateCopyHelperFunction(const CGBlockInfo &blockInfo) {
                                           false,
                                           false);
   // Create a scope with an artificial location for the body of this function.
-  ApplyDebugLocation NL(*this);
+  ArtificialLocation AL(*this, Builder);
   StartFunction(FD, C.VoidTy, Fn, FI, args);
-  ArtificialLocation AL(*this);
+  AL.Emit();
 
   llvm::Type *structPtrTy = blockInfo.StructureType->getPointerTo();
 
@@ -1497,9 +1497,9 @@ CodeGenFunction::GenerateDestroyHelperFunction(const CGBlockInfo &blockInfo) {
                                           nullptr, SC_Static,
                                           false, false);
   // Create a scope with an artificial location for the body of this function.
-  ApplyDebugLocation NL(*this);
+  ArtificialLocation AL(*this, Builder);
   StartFunction(FD, C.VoidTy, Fn, FI, args);
-  ArtificialLocation AL(*this);
+  AL.Emit();
 
   llvm::Type *structPtrTy = blockInfo.StructureType->getPointerTo();
 

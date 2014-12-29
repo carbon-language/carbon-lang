@@ -52,35 +52,54 @@ CGDebugInfo::~CGDebugInfo() {
          "Region stack mismatch, stack not empty!");
 }
 
-ArtificialLocation::ArtificialLocation(CodeGenFunction &CGF)
-    : ApplyDebugLocation(CGF) {
-  if (auto *DI = CGF.getDebugInfo()) {
+SaveAndRestoreLocation::SaveAndRestoreLocation(CodeGenFunction &CGF,
+                                               CGBuilderTy &B)
+    : DI(CGF.getDebugInfo()), Builder(B) {
+  if (DI) {
+    SavedLoc = DI->getLocation();
+    DI->CurLoc = SourceLocation();
+  }
+}
+
+SaveAndRestoreLocation::~SaveAndRestoreLocation() {
+  if (DI)
+    DI->EmitLocation(Builder, SavedLoc);
+}
+
+NoLocation::NoLocation(CodeGenFunction &CGF, CGBuilderTy &B)
+    : SaveAndRestoreLocation(CGF, B) {
+  if (DI)
+    Builder.SetCurrentDebugLocation(llvm::DebugLoc());
+}
+
+NoLocation::~NoLocation() {
+  if (DI)
+    assert(Builder.getCurrentDebugLocation().isUnknown());
+}
+
+ArtificialLocation::ArtificialLocation(CodeGenFunction &CGF, CGBuilderTy &B)
+    : SaveAndRestoreLocation(CGF, B) {
+  if (DI)
+    Builder.SetCurrentDebugLocation(llvm::DebugLoc());
+}
+
+void ArtificialLocation::Emit() {
+  if (DI) {
+    // Sync the Builder.
+    DI->EmitLocation(Builder, SavedLoc);
+    DI->CurLoc = SourceLocation();
     // Construct a location that has a valid scope, but no line info.
     assert(!DI->LexicalBlockStack.empty());
     llvm::DIDescriptor Scope(DI->LexicalBlockStack.back());
-    CGF.Builder.SetCurrentDebugLocation(llvm::DebugLoc::get(0, 0, Scope));
+    Builder.SetCurrentDebugLocation(llvm::DebugLoc::get(0, 0, Scope));
   }
 }
 
-ApplyDebugLocation::ApplyDebugLocation(CodeGenFunction &CGF,
-                                       SourceLocation TemporaryLocation,
-                                       bool ForceColumnInfo)
-    : CGF(CGF) {
-  if (auto *DI = CGF.getDebugInfo()) {
-    OriginalLocation = CGF.Builder.getCurrentDebugLocation();
-    if (TemporaryLocation.isInvalid())
-      CGF.Builder.SetCurrentDebugLocation(llvm::DebugLoc());
-    else
-      DI->EmitLocation(CGF.Builder, TemporaryLocation, ForceColumnInfo);
-  }
+ArtificialLocation::~ArtificialLocation() {
+  if (DI)
+    assert(Builder.getCurrentDebugLocation().getLine() == 0);
 }
 
-ApplyDebugLocation::~ApplyDebugLocation() {
-  CGF.Builder.SetCurrentDebugLocation(OriginalLocation);
-}
-
-/// ArtificialLocation - An RAII object that temporarily switches to
-/// an artificial debug location that has a valid scope, but no line
 void CGDebugInfo::setLocation(SourceLocation Loc) {
   // If the new location isn't valid return.
   if (Loc.isInvalid())
