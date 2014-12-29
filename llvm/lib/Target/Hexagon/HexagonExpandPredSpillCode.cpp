@@ -95,7 +95,7 @@ bool HexagonExpandPredSpillCode::runOnMachineFunction(MachineFunction &Fn) {
         int SrcReg = MI->getOperand(2).getReg();
         assert(Hexagon::PredRegsRegClass.contains(SrcReg) &&
                "Not a predicate register");
-        if (!TII->isValidOffset(Hexagon::STriw_indexed, Offset)) {
+        if (!TII->isValidOffset(Hexagon::S2_storeri_io, Offset)) {
           if (!TII->isValidOffset(Hexagon::ADD_ri, Offset)) {
             BuildMI(*MBB, MII, MI->getDebugLoc(),
                     TII->get(Hexagon::CONST32_Int_Real),
@@ -106,7 +106,7 @@ bool HexagonExpandPredSpillCode::runOnMachineFunction(MachineFunction &Fn) {
             BuildMI(*MBB, MII, MI->getDebugLoc(), TII->get(Hexagon::C2_tfrpr),
                       HEXAGON_RESERVED_REG_2).addReg(SrcReg);
             BuildMI(*MBB, MII, MI->getDebugLoc(),
-                    TII->get(Hexagon::STriw_indexed))
+                    TII->get(Hexagon::S2_storeri_io))
               .addReg(HEXAGON_RESERVED_REG_1)
               .addImm(0).addReg(HEXAGON_RESERVED_REG_2);
           } else {
@@ -115,7 +115,7 @@ bool HexagonExpandPredSpillCode::runOnMachineFunction(MachineFunction &Fn) {
             BuildMI(*MBB, MII, MI->getDebugLoc(), TII->get(Hexagon::C2_tfrpr),
                       HEXAGON_RESERVED_REG_2).addReg(SrcReg);
             BuildMI(*MBB, MII, MI->getDebugLoc(),
-                          TII->get(Hexagon::STriw_indexed))
+                          TII->get(Hexagon::S2_storeri_io))
               .addReg(HEXAGON_RESERVED_REG_1)
               .addImm(0)
               .addReg(HEXAGON_RESERVED_REG_2);
@@ -124,7 +124,7 @@ bool HexagonExpandPredSpillCode::runOnMachineFunction(MachineFunction &Fn) {
           BuildMI(*MBB, MII, MI->getDebugLoc(), TII->get(Hexagon::C2_tfrpr),
                     HEXAGON_RESERVED_REG_2).addReg(SrcReg);
           BuildMI(*MBB, MII, MI->getDebugLoc(),
-                        TII->get(Hexagon::STriw_indexed)).
+                        TII->get(Hexagon::S2_storeri_io)).
                     addReg(FP).addImm(Offset).addReg(HEXAGON_RESERVED_REG_2);
         }
         MII = MBB->erase(MI);

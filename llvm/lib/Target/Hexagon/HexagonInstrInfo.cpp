@@ -103,10 +103,10 @@ unsigned HexagonInstrInfo::isStoreToStackSlot(const MachineInstr *MI,
                                             int &FrameIndex) const {
   switch (MI->getOpcode()) {
   default: break;
-  case Hexagon::STriw:
-  case Hexagon::STrid:
-  case Hexagon::STrih:
-  case Hexagon::STrib:
+  case Hexagon::S2_storeri_io:
+  case Hexagon::S2_storerd_io:
+  case Hexagon::S2_storerh_io:
+  case Hexagon::S2_storerb_io:
     if (MI->getOperand(2).isFI() &&
         MI->getOperand(1).isImm() && (MI->getOperand(1).getImm() == 0)) {
       FrameIndex = MI->getOperand(0).getIndex();
@@ -488,11 +488,11 @@ storeRegToStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
                       Align);
 
   if (Hexagon::IntRegsRegClass.hasSubClassEq(RC)) {
-    BuildMI(MBB, I, DL, get(Hexagon::STriw))
+    BuildMI(MBB, I, DL, get(Hexagon::S2_storeri_io))
           .addFrameIndex(FI).addImm(0)
           .addReg(SrcReg, getKillRegState(isKill)).addMemOperand(MMO);
   } else if (Hexagon::DoubleRegsRegClass.hasSubClassEq(RC)) {
-    BuildMI(MBB, I, DL, get(Hexagon::STrid))
+    BuildMI(MBB, I, DL, get(Hexagon::S2_storerd_io))
           .addFrameIndex(FI).addImm(0)
           .addReg(SrcReg, getKillRegState(isKill)).addMemOperand(MMO);
   } else if (Hexagon::PredRegsRegClass.hasSubClassEq(RC)) {
@@ -651,22 +651,18 @@ bool HexagonInstrInfo::isPredicable(MachineInstr *MI) const {
   case Hexagon::A2_tfrsi:
     return isInt<12>(MI->getOperand(1).getImm());
 
-  case Hexagon::STrid:
-  case Hexagon::STrid_indexed:
+  case Hexagon::S2_storerd_io:
     return isShiftedUInt<6,3>(MI->getOperand(1).getImm());
 
-  case Hexagon::STriw:
-  case Hexagon::STriw_indexed:
+  case Hexagon::S2_storeri_io:
   case Hexagon::STriw_nv_V4:
     return isShiftedUInt<6,2>(MI->getOperand(1).getImm());
 
-  case Hexagon::STrih:
-  case Hexagon::STrih_indexed:
+  case Hexagon::S2_storerh_io:
   case Hexagon::STrih_nv_V4:
     return isShiftedUInt<6,1>(MI->getOperand(1).getImm());
 
-  case Hexagon::STrib:
-  case Hexagon::STrib_indexed:
+  case Hexagon::S2_storerb_io:
   case Hexagon::STrib_nv_V4:
     return isUInt<6>(MI->getOperand(1).getImm());
 
@@ -780,11 +776,11 @@ getMatchingCondBranchOpcode(int Opc, bool invertPredicate) const {
 
   // Word.
   case Hexagon::STriw_f:
-    return !invertPredicate ? Hexagon::STriw_cPt :
-                              Hexagon::STriw_cNotPt;
+    return !invertPredicate ? Hexagon::S2_pstorerit_io:
+                              Hexagon::S2_pstorerif_io;
   case Hexagon::STriw_indexed_f:
-    return !invertPredicate ? Hexagon::STriw_indexed_cPt :
-                              Hexagon::STriw_indexed_cNotPt;
+    return !invertPredicate ? Hexagon::S2_pstorerit_io:
+                              Hexagon::S2_pstorerif_io;
 
   // DEALLOC_RETURN.
   case Hexagon::DEALLOC_RET_V4:
@@ -1103,28 +1099,26 @@ isValidOffset(const int Opcode, const int Offset) const {
 
   case Hexagon::L2_loadri_io:
   case Hexagon::LDriw_f:
-  case Hexagon::STriw_indexed:
-  case Hexagon::STriw:
+  case Hexagon::S2_storeri_io:
   case Hexagon::STriw_f:
     return (Offset >= Hexagon_MEMW_OFFSET_MIN) &&
       (Offset <= Hexagon_MEMW_OFFSET_MAX);
 
   case Hexagon::L2_loadrd_io:
   case Hexagon::LDrid_f:
-  case Hexagon::STrid:
-  case Hexagon::STrid_indexed:
+  case Hexagon::S2_storerd_io:
   case Hexagon::STrid_f:
     return (Offset >= Hexagon_MEMD_OFFSET_MIN) &&
       (Offset <= Hexagon_MEMD_OFFSET_MAX);
 
   case Hexagon::L2_loadrh_io:
   case Hexagon::L2_loadruh_io:
-  case Hexagon::STrih:
+  case Hexagon::S2_storerh_io:
     return (Offset >= Hexagon_MEMH_OFFSET_MIN) &&
       (Offset <= Hexagon_MEMH_OFFSET_MAX);
 
   case Hexagon::L2_loadrb_io:
-  case Hexagon::STrib:
+  case Hexagon::S2_storerb_io:
   case Hexagon::L2_loadrub_io:
     return (Offset >= Hexagon_MEMB_OFFSET_MIN) &&
       (Offset <= Hexagon_MEMB_OFFSET_MAX);
@@ -1430,29 +1424,25 @@ isConditionalStore (const MachineInstr* MI) const {
     case Hexagon::STrib_imm_cNotPt_V4 :
     case Hexagon::STrib_indexed_shl_cPt_V4 :
     case Hexagon::STrib_indexed_shl_cNotPt_V4 :
-    case Hexagon::STrib_cPt :
-    case Hexagon::STrib_cNotPt :
+    case Hexagon::S2_pstorerbt_io:
+    case Hexagon::S2_pstorerbf_io:
     case Hexagon::S2_pstorerbt_pi:
     case Hexagon::S2_pstorerbf_pi:
-    case Hexagon::STrid_indexed_cPt :
-    case Hexagon::STrid_indexed_cNotPt :
+    case Hexagon::S2_pstorerdt_io:
+    case Hexagon::S2_pstorerdf_io:
     case Hexagon::STrid_indexed_shl_cPt_V4 :
     case Hexagon::S2_pstorerdt_pi:
     case Hexagon::S2_pstorerdf_pi:
-    case Hexagon::STrih_cPt :
-    case Hexagon::STrih_cNotPt :
-    case Hexagon::STrih_indexed_cPt :
-    case Hexagon::STrih_indexed_cNotPt :
+    case Hexagon::S2_pstorerht_io:
+    case Hexagon::S2_pstorerhf_io:
     case Hexagon::STrih_imm_cPt_V4 :
     case Hexagon::STrih_imm_cNotPt_V4 :
     case Hexagon::STrih_indexed_shl_cPt_V4 :
     case Hexagon::STrih_indexed_shl_cNotPt_V4 :
     case Hexagon::S2_pstorerht_pi:
     case Hexagon::S2_pstorerhf_pi:
-    case Hexagon::STriw_cPt :
-    case Hexagon::STriw_cNotPt :
-    case Hexagon::STriw_indexed_cPt :
-    case Hexagon::STriw_indexed_cNotPt :
+    case Hexagon::S2_pstorerit_io:
+    case Hexagon::S2_pstorerif_io:
     case Hexagon::STriw_imm_cPt_V4 :
     case Hexagon::STriw_imm_cNotPt_V4 :
     case Hexagon::STriw_indexed_shl_cPt_V4 :

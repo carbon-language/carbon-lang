@@ -2781,157 +2781,182 @@ def : Pat<(post_store (i64 DoubleRegs:$src1), IntRegs:$src2,
           (S2_storerd_pi IntRegs:$src2, s4_3ImmPred:$offset, DoubleRegs:$src1)>;
 
 //===----------------------------------------------------------------------===//
-// multiclass for the store instructions with MEMri operand.
+// Template class for post increment stores with register offset.
 //===----------------------------------------------------------------------===//
-multiclass ST_MEMri_Pbase<string mnemonic, RegisterClass RC, bit isNot,
-                          bit isPredNew> {
-  let isPredicatedNew = isPredNew in
-  def NAME : STInst2<(outs),
-            (ins PredRegs:$src1, MEMri:$addr, RC: $src2),
-            !if(isNot, "if (!$src1", "if ($src1")#!if(isPredNew, ".new) ",
-            ") ")#mnemonic#"($addr) = $src2",
-            []>;
-}
+let isNVStorable = 1 in
+class T_store_pr <string mnemonic, RegisterClass RC, bits<3> MajOp,
+                     MemAccessSize AccessSz, bit isHalf = 0>
+  : STInst <(outs IntRegs:$_dst_),
+            (ins IntRegs:$src1, ModRegs:$src2, RC:$src3),
+  mnemonic#"($src1++$src2) = $src3"#!if(isHalf, ".h", ""),
+  [], "$src1 = $_dst_" > {
+    bits<5> src1;
+    bits<1> src2;
+    bits<5> src3;
+    let accessSize = AccessSz;
 
-multiclass ST_MEMri_Pred<string mnemonic, RegisterClass RC, bit PredNot> {
-  let isPredicatedFalse = PredNot in {
-    defm _c#NAME : ST_MEMri_Pbase<mnemonic, RC, PredNot, 0>;
+    let IClass = 0b1010;
 
-    // Predicate new
-    let validSubTargets = HasV4SubT, Predicates = [HasV4T] in
-    defm _cdn#NAME#_V4 : ST_MEMri_Pbase<mnemonic, RC, PredNot, 1>;
+    let Inst{27-24} = 0b1101;
+    let Inst{23-21} = MajOp;
+    let Inst{20-16} = src1;
+    let Inst{13} = src2;
+    let Inst{12-8} = src3;
+    let Inst{7} = 0b0;
   }
+
+let isCodeGenOnly = 0 in {
+def S2_storerb_pr : T_store_pr<"memb", IntRegs, 0b000, ByteAccess>;
+def S2_storerh_pr : T_store_pr<"memh", IntRegs, 0b010, HalfWordAccess>;
+def S2_storeri_pr : T_store_pr<"memw", IntRegs, 0b100, WordAccess>;
+def S2_storerd_pr : T_store_pr<"memd", DoubleRegs, 0b110, DoubleWordAccess>;
+
+def S2_storerf_pr : T_store_pr<"memh", IntRegs, 0b011, HalfWordAccess, 1>;
 }
+let opExtendable = 1, isExtentSigned = 1, isPredicable = 1 in
+class T_store_io <string mnemonic, RegisterClass RC, Operand ImmOp,
+                 bits<3>MajOp, bit isH = 0>
+  : STInst <(outs),
+            (ins IntRegs:$src1, ImmOp:$src2, RC:$src3),
+  mnemonic#"($src1+#$src2) = $src3"#!if(isH,".h","")>,
+  AddrModeRel, ImmRegRel {
+    bits<5> src1;
+    bits<14> src2; // Actual address offset
+    bits<5> src3;
+    bits<11> offsetBits; // Represents offset encoding
 
-let isExtendable = 1, isNVStorable = 1, hasSideEffects = 0 in
-multiclass ST_MEMri<string mnemonic, string CextOp, RegisterClass RC,
-                    bits<5> ImmBits, bits<5> PredImmBits> {
+    string ImmOpStr = !cast<string>(ImmOp);
 
-  let CextOpcode = CextOp, BaseOpcode = CextOp in {
-    let opExtendable = 1, isExtentSigned = 1, opExtentBits = ImmBits,
-         isPredicable = 1 in
-    def NAME : STInst2<(outs),
-            (ins MEMri:$addr, RC:$src),
-            mnemonic#"($addr) = $src",
-            []>;
+    let opExtentBits = !if (!eq(ImmOpStr, "s11_3Ext"), 14,
+                       !if (!eq(ImmOpStr, "s11_2Ext"), 13,
+                       !if (!eq(ImmOpStr, "s11_1Ext"), 12,
+                                        /* s11_0Ext */ 11)));
+    let offsetBits = !if (!eq(ImmOpStr, "s11_3Ext"), src2{13-3},
+                     !if (!eq(ImmOpStr, "s11_2Ext"), src2{12-2},
+                     !if (!eq(ImmOpStr, "s11_1Ext"), src2{11-1},
+                                      /* s11_0Ext */ src2{10-0})));
+    let IClass = 0b1010;
 
-    let opExtendable = 2, isExtentSigned = 0, opExtentBits = PredImmBits,
-        isPredicated = 1 in {
-      defm Pt : ST_MEMri_Pred<mnemonic, RC, 0>;
-      defm NotPt : ST_MEMri_Pred<mnemonic, RC, 1>;
-    }
+    let Inst{27} = 0b0;
+    let Inst{26-25} = offsetBits{10-9};
+    let Inst{24} = 0b1;
+    let Inst{23-21} = MajOp;
+    let Inst{20-16} = src1;
+    let Inst{13} = offsetBits{8};
+    let Inst{12-8} = src3;
+    let Inst{7-0} = offsetBits{7-0};
   }
-}
 
-let addrMode = BaseImmOffset, isMEMri = "true" in {
-  let accessSize = ByteAccess in
-    defm STrib: ST_MEMri < "memb", "STrib", IntRegs, 11, 6>, AddrModeRel;
+let opExtendable = 2, isPredicated = 1 in
+class T_pstore_io <string mnemonic, RegisterClass RC, Operand ImmOp,
+                   bits<3>MajOp, bit PredNot, bit isPredNew, bit isH = 0>
+  : STInst <(outs),
+            (ins PredRegs:$src1, IntRegs:$src2, ImmOp:$src3, RC:$src4),
+  !if(PredNot, "if (!$src1", "if ($src1")#!if(isPredNew, ".new) ",
+  ") ")#mnemonic#"($src2+#$src3) = $src4"#!if(isH,".h",""),
+  [],"",V2LDST_tc_st_SLOT01 >,
+   AddrModeRel, ImmRegRel {
+    bits<2> src1;
+    bits<5> src2;
+    bits<9> src3; // Actual address offset
+    bits<5> src4;
+    bits<6> offsetBits; // Represents offset encoding
 
-  let accessSize = HalfWordAccess in
-    defm STrih: ST_MEMri < "memh", "STrih", IntRegs, 12, 7>, AddrModeRel;
+    let isPredicatedNew = isPredNew;
+    let isPredicatedFalse = PredNot;
 
-  let accessSize = WordAccess in
-    defm STriw: ST_MEMri < "memw", "STriw", IntRegs, 13, 8>, AddrModeRel;
+    string ImmOpStr = !cast<string>(ImmOp);
+    let opExtentBits = !if (!eq(ImmOpStr, "u6_3Ext"), 9,
+                       !if (!eq(ImmOpStr, "u6_2Ext"), 8,
+                       !if (!eq(ImmOpStr, "u6_1Ext"), 7,
+                                        /* u6_0Ext */ 6)));
+    let offsetBits = !if (!eq(ImmOpStr, "u6_3Ext"), src3{8-3},
+                     !if (!eq(ImmOpStr, "u6_2Ext"), src3{7-2},
+                     !if (!eq(ImmOpStr, "u6_1Ext"), src3{6-1},
+                                      /* u6_0Ext */ src3{5-0})));
+     let IClass = 0b0100;
 
-  let accessSize = DoubleWordAccess, isNVStorable = 0 in
-    defm STrid: ST_MEMri < "memd", "STrid", DoubleRegs, 14, 9>, AddrModeRel;
-}
-
-def : Pat<(truncstorei8 (i32 IntRegs:$src1), ADDRriS11_0:$addr),
-          (STrib ADDRriS11_0:$addr, (i32 IntRegs:$src1))>;
-
-def : Pat<(truncstorei16 (i32 IntRegs:$src1), ADDRriS11_1:$addr),
-          (STrih ADDRriS11_1:$addr, (i32 IntRegs:$src1))>;
-
-def : Pat<(store (i32 IntRegs:$src1), ADDRriS11_2:$addr),
-          (STriw ADDRriS11_2:$addr, (i32 IntRegs:$src1))>;
-
-def : Pat<(store (i64 DoubleRegs:$src1), ADDRriS11_3:$addr),
-          (STrid ADDRriS11_3:$addr, (i64 DoubleRegs:$src1))>;
-
-
-//===----------------------------------------------------------------------===//
-// multiclass for the store instructions with base+immediate offset
-// addressing mode
-//===----------------------------------------------------------------------===//
-multiclass ST_Idxd_Pbase<string mnemonic, RegisterClass RC, Operand predImmOp,
-                        bit isNot, bit isPredNew> {
-  let isPredicatedNew = isPredNew in
-  def NAME : STInst2<(outs),
-            (ins PredRegs:$src1, IntRegs:$src2, predImmOp:$src3, RC: $src4),
-            !if(isNot, "if (!$src1", "if ($src1")#!if(isPredNew, ".new) ",
-            ") ")#mnemonic#"($src2+#$src3) = $src4",
-            []>;
-}
-
-multiclass ST_Idxd_Pred<string mnemonic, RegisterClass RC, Operand predImmOp,
-                        bit PredNot> {
-  let isPredicatedFalse = PredNot, isPredicated = 1 in {
-    defm _c#NAME : ST_Idxd_Pbase<mnemonic, RC, predImmOp, PredNot, 0>;
-
-    // Predicate new
-    let validSubTargets = HasV4SubT, Predicates = [HasV4T] in
-    defm _cdn#NAME#_V4 : ST_Idxd_Pbase<mnemonic, RC, predImmOp, PredNot, 1>;
+    let Inst{27} = 0b0;
+    let Inst{26} = PredNot;
+    let Inst{25} = isPredNew;
+    let Inst{24} = 0b0;
+    let Inst{23-21} = MajOp;
+    let Inst{20-16} = src2;
+    let Inst{13} = offsetBits{5};
+    let Inst{12-8} = src4;
+    let Inst{7-3} = offsetBits{4-0};
+    let Inst{1-0} = src1;
   }
-}
 
 let isExtendable = 1, isNVStorable = 1, hasSideEffects = 0 in
 multiclass ST_Idxd<string mnemonic, string CextOp, RegisterClass RC,
-                   Operand ImmOp, Operand predImmOp, bits<5> ImmBits,
-                   bits<5> PredImmBits> {
-
+                 Operand ImmOp, Operand predImmOp, bits<3> MajOp, bit isH = 0> {
   let CextOpcode = CextOp, BaseOpcode = CextOp#_indexed in {
-    let opExtendable = 1, isExtentSigned = 1, opExtentBits = ImmBits,
-         isPredicable = 1 in
-    def NAME : STInst2<(outs),
-            (ins IntRegs:$src1, ImmOp:$src2, RC:$src3),
-            mnemonic#"($src1+#$src2) = $src3",
-            []>;
+    def S2_#NAME#_io : T_store_io <mnemonic, RC, ImmOp, MajOp, isH>;
 
-    let opExtendable = 2, isExtentSigned = 0, opExtentBits = PredImmBits in {
-      defm Pt : ST_Idxd_Pred<mnemonic, RC, predImmOp, 0>;
-      defm NotPt : ST_Idxd_Pred<mnemonic, RC, predImmOp, 1>;
-    }
+    // Predicated
+    def S2_p#NAME#t_io : T_pstore_io<mnemonic, RC, predImmOp, MajOp, 0, 0, isH>;
+    def S2_p#NAME#f_io : T_pstore_io<mnemonic, RC, predImmOp, MajOp, 1, 0, isH>;
+
+    // Predicated new
+    def S4_p#NAME#tnew_io : T_pstore_io <mnemonic, RC, predImmOp,
+                                         MajOp, 0, 1, isH>;
+    def S4_p#NAME#fnew_io : T_pstore_io <mnemonic, RC, predImmOp,
+                                         MajOp, 1, 1, isH>;
   }
 }
 
-let addrMode = BaseImmOffset, InputType = "reg" in {
+let addrMode = BaseImmOffset, InputType = "imm", isCodeGenOnly = 0 in {
   let accessSize = ByteAccess in
-    defm STrib_indexed: ST_Idxd < "memb", "STrib", IntRegs, s11_0Ext,
-                                  u6_0Ext, 11, 6>, AddrModeRel, ImmRegRel;
+    defm storerb: ST_Idxd < "memb", "STrib", IntRegs, s11_0Ext, u6_0Ext, 0b000>;
 
-  let accessSize = HalfWordAccess in
-    defm STrih_indexed: ST_Idxd < "memh", "STrih", IntRegs, s11_1Ext,
-                                  u6_1Ext, 12, 7>, AddrModeRel, ImmRegRel;
+  let accessSize = HalfWordAccess, opExtentAlign = 1 in
+    defm storerh: ST_Idxd < "memh", "STrih", IntRegs, s11_1Ext, u6_1Ext, 0b010>;
 
-  let accessSize = WordAccess in
-    defm STriw_indexed: ST_Idxd < "memw", "STriw", IntRegs, s11_2Ext,
-                                  u6_2Ext, 13, 8>, AddrModeRel, ImmRegRel;
+  let accessSize = WordAccess, opExtentAlign = 2 in
+    defm storeri: ST_Idxd < "memw", "STriw", IntRegs, s11_2Ext, u6_2Ext, 0b100>;
 
-  let accessSize = DoubleWordAccess, isNVStorable = 0 in
-    defm STrid_indexed: ST_Idxd < "memd", "STrid", DoubleRegs, s11_3Ext,
-                                  u6_3Ext, 14, 9>, AddrModeRel;
+  let accessSize = DoubleWordAccess, isNVStorable = 0, opExtentAlign = 3 in
+    defm storerd: ST_Idxd < "memd", "STrid", DoubleRegs, s11_3Ext,
+                            u6_3Ext, 0b110>;
+
+  let accessSize = HalfWordAccess, opExtentAlign = 1 in
+    defm storerf: ST_Idxd < "memh", "STrif", IntRegs, s11_1Ext,
+                            u6_1Ext, 0b011, 1>;
 }
+
+def : Pat<(truncstorei8 (i32 IntRegs:$src1), ADDRriS11_0:$addr),
+          (S2_storerb_io AddrFI:$addr, 0, (i32 IntRegs:$src1))>;
+
+def : Pat<(truncstorei16 (i32 IntRegs:$src1), ADDRriS11_1:$addr),
+          (S2_storerh_io AddrFI:$addr, 0, (i32 IntRegs:$src1))>;
+
+def : Pat<(store (i32 IntRegs:$src1), ADDRriS11_2:$addr),
+          (S2_storeri_io AddrFI:$addr, 0, (i32 IntRegs:$src1))>;
+
+def : Pat<(store (i64 DoubleRegs:$src1), ADDRriS11_3:$addr),
+          (S2_storerd_io AddrFI:$addr, 0, (i64 DoubleRegs:$src1))>;
+
 
 let AddedComplexity = 10 in {
 def : Pat<(truncstorei8 (i32 IntRegs:$src1), (add IntRegs:$src2,
                                                   s11_0ExtPred:$offset)),
-          (STrib_indexed IntRegs:$src2, s11_0ImmPred:$offset,
+          (S2_storerb_io IntRegs:$src2, s11_0ImmPred:$offset,
                          (i32 IntRegs:$src1))>;
 
 def : Pat<(truncstorei16 (i32 IntRegs:$src1), (add IntRegs:$src2,
                                                    s11_1ExtPred:$offset)),
-          (STrih_indexed IntRegs:$src2, s11_1ImmPred:$offset,
+          (S2_storerh_io IntRegs:$src2, s11_1ImmPred:$offset,
                          (i32 IntRegs:$src1))>;
 
 def : Pat<(store (i32 IntRegs:$src1), (add IntRegs:$src2,
                                            s11_2ExtPred:$offset)),
-          (STriw_indexed IntRegs:$src2, s11_2ImmPred:$offset,
+          (S2_storeri_io IntRegs:$src2, s11_2ImmPred:$offset,
                          (i32 IntRegs:$src1))>;
 
 def : Pat<(store (i64 DoubleRegs:$src1), (add IntRegs:$src2,
                                               s11_3ExtPred:$offset)),
-          (STrid_indexed IntRegs:$src2, s11_3ImmPred:$offset,
+          (S2_storerd_io IntRegs:$src2, s11_3ImmPred:$offset,
                          (i64 DoubleRegs:$src1))>;
 }
 
@@ -3890,39 +3915,39 @@ def : Pat<(atomic_load_64 (add (i32 IntRegs:$src1), s11_3ImmPred:$offset)),
 
 
 def : Pat<(atomic_store_8 ADDRriS11_0:$src2, (i32 IntRegs:$src1)),
-          (STrib ADDRriS11_0:$src2, (i32 IntRegs:$src1))>;
+          (S2_storerb_io AddrFI:$src2, 0, (i32 IntRegs:$src1))>;
 
 def : Pat<(atomic_store_8 (add (i32 IntRegs:$src2), s11_0ImmPred:$offset),
                           (i32 IntRegs:$src1)),
-          (STrib_indexed (i32 IntRegs:$src2), s11_0ImmPred:$offset,
+          (S2_storerb_io (i32 IntRegs:$src2), s11_0ImmPred:$offset,
                          (i32 IntRegs:$src1))>;
 
 
 def : Pat<(atomic_store_16 ADDRriS11_1:$src2, (i32 IntRegs:$src1)),
-          (STrih ADDRriS11_1:$src2, (i32 IntRegs:$src1))>;
+          (S2_storerh_io AddrFI:$src2, 0, (i32 IntRegs:$src1))>;
 
 def : Pat<(atomic_store_16 (i32 IntRegs:$src1),
                           (add (i32 IntRegs:$src2), s11_1ImmPred:$offset)),
-          (STrih_indexed (i32 IntRegs:$src2), s11_1ImmPred:$offset,
+          (S2_storerh_io (i32 IntRegs:$src2), s11_1ImmPred:$offset,
                          (i32 IntRegs:$src1))>;
 
 def : Pat<(atomic_store_32 ADDRriS11_2:$src2, (i32 IntRegs:$src1)),
-          (STriw ADDRriS11_2:$src2, (i32 IntRegs:$src1))>;
+          (S2_storeri_io AddrFI:$src2, 0, (i32 IntRegs:$src1))>;
 
 def : Pat<(atomic_store_32 (add (i32 IntRegs:$src2), s11_2ImmPred:$offset),
                            (i32 IntRegs:$src1)),
-          (STriw_indexed (i32 IntRegs:$src2), s11_2ImmPred:$offset,
+          (S2_storeri_io (i32 IntRegs:$src2), s11_2ImmPred:$offset,
                          (i32 IntRegs:$src1))>;
 
 
 
 
 def : Pat<(atomic_store_64 ADDRriS11_3:$src2, (i64 DoubleRegs:$src1)),
-          (STrid ADDRriS11_3:$src2, (i64 DoubleRegs:$src1))>;
+          (S2_storerd_io AddrFI:$src2, 0, (i64 DoubleRegs:$src1))>;
 
 def : Pat<(atomic_store_64 (add (i32 IntRegs:$src2), s11_3ImmPred:$offset),
                            (i64 DoubleRegs:$src1)),
-          (STrid_indexed (i32 IntRegs:$src2), s11_3ImmPred:$offset,
+          (S2_storerd_io (i32 IntRegs:$src2), s11_3ImmPred:$offset,
                          (i64 DoubleRegs:$src1))>;
 
 // Map from r0 = and(r1, 65535) to r0 = zxth(r1)
@@ -4071,35 +4096,35 @@ def :  Pat<(i1 (trunc (i64 DoubleRegs:$src))),
 
 // Map memb(Rs) = Rdd -> memb(Rs) = Rt.
 def : Pat<(truncstorei8 (i64 DoubleRegs:$src), ADDRriS11_0:$addr),
-      (STrib ADDRriS11_0:$addr, (i32 (EXTRACT_SUBREG (i64 DoubleRegs:$src),
+      (S2_storerb_io AddrFI:$addr, 0, (i32 (EXTRACT_SUBREG (i64 DoubleRegs:$src),
                                                      subreg_loreg)))>;
 
 // Map memh(Rs) = Rdd -> memh(Rs) = Rt.
 def : Pat<(truncstorei16 (i64 DoubleRegs:$src), ADDRriS11_0:$addr),
-      (STrih ADDRriS11_0:$addr, (i32 (EXTRACT_SUBREG (i64 DoubleRegs:$src),
+      (S2_storerh_io AddrFI:$addr, 0, (i32 (EXTRACT_SUBREG (i64 DoubleRegs:$src),
                                                      subreg_loreg)))>;
 // Map memw(Rs) = Rdd -> memw(Rs) = Rt
 def : Pat<(truncstorei32 (i64  DoubleRegs:$src), ADDRriS11_0:$addr),
-      (STriw ADDRriS11_0:$addr, (i32 (EXTRACT_SUBREG (i64 DoubleRegs:$src),
+      (S2_storeri_io AddrFI:$addr, 0, (i32 (EXTRACT_SUBREG (i64 DoubleRegs:$src),
                                                      subreg_loreg)))>;
 
 // Map memw(Rs) = Rdd -> memw(Rs) = Rt.
 def : Pat<(truncstorei32 (i64 DoubleRegs:$src), ADDRriS11_0:$addr),
-      (STriw ADDRriS11_0:$addr, (i32 (EXTRACT_SUBREG (i64 DoubleRegs:$src),
+      (S2_storeri_io AddrFI:$addr, 0, (i32 (EXTRACT_SUBREG (i64 DoubleRegs:$src),
                                                      subreg_loreg)))>;
 
 // Map from i1 = constant<-1>; memw(addr) = i1 -> r0 = 1; memw(addr) = r0.
 def : Pat<(store (i1 -1), ADDRriS11_2:$addr),
-      (STrib ADDRriS11_2:$addr, (A2_tfrsi 1))>;
+      (S2_storerb_io AddrFI:$addr, 0, (A2_tfrsi 1))>;
 
 
 // Map from i1 = constant<-1>; store i1 -> r0 = 1; store r0.
 def : Pat<(store (i1 -1), ADDRriS11_2:$addr),
-      (STrib ADDRriS11_2:$addr, (A2_tfrsi 1))>;
+      (S2_storerb_io AddrFI:$addr, 0, (A2_tfrsi 1))>;
 
 // Map from memb(Rs) = Pd -> Rt = mux(Pd, #0, #1); store Rt.
 def : Pat<(store (i1 PredRegs:$src1), ADDRriS11_2:$addr),
-      (STrib ADDRriS11_2:$addr, (i32 (C2_muxii (i1 PredRegs:$src1), 1, 0)) )>;
+      (S2_storerb_io ADDRriS11_2:$addr, 0, (i32 (C2_muxii (i1 PredRegs:$src1), 1, 0)) )>;
 
 // Map Rdd = anyext(Rs) -> Rdd = A2_sxtw(Rs).
 // Hexagon_TODO: We can probably use combine but that will cost 2 instructions.

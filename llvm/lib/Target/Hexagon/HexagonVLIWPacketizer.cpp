@@ -1280,9 +1280,9 @@ bool HexagonPacketizerList::isLegalToPacketizeTogether(SUnit *SUI, SUnit *SUJ) {
       else if (DepType == SDep::Data
                && QRI->Subtarget.hasV4TOps()
                && J->getOpcode() == Hexagon::ALLOCFRAME
-               && (I->getOpcode() == Hexagon::STrid
-                   || I->getOpcode() == Hexagon::STriw
-                   || I->getOpcode() == Hexagon::STrib)
+               && (I->getOpcode() == Hexagon::S2_storerd_io
+                   || I->getOpcode() == Hexagon::S2_storeri_io
+                   || I->getOpcode() == Hexagon::S2_storerb_io)
                && I->getOperand(0).getReg() == QRI->getStackRegister()
                && QII->isValidOffset(I->getOpcode(),
                                      I->getOperand(1).getImm() -

@@ -735,10 +735,10 @@ SDNode *HexagonDAGToDAGISel::SelectIndexedStore(StoreSDNode *ST, SDLoc dl) {
   unsigned Opcode = 0;
 
   // Figure out the opcode.
-  if (StoredVT == MVT::i64) Opcode = Hexagon::STrid;
-  else if (StoredVT == MVT::i32) Opcode = Hexagon::STriw_indexed;
-  else if (StoredVT == MVT::i16) Opcode = Hexagon::STrih;
-  else if (StoredVT == MVT::i8) Opcode = Hexagon::STrib;
+  if (StoredVT == MVT::i64) Opcode = Hexagon::S2_storerd_io;
+  else if (StoredVT == MVT::i32) Opcode = Hexagon::S2_storeri_io;
+  else if (StoredVT == MVT::i16) Opcode = Hexagon::S2_storerh_io;
+  else if (StoredVT == MVT::i8) Opcode = Hexagon::S2_storerb_io;
   else llvm_unreachable("unknown memory type");
 
   // Build regular store.
@@ -788,10 +788,10 @@ SDNode *HexagonDAGToDAGISel::SelectBaseOffsetStore(StoreSDNode *ST,
                                                  TargAddr);
 
         // Figure out base + offset opcode
-        if (StoredVT == MVT::i64) Opcode = Hexagon::STrid_indexed;
-        else if (StoredVT == MVT::i32) Opcode = Hexagon::STriw_indexed;
-        else if (StoredVT == MVT::i16) Opcode = Hexagon::STrih_indexed;
-        else if (StoredVT == MVT::i8) Opcode = Hexagon::STrib_indexed;
+        if (StoredVT == MVT::i64) Opcode = Hexagon::S2_storerd_io;
+        else if (StoredVT == MVT::i32) Opcode = Hexagon::S2_storeri_io;
+        else if (StoredVT == MVT::i16) Opcode = Hexagon::S2_storerh_io;
+        else if (StoredVT == MVT::i8) Opcode = Hexagon::S2_storerb_io;
         else llvm_unreachable("unknown memory type");
 
         SDValue Ops[] = {SDValue(NewBase,0),

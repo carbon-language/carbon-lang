@@ -7,7 +7,7 @@
 
 define i32 @main() nounwind {
 entry:
-; CHECK: memw(r{{[0-9]+}} + #{{[0-9]+}}) = r{{[0-9]+}}.new
+; CHECK: memw(r{{[0-9]+}}+#{{[0-9]+}}) = r{{[0-9]+}}.new
   %number1 = alloca i32, align 4
   %number2 = alloca i32, align 4
   %number3 = alloca i32, align 4

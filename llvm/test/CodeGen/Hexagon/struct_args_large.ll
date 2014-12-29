@@ -1,6 +1,6 @@
 ; RUN: llc -march=hexagon -mcpu=hexagonv4 < %s | FileCheck %s
 ; CHECK: r[[T0:[0-9]+]] = CONST32(#s2)
-; CHECK: memw(r29 + #0) = r{{.}}
+; CHECK: memw(r29+#0) = r{{.}}
 ; CHECK: memw(r29+#8) = r{{.}}
 
 %struct.large = type { i64, i64 }
