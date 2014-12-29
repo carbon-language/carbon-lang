@@ -298,7 +298,7 @@ CompactUnwindInfo::ScanIndex (const ProcessSP &process_sp)
             // };
 
         offset = indexSectionOffset;
-        for (int idx = 0; idx < indexCount; idx++)
+        for (uint32_t idx = 0; idx < indexCount; idx++)
         {
             uint32_t function_offset = m_unwindinfo_data.GetU32(&offset);      // functionOffset
             uint32_t second_level_offset = m_unwindinfo_data.GetU32(&offset);  // secondLevelPagesSectionOffset
@@ -886,7 +886,7 @@ CompactUnwindInfo::CreateUnwindPlan_x86_64 (Target &target, FunctionInfo &functi
 
                 int registers[6];
                 bool used[7] = { false, false, false, false, false, false, false };
-                for (int i = 0; i < register_count; i++)
+                for (uint32_t i = 0; i < register_count; i++)
                 {
                     int renum = 0;
                     for (int j = 1; j < 7; j++)
@@ -1160,7 +1160,7 @@ CompactUnwindInfo::CreateUnwindPlan_i386 (Target &target, FunctionInfo &function
 
                 int registers[6];
                 bool used[7] = { false, false, false, false, false, false, false };
-                for (int i = 0; i < register_count; i++)
+                for (uint32_t i = 0; i < register_count; i++)
                 {
                     int renum = 0;
                     for (int j = 1; j < 7; j++)
