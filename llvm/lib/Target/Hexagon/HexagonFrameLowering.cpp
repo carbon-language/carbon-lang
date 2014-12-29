@@ -122,7 +122,7 @@ void HexagonFrameLowering::emitPrologue(MachineFunction &MF) const {
 
     if (NumBytes >= ALLOCFRAME_MAX) {
       // Emit allocframe(#0).
-      BuildMI(MBB, InsertPt, dl, TII.get(Hexagon::ALLOCFRAME)).addImm(0);
+      BuildMI(MBB, InsertPt, dl, TII.get(Hexagon::S2_allocframe)).addImm(0);
 
       // Subtract offset from frame pointer.
       BuildMI(MBB, InsertPt, dl, TII.get(Hexagon::CONST32_Int_Real),
@@ -132,7 +132,7 @@ void HexagonFrameLowering::emitPrologue(MachineFunction &MF) const {
                                       addReg(QRI->getStackRegister()).
                                       addReg(HEXAGON_RESERVED_REG_1);
     } else {
-      BuildMI(MBB, InsertPt, dl, TII.get(Hexagon::ALLOCFRAME)).addImm(NumBytes);
+      BuildMI(MBB, InsertPt, dl, TII.get(Hexagon::S2_allocframe)).addImm(NumBytes);
     }
   }
 }

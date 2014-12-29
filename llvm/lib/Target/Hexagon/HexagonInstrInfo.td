@@ -2962,21 +2962,153 @@ def : Pat<(store (i64 DoubleRegs:$src1), (add IntRegs:$src2,
 
 // memh(Rx++#s4:1)=Rt.H
 
-// Store word.
 // Store predicate.
-let Defs = [R10,R11,D5], hasSideEffects = 0 in
-def STriw_pred : STInst2<(outs),
-            (ins MEMri:$addr, PredRegs:$src1),
-            "Error; should not emit",
-            []>;
+let isExtendable = 1, opExtendable = 1, isExtentSigned = 1, opExtentBits = 13,
+    isCodeGenOnly = 1, isPseudo = 1, hasSideEffects = 0 in
+def STriw_pred : STInst<(outs),
+      (ins IntRegs:$addr, s11_2Ext:$off, PredRegs:$src1),
+      ".error \"should not emit\"", []>;
 
-// Allocate stack frame.
-let Defs = [R29, R30], Uses = [R31, R30], hasSideEffects = 0 in {
-  def ALLOCFRAME : STInst2<(outs),
-             (ins i32imm:$amt),
-             "allocframe(#$amt)",
-             []>;
+// S2_allocframe: Allocate stack frame.
+let Defs = [R29, R30], Uses = [R29, R31, R30],
+    hasSideEffects = 0, accessSize = DoubleWordAccess, isCodeGenOnly = 0 in
+def S2_allocframe: ST0Inst <
+  (outs), (ins u11_3Imm:$u11_3),
+  "allocframe(#$u11_3)" > {
+    bits<14> u11_3;
+
+    let IClass = 0b1010;
+    let Inst{27-16} = 0b000010011101;
+    let Inst{13-11} = 0b000;
+    let Inst{10-0} = u11_3{13-3};
+  }
+
+// S2_storer[bhwdf]_pci: Store byte/half/word/double.
+// S2_storer[bhwdf]_pci -> S2_storerbnew_pci
+let Uses = [CS], isNVStorable = 1 in
+class T_store_pci <string mnemonic, RegisterClass RC,
+                         Operand Imm, bits<4>MajOp,
+                         MemAccessSize AlignSize, string RegSrc = "Rt">
+  : STInst <(outs IntRegs:$_dst_),
+  (ins IntRegs:$Rz, Imm:$offset, ModRegs:$Mu, RC:$Rt),
+  #mnemonic#"($Rz ++ #$offset:circ($Mu)) = $"#RegSrc#"",
+  [] ,
+  "$Rz = $_dst_" > {
+    bits<5> Rz;
+    bits<7> offset;
+    bits<1> Mu;
+    bits<5> Rt;
+    let accessSize = AlignSize;
+
+    let IClass = 0b1010;
+    let Inst{27-25} = 0b100;
+    let Inst{24-21} = MajOp;
+    let Inst{20-16} = Rz;
+    let Inst{13} = Mu;
+    let Inst{12-8} = Rt;
+    let Inst{7} = 0b0;
+    let Inst{6-3} =
+      !if (!eq(!cast<string>(AlignSize), "DoubleWordAccess"), offset{6-3},
+      !if (!eq(!cast<string>(AlignSize), "WordAccess"),       offset{5-2},
+      !if (!eq(!cast<string>(AlignSize), "HalfWordAccess"),   offset{4-1},
+                                       /* ByteAccess */       offset{3-0})));
+    let Inst{1} = 0b0;
+  }
+
+let isCodeGenOnly = 0 in {
+def S2_storerb_pci : T_store_pci<"memb", IntRegs, s4_0Imm, 0b1000,
+                                        ByteAccess>;
+def S2_storerh_pci : T_store_pci<"memh", IntRegs, s4_1Imm, 0b1010,
+                                        HalfWordAccess>;
+def S2_storerf_pci : T_store_pci<"memh", IntRegs, s4_1Imm, 0b1011,
+                                        HalfWordAccess, "Rt.h">;
+def S2_storeri_pci : T_store_pci<"memw", IntRegs, s4_2Imm, 0b1100,
+                                        WordAccess>;
+def S2_storerd_pci : T_store_pci<"memd", DoubleRegs, s4_3Imm, 0b1110,
+                                        DoubleWordAccess>;
 }
+
+//===----------------------------------------------------------------------===//
+// Circular stores with auto-increment register
+//===----------------------------------------------------------------------===//
+let Uses = [CS], isNVStorable = 1, isCodeGenOnly = 0 in
+class T_store_pcr <string mnemonic, RegisterClass RC, bits<4>MajOp,
+                               MemAccessSize AlignSize, string RegSrc = "Rt">
+  : STInst <(outs IntRegs:$_dst_),
+  (ins IntRegs:$Rz, ModRegs:$Mu, RC:$Rt),
+  #mnemonic#"($Rz ++ I:circ($Mu)) = $"#RegSrc#"",
+  [],
+  "$Rz = $_dst_" > {
+    bits<5> Rz;
+    bits<1> Mu;
+    bits<5> Rt;
+
+    let accessSize = AlignSize;
+
+    let IClass = 0b1010;
+    let Inst{27-25} = 0b100;
+    let Inst{24-21} = MajOp;
+    let Inst{20-16} = Rz;
+    let Inst{13} = Mu;
+    let Inst{12-8} = Rt;
+    let Inst{7} = 0b0;
+    let Inst{1} = 0b1;
+  }
+
+let isCodeGenOnly = 0 in {
+def S2_storerb_pcr : T_store_pcr<"memb", IntRegs, 0b1000, ByteAccess>;
+def S2_storerh_pcr : T_store_pcr<"memh", IntRegs, 0b1010, HalfWordAccess>;
+def S2_storeri_pcr : T_store_pcr<"memw", IntRegs, 0b1100, WordAccess>;
+def S2_storerd_pcr : T_store_pcr<"memd", DoubleRegs, 0b1110, DoubleWordAccess>;
+def S2_storerf_pcr : T_store_pcr<"memh", IntRegs, 0b1011,
+                                 HalfWordAccess, "Rt.h">;
+}
+
+//===----------------------------------------------------------------------===//
+// Bit-reversed stores with auto-increment register
+//===----------------------------------------------------------------------===//
+let hasSideEffects = 0 in
+class T_store_pbr<string mnemonic, RegisterClass RC,
+                            MemAccessSize addrSize, bits<3> majOp,
+                            bit isHalf = 0>
+  : STInst
+    <(outs IntRegs:$_dst_),
+     (ins IntRegs:$Rz, ModRegs:$Mu, RC:$src),
+     #mnemonic#"($Rz ++ $Mu:brev) = $src"#!if (!eq(isHalf, 1), ".h", ""),
+     [], "$Rz = $_dst_" > {
+
+      let accessSize = addrSize;
+
+      bits<5> Rz;
+      bits<1> Mu;
+      bits<5> src;
+
+      let IClass = 0b1010;
+
+      let Inst{27-24} = 0b1111;
+      let Inst{23-21} = majOp;
+      let Inst{7} = 0b0;
+      let Inst{20-16} = Rz;
+      let Inst{13} = Mu;
+      let Inst{12-8} = src;
+    }
+
+let isNVStorable = 1, isCodeGenOnly = 0 in {
+  let BaseOpcode = "S2_storerb_pbr" in
+  def S2_storerb_pbr : T_store_pbr<"memb", IntRegs, ByteAccess,
+                                             0b000>, NewValueRel;
+  let BaseOpcode = "S2_storerh_pbr" in
+  def S2_storerh_pbr : T_store_pbr<"memh", IntRegs, HalfWordAccess,
+                                             0b010>, NewValueRel;
+  let BaseOpcode = "S2_storeri_pbr" in
+  def S2_storeri_pbr : T_store_pbr<"memw", IntRegs, WordAccess,
+                                             0b100>, NewValueRel;
+}
+let isCodeGenOnly = 0 in {
+def S2_storerf_pbr : T_store_pbr<"memh", IntRegs, HalfWordAccess, 0b011, 1>;
+def S2_storerd_pbr : T_store_pbr<"memd", DoubleRegs, DoubleWordAccess, 0b110>;
+}
+
 //===----------------------------------------------------------------------===//
 // ST -
 //===----------------------------------------------------------------------===//
