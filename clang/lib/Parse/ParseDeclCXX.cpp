@@ -2714,8 +2714,11 @@ void Parser::ParseCXXMemberSpecification(SourceLocation RecordLoc,
     // attribute parsing code will try to parse the '[' as a constexpr lambda
     // and consume enough tokens that the alignas parsing code will eat the
     // opening '{'.  So bail out if the next token isn't one we expect.
-    if (!Tok.is(tok::colon) && !Tok.is(tok::l_brace))
+    if (!Tok.is(tok::colon) && !Tok.is(tok::l_brace)) {
+      if (TagDecl)
+        Actions.ActOnTagDefinitionError(getCurScope(), TagDecl);
       return;
+    }
   }
 
   if (Tok.is(tok::colon)) {
