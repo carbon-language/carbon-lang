@@ -26,8 +26,8 @@
 #ifndef __CLANG_UNWIND_H
 #define __CLANG_UNWIND_H
 
-#if __has_include_next(<unwind.h>)
-/* Darwin (from 11.x on) and libunwind provide an unwind.h. If that's available,
+#if defined(__APPLE__) && __has_include_next(<unwind.h>)
+/* Darwin (from 11.x on) provide an unwind.h. If that's available,
  * use it. libunwind wraps some of its definitions in #ifdef _GNU_SOURCE,
  * so define that around the include.*/
 # ifndef _GNU_SOURCE
