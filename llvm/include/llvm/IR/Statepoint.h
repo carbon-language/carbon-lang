@@ -202,11 +202,11 @@ class GCRelocateOperands {
   int derivedPtrIndex() {
     return cast<ConstantInt>(RelocateCS.getArgument(2))->getZExtValue();
   }
-  const Value *basePtr() {
+  Value *basePtr() {
     ImmutableCallSite CS(statepoint());
     return *(CS.arg_begin() + basePtrIndex());
   }
-  const Value *derivedPtr() {
+  Value *derivedPtr() {
     ImmutableCallSite CS(statepoint());
     return *(CS.arg_begin() + derivedPtrIndex());
   }

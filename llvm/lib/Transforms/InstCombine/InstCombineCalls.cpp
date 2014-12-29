@@ -1134,6 +1134,42 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
 
     break;
   }
+  case Intrinsic::experimental_gc_relocate: {
+    // Translate facts known about a pointer before relocating into
+    // facts about the relocate value, while being careful to
+    // preserve relocation semantics.
+    GCRelocateOperands Operands(II);
+    Value *DerivedPtr = Operands.derivedPtr();
+
+    // Remove the relocation if unused, note that this check is required
+    // to prevent the cases below from looping forever.
+    if (II->use_empty())
+      return EraseInstFromFunction(*II);
+
+    // Undef is undef, even after relocation.
+    // TODO: provide a hook for this in GCStrategy.  This is clearly legal for
+    // most practical collectors, but there was discussion in the review thread
+    // about whether it was legal for all possible collectors.
+    if (isa<UndefValue>(DerivedPtr))
+      return ReplaceInstUsesWith(*II, DerivedPtr);
+
+    // The relocation of null will be null for most any collector.
+    // TODO: provide a hook for this in GCStrategy.  There might be some weird
+    // collector this property does not hold for.
+    if (isa<ConstantPointerNull>(DerivedPtr))
+      return ReplaceInstUsesWith(*II, DerivedPtr);
+
+    // isKnownNonNull -> nonnull attribute
+    if (isKnownNonNull(DerivedPtr))
+      II->addAttribute(AttributeSet::ReturnIndex, Attribute::NonNull);
+
+    // TODO: dereferenceable -> deref attribute
+
+    // TODO: bitcast(relocate(p)) -> relocate(bitcast(p))
+    // Canonicalize on the type from the uses to the defs
+    
+    // TODO: relocate((gep p, C, C2, ...)) -> gep(relocate(p), C, C2, ...)
+  }
   }
 
   return visitCallSite(II);
