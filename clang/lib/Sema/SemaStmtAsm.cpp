@@ -317,8 +317,28 @@ StmtResult Sema::ActOnGCCAsmStmt(SourceLocation AsmLoc, bool IsSimple,
   }
 
   // Validate tied input operands for type mismatches.
+  unsigned NumAlternatives = ~0U;
+  for (unsigned i = 0, e = OutputConstraintInfos.size(); i != e; ++i) {
+    TargetInfo::ConstraintInfo &Info = OutputConstraintInfos[i];
+    StringRef ConstraintStr = Info.getConstraintStr();
+    unsigned AltCount = ConstraintStr.count(',') + 1;
+    if (NumAlternatives == ~0U)
+      NumAlternatives = AltCount;
+    else if (NumAlternatives != AltCount)
+      return StmtError(Diag(NS->getOutputExpr(i)->getLocStart(),
+                            diag::err_asm_unexpected_constraint_alternatives)
+                       << NumAlternatives << AltCount);
+  }
   for (unsigned i = 0, e = InputConstraintInfos.size(); i != e; ++i) {
     TargetInfo::ConstraintInfo &Info = InputConstraintInfos[i];
+    StringRef ConstraintStr = Info.getConstraintStr();
+    unsigned AltCount = ConstraintStr.count(',') + 1;
+    if (NumAlternatives == ~0U)
+      NumAlternatives = AltCount;
+    else if (NumAlternatives != AltCount)
+      return StmtError(Diag(NS->getInputExpr(i)->getLocStart(),
+                            diag::err_asm_unexpected_constraint_alternatives)
+                       << NumAlternatives << AltCount);
 
     // If this is a tied constraint, verify that the output and input have
     // either exactly the same type, or that they are int/ptr operands with the
