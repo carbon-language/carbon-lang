@@ -734,9 +734,7 @@ llvm::BasicBlock *CodeGenFunction::EmitLandingPad() {
 
   // Save the current IR generation state.
   CGBuilderTy::InsertPoint savedIP = Builder.saveAndClearIP();
-  SaveAndRestoreLocation AutoRestoreLocation(*this, Builder);
-  if (CGDebugInfo *DI = getDebugInfo())
-    DI->EmitLocation(Builder, CurEHLocation);
+  ApplyDebugLocation AutoRestoreLocation(*this, CurEHLocation);
 
   const EHPersonality &personality = EHPersonality::get(CGM);
 

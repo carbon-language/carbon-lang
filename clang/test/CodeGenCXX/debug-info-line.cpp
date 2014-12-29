@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -g -std=c++11 -S -emit-llvm %s -o - | FileCheck %s
+// RUN: %clang_cc1 -triple i686-linux-gnu -g -std=c++11 -S -emit-llvm %s -o - | FileCheck %s
 
 int &src();
 int *sink();
@@ -110,6 +111,13 @@ void f10() {
       new (void_src()) int(src()));
 }
 
+__complex double f11() {
+  __complex double f;
+  // CHECK: store {{.*}} !dbg [[DBG_F11:!.*]]
+#line 1200
+  return f;
+}
+
 // CHECK: [[DBG_F1]] = !{i32 100,
 // CHECK: [[DBG_FOO_VALUE]] = !{i32 200,
 // CHECK: [[DBG_FOO_REF]] = !{i32 202,
@@ -124,3 +132,4 @@ void f10() {
 // CHECK: [[DBG_F9]] = !{i32 1000,
 // CHECK: [[DBG_F10_ICMP]] = !{i32 1100,
 // CHECK: [[DBG_F10_STORE]] = !{i32 1100,
+// CHECK: [[DBG_F11]] = !{i32 1200,
