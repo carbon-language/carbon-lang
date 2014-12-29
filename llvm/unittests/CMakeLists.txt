@@ -4,7 +4,7 @@ set_target_properties(UnitTests PROPERTIES FOLDER "Tests")
 if (APPLE)
   set(CMAKE_INSTALL_RPATH "@executable_path/../../lib")
 else(UNIX)
-  set(CMAKE_INSTALL_RPATH "\$ORIGIN/../../lib")
+  set(CMAKE_INSTALL_RPATH "\$ORIGIN/../../lib${LLVM_LIBDIR_SUFFIX}")
 endif()
 
 function(add_llvm_unittest test_dirname)
