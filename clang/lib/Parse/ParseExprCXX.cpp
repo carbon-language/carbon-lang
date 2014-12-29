@@ -219,13 +219,19 @@ bool Parser::ParseOptionalCXXScopeSpecifier(CXXScopeSpec &SS,
     if (NextKind == tok::kw_new || NextKind == tok::kw_delete)
       return false;
 
-    // '::' - Global scope qualifier.
-    if (Actions.ActOnCXXGlobalScopeSpecifier(ConsumeToken(), SS))
-      return true;
+    if (NextKind == tok::l_brace) {
+      // It is invalid to have :: {, consume the scope qualifier and pretend
+      // like we never saw it.
+      Diag(ConsumeToken(), diag::err_expected) << tok::identifier;
+    } else {
+      // '::' - Global scope qualifier.
+      if (Actions.ActOnCXXGlobalScopeSpecifier(ConsumeToken(), SS))
+        return true;
 
-    CheckForLParenAfterColonColon();
+      CheckForLParenAfterColonColon();
 
-    HasScopeSpecifier = true;
+      HasScopeSpecifier = true;
+    }
   }
 
   if (Tok.is(tok::kw___super)) {
