@@ -308,6 +308,26 @@ define i32 @test16(i1 %C, i32* %P) {
 ; CHECK: ret i32 %V
 }
 
+;; It may be legal to load from a null address in a non-zero address space
+define i32 @test16_neg(i1 %C, i32 addrspace(1)* %P) {
+        %P2 = select i1 %C, i32 addrspace(1)* %P, i32 addrspace(1)* null
+        %V = load i32 addrspace(1)* %P2
+        ret i32 %V
+; CHECK-LABEL: @test16_neg
+; CHECK-NEXT: %P2 = select i1 %C, i32 addrspace(1)* %P, i32 addrspace(1)* null
+; CHECK-NEXT: %V = load i32 addrspace(1)* %P2
+; CHECK: ret i32 %V
+}
+define i32 @test16_neg2(i1 %C, i32 addrspace(1)* %P) {
+        %P2 = select i1 %C, i32 addrspace(1)* null, i32 addrspace(1)* %P
+        %V = load i32 addrspace(1)* %P2
+        ret i32 %V
+; CHECK-LABEL: @test16_neg2
+; CHECK-NEXT: %P2 = select i1 %C, i32 addrspace(1)* null, i32 addrspace(1)* %P
+; CHECK-NEXT: %V = load i32 addrspace(1)* %P2
+; CHECK: ret i32 %V
+}
+
 define i1 @test17(i32* %X, i1 %C) {
         %R = select i1 %C, i32* %X, i32* null           
         %RV = icmp eq i32* %R, null             

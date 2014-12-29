@@ -474,18 +474,18 @@ Instruction *InstCombiner::visitLoadInst(LoadInst &LI) {
       }
 
       // load (select (cond, null, P)) -> load P
-      if (Constant *C = dyn_cast<Constant>(SI->getOperand(1)))
-        if (C->isNullValue()) {
-          LI.setOperand(0, SI->getOperand(2));
-          return &LI;
-        }
+      if (isa<ConstantPointerNull>(SI->getOperand(1)) && 
+          LI.getPointerAddressSpace() == 0) {
+        LI.setOperand(0, SI->getOperand(2));
+        return &LI;
+      }
 
       // load (select (cond, P, null)) -> load P
-      if (Constant *C = dyn_cast<Constant>(SI->getOperand(2)))
-        if (C->isNullValue()) {
-          LI.setOperand(0, SI->getOperand(1));
-          return &LI;
-        }
+      if (isa<ConstantPointerNull>(SI->getOperand(2)) &&
+          LI.getPointerAddressSpace() == 0) {
+        LI.setOperand(0, SI->getOperand(1));
+        return &LI;
+      }
     }
   }
   return nullptr;
