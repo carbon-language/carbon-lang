@@ -1244,7 +1244,8 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
   SourceLocation AttrFixitLoc = Tok.getLocation();
 
   if (TagType == DeclSpec::TST_struct &&
-      !Tok.is(tok::identifier) &&
+      Tok.isNot(tok::identifier) &&
+      !Tok.isAnnotation() &&
       Tok.getIdentifierInfo() &&
       (Tok.is(tok::kw___is_abstract) ||
        Tok.is(tok::kw___is_arithmetic) ||
