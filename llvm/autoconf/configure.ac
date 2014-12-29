@@ -2017,6 +2017,11 @@ if test "${clang_src_root}" = ""; then
   clang_src_root="$srcdir/tools/clang"
 fi
 if test -f ${clang_src_root}/README.txt; then
+  dnl Clang supports build systems which use the multilib libdir suffix.
+  dnl The autoconf system doesn't support this so stub out that variable.
+  AC_DEFINE_UNQUOTED(CLANG_LIBDIR_SUFFIX,"",
+                     [Multilib suffix for libdir.])
+
   dnl Use variables to stay under 80 columns.
   configh="include/clang/Config/config.h"
   doxy="docs/doxygen.cfg"

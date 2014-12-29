@@ -18458,6 +18458,12 @@ if test "${clang_src_root}" = ""; then
   clang_src_root="$srcdir/tools/clang"
 fi
 if test -f ${clang_src_root}/README.txt; then
+
+cat >>confdefs.h <<_ACEOF
+#define CLANG_LIBDIR_SUFFIX ""
+_ACEOF
+
+
     configh="include/clang/Config/config.h"
   doxy="docs/doxygen.cfg"
   ac_config_headers="$ac_config_headers tools/clang/${configh}:${clang_src_root}/${configh}.in"
