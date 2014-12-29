@@ -2823,16 +2823,18 @@ public:
 
   bool hasDeclaratorForAnonDecl() const {
     return dyn_cast_or_null<DeclaratorDecl>(
-        NamedDeclOrQualifier.get<NamedDecl *>());
+        NamedDeclOrQualifier.dyn_cast<NamedDecl *>());
   }
   DeclaratorDecl *getDeclaratorForAnonDecl() const {
-    return hasExtInfo() ? nullptr : dyn_cast_or_null<DeclaratorDecl>(
-                                  NamedDeclOrQualifier.get<NamedDecl *>());
+    return hasExtInfo() ? nullptr
+                        : dyn_cast_or_null<DeclaratorDecl>(
+                              NamedDeclOrQualifier.dyn_cast<NamedDecl *>());
   }
 
   TypedefNameDecl *getTypedefNameForAnonDecl() const {
-    return hasExtInfo() ? nullptr : dyn_cast_or_null<TypedefNameDecl>(
-                                  NamedDeclOrQualifier.get<NamedDecl *>());
+    return hasExtInfo() ? nullptr
+                        : dyn_cast_or_null<TypedefNameDecl>(
+                              NamedDeclOrQualifier.dyn_cast<NamedDecl *>());
   }
 
   void setDeclaratorForAnonDecl(DeclaratorDecl *DD) { NamedDeclOrQualifier = DD; }

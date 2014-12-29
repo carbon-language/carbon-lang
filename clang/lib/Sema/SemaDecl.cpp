@@ -11790,7 +11790,7 @@ CreateNewDecl:
       // CheckMemberSpecialization, below.
       if (!isExplicitSpecialization &&
           (TUK == TUK_Definition || TUK == TUK_Declaration) &&
-          diagnoseQualifiedDeclaration(SS, DC, OrigName, NameLoc))
+          diagnoseQualifiedDeclaration(SS, DC, OrigName, Loc))
         Invalid = true;
 
       New->setQualifierInfo(SS.getWithLocInContext(Context));

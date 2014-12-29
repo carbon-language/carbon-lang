@@ -43,3 +43,6 @@ namespace NS {
   template<typename T> struct NS::Y { }; // expected-warning{{extra qualification on member 'Y'}}
   template<typename T> void NS::wibble(T) { } // expected-warning{{extra qualification on member 'wibble'}}
 }
+
+// expected-warning@+1{{extra qualification on member}}
+struct ::{} a; // expected-error{{expected identifier}}
