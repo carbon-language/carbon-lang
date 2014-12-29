@@ -850,21 +850,21 @@ class BinOpRI8<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
 
 // BinOpRI8_F - Instructions like "cmp reg, imm8".
 class BinOpRI8_F<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
-                  SDNode opnode, Format f>
+                  SDPatternOperator opnode, Format f>
   : BinOpRI8<opcode, mnemonic, typeinfo, f, (outs),
              [(set EFLAGS,
                (opnode typeinfo.RegClass:$src1, typeinfo.Imm8Operator:$src2))]>;
 
 // BinOpRI8_RF - Instructions like "add reg, reg, imm8".
 class BinOpRI8_RF<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
-                  SDNode opnode, Format f>
+                  SDPatternOperator opnode, Format f>
   : BinOpRI8<opcode, mnemonic, typeinfo, f, (outs typeinfo.RegClass:$dst),
              [(set typeinfo.RegClass:$dst, EFLAGS,
                (opnode typeinfo.RegClass:$src1, typeinfo.Imm8Operator:$src2))]>;
 
 // BinOpRI8_RFF - Instructions like "adc reg, reg, imm8".
 class BinOpRI8_RFF<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
-                   SDNode opnode, Format f>
+                   SDPatternOperator opnode, Format f>
   : BinOpRI8<opcode, mnemonic, typeinfo, f, (outs typeinfo.RegClass:$dst),
              [(set typeinfo.RegClass:$dst, EFLAGS,
                (opnode typeinfo.RegClass:$src1, typeinfo.Imm8Operator:$src2,
@@ -945,7 +945,7 @@ class BinOpMI8<string mnemonic, X86TypeInfo typeinfo,
 
 // BinOpMI8_RMW - Instructions like "add [mem], imm8".
 class BinOpMI8_RMW<string mnemonic, X86TypeInfo typeinfo,
-                   SDNode opnode, Format f>
+                   SDPatternOperator opnode, Format f>
   : BinOpMI8<mnemonic, typeinfo, f,
              [(store (opnode (load addr:$dst),
                              typeinfo.Imm8Operator:$src), addr:$dst),
@@ -953,7 +953,7 @@ class BinOpMI8_RMW<string mnemonic, X86TypeInfo typeinfo,
 
 // BinOpMI8_RMW_FF - Instructions like "adc [mem], imm8".
 class BinOpMI8_RMW_FF<string mnemonic, X86TypeInfo typeinfo,
-                   SDNode opnode, Format f>
+                      SDPatternOperator opnode, Format f>
   : BinOpMI8<mnemonic, typeinfo, f,
              [(store (opnode (load addr:$dst),
                              typeinfo.Imm8Operator:$src, EFLAGS), addr:$dst),
@@ -961,7 +961,7 @@ class BinOpMI8_RMW_FF<string mnemonic, X86TypeInfo typeinfo,
 
 // BinOpMI8_F - Instructions like "cmp [mem], imm8".
 class BinOpMI8_F<string mnemonic, X86TypeInfo typeinfo,
-                 SDNode opnode, Format f>
+                 SDPatternOperator opnode, Format f>
   : BinOpMI8<mnemonic, typeinfo, f,
              [(set EFLAGS, (opnode (load addr:$dst),
                                    typeinfo.Imm8Operator:$src))]>;
@@ -1046,6 +1046,16 @@ multiclass ArithBinOp_RF<bits<8> BaseOpc, bits<8> BaseOpc2, bits<8> BaseOpc4,
     def NAME#16mi   : BinOpMI_RMW<0x80, mnemonic, Xi16, opnode, MemMRM>;
     def NAME#32mi   : BinOpMI_RMW<0x80, mnemonic, Xi32, opnode, MemMRM>;
     def NAME#64mi32 : BinOpMI_RMW<0x80, mnemonic, Xi64, opnode, MemMRM>;
+
+    // These are for the disassembler since 0x82 opcode behaves like 0x80, but
+    // not in 64-bit mode.
+    let Predicates = [Not64BitMode], isCodeGenOnly = 1, ForceDisassemble = 1,
+        hasSideEffects = 0 in {
+      let Constraints = "$src1 = $dst" in
+        def NAME#8ri8 : BinOpRI8_RF<0x82, mnemonic, Xi8, null_frag, RegMRM>;
+      let mayLoad = 1, mayStore = 1 in
+        def NAME#8mi8 : BinOpMI8_RMW<mnemonic, Xi8, null_frag, MemMRM>;
+    }
   } // Defs = [EFLAGS]
 
   def NAME#8i8   : BinOpAI<BaseOpc4, mnemonic, Xi8 , AL,
@@ -1117,6 +1127,16 @@ multiclass ArithBinOp_RFF<bits<8> BaseOpc, bits<8> BaseOpc2, bits<8> BaseOpc4,
     def NAME#16mi   : BinOpMI_RMW_FF<0x80, mnemonic, Xi16, opnode, MemMRM>;
     def NAME#32mi   : BinOpMI_RMW_FF<0x80, mnemonic, Xi32, opnode, MemMRM>;
     def NAME#64mi32 : BinOpMI_RMW_FF<0x80, mnemonic, Xi64, opnode, MemMRM>;
+
+    // These are for the disassembler since 0x82 opcode behaves like 0x80, but
+    // not in 64-bit mode.
+    let Predicates = [Not64BitMode], isCodeGenOnly = 1, ForceDisassemble = 1,
+        hasSideEffects = 0 in {
+      let Constraints = "$src1 = $dst" in
+        def NAME#8ri8 : BinOpRI8_RFF<0x82, mnemonic, Xi8, null_frag, RegMRM>;
+      let mayLoad = 1, mayStore = 1 in
+        def NAME#8mi8 : BinOpMI8_RMW_FF<mnemonic, Xi8, null_frag, MemMRM>;
+    }
   } // Uses = [EFLAGS], Defs = [EFLAGS]
 
   def NAME#8i8   : BinOpAI_FF<BaseOpc4, mnemonic, Xi8 , AL,
@@ -1184,6 +1204,15 @@ multiclass ArithBinOp_F<bits<8> BaseOpc, bits<8> BaseOpc2, bits<8> BaseOpc4,
     def NAME#16mi   : BinOpMI_F<0x80, mnemonic, Xi16, opnode, MemMRM>;
     def NAME#32mi   : BinOpMI_F<0x80, mnemonic, Xi32, opnode, MemMRM>;
     def NAME#64mi32 : BinOpMI_F<0x80, mnemonic, Xi64, opnode, MemMRM>;
+
+    // These are for the disassembler since 0x82 opcode behaves like 0x80, but
+    // not in 64-bit mode.
+    let Predicates = [Not64BitMode], isCodeGenOnly = 1, ForceDisassemble = 1,
+        hasSideEffects = 0 in {
+      def NAME#8ri8 : BinOpRI8_F<0x82, mnemonic, Xi8, null_frag, RegMRM>;
+      let mayLoad = 1 in
+        def NAME#8mi8 : BinOpMI8_F<mnemonic, Xi8, null_frag, MemMRM>;
+    }
   } // Defs = [EFLAGS]
 
   def NAME#8i8   : BinOpAI<BaseOpc4, mnemonic, Xi8 , AL,
