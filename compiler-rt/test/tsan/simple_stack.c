@@ -53,7 +53,7 @@ int main() {
 // CHECK-NEXT:     #1 bar1{{.*}} {{.*}}simple_stack.c:14{{(:3)?}} ({{.*}})
 // CHECK-NEXT:     #2 Thread1{{.*}} {{.*}}simple_stack.c:28{{(:3)?}} ({{.*}})
 // CHECK:        Previous read of size 4 at {{.*}} by thread T2:
-// CHECK-NEXT:     #0 foo2{{.*}} {{.*}}simple_stack.c:18{{(:3)?}} ({{.*}})
+// CHECK-NEXT:     #0 foo2{{.*}} {{.*}}simple_stack.c:18{{(:20)?}} ({{.*}})
 // CHECK-NEXT:     #1 bar2{{.*}} {{.*}}simple_stack.c:23{{(:3)?}} ({{.*}})
 // CHECK-NEXT:     #2 Thread2{{.*}} {{.*}}simple_stack.c:33{{(:3)?}} ({{.*}})
 // CHECK:        Thread T1 (tid={{.*}}, running) created by main thread at:
