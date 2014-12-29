@@ -999,12 +999,13 @@ multiclass ArithBinOp_RF<bits<8> BaseOpc, bits<8> BaseOpc2, bits<8> BaseOpc4,
                          bit CommutableRR, bit ConvertibleToThreeAddress> {
   let Defs = [EFLAGS] in {
     let Constraints = "$src1 = $dst" in {
-      let isCommutable = CommutableRR,
-          isConvertibleToThreeAddress = ConvertibleToThreeAddress in {
+      let isCommutable = CommutableRR in {
         def NAME#8rr  : BinOpRR_RF<BaseOpc, mnemonic, Xi8 , opnodeflag>;
-        def NAME#16rr : BinOpRR_RF<BaseOpc, mnemonic, Xi16, opnodeflag>;
-        def NAME#32rr : BinOpRR_RF<BaseOpc, mnemonic, Xi32, opnodeflag>;
-        def NAME#64rr : BinOpRR_RF<BaseOpc, mnemonic, Xi64, opnodeflag>;
+        let isConvertibleToThreeAddress = ConvertibleToThreeAddress in {
+          def NAME#16rr : BinOpRR_RF<BaseOpc, mnemonic, Xi16, opnodeflag>;
+          def NAME#32rr : BinOpRR_RF<BaseOpc, mnemonic, Xi32, opnodeflag>;
+          def NAME#64rr : BinOpRR_RF<BaseOpc, mnemonic, Xi64, opnodeflag>;
+        } // isConvertibleToThreeAddress
       } // isCommutable
 
       def NAME#8rr_REV  : BinOpRR_Rev<BaseOpc2, mnemonic, Xi8>;
@@ -1017,6 +1018,8 @@ multiclass ArithBinOp_RF<bits<8> BaseOpc, bits<8> BaseOpc2, bits<8> BaseOpc4,
       def NAME#32rm  : BinOpRM_RF<BaseOpc2, mnemonic, Xi32, opnodeflag>;
       def NAME#64rm  : BinOpRM_RF<BaseOpc2, mnemonic, Xi64, opnodeflag>;
 
+      def NAME#8ri   : BinOpRI_RF<0x80, mnemonic, Xi8 , opnodeflag, RegMRM>;
+
       let isConvertibleToThreeAddress = ConvertibleToThreeAddress in {
         // NOTE: These are order specific, we want the ri8 forms to be listed
         // first so that they are slightly preferred to the ri forms.
@@ -1024,7 +1027,6 @@ multiclass ArithBinOp_RF<bits<8> BaseOpc, bits<8> BaseOpc2, bits<8> BaseOpc4,
         def NAME#32ri8 : BinOpRI8_RF<0x82, mnemonic, Xi32, opnodeflag, RegMRM>;
         def NAME#64ri8 : BinOpRI8_RF<0x82, mnemonic, Xi64, opnodeflag, RegMRM>;
 
-        def NAME#8ri   : BinOpRI_RF<0x80, mnemonic, Xi8 , opnodeflag, RegMRM>;
         def NAME#16ri  : BinOpRI_RF<0x80, mnemonic, Xi16, opnodeflag, RegMRM>;
         def NAME#32ri  : BinOpRI_RF<0x80, mnemonic, Xi32, opnodeflag, RegMRM>;
         def NAME#64ri32: BinOpRI_RF<0x80, mnemonic, Xi64, opnodeflag, RegMRM>;
@@ -1080,12 +1082,13 @@ multiclass ArithBinOp_RFF<bits<8> BaseOpc, bits<8> BaseOpc2, bits<8> BaseOpc4,
                            bit ConvertibleToThreeAddress> {
   let Uses = [EFLAGS], Defs = [EFLAGS] in {
     let Constraints = "$src1 = $dst" in {
-      let isCommutable = CommutableRR,
-          isConvertibleToThreeAddress = ConvertibleToThreeAddress in {
+      let isCommutable = CommutableRR in {
         def NAME#8rr  : BinOpRR_RFF<BaseOpc, mnemonic, Xi8 , opnode>;
-        def NAME#16rr : BinOpRR_RFF<BaseOpc, mnemonic, Xi16, opnode>;
-        def NAME#32rr : BinOpRR_RFF<BaseOpc, mnemonic, Xi32, opnode>;
-        def NAME#64rr : BinOpRR_RFF<BaseOpc, mnemonic, Xi64, opnode>;
+        let isConvertibleToThreeAddress = ConvertibleToThreeAddress in {
+          def NAME#16rr : BinOpRR_RFF<BaseOpc, mnemonic, Xi16, opnode>;
+          def NAME#32rr : BinOpRR_RFF<BaseOpc, mnemonic, Xi32, opnode>;
+          def NAME#64rr : BinOpRR_RFF<BaseOpc, mnemonic, Xi64, opnode>;
+        } // isConvertibleToThreeAddress
       } // isCommutable
 
       def NAME#8rr_REV  : BinOpRR_RFF_Rev<BaseOpc2, mnemonic, Xi8>;
@@ -1098,6 +1101,8 @@ multiclass ArithBinOp_RFF<bits<8> BaseOpc, bits<8> BaseOpc2, bits<8> BaseOpc4,
       def NAME#32rm  : BinOpRM_RFF<BaseOpc2, mnemonic, Xi32, opnode>;
       def NAME#64rm  : BinOpRM_RFF<BaseOpc2, mnemonic, Xi64, opnode>;
 
+      def NAME#8ri   : BinOpRI_RFF<0x80, mnemonic, Xi8 , opnode, RegMRM>;
+
       let isConvertibleToThreeAddress = ConvertibleToThreeAddress in {
         // NOTE: These are order specific, we want the ri8 forms to be listed
         // first so that they are slightly preferred to the ri forms.
@@ -1105,7 +1110,6 @@ multiclass ArithBinOp_RFF<bits<8> BaseOpc, bits<8> BaseOpc2, bits<8> BaseOpc4,
         def NAME#32ri8 : BinOpRI8_RFF<0x82, mnemonic, Xi32, opnode, RegMRM>;
         def NAME#64ri8 : BinOpRI8_RFF<0x82, mnemonic, Xi64, opnode, RegMRM>;
 
-        def NAME#8ri   : BinOpRI_RFF<0x80, mnemonic, Xi8 , opnode, RegMRM>;
         def NAME#16ri  : BinOpRI_RFF<0x80, mnemonic, Xi16, opnode, RegMRM>;
         def NAME#32ri  : BinOpRI_RFF<0x80, mnemonic, Xi32, opnode, RegMRM>;
         def NAME#64ri32: BinOpRI_RFF<0x80, mnemonic, Xi64, opnode, RegMRM>;
@@ -1158,12 +1162,13 @@ multiclass ArithBinOp_F<bits<8> BaseOpc, bits<8> BaseOpc2, bits<8> BaseOpc4,
                         SDNode opnode,
                         bit CommutableRR, bit ConvertibleToThreeAddress> {
   let Defs = [EFLAGS] in {
-    let isCommutable = CommutableRR,
-        isConvertibleToThreeAddress = ConvertibleToThreeAddress in {
+    let isCommutable = CommutableRR in {
       def NAME#8rr  : BinOpRR_F<BaseOpc, mnemonic, Xi8 , opnode>;
-      def NAME#16rr : BinOpRR_F<BaseOpc, mnemonic, Xi16, opnode>;
-      def NAME#32rr : BinOpRR_F<BaseOpc, mnemonic, Xi32, opnode>;
-      def NAME#64rr : BinOpRR_F<BaseOpc, mnemonic, Xi64, opnode>;
+      let isConvertibleToThreeAddress = ConvertibleToThreeAddress in {
+        def NAME#16rr : BinOpRR_F<BaseOpc, mnemonic, Xi16, opnode>;
+        def NAME#32rr : BinOpRR_F<BaseOpc, mnemonic, Xi32, opnode>;
+        def NAME#64rr : BinOpRR_F<BaseOpc, mnemonic, Xi64, opnode>;
+      }
     } // isCommutable
 
     def NAME#8rr_REV  : BinOpRR_F_Rev<BaseOpc2, mnemonic, Xi8>;
@@ -1176,6 +1181,8 @@ multiclass ArithBinOp_F<bits<8> BaseOpc, bits<8> BaseOpc2, bits<8> BaseOpc4,
     def NAME#32rm  : BinOpRM_F<BaseOpc2, mnemonic, Xi32, opnode>;
     def NAME#64rm  : BinOpRM_F<BaseOpc2, mnemonic, Xi64, opnode>;
 
+    def NAME#8ri   : BinOpRI_F<0x80, mnemonic, Xi8 , opnode, RegMRM>;
+
     let isConvertibleToThreeAddress = ConvertibleToThreeAddress in {
       // NOTE: These are order specific, we want the ri8 forms to be listed
       // first so that they are slightly preferred to the ri forms.
@@ -1183,7 +1190,6 @@ multiclass ArithBinOp_F<bits<8> BaseOpc, bits<8> BaseOpc2, bits<8> BaseOpc4,
       def NAME#32ri8 : BinOpRI8_F<0x82, mnemonic, Xi32, opnode, RegMRM>;
       def NAME#64ri8 : BinOpRI8_F<0x82, mnemonic, Xi64, opnode, RegMRM>;
 
-      def NAME#8ri   : BinOpRI_F<0x80, mnemonic, Xi8 , opnode, RegMRM>;
       def NAME#16ri  : BinOpRI_F<0x80, mnemonic, Xi16, opnode, RegMRM>;
       def NAME#32ri  : BinOpRI_F<0x80, mnemonic, Xi32, opnode, RegMRM>;
       def NAME#64ri32: BinOpRI_F<0x80, mnemonic, Xi64, opnode, RegMRM>;
