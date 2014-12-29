@@ -983,7 +983,8 @@ static InputKind ParseFrontendArgs(FrontendOptions &Opts, ArgList &Args,
 
 std::string CompilerInvocation::GetResourcesPath(const char *Argv0,
                                                  void *MainAddr) {
-  StringRef ClangExecutable = llvm::sys::fs::getMainExecutable(Argv0, MainAddr);
+  std::string ClangExecutable =
+      llvm::sys::fs::getMainExecutable(Argv0, MainAddr);
   StringRef Dir = llvm::sys::path::parent_path(ClangExecutable);
 
   // Compute the path to the resource directory.
