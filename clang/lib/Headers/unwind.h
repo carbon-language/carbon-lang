@@ -199,6 +199,8 @@ _Unwind_Word _Unwind_GetIPInfo(struct _Unwind_Context *, int *);
 
 _Unwind_Word _Unwind_GetCFA(struct _Unwind_Context *);
 
+_Unwind_Word _Unwind_GetBSP(struct _Unwind_Context *);
+
 void *_Unwind_GetLanguageSpecificData(struct _Unwind_Context *);
 
 _Unwind_Ptr _Unwind_GetRegionStart(struct _Unwind_Context *);
