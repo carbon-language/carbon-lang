@@ -442,7 +442,17 @@ bool Parser::ParseOptionalCXXScopeSpecifier(CXXScopeSpec &SS,
         Next.setKind(tok::coloncolon);
       }
     }
-    
+
+    if (Next.is(tok::coloncolon) && GetLookAheadToken(2).is(tok::l_brace)) {
+      // It is invalid to have :: {, consume the scope qualifier and pretend
+      // like we never saw it.
+      Token Identifier = Tok; // Stash away the identifier.
+      ConsumeToken();         // Eat the identifier, current token is now '::'.
+      Diag(PP.getLocForEndOfTokenConsumeToken(), diag::err_expected) << tok::identifier;
+      UnconsumeToken(Identifier); // Stick the identifier back.
+      Next = NextToken();         // Point Next at the '{' token.
+    }
+
     if (Next.is(tok::coloncolon)) {
       if (CheckForDestructor && GetLookAheadToken(2).is(tok::tilde) &&
           !Actions.isNonTypeNestedNameSpecifier(
