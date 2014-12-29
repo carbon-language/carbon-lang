@@ -104,7 +104,8 @@ else()
   # Get some LLVM variables from LLVMConfig.
   include("${LLVM_CMAKE_PATH}/LLVMConfig.cmake")
 
-  set(LLVM_LIBRARY_OUTPUT_INTDIR ${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR}/lib)
+  set(LLVM_LIBRARY_OUTPUT_INTDIR
+    ${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR}/lib${LLVM_LIBDIR_SUFFIX})
 
   # Find Python interpreter.
   set(Python_ADDITIONAL_VERSIONS 2.7 2.6 2.5)
