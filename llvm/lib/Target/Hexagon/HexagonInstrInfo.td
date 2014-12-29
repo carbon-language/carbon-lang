@@ -4124,7 +4124,7 @@ def : Pat<(store (i1 -1), ADDRriS11_2:$addr),
 
 // Map from memb(Rs) = Pd -> Rt = mux(Pd, #0, #1); store Rt.
 def : Pat<(store (i1 PredRegs:$src1), ADDRriS11_2:$addr),
-      (S2_storerb_io ADDRriS11_2:$addr, 0, (i32 (C2_muxii (i1 PredRegs:$src1), 1, 0)) )>;
+      (S2_storerb_io AddrFI:$addr, 0, (i32 (C2_muxii (i1 PredRegs:$src1), 1, 0)) )>;
 
 // Map Rdd = anyext(Rs) -> Rdd = A2_sxtw(Rs).
 // Hexagon_TODO: We can probably use combine but that will cost 2 instructions.
