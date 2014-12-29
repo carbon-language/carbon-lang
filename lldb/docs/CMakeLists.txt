@@ -35,7 +35,7 @@ if(EPYDOC_EXECUTABLE)
       --url "http://lldb.llvm.org"
       ${EPYDOC_OPTIONS}
       DEPENDS swig_wrapper liblldb
-      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/../../../lib/python2.7/site-packages
+      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/../../../lib${LLVM_LIBDIR_SUFFIX}/python2.7/site-packages
       COMMENT "Generating LLDB Python API reference with epydoc" VERBATIM
     )
 endif(EPYDOC_EXECUTABLE)

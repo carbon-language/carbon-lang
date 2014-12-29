@@ -13,7 +13,7 @@ add_library(readline SHARED readline.cpp)
 # python finds it when loading the python readline module.
 set_target_properties(readline PROPERTIES
                                PREFIX ""
-                               LIBRARY_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR}/lib/${PYTHON_DIRECTORY})
+                               LIBRARY_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR}/lib${LLVM_LIBDIR_SUFFIX}/${PYTHON_DIRECTORY})
 
 # Install the readline module.
-install(TARGETS readline LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/${PYTHON_DIRECTORY})
+install(TARGETS readline LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib${LLVM_LIBDIR_SUFFIX}/${PYTHON_DIRECTORY})
