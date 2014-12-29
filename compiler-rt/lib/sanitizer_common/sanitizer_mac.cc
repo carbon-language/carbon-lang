@@ -109,6 +109,10 @@ uptr internal_readlink(const char *path, char *buf, uptr bufsize) {
   return readlink(path, buf, bufsize);
 }
 
+uptr internal_unlink(const char *path) {
+  return unlink(path);
+}
+
 uptr internal_sched_yield() {
   return sched_yield();
 }
