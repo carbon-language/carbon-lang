@@ -27,7 +27,15 @@ MACRO_ENSURE_OUT_OF_SOURCE_BUILD(
  )
 
 if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
+  set(LIBCXX_LIBDIR_SUFFIX "" CACHE STRING
+      "Define suffix of library directory name (32/64)")
+
+  set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib${LIBCXX_LIBDIR_SUFFIX})
+  set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib${LIBCXX_LIBDIR_SUFFIX})
+
   set(LIBCXX_BUILT_STANDALONE 1)
+else()
+  set(LIBCXX_LIBDIR_SUFFIX ${LLVM_LIBDIR_SUFFIX})
 endif()
 
 #===============================================================================
@@ -90,11 +98,10 @@ get_target_triple(LIBCXX_TARGET_TRIPLE
   )
 set(LIBCXX_TARGET_TRIPLE ${LIBCXX_TARGET_TRIPLE} CACHE STRING "Target triple.")
 
-
 set(LIBCXX_COMPILER    ${CMAKE_CXX_COMPILER})
 set(LIBCXX_SOURCE_DIR  ${CMAKE_CURRENT_SOURCE_DIR})
 set(LIBCXX_BINARY_DIR  ${CMAKE_CURRENT_BINARY_DIR})
-set(LIBCXX_LIBRARY_DIR ${CMAKE_BINARY_DIR}/lib)
+set(LIBCXX_LIBRARY_DIR ${CMAKE_BINARY_DIR}/lib${LIBCXX_LIBDIR_SUFFIX})
 
 # Declare libc++ configuration variables.
 # They are intended for use as follows:
