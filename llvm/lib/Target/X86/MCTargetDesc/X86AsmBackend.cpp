@@ -790,26 +790,6 @@ public:
     return SMO.getType() == MachO::S_CSTRING_LITERALS;
   }
 
-  bool isSectionAtomizable(const MCSection &Section) const override {
-    const MCSectionMachO &SMO = static_cast<const MCSectionMachO&>(Section);
-    // Fixed sized data sections are uniqued, they cannot be diced into atoms.
-    switch (SMO.getType()) {
-    default:
-      return true;
-
-    case MachO::S_4BYTE_LITERALS:
-    case MachO::S_8BYTE_LITERALS:
-    case MachO::S_16BYTE_LITERALS:
-    case MachO::S_LITERAL_POINTERS:
-    case MachO::S_NON_LAZY_SYMBOL_POINTERS:
-    case MachO::S_LAZY_SYMBOL_POINTERS:
-    case MachO::S_MOD_INIT_FUNC_POINTERS:
-    case MachO::S_MOD_TERM_FUNC_POINTERS:
-    case MachO::S_INTERPOSING:
-      return false;
-    }
-  }
-
   /// \brief Generate the compact unwind encoding for the CFI instructions.
   uint32_t generateCompactUnwindEncoding(
                              ArrayRef<MCCFIInstruction> Instrs) const override {

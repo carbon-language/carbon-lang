@@ -21,7 +21,8 @@ namespace llvm {
 class Triple;
 
   class PPCMCAsmInfoDarwin : public MCAsmInfoDarwin {
-    void anchor() override;
+    virtual void anchor();
+
   public:
     explicit PPCMCAsmInfoDarwin(bool is64Bit, const Triple&);
   };

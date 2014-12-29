@@ -89,8 +89,6 @@ public:
                        ArrayRef<Module::ModuleFlagEntry> ModuleFlags,
                        Mangler &Mang, const TargetMachine &TM) const override;
 
-  bool isSectionAtomizableBySymbols(const MCSection &Section) const override;
-
   const MCSection *
     SelectSectionForGlobal(const GlobalValue *GV,
                            SectionKind Kind, Mangler &Mang,
