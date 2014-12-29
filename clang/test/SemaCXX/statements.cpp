@@ -30,3 +30,7 @@ void test4(int) {            // expected-note{{possible target for call}}
   // expected-error@+1{{overloaded function could not be resolved}}
   __asm__ ("":"+r" (test4)); // expected-error{{invalid lvalue in asm output}}
 }
+void test5() {
+  char buf[1];
+  __asm__ ("":"+r" (buf));
+}

@@ -156,6 +156,9 @@ StmtResult Sema::ActOnGCCAsmStmt(SourceLocation AsmLoc, bool IsSimple,
     case Expr::MLV_Valid:
       // Cool, this is an lvalue.
       break;
+    case Expr::MLV_ArrayType:
+      // This is OK too.
+      break;
     case Expr::MLV_LValueCast: {
       const Expr *LVal = OutputExpr->IgnoreParenNoopCasts(Context);
       if (!getLangOpts().HeinousExtensions) {
