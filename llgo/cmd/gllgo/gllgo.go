@@ -14,6 +14,11 @@
 
 package main
 
+/*
+#include "config.h"
+*/
+import "C"
+
 import (
 	"errors"
 	"fmt"
@@ -29,6 +34,8 @@ import (
 	"llvm.org/llgo/irgen"
 	"llvm.org/llvm/bindings/go/llvm"
 )
+
+const LibDirSuffix = C.LLVM_LIBDIR_SUFFIX
 
 func report(err error) {
 	if list, ok := err.(scanner.ErrorList); ok {
@@ -54,7 +61,7 @@ func initCompiler(opts *driverOptions) (*irgen.Compiler, error) {
 	copy(importPaths, opts.importPaths)
 	copy(importPaths[len(opts.importPaths):], opts.libPaths)
 	if opts.prefix != "" {
-		importPaths = append(importPaths, filepath.Join(opts.prefix, "lib", "go", "llgo-"+llvmVersion()))
+		importPaths = append(importPaths, filepath.Join(opts.prefix, "lib"+LibDirSuffix, "go", "llgo-"+llvmVersion()))
 	}
 	copts := irgen.CompilerOptions{
 		TargetTriple:       opts.triple,
@@ -93,7 +100,7 @@ type sanitizerOptions struct {
 }
 
 func (san *sanitizerOptions) resourcePath() string {
-	return filepath.Join(san.crtPrefix, "lib", "clang", llvmVersion())
+	return filepath.Join(san.crtPrefix, "lib"+LibDirSuffix, "clang", llvmVersion())
 }
 
 func (san *sanitizerOptions) isPIEDefault() bool {
@@ -524,23 +531,24 @@ func getDataInlineAsm(data []byte) string {
 	return string(edata)
 }
 
-// Get the lib-relative path to the standard libraries for the given driver
-// options. This is normally '.' but can vary for cross compilation, LTO,
-// sanitizers etc.
-func getVariantDir(opts *driverOptions) string {
+// Get the lib path to the standard libraries for the given driver options.
+// This is normally 'lib' but can vary for cross compilation, LTO, sanitizers
+// etc.
+func getLibDir(opts *driverOptions) string {
+	lib := "lib" + LibDirSuffix
 	switch {
 	case opts.lto:
-		return "llvm-lto.0"
+		return filepath.Join(lib, "llvm-lto.0")
 	case opts.sanitizer.address:
-		return "llvm-asan.0"
+		return filepath.Join(lib, "llvm-asan.0")
 	case opts.sanitizer.thread:
-		return "llvm-tsan.0"
+		return filepath.Join(lib, "llvm-tsan.0")
 	case opts.sanitizer.memory:
-		return "llvm-msan.0"
+		return filepath.Join(lib, "llvm-msan.0")
 	case opts.sanitizer.dataflow:
-		return "llvm-dfsan.0"
+		return filepath.Join(lib, "llvm-dfsan.0")
 	default:
-		return "."
+		return lib
 	}
 }
 
@@ -549,7 +557,7 @@ func performAction(opts *driverOptions, kind actionKind, inputs []string, output
 	case actionPrint:
 		switch opts.output {
 		case "-dumpversion":
-			fmt.Println("llgo-"+llvmVersion())
+			fmt.Println("llgo-" + llvmVersion())
 			return nil
 		case "-print-libgcc-file-name":
 			cmd := exec.Command(opts.bprefix+"gcc", "-print-libgcc-file-name")
@@ -557,7 +565,7 @@ func performAction(opts *driverOptions, kind actionKind, inputs []string, output
 			os.Stdout.Write(out)
 			return err
 		case "-print-multi-os-directory":
-			fmt.Println(getVariantDir(opts))
+			fmt.Println(filepath.Join("..", getLibDir(opts)))
 			return nil
 		case "--version":
 			displayVersion()
@@ -710,7 +718,7 @@ func performAction(opts *driverOptions, kind actionKind, inputs []string, output
 			linkerPath = opts.bprefix + "gcc"
 
 			if opts.prefix != "" {
-				libdir := filepath.Join(opts.prefix, "lib", getVariantDir(opts))
+				libdir := filepath.Join(opts.prefix, getLibDir(opts))
 				args = append(args, "-L", libdir)
 				if !opts.staticLibgo {
 					args = append(args, "-Wl,-rpath,"+libdir)

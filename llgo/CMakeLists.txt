@@ -1,6 +1,12 @@
 include(ExternalProject)
 include(ProcessorCount)
 
+# Provide a config.h which exposes build system information.
+configure_file(
+  cmd/gllgo/config.h.cmake
+  ${CMAKE_CURRENT_BINARY_DIR}/cmd/gllgo/config.h)
+include_directories(${CMAKE_CURRENT_BINARY_DIR}/cmd/gllgo)
+
 llvm_add_go_executable(llgo llvm.org/llgo/cmd/gllgo ALL DEPENDS
   build/context.go
   cmd/gllgo/gllgo.go
@@ -142,15 +148,17 @@ if(TARGET dfsan)
   add_libgo_variant("_dfsan" "-fsanitize=dataflow" "-fsanitize=dataflow" dfsan TRUE)
 endif()
 
-install(FILES ${CMAKE_BINARY_DIR}/lib/libgo-llgo.a
-              ${CMAKE_BINARY_DIR}/lib/libgo-llgo.so
-              ${CMAKE_BINARY_DIR}/lib/libgo-llgo.so.6
-              ${CMAKE_BINARY_DIR}/lib/libgo-llgo.so.6.0.0
-              ${CMAKE_BINARY_DIR}/lib/libgobegin-llgo.a
-        DESTINATION lib)
+set(LLGO_LIBRARY_DIR ${CMAKE_BINARY_DIR}/lib${LLVM_LIBDIR_SUFFIX})
 
-install(DIRECTORY ${CMAKE_BINARY_DIR}/lib/go
-        DESTINATION lib)
+install(FILES ${LLGO_LIBRARY_DIR}/libgo-llgo.a
+              ${LLGO_LIBRARY_DIR}/libgo-llgo.so
+              ${LLGO_LIBRARY_DIR}/libgo-llgo.so.6
+              ${LLGO_LIBRARY_DIR}/libgo-llgo.so.6.0.0
+              ${LLGO_LIBRARY_DIR}/libgobegin-llgo.a
+        DESTINATION lib${LLVM_LIBDIR_SUFFIX})
+
+install(DIRECTORY ${LLGO_LIBRARY_DIR}/go
+        DESTINATION lib${LLVM_LIBDIR_SUFFIX})
 
 add_custom_target(check-libgo
   COMMAND make -C ${CMAKE_CURRENT_BINARY_DIR}/libgo -j${PROCESSOR_COUNT} check
