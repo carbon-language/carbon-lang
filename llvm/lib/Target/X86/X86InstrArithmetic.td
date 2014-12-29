@@ -900,8 +900,8 @@ class BinOpMR_F<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
             [(set EFLAGS, (opnode (load addr:$dst), typeinfo.RegClass:$src))]>;
 
 // BinOpMI - Instructions like "add [mem], imm".
-class BinOpMI<string mnemonic, X86TypeInfo typeinfo,
-              Format f, list<dag> pattern, bits<8> opcode = 0x80,
+class BinOpMI<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
+              Format f, list<dag> pattern,
               InstrItinClass itin = IIC_BIN_MEM>
   : ITy<opcode, f, typeinfo,
         (outs), (ins typeinfo.MemOperand:$dst, typeinfo.ImmOperand:$src),
@@ -911,27 +911,26 @@ class BinOpMI<string mnemonic, X86TypeInfo typeinfo,
 }
 
 // BinOpMI_RMW - Instructions like "add [mem], imm".
-class BinOpMI_RMW<string mnemonic, X86TypeInfo typeinfo,
+class BinOpMI_RMW<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
                   SDNode opnode, Format f>
-  : BinOpMI<mnemonic, typeinfo, f,
+  : BinOpMI<opcode, mnemonic, typeinfo, f,
             [(store (opnode (typeinfo.VT (load addr:$dst)),
                             typeinfo.ImmOperator:$src), addr:$dst),
              (implicit EFLAGS)]>;
 // BinOpMI_RMW_FF - Instructions like "adc [mem], imm".
-class BinOpMI_RMW_FF<string mnemonic, X86TypeInfo typeinfo,
-                  SDNode opnode, Format f>
-  : BinOpMI<mnemonic, typeinfo, f,
+class BinOpMI_RMW_FF<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
+                     SDNode opnode, Format f>
+  : BinOpMI<opcode, mnemonic, typeinfo, f,
             [(store (opnode (typeinfo.VT (load addr:$dst)),
                             typeinfo.ImmOperator:$src, EFLAGS), addr:$dst),
-             (implicit EFLAGS)], 0x80, IIC_BIN_CARRY_MEM>;
+             (implicit EFLAGS)], IIC_BIN_CARRY_MEM>;
 
 // BinOpMI_F - Instructions like "cmp [mem], imm".
-class BinOpMI_F<string mnemonic, X86TypeInfo typeinfo,
-                SDPatternOperator opnode, Format f, bits<8> opcode = 0x80>
-  : BinOpMI<mnemonic, typeinfo, f,
+class BinOpMI_F<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
+                SDPatternOperator opnode, Format f>
+  : BinOpMI<opcode, mnemonic, typeinfo, f,
             [(set EFLAGS, (opnode (typeinfo.VT (load addr:$dst)),
-                                               typeinfo.ImmOperator:$src))],
-            opcode>;
+                                               typeinfo.ImmOperator:$src))]>;
 
 // BinOpMI8 - Instructions like "add [mem], imm8".
 class BinOpMI8<string mnemonic, X86TypeInfo typeinfo,
@@ -1043,10 +1042,10 @@ multiclass ArithBinOp_RF<bits<8> BaseOpc, bits<8> BaseOpc2, bits<8> BaseOpc4,
     def NAME#32mi8  : BinOpMI8_RMW<mnemonic, Xi32, opnode, MemMRM>;
     def NAME#64mi8  : BinOpMI8_RMW<mnemonic, Xi64, opnode, MemMRM>;
 
-    def NAME#8mi    : BinOpMI_RMW<mnemonic, Xi8 , opnode, MemMRM>;
-    def NAME#16mi   : BinOpMI_RMW<mnemonic, Xi16, opnode, MemMRM>;
-    def NAME#32mi   : BinOpMI_RMW<mnemonic, Xi32, opnode, MemMRM>;
-    def NAME#64mi32 : BinOpMI_RMW<mnemonic, Xi64, opnode, MemMRM>;
+    def NAME#8mi    : BinOpMI_RMW<0x80, mnemonic, Xi8 , opnode, MemMRM>;
+    def NAME#16mi   : BinOpMI_RMW<0x80, mnemonic, Xi16, opnode, MemMRM>;
+    def NAME#32mi   : BinOpMI_RMW<0x80, mnemonic, Xi32, opnode, MemMRM>;
+    def NAME#64mi32 : BinOpMI_RMW<0x80, mnemonic, Xi64, opnode, MemMRM>;
   } // Defs = [EFLAGS]
 
   def NAME#8i8   : BinOpAI<BaseOpc4, mnemonic, Xi8 , AL,
@@ -1114,10 +1113,10 @@ multiclass ArithBinOp_RFF<bits<8> BaseOpc, bits<8> BaseOpc2, bits<8> BaseOpc4,
     def NAME#32mi8  : BinOpMI8_RMW_FF<mnemonic, Xi32, opnode, MemMRM>;
     def NAME#64mi8  : BinOpMI8_RMW_FF<mnemonic, Xi64, opnode, MemMRM>;
 
-    def NAME#8mi    : BinOpMI_RMW_FF<mnemonic, Xi8 , opnode, MemMRM>;
-    def NAME#16mi   : BinOpMI_RMW_FF<mnemonic, Xi16, opnode, MemMRM>;
-    def NAME#32mi   : BinOpMI_RMW_FF<mnemonic, Xi32, opnode, MemMRM>;
-    def NAME#64mi32 : BinOpMI_RMW_FF<mnemonic, Xi64, opnode, MemMRM>;
+    def NAME#8mi    : BinOpMI_RMW_FF<0x80, mnemonic, Xi8 , opnode, MemMRM>;
+    def NAME#16mi   : BinOpMI_RMW_FF<0x80, mnemonic, Xi16, opnode, MemMRM>;
+    def NAME#32mi   : BinOpMI_RMW_FF<0x80, mnemonic, Xi32, opnode, MemMRM>;
+    def NAME#64mi32 : BinOpMI_RMW_FF<0x80, mnemonic, Xi64, opnode, MemMRM>;
   } // Uses = [EFLAGS], Defs = [EFLAGS]
 
   def NAME#8i8   : BinOpAI_FF<BaseOpc4, mnemonic, Xi8 , AL,
@@ -1181,10 +1180,10 @@ multiclass ArithBinOp_F<bits<8> BaseOpc, bits<8> BaseOpc2, bits<8> BaseOpc4,
     def NAME#32mi8  : BinOpMI8_F<mnemonic, Xi32, opnode, MemMRM>;
     def NAME#64mi8  : BinOpMI8_F<mnemonic, Xi64, opnode, MemMRM>;
 
-    def NAME#8mi    : BinOpMI_F<mnemonic, Xi8 , opnode, MemMRM>;
-    def NAME#16mi   : BinOpMI_F<mnemonic, Xi16, opnode, MemMRM>;
-    def NAME#32mi   : BinOpMI_F<mnemonic, Xi32, opnode, MemMRM>;
-    def NAME#64mi32 : BinOpMI_F<mnemonic, Xi64, opnode, MemMRM>;
+    def NAME#8mi    : BinOpMI_F<0x80, mnemonic, Xi8 , opnode, MemMRM>;
+    def NAME#16mi   : BinOpMI_F<0x80, mnemonic, Xi16, opnode, MemMRM>;
+    def NAME#32mi   : BinOpMI_F<0x80, mnemonic, Xi32, opnode, MemMRM>;
+    def NAME#64mi32 : BinOpMI_F<0x80, mnemonic, Xi64, opnode, MemMRM>;
   } // Defs = [EFLAGS]
 
   def NAME#8i8   : BinOpAI<BaseOpc4, mnemonic, Xi8 , AL,
@@ -1249,10 +1248,10 @@ let isCompare = 1 in {
     def TEST32ri   : BinOpRI_F<0xF6, "test", Xi32, X86testpat, MRM0r>;
     def TEST64ri32 : BinOpRI_F<0xF6, "test", Xi64, X86testpat, MRM0r>;
 
-    def TEST8mi    : BinOpMI_F<"test", Xi8 , X86testpat, MRM0m, 0xF6>;
-    def TEST16mi   : BinOpMI_F<"test", Xi16, X86testpat, MRM0m, 0xF6>;
-    def TEST32mi   : BinOpMI_F<"test", Xi32, X86testpat, MRM0m, 0xF6>;
-    def TEST64mi32 : BinOpMI_F<"test", Xi64, X86testpat, MRM0m, 0xF6>;
+    def TEST8mi    : BinOpMI_F<0xF6, "test", Xi8 , X86testpat, MRM0m>;
+    def TEST16mi   : BinOpMI_F<0xF6, "test", Xi16, X86testpat, MRM0m>;
+    def TEST32mi   : BinOpMI_F<0xF6, "test", Xi32, X86testpat, MRM0m>;
+    def TEST64mi32 : BinOpMI_F<0xF6, "test", Xi64, X86testpat, MRM0m>;
 
     // When testing the result of EXTRACT_SUBREG sub_8bit_hi, make sure the
     // register class is constrained to GR8_NOREX. This pseudo is explicitly
