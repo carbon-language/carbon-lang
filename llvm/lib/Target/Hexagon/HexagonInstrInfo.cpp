@@ -694,9 +694,9 @@ bool HexagonInstrInfo::isPredicable(MachineInstr *MI) const {
   case Hexagon::L2_loadrub_pi:
     return isInt<4>(MI->getOperand(3).getImm());
 
-  case Hexagon::STrib_imm_V4:
-  case Hexagon::STrih_imm_V4:
-  case Hexagon::STriw_imm_V4:
+  case Hexagon::S4_storeirb_io:
+  case Hexagon::S4_storeirh_io:
+  case Hexagon::S4_storeiri_io:
     return (isUInt<6>(MI->getOperand(1).getImm()) &&
             isInt<6>(MI->getOperand(2).getImm()));
 
@@ -1420,8 +1420,8 @@ isConditionalStore (const MachineInstr* MI) const {
   switch (MI->getOpcode())
   {
     default: return false;
-    case Hexagon::STrib_imm_cPt_V4 :
-    case Hexagon::STrib_imm_cNotPt_V4 :
+    case Hexagon::S4_storeirbt_io:
+    case Hexagon::S4_storeirbf_io:
     case Hexagon::S4_pstorerbt_rr:
     case Hexagon::S4_pstorerbf_rr:
     case Hexagon::S2_pstorerbt_io:
@@ -1436,16 +1436,16 @@ isConditionalStore (const MachineInstr* MI) const {
     case Hexagon::S2_pstorerdf_pi:
     case Hexagon::S2_pstorerht_io:
     case Hexagon::S2_pstorerhf_io:
-    case Hexagon::STrih_imm_cPt_V4 :
-    case Hexagon::STrih_imm_cNotPt_V4 :
+    case Hexagon::S4_storeirht_io:
+    case Hexagon::S4_storeirhf_io:
     case Hexagon::S4_pstorerht_rr:
     case Hexagon::S4_pstorerhf_rr:
     case Hexagon::S2_pstorerht_pi:
     case Hexagon::S2_pstorerhf_pi:
     case Hexagon::S2_pstorerit_io:
     case Hexagon::S2_pstorerif_io:
-    case Hexagon::STriw_imm_cPt_V4 :
-    case Hexagon::STriw_imm_cNotPt_V4 :
+    case Hexagon::S4_storeirit_io:
+    case Hexagon::S4_storeirif_io:
     case Hexagon::S4_pstorerit_rr:
     case Hexagon::S4_pstorerif_rr:
     case Hexagon::S2_pstorerit_pi:

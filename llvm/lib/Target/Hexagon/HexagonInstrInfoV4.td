@@ -907,74 +907,123 @@ defm : T_ST_LOff_Pats<STrih_shl_V4, IntRegs, i32, truncstorei16>;
 // TODO: needs to be implemented.
 
 //===----------------------------------------------------------------------===//
+// Template class
+//===----------------------------------------------------------------------===//
+let isPredicable = 1, isExtendable = 1, isExtentSigned = 1, opExtentBits = 8,
+    opExtendable = 2 in
+class T_StoreImm <string mnemonic, Operand OffsetOp, bits<2> MajOp >
+  : STInst <(outs ), (ins IntRegs:$Rs, OffsetOp:$offset, s8Ext:$S8),
+  mnemonic#"($Rs+#$offset)=#$S8",
+  [], "", V4LDST_tc_st_SLOT01>,
+  ImmRegRel, PredNewRel {
+    bits<5> Rs;
+    bits<8> S8;
+    bits<8> offset;
+    bits<6> offsetBits;
+
+    string OffsetOpStr = !cast<string>(OffsetOp);
+    let offsetBits = !if (!eq(OffsetOpStr, "u6_2Imm"), offset{7-2},
+                     !if (!eq(OffsetOpStr, "u6_1Imm"), offset{6-1},
+                                         /* u6_0Imm */ offset{5-0}));
+
+    let IClass = 0b0011;
+
+    let Inst{27-25} = 0b110;
+    let Inst{22-21} = MajOp;
+    let Inst{20-16} = Rs;
+    let Inst{12-7}  = offsetBits;
+    let Inst{13}    = S8{7};
+    let Inst{6-0}   = S8{6-0};
+  }
+
+let isPredicated = 1, isExtendable = 1, isExtentSigned = 1, opExtentBits = 6,
+    opExtendable = 3 in
+class T_StoreImm_pred <string mnemonic, Operand OffsetOp, bits<2> MajOp,
+                       bit isPredNot, bit isPredNew >
+  : STInst <(outs ),
+            (ins PredRegs:$Pv, IntRegs:$Rs, OffsetOp:$offset, s6Ext:$S6),
+  !if(isPredNot, "if (!$Pv", "if ($Pv")#!if(isPredNew, ".new) ",
+  ") ")#mnemonic#"($Rs+#$offset)=#$S6",
+  [], "", V4LDST_tc_st_SLOT01>,
+  ImmRegRel, PredNewRel {
+    bits<2> Pv;
+    bits<5> Rs;
+    bits<6> S6;
+    bits<8> offset;
+    bits<6> offsetBits;
+
+    string OffsetOpStr = !cast<string>(OffsetOp);
+    let offsetBits = !if (!eq(OffsetOpStr, "u6_2Imm"), offset{7-2},
+                     !if (!eq(OffsetOpStr, "u6_1Imm"), offset{6-1},
+                                         /* u6_0Imm */ offset{5-0}));
+    let isPredicatedNew = isPredNew;
+    let isPredicatedFalse = isPredNot;
+
+    let IClass = 0b0011;
+
+    let Inst{27-25} = 0b100;
+    let Inst{24}    = isPredNew;
+    let Inst{23}    = isPredNot;
+    let Inst{22-21} = MajOp;
+    let Inst{20-16} = Rs;
+    let Inst{13}    = S6{5};
+    let Inst{12-7}  = offsetBits;
+    let Inst{6-5}   = Pv;
+    let Inst{4-0}   = S6{4-0};
+  }
+
+
+//===----------------------------------------------------------------------===//
 // multiclass for store instructions with base + immediate offset
 // addressing mode and immediate stored value.
 // mem[bhw](Rx++#s4:3)=#s8
 // if ([!]Pv[.new]) mem[bhw](Rx++#s4:3)=#s6
 //===----------------------------------------------------------------------===//
-multiclass ST_Imm_Pbase<string mnemonic, Operand OffsetOp, bit isNot,
-                        bit isPredNew> {
-  let isPredicatedNew = isPredNew in
-  def NAME : STInst2<(outs),
-            (ins PredRegs:$src1, IntRegs:$src2, OffsetOp:$src3, s6Ext:$src4),
-            !if(isNot, "if (!$src1", "if ($src1")#!if(isPredNew, ".new) ",
-            ") ")#mnemonic#"($src2+#$src3) = #$src4",
-            []>,
-            Requires<[HasV4T]>;
+
+multiclass ST_Imm_Pred <string mnemonic, Operand OffsetOp, bits<2> MajOp,
+                        bit PredNot> {
+  def _io    : T_StoreImm_pred <mnemonic, OffsetOp, MajOp, PredNot, 0>;
+  // Predicate new
+  def new_io : T_StoreImm_pred <mnemonic, OffsetOp, MajOp, PredNot, 1>;
 }
 
-multiclass ST_Imm_Pred<string mnemonic, Operand OffsetOp, bit PredNot> {
-  let isPredicatedFalse = PredNot in {
-    defm _c#NAME : ST_Imm_Pbase<mnemonic, OffsetOp, PredNot, 0>;
-    // Predicate new
-    defm _cdn#NAME : ST_Imm_Pbase<mnemonic, OffsetOp, PredNot, 1>;
-  }
-}
-
-let isExtendable = 1, isExtentSigned = 1, hasSideEffects = 0 in
-multiclass ST_Imm<string mnemonic, string CextOp, Operand OffsetOp> {
+multiclass ST_Imm <string mnemonic, string CextOp, Operand OffsetOp,
+                   bits<2> MajOp> {
   let CextOpcode = CextOp, BaseOpcode = CextOp#_imm in {
-    let opExtendable = 2, opExtentBits = 8, isPredicable = 1 in
-    def NAME#_V4 : STInst2<(outs),
-            (ins IntRegs:$src1, OffsetOp:$src2, s8Ext:$src3),
-            mnemonic#"($src1+#$src2) = #$src3",
-            []>,
-            Requires<[HasV4T]>;
+    def _io : T_StoreImm <mnemonic, OffsetOp, MajOp>;
 
-    let opExtendable = 3, opExtentBits = 6, isPredicated = 1 in {
-      defm Pt_V4 : ST_Imm_Pred<mnemonic, OffsetOp, 0>;
-      defm NotPt_V4 : ST_Imm_Pred<mnemonic, OffsetOp, 1 >;
-    }
+    defm t : ST_Imm_Pred <mnemonic, OffsetOp, MajOp, 0>;
+    defm f : ST_Imm_Pred <mnemonic, OffsetOp, MajOp, 1>;
   }
 }
 
-let addrMode = BaseImmOffset, InputType = "imm",
-validSubTargets = HasV4SubT in {
+let hasSideEffects = 0, validSubTargets = HasV4SubT, addrMode = BaseImmOffset,
+    InputType = "imm", isCodeGenOnly = 0 in {
   let accessSize = ByteAccess in
-    defm STrib_imm : ST_Imm<"memb", "STrib", u6_0Imm>, ImmRegRel, PredNewRel;
+  defm S4_storeirb : ST_Imm<"memb", "STrib", u6_0Imm, 0b00>;
 
   let accessSize = HalfWordAccess in
-    defm STrih_imm : ST_Imm<"memh", "STrih", u6_1Imm>, ImmRegRel, PredNewRel;
+  defm S4_storeirh : ST_Imm<"memh", "STrih", u6_1Imm, 0b01>;
 
   let accessSize = WordAccess in
-    defm STriw_imm : ST_Imm<"memw", "STriw", u6_2Imm>, ImmRegRel, PredNewRel;
+  defm S4_storeiri : ST_Imm<"memw", "STriw", u6_2Imm, 0b10>;
 }
 
 let Predicates = [HasV4T], AddedComplexity = 10 in {
 def: Pat<(truncstorei8 s8ExtPred:$src3, (add IntRegs:$src1, u6_0ImmPred:$src2)),
-            (STrib_imm_V4 IntRegs:$src1, u6_0ImmPred:$src2, s8ExtPred:$src3)>;
+            (S4_storeirb_io IntRegs:$src1, u6_0ImmPred:$src2, s8ExtPred:$src3)>;
 
 def: Pat<(truncstorei16 s8ExtPred:$src3, (add IntRegs:$src1,
                                               u6_1ImmPred:$src2)),
-            (STrih_imm_V4 IntRegs:$src1, u6_1ImmPred:$src2, s8ExtPred:$src3)>;
+            (S4_storeirh_io IntRegs:$src1, u6_1ImmPred:$src2, s8ExtPred:$src3)>;
 
 def: Pat<(store s8ExtPred:$src3, (add IntRegs:$src1, u6_2ImmPred:$src2)),
-            (STriw_imm_V4 IntRegs:$src1, u6_2ImmPred:$src2, s8ExtPred:$src3)>;
+            (S4_storeiri_io IntRegs:$src1, u6_2ImmPred:$src2, s8ExtPred:$src3)>;
 }
 
 let AddedComplexity = 6 in
 def : Pat <(truncstorei8 s8ExtPred:$src2, (i32 IntRegs:$src1)),
-           (STrib_imm_V4 IntRegs:$src1, 0, s8ExtPred:$src2)>,
+           (S4_storeirb_io IntRegs:$src1, 0, s8ExtPred:$src2)>,
            Requires<[HasV4T]>;
 
 // memb(Rx++#s4:0:circ(Mu))=Rt
@@ -990,7 +1039,7 @@ def : Pat <(truncstorei8 s8ExtPred:$src2, (i32 IntRegs:$src1)),
 // memh(Rs+#s11:1)=Rt.H
 let AddedComplexity = 6 in
 def : Pat <(truncstorei16 s8ExtPred:$src2, (i32 IntRegs:$src1)),
-           (STrih_imm_V4 IntRegs:$src1, 0, s8ExtPred:$src2)>,
+           (S4_storeirh_io IntRegs:$src1, 0, s8ExtPred:$src2)>,
            Requires<[HasV4T]>;
 
 // memh(Rs+Ru<<#u2)=Rt.H
@@ -1030,7 +1079,7 @@ def STriw_pred_V4 : STInst2<(outs),
 
 let AddedComplexity = 6 in
 def : Pat <(store s8ExtPred:$src2, (i32 IntRegs:$src1)),
-           (STriw_imm_V4 IntRegs:$src1, 0, s8ExtPred:$src2)>,
+           (S4_storeiri_io IntRegs:$src1, 0, s8ExtPred:$src2)>,
            Requires<[HasV4T]>;
 
 // memw(Rx++#s4:2)=Rt
