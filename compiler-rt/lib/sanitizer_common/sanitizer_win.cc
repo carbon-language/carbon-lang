@@ -203,7 +203,7 @@ int CompareModulesBase(const void *pl, const void *pr) {
     return -1;
   return l.base_address > r.base_address;
 }
-}
+}  // namespace
 
 void DumpProcessMap() {
   Report("Dumping process modules:\n");
