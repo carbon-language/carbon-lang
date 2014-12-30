@@ -123,7 +123,7 @@ lit.site.cfg: FORCE
 	@$(ECHOPATH) s=@LLVM_SOURCE_DIR@=$(LLVM_SRC_ROOT)=g >> lit.tmp
 	@$(ECHOPATH) s=@LLVM_BINARY_DIR@=$(LLVM_OBJ_ROOT)=g >> lit.tmp
 	@$(ECHOPATH) s=@LLVM_TOOLS_DIR@=$(ToolDir)=g >> lit.tmp
-	@$(ECHOPATH) s=@LIBDIR@=$(LibDir)=g >> lit.tmp
+	@$(ECHOPATH) s=@LLVM_LIBRARY_DIR@=$(LibDir)=g >> lit.tmp
 	@$(ECHOPATH) s=@SHLIBDIR@=$(SharedLibDir)=g >> lit.tmp
 	@$(ECHOPATH) s=@SHLIBEXT@=$(SHLIBEXT)=g >> lit.tmp
 	@$(ECHOPATH) s=@EXEEXT@=$(EXEEXT)=g >> lit.tmp
