@@ -1351,31 +1351,31 @@ isConditionalLoad (const MachineInstr* MI) const {
     case Hexagon::L2_ploadrubt_io:
     case Hexagon::L2_ploadrubf_io:
       return true;
-    case Hexagon::L2_ploadrdt_pi :
-    case Hexagon::L2_ploadrdf_pi :
-    case Hexagon::L2_ploadrit_pi :
-    case Hexagon::L2_ploadrif_pi :
-    case Hexagon::L2_ploadrht_pi :
-    case Hexagon::L2_ploadrhf_pi :
-    case Hexagon::L2_ploadrbt_pi :
-    case Hexagon::L2_ploadrbf_pi :
-    case Hexagon::L2_ploadruht_pi :
-    case Hexagon::L2_ploadruhf_pi :
-    case Hexagon::L2_ploadrubt_pi :
-    case Hexagon::L2_ploadrubf_pi :
+    case Hexagon::L2_ploadrdt_pi:
+    case Hexagon::L2_ploadrdf_pi:
+    case Hexagon::L2_ploadrit_pi:
+    case Hexagon::L2_ploadrif_pi:
+    case Hexagon::L2_ploadrht_pi:
+    case Hexagon::L2_ploadrhf_pi:
+    case Hexagon::L2_ploadrbt_pi:
+    case Hexagon::L2_ploadrbf_pi:
+    case Hexagon::L2_ploadruht_pi:
+    case Hexagon::L2_ploadruhf_pi:
+    case Hexagon::L2_ploadrubt_pi:
+    case Hexagon::L2_ploadrubf_pi:
       return QRI.Subtarget.hasV4TOps();
-    case Hexagon::LDrid_indexed_shl_cPt_V4 :
-    case Hexagon::LDrid_indexed_shl_cNotPt_V4 :
-    case Hexagon::LDrib_indexed_shl_cPt_V4 :
-    case Hexagon::LDrib_indexed_shl_cNotPt_V4 :
-    case Hexagon::LDriub_indexed_shl_cPt_V4 :
-    case Hexagon::LDriub_indexed_shl_cNotPt_V4 :
-    case Hexagon::LDrih_indexed_shl_cPt_V4 :
-    case Hexagon::LDrih_indexed_shl_cNotPt_V4 :
-    case Hexagon::LDriuh_indexed_shl_cPt_V4 :
-    case Hexagon::LDriuh_indexed_shl_cNotPt_V4 :
-    case Hexagon::LDriw_indexed_shl_cPt_V4 :
-    case Hexagon::LDriw_indexed_shl_cNotPt_V4 :
+    case Hexagon::L4_ploadrdt_rr:
+    case Hexagon::L4_ploadrdf_rr:
+    case Hexagon::L4_ploadrbt_rr:
+    case Hexagon::L4_ploadrbf_rr:
+    case Hexagon::L4_ploadrubt_rr:
+    case Hexagon::L4_ploadrubf_rr:
+    case Hexagon::L4_ploadrht_rr:
+    case Hexagon::L4_ploadrhf_rr:
+    case Hexagon::L4_ploadruht_rr:
+    case Hexagon::L4_ploadruhf_rr:
+    case Hexagon::L4_ploadrit_rr:
+    case Hexagon::L4_ploadrif_rr:
       return QRI.Subtarget.hasV4TOps();
   }
 }

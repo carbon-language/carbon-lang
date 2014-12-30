@@ -342,62 +342,102 @@ def LDrih_abs_set_V4  : T_LD_abs_set <"memh", IntRegs>;
 def LDriw_abs_set_V4  : T_LD_abs_set <"memw", IntRegs>;
 def LDriuh_abs_set_V4 : T_LD_abs_set <"memuh", IntRegs>;
 
+//===----------------------------------------------------------------------===//
+// Template classes for the non-predicated load instructions with
+// base + register offset addressing mode
+//===----------------------------------------------------------------------===//
+class T_load_rr <string mnemonic, RegisterClass RC, bits<3> MajOp>:
+   LDInst<(outs RC:$dst), (ins IntRegs:$src1, IntRegs:$src2, u2Imm:$u2),
+  "$dst = "#mnemonic#"($src1 + $src2<<#$u2)",
+  [], "", V4LDST_tc_ld_SLOT01>, ImmRegShl, AddrModeRel {
+    bits<5> dst;
+    bits<5> src1;
+    bits<5> src2;
+    bits<2> u2;
 
+    let IClass = 0b0011;
+
+    let Inst{27-24} = 0b1010;
+    let Inst{23-21} = MajOp;
+    let Inst{20-16} = src1;
+    let Inst{12-8}  = src2;
+    let Inst{13}    = u2{1};
+    let Inst{7}     = u2{0};
+    let Inst{4-0}   = dst;
+  }
+
+//===----------------------------------------------------------------------===//
+// Template classes for the predicated load instructions with
+// base + register offset addressing mode
+//===----------------------------------------------------------------------===//
+let isPredicated =  1 in
+class T_pload_rr <string mnemonic, RegisterClass RC, bits<3> MajOp,
+                  bit isNot, bit isPredNew>:
+   LDInst <(outs RC:$dst),
+           (ins PredRegs:$src1, IntRegs:$src2, IntRegs:$src3, u2Imm:$u2),
+  !if(isNot, "if (!$src1", "if ($src1")#!if(isPredNew, ".new) ",
+  ") ")#"$dst = "#mnemonic#"($src2+$src3<<#$u2)",
+  [], "", V4LDST_tc_ld_SLOT01>, AddrModeRel {
+    bits<5> dst;
+    bits<2> src1;
+    bits<5> src2;
+    bits<5> src3;
+    bits<2> u2;
+
+    let isPredicatedFalse = isNot;
+    let isPredicatedNew = isPredNew;
+
+    let IClass = 0b0011;
+
+    let Inst{27-26} = 0b00;
+    let Inst{25}    = isPredNew;
+    let Inst{24}    = isNot;
+    let Inst{23-21} = MajOp;
+    let Inst{20-16} = src2;
+    let Inst{12-8}  = src3;
+    let Inst{13}    = u2{1};
+    let Inst{7}     = u2{0};
+    let Inst{6-5}   = src1;
+    let Inst{4-0}   = dst;
+  }
+
+//===----------------------------------------------------------------------===//
 // multiclass for load instructions with base + register offset
 // addressing mode
-multiclass ld_idxd_shl_pbase<string mnemonic, RegisterClass RC, bit isNot,
-                             bit isPredNew> {
-  let isPredicatedNew = isPredNew in
-  def NAME : LDInst2<(outs RC:$dst),
-            (ins PredRegs:$src1, IntRegs:$src2, IntRegs:$src3, u2Imm:$offset),
-            !if(isNot, "if (!$src1", "if ($src1")#!if(isPredNew, ".new) ",
-            ") ")#"$dst = "#mnemonic#"($src2+$src3<<#$offset)",
-            []>, Requires<[HasV4T]>;
-}
-
-multiclass ld_idxd_shl_pred<string mnemonic, RegisterClass RC, bit PredNot> {
-  let isPredicatedFalse = PredNot in {
-    defm _c#NAME : ld_idxd_shl_pbase<mnemonic, RC, PredNot, 0>;
-    // Predicate new
-    defm _cdn#NAME : ld_idxd_shl_pbase<mnemonic, RC, PredNot, 1>;
-  }
-}
-
-let hasSideEffects = 0 in
-multiclass ld_idxd_shl<string mnemonic, string CextOp, RegisterClass RC> {
-  let CextOpcode = CextOp, BaseOpcode = CextOp#_indexed_shl in {
+//===----------------------------------------------------------------------===//
+let hasSideEffects = 0, addrMode = BaseRegOffset in
+multiclass ld_idxd_shl <string mnemonic, string CextOp, RegisterClass RC,
+                        bits<3> MajOp > {
+  let CextOpcode = CextOp, BaseOpcode = CextOp#_indexed_shl,
+      InputType = "reg" in {
     let isPredicable = 1 in
-    def NAME#_V4 : LDInst2<(outs RC:$dst),
-            (ins IntRegs:$src1, IntRegs:$src2, u2Imm:$offset),
-            "$dst = "#mnemonic#"($src1+$src2<<#$offset)",
-            []>, Requires<[HasV4T]>;
+    def L4_#NAME#_rr : T_load_rr <mnemonic, RC, MajOp>;
 
-    let isPredicated = 1 in {
-      defm Pt_V4 : ld_idxd_shl_pred<mnemonic, RC, 0 >;
-      defm NotPt_V4 : ld_idxd_shl_pred<mnemonic, RC, 1>;
-    }
+    // Predicated
+    def L4_p#NAME#t_rr : T_pload_rr <mnemonic, RC, MajOp, 0, 0>;
+    def L4_p#NAME#f_rr : T_pload_rr <mnemonic, RC, MajOp, 1, 0>;
+
+    // Predicated new
+    def L4_p#NAME#tnew_rr : T_pload_rr <mnemonic, RC, MajOp, 0, 1>;
+    def L4_p#NAME#fnew_rr : T_pload_rr <mnemonic, RC, MajOp, 1, 1>;
   }
 }
 
-let addrMode = BaseRegOffset in {
-  let accessSize = ByteAccess in {
-    defm LDrib_indexed_shl: ld_idxd_shl<"memb", "LDrib", IntRegs>,
-                                        AddrModeRel;
-    defm LDriub_indexed_shl: ld_idxd_shl<"memub", "LDriub", IntRegs>,
-                                        AddrModeRel;
-  }
-  let accessSize = HalfWordAccess in {
-    defm LDrih_indexed_shl: ld_idxd_shl<"memh", "LDrih", IntRegs>, AddrModeRel;
-    defm LDriuh_indexed_shl: ld_idxd_shl<"memuh", "LDriuh", IntRegs>,
-                             AddrModeRel;
-  }
-  let accessSize = WordAccess in
-     defm LDriw_indexed_shl: ld_idxd_shl<"memw", "LDriw", IntRegs>, AddrModeRel;
-
-  let accessSize = DoubleWordAccess in
-    defm LDrid_indexed_shl: ld_idxd_shl<"memd", "LDrid", DoubleRegs>,
-                             AddrModeRel;
+let hasNewValue = 1, accessSize = ByteAccess, isCodeGenOnly = 0 in {
+  defm loadrb  : ld_idxd_shl<"memb", "LDrib", IntRegs, 0b000>;
+  defm loadrub : ld_idxd_shl<"memub", "LDriub", IntRegs, 0b001>;
 }
+
+let hasNewValue = 1, accessSize = HalfWordAccess, isCodeGenOnly = 0 in {
+  defm loadrh  : ld_idxd_shl<"memh", "LDrih", IntRegs, 0b010>;
+  defm loadruh : ld_idxd_shl<"memuh", "LDriuh", IntRegs, 0b011>;
+}
+
+let hasNewValue = 1, accessSize = WordAccess, isCodeGenOnly = 0 in
+defm loadri : ld_idxd_shl<"memw", "LDriw", IntRegs, 0b100>;
+
+let accessSize = DoubleWordAccess, isCodeGenOnly = 0 in
+defm loadrd  : ld_idxd_shl<"memd", "LDrid", DoubleRegs, 0b110>;
 
 // 'def pats' for load instructions with base + register offset and non-zero
 // immediate value. Immediate value is used to left-shift the second
@@ -405,49 +445,49 @@ let addrMode = BaseRegOffset in {
 let AddedComplexity = 40 in {
 def : Pat <(i32 (sextloadi8 (add IntRegs:$src1,
                                  (shl IntRegs:$src2, u2ImmPred:$offset)))),
-           (LDrib_indexed_shl_V4 IntRegs:$src1,
+           (L4_loadrb_rr IntRegs:$src1,
             IntRegs:$src2, u2ImmPred:$offset)>,
             Requires<[HasV4T]>;
 
 def : Pat <(i32 (zextloadi8 (add IntRegs:$src1,
                                  (shl IntRegs:$src2, u2ImmPred:$offset)))),
-           (LDriub_indexed_shl_V4 IntRegs:$src1,
+           (L4_loadrub_rr IntRegs:$src1,
             IntRegs:$src2, u2ImmPred:$offset)>,
             Requires<[HasV4T]>;
 
 def : Pat <(i32 (extloadi8 (add IntRegs:$src1,
                                 (shl IntRegs:$src2, u2ImmPred:$offset)))),
-           (LDriub_indexed_shl_V4 IntRegs:$src1,
+           (L4_loadrub_rr IntRegs:$src1,
             IntRegs:$src2, u2ImmPred:$offset)>,
             Requires<[HasV4T]>;
 
 def : Pat <(i32 (sextloadi16 (add IntRegs:$src1,
                                   (shl IntRegs:$src2, u2ImmPred:$offset)))),
-           (LDrih_indexed_shl_V4 IntRegs:$src1,
+           (L4_loadrh_rr IntRegs:$src1,
             IntRegs:$src2, u2ImmPred:$offset)>,
             Requires<[HasV4T]>;
 
 def : Pat <(i32 (zextloadi16 (add IntRegs:$src1,
                                   (shl IntRegs:$src2, u2ImmPred:$offset)))),
-           (LDriuh_indexed_shl_V4 IntRegs:$src1,
+           (L4_loadruh_rr IntRegs:$src1,
             IntRegs:$src2, u2ImmPred:$offset)>,
             Requires<[HasV4T]>;
 
 def : Pat <(i32 (extloadi16 (add IntRegs:$src1,
                                  (shl IntRegs:$src2, u2ImmPred:$offset)))),
-           (LDriuh_indexed_shl_V4 IntRegs:$src1,
+           (L4_loadruh_rr IntRegs:$src1,
             IntRegs:$src2, u2ImmPred:$offset)>,
             Requires<[HasV4T]>;
 
 def : Pat <(i32 (load (add IntRegs:$src1,
                            (shl IntRegs:$src2, u2ImmPred:$offset)))),
-           (LDriw_indexed_shl_V4 IntRegs:$src1,
+           (L4_loadri_rr IntRegs:$src1,
             IntRegs:$src2, u2ImmPred:$offset)>,
             Requires<[HasV4T]>;
 
 def : Pat <(i64 (load (add IntRegs:$src1,
                            (shl IntRegs:$src2, u2ImmPred:$offset)))),
-           (LDrid_indexed_shl_V4 IntRegs:$src1,
+           (L4_loadrd_rr IntRegs:$src1,
             IntRegs:$src2, u2ImmPred:$offset)>,
             Requires<[HasV4T]>;
 }
@@ -457,35 +497,35 @@ def : Pat <(i64 (load (add IntRegs:$src1,
 // zero immediate value.
 let AddedComplexity = 10 in {
 def : Pat <(i64 (load (add IntRegs:$src1, IntRegs:$src2))),
-           (LDrid_indexed_shl_V4 IntRegs:$src1, IntRegs:$src2, 0)>,
+           (L4_loadrd_rr IntRegs:$src1, IntRegs:$src2, 0)>,
             Requires<[HasV4T]>;
 
 def : Pat <(i32 (sextloadi8 (add IntRegs:$src1, IntRegs:$src2))),
-           (LDrib_indexed_shl_V4 IntRegs:$src1, IntRegs:$src2, 0)>,
+           (L4_loadrb_rr IntRegs:$src1, IntRegs:$src2, 0)>,
             Requires<[HasV4T]>;
 
 def : Pat <(i32 (zextloadi8 (add IntRegs:$src1, IntRegs:$src2))),
-           (LDriub_indexed_shl_V4 IntRegs:$src1, IntRegs:$src2, 0)>,
+           (L4_loadrub_rr IntRegs:$src1, IntRegs:$src2, 0)>,
             Requires<[HasV4T]>;
 
 def : Pat <(i32 (extloadi8 (add IntRegs:$src1, IntRegs:$src2))),
-           (LDriub_indexed_shl_V4 IntRegs:$src1, IntRegs:$src2, 0)>,
+           (L4_loadrub_rr IntRegs:$src1, IntRegs:$src2, 0)>,
             Requires<[HasV4T]>;
 
 def : Pat <(i32 (sextloadi16 (add IntRegs:$src1, IntRegs:$src2))),
-           (LDrih_indexed_shl_V4 IntRegs:$src1, IntRegs:$src2, 0)>,
+           (L4_loadrh_rr IntRegs:$src1, IntRegs:$src2, 0)>,
             Requires<[HasV4T]>;
 
 def : Pat <(i32 (zextloadi16 (add IntRegs:$src1, IntRegs:$src2))),
-           (LDriuh_indexed_shl_V4 IntRegs:$src1, IntRegs:$src2, 0)>,
+           (L4_loadruh_rr IntRegs:$src1, IntRegs:$src2, 0)>,
             Requires<[HasV4T]>;
 
 def : Pat <(i32 (extloadi16 (add IntRegs:$src1, IntRegs:$src2))),
-           (LDriuh_indexed_shl_V4 IntRegs:$src1, IntRegs:$src2, 0)>,
+           (L4_loadruh_rr IntRegs:$src1, IntRegs:$src2, 0)>,
             Requires<[HasV4T]>;
 
 def : Pat <(i32 (load (add IntRegs:$src1, IntRegs:$src2))),
-           (LDriw_indexed_shl_V4 IntRegs:$src1, IntRegs:$src2, 0)>,
+           (L4_loadri_rr IntRegs:$src1, IntRegs:$src2, 0)>,
             Requires<[HasV4T]>;
 }
 
