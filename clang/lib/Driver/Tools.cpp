@@ -2119,22 +2119,30 @@ static SmallString<128> getCompilerRTLibDir(const ToolChain &TC) {
   return Res;
 }
 
+static SmallString<128> getCompilerRT(const ToolChain &TC, StringRef Component,
+                                      bool Shared = false,
+                                      const char *Env = "") {
+  bool IsOSWindows = TC.getTriple().isOSWindows();
+  StringRef Arch = getArchNameForCompilerRTLib(TC);
+  const char *Prefix = IsOSWindows ? "" : "lib";
+  const char *Suffix =
+      Shared ? (IsOSWindows ? ".dll" : ".so") : (IsOSWindows ? ".lib" : ".a");
+
+  SmallString<128> Path = getCompilerRTLibDir(TC);
+  llvm::sys::path::append(Path, Prefix + Twine("clang_rt.") + Component + "-" +
+                                    Arch + Env + Suffix);
+
+  return Path;
+}
+
 // This adds the static libclang_rt.builtins-arch.a directly to the command line
 // FIXME: Make sure we can also emit shared objects if they're requested
 // and available, check for possible errors, etc.
 static void addClangRT(const ToolChain &TC, const ArgList &Args,
                        ArgStringList &CmdArgs) {
-  bool IsOSWindows = TC.getTriple().isOSWindows();
-  StringRef Arch = getArchNameForCompilerRTLib(TC);
-  const char *Prefix = IsOSWindows ? "" : "lib";
-  const char *Suffix = IsOSWindows ? ".lib" : ".a";
+  CmdArgs.push_back(Args.MakeArgString(getCompilerRT(TC, "builtins")));
 
-  SmallString<128> LibClangRT = getCompilerRTLibDir(TC);
-  llvm::sys::path::append(LibClangRT,
-                          Prefix + Twine("clang_rt.builtins-") + Arch + Suffix);
-
-  CmdArgs.push_back(Args.MakeArgString(LibClangRT));
-  if (!IsOSWindows) {
+  if (!TC.getTriple().isOSWindows()) {
     // FIXME: why do we link against gcc when we are using compiler-rt?
     CmdArgs.push_back("-lgcc_s");
     if (TC.getDriver().CCCIsCXX())
@@ -2152,38 +2160,22 @@ static void addProfileRT(const ToolChain &TC, const ArgList &Args,
         Args.hasArg(options::OPT_coverage)))
     return;
 
-  SmallString<128> LibProfile = getCompilerRTLibDir(TC);
-  llvm::sys::path::append(LibProfile, Twine("libclang_rt.profile-") +
-                                          getArchNameForCompilerRTLib(TC) +
-                                          ".a");
-
-  CmdArgs.push_back(Args.MakeArgString(LibProfile));
-}
-
-static SmallString<128> getSanitizerRTLibName(const ToolChain &TC,
-                                              StringRef Sanitizer,
-                                              bool Shared) {
-  // Sanitizer runtime has name "libclang_rt.<Sanitizer>-<ArchName>.{a,so}"
-  // (or "libclang_rt.<Sanitizer>-<ArchName>-android.so for Android)
-  const char *EnvSuffix =
-    TC.getTriple().getEnvironment() == llvm::Triple::Android ?  "-android" : "";
-  SmallString<128> LibSanitizer = getCompilerRTLibDir(TC);
-  llvm::sys::path::append(LibSanitizer,
-                          Twine("libclang_rt.") + Sanitizer + "-" +
-                              getArchNameForCompilerRTLib(TC) + EnvSuffix +
-                              (Shared ? ".so" : ".a"));
-  return LibSanitizer;
+  CmdArgs.push_back(Args.MakeArgString(getCompilerRT(TC, "profile")));
 }
 
 static void addSanitizerRuntime(const ToolChain &TC, const ArgList &Args,
                                 ArgStringList &CmdArgs, StringRef Sanitizer,
                                 bool IsShared) {
-  SmallString<128> LibSanitizer = getSanitizerRTLibName(TC, Sanitizer, IsShared);
+  const char *Env = TC.getTriple().getEnvironment() == llvm::Triple::Android
+                        ? "-android"
+                        : "";
+
   // Static runtimes must be forced into executable, so we wrap them in
   // whole-archive.
   if (!IsShared)
     CmdArgs.push_back("-whole-archive");
-  CmdArgs.push_back(Args.MakeArgString(LibSanitizer));
+  CmdArgs.push_back(Args.MakeArgString(getCompilerRT(TC, Sanitizer, IsShared,
+                                                     Env)));
   if (!IsShared)
     CmdArgs.push_back("-no-whole-archive");
 }
@@ -2193,10 +2185,9 @@ static void addSanitizerRuntime(const ToolChain &TC, const ArgList &Args,
 static bool addSanitizerDynamicList(const ToolChain &TC, const ArgList &Args,
                                     ArgStringList &CmdArgs,
                                     StringRef Sanitizer) {
-  SmallString<128> LibSanitizer = getSanitizerRTLibName(TC, Sanitizer, false);
-  if (llvm::sys::fs::exists(LibSanitizer + ".syms")) {
-    CmdArgs.push_back(
-        Args.MakeArgString("--dynamic-list=" + LibSanitizer + ".syms"));
+  SmallString<128> SanRT = getCompilerRT(TC, Sanitizer);
+  if (llvm::sys::fs::exists(SanRT + ".syms")) {
+    CmdArgs.push_back(Args.MakeArgString("--dynamic-list=" + SanRT + ".syms"));
     return true;
   }
   return false;
