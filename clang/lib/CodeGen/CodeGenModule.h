@@ -261,6 +261,7 @@ class CodeGenModule : public CodeGenTypeCache {
   CodeGenModule(const CodeGenModule &) LLVM_DELETED_FUNCTION;
   void operator=(const CodeGenModule &) LLVM_DELETED_FUNCTION;
 
+public:
   struct Structor {
     Structor() : Priority(0), Initializer(nullptr), AssociatedData(nullptr) {}
     Structor(int Priority, llvm::Constant *Initializer,
@@ -274,6 +275,7 @@ class CodeGenModule : public CodeGenTypeCache {
 
   typedef std::vector<Structor> CtorList;
 
+private:
   ASTContext &Context;
   const LangOptions &LangOpts;
   const CodeGenOptions &CodeGenOpts;
@@ -623,6 +625,9 @@ public:
   MicrosoftVTableContext &getMicrosoftVTableContext() {
     return VTables.getMicrosoftVTableContext();
   }
+
+  CtorList &getGlobalCtors() { return GlobalCtors; }
+  CtorList &getGlobalDtors() { return GlobalDtors; }
 
   llvm::MDNode *getTBAAInfo(QualType QTy);
   llvm::MDNode *getTBAAInfoForVTablePtr();
