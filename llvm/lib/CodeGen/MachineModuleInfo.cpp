@@ -273,7 +273,7 @@ bool MachineModuleInfo::doInitialization(Module &M) {
   CurCallSite = 0;
   CallsEHReturn = 0;
   CallsUnwindInit = 0;
-  DbgInfoAvailable = UsesVAFloatArgument = false; 
+  DbgInfoAvailable = UsesVAFloatArgument = UsesMorestackAddr = false;
   // Always emit some info, by default "no personality" info.
   Personalities.push_back(nullptr);
   AddrLabelSymbols = nullptr;

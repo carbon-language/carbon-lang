@@ -161,6 +161,13 @@ class MachineModuleInfo : public ImmutablePass {
   /// to _fltused on Windows targets.
   bool UsesVAFloatArgument;
 
+  /// UsesMorestackAddr - True if the module calls the __morestack function
+  /// indirectly, as is required under the large code model on x86. This is used
+  /// to emit a definition of a symbol, __morestack_addr, containing the
+  /// address. See comments in lib/Target/X86/X86FrameLowering.cpp for more
+  /// details.
+  bool UsesMorestackAddr;
+
 public:
   static char ID; // Pass identification, replacement for typeid
 
@@ -232,6 +239,14 @@ public:
 
   void setUsesVAFloatArgument(bool b) {
     UsesVAFloatArgument = b;
+  }
+
+  bool usesMorestackAddr() const {
+    return UsesMorestackAddr;
+  }
+
+  void setUsesMorestackAddr(bool b) {
+    UsesMorestackAddr = b;
   }
 
   /// \brief Returns a reference to a list of cfi instructions in the current

@@ -1,5 +1,6 @@
 ; RUN: llc < %s -mcpu=generic -mtriple=i686-linux -verify-machineinstrs | FileCheck %s -check-prefix=X32-Linux
 ; RUN: llc < %s -mcpu=generic -mtriple=x86_64-linux  -verify-machineinstrs | FileCheck %s -check-prefix=X64-Linux
+; RUN: llc < %s -mcpu=generic -mtriple=x86_64-linux -code-model=large -verify-machineinstrs | FileCheck %s -check-prefix=X64-Linux-Large
 ; RUN: llc < %s -mcpu=generic -mtriple=x86_64-linux-gnux32 -verify-machineinstrs | FileCheck %s -check-prefix=X32ABI
 ; RUN: llc < %s -mcpu=generic -mtriple=i686-darwin -verify-machineinstrs | FileCheck %s -check-prefix=X32-Darwin
 ; RUN: llc < %s -mcpu=generic -mtriple=x86_64-darwin -verify-machineinstrs | FileCheck %s -check-prefix=X64-Darwin
@@ -56,6 +57,16 @@ define void @test_basic() #0 {
 ; X64-Linux-NEXT:  movabsq $0, %r11
 ; X64-Linux-NEXT:  callq __morestack
 ; X64-Linux-NEXT:  ret
+
+; X64-Linux-Large-LABEL:       test_basic:
+
+; X64-Linux-Large:       cmpq %fs:112, %rsp
+; X64-Linux-Large-NEXT:  ja      .LBB0_2
+
+; X64-Linux-Large:       movabsq $40, %r10
+; X64-Linux-Large-NEXT:  movabsq $0, %r11
+; X64-Linux-Large-NEXT:  callq *__morestack_addr(%rip)
+; X64-Linux-Large-NEXT:  ret
 
 ; X32ABI-LABEL:       test_basic:
 
@@ -626,3 +637,7 @@ define void @test_nostack() #0 {
 }
 
 attributes #0 = { "split-stack" }
+
+; X64-Linux-Large: .rodata
+; X64-Linux-Large-NEXT: __morestack_addr:
+; X64-Linux-Large-NEXT: .quad	__morestack
