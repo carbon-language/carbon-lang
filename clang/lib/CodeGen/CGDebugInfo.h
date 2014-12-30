@@ -448,27 +448,16 @@ private:
   }
 };
 
-/// SaveAndRestoreLocation - An RAII object saves the current location
-/// and automatically restores it to the original value.
-class SaveAndRestoreLocation {
+class ApplyDebugLocation {
 protected:
-  SourceLocation SavedLoc;
-  CGDebugInfo *DI;
-  CGBuilderTy &Builder;
-public:
-  SaveAndRestoreLocation(CodeGenFunction &CGF, CGBuilderTy &B);
-  /// Autorestore everything back to normal.
-  ~SaveAndRestoreLocation();
-};
+  llvm::DebugLoc OriginalLocation;
+  CodeGenFunction &CGF;
 
-/// NoLocation - An RAII object that temporarily disables debug
-/// locations. This is useful for emitting instructions that should be
-/// counted towards the function prologue.
-class NoLocation : public SaveAndRestoreLocation {
 public:
-  NoLocation(CodeGenFunction &CGF, CGBuilderTy &B);
-  /// Autorestore everything back to normal.
-  ~NoLocation();
+  ApplyDebugLocation(CodeGenFunction &CGF,
+                     SourceLocation TemporaryLocation = SourceLocation(),
+                     bool ForceColumnInfo = false);
+  ~ApplyDebugLocation();
 };
 
 /// ArtificialLocation - An RAII object that temporarily switches to
@@ -482,16 +471,9 @@ public:
 /// This is necessary because passing an empty SourceLocation to
 /// CGDebugInfo::setLocation() will result in the last valid location
 /// being reused.
-class ArtificialLocation : public SaveAndRestoreLocation {
+class ArtificialLocation : public ApplyDebugLocation {
 public:
-  ArtificialLocation(CodeGenFunction &CGF, CGBuilderTy &B);
-
-  /// Set the current location to line 0, but within the current scope
-  /// (= the top of the LexicalBlockStack).
-  void Emit();
-
-  /// Autorestore everything back to normal.
-  ~ArtificialLocation();
+  ArtificialLocation(CodeGenFunction &CGF);
 };
 
 

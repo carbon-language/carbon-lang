@@ -93,19 +93,6 @@ enum TypeEvaluationKind {
   TEK_Aggregate
 };
 
-class SuppressDebugLocation {
-  llvm::DebugLoc CurLoc;
-  llvm::IRBuilderBase &Builder;
-public:
-  SuppressDebugLocation(llvm::IRBuilderBase &Builder)
-      : CurLoc(Builder.getCurrentDebugLocation()), Builder(Builder) {
-    Builder.SetCurrentDebugLocation(llvm::DebugLoc());
-  }
-  ~SuppressDebugLocation() {
-    Builder.SetCurrentDebugLocation(CurLoc);
-  }
-};
-
 /// CodeGenFunction - This class organizes the per-function state that is used
 /// while generating LLVM code.
 class CodeGenFunction : public CodeGenTypeCache {
@@ -1300,8 +1287,7 @@ public:
                         FunctionArgList &Args);
 
   void EmitInitializerForField(FieldDecl *Field, LValue LHS, Expr *Init,
-                               ArrayRef<VarDecl *> ArrayIndexes,
-                               SourceLocation DbgLoc = SourceLocation());
+                               ArrayRef<VarDecl *> ArrayIndexes);
 
   /// InitializeVTablePointer - Initialize the vtable pointer of the given
   /// subobject.
@@ -1546,7 +1532,7 @@ public:
   /// EmitExprAsInit - Emits the code necessary to initialize a
   /// location in memory with the given initializer.
   void EmitExprAsInit(const Expr *init, const ValueDecl *D, LValue lvalue,
-                      bool capturedByInit, SourceLocation DbgLoc);
+                      bool capturedByInit);
 
   /// hasVolatileMember - returns true if aggregate type has a volatile
   /// member.
@@ -1833,8 +1819,7 @@ public:
   void EmitVarDecl(const VarDecl &D);
 
   void EmitScalarInit(const Expr *init, const ValueDecl *D, LValue lvalue,
-                      bool capturedByInit,
-                      SourceLocation DbgLoc = SourceLocation());
+                      bool capturedByInit);
   void EmitScalarInit(llvm::Value *init, LValue lvalue);
 
   typedef void SpecialInitFn(CodeGenFunction &Init, const VarDecl &D,
@@ -2164,8 +2149,7 @@ public:
   /// EmitStoreThroughLValue - Store the specified rvalue into the specified
   /// lvalue, where both are guaranteed to the have the same type, and that type
   /// is 'Ty'.
-  void EmitStoreThroughLValue(RValue Src, LValue Dst, bool isInit = false,
-                              SourceLocation DbgLoc = SourceLocation());
+  void EmitStoreThroughLValue(RValue Src, LValue Dst, bool isInit = false);
   void EmitStoreThroughExtVectorComponentLValue(RValue Src, LValue Dst);
   void EmitStoreThroughGlobalRegLValue(RValue Src, LValue Dst);
 
@@ -2537,12 +2521,10 @@ public:
 
   /// EmitComplexExprIntoLValue - Emit the given expression of complex
   /// type and place its result into the specified l-value.
-  void EmitComplexExprIntoLValue(const Expr *E, LValue dest, bool isInit,
-                                 SourceLocation DbgLoc = SourceLocation());
+  void EmitComplexExprIntoLValue(const Expr *E, LValue dest, bool isInit);
 
   /// EmitStoreOfComplex - Store a complex number into the specified l-value.
-  void EmitStoreOfComplex(ComplexPairTy V, LValue dest, bool isInit,
-                          SourceLocation DbgLoc = SourceLocation());
+  void EmitStoreOfComplex(ComplexPairTy V, LValue dest, bool isInit);
 
   /// EmitLoadOfComplex - Load a complex number from the specified l-value.
   ComplexPairTy EmitLoadOfComplex(LValue src, SourceLocation loc);

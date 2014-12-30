@@ -196,6 +196,7 @@ public:
   //===--------------------------------------------------------------------===//
 
   Value *Visit(Expr *E) {
+    ApplyDebugLocation DL(CGF, E->getLocStart());
     return StmtVisitor<ScalarExprEmitter, Value*>::Visit(E);
   }
 
@@ -3042,7 +3043,7 @@ Value *ScalarExprEmitter::VisitBinLAnd(const BinaryOperator *E) {
   // Emit an unconditional branch from this block to ContBlock.
   {
     // There is no need to emit line number for unconditional branch.
-    SuppressDebugLocation S(Builder);
+    ApplyDebugLocation DL(CGF);
     CGF.EmitBlock(ContBlock);
   }
   // Insert an entry into the phi node for the edge with the value of RHSCond.
