@@ -1559,7 +1559,7 @@ int HexagonInstrInfo::GetDotNewOp(const MachineInstr* MI) const {
     return Hexagon::STriw_nv_V4;
 
   case Hexagon::STriw_indexed_f:
-    return Hexagon::STriw_indexed_nv_V4;
+    return Hexagon::S2_storerinew_io;
 
   case Hexagon::STriw_shl_V4:
     return Hexagon::STriw_shl_nv_V4;

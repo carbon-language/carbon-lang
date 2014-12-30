@@ -1097,62 +1097,117 @@ def : Pat <(store s8ExtPred:$src2, (i32 IntRegs:$src1)),
 // NV/ST +
 //===----------------------------------------------------------------------===//
 
+let opNewValue = 2, opExtendable = 1, isExtentSigned = 1, isPredicable = 1 in
+class T_store_io_nv <string mnemonic, RegisterClass RC,
+                    Operand ImmOp, bits<2>MajOp>
+  : NVInst_V4 <(outs),
+               (ins IntRegs:$src1, ImmOp:$src2, RC:$src3),
+  mnemonic#"($src1+#$src2) = $src3.new",
+  [],"",ST_tc_st_SLOT0> {
+    bits<5> src1;
+    bits<13> src2; // Actual address offset
+    bits<3> src3;
+    bits<11> offsetBits; // Represents offset encoding
+
+    let opExtentBits = !if (!eq(mnemonic, "memb"), 11,
+                       !if (!eq(mnemonic, "memh"), 12,
+                       !if (!eq(mnemonic, "memw"), 13, 0)));
+
+    let opExtentAlign = !if (!eq(mnemonic, "memb"), 0,
+                        !if (!eq(mnemonic, "memh"), 1,
+                        !if (!eq(mnemonic, "memw"), 2, 0)));
+
+    let offsetBits = !if (!eq(mnemonic, "memb"),  src2{10-0},
+                     !if (!eq(mnemonic, "memh"),  src2{11-1},
+                     !if (!eq(mnemonic, "memw"),  src2{12-2}, 0)));
+
+    let IClass = 0b1010;
+
+    let Inst{27} = 0b0;
+    let Inst{26-25} = offsetBits{10-9};
+    let Inst{24-21} = 0b1101;
+    let Inst{20-16} = src1;
+    let Inst{13} = offsetBits{8};
+    let Inst{12-11} = MajOp;
+    let Inst{10-8} = src3;
+    let Inst{7-0} = offsetBits{7-0};
+  }
+
+let opExtendable = 2, opNewValue = 3, isPredicated = 1 in
+class T_pstore_io_nv <string mnemonic, RegisterClass RC, Operand predImmOp,
+                         bits<2>MajOp, bit PredNot, bit isPredNew>
+  : NVInst_V4 <(outs),
+               (ins PredRegs:$src1, IntRegs:$src2, predImmOp:$src3, RC:$src4),
+  !if(PredNot, "if (!$src1", "if ($src1")#!if(isPredNew, ".new) ",
+  ") ")#mnemonic#"($src2+#$src3) = $src4.new",
+  [],"",V2LDST_tc_st_SLOT0> {
+    bits<2> src1;
+    bits<5> src2;
+    bits<9> src3;
+    bits<3> src4;
+    bits<6> offsetBits; // Represents offset encoding
+
+    let isPredicatedNew = isPredNew;
+    let isPredicatedFalse = PredNot;
+    let opExtentBits = !if (!eq(mnemonic, "memb"), 6,
+                       !if (!eq(mnemonic, "memh"), 7,
+                       !if (!eq(mnemonic, "memw"), 8, 0)));
+
+    let opExtentAlign = !if (!eq(mnemonic, "memb"), 0,
+                        !if (!eq(mnemonic, "memh"), 1,
+                        !if (!eq(mnemonic, "memw"), 2, 0)));
+
+    let offsetBits = !if (!eq(mnemonic, "memb"), src3{5-0},
+                     !if (!eq(mnemonic, "memh"), src3{6-1},
+                     !if (!eq(mnemonic, "memw"), src3{7-2}, 0)));
+
+    let IClass = 0b0100;
+
+    let Inst{27}    = 0b0;
+    let Inst{26}    = PredNot;
+    let Inst{25}    = isPredNew;
+    let Inst{24-21} = 0b0101;
+    let Inst{20-16} = src2;
+    let Inst{13}    = offsetBits{5};
+    let Inst{12-11} = MajOp;
+    let Inst{10-8}  = src4;
+    let Inst{7-3}   = offsetBits{4-0};
+    let Inst{2}     = 0b0;
+    let Inst{1-0}   = src1;
+  }
+
 // multiclass for new-value store instructions with base + immediate offset.
 //
-multiclass ST_Idxd_Pbase_nv<string mnemonic, RegisterClass RC,
-                            Operand predImmOp, bit isNot, bit isPredNew> {
-  let isPredicatedNew = isPredNew in
-  def NAME#_nv_V4 : NVInst_V4<(outs),
-            (ins PredRegs:$src1, IntRegs:$src2, predImmOp:$src3, RC: $src4),
-            !if(isNot, "if (!$src1", "if ($src1")#!if(isPredNew, ".new) ",
-            ") ")#mnemonic#"($src2+#$src3) = $src4.new",
-            []>,
-            Requires<[HasV4T]>;
-}
-
-multiclass ST_Idxd_Pred_nv<string mnemonic, RegisterClass RC, Operand predImmOp,
-                           bit PredNot> {
-  let isPredicatedFalse = PredNot in {
-    defm _c#NAME : ST_Idxd_Pbase_nv<mnemonic, RC, predImmOp, PredNot, 0>;
-    // Predicate new
-    defm _cdn#NAME : ST_Idxd_Pbase_nv<mnemonic, RC, predImmOp, PredNot, 1>;
-  }
-}
-
-let mayStore = 1, isNVStore = 1, hasSideEffects = 0, isExtendable = 1 in
+let mayStore = 1, isNVStore = 1, isNewValue = 1, hasSideEffects = 0,
+    isExtendable = 1 in
 multiclass ST_Idxd_nv<string mnemonic, string CextOp, RegisterClass RC,
-                   Operand ImmOp, Operand predImmOp, bits<5> ImmBits,
-                   bits<5> PredImmBits> {
+                   Operand ImmOp, Operand predImmOp, bits<2> MajOp> {
 
   let CextOpcode = CextOp, BaseOpcode = CextOp#_indexed in {
-    let opExtendable = 1, isExtentSigned = 1, opExtentBits = ImmBits,
-    isPredicable = 1 in
-    def NAME#_nv_V4 : NVInst_V4<(outs),
-            (ins IntRegs:$src1, ImmOp:$src2, RC:$src3),
-            mnemonic#"($src1+#$src2) = $src3.new",
-            []>,
-            Requires<[HasV4T]>;
-
-    let opExtendable = 2, isExtentSigned = 0, opExtentBits = PredImmBits,
-    isPredicated = 1 in {
-      defm Pt : ST_Idxd_Pred_nv<mnemonic, RC, predImmOp, 0>;
-      defm NotPt : ST_Idxd_Pred_nv<mnemonic, RC, predImmOp, 1>;
-    }
+    def S2_#NAME#new_io : T_store_io_nv <mnemonic, RC, ImmOp, MajOp>;
+    // Predicated
+    def S2_p#NAME#newt_io :T_pstore_io_nv <mnemonic, RC, predImmOp, MajOp, 0, 0>;
+    def S2_p#NAME#newf_io :T_pstore_io_nv <mnemonic, RC, predImmOp, MajOp, 1, 0>;
+    // Predicated new
+    def S4_p#NAME#newtnew_io :T_pstore_io_nv <mnemonic, RC, predImmOp,
+                                              MajOp, 0, 1>;
+    def S4_p#NAME#newfnew_io :T_pstore_io_nv <mnemonic, RC, predImmOp,
+                                              MajOp, 1, 1>;
   }
 }
 
-let addrMode = BaseImmOffset, validSubTargets = HasV4SubT in {
+let addrMode = BaseImmOffset, InputType = "imm", isCodeGenOnly = 0 in {
   let accessSize = ByteAccess in
-    defm STrib_indexed: ST_Idxd_nv<"memb", "STrib", IntRegs, s11_0Ext,
-                                   u6_0Ext, 11, 6>, AddrModeRel;
+  defm storerb: ST_Idxd_nv<"memb", "STrib", IntRegs, s11_0Ext,
+                           u6_0Ext, 0b00>, AddrModeRel;
 
-  let accessSize = HalfWordAccess in
-    defm STrih_indexed: ST_Idxd_nv<"memh", "STrih", IntRegs, s11_1Ext,
-                                   u6_1Ext, 12, 7>, AddrModeRel;
+  let accessSize = HalfWordAccess, opExtentAlign = 1 in
+  defm storerh: ST_Idxd_nv<"memh", "STrih", IntRegs, s11_1Ext,
+                           u6_1Ext, 0b01>, AddrModeRel;
 
-  let accessSize = WordAccess in
-    defm STriw_indexed: ST_Idxd_nv<"memw", "STriw", IntRegs, s11_2Ext,
-                                   u6_2Ext, 13, 8>, AddrModeRel;
+  let accessSize = WordAccess, opExtentAlign = 2 in
+  defm storeri: ST_Idxd_nv<"memw", "STriw", IntRegs, s11_2Ext,
+                           u6_2Ext, 0b10>, AddrModeRel;
 }
 
 // multiclass for new-value store instructions with base + immediate offset.
