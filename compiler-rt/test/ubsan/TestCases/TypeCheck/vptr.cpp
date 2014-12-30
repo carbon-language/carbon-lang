@@ -48,8 +48,7 @@ struct T : S {
   virtual int v() { return 1; }
 };
 
-struct X {};
-struct U : S, T, virtual X { virtual int v() { return 2; } };
+struct U : S, T { virtual int v() { return 2; } };
 
 struct V : S {};
 
