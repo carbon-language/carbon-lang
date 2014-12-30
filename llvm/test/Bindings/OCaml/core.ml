@@ -1146,7 +1146,7 @@ let test_builder () =
     (* CHECK: %dbg = add i32 %P1, %P2, !dbg !2
      * !2 is metadata emitted at EOF.
      *)
-    insist ((current_debug_location atentry) = None);
+    insist ((current_debug_location atentry) = Some (mdnode context [||]));
 
     let m_line = const_int i32_type 2 in
     let m_col = const_int i32_type 3 in
@@ -1435,7 +1435,7 @@ let test_builder () =
  * CHECK: attributes #0 = {{.*}}uwtable{{.*}}
  * CHECK: !llvm.module.flags = !{!0}
  * CHECK: !0 = !{i32 1, !"Debug Info Version", i32 2}
- * CHECK: !1 = !{i32 1, !"test"}
+ * CHECK: !1 = !{i32 1, !"metadata test"}
  * CHECK: !2 = !{i32 2, i32 3, !3, !3}
  *)
 
