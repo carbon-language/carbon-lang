@@ -2128,11 +2128,12 @@ static void addClangRT(const ToolChain &TC, const ArgList &Args,
                        ArgStringList &CmdArgs) {
   bool IsOSWindows = TC.getTriple().isOSWindows();
   StringRef Arch = getArchNameForCompilerRTLib(TC);
+  const char *Prefix = IsOSWindows ? "" : "lib";
   const char *Suffix = IsOSWindows ? ".lib" : ".a";
 
   SmallString<128> LibClangRT = getCompilerRTLibDir(TC);
   llvm::sys::path::append(LibClangRT,
-                          Twine("libclang_rt.builtins-") + Arch + Suffix);
+                          Prefix + Twine("clang_rt.builtins-") + Arch + Suffix);
 
   CmdArgs.push_back(Args.MakeArgString(LibClangRT));
   if (!IsOSWindows) {
