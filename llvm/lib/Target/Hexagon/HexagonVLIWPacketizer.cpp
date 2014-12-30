@@ -273,7 +273,7 @@ static bool IsIndirectCall(MachineInstr* MI) {
 void HexagonPacketizerList::reserveResourcesForConstExt(MachineInstr* MI) {
   const HexagonInstrInfo *QII = (const HexagonInstrInfo *) TII;
   MachineFunction *MF = MI->getParent()->getParent();
-  MachineInstr *PseudoMI = MF->CreateMachineInstr(QII->get(Hexagon::IMMEXT_i),
+  MachineInstr *PseudoMI = MF->CreateMachineInstr(QII->get(Hexagon::A4_ext),
                                                   MI->getDebugLoc());
 
   if (ResourceTracker->canReserveResources(PseudoMI)) {
@@ -291,7 +291,7 @@ bool HexagonPacketizerList::canReserveResourcesForConstExt(MachineInstr *MI) {
   assert((QII->isExtended(MI) || QII->isConstExtended(MI)) &&
          "Should only be called for constant extended instructions");
   MachineFunction *MF = MI->getParent()->getParent();
-  MachineInstr *PseudoMI = MF->CreateMachineInstr(QII->get(Hexagon::IMMEXT_i),
+  MachineInstr *PseudoMI = MF->CreateMachineInstr(QII->get(Hexagon::A4_ext),
                                                   MI->getDebugLoc());
   bool CanReserve = ResourceTracker->canReserveResources(PseudoMI);
   MF->DeleteMachineInstr(PseudoMI);
@@ -303,7 +303,7 @@ bool HexagonPacketizerList::canReserveResourcesForConstExt(MachineInstr *MI) {
 bool HexagonPacketizerList::tryAllocateResourcesForConstExt(MachineInstr* MI) {
   const HexagonInstrInfo *QII = (const HexagonInstrInfo *) TII;
   MachineFunction *MF = MI->getParent()->getParent();
-  MachineInstr *PseudoMI = MF->CreateMachineInstr(QII->get(Hexagon::IMMEXT_i),
+  MachineInstr *PseudoMI = MF->CreateMachineInstr(QII->get(Hexagon::A4_ext),
                                                   MI->getDebugLoc());
 
   if (ResourceTracker->canReserveResources(PseudoMI)) {

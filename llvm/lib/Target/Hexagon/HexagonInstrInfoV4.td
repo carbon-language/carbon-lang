@@ -12,14 +12,24 @@
 //===----------------------------------------------------------------------===//
 
 let hasSideEffects = 0 in
-class T_Immext<dag ins> :
-  EXTENDERInst<(outs), ins, "immext(#$imm)", []>,
-  Requires<[HasV4T]>;
+class T_Immext<Operand ImmType>
+  : EXTENDERInst<(outs), (ins ImmType:$imm),
+                 "immext(#$imm)", []> {
+    bits<32> imm;
+    let IClass = 0b0000;
 
-def IMMEXT_b : T_Immext<(ins brtarget:$imm)>;
-def IMMEXT_c : T_Immext<(ins calltarget:$imm)>;
-def IMMEXT_g : T_Immext<(ins globaladdress:$imm)>;
-def IMMEXT_i : T_Immext<(ins u26_6Imm:$imm)>;
+    let Inst{27-16} = imm{31-20};
+    let Inst{13-0} = imm{19-6};
+  }
+
+def A4_ext : T_Immext<u26_6Imm>;
+let isCodeGenOnly = 1 in {
+  let isBranch = 1 in
+    def A4_ext_b : T_Immext<brtarget>;
+  let isCall = 1 in
+    def A4_ext_c : T_Immext<calltarget>;
+  def A4_ext_g : T_Immext<globaladdress>;
+}
 
 // Fold (add (CONST32 tglobaladdr:$addr) <offset>) into a global address.
 def FoldGlobalAddr : ComplexPattern<i32, 1, "foldGlobalAddress", [], []>;
@@ -95,6 +105,29 @@ def NumUsesBelowThresCONST32 : PatFrag<(ops node:$addr),
 //===----------------------------------------------------------------------===//
 // ALU32 +
 //===----------------------------------------------------------------------===//
+
+class T_ALU32_3op_not<string mnemonic, bits<3> MajOp, bits<3> MinOp,
+                      bit OpsRev>
+  : T_ALU32_3op<mnemonic, MajOp, MinOp, OpsRev, 0> {
+  let AsmString = "$Rd = "#mnemonic#"($Rs, ~$Rt)";
+}
+
+let BaseOpcode = "andn_rr", CextOpcode = "andn", isCodeGenOnly = 0 in
+def A4_andn    : T_ALU32_3op_not<"and", 0b001, 0b100, 1>;
+let BaseOpcode = "orn_rr", CextOpcode = "orn", isCodeGenOnly = 0 in
+def A4_orn     : T_ALU32_3op_not<"or",  0b001, 0b101, 1>;
+
+let CextOpcode = "rcmp.eq", isCodeGenOnly = 0 in
+def A4_rcmpeq  : T_ALU32_3op<"cmp.eq",  0b011, 0b010, 0, 1>;
+let CextOpcode = "!rcmp.eq", isCodeGenOnly = 0 in
+def A4_rcmpneq : T_ALU32_3op<"!cmp.eq", 0b011, 0b011, 0, 1>;
+
+let isCodeGenOnly = 0 in {
+def C4_cmpneq  : T_ALU32_3op_cmp<"!cmp.eq",  0b00, 1, 1>;
+def C4_cmplte  : T_ALU32_3op_cmp<"!cmp.gt",  0b10, 1, 0>;
+def C4_cmplteu : T_ALU32_3op_cmp<"!cmp.gtu", 0b11, 1, 0>;
+}
+
 // Generate frame index addresses.
 let hasSideEffects = 0, isReMaterializable = 1,
 isExtended = 1, opExtendable = 2, validSubTargets = HasV4SubT in
