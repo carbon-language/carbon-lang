@@ -29,9 +29,6 @@ class MiProgramArgsTestCase(TestBase):
         import pexpect
         self.buildDefault()
 
-        # The default lldb-mi prompt (seriously?!).
-        prompt = "(gdb)"
-
         # So that the child gets torn down after the test.
         self.child = pexpect.spawn('%s --interpreter' % (self.lldbMiExec))
         child = self.child
@@ -52,7 +49,6 @@ class MiProgramArgsTestCase(TestBase):
                 child.sendline("-break-insert -f main")
                 child.expect("\^done,bkpt={number=\"1\"")
                 child.sendline("-exec-run")
-                child.sendline("") #FIXME: hangs here; extra return is needed
                 child.expect("\^running")
                 child.expect("\*stopped,reason=\"breakpoint-hit\"")
 
@@ -67,8 +63,6 @@ class MiProgramArgsTestCase(TestBase):
                 child.sendline("-exec-continue")
                 child.expect("\^running")
                 child.expect("\*stopped,reason=\"breakpoint-hit\"")
-
-                child.sendline("quit")
 
         # Now that the necessary logging is done, restore logfile to None to
         # stop further logging.

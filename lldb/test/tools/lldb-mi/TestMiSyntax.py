@@ -28,9 +28,6 @@ class MiSyntaxTestCase(TestBase):
         import pexpect
         self.buildDefault()
 
-        # The default lldb-mi prompt (seriously?!).
-        prompt = "(gdb)"
-
         # So that the child gets torn down after the test.
         self.child = pexpect.spawn('%s --interpreter' % (self.lldbMiExec))
         child = self.child
@@ -48,16 +45,12 @@ class MiSyntaxTestCase(TestBase):
                 child.expect("100000001\^done,bkpt={number=\"1\"")
 
                 child.sendline("2-exec-run")
-                child.sendline("") # FIXME: lldb-mi hangs here, so extra return is needed
                 child.expect("2\^running")
                 child.expect("\*stopped,reason=\"breakpoint-hit\"")
 
                 child.sendline("0000000000000000000003-exec-continue")
                 child.expect("0000000000000000000003\^running")
                 child.expect("\*stopped,reason=\"exited-normally\"")
-                child.expect_exact(prompt)
-
-                child.sendline("quit")
 
         # Now that the necessary logging is done, restore logfile to None to
         # stop further logging.
@@ -73,10 +66,6 @@ class MiSyntaxTestCase(TestBase):
             if self.TraceOn():
                 print "\n\nContents of child_read.txt:"
                 print from_child
-
-            self.expect(from_child, exe=False,
-                substrs = ["breakpoint-hit"])
-
 
 if __name__ == '__main__':
     import atexit

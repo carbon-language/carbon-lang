@@ -28,9 +28,6 @@ class MiLaunchTestCase(TestBase):
         import pexpect
         self.buildDefault()
 
-        # The default lldb-mi prompt (seriously?!).
-        prompt = "(gdb)"
-
         # So that the child gets torn down after the test.
         self.child = pexpect.spawn('%s --interpreter' % (self.lldbMiExec))
         child = self.child
@@ -46,12 +43,8 @@ class MiLaunchTestCase(TestBase):
                 child.expect("\^done")
 
                 child.sendline("-exec-run")
-                child.sendline("") # FIXME: lldb-mi hangs here, so extra return is needed
                 child.expect("\^running")
                 child.expect("\*stopped,reason=\"exited-normally\"")
-                child.expect_exact(prompt)
-
-                child.sendline("quit")
 
         # Now that the necessary logging is done, restore logfile to None to
         # stop further logging.
@@ -74,9 +67,6 @@ class MiLaunchTestCase(TestBase):
         import pexpect
         self.buildDefault()
 
-        # The default lldb-mi prompt (seriously?!).
-        prompt = "(gdb)"
-
         # So that the child gets torn down after the test.
         self.child = pexpect.spawn('%s --interpreter' % (self.lldbMiExec))
         child = self.child
@@ -93,12 +83,8 @@ class MiLaunchTestCase(TestBase):
                 child.expect("\^done")
 
                 child.sendline("-exec-run")
-                child.sendline("") # FIXME: lldb-mi hangs here, so extra return is needed
                 child.expect("\^running")
                 child.expect("\*stopped,reason=\"exited-normally\"")
-                child.expect_exact(prompt)
-
-                child.sendline("quit")
 
         # Now that the necessary logging is done, restore logfile to None to
         # stop further logging.
@@ -121,9 +107,6 @@ class MiLaunchTestCase(TestBase):
         import pexpect
         self.buildDefault()
 
-        # The default lldb-mi prompt (seriously?!).
-        prompt = "(gdb)"
-
         # So that the child gets torn down after the test.
         self.child = pexpect.spawn('%s --interpreter' % (self.lldbMiExec))
         child = self.child
@@ -140,12 +123,8 @@ class MiLaunchTestCase(TestBase):
                 child.expect("\^done")
 
                 child.sendline("-exec-run")
-                child.sendline("") # FIXME: lldb-mi hangs here, so extra return is needed
                 child.expect("\^running")
                 child.expect("\*stopped,reason=\"exited-normally\"")
-                child.expect_exact(prompt)
-
-                child.sendline("quit")
 
         # Now that the necessary logging is done, restore logfile to None to
         # stop further logging.
@@ -168,9 +147,6 @@ class MiLaunchTestCase(TestBase):
         import pexpect
         self.buildDefault()
 
-        # The default lldb-mi prompt (seriously?!).
-        prompt = "(gdb)"
-
         # So that the child gets torn down after the test.
         self.child = pexpect.spawn('%s --interpreter' % (self.lldbMiExec))
         child = self.child
@@ -185,9 +161,6 @@ class MiLaunchTestCase(TestBase):
                 exe = "badpath/" + self.myexe
                 child.sendline("-file-exec-and-symbols " + exe)
                 child.expect("\^error")
-                #child.expect_exact(prompt) #FIXME: no prompt after error
-
-                child.sendline("quit")
 
         # Now that the necessary logging is done, restore logfile to None to
         # stop further logging.
