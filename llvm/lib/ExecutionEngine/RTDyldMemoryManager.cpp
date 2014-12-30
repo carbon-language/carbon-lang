@@ -210,6 +210,10 @@ ARM_MATH_IMPORTS(ARM_MATH_DECL)
 #undef ARM_MATH_DECL
 #endif
 
+#if defined(__linux__) && defined(__GLIBC__)
+extern "C" void __morestack();
+#endif
+
 uint64_t
 RTDyldMemoryManager::getSymbolAddressInProcess(const std::string &Name) {
   // This implementation assumes that the host program is the target.
@@ -233,6 +237,9 @@ RTDyldMemoryManager::getSymbolAddressInProcess(const std::string &Name) {
   if (Name == "lstat64") return (uint64_t)&lstat64;
   if (Name == "atexit") return (uint64_t)&atexit;
   if (Name == "mknod") return (uint64_t)&mknod;
+
+  // __morestack lives in libgcc, a static library.
+  if (Name == "__morestack") return (uint64_t)&__morestack;
 #endif // __linux__ && __GLIBC__
   
   // See ARM_MATH_IMPORTS definition for explanation
