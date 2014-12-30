@@ -655,15 +655,15 @@ bool HexagonInstrInfo::isPredicable(MachineInstr *MI) const {
     return isShiftedUInt<6,3>(MI->getOperand(1).getImm());
 
   case Hexagon::S2_storeri_io:
-  case Hexagon::STriw_nv_V4:
+  case Hexagon::S2_storerinew_io:
     return isShiftedUInt<6,2>(MI->getOperand(1).getImm());
 
   case Hexagon::S2_storerh_io:
-  case Hexagon::STrih_nv_V4:
+  case Hexagon::S2_storerhnew_io:
     return isShiftedUInt<6,1>(MI->getOperand(1).getImm());
 
   case Hexagon::S2_storerb_io:
-  case Hexagon::STrib_nv_V4:
+  case Hexagon::S2_storerbnew_io:
     return isUInt<6>(MI->getOperand(1).getImm());
 
   case Hexagon::L2_loadrd_io:
@@ -1556,10 +1556,10 @@ int HexagonInstrInfo::GetDotNewOp(const MachineInstr* MI) const {
     return Hexagon::STrih_shl_nv_V4;
 
   case Hexagon::STriw_f:
-    return Hexagon::STriw_nv_V4;
+    return Hexagon::S2_storerinew_io;
 
   case Hexagon::STriw_indexed_f:
-    return Hexagon::S2_storerinew_io;
+    return Hexagon::S4_storerinew_rr;
 
   case Hexagon::STriw_shl_V4:
     return Hexagon::STriw_shl_nv_V4;

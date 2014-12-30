@@ -1210,113 +1210,107 @@ let addrMode = BaseImmOffset, InputType = "imm", isCodeGenOnly = 0 in {
                            u6_2Ext, 0b10>, AddrModeRel;
 }
 
-// multiclass for new-value store instructions with base + immediate offset.
-// and MEMri operand.
-multiclass ST_MEMri_Pbase_nv<string mnemonic, RegisterClass RC, bit isNot,
-                          bit isPredNew> {
-  let isPredicatedNew = isPredNew in
-  def NAME#_nv_V4 : NVInst_V4<(outs),
-            (ins PredRegs:$src1, MEMri:$addr, RC: $src2),
-            !if(isNot, "if (!$src1", "if ($src1")#!if(isPredNew, ".new) ",
-            ") ")#mnemonic#"($addr) = $src2.new",
-            []>,
-            Requires<[HasV4T]>;
-}
-
-multiclass ST_MEMri_Pred_nv<string mnemonic, RegisterClass RC, bit PredNot> {
-  let isPredicatedFalse = PredNot in {
-    defm _c#NAME : ST_MEMri_Pbase_nv<mnemonic, RC, PredNot, 0>;
-
-    // Predicate new
-    defm _cdn#NAME : ST_MEMri_Pbase_nv<mnemonic, RC, PredNot, 1>;
-  }
-}
-
-let mayStore = 1, isNVStore = 1, isExtendable = 1, hasSideEffects = 0 in
-multiclass ST_MEMri_nv<string mnemonic, string CextOp, RegisterClass RC,
-                    bits<5> ImmBits, bits<5> PredImmBits> {
-
-  let CextOpcode = CextOp, BaseOpcode = CextOp in {
-    let opExtendable = 1, isExtentSigned = 1, opExtentBits = ImmBits,
-         isPredicable = 1 in
-    def NAME#_nv_V4 : NVInst_V4<(outs),
-            (ins MEMri:$addr, RC:$src),
-            mnemonic#"($addr) = $src.new",
-            []>,
-            Requires<[HasV4T]>;
-
-    let opExtendable = 2, isExtentSigned = 0, opExtentBits = PredImmBits,
-        hasSideEffects = 0, isPredicated = 1 in {
-      defm Pt : ST_MEMri_Pred_nv<mnemonic, RC, 0>;
-      defm NotPt : ST_MEMri_Pred_nv<mnemonic, RC, 1>;
-    }
-  }
-}
-
-let addrMode = BaseImmOffset, isMEMri = "true", validSubTargets = HasV4SubT,
-mayStore = 1 in {
-  let accessSize = ByteAccess in
-    defm STrib: ST_MEMri_nv<"memb", "STrib", IntRegs, 11, 6>, AddrModeRel;
-
-  let accessSize = HalfWordAccess in
-    defm STrih: ST_MEMri_nv<"memh", "STrih", IntRegs, 12, 7>, AddrModeRel;
-
-  let accessSize = WordAccess in
-    defm STriw: ST_MEMri_nv<"memw", "STriw", IntRegs, 13, 8>, AddrModeRel;
-}
-
 //===----------------------------------------------------------------------===//
-// Post increment store
+// Template class for non-predicated post increment .new stores
 // mem[bhwd](Rx++#s4:[0123])=Nt.new
 //===----------------------------------------------------------------------===//
+let isPredicable = 1, hasSideEffects = 0, validSubTargets = HasV4SubT,
+    addrMode = PostInc, isNVStore = 1, isNewValue = 1, opNewValue = 3 in
+class T_StorePI_nv <string mnemonic, Operand ImmOp, bits<2> MajOp >
+  : NVInstPI_V4 <(outs IntRegs:$_dst_),
+                 (ins IntRegs:$src1, ImmOp:$offset, IntRegs:$src2),
+  mnemonic#"($src1++#$offset) = $src2.new",
+  [], "$src1 = $_dst_">,
+  AddrModeRel {
+    bits<5> src1;
+    bits<3> src2;
+    bits<7> offset;
+    bits<4> offsetBits;
 
-multiclass ST_PostInc_Pbase_nv<string mnemonic, RegisterClass RC, Operand ImmOp,
-                            bit isNot, bit isPredNew> {
-  let isPredicatedNew = isPredNew in
-  def NAME#_nv_V4 : NVInstPI_V4<(outs IntRegs:$dst),
-            (ins PredRegs:$src1, IntRegs:$src2, ImmOp:$offset, RC:$src3),
-            !if(isNot, "if (!$src1", "if ($src1")#!if(isPredNew, ".new) ",
-            ") ")#mnemonic#"($src2++#$offset) = $src3.new",
-            [],
-            "$src2 = $dst">,
-            Requires<[HasV4T]>;
-}
+    string ImmOpStr = !cast<string>(ImmOp);
+    let offsetBits = !if (!eq(ImmOpStr, "s4_2Imm"), offset{5-2},
+                     !if (!eq(ImmOpStr, "s4_1Imm"), offset{4-1},
+                                      /* s4_0Imm */ offset{3-0}));
+    let IClass = 0b1010;
 
-multiclass ST_PostInc_Pred_nv<string mnemonic, RegisterClass RC,
-                           Operand ImmOp, bit PredNot> {
-  let isPredicatedFalse = PredNot in {
-    defm _c#NAME : ST_PostInc_Pbase_nv<mnemonic, RC, ImmOp, PredNot, 0>;
-    // Predicate new
-    let Predicates = [HasV4T], validSubTargets = HasV4SubT in
-    defm _cdn#NAME : ST_PostInc_Pbase_nv<mnemonic, RC, ImmOp, PredNot, 1>;
+    let Inst{27-21} = 0b1011101;
+    let Inst{20-16} = src1;
+    let Inst{13} = 0b0;
+    let Inst{12-11} = MajOp;
+    let Inst{10-8} = src2;
+    let Inst{7} = 0b0;
+    let Inst{6-3} = offsetBits;
+    let Inst{1} = 0b0;
   }
+
+//===----------------------------------------------------------------------===//
+// Template class for predicated post increment .new stores
+// if([!]Pv[.new]) mem[bhwd](Rx++#s4:[0123])=Nt.new
+//===----------------------------------------------------------------------===//
+let isPredicated = 1, hasSideEffects = 0, validSubTargets = HasV4SubT,
+    addrMode = PostInc, isNVStore = 1, isNewValue = 1, opNewValue = 4 in
+class T_StorePI_nv_pred <string mnemonic, Operand ImmOp,
+                         bits<2> MajOp, bit isPredNot, bit isPredNew >
+  : NVInstPI_V4 <(outs IntRegs:$_dst_),
+                 (ins PredRegs:$src1, IntRegs:$src2,
+                      ImmOp:$offset, IntRegs:$src3),
+  !if(isPredNot, "if (!$src1", "if ($src1")#!if(isPredNew, ".new) ",
+  ") ")#mnemonic#"($src2++#$offset) = $src3.new",
+  [], "$src2 = $_dst_">,
+  AddrModeRel {
+    bits<2> src1;
+    bits<5> src2;
+    bits<3> src3;
+    bits<7> offset;
+    bits<4> offsetBits;
+
+    string ImmOpStr = !cast<string>(ImmOp);
+    let offsetBits = !if (!eq(ImmOpStr, "s4_2Imm"), offset{5-2},
+                     !if (!eq(ImmOpStr, "s4_1Imm"), offset{4-1},
+                                      /* s4_0Imm */ offset{3-0}));
+    let isPredicatedNew = isPredNew;
+    let isPredicatedFalse = isPredNot;
+
+    let IClass = 0b1010;
+
+    let Inst{27-21} = 0b1011101;
+    let Inst{20-16} = src2;
+    let Inst{13} = 0b1;
+    let Inst{12-11} = MajOp;
+    let Inst{10-8} = src3;
+    let Inst{7} = isPredNew;
+    let Inst{6-3} = offsetBits;
+    let Inst{2} = isPredNot;
+    let Inst{1-0} = src1;
+  }
+
+multiclass ST_PostInc_Pred_nv<string mnemonic, Operand ImmOp,
+                              bits<2> MajOp, bit PredNot> {
+  def _pi : T_StorePI_nv_pred <mnemonic, ImmOp, MajOp, PredNot, 0>;
+
+  // Predicate new
+  def new_pi : T_StorePI_nv_pred <mnemonic, ImmOp, MajOp, PredNot, 1>;
 }
 
-let hasCtrlDep = 1, isNVStore = 1, hasSideEffects = 0 in
-multiclass ST_PostInc_nv<string mnemonic, string BaseOp, RegisterClass RC,
-                      Operand ImmOp> {
-
+multiclass ST_PostInc_nv<string mnemonic, string BaseOp, Operand ImmOp,
+                         bits<2> MajOp> {
   let BaseOpcode = "POST_"#BaseOp in {
-    let isPredicable = 1 in
-    def NAME#_nv_V4 : NVInstPI_V4<(outs IntRegs:$dst),
-                (ins IntRegs:$src1, ImmOp:$offset, RC:$src2),
-                mnemonic#"($src1++#$offset) = $src2.new",
-                [],
-                "$src1 = $dst">,
-                Requires<[HasV4T]>;
+    def S2_#NAME#_pi : T_StorePI_nv <mnemonic, ImmOp, MajOp>;
 
-    let isPredicated = 1 in {
-      defm Pt : ST_PostInc_Pred_nv<mnemonic, RC, ImmOp, 0 >;
-      defm NotPt : ST_PostInc_Pred_nv<mnemonic, RC, ImmOp, 1 >;
-    }
+    // Predicated
+    defm S2_p#NAME#t : ST_PostInc_Pred_nv <mnemonic, ImmOp, MajOp, 0>;
+    defm S2_p#NAME#f : ST_PostInc_Pred_nv <mnemonic, ImmOp, MajOp, 1>;
   }
 }
 
-let addrMode = PostInc, validSubTargets = HasV4SubT in {
-defm POST_STbri: ST_PostInc_nv <"memb", "STrib", IntRegs, s4_0Imm>, AddrModeRel;
-defm POST_SThri: ST_PostInc_nv <"memh", "STrih", IntRegs, s4_1Imm>, AddrModeRel;
-defm POST_STwri: ST_PostInc_nv <"memw", "STriw", IntRegs, s4_2Imm>, AddrModeRel;
-}
+let accessSize = ByteAccess, isCodeGenOnly = 0 in
+defm storerbnew: ST_PostInc_nv <"memb", "STrib", s4_0Imm, 0b00>;
+
+let accessSize = HalfWordAccess, isCodeGenOnly = 0 in
+defm storerhnew: ST_PostInc_nv <"memh", "STrih", s4_1Imm, 0b01>;
+
+let accessSize = WordAccess, isCodeGenOnly = 0 in
+defm storerinew: ST_PostInc_nv <"memw", "STriw", s4_2Imm, 0b10>;
 
 // memb(Rx++#s4:0:circ(Mu))=Nt.new
 // memb(Rx++I:circ(Mu))=Nt.new
