@@ -63,6 +63,7 @@ void CommonFlags::SetDefaults() {
   legacy_pthread_cond = false;
   intercept_tls_get_addr = false;
   coverage = false;
+  coverage_pcs = true;  // On by default, but works only if coverage==true.
   coverage_bitset = false;
   coverage_direct = SANITIZER_ANDROID;
   coverage_dir = ".";
@@ -151,6 +152,9 @@ void CommonFlags::ParseFromString(const char *str) {
   ParseFlag(str, &coverage, "coverage",
       "If set, coverage information will be dumped at program shutdown (if the "
       "coverage instrumentation was enabled at compile time).");
+  ParseFlag(str, &coverage_pcs, "coverage_pcs",
+      "If set (and if 'coverage' is set too), the coverage information "
+      "will be dumped as a set of PC offsets for every module.");
   ParseFlag(str, &coverage_bitset, "coverage_bitset",
       "If set (and if 'coverage' is set too), the coverage information "
       "will also be dumped as a bitset to a separate file.");

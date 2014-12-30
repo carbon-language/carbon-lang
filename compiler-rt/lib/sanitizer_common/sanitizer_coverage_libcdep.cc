@@ -509,6 +509,7 @@ static void CovDump() {
   if (atomic_fetch_add(&dump_once_guard, 1, memory_order_relaxed))
     return;
   CovDumpAsBitSet();
+  if (!common_flags()->coverage_pcs) return;
   uptr size = coverage_data.size();
   InternalMmapVector<u32> offsets(size);
   uptr *vb = coverage_data.data();

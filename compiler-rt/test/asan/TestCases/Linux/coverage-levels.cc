@@ -9,6 +9,7 @@
 
 // RUN: ASAN_OPTIONS=coverage=1:coverage_bitset=0:verbosity=1 %run %t 2>&1 | FileCheck %s --check-prefix=CHECK3_NOBITSET
 // RUN: ASAN_OPTIONS=coverage=1:verbosity=1 %run %t 2>&1 | FileCheck %s --check-prefix=CHECK3_NOBITSET
+// RUN: ASAN_OPTIONS=coverage=1:coverage_pcs=0:verbosity=1 %run %t 2>&1 | FileCheck %s --check-prefix=CHECK3_NOPCS
 //
 // REQUIRES: asan-64-bits
 
@@ -25,3 +26,4 @@ int main(int argc, char **argv) {
 // CHECK3: CovDump: bitset of 4 bits written, 3 bits are set
 // CHECK3:  3 PCs written
 // CHECK3_NOBITSET-NOT: bitset of
+// CHECK3_NOPCS-NOT: PCs written
