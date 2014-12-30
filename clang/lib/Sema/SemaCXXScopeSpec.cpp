@@ -410,9 +410,6 @@ class NestedNameSpecifierValidatorCCC : public CorrectionCandidateCallback {
 /// \brief Build a new nested-name-specifier for "identifier::", as described
 /// by ActOnCXXNestedNameSpecifier.
 ///
-/// This routine differs only slightly from ActOnCXXNestedNameSpecifier, in
-/// that it contains an extra parameter \p ScopeLookupResult.
-///
 /// \param S Scope in which the nested-name-specifier occurs.
 /// \param Identifier Identifier in the sequence "identifier" "::".
 /// \param IdentifierLoc Location of the \p Identifier.
