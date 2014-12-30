@@ -570,7 +570,7 @@ void HexagonCopyToCombine::emitCombineII(MachineBasicBlock::iterator &InsertPt,
     return;
   }
   if (LoOperand.isGlobal()) {
-    BuildMI(*BB, InsertPt, DL, TII->get(Hexagon::COMBINE_iI_V4), DoubleDestReg)
+    BuildMI(*BB, InsertPt, DL, TII->get(Hexagon::A4_combineii), DoubleDestReg)
       .addImm(HiOperand.getImm())
       .addGlobalAddress(LoOperand.getGlobal(), LoOperand.getOffset(),
                         LoOperand.getTargetFlags());
@@ -588,7 +588,7 @@ void HexagonCopyToCombine::emitCombineII(MachineBasicBlock::iterator &InsertPt,
 
   if (!isUInt<6>(LoOperand.getImm())) {
     assert(isInt<8>(HiOperand.getImm()));
-    BuildMI(*BB, InsertPt, DL, TII->get(Hexagon::COMBINE_iI_V4), DoubleDestReg)
+    BuildMI(*BB, InsertPt, DL, TII->get(Hexagon::A4_combineii), DoubleDestReg)
       .addImm(HiOperand.getImm())
       .addImm(LoOperand.getImm());
     return;
@@ -613,7 +613,7 @@ void HexagonCopyToCombine::emitCombineIR(MachineBasicBlock::iterator &InsertPt,
 
   // Handle global.
   if (HiOperand.isGlobal()) {
-    BuildMI(*BB, InsertPt, DL, TII->get(Hexagon::COMBINE_Ir_V4), DoubleDestReg)
+    BuildMI(*BB, InsertPt, DL, TII->get(Hexagon::A4_combineir), DoubleDestReg)
       .addGlobalAddress(HiOperand.getGlobal(), HiOperand.getOffset(),
                         HiOperand.getTargetFlags())
       .addReg(LoReg, LoRegKillFlag);
@@ -621,7 +621,7 @@ void HexagonCopyToCombine::emitCombineIR(MachineBasicBlock::iterator &InsertPt,
   }
   // Insert new combine instruction.
   //  DoubleRegDest = combine #HiImm, LoReg
-  BuildMI(*BB, InsertPt, DL, TII->get(Hexagon::COMBINE_Ir_V4), DoubleDestReg)
+  BuildMI(*BB, InsertPt, DL, TII->get(Hexagon::A4_combineir), DoubleDestReg)
     .addImm(HiOperand.getImm())
     .addReg(LoReg, LoRegKillFlag);
 }
@@ -638,7 +638,7 @@ void HexagonCopyToCombine::emitCombineRI(MachineBasicBlock::iterator &InsertPt,
 
   // Handle global.
   if (LoOperand.isGlobal()) {
-    BuildMI(*BB, InsertPt, DL, TII->get(Hexagon::COMBINE_rI_V4), DoubleDestReg)
+    BuildMI(*BB, InsertPt, DL, TII->get(Hexagon::A4_combineri), DoubleDestReg)
       .addReg(HiReg, HiRegKillFlag)
       .addGlobalAddress(LoOperand.getGlobal(), LoOperand.getOffset(),
                         LoOperand.getTargetFlags());
@@ -647,7 +647,7 @@ void HexagonCopyToCombine::emitCombineRI(MachineBasicBlock::iterator &InsertPt,
 
   // Insert new combine instruction.
   //  DoubleRegDest = combine HiReg, #LoImm
-  BuildMI(*BB, InsertPt, DL, TII->get(Hexagon::COMBINE_rI_V4), DoubleDestReg)
+  BuildMI(*BB, InsertPt, DL, TII->get(Hexagon::A4_combineri), DoubleDestReg)
     .addReg(HiReg, HiRegKillFlag)
     .addImm(LoOperand.getImm());
 }

@@ -261,50 +261,6 @@ def: Pat<(i32 (zext (i1 (setne (i32 (and (i32 (shl 1, (i32 IntRegs:$src2))),
 // ALU32/PERM +
 //===----------------------------------------------------------------------===//
 
-// Combine
-// Rdd=combine(Rs, #s8)
-let isExtendable = 1, opExtendable = 2, isExtentSigned = 1, opExtentBits = 8,
-    hasSideEffects = 0, validSubTargets = HasV4SubT in
-def COMBINE_rI_V4 : ALU32_ri<(outs DoubleRegs:$dst),
-            (ins IntRegs:$src1, s8Ext:$src2),
-            "$dst = combine($src1, #$src2)",
-            []>,
-            Requires<[HasV4T]>;
-
-// Rdd=combine(#s8, Rs)
-let isExtendable = 1, opExtendable = 1, isExtentSigned = 1, opExtentBits = 8,
-    hasSideEffects = 0, validSubTargets = HasV4SubT in
-def COMBINE_Ir_V4 : ALU32_ir<(outs DoubleRegs:$dst),
-            (ins s8Ext:$src1, IntRegs:$src2),
-            "$dst = combine(#$src1, $src2)",
-            []>,
-            Requires<[HasV4T]>;
-
-def HexagonWrapperCombineRI_V4 :
-  SDNode<"HexagonISD::WrapperCombineRI_V4", SDTHexagonI64I32I32>;
-def HexagonWrapperCombineIR_V4 :
-  SDNode<"HexagonISD::WrapperCombineIR_V4", SDTHexagonI64I32I32>;
-
-def : Pat <(HexagonWrapperCombineRI_V4 IntRegs:$r, s8ExtPred:$i),
-           (COMBINE_rI_V4 IntRegs:$r, s8ExtPred:$i)>,
-          Requires<[HasV4T]>;
-
-def : Pat <(HexagonWrapperCombineIR_V4 s8ExtPred:$i, IntRegs:$r),
-           (COMBINE_Ir_V4 s8ExtPred:$i, IntRegs:$r)>,
-          Requires<[HasV4T]>;
-
-let isExtendable = 1, opExtendable = 2, isExtentSigned = 0, opExtentBits = 6,
-    hasSideEffects = 0, validSubTargets = HasV4SubT in
-def COMBINE_iI_V4 : ALU32_ii<(outs DoubleRegs:$dst),
-            (ins s8Imm:$src1, u6Ext:$src2),
-            "$dst = combine(#$src1, #$src2)",
-            []>,
-            Requires<[HasV4T]>;
-
-//===----------------------------------------------------------------------===//
-// ALU32/PERM +
-//===----------------------------------------------------------------------===//
-
 // Combine a word and an immediate into a register pair.
 let hasSideEffects = 0, isExtentSigned = 1, isExtendable = 1,
     opExtentBits = 8 in
@@ -330,6 +286,39 @@ def A4_combineri : T_Combine1<0b00, (ins IntRegs:$Rs, s8Ext:$s8),
 let opExtendable = 1, isCodeGenOnly = 0 in
 def A4_combineir : T_Combine1<0b01, (ins s8Ext:$s8, IntRegs:$Rs),
                                     "$Rdd = combine(#$s8, $Rs)">;
+
+def HexagonWrapperCombineRI_V4 :
+  SDNode<"HexagonISD::WrapperCombineRI_V4", SDTHexagonI64I32I32>;
+def HexagonWrapperCombineIR_V4 :
+  SDNode<"HexagonISD::WrapperCombineIR_V4", SDTHexagonI64I32I32>;
+
+def : Pat <(HexagonWrapperCombineRI_V4 IntRegs:$r, s8ExtPred:$i),
+           (A4_combineri IntRegs:$r, s8ExtPred:$i)>,
+          Requires<[HasV4T]>;
+
+def : Pat <(HexagonWrapperCombineIR_V4 s8ExtPred:$i, IntRegs:$r),
+           (A4_combineir s8ExtPred:$i, IntRegs:$r)>,
+          Requires<[HasV4T]>;
+
+// A4_combineii: Set two small immediates.
+let hasSideEffects = 0, isExtendable = 1, opExtentBits = 6, opExtendable = 2 in
+def A4_combineii: ALU32Inst<(outs DoubleRegs:$Rdd), (ins s8Imm:$s8, u6Ext:$U6),
+  "$Rdd = combine(#$s8, #$U6)"> {
+    bits<5> Rdd;
+    bits<8> s8;
+    bits<6> U6;
+
+    let IClass = 0b0111;
+    let Inst{27-23} = 0b11001;
+    let Inst{20-16} = U6{5-1};
+    let Inst{13}    = U6{0};
+    let Inst{12-5}  = s8;
+    let Inst{4-0}   = Rdd;
+  }
+
+//===----------------------------------------------------------------------===//
+// ALU32/PERM -
+//===----------------------------------------------------------------------===//
 
 //===----------------------------------------------------------------------===//
 // LD +
@@ -502,80 +491,80 @@ def : Pat <(i32 (load (add IntRegs:$src1, IntRegs:$src2))),
 
 // zext i1->i64
 def : Pat <(i64 (zext (i1 PredRegs:$src1))),
-      (i64 (COMBINE_Ir_V4 0, (C2_muxii (i1 PredRegs:$src1), 1, 0)))>,
+      (i64 (A4_combineir 0, (C2_muxii (i1 PredRegs:$src1), 1, 0)))>,
       Requires<[HasV4T]>;
 
 // zext i32->i64
 def : Pat <(i64 (zext (i32 IntRegs:$src1))),
-      (i64 (COMBINE_Ir_V4 0, (i32 IntRegs:$src1)))>,
+      (i64 (A4_combineir 0, (i32 IntRegs:$src1)))>,
       Requires<[HasV4T]>;
 // zext i8->i64
 def:  Pat <(i64 (zextloadi8 ADDRriS11_0:$src1)),
-      (i64 (COMBINE_Ir_V4 0, (L2_loadrub_io AddrFI:$src1, 0)))>,
+      (i64 (A4_combineir 0, (L2_loadrub_io AddrFI:$src1, 0)))>,
       Requires<[HasV4T]>;
 
 let AddedComplexity = 20 in
 def:  Pat <(i64 (zextloadi8 (add (i32 IntRegs:$src1),
                                 s11_0ExtPred:$offset))),
-      (i64 (COMBINE_Ir_V4 0, (L2_loadrub_io IntRegs:$src1,
+      (i64 (A4_combineir 0, (L2_loadrub_io IntRegs:$src1,
                                   s11_0ExtPred:$offset)))>,
       Requires<[HasV4T]>;
 
 // zext i1->i64
 def:  Pat <(i64 (zextloadi1 ADDRriS11_0:$src1)),
-      (i64 (COMBINE_Ir_V4 0, (L2_loadrub_io AddrFI:$src1, 0)))>,
+      (i64 (A4_combineir 0, (L2_loadrub_io AddrFI:$src1, 0)))>,
       Requires<[HasV4T]>;
 
 let AddedComplexity = 20 in
 def:  Pat <(i64 (zextloadi1 (add (i32 IntRegs:$src1),
                                 s11_0ExtPred:$offset))),
-      (i64 (COMBINE_Ir_V4 0, (L2_loadrub_io IntRegs:$src1,
+      (i64 (A4_combineir 0, (L2_loadrub_io IntRegs:$src1,
                                   s11_0ExtPred:$offset)))>,
       Requires<[HasV4T]>;
 
 // zext i16->i64
 def:  Pat <(i64 (zextloadi16 ADDRriS11_1:$src1)),
-      (i64 (COMBINE_Ir_V4 0, (L2_loadruh_io AddrFI:$src1, 0)))>,
+      (i64 (A4_combineir 0, (L2_loadruh_io AddrFI:$src1, 0)))>,
       Requires<[HasV4T]>;
 
 let AddedComplexity = 20 in
 def:  Pat <(i64 (zextloadi16 (add (i32 IntRegs:$src1),
                                   s11_1ExtPred:$offset))),
-      (i64 (COMBINE_Ir_V4 0, (L2_loadruh_io IntRegs:$src1,
+      (i64 (A4_combineir 0, (L2_loadruh_io IntRegs:$src1,
                                   s11_1ExtPred:$offset)))>,
       Requires<[HasV4T]>;
 
 // anyext i16->i64
 def:  Pat <(i64 (extloadi16 ADDRriS11_2:$src1)),
-      (i64 (COMBINE_Ir_V4 0, (L2_loadrh_io AddrFI:$src1, 0)))>,
+      (i64 (A4_combineir 0, (L2_loadrh_io AddrFI:$src1, 0)))>,
       Requires<[HasV4T]>;
 
 let AddedComplexity = 20 in
 def:  Pat <(i64 (extloadi16 (add (i32 IntRegs:$src1),
                                   s11_1ExtPred:$offset))),
-      (i64 (COMBINE_Ir_V4 0, (L2_loadrh_io IntRegs:$src1,
+      (i64 (A4_combineir 0, (L2_loadrh_io IntRegs:$src1,
                                   s11_1ExtPred:$offset)))>,
       Requires<[HasV4T]>;
 
 // zext i32->i64
 def:  Pat <(i64 (zextloadi32 ADDRriS11_2:$src1)),
-      (i64 (COMBINE_Ir_V4 0, (L2_loadri_io AddrFI:$src1, 0)))>,
+      (i64 (A4_combineir 0, (L2_loadri_io AddrFI:$src1, 0)))>,
       Requires<[HasV4T]>;
 
 let AddedComplexity = 100 in
 def:  Pat <(i64 (zextloadi32 (i32 (add IntRegs:$src1, s11_2ExtPred:$offset)))),
-      (i64 (COMBINE_Ir_V4 0, (L2_loadri_io IntRegs:$src1,
+      (i64 (A4_combineir 0, (L2_loadri_io IntRegs:$src1,
                                   s11_2ExtPred:$offset)))>,
       Requires<[HasV4T]>;
 
 // anyext i32->i64
 def:  Pat <(i64 (extloadi32 ADDRriS11_2:$src1)),
-      (i64 (COMBINE_Ir_V4 0, (L2_loadri_io AddrFI:$src1, 0)))>,
+      (i64 (A4_combineir 0, (L2_loadri_io AddrFI:$src1, 0)))>,
       Requires<[HasV4T]>;
 
 let AddedComplexity = 100 in
 def:  Pat <(i64 (extloadi32 (i32 (add IntRegs:$src1, s11_2ExtPred:$offset)))),
-      (i64 (COMBINE_Ir_V4 0, (L2_loadri_io IntRegs:$src1,
+      (i64 (A4_combineir 0, (L2_loadri_io IntRegs:$src1,
                                   s11_2ExtPred:$offset)))>,
       Requires<[HasV4T]>;
 
@@ -3329,11 +3318,11 @@ def STriw_offset_ext_V4 : STInst<(outs),
             Requires<[HasV4T]>;
 
 def : Pat<(i64 (ctlz (i64 DoubleRegs:$src1))),
-          (i64 (COMBINE_Ir_V4 (i32 0), (i32 (CTLZ64_rr DoubleRegs:$src1))))>,
+          (i64 (A4_combineir (i32 0), (i32 (CTLZ64_rr DoubleRegs:$src1))))>,
           Requires<[HasV4T]>;
 
 def : Pat<(i64 (cttz (i64 DoubleRegs:$src1))),
-          (i64 (COMBINE_Ir_V4 (i32 0), (i32 (CTTZ64_rr DoubleRegs:$src1))))>,
+          (i64 (A4_combineir (i32 0), (i32 (CTTZ64_rr DoubleRegs:$src1))))>,
           Requires<[HasV4T]>;
 
 
@@ -3342,19 +3331,19 @@ def : Pat<(i64 (cttz (i64 DoubleRegs:$src1))),
 // zextloadi8.
 let Predicates = [HasV4T], AddedComplexity = 120 in {
 def:  Pat <(i64 (extloadi8 (NumUsesBelowThresCONST32 tglobaladdr:$addr))),
-      (i64 (COMBINE_Ir_V4 0, (LDrib_abs_V4 tglobaladdr:$addr)))>;
+      (i64 (A4_combineir 0, (LDrib_abs_V4 tglobaladdr:$addr)))>;
 
 def:  Pat <(i64 (zextloadi8 (NumUsesBelowThresCONST32 tglobaladdr:$addr))),
-      (i64 (COMBINE_Ir_V4 0, (LDriub_abs_V4 tglobaladdr:$addr)))>;
+      (i64 (A4_combineir 0, (LDriub_abs_V4 tglobaladdr:$addr)))>;
 
 def:  Pat <(i64 (sextloadi8 (NumUsesBelowThresCONST32 tglobaladdr:$addr))),
       (i64 (A2_sxtw (LDrib_abs_V4 tglobaladdr:$addr)))>;
 
 def:  Pat <(i64 (extloadi8 FoldGlobalAddr:$addr)),
-      (i64 (COMBINE_Ir_V4 0, (LDrib_abs_V4 FoldGlobalAddr:$addr)))>;
+      (i64 (A4_combineir 0, (LDrib_abs_V4 FoldGlobalAddr:$addr)))>;
 
 def:  Pat <(i64 (zextloadi8 FoldGlobalAddr:$addr)),
-      (i64 (COMBINE_Ir_V4 0, (LDriub_abs_V4 FoldGlobalAddr:$addr)))>;
+      (i64 (A4_combineir 0, (LDriub_abs_V4 FoldGlobalAddr:$addr)))>;
 
 def:  Pat <(i64 (sextloadi8 FoldGlobalAddr:$addr)),
       (i64 (A2_sxtw (LDrib_abs_V4 FoldGlobalAddr:$addr)))>;
@@ -3364,11 +3353,11 @@ def:  Pat <(i64 (sextloadi8 FoldGlobalAddr:$addr)),
 // zextloadi16.
 let AddedComplexity = 120 in {
 def:  Pat <(i64 (extloadi16 (NumUsesBelowThresCONST32 tglobaladdr:$addr))),
-      (i64 (COMBINE_Ir_V4 0, (LDrih_abs_V4 tglobaladdr:$addr)))>,
+      (i64 (A4_combineir 0, (LDrih_abs_V4 tglobaladdr:$addr)))>,
       Requires<[HasV4T]>;
 
 def:  Pat <(i64 (zextloadi16 (NumUsesBelowThresCONST32 tglobaladdr:$addr))),
-      (i64 (COMBINE_Ir_V4 0, (LDriuh_abs_V4 tglobaladdr:$addr)))>,
+      (i64 (A4_combineir 0, (LDriuh_abs_V4 tglobaladdr:$addr)))>,
       Requires<[HasV4T]>;
 
 def:  Pat <(i64 (sextloadi16 (NumUsesBelowThresCONST32 tglobaladdr:$addr))),
@@ -3376,11 +3365,11 @@ def:  Pat <(i64 (sextloadi16 (NumUsesBelowThresCONST32 tglobaladdr:$addr))),
       Requires<[HasV4T]>;
 
 def:  Pat <(i64 (extloadi16 FoldGlobalAddr:$addr)),
-      (i64 (COMBINE_Ir_V4 0, (LDrih_abs_V4 FoldGlobalAddr:$addr)))>,
+      (i64 (A4_combineir 0, (LDrih_abs_V4 FoldGlobalAddr:$addr)))>,
       Requires<[HasV4T]>;
 
 def:  Pat <(i64 (zextloadi16 FoldGlobalAddr:$addr)),
-      (i64 (COMBINE_Ir_V4 0, (LDriuh_abs_V4 FoldGlobalAddr:$addr)))>,
+      (i64 (A4_combineir 0, (LDriuh_abs_V4 FoldGlobalAddr:$addr)))>,
       Requires<[HasV4T]>;
 
 def:  Pat <(i64 (sextloadi16 FoldGlobalAddr:$addr)),
@@ -3392,11 +3381,11 @@ def:  Pat <(i64 (sextloadi16 FoldGlobalAddr:$addr)),
 // zextloadi32.
 let AddedComplexity = 120 in {
 def:  Pat <(i64 (extloadi32 (NumUsesBelowThresCONST32 tglobaladdr:$addr))),
-      (i64 (COMBINE_Ir_V4 0, (LDriw_abs_V4 tglobaladdr:$addr)))>,
+      (i64 (A4_combineir 0, (LDriw_abs_V4 tglobaladdr:$addr)))>,
       Requires<[HasV4T]>;
 
 def:  Pat <(i64 (zextloadi32 (NumUsesBelowThresCONST32 tglobaladdr:$addr))),
-      (i64 (COMBINE_Ir_V4 0, (LDriw_abs_V4 tglobaladdr:$addr)))>,
+      (i64 (A4_combineir 0, (LDriw_abs_V4 tglobaladdr:$addr)))>,
       Requires<[HasV4T]>;
 
 def:  Pat <(i64 (sextloadi32 (NumUsesBelowThresCONST32 tglobaladdr:$addr))),
@@ -3404,11 +3393,11 @@ def:  Pat <(i64 (sextloadi32 (NumUsesBelowThresCONST32 tglobaladdr:$addr))),
       Requires<[HasV4T]>;
 
 def:  Pat <(i64 (extloadi32 FoldGlobalAddr:$addr)),
-      (i64 (COMBINE_Ir_V4 0, (LDriw_abs_V4 FoldGlobalAddr:$addr)))>,
+      (i64 (A4_combineir 0, (LDriw_abs_V4 FoldGlobalAddr:$addr)))>,
       Requires<[HasV4T]>;
 
 def:  Pat <(i64 (zextloadi32 FoldGlobalAddr:$addr)),
-      (i64 (COMBINE_Ir_V4 0, (LDriw_abs_V4 FoldGlobalAddr:$addr)))>,
+      (i64 (A4_combineir 0, (LDriw_abs_V4 FoldGlobalAddr:$addr)))>,
       Requires<[HasV4T]>;
 
 def:  Pat <(i64 (sextloadi32 FoldGlobalAddr:$addr)),
