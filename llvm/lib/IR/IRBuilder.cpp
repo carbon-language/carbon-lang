@@ -185,30 +185,49 @@ CallInst *IRBuilderBase::CreateAssumption(Value *Cond) {
 }
 
 /// Create a call to a Masked Load intrinsic.
-/// Ops - an array of operands.
-CallInst *IRBuilderBase::CreateMaskedLoad(ArrayRef<Value *> Ops) {
-  // The only one overloaded type - the type of passthru value in this case
-  Type *DataTy = Ops[3]->getType();
-  return CreateMaskedIntrinsic(Intrinsic::masked_load, Ops, DataTy);
+/// Ptr      - the base pointer for the load
+/// Align    - alignment of the source location
+/// Mask     - an vector of booleans which indicates what vector lanes should
+///            be accessed in memory
+/// PassThru - a pass-through value that is used to fill the masked-off lanes
+///            of the result
+/// Name     - name of the result variable
+CallInst *IRBuilderBase::CreateMaskedLoad(Value *Ptr, unsigned Align,
+                                          Value *Mask, Value *PassThru,
+                                          const Twine &Name) {
+  assert(Ptr->getType()->isPointerTy() && "Ptr must be of pointer type");
+  // DataTy is the overloaded type
+  Type *DataTy = cast<PointerType>(Ptr->getType())->getElementType();
+  assert(DataTy->isVectorTy() && "Ptr should point to a vector");
+  if (!PassThru)
+    PassThru = UndefValue::get(DataTy);
+  Value *Ops[] = { Ptr, getInt32(Align), Mask,  PassThru};
+  return CreateMaskedIntrinsic(Intrinsic::masked_load, Ops, DataTy, Name);
 }
 
 /// Create a call to a Masked Store intrinsic.
-/// Ops - an array of operands.
-CallInst *IRBuilderBase::CreateMaskedStore(ArrayRef<Value *> Ops) {
-  // DataTy - type of the data to be stored - the only one overloaded type
-  Type *DataTy = Ops[0]->getType();
-  return CreateMaskedIntrinsic(Intrinsic::masked_store, Ops, DataTy);
+/// Val   - the data to be stored,
+/// Ptr   - the base pointer for the store
+/// Align - alignment of the destination location
+/// Mask  - an vector of booleans which indicates what vector lanes should
+///         be accessed in memory
+CallInst *IRBuilderBase::CreateMaskedStore(Value *Val, Value *Ptr,
+                                           unsigned Align, Value *Mask) {
+  Value *Ops[] = { Val, Ptr, getInt32(Align), Mask };
+  // Type of the data to be stored - the only one overloaded type
+  return CreateMaskedIntrinsic(Intrinsic::masked_store, Ops, Val->getType());
 }
 
 /// Create a call to a Masked intrinsic, with given intrinsic Id,
 /// an array of operands - Ops, and one overloaded type - DataTy
 CallInst *IRBuilderBase::CreateMaskedIntrinsic(unsigned Id,
                                                ArrayRef<Value *> Ops,
-                                               Type *DataTy) {
+                                               Type *DataTy,
+                                               const Twine &Name) {
   Module *M = BB->getParent()->getParent();
   Type *OverloadedTypes[] = { DataTy };
   Value *TheFn = Intrinsic::getDeclaration(M, (Intrinsic::ID)Id, OverloadedTypes);
-  return createCallHelper(TheFn, Ops, this);
+  return createCallHelper(TheFn, Ops, this, Name);
 }
 
 CallInst *IRBuilderBase::CreateGCStatepoint(Value *ActualCallee,

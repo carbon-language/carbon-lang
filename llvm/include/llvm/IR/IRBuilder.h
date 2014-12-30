@@ -430,10 +430,12 @@ public:
   CallInst *CreateLifetimeEnd(Value *Ptr, ConstantInt *Size = nullptr);
 
   /// \brief Create a call to Masked Load intrinsic
-  CallInst *CreateMaskedLoad(ArrayRef<Value *> Ops);
+  CallInst *CreateMaskedLoad(Value *Ptr, unsigned Align, Value *Mask,
+                             Value *PassThru = 0, const Twine &Name = "");
 
   /// \brief Create a call to Masked Store intrinsic
-  CallInst *CreateMaskedStore(ArrayRef<Value *> Ops);
+  CallInst *CreateMaskedStore(Value *Val, Value *Ptr, unsigned Align,
+                              Value *Mask);
 
   /// \brief Create an assume intrinsic call that allows the optimizer to
   /// assume that the provided condition will be true.
@@ -465,7 +467,7 @@ private:
   /// \brief Create a call to a masked intrinsic with given Id.
   /// Masked intrinsic has only one overloaded type - data type.
   CallInst *CreateMaskedIntrinsic(unsigned Id, ArrayRef<Value *> Ops,
-                                  Type *DataTy);
+                                  Type *DataTy, const Twine &Name = "");
 
   Value *getCastedInt8PtrValue(Value *Ptr);
 };
