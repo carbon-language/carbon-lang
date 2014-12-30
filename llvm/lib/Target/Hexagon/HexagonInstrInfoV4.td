@@ -1369,7 +1369,8 @@ def S2_storerinew_pr : T_StorePI_RegNV<"memw", 0b10, WordAccess>;
 // operands.
 //===----------------------------------------------------------------------===//
 
-let isExtendable = 1, opExtendable = 2, isExtentSigned = 1, opExtentBits = 11 in
+let isExtendable = 1, opExtendable = 2, isExtentSigned = 1, opExtentBits = 11,
+    opExtentAlign = 2 in
 class NVJrr_template<string mnemonic, bits<3> majOp, bit NvOpNum,
                       bit isNegCond, bit isTak>
   : NVInst_V4<(outs),
@@ -1377,8 +1378,7 @@ class NVJrr_template<string mnemonic, bits<3> majOp, bit NvOpNum,
     "if ("#!if(isNegCond, "!","")#mnemonic#
     "($src1"#!if(!eq(NvOpNum, 0),".new, ",", ")#
     "$src2"#!if(!eq(NvOpNum, 1),".new))","))")#" jump:"
-    #!if(isTak, "t","nt")#" $offset",
-    []>, Requires<[HasV4T]> {
+    #!if(isTak, "t","nt")#" $offset", []> {
 
       bits<5> src1;
       bits<5> src2;
@@ -1387,8 +1387,8 @@ class NVJrr_template<string mnemonic, bits<3> majOp, bit NvOpNum,
       bits<11> offset;
 
       let isTaken = isTak;
-      let isBrTaken = !if(isTaken, "true", "false");
       let isPredicatedFalse = isNegCond;
+      let opNewValue{0} = NvOpNum;
 
       let Ns = !if(!eq(NvOpNum, 0), src1{2-0}, src2{2-0});
       let RegOp = !if(!eq(NvOpNum, 0), src2, src1);
@@ -1431,7 +1431,8 @@ multiclass NVJrr_base<string mnemonic, string BaseOp, bits<3> majOp,
 // if ([!]cmp.gtu(Rt,Ns.new)) jump:[n]t #r9:2
 
 let isPredicated = 1, isBranch = 1, isNewValue = 1, isTerminator = 1,
-  Defs = [PC], hasSideEffects = 0, validSubTargets = HasV4SubT in {
+    Defs = [PC], hasSideEffects = 0, validSubTargets = HasV4SubT,
+    isCodeGenOnly = 0 in {
   defm CMPEQrr  : NVJrr_base<"cmp.eq",  "CMPEQ",  0b000, 0>, PredRel;
   defm CMPGTrr  : NVJrr_base<"cmp.gt",  "CMPGT",  0b001, 0>, PredRel;
   defm CMPGTUrr : NVJrr_base<"cmp.gtu", "CMPGTU", 0b010, 0>, PredRel;
@@ -1444,18 +1445,18 @@ let isPredicated = 1, isBranch = 1, isNewValue = 1, isTerminator = 1,
 // with a register and an unsigned immediate (U5) operand.
 //===----------------------------------------------------------------------===//
 
-let isExtendable = 1, opExtendable = 2, isExtentSigned = 1, opExtentBits = 11 in
+let isExtendable = 1, opExtendable = 2, isExtentSigned = 1, opExtentBits = 11,
+    opExtentAlign = 2 in
 class NVJri_template<string mnemonic, bits<3> majOp, bit isNegCond,
                          bit isTak>
   : NVInst_V4<(outs),
     (ins IntRegs:$src1, u5Imm:$src2, brtarget:$offset),
     "if ("#!if(isNegCond, "!","")#mnemonic#"($src1.new, #$src2)) jump:"
-    #!if(isTak, "t","nt")#" $offset",
-    []>, Requires<[HasV4T]> {
+    #!if(isTak, "t","nt")#" $offset", []> {
 
       let isTaken = isTak;
       let isPredicatedFalse = isNegCond;
-      let isBrTaken = !if(isTaken, "true", "false");
+      let isTaken = isTak;
 
       bits<3> src1;
       bits<5> src2;
@@ -1491,7 +1492,8 @@ multiclass NVJri_base<string mnemonic, string BaseOp, bits<3> majOp> {
 // if ([!]cmp.gtu(Ns.new,#U5)) jump:[n]t #r9:2
 
 let isPredicated = 1, isBranch = 1, isNewValue = 1, isTerminator = 1,
-  Defs = [PC], hasSideEffects = 0, validSubTargets = HasV4SubT in {
+    Defs = [PC], hasSideEffects = 0, validSubTargets = HasV4SubT,
+    isCodeGenOnly = 0 in {
   defm CMPEQri  : NVJri_base<"cmp.eq", "CMPEQ", 0b000>, PredRel;
   defm CMPGTri  : NVJri_base<"cmp.gt", "CMPGT", 0b001>, PredRel;
   defm CMPGTUri : NVJri_base<"cmp.gtu", "CMPGTU", 0b010>, PredRel;
@@ -1502,19 +1504,19 @@ let isPredicated = 1, isBranch = 1, isNewValue = 1, isTerminator = 1,
 // with a register and an hardcoded 0/-1 immediate value.
 //===----------------------------------------------------------------------===//
 
-let isExtendable = 1, opExtendable = 1, isExtentSigned = 1, opExtentBits = 11 in
+let isExtendable = 1, opExtendable = 1, isExtentSigned = 1, opExtentBits = 11,
+    opExtentAlign = 2 in
 class NVJ_ConstImm_template<string mnemonic, bits<3> majOp, string ImmVal,
                             bit isNegCond, bit isTak>
   : NVInst_V4<(outs),
     (ins IntRegs:$src1, brtarget:$offset),
     "if ("#!if(isNegCond, "!","")#mnemonic
     #"($src1.new, #"#ImmVal#")) jump:"
-    #!if(isTak, "t","nt")#" $offset",
-    []>, Requires<[HasV4T]> {
+    #!if(isTak, "t","nt")#" $offset", []> {
 
       let isTaken = isTak;
       let isPredicatedFalse = isNegCond;
-      let isBrTaken = !if(isTaken, "true", "false");
+      let isTaken = isTak;
 
       bits<3> src1;
       bits<11> offset;
@@ -1539,8 +1541,8 @@ multiclass NVJ_ConstImm_cond<string mnemonic, bits<3> majOp, string ImmVal,
 multiclass NVJ_ConstImm_base<string mnemonic, string BaseOp, bits<3> majOp,
                              string ImmVal> {
   let BaseOpcode = BaseOp#_NVJ_ConstImm in {
-  defm _t_Jumpnv : NVJ_ConstImm_cond<mnemonic, majOp, ImmVal, 0>; // True cond
-  defm _f_Jumpnv : NVJ_ConstImm_cond<mnemonic, majOp, ImmVal, 1>; // False Cond
+    defm _t_Jumpnv : NVJ_ConstImm_cond<mnemonic, majOp, ImmVal, 0>; // True
+    defm _f_Jumpnv : NVJ_ConstImm_cond<mnemonic, majOp, ImmVal, 1>; // False
   }
 }
 
@@ -1549,11 +1551,27 @@ multiclass NVJ_ConstImm_base<string mnemonic, string BaseOp, bits<3> majOp,
 // if ([!]cmp.gt(Ns.new,#-1)) jump:[n]t #r9:2
 
 let isPredicated = 1, isBranch = 1, isNewValue = 1, isTerminator=1,
-  Defs = [PC], hasSideEffects = 0 in {
+    Defs = [PC], hasSideEffects = 0, isCodeGenOnly = 0 in {
   defm TSTBIT0  : NVJ_ConstImm_base<"tstbit", "TSTBIT", 0b011, "0">, PredRel;
   defm CMPEQn1  : NVJ_ConstImm_base<"cmp.eq", "CMPEQ",  0b100, "-1">, PredRel;
   defm CMPGTn1  : NVJ_ConstImm_base<"cmp.gt", "CMPGT",  0b101, "-1">, PredRel;
 }
+
+// J4_hintjumpr: Hint indirect conditional jump.
+let isBranch = 1, isIndirectBranch = 1, hasSideEffects = 0, isCodeGenOnly = 0 in
+def J4_hintjumpr: JRInst <
+  (outs),
+  (ins IntRegs:$Rs),
+  "hintjr($Rs)"> {
+    bits<5> Rs;
+    let IClass = 0b0101;
+    let Inst{27-21} = 0b0010101;
+    let Inst{20-16} = Rs;
+  }
+
+//===----------------------------------------------------------------------===//
+// NV/J -
+//===----------------------------------------------------------------------===//
 
 //===----------------------------------------------------------------------===//
 // XTYPE/ALU +
