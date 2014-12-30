@@ -1574,6 +1574,66 @@ def J4_hintjumpr: JRInst <
 //===----------------------------------------------------------------------===//
 
 //===----------------------------------------------------------------------===//
+// CR +
+//===----------------------------------------------------------------------===//
+
+// PC-relative add
+let hasNewValue = 1, isExtendable = 1, opExtendable = 1,
+    isExtentSigned = 0, opExtentBits = 6, hasSideEffects = 0,
+    Uses = [PC], validSubTargets = HasV4SubT in
+def C4_addipc : CRInst <(outs IntRegs:$Rd), (ins u6Ext:$u6),
+  "$Rd = add(pc, #$u6)", [], "", CR_tc_2_SLOT3 > {
+    bits<5> Rd;
+    bits<6> u6;
+
+    let IClass = 0b0110;
+    let Inst{27-16} = 0b101001001001;
+    let Inst{12-7} = u6;
+    let Inst{4-0} = Rd;
+  }
+
+
+
+let hasSideEffects = 0 in
+class T_LOGICAL_3OP<string MnOp1, string MnOp2, bits<2> OpBits, bit IsNeg>
+    : CRInst<(outs PredRegs:$Pd),
+             (ins PredRegs:$Ps, PredRegs:$Pt, PredRegs:$Pu),
+             "$Pd = " # MnOp1 # "($Ps, " # MnOp2 # "($Pt, " #
+                   !if (IsNeg,"!","") # "$Pu))",
+             [], "", CR_tc_2early_SLOT23> {
+  bits<2> Pd;
+  bits<2> Ps;
+  bits<2> Pt;
+  bits<2> Pu;
+
+  let IClass = 0b0110;
+  let Inst{27-24} = 0b1011;
+  let Inst{23} = IsNeg;
+  let Inst{22-21} = OpBits;
+  let Inst{20} = 0b1;
+  let Inst{17-16} = Ps;
+  let Inst{13} = 0b0;
+  let Inst{9-8} = Pt;
+  let Inst{7-6} = Pu;
+  let Inst{1-0} = Pd;
+}
+
+let isCodeGenOnly = 0 in {
+def C4_and_and  : T_LOGICAL_3OP<"and", "and", 0b00, 0>;
+def C4_and_or   : T_LOGICAL_3OP<"and", "or",  0b01, 0>;
+def C4_or_and   : T_LOGICAL_3OP<"or",  "and", 0b10, 0>;
+def C4_or_or    : T_LOGICAL_3OP<"or",  "or",  0b11, 0>;
+def C4_and_andn : T_LOGICAL_3OP<"and", "and", 0b00, 1>;
+def C4_and_orn  : T_LOGICAL_3OP<"and", "or",  0b01, 1>;
+def C4_or_andn  : T_LOGICAL_3OP<"or",  "and", 0b10, 1>;
+def C4_or_orn   : T_LOGICAL_3OP<"or",  "or",  0b11, 1>;
+}
+
+//===----------------------------------------------------------------------===//
+// CR -
+//===----------------------------------------------------------------------===//
+
+//===----------------------------------------------------------------------===//
 // XTYPE/ALU +
 //===----------------------------------------------------------------------===//
 
