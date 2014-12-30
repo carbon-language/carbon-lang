@@ -68,6 +68,10 @@ void ci(int ... []); // expected-error{{type 'int []' of function parameter pack
 void di(int ... x[]); // expected-error{{type 'int []' of function parameter pack does not contain any unexpanded parameter packs}}
 }
 
+void f5a(auto fp(int)->unk ...) {} // expected-error{{unknown type name 'unk'}}
+void f5b(auto fp(int)->auto ...) {} // expected-error{{'auto' not allowed in function return type}}
+void f5c(auto fp()->...) {} // expected-error{{expected a type}}
+
 // FIXME: Expand for function and member pointer types.
 
 
