@@ -79,6 +79,7 @@ class CoverageData {
   ALWAYS_INLINE
   void TraceBasicBlock(uptr *cache);
 
+  void InitializeGuardArray(s32 *guards);
   void InitializeGuards(s32 *guards, uptr n);
 
   uptr *data();
@@ -102,6 +103,9 @@ class CoverageData {
   uptr pc_array_mapped_size;
   // Descriptor of the file mapped pc array.
   int pc_fd;
+
+  // Vector of coverage guard arrays, protected by mu.
+  InternalMmapVectorNoCtor<s32*> guard_array_vec;
 
   // Caller-Callee (cc) array, size and current index.
   static const uptr kCcArrayMaxSize = FIRST_32_SECOND_64(1 << 18, 1 << 24);
@@ -181,6 +185,14 @@ void CoverageData::Init() {
   tr_pc_array_index = 0;
 }
 
+void CoverageData::InitializeGuardArray(s32 *guards) {
+  s32 n = guards[0];
+  for (s32 j = 1; j <= n; j++) {
+    uptr idx = atomic_fetch_add(&pc_array_index, 1, memory_order_relaxed);
+    guards[j] = -static_cast<s32>(idx + 1);
+  }
+}
+
 void CoverageData::ReInit() {
   if (pc_array) {
     internal_munmap(pc_array, sizeof(uptr) * kPcArrayMaxSize);
@@ -199,6 +211,11 @@ void CoverageData::ReInit() {
       Init();
     }
   }
+  // Re-initialize the guards.
+  // We are single-threaded now, no need to grab any lock.
+  CHECK_EQ(atomic_load(&pc_array_index, memory_order_relaxed), 0);
+  for (uptr i = 0; i < guard_array_vec.size(); i++)
+    InitializeGuardArray(guard_array_vec[i]);
 }
 
 void CoverageData::BeforeFork() {
@@ -251,10 +268,9 @@ void CoverageData::InitializeGuards(s32 *guards, uptr n) {
   // to store 'n'.
   CHECK_LT(n, 1 << 30);
   guards[0] = static_cast<s32>(n);
-  for (uptr i = 1; i <= n; i++) {
-    uptr idx = atomic_fetch_add(&pc_array_index, 1, memory_order_relaxed);
-    guards[i] = -static_cast<s32>(idx + 1);
-  }
+  InitializeGuardArray(guards);
+  SpinMutexLock l(&mu);
+  guard_array_vec.push_back(guards);
 }
 
 // If guard is negative, atomically set it to -guard and store the PC in
