@@ -1026,8 +1026,10 @@ void DwarfDebug::beginInstruction(const MachineInstr *MI) {
       if (DL == PrologEndLoc) {
         Flags |= DWARF2_FLAG_PROLOGUE_END;
         PrologEndLoc = DebugLoc();
+        Flags |= DWARF2_FLAG_IS_STMT;
       }
-      if (PrologEndLoc.isUnknown())
+      if (DL.getLine() !=
+          Asm->OutStreamer.getContext().getCurrentDwarfLoc().getLine())
         Flags |= DWARF2_FLAG_IS_STMT;
 
       if (!DL.isUnknown()) {
