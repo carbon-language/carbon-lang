@@ -636,124 +636,209 @@ def STrih_abs_set_V4 : T_ST_abs_set <"memh", IntRegs>;
 def STriw_abs_set_V4 : T_ST_abs_set <"memw", IntRegs>;
 
 //===----------------------------------------------------------------------===//
+// Template classes for the non-predicated store instructions with
+// base + register offset addressing mode
+//===----------------------------------------------------------------------===//
+let isPredicable = 1 in
+class T_store_rr <string mnemonic, RegisterClass RC, bits<3> MajOp, bit isH>
+  : STInst < (outs ), (ins IntRegs:$Rs, IntRegs:$Ru, u2Imm:$u2, RC:$Rt),
+  mnemonic#"($Rs + $Ru<<#$u2) = $Rt"#!if(isH, ".h",""),
+  [],"",V4LDST_tc_st_SLOT01>, ImmRegShl, AddrModeRel {
+
+    bits<5> Rs;
+    bits<5> Ru;
+    bits<2> u2;
+    bits<5> Rt;
+
+    let IClass = 0b0011;
+
+    let Inst{27-24} = 0b1011;
+    let Inst{23-21} = MajOp;
+    let Inst{20-16} = Rs;
+    let Inst{12-8}  = Ru;
+    let Inst{13}    = u2{1};
+    let Inst{7}     = u2{0};
+    let Inst{4-0}   = Rt;
+  }
+
+//===----------------------------------------------------------------------===//
+// Template classes for the predicated store instructions with
+// base + register offset addressing mode
+//===----------------------------------------------------------------------===//
+let isPredicated = 1 in
+class T_pstore_rr <string mnemonic, RegisterClass RC, bits<3> MajOp,
+                   bit isNot, bit isPredNew, bit isH>
+  : STInst <(outs),
+            (ins PredRegs:$Pv, IntRegs:$Rs, IntRegs:$Ru, u2Imm:$u2, RC:$Rt),
+
+  !if(isNot, "if (!$Pv", "if ($Pv")#!if(isPredNew, ".new) ",
+  ") ")#mnemonic#"($Rs+$Ru<<#$u2) = $Rt"#!if(isH, ".h",""),
+  [], "", V4LDST_tc_st_SLOT01> , AddrModeRel{
+    bits<2> Pv;
+    bits<5> Rs;
+    bits<5> Ru;
+    bits<2> u2;
+    bits<5> Rt;
+
+    let isPredicatedFalse = isNot;
+    let isPredicatedNew = isPredNew;
+
+    let IClass = 0b0011;
+
+    let Inst{27-26} = 0b01;
+    let Inst{25}    = isPredNew;
+    let Inst{24}    = isNot;
+    let Inst{23-21} = MajOp;
+    let Inst{20-16} = Rs;
+    let Inst{12-8}  = Ru;
+    let Inst{13}    = u2{1};
+    let Inst{7}     = u2{0};
+    let Inst{6-5}   = Pv;
+    let Inst{4-0}   = Rt;
+  }
+
+//===----------------------------------------------------------------------===//
+// Template classes for the new-value store instructions with
+// base + register offset addressing mode
+//===----------------------------------------------------------------------===//
+let isPredicable = 1, isNewValue = 1, opNewValue = 3 in
+class T_store_new_rr <string mnemonic, bits<2> MajOp> :
+  NVInst < (outs ), (ins IntRegs:$Rs, IntRegs:$Ru, u2Imm:$u2, IntRegs:$Nt),
+  mnemonic#"($Rs + $Ru<<#$u2) = $Nt.new",
+  [],"",V4LDST_tc_st_SLOT0>, ImmRegShl, AddrModeRel {
+
+    bits<5> Rs;
+    bits<5> Ru;
+    bits<2> u2;
+    bits<3> Nt;
+
+    let IClass = 0b0011;
+
+    let Inst{27-21} = 0b1011101;
+    let Inst{20-16} = Rs;
+    let Inst{12-8}  = Ru;
+    let Inst{13}    = u2{1};
+    let Inst{7}     = u2{0};
+    let Inst{4-3}   = MajOp;
+    let Inst{2-0}   = Nt;
+  }
+
+//===----------------------------------------------------------------------===//
+// Template classes for the predicated new-value store instructions with
+// base + register offset addressing mode
+//===----------------------------------------------------------------------===//
+let isPredicated = 1, isNewValue = 1, opNewValue = 4 in
+class T_pstore_new_rr <string mnemonic, bits<2> MajOp, bit isNot, bit isPredNew>
+  : NVInst<(outs),
+           (ins PredRegs:$Pv, IntRegs:$Rs, IntRegs:$Ru, u2Imm:$u2, IntRegs:$Nt),
+   !if(isNot, "if (!$Pv", "if ($Pv")#!if(isPredNew, ".new) ",
+   ") ")#mnemonic#"($Rs+$Ru<<#$u2) = $Nt.new",
+   [], "", V4LDST_tc_st_SLOT0>, AddrModeRel {
+    bits<2> Pv;
+    bits<5> Rs;
+    bits<5> Ru;
+    bits<2> u2;
+    bits<3> Nt;
+
+    let isPredicatedFalse = isNot;
+    let isPredicatedNew = isPredNew;
+
+    let IClass = 0b0011;
+    let Inst{27-26} = 0b01;
+    let Inst{25}    = isPredNew;
+    let Inst{24}    = isNot;
+    let Inst{23-21} = 0b101;
+    let Inst{20-16} = Rs;
+    let Inst{12-8}  = Ru;
+    let Inst{13}    = u2{1};
+    let Inst{7}     = u2{0};
+    let Inst{6-5}   = Pv;
+    let Inst{4-3}   = MajOp;
+    let Inst{2-0}   = Nt;
+  }
+
+//===----------------------------------------------------------------------===//
 // multiclass for store instructions with base + register offset addressing
 // mode
 //===----------------------------------------------------------------------===//
-multiclass ST_Idxd_shl_Pbase<string mnemonic, RegisterClass RC, bit isNot,
-                             bit isPredNew> {
-  let isPredicatedNew = isPredNew in
-  def NAME : STInst2<(outs),
-            (ins PredRegs:$src1, IntRegs:$src2, IntRegs:$src3, u2Imm:$src4,
-                 RC:$src5),
-            !if(isNot, "if (!$src1", "if ($src1")#!if(isPredNew, ".new) ",
-            ") ")#mnemonic#"($src2+$src3<<#$src4) = $src5",
-            []>,
-            Requires<[HasV4T]>;
-}
-
-multiclass ST_Idxd_shl_Pred<string mnemonic, RegisterClass RC, bit PredNot> {
-  let isPredicatedFalse = PredNot in {
-    defm _c#NAME : ST_Idxd_shl_Pbase<mnemonic, RC, PredNot, 0>;
-    // Predicate new
-    defm _cdn#NAME : ST_Idxd_shl_Pbase<mnemonic, RC, PredNot, 1>;
-  }
-}
-
 let isNVStorable = 1 in
-multiclass ST_Idxd_shl<string mnemonic, string CextOp, RegisterClass RC> {
+multiclass ST_Idxd_shl<string mnemonic, string CextOp, RegisterClass RC,
+                       bits<3> MajOp, bit isH = 0> {
   let CextOpcode = CextOp, BaseOpcode = CextOp#_indexed_shl in {
-    let isPredicable = 1 in
-    def NAME#_V4 : STInst2<(outs),
-            (ins IntRegs:$src1, IntRegs:$src2, u2Imm:$src3, RC:$src4),
-            mnemonic#"($src1+$src2<<#$src3) = $src4",
-            []>,
-            Requires<[HasV4T]>;
+    def S4_#NAME#_rr : T_store_rr <mnemonic, RC, MajOp, isH>;
 
-    let isPredicated = 1 in {
-      defm Pt_V4 : ST_Idxd_shl_Pred<mnemonic, RC, 0 >;
-      defm NotPt_V4 : ST_Idxd_shl_Pred<mnemonic, RC, 1>;
-    }
+    // Predicated
+    def S4_p#NAME#t_rr : T_pstore_rr <mnemonic, RC, MajOp, 0, 0, isH>;
+    def S4_p#NAME#f_rr : T_pstore_rr <mnemonic, RC, MajOp, 1, 0, isH>;
+
+    // Predicated new
+    def S4_p#NAME#tnew_rr : T_pstore_rr <mnemonic, RC, MajOp, 0, 1, isH>;
+    def S4_p#NAME#fnew_rr : T_pstore_rr <mnemonic, RC, MajOp, 1, 1, isH>;
   }
 }
 
+//===----------------------------------------------------------------------===//
 // multiclass for new-value store instructions with base + register offset
 // addressing mode.
-multiclass ST_Idxd_shl_Pbase_nv<string mnemonic, RegisterClass RC, bit isNot,
-                             bit isPredNew> {
-  let isPredicatedNew = isPredNew in
-  def NAME#_nv_V4 : NVInst_V4<(outs),
-            (ins PredRegs:$src1, IntRegs:$src2, IntRegs:$src3, u2Imm:$src4,
-                 RC:$src5),
-            !if(isNot, "if (!$src1", "if ($src1")#!if(isPredNew, ".new) ",
-            ") ")#mnemonic#"($src2+$src3<<#$src4) = $src5.new",
-            []>,
-            Requires<[HasV4T]>;
-}
-
-multiclass ST_Idxd_shl_Pred_nv<string mnemonic, RegisterClass RC, bit PredNot> {
-  let isPredicatedFalse = PredNot in {
-    defm _c#NAME : ST_Idxd_shl_Pbase_nv<mnemonic, RC, PredNot, 0>;
-    // Predicate new
-    defm _cdn#NAME : ST_Idxd_shl_Pbase_nv<mnemonic, RC, PredNot, 1>;
-  }
-}
-
+//===----------------------------------------------------------------------===//
 let mayStore = 1, isNVStore = 1 in
-multiclass ST_Idxd_shl_nv<string mnemonic, string CextOp, RegisterClass RC> {
+multiclass ST_Idxd_shl_nv <string mnemonic, string CextOp, RegisterClass RC,
+                           bits<2> MajOp> {
   let CextOpcode = CextOp, BaseOpcode = CextOp#_indexed_shl in {
-    let isPredicable = 1 in
-    def NAME#_nv_V4 : NVInst_V4<(outs),
-            (ins IntRegs:$src1, IntRegs:$src2, u2Imm:$src3, RC:$src4),
-            mnemonic#"($src1+$src2<<#$src3) = $src4.new",
-            []>,
-            Requires<[HasV4T]>;
+    def S4_#NAME#new_rr : T_store_new_rr<mnemonic, MajOp>;
 
-    let isPredicated = 1 in {
-      defm Pt : ST_Idxd_shl_Pred_nv<mnemonic, RC, 0 >;
-      defm NotPt : ST_Idxd_shl_Pred_nv<mnemonic, RC, 1>;
-    }
+    // Predicated
+    def S4_p#NAME#newt_rr : T_pstore_new_rr <mnemonic, MajOp, 0, 0>;
+    def S4_p#NAME#newf_rr : T_pstore_new_rr <mnemonic, MajOp, 1, 0>;
+
+    // Predicated new
+    def S4_p#NAME#newtnew_rr : T_pstore_new_rr <mnemonic, MajOp, 0, 1>;
+    def S4_p#NAME#newfnew_rr : T_pstore_new_rr <mnemonic, MajOp, 1, 1>;
   }
 }
 
-let addrMode = BaseRegOffset, hasSideEffects = 0,
-validSubTargets = HasV4SubT in {
+let addrMode = BaseRegOffset, InputType = "reg", hasSideEffects = 0,
+    isCodeGenOnly = 0 in {
   let accessSize = ByteAccess in
-    defm STrib_indexed_shl: ST_Idxd_shl<"memb", "STrib", IntRegs>,
-                            ST_Idxd_shl_nv<"memb", "STrib", IntRegs>, AddrModeRel;
+  defm storerb: ST_Idxd_shl<"memb", "STrib", IntRegs, 0b000>,
+                ST_Idxd_shl_nv<"memb", "STrib", IntRegs, 0b00>;
 
   let accessSize = HalfWordAccess in
-    defm STrih_indexed_shl: ST_Idxd_shl<"memh", "STrih", IntRegs>,
-                            ST_Idxd_shl_nv<"memh", "STrih", IntRegs>, AddrModeRel;
+  defm storerh: ST_Idxd_shl<"memh", "STrih", IntRegs, 0b010>,
+                ST_Idxd_shl_nv<"memh", "STrih", IntRegs, 0b01>;
 
   let accessSize = WordAccess in
-    defm STriw_indexed_shl: ST_Idxd_shl<"memw", "STriw", IntRegs>,
-                            ST_Idxd_shl_nv<"memw", "STriw", IntRegs>, AddrModeRel;
+  defm storeri: ST_Idxd_shl<"memw", "STriw", IntRegs, 0b100>,
+                ST_Idxd_shl_nv<"memw", "STriw", IntRegs, 0b10>;
 
   let isNVStorable = 0, accessSize = DoubleWordAccess in
-    defm STrid_indexed_shl: ST_Idxd_shl<"memd", "STrid", DoubleRegs>, AddrModeRel;
+  defm storerd: ST_Idxd_shl<"memd", "STrid", DoubleRegs, 0b110>;
+
+  let isNVStorable = 0, accessSize = HalfWordAccess in
+  defm storerf: ST_Idxd_shl<"memh", "STrif", IntRegs, 0b011, 1>;
 }
 
 let Predicates = [HasV4T], AddedComplexity = 10 in {
 def : Pat<(truncstorei8 (i32 IntRegs:$src4),
                        (add IntRegs:$src1, (shl IntRegs:$src2,
                                                 u2ImmPred:$src3))),
-          (STrib_indexed_shl_V4 IntRegs:$src1, IntRegs:$src2,
+          (S4_storerb_rr IntRegs:$src1, IntRegs:$src2,
                                 u2ImmPred:$src3, IntRegs:$src4)>;
 
 def : Pat<(truncstorei16 (i32 IntRegs:$src4),
                         (add IntRegs:$src1, (shl IntRegs:$src2,
                                                  u2ImmPred:$src3))),
-          (STrih_indexed_shl_V4 IntRegs:$src1, IntRegs:$src2,
+          (S4_storerh_rr IntRegs:$src1, IntRegs:$src2,
                                 u2ImmPred:$src3, IntRegs:$src4)>;
 
 def : Pat<(store (i32 IntRegs:$src4),
                  (add IntRegs:$src1, (shl IntRegs:$src2, u2ImmPred:$src3))),
-          (STriw_indexed_shl_V4 IntRegs:$src1, IntRegs:$src2,
+          (S4_storeri_rr IntRegs:$src1, IntRegs:$src2,
                                 u2ImmPred:$src3, IntRegs:$src4)>;
 
 def : Pat<(store (i64 DoubleRegs:$src4),
                 (add IntRegs:$src1, (shl IntRegs:$src2, u2ImmPred:$src3))),
-          (STrid_indexed_shl_V4 IntRegs:$src1, IntRegs:$src2,
+          (S4_storerd_rr IntRegs:$src1, IntRegs:$src2,
                                 u2ImmPred:$src3, DoubleRegs:$src4)>;
 }
 

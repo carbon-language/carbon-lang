@@ -1422,31 +1422,32 @@ isConditionalStore (const MachineInstr* MI) const {
     default: return false;
     case Hexagon::STrib_imm_cPt_V4 :
     case Hexagon::STrib_imm_cNotPt_V4 :
-    case Hexagon::STrib_indexed_shl_cPt_V4 :
-    case Hexagon::STrib_indexed_shl_cNotPt_V4 :
+    case Hexagon::S4_pstorerbt_rr:
+    case Hexagon::S4_pstorerbf_rr:
     case Hexagon::S2_pstorerbt_io:
     case Hexagon::S2_pstorerbf_io:
     case Hexagon::S2_pstorerbt_pi:
     case Hexagon::S2_pstorerbf_pi:
     case Hexagon::S2_pstorerdt_io:
     case Hexagon::S2_pstorerdf_io:
-    case Hexagon::STrid_indexed_shl_cPt_V4 :
+    case Hexagon::S4_pstorerdt_rr:
+    case Hexagon::S4_pstorerdf_rr:
     case Hexagon::S2_pstorerdt_pi:
     case Hexagon::S2_pstorerdf_pi:
     case Hexagon::S2_pstorerht_io:
     case Hexagon::S2_pstorerhf_io:
     case Hexagon::STrih_imm_cPt_V4 :
     case Hexagon::STrih_imm_cNotPt_V4 :
-    case Hexagon::STrih_indexed_shl_cPt_V4 :
-    case Hexagon::STrih_indexed_shl_cNotPt_V4 :
+    case Hexagon::S4_pstorerht_rr:
+    case Hexagon::S4_pstorerhf_rr:
     case Hexagon::S2_pstorerht_pi:
     case Hexagon::S2_pstorerhf_pi:
     case Hexagon::S2_pstorerit_io:
     case Hexagon::S2_pstorerif_io:
     case Hexagon::STriw_imm_cPt_V4 :
     case Hexagon::STriw_imm_cNotPt_V4 :
-    case Hexagon::STriw_indexed_shl_cPt_V4 :
-    case Hexagon::STriw_indexed_shl_cNotPt_V4 :
+    case Hexagon::S4_pstorerit_rr:
+    case Hexagon::S4_pstorerif_rr:
     case Hexagon::S2_pstorerit_pi:
     case Hexagon::S2_pstorerif_pi:
       return QRI.Subtarget.hasV4TOps();
