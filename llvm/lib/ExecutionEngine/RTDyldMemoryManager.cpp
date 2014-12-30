@@ -13,6 +13,7 @@
 
 #include "llvm/Config/config.h"
 #include "llvm/ExecutionEngine/RTDyldMemoryManager.h"
+#include "llvm/Support/Compiler.h"
 #include "llvm/Support/DynamicLibrary.h"
 #include "llvm/Support/ErrorHandling.h"
 #include <cstdlib>
@@ -212,7 +213,7 @@ ARM_MATH_IMPORTS(ARM_MATH_DECL)
 
 #if defined(__linux__) && defined(__GLIBC__) && \
       (defined(__i386__) || defined(__x86_64__))
-extern "C" void __morestack();
+extern "C" LLVM_ATTRIBUTE_WEAK void __morestack();
 #endif
 
 uint64_t
@@ -241,7 +242,8 @@ RTDyldMemoryManager::getSymbolAddressInProcess(const std::string &Name) {
 
 #if defined(__i386__) || defined(__x86_64__)
   // __morestack lives in libgcc, a static library.
-  if (Name == "__morestack") return (uint64_t)&__morestack;
+  if (&__morestack && Name == "__morestack")
+    return (uint64_t)&__morestack;
 #endif
 #endif // __linux__ && __GLIBC__
   
