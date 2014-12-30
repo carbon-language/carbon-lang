@@ -2124,25 +2124,23 @@ static SmallString<128> getCompilerRTLibDir(const ToolChain &TC) {
 // This adds the static libclang_rt.builtins-arch.a directly to the command line
 // FIXME: Make sure we can also emit shared objects if they're requested
 // and available, check for possible errors, etc.
-static void addClangRTLinux(
-    const ToolChain &TC, const ArgList &Args, ArgStringList &CmdArgs) {
+static void addClangRT(const ToolChain &TC, const ArgList &Args,
+                       ArgStringList &CmdArgs) {
+  bool IsOSWindows = TC.getTriple().isOSWindows();
+  StringRef Arch = getArchNameForCompilerRTLib(TC);
+  const char *Suffix = IsOSWindows ? ".lib" : ".a";
+
   SmallString<128> LibClangRT = getCompilerRTLibDir(TC);
-  llvm::sys::path::append(LibClangRT, Twine("libclang_rt.builtins-") +
-                                          getArchNameForCompilerRTLib(TC) +
-                                          ".a");
+  llvm::sys::path::append(LibClangRT,
+                          Twine("libclang_rt.builtins-") + Arch + Suffix);
 
   CmdArgs.push_back(Args.MakeArgString(LibClangRT));
-  CmdArgs.push_back("-lgcc_s");
-  if (TC.getDriver().CCCIsCXX())
-    CmdArgs.push_back("-lgcc_eh");
-}
-
-static void addClangRTWindows(const ToolChain &TC, const ArgList &Args,
-                              ArgStringList &CmdArgs) {
-  SmallString<128> LibClangRT = getCompilerRTLibDir(TC);
-  llvm::sys::path::append(LibClangRT, Twine("libclang_rt.builtins-") +
-                          getArchNameForCompilerRTLib(TC) + ".lib");
-  CmdArgs.push_back(Args.MakeArgString(LibClangRT));
+  if (!IsOSWindows) {
+    // FIXME: why do we link against gcc when we are using compiler-rt?
+    CmdArgs.push_back("-lgcc_s");
+    if (TC.getDriver().CCCIsCXX())
+      CmdArgs.push_back("-lgcc_eh");
+  }
 }
 
 static void addProfileRT(
@@ -7298,15 +7296,13 @@ static void AddRunTimeLibs(const ToolChain &TC, const Driver &D,
   // Make use of compiler-rt if --rtlib option is used
   ToolChain::RuntimeLibType RLT = TC.GetRuntimeLibType(Args);
 
-  switch(RLT) {
+  switch (RLT) {
   case ToolChain::RLT_CompilerRT:
     switch (TC.getTriple().getOS()) {
     default: llvm_unreachable("unsupported OS");
     case llvm::Triple::Win32:
-      addClangRTWindows(TC, Args, CmdArgs);
-      break;
     case llvm::Triple::Linux:
-      addClangRTLinux(TC, Args, CmdArgs);
+      addClangRT(TC, Args, CmdArgs);
       break;
     }
     break;
