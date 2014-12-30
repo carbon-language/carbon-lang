@@ -33,7 +33,7 @@ entry:
 ; CHECK0-NOT: call void @__sanitizer_cov_module_init(
 
 ; CHECK1-LABEL: define void @foo
-; CHECK1: %0 = load atomic i32* @__sancov_gen_cov_foo monotonic, align 4, !nosanitize
+; CHECK1: %0 = load atomic i32* {{.*}} monotonic, align 4, !nosanitize
 ; CHECK1: %1 = icmp sge i32 0, %0
 ; CHECK1: br i1 %1, label %2, label %3
 ; CHECK1: call void @__sanitizer_cov(i32*{{.*}})

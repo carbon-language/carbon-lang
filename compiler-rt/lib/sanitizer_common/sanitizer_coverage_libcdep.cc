@@ -79,7 +79,7 @@ class CoverageData {
   ALWAYS_INLINE
   void TraceBasicBlock(uptr *cache);
 
-  void InitializeGuards(s32 **guards, uptr n);
+  void InitializeGuards(s32 *guards, uptr n);
 
   uptr *data();
   uptr size();
@@ -246,16 +246,19 @@ void CoverageData::Extend(uptr npcs) {
   atomic_store(&pc_array_size, size, memory_order_release);
 }
 
-void CoverageData::InitializeGuards(s32 **guards, uptr n) {
-  for (uptr i = 0; i < n; i++) {
+void CoverageData::InitializeGuards(s32 *guards, uptr n) {
+  // The array 'guards' has n+1 elements, we use the element zero
+  // to store 'n'.
+  CHECK_LT(n, 1 << 30);
+  guards[0] = static_cast<s32>(n);
+  for (uptr i = 1; i <= n; i++) {
     uptr idx = atomic_fetch_add(&pc_array_index, 1, memory_order_relaxed);
-    *guards[i] = -static_cast<s32>(idx + 1);
+    guards[i] = -static_cast<s32>(idx + 1);
   }
 }
 
-// Atomically add the pc to the vector. The atomically set the guard to 1.
-// If the function is called more than once for a given PC it will
-// be inserted multiple times, which is fine.
+// If guard is negative, atomically set it to -guard and store the PC in
+// pc_array.
 void CoverageData::Add(uptr pc, u32 *guard) {
   atomic_uint32_t *atomic_guard = reinterpret_cast<atomic_uint32_t*>(guard);
   s32 guard_value = atomic_load(atomic_guard, memory_order_relaxed);
@@ -624,7 +627,7 @@ SANITIZER_INTERFACE_ATTRIBUTE void __sanitizer_cov_init() {
   coverage_data.Init();
 }
 SANITIZER_INTERFACE_ATTRIBUTE void __sanitizer_cov_dump() { CovDump(); }
-SANITIZER_INTERFACE_ATTRIBUTE void __sanitizer_cov_module_init(s32 **guards,
+SANITIZER_INTERFACE_ATTRIBUTE void __sanitizer_cov_module_init(s32 *guards,
                                                                uptr npcs) {
   coverage_data.InitializeGuards(guards, npcs);
   if (!common_flags()->coverage_direct) return;
