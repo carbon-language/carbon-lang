@@ -439,6 +439,28 @@ public:
   /// assume that the provided condition will be true.
   CallInst *CreateAssumption(Value *Cond);
 
+  /// \brief Create a call to the experimental.gc.statepoint intrinsic to
+  /// start a new statepoint sequence.
+  CallInst *CreateGCStatepoint(Value *ActualCallee,
+                               ArrayRef<Value*> CallArgs,
+                               ArrayRef<Value*> DeoptArgs,
+                               ArrayRef<Value*> GCArgs,
+                               const Twine &Name = "");
+
+  /// \brief Create a call to the experimental.gc.result intrinsic to extract
+  /// the result from a call wrapped in a statepoint.
+  CallInst *CreateGCResult(Instruction *Statepoint,
+                           Type *ResultType,
+                           const Twine &Name = "");
+
+  /// \brief Create a call to the experimental.gc.relocate intrinsics to
+  /// project the relocated value of one pointer from the statepoint.
+  CallInst *CreateGCRelocate(Instruction *Statepoint,
+                             int BaseOffset,
+                             int DerivedOffset,
+                             Type *ResultType,
+                             const Twine &Name = "");
+
 private:
   /// \brief Create a call to a masked intrinsic with given Id.
   /// Masked intrinsic has only one overloaded type - data type.
