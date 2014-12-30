@@ -128,63 +128,129 @@ def C4_cmplte  : T_ALU32_3op_cmp<"!cmp.gt",  0b10, 1, 0>;
 def C4_cmplteu : T_ALU32_3op_cmp<"!cmp.gtu", 0b11, 1, 0>;
 }
 
-// Generate frame index addresses.
-let hasSideEffects = 0, isReMaterializable = 1,
-isExtended = 1, opExtendable = 2, validSubTargets = HasV4SubT in
-def TFR_FI_immext_V4 : ALU32_ri<(outs IntRegs:$dst),
-            (ins IntRegs:$src1, s32Imm:$offset),
-            "$dst = add($src1, ##$offset)",
-            []>,
-            Requires<[HasV4T]>;
+// Pats for instruction selection.
 
-// Rd=cmp.eq(Rs,#s8)
-let validSubTargets = HasV4SubT, isExtendable = 1, opExtendable = 2,
-isExtentSigned = 1, opExtentBits = 8 in
-def V4_A4_rcmpeqi : ALU32_ri<(outs IntRegs:$Rd),
-                    (ins IntRegs:$Rs, s8Ext:$s8),
-                    "$Rd = cmp.eq($Rs, #$s8)",
-                    [(set (i32 IntRegs:$Rd),
-                          (i32 (zext (i1 (seteq (i32 IntRegs:$Rs),
-                                                s8ExtPred:$s8)))))]>,
-                    Requires<[HasV4T]>;
+// A class to embed the usual comparison patfrags within a zext to i32.
+// The seteq/setne frags use "lhs" and "rhs" as operands, so use the same
+// names, or else the frag's "body" won't match the operands.
+class CmpInReg<PatFrag Op>
+  : PatFrag<(ops node:$lhs, node:$rhs),(i32 (zext (i1 Op.Fragment)))>;
 
-// Preserve the TSTBIT generation
-def : Pat <(i32 (zext (i1 (setne (i32 (and (i32 (shl 1, (i32 IntRegs:$src2))),
-                                           (i32 IntRegs:$src1))), 0)))),
-      (i32 (C2_muxii (i1 (S2_tstbit_r (i32 IntRegs:$src1), (i32 IntRegs:$src2))),
-                   1, 0))>;
+def: T_cmp32_rr_pat<A4_rcmpeq,  CmpInReg<seteq>, i32>;
+def: T_cmp32_rr_pat<A4_rcmpneq, CmpInReg<setne>, i32>;
 
-// Interfered with tstbit generation, above pattern preserves, see : tstbit.ll
-// Rd=cmp.ne(Rs,#s8)
-let validSubTargets = HasV4SubT, isExtendable = 1, opExtendable = 2,
-isExtentSigned = 1, opExtentBits = 8 in
-def V4_A4_rcmpneqi : ALU32_ri<(outs IntRegs:$Rd),
-                     (ins IntRegs:$Rs, s8Ext:$s8),
-                     "$Rd = !cmp.eq($Rs, #$s8)",
-                     [(set (i32 IntRegs:$Rd),
-                           (i32 (zext (i1 (setne (i32 IntRegs:$Rs),
-                                                 s8ExtPred:$s8)))))]>,
-                     Requires<[HasV4T]>;
+class T_CMP_rrbh<string mnemonic, bits<3> MinOp, bit IsComm>
+  : SInst<(outs PredRegs:$Pd), (ins IntRegs:$Rs, IntRegs:$Rt),
+    "$Pd = "#mnemonic#"($Rs, $Rt)", [], "", S_3op_tc_2early_SLOT23>,
+    ImmRegRel {
+  let validSubTargets = HasV4SubT;
+  let InputType = "reg";
+  let CextOpcode = mnemonic;
+  let isCompare = 1;
+  let isCommutable = IsComm;
+  let hasSideEffects = 0;
 
-// Rd=cmp.eq(Rs,Rt)
-let validSubTargets = HasV4SubT in
-def V4_A4_rcmpeq : ALU32_ri<(outs IntRegs:$Rd),
-                   (ins IntRegs:$Rs, IntRegs:$Rt),
-                   "$Rd = cmp.eq($Rs, $Rt)",
-                   [(set (i32 IntRegs:$Rd),
-                         (i32 (zext (i1 (seteq (i32 IntRegs:$Rs),
-                                               IntRegs:$Rt)))))]>,
-                   Requires<[HasV4T]>;
+  bits<2> Pd;
+  bits<5> Rs;
+  bits<5> Rt;
 
-// Rd=cmp.ne(Rs,Rt)
-let validSubTargets = HasV4SubT in
-def V4_A4_rcmpneq : ALU32_ri<(outs IntRegs:$Rd),
-                    (ins IntRegs:$Rs, IntRegs:$Rt),
-                    "$Rd = !cmp.eq($Rs, $Rt)",
-                    [(set (i32 IntRegs:$Rd),
-                          (i32 (zext (i1 (setne (i32 IntRegs:$Rs),
-                                               IntRegs:$Rt)))))]>,
-                    Requires<[HasV4T]>;
+  let IClass = 0b1100;
+  let Inst{27-21} = 0b0111110;
+  let Inst{20-16} = Rs;
+  let Inst{12-8} = Rt;
+  let Inst{7-5} = MinOp;
+  let Inst{1-0} = Pd;
+}
+
+let isCodeGenOnly = 0 in {
+def A4_cmpbeq  : T_CMP_rrbh<"cmpb.eq",  0b110, 1>;
+def A4_cmpbgt  : T_CMP_rrbh<"cmpb.gt",  0b010, 0>;
+def A4_cmpbgtu : T_CMP_rrbh<"cmpb.gtu", 0b111, 0>;
+def A4_cmpheq  : T_CMP_rrbh<"cmph.eq",  0b011, 1>;
+def A4_cmphgt  : T_CMP_rrbh<"cmph.gt",  0b100, 0>;
+def A4_cmphgtu : T_CMP_rrbh<"cmph.gtu", 0b101, 0>;
+}
+
+class T_CMP_ribh<string mnemonic, bits<2> MajOp, bit IsHalf, bit IsComm,
+                 Operand ImmType, bit IsImmExt, bit IsImmSigned, int ImmBits>
+  : ALU64Inst<(outs PredRegs:$Pd), (ins IntRegs:$Rs, ImmType:$Imm),
+    "$Pd = "#mnemonic#"($Rs, #$Imm)", [], "", ALU64_tc_2early_SLOT23>,
+    ImmRegRel {
+  let validSubTargets = HasV4SubT;
+  let InputType = "imm";
+  let CextOpcode = mnemonic;
+  let isCompare = 1;
+  let isCommutable = IsComm;
+  let hasSideEffects = 0;
+  let isExtendable = IsImmExt;
+  let opExtendable = !if (IsImmExt, 2, 0);
+  let isExtentSigned = IsImmSigned;
+  let opExtentBits = ImmBits;
+
+  bits<2> Pd;
+  bits<5> Rs;
+  bits<8> Imm;
+
+  let IClass = 0b1101;
+  let Inst{27-24} = 0b1101;
+  let Inst{22-21} = MajOp;
+  let Inst{20-16} = Rs;
+  let Inst{12-5} = Imm;
+  let Inst{4} = 0b0;
+  let Inst{3} = IsHalf;
+  let Inst{1-0} = Pd;
+}
+
+let isCodeGenOnly = 0 in {
+def A4_cmpbeqi  : T_CMP_ribh<"cmpb.eq",  0b00, 0, 1, u8Imm, 0, 0, 8>;
+def A4_cmpbgti  : T_CMP_ribh<"cmpb.gt",  0b01, 0, 0, s8Imm, 0, 1, 8>;
+def A4_cmpbgtui : T_CMP_ribh<"cmpb.gtu", 0b10, 0, 0, u7Ext, 1, 0, 7>;
+def A4_cmpheqi  : T_CMP_ribh<"cmph.eq",  0b00, 1, 1, s8Ext, 1, 1, 8>;
+def A4_cmphgti  : T_CMP_ribh<"cmph.gt",  0b01, 1, 0, s8Ext, 1, 1, 8>;
+def A4_cmphgtui : T_CMP_ribh<"cmph.gtu", 0b10, 1, 0, u7Ext, 1, 0, 7>;
+}
+class T_RCMP_EQ_ri<string mnemonic, bit IsNeg>
+  : ALU32_ri<(outs IntRegs:$Rd), (ins IntRegs:$Rs, s8Ext:$s8),
+    "$Rd = "#mnemonic#"($Rs, #$s8)", [], "", ALU32_2op_tc_1_SLOT0123>,
+    ImmRegRel {
+  let validSubTargets = HasV4SubT;
+  let InputType = "imm";
+  let CextOpcode = !if (IsNeg, "!rcmp.eq", "rcmp.eq");
+  let isExtendable = 1;
+  let opExtendable = 2;
+  let isExtentSigned = 1;
+  let opExtentBits = 8;
+  let hasNewValue = 1;
+
+  bits<5> Rd;
+  bits<5> Rs;
+  bits<8> s8;
+
+  let IClass = 0b0111;
+  let Inst{27-24} = 0b0011;
+  let Inst{22} = 0b1;
+  let Inst{21} = IsNeg;
+  let Inst{20-16} = Rs;
+  let Inst{13} = 0b1;
+  let Inst{12-5} = s8;
+  let Inst{4-0} = Rd;
+}
+
+let isCodeGenOnly = 0 in {
+def A4_rcmpeqi  : T_RCMP_EQ_ri<"cmp.eq",  0>;
+def A4_rcmpneqi : T_RCMP_EQ_ri<"!cmp.eq", 1>;
+}
+
+def: Pat<(i32 (zext (i1 (seteq (i32 IntRegs:$Rs), s8ExtPred:$s8)))),
+         (A4_rcmpeqi IntRegs:$Rs, s8ExtPred:$s8)>;
+def: Pat<(i32 (zext (i1 (setne (i32 IntRegs:$Rs), s8ExtPred:$s8)))),
+         (A4_rcmpneqi IntRegs:$Rs, s8ExtPred:$s8)>;
+
+// Preserve the S2_tstbit_r generation
+def: Pat<(i32 (zext (i1 (setne (i32 (and (i32 (shl 1, (i32 IntRegs:$src2))),
+                                         (i32 IntRegs:$src1))), 0)))),
+         (C2_muxii (S2_tstbit_r IntRegs:$src1, IntRegs:$src2), 1, 0)>;
+
 
 //===----------------------------------------------------------------------===//
 // ALU32 -
