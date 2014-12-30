@@ -190,36 +190,69 @@ u32 GetUid() {
   UNIMPLEMENTED();
 }
 
+namespace {
+struct ModuleInfo {
+  HMODULE handle;
+  uptr base_address;
+  uptr end_address;
+};
+
+int CompareModulesBase(const void *pl, const void *pr) {
+  const ModuleInfo &l = *(ModuleInfo *)pl, &r = *(ModuleInfo *)pr;
+  if (l.base_address < r.base_address)
+    return -1;
+  return l.base_address > r.base_address;
+}
+}
+
 void DumpProcessMap() {
   Report("Dumping process modules:\n");
   HANDLE cur_process = GetCurrentProcess();
 
   // Query the list of modules.  Start by assuming there are no more than 256
   // modules and retry if that's not sufficient.
-  HMODULE *modules = 0;
-  uptr modules_buffer_size = sizeof(HMODULE) * 256;
-  DWORD bytes_required;
-  while (!modules) {
-    modules = (HMODULE *)MmapOrDie(modules_buffer_size, __FUNCTION__);
-    CHECK(EnumProcessModules(cur_process, modules, modules_buffer_size,
-                             &bytes_required));
-    if (bytes_required > modules_buffer_size) {
-      // Either there turned out to be more than 256 modules, or new modules
-      // could have loaded since the last try.  Retry.
-      UnmapOrDie(modules, modules_buffer_size);
-      modules = 0;
-      modules_buffer_size = bytes_required;
+  ModuleInfo *modules;
+  size_t num_modules;
+  {
+    HMODULE *hmodules = 0;
+    uptr modules_buffer_size = sizeof(HMODULE) * 256;
+    DWORD bytes_required;
+    while (!hmodules) {
+      hmodules = (HMODULE *)MmapOrDie(modules_buffer_size, __FUNCTION__);
+      CHECK(EnumProcessModules(cur_process, hmodules, modules_buffer_size,
+                               &bytes_required));
+      if (bytes_required > modules_buffer_size) {
+        // Either there turned out to be more than 256 hmodules, or new hmodules
+        // could have loaded since the last try.  Retry.
+        UnmapOrDie(hmodules, modules_buffer_size);
+        hmodules = 0;
+        modules_buffer_size = bytes_required;
+      }
     }
+
+    num_modules = bytes_required / sizeof(HMODULE);
+    modules =
+        (ModuleInfo *)MmapOrDie(num_modules * sizeof(ModuleInfo), __FUNCTION__);
+    for (size_t i = 0; i < num_modules; ++i) {
+      modules[i].handle = hmodules[i];
+      MODULEINFO mi;
+      if (!GetModuleInformation(cur_process, hmodules[i], &mi, sizeof(mi)))
+        continue;
+      modules[i].base_address = (uptr)mi.lpBaseOfDll;
+      modules[i].end_address = (uptr)mi.lpBaseOfDll + mi.SizeOfImage;
+    }
+    UnmapOrDie(hmodules, modules_buffer_size);
   }
 
-  for (size_t i = 0; i < bytes_required / sizeof(HMODULE); ++i) {
+  qsort(modules, num_modules, sizeof(ModuleInfo), CompareModulesBase);
+
+  for (size_t i = 0; i < num_modules; ++i) {
+    const ModuleInfo &mi = modules[i];
     char module_name[MAX_PATH];
     bool got_module_name = GetModuleFileNameEx(
-        cur_process, modules[i], module_name, sizeof(module_name));
-    MODULEINFO mi;
-    if (GetModuleInformation(cur_process, modules[i], &mi, sizeof(mi))) {
-      Printf("\t%p-%p %s\n", mi.lpBaseOfDll,
-             (void *)((uptr)mi.lpBaseOfDll + mi.SizeOfImage),
+        cur_process, mi.handle, module_name, sizeof(module_name));
+    if (mi.end_address != 0) {
+      Printf("\t%p-%p %s\n", mi.base_address, mi.end_address,
              got_module_name ? module_name : "[no name]");
     } else if (got_module_name) {
       Printf("\t??\?-??? %s\n", module_name);
@@ -227,7 +260,7 @@ void DumpProcessMap() {
       Printf("\t???\n");
     }
   }
-  UnmapOrDie(modules, modules_buffer_size);
+  UnmapOrDie(modules, num_modules * sizeof(ModuleInfo));
 }
 
 void DisableCoreDumperIfNecessary() {
