@@ -1312,6 +1312,36 @@ defm storerhnew: ST_PostInc_nv <"memh", "STrih", s4_1Imm, 0b01>;
 let accessSize = WordAccess, isCodeGenOnly = 0 in
 defm storerinew: ST_PostInc_nv <"memw", "STriw", s4_2Imm, 0b10>;
 
+//===----------------------------------------------------------------------===//
+// Template class for post increment .new stores with register offset
+//===----------------------------------------------------------------------===//
+let isNewValue = 1, mayStore = 1, isNVStore = 1, opNewValue = 3 in
+class T_StorePI_RegNV <string mnemonic, bits<2> MajOp, MemAccessSize AccessSz>
+  : NVInstPI_V4 <(outs IntRegs:$_dst_),
+                 (ins IntRegs:$src1, ModRegs:$src2, IntRegs:$src3),
+  #mnemonic#"($src1++$src2) = $src3.new",
+  [], "$src1 = $_dst_"> {
+    bits<5> src1;
+    bits<1> src2;
+    bits<3> src3;
+    let accessSize = AccessSz;
+
+    let IClass = 0b1010;
+
+    let Inst{27-21} = 0b1101101;
+    let Inst{20-16} = src1;
+    let Inst{13}    = src2;
+    let Inst{12-11} = MajOp;
+    let Inst{10-8}  = src3;
+    let Inst{7}     = 0b0;
+  }
+
+let isCodeGenOnly = 0 in {
+def S2_storerbnew_pr : T_StorePI_RegNV<"memb", 0b00, ByteAccess>;
+def S2_storerhnew_pr : T_StorePI_RegNV<"memh", 0b01, HalfWordAccess>;
+def S2_storerinew_pr : T_StorePI_RegNV<"memw", 0b10, WordAccess>;
+}
+
 // memb(Rx++#s4:0:circ(Mu))=Nt.new
 // memb(Rx++I:circ(Mu))=Nt.new
 // memb(Rx++Mu)=Nt.new
