@@ -20,8 +20,8 @@ foreach(TARGET ${LLVM_TARGETS_TO_BUILD})
 
   configure_file(
     "${CMAKE_CURRENT_SOURCE_DIR}/META.llvm_backend.in"
-    "${LLVM_LIBRARY_OUTPUT_INTDIR}/ocaml/META.llvm_${TARGET}")
+    "${LLVM_LIBRARY_DIR}/ocaml/META.llvm_${TARGET}")
 
-  install(FILES "${LLVM_LIBRARY_OUTPUT_INTDIR}/ocaml/META.llvm_${TARGET}"
+  install(FILES "${LLVM_LIBRARY_DIR}/ocaml/META.llvm_${TARGET}"
           DESTINATION lib/ocaml)
 endforeach()

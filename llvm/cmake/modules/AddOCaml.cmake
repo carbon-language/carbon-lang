@@ -52,7 +52,7 @@ function(add_ocaml_library name)
          "${bin}/${name}${CMAKE_STATIC_LIBRARY_SUFFIX}")
   endif()
 
-  set(ocaml_flags "-lstdc++" "-ldopt" "-L${LLVM_LIBRARY_OUTPUT_INTDIR}"
+  set(ocaml_flags "-lstdc++" "-ldopt" "-L${LLVM_LIBRARY_DIR}"
                   ${ocaml_pkgs})
 
   foreach( ocaml_dep ${ARG_OCAMLDEP} )
@@ -144,7 +144,7 @@ function(add_ocaml_library name)
     OUTPUT "${bin}/${name}.odoc"
     COMMAND "${OCAMLFIND}" "ocamldoc"
             "-I" "${bin}"
-            "-I" "${LLVM_LIBRARY_OUTPUT_INTDIR}/ocaml/"
+            "-I" "${LLVM_LIBRARY_DIR}/ocaml/"
             "-dump" "${bin}/${name}.odoc"
             ${ocaml_pkgs} ${ocaml_inputs}
     DEPENDS ${ocaml_inputs}
@@ -192,7 +192,7 @@ function(add_ocaml_library name)
     get_filename_component(filename "${install_file}" NAME)
     add_custom_command(TARGET "ocaml_${name}" POST_BUILD
       COMMAND "${CMAKE_COMMAND}" "-E" "copy" "${install_file}"
-                                             "${LLVM_LIBRARY_OUTPUT_INTDIR}/ocaml/"
+                                             "${LLVM_LIBRARY_DIR}/ocaml/"
       COMMENT "Copying OCaml library component ${filename} to intermediate area"
       VERBATIM)
   endforeach()

@@ -5,7 +5,7 @@ add_ocaml_library(llvm
 
 configure_file(
   "${CMAKE_CURRENT_SOURCE_DIR}/META.llvm.in"
-  "${LLVM_LIBRARY_OUTPUT_INTDIR}/ocaml/META.llvm")
+  "${LLVM_LIBRARY_DIR}/ocaml/META.llvm")
 
-install(FILES "${LLVM_LIBRARY_OUTPUT_INTDIR}/ocaml/META.llvm"
+install(FILES "${LLVM_LIBRARY_DIR}/ocaml/META.llvm"
         DESTINATION lib/ocaml)
