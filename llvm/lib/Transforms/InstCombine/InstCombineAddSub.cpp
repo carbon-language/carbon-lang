@@ -1713,6 +1713,14 @@ Instruction *InstCombiner::visitFSub(BinaryOperator &I) {
                                   TLI, DT, AT))
     return ReplaceInstUsesWith(I, V);
 
+  // fsub nsz 0, X ==> fsub nsz -0.0, X
+  if (I.getFastMathFlags().noSignedZeros() && match(Op0, m_Zero())) {
+    // Subtraction from -0.0 is the canonical form of fneg.
+    Instruction *NewI = BinaryOperator::CreateFNeg(Op1);
+    NewI->copyFastMathFlags(&I);
+    return NewI;
+  }
+
   if (isa<Constant>(Op0))
     if (SelectInst *SI = dyn_cast<SelectInst>(Op1))
       if (Instruction *NV = FoldOpIntoSelect(I, SI))
