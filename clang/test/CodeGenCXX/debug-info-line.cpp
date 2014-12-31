@@ -1,6 +1,8 @@
 // RUN: %clang_cc1 -g -std=c++11 -S -emit-llvm %s -o - | FileCheck %s
 // RUN: %clang_cc1 -triple i686-linux-gnu -g -std=c++11 -S -emit-llvm %s -o - | FileCheck %s
 
+// XFAIL: win32
+
 int &src();
 int *sink();
 extern "C" __complex float complex_src();
