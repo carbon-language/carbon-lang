@@ -123,7 +123,7 @@ __complex double f11() {
 void f12() {
   int f12_1();
   void f12_2(int = f12_1());
-// CHECK: call i32 {{.*}} !dbg [[DBG_F12:!.*]]
+// CHECK: call {{(signext )?}}i32 {{.*}} !dbg [[DBG_F12:!.*]]
 #line 1300
   f12_2();
 }
