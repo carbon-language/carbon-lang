@@ -412,3 +412,29 @@ TYPED_TEST(TinyPtrVectorTest, InsertRange) {
 }
 
 }
+
+TEST(TinyPtrVectorTest, SingleEltCtorTest) {
+  int v = 55;
+  TinyPtrVector<int *> V(&v);
+
+  EXPECT_TRUE(V.size() == 1);
+  EXPECT_FALSE(V.empty());
+  EXPECT_TRUE(V.front() == &v);
+}
+
+TEST(TinyPtrVectorTest, ArrayRefCtorTest) {
+  int data_array[128];
+  std::vector<int *> data;
+
+  for (unsigned i = 0, e = 128; i != e; ++i) {
+    data_array[i] = 324 - int(i);
+    data.push_back(&data_array[i]);
+  }
+
+  TinyPtrVector<int *> V(data);
+  EXPECT_TRUE(V.size() == 128);
+  EXPECT_FALSE(V.empty());
+  for (unsigned i = 0, e = 128; i != e; ++i) {
+    EXPECT_TRUE(V[i] == data[i]);
+  }
+}
