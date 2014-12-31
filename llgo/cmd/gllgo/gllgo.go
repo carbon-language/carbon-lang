@@ -71,6 +71,7 @@ func initCompiler(opts *driverOptions) (*irgen.Compiler, error) {
 		DebugPrefixMaps:    opts.debugPrefixMaps,
 		DumpSSA:            opts.dumpSSA,
 		GccgoPath:          opts.gccgoPath,
+		GccgoABI:           opts.gccgoPath != "",
 		ImportPaths:        importPaths,
 		SanitizerAttribute: opts.sanitizer.getAttribute(),
 	}

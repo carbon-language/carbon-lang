@@ -75,6 +75,9 @@ type CompilerOptions struct {
 	// path in ImportPaths.
 	GccgoPath string
 
+	// Whether to use the gccgo ABI.
+	GccgoABI bool
+
 	// ImportPaths is the list of additional import paths
 	ImportPaths []string
 
@@ -322,8 +325,6 @@ func (c *compiler) buildPackageInitData(mainPkg *ssa.Package) gccgoimporter.Init
 }
 
 func (c *compiler) createInitMainFunction(mainPkg *ssa.Package) {
-	initdata := c.buildPackageInitData(mainPkg)
-
 	ftyp := llvm.FunctionType(llvm.VoidType(), nil, false)
 	initMain := llvm.AddFunction(c.module.Module, "__go_init_main", ftyp)
 	c.addCommonFunctionAttrs(initMain)
@@ -332,6 +333,17 @@ func (c *compiler) createInitMainFunction(mainPkg *ssa.Package) {
 	builder := llvm.GlobalContext().NewBuilder()
 	defer builder.Dispose()
 	builder.SetInsertPointAtEnd(entry)
+
+	if !c.GccgoABI {
+		initfn := c.module.Module.NamedFunction("main..import")
+		if !initfn.IsNil() {
+			builder.CreateCall(initfn, nil, "")
+		}
+		builder.CreateRetVoid()
+		return
+	}
+
+	initdata := c.buildPackageInitData(mainPkg)
 
 	for _, init := range initdata.Inits {
 		initfn := c.module.Module.NamedFunction(init.InitFunc)
@@ -348,8 +360,13 @@ func (c *compiler) buildExportData(mainPkg *ssa.Package) []byte {
 	exportData := importer.ExportData(mainPkg.Object)
 	b := bytes.NewBuffer(exportData)
 
+	b.WriteString("v1;\n")
+	if !c.GccgoABI {
+		return b.Bytes()
+	}
+
 	initdata := c.buildPackageInitData(mainPkg)
-	b.WriteString("v1;\npriority ")
+	b.WriteString("priority ")
 	b.WriteString(strconv.Itoa(initdata.Priority))
 	b.WriteString(";\n")
 

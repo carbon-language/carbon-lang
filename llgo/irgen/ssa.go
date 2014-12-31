@@ -409,11 +409,6 @@ func (u *unit) defineFunction(f *ssa.Function) {
 		}
 	}
 
-	// If this is the "init" function, enable init-specific optimizations.
-	if !isMethod && f.Name() == "init" {
-		fr.isInit = true
-	}
-
 	// If the function contains any defers, we must first create
 	// an unwind block. We can short-circuit the check for defers with
 	// f.Recover != nil.
@@ -422,8 +417,20 @@ func (u *unit) defineFunction(f *ssa.Function) {
 		fr.frameptr = fr.builder.CreateAlloca(llvm.Int8Type(), "")
 	}
 
-	term := fr.builder.CreateBr(fr.blocks[0])
-	fr.allocaBuilder.SetInsertPointBefore(term)
+	// Keep track of the block into which we need to insert the call
+	// to __go_register_gc_roots. This needs to be inserted after the
+	// init guard check under the llgo ABI.
+	var registerGcBlock llvm.BasicBlock
+
+	// If this is the "init" function, emit the init guard check and
+	// enable init-specific optimizations.
+	if !isMethod && f.Name() == "init" {
+		registerGcBlock = fr.emitInitPrologue()
+		fr.isInit = true
+	}
+
+	fr.builder.CreateBr(fr.blocks[0])
+	fr.allocaBuilder.SetInsertPointBefore(prologueBlock.FirstInstruction())
 
 	for _, block := range f.DomPreorder() {
 		fr.translateBlock(block, fr.blocks[block.Index])
@@ -439,7 +446,7 @@ func (u *unit) defineFunction(f *ssa.Function) {
 	// after generating code for it because allocations may have caused
 	// additional GC roots to be created.
 	if fr.isInit {
-		fr.builder.SetInsertPointBefore(prologueBlock.FirstInstruction())
+		fr.builder.SetInsertPointBefore(registerGcBlock.FirstInstruction())
 		fr.registerGcRoots()
 	}
 }
@@ -482,6 +489,42 @@ func newFrame(u *unit, fn llvm.Value) *frame {
 func (fr *frame) dispose() {
 	fr.builder.Dispose()
 	fr.allocaBuilder.Dispose()
+}
+
+// emitInitPrologue emits the init-specific function prologue (guard check and
+// initialization of dependent packages under the llgo native ABI), and returns
+// the basic block into which the GC registration call should be emitted.
+func (fr *frame) emitInitPrologue() llvm.BasicBlock {
+	if fr.GccgoABI {
+		return fr.builder.GetInsertBlock()
+	}
+
+	initGuard := llvm.AddGlobal(fr.module.Module, llvm.Int1Type(), "init$guard")
+	initGuard.SetLinkage(llvm.InternalLinkage)
+	initGuard.SetInitializer(llvm.ConstNull(llvm.Int1Type()))
+
+	returnBlock := llvm.AddBasicBlock(fr.function, "")
+	initBlock := llvm.AddBasicBlock(fr.function, "")
+
+	initGuardVal := fr.builder.CreateLoad(initGuard, "")
+	fr.builder.CreateCondBr(initGuardVal, returnBlock, initBlock)
+
+	fr.builder.SetInsertPointAtEnd(returnBlock)
+	fr.builder.CreateRetVoid()
+
+	fr.builder.SetInsertPointAtEnd(initBlock)
+	fr.builder.CreateStore(llvm.ConstInt(llvm.Int1Type(), 1, false), initGuard)
+	ftyp := llvm.FunctionType(llvm.VoidType(), nil, false)
+	for _, pkg := range fr.pkg.Object.Imports() {
+		initname := ManglePackagePath(pkg.Path()) + "..import"
+		initfn := fr.module.Module.NamedFunction(initname)
+		if initfn.IsNil() {
+			initfn = llvm.AddFunction(fr.module.Module, initname, ftyp)
+		}
+		fr.builder.CreateCall(initfn, nil, "")
+	}
+
+	return initBlock
 }
 
 // bridgeRecoverFunc creates a function that may call recover(), and creates
