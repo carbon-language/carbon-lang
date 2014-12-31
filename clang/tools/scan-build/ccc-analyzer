@@ -41,10 +41,14 @@ my $Clang;
 my $DefaultCCompiler;
 my $DefaultCXXCompiler;
 my $IsCXX;
+my $UseXCRUN = 0;
 
 if (`uname -a` =~ m/Darwin/) {
   $DefaultCCompiler = 'clang';
   $DefaultCXXCompiler = 'clang++';
+  if (-x "/usr/bin/xcrun") {
+    $UseXCRUN = 1;
+  }
 } else {
   $DefaultCCompiler = 'gcc';
   $DefaultCXXCompiler = 'g++';
@@ -478,6 +482,7 @@ my $HtmlDir = $ENV{'CCC_ANALYZER_HTML'};
 my %DisabledArchs = ('ppc' => 1, 'ppc64' => 1);
 my %ArchsSeen;
 my $HadArch = 0;
+my $HasSDK = 0;
 
 # Process the arguments.
 foreach (my $i = 0; $i < scalar(@ARGV); ++$i) {
@@ -498,6 +503,12 @@ foreach (my $i = 0; $i < scalar(@ARGV); ++$i) {
     $HadArch = 1;
     ++$i;
     next;
+  }
+
+  # On OSX/iOS, record if an SDK path was specified.  This
+  # is innocuous for other platforms, so the check just happens.
+  if ($Arg =~ /^-isysroot/) {
+    $HasSDK = 1;
   }
 
   # Options with possible arguments that should pass through to compiler.
@@ -642,6 +653,15 @@ foreach (my $i = 0; $i < scalar(@ARGV); ++$i) {
     push @Files, $Arg;
     next;
   }
+}
+
+# If we are on OSX and have an installation where the
+# default SDK is inferred by xcrun use xcrun to infer
+# the SDK.
+if (not $HasSDK and $UseXCRUN) {
+  my $sdk = `/usr/bin/xcrun --show-sdk-path -sdk macosx`;
+  chomp $sdk;
+  push @CompileOpts, "-isysroot", $sdk;
 }
 
 if ($Action eq 'compile' or $Action eq 'link') {
