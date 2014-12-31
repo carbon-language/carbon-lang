@@ -975,27 +975,16 @@ static int getID(struct InternalInstruction* insn, const void *miiArg) {
   if (insn->rexPrefix & 0x08)
     attrMask |= ATTR_REXW;
 
-  if (getIDWithAttrMask(&instructionID, insn, attrMask))
-    return -1;
-
   /*
    * JCXZ/JECXZ need special handling for 16-bit mode because the meaning
    * of the AdSize prefix is inverted w.r.t. 32-bit mode.
    */
-  if (insn->mode == MODE_16BIT && insn->opcode == 0xE3) {
-    const struct InstructionSpecifier *spec;
-    spec = specifierForUID(instructionID);
+  if (insn->mode == MODE_16BIT && insn->opcodeType == ONEBYTE &&
+      insn->opcode == 0xE3)
+    attrMask ^= ATTR_ADSIZE;
 
-    /*
-     * Check for Ii8PCRel instructions. We could alternatively do a
-     * string-compare on the names, but this is probably cheaper.
-     */
-    if (x86OperandSets[spec->operands][0].type == TYPE_REL8) {
-      attrMask ^= ATTR_ADSIZE;
-      if (getIDWithAttrMask(&instructionID, insn, attrMask))
-        return -1;
-    }
-  }
+  if (getIDWithAttrMask(&instructionID, insn, attrMask))
+    return -1;
 
   /* The following clauses compensate for limitations of the tables. */
 
