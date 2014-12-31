@@ -1637,6 +1637,117 @@ def C4_or_orn   : T_LOGICAL_3OP<"or",  "or",  0b11, 1>;
 // XTYPE/ALU +
 //===----------------------------------------------------------------------===//
 
+// Logical with-not instructions.
+let validSubTargets = HasV4SubT, isCodeGenOnly = 0 in {
+  def A4_andnp : T_ALU64_logical<"and", 0b001, 1, 0, 1>;
+  def A4_ornp  : T_ALU64_logical<"or",  0b011, 1, 0, 1>;
+}
+
+let hasNewValue = 1, hasSideEffects = 0, isCodeGenOnly = 0 in
+def S4_parity: ALU64Inst<(outs IntRegs:$Rd), (ins IntRegs:$Rs, IntRegs:$Rt),
+      "$Rd = parity($Rs, $Rt)", [], "", ALU64_tc_2_SLOT23> {
+  bits<5> Rd;
+  bits<5> Rs;
+  bits<5> Rt;
+
+  let IClass = 0b1101;
+  let Inst{27-21} = 0b0101111;
+  let Inst{20-16} = Rs;
+  let Inst{12-8} = Rt;
+  let Inst{4-0} = Rd;
+}
+//  Add and accumulate.
+//  Rd=add(Rs,add(Ru,#s6))
+let isExtentSigned = 1, hasNewValue = 1, isExtendable = 1, opExtentBits = 6,
+    opExtendable = 3, isCodeGenOnly = 0 in
+def S4_addaddi : ALU64Inst <(outs IntRegs:$Rd),
+                            (ins IntRegs:$Rs, IntRegs:$Ru, s6Ext:$s6),
+  "$Rd = add($Rs, add($Ru, #$s6))" ,
+  [(set (i32 IntRegs:$Rd), (add (i32 IntRegs:$Rs),
+                           (add (i32 IntRegs:$Ru), s6_16ExtPred:$s6)))],
+  "", ALU64_tc_2_SLOT23> {
+    bits<5> Rd;
+    bits<5> Rs;
+    bits<5> Ru;
+    bits<6> s6;
+
+    let IClass = 0b1101;
+
+    let Inst{27-23} = 0b10110;
+    let Inst{22-21} = s6{5-4};
+    let Inst{20-16} = Rs;
+    let Inst{13}    = s6{3};
+    let Inst{12-8}  = Rd;
+    let Inst{7-5}   = s6{2-0};
+    let Inst{4-0}   = Ru;
+  }
+
+let isExtentSigned = 1, hasSideEffects = 0, hasNewValue = 1, isExtendable = 1,
+    opExtentBits = 6, opExtendable = 2, isCodeGenOnly = 0 in
+def S4_subaddi: ALU64Inst <(outs IntRegs:$Rd),
+                           (ins IntRegs:$Rs, s6Ext:$s6, IntRegs:$Ru),
+  "$Rd = add($Rs, sub(#$s6, $Ru))",
+  [], "", ALU64_tc_2_SLOT23> {
+    bits<5> Rd;
+    bits<5> Rs;
+    bits<6> s6;
+    bits<5> Ru;
+
+    let IClass = 0b1101;
+
+    let Inst{27-23} = 0b10111;
+    let Inst{22-21} = s6{5-4};
+    let Inst{20-16} = Rs;
+    let Inst{13}    = s6{3};
+    let Inst{12-8}  = Rd;
+    let Inst{7-5}   = s6{2-0};
+    let Inst{4-0}   = Ru;
+  }
+  
+// Extract bitfield
+// Rdd=extract(Rss,#u6,#U6)
+// Rdd=extract(Rss,Rtt)
+// Rd=extract(Rs,Rtt)
+// Rd=extract(Rs,#u5,#U5)
+
+let isCodeGenOnly = 0 in {
+def S4_extractp_rp : T_S3op_64 < "extract",  0b11, 0b100, 0>;
+def S4_extractp    : T_S2op_extract <"extract",  0b1010, DoubleRegs, u6Imm>;
+}
+
+let hasNewValue = 1, isCodeGenOnly = 0 in {
+  def S4_extract_rp : T_S3op_extract<"extract",  0b01>;
+  def S4_extract    : T_S2op_extract <"extract",  0b1101, IntRegs, u5Imm>;
+}
+
+let Itinerary = M_tc_3x_SLOT23, Defs = [USR_OVF], isCodeGenOnly = 0 in {
+  def M4_mac_up_s1_sat: T_MType_acc_rr<"+= mpy", 0b011, 0b000, 0, [], 0, 1, 1>;
+  def M4_nac_up_s1_sat: T_MType_acc_rr<"-= mpy", 0b011, 0b001, 0, [], 0, 1, 1>;
+}
+
+// Logical xor with xor accumulation.
+// Rxx^=xor(Rss,Rtt)
+let hasSideEffects = 0, isCodeGenOnly = 0 in
+def M4_xor_xacc
+  : SInst <(outs DoubleRegs:$Rxx),
+           (ins DoubleRegs:$dst2, DoubleRegs:$Rss, DoubleRegs:$Rtt),
+  "$Rxx ^= xor($Rss, $Rtt)",
+  [(set (i64 DoubleRegs:$Rxx),
+   (xor (i64 DoubleRegs:$dst2), (xor (i64 DoubleRegs:$Rss),
+                                     (i64 DoubleRegs:$Rtt))))],
+  "$dst2 = $Rxx", S_3op_tc_1_SLOT23> {
+    bits<5> Rxx;
+    bits<5> Rss;
+    bits<5> Rtt;
+
+    let IClass = 0b1100;
+
+    let Inst{27-23} = 0b10101;
+    let Inst{20-16} = Rss;
+    let Inst{12-8}  = Rtt;
+    let Inst{4-0}   = Rxx;
+  }
+
 //  Add and accumulate.
 //  Rd=add(Rs,add(Ru,#s6))
 let isExtendable = 1, opExtendable = 3, isExtentSigned = 1, opExtentBits = 6,
