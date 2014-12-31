@@ -36,6 +36,149 @@
         </div>
         <div class="postfooter"></div>
         <div class="post">
+          <h1 class="postheader">Building LLDB</h1>
+          <ul>
+            <li><a href="#BuildingLldbOnWindows">Building LLDB on Windows</a></li>
+            <li><a href="#BuildingLldbOnMacOSX">Building LLDB on Mac OSX</a></li>
+            <li><a href="#BuildingLldbOnLinux">Building LLDB on Linux and FreeBSD</a></li>
+          </ul>
+        </div>
+        <div class="postfooter"></div>
+        <div class="post" id="BuildingLldbOnWindows">
+          <h1 class="postheader">Building LLDB on Windows</h1>
+          <div class="postcontent">
+            <h2>Required Dependencies</h2>
+            <ul>
+              <li>Visual Studio 2012 or greater</li>
+              <li>Windows SDK 8.0 or higher</li>
+              <li>
+                <a href="https://www.python.org/download/releases/2.7/">Python 2.7</a>. Note that you <b>must</b>
+                compile Python from source.  See <a href="#WindowsPreliminaries">Preliminaries</a> for more
+                information.
+              </li>
+              <li><a href="http://martine.github.io/ninja/">Ninja build tool</a> (strongly recommended)</li>
+              <li><a href="http://gnuwin32.sourceforge.net/">GnuWin32</a></li>
+              <li><a href="http://www.swig.org/download.html">SWIG for Windows</a></li>
+            </ul>
+            <h2 id="WindowsPreliminaries">Preliminaries</h2>
+            <p>
+              This section describes how to set up your system and install the required dependencies such that
+              they can be found when needed during the build process.  The steps outlined here only need to
+              be performed once.
+            </p>
+            <ol>
+              <li><p>Install Visual Studio and the Windows SDK.</p></li>
+              <li>
+                <p>
+                  Build Python from source using the solution file supplied with the Python 2.7 source
+                  distribution.
+                </p>
+                <p>
+                  Because LLDB functionality is compiled into a Python extension module,
+                  the extension module must be compiled with the same version of Visual Studio that
+                  Python itself was compiled with.  The binary release of Python 2.7 is compiled with
+                  Visual Studio 2008, so it is incompatible with linking against LLDB.
+                </p>
+                <p>
+                  Note that if you plan to do both debug and release builds of LLDB, you will need to
+                  compile both debug and release builds of Python.
+                </p>
+              </li>
+              <li>
+                <p>Copy &lt;python src dir&gt;\PC\pyconfig.h to &lt;python src dir&gt;\Include.</p>
+                <p>
+                  This is necessary because pyconfig.h is a hand-maintained file which is platform specific,
+                  so multiple copies of this file are included with each source distribution.  It appears to
+                  be up to the person building Python to move the correct version of pyconfig.h to the Include
+                  folder.
+                </p>
+              </li>
+              <li><p>Install GnuWin32, making sure &lt;GnuWin32 install dir&gt;\bin is added to your PATH environment variable.</p></li>
+              <li><p>Install SWIG for Windows, making sure &lt;SWIG install dir&gt; is added to your PATH environment variable.</p></li>
+              <li>
+                <p>(Optional) Create a file somewhere on your disk called llvm_env.bat and add the following code to it:</p>
+                <code>
+                  @ECHO OFF<br /><br />
+                  IF "%1" == "build" goto do_build<br />
+                  IF "%1" == "dev" goto do_dev<br />
+                  ECHO Unknown option, expected "build" or "dev"<br />
+                  goto do_end<br /><br />
+                  :do_build<br />
+                  ECHO Initializing MSVC Build Environment...<br />
+                  CALL "c:\Program Files (x86)\Microsoft Visual Studio 12.0\vc\vcvarsall.bat"<br />
+                  ECHO Initializing Python environment...<br />
+                  set PYTHONPATH=&lt;python src dir&gt;\Lib;&lt;cmake gen dir&gt;\lib\site-packages<br />
+                  set PATH=%PATH%;&lt;python src dir&gt;\PCbuild<br />
+                  goto do_end<br /><br />
+                  :do_dev<br />
+                  set PYTHONPATH=<br />
+                  goto do_end<br />
+                  :do_end<br />
+                </code>
+              </li>
+              <li>
+                <p>
+                  (Optional) To make the process of setting up the environment before building more convenient, you can
+                  optionally create a shortcut with the following properties:
+                </p>
+                <code>%windir%\system32\cmd.exe /K &lt;path-to-llvm_env.bat&gt; build</code>
+              </li>
+            </ol>
+            <h2>Building LLDB</h2>
+            <p>
+              Any command prompt from which you build LLDB should have a valid Visual Studio environment setup.
+              This means you should run vcvarsall.bat or open an appropriate Visual Studio Command Prompt
+              corresponding to the version you wish to use.  Additionally, in order for LLDB to be able to locate
+              Python to link against, you will need to set up your PYTHONPATH environment variable to contain two
+              additional values:
+            </p>
+            <ol>
+              <li>&lt;python src dir&gt;\Lib</li>
+              <li>&lt;folder where CMake build files are generated&gt;\lib\site-packages</li>
+            </ol>
+            <p>
+              The first allows your custom built python installation to locate its system libraries, and
+              the second allows Python to locate the LLDB extension module.
+            </p>
+            <p>
+              Steps 6 and 7 of <a href="#WindowsPreliminaries">Preliminaries</a> describe a method for simplifying
+              this setup.
+            </p>
+            <p>Finally, when you are ready to build LLDB, generate CMake with the following command line:</p>
+            <code>cmake -G Ninja &lt;cmake variables&gt; &lt;path to root of llvm src tree&gt;</code>
+            <p>and run <code>ninja</code> to build LLDB, and <code>ninja check-lldb</code> to run LLDB's test suite.</p>
+            <p>
+              Following is a description of some of the most important CMake variables which you are likely to encounter.
+              A variable <code>FOO</code> is set by adding <code>-DFOO=value</code> to the CMake command line.
+            </p>
+            <ul>
+              <li>
+                <b>LLDB_TEST_DEBUG_TEST_CRASHES</b> (Default=0): If set to 1, will cause Windows to generate a crash
+                dialog whenever lldb.exe or the python extension module crashes while running the test suite.  If set to
+                0, LLDB will silently crash.  Setting to 1 allows a developer to attach a JIT debugger at the time of
+                a crash, rather than having to reproduce a failure or use a crash dump.
+              </li>
+              <li>
+                <b>PYTHON_LIBRARY</b>: Path to python27.lib.  If doing a debug build, note that the library is called
+                python27_d.lib.  Generally this should be set to <div align="center">&lt;python src dir&gt;\PCBuild\python27(_d).lib</div>
+              </li>
+              <li>
+                <b>PYTHON_INCLUDE_DIR</b>: Path to python include directory.  Generally this should be set to
+                <div align="center">&lt;python src dir&gt;\Include</div>
+              </li>
+              <li>
+                <b>PYTHON_EXECUTABLE</b>: Path to python.exe.  If doing a debug build of LLDB, note that the executable
+                is called python_d.exe.  Generally this should be set to <div align="center">&lt;python src dir&gt;\PCBuild\python(_d).exe</div>
+              </li>
+              <li>
+                <b>LLDB_TEST_COMPILER</b>: The test suite only supports testing executables that were compiled with clang.  This specifies
+                the path to the copy of clang that you wish to use to compile test executables.  To use the version
+                of clang that you compiled alongside LLDB, set this to <div align="center">&lt;folder where CMake build files are generated&gt;\bin\clang.exe</div>
+              </li>
+            </ul>
+          </div>
+        </div>
+        <div class="post" id="BuildingLldbOnMacOSX">
           <h1 class="postheader">Building LLDB on Mac OS X</h1>
           <div class="postcontent">
             <p>Building on Mac OS X is as easy as downloading the code and building the Xcode project or workspace:</p>
@@ -56,7 +199,7 @@
           </div>
           <div class="postfooter"></div>
         </div>
-        <div class="post">
+        <div class="post" id="BuildingLldbOnLinux">
           <h1 class="postheader">Building LLDB on Linux and FreeBSD</h1>
           <div class="postcontent">
             <p>This document describes the steps needed to compile LLDB on most Linux systems, and FreeBSD.</a></p>

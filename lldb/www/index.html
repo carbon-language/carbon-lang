@@ -94,7 +94,10 @@
 					   	<li>iOS device debugging on ARM</li>
 					   	<li>Linux local user-space debugging for i386 and x86-64</li>
 					   	<li>FreeBSD local user-space debugging for i386 and x86-64</li>
+					   	<li>Windows local user-space debugging for i386 (*)</li>
 				    </ul>
+				    <p>(*) Support for Windows is under active development.  Basic functionality
+				       is expected to work, with functionality improving rapidly.</p>
 				</div>
 				<div class="postfooter"></div>
 			</div>
@@ -110,9 +113,13 @@
 				        <li>svn co http://llvm.org/svn/llvm-project/lldb/trunk lldb</li>
 				    </ul>
 
-				    <p>Note that LLDB generally builds from top-of-trunk on Mac OS X with
-				        Xcode and on Linux (with clang and libstdc++/libc++). </p>
-
+				    <p>Note that LLDB generally builds from top-of-trunk</p>
+						<ul>
+								<li>On Mac OS X with Xcode</li>
+								<li>On Linux and FreeBSD (with clang and libstdc++/libc++)</li>
+								<li>On Windows with VS 2012 or higher using CMake</li>
+						</ul>
+						<p>See the <a href="build.html">LLDB Build Page</a> for platform-specific build instructions.</p>
 				    <p>Discussions about LLDB should go to the <a href="http://lists.cs.uiuc.edu/mailman/listinfo/lldb-dev">lldb-dev</a> mailing
 				        list.  Commit messages for the lldb SVN module are automatically sent to the
 				        <a  href="http://lists.cs.uiuc.edu/mailman/listinfo/lldb-commits">lldb-commits</a>
