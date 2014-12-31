@@ -38,6 +38,7 @@ type Module struct {
 	llvm.Module
 	Path       string
 	ExportData []byte
+	Package    *types.Package
 	disposed   bool
 }
 
@@ -194,7 +195,7 @@ func (compiler *compiler) compile(fset *token.FileSet, astFiles []*ast.File, imp
 
 	// Create a Module, which contains the LLVM module.
 	modulename := importpath
-	compiler.module = &Module{Module: llvm.NewModule(modulename), Path: modulename}
+	compiler.module = &Module{Module: llvm.NewModule(modulename), Path: modulename, Package: mainPkg.Object}
 	compiler.module.SetTarget(compiler.TargetTriple)
 	compiler.module.SetDataLayout(compiler.dataLayout)
 
