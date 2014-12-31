@@ -434,36 +434,3 @@ define void @loadStoreBaseIndexOffsetSextNoSex(i8* %a, i8* %b, i8* %c, i32 %n) {
 ; <label>:14
   ret void
 }
-
-define void @merge_vec_element_store(<8 x float> %v, float* %ptr) {
-  %vecext0 = extractelement <8 x float> %v, i32 0
-  %vecext1 = extractelement <8 x float> %v, i32 1
-  %vecext2 = extractelement <8 x float> %v, i32 2
-  %vecext3 = extractelement <8 x float> %v, i32 3
-  %vecext4 = extractelement <8 x float> %v, i32 4
-  %vecext5 = extractelement <8 x float> %v, i32 5
-  %vecext6 = extractelement <8 x float> %v, i32 6
-  %vecext7 = extractelement <8 x float> %v, i32 7
-  %arrayidx1 = getelementptr inbounds float* %ptr, i64 1
-  %arrayidx2 = getelementptr inbounds float* %ptr, i64 2
-  %arrayidx3 = getelementptr inbounds float* %ptr, i64 3
-  %arrayidx4 = getelementptr inbounds float* %ptr, i64 4
-  %arrayidx5 = getelementptr inbounds float* %ptr, i64 5
-  %arrayidx6 = getelementptr inbounds float* %ptr, i64 6
-  %arrayidx7 = getelementptr inbounds float* %ptr, i64 7
-  store float %vecext0, float* %ptr, align 4
-  store float %vecext1, float* %arrayidx1, align 4
-  store float %vecext2, float* %arrayidx2, align 4
-  store float %vecext3, float* %arrayidx3, align 4
-  store float %vecext4, float* %arrayidx4, align 4
-  store float %vecext5, float* %arrayidx5, align 4
-  store float %vecext6, float* %arrayidx6, align 4
-  store float %vecext7, float* %arrayidx7, align 4
-  ret void
-
-; CHECK-LABEL: merge_vec_element_store
-; CHECK: vmovups
-; CHECK-NEXT: vzeroupper
-; CHECK-NEXT: retq
-}
-
