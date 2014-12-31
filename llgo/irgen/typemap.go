@@ -487,10 +487,10 @@ func (ctx *manglerContext) mangleSignature(s *types.Signature, recv *types.Var, 
 	b.WriteRune('e')
 }
 
-func (ctx *manglerContext) manglePackagePath(pkgpath string, b *bytes.Buffer) {
+func ManglePackagePath(pkgpath string) string {
 	pkgpath = strings.Replace(pkgpath, "/", "_", -1)
 	pkgpath = strings.Replace(pkgpath, ".", "_", -1)
-	b.WriteString(pkgpath)
+	return pkgpath
 }
 
 func (ctx *manglerContext) mangleType(t types.Type, b *bytes.Buffer) {
@@ -499,7 +499,7 @@ func (ctx *manglerContext) mangleType(t types.Type, b *bytes.Buffer) {
 		var nb bytes.Buffer
 		ti := ctx.getNamedTypeInfo(t)
 		if ti.pkgpath != "" {
-			ctx.manglePackagePath(ti.pkgpath, &nb)
+			nb.WriteString(ManglePackagePath(ti.pkgpath))
 			nb.WriteRune('.')
 		}
 		if ti.functionName != "" {
@@ -602,7 +602,7 @@ func (ctx *manglerContext) mangleTypeDescriptorName(t types.Type, b *bytes.Buffe
 		b.WriteString("__go_tdn_")
 		ti := ctx.getNamedTypeInfo(t)
 		if ti.pkgpath != "" {
-			ctx.manglePackagePath(ti.pkgpath, b)
+			b.WriteString(ManglePackagePath(ti.pkgpath))
 			b.WriteRune('.')
 		}
 		if ti.functionName != "" {
@@ -674,7 +674,7 @@ func (ctx *manglerContext) mangleFunctionName(f *ssa.Function) string {
 	}
 
 	if pkg != nil {
-		ctx.manglePackagePath(pkg.Path(), &b)
+		b.WriteString(ManglePackagePath(pkg.Path()))
 		b.WriteRune('.')
 	}
 
@@ -694,7 +694,7 @@ func (ctx *manglerContext) mangleFunctionName(f *ssa.Function) string {
 func (ctx *manglerContext) mangleGlobalName(g *ssa.Global) string {
 	var b bytes.Buffer
 
-	ctx.manglePackagePath(g.Pkg.Object.Path(), &b)
+	b.WriteString(ManglePackagePath(g.Pkg.Object.Path()))
 	b.WriteRune('.')
 	b.WriteString(g.Name())
 
@@ -814,7 +814,7 @@ func (tm *TypeMap) writeType(typ types.Type, b *bytes.Buffer) {
 		ti := tm.mc.getNamedTypeInfo(t)
 		if ti.pkgpath != "" {
 			b.WriteByte('\t')
-			tm.mc.manglePackagePath(ti.pkgpath, b)
+			b.WriteString(ManglePackagePath(ti.pkgpath))
 			b.WriteByte('\t')
 			b.WriteString(ti.pkgname)
 			b.WriteByte('.')
