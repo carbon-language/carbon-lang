@@ -1019,6 +1019,32 @@ static int getID(struct InternalInstruction* insn, const void *miiArg) {
     }
   }
 
+  /*
+   * Absolute moves need special handling.
+   * -For 16-bit mode because the meaning of the AdSize and OpSize prefixes are
+   *  inverted w.r.t.
+   * -For 32-bit mode we need to ensure the ADSIZE prefix is observed in
+   *  any position.
+   */
+  if (insn->opcodeType == ONEBYTE && ((insn->opcode & 0xFC) == 0xA0)) {
+    /* Make sure we observed the prefixes in any position. */
+    if (insn->prefixPresent[0x67])
+      attrMask |= ATTR_ADSIZE;
+    if (insn->prefixPresent[0x66])
+      attrMask |= ATTR_OPSIZE;
+
+    /* In 16-bit, invert the attributes. */
+    if (insn->mode == MODE_16BIT)
+      attrMask ^= ATTR_ADSIZE | ATTR_OPSIZE;
+
+    if (getIDWithAttrMask(&instructionID, insn, attrMask))
+      return -1;
+
+    insn->instructionID = instructionID;
+    insn->spec = specifierForUID(instructionID);
+    return 0;
+  }
+
   if ((insn->mode == MODE_16BIT || insn->prefixPresent[0x66]) &&
       !(attrMask & ATTR_OPSIZE)) {
     /*

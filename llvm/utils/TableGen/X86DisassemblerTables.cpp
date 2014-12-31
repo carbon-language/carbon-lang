@@ -93,9 +93,15 @@ static inline bool inheritsFrom(InstructionContext child,
            inheritsFrom(child, IC_64BIT_XD)     ||
            inheritsFrom(child, IC_64BIT_XS));
   case IC_OPSIZE:
-    return inheritsFrom(child, IC_64BIT_OPSIZE);
+    return inheritsFrom(child, IC_64BIT_OPSIZE) ||
+           inheritsFrom(child, IC_OPSIZE_ADSIZE);
   case IC_ADSIZE:
+    return inheritsFrom(child, IC_OPSIZE_ADSIZE);
+  case IC_OPSIZE_ADSIZE:
+    return false;
   case IC_64BIT_ADSIZE:
+    return inheritsFrom(child, IC_64BIT_OPSIZE_ADSIZE);
+  case IC_64BIT_OPSIZE_ADSIZE:
     return false;
   case IC_XD:
     return inheritsFrom(child, IC_64BIT_XD);
@@ -110,7 +116,8 @@ static inline bool inheritsFrom(InstructionContext child,
            inheritsFrom(child, IC_64BIT_REXW_XD) ||
            inheritsFrom(child, IC_64BIT_REXW_OPSIZE));
   case IC_64BIT_OPSIZE:
-    return(inheritsFrom(child, IC_64BIT_REXW_OPSIZE));
+    return inheritsFrom(child, IC_64BIT_REXW_OPSIZE) ||
+           inheritsFrom(child, IC_64BIT_OPSIZE_ADSIZE);
   case IC_64BIT_XD:
     return(inheritsFrom(child, IC_64BIT_REXW_XD));
   case IC_64BIT_XS:
@@ -721,6 +728,9 @@ void DisassemblerTables::emitContextTable(raw_ostream &o, unsigned &i) const {
       o << "IC_64BIT_XS";
     else if ((index & ATTR_64BIT) && (index & ATTR_XD))
       o << "IC_64BIT_XD";
+    else if ((index & ATTR_64BIT) && (index & ATTR_OPSIZE) &&
+             (index & ATTR_ADSIZE))
+      o << "IC_64BIT_OPSIZE_ADSIZE";
     else if ((index & ATTR_64BIT) && (index & ATTR_OPSIZE))
       o << "IC_64BIT_OPSIZE";
     else if ((index & ATTR_64BIT) && (index & ATTR_ADSIZE))
@@ -737,6 +747,8 @@ void DisassemblerTables::emitContextTable(raw_ostream &o, unsigned &i) const {
       o << "IC_XS";
     else if (index & ATTR_XD)
       o << "IC_XD";
+    else if ((index & ATTR_OPSIZE) && (index & ATTR_ADSIZE))
+      o << "IC_OPSIZE_ADSIZE";
     else if (index & ATTR_OPSIZE)
       o << "IC_OPSIZE";
     else if (index & ATTR_ADSIZE)
@@ -821,18 +833,6 @@ void DisassemblerTables::setTableFields(ModRMDecision     &decision,
           InstructionSpecifiers[uid];
         InstructionSpecifier &previousInfo =
           InstructionSpecifiers[decision.instructionIDs[index]];
-
-        // FIXME this doesn't actually work. The MCInsts the disassembler
-        // create don't encode re-encode correctly. They just manage to mostly
-        // print correctly.
-        // Instructions such as MOV8ao8 and MOV8ao8_16 differ only in the
-        // presence of the AdSize prefix. However, the disassembler doesn't
-        // care about that difference in the instruction definition; it
-        // handles 16-bit vs. 32-bit addressing for itself based purely
-        // on the 0x67 prefix and the CPU mode. So there's no need to
-        // disambiguate between them; just let them conflict/coexist.
-        if (previousInfo.name + "_16" == newInfo.name)
-          continue;
 
         if(previousInfo.name == "NOOP" && (newInfo.name == "XCHG16ar" ||
                                            newInfo.name == "XCHG32ar" ||
