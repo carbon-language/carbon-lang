@@ -5,4 +5,4 @@ define i32 @get_work_dim() nounwind readnone alwaysinline {
   ret i32 %x
 }
 
-!0 = metadata !{ i32 1, i32 4 }
+!0 = !{ i32 1, i32 4 }
