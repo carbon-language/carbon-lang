@@ -15,6 +15,7 @@ _fred:
 
 	adrp	x3, _data_ext@gotpage
         ldr	w2, [x3, _data_ext@gotpageoff]
+        adrp    x0, L_.str@PAGE
 
 	.data
 _data:
@@ -28,9 +29,22 @@ _data:
         .quad _foo@got
         .long _foo@got - .
 
+        .section __TEXT,__cstring,cstring_literals
+L_.str:
+        .asciz "foo"
+
 
 ; CHECK:     Relocations [
 ; CHECK-NEXT:  Section __text {
+; CHECK-NEXT:    Relocation {
+; CHECK-NEXT:       Offset: 0x24
+; CHECK-NEXT:       PCRel: 1
+; CHECK-NEXT:       Length: 2
+; CHECK-NEXT:       Extern: 1
+; CHECK-NEXT:       Type: ARM64_RELOC_PAGE21 (3)
+; CHECK-NEXT:       Symbol: L_.str
+; CHECK-NEXT:       Scattered: 0
+; CHECK-NEXT:     }
 ; CHECK-NEXT:    Relocation {
 ; CHECK-NEXT:       Offset: 0x20
 ; CHECK-NEXT:       PCRel: 0
