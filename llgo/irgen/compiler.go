@@ -15,7 +15,6 @@ package irgen
 
 import (
 	"bytes"
-	"fmt"
 	"go/ast"
 	"go/token"
 	"log"
@@ -82,6 +81,15 @@ type CompilerOptions struct {
 	// SanitizerAttribute is an attribute to apply to functions to enable
 	// dynamic instrumentation using a sanitizer.
 	SanitizerAttribute llvm.Attribute
+
+	// Importer is the importer. If nil, the compiler will set this field
+	// automatically using MakeImporter().
+	Importer types.Importer
+
+	// InitMap is the init map used by Importer. If Importer is nil, the
+	// compiler will set this field automatically using MakeImporter().
+	// If Importer is non-nil, InitMap must be non-nil also.
+	InitMap map[*types.Package]gccgoimporter.InitData
 }
 
 type Compiler struct {
@@ -151,30 +159,44 @@ func (c *compiler) addCommonFunctionAttrs(fn llvm.Value) {
 	}
 }
 
+// MakeImporter sets CompilerOptions.Importer to an appropriate importer
+// for the search paths given in CompilerOptions.ImportPaths, and sets
+// CompilerOptions.InitMap to an init map belonging to that importer.
+// If CompilerOptions.GccgoPath is non-empty, the importer will also use
+// the search paths for that gccgo installation.
+func (opts *CompilerOptions) MakeImporter() error {
+	opts.InitMap = make(map[*types.Package]gccgoimporter.InitData)
+	if opts.GccgoPath == "" {
+		paths := append(append([]string{}, opts.ImportPaths...), ".")
+		opts.Importer = gccgoimporter.GetImporter(paths, opts.InitMap)
+	} else {
+		var inst gccgoimporter.GccgoInstallation
+		err := inst.InitFromDriver(opts.GccgoPath)
+		if err != nil {
+			return err
+		}
+		opts.Importer = inst.GetImporter(opts.ImportPaths, opts.InitMap)
+	}
+	return nil
+}
+
 func (compiler *compiler) compile(fset *token.FileSet, astFiles []*ast.File, importpath string) (m *Module, err error) {
 	buildctx, err := llgobuild.ContextFromTriple(compiler.TargetTriple)
 	if err != nil {
 		return nil, err
 	}
 
-	initmap := make(map[*types.Package]gccgoimporter.InitData)
-	var importer types.Importer
-	if compiler.GccgoPath == "" {
-		paths := append(append([]string{}, compiler.ImportPaths...), ".")
-		importer = gccgoimporter.GetImporter(paths, initmap)
-	} else {
-		var inst gccgoimporter.GccgoInstallation
-		err = inst.InitFromDriver(compiler.GccgoPath)
+	if compiler.Importer == nil {
+		err = compiler.MakeImporter()
 		if err != nil {
 			return nil, err
 		}
-		importer = inst.GetImporter(compiler.ImportPaths, initmap)
 	}
 
 	impcfg := &loader.Config{
 		Fset: fset,
 		TypeChecker: types.Config{
-			Import: importer,
+			Import: compiler.Importer,
 			Sizes:  compiler.llvmtypes,
 		},
 		Build: &buildctx.Context,
@@ -235,11 +257,9 @@ func (compiler *compiler) compile(fset *token.FileSet, astFiles []*ast.File, imp
 	compiler.processAnnotations(unit, mainPkginfo)
 
 	if importpath == "main" {
-		if err = compiler.createInitMainFunction(mainPkg, initmap); err != nil {
-			return nil, fmt.Errorf("failed to create __go_init_main: %v", err)
-		}
+		compiler.createInitMainFunction(mainPkg)
 	} else {
-		compiler.module.ExportData = compiler.buildExportData(mainPkg, initmap)
+		compiler.module.ExportData = compiler.buildExportData(mainPkg)
 	}
 
 	return compiler.module, nil
@@ -262,10 +282,10 @@ func (a byPriorityThenFunc) Less(i, j int) bool {
 	}
 }
 
-func (c *compiler) buildPackageInitData(mainPkg *ssa.Package, initmap map[*types.Package]gccgoimporter.InitData) gccgoimporter.InitData {
+func (c *compiler) buildPackageInitData(mainPkg *ssa.Package) gccgoimporter.InitData {
 	var inits []gccgoimporter.PackageInit
 	for _, imp := range mainPkg.Object.Imports() {
-		inits = append(inits, initmap[imp].Inits...)
+		inits = append(inits, c.InitMap[imp].Inits...)
 	}
 	sort.Sort(byPriorityThenFunc(inits))
 
@@ -301,8 +321,8 @@ func (c *compiler) buildPackageInitData(mainPkg *ssa.Package, initmap map[*types
 	return gccgoimporter.InitData{ourprio, uniqinits}
 }
 
-func (c *compiler) createInitMainFunction(mainPkg *ssa.Package, initmap map[*types.Package]gccgoimporter.InitData) error {
-	initdata := c.buildPackageInitData(mainPkg, initmap)
+func (c *compiler) createInitMainFunction(mainPkg *ssa.Package) {
+	initdata := c.buildPackageInitData(mainPkg)
 
 	ftyp := llvm.FunctionType(llvm.VoidType(), nil, false)
 	initMain := llvm.AddFunction(c.module.Module, "__go_init_main", ftyp)
@@ -322,14 +342,13 @@ func (c *compiler) createInitMainFunction(mainPkg *ssa.Package, initmap map[*typ
 	}
 
 	builder.CreateRetVoid()
-	return nil
 }
 
-func (c *compiler) buildExportData(mainPkg *ssa.Package, initmap map[*types.Package]gccgoimporter.InitData) []byte {
+func (c *compiler) buildExportData(mainPkg *ssa.Package) []byte {
 	exportData := importer.ExportData(mainPkg.Object)
 	b := bytes.NewBuffer(exportData)
 
-	initdata := c.buildPackageInitData(mainPkg, initmap)
+	initdata := c.buildPackageInitData(mainPkg)
 	b.WriteString("v1;\npriority ")
 	b.WriteString(strconv.Itoa(initdata.Priority))
 	b.WriteString(";\n")
