@@ -71,7 +71,8 @@ HexagonMCCodeEmitter::getMachineOpValue(MCInst const &MI, MCOperand const &MO,
     return MCT.getRegisterInfo()->getEncodingValue(MO.getReg());
   if (MO.isImm())
     return static_cast<unsigned>(MO.getImm());
-  llvm_unreachable("Only Immediates and Registers implemented right now");
+  assert(false && "Only Immediates and Registers implemented right now");
+  return 0;
 }
 
 MCSubtargetInfo const &HexagonMCCodeEmitter::getSubtargetInfo() const {
