@@ -23,6 +23,7 @@ import (
 	"errors"
 	"fmt"
 	"go/scanner"
+	"go/token"
 	"io/ioutil"
 	"log"
 	"os"
@@ -31,6 +32,7 @@ import (
 	"strings"
 
 	"llvm.org/llgo/debug"
+	"llvm.org/llgo/driver"
 	"llvm.org/llgo/irgen"
 	"llvm.org/llvm/bindings/go/llvm"
 )
@@ -580,7 +582,13 @@ func performAction(opts *driverOptions, kind actionKind, inputs []string, output
 			return err
 		}
 
-		module, err := compiler.Compile(inputs, opts.pkgpath)
+		fset := token.NewFileSet()
+		files, err := driver.ParseFiles(fset, inputs)
+		if err != nil {
+			return err
+		}
+
+		module, err := compiler.Compile(fset, files, opts.pkgpath)
 		if err != nil {
 			return err
 		}

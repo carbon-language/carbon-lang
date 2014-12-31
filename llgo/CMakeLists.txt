@@ -11,6 +11,7 @@ llvm_add_go_executable(llgo llvm.org/llgo/cmd/gllgo ALL DEPENDS
   build/context.go
   cmd/gllgo/gllgo.go
   debug/debug.go
+  driver/parser.go
   irgen/annotations.go
   irgen/attribute.go
   irgen/builtins.go
@@ -23,7 +24,6 @@ llvm_add_go_executable(llgo llvm.org/llgo/cmd/gllgo ALL DEPENDS
   irgen/indirect.go
   irgen/interfaces.go
   irgen/maps.go
-  irgen/parser.go
   irgen/predicates.go
   irgen/println.go
   irgen/runtime.go

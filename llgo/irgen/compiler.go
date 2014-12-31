@@ -16,6 +16,7 @@ package irgen
 import (
 	"bytes"
 	"fmt"
+	"go/ast"
 	"go/token"
 	"log"
 	"sort"
@@ -102,7 +103,7 @@ func NewCompiler(opts CompilerOptions) (*Compiler, error) {
 	return compiler, nil
 }
 
-func (c *Compiler) Compile(filenames []string, importpath string) (m *Module, err error) {
+func (c *Compiler) Compile(fset *token.FileSet, astFiles []*ast.File, importpath string) (m *Module, err error) {
 	target := llvm.NewTargetData(c.dataLayout)
 	compiler := &compiler{
 		CompilerOptions: c.opts,
@@ -111,7 +112,7 @@ func (c *Compiler) Compile(filenames []string, importpath string) (m *Module, er
 		pnacl:           c.pnacl,
 		llvmtypes:       NewLLVMTypeMap(llvm.GlobalContext(), target),
 	}
-	return compiler.compile(filenames, importpath)
+	return compiler.compile(fset, astFiles, importpath)
 }
 
 type compiler struct {
@@ -149,7 +150,7 @@ func (c *compiler) addCommonFunctionAttrs(fn llvm.Value) {
 	}
 }
 
-func (compiler *compiler) compile(filenames []string, importpath string) (m *Module, err error) {
+func (compiler *compiler) compile(fset *token.FileSet, astFiles []*ast.File, importpath string) (m *Module, err error) {
 	buildctx, err := llgobuild.ContextFromTriple(compiler.TargetTriple)
 	if err != nil {
 		return nil, err
@@ -170,18 +171,12 @@ func (compiler *compiler) compile(filenames []string, importpath string) (m *Mod
 	}
 
 	impcfg := &loader.Config{
-		Fset: token.NewFileSet(),
+		Fset: fset,
 		TypeChecker: types.Config{
 			Import: importer,
 			Sizes:  compiler.llvmtypes,
 		},
 		Build: &buildctx.Context,
-	}
-	// Must use parseFiles, so we retain comments;
-	// this is important for annotation processing.
-	astFiles, err := parseFiles(impcfg.Fset, filenames)
-	if err != nil {
-		return nil, err
 	}
 	// If no import path is specified, then set the import
 	// path to be the same as the package's name.
