@@ -2692,6 +2692,26 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
       return new ICmpInst(I.getPredicate(), A, B);
     }
 
+    // (icmp sgt (sub nsw A B), -1) -> (icmp sge A, B)
+    if (I.getPredicate() == ICmpInst::ICMP_SGT && CI->isAllOnesValue() &&
+        match(Op0, m_NSWSub(m_Value(A), m_Value(B))))
+      return new ICmpInst(ICmpInst::ICMP_SGE, A, B);
+
+    // (icmp sgt (sub nsw A B), 0) -> (icmp sgt A, B)
+    if (I.getPredicate() == ICmpInst::ICMP_SGT && CI->isZero() &&
+        match(Op0, m_NSWSub(m_Value(A), m_Value(B))))
+      return new ICmpInst(ICmpInst::ICMP_SGT, A, B);
+
+    // (icmp slt (sub nsw A B), 0) -> (icmp slt A, B)
+    if (I.getPredicate() == ICmpInst::ICMP_SLT && CI->isZero() &&
+        match(Op0, m_NSWSub(m_Value(A), m_Value(B))))
+      return new ICmpInst(ICmpInst::ICMP_SLT, A, B);
+
+    // (icmp slt (sub nsw A B), 1) -> (icmp sle A, B)
+    if (I.getPredicate() == ICmpInst::ICMP_SLT && CI->isOne() &&
+        match(Op0, m_NSWSub(m_Value(A), m_Value(B))))
+      return new ICmpInst(ICmpInst::ICMP_SLE, A, B);
+
     // If we have an icmp le or icmp ge instruction, turn it into the
     // appropriate icmp lt or icmp gt instruction.  This allows us to rely on
     // them being folded in the code below.  The SimplifyICmpInst code has

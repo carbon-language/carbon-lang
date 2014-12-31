@@ -1522,3 +1522,39 @@ define zeroext i1 @icmp_cmpxchg_strong(i32* %sc, i32 %old_val, i32 %new_val) {
   %icmp = icmp eq i32 %xtrc, %old_val
   ret i1 %icmp
 }
+
+; CHECK-LABEL: @f1
+; CHECK-NEXT: %[[cmp:.*]] = icmp sge i64 %a, %b
+; CHECK-NEXT: ret i1 %[[cmp]]
+define i1 @f1(i64 %a, i64 %b) {
+  %t = sub nsw i64 %a, %b
+  %v = icmp sge i64 %t, 0
+  ret i1 %v
+}
+
+; CHECK-LABEL: @f2
+; CHECK-NEXT: %[[cmp:.*]] = icmp sgt i64 %a, %b
+; CHECK-NEXT: ret i1 %[[cmp]]
+define i1 @f2(i64 %a, i64 %b) {
+  %t = sub nsw i64 %a, %b
+  %v = icmp sgt i64 %t, 0
+  ret i1 %v
+}
+
+; CHECK-LABEL: @f3
+; CHECK-NEXT: %[[cmp:.*]] = icmp slt i64 %a, %b
+; CHECK-NEXT: ret i1 %[[cmp]]
+define i1 @f3(i64 %a, i64 %b) {
+  %t = sub nsw i64 %a, %b
+  %v = icmp slt i64 %t, 0
+  ret i1 %v
+}
+
+; CHECK-LABEL: @f4
+; CHECK-NEXT: %[[cmp:.*]] = icmp sle i64 %a, %b
+; CHECK-NEXT: ret i1 %[[cmp]]
+define i1 @f4(i64 %a, i64 %b) {
+  %t = sub nsw i64 %a, %b
+  %v = icmp sle i64 %t, 0
+  ret i1 %v
+}
