@@ -697,6 +697,9 @@ void AtomChunk::addBaseRelocations(std::vector<uint64_t> &relocSites) const {
   case llvm::COFF::IMAGE_FILE_MACHINE_AMD64:
     relType = llvm::COFF::IMAGE_REL_AMD64_ADDR64;
     break;
+  case llvm::COFF::IMAGE_FILE_MACHINE_ARMNT:
+    relType = llvm::COFF::IMAGE_REL_ARM_ADDR32;
+    break;
   }
 
   for (const auto *layout : _atomLayouts) {

@@ -1,0 +1,6 @@
+# RUN: yaml2obj -format coff -o %t.obj %p/Inputs/armnt-obj.yaml
+# RUN: lld -flavor link /out:%t.dll /subsystem:console /entry:main %t.obj
+# RUN: llvm-readobj -sections %t.dll | FileCheck %s
+
+CHECK: Format: COFF-ARM
+

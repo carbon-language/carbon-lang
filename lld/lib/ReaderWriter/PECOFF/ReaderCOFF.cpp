@@ -932,6 +932,9 @@ std::error_code FileCOFF::getReferenceArch(Reference::KindArch &result) {
   case llvm::COFF::IMAGE_FILE_MACHINE_AMD64:
     result = Reference::KindArch::x86_64;
     return std::error_code();
+  case llvm::COFF::IMAGE_FILE_MACHINE_ARMNT:
+    result = Reference::KindArch::ARM;
+    return std::error_code();
   case llvm::COFF::IMAGE_FILE_MACHINE_UNKNOWN:
     result = Reference::KindArch::all;
     return std::error_code();
