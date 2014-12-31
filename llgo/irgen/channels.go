@@ -14,6 +14,7 @@
 package irgen
 
 import (
+	"llvm.org/llgo/third_party/go.tools/go/ssa"
 	"llvm.org/llgo/third_party/go.tools/go/types"
 	"llvm.org/llvm/bindings/go/llvm"
 )
@@ -60,16 +61,9 @@ func (fr *frame) chanClose(ch *govalue) {
 	fr.runtime.builtinClose.call(fr, ch.value)
 }
 
-// selectState is equivalent to ssa.SelectState
-type selectState struct {
-	Dir  types.ChanDir
-	Chan *govalue
-	Send *govalue
-}
-
-func (fr *frame) chanSelect(states []selectState, blocking bool) (index, recvOk *govalue, recvElems []*govalue) {
-	n := uint64(len(states))
-	if !blocking {
+func (fr *frame) chanSelect(sel *ssa.Select) (index, recvOk *govalue, recvElems []*govalue) {
+	n := uint64(len(sel.States))
+	if !sel.Blocking {
 		// non-blocking means there's a default case
 		n++
 	}
@@ -77,17 +71,21 @@ func (fr *frame) chanSelect(states []selectState, blocking bool) (index, recvOk 
 	selectp := fr.runtime.newSelect.call(fr, size)[0]
 
 	// Allocate stack for the values to send and receive.
-	//
-	// TODO(axw) check if received elements have any users, and
-	// elide stack allocation if not (pass nil to recv2 instead.)
-	ptrs := make([]llvm.Value, len(states))
-	for i, state := range states {
+	ptrs := make([]llvm.Value, len(sel.States))
+	for i, state := range sel.States {
 		chantyp := state.Chan.Type().Underlying().(*types.Chan)
 		elemtyp := fr.types.ToLLVM(chantyp.Elem())
-		ptrs[i] = fr.allocaBuilder.CreateAlloca(elemtyp, "")
 		if state.Dir == types.SendOnly {
-			fr.builder.CreateStore(state.Send.value, ptrs[i])
+			ptrs[i] = fr.allocaBuilder.CreateAlloca(elemtyp, "")
+			fr.builder.CreateStore(fr.llvmvalue(state.Send), ptrs[i])
 		} else {
+			// Only allocate stack space if the received value is used.
+			used := chanSelectStateUsed(sel, len(recvElems))
+			if used {
+				ptrs[i] = fr.allocaBuilder.CreateAlloca(elemtyp, "")
+			} else {
+				ptrs[i] = llvm.ConstNull(llvm.PointerType(llvm.Int8Type(), 0))
+			}
 			recvElems = append(recvElems, newValue(ptrs[i], chantyp.Elem()))
 		}
 	}
@@ -97,12 +95,12 @@ func (fr *frame) chanSelect(states []selectState, blocking bool) (index, recvOk 
 	if len(recvElems) > 0 {
 		receivedp = fr.allocaBuilder.CreateAlloca(fr.types.ToLLVM(types.Typ[types.Bool]), "")
 	}
-	if !blocking {
+	if !sel.Blocking {
 		// If the default case is chosen, the index must be -1.
 		fr.runtime.selectdefault.call(fr, selectp, llvm.ConstAllOnes(llvm.Int32Type()))
 	}
-	for i, state := range states {
-		ch := state.Chan.value
+	for i, state := range sel.States {
+		ch := fr.llvmvalue(state.Chan)
 		index := llvm.ConstInt(llvm.Int32Type(), uint64(i), false)
 		if state.Dir == types.SendOnly {
 			fr.runtime.selectsend.call(fr, selectp, ch, ptrs[i], index)
@@ -120,4 +118,17 @@ func (fr *frame) chanSelect(states []selectState, blocking bool) (index, recvOk 
 		}
 	}
 	return index, recvOk, recvElems
+}
+
+func chanSelectStateUsed(sel *ssa.Select, recvIndex int) bool {
+	for _, instr := range *sel.Referrers() {
+		extract, ok := instr.(*ssa.Extract)
+		if !ok || extract.Index != (recvIndex+2) {
+			continue
+		}
+		if len(*extract.Referrers()) > 0 {
+			return true
+		}
+	}
+	return false
 }

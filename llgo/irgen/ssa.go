@@ -1152,15 +1152,7 @@ func (fr *frame) instruction(instr ssa.Instruction) {
 		fr.runDefers()
 
 	case *ssa.Select:
-		states := make([]selectState, len(instr.States))
-		for i, state := range instr.States {
-			states[i] = selectState{
-				Dir:  state.Dir,
-				Chan: fr.value(state.Chan),
-				Send: fr.value(state.Send),
-			}
-		}
-		index, recvOk, recvElems := fr.chanSelect(states, instr.Blocking)
+		index, recvOk, recvElems := fr.chanSelect(instr)
 		tuple := append([]*govalue{index, recvOk}, recvElems...)
 		fr.tuples[instr] = tuple
 
