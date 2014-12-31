@@ -41,11 +41,15 @@ my $Clang;
 my $DefaultCCompiler;
 my $DefaultCXXCompiler;
 my $IsCXX;
+
+# If on OSX, use xcrun to determine the SDK root.
 my $UseXCRUN = 0;
 
 if (`uname -a` =~ m/Darwin/) {
   $DefaultCCompiler = 'clang';
   $DefaultCXXCompiler = 'clang++';
+  # Older versions of OSX do not have xcrun to
+  # query the SDK location.
   if (-x "/usr/bin/xcrun") {
     $UseXCRUN = 1;
   }
