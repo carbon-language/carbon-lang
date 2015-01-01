@@ -572,8 +572,7 @@ bad:
 }
 
 define i8 @test12() {
-; We fully promote these to the i24 load or store size, resulting in just masks
-; and other operations that instcombine will fold, but no alloca.
+; We promote these to three SSA values which fold away immediately.
 ;
 ; CHECK-LABEL: @test12(
 
@@ -592,17 +591,6 @@ entry:
   %ai = load i24* %aiptr
 ; CHECK-NOT: store
 ; CHECK-NOT: load
-; CHECK:      %[[ext2:.*]] = zext i8 0 to i24
-; CHECK-NEXT: %[[shift2:.*]] = shl i24 %[[ext2]], 16
-; CHECK-NEXT: %[[mask2:.*]] = and i24 undef, 65535
-; CHECK-NEXT: %[[insert2:.*]] = or i24 %[[mask2]], %[[shift2]]
-; CHECK-NEXT: %[[ext1:.*]] = zext i8 0 to i24
-; CHECK-NEXT: %[[shift1:.*]] = shl i24 %[[ext1]], 8
-; CHECK-NEXT: %[[mask1:.*]] = and i24 %[[insert2]], -65281
-; CHECK-NEXT: %[[insert1:.*]] = or i24 %[[mask1]], %[[shift1]]
-; CHECK-NEXT: %[[ext0:.*]] = zext i8 0 to i24
-; CHECK-NEXT: %[[mask0:.*]] = and i24 %[[insert1]], -256
-; CHECK-NEXT: %[[insert0:.*]] = or i24 %[[mask0]], %[[ext0]]
 
   %biptr = bitcast [3 x i8]* %b to i24*
   store i24 %ai, i24* %biptr
@@ -614,17 +602,12 @@ entry:
   %b2 = load i8* %b2ptr
 ; CHECK-NOT: store
 ; CHECK-NOT: load
-; CHECK:      %[[trunc0:.*]] = trunc i24 %[[insert0]] to i8
-; CHECK-NEXT: %[[shift1:.*]] = lshr i24 %[[insert0]], 8
-; CHECK-NEXT: %[[trunc1:.*]] = trunc i24 %[[shift1]] to i8
-; CHECK-NEXT: %[[shift2:.*]] = lshr i24 %[[insert0]], 16
-; CHECK-NEXT: %[[trunc2:.*]] = trunc i24 %[[shift2]] to i8
 
   %bsum0 = add i8 %b0, %b1
   %bsum1 = add i8 %bsum0, %b2
   ret i8 %bsum1
-; CHECK:      %[[sum0:.*]] = add i8 %[[trunc0]], %[[trunc1]]
-; CHECK-NEXT: %[[sum1:.*]] = add i8 %[[sum0]], %[[trunc2]]
+; CHECK:      %[[sum0:.*]] = add i8 0, 0
+; CHECK-NEXT: %[[sum1:.*]] = add i8 %[[sum0]], 0
 ; CHECK-NEXT: ret i8 %[[sum1]]
 }
 
@@ -1440,3 +1423,36 @@ entry:
   ret void
 }
 
+define float @test25() {
+; Check that we split up stores in order to promote the smaller SSA values.. These types
+; of patterns can arise because LLVM maps small memcpy's to integer load and
+; stores. If we get a memcpy of an aggregate (such as C and C++ frontends would
+; produce, but so might any language frontend), this will in many cases turn into
+; an integer load and store. SROA needs to be extremely powerful to correctly
+; handle these cases and form splitable and promotable SSA values.
+;
+; CHECK-LABEL: @test25(
+; CHECK-NOT: alloca
+; CHECK: %[[F1:.*]] = bitcast i32 0 to float
+; CHECK: %[[F2:.*]] = bitcast i32 1065353216 to float
+; CHECK: %[[SUM:.*]] = fadd float %[[F1]], %[[F2]]
+; CHECK: ret float %[[SUM]]
+
+entry:
+  %a = alloca i64
+  %b = alloca i64
+  %a.cast = bitcast i64* %a to [2 x float]*
+  %a.gep1 = getelementptr [2 x float]* %a.cast, i32 0, i32 0
+  %a.gep2 = getelementptr [2 x float]* %a.cast, i32 0, i32 1
+  %b.cast = bitcast i64* %b to [2 x float]*
+  %b.gep1 = getelementptr [2 x float]* %b.cast, i32 0, i32 0
+  %b.gep2 = getelementptr [2 x float]* %b.cast, i32 0, i32 1
+  store float 0.0, float* %a.gep1
+  store float 1.0, float* %a.gep2
+  %v = load i64* %a
+  store i64 %v, i64* %b
+  %f1 = load float* %b.gep1
+  %f2 = load float* %b.gep2
+  %ret = fadd float %f1, %f2
+  ret float %ret
+}
