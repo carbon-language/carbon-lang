@@ -617,13 +617,11 @@ def MULLI8 : DForm_2<7, (outs g8rc:$rD), (ins g8rc:$rA, s16imm64:$imm),
 }
 
 let hasSideEffects = 0 in {
-let isCommutable = 1 in {
 defm RLDIMI : MDForm_1r<30, 3, (outs g8rc:$rA),
                         (ins g8rc:$rSi, g8rc:$rS, u6imm:$SH, u6imm:$MBE),
                         "rldimi", "$rA, $rS, $SH, $MBE", IIC_IntRotateDI,
                         []>, isPPC64, RegConstraint<"$rSi = $rA">,
                         NoEncode<"$rSi">;
-}
 
 // Rotate instructions.
 defm RLDCL  : MDSForm_1r<30, 8,
