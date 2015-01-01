@@ -3726,7 +3726,7 @@ bool SROA::presplitLoadsAndStores(AllocaInst &AI, AllocaSlices &AS) {
         continue;
       }
 
-      Instruction *StoreBasePtr = cast<Instruction>(SI->getPointerOperand());
+      Value *StoreBasePtr = SI->getPointerOperand();
       IRB.SetInsertPoint(BasicBlock::iterator(SI));
 
       DEBUG(dbgs() << "    Splitting store of load: " << *SI << "\n");
@@ -3789,7 +3789,7 @@ bool SROA::presplitLoadsAndStores(AllocaInst &AI, AllocaSlices &AS) {
     assert(BaseOffset + StoreSize > BaseOffset &&
            "Cannot represent alloca access size using 64-bit integers!");
 
-    Instruction *LoadBasePtr = cast<Instruction>(LI->getPointerOperand());
+    Value *LoadBasePtr = LI->getPointerOperand();
     Instruction *StoreBasePtr = cast<Instruction>(SI->getPointerOperand());
 
     DEBUG(dbgs() << "  Splitting store: " << *SI << "\n");
