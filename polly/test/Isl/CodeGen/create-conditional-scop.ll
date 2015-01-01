@@ -9,19 +9,19 @@ define void @foo() nounwind {
 entry:
   br i1 undef, label %while.cond14.preheader, label %for.body7.single_entry.single_entry
 
-while.cond14.preheader:                           ; preds = %for.inc12, %for.body7.single_entry.single_entry, %entry
+while.cond14.preheader:                           ; preds = %for.inc02, %for.body7.single_entry.single_entry, %entry
   ret void
 
-for.body7.single_entry.single_entry:              ; preds = %for.inc12, %entry
+for.body7.single_entry.single_entry:              ; preds = %for.inc02, %entry
   br i1 undef, label %while.cond14.preheader, label %while.body
 
 while.body:                                       ; preds = %while.body, %for.body7.single_entry.single_entry
   %indvar35 = phi i32 [ %0, %while.body ], [ 0, %for.body7.single_entry.single_entry ]
   %0 = add i32 %indvar35, 1
   %exitcond2 = icmp eq i32 %0, 0
-  br i1 %exitcond2, label %for.inc12, label %while.body
+  br i1 %exitcond2, label %for.inc02, label %while.body
 
-for.inc12:                                        ; preds = %while.body
+for.inc02:                                        ; preds = %while.body
   br i1 undef, label %while.cond14.preheader, label %for.body7.single_entry.single_entry
 }
 

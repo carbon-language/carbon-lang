@@ -3,10 +3,10 @@
 ; Verify that we won't privatize anything in the outer dimension
 ;
 ; CHECK:    #pragma known-parallel
-; CHECK:    for (int c1 = 0; c1 < 2 * n; c1 += 1)
+; CHECK:    for (int c0 = 0; c0 < 2 * n; c0 += 1)
 ; CHECK:      #pragma simd reduction
-; CHECK:      for (int c3 = 0; c3 <= 1023; c3 += 1)
-; CHECK:        Stmt_for_body3(c1, c3);
+; CHECK:      for (int c1 = 0; c1 <= 1023; c1 += 1)
+; CHECK:        Stmt_for_body3(c0, c1);
 ;
 ;    void foo(int *A, long n) {
 ;      for (long i = 0; i < 2 * n; i++)

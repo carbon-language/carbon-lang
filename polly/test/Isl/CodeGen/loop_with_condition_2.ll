@@ -4,12 +4,12 @@
 ; there is a conditional inside.
 
 ; CHECK: #pragma simd
-; CHECK: for (int c1 = 0; c1 <= 1023; c1 += 1) {
-; CHECK:   if (c1 >= m + 1025) {
-; CHECK:     Stmt_if_else(c1);
+; CHECK: for (int c0 = 0; c0 <= 1023; c0 += 1) {
+; CHECK:   if (c0 >= m + 1025) {
+; CHECK:     Stmt_if_else(c0);
 ; CHECK:   } else
-; CHECK:     Stmt_if_then(c1);
-; CHECK:   Stmt_if_end(c1);
+; CHECK:     Stmt_if_then(c0);
+; CHECK:   Stmt_if_end(c0);
 ; CHECK: }
 
 target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-s0:64:64-f80:128:128-n8:16:32:64"
@@ -91,8 +91,8 @@ for.inc:                                          ; preds = %if.end
 for.end:                                          ; preds = %for.cond
   br label %for.cond6
 
-for.cond6:                                        ; preds = %for.inc32, %for.end
-  %indvar = phi i64 [ %indvar.next, %for.inc32 ], [ 0, %for.end ]
+for.cond6:                                        ; preds = %for.inc12, %for.end
+  %indvar = phi i64 [ %indvar.next, %for.inc12 ], [ 0, %for.end ]
   %arrayidx15 = getelementptr [1024 x i32]* @A, i64 0, i64 %indvar
   %i.1 = trunc i64 %indvar to i32
   %cmp8 = icmp slt i32 %i.1, 1024
@@ -124,9 +124,9 @@ if.end30:                                         ; preds = %land.lhs.true23, %i
   br label %if.end31
 
 if.end31:                                         ; preds = %if.end30
-  br label %for.inc32
+  br label %for.inc12
 
-for.inc32:                                        ; preds = %if.end31
+for.inc12:                                        ; preds = %if.end31
   %indvar.next = add i64 %indvar, 1
   br label %for.cond6
 

@@ -19,7 +19,7 @@ target triple = "x86_64-unknown-linux-gnu"
 ; CHECK: Domain
 ; CHECK:   [n, m] -> { Stmt_for_j[i0, i1] : i0 >= 0 and i0 <= -1 + n and i1 >= 0 and i1 <= -1 + m };
 ; CHECK: Scattering
-; CHECK:   [n, m] -> { Stmt_for_j[i0, i1] -> scattering[0, i0, 0, i1, 0] };
+; CHECK:   [n, m] -> { Stmt_for_j[i0, i1] -> scattering[i0, i1] };
 ; CHECK: MustWriteAccess
 ; CHECK:   [n, m] -> { Stmt_for_j[i0, i1] -> MemRef_A[i0, i1] };
 

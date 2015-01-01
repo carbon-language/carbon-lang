@@ -815,6 +815,13 @@ public:
   /// @returns True if __no__ error occurred, false otherwise.
   bool buildAliasGroups(AliasAnalysis &AA);
 
+  //// @brief Drop all constant dimensions from statment schedules.
+  ///
+  ///  Schedule dimensions that are constant accross the scop do not carry
+  ///  any information, but would cost compile time due to the increased number
+  ///  of scheduling dimensions. To not pay this cost, we remove them.
+  void dropConstantScheduleDims();
+
   /// @brief Return all alias groups for this SCoP.
   const MinMaxVectorVectorTy &getAliasGroups() const {
     return MinMaxAliasGroups;

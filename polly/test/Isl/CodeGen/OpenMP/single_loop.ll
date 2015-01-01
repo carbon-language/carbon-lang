@@ -19,14 +19,14 @@
 
 ; AST: #pragma simd
 ; AST: #pragma omp parallel for
-; AST: for (int c1 = 0; c1 <= 1023; c1 += 1)
-; AST:   Stmt_S(c1);
+; AST: for (int c0 = 0; c0 <= 1023; c0 += 1)
+; AST:   Stmt_S(c0);
 
 ; AST-STRIDE4: #pragma omp parallel for
-; AST-STRIDE4: for (int c1 = 0; c1 <= 1023; c1 += 4)
+; AST-STRIDE4: for (int c0 = 0; c0 <= 1023; c0 += 4)
 ; AST-STRIDE4:   #pragma simd
-; AST-STRIDE4:   for (int c2 = c1; c2 <= c1 + 3; c2 += 1)
-; AST-STRIDE4:     Stmt_S(c2);
+; AST-STRIDE4:   for (int c1 = c0; c1 <= c0 + 3; c1 += 1)
+; AST-STRIDE4:     Stmt_S(c1);
 
 ; IR-LABEL: single_parallel_loop()
 ; IR-NEXT: entry

@@ -24,8 +24,8 @@ if.end:                                           ; preds = %entry
 for.cond45.preheader:                             ; preds = %if.end
   br i1 undef, label %for.body47, label %for.end198
 
-for.body47:                                       ; preds = %for.inc196, %for.cond45.preheader
-  br i1 undef, label %for.body53.lr.ph, label %for.inc196
+for.body47:                                       ; preds = %for.inc096, %for.cond45.preheader
+  br i1 undef, label %for.body53.lr.ph, label %for.inc096
 
 for.body53.lr.ph:                                 ; preds = %for.body47
   br label %for.body53
@@ -65,12 +65,12 @@ for.body53:                                       ; preds = %for.body53, %for.bo
   store float %add189, float* %arrayidx191, align 4
   %add193 = add nsw i32 %i.013, 2
   %cmp52 = icmp slt i32 %add193, %ido
-  br i1 %cmp52, label %for.body53, label %for.inc196
+  br i1 %cmp52, label %for.body53, label %for.inc096
 
-for.inc196:                                       ; preds = %for.body53, %for.body47
+for.inc096:                                       ; preds = %for.body53, %for.body47
   br i1 undef, label %for.body47, label %for.end198
 
-for.end198:                                       ; preds = %for.inc196, %for.cond45.preheader
+for.end198:                                       ; preds = %for.inc096, %for.cond45.preheader
   br i1 false, label %for.end256, label %L105
 
 L105:                                             ; preds = %for.end198, %if.end

@@ -4,7 +4,7 @@
 ;
 ; CHECK: Read: { [Stmt_for_cond[i0] -> MemRef_sum[0]] -> MemRef_sum[0] : i0 >= 0 and i0 <= 100 }
 ; CHECK: Write: { [Stmt_for_cond[i0] -> MemRef_sum[0]] -> MemRef_sum[0] : i0 >= 0 and i0 <= 100 }
-; CHECK: Schedule: { Stmt_for_cond[i0] -> scattering[0, i0, 0]; [Stmt_for_cond[i0] -> MemRef_sum[0]] -> scattering[0, i0, 0] : i0 <= 100 and i0 >= 0 }
+; CHECK: Schedule: { [Stmt_for_cond[i0] -> MemRef_sum[0]] -> scattering[i0] : i0 <= 100 and i0 >= 0; Stmt_for_cond[i0] -> scattering[i0] }
 ; CHECK: Wrapped Dependences:
 ; CHECK: RAW dependences:
 ; CHECK:   { [Stmt_for_cond[i0] -> MemRef_sum[0]] -> [Stmt_for_cond[1 + i0] -> MemRef_sum[0]] : i0 >= 0 and i0 <= 99 }

@@ -21,16 +21,16 @@ define void @foo(i64 %n, i64 %m, i64 %p, double* %A, i32* %B) {
 entry:
   br label %for.cond
 
-for.cond:                                         ; preds = %for.inc13, %entry
-  %i.0 = phi i64 [ 0, %entry ], [ %inc14, %for.inc13 ]
+for.cond:                                         ; preds = %for.inc03, %entry
+  %i.0 = phi i64 [ 0, %entry ], [ %inc04, %for.inc03 ]
   %exitcond2 = icmp ne i64 %i.0, 100
   br i1 %exitcond2, label %for.body, label %for.end15
 
 for.body:                                         ; preds = %for.cond
   br label %for.cond1
 
-for.cond1:                                        ; preds = %for.inc10, %for.body
-  %j.0 = phi i64 [ 0, %for.body ], [ %inc11, %for.inc10 ]
+for.cond1:                                        ; preds = %for.inc00, %for.body
+  %j.0 = phi i64 [ 0, %for.body ], [ %inc01, %for.inc00 ]
   %exitcond1 = icmp ne i64 %j.0, 150
   br i1 %exitcond1, label %for.body3, label %for.end12
 
@@ -60,17 +60,17 @@ for.inc:                                          ; preds = %for.body6
   br label %for.cond4
 
 for.end:                                          ; preds = %for.cond4
-  br label %for.inc10
+  br label %for.inc00
 
-for.inc10:                                        ; preds = %for.end
-  %inc11 = add nsw i64 %j.0, 1
+for.inc00:                                        ; preds = %for.end
+  %inc01 = add nsw i64 %j.0, 1
   br label %for.cond1
 
 for.end12:                                        ; preds = %for.cond1
-  br label %for.inc13
+  br label %for.inc03
 
-for.inc13:                                        ; preds = %for.end12
-  %inc14 = add nsw i64 %i.0, 1
+for.inc03:                                        ; preds = %for.end12
+  %inc04 = add nsw i64 %i.0, 1
   br label %for.cond
 
 for.end15:                                        ; preds = %for.cond

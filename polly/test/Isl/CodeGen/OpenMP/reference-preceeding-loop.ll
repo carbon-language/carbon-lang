@@ -9,13 +9,13 @@
 ; AST: if (symbol >= p_2 + 1) {
 ; AST-NEXT:   #pragma simd
 ; AST-NEXT:   #pragma omp parallel for
-; AST-NEXT:   for (int c1 = 0; c1 < p_0 + symbol; c1 += 1)
-; AST-NEXT:     Stmt_while_body(c1);
+; AST-NEXT:   for (int c0 = 0; c0 < p_0 + symbol; c0 += 1)
+; AST-NEXT:     Stmt_while_body(c0);
 ; AST-NEXT: } else
 ; AST-NEXT:   #pragma simd
 ; AST-NEXT:   #pragma omp parallel for
-; AST-NEXT:   for (int c1 = 0; c1 <= p_0 + p_2; c1 += 1)
-; AST-NEXT:     Stmt_while_body(c1);
+; AST-NEXT:   for (int c0 = 0; c0 <= p_0 + p_2; c0 += 1)
+; AST-NEXT:     Stmt_while_body(c0);
 
 ; IR: @update_model.polly.subfn
 ; IR: @update_model.polly.subfn1
@@ -30,8 +30,8 @@ entry:
   br label %for.one
 
 for.one:
-  %i.1 = phi i64 [ %dec17, %for.one ], [ %symbol, %entry ]
-  %dec17 = add nsw i64 %i.1, -1
+  %i.1 = phi i64 [ %dec07, %for.one ], [ %symbol, %entry ]
+  %dec07 = add nsw i64 %i.1, -1
   br i1 undef, label %for.one, label %while.body
 
 while.body:

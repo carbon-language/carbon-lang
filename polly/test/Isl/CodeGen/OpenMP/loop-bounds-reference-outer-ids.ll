@@ -16,12 +16,12 @@
 ; k-loop, are correctly passed to the subfunction.
 
 ; AST: #pragma minimal dependence distance: 1
-; AST: for (int c1 = max(0, -n + 1); c1 <= 99; c1 += 1)
+; AST: for (int c0 = max(0, -n + 1); c0 <= 99; c0 += 1)
 ; AST:   #pragma omp parallel for
-; AST:   for (int c3 = 0; c3 <= 99; c3 += 1)
+; AST:   for (int c1 = 0; c1 <= 99; c1 += 1)
 ; AST:     #pragma minimal dependence distance: 1
-; AST:     for (int c5 = 0; c5 < n + c1; c5 += 1)
-; AST:       Stmt_for_body6(c1, c3, c5);
+; AST:     for (int c2 = 0; c2 < n + c0; c2 += 1)
+; AST:       Stmt_for_body6(c0, c1, c2);
 
 ; IR: %polly.par.userContext = alloca { i64, i64 }
 ; IR: %4 = bitcast { i64, i64 }* %polly.par.userContext to i8*
@@ -47,16 +47,16 @@ define void @loop_references_outer_ids(i64 %n) {
 entry:
   br label %for.cond
 
-for.cond:                                         ; preds = %for.inc13, %entry
-  %i.0 = phi i64 [ 0, %entry ], [ %inc14, %for.inc13 ]
+for.cond:                                         ; preds = %for.inc03, %entry
+  %i.0 = phi i64 [ 0, %entry ], [ %inc04, %for.inc03 ]
   %exitcond1 = icmp ne i64 %i.0, 100
   br i1 %exitcond1, label %for.body, label %for.end15
 
 for.body:                                         ; preds = %for.cond
   br label %for.cond1
 
-for.cond1:                                        ; preds = %for.inc10, %for.body
-  %j.0 = phi i64 [ 0, %for.body ], [ %inc11, %for.inc10 ]
+for.cond1:                                        ; preds = %for.inc00, %for.body
+  %j.0 = phi i64 [ 0, %for.body ], [ %inc01, %for.inc00 ]
   %exitcond = icmp ne i64 %j.0, 100
   br i1 %exitcond, label %for.body3, label %for.end12
 
@@ -84,17 +84,17 @@ for.inc:                                          ; preds = %for.body6
   br label %for.cond4
 
 for.end:                                          ; preds = %for.cond4
-  br label %for.inc10
+  br label %for.inc00
 
-for.inc10:                                        ; preds = %for.end
-  %inc11 = add nsw i64 %j.0, 1
+for.inc00:                                        ; preds = %for.end
+  %inc01 = add nsw i64 %j.0, 1
   br label %for.cond1
 
 for.end12:                                        ; preds = %for.cond1
-  br label %for.inc13
+  br label %for.inc03
 
-for.inc13:                                        ; preds = %for.end12
-  %inc14 = add nsw i64 %i.0, 1
+for.inc03:                                        ; preds = %for.end12
+  %inc04 = add nsw i64 %i.0, 1
   br label %for.cond
 
 for.end15:                                        ; preds = %for.cond

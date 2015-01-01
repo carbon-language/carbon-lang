@@ -7,13 +7,13 @@
 ; AST: if (nj >= p_1 + 3) {
 ; AST:   #pragma simd
 ; AST:   #pragma omp parallel for
-; AST:   for (int c1 = 0; c1 < p_0 + nj - 1; c1 += 1)
-; AST:     Stmt_for_body35(c1);
+; AST:   for (int c0 = 0; c0 < p_0 + nj - 1; c0 += 1)
+; AST:     Stmt_for_body35(c0);
 ; AST: } else
 ; AST:   #pragma simd
 ; AST:   #pragma omp parallel for
-; AST:   for (int c1 = 0; c1 <= p_0 + p_1; c1 += 1)
-; AST:     Stmt_for_body35(c1);
+; AST:   for (int c0 = 0; c0 <= p_0 + p_1; c0 += 1)
+; AST:     Stmt_for_body35(c0);
 
 ; IR: @foo.polly.subfn
 ; IR: @foo.polly.subfn1

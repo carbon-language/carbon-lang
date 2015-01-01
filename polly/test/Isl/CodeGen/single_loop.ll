@@ -49,8 +49,8 @@ for.inc:                                          ; preds = %for.body
 for.end:                                          ; preds = %for.cond
   br label %for.cond5
 
-for.cond5:                                        ; preds = %for.inc17, %for.end
-  %indvar = phi i64 [ %indvar.next, %for.inc17 ], [ 0, %for.end ] ; <i64> [#uses=3]
+for.cond5:                                        ; preds = %for.inc07, %for.end
+  %indvar = phi i64 [ %indvar.next, %for.inc07 ], [ 0, %for.end ] ; <i64> [#uses=3]
   %arrayidx13 = getelementptr [1024 x i32]* %A, i64 0, i64 %indvar ; <i32*> [#uses=1]
   %i.1 = trunc i64 %indvar to i32                 ; <i32> [#uses=1]
   %cmp7 = icmp slt i32 %i.1, 1024                 ; <i1> [#uses=1]
@@ -65,9 +65,9 @@ if.then:                                          ; preds = %for.body9
   br label %return
 
 if.end:                                           ; preds = %for.body9
-  br label %for.inc17
+  br label %for.inc07
 
-for.inc17:                                        ; preds = %if.end
+for.inc07:                                        ; preds = %if.end
   %indvar.next = add i64 %indvar, 1               ; <i64> [#uses=1]
   br label %for.cond5
 
@@ -81,5 +81,5 @@ return:                                           ; preds = %for.end20, %if.then
 
 declare void @llvm.memset.p0i8.i64(i8* nocapture, i8, i64, i32, i1) nounwind
 
-; CHECK: for (int c1 = 0; c1 <= 1023; c1 += 1)
-; CHECK:   Stmt_for_body(c1);
+; CHECK: for (int c0 = 0; c0 <= 1023; c0 += 1)
+; CHECK:   Stmt_for_body(c0);

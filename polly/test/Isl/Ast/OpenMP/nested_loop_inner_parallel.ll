@@ -40,8 +40,8 @@ ret:
   ret void
 }
 
-; CHECK: for (int c1 = 0; c1 < n; c1 += 1)
+; CHECK: for (int c0 = 0; c0 < n; c0 += 1)
 ; CHECK:   #pragma simd
 ; CHECK:   #pragma omp parallel for
-; CHECK:   for (int c3 = 0; c3 < n; c3 += 1)
-; CHECK:     Stmt_loop_body(c1, c3);
+; CHECK:   for (int c1 = 0; c1 < n; c1 += 1)
+; CHECK:     Stmt_loop_body(c0, c1);

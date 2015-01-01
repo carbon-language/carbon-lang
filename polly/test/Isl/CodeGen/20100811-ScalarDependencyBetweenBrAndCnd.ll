@@ -25,6 +25,6 @@ for.inc:                                          ; preds = %for.body
 for.end:                                          ; preds = %a
   br label %for.cond5
 
-for.cond5:                                        ; preds = %for.inc17, %for.end
+for.cond5:                                        ; preds = %for.inc07, %for.end
   ret void
 }

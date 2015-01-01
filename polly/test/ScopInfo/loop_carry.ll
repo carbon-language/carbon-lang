@@ -53,7 +53,7 @@ bb2:                                              ; preds = %bb, %entry
 ; CHECK:             Domain :=
 ; CHECK:                 [n] -> { Stmt_bb_nph[] : n >= 2 };
 ; CHECK:             Scattering :=
-; CHECK:                 [n] -> { Stmt_bb_nph[] -> scattering[0, 0, 0] };
+; CHECK:                 [n] -> { Stmt_bb_nph[] -> scattering[0, 0] };
 ; CHECK:             ReadAccess :=
 ; CHECK:                 [n] -> { Stmt_bb_nph[] -> MemRef_a[0] };
 ; CHECK:             MustWriteAccess :=
@@ -64,7 +64,7 @@ bb2:                                              ; preds = %bb, %entry
 ; CHECK:             Domain :=
 ; CHECK:                 [n] -> { Stmt_bb[i0] : i0 >= 0 and i0 <= -2 + n and n >= 2 };
 ; CHECK:             Scattering :=
-; CHECK:                 [n] -> { Stmt_bb[i0] -> scattering[1, i0, 0] };
+; CHECK:                 [n] -> { Stmt_bb[i0] -> scattering[1, i0] };
 ; CHECK:             ReadAccess :=
 ; CHECK:                 [n] -> { Stmt_bb[i0] -> MemRef__reg2mem[0] };
 ; CHECK:             ReadAccess :=

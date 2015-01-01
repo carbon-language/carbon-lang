@@ -204,12 +204,12 @@ define i32 @main() nounwind {
 
 declare void @llvm.memset.p0i8.i64(i8* nocapture, i8, i64, i32, i1) nounwind
 
-; CHECK: for (int c1 = 0; c1 <= 1023; c1 += 1) {
-; CHECK:   if (c1 <= 20) {
-; CHECK:     Stmt_7(c1);
-; CHECK:   } else if (c1 <= 512)
-; CHECK:     Stmt_6(c1);
-; CHECK:   Stmt_9(c1);
+; CHECK: for (int c0 = 0; c0 <= 1023; c0 += 1) {
+; CHECK:   if (c0 <= 20) {
+; CHECK:     Stmt_7(c0);
+; CHECK:   } else if (c0 <= 512)
+; CHECK:     Stmt_6(c0);
+; CHECK:   Stmt_9(c0);
 ; CHECK: }
 
 ; LOOPS: Printing analysis 'Natural Loop Information' for function 'loop_with_condition':

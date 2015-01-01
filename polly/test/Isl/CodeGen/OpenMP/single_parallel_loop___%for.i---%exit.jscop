@@ -11,7 +11,7 @@
          ],
          "domain" : "{ Stmt_S[i0] : i0 >= 0 and i0 <= 1023 }",
          "name" : "Stmt_S",
-         "schedule" : "{ Stmt_S[i0] -> scattering[0, floor(i0/4) * 4, i0] }"
+         "schedule" : "{ Stmt_S[i0] -> scattering[floor(i0/4) * 4, i0] }"
       }
    ]
 }

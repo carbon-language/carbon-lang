@@ -1478,6 +1478,42 @@ static unsigned getMaxLoopDepthInRegion(const Region &R, LoopInfo &LI) {
   return MaxLD - MinLD + 1;
 }
 
+void Scop::dropConstantScheduleDims() {
+  isl_union_map *FullSchedule = getSchedule();
+
+  if (isl_union_map_n_map(FullSchedule) == 0) {
+    isl_union_map_free(FullSchedule);
+    return;
+  }
+
+  isl_set *ScheduleSpace =
+      isl_set_from_union_set(isl_union_map_range(FullSchedule));
+  isl_map *DropDimMap = isl_set_identity(isl_set_copy(ScheduleSpace));
+
+  int NumDimsDropped = 0;
+  for (unsigned i = 0; i < isl_set_dim(ScheduleSpace, isl_dim_set); i++)
+    if (i % 2 == 0) {
+      isl_val *FixedVal =
+          isl_set_plain_get_val_if_fixed(ScheduleSpace, isl_dim_set, i);
+      if (isl_val_is_int(FixedVal)) {
+        DropDimMap =
+            isl_map_project_out(DropDimMap, isl_dim_out, i - NumDimsDropped, 1);
+        NumDimsDropped++;
+      }
+      isl_val_free(FixedVal);
+    }
+
+  DropDimMap = isl_map_set_tuple_id(
+      DropDimMap, isl_dim_out, isl_map_get_tuple_id(DropDimMap, isl_dim_in));
+  for (auto *S : *this) {
+    isl_map *Schedule = S->getScattering();
+    Schedule = isl_map_apply_range(Schedule, isl_map_copy(DropDimMap));
+    S->setScattering(Schedule);
+  }
+  isl_set_free(ScheduleSpace);
+  isl_map_free(DropDimMap);
+}
+
 Scop::Scop(TempScop &tempScop, LoopInfo &LI, ScalarEvolution &ScalarEvolution,
            isl_ctx *Context)
     : SE(&ScalarEvolution), R(tempScop.getMaxRegion()),
@@ -1497,6 +1533,7 @@ Scop::Scop(TempScop &tempScop, LoopInfo &LI, ScalarEvolution &ScalarEvolution,
   realignParams();
   addParameterBounds();
   simplifyAssumedContext();
+  dropConstantScheduleDims();
 
   assert(NestLoops.empty() && "NestLoops not empty at top level!");
 }

@@ -31,8 +31,8 @@ ret:
   ret void
 }
 
-; CHECK: for (int c1 = 0; c1 <= n; c1 += 1)
-; CHECK:   Stmt_loop_body(c1)
+; CHECK: for (int c0 = 0; c0 <= n; c0 += 1)
+; CHECK:   Stmt_loop_body(c0)
 
 ; CODEGEN: polly.start:
 ; CODEGEN:   br label %polly.loop_if

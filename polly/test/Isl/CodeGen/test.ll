@@ -31,7 +31,7 @@ define i32 @foo(i32 %z) nounwind {
 bb.nph31.split.us:
   br label %bb.nph.us
 
-for.inc16.us:                                     ; preds = %for.body6.us
+for.inc06.us:                                     ; preds = %for.body6.us
   store i32 %mul.us, i32* %arrayidx.us
   %indvar.next = add i64 %indvar, 1               ; <i64> [#uses=2]
   %exitcond32 = icmp eq i64 %indvar.next, 100     ; <i1> [#uses=1]
@@ -43,16 +43,16 @@ for.body6.us:                                     ; preds = %for.body6.us, %bb.n
   %mul.us = mul i32 %arrayidx10.tmp.0.us, %0      ; <i32> [#uses=2]
   %inc.us = add nsw i32 %0, 1                     ; <i32> [#uses=2]
   %exitcond = icmp eq i32 %inc.us, 200            ; <i1> [#uses=1]
-  br i1 %exitcond, label %for.inc16.us, label %for.body6.us
+  br i1 %exitcond, label %for.inc06.us, label %for.body6.us
 
-bb.nph.us:                                        ; preds = %bb.nph31.split.us, %for.inc16.us
-  %indvar = phi i64 [ %indvar.next, %for.inc16.us ], [ 0, %bb.nph31.split.us ] ; <i64> [#uses=3]
+bb.nph.us:                                        ; preds = %bb.nph31.split.us, %for.inc06.us
+  %indvar = phi i64 [ %indvar.next, %for.inc06.us ], [ 0, %bb.nph31.split.us ] ; <i64> [#uses=3]
   %arrayidx.us = getelementptr [100 x i32]* @A, i64 0, i64 %indvar ; <i32*> [#uses=2]
   %i.027.us = trunc i64 %indvar to i32            ; <i32> [#uses=2]
   store i32 %i.027.us, i32* %arrayidx.us
   br label %for.body6.us
 
-for.end19:                                        ; preds = %for.inc16.us
+for.end19:                                        ; preds = %for.inc06.us
   %idxprom21 = sext i32 %z to i64                 ; <i64> [#uses=1]
   %arrayidx22 = getelementptr inbounds [100 x i32]* @A, i64 0, i64 %idxprom21 ; <i32*> [#uses=1]
   %tmp23 = load i32* %arrayidx22                  ; <i32> [#uses=1]

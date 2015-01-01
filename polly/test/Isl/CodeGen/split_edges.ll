@@ -11,8 +11,8 @@ bb1:
   br i1 true, label %bb2, label %bb3
 
 bb2:
-  %ind1 = phi i32 [0, %bb1], [ %inc1, %bb2]
-  %inc1 = add i32 %ind1, 1
+  %ind1 = phi i32 [0, %bb1], [ %inc0, %bb2]
+  %inc0 = add i32 %ind1, 1
   %cond1 = icmp eq i32 %ind1, 32
   br i1 %cond1, label %bb4, label %bb2
 

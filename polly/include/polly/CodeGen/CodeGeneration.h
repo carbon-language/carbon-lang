@@ -46,6 +46,8 @@ static inline int getNumberOfIterations(__isl_take isl_set *Domain) {
   Identity = isl_map_add_dims(Identity, isl_dim_in, 1);
   Identity = isl_map_add_dims(Identity, isl_dim_out, 1);
 
+  Domain = isl_set_reset_tuple_id(Domain);
+
   isl_map *Map =
       isl_map_from_domain_and_range(isl_set_copy(Domain), isl_set_copy(Domain));
   isl_set_free(Domain);

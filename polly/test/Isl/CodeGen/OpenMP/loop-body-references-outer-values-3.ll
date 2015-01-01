@@ -9,8 +9,8 @@
 ; properly forwarded to the subfunction.
 
 ; AST: #pragma omp parallel for
-; AST: for (int c1 = 0; c1 < cols; c1 += 1)
-; AST:   Stmt_for_body(c1);
+; AST: for (int c0 = 0; c0 < cols; c0 += 1)
+; AST:   Stmt_for_body(c0);
 
 ; IR: @foo.polly.subfn
 
@@ -40,8 +40,8 @@ end:
 ; expression defined outside of the scop.
 
 ; AST: #pragma omp parallel for
-; AST: for (int c1 = 0; c1 < cols; c1 += 1)
-; AST:   Stmt_for_body(c1);
+; AST: for (int c0 = 0; c0 < cols; c0 += 1)
+; AST:   Stmt_for_body(c0);
 
 ; IR: @bar.polly.subfn
 

@@ -2,8 +2,8 @@
 ;
 ; CHECK: #pragma simd reduction (+ : sum{{[1,2]}}, sum{{[1,2]}}) reduction (* : prod) reduction (| : or) reduction (& : and)
 ; CHECK: #pragma known-parallel reduction (+ : sum{{[1,2]}}, sum{{[1,2]}}) reduction (* : prod) reduction (| : or) reduction (& : and)
-; CHECK: for (int c1 = 0; c1 < N; c1 += 1)
-; CHECK:   Stmt_for_body(c1);
+; CHECK: for (int c0 = 0; c0 < N; c0 += 1)
+; CHECK:   Stmt_for_body(c0);
 ;
 ;    void f(int N, int *restrict sum1, int *restrict sum2, int *restrict prod,
 ;           int *restrict and, int *restrict or ) {

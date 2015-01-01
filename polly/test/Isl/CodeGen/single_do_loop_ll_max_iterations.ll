@@ -65,5 +65,5 @@ return:                                           ; preds = %if.else, %if.then
   ret i32 %retval.0
 }
 
-; CHECK: for (int c1 = 0; c1 <= 9223372036854775806; c1 += 1)
-; CHECK:   Stmt_do_body(c1);
+; CHECK: for (int c0 = 0; c0 <= 9223372036854775806; c0 += 1)
+; CHECK:   Stmt_do_body(c0);

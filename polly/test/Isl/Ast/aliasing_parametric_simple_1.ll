@@ -6,8 +6,8 @@
 ;    }
 ;
 ; CHECK: if (1 && (&MemRef_A[1024] <= &MemRef_B[c] || &MemRef_B[c + 1] <= &MemRef_A[0]))
-; CHECK:     for (int c1 = 0; c1 <= 1023; c1 += 1)
-; CHECK:       Stmt_for_body(c1);
+; CHECK:     for (int c0 = 0; c0 <= 1023; c0 += 1)
+; CHECK:       Stmt_for_body(c0);
 ; CHECK: else
 ; CHECK:     /* original code */
 ;

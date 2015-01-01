@@ -19,7 +19,7 @@ target triple = "x86_64-unknown-linux-gnu"
 ; CHECK: Domain :=
 ; CHECK:   [n] -> { Stmt_for_i[i0] : i0 >= 0 and i0 <= -1 + n };
 ; CHECK: Scattering :=
-; CHECK:   [n] -> { Stmt_for_i[i0] -> scattering[0, i0, 0] };
+; CHECK:   [n] -> { Stmt_for_i[i0] -> scattering[i0] };
 ; CHECK: MustWriteAccess :=
 ; CHECK:   [n] -> { Stmt_for_i[i0] -> MemRef_A[i0, i0] };
 

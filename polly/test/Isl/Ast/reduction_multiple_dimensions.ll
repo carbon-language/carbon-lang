@@ -2,11 +2,11 @@
 ;
 ; CHECK-NOT:#pragma known-parallel reduction
 ; CHECK:    #pragma known-parallel
-; CHECK:    for (int c1 = 0; c1 <= 2047; c1 += 1)
-; CHECK:      for (int c3 = 0; c3 <= 1023; c3 += 1)
+; CHECK:    for (int c0 = 0; c0 <= 2047; c0 += 1)
+; CHECK:      for (int c1 = 0; c1 <= 1023; c1 += 1)
 ; CHECK:        #pragma simd reduction
-; CHECK:        for (int c5 = 0; c5 <= 511; c5 += 1)
-; CHECK:          Stmt_for_body6(c1, c3, c5);
+; CHECK:        for (int c2 = 0; c2 <= 511; c2 += 1)
+; CHECK:          Stmt_for_body6(c0, c1, c2);
 ;
 ;    void rmd(int *A) {
 ;      for (long i = 0; i < 2048; i++)

@@ -19,7 +19,7 @@ target triple = "x86_64-unknown-linux-gnu"
 ; CHECK:           Domain :=
 ; CHECK:               [m, o] -> { Stmt_for_k[i0, i1, i2] : i0 >= 0 and i0 <= 99 and i1 >= 0 and i1 <= 149 and i2 >= 0 and i2 <= 199 };
 ; CHECK:           Scattering :=
-; CHECK:               [m, o] -> { Stmt_for_k[i0, i1, i2] -> scattering[0, i0, 0, i1, 0, i2, 0] };
+; CHECK:               [m, o] -> { Stmt_for_k[i0, i1, i2] -> scattering[i0, i1, i2] };
 ; CHECK:           MustWriteAccess := [Reduction Type: NONE]
 ; CHECK:               [m, o] -> { Stmt_for_k[i0, i1, i2] -> MemRef_A[i0, i1, i2] };
 

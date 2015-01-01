@@ -166,10 +166,10 @@ define i32 @main() nounwind {
 
 declare void @llvm.memset.p0i8.i64(i8* nocapture, i8, i64, i32, i1) nounwind
 
-; CHECK: for (int c1 = 0; c1 <= 1023; c1 += 1) {
-; CHECK:   if (c1 >= 513) {
-; CHECK:     Stmt_5(c1);
+; CHECK: for (int c0 = 0; c0 <= 1023; c0 += 1) {
+; CHECK:   if (c0 >= 513) {
+; CHECK:     Stmt_5(c0);
 ; CHECK:   } else
-; CHECK:     Stmt_4(c1);
-; CHECK:   Stmt_6(c1);
+; CHECK:     Stmt_4(c0);
+; CHECK:   Stmt_6(c0);
 ; CHECK: }

@@ -55,5 +55,5 @@ declare i32 @printf(i8*, ...)
 
 declare i32 @rand()
 
-; CHECK: for (int c1 = 0; c1 <= 1023; c1 += 1)
-; CHECK:   Stmt_for_body(c1);
+; CHECK: for (int c0 = 0; c0 <= 1023; c0 += 1)
+; CHECK:   Stmt_for_body(c0);

@@ -1,6 +1,6 @@
 ; RUN: opt %loadPolly -polly-allow-nonaffine -polly-dce -polly-ast -analyze < %s | FileCheck %s
 ;
-; CHECK: for (int c1 = 0; c1 <= 1023; c1 += 1)
+; CHECK: for (int c0 = 0; c0 <= 1023; c0 += 1)
 ;
 ;    void f(int *A) {
 ;      for (int i = 0; i < 1024; i++)

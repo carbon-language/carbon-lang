@@ -3,8 +3,8 @@
 
 ; AST: #pragma simd
 ; AST: #pragma omp parallel for
-; AST: for (int c1 = 0; c1 <= 1023; c1 += 1)
-; AST:   Stmt_for_i(c1);
+; AST: for (int c0 = 0; c0 <= 1023; c0 += 1)
+; AST:   Stmt_for_i(c0);
 
 ; IR: getelementptr inbounds { [1024 x double]* }* %polly.par.userContext, i32 0, i32 0
 

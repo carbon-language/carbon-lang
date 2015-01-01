@@ -44,9 +44,9 @@ ret:
 ; annotations.
 
 ; CHECK:     #pragma omp parallel for
-; CHECK:     for (int c1 = 0; c1 <= 1023; c1 += 1)
+; CHECK:     for (int c0 = 0; c0 <= 1023; c0 += 1)
 ; CHECK-NOT:   #pragma omp parallel for
 ; CHECK:       #pragma simd
 ; CHECK-NOT:   #pragma omp parallel for
-; CHECK:       for (int c3 = 0; c3 <= 1023; c3 += 1)
-; CHECK:         Stmt_loop_body(c1, c3);
+; CHECK:       for (int c1 = 0; c1 <= 1023; c1 += 1)
+; CHECK:         Stmt_loop_body(c0, c1);

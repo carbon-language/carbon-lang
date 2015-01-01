@@ -12,8 +12,8 @@
 
 ; AST: #pragma simd
 ; AST: #pragma omp parallel for
-; AST: for (int c1 = 0; c1 <= 99; c1 += 1)
-; AST:   Stmt_for_body(c1);
+; AST: for (int c0 = 0; c0 <= 99; c0 += 1)
+; AST:   Stmt_for_body(c0);
 
 ; IR-LABEL: polly.start:
 ; IR-NEXT:  %0 = bitcast { float* }* %polly.par.userContext to i8*

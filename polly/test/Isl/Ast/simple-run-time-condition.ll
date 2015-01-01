@@ -26,12 +26,12 @@ target triple = "x86_64-unknown-linux-gnu"
 
 ; CHECK:     if (o >= 1) {
 ; CHECK:       for (int c1 = 0; c1 < n; c1 += 1)
-; CHECK:         for (int c3 = 0; c3 < m; c3 += 1)
-; CHECK:           Stmt_for_j(c1, c3);
+; CHECK:         for (int c2 = 0; c2 < m; c2 += 1)
+; CHECK:           Stmt_for_j(c1, c2);
 ; CHECK:     } else
 ; CHECK:       for (int c1 = 0; c1 < n; c1 += 1)
-; CHECK:         for (int c3 = 0; c3 < m; c3 += 1)
-; CHECK:           Stmt_for_j_1(c1, c3);
+; CHECK:         for (int c2 = 0; c2 < m; c2 += 1)
+; CHECK:           Stmt_for_j_1(c1, c2);
 
 ; CHECK: else
 ; CHECK:     {  /* original code */ }
