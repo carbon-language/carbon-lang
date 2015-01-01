@@ -238,9 +238,7 @@ public:
   /// @}
 
   /// \brief Erase a range of slices.
-  void erase(iterator Start, iterator Stop) {
-    Slices.erase(Start, Stop);
-  }
+  void erase(iterator Start, iterator Stop) { Slices.erase(Start, Stop); }
 
   /// \brief Insert new slices for this alloca.
   ///
@@ -3549,14 +3547,15 @@ bool SROA::presplitLoadsAndStores(AllocaInst &AI, AllocaSlices &AS) {
 
         Loads.push_back(LI);
       } else if (auto *SI = dyn_cast<StoreInst>(S.getUse()->getUser())) {
-      if (!SI || S.getUse() != &SI->getOperandUse(SI->getPointerOperandIndex()))
-        continue;
-      auto *StoredLoad = dyn_cast<LoadInst>(SI->getValueOperand());
-      if (!StoredLoad || !StoredLoad->isSimple())
-        continue;
-      assert(!SI->isVolatile() && "Cannot split volatile stores!");
+        if (!SI ||
+            S.getUse() != &SI->getOperandUse(SI->getPointerOperandIndex()))
+          continue;
+        auto *StoredLoad = dyn_cast<LoadInst>(SI->getValueOperand());
+        if (!StoredLoad || !StoredLoad->isSimple())
+          continue;
+        assert(!SI->isVolatile() && "Cannot split volatile stores!");
 
-      Stores.push_back(SI);
+        Stores.push_back(SI);
       } else {
         // Other uses cannot be pre-split.
         continue;
@@ -3599,36 +3598,37 @@ bool SROA::presplitLoadsAndStores(AllocaInst &AI, AllocaSlices &AS) {
   // any rewriting.
   SmallPtrSet<LoadInst *, 4> BadSplitLoads;
   Stores.erase(
-      std::remove_if(
-          Stores.begin(), Stores.end(),
-          [&BadSplitLoads, &SplitOffsetsMap](
-              StoreInst *SI) {
-            // Lookup the load we are storing in our map of split offsets.
-            auto *LI = cast<LoadInst>(SI->getValueOperand());
-            auto LoadOffsetsI = SplitOffsetsMap.find(LI);
-            if (LoadOffsetsI == SplitOffsetsMap.end())
-              return false; // Unrelated loads are always safe.
-            auto &LoadOffsets = LoadOffsetsI->second;
+      std::remove_if(Stores.begin(), Stores.end(),
+                     [&BadSplitLoads, &SplitOffsetsMap](StoreInst *SI) {
+                       // Lookup the load we are storing in our map of split
+                       // offsets.
+                       auto *LI = cast<LoadInst>(SI->getValueOperand());
+                       auto LoadOffsetsI = SplitOffsetsMap.find(LI);
+                       if (LoadOffsetsI == SplitOffsetsMap.end())
+                         return false; // Unrelated loads are always safe.
+                       auto &LoadOffsets = LoadOffsetsI->second;
 
-            // Now lookup the store's offsets.
-            auto &StoreOffsets = SplitOffsetsMap[SI];
+                       // Now lookup the store's offsets.
+                       auto &StoreOffsets = SplitOffsetsMap[SI];
 
-            // If the relative offsets of each split in the load and store
-            // match exactly, then we can split them and we don't need to
-            // remove them here.
-            if (LoadOffsets.Splits == StoreOffsets.Splits)
-              return false;
+                       // If the relative offsets of each split in the load and
+                       // store match exactly, then we can split them and we
+                       // don't need to remove them here.
+                       if (LoadOffsets.Splits == StoreOffsets.Splits)
+                         return false;
 
-            DEBUG(dbgs() << "    Mismatched splits for load and store:\n"
-                         << "      " << *LI << "\n"
-                         << "      " << *SI << "\n");
+                       DEBUG(dbgs()
+                             << "    Mismatched splits for load and store:\n"
+                             << "      " << *LI << "\n"
+                             << "      " << *SI << "\n");
 
-            // We've found a store and load that we need to split with
-            // mismatched relative splits. Just give up on them and remove both
-            // instructions from our list of candidates.
-            BadSplitLoads.insert(LI);
-            return true;
-          }),
+                       // We've found a store and load that we need to split
+                       // with mismatched relative splits. Just give up on them
+                       // and remove both instructions from our list of
+                       // candidates.
+                       BadSplitLoads.insert(LI);
+                       return true;
+                     }),
       Stores.end());
   Loads.erase(std::remove_if(Loads.begin(), Loads.end(),
                              [&BadSplitLoads](LoadInst *LI) {
@@ -3688,8 +3688,8 @@ bool SROA::presplitLoadsAndStores(AllocaInst &AI, AllocaSlices &AS) {
       auto *PartPtrTy = PartTy->getPointerTo(LI->getPointerAddressSpace());
       LoadInst *PLoad = IRB.CreateAlignedLoad(
           getAdjustedPtr(IRB, *DL, BasePtr,
-                         APInt(DL->getPointerSizeInBits(), PartOffset), PartPtrTy,
-                         BasePtr->getName() + "."),
+                         APInt(DL->getPointerSizeInBits(), PartOffset),
+                         PartPtrTy, BasePtr->getName() + "."),
           getAdjustedAlignment(LI, PartOffset, *DL), /*IsVolatile*/ false,
           LI->getName());
 
@@ -3698,10 +3698,10 @@ bool SROA::presplitLoadsAndStores(AllocaInst &AI, AllocaSlices &AS) {
       SplitLoads.push_back(PLoad);
 
       // Now build a new slice for the alloca.
-      NewSlices.push_back(Slice(BaseOffset + PartOffset,
-                         BaseOffset + PartOffset + PartSize,
-                         &PLoad->getOperandUse(PLoad->getPointerOperandIndex()),
-                         /*IsSplittable*/ true));
+      NewSlices.push_back(
+          Slice(BaseOffset + PartOffset, BaseOffset + PartOffset + PartSize,
+                &PLoad->getOperandUse(PLoad->getPointerOperandIndex()),
+                /*IsSplittable*/ true));
       DEBUG(AS.printSlice(dbgs(), std::prev(AS.end()), "    "));
       DEBUG(dbgs() << ": " << *PLoad << "\n");
 
@@ -3733,7 +3733,8 @@ bool SROA::presplitLoadsAndStores(AllocaInst &AI, AllocaSlices &AS) {
       for (int Idx = 0, Size = SplitLoads.size(); Idx < Size; ++Idx) {
         LoadInst *PLoad = SplitLoads[Idx];
         uint64_t PartOffset = Idx == 0 ? 0 : Offsets.Splits[Idx - 1];
-        auto *PartPtrTy = PLoad->getType()->getPointerTo(SI->getPointerAddressSpace());
+        auto *PartPtrTy =
+            PLoad->getType()->getPointerTo(SI->getPointerAddressSpace());
 
         StoreInst *PStore = IRB.CreateAlignedStore(
             PLoad, getAdjustedPtr(IRB, *DL, StoreBasePtr,
@@ -3802,7 +3803,6 @@ bool SROA::presplitLoadsAndStores(AllocaInst &AI, AllocaSlices &AS) {
     } else {
       DEBUG(dbgs() << "          of load: " << *LI << "\n");
     }
-
 
     uint64_t PartOffset = 0, PartSize = Offsets.Splits.front();
     int Idx = 0, Size = Offsets.Splits.size();
