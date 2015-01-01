@@ -547,10 +547,31 @@ static uint32_t getSectionStartAddr(uint64_t targetAddr,
   llvm_unreachable("Section missing");
 }
 
-void AtomChunk::applyRelocationsARM(uint8_t *buffer,
-                                    std::map<const Atom *, uint64_t> &atomRva,
-                                    std::vector<uint64_t> &sectionRva,
-                                    uint64_t imageBaseAddress) {
+void AtomChunk::applyRelocationsARM(uint8_t *Buffer,
+                                    std::map<const Atom *, uint64_t> &AtomRVA,
+                                    std::vector<uint64_t> &SectionRVA,
+                                    uint64_t ImageBase) {
+  Buffer = Buffer + _fileOffset;
+  for (const auto *Layout : _atomLayouts) {
+    const DefinedAtom *Atom = cast<DefinedAtom>(Layout->_atom);
+    for (const Reference *R : *Atom) {
+      if (R->kindNamespace() != Reference::KindNamespace::COFF)
+        continue;
+
+      const auto AtomOffset = R->offsetInAtom();
+      const auto FileOffset = Layout->_fileOffset;
+      const auto TargetAddr = AtomRVA[R->target()];
+      auto RelocSite32 =
+          reinterpret_cast<ulittle32_t *>(Buffer + FileOffset + AtomOffset);
+
+      switch (R->kindValue()) {
+      default: llvm_unreachable("unsupported relocation type");
+      case llvm::COFF::IMAGE_REL_ARM_ADDR32:
+        *RelocSite32 = *RelocSite32 + TargetAddr + ImageBase;
+        break;
+      }
+    }
+  }
 }
 
 void AtomChunk::applyRelocationsX86(uint8_t *buffer,
