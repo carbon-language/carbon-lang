@@ -8,7 +8,7 @@ sections:
     Alignment:       4
     SectionData:     '0000000000000000'
     Relocations:
-      - VirtualAddress:  4
+      - VirtualAddress:  0
         SymbolName:      i
         Type:            1
 symbols:
@@ -29,11 +29,11 @@ symbols:
     SectionNumber:   1
     SimpleType:      IMAGE_SYM_TYPE_NULL
     ComplexType:     IMAGE_SYM_DTYPE_NULL
-    StorageClass:    IMAGE_SYM_CLASS_EXTERNAL
+    StorageClass:    IMAGE_SYM_CLASS_STATIC
   - Name:            is
     Value:           4
     SectionNumber:   1
     SimpleType:      IMAGE_SYM_TYPE_NULL
     ComplexType:     IMAGE_SYM_DTYPE_NULL
-    StorageClass:    IMAGE_SYM_CLASS_STATIC
+    StorageClass:    IMAGE_SYM_CLASS_EXTERNAL
 ...
