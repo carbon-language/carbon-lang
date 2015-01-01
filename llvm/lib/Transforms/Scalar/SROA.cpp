@@ -3702,8 +3702,9 @@ bool SROA::presplitLoadsAndStores(AllocaInst &AI, AllocaSlices &AS) {
           Slice(BaseOffset + PartOffset, BaseOffset + PartOffset + PartSize,
                 &PLoad->getOperandUse(PLoad->getPointerOperandIndex()),
                 /*IsSplittable*/ true));
-      DEBUG(AS.printSlice(dbgs(), std::prev(AS.end()), "    "));
-      DEBUG(dbgs() << ": " << *PLoad << "\n");
+      DEBUG(dbgs() << "    new slice [" << NewSlices.back().beginOffset()
+                   << ", " << NewSlices.back().endOffset() << "): " << *PLoad
+                   << "\n");
 
       // Setup the next partition.
       PartOffset = Offsets.Splits[Idx];
@@ -3837,8 +3838,9 @@ bool SROA::presplitLoadsAndStores(AllocaInst &AI, AllocaSlices &AS) {
           Slice(BaseOffset + PartOffset, BaseOffset + PartOffset + PartSize,
                 &PStore->getOperandUse(PStore->getPointerOperandIndex()),
                 /*IsSplittable*/ true));
-      DEBUG(AS.printSlice(dbgs(), std::prev(AS.end()), "    "));
-      DEBUG(dbgs() << ": " << *PStore << "\n");
+      DEBUG(dbgs() << "    new slice [" << NewSlices.back().beginOffset()
+                   << ", " << NewSlices.back().endOffset() << "): " << *PStore
+                   << "\n");
       if (!SplitLoads) {
         DEBUG(dbgs() << "      of split load: " << *PLoad << "\n");
       }
