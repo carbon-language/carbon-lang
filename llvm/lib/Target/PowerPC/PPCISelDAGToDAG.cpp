@@ -1127,7 +1127,7 @@ class BitPermutationSelector {
     for (unsigned i = 0; i < Bits.size(); ++i) {
       if (Bits[i].hasValue())
         continue;
-      Mask |= (1ul << i);
+      Mask |= (UINT64_C(1) << i);
     }
 
     return ~Mask;
@@ -1491,12 +1491,12 @@ class BitPermutationSelector {
 
         if (BG.StartIdx <= BG.EndIdx) {
           for (unsigned i = BG.StartIdx; i <= BG.EndIdx; ++i)
-            Mask |= (1ul << i);
+            Mask |= (UINT64_C(1) << i);
         } else {
           for (unsigned i = BG.StartIdx; i < Bits.size(); ++i)
-            Mask |= (1ul << i);
+            Mask |= (UINT64_C(1) << i);
           for (unsigned i = 0; i <= BG.EndIdx; ++i)
-            Mask |= (1ul << i);
+            Mask |= (UINT64_C(1) << i);
         }
       }
 
