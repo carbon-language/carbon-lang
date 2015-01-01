@@ -90,39 +90,4 @@ TEST(ArrayRefTest, ConstConvert) {
   a = ArrayRef<int *>(A);
 }
 
-struct A {
-  int data;
-
-  A() : data(0) {}
-};
-
-struct B : A {
-  int data2;
-
-  B() : A(), data2(0) {}
-};
-
-TEST(ArrayRefTest, UpcastConvert) {
-  B Data[5];
-
-  for (unsigned i = 0, e = 5; i != e; ++i) {
-    Data[i].data = i + 5;
-    Data[i].data2 = i + 30;
-  }
-
-  B *DataPtrs[5];
-  for (unsigned i = 0, e = 5; i != e; ++i) {
-    DataPtrs[i] = &Data[i];
-  }
-
-  ArrayRef<B *> BArray(DataPtrs, 5);
-  ArrayRef<A *> AArray(BArray);
-
-  EXPECT_TRUE(AArray.size() == 5);
-  for (unsigned i = 0, e = 5; i != e; ++i) {
-    A *a = AArray[i];
-    EXPECT_TRUE(a->data == int(i + 5));
-  }
-}
-
 } // end anonymous namespace

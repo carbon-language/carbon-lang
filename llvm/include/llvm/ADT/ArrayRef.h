@@ -112,16 +112,6 @@ namespace llvm {
                  std::is_convertible<U *const *, T const *>::value>::type* = 0)
       : Data(A.data()), Length(A.size()) {}
 
-    /// Construct an ArrayRef<T*> from an ArrayRef<U*> where T is a super class
-    /// of U. This uses SFINAE to ensure that only ArrayRefs with this property
-    /// can be converted. This is an upcasting constructor.
-    template <typename U>
-    ArrayRef(const ArrayRef<U> &A,
-             typename std::enable_if<std::is_base_of<
-                 typename std::remove_pointer<T>::type,
-                 typename std::remove_pointer<U>::type>::value>::type * = 0)
-        : Data(reinterpret_cast<T const *>(A.data())), Length(A.size()) {}
-
     /// @}
     /// @name Simple Operations
     /// @{
