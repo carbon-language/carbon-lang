@@ -711,13 +711,6 @@ private:
                                     uint64_t &ErrorInfo,
                                     bool MatchingInlineAsm);
 
-  unsigned getPointerSize() {
-    if (is16BitMode()) return 16;
-    if (is32BitMode()) return 32;
-    if (is64BitMode()) return 64;
-    llvm_unreachable("invalid mode");
-  }
-
   bool OmitRegisterFromClobberLists(unsigned RegNo) override;
 
   /// doSrcDstMatch - Returns true if operands are matching in their
@@ -977,16 +970,18 @@ std::unique_ptr<X86Operand> X86AsmParser::DefaultMemSIOperand(SMLoc Loc) {
   unsigned basereg =
     is64BitMode() ? X86::RSI : (is32BitMode() ? X86::ESI : X86::SI);
   const MCExpr *Disp = MCConstantExpr::Create(0, getContext());
-  return X86Operand::CreateMem(/*SegReg=*/0, Disp, /*BaseReg=*/basereg,
-                               /*IndexReg=*/0, /*Scale=*/1, Loc, Loc, 0);
+  return X86Operand::CreateMem(getPointerWidth(), /*SegReg=*/0, Disp,
+                               /*BaseReg=*/basereg, /*IndexReg=*/0, /*Scale=*/1,
+                               Loc, Loc, 0);
 }
 
 std::unique_ptr<X86Operand> X86AsmParser::DefaultMemDIOperand(SMLoc Loc) {
   unsigned basereg =
     is64BitMode() ? X86::RDI : (is32BitMode() ? X86::EDI : X86::DI);
   const MCExpr *Disp = MCConstantExpr::Create(0, getContext());
-  return X86Operand::CreateMem(/*SegReg=*/0, Disp, /*BaseReg=*/basereg,
-                               /*IndexReg=*/0, /*Scale=*/1, Loc, Loc, 0);
+  return X86Operand::CreateMem(getPointerWidth(), /*SegReg=*/0, Disp,
+                               /*BaseReg=*/basereg, /*IndexReg=*/0, /*Scale=*/1,
+                               Loc, Loc, 0);
 }
 
 std::unique_ptr<X86Operand> X86AsmParser::ParseOperand() {
@@ -1027,8 +1022,8 @@ std::unique_ptr<X86Operand> X86AsmParser::CreateMemForInlineAsm(
 
     // Create an absolute memory reference in order to match against
     // instructions taking a PC relative operand.
-    return X86Operand::CreateMem(Disp, Start, End, Size, Identifier,
-                                 Info.OpDecl);
+    return X86Operand::CreateMem(getPointerWidth(), Disp, Start, End, Size,
+                                 Identifier, Info.OpDecl);
   }
 
   // We either have a direct symbol reference, or an offset from a symbol.  The
@@ -1050,8 +1045,9 @@ std::unique_ptr<X86Operand> X86AsmParser::CreateMemForInlineAsm(
   // if we don't know the actual value at this time.  This is necessary to
   // get the matching correct in some cases.
   BaseReg = BaseReg ? BaseReg : 1;
-  return X86Operand::CreateMem(SegReg, Disp, BaseReg, IndexReg, Scale, Start,
-                               End, Size, Identifier, Info.OpDecl);
+  return X86Operand::CreateMem(getPointerWidth(), SegReg, Disp, BaseReg,
+                               IndexReg, Scale, Start, End, Size, Identifier,
+                               Info.OpDecl);
 }
 
 static void
@@ -1292,17 +1288,17 @@ X86AsmParser::ParseIntelBracExpression(unsigned SegReg, SMLoc Start,
     // handle [-42]
     if (!BaseReg && !IndexReg) {
       if (!SegReg)
-        return X86Operand::CreateMem(Disp, Start, End, Size);
-      else
-        return X86Operand::CreateMem(SegReg, Disp, 0, 0, 1, Start, End, Size);
+        return X86Operand::CreateMem(getPointerWidth(), Disp, Start, End, Size);
+      return X86Operand::CreateMem(getPointerWidth(), SegReg, Disp, 0, 0, 1,
+                                   Start, End, Size);
     }
     StringRef ErrMsg;
     if (CheckBaseRegAndIndexReg(BaseReg, IndexReg, ErrMsg)) {
       Error(StartInBrac, ErrMsg);
       return nullptr;
     }
-    return X86Operand::CreateMem(SegReg, Disp, BaseReg, IndexReg, Scale, Start,
-                                 End, Size);
+    return X86Operand::CreateMem(getPointerWidth(), SegReg, Disp, BaseReg,
+                                 IndexReg, Scale, Start, End, Size);
   }
 
   InlineAsmIdentifierInfo &Info = SM.getIdentifierInfo();
@@ -1383,9 +1379,9 @@ X86AsmParser::ParseIntelSegmentOverride(unsigned SegReg, SMLoc Start,
       // be followed by a bracketed expression.  If it isn't we know we have our
       // final segment override.
       const MCExpr *Disp = MCConstantExpr::Create(ImmDisp, getContext());
-      return X86Operand::CreateMem(SegReg, Disp, /*BaseReg=*/0, /*IndexReg=*/0,
-                                   /*Scale=*/1, Start, ImmDispToken.getEndLoc(),
-                                   Size);
+      return X86Operand::CreateMem(getPointerWidth(), SegReg, Disp,
+                                   /*BaseReg=*/0, /*IndexReg=*/0, /*Scale=*/1,
+                                   Start, ImmDispToken.getEndLoc(), Size);
     }
   }
 
@@ -1398,7 +1394,7 @@ X86AsmParser::ParseIntelSegmentOverride(unsigned SegReg, SMLoc Start,
     if (getParser().parsePrimaryExpr(Val, End))
       return ErrorOperand(Tok.getLoc(), "unknown token in expression");
 
-    return X86Operand::CreateMem(Val, Start, End, Size);
+    return X86Operand::CreateMem(getPointerWidth(), Val, Start, End, Size);
   }
 
   InlineAsmIdentifierInfo Info;
@@ -1428,7 +1424,7 @@ std::unique_ptr<X86Operand> X86AsmParser::ParseIntelMemOperand(int64_t ImmDisp,
     if (getParser().parsePrimaryExpr(Val, End))
       return ErrorOperand(Tok.getLoc(), "unknown token in expression");
 
-    return X86Operand::CreateMem(Val, Start, End, Size);
+    return X86Operand::CreateMem(getPointerWidth(), Val, Start, End, Size);
   }
 
   InlineAsmIdentifierInfo Info;
@@ -1466,9 +1462,9 @@ std::unique_ptr<X86Operand> X86AsmParser::ParseIntelMemOperand(int64_t ImmDisp,
   // BaseReg is non-zero to avoid assertions.  In the context of inline asm,
   // we're pointing to a local variable in memory, so the base register is
   // really the frame or stack pointer.
-  return X86Operand::CreateMem(/*SegReg=*/0, Disp, /*BaseReg=*/1, /*IndexReg=*/0,
-                               /*Scale=*/1, Start, End, Size, Identifier,
-                               Info.OpDecl);
+  return X86Operand::CreateMem(getPointerWidth(), /*SegReg=*/0, Disp,
+                               /*BaseReg=*/1, /*IndexReg=*/0, /*Scale=*/1,
+                               Start, End, Size, Identifier, Info.OpDecl);
 }
 
 /// Parse the '.' operator.
@@ -1643,7 +1639,8 @@ std::unique_ptr<X86Operand> X86AsmParser::ParseIntelOperand() {
       // to the MCExpr with the directional local symbol and this is a
       // memory operand not an immediate operand.
       if (SM.getSym())
-        return X86Operand::CreateMem(SM.getSym(), Start, End, Size);
+        return X86Operand::CreateMem(getPointerWidth(), SM.getSym(), Start, End,
+                                     Size);
 
       const MCExpr *ImmExpr = MCConstantExpr::Create(Imm, getContext());
       return X86Operand::CreateImm(ImmExpr, Start, End);
@@ -1802,8 +1799,9 @@ std::unique_ptr<X86Operand> X86AsmParser::ParseMemOperand(unsigned SegReg,
     if (getLexer().isNot(AsmToken::LParen)) {
       // Unless we have a segment register, treat this as an immediate.
       if (SegReg == 0)
-        return X86Operand::CreateMem(Disp, MemStart, ExprEnd);
-      return X86Operand::CreateMem(SegReg, Disp, 0, 0, 1, MemStart, ExprEnd);
+        return X86Operand::CreateMem(getPointerWidth(), Disp, MemStart, ExprEnd);
+      return X86Operand::CreateMem(getPointerWidth(), SegReg, Disp, 0, 0, 1,
+                                   MemStart, ExprEnd);
     }
 
     // Eat the '('.
@@ -1829,8 +1827,10 @@ std::unique_ptr<X86Operand> X86AsmParser::ParseMemOperand(unsigned SegReg,
       if (getLexer().isNot(AsmToken::LParen)) {
         // Unless we have a segment register, treat this as an immediate.
         if (SegReg == 0)
-          return X86Operand::CreateMem(Disp, LParenLoc, ExprEnd);
-        return X86Operand::CreateMem(SegReg, Disp, 0, 0, 1, MemStart, ExprEnd);
+          return X86Operand::CreateMem(getPointerWidth(), Disp, LParenLoc,
+                                       ExprEnd);
+        return X86Operand::CreateMem(getPointerWidth(), SegReg, Disp, 0, 0, 1,
+                                     MemStart, ExprEnd);
       }
 
       // Eat the '('.
@@ -1946,9 +1946,9 @@ std::unique_ptr<X86Operand> X86AsmParser::ParseMemOperand(unsigned SegReg,
   }
 
   if (SegReg || BaseReg || IndexReg)
-    return X86Operand::CreateMem(SegReg, Disp, BaseReg, IndexReg, Scale,
-                                 MemStart, MemEnd);
-  return X86Operand::CreateMem(Disp, MemStart, MemEnd);
+    return X86Operand::CreateMem(getPointerWidth(), SegReg, Disp, BaseReg,
+                                 IndexReg, Scale, MemStart, MemEnd);
+  return X86Operand::CreateMem(getPointerWidth(), Disp, MemStart, MemEnd);
 }
 
 bool X86AsmParser::ParseInstruction(ParseInstructionInfo &Info, StringRef Name,
@@ -2614,7 +2614,7 @@ bool X86AsmParser::MatchAndEmitIntelInstruction(SMLoc IDLoc, unsigned &Opcode,
     static const char *const PtrSizedInstrs[] = {"call", "jmp", "push"};
     for (const char *Instr : PtrSizedInstrs) {
       if (Mnemonic == Instr) {
-        UnsizedMemOp->Mem.Size = getPointerSize();
+        UnsizedMemOp->Mem.Size = getPointerWidth();
         break;
       }
     }

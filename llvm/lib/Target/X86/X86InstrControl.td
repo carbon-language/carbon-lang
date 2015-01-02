@@ -106,20 +106,14 @@ let isBranch = 1, isTerminator = 1, hasSideEffects = 0, SchedRW = [WriteJump] in
   // jecxz.
   let Uses = [CX] in
     def JCXZ : Ii8PCRel<0xE3, RawFrm, (outs), (ins brtarget8:$dst),
-                        "jcxz\t$dst", [], IIC_JCXZ>, AdSize16, Requires<[Not64BitMode]>;
+                        "jcxz\t$dst", [], IIC_JCXZ>, AdSize16;
   let Uses = [ECX] in
-    def JECXZ_32 : Ii8PCRel<0xE3, RawFrm, (outs), (ins brtarget8:$dst),
-                           "jecxz\t$dst", [], IIC_JCXZ>, AdSize32, Requires<[Not64BitMode]>;
+    def JECXZ : Ii8PCRel<0xE3, RawFrm, (outs), (ins brtarget8:$dst),
+                        "jecxz\t$dst", [], IIC_JCXZ>, AdSize32;
 
-  // J*CXZ instruction: 64-bit versions of this instruction for the asmparser.
-  // In 64-bit mode, the address size prefix is jecxz and the unprefixed version
-  // is jrcxz.
-  let Uses = [ECX] in
-    def JECXZ_64 : Ii8PCRel<0xE3, RawFrm, (outs), (ins brtarget8:$dst),
-                            "jecxz\t$dst", [], IIC_JCXZ>, AdSize32, Requires<[In64BitMode]>;
   let Uses = [RCX] in
     def JRCXZ : Ii8PCRel<0xE3, RawFrm, (outs), (ins brtarget8:$dst),
-                           "jrcxz\t$dst", [], IIC_JCXZ>, AdSize64, Requires<[In64BitMode]>;
+                           "jrcxz\t$dst", [], IIC_JCXZ>, AdSize64;
 }
 
 // Indirect branches

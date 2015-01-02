@@ -261,6 +261,23 @@ protected:
                                               int64_t Displacement,
                                               MCContext &Ctx, int64_t *Residue);
 
+  bool is64BitMode() const {
+    return (STI.getFeatureBits() & X86::Mode64Bit) != 0;
+  }
+  bool is32BitMode() const {
+    return (STI.getFeatureBits() & X86::Mode32Bit) != 0;
+  }
+  bool is16BitMode() const {
+    return (STI.getFeatureBits() & X86::Mode16Bit) != 0;
+  }
+
+  unsigned getPointerWidth() {
+    if (is16BitMode()) return 16;
+    if (is32BitMode()) return 32;
+    if (is64BitMode()) return 64;
+    llvm_unreachable("invalid mode");
+  }
+
   // True when previous instruction was actually REP prefix.
   bool RepPrefix;
 
@@ -301,7 +318,7 @@ void X86AddressSanitizer::InstrumentMOVSBase(unsigned DstReg, unsigned SrcReg,
   {
     const MCExpr *Disp = MCConstantExpr::Create(0, Ctx);
     std::unique_ptr<X86Operand> Op(X86Operand::CreateMem(
-        0, Disp, SrcReg, 0, AccessSize, SMLoc(), SMLoc()));
+        getPointerWidth(), 0, Disp, SrcReg, 0, AccessSize, SMLoc(), SMLoc()));
     InstrumentMemOperand(*Op, AccessSize, false /* IsWrite */, RegCtx, Ctx,
                          Out);
   }
@@ -310,7 +327,8 @@ void X86AddressSanitizer::InstrumentMOVSBase(unsigned DstReg, unsigned SrcReg,
   {
     const MCExpr *Disp = MCConstantExpr::Create(-1, Ctx);
     std::unique_ptr<X86Operand> Op(X86Operand::CreateMem(
-        0, Disp, SrcReg, CntReg, AccessSize, SMLoc(), SMLoc()));
+        getPointerWidth(), 0, Disp, SrcReg, CntReg, AccessSize, SMLoc(),
+        SMLoc()));
     InstrumentMemOperand(*Op, AccessSize, false /* IsWrite */, RegCtx, Ctx,
                          Out);
   }
@@ -319,7 +337,7 @@ void X86AddressSanitizer::InstrumentMOVSBase(unsigned DstReg, unsigned SrcReg,
   {
     const MCExpr *Disp = MCConstantExpr::Create(0, Ctx);
     std::unique_ptr<X86Operand> Op(X86Operand::CreateMem(
-        0, Disp, DstReg, 0, AccessSize, SMLoc(), SMLoc()));
+        getPointerWidth(), 0, Disp, DstReg, 0, AccessSize, SMLoc(), SMLoc()));
     InstrumentMemOperand(*Op, AccessSize, true /* IsWrite */, RegCtx, Ctx, Out);
   }
 
@@ -327,7 +345,8 @@ void X86AddressSanitizer::InstrumentMOVSBase(unsigned DstReg, unsigned SrcReg,
   {
     const MCExpr *Disp = MCConstantExpr::Create(-1, Ctx);
     std::unique_ptr<X86Operand> Op(X86Operand::CreateMem(
-        0, Disp, DstReg, CntReg, AccessSize, SMLoc(), SMLoc()));
+        getPointerWidth(), 0, Disp, DstReg, CntReg, AccessSize, SMLoc(),
+        SMLoc()));
     InstrumentMemOperand(*Op, AccessSize, true /* IsWrite */, RegCtx, Ctx, Out);
   }
 
@@ -445,7 +464,8 @@ void X86AddressSanitizer::ComputeMemOperandAddress(X86Operand &Op,
     const MCConstantExpr *Disp =
         MCConstantExpr::Create(ApplyDisplacementBounds(Residue), Ctx);
     std::unique_ptr<X86Operand> DispOp =
-        X86Operand::CreateMem(0, Disp, Reg, 0, 1, SMLoc(), SMLoc());
+        X86Operand::CreateMem(getPointerWidth(), 0, Disp, Reg, 0, 1, SMLoc(),
+                              SMLoc());
     EmitLEA(*DispOp, VT, Reg, Out);
     Residue -= Disp->getValue();
   }
@@ -459,9 +479,10 @@ X86AddressSanitizer::AddDisplacement(X86Operand &Op, int64_t Displacement,
   if (Displacement == 0 ||
       (Op.getMemDisp() && Op.getMemDisp()->getKind() != MCExpr::Constant)) {
     *Residue = Displacement;
-    return X86Operand::CreateMem(Op.getMemSegReg(), Op.getMemDisp(),
-                                 Op.getMemBaseReg(), Op.getMemIndexReg(),
-                                 Op.getMemScale(), SMLoc(), SMLoc());
+    return X86Operand::CreateMem(Op.getMemModeSize(), Op.getMemSegReg(),
+                                 Op.getMemDisp(), Op.getMemBaseReg(),
+                                 Op.getMemIndexReg(), Op.getMemScale(),
+                                 SMLoc(), SMLoc());
   }
 
   int64_t OrigDisplacement =
@@ -474,9 +495,9 @@ X86AddressSanitizer::AddDisplacement(X86Operand &Op, int64_t Displacement,
 
   *Residue = Displacement - NewDisplacement;
   const MCExpr *Disp = MCConstantExpr::Create(NewDisplacement, Ctx);
-  return X86Operand::CreateMem(Op.getMemSegReg(), Disp, Op.getMemBaseReg(),
-                               Op.getMemIndexReg(), Op.getMemScale(), SMLoc(),
-                               SMLoc());
+  return X86Operand::CreateMem(Op.getMemModeSize(), Op.getMemSegReg(), Disp,
+                               Op.getMemBaseReg(), Op.getMemIndexReg(),
+                               Op.getMemScale(), SMLoc(), SMLoc());
 }
 
 class X86AddressSanitizer32 : public X86AddressSanitizer {
@@ -625,7 +646,8 @@ void X86AddressSanitizer32::InstrumentMemOperandSmall(
     Inst.addOperand(MCOperand::CreateReg(ShadowRegI8));
     const MCExpr *Disp = MCConstantExpr::Create(kShadowOffset, Ctx);
     std::unique_ptr<X86Operand> Op(
-        X86Operand::CreateMem(0, Disp, ShadowRegI32, 0, 1, SMLoc(), SMLoc()));
+        X86Operand::CreateMem(getPointerWidth(), 0, Disp, ShadowRegI32, 0, 1,
+                              SMLoc(), SMLoc()));
     Op->addMemOperands(Inst, 5);
     EmitInstruction(Out, Inst);
   }
@@ -649,7 +671,8 @@ void X86AddressSanitizer32::InstrumentMemOperandSmall(
   case 2: {
     const MCExpr *Disp = MCConstantExpr::Create(1, Ctx);
     std::unique_ptr<X86Operand> Op(
-        X86Operand::CreateMem(0, Disp, ScratchRegI32, 0, 1, SMLoc(), SMLoc()));
+        X86Operand::CreateMem(getPointerWidth(), 0, Disp, ScratchRegI32, 0, 1,
+                              SMLoc(), SMLoc()));
     EmitLEA(*Op, MVT::i32, ScratchRegI32, Out);
     break;
   }
@@ -704,7 +727,8 @@ void X86AddressSanitizer32::InstrumentMemOperandLarge(
     }
     const MCExpr *Disp = MCConstantExpr::Create(kShadowOffset, Ctx);
     std::unique_ptr<X86Operand> Op(
-        X86Operand::CreateMem(0, Disp, ShadowRegI32, 0, 1, SMLoc(), SMLoc()));
+        X86Operand::CreateMem(getPointerWidth(), 0, Disp, ShadowRegI32, 0, 1,
+                              SMLoc(), SMLoc()));
     Op->addMemOperands(Inst, 5);
     Inst.addOperand(MCOperand::CreateImm(0));
     EmitInstruction(Out, Inst);
@@ -843,7 +867,8 @@ private:
   void EmitAdjustRSP(MCContext &Ctx, MCStreamer &Out, long Offset) {
     const MCExpr *Disp = MCConstantExpr::Create(Offset, Ctx);
     std::unique_ptr<X86Operand> Op(
-        X86Operand::CreateMem(0, Disp, X86::RSP, 0, 1, SMLoc(), SMLoc()));
+        X86Operand::CreateMem(getPointerWidth(), 0, Disp, X86::RSP, 0, 1,
+                              SMLoc(), SMLoc()));
     EmitLEA(*Op, MVT::i64, X86::RSP, Out);
     OrigSPOffset += Offset;
   }
@@ -896,7 +921,8 @@ void X86AddressSanitizer64::InstrumentMemOperandSmall(
     Inst.addOperand(MCOperand::CreateReg(ShadowRegI8));
     const MCExpr *Disp = MCConstantExpr::Create(kShadowOffset, Ctx);
     std::unique_ptr<X86Operand> Op(
-        X86Operand::CreateMem(0, Disp, ShadowRegI64, 0, 1, SMLoc(), SMLoc()));
+        X86Operand::CreateMem(getPointerWidth(), 0, Disp, ShadowRegI64, 0, 1,
+                              SMLoc(), SMLoc()));
     Op->addMemOperands(Inst, 5);
     EmitInstruction(Out, Inst);
   }
@@ -920,7 +946,8 @@ void X86AddressSanitizer64::InstrumentMemOperandSmall(
   case 2: {
     const MCExpr *Disp = MCConstantExpr::Create(1, Ctx);
     std::unique_ptr<X86Operand> Op(
-        X86Operand::CreateMem(0, Disp, ScratchRegI32, 0, 1, SMLoc(), SMLoc()));
+        X86Operand::CreateMem(getPointerWidth(), 0, Disp, ScratchRegI32, 0, 1,
+                              SMLoc(), SMLoc()));
     EmitLEA(*Op, MVT::i32, ScratchRegI32, Out);
     break;
   }
@@ -975,7 +1002,8 @@ void X86AddressSanitizer64::InstrumentMemOperandLarge(
     }
     const MCExpr *Disp = MCConstantExpr::Create(kShadowOffset, Ctx);
     std::unique_ptr<X86Operand> Op(
-        X86Operand::CreateMem(0, Disp, ShadowRegI64, 0, 1, SMLoc(), SMLoc()));
+        X86Operand::CreateMem(getPointerWidth(), 0, Disp, ShadowRegI64, 0, 1,
+                              SMLoc(), SMLoc()));
     Op->addMemOperands(Inst, 5);
     Inst.addOperand(MCOperand::CreateImm(0));
     EmitInstruction(Out, Inst);

@@ -75,13 +75,13 @@ static inline const char* stringForOperandEncoding(OperandEncoding encoding) {
 /// @return       - True if child is a subset of parent, false otherwise.
 static inline bool inheritsFrom(InstructionContext child,
                                 InstructionContext parent,
-                                bool VEX_LIG = false) {
+                                bool VEX_LIG = false, bool AdSize64 = false) {
   if (child == parent)
     return true;
 
   switch (parent) {
   case IC:
-    return(inheritsFrom(child, IC_64BIT) ||
+    return(inheritsFrom(child, IC_64BIT, AdSize64) ||
            inheritsFrom(child, IC_OPSIZE) ||
            inheritsFrom(child, IC_ADSIZE) ||
            inheritsFrom(child, IC_XD) ||
@@ -89,7 +89,7 @@ static inline bool inheritsFrom(InstructionContext child,
   case IC_64BIT:
     return(inheritsFrom(child, IC_64BIT_REXW)   ||
            inheritsFrom(child, IC_64BIT_OPSIZE) ||
-           inheritsFrom(child, IC_64BIT_ADSIZE) ||
+           (!AdSize64 && inheritsFrom(child, IC_64BIT_ADSIZE)) ||
            inheritsFrom(child, IC_64BIT_XD)     ||
            inheritsFrom(child, IC_64BIT_XS));
   case IC_OPSIZE:
@@ -117,7 +117,7 @@ static inline bool inheritsFrom(InstructionContext child,
            inheritsFrom(child, IC_64BIT_REXW_OPSIZE));
   case IC_64BIT_OPSIZE:
     return inheritsFrom(child, IC_64BIT_REXW_OPSIZE) ||
-           inheritsFrom(child, IC_64BIT_OPSIZE_ADSIZE);
+           (!AdSize64 && inheritsFrom(child, IC_64BIT_OPSIZE_ADSIZE));
   case IC_64BIT_XD:
     return(inheritsFrom(child, IC_64BIT_REXW_XD));
   case IC_64BIT_XS:
@@ -865,15 +865,19 @@ void DisassemblerTables::setTableFields(OpcodeType          type,
                                         const ModRMFilter   &filter,
                                         InstrUID            uid,
                                         bool                is32bit,
-                                        bool                ignoresVEX_L) {
+                                        bool                ignoresVEX_L,
+                                        unsigned            addressSize) {
   ContextDecision &decision = *Tables[type];
 
   for (unsigned index = 0; index < IC_max; ++index) {
-    if (is32bit && inheritsFrom((InstructionContext)index, IC_64BIT))
+    if ((is32bit || addressSize == 16) &&
+        inheritsFrom((InstructionContext)index, IC_64BIT))
       continue;
 
+    bool adSize64 = addressSize == 64;
     if (inheritsFrom((InstructionContext)index,
-                     InstructionSpecifiers[uid].insnContext, ignoresVEX_L))
+                     InstructionSpecifiers[uid].insnContext, ignoresVEX_L,
+                     adSize64))
       setTableFields(decision.opcodeDecisions[index].modRMDecisions[opcode],
                      filter,
                      uid,
