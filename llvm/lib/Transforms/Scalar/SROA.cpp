@@ -3706,11 +3706,13 @@ bool SROA::presplitLoadsAndStores(AllocaInst &AI, AllocaSlices &AS) {
                    << ", " << NewSlices.back().endOffset() << "): " << *PLoad
                    << "\n");
 
+      // See if we've handled all the splits.
+      if (Idx >= Size)
+        break;
+
       // Setup the next partition.
       PartOffset = Offsets.Splits[Idx];
       ++Idx;
-      if (Idx > Size)
-        break;
       PartSize = (Idx < Size ? Offsets.Splits[Idx] : LoadSize) - PartOffset;
     }
 
@@ -3845,11 +3847,13 @@ bool SROA::presplitLoadsAndStores(AllocaInst &AI, AllocaSlices &AS) {
         DEBUG(dbgs() << "      of split load: " << *PLoad << "\n");
       }
 
+      // See if we've finished all the splits.
+      if (Idx >= Size)
+        break;
+
       // Setup the next partition.
       PartOffset = Offsets.Splits[Idx];
       ++Idx;
-      if (Idx > Size)
-        break;
       PartSize = (Idx < Size ? Offsets.Splits[Idx] : StoreSize) - PartOffset;
     }
 
