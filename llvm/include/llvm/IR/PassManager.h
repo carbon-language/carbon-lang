@@ -43,7 +43,7 @@
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/Module.h"
-#include "llvm/IR/PassManagerInternals.h"
+#include "llvm/IR/PassManagerInternal.h"
 #include "llvm/Support/type_traits.h"
 #include <list>
 #include <memory>
