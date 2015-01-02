@@ -3379,8 +3379,8 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     D.Diag(diag::warn_ignored_gcc_optimization) << (*it)->getAsString(Args);
   }
 
-  // Don't warn about unused -f(no-)?lto.  This can happen when we're preprocessing,
-  // precompiling or assembling.
+  // Don't warn about unused -f(no-)?lto.  This can happen when we're preprocessing or
+  // precompiling.
   Args.ClaimAllArgs(options::OPT_flto);
   Args.ClaimAllArgs(options::OPT_fno_lto);
 
@@ -4809,6 +4809,11 @@ void ClangAs::ConstructJob(Compilation &C, const JobAction &JA,
   Args.ClaimAllArgs(options::OPT_w);
   // and "clang -emit-llvm -c foo.s"
   Args.ClaimAllArgs(options::OPT_emit_llvm);
+
+  // Don't warn on -flto/-fno-lto
+  // FIXME: Code duplicated with Clang::ConstructJob.
+  Args.ClaimAllArgs(options::OPT_flto);
+  Args.ClaimAllArgs(options::OPT_fno_lto);
 
   // Invoke ourselves in -cc1as mode.
   //
