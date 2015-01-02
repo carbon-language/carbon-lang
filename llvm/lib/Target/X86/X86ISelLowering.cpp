@@ -3883,12 +3883,12 @@ bool X86TargetLowering::isExtractSubvectorCheap(EVT ResVT,
 }
 
 bool X86TargetLowering::isCheapToSpeculateCttz() const {
-  // Don't try to speculate cttz if we can't directly use TZCNT.
+  // Speculate cttz only if we can directly use TZCNT.
   return Subtarget->hasBMI();
 }
 
 bool X86TargetLowering::isCheapToSpeculateCtlz() const {
-  // Don't try to speculate ctlz if we can't directly use LZCNT.
+  // Speculate ctlz only if we can directly use LZCNT.
   return Subtarget->hasLZCNT();
 }
 
