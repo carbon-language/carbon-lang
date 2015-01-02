@@ -172,15 +172,13 @@ void ParseFlagsFromString(Flags *f, const char *str) {
 }
 
 void InitializeFlags(Flags *f) {
+  CommonFlags *cf = common_flags();
   SetCommonFlagsDefaults();
-  {
-    CommonFlags cf = *common_flags();
-    cf.detect_leaks = CAN_SANITIZE_LEAKS;
-    cf.external_symbolizer_path = GetEnv("ASAN_SYMBOLIZER_PATH");
-    cf.malloc_context_size = kDefaultMallocContextSize;
-    cf.intercept_tls_get_addr = true;
-    OverrideCommonFlags(cf);
-  }
+  cf->detect_leaks = CAN_SANITIZE_LEAKS;
+  cf->external_symbolizer_path = GetEnv("ASAN_SYMBOLIZER_PATH");
+  cf->malloc_context_size = kDefaultMallocContextSize;
+  cf->intercept_tls_get_addr = true;
+  cf->coverage = false;
 
   internal_memset(f, 0, sizeof(*f));
   f->quarantine_size = (ASAN_LOW_MEMORY) ? 1UL << 26 : 1UL << 28;
@@ -260,17 +258,17 @@ void InitializeFlags(Flags *f) {
   }
 
   // Flag validation:
-  if (!CAN_SANITIZE_LEAKS && common_flags()->detect_leaks) {
+  if (!CAN_SANITIZE_LEAKS && cf->detect_leaks) {
     Report("%s: detect_leaks is not supported on this platform.\n",
            SanitizerToolName);
-    Die();
+    cf->detect_leaks = false;
   }
   // Make "strict_init_order" imply "check_initialization_order".
   // TODO(samsonov): Use a single runtime flag for an init-order checker.
   if (f->strict_init_order) {
     f->check_initialization_order = true;
   }
-  CHECK_LE((uptr)common_flags()->malloc_context_size, kStackTraceMax);
+  CHECK_LE((uptr)cf->malloc_context_size, kStackTraceMax);
   CHECK_LE(f->min_uar_stack_size_log, f->max_uar_stack_size_log);
   CHECK_GE(f->redzone, 16);
   CHECK_GE(f->max_redzone, f->redzone);

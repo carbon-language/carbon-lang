@@ -74,13 +74,12 @@ static void InitializeFlags(bool standalone) {
 
   // Set defaults for common flags (only in standalone mode) and parse
   // them from LSAN_OPTIONS.
+  CommonFlags *cf = common_flags();
   if (standalone) {
     SetCommonFlagsDefaults();
-    CommonFlags cf = *common_flags();
-    cf.external_symbolizer_path = GetEnv("LSAN_SYMBOLIZER_PATH");
-    cf.malloc_context_size = 30;
-    cf.detect_leaks = true;
-    OverrideCommonFlags(cf);
+    cf->external_symbolizer_path = GetEnv("LSAN_SYMBOLIZER_PATH");
+    cf->malloc_context_size = 30;
+    cf->detect_leaks = true;
   }
   ParseCommonFlagsFromString(options);
 }
