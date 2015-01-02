@@ -231,6 +231,19 @@ define i32 @umultest4(i32 %n) nounwind {
 ; CHECK: umul.with.overflow
 }
 
+define %ov.result.32 @umultest5(i32 %x, i32 %y) nounwind {
+  %or_x = or i32 %x, 2147483648
+  %or_y = or i32 %y, 2147483648
+  %mul = call %ov.result.32 @llvm.umul.with.overflow.i32(i32 %or_x, i32 %or_y)
+  ret %ov.result.32 %mul
+; CHECK-LABEL: @umultest5(
+; CHECK-NEXT: %[[or_x:.*]] = or i32 %x, -2147483648
+; CHECK-NEXT: %[[or_y:.*]] = or i32 %y, -2147483648
+; CHECK-NEXT: %[[mul:.*]] = mul i32 %[[or_x]], %[[or_y]]
+; CHECK-NEXT: %[[ret:.*]] = insertvalue %ov.result.32 { i32 undef, i1 true }, i32 %[[mul]], 0
+; CHECK-NEXT: ret %ov.result.32 %[[ret]]
+}
+
 define void @powi(double %V, double *%P) {
 entry:
   %A = tail call double @llvm.powi.f64(double %V, i32 -1) nounwind

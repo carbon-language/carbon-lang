@@ -443,6 +443,8 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
     OverflowResult OR = computeOverflowForUnsignedMul(LHS, RHS, II);
     if (OR == OverflowResult::NeverOverflows) {
       return CreateOverflowTuple(II, Builder->CreateNUWMul(LHS, RHS), false);
+    } else if (OR == OverflowResult::AlwaysOverflows) {
+      return CreateOverflowTuple(II, Builder->CreateMul(LHS, RHS), true);
     }
   } // FALL THROUGH
   case Intrinsic::smul_with_overflow:

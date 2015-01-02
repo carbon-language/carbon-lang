@@ -2686,10 +2686,11 @@ OverflowResult llvm::computeOverflowForUnsignedMul(Value *LHS, Value *RHS,
   // Ref: "Hacker's Delight" by Henry Warren
   unsigned BitWidth = LHS->getType()->getScalarSizeInBits();
   APInt LHSKnownZero(BitWidth, 0);
+  APInt LHSKnownOne(BitWidth, 0);
   APInt RHSKnownZero(BitWidth, 0);
-  APInt TmpKnownOne(BitWidth, 0);
-  computeKnownBits(LHS, LHSKnownZero, TmpKnownOne, DL, /*Depth=*/0, AT, CxtI, DT);
-  computeKnownBits(RHS, RHSKnownZero, TmpKnownOne, DL, /*Depth=*/0, AT, CxtI, DT);
+  APInt RHSKnownOne(BitWidth, 0);
+  computeKnownBits(LHS, LHSKnownZero, LHSKnownOne, DL, /*Depth=*/0, AT, CxtI, DT);
+  computeKnownBits(RHS, RHSKnownZero, RHSKnownOne, DL, /*Depth=*/0, AT, CxtI, DT);
   // Note that underestimating the number of zero bits gives a more
   // conservative answer.
   unsigned ZeroBits = LHSKnownZero.countLeadingOnes() +
@@ -2705,9 +2706,17 @@ OverflowResult llvm::computeOverflowForUnsignedMul(Value *LHS, Value *RHS,
 
   // We know the multiply operation doesn't overflow if the maximum values for
   // each operand will not overflow after we multiply them together.
-  bool Overflow;
-  LHSMax.umul_ov(RHSMax, Overflow);
+  bool MaxOverflow;
+  LHSMax.umul_ov(RHSMax, MaxOverflow);
+  if (!MaxOverflow)
+    return OverflowResult::NeverOverflows;
 
-  return Overflow ? OverflowResult::MayOverflow
-                  : OverflowResult::NeverOverflows;
+  // We know it always overflows if multiplying the smallest possible values for
+  // the operands also results in overflow.
+  bool MinOverflow;
+  LHSKnownOne.umul_ov(RHSKnownOne, MinOverflow);
+  if (MinOverflow)
+    return OverflowResult::AlwaysOverflows;
+
+  return OverflowResult::MayOverflow;
 }
