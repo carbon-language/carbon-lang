@@ -2672,3 +2672,42 @@ bool llvm::isKnownNonNull(const Value *V, const TargetLibraryInfo *TLI) {
 
   return false;
 }
+
+OverflowResult llvm::computeOverflowForUnsignedMul(Value *LHS, Value *RHS,
+                                                   const DataLayout *DL,
+                                                   AssumptionTracker *AT,
+                                                   const Instruction *CxtI,
+                                                   const DominatorTree *DT) {
+  // Multiplying n * m significant bits yields a result of n + m significant
+  // bits. If the total number of significant bits does not exceed the
+  // result bit width (minus 1), there is no overflow.
+  // This means if we have enough leading zero bits in the operands
+  // we can guarantee that the result does not overflow.
+  // Ref: "Hacker's Delight" by Henry Warren
+  unsigned BitWidth = LHS->getType()->getScalarSizeInBits();
+  APInt LHSKnownZero(BitWidth, 0);
+  APInt RHSKnownZero(BitWidth, 0);
+  APInt TmpKnownOne(BitWidth, 0);
+  computeKnownBits(LHS, LHSKnownZero, TmpKnownOne, DL, /*Depth=*/0, AT, CxtI, DT);
+  computeKnownBits(RHS, RHSKnownZero, TmpKnownOne, DL, /*Depth=*/0, AT, CxtI, DT);
+  // Note that underestimating the number of zero bits gives a more
+  // conservative answer.
+  unsigned ZeroBits = LHSKnownZero.countLeadingOnes() +
+                      RHSKnownZero.countLeadingOnes();
+  // First handle the easy case: if we have enough zero bits there's
+  // definitely no overflow.
+  if (ZeroBits >= BitWidth)
+    return OverflowResult::NeverOverflows;
+
+  // Get the largest possible values for each operand.
+  APInt LHSMax = ~LHSKnownZero;
+  APInt RHSMax = ~RHSKnownZero;
+
+  // We know the multiply operation doesn't overflow if the maximum values for
+  // each operand will not overflow after we multiply them together.
+  bool Overflow;
+  LHSMax.umul_ov(RHSMax, Overflow);
+
+  return Overflow ? OverflowResult::MayOverflow
+                  : OverflowResult::NeverOverflows;
+}

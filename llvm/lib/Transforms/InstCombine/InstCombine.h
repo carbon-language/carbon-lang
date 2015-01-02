@@ -286,7 +286,6 @@ private:
   bool WillNotOverflowSignedSub(Value *LHS, Value *RHS, Instruction *CxtI);
   bool WillNotOverflowUnsignedSub(Value *LHS, Value *RHS, Instruction *CxtI);
   bool WillNotOverflowSignedMul(Value *LHS, Value *RHS, Instruction *CxtI);
-  bool WillNotOverflowUnsignedMul(Value *LHS, Value *RHS, Instruction *CxtI);
   Value *EmitGEPOffset(User *GEP);
   Instruction *scalarizePHI(ExtractElementInst &EI, PHINode *PN);
   Value *EvaluateInDifferentElementOrder(Value *V, ArrayRef<int> Mask);
@@ -387,6 +386,10 @@ public:
                       unsigned Depth = 0, Instruction *CxtI = nullptr) const {
     return llvm::ComputeSignBit(V, KnownZero, KnownOne, DL, Depth, AT, CxtI,
                                 DT);
+  }
+  OverflowResult computeOverflowForUnsignedMul(Value *LHS, Value *RHS,
+                                               const Instruction *CxtI) {
+    return llvm::computeOverflowForUnsignedMul(LHS, RHS, DL, AT, CxtI, DT);
   }
 
 private:

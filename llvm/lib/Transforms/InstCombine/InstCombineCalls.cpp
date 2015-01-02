@@ -440,24 +440,8 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
   }
   case Intrinsic::umul_with_overflow: {
     Value *LHS = II->getArgOperand(0), *RHS = II->getArgOperand(1);
-    unsigned BitWidth = cast<IntegerType>(LHS->getType())->getBitWidth();
-
-    APInt LHSKnownZero(BitWidth, 0);
-    APInt LHSKnownOne(BitWidth, 0);
-    computeKnownBits(LHS, LHSKnownZero, LHSKnownOne, 0, II);
-    APInt RHSKnownZero(BitWidth, 0);
-    APInt RHSKnownOne(BitWidth, 0);
-    computeKnownBits(RHS, RHSKnownZero, RHSKnownOne, 0, II);
-
-    // Get the largest possible values for each operand.
-    APInt LHSMax = ~LHSKnownZero;
-    APInt RHSMax = ~RHSKnownZero;
-
-    // If multiplying the maximum values does not overflow then we can turn
-    // this into a plain NUW mul.
-    bool Overflow;
-    LHSMax.umul_ov(RHSMax, Overflow);
-    if (!Overflow) {
+    OverflowResult OR = computeOverflowForUnsignedMul(LHS, RHS, II);
+    if (OR == OverflowResult::NeverOverflows) {
       return CreateOverflowTuple(II, Builder->CreateNUWMul(LHS, RHS), false);
     }
   } // FALL THROUGH

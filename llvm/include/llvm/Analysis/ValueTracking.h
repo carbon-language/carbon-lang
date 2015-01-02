@@ -217,6 +217,12 @@ namespace llvm {
                                const DataLayout *DL = nullptr,
                                const DominatorTree *DT = nullptr);
 
+  enum class OverflowResult { AlwaysOverflows, MayOverflow, NeverOverflows };
+  OverflowResult computeOverflowForUnsignedMul(Value *LHS, Value *RHS,
+                                               const DataLayout *DL,
+                                               AssumptionTracker *AT,
+                                               const Instruction *CxtI,
+                                               const DominatorTree *DT);
 } // end namespace llvm
 
 #endif
