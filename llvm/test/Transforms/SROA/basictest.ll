@@ -1456,3 +1456,39 @@ entry:
   %ret = fadd float %f1, %f2
   ret float %ret
 }
+
+@complex1 = external global [2 x float]
+@complex2 = external global [2 x float]
+
+define void @test26() {
+; Test a case of splitting up loads and stores against a globals.
+;
+; CHECK-LABEL: @test26(
+; CHECK-NOT: alloca
+; CHECK: %[[L1:.*]] = load i32* bitcast
+; CHECK: %[[L2:.*]] = load i32* bitcast
+; CHECK: %[[F1:.*]] = bitcast i32 %[[L1]] to float
+; CHECK: %[[F2:.*]] = bitcast i32 %[[L2]] to float
+; CHECK: %[[SUM:.*]] = fadd float %[[F1]], %[[F2]]
+; CHECK: %[[C1:.*]] = bitcast float %[[SUM]] to i32
+; CHECK: %[[C2:.*]] = bitcast float %[[SUM]] to i32
+; CHECK: store i32 %[[C1]], i32* bitcast
+; CHECK: store i32 %[[C2]], i32* bitcast
+; CHECK: ret void
+
+entry:
+  %a = alloca i64
+  %a.cast = bitcast i64* %a to [2 x float]*
+  %a.gep1 = getelementptr [2 x float]* %a.cast, i32 0, i32 0
+  %a.gep2 = getelementptr [2 x float]* %a.cast, i32 0, i32 1
+  %v1 = load i64* bitcast ([2 x float]* @complex1 to i64*)
+  store i64 %v1, i64* %a
+  %f1 = load float* %a.gep1
+  %f2 = load float* %a.gep2
+  %sum = fadd float %f1, %f2
+  store float %sum, float* %a.gep1
+  store float %sum, float* %a.gep2
+  %v2 = load i64* %a
+  store i64 %v2, i64* bitcast ([2 x float]* @complex2 to i64*)
+  ret void
+}
