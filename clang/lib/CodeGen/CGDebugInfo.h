@@ -454,6 +454,7 @@ public:
   ApplyDebugLocation(CodeGenFunction &CGF,
                      SourceLocation TemporaryLocation = SourceLocation(),
                      bool ForceColumnInfo = false);
+  ApplyDebugLocation(CodeGenFunction &CGF, llvm::DebugLoc Loc);
   ~ApplyDebugLocation();
 };
 
