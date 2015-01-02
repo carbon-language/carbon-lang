@@ -558,6 +558,22 @@ static void applyThumbMoveImmediate(ulittle16_t *mov, uint16_t imm) {
       mov[1] | (((imm & 0x0700) >> 8) << 12) | (((imm & 0x00ff) >> 0) << 0);
 }
 
+static void applyThumbBranchImmediate(ulittle16_t *bl, int32_t imm) {
+  // BL(T1):  |11110|S|imm10|11|J1|1|J2|imm11|
+  //          imm32 = sext S:I1:I2:imm10:imm11:'0'
+  //
+  //          I1 = ~(J1 ^ S), I2 = ~(J2 ^ S)
+
+  assert((~abs(imm) & (-1 << 24)) && "bl out of range");
+
+  uint32_t S = (imm < 0 ? 1 : 0);
+  uint32_t J1 = ((~imm & 0x00800000) >> 23) ^ S;
+  uint32_t J2 = ((~imm & 0x00400000) >> 22) ^ S;
+
+  bl[0] = bl[0] | (((imm & 0x003ff000) >> 12) << 0) | (S << 10);
+  bl[1] = bl[1] | (((imm & 0x00000ffe) >>  1) << 0) | (J2 << 11) | (J1 << 13);
+}
+
 void AtomChunk::applyRelocationsARM(uint8_t *Buffer,
                                     std::map<const Atom *, uint64_t> &AtomRVA,
                                     std::vector<uint64_t> &SectionRVA,
@@ -585,6 +601,10 @@ void AtomChunk::applyRelocationsARM(uint8_t *Buffer,
       case llvm::COFF::IMAGE_REL_ARM_MOV32T:
         applyThumbMoveImmediate(&RelocSite16[0], (TargetAddr + ImageBase) >>  0);
         applyThumbMoveImmediate(&RelocSite16[2], (TargetAddr + ImageBase) >> 16);
+        break;
+      case llvm::COFF::IMAGE_REL_ARM_BLX23T:
+        applyThumbBranchImmediate(RelocSite16,
+                                  TargetAddr - AtomRVA[Atom] - AtomOffset - 4);
         break;
       }
     }
