@@ -2360,8 +2360,10 @@ Decl * TemplateDeclInstantiator
 Decl *TemplateDeclInstantiator::VisitClassScopeFunctionSpecializationDecl(
                                      ClassScopeFunctionSpecializationDecl *Decl) {
   CXXMethodDecl *OldFD = Decl->getSpecialization();
-  CXXMethodDecl *NewFD = cast<CXXMethodDecl>(VisitCXXMethodDecl(OldFD,
-                                                                nullptr, true));
+  CXXMethodDecl *NewFD =
+    cast_or_null<CXXMethodDecl>(VisitCXXMethodDecl(OldFD, nullptr, true));
+  if (!NewFD)
+    return nullptr;
 
   LookupResult Previous(SemaRef, NewFD->getNameInfo(), Sema::LookupOrdinaryName,
                         Sema::ForRedeclaration);

@@ -182,3 +182,16 @@ namespace SameSignatureAfterInstantiation {
   };
   S<const int> s; // expected-note {{instantiation}}
 }
+
+namespace PR22040 {
+  template <typename T> struct Foobar {
+    template <> void bazqux(typename T::type) {}  // expected-error {{cannot specialize a function 'bazqux' within class scope}} expected-error 2{{cannot be used prior to '::' because it has no members}}
+  };
+
+  void test() {
+    // FIXME: we should suppress the "no member" errors
+    Foobar<void>::bazqux();  // expected-error{{no member named 'bazqux' in }}  expected-note{{in instantiation of template class }}
+    Foobar<int>::bazqux();  // expected-error{{no member named 'bazqux' in }}  expected-note{{in instantiation of template class }}
+    Foobar<int>::bazqux(3);  // expected-error{{no member named 'bazqux' in }}
+  }
+}
