@@ -2105,6 +2105,9 @@ static void CollectArgsForIntegratedAssembler(Compilation &C,
 static StringRef getArchNameForCompilerRTLib(const ToolChain &TC) {
   if (TC.getArch() == llvm::Triple::arm || TC.getArch() == llvm::Triple::armeb)
     return "arm";
+  // FIXME: handle 64-bit
+  if (TC.getTriple().isOSWindows())
+    return "i386";
   return TC.getArchName();
 }
 
@@ -7807,15 +7810,6 @@ void dragonfly::Link::ConstructJob(Compilation &C, const JobAction &JA,
   C.addCommand(llvm::make_unique<Command>(JA, *this, Exec, CmdArgs));
 }
 
-static void addSanitizerRTWindows(const ToolChain &TC, const ArgList &Args,
-                                  ArgStringList &CmdArgs,
-                                  StringRef RTName) {
-  SmallString<128> LibSanitizer(getCompilerRTLibDir(TC));
-  llvm::sys::path::append(LibSanitizer,
-                          Twine("clang_rt.") + RTName + ".lib");
-  CmdArgs.push_back(Args.MakeArgString(LibSanitizer));
-}
-
 // Try to find Exe from a Visual Studio distribution.  This first tries to find
 // an installed copy of Visual Studio and, failing that, looks in the PATH,
 // making sure that whatever executable that's found is not a same-named exe
@@ -7904,19 +7898,25 @@ void visualstudio::Link::ConstructJob(Compilation &C, const JobAction &JA,
   if (TC.getSanitizerArgs().needsAsanRt()) {
     CmdArgs.push_back(Args.MakeArgString("-debug"));
     CmdArgs.push_back(Args.MakeArgString("-incremental:no"));
-    // FIXME: Handle 64-bit.
     if (Args.hasArg(options::OPT__SLASH_MD, options::OPT__SLASH_MDd)) {
-      addSanitizerRTWindows(TC, Args, CmdArgs, "asan_dynamic-i386");
-      addSanitizerRTWindows(TC, Args, CmdArgs,
-                            "asan_dynamic_runtime_thunk-i386");
+      static const char *CompilerRTComponents[] = {
+        "asan_dynamic",
+        "asan_dynamic_runtime_thunk",
+      };
+      for (const auto &Component : CompilerRTComponents)
+        CmdArgs.push_back(Args.MakeArgString(getCompilerRT(TC, Component)));
       // Make sure the dynamic runtime thunk is not optimized out at link time
       // to ensure proper SEH handling.
       CmdArgs.push_back(Args.MakeArgString("-include:___asan_seh_interceptor"));
     } else if (DLL) {
-      addSanitizerRTWindows(TC, Args, CmdArgs, "asan_dll_thunk-i386");
+      CmdArgs.push_back(Args.MakeArgString(getCompilerRT(TC, "asan_dll_thunk")));
     } else {
-      addSanitizerRTWindows(TC, Args, CmdArgs, "asan-i386");
-      addSanitizerRTWindows(TC, Args, CmdArgs, "asan_cxx-i386");
+      static const char *CompilerRTComponents[] = {
+        "asan",
+        "asan_cxx",
+      };
+      for (const auto &Component : CompilerRTComponents)
+        CmdArgs.push_back(Args.MakeArgString(getCompilerRT(TC, Component)));
     }
   }
 
