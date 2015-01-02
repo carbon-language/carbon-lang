@@ -735,16 +735,10 @@ private:
 
   void handleLoadOrStore(Type *Ty, Instruction &I, const APInt &Offset,
                          uint64_t Size, bool IsVolatile) {
-    // We allow splitting of loads and stores where the type is an integer type
-    // and cover the entire alloca. This prevents us from splitting over
-    // eagerly.
-    // FIXME: In the great blue eventually, we should eagerly split all integer
-    // loads and stores, and then have a separate step that merges adjacent
-    // alloca partitions into a single partition suitable for integer widening.
-    // Or we should skip the merge step and rely on GVN and other passes to
-    // merge adjacent loads and stores that survive mem2reg.
-    bool IsSplittable =
-        Ty->isIntegerTy() && !IsVolatile && Offset == 0 && Size >= AllocSize;
+    // We allow splitting of non-volatile loads and stores where the type is an
+    // integer type. These may be used to implement 'memcpy' or other "transfer
+    // of bits" patterns.
+    bool IsSplittable = Ty->isIntegerTy() && !IsVolatile;
 
     insertUse(I, Offset, Size, IsSplittable);
   }
@@ -2620,7 +2614,8 @@ private:
       // LI only used for this computation.
       Value *Placeholder =
           new LoadInst(UndefValue::get(LI.getType()->getPointerTo()));
-      V = insertInteger(DL, IRB, Placeholder, V, NewBeginOffset, "insert");
+      V = insertInteger(DL, IRB, Placeholder, V, NewBeginOffset - BeginOffset,
+                        "insert");
       LI.replaceAllUsesWith(V);
       Placeholder->replaceAllUsesWith(&LI);
       delete Placeholder;
@@ -2699,7 +2694,8 @@ private:
                  DL.getTypeStoreSizeInBits(V->getType()) &&
              "Non-byte-multiple bit width");
       IntegerType *NarrowTy = Type::getIntNTy(SI.getContext(), SliceSize * 8);
-      V = extractInteger(DL, IRB, V, NarrowTy, NewBeginOffset, "extract");
+      V = extractInteger(DL, IRB, V, NarrowTy, NewBeginOffset - BeginOffset,
+                         "extract");
     }
 
     if (VecTy)
@@ -3571,7 +3567,7 @@ bool SROA::presplitLoadsAndStores(AllocaInst &AI, AllocaSlices &AS) {
       assert(Offsets.Splits.empty() &&
              "Should not have splits the first time we see an instruction!");
       Offsets.S = &S;
-      Offsets.Splits.push_back(P.endOffset());
+      Offsets.Splits.push_back(P.endOffset() - S.beginOffset());
     }
 
     // Now scan the already split slices, and add a split for any of them which
@@ -3586,13 +3582,14 @@ bool SROA::presplitLoadsAndStores(AllocaInst &AI, AllocaSlices &AS) {
       assert(Offsets.S == S && "Found a mismatched slice!");
       assert(!Offsets.Splits.empty() &&
              "Cannot have an empty set of splits on the second partition!");
-      assert(Offsets.Splits.back() == P.beginOffset() &&
+      assert(Offsets.Splits.back() ==
+                 P.beginOffset() - Offsets.S->beginOffset() &&
              "Previous split does not end where this one begins!");
 
       // Record each split. The last partition's end isn't needed as the size
       // of the slice dictates that.
       if (S->endOffset() > P.endOffset())
-        Offsets.Splits.push_back(P.endOffset());
+        Offsets.Splits.push_back(P.endOffset() - Offsets.S->beginOffset());
     }
   }
 
@@ -3705,7 +3702,7 @@ bool SROA::presplitLoadsAndStores(AllocaInst &AI, AllocaSlices &AS) {
       NewSlices.push_back(
           Slice(BaseOffset + PartOffset, BaseOffset + PartOffset + PartSize,
                 &PLoad->getOperandUse(PLoad->getPointerOperandIndex()),
-                /*IsSplittable*/ true));
+                /*IsSplittable*/ false));
       DEBUG(dbgs() << "    new slice [" << NewSlices.back().beginOffset()
                    << ", " << NewSlices.back().endOffset() << "): " << *PLoad
                    << "\n");
@@ -3843,7 +3840,7 @@ bool SROA::presplitLoadsAndStores(AllocaInst &AI, AllocaSlices &AS) {
       NewSlices.push_back(
           Slice(BaseOffset + PartOffset, BaseOffset + PartOffset + PartSize,
                 &PStore->getOperandUse(PStore->getPointerOperandIndex()),
-                /*IsSplittable*/ true));
+                /*IsSplittable*/ false));
       DEBUG(dbgs() << "    new slice [" << NewSlices.back().beginOffset()
                    << ", " << NewSlices.back().endOffset() << "): " << *PStore
                    << "\n");
@@ -3879,24 +3876,29 @@ bool SROA::presplitLoadsAndStores(AllocaInst &AI, AllocaSlices &AS) {
     }
 
     // Mark the original store as dead now that we've split it up and kill its
-    // slice. Note that we leave the original load in place. It may in turn be
-    // split up if it is an alloca load for some other alloca, but it may be
-    // a normal load. This may introduce redundant loads, but where those can
-    // be merged the rest of the optimizer should handle the merging, and this
-    // uncovers SSA splits which is more important. In practice, the original
-    // loads will almost always be fully split and removed eventually, and the
-    // splits will be merged by any trivial CSE, including instcombine.
+    // slice. Note that we leave the original load in place unless this store
+    // was its ownly use. It may in turn be split up if it is an alloca load
+    // for some other alloca, but it may be a normal load. This may introduce
+    // redundant loads, but where those can be merged the rest of the optimizer
+    // should handle the merging, and this uncovers SSA splits which is more
+    // important. In practice, the original loads will almost always be fully
+    // split and removed eventually, and the splits will be merged by any
+    // trivial CSE, including instcombine.
+    if (LI->hasOneUse()) {
+      assert(*LI->user_begin() == SI && "Single use isn't this store!");
+      DeadInsts.insert(LI);
+    }
     DeadInsts.insert(SI);
     Offsets.S->kill();
   }
 
-  // Now we need to remove the killed slices, sort the newly added slices, and
-  // merge the two sorted ranges of slices so that the entire range is sorted
-  // properly for us to re-compute the partitions.
+  // Remove the killed slices that have ben pre-split.
   AS.erase(std::remove_if(AS.begin(), AS.end(), [](const Slice &S) {
     return S.isDead();
   }), AS.end());
 
+  // Insert our new slices. This will sort and merge them into the sorted
+  // sequence.
   AS.insert(NewSlices);
 
   DEBUG(dbgs() << "  Pre-split slices:\n");
@@ -4072,7 +4074,32 @@ bool SROA::splitAlloca(AllocaInst &AI, AllocaSlices &AS) {
   unsigned NumPartitions = 0;
   bool Changed = false;
 
+  // First try to pre-split loads and stores.
   Changed |= presplitLoadsAndStores(AI, AS);
+
+  // Now that we have identified any pre-splitting opportunities, mark any
+  // splittable (non-whole-alloca) loads and stores as unsplittable. If we fail
+  // to split these during pre-splitting, we want to force them to be
+  // rewritten into a partition.
+  bool IsSorted = true;
+  for (Slice &S : AS) {
+    if (!S.isSplittable())
+      continue;
+    // FIXME: We currently leave whole-alloca splittable loads and stores. This
+    // used to be the only splittable loads and stores and we need to be
+    // confident that the above handling of splittable loads and stores is
+    // completely sufficient before we forcibly disable the remaining handling.
+    if (S.beginOffset() == 0 &&
+        S.endOffset() >= DL->getTypeAllocSize(AI.getAllocatedType()))
+      continue;
+    if (isa<LoadInst>(S.getUse()->getUser()) ||
+        isa<StoreInst>(S.getUse()->getUser())) {
+      S.makeUnsplittable();
+      IsSorted = false;
+    }
+  }
+  if (!IsSorted)
+    std::sort(AS.begin(), AS.end());
 
   // Rewrite each partition.
   for (auto &P : AS.partitions()) {

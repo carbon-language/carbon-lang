@@ -85,15 +85,18 @@ entry:
 }
 
 define void @test5() {
-; Test that we preserve underaligned loads and stores when splitting.
+; Test that we preserve underaligned loads and stores when splitting. The use
+; of volatile in this test case is just to force the loads and stores to not be
+; split or promoted out of existence.
+;
 ; CHECK-LABEL: @test5(
 ; CHECK: alloca [9 x i8]
 ; CHECK: alloca [9 x i8]
 ; CHECK: store volatile double 0.0{{.*}}, double* %{{.*}}, align 1
-; CHECK: load i16* %{{.*}}, align 1
+; CHECK: load volatile i16* %{{.*}}, align 1
 ; CHECK: load double* %{{.*}}, align 1
 ; CHECK: store volatile double %{{.*}}, double* %{{.*}}, align 1
-; CHECK: load i16* %{{.*}}, align 1
+; CHECK: load volatile i16* %{{.*}}, align 1
 ; CHECK: ret void
 
 entry:
@@ -103,7 +106,7 @@ entry:
   store volatile double 0.0, double* %ptr1, align 1
   %weird_gep1 = getelementptr inbounds [18 x i8]* %a, i32 0, i32 7
   %weird_cast1 = bitcast i8* %weird_gep1 to i16*
-  %weird_load1 = load i16* %weird_cast1, align 1
+  %weird_load1 = load volatile i16* %weird_cast1, align 1
 
   %raw2 = getelementptr inbounds [18 x i8]* %a, i32 0, i32 9
   %ptr2 = bitcast i8* %raw2 to double*
@@ -111,7 +114,7 @@ entry:
   store volatile double %d1, double* %ptr2, align 1
   %weird_gep2 = getelementptr inbounds [18 x i8]* %a, i32 0, i32 16
   %weird_cast2 = bitcast i8* %weird_gep2 to i16*
-  %weird_load2 = load i16* %weird_cast2, align 1
+  %weird_load2 = load volatile i16* %weird_cast2, align 1
 
   ret void
 }

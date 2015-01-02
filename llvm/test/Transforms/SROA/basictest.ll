@@ -572,7 +572,8 @@ bad:
 }
 
 define i8 @test12() {
-; We promote these to three SSA values which fold away immediately.
+; We fully promote these to the i24 load or store size, resulting in just masks
+; and other operations that instcombine will fold, but no alloca.
 ;
 ; CHECK-LABEL: @test12(
 
@@ -591,6 +592,17 @@ entry:
   %ai = load i24* %aiptr
 ; CHECK-NOT: store
 ; CHECK-NOT: load
+; CHECK:      %[[ext2:.*]] = zext i8 0 to i24
+; CHECK-NEXT: %[[shift2:.*]] = shl i24 %[[ext2]], 16
+; CHECK-NEXT: %[[mask2:.*]] = and i24 undef, 65535
+; CHECK-NEXT: %[[insert2:.*]] = or i24 %[[mask2]], %[[shift2]]
+; CHECK-NEXT: %[[ext1:.*]] = zext i8 0 to i24
+; CHECK-NEXT: %[[shift1:.*]] = shl i24 %[[ext1]], 8
+; CHECK-NEXT: %[[mask1:.*]] = and i24 %[[insert2]], -65281
+; CHECK-NEXT: %[[insert1:.*]] = or i24 %[[mask1]], %[[shift1]]
+; CHECK-NEXT: %[[ext0:.*]] = zext i8 0 to i24
+; CHECK-NEXT: %[[mask0:.*]] = and i24 %[[insert1]], -256
+; CHECK-NEXT: %[[insert0:.*]] = or i24 %[[mask0]], %[[ext0]]
 
   %biptr = bitcast [3 x i8]* %b to i24*
   store i24 %ai, i24* %biptr
@@ -602,12 +614,17 @@ entry:
   %b2 = load i8* %b2ptr
 ; CHECK-NOT: store
 ; CHECK-NOT: load
+; CHECK:      %[[trunc0:.*]] = trunc i24 %[[insert0]] to i8
+; CHECK-NEXT: %[[shift1:.*]] = lshr i24 %[[insert0]], 8
+; CHECK-NEXT: %[[trunc1:.*]] = trunc i24 %[[shift1]] to i8
+; CHECK-NEXT: %[[shift2:.*]] = lshr i24 %[[insert0]], 16
+; CHECK-NEXT: %[[trunc2:.*]] = trunc i24 %[[shift2]] to i8
 
   %bsum0 = add i8 %b0, %b1
   %bsum1 = add i8 %bsum0, %b2
   ret i8 %bsum1
-; CHECK:      %[[sum0:.*]] = add i8 0, 0
-; CHECK-NEXT: %[[sum1:.*]] = add i8 %[[sum0]], 0
+; CHECK:      %[[sum0:.*]] = add i8 %[[trunc0]], %[[trunc1]]
+; CHECK-NEXT: %[[sum1:.*]] = add i8 %[[sum0]], %[[trunc2]]
 ; CHECK-NEXT: ret i8 %[[sum1]]
 }
 
@@ -1491,4 +1508,36 @@ entry:
   %v2 = load i64* %a
   store i64 %v2, i64* bitcast ([2 x float]* @complex2 to i64*)
   ret void
+}
+
+define float @test27() {
+; Another, more complex case of splittable i64 loads and stores. This example
+; is a particularly challenging one because the load and store both point into
+; the alloca SROA is processing, and they overlap but at an offset.
+;
+; CHECK-LABEL: @test27(
+; CHECK-NOT: alloca
+; CHECK: %[[F1:.*]] = bitcast i32 0 to float
+; CHECK: %[[F2:.*]] = bitcast i32 1065353216 to float
+; CHECK: %[[SUM:.*]] = fadd float %[[F1]], %[[F2]]
+; CHECK: ret float %[[SUM]]
+
+entry:
+  %a = alloca [12 x i8]
+  %gep1 = getelementptr [12 x i8]* %a, i32 0, i32 0
+  %gep2 = getelementptr [12 x i8]* %a, i32 0, i32 4
+  %gep3 = getelementptr [12 x i8]* %a, i32 0, i32 8
+  %iptr1 = bitcast i8* %gep1 to i64*
+  %iptr2 = bitcast i8* %gep2 to i64*
+  %fptr1 = bitcast i8* %gep1 to float*
+  %fptr2 = bitcast i8* %gep2 to float*
+  %fptr3 = bitcast i8* %gep3 to float*
+  store float 0.0, float* %fptr1
+  store float 1.0, float* %fptr2
+  %v = load i64* %iptr1
+  store i64 %v, i64* %iptr2
+  %f1 = load float* %fptr2
+  %f2 = load float* %fptr3
+  %ret = fadd float %f1, %f2
+  ret float %ret
 }
