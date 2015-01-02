@@ -153,8 +153,23 @@ private:
   SmallPtrSet<void *, 2> PreservedPassIDs;
 };
 
+// We define the pass managers prior to the analysis managers that they use.
 class ModuleAnalysisManager;
 
+/// \brief Manages a sequence of passes over Modules of IR.
+///
+/// A module pass manager contains a sequence of module passes. It is also
+/// itself a module pass. When it is run over a module of LLVM IR, it will
+/// sequentially run each pass it contains over that module.
+///
+/// If it is run with a \c ModuleAnalysisManager argument, it will propagate
+/// that analysis manager to each pass it runs, as well as calling the analysis
+/// manager's invalidation routine with the PreservedAnalyses of each pass it
+/// runs.
+///
+/// Module passes can rely on having exclusive access to the module they are
+/// run over. No other threads will access that module, and they can mutate it
+/// freely. However, they must not mutate other LLVM IR modules.
 class ModulePassManager {
 public:
   // We have to explicitly define all the special member functions because MSVC
@@ -197,8 +212,33 @@ private:
   std::vector<std::unique_ptr<ModulePassConcept>> Passes;
 };
 
+// We define the pass managers prior to the analysis managers that they use.
 class FunctionAnalysisManager;
 
+/// \brief Manages a sequence of passes over a Function of IR.
+///
+/// A function pass manager contains a sequence of function passes. It is also
+/// itself a function pass. When it is run over a function of LLVM IR, it will
+/// sequentially run each pass it contains over that function.
+///
+/// If it is run with a \c FunctionAnalysisManager argument, it will propagate
+/// that analysis manager to each pass it runs, as well as calling the analysis
+/// manager's invalidation routine with the PreservedAnalyses of each pass it
+/// runs.
+///
+/// Function passes can rely on having exclusive access to the function they
+/// are run over. They should not read or modify any other functions! Other
+/// threads or systems may be manipulating other functions in the module, and
+/// so their state should never be relied on.
+/// FIXME: Make the above true for all of LLVM's actual passes, some still
+/// violate this principle.
+///
+/// Function passes can also read the module containing the function, but they
+/// should not modify that module outside of the use lists of various globals.
+/// For example, a function pass is not permitted to add functions to the
+/// module.
+/// FIXME: Make the above true for all of LLVM's actual passes, some still
+/// violate this principle.
 class FunctionPassManager {
 public:
   // We have to explicitly define all the special member functions because MSVC
