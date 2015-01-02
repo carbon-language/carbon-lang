@@ -70,10 +70,14 @@ void InitializeFlags(Flags *f, const char *env) {
   // Default values.
   f->second_deadlock_stack = false;
 
-  CommonFlags *cf = common_flags();
   SetCommonFlagsDefaults();
-  // Override some common flags defaults.
-  cf->allow_addr2line = true;
+  {
+    // Override some common flags defaults.
+    CommonFlags cf;
+    cf.CopyFrom(*common_flags());
+    cf.allow_addr2line = true;
+    OverrideCommonFlags(cf);
+  }
 
   // Override from command line.
   ParseFlag(env, &f->second_deadlock_stack, "second_deadlock_stack", "");

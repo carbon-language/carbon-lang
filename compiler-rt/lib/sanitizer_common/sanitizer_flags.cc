@@ -187,6 +187,10 @@ void CommonFlags::ParseFromString(const char *str) {
     malloc_context_size = 1;
 }
 
+void CommonFlags::CopyFrom(const CommonFlags &other) {
+  internal_memcpy(this, &other, sizeof(*this));
+}
+
 static bool GetFlagValue(const char *env, const char *name,
                          const char **value, int *value_length) {
   if (env == 0)

@@ -93,13 +93,17 @@ void InitializeFlags(Flags *f, const char *env) {
   // DDFlags
   f->second_deadlock_stack = false;
 
-  CommonFlags *cf = common_flags();
   SetCommonFlagsDefaults();
-  // Override some common flags defaults.
-  cf->allow_addr2line = true;
-  cf->detect_deadlocks = true;
-  cf->print_suppressions = false;
-  cf->stack_trace_format = "    #%n %f %S %M";
+  {
+    // Override some common flags defaults.
+    CommonFlags cf;
+    cf.CopyFrom(*common_flags());
+    cf.allow_addr2line = true;
+    cf.detect_deadlocks = true;
+    cf.print_suppressions = false;
+    cf.stack_trace_format = "    #%n %f %S %M";
+    OverrideCommonFlags(cf);
+  }
 
   // Let a frontend override.
   ParseFlags(f, __tsan_default_options());
@@ -115,7 +119,8 @@ void InitializeFlags(Flags *f, const char *env) {
     f->report_signal_unsafe = false;
   }
 
-  if (cf->help) PrintFlagDescriptions();
+  if (common_flags()->help)
+    PrintFlagDescriptions();
 
   if (f->history_size < 0 || f->history_size > 7) {
     Printf("ThreadSanitizer: incorrect value for history_size"
