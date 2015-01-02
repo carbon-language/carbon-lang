@@ -53,7 +53,7 @@ class CGDebugInfo {
   const CodeGenOptions::DebugInfoKind DebugKind;
   llvm::DIBuilder DBuilder;
   llvm::DICompileUnit TheCU;
-  SourceLocation CurLoc, PrevLoc;
+  SourceLocation CurLoc;
   llvm::DIType VTablePtrType;
   llvm::DIType ClassTy;
   llvm::DICompositeType ObjTy;

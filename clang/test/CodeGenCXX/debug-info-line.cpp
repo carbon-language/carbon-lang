@@ -130,6 +130,15 @@ void f12() {
   f12_2();
 }
 
+// CHECK-LABEL: define
+void f13() {
+// CHECK: call {{.*}} !dbg [[DBG_F13:!.*]]
+#define F13_IMPL 1, src()
+  1,
+#line 1400
+  F13_IMPL;
+}
+
 // CHECK: [[DBG_F1]] = !{i32 100,
 // CHECK: [[DBG_FOO_VALUE]] = !{i32 200,
 // CHECK: [[DBG_FOO_REF]] = !{i32 202,
@@ -146,3 +155,4 @@ void f12() {
 // CHECK: [[DBG_F10_STORE]] = !{i32 1100,
 // CHECK: [[DBG_F11]] = !{i32 1200,
 // CHECK: [[DBG_F12]] = !{i32 1300,
+// CHECK: [[DBG_F13]] = !{i32 1400,
