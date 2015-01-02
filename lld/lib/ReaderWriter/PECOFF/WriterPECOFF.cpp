@@ -547,6 +547,17 @@ static uint32_t getSectionStartAddr(uint64_t targetAddr,
   llvm_unreachable("Section missing");
 }
 
+static void applyThumbMoveImmediate(ulittle16_t *mov, uint16_t imm) {
+  // MOVW(T3): |11110|i|10|0|1|0|0|imm4|0|imm3|Rd|imm8|
+  //            imm32 = zext imm4:i:imm3:imm8
+  // MOVT(T1): |11110|i|10|1|1|0|0|imm4|0|imm3|Rd|imm8|
+  //            imm16 = imm4:i:imm3:imm8
+  mov[0] =
+      mov[0] | (((imm & 0x0800) >> 11) << 10) | (((imm & 0xf000) >> 12) << 0);
+  mov[1] =
+      mov[1] | (((imm & 0x0700) >> 8) << 12) | (((imm & 0x00ff) >> 0) << 0);
+}
+
 void AtomChunk::applyRelocationsARM(uint8_t *Buffer,
                                     std::map<const Atom *, uint64_t> &AtomRVA,
                                     std::vector<uint64_t> &SectionRVA,
@@ -561,6 +572,8 @@ void AtomChunk::applyRelocationsARM(uint8_t *Buffer,
       const auto AtomOffset = R->offsetInAtom();
       const auto FileOffset = Layout->_fileOffset;
       const auto TargetAddr = AtomRVA[R->target()];
+      auto RelocSite16 =
+          reinterpret_cast<ulittle16_t *>(Buffer + FileOffset + AtomOffset);
       auto RelocSite32 =
           reinterpret_cast<ulittle32_t *>(Buffer + FileOffset + AtomOffset);
 
@@ -568,6 +581,10 @@ void AtomChunk::applyRelocationsARM(uint8_t *Buffer,
       default: llvm_unreachable("unsupported relocation type");
       case llvm::COFF::IMAGE_REL_ARM_ADDR32:
         *RelocSite32 = *RelocSite32 + TargetAddr + ImageBase;
+        break;
+      case llvm::COFF::IMAGE_REL_ARM_MOV32T:
+        applyThumbMoveImmediate(&RelocSite16[0], (TargetAddr + ImageBase) >>  0);
+        applyThumbMoveImmediate(&RelocSite16[2], (TargetAddr + ImageBase) >> 16);
         break;
       }
     }
