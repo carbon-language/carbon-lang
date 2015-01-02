@@ -1733,8 +1733,9 @@ static Value *getAdjustedPtr(IRBuilderTy &IRB, const DataLayout &DL, Value *Ptr,
 
   // We may end up computing an offset pointer that has the wrong type. If we
   // never are able to compute one directly that has the correct type, we'll
-  // fall back to it, so keep it around here.
+  // fall back to it, so keep it and the base it was computed from around here.
   Value *OffsetPtr = nullptr;
+  Value *OffsetBasePtr;
 
   // Remember any i8 pointer we come across to re-use if we need to do a raw
   // byte offset.
@@ -1759,16 +1760,19 @@ static Value *getAdjustedPtr(IRBuilderTy &IRB, const DataLayout &DL, Value *Ptr,
     Indices.clear();
     if (Value *P = getNaturalGEPWithOffset(IRB, DL, Ptr, Offset, TargetTy,
                                            Indices, NamePrefix)) {
-      if (P->getType() == PointerTy) {
-        // Zap any offset pointer that we ended up computing in previous rounds.
-        if (OffsetPtr && OffsetPtr->use_empty())
-          if (Instruction *I = dyn_cast<Instruction>(OffsetPtr))
-            I->eraseFromParent();
+      // If we have a new natural pointer at the offset, clear out any old
+      // offset pointer we computed. Unless it is the base pointer or
+      // a non-instruction, we built a GEP we don't need. Zap it.
+      if (OffsetPtr && OffsetPtr != OffsetBasePtr)
+        if (Instruction *I = dyn_cast<Instruction>(OffsetPtr)) {
+          assert(I->use_empty() && "Built a GEP with uses some how!");
+          I->eraseFromParent();
+        }
+      OffsetPtr = P;
+      OffsetBasePtr = Ptr;
+      // If we also found a pointer of the right type, we're done.
+      if (P->getType() == PointerTy)
         return P;
-      }
-      if (!OffsetPtr) {
-        OffsetPtr = P;
-      }
     }
 
     // Stash this pointer if we've found an i8*.
