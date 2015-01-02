@@ -487,7 +487,7 @@ public:
 private:
   // Pull in the concept type and model template specialized for modules.
   typedef detail::PassConcept<Module *, ModuleAnalysisManager>
-  ModulePassConcept;
+      ModulePassConcept;
   template <typename PassT>
   struct ModulePassModel
       : detail::PassModel<Module *, ModuleAnalysisManager, PassT> {
@@ -527,7 +527,7 @@ public:
 private:
   // Pull in the concept type and model template specialized for functions.
   typedef detail::PassConcept<Function *, FunctionAnalysisManager>
-  FunctionPassConcept;
+      FunctionPassConcept;
   template <typename PassT>
   struct FunctionPassModel
       : detail::PassModel<Function *, FunctionAnalysisManager, PassT> {
@@ -785,7 +785,7 @@ private:
   /// half of a bijection and provides storage for the actual result concept.
   typedef std::list<std::pair<
       void *, std::unique_ptr<detail::AnalysisResultConcept<Function *>>>>
-          FunctionAnalysisResultListT;
+      FunctionAnalysisResultListT;
 
   /// \brief Map type from function pointer to our custom list type.
   typedef DenseMap<Function *, FunctionAnalysisResultListT>
@@ -972,7 +972,8 @@ public:
       : Pass(Arg.Pass) {}
   ModuleToFunctionPassAdaptor(ModuleToFunctionPassAdaptor &&Arg)
       : Pass(std::move(Arg.Pass)) {}
-  friend void swap(ModuleToFunctionPassAdaptor &LHS, ModuleToFunctionPassAdaptor &RHS) {
+  friend void swap(ModuleToFunctionPassAdaptor &LHS,
+                   ModuleToFunctionPassAdaptor &RHS) {
     using std::swap;
     swap(LHS.Pass, RHS.Pass);
   }

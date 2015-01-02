@@ -16,8 +16,8 @@
 using namespace llvm;
 
 static cl::opt<bool>
-DebugPM("debug-pass-manager", cl::Hidden,
-        cl::desc("Print pass management debugging information"));
+    DebugPM("debug-pass-manager", cl::Hidden,
+            cl::desc("Print pass management debugging information"));
 
 PreservedAnalyses ModulePassManager::run(Module *M, ModuleAnalysisManager *AM) {
   PreservedAnalyses PA = PreservedAnalyses::all();
