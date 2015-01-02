@@ -624,13 +624,13 @@ ReSimplify:
   // MOV64ao8, MOV64o8a
   // XCHG16ar, XCHG32ar, XCHG64ar
   case X86::MOV8mr_NOREX:
-  case X86::MOV8mr:     SimplifyShortMoveForm(AsmPrinter, OutMI, X86::MOV8ao8); break;
+  case X86::MOV8mr:     SimplifyShortMoveForm(AsmPrinter, OutMI, X86::MOV8o32a); break;
   case X86::MOV8rm_NOREX:
-  case X86::MOV8rm:     SimplifyShortMoveForm(AsmPrinter, OutMI, X86::MOV8o8a); break;
-  case X86::MOV16mr:    SimplifyShortMoveForm(AsmPrinter, OutMI, X86::MOV16ao16); break;
-  case X86::MOV16rm:    SimplifyShortMoveForm(AsmPrinter, OutMI, X86::MOV16o16a); break;
-  case X86::MOV32mr:    SimplifyShortMoveForm(AsmPrinter, OutMI, X86::MOV32ao32); break;
-  case X86::MOV32rm:    SimplifyShortMoveForm(AsmPrinter, OutMI, X86::MOV32o32a); break;
+  case X86::MOV8rm:     SimplifyShortMoveForm(AsmPrinter, OutMI, X86::MOV8ao32); break;
+  case X86::MOV16mr:    SimplifyShortMoveForm(AsmPrinter, OutMI, X86::MOV16o32a); break;
+  case X86::MOV16rm:    SimplifyShortMoveForm(AsmPrinter, OutMI, X86::MOV16ao32); break;
+  case X86::MOV32mr:    SimplifyShortMoveForm(AsmPrinter, OutMI, X86::MOV32o32a); break;
+  case X86::MOV32rm:    SimplifyShortMoveForm(AsmPrinter, OutMI, X86::MOV32ao32); break;
 
   case X86::ADC8ri:     SimplifyShortImmForm(OutMI, X86::ADC8i8);    break;
   case X86::ADC16ri:    SimplifyShortImmForm(OutMI, X86::ADC16i16);  break;
