@@ -26,7 +26,7 @@
 #include <set>
 
 // Too slow for debug build
-#if TSAN_DEBUG == 0
+#if !SANITIZER_DEBUG
 
 #if SANITIZER_CAN_USE_ALLOCATOR64
 static const uptr kAllocatorSpace = 0x700000000000ULL;
@@ -857,4 +857,4 @@ TEST(SanitizerCommon, ThreadedTwoLevelByteMap) {
   EXPECT_EQ((uptr)TestMapUnmapCallback::unmap_count, m.size1());
 }
 
-#endif  // #if TSAN_DEBUG==0
+#endif  // #if !SANITIZER_DEBUG

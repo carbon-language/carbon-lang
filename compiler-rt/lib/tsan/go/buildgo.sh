@@ -89,9 +89,9 @@ done
 
 FLAGS=" -I../rtl -I../.. -I../../sanitizer_common -I../../../include -std=c++11 -m64 -Wall -fno-exceptions -fno-rtti -DSANITIZER_GO -DTSAN_SHADOW_COUNT=4 -DSANITIZER_DEADLOCK_DETECTOR_VERSION=2 $OSCFLAGS"
 if [ "$DEBUG" == "" ]; then
-	FLAGS+=" -DTSAN_DEBUG=0 -O3 -msse3 -fomit-frame-pointer"
+	FLAGS+=" -DSANITIZER_DEBUG=0 -O3 -msse3 -fomit-frame-pointer"
 else
-	FLAGS+=" -DTSAN_DEBUG=1 -g"
+	FLAGS+=" -DSANITIZER_DEBUG=1 -g"
 fi
 
 CC=${CC:-gcc}

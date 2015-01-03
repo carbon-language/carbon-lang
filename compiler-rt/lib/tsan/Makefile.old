@@ -1,7 +1,7 @@
 DEBUG=0
 LDFLAGS=-ldl -lrt -lpthread -pie
 CXXFLAGS = -std=c++11 -fPIE -fno-rtti -g -Wall -Werror \
-					 -DGTEST_HAS_RTTI=0 -DTSAN_DEBUG=$(DEBUG) -DSANITIZER_DEBUG=$(DEBUG)
+					 -DGTEST_HAS_RTTI=0 -DSANITIZER_DEBUG=$(DEBUG)
 CLANG=clang
 FILECHECK=FileCheck
 # Silence warnings that Clang produces for gtest code.

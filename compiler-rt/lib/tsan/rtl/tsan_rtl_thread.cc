@@ -330,7 +330,7 @@ void MemoryAccessRange(ThreadState *thr, uptr pc, uptr addr,
       thr->tid, (void*)pc, (void*)addr,
       (int)size, is_write);
 
-#if TSAN_DEBUG
+#if SANITIZER_DEBUG
   if (!IsAppMem(addr)) {
     Printf("Access to non app mem %zx\n", addr);
     DCHECK(IsAppMem(addr));

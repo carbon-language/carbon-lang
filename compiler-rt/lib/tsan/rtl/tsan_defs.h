@@ -18,10 +18,6 @@
 #include "sanitizer_common/sanitizer_libc.h"
 #include "tsan_stat.h"
 
-#ifndef TSAN_DEBUG
-#define TSAN_DEBUG 0
-#endif  // TSAN_DEBUG
-
 namespace __tsan {
 
 #ifdef SANITIZER_GO
@@ -88,7 +84,7 @@ const bool kCollectStats = false;
 // The following "build consistency" machinery ensures that all source files
 // are built in the same configuration. Inconsistent builds lead to
 // hard to debug crashes.
-#if TSAN_DEBUG
+#if SANITIZER_DEBUG
 void build_consistency_debug();
 #else
 void build_consistency_release();
@@ -111,7 +107,7 @@ void build_consistency_shadow8();
 #endif
 
 static inline void USED build_consistency() {
-#if TSAN_DEBUG
+#if SANITIZER_DEBUG
   build_consistency_debug();
 #else
   build_consistency_release();

@@ -136,7 +136,7 @@ TEST(Mman, Stats) {
 }
 
 TEST(Mman, CallocOverflow) {
-#if TSAN_DEBUG
+#if SANITIZER_DEBUG
   // EXPECT_DEATH clones a thread with 4K stack,
   // which is overflown by tsan memory accesses functions in debug mode.
   return;
