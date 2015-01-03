@@ -1,6 +1,6 @@
 
-@ static const char buffer[] = "buffer";
-@ const char *get_buffer() { return buffer; }
+# static const char buffer[] = "buffer";
+# const char *get_buffer() { return buffer; }
 
 	.syntax unified
 	.thumb
@@ -12,7 +12,6 @@
 	.endef
 	.global get_buffer
 	.align 2
-	.code16			# @get_buffer
 	.thumb_func
 get_buffer:
 	movw r0, :lower16:buffer
