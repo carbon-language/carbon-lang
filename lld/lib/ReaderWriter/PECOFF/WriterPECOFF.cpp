@@ -587,9 +587,14 @@ void AtomChunk::applyRelocationsARM(uint8_t *Buffer,
       if (R->kindNamespace() != Reference::KindNamespace::COFF)
         continue;
 
+      bool AssumeTHUMBCode = false;
+      if (auto Target = cast_or_null<DefinedAtom>(R->target()))
+        AssumeTHUMBCode = Target->permissions() == DefinedAtom::permR_X ||
+                          Target->permissions() == DefinedAtom::permRWX;
+
       const auto AtomOffset = R->offsetInAtom();
       const auto FileOffset = Layout->_fileOffset;
-      const auto TargetAddr = AtomRVA[R->target()];
+      const auto TargetAddr = AtomRVA[R->target()] | (AssumeTHUMBCode ? 1 : 0);
       auto RelocSite16 =
           reinterpret_cast<ulittle16_t *>(Buffer + FileOffset + AtomOffset);
       auto RelocSite32 =
@@ -605,10 +610,12 @@ void AtomChunk::applyRelocationsARM(uint8_t *Buffer,
         applyThumbMoveImmediate(&RelocSite16[2], (TargetAddr + ImageBase) >> 16);
         break;
       case llvm::COFF::IMAGE_REL_ARM_BRANCH24T:
+        // NOTE: the thumb bit will implicitly be truncated properly
         applyThumbBranchImmediate(RelocSite16,
                                   TargetAddr - AtomRVA[Atom] - AtomOffset - 4);
         break;
       case llvm::COFF::IMAGE_REL_ARM_BLX23T:
+        // NOTE: the thumb bit will implicitly be truncated properly
         applyThumbBranchImmediate(RelocSite16,
                                   TargetAddr - AtomRVA[Atom] - AtomOffset - 4);
         break;

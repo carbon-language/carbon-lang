@@ -1,0 +1,11 @@
+# RUN: yaml2obj -format coff -o %t.obj %p/Inputs/armnt-addr32-exec.obj.yaml
+# RUN: llvm-objdump -s %t.obj | FileCheck %s -check-prefix BEFORE
+# RUN: lld -flavor link /out:%t.exe /entry:function /subsystem:console %t.obj
+# RUN: llvm-objdump -s %t.exe | FileCheck %s -check-prefix AFTER
+
+BEFORE: Contents of section .rdata:
+BEFORE:  0000 00000000
+
+AFTER: Contents of section .rdata:
+AFTER:  1000 01204000
+
