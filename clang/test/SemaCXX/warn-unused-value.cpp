@@ -90,9 +90,10 @@ void f() {
   Bad b;
   (void)typeid(b.f()); // expected-warning {{expression with side effects will be evaluated despite being used as an operand to 'typeid'}}
 
-  // A dereference of a volatile pointer is a side effecting operation, despite
-  // it being a reasonable operation.
+  // A dereference of a volatile pointer is a side effecting operation, however
+  // since it is idiomatic code, and the alternatives induce higher maintenance
+  // costs, it is allowed.
   int * volatile x;
-  (void)sizeof(*x); // expected-warning {{expression with side effects has no effect in an unevaluated context}}
+  (void)sizeof(*x); // Ok
 }
 }
