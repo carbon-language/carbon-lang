@@ -108,6 +108,7 @@ void PPCSubtarget::initializeEnvironment() {
   HasFPCVT = false;
   HasISEL = false;
   HasPOPCNTD = false;
+  HasCMPB = false;
   HasLDBRX = false;
   IsBookE = false;
   HasOnlyMSYNC = false;

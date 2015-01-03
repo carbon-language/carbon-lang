@@ -612,7 +612,9 @@
 # CHECK-BE: cntlzw. 2, 3                    # encoding: [0x7c,0x62,0x00,0x35]
 # CHECK-LE: cntlzw. 2, 3                    # encoding: [0x35,0x00,0x62,0x7c]
             cntlzw. 2, 3
-# FIXME:    cmpb 2, 3, 4
+            cmpb 7, 21, 4
+# CHECK-BE: cmpb 7, 21, 4                   # encoding: [0x7e,0xa7,0x23,0xf8]
+# CHECK-LE: cmpb 7, 21, 4                   # encoding: [0xf8,0x23,0xa7,0x7e]
 # FIXME:    popcntb 2, 3
 # CHECK-BE: popcntw 2, 3                    # encoding: [0x7c,0x62,0x02,0xf4]
 # CHECK-LE: popcntw 2, 3                    # encoding: [0xf4,0x02,0x62,0x7c]

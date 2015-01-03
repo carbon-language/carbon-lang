@@ -83,6 +83,7 @@ namespace {
       return true;
     }
 
+    void PreprocessISelDAG() override;
     void PostprocessISelDAG() override;
 
     /// getI32Imm - Return a target constant with the specified value, of type
@@ -214,6 +215,8 @@ private:
     void PeepholePPC64();
     void PeepholePPC64ZExt();
     void PeepholeCROps();
+
+    SDValue combineToCMPB(SDNode *N);
 
     bool AllUsersSelectZero(SDNode *N);
     void SwapAllSelectUsers(SDNode *N);
@@ -683,7 +686,6 @@ static SDNode *SelectInt64(SelectionDAG *CurDAG, SDNode *N) {
   int64_t Imm = cast<ConstantSDNode>(N)->getZExtValue();
   return SelectInt64(CurDAG, dl, Imm);
 }
-
 
 namespace {
 class BitPermutationSelector {
@@ -2870,6 +2872,254 @@ SDNode *PPCDAGToDAGISel::Select(SDNode *N) {
   }
 
   return SelectCode(N);
+}
+
+// If the target supports the cmpb instruction, do the idiom recognition here.
+// We don't do this as a DAG combine because we don't want to do it as nodes
+// are being combined (because we might miss part of the eventual idiom). We
+// don't want to do it during instruction selection because we want to reuse
+// the logic for lowering the masking operations already part of the
+// instruction selector.
+SDValue PPCDAGToDAGISel::combineToCMPB(SDNode *N) {
+  SDLoc dl(N);
+
+  assert(N->getOpcode() == ISD::OR &&
+         "Only OR nodes are supported for CMPB");
+
+  SDValue Res;
+  if (!PPCSubTarget->hasCMPB())
+    return Res;
+
+  if (N->getValueType(0) != MVT::i32 &&
+      N->getValueType(0) != MVT::i64)
+    return Res;
+
+  EVT VT = N->getValueType(0);
+
+  SDValue RHS, LHS;
+  bool BytesFound[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
+  uint64_t Mask = 0, Alt = 0;
+
+  auto IsByteSelectCC = [this](SDValue O, unsigned &b,
+                               uint64_t &Mask, uint64_t &Alt,
+                               SDValue &LHS, SDValue &RHS) {
+    if (O.getOpcode() != ISD::SELECT_CC)
+      return false;
+    ISD::CondCode CC = cast<CondCodeSDNode>(O.getOperand(4))->get();
+
+    if (!isa<ConstantSDNode>(O.getOperand(2)) ||
+        !isa<ConstantSDNode>(O.getOperand(3)))
+      return false;
+
+    uint64_t PM = O.getConstantOperandVal(2);
+    uint64_t PAlt = O.getConstantOperandVal(3);
+    for (b = 0; b < 8; ++b) {
+      uint64_t Mask = UINT64_C(0xFF) << (8*b);
+      if (PM && (PM & Mask) == PM && (PAlt & Mask) == PAlt)
+        break;
+    }
+
+    if (b == 8)
+      return false;
+    Mask |= PM;
+    Alt  |= PAlt;
+
+    if (!isa<ConstantSDNode>(O.getOperand(1)) ||
+        O.getConstantOperandVal(1) != 0) {
+      SDValue Op0 = O.getOperand(0), Op1 = O.getOperand(1);
+      if (Op0.getOpcode() == ISD::TRUNCATE)
+        Op0 = Op0.getOperand(0);
+      if (Op1.getOpcode() == ISD::TRUNCATE)
+        Op1 = Op1.getOperand(0);
+
+      if (Op0.getOpcode() == ISD::SRL && Op1.getOpcode() == ISD::SRL &&
+          Op0.getOperand(1) == Op1.getOperand(1) && CC == ISD::SETEQ &&
+          isa<ConstantSDNode>(Op0.getOperand(1))) {
+
+        unsigned Bits = Op0.getValueType().getSizeInBits();
+        if (b != Bits/8-1)
+          return false;
+        if (Op0.getConstantOperandVal(1) != Bits-8)
+          return false;
+
+        LHS = Op0.getOperand(0);
+        RHS = Op1.getOperand(0);
+        return true;
+      }
+
+      // When we have small integers (i16 to be specific), the form present
+      // post-legalization uses SETULT in the SELECT_CC for the
+      // higher-order byte, depending on the fact that the
+      // even-higher-order bytes are known to all be zero, for example:
+      //   select_cc (xor $lhs, $rhs), 256, 65280, 0, setult
+      // (so when the second byte is the same, because all higher-order
+      // bits from bytes 3 and 4 are known to be zero, the result of the
+      // xor can be at most 255)
+      if (Op0.getOpcode() == ISD::XOR && CC == ISD::SETULT &&
+          isa<ConstantSDNode>(O.getOperand(1))) {
+
+        uint64_t ULim = O.getConstantOperandVal(1);
+        if (ULim != (UINT64_C(1) << b*8))
+          return false;
+
+        // Now we need to make sure that the upper bytes are known to be
+        // zero.
+        unsigned Bits = Op0.getValueType().getSizeInBits();
+        if (!CurDAG->MaskedValueIsZero(Op0,
+              APInt::getHighBitsSet(Bits, Bits - (b+1)*8)))
+          return false;
+        
+        LHS = Op0.getOperand(0);
+        RHS = Op0.getOperand(1);
+        return true;
+      }
+
+      return false;
+    }
+
+    if (CC != ISD::SETEQ)
+      return false;
+
+    SDValue Op = O.getOperand(0);
+    if (Op.getOpcode() == ISD::AND) {
+      if (!isa<ConstantSDNode>(Op.getOperand(1)))
+        return false;
+      if (Op.getConstantOperandVal(1) != (UINT64_C(0xFF) << (8*b)))
+        return false;
+
+      SDValue XOR = Op.getOperand(0);
+      if (XOR.getOpcode() == ISD::TRUNCATE)
+        XOR = XOR.getOperand(0);
+      if (XOR.getOpcode() != ISD::XOR)
+        return false;
+
+      LHS = XOR.getOperand(0);
+      RHS = XOR.getOperand(1);
+      return true;
+    } else if (Op.getOpcode() == ISD::SRL) {
+      if (!isa<ConstantSDNode>(Op.getOperand(1)))
+        return false;
+      unsigned Bits = Op.getValueType().getSizeInBits();
+      if (b != Bits/8-1)
+        return false;
+      if (Op.getConstantOperandVal(1) != Bits-8)
+        return false;
+
+      SDValue XOR = Op.getOperand(0);
+      if (XOR.getOpcode() == ISD::TRUNCATE)
+        XOR = XOR.getOperand(0);
+      if (XOR.getOpcode() != ISD::XOR)
+        return false;
+
+      LHS = XOR.getOperand(0);
+      RHS = XOR.getOperand(1);
+      return true;
+    }
+
+    return false;
+  };
+
+  SmallVector<SDValue, 8> Queue(1, SDValue(N, 0));
+  while (!Queue.empty()) {
+    SDValue V = Queue.pop_back_val();
+
+    for (const SDValue &O : V.getNode()->ops()) {
+      unsigned b;
+      uint64_t M = 0, A = 0;
+      SDValue OLHS, ORHS;
+      if (O.getOpcode() == ISD::OR) {
+        Queue.push_back(O);
+      } else if (IsByteSelectCC(O, b, M, A, OLHS, ORHS)) {
+        if (!LHS) {
+          LHS = OLHS;
+          RHS = ORHS;
+          BytesFound[b] = true;
+          Mask |= M;
+          Alt  |= A;
+        } else if ((LHS == ORHS && RHS == OLHS) ||
+                   (RHS == ORHS && LHS == OLHS)) {
+          BytesFound[b] = true;
+          Mask |= M;
+          Alt  |= A;
+        } else {
+          return Res;
+        }
+      } else {
+        return Res;
+      }
+    }
+  }
+
+  unsigned LastB = 0, BCnt = 0;
+  for (unsigned i = 0; i < 8; ++i)
+    if (BytesFound[LastB]) {
+      ++BCnt;
+      LastB = i;
+    }
+
+  if (!LastB || BCnt < 2)
+    return Res;
+
+  // Because we'll be zero-extending the output anyway if don't have a specific
+  // value for each input byte (via the Mask), we can 'anyext' the inputs.
+  if (LHS.getValueType() != VT) {
+    LHS = CurDAG->getAnyExtOrTrunc(LHS, dl, VT);
+    RHS = CurDAG->getAnyExtOrTrunc(RHS, dl, VT);
+  }
+
+  Res = CurDAG->getNode(PPCISD::CMPB, dl, VT, LHS, RHS);
+
+  bool NonTrivialMask = ((int64_t) Mask) != INT64_C(-1);
+  if (NonTrivialMask && !Alt) {
+    // Res = Mask & CMPB
+    Res = CurDAG->getNode(ISD::AND, dl, VT, Res, CurDAG->getConstant(Mask, VT));
+  } else if (Alt) {
+    // Res = (CMPB & Mask) | (~CMPB & Alt)
+    // Which, as suggested here:
+    //   https://graphics.stanford.edu/~seander/bithacks.html#MaskedMerge
+    // can be written as:
+    // Res = Alt ^ ((Alt ^ Mask) & CMPB)
+    // useful because the (Alt ^ Mask) can be pre-computed.
+    Res = CurDAG->getNode(ISD::AND, dl, VT, Res,
+                          CurDAG->getConstant(Mask ^ Alt, VT));
+    Res = CurDAG->getNode(ISD::XOR, dl, VT, Res, CurDAG->getConstant(Alt, VT));
+  }
+
+  return Res;
+}
+
+void PPCDAGToDAGISel::PreprocessISelDAG() {
+  SelectionDAG::allnodes_iterator Position(CurDAG->getRoot().getNode());
+  ++Position;
+
+  bool MadeChange = false;
+  while (Position != CurDAG->allnodes_begin()) {
+    SDNode *N = --Position;
+    if (N->use_empty())
+      continue;
+
+    SDValue Res;
+    switch (N->getOpcode()) {
+    default: break;
+    case ISD::OR:
+      Res = combineToCMPB(N);
+      break;
+    }
+
+    if (Res) {
+      DEBUG(dbgs() << "PPC DAG preprocessing replacing:\nOld:    ");
+      DEBUG(N->dump(CurDAG));
+      DEBUG(dbgs() << "\nNew: ");
+      DEBUG(Res.getNode()->dump(CurDAG));
+      DEBUG(dbgs() << "\n");
+
+      CurDAG->ReplaceAllUsesOfValueWith(SDValue(N, 0), Res);
+      MadeChange = true;
+    }
+  }
+
+  if (MadeChange)
+    CurDAG->RemoveDeadNodes();
 }
 
 /// PostprocessISelDAG - Perform some late peephole optimizations

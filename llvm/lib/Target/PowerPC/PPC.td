@@ -88,6 +88,8 @@ def FeaturePOPCNTD   : SubtargetFeature<"popcntd","HasPOPCNTD", "true",
                                         "Enable the popcnt[dw] instructions">;
 def FeatureLDBRX     : SubtargetFeature<"ldbrx","HasLDBRX", "true",
                                         "Enable the ldbrx instruction">;
+def FeatureCMPB      : SubtargetFeature<"cmpb", "HasCMPB", "true",
+                                        "Enable the cmpb instruction">;
 def FeatureBookE     : SubtargetFeature<"booke", "IsBookE", "true",
                                         "Enable Book E instructions">;
 def FeatureMSYNC     : SubtargetFeature<"msync", "HasOnlyMSYNC", "true",
@@ -116,7 +118,6 @@ def DeprecatedDST    : SubtargetFeature<"", "DeprecatedDST", "true",
 // Note: Future features to add when support is extended to more
 // recent ISA levels:
 //
-// CMPB         p6, p6x, p7        cmpb
 // DFP          p6, p6x, p7        decimal floating-point instructions
 // POPCNTB      p5 through p7      popcntb and related instructions
 
@@ -258,7 +259,7 @@ def : ProcessorModel<"a2", PPCA2Model,
                    FeatureFRSQRTE, FeatureFRSQRTES, FeatureRecipPrec,
                    FeatureSTFIWX, FeatureLFIWAX,
                    FeatureFPRND, FeatureFPCVT, FeatureISEL,
-                   FeaturePOPCNTD, FeatureLDBRX, Feature64Bit
+                   FeaturePOPCNTD, FeatureCMPB, FeatureLDBRX, Feature64Bit
                /*, Feature64BitRegs */, DeprecatedMFTB]>;
 def : ProcessorModel<"a2q", PPCA2Model,
                   [DirectiveA2, FeatureBookE, FeatureMFOCRF,
@@ -266,7 +267,7 @@ def : ProcessorModel<"a2q", PPCA2Model,
                    FeatureFRSQRTE, FeatureFRSQRTES, FeatureRecipPrec,
                    FeatureSTFIWX, FeatureLFIWAX,
                    FeatureFPRND, FeatureFPCVT, FeatureISEL,
-                   FeaturePOPCNTD, FeatureLDBRX, Feature64Bit
+                   FeaturePOPCNTD, FeatureCMPB, FeatureLDBRX, Feature64Bit
                /*, Feature64BitRegs */, FeatureQPX, DeprecatedMFTB]>;
 def : ProcessorModel<"pwr3", G5Model,
                   [DirectivePwr3, FeatureAltivec,
@@ -292,14 +293,14 @@ def : ProcessorModel<"pwr6", G5Model,
                   [DirectivePwr6, FeatureAltivec,
                    FeatureMFOCRF, FeatureFCPSGN, FeatureFSqrt, FeatureFRE,
                    FeatureFRES, FeatureFRSQRTE, FeatureFRSQRTES,
-                   FeatureRecipPrec, FeatureSTFIWX, FeatureLFIWAX,
+                   FeatureRecipPrec, FeatureSTFIWX, FeatureLFIWAX, FeatureCMPB,
                    FeatureFPRND, Feature64Bit /*, Feature64BitRegs */,
                    DeprecatedMFTB, DeprecatedDST]>;
 def : ProcessorModel<"pwr6x", G5Model,
                   [DirectivePwr5x, FeatureAltivec, FeatureMFOCRF,
                    FeatureFCPSGN, FeatureFSqrt, FeatureFRE, FeatureFRES,
                    FeatureFRSQRTE, FeatureFRSQRTES, FeatureRecipPrec,
-                   FeatureSTFIWX, FeatureLFIWAX,
+                   FeatureSTFIWX, FeatureLFIWAX, FeatureCMPB,
                    FeatureFPRND, Feature64Bit,
                    DeprecatedMFTB, DeprecatedDST]>;
 def : ProcessorModel<"pwr7", P7Model,
@@ -308,7 +309,7 @@ def : ProcessorModel<"pwr7", P7Model,
                    FeatureFRES, FeatureFRSQRTE, FeatureFRSQRTES,
                    FeatureRecipPrec, FeatureSTFIWX, FeatureLFIWAX,
                    FeatureFPRND, FeatureFPCVT, FeatureISEL,
-                   FeaturePOPCNTD, FeatureLDBRX,
+                   FeaturePOPCNTD, FeatureCMPB, FeatureLDBRX,
                    Feature64Bit /*, Feature64BitRegs */,
                    DeprecatedMFTB, DeprecatedDST]>;
 def : ProcessorModel<"pwr8", P8Model,
@@ -317,7 +318,7 @@ def : ProcessorModel<"pwr8", P8Model,
                    FeatureFRES, FeatureFRSQRTE, FeatureFRSQRTES,
                    FeatureRecipPrec, FeatureSTFIWX, FeatureLFIWAX,
                    FeatureFPRND, FeatureFPCVT, FeatureISEL,
-                   FeaturePOPCNTD, FeatureLDBRX,
+                   FeaturePOPCNTD, FeatureCMPB, FeatureLDBRX,
                    Feature64Bit /*, Feature64BitRegs */,
                    DeprecatedMFTB, DeprecatedDST]>;
 def : Processor<"ppc", G3Itineraries, [Directive32]>;

@@ -102,6 +102,7 @@ protected:
   bool HasFPCVT;
   bool HasISEL;
   bool HasPOPCNTD;
+  bool HasCMPB;
   bool HasLDBRX;
   bool IsBookE;
   bool HasOnlyMSYNC;
@@ -220,6 +221,7 @@ public:
   bool hasMFOCRF() const { return HasMFOCRF; }
   bool hasISEL() const { return HasISEL; }
   bool hasPOPCNTD() const { return HasPOPCNTD; }
+  bool hasCMPB() const { return HasCMPB; }
   bool hasLDBRX() const { return HasLDBRX; }
   bool isBookE() const { return IsBookE; }
   bool hasOnlyMSYNC() const { return HasOnlyMSYNC; }
