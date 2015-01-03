@@ -600,12 +600,12 @@ def NAME#32mi : Ii32<{ImmOpc{7}, ImmOpc{6}, ImmOpc{5}, ImmOpc{4},
                                  "{$src2, $dst|$dst, $src2}"),
                       [], IIC_ALU_MEM>, OpSize32, LOCK;
 
-def NAME#64mi32 : RIi32<{ImmOpc{7}, ImmOpc{6}, ImmOpc{5}, ImmOpc{4},
-                         ImmOpc{3}, ImmOpc{2}, ImmOpc{1}, 1 },
-                         ImmMod, (outs), (ins i64mem :$dst, i64i32imm :$src2),
-                         !strconcat(mnemonic, "{q}\t",
-                                    "{$src2, $dst|$dst, $src2}"),
-                         [], IIC_ALU_MEM>, LOCK;
+def NAME#64mi32 : RIi32S<{ImmOpc{7}, ImmOpc{6}, ImmOpc{5}, ImmOpc{4},
+                          ImmOpc{3}, ImmOpc{2}, ImmOpc{1}, 1 },
+                          ImmMod, (outs), (ins i64mem :$dst, i64i32imm :$src2),
+                          !strconcat(mnemonic, "{q}\t",
+                                     "{$src2, $dst|$dst, $src2}"),
+                          [], IIC_ALU_MEM>, LOCK;
 
 def NAME#16mi8 : Ii8<{ImmOpc8{7}, ImmOpc8{6}, ImmOpc8{5}, ImmOpc8{4},
                       ImmOpc8{3}, ImmOpc8{2}, ImmOpc8{1}, 1 },
