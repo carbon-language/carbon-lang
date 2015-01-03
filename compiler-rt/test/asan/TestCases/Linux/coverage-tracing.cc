@@ -1,6 +1,6 @@
 // Test -mllvm -sanitizer-coverage-experimental-tracing
 //
-// RUN: %clangxx_asan -O1 -fsanitize-coverage=1 -mllvm -sanitizer-coverage-experimental-tracing %s -o %t
+// RUN: %clangxx_asan -O1 -fsanitize-coverage=2 -mllvm -sanitizer-coverage-experimental-tracing %s -o %t
 // RUN: rm -rf   %T/coverage-tracing
 // RUN: mkdir -p %T/coverage-tracing
 // RUN: ASAN_OPTIONS=coverage=1:coverage_dir=%T/coverage-tracing:verbosity=1 %run %t 1 2 3 4 2>&1 | FileCheck %s
