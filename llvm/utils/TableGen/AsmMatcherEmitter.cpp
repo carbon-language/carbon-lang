@@ -2645,9 +2645,7 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
   OS << "  void convertToMapAndConstraints(unsigned Kind,\n                ";
   OS << "           const OperandVector &Operands) override;\n";
   OS << "  bool mnemonicIsValid(StringRef Mnemonic, unsigned VariantID) override;\n";
-  OS << "  unsigned MatchInstructionImpl(\n";
-  OS.indent(27);
-  OS << "const OperandVector &Operands,\n"
+  OS << "  unsigned MatchInstructionImpl(const OperandVector &Operands,\n"
      << "                                MCInst &Inst,\n"
      << "                                uint64_t &ErrorInfo,"
      << " bool matchingInlineAsm,\n"
@@ -2850,10 +2848,9 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
 
   // Finally, build the match function.
   OS << "unsigned " << Target.getName() << ClassName << "::\n"
-     << "MatchInstructionImpl(const OperandVector"
-     << " &Operands,\n";
-  OS << "                     MCInst &Inst,\n"
-     << "uint64_t &ErrorInfo, bool matchingInlineAsm, unsigned VariantID) {\n";
+     << "MatchInstructionImpl(const OperandVector &Operands,\n";
+  OS << "                     MCInst &Inst, uint64_t &ErrorInfo,\n"
+     << "                     bool matchingInlineAsm, unsigned VariantID) {\n";
 
   OS << "  // Eliminate obvious mismatches.\n";
   OS << "  if (Operands.size() > " << (MaxNumOperands+1) << ") {\n";
