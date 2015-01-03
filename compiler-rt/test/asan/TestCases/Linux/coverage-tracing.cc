@@ -4,14 +4,14 @@
 // RUN: rm -rf   %T/coverage-tracing
 // RUN: mkdir %T/coverage-tracing
 // RUN: cd %T/coverage-tracing
-// RUN:  A=x;   ASAN_OPTIONS=coverage=1:verbosity=1 %run %t $A 2>&1 | FileCheck %s --check-prefix=CHECK --check-prefix=CHECK1; mv trace-points.*.sancov $A.points
-// RUN:  A=f;   ASAN_OPTIONS=coverage=1:verbosity=1 %run %t $A 2>&1 | FileCheck %s --check-prefix=CHECK --check-prefix=CHECK2; mv trace-points.*.sancov $A.points
-// RUN:  A=b;   ASAN_OPTIONS=coverage=1:verbosity=1 %run %t $A 2>&1 | FileCheck %s --check-prefix=CHECK --check-prefix=CHECK2; mv trace-points.*.sancov $A.points
-// RUN:  A=bf;  ASAN_OPTIONS=coverage=1:verbosity=1 %run %t $A 2>&1 | FileCheck %s --check-prefix=CHECK --check-prefix=CHECK3; mv trace-points.*.sancov $A.points
-// RUN:  A=fb;  ASAN_OPTIONS=coverage=1:verbosity=1 %run %t $A 2>&1 | FileCheck %s --check-prefix=CHECK --check-prefix=CHECK3; mv trace-points.*.sancov $A.points
-// RUN:  A=ffb; ASAN_OPTIONS=coverage=1:verbosity=1 %run %t $A 2>&1 | FileCheck %s --check-prefix=CHECK --check-prefix=CHECK4; mv trace-points.*.sancov $A.points
-// RUN:  A=fff; ASAN_OPTIONS=coverage=1:verbosity=1 %run %t $A 2>&1 | FileCheck %s --check-prefix=CHECK --check-prefix=CHECK4; mv trace-points.*.sancov $A.points
-// RUN:  A=bbf; ASAN_OPTIONS=coverage=1:verbosity=1 %run %t $A 2>&1 | FileCheck %s --check-prefix=CHECK --check-prefix=CHECK4; mv trace-points.*.sancov $A.points
+// RUN:  A=x;   ASAN_OPTIONS=coverage=1:verbosity=1 %run %t $A 1   2>&1 | FileCheck %s --check-prefix=CHECK --check-prefix=CHECK1; mv trace-points.*.sancov $A.points
+// RUN:  A=f;   ASAN_OPTIONS=coverage=1:verbosity=1 %run %t $A 1   2>&1 | FileCheck %s --check-prefix=CHECK --check-prefix=CHECK2; mv trace-points.*.sancov $A.points
+// RUN:  A=b;   ASAN_OPTIONS=coverage=1:verbosity=1 %run %t $A 1   2>&1 | FileCheck %s --check-prefix=CHECK --check-prefix=CHECK2; mv trace-points.*.sancov $A.points
+// RUN:  A=bf;  ASAN_OPTIONS=coverage=1:verbosity=1 %run %t $A 1   2>&1 | FileCheck %s --check-prefix=CHECK --check-prefix=CHECK3; mv trace-points.*.sancov $A.points
+// RUN:  A=fb;  ASAN_OPTIONS=coverage=1:verbosity=1 %run %t $A 1   2>&1 | FileCheck %s --check-prefix=CHECK --check-prefix=CHECK3; mv trace-points.*.sancov $A.points
+// RUN:  A=ffb; ASAN_OPTIONS=coverage=1:verbosity=1 %run %t $A 1   2>&1 | FileCheck %s --check-prefix=CHECK --check-prefix=CHECK4; mv trace-points.*.sancov $A.points
+// RUN:  A=fff; ASAN_OPTIONS=coverage=1:verbosity=1 %run %t $A 1   2>&1 | FileCheck %s --check-prefix=CHECK --check-prefix=CHECK4; mv trace-points.*.sancov $A.points
+// RUN:  A=bbf; ASAN_OPTIONS=coverage=1:verbosity=1 %run %t $A 100 2>&1 | FileCheck %s --check-prefix=CHECK --check-prefix=CHECK301; mv trace-points.*.sancov $A.points
 // RUN: diff f.points fff.points
 // RUN: diff bf.points fb.points
 // RUN: diff bf.points ffb.points
@@ -32,10 +32,13 @@ __attribute__((noinline)) void foo() { sink++; }
 __attribute__((noinline)) void bar() { sink++; }
 
 int main(int argc, char **argv) {
-  if (argc != 2) return 0;
-  for (int i = 0; argv[1][i]; i++) {
-    if (argv[1][i] == 'f') foo();
-    else if (argv[1][i] == 'b') bar();
+  if (argc != 3) return 0;
+  int n = strtol(argv[2], 0, 10);
+  while (n-- > 0) {
+    for (int i = 0; argv[1][i]; i++) {
+      if (argv[1][i] == 'f') foo();
+      else if (argv[1][i] == 'b') bar();
+    }
   }
 }
 
@@ -44,3 +47,4 @@ int main(int argc, char **argv) {
 // CHECK2: CovDump: Trace: 2 Events written
 // CHECK3: CovDump: Trace: 3 Events written
 // CHECK4: CovDump: Trace: 4 Events written
+// CHECK301: CovDump: Trace: 301 Events written

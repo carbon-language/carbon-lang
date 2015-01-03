@@ -165,9 +165,12 @@ void CoverageData::Init() {
   atomic_store(&cc_array_size, kCcArrayMaxSize, memory_order_relaxed);
   atomic_store(&cc_array_index, 0, memory_order_relaxed);
 
-  tr_event_array = reinterpret_cast<u32 *>(
-      MmapNoReserveOrDie(sizeof(tr_event_array[0]) * kTrEventArrayMaxSize,
-                         "CovInit::tr_event_array"));
+  // Allocate tr_event_array with a guard page at the end.
+  tr_event_array = reinterpret_cast<u32 *>(MmapNoReserveOrDie(
+      sizeof(tr_event_array[0]) * kTrEventArrayMaxSize + GetMmapGranularity(),
+      "CovInit::tr_event_array"));
+  Mprotect(reinterpret_cast<uptr>(&tr_event_array[kTrEventArrayMaxSize]),
+           GetMmapGranularity());
   tr_event_array_size = kTrEventArrayMaxSize;
   tr_event_array_index = 0;
 }
@@ -416,6 +419,8 @@ void CoverageData::DumpTrace() {
 
   fd = CovOpenFile(false, "trace-events");
   if (fd < 0) return;
+  for (uptr i = 0; i < max_idx; i++)
+    tr_event_array[i]--;  // Fix the IDs.
   internal_write(fd, tr_event_array, max_idx * sizeof(tr_event_array[0]));
   internal_close(fd);
   VReport(1, " CovDump: Trace: %zd PCs written\n", size());
@@ -464,12 +469,16 @@ void CoverageData::DumpCallerCalleePairs() {
 // Record the current PC into the event buffer.
 // Every event is a u32 value (index in tr_pc_array_index) so we compute
 // it once and then cache in the provided 'cache' storage.
+//
+// This function will eventually be inlined by the compiler.
 void CoverageData::TraceBasicBlock(s32 *id) {
-  CHECK(coverage_enabled);
-  uptr idx = *id;
-  CHECK_LT(tr_event_array_index, tr_event_array_size);
-  tr_event_array[tr_event_array_index] = static_cast<u32>(idx);
-  tr_event_array_index++;
+  // CHECK(coverage_enabled);
+  // CHECK_LT(tr_event_array_index, tr_event_array_size);
+  //
+  // Will trap here if
+  //  1. coverage is not enabled at run-time.
+  //  2. The array tr_event_array is full.
+  tr_event_array[tr_event_array_index++] = static_cast<u32>(*id);
 }
 
 static void CovDumpAsBitSet() {
