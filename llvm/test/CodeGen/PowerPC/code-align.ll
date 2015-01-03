@@ -1,15 +1,15 @@
 ; RUN: llc -mcpu=ppc64 < %s | FileCheck %s -check-prefix=GENERIC
-; RUN: llc -mcpu=970 < %s | FileCheck %s -check-prefix=BASIC
+; RUN: llc -mcpu=970 < %s | FileCheck %s -check-prefix=PWR
 ; RUN: llc -mcpu=a2 < %s | FileCheck %s -check-prefix=BASIC
 ; RUN: llc -mcpu=e500mc < %s | FileCheck %s -check-prefix=BASIC
 ; RUN: llc -mcpu=e5500 < %s | FileCheck %s -check-prefix=BASIC
-; RUN: llc -mcpu=pwr4 < %s | FileCheck %s -check-prefix=BASIC
-; RUN: llc -mcpu=pwr5 < %s | FileCheck %s -check-prefix=BASIC
-; RUN: llc -mcpu=pwr5x < %s | FileCheck %s -check-prefix=BASIC
-; RUN: llc -mcpu=pwr6 < %s | FileCheck %s -check-prefix=BASIC
-; RUN: llc -mcpu=pwr6x < %s | FileCheck %s -check-prefix=BASIC
-; RUN: llc -mcpu=pwr7 < %s | FileCheck %s -check-prefix=BASIC
-; RUN: llc -mcpu=pwr8 < %s | FileCheck %s -check-prefix=BASIC
+; RUN: llc -mcpu=pwr4 < %s | FileCheck %s -check-prefix=PWR
+; RUN: llc -mcpu=pwr5 < %s | FileCheck %s -check-prefix=PWR
+; RUN: llc -mcpu=pwr5x < %s | FileCheck %s -check-prefix=PWR
+; RUN: llc -mcpu=pwr6 < %s | FileCheck %s -check-prefix=PWR
+; RUN: llc -mcpu=pwr6x < %s | FileCheck %s -check-prefix=PWR
+; RUN: llc -mcpu=pwr7 < %s | FileCheck %s -check-prefix=PWR
+; RUN: llc -mcpu=pwr8 < %s | FileCheck %s -check-prefix=PWR
 target datalayout = "E-m:e-i64:64-n32:64"
 target triple = "powerpc64-unknown-linux-gnu"
 
@@ -21,10 +21,13 @@ entry:
 
 ; GENERIC-LABEL: .globl  foo
 ; BASIC-LABEL: .globl  foo
+; PWR-LABEL: .globl  foo
 ; GENERIC: .align  2
 ; BASIC: .align  4
+; PWR: .align  4
 ; GENERIC: @foo
 ; BASIC: @foo
+; PWR: @foo
 }
 
 ; Function Attrs: nounwind
@@ -34,12 +37,16 @@ entry:
 
 ; GENERIC-LABEL: @loop
 ; BASIC-LABEL: @loop
+; PWR-LABEL: @loop
 ; GENERIC: mtctr
 ; BASIC: mtctr
+; PWR: mtctr
 ; GENERIC-NOT: .align
 ; BASIC: .align  4
+; PWR: .align  4
 ; GENERIC: bdnz
 ; BASIC: bdnz
+; PWR: bdnz
 
 vector.body:                                      ; preds = %vector.body, %entry
   %index = phi i64 [ 0, %entry ], [ %index.next, %vector.body ]
@@ -57,6 +64,38 @@ vector.body:                                      ; preds = %vector.body, %entry
   br i1 %6, label %for.end, label %vector.body
 
 for.end:                                          ; preds = %vector.body
+  ret void
+}
+
+; Function Attrs: nounwind
+define void @sloop(i32 signext %x, i32* nocapture %a) #1 {
+entry:
+  br label %for.body
+
+; GENERIC-LABEL: @sloop
+; BASIC-LABEL: @sloop
+; PWR-LABEL: @sloop
+; GENERIC: mtctr
+; BASIC: mtctr
+; PWR: mtctr
+; GENERIC-NOT: .align
+; BASIC: .align  4
+; PWR: .align  5
+; GENERIC: bdnz
+; BASIC: bdnz
+; PWR: bdnz
+
+for.body:                                         ; preds = %for.body, %entry
+  %indvars.iv = phi i64 [ 0, %entry ], [ %indvars.iv.next, %for.body ]
+  %arrayidx = getelementptr inbounds i32* %a, i64 %indvars.iv
+  %0 = load i32* %arrayidx, align 4
+  %add = add nsw i32 %0, 4
+  store i32 %add, i32* %arrayidx, align 4
+  %indvars.iv.next = add nuw nsw i64 %indvars.iv, 1
+  %exitcond = icmp eq i64 %indvars.iv.next, 2048
+  br i1 %exitcond, label %for.end, label %for.body
+
+for.end:                                          ; preds = %for.body
   ret void
 }
 

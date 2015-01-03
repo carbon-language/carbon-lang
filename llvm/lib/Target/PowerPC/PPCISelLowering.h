@@ -449,6 +449,8 @@ namespace llvm {
                                        const SelectionDAG &DAG,
                                        unsigned Depth = 0) const override;
 
+    unsigned getPrefLoopAlignment(MachineLoop *ML) const override;
+
     Instruction* emitLeadingFence(IRBuilder<> &Builder, AtomicOrdering Ord,
                                   bool IsStore, bool IsLoad) const override;
     Instruction* emitTrailingFence(IRBuilder<> &Builder, AtomicOrdering Ord,

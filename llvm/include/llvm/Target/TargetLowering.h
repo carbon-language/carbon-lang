@@ -51,6 +51,7 @@ namespace llvm {
   class MachineFunction;
   class MachineInstr;
   class MachineJumpTableInfo;
+  class MachineLoop;
   class Mangler;
   class MCContext;
   class MCExpr;
@@ -929,7 +930,7 @@ public:
   }
 
   /// Return the preferred loop alignment.
-  unsigned getPrefLoopAlignment() const {
+  virtual unsigned getPrefLoopAlignment(MachineLoop *ML = nullptr) const {
     return PrefLoopAlignment;
   }
 
@@ -1336,7 +1337,8 @@ protected:
 
   /// Set the target's preferred loop alignment. Default alignment is zero, it
   /// means the target does not care about loop alignment.  The alignment is
-  /// specified in log2(bytes).
+  /// specified in log2(bytes). The target may also override
+  /// getPrefLoopAlignment to provide per-loop values.
   void setPrefLoopAlignment(unsigned Align) {
     PrefLoopAlignment = Align;
   }

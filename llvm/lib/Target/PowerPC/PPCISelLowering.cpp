@@ -24,6 +24,7 @@
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
+#include "llvm/CodeGen/MachineLoopInfo.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/CodeGen/TargetLoweringObjectFileImpl.h"
@@ -9049,6 +9050,40 @@ void PPCTargetLowering::computeKnownBitsForTargetNode(const SDValue Op,
   }
 }
 
+unsigned PPCTargetLowering::getPrefLoopAlignment(MachineLoop *ML) const {
+  switch (Subtarget.getDarwinDirective()) {
+  default: break;
+  case PPC::DIR_970:
+  case PPC::DIR_PWR4:
+  case PPC::DIR_PWR5:
+  case PPC::DIR_PWR5X:
+  case PPC::DIR_PWR6:
+  case PPC::DIR_PWR6X:
+  case PPC::DIR_PWR7:
+  case PPC::DIR_PWR8: {
+    if (!ML)
+      break;
+
+    const PPCInstrInfo *TII =
+      static_cast<const PPCInstrInfo *>(getTargetMachine().getSubtargetImpl()->
+                                          getInstrInfo());
+
+    // For small loops (between 5 and 8 instructions), align to a 32-byte
+    // boundary so that the entire loop fits in one instruction-cache line.
+    uint64_t LoopSize = 0;
+    for (auto I = ML->block_begin(), IE = ML->block_end(); I != IE; ++I)
+      for (auto J = (*I)->begin(), JE = (*I)->end(); J != JE; ++J)
+        LoopSize += TII->GetInstSizeInBytes(J);
+
+    if (LoopSize > 16 && LoopSize <= 32)
+      return 5;
+
+    break;
+  }
+  }
+
+  return TargetLowering::getPrefLoopAlignment(ML);
+}
 
 /// getConstraintType - Given a constraint, return the type of
 /// constraint it is for this target.
