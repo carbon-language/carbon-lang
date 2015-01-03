@@ -408,6 +408,8 @@ InstructionContext RecognizableInstr::insnContext() const {
   } else if (Is64Bit || HasREX_WPrefix || AdSize == X86Local::AdSize64) {
     if (HasREX_WPrefix && (OpSize == X86Local::OpSize16 || OpPrefix == X86Local::PD))
       insnContext = IC_64BIT_REXW_OPSIZE;
+    else if (HasREX_WPrefix && AdSize == X86Local::AdSize32)
+      insnContext = IC_64BIT_REXW_ADSIZE;
     else if (OpSize == X86Local::OpSize16 && OpPrefix == X86Local::XD)
       insnContext = IC_64BIT_XD_OPSIZE;
     else if (OpSize == X86Local::OpSize16 && OpPrefix == X86Local::XS)
@@ -984,6 +986,7 @@ OperandType RecognizableInstr::typeFromString(const std::string &s,
   TYPE("offset32_8",          TYPE_MOFFS8)
   TYPE("offset32_16",         TYPE_MOFFS16)
   TYPE("offset32_32",         TYPE_MOFFS32)
+  TYPE("offset32_64",         TYPE_MOFFS64)
   TYPE("offset64_8",          TYPE_MOFFS8)
   TYPE("offset64_16",         TYPE_MOFFS16)
   TYPE("offset64_32",         TYPE_MOFFS32)
@@ -1219,6 +1222,7 @@ RecognizableInstr::relocationEncodingFromString(const std::string &s,
   ENCODING("offset32_8",      ENCODING_Ia)
   ENCODING("offset32_16",     ENCODING_Ia)
   ENCODING("offset32_32",     ENCODING_Ia)
+  ENCODING("offset32_64",     ENCODING_Ia)
   ENCODING("offset64_8",      ENCODING_Ia)
   ENCODING("offset64_16",     ENCODING_Ia)
   ENCODING("offset64_32",     ENCODING_Ia)

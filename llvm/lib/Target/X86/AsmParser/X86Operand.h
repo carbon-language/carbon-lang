@@ -316,6 +316,9 @@ struct X86Operand : public MCParsedAsmOperand {
   bool isMemOffs32_32() const {
     return isMemOffs() && Mem.ModeSize == 32 && (!Mem.Size || Mem.Size == 32);
   }
+  bool isMemOffs32_64() const {
+    return isMemOffs() && Mem.ModeSize == 32 && (!Mem.Size || Mem.Size == 64);
+  }
   bool isMemOffs64_8() const {
     return isMemOffs() && Mem.ModeSize == 64 && (!Mem.Size || Mem.Size == 8);
   }

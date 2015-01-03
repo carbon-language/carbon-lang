@@ -114,10 +114,12 @@ static inline bool inheritsFrom(InstructionContext child,
   case IC_64BIT_REXW:
     return(inheritsFrom(child, IC_64BIT_REXW_XS) ||
            inheritsFrom(child, IC_64BIT_REXW_XD) ||
-           inheritsFrom(child, IC_64BIT_REXW_OPSIZE));
+           inheritsFrom(child, IC_64BIT_REXW_OPSIZE) ||
+           (!AdSize64 && inheritsFrom(child, IC_64BIT_REXW_ADSIZE)));
   case IC_64BIT_OPSIZE:
     return inheritsFrom(child, IC_64BIT_REXW_OPSIZE) ||
-           (!AdSize64 && inheritsFrom(child, IC_64BIT_OPSIZE_ADSIZE));
+           (!AdSize64 && inheritsFrom(child, IC_64BIT_OPSIZE_ADSIZE)) ||
+           (!AdSize64 && inheritsFrom(child, IC_64BIT_REXW_ADSIZE));
   case IC_64BIT_XD:
     return(inheritsFrom(child, IC_64BIT_REXW_XD));
   case IC_64BIT_XS:
@@ -128,6 +130,7 @@ static inline bool inheritsFrom(InstructionContext child,
   case IC_64BIT_REXW_XD:
   case IC_64BIT_REXW_XS:
   case IC_64BIT_REXW_OPSIZE:
+  case IC_64BIT_REXW_ADSIZE:
     return false;
   case IC_VEX:
     return (VEX_LIG && inheritsFrom(child, IC_VEX_L_W)) ||
@@ -720,6 +723,9 @@ void DisassemblerTables::emitContextTable(raw_ostream &o, unsigned &i) const {
     else if ((index & ATTR_64BIT) && (index & ATTR_REXW) &&
              (index & ATTR_OPSIZE))
       o << "IC_64BIT_REXW_OPSIZE";
+    else if ((index & ATTR_64BIT) && (index & ATTR_REXW) &&
+             (index & ATTR_ADSIZE))
+      o << "IC_64BIT_REXW_ADSIZE";
     else if ((index & ATTR_64BIT) && (index & ATTR_XD) && (index & ATTR_OPSIZE))
       o << "IC_64BIT_XD_OPSIZE";
     else if ((index & ATTR_64BIT) && (index & ATTR_XS) && (index & ATTR_OPSIZE))

@@ -93,6 +93,8 @@ enum attributeBits {
                                         "operands change width")               \
   ENUM_ENTRY(IC_64BIT_REXW,         5,  "requires a REX.W prefix, so operands "\
                                         "change width; overrides IC_OPSIZE")   \
+  ENUM_ENTRY(IC_64BIT_REXW_ADSIZE,  6,  "requires a REX.W prefix and 0x67 "    \
+                                        "prefix")                              \
   ENUM_ENTRY(IC_64BIT_OPSIZE,       3,  "Just as meaningful as IC_OPSIZE")     \
   ENUM_ENTRY(IC_64BIT_ADSIZE,       3,  "Just as meaningful as IC_ADSIZE")     \
   ENUM_ENTRY(IC_64BIT_OPSIZE_ADSIZE, 4, "Just as meaningful as IC_OPSIZE/"     \

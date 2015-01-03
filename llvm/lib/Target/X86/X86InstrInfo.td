@@ -494,6 +494,11 @@ def X86MemOffs32_32AsmOperand : AsmOperandClass {
   let RenderMethod = "addMemOffsOperands";
   let SuperClasses = [X86Mem32AsmOperand];
 }
+def X86MemOffs32_64AsmOperand : AsmOperandClass {
+  let Name = "MemOffs32_64";
+  let RenderMethod = "addMemOffsOperands";
+  let SuperClasses = [X86Mem64AsmOperand];
+}
 def X86MemOffs64_8AsmOperand : AsmOperandClass {
   let Name = "MemOffs64_8";
   let RenderMethod = "addMemOffsOperands";
@@ -571,6 +576,10 @@ def offset32_32 : Operand<iPTR> {
   let ParserMatchClass = X86MemOffs32_32AsmOperand;
   let MIOperandInfo = (ops i64imm, i8imm);
   let PrintMethod = "printMemOffs32"; }
+def offset32_64 : Operand<iPTR> {
+  let ParserMatchClass = X86MemOffs32_64AsmOperand;
+  let MIOperandInfo = (ops i64imm, i8imm);
+  let PrintMethod = "printMemOffs64"; }
 def offset64_8 : Operand<iPTR> {
   let ParserMatchClass = X86MemOffs64_8AsmOperand;
   let MIOperandInfo = (ops i64imm, i8imm);
@@ -1318,6 +1327,10 @@ let Defs = [EAX] in
 def MOV32ao32 : Ii32<0xA1, RawFrmMemOffs, (outs), (ins offset32_32:$src),
                      "mov{l}\t{$src, %eax|eax, $src}", [], IIC_MOV_MEM>,
                      OpSize32, AdSize32;
+let Defs = [RAX] in
+def MOV64ao32 : RIi32<0xA1, RawFrmMemOffs, (outs), (ins offset32_64:$src),
+                      "mov{q}\t{$src, %rax|rax, $src}", [], IIC_MOV_MEM>,
+                      AdSize32;
 
 let Defs = [AL] in
 def MOV8ao16 : Ii16<0xA0, RawFrmMemOffs, (outs), (ins offset16_8:$src),
@@ -1343,6 +1356,10 @@ let Uses = [EAX] in
 def MOV32o32a : Ii32<0xA3, RawFrmMemOffs, (outs offset32_32:$dst), (ins),
                      "mov{l}\t{%eax, $dst|$dst, eax}", [], IIC_MOV_MEM>,
                      OpSize32, AdSize32;
+let Uses = [RAX] in
+def MOV64o32a : RIi32<0xA3, RawFrmMemOffs, (outs offset32_64:$dst), (ins),
+                      "mov{q}\t{%rax, $dst|$dst, rax}", [], IIC_MOV_MEM>,
+                      AdSize32;
 
 let Uses = [AL] in
 def MOV8o16a : Ii16<0xA2, RawFrmMemOffs, (outs offset16_8:$dst), (ins),
