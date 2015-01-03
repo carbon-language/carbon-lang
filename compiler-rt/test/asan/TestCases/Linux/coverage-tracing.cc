@@ -1,22 +1,46 @@
 // Test -mllvm -sanitizer-coverage-experimental-tracing
 //
-// RUN: %clangxx_asan -O1 -fsanitize-coverage=2 -mllvm -sanitizer-coverage-experimental-tracing %s -o %t
+// RUN: %clangxx_asan -O1 -fsanitize-coverage=1 -mllvm -sanitizer-coverage-experimental-tracing %s -o %t
 // RUN: rm -rf   %T/coverage-tracing
-// RUN: mkdir -p %T/coverage-tracing
-// RUN: ASAN_OPTIONS=coverage=1:coverage_dir=%T/coverage-tracing:verbosity=1 %run %t 1 2 3 4 2>&1 | FileCheck %s
+// RUN: mkdir %T/coverage-tracing
+// RUN: cd %T/coverage-tracing
+// RUN:  A=x;   ASAN_OPTIONS=coverage=1:verbosity=1 %run %t $A 2>&1 | FileCheck %s --check-prefix=CHECK --check-prefix=CHECK1; mv trace-points.*.sancov $A.points
+// RUN:  A=f;   ASAN_OPTIONS=coverage=1:verbosity=1 %run %t $A 2>&1 | FileCheck %s --check-prefix=CHECK --check-prefix=CHECK2; mv trace-points.*.sancov $A.points
+// RUN:  A=b;   ASAN_OPTIONS=coverage=1:verbosity=1 %run %t $A 2>&1 | FileCheck %s --check-prefix=CHECK --check-prefix=CHECK2; mv trace-points.*.sancov $A.points
+// RUN:  A=bf;  ASAN_OPTIONS=coverage=1:verbosity=1 %run %t $A 2>&1 | FileCheck %s --check-prefix=CHECK --check-prefix=CHECK3; mv trace-points.*.sancov $A.points
+// RUN:  A=fb;  ASAN_OPTIONS=coverage=1:verbosity=1 %run %t $A 2>&1 | FileCheck %s --check-prefix=CHECK --check-prefix=CHECK3; mv trace-points.*.sancov $A.points
+// RUN:  A=ffb; ASAN_OPTIONS=coverage=1:verbosity=1 %run %t $A 2>&1 | FileCheck %s --check-prefix=CHECK --check-prefix=CHECK4; mv trace-points.*.sancov $A.points
+// RUN:  A=fff; ASAN_OPTIONS=coverage=1:verbosity=1 %run %t $A 2>&1 | FileCheck %s --check-prefix=CHECK --check-prefix=CHECK4; mv trace-points.*.sancov $A.points
+// RUN:  A=bbf; ASAN_OPTIONS=coverage=1:verbosity=1 %run %t $A 2>&1 | FileCheck %s --check-prefix=CHECK --check-prefix=CHECK4; mv trace-points.*.sancov $A.points
+// RUN: diff f.points fff.points
+// RUN: diff bf.points fb.points
+// RUN: diff bf.points ffb.points
+// RUN: diff bf.points bbf.points
+// RUN: not diff x.points f.points
+// RUN: not diff x.points b.points
+// RUN: not diff x.points bf.points
+// RUN: not diff f.points b.points
+// RUN: not diff f.points bf.points
+// RUN: not diff b.points bf.points
 // RUN: rm -rf   %T/coverage-tracing
 //
 // REQUIRES: asan-64-bits
 
+#include <stdlib.h>
 volatile int sink;
+__attribute__((noinline)) void foo() { sink++; }
+__attribute__((noinline)) void bar() { sink++; }
+
 int main(int argc, char **argv) {
-  volatile int i = 0;
-  do {
-    sink = 0;
-    i++;
-  } while (i < argc);
-  return 0;
+  if (argc != 2) return 0;
+  for (int i = 0; argv[1][i]; i++) {
+    if (argv[1][i] == 'f') foo();
+    else if (argv[1][i] == 'b') bar();
+  }
 }
 
-// CHECK: CovDump: Trace: {{[3-9]}} PCs written
-// CHECK: CovDump: Trace: {{[6-9]}} Events written
+// CHECK: CovDump: Trace: 3 PCs written
+// CHECK1: CovDump: Trace: 1 Events written
+// CHECK2: CovDump: Trace: 2 Events written
+// CHECK3: CovDump: Trace: 3 Events written
+// CHECK4: CovDump: Trace: 4 Events written
