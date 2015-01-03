@@ -21,4 +21,4 @@ namespace PR17666 {
   typedef int __attribute__((aligned(int))) T2; // expected-error {{expected '(' for function-style cast}}
 }
 
-__attribute((typename)) int x; // expected-error {{expected ')'}}
+__attribute((typename)) int x; // expected-warning {{unknown attribute 'typename' ignored}}
