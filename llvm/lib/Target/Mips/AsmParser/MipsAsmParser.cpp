@@ -1852,8 +1852,6 @@ bool MipsAsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
       MatchInstructionImpl(Operands, Inst, ErrorInfo, MatchingInlineAsm);
 
   switch (MatchResult) {
-  default:
-    break;
   case Match_Success: {
     if (processInstruction(Inst, IDLoc, Instructions))
       return true;
@@ -1882,7 +1880,8 @@ bool MipsAsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
   case Match_RequiresDifferentSrcAndDst:
     return Error(IDLoc, "source and destination must be different");
   }
-  return true;
+
+  llvm_unreachable("Implement any new match types added!");
 }
 
 void MipsAsmParser::warnIfAssemblerTemporary(int RegIndex, SMLoc Loc) {

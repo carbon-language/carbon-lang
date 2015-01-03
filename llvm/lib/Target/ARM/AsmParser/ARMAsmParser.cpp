@@ -8575,7 +8575,6 @@ bool ARMAsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
   MatchResult = MatchInstructionImpl(Operands, Inst, ErrorInfo,
                                      MatchingInlineAsm);
   switch (MatchResult) {
-  default: break;
   case Match_Success:
     // Context sensitive operand constraints aren't handled by the matcher,
     // so check them here.

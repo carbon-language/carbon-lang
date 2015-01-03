@@ -685,7 +685,6 @@ bool SystemZAsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
   MatchResult = MatchInstructionImpl(Operands, Inst, ErrorInfo,
                                      MatchingInlineAsm);
   switch (MatchResult) {
-  default: break;
   case Match_Success:
     Inst.setLoc(IDLoc);
     Out.EmitInstruction(Inst, STI);

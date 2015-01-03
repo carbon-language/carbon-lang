@@ -393,9 +393,6 @@ bool SparcAsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
   unsigned MatchResult = MatchInstructionImpl(Operands, Inst, ErrorInfo,
                                               MatchingInlineAsm);
   switch (MatchResult) {
-  default:
-    break;
-
   case Match_Success: {
     Inst.setLoc(IDLoc);
     Out.EmitInstruction(Inst, STI);
@@ -422,7 +419,7 @@ bool SparcAsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
   case Match_MnemonicFail:
     return Error(IDLoc, "invalid instruction mnemonic");
   }
-  return true;
+  llvm_unreachable("Implement any new match types added!");
 }
 
 bool SparcAsmParser::

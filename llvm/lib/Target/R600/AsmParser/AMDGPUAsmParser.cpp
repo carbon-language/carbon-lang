@@ -163,23 +163,22 @@ bool AMDGPUAsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
   MCInst Inst;
 
   switch (MatchInstructionImpl(Operands, Inst, ErrorInfo, MatchingInlineAsm)) {
-    default: break;
-    case Match_Success:
-      Inst.setLoc(IDLoc);
-      Out.EmitInstruction(Inst, STI);
-      return false;
-    case Match_MissingFeature:
-      return Error(IDLoc, "instruction use requires an option to be enabled");
-    case Match_MnemonicFail:
-        return Error(IDLoc, "unrecognized instruction mnemonic");
-    case Match_InvalidOperand: {
-      if (ErrorInfo != ~0ULL) {
-        if (ErrorInfo >= Operands.size())
-          return Error(IDLoc, "too few operands for instruction");
+  case Match_Success:
+    Inst.setLoc(IDLoc);
+    Out.EmitInstruction(Inst, STI);
+    return false;
+  case Match_MissingFeature:
+    return Error(IDLoc, "instruction use requires an option to be enabled");
+  case Match_MnemonicFail:
+    return Error(IDLoc, "unrecognized instruction mnemonic");
+  case Match_InvalidOperand: {
+    if (ErrorInfo != ~0ULL) {
+      if (ErrorInfo >= Operands.size())
+        return Error(IDLoc, "too few operands for instruction");
 
-      }
-      return Error(IDLoc, "invalid operand for instruction");
     }
+    return Error(IDLoc, "invalid operand for instruction");
+  }
   }
   llvm_unreachable("Implement any new match types added!");
 }

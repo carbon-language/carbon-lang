@@ -1053,7 +1053,6 @@ bool PPCAsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
   MCInst Inst;
 
   switch (MatchInstructionImpl(Operands, Inst, ErrorInfo, MatchingInlineAsm)) {
-  default: break;
   case Match_Success:
     // Post-process instructions (typically extended mnemonics)
     ProcessInstruction(Inst, Operands);
@@ -1063,7 +1062,7 @@ bool PPCAsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
   case Match_MissingFeature:
     return Error(IDLoc, "instruction use requires an option to be enabled");
   case Match_MnemonicFail:
-      return Error(IDLoc, "unrecognized instruction mnemonic");
+    return Error(IDLoc, "unrecognized instruction mnemonic");
   case Match_InvalidOperand: {
     SMLoc ErrorLoc = IDLoc;
     if (ErrorInfo != ~0ULL) {

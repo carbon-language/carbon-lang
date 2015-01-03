@@ -2432,7 +2432,7 @@ bool X86AsmParser::MatchAndEmitATTInstruction(SMLoc IDLoc, unsigned &Opcode,
   switch (MatchInstructionImpl(Operands, Inst,
                                ErrorInfo, MatchingInlineAsm,
                                isParsingIntelSyntax())) {
-  default: break;
+  default: llvm_unreachable("Unexpected match result!");
   case Match_Success:
     // Some instructions need post-processing to, for example, tweak which
     // encoding is selected. Loop on it while changes happen so the

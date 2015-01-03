@@ -3927,7 +3927,6 @@ bool AArch64AsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
   }
 
   llvm_unreachable("Implement any new match types added!");
-  return true;
 }
 
 /// ParseDirective parses the arm specific directives
