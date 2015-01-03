@@ -831,6 +831,9 @@ void computeKnownBits(Value *V, APInt &KnownZero, APInt &KnownOne,
 
     if (Align)
       KnownZero = APInt::getLowBitsSet(BitWidth, countTrailingZeros(Align));
+    else
+      KnownZero.clearAllBits();
+    KnownOne.clearAllBits();
 
     // Don't give up yet... there might be an assumption that provides more
     // information...
