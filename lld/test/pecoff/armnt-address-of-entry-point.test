@@ -1,0 +1,6 @@
+# RUN: yaml2obj -format coff -o %t.obj %p/Inputs/executable.obj.yaml
+# RUN: lld -flavor link /out:%t.exe %t.obj
+# RUN: llvm-readobj -file-headers %t.exe | FileCheck %s
+
+# CHECK: AddressOfEntryPoint: 0x1001
+

@@ -1160,11 +1160,17 @@ void PECOFFWriter::build(const File &linkedFile) {
       // says that entry point for dll images is optional, in which case it must
       // be set to 0.
       if (_ctx.hasEntry()) {
+        AtomChunk *atom = cast<AtomChunk>(section);
         uint64_t entryPointAddress =
-            dyn_cast<AtomChunk>(section)
-                ->getAtomVirtualAddress(_ctx.getEntrySymbolName());
-        if (entryPointAddress != 0)
+            atom->getAtomVirtualAddress(_ctx.getEntrySymbolName());
+
+        if (entryPointAddress) {
+          // NOTE: ARM NT assumes a pure THUMB execution, so adjust the entry
+          // point accordingly
+          if (_ctx.getMachineType() == llvm::COFF::IMAGE_FILE_MACHINE_ARMNT)
+            entryPointAddress |= 1;
           peHeader->setAddressOfEntryPoint(entryPointAddress);
+        }
       } else {
         peHeader->setAddressOfEntryPoint(0);
       }
