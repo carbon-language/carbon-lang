@@ -295,7 +295,7 @@ DEFINE_LIBUNWIND_FUNCTION(unw_getcontext)
 @ Per EHABI #4.7 this only saves the core integer registers.
 @ EHABI #7.4.5 notes that in general all VRS registers should be restored
 @ however this is very hard to do for VFP registers because it is unknown
-@ to the lbirary how many registers are implemented by the architecture.
+@ to the library how many registers are implemented by the architecture.
 @ Instead, VFP registers are demand saved by logic external to unw_getcontext.
 @
   .p2align 2
