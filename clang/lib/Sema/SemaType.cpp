@@ -1176,6 +1176,7 @@ static QualType ConvertDeclSpecToType(TypeProcessingState &state) {
       Result = Qualified;
   }
 
+  assert(!Result.isNull() && "This function should not return a null type");
   return Result;
 }
 
@@ -2340,6 +2341,7 @@ static QualType GetDeclSpecTypeForDeclarator(TypeProcessingState &state,
     }
   }
 
+  assert(!T.isNull() && "This function should not return a null type");
   return T;
 }
 
@@ -2489,7 +2491,8 @@ getCCForDeclaratorChunk(Sema &S, Declarator &D,
 static TypeSourceInfo *GetFullTypeForDeclarator(TypeProcessingState &state,
                                                 QualType declSpecType,
                                                 TypeSourceInfo *TInfo) {
-
+  // The TypeSourceInfo that this function returns will not be a null type.
+  // If there is an error, this function will fill in a dummy type as fallback.
   QualType T = declSpecType;
   Declarator &D = state.getDeclarator();
   Sema &S = state.getSema();
@@ -3074,6 +3077,8 @@ static TypeSourceInfo *GetFullTypeForDeclarator(TypeProcessingState &state,
       processTypeAttrs(state, T, TAL_DeclChunk, attrs);
   }
 
+  assert(!T.isNull() && "T must not be null after this point");
+
   if (LangOpts.CPlusPlus && T->isFunctionType()) {
     const FunctionProtoType *FnTy = T->getAs<FunctionProtoType>();
     assert(FnTy && "Why oh why is there not a FunctionProtoType here?");
@@ -3162,12 +3167,11 @@ static TypeSourceInfo *GetFullTypeForDeclarator(TypeProcessingState &state,
   }
 
   // Apply any undistributed attributes from the declarator.
-  if (!T.isNull())
-    if (AttributeList *attrs = D.getAttributes())
-      processTypeAttrs(state, T, TAL_DeclName, attrs);
+  if (AttributeList *attrs = D.getAttributes())
+    processTypeAttrs(state, T, TAL_DeclName, attrs);
 
   // Diagnose any ignored type attributes.
-  if (!T.isNull()) state.diagnoseIgnoredTypeAttrs(T);
+  state.diagnoseIgnoredTypeAttrs(T);
 
   // C++0x [dcl.constexpr]p9:
   //  A constexpr specifier used in an object declaration declares the object
@@ -3178,7 +3182,7 @@ static TypeSourceInfo *GetFullTypeForDeclarator(TypeProcessingState &state,
 
   // If there was an ellipsis in the declarator, the declaration declares a
   // parameter pack whose type may be a pack expansion type.
-  if (D.hasEllipsis() && !T.isNull()) {
+  if (D.hasEllipsis()) {
     // C++0x [dcl.fct]p13:
     //   A declarator-id or abstract-declarator containing an ellipsis shall
     //   only be used in a parameter-declaration. Such a parameter-declaration
@@ -3249,9 +3253,8 @@ static TypeSourceInfo *GetFullTypeForDeclarator(TypeProcessingState &state,
     }
   }
 
-  if (T.isNull())
-    return Context.getNullTypeSourceInfo();
-  else if (D.isInvalidType())
+  assert(!T.isNull() && "T must not be null at the end of this function");
+  if (D.isInvalidType())
     return Context.getTrivialTypeSourceInfo(T);
 
   return S.GetTypeSourceInfoForDeclarator(D, T, TInfo);
@@ -3270,8 +3273,6 @@ TypeSourceInfo *Sema::GetTypeForDeclarator(Declarator &D, Scope *S) {
 
   TypeSourceInfo *ReturnTypeInfo = nullptr;
   QualType T = GetDeclSpecTypeForDeclarator(state, ReturnTypeInfo);
-  if (T.isNull())
-    return Context.getNullTypeSourceInfo();
 
   if (D.isPrototypeContext() && getLangOpts().ObjCAutoRefCount)
     inferARCWriteback(state, T);
@@ -3385,8 +3386,6 @@ TypeSourceInfo *Sema::GetTypeForDeclaratorCast(Declarator &D, QualType FromTy) {
 
   TypeSourceInfo *ReturnTypeInfo = nullptr;
   QualType declSpecTy = GetDeclSpecTypeForDeclarator(state, ReturnTypeInfo);
-  if (declSpecTy.isNull())
-    return Context.getNullTypeSourceInfo();
 
   if (getLangOpts().ObjCAutoRefCount) {
     Qualifiers::ObjCLifetime ownership = Context.getInnerObjCOwnership(FromTy);
