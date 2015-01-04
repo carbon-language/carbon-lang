@@ -489,8 +489,7 @@ static void computeKnownBitsFromAssume(Value *V, APInt &KnownZero,
     if (!AssumeVH)
       continue;
     CallInst *I = cast<CallInst>(AssumeVH);
-    assert((I->getParent()->getParent() == 
-            const_cast<Function*>(Q.CxtI->getParent()->getParent())) &&
+    assert(I->getParent()->getParent() == Q.CxtI->getParent()->getParent() &&
            "Got assumption for the wrong function!");
     if (Q.ExclInvs.count(I))
       continue;
