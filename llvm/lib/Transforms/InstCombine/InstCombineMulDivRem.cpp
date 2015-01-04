@@ -341,10 +341,10 @@ Instruction *InstCombiner::visitMul(BinaryOperator &I) {
     bool ShlNSW = false;
     if (match(Op0, m_Shl(m_One(), m_Value(Y)))) {
       BO = BinaryOperator::CreateShl(Op1, Y);
-      ShlNSW = cast<BinaryOperator>(Op0)->hasNoSignedWrap();
+      ShlNSW = cast<ShlOperator>(Op0)->hasNoSignedWrap();
     } else if (match(Op1, m_Shl(m_One(), m_Value(Y)))) {
       BO = BinaryOperator::CreateShl(Op0, Y);
-      ShlNSW = cast<BinaryOperator>(Op1)->hasNoSignedWrap();
+      ShlNSW = cast<ShlOperator>(Op1)->hasNoSignedWrap();
     }
     if (BO) {
       if (I.hasNoUnsignedWrap())

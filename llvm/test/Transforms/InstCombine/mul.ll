@@ -279,3 +279,12 @@ define i64 @test30(i32 %A, i32 %B) {
 ; CHECK-NEXT: %[[mul:.*]] = mul nuw i64 %[[zext1]], %[[zext2]]
 ; CHECK-NEXT: ret i64 %[[mul]]
 }
+
+@PR22087 = external global i32
+define i32 @test31(i32 %V) {
+; CHECK-LABEL: @test31
+  %mul = mul i32 %V, shl (i32 1, i32 zext (i1 icmp ne (i32* inttoptr (i64 1 to i32*), i32* @PR22087) to i32))
+  ret i32 %mul
+; CHECK:      %[[mul:.*]] = shl i32 %V, zext (i1 icmp ne (i32* inttoptr (i64 1 to i32*), i32* @PR22087) to i32)
+; CHECK-NEXT: ret i32 %[[mul]]
+}
