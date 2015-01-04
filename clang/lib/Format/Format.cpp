@@ -419,7 +419,9 @@ FormatStyle getGoogleStyle(FormatStyle::LanguageKind Language) {
   if (Language == FormatStyle::LK_Java) {
     GoogleStyle.AlignAfterOpenBracket = false;
     GoogleStyle.AlignOperands = false;
+    GoogleStyle.AlignTrailingComments = false;
     GoogleStyle.AllowShortFunctionsOnASingleLine = FormatStyle::SFS_Empty;
+    GoogleStyle.AllowShortIfStatementsOnASingleLine = false;
     GoogleStyle.BreakBeforeBinaryOperators = FormatStyle::BOS_NonAssignment;
     GoogleStyle.ColumnLimit = 100;
     GoogleStyle.SpaceAfterCStyleCast = true;
@@ -440,6 +442,8 @@ FormatStyle getGoogleStyle(FormatStyle::LanguageKind Language) {
 FormatStyle getChromiumStyle(FormatStyle::LanguageKind Language) {
   FormatStyle ChromiumStyle = getGoogleStyle(Language);
   if (Language == FormatStyle::LK_Java) {
+    ChromiumStyle.AlignTrailingComments = true;
+    ChromiumStyle.AllowShortIfStatementsOnASingleLine = true;
     ChromiumStyle.IndentWidth = 4;
     ChromiumStyle.ContinuationIndentWidth = 8;
   } else {
