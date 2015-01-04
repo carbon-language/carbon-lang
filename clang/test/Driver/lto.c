@@ -16,7 +16,7 @@
 // RUN: grep '"-o" ".*lto\.i" "-x" "c" ".*lto\.c"' %t.log
 // RUN: grep '"-o" ".*lto\.bc" .*".*lto\.i"' %t.log
 // RUN: grep '"-o" ".*lto\.o" .*".*lto\.bc"' %t.log
-// RUN: grep '".*a.out" .*".*lto\.o"' %t.log
+// RUN: grep '".*a\.\(out\|exe\)" .*".*lto\.o"' %t.log
 
 // RUN: %clang %s -flto -S -### 2> %t.log
 // RUN: grep '"-o" ".*lto\.s" "-x" "c" ".*lto\.c"' %t.log

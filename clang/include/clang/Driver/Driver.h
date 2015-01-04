@@ -105,7 +105,7 @@ public:
   std::string DefaultTargetTriple;
 
   /// Default name for linked images (e.g., "a.out").
-  std::string DefaultImageName;
+  mutable std::string DefaultImageName;
 
   /// Driver title to use with help.
   std::string DriverTitle;
