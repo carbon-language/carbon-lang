@@ -1801,7 +1801,7 @@ StmtResult Parser::ParseReturnStatement() {
              diag::ext_generalized_initializer_lists)
           << R.get()->getSourceRange();
     } else
-        R = ParseExpression();
+      R = ParseExpression();
     if (R.isInvalid()) {
       SkipUntil(tok::r_brace, StopAtSemi | StopBeforeMatch);
       return StmtError();
