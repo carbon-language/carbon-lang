@@ -1109,8 +1109,9 @@ static QualType ConvertDeclSpecToType(TypeProcessingState &state) {
         S.Diag(DS.getConstSpecLoc(), diag::warn_typecheck_function_qualifiers)
           << Result << DS.getSourceRange();
       else if (TypeQuals & DeclSpec::TQ_volatile)
-        S.Diag(DS.getVolatileSpecLoc(), diag::warn_typecheck_function_qualifiers)
-          << Result << DS.getSourceRange();
+        S.Diag(DS.getVolatileSpecLoc(),
+               diag::warn_typecheck_function_qualifiers)
+            << Result << DS.getSourceRange();
       else {
         assert((TypeQuals & (DeclSpec::TQ_restrict | DeclSpec::TQ_atomic)) &&
                "Has CVRA quals but not C, V, R, or A?");
@@ -3057,7 +3058,8 @@ static TypeSourceInfo *GetFullTypeForDeclarator(TypeProcessingState &state,
       }
 
       if (!ClsType.isNull())
-        T = S.BuildMemberPointerType(T, ClsType, DeclType.Loc, D.getIdentifier());
+        T = S.BuildMemberPointerType(T, ClsType, DeclType.Loc,
+                                     D.getIdentifier());
       if (T.isNull()) {
         T = Context.IntTy;
         D.setInvalidType(true);
@@ -3247,7 +3249,8 @@ static TypeSourceInfo *GetFullTypeForDeclarator(TypeProcessingState &state,
     case Declarator::TemplateTypeArgContext:
       // FIXME: We may want to allow parameter packs in block-literal contexts
       // in the future.
-      S.Diag(D.getEllipsisLoc(), diag::err_ellipsis_in_declarator_not_parameter);
+      S.Diag(D.getEllipsisLoc(),
+             diag::err_ellipsis_in_declarator_not_parameter);
       D.setEllipsisLoc(SourceLocation());
       break;
     }
