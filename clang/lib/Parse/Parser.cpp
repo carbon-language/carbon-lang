@@ -927,7 +927,7 @@ Parser::ParseDeclarationOrFunctionDefinition(ParsedAttributesWithRange &attrs,
 Decl *Parser::ParseFunctionDefinition(ParsingDeclarator &D,
                                       const ParsedTemplateInfo &TemplateInfo,
                                       LateParsedAttrList *LateParsedAttrs) {
-  // Poison the SEH identifiers so they are flagged as illegal in function bodies
+  // Poison SEH identifiers so they are flagged as illegal in function bodies.
   PoisonSEHIdentifiersRAIIObject PoisonSEHIdentifiers(*this, true);
   const DeclaratorChunk::FunctionTypeInfo &FTI = D.getFunctionTypeInfo();
 
@@ -1725,7 +1725,8 @@ SourceLocation Parser::handleUnexpectedCodeCompletionToken() {
 
   for (Scope *S = getCurScope(); S; S = S->getParent()) {
     if (S->getFlags() & Scope::FnScope) {
-      Actions.CodeCompleteOrdinaryName(getCurScope(), Sema::PCC_RecoveryInFunction);
+      Actions.CodeCompleteOrdinaryName(getCurScope(),
+                                       Sema::PCC_RecoveryInFunction);
       cutOffParsing();
       return PrevTokLocation;
     }
@@ -1763,7 +1764,7 @@ void Parser::CodeCompletePreprocessorExpression() {
 void Parser::CodeCompleteMacroArgument(IdentifierInfo *Macro,
                                        MacroInfo *MacroInfo,
                                        unsigned ArgumentIndex) {
-  Actions.CodeCompletePreprocessorMacroArgument(getCurScope(), Macro, MacroInfo, 
+  Actions.CodeCompletePreprocessorMacroArgument(getCurScope(), Macro, MacroInfo,
                                                 ArgumentIndex);
 }
 
@@ -1808,7 +1809,7 @@ bool Parser::ParseMicrosoftIfExistsCondition(IfExistsCondition& Result) {
   
   // Check if the symbol exists.
   switch (Actions.CheckMicrosoftIfExistsSymbol(getCurScope(), Result.KeywordLoc,
-                                               Result.IsIfExists, Result.SS, 
+                                               Result.IsIfExists, Result.SS,
                                                Result.Name)) {
   case Sema::IER_Exists:
     Result.Behavior = Result.IsIfExists ? IEB_Parse : IEB_Skip;
