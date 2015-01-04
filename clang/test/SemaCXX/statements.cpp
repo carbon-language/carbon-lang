@@ -34,3 +34,6 @@ void test5() {
   char buf[1];
   __asm__ ("":"+r" (buf));
 }
+
+struct MMX_t {};
+void test6() { __asm__("" : "=m"(*(MMX_t *)0)); }
