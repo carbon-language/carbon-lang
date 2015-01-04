@@ -475,6 +475,47 @@ TEST(APFloatTest, FMA) {
     EXPECT_EQ(12.0f, f1.convertToFloat());
   }
 
+  // Test for correct zero sign when answer is exactly zero.
+  // fma(1.0, -1.0, 1.0) -> +ve 0.
+  {
+    APFloat f1(1.0);
+    APFloat f2(-1.0);
+    APFloat f3(1.0);
+    f1.fusedMultiplyAdd(f2, f3, APFloat::rmNearestTiesToEven);
+    EXPECT_TRUE(!f1.isNegative() && f1.isZero());
+  }
+
+  // Test for correct zero sign when answer is exactly zero and rounding towards
+  // negative.
+  // fma(1.0, -1.0, 1.0) -> +ve 0.
+  {
+    APFloat f1(1.0);
+    APFloat f2(-1.0);
+    APFloat f3(1.0);
+    f1.fusedMultiplyAdd(f2, f3, APFloat::rmTowardNegative);
+    EXPECT_TRUE(f1.isNegative() && f1.isZero());
+  }
+
+  // Test for correct (in this case -ve) sign when adding like signed zeros.
+  // Test fma(0.0, -0.0, -0.0) -> -ve 0.
+  {
+    APFloat f1(0.0);
+    APFloat f2(-0.0);
+    APFloat f3(-0.0);
+    f1.fusedMultiplyAdd(f2, f3, APFloat::rmNearestTiesToEven);
+    EXPECT_TRUE(f1.isNegative() && f1.isZero());
+  }
+
+  // Test -ve sign preservation when small negative results underflow.
+  {
+    APFloat f1(APFloat::IEEEdouble,  "-0x1p-1074");
+    APFloat f2(APFloat::IEEEdouble, "+0x1p-1074");
+    APFloat f3(0.0);
+    f1.fusedMultiplyAdd(f2, f3, APFloat::rmNearestTiesToEven);
+    EXPECT_TRUE(f1.isNegative() && f1.isZero());
+  }
+
+  // Test x87 extended precision case from http://llvm.org/PR20728.
   {
     APFloat M1(APFloat::x87DoubleExtended, 1.0);
     APFloat M2(APFloat::x87DoubleExtended, 1.0);

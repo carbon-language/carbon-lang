@@ -1823,7 +1823,7 @@ APFloat::fusedMultiplyAdd(const APFloat &multiplicand,
     /* If two numbers add (exactly) to zero, IEEE 754 decrees it is a
        positive zero unless rounding to minus infinity, except that
        adding two like-signed zeroes gives that zero.  */
-    if (category == fcZero && sign != addend.sign)
+    if (category == fcZero && !(fs & opUnderflow) && sign != addend.sign)
       sign = (rounding_mode == rmTowardNegative);
   } else {
     fs = multiplySpecials(multiplicand);
