@@ -1188,6 +1188,9 @@ static std::string getPrintableNameForEntity(DeclarationName Entity) {
 
 QualType Sema::BuildQualifiedType(QualType T, SourceLocation Loc,
                                   Qualifiers Qs, const DeclSpec *DS) {
+  if (T.isNull())
+    return QualType();
+
   // Enforce C99 6.7.3p2: "Types other than pointer types derived from
   // object or incomplete types shall not be restrict-qualified."
   if (Qs.hasRestrict()) {
@@ -1226,6 +1229,9 @@ QualType Sema::BuildQualifiedType(QualType T, SourceLocation Loc,
 
 QualType Sema::BuildQualifiedType(QualType T, SourceLocation Loc,
                                   unsigned CVRA, const DeclSpec *DS) {
+  if (T.isNull())
+    return QualType();
+
   // Convert from DeclSpec::TQ to Qualifiers::TQ by just dropping TQ_atomic.
   unsigned CVR = CVRA & ~DeclSpec::TQ_atomic;
 

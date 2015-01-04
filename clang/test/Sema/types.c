@@ -1,7 +1,7 @@
-// RUN: %clang_cc1 %s -pedantic -verify -triple=x86_64-apple-darwin9
-// RUN: %clang_cc1 %s -pedantic -verify -triple=mips64-linux-gnu
-// RUN: %clang_cc1 %s -pedantic -verify -triple=x86_64-unknown-linux
-// RUN: %clang_cc1 %s -pedantic -verify -triple=x86_64-unknown-linux-gnux32
+// RUN: %clang_cc1 %s -fblocks -pedantic -verify -triple=x86_64-apple-darwin9
+// RUN: %clang_cc1 %s -fblocks -pedantic -verify -triple=mips64-linux-gnu
+// RUN: %clang_cc1 %s -fblocks -pedantic -verify -triple=x86_64-unknown-linux
+// RUN: %clang_cc1 %s -fblocks -pedantic -verify -triple=x86_64-unknown-linux-gnux32
 
 // rdar://6097662
 typedef int (*T)[2];
@@ -84,3 +84,7 @@ void convert() {
     uchar32 r = 0;
     r.s[ 1234 ] = 1; // expected-error {{illegal vector component name 's'}}
 }
+
+int &*_Atomic null_type_0; // expected-error {{expected identifier or '('}}
+int &*__restrict__ null_type_1; // expected-error {{expected identifier or '('}}
+int ^_Atomic null_type_2; // expected-error {{block pointer to non-function type is invalid}}
