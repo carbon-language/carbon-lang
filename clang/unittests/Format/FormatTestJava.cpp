@@ -425,5 +425,18 @@ TEST_F(FormatTestJava, BreaksStringLiterals) {
             format("\"some text other\";", getStyleWithColumns(14)));
 }
 
+TEST_F(FormatTestJava, AlignsBlockComments) {
+  EXPECT_EQ("/*\n"
+            " * Really multi-line\n"
+            " * comment.\n"
+            " */\n"
+            "void f() {}",
+            format("  /*\n"
+                   "   * Really multi-line\n"
+                   "   * comment.\n"
+                   "   */\n"
+                   "  void f() {}"));
+}
+
 } // end namespace tooling
 } // end namespace clang
