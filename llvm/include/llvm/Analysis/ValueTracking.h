@@ -25,7 +25,7 @@ namespace llvm {
   class DataLayout;
   class StringRef;
   class MDNode;
-  class AssumptionTracker;
+  class AssumptionCache;
   class DominatorTree;
   class TargetLibraryInfo;
 
@@ -37,9 +37,9 @@ namespace llvm {
   /// where V is a vector, the known zero and known one values are the
   /// same width as the vector element, and the bit is set only if it is true
   /// for all of the elements in the vector.
-  void computeKnownBits(Value *V,  APInt &KnownZero, APInt &KnownOne,
+  void computeKnownBits(Value *V, APInt &KnownZero, APInt &KnownOne,
                         const DataLayout *TD = nullptr, unsigned Depth = 0,
-                        AssumptionTracker *AT = nullptr,
+                        AssumptionCache *AC = nullptr,
                         const Instruction *CxtI = nullptr,
                         const DominatorTree *DT = nullptr);
   /// Compute known bits from the range metadata.
@@ -51,7 +51,7 @@ namespace llvm {
   /// one.  Convenience wrapper around computeKnownBits.
   void ComputeSignBit(Value *V, bool &KnownZero, bool &KnownOne,
                       const DataLayout *TD = nullptr, unsigned Depth = 0,
-                      AssumptionTracker *AT = nullptr,
+                      AssumptionCache *AC = nullptr,
                       const Instruction *CxtI = nullptr,
                       const DominatorTree *DT = nullptr);
 
@@ -61,7 +61,7 @@ namespace llvm {
   /// integer or pointer type and vectors of integers.  If 'OrZero' is set then
   /// returns true if the given value is either a power of two or zero.
   bool isKnownToBeAPowerOfTwo(Value *V, bool OrZero = false, unsigned Depth = 0,
-                              AssumptionTracker *AT = nullptr,
+                              AssumptionCache *AC = nullptr,
                               const Instruction *CxtI = nullptr,
                               const DominatorTree *DT = nullptr);
 
@@ -70,7 +70,7 @@ namespace llvm {
   /// non-zero when defined.  Supports values with integer or pointer type and
   /// vectors of integers.
   bool isKnownNonZero(Value *V, const DataLayout *TD = nullptr,
-                      unsigned Depth = 0, AssumptionTracker *AT = nullptr,
+                      unsigned Depth = 0, AssumptionCache *AC = nullptr,
                       const Instruction *CxtI = nullptr,
                       const DominatorTree *DT = nullptr);
 
@@ -83,13 +83,12 @@ namespace llvm {
   /// where V is a vector, the mask, known zero, and known one values are the
   /// same width as the vector element, and the bit is set only if it is true
   /// for all of the elements in the vector.
-  bool MaskedValueIsZero(Value *V, const APInt &Mask, 
+  bool MaskedValueIsZero(Value *V, const APInt &Mask,
                          const DataLayout *TD = nullptr, unsigned Depth = 0,
-                         AssumptionTracker *AT = nullptr,
+                         AssumptionCache *AC = nullptr,
                          const Instruction *CxtI = nullptr,
                          const DominatorTree *DT = nullptr);
 
-  
   /// ComputeNumSignBits - Return the number of times the sign bit of the
   /// register is replicated into the other bits.  We know that at least 1 bit
   /// is always equal to the sign bit (itself), but other cases can give us
@@ -99,8 +98,7 @@ namespace llvm {
   /// 'Op' must have a scalar integer type.
   ///
   unsigned ComputeNumSignBits(Value *Op, const DataLayout *TD = nullptr,
-                              unsigned Depth = 0,
-                              AssumptionTracker *AT = nullptr,
+                              unsigned Depth = 0, AssumptionCache *AC = nullptr,
                               const Instruction *CxtI = nullptr,
                               const DominatorTree *DT = nullptr);
 
@@ -220,7 +218,7 @@ namespace llvm {
   enum class OverflowResult { AlwaysOverflows, MayOverflow, NeverOverflows };
   OverflowResult computeOverflowForUnsignedMul(Value *LHS, Value *RHS,
                                                const DataLayout *DL,
-                                               AssumptionTracker *AT,
+                                               AssumptionCache *AC,
                                                const Instruction *CxtI,
                                                const DominatorTree *DT);
 } // end namespace llvm

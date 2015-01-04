@@ -15,7 +15,7 @@
 #include "llvm/Analysis/LazyValueInfo.h"
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/STLExtras.h"
-#include "llvm/Analysis/AssumptionTracker.h"
+#include "llvm/Analysis/AssumptionCache.h"
 #include "llvm/Analysis/ConstantFolding.h"
 #include "llvm/Analysis/ValueTracking.h"
 #include "llvm/IR/CFG.h"
@@ -40,7 +40,7 @@ using namespace PatternMatch;
 char LazyValueInfo::ID = 0;
 INITIALIZE_PASS_BEGIN(LazyValueInfo, "lazy-value-info",
                 "Lazy Value Information Analysis", false, true)
-INITIALIZE_PASS_DEPENDENCY(AssumptionTracker)
+INITIALIZE_PASS_DEPENDENCY(AssumptionCacheTracker)
 INITIALIZE_PASS_DEPENDENCY(TargetLibraryInfo)
 INITIALIZE_PASS_END(LazyValueInfo, "lazy-value-info",
                 "Lazy Value Information Analysis", false, true)
@@ -358,7 +358,7 @@ namespace {
     }
 
     /// A pointer to the cache of @llvm.assume calls.
-    AssumptionTracker *AT;
+    AssumptionCache *AC;
     /// An optional DL pointer.
     const DataLayout *DL;
     /// An optional DT pointer.
@@ -430,9 +430,9 @@ namespace {
       OverDefinedCache.clear();
     }
 
-    LazyValueInfoCache(AssumptionTracker *AT,
-                       const DataLayout *DL = nullptr,
-                       DominatorTree *DT = nullptr) : AT(AT), DL(DL), DT(DT) {}
+    LazyValueInfoCache(AssumptionCache *AC, const DataLayout *DL = nullptr,
+                       DominatorTree *DT = nullptr)
+        : AC(AC), DL(DL), DT(DT) {}
   };
 } // end anonymous namespace
 
@@ -735,7 +735,10 @@ void LazyValueInfoCache::mergeAssumeBlockValueConstantRange(Value *Val,
   if (!BBI)
     return;
 
-  for (auto &I : AT->assumptions(BBI->getParent()->getParent())) {
+  for (auto &AssumeVH : AC->assumptions()) {
+    if (!AssumeVH)
+      continue;
+    auto *I = cast<CallInst>(AssumeVH);
     if (!isValidAssumeForContext(I, BBI, DL, DT))
       continue;
 
@@ -1104,17 +1107,16 @@ void LazyValueInfoCache::threadEdge(BasicBlock *PredBB, BasicBlock *OldSucc,
 //===----------------------------------------------------------------------===//
 
 /// getCache - This lazily constructs the LazyValueInfoCache.
-static LazyValueInfoCache &getCache(void *&PImpl,
-                                    AssumptionTracker *AT,
+static LazyValueInfoCache &getCache(void *&PImpl, AssumptionCache *AC,
                                     const DataLayout *DL = nullptr,
                                     DominatorTree *DT = nullptr) {
   if (!PImpl)
-    PImpl = new LazyValueInfoCache(AT, DL, DT);
+    PImpl = new LazyValueInfoCache(AC, DL, DT);
   return *static_cast<LazyValueInfoCache*>(PImpl);
 }
 
 bool LazyValueInfo::runOnFunction(Function &F) {
-  AT = &getAnalysis<AssumptionTracker>();
+  AC = &getAnalysis<AssumptionCacheTracker>().getAssumptionCache(F);
 
   DominatorTreeWrapperPass *DTWP =
       getAnalysisIfAvailable<DominatorTreeWrapperPass>();
@@ -1126,7 +1128,7 @@ bool LazyValueInfo::runOnFunction(Function &F) {
   TLI = &getAnalysis<TargetLibraryInfo>();
 
   if (PImpl)
-    getCache(PImpl, AT, DL, DT).clear();
+    getCache(PImpl, AC, DL, DT).clear();
 
   // Fully lazy.
   return false;
@@ -1134,14 +1136,14 @@ bool LazyValueInfo::runOnFunction(Function &F) {
 
 void LazyValueInfo::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.setPreservesAll();
-  AU.addRequired<AssumptionTracker>();
+  AU.addRequired<AssumptionCacheTracker>();
   AU.addRequired<TargetLibraryInfo>();
 }
 
 void LazyValueInfo::releaseMemory() {
   // If the cache was allocated, free it.
   if (PImpl) {
-    delete &getCache(PImpl, AT);
+    delete &getCache(PImpl, AC);
     PImpl = nullptr;
   }
 }
@@ -1149,8 +1151,8 @@ void LazyValueInfo::releaseMemory() {
 Constant *LazyValueInfo::getConstant(Value *V, BasicBlock *BB,
                                      Instruction *CxtI) {
   LVILatticeVal Result =
-    getCache(PImpl, AT, DL, DT).getValueInBlock(V, BB, CxtI);
-  
+      getCache(PImpl, AC, DL, DT).getValueInBlock(V, BB, CxtI);
+
   if (Result.isConstant())
     return Result.getConstant();
   if (Result.isConstantRange()) {
@@ -1167,8 +1169,8 @@ Constant *LazyValueInfo::getConstantOnEdge(Value *V, BasicBlock *FromBB,
                                            BasicBlock *ToBB,
                                            Instruction *CxtI) {
   LVILatticeVal Result =
-    getCache(PImpl, AT, DL, DT).getValueOnEdge(V, FromBB, ToBB, CxtI);
-  
+      getCache(PImpl, AC, DL, DT).getValueOnEdge(V, FromBB, ToBB, CxtI);
+
   if (Result.isConstant())
     return Result.getConstant();
   if (Result.isConstantRange()) {
@@ -1254,7 +1256,7 @@ LazyValueInfo::getPredicateOnEdge(unsigned Pred, Value *V, Constant *C,
                                   BasicBlock *FromBB, BasicBlock *ToBB,
                                   Instruction *CxtI) {
   LVILatticeVal Result =
-    getCache(PImpl, AT, DL, DT).getValueOnEdge(V, FromBB, ToBB, CxtI);
+      getCache(PImpl, AC, DL, DT).getValueOnEdge(V, FromBB, ToBB, CxtI);
 
   return getPredicateResult(Pred, C, Result, DL, TLI);
 }
@@ -1262,17 +1264,18 @@ LazyValueInfo::getPredicateOnEdge(unsigned Pred, Value *V, Constant *C,
 LazyValueInfo::Tristate
 LazyValueInfo::getPredicateAt(unsigned Pred, Value *V, Constant *C,
                               Instruction *CxtI) {
-  LVILatticeVal Result =
-    getCache(PImpl, AT, DL, DT).getValueAt(V, CxtI);
+  LVILatticeVal Result = getCache(PImpl, AC, DL, DT).getValueAt(V, CxtI);
 
   return getPredicateResult(Pred, C, Result, DL, TLI);
 }
 
 void LazyValueInfo::threadEdge(BasicBlock *PredBB, BasicBlock *OldSucc,
                                BasicBlock *NewSucc) {
-  if (PImpl) getCache(PImpl, AT, DL, DT).threadEdge(PredBB, OldSucc, NewSucc);
+  if (PImpl)
+    getCache(PImpl, AC, DL, DT).threadEdge(PredBB, OldSucc, NewSucc);
 }
 
 void LazyValueInfo::eraseBlock(BasicBlock *BB) {
-  if (PImpl) getCache(PImpl, AT, DL, DT).eraseBlock(BB);
+  if (PImpl)
+    getCache(PImpl, AC, DL, DT).eraseBlock(BB);
 }

@@ -17,7 +17,7 @@
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
-#include "llvm/Analysis/AssumptionTracker.h"
+#include "llvm/Analysis/AssumptionCache.h"
 #include "llvm/Analysis/ConstantFolding.h"
 #include "llvm/Analysis/CodeMetrics.h"
 #include "llvm/Analysis/InstructionSimplify.h"
@@ -52,7 +52,7 @@ class CallAnalyzer : public InstVisitor<CallAnalyzer, bool> {
   const TargetTransformInfo &TTI;
 
   /// The cache of @llvm.assume intrinsics.
-  AssumptionTracker *AT;
+  AssumptionCache &AC;
 
   // The called function.
   Function &F;
@@ -146,8 +146,8 @@ class CallAnalyzer : public InstVisitor<CallAnalyzer, bool> {
 
 public:
   CallAnalyzer(const DataLayout *DL, const TargetTransformInfo &TTI,
-               AssumptionTracker *AT, Function &Callee, int Threshold)
-      : DL(DL), TTI(TTI), AT(AT), F(Callee), Threshold(Threshold), Cost(0),
+               AssumptionCache &AC, Function &Callee, int Threshold)
+      : DL(DL), TTI(TTI), AC(AC), F(Callee), Threshold(Threshold), Cost(0),
         IsCallerRecursive(false), IsRecursiveCall(false),
         ExposesReturnsTwice(false), HasDynamicAlloca(false),
         ContainsNoDuplicateCall(false), HasReturn(false), HasIndirectBr(false),
@@ -783,7 +783,7 @@ bool CallAnalyzer::visitCallSite(CallSite CS) {
   // during devirtualization and so we want to give it a hefty bonus for
   // inlining, but cap that bonus in the event that inlining wouldn't pan
   // out. Pretend to inline the function, with a custom threshold.
-  CallAnalyzer CA(DL, TTI, AT, *F, InlineConstants::IndirectCallThreshold);
+  CallAnalyzer CA(DL, TTI, AC, *F, InlineConstants::IndirectCallThreshold);
   if (CA.analyzeCall(CS)) {
     // We were able to inline the indirect call! Subtract the cost from the
     // bonus we want to apply, but don't go below zero.
@@ -1110,7 +1110,7 @@ bool CallAnalyzer::analyzeCall(CallSite CS) {
   // the ephemeral values multiple times (and they're completely determined by
   // the callee, so this is purely duplicate work).
   SmallPtrSet<const Value *, 32> EphValues;
-  CodeMetrics::collectEphemeralValues(&F, AT, EphValues);
+  CodeMetrics::collectEphemeralValues(&F, &AC, EphValues);
 
   // The worklist of live basic blocks in the callee *after* inlining. We avoid
   // adding basic blocks of the callee which can be proven to be dead for this
@@ -1233,7 +1233,7 @@ void CallAnalyzer::dump() {
 INITIALIZE_PASS_BEGIN(InlineCostAnalysis, "inline-cost", "Inline Cost Analysis",
                       true, true)
 INITIALIZE_AG_DEPENDENCY(TargetTransformInfo)
-INITIALIZE_PASS_DEPENDENCY(AssumptionTracker)
+INITIALIZE_PASS_DEPENDENCY(AssumptionCacheTracker)
 INITIALIZE_PASS_END(InlineCostAnalysis, "inline-cost", "Inline Cost Analysis",
                     true, true)
 
@@ -1245,14 +1245,14 @@ InlineCostAnalysis::~InlineCostAnalysis() {}
 
 void InlineCostAnalysis::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.setPreservesAll();
-  AU.addRequired<AssumptionTracker>();
+  AU.addRequired<AssumptionCacheTracker>();
   AU.addRequired<TargetTransformInfo>();
   CallGraphSCCPass::getAnalysisUsage(AU);
 }
 
 bool InlineCostAnalysis::runOnSCC(CallGraphSCC &SCC) {
   TTI = &getAnalysis<TargetTransformInfo>();
-  AT = &getAnalysis<AssumptionTracker>();
+  ACT = &getAnalysis<AssumptionCacheTracker>();
   return false;
 }
 
@@ -1309,7 +1309,8 @@ InlineCost InlineCostAnalysis::getInlineCost(CallSite CS, Function *Callee,
   DEBUG(llvm::dbgs() << "      Analyzing call of " << Callee->getName()
         << "...\n");
 
-  CallAnalyzer CA(Callee->getDataLayout(), *TTI, AT, *Callee, Threshold);
+  CallAnalyzer CA(Callee->getDataLayout(), *TTI,
+                  ACT->getAssumptionCache(*Callee), *Callee, Threshold);
   bool ShouldInline = CA.analyzeCall(CS);
 
   DEBUG(CA.dump());

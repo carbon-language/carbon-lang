@@ -18,7 +18,7 @@
 #include "llvm/Pass.h"
 
 namespace llvm {
-  class AssumptionTracker;
+  class AssumptionCache;
   class Constant;
   class DataLayout;
   class DominatorTree;
@@ -29,7 +29,7 @@ namespace llvm {
 /// LazyValueInfo - This pass computes, caches, and vends lazy value constraint
 /// information.
 class LazyValueInfo : public FunctionPass {
-  AssumptionTracker *AT;
+  AssumptionCache *AC;
   const DataLayout *DL;
   class TargetLibraryInfo *TLI;
   DominatorTree *DT;

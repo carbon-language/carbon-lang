@@ -13,7 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Analysis/ValueTracking.h"
-#include "llvm/Analysis/AssumptionTracker.h"
+#include "llvm/Analysis/AssumptionCache.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/Analysis/InstructionSimplify.h"
 #include "llvm/Analysis/MemoryBuiltins.h"
@@ -65,16 +65,16 @@ namespace {
 // figuring out if we can use it.
 struct Query {
   ExclInvsSet ExclInvs;
-  AssumptionTracker *AT;
+  AssumptionCache *AC;
   const Instruction *CxtI;
   const DominatorTree *DT;
 
-  Query(AssumptionTracker *AT = nullptr, const Instruction *CxtI = nullptr,
+  Query(AssumptionCache *AC = nullptr, const Instruction *CxtI = nullptr,
         const DominatorTree *DT = nullptr)
-    : AT(AT), CxtI(CxtI), DT(DT) {}
+      : AC(AC), CxtI(CxtI), DT(DT) {}
 
   Query(const Query &Q, const Value *NewExcl)
-    : ExclInvs(Q.ExclInvs), AT(Q.AT), CxtI(Q.CxtI), DT(Q.DT) {
+      : ExclInvs(Q.ExclInvs), AC(Q.AC), CxtI(Q.CxtI), DT(Q.DT) {
     ExclInvs.insert(NewExcl);
   }
 };
@@ -102,10 +102,10 @@ static void computeKnownBits(Value *V, APInt &KnownZero, APInt &KnownOne,
 
 void llvm::computeKnownBits(Value *V, APInt &KnownZero, APInt &KnownOne,
                             const DataLayout *TD, unsigned Depth,
-                            AssumptionTracker *AT, const Instruction *CxtI,
+                            AssumptionCache *AC, const Instruction *CxtI,
                             const DominatorTree *DT) {
   ::computeKnownBits(V, KnownZero, KnownOne, TD, Depth,
-                     Query(AT, safeCxtI(V, CxtI), DT));
+                     Query(AC, safeCxtI(V, CxtI), DT));
 }
 
 static void ComputeSignBit(Value *V, bool &KnownZero, bool &KnownOne,
@@ -114,52 +114,50 @@ static void ComputeSignBit(Value *V, bool &KnownZero, bool &KnownOne,
 
 void llvm::ComputeSignBit(Value *V, bool &KnownZero, bool &KnownOne,
                           const DataLayout *TD, unsigned Depth,
-                          AssumptionTracker *AT, const Instruction *CxtI,
+                          AssumptionCache *AC, const Instruction *CxtI,
                           const DominatorTree *DT) {
   ::ComputeSignBit(V, KnownZero, KnownOne, TD, Depth,
-                   Query(AT, safeCxtI(V, CxtI), DT));
+                   Query(AC, safeCxtI(V, CxtI), DT));
 }
 
 static bool isKnownToBeAPowerOfTwo(Value *V, bool OrZero, unsigned Depth,
                                    const Query &Q);
 
 bool llvm::isKnownToBeAPowerOfTwo(Value *V, bool OrZero, unsigned Depth,
-                                  AssumptionTracker *AT,
-                                  const Instruction *CxtI,
+                                  AssumptionCache *AC, const Instruction *CxtI,
                                   const DominatorTree *DT) {
   return ::isKnownToBeAPowerOfTwo(V, OrZero, Depth,
-                                  Query(AT, safeCxtI(V, CxtI), DT));
+                                  Query(AC, safeCxtI(V, CxtI), DT));
 }
 
 static bool isKnownNonZero(Value *V, const DataLayout *TD, unsigned Depth,
                            const Query &Q);
 
 bool llvm::isKnownNonZero(Value *V, const DataLayout *TD, unsigned Depth,
-                          AssumptionTracker *AT, const Instruction *CxtI,
+                          AssumptionCache *AC, const Instruction *CxtI,
                           const DominatorTree *DT) {
-  return ::isKnownNonZero(V, TD, Depth, Query(AT, safeCxtI(V, CxtI), DT));
+  return ::isKnownNonZero(V, TD, Depth, Query(AC, safeCxtI(V, CxtI), DT));
 }
 
 static bool MaskedValueIsZero(Value *V, const APInt &Mask,
                               const DataLayout *TD, unsigned Depth,
                               const Query &Q);
 
-bool llvm::MaskedValueIsZero(Value *V, const APInt &Mask,
-                             const DataLayout *TD, unsigned Depth,
-                             AssumptionTracker *AT, const Instruction *CxtI,
-                             const DominatorTree *DT) {
+bool llvm::MaskedValueIsZero(Value *V, const APInt &Mask, const DataLayout *TD,
+                             unsigned Depth, AssumptionCache *AC,
+                             const Instruction *CxtI, const DominatorTree *DT) {
   return ::MaskedValueIsZero(V, Mask, TD, Depth,
-                             Query(AT, safeCxtI(V, CxtI), DT));
+                             Query(AC, safeCxtI(V, CxtI), DT));
 }
 
 static unsigned ComputeNumSignBits(Value *V, const DataLayout *TD,
                                    unsigned Depth, const Query &Q);
 
 unsigned llvm::ComputeNumSignBits(Value *V, const DataLayout *TD,
-                                  unsigned Depth, AssumptionTracker *AT,
+                                  unsigned Depth, AssumptionCache *AC,
                                   const Instruction *CxtI,
                                   const DominatorTree *DT) {
-  return ::ComputeNumSignBits(V, TD, Depth, Query(AT, safeCxtI(V, CxtI), DT));
+  return ::ComputeNumSignBits(V, TD, Depth, Query(AC, safeCxtI(V, CxtI), DT));
 }
 
 static void computeKnownBitsAddSub(bool Add, Value *Op0, Value *Op1, bool NSW,
@@ -482,14 +480,18 @@ static void computeKnownBitsFromAssume(Value *V, APInt &KnownZero,
                                        unsigned Depth, const Query &Q) {
   // Use of assumptions is context-sensitive. If we don't have a context, we
   // cannot use them!
-  if (!Q.AT || !Q.CxtI)
+  if (!Q.AC || !Q.CxtI)
     return;
 
   unsigned BitWidth = KnownZero.getBitWidth();
 
   Function *F = const_cast<Function*>(Q.CxtI->getParent()->getParent());
-  for (auto &CI : Q.AT->assumptions(F)) {
-    CallInst *I = CI;
+  for (auto &AssumeVH : Q.AC->assumptions()) {
+    if (!AssumeVH)
+      continue;
+    CallInst *I = cast<CallInst>(AssumeVH);
+    assert(I->getParent()->getParent() == F &&
+           "Got assumption for the wrong function!");
     if (Q.ExclInvs.count(I))
       continue;
 
@@ -2484,7 +2486,7 @@ llvm::GetUnderlyingObject(Value *V, const DataLayout *TD, unsigned MaxLookup) {
     } else {
       // See if InstructionSimplify knows any relevant tricks.
       if (Instruction *I = dyn_cast<Instruction>(V))
-        // TODO: Acquire a DominatorTree and AssumptionTracker and use them.
+        // TODO: Acquire a DominatorTree and AssumptionCache and use them.
         if (Value *Simplified = SimplifyInstruction(I, TD, nullptr)) {
           V = Simplified;
           continue;
@@ -2681,7 +2683,7 @@ bool llvm::isKnownNonNull(const Value *V, const TargetLibraryInfo *TLI) {
 
 OverflowResult llvm::computeOverflowForUnsignedMul(Value *LHS, Value *RHS,
                                                    const DataLayout *DL,
-                                                   AssumptionTracker *AT,
+                                                   AssumptionCache *AC,
                                                    const Instruction *CxtI,
                                                    const DominatorTree *DT) {
   // Multiplying n * m significant bits yields a result of n + m significant
@@ -2695,8 +2697,10 @@ OverflowResult llvm::computeOverflowForUnsignedMul(Value *LHS, Value *RHS,
   APInt LHSKnownOne(BitWidth, 0);
   APInt RHSKnownZero(BitWidth, 0);
   APInt RHSKnownOne(BitWidth, 0);
-  computeKnownBits(LHS, LHSKnownZero, LHSKnownOne, DL, /*Depth=*/0, AT, CxtI, DT);
-  computeKnownBits(RHS, RHSKnownZero, RHSKnownOne, DL, /*Depth=*/0, AT, CxtI, DT);
+  computeKnownBits(LHS, LHSKnownZero, LHSKnownOne, DL, /*Depth=*/0, AC, CxtI,
+                   DT);
+  computeKnownBits(RHS, RHSKnownZero, RHSKnownOne, DL, /*Depth=*/0, AC, CxtI,
+                   DT);
   // Note that underestimating the number of zero bits gives a more
   // conservative answer.
   unsigned ZeroBits = LHSKnownZero.countLeadingOnes() +

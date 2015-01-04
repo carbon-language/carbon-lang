@@ -18,7 +18,7 @@
 #include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Analysis/AliasAnalysis.h"
-#include "llvm/Analysis/AssumptionTracker.h"
+#include "llvm/Analysis/AssumptionCache.h"
 #include "llvm/Analysis/CallGraph.h"
 #include "llvm/Analysis/CaptureTracking.h"
 #include "llvm/Analysis/InstructionSimplify.h"
@@ -633,9 +633,10 @@ static void AddAlignmentAssumptions(CallSite CS, InlineFunctionInfo &IFI) {
   DominatorTree DT;
   bool DTCalculated = false;
 
-  const Function *CalledFunc = CS.getCalledFunction();
-  for (Function::const_arg_iterator I = CalledFunc->arg_begin(),
-       E = CalledFunc->arg_end(); I != E; ++I) {
+  Function *CalledFunc = CS.getCalledFunction();
+  for (Function::arg_iterator I = CalledFunc->arg_begin(),
+                              E = CalledFunc->arg_end();
+       I != E; ++I) {
     unsigned Align = I->getType()->isPointerTy() ? I->getParamAlignment() : 0;
     if (Align && !I->hasByValOrInAllocaAttr() && !I->hasNUses(0)) {
       if (!DTCalculated) {
@@ -647,8 +648,9 @@ static void AddAlignmentAssumptions(CallSite CS, InlineFunctionInfo &IFI) {
       // If we can already prove the asserted alignment in the context of the
       // caller, then don't bother inserting the assumption.
       Value *Arg = CS.getArgument(I->getArgNo());
-      if (getKnownAlignment(Arg, IFI.DL, IFI.AT, CS.getInstruction(),
-                            &DT) >= Align)
+      if (getKnownAlignment(Arg, IFI.DL,
+                            &IFI.ACT->getAssumptionCache(*CalledFunc),
+                            CS.getInstruction(), &DT) >= Align)
         continue;
 
       IRBuilder<>(CS.getInstruction()).CreateAlignmentAssumption(*IFI.DL, Arg,
@@ -748,6 +750,8 @@ static Value *HandleByValArgument(Value *Arg, Instruction *TheCall,
   PointerType *ArgTy = cast<PointerType>(Arg->getType());
   Type *AggTy = ArgTy->getElementType();
 
+  Function *Caller = TheCall->getParent()->getParent();
+
   // If the called function is readonly, then it could not mutate the caller's
   // copy of the byval'd memory.  In this case, it is safe to elide the copy and
   // temporary.
@@ -760,8 +764,9 @@ static Value *HandleByValArgument(Value *Arg, Instruction *TheCall,
 
     // If the pointer is already known to be sufficiently aligned, or if we can
     // round it up to a larger alignment, then we don't need a temporary.
-    if (getOrEnforceKnownAlignment(Arg, ByValAlignment,
-                                   IFI.DL, IFI.AT, TheCall) >= ByValAlignment)
+    if (getOrEnforceKnownAlignment(Arg, ByValAlignment, IFI.DL,
+                                   &IFI.ACT->getAssumptionCache(*Caller),
+                                   TheCall) >= ByValAlignment)
       return Arg;
     
     // Otherwise, we have to make a memcpy to get a safe alignment.  This is bad
@@ -777,8 +782,6 @@ static Value *HandleByValArgument(Value *Arg, Instruction *TheCall,
   // alignment, as it is required by the byval argument (and uses of the
   // pointer inside the callee).
   Align = std::max(Align, ByValAlignment);
-  
-  Function *Caller = TheCall->getParent()->getParent(); 
   
   Value *NewAlloca = new AllocaInst(AggTy, nullptr, Align, Arg->getName(), 
                                     &*Caller->begin()->begin());
@@ -1033,8 +1036,8 @@ bool llvm::InlineFunction(CallSite CS, InlineFunctionInfo &IFI,
 
     // FIXME: We could register any cloned assumptions instead of clearing the
     // whole function's cache.
-    if (IFI.AT)
-      IFI.AT->forgetCachedAssumptions(Caller);
+    if (IFI.ACT)
+      IFI.ACT->getAssumptionCache(*Caller).clear();
   }
 
   // If there are any alloca instructions in the block that used to be the entry
@@ -1405,7 +1408,8 @@ bool llvm::InlineFunction(CallSite CS, InlineFunctionInfo &IFI,
   // the entries are the same or undef).  If so, remove the PHI so it doesn't
   // block other optimizations.
   if (PHI) {
-    if (Value *V = SimplifyInstruction(PHI, IFI.DL, nullptr, nullptr, IFI.AT)) {
+    if (Value *V = SimplifyInstruction(PHI, IFI.DL, nullptr, nullptr,
+                                       &IFI.ACT->getAssumptionCache(*Caller))) {
       PHI->replaceAllUsesWith(V);
       PHI->eraseFromParent();
     }

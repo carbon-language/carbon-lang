@@ -37,7 +37,7 @@
 namespace llvm {
   template<typename T>
   class ArrayRef;
-  class AssumptionTracker;
+  class AssumptionCache;
   class DominatorTree;
   class Instruction;
   class DataLayout;
@@ -52,7 +52,7 @@ namespace llvm {
                          const DataLayout *TD = nullptr,
                          const TargetLibraryInfo *TLI = nullptr,
                          const DominatorTree *DT = nullptr,
-                         AssumptionTracker *AT = nullptr,
+                         AssumptionCache *AC = nullptr,
                          const Instruction *CxtI = nullptr);
 
   /// SimplifySubInst - Given operands for a Sub, see if we can
@@ -61,35 +61,34 @@ namespace llvm {
                          const DataLayout *TD = nullptr,
                          const TargetLibraryInfo *TLI = nullptr,
                          const DominatorTree *DT = nullptr,
-                         AssumptionTracker *AT = nullptr,
+                         AssumptionCache *AC = nullptr,
                          const Instruction *CxtI = nullptr);
 
   /// Given operands for an FAdd, see if we can fold the result.  If not, this
   /// returns null.
   Value *SimplifyFAddInst(Value *LHS, Value *RHS, FastMathFlags FMF,
-                         const DataLayout *TD = nullptr,
-                         const TargetLibraryInfo *TLI = nullptr,
-                         const DominatorTree *DT = nullptr,
-                         AssumptionTracker *AT = nullptr,
-                         const Instruction *CxtI = nullptr);
+                          const DataLayout *TD = nullptr,
+                          const TargetLibraryInfo *TLI = nullptr,
+                          const DominatorTree *DT = nullptr,
+                          AssumptionCache *AC = nullptr,
+                          const Instruction *CxtI = nullptr);
 
   /// Given operands for an FSub, see if we can fold the result.  If not, this
   /// returns null.
   Value *SimplifyFSubInst(Value *LHS, Value *RHS, FastMathFlags FMF,
-                         const DataLayout *TD = nullptr,
-                         const TargetLibraryInfo *TLI = nullptr,
-                         const DominatorTree *DT = nullptr,
-                         AssumptionTracker *AT = nullptr,
-                         const Instruction *CxtI = nullptr);
-
-  /// Given operands for an FMul, see if we can fold the result.  If not, this
-  /// returns null.
-  Value *SimplifyFMulInst(Value *LHS, Value *RHS,
-                          FastMathFlags FMF,
                           const DataLayout *TD = nullptr,
                           const TargetLibraryInfo *TLI = nullptr,
                           const DominatorTree *DT = nullptr,
-                          AssumptionTracker *AT = nullptr,
+                          AssumptionCache *AC = nullptr,
+                          const Instruction *CxtI = nullptr);
+
+  /// Given operands for an FMul, see if we can fold the result.  If not, this
+  /// returns null.
+  Value *SimplifyFMulInst(Value *LHS, Value *RHS, FastMathFlags FMF,
+                          const DataLayout *TD = nullptr,
+                          const TargetLibraryInfo *TLI = nullptr,
+                          const DominatorTree *DT = nullptr,
+                          AssumptionCache *AC = nullptr,
                           const Instruction *CxtI = nullptr);
 
   /// SimplifyMulInst - Given operands for a Mul, see if we can
@@ -97,7 +96,7 @@ namespace llvm {
   Value *SimplifyMulInst(Value *LHS, Value *RHS, const DataLayout *TD = nullptr,
                          const TargetLibraryInfo *TLI = nullptr,
                          const DominatorTree *DT = nullptr,
-                         AssumptionTracker *AT = nullptr,
+                         AssumptionCache *AC = nullptr,
                          const Instruction *CxtI = nullptr);
 
   /// SimplifySDivInst - Given operands for an SDiv, see if we can
@@ -106,7 +105,7 @@ namespace llvm {
                           const DataLayout *TD = nullptr,
                           const TargetLibraryInfo *TLI = nullptr,
                           const DominatorTree *DT = nullptr,
-                          AssumptionTracker *AT = nullptr,
+                          AssumptionCache *AC = nullptr,
                           const Instruction *CxtI = nullptr);
 
   /// SimplifyUDivInst - Given operands for a UDiv, see if we can
@@ -115,7 +114,7 @@ namespace llvm {
                           const DataLayout *TD = nullptr,
                           const TargetLibraryInfo *TLI = nullptr,
                           const DominatorTree *DT = nullptr,
-                          AssumptionTracker *AT = nullptr,
+                          AssumptionCache *AC = nullptr,
                           const Instruction *CxtI = nullptr);
 
   /// SimplifyFDivInst - Given operands for an FDiv, see if we can
@@ -124,7 +123,7 @@ namespace llvm {
                           const DataLayout *TD = nullptr,
                           const TargetLibraryInfo *TLI = nullptr,
                           const DominatorTree *DT = nullptr,
-                          AssumptionTracker *AT = nullptr,
+                          AssumptionCache *AC = nullptr,
                           const Instruction *CxtI = nullptr);
 
   /// SimplifySRemInst - Given operands for an SRem, see if we can
@@ -133,7 +132,7 @@ namespace llvm {
                           const DataLayout *TD = nullptr,
                           const TargetLibraryInfo *TLI = nullptr,
                           const DominatorTree *DT = nullptr,
-                          AssumptionTracker *AT = nullptr,
+                          AssumptionCache *AC = nullptr,
                           const Instruction *CxtI = nullptr);
 
   /// SimplifyURemInst - Given operands for a URem, see if we can
@@ -142,7 +141,7 @@ namespace llvm {
                           const DataLayout *TD = nullptr,
                           const TargetLibraryInfo *TLI = nullptr,
                           const DominatorTree *DT = nullptr,
-                          AssumptionTracker *AT = nullptr,
+                          AssumptionCache *AC = nullptr,
                           const Instruction *CxtI = nullptr);
 
   /// SimplifyFRemInst - Given operands for an FRem, see if we can
@@ -151,7 +150,7 @@ namespace llvm {
                           const DataLayout *TD = nullptr,
                           const TargetLibraryInfo *TLI = nullptr,
                           const DominatorTree *DT = nullptr,
-                          AssumptionTracker *AT = nullptr,
+                          AssumptionCache *AC = nullptr,
                           const Instruction *CxtI = nullptr);
 
   /// SimplifyShlInst - Given operands for a Shl, see if we can
@@ -160,7 +159,7 @@ namespace llvm {
                          const DataLayout *TD = nullptr,
                          const TargetLibraryInfo *TLI = nullptr,
                          const DominatorTree *DT = nullptr,
-                         AssumptionTracker *AT = nullptr,
+                         AssumptionCache *AC = nullptr,
                          const Instruction *CxtI = nullptr);
 
   /// SimplifyLShrInst - Given operands for a LShr, see if we can
@@ -169,7 +168,7 @@ namespace llvm {
                           const DataLayout *TD = nullptr,
                           const TargetLibraryInfo *TLI = nullptr,
                           const DominatorTree *DT = nullptr,
-                          AssumptionTracker *AT = nullptr,
+                          AssumptionCache *AC = nullptr,
                           const Instruction *CxtI = nullptr);
 
   /// SimplifyAShrInst - Given operands for a AShr, see if we can
@@ -178,7 +177,7 @@ namespace llvm {
                           const DataLayout *TD = nullptr,
                           const TargetLibraryInfo *TLI = nullptr,
                           const DominatorTree *DT = nullptr,
-                          AssumptionTracker *AT = nullptr,
+                          AssumptionCache *AC = nullptr,
                           const Instruction *CxtI = nullptr);
 
   /// SimplifyAndInst - Given operands for an And, see if we can
@@ -186,7 +185,7 @@ namespace llvm {
   Value *SimplifyAndInst(Value *LHS, Value *RHS, const DataLayout *TD = nullptr,
                          const TargetLibraryInfo *TLI = nullptr,
                          const DominatorTree *DT = nullptr,
-                         AssumptionTracker *AT = nullptr,
+                         AssumptionCache *AC = nullptr,
                          const Instruction *CxtI = nullptr);
 
   /// SimplifyOrInst - Given operands for an Or, see if we can
@@ -194,7 +193,7 @@ namespace llvm {
   Value *SimplifyOrInst(Value *LHS, Value *RHS, const DataLayout *TD = nullptr,
                         const TargetLibraryInfo *TLI = nullptr,
                         const DominatorTree *DT = nullptr,
-                        AssumptionTracker *AT = nullptr,
+                        AssumptionCache *AC = nullptr,
                         const Instruction *CxtI = nullptr);
 
   /// SimplifyXorInst - Given operands for a Xor, see if we can
@@ -202,7 +201,7 @@ namespace llvm {
   Value *SimplifyXorInst(Value *LHS, Value *RHS, const DataLayout *TD = nullptr,
                          const TargetLibraryInfo *TLI = nullptr,
                          const DominatorTree *DT = nullptr,
-                         AssumptionTracker *AT = nullptr,
+                         AssumptionCache *AC = nullptr,
                          const Instruction *CxtI = nullptr);
 
   /// SimplifyICmpInst - Given operands for an ICmpInst, see if we can
@@ -211,7 +210,7 @@ namespace llvm {
                           const DataLayout *TD = nullptr,
                           const TargetLibraryInfo *TLI = nullptr,
                           const DominatorTree *DT = nullptr,
-                          AssumptionTracker *AT = nullptr,
+                          AssumptionCache *AC = nullptr,
                           Instruction *CxtI = nullptr);
 
   /// SimplifyFCmpInst - Given operands for an FCmpInst, see if we can
@@ -220,7 +219,7 @@ namespace llvm {
                           const DataLayout *TD = nullptr,
                           const TargetLibraryInfo *TLI = nullptr,
                           const DominatorTree *DT = nullptr,
-                          AssumptionTracker *AT = nullptr,
+                          AssumptionCache *AC = nullptr,
                           const Instruction *CxtI = nullptr);
 
   /// SimplifySelectInst - Given operands for a SelectInst, see if we can fold
@@ -229,7 +228,7 @@ namespace llvm {
                             const DataLayout *TD = nullptr,
                             const TargetLibraryInfo *TLI = nullptr,
                             const DominatorTree *DT = nullptr,
-                            AssumptionTracker *AT = nullptr,
+                            AssumptionCache *AC = nullptr,
                             const Instruction *CxtI = nullptr);
 
   /// SimplifyGEPInst - Given operands for an GetElementPtrInst, see if we can
@@ -237,7 +236,7 @@ namespace llvm {
   Value *SimplifyGEPInst(ArrayRef<Value *> Ops, const DataLayout *TD = nullptr,
                          const TargetLibraryInfo *TLI = nullptr,
                          const DominatorTree *DT = nullptr,
-                         AssumptionTracker *AT = nullptr,
+                         AssumptionCache *AC = nullptr,
                          const Instruction *CxtI = nullptr);
 
   /// SimplifyInsertValueInst - Given operands for an InsertValueInst, see if we
@@ -247,7 +246,7 @@ namespace llvm {
                                  const DataLayout *TD = nullptr,
                                  const TargetLibraryInfo *TLI = nullptr,
                                  const DominatorTree *DT = nullptr,
-                                 AssumptionTracker *AT = nullptr,
+                                 AssumptionCache *AC = nullptr,
                                  const Instruction *CxtI = nullptr);
 
   /// SimplifyTruncInst - Given operands for an TruncInst, see if we can fold
@@ -255,7 +254,7 @@ namespace llvm {
   Value *SimplifyTruncInst(Value *Op, Type *Ty, const DataLayout *TD = nullptr,
                            const TargetLibraryInfo *TLI = nullptr,
                            const DominatorTree *DT = nullptr,
-                           AssumptionTracker *AT = nullptr,
+                           AssumptionCache *AC = nullptr,
                            const Instruction *CxtI = nullptr);
 
   //=== Helper functions for higher up the class hierarchy.
@@ -267,7 +266,7 @@ namespace llvm {
                          const DataLayout *TD = nullptr,
                          const TargetLibraryInfo *TLI = nullptr,
                          const DominatorTree *DT = nullptr,
-                         AssumptionTracker *AT = nullptr,
+                         AssumptionCache *AC = nullptr,
                          const Instruction *CxtI = nullptr);
 
   /// SimplifyBinOp - Given operands for a BinaryOperator, see if we can
@@ -276,7 +275,7 @@ namespace llvm {
                        const DataLayout *TD = nullptr,
                        const TargetLibraryInfo *TLI = nullptr,
                        const DominatorTree *DT = nullptr,
-                       AssumptionTracker *AT = nullptr,
+                       AssumptionCache *AC = nullptr,
                        const Instruction *CxtI = nullptr);
 
   /// \brief Given a function and iterators over arguments, see if we can fold
@@ -287,7 +286,7 @@ namespace llvm {
                       User::op_iterator ArgEnd, const DataLayout *TD = nullptr,
                       const TargetLibraryInfo *TLI = nullptr,
                       const DominatorTree *DT = nullptr,
-                      AssumptionTracker *AT = nullptr,
+                      AssumptionCache *AC = nullptr,
                       const Instruction *CxtI = nullptr);
 
   /// \brief Given a function and set of arguments, see if we can fold the
@@ -298,7 +297,7 @@ namespace llvm {
                       const DataLayout *TD = nullptr,
                       const TargetLibraryInfo *TLI = nullptr,
                       const DominatorTree *DT = nullptr,
-                      AssumptionTracker *AT = nullptr,
+                      AssumptionCache *AC = nullptr,
                       const Instruction *CxtI = nullptr);
 
   /// SimplifyInstruction - See if we can compute a simplified version of this
@@ -306,8 +305,7 @@ namespace llvm {
   Value *SimplifyInstruction(Instruction *I, const DataLayout *TD = nullptr,
                              const TargetLibraryInfo *TLI = nullptr,
                              const DominatorTree *DT = nullptr,
-                             AssumptionTracker *AT = nullptr);
-
+                             AssumptionCache *AC = nullptr);
 
   /// \brief Replace all uses of 'I' with 'SimpleV' and simplify the uses
   /// recursively.
@@ -321,7 +319,7 @@ namespace llvm {
                                      const DataLayout *TD = nullptr,
                                      const TargetLibraryInfo *TLI = nullptr,
                                      const DominatorTree *DT = nullptr,
-                                     AssumptionTracker *AT = nullptr);
+                                     AssumptionCache *AC = nullptr);
 
   /// \brief Recursively attempt to simplify an instruction.
   ///
@@ -333,7 +331,7 @@ namespace llvm {
                                       const DataLayout *TD = nullptr,
                                       const TargetLibraryInfo *TLI = nullptr,
                                       const DominatorTree *DT = nullptr,
-                                      AssumptionTracker *AT = nullptr);
+                                      AssumptionCache *AC = nullptr);
 } // end namespace llvm
 
 #endif

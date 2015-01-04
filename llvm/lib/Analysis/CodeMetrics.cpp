@@ -11,7 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Analysis/AssumptionTracker.h"
+#include "llvm/Analysis/AssumptionCache.h"
 #include "llvm/Analysis/CodeMetrics.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/TargetTransformInfo.h"
@@ -66,11 +66,16 @@ static void completeEphemeralValues(SmallVector<const Value *, 16> &WorkSet,
 }
 
 // Find all ephemeral values.
-void CodeMetrics::collectEphemeralValues(const Loop *L, AssumptionTracker *AT,
-                                         SmallPtrSetImpl<const Value*> &EphValues) {
+void CodeMetrics::collectEphemeralValues(
+    const Loop *L, AssumptionCache *AC,
+    SmallPtrSetImpl<const Value *> &EphValues) {
   SmallVector<const Value *, 16> WorkSet;
 
-  for (auto &I : AT->assumptions(L->getHeader()->getParent())) {
+  for (auto &AssumeVH : AC->assumptions()) {
+    if (!AssumeVH)
+      continue;
+    Instruction *I = cast<Instruction>(AssumeVH);
+
     // Filter out call sites outside of the loop so we don't to a function's
     // worth of work for each of its loops (and, in the common case, ephemeral
     // values in the loop are likely due to @llvm.assume calls in the loop).
@@ -83,12 +88,19 @@ void CodeMetrics::collectEphemeralValues(const Loop *L, AssumptionTracker *AT,
   completeEphemeralValues(WorkSet, EphValues);
 }
 
-void CodeMetrics::collectEphemeralValues(const Function *F, AssumptionTracker *AT,
-                                         SmallPtrSetImpl<const Value*> &EphValues) {
+void CodeMetrics::collectEphemeralValues(
+    const Function *F, AssumptionCache *AC,
+    SmallPtrSetImpl<const Value *> &EphValues) {
   SmallVector<const Value *, 16> WorkSet;
 
-  for (auto &I : AT->assumptions(const_cast<Function*>(F)))
+  for (auto &AssumeVH : AC->assumptions()) {
+    if (!AssumeVH)
+      continue;
+    Instruction *I = cast<Instruction>(AssumeVH);
+    assert(I->getParent()->getParent() == F &&
+           "Found assumption for the wrong function!");
     WorkSet.push_back(I);
+  }
 
   completeEphemeralValues(WorkSet, EphValues);
 }

@@ -21,7 +21,7 @@
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/Statistic.h"
-#include "llvm/Analysis/AssumptionTracker.h"
+#include "llvm/Analysis/AssumptionCache.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/ValueTracking.h"
 #include "llvm/Analysis/ScalarEvolution.h"
@@ -53,7 +53,7 @@ struct AlignmentFromAssumptions : public FunctionPass {
   bool runOnFunction(Function &F);
 
   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-    AU.addRequired<AssumptionTracker>();
+    AU.addRequired<AssumptionCacheTracker>();
     AU.addRequired<ScalarEvolution>();
     AU.addRequired<DominatorTreeWrapperPass>();
 
@@ -69,7 +69,6 @@ struct AlignmentFromAssumptions : public FunctionPass {
   // another assumption later, then we may change the alignment at that point.
   DenseMap<MemTransferInst *, unsigned> NewDestAlignments, NewSrcAlignments;
 
-  AssumptionTracker *AT;
   ScalarEvolution *SE;
   DominatorTree *DT;
   const DataLayout *DL;
@@ -84,7 +83,7 @@ char AlignmentFromAssumptions::ID = 0;
 static const char aip_name[] = "Alignment from assumptions";
 INITIALIZE_PASS_BEGIN(AlignmentFromAssumptions, AA_NAME,
                       aip_name, false, false)
-INITIALIZE_PASS_DEPENDENCY(AssumptionTracker)
+INITIALIZE_PASS_DEPENDENCY(AssumptionCacheTracker)
 INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(ScalarEvolution)
 INITIALIZE_PASS_END(AlignmentFromAssumptions, AA_NAME,
@@ -411,7 +410,7 @@ bool AlignmentFromAssumptions::processAssumption(CallInst *ACall) {
 
 bool AlignmentFromAssumptions::runOnFunction(Function &F) {
   bool Changed = false;
-  AT = &getAnalysis<AssumptionTracker>();
+  auto &AC = getAnalysis<AssumptionCacheTracker>().getAssumptionCache(F);
   SE = &getAnalysis<ScalarEvolution>();
   DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
   DataLayoutPass *DLP = getAnalysisIfAvailable<DataLayoutPass>();
@@ -420,8 +419,9 @@ bool AlignmentFromAssumptions::runOnFunction(Function &F) {
   NewDestAlignments.clear();
   NewSrcAlignments.clear();
 
-  for (auto &I : AT->assumptions(&F))
-    Changed |= processAssumption(I);
+  for (auto &AssumeVH : AC.assumptions())
+    if (AssumeVH)
+      Changed |= processAssumption(cast<CallInst>(AssumeVH));
 
   return Changed;
 }

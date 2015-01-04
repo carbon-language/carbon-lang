@@ -20,7 +20,7 @@
 #include "llvm/IR/CallSite.h"
 
 namespace llvm {
-class AssumptionTracker;
+class AssumptionCache;
 class BasicBlock;
 class Loop;
 class Function;
@@ -93,13 +93,13 @@ struct CodeMetrics {
 
   /// \brief Collect a loop's ephemeral values (those used only by an assume
   /// or similar intrinsics in the loop).
-  static void collectEphemeralValues(const Loop *L, AssumptionTracker *AT,
-                                     SmallPtrSetImpl<const Value*> &EphValues);
+  static void collectEphemeralValues(const Loop *L, AssumptionCache *AC,
+                                     SmallPtrSetImpl<const Value *> &EphValues);
 
   /// \brief Collect a functions's ephemeral values (those used only by an
   /// assume or similar intrinsics in the function).
-  static void collectEphemeralValues(const Function *L, AssumptionTracker *AT,
-                                     SmallPtrSetImpl<const Value*> &EphValues);
+  static void collectEphemeralValues(const Function *L, AssumptionCache *AC,
+                                     SmallPtrSetImpl<const Value *> &EphValues);
 };
 
 }

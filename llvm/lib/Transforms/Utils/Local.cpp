@@ -943,7 +943,7 @@ static unsigned enforceKnownAlignment(Value *V, unsigned Align,
 /// increase the alignment of the ultimate object, making this check succeed.
 unsigned llvm::getOrEnforceKnownAlignment(Value *V, unsigned PrefAlign,
                                           const DataLayout *DL,
-                                          AssumptionTracker *AT,
+                                          AssumptionCache *AC,
                                           const Instruction *CxtI,
                                           const DominatorTree *DT) {
   assert(V->getType()->isPointerTy() &&
@@ -951,7 +951,7 @@ unsigned llvm::getOrEnforceKnownAlignment(Value *V, unsigned PrefAlign,
   unsigned BitWidth = DL ? DL->getPointerTypeSizeInBits(V->getType()) : 64;
 
   APInt KnownZero(BitWidth, 0), KnownOne(BitWidth, 0);
-  computeKnownBits(V, KnownZero, KnownOne, DL, 0, AT, CxtI, DT);
+  computeKnownBits(V, KnownZero, KnownOne, DL, 0, AC, CxtI, DT);
   unsigned TrailZ = KnownZero.countTrailingOnes();
 
   // Avoid trouble with ridiculously large TrailZ values, such as

@@ -693,9 +693,9 @@ Instruction *InstCombiner::visitShl(BinaryOperator &I) {
   if (Value *V = SimplifyVectorOp(I))
     return ReplaceInstUsesWith(I, V);
 
-  if (Value *V = SimplifyShlInst(I.getOperand(0), I.getOperand(1),
-                                 I.hasNoSignedWrap(), I.hasNoUnsignedWrap(),
-                                 DL, TLI, DT, AT))
+  if (Value *V =
+          SimplifyShlInst(I.getOperand(0), I.getOperand(1), I.hasNoSignedWrap(),
+                          I.hasNoUnsignedWrap(), DL, TLI, DT, AC))
     return ReplaceInstUsesWith(I, V);
 
   if (Instruction *V = commonShiftTransforms(I))
@@ -735,8 +735,8 @@ Instruction *InstCombiner::visitLShr(BinaryOperator &I) {
   if (Value *V = SimplifyVectorOp(I))
     return ReplaceInstUsesWith(I, V);
 
-  if (Value *V = SimplifyLShrInst(I.getOperand(0), I.getOperand(1),
-                                  I.isExact(), DL, TLI, DT, AT))
+  if (Value *V = SimplifyLShrInst(I.getOperand(0), I.getOperand(1), I.isExact(),
+                                  DL, TLI, DT, AC))
     return ReplaceInstUsesWith(I, V);
 
   if (Instruction *R = commonShiftTransforms(I))
@@ -779,8 +779,8 @@ Instruction *InstCombiner::visitAShr(BinaryOperator &I) {
   if (Value *V = SimplifyVectorOp(I))
     return ReplaceInstUsesWith(I, V);
 
-  if (Value *V = SimplifyAShrInst(I.getOperand(0), I.getOperand(1),
-                                  I.isExact(), DL, TLI, DT, AT))
+  if (Value *V = SimplifyAShrInst(I.getOperand(0), I.getOperand(1), I.isExact(),
+                                  DL, TLI, DT, AC))
     return ReplaceInstUsesWith(I, V);
 
   if (Instruction *R = commonShiftTransforms(I))
