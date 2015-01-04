@@ -602,16 +602,19 @@ static unsigned SelectInt64CountDirect(int64_t Imm) {
   return Result;
 }
 
+static uint64_t Rot64(uint64_t Imm, unsigned R) {
+  return (Imm << R) | (Imm >> (64 - R));
+}
+
 static unsigned SelectInt64Count(int64_t Imm) {
-  unsigned DirectCount = SelectInt64CountDirect(Imm);
+  unsigned Count = SelectInt64CountDirect(Imm);
 
-  // If might be cheaper to materialize the bit-inverted constant, and then
-  // flip the bits (which takes one nor instruction).
-  unsigned NotDirectCount = SelectInt64CountDirect(~(uint64_t) Imm) + 1;
-  if (NotDirectCount < DirectCount)
-    return NotDirectCount;
+  for (unsigned r = 1; r < 63; ++r) {
+    unsigned RCount = SelectInt64CountDirect(Rot64(Imm, r)) + 1;
+    Count = std::min(Count, RCount);
+  }
 
-  return DirectCount;
+  return Count;
 }
 
 // Select a 64-bit constant. For cost-modeling purposes, SelectInt64Count
@@ -691,19 +694,27 @@ static SDNode *SelectInt64Direct(SelectionDAG *CurDAG, SDLoc dl, int64_t Imm) {
 }
 
 static SDNode *SelectInt64(SelectionDAG *CurDAG, SDLoc dl, int64_t Imm) {
-  unsigned DirectCount = SelectInt64CountDirect(Imm);
+  unsigned Count = SelectInt64CountDirect(Imm);
+  unsigned RMin = 0;
 
-  // If might be cheaper to materialize the bit-inverted constant, and then
-  // flip the bits (which takes one nor instruction).
-  unsigned NotDirectCount = SelectInt64CountDirect(~(uint64_t) Imm) + 1;
-  if (NotDirectCount < DirectCount) {
-    SDValue NotDirectVal =
-      SDValue(SelectInt64Direct(CurDAG, dl, ~(uint64_t) Imm), 0);
-    return CurDAG->getMachineNode(PPC::NOR8, dl, MVT::i64, NotDirectVal,
-                                  NotDirectVal);
+  for (unsigned r = 1; r < 63; ++r) {
+    unsigned RCount = SelectInt64CountDirect(Rot64(Imm, r)) + 1;
+    if (RCount < Count) {
+      Count = RCount;
+      RMin = r;
+    }
   }
 
-  return SelectInt64Direct(CurDAG, dl, Imm);
+  if (!RMin)
+    return SelectInt64Direct(CurDAG, dl, Imm);
+
+  auto getI32Imm = [CurDAG](unsigned Imm) {
+      return CurDAG->getTargetConstant(Imm, MVT::i32);
+  };
+
+  SDValue Val = SDValue(SelectInt64Direct(CurDAG, dl, Rot64(Imm, RMin)), 0);
+  return CurDAG->getMachineNode(PPC::RLDICL, dl, MVT::i64, Val,
+                                getI32Imm(64 - RMin), getI32Imm(0));
 }
 
 // Select a 64-bit constant.
