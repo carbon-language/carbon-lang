@@ -1821,13 +1821,16 @@ unsigned ComputeNumSignBits(Value *V, const DataLayout *TD,
 
   case Instruction::PHI: {
     PHINode *PN = cast<PHINode>(U);
+    unsigned NumIncomingValues = PN->getNumIncomingValues();
     // Don't analyze large in-degree PHIs.
-    if (PN->getNumIncomingValues() > 4) break;
+    if (NumIncomingValues > 4) break;
+    // Unreachable blocks may have zero-operand PHI nodes.
+    if (NumIncomingValues == 0) break;
 
     // Take the minimum of all incoming values.  This can't infinitely loop
     // because of our depth threshold.
     Tmp = ComputeNumSignBits(PN->getIncomingValue(0), TD, Depth+1, Q);
-    for (unsigned i = 1, e = PN->getNumIncomingValues(); i != e; ++i) {
+    for (unsigned i = 1, e = NumIncomingValues; i != e; ++i) {
       if (Tmp == 1) return Tmp;
       Tmp = std::min(Tmp,
                      ComputeNumSignBits(PN->getIncomingValue(i), TD,
