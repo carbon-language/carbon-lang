@@ -3220,6 +3220,13 @@ class T_S2op_2 <string mnemonic, bits<4> RegTyBits, RegisterClass RCOut,
     let Inst{7-5} = MinOp;
     let Inst{4-0} = dst;
   }
+
+class T_S2op_2_di <string mnemonic, bits<3> MajOp, bits<3> MinOp>
+  : T_S2op_2 <mnemonic, 0b1000, DoubleRegs, IntRegs, MajOp, MinOp, 0, 0>;
+
+let hasNewValue = 1 in
+class T_S2op_2_id <string mnemonic, bits<3> MajOp, bits<3> MinOp>
+  : T_S2op_2 <mnemonic, 0b1000, IntRegs, DoubleRegs, MajOp, MinOp, 0, 0>;
   
 let hasNewValue = 1 in
 class T_S2op_2_ii <string mnemonic, bits<3> MajOp, bits<3> MinOp,

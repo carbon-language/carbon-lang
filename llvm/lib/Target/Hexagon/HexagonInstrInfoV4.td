@@ -1747,6 +1747,20 @@ def M4_xor_xacc
     let Inst{12-8}  = Rtt;
     let Inst{4-0}   = Rxx;
   }
+  
+// Split bitfield
+let isCodeGenOnly = 0 in
+def A4_bitspliti : T_S2op_2_di <"bitsplit", 0b110, 0b100>;
+
+// Arithmetic/Convergent round
+let isCodeGenOnly = 0 in
+def A4_cround_ri : T_S2op_2_ii <"cround", 0b111, 0b000>;
+
+let isCodeGenOnly = 0 in
+def A4_round_ri  : T_S2op_2_ii <"round", 0b111, 0b100>;
+
+let Defs = [USR_OVF], isCodeGenOnly = 0 in
+def A4_round_ri_sat : T_S2op_2_ii <"round", 0b111, 0b110, 1>;
 
 //  Add and accumulate.
 //  Rd=add(Rs,add(Ru,#s6))
