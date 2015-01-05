@@ -2,6 +2,11 @@ set(LLVM_NO_RTTI 1)
 
 file(GLOB SWIG_INPUTS Python/interface/*.i)
 
+if (CMAKE_SYSTEM_NAME MATCHES "Windows")
+    STRING(REGEX REPLACE ".lib" ".dll" PYTHON_DLL ${PYTHON_LIBRARY})
+    file(COPY ${PYTHON_DLL} DESTINATION ${CMAKE_BINARY_DIR}/bin)
+endif ()
+
 if ( LLDB_ENABLE_PYTHON_SCRIPTS_SWIG_API_GENERATION )
 	find_package(SWIG REQUIRED)
 	add_custom_command(
