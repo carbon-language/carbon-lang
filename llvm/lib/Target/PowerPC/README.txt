@@ -31,40 +31,6 @@ Ick.
 
 ===-------------------------------------------------------------------------===
 
-Support 'update' load/store instructions.  These are cracked on the G5, but are
-still a codesize win.
-
-With preinc enabled, this:
-
-long *%test4(long *%X, long *%dest) {
-        %Y = getelementptr long* %X, int 4
-        %A = load long* %Y
-        store long %A, long* %dest
-        ret long* %Y
-}
-
-compiles to:
-
-_test4:
-        mr r2, r3
-        lwzu r5, 32(r2)
-        lwz r3, 36(r3)
-        stw r5, 0(r4)
-        stw r3, 4(r4)
-        mr r3, r2
-        blr 
-
-with -sched=list-burr, I get:
-
-_test4:
-        lwz r2, 36(r3)
-        lwzu r5, 32(r3)
-        stw r2, 4(r4)
-        stw r5, 0(r4)
-        blr 
-
-===-------------------------------------------------------------------------===
-
 We compile the hottest inner loop of viterbi to:
 
         li r6, 0
