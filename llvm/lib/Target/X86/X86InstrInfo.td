@@ -32,7 +32,8 @@ def SDTX86Cmov    : SDTypeProfile<1, 4,
 
 // Unary and binary operator instructions that set EFLAGS as a side-effect.
 def SDTUnaryArithWithFlags : SDTypeProfile<2, 1,
-                                           [SDTCisInt<0>, SDTCisVT<1, i32>]>;
+                                           [SDTCisSameAs<0, 2>,
+                                            SDTCisInt<0>, SDTCisVT<1, i32>]>;
 
 def SDTBinaryArithWithFlags : SDTypeProfile<2, 2,
                                             [SDTCisSameAs<0, 2>,
