@@ -1128,28 +1128,28 @@ isValidOffset(const int Opcode, const int Offset) const {
     return (Offset >= Hexagon_ADDI_OFFSET_MIN) &&
       (Offset <= Hexagon_ADDI_OFFSET_MAX);
 
-  case Hexagon::MemOPw_ADDi_V4 :
-  case Hexagon::MemOPw_SUBi_V4 :
-  case Hexagon::MemOPw_ADDr_V4 :
-  case Hexagon::MemOPw_SUBr_V4 :
-  case Hexagon::MemOPw_ANDr_V4 :
-  case Hexagon::MemOPw_ORr_V4 :
+  case Hexagon::L4_iadd_memopw_io:
+  case Hexagon::L4_isub_memopw_io:
+  case Hexagon::L4_add_memopw_io:
+  case Hexagon::L4_sub_memopw_io:
+  case Hexagon::L4_and_memopw_io:
+  case Hexagon::L4_or_memopw_io:
     return (0 <= Offset && Offset <= 255);
 
-  case Hexagon::MemOPh_ADDi_V4 :
-  case Hexagon::MemOPh_SUBi_V4 :
-  case Hexagon::MemOPh_ADDr_V4 :
-  case Hexagon::MemOPh_SUBr_V4 :
-  case Hexagon::MemOPh_ANDr_V4 :
-  case Hexagon::MemOPh_ORr_V4 :
+  case Hexagon::L4_iadd_memoph_io:
+  case Hexagon::L4_isub_memoph_io:
+  case Hexagon::L4_add_memoph_io:
+  case Hexagon::L4_sub_memoph_io:
+  case Hexagon::L4_and_memoph_io:
+  case Hexagon::L4_or_memoph_io:
     return (0 <= Offset && Offset <= 127);
 
-  case Hexagon::MemOPb_ADDi_V4 :
-  case Hexagon::MemOPb_SUBi_V4 :
-  case Hexagon::MemOPb_ADDr_V4 :
-  case Hexagon::MemOPb_SUBr_V4 :
-  case Hexagon::MemOPb_ANDr_V4 :
-  case Hexagon::MemOPb_ORr_V4 :
+  case Hexagon::L4_iadd_memopb_io:
+  case Hexagon::L4_isub_memopb_io:
+  case Hexagon::L4_add_memopb_io:
+  case Hexagon::L4_sub_memopb_io:
+  case Hexagon::L4_and_memopb_io:
+  case Hexagon::L4_or_memopb_io:
     return (0 <= Offset && Offset <= 63);
 
   // LDri_pred and STriw_pred are pseudo operations, so it has to take offset of
@@ -1206,31 +1206,31 @@ isMemOp(const MachineInstr *MI) const {
 
   switch (MI->getOpcode())
   {
-    default: return false;
-    case Hexagon::MemOPw_ADDi_V4 :
-    case Hexagon::MemOPw_SUBi_V4 :
-    case Hexagon::MemOPw_ADDr_V4 :
-    case Hexagon::MemOPw_SUBr_V4 :
-    case Hexagon::MemOPw_ANDr_V4 :
-    case Hexagon::MemOPw_ORr_V4 :
-    case Hexagon::MemOPh_ADDi_V4 :
-    case Hexagon::MemOPh_SUBi_V4 :
-    case Hexagon::MemOPh_ADDr_V4 :
-    case Hexagon::MemOPh_SUBr_V4 :
-    case Hexagon::MemOPh_ANDr_V4 :
-    case Hexagon::MemOPh_ORr_V4 :
-    case Hexagon::MemOPb_ADDi_V4 :
-    case Hexagon::MemOPb_SUBi_V4 :
-    case Hexagon::MemOPb_ADDr_V4 :
-    case Hexagon::MemOPb_SUBr_V4 :
-    case Hexagon::MemOPb_ANDr_V4 :
-    case Hexagon::MemOPb_ORr_V4 :
-    case Hexagon::MemOPb_SETBITi_V4:
-    case Hexagon::MemOPh_SETBITi_V4:
-    case Hexagon::MemOPw_SETBITi_V4:
-    case Hexagon::MemOPb_CLRBITi_V4:
-    case Hexagon::MemOPh_CLRBITi_V4:
-    case Hexagon::MemOPw_CLRBITi_V4:
+  default: return false;
+  case Hexagon::L4_iadd_memopw_io:
+  case Hexagon::L4_isub_memopw_io:
+  case Hexagon::L4_add_memopw_io:
+  case Hexagon::L4_sub_memopw_io:
+  case Hexagon::L4_and_memopw_io:
+  case Hexagon::L4_or_memopw_io:
+  case Hexagon::L4_iadd_memoph_io:
+  case Hexagon::L4_isub_memoph_io:
+  case Hexagon::L4_add_memoph_io:
+  case Hexagon::L4_sub_memoph_io:
+  case Hexagon::L4_and_memoph_io:
+  case Hexagon::L4_or_memoph_io:
+  case Hexagon::L4_iadd_memopb_io:
+  case Hexagon::L4_isub_memopb_io:
+  case Hexagon::L4_add_memopb_io:
+  case Hexagon::L4_sub_memopb_io:
+  case Hexagon::L4_and_memopb_io:
+  case Hexagon::L4_or_memopb_io:
+  case Hexagon::L4_ior_memopb_io:
+  case Hexagon::L4_ior_memoph_io:
+  case Hexagon::L4_ior_memopw_io:
+  case Hexagon::L4_iand_memopb_io:
+  case Hexagon::L4_iand_memoph_io:
+  case Hexagon::L4_iand_memopw_io:
     return true;
   }
   return false;
