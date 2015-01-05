@@ -202,6 +202,26 @@ TEST_F(MDNodeTest, Print) {
   EXPECT_EQ(Expected, Actual);
 }
 
+TEST_F(MDNodeTest, NullOperand) {
+  // metadata !{}
+  MDNode *Empty = MDNode::get(Context, None);
+
+  // metadata !{metadata !{}}
+  Metadata *Ops[] = {Empty};
+  MDNode *N = MDNode::get(Context, Ops);
+  ASSERT_EQ(Empty, N->getOperand(0));
+
+  // metadata !{metadata !{}} => metadata !{null}
+  N->replaceOperandWith(0, nullptr);
+  ASSERT_EQ(nullptr, N->getOperand(0));
+
+  // metadata !{null}
+  Ops[0] = nullptr;
+  MDNode *NullOp = MDNode::get(Context, Ops);
+  ASSERT_EQ(nullptr, NullOp->getOperand(0));
+  EXPECT_EQ(N, NullOp);
+}
+
 typedef MetadataTest MetadataAsValueTest;
 
 TEST_F(MetadataAsValueTest, MDNode) {
