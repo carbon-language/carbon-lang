@@ -2760,6 +2760,13 @@ def : Pat<(xor (v4i32 (AArch64vashr (v4i32(sub V128:$Rn, V128:$Rm)), (i32 31))),
                (AArch64vashr (v4i32(sub V128:$Rn, V128:$Rm)), (i32 31))))),
           (SABDv4i32 V128:$Rn, V128:$Rm)>;
 
+def : Pat<(v2f32 (fabs (fsub V64:$Rn, V64:$Rm))),
+          (FABDv2f32 V64:$Rn, V64:$Rm)>;
+def : Pat<(v4f32 (fabs (fsub V128:$Rn, V128:$Rm))),
+          (FABDv4f32 V128:$Rn, V128:$Rm)>;
+def : Pat<(v2f64 (fabs (fsub V128:$Rn, V128:$Rm))),
+          (FABDv2f64 V128:$Rn, V128:$Rm)>;
+
 def : Pat<(AArch64bsl (v8i8 V64:$Rd), V64:$Rn, V64:$Rm),
           (BSLv8i8 V64:$Rd, V64:$Rn, V64:$Rm)>;
 def : Pat<(AArch64bsl (v4i16 V64:$Rd), V64:$Rn, V64:$Rm),
@@ -3048,6 +3055,11 @@ defm UCVTF  : SIMDTwoScalarCVTSD<   1, 0, 0b11101, "ucvtf", AArch64uitof>;
 defm UQXTN  : SIMDTwoScalarMixedBHS<1, 0b10100, "uqxtn", int_aarch64_neon_scalar_uqxtn>;
 defm USQADD : SIMDTwoScalarBHSDTied< 1, 0b00011, "usqadd",
                                     int_aarch64_neon_usqadd>;
+
+def : Pat<(f32 (fabs (fsub FPR32:$Rn, FPR32:$Rm))),
+          (FABD32 FPR32:$Rn, FPR32:$Rm)>;
+def : Pat<(f64 (fabs (fsub FPR64:$Rn, FPR64:$Rm))),
+          (FABD64 FPR64:$Rn, FPR64:$Rm)>;
 
 def : Pat<(AArch64neg (v1i64 V64:$Rn)), (NEGv1i64 V64:$Rn)>;
 

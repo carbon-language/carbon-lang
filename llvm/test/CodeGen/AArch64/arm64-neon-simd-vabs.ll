@@ -99,3 +99,72 @@ define void @testv8i8(i8* noalias nocapture %a, i8* noalias nocapture readonly %
   ret void
 }
 
+; CHECK: test_v4f32
+; CHECK: fabd	v0.4s, v0.4s, v1.4s
+declare <4 x float> @llvm.fabs.v4f32(<4 x float>)
+define void @test_v4f32(float* noalias nocapture %a, float* noalias nocapture readonly %b, float* noalias nocapture readonly %c){
+  %1 = bitcast float* %b to <4 x float>*
+  %2 = load <4 x float>* %1
+  %3 = bitcast float* %c to <4 x float>*
+  %4 = load <4 x float>* %3
+  %5 = fsub <4 x float> %2, %4
+  %6 = call <4 x float> @llvm.fabs.v4f32(<4 x float> %5)
+  %7 = bitcast float* %a to <4 x float>*
+  store <4 x float> %6, <4 x float>* %7
+  ret void
+}
+
+; CHECK: test_v2f32
+; CHECK: fabd	v0.2s, v0.2s, v1.2s
+declare <2 x float> @llvm.fabs.v2f32(<2 x float>)
+define void @test_v2f32(float* noalias nocapture %a, float* noalias nocapture readonly %b, float* noalias nocapture readonly %c){
+  %1 = bitcast float* %b to <2 x float>*
+  %2 = load <2 x float>* %1
+  %3 = bitcast float* %c to <2 x float>*
+  %4 = load <2 x float>* %3
+  %5 = fsub <2 x float> %2, %4
+  %6 = call <2 x float> @llvm.fabs.v2f32(<2 x float> %5)
+  %7 = bitcast float* %a to <2 x float>*
+  store <2 x float> %6, <2 x float>* %7
+  ret void
+}
+
+; CHECK: test_v2f64
+; CHECK: fabd	v0.2d, v0.2d, v1.2d
+declare <2 x double> @llvm.fabs.v2f64(<2 x double>)
+define void @test_v2f64(double* noalias nocapture %a, double* noalias nocapture readonly %b, double* noalias nocapture readonly %c){
+  %1 = bitcast double* %b to <2 x double>*
+  %2 = load <2 x double>* %1
+  %3 = bitcast double* %c to <2 x double>*
+  %4 = load <2 x double>* %3
+  %5 = fsub <2 x double> %2, %4
+  %6 = call <2 x double> @llvm.fabs.v2f64(<2 x double> %5)
+  %7 = bitcast double* %a to <2 x double>*
+  store <2 x double> %6, <2 x double>* %7
+  ret void
+}
+
+@a = common global float 0.000000e+00
+declare float @fabsf(float)
+; CHECK: test_fabd32
+; CHECK: fabd	s0, s0, s1
+define void @test_fabd32(float %b, float %c) {
+  %1 = fsub float %b, %c
+  %fabsf = tail call float @fabsf(float %1) #0
+  store float %fabsf, float* @a
+  ret void
+}
+
+@d = common global double 0.000000e+00
+declare double @fabs(double)
+; CHECK: test_fabd64
+; CHECK: fabd	d0, d0, d1
+define void @test_fabd64(double %b, double %c) {
+  %1 = fsub double %b, %c
+  %2 = tail call double @fabs(double %1) #0
+  store double %2, double* @d
+  ret void
+}
+
+attributes #0 = { nounwind readnone}
+
