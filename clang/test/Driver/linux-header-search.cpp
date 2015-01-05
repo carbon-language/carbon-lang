@@ -8,6 +8,7 @@
 // RUN:     -stdlib=libc++ \
 // RUN:     -ccc-install-dir %S/Inputs/basic_linux_tree/usr/bin \
 // RUN:     --sysroot=%S/Inputs/basic_linux_libcxx_tree \
+// RUN:     --gcc-toolchain="" \
 // RUN:   | FileCheck --check-prefix=CHECK-BASIC-LIBCXX-SYSROOT %s
 // CHECK-BASIC-LIBCXX-SYSROOT: "{{[^"]*}}clang{{[^"]*}}" "-cc1"
 // CHECK-BASIC-LIBCXX-SYSROOT: "-isysroot" "[[SYSROOT:[^"]+]]"
@@ -18,6 +19,7 @@
 // RUN:     -stdlib=libc++ \
 // RUN:     -ccc-install-dir %S/Inputs/basic_linux_libcxx_tree/usr/bin \
 // RUN:     --sysroot=%S/Inputs/basic_linux_libcxx_tree \
+// RUN:     --gcc-toolchain="" \
 // RUN:   | FileCheck --check-prefix=CHECK-BASIC-LIBCXX-INSTALL %s
 // CHECK-BASIC-LIBCXX-INSTALL: "{{[^"]*}}clang{{[^"]*}}" "-cc1"
 // CHECK-BASIC-LIBCXX-INSTALL: "-isysroot" "[[SYSROOT:[^"]+]]"
@@ -28,6 +30,7 @@
 // RUN: %clang -no-canonical-prefixes %s -### -fsyntax-only 2>&1 \
 // RUN:     -target i386-unknown-linux \
 // RUN:     --sysroot=%S/Inputs/ubuntu_11.04_multiarch_tree \
+// RUN:     --gcc-toolchain="" \
 // RUN:   | FileCheck --check-prefix=CHECK-UBUNTU-11-04 %s
 // CHECK-UBUNTU-11-04: "{{.*}}clang{{.*}}" "-cc1"
 // CHECK-UBUNTU-11-04: "-isysroot" "[[SYSROOT:[^"]+]]"
@@ -42,6 +45,7 @@
 // RUN: %clang -no-canonical-prefixes %s -### -fsyntax-only 2>&1 \
 // RUN:     -target x86_64-unknown-linux-gnu \
 // RUN:     --sysroot=%S/Inputs/ubuntu_13.04_multiarch_tree \
+// RUN:     --gcc-toolchain="" \
 // RUN:   | FileCheck --check-prefix=CHECK-UBUNTU-13-04 %s
 // CHECK-UBUNTU-13-04: "{{[^"]*}}clang{{[^"]*}}" "-cc1"
 // CHECK-UBUNTU-13-04: "-isysroot" "[[SYSROOT:[^"]+]]"
@@ -57,6 +61,7 @@
 // RUN: %clang -no-canonical-prefixes %s -### -fsyntax-only 2>&1 \
 // RUN:     -target x86_64-unknown-linux-gnux32 \
 // RUN:     --sysroot=%S/Inputs/ubuntu_14.04_multiarch_tree \
+// RUN:     --gcc-toolchain="" \
 // RUN:   | FileCheck --check-prefix=CHECK-UBUNTU-14-04 %s
 // CHECK-UBUNTU-14-04: "{{[^"]*}}clang{{[^"]*}}" "-cc1"
 // CHECK-UBUNTU-14-04: "-isysroot" "[[SYSROOT:[^"]+]]"
@@ -72,6 +77,7 @@
 // RUN: %clang -no-canonical-prefixes %s -### -fsyntax-only 2>&1 \
 // RUN:     -target arm-linux-gnueabihf \
 // RUN:     --sysroot=%S/Inputs/ubuntu_13.04_multiarch_tree \
+// RUN:     --gcc-toolchain="" \
 // RUN:   | FileCheck --check-prefix=CHECK-UBUNTU-13-04-CROSS %s
 // CHECK-UBUNTU-13-04-CROSS: "{{[^"]*}}clang{{[^"]*}}" "-cc1"
 // CHECK-UBUNTU-13-04-CROSS: "-isysroot" "[[SYSROOT:[^"]+]]"
@@ -87,6 +93,7 @@
 // RUN: %clang -no-canonical-prefixes %s -### -fsyntax-only 2>&1 \
 // RUN:     -target x86_64-unknown-linux-gnu -m32 \
 // RUN:     --sysroot=%S/Inputs/ubuntu_13.04_multiarch_tree \
+// RUN:     --gcc-toolchain="" \
 // RUN:   | FileCheck --check-prefix=CHECK-UBUNTU-13-04-M32 %s
 // CHECK-UBUNTU-13-04-M32: "{{[^"]*}}clang{{[^"]*}}" "-cc1"
 // CHECK-UBUNTU-13-04-M32: "-triple" "i386-unknown-linux-gnu"
@@ -100,6 +107,7 @@
 // RUN: %clang -no-canonical-prefixes %s -### -fsyntax-only 2>&1 \
 // RUN:     -target x86_64-unknown-linux-gnu -m32 \
 // RUN:     --sysroot=%S/Inputs/ubuntu_14.04_multiarch_tree \
+// RUN:     --gcc-toolchain="" \
 // RUN:   | FileCheck --check-prefix=CHECK-UBUNTU-14-04-M32 %s
 // CHECK-UBUNTU-14-04-M32: "{{[^"]*}}clang{{[^"]*}}" "-cc1"
 // CHECK-UBUNTU-14-04-M32: "-triple" "i386-unknown-linux-gnu"
@@ -114,6 +122,7 @@
 // RUN: %clang -no-canonical-prefixes %s -### -fsyntax-only 2>&1 \
 // RUN:     -target x86_64-unknown-linux-gnu -m32 \
 // RUN:     --sysroot=%S/Inputs/ubuntu_14.04_multiarch_tree2 \
+// RUN:     --gcc-toolchain="" \
 // RUN:   | FileCheck --check-prefix=CHECK-UBUNTU-14-04-I686 %s
 // CHECK-UBUNTU-14-04-I686: "{{[^"]*}}clang{{[^"]*}}" "-cc1"
 // CHECK-UBUNTU-14-04-I686: "-triple" "i386-unknown-linux-gnu"
@@ -126,6 +135,7 @@
 // RUN: %clang -no-canonical-prefixes %s -### -fsyntax-only 2>&1 \
 // RUN:     -target powerpc64le-unknown-linux-gnu -m32 \
 // RUN:     --sysroot=%S/Inputs/ubuntu_14.04_multiarch_tree \
+// RUN:     --gcc-toolchain="" \
 // RUN:   | FileCheck --check-prefix=CHECK-UBUNTU-14-04-PPC64LE %s
 // CHECK-UBUNTU-14-04-PPC64LE: "{{[^"]*}}clang{{[^"]*}}" "-cc1"
 // CHECK-UBUNTU-14-04-PPC64LE: "-triple" "powerpc64le-unknown-linux-gnu"
@@ -141,6 +151,7 @@
 // RUN: %clang -no-canonical-prefixes %s -### -fsyntax-only 2>&1 \
 // RUN:     -target i686-linux-gnu \
 // RUN:     --sysroot=%S/Inputs/debian_multiarch_tree \
+// RUN:     --gcc-toolchain="" \
 // RUN:   | FileCheck --check-prefix=CHECK-DEBIAN-X86 %s
 // CHECK-DEBIAN-X86: "{{[^"]*}}clang{{[^"]*}}" "-cc1"
 // CHECK-DEBIAN-X86: "-isysroot" "[[SYSROOT:[^"]+]]"
@@ -155,6 +166,7 @@
 // RUN: %clang -no-canonical-prefixes %s -### -fsyntax-only 2>&1 \
 // RUN:     -target x86_64-linux-gnu \
 // RUN:     --sysroot=%S/Inputs/debian_multiarch_tree \
+// RUN:     --gcc-toolchain="" \
 // RUN:   | FileCheck --check-prefix=CHECK-DEBIAN-X86-64 %s
 // CHECK-DEBIAN-X86-64: "{{[^"]*}}clang{{[^"]*}}" "-cc1"
 // CHECK-DEBIAN-X86-64: "-isysroot" "[[SYSROOT:[^"]+]]"
@@ -169,6 +181,7 @@
 // RUN: %clang -no-canonical-prefixes %s -### -fsyntax-only 2>&1 \
 // RUN:     -target powerpc-linux-gnu \
 // RUN:     --sysroot=%S/Inputs/debian_multiarch_tree \
+// RUN:     --gcc-toolchain="" \
 // RUN:   | FileCheck --check-prefix=CHECK-DEBIAN-PPC %s
 // CHECK-DEBIAN-PPC: "{{[^"]*}}clang{{[^"]*}}" "-cc1"
 // CHECK-DEBIAN-PPC: "-isysroot" "[[SYSROOT:[^"]+]]"
@@ -183,6 +196,7 @@
 // RUN: %clang -no-canonical-prefixes %s -### -fsyntax-only 2>&1 \
 // RUN:     -target powerpc64-linux-gnu \
 // RUN:     --sysroot=%S/Inputs/debian_multiarch_tree \
+// RUN:     --gcc-toolchain="" \
 // RUN:   | FileCheck --check-prefix=CHECK-DEBIAN-PPC64 %s
 // CHECK-DEBIAN-PPC64: "{{[^"]*}}clang{{[^"]*}}" "-cc1"
 // CHECK-DEBIAN-PPC64: "-isysroot" "[[SYSROOT:[^"]+]]"
@@ -200,6 +214,7 @@
 // RUN: %clang -no-canonical-prefixes %s -### -fsyntax-only 2>&1 \
 // RUN:     -target x86_64-unknown-linux-gnu \
 // RUN:     --sysroot=%S/Inputs/gentoo_linux_gcc_4.6.2_tree \
+// RUN:     --gcc-toolchain="" \
 // RUN:   | FileCheck --check-prefix=CHECK-GENTOO-4-6-2 %s
 // CHECK-GENTOO-4-6-2: "{{.*}}clang{{.*}}" "-cc1"
 // CHECK-GENTOO-4-6-2: "-isysroot" "[[SYSROOT:[^"]+]]"
@@ -213,6 +228,7 @@
 // RUN: %clang -no-canonical-prefixes %s -### -fsyntax-only 2>&1 \
 // RUN:     -target x86_64-unknown-linux-gnu \
 // RUN:     --sysroot=%S/Inputs/gentoo_linux_gcc_4.6.4_tree \
+// RUN:     --gcc-toolchain="" \
 // RUN:   | FileCheck --check-prefix=CHECK-GENTOO-4-6-4 %s
 // CHECK-GENTOO-4-6-4: "{{.*}}clang{{.*}}" "-cc1"
 // CHECK-GENTOO-4-6-4: "-isysroot" "[[SYSROOT:[^"]+]]"
@@ -228,6 +244,7 @@
 // RUN: %clang -no-canonical-prefixes %s -### -fsyntax-only 2>&1 \
 // RUN:     -target mips64-unknown-linux-gnuabi64 \
 // RUN:     --sysroot=%S/Inputs/debian_6_mips64_tree \
+// RUN:     --gcc-toolchain="" \
 // RUN:   | FileCheck --check-prefix=CHECK-MIPS64-GNUABI %s
 // CHECK-MIPS64-GNUABI: "{{[^"]*}}clang{{[^"]*}}" "-cc1"
 // CHECK-MIPS64-GNUABI: "-isysroot" "[[SYSROOT:[^"]+]]"
@@ -244,6 +261,7 @@
 // RUN: %clang -no-canonical-prefixes %s -### -fsyntax-only 2>&1 \
 // RUN:     -target mips64el-unknown-linux-gnuabi64 \
 // RUN:     --sysroot=%S/Inputs/debian_6_mips64_tree \
+// RUN:     --gcc-toolchain="" \
 // RUN:   | FileCheck --check-prefix=CHECK-MIPS64EL-GNUABI %s
 // CHECK-MIPS64EL-GNUABI: "{{[^"]*}}clang{{[^"]*}}" "-cc1"
 // CHECK-MIPS64EL-GNUABI: "-isysroot" "[[SYSROOT:[^"]+]]"
