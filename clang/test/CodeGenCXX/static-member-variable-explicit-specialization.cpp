@@ -76,37 +76,37 @@ template<typename T> int Internal<T>::a = foo();
 }
 int *use_internal_a = &Internal<int>::a;
 
-// ALL: define internal void @[[unordered1]]
+// ALL: define internal void @[[unordered1]](
 // ALL: call i32 @foo()
 // ALL: store {{.*}} @_ZN1AIsE1aE
 // ALL: ret
 
-// ALL: define internal void @[[unordered2]]
+// ALL: define internal void @[[unordered2]](
 // ALL: call i32 @foo()
 // ALL: store {{.*}} @_Z1xIsE
 // ALL: ret
 
-// ALL: define internal void @[[unordered3]]
+// ALL: define internal void @[[unordered3]](
 // ALL: call i32 @foo()
 // ALL: store {{.*}} @_ZN2ns1aIiE1iE
 // ALL: ret
 
-// ALL: define internal void @[[unordered4]]
+// ALL: define internal void @[[unordered4]](
 // ALL: call i32 @foo()
 // ALL: store {{.*}} @_ZN2ns1b1iIiEE
 // ALL: ret
 
-// ALL: define internal void @[[unordered5]]
+// ALL: define internal void @[[unordered5]](
 // ALL: call i32 @foo()
 // ALL: store {{.*}} @_ZN1AIvE1aE
 // ALL: ret
 
-// ALL: define internal void @[[unordered6]]
+// ALL: define internal void @[[unordered6]](
 // ALL: call i32 @foo()
 // ALL: store {{.*}} @_Z1xIcE
 // ALL: ret
 
-// ALL: define internal void @[[unordered7]]
+// ALL: define internal void @[[unordered7]](
 // ALL: call i32 @foo()
 // ALL: store {{.*}} @_ZN12_GLOBAL__N_18InternalIiE1aE
 // ALL: ret
