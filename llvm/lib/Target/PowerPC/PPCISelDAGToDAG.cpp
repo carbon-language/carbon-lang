@@ -3736,6 +3736,12 @@ static bool PeepholePPC64ZExtGather(SDValue Op32,
     return true;
   }
 
+  // CNTLZW always produces a 64-bit value in [0,32], and so is zero extended.
+  if (Op32.getMachineOpcode() == PPC::CNTLZW) {
+    ToPromote.insert(Op32.getNode());
+    return true;
+  }
+
   // Next, check for those instructions we can look through.
 
   // Assuming the mask does not wrap around, then the higher-order bits are
@@ -3925,6 +3931,7 @@ void PPCDAGToDAGISel::PeepholePPC64ZExt() {
       case PPC::LIS:       NewOpcode = PPC::LIS8; break;
       case PPC::LHBRX:     NewOpcode = PPC::LHBRX8; break;
       case PPC::LWBRX:     NewOpcode = PPC::LWBRX8; break;
+      case PPC::CNTLZW:    NewOpcode = PPC::CNTLZW8; break;
       case PPC::RLWIMI:    NewOpcode = PPC::RLWIMI8; break;
       case PPC::OR:        NewOpcode = PPC::OR8; break;
       case PPC::SELECT_I4: NewOpcode = PPC::SELECT_I8; break;

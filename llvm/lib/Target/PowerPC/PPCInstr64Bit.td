@@ -551,7 +551,10 @@ defm SRAD : XForm_6rc<31, 794, (outs g8rc:$rA), (ins g8rc:$rS, gprc:$rB),
                       "srad", "$rA, $rS, $rB", IIC_IntRotateD,
                       [(set i64:$rA, (PPCsra i64:$rS, i32:$rB))]>, isPPC64;
 
-let Interpretation64Bit = 1, isCodeGenOnly = 1 in { 
+let Interpretation64Bit = 1, isCodeGenOnly = 1 in {
+defm CNTLZW8 : XForm_11r<31,  26, (outs g8rc:$rA), (ins g8rc:$rS),
+                        "cntlzw", "$rA, $rS", IIC_IntGeneral, []>;
+
 defm EXTSB8 : XForm_11r<31, 954, (outs g8rc:$rA), (ins g8rc:$rS),
                         "extsb", "$rA, $rS", IIC_IntSimple,
                         [(set i64:$rA, (sext_inreg i64:$rS, i8))]>;
