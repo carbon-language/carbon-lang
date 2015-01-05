@@ -554,31 +554,31 @@ def dstidx64 : Operand<iPTR> {
   let PrintMethod = "printDstIdx64"; }
 def offset16_8 : Operand<iPTR> {
   let ParserMatchClass = X86MemOffs16_8AsmOperand;
-  let MIOperandInfo = (ops i64imm, i8imm);
+  let MIOperandInfo = (ops i16imm, i8imm);
   let PrintMethod = "printMemOffs8"; }
 def offset16_16 : Operand<iPTR> {
   let ParserMatchClass = X86MemOffs16_16AsmOperand;
-  let MIOperandInfo = (ops i64imm, i8imm);
+  let MIOperandInfo = (ops i16imm, i8imm);
   let PrintMethod = "printMemOffs16"; }
 def offset16_32 : Operand<iPTR> {
   let ParserMatchClass = X86MemOffs16_32AsmOperand;
-  let MIOperandInfo = (ops i64imm, i8imm);
+  let MIOperandInfo = (ops i16imm, i8imm);
   let PrintMethod = "printMemOffs32"; }
 def offset32_8 : Operand<iPTR> {
   let ParserMatchClass = X86MemOffs32_8AsmOperand;
-  let MIOperandInfo = (ops i64imm, i8imm);
+  let MIOperandInfo = (ops i32imm, i8imm);
   let PrintMethod = "printMemOffs8"; }
 def offset32_16 : Operand<iPTR> {
   let ParserMatchClass = X86MemOffs32_16AsmOperand;
-  let MIOperandInfo = (ops i64imm, i8imm);
+  let MIOperandInfo = (ops i32imm, i8imm);
   let PrintMethod = "printMemOffs16"; }
 def offset32_32 : Operand<iPTR> {
   let ParserMatchClass = X86MemOffs32_32AsmOperand;
-  let MIOperandInfo = (ops i64imm, i8imm);
+  let MIOperandInfo = (ops i32imm, i8imm);
   let PrintMethod = "printMemOffs32"; }
 def offset32_64 : Operand<iPTR> {
   let ParserMatchClass = X86MemOffs32_64AsmOperand;
-  let MIOperandInfo = (ops i64imm, i8imm);
+  let MIOperandInfo = (ops i32imm, i8imm);
   let PrintMethod = "printMemOffs64"; }
 def offset64_8 : Operand<iPTR> {
   let ParserMatchClass = X86MemOffs64_8AsmOperand;
