@@ -387,6 +387,14 @@ namespace llvm {
 
     MVT getScalarShiftAmountTy(EVT LHSTy) const override { return MVT::i32; }
 
+    bool isCheapToSpeculateCttz() const override {
+      return true;
+    }
+
+    bool isCheapToSpeculateCtlz() const override {
+      return true;
+    }
+
     /// getSetCCResultType - Return the ISD::SETCC ValueType
     EVT getSetCCResultType(LLVMContext &Context, EVT VT) const override;
 
