@@ -28,13 +28,13 @@ namespace {
 
 /// \brief No-op module pass which does nothing.
 struct NoOpModulePass {
-  PreservedAnalyses run(Module *M) { return PreservedAnalyses::all(); }
+  PreservedAnalyses run(Module &M) { return PreservedAnalyses::all(); }
   static StringRef name() { return "NoOpModulePass"; }
 };
 
 /// \brief No-op CGSCC pass which does nothing.
 struct NoOpCGSCCPass {
-  PreservedAnalyses run(LazyCallGraph::SCC *C) {
+  PreservedAnalyses run(LazyCallGraph::SCC &C) {
     return PreservedAnalyses::all();
   }
   static StringRef name() { return "NoOpCGSCCPass"; }
@@ -42,7 +42,7 @@ struct NoOpCGSCCPass {
 
 /// \brief No-op function pass which does nothing.
 struct NoOpFunctionPass {
-  PreservedAnalyses run(Function *F) { return PreservedAnalyses::all(); }
+  PreservedAnalyses run(Function &F) { return PreservedAnalyses::all(); }
   static StringRef name() { return "NoOpFunctionPass"; }
 };
 

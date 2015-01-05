@@ -541,7 +541,7 @@ public:
   ///
   /// This just builds the set of entry points to the call graph. The rest is
   /// built lazily as it is walked.
-  LazyCallGraph run(Module *M) { return LazyCallGraph(*M); }
+  LazyCallGraph run(Module &M) { return LazyCallGraph(M); }
 
 private:
   static char PassID;
@@ -556,7 +556,7 @@ class LazyCallGraphPrinterPass {
 public:
   explicit LazyCallGraphPrinterPass(raw_ostream &OS);
 
-  PreservedAnalyses run(Module *M, ModuleAnalysisManager *AM);
+  PreservedAnalyses run(Module &M, ModuleAnalysisManager *AM);
 
   static StringRef name() { return "LazyCallGraphPrinterPass"; }
 };

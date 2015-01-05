@@ -708,11 +708,11 @@ static void printSCC(raw_ostream &OS, LazyCallGraph::SCC &SCC) {
   OS << "\n";
 }
 
-PreservedAnalyses LazyCallGraphPrinterPass::run(Module *M,
+PreservedAnalyses LazyCallGraphPrinterPass::run(Module &M,
                                                 ModuleAnalysisManager *AM) {
   LazyCallGraph &G = AM->getResult<LazyCallGraphAnalysis>(M);
 
-  OS << "Printing the call graph for module: " << M->getModuleIdentifier()
+  OS << "Printing the call graph for module: " << M.getModuleIdentifier()
      << "\n\n";
 
   SmallPtrSet<LazyCallGraph::Node *, 16> Printed;
@@ -724,5 +724,4 @@ PreservedAnalyses LazyCallGraphPrinterPass::run(Module *M,
     printSCC(OS, SCC);
 
   return PreservedAnalyses::all();
-
 }

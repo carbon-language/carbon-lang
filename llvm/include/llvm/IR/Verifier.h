@@ -77,8 +77,8 @@ class VerifierPass {
 public:
   explicit VerifierPass(bool FatalErrors = true) : FatalErrors(FatalErrors) {}
 
-  PreservedAnalyses run(Module *M);
-  PreservedAnalyses run(Function *F);
+  PreservedAnalyses run(Module &M);
+  PreservedAnalyses run(Function &F);
 
   static StringRef name() { return "VerifierPass"; }
 };

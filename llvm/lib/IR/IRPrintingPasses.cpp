@@ -24,8 +24,8 @@ PrintModulePass::PrintModulePass() : OS(dbgs()) {}
 PrintModulePass::PrintModulePass(raw_ostream &OS, const std::string &Banner)
     : OS(OS), Banner(Banner) {}
 
-PreservedAnalyses PrintModulePass::run(Module *M) {
-  OS << Banner << *M;
+PreservedAnalyses PrintModulePass::run(Module &M) {
+  OS << Banner << M;
   return PreservedAnalyses::all();
 }
 
@@ -33,8 +33,8 @@ PrintFunctionPass::PrintFunctionPass() : OS(dbgs()) {}
 PrintFunctionPass::PrintFunctionPass(raw_ostream &OS, const std::string &Banner)
     : OS(OS), Banner(Banner) {}
 
-PreservedAnalyses PrintFunctionPass::run(Function *F) {
-  OS << Banner << static_cast<Value &>(*F);
+PreservedAnalyses PrintFunctionPass::run(Function &F) {
+  OS << Banner << static_cast<Value &>(F);
   return PreservedAnalyses::all();
 }
 
@@ -50,7 +50,7 @@ public:
       : ModulePass(ID), P(OS, Banner) {}
 
   bool runOnModule(Module &M) override {
-    P.run(&M);
+    P.run(M);
     return false;
   }
 
@@ -70,7 +70,7 @@ public:
 
   // This pass just prints a banner followed by the function as it's processed.
   bool runOnFunction(Function &F) override {
-    P.run(&F);
+    P.run(F);
     return false;
   }
 

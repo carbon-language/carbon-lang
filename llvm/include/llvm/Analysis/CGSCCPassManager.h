@@ -40,7 +40,7 @@ public:
   }
 
   /// \brief Run all of the CGSCC passes in this pass manager over a SCC.
-  PreservedAnalyses run(LazyCallGraph::SCC *C,
+  PreservedAnalyses run(LazyCallGraph::SCC &C,
                         CGSCCAnalysisManager *AM = nullptr);
 
   template <typename CGSCCPassT> void addPass(CGSCCPassT Pass) {
@@ -51,13 +51,13 @@ public:
 
 private:
   // Pull in the concept type and model template specialized for SCCs.
-  typedef detail::PassConcept<LazyCallGraph::SCC *, CGSCCAnalysisManager>
+  typedef detail::PassConcept<LazyCallGraph::SCC &, CGSCCAnalysisManager>
   CGSCCPassConcept;
   template <typename PassT>
   struct CGSCCPassModel
-      : detail::PassModel<LazyCallGraph::SCC *, CGSCCAnalysisManager, PassT> {
+      : detail::PassModel<LazyCallGraph::SCC &, CGSCCAnalysisManager, PassT> {
     CGSCCPassModel(PassT Pass)
-        : detail::PassModel<LazyCallGraph::SCC *, CGSCCAnalysisManager, PassT>(
+        : detail::PassModel<LazyCallGraph::SCC &, CGSCCAnalysisManager, PassT>(
               std::move(Pass)) {}
   };
 
@@ -70,11 +70,11 @@ private:
 /// \brief A function analysis manager to coordinate and cache analyses run over
 /// a module.
 class CGSCCAnalysisManager : public detail::AnalysisManagerBase<
-                                 CGSCCAnalysisManager, LazyCallGraph::SCC *> {
+                                 CGSCCAnalysisManager, LazyCallGraph::SCC &> {
   friend class detail::AnalysisManagerBase<CGSCCAnalysisManager,
-                                           LazyCallGraph::SCC *>;
+                                           LazyCallGraph::SCC &>;
   typedef detail::AnalysisManagerBase<CGSCCAnalysisManager,
-                                      LazyCallGraph::SCC *> BaseT;
+                                      LazyCallGraph::SCC &> BaseT;
   typedef BaseT::ResultConceptT ResultConceptT;
   typedef BaseT::PassConceptT PassConceptT;
 
@@ -110,17 +110,17 @@ private:
   operator=(const CGSCCAnalysisManager &) LLVM_DELETED_FUNCTION;
 
   /// \brief Get a function pass result, running the pass if necessary.
-  ResultConceptT &getResultImpl(void *PassID, LazyCallGraph::SCC *C);
+  ResultConceptT &getResultImpl(void *PassID, LazyCallGraph::SCC &C);
 
   /// \brief Get a cached function pass result or return null.
   ResultConceptT *getCachedResultImpl(void *PassID,
-                                      LazyCallGraph::SCC *C) const;
+                                      LazyCallGraph::SCC &C) const;
 
   /// \brief Invalidate a function pass result.
-  void invalidateImpl(void *PassID, LazyCallGraph::SCC *C);
+  void invalidateImpl(void *PassID, LazyCallGraph::SCC &C);
 
   /// \brief Invalidate the results for a function..
-  void invalidateImpl(LazyCallGraph::SCC *C, const PreservedAnalyses &PA);
+  void invalidateImpl(LazyCallGraph::SCC &C, const PreservedAnalyses &PA);
 
   /// \brief List of function analysis pass IDs and associated concept pointers.
   ///
@@ -129,7 +129,7 @@ private:
   /// half of a bijection and provides storage for the actual result concept.
   typedef std::list<
       std::pair<void *, std::unique_ptr<detail::AnalysisResultConcept<
-                            LazyCallGraph::SCC *>>>> CGSCCAnalysisResultListT;
+                            LazyCallGraph::SCC &>>>> CGSCCAnalysisResultListT;
 
   /// \brief Map type from function pointer to our custom list type.
   typedef DenseMap<LazyCallGraph::SCC *, CGSCCAnalysisResultListT>
@@ -187,7 +187,7 @@ public:
     /// Regardless of whether this analysis is marked as preserved, all of the
     /// analyses in the \c CGSCCAnalysisManager are potentially invalidated
     /// based on the set of preserved analyses.
-    bool invalidate(Module *M, const PreservedAnalyses &PA);
+    bool invalidate(Module &M, const PreservedAnalyses &PA);
 
   private:
     CGSCCAnalysisManager *CGAM;
@@ -219,7 +219,7 @@ public:
   /// In debug builds, it will also assert that the analysis manager is empty
   /// as no queries should arrive at the CGSCC analysis manager prior to
   /// this analysis being requested.
-  Result run(Module *M);
+  Result run(Module &M);
 
 private:
   static char PassID;
@@ -257,7 +257,7 @@ public:
     const ModuleAnalysisManager &getManager() const { return *MAM; }
 
     /// \brief Handle invalidation by ignoring it, this pass is immutable.
-    bool invalidate(LazyCallGraph::SCC *) { return false; }
+    bool invalidate(LazyCallGraph::SCC &) { return false; }
 
   private:
     const ModuleAnalysisManager *MAM;
@@ -283,7 +283,7 @@ public:
   /// \brief Run the analysis pass and create our proxy result object.
   /// Nothing to see here, it just forwards the \c MAM reference into the
   /// result.
-  Result run(LazyCallGraph::SCC *) { return Result(*MAM); }
+  Result run(LazyCallGraph::SCC &) { return Result(*MAM); }
 
 private:
   static char PassID;
@@ -323,7 +323,7 @@ public:
   }
 
   /// \brief Runs the CGSCC pass across every SCC in the module.
-  PreservedAnalyses run(Module *M, ModuleAnalysisManager *AM) {
+  PreservedAnalyses run(Module &M, ModuleAnalysisManager *AM) {
     assert(AM && "We need analyses to compute the call graph!");
 
     // Setup the CGSCC analysis manager from its proxy.
@@ -335,7 +335,7 @@ public:
 
     PreservedAnalyses PA = PreservedAnalyses::all();
     for (LazyCallGraph::SCC &C : CG.postorder_sccs()) {
-      PreservedAnalyses PassPA = Pass.run(&C, &CGAM);
+      PreservedAnalyses PassPA = Pass.run(C, &CGAM);
 
       // We know that the CGSCC pass couldn't have invalidated any other
       // SCC's analyses (that's the contract of a CGSCC pass), so
@@ -343,7 +343,7 @@ public:
       // FIXME: This isn't quite correct. We need to handle the case where the
       // pass updated the CG, particularly some child of the current SCC, and
       // invalidate its analyses.
-      CGAM.invalidate(&C, PassPA);
+      CGAM.invalidate(C, PassPA);
 
       // Then intersect the preserved set so that invalidation of module
       // analyses will eventually occur when the module pass completes.
@@ -409,7 +409,7 @@ public:
     /// Regardless of whether this analysis is marked as preserved, all of the
     /// analyses in the \c FunctionAnalysisManager are potentially invalidated
     /// based on the set of preserved analyses.
-    bool invalidate(LazyCallGraph::SCC *C, const PreservedAnalyses &PA);
+    bool invalidate(LazyCallGraph::SCC &C, const PreservedAnalyses &PA);
 
   private:
     FunctionAnalysisManager *FAM;
@@ -441,7 +441,7 @@ public:
   /// In debug builds, it will also assert that the analysis manager is empty
   /// as no queries should arrive at the function analysis manager prior to
   /// this analysis being requested.
-  Result run(LazyCallGraph::SCC *C);
+  Result run(LazyCallGraph::SCC &C);
 
 private:
   static char PassID;
@@ -479,7 +479,7 @@ public:
     const CGSCCAnalysisManager &getManager() const { return *CGAM; }
 
     /// \brief Handle invalidation by ignoring it, this pass is immutable.
-    bool invalidate(Function *) { return false; }
+    bool invalidate(Function &) { return false; }
 
   private:
     const CGSCCAnalysisManager *CGAM;
@@ -505,7 +505,7 @@ public:
   /// \brief Run the analysis pass and create our proxy result object.
   /// Nothing to see here, it just forwards the \c CGAM reference into the
   /// result.
-  Result run(Function *) { return Result(*CGAM); }
+  Result run(Function &) { return Result(*CGAM); }
 
 private:
   static char PassID;
@@ -541,21 +541,21 @@ public:
   }
 
   /// \brief Runs the function pass across every function in the module.
-  PreservedAnalyses run(LazyCallGraph::SCC *C, CGSCCAnalysisManager *AM) {
+  PreservedAnalyses run(LazyCallGraph::SCC &C, CGSCCAnalysisManager *AM) {
     FunctionAnalysisManager *FAM = nullptr;
     if (AM)
       // Setup the function analysis manager from its proxy.
       FAM = &AM->getResult<FunctionAnalysisManagerCGSCCProxy>(C).getManager();
 
     PreservedAnalyses PA = PreservedAnalyses::all();
-    for (LazyCallGraph::Node *N : *C) {
-      PreservedAnalyses PassPA = Pass.run(&N->getFunction(), FAM);
+    for (LazyCallGraph::Node *N : C) {
+      PreservedAnalyses PassPA = Pass.run(N->getFunction(), FAM);
 
       // We know that the function pass couldn't have invalidated any other
       // function's analyses (that's the contract of a function pass), so
       // directly handle the function analysis manager's invalidation here.
       if (FAM)
-        FAM->invalidate(&N->getFunction(), PassPA);
+        FAM->invalidate(N->getFunction(), PassPA);
 
       // Then intersect the preserved set so that invalidation of module
       // analyses will eventually occur when the module pass completes.

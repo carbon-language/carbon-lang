@@ -58,7 +58,7 @@ public:
   PrintModulePass();
   PrintModulePass(raw_ostream &OS, const std::string &Banner = "");
 
-  PreservedAnalyses run(Module *M);
+  PreservedAnalyses run(Module &M);
 
   static StringRef name() { return "PrintModulePass"; }
 };
@@ -75,7 +75,7 @@ public:
   PrintFunctionPass();
   PrintFunctionPass(raw_ostream &OS, const std::string &Banner = "");
 
-  PreservedAnalyses run(Function *F);
+  PreservedAnalyses run(Function &F);
 
   static StringRef name() { return "PrintFunctionPass"; }
 };

@@ -18,8 +18,8 @@
 #include "llvm/Pass.h"
 using namespace llvm;
 
-PreservedAnalyses BitcodeWriterPass::run(Module *M) {
-  WriteBitcodeToFile(M, OS);
+PreservedAnalyses BitcodeWriterPass::run(Module &M) {
+  WriteBitcodeToFile(&M, OS);
   return PreservedAnalyses::all();
 }
 

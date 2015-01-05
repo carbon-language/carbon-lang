@@ -32,10 +32,10 @@ public:
   TestFunctionAnalysis(int &Runs) : Runs(Runs) {}
 
   /// \brief Run the analysis pass over the function and return a result.
-  Result run(Function *F, FunctionAnalysisManager *AM) {
+  Result run(Function &F, FunctionAnalysisManager *AM) {
     ++Runs;
     int Count = 0;
-    for (Function::iterator BBI = F->begin(), BBE = F->end(); BBI != BBE; ++BBI)
+    for (Function::iterator BBI = F.begin(), BBE = F.end(); BBI != BBE; ++BBI)
       for (BasicBlock::iterator II = BBI->begin(), IE = BBI->end(); II != IE;
            ++II)
         ++Count;
@@ -62,10 +62,10 @@ public:
 
   TestModuleAnalysis(int &Runs) : Runs(Runs) {}
 
-  Result run(Module *M, ModuleAnalysisManager *AM) {
+  Result run(Module &M, ModuleAnalysisManager *AM) {
     ++Runs;
     int Count = 0;
-    for (Module::iterator I = M->begin(), E = M->end(); I != E; ++I)
+    for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
       ++Count;
     return Result(Count);
   }
@@ -81,7 +81,7 @@ char TestModuleAnalysis::PassID;
 struct TestModulePass {
   TestModulePass(int &RunCount) : RunCount(RunCount) {}
 
-  PreservedAnalyses run(Module *M) {
+  PreservedAnalyses run(Module &M) {
     ++RunCount;
     return PreservedAnalyses::none();
   }
@@ -92,13 +92,13 @@ struct TestModulePass {
 };
 
 struct TestPreservingModulePass {
-  PreservedAnalyses run(Module *M) { return PreservedAnalyses::all(); }
+  PreservedAnalyses run(Module &M) { return PreservedAnalyses::all(); }
 
   static StringRef name() { return "TestPreservingModulePass"; }
 };
 
 struct TestMinPreservingModulePass {
-  PreservedAnalyses run(Module *M, ModuleAnalysisManager *AM) {
+  PreservedAnalyses run(Module &M, ModuleAnalysisManager *AM) {
     PreservedAnalyses PA;
 
     // Force running an analysis.
@@ -119,13 +119,13 @@ struct TestFunctionPass {
         AnalyzedFunctionCount(AnalyzedFunctionCount),
         OnlyUseCachedResults(OnlyUseCachedResults) {}
 
-  PreservedAnalyses run(Function *F, FunctionAnalysisManager *AM) {
+  PreservedAnalyses run(Function &F, FunctionAnalysisManager *AM) {
     ++RunCount;
 
     const ModuleAnalysisManager &MAM =
         AM->getResult<ModuleAnalysisManagerFunctionProxy>(F).getManager();
     if (TestModuleAnalysis::Result *TMA =
-            MAM.getCachedResult<TestModuleAnalysis>(F->getParent()))
+            MAM.getCachedResult<TestModuleAnalysis>(*F.getParent()))
       AnalyzedFunctionCount += TMA->FunctionCount;
 
     if (OnlyUseCachedResults) {
@@ -155,9 +155,9 @@ struct TestFunctionPass {
 struct TestInvalidationFunctionPass {
   TestInvalidationFunctionPass(StringRef FunctionName) : Name(FunctionName) {}
 
-  PreservedAnalyses run(Function *F) {
-    return F->getName() == Name ? PreservedAnalyses::none()
-                                : PreservedAnalyses::all();
+  PreservedAnalyses run(Function &F) {
+    return F.getName() == Name ? PreservedAnalyses::none()
+                               : PreservedAnalyses::all();
   }
 
   static StringRef name() { return "TestInvalidationFunctionPass"; }
@@ -165,10 +165,10 @@ struct TestInvalidationFunctionPass {
   StringRef Name;
 };
 
-Module *parseIR(const char *IR) {
+std::unique_ptr<Module> parseIR(const char *IR) {
   LLVMContext &C = getGlobalContext();
   SMDiagnostic Err;
-  return parseAssemblyString(IR, Err, C).release();
+  return parseAssemblyString(IR, Err, C);
 }
 
 class PassManagerTest : public ::testing::Test {
@@ -310,7 +310,7 @@ TEST_F(PassManagerTest, Basic) {
     MPM.addPass(createModuleToFunctionPassAdaptor(std::move(FPM)));
   }
 
-  MPM.run(M.get(), &MAM);
+  MPM.run(*M, &MAM);
 
   // Validate module pass counters.
   EXPECT_EQ(1, ModulePassRunCount);
