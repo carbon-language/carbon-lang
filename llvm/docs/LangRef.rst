@@ -8587,7 +8587,7 @@ Arguments:
 """"""""""
 
 The first argument is the value to be counted. This argument may be of
-any integer type, or a vectory with integer element type. The return
+any integer type, or a vector with integer element type. The return
 type must match the first argument type.
 
 The second argument must be a constant and is a flag to indicate whether
@@ -8634,7 +8634,7 @@ Arguments:
 """"""""""
 
 The first argument is the value to be counted. This argument may be of
-any integer type, or a vectory with integer element type. The return
+any integer type, or a vector with integer element type. The return
 type must match the first argument type.
 
 The second argument must be a constant and is a flag to indicate whether
