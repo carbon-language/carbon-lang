@@ -905,16 +905,14 @@ NVPTXTargetLowering::getPrototype(Type *retTy, const ArgListTy &Args,
       O << ".param .b" << size << " _";
     } else if (isa<PointerType>(retTy)) {
       O << ".param .b" << getPointerTy().getSizeInBits() << " _";
+    } else if ((retTy->getTypeID() == Type::StructTyID) ||
+               isa<VectorType>(retTy)) {
+      O << ".param .align "
+        << retAlignment
+        << " .b8 _["
+        << getDataLayout()->getTypeAllocSize(retTy) << "]";
     } else {
-      if((retTy->getTypeID() == Type::StructTyID) ||
-         isa<VectorType>(retTy)) {
-        O << ".param .align "
-          << retAlignment
-          << " .b8 _["
-          << getDataLayout()->getTypeAllocSize(retTy) << "]";
-      } else {
-        assert(false && "Unknown return type");
-      }
+      llvm_unreachable("Unknown return type");
     }
     O << ") ";
   }

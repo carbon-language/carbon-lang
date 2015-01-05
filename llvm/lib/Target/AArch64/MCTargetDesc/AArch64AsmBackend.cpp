@@ -132,7 +132,7 @@ static uint64_t adjustFixupValue(unsigned Kind, uint64_t Value) {
   int64_t SignedValue = static_cast<int64_t>(Value);
   switch (Kind) {
   default:
-    assert(false && "Unknown fixup kind!");
+    llvm_unreachable("Unknown fixup kind!");
   case AArch64::fixup_aarch64_pcrel_adr_imm21:
     if (SignedValue > 2097151 || SignedValue < -2097152)
       report_fatal_error("fixup value out of range");
@@ -239,7 +239,7 @@ bool AArch64AsmBackend::fixupNeedsRelaxation(const MCFixup &Fixup,
 
 void AArch64AsmBackend::relaxInstruction(const MCInst &Inst,
                                          MCInst &Res) const {
-  assert(false && "AArch64AsmBackend::relaxInstruction() unimplemented");
+  llvm_unreachable("AArch64AsmBackend::relaxInstruction() unimplemented");
 }
 
 bool AArch64AsmBackend::writeNopData(uint64_t Count, MCObjectWriter *OW) const {

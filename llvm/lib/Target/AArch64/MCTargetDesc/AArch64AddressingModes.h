@@ -51,7 +51,7 @@ enum ShiftExtendType {
 /// getShiftName - Get the string encoding for the shift type.
 static inline const char *getShiftExtendName(AArch64_AM::ShiftExtendType ST) {
   switch (ST) {
-  default: assert(false && "unhandled shift type!");
+  default: llvm_unreachable("unhandled shift type!");
   case AArch64_AM::LSL: return "lsl";
   case AArch64_AM::LSR: return "lsr";
   case AArch64_AM::ASR: return "asr";

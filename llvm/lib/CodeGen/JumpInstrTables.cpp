@@ -117,8 +117,8 @@ bool replaceGlobalValueIndirectUse(GlobalValue *GV, Value *V, Use *U) {
     if (!isa<GlobalAlias>(C))
       C->replaceUsesOfWithOnConstant(GV, V, U);
   } else {
-    assert(false && "The Use of a Function symbol is neither an instruction nor"
-                    " a constant");
+    llvm_unreachable("The Use of a Function symbol is neither an instruction "
+                     "nor a constant");
   }
 
   return true;

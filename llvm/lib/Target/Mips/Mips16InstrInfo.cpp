@@ -144,7 +144,6 @@ bool Mips16InstrInfo::expandPostRAPseudo(MachineBasicBlock::iterator MI) const {
 /// opcode, e.g. turning BEQ to BNE.
 unsigned Mips16InstrInfo::getOppositeBranchOpc(unsigned Opc) const {
   switch (Opc) {
-  default:  llvm_unreachable("Illegal opcode!");
   case Mips::BeqzRxImmX16: return Mips::BnezRxImmX16;
   case Mips::BnezRxImmX16: return Mips::BeqzRxImmX16;
   case Mips::BeqzRxImm16: return Mips::BnezRxImm16;
@@ -166,8 +165,7 @@ unsigned Mips16InstrInfo::getOppositeBranchOpc(unsigned Opc) const {
   case Mips::BtnezT8SltX16: return Mips::BteqzT8SltX16;
   case Mips::BtnezT8SltiX16: return Mips::BteqzT8SltiX16;
   }
-  assert(false && "Implement this function.");
-  return 0;
+  llvm_unreachable("Illegal opcode!");
 }
 
 static void addSaveRestoreRegs(MachineInstrBuilder &MIB,
@@ -288,7 +286,7 @@ void Mips16InstrInfo::adjustStackPtrBig(unsigned SP, int64_t Amount,
 void Mips16InstrInfo::adjustStackPtrBigUnrestricted(
     unsigned SP, int64_t Amount, MachineBasicBlock &MBB,
     MachineBasicBlock::iterator I) const {
-   assert(false && "adjust stack pointer amount exceeded");
+   llvm_unreachable("adjust stack pointer amount exceeded");
 }
 
 /// Adjust SP by Amount bytes.

@@ -422,7 +422,7 @@ bool ThreadSanitizer::instrumentLoadOrStore(Instruction *I) {
 static ConstantInt *createOrdering(IRBuilder<> *IRB, AtomicOrdering ord) {
   uint32_t v = 0;
   switch (ord) {
-    case NotAtomic:              assert(false);
+    case NotAtomic: llvm_unreachable("unexpected atomic ordering!");
     case Unordered:              // Fall-through.
     case Monotonic:              v = 0; break;
     // case Consume:                v = 1; break;  // Not specified yet.

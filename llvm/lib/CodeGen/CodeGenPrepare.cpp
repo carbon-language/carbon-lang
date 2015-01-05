@@ -3970,7 +3970,8 @@ void VectorPromoteHelper::promoteImpl(Instruction *ToBePromoted) {
           isa<UndefValue>(Val) ||
               canCauseUndefinedBehavior(ToBePromoted, U.getOperandNo()));
     } else
-      assert(0 && "Did you modified shouldPromote and forgot to update this?");
+      llvm_unreachable("Did you modified shouldPromote and forgot to update "
+                       "this?");
     ToBePromoted->setOperand(U.getOperandNo(), NewVal);
   }
   Transition->removeFromParent();

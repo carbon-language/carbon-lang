@@ -666,6 +666,7 @@ void X86AddressSanitizer32::InstrumentMemOperandSmall(
                            .addImm(7));
 
   switch (AccessSize) {
+  default: llvm_unreachable("Incorrect access size");
   case 1:
     break;
   case 2: {
@@ -681,9 +682,6 @@ void X86AddressSanitizer32::InstrumentMemOperandSmall(
                              .addReg(ScratchRegI32)
                              .addReg(ScratchRegI32)
                              .addImm(3));
-    break;
-  default:
-    assert(false && "Incorrect access size");
     break;
   }
 
@@ -715,14 +713,12 @@ void X86AddressSanitizer32::InstrumentMemOperandLarge(
   {
     MCInst Inst;
     switch (AccessSize) {
+    default: llvm_unreachable("Incorrect access size");
     case 8:
       Inst.setOpcode(X86::CMP8mi);
       break;
     case 16:
       Inst.setOpcode(X86::CMP16mi);
-      break;
-    default:
-      assert(false && "Incorrect access size");
       break;
     }
     const MCExpr *Disp = MCConstantExpr::Create(kShadowOffset, Ctx);
@@ -941,6 +937,7 @@ void X86AddressSanitizer64::InstrumentMemOperandSmall(
                            .addImm(7));
 
   switch (AccessSize) {
+  default: llvm_unreachable("Incorrect access size");
   case 1:
     break;
   case 2: {
@@ -956,9 +953,6 @@ void X86AddressSanitizer64::InstrumentMemOperandSmall(
                              .addReg(ScratchRegI32)
                              .addReg(ScratchRegI32)
                              .addImm(3));
-    break;
-  default:
-    assert(false && "Incorrect access size");
     break;
   }
 
@@ -990,14 +984,12 @@ void X86AddressSanitizer64::InstrumentMemOperandLarge(
   {
     MCInst Inst;
     switch (AccessSize) {
+    default: llvm_unreachable("Incorrect access size");
     case 8:
       Inst.setOpcode(X86::CMP8mi);
       break;
     case 16:
       Inst.setOpcode(X86::CMP16mi);
-      break;
-    default:
-      assert(false && "Incorrect access size");
       break;
     }
     const MCExpr *Disp = MCConstantExpr::Create(kShadowOffset, Ctx);

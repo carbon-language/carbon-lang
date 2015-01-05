@@ -891,7 +891,7 @@ PredicateInstruction(MachineInstr *MI,
         continue;
       }
       else {
-        assert(false && "Unexpected operand type");
+        llvm_unreachable("Unexpected operand type");
       }
     }
   }

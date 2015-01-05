@@ -110,8 +110,7 @@ static MachineBasicBlock *getTargetMBB(const MachineInstr &Br) {
       return MO.getMBB();
   }
 
-  assert(false && "This instruction does not have an MBB operand.");
-  return nullptr;
+  llvm_unreachable("This instruction does not have an MBB operand.");
 }
 
 // Traverse the list of instructions backwards until a non-debug instruction is

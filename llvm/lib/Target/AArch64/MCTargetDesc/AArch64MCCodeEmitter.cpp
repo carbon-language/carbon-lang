@@ -437,8 +437,7 @@ AArch64MCCodeEmitter::getVecShifterOpValue(const MCInst &MI, unsigned OpIdx,
     return 3;
   }
 
-  assert(false && "Invalid value for vector shift amount!");
-  return 0;
+  llvm_unreachable("Invalid value for vector shift amount!");
 }
 
 uint32_t

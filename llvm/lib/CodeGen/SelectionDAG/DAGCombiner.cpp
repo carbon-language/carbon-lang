@@ -9735,7 +9735,7 @@ bool DAGCombiner::MergeConsecutiveStores(StoreSDNode* St) {
         } else if (ConstantFPSDNode *C = dyn_cast<ConstantFPSDNode>(Val)) {
           StoreInt|= C->getValueAPF().bitcastToAPInt().zext(StoreBW);
         } else {
-          assert(false && "Invalid constant element type");
+          llvm_unreachable("Invalid constant element type");
         }
       }
 
