@@ -608,9 +608,23 @@ static uint64_t Rot64(uint64_t Imm, unsigned R) {
 
 static unsigned SelectInt64Count(int64_t Imm) {
   unsigned Count = SelectInt64CountDirect(Imm);
+  if (Count == 1)
+    return Count;
 
   for (unsigned r = 1; r < 63; ++r) {
-    unsigned RCount = SelectInt64CountDirect(Rot64(Imm, r)) + 1;
+    uint64_t RImm = Rot64(Imm, r);
+    unsigned RCount = SelectInt64CountDirect(RImm) + 1;
+    Count = std::min(Count, RCount);
+
+    // See comments in SelectInt64 for an explanation of the logic below.
+    unsigned LS = findLastSet(RImm);
+    if (LS != r-1)
+      continue;
+
+    uint64_t OnesMask = -(int64_t) (UINT64_C(1) << (LS+1));
+    uint64_t RImmWithOnes = RImm | OnesMask;
+
+    RCount = SelectInt64CountDirect(RImmWithOnes) + 1;
     Count = std::min(Count, RCount);
   }
 
@@ -695,13 +709,45 @@ static SDNode *SelectInt64Direct(SelectionDAG *CurDAG, SDLoc dl, int64_t Imm) {
 
 static SDNode *SelectInt64(SelectionDAG *CurDAG, SDLoc dl, int64_t Imm) {
   unsigned Count = SelectInt64CountDirect(Imm);
+  if (Count == 1)
+    return SelectInt64Direct(CurDAG, dl, Imm);
+
   unsigned RMin = 0;
 
+  int64_t MatImm;
+  unsigned MaskEnd;
+
   for (unsigned r = 1; r < 63; ++r) {
-    unsigned RCount = SelectInt64CountDirect(Rot64(Imm, r)) + 1;
+    uint64_t RImm = Rot64(Imm, r);
+    unsigned RCount = SelectInt64CountDirect(RImm) + 1;
     if (RCount < Count) {
       Count = RCount;
       RMin = r;
+      MatImm = RImm;
+      MaskEnd = 63;
+    }
+
+    // If the immediate to generate has many trailing zeros, it might be
+    // worthwhile to generate a rotated value with too many leading ones
+    // (because that's free with li/lis's sign-extension semantics), and then
+    // mask them off after rotation.
+
+    unsigned LS = findLastSet(RImm);
+    // We're adding (63-LS) higher-order ones, and we expect to mask them off
+    // after performing the inverse rotation by (64-r). So we need that:
+    //   63-LS == 64-r => LS == r-1
+    if (LS != r-1)
+      continue;
+
+    uint64_t OnesMask = -(int64_t) (UINT64_C(1) << (LS+1));
+    uint64_t RImmWithOnes = RImm | OnesMask;
+
+    RCount = SelectInt64CountDirect(RImmWithOnes) + 1;
+    if (RCount < Count) {
+      Count = RCount;
+      RMin = r;
+      MatImm = RImmWithOnes;
+      MaskEnd = LS;
     }
   }
 
@@ -712,9 +758,9 @@ static SDNode *SelectInt64(SelectionDAG *CurDAG, SDLoc dl, int64_t Imm) {
       return CurDAG->getTargetConstant(Imm, MVT::i32);
   };
 
-  SDValue Val = SDValue(SelectInt64Direct(CurDAG, dl, Rot64(Imm, RMin)), 0);
-  return CurDAG->getMachineNode(PPC::RLDICL, dl, MVT::i64, Val,
-                                getI32Imm(64 - RMin), getI32Imm(0));
+  SDValue Val = SDValue(SelectInt64Direct(CurDAG, dl, MatImm), 0);
+  return CurDAG->getMachineNode(PPC::RLDICR, dl, MVT::i64, Val,
+                                getI32Imm(64 - RMin), getI32Imm(MaskEnd));
 }
 
 // Select a 64-bit constant.
