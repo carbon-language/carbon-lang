@@ -534,6 +534,17 @@ public:
     return 2;
   }
 
+  virtual bool IsIntegratedAssemblerDefault() const override {
+    switch (getTriple().getArch()) {
+    case llvm::Triple::ppc:
+    case llvm::Triple::sparc:
+    case llvm::Triple::sparcv9:
+      return true;
+    default:
+      return Generic_ELF::IsIntegratedAssemblerDefault();
+    }
+  }
+
 protected:
   Tool *buildAssembler() const override;
   Tool *buildLinker() const override;
@@ -575,6 +586,14 @@ public:
   void
   AddClangCXXStdlibIncludeArgs(const llvm::opt::ArgList &DriverArgs,
                                llvm::opt::ArgStringList &CC1Args) const override;
+  bool IsIntegratedAssemblerDefault() const override {
+    switch (getTriple().getArch()) {
+    case llvm::Triple::ppc:
+      return true;
+    default:
+      return Generic_ELF::IsIntegratedAssemblerDefault();
+    }
+  }
 
   bool UseSjLjExceptions() const override;
   bool isPIEDefault() const override;
@@ -598,6 +617,14 @@ public:
                               llvm::opt::ArgStringList &CC1Args) const override;
   bool IsUnwindTablesDefault() const override {
     return true;
+  }
+  bool IsIntegratedAssemblerDefault() const override {
+    switch (getTriple().getArch()) {
+    case llvm::Triple::ppc:
+      return true;
+    default:
+      return Generic_ELF::IsIntegratedAssemblerDefault();
+    }
   }
 
 protected:

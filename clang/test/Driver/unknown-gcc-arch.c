@@ -24,11 +24,11 @@
 
 
 // RUN: %clang -target powerpc64-unknown-unknown -c -x assembler %s -### -m32 \
-// RUN: -no-integrated-as 2>&1 | FileCheck -check-prefix=PPC64-M32 %s
+// RUN: 2>&1 | FileCheck -check-prefix=PPC64-M32 %s
 // PPC64-M32: {{.*as.*-a32}}
 
 // RUN: %clang -target powerpc-unknown-unknown -c -x assembler %s -### 2>&1 \
-// RUN: -no-integrated-as | FileCheck -check-prefix=PPC %s
+// RUN:   | FileCheck -check-prefix=PPC %s
 // PPC: {{.*as.*-a32}}
 
 // RUN: %clang -target sparc64-unknown-unknown -no-integrated-as -c -x assembler %s -### -m32 2>&1 \
