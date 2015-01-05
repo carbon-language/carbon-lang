@@ -843,6 +843,13 @@ def LDBRX : XForm_1<31,  532, (outs g8rc:$rD), (ins memrr:$src),
                    "ldbrx $rD, $src", IIC_LdStLoad,
                    [(set i64:$rD, (PPClbrx xoaddr:$src, i64))]>, isPPC64;
 
+let mayLoad = 1, hasSideEffects = 0, isCodeGenOnly = 1 in {
+def LHBRX8 : XForm_1<31, 790, (outs g8rc:$rD), (ins memrr:$src),
+                   "lhbrx $rD, $src", IIC_LdStLoad, []>;
+def LWBRX8 : XForm_1<31,  534, (outs g8rc:$rD), (ins memrr:$src),
+                   "lwbrx $rD, $src", IIC_LdStLoad, []>;
+}
+
 let mayLoad = 1, hasSideEffects = 0 in {
 def LDU  : DSForm_1<58, 1, (outs g8rc:$rD, ptr_rc_nor0:$ea_result), (ins memrix:$addr),
                     "ldu $rD, $addr", IIC_LdStLDU,

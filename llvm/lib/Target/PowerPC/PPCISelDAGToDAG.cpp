@@ -3729,6 +3729,13 @@ static bool PeepholePPC64ZExtGather(SDValue Op32,
     return true;
   }
 
+  // LHBRX and LWBRX always clear the higher-order bits.
+  if (Op32.getMachineOpcode() == PPC::LHBRX ||
+      Op32.getMachineOpcode() == PPC::LWBRX) {
+    ToPromote.insert(Op32.getNode());
+    return true;
+  }
+
   // Next, check for those instructions we can look through.
 
   // Assuming the mask does not wrap around, then the higher-order bits are
@@ -3916,6 +3923,8 @@ void PPCDAGToDAGISel::PeepholePPC64ZExt() {
       case PPC::SRW:       NewOpcode = PPC::SRW8; break;
       case PPC::LI:        NewOpcode = PPC::LI8; break;
       case PPC::LIS:       NewOpcode = PPC::LIS8; break;
+      case PPC::LHBRX:     NewOpcode = PPC::LHBRX8; break;
+      case PPC::LWBRX:     NewOpcode = PPC::LWBRX8; break;
       case PPC::RLWIMI:    NewOpcode = PPC::RLWIMI8; break;
       case PPC::OR:        NewOpcode = PPC::OR8; break;
       case PPC::SELECT_I4: NewOpcode = PPC::SELECT_I8; break;
