@@ -1,4 +1,6 @@
-; RUN: llc < %s -march=ppc64 -mcpu=g5 | FileCheck %s
+; RUN: llc -mcpu=g5 < %s | FileCheck %s
+target datalayout = "E-m:e-i64:64-n32:64"
+target triple = "powerpc64-unknown-linux-gnu"
 
 define i32 @_ZNK4llvm5APInt17countLeadingZerosEv(i64 *%t) nounwind {
         %tmp19 = load i64* %t
