@@ -211,16 +211,6 @@ _foo:
 
 ===-------------------------------------------------------------------------===
 
-We generate really bad code for this:
-
-int f(signed char *a, _Bool b, _Bool c) {
-   signed char t = 0;
-  if (b)  t = *a;
-  if (c)  *a = t;
-}
-
-===-------------------------------------------------------------------------===
-
 On the G5, logical CR operations are more expensive in their three
 address form: ops that read/write the same register are half as expensive as
 those that read from two registers that are different from their destination.
