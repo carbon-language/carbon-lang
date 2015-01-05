@@ -2020,73 +2020,126 @@ def: Pat<(i1 (setne (and I32:$Rs, I32:$Rt), I32:$Rt)),
 // XTYPE/MPY +
 //===----------------------------------------------------------------------===//
 
-// Multiply and user lower result.
-// Rd=add(#u6,mpyi(Rs,#U6))
-let isExtendable = 1, opExtendable = 1, isExtentSigned = 0, opExtentBits = 6,
-validSubTargets = HasV4SubT in
-def ADDi_MPYri_V4 : MInst<(outs IntRegs:$dst),
-            (ins u6Ext:$src1, IntRegs:$src2, u6Imm:$src3),
-            "$dst = add(#$src1, mpyi($src2, #$src3))",
-            [(set (i32 IntRegs:$dst),
-                  (add (mul (i32 IntRegs:$src2), u6ImmPred:$src3),
-                       u6ExtPred:$src1))]>,
-            Requires<[HasV4T]>;
+// Rd=add(#u6,mpyi(Rs,#U6)) -- Multiply by immed and add immed.
+
+let hasNewValue = 1, isExtendable = 1, opExtentBits = 6, opExtendable = 1,
+    isCodeGenOnly = 0 in
+def M4_mpyri_addi : MInst<(outs IntRegs:$Rd),
+  (ins u6Ext:$u6, IntRegs:$Rs, u6Imm:$U6),
+  "$Rd = add(#$u6, mpyi($Rs, #$U6))" ,
+  [(set (i32 IntRegs:$Rd),
+        (add (mul (i32 IntRegs:$Rs), u6ImmPred:$U6),
+             u6ExtPred:$u6))] ,"",ALU64_tc_3x_SLOT23> {
+    bits<5> Rd;
+    bits<6> u6;
+    bits<5> Rs;
+    bits<6> U6;
+
+    let IClass = 0b1101;
+
+    let Inst{27-24} = 0b1000;
+    let Inst{23}    = U6{5};
+    let Inst{22-21} = u6{5-4};
+    let Inst{20-16} = Rs;
+    let Inst{13}    = u6{3};
+    let Inst{12-8}  = Rd;
+    let Inst{7-5}   = u6{2-0};
+    let Inst{4-0}   = U6{4-0};
+  }
+
+// Rd=add(#u6,mpyi(Rs,Rt))
+let CextOpcode = "ADD_MPY", InputType = "imm", hasNewValue = 1,
+    isExtendable = 1, opExtentBits = 6, opExtendable = 1, isCodeGenOnly = 0 in
+def M4_mpyrr_addi : MInst <(outs IntRegs:$Rd),
+  (ins u6Ext:$u6, IntRegs:$Rs, IntRegs:$Rt),
+  "$Rd = add(#$u6, mpyi($Rs, $Rt))" ,
+  [(set (i32 IntRegs:$Rd),
+        (add (mul (i32 IntRegs:$Rs), (i32 IntRegs:$Rt)), u6ExtPred:$u6))],
+  "", ALU64_tc_3x_SLOT23>, ImmRegRel {
+    bits<5> Rd;
+    bits<6> u6;
+    bits<5> Rs;
+    bits<5> Rt;
+
+    let IClass = 0b1101;
+
+    let Inst{27-23} = 0b01110;
+    let Inst{22-21} = u6{5-4};
+    let Inst{20-16} = Rs;
+    let Inst{13}    = u6{3};
+    let Inst{12-8}  = Rt;
+    let Inst{7-5}   = u6{2-0};
+    let Inst{4-0}   = Rd;
+  }
+
+let hasNewValue = 1 in
+class T_AddMpy <bit MajOp, PatLeaf ImmPred, dag ins>
+  : ALU64Inst <(outs IntRegs:$dst), ins,
+  "$dst = add($src1, mpyi("#!if(MajOp,"$src3, #$src2))",
+                                      "#$src2, $src3))"),
+  [(set (i32 IntRegs:$dst),
+        (add (i32 IntRegs:$src1), (mul (i32 IntRegs:$src3), ImmPred:$src2)))],
+  "", ALU64_tc_3x_SLOT23> {
+    bits<5> dst;
+    bits<5> src1;
+    bits<8> src2;
+    bits<5> src3;
+
+    let IClass = 0b1101;
+
+    bits<6> ImmValue = !if(MajOp, src2{5-0}, src2{7-2});
+
+    let Inst{27-24} = 0b1111;
+    let Inst{23}    = MajOp;
+    let Inst{22-21} = ImmValue{5-4};
+    let Inst{20-16} = src3;
+    let Inst{13}    = ImmValue{3};
+    let Inst{12-8}  = dst;
+    let Inst{7-5}   = ImmValue{2-0};
+    let Inst{4-0}   = src1;
+  }
+
+let isCodeGenOnly = 0 in
+def M4_mpyri_addr_u2 : T_AddMpy<0b0, u6_2ImmPred,
+                       (ins IntRegs:$src1, u6_2Imm:$src2, IntRegs:$src3)>;
+
+let isExtendable = 1, opExtentBits = 6, opExtendable = 3,
+    CextOpcode = "ADD_MPY", InputType = "imm", isCodeGenOnly = 0 in
+def M4_mpyri_addr : T_AddMpy<0b1, u6ExtPred,
+                    (ins IntRegs:$src1, IntRegs:$src3, u6Ext:$src2)>, ImmRegRel;
+
+// Rx=add(Ru,mpyi(Rx,Rs))
+let validSubTargets = HasV4SubT, CextOpcode = "ADD_MPY", InputType = "reg",
+    hasNewValue = 1, isCodeGenOnly = 0 in
+def M4_mpyrr_addr: MInst_acc <(outs IntRegs:$Rx),
+                              (ins IntRegs:$Ru, IntRegs:$_src_, IntRegs:$Rs),
+  "$Rx = add($Ru, mpyi($_src_, $Rs))",
+  [(set (i32 IntRegs:$Rx), (add (i32 IntRegs:$Ru),
+                           (mul (i32 IntRegs:$_src_), (i32 IntRegs:$Rs))))],
+  "$_src_ = $Rx", M_tc_3x_SLOT23>, ImmRegRel {
+    bits<5> Rx;
+    bits<5> Ru;
+    bits<5> Rs;
+
+    let IClass = 0b1110;
+
+    let Inst{27-21} = 0b0011000;
+    let Inst{12-8} = Rx;
+    let Inst{4-0} = Ru;
+    let Inst{20-16} = Rs;
+  }
 
 // Rd=add(##,mpyi(Rs,#U6))
 def : Pat <(add (mul (i32 IntRegs:$src2), u6ImmPred:$src3),
                      (HexagonCONST32 tglobaladdr:$src1)),
-           (i32 (ADDi_MPYri_V4 tglobaladdr:$src1, IntRegs:$src2,
+           (i32 (M4_mpyri_addi tglobaladdr:$src1, IntRegs:$src2,
                                u6ImmPred:$src3))>;
-
-// Rd=add(#u6,mpyi(Rs,Rt))
-let isExtendable = 1, opExtendable = 1, isExtentSigned = 0, opExtentBits = 6,
-validSubTargets = HasV4SubT, InputType = "imm", CextOpcode = "ADD_MPY" in
-def ADDi_MPYrr_V4 : MInst<(outs IntRegs:$dst),
-            (ins u6Ext:$src1, IntRegs:$src2, IntRegs:$src3),
-            "$dst = add(#$src1, mpyi($src2, $src3))",
-            [(set (i32 IntRegs:$dst),
-                  (add (mul (i32 IntRegs:$src2), (i32 IntRegs:$src3)),
-                       u6ExtPred:$src1))]>,
-            Requires<[HasV4T]>, ImmRegRel;
 
 // Rd=add(##,mpyi(Rs,Rt))
 def : Pat <(add (mul (i32 IntRegs:$src2), (i32 IntRegs:$src3)),
                      (HexagonCONST32 tglobaladdr:$src1)),
-           (i32 (ADDi_MPYrr_V4 tglobaladdr:$src1, IntRegs:$src2,
+           (i32 (M4_mpyrr_addi tglobaladdr:$src1, IntRegs:$src2,
                                IntRegs:$src3))>;
-
-// Rd=add(Ru,mpyi(#u6:2,Rs))
-let validSubTargets = HasV4SubT in
-def ADDr_MPYir_V4 : MInst<(outs IntRegs:$dst),
-            (ins IntRegs:$src1, u6Imm:$src2, IntRegs:$src3),
-            "$dst = add($src1, mpyi(#$src2, $src3))",
-            [(set (i32 IntRegs:$dst),
-             (add (i32 IntRegs:$src1), (mul (i32 IntRegs:$src3),
-                                            u6_2ImmPred:$src2)))]>,
-            Requires<[HasV4T]>;
-
-// Rd=add(Ru,mpyi(Rs,#u6))
-let isExtendable = 1, opExtendable = 3, isExtentSigned = 0, opExtentBits = 6,
-validSubTargets = HasV4SubT, InputType = "imm", CextOpcode = "ADD_MPY" in
-def ADDr_MPYri_V4 : MInst<(outs IntRegs:$dst),
-            (ins IntRegs:$src1, IntRegs:$src2, u6Ext:$src3),
-            "$dst = add($src1, mpyi($src2, #$src3))",
-            [(set (i32 IntRegs:$dst),
-                  (add (i32 IntRegs:$src1), (mul (i32 IntRegs:$src2),
-                                                 u6ExtPred:$src3)))]>,
-            Requires<[HasV4T]>, ImmRegRel;
-
-// Rx=add(Ru,mpyi(Rx,Rs))
-let validSubTargets = HasV4SubT, InputType = "reg", CextOpcode = "ADD_MPY" in
-def ADDr_MPYrr_V4 : MInst_acc<(outs IntRegs:$dst),
-            (ins IntRegs:$src1, IntRegs:$src2, IntRegs:$src3),
-            "$dst = add($src1, mpyi($src2, $src3))",
-            [(set (i32 IntRegs:$dst),
-             (add (i32 IntRegs:$src1), (mul (i32 IntRegs:$src2),
-                                            (i32 IntRegs:$src3))))],
-            "$src2 = $dst">,
-            Requires<[HasV4T]>, ImmRegRel;
-
 
 // Polynomial multiply words
 // Rdd=pmpyw(Rs,Rt)
@@ -2125,6 +2178,66 @@ def ADDr_MPYrr_V4 : MInst_acc<(outs IntRegs:$dst),
 //===----------------------------------------------------------------------===//
 // XTYPE/SHIFT +
 //===----------------------------------------------------------------------===//
+// Shift by immediate and accumulate/logical.
+// Rx=add(#u8,asl(Rx,#U5))  Rx=add(#u8,lsr(Rx,#U5))
+// Rx=sub(#u8,asl(Rx,#U5))  Rx=sub(#u8,lsr(Rx,#U5))
+// Rx=and(#u8,asl(Rx,#U5))  Rx=and(#u8,lsr(Rx,#U5))
+// Rx=or(#u8,asl(Rx,#U5))   Rx=or(#u8,lsr(Rx,#U5))
+let isExtendable = 1, opExtendable = 1, isExtentSigned = 0, opExtentBits = 8,
+    hasNewValue = 1, opNewValue = 0, validSubTargets = HasV4SubT in
+class T_S4_ShiftOperate<string MnOp, string MnSh, SDNode Op, SDNode Sh,
+                        bit asl_lsr, bits<2> MajOp, InstrItinClass Itin>
+  : MInst_acc<(outs IntRegs:$Rd), (ins u8Ext:$u8, IntRegs:$Rx, u5Imm:$U5),
+      "$Rd = "#MnOp#"(#$u8, "#MnSh#"($Rx, #$U5))",
+      [(set (i32 IntRegs:$Rd),
+            (Op (Sh I32:$Rx, u5ImmPred:$U5), u8ExtPred:$u8))],
+      "$Rd = $Rx", Itin> {
+
+  bits<5> Rd;
+  bits<8> u8;
+  bits<5> Rx;
+  bits<5> U5;
+
+  let IClass = 0b1101;
+  let Inst{27-24} = 0b1110;
+  let Inst{23-21} = u8{7-5};
+  let Inst{20-16} = Rd;
+  let Inst{13} = u8{4};
+  let Inst{12-8} = U5;
+  let Inst{7-5} = u8{3-1};
+  let Inst{4} = asl_lsr;
+  let Inst{3} = u8{0};
+  let Inst{2-1} = MajOp;
+}
+
+multiclass T_ShiftOperate<string mnemonic, SDNode Op, bits<2> MajOp,
+                          InstrItinClass Itin> {
+  def _asl_ri : T_S4_ShiftOperate<mnemonic, "asl", Op, shl, 0, MajOp, Itin>;
+  def _lsr_ri : T_S4_ShiftOperate<mnemonic, "lsr", Op, srl, 1, MajOp, Itin>;
+}
+
+let AddedComplexity = 200, isCodeGenOnly = 0 in {
+  defm S4_addi : T_ShiftOperate<"add", add, 0b10, ALU64_tc_2_SLOT23>;
+  defm S4_andi : T_ShiftOperate<"and", and, 0b00, ALU64_tc_2_SLOT23>;
+}
+
+let AddedComplexity = 30, isCodeGenOnly = 0 in
+defm S4_ori  : T_ShiftOperate<"or",  or,  0b01, ALU64_tc_1_SLOT23>;
+
+let isCodeGenOnly = 0 in
+defm S4_subi : T_ShiftOperate<"sub", sub, 0b11, ALU64_tc_1_SLOT23>;
+
+
+// Rd=[cround|round](Rs,Rt)
+let hasNewValue = 1, Itinerary = S_3op_tc_2_SLOT23, isCodeGenOnly = 0 in {
+  def A4_cround_rr    : T_S3op_3 < "cround", IntRegs, 0b11, 0b00>;
+  def A4_round_rr     : T_S3op_3 < "round", IntRegs, 0b11, 0b10>;
+}
+
+// Rd=round(Rs,Rt):sat
+let hasNewValue = 1, Defs = [USR_OVF], Itinerary = S_3op_tc_2_SLOT23,
+    isCodeGenOnly = 0 in
+def A4_round_rr_sat : T_S3op_3 < "round", IntRegs, 0b11, 0b11, 1>;
 
 // Shift by immediate and accumulate.
 // Rx=add(#u8,asl(Rx,#U5))
