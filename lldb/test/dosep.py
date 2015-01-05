@@ -64,8 +64,11 @@ def process_dir(root, files, test_root, dotest_options):
         if os.path.islink(path):
             continue
 
-        command = ([sys.executable, "%s/dotest.py" % test_root] +
-                   (shlex.split(dotest_options) if dotest_options else []) +
+        script_file = os.path.join(test_root, "dotest.py")
+        is_posix = (os.name == "posix")
+        split_args = shlex.split(dotest_options, posix=is_posix) if dotest_options else []
+        command = ([sys.executable, script_file] +
+                   split_args +
                    ["-p", name, root])
 
         timeout_name = os.path.basename(os.path.splitext(name)[0]).upper()
