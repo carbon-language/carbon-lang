@@ -684,9 +684,6 @@ namespace X86II {
         ++FirstMemOp;// Skip the register source (which is encoded in I8IMM).
       if (HasEVEX_K)
         ++FirstMemOp;// Skip the mask register
-      // FIXME: Maybe lea should have its own form?  This is a horrible hack.
-      //if (Opcode == X86::LEA64r || Opcode == X86::LEA64_32r ||
-      //    Opcode == X86::LEA16r || Opcode == X86::LEA32r)
       return FirstMemOp;
     }
     case X86II::MRMXr:
