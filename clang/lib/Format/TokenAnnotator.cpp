@@ -927,6 +927,8 @@ private:
         LeftOfParens->MatchingParen->is(TT_LambdaLSquare))
       return false;
     if (Tok.Next) {
+      if (Tok.Next->is(tok::question))
+        return false;
       if (Style.Language == FormatStyle::LK_JavaScript &&
           Tok.Next->is(Keywords.kw_in))
         return false;

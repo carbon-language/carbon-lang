@@ -289,6 +289,10 @@ TEST_F(FormatTestJava, Generics) {
 
   verifyFormat("private Foo<X, Y>[] foos;");
   verifyFormat("Foo<X, Y>[] foos = this.foos;");
+  verifyFormat("return (a instanceof List<?>)\n"
+               "    ? aaaaaaaaaaaaaaaaaaaaaaa(aaaaaaaaaaaaaaaaaaaaa)\n"
+               "    : aaaaaaaaaaaaaaaaaaaaaaa;",
+               getStyleWithColumns(60));
 
   verifyFormat(
       "SomeLoooooooooooooooooooooongType name =\n"
