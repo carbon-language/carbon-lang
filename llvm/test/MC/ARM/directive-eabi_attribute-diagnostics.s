@@ -29,6 +29,11 @@
 @ CHECK: 	.eabi_attribute 0
 @ CHECK:                         ^
 
+        .eabi_attribute Tag_compatibility, 1
+@ CHECK: error: comma expected
+@ CHECK: .eabi_attribute Tag_compatibility, 1
+@ CHECK:                                     ^
+
 	.eabi_attribute Tag_MPextension_use_old, 0
 @ CHECK: error: attribute name not recognised: Tag_MPextension_use_old
 @ CHECK: 	.eabi_attribute Tag_MPextension_use_old, 0

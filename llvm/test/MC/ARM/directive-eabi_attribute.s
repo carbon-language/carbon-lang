@@ -173,8 +173,6 @@
 @ CHECK-OBJ-NEXT:   Value: 1
 @ CHECK-OBJ-NEXT:   TagName: ABI_FP_optimization_goals
 @ CHECK-OBJ-NEXT:   Description: Speed
-	.eabi_attribute Tag_compatibility, 1
-@ CHECK: .eabi_attribute 32, 1
 	.eabi_attribute Tag_compatibility, 1, "aeabi"
 @ CHECK: .eabi_attribute 32, 1, "aeabi"
 @ CHECK-OBJ:        Tag: 32

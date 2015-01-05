@@ -3,8 +3,6 @@
 
 	.syntax unified
 	.thumb
-@ FIXME: The next directive is not correct, Tag_compatibility isn't getting parsed correctly.
-	.eabi_attribute Tag_compatibility, 1
 	.eabi_attribute Tag_compatibility, 1, "aeabi"
 
 @ CHECK-ATTR: FileAttributes {
