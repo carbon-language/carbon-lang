@@ -957,7 +957,6 @@ OperandType RecognizableInstr::typeFromString(const std::string &s,
   TYPE("AVXCC",               TYPE_IMM5)
   TYPE("AVX512RC",            TYPE_IMM32)
   TYPE("brtarget",            TYPE_RELv)
-  TYPE("uncondbrtarget",      TYPE_RELv)
   TYPE("brtarget8",           TYPE_REL8)
   TYPE("f80mem",              TYPE_M80FP)
   TYPE("lea32mem",            TYPE_LEA)
