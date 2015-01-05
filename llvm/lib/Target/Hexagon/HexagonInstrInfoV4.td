@@ -1819,6 +1819,61 @@ def A4_bitsplit: ALU64Inst<(outs DoubleRegs:$Rd),
   let Inst{4-0} = Rd;
 }
 
+let isCodeGenOnly = 0 in {
+// Rx[&|]=xor(Rs,Rt)
+def M4_or_xor   : T_MType_acc_rr < "|= xor", 0b110, 0b001, 0>;
+def M4_and_xor  : T_MType_acc_rr < "&= xor", 0b010, 0b010, 0>;
+
+// Rx[&|^]=or(Rs,Rt)
+def M4_xor_or   : T_MType_acc_rr < "^= or",  0b110, 0b011, 0>;
+
+let CextOpcode = "ORr_ORr" in
+def M4_or_or    : T_MType_acc_rr < "|= or",  0b110, 0b000, 0>;
+def M4_and_or   : T_MType_acc_rr < "&= or",  0b010, 0b001, 0>;
+
+// Rx[&|^]=and(Rs,Rt)
+def M4_xor_and  : T_MType_acc_rr < "^= and", 0b110, 0b010, 0>;
+
+let CextOpcode = "ORr_ANDr" in
+def M4_or_and   : T_MType_acc_rr < "|= and", 0b010, 0b011, 0>;
+def M4_and_and  : T_MType_acc_rr < "&= and", 0b010, 0b000, 0>;
+
+// Rx[&|^]=and(Rs,~Rt)
+def M4_xor_andn : T_MType_acc_rr < "^= and", 0b001, 0b010, 0, [], 1>;
+def M4_or_andn  : T_MType_acc_rr < "|= and", 0b001, 0b000, 0, [], 1>;
+def M4_and_andn : T_MType_acc_rr < "&= and", 0b001, 0b001, 0, [], 1>;
+}
+
+// Compound or-or and or-and
+let isExtentSigned = 1, InputType = "imm", hasNewValue = 1, isExtendable = 1,
+    opExtentBits = 10, opExtendable = 3 in
+class T_CompOR <string mnemonic, bits<2> MajOp, SDNode OpNode>
+  : MInst_acc <(outs IntRegs:$Rx),
+               (ins IntRegs:$src1, IntRegs:$Rs, s10Ext:$s10),
+  "$Rx |= "#mnemonic#"($Rs, #$s10)",
+  [(set (i32 IntRegs:$Rx), (or (i32 IntRegs:$src1),
+                           (OpNode (i32 IntRegs:$Rs), s10ExtPred:$s10)))],
+  "$src1 = $Rx", ALU64_tc_2_SLOT23>, ImmRegRel {
+    bits<5> Rx;
+    bits<5> Rs;
+    bits<10> s10;
+
+    let IClass = 0b1101;
+
+    let Inst{27-24} = 0b1010;
+    let Inst{23-22} = MajOp;
+    let Inst{20-16} = Rs;
+    let Inst{21}    = s10{9};
+    let Inst{13-5}  = s10{8-0};
+    let Inst{4-0}   = Rx;
+  }
+
+let CextOpcode = "ORr_ANDr", isCodeGenOnly = 0 in
+def S4_or_andi : T_CompOR <"and", 0b00, and>;
+
+let CextOpcode = "ORr_ORr", isCodeGenOnly = 0 in
+def S4_or_ori : T_CompOR <"or", 0b10, or>;
+
 //  Add and accumulate.
 //  Rd=add(Rs,add(Ru,#s6))
 let isExtendable = 1, opExtendable = 3, isExtentSigned = 1, opExtentBits = 6,
