@@ -2733,6 +2733,33 @@ defm ORN : SIMDLogicalThreeVector<0, 0b11, "orn",
                                   BinOpFrag<(or node:$LHS, (vnot node:$RHS))> >;
 defm ORR : SIMDLogicalThreeVector<0, 0b10, "orr", or>;
 
+// SABD Vd.<T>, Vn.<T>, Vm.<T> Subtracts the elements of Vm from the corresponding
+// elements of Vn, and places the absolute values of the results in the elements of Vd.
+def : Pat<(xor (v8i8 (AArch64vashr (v8i8(sub V64:$Rn, V64:$Rm)), (i32 7))),
+               (v8i8 (add (v8i8(sub V64:$Rn, V64:$Rm)),
+               (AArch64vashr (v8i8(sub V64:$Rn, V64:$Rm)), (i32 7))))),
+          (SABDv8i8 V64:$Rn, V64:$Rm)>;
+def : Pat<(xor (v4i16 (AArch64vashr (v4i16(sub V64:$Rn, V64:$Rm)), (i32 15))),
+               (v4i16 (add (v4i16(sub V64:$Rn, V64:$Rm)),
+               (AArch64vashr (v4i16(sub V64:$Rn, V64:$Rm)), (i32 15))))),
+          (SABDv4i16 V64:$Rn, V64:$Rm)>;
+def : Pat<(xor (v2i32 (AArch64vashr (v2i32(sub V64:$Rn, V64:$Rm)), (i32 31))),
+               (v2i32 (add (v2i32(sub V64:$Rn, V64:$Rm)),
+               (AArch64vashr (v2i32(sub V64:$Rn, V64:$Rm)), (i32 31))))),
+          (SABDv2i32 V64:$Rn, V64:$Rm)>;
+def : Pat<(xor (v16i8 (AArch64vashr (v16i8(sub V128:$Rn, V128:$Rm)), (i32 7))),
+               (v16i8 (add (v16i8(sub V128:$Rn, V128:$Rm)),
+               (AArch64vashr (v16i8(sub V128:$Rn, V128:$Rm)), (i32 7))))),
+          (SABDv16i8 V128:$Rn, V128:$Rm)>;
+def : Pat<(xor (v8i16 (AArch64vashr (v8i16(sub V128:$Rn, V128:$Rm)), (i32 15))),
+               (v8i16 (add (v8i16(sub V128:$Rn, V128:$Rm)),
+               (AArch64vashr (v8i16(sub V128:$Rn, V128:$Rm)), (i32 15))))),
+          (SABDv8i16 V128:$Rn, V128:$Rm)>;
+def : Pat<(xor (v4i32 (AArch64vashr (v4i32(sub V128:$Rn, V128:$Rm)), (i32 31))),
+               (v4i32 (add (v4i32(sub V128:$Rn, V128:$Rm)),
+               (AArch64vashr (v4i32(sub V128:$Rn, V128:$Rm)), (i32 31))))),
+          (SABDv4i32 V128:$Rn, V128:$Rm)>;
+
 def : Pat<(AArch64bsl (v8i8 V64:$Rd), V64:$Rn, V64:$Rm),
           (BSLv8i8 V64:$Rd, V64:$Rn, V64:$Rm)>;
 def : Pat<(AArch64bsl (v4i16 V64:$Rd), V64:$Rn, V64:$Rm),
