@@ -494,7 +494,7 @@ RewriteSymbols::RewriteSymbols() : ModulePass(ID) {
 
 RewriteSymbols::RewriteSymbols(SymbolRewriter::RewriteDescriptorList &DL)
     : ModulePass(ID) {
-  std::swap(Descriptors, DL);
+  Descriptors.splice(Descriptors.begin(), DL);
 }
 
 bool RewriteSymbols::runOnModule(Module &M) {
