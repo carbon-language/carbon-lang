@@ -279,6 +279,7 @@
 ; V7-FAST:   .eabi_attribute 23, 1
 
 ; V8:      .syntax unified
+; V8: .eabi_attribute 67, "2.09"
 ; V8: .eabi_attribute 6, 14
 ; V8-NOT:   .eabi_attribute 19
 ; V8: .eabi_attribute 20, 1

@@ -629,6 +629,8 @@ void ARMAsmPrinter::emitAttributes() {
   MCTargetStreamer &TS = *OutStreamer.getTargetStreamer();
   ARMTargetStreamer &ATS = static_cast<ARMTargetStreamer &>(TS);
 
+  ATS.emitTextAttribute(ARMBuildAttrs::conformance, "2.09");
+
   ATS.switchVendor("aeabi");
 
   std::string CPUString = Subtarget->getCPUString();

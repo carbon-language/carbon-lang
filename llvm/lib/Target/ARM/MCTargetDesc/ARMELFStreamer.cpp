@@ -300,7 +300,19 @@ private:
     StringRef StringValue;
 
     static bool LessTag(const AttributeItem &LHS, const AttributeItem &RHS) {
-      return (LHS.Tag < RHS.Tag);
+      // The conformance tag must be emitted first when serialised
+      // into an object file. Specifically, the addenda to the ARM ABI
+      // states that (2.3.7.4):
+      //
+      // "To simplify recognition by consumers in the common case of
+      // claiming conformity for the whole file, this tag should be
+      // emitted first in a file-scope sub-subsection of the first
+      // public subsection of the attributes section."
+      //
+      // So it is special-cased in this comparison predicate when the
+      // attributes are sorted in finishAttributeSection().
+      return (RHS.Tag != ARMBuildAttrs::conformance) &&
+             ((LHS.Tag == ARMBuildAttrs::conformance) || (LHS.Tag < RHS.Tag));
     }
   };
 
