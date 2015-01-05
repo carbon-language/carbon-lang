@@ -494,19 +494,6 @@ _bar:
 
 ===-------------------------------------------------------------------------===
 
-test/CodeGen/PowerPC/2007-03-24-cntlzd.ll compiles to:
-
-__ZNK4llvm5APInt17countLeadingZerosEv:
-        ld r2, 0(r3)
-        cntlzd r2, r2
-        or r2, r2, r2     <<-- silly.
-        addi r3, r2, -64
-        blr 
-
-The dead or is a 'truncate' from 64- to 32-bits.
-
-===-------------------------------------------------------------------------===
-
 We generate horrible ppc code for this:
 
 #define N  2000000
