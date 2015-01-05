@@ -1889,6 +1889,33 @@ let Predicates = [IsLE] in {
 }
 } // AddedComplexity = 10
 
+// Match stores from lane 0 to the appropriate subreg's store.
+multiclass VecROStoreLane0Pat<ROAddrMode ro, SDPatternOperator storeop,
+                              ValueType VecTy, ValueType STy,
+                              SubRegIndex SubRegIdx,
+                              Instruction STRW, Instruction STRX> {
+
+  def : Pat<(storeop (STy (vector_extract (VecTy VecListOne128:$Vt), 0)),
+                     (ro.Wpat GPR64sp:$Rn, GPR32:$Rm, ro.Wext:$extend)),
+            (STRW (EXTRACT_SUBREG VecListOne128:$Vt, SubRegIdx),
+                  GPR64sp:$Rn, GPR32:$Rm, ro.Wext:$extend)>;
+
+  def : Pat<(storeop (STy (vector_extract (VecTy VecListOne128:$Vt), 0)),
+                     (ro.Xpat GPR64sp:$Rn, GPR64:$Rm, ro.Xext:$extend)),
+            (STRX (EXTRACT_SUBREG VecListOne128:$Vt, SubRegIdx),
+                  GPR64sp:$Rn, GPR64:$Rm, ro.Xext:$extend)>;
+}
+
+let AddedComplexity = 19 in {
+  defm : VecROStoreLane0Pat<ro16, truncstorei16, v8i16, i32, hsub, STRHroW, STRHroX>;
+  defm : VecROStoreLane0Pat<ro16,      store   , v8i16, i16, hsub, STRHroW, STRHroX>;
+  defm : VecROStoreLane0Pat<ro32, truncstorei32, v4i32, i32, ssub, STRSroW, STRSroX>;
+  defm : VecROStoreLane0Pat<ro32,      store   , v4i32, i32, ssub, STRSroW, STRSroX>;
+  defm : VecROStoreLane0Pat<ro32,      store   , v4f32, f32, ssub, STRSroW, STRSroX>;
+  defm : VecROStoreLane0Pat<ro64,      store   , v2i64, i64, dsub, STRDroW, STRDroX>;
+  defm : VecROStoreLane0Pat<ro64,      store   , v2f64, f64, dsub, STRDroW, STRDroX>;
+}
+
 //---
 // (unsigned immediate)
 defm STRX : StoreUI<0b11, 0, 0b00, GPR64, uimm12s8, "str",
