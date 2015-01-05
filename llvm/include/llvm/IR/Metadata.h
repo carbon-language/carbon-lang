@@ -186,7 +186,7 @@ class ValueAsMetadata : public Metadata, ReplaceableMetadataImpl {
   Value *V;
 
 protected:
-  ValueAsMetadata(LLVMContext &Context, unsigned ID, Value *V)
+  ValueAsMetadata(unsigned ID, Value *V)
       : Metadata(ID), V(V) {
     assert(V && "Expected valid value");
   }
@@ -236,8 +236,8 @@ public:
 class ConstantAsMetadata : public ValueAsMetadata {
   friend class ValueAsMetadata;
 
-  ConstantAsMetadata(LLVMContext &Context, Constant *C)
-      : ValueAsMetadata(Context, ConstantAsMetadataKind, C) {}
+  ConstantAsMetadata(Constant *C)
+      : ValueAsMetadata(ConstantAsMetadataKind, C) {}
 
 public:
   static ConstantAsMetadata *get(Constant *C) {
@@ -259,8 +259,8 @@ public:
 class LocalAsMetadata : public ValueAsMetadata {
   friend class ValueAsMetadata;
 
-  LocalAsMetadata(LLVMContext &Context, Value *Local)
-      : ValueAsMetadata(Context, LocalAsMetadataKind, Local) {
+  LocalAsMetadata(Value *Local)
+      : ValueAsMetadata(LocalAsMetadataKind, Local) {
     assert(!isa<Constant>(Local) && "Expected local value");
   }
 

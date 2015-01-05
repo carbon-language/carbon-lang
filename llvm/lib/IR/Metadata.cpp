@@ -255,9 +255,9 @@ ValueAsMetadata *ValueAsMetadata::get(Value *V) {
            "Expected this to be the only metadata use");
     V->NameAndIsUsedByMD.setInt(true);
     if (auto *C = dyn_cast<Constant>(V))
-      Entry = new ConstantAsMetadata(Context, C);
+      Entry = new ConstantAsMetadata(C);
     else
-      Entry = new LocalAsMetadata(Context, V);
+      Entry = new LocalAsMetadata(V);
   }
 
   return Entry;
