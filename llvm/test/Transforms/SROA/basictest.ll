@@ -1541,3 +1541,57 @@ entry:
   %ret = fadd float %f1, %f2
   ret float %ret
 }
+
+define i32 @PR22093() {
+; Test that we don't try to pre-split a splittable store of a splittable but
+; not pre-splittable load over the same alloca. We "handle" this case when the
+; load is unsplittable but unrelated to this alloca by just generating extra
+; loads without touching the original, but when the original load was out of
+; this alloca we need to handle it specially to ensure the splits line up
+; properly for rewriting.
+;
+; CHECK-LABEL: @PR22093(
+; CHECK-NOT: alloca
+; CHECK: alloca i16
+; CHECK-NOT: alloca
+; CHECK: store volatile i16
+
+entry:
+  %a = alloca i32
+  %a.cast = bitcast i32* %a to i16*
+  store volatile i16 42, i16* %a.cast
+  %load = load i32* %a
+  store i32 %load, i32* %a
+  ret i32 %load
+}
+
+define void @PR22093.2() {
+; Another way that we end up being unable to split a particular set of loads
+; and stores can even have ordering importance. Here we have a load which is
+; pre-splittable by itself, and the first store is also compatible. But the
+; second store of the load makes the load unsplittable because of a mismatch of
+; splits. Because this makes the load unsplittable, we also have to go back and
+; remove the first store from the presplit candidates as its load won't be
+; presplit.
+;
+; CHECK-LABEL: @PR22093.2(
+; CHECK-NOT: alloca
+; CHECK: alloca i16
+; CHECK-NEXT: alloca i8
+; CHECK-NOT: alloca
+; CHECK: store volatile i16
+; CHECK: store volatile i8
+
+entry:
+  %a = alloca i64
+  %a.cast1 = bitcast i64* %a to i32*
+  %a.cast2 = bitcast i64* %a to i16*
+  store volatile i16 42, i16* %a.cast2
+  %load = load i32* %a.cast1
+  store i32 %load, i32* %a.cast1
+  %a.gep1 = getelementptr i32* %a.cast1, i32 1
+  %a.cast3 = bitcast i32* %a.gep1 to i8*
+  store volatile i8 13, i8* %a.cast3
+  store i32 %load, i32* %a.gep1
+  ret void
+}

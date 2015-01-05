@@ -3516,18 +3516,34 @@ bool SROA::presplitLoadsAndStores(AllocaInst &AI, AllocaSlices &AS) {
   };
   SmallDenseMap<Instruction *, SplitOffsets, 8> SplitOffsetsMap;
 
+  // Track loads out of this alloca which cannot, for any reason, be pre-split.
+  // This is important as we also cannot pre-split stores of those loads!
+  // FIXME: This is all pretty gross. It means that we can be more aggressive
+  // in pre-splitting when the load feeding the store happens to come from
+  // a separate alloca. Put another way, the effectiveness of SROA would be
+  // decreased by a frontend which just concatenated all of its local allocas
+  // into one big flat alloca. But defeating such patterns is exactly the job
+  // SROA is tasked with! Sadly, to not have this discrepancy we would have
+  // change store pre-splitting to actually force pre-splitting of the load
+  // that feeds it *and all stores*. That makes pre-splitting much harder, but
+  // maybe it would make it more principled?
+  SmallPtrSet<LoadInst *, 8> UnsplittableLoads;
+
   DEBUG(dbgs() << "  Searching for candidate loads and stores\n");
   for (auto &P : AS.partitions()) {
     for (Slice &S : P) {
-      if (!S.isSplittable())
+      Instruction *I = cast<Instruction>(S.getUse()->getUser());
+      if (!S.isSplittable() ||S.endOffset() <= P.endOffset()) {
+        // If this was a load we have to track that it can't participate in any
+        // pre-splitting!
+        if (auto *LI = dyn_cast<LoadInst>(I))
+          UnsplittableLoads.insert(LI);
         continue;
-      if (S.endOffset() <= P.endOffset())
-        continue;
+      }
       assert(P.endOffset() > S.beginOffset() &&
              "Empty or backwards partition!");
 
       // Determine if this is a pre-splittable slice.
-      Instruction *I = cast<Instruction>(S.getUse()->getUser());
       if (auto *LI = dyn_cast<LoadInst>(I)) {
         assert(!LI->isVolatile() && "Cannot split volatile loads!");
 
@@ -3542,8 +3558,10 @@ bool SROA::presplitLoadsAndStores(AllocaInst &AI, AllocaSlices &AS) {
           }
           return true;
         };
-        if (!IsLoadSimplyStored(LI))
+        if (!IsLoadSimplyStored(LI)) {
+          UnsplittableLoads.insert(LI);
           continue;
+        }
 
         Loads.push_back(LI);
       } else if (auto *SI = dyn_cast<StoreInst>(S.getUse()->getUser())) {
@@ -3597,16 +3615,20 @@ bool SROA::presplitLoadsAndStores(AllocaInst &AI, AllocaSlices &AS) {
   // such loads and stores, we can only pre-split them if their splits exactly
   // match relative to their starting offset. We have to verify this prior to
   // any rewriting.
-  SmallPtrSet<LoadInst *, 4> BadSplitLoads;
   Stores.erase(
       std::remove_if(Stores.begin(), Stores.end(),
-                     [&BadSplitLoads, &SplitOffsetsMap](StoreInst *SI) {
+                     [&UnsplittableLoads, &SplitOffsetsMap](StoreInst *SI) {
                        // Lookup the load we are storing in our map of split
                        // offsets.
                        auto *LI = cast<LoadInst>(SI->getValueOperand());
+                       // If it was completely unsplittable, then we're done,
+                       // and this store can't be pre-split.
+                       if (UnsplittableLoads.count(LI))
+                         return true;
+
                        auto LoadOffsetsI = SplitOffsetsMap.find(LI);
                        if (LoadOffsetsI == SplitOffsetsMap.end())
-                         return false; // Unrelated loads are always safe.
+                         return false; // Unrelated loads are definitely safe.
                        auto &LoadOffsets = LoadOffsetsI->second;
 
                        // Now lookup the store's offsets.
@@ -3627,15 +3649,29 @@ bool SROA::presplitLoadsAndStores(AllocaInst &AI, AllocaSlices &AS) {
                        // with mismatched relative splits. Just give up on them
                        // and remove both instructions from our list of
                        // candidates.
-                       BadSplitLoads.insert(LI);
+                       UnsplittableLoads.insert(LI);
                        return true;
                      }),
       Stores.end());
+  // Now we have to go *back* through all te stores, because a later store may
+  // have caused an earlier store's load to become unsplittable and if it is
+  // unsplittable for the later store, then we can't rely on it being split in
+  // the earlier store either.
+  Stores.erase(std::remove_if(Stores.begin(), Stores.end(),
+                              [&UnsplittableLoads](StoreInst *SI) {
+                                auto *LI =
+                                    cast<LoadInst>(SI->getValueOperand());
+                                return UnsplittableLoads.count(LI);
+                              }),
+               Stores.end());
+  // Once we've established all the loads that can't be split for some reason,
+  // filter any that made it into our list out.
   Loads.erase(std::remove_if(Loads.begin(), Loads.end(),
-                             [&BadSplitLoads](LoadInst *LI) {
-                               return BadSplitLoads.count(LI);
+                             [&UnsplittableLoads](LoadInst *LI) {
+                               return UnsplittableLoads.count(LI);
                              }),
               Loads.end());
+
 
   // If no loads or stores are left, there is no pre-splitting to be done for
   // this alloca.
