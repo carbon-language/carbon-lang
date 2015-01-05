@@ -261,121 +261,73 @@ def ptr_rc_nosp : PointerLikeRegClass<1>;
 def X86MemAsmOperand : AsmOperandClass {
  let Name = "Mem";
 }
-def X86Mem8AsmOperand : AsmOperandClass {
-  let Name = "Mem8"; let RenderMethod = "addMemOperands";
-}
-def X86Mem16AsmOperand : AsmOperandClass {
-  let Name = "Mem16"; let RenderMethod = "addMemOperands";
-}
-def X86Mem32AsmOperand : AsmOperandClass {
-  let Name = "Mem32"; let RenderMethod = "addMemOperands";
-}
-def X86Mem64AsmOperand : AsmOperandClass {
-  let Name = "Mem64"; let RenderMethod = "addMemOperands";
-}
-def X86Mem80AsmOperand : AsmOperandClass {
-  let Name = "Mem80"; let RenderMethod = "addMemOperands";
-}
-def X86Mem128AsmOperand : AsmOperandClass {
-  let Name = "Mem128"; let RenderMethod = "addMemOperands";
-}
-def X86Mem256AsmOperand : AsmOperandClass {
-  let Name = "Mem256"; let RenderMethod = "addMemOperands";
-}
-def X86Mem512AsmOperand : AsmOperandClass {
-  let Name = "Mem512"; let RenderMethod = "addMemOperands";
-}
-
-// Gather mem operands
-def X86MemVX32Operand : AsmOperandClass {
-  let Name = "MemVX32"; let RenderMethod = "addMemOperands";
-}
-def X86MemVY32Operand : AsmOperandClass {
-  let Name = "MemVY32"; let RenderMethod = "addMemOperands";
-}
-def X86MemVZ32Operand : AsmOperandClass {
-  let Name = "MemVZ32"; let RenderMethod = "addMemOperands";
-}
-def X86MemVX64Operand : AsmOperandClass {
-  let Name = "MemVX64"; let RenderMethod = "addMemOperands";
-}
-def X86MemVY64Operand : AsmOperandClass {
-  let Name = "MemVY64"; let RenderMethod = "addMemOperands";
-}
-def X86MemVZ64Operand : AsmOperandClass {
-  let Name = "MemVZ64"; let RenderMethod = "addMemOperands";
+let RenderMethod = "addMemOperands" in {
+  def X86Mem8AsmOperand   : AsmOperandClass { let Name = "Mem8"; }
+  def X86Mem16AsmOperand  : AsmOperandClass { let Name = "Mem16"; }
+  def X86Mem32AsmOperand  : AsmOperandClass { let Name = "Mem32"; }
+  def X86Mem64AsmOperand  : AsmOperandClass { let Name = "Mem64"; }
+  def X86Mem80AsmOperand  : AsmOperandClass { let Name = "Mem80"; }
+  def X86Mem128AsmOperand : AsmOperandClass { let Name = "Mem128"; }
+  def X86Mem256AsmOperand : AsmOperandClass { let Name = "Mem256"; }
+  def X86Mem512AsmOperand : AsmOperandClass { let Name = "Mem512"; }
+  // Gather mem operands
+  def X86MemVX32Operand : AsmOperandClass { let Name = "MemVX32"; }
+  def X86MemVY32Operand : AsmOperandClass { let Name = "MemVY32"; }
+  def X86MemVZ32Operand : AsmOperandClass { let Name = "MemVZ32"; }
+  def X86MemVX64Operand : AsmOperandClass { let Name = "MemVX64"; }
+  def X86MemVY64Operand : AsmOperandClass { let Name = "MemVY64"; }
+  def X86MemVZ64Operand : AsmOperandClass { let Name = "MemVZ64"; }
 }
 
 def X86AbsMemAsmOperand : AsmOperandClass {
   let Name = "AbsMem";
   let SuperClasses = [X86MemAsmOperand];
 }
-class X86MemOperand<string printMethod> : Operand<iPTR> {
+
+class X86MemOperand<string printMethod,
+          AsmOperandClass parserMatchClass = X86MemAsmOperand> : Operand<iPTR> {
   let PrintMethod = printMethod;
   let MIOperandInfo = (ops ptr_rc, i8imm, ptr_rc_nosp, i32imm, i8imm);
-  let ParserMatchClass = X86MemAsmOperand;
+  let ParserMatchClass = parserMatchClass;
+  let OperandType = "OPERAND_MEMORY";
 }
 
-let OperandType = "OPERAND_MEMORY" in {
+// Gather mem operands
+class X86VMemOperand<RegisterClass RC, string printMethod,
+                     AsmOperandClass parserMatchClass>
+    : X86MemOperand<printMethod, parserMatchClass> {
+  let MIOperandInfo = (ops ptr_rc, i8imm, RC, i32imm, i8imm);
+}
+
 def opaque32mem : X86MemOperand<"printopaquemem">;
 def opaque48mem : X86MemOperand<"printopaquemem">;
 def opaque80mem : X86MemOperand<"printopaquemem">;
 def opaque512mem : X86MemOperand<"printopaquemem">;
 
-def i8mem   : X86MemOperand<"printi8mem"> {
-  let ParserMatchClass = X86Mem8AsmOperand; }
-def i16mem  : X86MemOperand<"printi16mem"> {
-  let ParserMatchClass = X86Mem16AsmOperand; }
-def i32mem  : X86MemOperand<"printi32mem"> {
-  let ParserMatchClass = X86Mem32AsmOperand; }
-def i64mem  : X86MemOperand<"printi64mem"> {
-  let ParserMatchClass = X86Mem64AsmOperand; }
-def i128mem : X86MemOperand<"printi128mem"> {
-  let ParserMatchClass = X86Mem128AsmOperand; }
-def i256mem : X86MemOperand<"printi256mem"> {
-  let ParserMatchClass = X86Mem256AsmOperand; }
-def i512mem : X86MemOperand<"printi512mem"> {
-  let ParserMatchClass = X86Mem512AsmOperand; }
-def f32mem  : X86MemOperand<"printf32mem"> {
-  let ParserMatchClass = X86Mem32AsmOperand; }
-def f64mem  : X86MemOperand<"printf64mem"> {
-  let ParserMatchClass = X86Mem64AsmOperand; }
-def f80mem  : X86MemOperand<"printf80mem"> {
-  let ParserMatchClass = X86Mem80AsmOperand; }
-def f128mem : X86MemOperand<"printf128mem"> {
-  let ParserMatchClass = X86Mem128AsmOperand; }
-def f256mem : X86MemOperand<"printf256mem">{
-  let ParserMatchClass = X86Mem256AsmOperand; }
-def f512mem : X86MemOperand<"printf512mem">{
-  let ParserMatchClass = X86Mem512AsmOperand; }
-def v512mem : Operand<iPTR> {
-  let PrintMethod = "printf512mem";
-  let MIOperandInfo = (ops ptr_rc, i8imm, VR512, i32imm, i8imm);
-  let ParserMatchClass = X86Mem512AsmOperand; }
+def i8mem   : X86MemOperand<"printi8mem",   X86Mem8AsmOperand>;
+def i16mem  : X86MemOperand<"printi16mem",  X86Mem16AsmOperand>;
+def i32mem  : X86MemOperand<"printi32mem",  X86Mem32AsmOperand>;
+def i64mem  : X86MemOperand<"printi64mem",  X86Mem64AsmOperand>;
+def i128mem : X86MemOperand<"printi128mem", X86Mem128AsmOperand>;
+def i256mem : X86MemOperand<"printi256mem", X86Mem256AsmOperand>;
+def i512mem : X86MemOperand<"printi512mem", X86Mem512AsmOperand>;
+def f32mem  : X86MemOperand<"printf32mem",  X86Mem32AsmOperand>;
+def f64mem  : X86MemOperand<"printf64mem",  X86Mem64AsmOperand>;
+def f80mem  : X86MemOperand<"printf80mem",  X86Mem80AsmOperand>;
+def f128mem : X86MemOperand<"printf128mem", X86Mem128AsmOperand>;
+def f256mem : X86MemOperand<"printf256mem", X86Mem256AsmOperand>;
+def f512mem : X86MemOperand<"printf512mem", X86Mem512AsmOperand>;
+
+def v512mem : X86VMemOperand<VR512, "printf512mem", X86Mem512AsmOperand>;
 
 // Gather mem operands
-def vx32mem : X86MemOperand<"printi32mem">{
-  let MIOperandInfo = (ops ptr_rc, i8imm, VR128, i32imm, i8imm);
-  let ParserMatchClass = X86MemVX32Operand; }
-def vy32mem : X86MemOperand<"printi32mem">{
-  let MIOperandInfo = (ops ptr_rc, i8imm, VR256, i32imm, i8imm);
-  let ParserMatchClass = X86MemVY32Operand; }
-def vx64mem : X86MemOperand<"printi64mem">{
-  let MIOperandInfo = (ops ptr_rc, i8imm, VR128, i32imm, i8imm);
-  let ParserMatchClass = X86MemVX64Operand; }
-def vy64mem : X86MemOperand<"printi64mem">{
-  let MIOperandInfo = (ops ptr_rc, i8imm, VR256, i32imm, i8imm);
-  let ParserMatchClass = X86MemVY64Operand; }
-def vy64xmem : X86MemOperand<"printi64mem">{
-  let MIOperandInfo = (ops ptr_rc, i8imm, VR256X, i32imm, i8imm);
-  let ParserMatchClass = X86MemVY64Operand; }
-def vz32mem : X86MemOperand<"printi32mem">{
-  let MIOperandInfo = (ops ptr_rc, i16imm, VR512, i32imm, i8imm);
-  let ParserMatchClass = X86MemVZ32Operand; }
-def vz64mem : X86MemOperand<"printi64mem">{
-  let MIOperandInfo = (ops ptr_rc, i8imm, VR512, i32imm, i8imm);
-  let ParserMatchClass = X86MemVZ64Operand; }
-}
+def vx32mem  : X86VMemOperand<VR128,  "printi32mem", X86MemVX32Operand>;
+def vy32mem  : X86VMemOperand<VR256,  "printi32mem", X86MemVY32Operand>;
+def vx64mem  : X86VMemOperand<VR128,  "printi64mem", X86MemVX64Operand>;
+def vy64mem  : X86VMemOperand<VR256,  "printi64mem", X86MemVY64Operand>;
+def vy64xmem : X86VMemOperand<VR256X, "printi64mem", X86MemVY64Operand>;
+def vz32mem  : X86VMemOperand<VR512,  "printi32mem", X86MemVZ32Operand>;
+def vz64mem  : X86VMemOperand<VR512,  "printi64mem", X86MemVZ64Operand>;
 
 // A version of i8mem for use on x86-64 that uses GR64_NOREX instead of
 // plain GR64, so that it doesn't potentially require a REX prefix.
@@ -424,180 +376,138 @@ def brtarget8 : Operand<OtherVT>;
 
 }
 
-def X86SrcIdx8Operand : AsmOperandClass {
-  let Name = "SrcIdx8";
-  let RenderMethod = "addSrcIdxOperands";
-  let SuperClasses = [X86Mem8AsmOperand];
-}
-def X86SrcIdx16Operand : AsmOperandClass {
-  let Name = "SrcIdx16";
-  let RenderMethod = "addSrcIdxOperands";
-  let SuperClasses = [X86Mem16AsmOperand];
-}
-def X86SrcIdx32Operand : AsmOperandClass {
-  let Name = "SrcIdx32";
-  let RenderMethod = "addSrcIdxOperands";
-  let SuperClasses = [X86Mem32AsmOperand];
-}
-def X86SrcIdx64Operand : AsmOperandClass {
-  let Name = "SrcIdx64";
-  let RenderMethod = "addSrcIdxOperands";
-  let SuperClasses = [X86Mem64AsmOperand];
-}
-def X86DstIdx8Operand : AsmOperandClass {
-  let Name = "DstIdx8";
-  let RenderMethod = "addDstIdxOperands";
-  let SuperClasses = [X86Mem8AsmOperand];
-}
-def X86DstIdx16Operand : AsmOperandClass {
-  let Name = "DstIdx16";
-  let RenderMethod = "addDstIdxOperands";
-  let SuperClasses = [X86Mem16AsmOperand];
-}
-def X86DstIdx32Operand : AsmOperandClass {
-  let Name = "DstIdx32";
-  let RenderMethod = "addDstIdxOperands";
-  let SuperClasses = [X86Mem32AsmOperand];
-}
-def X86DstIdx64Operand : AsmOperandClass {
-  let Name = "DstIdx64";
-  let RenderMethod = "addDstIdxOperands";
-  let SuperClasses = [X86Mem64AsmOperand];
-}
-def X86MemOffs16_8AsmOperand : AsmOperandClass {
-  let Name = "MemOffs16_8";
-  let RenderMethod = "addMemOffsOperands";
-  let SuperClasses = [X86Mem8AsmOperand];
-}
-def X86MemOffs16_16AsmOperand : AsmOperandClass {
-  let Name = "MemOffs16_16";
-  let RenderMethod = "addMemOffsOperands";
-  let SuperClasses = [X86Mem16AsmOperand];
-}
-def X86MemOffs16_32AsmOperand : AsmOperandClass {
-  let Name = "MemOffs16_32";
-  let RenderMethod = "addMemOffsOperands";
-  let SuperClasses = [X86Mem32AsmOperand];
-}
-def X86MemOffs32_8AsmOperand : AsmOperandClass {
-  let Name = "MemOffs32_8";
-  let RenderMethod = "addMemOffsOperands";
-  let SuperClasses = [X86Mem8AsmOperand];
-}
-def X86MemOffs32_16AsmOperand : AsmOperandClass {
-  let Name = "MemOffs32_16";
-  let RenderMethod = "addMemOffsOperands";
-  let SuperClasses = [X86Mem16AsmOperand];
-}
-def X86MemOffs32_32AsmOperand : AsmOperandClass {
-  let Name = "MemOffs32_32";
-  let RenderMethod = "addMemOffsOperands";
-  let SuperClasses = [X86Mem32AsmOperand];
-}
-def X86MemOffs32_64AsmOperand : AsmOperandClass {
-  let Name = "MemOffs32_64";
-  let RenderMethod = "addMemOffsOperands";
-  let SuperClasses = [X86Mem64AsmOperand];
-}
-def X86MemOffs64_8AsmOperand : AsmOperandClass {
-  let Name = "MemOffs64_8";
-  let RenderMethod = "addMemOffsOperands";
-  let SuperClasses = [X86Mem8AsmOperand];
-}
-def X86MemOffs64_16AsmOperand : AsmOperandClass {
-  let Name = "MemOffs64_16";
-  let RenderMethod = "addMemOffsOperands";
-  let SuperClasses = [X86Mem16AsmOperand];
-}
-def X86MemOffs64_32AsmOperand : AsmOperandClass {
-  let Name = "MemOffs64_32";
-  let RenderMethod = "addMemOffsOperands";
-  let SuperClasses = [X86Mem32AsmOperand];
-}
-def X86MemOffs64_64AsmOperand : AsmOperandClass {
-  let Name = "MemOffs64_64";
-  let RenderMethod = "addMemOffsOperands";
-  let SuperClasses = [X86Mem64AsmOperand];
-}
-let OperandType = "OPERAND_MEMORY" in {
-def srcidx8 : Operand<iPTR> {
-  let ParserMatchClass = X86SrcIdx8Operand;
+let RenderMethod = "addSrcIdxOperands" in {
+  def X86SrcIdx8Operand : AsmOperandClass {
+    let Name = "SrcIdx8";
+    let SuperClasses = [X86Mem8AsmOperand];
+  }
+  def X86SrcIdx16Operand : AsmOperandClass {
+    let Name = "SrcIdx16";
+    let SuperClasses = [X86Mem16AsmOperand];
+  }
+  def X86SrcIdx32Operand : AsmOperandClass {
+    let Name = "SrcIdx32";
+    let SuperClasses = [X86Mem32AsmOperand];
+  }
+  def X86SrcIdx64Operand : AsmOperandClass {
+    let Name = "SrcIdx64";
+    let SuperClasses = [X86Mem64AsmOperand];
+  }
+} // RenderMethod = "addSrcIdxOperands"
+
+let RenderMethod = "addDstIdxOperands" in {
+ def X86DstIdx8Operand : AsmOperandClass {
+   let Name = "DstIdx8";
+   let SuperClasses = [X86Mem8AsmOperand];
+ }
+ def X86DstIdx16Operand : AsmOperandClass {
+   let Name = "DstIdx16";
+   let SuperClasses = [X86Mem16AsmOperand];
+ }
+ def X86DstIdx32Operand : AsmOperandClass {
+   let Name = "DstIdx32";
+   let SuperClasses = [X86Mem32AsmOperand];
+ }
+ def X86DstIdx64Operand : AsmOperandClass {
+   let Name = "DstIdx64";
+   let SuperClasses = [X86Mem64AsmOperand];
+ }
+} // RenderMethod = "addDstIdxOperands"
+
+let RenderMethod = "addMemOffsOperands" in {
+  def X86MemOffs16_8AsmOperand : AsmOperandClass {
+    let Name = "MemOffs16_8";
+    let SuperClasses = [X86Mem8AsmOperand];
+  }
+  def X86MemOffs16_16AsmOperand : AsmOperandClass {
+    let Name = "MemOffs16_16";
+    let SuperClasses = [X86Mem16AsmOperand];
+  }
+  def X86MemOffs16_32AsmOperand : AsmOperandClass {
+    let Name = "MemOffs16_32";
+    let SuperClasses = [X86Mem32AsmOperand];
+  }
+  def X86MemOffs32_8AsmOperand : AsmOperandClass {
+    let Name = "MemOffs32_8";
+    let SuperClasses = [X86Mem8AsmOperand];
+  }
+  def X86MemOffs32_16AsmOperand : AsmOperandClass {
+    let Name = "MemOffs32_16";
+    let SuperClasses = [X86Mem16AsmOperand];
+  }
+  def X86MemOffs32_32AsmOperand : AsmOperandClass {
+    let Name = "MemOffs32_32";
+    let SuperClasses = [X86Mem32AsmOperand];
+  }
+  def X86MemOffs32_64AsmOperand : AsmOperandClass {
+    let Name = "MemOffs32_64";
+    let SuperClasses = [X86Mem64AsmOperand];
+  }
+  def X86MemOffs64_8AsmOperand : AsmOperandClass {
+    let Name = "MemOffs64_8";
+    let SuperClasses = [X86Mem8AsmOperand];
+  }
+  def X86MemOffs64_16AsmOperand : AsmOperandClass {
+    let Name = "MemOffs64_16";
+    let SuperClasses = [X86Mem16AsmOperand];
+  }
+  def X86MemOffs64_32AsmOperand : AsmOperandClass {
+    let Name = "MemOffs64_32";
+    let SuperClasses = [X86Mem32AsmOperand];
+  }
+  def X86MemOffs64_64AsmOperand : AsmOperandClass {
+    let Name = "MemOffs64_64";
+    let SuperClasses = [X86Mem64AsmOperand];
+  }
+} // RenderMethod = "addMemOffsOperands"
+
+class X86SrcIdxOperand<string printMethod, AsmOperandClass parserMatchClass>
+    : X86MemOperand<printMethod, parserMatchClass> {
   let MIOperandInfo = (ops ptr_rc, i8imm);
-  let PrintMethod = "printSrcIdx8"; }
-def srcidx16 : Operand<iPTR> {
-  let ParserMatchClass = X86SrcIdx16Operand;
-  let MIOperandInfo = (ops ptr_rc, i8imm);
-  let PrintMethod = "printSrcIdx16"; }
-def srcidx32 : Operand<iPTR> {
-  let ParserMatchClass = X86SrcIdx32Operand;
-  let MIOperandInfo = (ops ptr_rc, i8imm);
-  let PrintMethod = "printSrcIdx32"; }
-def srcidx64 : Operand<iPTR> {
-  let ParserMatchClass = X86SrcIdx64Operand;
-  let MIOperandInfo = (ops ptr_rc, i8imm);
-  let PrintMethod = "printSrcIdx64"; }
-def dstidx8 : Operand<iPTR> {
-  let ParserMatchClass = X86DstIdx8Operand;
-  let MIOperandInfo = (ops ptr_rc);
-  let PrintMethod = "printDstIdx8"; }
-def dstidx16 : Operand<iPTR> {
-  let ParserMatchClass = X86DstIdx16Operand;
-  let MIOperandInfo = (ops ptr_rc);
-  let PrintMethod = "printDstIdx16"; }
-def dstidx32 : Operand<iPTR> {
-  let ParserMatchClass = X86DstIdx32Operand;
-  let MIOperandInfo = (ops ptr_rc);
-  let PrintMethod = "printDstIdx32"; }
-def dstidx64 : Operand<iPTR> {
-  let ParserMatchClass = X86DstIdx64Operand;
-  let MIOperandInfo = (ops ptr_rc);
-  let PrintMethod = "printDstIdx64"; }
-def offset16_8 : Operand<iPTR> {
-  let ParserMatchClass = X86MemOffs16_8AsmOperand;
-  let MIOperandInfo = (ops i16imm, i8imm);
-  let PrintMethod = "printMemOffs8"; }
-def offset16_16 : Operand<iPTR> {
-  let ParserMatchClass = X86MemOffs16_16AsmOperand;
-  let MIOperandInfo = (ops i16imm, i8imm);
-  let PrintMethod = "printMemOffs16"; }
-def offset16_32 : Operand<iPTR> {
-  let ParserMatchClass = X86MemOffs16_32AsmOperand;
-  let MIOperandInfo = (ops i16imm, i8imm);
-  let PrintMethod = "printMemOffs32"; }
-def offset32_8 : Operand<iPTR> {
-  let ParserMatchClass = X86MemOffs32_8AsmOperand;
-  let MIOperandInfo = (ops i32imm, i8imm);
-  let PrintMethod = "printMemOffs8"; }
-def offset32_16 : Operand<iPTR> {
-  let ParserMatchClass = X86MemOffs32_16AsmOperand;
-  let MIOperandInfo = (ops i32imm, i8imm);
-  let PrintMethod = "printMemOffs16"; }
-def offset32_32 : Operand<iPTR> {
-  let ParserMatchClass = X86MemOffs32_32AsmOperand;
-  let MIOperandInfo = (ops i32imm, i8imm);
-  let PrintMethod = "printMemOffs32"; }
-def offset32_64 : Operand<iPTR> {
-  let ParserMatchClass = X86MemOffs32_64AsmOperand;
-  let MIOperandInfo = (ops i32imm, i8imm);
-  let PrintMethod = "printMemOffs64"; }
-def offset64_8 : Operand<iPTR> {
-  let ParserMatchClass = X86MemOffs64_8AsmOperand;
-  let MIOperandInfo = (ops i64imm, i8imm);
-  let PrintMethod = "printMemOffs8"; }
-def offset64_16 : Operand<iPTR> {
-  let ParserMatchClass = X86MemOffs64_16AsmOperand;
-  let MIOperandInfo = (ops i64imm, i8imm);
-  let PrintMethod = "printMemOffs16"; }
-def offset64_32 : Operand<iPTR> {
-  let ParserMatchClass = X86MemOffs64_32AsmOperand;
-  let MIOperandInfo = (ops i64imm, i8imm);
-  let PrintMethod = "printMemOffs32"; }
-def offset64_64 : Operand<iPTR> {
-  let ParserMatchClass = X86MemOffs64_64AsmOperand;
-  let MIOperandInfo = (ops i64imm, i8imm);
-  let PrintMethod = "printMemOffs64"; }
 }
 
+class X86DstIdxOperand<string printMethod, AsmOperandClass parserMatchClass>
+    : X86MemOperand<printMethod, parserMatchClass> {
+  let MIOperandInfo = (ops ptr_rc);
+}
+
+def srcidx8  : X86SrcIdxOperand<"printSrcIdx8",  X86SrcIdx8Operand>;
+def srcidx16 : X86SrcIdxOperand<"printSrcIdx16", X86SrcIdx16Operand>;
+def srcidx32 : X86SrcIdxOperand<"printSrcIdx32", X86SrcIdx32Operand>;
+def srcidx64 : X86SrcIdxOperand<"printSrcIdx64", X86SrcIdx64Operand>;
+def dstidx8  : X86DstIdxOperand<"printDstIdx8",  X86DstIdx8Operand>;
+def dstidx16 : X86DstIdxOperand<"printDstIdx16", X86DstIdx16Operand>;
+def dstidx32 : X86DstIdxOperand<"printDstIdx32", X86DstIdx32Operand>;
+def dstidx64 : X86DstIdxOperand<"printDstIdx64", X86DstIdx64Operand>;
+
+class X86MemOffsOperand<Operand immOperand, string printMethod,
+                        AsmOperandClass parserMatchClass>
+    : X86MemOperand<printMethod, parserMatchClass> {
+  let MIOperandInfo = (ops immOperand, i8imm);
+}
+
+def offset16_8  : X86MemOffsOperand<i16imm, "printMemOffs8",
+                                    X86MemOffs16_8AsmOperand>;
+def offset16_16 : X86MemOffsOperand<i16imm, "printMemOffs16",
+                                    X86MemOffs16_16AsmOperand>;
+def offset16_32 : X86MemOffsOperand<i16imm, "printMemOffs32",
+                                    X86MemOffs16_32AsmOperand>;
+def offset32_8  : X86MemOffsOperand<i32imm, "printMemOffs8",
+                                    X86MemOffs32_8AsmOperand>;
+def offset32_16 : X86MemOffsOperand<i32imm, "printMemOffs16",
+                                    X86MemOffs32_16AsmOperand>;
+def offset32_32 : X86MemOffsOperand<i32imm, "printMemOffs32",
+                                    X86MemOffs32_32AsmOperand>;
+def offset32_64 : X86MemOffsOperand<i32imm, "printMemOffs64",
+                                    X86MemOffs32_64AsmOperand>;
+def offset64_8  : X86MemOffsOperand<i64imm, "printMemOffs8",
+                                    X86MemOffs64_8AsmOperand>;
+def offset64_16 : X86MemOffsOperand<i64imm, "printMemOffs16",
+                                    X86MemOffs64_16AsmOperand>;
+def offset64_32 : X86MemOffsOperand<i64imm, "printMemOffs32",
+                                    X86MemOffs64_32AsmOperand>;
+def offset64_64 : X86MemOffsOperand<i64imm, "printMemOffs64",
+                                    X86MemOffs64_64AsmOperand>;
 
 def SSECC : Operand<i8> {
   let PrintMethod = "printSSECC";
