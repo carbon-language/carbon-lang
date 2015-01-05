@@ -185,11 +185,9 @@ void MapVector<KeyT, ValueT, MapType, VectorType>::remove_if(Function Pred) {
 /// \brief A MapVector that performs no allocations if smaller than a certain
 /// size.
 template <typename KeyT, typename ValueT, unsigned N>
-class SmallMapVector
-    : public MapVector<KeyT, ValueT, SmallDenseMap<KeyT, unsigned, N>,
-                       SmallVector<std::pair<KeyT, ValueT>, N>> {
-public:
-  SmallMapVector() {}
+struct SmallMapVector
+    : MapVector<KeyT, ValueT, SmallDenseMap<KeyT, unsigned, N>,
+                SmallVector<std::pair<KeyT, ValueT>, N>> {
 };
 
 } // end namespace llvm
