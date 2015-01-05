@@ -255,24 +255,6 @@ int f(signed char *a, _Bool b, _Bool c) {
 
 ===-------------------------------------------------------------------------===
 
-This:
-int test(unsigned *P) { return *P >> 24; }
-
-Should compile to:
-
-_test:
-        lbz r3,0(r3)
-        blr
-
-not:
-
-_test:
-        lwz r2, 0(r3)
-        srwi r3, r2, 24
-        blr
-
-===-------------------------------------------------------------------------===
-
 On the G5, logical CR operations are more expensive in their three
 address form: ops that read/write the same register are half as expensive as
 those that read from two registers that are different from their destination.
