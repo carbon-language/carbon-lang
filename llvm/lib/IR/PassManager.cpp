@@ -52,8 +52,12 @@ ModuleAnalysisManager::getResultImpl(void *PassID, Module &M) {
 
   // If we don't have a cached result for this module, look up the pass and run
   // it to produce a result, which we then add to the cache.
-  if (Inserted)
-    RI->second = lookupPass(PassID).run(M, this);
+  if (Inserted) {
+    auto &P = lookupPass(PassID);
+    if (DebugPM)
+      dbgs() << "Running module analysis: " << P.name() << "\n";
+    RI->second = P.run(M, this);
+  }
 
   return *RI->second;
 }
@@ -66,18 +70,30 @@ ModuleAnalysisManager::getCachedResultImpl(void *PassID, Module &M) const {
 }
 
 void ModuleAnalysisManager::invalidateImpl(void *PassID, Module &M) {
+  if (DebugPM)
+    dbgs() << "Invalidating module analysis: " << lookupPass(PassID).name()
+           << "\n";
   ModuleAnalysisResults.erase(PassID);
 }
 
 void ModuleAnalysisManager::invalidateImpl(Module &M,
                                            const PreservedAnalyses &PA) {
+  if (DebugPM)
+    dbgs() << "Invalidating all non-preserved analyses for module: "
+           << M.getModuleIdentifier() << "\n";
+
   // FIXME: This is a total hack based on the fact that erasure doesn't
   // invalidate iteration for DenseMap.
   for (ModuleAnalysisResultMapT::iterator I = ModuleAnalysisResults.begin(),
                                           E = ModuleAnalysisResults.end();
        I != E; ++I)
-    if (I->second->invalidate(M, PA))
+    if (I->second->invalidate(M, PA)) {
+      if (DebugPM)
+        dbgs() << "Invalidating module analysis: "
+               << lookupPass(I->first).name() << "\n";
+
       ModuleAnalysisResults.erase(I);
+    }
 }
 
 PreservedAnalyses FunctionPassManager::run(Function &F,
@@ -128,8 +144,11 @@ FunctionAnalysisManager::getResultImpl(void *PassID, Function &F) {
   // If we don't have a cached result for this function, look up the pass and
   // run it to produce a result, which we then add to the cache.
   if (Inserted) {
+    auto &P = lookupPass(PassID);
+    if (DebugPM)
+      dbgs() << "Running function analysis: " << P.name() << "\n";
     FunctionAnalysisResultListT &ResultList = FunctionAnalysisResultLists[&F];
-    ResultList.emplace_back(PassID, lookupPass(PassID).run(F, this));
+    ResultList.emplace_back(PassID, P.run(F, this));
     RI->second = std::prev(ResultList.end());
   }
 
@@ -149,11 +168,18 @@ void FunctionAnalysisManager::invalidateImpl(void *PassID, Function &F) {
   if (RI == FunctionAnalysisResults.end())
     return;
 
+  if (DebugPM)
+    dbgs() << "Invalidating function analysis: " << lookupPass(PassID).name()
+           << "\n";
   FunctionAnalysisResultLists[&F].erase(RI->second);
 }
 
 void FunctionAnalysisManager::invalidateImpl(Function &F,
                                              const PreservedAnalyses &PA) {
+  if (DebugPM)
+    dbgs() << "Invalidating all non-preserved analyses for function: "
+           << F.getName() << "\n";
+
   // Clear all the invalidated results associated specifically with this
   // function.
   SmallVector<void *, 8> InvalidatedPassIDs;
@@ -162,6 +188,10 @@ void FunctionAnalysisManager::invalidateImpl(Function &F,
                                              E = ResultsList.end();
        I != E;)
     if (I->second->invalidate(F, PA)) {
+      if (DebugPM)
+        dbgs() << "Invalidating function analysis: "
+               << lookupPass(I->first).name() << "\n";
+
       InvalidatedPassIDs.push_back(I->first);
       I = ResultsList.erase(I);
     } else {

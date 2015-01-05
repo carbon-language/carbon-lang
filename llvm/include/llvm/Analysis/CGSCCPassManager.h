@@ -195,6 +195,8 @@ public:
 
   static void *ID() { return (void *)&PassID; }
 
+  static StringRef name() { return "CGSCCAnalysisManagerModuleProxy"; }
+
   explicit CGSCCAnalysisManagerModuleProxy(CGSCCAnalysisManager &CGAM)
       : CGAM(&CGAM) {}
   // We have to explicitly define all the special member functions because MSVC
@@ -264,6 +266,8 @@ public:
   };
 
   static void *ID() { return (void *)&PassID; }
+
+  static StringRef name() { return "ModuleAnalysisManagerCGSCCProxy"; }
 
   ModuleAnalysisManagerCGSCCProxy(const ModuleAnalysisManager &MAM)
       : MAM(&MAM) {}
@@ -417,6 +421,8 @@ public:
 
   static void *ID() { return (void *)&PassID; }
 
+  static StringRef name() { return "FunctionAnalysisManagerCGSCCProxy"; }
+
   explicit FunctionAnalysisManagerCGSCCProxy(FunctionAnalysisManager &FAM)
       : FAM(&FAM) {}
   // We have to explicitly define all the special member functions because MSVC
@@ -486,6 +492,8 @@ public:
   };
 
   static void *ID() { return (void *)&PassID; }
+
+  static StringRef name() { return "CGSCCAnalysisManagerFunctionProxy"; }
 
   CGSCCAnalysisManagerFunctionProxy(const CGSCCAnalysisManager &CGAM)
       : CGAM(&CGAM) {}

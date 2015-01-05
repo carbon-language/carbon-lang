@@ -84,11 +84,18 @@ void CGSCCAnalysisManager::invalidateImpl(void *PassID, LazyCallGraph::SCC &C) {
   if (RI == CGSCCAnalysisResults.end())
     return;
 
+  if (DebugPM)
+    dbgs() << "Invalidating CGSCC analysis: " << lookupPass(PassID).name()
+           << "\n";
   CGSCCAnalysisResultLists[&C].erase(RI->second);
 }
 
 void CGSCCAnalysisManager::invalidateImpl(LazyCallGraph::SCC &C,
                                           const PreservedAnalyses &PA) {
+  if (DebugPM)
+    dbgs() << "Invalidating all non-preserved analyses for SCC: " << C.getName()
+           << "\n";
+
   // Clear all the invalidated results associated specifically with this
   // function.
   SmallVector<void *, 8> InvalidatedPassIDs;
@@ -97,6 +104,10 @@ void CGSCCAnalysisManager::invalidateImpl(LazyCallGraph::SCC &C,
                                           E = ResultsList.end();
        I != E;)
     if (I->second->invalidate(C, PA)) {
+      if (DebugPM)
+        dbgs() << "Invalidating CGSCC analysis: " << lookupPass(I->first).name()
+               << "\n";
+
       InvalidatedPassIDs.push_back(I->first);
       I = ResultsList.erase(I);
     } else {

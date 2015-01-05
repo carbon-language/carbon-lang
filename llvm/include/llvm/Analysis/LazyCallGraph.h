@@ -252,6 +252,12 @@ public:
     /// \brief Test if this SCC is a descendant of \a C.
     bool isDescendantOf(const SCC &C) const;
 
+    /// \brief Short name useful for debugging or logging.
+    ///
+    /// We use the name of the first function in the SCC to name the SCC for
+    /// the purposes of debugging and logging.
+    StringRef getName() const { return (*begin())->getFunction().getName(); }
+
     ///@{
     /// \name Mutation API
     ///
@@ -536,6 +542,8 @@ public:
   typedef LazyCallGraph Result;
 
   static void *ID() { return (void *)&PassID; }
+
+  static StringRef name() { return "Lazy CallGraph Analysis"; }
 
   /// \brief Compute the \c LazyCallGraph for the module \c M.
   ///

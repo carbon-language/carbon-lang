@@ -28,6 +28,8 @@
 ; RUN:     | FileCheck %s --check-prefix=CHECK-FUNCTION-PRINT
 ; CHECK-FUNCTION-PRINT: Starting module pass manager
 ; CHECK-FUNCTION-PRINT: Running module pass: VerifierPass
+; CHECK-FUNCTION-PRINT: Running module pass: ModuleToFunctionPassAdaptor
+; CHECK-FUNCTION-PRINT: Running module analysis: FunctionAnalysisManagerModuleProxy
 ; CHECK-FUNCTION-PRINT: Starting function pass manager
 ; CHECK-FUNCTION-PRINT: Running function pass: PrintFunctionPass
 ; CHECK-FUNCTION-PRINT-NOT: ModuleID
@@ -83,6 +85,14 @@
 ; CHECK-NO-VERIFY: Finished function pass manager
 ; CHECK-NO-VERIFY-NOT: VerifierPass
 ; CHECK-NO-VERIFY: Finished module pass manager
+
+; RUN: opt -disable-output -debug-pass-manager -debug-cgscc-pass-manager -passes='cgscc(no-op-cgscc)' %s 2>&1 \
+; RUN:     | FileCheck %s --check-prefix=CHECK-LCG-ANALYSIS
+; CHECK-LCG-ANALYSIS: Starting module pass manager
+; CHECK-LCG-ANALYSIS: Running module pass: ModuleToPostOrderCGSCCPassAdaptor
+; CHECK-LCG-ANALYSIS: Running module analysis: CGSCCAnalysisManagerModuleProxy
+; CHECK-LCG-ANALYSIS: Running module analysis: Lazy CallGraph Analysis
+; CHECK-LCG-ANALYSIS: Starting CGSCC pass manager run.
 
 define void @foo() {
   ret void

@@ -256,6 +256,9 @@ struct AnalysisPassConcept {
   /// users.
   virtual std::unique_ptr<AnalysisResultConcept<IRUnitT>>
   run(IRUnitT IR, AnalysisManagerT *AM) = 0;
+
+  /// \brief Polymorphic method to access the name of a pass.
+  virtual StringRef name() = 0;
 };
 
 /// \brief Wrapper to model the analysis pass concept.
@@ -299,6 +302,11 @@ struct AnalysisPassModel<IRUnitT, AnalysisManagerT, PassT, true>
     return make_unique<ResultModelT>(Pass.run(IR, AM));
   }
 
+  /// \brief The model delegates to a static \c PassT::name method.
+  ///
+  /// The returned string ref must point to constant immutable data!
+  StringRef name() override { return PassT::name(); }
+
   PassT Pass;
 };
 
@@ -332,6 +340,11 @@ struct AnalysisPassModel<IRUnitT, AnalysisManagerT, PassT, false>
   run(IRUnitT IR, AnalysisManagerT *) override {
     return make_unique<ResultModelT>(Pass.run(IR));
   }
+
+  /// \brief The model delegates to a static \c PassT::name method.
+  ///
+  /// The returned string ref must point to constant immutable data!
+  StringRef name() override { return PassT::name(); }
 
   PassT Pass;
 };

@@ -29,6 +29,9 @@ public:
   /// \brief Returns an opaque, unique ID for this pass type.
   static void *ID() { return (void *)&PassID; }
 
+  /// \brief Returns the name of the analysis.
+  static StringRef name() { return "TestFunctionAnalysis"; }
+
   TestFunctionAnalysis(int &Runs) : Runs(Runs) {}
 
   /// \brief Run the analysis pass over the function and return a result.
@@ -59,6 +62,8 @@ public:
   };
 
   static void *ID() { return (void *)&PassID; }
+
+  static StringRef name() { return "TestModuleAnalysis"; }
 
   TestModuleAnalysis(int &Runs) : Runs(Runs) {}
 

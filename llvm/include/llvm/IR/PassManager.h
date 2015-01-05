@@ -557,6 +557,8 @@ public:
 
   static void *ID() { return (void *)&PassID; }
 
+  static StringRef name() { return "FunctionAnalysisManagerModuleProxy"; }
+
   explicit FunctionAnalysisManagerModuleProxy(FunctionAnalysisManager &FAM)
       : FAM(&FAM) {}
   // We have to explicitly define all the special member functions because MSVC
@@ -662,6 +664,8 @@ public:
   };
 
   static void *ID() { return (void *)&PassID; }
+
+  static StringRef name() { return "ModuleAnalysisManagerFunctionProxy"; }
 
   ModuleAnalysisManagerFunctionProxy(const ModuleAnalysisManager &MAM)
       : MAM(&MAM) {}
