@@ -38,7 +38,18 @@ int func2()
     return 2;
 }
 
-
+void *__attribute__((noinline))
+memcpy_f(void *dst, const void *src, size_t n) {
+// ARM and MIPS nartually align functions, but use the LSB for ISA selection
+// (THUMB, MIPS16/uMIPS respectively).  Ensure that the ISA bit is ignored in
+// the memcpy
+#if defined(__arm__) || defined(__mips__)
+  return (void *)((uintptr_t)memcpy(dst, (void *)((uintptr_t)src & ~1), n) |
+                  ((uintptr_t)src & 1));
+#else
+  return memcpy(dst, (void *)((uintptr_t)src), n);
+#endif
+}
 
 unsigned char execution_buffer[128];
 
@@ -59,16 +70,14 @@ int main()
         return 1;
 
     // verify you can copy and execute a function
-    memcpy(execution_buffer, (void *)(uintptr_t)&func1, 128);
+    pfunc f1 = (pfunc)memcpy_f(execution_buffer, func1, 128);
     __clear_cache(execution_buffer, &execution_buffer[128]);
-    pfunc f1 = (pfunc)(uintptr_t)execution_buffer;
     if ((*f1)() != 1)
         return 1;
 
     // verify you can overwrite a function with another
-    memcpy(execution_buffer, (void *)(uintptr_t)&func2, 128);
+    pfunc f2 = (pfunc)memcpy_f(execution_buffer, func2, 128);
     __clear_cache(execution_buffer, &execution_buffer[128]);
-    pfunc f2 = (pfunc)(uintptr_t)execution_buffer;
     if ((*f2)() != 2)
         return 1;
 
