@@ -13,8 +13,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_ANALYSIS_ASSUMPTIONTRACKER_H
-#define LLVM_ANALYSIS_ASSUMPTIONTRACKER_H
+#ifndef LLVM_ANALYSIS_ASSUMPTIONCACHE_H
+#define LLVM_ANALYSIS_ASSUMPTIONCACHE_H
 
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/DenseMap.h"
