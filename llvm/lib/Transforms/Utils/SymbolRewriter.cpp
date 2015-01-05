@@ -113,7 +113,8 @@ bool ExplicitRewriteDescriptor<DT, ValueType, Get>::performOnModule(Module &M) {
 
 template <RewriteDescriptor::Type DT, typename ValueType,
           ValueType *(llvm::Module::*Get)(StringRef) const,
-          iterator_range<typename iplist<ValueType>::iterator> (llvm::Module::*Iterator)()>
+          iterator_range<typename iplist<ValueType>::iterator>
+          (llvm::Module::*Iterator)()>
 class PatternRewriteDescriptor : public RewriteDescriptor {
 public:
   const std::string Pattern;
@@ -131,7 +132,8 @@ public:
 
 template <RewriteDescriptor::Type DT, typename ValueType,
           ValueType *(llvm::Module::*Get)(StringRef) const,
-          iterator_range<typename iplist<ValueType>::iterator> (llvm::Module::*Iterator)()>
+          iterator_range<typename iplist<ValueType>::iterator>
+          (llvm::Module::*Iterator)()>
 bool PatternRewriteDescriptor<DT, ValueType, Get, Iterator>::
 performOnModule(Module &M) {
   bool Changed = false;
