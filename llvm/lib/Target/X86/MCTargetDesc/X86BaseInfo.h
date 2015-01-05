@@ -676,16 +676,10 @@ namespace X86II {
        return -1;
     case X86II::MRMDestMem:
       return 0;
-    case X86II::MRMSrcMem: {
-      unsigned FirstMemOp = 1;
-      if (HasVEX_4V)
-        ++FirstMemOp;// Skip the register source (which is encoded in VEX_VVVV).
-      if (HasMemOp4)
-        ++FirstMemOp;// Skip the register source (which is encoded in I8IMM).
-      if (HasEVEX_K)
-        ++FirstMemOp;// Skip the mask register
-      return FirstMemOp;
-    }
+    case X86II::MRMSrcMem:
+      // Start from 1, skip any registers encoded in VEX_VVVV or I8IMM, or a
+      // mask register.
+      return 1 + HasVEX_4V + HasMemOp4 + HasEVEX_K;
     case X86II::MRMXr:
     case X86II::MRM0r: case X86II::MRM1r:
     case X86II::MRM2r: case X86II::MRM3r:
@@ -696,14 +690,9 @@ namespace X86II {
     case X86II::MRM0m: case X86II::MRM1m:
     case X86II::MRM2m: case X86II::MRM3m:
     case X86II::MRM4m: case X86II::MRM5m:
-    case X86II::MRM6m: case X86II::MRM7m: {
-      unsigned FirstMemOp = 0;
-      if (HasVEX_4V)
-        ++FirstMemOp;// Skip the register dest (which is encoded in VEX_VVVV).
-      if (HasEVEX_K)
-        ++FirstMemOp;// Skip the mask register
-      return FirstMemOp;
-    }
+    case X86II::MRM6m: case X86II::MRM7m:
+      // Start from 0, skip registers encoded in VEX_VVVV or a mask register.
+      return 0 + HasVEX_4V + HasEVEX_K;
     case X86II::MRM_C0: case X86II::MRM_C1: case X86II::MRM_C2:
     case X86II::MRM_C3: case X86II::MRM_C4: case X86II::MRM_C8:
     case X86II::MRM_C9: case X86II::MRM_CA: case X86II::MRM_CB:
