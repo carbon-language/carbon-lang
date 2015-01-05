@@ -94,6 +94,13 @@
 ; CHECK-LCG-ANALYSIS: Running module analysis: Lazy CallGraph Analysis
 ; CHECK-LCG-ANALYSIS: Starting CGSCC pass manager run.
 
+; Make sure no-op passes that preserve all analyses don't even try to do any
+; analysis invalidation.
+; RUN: opt -disable-output -debug-pass-manager -debug-cgscc-pass-manager -passes='cgscc(function(no-op-function))' %s 2>&1 \
+; RUN:     | FileCheck %s --check-prefix=CHECK-NO-OP-INVALIDATION
+; CHECK-NO-OP-INVALIDATION: Starting module pass manager
+; CHECK-NO-OP-INVALIDATION-NOT: Invalidating all non-preserved analyses
+
 define void @foo() {
   ret void
 }

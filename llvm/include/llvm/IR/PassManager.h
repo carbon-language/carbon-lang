@@ -141,14 +141,18 @@ public:
            PreservedPassIDs.count(PassID);
   }
 
+  /// \brief Test whether all passes are preserved.
+  ///
+  /// This is used primarily to optimize for the case of no changes which will
+  /// common in many scenarios.
+  bool areAllPreserved() const {
+    return PreservedPassIDs.count((void *)AllPassesID);
+  }
+
 private:
   // Note that this must not be -1 or -2 as those are already used by the
   // SmallPtrSet.
   static const uintptr_t AllPassesID = (intptr_t)(-3);
-
-  bool areAllPreserved() const {
-    return PreservedPassIDs.count((void *)AllPassesID);
-  }
 
   SmallPtrSet<void *, 2> PreservedPassIDs;
 };

@@ -92,6 +92,10 @@ void CGSCCAnalysisManager::invalidateImpl(void *PassID, LazyCallGraph::SCC &C) {
 
 void CGSCCAnalysisManager::invalidateImpl(LazyCallGraph::SCC &C,
                                           const PreservedAnalyses &PA) {
+  // Short circuit for a common case of all analyses being preserved.
+  if (PA.areAllPreserved())
+    return;
+
   if (DebugPM)
     dbgs() << "Invalidating all non-preserved analyses for SCC: " << C.getName()
            << "\n";

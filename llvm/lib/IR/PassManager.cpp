@@ -78,6 +78,10 @@ void ModuleAnalysisManager::invalidateImpl(void *PassID, Module &M) {
 
 void ModuleAnalysisManager::invalidateImpl(Module &M,
                                            const PreservedAnalyses &PA) {
+  // Short circuit for a common case of all analyses being preserved.
+  if (PA.areAllPreserved())
+    return;
+
   if (DebugPM)
     dbgs() << "Invalidating all non-preserved analyses for module: "
            << M.getModuleIdentifier() << "\n";
@@ -176,6 +180,10 @@ void FunctionAnalysisManager::invalidateImpl(void *PassID, Function &F) {
 
 void FunctionAnalysisManager::invalidateImpl(Function &F,
                                              const PreservedAnalyses &PA) {
+  // Short circuit for a common case of all analyses being preserved.
+  if (PA.areAllPreserved())
+    return;
+
   if (DebugPM)
     dbgs() << "Invalidating all non-preserved analyses for function: "
            << F.getName() << "\n";
