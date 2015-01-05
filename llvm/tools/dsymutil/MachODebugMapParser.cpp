@@ -7,6 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "BinaryHolder.h"
 #include "DebugMap.h"
 #include "dsymutil.h"
 #include "llvm/Object/MachO.h"
@@ -20,9 +21,10 @@ using namespace llvm::object;
 
 class MachODebugMapParser {
 public:
-  MachODebugMapParser(StringRef BinaryPath, StringRef PathPrefix = "")
+  MachODebugMapParser(StringRef BinaryPath, StringRef PathPrefix = "",
+                      bool Verbose = false)
       : BinaryPath(BinaryPath), PathPrefix(PathPrefix),
-        CurrentDebugMapObject(nullptr) {}
+        MainBinaryHolder(Verbose), CurrentObjectHolder(Verbose) {}
 
   /// \brief Parses and returns the DebugMap of the input binary.
   /// \returns an error in case the provided BinaryPath doesn't exist
@@ -33,16 +35,16 @@ private:
   std::string BinaryPath;
   std::string PathPrefix;
 
-  /// OwningBinary constructed from the BinaryPath.
-  object::OwningBinary<object::MachOObjectFile> MainOwningBinary;
+  /// Owns the MemoryBuffer for the main binary.
+  BinaryHolder MainBinaryHolder;
   /// Map of the binary symbol addresses.
   StringMap<uint64_t> MainBinarySymbolAddresses;
   StringRef MainBinaryStrings;
   /// The constructed DebugMap.
   std::unique_ptr<DebugMap> Result;
 
-  /// Handle to the currently processed object file.
-  object::OwningBinary<object::MachOObjectFile> CurrentObjectFile;
+  /// Owns the MemoryBuffer for the currently handled object file.
+  BinaryHolder CurrentObjectHolder;
   /// Map of the currently processed object file symbol addresses.
   StringMap<uint64_t> CurrentObjectAddresses;
   /// Element of the debug map corresponfing to the current object file.
@@ -66,26 +68,10 @@ private:
 static void Warning(const Twine &Msg) { errs() << "warning: " + Msg + "\n"; }
 }
 
-static ErrorOr<OwningBinary<MachOObjectFile>>
-createMachOBinary(StringRef File) {
-  auto MemBufOrErr = MemoryBuffer::getFile(File);
-  if (auto Error = MemBufOrErr.getError())
-    return Error;
-
-  MemoryBufferRef BufRef = (*MemBufOrErr)->getMemBufferRef();
-  auto MachOOrErr = ObjectFile::createMachOObjectFile(BufRef);
-  if (auto Error = MachOOrErr.getError())
-    return Error;
-
-  return OwningBinary<MachOObjectFile>(std::move(*MachOOrErr),
-                                       std::move(*MemBufOrErr));
-}
-
 /// Reset the parser state coresponding to the current object
 /// file. This is to be called after an object file is finished
 /// processing.
 void MachODebugMapParser::resetParserState() {
-  CurrentObjectFile = OwningBinary<object::MachOObjectFile>();
   CurrentObjectAddresses.clear();
   CurrentDebugMapObject = nullptr;
 }
@@ -99,14 +85,13 @@ void MachODebugMapParser::switchToNewDebugMapObject(StringRef Filename) {
   SmallString<80> Path(PathPrefix);
   sys::path::append(Path, Filename);
 
-  auto MachOOrError = createMachOBinary(Path);
+  auto MachOOrError = CurrentObjectHolder.GetFileAs<MachOObjectFile>(Path);
   if (auto Error = MachOOrError.getError()) {
     Warning(Twine("cannot open debug object \"") + Path.str() + "\": " +
             Error.message() + "\n");
     return;
   }
 
-  CurrentObjectFile = std::move(*MachOOrError);
   loadCurrentObjectFileSymbols();
   CurrentDebugMapObject = &Result->addDebugMapObject(Path);
 }
@@ -115,14 +100,13 @@ void MachODebugMapParser::switchToNewDebugMapObject(StringRef Filename) {
 /// successful iterates over the STAB entries. The real parsing is
 /// done in handleStabSymbolTableEntry.
 ErrorOr<std::unique_ptr<DebugMap>> MachODebugMapParser::parse() {
-  auto MainBinaryOrError = createMachOBinary(BinaryPath);
-  if (auto Error = MainBinaryOrError.getError())
+  auto MainBinOrError = MainBinaryHolder.GetFileAs<MachOObjectFile>(BinaryPath);
+  if (auto Error = MainBinOrError.getError())
     return Error;
 
-  MainOwningBinary = std::move(*MainBinaryOrError);
+  const MachOObjectFile &MainBinary = *MainBinOrError;
   loadMainBinarySymbols();
   Result = make_unique<DebugMap>();
-  const auto &MainBinary = *MainOwningBinary.getBinary();
   MainBinaryStrings = MainBinary.getStringTableData();
   for (const SymbolRef &Symbol : MainBinary.symbols()) {
     const DataRefImpl &DRI = Symbol.getRawDataRefImpl();
@@ -190,9 +174,8 @@ void MachODebugMapParser::handleStabSymbolTableEntry(uint32_t StringIndex,
 /// Load the current object file symbols into CurrentObjectAddresses.
 void MachODebugMapParser::loadCurrentObjectFileSymbols() {
   CurrentObjectAddresses.clear();
-  const auto &Binary = *CurrentObjectFile.getBinary();
 
-  for (auto Sym : Binary.symbols()) {
+  for (auto Sym : CurrentObjectHolder.Get().symbols()) {
     StringRef Name;
     uint64_t Addr;
     if (Sym.getAddress(Addr) || Addr == UnknownAddressOrSize ||
@@ -215,9 +198,9 @@ uint64_t MachODebugMapParser::getMainBinarySymbolAddress(StringRef Name) {
 /// Load the interesting main binary symbols' addresses into
 /// MainBinarySymbolAddresses.
 void MachODebugMapParser::loadMainBinarySymbols() {
-  const MachOObjectFile &Binary = *MainOwningBinary.getBinary();
-  section_iterator Section = Binary.section_end();
-  for (const auto &Sym : Binary.symbols()) {
+  const MachOObjectFile &MainBinary = MainBinaryHolder.GetAs<MachOObjectFile>();
+  section_iterator Section = MainBinary.section_end();
+  for (const auto &Sym : MainBinary.symbols()) {
     SymbolRef::Type Type;
     // Skip undefined and STAB entries.
     if (Sym.getType(Type) || (Type & SymbolRef::ST_Debug) ||
@@ -243,7 +226,7 @@ namespace dsymutil {
 llvm::ErrorOr<std::unique_ptr<DebugMap>> parseDebugMap(StringRef InputFile,
                                                        StringRef PrependPath,
                                                        bool Verbose) {
-  MachODebugMapParser Parser(InputFile, PrependPath);
+  MachODebugMapParser Parser(InputFile, PrependPath, Verbose);
   return Parser.parse();
 }
 }

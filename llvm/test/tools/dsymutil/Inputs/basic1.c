@@ -16,6 +16,9 @@
       clang basic1-lto.o basic2-lto.o basic3-lto.o -o basic-lto.macho.x86_64 -Wl,-object_path_lto,$PWD/basic-lto.macho.x86_64.o -Wl,-dead_strip
       rm basic1-lto.o basic2-lto.o basic3-lto.o
 
+   Archive compilation (after basic compilation):
+      ar -q libbasic.a basic2.macho.x86_64.o basic3.macho.x86_64.o
+      clang basic1.macho.x86_64.o -lbasic -o basic-archive.macho.x86_64 -Wl,-dead_strip -L.
 */
 
 int foo(int);

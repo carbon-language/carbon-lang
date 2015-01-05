@@ -1,7 +1,10 @@
 RUN: llvm-dsymutil -v -parse-only -oso-prepend-path=%p %p/Inputs/basic.macho.x86_64 | FileCheck %s
 RUN: llvm-dsymutil -v -parse-only -oso-prepend-path=%p %p/Inputs/basic-lto.macho.x86_64 | FileCheck %s --check-prefix=CHECK-LTO
+RUN: llvm-dsymutil -v -parse-only -oso-prepend-path=%p %p/Inputs/basic-archive.macho.x86_64 | FileCheck %s --check-prefix=CHECK-ARCHIVE
 RUN: llvm-dsymutil -v -parse-only %p/Inputs/basic.macho.x86_64 2>&1 | FileCheck %s --check-prefix=NOT-FOUND
 RUN: not llvm-dsymutil -v -parse-only %p/Inputs/inexistant 2>&1 | FileCheck %s --check-prefix=NO-EXECUTABLE
+
+
 Check that We can parse the debug map of the basic executable.
 
 CHECK-NOT: error
@@ -32,6 +35,32 @@ CHECK-LTO: 	0000000000000000 => 0000000100000f40	_main
 CHECK-LTO: 	00000000000008e8 => 0000000100001008	_private_int
 CHECK-LTO: 	00000000000008ec => 0000000100001004	_val
 CHECK-LTO: END DEBUG MAP
+
+Check thet we correctly handle debug maps with archive members (including only
+opening the archive once if mulitple of its members are used).
+
+CHECK-ARCHIVE:      trying to open {{.*}}basic-archive.macho.x86_64'
+CHECK-ARCHIVE-NEXT: 	loaded file.
+CHECK-ARCHIVE-NEXT: trying to open {{.*}}/Inputs/basic1.macho.x86_64.o'
+CHECK-ARCHIVE-NEXT: 	loaded file.
+CHECK-ARCHIVE-NEXT: trying to open {{.*}}/libbasic.a(basic2.macho.x86_64.o)'
+CHECK-ARCHIVE-NEXT: 	opened new archive {{.*}}/libbasic.a'
+CHECK-ARCHIVE-NEXT: 	found member in current archive.
+CHECK-ARCHIVE-NEXT: trying to open {{.*}}/libbasic.a(basic3.macho.x86_64.o)'
+CHECK-ARCHIVE-NEXT: 	found member in current archive.
+CHECK-ARCHIVE: DEBUG MAP:   object addr =>  executable addr	symbol name
+CHECK-ARCHIVE: /Inputs/basic1.macho.x86_64.o:
+CHECK-ARCHIVE: 	0000000000000000 => 0000000100000ea0	_main
+CHECK-ARCHIVE: /Inputs/./libbasic.a(basic2.macho.x86_64.o):
+CHECK-ARCHIVE: 	0000000000000310 => 0000000100001000	_baz
+CHECK-ARCHIVE: 	0000000000000020 => 0000000100000ed0	_foo
+CHECK-ARCHIVE: 	0000000000000070 => 0000000100000f20	_inc
+CHECK-ARCHIVE: 	0000000000000560 => 0000000100001004	_private_int
+CHECK-ARCHIVE: /Inputs/./libbasic.a(basic3.macho.x86_64.o):
+CHECK-ARCHIVE: 	0000000000000020 => 0000000100000f40	_bar
+CHECK-ARCHIVE: 	0000000000000070 => 0000000100000f90	_inc
+CHECK-ARCHIVE: 	0000000000000004 => 0000000100001008	_val
+CHECK-ARCHIVE: END DEBUG MAP
 
 Check that we warn about missing object files (this presumes that the files aren't
 present in the machine's /Inputs/ folder, which should be a pretty safe bet).
