@@ -16,7 +16,6 @@
 
 #include "DwarfFile.h"
 #include "AsmPrinterHandler.h"
-#include "DIE.h"
 #include "DbgValueHistoryCalculator.h"
 #include "DebugLocEntry.h"
 #include "DebugLocList.h"
@@ -26,6 +25,7 @@
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/FoldingSet.h"
+#include "llvm/CodeGen/DIE.h"
 #include "llvm/CodeGen/LexicalScopes.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/IR/DebugInfo.h"
