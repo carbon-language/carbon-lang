@@ -12,6 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include <inttypes.h>
 #include <stdint.h>
 #include <stdbool.h>
 #include <stdlib.h>
@@ -67,8 +68,9 @@ unwind_phase1(unw_context_t *uc, _Unwind_Exception *exception_object) {
       unw_word_t pc;
       unw_get_reg(&cursor1, UNW_REG_IP, &pc);
       _LIBUNWIND_TRACE_UNWINDING(
-          "unwind_phase1(ex_ojb=%p): pc=0x%llX, start_ip=0x%llX, func=%s, "
-          "lsda=0x%llX, personality=0x%llX\n",
+          "unwind_phase1(ex_ojb=%p): pc=0x%" PRIx64 ", start_ip=0x%" PRIx64
+          ", func=%s, "
+          "lsda=0x%" PRIx64 ", personality=0x%" PRIx64 "\n",
           exception_object, pc, frameInfo.start_ip, functionName,
           frameInfo.lsda, frameInfo.handler);
     }
@@ -160,8 +162,9 @@ unwind_phase2(unw_context_t *uc, _Unwind_Exception *exception_object) {
            UNW_ESUCCESS) || (frameInfo.start_ip + offset > frameInfo.end_ip))
         strcpy(functionName, ".anonymous.");
       _LIBUNWIND_TRACE_UNWINDING(
-          "unwind_phase2(ex_ojb=%p): start_ip=0x%llX, func=%s, sp=0x%llX, "
-          "lsda=0x%llX, personality=0x%llX\n",
+          "unwind_phase2(ex_ojb=%p): start_ip=0x%" PRIx64
+          ", func=%s, sp=0x%" PRIx64 ", "
+          "lsda=0x%" PRIx64 ", personality=0x%" PRIx64 "\n",
           exception_object, frameInfo.start_ip, functionName, sp,
           frameInfo.lsda, frameInfo.handler);
     }
@@ -201,7 +204,8 @@ unwind_phase2(unw_context_t *uc, _Unwind_Exception *exception_object) {
           unw_get_reg(&cursor2, UNW_REG_IP, &pc);
           unw_get_reg(&cursor2, UNW_REG_SP, &sp);
           _LIBUNWIND_TRACE_UNWINDING("unwind_phase2(ex_ojb=%p): re-entering  "
-                                     "user code with ip=0x%llX, sp=0x%llX\n",
+                                     "user code with ip=0x%" PRIx64
+                                     ", sp=0x%" PRIx64 "\n",
                                      exception_object, pc, sp);
         }
         unw_resume(&cursor2);
@@ -247,12 +251,12 @@ unwind_phase2_forced(unw_context_t *uc,
       if ((unw_get_proc_name(&cursor2, functionName, 512, &offset) !=
            UNW_ESUCCESS) || (frameInfo.start_ip + offset > frameInfo.end_ip))
         strcpy(functionName, ".anonymous.");
-      _LIBUNWIND_TRACE_UNWINDING("unwind_phase2_forced(ex_ojb=%p):  "
-                                 "start_ip=0x%llX, func=%s, lsda=0x%llX, "
-                                 " personality=0x%llX\n",
-                                 exception_object, frameInfo.start_ip,
-                                 functionName, frameInfo.lsda,
-                                 frameInfo.handler);
+      _LIBUNWIND_TRACE_UNWINDING(
+          "unwind_phase2_forced(ex_ojb=%p):  "
+          "start_ip=0x%" PRIx64 ", func=%s, lsda=0x%" PRIx64 ", "
+          " personality=0x%" PRIx64 "\n",
+          exception_object, frameInfo.start_ip, functionName, frameInfo.lsda,
+          frameInfo.handler);
     }
 
     // Call stop function at each frame.
@@ -406,10 +410,12 @@ _Unwind_GetLanguageSpecificData(struct _Unwind_Context *context) {
   if (unw_get_proc_info(cursor, &frameInfo) == UNW_ESUCCESS)
     result = (uintptr_t)frameInfo.lsda;
   _LIBUNWIND_TRACE_API("_Unwind_GetLanguageSpecificData(context=%p)"
-                             "=> 0x%lX\n", context, result);
+                       "=> 0x%" PRIxPTR "\n",
+                       context, result);
   if (result != 0) {
     if (*((uint8_t *)result) != 0xFF)
-      _LIBUNWIND_DEBUG_LOG("lsda at 0x%lX does not start with 0xFF\n", result);
+      _LIBUNWIND_DEBUG_LOG("lsda at 0x%" PRIxPTR " does not start with 0xFF\n",
+                           result);
   }
   return result;
 }
@@ -422,9 +428,8 @@ _LIBUNWIND_EXPORT uintptr_t _Unwind_GetGR(struct _Unwind_Context *context,
   unw_cursor_t *cursor = (unw_cursor_t *)context;
   unw_word_t result;
   unw_get_reg(cursor, index, &result);
-  _LIBUNWIND_TRACE_API("_Unwind_GetGR(context=%p, reg=%d) => 0x%llX\n",
-    context,
-                  index, (uint64_t) result);
+  _LIBUNWIND_TRACE_API("_Unwind_GetGR(context=%p, reg=%d) => 0x%" PRIx64 "\n",
+                       context, index, (uint64_t)result);
   return (uintptr_t)result;
 }
 
@@ -434,8 +439,8 @@ _LIBUNWIND_EXPORT uintptr_t _Unwind_GetGR(struct _Unwind_Context *context,
 _LIBUNWIND_EXPORT void _Unwind_SetGR(struct _Unwind_Context *context, int index,
                                      uintptr_t new_value) {
   _LIBUNWIND_TRACE_API("_Unwind_SetGR(context=%p, reg=%d, "
-                             "value=0x%0llX)\n", context,
-                             index, (uint64_t) new_value);
+                       "value=0x%0" PRIx64 ")\n",
+                       context, index, (uint64_t)new_value);
   unw_cursor_t *cursor = (unw_cursor_t *)context;
   unw_set_reg(cursor, index, new_value);
 }
@@ -447,8 +452,8 @@ _LIBUNWIND_EXPORT uintptr_t _Unwind_GetIP(struct _Unwind_Context *context) {
   unw_cursor_t *cursor = (unw_cursor_t *)context;
   unw_word_t result;
   unw_get_reg(cursor, UNW_REG_IP, &result);
-  _LIBUNWIND_TRACE_API("_Unwind_GetIP(context=%p) => 0x%llX\n", context,
-                             (uint64_t) result);
+  _LIBUNWIND_TRACE_API("_Unwind_GetIP(context=%p) => 0x%" PRIx64 "\n", context,
+                       (uint64_t)result);
   return (uintptr_t)result;
 }
 
@@ -459,8 +464,8 @@ _LIBUNWIND_EXPORT uintptr_t _Unwind_GetIP(struct _Unwind_Context *context) {
 /// start executing in the landing pad.
 _LIBUNWIND_EXPORT void _Unwind_SetIP(struct _Unwind_Context *context,
                                      uintptr_t new_value) {
-  _LIBUNWIND_TRACE_API("_Unwind_SetIP(context=%p, value=0x%0llX)\n",
-                             context, (uint64_t) new_value);
+  _LIBUNWIND_TRACE_API("_Unwind_SetIP(context=%p, value=0x%0" PRIx64 ")\n",
+                       context, (uint64_t)new_value);
   unw_cursor_t *cursor = (unw_cursor_t *)context;
   unw_set_reg(cursor, UNW_REG_IP, new_value);
 }
@@ -475,8 +480,8 @@ _Unwind_GetRegionStart(struct _Unwind_Context *context) {
   uintptr_t result = 0;
   if (unw_get_proc_info(cursor, &frameInfo) == UNW_ESUCCESS)
     result = (uintptr_t)frameInfo.start_ip;
-  _LIBUNWIND_TRACE_API("_Unwind_GetRegionStart(context=%p) => 0x%lX\n",
-                             context, result);
+  _LIBUNWIND_TRACE_API("_Unwind_GetRegionStart(context=%p) => 0x%" PRIxPTR "\n",
+                       context, result);
   return result;
 }
 

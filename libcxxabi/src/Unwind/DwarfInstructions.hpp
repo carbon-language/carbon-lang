@@ -156,11 +156,11 @@ int DwarfInstructions<A, R>::stepWithDwarf(A &addressSpace, pint_t pc,
                                            pint_t fdeStart, R &registers) {
   FDE_Info fdeInfo;
   CIE_Info cieInfo;
-  if (CFI_Parser<A>::decodeFDE(addressSpace, fdeStart,
-                                                  &fdeInfo, &cieInfo) == NULL) {
+  if (CFI_Parser<A>::decodeFDE(addressSpace, fdeStart, &fdeInfo,
+                               &cieInfo) == NULL) {
     PrologInfo prolog;
     if (CFI_Parser<A>::parseFDEInstructions(addressSpace, fdeInfo, cieInfo, pc,
-                                                                     &prolog)) {
+                                            &prolog)) {
       // get pointer to cfa (architecture specific)
       pint_t cfa = getCFA(addressSpace, prolog, registers);
 
@@ -168,10 +168,10 @@ int DwarfInstructions<A, R>::stepWithDwarf(A &addressSpace, pint_t pc,
       R newRegisters = registers;
       pint_t returnAddress = 0;
       const int lastReg = R::lastDwarfRegNum();
-      assert((int)CFI_Parser<A>::kMaxRegisterNumber > lastReg
-                                                && "register range too large");
-      assert(lastReg <= (int)cieInfo.returnAddressRegister
-                 && "register range does not contain return address register");
+      assert((int)CFI_Parser<A>::kMaxRegisterNumber > lastReg &&
+             "register range too large");
+      assert(lastReg <= (int)cieInfo.returnAddressRegister &&
+             "register range does not contain return address register");
       for (int i = 0; i <= lastReg; ++i) {
          if (prolog.savedRegisters[i].location !=
              CFI_Parser<A>::kRegisterUnused) {
@@ -223,7 +223,8 @@ DwarfInstructions<A, R>::evaluateExpression(pint_t expression, A &addressSpace,
   pint_t length = (pint_t)addressSpace.getULEB128(p, expressionEnd);
   expressionEnd = p + length;
   if (log)
-    fprintf(stderr, "evaluateExpression(): length=%llu\n", (uint64_t)length);
+    fprintf(stderr, "evaluateExpression(): length=%" PRIu64 "\n",
+            (uint64_t)length);
   pint_t stack[100];
   pint_t *sp = stack;
   *(++sp) = initialStackValue;
@@ -231,7 +232,7 @@ DwarfInstructions<A, R>::evaluateExpression(pint_t expression, A &addressSpace,
   while (p < expressionEnd) {
     if (log) {
       for (pint_t *t = sp; t > stack; --t) {
-        fprintf(stderr, "sp[] = 0x%llX\n", (uint64_t)(*t));
+        fprintf(stderr, "sp[] = 0x%" PRIx64 "\n", (uint64_t)(*t));
       }
     }
     uint8_t opcode = addressSpace.get8(p++);
@@ -245,7 +246,7 @@ DwarfInstructions<A, R>::evaluateExpression(pint_t expression, A &addressSpace,
       p += sizeof(pint_t);
       *(++sp) = value;
       if (log)
-        fprintf(stderr, "push 0x%llX\n", (uint64_t) value);
+        fprintf(stderr, "push 0x%" PRIx64 "\n", (uint64_t)value);
       break;
 
     case DW_OP_deref:
@@ -253,7 +254,7 @@ DwarfInstructions<A, R>::evaluateExpression(pint_t expression, A &addressSpace,
       value = *sp--;
       *(++sp) = addressSpace.getP(value);
       if (log)
-        fprintf(stderr, "dereference 0x%llX\n", (uint64_t) value);
+        fprintf(stderr, "dereference 0x%" PRIx64 "\n", (uint64_t)value);
       break;
 
     case DW_OP_const1u:
@@ -262,7 +263,7 @@ DwarfInstructions<A, R>::evaluateExpression(pint_t expression, A &addressSpace,
       p += 1;
       *(++sp) = value;
       if (log)
-        fprintf(stderr, "push 0x%llX\n", (uint64_t) value);
+        fprintf(stderr, "push 0x%" PRIx64 "\n", (uint64_t)value);
       break;
 
     case DW_OP_const1s:
@@ -271,7 +272,7 @@ DwarfInstructions<A, R>::evaluateExpression(pint_t expression, A &addressSpace,
       p += 1;
       *(++sp) = (pint_t)svalue;
       if (log)
-        fprintf(stderr, "push 0x%llX\n", (uint64_t) svalue);
+        fprintf(stderr, "push 0x%" PRIx64 "\n", (uint64_t)svalue);
       break;
 
     case DW_OP_const2u:
@@ -280,7 +281,7 @@ DwarfInstructions<A, R>::evaluateExpression(pint_t expression, A &addressSpace,
       p += 2;
       *(++sp) = value;
       if (log)
-        fprintf(stderr, "push 0x%llX\n", (uint64_t) value);
+        fprintf(stderr, "push 0x%" PRIx64 "\n", (uint64_t)value);
       break;
 
     case DW_OP_const2s:
@@ -289,7 +290,7 @@ DwarfInstructions<A, R>::evaluateExpression(pint_t expression, A &addressSpace,
       p += 2;
       *(++sp) = (pint_t)svalue;
       if (log)
-        fprintf(stderr, "push 0x%llX\n", (uint64_t) svalue);
+        fprintf(stderr, "push 0x%" PRIx64 "\n", (uint64_t)svalue);
       break;
 
     case DW_OP_const4u:
@@ -298,7 +299,7 @@ DwarfInstructions<A, R>::evaluateExpression(pint_t expression, A &addressSpace,
       p += 4;
       *(++sp) = value;
       if (log)
-        fprintf(stderr, "push 0x%llX\n", (uint64_t) value);
+        fprintf(stderr, "push 0x%" PRIx64 "\n", (uint64_t)value);
       break;
 
     case DW_OP_const4s:
@@ -307,7 +308,7 @@ DwarfInstructions<A, R>::evaluateExpression(pint_t expression, A &addressSpace,
       p += 4;
       *(++sp) = (pint_t)svalue;
       if (log)
-        fprintf(stderr, "push 0x%llX\n", (uint64_t) svalue);
+        fprintf(stderr, "push 0x%" PRIx64 "\n", (uint64_t)svalue);
       break;
 
     case DW_OP_const8u:
@@ -316,7 +317,7 @@ DwarfInstructions<A, R>::evaluateExpression(pint_t expression, A &addressSpace,
       p += 8;
       *(++sp) = value;
       if (log)
-        fprintf(stderr, "push 0x%llX\n", (uint64_t) value);
+        fprintf(stderr, "push 0x%" PRIx64 "\n", (uint64_t)value);
       break;
 
     case DW_OP_const8s:
@@ -325,7 +326,7 @@ DwarfInstructions<A, R>::evaluateExpression(pint_t expression, A &addressSpace,
       p += 8;
       *(++sp) = value;
       if (log)
-        fprintf(stderr, "push 0x%llX\n", (uint64_t) value);
+        fprintf(stderr, "push 0x%" PRIx64 "\n", (uint64_t)value);
       break;
 
     case DW_OP_constu:
@@ -333,7 +334,7 @@ DwarfInstructions<A, R>::evaluateExpression(pint_t expression, A &addressSpace,
       value = (pint_t)addressSpace.getULEB128(p, expressionEnd);
       *(++sp) = value;
       if (log)
-        fprintf(stderr, "push 0x%llX\n", (uint64_t) value);
+        fprintf(stderr, "push 0x%" PRIx64 "\n", (uint64_t)value);
       break;
 
     case DW_OP_consts:
@@ -341,7 +342,7 @@ DwarfInstructions<A, R>::evaluateExpression(pint_t expression, A &addressSpace,
       svalue = (sint_t)addressSpace.getSLEB128(p, expressionEnd);
       *(++sp) = (pint_t)svalue;
       if (log)
-        fprintf(stderr, "push 0x%llX\n", (uint64_t) svalue);
+        fprintf(stderr, "push 0x%" PRIx64 "\n", (uint64_t)svalue);
       break;
 
     case DW_OP_dup:
@@ -401,7 +402,7 @@ DwarfInstructions<A, R>::evaluateExpression(pint_t expression, A &addressSpace,
       value = *sp--;
       *sp = *((pint_t*)value);
       if (log)
-        fprintf(stderr, "x-dereference 0x%llX\n", (uint64_t) value);
+        fprintf(stderr, "x-dereference 0x%" PRIx64 "\n", (uint64_t)value);
       break;
 
     case DW_OP_abs:
@@ -518,7 +519,7 @@ DwarfInstructions<A, R>::evaluateExpression(pint_t expression, A &addressSpace,
       p += 2;
       p = (pint_t)((sint_t)p + svalue);
       if (log)
-        fprintf(stderr, "skip %lld\n", (uint64_t) svalue);
+        fprintf(stderr, "skip %" PRIu64 "\n", (uint64_t)svalue);
       break;
 
     case DW_OP_bra:
@@ -527,7 +528,7 @@ DwarfInstructions<A, R>::evaluateExpression(pint_t expression, A &addressSpace,
       if (*sp--)
         p = (pint_t)((sint_t)p + svalue);
       if (log)
-        fprintf(stderr, "bra %lld\n", (uint64_t) svalue);
+        fprintf(stderr, "bra %" PRIu64 "\n", (uint64_t)svalue);
       break;
 
     case DW_OP_eq:
@@ -607,7 +608,7 @@ DwarfInstructions<A, R>::evaluateExpression(pint_t expression, A &addressSpace,
       value = opcode - DW_OP_lit0;
       *(++sp) = value;
       if (log)
-        fprintf(stderr, "push literal 0x%llX\n", (uint64_t) value);
+        fprintf(stderr, "push literal 0x%" PRIx64 "\n", (uint64_t)value);
       break;
 
     case DW_OP_reg0:
@@ -652,7 +653,7 @@ DwarfInstructions<A, R>::evaluateExpression(pint_t expression, A &addressSpace,
       reg = (uint32_t)addressSpace.getULEB128(p, expressionEnd);
       *(++sp) = registers.getRegister((int)reg);
       if (log)
-        fprintf(stderr, "push reg %d + 0x%llX\n", reg, (uint64_t) svalue);
+        fprintf(stderr, "push reg %d + 0x%" PRIx64 "\n", reg, (uint64_t)svalue);
       break;
 
     case DW_OP_breg0:
@@ -692,7 +693,7 @@ DwarfInstructions<A, R>::evaluateExpression(pint_t expression, A &addressSpace,
       svalue += registers.getRegister((int)reg);
       *(++sp) = (pint_t)(svalue);
       if (log)
-        fprintf(stderr, "push reg %d + 0x%llX\n", reg, (uint64_t) svalue);
+        fprintf(stderr, "push reg %d + 0x%" PRIx64 "\n", reg, (uint64_t)svalue);
       break;
 
     case DW_OP_bregx:
@@ -701,7 +702,7 @@ DwarfInstructions<A, R>::evaluateExpression(pint_t expression, A &addressSpace,
       svalue += registers.getRegister((int)reg);
       *(++sp) = (pint_t)(svalue);
       if (log)
-        fprintf(stderr, "push reg %d + 0x%llX\n", reg, (uint64_t) svalue);
+        fprintf(stderr, "push reg %d + 0x%" PRIx64 "\n", reg, (uint64_t)svalue);
       break;
 
     case DW_OP_fbreg:
@@ -733,7 +734,7 @@ DwarfInstructions<A, R>::evaluateExpression(pint_t expression, A &addressSpace,
       }
       *(++sp) = value;
       if (log)
-        fprintf(stderr, "sized dereference 0x%llX\n", (uint64_t) value);
+        fprintf(stderr, "sized dereference 0x%" PRIx64 "\n", (uint64_t)value);
       break;
 
     case DW_OP_xderef_size:
@@ -748,7 +749,7 @@ DwarfInstructions<A, R>::evaluateExpression(pint_t expression, A &addressSpace,
 
   }
   if (log)
-    fprintf(stderr, "expression evaluates to 0x%llX\n", (uint64_t) * sp);
+    fprintf(stderr, "expression evaluates to 0x%" PRIx64 "\n", (uint64_t)*sp);
   return *sp;
 }
 

@@ -10,10 +10,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <stdint.h>
+#include <inttypes.h>
 #include <stdbool.h>
-#include <stdlib.h>
+#include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "libunwind.h"
 #include "unwind.h"
@@ -196,8 +197,8 @@ _LIBUNWIND_EXPORT uintptr_t _Unwind_GetCFA(struct _Unwind_Context *context) {
   unw_cursor_t *cursor = (unw_cursor_t *)context;
   unw_word_t result;
   unw_get_reg(cursor, UNW_REG_SP, &result);
-  _LIBUNWIND_TRACE_API("_Unwind_GetCFA(context=%p) => 0x%llX\n", context,
-                  (uint64_t) result);
+  _LIBUNWIND_TRACE_API("_Unwind_GetCFA(context=%p) => 0x%" PRIx64 "\n", context,
+                       (uint64_t)result);
   return (uintptr_t)result;
 }
 

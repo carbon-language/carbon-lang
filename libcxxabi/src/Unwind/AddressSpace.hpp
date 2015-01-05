@@ -325,7 +325,7 @@ inline LocalAddressSpace::pint_t LocalAddressSpace::getEncodedP(pint_t &addr,
 #endif
 
 inline bool LocalAddressSpace::findUnwindSections(pint_t targetAddr,
-                                                  UnwindInfoSections &info) {
+                                                  UnwindInfoSections & info) {
 #if __APPLE__
   dyld_unwind_sections dyldInfo;
   if (_dyld_find_unwind_sections((void *)targetAddr, &dyldInfo)) {
