@@ -65,7 +65,7 @@ namespace lldb_private {
                     return;
                 ConstString const_name = ConstString(name.c_str());
                 size_t byte_index = static_cast<size_t>(bit_offset / 8);
-                m_fields[const_name] = FieldImpl{field_type, byte_index, size};
+                m_fields[const_name] = FieldImpl{field_type, byte_index, static_cast<size_t>(size)};
             }
             size_t total_size = struct_type.GetByteSize();
             lldb::DataBufferSP buffer_sp(new DataBufferHeap(total_size,0));
