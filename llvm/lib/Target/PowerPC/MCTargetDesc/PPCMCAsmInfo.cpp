@@ -74,7 +74,6 @@ PPCELFMCAsmInfo::PPCELFMCAsmInfo(bool is64Bit, const Triple& T) {
   AssemblerDialect = 1;           // New-Style mnemonics.
   LCOMMDirectiveAlignmentType = LCOMM::ByteAlignment;
 
-  if (T.isOSFreeBSD() || ((T.isOSNetBSD() || T.isOSOpenBSD()) && !is64Bit))
-    UseIntegratedAssembler = true;
+  UseIntegratedAssembler = true;
 }
 
