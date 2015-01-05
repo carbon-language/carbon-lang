@@ -2441,14 +2441,11 @@ static std::string getMSCompatibilityVersion(const char *VersionStr) {
 }
 
 // Claim options we don't want to warn if they are unused. We do this for
-// options that
-// build systems might add but are unused when assembling or only running the
-// preprocessor
-// for example.
+// options that build systems might add but are unused when assembling or only
+// running the preprocessor for example.
 static void claimNoWarnArgs(const ArgList &Args) {
   // Don't warn about unused -f(no-)?lto.  This can happen when we're
-  // preprocessing,
-  // precompiling or assembling.
+  // preprocessing, precompiling or assembling.
   Args.ClaimAllArgs(options::OPT_flto);
   Args.ClaimAllArgs(options::OPT_fno_lto);
 }
