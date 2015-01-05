@@ -1762,6 +1762,63 @@ def A4_round_ri  : T_S2op_2_ii <"round", 0b111, 0b100>;
 let Defs = [USR_OVF], isCodeGenOnly = 0 in
 def A4_round_ri_sat : T_S2op_2_ii <"round", 0b111, 0b110, 1>;
 
+// Logical-logical words.
+// Compound or-and -- Rx=or(Ru,and(Rx,#s10))
+let isExtentSigned = 1, hasNewValue = 1, isExtendable = 1, opExtentBits = 10,
+    opExtendable = 3, isCodeGenOnly = 0 in
+def S4_or_andix:
+  ALU64Inst<(outs IntRegs:$Rx),
+            (ins IntRegs:$Ru, IntRegs:$_src_, s10Ext:$s10),
+  "$Rx = or($Ru, and($_src_, #$s10))" ,
+  [(set (i32 IntRegs:$Rx),
+        (or (i32 IntRegs:$Ru), (and (i32 IntRegs:$_src_), s10ExtPred:$s10)))] ,
+  "$_src_ = $Rx", ALU64_tc_2_SLOT23> {
+    bits<5> Rx;
+    bits<5> Ru;
+    bits<10> s10;
+
+    let IClass = 0b1101;
+
+    let Inst{27-22} = 0b101001;
+    let Inst{20-16} = Rx;
+    let Inst{21}    = s10{9};
+    let Inst{13-5}  = s10{8-0};
+    let Inst{4-0}   = Ru;
+  }
+
+// Miscellaneous ALU64 instructions.
+//
+let hasNewValue = 1, hasSideEffects = 0, isCodeGenOnly = 0 in
+def A4_modwrapu: ALU64Inst<(outs IntRegs:$Rd), (ins IntRegs:$Rs, IntRegs:$Rt),
+      "$Rd = modwrap($Rs, $Rt)", [], "", ALU64_tc_2_SLOT23> {
+  bits<5> Rd;
+  bits<5> Rs;
+  bits<5> Rt;
+
+  let IClass = 0b1101;
+  let Inst{27-21} = 0b0011111;
+  let Inst{20-16} = Rs;
+  let Inst{12-8} = Rt;
+  let Inst{7-5} = 0b111;
+  let Inst{4-0} = Rd;
+}
+
+let hasSideEffects = 0, isCodeGenOnly = 0 in
+def A4_bitsplit: ALU64Inst<(outs DoubleRegs:$Rd),
+      (ins IntRegs:$Rs, IntRegs:$Rt),
+      "$Rd = bitsplit($Rs, $Rt)", [], "", ALU64_tc_1_SLOT23> {
+  bits<5> Rd;
+  bits<5> Rs;
+  bits<5> Rt;
+
+  let IClass = 0b1101;
+  let Inst{27-24} = 0b0100;
+  let Inst{21} = 0b1;
+  let Inst{20-16} = Rs;
+  let Inst{12-8} = Rt;
+  let Inst{4-0} = Rd;
+}
+
 //  Add and accumulate.
 //  Rd=add(Rs,add(Ru,#s6))
 let isExtendable = 1, opExtendable = 3, isExtentSigned = 1, opExtentBits = 6,
