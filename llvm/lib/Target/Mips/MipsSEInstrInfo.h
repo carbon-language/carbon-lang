@@ -21,7 +21,6 @@ namespace llvm {
 
 class MipsSEInstrInfo : public MipsInstrInfo {
   const MipsSERegisterInfo RI;
-  bool IsN64;
 
 public:
   explicit MipsSEInstrInfo(const MipsSubtarget &STI);

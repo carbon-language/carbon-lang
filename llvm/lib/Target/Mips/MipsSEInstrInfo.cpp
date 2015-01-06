@@ -27,7 +27,7 @@ using namespace llvm;
 MipsSEInstrInfo::MipsSEInstrInfo(const MipsSubtarget &STI)
     : MipsInstrInfo(STI, STI.getRelocationModel() == Reloc::PIC_ ? Mips::B
                                                                  : Mips::J),
-      RI(STI), IsN64(STI.isABI_N64()) {}
+      RI(STI) {}
 
 const MipsRegisterInfo &MipsSEInstrInfo::getRegisterInfo() const {
   return RI;
