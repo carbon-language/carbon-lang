@@ -241,6 +241,178 @@ cond.end:                                         ; preds = %entry, %cond.true
   ret i16 %cond
 }
 
+; The following tests verify that calls to cttz/ctlz are speculated even if
+; basic block %cond.true has an extra zero extend/truncate which is "free"
+; for the target.
+
+define i64 @test1e(i32 %x) {
+; ALL-LABEL: @test1e(
+; LZCNT: icmp eq i32 %x, 0
+; LZCNT: call i32 @llvm.cttz.i32(i32 %x, i1 true)
+; BMI: call i32 @llvm.cttz.i32(i32 %x, i1 false)
+; GENERIC: icmp eq i32 %x, 0
+; GENERIC: call i32 @llvm.cttz.i32(i32 %x, i1 true)
+entry:
+  %tobool = icmp eq i32 %x, 0
+  br i1 %tobool, label %cond.end, label %cond.true
+
+cond.true:                                        ; preds = %entry
+  %0 = tail call i32 @llvm.cttz.i32(i32 %x, i1 true)
+  %phitmp2 = zext i32 %0 to i64
+  br label %cond.end
+
+cond.end:                                         ; preds = %entry, %cond.true
+  %cond = phi i64 [ %phitmp2, %cond.true ], [ 32, %entry ]
+  ret i64 %cond
+}
+
+define i32 @test2e(i64 %x) {
+; ALL-LABEL: @test2e(
+; LZCNT: icmp eq i64 %x, 0
+; LZCNT: call i64 @llvm.cttz.i64(i64 %x, i1 true)
+; BMI: call i64 @llvm.cttz.i64(i64 %x, i1 false)
+; GENERIC: icmp eq i64 %x, 0
+; GENERIC: call i64 @llvm.cttz.i64(i64 %x, i1 true)
+entry:
+  %tobool = icmp eq i64 %x, 0
+  br i1 %tobool, label %cond.end, label %cond.true
+
+cond.true:                                        ; preds = %entry
+  %0 = tail call i64 @llvm.cttz.i64(i64 %x, i1 true)
+  %cast = trunc i64 %0 to i32
+  br label %cond.end
+
+cond.end:                                         ; preds = %entry, %cond.true
+  %cond = phi i32 [ %cast, %cond.true ], [ 64, %entry ]
+  ret i32 %cond
+}
+
+define i64 @test3e(i32 %x) {
+; ALL-LABEL: @test3e(
+; BMI: icmp eq i32 %x, 0
+; BMI: call i32 @llvm.ctlz.i32(i32 %x, i1 true)
+; LZCNT: call i32 @llvm.ctlz.i32(i32 %x, i1 false)
+; GENERIC: icmp eq i32 %x, 0
+; GENERIC: call i32 @llvm.ctlz.i32(i32 %x, i1 true)
+entry:
+  %tobool = icmp eq i32 %x, 0
+  br i1 %tobool, label %cond.end, label %cond.true
+
+cond.true:                                        ; preds = %entry
+  %0 = tail call i32 @llvm.ctlz.i32(i32 %x, i1 true)
+  %phitmp2 = zext i32 %0 to i64
+  br label %cond.end
+
+cond.end:                                         ; preds = %entry, %cond.true
+  %cond = phi i64 [ %phitmp2, %cond.true ], [ 32, %entry ]
+  ret i64 %cond
+}
+
+define i32 @test4e(i64 %x) {
+; ALL-LABEL: @test4e(
+; BMI: icmp eq i64 %x, 0
+; BMI: call i64 @llvm.ctlz.i64(i64 %x, i1 true)
+; LZCNT: call i64 @llvm.ctlz.i64(i64 %x, i1 false)
+; GENERIC: icmp eq i64 %x, 0
+; GENERIC: call i64 @llvm.ctlz.i64(i64 %x, i1 true)
+entry:
+  %tobool = icmp eq i64 %x, 0
+  br i1 %tobool, label %cond.end, label %cond.true
+
+cond.true:                                        ; preds = %entry
+  %0 = tail call i64 @llvm.ctlz.i64(i64 %x, i1 true)
+  %cast = trunc i64 %0 to i32
+  br label %cond.end
+
+cond.end:                                         ; preds = %entry, %cond.true
+  %cond = phi i32 [ %cast, %cond.true ], [ 64, %entry ]
+  ret i32 %cond
+}
+
+define i16 @test5e(i64 %x) {
+; ALL-LABEL: @test5e(
+; BMI: icmp eq i64 %x, 0
+; BMI: call i64 @llvm.ctlz.i64(i64 %x, i1 true)
+; LZCNT: call i64 @llvm.ctlz.i64(i64 %x, i1 false)
+; GENERIC: icmp eq i64 %x, 0
+; GENERIC: call i64 @llvm.ctlz.i64(i64 %x, i1 true)
+entry:
+  %tobool = icmp eq i64 %x, 0
+  br i1 %tobool, label %cond.end, label %cond.true
+
+cond.true:                                        ; preds = %entry
+  %0 = tail call i64 @llvm.ctlz.i64(i64 %x, i1 true)
+  %cast = trunc i64 %0 to i16
+  br label %cond.end
+
+cond.end:                                         ; preds = %entry, %cond.true
+  %cond = phi i16 [ %cast, %cond.true ], [ 64, %entry ]
+  ret i16 %cond
+}
+
+define i16 @test6e(i32 %x) {
+; ALL-LABEL: @test6e(
+; BMI: icmp eq i32 %x, 0
+; BMI: call i32 @llvm.ctlz.i32(i32 %x, i1 true)
+; LZCNT: call i32 @llvm.ctlz.i32(i32 %x, i1 false)
+; GENERIC: icmp eq i32 %x, 0
+; GENERIC: call i32 @llvm.ctlz.i32(i32 %x, i1 true)
+entry:
+  %tobool = icmp eq i32 %x, 0
+  br i1 %tobool, label %cond.end, label %cond.true
+
+cond.true:                                        ; preds = %entry
+  %0 = tail call i32 @llvm.ctlz.i32(i32 %x, i1 true)
+  %cast = trunc i32 %0 to i16
+  br label %cond.end
+
+cond.end:                                         ; preds = %entry, %cond.true
+  %cond = phi i16 [ %cast, %cond.true ], [ 32, %entry ]
+  ret i16 %cond
+}
+
+define i16 @test7e(i64 %x) {
+; ALL-LABEL: @test7e(
+; LZCNT: icmp eq i64 %x, 0
+; LZCNT: call i64 @llvm.cttz.i64(i64 %x, i1 true)
+; BMI: call i64 @llvm.cttz.i64(i64 %x, i1 false)
+; GENERIC: icmp eq i64 %x, 0
+; GENERIC: call i64 @llvm.cttz.i64(i64 %x, i1 true)
+entry:
+  %tobool = icmp eq i64 %x, 0
+  br i1 %tobool, label %cond.end, label %cond.true
+
+cond.true:                                        ; preds = %entry
+  %0 = tail call i64 @llvm.cttz.i64(i64 %x, i1 true)
+  %cast = trunc i64 %0 to i16
+  br label %cond.end
+
+cond.end:                                         ; preds = %entry, %cond.true
+  %cond = phi i16 [ %cast, %cond.true ], [ 64, %entry ]
+  ret i16 %cond
+}
+
+define i16 @test8e(i32 %x) {
+; ALL-LABEL: @test8e(
+; LZCNT: icmp eq i32 %x, 0
+; LZCNT: call i32 @llvm.cttz.i32(i32 %x, i1 true)
+; BMI: call i32 @llvm.cttz.i32(i32 %x, i1 false)
+; GENERIC: icmp eq i32 %x, 0
+; GENERIC: call i32 @llvm.cttz.i32(i32 %x, i1 true)
+entry:
+  %tobool = icmp eq i32 %x, 0
+  br i1 %tobool, label %cond.end, label %cond.true
+
+cond.true:                                        ; preds = %entry
+  %0 = tail call i32 @llvm.cttz.i32(i32 %x, i1 true)
+  %cast = trunc i32 %0 to i16
+  br label %cond.end
+
+cond.end:                                         ; preds = %entry, %cond.true
+  %cond = phi i16 [ %cast, %cond.true ], [ 32, %entry ]
+  ret i16 %cond
+}
+
 
 declare i64 @llvm.ctlz.i64(i64, i1)
 declare i32 @llvm.ctlz.i32(i32, i1)

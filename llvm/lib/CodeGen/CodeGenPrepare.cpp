@@ -4008,15 +4008,41 @@ static bool OptimizeBranchInst(BranchInst *BrInst, const TargetLowering &TLI) {
   // See if ThenBB contains only one instruction (excluding the
   // terminator and DbgInfoIntrinsic calls).
   IntrinsicInst *II = nullptr;
+  CastInst *CI = nullptr;
   for (BasicBlock::iterator I = ThenBB->begin(),
                             E = std::prev(ThenBB->end()); I != E; ++I) {
     // Skip debug info.
     if (isa<DbgInfoIntrinsic>(I))
       continue;
 
-    if (II)
-      // Avoid speculating more than one instruction.
-      return false;
+    // Check if this is a zero extension or a truncate of a previously
+    // matched call to intrinsic cttz/ctlz.
+    if (II) {
+      // Early exit if we already found a "free" zero extend/truncate.
+      if (CI)
+        return false;
+
+      Type *SrcTy = II->getType();
+      Type *DestTy = I->getType();
+      Value *V;
+ 
+      if (match(cast<Instruction>(I), m_ZExt(m_Value(V))) && V == II) {
+        // Speculate this zero extend only if it is "free" for the target.
+        if (TLI.isZExtFree(SrcTy, DestTy)) {
+          CI = cast<CastInst>(I);
+          continue;
+        }
+      } else if (match(cast<Instruction>(I), m_Trunc(m_Value(V))) && V == II) {
+        // Speculate this truncate only if it is "free" for the target.
+        if (TLI.isTruncateFree(SrcTy, DestTy)) {
+          CI = cast<CastInst>(I);
+          continue;
+        }
+      } else {
+        // Avoid speculating more than one instruction.
+        return false;
+      }
+    }
 
     // See if this is a call to intrinsic cttz/ctlz.
     if (match(cast<Instruction>(I), m_Intrinsic<Intrinsic::cttz>())) {
@@ -4041,11 +4067,14 @@ static bool OptimizeBranchInst(BranchInst *BrInst, const TargetLowering &TLI) {
     Value *ThenV = PN->getIncomingValueForBlock(ThenBB);
     Value *OrigV = PN->getIncomingValueForBlock(EntryBB);
 
-    if (!OrigV || ThenV != II)
+    if (!OrigV)
       return false;
 
+    if (ThenV != II && (!CI || ThenV != CI))
+      return false;
+    
     if (ConstantInt *CInt = dyn_cast<ConstantInt>(OrigV)) {
-      unsigned BitWidth = ThenV->getType()->getIntegerBitWidth();
+      unsigned BitWidth = II->getType()->getIntegerBitWidth();
 
       // Don't try to simplify this phi node if 'ThenV' is a cttz/ctlz
       // intrinsic call, but 'OrigV' is not equal to the 'size-of' in bits
@@ -4070,7 +4099,7 @@ static bool OptimizeBranchInst(BranchInst *BrInst, const TargetLowering &TLI) {
                           ConstantInt::getFalse(II->getContext()) };
         Module *M = EntryBB->getParent()->getParent();
         Value *IF = Intrinsic::getDeclaration(M, II->getIntrinsicID(), Ty);
-        IRBuilder<> Builder(BrInst);
+        IRBuilder<> Builder(II);
         Instruction *NewI = Builder.CreateCall(IF, Args);
 
         // Replace the old call to cttz/ctlz.
