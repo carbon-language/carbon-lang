@@ -3442,7 +3442,7 @@ defm storerf : ST_Abs <"memh", "STrif", IntRegs, u16_1Imm, 0b01, 1>;
 // if ([!]Pv[.new]) mem[bhwd](##global)=Rt
 //===----------------------------------------------------------------------===//
 
-let Uses = [GP], validSubTargets = HasV4SubT in
+let validSubTargets = HasV4SubT in
 class T_StoreGP <string mnemonic, string BaseOp, RegisterClass RC,
                  Operand ImmOp, bits<2> MajOp, bit isHalf = 0>
   : T_StoreAbsGP <mnemonic, RC, ImmOp, MajOp, globaladdress, 0, isHalf> {
@@ -3452,7 +3452,7 @@ class T_StoreGP <string mnemonic, string BaseOp, RegisterClass RC,
     let BaseOpcode = BaseOp#_abs;
   }
 
-let Uses = [GP], validSubTargets = HasV4SubT in
+let validSubTargets = HasV4SubT in
 multiclass ST_GP <string mnemonic, string BaseOp, Operand ImmOp,
                   bits<2> MajOp, bit isHalf = 0> {
   // Set BaseOpcode same as absolute addressing instructions so that
