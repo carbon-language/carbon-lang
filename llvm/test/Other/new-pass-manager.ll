@@ -5,6 +5,42 @@
 ; files, but for now this is just going to step the new process through its
 ; paces.
 
+; RUN: opt -disable-output -disable-verify -debug-pass-manager -debug-cgscc-pass-manager \
+; RUN:     -passes=no-op-module %s 2>&1 \
+; RUN:     | FileCheck %s --check-prefix=CHECK-MODULE-PASS
+; CHECK-MODULE-PASS: Starting module pass manager
+; CHECK-MODULE-PASS-NEXT: Running module pass: NoOpModulePass
+; CHECK-MODULE-PASS-NEXT: Finished module pass manager run.
+
+; RUN: opt -disable-output -disable-verify -debug-pass-manager -debug-cgscc-pass-manager \
+; RUN:     -passes=no-op-cgscc %s 2>&1 \
+; RUN:     | FileCheck %s --check-prefix=CHECK-CGSCC-PASS
+; RUN: opt -disable-output -disable-verify -debug-pass-manager -debug-cgscc-pass-manager \
+; RUN:     -passes='cgscc(no-op-cgscc)' %s 2>&1 \
+; RUN:     | FileCheck %s --check-prefix=CHECK-CGSCC-PASS
+; CHECK-CGSCC-PASS: Starting module pass manager
+; CHECK-CGSCC-PASS-NEXT: Running module pass: ModuleToPostOrderCGSCCPassAdaptor
+; CHECK-CGSCC-PASS-NEXT: Running module analysis: CGSCCAnalysisManagerModuleProxy
+; CHECK-CGSCC-PASS-NEXT: Running module analysis: Lazy CallGraph Analysis
+; CHECK-CGSCC-PASS-NEXT: Starting CGSCC pass manager run.
+; CHECK-CGSCC-PASS-NEXT: Running CGSCC pass: NoOpCGSCCPass
+; CHECK-CGSCC-PASS-NEXT: Finished CGSCC pass manager run.
+; CHECK-CGSCC-PASS-NEXT: Finished module pass manager run.
+
+; RUN: opt -disable-output -disable-verify -debug-pass-manager -debug-cgscc-pass-manager \
+; RUN:     -passes=no-op-function %s 2>&1 \
+; RUN:     | FileCheck %s --check-prefix=CHECK-FUNCTION-PASS
+; RUN: opt -disable-output -disable-verify -debug-pass-manager -debug-cgscc-pass-manager \
+; RUN:     -passes='function(no-op-function)' %s 2>&1 \
+; RUN:     | FileCheck %s --check-prefix=CHECK-FUNCTION-PASS
+; CHECK-FUNCTION-PASS: Starting module pass manager
+; CHECK-FUNCTION-PASS-NEXT: Running module pass: ModuleToFunctionPassAdaptor
+; CHECK-FUNCTION-PASS-NEXT: Running module analysis: FunctionAnalysisManagerModuleProxy
+; CHECK-FUNCTION-PASS-NEXT: Starting function pass manager run.
+; CHECK-FUNCTION-PASS-NEXT: Running function pass: NoOpFunctionPass
+; CHECK-FUNCTION-PASS-NEXT: Finished function pass manager run.
+; CHECK-FUNCTION-PASS-NEXT: Finished module pass manager run.
+
 ; RUN: opt -disable-output -debug-pass-manager -passes=print %s 2>&1 \
 ; RUN:     | FileCheck %s --check-prefix=CHECK-MODULE-PRINT
 ; CHECK-MODULE-PRINT: Starting module pass manager

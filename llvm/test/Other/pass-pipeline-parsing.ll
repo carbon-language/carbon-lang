@@ -34,11 +34,8 @@
 ; CHECK-NESTED-TWO-NOOP-FP: Starting module pass manager
 ; CHECK-NESTED-TWO-NOOP-FP: Running module pass: ModuleToFunctionPassAdaptor
 ; CHECK-NESTED-TWO-NOOP-FP: Starting function pass manager
-; CHECK-NESTED-TWO-NOOP-FP: Running function pass: FunctionPassManager
-; CHECK-NESTED-TWO-NOOP-FP: Starting function pass manager
 ; CHECK-NESTED-TWO-NOOP-FP: Running function pass: NoOpFunctionPass
 ; CHECK-NESTED-TWO-NOOP-FP: Running function pass: NoOpFunctionPass
-; CHECK-NESTED-TWO-NOOP-FP: Finished function pass manager
 ; CHECK-NESTED-TWO-NOOP-FP: Finished function pass manager
 ; CHECK-NESTED-TWO-NOOP-FP: Finished module pass manager
 
