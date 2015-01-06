@@ -236,6 +236,9 @@ MachOObjectFile::MachOObjectFile(MemoryBufferRef Object, bool IsLittleEndian,
       DataInCodeLoadCmd(nullptr), DyldInfoLoadCmd(nullptr),
       UuidLoadCmd(nullptr), HasPageZeroSegment(false) {
   uint32_t LoadCommandCount = this->getHeader().ncmds;
+  if (LoadCommandCount == 0)
+    return;
+
   MachO::LoadCommandType SegmentLoadType = is64Bit() ?
     MachO::LC_SEGMENT_64 : MachO::LC_SEGMENT;
 

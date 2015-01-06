@@ -1,0 +1,9 @@
+RUN: llvm-objdump -private-headers %p/Inputs/macho-zero-ncmds \
+RUN:         | FileCheck %s -check-prefix A
+
+// Check that we don't get an infinite loop if ncmds = 0
+A: file format Mach-O 64-bit unknown
+A: Mach header
+A:      magic cputype cpusubtype  caps    filetype ncmds sizeofcmds      flags
+A: MH_MAGIC_64  0x00      OBJECT     0          0 0x00000000
+

@@ -4204,6 +4204,8 @@ static void PrintLinkEditDataCommand(MachO::linkedit_data_command ld,
 static void PrintLoadCommands(const MachOObjectFile *Obj, uint32_t ncmds,
                               uint32_t filetype, uint32_t cputype,
                               bool verbose) {
+  if (ncmds == 0)
+    return;
   StringRef Buf = Obj->getData();
   MachOObjectFile::LoadCommandInfo Command = Obj->getFirstLoadCommandInfo();
   for (unsigned i = 0;; ++i) {
