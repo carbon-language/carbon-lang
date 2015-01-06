@@ -143,8 +143,10 @@ function(add_llvm_symbol_exports target_name export_file)
 endfunction(add_llvm_symbol_exports)
 
 if(NOT WIN32 AND NOT APPLE)
-  execute_process(COMMAND ${CMAKE_C_COMPILER} -Wl,--version
-                  OUTPUT_VARIABLE stdout)
+  execute_process(
+    COMMAND ${CMAKE_C_COMPILER} -Wl,--version
+    OUTPUT_VARIABLE stdout
+    )
   if("${stdout}" MATCHES "GNU gold")
     set(LLVM_LINKER_IS_GOLD ON)
   endif()
