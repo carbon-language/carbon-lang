@@ -4212,3 +4212,264 @@ def Y2_dcfetchbo : LD0Inst<(outs), (ins IntRegs:$Rs, u11_3Imm:$u11_3),
   let Inst{13} = 0b0;
   let Inst{10-0} = u11_3{13-3};
 }
+
+//===----------------------------------------------------------------------===//
+// Compound instructions
+//===----------------------------------------------------------------------===//
+
+let isBranch = 1, hasSideEffects = 0, isExtentSigned = 1,
+    isPredicated = 1, isPredicatedNew = 1, isExtendable = 1,
+    opExtentBits = 11, opExtentAlign = 2, opExtendable = 1,
+    isTerminator = 1, validSubTargets = HasV4SubT in
+class CJInst_tstbit_R0<string px, bit np, string tnt>
+  : InstHexagon<(outs), (ins IntRegs:$Rs, brtarget:$r9_2),
+  ""#px#" = tstbit($Rs, #0); if ("
+    #!if(np, "!","")#""#px#".new) jump:"#tnt#" $r9_2",
+  [], "", COMPOUND, TypeCOMPOUND> {
+  bits<4> Rs;
+  bits<11> r9_2;
+
+  // np: !p[01]
+  let isPredicatedFalse = np;
+  // tnt: Taken/Not Taken
+  let isBrTaken = !if (!eq(tnt, "t"), "true", "false");
+  let isTaken   = !if (!eq(tnt, "t"), 1, 0);
+
+  let IClass = 0b0001;
+  let Inst{27-26} = 0b00;
+  let Inst{25} = !if (!eq(px, "!p1"), 1,
+                 !if (!eq(px,  "p1"), 1, 0));
+  let Inst{24-23} = 0b11;
+  let Inst{22} = np;
+  let Inst{21-20} = r9_2{10-9};
+  let Inst{19-16} = Rs;
+  let Inst{13} = !if (!eq(tnt, "t"), 1, 0);
+  let Inst{9-8} = 0b11;
+  let Inst{7-1} = r9_2{8-2};
+}
+
+let Defs = [PC, P0], Uses = [P0], isCodeGenOnly = 0 in {
+  def J4_tstbit0_tp0_jump_nt : CJInst_tstbit_R0<"p0", 0, "nt">;
+  def J4_tstbit0_tp0_jump_t : CJInst_tstbit_R0<"p0", 0, "t">;
+  def J4_tstbit0_fp0_jump_nt : CJInst_tstbit_R0<"p0", 1, "nt">;
+  def J4_tstbit0_fp0_jump_t : CJInst_tstbit_R0<"p0", 1, "t">;
+}
+
+let Defs = [PC, P1], Uses = [P1], isCodeGenOnly = 0 in {
+  def J4_tstbit0_tp1_jump_nt : CJInst_tstbit_R0<"p1", 0, "nt">;
+  def J4_tstbit0_tp1_jump_t : CJInst_tstbit_R0<"p1", 0, "t">;
+  def J4_tstbit0_fp1_jump_nt : CJInst_tstbit_R0<"p1", 1, "nt">;
+  def J4_tstbit0_fp1_jump_t : CJInst_tstbit_R0<"p1", 1, "t">;
+}
+
+
+let isBranch = 1, hasSideEffects = 0,
+    isExtentSigned = 1, isPredicated = 1, isPredicatedNew = 1,
+    isExtendable = 1, opExtentBits = 11, opExtentAlign = 2,
+    opExtendable = 2, isTerminator = 1, validSubTargets = HasV4SubT in
+class CJInst_RR<string px, string op, bit np, string tnt>
+  : InstHexagon<(outs), (ins IntRegs:$Rs, IntRegs:$Rt, brtarget:$r9_2),
+  ""#px#" = cmp."#op#"($Rs, $Rt); if ("
+   #!if(np, "!","")#""#px#".new) jump:"#tnt#" $r9_2",
+  [], "", COMPOUND, TypeCOMPOUND> {
+  bits<4> Rs;
+  bits<4> Rt;
+  bits<11> r9_2;
+
+  // np: !p[01]
+  let isPredicatedFalse = np;
+  // tnt: Taken/Not Taken
+  let isBrTaken = !if (!eq(tnt, "t"), "true", "false");
+  let isTaken   = !if (!eq(tnt, "t"), 1, 0);
+
+  let IClass = 0b0001;
+  let Inst{27-23} = !if (!eq(op, "eq"),  0b01000,
+                    !if (!eq(op, "gt"),  0b01001,
+                    !if (!eq(op, "gtu"), 0b01010, 0)));
+  let Inst{22} = np;
+  let Inst{21-20} = r9_2{10-9};
+  let Inst{19-16} = Rs;
+  let Inst{13} = !if (!eq(tnt, "t"), 1, 0);
+  // px: Predicate reg 0/1
+  let Inst{12} = !if (!eq(px, "!p1"), 1,
+                 !if (!eq(px,  "p1"), 1, 0));
+  let Inst{11-8} = Rt;
+  let Inst{7-1} = r9_2{8-2};
+}
+
+// P[10] taken/not taken.
+multiclass T_tnt_CJInst_RR<string op, bit np> {
+  let Defs = [PC, P0], Uses = [P0] in {
+    def NAME#p0_jump_nt : CJInst_RR<"p0", op, np, "nt">;
+    def NAME#p0_jump_t : CJInst_RR<"p0", op, np, "t">;
+  }
+  let Defs = [PC, P1], Uses = [P1] in {
+    def NAME#p1_jump_nt : CJInst_RR<"p1", op, np, "nt">;
+    def NAME#p1_jump_t : CJInst_RR<"p1", op, np, "t">;
+  }
+}
+// Predicate / !Predicate
+multiclass T_pnp_CJInst_RR<string op>{
+  defm J4_cmp#NAME#_t : T_tnt_CJInst_RR<op, 0>;
+  defm J4_cmp#NAME#_f : T_tnt_CJInst_RR<op, 1>;
+}
+// TypeCJ Instructions compare RR and jump
+let isCodeGenOnly = 0 in {
+defm eq : T_pnp_CJInst_RR<"eq">;
+defm gt : T_pnp_CJInst_RR<"gt">;
+defm gtu : T_pnp_CJInst_RR<"gtu">;
+}
+
+let isBranch = 1, hasSideEffects = 0, isExtentSigned = 1,
+    isPredicated = 1, isPredicatedNew = 1, isExtendable = 1, opExtentBits = 11,
+    opExtentAlign = 2, opExtendable = 2, isTerminator = 1,
+    validSubTargets = HasV4SubT in
+class CJInst_RU5<string px, string op, bit np, string tnt>
+  : InstHexagon<(outs), (ins IntRegs:$Rs, u5Imm:$U5, brtarget:$r9_2),
+  ""#px#" = cmp."#op#"($Rs, #$U5); if ("
+    #!if(np, "!","")#""#px#".new) jump:"#tnt#" $r9_2",
+  [], "", COMPOUND, TypeCOMPOUND> {
+  bits<4> Rs;
+  bits<5> U5;
+  bits<11> r9_2;
+
+  // np: !p[01]
+  let isPredicatedFalse = np;
+  // tnt: Taken/Not Taken
+  let isBrTaken = !if (!eq(tnt, "t"), "true", "false");
+  let isTaken   = !if (!eq(tnt, "t"), 1, 0);
+
+  let IClass = 0b0001;
+  let Inst{27-26} = 0b00;
+  // px: Predicate reg 0/1
+  let Inst{25} = !if (!eq(px, "!p1"), 1,
+                 !if (!eq(px,  "p1"), 1, 0));
+  let Inst{24-23} = !if (!eq(op, "eq"),  0b00,
+                    !if (!eq(op, "gt"),  0b01,
+                    !if (!eq(op, "gtu"), 0b10, 0)));
+  let Inst{22} = np;
+  let Inst{21-20} = r9_2{10-9};
+  let Inst{19-16} = Rs;
+  let Inst{13} = !if (!eq(tnt, "t"), 1, 0);
+  let Inst{12-8} = U5;
+  let Inst{7-1} = r9_2{8-2};
+}
+// P[10] taken/not taken.
+multiclass T_tnt_CJInst_RU5<string op, bit np> {
+  let Defs = [PC, P0], Uses = [P0] in {
+    def NAME#p0_jump_nt : CJInst_RU5<"p0", op, np, "nt">;
+    def NAME#p0_jump_t : CJInst_RU5<"p0", op, np, "t">;
+  }
+  let Defs = [PC, P1], Uses = [P1] in {
+    def NAME#p1_jump_nt : CJInst_RU5<"p1", op, np, "nt">;
+    def NAME#p1_jump_t : CJInst_RU5<"p1", op, np, "t">;
+  }
+}
+// Predicate / !Predicate
+multiclass T_pnp_CJInst_RU5<string op>{
+  defm J4_cmp#NAME#i_t : T_tnt_CJInst_RU5<op, 0>;
+  defm J4_cmp#NAME#i_f : T_tnt_CJInst_RU5<op, 1>;
+}
+// TypeCJ Instructions compare RI and jump
+let isCodeGenOnly = 0 in {
+defm eq : T_pnp_CJInst_RU5<"eq">;
+defm gt : T_pnp_CJInst_RU5<"gt">;
+defm gtu : T_pnp_CJInst_RU5<"gtu">;
+}
+
+let isBranch = 1, hasSideEffects = 0, isExtentSigned = 1,
+    isPredicated = 1, isPredicatedFalse = 1, isPredicatedNew = 1,
+    isExtendable = 1, opExtentBits = 11, opExtentAlign = 2, opExtendable = 1,
+    isTerminator = 1, validSubTargets = HasV4SubT in
+class CJInst_Rn1<string px, string op, bit np, string tnt>
+  : InstHexagon<(outs), (ins IntRegs:$Rs, brtarget:$r9_2),
+  ""#px#" = cmp."#op#"($Rs,#-1); if ("
+  #!if(np, "!","")#""#px#".new) jump:"#tnt#" $r9_2",
+  [], "", COMPOUND, TypeCOMPOUND> {
+  bits<4> Rs;
+  bits<11> r9_2;
+
+  // np: !p[01]
+  let isPredicatedFalse = np;
+  // tnt: Taken/Not Taken
+  let isBrTaken = !if (!eq(tnt, "t"), "true", "false");
+  let isTaken   = !if (!eq(tnt, "t"), 1, 0);
+
+  let IClass = 0b0001;
+  let Inst{27-26} = 0b00;
+  let Inst{25} = !if (!eq(px, "!p1"), 1,
+                 !if (!eq(px,  "p1"), 1, 0));
+
+  let Inst{24-23} = 0b11;
+  let Inst{22} = np;
+  let Inst{21-20} = r9_2{10-9};
+  let Inst{19-16} = Rs;
+  let Inst{13} = !if (!eq(tnt, "t"), 1, 0);
+  let Inst{9-8} = !if (!eq(op, "eq"),  0b00,
+                  !if (!eq(op, "gt"),  0b01, 0));
+  let Inst{7-1} = r9_2{8-2};
+}
+
+// P[10] taken/not taken.
+multiclass T_tnt_CJInst_Rn1<string op, bit np> {
+  let Defs = [PC, P0], Uses = [P0] in {
+    def NAME#p0_jump_nt : CJInst_Rn1<"p0", op, np, "nt">;
+    def NAME#p0_jump_t : CJInst_Rn1<"p0", op, np, "t">;
+  }
+  let Defs = [PC, P1], Uses = [P1] in {
+    def NAME#p1_jump_nt : CJInst_Rn1<"p1", op, np, "nt">;
+    def NAME#p1_jump_t : CJInst_Rn1<"p1", op, np, "t">;
+  }
+}
+// Predicate / !Predicate
+multiclass T_pnp_CJInst_Rn1<string op>{
+  defm J4_cmp#NAME#n1_t : T_tnt_CJInst_Rn1<op, 0>;
+  defm J4_cmp#NAME#n1_f : T_tnt_CJInst_Rn1<op, 1>;
+}
+// TypeCJ Instructions compare -1 and jump
+let isCodeGenOnly = 0 in {
+defm eq : T_pnp_CJInst_Rn1<"eq">;
+defm gt : T_pnp_CJInst_Rn1<"gt">;
+}
+
+// J4_jumpseti: Direct unconditional jump and set register to immediate.
+let Defs = [PC], isBranch = 1, hasSideEffects = 0, hasNewValue = 1,
+    isExtentSigned = 1, opNewValue = 0, isExtendable = 1, opExtentBits = 11,
+    opExtentAlign = 2, opExtendable = 2, validSubTargets = HasV4SubT,
+    isCodeGenOnly = 0 in
+def J4_jumpseti: CJInst <
+  (outs IntRegs:$Rd),
+  (ins u6Imm:$U6, brtarget:$r9_2),
+  "$Rd = #$U6 ; jump $r9_2"> {
+    bits<4> Rd;
+    bits<6> U6;
+    bits<11> r9_2;
+
+    let IClass = 0b0001;
+    let Inst{27-24} = 0b0110;
+    let Inst{21-20} = r9_2{10-9};
+    let Inst{19-16} = Rd;
+    let Inst{13-8} = U6;
+    let Inst{7-1} = r9_2{8-2};
+  }
+
+// J4_jumpsetr: Direct unconditional jump and transfer register.
+let Defs = [PC], isBranch = 1, hasSideEffects = 0, hasNewValue = 1,
+    isExtentSigned = 1, opNewValue = 0, isExtendable = 1, opExtentBits = 11,
+    opExtentAlign = 2, opExtendable = 2, validSubTargets = HasV4SubT,
+    isCodeGenOnly = 0 in
+def J4_jumpsetr: CJInst <
+  (outs IntRegs:$Rd),
+  (ins IntRegs:$Rs, brtarget:$r9_2),
+  "$Rd = $Rs ; jump $r9_2"> {
+    bits<4> Rd;
+    bits<4> Rs;
+    bits<11> r9_2;
+
+    let IClass = 0b0001;
+    let Inst{27-24} = 0b0111;
+    let Inst{21-20} = r9_2{10-9};
+    let Inst{11-8} = Rd;
+    let Inst{19-16} = Rs;
+    let Inst{7-1} = r9_2{8-2};
+  }

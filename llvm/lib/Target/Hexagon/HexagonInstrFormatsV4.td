@@ -19,6 +19,7 @@
 
 def TypeMEMOP  : IType<9>;
 def TypeNV     : IType<10>;
+def TypeCOMPOUND : IType<12>;
 def TypePREFIX : IType<30>;
 
 //----------------------------------------------------------------------------//
@@ -65,3 +66,7 @@ let isCodeGenOnly = 1 in
 class EXTENDERInst<dag outs, dag ins, string asmstr, list<dag> pattern = []>
   : InstHexagon<outs, ins, asmstr, pattern, "", EXTENDER_tc_1_SLOT0123,
                 TypePREFIX>;
+
+class CJInst<dag outs, dag ins, string asmstr, list<dag> pattern = [],
+              string cstr = "">
+  : InstHexagon<outs, ins, asmstr, pattern, cstr, COMPOUND, TypeCOMPOUND>;
