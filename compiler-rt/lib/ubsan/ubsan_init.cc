@@ -43,6 +43,7 @@ void __ubsan::InitIfNecessary() {
   // Initialize UBSan-specific flags.
   InitializeFlags();
   SuppressionContext::InitIfNecessary();
+  InitializeCoverage(common_flags()->coverage, common_flags()->coverage_dir);
   ubsan_inited = true;
 }
 
