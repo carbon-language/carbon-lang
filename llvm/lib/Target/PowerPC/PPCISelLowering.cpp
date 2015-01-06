@@ -770,8 +770,13 @@ const char *PPCTargetLowering::getTargetNodeName(unsigned Opcode) const {
   default: return nullptr;
   case PPCISD::FSEL:            return "PPCISD::FSEL";
   case PPCISD::FCFID:           return "PPCISD::FCFID";
+  case PPCISD::FCFIDU:          return "PPCISD::FCFIDU";
+  case PPCISD::FCFIDS:          return "PPCISD::FCFIDS";
+  case PPCISD::FCFIDUS:         return "PPCISD::FCFIDUS";
   case PPCISD::FCTIDZ:          return "PPCISD::FCTIDZ";
   case PPCISD::FCTIWZ:          return "PPCISD::FCTIWZ";
+  case PPCISD::FCTIDUZ:         return "PPCISD::FCTIDUZ";
+  case PPCISD::FCTIWUZ:         return "PPCISD::FCTIWUZ";
   case PPCISD::FRE:             return "PPCISD::FRE";
   case PPCISD::FRSQRTE:         return "PPCISD::FRSQRTE";
   case PPCISD::STFIWX:          return "PPCISD::STFIWX";
@@ -805,6 +810,8 @@ const char *PPCTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case PPCISD::VCMPo:           return "PPCISD::VCMPo";
   case PPCISD::LBRX:            return "PPCISD::LBRX";
   case PPCISD::STBRX:           return "PPCISD::STBRX";
+  case PPCISD::LFIWAX:          return "PPCISD::LFIWAX";
+  case PPCISD::LFIWZX:          return "PPCISD::LFIWZX";
   case PPCISD::LARX:            return "PPCISD::LARX";
   case PPCISD::STCX:            return "PPCISD::STCX";
   case PPCISD::COND_BRANCH:     return "PPCISD::COND_BRANCH";
