@@ -769,6 +769,28 @@ createModuleToFunctionPassAdaptor(FunctionPassT Pass) {
   return std::move(ModuleToFunctionPassAdaptor<FunctionPassT>(std::move(Pass)));
 }
 
+/// \brief A template utility pass to force an analysis result to be available.
+///
+/// This is a no-op pass which simply forces a specific analysis pass's result
+/// to be available when it is run.
+template <typename AnalysisT> struct NoopAnalysisRequirementPass {
+  /// \brief Run this pass over some unit of IR.
+  ///
+  /// This pass can be run over any unit of IR and use any analysis manager
+  /// provided they satisfy the basic API requirements. When this pass is
+  /// created, these methods can be instantiated to satisfy whatever the
+  /// context requires.
+  template <typename T, typename AnalysisManagerT>
+  PreservedAnalyses run(T &&Arg, AnalysisManagerT *AM) {
+    if (AM)
+      (void)AM->template getResult<AnalysisT>(std::forward<T>(Arg));
+
+    return PreservedAnalyses::all();
+  }
+
+  static StringRef name() { return "No-op Analysis Requirement Pass"; }
+};
+
 }
 
 #endif

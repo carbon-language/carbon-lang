@@ -86,13 +86,11 @@
 ; CHECK-NO-VERIFY-NOT: VerifierPass
 ; CHECK-NO-VERIFY: Finished module pass manager
 
-; RUN: opt -disable-output -debug-pass-manager -debug-cgscc-pass-manager -passes='cgscc(no-op-cgscc)' %s 2>&1 \
+; RUN: opt -disable-output -debug-pass-manager -passes='require<lcg>' %s 2>&1 \
 ; RUN:     | FileCheck %s --check-prefix=CHECK-LCG-ANALYSIS
 ; CHECK-LCG-ANALYSIS: Starting module pass manager
-; CHECK-LCG-ANALYSIS: Running module pass: ModuleToPostOrderCGSCCPassAdaptor
-; CHECK-LCG-ANALYSIS: Running module analysis: CGSCCAnalysisManagerModuleProxy
+; CHECK-LCG-ANALYSIS: Running module pass: No-op Analysis Requirement Pass
 ; CHECK-LCG-ANALYSIS: Running module analysis: Lazy CallGraph Analysis
-; CHECK-LCG-ANALYSIS: Starting CGSCC pass manager run.
 
 ; Make sure no-op passes that preserve all analyses don't even try to do any
 ; analysis invalidation.
