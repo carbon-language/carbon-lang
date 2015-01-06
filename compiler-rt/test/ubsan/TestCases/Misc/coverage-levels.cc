@@ -14,6 +14,8 @@
 // RUN: %clangxx -fsanitize=shift -O1 -fsanitize-coverage=3  %s -o %t
 // RUN: UBSAN_OPTIONS=$OPT ASAN_OPTIONS=$OPT %run %t 2>&1 | FileCheck %s --check-prefix=CHECK3 --check-prefix=CHECK_WARN
 
+// XFAIL: darwin
+
 volatile int sink;
 int main(int argc, char **argv) {
   int shift = argc * 32;
