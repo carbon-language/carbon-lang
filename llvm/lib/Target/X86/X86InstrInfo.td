@@ -377,6 +377,28 @@ def brtarget8 : Operand<OtherVT>;
 
 }
 
+// Special parsers to detect mode to disambiguate.
+def X86AbsMem16AsmOperand : AsmOperandClass {
+  let Name = "AbsMem16";
+  let RenderMethod = "addAbsMemOperands";
+  let SuperClasses = [X86AbsMemAsmOperand];
+}
+
+def X86AbsMem32AsmOperand : AsmOperandClass {
+  let Name = "AbsMem32";
+  let RenderMethod = "addAbsMemOperands";
+  let SuperClasses = [X86AbsMemAsmOperand];
+}
+
+// Branch targets have OtherVT type and print as pc-relative values.
+let OperandType = "OPERAND_PCREL",
+    PrintMethod = "printPCRelImm" in {
+let ParserMatchClass = X86AbsMem16AsmOperand in
+  def brtarget16 : Operand<OtherVT>;
+let ParserMatchClass = X86AbsMem32AsmOperand in
+  def brtarget32 : Operand<OtherVT>;
+}
+
 let RenderMethod = "addSrcIdxOperands" in {
   def X86SrcIdx8Operand : AsmOperandClass {
     let Name = "SrcIdx8";

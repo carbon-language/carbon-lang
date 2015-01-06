@@ -23,9 +23,12 @@ def XBEGIN : I<0, Pseudo, (outs GR32:$dst), (ins),
                "# XBEGIN", [(set GR32:$dst, (int_x86_xbegin))]>,
              Requires<[HasRTM]>;
 
-let isBranch = 1, isTerminator = 1, Defs = [EAX] in
-def XBEGIN_4 : Ii32PCRel<0xc7, MRM_F8, (outs), (ins brtarget:$dst),
-                         "xbegin\t$dst", []>, Requires<[HasRTM]>;
+let isBranch = 1, isTerminator = 1, Defs = [EAX] in {
+def XBEGIN_2 : Ii16PCRel<0xc7, MRM_F8, (outs), (ins brtarget16:$dst),
+                         "xbegin\t$dst", []>, OpSize16, Requires<[HasRTM]>;
+def XBEGIN_4 : Ii32PCRel<0xc7, MRM_F8, (outs), (ins brtarget32:$dst),
+                         "xbegin\t$dst", []>, OpSize32, Requires<[HasRTM]>;
+}
 
 def XEND : I<0x01, MRM_D5, (outs), (ins),
              "xend", [(int_x86_xend)]>, TB, Requires<[HasRTM]>;
