@@ -118,6 +118,7 @@ FUNCTIONS.armv7s := $(FUNCTIONS.armv7)
 FUNCTIONS.arm64 :=  divti3 modti3 \
 					udivmodti4 \
 					udivti3 umodti3 \
+					mulsc3 muldc3 \
 					powisf2 powidf2 \
 					clzti2 \
 					fixdfti fixsfti \
