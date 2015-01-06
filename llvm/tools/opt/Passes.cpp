@@ -102,6 +102,7 @@ void llvm::registerFunctionAnalyses(FunctionAnalysisManager &FAM) {
 #include "PassRegistry.def"
 }
 
+#ifndef NDEBUG
 static bool isModulePassName(StringRef Name) {
 #define MODULE_PASS(NAME, CREATE_PASS) if (Name == NAME) return true;
 #define MODULE_ANALYSIS(NAME, CREATE_PASS)                                     \
@@ -111,6 +112,7 @@ static bool isModulePassName(StringRef Name) {
 
   return false;
 }
+#endif
 
 static bool isCGSCCPassName(StringRef Name) {
 #define CGSCC_PASS(NAME, CREATE_PASS) if (Name == NAME) return true;
