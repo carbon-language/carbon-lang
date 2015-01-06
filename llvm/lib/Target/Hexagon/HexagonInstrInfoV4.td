@@ -3550,176 +3550,238 @@ def : Pat<(store (i32 IntRegs:$src1), (HexagonCONST32_GP tglobaladdr:$global)),
           (S2_storerigp tglobaladdr:$global, (i32 IntRegs:$src1))>;
 
 //===----------------------------------------------------------------------===//
+// Template class for non predicated load instructions with
+// absolute addressing mode.
+//===----------------------------------------------------------------------===//
+let isPredicable = 1, hasSideEffects = 0, validSubTargets = HasV4SubT in
+class T_LoadAbsGP <string mnemonic, RegisterClass RC, Operand ImmOp,
+                   bits<3> MajOp, Operand AddrOp, bit isAbs>
+  : LDInst <(outs RC:$dst), (ins AddrOp:$addr),
+  "$dst = "#mnemonic# !if(isAbs, "(##", "(#")#"$addr)",
+  [], "", V2LDST_tc_ld_SLOT01> {
+    bits<5> dst;
+    bits<19> addr;
+    bits<16> offsetBits;
+
+    string ImmOpStr = !cast<string>(ImmOp);
+    let offsetBits = !if (!eq(ImmOpStr, "u16_3Imm"), addr{18-3},
+                     !if (!eq(ImmOpStr, "u16_2Imm"), addr{17-2},
+                     !if (!eq(ImmOpStr, "u16_1Imm"), addr{16-1},
+                                      /* u16_0Imm */ addr{15-0})));
+
+    let IClass = 0b0100;
+
+    let Inst{27}    = 0b1;
+    let Inst{26-25} = offsetBits{15-14};
+    let Inst{24}    = 0b1;
+    let Inst{23-21} = MajOp;
+    let Inst{20-16} = offsetBits{13-9};
+    let Inst{13-5}  = offsetBits{8-0};
+    let Inst{4-0}   = dst;
+  }
+
+class T_LoadAbs <string mnemonic, RegisterClass RC, Operand ImmOp,
+                 bits<3> MajOp>
+  : T_LoadAbsGP <mnemonic, RC, ImmOp, MajOp, u0AlwaysExt, 1>, AddrModeRel {
+
+    string ImmOpStr = !cast<string>(ImmOp);
+    let opExtentBits = !if (!eq(ImmOpStr, "u16_3Imm"), 19,
+                       !if (!eq(ImmOpStr, "u16_2Imm"), 18,
+                       !if (!eq(ImmOpStr, "u16_1Imm"), 17,
+                                        /* u16_0Imm */ 16)));
+
+    let opExtentAlign = !if (!eq(ImmOpStr, "u16_3Imm"), 3,
+                        !if (!eq(ImmOpStr, "u16_2Imm"), 2,
+                        !if (!eq(ImmOpStr, "u16_1Imm"), 1,
+                                        /* u16_0Imm */ 0)));
+  }
+//===----------------------------------------------------------------------===//
+// Template class for predicated load instructions with
+// absolute addressing mode.
+//===----------------------------------------------------------------------===//
+let isPredicated = 1, hasNewValue = 1, opExtentBits = 6, opExtendable = 2 in
+class T_LoadAbs_Pred <string mnemonic, RegisterClass RC, bits<3> MajOp,
+                      bit isPredNot, bit isPredNew>
+  : LDInst <(outs RC:$dst), (ins PredRegs:$src1, u6Ext:$absaddr),
+  !if(isPredNot, "if (!$src1", "if ($src1")#!if(isPredNew, ".new) ",
+  ") ")#"$dst = "#mnemonic#"(#$absaddr)">, AddrModeRel {
+    bits<5> dst;
+    bits<2> src1;
+    bits<6> absaddr;
+
+    let isPredicatedNew = isPredNew;
+    let isPredicatedFalse = isPredNot;
+
+    let IClass = 0b1001;
+
+    let Inst{27-24} = 0b1111;
+    let Inst{23-21} = MajOp;
+    let Inst{20-16} = absaddr{5-1};
+    let Inst{13} = 0b1;
+    let Inst{12} = isPredNew;
+    let Inst{11} = isPredNot;
+    let Inst{10-9} = src1;
+    let Inst{8} = absaddr{0};
+    let Inst{7} = 0b1;
+    let Inst{4-0} = dst;
+  }
+
+//===----------------------------------------------------------------------===//
 // Multiclass for the load instructions with absolute addressing mode.
 //===----------------------------------------------------------------------===//
-multiclass LD_Abs_Predbase<string mnemonic, RegisterClass RC, bit isNot,
-                           bit isPredNew> {
-  let isPredicatedNew = isPredNew in
-  def NAME : LDInst2<(outs RC:$dst),
-            (ins PredRegs:$src1, u0AlwaysExt:$absaddr),
-            !if(isNot, "if (!$src1", "if ($src1")#!if(isPredNew, ".new) ",
-            ") ")#"$dst = "#mnemonic#"(##$absaddr)",
-            []>,
-            Requires<[HasV4T]>;
+multiclass LD_Abs_Pred<string mnemonic, RegisterClass RC, bits<3> MajOp,
+                       bit PredNot> {
+  def _abs : T_LoadAbs_Pred <mnemonic, RC, MajOp, PredNot, 0>;
+  // Predicate new
+  def new_abs : T_LoadAbs_Pred <mnemonic, RC, MajOp, PredNot, 1>;
 }
 
-multiclass LD_Abs_Pred<string mnemonic, RegisterClass RC, bit PredNot> {
-  let isPredicatedFalse = PredNot in {
-    defm _c#NAME : LD_Abs_Predbase<mnemonic, RC, PredNot, 0>;
-    // Predicate new
-    defm _cdn#NAME : LD_Abs_Predbase<mnemonic, RC, PredNot, 1>;
-  }
-}
-
-let isExtended = 1, hasSideEffects = 0 in
-multiclass LD_Abs<string mnemonic, string CextOp, RegisterClass RC> {
+let addrMode = Absolute, isExtended = 1 in
+multiclass LD_Abs<string mnemonic, string CextOp, RegisterClass RC,
+                  Operand ImmOp, bits<3> MajOp> {
   let CextOpcode = CextOp, BaseOpcode = CextOp#_abs in {
-    let  opExtendable = 1, isPredicable = 1 in
-    def NAME#_V4 : LDInst2<(outs RC:$dst),
-            (ins u0AlwaysExt:$absaddr),
-            "$dst = "#mnemonic#"(##$absaddr)",
-            []>,
-            Requires<[HasV4T]>;
+    let opExtendable = 1, isPredicable = 1 in
+    def L4_#NAME#_abs: T_LoadAbs <mnemonic, RC, ImmOp, MajOp>;
 
-    let opExtendable = 2, isPredicated = 1 in {
-      defm Pt_V4 : LD_Abs_Pred<mnemonic, RC, 0>;
-      defm NotPt_V4 : LD_Abs_Pred<mnemonic, RC, 1>;
-    }
+    // Predicated
+    defm L4_p#NAME#t : LD_Abs_Pred<mnemonic, RC, MajOp, 0>;
+    defm L4_p#NAME#f : LD_Abs_Pred<mnemonic, RC, MajOp, 1>;
   }
 }
 
-let addrMode = Absolute in {
-  let accessSize = ByteAccess in {
-    defm LDrib_abs  : LD_Abs<"memb", "LDrib", IntRegs>, AddrModeRel;
-    defm LDriub_abs : LD_Abs<"memub", "LDriub", IntRegs>, AddrModeRel;
-  }
-  let accessSize = HalfWordAccess in {
-    defm LDrih_abs  : LD_Abs<"memh", "LDrih", IntRegs>, AddrModeRel;
-    defm LDriuh_abs : LD_Abs<"memuh", "LDriuh", IntRegs>, AddrModeRel;
-  }
-  let accessSize = WordAccess in
-    defm LDriw_abs  : LD_Abs<"memw", "LDriw", IntRegs>, AddrModeRel;
-
-  let accessSize = DoubleWordAccess in
-    defm LDrid_abs : LD_Abs<"memd",  "LDrid", DoubleRegs>, AddrModeRel;
+let accessSize = ByteAccess, hasNewValue = 1, isCodeGenOnly = 0 in {
+  defm loadrb  : LD_Abs<"memb",  "LDrib",  IntRegs, u16_0Imm, 0b000>;
+  defm loadrub : LD_Abs<"memub", "LDriub", IntRegs, u16_0Imm, 0b001>;
 }
 
-let Predicates = [HasV4T], AddedComplexity  = 30 in {
-def : Pat<(i32 (load (HexagonCONST32 tglobaladdr:$absaddr))),
-          (LDriw_abs_V4 tglobaladdr: $absaddr)>;
-
-def : Pat<(i32 (sextloadi8 (HexagonCONST32 tglobaladdr:$absaddr))),
-          (LDrib_abs_V4 tglobaladdr:$absaddr)>;
-
-def : Pat<(i32 (zextloadi8 (HexagonCONST32 tglobaladdr:$absaddr))),
-          (LDriub_abs_V4 tglobaladdr:$absaddr)>;
-
-def : Pat<(i32 (sextloadi16 (HexagonCONST32 tglobaladdr:$absaddr))),
-          (LDrih_abs_V4 tglobaladdr:$absaddr)>;
-
-def : Pat<(i32 (zextloadi16 (HexagonCONST32 tglobaladdr:$absaddr))),
-          (LDriuh_abs_V4 tglobaladdr:$absaddr)>;
+let accessSize = HalfWordAccess, hasNewValue = 1, isCodeGenOnly = 0 in {
+  defm loadrh  : LD_Abs<"memh",  "LDrih",  IntRegs, u16_1Imm, 0b010>;
+  defm loadruh : LD_Abs<"memuh", "LDriuh", IntRegs, u16_1Imm, 0b011>;
 }
+
+let accessSize = WordAccess, hasNewValue = 1, isCodeGenOnly = 0 in
+defm loadri  : LD_Abs<"memw",  "LDriw",  IntRegs, u16_2Imm, 0b100>;
+
+let accessSize = DoubleWordAccess, isCodeGenOnly = 0 in
+defm loadrd  : LD_Abs<"memd",  "LDrid", DoubleRegs, u16_3Imm, 0b110>;
 
 //===----------------------------------------------------------------------===//
 // multiclass for load instructions with GP-relative addressing mode.
 // Rx=mem[bhwd](##global)
+// Once predicated, these instructions map to absolute addressing mode.
 // if ([!]Pv[.new]) Rx=mem[bhwd](##global)
 //===----------------------------------------------------------------------===//
-let hasSideEffects = 0, validSubTargets = HasV4SubT in
-multiclass LD_GP<string mnemonic, string BaseOp, RegisterClass RC> {
-  let BaseOpcode = BaseOp in {
-    let isPredicable = 1 in
-    def NAME#_V4 : LDInst2<(outs RC:$dst),
-            (ins globaladdress:$global),
-            "$dst = "#mnemonic#"(#$global)",
-            []>;
 
-    let isExtended = 1, opExtendable = 2, isPredicated = 1 in {
-      defm Pt_V4 : LD_Abs_Pred<mnemonic, RC, 0>;
-      defm NotPt_V4 : LD_Abs_Pred<mnemonic, RC, 1>;
-    }
+class T_LoadGP <string mnemonic, string BaseOp, RegisterClass RC, Operand ImmOp,
+                bits<3> MajOp>
+  : T_LoadAbsGP <mnemonic, RC, ImmOp, MajOp, globaladdress, 0>, PredNewRel {
+    let BaseOpcode = BaseOp#_abs;
   }
+
+let accessSize = ByteAccess, hasNewValue = 1 in {
+  def L2_loadrbgp  : T_LoadGP<"memb",  "LDrib",  IntRegs, u16_0Imm, 0b000>;
+  def L2_loadrubgp : T_LoadGP<"memub", "LDriub", IntRegs, u16_0Imm, 0b001>;
 }
 
-defm LDd_GP  : LD_GP<"memd",  "LDd_GP",  DoubleRegs>, PredNewRel;
-defm LDb_GP  : LD_GP<"memb",  "LDb_GP",  IntRegs>, PredNewRel;
-defm LDub_GP : LD_GP<"memub", "LDub_GP", IntRegs>, PredNewRel;
-defm LDh_GP  : LD_GP<"memh",  "LDh_GP",  IntRegs>, PredNewRel;
-defm LDuh_GP : LD_GP<"memuh", "LDuh_GP", IntRegs>, PredNewRel;
-defm LDw_GP  : LD_GP<"memw",  "LDw_GP",  IntRegs>, PredNewRel;
+let accessSize = HalfWordAccess, hasNewValue = 1 in {
+  def L2_loadrhgp  : T_LoadGP<"memh",  "LDrih",  IntRegs, u16_1Imm, 0b010>;
+  def L2_loadruhgp : T_LoadGP<"memuh", "LDriuh", IntRegs, u16_1Imm, 0b011>;
+}
+
+let accessSize = WordAccess, hasNewValue = 1 in
+def L2_loadrigp  : T_LoadGP<"memw",  "LDriw",  IntRegs, u16_2Imm, 0b100>;
+
+let accessSize = DoubleWordAccess in
+def L2_loadrdgp  : T_LoadGP<"memd", "LDrid", DoubleRegs, u16_3Imm, 0b110>;
+
+let Predicates = [HasV4T], AddedComplexity  = 30 in {
+def : Pat<(i32 (load (HexagonCONST32 tglobaladdr:$absaddr))),
+          (L4_loadri_abs tglobaladdr: $absaddr)>;
+
+def : Pat<(i32 (sextloadi8 (HexagonCONST32 tglobaladdr:$absaddr))),
+          (L4_loadrb_abs tglobaladdr:$absaddr)>;
+
+def : Pat<(i32 (zextloadi8 (HexagonCONST32 tglobaladdr:$absaddr))),
+          (L4_loadrub_abs tglobaladdr:$absaddr)>;
+
+def : Pat<(i32 (sextloadi16 (HexagonCONST32 tglobaladdr:$absaddr))),
+          (L4_loadrh_abs tglobaladdr:$absaddr)>;
+
+def : Pat<(i32 (zextloadi16 (HexagonCONST32 tglobaladdr:$absaddr))),
+          (L4_loadruh_abs tglobaladdr:$absaddr)>;
+}
 
 def : Pat <(atomic_load_64 (HexagonCONST32_GP tglobaladdr:$global)),
-           (i64 (LDd_GP_V4 tglobaladdr:$global))>;
+           (i64 (L2_loadrdgp tglobaladdr:$global))>;
 
 def : Pat <(atomic_load_32 (HexagonCONST32_GP tglobaladdr:$global)),
-           (i32 (LDw_GP_V4 tglobaladdr:$global))>;
+           (i32 (L2_loadrigp tglobaladdr:$global))>;
 
 def : Pat <(atomic_load_16 (HexagonCONST32_GP tglobaladdr:$global)),
-           (i32 (LDuh_GP_V4 tglobaladdr:$global))>;
+           (i32 (L2_loadruhgp tglobaladdr:$global))>;
 
 def : Pat <(atomic_load_8 (HexagonCONST32_GP tglobaladdr:$global)),
-           (i32 (LDub_GP_V4 tglobaladdr:$global))>;
+           (i32 (L2_loadrubgp tglobaladdr:$global))>;
 
 // Map from load(globaladdress) -> memw(#foo + 0)
 let AddedComplexity = 100 in
 def : Pat <(i64 (load (HexagonCONST32_GP tglobaladdr:$global))),
-           (i64 (LDd_GP_V4 tglobaladdr:$global))>;
+           (i64 (L2_loadrdgp tglobaladdr:$global))>;
 
 // Map from Pd = load(globaladdress) -> Rd = memb(globaladdress), Pd = Rd
 let AddedComplexity = 100 in
 def : Pat <(i1 (load (HexagonCONST32_GP tglobaladdr:$global))),
-           (i1 (C2_tfrrp (i32 (LDb_GP_V4 tglobaladdr:$global))))>;
+           (i1 (C2_tfrrp (i32 (L2_loadrbgp tglobaladdr:$global))))>;
 
 // When the Interprocedural Global Variable optimizer realizes that a certain
 // global variable takes only two constant values, it shrinks the global to
 // a boolean. Catch those loads here in the following 3 patterns.
 let AddedComplexity = 100 in
 def : Pat <(i32 (extloadi1 (HexagonCONST32_GP tglobaladdr:$global))),
-           (i32 (LDb_GP_V4 tglobaladdr:$global))>;
+           (i32 (L2_loadrbgp tglobaladdr:$global))>;
 
 let AddedComplexity = 100 in
 def : Pat <(i32 (sextloadi1 (HexagonCONST32_GP tglobaladdr:$global))),
-           (i32 (LDb_GP_V4 tglobaladdr:$global))>;
+           (i32 (L2_loadrbgp tglobaladdr:$global))>;
 
 // Map from load(globaladdress) -> memb(#foo)
 let AddedComplexity = 100 in
 def : Pat <(i32 (extloadi8 (HexagonCONST32_GP tglobaladdr:$global))),
-           (i32 (LDb_GP_V4 tglobaladdr:$global))>;
+           (i32 (L2_loadrbgp tglobaladdr:$global))>;
 
 // Map from load(globaladdress) -> memb(#foo)
 let AddedComplexity = 100 in
 def : Pat <(i32 (sextloadi8 (HexagonCONST32_GP tglobaladdr:$global))),
-           (i32 (LDb_GP_V4 tglobaladdr:$global))>;
+           (i32 (L2_loadrbgp tglobaladdr:$global))>;
 
 let AddedComplexity = 100 in
 def : Pat <(i32 (zextloadi1 (HexagonCONST32_GP tglobaladdr:$global))),
-           (i32 (LDub_GP_V4 tglobaladdr:$global))>;
+           (i32 (L2_loadrubgp tglobaladdr:$global))>;
 
 // Map from load(globaladdress) -> memub(#foo)
 let AddedComplexity = 100 in
 def : Pat <(i32 (zextloadi8 (HexagonCONST32_GP tglobaladdr:$global))),
-           (i32 (LDub_GP_V4 tglobaladdr:$global))>;
+           (i32 (L2_loadrubgp tglobaladdr:$global))>;
 
 // Map from load(globaladdress) -> memh(#foo)
 let AddedComplexity = 100 in
 def : Pat <(i32 (extloadi16 (HexagonCONST32_GP tglobaladdr:$global))),
-           (i32 (LDh_GP_V4 tglobaladdr:$global))>;
+           (i32 (L2_loadrhgp tglobaladdr:$global))>;
 
 // Map from load(globaladdress) -> memh(#foo)
 let AddedComplexity = 100 in
 def : Pat <(i32 (sextloadi16 (HexagonCONST32_GP tglobaladdr:$global))),
-           (i32 (LDh_GP_V4 tglobaladdr:$global))>;
+           (i32 (L2_loadrhgp tglobaladdr:$global))>;
 
 // Map from load(globaladdress) -> memuh(#foo)
 let AddedComplexity = 100 in
 def : Pat <(i32 (zextloadi16 (HexagonCONST32_GP tglobaladdr:$global))),
-           (i32 (LDuh_GP_V4 tglobaladdr:$global))>;
+           (i32 (L2_loadruhgp tglobaladdr:$global))>;
 
 // Map from load(globaladdress) -> memw(#foo)
 let AddedComplexity = 100 in
 def : Pat <(i32 (load (HexagonCONST32_GP tglobaladdr:$global))),
-           (i32 (LDw_GP_V4 tglobaladdr:$global))>;
+           (i32 (L2_loadrigp tglobaladdr:$global))>;
 
 
 // Transfer global address into a register
@@ -3831,19 +3893,19 @@ def : Pat<(store (i32 IntRegs:$src1), u0AlwaysExtPred:$src2),
 
 let Predicates = [HasV4T], AddedComplexity  = 30 in {
 def : Pat<(i32 (load u0AlwaysExtPred:$src)),
-          (LDriw_abs_V4 u0AlwaysExtPred:$src)>;
+          (L4_loadri_abs u0AlwaysExtPred:$src)>;
 
 def : Pat<(i32 (sextloadi8 u0AlwaysExtPred:$src)),
-          (LDrib_abs_V4 u0AlwaysExtPred:$src)>;
+          (L4_loadrb_abs u0AlwaysExtPred:$src)>;
 
 def : Pat<(i32 (zextloadi8 u0AlwaysExtPred:$src)),
-          (LDriub_abs_V4 u0AlwaysExtPred:$src)>;
+          (L4_loadrub_abs u0AlwaysExtPred:$src)>;
 
 def : Pat<(i32 (sextloadi16 u0AlwaysExtPred:$src)),
-          (LDrih_abs_V4 u0AlwaysExtPred:$src)>;
+          (L4_loadrh_abs u0AlwaysExtPred:$src)>;
 
 def : Pat<(i32 (zextloadi16 u0AlwaysExtPred:$src)),
-          (LDriuh_abs_V4 u0AlwaysExtPred:$src)>;
+          (L4_loadruh_abs u0AlwaysExtPred:$src)>;
 }
 
 // Indexed store word - global address.
@@ -3870,49 +3932,49 @@ def : Pat<(i64 (cttz (i64 DoubleRegs:$src1))),
 // zextloadi8.
 let Predicates = [HasV4T], AddedComplexity = 120 in {
 def:  Pat <(i64 (extloadi8 (NumUsesBelowThresCONST32 tglobaladdr:$addr))),
-      (i64 (A4_combineir 0, (LDrib_abs_V4 tglobaladdr:$addr)))>;
+      (i64 (A4_combineir 0, (L4_loadrb_abs tglobaladdr:$addr)))>;
 
 def:  Pat <(i64 (zextloadi8 (NumUsesBelowThresCONST32 tglobaladdr:$addr))),
-      (i64 (A4_combineir 0, (LDriub_abs_V4 tglobaladdr:$addr)))>;
+      (i64 (A4_combineir 0, (L4_loadrub_abs tglobaladdr:$addr)))>;
 
 def:  Pat <(i64 (sextloadi8 (NumUsesBelowThresCONST32 tglobaladdr:$addr))),
-      (i64 (A2_sxtw (LDrib_abs_V4 tglobaladdr:$addr)))>;
+      (i64 (A2_sxtw (L4_loadrb_abs tglobaladdr:$addr)))>;
 
 def:  Pat <(i64 (extloadi8 FoldGlobalAddr:$addr)),
-      (i64 (A4_combineir 0, (LDrib_abs_V4 FoldGlobalAddr:$addr)))>;
+      (i64 (A4_combineir 0, (L4_loadrb_abs FoldGlobalAddr:$addr)))>;
 
 def:  Pat <(i64 (zextloadi8 FoldGlobalAddr:$addr)),
-      (i64 (A4_combineir 0, (LDriub_abs_V4 FoldGlobalAddr:$addr)))>;
+      (i64 (A4_combineir 0, (L4_loadrub_abs FoldGlobalAddr:$addr)))>;
 
 def:  Pat <(i64 (sextloadi8 FoldGlobalAddr:$addr)),
-      (i64 (A2_sxtw (LDrib_abs_V4 FoldGlobalAddr:$addr)))>;
+      (i64 (A2_sxtw (L4_loadrb_abs FoldGlobalAddr:$addr)))>;
 }
 // i16 -> i64 loads
 // We need a complexity of 120 here to override preceding handling of
 // zextloadi16.
 let AddedComplexity = 120 in {
 def:  Pat <(i64 (extloadi16 (NumUsesBelowThresCONST32 tglobaladdr:$addr))),
-      (i64 (A4_combineir 0, (LDrih_abs_V4 tglobaladdr:$addr)))>,
+      (i64 (A4_combineir 0, (L4_loadrh_abs tglobaladdr:$addr)))>,
       Requires<[HasV4T]>;
 
 def:  Pat <(i64 (zextloadi16 (NumUsesBelowThresCONST32 tglobaladdr:$addr))),
-      (i64 (A4_combineir 0, (LDriuh_abs_V4 tglobaladdr:$addr)))>,
+      (i64 (A4_combineir 0, (L4_loadruh_abs tglobaladdr:$addr)))>,
       Requires<[HasV4T]>;
 
 def:  Pat <(i64 (sextloadi16 (NumUsesBelowThresCONST32 tglobaladdr:$addr))),
-      (i64 (A2_sxtw (LDrih_abs_V4 tglobaladdr:$addr)))>,
+      (i64 (A2_sxtw (L4_loadrh_abs tglobaladdr:$addr)))>,
       Requires<[HasV4T]>;
 
 def:  Pat <(i64 (extloadi16 FoldGlobalAddr:$addr)),
-      (i64 (A4_combineir 0, (LDrih_abs_V4 FoldGlobalAddr:$addr)))>,
+      (i64 (A4_combineir 0, (L4_loadrh_abs FoldGlobalAddr:$addr)))>,
       Requires<[HasV4T]>;
 
 def:  Pat <(i64 (zextloadi16 FoldGlobalAddr:$addr)),
-      (i64 (A4_combineir 0, (LDriuh_abs_V4 FoldGlobalAddr:$addr)))>,
+      (i64 (A4_combineir 0, (L4_loadruh_abs FoldGlobalAddr:$addr)))>,
       Requires<[HasV4T]>;
 
 def:  Pat <(i64 (sextloadi16 FoldGlobalAddr:$addr)),
-      (i64 (A2_sxtw (LDrih_abs_V4 FoldGlobalAddr:$addr)))>,
+      (i64 (A2_sxtw (L4_loadrh_abs FoldGlobalAddr:$addr)))>,
       Requires<[HasV4T]>;
 }
 // i32->i64 loads
@@ -3920,27 +3982,27 @@ def:  Pat <(i64 (sextloadi16 FoldGlobalAddr:$addr)),
 // zextloadi32.
 let AddedComplexity = 120 in {
 def:  Pat <(i64 (extloadi32 (NumUsesBelowThresCONST32 tglobaladdr:$addr))),
-      (i64 (A4_combineir 0, (LDriw_abs_V4 tglobaladdr:$addr)))>,
+      (i64 (A4_combineir 0, (L4_loadri_abs tglobaladdr:$addr)))>,
       Requires<[HasV4T]>;
 
 def:  Pat <(i64 (zextloadi32 (NumUsesBelowThresCONST32 tglobaladdr:$addr))),
-      (i64 (A4_combineir 0, (LDriw_abs_V4 tglobaladdr:$addr)))>,
+      (i64 (A4_combineir 0, (L4_loadri_abs tglobaladdr:$addr)))>,
       Requires<[HasV4T]>;
 
 def:  Pat <(i64 (sextloadi32 (NumUsesBelowThresCONST32 tglobaladdr:$addr))),
-      (i64 (A2_sxtw (LDriw_abs_V4 tglobaladdr:$addr)))>,
+      (i64 (A2_sxtw (L4_loadri_abs tglobaladdr:$addr)))>,
       Requires<[HasV4T]>;
 
 def:  Pat <(i64 (extloadi32 FoldGlobalAddr:$addr)),
-      (i64 (A4_combineir 0, (LDriw_abs_V4 FoldGlobalAddr:$addr)))>,
+      (i64 (A4_combineir 0, (L4_loadri_abs FoldGlobalAddr:$addr)))>,
       Requires<[HasV4T]>;
 
 def:  Pat <(i64 (zextloadi32 FoldGlobalAddr:$addr)),
-      (i64 (A4_combineir 0, (LDriw_abs_V4 FoldGlobalAddr:$addr)))>,
+      (i64 (A4_combineir 0, (L4_loadri_abs FoldGlobalAddr:$addr)))>,
       Requires<[HasV4T]>;
 
 def:  Pat <(i64 (sextloadi32 FoldGlobalAddr:$addr)),
-      (i64 (A2_sxtw (LDriw_abs_V4 FoldGlobalAddr:$addr)))>,
+      (i64 (A2_sxtw (L4_loadri_abs FoldGlobalAddr:$addr)))>,
       Requires<[HasV4T]>;
 }
 
@@ -3998,63 +4060,63 @@ def : Pat<(atomic_store_32 FoldGlobalAddrGP:$addr, (i32 IntRegs:$src1)),
 // Map from load(globaladdress + x) -> memd(#foo + x)
 let AddedComplexity = 100 in
 def : Pat<(i64 (load FoldGlobalAddrGP:$addr)),
-          (i64 (LDrid_abs_V4 FoldGlobalAddrGP:$addr))>,
+          (i64 (L4_loadrd_abs FoldGlobalAddrGP:$addr))>,
            Requires<[HasV4T]>;
 
 def : Pat<(atomic_load_64 FoldGlobalAddrGP:$addr),
-          (i64 (LDrid_abs_V4 FoldGlobalAddrGP:$addr))>,
+          (i64 (L4_loadrd_abs FoldGlobalAddrGP:$addr))>,
            Requires<[HasV4T]>;
 
 // Map from load(globaladdress + x) -> memb(#foo + x)
 let AddedComplexity = 100 in
 def : Pat<(i32 (extloadi8 FoldGlobalAddrGP:$addr)),
-          (i32 (LDrib_abs_V4 FoldGlobalAddrGP:$addr))>,
+          (i32 (L4_loadrb_abs FoldGlobalAddrGP:$addr))>,
            Requires<[HasV4T]>;
 
 // Map from load(globaladdress + x) -> memb(#foo + x)
 let AddedComplexity = 100 in
 def : Pat<(i32 (sextloadi8 FoldGlobalAddrGP:$addr)),
-          (i32 (LDrib_abs_V4 FoldGlobalAddrGP:$addr))>,
+          (i32 (L4_loadrb_abs FoldGlobalAddrGP:$addr))>,
            Requires<[HasV4T]>;
 
 //let AddedComplexity = 100 in
 let AddedComplexity = 100 in
 def : Pat<(i32 (extloadi16 FoldGlobalAddrGP:$addr)),
-          (i32 (LDrih_abs_V4 FoldGlobalAddrGP:$addr))>,
+          (i32 (L4_loadrh_abs FoldGlobalAddrGP:$addr))>,
            Requires<[HasV4T]>;
 
 // Map from load(globaladdress + x) -> memh(#foo + x)
 let AddedComplexity = 100 in
 def : Pat<(i32 (sextloadi16 FoldGlobalAddrGP:$addr)),
-          (i32 (LDrih_abs_V4 FoldGlobalAddrGP:$addr))>,
+          (i32 (L4_loadrh_abs FoldGlobalAddrGP:$addr))>,
            Requires<[HasV4T]>;
 
 // Map from load(globaladdress + x) -> memuh(#foo + x)
 let AddedComplexity = 100 in
 def : Pat<(i32 (zextloadi16 FoldGlobalAddrGP:$addr)),
-          (i32 (LDriuh_abs_V4 FoldGlobalAddrGP:$addr))>,
+          (i32 (L4_loadruh_abs FoldGlobalAddrGP:$addr))>,
            Requires<[HasV4T]>;
 
 def : Pat<(atomic_load_16 FoldGlobalAddrGP:$addr),
-          (i32 (LDriuh_abs_V4 FoldGlobalAddrGP:$addr))>,
+          (i32 (L4_loadruh_abs FoldGlobalAddrGP:$addr))>,
            Requires<[HasV4T]>;
 
 // Map from load(globaladdress + x) -> memub(#foo + x)
 let AddedComplexity = 100 in
 def : Pat<(i32 (zextloadi8 FoldGlobalAddrGP:$addr)),
-          (i32 (LDriub_abs_V4 FoldGlobalAddrGP:$addr))>,
+          (i32 (L4_loadrub_abs FoldGlobalAddrGP:$addr))>,
            Requires<[HasV4T]>;
 
 def : Pat<(atomic_load_8 FoldGlobalAddrGP:$addr),
-          (i32 (LDriub_abs_V4 FoldGlobalAddrGP:$addr))>,
+          (i32 (L4_loadrub_abs FoldGlobalAddrGP:$addr))>,
            Requires<[HasV4T]>;
 
 // Map from load(globaladdress + x) -> memw(#foo + x)
 let AddedComplexity = 100 in
 def : Pat<(i32 (load FoldGlobalAddrGP:$addr)),
-          (i32 (LDriw_abs_V4 FoldGlobalAddrGP:$addr))>,
+          (i32 (L4_loadri_abs FoldGlobalAddrGP:$addr))>,
            Requires<[HasV4T]>;
 
 def : Pat<(atomic_load_32 FoldGlobalAddrGP:$addr),
-          (i32 (LDriw_abs_V4 FoldGlobalAddrGP:$addr))>,
+          (i32 (L4_loadri_abs FoldGlobalAddrGP:$addr))>,
            Requires<[HasV4T]>;
