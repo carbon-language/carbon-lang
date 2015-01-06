@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -triple r600-- -target-cpu tahiti -O0 -emit-llvm -o - %s | FileCheck %s
+// RUN: %clang_cc1 -triple amdgcn-- -target-cpu tahiti -O0 -emit-llvm -o - %s | FileCheck %s
 // RUN: %clang_cc1 -triple x86_64-unknown-linux-gnu -O0 -emit-llvm -verify -o - %s | FileCheck -check-prefix=X86 %s
 
 // Make sure this is silently accepted on other targets.

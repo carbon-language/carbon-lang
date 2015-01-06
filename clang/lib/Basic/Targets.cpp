@@ -6634,6 +6634,7 @@ static TargetInfo *AllocateTarget(const llvm::Triple &Triple) {
   case llvm::Triple::nvptx64:
     return new NVPTX64TargetInfo(Triple);
 
+  case llvm::Triple::amdgcn:
   case llvm::Triple::r600:
     return new R600TargetInfo(Triple);
 
