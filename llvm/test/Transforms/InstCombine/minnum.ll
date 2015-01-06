@@ -7,7 +7,7 @@ declare <4 x float> @llvm.minnum.v4f32(<4 x float>, <4 x float>) #0
 declare double @llvm.minnum.f64(double, double) #0
 declare <2 x double> @llvm.minnum.v2f64(<2 x double>, <2 x double>) #0
 
-declare float @llvm.fmax.f32(float, float) #0
+declare float @llvm.maxnum.f32(float, float) #0
 
 ; CHECK-LABEL: @constant_fold_minnum_f32
 ; CHECK-NEXT: ret float 1.000000e+00
@@ -206,23 +206,23 @@ define float @minnum4(float %x, float %y, float %z, float %w) #0 {
   ret float %c
 }
 
-; CHECK-LABEL: @minnum_x_fmax_x_y
-; CHECK-NEXT: call float @llvm.fmax.f32
+; CHECK-LABEL: @minnum_x_maxnum_x_y
+; CHECK-NEXT: call float @llvm.maxnum.f32
 ; CHECK-NEXT: call float @llvm.minnum.f32
 ; CHECK-NEXT: ret float
-define float @minnum_x_fmax_x_y(float %x, float %y) #0 {
-  %a = call float @llvm.fmax.f32(float %x, float %y) #0
+define float @minnum_x_maxnum_x_y(float %x, float %y) #0 {
+  %a = call float @llvm.maxnum.f32(float %x, float %y) #0
   %b = call float @llvm.minnum.f32(float %x, float %a) #0
   ret float %b
 }
 
-; CHECK-LABEL: @fmax_x_minnum_x_y
+; CHECK-LABEL: @maxnum_x_minnum_x_y
 ; CHECK-NEXT: call float @llvm.minnum.f32
-; CHECK-NEXT: call float @llvm.fmax.f32
+; CHECK-NEXT: call float @llvm.maxnum.f32
 ; CHECK-NEXT: ret float
-define float @fmax_x_minnum_x_y(float %x, float %y) #0 {
+define float @maxnum_x_minnum_x_y(float %x, float %y) #0 {
   %a = call float @llvm.minnum.f32(float %x, float %y) #0
-  %b = call float @llvm.fmax.f32(float %x, float %a) #0
+  %b = call float @llvm.maxnum.f32(float %x, float %a) #0
   ret float %b
 }
 
