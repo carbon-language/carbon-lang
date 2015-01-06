@@ -30,5 +30,7 @@ BUILTIN(__builtin_amdgpu_rsq_clamped, "dd", "nc")
 BUILTIN(__builtin_amdgpu_rsq_clampedf, "ff", "nc")
 BUILTIN(__builtin_amdgpu_ldexp, "ddi", "nc")
 BUILTIN(__builtin_amdgpu_ldexpf, "ffi", "nc")
+BUILTIN(__builtin_amdgpu_class, "bdi", "nc")
+BUILTIN(__builtin_amdgpu_classf, "bfi", "nc")
 
 #undef BUILTIN

@@ -6393,6 +6393,9 @@ Value *CodeGenFunction::EmitR600BuiltinExpr(unsigned BuiltinID,
   case R600::BI__builtin_amdgpu_ldexp:
   case R600::BI__builtin_amdgpu_ldexpf:
     return emitFPIntBuiltin(*this, E, Intrinsic::AMDGPU_ldexp);
+  case R600::BI__builtin_amdgpu_class:
+  case R600::BI__builtin_amdgpu_classf:
+    return emitFPIntBuiltin(*this, E, Intrinsic::AMDGPU_class);
    default:
     return nullptr;
   }
