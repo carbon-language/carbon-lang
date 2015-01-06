@@ -104,9 +104,6 @@ void llvm::registerFunctionAnalyses(FunctionAnalysisManager &FAM) {
 
 static bool isModulePassName(StringRef Name) {
 #define MODULE_PASS(NAME, CREATE_PASS) if (Name == NAME) return true;
-#include "PassRegistry.def"
-
-  // We also support building a require pass around any analysis.
 #define MODULE_ANALYSIS(NAME, CREATE_PASS)                                     \
   if (Name == "require<" NAME ">")                                             \
     return true;
@@ -117,9 +114,6 @@ static bool isModulePassName(StringRef Name) {
 
 static bool isCGSCCPassName(StringRef Name) {
 #define CGSCC_PASS(NAME, CREATE_PASS) if (Name == NAME) return true;
-#include "PassRegistry.def"
-
-  // We also support building a require pass around any analysis.
 #define CGSCC_ANALYSIS(NAME, CREATE_PASS)                                      \
   if (Name == "require<" NAME ">")                                             \
     return true;
@@ -130,9 +124,6 @@ static bool isCGSCCPassName(StringRef Name) {
 
 static bool isFunctionPassName(StringRef Name) {
 #define FUNCTION_PASS(NAME, CREATE_PASS) if (Name == NAME) return true;
-#include "PassRegistry.def"
-
-  // We also support building a require pass around any analysis.
 #define FUNCTION_ANALYSIS(NAME, CREATE_PASS)                                   \
   if (Name == "require<" NAME ">")                                             \
     return true;
@@ -147,9 +138,6 @@ static bool parseModulePassName(ModulePassManager &MPM, StringRef Name) {
     MPM.addPass(CREATE_PASS);                                                  \
     return true;                                                               \
   }
-#include "PassRegistry.def"
-
-  // We also support building a require pass around any analysis.
 #define MODULE_ANALYSIS(NAME, CREATE_PASS)                                     \
   if (Name == "require<" NAME ">") {                                           \
     MPM.addPass(NoopAnalysisRequirementPass<decltype(CREATE_PASS)>());         \
@@ -166,9 +154,6 @@ static bool parseCGSCCPassName(CGSCCPassManager &CGPM, StringRef Name) {
     CGPM.addPass(CREATE_PASS);                                                 \
     return true;                                                               \
   }
-#include "PassRegistry.def"
-
-  // We also support building a require pass around any analysis.
 #define CGSCC_ANALYSIS(NAME, CREATE_PASS)                                      \
   if (Name == "require<" NAME ">") {                                           \
     CGPM.addPass(NoopAnalysisRequirementPass<decltype(CREATE_PASS)>());        \
@@ -185,9 +170,6 @@ static bool parseFunctionPassName(FunctionPassManager &FPM, StringRef Name) {
     FPM.addPass(CREATE_PASS);                                                  \
     return true;                                                               \
   }
-#include "PassRegistry.def"
-
-  // We also support building a require pass around any analysis.
 #define FUNCTION_ANALYSIS(NAME, CREATE_PASS)                                   \
   if (Name == "require<" NAME ">") {                                           \
     FPM.addPass(NoopAnalysisRequirementPass<decltype(CREATE_PASS)>());         \
