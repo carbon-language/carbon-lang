@@ -428,7 +428,11 @@ bool SIInsertWaits::runOnMachineFunction(MachineFunction &MF) {
     for (MachineBasicBlock::iterator I = MBB.begin(), E = MBB.end();
          I != E; ++I) {
 
-      Changes |= insertWait(MBB, I, handleOperands(*I));
+      // Wait for everything before a barrier.
+      if (I->getOpcode() == AMDGPU::S_BARRIER)
+        Changes |= insertWait(MBB, I, LastIssued);
+      else
+        Changes |= insertWait(MBB, I, handleOperands(*I));
       pushInstruction(MBB, I);
     }
 
