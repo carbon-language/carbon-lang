@@ -208,6 +208,8 @@ int main (int argc, char *const *argv, char *const *envp, const char **apple)
                     cpu_type = CPU_TYPE_I386;
 				else if (streq (optarg, "x86_64"))
                     cpu_type = CPU_TYPE_X86_64;
+                else if (streq (optarg, "x86_64h"))
+                    cpu_type = 0; // Don't set CPU type when we have x86_64h
                 else if (strstr (optarg, "arm") == optarg)
                     cpu_type = CPU_TYPE_ARM;
                 else

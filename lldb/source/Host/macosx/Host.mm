@@ -443,7 +443,8 @@ LaunchInNewTerminalWithAppleScript (const char *exe_path, ProcessLaunchInfo &lau
     darwin_debug_file_spec.GetPath(launcher_path, sizeof(launcher_path));
 
     const ArchSpec &arch_spec = launch_info.GetArchitecture();
-    if (arch_spec.IsValid())
+    // Only set the architecture if it is valid and if it isn't Haswell (x86_64h).
+    if (arch_spec.IsValid() && arch_spec.GetCore() != ArchSpec::eCore_x86_64_x86_64h)
         command.Printf("arch -arch %s ", arch_spec.GetArchitectureName());
 
     command.Printf("'%s' --unix-socket=%s", launcher_path, unix_socket_name);
