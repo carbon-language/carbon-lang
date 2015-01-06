@@ -72,6 +72,15 @@ private:
 /// MachineFunction is destroyed.
 struct MachineFunctionInfo {
   virtual ~MachineFunctionInfo();
+
+  /// \brief Factory function: default behavior is to call new using the
+  /// supplied allocator.
+  ///
+  /// This function can be overridden in a derive class.
+  template<typename Ty>
+  static Ty *create(BumpPtrAllocator &Allocator, MachineFunction &MF) {
+    return new (Allocator.Allocate<Ty>()) Ty(MF);
+  }
 };
 
 class MachineFunction {
@@ -239,7 +248,7 @@ public:
   template<typename Ty>
   Ty *getInfo() {
     if (!MFInfo)
-      MFInfo = new (Allocator.Allocate<Ty>()) Ty(*this);
+      MFInfo = Ty::template create<Ty>(Allocator, *this);
     return static_cast<Ty*>(MFInfo);
   }
 
