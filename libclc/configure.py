@@ -89,15 +89,16 @@ available_targets = {
                [{'gpu' : 'cedar',   'aliases' : ['palm', 'sumo', 'sumo2', 'redwood', 'juniper']},
                 {'gpu' : 'cypress', 'aliases' : ['hemlock']},
                 {'gpu' : 'barts',   'aliases' : ['turks', 'caicos']},
-                {'gpu' : 'cayman',  'aliases' : ['aruba']},
-                {'gpu' : 'tahiti',  'aliases' : ['pitcairn', 'verde', 'oland', 'hainan', 'bonaire', 'kabini', 'kaveri', 'hawaii','mullins']}]},
-  'nvptx--'   : { 'devices' : [{'gpu' : '', 'aliases' : []}] },
+                {'gpu' : 'cayman',  'aliases' : ['aruba']}]},
+  'amdgcn--': { 'devices' :
+                [{'gpu' : 'tahiti',  'aliases' : ['pitcairn', 'verde', 'oland', 'hainan', 'bonaire', 'kabini', 'kaveri', 'hawaii','mullins']}]},
+  'nvptx--'   : { 'devices' : [{'gpu' : '', 'aliases' : []}]},
   'nvptx64--'   : { 'devices' : [{'gpu' : '', 'aliases' : []}] },
   'nvptx--nvidiacl'   : { 'devices' : [{'gpu' : '', 'aliases' : []}] },
   'nvptx64--nvidiacl' : { 'devices' : [{'gpu' : '', 'aliases' : []}] }
 }
 
-default_targets = ['nvptx--nvidiacl', 'nvptx64--nvidiacl', 'r600--']
+default_targets = ['nvptx--nvidiacl', 'nvptx64--nvidiacl', 'r600--', 'amdgcn--']
 
 targets = args
 if not targets:
@@ -150,6 +151,8 @@ for target in targets:
     subdirs.append("%s-%s-%s" % (arch, t_vendor, t_os))
     subdirs.append("%s-%s" % (arch, t_os))
     subdirs.append(arch)
+    if arch == 'amdgcn':
+        subdirs.append('r600')
 
   incdirs = filter(os.path.isdir,
                [os.path.join(srcdir, subdir, 'include') for subdir in subdirs])
