@@ -25,7 +25,7 @@
 int main() {
     std::atomic<int> i;
     volatile std::atomic<int> v;
-    int exp;
+    int exp = 0;
 
     i.compare_exchange_weak(exp, 0, std::memory_order_acq_rel);
     i.compare_exchange_weak(exp, 0, std::memory_order_release);
