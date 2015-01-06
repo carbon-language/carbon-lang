@@ -67,8 +67,6 @@ void llvm::registerFunctionAnalyses(FunctionAnalysisManager &FAM) {
 }
 
 static bool isModulePassName(StringRef Name) {
-  if (Name == "no-op-module") return true;
-
 #define MODULE_PASS(NAME, CREATE_PASS) if (Name == NAME) return true;
 #include "PassRegistry.def"
 
@@ -82,8 +80,6 @@ static bool isModulePassName(StringRef Name) {
 }
 
 static bool isCGSCCPassName(StringRef Name) {
-  if (Name == "no-op-cgscc") return true;
-
 #define CGSCC_PASS(NAME, CREATE_PASS) if (Name == NAME) return true;
 #include "PassRegistry.def"
 
@@ -97,8 +93,6 @@ static bool isCGSCCPassName(StringRef Name) {
 }
 
 static bool isFunctionPassName(StringRef Name) {
-  if (Name == "no-op-function") return true;
-
 #define FUNCTION_PASS(NAME, CREATE_PASS) if (Name == NAME) return true;
 #include "PassRegistry.def"
 
@@ -112,11 +106,6 @@ static bool isFunctionPassName(StringRef Name) {
 }
 
 static bool parseModulePassName(ModulePassManager &MPM, StringRef Name) {
-  if (Name == "no-op-module") {
-    MPM.addPass(NoOpModulePass());
-    return true;
-  }
-
 #define MODULE_PASS(NAME, CREATE_PASS)                                         \
   if (Name == NAME) {                                                          \
     MPM.addPass(CREATE_PASS);                                                  \
@@ -136,11 +125,6 @@ static bool parseModulePassName(ModulePassManager &MPM, StringRef Name) {
 }
 
 static bool parseCGSCCPassName(CGSCCPassManager &CGPM, StringRef Name) {
-  if (Name == "no-op-cgscc") {
-    CGPM.addPass(NoOpCGSCCPass());
-    return true;
-  }
-
 #define CGSCC_PASS(NAME, CREATE_PASS)                                          \
   if (Name == NAME) {                                                          \
     CGPM.addPass(CREATE_PASS);                                                 \
@@ -160,11 +144,6 @@ static bool parseCGSCCPassName(CGSCCPassManager &CGPM, StringRef Name) {
 }
 
 static bool parseFunctionPassName(FunctionPassManager &FPM, StringRef Name) {
-  if (Name == "no-op-function") {
-    FPM.addPass(NoOpFunctionPass());
-    return true;
-  }
-
 #define FUNCTION_PASS(NAME, CREATE_PASS)                                       \
   if (Name == NAME) {                                                          \
     FPM.addPass(CREATE_PASS);                                                  \
