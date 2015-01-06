@@ -28,48 +28,12 @@ void ParseFlag(const char *env, const char **flag,
     const char *name, const char *descr);
 
 struct CommonFlags {
-  bool symbolize;
-  const char *external_symbolizer_path;
-  bool allow_addr2line;
-  const char *strip_path_prefix;
-  bool fast_unwind_on_check;
-  bool fast_unwind_on_fatal;
-  bool fast_unwind_on_malloc;
-  bool handle_ioctl;
-  int malloc_context_size;
-  const char *log_path;
-  int  verbosity;
-  bool detect_leaks;
-  bool leak_check_at_exit;
-  bool allocator_may_return_null;
-  bool print_summary;
-  bool check_printf;
-  bool handle_segv;
-  bool allow_user_segv_handler;
-  bool use_sigaltstack;
-  bool detect_deadlocks;
-  uptr clear_shadow_mmap_threshold;
-  const char *color;
-  bool legacy_pthread_cond;
-  bool intercept_tls_get_addr;
-  bool help;
-  uptr mmap_limit_mb;
-  uptr hard_rss_limit_mb;
-  bool coverage;
-  bool coverage_pcs;
-  bool coverage_bitset;
-  bool coverage_direct;
-  const char *coverage_dir;
-  bool full_address_space;
-  const char *suppressions;
-  bool print_suppressions;
-  bool disable_coredump;
-  bool symbolize_inline_frames;
-  const char *stack_trace_format;
+#define COMMON_FLAG(Type, Name, DefaultValue, Description) Type Name;
+#include "sanitizer_flags.inc"
+#undef COMMON_FLAG
 
   void SetDefaults();
   void ParseFromString(const char *str);
-
   void CopyFrom(const CommonFlags &other);
 };
 

@@ -64,6 +64,7 @@ set(SANITIZER_HEADERS
   sanitizer_deadlock_detector.h
   sanitizer_deadlock_detector_interface.h
   sanitizer_flags.h
+  sanitizer_flags.inc
   sanitizer_internal_defs.h
   sanitizer_lfstack.h
   sanitizer_libc.h
