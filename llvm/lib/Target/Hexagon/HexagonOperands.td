@@ -39,6 +39,7 @@ let PrintMethod = "printImmOperand" in {
   def u16_0Imm : Operand<i32>;
   def u16_1Imm : Operand<i32>;
   def u16_2Imm : Operand<i32>;
+  def u16_3Imm : Operand<i32>;
   def u11_3Imm : Operand<i32>;
   def u10Imm : Operand<i32>;
   def u9Imm : Operand<i32>;

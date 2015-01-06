@@ -3122,16 +3122,60 @@ def NTSTBIT_ri : SInst<(outs PredRegs:$dst), (ins IntRegs:$src1, u5Imm:$src2),
 // XTYPE/PRED -
 //===----------------------------------------------------------------------===//
 
-//Deallocate frame and return.
-//    dealloc_return
-let isReturn = 1, isTerminator = 1, isBarrier = 1, isPredicable = 1,
-  Defs = [R29, R30, R31, PC], Uses = [R30], hasSideEffects = 0 in {
-let validSubTargets = HasV4SubT in
-  def DEALLOC_RET_V4 : LD0Inst<(outs), (ins),
-            "dealloc_return",
-            []>,
-            Requires<[HasV4T]>;
+//===----------------------------------------------------------------------===//
+// Multiclass for DeallocReturn
+//===----------------------------------------------------------------------===//
+class L4_RETURN<string mnemonic, bit isNot, bit isPredNew, bit isTak>
+  : LD0Inst<(outs), (ins PredRegs:$src),
+  !if(isNot, "if (!$src", "if ($src")#
+  !if(isPredNew, ".new) ", ") ")#mnemonic#
+  !if(isPredNew, #!if(isTak,":t", ":nt"),""),
+  [], "", LD_tc_3or4stall_SLOT0> {
+
+    bits<2> src;
+    let BaseOpcode = "L4_RETURN";
+    let isPredicatedFalse = isNot;
+    let isPredicatedNew = isPredNew;
+    let isTaken = isTak;
+    let IClass = 0b1001;
+
+    let Inst{27-16} = 0b011000011110;
+
+    let Inst{13} = isNot;
+    let Inst{12} = isTak;
+    let Inst{11} = isPredNew;
+    let Inst{10} = 0b0;
+    let Inst{9-8} = src;
+    let Inst{4-0} = 0b11110;
+  }
+
+// Produce all predicated forms, p, !p, p.new, !p.new, :t, :nt
+multiclass L4_RETURN_PRED<string mnemonic, bit PredNot> {
+  let isPredicated = 1 in {
+    def _#NAME# : L4_RETURN <mnemonic, PredNot, 0, 1>;
+    def _#NAME#new_pnt : L4_RETURN <mnemonic, PredNot, 1, 0>;
+    def _#NAME#new_pt : L4_RETURN <mnemonic, PredNot, 1, 1>;
+  }
 }
+
+multiclass LD_MISC_L4_RETURN<string mnemonic> {
+  let isBarrier = 1, isPredicable = 1 in
+    def NAME : LD0Inst <(outs), (ins), mnemonic, [], "",
+                        LD_tc_3or4stall_SLOT0> {
+      let BaseOpcode = "L4_RETURN";
+      let IClass = 0b1001;
+      let Inst{27-16} = 0b011000011110;
+      let Inst{13-10} = 0b0000;
+      let Inst{4-0} = 0b11110;
+    }
+  defm t : L4_RETURN_PRED<mnemonic, 0 >;
+  defm f : L4_RETURN_PRED<mnemonic, 1 >;
+}
+
+let isReturn = 1, isTerminator = 1,
+    Defs = [R29, R30, R31, PC], Uses = [R30], hasSideEffects = 0,
+    validSubTargets = HasV4SubT, isCodeGenOnly = 0 in
+defm L4_return: LD_MISC_L4_RETURN <"dealloc_return">, PredNewRel;
 
 // Restore registers and dealloc return function call.
 let isCall = 1, isBarrier = 1, isReturn = 1, isTerminator = 1,
@@ -3165,282 +3209,345 @@ let isCall = 1, isBarrier = 1,
              Requires<[HasV4T]>;
 }
 
-//    if (Ps) dealloc_return
-let isReturn = 1, isTerminator = 1,
-    Defs = [R29, R30, R31, PC], Uses = [R30], hasSideEffects = 0,
-    isPredicated = 1 in {
-let validSubTargets = HasV4SubT in
-  def DEALLOC_RET_cPt_V4 : LD0Inst<(outs),
-                           (ins PredRegs:$src1),
-            "if ($src1) dealloc_return",
-            []>,
-            Requires<[HasV4T]>;
-}
+//===----------------------------------------------------------------------===//
+// Template class for non predicated store instructions with
+// GP-Relative or absolute addressing.
+//===----------------------------------------------------------------------===//
+let hasSideEffects = 0, isPredicable = 1, isNVStorable = 1 in
+class T_StoreAbsGP <string mnemonic, RegisterClass RC, Operand ImmOp,
+                    bits<2>MajOp, Operand AddrOp, bit isAbs, bit isHalf>
+  : STInst<(outs), (ins AddrOp:$addr, RC:$src),
+  mnemonic # !if(isAbs, "(##", "(#")#"$addr) = $src"#!if(isHalf, ".h",""),
+  [], "", V2LDST_tc_st_SLOT01> {
+    bits<19> addr;
+    bits<5> src;
+    bits<16> offsetBits;
 
-//    if (!Ps) dealloc_return
-let isReturn = 1, isTerminator = 1,
-    Defs = [R29, R30, R31, PC], Uses = [R30], hasSideEffects = 0,
-    isPredicated = 1, isPredicatedFalse = 1 in {
-let validSubTargets = HasV4SubT in
-  def DEALLOC_RET_cNotPt_V4 : LD0Inst<(outs), (ins PredRegs:$src1),
-            "if (!$src1) dealloc_return",
-            []>,
-            Requires<[HasV4T]>;
-}
-
-//    if (Ps.new) dealloc_return:nt
-let isReturn = 1, isTerminator = 1,
-    Defs = [R29, R30, R31, PC], Uses = [R30], hasSideEffects = 0,
-    isPredicated = 1 in {
-let validSubTargets = HasV4SubT in
-  def DEALLOC_RET_cdnPnt_V4 : LD0Inst<(outs), (ins PredRegs:$src1),
-            "if ($src1.new) dealloc_return:nt",
-            []>,
-            Requires<[HasV4T]>;
-}
-
-//    if (!Ps.new) dealloc_return:nt
-let isReturn = 1, isTerminator = 1,
-    Defs = [R29, R30, R31, PC], Uses = [R30], hasSideEffects = 0,
-    isPredicated = 1, isPredicatedFalse = 1 in {
-let validSubTargets = HasV4SubT in
-  def DEALLOC_RET_cNotdnPnt_V4 : LD0Inst<(outs), (ins PredRegs:$src1),
-            "if (!$src1.new) dealloc_return:nt",
-            []>,
-            Requires<[HasV4T]>;
-}
-
-//    if (Ps.new) dealloc_return:t
-let isReturn = 1, isTerminator = 1,
-    Defs = [R29, R30, R31, PC], Uses = [R30], hasSideEffects = 0,
-    isPredicated = 1 in {
-let validSubTargets = HasV4SubT in
-  def DEALLOC_RET_cdnPt_V4 : LD0Inst<(outs), (ins PredRegs:$src1),
-            "if ($src1.new) dealloc_return:t",
-            []>,
-            Requires<[HasV4T]>;
-}
-
-// if (!Ps.new) dealloc_return:nt
-let isReturn = 1, isTerminator = 1,
-    Defs = [R29, R30, R31, PC], Uses = [R30], hasSideEffects = 0,
-    isPredicated = 1, isPredicatedFalse = 1 in {
-let validSubTargets = HasV4SubT in
-  def DEALLOC_RET_cNotdnPt_V4 : LD0Inst<(outs), (ins PredRegs:$src1),
-            "if (!$src1.new) dealloc_return:t",
-            []>,
-            Requires<[HasV4T]>;
-}
-
-// Load/Store with absolute addressing mode
-// memw(#u6)=Rt
-
-multiclass ST_Abs_Predbase<string mnemonic, RegisterClass RC, bit isNot,
-                           bit isPredNew> {
-  let isPredicatedNew = isPredNew in
-  def NAME#_V4 : STInst2<(outs),
-            (ins PredRegs:$src1, u0AlwaysExt:$absaddr, RC: $src2),
-            !if(isNot, "if (!$src1", "if ($src1")#!if(isPredNew, ".new) ",
-            ") ")#mnemonic#"(##$absaddr) = $src2",
-            []>,
-            Requires<[HasV4T]>;
-}
-
-multiclass ST_Abs_Pred<string mnemonic, RegisterClass RC, bit PredNot> {
-  let isPredicatedFalse = PredNot in {
-    defm _c#NAME : ST_Abs_Predbase<mnemonic, RC, PredNot, 0>;
-    // Predicate new
-    defm _cdn#NAME : ST_Abs_Predbase<mnemonic, RC, PredNot, 1>;
+    string ImmOpStr = !cast<string>(ImmOp);
+    let offsetBits = !if (!eq(ImmOpStr, "u16_3Imm"), addr{18-3},
+                     !if (!eq(ImmOpStr, "u16_2Imm"), addr{17-2},
+                     !if (!eq(ImmOpStr, "u16_1Imm"), addr{16-1},
+                                      /* u16_0Imm */ addr{15-0})));
+    let IClass = 0b0100;
+    let Inst{27} = 1;
+    let Inst{26-25} = offsetBits{15-14};
+    let Inst{24}    = 0b0;
+    let Inst{23-22} = MajOp;
+    let Inst{21}    = isHalf;
+    let Inst{20-16} = offsetBits{13-9};
+    let Inst{13}    = offsetBits{8};
+    let Inst{12-8}  = src;
+    let Inst{7-0}   = offsetBits{7-0};
   }
+
+//===----------------------------------------------------------------------===//
+// Template class for predicated store instructions with
+// GP-Relative or absolute addressing.
+//===----------------------------------------------------------------------===//
+let hasSideEffects = 0, isPredicated = 1, isNVStorable = 1, opExtentBits = 6,
+    opExtendable = 1 in
+class T_StoreAbs_Pred <string mnemonic, RegisterClass RC, bits<2> MajOp,
+                       bit isHalf, bit isNot, bit isNew>
+  : STInst<(outs), (ins PredRegs:$src1, u6Ext:$absaddr, RC: $src2),
+  !if(isNot, "if (!$src1", "if ($src1")#!if(isNew, ".new) ",
+  ") ")#mnemonic#"(#$absaddr) = $src2"#!if(isHalf, ".h",""),
+  [], "", ST_tc_st_SLOT01>, AddrModeRel {
+    bits<2> src1;
+    bits<6> absaddr;
+    bits<5> src2;
+
+    let isPredicatedNew = isNew;
+    let isPredicatedFalse = isNot;
+
+    let IClass = 0b1010;
+
+    let Inst{27-24} = 0b1111;
+    let Inst{23-22} = MajOp;
+    let Inst{21}    = isHalf;
+    let Inst{17-16} = absaddr{5-4};
+    let Inst{13}    = isNew;
+    let Inst{12-8}  = src2;
+    let Inst{7}     = 0b1;
+    let Inst{6-3}   = absaddr{3-0};
+    let Inst{2}     = isNot;
+    let Inst{1-0}   = src1;
+  }
+
+//===----------------------------------------------------------------------===//
+// Template class for predicated store instructions with absolute addressing.
+//===----------------------------------------------------------------------===//
+class T_StoreAbs <string mnemonic, RegisterClass RC, Operand ImmOp,
+                 bits<2> MajOp, bit isHalf>
+  : T_StoreAbsGP <mnemonic, RC, ImmOp, MajOp, u0AlwaysExt, 1, isHalf>,
+                  AddrModeRel {
+  string ImmOpStr = !cast<string>(ImmOp);
+  let opExtentBits = !if (!eq(ImmOpStr, "u16_3Imm"), 19,
+                     !if (!eq(ImmOpStr, "u16_2Imm"), 18,
+                     !if (!eq(ImmOpStr, "u16_1Imm"), 17,
+                                      /* u16_0Imm */ 16)));
+
+  let opExtentAlign = !if (!eq(ImmOpStr, "u16_3Imm"), 3,
+                      !if (!eq(ImmOpStr, "u16_2Imm"), 2,
+                      !if (!eq(ImmOpStr, "u16_1Imm"), 1,
+                                       /* u16_0Imm */ 0)));
 }
 
-let isNVStorable = 1, isExtended = 1, hasSideEffects = 0 in
-multiclass ST_Abs<string mnemonic, string CextOp, RegisterClass RC> {
+//===----------------------------------------------------------------------===//
+// Multiclass for store instructions with absolute addressing.
+//===----------------------------------------------------------------------===//
+let validSubTargets = HasV4SubT, addrMode = Absolute, isExtended = 1 in
+multiclass ST_Abs<string mnemonic, string CextOp, RegisterClass RC,
+                  Operand ImmOp, bits<2> MajOp, bit isHalf = 0> {
   let CextOpcode = CextOp, BaseOpcode = CextOp#_abs in {
     let opExtendable = 0, isPredicable = 1 in
-    def NAME#_V4 : STInst2<(outs),
-            (ins u0AlwaysExt:$absaddr, RC:$src),
-            mnemonic#"(##$absaddr) = $src",
-            []>,
-            Requires<[HasV4T]>;
+    def S2_#NAME#abs : T_StoreAbs <mnemonic, RC, ImmOp, MajOp, isHalf>;
 
-    let opExtendable = 1, isPredicated = 1 in {
-      defm Pt : ST_Abs_Pred<mnemonic, RC, 0>;
-      defm NotPt : ST_Abs_Pred<mnemonic, RC, 1>;
-    }
+    // Predicated
+    def S4_p#NAME#t_abs : T_StoreAbs_Pred<mnemonic, RC, MajOp, isHalf, 0, 0>;
+    def S4_p#NAME#f_abs : T_StoreAbs_Pred<mnemonic, RC, MajOp, isHalf, 1, 0>;
+
+    // .new Predicated
+    def S4_p#NAME#tnew_abs : T_StoreAbs_Pred<mnemonic, RC, MajOp, isHalf, 0, 1>;
+    def S4_p#NAME#fnew_abs : T_StoreAbs_Pred<mnemonic, RC, MajOp, isHalf, 1, 1>;
   }
 }
 
-multiclass ST_Abs_Predbase_nv<string mnemonic, RegisterClass RC, bit isNot,
-                           bit isPredNew> {
-  let isPredicatedNew = isPredNew in
-  def NAME#_nv_V4 : NVInst_V4<(outs),
-            (ins PredRegs:$src1, u0AlwaysExt:$absaddr, RC: $src2),
-            !if(isNot, "if (!$src1", "if ($src1")#!if(isPredNew, ".new) ",
-            ") ")#mnemonic#"(##$absaddr) = $src2.new",
-            []>,
-            Requires<[HasV4T]>;
-}
+//===----------------------------------------------------------------------===//
+// Template class for non predicated new-value store instructions with
+// GP-Relative or absolute addressing.
+//===----------------------------------------------------------------------===//
+let hasSideEffects = 0, isPredicable = 1, mayStore = 1, isNVStore = 1,
+    isNewValue = 1, opNewValue = 1 in
+class T_StoreAbsGP_NV <string mnemonic, Operand ImmOp, bits<2>MajOp, bit isAbs>
+  : NVInst_V4<(outs), (ins u0AlwaysExt:$addr, IntRegs:$src),
+  mnemonic # !if(isAbs, "(##", "(#")#"$addr) = $src.new",
+  [], "", V2LDST_tc_st_SLOT0> {
+    bits<19> addr;
+    bits<3> src;
+    bits<16> offsetBits;
 
-multiclass ST_Abs_Pred_nv<string mnemonic, RegisterClass RC, bit PredNot> {
-  let isPredicatedFalse = PredNot in {
-    defm _c#NAME : ST_Abs_Predbase_nv<mnemonic, RC, PredNot, 0>;
-    // Predicate new
-    defm _cdn#NAME : ST_Abs_Predbase_nv<mnemonic, RC, PredNot, 1>;
+    string ImmOpStr = !cast<string>(ImmOp);
+    let offsetBits = !if (!eq(ImmOpStr, "u16_3Imm"), addr{18-3},
+                     !if (!eq(ImmOpStr, "u16_2Imm"), addr{17-2},
+                     !if (!eq(ImmOpStr, "u16_1Imm"), addr{16-1},
+                                      /* u16_0Imm */ addr{15-0})));
+    let IClass = 0b0100;
+
+    let Inst{27} = 1;
+    let Inst{26-25} = offsetBits{15-14};
+    let Inst{24-21} = 0b0101;
+    let Inst{20-16} = offsetBits{13-9};
+    let Inst{13}    = offsetBits{8};
+    let Inst{12-11} = MajOp;
+    let Inst{10-8}  = src;
+    let Inst{7-0}   = offsetBits{7-0};
   }
+
+//===----------------------------------------------------------------------===//
+// Template class for predicated new-value store instructions with
+// absolute addressing.
+//===----------------------------------------------------------------------===//
+let hasSideEffects = 0, isPredicated = 1, mayStore = 1, isNVStore = 1,
+    isNewValue = 1, opNewValue = 2, opExtentBits = 6, opExtendable = 1 in
+class T_StoreAbs_NV_Pred <string mnemonic, bits<2> MajOp, bit isNot, bit isNew>
+  : NVInst_V4<(outs), (ins PredRegs:$src1, u6Ext:$absaddr, IntRegs:$src2),
+  !if(isNot, "if (!$src1", "if ($src1")#!if(isNew, ".new) ",
+  ") ")#mnemonic#"(#$absaddr) = $src2.new",
+  [], "", ST_tc_st_SLOT0>, AddrModeRel {
+    bits<2> src1;
+    bits<6> absaddr;
+    bits<3> src2;
+
+    let isPredicatedNew = isNew;
+    let isPredicatedFalse = isNot;
+
+    let IClass = 0b1010;
+
+    let Inst{27-24} = 0b1111;
+    let Inst{23-21} = 0b101;
+    let Inst{17-16} = absaddr{5-4};
+    let Inst{13}    = isNew;
+    let Inst{12-11} = MajOp;
+    let Inst{10-8}  = src2;
+    let Inst{7}     = 0b1;
+    let Inst{6-3}   = absaddr{3-0};
+    let Inst{2}     = isNot;
+    let Inst{1-0}   = src1;
 }
 
-let mayStore = 1, isNVStore = 1, isExtended = 1, hasSideEffects = 0 in
-multiclass ST_Abs_nv<string mnemonic, string CextOp, RegisterClass RC> {
+//===----------------------------------------------------------------------===//
+// Template class for non-predicated new-value store instructions with
+// absolute addressing.
+//===----------------------------------------------------------------------===//
+class T_StoreAbs_NV <string mnemonic, Operand ImmOp, bits<2> MajOp>
+  : T_StoreAbsGP_NV <mnemonic, ImmOp, MajOp, 1>, AddrModeRel {
+
+  string ImmOpStr = !cast<string>(ImmOp);
+  let opExtentBits = !if (!eq(ImmOpStr, "u16_3Imm"), 19,
+                     !if (!eq(ImmOpStr, "u16_2Imm"), 18,
+                     !if (!eq(ImmOpStr, "u16_1Imm"), 17,
+                                      /* u16_0Imm */ 16)));
+
+  let opExtentAlign = !if (!eq(ImmOpStr, "u16_3Imm"), 3,
+                      !if (!eq(ImmOpStr, "u16_2Imm"), 2,
+                      !if (!eq(ImmOpStr, "u16_1Imm"), 1,
+                                       /* u16_0Imm */ 0)));
+}
+
+//===----------------------------------------------------------------------===//
+// Multiclass for new-value store instructions with absolute addressing.
+//===----------------------------------------------------------------------===//
+let validSubTargets = HasV4SubT, addrMode = Absolute, isExtended = 1  in
+multiclass ST_Abs_NV <string mnemonic, string CextOp, Operand ImmOp,
+                   bits<2> MajOp> {
   let CextOpcode = CextOp, BaseOpcode = CextOp#_abs in {
     let opExtendable = 0, isPredicable = 1 in
-    def NAME#_nv_V4 : NVInst_V4<(outs),
-            (ins u0AlwaysExt:$absaddr, RC:$src),
-            mnemonic#"(##$absaddr) = $src.new",
-            []>,
-            Requires<[HasV4T]>;
+    def S2_#NAME#newabs : T_StoreAbs_NV <mnemonic, ImmOp, MajOp>;
 
-    let opExtendable = 1, isPredicated = 1 in {
-      defm Pt : ST_Abs_Pred_nv<mnemonic, RC, 0>;
-      defm NotPt : ST_Abs_Pred_nv<mnemonic, RC, 1>;
-    }
+    // Predicated
+    def S4_p#NAME#newt_abs  : T_StoreAbs_NV_Pred <mnemonic, MajOp, 0, 0>;
+    def S4_p#NAME#newf_abs  : T_StoreAbs_NV_Pred <mnemonic, MajOp, 1, 0>;
+
+    // .new Predicated
+    def S4_p#NAME#newtnew_abs : T_StoreAbs_NV_Pred <mnemonic, MajOp, 0, 1>;
+    def S4_p#NAME#newfnew_abs : T_StoreAbs_NV_Pred <mnemonic, MajOp, 1, 1>;
   }
 }
 
-let addrMode = Absolute in {
-  let accessSize = ByteAccess in
-    defm STrib_abs : ST_Abs<"memb", "STrib", IntRegs>,
-                     ST_Abs_nv<"memb", "STrib", IntRegs>, AddrModeRel;
+//===----------------------------------------------------------------------===//
+// Stores with absolute addressing
+//===----------------------------------------------------------------------===//
+let accessSize = ByteAccess, isCodeGenOnly = 0 in
+defm storerb : ST_Abs    <"memb", "STrib", IntRegs, u16_0Imm, 0b00>,
+               ST_Abs_NV <"memb", "STrib", u16_0Imm, 0b00>;
 
-  let accessSize = HalfWordAccess in
-    defm STrih_abs : ST_Abs<"memh", "STrih", IntRegs>,
-                     ST_Abs_nv<"memh", "STrih", IntRegs>, AddrModeRel;
+let accessSize = HalfWordAccess, isCodeGenOnly = 0 in
+defm storerh : ST_Abs    <"memh", "STrih", IntRegs, u16_1Imm, 0b01>,
+               ST_Abs_NV <"memh", "STrih", u16_1Imm, 0b01>;
 
-  let accessSize = WordAccess in
-    defm STriw_abs : ST_Abs<"memw", "STriw", IntRegs>,
-                     ST_Abs_nv<"memw", "STriw", IntRegs>, AddrModeRel;
+let accessSize = WordAccess, isCodeGenOnly = 0 in
+defm storeri : ST_Abs    <"memw", "STriw", IntRegs, u16_2Imm, 0b10>,
+               ST_Abs_NV <"memw", "STriw", u16_2Imm, 0b10>;
 
-  let accessSize = DoubleWordAccess, isNVStorable = 0 in
-    defm STrid_abs : ST_Abs<"memd", "STrid", DoubleRegs>, AddrModeRel;
+let isNVStorable = 0, accessSize = DoubleWordAccess, isCodeGenOnly = 0 in
+defm storerd : ST_Abs <"memd", "STrid", DoubleRegs, u16_3Imm, 0b11>;
+
+let isNVStorable = 0, accessSize = HalfWordAccess, isCodeGenOnly = 0 in
+defm storerf : ST_Abs <"memh", "STrif", IntRegs, u16_1Imm, 0b01, 1>;
+
+//===----------------------------------------------------------------------===//
+// GP-relative stores.
+// mem[bhwd](#global)=Rt
+// Once predicated, these instructions map to absolute addressing mode.
+// if ([!]Pv[.new]) mem[bhwd](##global)=Rt
+//===----------------------------------------------------------------------===//
+
+let Uses = [GP], validSubTargets = HasV4SubT in
+class T_StoreGP <string mnemonic, string BaseOp, RegisterClass RC,
+                 Operand ImmOp, bits<2> MajOp, bit isHalf = 0>
+  : T_StoreAbsGP <mnemonic, RC, ImmOp, MajOp, globaladdress, 0, isHalf> {
+    // Set BaseOpcode same as absolute addressing instructions so that
+    // non-predicated GP-Rel instructions can have relate with predicated
+    // Absolute instruction.
+    let BaseOpcode = BaseOp#_abs;
+  }
+
+let Uses = [GP], validSubTargets = HasV4SubT in
+multiclass ST_GP <string mnemonic, string BaseOp, Operand ImmOp,
+                  bits<2> MajOp, bit isHalf = 0> {
+  // Set BaseOpcode same as absolute addressing instructions so that
+  // non-predicated GP-Rel instructions can have relate with predicated
+  // Absolute instruction.
+  let BaseOpcode = BaseOp#_abs in {
+    def NAME#gp : T_StoreAbsGP <mnemonic, IntRegs, ImmOp, MajOp,
+                                globaladdress, 0, isHalf>;
+    // New-value store
+    def NAME#newgp : T_StoreAbsGP_NV <mnemonic, ImmOp, MajOp, 0> ;
+  }
 }
+
+let accessSize = ByteAccess in
+defm S2_storerb : ST_GP<"memb", "STrib", u16_0Imm, 0b00>, NewValueRel;
+
+let accessSize = HalfWordAccess in
+defm S2_storerh : ST_GP<"memh", "STrih", u16_1Imm, 0b01>, NewValueRel;
+
+let accessSize = WordAccess in
+defm S2_storeri : ST_GP<"memw", "STriw", u16_2Imm, 0b10>, NewValueRel;
+
+let isNVStorable = 0, accessSize = DoubleWordAccess in
+def S2_storerdgp : T_StoreGP <"memd", "STrid", DoubleRegs,
+                              u16_3Imm, 0b11>, PredNewRel;
+
+let isNVStorable = 0, accessSize = HalfWordAccess in
+def S2_storerfgp : T_StoreGP <"memh", "STrif", IntRegs,
+                              u16_1Imm, 0b01, 1>, PredNewRel;
 
 let Predicates = [HasV4T], AddedComplexity = 30 in {
 def : Pat<(truncstorei8 (i32 IntRegs:$src1),
                         (HexagonCONST32 tglobaladdr:$absaddr)),
-          (STrib_abs_V4 tglobaladdr: $absaddr, IntRegs: $src1)>;
+          (S2_storerbabs tglobaladdr: $absaddr, IntRegs: $src1)>;
 
 def : Pat<(truncstorei16 (i32 IntRegs:$src1),
                           (HexagonCONST32 tglobaladdr:$absaddr)),
-          (STrih_abs_V4 tglobaladdr: $absaddr, IntRegs: $src1)>;
+          (S2_storerhabs tglobaladdr: $absaddr, IntRegs: $src1)>;
 
 def : Pat<(store (i32 IntRegs:$src1), (HexagonCONST32 tglobaladdr:$absaddr)),
-          (STriw_abs_V4 tglobaladdr: $absaddr, IntRegs: $src1)>;
+          (S2_storeriabs tglobaladdr: $absaddr, IntRegs: $src1)>;
 
 def : Pat<(store (i64 DoubleRegs:$src1),
                  (HexagonCONST32 tglobaladdr:$absaddr)),
-          (STrid_abs_V4 tglobaladdr: $absaddr, DoubleRegs: $src1)>;
-}
-
-//===----------------------------------------------------------------------===//
-// multiclass for store instructions with GP-relative addressing mode.
-// mem[bhwd](#global)=Rt
-// if ([!]Pv[.new]) mem[bhwd](##global) = Rt
-//===----------------------------------------------------------------------===//
-let mayStore = 1, isNVStorable = 1 in
-multiclass ST_GP<string mnemonic, string BaseOp, RegisterClass RC> {
-  let BaseOpcode = BaseOp, isPredicable = 1 in
-  def NAME#_V4 : STInst2<(outs),
-          (ins globaladdress:$global, RC:$src),
-          mnemonic#"(#$global) = $src",
-          []>;
-
-  // When GP-relative instructions are predicated, their addressing mode is
-  // changed to absolute and they are always constant extended.
-  let BaseOpcode = BaseOp, isExtended = 1, opExtendable = 1,
-  isPredicated = 1 in {
-    defm Pt : ST_Abs_Pred <mnemonic, RC, 0>;
-    defm NotPt : ST_Abs_Pred <mnemonic, RC, 1>;
-  }
-}
-
-let mayStore = 1, isNVStore = 1 in
-multiclass ST_GP_nv<string mnemonic, string BaseOp, RegisterClass RC> {
-  let BaseOpcode = BaseOp, isPredicable = 1 in
-  def NAME#_nv_V4 : NVInst_V4<(outs),
-          (ins u0AlwaysExt:$global, RC:$src),
-          mnemonic#"(#$global) = $src.new",
-          []>,
-          Requires<[HasV4T]>;
-
-  // When GP-relative instructions are predicated, their addressing mode is
-  // changed to absolute and they are always constant extended.
-  let BaseOpcode = BaseOp, isExtended = 1, opExtendable = 1,
-  isPredicated = 1 in {
-    defm Pt : ST_Abs_Pred_nv<mnemonic, RC, 0>;
-    defm NotPt : ST_Abs_Pred_nv<mnemonic, RC, 1>;
-  }
-}
-
-let validSubTargets = HasV4SubT, hasSideEffects = 0 in {
-  let isNVStorable = 0 in
-  defm STd_GP : ST_GP <"memd", "STd_GP", DoubleRegs>, PredNewRel;
-
-  defm STb_GP : ST_GP<"memb",  "STb_GP", IntRegs>,
-                ST_GP_nv<"memb", "STb_GP", IntRegs>, NewValueRel;
-  defm STh_GP : ST_GP<"memh",  "STh_GP", IntRegs>,
-                ST_GP_nv<"memh", "STh_GP", IntRegs>, NewValueRel;
-  defm STw_GP : ST_GP<"memw",  "STw_GP", IntRegs>,
-                ST_GP_nv<"memw", "STw_GP", IntRegs>, NewValueRel;
+          (S2_storerdabs tglobaladdr: $absaddr, DoubleRegs: $src1)>;
 }
 
 // 64 bit atomic store
 def : Pat <(atomic_store_64 (HexagonCONST32_GP tglobaladdr:$global),
                             (i64 DoubleRegs:$src1)),
-           (STd_GP_V4 tglobaladdr:$global, (i64 DoubleRegs:$src1))>,
+           (S2_storerdgp tglobaladdr:$global, (i64 DoubleRegs:$src1))>,
            Requires<[HasV4T]>;
 
 // Map from store(globaladdress) -> memd(#foo)
 let AddedComplexity = 100 in
 def : Pat <(store (i64 DoubleRegs:$src1),
                   (HexagonCONST32_GP tglobaladdr:$global)),
-           (STd_GP_V4 tglobaladdr:$global, (i64 DoubleRegs:$src1))>;
+           (S2_storerdgp tglobaladdr:$global, (i64 DoubleRegs:$src1))>;
 
 // 8 bit atomic store
 def : Pat < (atomic_store_8 (HexagonCONST32_GP tglobaladdr:$global),
                             (i32 IntRegs:$src1)),
-            (STb_GP_V4 tglobaladdr:$global, (i32 IntRegs:$src1))>;
+            (S2_storerbgp tglobaladdr:$global, (i32 IntRegs:$src1))>;
 
 // Map from store(globaladdress) -> memb(#foo)
 let AddedComplexity = 100 in
 def : Pat<(truncstorei8 (i32 IntRegs:$src1),
           (HexagonCONST32_GP tglobaladdr:$global)),
-          (STb_GP_V4 tglobaladdr:$global, (i32 IntRegs:$src1))>;
+          (S2_storerbgp tglobaladdr:$global, (i32 IntRegs:$src1))>;
 
 // Map from "i1 = constant<-1>; memw(CONST32(#foo)) = i1"
 //       to "r0 = 1; memw(#foo) = r0"
 let AddedComplexity = 100 in
 def : Pat<(store (i1 -1), (HexagonCONST32_GP tglobaladdr:$global)),
-          (STb_GP_V4 tglobaladdr:$global, (A2_tfrsi 1))>;
+          (S2_storerbgp tglobaladdr:$global, (A2_tfrsi 1))>;
 
 def : Pat<(atomic_store_16 (HexagonCONST32_GP tglobaladdr:$global),
                            (i32 IntRegs:$src1)),
-          (STh_GP_V4 tglobaladdr:$global, (i32 IntRegs:$src1))>;
+          (S2_storerhgp tglobaladdr:$global, (i32 IntRegs:$src1))>;
 
 // Map from store(globaladdress) -> memh(#foo)
 let AddedComplexity = 100 in
 def : Pat<(truncstorei16 (i32 IntRegs:$src1),
                          (HexagonCONST32_GP tglobaladdr:$global)),
-          (STh_GP_V4 tglobaladdr:$global, (i32 IntRegs:$src1))>;
+          (S2_storerhgp tglobaladdr:$global, (i32 IntRegs:$src1))>;
 
 // 32 bit atomic store
 def : Pat<(atomic_store_32 (HexagonCONST32_GP tglobaladdr:$global),
                            (i32 IntRegs:$src1)),
-          (STw_GP_V4 tglobaladdr:$global, (i32 IntRegs:$src1))>;
+          (S2_storerigp tglobaladdr:$global, (i32 IntRegs:$src1))>;
 
 // Map from store(globaladdress) -> memw(#foo)
 let AddedComplexity = 100 in
 def : Pat<(store (i32 IntRegs:$src1), (HexagonCONST32_GP tglobaladdr:$global)),
-          (STw_GP_V4 tglobaladdr:$global, (i32 IntRegs:$src1))>;
+          (S2_storerigp tglobaladdr:$global, (i32 IntRegs:$src1))>;
 
 //===----------------------------------------------------------------------===//
 // Multiclass for the load instructions with absolute addressing mode.
@@ -3713,13 +3820,13 @@ def : Pat <(i32 (zextloadi8 (add IntRegs:$src1,
 
 let Predicates = [HasV4T], AddedComplexity  = 30 in {
 def : Pat<(truncstorei8 (i32 IntRegs:$src1), u0AlwaysExtPred:$src2),
-          (STrib_abs_V4 u0AlwaysExtPred:$src2, IntRegs: $src1)>;
+          (S2_storerbabs u0AlwaysExtPred:$src2, IntRegs: $src1)>;
 
 def : Pat<(truncstorei16 (i32 IntRegs:$src1), u0AlwaysExtPred:$src2),
-          (STrih_abs_V4 u0AlwaysExtPred:$src2, IntRegs: $src1)>;
+          (S2_storerhabs u0AlwaysExtPred:$src2, IntRegs: $src1)>;
 
 def : Pat<(store (i32 IntRegs:$src1), u0AlwaysExtPred:$src2),
-          (STriw_abs_V4 u0AlwaysExtPred:$src2, IntRegs: $src1)>;
+          (S2_storeriabs u0AlwaysExtPred:$src2, IntRegs: $src1)>;
 }
 
 let Predicates = [HasV4T], AddedComplexity  = 30 in {
@@ -3850,42 +3957,42 @@ def STrih_offset_ext_V4 : STInst<(outs),
 let AddedComplexity = 100 in
 def : Pat<(store (i64 DoubleRegs:$src1),
                  FoldGlobalAddrGP:$addr),
-          (STrid_abs_V4 FoldGlobalAddrGP:$addr, (i64 DoubleRegs:$src1))>,
+          (S2_storerdabs FoldGlobalAddrGP:$addr, (i64 DoubleRegs:$src1))>,
           Requires<[HasV4T]>;
 
 def : Pat<(atomic_store_64 FoldGlobalAddrGP:$addr,
                            (i64 DoubleRegs:$src1)),
-          (STrid_abs_V4 FoldGlobalAddrGP:$addr, (i64 DoubleRegs:$src1))>,
+          (S2_storerdabs FoldGlobalAddrGP:$addr, (i64 DoubleRegs:$src1))>,
           Requires<[HasV4T]>;
 
 // Map from store(globaladdress + x) -> memb(#foo + x)
 let AddedComplexity = 100 in
 def : Pat<(truncstorei8 (i32 IntRegs:$src1), FoldGlobalAddrGP:$addr),
-          (STrib_abs_V4 FoldGlobalAddrGP:$addr, (i32 IntRegs:$src1))>,
+          (S2_storerbabs FoldGlobalAddrGP:$addr, (i32 IntRegs:$src1))>,
             Requires<[HasV4T]>;
 
 def : Pat<(atomic_store_8 FoldGlobalAddrGP:$addr, (i32 IntRegs:$src1)),
-          (STrib_abs_V4 FoldGlobalAddrGP:$addr, (i32 IntRegs:$src1))>,
+          (S2_storerbabs FoldGlobalAddrGP:$addr, (i32 IntRegs:$src1))>,
             Requires<[HasV4T]>;
 
 // Map from store(globaladdress + x) -> memh(#foo + x)
 let AddedComplexity = 100 in
 def : Pat<(truncstorei16 (i32 IntRegs:$src1), FoldGlobalAddrGP:$addr),
-          (STrih_abs_V4 FoldGlobalAddrGP:$addr, (i32 IntRegs:$src1))>,
+          (S2_storerhabs FoldGlobalAddrGP:$addr, (i32 IntRegs:$src1))>,
             Requires<[HasV4T]>;
 
 def : Pat<(atomic_store_16 FoldGlobalAddrGP:$addr, (i32 IntRegs:$src1)),
-          (STrih_abs_V4 FoldGlobalAddrGP:$addr, (i32 IntRegs:$src1))>,
+          (S2_storerhabs FoldGlobalAddrGP:$addr, (i32 IntRegs:$src1))>,
             Requires<[HasV4T]>;
 
 // Map from store(globaladdress + x) -> memw(#foo + x)
 let AddedComplexity = 100 in
 def : Pat<(store (i32 IntRegs:$src1), FoldGlobalAddrGP:$addr),
-          (STriw_abs_V4 FoldGlobalAddrGP:$addr, (i32 IntRegs:$src1))>,
+          (S2_storeriabs FoldGlobalAddrGP:$addr, (i32 IntRegs:$src1))>,
            Requires<[HasV4T]>;
 
 def : Pat<(atomic_store_32 FoldGlobalAddrGP:$addr, (i32 IntRegs:$src1)),
-          (STriw_abs_V4 FoldGlobalAddrGP:$addr, (i32 IntRegs:$src1))>,
+          (S2_storeriabs FoldGlobalAddrGP:$addr, (i32 IntRegs:$src1))>,
             Requires<[HasV4T]>;
 
 // Map from load(globaladdress + x) -> memd(#foo + x)

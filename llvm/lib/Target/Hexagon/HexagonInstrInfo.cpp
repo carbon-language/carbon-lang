@@ -735,10 +735,10 @@ unsigned HexagonInstrInfo::getInvertedPredicatedOpcode(const int Opc) const {
       return Hexagon::C2_ccombinewt;
 
       // Dealloc_return.
-    case Hexagon::DEALLOC_RET_cPt_V4:
-      return Hexagon::DEALLOC_RET_cNotPt_V4;
-    case Hexagon::DEALLOC_RET_cNotPt_V4:
-      return Hexagon::DEALLOC_RET_cPt_V4;
+    case Hexagon::L4_return_t:
+      return Hexagon::L4_return_f;
+    case Hexagon::L4_return_f:
+      return Hexagon::L4_return_t;
   }
 }
 
@@ -783,9 +783,9 @@ getMatchingCondBranchOpcode(int Opc, bool invertPredicate) const {
                               Hexagon::S2_pstorerif_io;
 
   // DEALLOC_RETURN.
-  case Hexagon::DEALLOC_RET_V4:
-    return !invertPredicate ? Hexagon::DEALLOC_RET_cPt_V4 :
-                              Hexagon::DEALLOC_RET_cNotPt_V4;
+  case Hexagon::L4_return:
+    return !invertPredicate ? Hexagon::L4_return_t:
+                              Hexagon::L4_return_f;
   }
   llvm_unreachable("Unexpected predicable instruction");
 }
@@ -1072,13 +1072,13 @@ isProfitableToDupForIfCvt(MachineBasicBlock &MBB,unsigned NumInstrs,
 bool HexagonInstrInfo::isDeallocRet(const MachineInstr *MI) const {
   switch (MI->getOpcode()) {
   default: return false;
-  case Hexagon::DEALLOC_RET_V4 :
-  case Hexagon::DEALLOC_RET_cPt_V4 :
-  case Hexagon::DEALLOC_RET_cNotPt_V4 :
-  case Hexagon::DEALLOC_RET_cdnPnt_V4 :
-  case Hexagon::DEALLOC_RET_cNotdnPnt_V4 :
-  case Hexagon::DEALLOC_RET_cdnPt_V4 :
-  case Hexagon::DEALLOC_RET_cNotdnPt_V4 :
+  case Hexagon::L4_return:
+  case Hexagon::L4_return_t:
+  case Hexagon::L4_return_f:
+  case Hexagon::L4_return_tnew_pnt:
+  case Hexagon::L4_return_fnew_pnt:
+  case Hexagon::L4_return_tnew_pt:
+  case Hexagon::L4_return_fnew_pt:
    return true;
   }
 }
@@ -1453,14 +1453,14 @@ isConditionalStore (const MachineInstr* MI) const {
       return QRI.Subtarget.hasV4TOps();
 
     // V4 global address store before promoting to dot new.
-    case Hexagon::STd_GP_cPt_V4 :
-    case Hexagon::STd_GP_cNotPt_V4 :
-    case Hexagon::STb_GP_cPt_V4 :
-    case Hexagon::STb_GP_cNotPt_V4 :
-    case Hexagon::STh_GP_cPt_V4 :
-    case Hexagon::STh_GP_cNotPt_V4 :
-    case Hexagon::STw_GP_cPt_V4 :
-    case Hexagon::STw_GP_cNotPt_V4 :
+    case Hexagon::S4_pstorerdt_abs:
+    case Hexagon::S4_pstorerdf_abs:
+    case Hexagon::S4_pstorerbt_abs:
+    case Hexagon::S4_pstorerbf_abs:
+    case Hexagon::S4_pstorerht_abs:
+    case Hexagon::S4_pstorerhf_abs:
+    case Hexagon::S4_pstorerit_abs:
+    case Hexagon::S4_pstorerif_abs:
       return QRI.Subtarget.hasV4TOps();
 
     // Predicated new value stores (i.e. if (p0) memw(..)=r0.new) are excluded

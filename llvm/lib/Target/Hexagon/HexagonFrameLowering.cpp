@@ -183,7 +183,7 @@ void HexagonFrameLowering::emitEpilogue(MachineFunction &MF,
 
       // Add dealloc_return.
       MachineInstrBuilder MIB =
-        BuildMI(MBB, MBBI_end, dl, TII.get(Hexagon::DEALLOC_RET_V4));
+        BuildMI(MBB, MBBI_end, dl, TII.get(Hexagon::L4_return));
       // Transfer the function live-out registers.
       MIB->copyImplicitOps(*MBB.getParent(), &*MBBI);
       // Remove the JUMPR node.
