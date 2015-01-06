@@ -745,16 +745,16 @@ defm V_CMPX_T_U64 : VOPCX_I64 <vopc<0xf7, 0xff>, "v_cmpx_t_u64">;
 
 } // End hasSideEffects = 1
 
-defm V_CMP_CLASS_F32 : VOPC_F32 <vopc<0x88, 0x10>, "v_cmp_class_f32">;
+defm V_CMP_CLASS_F32 : VOPC_CLASS_F32 <vopc<0x88, 0x10>, "v_cmp_class_f32">;
 
 let hasSideEffects = 1 in {
-defm V_CMPX_CLASS_F32 : VOPCX_F32 <vopc<0x98, 0x11>, "v_cmpx_class_f32">;
+defm V_CMPX_CLASS_F32 : VOPCX_CLASS_F32 <vopc<0x98, 0x11>, "v_cmpx_class_f32">;
 } // End hasSideEffects = 1
 
-defm V_CMP_CLASS_F64 : VOPC_F64 <vopc<0xa8, 0x12>, "v_cmp_class_f64">;
+defm V_CMP_CLASS_F64 : VOPC_CLASS_F64 <vopc<0xa8, 0x12>, "v_cmp_class_f64">;
 
 let hasSideEffects = 1 in {
-defm V_CMPX_CLASS_F64 : VOPCX_F64 <vopc<0xb8, 0x13>, "v_cmpx_class_f64">;
+defm V_CMPX_CLASS_F64 : VOPCX_CLASS_F64 <vopc<0xb8, 0x13>, "v_cmpx_class_f64">;
 } // End hasSideEffects = 1
 
 } // End isCompare = 1

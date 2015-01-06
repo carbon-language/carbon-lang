@@ -283,6 +283,7 @@ def MUBUFOffsetAtomic : ComplexPattern<i64, 4, "SelectMUBUFOffset">;
 
 def VOP3Mods0 : ComplexPattern<untyped, 4, "SelectVOP3Mods0">;
 def VOP3Mods0Clamp : ComplexPattern<untyped, 3, "SelectVOP3Mods0Clamp">;
+def VOP3Mods0Clamp0OMod : ComplexPattern<untyped, 4, "SelectVOP3Mods0Clamp0OMod">;
 def VOP3Mods  : ComplexPattern<untyped, 2, "SelectVOP3Mods">;
 
 //===----------------------------------------------------------------------===//
@@ -611,7 +612,9 @@ class getNumSrcArgs<ValueType Src1, ValueType Src2> {
 // Returns the register class to use for the destination of VOP[123C]
 // instructions for the given VT.
 class getVALUDstForVT<ValueType VT> {
-  RegisterClass ret = !if(!eq(VT.Size, 32), VReg_32, VReg_64);
+  RegisterClass ret = !if(!eq(VT.Size, 32), VReg_32,
+                          !if(!eq(VT.Size, 64), VReg_64,
+                            SReg_64)); // else VT == i1
 }
 
 // Returns the register class to use for source 0 of VOP[12C]
@@ -775,6 +778,17 @@ def VOP_I32_I32_I32 : VOPProfile <[i32, i32, i32, untyped]>;
 def VOP_I32_I32_I32_VCC : VOPProfile <[i32, i32, i32, untyped]> {
   let Src0RC32 = VCSrc_32;
 }
+
+def VOP_I1_F32_I32 : VOPProfile <[i1, f32, i32, untyped]> {
+  let Ins64 = (ins InputModsNoDefault:$src0_modifiers, Src0RC64:$src0, Src1RC64:$src1);
+  let Asm64 = " $dst, $src0_modifiers, $src1";
+}
+
+def VOP_I1_F64_I32 : VOPProfile <[i1, f64, i32, untyped]> {
+  let Ins64 = (ins InputModsNoDefault:$src0_modifiers, Src0RC64:$src0, Src1RC64:$src1);
+  let Asm64 = " $dst, $src0_modifiers, $src1";
+}
+
 def VOP_I64_I64_I32 : VOPProfile <[i64, i64, i32, untyped]>;
 def VOP_I64_I64_I64 : VOPProfile <[i64, i64, i64, untyped]>;
 
@@ -1111,6 +1125,19 @@ multiclass VOPCInst <vopc op, string opName,
   P.HasModifiers, DefExec
 >;
 
+multiclass VOPCClassInst <vopc op, string opName, VOPProfile P,
+                     bit DefExec = 0> : VOPC_Helper <
+  op, opName,
+  P.Ins32, P.Asm32, [],
+  (outs SReg_64:$dst), P.Ins64, P.Asm64,
+  !if(P.HasModifiers,
+      [(set i1:$dst,
+          (AMDGPUfp_class (P.Src0VT (VOP3Mods0Clamp0OMod P.Src0VT:$src0, i32:$src0_modifiers)), P.Src1VT:$src1))],
+      [(set i1:$dst, (AMDGPUfp_class P.Src0VT:$src0, P.Src1VT:$src1))]),
+  P.HasModifiers, DefExec
+>;
+
+
 multiclass VOPC_F32 <vopc op, string opName, PatLeaf cond = COND_NULL> :
   VOPCInst <op, opName, VOP_F32_F32_F32, cond>;
 
@@ -1144,6 +1171,18 @@ multiclass VOP3_Helper <vop3 op, string opName, dag outs, dag ins, string asm,
                         list<dag> pat, int NumSrcArgs, bit HasMods> : VOP3_m <
     op, outs, ins, opName#asm, pat, opName, NumSrcArgs, HasMods
 >;
+
+multiclass VOPC_CLASS_F32 <vopc op, string opName> :
+  VOPCClassInst <op, opName, VOP_I1_F32_I32, 0>;
+
+multiclass VOPCX_CLASS_F32 <vopc op, string opName> :
+  VOPCClassInst <op, opName, VOP_I1_F32_I32, 1>;
+
+multiclass VOPC_CLASS_F64 <vopc op, string opName> :
+  VOPCClassInst <op, opName, VOP_I1_F64_I32, 0>;
+
+multiclass VOPCX_CLASS_F64 <vopc op, string opName> :
+  VOPCClassInst <op, opName, VOP_I1_F64_I32, 1>;
 
 multiclass VOP3Inst <vop3 op, string opName, VOPProfile P,
                      SDPatternOperator node = null_frag> : VOP3_Helper <

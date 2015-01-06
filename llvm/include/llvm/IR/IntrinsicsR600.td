@@ -76,6 +76,9 @@ def int_AMDGPU_rsq_clamped : GCCBuiltin<"__builtin_amdgpu_rsq_clamped">,
 def int_AMDGPU_ldexp : GCCBuiltin<"__builtin_amdgpu_ldexp">,
   Intrinsic<[llvm_anyfloat_ty], [LLVMMatchType<0>, llvm_i32_ty], [IntrNoMem]>;
 
+def int_AMDGPU_class : GCCBuiltin<"__builtin_amdgpu_class">,
+  Intrinsic<[llvm_i1_ty], [llvm_anyfloat_ty, llvm_i32_ty], [IntrNoMem]>;
+
 def int_AMDGPU_read_workdim : AMDGPUReadPreloadRegisterIntrinsic <
                                        "__builtin_amdgpu_read_workdim">;
 

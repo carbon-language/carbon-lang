@@ -113,6 +113,9 @@ private:
 
   bool SelectVOP3Mods0Clamp(SDValue In, SDValue &Src, SDValue &SrcMods,
                             SDValue &Omod) const;
+  bool SelectVOP3Mods0Clamp0OMod(SDValue In, SDValue &Src, SDValue &SrcMods,
+                                 SDValue &Clamp,
+                                 SDValue &Omod) const;
 
   SDNode *SelectADD_SUB_I64(SDNode *N);
   SDNode *SelectDIV_SCALE(SDNode *N);
@@ -1140,6 +1143,14 @@ bool AMDGPUDAGToDAGISel::SelectVOP3Mods0Clamp(SDValue In, SDValue &Src,
   // FIXME: Handle Omod
   Omod = CurDAG->getTargetConstant(0, MVT::i32);
 
+  return SelectVOP3Mods(In, Src, SrcMods);
+}
+
+bool AMDGPUDAGToDAGISel::SelectVOP3Mods0Clamp0OMod(SDValue In, SDValue &Src,
+                                                   SDValue &SrcMods,
+                                                   SDValue &Clamp,
+                                                   SDValue &Omod) const {
+  Clamp = Omod = CurDAG->getTargetConstant(0, MVT::i32);
   return SelectVOP3Mods(In, Src, SrcMods);
 }
 

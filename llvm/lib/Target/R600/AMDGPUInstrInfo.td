@@ -27,6 +27,10 @@ def AMDGPULdExpOp : SDTypeProfile<1, 2,
   [SDTCisSameAs<0, 1>, SDTCisFP<0>, SDTCisInt<2>]
 >;
 
+def AMDGPUFPClassOp : SDTypeProfile<1, 2,
+  [SDTCisInt<0>, SDTCisFP<1>, SDTCisInt<2>]
+>;
+
 def AMDGPUDivScaleOp : SDTypeProfile<2, 3,
   [SDTCisFP<0>, SDTCisInt<1>, SDTCisSameAs<0, 2>, SDTCisSameAs<0, 3>, SDTCisSameAs<0, 4>]
 >;
@@ -57,6 +61,8 @@ def AMDGPUrsq_legacy : SDNode<"AMDGPUISD::RSQ_LEGACY", SDTFPUnaryOp>;
 def AMDGPUrsq_clamped : SDNode<"AMDGPUISD::RSQ_CLAMPED", SDTFPUnaryOp>;
 
 def AMDGPUldexp : SDNode<"AMDGPUISD::LDEXP", AMDGPULdExpOp>;
+
+def AMDGPUfp_class : SDNode<"AMDGPUISD::FP_CLASS", AMDGPUFPClassOp>;
 
 // out = max(a, b) a and b are floats, where a nan comparison fails.
 // This is not commutative because this gives the second operand:
