@@ -91,6 +91,7 @@ void CGSCCAnalysisManager::invalidateImpl(void *PassID, LazyCallGraph::SCC &C) {
     dbgs() << "Invalidating CGSCC analysis: " << lookupPass(PassID).name()
            << "\n";
   CGSCCAnalysisResultLists[&C].erase(RI->second);
+  CGSCCAnalysisResults.erase(RI);
 }
 
 void CGSCCAnalysisManager::invalidateImpl(LazyCallGraph::SCC &C,

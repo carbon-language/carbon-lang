@@ -176,6 +176,7 @@ void FunctionAnalysisManager::invalidateImpl(void *PassID, Function &F) {
     dbgs() << "Invalidating function analysis: " << lookupPass(PassID).name()
            << "\n";
   FunctionAnalysisResultLists[&F].erase(RI->second);
+  FunctionAnalysisResults.erase(RI);
 }
 
 void FunctionAnalysisManager::invalidateImpl(Function &F,

@@ -373,10 +373,10 @@ public:
   /// \brief Invalidate a specific analysis pass for an IR module.
   ///
   /// Note that the analysis result can disregard invalidation.
-  template <typename PassT> void invalidate(Module &M) {
+  template <typename PassT> void invalidate(IRUnitT IR) {
     assert(AnalysisPasses.count(PassT::ID()) &&
            "This analysis pass was not registered prior to being invalidated");
-    derived_this()->invalidateImpl(PassT::ID(), M);
+    derived_this()->invalidateImpl(PassT::ID(), IR);
   }
 
   /// \brief Invalidate analyses cached for an IR unit.
@@ -789,6 +789,31 @@ template <typename AnalysisT> struct NoopAnalysisRequirementPass {
   }
 
   static StringRef name() { return "No-op Analysis Requirement Pass"; }
+};
+
+/// \brief A template utility pass to force an analysis result to be
+/// invalidated.
+///
+/// This is a no-op pass which simply forces a specific analysis result to be
+/// invalidated when it is run.
+template <typename AnalysisT> struct NoopAnalysisInvalidationPass {
+  /// \brief Run this pass over some unit of IR.
+  ///
+  /// This pass can be run over any unit of IR and use any analysis manager
+  /// provided they satisfy the basic API requirements. When this pass is
+  /// created, these methods can be instantiated to satisfy whatever the
+  /// context requires.
+  template <typename T, typename AnalysisManagerT>
+  PreservedAnalyses run(T &&Arg, AnalysisManagerT *AM) {
+    if (AM)
+      // We have to directly invalidate the analysis result as we can't
+      // enumerate all other analyses and use the preserved set to control it.
+      (void)AM->template invalidate<AnalysisT>(std::forward<T>(Arg));
+
+    return PreservedAnalyses::all();
+  }
+
+  static StringRef name() { return "No-op Analysis Invalidation Pass"; }
 };
 
 }
