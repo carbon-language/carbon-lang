@@ -43,7 +43,8 @@ ID = ALIAS, ID##Group = 1 << SO_##ID##Group,
   NeedsUbsanRt = Undefined | Integer,
   NotAllowedWithTrap = Vptr,
   RequiresPIE = Memory | DataFlow,
-  NeedsUnwindTables = Address | Thread | Memory | DataFlow
+  NeedsUnwindTables = Address | Thread | Memory | DataFlow,
+  SupportsCoverage = Address | Memory | Leak | Undefined | Integer
 };
 }
 
@@ -295,7 +296,7 @@ SanitizerArgs::SanitizerArgs(const ToolChain &TC,
   }
 
   // Parse -fsanitize-coverage=N. Currently one of asan/msan/lsan is required.
-  if (NeedsAsan || NeedsMsan || NeedsLsan) {
+  if (hasOneOf(Sanitizers, SupportsCoverage)) {
     if (Arg *A = Args.getLastArg(options::OPT_fsanitize_coverage)) {
       StringRef S = A->getValue();
       // Legal values are 0..4.
