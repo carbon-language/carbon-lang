@@ -113,9 +113,9 @@ class CoverageData {
   atomic_uintptr_t cc_array_index;
   atomic_uintptr_t cc_array_size;
 
-  // Tracing event array, size and current index.
+  // Tracing event array, size and current pointer.
   // We record all events (basic block entries) in a global buffer of u32
-  // values. Each such value is the index in pc_array (incremented by one).
+  // values. Each such value is the index in pc_array.
   // So far the tracing is highly experimental:
   //   - not thread-safe;
   //   - does not support long traces;
@@ -123,7 +123,7 @@ class CoverageData {
   static const uptr kTrEventArrayMaxSize = FIRST_32_SECOND_64(1 << 22, 1 << 30);
   u32 *tr_event_array;
   uptr tr_event_array_size;
-  uptr tr_event_array_index;
+  u32 *tr_event_pointer;
   static const uptr kTrPcArrayMaxSize    = FIRST_32_SECOND_64(1 << 22, 1 << 27);
 
   StaticSpinMutex mu;
@@ -150,6 +150,7 @@ void CoverageData::DirectOpen() {
 }
 
 void CoverageData::Init() {
+  CHECK_EQ(pc_array, nullptr);
   pc_array = reinterpret_cast<uptr *>(
       MmapNoReserveOrDie(sizeof(uptr) * kPcArrayMaxSize, "CovInit"));
   pc_fd = kInvalidFd;
@@ -172,7 +173,7 @@ void CoverageData::Init() {
   Mprotect(reinterpret_cast<uptr>(&tr_event_array[kTrEventArrayMaxSize]),
            GetMmapGranularity());
   tr_event_array_size = kTrEventArrayMaxSize;
-  tr_event_array_index = 0;
+  tr_event_pointer = tr_event_array;
 }
 
 void CoverageData::InitializeGuardArray(s32 *guards) {
@@ -399,7 +400,7 @@ static int CovOpenFile(bool packed, const char *name,
 
 // Dump trace PCs and trace events into two separate files.
 void CoverageData::DumpTrace() {
-  uptr max_idx = tr_event_array_index;
+  uptr max_idx = tr_event_pointer - tr_event_array;
   if (!max_idx) return;
   auto sym = Symbolizer::GetOrInit();
   if (!sym)
@@ -419,12 +420,21 @@ void CoverageData::DumpTrace() {
 
   fd = CovOpenFile(false, "trace-events");
   if (fd < 0) return;
-  for (uptr i = 0; i < max_idx; i++)
-    tr_event_array[i]--;  // Fix the IDs.
-  internal_write(fd, tr_event_array, max_idx * sizeof(tr_event_array[0]));
+  uptr bytes_to_write = max_idx * sizeof(tr_event_array[0]);
+  u8 *event_bytes = reinterpret_cast<u8*>(tr_event_array);
+  // The trace file could be huge, and may not be written with a single syscall.
+  while (bytes_to_write) {
+    uptr actually_written = internal_write(fd, event_bytes, bytes_to_write);
+    if (actually_written <= bytes_to_write) {
+      bytes_to_write -= actually_written;
+      event_bytes += actually_written;
+    } else {
+      break;
+    }
+  }
   internal_close(fd);
   VReport(1, " CovDump: Trace: %zd PCs written\n", size());
-  VReport(1, " CovDump: Trace: %zd Events written\n", tr_event_array_index);
+  VReport(1, " CovDump: Trace: %zd Events written\n", max_idx);
 }
 
 // This function dumps the caller=>callee pairs into a file as a sequence of
@@ -472,13 +482,11 @@ void CoverageData::DumpCallerCalleePairs() {
 //
 // This function will eventually be inlined by the compiler.
 void CoverageData::TraceBasicBlock(s32 *id) {
-  // CHECK(coverage_enabled);
-  // CHECK_LT(tr_event_array_index, tr_event_array_size);
-  //
   // Will trap here if
   //  1. coverage is not enabled at run-time.
   //  2. The array tr_event_array is full.
-  tr_event_array[tr_event_array_index++] = static_cast<u32>(*id);
+  *tr_event_pointer = static_cast<u32>(*id - 1);
+  tr_event_pointer++;
 }
 
 static void CovDumpAsBitSet() {
@@ -590,6 +598,8 @@ void CovAfterFork(int child_pid) {
 }
 
 void InitializeCoverage(bool enabled, const char *dir) {
+  if (coverage_enabled)
+    return;  // May happen if two sanitizer enable coverage in the same process.
   coverage_enabled = enabled;
   coverage_dir = dir;
   if (enabled) coverage_data.Init();
