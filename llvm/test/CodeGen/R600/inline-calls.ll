@@ -1,4 +1,4 @@
-; RUN: llc -march=r600 -mcpu=SI -verify-machineinstrs < %s | FileCheck  %s
+; RUN: llc -march=amdgcn -mcpu=SI -verify-machineinstrs < %s | FileCheck  %s
 ; RUN: llc -march=r600 -mcpu=redwood -verify-machineinstrs < %s | FileCheck %s
 
 ; CHECK-NOT: {{^}}func:

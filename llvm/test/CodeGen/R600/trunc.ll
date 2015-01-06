@@ -1,4 +1,4 @@
-; RUN: llc -march=r600 -mcpu=SI -verify-machineinstrs< %s | FileCheck -check-prefix=SI %s
+; RUN: llc -march=amdgcn -mcpu=SI -verify-machineinstrs< %s | FileCheck -check-prefix=SI %s
 ; RUN: llc -march=r600 -mcpu=cypress < %s | FileCheck -check-prefix=EG %s
 
 define void @trunc_i64_to_i32_store(i32 addrspace(1)* %out, i64 %in) {

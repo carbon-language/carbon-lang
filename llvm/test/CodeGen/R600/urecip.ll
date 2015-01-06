@@ -1,4 +1,4 @@
-;RUN: llc < %s -march=r600 -mcpu=verde -verify-machineinstrs | FileCheck %s
+;RUN: llc < %s -march=amdgcn -mcpu=verde -verify-machineinstrs | FileCheck %s
 
 ;CHECK: v_rcp_iflag_f32_e32
 

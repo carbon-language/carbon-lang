@@ -1,4 +1,4 @@
-; RUN: llc -march=r600 -mcpu=SI -verify-machineinstrs < %s | FileCheck %s
+; RUN: llc -march=amdgcn -mcpu=SI -verify-machineinstrs < %s | FileCheck %s
 
 declare float @llvm.fmuladd.f32(float, float, float)
 declare double @llvm.fmuladd.f64(double, double, double)

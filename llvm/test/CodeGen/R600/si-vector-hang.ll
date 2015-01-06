@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=r600 -mcpu=verde -verify-machineinstrs | FileCheck %s
+; RUN: llc < %s -march=amdgcn -mcpu=verde -verify-machineinstrs | FileCheck %s
 
 ; CHECK: {{^}}test_8_min_char:
 ; CHECK: buffer_store_byte

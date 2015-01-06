@@ -1,5 +1,5 @@
-; RUN: llc -march=r600 -mcpu=SI -verify-machineinstrs < %s | FileCheck -check-prefix=SI -check-prefix=FUNC %s
-; RUN: llc -march=r600 -mcpu=bonaire -verify-machineinstrs < %s | FileCheck -strict-whitespace -check-prefix=CI -check-prefix=FUNC %s
+; RUN: llc -march=amdgcn -mcpu=SI -verify-machineinstrs < %s | FileCheck -check-prefix=SI -check-prefix=FUNC %s
+; RUN: llc -march=amdgcn -mcpu=bonaire -verify-machineinstrs < %s | FileCheck -strict-whitespace -check-prefix=CI -check-prefix=FUNC %s
 ; RUN: llc -march=r600 -mcpu=redwood -verify-machineinstrs < %s | FileCheck -check-prefix=EG -check-prefix=FUNC %s
 
 ; FUNC-LABEL: {{^}}lds_atomic_xchg_ret_i32:

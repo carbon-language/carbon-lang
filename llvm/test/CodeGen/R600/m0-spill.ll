@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=r600 -mcpu=SI -verify-machineinstrs | FileCheck %s
+; RUN: llc < %s -march=amdgcn -mcpu=SI -verify-machineinstrs | FileCheck %s
 
 @lds = external addrspace(3) global [64 x float]
 

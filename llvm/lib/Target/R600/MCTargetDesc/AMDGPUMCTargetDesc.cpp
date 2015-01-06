@@ -92,20 +92,29 @@ static MCStreamer *createMCStreamer(const Target &T, StringRef TT,
 extern "C" void LLVMInitializeR600TargetMC() {
 
   RegisterMCAsmInfo<AMDGPUMCAsmInfo> Y(TheAMDGPUTarget);
+  RegisterMCAsmInfo<AMDGPUMCAsmInfo> Z(TheGCNTarget);
 
   TargetRegistry::RegisterMCCodeGenInfo(TheAMDGPUTarget, createAMDGPUMCCodeGenInfo);
+  TargetRegistry::RegisterMCCodeGenInfo(TheGCNTarget, createAMDGPUMCCodeGenInfo);
 
   TargetRegistry::RegisterMCInstrInfo(TheAMDGPUTarget, createAMDGPUMCInstrInfo);
+  TargetRegistry::RegisterMCInstrInfo(TheGCNTarget, createAMDGPUMCInstrInfo);
 
   TargetRegistry::RegisterMCRegInfo(TheAMDGPUTarget, createAMDGPUMCRegisterInfo);
+  TargetRegistry::RegisterMCRegInfo(TheGCNTarget, createAMDGPUMCRegisterInfo);
 
   TargetRegistry::RegisterMCSubtargetInfo(TheAMDGPUTarget, createAMDGPUMCSubtargetInfo);
+  TargetRegistry::RegisterMCSubtargetInfo(TheGCNTarget, createAMDGPUMCSubtargetInfo);
 
   TargetRegistry::RegisterMCInstPrinter(TheAMDGPUTarget, createAMDGPUMCInstPrinter);
+  TargetRegistry::RegisterMCInstPrinter(TheGCNTarget, createAMDGPUMCInstPrinter);
 
   TargetRegistry::RegisterMCCodeEmitter(TheAMDGPUTarget, createAMDGPUMCCodeEmitter);
+  TargetRegistry::RegisterMCCodeEmitter(TheGCNTarget, createAMDGPUMCCodeEmitter);
 
   TargetRegistry::RegisterMCAsmBackend(TheAMDGPUTarget, createAMDGPUAsmBackend);
+  TargetRegistry::RegisterMCAsmBackend(TheGCNTarget, createAMDGPUAsmBackend);
 
   TargetRegistry::RegisterMCObjectStreamer(TheAMDGPUTarget, createMCStreamer);
+  TargetRegistry::RegisterMCObjectStreamer(TheGCNTarget, createMCStreamer);
 }

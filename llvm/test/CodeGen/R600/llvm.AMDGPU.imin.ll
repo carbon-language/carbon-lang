@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=r600 -mcpu=verde -verify-machineinstrs | FileCheck -check-prefix=SI %s
+; RUN: llc < %s -march=amdgcn -mcpu=verde -verify-machineinstrs | FileCheck -check-prefix=SI %s
 
 ; SI-LABEL: {{^}}vector_imin:
 ; SI: v_min_i32_e32

@@ -1,4 +1,4 @@
-;RUN: llc < %s -march=r600 -mcpu=verde -verify-machineinstrs | FileCheck %s
+;RUN: llc < %s -march=amdgcn -mcpu=verde -verify-machineinstrs | FileCheck %s
 
 ;CHECK-LABEL: {{^}}getlod:
 ;CHECK: image_get_lod {{v\[[0-9]+:[0-9]+\]}}, 3, 0, 0, -1, 0, 0, 0, 0, {{v[0-9]+}}, {{s\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}

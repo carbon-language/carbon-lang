@@ -72,6 +72,7 @@ extern char &SIFixSGPRLiveRangesID;
 
 
 extern Target TheAMDGPUTarget;
+extern Target TheGCNTarget;
 
 namespace AMDGPU {
 enum TargetIndex {

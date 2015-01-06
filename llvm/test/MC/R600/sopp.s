@@ -1,4 +1,4 @@
-// RUN: llvm-mc -arch=r600 -mcpu=SI  -show-encoding %s | FileCheck %s
+// RUN: llvm-mc -arch=amdgcn -mcpu=SI  -show-encoding %s | FileCheck %s
 
   s_nop 1            // CHECK: s_nop 1 ; encoding: [0x01,0x00,0x80,0xbf]
   s_endpgm           // CHECK: s_endpgm ; encoding: [0x00,0x00,0x81,0xbf]

@@ -1,5 +1,5 @@
 ;RUN: llc < %s -march=r600 -mcpu=redwood | FileCheck --check-prefix=EG-CHECK %s
-;RUN: llc < %s -march=r600 -mcpu=verde -verify-machineinstrs | FileCheck --check-prefix=SI-CHECK %s
+;RUN: llc < %s -march=amdgcn -mcpu=verde -verify-machineinstrs | FileCheck --check-prefix=SI-CHECK %s
 
 ;EG-CHECK-LABEL: {{^}}test:
 ;EG-CHECK-NOT: SETGE_INT

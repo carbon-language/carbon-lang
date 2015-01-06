@@ -1,4 +1,4 @@
-; RUN: llc -march=r600 -mcpu=bonaire -verify-machineinstrs -mattr=+load-store-opt -enable-misched < %s | FileCheck -strict-whitespace -check-prefix=SI %s
+; RUN: llc -march=amdgcn -mcpu=bonaire -verify-machineinstrs -mattr=+load-store-opt -enable-misched < %s | FileCheck -strict-whitespace -check-prefix=SI %s
 
 ; XFAIL: *
 

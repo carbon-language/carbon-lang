@@ -1,5 +1,5 @@
 ; RUN: llc -march=r600 -mcpu=redwood < %s | FileCheck %s --check-prefix=EG --check-prefix=FUNC
-; RUN: llc -march=r600 -mcpu=SI -verify-machineinstrs < %s | FileCheck %s --check-prefix=SI --check-prefix=FUNC
+; RUN: llc -march=amdgcn -mcpu=SI -verify-machineinstrs < %s | FileCheck %s --check-prefix=SI --check-prefix=FUNC
 
 ; FUNC-LABEL: {{^}}fp_to_sint_i32:
 ; EG: FLT_TO_INT {{\** *}}T{{[0-9]+\.[XYZW], PV\.[XYZW]}}

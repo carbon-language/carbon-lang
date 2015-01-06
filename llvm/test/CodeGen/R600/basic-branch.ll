@@ -1,5 +1,5 @@
 ; XFAIL: *
-; RUN: llc -O0 -march=r600 -mcpu=SI -verify-machineinstrs < %s | FileCheck %s
+; RUN: llc -O0 -march=amdgcn -mcpu=SI -verify-machineinstrs < %s | FileCheck %s
 
 ; CHECK-LABEL: {{^}}test_branch(
 define void @test_branch(i32 addrspace(1)* noalias %out, i32 addrspace(1)* noalias %in, i32 %val) nounwind {

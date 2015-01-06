@@ -1,5 +1,5 @@
 ; XFAIL: *
-; RUN: llc -O0 -verify-machineinstrs -march=r600 -mcpu=SI < %s | FileCheck %s
+; RUN: llc -O0 -verify-machineinstrs -march=amdgcn -mcpu=SI < %s | FileCheck %s
 
 ; CHECK-LABEL: {{^}}test_loop:
 define void @test_loop(i32 addrspace(1)* noalias %out, i32 addrspace(1)* noalias %in, i32 %val) nounwind {

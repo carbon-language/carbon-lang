@@ -1,4 +1,4 @@
-; RUN: llc -march=r600 -mcpu=SI < %s | FileCheck %s
+; RUN: llc -march=amdgcn -mcpu=SI < %s | FileCheck %s
 
 ; These tests check that the compiler won't crash when it needs to spill
 ; SGPRs.

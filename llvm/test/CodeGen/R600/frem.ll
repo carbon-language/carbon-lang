@@ -1,4 +1,4 @@
-; RUN: llc -march=r600 -mcpu=SI -enable-misched < %s | FileCheck -check-prefix=SI -check-prefix=FUNC %s
+; RUN: llc -march=amdgcn -mcpu=SI -enable-misched < %s | FileCheck -check-prefix=SI -check-prefix=FUNC %s
 
 ; FUNC-LABEL: {{^}}frem_f32:
 ; SI-DAG: buffer_load_dword [[X:v[0-9]+]], {{.*$}}

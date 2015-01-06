@@ -1,6 +1,6 @@
 ; RUN: llc < %s -march=r600 -mcpu=redwood | FileCheck --check-prefix=EG-CHECK %s
-; RUN: llc < %s -march=r600 -mcpu=verde -verify-machineinstrs | FileCheck --check-prefix=SI-CHECK --check-prefix=SI %s
-; RUN: llc < %s -march=r600 -mcpu=bonaire -verify-machineinstrs | FileCheck --check-prefix=SI-CHECK --check-prefix=CI %s
+; RUN: llc < %s -march=amdgcn -mcpu=verde -verify-machineinstrs | FileCheck --check-prefix=SI-CHECK --check-prefix=SI %s
+; RUN: llc < %s -march=amdgcn -mcpu=bonaire -verify-machineinstrs | FileCheck --check-prefix=SI-CHECK --check-prefix=CI %s
 
 @local_memory_two_objects.local_mem0 = internal unnamed_addr addrspace(3) global [4 x i32] undef, align 4
 @local_memory_two_objects.local_mem1 = internal unnamed_addr addrspace(3) global [4 x i32] undef, align 4

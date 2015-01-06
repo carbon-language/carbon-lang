@@ -1,4 +1,4 @@
-;RUN: llc < %s -march=r600 -mcpu=verde -verify-machineinstrs | FileCheck %s
+;RUN: llc < %s -march=amdgcn -mcpu=verde -verify-machineinstrs | FileCheck %s
 
 ;CHECK-LABEL: {{^}}gather4_v2:
 ;CHECK: image_gather4 {{v\[[0-9]+:[0-9]+\]}}, 1, 0, 0, -1, 0, 0, 0, 0, {{v\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}

@@ -1,6 +1,6 @@
 ;RUN: llc < %s -march=r600 -mcpu=redwood | FileCheck %s --check-prefix=EG-CHECK --check-prefix=FUNC
 ;RUN: llc < %s -march=r600 -mcpu=cayman | FileCheck %s --check-prefix=CM-CHECK --check-prefix=FUNC
-;RUN: llc < %s -march=r600 -mcpu=SI | FileCheck %s --check-prefix=SI-CHECK --check-prefix=FUNC
+;RUN: llc < %s -march=amdgcn -mcpu=SI | FileCheck %s --check-prefix=SI-CHECK --check-prefix=FUNC
 
 ;FUNC-LABEL: {{^}}test:
 ;EG-CHECK: LOG_IEEE

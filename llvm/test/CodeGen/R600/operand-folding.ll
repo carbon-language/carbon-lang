@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=r600 -mcpu=SI -verify-machineinstrs | FileCheck %s
+; RUN: llc < %s -march=amdgcn -mcpu=SI -verify-machineinstrs | FileCheck %s
 
 ; CHECK-LABEL: {{^}}fold_sgpr:
 ; CHECK: v_add_i32_e32 v{{[0-9]+}}, s

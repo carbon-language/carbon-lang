@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=r600 -mcpu=tahiti -debug
+; RUN: llc < %s -march=amdgcn -mcpu=tahiti -debug
 ; REQUIRES: asserts
 
 ; Check that SelectionDAGDumper does not crash on int_SI_if.

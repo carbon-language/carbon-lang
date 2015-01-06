@@ -1,5 +1,5 @@
-; RUN: llc -march=r600 -mcpu=SI -mattr=-promote-alloca -verify-machineinstrs < %s | FileCheck -check-prefix=SI-ALLOCA -check-prefix=SI %s
-; RUN: llc -march=r600 -mcpu=SI -mattr=+promote-alloca -verify-machineinstrs < %s | FileCheck -check-prefix=SI-PROMOTE -check-prefix=SI %s
+; RUN: llc -march=amdgcn -mcpu=SI -mattr=-promote-alloca -verify-machineinstrs < %s | FileCheck -check-prefix=SI-ALLOCA -check-prefix=SI %s
+; RUN: llc -march=amdgcn -mcpu=SI -mattr=+promote-alloca -verify-machineinstrs < %s | FileCheck -check-prefix=SI-PROMOTE -check-prefix=SI %s
 
 
 declare void @llvm.AMDGPU.barrier.local() noduplicate nounwind

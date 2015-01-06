@@ -1,6 +1,6 @@
 ; RUN: llc -march=r600 -mcpu=redwood < %s | FileCheck -check-prefix=EG -check-prefix=FUNC %s
-; RUN: llc -march=r600 -mcpu=SI < %s | FileCheck -check-prefix=SI -check-prefix=SI-SAFE -check-prefix=FUNC %s
-; RUN: llc -march=r600 -mcpu=SI -enable-unsafe-fp-math < %s | FileCheck -check-prefix=SI -check-prefix=SI-UNSAFE -check-prefix=FUNC %s
+; RUN: llc -march=amdgcn -mcpu=SI < %s | FileCheck -check-prefix=SI -check-prefix=SI-SAFE -check-prefix=FUNC %s
+; RUN: llc -march=amdgcn -mcpu=SI -enable-unsafe-fp-math < %s | FileCheck -check-prefix=SI -check-prefix=SI-UNSAFE -check-prefix=FUNC %s
 
 ; FUNC-LABEL: sin_f32
 ; EG: MULADD_IEEE *

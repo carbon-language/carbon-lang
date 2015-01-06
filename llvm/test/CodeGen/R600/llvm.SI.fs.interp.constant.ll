@@ -1,4 +1,4 @@
-;RUN: llc < %s -march=r600 -mcpu=verde -verify-machineinstrs | FileCheck %s
+;RUN: llc < %s -march=amdgcn -mcpu=verde -verify-machineinstrs | FileCheck %s
 
 ;CHECK: s_mov_b32
 ;CHECK-NEXT: v_interp_mov_f32

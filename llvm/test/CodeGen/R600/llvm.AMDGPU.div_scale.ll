@@ -1,4 +1,4 @@
-; RUN: llc -march=r600 -mcpu=SI -verify-machineinstrs < %s | FileCheck -check-prefix=SI %s
+; RUN: llc -march=amdgcn -mcpu=SI -verify-machineinstrs < %s | FileCheck -check-prefix=SI %s
 
 declare i32 @llvm.r600.read.tidig.x() nounwind readnone
 declare { float, i1 } @llvm.AMDGPU.div.scale.f32(float, float, i1) nounwind readnone

@@ -80,6 +80,7 @@ static AsmPrinter *createAMDGPUAsmPrinterPass(TargetMachine &tm,
 
 extern "C" void LLVMInitializeR600AsmPrinter() {
   TargetRegistry::RegisterAsmPrinter(TheAMDGPUTarget, createAMDGPUAsmPrinterPass);
+  TargetRegistry::RegisterAsmPrinter(TheGCNTarget, createAMDGPUAsmPrinterPass);
 }
 
 AMDGPUAsmPrinter::AMDGPUAsmPrinter(TargetMachine &TM, MCStreamer &Streamer)

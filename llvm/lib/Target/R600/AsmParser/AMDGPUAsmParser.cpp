@@ -311,6 +311,7 @@ bool AMDGPUOperand::isSWaitCnt() const {
 /// Force static initialization.
 extern "C" void LLVMInitializeR600AsmParser() {
   RegisterMCAsmParser<AMDGPUAsmParser> A(TheAMDGPUTarget);
+  RegisterMCAsmParser<AMDGPUAsmParser> B(TheGCNTarget);
 }
 
 #define GET_REGISTER_MATCHER

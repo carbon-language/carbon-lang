@@ -1,4 +1,4 @@
-; RUN: llc -march=r600 -mcpu=SI -verify-machineinstrs < %s | FileCheck -check-prefix=SI -check-prefix=FUNC %s
+; RUN: llc -march=amdgcn -mcpu=SI -verify-machineinstrs < %s | FileCheck -check-prefix=SI -check-prefix=FUNC %s
 
 declare i64 @llvm.ctpop.i64(i64) nounwind readnone
 declare <2 x i64> @llvm.ctpop.v2i64(<2 x i64>) nounwind readnone

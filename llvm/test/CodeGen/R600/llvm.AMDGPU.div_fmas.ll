@@ -1,4 +1,4 @@
-; RUN: llc -march=r600 -mcpu=SI -verify-machineinstrs < %s | FileCheck -check-prefix=SI %s
+; RUN: llc -march=amdgcn -mcpu=SI -verify-machineinstrs < %s | FileCheck -check-prefix=SI %s
 
 declare float @llvm.AMDGPU.div.fmas.f32(float, float, float, i1) nounwind readnone
 declare double @llvm.AMDGPU.div.fmas.f64(double, double, double, i1) nounwind readnone

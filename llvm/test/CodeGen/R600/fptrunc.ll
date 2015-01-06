@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=r600 -mcpu=SI -verify-machineinstrs | FileCheck %s --check-prefix=CHECK
+; RUN: llc < %s -march=amdgcn -mcpu=SI -verify-machineinstrs | FileCheck %s --check-prefix=CHECK
 
 ; CHECK: {{^}}fptrunc:
 ; CHECK: v_cvt_f32_f64_e32

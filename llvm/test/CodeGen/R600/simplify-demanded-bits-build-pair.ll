@@ -1,5 +1,5 @@
 ; XFAIL: *
-; RUN: llc -verify-machineinstrs -march=r600 -mcpu=SI -mattr=-promote-alloca < %s | FileCheck -check-prefix=SI %s
+; RUN: llc -verify-machineinstrs -march=amdgcn -mcpu=SI -mattr=-promote-alloca < %s | FileCheck -check-prefix=SI %s
 
 ; 64-bit select was originally lowered with a build_pair, and this
 ; could be simplified to 1 cndmask instead of 2, but that broken when

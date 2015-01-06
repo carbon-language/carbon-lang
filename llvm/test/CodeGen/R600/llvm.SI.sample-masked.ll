@@ -1,4 +1,4 @@
-;RUN: llc < %s -march=r600 -mcpu=verde | FileCheck %s
+;RUN: llc < %s -march=amdgcn -mcpu=verde | FileCheck %s
 
 ; CHECK-LABEL: {{^}}v1:
 ; CHECK: image_sample {{v\[[0-9]+:[0-9]+\]}}, 13

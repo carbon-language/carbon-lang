@@ -1,4 +1,4 @@
-; RUN: llc -march=r600 -mcpu=verde -verify-machineinstrs < %s | FileCheck %s
+; RUN: llc -march=amdgcn -mcpu=verde -verify-machineinstrs < %s | FileCheck %s
 
 ; CHECK-LABEL: {{^}}main:
 ; CHECK: v_cmp_u_f32_e64 [[CMP:s\[[0-9]+:[0-9]+\]]], [[SREG:s[0-9]+]], [[SREG]]

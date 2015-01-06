@@ -1,10 +1,10 @@
-; RUN: llc -march=r600 -mcpu=SI -mattr=-fp32-denormals,+fp64-denormals < %s | FileCheck -check-prefix=FP64-DENORMAL -check-prefix=FUNC %s
-; RUN: llc -march=r600 -mcpu=SI -mattr=+fp32-denormals,-fp64-denormals < %s | FileCheck -check-prefix=FP32-DENORMAL -check-prefix=FUNC %s
-; RUN: llc -march=r600 -mcpu=SI -mattr=+fp32-denormals,+fp64-denormals < %s | FileCheck -check-prefix=BOTH-DENORMAL -check-prefix=FUNC %s
-; RUN: llc -march=r600 -mcpu=SI -mattr=-fp32-denormals,-fp64-denormals < %s | FileCheck -check-prefix=NO-DENORMAL -check-prefix=FUNC %s
-; RUN: llc -march=r600 -mcpu=SI < %s | FileCheck -check-prefix=DEFAULT -check-prefix=FUNC %s
-; RUN: llc -march=r600 -mcpu=SI -mattr=-fp32-denormals < %s | FileCheck -check-prefix=DEFAULT -check-prefix=FUNC %s
-; RUN: llc -march=r600 -mcpu=SI -mattr=+fp64-denormals < %s | FileCheck -check-prefix=DEFAULT -check-prefix=FUNC %s
+; RUN: llc -march=amdgcn -mcpu=SI -mattr=-fp32-denormals,+fp64-denormals < %s | FileCheck -check-prefix=FP64-DENORMAL -check-prefix=FUNC %s
+; RUN: llc -march=amdgcn -mcpu=SI -mattr=+fp32-denormals,-fp64-denormals < %s | FileCheck -check-prefix=FP32-DENORMAL -check-prefix=FUNC %s
+; RUN: llc -march=amdgcn -mcpu=SI -mattr=+fp32-denormals,+fp64-denormals < %s | FileCheck -check-prefix=BOTH-DENORMAL -check-prefix=FUNC %s
+; RUN: llc -march=amdgcn -mcpu=SI -mattr=-fp32-denormals,-fp64-denormals < %s | FileCheck -check-prefix=NO-DENORMAL -check-prefix=FUNC %s
+; RUN: llc -march=amdgcn -mcpu=SI < %s | FileCheck -check-prefix=DEFAULT -check-prefix=FUNC %s
+; RUN: llc -march=amdgcn -mcpu=SI -mattr=-fp32-denormals < %s | FileCheck -check-prefix=DEFAULT -check-prefix=FUNC %s
+; RUN: llc -march=amdgcn -mcpu=SI -mattr=+fp64-denormals < %s | FileCheck -check-prefix=DEFAULT -check-prefix=FUNC %s
 
 ; FUNC-LABEL: {{^}}test_kernel:
 

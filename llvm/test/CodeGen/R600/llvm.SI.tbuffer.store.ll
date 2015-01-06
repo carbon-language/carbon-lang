@@ -1,4 +1,4 @@
-;RUN: llc < %s -march=r600 -mcpu=verde -verify-machineinstrs | FileCheck %s
+;RUN: llc < %s -march=amdgcn -mcpu=verde -verify-machineinstrs | FileCheck %s
 
 ;CHECK-LABEL: {{^}}test1:
 ;CHECK: tbuffer_store_format_xyzw {{v\[[0-9]+:[0-9]+\]}}, 0x20, -1, 0, -1, 0, 14, 4, {{v[0-9]+}}, {{s\[[0-9]+:[0-9]+\]}}, -1, 0, 0

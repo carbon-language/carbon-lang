@@ -1,4 +1,4 @@
-; RUN: llc -march=r600 -mcpu=SI -show-mc-encoding -verify-machineinstrs < %s | FileCheck %s
+; RUN: llc -march=amdgcn -mcpu=SI -show-mc-encoding -verify-machineinstrs < %s | FileCheck %s
 
 declare i32 @llvm.r600.read.tidig.x() readnone
 

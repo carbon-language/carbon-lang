@@ -1,5 +1,5 @@
-; RUN: llc -O0 -march=r600 -mcpu=bonaire -mattr=-promote-alloca < %s | FileCheck -check-prefix=CHECK -check-prefix=CHECK-NO-PROMOTE %s
-; RUN: llc -O0 -march=r600 -mcpu=bonaire -mattr=+promote-alloca < %s | FileCheck -check-prefix=CHECK -check-prefix=CHECK-PROMOTE %s
+; RUN: llc -O0 -march=amdgcn -mcpu=bonaire -mattr=-promote-alloca < %s | FileCheck -check-prefix=CHECK -check-prefix=CHECK-NO-PROMOTE %s
+; RUN: llc -O0 -march=amdgcn -mcpu=bonaire -mattr=+promote-alloca < %s | FileCheck -check-prefix=CHECK -check-prefix=CHECK-PROMOTE %s
 
 ; Disable optimizations in case there are optimizations added that
 ; specialize away generic pointer accesses.

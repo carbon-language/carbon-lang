@@ -1,4 +1,4 @@
-; RUN: llc -march=r600 -mcpu=SI -verify-machineinstrs < %s | FileCheck -strict-whitespace -check-prefix=SI %s
+; RUN: llc -march=amdgcn -mcpu=SI -verify-machineinstrs < %s | FileCheck -strict-whitespace -check-prefix=SI %s
 
 ; FUNC-LABEL: {{^}}lds_atomic_xchg_ret_i64:
 ; SI: ds_wrxchg_rtn_b64

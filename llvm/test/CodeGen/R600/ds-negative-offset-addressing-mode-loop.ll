@@ -1,5 +1,5 @@
-; RUN: llc -march=r600 -mcpu=SI -verify-machineinstrs -mattr=+load-store-opt -enable-misched < %s | FileCheck -check-prefix=SI --check-prefix=CHECK %s
-; RUN: llc -march=r600 -mcpu=bonaire -verify-machineinstrs -mattr=+load-store-opt -enable-misched < %s | FileCheck -check-prefix=CI --check-prefix=CHECK %s
+; RUN: llc -march=amdgcn -mcpu=SI -verify-machineinstrs -mattr=+load-store-opt -enable-misched < %s | FileCheck -check-prefix=SI --check-prefix=CHECK %s
+; RUN: llc -march=amdgcn -mcpu=bonaire -verify-machineinstrs -mattr=+load-store-opt -enable-misched < %s | FileCheck -check-prefix=CI --check-prefix=CHECK %s
 
 declare i32 @llvm.r600.read.tidig.x() #0
 declare void @llvm.AMDGPU.barrier.local() #1

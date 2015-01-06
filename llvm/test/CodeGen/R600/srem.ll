@@ -1,4 +1,4 @@
-; RUN: llc -march=r600 -mcpu=SI < %s
+; RUN: llc -march=amdgcn -mcpu=SI < %s
 ; RUN: llc -march=r600 -mcpu=redwood < %s
 
 define void @srem_i32(i32 addrspace(1)* %out, i32 addrspace(1)* %in) {

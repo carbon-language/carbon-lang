@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=r600 -mcpu=SI -show-mc-encoding -verify-machineinstrs | FileCheck %s
+; RUN: llc < %s -march=amdgcn -mcpu=SI -show-mc-encoding -verify-machineinstrs | FileCheck %s
 
 ; SMRD load with an immediate offset.
 ; CHECK-LABEL: {{^}}smrd0:

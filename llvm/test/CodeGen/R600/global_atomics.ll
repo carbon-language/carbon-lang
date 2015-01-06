@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=r600 -mcpu=SI -verify-machineinstrs | FileCheck --check-prefix=SI --check-prefix=FUNC %s
+; RUN: llc < %s -march=amdgcn -mcpu=SI -verify-machineinstrs | FileCheck --check-prefix=SI --check-prefix=FUNC %s
 
 ; FUNC-LABEL: {{^}}atomic_add_i32_offset:
 ; SI: buffer_atomic_add v{{[0-9]+}}, s[{{[0-9]+}}:{{[0-9]+}}], 0 offset:16{{$}}

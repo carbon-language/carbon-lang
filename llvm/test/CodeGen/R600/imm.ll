@@ -1,4 +1,4 @@
-; RUN: llc -march=r600 -mcpu=verde -verify-machineinstrs < %s | FileCheck %s
+; RUN: llc -march=amdgcn -mcpu=verde -verify-machineinstrs < %s | FileCheck %s
 
 ; Use a 64-bit value with lo bits that can be represented as an inline constant
 ; CHECK-LABEL: {{^}}i64_imm_inline_lo:

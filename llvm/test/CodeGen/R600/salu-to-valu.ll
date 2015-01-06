@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=r600 -mcpu=SI -verify-machineinstrs | FileCheck %s
+; RUN: llc < %s -march=amdgcn -mcpu=SI -verify-machineinstrs | FileCheck %s
 
 ; In this test both the pointer and the offset operands to the
 ; BUFFER_LOAD instructions end up being stored in vgprs.  This
