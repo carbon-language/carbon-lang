@@ -48,6 +48,24 @@ struct NoOpFunctionPass {
 
 } // End anonymous namespace.
 
+void llvm::registerModuleAnalyses(ModuleAnalysisManager &MAM) {
+#define MODULE_ANALYSIS(NAME, CREATE_PASS) \
+  MAM.registerPass(CREATE_PASS);
+#include "PassRegistry.def"
+}
+
+void llvm::registerCGSCCAnalyses(CGSCCAnalysisManager &CGAM) {
+#define CGSCC_ANALYSIS(NAME, CREATE_PASS) \
+  CGAM.registerPass(CREATE_PASS);
+#include "PassRegistry.def"
+}
+
+void llvm::registerFunctionAnalyses(FunctionAnalysisManager &FAM) {
+#define FUNCTION_ANALYSIS(NAME, CREATE_PASS) \
+  FAM.registerPass(CREATE_PASS);
+#include "PassRegistry.def"
+}
+
 static bool isModulePassName(StringRef Name) {
   if (Name == "no-op-module") return true;
 

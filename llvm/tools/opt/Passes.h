@@ -19,7 +19,31 @@
 #include "llvm/ADT/StringRef.h"
 
 namespace llvm {
+class CGSCCAnalysisManager;
+class FunctionAnalysisManager;
+class ModuleAnalysisManager;
 class ModulePassManager;
+
+/// \brief Registers all available module analysis passes.
+///
+/// This is an interface that can be used to populate a \c
+/// ModuleAnalysisManager with all registered module analyses. Callers can
+/// still manually register any additional analyses.
+void registerModuleAnalyses(ModuleAnalysisManager &MAM);
+
+/// \brief Registers all available CGSCC analysis passes.
+///
+/// This is an interface that can be used to populate a \c CGSCCAnalysisManager
+/// with all registered CGSCC analyses. Callers can still manually register any
+/// additional analyses.
+void registerCGSCCAnalyses(CGSCCAnalysisManager &CGAM);
+
+/// \brief Registers all available function analysis passes.
+///
+/// This is an interface that can be used to populate a \c
+/// FunctionAnalysisManager with all registered function analyses. Callers can
+/// still manually register any additional analyses.
+void registerFunctionAnalyses(FunctionAnalysisManager &FAM);
 
 /// \brief Parse a textual pass pipeline description into a \c ModulePassManager.
 ///
