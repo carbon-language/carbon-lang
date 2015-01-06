@@ -196,6 +196,10 @@ Error
 ProcessWindows::DoLaunch(Module *exe_module,
                          ProcessLaunchInfo &launch_info)
 {
+    // Even though m_session_data is accessed here, it is before a debugger thread has been
+    // kicked off.  So there's no race conditions, and it shouldn't be necessary to acquire
+    // the mutex.
+
     Error result;
     if (!launch_info.GetFlags().Test(eLaunchFlagDebug))
     {
@@ -367,6 +371,7 @@ ProcessWindows::DoHalt(bool &caused_stop)
         caused_stop = false;
     else
     {
+        llvm::sys::ScopedLock lock(m_mutex);
         caused_stop = ::DebugBreakProcess(m_session_data->m_debugger->GetProcess().GetNativeProcess().GetSystemHandle());
         if (!caused_stop)
             error.SetError(GetLastError(), eErrorTypeWin32);
@@ -391,10 +396,10 @@ ProcessWindows::DoReadMemory(lldb::addr_t vm_addr,
                              size_t size,
                              Error &error)
 {
+    llvm::sys::ScopedLock lock(m_mutex);
+
     if (!m_session_data)
         return 0;
-
-    llvm::sys::ScopedLock lock(m_mutex);
 
     HostProcess process = m_session_data->m_debugger->GetProcess();
     void *addr = reinterpret_cast<void *>(vm_addr);
@@ -407,10 +412,10 @@ ProcessWindows::DoReadMemory(lldb::addr_t vm_addr,
 size_t
 ProcessWindows::DoWriteMemory(lldb::addr_t vm_addr, const void *buf, size_t size, Error &error)
 {
+    llvm::sys::ScopedLock lock(m_mutex);
+
     if (!m_session_data)
         return 0;
-
-    llvm::sys::ScopedLock lock(m_mutex);
 
     HostProcess process = m_session_data->m_debugger->GetProcess();
     void *addr = reinterpret_cast<void *>(vm_addr);
@@ -451,7 +456,7 @@ ProcessWindows::CanDebug(Target &target, bool plugin_specified_by_name)
 void
 ProcessWindows::OnExitProcess(uint32_t exit_code)
 {
-    llvm::sys::ScopedLock lock(m_mutex);
+    // No need to acquire the lock since m_session_data isn't accessed.
 
     ModuleSP executable_module = GetTarget().GetExecutableModule();
     ModuleList unloaded_modules;
@@ -467,8 +472,6 @@ ProcessWindows::OnDebuggerConnected(lldb::addr_t image_base)
 {
     // Either we successfully attached to an existing process, or we successfully launched a new
     // process under the debugger.
-    llvm::sys::ScopedLock lock(m_mutex);
-
     ModuleSP module = GetTarget().GetExecutableModule();
     bool load_addr_changed;
     module->SetLoadAddress(GetTarget(), image_base, false, load_addr_changed);
@@ -478,6 +481,8 @@ ProcessWindows::OnDebuggerConnected(lldb::addr_t image_base)
     ModuleList loaded_modules;
     loaded_modules.Append(module);
     GetTarget().ModulesDidLoad(loaded_modules);
+
+    llvm::sys::ScopedLock lock(m_mutex);
 
     DebuggerThreadSP debugger = m_session_data->m_debugger;
     const HostThreadWindows &wmain_thread = debugger->GetMainThread().GetNativeThread();
@@ -566,8 +571,6 @@ ProcessWindows::OnExitThread(const HostThread &exited_thread)
 void
 ProcessWindows::OnLoadDll(const ModuleSpec &module_spec, lldb::addr_t module_addr)
 {
-    llvm::sys::ScopedLock lock(m_mutex);
-
     // Confusingly, there is no Target::AddSharedModule.  Instead, calling GetSharedModule() with
     // a new module will add it to the module list and return a corresponding ModuleSP.
     Error error;
@@ -583,8 +586,6 @@ ProcessWindows::OnLoadDll(const ModuleSpec &module_spec, lldb::addr_t module_add
 void
 ProcessWindows::OnUnloadDll(lldb::addr_t module_addr)
 {
-    llvm::sys::ScopedLock lock(m_mutex);
-
     Address resolved_addr;
     if (GetTarget().ResolveLoadAddress(module_addr, resolved_addr))
     {
