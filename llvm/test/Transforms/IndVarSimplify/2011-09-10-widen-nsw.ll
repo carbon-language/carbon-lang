@@ -17,7 +17,7 @@ for.body11:                                       ; preds = %entry
 for.body153:                                      ; preds = %for.body153, %for.body11
   br i1 undef, label %for.body170, label %for.body153
 
-; CHECK: add nsw i64 %indvars.iv, 1
+; CHECK: add nuw nsw i64 %indvars.iv, 1
 ; CHECK: sub nsw i64 %indvars.iv, 2
 ; CHECK: sub nsw i64 4, %indvars.iv
 ; CHECK: mul nsw i64 %indvars.iv, 8
