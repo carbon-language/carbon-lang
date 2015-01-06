@@ -91,10 +91,19 @@ COMMON_FLAG(uptr, mmap_limit_mb, 0,
             "Limit the amount of mmap-ed memory (excluding shadow) in Mb; "
             "not a user-facing flag, used mosly for testing the tools")
 COMMON_FLAG(uptr, hard_rss_limit_mb, 0,
-            "RSS limit in Mb."
+            "Hard RSS limit in Mb."
             " If non-zero, a background thread is spawned at startup"
             " which periodically reads RSS and aborts the process if the"
             " limit is reached")
+COMMON_FLAG(uptr, soft_rss_limit_mb, 0,
+            "Soft RSS limit in Mb."
+            " If non-zero, a background thread is spawned at startup"
+            " which periodically reads RSS. If the limit is reached"
+            " all subsequent malloc/new calls will fail or return NULL"
+            " (depending on the value of allocator_may_return_null)"
+            " until the RSS goes below the soft limit."
+            " This limit does not affect memory allocations other than"
+            " malloc/new.")
 COMMON_FLAG(
     bool, coverage, false,
     "If set, coverage information will be dumped at program shutdown (if the "

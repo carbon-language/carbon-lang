@@ -134,6 +134,7 @@ class QuarantineCache {
       size += sizeof(QuarantineBatch);  // Count the batch in Quarantine size.
     }
     QuarantineBatch *b = list_.back();
+    CHECK(b);
     b->batch[b->count++] = ptr;
     b->size += size;
     SizeAdd(size);
@@ -172,6 +173,7 @@ class QuarantineCache {
 
   NOINLINE QuarantineBatch* AllocBatch(Callback cb) {
     QuarantineBatch *b = (QuarantineBatch *)cb.Allocate(sizeof(*b));
+    CHECK(b);
     b->count = 0;
     b->size = 0;
     list_.push_back(b);

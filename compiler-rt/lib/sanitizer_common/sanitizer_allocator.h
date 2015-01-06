@@ -1279,11 +1279,13 @@ class CombinedAllocator {
   }
 
   void *Allocate(AllocatorCache *cache, uptr size, uptr alignment,
-                 bool cleared = false) {
+                 bool cleared = false, bool check_rss_limit = false) {
     // Returning 0 on malloc(0) may break a lot of code.
     if (size == 0)
       size = 1;
     if (size + alignment < size)
+      return ReturnNullOrDie();
+    if (check_rss_limit && RssLimitIsExceeded())
       return ReturnNullOrDie();
     if (alignment > 8)
       size = RoundUpTo(size, alignment);
@@ -1313,6 +1315,15 @@ class CombinedAllocator {
   void SetMayReturnNull(bool may_return_null) {
     secondary_.SetMayReturnNull(may_return_null);
     atomic_store(&may_return_null_, may_return_null, memory_order_release);
+  }
+
+  bool RssLimitIsExceeded() {
+    return atomic_load(&rss_limit_is_exceeded_, memory_order_release);
+  }
+
+  void SetRssLimitIsExceeded(bool rss_limit_is_exceeded) {
+    atomic_store(&rss_limit_is_exceeded_, rss_limit_is_exceeded,
+                 memory_order_release);
   }
 
   void Deallocate(AllocatorCache *cache, void *p) {
@@ -1428,6 +1439,7 @@ class CombinedAllocator {
   SecondaryAllocator secondary_;
   AllocatorGlobalStats stats_;
   atomic_uint8_t may_return_null_;
+  atomic_uint8_t rss_limit_is_exceeded_;
 };
 
 // Returns true if calloc(size, n) should return 0 due to overflow in size*n.

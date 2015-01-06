@@ -60,10 +60,18 @@ void ReportErrorSummary(const char *error_type, StackTrace *stack) {
 #endif
 }
 
+static void (*SoftRssLimitExceededCallback)(bool exceeded);
+void SetSoftRssLimitExceededCallback(void (*Callback)(bool exceeded)) {
+  CHECK_EQ(SoftRssLimitExceededCallback, nullptr);
+  SoftRssLimitExceededCallback = Callback;
+}
+
 void BackgroundThread(void *arg) {
   uptr hard_rss_limit_mb = common_flags()->hard_rss_limit_mb;
+  uptr soft_rss_limit_mb = common_flags()->soft_rss_limit_mb;
   uptr prev_reported_rss = 0;
   uptr prev_reported_stack_depot_size = 0;
+  bool reached_soft_rss_limit = false;
   while (true) {
     SleepForMillis(100);
     uptr current_rss_mb = GetRSS() >> 20;
@@ -91,13 +99,28 @@ void BackgroundThread(void *arg) {
       DumpProcessMap();
       Die();
     }
+    if (soft_rss_limit_mb) {
+      if (soft_rss_limit_mb < current_rss_mb && !reached_soft_rss_limit) {
+        reached_soft_rss_limit = true;
+        Report("%s: soft rss limit exhausted (%zdMb vs %zdMb)\n",
+               SanitizerToolName, soft_rss_limit_mb, current_rss_mb);
+        if (SoftRssLimitExceededCallback)
+          SoftRssLimitExceededCallback(true);
+      } else if (soft_rss_limit_mb >= current_rss_mb &&
+                 reached_soft_rss_limit) {
+        reached_soft_rss_limit = false;
+        if (SoftRssLimitExceededCallback)
+          SoftRssLimitExceededCallback(false);
+      }
+    }
   }
 }
 
 void MaybeStartBackgroudThread() {
   if (!SANITIZER_LINUX) return;  // Need to implement/test on other platforms.
-  // Currently, only start the background thread if hard_rss_limit_mb is given.
-  if (!common_flags()->hard_rss_limit_mb) return;
+  // Start the background thread if one of the rss limits is given.
+  if (!common_flags()->hard_rss_limit_mb &&
+      !common_flags()->soft_rss_limit_mb) return;
   if (!real_pthread_create) return;  // Can't spawn the thread anyway.
   internal_start_thread(BackgroundThread, nullptr);
 }
