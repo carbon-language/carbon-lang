@@ -8,6 +8,14 @@
 // CHECK-PG: clang{{.*}}" "-cc1" "-triple" "i686-pc-openbsd"
 // CHECK-PG: ld{{.*}}" "-e" "__start" "--eh-frame-hdr" "-Bdynamic" "-dynamic-linker" "{{.*}}ld.so" "-o" "a.out" "{{.*}}gcrt0.o" "{{.*}}crtbegin.o" "{{.*}}.o" "-lgcc" "-lpthread_p" "-lc_p" "-lgcc" "{{.*}}crtend.o"
 
+// Check CPU type for MIPS64
+// RUN: %clang -target mips64-unknown-openbsd -### -c %s 2>&1 \
+// RUN:   | FileCheck -check-prefix=CHECK-MIPS64-CPU %s
+// RUN: %clang -target mips64el-unknown-openbsd -### -c %s 2>&1 \
+// RUN:   | FileCheck -check-prefix=CHECK-MIPS64EL-CPU %s
+// CHECK-MIPS64-CPU: "-target-cpu" "mips3"
+// CHECK-MIPS64EL-CPU: "-target-cpu" "mips3"
+
 // Check that the new linker flags are passed to OpenBSD
 // RUN: %clang -no-canonical-prefixes -target i686-pc-openbsd -r %s -### 2>&1 \
 // RUN:   | FileCheck --check-prefix=CHECK-LD-R %s

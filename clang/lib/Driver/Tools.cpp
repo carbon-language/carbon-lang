@@ -977,6 +977,10 @@ void mips::getMipsCPUAndABI(const ArgList &Args,
     DefMips64CPU = "mips64r6";
   }
 
+  // MIPS3 is the default for mips64*-unknown-openbsd.
+  if (Triple.getOS() == llvm::Triple::OpenBSD)
+    DefMips64CPU = "mips3";
+
   if (Arg *A = Args.getLastArg(options::OPT_march_EQ,
                                options::OPT_mcpu_EQ))
     CPUName = A->getValue();
