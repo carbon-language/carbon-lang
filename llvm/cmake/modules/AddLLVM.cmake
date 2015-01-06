@@ -515,7 +515,7 @@ macro(add_llvm_example name)
   set_target_properties(${name} PROPERTIES FOLDER "Examples")
 
   if(NOT TARGET examples)
-    add_custom_target(examples ${name})
+    add_custom_target(examples DEPENDS ${name})
   else()
     add_dependencies(examples ${name})
   endif()
