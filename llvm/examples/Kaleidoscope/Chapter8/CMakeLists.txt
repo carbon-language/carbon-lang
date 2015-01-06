@@ -13,6 +13,6 @@ set(LLVM_LINK_COMPONENTS
 
 set(LLVM_REQUIRES_RTTI 1)
 
-add_llvm_example(Kaleidoscope-Ch8
+add_kaleidoscope_chapter(Kaleidoscope-Ch8
   toy.cpp
   )

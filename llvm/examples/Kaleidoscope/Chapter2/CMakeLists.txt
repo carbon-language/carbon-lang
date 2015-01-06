@@ -1,3 +1,3 @@
-add_llvm_example(Kaleidoscope-Ch2
+add_kaleidoscope_chapter(Kaleidoscope-Ch2
   toy.cpp
   )

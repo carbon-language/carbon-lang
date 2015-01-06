@@ -10,6 +10,6 @@ set(LLVM_LINK_COMPONENTS
   mcjit
   )
 
-add_llvm_example(Kaleidoscope-Ch4
+add_kaleidoscope_chapter(Kaleidoscope-Ch4
   toy.cpp
   )

@@ -3,6 +3,6 @@ set(LLVM_LINK_COMPONENTS
   Support
   )
 
-add_llvm_example(Kaleidoscope-Ch3
+add_kaleidoscope_chapter(Kaleidoscope-Ch3
   toy.cpp
   )
