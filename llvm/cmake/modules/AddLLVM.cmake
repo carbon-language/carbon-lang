@@ -513,6 +513,12 @@ macro(add_llvm_example name)
     install(TARGETS ${name} RUNTIME DESTINATION examples)
   endif()
   set_target_properties(${name} PROPERTIES FOLDER "Examples")
+
+  if(NOT TARGET examples)
+    add_custom_target(examples ${name})
+  else()
+    add_dependencies(examples ${name})
+  endif()
 endmacro(add_llvm_example name)
 
 
