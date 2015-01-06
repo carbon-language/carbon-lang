@@ -470,24 +470,29 @@ LaunchInNewTerminalWithAppleScript (const char *exe_path, ProcessLaunchInfo &lau
     // need to be sent to darwin-debug. If we send all environment entries, we might blow the
     // max command line length, so we only send user modified entries.
     const char **envp = launch_info.GetEnvironmentEntries().GetConstArgumentVector ();
+
     StringList host_env;
     const size_t host_env_count = Host::GetEnvironment (host_env);
-    const char *env_entry;
-    for (size_t env_idx = 0; (env_entry = envp[env_idx]) != NULL; ++env_idx)
+
+    if (envp && envp[0])
     {
-        bool add_entry = true;
-        for (size_t i=0; i<host_env_count; ++i)
+        const char *env_entry;
+        for (size_t env_idx = 0; (env_entry = envp[env_idx]) != NULL; ++env_idx)
         {
-            const char *host_env_entry = host_env.GetStringAtIndex(i);
-            if (strcmp(env_entry, host_env_entry) == 0)
+            bool add_entry = true;
+            for (size_t i=0; i<host_env_count; ++i)
             {
-                add_entry = false;
-                break;
+                const char *host_env_entry = host_env.GetStringAtIndex(i);
+                if (strcmp(env_entry, host_env_entry) == 0)
+                {
+                    add_entry = false;
+                    break;
+                }
             }
-        }
-        if (add_entry)
-        {
-            command.Printf(" --env='%s'", env_entry);
+            if (add_entry)
+            {
+                command.Printf(" --env='%s'", env_entry);
+            }
         }
     }
 
