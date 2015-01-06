@@ -182,8 +182,7 @@ void TargetMachine::getNameWithPrefix(SmallVectorImpl<char> &Name,
   const TargetLoweringObjectFile &TLOF =
       getSubtargetImpl()->getTargetLowering()->getObjFileLowering();
   const MCSection *TheSection = TLOF.SectionForGlobal(GV, GVKind, Mang, *this);
-  bool CannotUsePrivateLabel =
-      AsmInfo->isSectionAtomizableBySymbols(*TheSection);
+  bool CannotUsePrivateLabel = TLOF.isSectionAtomizableBySymbols(*TheSection);
   Mang.getNameWithPrefix(Name, GV, CannotUsePrivateLabel);
 }
 

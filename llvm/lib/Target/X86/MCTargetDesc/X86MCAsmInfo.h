@@ -23,8 +23,7 @@ namespace llvm {
   class Triple;
 
   class X86MCAsmInfoDarwin : public MCAsmInfoDarwin {
-    virtual void anchor();
-
+    void anchor() override;
   public:
     explicit X86MCAsmInfoDarwin(const Triple &Triple);
   };

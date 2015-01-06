@@ -270,6 +270,12 @@ SectionForGlobal(const GlobalValue *GV, SectionKind Kind, Mangler &Mang,
   return SelectSectionForGlobal(GV, Kind, Mang, TM);
 }
 
+bool TargetLoweringObjectFile::isSectionAtomizableBySymbols(
+    const MCSection &Section) const {
+  return false;
+}
+
+
 /// getSectionForConstant - Given a mergable constant with the
 /// specified size and relocation information, return a section that it
 /// should be placed in.

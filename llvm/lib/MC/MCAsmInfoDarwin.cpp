@@ -15,61 +15,10 @@
 #include "llvm/MC/MCAsmInfoDarwin.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCExpr.h"
-#include "llvm/MC/MCSectionMachO.h"
 #include "llvm/MC/MCStreamer.h"
 using namespace llvm;
 
-bool MCAsmInfoDarwin::isSectionAtomizableBySymbols(
-    const MCSection &Section) const {
-  const MCSectionMachO &SMO = static_cast<const MCSectionMachO &>(Section);
-
-  // Sections holding 1 byte strings are atomized based on the data they
-  // contain.
-  // Sections holding 2 byte strings require symbols in order to be atomized.
-  // There is no dedicated section for 4 byte strings.
-  if (SMO.getKind().isMergeable1ByteCString())
-    return false;
-
-  if (SMO.getSegmentName() == "__TEXT" &&
-      SMO.getSectionName() == "__objc_classname" &&
-      SMO.getType() == MachO::S_CSTRING_LITERALS)
-    return false;
-
-  if (SMO.getSegmentName() == "__TEXT" &&
-      SMO.getSectionName() == "__objc_methname" &&
-      SMO.getType() == MachO::S_CSTRING_LITERALS)
-    return false;
-
-  if (SMO.getSegmentName() == "__TEXT" &&
-      SMO.getSectionName() == "__objc_methtype" &&
-      SMO.getType() == MachO::S_CSTRING_LITERALS)
-    return false;
-
-  if (SMO.getSegmentName() == "__DATA" && SMO.getSectionName() == "__cfstring")
-    return false;
-
-  // no_dead_strip sections are not atomized in practice.
-  if (SMO.hasAttribute(MachO::S_ATTR_NO_DEAD_STRIP))
-    return false;
-
-  switch (SMO.getType()) {
-  default:
-    return true;
-
-  // These sections are atomized at the element boundaries without using
-  // symbols.
-  case MachO::S_4BYTE_LITERALS:
-  case MachO::S_8BYTE_LITERALS:
-  case MachO::S_16BYTE_LITERALS:
-  case MachO::S_LITERAL_POINTERS:
-  case MachO::S_NON_LAZY_SYMBOL_POINTERS:
-  case MachO::S_LAZY_SYMBOL_POINTERS:
-  case MachO::S_MOD_INIT_FUNC_POINTERS:
-  case MachO::S_MOD_TERM_FUNC_POINTERS:
-  case MachO::S_INTERPOSING:
-    return false;
-  }
-}
+void MCAsmInfoDarwin::anchor() { }
 
 MCAsmInfoDarwin::MCAsmInfoDarwin() {
   // Common settings for all Darwin targets.
