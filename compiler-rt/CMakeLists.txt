@@ -251,8 +251,7 @@ if(MSVC)
   append_list_if(COMPILER_RT_HAS_GS_FLAG /GS- SANITIZER_COMMON_CFLAGS)
 endif()
 
-# FIXME: Enable SANITIZER_DEBUG definition when PR22083 is fixed.
-#append_list_if(COMPILER_RT_DEBUG -DSANITIZER_DEBUG=1 SANITIZER_COMMON_CFLAGS)
+append_list_if(COMPILER_RT_DEBUG -DSANITIZER_DEBUG=1 SANITIZER_COMMON_CFLAGS)
 
 # Build with optimization, unless we're in debug mode. If we're using MSVC,
 # always respect the optimization flags set by CMAKE_BUILD_TYPE instead.
