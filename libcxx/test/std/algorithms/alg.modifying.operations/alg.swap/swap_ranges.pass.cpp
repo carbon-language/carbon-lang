@@ -62,6 +62,53 @@ test1()
 
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
+void test2()
+{
+    {
+    int src[2][2]      = {{0, 1}, {2, 3}};
+    decltype(src) dest = {{9, 8}, {7, 6}};
+
+    std::swap(src, dest);
+
+    assert ( src[0][0] == 9 );
+    assert ( src[0][1] == 8 );
+    assert ( src[1][0] == 7 );
+    assert ( src[1][1] == 6 );
+
+    assert ( dest[0][0] == 0 );
+    assert ( dest[0][1] == 1 );
+    assert ( dest[1][0] == 2 );
+    assert ( dest[1][1] == 3 );
+    }
+    
+    {
+    int src[3][3]      = {{0, 1, 2}, {3, 4, 5}, {6, 7, 8}};
+    decltype(src) dest = {{9, 8, 7}, {6, 5, 4}, {3, 2, 1}};
+
+    std::swap(src, dest);
+
+    assert ( src[0][0] == 9 );
+    assert ( src[0][1] == 8 );
+    assert ( src[0][2] == 7 );
+    assert ( src[1][0] == 6 );
+    assert ( src[1][1] == 5 );
+    assert ( src[1][2] == 4 );
+    assert ( src[2][0] == 3 );
+    assert ( src[2][1] == 2 );
+    assert ( src[2][2] == 1 );
+
+    assert ( dest[0][0] == 0 );
+    assert ( dest[0][1] == 1 );
+    assert ( dest[0][2] == 2 );
+    assert ( dest[1][0] == 3 );
+    assert ( dest[1][1] == 4 );
+    assert ( dest[1][2] == 5 );
+    assert ( dest[2][0] == 6 );
+    assert ( dest[2][1] == 7 );
+    assert ( dest[2][2] == 8 );
+    }
+}
+
 int main()
 {
     test<forward_iterator<int*>, forward_iterator<int*> >();
@@ -107,4 +154,6 @@ int main()
     test1<std::unique_ptr<int>*, std::unique_ptr<int>*>();
 
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
+
+	test2();
 }
