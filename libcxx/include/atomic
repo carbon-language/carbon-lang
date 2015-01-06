@@ -583,6 +583,16 @@ static inline constexpr int __to_gcc_order(memory_order __order) {
               __ATOMIC_CONSUME))));
 }
 
+static inline constexpr int __to_gcc_failure_order(memory_order __order) {
+  // Avoid switch statement to make this a constexpr.
+  return __order == memory_order_relaxed ? __ATOMIC_RELAXED:
+         (__order == memory_order_acquire ? __ATOMIC_ACQUIRE:
+          (__order == memory_order_release ? __ATOMIC_RELAXED:
+           (__order == memory_order_seq_cst ? __ATOMIC_SEQ_CST:
+            (__order == memory_order_acq_rel ? __ATOMIC_ACQUIRE:
+              __ATOMIC_CONSUME))));
+}
+
 } // namespace __gcc_atomic
 
 template <typename _Tp>
@@ -637,8 +647,8 @@ static inline void __c11_atomic_store(volatile _Atomic(_Tp)* __a,  _Tp __val,
 template <typename _Tp>
 static inline void __c11_atomic_store(_Atomic(_Tp)* __a,  _Tp __val,
                                       memory_order __order) {
-  return __atomic_store(&__a->__a_value, &__val,
-                        __gcc_atomic::__to_gcc_order(__order));
+  __atomic_store(&__a->__a_value, &__val,
+                 __gcc_atomic::__to_gcc_order(__order));
 }
 
 template <typename _Tp>
@@ -683,7 +693,7 @@ static inline bool __c11_atomic_compare_exchange_strong(
   return __atomic_compare_exchange(&__a->__a_value, __expected, &__value,
                                    false,
                                    __gcc_atomic::__to_gcc_order(__success),
-                                   __gcc_atomic::__to_gcc_order(__failure));
+                                   __gcc_atomic::__to_gcc_failure_order(__failure));
 }
 
 template <typename _Tp>
@@ -693,7 +703,7 @@ static inline bool __c11_atomic_compare_exchange_strong(
   return __atomic_compare_exchange(&__a->__a_value, __expected, &__value,
                                    false,
                                    __gcc_atomic::__to_gcc_order(__success),
-                                   __gcc_atomic::__to_gcc_order(__failure));
+                                   __gcc_atomic::__to_gcc_failure_order(__failure));
 }
 
 template <typename _Tp>
@@ -703,7 +713,7 @@ static inline bool __c11_atomic_compare_exchange_weak(
   return __atomic_compare_exchange(&__a->__a_value, __expected, &__value,
                                    true,
                                    __gcc_atomic::__to_gcc_order(__success),
-                                   __gcc_atomic::__to_gcc_order(__failure));
+                                   __gcc_atomic::__to_gcc_failure_order(__failure));
 }
 
 template <typename _Tp>
@@ -713,7 +723,7 @@ static inline bool __c11_atomic_compare_exchange_weak(
   return __atomic_compare_exchange(&__a->__a_value, __expected, &__value,
                                    true,
                                    __gcc_atomic::__to_gcc_order(__success),
-                                   __gcc_atomic::__to_gcc_order(__failure));
+                                   __gcc_atomic::__to_gcc_failure_order(__failure));
 }
 
 template <typename _Tp>
