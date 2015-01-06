@@ -10,6 +10,8 @@
 		236ED33319D49076008CA7D7 /* ThreadStateCoordinatorTest.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ThreadStateCoordinatorTest.cpp; sourceTree = "<group>"; };
 		236ED33419D49081008CA7D7 /* Makefile */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.make; path = Makefile; sourceTree = "<group>"; };
 		236ED33619D490B0008CA7D7 /* Makefile.rules */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = Makefile.rules; sourceTree = "<group>"; };
+		33064C981A5C7A1A0033D415 /* UriParserTest.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = UriParserTest.cpp; path = Utility/UriParserTest.cpp; sourceTree = "<group>"; };
+		33064C9D1A5C7AC90033D415 /* do-gtest.py */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.python; path = "do-gtest.py"; sourceTree = "<group>"; };
 		338C47F41A1E67B900B46077 /* Makefile */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.make; name = Makefile; path = Utility/Makefile; sourceTree = "<group>"; };
 		338C47F51A1E67B900B46077 /* StringExtractorTest.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = StringExtractorTest.cpp; path = Utility/StringExtractorTest.cpp; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -60,6 +62,7 @@
 		23CDD8EE19D4790700461DDC = {
 			isa = PBXGroup;
 			children = (
+				33064C9D1A5C7AC90033D415 /* do-gtest.py */,
 				236ED33519D49098008CA7D7 /* make */,
 				236ED32F19D4901D008CA7D7 /* unittest */,
 			);
@@ -68,6 +71,7 @@
 		338C47F31A1E677900B46077 /* Utility */ = {
 			isa = PBXGroup;
 			children = (
+				33064C981A5C7A1A0033D415 /* UriParserTest.cpp */,
 				338C47F41A1E67B900B46077 /* Makefile */,
 				338C47F51A1E67B900B46077 /* StringExtractorTest.cpp */,
 			);

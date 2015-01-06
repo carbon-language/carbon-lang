@@ -581,6 +581,8 @@
 		26FFC19C14FC072100087D58 /* DYLDRendezvous.h in Headers */ = {isa = PBXBuildFile; fileRef = 26FFC19614FC072100087D58 /* DYLDRendezvous.h */; };
 		26FFC19D14FC072100087D58 /* DynamicLoaderPOSIXDYLD.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26FFC19714FC072100087D58 /* DynamicLoaderPOSIXDYLD.cpp */; };
 		26FFC19E14FC072100087D58 /* DynamicLoaderPOSIXDYLD.h in Headers */ = {isa = PBXBuildFile; fileRef = 26FFC19814FC072100087D58 /* DynamicLoaderPOSIXDYLD.h */; };
+		33064C9A1A5C7A330033D415 /* UriParser.cpp in CopyFiles */ = {isa = PBXBuildFile; fileRef = 33064C991A5C7A330033D415 /* UriParser.cpp */; };
+		33064C9C1A5C7A490033D415 /* UriParser.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 33064C9B1A5C7A490033D415 /* UriParser.h */; };
 		3FDFDDBD199C3A06009756A7 /* FileAction.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3FDFDDBC199C3A06009756A7 /* FileAction.cpp */; };
 		3FDFDDBF199D345E009756A7 /* FileCache.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3FDFDDBE199D345E009756A7 /* FileCache.cpp */; };
 		3FDFDDC6199D37ED009756A7 /* FileSystem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3FDFDDC5199D37ED009756A7 /* FileSystem.cpp */; };
@@ -932,6 +934,8 @@
 			dstSubfolderSpec = 0;
 			files = (
 				AF90106515AB7D3600FF120D /* lldb.1 in CopyFiles */,
+				33064C9C1A5C7A490033D415 /* UriParser.h in CopyFiles */,
+				33064C9A1A5C7A330033D415 /* UriParser.cpp in CopyFiles */,
 			);
 			runOnlyForDeploymentPostprocessing = 1;
 		};
@@ -1794,6 +1798,8 @@
 		26FFC19614FC072100087D58 /* DYLDRendezvous.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DYLDRendezvous.h; sourceTree = "<group>"; };
 		26FFC19714FC072100087D58 /* DynamicLoaderPOSIXDYLD.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = DynamicLoaderPOSIXDYLD.cpp; sourceTree = "<group>"; };
 		26FFC19814FC072100087D58 /* DynamicLoaderPOSIXDYLD.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DynamicLoaderPOSIXDYLD.h; sourceTree = "<group>"; };
+		33064C991A5C7A330033D415 /* UriParser.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = UriParser.cpp; path = source/Utility/UriParser.cpp; sourceTree = "<group>"; };
+		33064C9B1A5C7A490033D415 /* UriParser.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = UriParser.h; path = source/Utility/UriParser.h; sourceTree = "<group>"; };
 		3F5E8AF31A40D4A500A73232 /* PipeBase.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = PipeBase.h; path = include/lldb/Host/PipeBase.h; sourceTree = "<group>"; };
 		3FDFD6C3199C396E009756A7 /* FileAction.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = FileAction.h; path = include/lldb/Target/FileAction.h; sourceTree = "<group>"; };
 		3FDFDDBC199C3A06009756A7 /* FileAction.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = FileAction.cpp; path = source/Target/FileAction.cpp; sourceTree = "<group>"; };
@@ -3031,6 +3037,8 @@
 		2682F168115ED9C800CCFF99 /* Utility */ = {
 			isa = PBXGroup;
 			children = (
+				33064C9B1A5C7A490033D415 /* UriParser.h */,
+				33064C991A5C7A330033D415 /* UriParser.cpp */,
 				AF9107E91685709A00DBCD3C /* ARM64_GCC_Registers.h */,
 				26CF992414428766001E4138 /* AnsiTerminal.h */,
 				26F996A7119B79C300412154 /* ARM_DWARF_Registers.h */,

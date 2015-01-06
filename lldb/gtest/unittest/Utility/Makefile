@@ -5,7 +5,8 @@ LEVEL := $(realpath $(THIS_FILE_DIR)../../make)
 CFLAGS_EXTRAS := -D__STDC_LIMIT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_CONSTANT_MACROS
 ENABLE_THREADS := YES
 CXX_SOURCES := $(wildcard *.cpp) \
-	$(realpath $(LEVEL)/../../source/Utility/StringExtractor.cpp)
+	$(realpath $(LEVEL)/../../source/Utility/StringExtractor.cpp) \
+	$(realpath $(LEVEL)/../../source/Utility/UriParser.cpp)
 MAKE_DSYM := NO
 
 OS := $(shell uname -s)
