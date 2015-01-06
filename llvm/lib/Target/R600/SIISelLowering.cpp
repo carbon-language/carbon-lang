@@ -218,6 +218,7 @@ SITargetLowering::SITargetLowering(TargetMachine &TM) :
   setTargetDAGCombine(ISD::FMAXNUM);
   setTargetDAGCombine(ISD::SELECT_CC);
   setTargetDAGCombine(ISD::SETCC);
+  setTargetDAGCombine(ISD::AND);
   setTargetDAGCombine(ISD::OR);
   setTargetDAGCombine(ISD::UINT_TO_FP);
 
@@ -1302,6 +1303,59 @@ SDValue SITargetLowering::performSHLPtrCombine(SDNode *N,
   return DAG.getNode(ISD::ADD, SL, VT, ShlX, COffset);
 }
 
+SDValue SITargetLowering::performAndCombine(SDNode *N,
+                                            DAGCombinerInfo &DCI) const {
+  if (DCI.isBeforeLegalize())
+    return SDValue();
+
+  SelectionDAG &DAG = DCI.DAG;
+
+  // (and (fcmp ord x, x), (fcmp une (fabs x), inf)) ->
+  // fp_class x, ~(s_nan | q_nan | n_infinity | p_infinity)
+  SDValue LHS = N->getOperand(0);
+  SDValue RHS = N->getOperand(1);
+
+  if (LHS.getOpcode() == ISD::SETCC &&
+      RHS.getOpcode() == ISD::SETCC) {
+    ISD::CondCode LCC = cast<CondCodeSDNode>(LHS.getOperand(2))->get();
+    ISD::CondCode RCC = cast<CondCodeSDNode>(RHS.getOperand(2))->get();
+
+    SDValue X = LHS.getOperand(0);
+    SDValue Y = RHS.getOperand(0);
+    if (Y.getOpcode() != ISD::FABS || Y.getOperand(0) != X)
+      return SDValue();
+
+    if (LCC == ISD::SETO) {
+      if (X != LHS.getOperand(1))
+        return SDValue();
+
+      if (RCC == ISD::SETUNE) {
+        const ConstantFPSDNode *C1 = dyn_cast<ConstantFPSDNode>(RHS.getOperand(1));
+        if (!C1 || !C1->isInfinity() || C1->isNegative())
+          return SDValue();
+
+        const uint32_t Mask = SIInstrFlags::N_NORMAL |
+                              SIInstrFlags::N_SUBNORMAL |
+                              SIInstrFlags::N_ZERO |
+                              SIInstrFlags::P_ZERO |
+                              SIInstrFlags::P_SUBNORMAL |
+                              SIInstrFlags::P_NORMAL;
+
+        static_assert(((~(SIInstrFlags::S_NAN |
+                          SIInstrFlags::Q_NAN |
+                          SIInstrFlags::N_INFINITY |
+                          SIInstrFlags::P_INFINITY)) & 0x3ff) == Mask,
+                      "mask not equal");
+
+        return DAG.getNode(AMDGPUISD::FP_CLASS, SDLoc(N), MVT::i1,
+                           X, DAG.getConstant(Mask, MVT::i32));
+      }
+    }
+  }
+
+  return SDValue();
+}
+
 SDValue SITargetLowering::performOrCombine(SDNode *N,
                                            DAGCombinerInfo &DCI) const {
   SelectionDAG &DAG = DCI.DAG;
@@ -1607,6 +1661,8 @@ SDValue SITargetLowering::PerformDAGCombine(SDNode *N,
     }
     break;
   }
+  case ISD::AND:
+    return performAndCombine(N, DCI);
   case ISD::OR:
     return performOrCombine(N, DCI);
   case AMDGPUISD::FP_CLASS:
