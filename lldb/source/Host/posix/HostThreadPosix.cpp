@@ -35,12 +35,15 @@ HostThreadPosix::Join(lldb::thread_result_t *result)
     Error error;
     if (IsJoinable())
     {
-        lldb::thread_result_t thread_result;
-        int err = ::pthread_join(m_thread, &thread_result);
+        int err = ::pthread_join(m_thread, result);
         error.SetError(err, lldb::eErrorTypePOSIX);
     }
     else
+    {
+        if (result)
+            *result = NULL;
         error.SetError(EINVAL, eErrorTypePOSIX);
+    }
 
     Reset();
     return error;
