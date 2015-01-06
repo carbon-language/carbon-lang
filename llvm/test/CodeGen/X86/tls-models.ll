@@ -128,6 +128,14 @@ entry:
   ; DARWIN:  _internal_ie@TLVP
 }
 
+define i32 @PR22083() {
+entry:
+  ret i32 ptrtoint (i32* @external_ie to i32)
+  ; X64-LABEL:     PR22083:
+  ; X64:     movq    external_ie@GOTTPOFF(%rip), %rax
+  ; X64_PIC-LABEL: PR22083:
+  ; X64_PIC: movq    external_ie@GOTTPOFF(%rip), %rax
+}
 
 ; ----- localexec specified -----
 

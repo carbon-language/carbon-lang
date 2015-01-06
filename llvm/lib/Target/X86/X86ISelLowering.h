@@ -770,6 +770,11 @@ namespace llvm {
       return !X86ScalarSSEf64 || VT == MVT::f80;
     }
 
+    /// Return true if we believe it is correct and profitable to reduce the
+    /// load node to a smaller type.
+    bool shouldReduceLoadWidth(SDNode *Load, ISD::LoadExtType ExtTy,
+                               EVT NewVT) const override;
+
     const X86Subtarget* getSubtarget() const {
       return Subtarget;
     }

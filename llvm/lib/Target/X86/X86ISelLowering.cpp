@@ -3862,6 +3862,18 @@ bool X86TargetLowering::isFPImmLegal(const APFloat &Imm, EVT VT) const {
   return false;
 }
 
+bool X86TargetLowering::shouldReduceLoadWidth(SDNode *Load,
+                                              ISD::LoadExtType ExtTy,
+                                              EVT NewVT) const {
+  // "ELF Handling for Thread-Local Storage" specifies that R_X86_64_GOTTPOFF
+  // relocation target a movq or addq instruction: don't let the load shrink.
+  SDValue BasePtr = cast<LoadSDNode>(Load)->getBasePtr();
+  if (BasePtr.getOpcode() == X86ISD::WrapperRIP)
+    if (const auto *GA = dyn_cast<GlobalAddressSDNode>(BasePtr.getOperand(0)))
+      return GA->getTargetFlags() != X86II::MO_GOTTPOFF;
+  return true;
+}
+
 /// \brief Returns true if it is beneficial to convert a load of a constant
 /// to just the constant itself.
 bool X86TargetLowering::shouldConvertConstantLoadToIntImm(const APInt &Imm,
