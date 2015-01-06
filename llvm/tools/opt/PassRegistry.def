@@ -26,6 +26,7 @@ MODULE_ANALYSIS("no-op-module", NoOpModuleAnalysis())
 #ifndef MODULE_PASS
 #define MODULE_PASS(NAME, CREATE_PASS)
 #endif
+MODULE_PASS("invalidate<all>", InvalidateAllAnalysesPass())
 MODULE_PASS("no-op-module", NoOpModulePass())
 MODULE_PASS("print", PrintModulePass(dbgs()))
 MODULE_PASS("print-cg", LazyCallGraphPrinterPass(dbgs()))
@@ -41,6 +42,7 @@ CGSCC_ANALYSIS("no-op-cgscc", NoOpCGSCCAnalysis())
 #ifndef CGSCC_PASS
 #define CGSCC_PASS(NAME, CREATE_PASS)
 #endif
+CGSCC_PASS("invalidate<all>", InvalidateAllAnalysesPass())
 CGSCC_PASS("no-op-cgscc", NoOpCGSCCPass())
 #undef CGSCC_PASS
 
@@ -53,6 +55,7 @@ FUNCTION_ANALYSIS("no-op-function", NoOpFunctionAnalysis())
 #ifndef FUNCTION_PASS
 #define FUNCTION_PASS(NAME, CREATE_PASS)
 #endif
+FUNCTION_PASS("invalidate<all>", InvalidateAllAnalysesPass())
 FUNCTION_PASS("no-op-function", NoOpFunctionPass())
 FUNCTION_PASS("print", PrintFunctionPass(dbgs()))
 FUNCTION_PASS("verify", VerifierPass())

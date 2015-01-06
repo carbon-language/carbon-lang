@@ -194,6 +194,39 @@
 ; CHECK-DO-INVALIDATE-FUNCTION-ANALYSIS-RESULTS: Invalidating function analysis: NoOpFunctionAnalysis
 ; CHECK-DO-INVALIDATE-FUNCTION-ANALYSIS-RESULTS: Running function analysis: NoOpFunctionAnalysis
 
+; RUN: opt -disable-output -disable-verify -debug-pass-manager -debug-cgscc-pass-manager \
+; RUN:     -passes='require<no-op-module>,cgscc(require<no-op-cgscc>,function(require<no-op-function>,invalidate<all>,require<no-op-function>),require<no-op-cgscc>),require<no-op-module>' %s 2>&1 \
+; RUN:     | FileCheck %s --check-prefix=CHECK-INVALIDATE-ALL
+; CHECK-INVALIDATE-ALL: Starting module pass manager run.
+; CHECK-INVALIDATE-ALL: Running module pass: No-op Analysis Requirement Pass
+; CHECK-INVALIDATE-ALL: Running module analysis: NoOpModuleAnalysis
+; CHECK-INVALIDATE-ALL: Starting CGSCC pass manager run.
+; CHECK-INVALIDATE-ALL: Running CGSCC pass: No-op Analysis Requirement Pass
+; CHECK-INVALIDATE-ALL: Running CGSCC analysis: NoOpCGSCCAnalysis
+; CHECK-INVALIDATE-ALL: Starting function pass manager run.
+; CHECK-INVALIDATE-ALL: Running function pass: No-op Analysis Requirement Pass
+; CHECK-INVALIDATE-ALL: Running function analysis: NoOpFunctionAnalysis
+; CHECK-INVALIDATE-ALL: Running function pass: InvalidateAllAnalysesPass
+; CHECK-INVALIDATE-ALL: Invalidating all non-preserved analyses for function
+; CHECK-INVALIDATE-ALL: Invalidating function analysis: NoOpFunctionAnalysis
+; CHECK-INVALIDATE-ALL: Running function pass: No-op Analysis Requirement Pass
+; CHECK-INVALIDATE-ALL: Running function analysis: NoOpFunctionAnalysis
+; CHECK-INVALIDATE-ALL: Finished function pass manager run.
+; CHECK-INVALIDATE-ALL: Invalidating all non-preserved analyses for function
+; CHECK-INVALIDATE-ALL: Invalidating function analysis: NoOpFunctionAnalysis
+; CHECK-INVALIDATE-ALL: Invalidating all non-preserved analyses for SCC
+; CHECK-INVALIDATE-ALL: Invalidating CGSCC analysis: NoOpCGSCCAnalysis
+; CHECK-INVALIDATE-ALL: Running CGSCC pass: No-op Analysis Requirement Pass
+; CHECK-INVALIDATE-ALL: Running CGSCC analysis: NoOpCGSCCAnalysis
+; CHECK-INVALIDATE-ALL: Finished CGSCC pass manager run.
+; CHECK-INVALIDATE-ALL: Invalidating all non-preserved analyses for SCC
+; CHECK-INVALIDATE-ALL: Invalidating CGSCC analysis: NoOpCGSCCAnalysis
+; CHECK-INVALIDATE-ALL: Invalidating all non-preserved analyses for module
+; CHECK-INVALIDATE-ALL: Invalidating module analysis: NoOpModuleAnalysis
+; CHECK-INVALIDATE-ALL: Running module pass: No-op Analysis Requirement Pass
+; CHECK-INVALIDATE-ALL: Running module analysis: NoOpModuleAnalysis
+; CHECK-INVALIDATE-ALL: Finished module pass manager run.
+
 define void @foo() {
   ret void
 }

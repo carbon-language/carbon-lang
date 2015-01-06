@@ -816,6 +816,20 @@ template <typename AnalysisT> struct NoopAnalysisInvalidationPass {
   static StringRef name() { return "No-op Analysis Invalidation Pass"; }
 };
 
+/// \brief A utility pass that does nothing but preserves no analyses.
+///
+/// As a consequence fo not preserving any analyses, this pass will force all
+/// analysis passes to be re-run to produce fresh results if any are needed.
+struct InvalidateAllAnalysesPass {
+  /// \brief Run this pass over some unit of IR.
+  template <typename T>
+  PreservedAnalyses run(T &&Arg) {
+    return PreservedAnalyses::none();
+  }
+
+  static StringRef name() { return "InvalidateAllAnalysesPass"; }
+};
+
 }
 
 #endif
