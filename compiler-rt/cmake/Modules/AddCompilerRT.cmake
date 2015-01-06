@@ -131,10 +131,11 @@ set(COMPILER_RT_GTEST_CFLAGS
   -I${COMPILER_RT_GTEST_PATH}
 )
 
+append_list_if(COMPILER_RT_DEBUG -DSANITIZER_DEBUG=1 COMPILER_RT_TEST_CFLAGS)
+
 if(MSVC)
   # clang doesn't support exceptions on Windows yet.
-  list(APPEND COMPILER_RT_TEST_CFLAGS
-       -D_HAS_EXCEPTIONS=0)
+  list(APPEND COMPILER_RT_TEST_CFLAGS -D_HAS_EXCEPTIONS=0)
 
   # We should teach clang to understand "#pragma intrinsic", see PR19898.
   list(APPEND COMPILER_RT_TEST_CFLAGS -Wno-undefined-inline)
