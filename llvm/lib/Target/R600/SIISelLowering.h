@@ -62,6 +62,7 @@ class SITargetLowering : public AMDGPUTargetLowering {
   SDValue performClassCombine(SDNode *N, DAGCombinerInfo &DCI) const;
 
   SDValue performMin3Max3Combine(SDNode *N, DAGCombinerInfo &DCI) const;
+  SDValue performSetCCCombine(SDNode *N, DAGCombinerInfo &DCI) const;
 
 public:
   SITargetLowering(TargetMachine &tm);

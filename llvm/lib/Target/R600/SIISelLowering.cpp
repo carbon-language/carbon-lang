@@ -1400,6 +1400,37 @@ SDValue SITargetLowering::performMin3Max3Combine(SDNode *N,
   return SDValue();
 }
 
+SDValue SITargetLowering::performSetCCCombine(SDNode *N,
+                                              DAGCombinerInfo &DCI) const {
+  SelectionDAG &DAG = DCI.DAG;
+  SDLoc SL(N);
+
+  SDValue LHS = N->getOperand(0);
+  SDValue RHS = N->getOperand(1);
+  EVT VT = LHS.getValueType();
+
+  if (VT != MVT::f32 && VT != MVT::f64)
+    return SDValue();
+
+  // Match isinf pattern
+  // (fcmp oeq (fabs x), inf) -> (fp_class x, (p_infinity | n_infinity))
+  ISD::CondCode CC = cast<CondCodeSDNode>(N->getOperand(2))->get();
+  if (CC == ISD::SETOEQ && LHS.getOpcode() == ISD::FABS) {
+    const ConstantFPSDNode *CRHS = dyn_cast<ConstantFPSDNode>(RHS);
+    if (!CRHS)
+      return SDValue();
+
+    const APFloat &APF = CRHS->getValueAPF();
+    if (APF.isInfinity() && !APF.isNegative()) {
+      unsigned Mask = SIInstrFlags::P_INFINITY | SIInstrFlags::N_INFINITY;
+      return DAG.getNode(AMDGPUISD::FP_CLASS, SL, MVT::i1,
+                         LHS.getOperand(0), DAG.getConstant(Mask, MVT::i32));
+    }
+  }
+
+  return SDValue();
+}
+
 SDValue SITargetLowering::PerformDAGCombine(SDNode *N,
                                             DAGCombinerInfo &DCI) const {
   SelectionDAG &DAG = DCI.DAG;
@@ -1408,6 +1439,8 @@ SDValue SITargetLowering::PerformDAGCombine(SDNode *N,
   switch (N->getOpcode()) {
   default:
     return AMDGPUTargetLowering::PerformDAGCombine(N, DCI);
+  case ISD::SETCC:
+    return performSetCCCombine(N, DCI);
   case ISD::FMAXNUM: // TODO: What about fmax_legacy?
   case ISD::FMINNUM:
   case AMDGPUISD::SMAX:
