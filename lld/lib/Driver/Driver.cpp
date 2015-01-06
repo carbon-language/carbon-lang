@@ -8,6 +8,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "lld/Driver/Driver.h"
+#include "lld/Core/ArchiveLibraryFile.h"
+#include "lld/Core/File.h"
 #include "lld/Core/Instrumentation.h"
 #include "lld/Core/LLVM.h"
 #include "lld/Core/Parallel.h"
@@ -27,6 +29,38 @@
 #include <mutex>
 
 namespace lld {
+
+FileVector makeErrorFile(StringRef path, std::error_code ec) {
+  std::vector<std::unique_ptr<File>> result;
+  result.push_back(llvm::make_unique<ErrorFile>(path, ec));
+  return result;
+}
+
+FileVector parseMemberFiles(FileVector &files) {
+  std::vector<std::unique_ptr<File>> members;
+  for (std::unique_ptr<File> &file : files) {
+    if (auto *archive = dyn_cast<ArchiveLibraryFile>(file.get())) {
+      if (std::error_code ec = archive->parseAllMembers(members))
+        return makeErrorFile(file->path(), ec);
+    } else {
+      members.push_back(std::move(file));
+    }
+  }
+  return members;
+}
+
+FileVector parseFile(LinkingContext &ctx, StringRef path, bool wholeArchive) {
+  ErrorOr<std::unique_ptr<MemoryBuffer>> mb
+      = MemoryBuffer::getFileOrSTDIN(path);
+  if (std::error_code ec = mb.getError())
+    return makeErrorFile(path, ec);
+  std::vector<std::unique_ptr<File>> files;
+  if (std::error_code ec = ctx.registry().parseFile(std::move(mb.get()), files))
+    return makeErrorFile(path, ec);
+  if (wholeArchive)
+    return parseMemberFiles(files);
+  return files;
+}
 
 /// This is where the link is actually performed.
 bool Driver::link(LinkingContext &context, raw_ostream &diagnostics) {

@@ -208,6 +208,8 @@ public:
     return _files[_nextFileIndex++].get();
   }
 
+  std::error_code parse(const LinkingContext &, raw_ostream &) override;
+
 protected:
   StringRef _path;                       // The path of the Input file
   InputGraph::FileVectorT _files;        // A vector of lld File objects
@@ -231,12 +233,8 @@ public:
   virtual void appendInputFile(std::unique_ptr<File> f) {
     _files.push_back(std::move(f));
   }
-
-  /// \brief parse the input element
-  std::error_code parse(const LinkingContext &, raw_ostream &) override {
-    return std::error_code();
-  }
 };
+
 } // namespace lld
 
 #endif // LLD_CORE_INPUT_GRAPH_H

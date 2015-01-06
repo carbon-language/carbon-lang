@@ -101,3 +101,10 @@ bool FileNode::getReplacements(InputGraph::InputElementVectorT &result) {
     result.push_back(llvm::make_unique<SimpleFileNode>(_path, std::move(file)));
   return true;
 }
+
+std::error_code FileNode::parse(const LinkingContext &, raw_ostream &) {
+  for (std::unique_ptr<File> &file : _files)
+    if (std::error_code ec = file->parse())
+      return ec;
+  return std::error_code();
+}

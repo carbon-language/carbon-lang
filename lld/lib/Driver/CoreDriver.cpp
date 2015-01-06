@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "lld/Driver/Driver.h"
-#include "lld/Driver/CoreInputGraph.h"
+#include "lld/Driver/WrapperInputGraph.h"
 #include "lld/ReaderWriter/CoreLinkingContext.h"
 #include "lld/ReaderWriter/Reader.h"
 #include "llvm/ADT/ArrayRef.h"
@@ -76,16 +76,15 @@ static const Registry::KindStrings coreKindStrings[] = {
 
 bool CoreDriver::link(int argc, const char *argv[], raw_ostream &diagnostics) {
   CoreLinkingContext ctx;
-  if (!parse(argc, argv, ctx))
-    return false;
 
   // Register possible input file parsers.
   ctx.registry().addSupportNativeObjects();
   ctx.registry().addSupportYamlFiles();
-
   ctx.registry().addKindTable(Reference::KindNamespace::testing,
                               Reference::KindArch::all, coreKindStrings);
 
+  if (!parse(argc, argv, ctx))
+    return false;
   return Driver::link(ctx);
 }
 
@@ -151,10 +150,15 @@ bool CoreDriver::parse(int argc, const char *argv[], CoreLinkingContext &ctx,
       ctx.addPassNamed(inputArg->getValue());
       break;
 
-    case OPT_INPUT:
-      inputGraph->addInputElement(std::unique_ptr<InputElement>(
-          new CoreFileNode(ctx, inputArg->getValue())));
+    case OPT_INPUT: {
+      std::vector<std::unique_ptr<File>> files
+        = parseFile(ctx, inputArg->getValue(), false);
+      for (std::unique_ptr<File> &file : files) {
+        inputGraph->addInputElement(std::unique_ptr<InputElement>(
+            new WrapperNode(std::move(file))));
+      }
       break;
+    }
 
     default:
       break;

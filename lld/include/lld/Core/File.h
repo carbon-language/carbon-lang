@@ -16,6 +16,7 @@
 #include "lld/Core/UndefinedAtom.h"
 #include "lld/Core/range.h"
 #include "llvm/ADT/Optional.h"
+#include "llvm/ADT/Twine.h"
 #include "llvm/Support/ErrorHandling.h"
 #include <functional>
 #include <memory>
@@ -265,6 +266,35 @@ protected:
   /// \brief only subclasses of MutableFile can be instantiated
   MutableFile(StringRef p) : File(p, kindObject) {}
 };
+
+/// An ErrorFile represents a file that doesn't exist.
+/// If you try to parse a file which doesn't exist, an instance of this
+/// class will be returned. That's parse method always returns an error.
+/// This is useful to delay erroring on non-existent files, so that we
+/// can do unit testing a driver using non-existing file paths.
+class ErrorFile : public File {
+public:
+  ErrorFile(StringRef p, std::error_code ec) : File(p, kindObject), _ec(ec) {}
+
+  std::error_code doParse() override { return _ec; }
+
+  const atom_collection<DefinedAtom> &defined() const override {
+    llvm_unreachable("internal error");
+  }
+  const atom_collection<UndefinedAtom> &undefined() const override {
+    llvm_unreachable("internal error");
+  }
+  const atom_collection<SharedLibraryAtom> &sharedLibrary() const override {
+    llvm_unreachable("internal error");
+  }
+  const atom_collection<AbsoluteAtom> &absolute() const override {
+    llvm_unreachable("internal error");
+  }
+
+private:
+  std::error_code _ec;
+};
+
 } // end namespace lld
 
 #endif
