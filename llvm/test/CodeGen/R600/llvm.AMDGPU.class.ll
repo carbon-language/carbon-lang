@@ -331,5 +331,167 @@ define void @test_class_lit_constant_dynamic_mask_f64(i32 addrspace(1)* %out, i3
   ret void
 }
 
+; SI-LABEL: {{^}}test_fold_or_class_f32_0:
+; SI-NOT: v_cmp_class
+; SI: v_cmp_class_f32_e64 {{s\[[0-9]+:[0-9]+\]}}, v{{[0-9]+}}, 3{{$}}
+; SI-NOT: v_cmp_class
+; SI: s_endpgm
+define void @test_fold_or_class_f32_0(i32 addrspace(1)* %out, float addrspace(1)* %in) #0 {
+  %tid = call i32 @llvm.r600.read.tidig.x() #1
+  %gep.in = getelementptr float addrspace(1)* %in, i32 %tid
+  %gep.out = getelementptr i32 addrspace(1)* %out, i32 %tid
+  %a = load float addrspace(1)* %gep.in
+
+  %class0 = call i1 @llvm.AMDGPU.class.f32(float %a, i32 1) #1
+  %class1 = call i1 @llvm.AMDGPU.class.f32(float %a, i32 3) #1
+  %or = or i1 %class0, %class1
+
+  %sext = sext i1 %or to i32
+  store i32 %sext, i32 addrspace(1)* %out, align 4
+  ret void
+}
+
+; SI-LABEL: {{^}}test_fold_or3_class_f32_0:
+; SI-NOT: v_cmp_class
+; SI: v_cmp_class_f32_e64 s{{\[[0-9]+:[0-9]+\]}}, v{{[0-9]+}}, 7{{$}}
+; SI-NOT: v_cmp_class
+; SI: s_endpgm
+define void @test_fold_or3_class_f32_0(i32 addrspace(1)* %out, float addrspace(1)* %in) #0 {
+  %tid = call i32 @llvm.r600.read.tidig.x() #1
+  %gep.in = getelementptr float addrspace(1)* %in, i32 %tid
+  %gep.out = getelementptr i32 addrspace(1)* %out, i32 %tid
+  %a = load float addrspace(1)* %gep.in
+
+  %class0 = call i1 @llvm.AMDGPU.class.f32(float %a, i32 1) #1
+  %class1 = call i1 @llvm.AMDGPU.class.f32(float %a, i32 2) #1
+  %class2 = call i1 @llvm.AMDGPU.class.f32(float %a, i32 4) #1
+  %or.0 = or i1 %class0, %class1
+  %or.1 = or i1 %or.0, %class2
+
+  %sext = sext i1 %or.1 to i32
+  store i32 %sext, i32 addrspace(1)* %out, align 4
+  ret void
+}
+
+; SI-LABEL: {{^}}test_fold_or_all_tests_class_f32_0:
+; SI-NOT: v_cmp_class
+; SI: v_mov_b32_e32 [[MASK:v[0-9]+]], 0x3ff{{$}}
+; SI: v_cmp_class_f32_e32 vcc, v{{[0-9]+}}, [[MASK]]{{$}}
+; SI-NOT: v_cmp_class
+; SI: s_endpgm
+define void @test_fold_or_all_tests_class_f32_0(i32 addrspace(1)* %out, float addrspace(1)* %in) #0 {
+  %tid = call i32 @llvm.r600.read.tidig.x() #1
+  %gep.in = getelementptr float addrspace(1)* %in, i32 %tid
+  %gep.out = getelementptr i32 addrspace(1)* %out, i32 %tid
+  %a = load float addrspace(1)* %gep.in
+
+  %class0 = call i1 @llvm.AMDGPU.class.f32(float %a, i32 1) #1
+  %class1 = call i1 @llvm.AMDGPU.class.f32(float %a, i32 2) #1
+  %class2 = call i1 @llvm.AMDGPU.class.f32(float %a, i32 4) #1
+  %class3 = call i1 @llvm.AMDGPU.class.f32(float %a, i32 8) #1
+  %class4 = call i1 @llvm.AMDGPU.class.f32(float %a, i32 16) #1
+  %class5 = call i1 @llvm.AMDGPU.class.f32(float %a, i32 32) #1
+  %class6 = call i1 @llvm.AMDGPU.class.f32(float %a, i32 64) #1
+  %class7 = call i1 @llvm.AMDGPU.class.f32(float %a, i32 128) #1
+  %class8 = call i1 @llvm.AMDGPU.class.f32(float %a, i32 256) #1
+  %class9 = call i1 @llvm.AMDGPU.class.f32(float %a, i32 512) #1
+  %or.0 = or i1 %class0, %class1
+  %or.1 = or i1 %or.0, %class2
+  %or.2 = or i1 %or.1, %class3
+  %or.3 = or i1 %or.2, %class4
+  %or.4 = or i1 %or.3, %class5
+  %or.5 = or i1 %or.4, %class6
+  %or.6 = or i1 %or.5, %class7
+  %or.7 = or i1 %or.6, %class8
+  %or.8 = or i1 %or.7, %class9
+  %sext = sext i1 %or.8 to i32
+  store i32 %sext, i32 addrspace(1)* %out, align 4
+  ret void
+}
+
+; SI-LABEL: {{^}}test_fold_or_class_f32_1:
+; SI-NOT: v_cmp_class
+; SI: v_cmp_class_f32_e64 {{s\[[0-9]+:[0-9]+\]}}, v{{[0-9]+}}, 12{{$}}
+; SI-NOT: v_cmp_class
+; SI: s_endpgm
+define void @test_fold_or_class_f32_1(i32 addrspace(1)* %out, float addrspace(1)* %in) #0 {
+  %tid = call i32 @llvm.r600.read.tidig.x() #1
+  %gep.in = getelementptr float addrspace(1)* %in, i32 %tid
+  %gep.out = getelementptr i32 addrspace(1)* %out, i32 %tid
+  %a = load float addrspace(1)* %gep.in
+
+  %class0 = call i1 @llvm.AMDGPU.class.f32(float %a, i32 4) #1
+  %class1 = call i1 @llvm.AMDGPU.class.f32(float %a, i32 8) #1
+  %or = or i1 %class0, %class1
+
+  %sext = sext i1 %or to i32
+  store i32 %sext, i32 addrspace(1)* %out, align 4
+  ret void
+}
+
+; SI-LABEL: {{^}}test_fold_or_class_f32_2:
+; SI-NOT: v_cmp_class
+; SI: v_cmp_class_f32_e64 {{s\[[0-9]+:[0-9]+\]}}, v{{[0-9]+}}, 7{{$}}
+; SI-NOT: v_cmp_class
+; SI: s_endpgm
+define void @test_fold_or_class_f32_2(i32 addrspace(1)* %out, float addrspace(1)* %in) #0 {
+  %tid = call i32 @llvm.r600.read.tidig.x() #1
+  %gep.in = getelementptr float addrspace(1)* %in, i32 %tid
+  %gep.out = getelementptr i32 addrspace(1)* %out, i32 %tid
+  %a = load float addrspace(1)* %gep.in
+
+  %class0 = call i1 @llvm.AMDGPU.class.f32(float %a, i32 7) #1
+  %class1 = call i1 @llvm.AMDGPU.class.f32(float %a, i32 7) #1
+  %or = or i1 %class0, %class1
+
+  %sext = sext i1 %or to i32
+  store i32 %sext, i32 addrspace(1)* %out, align 4
+  ret void
+}
+
+; SI-LABEL: {{^}}test_no_fold_or_class_f32_0:
+; SI-DAG: v_cmp_class_f32_e64 {{s\[[0-9]+:[0-9]+\]}}, v{{[0-9]+}}, 4{{$}}
+; SI-DAG: v_cmp_class_f32_e64 {{s\[[0-9]+:[0-9]+\]}}, s{{[0-9]+}}, 8{{$}}
+; SI: s_or_b64
+; SI: s_endpgm
+define void @test_no_fold_or_class_f32_0(i32 addrspace(1)* %out, float addrspace(1)* %in, float %b) #0 {
+  %tid = call i32 @llvm.r600.read.tidig.x() #1
+  %gep.in = getelementptr float addrspace(1)* %in, i32 %tid
+  %gep.out = getelementptr i32 addrspace(1)* %out, i32 %tid
+  %a = load float addrspace(1)* %gep.in
+
+  %class0 = call i1 @llvm.AMDGPU.class.f32(float %a, i32 4) #1
+  %class1 = call i1 @llvm.AMDGPU.class.f32(float %b, i32 8) #1
+  %or = or i1 %class0, %class1
+
+  %sext = sext i1 %or to i32
+  store i32 %sext, i32 addrspace(1)* %out, align 4
+  ret void
+}
+
+; SI-LABEL: {{^}}test_class_0_f32:
+; SI-NOT: v_cmp_class
+; SI: v_mov_b32_e32 [[RESULT:v[0-9]+]], 0{{$}}
+; SI-NEXT: buffer_store_dword [[RESULT]]
+; SI: s_endpgm
+define void @test_class_0_f32(i32 addrspace(1)* %out, float %a) #0 {
+  %result = call i1 @llvm.AMDGPU.class.f32(float %a, i32 0) #1
+  %sext = sext i1 %result to i32
+  store i32 %sext, i32 addrspace(1)* %out, align 4
+  ret void
+}
+
+; SI-LABEL: {{^}}test_class_0_f64:
+; SI-NOT: v_cmp_class
+; SI: v_mov_b32_e32 [[RESULT:v[0-9]+]], 0{{$}}
+; SI: buffer_store_dword [[RESULT]]
+; SI: s_endpgm
+define void @test_class_0_f64(i32 addrspace(1)* %out, double %a) #0 {
+  %result = call i1 @llvm.AMDGPU.class.f64(double %a, i32 0) #1
+  %sext = sext i1 %result to i32
+  store i32 %sext, i32 addrspace(1)* %out, align 4
+  ret void
+}
+
 attributes #0 = { nounwind }
 attributes #1 = { nounwind readnone }

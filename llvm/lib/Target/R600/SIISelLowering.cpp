@@ -218,7 +218,7 @@ SITargetLowering::SITargetLowering(TargetMachine &TM) :
   setTargetDAGCombine(ISD::FMAXNUM);
   setTargetDAGCombine(ISD::SELECT_CC);
   setTargetDAGCombine(ISD::SETCC);
-
+  setTargetDAGCombine(ISD::OR);
   setTargetDAGCombine(ISD::UINT_TO_FP);
 
   // All memory operations. Some folding on the pointer operand is done to help
@@ -1302,6 +1302,49 @@ SDValue SITargetLowering::performSHLPtrCombine(SDNode *N,
   return DAG.getNode(ISD::ADD, SL, VT, ShlX, COffset);
 }
 
+SDValue SITargetLowering::performOrCombine(SDNode *N,
+                                           DAGCombinerInfo &DCI) const {
+  SelectionDAG &DAG = DCI.DAG;
+  SDValue LHS = N->getOperand(0);
+  SDValue RHS = N->getOperand(1);
+
+  // or (fp_class x, c1), (fp_class x, c2) -> fp_class x, (c1 | c2)
+  if (LHS.getOpcode() == AMDGPUISD::FP_CLASS &&
+      RHS.getOpcode() == AMDGPUISD::FP_CLASS) {
+    SDValue Src = LHS.getOperand(0);
+    if (Src != RHS.getOperand(0))
+      return SDValue();
+
+    const ConstantSDNode *CLHS = dyn_cast<ConstantSDNode>(LHS.getOperand(1));
+    const ConstantSDNode *CRHS = dyn_cast<ConstantSDNode>(RHS.getOperand(1));
+    if (!CLHS || !CRHS)
+      return SDValue();
+
+    // Only 10 bits are used.
+    static const uint32_t MaxMask = 0x3ff;
+
+    uint32_t NewMask = (CLHS->getZExtValue() | CRHS->getZExtValue()) & MaxMask;
+    return DAG.getNode(AMDGPUISD::FP_CLASS, SDLoc(N), MVT::i1,
+                       Src, DAG.getConstant(NewMask, MVT::i32));
+  }
+
+  return SDValue();
+}
+
+SDValue SITargetLowering::performClassCombine(SDNode *N,
+                                              DAGCombinerInfo &DCI) const {
+  SelectionDAG &DAG = DCI.DAG;
+  SDValue Mask = N->getOperand(1);
+
+  // fp_class x, 0 -> false
+  if (const ConstantSDNode *CMask = dyn_cast<ConstantSDNode>(Mask)) {
+    if (CMask->isNullValue())
+      return DAG.getConstant(0, MVT::i1);
+  }
+
+  return SDValue();
+}
+
 static unsigned minMaxOpcToMin3Max3Opc(unsigned Opc) {
   switch (Opc) {
   case ISD::FMAXNUM:
@@ -1531,6 +1574,10 @@ SDValue SITargetLowering::PerformDAGCombine(SDNode *N,
     }
     break;
   }
+  case ISD::OR:
+    return performOrCombine(N, DCI);
+  case AMDGPUISD::FP_CLASS:
+    return performClassCombine(N, DCI);
   }
   return AMDGPUTargetLowering::PerformDAGCombine(N, DCI);
 }
