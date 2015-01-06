@@ -7,6 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "SyntaxHighlighting.h"
 #include "llvm/DebugInfo/DWARFDebugInfoEntry.h"
 #include "llvm/DebugInfo/DWARFCompileUnit.h"
 #include "llvm/DebugInfo/DWARFContext.h"
@@ -19,6 +20,7 @@
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 using namespace dwarf;
+using namespace syntax;
 
 // Small helper to extract a DIE pointed by a reference
 // attribute. It looks up the Unit containing the DIE and calls
@@ -39,15 +41,17 @@ void DWARFDebugInfoEntryMinimal::dump(raw_ostream &OS, DWARFUnit *u,
 
   if (debug_info_data.isValidOffset(offset)) {
     uint32_t abbrCode = debug_info_data.getULEB128(&offset);
+    WithColor(OS, syntax::Address).get() << format("\n0x%8.8x: ", Offset);
 
-    OS << format("\n0x%8.8x: ", Offset);
     if (abbrCode) {
       if (AbbrevDecl) {
-        const char *tagString = TagString(getTag());
-        if (tagString)
-          OS.indent(indent) << tagString;
-        else
-          OS.indent(indent) << format("DW_TAG_Unknown_%x", getTag());
+          const char *tagString = TagString(getTag());
+          if (tagString)
+            WithColor(OS, syntax::Tag).get().indent(indent) << tagString;
+          else
+            WithColor(OS, syntax::Tag).get().indent(indent) <<
+              format("DW_TAG_Unknown_%x", getTag());
+
         OS << format(" [%u] %c\n", abbrCode,
                      AbbrevDecl->hasChildren() ? '*' : ' ');
 
@@ -114,9 +118,10 @@ void DWARFDebugInfoEntryMinimal::dumpAttribute(raw_ostream &OS,
   OS.indent(indent+2);
   const char *attrString = AttributeString(attr);
   if (attrString)
-    OS << attrString;
+    WithColor(OS, syntax::Attribute) << attrString;
   else
-    OS << format("DW_AT_Unknown_%x", attr);
+    WithColor(OS, syntax::Attribute).get() << format("DW_AT_Unknown_%x", attr);
+
   const char *formString = FormEncodingString(form);
   if (formString)
     OS << " [" << formString << ']';
@@ -132,7 +137,9 @@ void DWARFDebugInfoEntryMinimal::dumpAttribute(raw_ostream &OS,
   
   const char *Name = nullptr;
   std::string File;
+  auto Color = syntax::Enumerator;
   if (attr == DW_AT_decl_file || attr == DW_AT_call_file) {
+  Color = syntax::String;
     if (const auto *LT = u->getContext().getLineTableForUnit(u))
       if (LT->getFileNameByIndex(
              formValue.getAsUnsignedConstant().getValue(),
@@ -144,13 +151,12 @@ void DWARFDebugInfoEntryMinimal::dumpAttribute(raw_ostream &OS,
   } else if (Optional<uint64_t> Val = formValue.getAsUnsignedConstant())
     Name = AttributeValueString(attr, *Val);
 
-  if (Name) {
-    OS << Name;
-  } else if (attr == DW_AT_decl_line || attr == DW_AT_call_line) {
+  if (Name)
+    WithColor(OS, Color) << Name;
+  else if (attr == DW_AT_decl_line || attr == DW_AT_call_line)
     OS << *formValue.getAsUnsignedConstant();
-  } else {
+  else
     formValue.dump(OS, u);
-  }
 
   // We have dumped the attribute raw value. For some attributes
   // having both the raw value and the pretty-printed value is

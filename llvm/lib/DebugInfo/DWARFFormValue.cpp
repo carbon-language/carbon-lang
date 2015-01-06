@@ -7,6 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "SyntaxHighlighting.h"
 #include "llvm/DebugInfo/DWARFFormValue.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/StringRef.h"
@@ -19,6 +20,7 @@
 #include <cassert>
 using namespace llvm;
 using namespace dwarf;
+using namespace syntax;
 
 namespace {
 uint8_t getRefAddrSize(uint8_t AddrSize, uint16_t Version) {
@@ -423,9 +425,10 @@ DWARFFormValue::dump(raw_ostream &OS, const DWARFUnit *cu) const {
     OS << format(" .debug_str[0x%8.8x] = ", (uint32_t)uvalue);
     Optional<const char *> DbgStr = getAsCString(cu);
     if (DbgStr.hasValue()) {
-      OS << '"';
-      OS.write_escaped(DbgStr.getValue());
-      OS << '"';
+      raw_ostream &COS = WithColor(OS, syntax::String);
+      COS << '"';
+      COS.write_escaped(DbgStr.getValue());
+      COS << '"';
     }
     break;
   }
@@ -433,9 +436,10 @@ DWARFFormValue::dump(raw_ostream &OS, const DWARFUnit *cu) const {
     OS << format(" indexed (%8.8x) string = ", (uint32_t)uvalue);
     Optional<const char *> DbgStr = getAsCString(cu);
     if (DbgStr.hasValue()) {
-      OS << '"';
-      OS.write_escaped(DbgStr.getValue());
-      OS << '"';
+      raw_ostream &COS = WithColor(OS, syntax::String);
+      COS << '"';
+      COS.write_escaped(DbgStr.getValue());
+      COS << '"';
     }
     break;
   }
@@ -479,8 +483,12 @@ DWARFFormValue::dump(raw_ostream &OS, const DWARFUnit *cu) const {
     break;
   }
 
-  if (cu_relative_offset)
-    OS << format(" => {0x%8.8" PRIx64 "}", uvalue + (cu ? cu->getOffset() : 0));
+  if (cu_relative_offset) {
+    OS << " => {";
+    WithColor(OS, syntax::Address).get()
+      << format("0x%8.8" PRIx64, uvalue + (cu ? cu->getOffset() : 0));
+    OS << "}";
+  }
 }
 
 Optional<const char *> DWARFFormValue::getAsCString(const DWARFUnit *U) const {
