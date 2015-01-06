@@ -968,7 +968,7 @@ void MipsAsmPrinter::EmitFPCallStub(
   // called otherwise. when the full stub generation is moved here
   // we need to deal with pic.
   //
-  if (Subtarget->getRelocationModel() == Reloc::PIC_)
+  if (TM.getRelocationModel() == Reloc::PIC_)
     llvm_unreachable("should not be here if we are compiling pic");
   TS.emitDirectiveSetReorder();
   //
