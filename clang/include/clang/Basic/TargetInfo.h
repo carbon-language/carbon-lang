@@ -528,18 +528,23 @@ public:
       CI_None = 0x00,
       CI_AllowsMemory = 0x01,
       CI_AllowsRegister = 0x02,
-      CI_ReadWrite = 0x04,       // "+r" output constraint (read and write).
-      CI_HasMatchingInput = 0x08 // This output operand has a matching input.
+      CI_ReadWrite = 0x04,         // "+r" output constraint (read and write).
+      CI_HasMatchingInput = 0x08,  // This output operand has a matching input.
+      CI_ImmediateConstant = 0x10, // This operand must be an immediate constant
     };
     unsigned Flags;
     int TiedOperand;
+    struct {
+      int Min;
+      int Max;
+    } ImmRange;
 
     std::string ConstraintStr;  // constraint: "=rm"
     std::string Name;           // Operand name: [foo] with no []'s.
   public:
     ConstraintInfo(StringRef ConstraintStr, StringRef Name)
-      : Flags(0), TiedOperand(-1), ConstraintStr(ConstraintStr.str()),
-      Name(Name.str()) {}
+        : Flags(0), TiedOperand(-1), ImmRange({0, 0}),
+          ConstraintStr(ConstraintStr.str()), Name(Name.str()) {}
 
     const std::string &getConstraintStr() const { return ConstraintStr; }
     const std::string &getName() const { return Name; }
@@ -562,10 +567,21 @@ public:
       return (unsigned)TiedOperand;
     }
 
+    bool requiresImmediateConstant() const {
+      return (Flags & CI_ImmediateConstant) != 0;
+    }
+    int getImmConstantMin() const { return ImmRange.Min; }
+    int getImmConstantMax() const { return ImmRange.Max; }
+
     void setIsReadWrite() { Flags |= CI_ReadWrite; }
     void setAllowsMemory() { Flags |= CI_AllowsMemory; }
     void setAllowsRegister() { Flags |= CI_AllowsRegister; }
     void setHasMatchingInput() { Flags |= CI_HasMatchingInput; }
+    void setRequiresImmediate(int Min, int Max) {
+      Flags |= CI_ImmediateConstant;
+      ImmRange.Min = Min;
+      ImmRange.Max = Max;
+    }
 
     /// \brief Indicate that this is an input operand that is tied to
     /// the specified output operand. 

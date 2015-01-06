@@ -226,6 +226,20 @@ StmtResult Sema::ActOnGCCAsmStmt(SourceLocation AsmLoc, bool IsSimple,
                               diag::err_asm_invalid_lvalue_in_input)
                          << Info.getConstraintStr()
                          << InputExpr->getSourceRange());
+    } else if (Info.requiresImmediateConstant() && !Info.allowsRegister()) {
+      llvm::APSInt Result;
+      if (!InputExpr->EvaluateAsInt(Result, Context))
+        return StmtError(
+            Diag(InputExpr->getLocStart(), diag::err_asm_invalid_type_in_input)
+            << InputExpr->getType() << Info.getConstraintStr()
+            << InputExpr->getSourceRange());
+      if (Result.slt(Info.getImmConstantMin()) ||
+          Result.sgt(Info.getImmConstantMax()))
+        return StmtError(Diag(InputExpr->getLocStart(),
+                              diag::err_invalid_asm_value_for_constraint)
+                         << Result.toString(10) << Info.getConstraintStr()
+                         << InputExpr->getSourceRange());
+
     } else {
       ExprResult Result = DefaultFunctionArrayLvalueConversion(Exprs[i]);
       if (Result.isInvalid())
