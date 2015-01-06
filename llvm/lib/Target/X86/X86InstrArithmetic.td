@@ -456,33 +456,29 @@ def INC8r  : I<0xFE, MRM0r, (outs GR8 :$dst), (ins GR8 :$src1),
                "inc{b}\t$dst",
                [(set GR8:$dst, EFLAGS, (X86inc_flag GR8:$src1))],
                IIC_UNARY_REG>;
-
-let isConvertibleToThreeAddress = 1, CodeSize = 1 in {  // Can xform into LEA.
-def INC16r : I<0x40, AddRegFrm, (outs GR16:$dst), (ins GR16:$src1),
-               "inc{w}\t$dst", [], IIC_UNARY_REG>,
-             OpSize16, Requires<[Not64BitMode]>;
-def INC32r : I<0x40, AddRegFrm, (outs GR32:$dst), (ins GR32:$src1),
-               "inc{l}\t$dst", [], IIC_UNARY_REG>,
-             OpSize32, Requires<[Not64BitMode]>;
+let isConvertibleToThreeAddress = 1, CodeSize = 2 in { // Can xform into LEA.
+def INC16r : I<0xFF, MRM0r, (outs GR16:$dst), (ins GR16:$src1),
+               "inc{w}\t$dst",
+               [(set GR16:$dst, EFLAGS, (X86inc_flag GR16:$src1))],
+               IIC_UNARY_REG>, OpSize16;
+def INC32r : I<0xFF, MRM0r, (outs GR32:$dst), (ins GR32:$src1),
+               "inc{l}\t$dst",
+               [(set GR32:$dst, EFLAGS, (X86inc_flag GR32:$src1))],
+               IIC_UNARY_REG>, OpSize32;
 def INC64r : RI<0xFF, MRM0r, (outs GR64:$dst), (ins GR64:$src1), "inc{q}\t$dst",
                 [(set GR64:$dst, EFLAGS, (X86inc_flag GR64:$src1))],
                 IIC_UNARY_REG>;
-} // isConvertibleToThreeAddress = 1, CodeSize = 1
-
-
-// In 64-bit mode, single byte INC and DEC cannot be encoded.
-let isConvertibleToThreeAddress = 1, CodeSize = 2 in {
-// Can transform into LEA.
-def INC64_16r : I<0xFF, MRM0r, (outs GR16:$dst), (ins GR16:$src1),
-                  "inc{w}\t$dst", [], IIC_UNARY_REG>, OpSize16;
-def INC64_32r : I<0xFF, MRM0r, (outs GR32:$dst), (ins GR32:$src1),
-                  "inc{l}\t$dst", [], IIC_UNARY_REG>, OpSize32;
-def DEC64_16r : I<0xFF, MRM1r, (outs GR16:$dst), (ins GR16:$src1),
-                  "dec{w}\t$dst", [], IIC_UNARY_REG>, OpSize16;
-def DEC64_32r : I<0xFF, MRM1r, (outs GR32:$dst), (ins GR32:$src1),
-                  "dec{l}\t$dst", [], IIC_UNARY_REG>, OpSize32;
 } // isConvertibleToThreeAddress = 1, CodeSize = 2
 
+// Short forms only valid in 32-bit mode. Selected during MCInst lowering.
+let CodeSize = 1, hasSideEffects = 0 in {
+def INC16r_alt : I<0x40, AddRegFrm, (outs GR16:$dst), (ins GR16:$src1),
+                   "inc{w}\t$dst", [], IIC_UNARY_REG>,
+                 OpSize16, Requires<[Not64BitMode]>;
+def INC32r_alt : I<0x40, AddRegFrm, (outs GR32:$dst), (ins GR32:$src1),
+                   "inc{l}\t$dst", [], IIC_UNARY_REG>,
+                 OpSize32, Requires<[Not64BitMode]>;
+} // CodeSize = 1, hasSideEffects = 0
 } // Constraints = "$src1 = $dst", SchedRW
 
 let CodeSize = 2, SchedRW = [WriteALULd, WriteRMW] in {
@@ -491,35 +487,13 @@ let CodeSize = 2, SchedRW = [WriteALULd, WriteRMW] in {
                 (implicit EFLAGS)], IIC_UNARY_MEM>;
   def INC16m : I<0xFF, MRM0m, (outs), (ins i16mem:$dst), "inc{w}\t$dst",
                [(store (add (loadi16 addr:$dst), 1), addr:$dst),
-                (implicit EFLAGS)], IIC_UNARY_MEM>,
-               OpSize16, Requires<[Not64BitMode]>;
+                (implicit EFLAGS)], IIC_UNARY_MEM>, OpSize16;
   def INC32m : I<0xFF, MRM0m, (outs), (ins i32mem:$dst), "inc{l}\t$dst",
                [(store (add (loadi32 addr:$dst), 1), addr:$dst),
-                (implicit EFLAGS)], IIC_UNARY_MEM>,
-               OpSize32, Requires<[Not64BitMode]>;
+                (implicit EFLAGS)], IIC_UNARY_MEM>, OpSize32;
   def INC64m : RI<0xFF, MRM0m, (outs), (ins i64mem:$dst), "inc{q}\t$dst",
                   [(store (add (loadi64 addr:$dst), 1), addr:$dst),
                    (implicit EFLAGS)], IIC_UNARY_MEM>;
-
-// These are duplicates of their 32-bit counterparts. Only needed so X86 knows
-// how to unfold them.
-// FIXME: What is this for??
-def INC64_16m : I<0xFF, MRM0m, (outs), (ins i16mem:$dst), "inc{w}\t$dst",
-                  [(store (add (loadi16 addr:$dst), 1), addr:$dst),
-                    (implicit EFLAGS)], IIC_UNARY_MEM>,
-                OpSize16, Requires<[In64BitMode]>;
-def INC64_32m : I<0xFF, MRM0m, (outs), (ins i32mem:$dst), "inc{l}\t$dst",
-                  [(store (add (loadi32 addr:$dst), 1), addr:$dst),
-                    (implicit EFLAGS)], IIC_UNARY_MEM>,
-                OpSize32, Requires<[In64BitMode]>;
-def DEC64_16m : I<0xFF, MRM1m, (outs), (ins i16mem:$dst), "dec{w}\t$dst",
-                  [(store (add (loadi16 addr:$dst), -1), addr:$dst),
-                    (implicit EFLAGS)], IIC_UNARY_MEM>,
-                OpSize16, Requires<[In64BitMode]>;
-def DEC64_32m : I<0xFF, MRM1m, (outs), (ins i32mem:$dst), "dec{l}\t$dst",
-                  [(store (add (loadi32 addr:$dst), -1), addr:$dst),
-                    (implicit EFLAGS)], IIC_UNARY_MEM>,
-                OpSize32, Requires<[In64BitMode]>;
 } // CodeSize = 2, SchedRW
 
 let Constraints = "$src1 = $dst", SchedRW = [WriteALU] in {
@@ -528,17 +502,29 @@ def DEC8r  : I<0xFE, MRM1r, (outs GR8 :$dst), (ins GR8 :$src1),
                "dec{b}\t$dst",
                [(set GR8:$dst, EFLAGS, (X86dec_flag GR8:$src1))],
                IIC_UNARY_REG>;
-let isConvertibleToThreeAddress = 1, CodeSize = 1 in {   // Can xform into LEA.
-def DEC16r : I<0x48, AddRegFrm, (outs GR16:$dst), (ins GR16:$src1),
-               "dec{w}\t$dst", [], IIC_UNARY_REG>,
-             OpSize16, Requires<[Not64BitMode]>;
-def DEC32r : I<0x48, AddRegFrm, (outs GR32:$dst), (ins GR32:$src1),
-               "dec{l}\t$dst", [], IIC_UNARY_REG>,
-             OpSize32, Requires<[Not64BitMode]>;
+let isConvertibleToThreeAddress = 1, CodeSize = 2 in { // Can xform into LEA.
+def DEC16r : I<0xFF, MRM1r, (outs GR16:$dst), (ins GR16:$src1),
+               "dec{w}\t$dst",
+               [(set GR16:$dst, EFLAGS, (X86dec_flag GR16:$src1))],
+               IIC_UNARY_REG>, OpSize16;
+def DEC32r : I<0xFF, MRM1r, (outs GR32:$dst), (ins GR32:$src1),
+               "dec{l}\t$dst",
+               [(set GR32:$dst, EFLAGS, (X86dec_flag GR32:$src1))],
+               IIC_UNARY_REG>, OpSize32;
 def DEC64r : RI<0xFF, MRM1r, (outs GR64:$dst), (ins GR64:$src1), "dec{q}\t$dst",
                 [(set GR64:$dst, EFLAGS, (X86dec_flag GR64:$src1))],
                 IIC_UNARY_REG>;
-} // CodeSize = 2
+} // isConvertibleToThreeAddress = 1, CodeSize = 2
+
+// Short forms only valid in 32-bit mode. Selected during MCInst lowering.
+let CodeSize = 1, hasSideEffects = 0 in {
+def DEC16r_alt : I<0x48, AddRegFrm, (outs GR16:$dst), (ins GR16:$src1),
+                   "dec{w}\t$dst", [], IIC_UNARY_REG>,
+                 OpSize16, Requires<[Not64BitMode]>;
+def DEC32r_alt : I<0x48, AddRegFrm, (outs GR32:$dst), (ins GR32:$src1),
+                   "dec{l}\t$dst", [], IIC_UNARY_REG>,
+                 OpSize32, Requires<[Not64BitMode]>;
+} // CodeSize = 1, hasSideEffects = 0
 } // Constraints = "$src1 = $dst", SchedRW
 
 
@@ -548,31 +534,15 @@ let CodeSize = 2, SchedRW = [WriteALULd, WriteRMW] in {
                 (implicit EFLAGS)], IIC_UNARY_MEM>;
   def DEC16m : I<0xFF, MRM1m, (outs), (ins i16mem:$dst), "dec{w}\t$dst",
                [(store (add (loadi16 addr:$dst), -1), addr:$dst),
-                (implicit EFLAGS)], IIC_UNARY_MEM>,
-               OpSize16, Requires<[Not64BitMode]>;
+                (implicit EFLAGS)], IIC_UNARY_MEM>, OpSize16;
   def DEC32m : I<0xFF, MRM1m, (outs), (ins i32mem:$dst), "dec{l}\t$dst",
                [(store (add (loadi32 addr:$dst), -1), addr:$dst),
-                (implicit EFLAGS)], IIC_UNARY_MEM>,
-               OpSize32, Requires<[Not64BitMode]>;
+                (implicit EFLAGS)], IIC_UNARY_MEM>, OpSize32;
   def DEC64m : RI<0xFF, MRM1m, (outs), (ins i64mem:$dst), "dec{q}\t$dst",
                   [(store (add (loadi64 addr:$dst), -1), addr:$dst),
                    (implicit EFLAGS)], IIC_UNARY_MEM>;
 } // CodeSize = 2, SchedRW
 } // Defs = [EFLAGS]
-
-let Predicates = [Not64BitMode] in {
-  def : Pat<(X86inc_flag GR16:$src1), (INC16r GR16:$src1)>;
-  def : Pat<(X86inc_flag GR32:$src1), (INC32r GR32:$src1)>;
-  def : Pat<(X86dec_flag GR16:$src1), (DEC16r GR16:$src1)>;
-  def : Pat<(X86dec_flag GR32:$src1), (DEC32r GR32:$src1)>;
-}
-
-let Predicates = [In64BitMode] in {
-  def : Pat<(X86inc_flag GR16:$src1), (INC64_16r GR16:$src1)>;
-  def : Pat<(X86inc_flag GR32:$src1), (INC64_32r GR32:$src1)>;
-  def : Pat<(X86dec_flag GR16:$src1), (DEC64_16r GR16:$src1)>;
-  def : Pat<(X86dec_flag GR32:$src1), (DEC64_32r GR32:$src1)>;
-}
 
 /// X86TypeInfo - This is a bunch of information that describes relevant X86
 /// information about value types.  For example, it can tell you what the

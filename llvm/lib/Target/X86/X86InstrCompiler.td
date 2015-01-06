@@ -1724,35 +1724,18 @@ def : Pat<(mul (loadi64 addr:$src1), i64immSExt8:$src2),
 def : Pat<(mul (loadi64 addr:$src1), i64immSExt32:$src2),
           (IMUL64rmi32 addr:$src1, i64immSExt32:$src2)>;
 
-// Increment reg.
-// Do not make INC if it is slow
-def : Pat<(add GR8:$src, 1),
-          (INC8r GR8:$src)>, Requires<[NotSlowIncDec]>;
-def : Pat<(add GR16:$src, 1),
-          (INC16r GR16:$src)>, Requires<[NotSlowIncDec, Not64BitMode]>;
-def : Pat<(add GR16:$src, 1),
-          (INC64_16r GR16:$src)>, Requires<[NotSlowIncDec, In64BitMode]>;
-def : Pat<(add GR32:$src, 1),
-          (INC32r GR32:$src)>, Requires<[NotSlowIncDec, Not64BitMode]>;
-def : Pat<(add GR32:$src, 1),
-          (INC64_32r GR32:$src)>, Requires<[NotSlowIncDec, In64BitMode]>;
-def : Pat<(add GR64:$src, 1),
-          (INC64r GR64:$src)>, Requires<[NotSlowIncDec]>;
-
-// Decrement reg.
-// Do not make DEC if it is slow
-def : Pat<(add GR8:$src, -1),
-          (DEC8r GR8:$src)>, Requires<[NotSlowIncDec]>;
-def : Pat<(add GR16:$src, -1),
-          (DEC16r GR16:$src)>, Requires<[NotSlowIncDec, Not64BitMode]>;
-def : Pat<(add GR16:$src, -1),
-          (DEC64_16r GR16:$src)>, Requires<[NotSlowIncDec, In64BitMode]>;
-def : Pat<(add GR32:$src, -1),
-          (DEC32r GR32:$src)>, Requires<[NotSlowIncDec, Not64BitMode]>;
-def : Pat<(add GR32:$src, -1),
-          (DEC64_32r GR32:$src)>, Requires<[NotSlowIncDec, In64BitMode]>;
-def : Pat<(add GR64:$src, -1),
-          (DEC64r GR64:$src)>, Requires<[NotSlowIncDec]>;
+// Increment/Decrement reg.
+// Do not make INC/DEC if it is slow
+let Predicates = [NotSlowIncDec] in {
+  def : Pat<(add GR8:$src, 1),   (INC8r GR8:$src)>;
+  def : Pat<(add GR16:$src, 1),  (INC16r GR16:$src)>;
+  def : Pat<(add GR32:$src, 1),  (INC32r GR32:$src)>;
+  def : Pat<(add GR64:$src, 1),  (INC64r GR64:$src)>;
+  def : Pat<(add GR8:$src, -1),  (DEC8r GR8:$src)>;
+  def : Pat<(add GR16:$src, -1), (DEC16r GR16:$src)>;
+  def : Pat<(add GR32:$src, -1), (DEC32r GR32:$src)>;
+  def : Pat<(add GR64:$src, -1), (DEC64r GR64:$src)>;
+}
 
 // or reg/reg.
 def : Pat<(or GR8 :$src1, GR8 :$src2), (OR8rr  GR8 :$src1, GR8 :$src2)>;

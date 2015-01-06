@@ -146,14 +146,10 @@ X86InstrInfo::X86InstrInfo(X86Subtarget &STI)
     { X86::AND8rr,      X86::AND8mr,     0 },
     { X86::DEC16r,      X86::DEC16m,     0 },
     { X86::DEC32r,      X86::DEC32m,     0 },
-    { X86::DEC64_16r,   X86::DEC64_16m,  0 },
-    { X86::DEC64_32r,   X86::DEC64_32m,  0 },
     { X86::DEC64r,      X86::DEC64m,     0 },
     { X86::DEC8r,       X86::DEC8m,      0 },
     { X86::INC16r,      X86::INC16m,     0 },
     { X86::INC32r,      X86::INC32m,     0 },
-    { X86::INC64_16r,   X86::INC64_16m,  0 },
-    { X86::INC64_32r,   X86::INC64_32m,  0 },
     { X86::INC64r,      X86::INC64m,     0 },
     { X86::INC8r,       X86::INC8m,      0 },
     { X86::NEG16r,      X86::NEG16m,     0 },
@@ -2175,11 +2171,9 @@ X86InstrInfo::convertToThreeAddressWithLEA(unsigned MIOpc,
     break;
   }
   case X86::INC16r:
-  case X86::INC64_16r:
     addRegOffset(MIB, leaInReg, true, 1);
     break;
   case X86::DEC16r:
-  case X86::DEC64_16r:
     addRegOffset(MIB, leaInReg, true, -1);
     break;
   case X86::ADD16ri:
@@ -2332,8 +2326,7 @@ X86InstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
     switch (MIOpc) {
     default: return nullptr;
     case X86::INC64r:
-    case X86::INC32r:
-    case X86::INC64_32r: {
+    case X86::INC32r: {
       assert(MI->getNumOperands() >= 2 && "Unknown inc instruction!");
       unsigned Opc = MIOpc == X86::INC64r ? X86::LEA64r
         : (is64Bit ? X86::LEA64_32r : X86::LEA32r);
@@ -2354,7 +2347,6 @@ X86InstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
       break;
     }
     case X86::INC16r:
-    case X86::INC64_16r:
       if (DisableLEA16)
         return is64Bit ? convertToThreeAddressWithLEA(MIOpc, MFI, MBBI, LV)
                        : nullptr;
@@ -2363,8 +2355,7 @@ X86InstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
                         .addOperand(Dest).addOperand(Src), 1);
       break;
     case X86::DEC64r:
-    case X86::DEC32r:
-    case X86::DEC64_32r: {
+    case X86::DEC32r: {
       assert(MI->getNumOperands() >= 2 && "Unknown dec instruction!");
       unsigned Opc = MIOpc == X86::DEC64r ? X86::LEA64r
         : (is64Bit ? X86::LEA64_32r : X86::LEA32r);
@@ -2387,7 +2378,6 @@ X86InstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
       break;
     }
     case X86::DEC16r:
-    case X86::DEC64_16r:
       if (DisableLEA16)
         return is64Bit ? convertToThreeAddressWithLEA(MIOpc, MFI, MBBI, LV)
                        : nullptr;
@@ -3718,14 +3708,12 @@ inline static bool isDefConvertible(MachineInstr *MI) {
   case X86::SUB16rr:   case X86::SUB8rr:   case X86::SUB64rm:
   case X86::SUB32rm:   case X86::SUB16rm:  case X86::SUB8rm:
   case X86::DEC64r:    case X86::DEC32r:   case X86::DEC16r: case X86::DEC8r:
-  case X86::DEC64_32r: case X86::DEC64_16r:
   case X86::ADD64ri32: case X86::ADD64ri8: case X86::ADD32ri:
   case X86::ADD32ri8:  case X86::ADD16ri:  case X86::ADD16ri8:
   case X86::ADD8ri:    case X86::ADD64rr:  case X86::ADD32rr:
   case X86::ADD16rr:   case X86::ADD8rr:   case X86::ADD64rm:
   case X86::ADD32rm:   case X86::ADD16rm:  case X86::ADD8rm:
   case X86::INC64r:    case X86::INC32r:   case X86::INC16r: case X86::INC8r:
-  case X86::INC64_32r: case X86::INC64_16r:
   case X86::AND64ri32: case X86::AND64ri8: case X86::AND32ri:
   case X86::AND32ri8:  case X86::AND16ri:  case X86::AND16ri8:
   case X86::AND8ri:    case X86::AND64rr:  case X86::AND32rr:
@@ -5476,14 +5464,10 @@ bool X86InstrInfo::shouldScheduleAdjacent(MachineInstr* First,
     return FuseKind == FuseCmp || FuseKind == FuseInc;
   case X86::INC16r:
   case X86::INC32r:
-  case X86::INC64_16r:
-  case X86::INC64_32r:
   case X86::INC64r:
   case X86::INC8r:
   case X86::DEC16r:
   case X86::DEC32r:
-  case X86::DEC64_16r:
-  case X86::DEC64_32r:
   case X86::DEC64r:
   case X86::DEC8r:
     return FuseKind == FuseInc;

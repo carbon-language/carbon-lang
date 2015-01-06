@@ -545,6 +545,24 @@ ReSimplify:
     break;
   }
 
+  case X86::DEC16r:
+  case X86::DEC32r:
+  case X86::INC16r:
+  case X86::INC32r:
+    // If we aren't in 64-bit mode we can use the 1-byte inc/dec instructions.
+    if (!AsmPrinter.getSubtarget().is64Bit()) {
+      unsigned Opcode;
+      switch (OutMI.getOpcode()) {
+      default: llvm_unreachable("Invalid opcode");
+      case X86::DEC16r: Opcode = X86::DEC16r_alt; break;
+      case X86::DEC32r: Opcode = X86::DEC32r_alt; break;
+      case X86::INC16r: Opcode = X86::INC16r_alt; break;
+      case X86::INC32r: Opcode = X86::INC32r_alt; break;
+      }
+      OutMI.setOpcode(Opcode);
+    }
+    break;
+
   // These are pseudo-ops for OR to help with the OR->ADD transformation.  We do
   // this with an ugly goto in case the resultant OR uses EAX and needs the
   // short form.
