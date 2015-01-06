@@ -1416,7 +1416,7 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
     if (NewRetTy->isStructTy())
       return false; // TODO: Handle multiple return values.
 
-    if (!CastInst::isBitCastable(NewRetTy, OldRetTy)) {
+    if (!CastInst::isBitOrNoopPointerCastable(NewRetTy, OldRetTy, DL)) {
       if (Callee->isDeclaration())
         return false;   // Cannot transform this return value.
 
@@ -1451,12 +1451,21 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
   unsigned NumActualArgs = CS.arg_size();
   unsigned NumCommonArgs = std::min(FT->getNumParams(), NumActualArgs);
 
+  // Prevent us turning:
+  // declare void @takes_i32_inalloca(i32* inalloca)
+  //  call void bitcast (void (i32*)* @takes_i32_inalloca to void (i32)*)(i32 0)
+  //
+  // into:
+  //  call void @takes_i32_inalloca(i32* null)
+  if (Callee->getAttributes().hasAttrSomewhere(Attribute::InAlloca))
+    return false;
+
   CallSite::arg_iterator AI = CS.arg_begin();
   for (unsigned i = 0, e = NumCommonArgs; i != e; ++i, ++AI) {
     Type *ParamTy = FT->getParamType(i);
     Type *ActTy = (*AI)->getType();
 
-    if (!CastInst::isBitCastable(ActTy, ParamTy))
+    if (!CastInst::isBitOrNoopPointerCastable(ActTy, ParamTy, DL))
       return false;   // Cannot transform this parameter value.
 
     if (AttrBuilder(CallerPAL.getParamAttributes(i + 1), i + 1).
@@ -1551,7 +1560,7 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
     if ((*AI)->getType() == ParamTy) {
       Args.push_back(*AI);
     } else {
-      Args.push_back(Builder->CreateBitCast(*AI, ParamTy));
+      Args.push_back(Builder->CreateBitOrPointerCast(*AI, ParamTy));
     }
 
     // Add any parameter attributes.
@@ -1622,7 +1631,7 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
   Value *NV = NC;
   if (OldRetTy != NV->getType() && !Caller->use_empty()) {
     if (!NV->getType()->isVoidTy()) {
-      NV = NC = CastInst::Create(CastInst::BitCast, NC, OldRetTy);
+      NV = NC = CastInst::CreateBitOrPointerCast(NC, OldRetTy);
       NC->setDebugLoc(Caller->getDebugLoc());
 
       // If this is an invoke instruction, we should insert it after the first
