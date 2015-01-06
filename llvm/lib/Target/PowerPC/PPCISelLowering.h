@@ -591,6 +591,28 @@ namespace llvm {
     }
 
   private:
+
+    struct ReuseLoadInfo {
+      SDValue Ptr;
+      SDValue Chain;
+      SDValue ResChain;
+      MachinePointerInfo MPI;
+      bool IsInvariant;
+      unsigned Alignment;
+      AAMDNodes AAInfo;
+      const MDNode *Ranges;
+
+      ReuseLoadInfo() : IsInvariant(false), Alignment(0), Ranges(nullptr) {}
+    };
+
+    bool canReuseLoadAddress(SDValue Op, EVT MemVT, ReuseLoadInfo &RLI,
+                             SelectionDAG &DAG) const;
+    void spliceIntoChain(SDValue ResChain, SDValue NewResChain,
+                         SelectionDAG &DAG) const;
+
+    void LowerFP_TO_INTForReuse(SDValue Op, ReuseLoadInfo &RLI,
+                                SelectionDAG &DAG, SDLoc dl) const;
+
     SDValue getFramePointerFrameIndex(SelectionDAG & DAG) const;
     SDValue getReturnAddrFrameIndex(SelectionDAG & DAG) const;
 

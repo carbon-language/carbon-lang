@@ -302,27 +302,6 @@ http://www.lcs.mit.edu/pubs/pdf/MIT-LCS-TM-600.pdf
 
 ===-------------------------------------------------------------------------===
 
-float foo(float X) { return (int)(X); }
-
-Currently produces:
-
-_foo:
-        fctiwz f0, f1
-        stfd f0, -8(r1)
-        lwz r2, -4(r1)
-        extsw r2, r2
-        std r2, -16(r1)
-        lfd f0, -16(r1)
-        fcfid f0, f0
-        frsp f1, f0
-        blr
-
-We could use a target dag combine to turn the lwz/extsw into an lwa when the 
-lwz has a single use.  Since LWA is cracked anyway, this would be a codesize
-win only.
-
-===-------------------------------------------------------------------------===
-
 We generate ugly code for this:
 
 void func(unsigned int *ret, float dx, float dy, float dz, float dw) {
