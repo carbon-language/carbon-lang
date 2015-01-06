@@ -4,7 +4,7 @@ $c1 = comdat any
 @v1 = weak hidden global i32 0
 @v2 = weak protected global i32 0
 @v3 = weak hidden global i32 0
-@v4 = hidden global i32 1, comdat $c1
+@v4 = hidden global i32 1, comdat($c1)
 
 ; Aliases
 @a1 = weak hidden alias i32* @v1

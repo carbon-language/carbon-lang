@@ -5,5 +5,5 @@ target triple = "i686-pc-windows-msvc"
 
 $foo = comdat largest
 @foo = global i32 0
-@bar = global i32 0, comdat $foo
+@bar = global i32 0, comdat($foo)
 ; CHECK: Associative COMDAT symbol 'foo' is not a key for its COMDAT.

@@ -1,7 +1,7 @@
 ; RUN: llc -mtriple x86_64-pc-linux-gnu < %s | FileCheck %s
 
 $foo = comdat any
-@bar = global i32 42, comdat $foo
+@bar = global i32 42, comdat($foo)
 @foo = global i32 42
 
 ; CHECK:      .type   bar,@object

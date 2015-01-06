@@ -6,8 +6,8 @@
 
 $c1 = comdat any
 
-@v1 = weak_odr global i32 42, comdat $c1
-define weak_odr i32 @f1(i8*) comdat $c1 {
+@v1 = weak_odr global i32 42, comdat($c1)
+define weak_odr i32 @f1(i8*) comdat($c1) {
 bb10:
   br label %bb11
 bb11:
@@ -27,7 +27,7 @@ bb11:
 ; CHECK: $c1 = comdat any
 ; CHECK: $c2 = comdat any
 
-; CHECK: @v1 = weak_odr global i32 42, comdat $c1
+; CHECK: @v1 = weak_odr global i32 42, comdat($c1)
 
 ; CHECK: @r11 = global i32* @v1{{$}}
 ; CHECK: @r12 = global i32 (i8*)* @f1{{$}}
@@ -35,7 +35,7 @@ bb11:
 ; CHECK: @r21 = global i32* @v1{{$}}
 ; CHECK: @r22 = global i32 (i8*)* @f1{{$}}
 
-; CHECK: @v11 = internal global i32 41, comdat $c2
+; CHECK: @v11 = internal global i32 41, comdat($c2)
 
 ; CHECK: @a11 = alias i32* @v1{{$}}
 ; CHECK: @a12 = alias bitcast (i32* @v1 to i16*)
@@ -49,14 +49,14 @@ bb11:
 ; CHECK: @a23 = alias i32 (i8*)* @f12{{$}}
 ; CHECK: @a24 = alias bitcast (i32 (i8*)* @f12 to i16*)
 
-; CHECK:      define weak_odr protected i32 @f1(i8*) comdat $c1 {
+; CHECK:      define weak_odr protected i32 @f1(i8*) comdat($c1) {
 ; CHECK-NEXT: bb10:
 ; CHECK-NEXT:   br label %bb11{{$}}
 ; CHECK:      bb11:
 ; CHECK-NEXT:   ret i32 42
 ; CHECK-NEXT: }
 
-; CHECK:      define internal i32 @f12(i8* %this) comdat $c2 {
+; CHECK:      define internal i32 @f12(i8* %this) comdat($c2) {
 ; CHECK-NEXT: bb20:
 ; CHECK-NEXT:   store i8* %this, i8** null
 ; CHECK-NEXT:   br label %bb21

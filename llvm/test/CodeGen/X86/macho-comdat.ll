@@ -2,5 +2,5 @@
 ; RUN: FileCheck < %t %s
 
 $f = comdat any
-@v = global i32 0, comdat $f
+@v = global i32 0, comdat($f)
 ; CHECK: LLVM ERROR: MachO doesn't support COMDATs, 'f' cannot be lowered.

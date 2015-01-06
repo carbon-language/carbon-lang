@@ -17,8 +17,8 @@ $c1 = comdat any
 ; CHECK-DAG: @v3 = hidden global i32 0
 @v3 = protected global i32 0
 
-; CHECK-DAG: @v4 = hidden global i32 1, comdat $c1
-@v4 = global i32 1, comdat $c1
+; CHECK-DAG: @v4 = hidden global i32 1, comdat($c1)
+@v4 = global i32 1, comdat($c1)
 
 ; Aliases
 ; CHECK: @a1 = hidden alias i32* @v1

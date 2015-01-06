@@ -2,9 +2,9 @@
 
 $comdat_global = comdat any
 
-@comdat_global = weak_odr global i8 0, comdat $comdat_global
+@comdat_global = weak_odr global i8 0, comdat($comdat_global)
 @simple_global = internal global i8 0
-; CHECK: @comdat_global = weak_odr global i8 0, comdat $comdat_global
+; CHECK: @comdat_global = weak_odr global i8 0, comdat{{$}}
 ; CHECK: @simple_global = internal global i8 42
 
 @llvm.global_ctors = appending global [2 x { i32, void ()*, i8* }] [
@@ -20,7 +20,7 @@ define void @init_comdat_global() {
 }
 ; CHECK: define void @init_comdat_global()
 
-define internal void @init_simple_global() comdat $comdat_global {
+define internal void @init_simple_global() comdat($comdat_global) {
   store i8 42, i8* @simple_global
   ret void
 }

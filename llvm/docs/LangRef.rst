@@ -596,7 +596,8 @@ Syntax::
     [@<GlobalVarName> =] [Linkage] [Visibility] [DLLStorageClass] [ThreadLocal]
                          [unnamed_addr] [AddrSpace] [ExternallyInitialized]
                          <global | constant> <Type> [<InitializerConstant>]
-                         [, section "name"] [, align <Alignment>]
+                         [, section "name"] [, comdat [($name)]]
+                         [, align <Alignment>]
 
 For example, the following defines a global in a numbered address space
 with an initializer, section, and alignment:
@@ -681,7 +682,7 @@ Syntax::
     define [linkage] [visibility] [DLLStorageClass]
            [cconv] [ret attrs]
            <ResultType> @<FunctionName> ([argument list])
-           [unnamed_addr] [fn Attrs] [section "name"] [comdat $<ComdatName>]
+           [unnamed_addr] [fn Attrs] [section "name"] [comdat [($name)]]
            [align N] [gc] [prefix Constant] [prologue Constant] { ... }
 
 The argument list is a comma seperated sequence of arguments where each
@@ -775,11 +776,20 @@ the COMDAT key's section is the largest:
 .. code-block:: llvm
 
    $foo = comdat largest
-   @foo = global i32 2, comdat $foo
+   @foo = global i32 2, comdat($foo)
 
-   define void @bar() comdat $foo {
+   define void @bar() comdat($foo) {
      ret void
    }
+
+As a syntactic sugar the ``$name`` can be omitted if the name is the same as
+the global name:
+
+.. code-block:: llvm
+
+  $foo = comdat any
+  @foo = global i32 2, comdat
+
 
 In a COFF object file, this will create a COMDAT section with selection kind
 ``IMAGE_COMDAT_SELECT_LARGEST`` containing the contents of the ``@foo`` symbol
@@ -803,8 +813,8 @@ For example:
 
    $foo = comdat any
    $bar = comdat any
-   @g1 = global i32 42, section "sec", comdat $foo
-   @g2 = global i32 42, section "sec", comdat $bar
+   @g1 = global i32 42, section "sec", comdat($foo)
+   @g2 = global i32 42, section "sec", comdat($bar)
 
 From the object file perspective, this requires the creation of two sections
 with the same name.  This is necessary because both globals belong to different

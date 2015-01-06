@@ -1683,6 +1683,24 @@ static void PrintThreadLocalModel(GlobalVariable::ThreadLocalMode TLM,
   }
 }
 
+static void maybePrintComdat(formatted_raw_ostream &Out,
+                             const GlobalObject &GO) {
+  const Comdat *C = GO.getComdat();
+  if (!C)
+    return;
+
+  if (isa<GlobalVariable>(GO))
+    Out << ',';
+  Out << " comdat";
+
+  if (GO.getName() == C->getName())
+    return;
+
+  Out << '(';
+  PrintLLVMName(Out, C->getName(), ComdatPrefix);
+  Out << ')';
+}
+
 void AssemblyWriter::printGlobal(const GlobalVariable *GV) {
   if (GV->isMaterializable())
     Out << "; Materializable\n";
@@ -1716,10 +1734,7 @@ void AssemblyWriter::printGlobal(const GlobalVariable *GV) {
     PrintEscapedString(GV->getSection(), Out);
     Out << '"';
   }
-  if (GV->hasComdat()) {
-    Out << ", comdat ";
-    PrintLLVMName(Out, GV->getComdat()->getName(), ComdatPrefix);
-  }
+  maybePrintComdat(Out, *GV);
   if (GV->getAlignment())
     Out << ", align " << GV->getAlignment();
 
@@ -1900,10 +1915,7 @@ void AssemblyWriter::printFunction(const Function *F) {
     PrintEscapedString(F->getSection(), Out);
     Out << '"';
   }
-  if (F->hasComdat()) {
-    Out << " comdat ";
-    PrintLLVMName(Out, F->getComdat()->getName(), ComdatPrefix);
-  }
+  maybePrintComdat(Out, *F);
   if (F->getAlignment())
     Out << " align " << F->getAlignment();
   if (F->hasGC())

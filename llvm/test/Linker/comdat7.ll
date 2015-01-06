@@ -2,7 +2,7 @@
 
 $c1 = comdat largest
 
-define void @c1() comdat $c1 {
+define void @c1() comdat($c1) {
   ret void
 }
 ; CHECK: GlobalVariable required for data dependent selection!
