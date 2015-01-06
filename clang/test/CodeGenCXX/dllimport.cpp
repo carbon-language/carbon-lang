@@ -1,13 +1,13 @@
-// RUN: %clang_cc1 -triple i686-windows-msvc   -fno-rtti -emit-llvm -std=c++1y -O0 -o - %s -DMSABI | FileCheck --check-prefix=MSC --check-prefix=M32 %s
-// RUN: %clang_cc1 -triple x86_64-windows-msvc -fno-rtti -emit-llvm -std=c++1y -O0 -o - %s -DMSABI | FileCheck --check-prefix=MSC --check-prefix=M64 %s
-// RUN: %clang_cc1 -triple i686-windows-gnu    -fno-rtti -emit-llvm -std=c++1y -O0 -o - %s         | FileCheck --check-prefix=GNU --check-prefix=G32 %s
-// RUN: %clang_cc1 -triple x86_64-windows-gnu  -fno-rtti -emit-llvm -std=c++1y -O0 -o - %s         | FileCheck --check-prefix=GNU --check-prefix=G64 %s
-// RUN: %clang_cc1 -triple i686-windows-msvc   -fno-rtti -emit-llvm -std=c++1y -O1 -o - %s -DMSABI | FileCheck --check-prefix=MO1 %s
-// RUN: %clang_cc1 -triple i686-windows-gnu    -fno-rtti -emit-llvm -std=c++1y -O1 -o - %s         | FileCheck --check-prefix=GO1 %s
+// RUN: %clang_cc1 -triple i686-windows-msvc   -fno-rtti -emit-llvm -std=c++1y -O0 -o - %s -DMSABI -w | FileCheck --check-prefix=MSC --check-prefix=M32 %s
+// RUN: %clang_cc1 -triple x86_64-windows-msvc -fno-rtti -emit-llvm -std=c++1y -O0 -o - %s -DMSABI -w | FileCheck --check-prefix=MSC --check-prefix=M64 %s
+// RUN: %clang_cc1 -triple i686-windows-gnu    -fno-rtti -emit-llvm -std=c++1y -O0 -o - %s         -w | FileCheck --check-prefix=GNU --check-prefix=G32 %s
+// RUN: %clang_cc1 -triple x86_64-windows-gnu  -fno-rtti -emit-llvm -std=c++1y -O0 -o - %s         -w | FileCheck --check-prefix=GNU --check-prefix=G64 %s
+// RUN: %clang_cc1 -triple i686-windows-msvc   -fno-rtti -emit-llvm -std=c++1y -O1 -o - %s -DMSABI -w | FileCheck --check-prefix=MO1 %s
+// RUN: %clang_cc1 -triple i686-windows-gnu    -fno-rtti -emit-llvm -std=c++1y -O1 -o - %s         -w | FileCheck --check-prefix=GO1 %s
 
 // CHECK-NOT doesn't play nice with CHECK-DAG, so use separate run lines.
-// RUN: %clang_cc1 -triple i686-windows-msvc   -fno-rtti -emit-llvm -std=c++1y -O0 -o - %s -DMSABI | FileCheck --check-prefix=MSC2 %s
-// RUN: %clang_cc1 -triple i686-windows-gnu    -fno-rtti -emit-llvm -std=c++1y -O0 -o - %s         | FileCheck --check-prefix=GNU2 %s
+// RUN: %clang_cc1 -triple i686-windows-msvc   -fno-rtti -emit-llvm -std=c++1y -O0 -o - %s -DMSABI -w | FileCheck --check-prefix=MSC2 %s
+// RUN: %clang_cc1 -triple i686-windows-gnu    -fno-rtti -emit-llvm -std=c++1y -O0 -o - %s         -w | FileCheck --check-prefix=GNU2 %s
 
 // Helper structs to make templates more expressive.
 struct ImplicitInst_Imported {};
