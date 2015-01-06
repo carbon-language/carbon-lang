@@ -1039,33 +1039,17 @@ public:
   }
   bool isAdrLabel() const {
     // If we have an immediate that's not a constant, treat it as a label
-    // reference needing a fixup. If it is a constant, but it can't fit 
-    // into shift immediate encoding, we reject it.
-    if (isImm() && !isa<MCConstantExpr>(getImm())) return true;
-    else return (isARMSOImm() || isARMSOImmNeg());
-  }
-  bool isARMSOImm() const {
+    // reference needing a fixup.
+    if (isImm() && !isa<MCConstantExpr>(getImm()))
+      return true;
+
+    // If it is a constant, it must fit into a modified immediate encoding.
     if (!isImm()) return false;
     const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
     if (!CE) return false;
     int64_t Value = CE->getValue();
-    return ARM_AM::getSOImmVal(Value) != -1;
-  }
-  bool isARMSOImmNot() const {
-    if (!isImm()) return false;
-    const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
-    if (!CE) return false;
-    int64_t Value = CE->getValue();
-    return ARM_AM::getSOImmVal(~Value) != -1;
-  }
-  bool isARMSOImmNeg() const {
-    if (!isImm()) return false;
-    const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
-    if (!CE) return false;
-    int64_t Value = CE->getValue();
-    // Only use this when not representable as a plain so_imm.
-    return ARM_AM::getSOImmVal(Value) == -1 &&
-      ARM_AM::getSOImmVal(-Value) != -1;
+    return (ARM_AM::getSOImmVal(Value) != -1 ||
+            ARM_AM::getSOImmVal(~Value) != -1);;
   }
   bool isT2SOImm() const {
     if (!isImm()) return false;
@@ -2039,22 +2023,6 @@ public:
     assert(isMem()  && "Unknown value type!");
     assert(isa<MCConstantExpr>(Memory.OffsetImm) && "Unknown value type!");
     Inst.addOperand(MCOperand::CreateImm(Memory.OffsetImm->getValue()));
-  }
-
-  void addARMSOImmNotOperands(MCInst &Inst, unsigned N) const {
-    assert(N == 1 && "Invalid number of operands!");
-    // The operand is actually a so_imm, but we have its bitwise
-    // negation in the assembly source, so twiddle it here.
-    const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
-    Inst.addOperand(MCOperand::CreateImm(~CE->getValue()));
-  }
-
-  void addARMSOImmNegOperands(MCInst &Inst, unsigned N) const {
-    assert(N == 1 && "Invalid number of operands!");
-    // The operand is actually a so_imm, but we have its
-    // negation in the assembly source, so twiddle it here.
-    const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
-    Inst.addOperand(MCOperand::CreateImm(-CE->getValue()));
   }
 
   void addMemBarrierOptOperands(MCInst &Inst, unsigned N) const {
@@ -5478,7 +5446,7 @@ bool ARMAsmParser::shouldOmitCCOutOperand(StringRef Mnemonic,
   // conditionally adding the cc_out in the first place because we need
   // to check the type of the parsed immediate operand.
   if (Mnemonic == "mov" && Operands.size() > 4 && !isThumb() &&
-      !static_cast<ARMOperand &>(*Operands[4]).isARMSOImm() &&
+      !static_cast<ARMOperand &>(*Operands[4]).isModImm() &&
       static_cast<ARMOperand &>(*Operands[4]).isImm0_65535Expr() &&
       static_cast<ARMOperand &>(*Operands[1]).getReg() == 0)
     return true;
@@ -10058,7 +10026,6 @@ unsigned ARMAsmParser::validateTargetOperandClass(MCParsedAsmOperand &AsmOp,
           return Match_Success;
     break;
   case MCK_ModImm:
-  case MCK_ARMSOImm:
     if (Op.isImm()) {
       const MCExpr *SOExpr = Op.getImm();
       int64_t Value;

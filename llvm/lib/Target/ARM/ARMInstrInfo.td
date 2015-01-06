@@ -331,24 +331,6 @@ def imm16_31 : ImmLeaf<i32, [{
   return (int32_t)Imm >= 16 && (int32_t)Imm < 32;
 }]>;
 
-def so_imm_neg_asmoperand : AsmOperandClass { let Name = "ARMSOImmNeg"; }
-def so_imm_neg : Operand<i32>, PatLeaf<(imm), [{
-    unsigned Value = -(unsigned)N->getZExtValue();
-    return Value && ARM_AM::getSOImmVal(Value) != -1;
-  }], imm_neg_XFORM> {
-  let ParserMatchClass = so_imm_neg_asmoperand;
-}
-
-// Note: this pattern doesn't require an encoder method and such, as it's
-// only used on aliases (Pat<> and InstAlias<>). The actual encoding
-// is handled by the destination instructions, which use so_imm.
-def so_imm_not_asmoperand : AsmOperandClass { let Name = "ARMSOImmNot"; }
-def so_imm_not : Operand<i32>, PatLeaf<(imm), [{
-    return ARM_AM::getSOImmVal(~(uint32_t)N->getZExtValue()) != -1;
-  }], imm_not_XFORM> {
-  let ParserMatchClass = so_imm_not_asmoperand;
-}
-
 // sext_16_node predicate - True if the SDNode is sign-extended 16 or more bits.
 def sext_16_node : PatLeaf<(i32 GPR:$a), [{
   return CurDAG->ComputeNumSignBits(SDValue(N,0)) >= 17;
@@ -528,7 +510,7 @@ def shift_imm : Operand<i32> {
   let ParserMatchClass = ShifterImmAsmOperand;
 }
 
-// shifter_operand operands: so_reg_reg, so_reg_imm, and so_imm.
+// shifter_operand operands: so_reg_reg, so_reg_imm, and mod_imm.
 def ShiftedRegAsmOperand : AsmOperandClass { let Name = "RegShiftedReg"; }
 def so_reg_reg : Operand<i32>,  // reg reg imm
                  ComplexPattern<i32, 3, "SelectRegShifterOperand",
@@ -573,20 +555,10 @@ def shift_so_reg_imm : Operand<i32>,    // reg reg imm
   let MIOperandInfo = (ops GPR, i32imm);
 }
 
-
-// so_imm - Match a 32-bit shifter_operand immediate operand, which is an
-// 8-bit immediate rotated by an arbitrary number of bits.
-def SOImmAsmOperand: ImmAsmOperand { let Name = "ARMSOImm"; }
-def so_imm : Operand<i32>, ImmLeaf<i32, [{
-    return ARM_AM::getSOImmVal(Imm) != -1;
-  }]> {
-  let EncoderMethod = "getSOImmOpValue";
-  let ParserMatchClass = SOImmAsmOperand;
-}
-
-// mod_imm: match a 32-bit immediate operand, which is encoded as a 12-bit
-// immediate (See ARMARM - "Modified Immediate Constants"). Unlike so_imm,
-// mod_imm keeps the immediate in its encoded form (within the MC layer).
+// mod_imm: match a 32-bit immediate operand, which can be encoded into
+// a 12-bit immediate; an 8-bit integer and a 4-bit rotator (See ARMARM
+// - "Modified Immediate Constants"). Within the MC layer we keep this
+// immediate in its encoded form.
 def ModImmAsmOperand: AsmOperandClass {
   let Name = "ModImm";
   let ParserMethod = "parseModImm";
@@ -599,7 +571,11 @@ def mod_imm : Operand<i32>, ImmLeaf<i32, [{
   let ParserMatchClass = ModImmAsmOperand;
 }
 
-// similar to so_imm_not, but keeps the immediate in its encoded form
+// Note: the patterns mod_imm_not and mod_imm_neg do not require an encoder
+// method and such, as they are only used on aliases (Pat<> and InstAlias<>).
+// The actual parsing, encoding, decoding are handled by the destination
+// instructions, which use mod_imm.
+
 def ModImmNotAsmOperand : AsmOperandClass { let Name = "ModImmNot"; }
 def mod_imm_not : Operand<i32>, PatLeaf<(imm), [{
     return ARM_AM::getSOImmVal(~(uint32_t)N->getZExtValue()) != -1;
@@ -607,7 +583,6 @@ def mod_imm_not : Operand<i32>, PatLeaf<(imm), [{
   let ParserMatchClass = ModImmNotAsmOperand;
 }
 
-// similar to so_imm_neg, but keeps the immediate in its encoded form
 def ModImmNegAsmOperand : AsmOperandClass { let Name = "ModImmNeg"; }
 def mod_imm_neg : Operand<i32>, PatLeaf<(imm), [{
     unsigned Value = -(unsigned)N->getZExtValue();
@@ -616,15 +591,7 @@ def mod_imm_neg : Operand<i32>, PatLeaf<(imm), [{
   let ParserMatchClass = ModImmNegAsmOperand;
 }
 
-// Break so_imm's up into two pieces.  This handles immediates with up to 16
-// bits set in them.  This uses so_imm2part to match and so_imm2part_[12] to
-// get the first/second pieces.
-def so_imm2part : PatLeaf<(imm), [{
-      return ARM_AM::isSOImmTwoPartVal((unsigned)N->getZExtValue());
-}]>;
-
-/// arm_i32imm - True for +V6T2, or true only if so_imm2part is true.
-///
+/// arm_i32imm - True for +V6T2, or when isSOImmTwoParVal()
 def arm_i32imm : PatLeaf<(imm), [{
   if (Subtarget->useMovt(*MF))
     return true;
@@ -1233,7 +1200,7 @@ include "ARMInstrFormats.td"
 // Multiclass helpers...
 //
 
-/// AsI1_bin_irs - Defines a set of (op r, {so_imm|r|so_reg}) patterns for a
+/// AsI1_bin_irs - Defines a set of (op r, {mod_imm|r|so_reg}) patterns for a
 /// binop that produces a value.
 let TwoOperandAliasConstraint = "$Rn = $Rd" in
 multiclass AsI1_bin_irs<bits<4> opcod, string opc,
@@ -1439,7 +1406,7 @@ multiclass AsI1_rbin_s_is<InstrItinClass iii, InstrItinClass iir,
 }
 }
 
-/// AI1_cmp_irs - Defines a set of (op r, {so_imm|r|so_reg}) cmp / test
+/// AI1_cmp_irs - Defines a set of (op r, {mod_imm|r|so_reg}) cmp / test
 /// patterns. Similar to AsI1_bin_irs except the instruction does not produce
 /// a explicit result, only implicitly set CPSR.
 let isCompare = 1, Defs = [CPSR] in {
@@ -3465,10 +3432,10 @@ defm RSC : AI1_rsc_irs<0b0111, "rsc",
 // assume opposite meanings of the carry flag (i.e., carry == !borrow).
 // See the definition of AddWithCarry() in the ARM ARM A2.2.1 for the gory
 // details.
-def : ARMPat<(add     GPR:$src, so_imm_neg:$imm),
-             (SUBri   GPR:$src, so_imm_neg:$imm)>;
-def : ARMPat<(ARMaddc GPR:$src, so_imm_neg:$imm),
-             (SUBSri  GPR:$src, so_imm_neg:$imm)>;
+def : ARMPat<(add     GPR:$src, mod_imm_neg:$imm),
+             (SUBri   GPR:$src, mod_imm_neg:$imm)>;
+def : ARMPat<(ARMaddc GPR:$src, mod_imm_neg:$imm),
+             (SUBSri  GPR:$src, mod_imm_neg:$imm)>;
 
 def : ARMPat<(add     GPR:$src, imm0_65535_neg:$imm),
              (SUBrr   GPR:$src, (MOVi16 (imm_neg_XFORM imm:$imm)))>,
@@ -3480,8 +3447,8 @@ def : ARMPat<(ARMaddc GPR:$src, imm0_65535_neg:$imm),
 // The with-carry-in form matches bitwise not instead of the negation.
 // Effectively, the inverse interpretation of the carry flag already accounts
 // for part of the negation.
-def : ARMPat<(ARMadde GPR:$src, so_imm_not:$imm, CPSR),
-             (SBCri   GPR:$src, so_imm_not:$imm)>;
+def : ARMPat<(ARMadde GPR:$src, mod_imm_not:$imm, CPSR),
+             (SBCri   GPR:$src, mod_imm_not:$imm)>;
 def : ARMPat<(ARMadde GPR:$src, imm0_65535_neg:$imm, CPSR),
              (SBCrr   GPR:$src, (MOVi16 (imm_not_XFORM imm:$imm)))>,
              Requires<[IsARM, HasV6T2]>;
@@ -3773,8 +3740,8 @@ def  MVNi  : AsI1<0b1111, (outs GPR:$Rd), (ins mod_imm:$imm), DPFrm,
   let Inst{11-0} = imm;
 }
 
-def : ARMPat<(and   GPR:$src, so_imm_not:$imm),
-             (BICri GPR:$src, so_imm_not:$imm)>;
+def : ARMPat<(and   GPR:$src, mod_imm_not:$imm),
+             (BICri GPR:$src, mod_imm_not:$imm)>;
 
 //===----------------------------------------------------------------------===//
 //  Multiply Instructions.
@@ -4299,8 +4266,8 @@ defm CMP  : AI1_cmp_irs<0b1010, "cmp",
                         BinOpFrag<(ARMcmp node:$LHS, node:$RHS)>>;
 
 // ARMcmpZ can re-use the above instruction definitions.
-def : ARMPat<(ARMcmpZ GPR:$src, so_imm:$imm),
-             (CMPri   GPR:$src, so_imm:$imm)>;
+def : ARMPat<(ARMcmpZ GPR:$src, mod_imm:$imm),
+             (CMPri   GPR:$src, mod_imm:$imm)>;
 def : ARMPat<(ARMcmpZ GPR:$src, GPR:$rhs),
              (CMPrr   GPR:$src, GPR:$rhs)>;
 def : ARMPat<(ARMcmpZ GPR:$src, so_reg_imm:$rhs),
@@ -4385,11 +4352,11 @@ def CMNzrsr : AI1<0b1011, (outs),
 
 }
 
-def : ARMPat<(ARMcmp  GPR:$src, so_imm_neg:$imm),
-             (CMNri   GPR:$src, so_imm_neg:$imm)>;
+def : ARMPat<(ARMcmp  GPR:$src, mod_imm_neg:$imm),
+             (CMNri   GPR:$src, mod_imm_neg:$imm)>;
 
-def : ARMPat<(ARMcmpZ GPR:$src, so_imm_neg:$imm),
-             (CMNri   GPR:$src, so_imm_neg:$imm)>;
+def : ARMPat<(ARMcmpZ GPR:$src, mod_imm_neg:$imm),
+             (CMNri   GPR:$src, mod_imm_neg:$imm)>;
 
 // Note that TST/TEQ don't set all the same flags that CMP does!
 defm TST  : AI1_cmp_irs<0b1000, "tst",
@@ -4453,9 +4420,9 @@ def MOVCCi16
 
 let isMoveImm = 1 in
 def MOVCCi : ARMPseudoInst<(outs GPR:$Rd),
-                           (ins GPR:$false, so_imm:$imm, cmovpred:$p),
+                           (ins GPR:$false, mod_imm:$imm, cmovpred:$p),
                            4, IIC_iCMOVi,
-                           [(set GPR:$Rd, (ARMcmov GPR:$false, so_imm:$imm,
+                           [(set GPR:$Rd, (ARMcmov GPR:$false, mod_imm:$imm,
                                                    cmovpred:$p))]>,
       RegConstraint<"$false = $Rd">, Sched<[WriteALU]>;
 
@@ -4471,9 +4438,9 @@ def MOVCCi32imm
 
 let isMoveImm = 1 in
 def MVNCCi : ARMPseudoInst<(outs GPR:$Rd),
-                           (ins GPR:$false, so_imm:$imm, cmovpred:$p),
+                           (ins GPR:$false, mod_imm:$imm, cmovpred:$p),
                            4, IIC_iCMOVi,
-                           [(set GPR:$Rd, (ARMcmov GPR:$false, so_imm_not:$imm,
+                           [(set GPR:$Rd, (ARMcmov GPR:$false, mod_imm_not:$imm,
                                                    cmovpred:$p))]>,
                 RegConstraint<"$false = $Rd">, Sched<[WriteALU]>;
 
@@ -5285,7 +5252,7 @@ let isBranch = 1, isTerminator = 1, isBarrier = 1, isIndirectBranch = 1 in
 
 // Large immediate handling.
 
-// 32-bit immediate using two piece so_imms or movw + movt.
+// 32-bit immediate using two piece mod_imms or movw + movt.
 // This is a single pseudo instruction, the benefit is that it can be remat'd
 // as a single unit instead of having to handle reg inputs.
 // FIXME: Remove this when we can do generalized remat.
@@ -5577,7 +5544,7 @@ def : MnemonicAlias<"uqsubaddx", "uqsax">;
 // USAX == USUBADDX
 def : MnemonicAlias<"usubaddx", "usax">;
 
-// "mov Rd, so_imm_not" can be handled via "mvn" in assembly, just like
+// "mov Rd, mod_imm_not" can be handled via "mvn" in assembly, just like
 // for isel.
 def : ARMInstAlias<"mov${s}${p} $Rd, $imm",
                    (MVNi rGPR:$Rd, mod_imm_not:$imm, pred:$p, cc_out:$s)>;
@@ -5597,12 +5564,12 @@ def : ARMInstAlias<"and${s}${p} $Rdn, $imm",
                    (BICri rGPR:$Rdn, rGPR:$Rdn, mod_imm_not:$imm,
                           pred:$p, cc_out:$s)>;
 
-// Likewise, "add Rd, so_imm_neg" -> sub
+// Likewise, "add Rd, mod_imm_neg" -> sub
 def : ARMInstAlias<"add${s}${p} $Rd, $Rn, $imm",
                  (SUBri GPR:$Rd, GPR:$Rn, mod_imm_neg:$imm, pred:$p, cc_out:$s)>;
 def : ARMInstAlias<"add${s}${p} $Rd, $imm",
                  (SUBri GPR:$Rd, GPR:$Rd, mod_imm_neg:$imm, pred:$p, cc_out:$s)>;
-// Same for CMP <--> CMN via so_imm_neg
+// Same for CMP <--> CMN via mod_imm_neg
 def : ARMInstAlias<"cmp${p} $Rd, $imm",
                    (CMNri rGPR:$Rd, mod_imm_neg:$imm, pred:$p)>;
 def : ARMInstAlias<"cmn${p} $Rd, $imm",
