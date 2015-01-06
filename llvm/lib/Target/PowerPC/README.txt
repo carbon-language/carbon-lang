@@ -118,14 +118,6 @@ http://gcc.gnu.org/ml/gcc-patches/2006-02/msg00133.html
 
 ===-------------------------------------------------------------------------===
 
-No loads or stores of the constants should be needed:
-
-struct foo { double X, Y; };
-void xxx(struct foo F);
-void bar() { struct foo R = { 1.0, 2.0 }; xxx(R); }
-
-===-------------------------------------------------------------------------===
-
 Darwin Stub removal:
 
 We still generate calls to foo$stub, and stubs, on Darwin.  This is not
