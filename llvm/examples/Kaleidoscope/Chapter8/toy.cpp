@@ -836,7 +836,7 @@ void DebugInfo::emitLocation(ExprAST *AST) {
 }
 
 static DICompositeType CreateFunctionType(unsigned NumArgs, DIFile Unit) {
-  SmallVector<Value *, 8> EltTys;
+  SmallVector<Metadata *, 8> EltTys;
   DIType DblTy = KSDbgInfo.getDoubleTy();
 
   // Add the result type.
