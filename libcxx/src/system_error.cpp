@@ -7,11 +7,14 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define _LIBCPP_BUILDING_SYSTEM_ERROR
 #include "__config"
+
+#define _LIBCPP_BUILDING_SYSTEM_ERROR
 #include "system_error"
-#include "string"
+
+#include "config_elast.h"
 #include "cstring"
+#include "string"
 
 _LIBCPP_BEGIN_NAMESPACE_STD
 
