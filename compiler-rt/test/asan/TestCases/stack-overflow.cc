@@ -92,7 +92,7 @@ void LimitStackAndReexec(int argc, char **argv) {
   int res = getrlimit(RLIMIT_STACK, &rlim);
   assert(res == 0);
   if (rlim.rlim_cur == RLIM_INFINITY) {
-    rlim.rlim_cur = 128 * 1024;
+    rlim.rlim_cur = 256 * 1024;
     res = setrlimit(RLIMIT_STACK, &rlim);
     assert(res == 0);
 
