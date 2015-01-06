@@ -62,8 +62,11 @@ CGSCCAnalysisManager::getResultImpl(void *PassID, LazyCallGraph::SCC &C) {
   // If we don't have a cached result for this function, look up the pass and
   // run it to produce a result, which we then add to the cache.
   if (Inserted) {
+    auto &P = lookupPass(PassID);
+    if (DebugPM)
+      dbgs() << "Running CGSCC analysis: " << P.name() << "\n";
     CGSCCAnalysisResultListT &ResultList = CGSCCAnalysisResultLists[&C];
-    ResultList.emplace_back(PassID, lookupPass(PassID).run(C, this));
+    ResultList.emplace_back(PassID, P.run(C, this));
     RI->second = std::prev(ResultList.end());
   }
 

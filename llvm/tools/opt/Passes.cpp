@@ -32,6 +32,18 @@ struct NoOpModulePass {
   static StringRef name() { return "NoOpModulePass"; }
 };
 
+/// \brief No-op module analysis.
+struct NoOpModuleAnalysis {
+  struct Result {};
+  Result run(Module &) { return Result(); }
+  static StringRef name() { return "NoOpModuleAnalysis"; }
+  static void *ID() { return (void *)&PassID; }
+private:
+  static char PassID;
+};
+
+char NoOpModuleAnalysis::PassID;
+
 /// \brief No-op CGSCC pass which does nothing.
 struct NoOpCGSCCPass {
   PreservedAnalyses run(LazyCallGraph::SCC &C) {
@@ -40,11 +52,35 @@ struct NoOpCGSCCPass {
   static StringRef name() { return "NoOpCGSCCPass"; }
 };
 
+/// \brief No-op CGSCC analysis.
+struct NoOpCGSCCAnalysis {
+  struct Result {};
+  Result run(LazyCallGraph::SCC &) { return Result(); }
+  static StringRef name() { return "NoOpCGSCCAnalysis"; }
+  static void *ID() { return (void *)&PassID; }
+private:
+  static char PassID;
+};
+
+char NoOpCGSCCAnalysis::PassID;
+
 /// \brief No-op function pass which does nothing.
 struct NoOpFunctionPass {
   PreservedAnalyses run(Function &F) { return PreservedAnalyses::all(); }
   static StringRef name() { return "NoOpFunctionPass"; }
 };
+
+/// \brief No-op function analysis.
+struct NoOpFunctionAnalysis {
+  struct Result {};
+  Result run(Function &) { return Result(); }
+  static StringRef name() { return "NoOpFunctionAnalysis"; }
+  static void *ID() { return (void *)&PassID; }
+private:
+  static char PassID;
+};
+
+char NoOpFunctionAnalysis::PassID;
 
 } // End anonymous namespace.
 

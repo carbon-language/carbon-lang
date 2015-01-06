@@ -86,15 +86,23 @@
 ; CHECK-NO-VERIFY-NOT: VerifierPass
 ; CHECK-NO-VERIFY: Finished module pass manager
 
-; RUN: opt -disable-output -debug-pass-manager -passes='require<lcg>' %s 2>&1 \
-; RUN:     | FileCheck %s --check-prefix=CHECK-LCG-ANALYSIS
-; CHECK-LCG-ANALYSIS: Starting module pass manager
-; CHECK-LCG-ANALYSIS: Running module pass: No-op Analysis Requirement Pass
-; CHECK-LCG-ANALYSIS: Running module analysis: Lazy CallGraph Analysis
+; RUN: opt -disable-output -debug-pass-manager -debug-cgscc-pass-manager \
+; RUN:     -passes='require<no-op-module>,cgscc(require<no-op-cgscc>,function(require<no-op-function>))' %s 2>&1 \
+; RUN:     | FileCheck %s --check-prefix=CHECK-ANALYSES
+; CHECK-ANALYSES: Starting module pass manager
+; CHECK-ANALYSES: Running module pass: No-op Analysis Requirement Pass
+; CHECK-ANALYSES: Running module analysis: NoOpModuleAnalysis
+; CHECK-ANALYSES: Starting CGSCC pass manager
+; CHECK-ANALYSES: Running CGSCC pass: No-op Analysis Requirement Pass
+; CHECK-ANALYSES: Running CGSCC analysis: NoOpCGSCCAnalysis
+; CHECK-ANALYSES: Starting function pass manager
+; CHECK-ANALYSES: Running function pass: No-op Analysis Requirement Pass
+; CHECK-ANALYSES: Running function analysis: NoOpFunctionAnalysis
 
 ; Make sure no-op passes that preserve all analyses don't even try to do any
 ; analysis invalidation.
-; RUN: opt -disable-output -debug-pass-manager -debug-cgscc-pass-manager -passes='cgscc(function(no-op-function))' %s 2>&1 \
+; RUN: opt -disable-output -debug-pass-manager -debug-cgscc-pass-manager \
+; RUN:     -passes='require<no-op-module>,cgscc(require<no-op-cgscc>,function(require<no-op-function>))' %s 2>&1 \
 ; RUN:     | FileCheck %s --check-prefix=CHECK-NO-OP-INVALIDATION
 ; CHECK-NO-OP-INVALIDATION: Starting module pass manager
 ; CHECK-NO-OP-INVALIDATION-NOT: Invalidating all non-preserved analyses
