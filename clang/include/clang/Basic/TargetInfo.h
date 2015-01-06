@@ -543,8 +543,10 @@ public:
     std::string Name;           // Operand name: [foo] with no []'s.
   public:
     ConstraintInfo(StringRef ConstraintStr, StringRef Name)
-        : Flags(0), TiedOperand(-1), ImmRange({0, 0}),
-          ConstraintStr(ConstraintStr.str()), Name(Name.str()) {}
+        : Flags(0), TiedOperand(-1), ConstraintStr(ConstraintStr.str()),
+          Name(Name.str()) {
+      ImmRange.Min = ImmRange.Max = 0;
+    }
 
     const std::string &getConstraintStr() const { return ConstraintStr; }
     const std::string &getName() const { return Name; }
