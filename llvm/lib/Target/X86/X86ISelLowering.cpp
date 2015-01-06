@@ -20527,7 +20527,7 @@ X86TargetLowering::EmitVAARG64WithCustomInserter(
       .setMemRefs(MMOBegin, MMOEnd);
 
     // Jump to endMBB
-    BuildMI(offsetMBB, DL, TII->get(X86::JMP_4))
+    BuildMI(offsetMBB, DL, TII->get(X86::JMP_1))
       .addMBB(endMBB);
   }
 
@@ -20641,7 +20641,7 @@ X86TargetLowering::EmitVAStartSaveXMMRegsWithCustomInserter(
   if (!Subtarget->isTargetWin64()) {
     // If %al is 0, branch around the XMM save block.
     BuildMI(MBB, DL, TII->get(X86::TEST8rr)).addReg(CountReg).addReg(CountReg);
-    BuildMI(MBB, DL, TII->get(X86::JE_4)).addMBB(EndMBB);
+    BuildMI(MBB, DL, TII->get(X86::JE_1)).addMBB(EndMBB);
     MBB->addSuccessor(EndMBB);
   }
 
@@ -20845,7 +20845,7 @@ X86TargetLowering::EmitLoweredSegAlloca(MachineInstr *MI,
   BuildMI(BB, DL, TII->get(IsLP64 ? X86::CMP64mr:X86::CMP32mr))
     .addReg(0).addImm(1).addReg(0).addImm(TlsOffset).addReg(TlsReg)
     .addReg(SPLimitVReg);
-  BuildMI(BB, DL, TII->get(X86::JG_4)).addMBB(mallocMBB);
+  BuildMI(BB, DL, TII->get(X86::JG_1)).addMBB(mallocMBB);
 
   // bumpMBB simply decreases the stack pointer, since we know the current
   // stacklet has enough space.
@@ -20853,7 +20853,7 @@ X86TargetLowering::EmitLoweredSegAlloca(MachineInstr *MI,
     .addReg(SPLimitVReg);
   BuildMI(bumpMBB, DL, TII->get(TargetOpcode::COPY), bumpSPPtrVReg)
     .addReg(SPLimitVReg);
-  BuildMI(bumpMBB, DL, TII->get(X86::JMP_4)).addMBB(continueMBB);
+  BuildMI(bumpMBB, DL, TII->get(X86::JMP_1)).addMBB(continueMBB);
 
   // Calls into a routine in libgcc to allocate more space from the heap.
   const uint32_t *RegMask = MF->getTarget()
@@ -20892,7 +20892,7 @@ X86TargetLowering::EmitLoweredSegAlloca(MachineInstr *MI,
 
   BuildMI(mallocMBB, DL, TII->get(TargetOpcode::COPY), mallocPtrVReg)
     .addReg(IsLP64 ? X86::RAX : X86::EAX);
-  BuildMI(mallocMBB, DL, TII->get(X86::JMP_4)).addMBB(continueMBB);
+  BuildMI(mallocMBB, DL, TII->get(X86::JMP_1)).addMBB(continueMBB);
 
   // Set up the CFG correctly.
   BB->addSuccessor(bumpMBB);
@@ -21171,7 +21171,7 @@ X86TargetLowering::emitEHSjLjSetJmp(MachineInstr *MI,
       .setMIFlag(MachineInstr::FrameSetup);
   }
   BuildMI(restoreMBB, DL, TII->get(X86::MOV32ri), restoreDstReg).addImm(1);
-  BuildMI(restoreMBB, DL, TII->get(X86::JMP_4)).addMBB(sinkMBB);
+  BuildMI(restoreMBB, DL, TII->get(X86::JMP_1)).addMBB(sinkMBB);
   restoreMBB->addSuccessor(sinkMBB);
 
   MI->eraseFromParent();

@@ -57,33 +57,32 @@ let isTerminator = 1, isReturn = 1, isBarrier = 1,
 
 // Unconditional branches.
 let isBarrier = 1, isBranch = 1, isTerminator = 1, SchedRW = [WriteJump] in {
-  def JMP_4 : Ii32PCRel<0xE9, RawFrm, (outs), (ins brtarget:$dst),
-                        "jmp\t$dst", [(br bb:$dst)], IIC_JMP_REL>, OpSize32;
-  def JMP_2 : Ii16PCRel<0xE9, RawFrm, (outs), (ins brtarget:$dst),
-                        "jmp\t$dst", [(br bb:$dst)], IIC_JMP_REL>, OpSize16,
-                        Requires<[In16BitMode]>;
-  let hasSideEffects = 0 in
   def JMP_1 : Ii8PCRel<0xEB, RawFrm, (outs), (ins brtarget8:$dst),
-                       "jmp\t$dst", [], IIC_JMP_REL>;
+                       "jmp\t$dst", [(br bb:$dst)], IIC_JMP_REL>;
+  let hasSideEffects = 0 in {
+    def JMP_2 : Ii16PCRel<0xE9, RawFrm, (outs), (ins brtarget:$dst),
+                          "jmp\t$dst", [], IIC_JMP_REL>, OpSize16;
+    def JMP_4 : Ii32PCRel<0xE9, RawFrm, (outs), (ins brtarget:$dst),
+                          "jmp\t$dst", [], IIC_JMP_REL>, OpSize32;
+  }
 }
 
 // Conditional Branches.
 let isBranch = 1, isTerminator = 1, Uses = [EFLAGS], SchedRW = [WriteJump] in {
   multiclass ICBr<bits<8> opc1, bits<8> opc4, string asm, PatFrag Cond> {
-    let hasSideEffects = 0 in
-    def _1 : Ii8PCRel <opc1, RawFrm, (outs), (ins brtarget8:$dst), asm, [],
-                       IIC_Jcc>;
-    def _2 : Ii16PCRel<opc4, RawFrm, (outs), (ins brtarget:$dst), asm,
-                       [(X86brcond bb:$dst, Cond, EFLAGS)], IIC_Jcc>, OpSize16,
-		       TB, Requires<[In16BitMode]>;
-    def _4 : Ii32PCRel<opc4, RawFrm, (outs), (ins brtarget:$dst), asm,
-                       [(X86brcond bb:$dst, Cond, EFLAGS)], IIC_Jcc>, TB,
-             OpSize32;
+    def _1 : Ii8PCRel <opc1, RawFrm, (outs), (ins brtarget8:$dst), asm,
+                       [(X86brcond bb:$dst, Cond, EFLAGS)], IIC_Jcc>;
+    let hasSideEffects = 0 in {
+      def _2 : Ii16PCRel<opc4, RawFrm, (outs), (ins brtarget:$dst), asm,
+                         [], IIC_Jcc>, OpSize16, TB;
+      def _4 : Ii32PCRel<opc4, RawFrm, (outs), (ins brtarget:$dst), asm,
+                         [], IIC_Jcc>, TB, OpSize32;
+    }
   }
 }
 
 defm JO  : ICBr<0x70, 0x80, "jo\t$dst" , X86_COND_O>;
-defm JNO : ICBr<0x71, 0x81, "jno\t$dst" , X86_COND_NO>;
+defm JNO : ICBr<0x71, 0x81, "jno\t$dst", X86_COND_NO>;
 defm JB  : ICBr<0x72, 0x82, "jb\t$dst" , X86_COND_B>;
 defm JAE : ICBr<0x73, 0x83, "jae\t$dst", X86_COND_AE>;
 defm JE  : ICBr<0x74, 0x84, "je\t$dst" , X86_COND_E>;

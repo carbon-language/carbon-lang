@@ -1362,7 +1362,7 @@ bool X86FastISel::X86SelectBranch(const Instruction *I) {
       // X86 requires a second branch to handle UNE (and OEQ, which is mapped
       // to UNE above).
       if (NeedExtraBranch) {
-        BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(X86::JP_4))
+        BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(X86::JP_1))
           .addMBB(TrueMBB);
       }
 
@@ -1399,10 +1399,10 @@ bool X86FastISel::X86SelectBranch(const Instruction *I) {
         BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(TestOpc))
           .addReg(OpReg).addImm(1);
 
-        unsigned JmpOpc = X86::JNE_4;
+        unsigned JmpOpc = X86::JNE_1;
         if (FuncInfo.MBB->isLayoutSuccessor(TrueMBB)) {
           std::swap(TrueMBB, FalseMBB);
-          JmpOpc = X86::JE_4;
+          JmpOpc = X86::JE_1;
         }
 
         BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(JmpOpc))
@@ -1444,7 +1444,7 @@ bool X86FastISel::X86SelectBranch(const Instruction *I) {
 
   BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(X86::TEST8ri))
     .addReg(OpReg).addImm(1);
-  BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(X86::JNE_4))
+  BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(X86::JNE_1))
     .addMBB(TrueMBB);
   fastEmitBranch(FalseMBB, DbgLoc);
   uint32_t BranchWeight = 0;

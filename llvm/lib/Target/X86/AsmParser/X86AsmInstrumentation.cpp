@@ -656,7 +656,7 @@ void X86AddressSanitizer32::InstrumentMemOperandSmall(
       Out, MCInstBuilder(X86::TEST8rr).addReg(ShadowRegI8).addReg(ShadowRegI8));
   MCSymbol *DoneSym = Ctx.CreateTempSymbol();
   const MCExpr *DoneExpr = MCSymbolRefExpr::Create(DoneSym, Ctx);
-  EmitInstruction(Out, MCInstBuilder(X86::JE_4).addExpr(DoneExpr));
+  EmitInstruction(Out, MCInstBuilder(X86::JE_1).addExpr(DoneExpr));
 
   EmitInstruction(Out, MCInstBuilder(X86::MOV32rr).addReg(ScratchRegI32).addReg(
                            AddressRegI32));
@@ -690,7 +690,7 @@ void X86AddressSanitizer32::InstrumentMemOperandSmall(
       MCInstBuilder(X86::MOVSX32rr8).addReg(ShadowRegI32).addReg(ShadowRegI8));
   EmitInstruction(Out, MCInstBuilder(X86::CMP32rr).addReg(ScratchRegI32).addReg(
                            ShadowRegI32));
-  EmitInstruction(Out, MCInstBuilder(X86::JL_4).addExpr(DoneExpr));
+  EmitInstruction(Out, MCInstBuilder(X86::JL_1).addExpr(DoneExpr));
 
   EmitCallAsanReport(AccessSize, IsWrite, Ctx, Out, RegCtx);
   EmitLabel(Out, DoneSym);
@@ -731,7 +731,7 @@ void X86AddressSanitizer32::InstrumentMemOperandLarge(
   }
   MCSymbol *DoneSym = Ctx.CreateTempSymbol();
   const MCExpr *DoneExpr = MCSymbolRefExpr::Create(DoneSym, Ctx);
-  EmitInstruction(Out, MCInstBuilder(X86::JE_4).addExpr(DoneExpr));
+  EmitInstruction(Out, MCInstBuilder(X86::JE_1).addExpr(DoneExpr));
 
   EmitCallAsanReport(AccessSize, IsWrite, Ctx, Out, RegCtx);
   EmitLabel(Out, DoneSym);
@@ -747,7 +747,7 @@ void X86AddressSanitizer32::InstrumentMOVSImpl(unsigned AccessSize,
   const MCExpr *DoneExpr = MCSymbolRefExpr::Create(DoneSym, Ctx);
   EmitInstruction(
       Out, MCInstBuilder(X86::TEST32rr).addReg(X86::ECX).addReg(X86::ECX));
-  EmitInstruction(Out, MCInstBuilder(X86::JE_4).addExpr(DoneExpr));
+  EmitInstruction(Out, MCInstBuilder(X86::JE_1).addExpr(DoneExpr));
 
   // Instrument first and last elements in src and dst range.
   InstrumentMOVSBase(X86::EDI /* DstReg */, X86::ESI /* SrcReg */,
@@ -927,7 +927,7 @@ void X86AddressSanitizer64::InstrumentMemOperandSmall(
       Out, MCInstBuilder(X86::TEST8rr).addReg(ShadowRegI8).addReg(ShadowRegI8));
   MCSymbol *DoneSym = Ctx.CreateTempSymbol();
   const MCExpr *DoneExpr = MCSymbolRefExpr::Create(DoneSym, Ctx);
-  EmitInstruction(Out, MCInstBuilder(X86::JE_4).addExpr(DoneExpr));
+  EmitInstruction(Out, MCInstBuilder(X86::JE_1).addExpr(DoneExpr));
 
   EmitInstruction(Out, MCInstBuilder(X86::MOV32rr).addReg(ScratchRegI32).addReg(
                            AddressRegI32));
@@ -961,7 +961,7 @@ void X86AddressSanitizer64::InstrumentMemOperandSmall(
       MCInstBuilder(X86::MOVSX32rr8).addReg(ShadowRegI32).addReg(ShadowRegI8));
   EmitInstruction(Out, MCInstBuilder(X86::CMP32rr).addReg(ScratchRegI32).addReg(
                            ShadowRegI32));
-  EmitInstruction(Out, MCInstBuilder(X86::JL_4).addExpr(DoneExpr));
+  EmitInstruction(Out, MCInstBuilder(X86::JL_1).addExpr(DoneExpr));
 
   EmitCallAsanReport(AccessSize, IsWrite, Ctx, Out, RegCtx);
   EmitLabel(Out, DoneSym);
@@ -1003,7 +1003,7 @@ void X86AddressSanitizer64::InstrumentMemOperandLarge(
 
   MCSymbol *DoneSym = Ctx.CreateTempSymbol();
   const MCExpr *DoneExpr = MCSymbolRefExpr::Create(DoneSym, Ctx);
-  EmitInstruction(Out, MCInstBuilder(X86::JE_4).addExpr(DoneExpr));
+  EmitInstruction(Out, MCInstBuilder(X86::JE_1).addExpr(DoneExpr));
 
   EmitCallAsanReport(AccessSize, IsWrite, Ctx, Out, RegCtx);
   EmitLabel(Out, DoneSym);
@@ -1019,7 +1019,7 @@ void X86AddressSanitizer64::InstrumentMOVSImpl(unsigned AccessSize,
   const MCExpr *DoneExpr = MCSymbolRefExpr::Create(DoneSym, Ctx);
   EmitInstruction(
       Out, MCInstBuilder(X86::TEST64rr).addReg(X86::RCX).addReg(X86::RCX));
-  EmitInstruction(Out, MCInstBuilder(X86::JE_4).addExpr(DoneExpr));
+  EmitInstruction(Out, MCInstBuilder(X86::JE_1).addExpr(DoneExpr));
 
   // Instrument first and last elements in src and dst range.
   InstrumentMOVSBase(X86::RDI /* DstReg */, X86::RSI /* SrcReg */,
