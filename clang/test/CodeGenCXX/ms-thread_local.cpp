@@ -6,8 +6,8 @@ struct A {
 };
 
 // CHECK-DAG: $"\01??$a@X@@3UA@@A" = comdat any
-// CHECK-DAG: @"\01??$a@X@@3UA@@A" = linkonce_odr thread_local global %struct.A zeroinitializer, comdat $"\01??$a@X@@3UA@@A"
-// CHECK-DAG: @"\01??__E?$a@X@@YAXXZ$initializer$" = internal constant void ()* @"\01??__E?$a@X@@YAXXZ", section ".CRT$XDU", comdat $"\01??$a@X@@3UA@@A"
+// CHECK-DAG: @"\01??$a@X@@3UA@@A" = linkonce_odr thread_local global %struct.A zeroinitializer, comdat, align 1
+// CHECK-DAG: @"\01??__E?$a@X@@YAXXZ$initializer$" = internal constant void ()* @"\01??__E?$a@X@@YAXXZ", section ".CRT$XDU", comdat($"\01??$a@X@@3UA@@A")
 template <typename T>
 thread_local A a = A();
 

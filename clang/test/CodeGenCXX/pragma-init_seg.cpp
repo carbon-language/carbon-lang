@@ -35,24 +35,24 @@ int x = f();
 
 namespace selectany_init {
 int __declspec(selectany) x = f();
-// CHECK: @"\01?x@selectany_init@@3HA" = weak_odr global i32 0, comdat $"\01?x@selectany_init@@3HA", align 4
-// CHECK: @__cxx_init_fn_ptr3 = private constant void ()* @"\01??__Ex@selectany_init@@YAXXZ", section ".asdf", comdat $"\01?x@selectany_init@@3HA"
+// CHECK: @"\01?x@selectany_init@@3HA" = weak_odr global i32 0, comdat, align 4
+// CHECK: @__cxx_init_fn_ptr3 = private constant void ()* @"\01??__Ex@selectany_init@@YAXXZ", section ".asdf", comdat($"\01?x@selectany_init@@3HA")
 }
 
 namespace explicit_template_instantiation {
 template <typename T> struct A { static const int x; };
 template <typename T> const int A<T>::x = f();
 template struct A<int>;
-// CHECK: @"\01?x@?$A@H@explicit_template_instantiation@@2HB" = weak_odr global i32 0, comdat $"\01?x@?$A@H@explicit_template_instantiation@@2HB", align 4
-// CHECK: @__cxx_init_fn_ptr4 = private constant void ()* @"\01??__Ex@?$A@H@explicit_template_instantiation@@2HB@YAXXZ", section ".asdf", comdat $"\01?x@?$A@H@explicit_template_instantiation@@2HB"
+// CHECK: @"\01?x@?$A@H@explicit_template_instantiation@@2HB" = weak_odr global i32 0, comdat, align 4
+// CHECK: @__cxx_init_fn_ptr4 = private constant void ()* @"\01??__Ex@?$A@H@explicit_template_instantiation@@2HB@YAXXZ", section ".asdf", comdat($"\01?x@?$A@H@explicit_template_instantiation@@2HB")
 }
 
 namespace implicit_template_instantiation {
 template <typename T> struct A { static const int x; };
 template <typename T> const int A<T>::x = f();
 int g() { return A<int>::x; }
-// CHECK: @"\01?x@?$A@H@implicit_template_instantiation@@2HB" = linkonce_odr global i32 0, comdat $"\01?x@?$A@H@implicit_template_instantiation@@2HB", align 4
-// CHECK: @__cxx_init_fn_ptr5 = private constant void ()* @"\01??__Ex@?$A@H@implicit_template_instantiation@@2HB@YAXXZ", section ".asdf", comdat $"\01?x@?$A@H@implicit_template_instantiation@@2HB"
+// CHECK: @"\01?x@?$A@H@implicit_template_instantiation@@2HB" = linkonce_odr global i32 0, comdat, align 4
+// CHECK: @__cxx_init_fn_ptr5 = private constant void ()* @"\01??__Ex@?$A@H@implicit_template_instantiation@@2HB@YAXXZ", section ".asdf", comdat($"\01?x@?$A@H@implicit_template_instantiation@@2HB")
 }
 
 // ... and here's where we emitted user level ctors.

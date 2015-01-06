@@ -4,8 +4,8 @@
 
 // CHECK: @_ZN5test11A1aE = constant i32 10, align 4
 // CHECK: @_ZN5test212_GLOBAL__N_11AIiE1xE = internal global i32 0, align 4
-// CHECK: @_ZN5test31AIiE1xE = weak_odr global i32 0, comdat $_ZN5test31AIiE1xE, align 4
-// CHECK: @_ZGVN5test31AIiE1xE = weak_odr global i64 0, comdat $_ZN5test31AIiE1xE
+// CHECK: @_ZN5test31AIiE1xE = weak_odr global i32 0, comdat, align 4
+// CHECK: @_ZGVN5test31AIiE1xE = weak_odr global i64 0, comdat($_ZN5test31AIiE1xE)
 // MACHO: @_ZGVN5test31AIiE1xE = weak_odr global i64 0
 // MACHO-NOT: comdat
 
@@ -64,7 +64,7 @@ namespace test3 {
   template <class T> int A<T>::x = foo();
   template struct A<int>;
 
-  // CHECK-LABEL: define internal void @__cxx_global_var_init1() {{.*}} comdat $_ZN5test31AIiE1xE
+  // CHECK-LABEL: define internal void @__cxx_global_var_init1() {{.*}} comdat($_ZN5test31AIiE1xE)
   // MACHO-LABEL: define internal void @__cxx_global_var_init1()
   // MACHO-NOT: comdat
   // CHECK:      [[GUARDBYTE:%.*]] = load i8* bitcast (i64* @_ZGVN5test31AIiE1xE to i8*)
