@@ -146,6 +146,7 @@ if(NOT WIN32 AND NOT APPLE)
   execute_process(
     COMMAND ${CMAKE_C_COMPILER} -Wl,--version
     OUTPUT_VARIABLE stdout
+    ERROR_QUIET
     )
   if("${stdout}" MATCHES "GNU gold")
     set(LLVM_LINKER_IS_GOLD ON)
