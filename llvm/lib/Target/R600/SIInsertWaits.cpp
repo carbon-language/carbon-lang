@@ -186,6 +186,29 @@ bool SIInsertWaits::isOpRelevant(MachineOperand &Op) {
   if (!MI.getDesc().mayStore())
     return false;
 
+  // Check if this operand is the value being stored.
+  // Special case for DS instructions, since the address
+  // operand comes before the value operand and it may have
+  // multiple data operands.
+
+  if (TII->isDS(MI.getOpcode())) {
+    MachineOperand *Data = TII->getNamedOperand(MI, AMDGPU::OpName::data);
+    if (Data && Op.isIdenticalTo(*Data))
+      return true;
+
+    MachineOperand *Data0 = TII->getNamedOperand(MI, AMDGPU::OpName::data0);
+    if (Data0 && Op.isIdenticalTo(*Data0))
+      return true;
+
+    MachineOperand *Data1 = TII->getNamedOperand(MI, AMDGPU::OpName::data1);
+    if (Data1 && Op.isIdenticalTo(*Data1))
+      return true;
+
+    return false;
+  }
+
+  // NOTE: This assumes that the value operand is before the
+  // address operand, and that there is only one value operand.
   for (MachineInstr::mop_iterator I = MI.operands_begin(),
        E = MI.operands_end(); I != E; ++I) {
 
