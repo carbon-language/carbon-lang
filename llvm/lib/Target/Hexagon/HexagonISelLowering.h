@@ -68,7 +68,8 @@ bool isPositiveHalfWord(SDNode *N);
       WrapperShuffOB,
       WrapperShuffOH,
       TC_RETURN,
-      EH_RETURN
+      EH_RETURN,
+      DCFETCH
     };
   }
 

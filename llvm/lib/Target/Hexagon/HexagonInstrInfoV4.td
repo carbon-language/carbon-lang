@@ -4120,3 +4120,95 @@ def : Pat<(i32 (load FoldGlobalAddrGP:$addr)),
 def : Pat<(atomic_load_32 FoldGlobalAddrGP:$addr),
           (i32 (L4_loadri_abs FoldGlobalAddrGP:$addr))>,
            Requires<[HasV4T]>;
+
+//===----------------------------------------------------------------------===//
+// :raw for of boundscheck:hi:lo insns
+//===----------------------------------------------------------------------===//
+
+// A4_boundscheck_lo: Detect if a register is within bounds.
+let hasSideEffects = 0, isCodeGenOnly = 0 in
+def A4_boundscheck_lo: ALU64Inst <
+  (outs PredRegs:$Pd),
+  (ins DoubleRegs:$Rss, DoubleRegs:$Rtt),
+  "$Pd = boundscheck($Rss, $Rtt):raw:lo"> {
+    bits<2> Pd;
+    bits<5> Rss;
+    bits<5> Rtt;
+
+    let IClass = 0b1101;
+
+    let Inst{27-23} = 0b00100;
+    let Inst{13} = 0b1;
+    let Inst{7-5} = 0b100;
+    let Inst{1-0} = Pd;
+    let Inst{20-16} = Rss;
+    let Inst{12-8} = Rtt;
+  }
+
+// A4_boundscheck_hi: Detect if a register is within bounds.
+let hasSideEffects = 0, isCodeGenOnly = 0 in
+def A4_boundscheck_hi: ALU64Inst <
+  (outs PredRegs:$Pd),
+  (ins DoubleRegs:$Rss, DoubleRegs:$Rtt),
+  "$Pd = boundscheck($Rss, $Rtt):raw:hi"> {
+    bits<2> Pd;
+    bits<5> Rss;
+    bits<5> Rtt;
+
+    let IClass = 0b1101;
+
+    let Inst{27-23} = 0b00100;
+    let Inst{13} = 0b1;
+    let Inst{7-5} = 0b101;
+    let Inst{1-0} = Pd;
+    let Inst{20-16} = Rss;
+    let Inst{12-8} = Rtt;
+  }
+
+let hasSideEffects = 0 in
+def A4_boundscheck : MInst <
+  (outs PredRegs:$Pd), (ins IntRegs:$Rs, DoubleRegs:$Rtt),
+  "$Pd=boundscheck($Rs,$Rtt)">;
+
+// A4_tlbmatch: Detect if a VA/ASID matches a TLB entry.
+let isPredicateLate = 1, hasSideEffects = 0, isCodeGenOnly = 0 in
+def A4_tlbmatch : ALU64Inst<(outs PredRegs:$Pd),
+  (ins DoubleRegs:$Rs, IntRegs:$Rt),
+  "$Pd = tlbmatch($Rs, $Rt)",
+  [], "", ALU64_tc_2early_SLOT23> {
+    bits<2> Pd;
+    bits<5> Rs;
+    bits<5> Rt;
+
+    let IClass = 0b1101;
+    let Inst{27-23} = 0b00100;
+    let Inst{20-16} = Rs;
+    let Inst{13} = 0b1;
+    let Inst{12-8} = Rt;
+    let Inst{7-5} = 0b011;
+    let Inst{1-0} = Pd;
+  }
+
+// We need custom lowering of ISD::PREFETCH into HexagonISD::DCFETCH
+// because the SDNode ISD::PREFETCH has properties MayLoad and MayStore.
+// We don't really want either one here.
+def SDTHexagonDCFETCH : SDTypeProfile<0, 2, [SDTCisPtrTy<0>,SDTCisInt<1>]>;
+def HexagonDCFETCH : SDNode<"HexagonISD::DCFETCH", SDTHexagonDCFETCH,
+                            [SDNPHasChain]>;
+
+// Use LD0Inst for dcfetch, but set "mayLoad" to 0 because this doesn't
+// really do a load.
+let hasSideEffects = 1, mayLoad = 0, isCodeGenOnly = 0 in
+def Y2_dcfetchbo : LD0Inst<(outs), (ins IntRegs:$Rs, u11_3Imm:$u11_3),
+      "dcfetch($Rs + #$u11_3)",
+      [(HexagonDCFETCH IntRegs:$Rs, u11_3ImmPred:$u11_3)],
+      "", LD_tc_ld_SLOT0> {
+  bits<5> Rs;
+  bits<14> u11_3;
+
+  let IClass = 0b1001;
+  let Inst{27-21} = 0b0100000;
+  let Inst{20-16} = Rs;
+  let Inst{13} = 0b0;
+  let Inst{10-0} = u11_3{13-3};
+}

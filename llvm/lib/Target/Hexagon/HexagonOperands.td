@@ -259,6 +259,13 @@ def u16_s8ImmPred  : PatLeaf<(i32 imm), [{
   return isShiftedUInt<16,8>(v);
 }]>;
 
+def u11_3ImmPred : PatLeaf<(i32 imm), [{
+  // True if the immediate fits in a 14-bit unsigned field, and the lowest
+  // three bits are 0.
+  int64_t v = (int64_t)N->getSExtValue();
+  return isShiftedUInt<11,3>(v);
+}]>;
+
 def u9ImmPred  : PatLeaf<(i32 imm), [{
   // u9ImmPred predicate - True if the immediate fits in a 9-bit unsigned
   // field.
