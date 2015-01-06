@@ -25,26 +25,16 @@ using namespace llvm;
 namespace llvm {
 
 class Mips16HardFloat : public ModulePass {
-
 public:
   static char ID;
 
-  Mips16HardFloat(MipsTargetMachine &TM_) : ModulePass(ID),
-    TM(TM_), Subtarget(TM.getSubtarget<MipsSubtarget>()) {
-  }
+  Mips16HardFloat(MipsTargetMachine &TM_) : ModulePass(ID), TM(TM_) {}
 
-  const char *getPassName() const override {
-    return "MIPS16 Hard Float Pass";
-  }
-
+  const char *getPassName() const override { return "MIPS16 Hard Float Pass"; }
   bool runOnModule(Module &M) override;
 
 protected:
-  /// Keep a pointer to the MipsSubtarget around so that we can make the right
-  /// decision when generating code for different targets.
-  const TargetMachine &TM;
-  const MipsSubtarget &Subtarget;
-
+  const MipsTargetMachine &TM;
 };
 
 ModulePass *createMips16HardFloat(MipsTargetMachine &TM);

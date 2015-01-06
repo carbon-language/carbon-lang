@@ -162,7 +162,7 @@ public:
         Subtarget(&TM.getSubtarget<MipsSubtarget>()) {
     MFI = funcInfo.MF->getInfo<MipsFunctionInfo>();
     Context = &funcInfo.Fn->getContext();
-    TargetSupported = ((Subtarget->getRelocationModel() == Reloc::PIC_) &&
+    TargetSupported = ((TM.getRelocationModel() == Reloc::PIC_) &&
                        ((Subtarget->hasMips32r2() || Subtarget->hasMips32()) &&
                         (Subtarget->isABI_O32())));
     UnsupportedFPMode = Subtarget->isFP64bit();

@@ -59,6 +59,8 @@ public:
   TargetLoweringObjectFile *getObjFileLowering() const override {
     return TLOF.get();
   }
+
+  bool isLittleEndian() const { return isLittle; }
 };
 
 /// MipsebTargetMachine - Mips32/64 big endian target machine.
