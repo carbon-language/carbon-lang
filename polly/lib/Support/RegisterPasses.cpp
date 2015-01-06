@@ -182,7 +182,7 @@ void initializePollyPasses(PassRegistry &Registry) {
 /// scheduling optimizer.
 ///
 /// Polly supports the isl internal code generator.
-static void registerPollyPasses(llvm::PassManagerBase &PM) {
+void registerPollyPasses(llvm::PassManagerBase &PM) {
   registerCanonicalicationPasses(PM);
 
   PM.add(polly::createScopInfoPass());
