@@ -635,9 +635,8 @@ static VNInfo *searchForVNI(const SlotIndexes &Indexes, LiveRange &LR,
   // Continue at predecessors (we could even go to idom with domtree available).
   for (const MachineBasicBlock *Pred : MBB->predecessors()) {
     // Avoid going in circles.
-    if (Visited.count(Pred))
+    if (!Visited.insert(Pred).second)
       continue;
-    Visited.insert(Pred);
 
     VNI = searchForVNI(Indexes, LR, Pred, Visited);
     if (VNI != nullptr) {
@@ -647,6 +646,27 @@ static VNInfo *searchForVNI(const SlotIndexes &Indexes, LiveRange &LR,
   }
 
   return VNI;
+}
+
+static void determineMissingVNIs(const SlotIndexes &Indexes, LiveInterval &LI) {
+  SmallPtrSet<const MachineBasicBlock*, 5> Visited;
+  for (LiveRange::Segment &S : LI.segments) {
+    if (S.valno != nullptr)
+      continue;
+    // This can only happen at the begin of a basic block.
+    assert(S.start.isBlock() && "valno should only be missing at block begin");
+
+    Visited.clear();
+    const MachineBasicBlock *MBB = Indexes.getMBBFromIndex(S.start);
+    for (const MachineBasicBlock *Pred : MBB->predecessors()) {
+      VNInfo *VNI = searchForVNI(Indexes, LI, Pred, Visited);
+      if (VNI != nullptr) {
+        S.valno = VNI;
+        break;
+      }
+    }
+    assert(S.valno != nullptr && "could not determine valno");
+  }
 }
 
 void LiveInterval::constructMainRangeFromSubranges(
@@ -659,7 +679,7 @@ void LiveInterval::constructMainRangeFromSubranges(
   //   live either.
   // We do this by scannig through all the subranges simultaneously creating new
   // segments in the main range as segments start/ends come up in the subranges.
-  assert(hasSubRanges());
+  assert(hasSubRanges() && "expected subranges to be present");
   assert(segments.empty() && valnos.empty() && "expected empty main range");
 
   // Collect subrange, iterator pairs for the walk and determine first and last
@@ -690,7 +710,9 @@ void LiveInterval::constructMainRangeFromSubranges(
       BEGIN_SEGMENT,
       END_SEGMENT,
     } Event = NOTHING;
+    // Which subregister lanes are affected by the current event.
     unsigned EventMask = 0;
+    // Whether a BEGIN_SEGMENT is also a valno definition point.
     bool IsDef = false;
     // Find the next begin or end of a subrange segment. Combine masks if we
     // have multiple begins/ends at the same position. Ends take precedence over
@@ -698,6 +720,8 @@ void LiveInterval::constructMainRangeFromSubranges(
     for (auto &SRP : SRs) {
       const SubRange &SR = *SRP.first;
       const_iterator &I = SRP.second;
+      // Advance iterator of subrange to a segment involving Pos; the earlier
+      // segments are already merged at this point.
       while (I != SR.end() &&
              (I->end < Pos ||
               (I->end == Pos && (ActiveMask & SR.LaneMask) == 0)))
@@ -706,7 +730,7 @@ void LiveInterval::constructMainRangeFromSubranges(
         continue;
       if ((ActiveMask & SR.LaneMask) == 0 &&
           Pos <= I->start && I->start <= NextPos) {
-        // Merge multiple begins at the same position
+        // Merge multiple begins at the same position.
         if (I->start == NextPos && Event == BEGIN_SEGMENT) {
           EventMask |= SR.LaneMask;
           IsDef |= I->valno->def == I->start;
@@ -789,27 +813,10 @@ void LiveInterval::constructMainRangeFromSubranges(
   // We might not be able to assign new valnos for all segments if the basic
   // block containing the definition comes after a segment using the valno.
   // Do a fixup pass for this uncommon case.
-  if (NeedVNIFixup) {
-    SmallPtrSet<const MachineBasicBlock*, 5> Visited;
-    for (Segment &S : segments) {
-      if (S.valno != nullptr)
-        continue;
-      // This can only happen at the begin of a basic block.
-      assert(S.start.isBlock());
+  if (NeedVNIFixup)
+    determineMissingVNIs(Indexes, *this);
 
-      Visited.clear();
-      const MachineBasicBlock *MBB = Indexes.getMBBFromIndex(S.start);
-      for (const MachineBasicBlock *Pred : MBB->predecessors()) {
-        VNInfo *VNI = searchForVNI(Indexes, *this, Pred, Visited);
-        if (VNI != nullptr) {
-          S.valno = VNI;
-          break;
-        }
-      }
-      assert(S.valno != nullptr);
-    }
-  }
-  assert(ActiveMask == 0 && !ConstructingSegment);
+  assert(ActiveMask == 0 && !ConstructingSegment && "all segments ended");
   verify();
 }
 
