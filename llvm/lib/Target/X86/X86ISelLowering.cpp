@@ -1536,7 +1536,7 @@ void X86TargetLowering::resetOperationActions() {
     for (int i = MVT::v32i8; i != MVT::v8i64; ++i) {
       MVT VT = (MVT::SimpleValueType)i;
 
-      // Do not attempt to promote non-256-bit vectors.
+      // Do not attempt to promote non-512-bit vectors.
       if (!VT.is512BitVector())
         continue;
 
@@ -1567,7 +1567,7 @@ void X86TargetLowering::resetOperationActions() {
 
       const unsigned EltSize = VT.getVectorElementType().getSizeInBits();
 
-      // Do not attempt to promote non-256-bit vectors.
+      // Do not attempt to promote non-512-bit vectors.
       if (!VT.is512BitVector())
         continue;
 
