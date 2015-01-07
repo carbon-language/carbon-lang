@@ -1167,6 +1167,9 @@ class Base(unittest2.TestCase):
             else:
                 print >> sbuf, "unexpected success (problem id:" + str(bugnumber) + ")"	
 
+    def getRerunArgs(self):
+        return " -f %s.%s" % (self.__class__.__name__, self._testMethodName)
+        
     def dumpSessionInfo(self):
         """
         Dump the debugger interactions leading to a test error/failure.  This
@@ -1229,10 +1232,9 @@ class Base(unittest2.TestCase):
             print >> f, "Session info generated @", datetime.datetime.now().ctime()
             print >> f, self.session.getvalue()
             print >> f, "To rerun this test, issue the following command from the 'test' directory:\n"
-            print >> f, "./dotest.py %s -v %s -f %s.%s" % (self.getRunOptions(),
-                                                           ('+b' if benchmarks else '-t'),
-                                                           self.__class__.__name__,
-                                                           self._testMethodName)
+            print >> f, "./dotest.py %s -v %s %s" % (self.getRunOptions(),
+                                                     ('+b' if benchmarks else '-t'),
+                                                     self.getRerunArgs())
 
     # ====================================================
     # Config. methods supported through a plugin interface
