@@ -64,6 +64,7 @@ void InitializeFlags(Flags *f) {
     OverrideCommonFlags(cf);
   }
 
+  const int kDefaultQuarantineSizeMb = (ASAN_LOW_MEMORY) ? 1UL << 6 : 1UL << 8;
   f->SetDefaults();
 
   // Override from compile definition.
@@ -118,6 +119,18 @@ void InitializeFlags(Flags *f) {
   CHECK_LE(f->max_redzone, 2048);
   CHECK(IsPowerOfTwo(f->redzone));
   CHECK(IsPowerOfTwo(f->max_redzone));
+
+  // quarantine_size is deprecated but we still honor it.
+  // quarantine_size can not be used together with quarantine_size_mb.
+  if (f->quarantine_size >= 0 && f->quarantine_size_mb >= 0) {
+    Report("%s: please use either 'quarantine_size' (deprecated) or "
+           "quarantine_size_mb, but not both\n", SanitizerToolName);
+    Die();
+  }
+  if (f->quarantine_size >= 0)
+    f->quarantine_size_mb = f->quarantine_size >> 20;
+  if (f->quarantine_size_mb < 0)
+    f->quarantine_size_mb = kDefaultQuarantineSizeMb;
 }
 
 }  // namespace __asan

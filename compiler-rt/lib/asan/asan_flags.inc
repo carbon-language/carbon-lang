@@ -17,8 +17,10 @@
 // ASAN_FLAG(Type, Name, DefaultValue, Description)
 // See COMMON_FLAG in sanitizer_flags.inc for more details.
 
-ASAN_FLAG(int, quarantine_size, (ASAN_LOW_MEMORY) ? 1UL << 26 : 1UL << 28,
-          "Size (in bytes) of quarantine used to detect use-after-free "
+ASAN_FLAG(int, quarantine_size, -1,
+            "Deprecated, please use quarantine_size_mb.")
+ASAN_FLAG(int, quarantine_size_mb, -1,
+          "Size (in Mb) of quarantine used to detect use-after-free "
           "errors. Lower value may reduce memory usage but increase the "
           "chance of false negatives.")
 ASAN_FLAG(int, redzone, 16,

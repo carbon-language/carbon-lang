@@ -281,7 +281,7 @@ static void PrintAddressSpaceLayout() {
   Printf("\n");
   Printf("redzone=%zu\n", (uptr)flags()->redzone);
   Printf("max_redzone=%zu\n", (uptr)flags()->max_redzone);
-  Printf("quarantine_size=%zuM\n", (uptr)flags()->quarantine_size >> 20);
+  Printf("quarantine_size_mb=%zuM\n", (uptr)flags()->quarantine_size_mb);
   Printf("malloc_context_size=%zu\n",
          (uptr)common_flags()->malloc_context_size);
 

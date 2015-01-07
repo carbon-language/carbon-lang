@@ -206,7 +206,7 @@ QuarantineCache *GetQuarantineCache(AsanThreadLocalMallocStorage *ms) {
 }
 
 void AllocatorOptions::SetFrom(const Flags *f, const CommonFlags *cf) {
-  quarantine_size_mb = f->quarantine_size >> 20;
+  quarantine_size_mb = f->quarantine_size_mb;
   min_redzone = f->redzone;
   max_redzone = f->max_redzone;
   may_return_null = cf->allocator_may_return_null;
@@ -214,7 +214,7 @@ void AllocatorOptions::SetFrom(const Flags *f, const CommonFlags *cf) {
 }
 
 void AllocatorOptions::CopyTo(Flags *f, CommonFlags *cf) {
-  f->quarantine_size = (int)quarantine_size_mb << 20;
+  f->quarantine_size_mb = quarantine_size_mb;
   f->redzone = min_redzone;
   f->max_redzone = max_redzone;
   cf->allocator_may_return_null = may_return_null;
