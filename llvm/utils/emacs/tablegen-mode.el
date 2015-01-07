@@ -1,12 +1,17 @@
+;;; tablegen-mode.el --- Major mode for TableGen description files (part of LLVM project)
+
 ;; Maintainer:  The LLVM team, http://llvm.org/
-;; Description: Major mode for TableGen description files (part of LLVM project)
-;; Updated:     2007-12-18
+
+;;; Commentary:
+;; A major mode for TableGen description files in LLVM.
 
 (require 'comint)
 (require 'custom)
 (require 'ansi-color)
 
 ;; Create mode-specific tables.
+;;; Code:
+
 (defvar td-decorators-face 'td-decorators-face
   "Face method decorators.")
 (make-face 'td-decorators-face)
@@ -93,10 +98,11 @@
   (define-key tablegen-mode-map "\es" 'center-line)
   (define-key tablegen-mode-map "\eS" 'center-paragraph))
 
+;;;###autoload
 (defun tablegen-mode ()
   "Major mode for editing TableGen description files.
-  \\{tablegen-mode-map}
-  Runs tablegen-mode-hook on startup."
+\\{tablegen-mode-map}
+  Runs `tablegen-mode-hook' on startup."
   (interactive)
   (kill-all-local-variables)
   (use-local-map tablegen-mode-map)      ; Provides the local keymap.
@@ -117,7 +123,9 @@
                                          ;   customize the mode with a hook.
 
 ;; Associate .td files with tablegen-mode
-(setq auto-mode-alist (append '(("\\.td$" . tablegen-mode)) auto-mode-alist))
+;;;###autoload
+(add-to-list 'auto-mode-alist (cons (purecopy "\\.td\\'")  'tablegen-mode))
 
 (provide 'tablegen-mode)
-;; end of tablegen-mode.el
+
+;;; tablegen-mode.el ends here
