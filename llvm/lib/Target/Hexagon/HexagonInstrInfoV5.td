@@ -437,6 +437,51 @@ def F2_sffma_sc: MInst <
     let Inst{4-0}   = Rx;
   }
 
+// Classify floating-point value
+let Uses = [USR], isFP = 1, isCodeGenOnly = 0 in
+ def F2_sfclass : T_TEST_BIT_IMM<"sfclass", 0b111>;
+
+let Uses = [USR], isFP = 1, isCodeGenOnly = 0 in
+def F2_dfclass: ALU64Inst<(outs PredRegs:$Pd), (ins DoubleRegs:$Rss, u5Imm:$u5),
+  "$Pd = dfclass($Rss, #$u5)",
+  [], "" , ALU64_tc_2early_SLOT23 > , Requires<[HasV5T]> {
+    bits<2> Pd;
+    bits<5> Rss;
+    bits<5> u5;
+
+    let IClass = 0b1101;
+    let Inst{27-21} = 0b1100100;
+    let Inst{20-16} = Rss;
+    let Inst{12-10} = 0b000;
+    let Inst{9-5}   = u5;
+    let Inst{4-3}   = 0b10;
+    let Inst{1-0}   = Pd;
+  }
+
+// Instructions to create floating point constant
+let hasNewValue = 1, opNewValue = 0 in
+class T_fimm <string mnemonic, RegisterClass RC, bits<4> RegType, bit isNeg>
+  : ALU64Inst<(outs RC:$dst), (ins u10Imm:$src),
+  "$dst = "#mnemonic#"(#$src)"#!if(isNeg, ":neg", ":pos"),
+  [], "", ALU64_tc_3x_SLOT23>, Requires<[HasV5T]> {
+    bits<5> dst;
+    bits<10> src;
+
+    let IClass = 0b1101;
+    let Inst{27-24} = RegType;
+    let Inst{23}    = 0b0;
+    let Inst{22}    = isNeg;
+    let Inst{21}    = src{9};
+    let Inst{13-5}  = src{8-0};
+    let Inst{4-0}   = dst;
+  }
+
+let isCodeGenOnly = 0 in {
+def F2_sfimm_p : T_fimm <"sfmake", IntRegs, 0b0110, 0>;
+def F2_sfimm_n : T_fimm <"sfmake", IntRegs, 0b0110, 1>;
+def F2_dfimm_p : T_fimm <"dfmake", DoubleRegs, 0b1001, 0>;
+def F2_dfimm_n : T_fimm <"dfmake", DoubleRegs, 0b1001, 1>;
+}
 
 // Convert single precision to double precision and vice-versa.
 def CONVERT_sf2df : ALU64_rr<(outs DoubleRegs:$dst), (ins IntRegs:$src),
