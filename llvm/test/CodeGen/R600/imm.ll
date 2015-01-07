@@ -474,12 +474,9 @@ define void @add_inline_imm_64_f64(double addrspace(1)* %out, double %x) {
 }
 
 
-; FIXME: These shoudn't bother materializing in SGPRs
-
 ; CHECK-LABEL: {{^}}store_inline_imm_0.0_f64
-; CHECK: s_mov_b64 s{{\[}}[[LO_SREG:[0-9]+]]:[[HI_SREG:[0-9]+]]{{\]}}, 0{{$}}
-; CHECK-DAG: v_mov_b32_e32 v[[LO_VREG:[0-9]+]], s[[LO_SREG]]
-; CHECK-DAG: v_mov_b32_e32 v[[HI_VREG:[0-9]+]], s[[HI_SREG]]
+; CHECK: v_mov_b32_e32 v[[LO_VREG:[0-9]+]], 0
+; CHECK: v_mov_b32_e32 v[[HI_VREG:[0-9]+]], 0
 ; CHECK: buffer_store_dwordx2 v{{\[}}[[LO_VREG]]:[[HI_VREG]]{{\]}}
 define void @store_inline_imm_0.0_f64(double addrspace(1)* %out) {
   store double 0.0, double addrspace(1)* %out

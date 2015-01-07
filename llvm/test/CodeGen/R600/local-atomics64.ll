@@ -30,9 +30,8 @@ define void @lds_atomic_add_ret_i64(i64 addrspace(1)* %out, i64 addrspace(3)* %p
 
 ; FUNC-LABEL: {{^}}lds_atomic_add_ret_i64_offset:
 ; SI: s_load_dword [[PTR:s[0-9]+]], s{{\[[0-9]+:[0-9]+\]}}, 0xb
-; SI: s_mov_b64 s{{\[}}[[LOSDATA:[0-9]+]]:[[HISDATA:[0-9]+]]{{\]}}, 9
-; SI-DAG: v_mov_b32_e32 v[[LOVDATA:[0-9]+]], s[[LOSDATA]]
-; SI-DAG: v_mov_b32_e32 v[[HIVDATA:[0-9]+]], s[[HISDATA]]
+; SI-DAG: v_mov_b32_e32 v[[LOVDATA:[0-9]+]], 9
+; SI-DAG: v_mov_b32_e32 v[[HIVDATA:[0-9]+]], 0
 ; SI-DAG: v_mov_b32_e32 [[VPTR:v[0-9]+]], [[PTR]]
 ; SI: ds_add_rtn_u64 [[RESULT:v\[[0-9]+:[0-9]+\]]], [[VPTR]], v{{\[}}[[LOVDATA]]:[[HIVDATA]]{{\]}} offset:32 [M0]
 ; SI: buffer_store_dwordx2 [[RESULT]],
@@ -45,9 +44,8 @@ define void @lds_atomic_add_ret_i64_offset(i64 addrspace(1)* %out, i64 addrspace
 }
 
 ; FUNC-LABEL: {{^}}lds_atomic_inc_ret_i64:
-; SI: s_mov_b64 s{{\[}}[[LOSDATA:[0-9]+]]:[[HISDATA:[0-9]+]]{{\]}}, -1
-; SI-DAG: v_mov_b32_e32 v[[LOVDATA:[0-9]+]], s[[LOSDATA]]
-; SI-DAG: v_mov_b32_e32 v[[HIVDATA:[0-9]+]], s[[HISDATA]]
+; SI: v_mov_b32_e32 v[[LOVDATA:[0-9]+]], -1
+; SI: v_mov_b32_e32 v[[HIVDATA:[0-9]+]], -1
 ; SI: ds_inc_rtn_u64 [[RESULT:v\[[0-9]+:[0-9]+\]]], [[VPTR]], v{{\[}}[[LOVDATA]]:[[HIVDATA]]{{\]}}
 ; SI: buffer_store_dwordx2 [[RESULT]],
 ; SI: s_endpgm
@@ -87,9 +85,8 @@ define void @lds_atomic_sub_ret_i64_offset(i64 addrspace(1)* %out, i64 addrspace
 }
 
 ; FUNC-LABEL: {{^}}lds_atomic_dec_ret_i64:
-; SI: s_mov_b64 s{{\[}}[[LOSDATA:[0-9]+]]:[[HISDATA:[0-9]+]]{{\]}}, -1
-; SI-DAG: v_mov_b32_e32 v[[LOVDATA:[0-9]+]], s[[LOSDATA]]
-; SI-DAG: v_mov_b32_e32 v[[HIVDATA:[0-9]+]], s[[HISDATA]]
+; SI: v_mov_b32_e32 v[[LOVDATA:[0-9]+]], -1
+; SI: v_mov_b32_e32 v[[HIVDATA:[0-9]+]], -1
 ; SI: ds_dec_rtn_u64 [[RESULT:v\[[0-9]+:[0-9]+\]]], [[VPTR]], v{{\[}}[[LOVDATA]]:[[HIVDATA]]{{\]}}
 ; SI: buffer_store_dwordx2 [[RESULT]],
 ; SI: s_endpgm
@@ -277,10 +274,9 @@ define void @lds_atomic_add_noret_i64(i64 addrspace(3)* %ptr) nounwind {
 
 ; FUNC-LABEL: {{^}}lds_atomic_add_noret_i64_offset:
 ; SI: s_load_dword [[PTR:s[0-9]+]], s{{\[[0-9]+:[0-9]+\]}}, 0x9
-; SI: s_mov_b64 s{{\[}}[[LOSDATA:[0-9]+]]:[[HISDATA:[0-9]+]]{{\]}}, 9
-; SI-DAG: v_mov_b32_e32 v[[LOVDATA:[0-9]+]], s[[LOSDATA]]
-; SI-DAG: v_mov_b32_e32 v[[HIVDATA:[0-9]+]], s[[HISDATA]]
-; SI-DAG: v_mov_b32_e32 [[VPTR:v[0-9]+]], [[PTR]]
+; SI: v_mov_b32_e32 [[VPTR:v[0-9]+]], [[PTR]]
+; SI: v_mov_b32_e32 v[[LOVDATA:[0-9]+]], 9
+; SI: v_mov_b32_e32 v[[HIVDATA:[0-9]+]], 0
 ; SI: ds_add_u64 [[VPTR]], v{{\[}}[[LOVDATA]]:[[HIVDATA]]{{\]}} offset:32 [M0]
 ; SI: s_endpgm
 define void @lds_atomic_add_noret_i64_offset(i64 addrspace(3)* %ptr) nounwind {
@@ -290,9 +286,8 @@ define void @lds_atomic_add_noret_i64_offset(i64 addrspace(3)* %ptr) nounwind {
 }
 
 ; FUNC-LABEL: {{^}}lds_atomic_inc_noret_i64:
-; SI: s_mov_b64 s{{\[}}[[LOSDATA:[0-9]+]]:[[HISDATA:[0-9]+]]{{\]}}, -1
-; SI-DAG: v_mov_b32_e32 v[[LOVDATA:[0-9]+]], s[[LOSDATA]]
-; SI-DAG: v_mov_b32_e32 v[[HIVDATA:[0-9]+]], s[[HISDATA]]
+; SI: v_mov_b32_e32 v[[LOVDATA:[0-9]+]], -1
+; SI: v_mov_b32_e32 v[[HIVDATA:[0-9]+]], -1
 ; SI: ds_inc_u64 [[VPTR]], v{{\[}}[[LOVDATA]]:[[HIVDATA]]{{\]}}
 ; SI: s_endpgm
 define void @lds_atomic_inc_noret_i64(i64 addrspace(3)* %ptr) nounwind {
@@ -327,9 +322,8 @@ define void @lds_atomic_sub_noret_i64_offset(i64 addrspace(3)* %ptr) nounwind {
 }
 
 ; FUNC-LABEL: {{^}}lds_atomic_dec_noret_i64:
-; SI: s_mov_b64 s{{\[}}[[LOSDATA:[0-9]+]]:[[HISDATA:[0-9]+]]{{\]}}, -1
-; SI-DAG: v_mov_b32_e32 v[[LOVDATA:[0-9]+]], s[[LOSDATA]]
-; SI-DAG: v_mov_b32_e32 v[[HIVDATA:[0-9]+]], s[[HISDATA]]
+; SI: v_mov_b32_e32 v[[LOVDATA:[0-9]+]], -1
+; SI: v_mov_b32_e32 v[[HIVDATA:[0-9]+]], -1
 ; SI: ds_dec_u64 [[VPTR]], v{{\[}}[[LOVDATA]]:[[HIVDATA]]{{\]}}
 ; SI: s_endpgm
 define void @lds_atomic_dec_noret_i64(i64 addrspace(3)* %ptr) nounwind {

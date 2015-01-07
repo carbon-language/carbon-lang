@@ -1742,6 +1742,12 @@ defm V_TRIG_PREOP_F64 : VOP3Inst <
 //===----------------------------------------------------------------------===//
 let isCodeGenOnly = 1, isPseudo = 1 in {
 
+let hasSideEffects = 0, mayLoad = 0, mayStore = 0 in {
+// 64-bit vector move instruction.  This is mainly used by the SIFoldOperands
+// pass to enable folding of inline immediates.
+def V_MOV_B64_PSEUDO : InstSI <(outs VReg_64:$dst), (ins VSrc_64:$src0), "", []>;
+} // end let hasSideEffects = 0, mayLoad = 0, mayStore = 0
+
 let hasSideEffects = 1 in {
 def SGPR_USE : InstSI <(outs),(ins), "", []>;
 }

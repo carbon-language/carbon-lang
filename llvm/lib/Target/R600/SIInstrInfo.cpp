@@ -424,6 +424,8 @@ unsigned SIInstrInfo::getMovOpcode(const TargetRegisterClass *DstRC) const {
     return RI.isSGPRClass(DstRC) ? AMDGPU::S_MOV_B32 : AMDGPU::V_MOV_B32_e32;
   } else if (DstRC->getSize() == 8 && RI.isSGPRClass(DstRC)) {
     return AMDGPU::S_MOV_B64;
+  } else if (DstRC->getSize() == 8 && !RI.isSGPRClass(DstRC)) {
+    return  AMDGPU::V_MOV_B64_PSEUDO;
   }
   return AMDGPU::COPY;
 }
@@ -672,6 +674,35 @@ bool SIInstrInfo::expandPostRAPseudo(MachineBasicBlock::iterator MI) const {
     // This is just a placeholder for register allocation.
     MI->eraseFromParent();
     break;
+
+  case AMDGPU::V_MOV_B64_PSEUDO: {
+    unsigned Dst = MI->getOperand(0).getReg();
+    unsigned DstLo = RI.getSubReg(Dst, AMDGPU::sub0);
+    unsigned DstHi = RI.getSubReg(Dst, AMDGPU::sub1);
+
+    const MachineOperand &SrcOp = MI->getOperand(1);
+    // FIXME: Will this work for 64-bit floating point immediates?
+    assert(!SrcOp.isFPImm());
+    if (SrcOp.isImm()) {
+      APInt Imm(64, SrcOp.getImm());
+      BuildMI(MBB, MI, DL, get(AMDGPU::V_MOV_B32_e32), DstLo)
+              .addImm(Imm.getLoBits(32).getZExtValue())
+              .addReg(Dst, RegState::Implicit);
+      BuildMI(MBB, MI, DL, get(AMDGPU::V_MOV_B32_e32), DstHi)
+              .addImm(Imm.getHiBits(32).getZExtValue())
+              .addReg(Dst, RegState::Implicit);
+    } else {
+      assert(SrcOp.isReg());
+      BuildMI(MBB, MI, DL, get(AMDGPU::V_MOV_B32_e32), DstLo)
+              .addReg(RI.getSubReg(SrcOp.getReg(), AMDGPU::sub0))
+              .addReg(Dst, RegState::Implicit);
+      BuildMI(MBB, MI, DL, get(AMDGPU::V_MOV_B32_e32), DstHi)
+              .addReg(RI.getSubReg(SrcOp.getReg(), AMDGPU::sub1))
+              .addReg(Dst, RegState::Implicit);
+    }
+    MI->eraseFromParent();
+    break;
+  }
   }
   return true;
 }
