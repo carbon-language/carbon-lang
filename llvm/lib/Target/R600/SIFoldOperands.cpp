@@ -49,6 +49,23 @@ public:
   }
 };
 
+struct FoldCandidate {
+  MachineInstr *UseMI;
+  unsigned UseOpNo;
+  MachineOperand *OpToFold;
+  uint64_t ImmToFold;
+
+  FoldCandidate(MachineInstr *MI, unsigned OpNo, MachineOperand *FoldOp) :
+      UseMI(MI), UseOpNo(OpNo), OpToFold(FoldOp), ImmToFold(0) { }
+
+  FoldCandidate(MachineInstr *MI, unsigned OpNo, uint64_t Imm) :
+      UseMI(MI), UseOpNo(OpNo), OpToFold(nullptr), ImmToFold(Imm) { }
+
+  bool isImm() const {
+    return !OpToFold;
+  }
+};
+
 } // End anonymous namespace.
 
 INITIALIZE_PASS_BEGIN(SIFoldOperands, DEBUG_TYPE,
@@ -78,28 +95,22 @@ static bool isSafeToFold(unsigned Opcode) {
   }
 }
 
-static bool updateOperand(MachineInstr *MI, unsigned OpNo,
-                          const MachineOperand &New,
+static bool updateOperand(FoldCandidate &Fold,
                           const TargetRegisterInfo &TRI) {
-  MachineOperand &Old = MI->getOperand(OpNo);
+  MachineInstr *MI = Fold.UseMI;
+  MachineOperand &Old = MI->getOperand(Fold.UseOpNo);
   assert(Old.isReg());
 
-  if (New.isImm()) {
-    Old.ChangeToImmediate(New.getImm());
+  if (Fold.isImm()) {
+    Old.ChangeToImmediate(Fold.ImmToFold);
     return true;
   }
 
-  if (New.isFPImm()) {
-    Old.ChangeToFPImmediate(New.getFPImm());
+  MachineOperand *New = Fold.OpToFold;
+  if (TargetRegisterInfo::isVirtualRegister(Old.getReg()) &&
+      TargetRegisterInfo::isVirtualRegister(New->getReg())) {
+    Old.substVirtReg(New->getReg(), New->getSubReg(), TRI);
     return true;
-  }
-
-  if (New.isReg())  {
-    if (TargetRegisterInfo::isVirtualRegister(Old.getReg()) &&
-        TargetRegisterInfo::isVirtualRegister(New.getReg())) {
-      Old.substVirtReg(New.getReg(), New.getSubReg(), TRI);
-      return true;
-    }
   }
 
   // FIXME: Handle physical registers.
@@ -133,7 +144,7 @@ bool SIFoldOperands::runOnMachineFunction(MachineFunction &MF) {
            OpToFold.getSubReg()))
         continue;
 
-      std::vector<std::pair<MachineInstr *, unsigned>> FoldList;
+      std::vector<FoldCandidate> FoldList;
       for (MachineRegisterInfo::use_iterator
            Use = MRI.use_begin(MI.getOperand(0).getReg()), E = MRI.use_end();
            Use != E; ++Use) {
@@ -146,10 +157,11 @@ bool SIFoldOperands::runOnMachineFunction(MachineFunction &MF) {
           continue;
         }
 
+        bool FoldingImm = OpToFold.isImm() || OpToFold.isFPImm();
+
         // In order to fold immediates into copies, we need to change the
         // copy to a MOV.
-        if ((OpToFold.isImm() || OpToFold.isFPImm()) &&
-             UseMI->getOpcode() == AMDGPU::COPY) {
+        if (FoldingImm && UseMI->getOpcode() == AMDGPU::COPY) {
           const TargetRegisterClass *TRC =
               MRI.getRegClass(UseMI->getOperand(0).getReg());
 
@@ -173,9 +185,24 @@ bool SIFoldOperands::runOnMachineFunction(MachineFunction &MF) {
             UseDesc.OpInfo[Use.getOperandNo()].RegClass == -1)
           continue;
 
-        // Normal substitution
+        if (FoldingImm) {
+          uint64_t Imm;
+          if (OpToFold.isFPImm()) {
+            Imm = OpToFold.getFPImm()->getValueAPF().bitcastToAPInt().getSExtValue();
+          } else {
+            Imm = OpToFold.getImm();
+          }
+
+          const MachineOperand ImmOp = MachineOperand::CreateImm(Imm);
+          if (TII->isOperandLegal(UseMI, Use.getOperandNo(), &ImmOp)) {
+            FoldList.push_back(FoldCandidate(UseMI, Use.getOperandNo(), Imm));
+            continue;
+          }
+        }
+
+        // Normal substitution with registers
         if (TII->isOperandLegal(UseMI, Use.getOperandNo(), &OpToFold)) {
-          FoldList.push_back(std::make_pair(UseMI, Use.getOperandNo()));
+          FoldList.push_back(FoldCandidate(UseMI, Use.getOperandNo(), &OpToFold));
           continue;
         }
 
@@ -187,13 +214,15 @@ bool SIFoldOperands::runOnMachineFunction(MachineFunction &MF) {
         // already does this.
       }
 
-      for (std::pair<MachineInstr *, unsigned> Fold : FoldList) {
-        if (updateOperand(Fold.first, Fold.second, OpToFold, TRI)) {
+      for (FoldCandidate &Fold : FoldList) {
+        if (updateOperand(Fold, TRI)) {
           // Clear kill flags.
-          if (OpToFold.isReg())
-            OpToFold.setIsKill(false);
+          if (!Fold.isImm()) {
+            assert(Fold.OpToFold && Fold.OpToFold->isReg());
+            Fold.OpToFold->setIsKill(false);
+          }
           DEBUG(dbgs() << "Folded source from " << MI << " into OpNo " <<
-                Fold.second << " of " << *Fold.first << '\n');
+                Fold.UseOpNo << " of " << *Fold.UseMI << '\n');
         }
       }
     }
