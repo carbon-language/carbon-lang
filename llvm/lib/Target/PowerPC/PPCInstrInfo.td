@@ -2010,6 +2010,15 @@ def MCRF   : XLForm_3<19, 0, (outs crrc:$BF), (ins crrc:$BFA),
                       "mcrf $BF, $BFA", IIC_BrMCR>,
              PPC970_DGroup_First, PPC970_Unit_CRU;
 
+// FIXME: According to the ISA (section 2.5.1 of version 2.06), the
+// condition-register logical instructions have preferred forms. Specifically,
+// it is preferred that the bit specified by the BT field be in the same
+// condition register as that specified by the bit BB. We might want to account
+// for this via hinting the register allocator and anti-dep breakers, or we
+// could constrain the register class to force this constraint and then loosen
+// it during register allocation via convertToThreeAddress or some similar
+// mechanism.
+
 let isCommutable = 1 in {
 def CRAND  : XLForm_1<19, 257, (outs crbitrc:$CRD),
                                (ins crbitrc:$CRA, crbitrc:$CRB),
