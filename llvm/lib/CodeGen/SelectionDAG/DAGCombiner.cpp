@@ -6878,6 +6878,7 @@ SDValue DAGCombiner::visitFADD(SDNode *N) {
     }
   } // enable-unsafe-fp-math
 
+
   // FADD -> FMA combines:
   if ((Options.AllowFPOpFusion == FPOpFusion::Fast || Options.UnsafeFPMath) &&
       TLI.isFMAFasterThanFMulAndFAdd(VT) &&
