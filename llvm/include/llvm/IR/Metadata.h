@@ -621,6 +621,11 @@ public:
     return getMDNode(Context, MDs, false);
   }
 
+  /// \brief Return a distinct node.
+  ///
+  /// Return a distinct node -- i.e., a node that is not uniqued.
+  static MDNode *getDistinct(LLVMContext &Context, ArrayRef<Metadata *> MDs);
+
   /// \brief Return a temporary MDNode
   ///
   /// For use in constructing cyclic MDNode structures. A temporary MDNode is
@@ -700,7 +705,7 @@ public:
 /// RAUW.  If an operand change (due to RAUW or otherwise) causes a uniquing
 /// collision, the uniquing bit is dropped.
 ///
-/// TODO: Make uniquing opt-out (status: mandatory, sometimes dropped).
+/// TODO: Make 'distinct' survive across assembly/bitcode/ValueMap.
 class GenericMDNode : public MDNode {
   friend class Metadata;
   friend class MDNode;
@@ -717,7 +722,12 @@ class GenericMDNode : public MDNode {
   /// LLVMContext, and adding an LLVMContext reference to RMI.
   std::unique_ptr<ReplaceableMetadataImpl> ReplaceableUses;
 
-  GenericMDNode(LLVMContext &C, ArrayRef<Metadata *> Vals);
+  /// \brief Create a new node.
+  ///
+  /// If \c AllowRAUW, then if any operands are unresolved support RAUW.  RAUW
+  /// will be dropped once all operands have been resolved (or if \a
+  /// resolveCycles() is called).
+  GenericMDNode(LLVMContext &C, ArrayRef<Metadata *> Vals, bool AllowRAUW);
   ~GenericMDNode();
 
   void setHash(unsigned Hash) { MDNodeSubclassData = Hash; }

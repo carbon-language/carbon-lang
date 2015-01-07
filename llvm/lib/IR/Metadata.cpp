@@ -411,8 +411,12 @@ static bool isOperandUnresolved(Metadata *Op) {
   return false;
 }
 
-GenericMDNode::GenericMDNode(LLVMContext &C, ArrayRef<Metadata *> Vals)
+GenericMDNode::GenericMDNode(LLVMContext &C, ArrayRef<Metadata *> Vals,
+                             bool AllowRAUW)
     : MDNode(C, GenericMDNodeKind, Vals) {
+  if (!AllowRAUW)
+    return;
+
   // Check whether any operands are unresolved, requiring re-uniquing.
   for (const auto &Op : operands())
     if (isOperandUnresolved(Op))
@@ -581,9 +585,15 @@ MDNode *MDNode::getMDNode(LLVMContext &Context, ArrayRef<Metadata *> MDs,
     return nullptr;
 
   // Coallocate space for the node and Operands together, then placement new.
-  GenericMDNode *N = new (MDs.size()) GenericMDNode(Context, MDs);
+  auto *N = new (MDs.size()) GenericMDNode(Context, MDs, /* AllowRAUW */ true);
   N->setHash(Key.Hash);
   Store.insert(N);
+  return N;
+}
+
+MDNode *MDNode::getDistinct(LLVMContext &Context, ArrayRef<Metadata *> MDs) {
+  auto *N = new (MDs.size()) GenericMDNode(Context, MDs, /* AllowRAUW */ false);
+  N->storeDistinctInContext();
   return N;
 }
 
