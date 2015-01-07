@@ -28,13 +28,6 @@ bool IsExpectedReport(uptr addr, uptr size) {
   return false;
 }
 
-void *internal_start_thread(void(*func)(void*), void *arg) {
-  return 0;
-}
-
-void internal_join_thread(void *th) {
-}
-
 ReportLocation *SymbolizeData(uptr addr) {
   return 0;
 }

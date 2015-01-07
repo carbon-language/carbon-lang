@@ -940,6 +940,7 @@ bool IsDeadlySignal(int signum) {
   return (signum == SIGSEGV) && common_flags()->handle_segv;
 }
 
+#ifndef SANITIZER_GO
 void *internal_start_thread(void(*func)(void *arg), void *arg) {
   // Start the thread with signals blocked, otherwise it can steal user signals.
   __sanitizer_sigset_t set, old;
@@ -954,6 +955,11 @@ void *internal_start_thread(void(*func)(void *arg), void *arg) {
 void internal_join_thread(void *th) {
   real_pthread_join(th, 0);
 }
+#else
+void *internal_start_thread(void (*func)(void *), void *arg) { return 0; }
+
+void internal_join_thread(void *th) {}
+#endif
 
 }  // namespace __sanitizer
 
