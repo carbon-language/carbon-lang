@@ -8,11 +8,11 @@ html, body {
 #box {
   margin-left: auto;
   margin-right: auto;
-  max-width: 70em;
+  max-width: 67em;
 }
 [id=content] {
 	/* *****  EDIT THIS VALUE IF CONTENT OVERLAPS MENU ***** */
-        margin-left: 18em;
+        margin-left: 21em;
 	padding-left: 3em;
 }
 
