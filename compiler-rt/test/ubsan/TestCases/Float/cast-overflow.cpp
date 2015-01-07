@@ -14,6 +14,7 @@
 
 // This test assumes float and double are IEEE-754 single- and double-precision.
 // XFAIL: armv7l-unknown-linux-gnueabihf
+// XFAIL: aarch64
 
 #if defined(__APPLE__)
 # include <machine/endian.h>
