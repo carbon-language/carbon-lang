@@ -960,7 +960,6 @@ OperandType RecognizableInstr::typeFromString(const std::string &s,
   TYPE("brtarget16",          TYPE_RELv)
   TYPE("brtarget8",           TYPE_REL8)
   TYPE("f80mem",              TYPE_M80FP)
-  TYPE("lea32mem",            TYPE_LEA)
   TYPE("lea64_32mem",         TYPE_LEA)
   TYPE("lea64mem",            TYPE_LEA)
   TYPE("VR64",                TYPE_MM64)

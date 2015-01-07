@@ -421,10 +421,6 @@ enum OperandEncoding {
   ENUM_ENTRY(TYPE_M1616,      "2+2-byte segment+offset address")               \
   ENUM_ENTRY(TYPE_M1632,      "2+4-byte")                                      \
   ENUM_ENTRY(TYPE_M1664,      "2+8-byte")                                      \
-  ENUM_ENTRY(TYPE_M16_32,     "2+4-byte two-part memory operand (LIDT, LGDT)") \
-  ENUM_ENTRY(TYPE_M16_16,     "2+2-byte (BOUND)")                              \
-  ENUM_ENTRY(TYPE_M32_32,     "4+4-byte (BOUND)")                              \
-  ENUM_ENTRY(TYPE_M16_64,     "2+8-byte (LIDT, LGDT)")                         \
   ENUM_ENTRY(TYPE_SRCIDX8,    "1-byte memory at source index")                 \
   ENUM_ENTRY(TYPE_SRCIDX16,   "2-byte memory at source index")                 \
   ENUM_ENTRY(TYPE_SRCIDX32,   "4-byte memory at source index")                 \
@@ -443,14 +439,8 @@ enum OperandEncoding {
   ENUM_ENTRY(TYPE_M32FP,      "32-bit IEE754 memory floating-point operand")   \
   ENUM_ENTRY(TYPE_M64FP,      "64-bit")                                        \
   ENUM_ENTRY(TYPE_M80FP,      "80-bit extended")                               \
-  ENUM_ENTRY(TYPE_M16INT,     "2-byte memory integer operand for use in "      \
-                              "floating-point instructions")                   \
-  ENUM_ENTRY(TYPE_M32INT,     "4-byte")                                        \
-  ENUM_ENTRY(TYPE_M64INT,     "8-byte")                                        \
   ENUM_ENTRY(TYPE_ST,         "Position on the floating-point stack")          \
-  ENUM_ENTRY(TYPE_MM,         "MMX register operand")                          \
-  ENUM_ENTRY(TYPE_MM32,       "4-byte MMX register or memory operand")         \
-  ENUM_ENTRY(TYPE_MM64,       "8-byte")                                        \
+  ENUM_ENTRY(TYPE_MM64,       "8-byte MMX register")                           \
   ENUM_ENTRY(TYPE_XMM,        "XMM register operand")                          \
   ENUM_ENTRY(TYPE_XMM32,      "4-byte XMM register or memory operand")         \
   ENUM_ENTRY(TYPE_XMM64,      "8-byte")                                        \

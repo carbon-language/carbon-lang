@@ -681,8 +681,6 @@ static bool translateRM(MCInst &mcInst, const OperandSpecifier &operand,
   case TYPE_R32:
   case TYPE_R64:
   case TYPE_Rv:
-  case TYPE_MM:
-  case TYPE_MM32:
   case TYPE_MM64:
   case TYPE_XMM:
   case TYPE_XMM32:
@@ -708,9 +706,6 @@ static bool translateRM(MCInst &mcInst, const OperandSpecifier &operand,
   case TYPE_M32FP:
   case TYPE_M64FP:
   case TYPE_M80FP:
-  case TYPE_M16INT:
-  case TYPE_M32INT:
-  case TYPE_M64INT:
   case TYPE_M1616:
   case TYPE_M1632:
   case TYPE_M1664:

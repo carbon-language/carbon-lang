@@ -1460,8 +1460,6 @@ static int readModRM(struct InternalInstruction* insn) {
     case TYPE_VK16:                                       \
       return prefix##_K0 + index;                         \
     case TYPE_MM64:                                       \
-    case TYPE_MM32:                                       \
-    case TYPE_MM:                                         \
       return prefix##_MM0 + (index & 0x7);                \
     case TYPE_SEGMENTREG:                                 \
       if (index > 5)                                      \
