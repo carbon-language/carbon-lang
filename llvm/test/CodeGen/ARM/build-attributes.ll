@@ -150,6 +150,7 @@
 ; V6-NOT:    .eabi_attribute 36
 ; V6:    .eabi_attribute 38, 1
 ; V6-NOT:    .eabi_attribute 42
+; V6-NOT:  .eabi_attribute 44
 ; V6-NOT:    .eabi_attribute 68
 
 ; V6-FAST-NOT:   .eabi_attribute 19
@@ -181,6 +182,7 @@
 ; V6M-NOT:  .eabi_attribute 36
 ; V6M:  .eabi_attribute 38, 1
 ; V6M-NOT:  .eabi_attribute 42
+; V6M-NOT:  .eabi_attribute 44
 ; V6M-NOT:  .eabi_attribute 68
 
 ; V6M-FAST-NOT:   .eabi_attribute 19
@@ -210,6 +212,7 @@
 ; ARM1156T2F-S-NOT: .eabi_attribute 36
 ; ARM1156T2F-S: .eabi_attribute 38, 1
 ; ARM1156T2F-S-NOT:    .eabi_attribute 42
+; ARM1156T2F-S-NOT:    .eabi_attribute 44
 ; ARM1156T2F-S-NOT:    .eabi_attribute 68
 
 ; ARM1156T2F-S-FAST-NOT:   .eabi_attribute 19
@@ -268,6 +271,7 @@
 ; V7-NOT: .eabi_attribute 36
 ; V7: .eabi_attribute 38, 1
 ; V7-NOT:    .eabi_attribute 42
+; V7-NOT:    .eabi_attribute 44
 ; V7-NOT:    .eabi_attribute 68
 
 ; V7-FAST-NOT:   .eabi_attribute 19
@@ -286,6 +290,7 @@
 ; V8: .eabi_attribute 21, 1
 ; V8-NOT: .eabi_attribute 22
 ; V8: .eabi_attribute 23, 3
+; V8-NOT: .eabi_attribute 44
 
 ; V8-FAST-NOT:   .eabi_attribute 19
 ;; The default does have an FPU, and for V8-A, it flushes preserving sign.
@@ -430,6 +435,7 @@
 ; CORTEX-A5-DEFAULT:        .eabi_attribute 24, 1
 ; CORTEX-A5-DEFAULT:        .eabi_attribute 25, 1
 ; CORTEX-A5-DEFAULT:        .eabi_attribute 42, 1
+; CORTEX-A5-DEFAULT-NOT:        .eabi_attribute 44
 ; CORTEX-A5-DEFAULT:        .eabi_attribute 68, 1
 
 ; CORTEX-A5-DEFAULT-FAST-NOT:   .eabi_attribute 19
@@ -509,6 +515,7 @@
 ; CORTEX-A9-SOFT:  .eabi_attribute 36, 1
 ; CORTEX-A9-SOFT:  .eabi_attribute 38, 1
 ; CORTEX-A9-SOFT:  .eabi_attribute 42, 1
+; CORTEX-A9-SOFT-NOT:  .eabi_attribute 44
 ; CORTEX-A9-SOFT:  .eabi_attribute 68, 1
 
 ; CORTEX-A9-SOFT-FAST-NOT:   .eabi_attribute 19
@@ -702,6 +709,7 @@
 ; CORTEX-M0-NOT:  .eabi_attribute 36
 ; CORTEX-M0:  .eabi_attribute 38, 1
 ; CORTEX-M0-NOT:  .eabi_attribute 42
+; CORTEX-M0-NOT:  .eabi_attribute 44
 ; CORTEX-M0-NOT:  .eabi_attribute 68
 
 ; CORTEX-M0-FAST-NOT:   .eabi_attribute 19
