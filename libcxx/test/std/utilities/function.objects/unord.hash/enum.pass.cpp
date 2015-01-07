@@ -34,8 +34,8 @@ void
 test()
 {
     typedef std::hash<T> H;
-    static_assert((std::is_same<H::argument_type, T>::value), "" );
-    static_assert((std::is_same<H::result_type, std::size_t>::value), "" );
+    static_assert((std::is_same<typename H::argument_type, T>::value), "" );
+    static_assert((std::is_same<typename H::result_type, std::size_t>::value), "" );
     typedef typename std::underlying_type<T>::type under_type;
     
     H h1;
