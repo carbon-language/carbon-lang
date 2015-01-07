@@ -19,7 +19,8 @@ int main()
 {
     typedef std::negate<int> F;
     const F f = F();
-    static_assert((std::is_base_of<std::unary_function<int, int>, F>::value), "");
+    static_assert((std::is_same<F::argument_type, int>::value), "" );
+    static_assert((std::is_same<F::result_type, int>::value), "" );
     assert(f(36) == -36);
 #if _LIBCPP_STD_VER > 11
     typedef std::negate<> F2;

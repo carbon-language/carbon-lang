@@ -19,7 +19,8 @@ int main()
 {
     typedef std::logical_not<int> F;
     const F f = F();
-    static_assert((std::is_base_of<std::unary_function<int, bool>, F>::value), "");
+    static_assert((std::is_same<F::argument_type, int>::value), "" );
+    static_assert((std::is_same<F::result_type, bool>::value), "" );
     assert(!f(36));
     assert(f(0));
 #if _LIBCPP_STD_VER > 11

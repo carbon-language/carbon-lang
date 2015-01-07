@@ -20,7 +20,8 @@ int main()
 #if _LIBCPP_STD_VER > 11
     typedef std::bit_not<int> F;
     const F f = F();
-    static_assert((std::is_base_of<std::unary_function<int, int>, F>::value), "");
+    static_assert((std::is_same<F::argument_type, int>::value), "" );
+    static_assert((std::is_same<F::result_type, int>::value), "" );
     assert((f(0xEA95) & 0xFFFF ) == 0x156A);
     assert((f(0x58D3) & 0xFFFF ) == 0xA72C);
     assert((f(0)      & 0xFFFF ) == 0xFFFF);
