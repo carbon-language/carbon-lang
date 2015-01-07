@@ -282,7 +282,6 @@ private:
                                  bool DoXform = true);
   Instruction *transformSExtICmp(ICmpInst *ICI, Instruction &CI);
   bool WillNotOverflowSignedAdd(Value *LHS, Value *RHS, Instruction *CxtI);
-  bool WillNotOverflowUnsignedAdd(Value *LHS, Value *RHS, Instruction *CxtI);
   bool WillNotOverflowSignedSub(Value *LHS, Value *RHS, Instruction *CxtI);
   bool WillNotOverflowUnsignedSub(Value *LHS, Value *RHS, Instruction *CxtI);
   bool WillNotOverflowSignedMul(Value *LHS, Value *RHS, Instruction *CxtI);
@@ -390,6 +389,10 @@ public:
   OverflowResult computeOverflowForUnsignedMul(Value *LHS, Value *RHS,
                                                const Instruction *CxtI) {
     return llvm::computeOverflowForUnsignedMul(LHS, RHS, DL, AC, CxtI, DT);
+  }
+  OverflowResult computeOverflowForUnsignedAdd(Value *LHS, Value *RHS,
+                                               const Instruction *CxtI) {
+    return llvm::computeOverflowForUnsignedAdd(LHS, RHS, DL, AC, CxtI, DT);
   }
 
 private:

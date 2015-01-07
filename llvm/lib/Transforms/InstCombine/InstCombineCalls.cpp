@@ -352,33 +352,11 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
     break;
   case Intrinsic::uadd_with_overflow: {
     Value *LHS = II->getArgOperand(0), *RHS = II->getArgOperand(1);
-    IntegerType *IT = cast<IntegerType>(II->getArgOperand(0)->getType());
-    uint32_t BitWidth = IT->getBitWidth();
-    APInt LHSKnownZero(BitWidth, 0);
-    APInt LHSKnownOne(BitWidth, 0);
-    computeKnownBits(LHS, LHSKnownZero, LHSKnownOne, 0, II);
-    bool LHSKnownNegative = LHSKnownOne[BitWidth - 1];
-    bool LHSKnownPositive = LHSKnownZero[BitWidth - 1];
-
-    if (LHSKnownNegative || LHSKnownPositive) {
-      APInt RHSKnownZero(BitWidth, 0);
-      APInt RHSKnownOne(BitWidth, 0);
-      computeKnownBits(RHS, RHSKnownZero, RHSKnownOne, 0, II);
-      bool RHSKnownNegative = RHSKnownOne[BitWidth - 1];
-      bool RHSKnownPositive = RHSKnownZero[BitWidth - 1];
-      if (LHSKnownNegative && RHSKnownNegative) {
-        // The sign bit is set in both cases: this MUST overflow.
-        // Create a simple add instruction, and insert it into the struct.
-        return CreateOverflowTuple(II, Builder->CreateAdd(LHS, RHS), true,
-                                    /*ReUseName*/true);
-      }
-
-      if (LHSKnownPositive && RHSKnownPositive) {
-        // The sign bit is clear in both cases: this CANNOT overflow.
-        // Create a simple add instruction, and insert it into the struct.
-        return CreateOverflowTuple(II, Builder->CreateNUWAdd(LHS, RHS), false);
-      }
-    }
+    OverflowResult OR = computeOverflowForUnsignedAdd(LHS, RHS, II);
+    if (OR == OverflowResult::NeverOverflows)
+      return CreateOverflowTuple(II, Builder->CreateNUWAdd(LHS, RHS), false);
+    if (OR == OverflowResult::AlwaysOverflows)
+      return CreateOverflowTuple(II, Builder->CreateAdd(LHS, RHS), true);
   }
   // FALL THROUGH uadd into sadd
   case Intrinsic::sadd_with_overflow:

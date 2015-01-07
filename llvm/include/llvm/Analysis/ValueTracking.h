@@ -221,6 +221,11 @@ namespace llvm {
                                                AssumptionCache *AC,
                                                const Instruction *CxtI,
                                                const DominatorTree *DT);
+  OverflowResult computeOverflowForUnsignedAdd(Value *LHS, Value *RHS,
+                                               const DataLayout *DL,
+                                               AssumptionCache *AC,
+                                               const Instruction *CxtI,
+                                               const DominatorTree *DT);
 } // end namespace llvm
 
 #endif

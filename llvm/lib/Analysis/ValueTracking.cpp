@@ -2729,3 +2729,32 @@ OverflowResult llvm::computeOverflowForUnsignedMul(Value *LHS, Value *RHS,
 
   return OverflowResult::MayOverflow;
 }
+
+OverflowResult llvm::computeOverflowForUnsignedAdd(Value *LHS, Value *RHS,
+                                                   const DataLayout *DL,
+                                                   AssumptionCache *AC,
+                                                   const Instruction *CxtI,
+                                                   const DominatorTree *DT) {
+  bool LHSKnownNonNegative, LHSKnownNegative;
+  ComputeSignBit(LHS, LHSKnownNonNegative, LHSKnownNegative, DL, /*Depth=*/0,
+                 AC, CxtI, DT);
+  if (LHSKnownNonNegative || LHSKnownNegative) {
+    bool RHSKnownNonNegative, RHSKnownNegative;
+    ComputeSignBit(RHS, RHSKnownNonNegative, RHSKnownNegative, DL, /*Depth=*/0,
+                   AC, CxtI, DT);
+
+    if (LHSKnownNegative && RHSKnownNegative) {
+      // The sign bit is set in both cases: this MUST overflow.
+      // Create a simple add instruction, and insert it into the struct.
+      return OverflowResult::AlwaysOverflows;
+    }
+
+    if (LHSKnownNonNegative && RHSKnownNonNegative) {
+      // The sign bit is clear in both cases: this CANNOT overflow.
+      // Create a simple add instruction, and insert it into the struct.
+      return OverflowResult::NeverOverflows;
+    }
+  }
+
+  return OverflowResult::MayOverflow;
+}
