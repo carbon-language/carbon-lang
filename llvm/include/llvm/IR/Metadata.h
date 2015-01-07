@@ -700,7 +700,6 @@ public:
 /// collision, the uniquing bit is dropped.
 ///
 /// TODO: Make uniquing opt-out (status: mandatory, sometimes dropped).
-/// TODO: Drop support for RAUW.
 class GenericMDNode : public MDNode {
   friend class Metadata;
   friend class MDNode;
