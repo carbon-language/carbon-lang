@@ -627,6 +627,8 @@ static bool isUnsignedDIType(DwarfDebug *DD, DIType Ty) {
     dwarf::Tag T = (dwarf::Tag)Ty.getTag();
     // Encode pointer constants as unsigned bytes. This is used at least for
     // null pointer constant emission.
+    // (Pieces of) aggregate types that get hacked apart by SROA may also be
+    // represented by a constant. Encode them as unsigned bytes.
     // FIXME: reference and rvalue_reference /probably/ shouldn't be allowed
     // here, but accept them for now due to a bug in SROA producing bogus
     // dbg.values.
