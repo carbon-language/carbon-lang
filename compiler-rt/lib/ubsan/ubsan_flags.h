@@ -18,8 +18,12 @@
 namespace __ubsan {
 
 struct Flags {
-  bool halt_on_error;
-  bool print_stacktrace;
+#define UBSAN_FLAG(Type, Name, DefaultValue, Description) Type Name;
+#include "ubsan_flags.inc"
+#undef UBSAN_FLAG
+
+  void SetDefaults();
+  void ParseFromString(const char *str);
 };
 
 extern Flags ubsan_flags;

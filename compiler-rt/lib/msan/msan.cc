@@ -96,51 +96,23 @@ static const char *StackOriginDescr[kNumStackOriginDescrs];
 static uptr StackOriginPC[kNumStackOriginDescrs];
 static atomic_uint32_t NumStackOriginDescrs;
 
-static void ParseFlagsFromString(Flags *f, const char *str) {
-  ParseFlag(str, &f->poison_heap_with_zeroes, "poison_heap_with_zeroes", "");
-  ParseFlag(str, &f->poison_stack_with_zeroes, "poison_stack_with_zeroes", "");
-  ParseFlag(str, &f->poison_in_malloc, "poison_in_malloc", "");
-  ParseFlag(str, &f->poison_in_free, "poison_in_free", "");
-  ParseFlag(str, &f->exit_code, "exit_code", "");
-  if (f->exit_code < 0 || f->exit_code > 127) {
-    Printf("Exit code not in [0, 128) range: %d\n", f->exit_code);
-    Die();
-  }
-  ParseFlag(str, &f->origin_history_size, "origin_history_size", "");
-  if (f->origin_history_size < 0 ||
-      f->origin_history_size > Origin::kMaxDepth) {
-    Printf(
-        "Origin history size invalid: %d. Must be 0 (unlimited) or in [1, %d] "
-        "range.\n",
-        f->origin_history_size, Origin::kMaxDepth);
-    Die();
-  }
-  ParseFlag(str, &f->origin_history_per_stack_limit,
-            "origin_history_per_stack_limit", "");
-  // Limiting to kStackDepotMaxUseCount / 2 to avoid overflow in
-  // StackDepotHandle::inc_use_count_unsafe.
-  if (f->origin_history_per_stack_limit < 0 ||
-      f->origin_history_per_stack_limit > kStackDepotMaxUseCount / 2) {
-    Printf(
-        "Origin per-stack limit invalid: %d. Must be 0 (unlimited) or in [1, "
-        "%d] range.\n",
-        f->origin_history_per_stack_limit, kStackDepotMaxUseCount / 2);
-    Die();
-  }
+void Flags::SetDefaults() {
+#define MSAN_FLAG(Type, Name, DefaultValue, Description) Name = DefaultValue;
+#include "msan_flags.inc"
+#undef MSAN_FLAG
+}
 
-  ParseFlag(str, &f->report_umrs, "report_umrs", "");
-  ParseFlag(str, &f->wrap_signals, "wrap_signals", "");
-  ParseFlag(str, &f->print_stats, "print_stats", "");
-  ParseFlag(str, &f->atexit, "atexit", "");
-  ParseFlag(str, &f->store_context_size, "store_context_size", "");
-  if (f->store_context_size < 1) f->store_context_size = 1;
-
+void Flags::ParseFromString(const char *str) {
   // keep_going is an old name for halt_on_error,
   // and it has inverse meaning.
-  f->halt_on_error = !f->halt_on_error;
-  ParseFlag(str, &f->halt_on_error, "keep_going", "");
-  f->halt_on_error = !f->halt_on_error;
-  ParseFlag(str, &f->halt_on_error, "halt_on_error", "");
+  halt_on_error = !halt_on_error;
+  ParseFlag(str, &halt_on_error, "keep_going", "");
+  halt_on_error = !halt_on_error;
+
+#define MSAN_FLAG(Type, Name, DefaultValue, Description)                     \
+  ParseFlag(str, &Name, #Name, Description);
+#include "msan_flags.inc"
+#undef MSAN_FLAG
 }
 
 static void InitializeFlags(Flags *f, const char *options) {
@@ -157,29 +129,41 @@ static void InitializeFlags(Flags *f, const char *options) {
     OverrideCommonFlags(cf);
   }
 
-  internal_memset(f, 0, sizeof(*f));
-  f->poison_heap_with_zeroes = false;
-  f->poison_stack_with_zeroes = false;
-  f->poison_in_malloc = true;
-  f->poison_in_free = true;
-  f->exit_code = 77;
-  f->origin_history_size = Origin::kMaxDepth;
-  f->origin_history_per_stack_limit = 20000;
-  f->report_umrs = true;
-  f->wrap_signals = true;
-  f->print_stats = false;
-  f->atexit = false;
-  f->halt_on_error = !&__msan_keep_going;
-  f->store_context_size = 20;
+  f->SetDefaults();
 
   // Override from user-specified string.
   if (__msan_default_options) {
-    ParseFlagsFromString(f, __msan_default_options());
+    f->ParseFromString(__msan_default_options());
     ParseCommonFlagsFromString(__msan_default_options());
   }
 
-  ParseFlagsFromString(f, options);
+  f->ParseFromString(options);
   ParseCommonFlagsFromString(options);
+
+  // Check flag values:
+  if (f->exit_code < 0 || f->exit_code > 127) {
+    Printf("Exit code not in [0, 128) range: %d\n", f->exit_code);
+    Die();
+  }
+  if (f->origin_history_size < 0 ||
+      f->origin_history_size > Origin::kMaxDepth) {
+    Printf(
+        "Origin history size invalid: %d. Must be 0 (unlimited) or in [1, %d] "
+        "range.\n",
+        f->origin_history_size, Origin::kMaxDepth);
+    Die();
+  }
+  // Limiting to kStackDepotMaxUseCount / 2 to avoid overflow in
+  // StackDepotHandle::inc_use_count_unsafe.
+  if (f->origin_history_per_stack_limit < 0 ||
+      f->origin_history_per_stack_limit > kStackDepotMaxUseCount / 2) {
+    Printf(
+        "Origin per-stack limit invalid: %d. Must be 0 (unlimited) or in [1, "
+        "%d] range.\n",
+        f->origin_history_per_stack_limit, kStackDepotMaxUseCount / 2);
+    Die();
+  }
+  if (f->store_context_size < 1) f->store_context_size = 1;
 }
 
 void GetStackTrace(BufferedStackTrace *stack, uptr max_s, uptr pc, uptr bp,

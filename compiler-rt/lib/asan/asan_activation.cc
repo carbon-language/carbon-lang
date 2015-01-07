@@ -45,14 +45,14 @@ static struct AsanDeactivatedFlags {
     // contain any other flags.
     if (const char *env = GetEnv("ASAN_ACTIVATION_OPTIONS")) {
       cf.ParseFromString(env);
-      ParseFlagsFromString(&f, env);
+      f.ParseFromString(env);
     }
 
     // Override from getprop asan.options.
     char buf[100];
     GetExtraActivationFlags(buf, sizeof(buf));
     cf.ParseFromString(buf);
-    ParseFlagsFromString(&f, buf);
+    f.ParseFromString(buf);
 
     allocator_options.SetFrom(&f, &cf);
     malloc_context_size = cf.malloc_context_size;

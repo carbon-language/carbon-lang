@@ -35,24 +35,26 @@ void InitializeCommonFlags() {
 
 Flags ubsan_flags;
 
-static void ParseFlagsFromString(Flags *f, const char *str) {
-  if (!str)
-    return;
-  ParseFlag(str, &f->halt_on_error, "halt_on_error",
-            "Crash the program after printing the first error report");
-  ParseFlag(str, &f->print_stacktrace, "print_stacktrace",
-            "Include full stacktrace into an error report");
+void Flags::SetDefaults() {
+#define UBSAN_FLAG(Type, Name, DefaultValue, Description) Name = DefaultValue;
+#include "ubsan_flags.inc"
+#undef UBSAN_FLAG
+}
+
+void Flags::ParseFromString(const char *str) {
+#define UBSAN_FLAG(Type, Name, DefaultValue, Description)                      \
+  ParseFlag(str, &Name, #Name, Description);
+#include "ubsan_flags.inc"
+#undef UBSAN_FLAG
 }
 
 void InitializeFlags() {
   Flags *f = flags();
-  // Default values.
-  f->halt_on_error = false;
-  f->print_stacktrace = false;
+  f->SetDefaults();
   // Override from user-specified string.
-  ParseFlagsFromString(f, MaybeCallUbsanDefaultOptions());
+  f->ParseFromString(MaybeCallUbsanDefaultOptions());
   // Override from environment variable.
-  ParseFlagsFromString(f, GetEnv("UBSAN_OPTIONS"));
+  f->ParseFromString(GetEnv("UBSAN_OPTIONS"));
 }
 
 }  // namespace __ubsan

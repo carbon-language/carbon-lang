@@ -38,40 +38,15 @@ enum ChunkTag {
 };
 
 struct Flags {
+#define LSAN_FLAG(Type, Name, DefaultValue, Description) Type Name;
+#include "lsan_flags.inc"
+#undef LSAN_FLAG
+
+  void SetDefaults();
+  void ParseFromString(const char *str);
   uptr pointer_alignment() const {
     return use_unaligned ? 1 : sizeof(uptr);
   }
-
-  // Print addresses of leaked objects after main leak report.
-  bool report_objects;
-  // Aggregate two objects into one leak if this many stack frames match. If
-  // zero, the entire stack trace must match.
-  int resolution;
-  // The number of leaks reported.
-  int max_leaks;
-  // If nonzero kill the process with this exit code upon finding leaks.
-  int exitcode;
-
-  // Flags controlling the root set of reachable memory.
-  // Global variables (.data and .bss).
-  bool use_globals;
-  // Thread stacks.
-  bool use_stacks;
-  // Thread registers.
-  bool use_registers;
-  // TLS and thread-specific storage.
-  bool use_tls;
-  // Regions added via __lsan_register_root_region().
-  bool use_root_regions;
-
-  // Consider unaligned pointers valid.
-  bool use_unaligned;
-  // Consider pointers found in poisoned memory to be valid.
-  bool use_poisoned;
-
-  // Debug logging.
-  bool log_pointers;
-  bool log_threads;
 };
 
 extern Flags lsan_flags;

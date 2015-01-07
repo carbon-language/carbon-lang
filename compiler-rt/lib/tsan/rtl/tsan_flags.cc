@@ -33,65 +33,25 @@ const char *WEAK __tsan_default_options() {
 }
 #endif
 
-static void ParseFlags(Flags *f, const char *env) {
-  ParseFlag(env, &f->enable_annotations, "enable_annotations", "");
-  ParseFlag(env, &f->suppress_equal_stacks, "suppress_equal_stacks", "");
-  ParseFlag(env, &f->suppress_equal_addresses, "suppress_equal_addresses", "");
-  ParseFlag(env, &f->report_bugs, "report_bugs", "");
-  ParseFlag(env, &f->report_thread_leaks, "report_thread_leaks", "");
-  ParseFlag(env, &f->report_destroy_locked, "report_destroy_locked", "");
-  ParseFlag(env, &f->report_mutex_bugs, "report_mutex_bugs", "");
-  ParseFlag(env, &f->report_signal_unsafe, "report_signal_unsafe", "");
-  ParseFlag(env, &f->report_atomic_races, "report_atomic_races", "");
-  ParseFlag(env, &f->force_seq_cst_atomics, "force_seq_cst_atomics", "");
-  ParseFlag(env, &f->print_benign, "print_benign", "");
-  ParseFlag(env, &f->exitcode, "exitcode", "");
-  ParseFlag(env, &f->halt_on_error, "halt_on_error", "");
-  ParseFlag(env, &f->atexit_sleep_ms, "atexit_sleep_ms", "");
-  ParseFlag(env, &f->profile_memory, "profile_memory", "");
-  ParseFlag(env, &f->flush_memory_ms, "flush_memory_ms", "");
-  ParseFlag(env, &f->flush_symbolizer_ms, "flush_symbolizer_ms", "");
-  ParseFlag(env, &f->memory_limit_mb, "memory_limit_mb", "");
-  ParseFlag(env, &f->stop_on_start, "stop_on_start", "");
-  ParseFlag(env, &f->running_on_valgrind, "running_on_valgrind", "");
-  ParseFlag(env, &f->history_size, "history_size", "");
-  ParseFlag(env, &f->io_sync, "io_sync", "");
-  ParseFlag(env, &f->die_after_fork, "die_after_fork", "");
-
+void Flags::SetDefaults() {
+#define TSAN_FLAG(Type, Name, DefaultValue, Description) Name = DefaultValue;
+#include "tsan_flags.inc"
+#undef TSAN_FLAG
   // DDFlags
-  ParseFlag(env, &f->second_deadlock_stack, "second_deadlock_stack", "");
+  second_deadlock_stack = false;
+}
+
+void Flags::ParseFromString(const char *str) {
+#define TSAN_FLAG(Type, Name, DefaultValue, Description)                     \
+  ParseFlag(str, &Name, #Name, Description);
+#include "tsan_flags.inc"
+#undef TSAN_FLAG
+  // DDFlags
+  ParseFlag(str, &second_deadlock_stack, "second_deadlock_stack", "");
 }
 
 void InitializeFlags(Flags *f, const char *env) {
-  internal_memset(f, 0, sizeof(*f));
-
-  // Default values.
-  f->enable_annotations = true;
-  f->suppress_equal_stacks = true;
-  f->suppress_equal_addresses = true;
-  f->report_bugs = true;
-  f->report_thread_leaks = true;
-  f->report_destroy_locked = true;
-  f->report_mutex_bugs = true;
-  f->report_signal_unsafe = true;
-  f->report_atomic_races = true;
-  f->force_seq_cst_atomics = false;
-  f->print_benign = false;
-  f->exitcode = 66;
-  f->halt_on_error = false;
-  f->atexit_sleep_ms = 1000;
-  f->profile_memory = "";
-  f->flush_memory_ms = 0;
-  f->flush_symbolizer_ms = 5000;
-  f->memory_limit_mb = 0;
-  f->stop_on_start = false;
-  f->running_on_valgrind = false;
-  f->history_size = kGoMode ? 1 : 2;  // There are a lot of goroutines in Go.
-  f->io_sync = 1;
-  f->die_after_fork = true;
-
-  // DDFlags
-  f->second_deadlock_stack = false;
+  f->SetDefaults();
 
   SetCommonFlagsDefaults();
   {
@@ -106,10 +66,10 @@ void InitializeFlags(Flags *f, const char *env) {
   }
 
   // Let a frontend override.
-  ParseFlags(f, __tsan_default_options());
+  f->ParseFromString(__tsan_default_options());
   ParseCommonFlagsFromString(__tsan_default_options());
   // Override from command line.
-  ParseFlags(f, env);
+  f->ParseFromString(env);
   ParseCommonFlagsFromString(env);
 
   // Sanity check.

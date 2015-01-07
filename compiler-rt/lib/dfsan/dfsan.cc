@@ -310,16 +310,22 @@ dfsan_dump_labels(int fd) {
   }
 }
 
-static void InitializeFlags(Flags &f, const char *env) {
-  f.warn_unimplemented = true;
-  f.warn_nonzero_labels = false;
-  f.strict_data_dependencies = true;
-  f.dump_labels_at_exit = "";
+void Flags::SetDefaults() {
+#define DFSAN_FLAG(Type, Name, DefaultValue, Description) Name = DefaultValue;
+#include "dfsan_flags.inc"
+#undef DFSAN_FLAG
+}
 
-  ParseFlag(env, &f.warn_unimplemented, "warn_unimplemented", "");
-  ParseFlag(env, &f.warn_nonzero_labels, "warn_nonzero_labels", "");
-  ParseFlag(env, &f.strict_data_dependencies, "strict_data_dependencies", "");
-  ParseFlag(env, &f.dump_labels_at_exit, "dump_labels_at_exit", "");
+void Flags::ParseFromString(const char *str) {
+#define DFSAN_FLAG(Type, Name, DefaultValue, Description)                     \
+  ParseFlag(str, &Name, #Name, Description);
+#include "dfsan_flags.inc"
+#undef DFSAN_FLAG
+}
+
+static void InitializeFlags(Flags &f, const char *env) {
+  f.SetDefaults();
+  f.ParseFromString(env);
 }
 
 static void dfsan_fini() {

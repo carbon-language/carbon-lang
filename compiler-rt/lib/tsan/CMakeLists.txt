@@ -54,6 +54,7 @@ set(TSAN_HEADERS
   rtl/tsan_dense_alloc.h
   rtl/tsan_fd.h
   rtl/tsan_flags.h
+  rtl/tsan_flags.inc
   rtl/tsan_ignoreset.h
   rtl/tsan_interface_ann.h
   rtl/tsan_interface.h

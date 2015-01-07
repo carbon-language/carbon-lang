@@ -56,17 +56,12 @@ inline const dfsan_label *shadow_for(const void *ptr) {
 }
 
 struct Flags {
-  // Whether to warn on unimplemented functions.
-  bool warn_unimplemented;
-  // Whether to warn on non-zero labels.
-  bool warn_nonzero_labels;
-  // Whether to propagate labels only when there is an obvious data dependency
-  // (e.g., when comparing strings, ignore the fact that the output of the
-  // comparison might be data-dependent on the content of the strings). This
-  // applies only to the custom functions defined in 'custom.c'.
-  bool strict_data_dependencies;
-  // The path of the file where to dump the labels when the program terminates.
-  const char* dump_labels_at_exit;
+#define DFSAN_FLAG(Type, Name, DefaultValue, Description) Type Name;
+#include "dfsan_flags.inc"
+#undef DFSAN_FLAG
+
+  void SetDefaults();
+  void ParseFromString(const char *str);
 };
 
 extern Flags flags_data;

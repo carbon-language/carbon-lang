@@ -24,47 +24,17 @@
 // 3) overriden from string returned by user-specified function
 //    __asan_default_options().
 // 4) overriden from env variable ASAN_OPTIONS.
+// 5) overriden during ASan activation (for now used on Android only).
 
 namespace __asan {
 
 struct Flags {
-  // Flag descriptions are in asan_rtl.cc.
-  int  quarantine_size;
-  int  redzone;
-  int  max_redzone;
-  bool debug;
-  int  report_globals;
-  bool check_initialization_order;
-  bool replace_str;
-  bool replace_intrin;
-  bool mac_ignore_invalid_free;
-  bool detect_stack_use_after_return;
-  int min_uar_stack_size_log;
-  int max_uar_stack_size_log;
-  bool uar_noreserve;
-  int max_malloc_fill_size, malloc_fill_byte;
-  int  exitcode;
-  bool allow_user_poisoning;
-  int  sleep_before_dying;
-  bool check_malloc_usable_size;
-  bool unmap_shadow_on_exit;
-  bool abort_on_error;
-  bool print_stats;
-  bool print_legend;
-  bool atexit;
-  bool print_full_thread_history;
-  bool poison_heap;
-  bool poison_partial;
-  bool poison_array_cookie;
-  bool alloc_dealloc_mismatch;
-  bool new_delete_type_mismatch;
-  bool strict_memcmp;
-  bool strict_init_order;
-  bool start_deactivated;
-  int detect_invalid_pointer_pairs;
-  bool detect_container_overflow;
-  int detect_odr_violation;
-  bool dump_instruction_bytes;
+#define ASAN_FLAG(Type, Name, DefaultValue, Description) Type Name;
+#include "asan_flags.inc"
+#undef ASAN_FLAG
+
+  void SetDefaults();
+  void ParseFromString(const char *str);
 };
 
 extern Flags asan_flags_dont_use_directly;
@@ -72,7 +42,6 @@ inline Flags *flags() {
   return &asan_flags_dont_use_directly;
 }
 void InitializeFlags(Flags *f);
-void ParseFlagsFromString(Flags *f, const char *str);
 
 }  // namespace __asan
 
