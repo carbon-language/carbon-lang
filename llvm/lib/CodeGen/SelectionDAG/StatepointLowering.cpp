@@ -17,6 +17,7 @@
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/CodeGen/FunctionLoweringInfo.h"
+#include "llvm/CodeGen/GCStrategy.h"
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/CodeGen/StackMaps.h"
 #include "llvm/IR/CallingConv.h"
@@ -417,6 +418,39 @@ static void lowerStatepointMetaArgs(SmallVectorImpl<SDValue> &Ops,
   getIncomingStatepointGCValues(Bases, Ptrs, Relocations,
                                 Statepoint.getCallSite(), Builder);
 
+#ifndef NDEBUG
+  // Check that each of the gc pointer and bases we've gotten out of the
+  // safepoint is something the strategy thinks might be a pointer into the GC
+  // heap.  This is basically just here to help catch errors during statepoint
+  // insertion. TODO: This should actually be in the Verifier, but we can't get
+  // to the GCStrategy from there (yet).
+  if (Builder.GFI) {
+    GCStrategy &S = Builder.GFI->getStrategy();
+    for (const Value *V : Bases) {
+      auto Opt = S.isGCManagedPointer(V);
+      if (Opt.hasValue()) {
+        assert(Opt.getValue() &&
+               "non gc managed base pointer found in statepoint");
+      }
+    }
+    for (const Value *V : Ptrs) {
+      auto Opt = S.isGCManagedPointer(V);
+      if (Opt.hasValue()) {
+        assert(Opt.getValue() &&
+               "non gc managed derived pointer found in statepoint");
+      }
+    }
+    for (const Value *V : Relocations) {
+      auto Opt = S.isGCManagedPointer(V);
+      if (Opt.hasValue()) {
+        assert(Opt.getValue() && "non gc managed pointer relocated");
+      }
+    }
+  }
+#endif
+
+
+
   // Before we actually start lowering (and allocating spill slots for values),
   // reserve any stack slots which we judge to be profitable to reuse for a
   // particular value.  This is purely an optimization over the code below and
@@ -498,6 +532,15 @@ void SelectionDAGBuilder::visitStatepoint(const CallInst &CI) {
   // This should catch any IR level mistake that's made when constructing or
   // transforming statepoints.
   ISP.verify();
+
+  // Check that the associated GCStrategy expects to encounter statepoints.
+  // TODO: This if should become an assert.  For now, we allow the GCStrategy
+  // to be optional for backwards compatibility.  This will only last a short
+  // period (i.e. a couple of weeks).
+  if (GFI) {
+    assert(GFI->getStrategy().useStatepoints() &&
+           "GCStrategy does not expect to encounter statepoints");
+  }
 #endif
 
 

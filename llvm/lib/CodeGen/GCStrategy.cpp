@@ -93,6 +93,7 @@ namespace {
 // -----------------------------------------------------------------------------
 
 GCStrategy::GCStrategy() :
+  UseStatepoints(false),
   NeededSafePoints(0),
   CustomReadBarriers(false),
   CustomWriteBarriers(false),

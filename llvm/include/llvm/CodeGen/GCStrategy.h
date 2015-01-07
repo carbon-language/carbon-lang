@@ -50,6 +50,7 @@
 #ifndef LLVM_CODEGEN_GCSTRATEGY_H
 #define LLVM_CODEGEN_GCSTRATEGY_H
 
+#include "llvm/ADT/Optional.h"
 #include "llvm/CodeGen/GCMetadata.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/Support/Registry.h"
@@ -67,6 +68,10 @@ namespace llvm {
     friend class GCModuleInfo;
     
   protected:
+    bool UseStatepoints;       /// Uses gc.statepoints as opposed to gc.roots,
+                               /// if set, none of the other options can be
+                               /// anything but their default values.
+
     unsigned NeededSafePoints; ///< Bitmask of required safe points.
     bool CustomReadBarriers;   ///< Default is to insert loads.
     bool CustomWriteBarriers;  ///< Default is to insert stores.
@@ -93,6 +98,22 @@ namespace llvm {
     /// instructions. If true, then performCustomLowering must instead lower
     /// them. 
     bool customReadBarrier() const { return CustomReadBarriers; }
+
+    /// Returns true if this strategy is expecting the use of gc.statepoints,
+    /// and false otherwise.
+    bool useStatepoints() const { return UseStatepoints; }
+
+    /** @name Statepoint Specific Properties */
+    ///@{
+
+    /// If the value specified can be reliably distinguished, returns true for
+    /// pointers to GC managed locations and false for pointers to non-GC 
+    /// managed locations.  Note a GCStrategy can always return 'None' (i.e. an
+    /// empty optional indicating it can't reliably distinguish.   
+    virtual Optional<bool> isGCManagedPointer(const Value *V) const {
+      return None;
+    }
+    ///@}
 
     /** @name GCRoot Specific Properties
      * These properties and overrides only apply to collector strategies using
@@ -126,7 +147,9 @@ namespace llvm {
     bool initializeRoots() const { return InitRoots; }
     
     /// If set, appropriate metadata tables must be emitted by the back-end
-    /// (assembler, JIT, or otherwise). 
+    /// (assembler, JIT, or otherwise). For statepoint, this method is
+    /// currently unsupported.  The stackmap information can be found in the
+    /// StackMap section as described in the documentation.
     bool usesMetadata() const { return UsesMetadata; }
 
     ///@}

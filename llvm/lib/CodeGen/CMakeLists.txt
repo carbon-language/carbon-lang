@@ -104,6 +104,7 @@ add_llvm_library(LLVMCodeGen
   StackSlotColoring.cpp
   StackMapLivenessAnalysis.cpp
   StackMaps.cpp
+  StatepointExampleGC.cpp
   TailDuplication.cpp
   TargetFrameLoweringImpl.cpp
   TargetInstrInfo.cpp

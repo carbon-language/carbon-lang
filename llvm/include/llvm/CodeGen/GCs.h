@@ -36,6 +36,8 @@ namespace llvm {
   /// Creates a shadow stack garbage collector. This collector requires no code
   /// generator support.
   void linkShadowStackGC();
+
+  void linkStatepointExampleGC();
 }
 
 #endif

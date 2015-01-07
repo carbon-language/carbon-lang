@@ -20,7 +20,7 @@ declare void @func() readonly
 ;; Forwarding the value of a pointer load is invalid since it may have
 ;; changed at the safepoint.  Forwarding a non-gc pointer value would 
 ;; be valid, but is not currently implemented.
-define i1 @test_load_forward(i32 addrspace(1)* addrspace(1)* %p) {
+define i1 @test_load_forward(i32 addrspace(1)* addrspace(1)* %p) gc "statepoint-example" {
 entry:
   %before = load i32 addrspace(1)* addrspace(1)* %p
   %cmp1 = call i1 @f(i32 addrspace(1)* %before)
@@ -39,7 +39,7 @@ entry:
 
 ;; Same as above, but forwarding from a store
 define i1 @test_store_forward(i32 addrspace(1)* addrspace(1)* %p,
-                              i32 addrspace(1)* %v) {
+                              i32 addrspace(1)* %v) gc "statepoint-example" {
 entry:
   %cmp1 = call i1 @f(i32 addrspace(1)* %v)
   call void @llvm.assume(i1 %cmp1)
@@ -67,7 +67,7 @@ declare i1 @f(i32 addrspace(1)* %v) readnone
 ; that is not itself GC managed.  The GC may have an external mechanism
 ; to know about and update that value at a safepoint.  Note that the 
 ; statepoint does not provide the collector with this root.
-define i1 @test_load_forward_nongc_heap(i32 addrspace(1)** %p) {
+define i1 @test_load_forward_nongc_heap(i32 addrspace(1)** %p) gc "statepoint-example" {
 entry:
   %before = load i32 addrspace(1)** %p
   %cmp1 = call i1 @f(i32 addrspace(1)* %before)
@@ -85,7 +85,7 @@ entry:
 
 ;; Same as above, but forwarding from a store
 define i1 @test_store_forward_nongc_heap(i32 addrspace(1)** %p,
-                                         i32 addrspace(1)* %v) {
+                                         i32 addrspace(1)* %v) gc "statepoint-example" {
 entry:
   %cmp1 = call i1 @f(i32 addrspace(1)* %v)
   call void @llvm.assume(i1 %cmp1)
@@ -100,7 +100,6 @@ entry:
 ; CHECK-LLC-LABEL: test_store_forward_nongc_heap
 ; CHECK-LLC: callq f
 }
-
 
 declare void @llvm.assume(i1)
 declare i32 @llvm.experimental.gc.statepoint.p0f_isVoidf(void ()*, i32, i32, ...)
