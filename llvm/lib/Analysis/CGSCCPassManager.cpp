@@ -29,8 +29,17 @@ PreservedAnalyses CGSCCPassManager::run(LazyCallGraph::SCC &C,
       dbgs() << "Running CGSCC pass: " << Passes[Idx]->name() << "\n";
 
     PreservedAnalyses PassPA = Passes[Idx]->run(C, AM);
+
+    // If we have an active analysis manager at this level we want to ensure we
+    // update it as each pass runs and potentially invalidates analyses. We
+    // also update the preserved set of analyses based on what analyses we have
+    // already handled the invalidation for here and don't need to invalidate
+    // when finished.
     if (AM)
-      AM->invalidate(C, PassPA);
+      PassPA = AM->invalidate(C, std::move(PassPA));
+
+    // Finally, we intersect the final preserved analyses to compute the
+    // aggregate preserved set for this pass manager.
     PA.intersect(std::move(PassPA));
   }
 
@@ -94,11 +103,11 @@ void CGSCCAnalysisManager::invalidateImpl(void *PassID, LazyCallGraph::SCC &C) {
   CGSCCAnalysisResults.erase(RI);
 }
 
-void CGSCCAnalysisManager::invalidateImpl(LazyCallGraph::SCC &C,
-                                          const PreservedAnalyses &PA) {
+PreservedAnalyses CGSCCAnalysisManager::invalidateImpl(LazyCallGraph::SCC &C,
+                                                       PreservedAnalyses PA) {
   // Short circuit for a common case of all analyses being preserved.
   if (PA.areAllPreserved())
-    return;
+    return std::move(PA);
 
   if (DebugPM)
     dbgs() << "Invalidating all non-preserved analyses for SCC: " << C.getName()
@@ -110,10 +119,15 @@ void CGSCCAnalysisManager::invalidateImpl(LazyCallGraph::SCC &C,
   CGSCCAnalysisResultListT &ResultsList = CGSCCAnalysisResultLists[&C];
   for (CGSCCAnalysisResultListT::iterator I = ResultsList.begin(),
                                           E = ResultsList.end();
-       I != E;)
+       I != E;) {
+    void *PassID = I->first;
+
+    // Pass the invalidation down to the pass itself to see if it thinks it is
+    // necessary. The analysis pass can return false if no action on the part
+    // of the analysis manager is required for this invalidation event.
     if (I->second->invalidate(C, PA)) {
       if (DebugPM)
-        dbgs() << "Invalidating CGSCC analysis: " << lookupPass(I->first).name()
+        dbgs() << "Invalidating CGSCC analysis: " << lookupPass(PassID).name()
                << "\n";
 
       InvalidatedPassIDs.push_back(I->first);
@@ -121,10 +135,18 @@ void CGSCCAnalysisManager::invalidateImpl(LazyCallGraph::SCC &C,
     } else {
       ++I;
     }
+
+    // After handling each pass, we mark it as preserved. Once we've
+    // invalidated any stale results, the rest of the system is allowed to
+    // start preserving this analysis again.
+    PA.preserve(PassID);
+  }
   while (!InvalidatedPassIDs.empty())
     CGSCCAnalysisResults.erase(
         std::make_pair(InvalidatedPassIDs.pop_back_val(), &C));
   CGSCCAnalysisResultLists.erase(&C);
+
+  return std::move(PA);
 }
 
 char CGSCCAnalysisManagerModuleProxy::PassID;

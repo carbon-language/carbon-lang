@@ -120,7 +120,7 @@ private:
   void invalidateImpl(void *PassID, LazyCallGraph::SCC &C);
 
   /// \brief Invalidate the results for a function..
-  void invalidateImpl(LazyCallGraph::SCC &C, const PreservedAnalyses &PA);
+  PreservedAnalyses invalidateImpl(LazyCallGraph::SCC &C, PreservedAnalyses PA);
 
   /// \brief List of function analysis pass IDs and associated concept pointers.
   ///
@@ -343,11 +343,13 @@ public:
 
       // We know that the CGSCC pass couldn't have invalidated any other
       // SCC's analyses (that's the contract of a CGSCC pass), so
-      // directly handle the CGSCC analysis manager's invalidation here.
+      // directly handle the CGSCC analysis manager's invalidation here. We
+      // also update the preserved set of analyses to reflect that invalidated
+      // analyses are now safe to preserve.
       // FIXME: This isn't quite correct. We need to handle the case where the
       // pass updated the CG, particularly some child of the current SCC, and
       // invalidate its analyses.
-      CGAM.invalidate(C, PassPA);
+      PassPA = CGAM.invalidate(C, std::move(PassPA));
 
       // Then intersect the preserved set so that invalidation of module
       // analyses will eventually occur when the module pass completes.
@@ -562,8 +564,10 @@ public:
       // We know that the function pass couldn't have invalidated any other
       // function's analyses (that's the contract of a function pass), so
       // directly handle the function analysis manager's invalidation here.
+      // Also, update the preserved analyses to reflect that once invalidated
+      // these can again be preserved.
       if (FAM)
-        FAM->invalidate(N->getFunction(), PassPA);
+        PassPA = FAM->invalidate(N->getFunction(), std::move(PassPA));
 
       // Then intersect the preserved set so that invalidation of module
       // analyses will eventually occur when the module pass completes.

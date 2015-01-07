@@ -30,8 +30,17 @@ PreservedAnalyses ModulePassManager::run(Module &M, ModuleAnalysisManager *AM) {
       dbgs() << "Running module pass: " << Passes[Idx]->name() << "\n";
 
     PreservedAnalyses PassPA = Passes[Idx]->run(M, AM);
+
+    // If we have an active analysis manager at this level we want to ensure we
+    // update it as each pass runs and potentially invalidates analyses. We
+    // also update the preserved set of analyses based on what analyses we have
+    // already handled the invalidation for here and don't need to invalidate
+    // when finished.
     if (AM)
-      AM->invalidate(M, PassPA);
+      PassPA = AM->invalidate(M, std::move(PassPA));
+
+    // Finally, we intersect the final preserved analyses to compute the
+    // aggregate preserved set for this pass manager.
     PA.intersect(std::move(PassPA));
 
     M.getContext().yield();
@@ -76,11 +85,11 @@ void ModuleAnalysisManager::invalidateImpl(void *PassID, Module &M) {
   ModuleAnalysisResults.erase(PassID);
 }
 
-void ModuleAnalysisManager::invalidateImpl(Module &M,
-                                           const PreservedAnalyses &PA) {
+PreservedAnalyses ModuleAnalysisManager::invalidateImpl(Module &M,
+                                                        PreservedAnalyses PA) {
   // Short circuit for a common case of all analyses being preserved.
   if (PA.areAllPreserved())
-    return;
+    return std::move(PA);
 
   if (DebugPM)
     dbgs() << "Invalidating all non-preserved analyses for module: "
@@ -90,14 +99,27 @@ void ModuleAnalysisManager::invalidateImpl(Module &M,
   // invalidate iteration for DenseMap.
   for (ModuleAnalysisResultMapT::iterator I = ModuleAnalysisResults.begin(),
                                           E = ModuleAnalysisResults.end();
-       I != E; ++I)
+       I != E; ++I) {
+    void *PassID = I->first;
+
+    // Pass the invalidation down to the pass itself to see if it thinks it is
+    // necessary. The analysis pass can return false if no action on the part
+    // of the analysis manager is required for this invalidation event.
     if (I->second->invalidate(M, PA)) {
       if (DebugPM)
         dbgs() << "Invalidating module analysis: "
-               << lookupPass(I->first).name() << "\n";
+               << lookupPass(PassID).name() << "\n";
 
       ModuleAnalysisResults.erase(I);
     }
+
+    // After handling each pass, we mark it as preserved. Once we've
+    // invalidated any stale results, the rest of the system is allowed to
+    // start preserving this analysis again.
+    PA.preserve(PassID);
+  }
+
+  return std::move(PA);
 }
 
 PreservedAnalyses FunctionPassManager::run(Function &F,
@@ -112,8 +134,17 @@ PreservedAnalyses FunctionPassManager::run(Function &F,
       dbgs() << "Running function pass: " << Passes[Idx]->name() << "\n";
 
     PreservedAnalyses PassPA = Passes[Idx]->run(F, AM);
+
+    // If we have an active analysis manager at this level we want to ensure we
+    // update it as each pass runs and potentially invalidates analyses. We
+    // also update the preserved set of analyses based on what analyses we have
+    // already handled the invalidation for here and don't need to invalidate
+    // when finished.
     if (AM)
-      AM->invalidate(F, PassPA);
+      PassPA = AM->invalidate(F, std::move(PassPA));
+
+    // Finally, we intersect the final preserved analyses to compute the
+    // aggregate preserved set for this pass manager.
     PA.intersect(std::move(PassPA));
 
     F.getContext().yield();
@@ -179,11 +210,11 @@ void FunctionAnalysisManager::invalidateImpl(void *PassID, Function &F) {
   FunctionAnalysisResults.erase(RI);
 }
 
-void FunctionAnalysisManager::invalidateImpl(Function &F,
-                                             const PreservedAnalyses &PA) {
+PreservedAnalyses
+FunctionAnalysisManager::invalidateImpl(Function &F, PreservedAnalyses PA) {
   // Short circuit for a common case of all analyses being preserved.
   if (PA.areAllPreserved())
-    return;
+    return std::move(PA);
 
   if (DebugPM)
     dbgs() << "Invalidating all non-preserved analyses for function: "
@@ -195,22 +226,35 @@ void FunctionAnalysisManager::invalidateImpl(Function &F,
   FunctionAnalysisResultListT &ResultsList = FunctionAnalysisResultLists[&F];
   for (FunctionAnalysisResultListT::iterator I = ResultsList.begin(),
                                              E = ResultsList.end();
-       I != E;)
+       I != E;) {
+    void *PassID = I->first;
+
+    // Pass the invalidation down to the pass itself to see if it thinks it is
+    // necessary. The analysis pass can return false if no action on the part
+    // of the analysis manager is required for this invalidation event.
     if (I->second->invalidate(F, PA)) {
       if (DebugPM)
         dbgs() << "Invalidating function analysis: "
-               << lookupPass(I->first).name() << "\n";
+               << lookupPass(PassID).name() << "\n";
 
       InvalidatedPassIDs.push_back(I->first);
       I = ResultsList.erase(I);
     } else {
       ++I;
     }
+
+    // After handling each pass, we mark it as preserved. Once we've
+    // invalidated any stale results, the rest of the system is allowed to
+    // start preserving this analysis again.
+    PA.preserve(PassID);
+  }
   while (!InvalidatedPassIDs.empty())
     FunctionAnalysisResults.erase(
         std::make_pair(InvalidatedPassIDs.pop_back_val(), &F));
   if (ResultsList.empty())
     FunctionAnalysisResultLists.erase(&F);
+
+  return std::move(PA);
 }
 
 char FunctionAnalysisManagerModuleProxy::PassID;
