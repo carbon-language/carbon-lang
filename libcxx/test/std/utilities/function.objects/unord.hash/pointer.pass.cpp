@@ -27,9 +27,11 @@ template <class T>
 void
 test()
 {
-    static_assert((std::is_base_of<std::unary_function<T, std::size_t>,
-                                   std::hash<T> >::value), "");
-    std::hash<T> h;
+    typedef std::hash<T> H;
+    static_assert((std::is_same<typename H::argument_type, T>::value), "" );
+    static_assert((std::is_same<typename H::result_type, std::size_t>::value), "" );
+    H h;
+
     typedef typename std::remove_pointer<T>::type type;
     type i;
     type j;

@@ -28,8 +28,8 @@ test()
 {
     typedef std::bitset<N> T;
     typedef std::hash<T> H;
-    static_assert((std::is_base_of<std::unary_function<T, std::size_t>,
-                                   H>::value), "");
+    static_assert((std::is_same<typename H::argument_type, T>::value), "" );
+    static_assert((std::is_same<typename H::result_type, std::size_t>::value), "" );
     H h;
     T bs(static_cast<unsigned long long>(N));
     assert(h(bs) == N);

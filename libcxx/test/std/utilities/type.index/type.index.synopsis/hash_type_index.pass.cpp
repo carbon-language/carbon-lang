@@ -20,6 +20,7 @@
 
 int main()
 {
-    static_assert((std::is_base_of<std::unary_function<std::type_index, std::size_t>,
-                                   std::hash<std::type_index> >::value), "");
+    typedef std::hash<std::type_index> H;
+    static_assert((std::is_same<typename H::argument_type, std::type_index>::value), "" );
+    static_assert((std::is_same<typename H::result_type, std::size_t>::value), "" );
 }

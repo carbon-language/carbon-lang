@@ -29,8 +29,9 @@ int main()
     {
     typedef std::vector<bool> T;
     typedef std::hash<T> H;
-    static_assert((std::is_base_of<std::unary_function<T, std::size_t>,
-                                   H>::value), "");
+    static_assert((std::is_same<H::argument_type, T>::value), "" );
+    static_assert((std::is_same<H::result_type, std::size_t>::value), "" );
+    
     bool ba[] = {true, false, true, true, false};
     T vb(std::begin(ba), std::end(ba));
     H h;
