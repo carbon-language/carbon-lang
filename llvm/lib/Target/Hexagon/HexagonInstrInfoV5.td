@@ -112,6 +112,332 @@ def S5_popcountp : ALU64_rr<(outs IntRegs:$Rd), (ins DoubleRegs:$Rss),
     let Inst{20-16} = Rss;
   }
 
+let Uses = [USR], isFP = 1, hasNewValue = 1, opNewValue = 0 in
+class T_MInstFloat <string mnemonic, bits<3> MajOp, bits<3> MinOp>
+  : MInst<(outs IntRegs:$Rd),
+          (ins IntRegs:$Rs, IntRegs:$Rt),
+  "$Rd = "#mnemonic#"($Rs, $Rt)", [],
+  "" , M_tc_3or4x_SLOT23 > ,
+  Requires<[HasV5T]> {
+    bits<5> Rd;
+    bits<5> Rs;
+    bits<5> Rt;
+
+    let IClass = 0b1110;
+
+    let Inst{27-24} = 0b1011;
+    let Inst{23-21} = MajOp;
+    let Inst{20-16} = Rs;
+    let Inst{13} = 0b0;
+    let Inst{12-8} = Rt;
+    let Inst{7-5} = MinOp;
+    let Inst{4-0} = Rd;
+  }
+
+let isCommutable = 1, isCodeGenOnly = 0 in {
+  def F2_sfadd : T_MInstFloat < "sfadd", 0b000, 0b000>;
+  def F2_sfmpy : T_MInstFloat < "sfmpy", 0b010, 0b000>;
+}
+
+let isCodeGenOnly = 0 in
+def F2_sfsub : T_MInstFloat < "sfsub", 0b000, 0b001>;
+
+let Itinerary = M_tc_3x_SLOT23, isCodeGenOnly = 0 in {
+  def F2_sfmax : T_MInstFloat < "sfmax", 0b100, 0b000>;
+  def F2_sfmin : T_MInstFloat < "sfmin", 0b100, 0b001>;
+}
+
+let isCodeGenOnly = 0 in {
+def F2_sffixupn : T_MInstFloat < "sffixupn", 0b110, 0b000>;
+def F2_sffixupd : T_MInstFloat < "sffixupd", 0b110, 0b001>;
+}
+
+// F2_sfrecipa: Reciprocal approximation for division.
+let Uses = [USR], isPredicateLate = 1, isFP = 1,
+hasSideEffects = 0, hasNewValue = 1, isCodeGenOnly = 0 in
+def F2_sfrecipa: MInst <
+  (outs IntRegs:$Rd, PredRegs:$Pe),
+  (ins IntRegs:$Rs, IntRegs:$Rt),
+  "$Rd, $Pe = sfrecipa($Rs, $Rt)">,
+  Requires<[HasV5T]> {
+    bits<5> Rd;
+    bits<2> Pe;
+    bits<5> Rs;
+    bits<5> Rt;
+
+    let IClass = 0b1110;
+    let Inst{27-21} = 0b1011111;
+    let Inst{20-16} = Rs;
+    let Inst{13}    = 0b0;
+    let Inst{12-8}  = Rt;
+    let Inst{7}     = 0b1;
+    let Inst{6-5}   = Pe;
+    let Inst{4-0}   = Rd;
+  }
+
+// F2_dfcmpeq: Floating point compare for equal.
+let Uses = [USR], isCompare = 1, isFP = 1 in
+class T_fcmp <string mnemonic, RegisterClass RC, bits<3> MinOp,
+              list<dag> pattern = [] >
+  : ALU64Inst <(outs PredRegs:$dst), (ins RC:$src1, RC:$src2),
+  "$dst = "#mnemonic#"($src1, $src2)", pattern,
+  "" , ALU64_tc_2early_SLOT23 > ,
+  Requires<[HasV5T]> {
+    bits<2> dst;
+    bits<5> src1;
+    bits<5> src2;
+
+    let IClass = 0b1101;
+
+    let Inst{27-21} = 0b0010111;
+    let Inst{20-16} = src1;
+    let Inst{12-8}  = src2;
+    let Inst{7-5}   = MinOp;
+    let Inst{1-0}   = dst;
+  }
+
+class T_fcmp64 <string mnemonic, PatFrag OpNode, bits<3> MinOp>
+  : T_fcmp <mnemonic, DoubleRegs, MinOp,
+  [(set  I1:$dst, (OpNode F64:$src1, F64:$src2))]> {
+  let IClass = 0b1101;
+  let Inst{27-21} = 0b0010111;
+}
+
+class T_fcmp32 <string mnemonic, PatFrag OpNode, bits<3> MinOp>
+  : T_fcmp <mnemonic, IntRegs, MinOp,
+  [(set  I1:$dst, (OpNode F32:$src1, F32:$src2))]> {
+  let IClass = 0b1100;
+  let Inst{27-21} = 0b0111111;
+}
+
+let isCodeGenOnly = 0 in {
+def F2_dfcmpeq : T_fcmp64<"dfcmp.eq", setoeq, 0b000>;
+def F2_dfcmpgt : T_fcmp64<"dfcmp.gt", setogt, 0b001>;
+def F2_dfcmpge : T_fcmp64<"dfcmp.ge", setoge, 0b010>;
+def F2_dfcmpuo : T_fcmp64<"dfcmp.uo", setuo,  0b011>;
+
+def F2_sfcmpge : T_fcmp32<"sfcmp.ge", setoge, 0b000>;
+def F2_sfcmpuo : T_fcmp32<"sfcmp.uo", setuo,  0b001>;
+def F2_sfcmpeq : T_fcmp32<"sfcmp.eq", setoeq, 0b011>;
+def F2_sfcmpgt : T_fcmp32<"sfcmp.gt", setogt, 0b100>;
+}
+
+// F2 convert template classes:
+let Uses = [USR], isFP = 1 in
+class F2_RDD_RSS_CONVERT<string mnemonic, bits<3> MinOp,
+                         SDNode Op, PatLeaf RCOut, PatLeaf RCIn,
+                         string chop ="">
+  : SInst <(outs DoubleRegs:$Rdd), (ins DoubleRegs:$Rss),
+   "$Rdd = "#mnemonic#"($Rss)"#chop,
+   [(set RCOut:$Rdd, (Op RCIn:$Rss))], "",
+   S_2op_tc_3or4x_SLOT23> {
+     bits<5> Rdd;
+     bits<5> Rss;
+
+     let IClass = 0b1000;
+
+     let Inst{27-21} = 0b0000111;
+     let Inst{20-16} = Rss;
+     let Inst{7-5} = MinOp;
+     let Inst{4-0} = Rdd;
+  }
+
+let Uses = [USR], isFP = 1 in
+class F2_RDD_RS_CONVERT<string mnemonic, bits<3> MinOp,
+                        SDNode Op, PatLeaf RCOut, PatLeaf RCIn,
+                        string chop ="">
+  : SInst <(outs DoubleRegs:$Rdd), (ins IntRegs:$Rs),
+   "$Rdd = "#mnemonic#"($Rs)"#chop,
+   [(set RCOut:$Rdd, (Op RCIn:$Rs))], "",
+   S_2op_tc_3or4x_SLOT23> {
+     bits<5> Rdd;
+     bits<5> Rs;
+
+     let IClass = 0b1000;
+
+     let Inst{27-21} = 0b0100100;
+     let Inst{20-16} = Rs;
+     let Inst{7-5} = MinOp;
+     let Inst{4-0} = Rdd;
+  }
+
+let Uses = [USR], isFP = 1, hasNewValue = 1 in
+class F2_RD_RSS_CONVERT<string mnemonic, bits<3> MinOp,
+                        SDNode Op, PatLeaf RCOut, PatLeaf RCIn,
+                        string chop ="">
+  : SInst <(outs IntRegs:$Rd), (ins DoubleRegs:$Rss),
+   "$Rd = "#mnemonic#"($Rss)"#chop,
+   [(set RCOut:$Rd, (Op RCIn:$Rss))], "",
+   S_2op_tc_3or4x_SLOT23> {
+     bits<5> Rd;
+     bits<5> Rss;
+
+     let IClass = 0b1000;
+
+     let Inst{27-24} = 0b1000;
+     let Inst{23-21} = MinOp;
+     let Inst{20-16} = Rss;
+     let Inst{7-5} = 0b001;
+     let Inst{4-0} = Rd;
+  }
+
+let Uses = [USR], isFP = 1, hasNewValue = 1 in
+class F2_RD_RS_CONVERT<string mnemonic, bits<3> MajOp, bits<3> MinOp,
+                        SDNode Op, PatLeaf RCOut, PatLeaf RCIn,
+                        string chop ="">
+  : SInst <(outs IntRegs:$Rd), (ins IntRegs:$Rs),
+   "$Rd = "#mnemonic#"($Rs)"#chop,
+   [(set RCOut:$Rd, (Op RCIn:$Rs))], "",
+   S_2op_tc_3or4x_SLOT23> {
+     bits<5> Rd;
+     bits<5> Rs;
+
+     let IClass = 0b1000;
+
+     let Inst{27-24} = 0b1011;
+     let Inst{23-21} = MajOp;
+     let Inst{20-16} = Rs;
+     let Inst{7-5} = MinOp;
+     let Inst{4-0} = Rd;
+  }
+
+// Convert single precision to double precision and vice-versa.
+let isCodeGenOnly = 0 in {
+def F2_conv_sf2df : F2_RDD_RS_CONVERT <"convert_sf2df", 0b000,
+                                       fextend, F64, F32>;
+
+def F2_conv_df2sf : F2_RD_RSS_CONVERT <"convert_df2sf", 0b000,
+                                       fround, F32, F64>;
+
+// Convert Integer to Floating Point.
+def F2_conv_d2sf : F2_RD_RSS_CONVERT <"convert_d2sf", 0b010,
+                                       sint_to_fp, F32, I64>;
+def F2_conv_ud2sf : F2_RD_RSS_CONVERT <"convert_ud2sf", 0b001,
+                                       uint_to_fp, F32, I64>;
+def F2_conv_uw2sf : F2_RD_RS_CONVERT <"convert_uw2sf", 0b001, 0b000,
+                                       uint_to_fp, F32, I32>;
+def F2_conv_w2sf : F2_RD_RS_CONVERT <"convert_w2sf", 0b010, 0b000,
+                                       sint_to_fp, F32, I32>;
+def F2_conv_d2df : F2_RDD_RSS_CONVERT <"convert_d2df", 0b011,
+                                       sint_to_fp, F64, I64>;
+def F2_conv_ud2df : F2_RDD_RSS_CONVERT <"convert_ud2df", 0b010,
+                                        uint_to_fp, F64, I64>;
+def F2_conv_uw2df : F2_RDD_RS_CONVERT <"convert_uw2df", 0b001,
+                                       uint_to_fp, F64, I32>;
+def F2_conv_w2df : F2_RDD_RS_CONVERT <"convert_w2df", 0b010,
+                                       sint_to_fp, F64, I32>;
+
+// Convert Floating Point to Integer - default.
+def F2_conv_df2uw_chop : F2_RD_RSS_CONVERT <"convert_df2uw", 0b101,
+                                            fp_to_uint, I32, F64, ":chop">;
+def F2_conv_df2w_chop : F2_RD_RSS_CONVERT <"convert_df2w", 0b111,
+                                            fp_to_sint, I32, F64, ":chop">;
+def F2_conv_sf2uw_chop : F2_RD_RS_CONVERT <"convert_sf2uw", 0b011, 0b001,
+                                       fp_to_uint, I32, F32, ":chop">;
+def F2_conv_sf2w_chop : F2_RD_RS_CONVERT <"convert_sf2w", 0b100, 0b001,
+                                       fp_to_sint, I32, F32, ":chop">;
+def F2_conv_df2d_chop : F2_RDD_RSS_CONVERT <"convert_df2d", 0b110,
+                                            fp_to_sint, I64, F64, ":chop">;
+def F2_conv_df2ud_chop : F2_RDD_RSS_CONVERT <"convert_df2ud", 0b111,
+                                             fp_to_uint, I64, F64, ":chop">;
+def F2_conv_sf2d_chop : F2_RDD_RS_CONVERT <"convert_sf2d", 0b110,
+                                       fp_to_sint, I64, F32, ":chop">;
+def F2_conv_sf2ud_chop : F2_RDD_RS_CONVERT <"convert_sf2ud", 0b101,
+                                            fp_to_uint, I64, F32, ":chop">;
+
+// Convert Floating Point to Integer: non-chopped.
+let AddedComplexity = 20, Predicates = [HasV5T, IEEERndNearV5T] in {
+  def F2_conv_df2d : F2_RDD_RSS_CONVERT <"convert_df2d", 0b000,
+                                         fp_to_sint, I64, F64>;
+  def F2_conv_df2ud : F2_RDD_RSS_CONVERT <"convert_df2ud", 0b001,
+                                          fp_to_uint, I64, F64>;
+  def F2_conv_sf2ud : F2_RDD_RS_CONVERT <"convert_sf2ud", 0b011,
+                                         fp_to_uint, I64, F32>;
+  def F2_conv_sf2d : F2_RDD_RS_CONVERT <"convert_sf2d", 0b100,
+                                         fp_to_sint, I64, F32>;
+  def F2_conv_df2uw : F2_RD_RSS_CONVERT <"convert_df2uw", 0b011,
+                                         fp_to_uint, I32, F64>;
+  def F2_conv_df2w : F2_RD_RSS_CONVERT <"convert_df2w", 0b100,
+                                         fp_to_sint, I32, F64>;
+  def F2_conv_sf2uw : F2_RD_RS_CONVERT <"convert_sf2uw", 0b011, 0b000,
+                                         fp_to_uint, I32, F32>;
+  def F2_conv_sf2w : F2_RD_RS_CONVERT <"convert_sf2w", 0b100, 0b000,
+                                         fp_to_sint, I32, F32>;
+}
+}
+
+// Fix up radicand.
+let Uses = [USR], isFP = 1, hasNewValue = 1, isCodeGenOnly = 0 in
+def F2_sffixupr: SInst<(outs IntRegs:$Rd), (ins IntRegs:$Rs),
+  "$Rd = sffixupr($Rs)",
+  [], "" , S_2op_tc_3or4x_SLOT23>, Requires<[HasV5T]> {
+    bits<5> Rd;
+    bits<5> Rs;
+
+    let IClass = 0b1000;
+
+    let Inst{27-21} = 0b1011101;
+    let Inst{20-16} = Rs;
+    let Inst{7-5}   = 0b000;
+    let Inst{4-0}   = Rd;
+  }
+
+// F2_sffma: Floating-point fused multiply add.
+let Uses = [USR], isFP = 1, hasNewValue = 1 in
+class T_sfmpy_acc <bit isSub, bit isLib>
+  : MInst<(outs IntRegs:$Rx),
+          (ins IntRegs:$dst2, IntRegs:$Rs, IntRegs:$Rt),
+  "$Rx "#!if(isSub, "-=","+=")#" sfmpy($Rs, $Rt)"#!if(isLib, ":lib",""),
+  [], "$dst2 = $Rx" , M_tc_3_SLOT23 > ,
+  Requires<[HasV5T]> {
+    bits<5> Rx;
+    bits<5> Rs;
+    bits<5> Rt;
+
+    let IClass = 0b1110;
+
+    let Inst{27-21} = 0b1111000;
+    let Inst{20-16} = Rs;
+    let Inst{13}    = 0b0;
+    let Inst{12-8}  = Rt;
+    let Inst{7}     = 0b1;
+    let Inst{6}     = isLib;
+    let Inst{5}     = isSub;
+    let Inst{4-0}   = Rx;
+  }
+
+let isCodeGenOnly = 0 in {
+def F2_sffma: T_sfmpy_acc <0, 0>;
+def F2_sffms: T_sfmpy_acc <1, 0>;
+def F2_sffma_lib: T_sfmpy_acc <0, 1>;
+def F2_sffms_lib: T_sfmpy_acc <1, 1>;
+}
+
+// Floating-point fused multiply add w/ additional scaling (2**pu).
+let Uses = [USR], isFP = 1, hasNewValue = 1, isCodeGenOnly = 0 in
+def F2_sffma_sc: MInst <
+  (outs IntRegs:$Rx),
+  (ins IntRegs:$dst2, IntRegs:$Rs, IntRegs:$Rt, PredRegs:$Pu),
+  "$Rx += sfmpy($Rs, $Rt, $Pu):scale" ,
+  [], "$dst2 = $Rx" , M_tc_3_SLOT23 > ,
+  Requires<[HasV5T]> {
+    bits<5> Rx;
+    bits<5> Rs;
+    bits<5> Rt;
+    bits<2> Pu;
+
+    let IClass = 0b1110;
+
+    let Inst{27-21} = 0b1111011;
+    let Inst{20-16} = Rs;
+    let Inst{13}    = 0b0;
+    let Inst{12-8}  = Rt;
+    let Inst{7}     = 0b1;
+    let Inst{6-5}   = Pu;
+    let Inst{4-0}   = Rx;
+  }
+
+
 // Convert single precision to double precision and vice-versa.
 def CONVERT_sf2df : ALU64_rr<(outs DoubleRegs:$dst), (ins IntRegs:$src),
                 "$dst = convert_sf2df($src)",
