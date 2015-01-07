@@ -47,6 +47,10 @@ int main()
     typedef std::owner_less<std::shared_ptr<int> > CS;
     CS cs;
 
+    static_assert((std::is_same<std::shared_ptr<int>, CS::first_argument_type>::value), "" );
+    static_assert((std::is_same<std::shared_ptr<int>, CS::second_argument_type>::value), "" );
+    static_assert((std::is_same<bool, CS::result_type>::value), "" );
+
     assert(!cs(p1, p2));
     assert(!cs(p2, p1));
     assert(cs(p1 ,p3) || cs(p3, p1));
@@ -60,6 +64,10 @@ int main()
     {
     typedef std::owner_less<std::weak_ptr<int> > CS;
     CS cs;
+
+    static_assert((std::is_same<std::weak_ptr<int>, CS::first_argument_type>::value), "" );
+    static_assert((std::is_same<std::weak_ptr<int>, CS::second_argument_type>::value), "" );
+    static_assert((std::is_same<bool, CS::result_type>::value), "" );
 
     assert(!cs(w1, w2));
     assert(!cs(w2, w1));
