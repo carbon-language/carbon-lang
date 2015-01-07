@@ -1,4 +1,5 @@
 add_custom_target(Kaleidoscope)
+set_target_properties(Kaleidoscope PROPERTIES FOLDER Examples)
 
 macro(add_kaleidoscope_chapter name)
   add_dependencies(Kaleidoscope ${name})
