@@ -75,7 +75,7 @@ identifiers, for different purposes:
 #. Named values are represented as a string of characters with their
    prefix. For example, ``%foo``, ``@DivisionByZero``,
    ``%a.really.long.identifier``. The actual regular expression used is
-   '``[%@][a-zA-Z$._][a-zA-Z$._0-9]*``'. Identifiers that require other
+   '``[%@][-a-zA-Z$._][-a-zA-Z$._0-9]*``'. Identifiers that require other
    characters in their names can be surrounded with quotes. Special
    characters may be escaped using ``"\xx"`` where ``xx`` is the ASCII
    code for the character in hexadecimal. In this way, any character can
