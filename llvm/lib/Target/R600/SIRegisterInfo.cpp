@@ -252,7 +252,7 @@ void SIRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator MI,
       int64_t Offset = FrameInfo->getObjectOffset(Index);
       FIOp.ChangeToImmediate(Offset);
       if (!TII->isImmOperandLegal(MI, FIOperandNum, FIOp)) {
-        unsigned TmpReg = RS->scavengeRegister(&AMDGPU::VReg_32RegClass, MI, SPAdj);
+        unsigned TmpReg = RS->scavengeRegister(&AMDGPU::VGPR_32RegClass, MI, SPAdj);
         BuildMI(*MBB, MI, MI->getDebugLoc(),
                 TII->get(AMDGPU::V_MOV_B32_e32), TmpReg)
                 .addImm(Offset);
@@ -266,7 +266,7 @@ const TargetRegisterClass * SIRegisterInfo::getCFGStructurizerRegClass(
                                                                    MVT VT) const {
   switch(VT.SimpleTy) {
     default:
-    case MVT::i32: return &AMDGPU::VReg_32RegClass;
+    case MVT::i32: return &AMDGPU::VGPR_32RegClass;
   }
 }
 
@@ -278,7 +278,7 @@ const TargetRegisterClass *SIRegisterInfo::getPhysRegClass(unsigned Reg) const {
   assert(!TargetRegisterInfo::isVirtualRegister(Reg));
 
   static const TargetRegisterClass *BaseClasses[] = {
-    &AMDGPU::VReg_32RegClass,
+    &AMDGPU::VGPR_32RegClass,
     &AMDGPU::SReg_32RegClass,
     &AMDGPU::VReg_64RegClass,
     &AMDGPU::SReg_64RegClass,
@@ -299,7 +299,7 @@ const TargetRegisterClass *SIRegisterInfo::getPhysRegClass(unsigned Reg) const {
 }
 
 bool SIRegisterInfo::hasVGPRs(const TargetRegisterClass *RC) const {
-  return getCommonSubClass(&AMDGPU::VReg_32RegClass, RC) ||
+  return getCommonSubClass(&AMDGPU::VGPR_32RegClass, RC) ||
          getCommonSubClass(&AMDGPU::VReg_64RegClass, RC) ||
          getCommonSubClass(&AMDGPU::VReg_96RegClass, RC) ||
          getCommonSubClass(&AMDGPU::VReg_128RegClass, RC) ||
@@ -314,7 +314,7 @@ const TargetRegisterClass *SIRegisterInfo::getEquivalentVGPRClass(
     } else if (SRC == &AMDGPU::SCCRegRegClass) {
       return &AMDGPU::VCCRegRegClass;
     } else if (getCommonSubClass(SRC, &AMDGPU::SGPR_32RegClass)) {
-      return &AMDGPU::VReg_32RegClass;
+      return &AMDGPU::VGPR_32RegClass;
     } else if (getCommonSubClass(SRC, &AMDGPU::SGPR_64RegClass)) {
       return &AMDGPU::VReg_64RegClass;
     } else if (getCommonSubClass(SRC, &AMDGPU::SReg_128RegClass)) {

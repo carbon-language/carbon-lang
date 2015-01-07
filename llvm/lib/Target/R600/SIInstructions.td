@@ -764,47 +764,47 @@ defm V_CMPX_CLASS_F64 : VOPCX_CLASS_F64 <vopc<0xb8, 0x13>, "v_cmpx_class_f64">;
 //===----------------------------------------------------------------------===//
 
 
-def DS_ADD_U32 : DS_1A1D_NORET <0x0, "ds_add_u32", VReg_32>;
-def DS_SUB_U32 : DS_1A1D_NORET <0x1, "ds_sub_u32", VReg_32>;
-def DS_RSUB_U32 : DS_1A1D_NORET <0x2, "ds_rsub_u32", VReg_32>;
-def DS_INC_U32 : DS_1A1D_NORET <0x3, "ds_inc_u32", VReg_32>;
-def DS_DEC_U32 : DS_1A1D_NORET <0x4, "ds_dec_u32", VReg_32>;
-def DS_MIN_I32 : DS_1A1D_NORET <0x5, "ds_min_i32", VReg_32>;
-def DS_MAX_I32 : DS_1A1D_NORET <0x6, "ds_max_i32", VReg_32>;
-def DS_MIN_U32 : DS_1A1D_NORET <0x7, "ds_min_u32", VReg_32>;
-def DS_MAX_U32 : DS_1A1D_NORET <0x8, "ds_max_u32", VReg_32>;
-def DS_AND_B32 : DS_1A1D_NORET <0x9, "ds_and_b32", VReg_32>;
-def DS_OR_B32 : DS_1A1D_NORET <0xa, "ds_or_b32", VReg_32>;
-def DS_XOR_B32 : DS_1A1D_NORET <0xb, "ds_xor_b32", VReg_32>;
-def DS_MSKOR_B32 : DS_1A1D_NORET <0xc, "ds_mskor_b32", VReg_32>;
-def DS_CMPST_B32 : DS_1A2D_NORET <0x10, "ds_cmpst_b32", VReg_32>;
-def DS_CMPST_F32 : DS_1A2D_NORET <0x11, "ds_cmpst_f32", VReg_32>;
-def DS_MIN_F32 : DS_1A1D_NORET <0x12, "ds_min_f32", VReg_32>;
-def DS_MAX_F32 : DS_1A1D_NORET <0x13, "ds_max_f32", VReg_32>;
+def DS_ADD_U32 : DS_1A1D_NORET <0x0, "ds_add_u32", VGPR_32>;
+def DS_SUB_U32 : DS_1A1D_NORET <0x1, "ds_sub_u32", VGPR_32>;
+def DS_RSUB_U32 : DS_1A1D_NORET <0x2, "ds_rsub_u32", VGPR_32>;
+def DS_INC_U32 : DS_1A1D_NORET <0x3, "ds_inc_u32", VGPR_32>;
+def DS_DEC_U32 : DS_1A1D_NORET <0x4, "ds_dec_u32", VGPR_32>;
+def DS_MIN_I32 : DS_1A1D_NORET <0x5, "ds_min_i32", VGPR_32>;
+def DS_MAX_I32 : DS_1A1D_NORET <0x6, "ds_max_i32", VGPR_32>;
+def DS_MIN_U32 : DS_1A1D_NORET <0x7, "ds_min_u32", VGPR_32>;
+def DS_MAX_U32 : DS_1A1D_NORET <0x8, "ds_max_u32", VGPR_32>;
+def DS_AND_B32 : DS_1A1D_NORET <0x9, "ds_and_b32", VGPR_32>;
+def DS_OR_B32 : DS_1A1D_NORET <0xa, "ds_or_b32", VGPR_32>;
+def DS_XOR_B32 : DS_1A1D_NORET <0xb, "ds_xor_b32", VGPR_32>;
+def DS_MSKOR_B32 : DS_1A1D_NORET <0xc, "ds_mskor_b32", VGPR_32>;
+def DS_CMPST_B32 : DS_1A2D_NORET <0x10, "ds_cmpst_b32", VGPR_32>;
+def DS_CMPST_F32 : DS_1A2D_NORET <0x11, "ds_cmpst_f32", VGPR_32>;
+def DS_MIN_F32 : DS_1A1D_NORET <0x12, "ds_min_f32", VGPR_32>;
+def DS_MAX_F32 : DS_1A1D_NORET <0x13, "ds_max_f32", VGPR_32>;
 
-def DS_ADD_RTN_U32 : DS_1A1D_RET <0x20, "ds_add_rtn_u32", VReg_32, "ds_add_u32">;
-def DS_SUB_RTN_U32 : DS_1A1D_RET <0x21, "ds_sub_rtn_u32", VReg_32, "ds_sub_u32">;
-def DS_RSUB_RTN_U32 : DS_1A1D_RET <0x22, "ds_rsub_rtn_u32", VReg_32, "ds_rsub_u32">;
-def DS_INC_RTN_U32 : DS_1A1D_RET <0x23, "ds_inc_rtn_u32", VReg_32, "ds_inc_u32">;
-def DS_DEC_RTN_U32 : DS_1A1D_RET <0x24, "ds_dec_rtn_u32", VReg_32, "ds_dec_u32">;
-def DS_MIN_RTN_I32 : DS_1A1D_RET <0x25, "ds_min_rtn_i32", VReg_32, "ds_min_i32">;
-def DS_MAX_RTN_I32 : DS_1A1D_RET <0x26, "ds_max_rtn_i32", VReg_32, "ds_max_i32">;
-def DS_MIN_RTN_U32 : DS_1A1D_RET <0x27, "ds_min_rtn_u32", VReg_32, "ds_min_u32">;
-def DS_MAX_RTN_U32 : DS_1A1D_RET <0x28, "ds_max_rtn_u32", VReg_32, "ds_max_u32">;
-def DS_AND_RTN_B32 : DS_1A1D_RET <0x29, "ds_and_rtn_b32", VReg_32, "ds_and_b32">;
-def DS_OR_RTN_B32 : DS_1A1D_RET <0x2a, "ds_or_rtn_b32", VReg_32, "ds_or_b32">;
-def DS_XOR_RTN_B32 : DS_1A1D_RET <0x2b, "ds_xor_rtn_b32", VReg_32, "ds_xor_b32">;
-def DS_MSKOR_RTN_B32 : DS_1A1D_RET <0x2c, "ds_mskor_rtn_b32", VReg_32, "ds_mskor_b32">;
-def DS_WRXCHG_RTN_B32 : DS_1A1D_RET <0x2d, "ds_wrxchg_rtn_b32", VReg_32>;
-//def DS_WRXCHG2_RTN_B32 : DS_2A0D_RET <0x2e, "ds_wrxchg2_rtn_b32", VReg_32, "ds_wrxchg2_b32">;
-//def DS_WRXCHG2ST64_RTN_B32 : DS_2A0D_RET <0x2f, "ds_wrxchg2_rtn_b32", VReg_32, "ds_wrxchg2st64_b32">;
-def DS_CMPST_RTN_B32 : DS_1A2D_RET <0x30, "ds_cmpst_rtn_b32", VReg_32, "ds_cmpst_b32">;
-def DS_CMPST_RTN_F32 : DS_1A2D_RET <0x31, "ds_cmpst_rtn_f32", VReg_32, "ds_cmpst_f32">;
-def DS_MIN_RTN_F32 : DS_1A1D_RET <0x32, "ds_min_rtn_f32", VReg_32, "ds_min_f32">;
-def DS_MAX_RTN_F32 : DS_1A1D_RET <0x33, "ds_max_rtn_f32", VReg_32, "ds_max_f32">;
+def DS_ADD_RTN_U32 : DS_1A1D_RET <0x20, "ds_add_rtn_u32", VGPR_32, "ds_add_u32">;
+def DS_SUB_RTN_U32 : DS_1A1D_RET <0x21, "ds_sub_rtn_u32", VGPR_32, "ds_sub_u32">;
+def DS_RSUB_RTN_U32 : DS_1A1D_RET <0x22, "ds_rsub_rtn_u32", VGPR_32, "ds_rsub_u32">;
+def DS_INC_RTN_U32 : DS_1A1D_RET <0x23, "ds_inc_rtn_u32", VGPR_32, "ds_inc_u32">;
+def DS_DEC_RTN_U32 : DS_1A1D_RET <0x24, "ds_dec_rtn_u32", VGPR_32, "ds_dec_u32">;
+def DS_MIN_RTN_I32 : DS_1A1D_RET <0x25, "ds_min_rtn_i32", VGPR_32, "ds_min_i32">;
+def DS_MAX_RTN_I32 : DS_1A1D_RET <0x26, "ds_max_rtn_i32", VGPR_32, "ds_max_i32">;
+def DS_MIN_RTN_U32 : DS_1A1D_RET <0x27, "ds_min_rtn_u32", VGPR_32, "ds_min_u32">;
+def DS_MAX_RTN_U32 : DS_1A1D_RET <0x28, "ds_max_rtn_u32", VGPR_32, "ds_max_u32">;
+def DS_AND_RTN_B32 : DS_1A1D_RET <0x29, "ds_and_rtn_b32", VGPR_32, "ds_and_b32">;
+def DS_OR_RTN_B32 : DS_1A1D_RET <0x2a, "ds_or_rtn_b32", VGPR_32, "ds_or_b32">;
+def DS_XOR_RTN_B32 : DS_1A1D_RET <0x2b, "ds_xor_rtn_b32", VGPR_32, "ds_xor_b32">;
+def DS_MSKOR_RTN_B32 : DS_1A1D_RET <0x2c, "ds_mskor_rtn_b32", VGPR_32, "ds_mskor_b32">;
+def DS_WRXCHG_RTN_B32 : DS_1A1D_RET <0x2d, "ds_wrxchg_rtn_b32", VGPR_32>;
+//def DS_WRXCHG2_RTN_B32 : DS_2A0D_RET <0x2e, "ds_wrxchg2_rtn_b32", VGPR_32, "ds_wrxchg2_b32">;
+//def DS_WRXCHG2ST64_RTN_B32 : DS_2A0D_RET <0x2f, "ds_wrxchg2_rtn_b32", VGPR_32, "ds_wrxchg2st64_b32">;
+def DS_CMPST_RTN_B32 : DS_1A2D_RET <0x30, "ds_cmpst_rtn_b32", VGPR_32, "ds_cmpst_b32">;
+def DS_CMPST_RTN_F32 : DS_1A2D_RET <0x31, "ds_cmpst_rtn_f32", VGPR_32, "ds_cmpst_f32">;
+def DS_MIN_RTN_F32 : DS_1A1D_RET <0x32, "ds_min_rtn_f32", VGPR_32, "ds_min_f32">;
+def DS_MAX_RTN_F32 : DS_1A1D_RET <0x33, "ds_max_rtn_f32", VGPR_32, "ds_max_f32">;
 
 let SubtargetPredicate = isCI in {
-def DS_WRAP_RTN_F32 : DS_1A1D_RET <0x34, "ds_wrap_rtn_f32", VReg_32, "ds_wrap_f32">;
+def DS_WRAP_RTN_F32 : DS_1A1D_RET <0x34, "ds_wrap_rtn_f32", VGPR_32, "ds_wrap_f32">;
 } // End isCI
 
 
@@ -854,21 +854,21 @@ def DS_MAX_RTN_F64 : DS_1A1D_RET <0x73, "ds_max_f64", VReg_64, "ds_max_f64">;
 
 // TODO: _SRC2_* forms
 
-defm DS_WRITE_B32 : DS_Store_Helper <0x0000000d, "ds_write_b32", VReg_32>;
-defm DS_WRITE_B8 : DS_Store_Helper <0x00000001e, "ds_write_b8", VReg_32>;
-defm DS_WRITE_B16 : DS_Store_Helper <0x00000001f, "ds_write_b16", VReg_32>;
+defm DS_WRITE_B32 : DS_Store_Helper <0x0000000d, "ds_write_b32", VGPR_32>;
+defm DS_WRITE_B8 : DS_Store_Helper <0x00000001e, "ds_write_b8", VGPR_32>;
+defm DS_WRITE_B16 : DS_Store_Helper <0x00000001f, "ds_write_b16", VGPR_32>;
 defm DS_WRITE_B64 : DS_Store_Helper <0x00000004d, "ds_write_b64", VReg_64>;
 
-defm DS_READ_B32 : DS_Load_Helper <0x00000036, "ds_read_b32", VReg_32>;
-defm DS_READ_I8 : DS_Load_Helper <0x00000039, "ds_read_i8", VReg_32>;
-defm DS_READ_U8 : DS_Load_Helper <0x0000003a, "ds_read_u8", VReg_32>;
-defm DS_READ_I16 : DS_Load_Helper <0x0000003b, "ds_read_i16", VReg_32>;
-defm DS_READ_U16 : DS_Load_Helper <0x0000003c, "ds_read_u16", VReg_32>;
+defm DS_READ_B32 : DS_Load_Helper <0x00000036, "ds_read_b32", VGPR_32>;
+defm DS_READ_I8 : DS_Load_Helper <0x00000039, "ds_read_i8", VGPR_32>;
+defm DS_READ_U8 : DS_Load_Helper <0x0000003a, "ds_read_u8", VGPR_32>;
+defm DS_READ_I16 : DS_Load_Helper <0x0000003b, "ds_read_i16", VGPR_32>;
+defm DS_READ_U16 : DS_Load_Helper <0x0000003c, "ds_read_u16", VGPR_32>;
 defm DS_READ_B64 : DS_Load_Helper <0x00000076, "ds_read_b64", VReg_64>;
 
 // 2 forms.
-defm DS_WRITE2_B32 : DS_Store2_Helper <0x0000000E, "ds_write2_b32", VReg_32>;
-defm DS_WRITE2ST64_B32 : DS_Store2_Helper <0x0000000F, "ds_write2st64_b32", VReg_32>;
+defm DS_WRITE2_B32 : DS_Store2_Helper <0x0000000E, "ds_write2_b32", VGPR_32>;
+defm DS_WRITE2ST64_B32 : DS_Store2_Helper <0x0000000F, "ds_write2st64_b32", VGPR_32>;
 defm DS_WRITE2_B64 : DS_Store2_Helper <0x0000004E, "ds_write2_b64", VReg_64>;
 defm DS_WRITE2ST64_B64 : DS_Store2_Helper <0x0000004F, "ds_write2st64_b64", VReg_64>;
 
@@ -892,19 +892,19 @@ defm BUFFER_LOAD_FORMAT_XYZW : MUBUF_Load_Helper <0x00000003, "buffer_load_forma
 //def BUFFER_STORE_FORMAT_XYZ : MUBUF_ <0x00000006, "buffer_store_format_xyz", []>;
 //def BUFFER_STORE_FORMAT_XYZW : MUBUF_ <0x00000007, "buffer_store_format_xyzw", []>;
 defm BUFFER_LOAD_UBYTE : MUBUF_Load_Helper <
-  0x00000008, "buffer_load_ubyte", VReg_32, i32, az_extloadi8_global
+  0x00000008, "buffer_load_ubyte", VGPR_32, i32, az_extloadi8_global
 >;
 defm BUFFER_LOAD_SBYTE : MUBUF_Load_Helper <
-  0x00000009, "buffer_load_sbyte", VReg_32, i32, sextloadi8_global
+  0x00000009, "buffer_load_sbyte", VGPR_32, i32, sextloadi8_global
 >;
 defm BUFFER_LOAD_USHORT : MUBUF_Load_Helper <
-  0x0000000a, "buffer_load_ushort", VReg_32, i32, az_extloadi16_global
+  0x0000000a, "buffer_load_ushort", VGPR_32, i32, az_extloadi16_global
 >;
 defm BUFFER_LOAD_SSHORT : MUBUF_Load_Helper <
-  0x0000000b, "buffer_load_sshort", VReg_32, i32, sextloadi16_global
+  0x0000000b, "buffer_load_sshort", VGPR_32, i32, sextloadi16_global
 >;
 defm BUFFER_LOAD_DWORD : MUBUF_Load_Helper <
-  0x0000000c, "buffer_load_dword", VReg_32, i32, global_load
+  0x0000000c, "buffer_load_dword", VGPR_32, i32, global_load
 >;
 defm BUFFER_LOAD_DWORDX2 : MUBUF_Load_Helper <
   0x0000000d, "buffer_load_dwordx2", VReg_64, v2i32, global_load
@@ -914,15 +914,15 @@ defm BUFFER_LOAD_DWORDX4 : MUBUF_Load_Helper <
 >;
 
 defm BUFFER_STORE_BYTE : MUBUF_Store_Helper <
-  0x00000018, "buffer_store_byte", VReg_32, i32, truncstorei8_global
+  0x00000018, "buffer_store_byte", VGPR_32, i32, truncstorei8_global
 >;
 
 defm BUFFER_STORE_SHORT : MUBUF_Store_Helper <
-  0x0000001a, "buffer_store_short", VReg_32, i32, truncstorei16_global
+  0x0000001a, "buffer_store_short", VGPR_32, i32, truncstorei16_global
 >;
 
 defm BUFFER_STORE_DWORD : MUBUF_Store_Helper <
-  0x0000001c, "buffer_store_dword", VReg_32, i32, global_store
+  0x0000001c, "buffer_store_dword", VGPR_32, i32, global_store
 >;
 
 defm BUFFER_STORE_DWORDX2 : MUBUF_Store_Helper <
@@ -934,36 +934,36 @@ defm BUFFER_STORE_DWORDX4 : MUBUF_Store_Helper <
 >;
 //def BUFFER_ATOMIC_SWAP : MUBUF_ <0x00000030, "buffer_atomic_swap", []>;
 defm BUFFER_ATOMIC_SWAP : MUBUF_Atomic <
-  0x00000030, "buffer_atomic_swap", VReg_32, i32, atomic_swap_global
+  0x00000030, "buffer_atomic_swap", VGPR_32, i32, atomic_swap_global
 >;
 //def BUFFER_ATOMIC_CMPSWAP : MUBUF_ <0x00000031, "buffer_atomic_cmpswap", []>;
 defm BUFFER_ATOMIC_ADD : MUBUF_Atomic <
-  0x00000032, "buffer_atomic_add", VReg_32, i32, atomic_add_global
+  0x00000032, "buffer_atomic_add", VGPR_32, i32, atomic_add_global
 >;
 defm BUFFER_ATOMIC_SUB : MUBUF_Atomic <
-  0x00000033, "buffer_atomic_sub", VReg_32, i32, atomic_sub_global
+  0x00000033, "buffer_atomic_sub", VGPR_32, i32, atomic_sub_global
 >;
 //def BUFFER_ATOMIC_RSUB : MUBUF_ <0x00000034, "buffer_atomic_rsub", []>;
 defm BUFFER_ATOMIC_SMIN : MUBUF_Atomic <
-  0x00000035, "buffer_atomic_smin", VReg_32, i32, atomic_min_global
+  0x00000035, "buffer_atomic_smin", VGPR_32, i32, atomic_min_global
 >;
 defm BUFFER_ATOMIC_UMIN : MUBUF_Atomic <
-  0x00000036, "buffer_atomic_umin", VReg_32, i32, atomic_umin_global
+  0x00000036, "buffer_atomic_umin", VGPR_32, i32, atomic_umin_global
 >;
 defm BUFFER_ATOMIC_SMAX : MUBUF_Atomic <
-  0x00000037, "buffer_atomic_smax", VReg_32, i32, atomic_max_global
+  0x00000037, "buffer_atomic_smax", VGPR_32, i32, atomic_max_global
 >;
 defm BUFFER_ATOMIC_UMAX : MUBUF_Atomic <
-  0x00000038, "buffer_atomic_umax", VReg_32, i32, atomic_umax_global
+  0x00000038, "buffer_atomic_umax", VGPR_32, i32, atomic_umax_global
 >;
 defm BUFFER_ATOMIC_AND : MUBUF_Atomic <
-  0x00000039, "buffer_atomic_and", VReg_32, i32, atomic_and_global
+  0x00000039, "buffer_atomic_and", VGPR_32, i32, atomic_and_global
 >;
 defm BUFFER_ATOMIC_OR : MUBUF_Atomic <
-  0x0000003a, "buffer_atomic_or", VReg_32, i32, atomic_or_global
+  0x0000003a, "buffer_atomic_or", VGPR_32, i32, atomic_or_global
 >;
 defm BUFFER_ATOMIC_XOR : MUBUF_Atomic <
-  0x0000003b, "buffer_atomic_xor", VReg_32, i32, atomic_xor_global
+  0x0000003b, "buffer_atomic_xor", VGPR_32, i32, atomic_xor_global
 >;
 //def BUFFER_ATOMIC_INC : MUBUF_ <0x0000003c, "buffer_atomic_inc", []>;
 //def BUFFER_ATOMIC_DEC : MUBUF_ <0x0000003d, "buffer_atomic_dec", []>;
@@ -1000,7 +1000,7 @@ defm BUFFER_ATOMIC_XOR : MUBUF_Atomic <
 //def TBUFFER_LOAD_FORMAT_XY : MTBUF_ <0x00000001, "tbuffer_load_format_xy", []>;
 //def TBUFFER_LOAD_FORMAT_XYZ : MTBUF_ <0x00000002, "tbuffer_load_format_xyz", []>;
 defm TBUFFER_LOAD_FORMAT_XYZW : MTBUF_Load_Helper <0x00000003, "tbuffer_load_format_xyzw", VReg_128>;
-defm TBUFFER_STORE_FORMAT_X : MTBUF_Store_Helper <0x00000004, "tbuffer_store_format_x", VReg_32>;
+defm TBUFFER_STORE_FORMAT_X : MTBUF_Store_Helper <0x00000004, "tbuffer_store_format_x", VGPR_32>;
 defm TBUFFER_STORE_FORMAT_XY : MTBUF_Store_Helper <0x00000005, "tbuffer_store_format_xy", VReg_64>;
 defm TBUFFER_STORE_FORMAT_XYZ : MTBUF_Store_Helper <0x00000006, "tbuffer_store_format_xyz", VReg_128>;
 defm TBUFFER_STORE_FORMAT_XYZW : MTBUF_Store_Helper <0x00000007, "tbuffer_store_format_xyzw", VReg_128>;
@@ -1110,25 +1110,25 @@ defm IMAGE_SAMPLE_C_CD_CL_O : MIMG_Sampler <0x0000006f, "image_sample_c_cd_cl_o"
 //===----------------------------------------------------------------------===//
 
 let Predicates = [HasFlatAddressSpace] in {
-def FLAT_LOAD_UBYTE : FLAT_Load_Helper <0x00000008, "flat_load_ubyte", VReg_32>;
-def FLAT_LOAD_SBYTE : FLAT_Load_Helper <0x00000009, "flat_load_sbyte", VReg_32>;
-def FLAT_LOAD_USHORT : FLAT_Load_Helper <0x0000000a, "flat_load_ushort", VReg_32>;
-def FLAT_LOAD_SSHORT : FLAT_Load_Helper <0x0000000b, "flat_load_sshort", VReg_32>;
-def FLAT_LOAD_DWORD : FLAT_Load_Helper <0x0000000c, "flat_load_dword", VReg_32>;
+def FLAT_LOAD_UBYTE : FLAT_Load_Helper <0x00000008, "flat_load_ubyte", VGPR_32>;
+def FLAT_LOAD_SBYTE : FLAT_Load_Helper <0x00000009, "flat_load_sbyte", VGPR_32>;
+def FLAT_LOAD_USHORT : FLAT_Load_Helper <0x0000000a, "flat_load_ushort", VGPR_32>;
+def FLAT_LOAD_SSHORT : FLAT_Load_Helper <0x0000000b, "flat_load_sshort", VGPR_32>;
+def FLAT_LOAD_DWORD : FLAT_Load_Helper <0x0000000c, "flat_load_dword", VGPR_32>;
 def FLAT_LOAD_DWORDX2 : FLAT_Load_Helper <0x0000000d, "flat_load_dwordx2", VReg_64>;
 def FLAT_LOAD_DWORDX4 : FLAT_Load_Helper <0x0000000e, "flat_load_dwordx4", VReg_128>;
 def FLAT_LOAD_DWORDX3 : FLAT_Load_Helper <0x00000010, "flat_load_dwordx3", VReg_96>;
 
 def FLAT_STORE_BYTE : FLAT_Store_Helper <
-  0x00000018, "flat_store_byte", VReg_32
+  0x00000018, "flat_store_byte", VGPR_32
 >;
 
 def FLAT_STORE_SHORT : FLAT_Store_Helper <
-  0x0000001a, "flat_store_short", VReg_32
+  0x0000001a, "flat_store_short", VGPR_32
 >;
 
 def FLAT_STORE_DWORD : FLAT_Store_Helper <
-  0x0000001c, "flat_store_dword", VReg_32
+  0x0000001c, "flat_store_dword", VGPR_32
 >;
 
 def FLAT_STORE_DWORDX2 : FLAT_Store_Helper <
@@ -1194,7 +1194,7 @@ let Uses = [EXEC] in {
 def V_READFIRSTLANE_B32 : VOP1 <
   0x00000002,
   (outs SReg_32:$vdst),
-  (ins VReg_32:$src0),
+  (ins VGPR_32:$src0),
   "v_readfirstlane_b32 $vdst, $src0",
   []
 >;
@@ -1345,22 +1345,22 @@ defm V_RSQ_CLAMP_F64 : VOP1InstSI <vop1<0x32>, "v_rsq_clamp_f64",
 
 defm V_INTERP_P1_F32 : VINTRP_m <
   0x00000000, "v_interp_p1_f32",
-  (outs VReg_32:$dst),
-  (ins VReg_32:$i, i32imm:$attr_chan, i32imm:$attr, M0Reg:$m0),
+  (outs VGPR_32:$dst),
+  (ins VGPR_32:$i, i32imm:$attr_chan, i32imm:$attr, M0Reg:$m0),
   "v_interp_p1_f32 $dst, $i, $attr_chan, $attr, [$m0]",
   "$m0">;
 
 defm V_INTERP_P2_F32 : VINTRP_m <
   0x00000001, "v_interp_p2_f32",
-  (outs VReg_32:$dst),
-  (ins VReg_32:$src0, VReg_32:$j, i32imm:$attr_chan, i32imm:$attr, M0Reg:$m0),
+  (outs VGPR_32:$dst),
+  (ins VGPR_32:$src0, VGPR_32:$j, i32imm:$attr_chan, i32imm:$attr, M0Reg:$m0),
   "v_interp_p2_f32 $dst, [$src0], $j, $attr_chan, $attr, [$m0]",
   "$src0,$m0",
   "$src0 = $dst">;
 
 defm V_INTERP_MOV_F32 : VINTRP_m <
   0x00000002, "v_interp_mov_f32",
-  (outs VReg_32:$dst),
+  (outs VGPR_32:$dst),
   (ins InterpSlot:$src0, i32imm:$attr_chan, i32imm:$attr, M0Reg:$m0),
   "v_interp_mov_f32 $dst, $src0, $attr_chan, $attr, [$m0]",
   "$m0">;
@@ -1369,7 +1369,7 @@ defm V_INTERP_MOV_F32 : VINTRP_m <
 // VOP2 Instructions
 //===----------------------------------------------------------------------===//
 
-defm V_CNDMASK_B32_e64 : VOP3_m_nosrcmod <vop3<0x100>, (outs VReg_32:$dst),
+defm V_CNDMASK_B32_e64 : VOP3_m_nosrcmod <vop3<0x100>, (outs VGPR_32:$dst),
   (ins VSrc_32:$src0, VSrc_32:$src1, SSrc_64:$src2),
   "v_cndmask_b32_e64 $dst, $src0, $src1, $src2",
   [(set i32:$dst, (select i1:$src2, i32:$src1, i32:$src0))],
@@ -1497,14 +1497,14 @@ let SubtargetPredicate = isSICI in {
 def V_READLANE_B32 : VOP2 <
   0x00000001,
   (outs SReg_32:$vdst),
-  (ins VReg_32:$src0, SSrc_32:$vsrc1),
+  (ins VGPR_32:$src0, SSrc_32:$vsrc1),
   "v_readlane_b32 $vdst, $src0, $vsrc1",
   []
 >;
 
 def V_WRITELANE_B32 : VOP2 <
   0x00000002,
-  (outs VReg_32:$vdst),
+  (outs VGPR_32:$vdst),
   (ins SReg_32:$src0, SSrc_32:$vsrc1),
   "v_writelane_b32 $vdst, $src0, $vsrc1",
   []
@@ -1825,12 +1825,12 @@ def SI_KILL : InstSI <
 
 let Uses = [EXEC], Defs = [EXEC,VCC,M0] in {
 
-//defm SI_ : RegisterLoadStore <VReg_32, FRAMEri, ADDRIndirect>;
+//defm SI_ : RegisterLoadStore <VGPR_32, FRAMEri, ADDRIndirect>;
 
 let UseNamedOperandTable = 1 in {
 
 def SI_RegisterLoad : InstSI <
-  (outs VReg_32:$dst, SReg_64:$temp),
+  (outs VGPR_32:$dst, SReg_64:$temp),
   (ins FRAMEri32:$addr, i32imm:$chan),
   "", []
 > {
@@ -1840,7 +1840,7 @@ def SI_RegisterLoad : InstSI <
 
 class SIRegStore<dag outs> : InstSI <
   outs,
-  (ins VReg_32:$val, FRAMEri32:$addr, i32imm:$chan),
+  (ins VGPR_32:$val, FRAMEri32:$addr, i32imm:$chan),
   "", []
 > {
   let isRegisterStore = 1;
@@ -1856,7 +1856,7 @@ def SI_RegisterStore : SIRegStore<(outs SReg_64:$temp)>;
 } // End UseNamedOperandTable = 1
 
 def SI_INDIRECT_SRC : InstSI <
-  (outs VReg_32:$dst, SReg_64:$temp),
+  (outs VGPR_32:$dst, SReg_64:$temp),
   (ins unknown:$src, VSrc_32:$idx, i32imm:$off),
   "si_indirect_src $dst, $temp, $src, $idx, $off",
   []
@@ -1864,14 +1864,14 @@ def SI_INDIRECT_SRC : InstSI <
 
 class SI_INDIRECT_DST<RegisterClass rc> : InstSI <
   (outs rc:$dst, SReg_64:$temp),
-  (ins unknown:$src, VSrc_32:$idx, i32imm:$off, VReg_32:$val),
+  (ins unknown:$src, VSrc_32:$idx, i32imm:$off, VGPR_32:$val),
   "si_indirect_dst $dst, $temp, $src, $idx, $off, $val",
   []
 > {
   let Constraints = "$src = $dst";
 }
 
-def SI_INDIRECT_DST_V1 : SI_INDIRECT_DST<VReg_32>;
+def SI_INDIRECT_DST_V1 : SI_INDIRECT_DST<VGPR_32>;
 def SI_INDIRECT_DST_V2 : SI_INDIRECT_DST<VReg_64>;
 def SI_INDIRECT_DST_V4 : SI_INDIRECT_DST<VReg_128>;
 def SI_INDIRECT_DST_V8 : SI_INDIRECT_DST<VReg_256>;
@@ -1926,7 +1926,7 @@ multiclass SI_SPILL_VGPR <RegisterClass vgpr_class> {
   >;
 }
 
-defm SI_SPILL_V32  : SI_SPILL_VGPR <VReg_32>;
+defm SI_SPILL_V32  : SI_SPILL_VGPR <VGPR_32>;
 defm SI_SPILL_V64  : SI_SPILL_VGPR <VReg_64>;
 defm SI_SPILL_V96  : SI_SPILL_VGPR <VReg_96>;
 defm SI_SPILL_V128 : SI_SPILL_VGPR <VReg_128>;
@@ -2446,10 +2446,10 @@ foreach Index = 0-15 in {
 }
 
 def : BitConvert <i32, f32, SReg_32>;
-def : BitConvert <i32, f32, VReg_32>;
+def : BitConvert <i32, f32, VGPR_32>;
 
 def : BitConvert <f32, i32, SReg_32>;
-def : BitConvert <f32, i32, VReg_32>;
+def : BitConvert <f32, i32, VGPR_32>;
 
 def : BitConvert <i64, f64, VReg_64>;
 

@@ -336,7 +336,7 @@ class SIMCInstr <string pseudo, int subtarget> {
 class EXPCommon : InstSI<
   (outs),
   (ins i32imm:$en, i32imm:$tgt, i32imm:$compr, i32imm:$done, i32imm:$vm,
-       VReg_32:$src0, VReg_32:$src1, VReg_32:$src2, VReg_32:$src3),
+       VGPR_32:$src0, VGPR_32:$src1, VGPR_32:$src2, VGPR_32:$src3),
   "exp $en, $tgt, $compr, $done, $vm, $src0, $src1, $src2, $src3",
   [] > {
 
@@ -612,7 +612,7 @@ class getNumSrcArgs<ValueType Src1, ValueType Src2> {
 // Returns the register class to use for the destination of VOP[123C]
 // instructions for the given VT.
 class getVALUDstForVT<ValueType VT> {
-  RegisterClass ret = !if(!eq(VT.Size, 32), VReg_32,
+  RegisterClass ret = !if(!eq(VT.Size, 32), VGPR_32,
                           !if(!eq(VT.Size, 64), VReg_64,
                             SReg_64)); // else VT == i1
 }
@@ -626,7 +626,7 @@ class getVOPSrc0ForVT<ValueType VT> {
 // Returns the register class to use for source 1 of VOP[12C] for the
 // given VT.
 class getVOPSrc1ForVT<ValueType VT> {
-  RegisterClass ret = !if(!eq(VT.Size, 32), VReg_32, VReg_64);
+  RegisterClass ret = !if(!eq(VT.Size, 32), VGPR_32, VReg_64);
 }
 
 // Returns the register classes for the source arguments of a VOP[12C]
@@ -1256,7 +1256,7 @@ multiclass VOP3b_64 <vop3 op, string opName, list<dag> pattern> :
   VOP3b_Helper <op, VReg_64, VSrc_64, opName, pattern>;
 
 multiclass VOP3b_32 <vop3 op, string opName, list<dag> pattern> :
-  VOP3b_Helper <op, VReg_32, VSrc_32, opName, pattern>;
+  VOP3b_Helper <op, VGPR_32, VSrc_32, opName, pattern>;
 
 
 class Vop3ModPat<Instruction Inst, VOPProfile P, SDPatternOperator node> : Pat<
@@ -1364,7 +1364,7 @@ multiclass DS_Load_Helper <bits<8> op, string asm, RegisterClass regClass>
   op,
   asm,
   (outs regClass:$vdst),
-  (ins i1imm:$gds, VReg_32:$addr, ds_offset:$offset, M0Reg:$m0),
+  (ins i1imm:$gds, VGPR_32:$addr, ds_offset:$offset, M0Reg:$m0),
   asm#" $vdst, $addr"#"$offset"#" [M0]",
   []>;
 
@@ -1385,7 +1385,7 @@ multiclass DS_Load2_Helper <bits<8> op, string asm, RegisterClass regClass>
   op,
   asm,
   (outs regClass:$vdst),
-  (ins i1imm:$gds, VReg_32:$addr, ds_offset0:$offset0, ds_offset1:$offset1,
+  (ins i1imm:$gds, VGPR_32:$addr, ds_offset0:$offset0, ds_offset1:$offset1,
         M0Reg:$m0),
   asm#" $vdst, $addr"#"$offset0"#"$offset1 [M0]",
   []>;
@@ -1407,7 +1407,7 @@ multiclass DS_Store_Helper <bits<8> op, string asm, RegisterClass regClass>
   op,
   asm,
   (outs),
-  (ins i1imm:$gds, VReg_32:$addr, regClass:$data0, ds_offset:$offset, M0Reg:$m0),
+  (ins i1imm:$gds, VGPR_32:$addr, regClass:$data0, ds_offset:$offset, M0Reg:$m0),
   asm#" $addr, $data0"#"$offset"#" [M0]",
   []>;
 
@@ -1428,7 +1428,7 @@ multiclass DS_Store2_Helper <bits<8> op, string asm, RegisterClass regClass>
   op,
   asm,
   (outs),
-  (ins i1imm:$gds, VReg_32:$addr, regClass:$data0, regClass:$data1,
+  (ins i1imm:$gds, VGPR_32:$addr, regClass:$data0, regClass:$data1,
        ds_offset0:$offset0, ds_offset1:$offset1, M0Reg:$m0),
   asm#" $addr, $data0, $data1"#"$offset0"#"$offset1 [M0]",
   []>;
@@ -1448,7 +1448,7 @@ class DS_1A_si <bits<8> op, dag outs, dag ins, string asm, list<dag> pat> :
 class DS_1A1D_RET <bits<8> op, string asm, RegisterClass rc, string noRetOp = ""> : DS_1A_si <
   op,
   (outs rc:$vdst),
-  (ins i1imm:$gds, VReg_32:$addr, rc:$data0, ds_offset:$offset, M0Reg:$m0),
+  (ins i1imm:$gds, VGPR_32:$addr, rc:$data0, ds_offset:$offset, M0Reg:$m0),
   asm#" $vdst, $addr, $data0"#"$offset"#" [M0]", []>,
   AtomicNoRet<noRetOp, 1> {
 
@@ -1463,7 +1463,7 @@ class DS_1A1D_RET <bits<8> op, string asm, RegisterClass rc, string noRetOp = ""
 class DS_1A2D_RET <bits<8> op, string asm, RegisterClass rc, string noRetOp = ""> : DS_1A_si <
   op,
   (outs rc:$vdst),
-  (ins i1imm:$gds, VReg_32:$addr, rc:$data0, rc:$data1, ds_offset:$offset, M0Reg:$m0),
+  (ins i1imm:$gds, VGPR_32:$addr, rc:$data0, rc:$data1, ds_offset:$offset, M0Reg:$m0),
   asm#" $vdst, $addr, $data0, $data1"#"$offset"#" [M0]",
   []>,
   AtomicNoRet<noRetOp, 1> {
@@ -1476,7 +1476,7 @@ class DS_1A2D_RET <bits<8> op, string asm, RegisterClass rc, string noRetOp = ""
 class DS_1A2D_NORET <bits<8> op, string asm, RegisterClass rc, string noRetOp = asm> : DS_1A_si <
   op,
   (outs),
-  (ins i1imm:$gds, VReg_32:$addr, rc:$data0, rc:$data1, ds_offset:$offset, M0Reg:$m0),
+  (ins i1imm:$gds, VGPR_32:$addr, rc:$data0, rc:$data1, ds_offset:$offset, M0Reg:$m0),
   asm#" $addr, $data0, $data1"#"$offset"#" [M0]",
   []>,
   AtomicNoRet<noRetOp, 0> {
@@ -1488,7 +1488,7 @@ class DS_1A2D_NORET <bits<8> op, string asm, RegisterClass rc, string noRetOp = 
 class DS_1A1D_NORET <bits<8> op, string asm, RegisterClass rc, string noRetOp = asm> : DS_1A_si <
   op,
   (outs),
-  (ins i1imm:$gds, VReg_32:$addr, rc:$data0, ds_offset:$offset, M0Reg:$m0),
+  (ins i1imm:$gds, VGPR_32:$addr, rc:$data0, ds_offset:$offset, M0Reg:$m0),
   asm#" $addr, $data0"#"$offset"#" [M0]",
   []>,
   AtomicNoRet<noRetOp, 0> {
@@ -1536,7 +1536,7 @@ multiclass MTBUF_Store_Helper <bits<3> op, string opName,
                                RegisterClass regClass> : MTBUF_m <
   op, opName, (outs),
   (ins regClass:$vdata, u16imm:$offset, i1imm:$offen, i1imm:$idxen, i1imm:$glc,
-   i1imm:$addr64, i8imm:$dfmt, i8imm:$nfmt, VReg_32:$vaddr,
+   i1imm:$addr64, i8imm:$dfmt, i8imm:$nfmt, VGPR_32:$vaddr,
    SReg_128:$srsrc, i1imm:$slc, i1imm:$tfe, SCSrc_32:$soffset),
   opName#" $vdata, $offset, $offen, $idxen, $glc, $addr64, $dfmt,"
         #" $nfmt, $vaddr, $srsrc, $slc, $tfe, $soffset", []
@@ -1550,7 +1550,7 @@ multiclass MTBUF_Load_Helper <bits<3> op, string opName,
                               RegisterClass regClass> : MTBUF_m <
   op, opName, (outs regClass:$dst),
   (ins u16imm:$offset, i1imm:$offen, i1imm:$idxen, i1imm:$glc, i1imm:$addr64,
-       i8imm:$dfmt, i8imm:$nfmt, VReg_32:$vaddr, SReg_128:$srsrc,
+       i8imm:$dfmt, i8imm:$nfmt, VGPR_32:$vaddr, SReg_128:$srsrc,
        i1imm:$slc, i1imm:$tfe, SCSrc_32:$soffset),
   opName#" $dst, $offset, $offen, $idxen, $glc, $addr64, $dfmt,"
         #" $nfmt, $vaddr, $srsrc, $slc, $tfe, $soffset", []
@@ -1674,7 +1674,7 @@ multiclass MUBUF_Load_Helper <bits<7> op, string asm, RegisterClass regClass,
 
       let offen = 1, idxen = 0  in {
         def _OFFEN  : MUBUF_si <op, (outs regClass:$vdata),
-                             (ins SReg_128:$srsrc, VReg_32:$vaddr,
+                             (ins SReg_128:$srsrc, VGPR_32:$vaddr,
                              SCSrc_32:$soffset, mbuf_offset:$offset, glc:$glc, slc:$slc,
                              tfe:$tfe),
                              asm#" $vdata, $vaddr, $srsrc, $soffset offen"#"$offset"#"$glc"#"$slc"#"$tfe", []>;
@@ -1682,7 +1682,7 @@ multiclass MUBUF_Load_Helper <bits<7> op, string asm, RegisterClass regClass,
 
       let offen = 0, idxen = 1 in {
         def _IDXEN  : MUBUF_si <op, (outs regClass:$vdata),
-                             (ins SReg_128:$srsrc, VReg_32:$vaddr,
+                             (ins SReg_128:$srsrc, VGPR_32:$vaddr,
                              mbuf_offset:$offset, SCSrc_32:$soffset, glc:$glc,
                              slc:$slc, tfe:$tfe),
                              asm#" $vdata, $vaddr, $srsrc, $soffset idxen"#"$offset"#"$glc"#"$slc"#"$tfe", []>;
@@ -1725,7 +1725,7 @@ multiclass MUBUF_Load_Helper_vi <bits<7> op, string asm, RegisterClass regClass,
 
     let offen = 1, idxen = 0  in {
       def _OFFEN  : MUBUF_vi <op, (outs regClass:$vdata),
-                           (ins SReg_128:$srsrc, VReg_32:$vaddr,
+                           (ins SReg_128:$srsrc, VGPR_32:$vaddr,
                            SCSrc_32:$soffset, mbuf_offset:$offset, glc:$glc, slc:$slc,
                            tfe:$tfe),
                            asm#" $vdata, $vaddr, $srsrc, $soffset offen"#"$offset"#"$glc"#"$slc"#"$tfe", []>;
@@ -1733,7 +1733,7 @@ multiclass MUBUF_Load_Helper_vi <bits<7> op, string asm, RegisterClass regClass,
 
     let offen = 0, idxen = 1 in {
       def _IDXEN  : MUBUF_vi <op, (outs regClass:$vdata),
-                           (ins SReg_128:$srsrc, VReg_32:$vaddr,
+                           (ins SReg_128:$srsrc, VGPR_32:$vaddr,
                            mbuf_offset:$offset, SCSrc_32:$soffset, glc:$glc,
                            slc:$slc, tfe:$tfe),
                            asm#" $vdata, $vaddr, $srsrc, $soffset idxen"#"$offset"#"$glc"#"$slc"#"$tfe", []>;
@@ -1755,7 +1755,7 @@ multiclass MUBUF_Store_Helper <bits<7> op, string name, RegisterClass vdataClass
 
     def "" : MUBUF_si <
       op, (outs),
-      (ins vdataClass:$vdata, SReg_128:$srsrc, VReg_32:$vaddr, SCSrc_32:$soffset,
+      (ins vdataClass:$vdata, SReg_128:$srsrc, VGPR_32:$vaddr, SCSrc_32:$soffset,
            mbuf_offset:$offset, offen:$offen, idxen:$idxen, glc:$glc, slc:$slc,
            tfe:$tfe),
       name#" $vdata, $vaddr, $srsrc, $soffset"#"$offen"#"$idxen"#"$offset"#
@@ -1778,7 +1778,7 @@ multiclass MUBUF_Store_Helper <bits<7> op, string name, RegisterClass vdataClass
     let offen = 1, idxen = 0  in {
       def _OFFEN  : MUBUF_si <
         op, (outs),
-        (ins vdataClass:$vdata, SReg_128:$srsrc, VReg_32:$vaddr, SCSrc_32:$soffset,
+        (ins vdataClass:$vdata, SReg_128:$srsrc, VGPR_32:$vaddr, SCSrc_32:$soffset,
              mbuf_offset:$offset, glc:$glc, slc:$slc, tfe:$tfe),
         name#" $vdata, $vaddr, $srsrc, $soffset offen"#"$offset"#
             "$glc"#"$slc"#"$tfe",
@@ -1859,7 +1859,7 @@ class MIMG_NoSampler_Helper <bits<7> op, string asm,
 multiclass MIMG_NoSampler_Src_Helper <bits<7> op, string asm,
                                       RegisterClass dst_rc,
                                       int channels> {
-  def _V1 : MIMG_NoSampler_Helper <op, asm, dst_rc, VReg_32>,
+  def _V1 : MIMG_NoSampler_Helper <op, asm, dst_rc, VGPR_32>,
             MIMG_Mask<asm#"_V1", channels>;
   def _V2 : MIMG_NoSampler_Helper <op, asm, dst_rc, VReg_64>,
             MIMG_Mask<asm#"_V2", channels>;
@@ -1868,7 +1868,7 @@ multiclass MIMG_NoSampler_Src_Helper <bits<7> op, string asm,
 }
 
 multiclass MIMG_NoSampler <bits<7> op, string asm> {
-  defm _V1 : MIMG_NoSampler_Src_Helper <op, asm, VReg_32, 1>;
+  defm _V1 : MIMG_NoSampler_Src_Helper <op, asm, VGPR_32, 1>;
   defm _V2 : MIMG_NoSampler_Src_Helper <op, asm, VReg_64, 2>;
   defm _V3 : MIMG_NoSampler_Src_Helper <op, asm, VReg_96, 3>;
   defm _V4 : MIMG_NoSampler_Src_Helper <op, asm, VReg_128, 4>;
@@ -1893,7 +1893,7 @@ class MIMG_Sampler_Helper <bits<7> op, string asm,
 multiclass MIMG_Sampler_Src_Helper <bits<7> op, string asm,
                                     RegisterClass dst_rc,
                                     int channels> {
-  def _V1 : MIMG_Sampler_Helper <op, asm, dst_rc, VReg_32>,
+  def _V1 : MIMG_Sampler_Helper <op, asm, dst_rc, VGPR_32>,
             MIMG_Mask<asm#"_V1", channels>;
   def _V2 : MIMG_Sampler_Helper <op, asm, dst_rc, VReg_64>,
             MIMG_Mask<asm#"_V2", channels>;
@@ -1906,7 +1906,7 @@ multiclass MIMG_Sampler_Src_Helper <bits<7> op, string asm,
 }
 
 multiclass MIMG_Sampler <bits<7> op, string asm> {
-  defm _V1 : MIMG_Sampler_Src_Helper<op, asm, VReg_32, 1>;
+  defm _V1 : MIMG_Sampler_Src_Helper<op, asm, VGPR_32, 1>;
   defm _V2 : MIMG_Sampler_Src_Helper<op, asm, VReg_64, 2>;
   defm _V3 : MIMG_Sampler_Src_Helper<op, asm, VReg_96, 3>;
   defm _V4 : MIMG_Sampler_Src_Helper<op, asm, VReg_128, 4>;
@@ -1940,7 +1940,7 @@ class MIMG_Gather_Helper <bits<7> op, string asm,
 multiclass MIMG_Gather_Src_Helper <bits<7> op, string asm,
                                     RegisterClass dst_rc,
                                     int channels> {
-  def _V1 : MIMG_Gather_Helper <op, asm, dst_rc, VReg_32>,
+  def _V1 : MIMG_Gather_Helper <op, asm, dst_rc, VGPR_32>,
             MIMG_Mask<asm#"_V1", channels>;
   def _V2 : MIMG_Gather_Helper <op, asm, dst_rc, VReg_64>,
             MIMG_Mask<asm#"_V2", channels>;
@@ -1953,7 +1953,7 @@ multiclass MIMG_Gather_Src_Helper <bits<7> op, string asm,
 }
 
 multiclass MIMG_Gather <bits<7> op, string asm> {
-  defm _V1 : MIMG_Gather_Src_Helper<op, asm, VReg_32, 1>;
+  defm _V1 : MIMG_Gather_Src_Helper<op, asm, VGPR_32, 1>;
   defm _V2 : MIMG_Gather_Src_Helper<op, asm, VReg_64, 2>;
   defm _V3 : MIMG_Gather_Src_Helper<op, asm, VReg_96, 3>;
   defm _V4 : MIMG_Gather_Src_Helper<op, asm, VReg_128, 4>;

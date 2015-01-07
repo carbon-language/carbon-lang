@@ -28,7 +28,7 @@ def V_CVT_PKRTZ_F16_F32 : VOP3InstVI <0x296, "v_cvt_pkrtz_f16_f32",
 >;
 
 defm BUFFER_LOAD_DWORD_VI : MUBUF_Load_Helper_vi <
-  0x14, "buffer_load_dword", VReg_32, i32, global_load
+  0x14, "buffer_load_dword", VGPR_32, i32, global_load
 >;
 
 defm BUFFER_LOAD_FORMAT_XYZW_VI : MUBUF_Load_Helper_vi <

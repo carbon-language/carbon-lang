@@ -145,7 +145,7 @@ bool SILowerI1Copies::runOnMachineFunction(MachineFunction &MF) {
   }
 
   for (unsigned Reg : I1Defs)
-    MRI.setRegClass(Reg, &AMDGPU::VReg_32RegClass);
+    MRI.setRegClass(Reg, &AMDGPU::VGPR_32RegClass);
 
   return false;
 }

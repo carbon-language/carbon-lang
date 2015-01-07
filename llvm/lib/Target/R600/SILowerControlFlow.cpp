@@ -340,7 +340,7 @@ void SILowerControlFlowPass::LoadM0(MachineInstr &MI, MachineInstr *MovRel) {
   } else {
 
     assert(AMDGPU::SReg_64RegClass.contains(Save));
-    assert(AMDGPU::VReg_32RegClass.contains(Idx));
+    assert(AMDGPU::VGPR_32RegClass.contains(Idx));
 
     // Save the EXEC mask
     BuildMI(MBB, &MI, DL, TII->get(AMDGPU::S_MOV_B64), Save)
