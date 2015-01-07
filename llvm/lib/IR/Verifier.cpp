@@ -2691,10 +2691,12 @@ void Verifier::visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI) {
   case Intrinsic::experimental_gc_result_ptr: {
     // Are we tied to a statepoint properly?
     CallSite StatepointCS(CI.getArgOperand(0));
-    const Function *StatepointFn = StatepointCS.getCalledFunction();
+    const Function *StatepointFn =
+      StatepointCS.getInstruction() ? StatepointCS.getCalledFunction() : nullptr;
     Assert2(StatepointFn && StatepointFn->isDeclaration() &&
             StatepointFn->getIntrinsicID() == Intrinsic::experimental_gc_statepoint,
-            "token must be from a statepoint", &CI, CI.getArgOperand(0));
+	    "gc.result operand #1 must be from a statepoint",
+	    &CI, CI.getArgOperand(0));
 
     // Assert that result type matches wrapped callee.
     const Value *Target = StatepointCS.getArgument(0);
@@ -2710,32 +2712,53 @@ void Verifier::visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI) {
     // Are we tied to a statepoint properly?
     CallSite StatepointCS(CI.getArgOperand(0));
     const Function *StatepointFn =
-        StatepointCS.getInstruction() ? StatepointCS.getCalledFunction() : NULL;
+        StatepointCS.getInstruction() ? StatepointCS.getCalledFunction() : nullptr;
     Assert2(StatepointFn && StatepointFn->isDeclaration() &&
             StatepointFn->getIntrinsicID() == Intrinsic::experimental_gc_statepoint,
-            "token must be from a statepoint", &CI, CI.getArgOperand(0));
+            "gc.relocate operand #1 must be from a statepoint",
+	    &CI, CI.getArgOperand(0));
 
     // Both the base and derived must be piped through the safepoint
     Value* Base = CI.getArgOperand(1);
-    Assert1( isa<ConstantInt>(Base), "must be integer offset", &CI);
+    Assert1(isa<ConstantInt>(Base),
+            "gc.relocate operand #2 must be integer offset", &CI);
     
     Value* Derived = CI.getArgOperand(2);
-    Assert1( isa<ConstantInt>(Derived), "must be integer offset", &CI);
+    Assert1(isa<ConstantInt>(Derived),
+            "gc.relocate operand #3 must be integer offset", &CI);
 
     const int BaseIndex = cast<ConstantInt>(Base)->getZExtValue();
     const int DerivedIndex = cast<ConstantInt>(Derived)->getZExtValue();
     // Check the bounds
     Assert1(0 <= BaseIndex &&
             BaseIndex < (int)StatepointCS.arg_size(),
-            "index out of bounds", &CI);
+            "gc.relocate: statepoint base index out of bounds", &CI);
     Assert1(0 <= DerivedIndex &&
             DerivedIndex < (int)StatepointCS.arg_size(),
-            "index out of bounds", &CI);
+            "gc.relocate: statepoint derived index out of bounds", &CI);
+
+    // Check that BaseIndex and DerivedIndex fall within the 'gc parameters'
+    // section of the statepoint's argument
+    const int NumCallArgs =
+      cast<ConstantInt>(StatepointCS.getArgument(1))->getZExtValue();
+    const int NumDeoptArgs =
+      cast<ConstantInt>(StatepointCS.getArgument(NumCallArgs + 3))->getZExtValue();
+    const int GCParamArgsStart = NumCallArgs + NumDeoptArgs + 4;
+    const int GCParamArgsEnd = StatepointCS.arg_size();
+    Assert1(GCParamArgsStart <= BaseIndex &&
+            BaseIndex < GCParamArgsEnd,
+            "gc.relocate: statepoint base index doesn't fall within the "
+	    "'gc parameters' section of the statepoint call", &CI);
+    Assert1(GCParamArgsStart <= DerivedIndex &&
+            DerivedIndex < GCParamArgsEnd,
+            "gc.relocate: statepoint derived index doesn't fall within the "
+	    "'gc parameters' section of the statepoint call", &CI);
+
 
     // Assert that the result type matches the type of the relocated pointer
     GCRelocateOperands Operands(&CI);
     Assert1(Operands.derivedPtr()->getType() == CI.getType(),
-            "gc.relocate: relocating a pointer shouldn't change it's type",
+            "gc.relocate: relocating a pointer shouldn't change its type",
             &CI);
     break;
   }

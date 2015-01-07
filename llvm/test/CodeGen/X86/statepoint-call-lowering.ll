@@ -60,6 +60,21 @@ entry:
   ret float %call1
 }
 
+define i1 @test_relocate(i32* %a) {
+; CHECK-LABEL: test_relocate
+; Check that an ununsed relocate has no code-generation impact
+; CHECK: pushq %rax
+; CHECK: callq return_i1
+; CHECK-NEXT: .Ltmp13:
+; CHECK-NEXT: popq %rdx
+; CHECK-NEXT: retq
+entry:
+  %safepoint_token = tail call i32 (i1 ()*, i32, i32, ...)* @llvm.experimental.gc.statepoint.p0f_i1f(i1 ()* @return_i1, i32 0, i32 0, i32 0, i32* %a)
+  %call1 = call i32* @llvm.experimental.gc.relocate.p0i32(i32 %safepoint_token, i32 4, i32 4)
+  %call2 = call zeroext i1 @llvm.experimental.gc.result.int.i1(i32 %safepoint_token)
+  ret i1 %call2
+}
+
 declare i32 @llvm.experimental.gc.statepoint.p0f_i1f(i1 ()*, i32, i32, ...)
 declare i1 @llvm.experimental.gc.result.int.i1(i32)
 
@@ -72,3 +87,4 @@ declare i32* @llvm.experimental.gc.result.ptr.p0i32(i32)
 declare i32 @llvm.experimental.gc.statepoint.p0f_f32f(float ()*, i32, i32, ...)
 declare float @llvm.experimental.gc.result.float.f32(i32)
 
+declare i32* @llvm.experimental.gc.relocate.p0i32(i32, i32, i32)
