@@ -614,10 +614,10 @@ iterateChainSucc(AliasAnalysis *AA, const MachineFrameInfo *MFI,
   }
   // Track current depth.
   (*Depth)++;
-  // Iterate over chain dependencies only.
+  // Iterate over memory dependencies only.
   for (SUnit::const_succ_iterator I = SUb->Succs.begin(), E = SUb->Succs.end();
        I != E; ++I)
-    if (I->isCtrl())
+    if (I->isNormalMemoryOrBarrier())
       iterateChainSucc (AA, MFI, SUa, I->getSUnit(), ExitSU, Depth, Visited);
   return *Depth;
 }
@@ -644,11 +644,12 @@ static void adjustChainDeps(AliasAnalysis *AA, const MachineFrameInfo *MFI,
       Dep.setLatency(((*I)->getInstr()->mayLoad()) ? LatencyToLoad : 0);
       (*I)->addPred(Dep);
     }
-    // Now go through all the chain successors and iterate from them.
-    // Keep track of visited nodes.
+
+    // Iterate recursively over all previously added memory chain
+    // successors. Keep track of visited nodes.
     for (SUnit::const_succ_iterator J = (*I)->Succs.begin(),
          JE = (*I)->Succs.end(); J != JE; ++J)
-      if (J->isCtrl())
+      if (J->isNormalMemoryOrBarrier())
         iterateChainSucc (AA, MFI, SU, J->getSUnit(),
                           ExitSU, &Depth, Visited);
   }
