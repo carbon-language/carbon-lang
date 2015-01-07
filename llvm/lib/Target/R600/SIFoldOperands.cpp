@@ -138,6 +138,14 @@ bool SIFoldOperands::runOnMachineFunction(MachineFunction &MF) {
         continue;
 
       MachineOperand &OpToFold = MI.getOperand(1);
+      bool FoldingImm = OpToFold.isImm() || OpToFold.isFPImm();
+
+      // Folding immediates with more than one use will increase program side.
+      // FIXME: This will also reduce register usage, which may be better
+      // in some cases.  A better heuristic is needed.
+      if (FoldingImm && !TII->isInlineConstant(OpToFold) &&
+          !MRI.hasOneUse(MI.getOperand(0).getReg()))
+        continue;
 
       // FIXME: Fold operands with subregs.
       if (OpToFold.isReg() &&
@@ -158,7 +166,6 @@ bool SIFoldOperands::runOnMachineFunction(MachineFunction &MF) {
           continue;
         }
 
-        bool FoldingImm = OpToFold.isImm() || OpToFold.isFPImm();
         APInt Imm;
 
         if (FoldingImm) {
