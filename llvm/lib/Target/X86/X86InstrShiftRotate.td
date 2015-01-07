@@ -49,6 +49,7 @@ def SHL64ri  : RIi8<0xC1, MRM4r, (outs GR64:$dst),
                     "shl{q}\t{$src2, $dst|$dst, $src2}",
                     [(set GR64:$dst, (shl GR64:$src1, (i8 imm:$src2)))],
                     IIC_SR>;
+} // isConvertibleToThreeAddress = 1
 
 // NOTE: We don't include patterns for shifts of a register by one, because
 // 'add reg,reg' is cheaper (and we have a Pat pattern for shift-by-one).
@@ -62,7 +63,6 @@ def SHL32r1  : I<0xD1, MRM4r, (outs GR32:$dst), (ins GR32:$src1),
 def SHL64r1  : RI<0xD1, MRM4r, (outs GR64:$dst), (ins GR64:$src1),
                  "shl{q}\t$dst", [], IIC_SR>;
 } // hasSideEffects = 0
-} // isConvertibleToThreeAddress = 1
 } // Constraints = "$src = $dst", SchedRW
 
 
