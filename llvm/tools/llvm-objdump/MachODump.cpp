@@ -285,11 +285,57 @@ static bool checkMachOAndArchFlags(ObjectFile *O, StringRef Filename) {
   return true;
 }
 
-static void DisassembleInputMachO2(StringRef Filename, MachOObjectFile *MachOOF,
-                                   StringRef ArchiveMemberName = StringRef(),
-                                   StringRef ArchitectureName = StringRef());
+static void DisassembleMachO(StringRef Filename, MachOObjectFile *MachOOF);
 
-void llvm::DisassembleInputMachO(StringRef Filename) {
+// ProcessMachO() is passed a single opened Mach-O file, which may be an
+// archive member and or in a slice of a universal file.  It prints the
+// the file name and header info and then processes it according to the
+// command line options.
+static void ProcessMachO(StringRef Filename, MachOObjectFile *MachOOF,
+                         StringRef ArchiveMemberName = StringRef(),
+                         StringRef ArchitectureName = StringRef()) {
+  outs() << Filename;
+  if (!ArchiveMemberName.empty())
+    outs() << '(' << ArchiveMemberName << ')';
+  if (!ArchitectureName.empty())
+    outs() << " (architecture " << ArchitectureName << ")";
+  outs() << ":\n";
+
+  if (Disassemble)
+    DisassembleMachO(Filename, MachOOF);
+  // TODO: These should/could be printed in Darwin's otool(1) or nm(1) style
+  //       for -macho. Or just used a new option that maps to the otool(1)
+  //       option like -r, -l, etc.  Or just the normal llvm-objdump option
+  //       but now for this slice so that the -arch options can be used.
+  // if (Relocations)
+  //   PrintRelocations(MachOOF);
+  // if (SectionHeaders)
+  //   PrintSectionHeaders(MachOOF);
+  // if (SectionContents)
+  //   PrintSectionContents(MachOOF);
+  // if (SymbolTable)
+  //   PrintSymbolTable(MachOOF);
+  // if (UnwindInfo)
+  //   PrintUnwindInfo(MachOOF);
+  if (PrivateHeaders)
+    printMachOFileHeader(MachOOF);
+  if (ExportsTrie)
+    printExportsTrie(MachOOF);
+  if (Rebase)
+    printRebaseTable(MachOOF);
+  if (Bind)
+    printBindTable(MachOOF);
+  if (LazyBind)
+    printLazyBindTable(MachOOF);
+  if (WeakBind)
+    printWeakBindTable(MachOOF);
+}
+
+// ParseInputMachO() parses the named Mach-O file in Filename and handles the
+// -arch flags selecting just those slices as specified by them and also parses
+// archive files.  Then for each individual Mach-O file ProcessMachO() is
+// called to process the file based on the command line options.
+void llvm::ParseInputMachO(StringRef Filename) {
   // Check for -arch all and verifiy the -arch flags are valid.
   for (unsigned i = 0; i < ArchFlags.size(); ++i) {
     if (ArchFlags[i] == "all") {
@@ -321,7 +367,7 @@ void llvm::DisassembleInputMachO(StringRef Filename) {
       if (MachOObjectFile *O = dyn_cast<MachOObjectFile>(&*ChildOrErr.get())) {
         if (!checkMachOAndArchFlags(O, Filename))
           return;
-        DisassembleInputMachO2(Filename, O, O->getFileName());
+        ProcessMachO(Filename, O, O->getFileName());
       }
     }
     return;
@@ -346,7 +392,7 @@ void llvm::DisassembleInputMachO(StringRef Filename) {
             if (ObjOrErr) {
               ObjectFile &O = *ObjOrErr.get();
               if (MachOObjectFile *MachOOF = dyn_cast<MachOObjectFile>(&O))
-                DisassembleInputMachO2(Filename, MachOOF, "", ArchitectureName);
+                ProcessMachO(Filename, MachOOF, "", ArchitectureName);
             } else if (ErrorOr<std::unique_ptr<Archive>> AOrErr =
                            I->getAsArchive()) {
               std::unique_ptr<Archive> &A = *AOrErr;
@@ -362,8 +408,7 @@ void llvm::DisassembleInputMachO(StringRef Filename) {
                   continue;
                 if (MachOObjectFile *O =
                         dyn_cast<MachOObjectFile>(&*ChildOrErr.get()))
-                  DisassembleInputMachO2(Filename, O, O->getFileName(),
-                                         ArchitectureName);
+                  ProcessMachO(Filename, O, O->getFileName(), ArchitectureName);
               }
             }
           }
@@ -390,7 +435,7 @@ void llvm::DisassembleInputMachO(StringRef Filename) {
           if (ObjOrErr) {
             ObjectFile &O = *ObjOrErr.get();
             if (MachOObjectFile *MachOOF = dyn_cast<MachOObjectFile>(&O))
-              DisassembleInputMachO2(Filename, MachOOF);
+              ProcessMachO(Filename, MachOOF);
           } else if (ErrorOr<std::unique_ptr<Archive>> AOrErr =
                          I->getAsArchive()) {
             std::unique_ptr<Archive> &A = *AOrErr;
@@ -403,7 +448,7 @@ void llvm::DisassembleInputMachO(StringRef Filename) {
                 continue;
               if (MachOObjectFile *O =
                       dyn_cast<MachOObjectFile>(&*ChildOrErr.get()))
-                DisassembleInputMachO2(Filename, O, O->getFileName());
+                ProcessMachO(Filename, O, O->getFileName());
             }
           }
           return;
@@ -423,7 +468,7 @@ void llvm::DisassembleInputMachO(StringRef Filename) {
       if (ObjOrErr) {
         ObjectFile &Obj = *ObjOrErr.get();
         if (MachOObjectFile *MachOOF = dyn_cast<MachOObjectFile>(&Obj))
-          DisassembleInputMachO2(Filename, MachOOF, "", ArchitectureName);
+          ProcessMachO(Filename, MachOOF, "", ArchitectureName);
       } else if (ErrorOr<std::unique_ptr<Archive>> AOrErr = I->getAsArchive()) {
         std::unique_ptr<Archive> &A = *AOrErr;
         outs() << "Archive : " << Filename;
@@ -438,8 +483,8 @@ void llvm::DisassembleInputMachO(StringRef Filename) {
           if (MachOObjectFile *O =
                   dyn_cast<MachOObjectFile>(&*ChildOrErr.get())) {
             if (MachOObjectFile *MachOOF = dyn_cast<MachOObjectFile>(O))
-              DisassembleInputMachO2(Filename, MachOOF, MachOOF->getFileName(),
-                                     ArchitectureName);
+              ProcessMachO(Filename, MachOOF, MachOOF->getFileName(),
+                           ArchitectureName);
           }
         }
       }
@@ -450,7 +495,7 @@ void llvm::DisassembleInputMachO(StringRef Filename) {
     if (!checkMachOAndArchFlags(O, Filename))
       return;
     if (MachOObjectFile *MachOOF = dyn_cast<MachOObjectFile>(&*O)) {
-      DisassembleInputMachO2(Filename, MachOOF);
+      ProcessMachO(Filename, MachOOF);
     } else
       errs() << "llvm-objdump: '" << Filename << "': "
              << "Object is not a Mach-O file type.\n";
@@ -1785,9 +1830,7 @@ static void emitComments(raw_svector_ostream &CommentStream,
   CommentStream.resync();
 }
 
-static void DisassembleInputMachO2(StringRef Filename, MachOObjectFile *MachOOF,
-                                   StringRef ArchiveMemberName,
-                                   StringRef ArchitectureName) {
+static void DisassembleMachO(StringRef Filename, MachOObjectFile *MachOOF) {
   const char *McpuDefault = nullptr;
   const Target *ThumbTarget = nullptr;
   const Target *TheTarget = GetTarget(MachOOF, &McpuDefault, &ThumbTarget);
@@ -1893,13 +1936,6 @@ static void DisassembleInputMachO2(StringRef Filename, MachOObjectFile *MachOOF,
            << ThumbTripleName << '\n';
     return;
   }
-
-  outs() << Filename;
-  if (!ArchiveMemberName.empty())
-    outs() << '(' << ArchiveMemberName << ')';
-  if (!ArchitectureName.empty())
-    outs() << " (architecture " << ArchitectureName << ")";
-  outs() << ":\n";
 
   MachO::mach_header Header = MachOOF->getHeader();
 

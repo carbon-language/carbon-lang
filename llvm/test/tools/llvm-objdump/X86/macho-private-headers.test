@@ -17,6 +17,8 @@
 // RUN:     | FileCheck %s -check-prefix=ROUTINE
 // RUN: llvm-objdump -p %p/Inputs/exeThread.macho-x86_64 \
 // RUN:     | FileCheck %s -check-prefix=THREAD
+// RUN: llvm-objdump -macho -p -arch i386 %p/Inputs/macho-universal.x86_64.i386 \
+// RUN:     | FileCheck %s -check-prefix=FATi386
 
 CHECK: Mach header
 CHECK:       magic cputype cpusubtype  caps    filetype ncmds sizeofcmds      flags
@@ -437,3 +439,7 @@ THREAD:    r12  0x0000000000000000 r13 0x0000000000000000 r14  0x000000000000000
 THREAD:    r15  0x0000000000000000 rip 0x0000000100000d00
 THREAD: rflags  0x0000000000000000 cs  0x0000000000000000 fs   0x0000000000000000
 THREAD:     gs  0x0000000000000000
+
+FATi386: Mach header
+FATi386:       magic cputype cpusubtype  caps    filetype ncmds sizeofcmds      flags
+FATi386:    MH_MAGIC    I386        ALL  0x00     EXECUTE    16        716   NOUNDEFS DYLDLINK TWOLEVEL PIE MH_NO_HEAP_EXECUTION

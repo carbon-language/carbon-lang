@@ -61,8 +61,8 @@ using namespace object;
 static cl::list<std::string>
 InputFilenames(cl::Positional, cl::desc("<input object files>"),cl::ZeroOrMore);
 
-static cl::opt<bool>
-Disassemble("disassemble",
+cl::opt<bool>
+llvm::Disassemble("disassemble",
   cl::desc("Display assembler mnemonics for the machine instructions"));
 static cl::alias
 Disassembled("d", cl::desc("Alias for --disassemble"),
@@ -77,20 +77,20 @@ SectionContents("s", cl::desc("Display the content of each section"));
 static cl::opt<bool>
 SymbolTable("t", cl::desc("Display the symbol table"));
 
-static cl::opt<bool>
-ExportsTrie("exports-trie", cl::desc("Display mach-o exported symbols"));
+cl::opt<bool>
+llvm::ExportsTrie("exports-trie", cl::desc("Display mach-o exported symbols"));
 
-static cl::opt<bool>
-Rebase("rebase", cl::desc("Display mach-o rebasing info"));
+cl::opt<bool>
+llvm::Rebase("rebase", cl::desc("Display mach-o rebasing info"));
 
-static cl::opt<bool>
-Bind("bind", cl::desc("Display mach-o binding info"));
+cl::opt<bool>
+llvm::Bind("bind", cl::desc("Display mach-o binding info"));
 
-static cl::opt<bool>
-LazyBind("lazy-bind", cl::desc("Display mach-o lazy binding info"));
+cl::opt<bool>
+llvm::LazyBind("lazy-bind", cl::desc("Display mach-o lazy binding info"));
 
-static cl::opt<bool>
-WeakBind("weak-bind", cl::desc("Display mach-o weak binding info"));
+cl::opt<bool>
+llvm::WeakBind("weak-bind", cl::desc("Display mach-o weak binding info"));
 
 static cl::opt<bool>
 MachOOpt("macho", cl::desc("Use MachO specific object file parser"));
@@ -139,9 +139,9 @@ static cl::alias
 UnwindInfoShort("u", cl::desc("Alias for --unwind-info"),
                 cl::aliasopt(UnwindInfo));
 
-static cl::opt<bool>
-PrivateHeaders("private-headers",
-               cl::desc("Display format specific file headers"));
+cl::opt<bool>
+llvm::PrivateHeaders("private-headers",
+                     cl::desc("Display format specific file headers"));
 
 static cl::alias
 PrivateHeadersShort("p", cl::desc("Alias for --private-headers"),
@@ -708,7 +708,7 @@ static void PrintUnwindInfo(const ObjectFile *o) {
   }
 }
 
-static void printExportsTrie(const ObjectFile *o) {
+void llvm::printExportsTrie(const ObjectFile *o) {
   outs() << "Exports trie:\n";
   if (const MachOObjectFile *MachO = dyn_cast<MachOObjectFile>(o))
     printMachOExportsTrie(MachO);
@@ -719,7 +719,7 @@ static void printExportsTrie(const ObjectFile *o) {
   }
 }
 
-static void printRebaseTable(const ObjectFile *o) {
+void llvm::printRebaseTable(const ObjectFile *o) {
   outs() << "Rebase table:\n";
   if (const MachOObjectFile *MachO = dyn_cast<MachOObjectFile>(o))
     printMachORebaseTable(MachO);
@@ -730,7 +730,7 @@ static void printRebaseTable(const ObjectFile *o) {
   }
 }
 
-static void printBindTable(const ObjectFile *o) {
+void llvm::printBindTable(const ObjectFile *o) {
   outs() << "Bind table:\n";
   if (const MachOObjectFile *MachO = dyn_cast<MachOObjectFile>(o))
     printMachOBindTable(MachO);
@@ -741,7 +741,7 @@ static void printBindTable(const ObjectFile *o) {
   }
 }
 
-static void printLazyBindTable(const ObjectFile *o) {
+void llvm::printLazyBindTable(const ObjectFile *o) {
   outs() << "Lazy bind table:\n";
   if (const MachOObjectFile *MachO = dyn_cast<MachOObjectFile>(o))
     printMachOLazyBindTable(MachO);
@@ -752,7 +752,7 @@ static void printLazyBindTable(const ObjectFile *o) {
   }
 }
 
-static void printWeakBindTable(const ObjectFile *o) {
+void llvm::printWeakBindTable(const ObjectFile *o) {
   outs() << "Weak bind table:\n";
   if (const MachOObjectFile *MachO = dyn_cast<MachOObjectFile>(o))
     printMachOWeakBindTable(MachO);
@@ -832,8 +832,11 @@ static void DumpInput(StringRef file) {
     return;
   }
 
-  if (MachOOpt && Disassemble) {
-    DisassembleInputMachO(file);
+  // If we are using the Mach-O specific object file parser, then let it parse
+  // the file and process the command line options.  So the -arch flags can
+  // be used to select specific slices, etc.
+  if (MachOOpt) {
+    ParseInputMachO(file);
     return;
   }
 
