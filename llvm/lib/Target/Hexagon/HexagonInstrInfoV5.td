@@ -112,7 +112,7 @@ def S5_popcountp : ALU64_rr<(outs IntRegs:$Rd), (ins DoubleRegs:$Rss),
     let Inst{20-16} = Rss;
   }
 
-let Uses = [USR], isFP = 1, hasNewValue = 1, opNewValue = 0 in
+let isFP = 1, hasNewValue = 1, opNewValue = 0 in
 class T_MInstFloat <string mnemonic, bits<3> MajOp, bits<3> MinOp>
   : MInst<(outs IntRegs:$Rd),
           (ins IntRegs:$Rs, IntRegs:$Rt),
@@ -153,7 +153,7 @@ def F2_sffixupd : T_MInstFloat < "sffixupd", 0b110, 0b001>;
 }
 
 // F2_sfrecipa: Reciprocal approximation for division.
-let Uses = [USR], isPredicateLate = 1, isFP = 1,
+let isPredicateLate = 1, isFP = 1,
 hasSideEffects = 0, hasNewValue = 1, isCodeGenOnly = 0 in
 def F2_sfrecipa: MInst <
   (outs IntRegs:$Rd, PredRegs:$Pe),
@@ -176,7 +176,7 @@ def F2_sfrecipa: MInst <
   }
 
 // F2_dfcmpeq: Floating point compare for equal.
-let Uses = [USR], isCompare = 1, isFP = 1 in
+let isCompare = 1, isFP = 1 in
 class T_fcmp <string mnemonic, RegisterClass RC, bits<3> MinOp,
               list<dag> pattern = [] >
   : ALU64Inst <(outs PredRegs:$dst), (ins RC:$src1, RC:$src2),
@@ -223,7 +223,7 @@ def F2_sfcmpgt : T_fcmp32<"sfcmp.gt", setogt, 0b100>;
 }
 
 // F2 convert template classes:
-let Uses = [USR], isFP = 1 in
+let isFP = 1 in
 class F2_RDD_RSS_CONVERT<string mnemonic, bits<3> MinOp,
                          SDNode Op, PatLeaf RCOut, PatLeaf RCIn,
                          string chop ="">
@@ -242,7 +242,7 @@ class F2_RDD_RSS_CONVERT<string mnemonic, bits<3> MinOp,
      let Inst{4-0} = Rdd;
   }
 
-let Uses = [USR], isFP = 1 in
+let isFP = 1 in
 class F2_RDD_RS_CONVERT<string mnemonic, bits<3> MinOp,
                         SDNode Op, PatLeaf RCOut, PatLeaf RCIn,
                         string chop ="">
@@ -261,7 +261,7 @@ class F2_RDD_RS_CONVERT<string mnemonic, bits<3> MinOp,
      let Inst{4-0} = Rdd;
   }
 
-let Uses = [USR], isFP = 1, hasNewValue = 1 in
+let isFP = 1, hasNewValue = 1 in
 class F2_RD_RSS_CONVERT<string mnemonic, bits<3> MinOp,
                         SDNode Op, PatLeaf RCOut, PatLeaf RCIn,
                         string chop ="">
@@ -281,7 +281,7 @@ class F2_RD_RSS_CONVERT<string mnemonic, bits<3> MinOp,
      let Inst{4-0} = Rd;
   }
 
-let Uses = [USR], isFP = 1, hasNewValue = 1 in
+let isFP = 1, hasNewValue = 1 in
 class F2_RD_RS_CONVERT<string mnemonic, bits<3> MajOp, bits<3> MinOp,
                         SDNode Op, PatLeaf RCOut, PatLeaf RCIn,
                         string chop ="">
@@ -367,7 +367,7 @@ let AddedComplexity = 20, Predicates = [HasV5T, IEEERndNearV5T] in {
 }
 
 // Fix up radicand.
-let Uses = [USR], isFP = 1, hasNewValue = 1, isCodeGenOnly = 0 in
+let isFP = 1, hasNewValue = 1, isCodeGenOnly = 0 in
 def F2_sffixupr: SInst<(outs IntRegs:$Rd), (ins IntRegs:$Rs),
   "$Rd = sffixupr($Rs)",
   [], "" , S_2op_tc_3or4x_SLOT23>, Requires<[HasV5T]> {
@@ -383,7 +383,7 @@ def F2_sffixupr: SInst<(outs IntRegs:$Rd), (ins IntRegs:$Rs),
   }
 
 // F2_sffma: Floating-point fused multiply add.
-let Uses = [USR], isFP = 1, hasNewValue = 1 in
+let isFP = 1, hasNewValue = 1 in
 class T_sfmpy_acc <bit isSub, bit isLib>
   : MInst<(outs IntRegs:$Rx),
           (ins IntRegs:$dst2, IntRegs:$Rs, IntRegs:$Rt),
@@ -414,7 +414,7 @@ def F2_sffms_lib: T_sfmpy_acc <1, 1>;
 }
 
 // Floating-point fused multiply add w/ additional scaling (2**pu).
-let Uses = [USR], isFP = 1, hasNewValue = 1, isCodeGenOnly = 0 in
+let isFP = 1, hasNewValue = 1, isCodeGenOnly = 0 in
 def F2_sffma_sc: MInst <
   (outs IntRegs:$Rx),
   (ins IntRegs:$dst2, IntRegs:$Rs, IntRegs:$Rt, PredRegs:$Pu),
@@ -438,10 +438,10 @@ def F2_sffma_sc: MInst <
   }
 
 // Classify floating-point value
-let Uses = [USR], isFP = 1, isCodeGenOnly = 0 in
+let isFP = 1, isCodeGenOnly = 0 in
  def F2_sfclass : T_TEST_BIT_IMM<"sfclass", 0b111>;
 
-let Uses = [USR], isFP = 1, isCodeGenOnly = 0 in
+let isFP = 1, isCodeGenOnly = 0 in
 def F2_dfclass: ALU64Inst<(outs PredRegs:$Pd), (ins DoubleRegs:$Rss, u5Imm:$u5),
   "$Pd = dfclass($Rss, #$u5)",
   [], "" , ALU64_tc_2early_SLOT23 > , Requires<[HasV5T]> {
