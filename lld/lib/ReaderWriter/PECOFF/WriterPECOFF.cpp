@@ -605,6 +605,9 @@ void AtomChunk::applyRelocationsARM(uint8_t *Buffer,
       case llvm::COFF::IMAGE_REL_ARM_ADDR32:
         *RelocSite32 = *RelocSite32 + TargetAddr + ImageBase;
         break;
+      case llvm::COFF::IMAGE_REL_ARM_ADDR32NB:
+        *RelocSite32 = *RelocSite32 + TargetAddr;
+        break;
       case llvm::COFF::IMAGE_REL_ARM_MOV32T:
         applyThumbMoveImmediate(&RelocSite16[0], (TargetAddr + ImageBase) >>  0);
         applyThumbMoveImmediate(&RelocSite16[2], (TargetAddr + ImageBase) >> 16);

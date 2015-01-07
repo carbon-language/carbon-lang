@@ -1,0 +1,4 @@
+LIBRARY "armnt-exports"
+EXPORTS
+  function
+

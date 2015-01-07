@@ -65,6 +65,10 @@ void addDir32NBReloc(COFFBaseDefinedAtom *atom, const Atom *target,
     addReloc(atom, target, offsetInAtom, Reference::KindArch::x86_64,
              llvm::COFF::IMAGE_REL_AMD64_ADDR32NB);
     return;
+  case llvm::COFF::IMAGE_FILE_MACHINE_ARMNT:
+    addReloc(atom, target, offsetInAtom, Reference::KindArch::ARM,
+             llvm::COFF::IMAGE_REL_ARM_ADDR32NB);
+    return;
   default:
     llvm_unreachable("unsupported machine type");
   }

@@ -1,0 +1,10 @@
+# RUN: yaml2obj -format coff -o %t.obj %p/Inputs/armnt-exports.obj.yaml
+# RUN: lld -flavor link /dll /def:%p/Inputs/armnt-exports.def /out:%t.dll %t.obj
+# RUN: llvm-readobj -coff-exports %t.dll | FileCheck %s
+
+CHECK: Export {
+CHECK:   Ordinal: 1
+CHECK:   Name: function
+CHECK:   RVA: 0x2001
+CHECK: }
+
