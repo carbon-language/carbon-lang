@@ -167,6 +167,12 @@ namespace llvm {
     bool operator>=(const MVT& S) const { return SimpleTy >= S.SimpleTy; }
     bool operator<=(const MVT& S) const { return SimpleTy <= S.SimpleTy; }
 
+    /// isValid - Return true if this is a valid simple valuetype.
+    bool isValid() const {
+      return (SimpleTy >= MVT::FIRST_VALUETYPE &&
+              SimpleTy < MVT::LAST_VALUETYPE);
+    }
+
     /// isFloatingPoint - Return true if this is a FP, or a vector FP type.
     bool isFloatingPoint() const {
       return ((SimpleTy >= MVT::FIRST_FP_VALUETYPE &&
