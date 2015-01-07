@@ -1049,7 +1049,7 @@ public:
     if (!CE) return false;
     int64_t Value = CE->getValue();
     return (ARM_AM::getSOImmVal(Value) != -1 ||
-            ARM_AM::getSOImmVal(~Value) != -1);;
+            ARM_AM::getSOImmVal(-Value) != -1);;
   }
   bool isT2SOImm() const {
     if (!isImm()) return false;
