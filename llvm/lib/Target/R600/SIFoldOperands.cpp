@@ -153,27 +153,44 @@ bool SIFoldOperands::runOnMachineFunction(MachineFunction &MF) {
         const MachineOperand &UseOp = UseMI->getOperand(Use.getOperandNo());
 
         // FIXME: Fold operands with subregs.
-        if (UseOp.isReg() && UseOp.getSubReg()) {
+        if (UseOp.isReg() && UseOp.getSubReg() && OpToFold.isReg()) {
           continue;
         }
 
         bool FoldingImm = OpToFold.isImm() || OpToFold.isFPImm();
+        APInt Imm;
 
-        // In order to fold immediates into copies, we need to change the
-        // copy to a MOV.
-        if (FoldingImm && UseMI->getOpcode() == AMDGPU::COPY) {
-          const TargetRegisterClass *TRC =
-              MRI.getRegClass(UseMI->getOperand(0).getReg());
+        if (FoldingImm) {
+          const TargetRegisterClass *UseRC = MRI.getRegClass(UseOp.getReg());
 
-          if (TRC->getSize() == 4) {
-            if (TRI.isSGPRClass(TRC))
-              UseMI->setDesc(TII->get(AMDGPU::S_MOV_B32));
-            else
-              UseMI->setDesc(TII->get(AMDGPU::V_MOV_B32_e32));
-          } else if (TRC->getSize() == 8 && TRI.isSGPRClass(TRC)) {
-            UseMI->setDesc(TII->get(AMDGPU::S_MOV_B64));
+          if (OpToFold.isFPImm()) {
+            Imm = OpToFold.getFPImm()->getValueAPF().bitcastToAPInt();
           } else {
-            continue;
+            Imm = APInt(64, OpToFold.getImm());
+          }
+
+          // Split 64-bit constants into 32-bits for folding.
+          if (UseOp.getSubReg()) {
+            if (UseRC->getSize() != 8)
+              continue;
+
+            if (UseOp.getSubReg() == AMDGPU::sub0) {
+              Imm = Imm.getLoBits(32);
+            } else {
+              assert(UseOp.getSubReg() == AMDGPU::sub1);
+              Imm = Imm.getHiBits(32);
+            }
+          }
+
+          // In order to fold immediates into copies, we need to change the
+          // copy to a MOV.
+          if (UseMI->getOpcode() == AMDGPU::COPY) {
+            unsigned MovOp = TII->getMovOpcode(
+                MRI.getRegClass(UseMI->getOperand(0).getReg()));
+            if (MovOp == AMDGPU::COPY)
+              continue;
+
+            UseMI->setDesc(TII->get(MovOp));
           }
         }
 
@@ -185,19 +202,14 @@ bool SIFoldOperands::runOnMachineFunction(MachineFunction &MF) {
             UseDesc.OpInfo[Use.getOperandNo()].RegClass == -1)
           continue;
 
-        if (FoldingImm) {
-          uint64_t Imm;
-          if (OpToFold.isFPImm()) {
-            Imm = OpToFold.getFPImm()->getValueAPF().bitcastToAPInt().getSExtValue();
-          } else {
-            Imm = OpToFold.getImm();
-          }
 
-          const MachineOperand ImmOp = MachineOperand::CreateImm(Imm);
+        if (FoldingImm) {
+          const MachineOperand ImmOp = MachineOperand::CreateImm(Imm.getSExtValue());
           if (TII->isOperandLegal(UseMI, Use.getOperandNo(), &ImmOp)) {
-            FoldList.push_back(FoldCandidate(UseMI, Use.getOperandNo(), Imm));
-            continue;
+            FoldList.push_back(FoldCandidate(UseMI, Use.getOperandNo(),
+                               Imm.getSExtValue()));
           }
+          continue;
         }
 
         // Normal substitution with registers

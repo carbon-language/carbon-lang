@@ -12,10 +12,10 @@ define void @sint_to_fp_i32_to_f64(double addrspace(1)* %out, i32 %in) {
 
 ; SI-LABEL: {{^}}sint_to_fp_i1_f64:
 ; SI: v_cmp_eq_i32_e64 [[CMP:s\[[0-9]+:[0-9]\]]],
-; FIXME: We should the VGPR sources for V_CNDMASK are copied from SGPRs,
-; we should be able to fold the SGPRs into the V_CNDMASK instructions.
-; SI: v_cndmask_b32_e64 v{{[0-9]+}}, v{{[0-9]+}}, v{{[0-9]+}}, [[CMP]]
-; SI: v_cndmask_b32_e64 v{{[0-9]+}}, v{{[0-9]+}}, v{{[0-9]+}}, [[CMP]]
+; We can't fold the SGPRs into v_cndmask_b32_e64, because it already
+; uses an SGPR for [[CMP]]
+; SI: v_cndmask_b32_e64 v{{[0-9]+}}, 0, v{{[0-9]+}}, [[CMP]]
+; SI: v_cndmask_b32_e64 v{{[0-9]+}}, 0, v{{[0-9]+}}, [[CMP]]
 ; SI: buffer_store_dwordx2
 ; SI: s_endpgm
 define void @sint_to_fp_i1_f64(double addrspace(1)* %out, i32 %in) {

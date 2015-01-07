@@ -110,6 +110,10 @@ public:
 
   bool expandPostRAPseudo(MachineBasicBlock::iterator MI) const override;
 
+  // \brief Returns an opcode that can be used to move a value to a \p DstRC
+  // register.  If there is no hardware instruction that can store to \p
+  // DstRC, then AMDGPU::COPY is returned.
+  unsigned getMovOpcode(const TargetRegisterClass *DstRC) const;
   unsigned commuteOpcode(unsigned Opcode) const;
 
   MachineInstr *commuteInstruction(MachineInstr *MI,

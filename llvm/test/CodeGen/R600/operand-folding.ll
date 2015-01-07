@@ -36,5 +36,22 @@ endif:
   ret void
 }
 
+; CHECK-LABEL: {{^}}fold_64bit_constant_add:
+; CHECK-NOT: s_mov_b64
+; FIXME: It would be better if we could use v_add here and drop the extra
+; v_mov_b32 instructions.
+; CHECK-DAG: s_add_u32 [[LO:s[0-9]+]], s{{[0-9]+}}, 1
+; CHECK-DAG: s_addc_u32 [[HI:s[0-9]+]], s{{[0-9]+}}, 0
+; CHECK-DAG: v_mov_b32_e32 v[[VLO:[0-9]+]], [[LO]]
+; CHECK-DAG: v_mov_b32_e32 v[[VHI:[0-9]+]], [[HI]]
+; CHECK: buffer_store_dwordx2 v{{\[}}[[VLO]]:[[VHI]]{{\]}},
+
+define void @fold_64bit_constant_add(i64 addrspace(1)* %out, i32 %cmp, i64 %val) {
+entry:
+  %tmp0 = add i64 %val, 1
+  store i64 %tmp0, i64 addrspace(1)* %out
+  ret void
+}
+
 declare i32 @llvm.r600.read.tidig.x() #0
 attributes #0 = { readnone }

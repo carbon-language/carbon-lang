@@ -418,6 +418,16 @@ unsigned SIInstrInfo::commuteOpcode(unsigned Opcode) const {
   return Opcode;
 }
 
+unsigned SIInstrInfo::getMovOpcode(const TargetRegisterClass *DstRC) const {
+
+  if (DstRC->getSize() == 4) {
+    return RI.isSGPRClass(DstRC) ? AMDGPU::S_MOV_B32 : AMDGPU::V_MOV_B32_e32;
+  } else if (DstRC->getSize() == 8 && RI.isSGPRClass(DstRC)) {
+    return AMDGPU::S_MOV_B64;
+  }
+  return AMDGPU::COPY;
+}
+
 static bool shouldTryToSpillVGPRs(MachineFunction *MF) {
 
   SIMachineFunctionInfo *MFI = MF->getInfo<SIMachineFunctionInfo>();
