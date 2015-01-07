@@ -616,11 +616,6 @@ public:
   static MDNode *get(LLVMContext &Context, ArrayRef<Metadata *> MDs) {
     return getMDNode(Context, MDs, true);
   }
-  static MDNode *getWhenValsUnresolved(LLVMContext &Context,
-                                       ArrayRef<Metadata *> MDs) {
-    // TODO: Remove this.
-    return get(Context, MDs);
-  }
 
   static MDNode *getIfExists(LLVMContext &Context, ArrayRef<Metadata *> MDs) {
     return getMDNode(Context, MDs, false);
