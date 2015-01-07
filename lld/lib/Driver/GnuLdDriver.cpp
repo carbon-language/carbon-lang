@@ -15,6 +15,7 @@
 
 #include "lld/Driver/Driver.h"
 #include "lld/Driver/GnuLdInputGraph.h"
+#include "lld/ReaderWriter/LinkerScript.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/Optional.h"
 #include "llvm/ADT/STLExtras.h"
@@ -215,6 +216,54 @@ static bool isLinkerScript(StringRef path, raw_ostream &diag) {
     return false;
   }
   return magic == llvm::sys::fs::file_magic::unknown;
+}
+
+static bool isPathUnderSysroot(StringRef sysroot, StringRef path) {
+  if (sysroot.empty())
+    return false;
+  while (!path.empty() && !llvm::sys::fs::equivalent(sysroot, path))
+    path = llvm::sys::path::parent_path(path);
+  return !path.empty();
+}
+
+static std::error_code
+evaluateLinkerScript(ELFLinkingContext &ctx, InputGraph *inputGraph,
+                     StringRef path, raw_ostream &diag) {
+  // Read the script file from disk and parse.
+  ErrorOr<std::unique_ptr<MemoryBuffer>> mb =
+      MemoryBuffer::getFileOrSTDIN(path);
+  if (std::error_code ec = mb.getError())
+    return ec;
+  if (ctx.logInputFiles())
+    diag << path << "\n";
+  auto lexer = llvm::make_unique<script::Lexer>(std::move(mb.get()));
+  auto parser = llvm::make_unique<script::Parser>(*lexer);
+  script::LinkerScript *script = parser->parse();
+  if (!script)
+    return LinkerScriptReaderError::parse_error;
+
+  // Evaluate script commands.
+  // Currently we only recognize GROUP() command.
+  bool sysroot = (!ctx.getSysroot().empty()
+                  && isPathUnderSysroot(ctx.getSysroot(), path));
+  for (const script::Command *c : script->_commands) {
+    auto *group = dyn_cast<script::Group>(c);
+    if (!group)
+      continue;
+    int numfiles = 0;
+    for (const script::Path &path : group->getPaths()) {
+      // TODO : Propagate Set WholeArchive/dashlPrefix
+      ELFFileNode::Attributes attr;
+      attr.setSysRooted(sysroot);
+      attr.setAsNeeded(path._asNeeded);
+      attr.setDashlPrefix(path._isDashlPrefix);
+      ++numfiles;
+      inputGraph->addInputElement(llvm::make_unique<ELFFileNode>(
+                                      ctx, ctx.allocateString(path._path), attr));
+    }
+    inputGraph->addInputElement(llvm::make_unique<GroupEnd>(numfiles));
+  }
+  return std::error_code();
 }
 
 bool GnuLdDriver::applyEmulation(llvm::Triple &triple,
@@ -529,19 +578,19 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
       }
       bool isScript =
           (!path.endswith(".objtxt") && isLinkerScript(realpath, diagnostics));
-      FileNode *inputNode = nullptr;
       if (isScript) {
-        inputNode = new ELFGNULdScript(*ctx, realpath);
-        if (inputNode->parse(*ctx, diagnostics)) {
-          diagnostics << path << ": Error parsing linker script\n";
+        std::error_code ec = evaluateLinkerScript(
+            *ctx, inputGraph.get(), realpath, diagnostics);
+        if (ec) {
+          diagnostics << path << ": Error parsing linker script: "
+                      << ec.message() << "\n";
           return false;
         }
-      } else {
-        inputNode = new ELFFileNode(*ctx, path, attributes);
+        break;
       }
-      std::unique_ptr<InputElement> inputFile(inputNode);
       ++numfiles;
-      inputGraph->addInputElement(std::move(inputFile));
+      inputGraph->addInputElement(
+          llvm::make_unique<ELFFileNode>(*ctx, path, attributes));
       break;
     }
 

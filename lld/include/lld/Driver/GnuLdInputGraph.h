@@ -21,7 +21,6 @@
 #include "lld/Core/InputGraph.h"
 #include "lld/Core/Resolver.h"
 #include "lld/ReaderWriter/ELFLinkingContext.h"
-#include "lld/ReaderWriter/LinkerScript.h"
 
 namespace lld {
 
@@ -79,41 +78,6 @@ private:
   const ELFLinkingContext &_elfLinkingContext;
   std::unique_ptr<const ArchiveLibraryFile> _archiveFile;
   const Attributes _attributes;
-};
-
-/// \brief Parse GNU Linker scripts.
-class GNULdScript : public FileNode {
-public:
-  GNULdScript(ELFLinkingContext &ctx, StringRef userPath)
-      : FileNode(userPath), _elfLinkingContext(ctx), _linkerScript(nullptr) {}
-
-  /// \brief Parse the linker script.
-  std::error_code parse(const LinkingContext &, raw_ostream &) override;
-
-protected:
-  ELFLinkingContext &_elfLinkingContext;
-  std::unique_ptr<script::Parser> _parser;
-  std::unique_ptr<script::Lexer> _lexer;
-  script::LinkerScript *_linkerScript;
-};
-
-/// \brief Handle ELF style with GNU Linker scripts.
-class ELFGNULdScript : public GNULdScript {
-public:
-  ELFGNULdScript(ELFLinkingContext &ctx, StringRef userPath)
-      : GNULdScript(ctx, userPath) {}
-
-  std::error_code parse(const LinkingContext &ctx,
-                        raw_ostream &diagnostics) override;
-
-  bool getReplacements(InputGraph::InputElementVectorT &result) override {
-    for (std::unique_ptr<InputElement> &elt : _expandElements)
-      result.push_back(std::move(elt));
-    return true;
-  }
-
-private:
-  InputGraph::InputElementVectorT _expandElements;
 };
 
 } // namespace lld
