@@ -56,10 +56,16 @@ struct FoldCandidate {
   uint64_t ImmToFold;
 
   FoldCandidate(MachineInstr *MI, unsigned OpNo, MachineOperand *FoldOp) :
-      UseMI(MI), UseOpNo(OpNo), OpToFold(FoldOp), ImmToFold(0) { }
+                UseMI(MI), UseOpNo(OpNo) {
 
-  FoldCandidate(MachineInstr *MI, unsigned OpNo, uint64_t Imm) :
-      UseMI(MI), UseOpNo(OpNo), OpToFold(nullptr), ImmToFold(Imm) { }
+    if (FoldOp->isImm()) {
+      OpToFold = nullptr;
+      ImmToFold = FoldOp->getImm();
+    } else {
+      assert(FoldOp->isReg());
+      OpToFold = FoldOp;
+    }
+  }
 
   bool isImm() const {
     return !OpToFold;
@@ -119,6 +125,35 @@ static bool updateOperand(FoldCandidate &Fold,
   return false;
 }
 
+static bool tryAddToFoldList(std::vector<FoldCandidate> &FoldList,
+                             MachineInstr *MI, unsigned OpNo,
+                             MachineOperand *OpToFold,
+                             const SIInstrInfo *TII) {
+  if (!TII->isOperandLegal(MI, OpNo, OpToFold)) {
+    // Operand is not legal, so try to commute the instruction to
+    // see if this makes it possible to fold.
+    unsigned CommuteIdx0;
+    unsigned CommuteIdx1;
+    bool CanCommute = TII->findCommutedOpIndices(MI, CommuteIdx0, CommuteIdx1);
+
+    if (CanCommute) {
+      if (CommuteIdx0 == OpNo)
+        OpNo = CommuteIdx1;
+      else if (CommuteIdx1 == OpNo)
+        OpNo = CommuteIdx0;
+    }
+
+    if (!CanCommute || !TII->commuteInstruction(MI))
+      return false;
+
+    if (!TII->isOperandLegal(MI, OpNo, OpToFold))
+      return false;
+  }
+
+  FoldList.push_back(FoldCandidate(MI, OpNo, OpToFold));
+  return true;
+}
+
 bool SIFoldOperands::runOnMachineFunction(MachineFunction &MF) {
   MachineRegisterInfo &MRI = MF.getRegInfo();
   const SIInstrInfo *TII =
@@ -139,6 +174,11 @@ bool SIFoldOperands::runOnMachineFunction(MachineFunction &MF) {
 
       MachineOperand &OpToFold = MI.getOperand(1);
       bool FoldingImm = OpToFold.isImm() || OpToFold.isFPImm();
+
+      // FIXME: We could also be folding things like FrameIndexes and
+      // TargetIndexes.
+      if (!FoldingImm && !OpToFold.isReg())
+        continue;
 
       // Folding immediates with more than one use will increase program side.
       // FIXME: This will also reduce register usage, which may be better
@@ -210,24 +250,13 @@ bool SIFoldOperands::runOnMachineFunction(MachineFunction &MF) {
             UseDesc.OpInfo[Use.getOperandNo()].RegClass == -1)
           continue;
 
-
         if (FoldingImm) {
-          const MachineOperand ImmOp = MachineOperand::CreateImm(Imm.getSExtValue());
-          if (TII->isOperandLegal(UseMI, Use.getOperandNo(), &ImmOp)) {
-            FoldList.push_back(FoldCandidate(UseMI, Use.getOperandNo(),
-                               Imm.getSExtValue()));
-          }
+          MachineOperand ImmOp = MachineOperand::CreateImm(Imm.getSExtValue());
+          tryAddToFoldList(FoldList, UseMI, Use.getOperandNo(), &ImmOp, TII);
           continue;
         }
 
-        // Normal substitution with registers
-        if (TII->isOperandLegal(UseMI, Use.getOperandNo(), &OpToFold)) {
-          FoldList.push_back(FoldCandidate(UseMI, Use.getOperandNo(), &OpToFold));
-          continue;
-        }
-
-        // FIXME: We could commute the instruction to create more opportunites
-        // for folding.  This will only be useful if we have 32-bit instructions.
+        tryAddToFoldList(FoldList, UseMI, Use.getOperandNo(), &OpToFold, TII);
 
         // FIXME: We could try to change the instruction from 64-bit to 32-bit
         // to enable more folding opportunites.  The shrink operands pass

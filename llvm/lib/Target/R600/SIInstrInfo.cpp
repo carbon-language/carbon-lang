@@ -709,6 +709,7 @@ bool SIInstrInfo::expandPostRAPseudo(MachineBasicBlock::iterator MI) const {
 
 MachineInstr *SIInstrInfo::commuteInstruction(MachineInstr *MI,
                                               bool NewMI) const {
+
   if (MI->getNumOperands() < 3)
     return nullptr;
 
@@ -730,8 +731,9 @@ MachineInstr *SIInstrInfo::commuteInstruction(MachineInstr *MI,
   // Make sure it's legal to commute operands for VOP2.
   if (isVOP2(MI->getOpcode()) &&
       (!isOperandLegal(MI, Src0Idx, &Src1) ||
-       !isOperandLegal(MI, Src1Idx, &Src0)))
+       !isOperandLegal(MI, Src1Idx, &Src0))) {
     return nullptr;
+    }
 
   if (!Src1.isReg()) {
     // Allow commuting instructions with Imm or FPImm operands.
@@ -1471,6 +1473,7 @@ bool SIInstrInfo::isOperandLegal(const MachineInstr *MI, unsigned OpIdx,
     //
     // s_sendmsg 0, s0 ; Operand defined as m0reg
     //                 ; RI.getCommonSubClass(s0,m0reg) = m0reg ; NOT LEGAL
+
     return RI.getCommonSubClass(RC, RI.getRegClass(OpInfo.RegClass)) == RC;
   }
 

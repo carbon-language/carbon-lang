@@ -41,7 +41,7 @@ define void @test_sgpr_use_twice_ternary_op_a_a_b(float addrspace(1)* %out, floa
 ; SI: s_load_dword [[SGPR0:s[0-9]+]], s{{\[[0-9]+:[0-9]+\]}}, 0xb
 ; SI: s_load_dword [[SGPR1:s[0-9]+]], s{{\[[0-9]+:[0-9]+\]}}, 0xc
 ; SI: v_mov_b32_e32 [[VGPR1:v[0-9]+]], [[SGPR1]]
-; SI: v_fma_f32 [[RESULT:v[0-9]+]], [[SGPR0]], [[VGPR1]], [[SGPR0]]
+; SI: v_fma_f32 [[RESULT:v[0-9]+]], [[VGPR1]], [[SGPR0]], [[SGPR0]]
 ; SI: buffer_store_dword [[RESULT]]
 define void @test_sgpr_use_twice_ternary_op_a_b_a(float addrspace(1)* %out, float %a, float %b) #0 {
   %fma = call float @llvm.fma.f32(float %a, float %b, float %a) #1
@@ -53,7 +53,7 @@ define void @test_sgpr_use_twice_ternary_op_a_b_a(float addrspace(1)* %out, floa
 ; SI: s_load_dword [[SGPR0:s[0-9]+]], s{{\[[0-9]+:[0-9]+\]}}, 0xb
 ; SI: s_load_dword [[SGPR1:s[0-9]+]], s{{\[[0-9]+:[0-9]+\]}}, 0xc
 ; SI: v_mov_b32_e32 [[VGPR1:v[0-9]+]], [[SGPR1]]
-; SI: v_fma_f32 [[RESULT:v[0-9]+]], [[VGPR1]], [[SGPR0]], [[SGPR0]]
+; SI: v_fma_f32 [[RESULT:v[0-9]+]], [[SGPR0]], [[VGPR1]], [[SGPR0]]
 ; SI: buffer_store_dword [[RESULT]]
 define void @test_sgpr_use_twice_ternary_op_b_a_a(float addrspace(1)* %out, float %a, float %b) #0 {
   %fma = call float @llvm.fma.f32(float %b, float %a, float %a) #1
