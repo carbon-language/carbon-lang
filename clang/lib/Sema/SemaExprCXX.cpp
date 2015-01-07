@@ -6141,6 +6141,12 @@ public:
 
   ExprResult TransformLambdaExpr(LambdaExpr *E) { return Owned(E); }
 
+  ExprResult TransformOpaqueValueExpr(OpaqueValueExpr *E) {
+    if (Expr *SE = E->getSourceExpr())
+      return TransformExpr(SE);
+    return BaseTransform::TransformOpaqueValueExpr(E);
+  }
+
   ExprResult Transform(Expr *E) {
     ExprResult Res;
     while (true) {

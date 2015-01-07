@@ -152,3 +152,8 @@ namespace PR21947 {
 int blue;  // expected-note {{'blue' declared here}}
 __typeof blur y;  // expected-error {{use of undeclared identifier 'blur'; did you mean 'blue'?}}
 }
+
+namespace PR22092 {
+a = b ? : 0;  // expected-error {{C++ requires a type specifier for all declarations}} \
+              // expected-error-re {{use of undeclared identifier 'b'{{$}}}}
+}

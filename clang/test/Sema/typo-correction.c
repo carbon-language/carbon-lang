@@ -9,3 +9,6 @@ void PR21656() {
   float x;
   x = (float)arst;  // expected-error-re {{use of undeclared identifier 'arst'{{$}}}}
 }
+
+a = b ? : 0;  // expected-warning {{type specifier missing, defaults to 'int'}} \
+              // expected-error {{use of undeclared identifier 'b'}}

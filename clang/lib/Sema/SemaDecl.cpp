@@ -8574,8 +8574,10 @@ void Sema::AddInitializerToDecl(Decl *RealDecl, Expr *Init,
                                 bool DirectInit, bool TypeMayContainAuto) {
   // If there is no declaration, there was an error parsing it.  Just ignore
   // the initializer.
-  if (!RealDecl || RealDecl->isInvalidDecl())
+  if (!RealDecl || RealDecl->isInvalidDecl()) {
+    CorrectDelayedTyposInExpr(Init);
     return;
+  }
 
   if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(RealDecl)) {
     // With declarators parsed the way they are, the parser cannot
