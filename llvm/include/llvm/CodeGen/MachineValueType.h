@@ -118,6 +118,7 @@ namespace llvm {
                               // unspecified type.  The register class
                               // will be determined by the opcode.
 
+      FIRST_VALUETYPE = 0,    // This is always the beginning of the list.
       LAST_VALUETYPE =  58,   // This always remains at the end of the list.
 
       // This is the current maximum for LAST_VALUETYPE.
