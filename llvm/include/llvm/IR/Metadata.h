@@ -642,6 +642,12 @@ public:
   /// \brief Check if node is fully resolved.
   bool isResolved() const;
 
+  /// \brief Check if node is distinct.
+  ///
+  /// Distinct nodes are not uniqued, and will not be returned by \a
+  /// MDNode::get().
+  bool isDistinct() const { return IsDistinctInContext; }
+
 protected:
   /// \brief Set an operand.
   ///

@@ -222,6 +222,33 @@ TEST_F(MDNodeTest, NullOperand) {
   EXPECT_EQ(N, NullOp);
 }
 
+TEST_F(MDNodeTest, DistinctOnUniquingCollision) {
+  // !{}
+  MDNode *Empty = MDNode::get(Context, None);
+  ASSERT_TRUE(Empty->isResolved());
+  EXPECT_FALSE(Empty->isDistinct());
+
+  // !{!{}}
+  Metadata *Wrapped1Ops[] = {Empty};
+  MDNode *Wrapped1 = MDNode::get(Context, Wrapped1Ops);
+  ASSERT_EQ(Empty, Wrapped1->getOperand(0));
+  ASSERT_TRUE(Wrapped1->isResolved());
+  EXPECT_FALSE(Wrapped1->isDistinct());
+
+  // !{!{!{}}}
+  Metadata *Wrapped2Ops[] = {Wrapped1};
+  MDNode *Wrapped2 = MDNode::get(Context, Wrapped2Ops);
+  ASSERT_EQ(Wrapped1, Wrapped2->getOperand(0));
+  ASSERT_TRUE(Wrapped2->isResolved());
+  EXPECT_FALSE(Wrapped2->isDistinct());
+
+  // !{!{!{}}} => !{!{}}
+  Wrapped2->replaceOperandWith(0, Empty);
+  ASSERT_EQ(Empty, Wrapped2->getOperand(0));
+  EXPECT_TRUE(Wrapped2->isDistinct());
+  EXPECT_FALSE(Wrapped1->isDistinct());
+}
+
 typedef MetadataTest MetadataAsValueTest;
 
 TEST_F(MetadataAsValueTest, MDNode) {
