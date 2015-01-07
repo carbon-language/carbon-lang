@@ -15,6 +15,7 @@
 
 <h2> Overview</h2>
 <ul>
+<li><a href="#phase3">Phase 4</a></li>
 <li><a href="#phase3">Phase 3 - Improve Robustness, Interoperability and
 Optimizations (ongoing)</a></li>
 <li><a href="#llvm">Polly as a LLVM Project (Finished February 2012)</a></li>
@@ -24,6 +25,225 @@ February 2012)</a></li>
 </li>
 </ul>
 <h2> Individual Phases</h3>
+
+<h3 id="phase4"> Phase 4</h3>
+<table class="wikitable" cellpadding="2">
+<p> </p>
+
+<tbody>
+<tr><th colspan="3" style="background: rgb(239, 239, 239);"> Infrastructure </th></tr>
+<tr style="background: rgb(239, 239, 239)">
+  <th width="400px"> Task </th>
+  <th width="150px"> Status </th>
+  <th> Owner </th>
+</tr>
+<tr>
+<th align="left"> Move to isl C++ bindings
+</th><td align="center" class='open'> Open
+</td><td>
+</td>
+</tr>
+<th align="left"> &nbsp; &nbsp; - Add isl C++ bindings generator to isl
+</th><td align="center" class='open'> Open
+</td><td>
+</td>
+</tr>
+<tr>
+<th align="left"> Add isl as an external library to Polly SVN
+</th><td align="center" class='open'> Open
+</td><td>
+</td>
+</tr>
+<tr>
+<th align="left"> Compile-time: Speed up transformations
+</th><td align="center">
+</td><td>
+</td>
+</tr>
+<th align="left"> &nbsp; &nbsp; - Optimize isl_int for small integers
+</th><td align="center" class='open'> Open
+</td><td>
+</td>
+</tr>
+<tr>
+<th align="left"> Compile-time: Minimize SCoP detection time
+</th><td align="center" class='open'> Open
+</td><td>
+</td>
+</tr>
+<th align="left"> &nbsp; &nbsp; - Reconsider pass-ordering (move Polly later)
+</th><td align="center" class='open'> Open
+</td><td>
+</td>
+</tr>
+
+<tr><td colspan='4'>&nbsp;</td></tr>
+<tr><th colspan="3" style="background: rgb(239, 239, 239);"> Increase coverage
+</th></tr>
+<tr style="background: rgb(239, 239, 239)">
+  <th width="400px"> Task </th>
+  <th width="150px"> Status </th>
+  <th> Owner </th>
+</tr>
+
+<tr>
+<th align="left">
+Support for Modulos
+</th><td align="center" class='open'> Open
+</td><td>
+</td></tr>
+<tr>
+<th align="left">
+Boolean Combinations
+</th><td align="center" class='open'> Open
+</td><td>
+</td></tr>
+<tr>
+<th align="left">
+Unsigned Integers
+</th><td align="center" class='open'> Open
+</td><td>
+</td></tr>
+<tr>
+<th align="left">
+Pointer Comparisions
+</th><td align="center" class='open'> Open
+</td><td>
+</td></tr>
+
+<tr><td colspan='4'>&nbsp;</td></tr>
+<tr><th colspan="3" style="background: rgb(239, 239, 239);"> Polly as an
+analysis </th></tr>
+<tr style="background: rgb(239, 239, 239)">
+  <th width="400px"> Task </th>
+  <th width="150px"> Status </th>
+  <th> Owner </th>
+</tr>
+
+<tr>
+<th align="left">
+Model scalars dependences directly in Polly
+</th><td align="center" class='done'> Done
+</td><td>
+</td></tr>
+<tr>
+<th align="left">
+Code generate scalar dependences
+</th><td align="center" class='open'> Open
+</td><td>
+</td></tr>
+<tr>
+<th align="left">
+Model PHI dependences directly in Polly
+</th><td align="center" class='open'> Open
+</td><td>
+</td></tr>
+<tr>
+<th align="left">
+Code generate PHI dependences
+</th><td align="center" class='open'> Open
+</td><td>
+</td></tr>
+<tr>
+<th align="left"> <a href="http://llvm.org/bugs/show_bug.cgi?id=12398">Remove
+the need for independent blocks</a>
+</th><td class="open"> Open
+</td><td>
+</td></tr>
+<tr>
+<th align="left">
+Remove polly-prepare pass
+</th><td align="center" class='open'> Open
+</td><td>
+</td></tr>
+
+<tr><td colspan='4'>&nbsp;</td></tr>
+<tr><th colspan="3" style="background: rgb(239, 239, 239);"> Correctness in
+cornercases </th></tr>
+<tr style="background: rgb(239, 239, 239)">
+  <th width="400px"> Task </th>
+  <th width="150px"> Status </th>
+  <th> Owner </th>
+</tr>
+<tr>
+<th align="left"> <a href="http://llvm.org/bugs/show_bug.cgi?id=10381">Derive
+optimal types (instead of always using i64)</a>
+</th><td class="open"> Open
+</td><td>
+</td></tr>
+<tr>
+<th align="left"> <a href="http://llvm.org/bugs/show_bug.cgi?id=12397">Model
+integer wrapping</a>
+</th><td align="center" class='open'> Open
+</td><td>
+</td></tr
+
+<tr><td colspan='4'>&nbsp;</td></tr>
+<tr><th colspan="3" style="background: rgb(239, 239, 239);"> Optimize Julia
+code with Polly
+analysis </th></tr>
+<tr style="background: rgb(239, 239, 239)">
+  <th width="400px"> Task </th>
+  <th width="150px"> Status </th>
+  <th> Owner </th>
+</tr>
+
+<th align="left">
+Integrate Polly into Julia
+</th><td align="center" class='open'> Open
+</td><td>
+</td></tr>
+<tr>
+<th align="left">
+Eliminate run-time bounds checks
+</th><td align="center" class='open'> Open
+</td><td>
+</td></tr>
+<tr>
+<th align="left"> &nbsp; &nbsp; - Reconsider unreachables in post-dominance tree
+</th><td align="center" class='open'> Open
+</td><td>
+</td></tr>
+
+<th align="left"> &nbsp; &nbsp; - Actually eliminate statements
+</th><td align="center" class='open'> Open
+</td><td>
+</td></tr>
+
+<tr><td colspan='4'>&nbsp;</td></tr>
+<tr><th colspan="3" style="background: rgb(239, 239, 239);"> Improved
+Optimizations in Polly
+</th></tr>
+<tr style="background: rgb(239, 239, 239)">
+  <th width="400px"> Task </th>
+  <th width="150px"> Status </th>
+  <th> Owner </th>
+</tr>
+
+<th align="left">
+Multi-level tiling
+</th><td align="center" class='open'> Open
+</td><td>
+</td></tr>
+<tr>
+<th align="left">
+Register Tiling
+</th><td align="center" class='open'> Open
+</td><td>
+</td></tr>
+<tr>
+<th align="left">
+Full/partial tile separation for vectorization
+</th><td align="center" class='open'> Open
+</td><td>
+</td></tr>
+<th align="left">
+Loop interchange after vectorization to maximize stride-one accesses
+</th><td align="center" class='open'> Open
+</td><td>
+</td></tr>
+</table>
+
 
 <h3 id="phase3"> Phase 3 - Improve Robustness, Interoperability and
 Optimizations (ongoing)</h3>
@@ -46,11 +266,6 @@ Optimizations (ongoing)</h3>
 
 
 <tr>
-<th align="left"> <a href="http://llvm.org/bugs/show_bug.cgi?id=12397">Model
-integer wrapping</a>
-</th><td align="center" class='open'> Open
-</td><td>
-</td></tr>
 <tr>
 <th align="left"> <a
 href="http://llvm.org/bugs/show_bug.cgi?id=12403">Variable-size
