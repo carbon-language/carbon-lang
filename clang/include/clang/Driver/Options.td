@@ -1096,14 +1096,16 @@ def mhwdiv_EQ : Joined<["-"], "mhwdiv=">, Group<m_Group>;
 def mglobal_merge : Flag<["-"], "mglobal-merge">, Group<m_Group>;
 def mhard_float : Flag<["-"], "mhard-float">, Group<m_Group>;
 def miphoneos_version_min_EQ : Joined<["-"], "miphoneos-version-min=">, Group<m_Group>;
-def mios_version_min_EQ : Joined<["-"], "mios-version-min=">, Alias<miphoneos_version_min_EQ>;
+def mios_version_min_EQ : Joined<["-"], "mios-version-min=">,
+  Alias<miphoneos_version_min_EQ>, HelpText<"Set iOS deployment target">;
 def mios_simulator_version_min_EQ : Joined<["-"], "mios-simulator-version-min=">, Alias<miphoneos_version_min_EQ>;
 def mkernel : Flag<["-"], "mkernel">, Group<m_Group>;
 def mlinker_version_EQ : Joined<["-"], "mlinker-version=">,
   Flags<[DriverOption]>;
 def mllvm : Separate<["-"], "mllvm">, Flags<[CC1Option,CC1AsOption,CoreOption]>,
   HelpText<"Additional arguments to forward to LLVM's option processing">;
-def mmacosx_version_min_EQ : Joined<["-"], "mmacosx-version-min=">, Group<m_Group>;
+def mmacosx_version_min_EQ : Joined<["-"], "mmacosx-version-min=">,
+  Group<m_Group>, HelpText<"Set Mac OS X deployment target">;
 def mms_bitfields : Flag<["-"], "mms-bitfields">, Group<m_Group>, Flags<[CC1Option]>,
   HelpText<"Set the default structure layout to be compatible with the Microsoft compiler standard">;
 def mstackrealign : Flag<["-"], "mstackrealign">, Group<m_Group>, Flags<[CC1Option]>,
