@@ -14530,14 +14530,27 @@ static SDValue LowerFCOPYSIGN(SDValue Op, SelectionDAG &DAG) {
   SDValue SignBit = DAG.getNode(X86ISD::FAND, dl, SrcVT, Op1, Mask1);
 
   // Next, clear the sign bit from the first operand (magnitude).
-  CV[0] = ConstantFP::get(
-      *Context, APFloat(Sem, APInt::getLowBitsSet(SizeInBits, SizeInBits - 1)));
+  // If it's a constant, we can clear it here.
+  if (ConstantFPSDNode *Op0CN = dyn_cast<ConstantFPSDNode>(Op0)) {
+    APFloat APF = Op0CN->getValueAPF();
+    // If the magnitude is a positive zero, the sign bit alone is enough.
+    if (APF.isPosZero())
+      return SignBit;
+    APF.clearSign();
+    CV[0] = ConstantFP::get(*Context, APF);
+  } else {
+    CV[0] = ConstantFP::get(
+        *Context,
+        APFloat(Sem, APInt::getLowBitsSet(SizeInBits, SizeInBits - 1)));
+  }
   C = ConstantVector::get(CV);
   CPIdx = DAG.getConstantPool(C, TLI.getPointerTy(), 16);
-  SDValue Mask2 = DAG.getLoad(VT, dl, DAG.getEntryNode(), CPIdx,
-                              MachinePointerInfo::getConstantPool(),
-                              false, false, false, 16);
-  SDValue Val = DAG.getNode(X86ISD::FAND, dl, VT, Op0, Mask2);
+  SDValue Val = DAG.getLoad(VT, dl, DAG.getEntryNode(), CPIdx,
+                            MachinePointerInfo::getConstantPool(),
+                            false, false, false, 16);
+  // If the magnitude operand wasn't a constant, we need to AND out the sign.
+  if (!isa<ConstantFPSDNode>(Op0))
+    Val = DAG.getNode(X86ISD::FAND, dl, VT, Op0, Val);
 
   // OR the magnitude value with the sign bit.
   return DAG.getNode(X86ISD::FOR, dl, VT, Val, SignBit);
