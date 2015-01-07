@@ -442,7 +442,6 @@ FormatStyle getGoogleStyle(FormatStyle::LanguageKind Language) {
 FormatStyle getChromiumStyle(FormatStyle::LanguageKind Language) {
   FormatStyle ChromiumStyle = getGoogleStyle(Language);
   if (Language == FormatStyle::LK_Java) {
-    ChromiumStyle.AlignTrailingComments = true;
     ChromiumStyle.AllowShortIfStatementsOnASingleLine = true;
     ChromiumStyle.IndentWidth = 4;
     ChromiumStyle.ContinuationIndentWidth = 8;
