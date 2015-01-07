@@ -135,11 +135,11 @@ public:
   const_pointer data() const { return const_pointer(begin()); }
 
   reference operator[](size_type idx) {
-    assert(begin() + idx < end());
+    assert(idx < size());
     return begin()[idx];
   }
   const_reference operator[](size_type idx) const {
-    assert(begin() + idx < end());
+    assert(idx < size());
     return begin()[idx];
   }
 
