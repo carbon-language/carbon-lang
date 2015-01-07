@@ -441,11 +441,10 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
   case Intrinsic::umul_with_overflow: {
     Value *LHS = II->getArgOperand(0), *RHS = II->getArgOperand(1);
     OverflowResult OR = computeOverflowForUnsignedMul(LHS, RHS, II);
-    if (OR == OverflowResult::NeverOverflows) {
+    if (OR == OverflowResult::NeverOverflows)
       return CreateOverflowTuple(II, Builder->CreateNUWMul(LHS, RHS), false);
-    } else if (OR == OverflowResult::AlwaysOverflows) {
+    if (OR == OverflowResult::AlwaysOverflows)
       return CreateOverflowTuple(II, Builder->CreateMul(LHS, RHS), true);
-    }
   } // FALL THROUGH
   case Intrinsic::smul_with_overflow:
     // Canonicalize constants into the RHS.
