@@ -112,7 +112,7 @@ Value *IslExprBuilder::createAccessAddress(isl_ast_expr *Expr) {
   const ScopArrayInfo *SAI = ScopArrayInfo::getFromId(BaseId);
   Base = SAI->getBasePtr();
   assert(Base->getType()->isPointerTy() && "Access base should be a pointer");
-  const Twine &BaseName = Base->getName();
+  auto BaseName = Base->getName();
 
   if (Base->getType() != SAI->getType())
     Base = Builder.CreateBitCast(Base, SAI->getType(),
