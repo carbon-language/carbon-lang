@@ -168,6 +168,10 @@ protected:
     lldb::addr_t
     GetEntryPoint();
 
+    /// Loads ModuleSpec data from inferior process.
+    bool
+    GetProcessModuleSpec(lldb_private::ModuleSpec& module_spec);
+
 private:
     DISALLOW_COPY_AND_ASSIGN(DynamicLoaderPOSIXDYLD);
 };

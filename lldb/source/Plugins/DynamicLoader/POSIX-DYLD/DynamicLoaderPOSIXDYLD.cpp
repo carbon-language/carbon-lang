@@ -112,9 +112,6 @@ void
 DynamicLoaderPOSIXDYLD::DidAttach()
 {
     Log *log (GetLogIfAnyCategoriesSet(LIBLLDB_LOG_DYNAMIC_LOADER));
-    ModuleSP executable_sp;
-    addr_t load_offset;
-
     if (log)
         log->Printf ("DynamicLoaderPOSIXDYLD::%s() pid %" PRIu64, __FUNCTION__, m_process ? m_process->GetID () : LLDB_INVALID_PROCESS_ID);
 
@@ -122,8 +119,19 @@ DynamicLoaderPOSIXDYLD::DidAttach()
     if (log)
         log->Printf ("DynamicLoaderPOSIXDYLD::%s pid %" PRIu64 " reloaded auxv data", __FUNCTION__, m_process ? m_process->GetID () : LLDB_INVALID_PROCESS_ID);
 
-    executable_sp = GetTargetExecutable();
-    load_offset = ComputeLoadOffset();
+    ModuleSP executable_sp = GetTargetExecutable();
+    ModuleSpec process_module_spec;
+    if (GetProcessModuleSpec(process_module_spec))
+    {
+        if (executable_sp == nullptr || !executable_sp->MatchesModuleSpec(process_module_spec))
+        {
+            executable_sp.reset(new Module(process_module_spec));
+            assert(m_process != nullptr);
+            m_process->GetTarget().SetExecutableModule(executable_sp, false);
+        }
+    }
+
+    addr_t load_offset = ComputeLoadOffset();
     if (log)
         log->Printf ("DynamicLoaderPOSIXDYLD::%s pid %" PRIu64 " executable '%s', load_offset 0x%" PRIx64, __FUNCTION__, m_process ? m_process->GetID () : LLDB_INVALID_PROCESS_ID, executable_sp ? executable_sp->GetFileSpec().GetPath().c_str () : "<null executable>", load_offset);
 
@@ -612,4 +620,19 @@ DynamicLoaderPOSIXDYLD::GetThreadLocalData (const lldb::ModuleSP module, const l
                     mod->GetObjectName().AsCString(""), link_map, tp, (int64_t)modid, tls_block);
 
     return tls_block;
+}
+
+bool
+DynamicLoaderPOSIXDYLD::GetProcessModuleSpec (ModuleSpec& module_spec)
+{
+    if (m_process == nullptr)
+        return false;
+
+    auto& target = m_process->GetTarget ();
+    ProcessInstanceInfo process_info;
+    if (!target.GetPlatform ()->GetProcessInfo (m_process->GetID (), process_info))
+        return false;
+
+    module_spec = ModuleSpec (process_info.GetExecutableFile (), process_info.GetArchitecture ());
+    return true;
 }
