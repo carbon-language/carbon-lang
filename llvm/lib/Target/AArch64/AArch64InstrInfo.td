@@ -2760,40 +2760,6 @@ defm ORN : SIMDLogicalThreeVector<0, 0b11, "orn",
                                   BinOpFrag<(or node:$LHS, (vnot node:$RHS))> >;
 defm ORR : SIMDLogicalThreeVector<0, 0b10, "orr", or>;
 
-// SABD Vd.<T>, Vn.<T>, Vm.<T> Subtracts the elements of Vm from the corresponding
-// elements of Vn, and places the absolute values of the results in the elements of Vd.
-def : Pat<(xor (v8i8 (AArch64vashr (v8i8(sub V64:$Rn, V64:$Rm)), (i32 7))),
-               (v8i8 (add (v8i8(sub V64:$Rn, V64:$Rm)),
-               (AArch64vashr (v8i8(sub V64:$Rn, V64:$Rm)), (i32 7))))),
-          (SABDv8i8 V64:$Rn, V64:$Rm)>;
-def : Pat<(xor (v4i16 (AArch64vashr (v4i16(sub V64:$Rn, V64:$Rm)), (i32 15))),
-               (v4i16 (add (v4i16(sub V64:$Rn, V64:$Rm)),
-               (AArch64vashr (v4i16(sub V64:$Rn, V64:$Rm)), (i32 15))))),
-          (SABDv4i16 V64:$Rn, V64:$Rm)>;
-def : Pat<(xor (v2i32 (AArch64vashr (v2i32(sub V64:$Rn, V64:$Rm)), (i32 31))),
-               (v2i32 (add (v2i32(sub V64:$Rn, V64:$Rm)),
-               (AArch64vashr (v2i32(sub V64:$Rn, V64:$Rm)), (i32 31))))),
-          (SABDv2i32 V64:$Rn, V64:$Rm)>;
-def : Pat<(xor (v16i8 (AArch64vashr (v16i8(sub V128:$Rn, V128:$Rm)), (i32 7))),
-               (v16i8 (add (v16i8(sub V128:$Rn, V128:$Rm)),
-               (AArch64vashr (v16i8(sub V128:$Rn, V128:$Rm)), (i32 7))))),
-          (SABDv16i8 V128:$Rn, V128:$Rm)>;
-def : Pat<(xor (v8i16 (AArch64vashr (v8i16(sub V128:$Rn, V128:$Rm)), (i32 15))),
-               (v8i16 (add (v8i16(sub V128:$Rn, V128:$Rm)),
-               (AArch64vashr (v8i16(sub V128:$Rn, V128:$Rm)), (i32 15))))),
-          (SABDv8i16 V128:$Rn, V128:$Rm)>;
-def : Pat<(xor (v4i32 (AArch64vashr (v4i32(sub V128:$Rn, V128:$Rm)), (i32 31))),
-               (v4i32 (add (v4i32(sub V128:$Rn, V128:$Rm)),
-               (AArch64vashr (v4i32(sub V128:$Rn, V128:$Rm)), (i32 31))))),
-          (SABDv4i32 V128:$Rn, V128:$Rm)>;
-
-def : Pat<(v2f32 (fabs (fsub V64:$Rn, V64:$Rm))),
-          (FABDv2f32 V64:$Rn, V64:$Rm)>;
-def : Pat<(v4f32 (fabs (fsub V128:$Rn, V128:$Rm))),
-          (FABDv4f32 V128:$Rn, V128:$Rm)>;
-def : Pat<(v2f64 (fabs (fsub V128:$Rn, V128:$Rm))),
-          (FABDv2f64 V128:$Rn, V128:$Rm)>;
-
 def : Pat<(AArch64bsl (v8i8 V64:$Rd), V64:$Rn, V64:$Rm),
           (BSLv8i8 V64:$Rd, V64:$Rn, V64:$Rm)>;
 def : Pat<(AArch64bsl (v4i16 V64:$Rd), V64:$Rn, V64:$Rm),
@@ -3082,11 +3048,6 @@ defm UCVTF  : SIMDTwoScalarCVTSD<   1, 0, 0b11101, "ucvtf", AArch64uitof>;
 defm UQXTN  : SIMDTwoScalarMixedBHS<1, 0b10100, "uqxtn", int_aarch64_neon_scalar_uqxtn>;
 defm USQADD : SIMDTwoScalarBHSDTied< 1, 0b00011, "usqadd",
                                     int_aarch64_neon_usqadd>;
-
-def : Pat<(f32 (fabs (fsub FPR32:$Rn, FPR32:$Rm))),
-          (FABD32 FPR32:$Rn, FPR32:$Rm)>;
-def : Pat<(f64 (fabs (fsub FPR64:$Rn, FPR64:$Rm))),
-          (FABD64 FPR64:$Rn, FPR64:$Rm)>;
 
 def : Pat<(AArch64neg (v1i64 V64:$Rn)), (NEGv1i64 V64:$Rn)>;
 
