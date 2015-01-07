@@ -1312,7 +1312,7 @@ bool ModuleLinker::linkModuleFlagsMetadata() {
   }
 
   // First build a map of the existing module flags and requirements.
-  DenseMap<MDString*, MDNode*> Flags;
+  DenseMap<MDString *, std::pair<MDNode *, unsigned>> Flags;
   SmallSetVector<MDNode*, 16> Requirements;
   for (unsigned I = 0, E = DstModFlags->getNumOperands(); I != E; ++I) {
     MDNode *Op = DstModFlags->getOperand(I);
@@ -1322,7 +1322,7 @@ bool ModuleLinker::linkModuleFlagsMetadata() {
     if (Behavior->getZExtValue() == Module::Require) {
       Requirements.insert(cast<MDNode>(Op->getOperand(2)));
     } else {
-      Flags[ID] = Op;
+      Flags[ID] = std::make_pair(Op, I);
     }
   }
 
@@ -1334,7 +1334,9 @@ bool ModuleLinker::linkModuleFlagsMetadata() {
     ConstantInt *SrcBehavior =
         mdconst::extract<ConstantInt>(SrcOp->getOperand(0));
     MDString *ID = cast<MDString>(SrcOp->getOperand(1));
-    MDNode *DstOp = Flags.lookup(ID);
+    MDNode *DstOp;
+    unsigned DstIndex;
+    std::tie(DstOp, DstIndex) = Flags.lookup(ID);
     unsigned SrcBehaviorValue = SrcBehavior->getZExtValue();
 
     // If this is a requirement, add it and continue.
@@ -1349,7 +1351,7 @@ bool ModuleLinker::linkModuleFlagsMetadata() {
 
     // If there is no existing flag with this ID, just add it.
     if (!DstOp) {
-      Flags[ID] = SrcOp;
+      Flags[ID] = std::make_pair(SrcOp, DstModFlags->getNumOperands());
       DstModFlags->addOperand(SrcOp);
       continue;
     }
@@ -1370,8 +1372,8 @@ bool ModuleLinker::linkModuleFlagsMetadata() {
       continue;
     } else if (SrcBehaviorValue == Module::Override) {
       // Update the destination flag to that of the source.
-      DstOp->replaceOperandWith(0, ConstantAsMetadata::get(SrcBehavior));
-      DstOp->replaceOperandWith(2, SrcOp->getOperand(2));
+      DstModFlags->setOperand(DstIndex, SrcOp);
+      Flags[ID].first = SrcOp;
       continue;
     }
 
@@ -1381,6 +1383,13 @@ bool ModuleLinker::linkModuleFlagsMetadata() {
                           "': IDs have conflicting behaviors");
       continue;
     }
+
+    auto replaceDstValue = [&](MDNode *New) {
+      Metadata *FlagOps[] = {DstOp->getOperand(0), ID, New};
+      MDNode *Flag = MDNode::get(DstM->getContext(), FlagOps);
+      DstModFlags->setOperand(DstIndex, Flag);
+      Flags[ID].first = Flag;
+    };
 
     // Perform the merge for standard behavior types.
     switch (SrcBehaviorValue) {
@@ -1411,7 +1420,8 @@ bool ModuleLinker::linkModuleFlagsMetadata() {
         MDs.push_back(DstValue->getOperand(i));
       for (unsigned i = 0, e = SrcValue->getNumOperands(); i != e; ++i)
         MDs.push_back(SrcValue->getOperand(i));
-      DstOp->replaceOperandWith(2, MDNode::get(DstM->getContext(), MDs));
+
+      replaceDstValue(MDNode::get(DstM->getContext(), MDs));
       break;
     }
     case Module::AppendUnique: {
@@ -1422,9 +1432,9 @@ bool ModuleLinker::linkModuleFlagsMetadata() {
         Elts.insert(DstValue->getOperand(i));
       for (unsigned i = 0, e = SrcValue->getNumOperands(); i != e; ++i)
         Elts.insert(SrcValue->getOperand(i));
-      DstOp->replaceOperandWith(
-          2, MDNode::get(DstM->getContext(),
-                         makeArrayRef(Elts.begin(), Elts.end())));
+
+      replaceDstValue(MDNode::get(DstM->getContext(),
+                                  makeArrayRef(Elts.begin(), Elts.end())));
       break;
     }
     }
@@ -1436,7 +1446,7 @@ bool ModuleLinker::linkModuleFlagsMetadata() {
     MDString *Flag = cast<MDString>(Requirement->getOperand(0));
     Metadata *ReqValue = Requirement->getOperand(1);
 
-    MDNode *Op = Flags[Flag];
+    MDNode *Op = Flags[Flag].first;
     if (!Op || Op->getOperand(2) != ReqValue) {
       HasErr |= emitError("linking module flags '" + Flag->getString() +
                           "': does not have the required value");

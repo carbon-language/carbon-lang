@@ -836,6 +836,11 @@ MDNode *NamedMDNode::getOperand(unsigned i) const {
 
 void NamedMDNode::addOperand(MDNode *M) { getNMDOps(Operands).emplace_back(M); }
 
+void NamedMDNode::setOperand(unsigned I, MDNode *New) {
+  assert(I < getNumOperands() && "Invalid operand number");
+  getNMDOps(Operands)[I].reset(New);
+}
+
 void NamedMDNode::eraseFromParent() {
   getParent()->eraseNamedMetadata(this);
 }
