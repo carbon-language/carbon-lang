@@ -24,7 +24,8 @@ public:
   MachODebugMapParser(StringRef BinaryPath, StringRef PathPrefix = "",
                       bool Verbose = false)
       : BinaryPath(BinaryPath), PathPrefix(PathPrefix),
-        MainBinaryHolder(Verbose), CurrentObjectHolder(Verbose) {}
+        MainBinaryHolder(Verbose), CurrentObjectHolder(Verbose),
+        CurrentDebugMapObject(nullptr) {}
 
   /// \brief Parses and returns the DebugMap of the input binary.
   /// \returns an error in case the provided BinaryPath doesn't exist
