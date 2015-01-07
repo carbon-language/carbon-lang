@@ -44,10 +44,10 @@ using namespace llvm;
 
 static cl::opt<bool> EnableAASchedMI("enable-aa-sched-mi", cl::Hidden,
     cl::ZeroOrMore, cl::init(false),
-    cl::desc("Enable use of AA during MI GAD construction"));
+    cl::desc("Enable use of AA during MI DAG construction"));
 
 static cl::opt<bool> UseTBAA("use-tbaa-in-sched-mi", cl::Hidden,
-    cl::init(true), cl::desc("Enable use of TBAA during MI GAD construction"));
+    cl::init(true), cl::desc("Enable use of TBAA during MI DAG construction"));
 
 ScheduleDAGInstrs::ScheduleDAGInstrs(MachineFunction &mf,
                                      const MachineLoopInfo *mli,
@@ -891,7 +891,7 @@ void ScheduleDAGInstrs::buildSchedGraph(AliasAnalysis *AA,
 
       // fall-through
     new_alias_chain:
-      // Chain all possibly aliasing memory references though SU.
+      // Chain all possibly aliasing memory references through SU.
       if (AliasChain) {
         unsigned ChainLatency = 0;
         if (AliasChain->getInstr()->mayLoad())
