@@ -142,11 +142,11 @@ static bool parseModulePassName(ModulePassManager &MPM, StringRef Name) {
   }
 #define MODULE_ANALYSIS(NAME, CREATE_PASS)                                     \
   if (Name == "require<" NAME ">") {                                           \
-    MPM.addPass(NoopAnalysisRequirementPass<decltype(CREATE_PASS)>());         \
+    MPM.addPass(RequireAnalysisPass<decltype(CREATE_PASS)>());                 \
     return true;                                                               \
   }                                                                            \
   if (Name == "invalidate<" NAME ">") {                                        \
-    MPM.addPass(NoopAnalysisInvalidationPass<decltype(CREATE_PASS)>());        \
+    MPM.addPass(InvalidateAnalysisPass<decltype(CREATE_PASS)>());              \
     return true;                                                               \
   }
 #include "PassRegistry.def"
@@ -162,11 +162,11 @@ static bool parseCGSCCPassName(CGSCCPassManager &CGPM, StringRef Name) {
   }
 #define CGSCC_ANALYSIS(NAME, CREATE_PASS)                                      \
   if (Name == "require<" NAME ">") {                                           \
-    CGPM.addPass(NoopAnalysisRequirementPass<decltype(CREATE_PASS)>());        \
+    CGPM.addPass(RequireAnalysisPass<decltype(CREATE_PASS)>());                \
     return true;                                                               \
   }                                                                            \
   if (Name == "invalidate<" NAME ">") {                                        \
-    CGPM.addPass(NoopAnalysisInvalidationPass<decltype(CREATE_PASS)>());       \
+    CGPM.addPass(InvalidateAnalysisPass<decltype(CREATE_PASS)>());             \
     return true;                                                               \
   }
 #include "PassRegistry.def"
@@ -182,11 +182,11 @@ static bool parseFunctionPassName(FunctionPassManager &FPM, StringRef Name) {
   }
 #define FUNCTION_ANALYSIS(NAME, CREATE_PASS)                                   \
   if (Name == "require<" NAME ">") {                                           \
-    FPM.addPass(NoopAnalysisRequirementPass<decltype(CREATE_PASS)>());         \
+    FPM.addPass(RequireAnalysisPass<decltype(CREATE_PASS)>());                 \
     return true;                                                               \
   }                                                                            \
   if (Name == "invalidate<" NAME ">") {                                        \
-    FPM.addPass(NoopAnalysisInvalidationPass<decltype(CREATE_PASS)>());        \
+    FPM.addPass(InvalidateAnalysisPass<decltype(CREATE_PASS)>());              \
     return true;                                                               \
   }
 #include "PassRegistry.def"

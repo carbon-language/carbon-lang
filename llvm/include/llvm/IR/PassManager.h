@@ -781,7 +781,7 @@ createModuleToFunctionPassAdaptor(FunctionPassT Pass) {
 ///
 /// This is a no-op pass which simply forces a specific analysis pass's result
 /// to be available when it is run.
-template <typename AnalysisT> struct NoopAnalysisRequirementPass {
+template <typename AnalysisT> struct RequireAnalysisPass {
   /// \brief Run this pass over some unit of IR.
   ///
   /// This pass can be run over any unit of IR and use any analysis manager
@@ -796,7 +796,7 @@ template <typename AnalysisT> struct NoopAnalysisRequirementPass {
     return PreservedAnalyses::all();
   }
 
-  static StringRef name() { return "No-op Analysis Requirement Pass"; }
+  static StringRef name() { return "RequireAnalysisPass"; }
 };
 
 /// \brief A template utility pass to force an analysis result to be
@@ -804,7 +804,7 @@ template <typename AnalysisT> struct NoopAnalysisRequirementPass {
 ///
 /// This is a no-op pass which simply forces a specific analysis result to be
 /// invalidated when it is run.
-template <typename AnalysisT> struct NoopAnalysisInvalidationPass {
+template <typename AnalysisT> struct InvalidateAnalysisPass {
   /// \brief Run this pass over some unit of IR.
   ///
   /// This pass can be run over any unit of IR and use any analysis manager
@@ -821,7 +821,7 @@ template <typename AnalysisT> struct NoopAnalysisInvalidationPass {
     return PreservedAnalyses::all();
   }
 
-  static StringRef name() { return "No-op Analysis Invalidation Pass"; }
+  static StringRef name() { return "InvalidateAnalysisPass"; }
 };
 
 /// \brief A utility pass that does nothing but preserves no analyses.

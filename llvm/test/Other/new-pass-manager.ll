@@ -126,13 +126,13 @@
 ; RUN:     -passes='require<no-op-module>,cgscc(require<no-op-cgscc>,function(require<no-op-function>))' %s 2>&1 \
 ; RUN:     | FileCheck %s --check-prefix=CHECK-ANALYSES
 ; CHECK-ANALYSES: Starting module pass manager
-; CHECK-ANALYSES: Running module pass: No-op Analysis Requirement Pass
+; CHECK-ANALYSES: Running module pass: RequireAnalysisPass
 ; CHECK-ANALYSES: Running module analysis: NoOpModuleAnalysis
 ; CHECK-ANALYSES: Starting CGSCC pass manager
-; CHECK-ANALYSES: Running CGSCC pass: No-op Analysis Requirement Pass
+; CHECK-ANALYSES: Running CGSCC pass: RequireAnalysisPass
 ; CHECK-ANALYSES: Running CGSCC analysis: NoOpCGSCCAnalysis
 ; CHECK-ANALYSES: Starting function pass manager
-; CHECK-ANALYSES: Running function pass: No-op Analysis Requirement Pass
+; CHECK-ANALYSES: Running function pass: RequireAnalysisPass
 ; CHECK-ANALYSES: Running function analysis: NoOpFunctionAnalysis
 
 ; Make sure no-op passes that preserve all analyses don't even try to do any
@@ -147,7 +147,7 @@
 ; RUN:     -passes='require<no-op-module>,require<no-op-module>,require<no-op-module>' %s 2>&1 \
 ; RUN:     | FileCheck %s --check-prefix=CHECK-DO-CACHE-MODULE-ANALYSIS-RESULTS
 ; CHECK-DO-CACHE-MODULE-ANALYSIS-RESULTS: Starting module pass manager
-; CHECK-DO-CACHE-MODULE-ANALYSIS-RESULTS: Running module pass: No-op Analysis Requirement Pass
+; CHECK-DO-CACHE-MODULE-ANALYSIS-RESULTS: Running module pass: RequireAnalysisPass
 ; CHECK-DO-CACHE-MODULE-ANALYSIS-RESULTS: Running module analysis: NoOpModuleAnalysis
 ; CHECK-DO-CACHE-MODULE-ANALYSIS-RESULTS-NOT: Running module analysis: NoOpModuleAnalysis
 
@@ -155,7 +155,7 @@
 ; RUN:     -passes='require<no-op-module>,invalidate<no-op-module>,require<no-op-module>' %s 2>&1 \
 ; RUN:     | FileCheck %s --check-prefix=CHECK-DO-INVALIDATE-MODULE-ANALYSIS-RESULTS
 ; CHECK-DO-INVALIDATE-MODULE-ANALYSIS-RESULTS: Starting module pass manager
-; CHECK-DO-INVALIDATE-MODULE-ANALYSIS-RESULTS: Running module pass: No-op Analysis Requirement Pass
+; CHECK-DO-INVALIDATE-MODULE-ANALYSIS-RESULTS: Running module pass: RequireAnalysisPass
 ; CHECK-DO-INVALIDATE-MODULE-ANALYSIS-RESULTS: Running module analysis: NoOpModuleAnalysis
 ; CHECK-DO-INVALIDATE-MODULE-ANALYSIS-RESULTS: Invalidating module analysis: NoOpModuleAnalysis
 ; CHECK-DO-INVALIDATE-MODULE-ANALYSIS-RESULTS: Running module analysis: NoOpModuleAnalysis
@@ -164,7 +164,7 @@
 ; RUN:     -passes='cgscc(require<no-op-cgscc>,require<no-op-cgscc>,require<no-op-cgscc>)' %s 2>&1 \
 ; RUN:     | FileCheck %s --check-prefix=CHECK-DO-CACHE-CGSCC-ANALYSIS-RESULTS
 ; CHECK-DO-CACHE-CGSCC-ANALYSIS-RESULTS: Starting CGSCC pass manager
-; CHECK-DO-CACHE-CGSCC-ANALYSIS-RESULTS: Running CGSCC pass: No-op Analysis Requirement Pass
+; CHECK-DO-CACHE-CGSCC-ANALYSIS-RESULTS: Running CGSCC pass: RequireAnalysisPass
 ; CHECK-DO-CACHE-CGSCC-ANALYSIS-RESULTS: Running CGSCC analysis: NoOpCGSCCAnalysis
 ; CHECK-DO-CACHE-CGSCC-ANALYSIS-RESULTS-NOT: Running CGSCC analysis: NoOpCGSCCAnalysis
 
@@ -172,7 +172,7 @@
 ; RUN:     -passes='cgscc(require<no-op-cgscc>,invalidate<no-op-cgscc>,require<no-op-cgscc>)' %s 2>&1 \
 ; RUN:     | FileCheck %s --check-prefix=CHECK-DO-INVALIDATE-CGSCC-ANALYSIS-RESULTS
 ; CHECK-DO-INVALIDATE-CGSCC-ANALYSIS-RESULTS: Starting CGSCC pass manager
-; CHECK-DO-INVALIDATE-CGSCC-ANALYSIS-RESULTS: Running CGSCC pass: No-op Analysis Requirement Pass
+; CHECK-DO-INVALIDATE-CGSCC-ANALYSIS-RESULTS: Running CGSCC pass: RequireAnalysisPass
 ; CHECK-DO-INVALIDATE-CGSCC-ANALYSIS-RESULTS: Running CGSCC analysis: NoOpCGSCCAnalysis
 ; CHECK-DO-INVALIDATE-CGSCC-ANALYSIS-RESULTS: Invalidating CGSCC analysis: NoOpCGSCCAnalysis
 ; CHECK-DO-INVALIDATE-CGSCC-ANALYSIS-RESULTS: Running CGSCC analysis: NoOpCGSCCAnalysis
@@ -181,7 +181,7 @@
 ; RUN:     -passes='function(require<no-op-function>,require<no-op-function>,require<no-op-function>)' %s 2>&1 \
 ; RUN:     | FileCheck %s --check-prefix=CHECK-DO-CACHE-FUNCTION-ANALYSIS-RESULTS
 ; CHECK-DO-CACHE-FUNCTION-ANALYSIS-RESULTS: Starting function pass manager
-; CHECK-DO-CACHE-FUNCTION-ANALYSIS-RESULTS: Running function pass: No-op Analysis Requirement Pass
+; CHECK-DO-CACHE-FUNCTION-ANALYSIS-RESULTS: Running function pass: RequireAnalysisPass
 ; CHECK-DO-CACHE-FUNCTION-ANALYSIS-RESULTS: Running function analysis: NoOpFunctionAnalysis
 ; CHECK-DO-CACHE-FUNCTION-ANALYSIS-RESULTS-NOT: Running function analysis: NoOpFunctionAnalysis
 
@@ -189,7 +189,7 @@
 ; RUN:     -passes='function(require<no-op-function>,invalidate<no-op-function>,require<no-op-function>)' %s 2>&1 \
 ; RUN:     | FileCheck %s --check-prefix=CHECK-DO-INVALIDATE-FUNCTION-ANALYSIS-RESULTS
 ; CHECK-DO-INVALIDATE-FUNCTION-ANALYSIS-RESULTS: Starting function pass manager
-; CHECK-DO-INVALIDATE-FUNCTION-ANALYSIS-RESULTS: Running function pass: No-op Analysis Requirement Pass
+; CHECK-DO-INVALIDATE-FUNCTION-ANALYSIS-RESULTS: Running function pass: RequireAnalysisPass
 ; CHECK-DO-INVALIDATE-FUNCTION-ANALYSIS-RESULTS: Running function analysis: NoOpFunctionAnalysis
 ; CHECK-DO-INVALIDATE-FUNCTION-ANALYSIS-RESULTS: Invalidating function analysis: NoOpFunctionAnalysis
 ; CHECK-DO-INVALIDATE-FUNCTION-ANALYSIS-RESULTS: Running function analysis: NoOpFunctionAnalysis
@@ -198,30 +198,30 @@
 ; RUN:     -passes='require<no-op-module>,module(require<no-op-module>,function(require<no-op-function>,invalidate<all>,require<no-op-function>),require<no-op-module>),require<no-op-module>' %s 2>&1 \
 ; RUN:     | FileCheck %s --check-prefix=CHECK-INVALIDATE-ALL
 ; CHECK-INVALIDATE-ALL: Starting module pass manager run.
-; CHECK-INVALIDATE-ALL: Running module pass: No-op Analysis Requirement Pass
+; CHECK-INVALIDATE-ALL: Running module pass: RequireAnalysisPass
 ; CHECK-INVALIDATE-ALL: Running module analysis: NoOpModuleAnalysis
 ; CHECK-INVALIDATE-ALL: Starting module pass manager run.
-; CHECK-INVALIDATE-ALL: Running module pass: No-op Analysis Requirement Pass
+; CHECK-INVALIDATE-ALL: Running module pass: RequireAnalysisPass
 ; CHECK-INVALIDATE-ALL-NOT: Running module analysis: NoOpModuleAnalysis
 ; CHECK-INVALIDATE-ALL: Starting function pass manager run.
-; CHECK-INVALIDATE-ALL: Running function pass: No-op Analysis Requirement Pass
+; CHECK-INVALIDATE-ALL: Running function pass: RequireAnalysisPass
 ; CHECK-INVALIDATE-ALL: Running function analysis: NoOpFunctionAnalysis
 ; CHECK-INVALIDATE-ALL: Running function pass: InvalidateAllAnalysesPass
 ; CHECK-INVALIDATE-ALL: Invalidating all non-preserved analyses for function
 ; CHECK-INVALIDATE-ALL: Invalidating function analysis: NoOpFunctionAnalysis
-; CHECK-INVALIDATE-ALL: Running function pass: No-op Analysis Requirement Pass
+; CHECK-INVALIDATE-ALL: Running function pass: RequireAnalysisPass
 ; CHECK-INVALIDATE-ALL: Running function analysis: NoOpFunctionAnalysis
 ; CHECK-INVALIDATE-ALL: Finished function pass manager run.
 ; CHECK-INVALIDATE-ALL: Invalidating all non-preserved analyses for function
 ; CHECK-INVALIDATE-ALL-NOT: Running function analysis: NoOpFunctionAnalysis
 ; CHECK-INVALIDATE-ALL: Invalidating all non-preserved analyses for module
 ; CHECK-INVALIDATE-ALL: Invalidating module analysis: NoOpModuleAnalysis
-; CHECK-INVALIDATE-ALL: Running module pass: No-op Analysis Requirement Pass
+; CHECK-INVALIDATE-ALL: Running module pass: RequireAnalysisPass
 ; CHECK-INVALIDATE-ALL: Running module analysis: NoOpModuleAnalysis
 ; CHECK-INVALIDATE-ALL: Finished module pass manager run.
 ; CHECK-INVALIDATE-ALL: Invalidating all non-preserved analyses for module
 ; CHECK-INVALIDATE-ALL-NOT: Invalidating module analysis: NoOpModuleAnalysis
-; CHECK-INVALIDATE-ALL: Running module pass: No-op Analysis Requirement Pass
+; CHECK-INVALIDATE-ALL: Running module pass: RequireAnalysisPass
 ; CHECK-INVALIDATE-ALL-NOT: Running module analysis: NoOpModuleAnalysis
 ; CHECK-INVALIDATE-ALL: Finished module pass manager run.
 
@@ -229,40 +229,40 @@
 ; RUN:     -passes='require<no-op-module>,module(require<no-op-module>,cgscc(require<no-op-cgscc>,function(require<no-op-function>,invalidate<all>,require<no-op-function>),require<no-op-cgscc>),require<no-op-module>),require<no-op-module>' %s 2>&1 \
 ; RUN:     | FileCheck %s --check-prefix=CHECK-INVALIDATE-ALL-CG
 ; CHECK-INVALIDATE-ALL-CG: Starting module pass manager run.
-; CHECK-INVALIDATE-ALL-CG: Running module pass: No-op Analysis Requirement Pass
+; CHECK-INVALIDATE-ALL-CG: Running module pass: RequireAnalysisPass
 ; CHECK-INVALIDATE-ALL-CG: Running module analysis: NoOpModuleAnalysis
 ; CHECK-INVALIDATE-ALL-CG: Starting module pass manager run.
-; CHECK-INVALIDATE-ALL-CG: Running module pass: No-op Analysis Requirement Pass
+; CHECK-INVALIDATE-ALL-CG: Running module pass: RequireAnalysisPass
 ; CHECK-INVALIDATE-ALL-CG-NOT: Running module analysis: NoOpModuleAnalysis
 ; CHECK-INVALIDATE-ALL-CG: Starting CGSCC pass manager run.
-; CHECK-INVALIDATE-ALL-CG: Running CGSCC pass: No-op Analysis Requirement Pass
+; CHECK-INVALIDATE-ALL-CG: Running CGSCC pass: RequireAnalysisPass
 ; CHECK-INVALIDATE-ALL-CG: Running CGSCC analysis: NoOpCGSCCAnalysis
 ; CHECK-INVALIDATE-ALL-CG: Starting function pass manager run.
-; CHECK-INVALIDATE-ALL-CG: Running function pass: No-op Analysis Requirement Pass
+; CHECK-INVALIDATE-ALL-CG: Running function pass: RequireAnalysisPass
 ; CHECK-INVALIDATE-ALL-CG: Running function analysis: NoOpFunctionAnalysis
 ; CHECK-INVALIDATE-ALL-CG: Running function pass: InvalidateAllAnalysesPass
 ; CHECK-INVALIDATE-ALL-CG: Invalidating all non-preserved analyses for function
 ; CHECK-INVALIDATE-ALL-CG: Invalidating function analysis: NoOpFunctionAnalysis
-; CHECK-INVALIDATE-ALL-CG: Running function pass: No-op Analysis Requirement Pass
+; CHECK-INVALIDATE-ALL-CG: Running function pass: RequireAnalysisPass
 ; CHECK-INVALIDATE-ALL-CG: Running function analysis: NoOpFunctionAnalysis
 ; CHECK-INVALIDATE-ALL-CG: Finished function pass manager run.
 ; CHECK-INVALIDATE-ALL-CG: Invalidating all non-preserved analyses for function
 ; CHECK-INVALIDATE-ALL-CG-NOT: Running function analysis: NoOpFunctionAnalysis
 ; CHECK-INVALIDATE-ALL-CG: Invalidating all non-preserved analyses for SCC
 ; CHECK-INVALIDATE-ALL-CG: Invalidating CGSCC analysis: NoOpCGSCCAnalysis
-; CHECK-INVALIDATE-ALL-CG: Running CGSCC pass: No-op Analysis Requirement Pass
+; CHECK-INVALIDATE-ALL-CG: Running CGSCC pass: RequireAnalysisPass
 ; CHECK-INVALIDATE-ALL-CG: Running CGSCC analysis: NoOpCGSCCAnalysis
 ; CHECK-INVALIDATE-ALL-CG: Finished CGSCC pass manager run.
 ; CHECK-INVALIDATE-ALL-CG: Invalidating all non-preserved analyses for SCC
 ; CHECK-INVALIDATE-ALL-CG-NOT: Invalidating CGSCC analysis: NoOpCGSCCAnalysis
 ; CHECK-INVALIDATE-ALL-CG: Invalidating all non-preserved analyses for module
 ; CHECK-INVALIDATE-ALL-CG: Invalidating module analysis: NoOpModuleAnalysis
-; CHECK-INVALIDATE-ALL-CG: Running module pass: No-op Analysis Requirement Pass
+; CHECK-INVALIDATE-ALL-CG: Running module pass: RequireAnalysisPass
 ; CHECK-INVALIDATE-ALL-CG: Running module analysis: NoOpModuleAnalysis
 ; CHECK-INVALIDATE-ALL-CG: Finished module pass manager run.
 ; CHECK-INVALIDATE-ALL-CG: Invalidating all non-preserved analyses for module
 ; CHECK-INVALIDATE-ALL-CG-NOT: Invalidating module analysis: NoOpModuleAnalysis
-; CHECK-INVALIDATE-ALL-CG: Running module pass: No-op Analysis Requirement Pass
+; CHECK-INVALIDATE-ALL-CG: Running module pass: RequireAnalysisPass
 ; CHECK-INVALIDATE-ALL-CG-NOT: Running module analysis: NoOpModuleAnalysis
 ; CHECK-INVALIDATE-ALL-CG: Finished module pass manager run.
 
