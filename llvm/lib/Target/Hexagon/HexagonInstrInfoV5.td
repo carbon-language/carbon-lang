@@ -1,3 +1,42 @@
+//=- HexagonInstrInfoV5.td - Target Desc. for Hexagon Target -*- tablegen -*-=//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+//
+// This file describes the Hexagon V5 instructions in TableGen format.
+//
+//===----------------------------------------------------------------------===//
+
+//===----------------------------------------------------------------------===//
+// XTYPE/MPY
+//===----------------------------------------------------------------------===//
+
+let isCodeGenOnly = 0 in
+def S2_asr_i_p_rnd : S_2OpInstImm<"asr", 0b110, 0b111, u6Imm,
+      [(set I64:$dst,
+            (sra (i64 (add (i64 (sra I64:$src1, u6ImmPred:$src2)), 1)),
+                 (i32 1)))], 1>,
+      Requires<[HasV5T]> {
+  bits<6> src2;
+  let Inst{13-8} = src2;
+}
+
+let isCodeGenOnly = 0 in
+def C4_fastcorner9 : T_LOGICAL_2OP<"fastcorner9", 0b000, 0, 0>,
+  Requires<[HasV5T]> {
+  let Inst{13,7,4} = 0b111;
+}
+
+let isCodeGenOnly = 0 in
+def C4_fastcorner9_not : T_LOGICAL_2OP<"!fastcorner9", 0b000, 0, 0>,
+  Requires<[HasV5T]> {
+  let Inst{20,13,7,4} = 0b1111;
+}
+
 def SDTHexagonFCONST32 : SDTypeProfile<1, 1, [
                                             SDTCisVT<0, f32>,
                                             SDTCisPtrTy<1>]>;
@@ -51,6 +90,27 @@ def TFRI_cNotPt_f : ALU32_ri<(outs IntRegs:$dst),
            "if (!$src1) $dst =#$src2",
            []>,
           Requires<[HasV5T]>;
+
+def SDTHexagonI32I64: SDTypeProfile<1, 1, [SDTCisVT<0, i32>,
+                                           SDTCisVT<1, i64>]>;
+
+def HexagonPOPCOUNT: SDNode<"HexagonISD::POPCOUNT", SDTHexagonI32I64>;
+
+let hasNewValue = 1, validSubTargets = HasV5SubT, isCodeGenOnly = 0 in
+def S5_popcountp : ALU64_rr<(outs IntRegs:$Rd), (ins DoubleRegs:$Rss),
+  "$Rd = popcount($Rss)",
+  [(set I32:$Rd, (HexagonPOPCOUNT I64:$Rss))], "", S_2op_tc_2_SLOT23>,
+  Requires<[HasV5T]> {
+    bits<5> Rd;
+    bits<5> Rss;
+
+    let IClass = 0b1000;
+
+    let Inst{27-21} = 0b1000011;
+    let Inst{7-5} = 0b011;
+    let Inst{4-0} = Rd;
+    let Inst{20-16} = Rss;
+  }
 
 // Convert single precision to double precision and vice-versa.
 def CONVERT_sf2df : ALU64_rr<(outs DoubleRegs:$dst), (ins IntRegs:$src),
