@@ -2267,6 +2267,7 @@ X86InstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
 
   unsigned MIOpc = MI->getOpcode();
   switch (MIOpc) {
+  default: return nullptr;
   case X86::SHL64ri: {
     assert(MI->getNumOperands() >= 3 && "Unknown shift instruction!");
     unsigned ShAmt = getTruncatedShiftCount(MI, 2);
@@ -2321,181 +2322,175 @@ X86InstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
       .addReg(0).addImm(1 << ShAmt).addOperand(Src).addImm(0).addReg(0);
     break;
   }
-  default: {
+  case X86::INC64r:
+  case X86::INC32r: {
+    assert(MI->getNumOperands() >= 2 && "Unknown inc instruction!");
+    unsigned Opc = MIOpc == X86::INC64r ? X86::LEA64r
+      : (is64Bit ? X86::LEA64_32r : X86::LEA32r);
+    bool isKill, isUndef;
+    unsigned SrcReg;
+    MachineOperand ImplicitOp = MachineOperand::CreateReg(0, false);
+    if (!classifyLEAReg(MI, Src, Opc, /*AllowSP=*/ false,
+                        SrcReg, isKill, isUndef, ImplicitOp))
+      return nullptr;
 
-    switch (MIOpc) {
-    default: return nullptr;
-    case X86::INC64r:
-    case X86::INC32r: {
-      assert(MI->getNumOperands() >= 2 && "Unknown inc instruction!");
-      unsigned Opc = MIOpc == X86::INC64r ? X86::LEA64r
-        : (is64Bit ? X86::LEA64_32r : X86::LEA32r);
-      bool isKill, isUndef;
-      unsigned SrcReg;
-      MachineOperand ImplicitOp = MachineOperand::CreateReg(0, false);
-      if (!classifyLEAReg(MI, Src, Opc, /*AllowSP=*/ false,
-                          SrcReg, isKill, isUndef, ImplicitOp))
-        return nullptr;
+    MachineInstrBuilder MIB = BuildMI(MF, MI->getDebugLoc(), get(Opc))
+        .addOperand(Dest)
+        .addReg(SrcReg, getKillRegState(isKill) | getUndefRegState(isUndef));
+    if (ImplicitOp.getReg() != 0)
+      MIB.addOperand(ImplicitOp);
 
-      MachineInstrBuilder MIB = BuildMI(MF, MI->getDebugLoc(), get(Opc))
-          .addOperand(Dest)
-          .addReg(SrcReg, getKillRegState(isKill) | getUndefRegState(isUndef));
-      if (ImplicitOp.getReg() != 0)
-        MIB.addOperand(ImplicitOp);
-
-      NewMI = addOffset(MIB, 1);
-      break;
-    }
-    case X86::INC16r:
-      if (DisableLEA16)
-        return is64Bit ? convertToThreeAddressWithLEA(MIOpc, MFI, MBBI, LV)
-                       : nullptr;
-      assert(MI->getNumOperands() >= 2 && "Unknown inc instruction!");
-      NewMI = addOffset(BuildMI(MF, MI->getDebugLoc(), get(X86::LEA16r))
-                        .addOperand(Dest).addOperand(Src), 1);
-      break;
-    case X86::DEC64r:
-    case X86::DEC32r: {
-      assert(MI->getNumOperands() >= 2 && "Unknown dec instruction!");
-      unsigned Opc = MIOpc == X86::DEC64r ? X86::LEA64r
-        : (is64Bit ? X86::LEA64_32r : X86::LEA32r);
-
-      bool isKill, isUndef;
-      unsigned SrcReg;
-      MachineOperand ImplicitOp = MachineOperand::CreateReg(0, false);
-      if (!classifyLEAReg(MI, Src, Opc, /*AllowSP=*/ false,
-                          SrcReg, isKill, isUndef, ImplicitOp))
-        return nullptr;
-
-      MachineInstrBuilder MIB = BuildMI(MF, MI->getDebugLoc(), get(Opc))
-          .addOperand(Dest)
-          .addReg(SrcReg, getUndefRegState(isUndef) | getKillRegState(isKill));
-      if (ImplicitOp.getReg() != 0)
-        MIB.addOperand(ImplicitOp);
-
-      NewMI = addOffset(MIB, -1);
-
-      break;
-    }
-    case X86::DEC16r:
-      if (DisableLEA16)
-        return is64Bit ? convertToThreeAddressWithLEA(MIOpc, MFI, MBBI, LV)
-                       : nullptr;
-      assert(MI->getNumOperands() >= 2 && "Unknown dec instruction!");
-      NewMI = addOffset(BuildMI(MF, MI->getDebugLoc(), get(X86::LEA16r))
-                        .addOperand(Dest).addOperand(Src), -1);
-      break;
-    case X86::ADD64rr:
-    case X86::ADD64rr_DB:
-    case X86::ADD32rr:
-    case X86::ADD32rr_DB: {
-      assert(MI->getNumOperands() >= 3 && "Unknown add instruction!");
-      unsigned Opc;
-      if (MIOpc == X86::ADD64rr || MIOpc == X86::ADD64rr_DB)
-        Opc = X86::LEA64r;
-      else
-        Opc = is64Bit ? X86::LEA64_32r : X86::LEA32r;
-
-      bool isKill, isUndef;
-      unsigned SrcReg;
-      MachineOperand ImplicitOp = MachineOperand::CreateReg(0, false);
-      if (!classifyLEAReg(MI, Src, Opc, /*AllowSP=*/ true,
-                          SrcReg, isKill, isUndef, ImplicitOp))
-        return nullptr;
-
-      const MachineOperand &Src2 = MI->getOperand(2);
-      bool isKill2, isUndef2;
-      unsigned SrcReg2;
-      MachineOperand ImplicitOp2 = MachineOperand::CreateReg(0, false);
-      if (!classifyLEAReg(MI, Src2, Opc, /*AllowSP=*/ false,
-                          SrcReg2, isKill2, isUndef2, ImplicitOp2))
-        return nullptr;
-
-      MachineInstrBuilder MIB = BuildMI(MF, MI->getDebugLoc(), get(Opc))
-        .addOperand(Dest);
-      if (ImplicitOp.getReg() != 0)
-        MIB.addOperand(ImplicitOp);
-      if (ImplicitOp2.getReg() != 0)
-        MIB.addOperand(ImplicitOp2);
-
-      NewMI = addRegReg(MIB, SrcReg, isKill, SrcReg2, isKill2);
-
-      // Preserve undefness of the operands.
-      NewMI->getOperand(1).setIsUndef(isUndef);
-      NewMI->getOperand(3).setIsUndef(isUndef2);
-
-      if (LV && Src2.isKill())
-        LV->replaceKillInstruction(SrcReg2, MI, NewMI);
-      break;
-    }
-    case X86::ADD16rr:
-    case X86::ADD16rr_DB: {
-      if (DisableLEA16)
-        return is64Bit ? convertToThreeAddressWithLEA(MIOpc, MFI, MBBI, LV)
-                       : nullptr;
-      assert(MI->getNumOperands() >= 3 && "Unknown add instruction!");
-      unsigned Src2 = MI->getOperand(2).getReg();
-      bool isKill2 = MI->getOperand(2).isKill();
-      NewMI = addRegReg(BuildMI(MF, MI->getDebugLoc(), get(X86::LEA16r))
-                        .addOperand(Dest),
-                        Src.getReg(), Src.isKill(), Src2, isKill2);
-
-      // Preserve undefness of the operands.
-      bool isUndef = MI->getOperand(1).isUndef();
-      bool isUndef2 = MI->getOperand(2).isUndef();
-      NewMI->getOperand(1).setIsUndef(isUndef);
-      NewMI->getOperand(3).setIsUndef(isUndef2);
-
-      if (LV && isKill2)
-        LV->replaceKillInstruction(Src2, MI, NewMI);
-      break;
-    }
-    case X86::ADD64ri32:
-    case X86::ADD64ri8:
-    case X86::ADD64ri32_DB:
-    case X86::ADD64ri8_DB:
-      assert(MI->getNumOperands() >= 3 && "Unknown add instruction!");
-      NewMI = addOffset(BuildMI(MF, MI->getDebugLoc(), get(X86::LEA64r))
-                        .addOperand(Dest).addOperand(Src),
-                        MI->getOperand(2).getImm());
-      break;
-    case X86::ADD32ri:
-    case X86::ADD32ri8:
-    case X86::ADD32ri_DB:
-    case X86::ADD32ri8_DB: {
-      assert(MI->getNumOperands() >= 3 && "Unknown add instruction!");
-      unsigned Opc = is64Bit ? X86::LEA64_32r : X86::LEA32r;
-
-      bool isKill, isUndef;
-      unsigned SrcReg;
-      MachineOperand ImplicitOp = MachineOperand::CreateReg(0, false);
-      if (!classifyLEAReg(MI, Src, Opc, /*AllowSP=*/ true,
-                          SrcReg, isKill, isUndef, ImplicitOp))
-        return nullptr;
-
-      MachineInstrBuilder MIB = BuildMI(MF, MI->getDebugLoc(), get(Opc))
-          .addOperand(Dest)
-          .addReg(SrcReg, getUndefRegState(isUndef) | getKillRegState(isKill));
-      if (ImplicitOp.getReg() != 0)
-        MIB.addOperand(ImplicitOp);
-
-      NewMI = addOffset(MIB, MI->getOperand(2).getImm());
-      break;
-    }
-    case X86::ADD16ri:
-    case X86::ADD16ri8:
-    case X86::ADD16ri_DB:
-    case X86::ADD16ri8_DB:
-      if (DisableLEA16)
-        return is64Bit ? convertToThreeAddressWithLEA(MIOpc, MFI, MBBI, LV)
-                       : nullptr;
-      assert(MI->getNumOperands() >= 3 && "Unknown add instruction!");
-      NewMI = addOffset(BuildMI(MF, MI->getDebugLoc(), get(X86::LEA16r))
-                        .addOperand(Dest).addOperand(Src),
-                        MI->getOperand(2).getImm());
-      break;
-    }
+    NewMI = addOffset(MIB, 1);
+    break;
   }
+  case X86::INC16r:
+    if (DisableLEA16)
+      return is64Bit ? convertToThreeAddressWithLEA(MIOpc, MFI, MBBI, LV)
+                     : nullptr;
+    assert(MI->getNumOperands() >= 2 && "Unknown inc instruction!");
+    NewMI = addOffset(BuildMI(MF, MI->getDebugLoc(), get(X86::LEA16r))
+                      .addOperand(Dest).addOperand(Src), 1);
+    break;
+  case X86::DEC64r:
+  case X86::DEC32r: {
+    assert(MI->getNumOperands() >= 2 && "Unknown dec instruction!");
+    unsigned Opc = MIOpc == X86::DEC64r ? X86::LEA64r
+      : (is64Bit ? X86::LEA64_32r : X86::LEA32r);
+
+    bool isKill, isUndef;
+    unsigned SrcReg;
+    MachineOperand ImplicitOp = MachineOperand::CreateReg(0, false);
+    if (!classifyLEAReg(MI, Src, Opc, /*AllowSP=*/ false,
+                        SrcReg, isKill, isUndef, ImplicitOp))
+      return nullptr;
+
+    MachineInstrBuilder MIB = BuildMI(MF, MI->getDebugLoc(), get(Opc))
+        .addOperand(Dest)
+        .addReg(SrcReg, getUndefRegState(isUndef) | getKillRegState(isKill));
+    if (ImplicitOp.getReg() != 0)
+      MIB.addOperand(ImplicitOp);
+
+    NewMI = addOffset(MIB, -1);
+
+    break;
+  }
+  case X86::DEC16r:
+    if (DisableLEA16)
+      return is64Bit ? convertToThreeAddressWithLEA(MIOpc, MFI, MBBI, LV)
+                     : nullptr;
+    assert(MI->getNumOperands() >= 2 && "Unknown dec instruction!");
+    NewMI = addOffset(BuildMI(MF, MI->getDebugLoc(), get(X86::LEA16r))
+                      .addOperand(Dest).addOperand(Src), -1);
+    break;
+  case X86::ADD64rr:
+  case X86::ADD64rr_DB:
+  case X86::ADD32rr:
+  case X86::ADD32rr_DB: {
+    assert(MI->getNumOperands() >= 3 && "Unknown add instruction!");
+    unsigned Opc;
+    if (MIOpc == X86::ADD64rr || MIOpc == X86::ADD64rr_DB)
+      Opc = X86::LEA64r;
+    else
+      Opc = is64Bit ? X86::LEA64_32r : X86::LEA32r;
+
+    bool isKill, isUndef;
+    unsigned SrcReg;
+    MachineOperand ImplicitOp = MachineOperand::CreateReg(0, false);
+    if (!classifyLEAReg(MI, Src, Opc, /*AllowSP=*/ true,
+                        SrcReg, isKill, isUndef, ImplicitOp))
+      return nullptr;
+
+    const MachineOperand &Src2 = MI->getOperand(2);
+    bool isKill2, isUndef2;
+    unsigned SrcReg2;
+    MachineOperand ImplicitOp2 = MachineOperand::CreateReg(0, false);
+    if (!classifyLEAReg(MI, Src2, Opc, /*AllowSP=*/ false,
+                        SrcReg2, isKill2, isUndef2, ImplicitOp2))
+      return nullptr;
+
+    MachineInstrBuilder MIB = BuildMI(MF, MI->getDebugLoc(), get(Opc))
+      .addOperand(Dest);
+    if (ImplicitOp.getReg() != 0)
+      MIB.addOperand(ImplicitOp);
+    if (ImplicitOp2.getReg() != 0)
+      MIB.addOperand(ImplicitOp2);
+
+    NewMI = addRegReg(MIB, SrcReg, isKill, SrcReg2, isKill2);
+
+    // Preserve undefness of the operands.
+    NewMI->getOperand(1).setIsUndef(isUndef);
+    NewMI->getOperand(3).setIsUndef(isUndef2);
+
+    if (LV && Src2.isKill())
+      LV->replaceKillInstruction(SrcReg2, MI, NewMI);
+    break;
+  }
+  case X86::ADD16rr:
+  case X86::ADD16rr_DB: {
+    if (DisableLEA16)
+      return is64Bit ? convertToThreeAddressWithLEA(MIOpc, MFI, MBBI, LV)
+                     : nullptr;
+    assert(MI->getNumOperands() >= 3 && "Unknown add instruction!");
+    unsigned Src2 = MI->getOperand(2).getReg();
+    bool isKill2 = MI->getOperand(2).isKill();
+    NewMI = addRegReg(BuildMI(MF, MI->getDebugLoc(), get(X86::LEA16r))
+                      .addOperand(Dest),
+                      Src.getReg(), Src.isKill(), Src2, isKill2);
+
+    // Preserve undefness of the operands.
+    bool isUndef = MI->getOperand(1).isUndef();
+    bool isUndef2 = MI->getOperand(2).isUndef();
+    NewMI->getOperand(1).setIsUndef(isUndef);
+    NewMI->getOperand(3).setIsUndef(isUndef2);
+
+    if (LV && isKill2)
+      LV->replaceKillInstruction(Src2, MI, NewMI);
+    break;
+  }
+  case X86::ADD64ri32:
+  case X86::ADD64ri8:
+  case X86::ADD64ri32_DB:
+  case X86::ADD64ri8_DB:
+    assert(MI->getNumOperands() >= 3 && "Unknown add instruction!");
+    NewMI = addOffset(BuildMI(MF, MI->getDebugLoc(), get(X86::LEA64r))
+                      .addOperand(Dest).addOperand(Src),
+                      MI->getOperand(2).getImm());
+    break;
+  case X86::ADD32ri:
+  case X86::ADD32ri8:
+  case X86::ADD32ri_DB:
+  case X86::ADD32ri8_DB: {
+    assert(MI->getNumOperands() >= 3 && "Unknown add instruction!");
+    unsigned Opc = is64Bit ? X86::LEA64_32r : X86::LEA32r;
+
+    bool isKill, isUndef;
+    unsigned SrcReg;
+    MachineOperand ImplicitOp = MachineOperand::CreateReg(0, false);
+    if (!classifyLEAReg(MI, Src, Opc, /*AllowSP=*/ true,
+                        SrcReg, isKill, isUndef, ImplicitOp))
+      return nullptr;
+
+    MachineInstrBuilder MIB = BuildMI(MF, MI->getDebugLoc(), get(Opc))
+        .addOperand(Dest)
+        .addReg(SrcReg, getUndefRegState(isUndef) | getKillRegState(isKill));
+    if (ImplicitOp.getReg() != 0)
+      MIB.addOperand(ImplicitOp);
+
+    NewMI = addOffset(MIB, MI->getOperand(2).getImm());
+    break;
+  }
+  case X86::ADD16ri:
+  case X86::ADD16ri8:
+  case X86::ADD16ri_DB:
+  case X86::ADD16ri8_DB:
+    if (DisableLEA16)
+      return is64Bit ? convertToThreeAddressWithLEA(MIOpc, MFI, MBBI, LV)
+                     : nullptr;
+    assert(MI->getNumOperands() >= 3 && "Unknown add instruction!");
+    NewMI = addOffset(BuildMI(MF, MI->getDebugLoc(), get(X86::LEA16r))
+                      .addOperand(Dest).addOperand(Src),
+                      MI->getOperand(2).getImm());
+    break;
   }
 
   if (!NewMI) return nullptr;
