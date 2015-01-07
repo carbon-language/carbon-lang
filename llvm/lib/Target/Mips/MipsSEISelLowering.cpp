@@ -46,17 +46,13 @@ MipsSETargetLowering::MipsSETargetLowering(const MipsTargetMachine &TM,
 
   if (Subtarget.hasDSP() || Subtarget.hasMSA()) {
     // Expand all truncating stores and extending loads.
-    unsigned FirstVT = (unsigned)MVT::FIRST_VECTOR_VALUETYPE;
-    unsigned LastVT = (unsigned)MVT::LAST_VECTOR_VALUETYPE;
+    for (MVT VT0 : MVT::vector_valuetypes()) {
+      for (MVT VT1 : MVT::vector_valuetypes())
+        setTruncStoreAction(VT0, VT1, Expand);
 
-    for (unsigned VT0 = FirstVT; VT0 <= LastVT; ++VT0) {
-      for (unsigned VT1 = FirstVT; VT1 <= LastVT; ++VT1)
-        setTruncStoreAction((MVT::SimpleValueType)VT0,
-                            (MVT::SimpleValueType)VT1, Expand);
-
-      setLoadExtAction(ISD::SEXTLOAD, (MVT::SimpleValueType)VT0, Expand);
-      setLoadExtAction(ISD::ZEXTLOAD, (MVT::SimpleValueType)VT0, Expand);
-      setLoadExtAction(ISD::EXTLOAD, (MVT::SimpleValueType)VT0, Expand);
+      setLoadExtAction(ISD::SEXTLOAD, VT0, Expand);
+      setLoadExtAction(ISD::ZEXTLOAD, VT0, Expand);
+      setLoadExtAction(ISD::EXTLOAD, VT0, Expand);
     }
   }
 

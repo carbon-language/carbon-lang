@@ -801,9 +801,7 @@ void X86TargetLowering::resetOperationActions() {
   // First set operation action for all vector types to either promote
   // (for widening) or expand (for scalarization). Then we will selectively
   // turn on ones that can be effectively codegen'd.
-  for (int i = MVT::FIRST_VECTOR_VALUETYPE;
-           i <= MVT::LAST_VECTOR_VALUETYPE; ++i) {
-    MVT VT = (MVT::SimpleValueType)i;
+  for (MVT VT : MVT::vector_valuetypes()) {
     setOperationAction(ISD::ADD , VT, Expand);
     setOperationAction(ISD::SUB , VT, Expand);
     setOperationAction(ISD::FADD, VT, Expand);
@@ -872,10 +870,8 @@ void X86TargetLowering::resetOperationActions() {
     setOperationAction(ISD::ANY_EXTEND, VT, Expand);
     setOperationAction(ISD::VSELECT, VT, Expand);
     setOperationAction(ISD::SELECT_CC, VT, Expand);
-    for (int InnerVT = MVT::FIRST_VECTOR_VALUETYPE;
-             InnerVT <= MVT::LAST_VECTOR_VALUETYPE; ++InnerVT)
-      setTruncStoreAction(VT,
-                          (MVT::SimpleValueType)InnerVT, Expand);
+    for (MVT InnerVT : MVT::vector_valuetypes())
+      setTruncStoreAction(VT, InnerVT, Expand);
     setLoadExtAction(ISD::SEXTLOAD, VT, Expand);
     setLoadExtAction(ISD::ZEXTLOAD, VT, Expand);
 
@@ -1328,10 +1324,7 @@ void X86TargetLowering::resetOperationActions() {
     setOperationAction(ISD::SRA,               MVT::v8i32, Custom);
 
     // Custom lower several nodes for 256-bit types.
-    for (int i = MVT::FIRST_VECTOR_VALUETYPE;
-             i <= MVT::LAST_VECTOR_VALUETYPE; ++i) {
-      MVT VT = (MVT::SimpleValueType)i;
-
+    for (MVT VT : MVT::vector_valuetypes()) {
       if (VT.getScalarSizeInBits() >= 32) {
         setOperationAction(ISD::MLOAD,  VT, Legal);
         setOperationAction(ISD::MSTORE, VT, Legal);
@@ -1504,10 +1497,7 @@ void X86TargetLowering::resetOperationActions() {
     }
 
     // Custom lower several nodes.
-    for (int i = MVT::FIRST_VECTOR_VALUETYPE;
-             i <= MVT::LAST_VECTOR_VALUETYPE; ++i) {
-      MVT VT = (MVT::SimpleValueType)i;
-
+    for (MVT VT : MVT::vector_valuetypes()) {
       unsigned EltSize = VT.getVectorElementType().getSizeInBits();
       // Extract subvector is special because the value type
       // (result) is 256/128-bit but the source is 512-bit wide.
@@ -1596,11 +1586,8 @@ void X86TargetLowering::resetOperationActions() {
 
   // SIGN_EXTEND_INREGs are evaluated by the extend type. Handle the expansion
   // of this type with custom code.
-  for (int VT = MVT::FIRST_VECTOR_VALUETYPE;
-           VT != MVT::LAST_VECTOR_VALUETYPE; VT++) {
-    setOperationAction(ISD::SIGN_EXTEND_INREG, (MVT::SimpleValueType)VT,
-                       Custom);
-  }
+  for (MVT VT : MVT::vector_valuetypes())
+    setOperationAction(ISD::SIGN_EXTEND_INREG, VT, Custom);
 
   // We want to custom lower some of our intrinsics.
   setOperationAction(ISD::INTRINSIC_WO_CHAIN, MVT::Other, Custom);
@@ -16009,9 +15996,7 @@ static SDValue LowerExtendedLoad(SDValue Op, const X86Subtarget *Subtarget,
   // Attempt to load the original value using scalar loads.
   // Find the largest scalar type that divides the total loaded size.
   MVT SclrLoadTy = MVT::i8;
-  for (unsigned tp = MVT::FIRST_INTEGER_VALUETYPE;
-       tp < MVT::LAST_INTEGER_VALUETYPE; ++tp) {
-    MVT Tp = (MVT::SimpleValueType)tp;
+  for (MVT Tp : MVT::integer_valuetypes()) {
     if (TLI.isTypeLegal(Tp) && ((MemSz % Tp.getSizeInBits()) == 0)) {
       SclrLoadTy = Tp;
     }
@@ -24689,9 +24674,7 @@ static SDValue PerformSTORECombine(SDNode *N, SelectionDAG &DAG,
 
     // Find the largest store unit
     MVT StoreType = MVT::i8;
-    for (unsigned tp = MVT::FIRST_INTEGER_VALUETYPE;
-         tp < MVT::LAST_INTEGER_VALUETYPE; ++tp) {
-      MVT Tp = (MVT::SimpleValueType)tp;
+    for (MVT Tp : MVT::integer_valuetypes()) {
       if (TLI.isTypeLegal(Tp) && Tp.getSizeInBits() <= NumElems * ToSz)
         StoreType = Tp;
     }

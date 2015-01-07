@@ -394,10 +394,7 @@ PPCTargetLowering::PPCTargetLowering(const PPCTargetMachine &TM)
   if (Subtarget.hasAltivec()) {
     // First set operation action for all vector types to expand. Then we
     // will selectively turn on ones that can be effectively codegen'd.
-    for (unsigned i = (unsigned)MVT::FIRST_VECTOR_VALUETYPE;
-         i <= (unsigned)MVT::LAST_VECTOR_VALUETYPE; ++i) {
-      MVT::SimpleValueType VT = (MVT::SimpleValueType)i;
-
+    for (MVT VT : MVT::vector_valuetypes()) {
       // add/sub are legal for all supported vector VT's.
       setOperationAction(ISD::ADD , VT, Legal);
       setOperationAction(ISD::SUB , VT, Legal);
@@ -464,11 +461,8 @@ PPCTargetLowering::PPCTargetLowering(const PPCTargetMachine &TM)
       setOperationAction(ISD::VSELECT, VT, Expand);
       setOperationAction(ISD::SIGN_EXTEND_INREG, VT, Expand);
 
-      for (unsigned j = (unsigned)MVT::FIRST_VECTOR_VALUETYPE;
-           j <= (unsigned)MVT::LAST_VECTOR_VALUETYPE; ++j) {
-        MVT::SimpleValueType InnerVT = (MVT::SimpleValueType)j;
+      for (MVT InnerVT : MVT::vector_valuetypes())
         setTruncStoreAction(VT, InnerVT, Expand);
-      }
       setLoadExtAction(ISD::SEXTLOAD, VT, Expand);
       setLoadExtAction(ISD::ZEXTLOAD, VT, Expand);
       setLoadExtAction(ISD::EXTLOAD, VT, Expand);

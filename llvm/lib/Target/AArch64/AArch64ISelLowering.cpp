@@ -539,26 +539,21 @@ AArch64TargetLowering::AArch64TargetLowering(const TargetMachine &TM)
     setTruncStoreAction(MVT::v2i32, MVT::v2i16, Expand);
     // Likewise, narrowing and extending vector loads/stores aren't handled
     // directly.
-    for (unsigned VT = (unsigned)MVT::FIRST_VECTOR_VALUETYPE;
-         VT <= (unsigned)MVT::LAST_VECTOR_VALUETYPE; ++VT) {
+    for (MVT VT : MVT::vector_valuetypes()) {
+      setOperationAction(ISD::SIGN_EXTEND_INREG, VT, Expand);
 
-      setOperationAction(ISD::SIGN_EXTEND_INREG, (MVT::SimpleValueType)VT,
-                         Expand);
+      setOperationAction(ISD::MULHS, VT, Expand);
+      setOperationAction(ISD::SMUL_LOHI, VT, Expand);
+      setOperationAction(ISD::MULHU, VT, Expand);
+      setOperationAction(ISD::UMUL_LOHI, VT, Expand);
 
-      setOperationAction(ISD::MULHS, (MVT::SimpleValueType)VT, Expand);
-      setOperationAction(ISD::SMUL_LOHI, (MVT::SimpleValueType)VT, Expand);
-      setOperationAction(ISD::MULHU, (MVT::SimpleValueType)VT, Expand);
-      setOperationAction(ISD::UMUL_LOHI, (MVT::SimpleValueType)VT, Expand);
+      setOperationAction(ISD::BSWAP, VT, Expand);
 
-      setOperationAction(ISD::BSWAP, (MVT::SimpleValueType)VT, Expand);
-
-      for (unsigned InnerVT = (unsigned)MVT::FIRST_VECTOR_VALUETYPE;
-           InnerVT <= (unsigned)MVT::LAST_VECTOR_VALUETYPE; ++InnerVT)
-        setTruncStoreAction((MVT::SimpleValueType)VT,
-                            (MVT::SimpleValueType)InnerVT, Expand);
-      setLoadExtAction(ISD::SEXTLOAD, (MVT::SimpleValueType)VT, Expand);
-      setLoadExtAction(ISD::ZEXTLOAD, (MVT::SimpleValueType)VT, Expand);
-      setLoadExtAction(ISD::EXTLOAD, (MVT::SimpleValueType)VT, Expand);
+      for (MVT InnerVT : MVT::vector_valuetypes())
+        setTruncStoreAction(VT, InnerVT, Expand);
+      setLoadExtAction(ISD::SEXTLOAD, VT, Expand);
+      setLoadExtAction(ISD::ZEXTLOAD, VT, Expand);
+      setLoadExtAction(ISD::EXTLOAD, VT, Expand);
     }
 
     // AArch64 has implementations of a lot of rounding-like FP operations.

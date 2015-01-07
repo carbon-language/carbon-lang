@@ -232,9 +232,7 @@ NVPTXTargetLowering::NVPTXTargetLowering(const NVPTXTargetMachine &TM)
   setOperationAction(ISD::ADDE, MVT::i64, Expand);
 
   // Register custom handling for vector loads/stores
-  for (int i = MVT::FIRST_VECTOR_VALUETYPE; i <= MVT::LAST_VECTOR_VALUETYPE;
-       ++i) {
-    MVT VT = (MVT::SimpleValueType) i;
+  for (MVT VT : MVT::vector_valuetypes()) {
     if (IsPTXVectorType(VT)) {
       setOperationAction(ISD::LOAD, VT, Custom);
       setOperationAction(ISD::STORE, VT, Custom);

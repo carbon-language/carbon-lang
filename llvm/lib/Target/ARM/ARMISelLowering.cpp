@@ -404,22 +404,19 @@ ARMTargetLowering::ARMTargetLowering(const TargetMachine &TM)
     addRegisterClass(MVT::f64, &ARM::DPRRegClass);
   }
 
-  for (unsigned VT = (unsigned)MVT::FIRST_VECTOR_VALUETYPE;
-       VT <= (unsigned)MVT::LAST_VECTOR_VALUETYPE; ++VT) {
-    for (unsigned InnerVT = (unsigned)MVT::FIRST_VECTOR_VALUETYPE;
-         InnerVT <= (unsigned)MVT::LAST_VECTOR_VALUETYPE; ++InnerVT)
-      setTruncStoreAction((MVT::SimpleValueType)VT,
-                          (MVT::SimpleValueType)InnerVT, Expand);
-    setLoadExtAction(ISD::SEXTLOAD, (MVT::SimpleValueType)VT, Expand);
-    setLoadExtAction(ISD::ZEXTLOAD, (MVT::SimpleValueType)VT, Expand);
-    setLoadExtAction(ISD::EXTLOAD, (MVT::SimpleValueType)VT, Expand);
+  for (MVT VT : MVT::vector_valuetypes()) {
+    for (MVT InnerVT : MVT::vector_valuetypes())
+      setTruncStoreAction(VT, InnerVT, Expand);
+    setLoadExtAction(ISD::SEXTLOAD, VT, Expand);
+    setLoadExtAction(ISD::ZEXTLOAD, VT, Expand);
+    setLoadExtAction(ISD::EXTLOAD, VT, Expand);
 
-    setOperationAction(ISD::MULHS, (MVT::SimpleValueType)VT, Expand);
-    setOperationAction(ISD::SMUL_LOHI, (MVT::SimpleValueType)VT, Expand);
-    setOperationAction(ISD::MULHU, (MVT::SimpleValueType)VT, Expand);
-    setOperationAction(ISD::UMUL_LOHI, (MVT::SimpleValueType)VT, Expand);
+    setOperationAction(ISD::MULHS, VT, Expand);
+    setOperationAction(ISD::SMUL_LOHI, VT, Expand);
+    setOperationAction(ISD::MULHU, VT, Expand);
+    setOperationAction(ISD::UMUL_LOHI, VT, Expand);
 
-    setOperationAction(ISD::BSWAP, (MVT::SimpleValueType)VT, Expand);
+    setOperationAction(ISD::BSWAP, VT, Expand);
   }
 
   setOperationAction(ISD::ConstantFP, MVT::f32, Custom);
@@ -9253,9 +9250,7 @@ static SDValue PerformSTORECombine(SDNode *N,
 
     // Find the largest store unit
     MVT StoreType = MVT::i8;
-    for (unsigned tp = MVT::FIRST_INTEGER_VALUETYPE;
-         tp < MVT::LAST_INTEGER_VALUETYPE; ++tp) {
-      MVT Tp = (MVT::SimpleValueType)tp;
+    for (MVT Tp : MVT::integer_valuetypes()) {
       if (TLI.isTypeLegal(Tp) && Tp.getSizeInBits() <= NumElems * ToEltSz)
         StoreType = Tp;
     }
