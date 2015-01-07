@@ -741,11 +741,9 @@ static void handleExclusiveTrylockFunctionAttr(Sema &S, Decl *D,
   if (!checkTryLockFunAttrCommon(S, D, Attr, Args))
     return;
 
-  D->addAttr(::new (S.Context)
-             ExclusiveTrylockFunctionAttr(Attr.getRange(), S.Context,
-                                          Attr.getArgAsExpr(0),
-                                          Args.data(), Args.size(),
-                                          Attr.getAttributeSpellingListIndex()));
+  D->addAttr(::new (S.Context) ExclusiveTrylockFunctionAttr(
+      Attr.getRange(), S.Context, Attr.getArgAsExpr(0), Args.data(),
+      Args.size(), Attr.getAttributeSpellingListIndex()));
 }
 
 static void handleLockReturnedAttr(Sema &S, Decl *D,
@@ -3635,29 +3633,24 @@ static void handleNSReturnsRetainedAttr(Sema &S, Decl *D,
     default:
       llvm_unreachable("invalid ownership attribute");
     case AttributeList::AT_NSReturnsAutoreleased:
-      D->addAttr(::new (S.Context)
-                 NSReturnsAutoreleasedAttr(Attr.getRange(), S.Context,
-                                           Attr.getAttributeSpellingListIndex()));
+      D->addAttr(::new (S.Context) NSReturnsAutoreleasedAttr(
+          Attr.getRange(), S.Context, Attr.getAttributeSpellingListIndex()));
       return;
     case AttributeList::AT_CFReturnsNotRetained:
-      D->addAttr(::new (S.Context)
-                 CFReturnsNotRetainedAttr(Attr.getRange(), S.Context,
-                                          Attr.getAttributeSpellingListIndex()));
+      D->addAttr(::new (S.Context) CFReturnsNotRetainedAttr(
+          Attr.getRange(), S.Context, Attr.getAttributeSpellingListIndex()));
       return;
     case AttributeList::AT_NSReturnsNotRetained:
-      D->addAttr(::new (S.Context)
-                 NSReturnsNotRetainedAttr(Attr.getRange(), S.Context,
-                                          Attr.getAttributeSpellingListIndex()));
+      D->addAttr(::new (S.Context) NSReturnsNotRetainedAttr(
+          Attr.getRange(), S.Context, Attr.getAttributeSpellingListIndex()));
       return;
     case AttributeList::AT_CFReturnsRetained:
-      D->addAttr(::new (S.Context)
-                 CFReturnsRetainedAttr(Attr.getRange(), S.Context,
-                                       Attr.getAttributeSpellingListIndex()));
+      D->addAttr(::new (S.Context) CFReturnsRetainedAttr(
+          Attr.getRange(), S.Context, Attr.getAttributeSpellingListIndex()));
       return;
     case AttributeList::AT_NSReturnsRetained:
-      D->addAttr(::new (S.Context)
-                 NSReturnsRetainedAttr(Attr.getRange(), S.Context,
-                                       Attr.getAttributeSpellingListIndex()));
+      D->addAttr(::new (S.Context) NSReturnsRetainedAttr(
+          Attr.getRange(), S.Context, Attr.getAttributeSpellingListIndex()));
       return;
   };
 }
@@ -3686,9 +3679,8 @@ static void handleObjCReturnsInnerPointerAttr(Sema &S, Decl *D,
     return;
   }
 
-  D->addAttr(::new (S.Context)
-                  ObjCReturnsInnerPointerAttr(attr.getRange(), S.Context,
-                                              attr.getAttributeSpellingListIndex()));
+  D->addAttr(::new (S.Context) ObjCReturnsInnerPointerAttr(
+      attr.getRange(), S.Context, attr.getAttributeSpellingListIndex()));
 }
 
 static void handleObjCRequiresSuperAttr(Sema &S, Decl *D,
@@ -3782,7 +3774,8 @@ static void handleObjCBridgeRelatedAttr(Sema &S, Scope *Sc, Decl *D,
 static void handleObjCDesignatedInitializer(Sema &S, Decl *D,
                                             const AttributeList &Attr) {
   ObjCInterfaceDecl *IFace;
-  if (ObjCCategoryDecl *CatDecl = dyn_cast<ObjCCategoryDecl>(D->getDeclContext()))
+  if (ObjCCategoryDecl *CatDecl =
+          dyn_cast<ObjCCategoryDecl>(D->getDeclContext()))
     IFace = CatDecl->getClassInterface();
   else
     IFace = cast<ObjCInterfaceDecl>(D->getDeclContext());
@@ -5213,11 +5206,9 @@ void Sema::EmitAvailabilityWarning(AvailabilityDiagnostic AD,
                                    bool ObjCPropertyAccess) {
   // Delay if we're currently parsing a declaration.
   if (DelayedDiagnostics.shouldDelayDiagnostics()) {
-    DelayedDiagnostics.add(DelayedDiagnostic::makeAvailability(AD, Loc, D,
-                                                               UnknownObjCClass,
-                                                               ObjCProperty,
-                                                               Message,
-                                                               ObjCPropertyAccess));
+    DelayedDiagnostics.add(DelayedDiagnostic::makeAvailability(
+        AD, Loc, D, UnknownObjCClass, ObjCProperty, Message,
+        ObjCPropertyAccess));
     return;
   }
 
