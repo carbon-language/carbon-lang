@@ -41,7 +41,7 @@ entry:
 define void @test2(<16 x float>* noalias sret %agg.result) nounwind ssp {
 entry:
 ; REALIGN-LABEL: test2
-; REALIGN: bic sp, sp, #63
+; REALIGN: bfc sp, #0, #6
 ; REALIGN: mov r[[R2:[0-9]+]], r[[R1:[0-9]+]]
 ; REALIGN: vld1.32 {{{d[0-9]+, d[0-9]+}}}, [r[[R2]]:128]!
 ; REALIGN: vld1.64 {{{d[0-9]+, d[0-9]+}}}, [r[[R2]]:128]

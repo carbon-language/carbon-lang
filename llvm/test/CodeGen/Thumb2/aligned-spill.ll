@@ -9,7 +9,7 @@ target triple = "thumbv7-apple-ios"
 ;
 ; The caller-saved r4 is used as a scratch register for stack realignment.
 ; CHECK: push {r4, r7, lr}
-; CHECK: bic r4, r4, #7
+; CHECK: bfc r4, #0, #3
 ; CHECK: mov sp, r4
 define void @f(double* nocapture %p) nounwind ssp {
 entry:
@@ -23,7 +23,7 @@ entry:
 ; NEON: f
 ; NEON: push {r4, r7, lr}
 ; NEON: sub.w r4, sp, #64
-; NEON: bic r4, r4, #15
+; NEON: bfc r4, #0, #4
 ; Stack pointer must be updated before the spills.
 ; NEON: mov sp, r4
 ; NEON: vst1.64 {d8, d9, d10, d11}, [r4:128]!
@@ -54,7 +54,7 @@ entry:
 ; NEON: f7
 ; NEON: push {r4, r7, lr}
 ; NEON: sub.w r4, sp, #56
-; NEON: bic r4, r4, #15
+; NEON: bfc r4, #0, #4
 ; Stack pointer must be updated before the spills.
 ; NEON: mov sp, r4
 ; NEON: vst1.64 {d8, d9, d10, d11}, [r4:128]!
@@ -81,7 +81,7 @@ entry:
 ; NEON: push {r4, r7, lr}
 ; NEON: vpush {d12, d13, d14, d15}
 ; NEON: sub.w r4, sp, #24
-; NEON: bic r4, r4, #15
+; NEON: bfc r4, #0, #4
 ; Stack pointer must be updated before the spills.
 ; NEON: mov sp, r4
 ; NEON: vst1.64 {d8, d9}, [r4:128]

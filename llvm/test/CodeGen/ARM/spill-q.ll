@@ -11,7 +11,7 @@ declare <4 x float> @llvm.arm.neon.vld1.v4f32(i8*, i32) nounwind readonly
 
 define void @aaa(%quuz* %this, i8* %block) {
 ; CHECK-LABEL: aaa:
-; CHECK: bic {{.*}}, #15
+; CHECK: bfc {{.*}}, #0, #4
 ; CHECK: vst1.64 {{.*}}sp:128
 ; CHECK: vld1.64 {{.*}}sp:128
 entry:

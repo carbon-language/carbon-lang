@@ -71,7 +71,7 @@ define void @check_vfp_fold() minsize {
 ; CHECK-IOS-LABEL: check_vfp_fold:
 ; CHECK-IOS: push {r0, r1, r2, r3, r4, r7, lr}
 ; CHECK-IOS: sub.w r4, sp, #16
-; CHECK-IOS: bic r4, r4, #15
+; CHECK-IOS: bfc r4, #0, #4
 ; CHECK-IOS: mov sp, r4
 ; CHECK-IOS: vst1.64 {d8, d9}, [r4:128]
 ; ...

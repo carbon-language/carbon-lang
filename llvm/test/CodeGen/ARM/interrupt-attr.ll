@@ -15,7 +15,7 @@ define arm_aapcscc void @irq_fn() alignstack(8) "interrupt"="IRQ" {
 ; CHECK-A: push {r0, r1, r2, r3, r10, r11, r12, lr}
 ; CHECK-A: add r11, sp, #20
 ; CHECK-A-NOT: sub sp, sp, #{{[0-9]+}}
-; CHECK-A: bic sp, sp, #7
+; CHECK-A: bfc sp, #0, #3
 ; CHECK-A: bl bar
 ; CHECK-A: sub sp, r11, #20
 ; CHECK-A: pop {r0, r1, r2, r3, r10, r11, r12, lr}
@@ -25,7 +25,7 @@ define arm_aapcscc void @irq_fn() alignstack(8) "interrupt"="IRQ" {
 ; CHECK-A-THUMB: push.w {r0, r1, r2, r3, r4, r7, r12, lr}
 ; CHECK-A-THUMB: add r7, sp, #20
 ; CHECK-A-THUMB: mov r4, sp
-; CHECK-A-THUMB: bic r4, r4, #7
+; CHECK-A-THUMB: bfc r4, #0, #3
 ; CHECK-A-THUMB: bl bar
 ; CHECK-A-THUMB: sub.w r4, r7,  #20
 ; CHECK-A-THUMB: mov sp, r4
@@ -38,7 +38,7 @@ define arm_aapcscc void @irq_fn() alignstack(8) "interrupt"="IRQ" {
 ; CHECK-M: push.w {r4, r10, r11, lr}
 ; CHECK-M: add.w r11, sp, #8
 ; CHECK-M: mov r4, sp
-; CHECK-M: bic r4, r4, #7
+; CHECK-M: bfc r4, #0, #3
 ; CHECK-M: mov sp, r4
 ; CHECK-M: bl _bar
 ; CHECK-M: sub.w r4, r11, #8
@@ -56,7 +56,7 @@ define arm_aapcscc void @fiq_fn() alignstack(8) "interrupt"="FIQ" {
   ; 32 to get past r0, r1, ..., r7
 ; CHECK-A: add r11, sp, #32
 ; CHECK-A: sub sp, sp, #{{[0-9]+}}
-; CHECK-A: bic sp, sp, #7
+; CHECK-A: bfc sp, #0, #3
 ; [...]
   ; 32 must match above
 ; CHECK-A: sub sp, r11, #32
@@ -75,7 +75,7 @@ define arm_aapcscc void @swi_fn() alignstack(8) "interrupt"="SWI" {
 ; CHECK-A: push {r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, lr}
 ; CHECK-A: add r11, sp, #44
 ; CHECK-A: sub sp, sp, #{{[0-9]+}}
-; CHECK-A: bic sp, sp, #7
+; CHECK-A: bfc sp, #0, #3
 ; [...]
 ; CHECK-A: sub sp, r11, #44
 ; CHECK-A: pop {r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, lr}
@@ -91,7 +91,7 @@ define arm_aapcscc void @undef_fn() alignstack(8) "interrupt"="UNDEF" {
 ; CHECK-A: push {r0, r1, r2, r3, r10, r11, r12, lr}
 ; CHECK-A: add r11, sp, #20
 ; CHECK-A-NOT: sub sp, sp, #{{[0-9]+}}
-; CHECK-A: bic sp, sp, #7
+; CHECK-A: bfc sp, #0, #3
 ; [...]
 ; CHECK-A: sub sp, r11, #20
 ; CHECK-A: pop {r0, r1, r2, r3, r10, r11, r12, lr}
@@ -106,7 +106,7 @@ define arm_aapcscc void @abort_fn() alignstack(8) "interrupt"="ABORT" {
 ; CHECK-A: push {r0, r1, r2, r3, r10, r11, r12, lr}
 ; CHECK-A: add r11, sp, #20
 ; CHECK-A-NOT: sub sp, sp, #{{[0-9]+}}
-; CHECK-A: bic sp, sp, #7
+; CHECK-A: bfc sp, #0, #3
 ; [...]
 ; CHECK-A: sub sp, r11, #20
 ; CHECK-A: pop {r0, r1, r2, r3, r10, r11, r12, lr}
