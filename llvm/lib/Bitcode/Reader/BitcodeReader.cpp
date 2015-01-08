@@ -100,22 +100,35 @@ static bool ConvertToString(ArrayRef<uint64_t> Record, unsigned Idx,
   return false;
 }
 
-static GlobalValue::LinkageTypes GetDecodedLinkage(unsigned Val) {
+static GlobalValue::LinkageTypes getDecodedLinkage(unsigned Val) {
   switch (Val) {
   default: // Map unknown/new linkages to external
-  case 0:  return GlobalValue::ExternalLinkage;
-  case 1:  return GlobalValue::WeakAnyLinkage;
-  case 2:  return GlobalValue::AppendingLinkage;
-  case 3:  return GlobalValue::InternalLinkage;
-  case 4:  return GlobalValue::LinkOnceAnyLinkage;
-  case 5:  return GlobalValue::ExternalLinkage; // Obsolete DLLImportLinkage
-  case 6:  return GlobalValue::ExternalLinkage; // Obsolete DLLExportLinkage
-  case 7:  return GlobalValue::ExternalWeakLinkage;
-  case 8:  return GlobalValue::CommonLinkage;
-  case 9:  return GlobalValue::PrivateLinkage;
-  case 10: return GlobalValue::WeakODRLinkage;
-  case 11: return GlobalValue::LinkOnceODRLinkage;
-  case 12: return GlobalValue::AvailableExternallyLinkage;
+  case 0:
+    return GlobalValue::ExternalLinkage;
+  case 1:
+    return GlobalValue::WeakAnyLinkage;
+  case 2:
+    return GlobalValue::AppendingLinkage;
+  case 3:
+    return GlobalValue::InternalLinkage;
+  case 4:
+    return GlobalValue::LinkOnceAnyLinkage;
+  case 5:
+    return GlobalValue::ExternalLinkage; // Obsolete DLLImportLinkage
+  case 6:
+    return GlobalValue::ExternalLinkage; // Obsolete DLLExportLinkage
+  case 7:
+    return GlobalValue::ExternalWeakLinkage;
+  case 8:
+    return GlobalValue::CommonLinkage;
+  case 9:
+    return GlobalValue::PrivateLinkage;
+  case 10:
+    return GlobalValue::WeakODRLinkage;
+  case 11:
+    return GlobalValue::LinkOnceODRLinkage;
+  case 12:
+    return GlobalValue::AvailableExternallyLinkage;
   case 13:
     return GlobalValue::PrivateLinkage; // Obsolete LinkerPrivateLinkage
   case 14:
@@ -2048,7 +2061,7 @@ std::error_code BitcodeReader::ParseModule(bool Resume) {
       Ty = cast<PointerType>(Ty)->getElementType();
 
       bool isConstant = Record[1];
-      GlobalValue::LinkageTypes Linkage = GetDecodedLinkage(Record[3]);
+      GlobalValue::LinkageTypes Linkage = getDecodedLinkage(Record[3]);
       unsigned Alignment = (1 << Record[4]) >> 1;
       std::string Section;
       if (Record[5]) {
@@ -2122,7 +2135,7 @@ std::error_code BitcodeReader::ParseModule(bool Resume) {
 
       Func->setCallingConv(static_cast<CallingConv::ID>(Record[1]));
       bool isProto = Record[2];
-      Func->setLinkage(GetDecodedLinkage(Record[3]));
+      Func->setLinkage(getDecodedLinkage(Record[3]));
       Func->setAttributes(getAttributes(Record[4]));
 
       Func->setAlignment((1 << Record[5]) >> 1);
@@ -2187,7 +2200,7 @@ std::error_code BitcodeReader::ParseModule(bool Resume) {
 
       auto *NewGA =
           GlobalAlias::create(PTy->getElementType(), PTy->getAddressSpace(),
-                              GetDecodedLinkage(Record[2]), "", TheModule);
+                              getDecodedLinkage(Record[2]), "", TheModule);
       // Old bitcode files didn't have visibility field.
       // Local linkage must have default visibility.
       if (Record.size() > 3 && !NewGA->hasLocalLinkage())
