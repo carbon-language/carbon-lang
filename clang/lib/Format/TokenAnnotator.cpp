@@ -1839,56 +1839,54 @@ bool TokenAnnotator::mustBreakBefore(const AnnotatedLine &Line,
                              BeforeClosingBrace->isTrailingComment()))
     return true;
 
-  if (Right.is(tok::comment)) {
+  if (Right.is(tok::comment))
     return Left.BlockKind != BK_BracedInit &&
            Left.isNot(TT_CtorInitializerColon) &&
            (Right.NewlinesBefore > 0 && Right.HasUnescapedNewline);
-  } else if (Right.Previous->isTrailingComment() ||
-             (Right.isStringLiteral() && Right.Previous->isStringLiteral())) {
+  if (Right.Previous->isTrailingComment() ||
+      (Right.isStringLiteral() && Right.Previous->isStringLiteral()))
     return true;
-  } else if (Right.Previous->IsUnterminatedLiteral) {
+  if (Right.Previous->IsUnterminatedLiteral)
     return true;
-  } else if (Right.is(tok::lessless) && Right.Next &&
-             Right.Previous->is(tok::string_literal) &&
-             Right.Next->is(tok::string_literal)) {
+  if (Right.is(tok::lessless) && Right.Next &&
+      Right.Previous->is(tok::string_literal) &&
+      Right.Next->is(tok::string_literal))
     return true;
-  } else if (Right.Previous->ClosesTemplateDeclaration &&
-             Right.Previous->MatchingParen &&
-             Right.Previous->MatchingParen->NestingLevel == 0 &&
-             Style.AlwaysBreakTemplateDeclarations) {
+  if (Right.Previous->ClosesTemplateDeclaration &&
+      Right.Previous->MatchingParen &&
+      Right.Previous->MatchingParen->NestingLevel == 0 &&
+      Style.AlwaysBreakTemplateDeclarations)
     return true;
-  } else if ((Right.isOneOf(TT_CtorInitializerComma,
-                            TT_CtorInitializerColon)) &&
-             Style.BreakConstructorInitializersBeforeComma &&
-             !Style.ConstructorInitializerAllOnOneLineOrOnePerLine) {
+  if ((Right.isOneOf(TT_CtorInitializerComma, TT_CtorInitializerColon)) &&
+      Style.BreakConstructorInitializersBeforeComma &&
+      !Style.ConstructorInitializerAllOnOneLineOrOnePerLine)
     return true;
-  } else if (Right.is(tok::string_literal) &&
-             Right.TokenText.startswith("R\"")) {
+  if (Right.is(tok::string_literal) && Right.TokenText.startswith("R\""))
     // Raw string literals are special wrt. line breaks. The author has made a
     // deliberate choice and might have aligned the contents of the string
     // literal accordingly. Thus, we try keep existing line breaks.
     return Right.NewlinesBefore > 0;
-  } else if (Right.Previous->is(tok::l_brace) && Right.NestingLevel == 1 &&
-             Style.Language == FormatStyle::LK_Proto) {
+  if (Right.Previous->is(tok::l_brace) && Right.NestingLevel == 1 &&
+      Style.Language == FormatStyle::LK_Proto)
     // Don't put enums onto single lines in protocol buffers.
     return true;
-  } else if (Style.Language == FormatStyle::LK_JavaScript &&
-             Right.is(tok::r_brace) && Left.is(tok::l_brace) &&
-             !Left.Children.empty()) {
+  if (Style.Language == FormatStyle::LK_JavaScript && Right.is(tok::r_brace) &&
+      Left.is(tok::l_brace) && !Left.Children.empty())
     // Support AllowShortFunctionsOnASingleLine for JavaScript.
     return Style.AllowShortFunctionsOnASingleLine == FormatStyle::SFS_None ||
            (Left.NestingLevel == 0 && Line.Level == 0 &&
             Style.AllowShortFunctionsOnASingleLine == FormatStyle::SFS_Inline);
-  } else if (isAllmanBrace(Left) || isAllmanBrace(Right)) {
+  if (isAllmanBrace(Left) || isAllmanBrace(Right))
     return Style.BreakBeforeBraces == FormatStyle::BS_Allman ||
            Style.BreakBeforeBraces == FormatStyle::BS_GNU;
-  } else if (Style.Language == FormatStyle::LK_Proto &&
-             Left.isNot(tok::l_brace) && Right.is(TT_SelectorName)) {
+  if (Style.Language == FormatStyle::LK_Proto && Left.isNot(tok::l_brace) &&
+      Right.is(TT_SelectorName))
     return true;
-  } else if (Left.is(TT_ObjCBlockLBrace) &&
-             !Style.AllowShortBlocksOnASingleLine) {
+  if (Left.is(TT_ObjCBlockLBrace) && !Style.AllowShortBlocksOnASingleLine)
     return true;
-  }
+  if (Right.is(tok::lessless) && Left.is(tok::identifier) &&
+      Left.TokenText == "endl")
+    return true;
 
   if (Style.Language == FormatStyle::LK_JavaScript) {
     // FIXME: This might apply to other languages and token kinds.
