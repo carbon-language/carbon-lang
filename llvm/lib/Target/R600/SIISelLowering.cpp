@@ -1690,12 +1690,6 @@ static bool isVSrc(unsigned RegClass) {
   }
 }
 
-/// \brief Test if RegClass is one of the SSrc classes
-static bool isSSrc(unsigned RegClass) {
-  return AMDGPU::SSrc_32RegClassID == RegClass ||
-         AMDGPU::SSrc_64RegClassID == RegClass;
-}
-
 /// \brief Analyze the possible immediate value Op
 ///
 /// Returns -1 if it isn't an immediate, 0 if it's and inline immediate
@@ -1726,44 +1720,6 @@ int32_t SITargetLowering::analyzeImmediate(const SDNode *N) const {
   }
 
   return -1;
-}
-
-/// \brief Try to fold an immediate directly into an instruction
-bool SITargetLowering::foldImm(SDValue &Operand, int32_t &Immediate,
-                               bool &ScalarSlotUsed) const {
-
-  MachineSDNode *Mov = dyn_cast<MachineSDNode>(Operand);
-  const SIInstrInfo *TII = static_cast<const SIInstrInfo *>(
-      getTargetMachine().getSubtargetImpl()->getInstrInfo());
-  if (!Mov || !TII->isMov(Mov->getMachineOpcode()))
-    return false;
-
-  const SDValue &Op = Mov->getOperand(0);
-  int32_t Value = analyzeImmediate(Op.getNode());
-  if (Value == -1) {
-    // Not an immediate at all
-    return false;
-
-  } else if (Value == 0) {
-    // Inline immediates can always be fold
-    Operand = Op;
-    return true;
-
-  } else if (Value == Immediate) {
-    // Already fold literal immediate
-    Operand = Op;
-    return true;
-
-  } else if (!ScalarSlotUsed && !Immediate) {
-    // Fold this literal immediate
-    ScalarSlotUsed = true;
-    Immediate = Value;
-    Operand = Op;
-    return true;
-
-  }
-
-  return false;
 }
 
 const TargetRegisterClass *SITargetLowering::getRegClassForNode(
@@ -1827,133 +1783,6 @@ bool SITargetLowering::fitsRegClass(SelectionDAG &DAG, const SDValue &Op,
     return false;
   }
   return TRI->getRegClass(RegClass)->hasSubClassEq(RC);
-}
-
-/// \returns true if \p Node's operands are different from the SDValue list
-/// \p Ops
-static bool isNodeChanged(const SDNode *Node, const std::vector<SDValue> &Ops) {
-  for (unsigned i = 0, e = Node->getNumOperands(); i < e; ++i) {
-    if (Ops[i].getNode() != Node->getOperand(i).getNode()) {
-      return true;
-    }
-  }
-  return false;
-}
-
-/// TODO: This needs to be removed. It's current primary purpose is to fold
-/// immediates into operands when legal. The legalization parts are redundant
-/// with SIInstrInfo::legalizeOperands which is called in a post-isel hook.
-SDNode *SITargetLowering::legalizeOperands(MachineSDNode *Node,
-                                           SelectionDAG &DAG) const {
-  // Original encoding (either e32 or e64)
-  int Opcode = Node->getMachineOpcode();
-  const SIInstrInfo *TII = static_cast<const SIInstrInfo *>(
-      getTargetMachine().getSubtargetImpl()->getInstrInfo());
-  const MCInstrDesc *Desc = &TII->get(Opcode);
-
-  unsigned NumDefs = Desc->getNumDefs();
-  unsigned NumOps = Desc->getNumOperands();
-
-  // Commuted opcode if available
-  int OpcodeRev = Desc->isCommutable() ? TII->commuteOpcode(Opcode) : -1;
-  const MCInstrDesc *DescRev = OpcodeRev == -1 ? nullptr : &TII->get(OpcodeRev);
-
-  assert(!DescRev || DescRev->getNumDefs() == NumDefs);
-  assert(!DescRev || DescRev->getNumOperands() == NumOps);
-
-  int32_t Immediate = Desc->getSize() == 4 ? 0 : -1;
-  bool HaveVSrc = false, HaveSSrc = false;
-
-  // First figure out what we already have in this instruction.
-  for (unsigned i = 0, e = Node->getNumOperands(), Op = NumDefs;
-       i != e && Op < NumOps; ++i, ++Op) {
-
-    unsigned RegClass = Desc->OpInfo[Op].RegClass;
-    if (isVSrc(RegClass))
-      HaveVSrc = true;
-    else if (isSSrc(RegClass))
-      HaveSSrc = true;
-    else
-      continue;
-
-    int32_t Imm = analyzeImmediate(Node->getOperand(i).getNode());
-    if (Imm != -1 && Imm != 0) {
-      // Literal immediate
-      Immediate = Imm;
-    }
-  }
-
-  // If we neither have VSrc nor SSrc, it makes no sense to continue.
-  if (!HaveVSrc && !HaveSSrc)
-    return Node;
-
-  // No scalar allowed when we have both VSrc and SSrc
-  bool ScalarSlotUsed = HaveVSrc && HaveSSrc;
-
-  // If this instruction has an implicit use of VCC, then it can't use the
-  // constant bus.
-  for (unsigned i = 0, e = Desc->getNumImplicitUses(); i != e; ++i) {
-    if (Desc->ImplicitUses[i] == AMDGPU::VCC) {
-      ScalarSlotUsed = true;
-      break;
-    }
-  }
-
-  // Second go over the operands and try to fold them
-  std::vector<SDValue> Ops;
-  for (unsigned i = 0, e = Node->getNumOperands(), Op = NumDefs;
-       i != e && Op < NumOps; ++i, ++Op) {
-
-    const SDValue &Operand = Node->getOperand(i);
-    Ops.push_back(Operand);
-
-    // Already folded immediate?
-    if (isa<ConstantSDNode>(Operand.getNode()) ||
-        isa<ConstantFPSDNode>(Operand.getNode()))
-      continue;
-
-    // Is this a VSrc or SSrc operand?
-    unsigned RegClass = Desc->OpInfo[Op].RegClass;
-    if (isVSrc(RegClass) || isSSrc(RegClass)) {
-      // Try to fold the immediates. If this ends up with multiple constant bus
-      // uses, it will be legalized later.
-      foldImm(Ops[i], Immediate, ScalarSlotUsed);
-      continue;
-    }
-
-    if (i == 1 && DescRev && fitsRegClass(DAG, Ops[0], RegClass)) {
-
-      unsigned OtherRegClass = Desc->OpInfo[NumDefs].RegClass;
-      assert(isVSrc(OtherRegClass) || isSSrc(OtherRegClass));
-
-      // Test if it makes sense to swap operands
-      if (foldImm(Ops[1], Immediate, ScalarSlotUsed) ||
-          (!fitsRegClass(DAG, Ops[1], RegClass) &&
-           fitsRegClass(DAG, Ops[1], OtherRegClass))) {
-
-        // Swap commutable operands
-        std::swap(Ops[0], Ops[1]);
-
-        Desc = DescRev;
-        DescRev = nullptr;
-        continue;
-      }
-    }
-  }
-
-  // Add optional chain and glue
-  for (unsigned i = NumOps - NumDefs, e = Node->getNumOperands(); i < e; ++i)
-    Ops.push_back(Node->getOperand(i));
-
-  // Nodes that have a glue result are not CSE'd by getMachineNode(), so in
-  // this case a brand new node is always be created, even if the operands
-  // are the same as before.  So, manually check if anything has been changed.
-  if (Desc->Opcode == Opcode && !isNodeChanged(Node, Ops)) {
-    return Node;
-  }
-
-  // Create a complete new instruction
-  return DAG.getMachineNode(Desc->Opcode, SDLoc(Node), Node->getVTList(), Ops);
 }
 
 /// \brief Helper function for adjustWritemask
@@ -2084,8 +1913,7 @@ SDNode *SITargetLowering::PostISelFolding(MachineSDNode *Node,
     legalizeTargetIndependentNode(Node, DAG);
     return Node;
   }
-
-  return legalizeOperands(Node, DAG);
+  return Node;
 }
 
 /// \brief Assign the register class depending on the number of

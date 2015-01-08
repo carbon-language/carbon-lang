@@ -87,6 +87,27 @@ entry:
   store i32 %tmp1, i32 addrspace(1)* %out
   ret void
 }
+; CHECK-LABEL: {{^}}vector_imm:
+; CHECK: s_movk_i32 [[IMM:s[0-9]+]], 0x64
+; CHECK: v_xor_b32_e32 v{{[0-9]}}, [[IMM]], v{{[0-9]}}
+; CHECK: v_xor_b32_e32 v{{[0-9]}}, [[IMM]], v{{[0-9]}}
+; CHECK: v_xor_b32_e32 v{{[0-9]}}, [[IMM]], v{{[0-9]}}
+; CHECK: v_xor_b32_e32 v{{[0-9]}}, [[IMM]], v{{[0-9]}}
+
+define void @vector_imm(<4 x i32> addrspace(1)* %out) {
+entry:
+  %tmp0 = call i32 @llvm.r600.read.tidig.x()
+  %tmp1 = add i32 %tmp0, 1
+  %tmp2 = add i32 %tmp0, 2
+  %tmp3 = add i32 %tmp0, 3
+  %vec0 = insertelement <4 x i32> undef, i32 %tmp0, i32 0
+  %vec1 = insertelement <4 x i32> %vec0, i32 %tmp1, i32 1
+  %vec2 = insertelement <4 x i32> %vec1, i32 %tmp2, i32 2
+  %vec3 = insertelement <4 x i32> %vec2, i32 %tmp3, i32 3
+  %tmp4 = xor <4 x i32> <i32 100, i32 100, i32 100, i32 100>, %vec3
+  store <4 x i32> %tmp4, <4 x i32> addrspace(1)* %out
+  ret void
+}
 
 declare i32 @llvm.r600.read.tidig.x() #0
 attributes #0 = { readnone }

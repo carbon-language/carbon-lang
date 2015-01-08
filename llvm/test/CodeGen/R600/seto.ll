@@ -2,7 +2,7 @@
 
 ; CHECK-LABEL: {{^}}main:
 ; CHECK: v_cmp_o_f32_e64 [[CMP:s\[[0-9]+:[0-9]+\]]], [[SREG:s[0-9]+]], [[SREG]]
-; CHECK-NEXT: v_cndmask_b32_e64 {{v[0-9]+}}, 0.0, 1.0, [[CMP]]
+; CHECK-NEXT: v_cndmask_b32_e64 {{v[0-9]+}}, 0, 1.0, [[CMP]]
 define void @main(float %p) {
 main_body:
   %c = fcmp oeq float %p, %p

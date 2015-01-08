@@ -112,7 +112,7 @@ define void @store_literal_imm_f32(float addrspace(1)* %out) {
 
 ; CHECK-LABEL: {{^}}add_inline_imm_0.0_f32
 ; CHECK: s_load_dword [[VAL:s[0-9]+]]
-; CHECK: v_add_f32_e64 [[REG:v[0-9]+]], 0.0, [[VAL]]{{$}}
+; CHECK: v_add_f32_e64 [[REG:v[0-9]+]], 0, [[VAL]]{{$}}
 ; CHECK-NEXT: buffer_store_dword [[REG]]
 define void @add_inline_imm_0.0_f32(float addrspace(1)* %out, float %x) {
   %y = fadd float %x, 0.0
@@ -304,7 +304,7 @@ define void @add_inline_imm_64_f32(float addrspace(1)* %out, float %x) {
 
 ; CHECK-LABEL: {{^}}add_inline_imm_0.0_f64
 ; CHECK: s_load_dwordx2 [[VAL:s\[[0-9]+:[0-9]+\]]], {{s\[[0-9]+:[0-9]+\]}}, 0xb
-; CHECK: v_add_f64 [[REG:v\[[0-9]+:[0-9]+\]]], 0.0, [[VAL]]
+; CHECK: v_add_f64 [[REG:v\[[0-9]+:[0-9]+\]]], 0, [[VAL]]
 ; CHECK-NEXT: buffer_store_dwordx2 [[REG]]
 define void @add_inline_imm_0.0_f64(double addrspace(1)* %out, double %x) {
   %y = fadd double %x, 0.0

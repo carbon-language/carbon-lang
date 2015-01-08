@@ -48,7 +48,7 @@ define void @fneg_v4f32(<4 x float> addrspace(1)* nocapture %out, <4 x float> %i
 ; R600: -KC0[2].Z
 
 ; XXX: We could use v_add_f32_e64 with the negate bit here instead.
-; SI: v_sub_f32_e64 v{{[0-9]}}, 0.0, s{{[0-9]+$}}
+; SI: v_sub_f32_e64 v{{[0-9]}}, 0, s{{[0-9]+$}}
 define void @fneg_free_f32(float addrspace(1)* %out, i32 %in) {
   %bc = bitcast i32 %in to float
   %fsub = fsub float 0.0, %bc
