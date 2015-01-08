@@ -3960,40 +3960,42 @@ Instruction *InstCombiner::visitFCmpInst(FCmpInst &I) {
         }
         break;
       case Instruction::Call: {
+        if (!RHSC->isNullValue())
+          break;
+
         CallInst *CI = cast<CallInst>(LHSI);
-        LibFunc::Func Func;
+        const Function *F = CI->getCalledFunction();
+        if (!F)
+          break;
+
         // Various optimization for fabs compared with zero.
-        if (RHSC->isNullValue() && CI->getCalledFunction() &&
-            TLI->getLibFunc(CI->getCalledFunction()->getName(), Func) &&
-            TLI->has(Func)) {
-          if (Func == LibFunc::fabs || Func == LibFunc::fabsf ||
-              Func == LibFunc::fabsl) {
-            switch (I.getPredicate()) {
-            default: break;
+        LibFunc::Func Func;
+        if (F->getIntrinsicID() == Intrinsic::fabs ||
+            (TLI->getLibFunc(F->getName(), Func) && TLI->has(Func) &&
+             (Func == LibFunc::fabs || Func == LibFunc::fabsf ||
+              Func == LibFunc::fabsl))) {
+          switch (I.getPredicate()) {
+          default:
+            break;
             // fabs(x) < 0 --> false
-            case FCmpInst::FCMP_OLT:
-              return ReplaceInstUsesWith(I, Builder->getFalse());
+          case FCmpInst::FCMP_OLT:
+            return ReplaceInstUsesWith(I, Builder->getFalse());
             // fabs(x) > 0 --> x != 0
-            case FCmpInst::FCMP_OGT:
-              return new FCmpInst(FCmpInst::FCMP_ONE, CI->getArgOperand(0),
-                                  RHSC);
+          case FCmpInst::FCMP_OGT:
+            return new FCmpInst(FCmpInst::FCMP_ONE, CI->getArgOperand(0), RHSC);
             // fabs(x) <= 0 --> x == 0
-            case FCmpInst::FCMP_OLE:
-              return new FCmpInst(FCmpInst::FCMP_OEQ, CI->getArgOperand(0),
-                                  RHSC);
+          case FCmpInst::FCMP_OLE:
+            return new FCmpInst(FCmpInst::FCMP_OEQ, CI->getArgOperand(0), RHSC);
             // fabs(x) >= 0 --> !isnan(x)
-            case FCmpInst::FCMP_OGE:
-              return new FCmpInst(FCmpInst::FCMP_ORD, CI->getArgOperand(0),
-                                  RHSC);
+          case FCmpInst::FCMP_OGE:
+            return new FCmpInst(FCmpInst::FCMP_ORD, CI->getArgOperand(0), RHSC);
             // fabs(x) == 0 --> x == 0
             // fabs(x) != 0 --> x != 0
-            case FCmpInst::FCMP_OEQ:
-            case FCmpInst::FCMP_UEQ:
-            case FCmpInst::FCMP_ONE:
-            case FCmpInst::FCMP_UNE:
-              return new FCmpInst(I.getPredicate(), CI->getArgOperand(0),
-                                  RHSC);
-            }
+          case FCmpInst::FCMP_OEQ:
+          case FCmpInst::FCMP_UEQ:
+          case FCmpInst::FCMP_ONE:
+          case FCmpInst::FCMP_UNE:
+            return new FCmpInst(I.getPredicate(), CI->getArgOperand(0), RHSC);
           }
         }
       }
