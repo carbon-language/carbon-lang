@@ -352,6 +352,7 @@ func (u *unit) defineFunction(f *ssa.Function) {
 		fr.blocks[i] = llvm.AddBasicBlock(fr.function, fmt.Sprintf(".%d.%s", i, block.Comment))
 	}
 	fr.builder.SetInsertPointAtEnd(fr.blocks[0])
+	fr.transformSwitches(f)
 
 	prologueBlock := llvm.InsertBasicBlock(fr.blocks[0], "prologue")
 	fr.builder.SetInsertPointAtEnd(prologueBlock)
@@ -433,7 +434,11 @@ func (u *unit) defineFunction(f *ssa.Function) {
 	fr.allocaBuilder.SetInsertPointBefore(prologueBlock.FirstInstruction())
 
 	for _, block := range f.DomPreorder() {
-		fr.translateBlock(block, fr.blocks[block.Index])
+		llblock := fr.blocks[block.Index]
+		if llblock.IsNil() {
+			continue
+		}
+		fr.translateBlock(block, llblock)
 	}
 
 	fr.fixupPhis()
@@ -1178,6 +1183,9 @@ func (fr *frame) instruction(instr ssa.Instruction) {
 			fr.nilCheck(instr.Addr, addr)
 			fr.builder.CreateStore(value, addr)
 		}
+
+	case *switchInstr:
+		fr.emitSwitch(instr)
 
 	case *ssa.TypeAssert:
 		x := fr.value(instr.X)
