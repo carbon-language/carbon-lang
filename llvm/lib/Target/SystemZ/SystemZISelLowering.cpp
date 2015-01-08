@@ -218,10 +218,12 @@ SystemZTargetLowering::SystemZTargetLowering(const TargetMachine &tm)
   setOperationAction(ISD::SRA_PARTS, MVT::i64, Expand);
 
   // We have native instructions for i8, i16 and i32 extensions, but not i1.
-  setLoadExtAction(ISD::SEXTLOAD, MVT::i1, Promote);
-  setLoadExtAction(ISD::ZEXTLOAD, MVT::i1, Promote);
-  setLoadExtAction(ISD::EXTLOAD,  MVT::i1, Promote);
   setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i1, Expand);
+  for (MVT VT : MVT::integer_valuetypes()) {
+    setLoadExtAction(ISD::SEXTLOAD, VT, MVT::i1, Promote);
+    setLoadExtAction(ISD::ZEXTLOAD, VT, MVT::i1, Promote);
+    setLoadExtAction(ISD::EXTLOAD,  VT, MVT::i1, Promote);
+  }
 
   // Handle the various types of symbolic address.
   setOperationAction(ISD::ConstantPool,     PtrVT, Custom);
@@ -275,7 +277,8 @@ SystemZTargetLowering::SystemZTargetLowering(const TargetMachine &tm)
   // Needed so that we don't try to implement f128 constant loads using
   // a load-and-extend of a f80 constant (in cases where the constant
   // would fit in an f80).
-  setLoadExtAction(ISD::EXTLOAD, MVT::f80, Expand);
+  for (MVT VT : MVT::fp_valuetypes())
+    setLoadExtAction(ISD::EXTLOAD, VT, MVT::f80, Expand);
 
   // Floating-point truncation and stores need to be done separately.
   setTruncStoreAction(MVT::f64,  MVT::f32, Expand);

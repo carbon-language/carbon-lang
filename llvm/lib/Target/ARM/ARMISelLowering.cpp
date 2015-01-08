@@ -405,11 +405,12 @@ ARMTargetLowering::ARMTargetLowering(const TargetMachine &TM)
   }
 
   for (MVT VT : MVT::vector_valuetypes()) {
-    for (MVT InnerVT : MVT::vector_valuetypes())
+    for (MVT InnerVT : MVT::vector_valuetypes()) {
       setTruncStoreAction(VT, InnerVT, Expand);
-    setLoadExtAction(ISD::SEXTLOAD, VT, Expand);
-    setLoadExtAction(ISD::ZEXTLOAD, VT, Expand);
-    setLoadExtAction(ISD::EXTLOAD, VT, Expand);
+      setLoadExtAction(ISD::SEXTLOAD, VT, InnerVT, Expand);
+      setLoadExtAction(ISD::ZEXTLOAD, VT, InnerVT, Expand);
+      setLoadExtAction(ISD::EXTLOAD, VT, InnerVT, Expand);
+    }
 
     setOperationAction(ISD::MULHS, VT, Expand);
     setOperationAction(ISD::SMUL_LOHI, VT, Expand);
@@ -571,9 +572,11 @@ ARMTargetLowering::ARMTargetLowering(const TargetMachine &TM)
                   MVT::v4i16, MVT::v2i16,
                   MVT::v2i32};
     for (unsigned i = 0; i < 6; ++i) {
-      setLoadExtAction(ISD::EXTLOAD, Tys[i], Legal);
-      setLoadExtAction(ISD::ZEXTLOAD, Tys[i], Legal);
-      setLoadExtAction(ISD::SEXTLOAD, Tys[i], Legal);
+      for (MVT VT : MVT::integer_vector_valuetypes()) {
+        setLoadExtAction(ISD::EXTLOAD, VT, Tys[i], Legal);
+        setLoadExtAction(ISD::ZEXTLOAD, VT, Tys[i], Legal);
+        setLoadExtAction(ISD::SEXTLOAD, VT, Tys[i], Legal);
+      }
     }
   }
 
@@ -618,8 +621,10 @@ ARMTargetLowering::ARMTargetLowering(const TargetMachine &TM)
   computeRegisterProperties();
 
   // ARM does not have floating-point extending loads.
-  setLoadExtAction(ISD::EXTLOAD, MVT::f32, Expand);
-  setLoadExtAction(ISD::EXTLOAD, MVT::f16, Expand);
+  for (MVT VT : MVT::fp_valuetypes()) {
+    setLoadExtAction(ISD::EXTLOAD, VT, MVT::f32, Expand);
+    setLoadExtAction(ISD::EXTLOAD, VT, MVT::f16, Expand);
+  }
 
   // ... or truncating stores
   setTruncStoreAction(MVT::f64, MVT::f32, Expand);
@@ -627,7 +632,8 @@ ARMTargetLowering::ARMTargetLowering(const TargetMachine &TM)
   setTruncStoreAction(MVT::f64, MVT::f16, Expand);
 
   // ARM does not have i1 sign extending load.
-  setLoadExtAction(ISD::SEXTLOAD, MVT::i1, Promote);
+  for (MVT VT : MVT::integer_valuetypes())
+    setLoadExtAction(ISD::SEXTLOAD, VT, MVT::i1, Promote);
 
   // ARM supports all 4 flavors of integer indexed load / store.
   if (!Subtarget->isThumb1Only()) {

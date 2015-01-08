@@ -130,23 +130,30 @@ SITargetLowering::SITargetLowering(TargetMachine &TM) :
   setOperationAction(ISD::INTRINSIC_VOID, MVT::Other, Custom);
   setOperationAction(ISD::BRCOND, MVT::Other, Custom);
 
-  setLoadExtAction(ISD::SEXTLOAD, MVT::i1, Promote);
-  setLoadExtAction(ISD::SEXTLOAD, MVT::i8, Custom);
-  setLoadExtAction(ISD::SEXTLOAD, MVT::i16, Custom);
-  setLoadExtAction(ISD::SEXTLOAD, MVT::i32, Expand);
-  setLoadExtAction(ISD::SEXTLOAD, MVT::v8i16, Expand);
-  setLoadExtAction(ISD::SEXTLOAD, MVT::v16i16, Expand);
+  for (MVT VT : MVT::integer_valuetypes()) {
+    setLoadExtAction(ISD::SEXTLOAD, VT, MVT::i1, Promote);
+    setLoadExtAction(ISD::SEXTLOAD, VT, MVT::i8, Custom);
+    setLoadExtAction(ISD::SEXTLOAD, VT, MVT::i16, Custom);
+    setLoadExtAction(ISD::SEXTLOAD, VT, MVT::i32, Expand);
 
-  setLoadExtAction(ISD::ZEXTLOAD, MVT::i1, Promote);
-  setLoadExtAction(ISD::ZEXTLOAD, MVT::i8, Custom);
-  setLoadExtAction(ISD::ZEXTLOAD, MVT::i16, Custom);
-  setLoadExtAction(ISD::ZEXTLOAD, MVT::i32, Expand);
+    setLoadExtAction(ISD::ZEXTLOAD, VT, MVT::i1, Promote);
+    setLoadExtAction(ISD::ZEXTLOAD, VT, MVT::i8, Custom);
+    setLoadExtAction(ISD::ZEXTLOAD, VT, MVT::i16, Custom);
+    setLoadExtAction(ISD::ZEXTLOAD, VT, MVT::i32, Expand);
 
-  setLoadExtAction(ISD::EXTLOAD, MVT::i1, Promote);
-  setLoadExtAction(ISD::EXTLOAD, MVT::i8, Custom);
-  setLoadExtAction(ISD::EXTLOAD, MVT::i16, Custom);
-  setLoadExtAction(ISD::EXTLOAD, MVT::i32, Expand);
-  setLoadExtAction(ISD::EXTLOAD, MVT::f32, Expand);
+    setLoadExtAction(ISD::EXTLOAD, VT, MVT::i1, Promote);
+    setLoadExtAction(ISD::EXTLOAD, VT, MVT::i8, Custom);
+    setLoadExtAction(ISD::EXTLOAD, VT, MVT::i16, Custom);
+    setLoadExtAction(ISD::EXTLOAD, VT, MVT::i32, Expand);
+  }
+
+  for (MVT VT : MVT::integer_vector_valuetypes()) {
+    setLoadExtAction(ISD::SEXTLOAD, VT, MVT::v8i16, Expand);
+    setLoadExtAction(ISD::SEXTLOAD, VT, MVT::v16i16, Expand);
+  }
+
+  for (MVT VT : MVT::fp_valuetypes())
+    setLoadExtAction(ISD::EXTLOAD, VT, MVT::f32, Expand);
 
   setTruncStoreAction(MVT::i32, MVT::i8, Custom);
   setTruncStoreAction(MVT::i32, MVT::i16, Custom);

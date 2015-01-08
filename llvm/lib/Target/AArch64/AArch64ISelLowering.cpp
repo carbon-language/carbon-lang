@@ -396,11 +396,15 @@ AArch64TargetLowering::AArch64TargetLowering(const TargetMachine &TM)
 
   // AArch64 does not have floating-point extending loads, i1 sign-extending
   // load, floating-point truncating stores, or v2i32->v2i16 truncating store.
-  setLoadExtAction(ISD::EXTLOAD, MVT::f16, Expand);
-  setLoadExtAction(ISD::EXTLOAD, MVT::f32, Expand);
-  setLoadExtAction(ISD::EXTLOAD, MVT::f64, Expand);
-  setLoadExtAction(ISD::EXTLOAD, MVT::f80, Expand);
-  setLoadExtAction(ISD::SEXTLOAD, MVT::i1, Expand);
+  for (MVT VT : MVT::fp_valuetypes()) {
+    setLoadExtAction(ISD::EXTLOAD, VT, MVT::f16, Expand);
+    setLoadExtAction(ISD::EXTLOAD, VT, MVT::f32, Expand);
+    setLoadExtAction(ISD::EXTLOAD, VT, MVT::f64, Expand);
+    setLoadExtAction(ISD::EXTLOAD, VT, MVT::f80, Expand);
+  }
+  for (MVT VT : MVT::integer_valuetypes())
+    setLoadExtAction(ISD::SEXTLOAD, VT, MVT::i1, Expand);
+
   setTruncStoreAction(MVT::f32, MVT::f16, Expand);
   setTruncStoreAction(MVT::f64, MVT::f32, Expand);
   setTruncStoreAction(MVT::f64, MVT::f16, Expand);
@@ -549,11 +553,12 @@ AArch64TargetLowering::AArch64TargetLowering(const TargetMachine &TM)
 
       setOperationAction(ISD::BSWAP, VT, Expand);
 
-      for (MVT InnerVT : MVT::vector_valuetypes())
+      for (MVT InnerVT : MVT::vector_valuetypes()) {
         setTruncStoreAction(VT, InnerVT, Expand);
-      setLoadExtAction(ISD::SEXTLOAD, VT, Expand);
-      setLoadExtAction(ISD::ZEXTLOAD, VT, Expand);
-      setLoadExtAction(ISD::EXTLOAD, VT, Expand);
+        setLoadExtAction(ISD::SEXTLOAD, VT, InnerVT, Expand);
+        setLoadExtAction(ISD::ZEXTLOAD, VT, InnerVT, Expand);
+        setLoadExtAction(ISD::EXTLOAD, VT, InnerVT, Expand);
+      }
     }
 
     // AArch64 has implementations of a lot of rounding-like FP operations.
@@ -618,7 +623,8 @@ void AArch64TargetLowering::addTypeForNEON(EVT VT, EVT PromotedBitwiseVT) {
   setOperationAction(ISD::SELECT, VT.getSimpleVT(), Expand);
   setOperationAction(ISD::SELECT_CC, VT.getSimpleVT(), Expand);
   setOperationAction(ISD::VSELECT, VT.getSimpleVT(), Expand);
-  setLoadExtAction(ISD::EXTLOAD, VT.getSimpleVT(), Expand);
+  for (MVT InnerVT : MVT::all_valuetypes())
+    setLoadExtAction(ISD::EXTLOAD, InnerVT, VT.getSimpleVT(), Expand);
 
   // CNT supports only B element sizes.
   if (VT != MVT::v8i8 && VT != MVT::v16i8)

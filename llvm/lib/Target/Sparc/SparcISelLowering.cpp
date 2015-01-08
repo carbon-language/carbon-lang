@@ -1378,11 +1378,14 @@ SparcTargetLowering::SparcTargetLowering(TargetMachine &TM)
     addRegisterClass(MVT::i64, &SP::I64RegsRegClass);
 
   // Turn FP extload into load/fextend
-  setLoadExtAction(ISD::EXTLOAD, MVT::f32, Expand);
-  setLoadExtAction(ISD::EXTLOAD, MVT::f64, Expand);
+  for (MVT VT : MVT::fp_valuetypes()) {
+    setLoadExtAction(ISD::EXTLOAD, VT, MVT::f32, Expand);
+    setLoadExtAction(ISD::EXTLOAD, VT, MVT::f64, Expand);
+  }
 
   // Sparc doesn't have i1 sign extending load
-  setLoadExtAction(ISD::SEXTLOAD, MVT::i1, Promote);
+  for (MVT VT : MVT::integer_valuetypes())
+    setLoadExtAction(ISD::SEXTLOAD, VT, MVT::i1, Promote);
 
   // Turn FP truncstore into trunc + store.
   setTruncStoreAction(MVT::f64, MVT::f32, Expand);

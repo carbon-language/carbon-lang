@@ -127,12 +127,14 @@ XCoreTargetLowering::XCoreTargetLowering(const TargetMachine &TM)
   setOperationAction(ISD::ConstantPool, MVT::i32,   Custom);
 
   // Loads
-  setLoadExtAction(ISD::EXTLOAD, MVT::i1, Promote);
-  setLoadExtAction(ISD::ZEXTLOAD, MVT::i1, Promote);
-  setLoadExtAction(ISD::SEXTLOAD, MVT::i1, Promote);
+  for (MVT VT : MVT::integer_valuetypes()) {
+    setLoadExtAction(ISD::EXTLOAD, VT, MVT::i1, Promote);
+    setLoadExtAction(ISD::ZEXTLOAD, VT, MVT::i1, Promote);
+    setLoadExtAction(ISD::SEXTLOAD, VT, MVT::i1, Promote);
 
-  setLoadExtAction(ISD::SEXTLOAD, MVT::i8, Expand);
-  setLoadExtAction(ISD::ZEXTLOAD, MVT::i16, Expand);
+    setLoadExtAction(ISD::SEXTLOAD, VT, MVT::i8, Expand);
+    setLoadExtAction(ISD::ZEXTLOAD, VT, MVT::i16, Expand);
+  }
 
   // Custom expand misaligned loads / stores.
   setOperationAction(ISD::LOAD, MVT::i32, Custom);

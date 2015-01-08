@@ -74,8 +74,10 @@ PPCTargetLowering::PPCTargetLowering(const PPCTargetMachine &TM)
   addRegisterClass(MVT::f64, &PPC::F8RCRegClass);
 
   // PowerPC has an i16 but no i8 (or i1) SEXTLOAD
-  setLoadExtAction(ISD::SEXTLOAD, MVT::i1, Promote);
-  setLoadExtAction(ISD::SEXTLOAD, MVT::i8, Expand);
+  for (MVT VT : MVT::integer_valuetypes()) {
+    setLoadExtAction(ISD::SEXTLOAD, VT, MVT::i1, Promote);
+    setLoadExtAction(ISD::SEXTLOAD, VT, MVT::i8, Expand);
+  }
 
   setTruncStoreAction(MVT::f64, MVT::f32, Expand);
 
@@ -114,12 +116,11 @@ PPCTargetLowering::PPCTargetLowering(const PPCTargetMachine &TM)
     if (ANDIGlueBug)
       setOperationAction(ISD::TRUNCATE, MVT::i1, Custom);
 
-    setLoadExtAction(ISD::SEXTLOAD, MVT::i1, Promote);
-    setLoadExtAction(ISD::ZEXTLOAD, MVT::i1, Promote);
-    setTruncStoreAction(MVT::i64, MVT::i1, Expand);
-    setTruncStoreAction(MVT::i32, MVT::i1, Expand);
-    setTruncStoreAction(MVT::i16, MVT::i1, Expand);
-    setTruncStoreAction(MVT::i8, MVT::i1, Expand);
+    for (MVT VT : MVT::integer_valuetypes()) {
+      setLoadExtAction(ISD::SEXTLOAD, VT, MVT::i1, Promote);
+      setLoadExtAction(ISD::ZEXTLOAD, VT, MVT::i1, Promote);
+      setTruncStoreAction(VT, MVT::i1, Expand);
+    }
 
     addRegisterClass(MVT::i1, &PPC::CRBITRCRegClass);
   }
@@ -461,11 +462,12 @@ PPCTargetLowering::PPCTargetLowering(const PPCTargetMachine &TM)
       setOperationAction(ISD::VSELECT, VT, Expand);
       setOperationAction(ISD::SIGN_EXTEND_INREG, VT, Expand);
 
-      for (MVT InnerVT : MVT::vector_valuetypes())
+      for (MVT InnerVT : MVT::vector_valuetypes()) {
         setTruncStoreAction(VT, InnerVT, Expand);
-      setLoadExtAction(ISD::SEXTLOAD, VT, Expand);
-      setLoadExtAction(ISD::ZEXTLOAD, VT, Expand);
-      setLoadExtAction(ISD::EXTLOAD, VT, Expand);
+        setLoadExtAction(ISD::SEXTLOAD, VT, InnerVT, Expand);
+        setLoadExtAction(ISD::ZEXTLOAD, VT, InnerVT, Expand);
+        setLoadExtAction(ISD::EXTLOAD, VT, InnerVT, Expand);
+      }
     }
 
     // We can custom expand all VECTOR_SHUFFLEs to VPERM, others we can handle

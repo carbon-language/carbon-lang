@@ -260,7 +260,7 @@ SelectionDAGLegalize::ExpandConstantFP(ConstantFPSDNode *CFP, bool UseCP) {
     if (ConstantFPSDNode::isValueValidForType(SVT, CFP->getValueAPF()) &&
         // Only do this if the target has a native EXTLOAD instruction from
         // smaller type.
-        TLI.isLoadExtLegal(ISD::EXTLOAD, SVT) &&
+        TLI.isLoadExtLegal(ISD::EXTLOAD, OrigVT, SVT) &&
         TLI.ShouldShrinkFPConstant(OrigVT)) {
       Type *SType = SVT.getTypeForEVT(*DAG.getContext());
       LLVMC = cast<ConstantFP>(ConstantExpr::getFPTrunc(LLVMC, SType));
@@ -944,7 +944,8 @@ void SelectionDAGLegalize::LegalizeLoadOps(SDNode *Node) {
       // nice to have an effective generic way of getting these benefits...
       // Until such a way is found, don't insist on promoting i1 here.
       (SrcVT != MVT::i1 ||
-       TLI.getLoadExtAction(ExtType, MVT::i1) == TargetLowering::Promote)) {
+       TLI.getLoadExtAction(ExtType, Node->getValueType(0), MVT::i1) ==
+         TargetLowering::Promote)) {
     // Promote to a byte-sized load if not loading an integral number of
     // bytes.  For example, promote EXTLOAD:i20 -> EXTLOAD:i24.
     unsigned NewWidth = SrcVT.getStoreSizeInBits();
@@ -1056,7 +1057,8 @@ void SelectionDAGLegalize::LegalizeLoadOps(SDNode *Node) {
     Chain = Ch;
   } else {
     bool isCustom = false;
-    switch (TLI.getLoadExtAction(ExtType, SrcVT.getSimpleVT())) {
+    switch (TLI.getLoadExtAction(ExtType, Node->getValueType(0),
+                                 SrcVT.getSimpleVT())) {
     default: llvm_unreachable("This action is not supported yet!");
     case TargetLowering::Custom:
       isCustom = true;
@@ -1088,7 +1090,8 @@ void SelectionDAGLegalize::LegalizeLoadOps(SDNode *Node) {
       break;
     }
     case TargetLowering::Expand:
-      if (!TLI.isLoadExtLegal(ISD::EXTLOAD, SrcVT) && TLI.isTypeLegal(SrcVT)) {
+      if (!TLI.isLoadExtLegal(ISD::EXTLOAD, Node->getValueType(0),
+                              SrcVT) && TLI.isTypeLegal(SrcVT)) {
         SDValue Load = DAG.getLoad(SrcVT, dl, Chain, Ptr, LD->getMemOperand());
         unsigned ExtendOp;
         switch (ExtType) {

@@ -519,7 +519,7 @@ unsigned BasicTTI::getMemoryOpCost(unsigned Opcode, Type *Src,
       if (Opcode == Instruction::Store)
         LA = getTLI()->getTruncStoreAction(LT.second, MemVT.getSimpleVT());
       else
-        LA = getTLI()->getLoadExtAction(ISD::EXTLOAD, MemVT.getSimpleVT());
+        LA = getTLI()->getLoadExtAction(ISD::EXTLOAD, LT.second, MemVT);
     }
 
     if (LA != TargetLowering::Legal && LA != TargetLowering::Custom) {

@@ -80,11 +80,13 @@ MSP430TargetLowering::MSP430TargetLowering(const TargetMachine &TM)
   setIndexedLoadAction(ISD::POST_INC, MVT::i8, Legal);
   setIndexedLoadAction(ISD::POST_INC, MVT::i16, Legal);
 
-  setLoadExtAction(ISD::EXTLOAD,  MVT::i1,  Promote);
-  setLoadExtAction(ISD::SEXTLOAD, MVT::i1,  Promote);
-  setLoadExtAction(ISD::ZEXTLOAD, MVT::i1,  Promote);
-  setLoadExtAction(ISD::SEXTLOAD, MVT::i8,  Expand);
-  setLoadExtAction(ISD::SEXTLOAD, MVT::i16, Expand);
+  for (MVT VT : MVT::integer_valuetypes()) {
+    setLoadExtAction(ISD::EXTLOAD,  VT, MVT::i1,  Promote);
+    setLoadExtAction(ISD::SEXTLOAD, VT, MVT::i1,  Promote);
+    setLoadExtAction(ISD::ZEXTLOAD, VT, MVT::i1,  Promote);
+    setLoadExtAction(ISD::SEXTLOAD, VT, MVT::i8,  Expand);
+    setLoadExtAction(ISD::SEXTLOAD, VT, MVT::i16, Expand);
+  }
 
   // We don't have any truncstores
   setTruncStoreAction(MVT::i16, MVT::i8, Expand);
