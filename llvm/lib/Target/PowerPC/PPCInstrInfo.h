@@ -106,6 +106,15 @@ public:
                                               UseNode, UseIdx);
   }
 
+  bool hasLowDefLatency(const InstrItineraryData *ItinData,
+                        const MachineInstr *DefMI,
+                        unsigned DefIdx) const override {
+    // Machine LICM should hoist all instructions in low-register-pressure
+    // situations; none are sufficiently free to justify leaving in a loop
+    // body.
+    return false;
+  }
+
   bool isCoalescableExtInstr(const MachineInstr &MI,
                              unsigned &SrcReg, unsigned &DstReg,
                              unsigned &SubIdx) const override;
