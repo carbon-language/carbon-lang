@@ -250,7 +250,7 @@ ValueObject::UpdateValueIfNeeded (bool update_format)
                 m_value_checksum.clear();
             }
             
-            assert (old_checksum.empty() == !need_compare_checksums);
+            assert (success && (old_checksum.empty() == !need_compare_checksums));
             
             if (first_update)
                 SetValueDidChange (false);
