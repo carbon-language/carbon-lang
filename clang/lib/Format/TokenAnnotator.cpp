@@ -470,9 +470,12 @@ private:
         return false;
       break;
     case tok::less:
-      if ((!Tok->Previous || !Tok->Previous->Tok.isLiteral()) && parseAngle())
+      if ((!Tok->Previous ||
+           (!Tok->Previous->Tok.isLiteral() &&
+            !(Tok->Previous->is(tok::r_paren) && Contexts.size() > 1))) &&
+          parseAngle()) {
         Tok->Type = TT_TemplateOpener;
-      else {
+      } else {
         Tok->Type = TT_BinaryOperator;
         CurrentToken = Tok;
         next();
