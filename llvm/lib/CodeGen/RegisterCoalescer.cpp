@@ -1912,8 +1912,14 @@ JoinVals::analyzeValue(unsigned ValNo, JoinVals &Other) {
     return CR_Replace;
 
   // Check for simple erasable conflicts.
-  if (DefMI->isImplicitDef())
+  if (DefMI->isImplicitDef()) {
+    // We need the def for the subregister if there is nothing else live at the
+    // subrange at this point.
+    if (TrackSubRegLiveness
+        && (V.WriteLanes & (OtherV.ValidLanes | OtherV.WriteLanes)) == 0)
+      return CR_Replace;
     return CR_Erase;
+  }
 
   // Include the non-conflict where DefMI is a coalescable copy that kills
   // OtherVNI. We still want the copy erased and value numbers merged.
