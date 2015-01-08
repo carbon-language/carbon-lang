@@ -4,7 +4,7 @@
 // rid of self-referenceing structure_types (PR21902), then it should be safe
 // to just kill this test.
 //
-// CHECK: ![[SELF:[0-9]+]] = !{!"0x13\00B\00{{[^"]*}}", {{[^,]+}}, {{[^,]+}}, {{[^,]+}}, {{[^,]+}}, ![[SELF]], {{[^}]+}}} ; [ DW_TAG_structure_type ] [B]
+// CHECK: ![[SELF:[0-9]+]] = distinct !{!"0x13\00B\00{{[^"]*}}", {{[^,]+}}, {{[^,]+}}, {{[^,]+}}, {{[^,]+}}, ![[SELF]], {{[^}]+}}} ; [ DW_TAG_structure_type ] [B]
 
 void foo() {
   struct V {

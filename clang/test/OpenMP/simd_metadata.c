@@ -52,13 +52,13 @@ void h3(float *c, float *a, float *b, int size)
 }
 
 // Metadata for h1:
-// CHECK: [[LOOP_H1_HEADER:![0-9]+]] = !{[[LOOP_H1_HEADER]], [[LOOP_WIDTH_16:![0-9]+]], [[LOOP_VEC_ENABLE:![0-9]+]]}
+// CHECK: [[LOOP_H1_HEADER:![0-9]+]] = distinct !{[[LOOP_H1_HEADER]], [[LOOP_WIDTH_16:![0-9]+]], [[LOOP_VEC_ENABLE:![0-9]+]]}
 // CHECK: [[LOOP_WIDTH_16]] = !{!"llvm.loop.vectorize.width", i32 16}
 // CHECK: [[LOOP_VEC_ENABLE]] = !{!"llvm.loop.vectorize.enable", i1 true}
 //
 // Metadata for h2:
-// CHECK: [[LOOP_H2_HEADER]] = !{[[LOOP_H2_HEADER]], [[LOOP_VEC_ENABLE]]}
+// CHECK: [[LOOP_H2_HEADER]] = distinct !{[[LOOP_H2_HEADER]], [[LOOP_VEC_ENABLE]]}
 //
 // Metadata for h3:
-// CHECK: [[LOOP_H3_HEADER:![0-9]+]] = !{[[LOOP_H3_HEADER]], [[LOOP_VEC_ENABLE]]}
+// CHECK: [[LOOP_H3_HEADER:![0-9]+]] = distinct !{[[LOOP_H3_HEADER]], [[LOOP_VEC_ENABLE]]}
 //

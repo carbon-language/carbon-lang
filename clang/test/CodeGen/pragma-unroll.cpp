@@ -86,14 +86,14 @@ void template_test(double *List, int Length) {
   for_template_define_test<double>(List, Length, Value);
 }
 
-// CHECK: ![[LOOP_1]] = !{![[LOOP_1]], ![[UNROLL_FULL:.*]]}
+// CHECK: ![[LOOP_1]] = distinct !{![[LOOP_1]], ![[UNROLL_FULL:.*]]}
 // CHECK: ![[UNROLL_FULL]] = !{!"llvm.loop.unroll.full"}
-// CHECK: ![[LOOP_2]] = !{![[LOOP_2:.*]], ![[UNROLL_DISABLE:.*]]}
+// CHECK: ![[LOOP_2]] = distinct !{![[LOOP_2:.*]], ![[UNROLL_DISABLE:.*]]}
 // CHECK: ![[UNROLL_DISABLE]] = !{!"llvm.loop.unroll.disable"}
-// CHECK: ![[LOOP_3]] = !{![[LOOP_3]], ![[UNROLL_8:.*]]}
+// CHECK: ![[LOOP_3]] = distinct !{![[LOOP_3]], ![[UNROLL_8:.*]]}
 // CHECK: ![[UNROLL_8]] = !{!"llvm.loop.unroll.count", i32 8}
-// CHECK: ![[LOOP_4]] = !{![[LOOP_4]], ![[UNROLL_4:.*]]}
+// CHECK: ![[LOOP_4]] = distinct !{![[LOOP_4]], ![[UNROLL_4:.*]]}
 // CHECK: ![[UNROLL_4]] = !{!"llvm.loop.unroll.count", i32 4}
-// CHECK: ![[LOOP_5]] = !{![[LOOP_5]], ![[UNROLL_8:.*]]}
-// CHECK: ![[LOOP_6]] = !{![[LOOP_6]], ![[UNROLL_8:.*]]}
-// CHECK: ![[LOOP_7]] = !{![[LOOP_7]], ![[UNROLL_8:.*]]}
+// CHECK: ![[LOOP_5]] = distinct !{![[LOOP_5]], ![[UNROLL_8:.*]]}
+// CHECK: ![[LOOP_6]] = distinct !{![[LOOP_6]], ![[UNROLL_8:.*]]}
+// CHECK: ![[LOOP_7]] = distinct !{![[LOOP_7]], ![[UNROLL_8:.*]]}

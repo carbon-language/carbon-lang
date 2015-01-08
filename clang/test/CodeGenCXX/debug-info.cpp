@@ -53,7 +53,7 @@ namespace VirtualBase {
   }
 }
 
-// MSVC: [[VBASE_B:![0-9]+]] = !{!"0x13\00B\00{{[0-9]+}}\0096\0032\000\000\000", {{.*}}, null, [[VBASE_B_DEF:![0-9]+]], {{.*}}} ; [ DW_TAG_structure_type ] [B] [line 49, size 96, align 32, offset 0] [def] [from ]
+// MSVC: [[VBASE_B:![0-9]+]] = distinct !{!"0x13\00B\00{{[0-9]+}}\0096\0032\000\000\000", {{.*}}, null, [[VBASE_B_DEF:![0-9]+]], {{.*}}} ; [ DW_TAG_structure_type ] [B] [line 49, size 96, align 32, offset 0] [def] [from ]
 // MSVC: [[VBASE_B_DEF]] = !{[[VBASE_A_IN_B:![0-9]+]],
 //
 // Look for the vbtable offset of A, which should be 4.
