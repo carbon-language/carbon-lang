@@ -212,6 +212,20 @@ static Metadata *MapMetadataImpl(const Metadata *MD, ValueToValueMapTy &VM,
   if (Flags & RF_NoModuleLevelChanges)
     return mapToSelf(VM, MD);
 
+  // Distinct nodes are always recreated.
+  if (Node->isDistinct()) {
+    // Create the node first so it's available for cyclical references.
+    SmallVector<Metadata *, 4> EmptyOps(Node->getNumOperands());
+    MDNode *NewMD = MDNode::getDistinct(Node->getContext(), EmptyOps);
+    mapToMetadata(VM, Node, NewMD);
+
+    // Fix the operands.
+    for (unsigned I = 0, E = Node->getNumOperands(); I != E; ++I)
+      NewMD->replaceOperandWith(I, getMappedOp(Node->getOperand(I)));
+
+    return NewMD;
+  }
+
   // Create a dummy node in case we have a metadata cycle.
   MDNodeFwdDecl *Dummy = MDNode::getTemporary(Node->getContext(), None);
   mapToMetadata(VM, Node, Dummy);
