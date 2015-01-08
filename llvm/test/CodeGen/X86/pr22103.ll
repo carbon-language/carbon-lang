@@ -12,7 +12,7 @@ define void @_Z1fv() {
 ; CHECK-NOT: callq *$a
 ; CHECK: movq %fs:0, [[RAX:%r..]]
 ; CHECK-NEXT: addq    a@GOTTPOFF(%rip), [[RAX]]
-; CHECK-NEXT: callq *%rax
+; CHECK-NEXT: callq *[[RAX]]
 entry:
   call void bitcast (i64* @a to void ()*)()
   ret void
