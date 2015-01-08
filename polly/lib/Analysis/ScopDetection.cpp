@@ -457,8 +457,8 @@ bool ScopDetection::hasAffineMemoryAccesses(DetectionContext &Context) const {
       if (IsNonAffine) {
         BasePtrHasNonAffine = true;
         if (!AllowNonAffine)
-          invalid<ReportNonAffineAccess>(Context, /*Assert=*/true, AF, Insn,
-                                         BaseValue);
+          invalid<ReportNonAffineAccess>(Context, /*Assert=*/true, Pair.second,
+                                         Insn, BaseValue);
         if (!KeepGoing && !AllowNonAffine)
           return false;
       }
