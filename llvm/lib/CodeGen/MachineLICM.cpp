@@ -49,6 +49,11 @@ AvoidSpeculation("avoid-speculation",
                  cl::desc("MachineLICM should avoid speculation"),
                  cl::init(true), cl::Hidden);
 
+static cl::opt<bool>
+HoistCheapInsts("hoist-cheap-insts",
+                cl::desc("MachineLICM should hoist even cheap instructions"),
+                cl::init(false), cl::Hidden);
+
 STATISTIC(NumHoisted,
           "Number of machine instructions hoisted out of loops");
 STATISTIC(NumLowRP,
@@ -1075,7 +1080,7 @@ bool MachineLICM::CanCauseHighRegPressure(DenseMap<unsigned, int> &Cost,
 
     // Don't hoist cheap instructions if they would increase register pressure,
     // even if we're under the limit.
-    if (CheapInstr)
+    if (CheapInstr && !HoistCheapInsts)
       return true;
 
     for (unsigned i = BackTrace.size(); i != 0; --i) {
