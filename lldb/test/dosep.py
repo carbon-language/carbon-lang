@@ -2,6 +2,23 @@
 
 """
 Run the test suite using a separate process for each test file.
+
+Each test will run with a time limit of 5 minutes by default.
+
+Override the default time limit of 5 minutes by setting
+the environment variable LLDB_TEST_TIMEOUT.
+
+E.g., export LLDB_TEST_TIMEOUT=10m
+
+Override the time limit for individual tests by setting
+the environment variable LLDB_[TEST NAME]_TIMEOUT.
+
+E.g., export LLDB_TESTCONCURRENTEVENTS_TIMEOUT=2m
+
+Set to "0" to run without time limit.
+
+E.g., export LLDB_TEST_TIMEOUT=0
+or    export LLDB_TESTCONCURRENTEVENTS_TIMEOUT=0
 """
 
 import multiprocessing
@@ -14,6 +31,7 @@ import sys
 from optparse import OptionParser
 
 def get_timeout_command():
+    """Search for a suitable timeout command."""
     if sys.platform.startswith("win32"):
         return None
     try:
@@ -36,13 +54,8 @@ default_timeout = os.getenv("LLDB_TEST_TIMEOUT") or "5m"
 eTimedOut, ePassed, eFailed = 124, 0, 1
 
 def call_with_timeout(command, timeout):
-    """Each test will timeout after 5 minutes by default.
-    Override the default timeout of 5 minutes with LLDB_TEST_TIMEOUT.
-    E.g., LLDB_TEST_TIMEOUT=10m
-    Override the timeout for individual tests with LLDB_[TEST NAME]_TIMEOUT.
-    E.g., LLDB_TESTCONCURRENTEVENTS_TIMEOUT=2m
-    Set to "0" to run without timeout."""
-    if timeout_command:
+    """Run command with a timeout if possible."""
+    if timeout_command and timeout != "0":
         return subprocess.call([timeout_command, timeout] + command,
                                stdin=subprocess.PIPE)
     return (ePassed if subprocess.call(command, stdin=subprocess.PIPE) == 0
@@ -132,6 +145,23 @@ def main():
 
     parser = OptionParser(usage="""\
 Run lldb test suite using a separate process for each test file.
+
+       Each test will run with a time limit of 5 minutes by default.
+
+       Override the default time limit of 5 minutes by setting
+       the environment variable LLDB_TEST_TIMEOUT.
+
+       E.g., export LLDB_TEST_TIMEOUT=10m
+
+       Override the time limit for individual tests by setting
+       the environment variable LLDB_[TEST NAME]_TIMEOUT.
+
+       E.g., export LLDB_TESTCONCURRENTEVENTS_TIMEOUT=2m
+
+       Set to "0" to run without time limit.
+
+       E.g., export LLDB_TEST_TIMEOUT=0
+       or    export LLDB_TESTCONCURRENTEVENTS_TIMEOUT=0
 """)
     parser.add_option('-o', '--options',
                       type='string', action='store',
