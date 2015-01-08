@@ -115,6 +115,6 @@ for.end:                                          ; preds = %for.cond.for.end_cr
   ret i16 %res.0.lcssa
 }
 
-; CHECK: !0 = !{!0, !1}
+; CHECK: !0 = distinct !{!0, !1}
 ; CHECK: !1 = !{!"llvm.loop.unroll.disable"}
 

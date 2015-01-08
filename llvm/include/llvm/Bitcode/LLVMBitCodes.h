@@ -140,7 +140,7 @@ namespace bitc {
     METADATA_VALUE         = 2,   // VALUE:         [type num, value num]
     METADATA_NODE          = 3,   // NODE:          [n x md num]
     METADATA_NAME          = 4,   // STRING:        [values]
-    // 5 is unused.
+    METADATA_DISTINCT_NODE = 5,   // DISTINCT_NODE: [n x md num]
     METADATA_KIND          = 6,   // [n x [id, name]]
     // 7 is unused.
     METADATA_OLD_NODE      = 8,   // OLD_NODE:      [n x (type num, value num)]

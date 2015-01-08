@@ -36,9 +36,9 @@ attributes #0 = { nounwind }
 attributes #1 = { nounwind uwtable }
 
 ; CHECK: !0 = !{!1}
-; CHECK: !1 = !{!1, !2, !"hello: %c"}
-; CHECK: !2 = !{!2, !"hello"}
+; CHECK: !1 = distinct !{!1, !2, !"hello: %c"}
+; CHECK: !2 = distinct !{!2, !"hello"}
 ; CHECK: !3 = !{!4}
-; CHECK: !4 = !{!4, !2, !"hello: %a"}
+; CHECK: !4 = distinct !{!4, !2, !"hello: %a"}
 ; CHECK: !5 = !{!4, !1}
 

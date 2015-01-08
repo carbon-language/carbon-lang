@@ -773,7 +773,9 @@ static void WriteMDNode(const MDNode *N,
     assert(!isa<LocalAsMetadata>(MD) && "Unexpected function-local metadata");
     Record.push_back(VE.getMetadataID(MD) + 1);
   }
-  Stream.EmitRecord(bitc::METADATA_NODE, Record);
+  Stream.EmitRecord(N->isDistinct() ? bitc::METADATA_DISTINCT_NODE
+                                    : bitc::METADATA_NODE,
+                    Record);
   Record.clear();
 }
 

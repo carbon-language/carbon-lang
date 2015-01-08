@@ -182,6 +182,9 @@ namespace lltok {
     kw_extractelement, kw_insertelement, kw_shufflevector,
     kw_extractvalue, kw_insertvalue, kw_blockaddress,
 
+    // Metadata types.
+    kw_distinct,
+
     // Use-list order directives.
     kw_uselistorder, kw_uselistorder_bb,
 

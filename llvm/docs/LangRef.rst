@@ -2848,6 +2848,12 @@ their operand. For example:
 
     !{ !"test\00", i32 10}
 
+Metadata nodes that aren't uniqued use the ``distinct`` keyword. For example:
+
+.. code-block:: llvm
+
+    !0 = distinct !{!"test\00", i32 10}
+
 A :ref:`named metadata <namedmetadatastructure>` is a collection of
 metadata nodes, which can be looked up in the module symbol table. For
 example:

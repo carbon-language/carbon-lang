@@ -1106,6 +1106,7 @@ std::error_code BitcodeReader::ParseMetadata() {
     // Read a record.
     Record.clear();
     unsigned Code = Stream.readRecord(Entry.ID, Record);
+    bool IsDistinct = false;
     switch (Code) {
     default:  // Default behavior: ignore.
       break;
@@ -1196,12 +1197,17 @@ std::error_code BitcodeReader::ParseMetadata() {
           NextMDValueNo++);
       break;
     }
+    case bitc::METADATA_DISTINCT_NODE:
+      IsDistinct = true;
+      // fallthrough...
     case bitc::METADATA_NODE: {
       SmallVector<Metadata *, 8> Elts;
       Elts.reserve(Record.size());
       for (unsigned ID : Record)
         Elts.push_back(ID ? MDValueList.getValueFwdRef(ID - 1) : nullptr);
-      MDValueList.AssignValue(MDNode::get(Context, Elts), NextMDValueNo++);
+      MDValueList.AssignValue(IsDistinct ? MDNode::getDistinct(Context, Elts)
+                                         : MDNode::get(Context, Elts),
+                              NextMDValueNo++);
       break;
     }
     case bitc::METADATA_STRING: {

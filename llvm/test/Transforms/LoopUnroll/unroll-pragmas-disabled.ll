@@ -138,12 +138,12 @@ for.inc5.1:                                       ; preds = %for.body3.1
 !10 = !{!"llvm.loop.unroll.count", i32 2}
 
 
-; CHECK: ![[LOOP_1]] = !{![[LOOP_1]], ![[VEC_ENABLE:.*]], ![[WIDTH_8:.*]], ![[UNROLL_DISABLE:.*]]}
+; CHECK: ![[LOOP_1]] = distinct !{![[LOOP_1]], ![[VEC_ENABLE:.*]], ![[WIDTH_8:.*]], ![[UNROLL_DISABLE:.*]]}
 ; CHECK: ![[VEC_ENABLE]] = !{!"llvm.loop.vectorize.enable", i1 true}
 ; CHECK: ![[WIDTH_8]] = !{!"llvm.loop.vectorize.width", i32 8}
 ; CHECK: ![[UNROLL_DISABLE]] = !{!"llvm.loop.unroll.disable"}
-; CHECK: ![[LOOP_2]] = !{![[LOOP_2]], ![[UNROLL_FULL:.*]]}
+; CHECK: ![[LOOP_2]] = distinct !{![[LOOP_2]], ![[UNROLL_FULL:.*]]}
 ; CHECK: ![[UNROLL_FULL]] = !{!"llvm.loop.unroll.full"}
-; CHECK: ![[LOOP_3]] = !{![[LOOP_3]], ![[UNROLL_DISABLE:.*]]}
-; CHECK: ![[LOOP_4]] = !{![[LOOP_4]], ![[UNROLL_DISABLE:.*]]}
-; CHECK: ![[LOOP_5]] = !{![[LOOP_5]], ![[UNROLL_DISABLE:.*]]}
+; CHECK: ![[LOOP_3]] = distinct !{![[LOOP_3]], ![[UNROLL_DISABLE:.*]]}
+; CHECK: ![[LOOP_4]] = distinct !{![[LOOP_4]], ![[UNROLL_DISABLE:.*]]}
+; CHECK: ![[LOOP_5]] = distinct !{![[LOOP_5]], ![[UNROLL_DISABLE:.*]]}

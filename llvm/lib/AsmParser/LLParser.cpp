@@ -618,8 +618,9 @@ bool LLParser::ParseStandaloneMetadata() {
   if (Lex.getKind() == lltok::Type)
     return TokError("unexpected type in metadata definition");
 
+  bool IsDistinct = EatIfPresent(lltok::kw_distinct);
   if (ParseToken(lltok::exclaim, "Expected '!' here") ||
-      ParseMDNode(Init))
+      ParseMDNode(Init, IsDistinct))
     return true;
 
   // See if this was forward referenced, if so, handle it.
@@ -2945,12 +2946,15 @@ bool LLParser::ParseGlobalValueVector(SmallVectorImpl<Constant *> &Elts) {
   return false;
 }
 
-bool LLParser::ParseMDNode(MDNode *&MD) {
+bool LLParser::ParseMDNode(MDNode *&MD, bool IsDistinct) {
   SmallVector<Metadata *, 16> Elts;
   if (ParseMDNodeVector(Elts))
     return true;
 
-  MD = MDNode::get(Context, Elts);
+  if (IsDistinct)
+    MD = MDNode::getDistinct(Context, Elts);
+  else
+    MD = MDNode::get(Context, Elts);
   return false;
 }
 

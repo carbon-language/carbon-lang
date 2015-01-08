@@ -655,6 +655,9 @@ lltok::Kind LLLexer::LexIdentifier() {
   KEYWORD(x);
   KEYWORD(blockaddress);
 
+  // Metadata types.
+  KEYWORD(distinct);
+
   // Use-list order directives.
   KEYWORD(uselistorder);
   KEYWORD(uselistorder_bb);

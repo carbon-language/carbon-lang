@@ -65,12 +65,12 @@ entry:
 attributes #0 = { nounwind uwtable }
 
 ; CHECK: !0 = !{!1}
-; CHECK: !1 = !{!1, !2, !"hello: %a"}
-; CHECK: !2 = !{!2, !"hello"}
+; CHECK: !1 = distinct !{!1, !2, !"hello: %a"}
+; CHECK: !2 = distinct !{!2, !"hello"}
 ; CHECK: !3 = !{!4, !6}
-; CHECK: !4 = !{!4, !5, !"hello2: %a"}
-; CHECK: !5 = !{!5, !"hello2"}
-; CHECK: !6 = !{!6, !5, !"hello2: %b"}
+; CHECK: !4 = distinct !{!4, !5, !"hello2: %a"}
+; CHECK: !5 = distinct !{!5, !"hello2"}
+; CHECK: !6 = distinct !{!6, !5, !"hello2: %b"}
 ; CHECK: !7 = !{!4}
 ; CHECK: !8 = !{!6}
 

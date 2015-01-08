@@ -68,10 +68,10 @@ _ZSt10accumulateIPiiET0_T_S2_S1_.exit:            ; preds = %for.body.i, %entry
 
 attributes #0 = { nounwind readonly ssp uwtable "fp-contract-model"="standard" "no-frame-pointer-elim" "no-frame-pointer-elim-non-leaf" "realign-stack" "relocation-model"="pic" "ssp-buffers-size"="8" }
 
-; CHECK: !0 = !{!0, !1, !2}
+; CHECK: !0 = distinct !{!0, !1, !2}
 ; CHECK: !1 = !{!"llvm.loop.vectorize.width", i32 1}
 ; CHECK: !2 = !{!"llvm.loop.interleave.count", i32 1}
-; CHECK: !3 = !{!3, !1, !2}
+; CHECK: !3 = distinct !{!3, !1, !2}
 
 !0 = !{!0, !1}
 !1 = !{!"llvm.loop.vectorize.width", i32 1}
