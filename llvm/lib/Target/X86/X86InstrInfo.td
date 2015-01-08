@@ -300,6 +300,8 @@ class X86VMemOperand<RegisterClass RC, string printMethod,
   let MIOperandInfo = (ops ptr_rc, i8imm, RC, i32imm, i8imm);
 }
 
+def anymem : X86MemOperand<"printanymem">;
+
 def opaque32mem : X86MemOperand<"printopaquemem">;
 def opaque48mem : X86MemOperand<"printopaquemem">;
 def opaque80mem : X86MemOperand<"printopaquemem">;
@@ -640,14 +642,14 @@ def i64i8imm   : Operand<i64> {
 }
 
 def lea64_32mem : Operand<i32> {
-  let PrintMethod = "printi32mem";
+  let PrintMethod = "printanymem";
   let MIOperandInfo = (ops GR64, i8imm, GR64_NOSP, i32imm, i8imm);
   let ParserMatchClass = X86MemAsmOperand;
 }
 
 // Memory operands that use 64-bit pointers in both ILP32 and LP64.
 def lea64mem : Operand<i64> {
-  let PrintMethod = "printi64mem";
+  let PrintMethod = "printanymem";
   let MIOperandInfo = (ops GR64, i8imm, GR64_NOSP, i32imm, i8imm);
   let ParserMatchClass = X86MemAsmOperand;
 }

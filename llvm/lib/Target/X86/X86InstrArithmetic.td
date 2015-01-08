@@ -17,11 +17,11 @@
 let SchedRW = [WriteLEA] in {
 let hasSideEffects = 0 in
 def LEA16r   : I<0x8D, MRMSrcMem,
-                 (outs GR16:$dst), (ins i32mem:$src),
+                 (outs GR16:$dst), (ins anymem:$src),
                  "lea{w}\t{$src|$dst}, {$dst|$src}", [], IIC_LEA_16>, OpSize16;
 let isReMaterializable = 1 in
 def LEA32r   : I<0x8D, MRMSrcMem,
-                 (outs GR32:$dst), (ins i32mem:$src),
+                 (outs GR32:$dst), (ins anymem:$src),
                  "lea{l}\t{$src|$dst}, {$dst|$src}",
                  [(set GR32:$dst, lea32addr:$src)], IIC_LEA>,
                  OpSize32, Requires<[Not64BitMode]>;
