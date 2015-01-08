@@ -109,6 +109,12 @@ public:
   int getCallFrameSetupOpcode() const { return CallFrameSetupOpcode; }
   int getCallFrameDestroyOpcode() const { return CallFrameDestroyOpcode; }
 
+  /// Returns the actual stack pointer adjustment made by an instruction
+  /// as part of a call sequence. By default, only call frame setup/destroy
+  /// instructions adjust the stack, but targets may want to override this
+  /// to enable more fine-grained adjustment, or adjust by a different value.
+  virtual int getSPAdjust(const MachineInstr *MI) const;
+
   /// isCoalescableExtInstr - Return true if the instruction is a "coalescable"
   /// extension instruction. That is, it's like a copy where it's legal for the
   /// source to overlap the destination. e.g. X86::MOVSX64rr32. If this returns

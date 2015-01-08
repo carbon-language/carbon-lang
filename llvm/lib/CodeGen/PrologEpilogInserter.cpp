@@ -743,26 +743,19 @@ void PEI::replaceFrameIndices(MachineBasicBlock *BB, MachineFunction &Fn,
   const TargetInstrInfo &TII = *Fn.getSubtarget().getInstrInfo();
   const TargetRegisterInfo &TRI = *Fn.getSubtarget().getRegisterInfo();
   const TargetFrameLowering *TFI = Fn.getSubtarget().getFrameLowering();
-  bool StackGrowsDown =
-    TFI->getStackGrowthDirection() == TargetFrameLowering::StackGrowsDown;
   int FrameSetupOpcode   = TII.getCallFrameSetupOpcode();
   int FrameDestroyOpcode = TII.getCallFrameDestroyOpcode();
 
   if (RS && !FrameIndexVirtualScavenging) RS->enterBasicBlock(BB);
 
+  bool InsideCallSequence = false;
+
   for (MachineBasicBlock::iterator I = BB->begin(); I != BB->end(); ) {
 
     if (I->getOpcode() == FrameSetupOpcode ||
         I->getOpcode() == FrameDestroyOpcode) {
-      // Remember how much SP has been adjusted to create the call
-      // frame.
-      int Size = I->getOperand(0).getImm();
-
-      if ((!StackGrowsDown && I->getOpcode() == FrameSetupOpcode) ||
-          (StackGrowsDown && I->getOpcode() == FrameDestroyOpcode))
-        Size = -Size;
-
-      SPAdj += Size;
+      InsideCallSequence = (I->getOpcode() == FrameSetupOpcode);
+      SPAdj += TII.getSPAdjust(I);
 
       MachineBasicBlock::iterator PrevI = BB->end();
       if (I != BB->begin()) PrevI = std::prev(I);
@@ -775,6 +768,13 @@ void PEI::replaceFrameIndices(MachineBasicBlock *BB, MachineFunction &Fn,
         I = std::next(PrevI);
       continue;
     }
+
+    // If we are looking at a call sequence, we need to keep track of
+    // the SP adjustment made by each instruction in the sequence.
+    // This includes both the frame setup/destroy pseudos (handled above),
+    // as well as other instructions that have side effects w.r.t the SP.
+    if (InsideCallSequence)
+      SPAdj += TII.getSPAdjust(I);
 
     MachineInstr *MI = I;
     bool DoIncr = true;

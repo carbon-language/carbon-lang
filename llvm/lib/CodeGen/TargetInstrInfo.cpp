@@ -28,6 +28,7 @@
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetRegisterInfo.h"
+#include "llvm/Target/TargetFrameLowering.h"
 #include <cctype>
 using namespace llvm;
 
@@ -642,6 +643,28 @@ isReallyTriviallyReMaterializableGeneric(const MachineInstr *MI,
 
   // Everything checked out.
   return true;
+}
+
+int TargetInstrInfo::getSPAdjust(const MachineInstr *MI) const {
+  const MachineFunction *MF = MI->getParent()->getParent();
+  const TargetFrameLowering *TFI = MF->getSubtarget().getFrameLowering();
+  bool StackGrowsDown =
+    TFI->getStackGrowthDirection() == TargetFrameLowering::StackGrowsDown;
+
+  int FrameSetupOpcode = getCallFrameSetupOpcode();
+  int FrameDestroyOpcode = getCallFrameDestroyOpcode();
+
+  if (MI->getOpcode() != FrameSetupOpcode &&
+      MI->getOpcode() != FrameDestroyOpcode)
+    return 0;
+ 
+  int SPAdj = MI->getOperand(0).getImm();
+
+  if ((!StackGrowsDown && MI->getOpcode() == FrameSetupOpcode) ||
+       (StackGrowsDown && MI->getOpcode() == FrameDestroyOpcode))
+    SPAdj = -SPAdj;
+
+  return SPAdj;
 }
 
 /// isSchedulingBoundary - Test if the given instruction should be
