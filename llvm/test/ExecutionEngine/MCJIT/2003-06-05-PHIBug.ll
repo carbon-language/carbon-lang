@@ -2,8 +2,6 @@
 
 ; Testcase distilled from 256.bzip2.
 
-target datalayout = "e-p:32:32"
-
 define i32 @main() {
 entry:
 	%X = add i32 1, -1		; <i32> [#uses=3]

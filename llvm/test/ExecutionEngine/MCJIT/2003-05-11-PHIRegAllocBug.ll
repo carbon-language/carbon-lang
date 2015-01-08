@@ -1,7 +1,5 @@
 ; RUN: %lli %s > /dev/null
 
-target datalayout = "e-p:32:32"
-
 define i32 @main() {
 entry:
 	br label %endif
