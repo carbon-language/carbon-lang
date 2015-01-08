@@ -638,6 +638,12 @@ AssemblyParse_x86::get_non_call_site_unwind_plan (UnwindPlan &unwind_plan)
     *newrow = *row.get();
     row.reset(newrow);
 
+    // Track which registers have been saved so far in the prologue.
+    // If we see another push of that register, it's not part of the prologue.
+    // The register numbers used here are the machine register #'s
+    // (i386_register_numbers, x86_64_register_numbers).
+    std::vector<bool> saved_registers(32, false);
+
     const bool prefer_file_cache = true;
 
     Target *target = m_exe_ctx.GetTargetPtr();
@@ -707,12 +713,15 @@ AssemblyParse_x86::get_non_call_site_unwind_plan (UnwindPlan &unwind_plan)
                 row->SetCFAOffset (current_sp_bytes_offset_from_cfa);
             }
             // record where non-volatile (callee-saved, spilled) registers are saved on the stack
-            if (nonvolatile_reg_p (machine_regno) && machine_regno_to_lldb_regno (machine_regno, lldb_regno))
+            if (nonvolatile_reg_p (machine_regno) 
+                && machine_regno_to_lldb_regno (machine_regno, lldb_regno)
+                && saved_registers[machine_regno] == false)
             {
                 need_to_push_row = true;
                 UnwindPlan::Row::RegisterLocation regloc;
                 regloc.SetAtCFAPlusOffset (-current_sp_bytes_offset_from_cfa);
                 row->SetRegisterInfo (lldb_regno, regloc);
+                saved_registers[machine_regno] = true;
             }
             if (need_to_push_row)
             {
@@ -728,8 +737,10 @@ AssemblyParse_x86::get_non_call_site_unwind_plan (UnwindPlan &unwind_plan)
 
         if (mov_reg_to_local_stack_frame_p (machine_regno, stack_offset) && nonvolatile_reg_p (machine_regno))
         {
-            if (machine_regno_to_lldb_regno (machine_regno, lldb_regno))
+            if (machine_regno_to_lldb_regno (machine_regno, lldb_regno) && saved_registers[machine_regno] == false)
             {
+                saved_registers[machine_regno] = true;
+
                 row->SetOffset (current_func_text_offset + insn_len);
                 UnwindPlan::Row::RegisterLocation regloc;
 
