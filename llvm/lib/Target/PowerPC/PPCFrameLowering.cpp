@@ -644,6 +644,14 @@ void PPCFrameLowering::emitPrologue(MachineFunction &MF) const {
       .addImm(FPOffset)
       .addReg(SPReg);
 
+  if (isPIC && !isDarwinABI && !isPPC64 &&
+      MF.getInfo<PPCFunctionInfo>()->usesPICBase())
+    // FIXME: On PPC32 SVR4, we must not spill before claiming the stackframe.
+    BuildMI(MBB, MBBI, dl, StoreInst)
+      .addReg(PPC::R30)
+      .addImm(-8U)
+      .addReg(SPReg);
+
   if (HasBP)
     // FIXME: On PPC32 SVR4, we must not spill before claiming the stackframe.
     BuildMI(MBB, MBBI, dl, StoreInst)
@@ -1001,6 +1009,14 @@ void PPCFrameLowering::emitEpilogue(MachineFunction &MF,
   if (HasFP)
     BuildMI(MBB, MBBI, dl, LoadInst, FPReg)
       .addImm(FPOffset)
+      .addReg(SPReg);
+
+  if (isPIC && !isDarwinABI && !isPPC64 &&
+      MF.getInfo<PPCFunctionInfo>()->usesPICBase())
+    // FIXME: On PPC32 SVR4, we must not spill before claiming the stackframe.
+    BuildMI(MBB, MBBI, dl, LoadInst)
+      .addReg(PPC::R30)
+      .addImm(-8U)
       .addReg(SPReg);
 
   if (HasBP)

@@ -10,7 +10,9 @@ entry:
 !llvm.module.flags = !{!0}
 !0 = !{i32 1, !"PIC Level", i32 1}
 ; SMALL-BSS-LABEL:foo:
+; SMALL-BSS:         stw 30, -8(1)
 ; SMALL-BSS:         bl _GLOBAL_OFFSET_TABLE_@local-4
 ; SMALL-BSS:         mflr 30
 ; SMALL-BSS:         lwz [[VREG:[0-9]+]], bar@GOT(30)
-; SMALL-BSS:         lwz {{[0-9]+}}, 0([[VREG]])
+; SMALL-BSS-DAG:     lwz {{[0-9]+}}, 0([[VREG]])
+; SMALL-BSS-DAG:     lwz 30, -8(1)

@@ -307,6 +307,7 @@ SDNode *PPCDAGToDAGISel::getGlobalBaseReg() {
         if (M->getPICLevel() == PICLevel::Small) {
           BuildMI(FirstMBB, MBBI, dl, TII.get(PPC::MoveGOTtoLR));
           BuildMI(FirstMBB, MBBI, dl, TII.get(PPC::MFLR), GlobalBaseReg);
+          MF->getInfo<PPCFunctionInfo>()->setUsesPICBase(true);
         } else {
           BuildMI(FirstMBB, MBBI, dl, TII.get(PPC::MovePCtoLR));
           BuildMI(FirstMBB, MBBI, dl, TII.get(PPC::MFLR), GlobalBaseReg);

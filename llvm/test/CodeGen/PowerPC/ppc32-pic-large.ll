@@ -12,12 +12,14 @@ entry:
 ; LARGE-BSS:       [[POFF:\.L[0-9]+\$poff]]:
 ; LARGE-BSS-NEXT:    .long .LTOC-[[PB:\.L[0-9]+\$pb]]
 ; LARGE-BSS-NEXT:  foo:
+; LARGE-BSS:         stw 30, -8(1)
 ; LARGE-BSS:         bl [[PB]]
 ; LARGE-BSS-NEXT:  [[PB]]:
 ; LARGE-BSS:         mflr 30
 ; LARGE-BSS:         lwz [[REG:[0-9]+]], [[POFF]]-[[PB]](30)
 ; LARGE-BSS-NEXT:    add 30, [[REG]], 30
 ; LARGE-BSS:         lwz [[VREG:[0-9]+]], [[VREF:\.LC[0-9]+]]-.LTOC(30)
-; LARGE-BSS:         lwz {{[0-9]+}}, 0([[VREG]])
+; LARGE-BSS-DAG:     lwz {{[0-9]+}}, 0([[VREG]])
+; LARGE-BSS-DAG:     lwz 30, -8(1)
 ; LARGE-BSS:       [[VREF]]:
 ; LARGE-BSS-NEXT:    .long bar
