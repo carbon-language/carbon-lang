@@ -71,24 +71,28 @@ void CovUpdateMapping(const char *coverage_dir, uptr caller_pc) {
     return;
 
   InternalScopedString text(kMaxTextSize);
-  InternalScopedBuffer<LoadedModule> modules(kMaxNumberOfModules);
-  CHECK(modules.data());
-  int n_modules = GetListOfModules(modules.data(), kMaxNumberOfModules,
-                                   /* filter */ 0);
 
-  text.append("%d\n", sizeof(uptr) * 8);
-  for (int i = 0; i < n_modules; ++i) {
-    const char *module_name = StripModuleName(modules[i].full_name());
-    uptr base = modules[i].base_address();
-    for (auto iter = modules[i].ranges(); iter.hasNext();) {
-      const auto *range = iter.next();
-      if (range->executable) {
-        uptr start = range->beg;
-        uptr end = range->end;
-        text.append("%zx %zx %zx %s\n", start, end, base, module_name);
-        if (caller_pc && caller_pc >= start && caller_pc < end)
-          cached_mapping.SetModuleRange(start, end);
+  {
+    InternalScopedBuffer<LoadedModule> modules(kMaxNumberOfModules);
+    CHECK(modules.data());
+    int n_modules = GetListOfModules(modules.data(), kMaxNumberOfModules,
+                                     /* filter */ 0);
+
+    text.append("%d\n", sizeof(uptr) * 8);
+    for (int i = 0; i < n_modules; ++i) {
+      const char *module_name = StripModuleName(modules[i].full_name());
+      uptr base = modules[i].base_address();
+      for (auto iter = modules[i].ranges(); iter.hasNext();) {
+        const auto *range = iter.next();
+        if (range->executable) {
+          uptr start = range->beg;
+          uptr end = range->end;
+          text.append("%zx %zx %zx %s\n", start, end, base, module_name);
+          if (caller_pc && caller_pc >= start && caller_pc < end)
+            cached_mapping.SetModuleRange(start, end);
+        }
       }
+      modules[i].clear();
     }
   }
 

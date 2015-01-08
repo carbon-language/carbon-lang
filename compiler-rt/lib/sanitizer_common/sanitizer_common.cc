@@ -242,6 +242,15 @@ LoadedModule::LoadedModule(const char *module_name, uptr base_address) {
   ranges_.clear();
 }
 
+void LoadedModule::clear() {
+  InternalFree(full_name_);
+  while (!ranges_.empty()) {
+    AddressRange *r = ranges_.front();
+    ranges_.pop_front();
+    InternalFree(r);
+  }
+}
+
 void LoadedModule::addAddressRange(uptr beg, uptr end, bool executable) {
   void *mem = InternalAlloc(sizeof(AddressRange));
   AddressRange *r = new(mem) AddressRange(beg, end, executable);

@@ -48,6 +48,7 @@ TEST(MemoryMappingLayout, DumpListOfModules) {
       if (strstr(modules[i].full_name(), binary_name) != 0)
         found = true;
     }
+    modules[i].clear();
   }
   EXPECT_TRUE(found);
   free(modules);

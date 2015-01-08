@@ -521,6 +521,7 @@ uptr InternalBinarySearch(const Container &v, uptr first, uptr last,
 class LoadedModule {
  public:
   LoadedModule(const char *module_name, uptr base_address);
+  void clear();
   void addAddressRange(uptr beg, uptr end, bool executable);
   bool containsAddress(uptr address) const;
 
@@ -541,7 +542,7 @@ class LoadedModule {
   Iterator ranges() const { return Iterator(&ranges_); }
 
  private:
-  char *full_name_;
+  char *full_name_;  // Owned.
   uptr base_address_;
   IntrusiveList<AddressRange> ranges_;
 };
