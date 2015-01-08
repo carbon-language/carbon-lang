@@ -879,9 +879,10 @@ void X86TargetLowering::resetOperationActions() {
       setLoadExtAction(ISD::SEXTLOAD, InnerVT, VT, Expand);
       setLoadExtAction(ISD::ZEXTLOAD, InnerVT, VT, Expand);
 
-      // N.b. ISD::EXTLOAD legality is basically ignored except for i1-like types,
-      // we have to deal with them whether we ask for Expansion or not. Setting
-      // Expand causes its own optimisation problems though, so leave them legal.
+      // N.b. ISD::EXTLOAD legality is basically ignored except for i1-like
+      // types, we have to deal with them whether we ask for Expansion or not.
+      // Setting Expand causes its own optimisation problems though, so leave
+      // them legal.
       if (VT.getVectorElementType() == MVT::i1)
         setLoadExtAction(ISD::EXTLOAD, InnerVT, VT, Expand);
     }
