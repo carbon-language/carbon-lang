@@ -296,6 +296,9 @@ class RAGreedy : public MachineFunctionPass,
   /// obtained from the TargetSubtargetInfo.
   bool EnableLocalReassign;
 
+  /// Set of broken hints that may be reconciled later because of eviction.
+  SmallSetVector<LiveInterval *, 8> SetOfBrokenHints;
+
 public:
   RAGreedy();
 
@@ -311,6 +314,7 @@ public:
   void enqueue(LiveInterval *LI) override;
   LiveInterval *dequeue() override;
   unsigned selectOrSplit(LiveInterval&, SmallVectorImpl<unsigned>&) override;
+  void aboutToRemoveInterval(LiveInterval &) override;
 
   /// Perform register allocation.
   bool runOnMachineFunction(MachineFunction &mf) override;
@@ -378,6 +382,24 @@ private:
                                    SmallVirtRegSet &, unsigned);
   bool tryRecoloringCandidates(PQueue &, SmallVectorImpl<unsigned> &,
                                SmallVirtRegSet &, unsigned);
+  void tryHintRecoloring(LiveInterval &);
+  void tryHintsRecoloring();
+
+  /// Model the information carried by one end of a copy.
+  struct HintInfo {
+    /// The frequency of the copy.
+    BlockFrequency Freq;
+    /// The virtual register or physical register.
+    unsigned Reg;
+    /// Its currently assigned register.
+    /// In case of a physical register Reg == PhysReg.
+    unsigned PhysReg;
+    HintInfo(BlockFrequency Freq, unsigned Reg, unsigned PhysReg)
+        : Freq(Freq), Reg(Reg), PhysReg(PhysReg) {}
+  };
+  typedef SmallVector<HintInfo, 4> HintsInfo;
+  BlockFrequency getBrokenHintFreq(const HintsInfo &, unsigned);
+  void collectHintInfo(unsigned, HintsInfo &);
 };
 } // end anonymous namespace
 
@@ -453,7 +475,9 @@ void RAGreedy::getAnalysisUsage(AnalysisUsage &AU) const {
 
 bool RAGreedy::LRE_CanEraseVirtReg(unsigned VirtReg) {
   if (VRM->hasPhys(VirtReg)) {
-    Matrix->unassign(LIS->getInterval(VirtReg));
+    LiveInterval &LI = LIS->getInterval(VirtReg);
+    Matrix->unassign(LI);
+    aboutToRemoveInterval(LI);
     return true;
   }
   // Unassigned virtreg is probably in the priority queue.
@@ -2213,6 +2237,11 @@ unsigned RAGreedy::tryAssignCSRFirstTime(LiveInterval &VirtReg,
   return PhysReg;
 }
 
+void RAGreedy::aboutToRemoveInterval(LiveInterval &LI) {
+  // Do not keep invalid information around.
+  SetOfBrokenHints.remove(&LI);
+}
+
 void RAGreedy::initializeCSRCost() {
   // We use the larger one out of the command-line option and the value report
   // by TRI.
@@ -2236,6 +2265,170 @@ void RAGreedy::initializeCSRCost() {
   else
     // Can't use BranchProbability in general, since it takes 32-bit numbers.
     CSRCost = CSRCost.getFrequency() * (ActualEntry / FixedEntry);
+}
+
+/// \brief Collect the hint info for \p Reg.
+/// The results are stored into \p Out.
+/// \p Out is not cleared before being populated.
+void RAGreedy::collectHintInfo(unsigned Reg, HintsInfo &Out) {
+  for (const MachineInstr &Instr : MRI->reg_nodbg_instructions(Reg)) {
+    if (!Instr.isFullCopy())
+      continue;
+    // Look for the other end of the copy.
+    unsigned OtherReg = Instr.getOperand(0).getReg();
+    if (OtherReg == Reg) {
+      OtherReg = Instr.getOperand(1).getReg();
+      if (OtherReg == Reg)
+        continue;
+    }
+    // Get the current assignment.
+    unsigned OtherPhysReg = TargetRegisterInfo::isPhysicalRegister(OtherReg)
+                                ? OtherReg
+                                : VRM->getPhys(OtherReg);
+    // Push the collected information.
+    Out.push_back(HintInfo(MBFI->getBlockFreq(Instr.getParent()), OtherReg,
+                           OtherPhysReg));
+  }
+}
+
+/// \brief Using the given \p List, compute the cost of the broken hints if
+/// \p PhysReg was used.
+/// \return The cost of \p List for \p PhysReg.
+BlockFrequency RAGreedy::getBrokenHintFreq(const HintsInfo &List,
+                                           unsigned PhysReg) {
+  BlockFrequency Cost = 0;
+  for (const HintInfo &Info : List) {
+    if (Info.PhysReg != PhysReg)
+      Cost += Info.Freq;
+  }
+  return Cost;
+}
+
+/// \brief Using the register assigned to \p VirtReg, try to recolor
+/// all the live ranges that are copy-related with \p VirtReg.
+/// The recoloring is then propagated to all the live-ranges that have
+/// been recolored and so on, until no more copies can be coalesced or
+/// it is not profitable.
+/// For a given live range, profitability is determined by the sum of the
+/// frequencies of the non-identity copies it would introduce with the old
+/// and new register.
+void RAGreedy::tryHintRecoloring(LiveInterval &VirtReg) {
+  // We have a broken hint, check if it is possible to fix it by
+  // reusing PhysReg for the copy-related live-ranges. Indeed, we evicted
+  // some register and PhysReg may be available for the other live-ranges.
+  SmallSet<unsigned, 4> Visited;
+  SmallVector<unsigned, 2> RecoloringCandidates;
+  HintsInfo Info;
+  unsigned Reg = VirtReg.reg;
+  unsigned PhysReg = VRM->getPhys(Reg);
+  // Start the recoloring algorithm from the input live-interval, then
+  // it will propagate to the ones that are copy-related with it.
+  Visited.insert(Reg);
+  RecoloringCandidates.push_back(Reg);
+
+  DEBUG(dbgs() << "Trying to reconcile hints for: " << PrintReg(Reg, TRI) << '('
+               << PrintReg(PhysReg, TRI) << ")\n");
+
+  do {
+    Reg = RecoloringCandidates.pop_back_val();
+
+    // We cannot recolor physcal register.
+    if (TargetRegisterInfo::isPhysicalRegister(Reg))
+      continue;
+
+    assert(VRM->hasPhys(Reg) && "We have unallocated variable!!");
+
+    // Get the live interval mapped with this virtual register to be able
+    // to check for the interference with the new color.
+    LiveInterval &LI = LIS->getInterval(Reg);
+    unsigned CurrPhys = VRM->getPhys(Reg);
+    // Check that the new color matches the register class constraints and
+    // that it is free for this live range.
+    if (CurrPhys != PhysReg && (!MRI->getRegClass(Reg)->contains(PhysReg) ||
+                                Matrix->checkInterference(LI, PhysReg)))
+      continue;
+
+    DEBUG(dbgs() << PrintReg(Reg, TRI) << '(' << PrintReg(CurrPhys, TRI)
+                 << ") is recolorable.\n");
+
+    // Gather the hint info.
+    Info.clear();
+    collectHintInfo(Reg, Info);
+    // Check if recoloring the live-range will increase the cost of the
+    // non-identity copies.
+    if (CurrPhys != PhysReg) {
+      DEBUG(dbgs() << "Checking profitability:\n");
+      BlockFrequency OldCopiesCost = getBrokenHintFreq(Info, CurrPhys);
+      BlockFrequency NewCopiesCost = getBrokenHintFreq(Info, PhysReg);
+      DEBUG(dbgs() << "Old Cost: " << OldCopiesCost.getFrequency()
+                   << "\nNew Cost: " << NewCopiesCost.getFrequency() << '\n');
+      if (OldCopiesCost < NewCopiesCost) {
+        DEBUG(dbgs() << "=> Not profitable.\n");
+        continue;
+      }
+      // At this point, the cost is either cheaper or equal. If it is
+      // equal, we consider this is profitable because it may expose
+      // more recoloring opportunities.
+      DEBUG(dbgs() << "=> Profitable.\n");
+      // Recolor the live-range.
+      Matrix->unassign(LI);
+      Matrix->assign(LI, PhysReg);
+    }
+    // Push all copy-related live-ranges to keep reconciling the broken
+    // hints.
+    for (const HintInfo &HI : Info) {
+      if (Visited.insert(HI.Reg).second)
+        RecoloringCandidates.push_back(HI.Reg);
+    }
+  } while (!RecoloringCandidates.empty());
+}
+
+/// \brief Try to recolor broken hints.
+/// Broken hints may be repaired by recoloring when an evicted variable
+/// freed up a register for a larger live-range.
+/// Consider the following example:
+/// BB1:
+///   a =
+///   b =
+/// BB2:
+///   ...
+///   = b
+///   = a
+/// Let us assume b gets split:
+/// BB1:
+///   a =
+///   b =
+/// BB2:
+///   c = b
+///   ...
+///   d = c
+///   = d
+///   = a
+/// Because of how the allocation work, b, c, and d may be assigned different
+/// colors. Now, if a gets evicted later:
+/// BB1:
+///   a =
+///   st a, SpillSlot
+///   b =
+/// BB2:
+///   c = b
+///   ...
+///   d = c
+///   = d
+///   e = ld SpillSlot
+///   = e
+/// This is likely that we can assign the same register for b, c, and d,
+/// getting rid of 2 copies.
+void RAGreedy::tryHintsRecoloring() {
+  for (LiveInterval *LI : SetOfBrokenHints) {
+    assert(TargetRegisterInfo::isVirtualRegister(LI->reg) &&
+           "Recoloring is possible only for virtual registers");
+    // Some dead defs may be around (e.g., because of debug uses).
+    // Ignore those.
+    if (!VRM->hasPhys(LI->reg))
+      continue;
+    tryHintRecoloring(*LI);
+  }
 }
 
 unsigned RAGreedy::selectOrSplitImpl(LiveInterval &VirtReg,
@@ -2274,8 +2467,18 @@ unsigned RAGreedy::selectOrSplitImpl(LiveInterval &VirtReg,
   // queue. The RS_Split ranges already failed to do this, and they should not
   // get a second chance until they have been split.
   if (Stage != RS_Split)
-    if (unsigned PhysReg = tryEvict(VirtReg, Order, NewVRegs, CostPerUseLimit))
+    if (unsigned PhysReg =
+            tryEvict(VirtReg, Order, NewVRegs, CostPerUseLimit)) {
+      unsigned Hint = MRI->getSimpleHint(VirtReg.reg);
+      // If VirtReg has a hint and that hint is broken record this
+      // virtual register as a recoloring candidate for broken hint.
+      // Indeed, since we evicted a variable in its neighborhood it is
+      // likely we can at least partially recolor some of the
+      // copy-related live-ranges.
+      if (Hint && Hint != PhysReg)
+        SetOfBrokenHints.insert(&VirtReg);
       return PhysReg;
+    }
 
   assert(NewVRegs.empty() && "Cannot append to existing NewVRegs");
 
@@ -2355,8 +2558,10 @@ bool RAGreedy::runOnMachineFunction(MachineFunction &mf) {
   NextCascade = 1;
   IntfCache.init(MF, Matrix->getLiveUnions(), Indexes, LIS, TRI);
   GlobalCand.resize(32);  // This will grow as needed.
+  SetOfBrokenHints.clear();
 
   allocatePhysRegs();
+  tryHintsRecoloring();
   releaseMemory();
   return true;
 }

@@ -96,6 +96,9 @@ protected:
   // Use this group name for NamedRegionTimer.
   static const char TimerGroupName[];
 
+  /// Method called when the allocator is about to remove a LiveInterval.
+  virtual void aboutToRemoveInterval(LiveInterval &LI) {}
+
 public:
   /// VerifyEnabled - True when -verify-regalloc is given.
   static bool VerifyEnabled;
