@@ -1,0 +1,11 @@
+# RUN: yaml2obj -format coff -o %t.obj %p/Inputs/armnt-import.obj.yaml
+# RUN: lld -flavor link /out:%t.exe /subsystem:console %t.obj %p/Inputs/library.lib
+# RUN: llvm-readobj -coff-imports %t.exe | FileCheck %s
+
+CHECK: Import {
+CHECK:   Name: library.dll
+CHECK:   ImportLookupTableRVA: 0x4000
+CHECK:   ImportAddressTableRVA: 0x2000
+CHECK:   Symbol: function (0)
+CHECK: }
+
