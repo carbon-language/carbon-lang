@@ -219,7 +219,6 @@ unsigned TargetTransformInfo::getMemoryOpCost(unsigned Opcode, Type *Src,
                                               unsigned Alignment,
                                               unsigned AddressSpace) const {
   return PrevTTI->getMemoryOpCost(Opcode, Src, Alignment, AddressSpace);
-  ;
 }
 
 unsigned
