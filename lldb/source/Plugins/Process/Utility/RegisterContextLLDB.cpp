@@ -1143,24 +1143,6 @@ RegisterContextLLDB::SavedLocationForRegister (uint32_t lldb_regnum, lldb_privat
         }
     }
 
-    RegisterNumber sp_regnum (m_thread, eRegisterKindGeneric, LLDB_REGNUM_GENERIC_SP);
-    RegisterNumber pc_regnum (m_thread, eRegisterKindGeneric, LLDB_REGNUM_GENERIC_PC);
-
-    // Are we looking for the CALLER's stack pointer?  The stack pointer is defined to be the same as THIS frame's
-    // CFA so just return the CFA value.  This is true on x86-32/x86-64 at least.
-    if (sp_regnum.GetAsKind (eRegisterKindLLDB) != LLDB_INVALID_REGNUM 
-        && sp_regnum.GetAsKind (eRegisterKindLLDB) == regnum.GetAsKind (eRegisterKindLLDB))
-    {
-        // make sure we won't lose precision copying an addr_t (m_cfa) into a uint64_t (.inferred_value)
-        assert (sizeof (addr_t) <= sizeof (uint64_t));
-        regloc.type = UnwindLLDB::RegisterLocation::eRegisterValueInferred;
-        regloc.location.inferred_value = m_cfa;
-        m_registers[regnum.GetAsKind (eRegisterKindLLDB)] = regloc;
-        UnwindLogMsg ("supplying caller's stack pointer %s (%d) value, computed from CFA", 
-                      regnum.GetName(), regnum.GetAsKind (eRegisterKindLLDB));
-        return UnwindLLDB::RegisterSearchResult::eRegisterFound;
-    }
-
     // Look through the available UnwindPlans for the register location.
 
     UnwindPlan::Row::RegisterLocation unwindplan_regloc;
@@ -1193,6 +1175,8 @@ RegisterContextLLDB::SavedLocationForRegister (uint32_t lldb_regnum, lldb_privat
 
         if (m_full_unwind_plan_sp)
         {
+            RegisterNumber pc_regnum (m_thread, eRegisterKindGeneric, LLDB_REGNUM_GENERIC_PC);
+
             UnwindPlan::RowSP active_row = m_full_unwind_plan_sp->GetRowForFunctionOffset (m_current_offset);
             unwindplan_registerkind = m_full_unwind_plan_sp->GetRegisterKind ();
 
@@ -1327,6 +1311,26 @@ RegisterContextLLDB::SavedLocationForRegister (uint32_t lldb_regnum, lldb_privat
         }
     }
 
+    if (have_unwindplan_regloc == false)
+    {
+        // Did the UnwindPlan fail to give us the caller's stack pointer?  
+        // The stack pointer is defined to be the same as THIS frame's CFA, so return the CFA value as
+        // the caller's stack pointer.  This is true on x86-32/x86-64 at least.
+
+        RegisterNumber sp_regnum (m_thread, eRegisterKindGeneric, LLDB_REGNUM_GENERIC_SP);
+        if (sp_regnum.GetAsKind (eRegisterKindLLDB) != LLDB_INVALID_REGNUM 
+            && sp_regnum.GetAsKind (eRegisterKindLLDB) == regnum.GetAsKind (eRegisterKindLLDB))
+        {
+            // make sure we won't lose precision copying an addr_t (m_cfa) into a uint64_t (.inferred_value)
+            assert (sizeof (addr_t) <= sizeof (uint64_t));
+            regloc.type = UnwindLLDB::RegisterLocation::eRegisterValueInferred;
+            regloc.location.inferred_value = m_cfa;
+            m_registers[regnum.GetAsKind (eRegisterKindLLDB)] = regloc;
+            UnwindLogMsg ("supplying caller's stack pointer %s (%d) value, computed from CFA", 
+                        regnum.GetName(), regnum.GetAsKind (eRegisterKindLLDB));
+            return UnwindLLDB::RegisterSearchResult::eRegisterFound;
+        }
+    }
 
     ExecutionContext exe_ctx(m_thread.shared_from_this());
     Process *process = exe_ctx.GetProcessPtr();
