@@ -704,8 +704,6 @@ public:
 /// Although nodes are uniqued by default, \a GenericMDNode has no support for
 /// RAUW.  If an operand change (due to RAUW or otherwise) causes a uniquing
 /// collision, the uniquing bit is dropped.
-///
-/// TODO: Make 'distinct' survive across assembly/bitcode/ValueMap.
 class GenericMDNode : public MDNode {
   friend class Metadata;
   friend class MDNode;
