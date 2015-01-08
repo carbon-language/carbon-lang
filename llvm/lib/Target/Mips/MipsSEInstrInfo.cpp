@@ -622,18 +622,13 @@ void MipsSEInstrInfo::expandEhReturn(MachineBasicBlock &MBB,
   // jr   $ra (via RetRA)
   const TargetMachine &TM = MBB.getParent()->getTarget();
   if (TM.getRelocationModel() == Reloc::PIC_)
-    BuildMI(MBB, I, I->getDebugLoc(),
-            TM.getSubtargetImpl()->getInstrInfo()->get(ADDU), T9)
+    BuildMI(MBB, I, I->getDebugLoc(), get(ADDU), T9)
         .addReg(TargetReg)
         .addReg(ZERO);
-  BuildMI(MBB, I, I->getDebugLoc(),
-          TM.getSubtargetImpl()->getInstrInfo()->get(ADDU), RA)
+  BuildMI(MBB, I, I->getDebugLoc(), get(ADDU), RA)
       .addReg(TargetReg)
       .addReg(ZERO);
-  BuildMI(MBB, I, I->getDebugLoc(),
-          TM.getSubtargetImpl()->getInstrInfo()->get(ADDU), SP)
-      .addReg(SP)
-      .addReg(OffsetReg);
+  BuildMI(MBB, I, I->getDebugLoc(), get(ADDU), SP).addReg(SP).addReg(OffsetReg);
   expandRetRA(MBB, I);
 }
 
