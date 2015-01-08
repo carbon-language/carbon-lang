@@ -2854,6 +2854,10 @@ Metadata nodes that aren't uniqued use the ``distinct`` keyword. For example:
 
     !0 = distinct !{!"test\00", i32 10}
 
+``distinct`` nodes are useful when nodes shouldn't be merged based on their
+content.  They can also occur when transformations cause uniquing collisions
+when metadata operands change.
+
 A :ref:`named metadata <namedmetadatastructure>` is a collection of
 metadata nodes, which can be looked up in the module symbol table. For
 example:
