@@ -293,14 +293,14 @@ struct SourceColumnMap {
 
   /// \brief Map from a byte index to the next byte which starts a column.
   int startOfNextColumn(int N) const {
-    assert(0 <= N && N < static_cast<int>(m_columnToByte.size() - 1));
+    assert(0 <= N && N < static_cast<int>(m_byteToColumn.size() - 1));
     while (byteToColumn(++N) == -1) {}
     return N;
   }
 
   /// \brief Map from a byte index to the previous byte which starts a column.
   int startOfPreviousColumn(int N) const {
-    assert(0 < N && N < static_cast<int>(m_columnToByte.size()));
+    assert(0 < N && N < static_cast<int>(m_byteToColumn.size()));
     while (byteToColumn(--N) == -1) {}
     return N;
   }
@@ -323,9 +323,10 @@ static void selectInterestingSourceRegion(std::string &SourceLine,
                                           std::string &FixItInsertionLine,
                                           unsigned Columns,
                                           const SourceColumnMap &map) {
-  unsigned MaxColumns = std::max<unsigned>(map.columns(),
-                                           std::max(CaretLine.size(),
-                                                    FixItInsertionLine.size()));
+  unsigned CaretColumns = CaretLine.size();
+  unsigned FixItColumns = llvm::sys::locale::columnWidth(FixItInsertionLine);
+  unsigned MaxColumns = std::max(static_cast<unsigned>(map.columns()),
+                                 std::max(CaretColumns, FixItColumns));
   // if the number of columns is less than the desired number we're done
   if (MaxColumns <= Columns)
     return;
@@ -1110,11 +1111,12 @@ void TextDiagnostic::emitSnippetAndCaret(
   // Copy the line of code into an std::string for ease of manipulation.
   std::string SourceLine(LineStart, LineEnd);
 
-  // Create a line for the caret that is filled with spaces that is the same
-  // length as the line of source code.
-  std::string CaretLine(LineEnd-LineStart, ' ');
-
+  // Build the byte to column map.
   const SourceColumnMap sourceColMap(SourceLine, DiagOpts->TabStop);
+
+  // Create a line for the caret that is filled with spaces that is the same
+  // number of columns as the line of source code.
+  std::string CaretLine(sourceColMap.columns(), ' ');
 
   // Highlight all of the characters covered by Ranges with ~ characters.
   for (SmallVectorImpl<CharSourceRange>::iterator I = Ranges.begin(),
