@@ -115,20 +115,24 @@ struct IntrusiveList {
     }
   }
 
-  class Iterator {
+  template<class ListTy, class ItemTy>
+  class IteratorBase {
    public:
-    explicit Iterator(IntrusiveList<Item> *list)
+    explicit IteratorBase(ListTy *list)
         : list_(list), current_(list->first_) { }
-    Item *next() {
-      Item *ret = current_;
+    ItemTy *next() {
+      ItemTy *ret = current_;
       if (current_) current_ = current_->next;
       return ret;
     }
     bool hasNext() const { return current_ != 0; }
    private:
-    IntrusiveList<Item> *list_;
-    Item *current_;
+    ListTy *list_;
+    ItemTy *current_;
   };
+
+  typedef IteratorBase<IntrusiveList<Item>, Item> Iterator;
+  typedef IteratorBase<const IntrusiveList<Item>, const Item> ConstIterator;
 
 // private, don't use directly.
   uptr size_;

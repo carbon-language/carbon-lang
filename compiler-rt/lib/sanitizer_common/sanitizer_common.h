@@ -16,10 +16,11 @@
 #ifndef SANITIZER_COMMON_H
 #define SANITIZER_COMMON_H
 
+#include "sanitizer_flags.h"
 #include "sanitizer_internal_defs.h"
 #include "sanitizer_libc.h"
+#include "sanitizer_list.h"
 #include "sanitizer_mutex.h"
-#include "sanitizer_flags.h"
 
 namespace __sanitizer {
 struct StackTrace;
@@ -526,22 +527,23 @@ class LoadedModule {
   const char *full_name() const { return full_name_; }
   uptr base_address() const { return base_address_; }
 
-  uptr n_ranges() const { return n_ranges_; }
-  uptr address_range_start(int i) const { return ranges_[i].beg; }
-  uptr address_range_end(int i) const { return ranges_[i].end; }
-  bool address_range_executable(int i) const { return exec_[i]; }
-
- private:
   struct AddressRange {
+    AddressRange *next;
     uptr beg;
     uptr end;
+    bool executable;
+
+    AddressRange(uptr beg, uptr end, bool executable)
+        : next(nullptr), beg(beg), end(end), executable(executable) {}
   };
+
+  typedef IntrusiveList<AddressRange>::ConstIterator Iterator;
+  Iterator ranges() const { return Iterator(&ranges_); }
+
+ private:
   char *full_name_;
   uptr base_address_;
-  static const uptr kMaxNumberOfAddressRanges = 6;
-  AddressRange ranges_[kMaxNumberOfAddressRanges];
-  bool exec_[kMaxNumberOfAddressRanges];
-  uptr n_ranges_;
+  IntrusiveList<AddressRange> ranges_;
 };
 
 // OS-dependent function that fills array with descriptions of at most
