@@ -1713,6 +1713,9 @@ void DAGTypeLegalizer::WidenVectorResult(SDNode *N, unsigned ResNo) {
   case ISD::VECTOR_SHUFFLE:
     Res = WidenVecRes_VECTOR_SHUFFLE(cast<ShuffleVectorSDNode>(N));
     break;
+  case ISD::MLOAD:
+    Res = WidenVecRes_MLOAD(cast<MaskedLoadSDNode>(N));
+    break;
 
   case ISD::ADD:
   case ISD::AND:
@@ -2401,6 +2404,48 @@ SDValue DAGTypeLegalizer::WidenVecRes_LOAD(SDNode *N) {
   ReplaceValueWith(SDValue(N, 1), NewChain);
 
   return Result;
+}
+
+SDValue DAGTypeLegalizer::WidenVecRes_MLOAD(MaskedLoadSDNode *N) {
+  
+  EVT WidenVT = TLI.getTypeToTransformTo(*DAG.getContext(),N->getValueType(0));
+  SDValue Mask = N->getMask();
+  EVT MaskVT = Mask.getValueType();
+  SDValue Src0 = GetWidenedVector(N->getSrc0());
+  SDLoc dl(N);
+
+  if (getTypeAction(MaskVT) == TargetLowering::TypeWidenVector)
+    Mask = GetWidenedVector(Mask);
+  else {
+    EVT BoolVT = getSetCCResultType(WidenVT);
+
+    // We can't use ModifyToType() because we should fill the mask with
+    // zeroes
+    unsigned WidenNumElts = BoolVT.getVectorNumElements();
+    unsigned MaskNumElts = MaskVT.getVectorNumElements();
+
+    unsigned NumConcat = WidenNumElts / MaskNumElts;
+    SmallVector<SDValue, 16> Ops(NumConcat);
+    SDValue ZeroVal = DAG.getConstant(0, MaskVT);
+    Ops[0] = Mask;
+    for (unsigned i = 1; i != NumConcat; ++i)
+      Ops[i] = ZeroVal;
+
+    Mask = DAG.getNode(ISD::CONCAT_VECTORS, dl, BoolVT, Ops);
+  }
+
+  // Rebuild memory operand because MemoryVT was changed
+  MachineMemOperand *MMO = DAG.getMachineFunction().
+    getMachineMemOperand(N->getPointerInfo(),
+                         MachineMemOperand::MOLoad,  WidenVT.getStoreSize(),
+                         N->getAlignment(), N->getAAInfo(), N->getRanges());
+
+  SDValue Res = DAG.getMaskedLoad(WidenVT, dl, N->getChain(), N->getBasePtr(),
+                                  Mask, Src0, MMO);
+  // Legalized the chain result - switch anything that used the old chain to
+  // use the new one.
+  ReplaceValueWith(SDValue(N, 1), Res.getValue(1));
+  return Res;
 }
 
 SDValue DAGTypeLegalizer::WidenVecRes_SCALAR_TO_VECTOR(SDNode *N) {
