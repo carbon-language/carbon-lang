@@ -1240,10 +1240,6 @@ class SROA : public FunctionPass {
   /// currently in the promotable queue.
   SetVector<SelectInst *, SmallVector<SelectInst *, 2>> SpeculatableSelects;
 
-  /// Debug intrinsics do not show up as regular uses in the
-  /// IR. This side-table holds the missing use edges.
-  DenseMap<AllocaInst *, DbgDeclareInst *> DbgDeclares;
-
 public:
   SROA(bool RequiresDomTree = true)
       : FunctionPass(ID), RequiresDomTree(RequiresDomTree), C(nullptr),
@@ -1261,8 +1257,8 @@ private:
   friend class AllocaSliceRewriter;
 
   bool presplitLoadsAndStores(AllocaInst &AI, AllocaSlices &AS);
-  AllocaInst *rewritePartition(AllocaInst &AI, AllocaSlices &AS,
-                               AllocaSlices::Partition &P);
+  bool rewritePartition(AllocaInst &AI, AllocaSlices &AS,
+                        AllocaSlices::Partition &P);
   bool splitAlloca(AllocaInst &AI, AllocaSlices &AS);
   bool runOnAlloca(AllocaInst &AI);
   void clobberUse(Use &U);
@@ -3968,8 +3964,8 @@ bool SROA::presplitLoadsAndStores(AllocaInst &AI, AllocaSlices &AS) {
 /// appropriate new offsets. It also evaluates how successful the rewrite was
 /// at enabling promotion and if it was successful queues the alloca to be
 /// promoted.
-AllocaInst *SROA::rewritePartition(AllocaInst &AI, AllocaSlices &AS,
-                                   AllocaSlices::Partition &P) {
+bool SROA::rewritePartition(AllocaInst &AI, AllocaSlices &AS,
+                            AllocaSlices::Partition &P) {
   // Try to compute a friendly type for this partition of the alloca. This
   // won't always succeed, in which case we fall back to a legal integer type
   // or an i8 array of an appropriate size.
@@ -4007,7 +4003,6 @@ AllocaInst *SROA::rewritePartition(AllocaInst &AI, AllocaSlices &AS,
     NewAI = &AI;
     // FIXME: We should be able to bail at this point with "nothing changed".
     // FIXME: We might want to defer PHI speculation until after here.
-    // FIXME: return nullptr;
   } else {
     unsigned Alignment = AI.getAlignment();
     if (!Alignment) {
@@ -4103,7 +4098,7 @@ AllocaInst *SROA::rewritePartition(AllocaInst &AI, AllocaSlices &AS,
       PostPromotionWorklist.pop_back();
   }
 
-  return NewAI;
+  return true;
 }
 
 /// \brief Walks the slices of an alloca and form partitions based on them,
@@ -4142,24 +4137,9 @@ bool SROA::splitAlloca(AllocaInst &AI, AllocaSlices &AS) {
   if (!IsSorted)
     std::sort(AS.begin(), AS.end());
 
-  /// \brief Describes the allocas introduced by rewritePartition
-  /// in order to migrate the debug info.
-  struct Piece {
-    AllocaInst *Alloca;
-    uint64_t Offset;
-    uint64_t Size;
-    Piece(AllocaInst *AI, uint64_t O, uint64_t S)
-      : Alloca(AI), Offset(O), Size(S) {}
-  };
-  SmallVector<Piece, 4> Pieces;
-
   // Rewrite each partition.
   for (auto &P : AS.partitions()) {
-    if (AllocaInst *NewAI = rewritePartition(AI, AS, P)) {
-      Changed = true;
-      if (NewAI != &AI)
-        Pieces.push_back(Piece(NewAI, P.beginOffset(), P.size()));
-    }
+    Changed |= rewritePartition(AI, AS, P);
     ++NumPartitions;
   }
 
@@ -4167,28 +4147,6 @@ bool SROA::splitAlloca(AllocaInst &AI, AllocaSlices &AS) {
   MaxPartitionsPerAlloca =
       std::max<unsigned>(NumPartitions, MaxPartitionsPerAlloca);
 
-  // Migrate debug information from the old alloca to the new alloca(s)
-  // and the individial partitions.
-  if (DbgDeclareInst *DbgDecl = DbgDeclares.lookup(&AI)) {
-    DIVariable Var(DbgDecl->getVariable());
-    DIExpression Expr(DbgDecl->getExpression());
-    DIBuilder DIB(*AI.getParent()->getParent()->getParent(),
-                  /*AllowUnresolved*/ false);
-    bool IsSplit = Pieces.size() > 1;
-    for (auto Piece : Pieces) {
-      // Create a piece expression describing the new partition or reuse AI's
-      // expression if there is only one partition.
-      if (IsSplit)
-        Expr = DIB.createPieceExpression(Piece.Offset, Piece.Size);
-      Instruction *NewDDI = DIB.insertDeclare(Piece.Alloca, Var, Expr, &AI);
-      NewDDI->setDebugLoc(DbgDecl->getDebugLoc());
-      assert((!DbgDeclares.count(Piece.Alloca) ||
-              DbgDeclares[Piece.Alloca] == cast<DbgDeclareInst>(NewDDI)
-             ) && "alloca already described");
-      DbgDeclares.insert(std::make_pair(Piece.Alloca,
-                                        cast<DbgDeclareInst>(NewDDI)));
-    }
-  }
   return Changed;
 }
 
@@ -4300,13 +4258,8 @@ void SROA::deleteDeadInstructions(
           DeadInsts.insert(U);
       }
 
-    if (AllocaInst *AI = dyn_cast<AllocaInst>(I)) {
+    if (AllocaInst *AI = dyn_cast<AllocaInst>(I))
       DeletedAllocas.insert(AI);
-      if (DbgDeclareInst *DbgDecl = DbgDeclares.lookup(AI)) {
-        DbgDecl->eraseFromParent();
-        DbgDeclares.erase(AI);
-      }
-    }
 
     ++NumDeleted;
     I->eraseFromParent();
@@ -4421,16 +4374,11 @@ bool SROA::runOnFunction(Function &F) {
   DT = DTWP ? &DTWP->getDomTree() : nullptr;
   AC = &getAnalysis<AssumptionCacheTracker>().getAssumptionCache(F);
 
-  DbgDeclares.clear();
   BasicBlock &EntryBB = F.getEntryBlock();
   for (BasicBlock::iterator I = EntryBB.begin(), E = std::prev(EntryBB.end());
-       I != E; ++I) {
+       I != E; ++I)
     if (AllocaInst *AI = dyn_cast<AllocaInst>(I))
       Worklist.insert(AI);
-    else if (DbgDeclareInst *DDI = dyn_cast<DbgDeclareInst>(I))
-      if (auto AI = dyn_cast_or_null<AllocaInst>(DDI->getAddress()))
-        DbgDeclares.insert(std::make_pair(AI, DDI));
-  }
 
   bool Changed = false;
   // A set of deleted alloca instruction pointers which should be removed from
