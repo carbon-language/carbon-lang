@@ -261,9 +261,9 @@ bool CodeGenPrepare::runOnFunction(Function &F) {
   if (!DisableBranchOpts) {
     MadeChange = false;
     SmallPtrSet<BasicBlock*, 8> WorkList;
-    for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB) {
-      SmallVector<BasicBlock*, 2> Successors(succ_begin(BB), succ_end(BB));
-      MadeChange |= ConstantFoldTerminator(BB, true);
+    for (BasicBlock &BB : F) {
+      SmallVector<BasicBlock *, 2> Successors(succ_begin(&BB), succ_end(&BB));
+      MadeChange |= ConstantFoldTerminator(&BB, true);
       if (!MadeChange) continue;
 
       for (SmallVectorImpl<BasicBlock*>::iterator
@@ -4327,9 +4327,9 @@ bool CodeGenPrepare::OptimizeBlock(BasicBlock &BB, bool& ModifiedDT) {
 // find a node corresponding to the value.
 bool CodeGenPrepare::PlaceDbgValues(Function &F) {
   bool MadeChange = false;
-  for (Function::iterator I = F.begin(), E = F.end(); I != E; ++I) {
+  for (BasicBlock &BB : F) {
     Instruction *PrevNonDbgInst = nullptr;
-    for (BasicBlock::iterator BI = I->begin(), BE = I->end(); BI != BE;) {
+    for (BasicBlock::iterator BI = BB.begin(), BE = BB.end(); BI != BE;) {
       Instruction *Insn = BI; ++BI;
       DbgValueInst *DVI = dyn_cast<DbgValueInst>(Insn);
       // Leave dbg.values that refer to an alloca alone. These
