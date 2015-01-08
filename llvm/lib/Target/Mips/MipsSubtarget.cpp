@@ -108,7 +108,7 @@ static std::string computeDataLayout(const MipsSubtarget &ST) {
 
 MipsSubtarget::MipsSubtarget(const std::string &TT, const std::string &CPU,
                              const std::string &FS, bool little,
-                             const MipsTargetMachine *_TM)
+                             const MipsTargetMachine &TM)
     : MipsGenSubtargetInfo(TT, CPU, FS), MipsArchVersion(MipsDefault),
       ABI(MipsABIInfo::Unknown()), IsLittle(little), IsSingleFloat(false),
       IsFPXX(false), NoABICalls(false), IsFP64bit(false), UseOddSPReg(true),
@@ -117,11 +117,11 @@ MipsSubtarget::MipsSubtarget(const std::string &TT, const std::string &CPU,
       HasMips4_32r2(false), HasMips5_32r2(false), InMips16Mode(false),
       InMips16HardFloat(Mips16HardFloat), InMicroMipsMode(false), HasDSP(false),
       HasDSPR2(false), AllowMixed16_32(Mixed16_32 | Mips_Os16), Os16(Mips_Os16),
-      HasMSA(false), TM(_TM), TargetTriple(TT),
+      HasMSA(false), TM(TM), TargetTriple(TT),
       DL(computeDataLayout(initializeSubtargetDependencies(CPU, FS, TM))),
       TSInfo(DL), InstrInfo(MipsInstrInfo::create(*this)),
       FrameLowering(MipsFrameLowering::create(*this)),
-      TLInfo(MipsTargetLowering::create(*TM, *this)) {
+      TLInfo(MipsTargetLowering::create(TM, *this)) {
 
   PreviousInMips16Mode = InMips16Mode;
 
@@ -167,7 +167,7 @@ MipsSubtarget::MipsSubtarget(const std::string &TT, const std::string &CPU,
       report_fatal_error(ISA + " is not compatible with the DSP ASE", false);
   }
 
-  if (NoABICalls && TM->getRelocationModel() == Reloc::PIC_)
+  if (NoABICalls && TM.getRelocationModel() == Reloc::PIC_)
     report_fatal_error("position-independent code requires '-mabicalls'");
 
   // Set UseSmallSection.
@@ -194,7 +194,7 @@ CodeGenOpt::Level MipsSubtarget::getOptLevelToEnablePostRAScheduler() const {
 
 MipsSubtarget &
 MipsSubtarget::initializeSubtargetDependencies(StringRef CPU, StringRef FS,
-                                               const TargetMachine *TM) {
+                                               const TargetMachine &TM) {
   std::string CPUName = selectMipsCPU(TargetTriple, CPU);
   
   // Parse features string.
@@ -202,14 +202,14 @@ MipsSubtarget::initializeSubtargetDependencies(StringRef CPU, StringRef FS,
   // Initialize scheduling itinerary for the specified CPU.
   InstrItins = getInstrItineraryForCPU(CPUName);
 
-  if (InMips16Mode && !TM->Options.UseSoftFloat)
+  if (InMips16Mode && !TM.Options.UseSoftFloat)
     InMips16HardFloat = true;
 
   return *this;
 }
 
 bool MipsSubtarget::abiUsesSoftFloat() const {
-  return TM->Options.UseSoftFloat && !InMips16HardFloat;
+  return TM.Options.UseSoftFloat && !InMips16HardFloat;
 }
 
 bool MipsSubtarget::useConstantIslands() {
@@ -218,5 +218,5 @@ bool MipsSubtarget::useConstantIslands() {
 }
 
 Reloc::Model MipsSubtarget::getRelocationModel() const {
-  return TM->getRelocationModel();
+  return TM.getRelocationModel();
 }
