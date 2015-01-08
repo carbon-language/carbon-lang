@@ -142,8 +142,11 @@ TEST(SanitizerCommon, InternalMmapWithOffset) {
   res = internal_ftruncate(fd, page_size * 2);
   ASSERT_FALSE(internal_iserror(res));
 
-  internal_lseek(fd, page_size, SEEK_SET);
-  internal_write(fd, "AB", 2);
+  res = internal_lseek(fd, page_size, SEEK_SET);
+  ASSERT_FALSE(internal_iserror(res));
+
+  res = internal_write(fd, "AB", 2);
+  ASSERT_FALSE(internal_iserror(res));
 
   char *p = (char *)MapWritableFileToMemory(nullptr, page_size, fd, page_size);
   ASSERT_NE(nullptr, p);
