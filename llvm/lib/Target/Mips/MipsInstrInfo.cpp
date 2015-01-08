@@ -15,7 +15,7 @@
 #include "InstPrinter/MipsInstPrinter.h"
 #include "MipsAnalyzeImmediate.h"
 #include "MipsMachineFunction.h"
-#include "MipsTargetMachine.h"
+#include "MipsSubtarget.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
