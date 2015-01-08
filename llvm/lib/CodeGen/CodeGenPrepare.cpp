@@ -4330,7 +4330,7 @@ bool CodeGenPrepare::PlaceDbgValues(Function &F) {
   for (BasicBlock &BB : F) {
     Instruction *PrevNonDbgInst = nullptr;
     for (BasicBlock::iterator BI = BB.begin(), BE = BB.end(); BI != BE;) {
-      Instruction *Insn = BI; ++BI;
+      Instruction *Insn = BI++;
       DbgValueInst *DVI = dyn_cast<DbgValueInst>(Insn);
       // Leave dbg.values that refer to an alloca alone. These
       // instrinsics describe the address of a variable (= the alloca)
