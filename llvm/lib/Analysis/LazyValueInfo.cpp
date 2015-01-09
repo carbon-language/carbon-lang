@@ -54,8 +54,7 @@ namespace llvm {
 //                               LVILatticeVal
 //===----------------------------------------------------------------------===//
 
-/// LVILatticeVal - This is the information tracked by LazyValueInfo for each
-/// value.
+/// This is the information tracked by LazyValueInfo for each value.
 ///
 /// FIXME: This is basically just for bringup, this can be made a lot more rich
 /// in the future.
@@ -63,19 +62,19 @@ namespace llvm {
 namespace {
 class LVILatticeVal {
   enum LatticeValueTy {
-    /// undefined - This Value has no known value yet.
+    /// This Value has no known value yet.
     undefined,
     
-    /// constant - This Value has a specific constant value.
+    /// This Value has a specific constant value.
     constant,
-    /// notconstant - This Value is known to not have the specified value.
+    
+    /// This Value is known to not have the specified value.
     notconstant,
 
-    /// constantrange - The Value falls within this range.
+    /// The Value falls within this range.
     constantrange,
 
-    /// overdefined - This value is not known to be constant, and we know that
-    /// it has a value.
+    /// This value is not known to be constant, and we know that it has a value.
     overdefined
   };
   
@@ -128,7 +127,7 @@ public:
     return Range;
   }
   
-  /// markOverdefined - Return true if this is a change in status.
+  /// Return true if this is a change in status.
   bool markOverdefined() {
     if (isOverdefined())
       return false;
@@ -136,7 +135,7 @@ public:
     return true;
   }
 
-  /// markConstant - Return true if this is a change in status.
+  /// Return true if this is a change in status.
   bool markConstant(Constant *V) {
     assert(V && "Marking constant with NULL");
     if (ConstantInt *CI = dyn_cast<ConstantInt>(V))
@@ -152,7 +151,7 @@ public:
     return true;
   }
   
-  /// markNotConstant - Return true if this is a change in status.
+  /// Return true if this is a change in status.
   bool markNotConstant(Constant *V) {
     assert(V && "Marking constant with NULL");
     if (ConstantInt *CI = dyn_cast<ConstantInt>(V))
@@ -170,7 +169,7 @@ public:
     return true;
   }
   
-  /// markConstantRange - Return true if this is a change in status.
+  /// Return true if this is a change in status.
   bool markConstantRange(const ConstantRange NewR) {
     if (isConstantRange()) {
       if (NewR.isEmptySet())
@@ -190,7 +189,7 @@ public:
     return true;
   }
   
-  /// mergeIn - Merge the specified lattice value into this one, updating this
+  /// Merge the specified lattice value into this one, updating this
   /// one and returning true if anything changed.
   bool mergeIn(const LVILatticeVal &RHS) {
     if (RHS.isUndefined() || isOverdefined()) return false;
@@ -298,8 +297,7 @@ raw_ostream &operator<<(raw_ostream &OS, const LVILatticeVal &Val) {
 //===----------------------------------------------------------------------===//
 
 namespace {
-  /// LVIValueHandle - A callback value handle updates the cache when
-  /// values are erased.
+  /// A callback value handle updates the cache when values are erased.
   class LazyValueInfoCache;
   struct LVIValueHandle : public CallbackVH {
     LazyValueInfoCache *Parent;
@@ -315,39 +313,38 @@ namespace {
 }
 
 namespace { 
-  /// LazyValueInfoCache - This is the cache kept by LazyValueInfo which
+  /// This is the cache kept by LazyValueInfo which
   /// maintains information about queries across the clients' queries.
   class LazyValueInfoCache {
-    /// ValueCacheEntryTy - This is all of the cached block information for
-    /// exactly one Value*.  The entries are sorted by the BasicBlock* of the
+    /// This is all of the cached block information for exactly one Value*.
+    /// The entries are sorted by the BasicBlock* of the
     /// entries, allowing us to do a lookup with a binary search.
     typedef std::map<AssertingVH<BasicBlock>, LVILatticeVal> ValueCacheEntryTy;
 
-    /// ValueCache - This is all of the cached information for all values,
+    /// This is all of the cached information for all values,
     /// mapped from Value* to key information.
     std::map<LVIValueHandle, ValueCacheEntryTy> ValueCache;
     
-    /// OverDefinedCache - This tracks, on a per-block basis, the set of 
-    /// values that are over-defined at the end of that block.  This is required
+    /// This tracks, on a per-block basis, the set of values that are
+    /// over-defined at the end of that block.  This is required
     /// for cache updating.
     typedef std::pair<AssertingVH<BasicBlock>, Value*> OverDefinedPairTy;
     DenseSet<OverDefinedPairTy> OverDefinedCache;
 
-    /// SeenBlocks - Keep track of all blocks that we have ever seen, so we
+    /// Keep track of all blocks that we have ever seen, so we
     /// don't spend time removing unused blocks from our caches.
     DenseSet<AssertingVH<BasicBlock> > SeenBlocks;
 
-    /// BlockValueStack - This stack holds the state of the value solver
-    /// during a query.  It basically emulates the callstack of the naive
+    /// This stack holds the state of the value solver during a query.
+    /// It basically emulates the callstack of the naive
     /// recursive value lookup process.
     std::stack<std::pair<BasicBlock*, Value*> > BlockValueStack;
 
-    /// BlockValueSet - Keeps track of which block-value pairs are in
-    /// BlockValueStack.
+    /// Keeps track of which block-value pairs are in BlockValueStack.
     DenseSet<std::pair<BasicBlock*, Value*> > BlockValueSet;
 
-    /// pushBlockValue - Push BV onto BlockValueStack unless it's already in
-    /// there. Returns true on success.
+    /// Push BV onto BlockValueStack unless it's already in there.
+    /// Returns true on success.
     bool pushBlockValue(const std::pair<BasicBlock *, Value *> &BV) {
       if (BlockValueSet.count(BV))
         return false;  // It's already in the stack.
@@ -399,27 +396,26 @@ namespace {
     }
 
   public:
-    /// getValueInBlock - This is the query interface to determine the lattice
+    /// This is the query interface to determine the lattice
     /// value for the specified Value* at the end of the specified block.
     LVILatticeVal getValueInBlock(Value *V, BasicBlock *BB,
                                   Instruction *CxtI = nullptr);
 
-    /// getValueAt - This is the query interface to determine the lattice
+    /// This is the query interface to determine the lattice
     /// value for the specified Value* at the specified instruction (generally
     /// from an assume intrinsic).
     LVILatticeVal getValueAt(Value *V, Instruction *CxtI);
 
-    /// getValueOnEdge - This is the query interface to determine the lattice
+    /// This is the query interface to determine the lattice
     /// value for the specified Value* that is true on the specified edge.
     LVILatticeVal getValueOnEdge(Value *V, BasicBlock *FromBB,BasicBlock *ToBB,
                                  Instruction *CxtI = nullptr);
     
-    /// threadEdge - This is the update interface to inform the cache that an
-    /// edge from PredBB to OldSucc has been threaded to be from PredBB to
-    /// NewSucc.
+    /// This is the update interface to inform the cache that an edge from
+    /// PredBB to OldSucc has been threaded to be from PredBB to NewSucc.
     void threadEdge(BasicBlock *PredBB,BasicBlock *OldSucc,BasicBlock *NewSucc);
     
-    /// eraseBlock - This is part of the update interface to inform the cache
+    /// This is part of the update interface to inform the cache
     /// that a block has been deleted.
     void eraseBlock(BasicBlock *BB);
     
@@ -1106,7 +1102,7 @@ void LazyValueInfoCache::threadEdge(BasicBlock *PredBB, BasicBlock *OldSucc,
 //                            LazyValueInfo Impl
 //===----------------------------------------------------------------------===//
 
-/// getCache - This lazily constructs the LazyValueInfoCache.
+/// This lazily constructs the LazyValueInfoCache.
 static LazyValueInfoCache &getCache(void *&PImpl, AssumptionCache *AC,
                                     const DataLayout *DL = nullptr,
                                     DominatorTree *DT = nullptr) {
@@ -1163,7 +1159,7 @@ Constant *LazyValueInfo::getConstant(Value *V, BasicBlock *BB,
   return nullptr;
 }
 
-/// getConstantOnEdge - Determine whether the specified value is known to be a
+/// Determine whether the specified value is known to be a
 /// constant on the specified edge.  Return null if not.
 Constant *LazyValueInfo::getConstantOnEdge(Value *V, BasicBlock *FromBB,
                                            BasicBlock *ToBB,
@@ -1248,9 +1244,8 @@ getPredicateResult(unsigned Pred, Constant *C, LVILatticeVal &Result,
   return LazyValueInfo::Unknown;
 }
 
-/// getPredicateOnEdge - Determine whether the specified value comparison
-/// with a constant is known to be true or false on the specified CFG edge.
-/// Pred is a CmpInst predicate.
+/// Determine whether the specified value comparison with a constant is known to
+/// be true or false on the specified CFG edge. Pred is a CmpInst predicate.
 LazyValueInfo::Tristate
 LazyValueInfo::getPredicateOnEdge(unsigned Pred, Value *V, Constant *C,
                                   BasicBlock *FromBB, BasicBlock *ToBB,
