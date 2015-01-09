@@ -2043,8 +2043,12 @@ static bool isGuardVariableRef(Value *V)
 
     GlobalVariable *GV = dyn_cast<GlobalVariable>(Old);
 
-    if (!GV || !GV->hasName() || !GV->getName().startswith("_ZGV"))
+    if (!GV || !GV->hasName() ||
+        (!GV->getName().startswith("_ZGV") && // Itanium ABI guard variable
+         !GV->getName().endswith("@4IA")))    // Microsoft ABI guard variable
+    {
         return false;
+    }
 
     return true;
 }
@@ -2052,20 +2056,8 @@ static bool isGuardVariableRef(Value *V)
 void
 IRForTarget::TurnGuardLoadIntoZero(llvm::Instruction* guard_load)
 {
-    Constant* zero(ConstantInt::get(Type::getInt8Ty(m_module->getContext()), 0, true));
-
-    for (llvm::User *u : guard_load->users())
-    {
-        if (isa<Constant>(u))
-        {
-            // do nothing for the moment
-        }
-        else
-        {
-            u->replaceUsesOfWith(guard_load, zero);
-        }
-    }
-
+    Constant *zero(Constant::getNullValue(guard_load->getType()));
+    guard_load->replaceAllUsesWith(zero);
     guard_load->eraseFromParent();
 }
 
