@@ -2762,8 +2762,7 @@ bool Sema::Subst(const TemplateArgumentLoc *Args, unsigned NumArgs,
   return Instantiator.TransformTemplateArguments(Args, NumArgs, Result);
 }
 
-
-static const Decl* getCanonicalParmVarDecl(const Decl *D) {
+static const Decl *getCanonicalParmVarDecl(const Decl *D) {
   // When storing ParmVarDecls in the local instantiation scope, we always
   // want to use the ParmVarDecl from the canonical function declaration,
   // since the map is then valid for any redeclaration or definition of that
@@ -2771,7 +2770,10 @@ static const Decl* getCanonicalParmVarDecl(const Decl *D) {
   if (const ParmVarDecl *PV = dyn_cast<ParmVarDecl>(D)) {
     if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(PV->getDeclContext())) {
       unsigned i = PV->getFunctionScopeIndex();
-      return FD->getCanonicalDecl()->getParamDecl(i);
+      // This parameter might be from a freestanding function type within the
+      // function and isn't necessarily referring to one of FD's parameters.
+      if (FD->getParamDecl(i) == PV)
+        return FD->getCanonicalDecl()->getParamDecl(i);
     }
   }
   return D;
@@ -2820,12 +2822,22 @@ LocalInstantiationScope::findInstantiationOf(const Decl *D) {
 void LocalInstantiationScope::InstantiatedLocal(const Decl *D, Decl *Inst) {
   D = getCanonicalParmVarDecl(D);
   llvm::PointerUnion<Decl *, DeclArgumentPack *> &Stored = LocalDecls[D];
-  if (Stored.isNull())
+  if (Stored.isNull()) {
+#ifndef NDEBUG
+    // It should not be present in any surrounding scope either.
+    LocalInstantiationScope *Current = this;
+    while (Current->CombineWithOuterScope && Current->Outer) {
+      Current = Current->Outer;
+      assert(Current->LocalDecls.find(D) == Current->LocalDecls.end() &&
+             "Instantiated local in inner and outer scopes");
+    }
+#endif
     Stored = Inst;
-  else if (DeclArgumentPack *Pack = Stored.dyn_cast<DeclArgumentPack *>())
+  } else if (DeclArgumentPack *Pack = Stored.dyn_cast<DeclArgumentPack *>()) {
     Pack->push_back(Inst);
-  else
+  } else {
     assert(Stored.get<Decl *>() == Inst && "Already instantiated this local");
+  }
 }
 
 void LocalInstantiationScope::InstantiatedLocalPackArg(const Decl *D, 
@@ -2836,9 +2848,16 @@ void LocalInstantiationScope::InstantiatedLocalPackArg(const Decl *D,
 }
 
 void LocalInstantiationScope::MakeInstantiatedLocalArgPack(const Decl *D) {
+#ifndef NDEBUG
+  // This should be the first time we've been told about this decl.
+  for (LocalInstantiationScope *Current = this;
+       Current && Current->CombineWithOuterScope; Current = Current->Outer)
+    assert(Current->LocalDecls.find(D) == Current->LocalDecls.end() &&
+           "Creating local pack after instantiation of local");
+#endif
+
   D = getCanonicalParmVarDecl(D);
   llvm::PointerUnion<Decl *, DeclArgumentPack *> &Stored = LocalDecls[D];
-  assert(Stored.isNull() && "Already instantiated this local");
   DeclArgumentPack *Pack = new DeclArgumentPack;
   Stored = Pack;
   ArgumentPacks.push_back(Pack);

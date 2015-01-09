@@ -922,3 +922,12 @@ int run2 = x2.fooG3();
 namespace pr21684_disambiguate_auto_followed_by_ellipsis_no_id {
 int a = [](auto ...) { return 0; }();
 }
+
+namespace PR22117 {
+  int x = [](auto) {
+    return [](auto... run_args) {
+      using T = int(decltype(run_args)...);
+      return 0;
+    };
+  }(0)(0);
+}
