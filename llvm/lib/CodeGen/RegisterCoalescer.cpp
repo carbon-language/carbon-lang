@@ -694,8 +694,6 @@ bool RegisterCoalescer::removeCopyByCommutingDef(const CoalescerPair &CP,
     MBB->insert(Pos, NewMI);
     MBB->erase(DefMI);
   }
-  unsigned OpIdx = NewMI->findRegisterUseOperandIdx(IntA.reg, false);
-  NewMI->getOperand(OpIdx).setIsKill();
 
   // If ALR and BLR overlaps and end of BLR extends beyond end of ALR, e.g.
   // A = or A, B
