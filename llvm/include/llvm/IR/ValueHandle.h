@@ -56,55 +56,48 @@ private:
   PointerIntPair<ValueHandleBase**, 2, HandleBaseKind> PrevPair;
   ValueHandleBase *Next;
 
-  // A subclass may want to store some information along with the value
-  // pointer. Allow them to do this by making the value pointer a pointer-int
-  // pair. The 'setValPtrInt' and 'getValPtrInt' methods below give them this
-  // access.
-  PointerIntPair<Value*, 2> VP;
+  Value* V;
 
   ValueHandleBase(const ValueHandleBase&) LLVM_DELETED_FUNCTION;
 public:
   explicit ValueHandleBase(HandleBaseKind Kind)
-    : PrevPair(nullptr, Kind), Next(nullptr), VP(nullptr, 0) {}
+    : PrevPair(nullptr, Kind), Next(nullptr), V(nullptr) {}
   ValueHandleBase(HandleBaseKind Kind, Value *V)
-    : PrevPair(nullptr, Kind), Next(nullptr), VP(V, 0) {
-    if (isValid(VP.getPointer()))
+    : PrevPair(nullptr, Kind), Next(nullptr), V(V) {
+    if (isValid(V))
       AddToUseList();
   }
   ValueHandleBase(HandleBaseKind Kind, const ValueHandleBase &RHS)
-    : PrevPair(nullptr, Kind), Next(nullptr), VP(RHS.VP) {
-    if (isValid(VP.getPointer()))
+    : PrevPair(nullptr, Kind), Next(nullptr), V(RHS.V) {
+    if (isValid(V))
       AddToExistingUseList(RHS.getPrevPtr());
   }
   ~ValueHandleBase() {
-    if (isValid(VP.getPointer()))
+    if (isValid(V))
       RemoveFromUseList();
   }
 
   Value *operator=(Value *RHS) {
-    if (VP.getPointer() == RHS) return RHS;
-    if (isValid(VP.getPointer())) RemoveFromUseList();
-    VP.setPointer(RHS);
-    if (isValid(VP.getPointer())) AddToUseList();
+    if (V == RHS) return RHS;
+    if (isValid(V)) RemoveFromUseList();
+    V = RHS;
+    if (isValid(V)) AddToUseList();
     return RHS;
   }
 
   Value *operator=(const ValueHandleBase &RHS) {
-    if (VP.getPointer() == RHS.VP.getPointer()) return RHS.VP.getPointer();
-    if (isValid(VP.getPointer())) RemoveFromUseList();
-    VP.setPointer(RHS.VP.getPointer());
-    if (isValid(VP.getPointer())) AddToExistingUseList(RHS.getPrevPtr());
-    return VP.getPointer();
+    if (V == RHS.V) return RHS.V;
+    if (isValid(V)) RemoveFromUseList();
+    V = RHS.V;
+    if (isValid(V)) AddToExistingUseList(RHS.getPrevPtr());
+    return V;
   }
 
-  Value *operator->() const { return getValPtr(); }
-  Value &operator*() const { return *getValPtr(); }
+  Value *operator->() const { return V; }
+  Value &operator*() const { return *V; }
 
 protected:
-  Value *getValPtr() const { return VP.getPointer(); }
-
-  void setValPtrInt(unsigned K) { VP.setInt(K); }
-  unsigned getValPtrInt() const { return VP.getInt(); }
+  Value *getValPtr() const { return V; }
 
   static bool isValid(Value *V) {
     return V &&
@@ -123,7 +116,7 @@ private:
   HandleBaseKind getKind() const { return PrevPair.getInt(); }
   void setPrevPtr(ValueHandleBase **Ptr) { PrevPair.setPointer(Ptr); }
 
-  /// \brief Add this ValueHandle to the use list for VP.
+  /// \brief Add this ValueHandle to the use list for V.
   ///
   /// List is the address of either the head of the list or a Next node within
   /// the existing use list.
@@ -132,7 +125,7 @@ private:
   /// \brief Add this ValueHandle to the use list after Node.
   void AddToExistingUseListAfter(ValueHandleBase *Node);
 
-  /// \brief Add this ValueHandle to the use list for VP.
+  /// \brief Add this ValueHandle to the use list for V.
   void AddToUseList();
   /// \brief Remove this ValueHandle from its current use list.
   void RemoveFromUseList();
