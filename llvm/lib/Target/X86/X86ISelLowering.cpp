@@ -9599,23 +9599,41 @@ static SDValue lowerV16I8VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
   if (Subtarget->hasSSSE3()) {
     SDValue V1Mask[16];
     SDValue V2Mask[16];
-    for (int i = 0; i < 16; ++i)
+    bool V1InUse = false;
+    bool V2InUse = false;
+    SmallBitVector Zeroable = computeZeroableShuffleElements(Mask, V1, V2);
+
+    for (int i = 0; i < 16; ++i) {
       if (Mask[i] == -1) {
         V1Mask[i] = V2Mask[i] = DAG.getUNDEF(MVT::i8);
       } else {
-        V1Mask[i] = DAG.getConstant(Mask[i] < 16 ? Mask[i] : 0x80, MVT::i8);
-        V2Mask[i] =
-            DAG.getConstant(Mask[i] < 16 ? 0x80 : Mask[i] - 16, MVT::i8);
+        const int ZeroMask = 0x80;
+        int V1Idx = (Mask[i] < 16 ? Mask[i] : ZeroMask);
+        int V2Idx = (Mask[i] < 16 ? ZeroMask : Mask[i] - 16);
+        if (Zeroable[i])
+          V1Idx = V2Idx = ZeroMask;
+        V1Mask[i] = DAG.getConstant(V1Idx, MVT::i8);
+        V2Mask[i] = DAG.getConstant(V2Idx, MVT::i8);
+        V1InUse |= (ZeroMask != V1Idx);
+        V2InUse |= (ZeroMask != V2Idx);
       }
-    V1 = DAG.getNode(X86ISD::PSHUFB, DL, MVT::v16i8, V1,
-                     DAG.getNode(ISD::BUILD_VECTOR, DL, MVT::v16i8, V1Mask));
-    if (isSingleInputShuffleMask(Mask))
-      return V1; // Single inputs are easy.
+    }
+    assert((V1InUse || V2InUse) && "Shuffling to a zeroable vector");
 
-    // Otherwise, blend the two.
-    V2 = DAG.getNode(X86ISD::PSHUFB, DL, MVT::v16i8, V2,
-                     DAG.getNode(ISD::BUILD_VECTOR, DL, MVT::v16i8, V2Mask));
-    return DAG.getNode(ISD::OR, DL, MVT::v16i8, V1, V2);
+    if (V1InUse)
+      V1 = DAG.getNode(X86ISD::PSHUFB, DL, MVT::v16i8, V1,
+                       DAG.getNode(ISD::BUILD_VECTOR, DL, MVT::v16i8, V1Mask));
+    if (V2InUse)
+      V2 = DAG.getNode(X86ISD::PSHUFB, DL, MVT::v16i8, V2,
+                       DAG.getNode(ISD::BUILD_VECTOR, DL, MVT::v16i8, V2Mask));
+
+    // If we need shuffled inputs from both, blend the two.
+    if (V1InUse && V2InUse)
+      return DAG.getNode(ISD::OR, DL, MVT::v16i8, V1, V2);
+    if (V1InUse)
+      return V1; // Single inputs are easy.
+    if (V2InUse)
+      return V2; // Single inputs are easy.
   }
 
   // There are special ways we can lower some single-element blends.
