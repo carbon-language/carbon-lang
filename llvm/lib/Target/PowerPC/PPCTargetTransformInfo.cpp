@@ -277,6 +277,8 @@ void PPCTTI::getUnrollingPreferences(const Function *F, Loop *L,
     // helps expose latency-hiding opportunities to the instruction scheduler.
     UP.Partial = UP.Runtime = true;
   }
+
+  TargetTransformInfo::getUnrollingPreferences(F, L, UP);
 }
 
 unsigned PPCTTI::getNumberOfRegisters(bool Vector) const {
