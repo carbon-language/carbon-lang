@@ -305,7 +305,7 @@ private:
           (Left->is(TT_ArraySubscriptLSquare) ||
            (Left->is(TT_ObjCMethodExpr) && !ColonFound)))
         Left->Type = TT_ArrayInitializerLSquare;
-      FormatToken* Tok = CurrentToken;
+      FormatToken *Tok = CurrentToken;
       if (!consumeToken())
         return false;
       updateParameterCount(Left, Tok);
@@ -861,6 +861,11 @@ private:
       if (PreviousNoComment &&
           PreviousNoComment->isOneOf(tok::comma, tok::l_brace))
         Current.Type = TT_DesignatedInitializerPeriod;
+      else if (Style.Language == FormatStyle::LK_Java && Current.Previous &&
+               Current.Previous->isOneOf(TT_JavaAnnotation,
+                                         TT_LeadingJavaAnnotation)) {
+        Current.Type = Current.Previous->Type;
+      }
     } else if (Current.isOneOf(tok::identifier, tok::kw_const) &&
                Current.Previous &&
                !Current.Previous->isOneOf(tok::equal, tok::at) &&
@@ -868,15 +873,20 @@ private:
       // Line.MightBeFunctionDecl can only be true after the parentheses of a
       // function declaration have been found.
       Current.Type = TT_TrailingAnnotation;
-    } else if (Style.Language == FormatStyle::LK_Java && Current.Previous &&
-               Current.Previous->is(tok::at) &&
-               Current.isNot(Keywords.kw_interface)) {
-      const FormatToken &AtToken = *Current.Previous;
-      const FormatToken *Previous = AtToken.getPreviousNonComment();
-      if (!Previous || Previous->is(TT_LeadingJavaAnnotation))
-        Current.Type = TT_LeadingJavaAnnotation;
-      else
-        Current.Type = TT_JavaAnnotation;
+    } else if (Style.Language == FormatStyle::LK_Java && Current.Previous) {
+      if (Current.Previous->is(tok::at) &&
+          Current.isNot(Keywords.kw_interface)) {
+        const FormatToken &AtToken = *Current.Previous;
+        const FormatToken *Previous = AtToken.getPreviousNonComment();
+        if (!Previous || Previous->is(TT_LeadingJavaAnnotation))
+          Current.Type = TT_LeadingJavaAnnotation;
+        else
+          Current.Type = TT_JavaAnnotation;
+      } else if (Current.Previous->is(tok::period) &&
+                 Current.Previous->isOneOf(TT_JavaAnnotation,
+                                           TT_LeadingJavaAnnotation)) {
+        Current.Type = Current.Previous->Type;
+      }
     }
   }
 
@@ -1281,8 +1291,8 @@ private:
 
 } // end anonymous namespace
 
-void
-TokenAnnotator::setCommentLineLevels(SmallVectorImpl<AnnotatedLine *> &Lines) {
+void TokenAnnotator::setCommentLineLevels(
+    SmallVectorImpl<AnnotatedLine *> &Lines) {
   const AnnotatedLine *NextNonCommentLine = nullptr;
   for (SmallVectorImpl<AnnotatedLine *>::reverse_iterator I = Lines.rbegin(),
                                                           E = Lines.rend();
@@ -1408,9 +1418,9 @@ void TokenAnnotator::calculateFormattingInformation(AnnotatedLine &Line) {
     Current->MustBreakBefore =
         Current->MustBreakBefore || mustBreakBefore(Line, *Current);
 
-    if (Style.AlwaysBreakAfterDefinitionReturnType &&
-        InFunctionDecl && Current->is(TT_FunctionDeclarationName) &&
-        !Line.Last->isOneOf(tok::semi, tok::comment))  // Only for definitions.
+    if (Style.AlwaysBreakAfterDefinitionReturnType && InFunctionDecl &&
+        Current->is(TT_FunctionDeclarationName) &&
+        !Line.Last->isOneOf(tok::semi, tok::comment)) // Only for definitions.
       // FIXME: Line.Last points to other characters than tok::semi
       // and tok::lbrace.
       Current->MustBreakBefore = true;
@@ -1423,7 +1433,7 @@ void TokenAnnotator::calculateFormattingInformation(AnnotatedLine &Line) {
       ChildSize = LastOfChild.isTrailingComment() ? Style.ColumnLimit
                                                   : LastOfChild.TotalLength + 1;
     }
-    const FormatToken *Prev= Current->Previous;
+    const FormatToken *Prev = Current->Previous;
     if (Current->MustBreakBefore || Prev->Children.size() > 1 ||
         (Prev->Children.size() == 1 &&
          Prev->Children[0]->First->MustBreakBefore) ||
@@ -1612,7 +1622,7 @@ bool TokenAnnotator::spaceRequiredBetween(const AnnotatedLine &Line,
   if (Left.is(tok::l_paren) && Right.is(tok::r_paren))
     return Style.SpaceInEmptyParentheses;
   if (Left.is(tok::l_paren) || Right.is(tok::r_paren))
-    return (Right.is(TT_CastRParen )||
+    return (Right.is(TT_CastRParen) ||
             (Left.MatchingParen && Left.MatchingParen->is(TT_CastRParen)))
                ? Style.SpacesInCStyleCastParentheses
                : Style.SpacesInParentheses;
@@ -1897,7 +1907,8 @@ bool TokenAnnotator::mustBreakBefore(const AnnotatedLine &Line,
         Left.NestingLevel == 0)
       return true;
   } else if (Style.Language == FormatStyle::LK_Java) {
-    if (Left.is(TT_LeadingJavaAnnotation) && Right.isNot(tok::l_paren) &&
+    if (Left.is(TT_LeadingJavaAnnotation) &&
+        Right.isNot(TT_LeadingJavaAnnotation) && Right.isNot(tok::l_paren) &&
         Line.Last->is(tok::l_brace))
       return true;
     if (Right.is(tok::plus) && Left.is(tok::string_literal) && Right.Next &&

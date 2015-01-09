@@ -242,6 +242,9 @@ TEST_F(FormatTestJava, Annotations) {
   verifyFormat("@Override // comment\n"
                "@Nullable\n"
                "public String getNameIfPresent() {}");
+  verifyFormat("@java.lang.Override // comment\n"
+               "@Nullable\n"
+               "public String getNameIfPresent() {}");
 
   verifyFormat("@SuppressWarnings(value = \"unchecked\")\n"
                "public void doSomething() {}");
@@ -255,6 +258,7 @@ TEST_F(FormatTestJava, Annotations) {
                "});");
 
   verifyFormat("void SomeFunction(@Nullable String something) {}");
+  verifyFormat("void SomeFunction(@org.llvm.Nullable String something) {}");
 
   verifyFormat("@Partial @Mock DataLoader loader;");
   verifyFormat("@SuppressWarnings(value = \"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\")\n"
@@ -262,7 +266,13 @@ TEST_F(FormatTestJava, Annotations) {
 
   verifyFormat("@SomeAnnotation(\"With some really looooooooooooooong text\")\n"
                "private static final long something = 0L;");
+  verifyFormat("@org.llvm.Qualified(\"With some really looooooooooong text\")\n"
+               "private static final long something = 0L;");
   verifyFormat("@Mock\n"
+               "DataLoader loooooooooooooooooooooooader =\n"
+               "    aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa;",
+               getStyleWithColumns(60));
+  verifyFormat("@org.llvm.QualifiedMock\n"
                "DataLoader loooooooooooooooooooooooader =\n"
                "    aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa;",
                getStyleWithColumns(60));
