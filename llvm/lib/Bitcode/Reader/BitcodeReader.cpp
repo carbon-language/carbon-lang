@@ -2453,6 +2453,14 @@ std::error_code BitcodeReader::ParseFunctionBody(Function *F) {
   unsigned CurBBNo = 0;
 
   DebugLoc LastLoc;
+  auto getLastInstruction = [&]() -> Instruction * {
+    if (CurBB && !CurBB->empty())
+      return &CurBB->back();
+    else if (CurBBNo && FunctionBBs[CurBBNo - 1] &&
+             !FunctionBBs[CurBBNo - 1]->empty())
+      return &FunctionBBs[CurBBNo - 1]->back();
+    return nullptr;
+  };
 
   // Read all the records.
   SmallVector<uint64_t, 64> Record;
@@ -2545,14 +2553,7 @@ std::error_code BitcodeReader::ParseFunctionBody(Function *F) {
     case bitc::FUNC_CODE_DEBUG_LOC_AGAIN:  // DEBUG_LOC_AGAIN
       // This record indicates that the last instruction is at the same
       // location as the previous instruction with a location.
-      I = nullptr;
-
-      // Get the last instruction emitted.
-      if (CurBB && !CurBB->empty())
-        I = &CurBB->back();
-      else if (CurBBNo && FunctionBBs[CurBBNo-1] &&
-               !FunctionBBs[CurBBNo-1]->empty())
-        I = &FunctionBBs[CurBBNo-1]->back();
+      I = getLastInstruction();
 
       if (!I)
         return Error(BitcodeError::InvalidRecord);
@@ -2561,12 +2562,7 @@ std::error_code BitcodeReader::ParseFunctionBody(Function *F) {
       continue;
 
     case bitc::FUNC_CODE_DEBUG_LOC_OLD: { // DEBUG_LOC_OLD: [line,col,scope,ia]
-      I = nullptr;     // Get the last instruction emitted.
-      if (CurBB && !CurBB->empty())
-        I = &CurBB->back();
-      else if (CurBBNo && FunctionBBs[CurBBNo-1] &&
-               !FunctionBBs[CurBBNo-1]->empty())
-        I = &FunctionBBs[CurBBNo-1]->back();
+      I = getLastInstruction();
       if (!I || Record.size() < 4)
         return Error(BitcodeError::InvalidRecord);
 
