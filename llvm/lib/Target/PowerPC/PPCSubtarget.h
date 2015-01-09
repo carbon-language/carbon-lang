@@ -259,6 +259,8 @@ public:
                            MachineInstr *end,
                            unsigned NumRegionInstrs) const override;
   bool useAA() const override;
+
+  bool enableSubRegLiveness() const override;
 };
 } // End llvm namespace
 

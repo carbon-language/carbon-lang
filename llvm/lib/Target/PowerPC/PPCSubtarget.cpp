@@ -19,6 +19,7 @@
 #include "llvm/IR/Attributes.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/GlobalValue.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Host.h"
 #include "llvm/Support/TargetRegistry.h"
 #include "llvm/Target/TargetMachine.h"
@@ -31,6 +32,9 @@ using namespace llvm;
 #define GET_SUBTARGETINFO_TARGET_DESC
 #define GET_SUBTARGETINFO_CTOR
 #include "PPCGenSubtargetInfo.inc"
+
+static cl::opt<bool> UseSubRegLiveness("ppc-track-subreg-liveness",
+cl::desc("Enable subregister liveness tracking for PPC"), cl::Hidden);
 
 /// Return the datalayout string of a subtarget.
 static std::string getDataLayoutString(const Triple &T) {
@@ -232,5 +236,9 @@ void PPCSubtarget::overrideSchedPolicy(MachineSchedPolicy &Policy,
 bool PPCSubtarget::useAA() const {
   // Use AA during code generation for the embedded cores.
   return needsAggressiveScheduling(DarwinDirective);
+}
+
+bool PPCSubtarget::enableSubRegLiveness() const {
+  return UseSubRegLiveness;
 }
 
