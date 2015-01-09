@@ -1193,6 +1193,13 @@ def visit(prefix, dir, names):
                 suite.addTests(unittest2.defaultTestLoader.loadTestsFromName(base))
 
 
+def disabledynamics():
+    ci = lldb.DBG.GetCommandInterpreter()
+    res = lldb.SBCommandReturnObject()
+    ci.HandleCommand("setting set target.prefer-dynamic-value no-dynamic-values", res, False)    
+    if not res.Succeeded():
+        raise Exception('disabling dynamic type support failed')
+
 def lldbLoggings():
     """Check and do lldb loggings if necessary."""
 
@@ -1381,6 +1388,9 @@ lldb.runHooks = runHooks
 
 # Turn on lldb loggings if necessary.
 lldbLoggings()
+
+# Disable default dynamic types for testing purposes
+disabledynamics()
 
 # Install the control-c handler.
 unittest2.signals.installHandler()
