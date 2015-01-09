@@ -19,7 +19,7 @@ struct ContainerStuct {
 
 void func(int arg) {
   switch (arg) {
-  case SOME_ENUM_:
-    ; // expected-error {{use of undeclared identifier 'SOME_ENUM_'; did you mean 'SOME_ENUM'}}
+  case SOME_ENUM_: // expected-error {{use of undeclared identifier 'SOME_ENUM_'; did you mean 'SOME_ENUM'}}
+    ;
   }
 }
