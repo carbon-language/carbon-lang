@@ -788,6 +788,8 @@ CodeGenPGO::applyFunctionAttributes(llvm::IndexedInstrProfReader *PGOReader,
 void CodeGenPGO::emitCounterIncrement(CGBuilderTy &Builder, unsigned Counter) {
   if (!CGM.getCodeGenOpts().ProfileInstrGenerate || !RegionCounterMap)
     return;
+  if (!Builder.GetInsertPoint())
+    return;
   auto *I8PtrTy = llvm::Type::getInt8PtrTy(CGM.getLLVMContext());
   Builder.CreateCall4(CGM.getIntrinsic(llvm::Intrinsic::instrprof_increment),
                       llvm::ConstantExpr::getBitCast(FuncNameVar, I8PtrTy),
