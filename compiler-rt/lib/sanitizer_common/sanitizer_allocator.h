@@ -1318,7 +1318,7 @@ class CombinedAllocator {
   }
 
   bool RssLimitIsExceeded() {
-    return atomic_load(&rss_limit_is_exceeded_, memory_order_release);
+    return atomic_load(&rss_limit_is_exceeded_, memory_order_acquire);
   }
 
   void SetRssLimitIsExceeded(bool rss_limit_is_exceeded) {
