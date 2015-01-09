@@ -17,6 +17,7 @@
 //    deleter is a reference, not even that.
 
 #include <memory>
+#include <utility>
 #include <cassert>
 
 #include "../deleter.h"

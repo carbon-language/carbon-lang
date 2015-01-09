@@ -14,6 +14,7 @@
 // tuple(tuple&& u);
 
 #include <tuple>
+#include <utility>
 #include <cassert>
 
 #include "../MoveOnly.h"

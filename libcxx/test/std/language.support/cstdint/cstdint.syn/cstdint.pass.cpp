@@ -10,6 +10,8 @@
 // test <cstdint>
 
 #include <cstdint>
+#include <cstddef>
+#include <cwchar>
 #include <csignal>
 #include <cwctype>
 #include <climits>

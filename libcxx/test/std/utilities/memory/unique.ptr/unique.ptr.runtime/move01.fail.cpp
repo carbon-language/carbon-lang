@@ -14,6 +14,7 @@
 // Test unique_ptr move assignment
 
 #include <memory>
+#include <utility>
 #include <cassert>
 
 // Can't copy from lvalue

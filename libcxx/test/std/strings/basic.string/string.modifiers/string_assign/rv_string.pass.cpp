@@ -13,6 +13,7 @@
 //   assign(basic_string<charT,traits>&& str);
 
 #include <string>
+#include <utility>
 #include <cassert>
 
 #include "min_allocator.h"

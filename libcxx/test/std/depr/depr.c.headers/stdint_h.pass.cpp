@@ -10,6 +10,7 @@
 // test <stdint.h>
 
 #include <stdint.h>
+#include <cstddef>
 #include <csignal>
 #include <cwctype>
 #include <climits>

@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include <scoped_allocator>
+#include <memory>
 #include <cassert>
 
 #if __cplusplus >= 201103L

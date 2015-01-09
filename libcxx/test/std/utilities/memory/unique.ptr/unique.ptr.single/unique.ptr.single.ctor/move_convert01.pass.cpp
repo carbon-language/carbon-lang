@@ -14,6 +14,7 @@
 // Test unique_ptr converting move ctor
 
 #include <memory>
+#include <utility>
 #include <cassert>
 
 // test converting move ctor.  Should only require a MoveConstructible deleter, or if

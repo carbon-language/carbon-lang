@@ -16,6 +16,7 @@
 // Do not convert from an array unique_ptr
 
 #include <memory>
+#include <utility>
 #include <cassert>
 
 struct A

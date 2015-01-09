@@ -18,6 +18,7 @@
 //   operator+(basic_string<charT,traits,Allocator>&& lhs, const charT* rhs);
 
 #include <string>
+#include <utility>
 #include <cassert>
 
 #include "min_allocator.h"

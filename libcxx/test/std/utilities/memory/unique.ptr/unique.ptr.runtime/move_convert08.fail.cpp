@@ -14,6 +14,7 @@
 // Test unique_ptr converting move assignment
 
 #include <memory>
+#include <utility>
 #include <cassert>
 
 #include "../deleter.h"

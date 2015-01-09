@@ -17,6 +17,7 @@
 #define DELETER_H
 
 #include <type_traits>
+#include <utility>
 #include <cassert>
 
 template <class T>

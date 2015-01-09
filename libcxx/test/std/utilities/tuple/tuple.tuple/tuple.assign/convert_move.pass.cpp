@@ -17,6 +17,7 @@
 #include <tuple>
 #include <string>
 #include <memory>
+#include <utility>
 #include <cassert>
 
 struct B

@@ -13,6 +13,7 @@
 //   void swap(vector<T,Alloc>& x, vector<T,Alloc>& y);
 
 #include <vector>
+#include <iterator>
 #include <cassert>
 #include "test_allocator.h"
 #include "min_allocator.h"

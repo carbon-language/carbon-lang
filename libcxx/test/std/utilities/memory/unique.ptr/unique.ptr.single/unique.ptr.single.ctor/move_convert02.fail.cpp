@@ -18,6 +18,7 @@
 // Explicit version
 
 #include <memory>
+#include <utility>
 #include <cassert>
 
 #include "../../deleter.h"

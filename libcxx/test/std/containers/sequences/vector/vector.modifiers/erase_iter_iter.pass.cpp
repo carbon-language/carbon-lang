@@ -12,6 +12,7 @@
 // iterator erase(const_iterator first, const_iterator last);
 
 #include <vector>
+#include <iterator>
 #include <cassert>
 
 #include "min_allocator.h"

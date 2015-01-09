@@ -14,6 +14,7 @@
 // Test unique_ptr(pointer) ctor
 
 #include <memory>
+#include <utility>
 #include <cassert>
 
 // template <class U> explicit unique_ptr(auto_ptr<U>&);

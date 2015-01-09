@@ -13,6 +13,7 @@
 
 #include <array>
 #include <memory>
+#include <utility>
 #include <cassert>
 
 int main()
