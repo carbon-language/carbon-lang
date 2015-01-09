@@ -767,10 +767,13 @@ __isl_give isl_set *ScopStmt::buildConditionSet(const Comparison &Comp) {
   case ICmpInst::ICMP_SGE:
     return isl_pw_aff_ge_set(L, R);
   case ICmpInst::ICMP_ULT:
+    return isl_pw_aff_lt_set(L, R);
   case ICmpInst::ICMP_UGT:
+    return isl_pw_aff_gt_set(L, R);
   case ICmpInst::ICMP_ULE:
+    return isl_pw_aff_le_set(L, R);
   case ICmpInst::ICMP_UGE:
-    llvm_unreachable("Unsigned comparisons not yet supported");
+    return isl_pw_aff_ge_set(L, R);
   default:
     llvm_unreachable("Non integer predicate not supported");
   }
