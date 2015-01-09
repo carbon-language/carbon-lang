@@ -6712,6 +6712,11 @@ static FunctionDecl* CreateNewFunctionDecl(Sema &SemaRef, Declarator &D,
     IsVirtualOkay = !Ret->isStatic();
     return Ret;
   } else {
+    bool isFriend =
+        SemaRef.getLangOpts().CPlusPlus && D.getDeclSpec().isFriendSpecified();
+    if (!isFriend && SemaRef.CurContext->isRecord())
+      return nullptr;
+
     // Determine whether the function was written with a
     // prototype. This true when:
     //   - we're in C++ (where every function has a prototype),
@@ -7482,7 +7487,7 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
     } else if (isFunctionTemplateSpecialization) {
       if (CurContext->isDependentContext() && CurContext->isRecord() 
           && !isFriend) {
-        isDependentClassScopeExplicitSpecialization = isa<CXXMethodDecl>(NewFD);
+        isDependentClassScopeExplicitSpecialization = true;
         Diag(NewFD->getLocation(), getLangOpts().MicrosoftExt ? 
           diag::ext_function_specialization_in_class :
           diag::err_function_specialization_in_class)

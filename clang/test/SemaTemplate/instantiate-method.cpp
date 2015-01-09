@@ -199,5 +199,11 @@ namespace PR22040 {
 template <typename>
 struct SpecializationOfGlobalFnInClassScope {
   template <>
-  void ::Fn(); // expected-error{{cannot have a qualified name}} expected-error{{cannot specialize a function}}
+  void ::Fn(); // expected-error{{cannot have a qualified name}}
+};
+
+class AbstractClassWithGlobalFn {
+  template <typename>
+  void ::f(); // expected-error{{cannot have a qualified name}}
+  virtual void f1() = 0;
 };
