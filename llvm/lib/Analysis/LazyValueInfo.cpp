@@ -905,9 +905,9 @@ static bool getEdgeValueLocal(Value *Val, BasicBlock *BBFrom,
       
       // If the condition of the branch is an equality comparison, we may be
       // able to infer the value.
-      ICmpInst *ICI = dyn_cast<ICmpInst>(BI->getCondition());
-      if (getValueFromFromCondition(Val, ICI, Result, isTrueDest))
-        return true;
+      if (ICmpInst *ICI = dyn_cast<ICmpInst>(BI->getCondition()))
+        if (getValueFromFromCondition(Val, ICI, Result, isTrueDest))
+          return true;
     }
   }
 
