@@ -828,8 +828,16 @@ protected:
             {
                 if (m_interpreter.CommandExists (command_name))
                 {
-                    result.AppendErrorWithFormat ("'%s' is a permanent debugger command and cannot be removed.\n",
-                                                  command_name);
+                    if (cmd_obj->IsRemovable())
+                    {
+                        result.AppendErrorWithFormat ("'%s' is not an alias, it is a debugger command which can be removed using the 'command delete' command.\n",
+                                                      command_name);
+                    }
+                    else
+                    {
+                        result.AppendErrorWithFormat ("'%s' is a permanent debugger command and cannot be removed.\n",
+                                                      command_name);
+                    }
                     result.SetStatus (eReturnStatusFailed);
                 }
                 else
@@ -859,6 +867,77 @@ protected:
         else
         {
             result.AppendError ("must call 'unalias' with a valid alias");
+            result.SetStatus (eReturnStatusFailed);
+        }
+
+        return result.Succeeded();
+    }
+};
+
+#pragma mark CommandObjectCommandsDelete
+//-------------------------------------------------------------------------
+// CommandObjectCommandsDelete
+//-------------------------------------------------------------------------
+
+class CommandObjectCommandsDelete : public CommandObjectParsed
+{
+public:
+    CommandObjectCommandsDelete (CommandInterpreter &interpreter) :
+    CommandObjectParsed (interpreter,
+                         "command delete",
+                         "Allow the user to delete user-defined regular expression, python or multi-word commands.",
+                         NULL)
+    {
+        CommandArgumentEntry arg;
+        CommandArgumentData alias_arg;
+
+        // Define the first (and only) variant of this arg.
+        alias_arg.arg_type = eArgTypeCommandName;
+        alias_arg.arg_repetition = eArgRepeatPlain;
+
+        // There is only one variant this argument could be; put it into the argument entry.
+        arg.push_back (alias_arg);
+
+        // Push the data for the first argument into the m_arguments vector.
+        m_arguments.push_back (arg);
+    }
+
+    ~CommandObjectCommandsDelete()
+    {
+    }
+
+protected:
+    bool
+    DoExecute (Args& args, CommandReturnObject &result)
+    {
+        CommandObject::CommandMap::iterator pos;
+
+        if (args.GetArgumentCount() != 0)
+        {
+            const char *command_name = args.GetArgumentAtIndex(0);
+            if (m_interpreter.CommandExists (command_name))
+            {
+                if (m_interpreter.RemoveCommand (command_name))
+                {
+                    result.SetStatus (eReturnStatusSuccessFinishNoResult);
+                }
+                else
+                {
+                    result.AppendErrorWithFormat ("'%s' is a permanent debugger command and cannot be removed.\n",
+                                                  command_name);
+                    result.SetStatus (eReturnStatusFailed);
+                }
+            }
+            else
+            {
+                result.AppendErrorWithFormat ("'%s' is not a known command.\nTry 'help' to see a current list of commands.\n",
+                                              command_name);
+                result.SetStatus (eReturnStatusFailed);
+            }
+        }
+        else
+        {
+            result.AppendErrorWithFormat ("must call '%s' with one or more valid user defined regular expression, python or multi-word command names", GetCommandName ());
             result.SetStatus (eReturnStatusFailed);
         }
 
@@ -979,7 +1058,9 @@ protected:
                                                                  name, 
                                                                  m_options.GetHelp (),
                                                                  m_options.GetSyntax (),
-                                                                 10));
+                                                                 10,
+                                                                 0,
+                                                                 true));
 
             if (argc == 1)
             {
@@ -1931,11 +2012,11 @@ public:
                             "A set of commands for managing or customizing script commands.",
                             "command script <subcommand> [<subcommand-options>]")
     {
-        LoadSubCommand ("add",  CommandObjectSP (new CommandObjectCommandsScriptAdd (interpreter)));
-        LoadSubCommand ("delete",   CommandObjectSP (new CommandObjectCommandsScriptDelete (interpreter)));
-        LoadSubCommand ("clear", CommandObjectSP (new CommandObjectCommandsScriptClear (interpreter)));
+        LoadSubCommand ("add",    CommandObjectSP (new CommandObjectCommandsScriptAdd (interpreter)));
+        LoadSubCommand ("delete", CommandObjectSP (new CommandObjectCommandsScriptDelete (interpreter)));
+        LoadSubCommand ("clear",  CommandObjectSP (new CommandObjectCommandsScriptClear (interpreter)));
         LoadSubCommand ("list",   CommandObjectSP (new CommandObjectCommandsScriptList (interpreter)));
-        LoadSubCommand ("import",   CommandObjectSP (new CommandObjectCommandsScriptImport (interpreter)));
+        LoadSubCommand ("import", CommandObjectSP (new CommandObjectCommandsScriptImport (interpreter)));
     }
 
     ~CommandObjectMultiwordCommandsScript ()
@@ -1960,9 +2041,10 @@ CommandObjectMultiwordCommands::CommandObjectMultiwordCommands (CommandInterpret
     LoadSubCommand ("source",  CommandObjectSP (new CommandObjectCommandsSource (interpreter)));
     LoadSubCommand ("alias",   CommandObjectSP (new CommandObjectCommandsAlias (interpreter)));
     LoadSubCommand ("unalias", CommandObjectSP (new CommandObjectCommandsUnalias (interpreter)));
+    LoadSubCommand ("delete",  CommandObjectSP (new CommandObjectCommandsDelete (interpreter)));
     LoadSubCommand ("regex",   CommandObjectSP (new CommandObjectCommandsAddRegex (interpreter)));
-    LoadSubCommand ("history",   CommandObjectSP (new CommandObjectCommandsHistory (interpreter)));
-    LoadSubCommand ("script",   CommandObjectSP (new CommandObjectMultiwordCommandsScript (interpreter)));
+    LoadSubCommand ("history", CommandObjectSP (new CommandObjectCommandsHistory (interpreter)));
+    LoadSubCommand ("script",  CommandObjectSP (new CommandObjectMultiwordCommandsScript (interpreter)));
 }
 
 CommandObjectMultiwordCommands::~CommandObjectMultiwordCommands ()

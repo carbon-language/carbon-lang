@@ -442,7 +442,8 @@ CommandInterpreter::LoadCommandDictionary ()
                                                       "_regexp-break [<filename>:<linenum>]\n_regexp-break [<linenum>]\n_regexp-break [<address>]\n_regexp-break <...>",
                                                       2,
                                                       CommandCompletions::eSymbolCompletion |
-                                                      CommandCompletions::eSourceFileCompletion));
+                                                      CommandCompletions::eSourceFileCompletion,
+                                                      false));
 
     if (break_regex_cmd_ap.get())
     {
@@ -469,7 +470,8 @@ CommandInterpreter::LoadCommandDictionary ()
                                                       "_regexp-tbreak [<filename>:<linenum>]\n_regexp-break [<linenum>]\n_regexp-break [<address>]\n_regexp-break <...>",
                                                        2,
                                                        CommandCompletions::eSymbolCompletion |
-                                                       CommandCompletions::eSourceFileCompletion));
+                                                       CommandCompletions::eSourceFileCompletion,
+                                                       false));
 
     if (tbreak_regex_cmd_ap.get())
     {
@@ -500,7 +502,9 @@ CommandInterpreter::LoadCommandDictionary ()
                                                        "_regexp-attach",
                                                        "Attach to a process id if in decimal, otherwise treat the argument as a process name to attach to.",
                                                        "_regexp-attach [<pid>]\n_regexp-attach [<process-name>]",
-                                                       2));
+                                                       2,
+                                                       0,
+                                                       false));
     if (attach_regex_cmd_ap.get())
     {
         if (attach_regex_cmd_ap->AddRegexCommand("^([0-9]+)[[:space:]]*$", "process attach --pid %1") &&
@@ -517,7 +521,10 @@ CommandInterpreter::LoadCommandDictionary ()
     down_regex_cmd_ap(new CommandObjectRegexCommand (*this,
                                                      "_regexp-down",
                                                      "Go down \"n\" frames in the stack (1 frame by default).",
-                                                     "_regexp-down [n]", 2));
+                                                     "_regexp-down [n]",
+                                                     2,
+                                                     0,
+                                                     false));
     if (down_regex_cmd_ap.get())
     {
         if (down_regex_cmd_ap->AddRegexCommand("^$", "frame select -r -1") &&
@@ -532,7 +539,10 @@ CommandInterpreter::LoadCommandDictionary ()
     up_regex_cmd_ap(new CommandObjectRegexCommand (*this,
                                                    "_regexp-up",
                                                    "Go up \"n\" frames in the stack (1 frame by default).",
-                                                   "_regexp-up [n]", 2));
+                                                   "_regexp-up [n]",
+                                                   2,
+                                                   0,
+                                                   false));
     if (up_regex_cmd_ap.get())
     {
         if (up_regex_cmd_ap->AddRegexCommand("^$", "frame select -r 1") &&
@@ -547,7 +557,10 @@ CommandInterpreter::LoadCommandDictionary ()
     display_regex_cmd_ap(new CommandObjectRegexCommand (*this,
                                                         "_regexp-display",
                                                         "Add an expression evaluation stop-hook.",
-                                                        "_regexp-display expression", 2));
+                                                        "_regexp-display expression",
+                                                        2,
+                                                        0,
+                                                        false));
     if (display_regex_cmd_ap.get())
     {
         if (display_regex_cmd_ap->AddRegexCommand("^(.+)$", "target stop-hook add -o \"expr -- %1\""))
@@ -561,7 +574,10 @@ CommandInterpreter::LoadCommandDictionary ()
     undisplay_regex_cmd_ap(new CommandObjectRegexCommand (*this,
                                                           "_regexp-undisplay",
                                                           "Remove an expression evaluation stop-hook.",
-                                                          "_regexp-undisplay stop-hook-number", 2));
+                                                          "_regexp-undisplay stop-hook-number",
+                                                          2,
+                                                          0,
+                                                          false));
     if (undisplay_regex_cmd_ap.get())
     {
         if (undisplay_regex_cmd_ap->AddRegexCommand("^([0-9]+)$", "target stop-hook delete %1"))
@@ -575,7 +591,10 @@ CommandInterpreter::LoadCommandDictionary ()
     connect_gdb_remote_cmd_ap(new CommandObjectRegexCommand (*this,
                                                              "gdb-remote",
                                                              "Connect to a remote GDB server.  If no hostname is provided, localhost is assumed.",
-                                                             "gdb-remote [<hostname>:]<portnum>", 2));
+                                                             "gdb-remote [<hostname>:]<portnum>",
+                                                             2,
+                                                             0,
+                                                             false));
     if (connect_gdb_remote_cmd_ap.get())
     {
         if (connect_gdb_remote_cmd_ap->AddRegexCommand("^([^:]+:[[:digit:]]+)$", "process connect --plugin gdb-remote connect://%1") &&
@@ -590,7 +609,10 @@ CommandInterpreter::LoadCommandDictionary ()
     connect_kdp_remote_cmd_ap(new CommandObjectRegexCommand (*this,
                                                              "kdp-remote",
                                                              "Connect to a remote KDP server.  udp port 41139 is the default port number.",
-                                                             "kdp-remote <hostname>[:<portnum>]", 2));
+                                                             "kdp-remote <hostname>[:<portnum>]",
+                                                             2,
+                                                             0,
+                                                             false));
     if (connect_kdp_remote_cmd_ap.get())
     {
         if (connect_kdp_remote_cmd_ap->AddRegexCommand("^([^:]+:[[:digit:]]+)$", "process connect --plugin kdp-remote udp://%1") &&
@@ -603,9 +625,12 @@ CommandInterpreter::LoadCommandDictionary ()
 
     std::unique_ptr<CommandObjectRegexCommand>
     bt_regex_cmd_ap(new CommandObjectRegexCommand (*this,
-                                                     "_regexp-bt",
-                                                     "Show a backtrace.  An optional argument is accepted; if that argument is a number, it specifies the number of frames to display.  If that argument is 'all', full backtraces of all threads are displayed.",
-                                                     "bt [<digit>|all]", 2));
+                                                   "_regexp-bt",
+                                                   "Show a backtrace.  An optional argument is accepted; if that argument is a number, it specifies the number of frames to display.  If that argument is 'all', full backtraces of all threads are displayed.",
+                                                   "bt [<digit>|all]",
+                                                   2,
+                                                   0,
+                                                   false));
     if (bt_regex_cmd_ap.get())
     {
         // accept but don't document "bt -c <number>" -- before bt was a regex command if you wanted to backtrace
@@ -627,7 +652,8 @@ CommandInterpreter::LoadCommandDictionary ()
                                                      "Implements the GDB 'list' command in all of its forms except FILE:FUNCTION and maps them to the appropriate 'source list' commands.",
                                                      "_regexp-list [<line>]\n_regexp-list [<file>:<line>]\n_regexp-list [<file>:<line>]",
                                                      2,
-                                                     CommandCompletions::eSourceFileCompletion));
+                                                     CommandCompletions::eSourceFileCompletion,
+                                                     false));
     if (list_regex_cmd_ap.get())
     {
         if (list_regex_cmd_ap->AddRegexCommand("^([0-9]+)[[:space:]]*$", "source list --line %1") &&
@@ -647,7 +673,10 @@ CommandInterpreter::LoadCommandDictionary ()
     env_regex_cmd_ap(new CommandObjectRegexCommand (*this,
                                                     "_regexp-env",
                                                     "Implements a shortcut to viewing and setting environment variables.",
-                                                    "_regexp-env\n_regexp-env FOO=BAR", 2));
+                                                    "_regexp-env\n_regexp-env FOO=BAR",
+                                                    2,
+                                                    0,
+                                                    false));
     if (env_regex_cmd_ap.get())
     {
         if (env_regex_cmd_ap->AddRegexCommand("^$", "settings show target.env-vars") &&
@@ -665,7 +694,10 @@ CommandInterpreter::LoadCommandDictionary ()
                                                     "_regexp-jump [<line>]\n"
                                                     "_regexp-jump [<+-lineoffset>]\n"
                                                     "_regexp-jump [<file>:<line>]\n"
-                                                    "_regexp-jump [*<addr>]\n", 2));
+                                                    "_regexp-jump [*<addr>]\n",
+                                                     2,
+                                                     0,
+                                                     false));
     if (jump_regex_cmd_ap.get())
     {
         if (jump_regex_cmd_ap->AddRegexCommand("^\\*(.*)$", "thread jump --addr %1") &&
@@ -1053,6 +1085,22 @@ CommandInterpreter::RemoveAlias (const char *alias_name)
     {
         m_alias_dict.erase(pos);
         return true;
+    }
+    return false;
+}
+
+bool
+CommandInterpreter::RemoveCommand (const char *cmd)
+{
+    auto pos = m_command_dict.find(cmd);
+    if (pos != m_command_dict.end())
+    {
+        if (pos->second->IsRemovable())
+        {
+            // Only regular expression objects or python commands are removable
+            m_command_dict.erase(pos);
+            return true;
+        }
     }
     return false;
 }

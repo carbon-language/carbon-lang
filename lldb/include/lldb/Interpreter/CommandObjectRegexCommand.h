@@ -34,10 +34,14 @@ public:
                                const char *help, 
                                const char *syntax, 
                                uint32_t max_matches,
-                               uint32_t completion_type_mask = 0);
+                               uint32_t completion_type_mask,
+                               bool is_removable);
     
     virtual
     ~CommandObjectRegexCommand ();
+
+    bool
+    IsRemovable () const override { return m_is_removable; }
 
     bool
     AddRegexCommand (const char *re_cstr, const char *command_cstr);
@@ -71,6 +75,7 @@ protected:
     const uint32_t m_max_matches;
     const uint32_t m_completion_type_mask;
     EntryCollection m_entries;
+    bool m_is_removable;
 
 private:
     DISALLOW_COPY_AND_ASSIGN (CommandObjectRegexCommand);

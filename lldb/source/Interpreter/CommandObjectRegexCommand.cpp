@@ -31,12 +31,14 @@ CommandObjectRegexCommand::CommandObjectRegexCommand
     const char *help,
     const char *syntax,
     uint32_t max_matches,
-    uint32_t completion_type_mask
+    uint32_t completion_type_mask,
+    bool is_removable
 ) :
     CommandObjectRaw (interpreter, name, help, syntax),
     m_max_matches (max_matches),
     m_completion_type_mask (completion_type_mask),
-    m_entries ()
+    m_entries (),
+    m_is_removable (is_removable)
 {
 }
 

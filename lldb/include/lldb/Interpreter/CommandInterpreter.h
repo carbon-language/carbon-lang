@@ -282,6 +282,10 @@ public:
     AddAlias (const char *alias_name, 
               lldb::CommandObjectSP& command_obj_sp);
 
+    // Remove a command if it is removable (python or regex command)
+    bool
+    RemoveCommand (const char *cmd);
+
     bool
     RemoveAlias (const char *alias_name);
     

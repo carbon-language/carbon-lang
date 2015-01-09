@@ -610,7 +610,7 @@ public:
     
     virtual bool
     Execute (const char *args_string, CommandReturnObject &result);
-    
+
 protected:    
     virtual bool
     DoExecute (const char *command, CommandReturnObject &result) = 0;
