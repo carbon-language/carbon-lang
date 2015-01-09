@@ -594,6 +594,8 @@ static bool ParseCodeGenArgs(CodeGenOptions &Opts, ArgList &Args, InputKind IK,
   if (NeedLocTracking && Opts.getDebugInfo() == CodeGenOptions::NoDebugInfo)
     Opts.setDebugInfo(CodeGenOptions::LocTrackingOnly);
 
+  Opts.RewriteMapFiles = Args.getAllArgValues(OPT_frewrite_map_file);
+
   return Success;
 }
 

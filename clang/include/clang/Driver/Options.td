@@ -577,6 +577,13 @@ def frewrite_includes : Flag<["-"], "frewrite-includes">, Group<f_Group>,
   Flags<[CC1Option]>;
 def fno_rewrite_includes : Flag<["-"], "fno-rewrite-includes">, Group<f_Group>;
 
+def frewrite_map_file : Separate<["-"], "frewrite-map-file">,
+                        Group<f_Group>,
+                        Flags<[ DriverOption, CC1Option ]>;
+def frewrite_map_file_EQ : Joined<["-"], "frewrite-map-file=">,
+                           Group<f_Group>,
+                           Flags<[DriverOption]>;
+
 def ffreestanding : Flag<["-"], "ffreestanding">, Group<f_Group>, Flags<[CC1Option]>,
   HelpText<"Assert that the compilation takes place in a freestanding environment">;
 def fgnu_keywords : Flag<["-"], "fgnu-keywords">, Group<f_Group>, Flags<[CC1Option]>,

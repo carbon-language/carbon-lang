@@ -2781,6 +2781,19 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
 
   // LLVM Code Generator Options.
 
+  if (Args.hasArg(options::OPT_frewrite_map_file) ||
+      Args.hasArg(options::OPT_frewrite_map_file_EQ)) {
+    for (arg_iterator
+             MFI = Args.filtered_begin(options::OPT_frewrite_map_file,
+                                       options::OPT_frewrite_map_file_EQ),
+             MFE = Args.filtered_end();
+         MFI != MFE; ++MFI) {
+      CmdArgs.push_back("-frewrite-map-file");
+      CmdArgs.push_back((*MFI)->getValue());
+      (*MFI)->claim();
+    }
+  }
+
   if (Arg *A = Args.getLastArg(options::OPT_Wframe_larger_than_EQ)) {
     StringRef v = A->getValue();
     CmdArgs.push_back("-mllvm");

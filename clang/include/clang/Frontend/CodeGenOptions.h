@@ -176,6 +176,9 @@ public:
   /// flag.
   std::shared_ptr<llvm::Regex> OptimizationRemarkAnalysisPattern;
 
+  /// Set of files definining the rules for the symbol rewriting.
+  std::vector<std::string> RewriteMapFiles;
+
 public:
   // Define accessors/mutators for code generation options of enumeration type.
 #define CODEGENOPT(Name, Bits, Default)
