@@ -10275,11 +10275,6 @@ Sema::ActOnStmtExpr(SourceLocation LPLoc, Stmt *SubStmt,
   assert(!ExprNeedsCleanups && "cleanups within StmtExpr not correctly bound!");
   PopExpressionEvaluationContext();
 
-  bool isFileScope
-    = (getCurFunctionOrMethodDecl() == nullptr) && (getCurBlock() == nullptr);
-  if (isFileScope)
-    return ExprError(Diag(LPLoc, diag::err_stmtexpr_file_scope));
-
   // FIXME: there are a variety of strange constraints to enforce here, for
   // example, it is not possible to goto into a stmt expression apparently.
   // More semantic analysis is needed.

@@ -2084,16 +2084,21 @@ Parser::ParseParenExpression(ParenParseOption &ExprType, bool stopIfCastExpr,
   // unless they've already reported an error.
   if (ExprType >= CompoundStmt && Tok.is(tok::l_brace)) {
     Diag(Tok, diag::ext_gnu_statement_expr);
-    Actions.ActOnStartStmtExpr();
 
-    StmtResult Stmt(ParseCompoundStatement(true));
-    ExprType = CompoundStmt;
-
-    // If the substmt parsed correctly, build the AST node.
-    if (!Stmt.isInvalid()) {
-      Result = Actions.ActOnStmtExpr(OpenLoc, Stmt.get(), Tok.getLocation());
+    if (!getCurScope()->getFnParent() && !getCurScope()->getBlockParent()) {
+      Result = ExprError(Diag(OpenLoc, diag::err_stmtexpr_file_scope));
     } else {
-      Actions.ActOnStmtExprError();
+      Actions.ActOnStartStmtExpr();
+
+      StmtResult Stmt(ParseCompoundStatement(true));
+      ExprType = CompoundStmt;
+
+      // If the substmt parsed correctly, build the AST node.
+      if (!Stmt.isInvalid()) {
+        Result = Actions.ActOnStmtExpr(OpenLoc, Stmt.get(), Tok.getLocation());
+      } else {
+        Actions.ActOnStmtExprError();
+      }
     }
   } else if (ExprType >= CompoundLiteral && BridgeCast) {
     tok::TokenKind tokenKind = Tok.getKind();
