@@ -3486,6 +3486,21 @@ GetCaseResults(SwitchInst *SI,
       continue;
     } else if (Constant *C = ConstantFold(I, ConstantPool, DL)) {
       // Instruction is side-effect free and constant.
+
+      // If the instruction has uses outside this block or a phi node slot for
+      // the block, it is not safe to bypass the instruction since it would then
+      // no longer dominate all its uses.
+      for (auto &Use : I->uses()) {
+        User *User = Use.getUser();
+        if (Instruction *I = dyn_cast<Instruction>(User))
+          if (I->getParent() == CaseDest)
+            continue;
+        if (PHINode *Phi = dyn_cast<PHINode>(User))
+          if (Phi->getIncomingBlock(Use) == CaseDest)
+            continue;
+        return false;
+      }
+
       ConstantPool.insert(std::make_pair(I, C));
     } else {
       break;
@@ -3510,12 +3525,6 @@ GetCaseResults(SwitchInst *SI,
                                         ConstantPool);
     if (!ConstVal)
       return false;
-
-    // Note: If the constant comes from constant-propagating the case value
-    // through the CaseDest basic block, it will be safe to remove the
-    // instructions in that block. They cannot be used (except in the phi nodes
-    // we visit) outside CaseDest, because that block does not dominate its
-    // successor. If it did, we would not be in this phi node.
 
     // Be conservative about which kinds of constants we support.
     if (!ValidLookupTableConstant(ConstVal))

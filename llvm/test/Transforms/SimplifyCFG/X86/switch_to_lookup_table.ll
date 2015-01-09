@@ -1204,3 +1204,43 @@ return:
 ; CHECK-NEXT:  [[R:%.+]] = select i1 %cmp
 ; CHECK-NEXT:  ret i32 [[R]]
 }
+
+define void @pr20210(i8 %x, i1 %y) {
+; %z has uses outside of its BB or the phi it feeds into,
+; so doing a table lookup and jumping directly to while.cond would
+; cause %z to cease dominating all its uses.
+
+entry:
+  br i1 %y, label %sw, label %intermediate
+
+sw:
+  switch i8 %x, label %end [
+    i8 7, label %intermediate
+    i8 3, label %intermediate
+    i8 2, label %intermediate
+    i8 1, label %intermediate
+    i8 0, label %intermediate
+  ]
+
+intermediate:
+  %z = zext i8 %x to i32
+  br label %while.cond
+
+while.cond:
+  %i = phi i32 [ %z, %intermediate ], [ %j, %while.body ]
+  %b = icmp ne i32 %i, 7
+  br i1 %b, label %while.body, label %while.end
+
+while.body:
+  %j = add i32 %i, 1
+  br label %while.cond
+
+while.end:
+  call void @exit(i32 %z)
+  unreachable
+
+end:
+  ret void
+; CHECK-LABEL: @pr20210
+; CHECK: switch i8 %x
+}
