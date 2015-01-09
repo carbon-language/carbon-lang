@@ -29,6 +29,7 @@ struct Base {
   virtual bool n() MUST_USE_RESULT UNUSED;
 
   virtual void m();
+  virtual void o() __attribute__((unused));
 };
 
 struct SimpleCases : public Base {
@@ -84,6 +85,10 @@ public:
   virtual void m() override final;
   // CHECK-MESSAGES: :[[@LINE-1]]:16: warning: Annotate this
   // CHECK-FIXES: {{^  void m\(\) final;}}
+
+  virtual void o() __attribute__((unused));
+  // CHECK-MESSAGES: :[[@LINE-1]]:16: warning: Prefer using
+  // CHECK-FIXES: {{^  void o\(\) override __attribute__\(\(unused\)\);}}
 };
 
 // CHECK-MESSAGES-NOT: warning:
