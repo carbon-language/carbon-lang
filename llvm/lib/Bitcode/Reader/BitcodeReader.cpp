@@ -2561,7 +2561,7 @@ std::error_code BitcodeReader::ParseFunctionBody(Function *F) {
       I = nullptr;
       continue;
 
-    case bitc::FUNC_CODE_DEBUG_LOC_OLD: { // DEBUG_LOC_OLD: [line,col,scope,ia]
+    case bitc::FUNC_CODE_DEBUG_LOC: {      // DEBUG_LOC: [line, col, scope, ia]
       I = getLastInstruction();
       if (!I || Record.size() < 4)
         return Error(BitcodeError::InvalidRecord);

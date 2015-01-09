@@ -1718,7 +1718,7 @@ static void WriteFunction(const Function &F, ValueEnumerator &VE,
         Vals.push_back(DL.getCol());
         Vals.push_back(Scope ? VE.getMetadataID(Scope) + 1 : 0);
         Vals.push_back(IA ? VE.getMetadataID(IA) + 1 : 0);
-        Stream.EmitRecord(bitc::FUNC_CODE_DEBUG_LOC_OLD, Vals);
+        Stream.EmitRecord(bitc::FUNC_CODE_DEBUG_LOC, Vals);
         Vals.clear();
 
         LastDL = DL;
