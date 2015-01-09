@@ -751,7 +751,9 @@ bool RegisterCoalescer::removeCopyByCommutingDef(const CoalescerPair &CP,
       if (!SubDVNI)
         continue;
       VNInfo *SubBValNo = S.getVNInfoAt(CopyIdx);
-      S.MergeValueNumberInto(SubBValNo, SubDVNI);
+      assert(SubBValNo->def == CopyIdx);
+      VNInfo *Merged = S.MergeValueNumberInto(SubBValNo, SubDVNI);
+      Merged->def = CopyIdx;
     }
 
     ErasedInstrs.insert(UseMI);
