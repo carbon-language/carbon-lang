@@ -118,27 +118,9 @@ bool MemDepPrinter::runOnFunction(Function &F) {
       }
     } else {
       SmallVector<NonLocalDepResult, 4> NLDI;
-      if (LoadInst *LI = dyn_cast<LoadInst>(Inst)) {
-        if (!LI->isUnordered()) {
-          // FIXME: Handle atomic/volatile loads.
-          Deps[Inst].insert(std::make_pair(getInstTypePair(nullptr, Unknown),
-                                           static_cast<BasicBlock *>(nullptr)));
-          continue;
-        }
-        MDA.getNonLocalPointerDependency(LI, NLDI);
-      } else if (StoreInst *SI = dyn_cast<StoreInst>(Inst)) {
-        if (!SI->isUnordered()) {
-          // FIXME: Handle atomic/volatile stores.
-          Deps[Inst].insert(std::make_pair(getInstTypePair(nullptr, Unknown),
-                                           static_cast<BasicBlock *>(nullptr)));
-          continue;
-        }
-        MDA.getNonLocalPointerDependency(SI, NLDI);
-      } else if (VAArgInst *VI = dyn_cast<VAArgInst>(Inst)) {
-        MDA.getNonLocalPointerDependency(VI, NLDI);
-      } else {
-        llvm_unreachable("Unknown memory instruction!");
-      }
+      assert( (isa<LoadInst>(Inst) || isa<StoreInst>(Inst) ||
+               isa<VAArgInst>(Inst)) && "Unknown memory instruction!"); 
+      MDA.getNonLocalPointerDependency(Inst, NLDI);
 
       DepSet &InstDeps = Deps[Inst];
       for (SmallVectorImpl<NonLocalDepResult>::const_iterator

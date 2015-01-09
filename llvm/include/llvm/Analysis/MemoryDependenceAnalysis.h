@@ -366,9 +366,12 @@ namespace llvm {
 
 
     /// getNonLocalPointerDependency - Perform a full dependency query for an
-    /// access to the QueryInst's specified (non-volatile) memory location,
-    /// returning the set of instructions that either define or clobber
-    /// the value.
+    /// access to the QueryInst's specified memory location, returning the set
+    /// of instructions that either define or clobber the value.
+    ///
+    /// Warning: For a volatile query instruction, the dependencies will be
+    /// accurate, and thus usable for reordering, but it is never legal to
+    /// remove the query instruction.  
     ///
     /// This method assumes the pointer has a "NonLocal" dependency within
     /// QueryInst's parent basic block.

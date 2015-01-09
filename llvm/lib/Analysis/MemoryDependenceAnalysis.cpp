@@ -881,18 +881,23 @@ getNonLocalPointerDependency(Instruction *QueryInst,
   bool isLoad = isa<LoadInst>(QueryInst);
   BasicBlock *FromBB = QueryInst->getParent();
   assert(FromBB);
+
+  assert(Loc.Ptr->getType()->isPointerTy() &&
+         "Can't get pointer deps of a non-pointer!");
+  Result.clear();
   
-  // This routine does not expect to deal with volatile instructions.  Doing so
-  // would require piping through the QueryInst all the way through.
+  // This routine does not expect to deal with volatile instructions.
+  // Doing so would require piping through the QueryInst all the way through.
   // TODO: volatiles can't be elided, but they can be reordered with other
-  // non-volatile accesses.  
-  if (LoadInst *LI = dyn_cast<LoadInst>(QueryInst)) {
-    assert(!LI->isVolatile());
-  } else if (StoreInst *SI = dyn_cast<StoreInst>(QueryInst)) {
-    assert(!SI->isVolatile());
-  }
-
-
+  // non-volatile accesses.
+  auto isVolatile = [](Instruction *Inst) {
+    if (LoadInst *LI = dyn_cast<LoadInst>(Inst)) {
+      return LI->isVolatile();
+    } else if (StoreInst *SI = dyn_cast<StoreInst>(Inst)) {
+      return SI->isVolatile();
+    }
+    return false;
+  };
   // We currently give up on any instruction which is ordered, but we do handle
   // atomic instructions which are unordered.
   // TODO: Handle ordered instructions
@@ -904,11 +909,13 @@ getNonLocalPointerDependency(Instruction *QueryInst,
     }
     return false;
   };
-  assert(!isOrdered(QueryInst) && "ordered instructions not expected");
+  if (isVolatile(QueryInst) || isOrdered(QueryInst)) {
+    Result.push_back(NonLocalDepResult(FromBB,
+                                       MemDepResult::getUnknown(),
+                                       const_cast<Value *>(Loc.Ptr)));
+    return;
+  }
 
-  assert(Loc.Ptr->getType()->isPointerTy() &&
-         "Can't get pointer deps of a non-pointer!");
-  Result.clear();
 
   PHITransAddr Address(const_cast<Value *>(Loc.Ptr), DL, AC);
 
