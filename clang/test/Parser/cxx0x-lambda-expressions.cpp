@@ -91,3 +91,10 @@ class C {
       __attribute__((noreturn)) { while(1); }; // expected-error {{expected body of lambda expression}}
   }
 };
+
+template <typename>
+void PR22122() {
+  [](int) -> {}; // expected-error {{expected a type}}
+}
+
+template void PR22122<int>();
