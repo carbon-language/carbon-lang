@@ -1,5 +1,7 @@
 @ RUN: llvm-mc -triple armv7-eabi -filetype obj -o - %s | llvm-objdump -r - \
 @ RUN:     | FileCheck %s
+@ RUN: llvm-mc -triple thumbv7-eabi -filetype obj -o - %s | llvm-objdump -r - \
+@ RUN:     | FileCheck %s
 
 	.syntax unified
 
