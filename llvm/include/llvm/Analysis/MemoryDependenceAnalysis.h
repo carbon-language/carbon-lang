@@ -366,12 +366,13 @@ namespace llvm {
 
 
     /// getNonLocalPointerDependency - Perform a full dependency query for an
-    /// access to the specified (non-volatile) memory location, returning the
-    /// set of instructions that either define or clobber the value.
+    /// access to the QueryInst's specified (non-volatile) memory location,
+    /// returning the set of instructions that either define or clobber
+    /// the value.
     ///
-    /// This method assumes the pointer has a "NonLocal" dependency within BB.
-    void getNonLocalPointerDependency(const AliasAnalysis::Location &Loc,
-                                      bool isLoad, BasicBlock *BB,
+    /// This method assumes the pointer has a "NonLocal" dependency within
+    /// QueryInst's parent basic block.
+    void getNonLocalPointerDependency(Instruction *QueryInst,
                                     SmallVectorImpl<NonLocalDepResult> &Result);
 
     /// removeInstruction - Remove an instruction from the dependence analysis,

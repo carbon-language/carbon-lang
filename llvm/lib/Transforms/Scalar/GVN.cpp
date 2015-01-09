@@ -1707,8 +1707,7 @@ bool GVN::PerformLoadPRE(LoadInst *LI, AvailValInBlkVect &ValuesPerBlock,
 bool GVN::processNonLocalLoad(LoadInst *LI) {
   // Step 1: Find the non-local dependencies of the load.
   LoadDepVect Deps;
-  AliasAnalysis::Location Loc = VN.getAliasAnalysis()->getLocation(LI);
-  MD->getNonLocalPointerDependency(Loc, true, LI->getParent(), Deps);
+  MD->getNonLocalPointerDependency(LI, Deps);
 
   // If we had to process more than one hundred blocks to find the
   // dependencies, this load isn't worth worrying about.  Optimizing

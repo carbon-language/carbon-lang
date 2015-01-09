@@ -92,7 +92,6 @@ const char *const MemDepPrinter::DepTypeStr[]
 
 bool MemDepPrinter::runOnFunction(Function &F) {
   this->F = &F;
-  AliasAnalysis &AA = getAnalysis<AliasAnalysis>();
   MemoryDependenceAnalysis &MDA = getAnalysis<MemoryDependenceAnalysis>();
 
   // All this code uses non-const interfaces because MemDep is not
@@ -126,8 +125,7 @@ bool MemDepPrinter::runOnFunction(Function &F) {
                                            static_cast<BasicBlock *>(nullptr)));
           continue;
         }
-        AliasAnalysis::Location Loc = AA.getLocation(LI);
-        MDA.getNonLocalPointerDependency(Loc, true, LI->getParent(), NLDI);
+        MDA.getNonLocalPointerDependency(LI, NLDI);
       } else if (StoreInst *SI = dyn_cast<StoreInst>(Inst)) {
         if (!SI->isUnordered()) {
           // FIXME: Handle atomic/volatile stores.
@@ -135,11 +133,9 @@ bool MemDepPrinter::runOnFunction(Function &F) {
                                            static_cast<BasicBlock *>(nullptr)));
           continue;
         }
-        AliasAnalysis::Location Loc = AA.getLocation(SI);
-        MDA.getNonLocalPointerDependency(Loc, false, SI->getParent(), NLDI);
+        MDA.getNonLocalPointerDependency(SI, NLDI);
       } else if (VAArgInst *VI = dyn_cast<VAArgInst>(Inst)) {
-        AliasAnalysis::Location Loc = AA.getLocation(VI);
-        MDA.getNonLocalPointerDependency(Loc, false, VI->getParent(), NLDI);
+        MDA.getNonLocalPointerDependency(VI, NLDI);
       } else {
         llvm_unreachable("Unknown memory instruction!");
       }

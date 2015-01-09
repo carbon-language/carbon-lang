@@ -859,9 +859,53 @@ MemoryDependenceAnalysis::getNonLocalCallDependency(CallSite QueryCS) {
 /// own block.
 ///
 void MemoryDependenceAnalysis::
-getNonLocalPointerDependency(const AliasAnalysis::Location &Loc, bool isLoad,
-                             BasicBlock *FromBB,
+getNonLocalPointerDependency(Instruction *QueryInst,
                              SmallVectorImpl<NonLocalDepResult> &Result) {
+
+  auto getLocation = [](AliasAnalysis *AA, Instruction *Inst) {
+    if (auto *I = dyn_cast<LoadInst>(Inst))
+      return AA->getLocation(I);
+    else if (auto *I = dyn_cast<StoreInst>(Inst))
+      return AA->getLocation(I);
+    else if (auto *I = dyn_cast<VAArgInst>(Inst))
+      return AA->getLocation(I);
+    else if (auto *I = dyn_cast<AtomicCmpXchgInst>(Inst))
+      return AA->getLocation(I);
+    else if (auto *I = dyn_cast<AtomicRMWInst>(Inst))
+      return AA->getLocation(I);
+    else
+      llvm_unreachable("unsupported memory instruction");
+  };
+   
+  const AliasAnalysis::Location Loc = getLocation(AA, QueryInst);
+  bool isLoad = isa<LoadInst>(QueryInst);
+  BasicBlock *FromBB = QueryInst->getParent();
+  assert(FromBB);
+  
+  // This routine does not expect to deal with volatile instructions.  Doing so
+  // would require piping through the QueryInst all the way through.
+  // TODO: volatiles can't be elided, but they can be reordered with other
+  // non-volatile accesses.  
+  if (LoadInst *LI = dyn_cast<LoadInst>(QueryInst)) {
+    assert(!LI->isVolatile());
+  } else if (StoreInst *SI = dyn_cast<StoreInst>(QueryInst)) {
+    assert(!SI->isVolatile());
+  }
+
+
+  // We currently give up on any instruction which is ordered, but we do handle
+  // atomic instructions which are unordered.
+  // TODO: Handle ordered instructions
+  auto isOrdered = [](Instruction *Inst) {
+    if (LoadInst *LI = dyn_cast<LoadInst>(Inst)) {
+      return !LI->isUnordered();
+    } else if (StoreInst *SI = dyn_cast<StoreInst>(Inst)) {
+      return !SI->isUnordered();
+    }
+    return false;
+  };
+  assert(!isOrdered(QueryInst) && "ordered instructions not expected");
+
   assert(Loc.Ptr->getType()->isPointerTy() &&
          "Can't get pointer deps of a non-pointer!");
   Result.clear();
