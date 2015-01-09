@@ -21,7 +21,8 @@
 namespace llvm {
 
   class ARMMCAsmInfoDarwin : public MCAsmInfoDarwin {
-    void anchor() override;
+    virtual void anchor();
+
   public:
     explicit ARMMCAsmInfoDarwin(StringRef TT);
   };

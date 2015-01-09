@@ -109,6 +109,10 @@ MCAsmInfo::MCAsmInfo() {
 MCAsmInfo::~MCAsmInfo() {
 }
 
+bool MCAsmInfo::isSectionAtomizableBySymbols(const MCSection &Section) const {
+  return false;
+}
+
 const MCExpr *
 MCAsmInfo::getExprForPersonalitySymbol(const MCSymbol *Sym,
                                        unsigned Encoding,
