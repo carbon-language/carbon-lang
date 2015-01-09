@@ -7482,7 +7482,7 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
     } else if (isFunctionTemplateSpecialization) {
       if (CurContext->isDependentContext() && CurContext->isRecord() 
           && !isFriend) {
-        isDependentClassScopeExplicitSpecialization = true;
+        isDependentClassScopeExplicitSpecialization = isa<CXXMethodDecl>(NewFD);
         Diag(NewFD->getLocation(), getLangOpts().MicrosoftExt ? 
           diag::ext_function_specialization_in_class :
           diag::err_function_specialization_in_class)
