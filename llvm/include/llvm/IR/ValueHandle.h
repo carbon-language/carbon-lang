@@ -190,22 +190,19 @@ class AssertingVH
   friend struct DenseMapInfo<AssertingVH<ValueTy> >;
 
 #ifndef NDEBUG
-  ValueTy *getValPtr() const {
-    return static_cast<ValueTy*>(ValueHandleBase::getValPtr());
-  }
-  void setValPtr(ValueTy *P) {
-    ValueHandleBase::operator=(GetAsValue(P));
-  }
+  Value *getRawValPtr() const { return ValueHandleBase::getValPtr(); }
+  void setRawValPtr(Value *P) { ValueHandleBase::operator=(P); }
 #else
-  ValueTy *ThePtr;
-  ValueTy *getValPtr() const { return ThePtr; }
-  void setValPtr(ValueTy *P) { ThePtr = P; }
+  Value *ThePtr;
+  Value *getRawValPtr() const { return ThePtr; }
+  void setRawValPtr(Value *P) { ThePtr = P; }
 #endif
-
-  // Convert a ValueTy*, which may be const, to the type the base
-  // class expects.
+  // Convert a ValueTy*, which may be const, to the raw Value*.
   static Value *GetAsValue(Value *V) { return V; }
   static Value *GetAsValue(const Value *V) { return const_cast<Value*>(V); }
+
+  ValueTy *getValPtr() const { return static_cast<ValueTy *>(getRawValPtr()); }
+  void setValPtr(ValueTy *P) { setRawValPtr(GetAsValue(P)); }
 
 public:
 #ifndef NDEBUG
@@ -214,7 +211,7 @@ public:
   AssertingVH(const AssertingVH &RHS) : ValueHandleBase(Assert, RHS) {}
 #else
   AssertingVH() : ThePtr(nullptr) {}
-  AssertingVH(ValueTy *P) : ThePtr(P) {}
+  AssertingVH(ValueTy *P) : ThePtr(GetAsValue(P)) {}
 #endif
 
   operator ValueTy*() const {
@@ -237,27 +234,23 @@ public:
 // Specialize DenseMapInfo to allow AssertingVH to participate in DenseMap.
 template<typename T>
 struct DenseMapInfo<AssertingVH<T> > {
-  typedef DenseMapInfo<T*> PointerInfo;
   static inline AssertingVH<T> getEmptyKey() {
-    return AssertingVH<T>(PointerInfo::getEmptyKey());
+    AssertingVH<T> Res;
+    Res.setRawValPtr(DenseMapInfo<Value *>::getEmptyKey());
+    return Res;
   }
-  static inline T* getTombstoneKey() {
-    return AssertingVH<T>(PointerInfo::getTombstoneKey());
+  static inline AssertingVH<T> getTombstoneKey() {
+    AssertingVH<T> Res;
+    Res.setRawValPtr(DenseMapInfo<Value *>::getTombstoneKey());
+    return Res;
   }
   static unsigned getHashValue(const AssertingVH<T> &Val) {
-    return PointerInfo::getHashValue(Val);
+    return DenseMapInfo<Value *>::getHashValue(Val.getRawValPtr());
   }
-#ifndef NDEBUG
   static bool isEqual(const AssertingVH<T> &LHS, const AssertingVH<T> &RHS) {
-    // Avoid downcasting AssertingVH<T> to T*, as empty/tombstone keys may not
-    // be properly aligned pointers to T*.
-    return LHS.ValueHandleBase::getValPtr() == RHS.ValueHandleBase::getValPtr();
+    return DenseMapInfo<Value *>::isEqual(LHS.getRawValPtr(),
+                                          RHS.getRawValPtr());
   }
-#else
-  static bool isEqual(const AssertingVH<T> &LHS, const AssertingVH<T> &RHS) {
-    return LHS == RHS;
-  }
-#endif
 };
 
 template <typename T>
