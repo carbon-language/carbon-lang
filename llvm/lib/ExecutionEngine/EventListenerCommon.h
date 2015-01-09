@@ -26,13 +26,13 @@ namespace jitprofiling {
 
 class FilenameCache {
   // Holds the filename of each Scope, so that we can pass a null-terminated
-  // string into oprofile.  Use an AssertingVH rather than a ValueMap because we
-  // shouldn't be modifying any MDNodes while this map is alive.
-  DenseMap<AssertingVH<MDNode>, std::string> Filenames;
-  DenseMap<AssertingVH<MDNode>, std::string> Paths;
+  // string into oprofile.  
+  DenseMap<const MDNode *, std::string> Filenames;
+  DenseMap<const MDNode *, std::string> Paths;
 
  public:
   const char *getFilename(MDNode *Scope) {
+    assert(Scope->isResolved() && "Expected Scope to be resolved");
     std::string &Filename = Filenames[Scope];
     if (Filename.empty()) {
       DIScope DIScope(Scope);
@@ -42,6 +42,7 @@ class FilenameCache {
   }
 
   const char *getFullPath(MDNode *Scope) {
+    assert(Scope->isResolved() && "Expected Scope to be resolved");
     std::string &P = Paths[Scope];
     if (P.empty()) {
       DIScope DIScope(Scope);
