@@ -1,5 +1,4 @@
 // RUN: %clang_cc1 -g -std=c++11 -S -emit-llvm %s -o - | FileCheck %s
-// RUN: %clang_cc1 -triple i686-linux-gnu -g -std=c++11 -S -emit-llvm %s -o - | FileCheck %s
 
 // XFAIL: win32
 
@@ -113,32 +112,6 @@ void f10() {
       new (void_src()) int(src()));
 }
 
-// CHECK-LABEL: define
-__complex double f11() {
-  __complex double f;
-// CHECK: store {{.*}} !dbg [[DBG_F11:!.*]]
-#line 1200
-  return f;
-}
-
-// CHECK-LABEL: define
-void f12() {
-  int f12_1();
-  void f12_2(int = f12_1());
-// CHECK: call {{(signext )?}}i32 {{.*}} !dbg [[DBG_F12:!.*]]
-#line 1300
-  f12_2();
-}
-
-// CHECK-LABEL: define
-void f13() {
-// CHECK: call {{.*}} !dbg [[DBG_F13:!.*]]
-#define F13_IMPL 1, src()
-  1,
-#line 1400
-  F13_IMPL;
-}
-
 // CHECK: [[DBG_F1]] = !{i32 100,
 // CHECK: [[DBG_FOO_VALUE]] = !{i32 200,
 // CHECK: [[DBG_FOO_REF]] = !{i32 202,
@@ -153,6 +126,3 @@ void f13() {
 // CHECK: [[DBG_F9]] = !{i32 1000,
 // CHECK: [[DBG_F10_ICMP]] = !{i32 1100,
 // CHECK: [[DBG_F10_STORE]] = !{i32 1100,
-// CHECK: [[DBG_F11]] = !{i32 1200,
-// CHECK: [[DBG_F12]] = !{i32 1300,
-// CHECK: [[DBG_F13]] = !{i32 1400,

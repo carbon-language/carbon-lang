@@ -158,7 +158,7 @@ TypeEvaluationKind CodeGenFunction::getEvaluationKind(QualType type) {
   }
 }
 
-llvm::DebugLoc CodeGenFunction::EmitReturnBlock() {
+void CodeGenFunction::EmitReturnBlock() {
   // For cleanliness, we try to avoid emitting the return block for
   // simple cases.
   llvm::BasicBlock *CurBB = Builder.GetInsertBlock();
@@ -173,7 +173,7 @@ llvm::DebugLoc CodeGenFunction::EmitReturnBlock() {
       delete ReturnBlock.getBlock();
     } else
       EmitBlock(ReturnBlock.getBlock());
-    return llvm::DebugLoc();
+    return;
   }
 
   // Otherwise, if the return block is the target of a single direct
@@ -184,13 +184,15 @@ llvm::DebugLoc CodeGenFunction::EmitReturnBlock() {
       dyn_cast<llvm::BranchInst>(*ReturnBlock.getBlock()->user_begin());
     if (BI && BI->isUnconditional() &&
         BI->getSuccessor(0) == ReturnBlock.getBlock()) {
-      // Record/return the DebugLoc of the simple 'return' expression to be used
-      // later by the actual 'ret' instruction.
-      llvm::DebugLoc Loc = BI->getDebugLoc();
+      // Reset insertion point, including debug location, and delete the
+      // branch.  This is really subtle and only works because the next change
+      // in location will hit the caching in CGDebugInfo::EmitLocation and not
+      // override this.
+      Builder.SetCurrentDebugLocation(BI->getDebugLoc());
       Builder.SetInsertPoint(BI->getParent());
       BI->eraseFromParent();
       delete ReturnBlock.getBlock();
-      return Loc;
+      return;
     }
   }
 
@@ -199,7 +201,6 @@ llvm::DebugLoc CodeGenFunction::EmitReturnBlock() {
   // region.end for now.
 
   EmitBlock(ReturnBlock.getBlock());
-  return llvm::DebugLoc();
 }
 
 static void EmitIfUsed(CodeGenFunction &CGF, llvm::BasicBlock *BB) {
@@ -253,18 +254,16 @@ void CodeGenFunction::FinishFunction(SourceLocation EndLoc) {
   }
 
   // Emit function epilog (to return).
-  llvm::DebugLoc Loc = EmitReturnBlock();
+  EmitReturnBlock();
 
   if (ShouldInstrumentFunction())
     EmitFunctionInstrumentation("__cyg_profile_func_exit");
 
   // Emit debug descriptor for function end.
-  if (CGDebugInfo *DI = getDebugInfo())
+  if (CGDebugInfo *DI = getDebugInfo()) {
     DI->EmitFunctionEnd(Builder);
+  }
 
-  // Reset the debug location to that of the simple 'return' expression, if any
-  // rather than that of the end of the function's scope '}'.
-  ApplyDebugLocation AL(*this, Loc);
   EmitFunctionEpilog(*CurFnInfo, EmitRetDbgLoc, EndLoc);
   EmitEndEHSpec(CurCodeDecl);
 

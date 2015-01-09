@@ -53,7 +53,7 @@ class CGDebugInfo {
   const CodeGenOptions::DebugInfoKind DebugKind;
   llvm::DIBuilder DBuilder;
   llvm::DICompileUnit TheCU;
-  SourceLocation CurLoc;
+  SourceLocation CurLoc, PrevLoc;
   llvm::DIType VTablePtrType;
   llvm::DIType ClassTy;
   llvm::DICompositeType ObjTy;
@@ -448,17 +448,27 @@ private:
   }
 };
 
-class ApplyDebugLocation {
+/// SaveAndRestoreLocation - An RAII object saves the current location
+/// and automatically restores it to the original value.
+class SaveAndRestoreLocation {
 protected:
-  llvm::DebugLoc OriginalLocation;
-  CodeGenFunction &CGF;
-
+  SourceLocation SavedLoc;
+  CGDebugInfo *DI;
+  CGBuilderTy &Builder;
 public:
-  ApplyDebugLocation(CodeGenFunction &CGF,
-                     SourceLocation TemporaryLocation = SourceLocation(),
-                     bool ForceColumnInfo = false);
-  ApplyDebugLocation(CodeGenFunction &CGF, llvm::DebugLoc Loc);
-  ~ApplyDebugLocation();
+  SaveAndRestoreLocation(CodeGenFunction &CGF, CGBuilderTy &B);
+  /// Autorestore everything back to normal.
+  ~SaveAndRestoreLocation();
+};
+
+/// NoLocation - An RAII object that temporarily disables debug
+/// locations. This is useful for emitting instructions that should be
+/// counted towards the function prologue.
+class NoLocation : public SaveAndRestoreLocation {
+public:
+  NoLocation(CodeGenFunction &CGF, CGBuilderTy &B);
+  /// Autorestore everything back to normal.
+  ~NoLocation();
 };
 
 /// ArtificialLocation - An RAII object that temporarily switches to
@@ -472,9 +482,16 @@ public:
 /// This is necessary because passing an empty SourceLocation to
 /// CGDebugInfo::setLocation() will result in the last valid location
 /// being reused.
-class ArtificialLocation : public ApplyDebugLocation {
+class ArtificialLocation : public SaveAndRestoreLocation {
 public:
-  ArtificialLocation(CodeGenFunction &CGF);
+  ArtificialLocation(CodeGenFunction &CGF, CGBuilderTy &B);
+
+  /// Set the current location to line 0, but within the current scope
+  /// (= the top of the LexicalBlockStack).
+  void Emit();
+
+  /// Autorestore everything back to normal.
+  ~ArtificialLocation();
 };
 
 
