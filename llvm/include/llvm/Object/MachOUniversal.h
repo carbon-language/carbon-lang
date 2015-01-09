@@ -51,6 +51,10 @@ public:
 
     ObjectForArch getNext() const { return ObjectForArch(Parent, Index + 1); }
     uint32_t getCPUType() const { return Header.cputype; }
+    uint32_t getCPUSubType() const { return Header.cpusubtype; }
+    uint32_t getOffset() const { return Header.offset; }
+    uint32_t getSize() const { return Header.size; }
+    uint32_t getAlign() const { return Header.align; }
     std::string getArchTypeName() const {
       Triple T = MachOObjectFile::getArch(Header.cputype, Header.cpusubtype);
       return T.getArchName();
