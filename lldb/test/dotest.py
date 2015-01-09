@@ -949,13 +949,13 @@ def setupSysPath():
 
     lldbExec = None
     lldbMiExec = None
+    lldbHere = None
     if lldbExecutablePath:
         if is_exe(lldbExecutablePath):
             lldbExec = lldbExecutablePath
             lldbHere = lldbExec
         else:
-            print lldbExecutablePath + " is not an executable"
-            sys.exit(-1)
+            print lldbExecutablePath + " is not an executable, lldb tests will fail."
     else:
         # First, you can define an environment variable LLDB_EXEC specifying the
         # full pathname of the lldb executable.
@@ -975,7 +975,6 @@ def setupSysPath():
         baiExec2 = os.path.join(base, *(xcode4_build_dir + bai + executable))
     
         # The 'lldb' executable built here in the source tree.
-        lldbHere = None
         if is_exe(dbgExec):
             lldbHere = dbgExec
         elif is_exe(dbgExec2):
@@ -1102,24 +1101,24 @@ def setupSysPath():
 
         if not lldbPath:
             print 'This script requires lldb.py to be in either ' + dbgPath + ',',
-            print relPath + ', or ' + baiPath
-            sys.exit(-1)
+            print relPath + ', or ' + baiPath + '. Some tests might fail.'
 
-    # Some of the code that uses this path assumes it hasn't resolved the Versions... link.  
-    # If the path we've constructed looks like that, then we'll strip out the Versions/A part.
-    (before, frameWithVersion, after) = lldbPath.rpartition("LLDB.framework/Versions/A")
-    if frameWithVersion != "" :
-        lldbPath = before + "LLDB.framework" + after
+    if lldbPath:
+        # Some of the code that uses this path assumes it hasn't resolved the Versions... link.  
+        # If the path we've constructed looks like that, then we'll strip out the Versions/A part.
+        (before, frameWithVersion, after) = lldbPath.rpartition("LLDB.framework/Versions/A")
+        if frameWithVersion != "" :
+            lldbPath = before + "LLDB.framework" + after
 
-    lldbPath = os.path.abspath(lldbPath)
+        lldbPath = os.path.abspath(lldbPath)
 
-    # If tests need to find LLDB_FRAMEWORK, now they can do it
-    os.environ["LLDB_FRAMEWORK"] = os.path.dirname(os.path.dirname(lldbPath))
+        # If tests need to find LLDB_FRAMEWORK, now they can do it
+        os.environ["LLDB_FRAMEWORK"] = os.path.dirname(os.path.dirname(lldbPath))
 
-    # This is to locate the lldb.py module.  Insert it right after sys.path[0].
-    sys.path[1:1] = [lldbPath]
-    if dumpSysPath:
-        print "sys.path:", sys.path
+        # This is to locate the lldb.py module.  Insert it right after sys.path[0].
+        sys.path[1:1] = [lldbPath]
+        if dumpSysPath:
+            print "sys.path:", sys.path
 
 def visit(prefix, dir, names):
     """Visitor function for os.path.walk(path, visit, arg)."""

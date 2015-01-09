@@ -56,11 +56,16 @@ def get_lldb_gdbserver_exe():
         A path to the lldb-gdbserver exe if it is found to exist; otherwise,
         returns None.
     """
-    lldb_exe = os.environ["LLDB_EXEC"]
-    if not lldb_exe:
-        return None
+    if "LLDB_DEBUGSERVER_PATH" in os.environ:
+        return os.environ["LLDB_DEBUGSERVER_PATH"]
+    elif "LLDB_EXEC" in os.environ:
+        lldb_exe = os.environ["LLDB_EXEC"]
+        if not lldb_exe:
+            return None
+        else:
+            return _get_debug_monitor_from_lldb(lldb_exe, "lldb-gdbserver")
     else:
-        return _get_debug_monitor_from_lldb(lldb_exe, "lldb-gdbserver")
+        return None
 
 def get_debugserver_exe():
     """Return the debugserver exe path.
@@ -69,11 +74,16 @@ def get_debugserver_exe():
         A path to the debugserver exe if it is found to exist; otherwise,
         returns None.
     """
-    lldb_exe = os.environ["LLDB_EXEC"]
-    if not lldb_exe:
-        return None
+    if "LLDB_DEBUGSERVER_PATH" in os.environ:
+        return os.environ["LLDB_DEBUGSERVER_PATH"]
+    elif "LLDB_EXEC" in os.environ:
+        lldb_exe = os.environ["LLDB_EXEC"]
+        if not lldb_exe:
+            return None
+        else:
+            return _get_debug_monitor_from_lldb(lldb_exe, "debugserver")
     else:
-        return _get_debug_monitor_from_lldb(lldb_exe, "debugserver")
+        return None
 
 
 _LOG_LINE_REGEX = re.compile(r'^(lldb-gdbserver|debugserver)\s+<\s*(\d+)>' +
