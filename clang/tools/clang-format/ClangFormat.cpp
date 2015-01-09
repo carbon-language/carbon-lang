@@ -229,6 +229,10 @@ static bool format(StringRef FileName) {
   if (OutputXML) {
     llvm::outs()
         << "<?xml version='1.0'?>\n<replacements xml:space='preserve'>\n";
+    if (Cursor.getNumOccurrences() != 0)
+      llvm::outs() << "<cursor>"
+                   << tooling::shiftedCodePosition(Replaces, Cursor)
+                   << "</cursor>\n";
     for (tooling::Replacements::const_iterator I = Replaces.begin(),
                                                E = Replaces.end();
          I != E; ++I) {
