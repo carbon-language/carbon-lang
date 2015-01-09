@@ -622,13 +622,12 @@ bool RegisterCoalescer::removeCopyByCommutingDef(const CoalescerPair &CP,
   // BValNo is a value number in B that is defined by a copy from A. 'B1' in
   // the example above.
   VNInfo *BValNo = IntB.getVNInfoAt(CopyIdx);
-  if (!BValNo || BValNo->def != CopyIdx)
-    return false;
+  assert(BValNo != nullptr && BValNo->def == CopyIdx);
 
   // AValNo is the value number in A that defines the copy, A3 in the example.
   VNInfo *AValNo = IntA.getVNInfoAt(CopyIdx.getRegSlot(true));
-  assert(AValNo && "COPY source not live");
-  if (AValNo->isPHIDef() || AValNo->isUnused())
+  assert(AValNo && !AValNo->isUnused() && "COPY source not live");
+  if (AValNo->isPHIDef())
     return false;
   MachineInstr *DefMI = LIS->getInstructionFromIndex(AValNo->def);
   if (!DefMI)
@@ -711,6 +710,8 @@ bool RegisterCoalescer::removeCopyByCommutingDef(const CoalescerPair &CP,
   for (MachineRegisterInfo::use_iterator UI = MRI->use_begin(IntA.reg),
          UE = MRI->use_end(); UI != UE;) {
     MachineOperand &UseMO = *UI;
+    if (UseMO.isUndef())
+      continue;
     MachineInstr *UseMI = UseMO.getParent();
     ++UI;
     if (UseMI->isDebugValue()) {
@@ -721,7 +722,8 @@ bool RegisterCoalescer::removeCopyByCommutingDef(const CoalescerPair &CP,
     }
     SlotIndex UseIdx = LIS->getInstructionIndex(UseMI).getRegSlot(true);
     LiveInterval::iterator US = IntA.FindSegmentContaining(UseIdx);
-    if (US == IntA.end() || US->valno != AValNo)
+    assert(US != IntA.end() && "Use must be live");
+    if (US->valno != AValNo)
       continue;
     // Kill flags are no longer accurate. They are recomputed after RA.
     UseMO.setIsKill(false);
@@ -770,11 +772,7 @@ bool RegisterCoalescer::removeCopyByCommutingDef(const CoalescerPair &CP,
     SlotIndex AIdx = CopyIdx.getRegSlot(true);
     for (LiveInterval::SubRange &SA : IntA.subranges()) {
       VNInfo *ASubValNo = SA.getVNInfoAt(AIdx);
-      if (ASubValNo == nullptr) {
-        DEBUG(dbgs() << "No A Range at " << AIdx << " with mask "
-              << format("%04X", SA.LaneMask) << "\n");
-        continue;
-      }
+      assert(ASubValNo != nullptr);
 
       unsigned AMask = SA.LaneMask;
       for (LiveInterval::SubRange &SB : IntB.subranges()) {
@@ -816,11 +814,7 @@ bool RegisterCoalescer::removeCopyByCommutingDef(const CoalescerPair &CP,
     SlotIndex AIdx = CopyIdx.getRegSlot(true);
     for (LiveInterval::SubRange &SA : IntA.subranges()) {
       VNInfo *ASubValNo = SA.getVNInfoAt(AIdx);
-      if (ASubValNo == nullptr) {
-        DEBUG(dbgs() << "No A Range at " << AIdx << " with mask "
-              << format("%04X", SA.LaneMask) << "\n");
-        continue;
-      }
+      assert(ASubValNo != nullptr);
       SA.removeValNo(ASubValNo);
     }
   }
