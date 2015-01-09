@@ -314,7 +314,7 @@ namespace bitc {
 
     FUNC_CODE_INST_CALL        = 34, // CALL:    [attr, cc, fnty, fnid, args...]
 
-    FUNC_CODE_DEBUG_LOC        = 35, // DEBUG_LOC:  [Line,Col,ScopeVal, IAVal]
+    FUNC_CODE_DEBUG_LOC_OLD    = 35, // DEBUG_LOC:  [Line,Col,ScopeVal, IAVal]
     FUNC_CODE_INST_FENCE       = 36, // FENCE: [ordering, synchscope]
     FUNC_CODE_INST_CMPXCHG     = 37, // CMPXCHG: [ptrty,ptr,cmp,new, align, vol,
                                      //           ordering, synchscope]

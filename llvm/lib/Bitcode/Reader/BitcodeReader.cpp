@@ -2560,7 +2560,7 @@ std::error_code BitcodeReader::ParseFunctionBody(Function *F) {
       I = nullptr;
       continue;
 
-    case bitc::FUNC_CODE_DEBUG_LOC: {      // DEBUG_LOC: [line, col, scope, ia]
+    case bitc::FUNC_CODE_DEBUG_LOC_OLD: { // DEBUG_LOC_OLD: [line,col,scope,ia]
       I = nullptr;     // Get the last instruction emitted.
       if (CurBB && !CurBB->empty())
         I = &CurBB->back();
