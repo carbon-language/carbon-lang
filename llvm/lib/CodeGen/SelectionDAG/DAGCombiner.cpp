@@ -6898,49 +6898,48 @@ SDValue DAGCombiner::visitFADD(SDNode *N) {
       return DAG.getNode(ISD::FMA, SDLoc(N), VT,
                          N1.getOperand(0), N1.getOperand(1), N0);
 
-    // Remove FP_EXTEND when there is an opportunity to combine. This is
-    // legal here since extra precision is allowed.
-
-    // fold (fadd (fpext (fmul x, y)), z) -> (fma x, y, z)
-    if (N0.getOpcode() == ISD::FP_EXTEND) {
-      SDValue N00 = N0.getOperand(0);
-      if (N00.getOpcode() == ISD::FMUL)
+    // More folding opportunities when target permits.
+    if (TLI.enableAggressiveFMAFusion(VT)) {
+      // fold (fadd (fma x, y, (fmul u, v)), z) -> (fma x, y (fma u, v, z))
+      if (N0.getOpcode() == ISD::FMA &&
+          N0.getOperand(2).getOpcode() == ISD::FMUL)
         return DAG.getNode(ISD::FMA, SDLoc(N), VT,
-                           N00.getOperand(0), N00.getOperand(1), N1);
-    }
+                           N0.getOperand(0), N0.getOperand(1),
+                           DAG.getNode(ISD::FMA, SDLoc(N), VT,
+                                       N0.getOperand(2).getOperand(0),
+                                       N0.getOperand(2).getOperand(1),
+                                       N1));
 
-    // fold (fadd x, (fpext (fmul y, z)), z) -> (fma y, z, x)
-    // Note: Commutes FADD operands.
-    if (N1.getOpcode() == ISD::FP_EXTEND) {
-      SDValue N10 = N1.getOperand(0);
-      if (N10.getOpcode() == ISD::FMUL)
+      // fold (fadd x, (fma y, z, (fmul u, v)) -> (fma y, z (fma u, v, x))
+      if (N1->getOpcode() == ISD::FMA &&
+          N1.getOperand(2).getOpcode() == ISD::FMUL)
         return DAG.getNode(ISD::FMA, SDLoc(N), VT,
-                           N10.getOperand(0), N10.getOperand(1), N0);
+                           N1.getOperand(0), N1.getOperand(1),
+                           DAG.getNode(ISD::FMA, SDLoc(N), VT,
+                                       N1.getOperand(2).getOperand(0),
+                                       N1.getOperand(2).getOperand(1),
+                                       N0));
+
+      // Remove FP_EXTEND when there is an opportunity to combine. This is
+      // legal here since extra precision is allowed.
+
+      // fold (fadd (fpext (fmul x, y)), z) -> (fma x, y, z)
+      if (N0.getOpcode() == ISD::FP_EXTEND) {
+        SDValue N00 = N0.getOperand(0);
+        if (N00.getOpcode() == ISD::FMUL)
+          return DAG.getNode(ISD::FMA, SDLoc(N), VT,
+                             N00.getOperand(0), N00.getOperand(1), N1);
+      }
+
+      // fold (fadd x, (fpext (fmul y, z)), z) -> (fma y, z, x)
+      // Note: Commutes FADD operands.
+      if (N1.getOpcode() == ISD::FP_EXTEND) {
+        SDValue N10 = N1.getOperand(0);
+        if (N10.getOpcode() == ISD::FMUL)
+          return DAG.getNode(ISD::FMA, SDLoc(N), VT,
+                             N10.getOperand(0), N10.getOperand(1), N0);
+      }
     }
-  }
-
-  // More folding opportunities when target permits.
-  if (TLI.enableAggressiveFMAFusion(VT)) {
-
-    // fold (fadd (fma x, y, (fmul u, v)), z) -> (fma x, y (fma u, v, z))
-    if (N0.getOpcode() == ISD::FMA &&
-        N0.getOperand(2).getOpcode() == ISD::FMUL)
-      return DAG.getNode(ISD::FMA, SDLoc(N), VT,
-                         N0.getOperand(0), N0.getOperand(1),
-                         DAG.getNode(ISD::FMA, SDLoc(N), VT,
-                                     N0.getOperand(2).getOperand(0),
-                                     N0.getOperand(2).getOperand(1),
-                                     N1));
-
-    // fold (fadd x, (fma y, z, (fmul u, v)) -> (fma y, z (fma u, v, x))
-    if (N1->getOpcode() == ISD::FMA &&
-        N1.getOperand(2).getOpcode() == ISD::FMUL)
-      return DAG.getNode(ISD::FMA, SDLoc(N), VT,
-                         N1.getOperand(0), N1.getOperand(1),
-                         DAG.getNode(ISD::FMA, SDLoc(N), VT,
-                                     N1.getOperand(2).getOperand(0),
-                                     N1.getOperand(2).getOperand(1),
-                                     N0));
   }
 
   return SDValue();
@@ -7035,63 +7034,6 @@ SDValue DAGCombiner::visitFSUB(SDNode *N) {
                          DAG.getNode(ISD::FNEG, dl, VT, N1));
     }
 
-    // Remove FP_EXTEND when there is an opportunity to combine. This is
-    // legal here since extra precision is allowed.
-
-    // fold (fsub (fpext (fmul x, y)), z) -> (fma x, y, (fneg z))
-    if (N0.getOpcode() == ISD::FP_EXTEND) {
-      SDValue N00 = N0.getOperand(0);
-      if (N00.getOpcode() == ISD::FMUL)
-        return DAG.getNode(ISD::FMA, SDLoc(N), VT,
-                           N00.getOperand(0),
-                           N00.getOperand(1),
-                           DAG.getNode(ISD::FNEG, SDLoc(N), VT, N1));
-    }
-
-    // fold (fsub x, (fpext (fmul y, z))) -> (fma (fneg y), z, x)
-    // Note: Commutes FSUB operands.
-    if (N1.getOpcode() == ISD::FP_EXTEND) {
-      SDValue N10 = N1.getOperand(0);
-      if (N10.getOpcode() == ISD::FMUL)
-        return DAG.getNode(ISD::FMA, SDLoc(N), VT,
-                           DAG.getNode(ISD::FNEG, SDLoc(N), VT,
-                                       N10.getOperand(0)),
-                           N10.getOperand(1),
-                           N0);
-    }
-
-    // fold (fsub (fpext (fneg (fmul, x, y))), z)
-    //   -> (fma (fneg x), y, (fneg z))
-    if (N0.getOpcode() == ISD::FP_EXTEND) {
-      SDValue N00 = N0.getOperand(0);
-      if (N00.getOpcode() == ISD::FNEG) {
-        SDValue N000 = N00.getOperand(0);
-        if (N000.getOpcode() == ISD::FMUL) {
-          return DAG.getNode(ISD::FMA, dl, VT,
-                             DAG.getNode(ISD::FNEG, dl, VT,
-                                         N000.getOperand(0)),
-                             N000.getOperand(1),
-                             DAG.getNode(ISD::FNEG, dl, VT, N1));
-        }
-      }
-    }
-
-    // fold (fsub (fneg (fpext (fmul, x, y))), z)
-    //   -> (fma (fneg x), y, (fneg z))
-    if (N0.getOpcode() == ISD::FNEG) {
-      SDValue N00 = N0.getOperand(0);
-      if (N00.getOpcode() == ISD::FP_EXTEND) {
-        SDValue N000 = N00.getOperand(0);
-        if (N000.getOpcode() == ISD::FMUL) {
-          return DAG.getNode(ISD::FMA, dl, VT,
-                             DAG.getNode(ISD::FNEG, dl, VT,
-                                         N000.getOperand(0)),
-                             N000.getOperand(1),
-                             DAG.getNode(ISD::FNEG, dl, VT, N1));
-        }
-      }
-    }
-
     // More folding opportunities when target permits.
     if (TLI.enableAggressiveFMAFusion(VT)) {
 
@@ -7121,6 +7063,63 @@ SDValue DAGCombiner::visitFSUB(SDNode *N) {
                                        DAG.getNode(ISD::FNEG, SDLoc(N),  VT,
                                                    N20),
                                        N21, N0));
+      }
+
+      // Remove FP_EXTEND when there is an opportunity to combine. This is
+      // legal here since extra precision is allowed.
+
+      // fold (fsub (fpext (fmul x, y)), z) -> (fma x, y, (fneg z))
+      if (N0.getOpcode() == ISD::FP_EXTEND) {
+        SDValue N00 = N0.getOperand(0);
+        if (N00.getOpcode() == ISD::FMUL)
+          return DAG.getNode(ISD::FMA, SDLoc(N), VT,
+                             N00.getOperand(0),
+                             N00.getOperand(1),
+                             DAG.getNode(ISD::FNEG, SDLoc(N), VT, N1));
+      }
+
+      // fold (fsub x, (fpext (fmul y, z))) -> (fma (fneg y), z, x)
+      // Note: Commutes FSUB operands.
+      if (N1.getOpcode() == ISD::FP_EXTEND) {
+        SDValue N10 = N1.getOperand(0);
+        if (N10.getOpcode() == ISD::FMUL)
+          return DAG.getNode(ISD::FMA, SDLoc(N), VT,
+                             DAG.getNode(ISD::FNEG, SDLoc(N), VT,
+                                         N10.getOperand(0)),
+                             N10.getOperand(1),
+                             N0);
+      }
+
+      // fold (fsub (fpext (fneg (fmul, x, y))), z)
+      //   -> (fma (fneg x), y, (fneg z))
+      if (N0.getOpcode() == ISD::FP_EXTEND) {
+        SDValue N00 = N0.getOperand(0);
+        if (N00.getOpcode() == ISD::FNEG) {
+          SDValue N000 = N00.getOperand(0);
+          if (N000.getOpcode() == ISD::FMUL) {
+            return DAG.getNode(ISD::FMA, dl, VT,
+                               DAG.getNode(ISD::FNEG, dl, VT,
+                                           N000.getOperand(0)),
+                               N000.getOperand(1),
+                               DAG.getNode(ISD::FNEG, dl, VT, N1));
+          }
+        }
+      }
+
+      // fold (fsub (fneg (fpext (fmul, x, y))), z)
+      //   -> (fma (fneg x), y, (fneg z))
+      if (N0.getOpcode() == ISD::FNEG) {
+        SDValue N00 = N0.getOperand(0);
+        if (N00.getOpcode() == ISD::FP_EXTEND) {
+          SDValue N000 = N00.getOperand(0);
+          if (N000.getOpcode() == ISD::FMUL) {
+            return DAG.getNode(ISD::FMA, dl, VT,
+                               DAG.getNode(ISD::FNEG, dl, VT,
+                                           N000.getOperand(0)),
+                               N000.getOperand(1),
+                               DAG.getNode(ISD::FNEG, dl, VT, N1));
+          }
+        }
       }
     }
   }
