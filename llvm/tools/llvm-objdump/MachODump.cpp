@@ -475,12 +475,12 @@ static void printMachOUniversalHeaders(const object::MachOUniversalBinary *UB,
       MachOUniversalBinary::ObjectForArch other_OFA(UB, j);
       uint32_t other_cputype = other_OFA.getCPUType();
       uint32_t other_cpusubtype = other_OFA.getCPUSubType();
-      if (cputype != 0 && cpusubtype != 0 &&
-          cputype == other_cputype &&
+      if (cputype != 0 && cpusubtype != 0 && cputype == other_cputype &&
           (cpusubtype & ~MachO::CPU_SUBTYPE_MASK) ==
-          (other_cpusubtype & ~MachO::CPU_SUBTYPE_MASK))
+              (other_cpusubtype & ~MachO::CPU_SUBTYPE_MASK)) {
         outs() << "(illegal duplicate architecture) ";
         break;
+      }
     }
     if (verbose) {
       outs() << OFA.getArchTypeName() << "\n";
@@ -611,11 +611,11 @@ void llvm::ParseInputMachO(StringRef Filename) {
     // No architecture flags were specified so if this contains a slice that
     // matches the host architecture dump only that.
     if (!ArchAll) {
-      StringRef HostArchName = MachOObjectFile::getHostArch().getArchName();
       for (MachOUniversalBinary::object_iterator I = UB->begin_objects(),
                                                  E = UB->end_objects();
            I != E; ++I) {
-        if (HostArchName == I->getArchTypeName()) {
+        if (MachOObjectFile::getHostArch().getArchName() ==
+            I->getArchTypeName()) {
           ErrorOr<std::unique_ptr<ObjectFile>> ObjOrErr = I->getAsObjectFile();
           std::string ArchiveName;
           ArchiveName.clear();
