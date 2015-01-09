@@ -454,7 +454,7 @@ public:
         std::string m_avoid_regexp;
         std::string m_step_in_target;
         std::string m_class_name;
-        int32_t m_step_count;
+        uint32_t m_step_count;
     };
 
     CommandObjectThreadStepWithTypeAndScope (CommandInterpreter &interpreter,
