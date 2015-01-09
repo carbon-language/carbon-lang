@@ -37,7 +37,7 @@
 
 namespace llvm {
 
-/// ConstantRange - This class represents an range of values.
+/// This class represents a range of values.
 ///
 class ConstantRange {
   APInt Lower, Upper;
@@ -59,7 +59,7 @@ public:
   /// assert out if the two APInt's are not the same bit width.
   ConstantRange(APIntMoveTy Lower, APIntMoveTy Upper);
 
-  /// makeICmpRegion - Produce the smallest range that contains all values that
+  /// Produce the smallest range that contains all values that
   /// might satisfy the comparison specified by Pred when compared to any value
   /// contained within Other.
   ///
@@ -69,47 +69,46 @@ public:
   static ConstantRange makeICmpRegion(unsigned Pred,
                                       const ConstantRange &Other);
 
-  /// getLower - Return the lower value for this range...
+  /// Return the lower value for this range.
   ///
   const APInt &getLower() const { return Lower; }
 
-  /// getUpper - Return the upper value for this range...
+  /// Return the upper value for this range.
   ///
   const APInt &getUpper() const { return Upper; }
 
-  /// getBitWidth - get the bit width of this ConstantRange
+  /// Get the bit width of this ConstantRange.
   ///
   uint32_t getBitWidth() const { return Lower.getBitWidth(); }
 
-  /// isFullSet - Return true if this set contains all of the elements possible
-  /// for this data-type
+  /// Return true if this set contains all of the elements possible
+  /// for this data-type.
   ///
   bool isFullSet() const;
 
-  /// isEmptySet - Return true if this set contains no members.
+  /// Return true if this set contains no members.
   ///
   bool isEmptySet() const;
 
-  /// isWrappedSet - Return true if this set wraps around the top of the range,
-  /// for example: [100, 8)
+  /// Return true if this set wraps around the top of the range.
+  /// For example: [100, 8).
   ///
   bool isWrappedSet() const;
 
-  /// isSignWrappedSet - Return true if this set wraps around the INT_MIN of
-  /// its bitwidth, for example: i8 [120, 140).
+  /// Return true if this set wraps around the INT_MIN of
+  /// its bitwidth. For example: i8 [120, 140).
   ///
   bool isSignWrappedSet() const;
 
-  /// contains - Return true if the specified value is in the set.
+  /// Return true if the specified value is in the set.
   ///
   bool contains(const APInt &Val) const;
 
-  /// contains - Return true if the other range is a subset of this one.
+  /// Return true if the other range is a subset of this one.
   ///
   bool contains(const ConstantRange &CR) const;
 
-  /// getSingleElement - If this set contains a single element, return it,
-  /// otherwise return null.
+  /// If this set contains a single element, return it, otherwise return null.
   ///
   const APInt *getSingleElement() const {
     if (Upper == Lower + 1)
@@ -117,35 +116,31 @@ public:
     return nullptr;
   }
 
-  /// isSingleElement - Return true if this set contains exactly one member.
+  /// Return true if this set contains exactly one member.
   ///
   bool isSingleElement() const { return getSingleElement() != nullptr; }
 
-  /// getSetSize - Return the number of elements in this set.
+  /// Return the number of elements in this set.
   ///
   APInt getSetSize() const;
 
-  /// getUnsignedMax - Return the largest unsigned value contained in the
-  /// ConstantRange.
+  /// Return the largest unsigned value contained in the ConstantRange.
   ///
   APInt getUnsignedMax() const;
 
-  /// getUnsignedMin - Return the smallest unsigned value contained in the
-  /// ConstantRange.
+  /// Return the smallest unsigned value contained in the ConstantRange.
   ///
   APInt getUnsignedMin() const;
 
-  /// getSignedMax - Return the largest signed value contained in the
-  /// ConstantRange.
+  /// Return the largest signed value contained in the ConstantRange.
   ///
   APInt getSignedMax() const;
 
-  /// getSignedMin - Return the smallest signed value contained in the
-  /// ConstantRange.
+  /// Return the smallest signed value contained in the ConstantRange.
   ///
   APInt getSignedMin() const;
 
-  /// operator== - Return true if this range is equal to another range.
+  /// Return true if this range is equal to another range.
   ///
   bool operator==(const ConstantRange &CR) const {
     return Lower == CR.Lower && Upper == CR.Upper;
@@ -154,15 +149,14 @@ public:
     return !operator==(CR);
   }
 
-  /// subtract - Subtract the specified constant from the endpoints of this
-  /// constant range.
+  /// Subtract the specified constant from the endpoints of this constant range.
   ConstantRange subtract(const APInt &CI) const;
 
   /// \brief Subtract the specified range from this range (aka relative
   /// complement of the sets).
   ConstantRange difference(const ConstantRange &CR) const;
 
-  /// intersectWith - Return the range that results from the intersection of
+  /// Return the range that results from the intersection of
   /// this range with another range.  The resultant range is guaranteed to
   /// include all elements contained in both input ranges, and to have the
   /// smallest possible set size that does so.  Because there may be two
@@ -171,7 +165,7 @@ public:
   ///
   ConstantRange intersectWith(const ConstantRange &CR) const;
 
-  /// unionWith - Return the range that results from the union of this range
+  /// Return the range that results from the union of this range
   /// with another range.  The resultant range is guaranteed to include the
   /// elements of both sets, but may contain more.  For example, [3, 9) union
   /// [12,15) is [3, 15), which includes 9, 10, and 11, which were not included
@@ -179,85 +173,84 @@ public:
   ///
   ConstantRange unionWith(const ConstantRange &CR) const;
 
-  /// zeroExtend - Return a new range in the specified integer type, which must
+  /// Return a new range in the specified integer type, which must
   /// be strictly larger than the current type.  The returned range will
   /// correspond to the possible range of values if the source range had been
   /// zero extended to BitWidth.
   ConstantRange zeroExtend(uint32_t BitWidth) const;
 
-  /// signExtend - Return a new range in the specified integer type, which must
+  /// Return a new range in the specified integer type, which must
   /// be strictly larger than the current type.  The returned range will
   /// correspond to the possible range of values if the source range had been
   /// sign extended to BitWidth.
   ConstantRange signExtend(uint32_t BitWidth) const;
 
-  /// truncate - Return a new range in the specified integer type, which must be
+  /// Return a new range in the specified integer type, which must be
   /// strictly smaller than the current type.  The returned range will
   /// correspond to the possible range of values if the source range had been
   /// truncated to the specified type.
   ConstantRange truncate(uint32_t BitWidth) const;
 
-  /// zextOrTrunc - make this range have the bit width given by \p BitWidth. The
+  /// Make this range have the bit width given by \p BitWidth. The
   /// value is zero extended, truncated, or left alone to make it that width.
   ConstantRange zextOrTrunc(uint32_t BitWidth) const;
   
-  /// sextOrTrunc - make this range have the bit width given by \p BitWidth. The
+  /// Make this range have the bit width given by \p BitWidth. The
   /// value is sign extended, truncated, or left alone to make it that width.
   ConstantRange sextOrTrunc(uint32_t BitWidth) const;
 
-  /// add - Return a new range representing the possible values resulting
+  /// Return a new range representing the possible values resulting
   /// from an addition of a value in this range and a value in \p Other.
   ConstantRange add(const ConstantRange &Other) const;
 
-  /// sub - Return a new range representing the possible values resulting
+  /// Return a new range representing the possible values resulting
   /// from a subtraction of a value in this range and a value in \p Other.
   ConstantRange sub(const ConstantRange &Other) const;
 
-  /// multiply - Return a new range representing the possible values resulting
+  /// Return a new range representing the possible values resulting
   /// from a multiplication of a value in this range and a value in \p Other.
   /// TODO: This isn't fully implemented yet.
   ConstantRange multiply(const ConstantRange &Other) const;
 
-  /// smax - Return a new range representing the possible values resulting
+  /// Return a new range representing the possible values resulting
   /// from a signed maximum of a value in this range and a value in \p Other.
   ConstantRange smax(const ConstantRange &Other) const;
 
-  /// umax - Return a new range representing the possible values resulting
+  /// Return a new range representing the possible values resulting
   /// from an unsigned maximum of a value in this range and a value in \p Other.
   ConstantRange umax(const ConstantRange &Other) const;
 
-  /// udiv - Return a new range representing the possible values resulting
+  /// Return a new range representing the possible values resulting
   /// from an unsigned division of a value in this range and a value in
   /// \p Other.
   ConstantRange udiv(const ConstantRange &Other) const;
 
-  /// binaryAnd - return a new range representing the possible values resulting
+  /// Return a new range representing the possible values resulting
   /// from a binary-and of a value in this range by a value in \p Other.
   ConstantRange binaryAnd(const ConstantRange &Other) const;
 
-  /// binaryOr - return a new range representing the possible values resulting
+  /// Return a new range representing the possible values resulting
   /// from a binary-or of a value in this range by a value in \p Other.
   ConstantRange binaryOr(const ConstantRange &Other) const;
 
-  /// shl - Return a new range representing the possible values resulting
+  /// Return a new range representing the possible values resulting
   /// from a left shift of a value in this range by a value in \p Other.
   /// TODO: This isn't fully implemented yet.
   ConstantRange shl(const ConstantRange &Other) const;
 
-  /// lshr - Return a new range representing the possible values resulting
-  /// from a logical right shift of a value in this range and a value in
-  /// \p Other.
+  /// Return a new range representing the possible values resulting from a
+  /// logical right shift of a value in this range and a value in \p Other.
   ConstantRange lshr(const ConstantRange &Other) const;
 
-  /// inverse - Return a new range that is the logical not of the current set.
+  /// Return a new range that is the logical not of the current set.
   ///
   ConstantRange inverse() const;
   
-  /// print - Print out the bounds to a stream...
+  /// Print out the bounds to a stream.
   ///
   void print(raw_ostream &OS) const;
 
-  /// dump - Allow printing from a debugger easily...
+  /// Allow printing from a debugger easily.
   ///
   void dump() const;
 };
