@@ -86,7 +86,7 @@ public:
             
             bool has_indexes(false),has_length(false);
             
-            for (auto x = 0;
+            for (size_t x = 0;
                  x < descriptor->GetNumIVars();
                  x++)
             {
