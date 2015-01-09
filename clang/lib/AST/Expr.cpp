@@ -3827,7 +3827,7 @@ DesignatedInitExpr::DesignatedInitExpr(const ASTContext &C, QualType Ty,
       // Compute type- and value-dependence.
       Expr *Index = IndexExprs[IndexIdx];
       if (Index->isTypeDependent() || Index->isValueDependent())
-        ExprBits.ValueDependent = true;
+        ExprBits.TypeDependent = ExprBits.ValueDependent = true;
       if (Index->isInstantiationDependent())
         ExprBits.InstantiationDependent = true;
       // Propagate unexpanded parameter packs.
@@ -3842,7 +3842,7 @@ DesignatedInitExpr::DesignatedInitExpr(const ASTContext &C, QualType Ty,
       Expr *End = IndexExprs[IndexIdx + 1];
       if (Start->isTypeDependent() || Start->isValueDependent() ||
           End->isTypeDependent() || End->isValueDependent()) {
-        ExprBits.ValueDependent = true;
+        ExprBits.TypeDependent = ExprBits.ValueDependent = true;
         ExprBits.InstantiationDependent = true;
       } else if (Start->isInstantiationDependent() || 
                  End->isInstantiationDependent()) {

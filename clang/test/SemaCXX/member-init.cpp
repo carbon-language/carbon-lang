@@ -185,3 +185,10 @@ template<typename T> void f() {
 }
 void g() { f<int>(); } // expected-note {{in instantiation of function template specialization 'local_class::f<int>' requested here}}
 }
+
+namespace PR22056 {
+template <int N>
+struct S {
+  int x[3] = {[N] = 3};
+};
+}
