@@ -1007,16 +1007,7 @@ static QualType ConvertDeclSpecToType(TypeProcessingState &state) {
       const unsigned TemplateParameterDepth = LSI->AutoTemplateParameterDepth;
       const unsigned AutoParameterPosition = LSI->AutoTemplateParams.size();
       const bool IsParameterPack = declarator.hasEllipsis();
-      
-      // Create a name for the invented template parameter type.
-      std::string InventedTemplateParamName = "$auto-";
-      llvm::raw_string_ostream ss(InventedTemplateParamName);
-      ss << TemplateParameterDepth; 
-      ss << "-" << AutoParameterPosition;
-      ss.flush();
 
-      IdentifierInfo& TemplateParamII = Context.Idents.get(
-                                        InventedTemplateParamName.c_str());
       // Turns out we must create the TemplateTypeParmDecl here to 
       // retrieve the corresponding template parameter type. 
       TemplateTypeParmDecl *CorrespondingTemplateParam =
@@ -1031,7 +1022,7 @@ static QualType ConvertDeclSpecToType(TypeProcessingState &state) {
         /*NameLoc*/ declarator.getLocStart(),  
         TemplateParameterDepth, 
         AutoParameterPosition,  // our template param index 
-        /* Identifier*/ &TemplateParamII, false, IsParameterPack);
+        /* Identifier*/ nullptr, false, IsParameterPack);
       LSI->AutoTemplateParams.push_back(CorrespondingTemplateParam);
       // Replace the 'auto' in the function parameter with this invented 
       // template type parameter.
