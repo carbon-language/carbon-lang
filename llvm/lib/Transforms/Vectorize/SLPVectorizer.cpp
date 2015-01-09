@@ -3502,11 +3502,10 @@ private:
   /// \brief Emit a horizontal reduction of the vectorized value.
   Value *emitReduction(Value *VectorizedValue, IRBuilder<> &Builder) {
     assert(VectorizedValue && "Need to have a vectorized tree node");
-    Instruction *ValToReduce = dyn_cast<Instruction>(VectorizedValue);
     assert(isPowerOf2_32(ReduxWidth) &&
            "We only handle power-of-two reductions for now");
 
-    Value *TmpVec = ValToReduce;
+    Value *TmpVec = VectorizedValue;
     for (unsigned i = ReduxWidth / 2; i != 0; i >>= 1) {
       if (IsPairwiseReduction) {
         Value *LeftMask =
