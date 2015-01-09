@@ -10,8 +10,8 @@
 ;
 ; CHECK-DAG: store i32 %{{[a-z_0-9]*}}, i32* %{{[a-z_0-9]*}}, {{[ ._!,a-zA-Z0-9]*}}, !llvm.mem.parallel_loop_access !4
 ;
-; CHECK-DAG: ![[IDOuter]] = !{![[IDOuter]]}
-; CHECK-DAG: ![[IDInner]] = !{![[IDInner]]}
+; CHECK-DAG: ![[IDOuter]] = distinct !{![[IDOuter]]}
+; CHECK-DAG: ![[IDInner]] = distinct !{![[IDInner]]}
 ; CHECK-DAG: !4 = !{![[IDOuter]], ![[IDInner]]}
 ;
 ;    void jd(int *A) {
