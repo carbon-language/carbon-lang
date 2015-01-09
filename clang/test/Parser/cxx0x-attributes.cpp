@@ -334,3 +334,10 @@ namespace {
   [[deprecated()]] void foo(); // expected-error {{parentheses must be omitted if 'deprecated' attribute's argument list is empty}}
   [[gnu::deprecated()]] void quux();
 }
+
+namespace {
+[[ // expected-error {{expected ']'}}
+#pragma pack(pop)
+deprecated
+]] void bad();
+}
