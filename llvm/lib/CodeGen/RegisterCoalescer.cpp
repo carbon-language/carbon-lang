@@ -602,7 +602,7 @@ static void addSegmentsWithValNo(LiveRange &Dst, VNInfo *DstValNo,
 ///
 ///  B2 = op B0 A2<kill>
 ///    ...
-///  B1 = B2      <- now an identify copy
+///  B1 = B2      <- now an identity copy
 ///    ...
 ///     = op B2   <- more uses
 ///
@@ -610,17 +610,16 @@ static void addSegmentsWithValNo(LiveRange &Dst, VNInfo *DstValNo,
 ///
 bool RegisterCoalescer::removeCopyByCommutingDef(const CoalescerPair &CP,
                                                  MachineInstr *CopyMI) {
-  assert (!CP.isPhys());
-
-  SlotIndex CopyIdx = LIS->getInstructionIndex(CopyMI).getRegSlot();
+  assert(!CP.isPhys());
 
   LiveInterval &IntA =
-    LIS->getInterval(CP.isFlipped() ? CP.getDstReg() : CP.getSrcReg());
+      LIS->getInterval(CP.isFlipped() ? CP.getDstReg() : CP.getSrcReg());
   LiveInterval &IntB =
-    LIS->getInterval(CP.isFlipped() ? CP.getSrcReg() : CP.getDstReg());
+      LIS->getInterval(CP.isFlipped() ? CP.getSrcReg() : CP.getDstReg());
 
   // BValNo is a value number in B that is defined by a copy from A. 'B1' in
   // the example above.
+  SlotIndex CopyIdx = LIS->getInstructionIndex(CopyMI).getRegSlot();
   VNInfo *BValNo = IntB.getVNInfoAt(CopyIdx);
   assert(BValNo != nullptr && BValNo->def == CopyIdx);
 
@@ -706,7 +705,8 @@ bool RegisterCoalescer::removeCopyByCommutingDef(const CoalescerPair &CP,
 
   // Update uses of IntA of the specific Val# with IntB.
   for (MachineRegisterInfo::use_iterator UI = MRI->use_begin(IntA.reg),
-         UE = MRI->use_end(); UI != UE;) {
+                                         UE = MRI->use_end();
+       UI != UE;) {
     MachineOperand &UseMO = *UI;
     if (UseMO.isUndef())
       continue;
@@ -779,7 +779,8 @@ bool RegisterCoalescer::removeCopyByCommutingDef(const CoalescerPair &CP,
         if (Common == 0)
           continue;
 
-        DEBUG(dbgs() << format("\t\tCopy+Merge %04X into %04X\n", BMask, Common));
+        DEBUG(
+            dbgs() << format("\t\tCopy+Merge %04X into %04X\n", BMask, Common));
         unsigned BRest = BMask & ~AMask;
         LiveInterval::SubRange *CommonRange;
         if (BRest != 0) {
@@ -808,13 +809,6 @@ bool RegisterCoalescer::removeCopyByCommutingDef(const CoalescerPair &CP,
       }
       SA.removeValNo(ASubValNo);
     }
-  } else if (IntA.hasSubRanges()) {
-    SlotIndex AIdx = CopyIdx.getRegSlot(true);
-    for (LiveInterval::SubRange &SA : IntA.subranges()) {
-      VNInfo *ASubValNo = SA.getVNInfoAt(AIdx);
-      assert(ASubValNo != nullptr);
-      SA.removeValNo(ASubValNo);
-    }
   }
 
   BValNo->def = AValNo->def;
@@ -822,6 +816,16 @@ bool RegisterCoalescer::removeCopyByCommutingDef(const CoalescerPair &CP,
   DEBUG(dbgs() << "\t\textended: " << IntB << '\n');
 
   IntA.removeValNo(AValNo);
+  // Remove valuenos in subranges (the A+B have subranges case has already been
+  // handled above)
+  if (!IntB.hasSubRanges()) {
+    SlotIndex AIdx = CopyIdx.getRegSlot(true);
+    for (LiveInterval::SubRange &SA : IntA.subranges()) {
+      VNInfo *ASubValNo = SA.getVNInfoAt(AIdx);
+      assert(ASubValNo != nullptr);
+      SA.removeValNo(ASubValNo);
+    }
+  }
   DEBUG(dbgs() << "\t\ttrimmed:  " << IntA << '\n');
   ++numCommutes;
   return true;
