@@ -1,5 +1,5 @@
 ======================
-LLVM 3.5 Release Notes
+LLVM 3.6 Release Notes
 ======================
 
 .. contents::
