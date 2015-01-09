@@ -5483,9 +5483,11 @@ SDValue PPCTargetLowering::LowerFP_TO_INT(SDValue Op, SelectionDAG &DAG,
 // factor (see spliceIntoChain below for this last part).
 bool PPCTargetLowering::canReuseLoadAddress(SDValue Op, EVT MemVT,
                                             ReuseLoadInfo &RLI,
-                                            SelectionDAG &DAG) const {
+                                            SelectionDAG &DAG,
+                                            ISD::LoadExtType ET) const {
   SDLoc dl(Op);
-  if ((Op.getOpcode() == ISD::FP_TO_UINT ||
+  if (ET == ISD::NON_EXTLOAD &&
+      (Op.getOpcode() == ISD::FP_TO_UINT ||
        Op.getOpcode() == ISD::FP_TO_SINT) &&
       isOperationLegalOrCustom(Op.getOpcode(),
                                Op.getOperand(0).getValueType())) {
@@ -5495,7 +5497,8 @@ bool PPCTargetLowering::canReuseLoadAddress(SDValue Op, EVT MemVT,
   }
 
   LoadSDNode *LD = dyn_cast<LoadSDNode>(Op);
-  if (!LD || !ISD::isNON_EXTLoad(LD) || LD->isVolatile() || LD->isNonTemporal())
+  if (!LD || LD->getExtensionType() != ET || LD->isVolatile() ||
+      LD->isNonTemporal())
     return false;
   if (LD->getMemoryVT() != MemVT)
     return false;
@@ -5615,11 +5618,64 @@ SDValue PPCTargetLowering::LowerINT_TO_FP(SDValue Op,
     ReuseLoadInfo RLI;
     SDValue Bits;
 
+    MachineFunction &MF = DAG.getMachineFunction();
     if (canReuseLoadAddress(SINT, MVT::i64, RLI, DAG)) {
       Bits = DAG.getLoad(MVT::f64, dl, RLI.Chain, RLI.Ptr, RLI.MPI, false,
                          false, RLI.IsInvariant, RLI.Alignment, RLI.AAInfo,
                          RLI.Ranges);
       spliceIntoChain(RLI.ResChain, Bits.getValue(1), DAG);
+    } else if (Subtarget.hasLFIWAX() &&
+               canReuseLoadAddress(SINT, MVT::i32, RLI, DAG, ISD::SEXTLOAD)) {
+      MachineMemOperand *MMO =
+        MF.getMachineMemOperand(RLI.MPI, MachineMemOperand::MOLoad, 4,
+                                RLI.Alignment, RLI.AAInfo, RLI.Ranges);
+      SDValue Ops[] = { RLI.Chain, RLI.Ptr };
+      Bits = DAG.getMemIntrinsicNode(PPCISD::LFIWAX, dl,
+                                     DAG.getVTList(MVT::f64, MVT::Other),
+                                     Ops, MVT::i32, MMO);
+      spliceIntoChain(RLI.ResChain, Bits.getValue(1), DAG);
+    } else if (Subtarget.hasFPCVT() &&
+               canReuseLoadAddress(SINT, MVT::i32, RLI, DAG, ISD::ZEXTLOAD)) {
+      MachineMemOperand *MMO =
+        MF.getMachineMemOperand(RLI.MPI, MachineMemOperand::MOLoad, 4,
+                                RLI.Alignment, RLI.AAInfo, RLI.Ranges);
+      SDValue Ops[] = { RLI.Chain, RLI.Ptr };
+      Bits = DAG.getMemIntrinsicNode(PPCISD::LFIWZX, dl,
+                                     DAG.getVTList(MVT::f64, MVT::Other),
+                                     Ops, MVT::i32, MMO);
+      spliceIntoChain(RLI.ResChain, Bits.getValue(1), DAG);
+    } else if (((Subtarget.hasLFIWAX() &&
+                 SINT.getOpcode() == ISD::SIGN_EXTEND) ||
+                (Subtarget.hasFPCVT() &&
+                 SINT.getOpcode() == ISD::ZERO_EXTEND)) &&
+               SINT.getOperand(0).getValueType() == MVT::i32) {
+      MachineFrameInfo *FrameInfo = MF.getFrameInfo();
+      EVT PtrVT = DAG.getTargetLoweringInfo().getPointerTy();
+
+      int FrameIdx = FrameInfo->CreateStackObject(4, 4, false);
+      SDValue FIdx = DAG.getFrameIndex(FrameIdx, PtrVT);
+
+      SDValue Store =
+        DAG.getStore(DAG.getEntryNode(), dl, SINT.getOperand(0), FIdx,
+                     MachinePointerInfo::getFixedStack(FrameIdx),
+                     false, false, 0);
+
+      assert(cast<StoreSDNode>(Store)->getMemoryVT() == MVT::i32 &&
+             "Expected an i32 store");
+
+      RLI.Ptr = FIdx;
+      RLI.Chain = Store;
+      RLI.MPI = MachinePointerInfo::getFixedStack(FrameIdx);
+      RLI.Alignment = 4;
+
+      MachineMemOperand *MMO =
+        MF.getMachineMemOperand(RLI.MPI, MachineMemOperand::MOLoad, 4,
+                                RLI.Alignment, RLI.AAInfo, RLI.Ranges);
+      SDValue Ops[] = { RLI.Chain, RLI.Ptr };
+      Bits = DAG.getMemIntrinsicNode(SINT.getOpcode() == ISD::ZERO_EXTEND ?
+                                     PPCISD::LFIWZX : PPCISD::LFIWAX,
+                                     dl, DAG.getVTList(MVT::f64, MVT::Other),
+                                     Ops, MVT::i32, MMO);
     } else
       Bits = DAG.getNode(ISD::BITCAST, dl, MVT::f64, SINT);
 
