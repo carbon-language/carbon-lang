@@ -12,3 +12,14 @@ void PR21656() {
 
 a = b ? : 0;  // expected-warning {{type specifier missing, defaults to 'int'}} \
               // expected-error {{use of undeclared identifier 'b'}}
+
+struct ContainerStuct {
+  enum { SOME_ENUM }; // expected-note {{'SOME_ENUM' declared here}}
+};
+
+void func(int arg) {
+  switch (arg) {
+  case SOME_ENUM_:
+    ; // expected-error {{use of undeclared identifier 'SOME_ENUM_'; did you mean 'SOME_ENUM'}}
+  }
+}

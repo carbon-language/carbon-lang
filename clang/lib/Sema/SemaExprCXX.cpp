@@ -5991,8 +5991,10 @@ static ExprResult attemptRecovery(Sema &SemaRef,
       if (auto *NNS = TC.getCorrectionSpecifier())
         Record = NNS->getAsType()->getAsCXXRecordDecl();
       if (!Record)
-        Record = cast<CXXRecordDecl>(ND->getDeclContext()->getRedeclContext());
-      R.setNamingClass(Record);
+        Record =
+            dyn_cast<CXXRecordDecl>(ND->getDeclContext()->getRedeclContext());
+      if (Record)
+        R.setNamingClass(Record);
 
       // Detect and handle the case where the decl might be an implicit
       // member.
