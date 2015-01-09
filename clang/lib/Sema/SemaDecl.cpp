@@ -6613,9 +6613,6 @@ static FunctionDecl* CreateNewFunctionDecl(Sema &SemaRef, Declarator &D,
     if (D.isInvalidType())
       NewFD->setInvalidDecl();
 
-    // Set the lexical context.
-    NewFD->setLexicalDeclContext(SemaRef.CurContext);
-
     return NewFD;
   }
 
