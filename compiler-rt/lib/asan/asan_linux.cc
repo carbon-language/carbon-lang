@@ -220,10 +220,6 @@ void GetPcSpBp(void *context, uptr *pc, uptr *sp, uptr *bp) {
 #endif
 }
 
-bool AsanInterceptsSignal(int signum) {
-  return signum == SIGSEGV && common_flags()->handle_segv;
-}
-
 void AsanPlatformThreadInit() {
   // Nothing here for now.
 }

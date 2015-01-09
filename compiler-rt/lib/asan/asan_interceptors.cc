@@ -254,16 +254,14 @@ DEFINE_REAL_PTHREAD_FUNCTIONS;
 
 #if SANITIZER_ANDROID
 INTERCEPTOR(void*, bsd_signal, int signum, void *handler) {
-  if (!AsanInterceptsSignal(signum) ||
-      common_flags()->allow_user_segv_handler) {
+  if (!IsDeadlySignal(signum) || common_flags()->allow_user_segv_handler) {
     return REAL(bsd_signal)(signum, handler);
   }
   return 0;
 }
 #else
 INTERCEPTOR(void*, signal, int signum, void *handler) {
-  if (!AsanInterceptsSignal(signum) ||
-      common_flags()->allow_user_segv_handler) {
+  if (!IsDeadlySignal(signum) || common_flags()->allow_user_segv_handler) {
     return REAL(signal)(signum, handler);
   }
   return 0;
@@ -272,8 +270,7 @@ INTERCEPTOR(void*, signal, int signum, void *handler) {
 
 INTERCEPTOR(int, sigaction, int signum, const struct sigaction *act,
                             struct sigaction *oldact) {
-  if (!AsanInterceptsSignal(signum) ||
-      common_flags()->allow_user_segv_handler) {
+  if (!IsDeadlySignal(signum) || common_flags()->allow_user_segv_handler) {
     return REAL(sigaction)(signum, act, oldact);
   }
   return 0;
