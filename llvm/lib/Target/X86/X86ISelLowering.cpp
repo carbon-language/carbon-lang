@@ -71,6 +71,13 @@ static cl::opt<bool> ExperimentalVectorShuffleLowering(
     cl::desc("Enable an experimental vector shuffle lowering code path."),
     cl::Hidden);
 
+static cl::opt<bool> ExperimentalVectorShuffleLegality(
+    "x86-experimental-vector-shuffle-legality", cl::init(false),
+    cl::desc("Enable experimental shuffle legality based on the experimental "
+             "shuffle lowering. Should only be used with the experimental "
+             "shuffle lowering."),
+    cl::Hidden);
+
 static cl::opt<int> ReciprocalEstimateRefinementSteps(
     "x86-recip-refinement-steps", cl::init(1),
     cl::desc("Specify the number of Newton-Raphson iterations applied to the "
@@ -20148,6 +20155,14 @@ X86TargetLowering::isShuffleMaskLegal(const SmallVectorImpl<int> &M,
   if (VT.getSizeInBits() == 64)
     return false;
 
+  // This is an experimental legality test that is tailored to match the
+  // legality test of the experimental lowering more closely. They are gated
+  // separately to ease testing of performance differences.
+  if (ExperimentalVectorShuffleLegality)
+    // We only care that the types being shuffled are legal. The lowering can
+    // handle any possible shuffle mask that results.
+    return isTypeLegal(SVT);
+
   // If this is a single-input shuffle with no 128 bit lane crossings we can
   // lower it into pshufb.
   if ((SVT.is128BitVector() && Subtarget->hasSSSE3()) ||
@@ -20192,6 +20207,14 @@ X86TargetLowering::isVectorClearMaskLegal(const SmallVectorImpl<int> &Mask,
     return false;
 
   MVT SVT = VT.getSimpleVT();
+
+  // This is an experimental legality test that is tailored to match the
+  // legality test of the experimental lowering more closely. They are gated
+  // separately to ease testing of performance differences.
+  if (ExperimentalVectorShuffleLegality)
+    // The new vector shuffle lowering is very good at managing zero-inputs.
+    return isShuffleMaskLegal(Mask, VT);
+
   unsigned NumElts = SVT.getVectorNumElements();
   // FIXME: This collection of masks seems suspect.
   if (NumElts == 2)
