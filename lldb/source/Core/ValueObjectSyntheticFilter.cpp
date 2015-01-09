@@ -182,8 +182,8 @@ ValueObjectSynthetic::UpdateValue ()
     if (m_synth_filter_ap->Update() == false)
     {
         // filter said that cached values are stale
-        m_children_byindex.clear();
-        m_name_toindex.clear();
+        m_children_byindex.Clear();
+        m_name_toindex.Clear();
         // usually, an object's value can change but this does not alter its children count
         // for a synthetic VO that might indeed happen, so we need to tell the upper echelons
         // that they need to come back to us asking for children
@@ -216,23 +216,22 @@ ValueObjectSynthetic::GetChildAtIndex (size_t idx, bool can_create)
 {
     UpdateValueIfNeeded();
     
-    ByIndexIterator iter = m_children_byindex.find(idx);
-    
-    if (iter == m_children_byindex.end())
+    ValueObject *valobj;
+    if (m_children_byindex.GetValueForKey(idx, valobj) == false)
     {
         if (can_create && m_synth_filter_ap.get() != NULL)
         {
             lldb::ValueObjectSP synth_guy = m_synth_filter_ap->GetChildAtIndex (idx);
             if (!synth_guy)
                 return synth_guy;
-            m_children_byindex[idx]= synth_guy.get();
+            m_children_byindex.SetValueForKey(idx, synth_guy.get());
             return synth_guy;
         }
         else
             return lldb::ValueObjectSP();
     }
     else
-        return iter->second->GetSP();
+        return valobj->GetSP();
 }
 
 lldb::ValueObjectSP
@@ -253,20 +252,21 @@ ValueObjectSynthetic::GetIndexOfChildWithName (const ConstString &name)
 {
     UpdateValueIfNeeded();
     
-    NameToIndexIterator iter = m_name_toindex.find(name.GetCString());
+    uint32_t found_index = UINT32_MAX;
+    bool did_find = m_name_toindex.GetValueForKey(name.GetCString(), found_index);
     
-    if (iter == m_name_toindex.end() && m_synth_filter_ap.get() != NULL)
+    if (!did_find && m_synth_filter_ap.get() != NULL)
     {
         uint32_t index = m_synth_filter_ap->GetIndexOfChildWithName (name);
         if (index == UINT32_MAX)
             return index;
-        m_name_toindex[name.GetCString()] = index;
+        m_name_toindex.SetValueForKey(name.GetCString(), index);
         return index;
     }
-    else if (iter == m_name_toindex.end() && m_synth_filter_ap.get() == NULL)
+    else if (!did_find && m_synth_filter_ap.get() == NULL)
         return UINT32_MAX;
     else /*if (iter != m_name_toindex.end())*/
-        return iter->second;
+        return found_index;
 }
 
 bool

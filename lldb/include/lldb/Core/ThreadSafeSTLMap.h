@@ -16,6 +16,7 @@
 
 // Other libraries and framework includes
 // Project includes
+#include "lldb/lldb-defines.h"
 #include "lldb/Host/Mutex.h"
 
 namespace lldb_private {
