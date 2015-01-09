@@ -2,7 +2,6 @@ import lldb
 from lldbtest import *
 import lldbutil
 import os
-import new
 import unittest2
 import sys
 
@@ -72,7 +71,10 @@ class InlineTest(TestBase):
     def getRerunArgs(self):
         # The -N option says to NOT run a if it matches the option argument, so
         # if we are using dSYM we say to NOT run dwarf (-N dwarf) and vice versa.
-        if self.using_dsym:
+        if self.using_dsym is None:
+            # The test was skipped altogether.
+            return ""
+        elif self.using_dsym:
             return "-N dwarf %s" % (self.mydir)
         else:
             return "-N dsym %s" % (self.mydir)
@@ -179,7 +181,7 @@ def MakeInlineTest(__file, __globals, decorators=None):
 
     test_name, _ = os.path.splitext(file_basename)
     # Build the test case 
-    test = new.classobj(test_name, (InlineTest,), {})
+    test = type(test_name, (InlineTest,), {'using_dsym': None})
     test.name = test_name
 
     test.test_with_dsym = ApplyDecoratorsToFunction(test._InlineTest__test_with_dsym, decorators)
