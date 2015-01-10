@@ -444,19 +444,23 @@ ScriptInterpreterPython::EnterSession (uint16_t on_entry_flags,
         if (in == nullptr || out == nullptr || err == nullptr)
             m_interpreter.GetDebugger().AdoptTopIOHandlerFilesIfInvalid (in_sp, out_sp, err_sp);
 
-        if (in == nullptr && in_sp && (on_entry_flags & Locker::NoSTDIN) == 0)
-            in = in_sp->GetFile().GetStream();
-        if (in)
-        {
-            m_saved_stdin.Reset(sys_module_dict.GetItemForKey("stdin"));
+        m_saved_stdin.Reset();
 
-            PyObject *new_file = PyFile_FromFile (in, (char *) "", (char *) "r", nullptr);
-            sys_module_dict.SetItemForKey ("stdin", new_file);
-            Py_DECREF (new_file);
+        if ((on_entry_flags & Locker::NoSTDIN) == 0)
+        {
+            // STDIN is enabled
+            if (in == nullptr && in_sp)
+                in = in_sp->GetFile().GetStream();
+            if (in)
+            {
+                m_saved_stdin.Reset(sys_module_dict.GetItemForKey("stdin"));
+                // This call can deadlock your process if the file is locked
+                PyObject *new_file = PyFile_FromFile (in, (char *) "", (char *) "r", nullptr);
+                sys_module_dict.SetItemForKey ("stdin", new_file);
+                Py_DECREF (new_file);
+            }
         }
-        else
-            m_saved_stdin.Reset();
-        
+
         if (out == nullptr && out_sp)
             out = out_sp->GetFile().GetStream();
         if (out)
@@ -648,7 +652,8 @@ ScriptInterpreterPython::ExecuteOneLine (const char *command, CommandReturnObjec
         Locker locker(this,
                       ScriptInterpreterPython::Locker::AcquireLock |
                       ScriptInterpreterPython::Locker::InitSession |
-                      (options.GetSetLLDBGlobals() ? ScriptInterpreterPython::Locker::InitGlobals : 0),
+                      (options.GetSetLLDBGlobals() ? ScriptInterpreterPython::Locker::InitGlobals : 0) |
+                      ((result && result->GetInteractive()) ? 0: Locker::NoSTDIN),
                       ScriptInterpreterPython::Locker::FreeAcquiredLock |
                       ScriptInterpreterPython::Locker::TearDownSession,
                       in_file,
