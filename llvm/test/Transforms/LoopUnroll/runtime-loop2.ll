@@ -1,4 +1,4 @@
-; RUN: opt < %s -S -loop-unroll -unroll-threshold=50 -unroll-runtime -unroll-count=8 | FileCheck %s
+; RUN: opt < %s -S -loop-unroll -unroll-threshold=25 -unroll-runtime -unroll-count=8 | FileCheck %s
 
 ; Choose a smaller, power-of-two, unroll count if the loop is too large.
 ; This test makes sure we're not unrolling 'odd' counts
