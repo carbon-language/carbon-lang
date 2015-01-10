@@ -24,6 +24,13 @@
 #==============================================================================#
 # Explicit files to ignore (only matches one).
 #==============================================================================#
+# Various tag programs
+/tags
+/TAGS
+/GPATH
+/GRTAGS
+/GSYMS
+/GTAGS
 .gitusers
 autom4te.cache
 cscope.files
