@@ -5,12 +5,27 @@
 
 	.syntax unified
 
+	.section .text.r_arm_abs8
+
 	.byte abs8_0 -128
 	.byte abs8_1 +255
 
 @ CHECK: Relocations {
-@ CHECK:   Section (2) .rel.text {
+@ CHECK:   Section {{.*}} .rel.text.r_arm_abs8 {
 @ CHECK:     0x0 R_ARM_ABS8 abs8_0 0x0
 @ CHECK:     0x1 R_ARM_ABS8 abs8_1 0x0
 @ CHECK:   }
 @ CHECK: }
+
+	.section .text.r_arm_abs16
+
+	.short abs16_0 -32768
+	.short abs16_1 +65535
+
+@ CHECK: Relocations {
+@ CHECK:   Section {{.*}} .rel.text.r_arm_abs16 {
+@ CHECK:     0x0 R_ARM_ABS16 abs16_0 0x0
+@ CHECK:     0x2 R_ARM_ABS16 abs16_1 0x0
+@ CHECK:   }
+@ CHECK: }
+
