@@ -5497,17 +5497,17 @@ static void performLifetimeExtension(Expr *Init,
 static bool
 performReferenceExtension(Expr *Init,
                           const InitializedEntity *ExtendingEntity) {
-  if (InitListExpr *ILE = dyn_cast<InitListExpr>(Init)) {
-    if (ILE->getNumInits() == 1 && ILE->isGLValue()) {
-      // This is just redundant braces around an initializer. Step over it.
-      Init = ILE->getInit(0);
-    }
-  }
-
   // Walk past any constructs which we can lifetime-extend across.
   Expr *Old;
   do {
     Old = Init;
+
+    if (InitListExpr *ILE = dyn_cast<InitListExpr>(Init)) {
+      if (ILE->getNumInits() == 1 && ILE->isGLValue()) {
+        // This is just redundant braces around an initializer. Step over it.
+        Init = ILE->getInit(0);
+      }
+    }
 
     // Step over any subobject adjustments; we may have a materialized
     // temporary inside them.

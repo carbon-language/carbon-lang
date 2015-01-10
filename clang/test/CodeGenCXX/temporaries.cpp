@@ -42,6 +42,13 @@ namespace PR20227 {
   // CHECK: @_ZGRN7PR202271cE_ = private global
 }
 
+namespace BraceInit {
+  typedef const int &CIR;
+  CIR x = CIR{3};
+  // CHECK: @_ZGRN9BraceInit1xE_ = private constant i32 3
+  // CHECK: @_ZN9BraceInit1xE = constant i32* @_ZGRN9BraceInit1xE_
+}
+
 struct A {
   A();
   ~A();
