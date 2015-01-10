@@ -120,6 +120,24 @@ inline _LIBCPP_INLINE_VISIBILITY int __libcpp_putc(int __c, FILE* __stream) {ret
 inline _LIBCPP_INLINE_VISIBILITY int putc(int __c, FILE* __stream) {return __libcpp_putc(__c, __stream);}
 #endif  // putc
 
+#ifdef clearerr
+inline _LIBCPP_INLINE_VISIBILITY void __libcpp_clearerr(FILE* __stream) { return clearerr(__stream); }
+#undef clearerr
+inline _LIBCPP_INLINE_VISIBILITY void clearerr(FILE* __stream) { return __libcpp_clearerr(__stream); }
+#endif  // clearerr
+
+#ifdef feof
+inline _LIBCPP_INLINE_VISIBILITY int __libcpp_feof(FILE* __stream) { return feof(__stream); }
+#undef feof
+inline _LIBCPP_INLINE_VISIBILITY int feof(FILE* __stream) { return __libcpp_feof(__stream); }
+#endif  // feof
+
+#ifdef ferror
+inline _LIBCPP_INLINE_VISIBILITY int __libcpp_ferror(FILE* __stream) { return ferror(__stream); }
+#undef ferror
+inline _LIBCPP_INLINE_VISIBILITY int ferror(FILE* __stream) { return __libcpp_ferror(__stream); }
+#endif  // ferror
+
 _LIBCPP_BEGIN_NAMESPACE_STD
 
 using ::FILE;
