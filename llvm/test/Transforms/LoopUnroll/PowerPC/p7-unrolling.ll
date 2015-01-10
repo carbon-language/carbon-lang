@@ -22,7 +22,31 @@ exit:
 ; CHECK-NEXT: add
 ; CHECK-NEXT: add
 ; CHECK-NEXT: add
-; CHECK: icmp
+; CHECK-NEXT: add
+; CHECK-NEXT: add
+; CHECK-NEXT: add
+; CHECK-NEXT: add
+; CHECK-NEXT: add
+; CHECK-NEXT: add
+; CHECK-NEXT: add
+; CHECK-NEXT: add
+; CHECK-NEXT: add
+; CHECK-NEXT: add
+; CHECK-NEXT: add
+; CHECK-NEXT: add
+; CHECK-NEXT: add
+; CHECK-NEXT: add
+; CHECK-NEXT: add
+; CHECK-NEXT: add
+; CHECK-NEXT: add
+; CHECK-NEXT: add
+; CHECK-NEXT: add
+; CHECK-NEXT: add
+; CHECK-NEXT: add
+; CHECK-NEXT: add
+; CHECK-NEXT: add
+; CHECK-NEXT: add
+; CHECK-NEXT: icmp
 
 define void @unroll_default() nounwind {
 entry:
@@ -47,5 +71,29 @@ exit:
 ; CHECK-NEXT: add
 ; CHECK-NEXT: add
 ; CHECK-NEXT: add
-; CHECK: icmp
+; CHECK-NEXT: add
+; CHECK-NEXT: add
+; CHECK-NEXT: add
+; CHECK-NEXT: add
+; CHECK-NEXT: add
+; CHECK-NEXT: add
+; CHECK-NEXT: add
+; CHECK-NEXT: add
+; CHECK-NEXT: add
+; CHECK-NEXT: add
+; CHECK-NEXT: add
+; CHECK-NEXT: add
+; CHECK-NEXT: add
+; CHECK-NEXT: add
+; CHECK-NEXT: add
+; CHECK-NEXT: add
+; CHECK-NEXT: add
+; CHECK-NEXT: add
+; CHECK-NEXT: add
+; CHECK-NEXT: add
+; CHECK-NEXT: add
+; CHECK-NEXT: add
+; CHECK-NEXT: add
+; CHECK-NEXT: add
+; CHECK-NEXT: icmp
 
