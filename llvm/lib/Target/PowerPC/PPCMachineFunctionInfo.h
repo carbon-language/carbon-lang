@@ -35,6 +35,9 @@ class PPCFunctionInfo : public MachineFunctionInfo {
   /// Frame index where the old base pointer is stored.
   int BasePointerSaveIndex;
 
+  /// Frame index where the old PIC base pointer is stored.
+  int PICBasePointerSaveIndex;
+
   /// MustSaveLR - Indicates whether LR is defined (or clobbered) in the current
   /// function.  This is only valid after the initial scan of the function by
   /// PEI.
@@ -103,6 +106,7 @@ public:
     : FramePointerSaveIndex(0),
       ReturnAddrSaveIndex(0),
       BasePointerSaveIndex(0),
+      PICBasePointerSaveIndex(0),
       HasSpills(false),
       HasNonRISpills(false),
       SpillsCR(false),
@@ -127,6 +131,9 @@ public:
 
   int getBasePointerSaveIndex() const { return BasePointerSaveIndex; }
   void setBasePointerSaveIndex(int Idx) { BasePointerSaveIndex = Idx; }
+
+  int getPICBasePointerSaveIndex() const { return PICBasePointerSaveIndex; }
+  void setPICBasePointerSaveIndex(int Idx) { PICBasePointerSaveIndex = Idx; }
 
   unsigned getMinReservedArea() const { return MinReservedArea; }
   void setMinReservedArea(unsigned size) { MinReservedArea = size; }

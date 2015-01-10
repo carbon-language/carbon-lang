@@ -1,9 +1,12 @@
 ; RUN: llc < %s -mtriple=powerpc-unknown-linux-gnu -relocation-model=pic | FileCheck -check-prefix=LARGE-BSS %s
 @bar = common global i32 0, align 4
 
+declare i32 @call_foo(i32, ...)
+
 define i32 @foo() {
 entry:
   %0 = load i32* @bar, align 4
+  %call = call i32 (i32, ...)* @call_foo(i32 %0, i32 0, i32 1, i32 2, i32 4, i32 8, i32 16, i32 32, i32 64)
   ret i32 %0
 }
 
@@ -18,8 +21,9 @@ entry:
 ; LARGE-BSS:         mflr 30
 ; LARGE-BSS:         lwz [[REG:[0-9]+]], [[POFF]]-[[PB]](30)
 ; LARGE-BSS-NEXT:    add 30, [[REG]], 30
-; LARGE-BSS:         lwz [[VREG:[0-9]+]], [[VREF:\.LC[0-9]+]]-.LTOC(30)
+; LARGE-BSS-DAG:     lwz [[VREG:[0-9]+]], [[VREF:\.LC[0-9]+]]-.LTOC(30)
 ; LARGE-BSS-DAG:     lwz {{[0-9]+}}, 0([[VREG]])
-; LARGE-BSS-DAG:     lwz 30, -8(1)
+; LARGE-BSS-DAG:     stw {{[0-9]+}}, 8(1)
+; LARGE-BSS:         lwz 30, -8(1)
 ; LARGE-BSS:       [[VREF]]:
 ; LARGE-BSS-NEXT:    .long bar
