@@ -141,8 +141,8 @@ CheckConvertUTF8ToUnicodeScalars(ConvertUTFResultContainer Expected,
   if (!Partial)
     std::tie(ErrorCode, Decoded) = ConvertUTF8ToUnicodeScalarsLenient(S);
   else
-
     std::tie(ErrorCode, Decoded) = ConvertUTF8ToUnicodeScalarsPartialLenient(S);
+
   if (Expected.ErrorCode != ErrorCode)
     return ::testing::AssertionFailure() << "Expected error code "
                                          << Expected.ErrorCode << ", actual "
