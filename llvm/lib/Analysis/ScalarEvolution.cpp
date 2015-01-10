@@ -1737,6 +1737,36 @@ namespace {
   };
 }
 
+// We're trying to construct a SCEV of type `Type' with `Ops' as operands and
+// `OldFlags' as can't-wrap behavior.  Infer a more aggressive set of
+// can't-overflow flags for the operation if possible.
+static SCEV::NoWrapFlags
+StrengthenNoWrapFlags(ScalarEvolution *SE, SCEVTypes Type,
+                      const SmallVectorImpl<const SCEV *> &Ops,
+                      SCEV::NoWrapFlags OldFlags) {
+  using namespace std::placeholders;
+
+  bool CanAnalyze =
+      Type == scAddExpr || Type == scAddRecExpr || Type == scMulExpr;
+  (void)CanAnalyze;
+  assert(CanAnalyze && "don't call from other places!");
+
+  int SignOrUnsignMask = SCEV::FlagNUW | SCEV::FlagNSW;
+  SCEV::NoWrapFlags SignOrUnsignWrap =
+      ScalarEvolution::maskFlags(OldFlags, SignOrUnsignMask);
+
+  // If FlagNSW is true and all the operands are non-negative, infer FlagNUW.
+  auto IsKnownNonNegative =
+    std::bind(std::mem_fn(&ScalarEvolution::isKnownNonNegative), SE, _1);
+
+  if (SignOrUnsignWrap == SCEV::FlagNSW &&
+      std::all_of(Ops.begin(), Ops.end(), IsKnownNonNegative))
+    return ScalarEvolution::setFlags(OldFlags,
+                                     (SCEV::NoWrapFlags)SignOrUnsignMask);
+
+  return OldFlags;
+}
+
 /// getAddExpr - Get a canonical add expression, or something simpler if
 /// possible.
 const SCEV *ScalarEvolution::getAddExpr(SmallVectorImpl<const SCEV *> &Ops,
@@ -1752,20 +1782,7 @@ const SCEV *ScalarEvolution::getAddExpr(SmallVectorImpl<const SCEV *> &Ops,
            "SCEVAddExpr operand types don't match!");
 #endif
 
-  // If FlagNSW is true and all the operands are non-negative, infer FlagNUW.
-  // And vice-versa.
-  int SignOrUnsignMask = SCEV::FlagNUW | SCEV::FlagNSW;
-  SCEV::NoWrapFlags SignOrUnsignWrap = maskFlags(Flags, SignOrUnsignMask);
-  if (SignOrUnsignWrap && (SignOrUnsignWrap != SignOrUnsignMask)) {
-    bool All = true;
-    for (SmallVectorImpl<const SCEV *>::const_iterator I = Ops.begin(),
-         E = Ops.end(); I != E; ++I)
-      if (!isKnownNonNegative(*I)) {
-        All = false;
-        break;
-      }
-    if (All) Flags = setFlags(Flags, (SCEV::NoWrapFlags)SignOrUnsignMask);
-  }
+  Flags = StrengthenNoWrapFlags(this, scAddExpr, Ops, Flags);
 
   // Sort by complexity, this groups all similar expression types together.
   GroupByComplexity(Ops, LI);
@@ -2174,20 +2191,7 @@ const SCEV *ScalarEvolution::getMulExpr(SmallVectorImpl<const SCEV *> &Ops,
            "SCEVMulExpr operand types don't match!");
 #endif
 
-  // If FlagNSW is true and all the operands are non-negative, infer FlagNUW.
-  // And vice-versa.
-  int SignOrUnsignMask = SCEV::FlagNUW | SCEV::FlagNSW;
-  SCEV::NoWrapFlags SignOrUnsignWrap = maskFlags(Flags, SignOrUnsignMask);
-  if (SignOrUnsignWrap && (SignOrUnsignWrap != SignOrUnsignMask)) {
-    bool All = true;
-    for (SmallVectorImpl<const SCEV *>::const_iterator I = Ops.begin(),
-         E = Ops.end(); I != E; ++I)
-      if (!isKnownNonNegative(*I)) {
-        All = false;
-        break;
-      }
-    if (All) Flags = setFlags(Flags, (SCEV::NoWrapFlags)SignOrUnsignMask);
-  }
+  Flags = StrengthenNoWrapFlags(this, scMulExpr, Ops, Flags);
 
   // Sort by complexity, this groups all similar expression types together.
   GroupByComplexity(Ops, LI);
@@ -2653,20 +2657,7 @@ ScalarEvolution::getAddRecExpr(SmallVectorImpl<const SCEV *> &Operands,
   // meaningful BE count at this point (and if we don't, we'd be stuck
   // with a SCEVCouldNotCompute as the cached BE count).
 
-  // If FlagNSW is true and all the operands are non-negative, infer FlagNUW.
-  // And vice-versa.
-  int SignOrUnsignMask = SCEV::FlagNUW | SCEV::FlagNSW;
-  SCEV::NoWrapFlags SignOrUnsignWrap = maskFlags(Flags, SignOrUnsignMask);
-  if (SignOrUnsignWrap && (SignOrUnsignWrap != SignOrUnsignMask)) {
-    bool All = true;
-    for (SmallVectorImpl<const SCEV *>::const_iterator I = Operands.begin(),
-         E = Operands.end(); I != E; ++I)
-      if (!isKnownNonNegative(*I)) {
-        All = false;
-        break;
-      }
-    if (All) Flags = setFlags(Flags, (SCEV::NoWrapFlags)SignOrUnsignMask);
-  }
+  Flags = StrengthenNoWrapFlags(this, scAddRecExpr, Operands, Flags);
 
   // Canonicalize nested AddRecs in by nesting them in order of loop depth.
   if (const SCEVAddRecExpr *NestedAR = dyn_cast<SCEVAddRecExpr>(Operands[0])) {
