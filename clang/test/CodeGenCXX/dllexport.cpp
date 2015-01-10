@@ -615,6 +615,21 @@ NonExportedBaseClass::~NonExportedBaseClass() {}
 struct __declspec(dllexport) ExportedDerivedClass : NonExportedBaseClass {};
 // M32-DAG: weak_odr dllexport x86_thiscallcc void @"\01??1ExportedDerivedClass@@UAE@XZ"
 
+// Do not assert about generating code for constexpr functions twice during explicit instantiation (PR21718).
+template <typename T> struct ExplicitInstConstexprMembers {
+  // Copy assignment operator
+  // M32-DAG: define weak_odr dllexport x86_thiscallcc dereferenceable(1) %struct.ExplicitInstConstexprMembers* @"\01??4?$ExplicitInstConstexprMembers@X@@QAEAAU0@ABU0@@Z"
+
+  constexpr ExplicitInstConstexprMembers() {}
+  // M32-DAG: define weak_odr dllexport x86_thiscallcc %struct.ExplicitInstConstexprMembers* @"\01??0?$ExplicitInstConstexprMembers@X@@QAE@XZ"
+
+  ExplicitInstConstexprMembers(const ExplicitInstConstexprMembers&) = default;
+  // M32-DAG: define weak_odr dllexport x86_thiscallcc %struct.ExplicitInstConstexprMembers* @"\01??0?$ExplicitInstConstexprMembers@X@@QAE@ABU0@@Z"
+
+  constexpr int f() const { return 42; }
+  // M32-DAG: define weak_odr dllexport x86_thiscallcc i32 @"\01?f@?$ExplicitInstConstexprMembers@X@@QBEHXZ"
+};
+template struct __declspec(dllexport) ExplicitInstConstexprMembers<void>;
 
 //===----------------------------------------------------------------------===//
 // Classes with template base classes

@@ -90,6 +90,19 @@ namespace LateInstantiation {
   // CHECK-OPT: define available_externally i32 @_ZN17LateInstantiation1fIiEEiv(
 }
 
+namespace PR21718 {
+// The linkage of a used constexpr member function can change from linkonce_odr
+// to weak_odr after explicit instantiation without errors about defining the
+// same function twice.
+template <typename T>
+struct S {
+// CHECK-LABEL: define weak_odr i32 @_ZN7PR217181SIiE1fEv
+  __attribute__((used)) constexpr int f() { return 0; }
+};
+int g() { return S<int>().f(); }
+template struct S<int>;
+}
+
 // Check that we emit definitions from explicit instantiations even when they
 // occur prior to the definition itself.
 template <typename T> struct S {
