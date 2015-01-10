@@ -54,7 +54,7 @@ class AssertingInferiorTestCase(TestBase):
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @unittest2.expectedFailure("rdar://15367233")
-    def test_inferior_asserting_expr(self):
+    def test_inferior_asserting_expr_dsym(self):
         """Test that the lldb expression interpreter can read from the inferior after asserting (command)."""
         self.buildDsym()
         self.inferior_asserting_expr()
@@ -62,14 +62,14 @@ class AssertingInferiorTestCase(TestBase):
     @expectedFailurei386('llvm.org/pr17384: lldb needs to be aware of linux-vdso.so to unwind stacks properly')
     @unittest2.expectedFailure("rdar://15367233")
     @expectedFailureWindows("llvm.org/pr21793: need to implement support for detecting assertion / abort on Windows")
-    def test_inferior_asserting_expr(self):
+    def test_inferior_asserting_expr_dwarf(self):
         """Test that the lldb expression interpreter can read from the inferior after asserting (command)."""
         self.buildDwarf()
         self.inferior_asserting_expr()
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @unittest2.expectedFailure("rdar://15367233")
-    def test_inferior_asserting_step(self):
+    def test_inferior_asserting_step_dsym(self):
         """Test that lldb functions correctly after stepping through a call to assert()."""
         self.buildDsym()
         self.inferior_asserting_step()
@@ -77,7 +77,7 @@ class AssertingInferiorTestCase(TestBase):
     @expectedFailurei386("llvm.org/pr17384: lldb needs to be aware of linux-vdso.so to unwind stacks properly")
     @expectedFailureDarwin("rdar://15367233")
     @expectedFailureWindows("llvm.org/pr21793: need to implement support for detecting assertion / abort on Windows")
-    def test_inferior_asserting_step(self):
+    def test_inferior_asserting_step_dwarf(self):
         """Test that lldb functions correctly after stepping through a call to assert()."""
         self.buildDwarf()
         self.inferior_asserting_step()
