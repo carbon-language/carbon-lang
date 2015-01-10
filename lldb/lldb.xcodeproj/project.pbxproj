@@ -745,6 +745,7 @@
 		AF1729D7182C907200E0AB97 /* HistoryUnwind.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF1729D5182C907200E0AB97 /* HistoryUnwind.cpp */; };
 		AF1F7B07189C904B0087DB9C /* AppleGetPendingItemsHandler.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF1F7B05189C904B0087DB9C /* AppleGetPendingItemsHandler.cpp */; };
 		AF1F7B08189C904B0087DB9C /* AppleGetPendingItemsHandler.h in Headers */ = {isa = PBXBuildFile; fileRef = AF1F7B06189C904B0087DB9C /* AppleGetPendingItemsHandler.h */; };
+		AF1FA88A1A60A69500272AFC /* RegisterNumber.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF1FA8891A60A69500272AFC /* RegisterNumber.cpp */; };
 		AF23B4DB19009C66003E2A58 /* FreeBSDSignals.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF23B4D919009C66003E2A58 /* FreeBSDSignals.cpp */; };
 		AF254E31170CCC33007AE5C9 /* PlatformDarwinKernel.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF254E2F170CCC33007AE5C9 /* PlatformDarwinKernel.cpp */; };
 		AF254E32170CCC33007AE5C9 /* PlatformDarwinKernel.h in Headers */ = {isa = PBXBuildFile; fileRef = AF254E30170CCC33007AE5C9 /* PlatformDarwinKernel.h */; };
@@ -2200,6 +2201,7 @@
 		AF1729D5182C907200E0AB97 /* HistoryUnwind.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = HistoryUnwind.cpp; path = Utility/HistoryUnwind.cpp; sourceTree = "<group>"; };
 		AF1F7B05189C904B0087DB9C /* AppleGetPendingItemsHandler.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = AppleGetPendingItemsHandler.cpp; sourceTree = "<group>"; };
 		AF1F7B06189C904B0087DB9C /* AppleGetPendingItemsHandler.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AppleGetPendingItemsHandler.h; sourceTree = "<group>"; };
+		AF1FA8891A60A69500272AFC /* RegisterNumber.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = RegisterNumber.cpp; path = source/Utility/RegisterNumber.cpp; sourceTree = "<group>"; };
 		AF23B4D919009C66003E2A58 /* FreeBSDSignals.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = FreeBSDSignals.cpp; path = Utility/FreeBSDSignals.cpp; sourceTree = "<group>"; };
 		AF23B4DA19009C66003E2A58 /* FreeBSDSignals.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = FreeBSDSignals.h; path = Utility/FreeBSDSignals.h; sourceTree = "<group>"; };
 		AF254E2F170CCC33007AE5C9 /* PlatformDarwinKernel.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PlatformDarwinKernel.cpp; sourceTree = "<group>"; };
@@ -3069,6 +3071,7 @@
 				94EBAC8313D9EE26009BA64E /* PythonPointer.h */,
 				94BA8B6E176F8CA0005A91B5 /* Range.h */,
 				94BA8B6C176F8C9B005A91B5 /* Range.cpp */,
+				AF1FA8891A60A69500272AFC /* RegisterNumber.cpp */,
 				B2462249141AE62200F3D409 /* Utils.h */,
 			);
 			name = Utility;
@@ -5568,6 +5571,7 @@
 				94F48F251A01C687005C0EC6 /* StringPrinter.cpp in Sources */,
 				94094C6B163B6F840083A547 /* ValueObjectCast.cpp in Sources */,
 				AF9107EF168570D200DBCD3C /* RegisterContextDarwin_arm64.cpp in Sources */,
+				AF1FA88A1A60A69500272AFC /* RegisterNumber.cpp in Sources */,
 				94CB255B16B069770059775D /* CXXFormatterFunctions.cpp in Sources */,
 				94CB255C16B069770059775D /* DataVisualization.cpp in Sources */,
 				94CD705016F8DF1C00CF1E42 /* LibCxxList.cpp in Sources */,

@@ -23,6 +23,7 @@
 #include "lldb/Target/Thread.h"
 #include "lldb/Target/Target.h"
 #include "lldb/Target/UnwindAssembly.h"
+#include "lldb/Utility/RegisterNumber.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -955,7 +956,9 @@ AssemblyParse_x86::augment_unwind_plan_from_call_site (AddressRange& func, Unwin
         // If we already have one row for this instruction, we can continue.
         while (row_id < unwind_plan.GetRowCount()
                && unwind_plan.GetRowAtIndex (row_id)->GetOffset() <= offset)
+        {
             row_id++;
+        }
         UnwindPlan::RowSP original_row = unwind_plan.GetRowAtIndex (row_id - 1);
         if (original_row->GetOffset() == offset)
         {
@@ -1262,9 +1265,71 @@ UnwindAssembly_x86::GetNonCallSiteUnwindPlanFromAssembly (AddressRange& func, Th
 bool
 UnwindAssembly_x86::AugmentUnwindPlanFromCallSite (AddressRange& func, Thread& thread, UnwindPlan& unwind_plan)
 {
-    ExecutionContext exe_ctx (thread.shared_from_this());
-    AssemblyParse_x86 asm_parse(exe_ctx, m_cpu, m_arch, func);
-    return asm_parse.augment_unwind_plan_from_call_site (func, unwind_plan);
+    bool do_augment_unwindplan = true;
+
+    UnwindPlan::RowSP first_row = unwind_plan.GetRowForFunctionOffset (0);
+    UnwindPlan::RowSP last_row = unwind_plan.GetRowForFunctionOffset (-1);
+    
+    // If the UnwindPlan correctly describes the prologue and the epilogue, then
+    // we shouldn't do any augmentation (and risk messing up correct unwind instructions)
+
+    // See if the first row (which should be the register state on function entry)
+    // and the last row (which should be the register state on function exit) match.
+
+    if (first_row != last_row && first_row->GetOffset() != last_row->GetOffset())
+    {
+        RegisterNumber sp_regnum (thread, eRegisterKindGeneric, LLDB_REGNUM_GENERIC_SP);
+
+        // The first & last row have the same CFA register
+        // and the same CFA offset value
+        // and the CFA register is esp/rsp (the stack pointer).
+
+        // We're checking that both of them have an unwind rule like "CFA=esp+4" or CFA+rsp+8".
+
+        if (first_row->GetCFAType() == last_row->GetCFAType()
+            && first_row->GetCFAType() == UnwindPlan::Row::CFAType::CFAIsRegisterPlusOffset
+            && first_row->GetCFARegister() == last_row->GetCFARegister()
+            && first_row->GetCFAOffset() == last_row->GetCFAOffset()
+            && RegisterNumber (thread, unwind_plan.GetRegisterKind(), first_row->GetCFARegister()) == sp_regnum)
+        {
+            RegisterNumber pc_regnum (thread, eRegisterKindGeneric, LLDB_REGNUM_GENERIC_PC);
+
+            // Get the register locations for eip/rip from the first & last rows.
+            // Are they both CFA plus an offset?  Is it the same offset?
+
+            UnwindPlan::Row::RegisterLocation first_row_pc_loc;
+            UnwindPlan::Row::RegisterLocation last_row_pc_loc;
+            if (first_row->GetRegisterInfo (pc_regnum.GetAsKind (unwind_plan.GetRegisterKind()), first_row_pc_loc)
+                && last_row->GetRegisterInfo (pc_regnum.GetAsKind (unwind_plan.GetRegisterKind()), last_row_pc_loc))
+            {
+                if (first_row_pc_loc.IsAtCFAPlusOffset() 
+                    && last_row_pc_loc.IsAtCFAPlusOffset()
+                    && first_row_pc_loc.GetOffset() == last_row_pc_loc.GetOffset())
+                {
+            
+                    // One last sanity check:  Is the unwind rule for getting the caller pc value
+                    // "deref the CFA-4" or "deref the CFA-8"? 
+
+                    // If so, we have an UnwindPlan that already describes the epilogue and we don't need
+                    // to modify it at all.
+
+                    if (first_row_pc_loc.GetOffset() == -4 || first_row_pc_loc.GetOffset() == -8)
+                    {
+                        do_augment_unwindplan = false;
+                    }
+                }
+            }
+        }
+    }
+
+    if (do_augment_unwindplan)
+    {
+        ExecutionContext exe_ctx (thread.shared_from_this());
+        AssemblyParse_x86 asm_parse(exe_ctx, m_cpu, m_arch, func);
+        return asm_parse.augment_unwind_plan_from_call_site (func, unwind_plan);
+    }
+    
+    return false;
 }
 
 bool
