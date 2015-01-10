@@ -19,6 +19,8 @@
 #include "llvm/CodeGen/Analysis.h"
 #include "llvm/CodeGen/CommandFlags.h"
 #include "llvm/IR/Constants.h"
+#include "llvm/IR/DiagnosticInfo.h"
+#include "llvm/IR/DiagnosticPrinter.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/Verifier.h"
@@ -269,6 +271,23 @@ static bool shouldSkip(uint32_t Symflags) {
   return false;
 }
 
+static void diagnosticHandler(const DiagnosticInfo &DI, void *Context) {
+  assert(DI.getSeverity() == DS_Error && "Only expecting errors");
+  const auto &BDI = cast<BitcodeDiagnosticInfo>(DI);
+  std::error_code EC = BDI.getError();
+  if (EC == BitcodeError::InvalidBitcodeSignature)
+    return;
+
+  std::string ErrStorage;
+  {
+    raw_string_ostream OS(ErrStorage);
+    DiagnosticPrinterRawOStream DP(OS);
+    DI.print(DP);
+  }
+  message(LDPL_FATAL, "LLVM gold plugin has failed to create LTO module: %s",
+          ErrStorage.c_str());
+}
+
 /// Called by gold to see whether this file is one that our plugin can handle.
 /// We'll try to open it and register all the symbols with add_symbol if
 /// possible.
@@ -302,11 +321,11 @@ static ld_plugin_status claim_file_hook(const ld_plugin_input_file *file,
     BufferRef = Buffer->getMemBufferRef();
   }
 
+  Context.setDiagnosticHandler(diagnosticHandler);
   ErrorOr<std::unique_ptr<object::IRObjectFile>> ObjOrErr =
       object::IRObjectFile::create(BufferRef, Context);
   std::error_code EC = ObjOrErr.getError();
-  if (EC == BitcodeError::InvalidBitcodeSignature ||
-      EC == object::object_error::invalid_file_type ||
+  if (EC == object::object_error::invalid_file_type ||
       EC == object::object_error::bitcode_section_not_found)
     return LDPS_OK;
 

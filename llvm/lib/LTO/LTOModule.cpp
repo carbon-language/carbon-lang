@@ -17,6 +17,7 @@
 #include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/CodeGen/Analysis.h"
 #include "llvm/IR/Constants.h"
+#include "llvm/IR/DiagnosticPrinter.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Metadata.h"
 #include "llvm/IR/Module.h"
@@ -146,23 +147,42 @@ LTOModule *LTOModule::createInContext(const void *mem, size_t length,
   return makeLTOModule(Buffer, options, errMsg, Context);
 }
 
-static ErrorOr<Module *> parseBitcodeFileImpl(MemoryBufferRef Buffer,
-                                              LLVMContext &Context,
-                                              bool ShouldBeLazy) {
+static Module *parseBitcodeFileImpl(MemoryBufferRef Buffer,
+                                    LLVMContext &Context, bool ShouldBeLazy,
+                                    std::string &ErrMsg) {
+
   // Find the buffer.
   ErrorOr<MemoryBufferRef> MBOrErr =
       IRObjectFile::findBitcodeInMemBuffer(Buffer);
-  if (std::error_code EC = MBOrErr.getError())
-    return EC;
+  if (std::error_code EC = MBOrErr.getError()) {
+    ErrMsg = EC.message();
+    return nullptr;
+  }
 
-  if (!ShouldBeLazy)
+  std::function<void(const DiagnosticInfo &)> DiagnosticHandler =
+      [&ErrMsg](const DiagnosticInfo &DI) {
+        raw_string_ostream Stream(ErrMsg);
+        DiagnosticPrinterRawOStream DP(Stream);
+        DI.print(DP);
+      };
+
+  if (!ShouldBeLazy) {
     // Parse the full file.
-    return parseBitcodeFile(*MBOrErr, Context);
+    ErrorOr<Module *> M =
+        parseBitcodeFile(*MBOrErr, Context, DiagnosticHandler);
+    if (!M)
+      return nullptr;
+    return *M;
+  }
 
   // Parse lazily.
   std::unique_ptr<MemoryBuffer> LightweightBuf =
       MemoryBuffer::getMemBuffer(*MBOrErr, false);
-  return getLazyBitcodeModule(std::move(LightweightBuf), Context);
+  ErrorOr<Module *> M = getLazyBitcodeModule(std::move(LightweightBuf), Context,
+                                             DiagnosticHandler);
+  if (!M)
+    return nullptr;
+  return *M;
 }
 
 LTOModule *LTOModule::makeLTOModule(MemoryBufferRef Buffer,
@@ -176,13 +196,11 @@ LTOModule *LTOModule::makeLTOModule(MemoryBufferRef Buffer,
 
   // If we own a context, we know this is being used only for symbol
   // extraction, not linking.  Be lazy in that case.
-  ErrorOr<Module *> MOrErr = parseBitcodeFileImpl(
-      Buffer, *Context, /* ShouldBeLazy */ static_cast<bool>(OwnedContext));
-  if (std::error_code EC = MOrErr.getError()) {
-    errMsg = EC.message();
+  std::unique_ptr<Module> M(parseBitcodeFileImpl(
+      Buffer, *Context,
+      /* ShouldBeLazy */ static_cast<bool>(OwnedContext), errMsg));
+  if (!M)
     return nullptr;
-  }
-  std::unique_ptr<Module> M(MOrErr.get());
 
   std::string TripleStr = M->getTargetTriple();
   if (TripleStr.empty())

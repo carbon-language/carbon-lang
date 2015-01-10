@@ -13,11 +13,9 @@
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/DenseSet.h"
-
-#include <functional>
+#include "llvm/IR/DiagnosticInfo.h"
 
 namespace llvm {
-class DiagnosticInfo;
 class Module;
 class StructType;
 class Type;
@@ -28,8 +26,6 @@ class Type;
 /// something with it after the linking.
 class Linker {
 public:
-  typedef std::function<void(const DiagnosticInfo &)> DiagnosticHandlerFunction;
-
   struct StructTypeKeyInfo {
     struct KeyTy {
       ArrayRef<Type *> ETypes;

@@ -132,6 +132,7 @@ public:
 
 class BitcodeReader : public GVMaterializer {
   LLVMContext &Context;
+  DiagnosticHandlerFunction DiagnosticHandler;
   Module *TheModule;
   std::unique_ptr<MemoryBuffer> Buffer;
   std::unique_ptr<BitstreamReader> StreamFile;
@@ -210,18 +211,14 @@ class BitcodeReader : public GVMaterializer {
   SmallPtrSet<const Function *, 4> BlockAddressesTaken;
 
 public:
-  std::error_code Error(BitcodeError E) { return make_error_code(E); }
+  std::error_code Error(BitcodeError E, const Twine &Message);
+  std::error_code Error(BitcodeError E);
+  std::error_code Error(const Twine &Message);
 
-  explicit BitcodeReader(MemoryBuffer *buffer, LLVMContext &C)
-      : Context(C), TheModule(nullptr), Buffer(buffer), LazyStreamer(nullptr),
-        NextUnreadBit(0), SeenValueSymbolTable(false), ValueList(C),
-        MDValueList(C), SeenFirstFunctionBody(false), UseRelativeIDs(false),
-        WillMaterializeAllForwardRefs(false) {}
-  explicit BitcodeReader(DataStreamer *streamer, LLVMContext &C)
-      : Context(C), TheModule(nullptr), Buffer(nullptr), LazyStreamer(streamer),
-        NextUnreadBit(0), SeenValueSymbolTable(false), ValueList(C),
-        MDValueList(C), SeenFirstFunctionBody(false), UseRelativeIDs(false),
-        WillMaterializeAllForwardRefs(false) {}
+  explicit BitcodeReader(MemoryBuffer *buffer, LLVMContext &C,
+                         DiagnosticHandlerFunction DiagnosticHandler);
+  explicit BitcodeReader(DataStreamer *streamer, LLVMContext &C,
+                         DiagnosticHandlerFunction DiagnosticHandler);
   ~BitcodeReader() { FreeState(); }
 
   std::error_code materializeForwardReferencedFunctions();

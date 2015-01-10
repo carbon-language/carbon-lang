@@ -420,11 +420,11 @@ class ModuleLinker {
   /// Functions that have replaced other functions.
   SmallPtrSet<const Function *, 16> OverridingFunctions;
 
-  Linker::DiagnosticHandlerFunction DiagnosticHandler;
+  DiagnosticHandlerFunction DiagnosticHandler;
 
 public:
   ModuleLinker(Module *dstM, Linker::IdentifiedStructTypeSet &Set, Module *srcM,
-               Linker::DiagnosticHandlerFunction DiagnosticHandler)
+               DiagnosticHandlerFunction DiagnosticHandler)
       : DstM(dstM), SrcM(srcM), TypeMap(Set),
         ValMaterializer(TypeMap, DstM, LazilyLinkGlobalValues),
         DiagnosticHandler(DiagnosticHandler) {}

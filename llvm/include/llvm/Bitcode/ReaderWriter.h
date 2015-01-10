@@ -14,6 +14,7 @@
 #ifndef LLVM_BITCODE_READERWRITER_H
 #define LLVM_BITCODE_READERWRITER_H
 
+#include "llvm/IR/DiagnosticInfo.h"
 #include "llvm/Support/ErrorOr.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include <memory>
@@ -30,24 +31,28 @@ namespace llvm {
   /// Read the header of the specified bitcode buffer and prepare for lazy
   /// deserialization of function bodies.  If successful, this moves Buffer. On
   /// error, this *does not* move Buffer.
-  ErrorOr<Module *> getLazyBitcodeModule(std::unique_ptr<MemoryBuffer> &&Buffer,
-                                         LLVMContext &Context);
+  ErrorOr<Module *>
+  getLazyBitcodeModule(std::unique_ptr<MemoryBuffer> &&Buffer,
+                       LLVMContext &Context,
+                       DiagnosticHandlerFunction DiagnosticHandler = nullptr);
 
   /// Read the header of the specified stream and prepare for lazy
   /// deserialization and streaming of function bodies.
-  ErrorOr<std::unique_ptr<Module>>
-  getStreamedBitcodeModule(StringRef Name, DataStreamer *Streamer,
-                           LLVMContext &Context);
+  ErrorOr<std::unique_ptr<Module>> getStreamedBitcodeModule(
+      StringRef Name, DataStreamer *Streamer, LLVMContext &Context,
+      DiagnosticHandlerFunction DiagnosticHandler = nullptr);
 
   /// Read the header of the specified bitcode buffer and extract just the
   /// triple information. If successful, this returns a string. On error, this
   /// returns "".
-  std::string getBitcodeTargetTriple(MemoryBufferRef Buffer,
-                                     LLVMContext &Context);
+  std::string
+  getBitcodeTargetTriple(MemoryBufferRef Buffer, LLVMContext &Context,
+                         DiagnosticHandlerFunction DiagnosticHandler = nullptr);
 
   /// Read the specified bitcode file, returning the module.
-  ErrorOr<Module *> parseBitcodeFile(MemoryBufferRef Buffer,
-                                     LLVMContext &Context);
+  ErrorOr<Module *>
+  parseBitcodeFile(MemoryBufferRef Buffer, LLVMContext &Context,
+                   DiagnosticHandlerFunction DiagnosticHandler = nullptr);
 
   /// WriteBitcodeToFile - Write the specified module to the specified
   /// raw output stream.  For streams where it matters, the given stream
@@ -138,31 +143,25 @@ namespace llvm {
   }
 
   const std::error_category &BitcodeErrorCategory();
-  enum class BitcodeError {
-    ConflictingMETADATA_KINDRecords,
-    CouldNotFindFunctionInStream,
-    ExpectedConstant,
-    InsufficientFunctionProtos,
-    InvalidBitcodeSignature,
-    InvalidBitcodeWrapperHeader,
-    InvalidConstantReference,
-    InvalidID, // A read identifier is not found in the table it should be in.
-    InvalidInstructionWithNoBB,
-    InvalidRecord, // A read record doesn't have the expected size or structure
-    InvalidTypeForValue, // Type read OK, but is invalid for its use
-    InvalidTYPETable,
-    InvalidType,    // We were unable to read a type
-    MalformedBlock, // We are unable to advance in the stream.
-    MalformedGlobalInitializerSet,
-    InvalidMultipleBlocks, // We found multiple blocks of a kind that should
-                           // have only one
-    NeverResolvedValueFoundInFunction,
-    NeverResolvedFunctionFromBlockAddress,
-    InvalidValue // Invalid version, inst number, attr number, etc
-  };
+  enum class BitcodeError { InvalidBitcodeSignature, CorruptedBitcode };
   inline std::error_code make_error_code(BitcodeError E) {
     return std::error_code(static_cast<int>(E), BitcodeErrorCategory());
   }
+
+  class BitcodeDiagnosticInfo : public DiagnosticInfo {
+    const Twine &Msg;
+    std::error_code EC;
+
+  public:
+    BitcodeDiagnosticInfo(std::error_code EC, DiagnosticSeverity Severity,
+                          const Twine &Msg);
+    void print(DiagnosticPrinter &DP) const override;
+    std::error_code getError() const { return EC; };
+
+    static bool classof(const DiagnosticInfo *DI) {
+      return DI->getKind() == DK_Bitcode;
+    }
+  };
 
 } // End llvm namespace
 
