@@ -531,6 +531,7 @@ public:
       CI_ReadWrite = 0x04,         // "+r" output constraint (read and write).
       CI_HasMatchingInput = 0x08,  // This output operand has a matching input.
       CI_ImmediateConstant = 0x10, // This operand must be an immediate constant
+      CI_EarlyClobber = 0x20,      // "&" output constraint (early clobber).
     };
     unsigned Flags;
     int TiedOperand;
@@ -551,6 +552,7 @@ public:
     const std::string &getConstraintStr() const { return ConstraintStr; }
     const std::string &getName() const { return Name; }
     bool isReadWrite() const { return (Flags & CI_ReadWrite) != 0; }
+    bool earlyClobber() { return (Flags & CI_EarlyClobber) != 0; }
     bool allowsRegister() const { return (Flags & CI_AllowsRegister) != 0; }
     bool allowsMemory() const { return (Flags & CI_AllowsMemory) != 0; }
 
@@ -576,6 +578,7 @@ public:
     int getImmConstantMax() const { return ImmRange.Max; }
 
     void setIsReadWrite() { Flags |= CI_ReadWrite; }
+    void setEarlyClobber() { Flags |= CI_EarlyClobber; }
     void setAllowsMemory() { Flags |= CI_AllowsMemory; }
     void setAllowsRegister() { Flags |= CI_AllowsRegister; }
     void setHasMatchingInput() { Flags |= CI_HasMatchingInput; }

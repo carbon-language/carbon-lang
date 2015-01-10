@@ -171,3 +171,9 @@ void fn1() {
           : [l] "=r"(l)
           : "[l],m"(l)); // expected-error {{asm constraint has an unexpected number of alternatives: 1 vs 2}}
 }
+
+void fn2() {
+  int l;
+ __asm__(""
+          : "+&m"(l)); // expected-error {{invalid output constraint '+&m' in asm}}
+}
