@@ -26,9 +26,9 @@ RUN:   %p/Inputs/shared.so-x86-64 -o %t.useundefines -e main -shared \
 RUN: --use-shlib-undefines --no-allow-shlib-undefined  2> %t2
 RUN: llvm-readobj -symbols %t.useundefines | FileCheck -check-prefix=SHLIB-UNDEF-SYMBOLS %s
 
-EXEC: Undefined symbol: {{[-_A-Za-z0-9.\\/:]+}}shared.so-x86-64: puts
-SHLIB: Undefined symbol: {{[-_A-Za-z0-9.\\/:]+}}shared.so-x86-64: puts
-EXEC-NOT: Undefined symbol: {{[-_A-Za-z0-9.\\/:]+}}shared.so-x86-64: weakfoo
-SHLIB-NOT: Undefined symbol: {{[-_A-Za-z0-9.\\/:]+}}shared.so-x86-64: weakfoo
+EXEC: Undefined symbol: {{[+-_A-Za-z0-9.\\/:]+}}shared.so-x86-64: puts
+SHLIB: Undefined symbol: {{[+-_A-Za-z0-9.\\/:]+}}shared.so-x86-64: puts
+EXEC-NOT: Undefined symbol: {{[+-_A-Za-z0-9.\\/:]+}}shared.so-x86-64: weakfoo
+SHLIB-NOT: Undefined symbol: {{[+-_A-Za-z0-9.\\/:]+}}shared.so-x86-64: weakfoo
 SHLIB-NOUNDEF-NOT: Name: puts
 SHLIB-UNDEF-SYMBOLS: Name: puts
