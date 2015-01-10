@@ -294,6 +294,7 @@ def BindToTemporaryCopy : DiagGroup<"bind-to-temporary-copy",
                                     [CXX98CompatBindToTemporaryCopy]>;
 def SelfAssignmentField : DiagGroup<"self-assign-field">;
 def SelfAssignment : DiagGroup<"self-assign", [SelfAssignmentField]>;
+def SelfMove : DiagGroup<"self-move">;
 def SemiBeforeMethodBody : DiagGroup<"semicolon-before-method-body">;
 def Sentinel : DiagGroup<"sentinel">;
 def MissingMethodReturnType : DiagGroup<"missing-method-return-type">;
@@ -586,6 +587,7 @@ def Most : DiagGroup<"most", [
     Reorder,
     ReturnType,
     SelfAssignment,
+    SelfMove,
     SizeofArrayArgument,
     SizeofArrayDecay,
     StringPlusInt,
