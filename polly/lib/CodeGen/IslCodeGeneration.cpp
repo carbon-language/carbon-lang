@@ -245,10 +245,11 @@ IslNodeBuilder::getUpperBound(__isl_keep isl_ast_node *For,
 
   Cond = isl_ast_node_for_get_cond(For);
   Iterator = isl_ast_node_for_get_iterator(For);
-  Type = isl_ast_expr_get_op_type(Cond);
-
+  isl_ast_expr_get_type(Cond);
   assert(isl_ast_expr_get_type(Cond) == isl_ast_expr_op &&
          "conditional expression is not an atomic upper bound");
+
+  Type = isl_ast_expr_get_op_type(Cond);
 
   switch (Type) {
   case isl_ast_op_le:
