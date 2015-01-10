@@ -240,12 +240,10 @@ define <4 x i32> @test19(<4 x i32> %a, <4 x i32> %b) {
 ; CHECK-LABEL: test19:
 ; CHECK:       # BB#0:
 ; CHECK-NEXT:    xorps %xmm2, %xmm2
-; CHECK-NEXT:    xorps %xmm3, %xmm3
-; CHECK-NEXT:    shufps {{.*#+}} xmm3 = xmm3[0,0],xmm0[0,3]
-; CHECK-NEXT:    shufps {{.*#+}} xmm3 = xmm3[0,2,1,3]
-; CHECK-NEXT:    shufps {{.*#+}} xmm2 = xmm2[0,0],xmm1[0,0]
-; CHECK-NEXT:    shufps {{.*#+}} xmm2 = xmm2[2,0],xmm1[2,2]
-; CHECK-NEXT:    orps %xmm3, %xmm2
+; CHECK-NEXT:    shufps {{.*#+}} xmm2 = xmm2[0,0],xmm0[0,3]
+; CHECK-NEXT:    shufps {{.*#+}} xmm2 = xmm2[0,2,1,3]
+; CHECK-NEXT:    insertps {{.*#+}} xmm1 = xmm1[0],zero,xmm1[2,2]
+; CHECK-NEXT:    orps %xmm1, %xmm2
 ; CHECK-NEXT:    movaps %xmm2, %xmm0
 ; CHECK-NEXT:    retq
   %shuf1 = shufflevector <4 x i32> %a, <4 x i32> zeroinitializer, <4 x i32><i32 4, i32 0, i32 4, i32 3>
