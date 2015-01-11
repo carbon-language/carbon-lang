@@ -24,7 +24,6 @@
 
 namespace llvm {
 class Constant;
-class DataLayout;
 class MVT;
 
 enum { SM_SentinelUndef = -1, SM_SentinelZero = -2 };
@@ -69,8 +68,7 @@ void DecodeUNPCKHMask(MVT VT, SmallVectorImpl<int> &ShuffleMask);
 void DecodeUNPCKLMask(MVT VT, SmallVectorImpl<int> &ShuffleMask);
 
 /// \brief Decode a PSHUFB mask from an IR-level vector constant.
-void DecodePSHUFBMask(const Constant *C, const DataLayout *TD,
-                      SmallVectorImpl<int> &ShuffleMask);
+void DecodePSHUFBMask(const Constant *C, SmallVectorImpl<int> &ShuffleMask);
 
 /// \brief Decode a PSHUFB mask from a raw array of constants such as from
 /// BUILD_VECTOR.

@@ -5365,7 +5365,7 @@ static SDValue getShuffleVectorZeroOrUndef(SDValue V2, unsigned Idx,
 /// IsUnary to true if only uses one source. Note that this will set IsUnary for
 /// shuffles which use a single input multiple times, and in those cases it will
 /// adjust the mask to only have indices within that single input.
-static bool getTargetShuffleMask(SDNode *N, MVT VT, const DataLayout *TD,
+static bool getTargetShuffleMask(SDNode *N, MVT VT,
                                  SmallVectorImpl<int> &Mask, bool &IsUnary) {
   unsigned NumElems = VT.getVectorNumElements();
   SDValue ImmN;
@@ -5472,7 +5472,7 @@ static bool getTargetShuffleMask(SDNode *N, MVT VT, const DataLayout *TD,
       return false;
 
     if (auto *C = dyn_cast<Constant>(MaskCP->getConstVal())) {
-      DecodePSHUFBMask(C, TD, Mask);
+      DecodePSHUFBMask(C, Mask);
       break;
     }
 
@@ -5535,7 +5535,6 @@ static SDValue getShuffleScalarElt(SDNode *N, unsigned Index, SelectionDAG &DAG,
   SDValue V = SDValue(N, 0);
   EVT VT = V.getValueType();
   unsigned Opcode = V.getOpcode();
-  const DataLayout *TD = DAG.getSubtarget().getDataLayout();
 
   // Recurse into ISD::VECTOR_SHUFFLE node to find scalars.
   if (const ShuffleVectorSDNode *SV = dyn_cast<ShuffleVectorSDNode>(N)) {
@@ -5557,7 +5556,7 @@ static SDValue getShuffleScalarElt(SDNode *N, unsigned Index, SelectionDAG &DAG,
     SmallVector<int, 16> ShuffleMask;
     bool IsUnary;
 
-    if (!getTargetShuffleMask(N, ShufVT, TD, ShuffleMask, IsUnary))
+    if (!getTargetShuffleMask(N, ShufVT, ShuffleMask, IsUnary))
       return SDValue();
 
     int Elt = ShuffleMask[Index];
@@ -22112,8 +22111,7 @@ static bool combineX86ShufflesRecursively(SDValue Op, SDValue Root,
     return false;
   SmallVector<int, 16> OpMask;
   bool IsUnary;
-  bool HaveMask = getTargetShuffleMask(
-      Op.getNode(), VT, Subtarget->getDataLayout(), OpMask, IsUnary);
+  bool HaveMask = getTargetShuffleMask(Op.getNode(), VT, OpMask, IsUnary);
   // We only can combine unary shuffles which we can decode the mask for.
   if (!HaveMask || !IsUnary)
     return false;
@@ -22204,12 +22202,10 @@ static bool combineX86ShufflesRecursively(SDValue Op, SDValue Root,
 ///
 /// This is a very minor wrapper around getTargetShuffleMask to easy forming v4
 /// PSHUF-style masks that can be reused with such instructions.
-static SmallVector<int, 4> getPSHUFShuffleMask(SDValue N,
-                                               const DataLayout *TD) {
+static SmallVector<int, 4> getPSHUFShuffleMask(SDValue N) {
   SmallVector<int, 4> Mask;
   bool IsUnary;
-  bool HaveMask = getTargetShuffleMask(N.getNode(), N.getSimpleValueType(), TD,
-                                       Mask, IsUnary);
+  bool HaveMask = getTargetShuffleMask(N.getNode(), N.getSimpleValueType(), Mask, IsUnary);
   (void)HaveMask;
   assert(HaveMask);
 
@@ -22241,7 +22237,6 @@ combineRedundantDWordShuffle(SDValue N, MutableArrayRef<int> Mask,
   assert(N.getOpcode() == X86ISD::PSHUFD &&
          "Called with something other than an x86 128-bit half shuffle!");
   SDLoc DL(N);
-  const DataLayout *TD = DAG.getSubtarget().getDataLayout();
 
   // Walk up a single-use chain looking for a combinable shuffle. Keep a stack
   // of the shuffles in the chain so that we can form a fresh chain to replace
@@ -22327,7 +22322,7 @@ combineRedundantDWordShuffle(SDValue N, MutableArrayRef<int> Mask,
     return SDValue();
 
   // Merge this node's mask and our incoming mask.
-  SmallVector<int, 4> VMask = getPSHUFShuffleMask(V, TD);
+  SmallVector<int, 4> VMask = getPSHUFShuffleMask(V);
   for (int &M : Mask)
     M = VMask[M];
   V = DAG.getNode(V.getOpcode(), DL, V.getValueType(), V.getOperand(0),
@@ -22376,7 +22371,6 @@ static bool combineRedundantHalfShuffle(SDValue N, MutableArrayRef<int> Mask,
       "Called with something other than an x86 128-bit half shuffle!");
   SDLoc DL(N);
   unsigned CombineOpcode = N.getOpcode();
-  const DataLayout *TD = DAG.getSubtarget().getDataLayout();
 
   // Walk up a single-use chain looking for a combinable shuffle.
   SDValue V = N.getOperand(0);
@@ -22415,7 +22409,7 @@ static bool combineRedundantHalfShuffle(SDValue N, MutableArrayRef<int> Mask,
 
   // Merge this node's mask and our incoming mask (adjusted to account for all
   // the pshufd instructions encountered).
-  SmallVector<int, 4> VMask = getPSHUFShuffleMask(V, TD);
+  SmallVector<int, 4> VMask = getPSHUFShuffleMask(V);
   for (int &M : Mask)
     M = VMask[M];
   V = DAG.getNode(V.getOpcode(), DL, MVT::v8i16, V.getOperand(0),
@@ -22437,14 +22431,13 @@ static SDValue PerformTargetShuffleCombine(SDValue N, SelectionDAG &DAG,
                                            const X86Subtarget *Subtarget) {
   SDLoc DL(N);
   MVT VT = N.getSimpleValueType();
-  const DataLayout *TD = Subtarget->getDataLayout();
   SmallVector<int, 4> Mask;
 
   switch (N.getOpcode()) {
   case X86ISD::PSHUFD:
   case X86ISD::PSHUFLW:
   case X86ISD::PSHUFHW:
-    Mask = getPSHUFShuffleMask(N, TD);
+    Mask = getPSHUFShuffleMask(N);
     assert(Mask.size() == 4);
     break;
   default:
@@ -22496,8 +22489,8 @@ static SDValue PerformTargetShuffleCombine(SDValue N, SelectionDAG &DAG,
       while (D.getOpcode() == ISD::BITCAST && D.hasOneUse())
         D = D.getOperand(0);
       if (D.getOpcode() == X86ISD::PSHUFD && D.hasOneUse()) {
-        SmallVector<int, 4> VMask = getPSHUFShuffleMask(V, TD);
-        SmallVector<int, 4> DMask = getPSHUFShuffleMask(D, TD);
+        SmallVector<int, 4> VMask = getPSHUFShuffleMask(V);
+        SmallVector<int, 4> DMask = getPSHUFShuffleMask(D);
         int NOffset = N.getOpcode() == X86ISD::PSHUFLW ? 0 : 4;
         int VOffset = V.getOpcode() == X86ISD::PSHUFLW ? 0 : 4;
         int WordMask[8];
@@ -22750,10 +22743,9 @@ static SDValue XFormVExtractWithShuffleIntoLoad(SDNode *N, SelectionDAG &DAG,
   if (!InVec.hasOneUse())
     return SDValue();
 
-  const DataLayout *TD = DAG.getSubtarget().getDataLayout();
   SmallVector<int, 16> ShuffleMask;
   bool UnaryShuffle;
-  if (!getTargetShuffleMask(InVec.getNode(), CurrentVT.getSimpleVT(), TD,
+  if (!getTargetShuffleMask(InVec.getNode(), CurrentVT.getSimpleVT(),
                             ShuffleMask, UnaryShuffle))
     return SDValue();
 

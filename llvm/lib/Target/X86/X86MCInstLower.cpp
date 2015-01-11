@@ -1161,7 +1161,7 @@ void X86AsmPrinter::EmitInstruction(const MachineInstr *MI) {
 
     if (auto *C = getConstantFromPool(*MI, MaskOp)) {
       SmallVector<int, 16> Mask;
-      DecodePSHUFBMask(C, TM.getSubtargetImpl()->getDataLayout(), Mask);
+      DecodePSHUFBMask(C, Mask);
       if (!Mask.empty())
         OutStreamer.AddComment(getShuffleComment(DstOp, SrcOp, Mask));
     }
