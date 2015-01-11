@@ -190,3 +190,10 @@ void fn4() {
           : "=r"(l)
           : "#m"(l)); // expected-error {{invalid input constraint '#m' in asm}}
 }
+
+void fn5() {
+  int l;
+    __asm__(""
+          : [g] "+r"(l)
+          : "[g]"(l)); // expected-error {{invalid input constraint '[g]' in asm}}
+}
