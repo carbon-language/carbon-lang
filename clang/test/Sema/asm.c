@@ -177,3 +177,9 @@ void fn2() {
  __asm__(""
           : "+&m"(l)); // expected-error {{invalid output constraint '+&m' in asm}}
 }
+
+void fn3() {
+  int l;
+ __asm__(""
+          : "+#r"(l)); // expected-error {{invalid output constraint '+#r' in asm}}
+}
