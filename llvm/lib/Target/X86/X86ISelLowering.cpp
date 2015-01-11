@@ -26255,9 +26255,34 @@ void X86TargetLowering::LowerAsmOperandForConstraint(SDValue Op,
       }
     }
     return;
+  case 'L':
+    if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(Op)) {
+      if (C->getZExtValue() == 0xff || C->getZExtValue() == 0xffff ||
+          (Subtarget->is64Bit() && C->getZExtValue() == 0xffffffff)) {
+        Result = DAG.getTargetConstant(C->getSExtValue(), Op.getValueType());
+        break;
+      }
+    }
+    return;
+  case 'M':
+    if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(Op)) {
+      if (C->getZExtValue() <= 3) {
+        Result = DAG.getTargetConstant(C->getZExtValue(), Op.getValueType());
+        break;
+      }
+    }
+    return;
   case 'N':
     if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(Op)) {
       if (C->getZExtValue() <= 255) {
+        Result = DAG.getTargetConstant(C->getZExtValue(), Op.getValueType());
+        break;
+      }
+    }
+    return;
+  case 'O':
+    if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(Op)) {
+      if (C->getZExtValue() <= 127) {
         Result = DAG.getTargetConstant(C->getZExtValue(), Op.getValueType());
         break;
       }
