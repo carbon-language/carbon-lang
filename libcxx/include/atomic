@@ -551,26 +551,26 @@ typedef enum memory_order
 
 #if _GNUC_VER >= 407
 namespace __gcc_atomic {
-template <typename T>
+template <typename _Tp>
 struct __gcc_atomic_t {
   __gcc_atomic_t() _NOEXCEPT {}
-  explicit __gcc_atomic_t(T value) _NOEXCEPT : __a_value(value) {}
-  T __a_value;
+  explicit __gcc_atomic_t(_Tp value) _NOEXCEPT : __a_value(value) {}
+  _Tp __a_value;
 };
 #define _Atomic(x) __gcc_atomic::__gcc_atomic_t<x>
 
-template <typename T> T __create();
+template <typename _Tp> _Tp __create();
 
-template <typename __Tp, typename __Td>
-typename enable_if<sizeof(__Tp()->__a_value = __create<__Td>()), char>::type
+template <typename _Tp, typename _Td>
+typename enable_if<sizeof(_Tp()->__a_value = __create<_Td>()), char>::type
     __test_atomic_assignable(int);
-template <typename T, typename U>
+template <typename _Tp, typename _Up>
 __two __test_atomic_assignable(...);
 
-template <typename __Tp, typename __Td>
+template <typename _Tp, typename _Td>
 struct __can_assign {
   static const bool value =
-      sizeof(__test_atomic_assignable<__Tp, __Td>(1)) == sizeof(char);
+      sizeof(__test_atomic_assignable<_Tp, _Td>(1)) == sizeof(char);
 };
 
 static inline constexpr int __to_gcc_order(memory_order __order) {

@@ -1420,7 +1420,7 @@ protected:
 
 // template <class charT> class numpunct_byname
 
-template <class charT> class _LIBCPP_TYPE_VIS_ONLY numpunct_byname;
+template <class _CharT> class _LIBCPP_TYPE_VIS_ONLY numpunct_byname;
 
 template <>
 class _LIBCPP_TYPE_VIS numpunct_byname<char>
