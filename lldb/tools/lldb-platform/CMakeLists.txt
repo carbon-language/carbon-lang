@@ -22,7 +22,13 @@ add_lldb_executable(lldb-platform
   lldb-platform.cpp
   ../../source/lldb-log.cpp
   ../../source/lldb.cpp
+  ${LLDB_WRAP_PYTHON}
+  ${LLDB_VERS_GENERATED_FILE}
   )
+
+if (LLDB_WRAP_PYTHON OR LLDB_VERS_GENERATED_FILE)
+  add_dependencies(lldb-platform swig_wrapper)
+endif()
 
 # The Darwin linker doesn't understand --start-group/--end-group.
 if (LLVM_COMPILER_IS_GCC_COMPATIBLE AND NOT "${CMAKE_SYSTEM_NAME}" MATCHES "Darwin")
