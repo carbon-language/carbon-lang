@@ -13,6 +13,11 @@
 #if __APPLE__
   #include <libkern/OSCacheControl.h>
 #endif
+#if defined(__FreeBSD__) && defined(__arm__)
+  #include <sys/types.h>
+  #include <machine/sysarch.h>
+#endif
+
 #if defined(__NetBSD__) && defined(__arm__)
   #include <machine/sysarch.h>
 #endif
@@ -39,7 +44,7 @@ void __clear_cache(void *start, void *end) {
  * so there is nothing to do
  */
 #elif defined(__arm__) && !defined(__APPLE__)
-    #if defined(__NetBSD__)
+    #if defined(__FreeBSD__) || defined(__NetBSD__)
         struct arm_sync_icache_args arg;
 
         arg.addr = (uintptr_t)start;
