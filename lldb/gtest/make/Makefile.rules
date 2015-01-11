@@ -9,8 +9,13 @@ ifneq ($(wildcard $(THIS_FILE_DIR)../../llvm/utils/unittest/googletest),)
     # Assume lldb/llvm (MacOSX Xcode) directory form.
     LLVM_BASE_DIR := $(realpath $(THIS_FILE_DIR)../../llvm)
 else
-    # Assume llvm/tools/lldb (Non-MacOSX) directory form.
-    LLVM_BASE_DIR := $(realpath $(THIS_FILE_DIR)../../../..)
+    ifneq ($(wildcard $(THIS_FILE_DIR)../../../llvm/utils/unittest/googletest),)
+        # Assume lldb/llvm side-by-side configuration (with symbolic links)
+        LLVM_BASE_DIR := $(realpath $(THIS_FILE_DIR)../../../llvm)
+    else
+        # Assume llvm/tools/lldb (Non-MacOSX) directory form.
+        LLVM_BASE_DIR := $(realpath $(THIS_FILE_DIR)../../../..)
+    endif
 endif
 
 ifeq ($(GTEST_DIR),)
