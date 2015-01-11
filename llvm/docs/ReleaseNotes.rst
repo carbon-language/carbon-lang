@@ -113,7 +113,7 @@ Changes to the MIPS Target
 
 During this release the MIPS target has reached a few major milestones. It has
 gained support for MIPS-II and MIPS-III, become ABI-compatible with GCC for big
-and little endian O32, N32, and N64, and we are now able to compile the Linux
+and little endian O32, N32, and N64, and it is now able to compile the Linux
 kernel for 32-bit targets.
 
 ABI
