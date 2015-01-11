@@ -548,11 +548,17 @@ bool TargetInfo::validateInputConstraint(ConstraintInfo *OutputConstraints,
     default:
       // Check if we have a matching constraint
       if (*Name >= '0' && *Name <= '9') {
-        unsigned i = *Name - '0';
+        const char *DigitStart = Name;
+        while (Name[1] >= '0' && Name[1] <= '9')
+          Name++;
+        const char *DigitEnd = Name;
+        unsigned i;
+        if (StringRef(DigitStart, DigitEnd - DigitStart + 1)
+                .getAsInteger(10, i))
+          return false;
 
         // Check if matching constraint is out of bounds.
-        if (i >= NumOutputs)
-          return false;
+        if (i >= NumOutputs) return false;
 
         // A number must refer to an output only operand.
         if (OutputConstraints[i].isReadWrite())

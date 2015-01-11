@@ -197,3 +197,10 @@ void fn5() {
           : [g] "+r"(l)
           : "[g]"(l)); // expected-error {{invalid input constraint '[g]' in asm}}
 }
+
+void fn6() {
+    int a;
+  __asm__(""
+            : "=rm"(a), "=rm"(a)
+            : "11m"(a)) // expected-error {{invalid input constraint '11m' in asm}}
+}
