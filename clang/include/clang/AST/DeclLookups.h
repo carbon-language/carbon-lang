@@ -75,7 +75,10 @@ inline DeclContext::lookups_range DeclContext::lookups() const {
   if (StoredDeclsMap *Map = Primary->buildLookup())
     return lookups_range(all_lookups_iterator(Map->begin(), Map->end()),
                          all_lookups_iterator(Map->end(), Map->end()));
-  return lookups_range();
+
+  // Synthesize an empty range. This requires that two default constructed
+  // versions of these iterators form a valid empty range.
+  return lookups_range(all_lookups_iterator(), all_lookups_iterator());
 }
 
 inline DeclContext::all_lookups_iterator DeclContext::lookups_begin() const {
@@ -91,7 +94,10 @@ inline DeclContext::lookups_range DeclContext::noload_lookups() const {
   if (StoredDeclsMap *Map = Primary->getLookupPtr())
     return lookups_range(all_lookups_iterator(Map->begin(), Map->end()),
                          all_lookups_iterator(Map->end(), Map->end()));
-  return lookups_range();
+
+  // Synthesize an empty range. This requires that two default constructed
+  // versions of these iterators form a valid empty range.
+  return lookups_range(all_lookups_iterator(), all_lookups_iterator());
 }
 
 inline

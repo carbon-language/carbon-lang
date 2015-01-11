@@ -178,7 +178,8 @@ inline DeclContext::ddiag_range DeclContext::ddiags() const {
     = static_cast<DependentStoredDeclsMap*>(getPrimaryContext()->getLookupPtr());
 
   if (!Map)
-    return ddiag_range();
+    // Return an empty range using the always-end default constructor.
+    return ddiag_range(ddiag_iterator(), ddiag_iterator());
 
   return ddiag_range(ddiag_iterator(Map->FirstDiagnostic), ddiag_iterator());
 }
