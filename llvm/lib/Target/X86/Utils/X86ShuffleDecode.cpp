@@ -13,7 +13,10 @@
 //===----------------------------------------------------------------------===//
 
 #include "X86ShuffleDecode.h"
+#include "llvm/Analysis/ConstantFolding.h"
 #include "llvm/IR/Constants.h"
+#include "llvm/IR/DataLayout.h"
+#include "llvm/IR/InstrTypes.h"
 #include "llvm/CodeGen/MachineValueType.h"
 
 //===----------------------------------------------------------------------===//
@@ -253,57 +256,64 @@ void DecodeVPERM2X128Mask(MVT VT, unsigned Imm,
   }
 }
 
-void DecodePSHUFBMask(const Constant *C, SmallVectorImpl<int> &ShuffleMask) {
+void DecodePSHUFBMask(const Constant *C, const DataLayout *TD,
+                      SmallVectorImpl<int> &ShuffleMask) {
   Type *MaskTy = C->getType();
-  assert(MaskTy->isVectorTy() && "Expected a vector constant mask!");
-  assert(MaskTy->getVectorElementType()->isIntegerTy(8) &&
-         "Expected i8 constant mask elements!");
-  int NumElements = MaskTy->getVectorNumElements();
+  // It is not an error for the PSHUFB mask to not be a vector of i8 because the
+  // constant pool uniques constants by their bit representation.
+  // e.g. the following take up the same space in the constant pool:
+  //   i128 -170141183420855150465331762880109871104
+  //
+  //   <2 x i64> <i64 -9223372034707292160, i64 -9223372034707292160>
+  //
+  //   <4 x i32> <i32 -2147483648, i32 -2147483648, i32 -2147483648, i32
+  //   -2147483648>
+
+  unsigned MaskTySize = MaskTy->getPrimitiveSizeInBits();
+
+  VectorType *DestTy = nullptr;
+  if (MaskTySize == 128)
+    DestTy = VectorType::get(Type::getInt8Ty(MaskTy->getContext()), 16);
+  else if (MaskTySize == 256)
+    DestTy = VectorType::get(Type::getInt8Ty(MaskTy->getContext()), 32);
+
   // FIXME: Add support for AVX-512.
-  assert((NumElements == 16 || NumElements == 32) &&
-         "Only 128-bit and 256-bit vectors supported!");
+  if (!DestTy)
+    return;
+
+  if (DestTy != MaskTy) {
+    if (!CastInst::castIsValid(Instruction::BitCast, const_cast<Constant *>(C),
+                               DestTy))
+      return;
+
+    C = ConstantFoldInstOperands(Instruction::BitCast, DestTy,
+                                 const_cast<Constant *>(C), TD);
+    MaskTy = DestTy;
+  }
+
+  int NumElements = MaskTy->getVectorNumElements();
   ShuffleMask.reserve(NumElements);
 
-  if (auto *CDS = dyn_cast<ConstantDataSequential>(C)) {
-    assert((unsigned)NumElements == CDS->getNumElements() &&
-           "Constant mask has a different number of elements!");
-
-    for (int i = 0; i < NumElements; ++i) {
-      // For AVX vectors with 32 bytes the base of the shuffle is the 16-byte
-      // lane of the vector we're inside.
-      int Base = i < 16 ? 0 : 16;
-      uint64_t Element = CDS->getElementAsInteger(i);
-      // If the high bit (7) of the byte is set, the element is zeroed.
-      if (Element & (1 << 7))
-        ShuffleMask.push_back(SM_SentinelZero);
-      else {
-        // Only the least significant 4 bits of the byte are used.
-        int Index = Base + (Element & 0xf);
-        ShuffleMask.push_back(Index);
-      }
+  for (int i = 0; i < NumElements; ++i) {
+    // For AVX vectors with 32 bytes the base of the shuffle is the 16-byte
+    // lane of the vector we're inside.
+    int Base = i < 16 ? 0 : 16;
+    Constant *COp = C->getAggregateElement(i);
+    if (!COp) {
+      ShuffleMask.clear();
+      return;
+    } else if (isa<UndefValue>(COp)) {
+      ShuffleMask.push_back(SM_SentinelUndef);
+      continue;
     }
-  } else if (auto *CV = dyn_cast<ConstantVector>(C)) {
-    assert((unsigned)NumElements == CV->getNumOperands() &&
-           "Constant mask has a different number of elements!");
-
-    for (int i = 0; i < NumElements; ++i) {
-      // For AVX vectors with 32 bytes the base of the shuffle is the 16-byte
-      // lane of the vector we're inside.
-      int Base = i < 16 ? 0 : 16;
-      Constant *COp = CV->getOperand(i);
-      if (isa<UndefValue>(COp)) {
-        ShuffleMask.push_back(SM_SentinelUndef);
-        continue;
-      }
-      uint64_t Element = cast<ConstantInt>(COp)->getZExtValue();
-      // If the high bit (7) of the byte is set, the element is zeroed.
-      if (Element & (1 << 7))
-        ShuffleMask.push_back(SM_SentinelZero);
-      else {
-        // Only the least significant 4 bits of the byte are used.
-        int Index = Base + (Element & 0xf);
-        ShuffleMask.push_back(Index);
-      }
+    uint64_t Element = cast<ConstantInt>(COp)->getZExtValue();
+    // If the high bit (7) of the byte is set, the element is zeroed.
+    if (Element & (1 << 7))
+      ShuffleMask.push_back(SM_SentinelZero);
+    else {
+      // Only the least significant 4 bits of the byte are used.
+      int Index = Base + (Element & 0xf);
+      ShuffleMask.push_back(Index);
     }
   }
 }
