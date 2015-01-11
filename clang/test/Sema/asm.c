@@ -183,3 +183,10 @@ void fn3() {
  __asm__(""
           : "+#r"(l)); // expected-error {{invalid output constraint '+#r' in asm}}
 }
+
+void fn4() {
+  int l;
+ __asm__(""
+          : "=r"(l)
+          : "#m"(l)); // expected-error {{invalid input constraint '#m' in asm}}
+}

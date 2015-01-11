@@ -491,6 +491,7 @@ bool TargetInfo::validateOutputConstraint(ConstraintInfo &Info) const {
         Name++;
       if (Name[1] != ',')
         return false;
+      break;
     case '?': // Disparage slightly code.
     case '!': // Disparage severely.
     case '*': // Ignore for choosing register preferences.
@@ -623,9 +624,14 @@ bool TargetInfo::validateInputConstraint(ConstraintInfo *OutputConstraints,
       break;
     case ',': // multiple alternative constraint.  Ignore comma.
       break;
+    case '#': // Ignore as constraint.
+      while (Name[1] && Name[1] != ',')
+        Name++;
+      if (Name[1] != ',')
+        return false;
+      break;
     case '?': // Disparage slightly code.
     case '!': // Disparage severely.
-    case '#': // Ignore as constraint.
     case '*': // Ignore for choosing register preferences.
       break;  // Pass them.
     }
