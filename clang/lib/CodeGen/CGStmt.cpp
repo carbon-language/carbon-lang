@@ -1660,8 +1660,9 @@ SimplifyConstraint(const char *Constraint, const TargetInfo &Target,
         Constraint++;
       break;
     case '&':
-      Result += '&';
-      while (Constraint[1] && Constraint[1] == '&')
+    case '%':
+      Result += *Constraint;
+      while (Constraint[1] && Constraint[1] == *Constraint)
         Constraint++;
       break;
     case ',':
