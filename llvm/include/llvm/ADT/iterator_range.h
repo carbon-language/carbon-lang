@@ -32,7 +32,6 @@ class iterator_range {
   IteratorT begin_iterator, end_iterator;
 
 public:
-  iterator_range() {}
   iterator_range(IteratorT begin_iterator, IteratorT end_iterator)
       : begin_iterator(std::move(begin_iterator)),
         end_iterator(std::move(end_iterator)) {}
