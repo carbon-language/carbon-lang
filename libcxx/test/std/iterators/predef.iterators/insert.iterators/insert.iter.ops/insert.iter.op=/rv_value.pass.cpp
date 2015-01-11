@@ -18,6 +18,7 @@
 #include <iterator>
 
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+#include <utility>
 #include <vector>
 #include <memory>
 #include <cassert>
