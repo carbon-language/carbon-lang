@@ -25,3 +25,13 @@
 @ CHECK:   0x2 R_ARM_ABS16 abs16_1 0x0
 @ CHECK: }
 
+	.section .text.r_arm_sbrel32
+
+	.word target(sbrel)
+	.word target(SBREL)
+
+@ CHECK: Section {{.*}} .rel.text.r_arm_sbrel32 {
+@ CHECK:   0x0 R_ARM_SBREL32 target 0x0
+@ CHECK:   0x4 R_ARM_SBREL32 target 0x0
+@ CHECK: }
+
