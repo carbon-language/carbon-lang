@@ -52,18 +52,18 @@ public:
         return !m_entries.empty();
     }
     
-    virtual int
+    int
     HandleCompletion (Args &input,
                       int &cursor_index,
                       int &cursor_char_position,
                       int match_start_point,
                       int max_return_elements,
                       bool &word_complete,
-                      StringList &matches);
+                      StringList &matches) override;
 
 protected:
-    virtual bool
-    DoExecute (const char *command, CommandReturnObject &result);
+    bool
+    DoExecute (const char *command, CommandReturnObject &result) override;
 
     struct Entry
     {
