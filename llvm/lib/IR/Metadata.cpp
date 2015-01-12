@@ -614,7 +614,6 @@ void MDNode::storeDistinctInContext() {
   getContext().pImpl->NonUniquedMDNodes.insert(G);
 }
 
-// Replace value from this node's operand list.
 void MDNode::replaceOperandWith(unsigned I, Metadata *New) {
   if (getOperand(I) == New)
     return;
