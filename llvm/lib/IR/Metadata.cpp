@@ -534,12 +534,6 @@ void GenericMDNode::handleChangedOperand(void *Ref, Metadata *New) {
     setOperand(Op, New);
     return;
   }
-  if (InRAUW) {
-    // We just hit a recursion due to RAUW.  Set the operand and move on, since
-    // we're about to be deleted.
-    setOperand(Op, New);
-    return;
-  }
 
   auto &Store = getContext().pImpl->MDNodeSet;
   Store.erase(this);
@@ -571,13 +565,17 @@ void GenericMDNode::handleChangedOperand(void *Ref, Metadata *New) {
   // Collision.
   if (!isResolved()) {
     // Still unresolved, so RAUW.
-    InRAUW = true;
+    //
+    // First, clear out all operands to prevent any recursion (similar to
+    // dropAllReferences(), but we still need the use-list).
+    for (unsigned O = 0, E = getNumOperands(); O != E; ++O)
+      setOperand(O, nullptr);
     ReplaceableUses->replaceAllUsesWith(*I);
     delete this;
     return;
   }
 
-  // Store in non-uniqued form if this node has already been resolved.
+  // Store in non-uniqued form if RAUW isn't possible.
   storeDistinctInContext();
 }
 
