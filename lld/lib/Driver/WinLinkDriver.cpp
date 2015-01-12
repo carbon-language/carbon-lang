@@ -812,8 +812,8 @@ static bool hasLibrary(const PECOFFLinkingContext &ctx, FileNode *fileNode) {
 }
 
 // If the first command line argument is "/lib", link.exe acts as if it's
-// "lib.exe" command. This feature is not documented and looks weird, or at
-// least seems redundant, but is needed for MSVC compatibility.
+// "lib.exe" command. This is for backward compatibility.
+// http://msdn.microsoft.com/en-us/library/h34w59b3.aspx
 static bool maybeRunLibCommand(int argc, const char **argv, raw_ostream &diag) {
   if (argc <= 1)
     return false;
