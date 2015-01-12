@@ -731,6 +731,7 @@ class GenericMDNode : public MDNode {
   ~GenericMDNode();
 
   void setHash(unsigned Hash) { MDNodeSubclassData = Hash; }
+  void recalculateHash();
 
 public:
   /// \brief Get the hash, if any.

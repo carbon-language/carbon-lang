@@ -484,6 +484,18 @@ void GenericMDNode::resolveCycles() {
   }
 }
 
+void GenericMDNode::recalculateHash() {
+  setHash(hash_combine_range(op_begin(), op_end()));
+#ifndef NDEBUG
+  {
+    SmallVector<Metadata *, 8> MDs(op_begin(), op_end());
+    unsigned RawHash = hash_combine_range(MDs.begin(), MDs.end());
+    assert(getHash() == RawHash &&
+           "Expected hash of MDOperand to equal hash of Metadata*");
+  }
+#endif
+}
+
 void MDNode::dropAllReferences() {
   for (unsigned I = 0, E = NumOperands; I != E; ++I)
     setOperand(I, nullptr);
@@ -545,18 +557,8 @@ void GenericMDNode::handleChangedOperand(void *Ref, Metadata *New) {
     return;
   }
 
-  // Re-calculate the hash.
-  setHash(hash_combine_range(op_begin(), op_end()));
-#ifndef NDEBUG
-  {
-    SmallVector<Metadata *, 8> MDs(op_begin(), op_end());
-    unsigned RawHash = hash_combine_range(MDs.begin(), MDs.end());
-    assert(getHash() == RawHash &&
-           "Expected hash of MDOperand to equal hash of Metadata*");
-  }
-#endif
-
   // Re-unique the node.
+  recalculateHash();
   GenericMDNodeInfo::KeyTy Key(this);
   auto I = Store.find_as(Key);
   if (I == Store.end()) {
