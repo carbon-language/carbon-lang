@@ -388,6 +388,8 @@ namespace llvm {
     bool ParseValueAsMetadata(Metadata *&MD, PerFunctionState *PFS);
     bool ParseMetadata(Metadata *&MD, PerFunctionState *PFS);
     bool ParseMDTuple(MDNode *&MD, bool IsDistinct = false);
+    bool ParseMDNode(MDNode *&MD);
+    bool ParseMDNodeTail(MDNode *&MD);
     bool ParseMDNodeVector(SmallVectorImpl<Metadata *> &MDs);
     bool ParseInstructionMetadata(Instruction *Inst, PerFunctionState *PFS);
 

@@ -1490,24 +1490,11 @@ bool LLParser::ParseInstructionMetadata(Instruction *Inst,
     unsigned MDK = M->getMDKindID(Name);
     Lex.Lex();
 
-    if (ParseToken(lltok::exclaim, "expected '!' here"))
+    MDNode *N;
+    if (ParseMDNode(N))
       return true;
 
-    // This code is similar to that of ParseMetadata.  However, only MDNodes
-    // are supported here.
-    if (Lex.getKind() == lltok::lbrace) {
-      MDNode *N;
-      if (ParseMDTuple(N))
-        return true;
-      Inst->setMetadata(MDK, N);
-    } else {
-      MDNode *Node;
-      if (ParseMDNodeID(Node))
-        return true;
-      // If we got the node, add it to the instruction.
-      Inst->setMetadata(MDK, Node);
-    }
-
+    Inst->setMetadata(MDK, N);
     if (MDK == LLVMContext::MD_tbaa)
       InstsWithTBAATag.push_back(Inst);
 
@@ -2912,6 +2899,23 @@ bool LLParser::ParseMDTuple(MDNode *&MD, bool IsDistinct) {
   return false;
 }
 
+/// MDNode:
+///  ::= !{ ... }
+///  ::= !7
+bool LLParser::ParseMDNode(MDNode *&N) {
+  return ParseToken(lltok::exclaim, "expected '!' here") ||
+         ParseMDNodeTail(N);
+}
+
+bool LLParser::ParseMDNodeTail(MDNode *&N) {
+  // !{ ... }
+  if (Lex.getKind() == lltok::lbrace)
+    return ParseMDTuple(N);
+
+  // !42
+  return ParseMDNodeID(N);
+}
+
 /// ParseMetadataAsValue
 ///  ::= metadata i32 %local
 ///  ::= metadata i32 @global
@@ -2978,18 +2982,9 @@ bool LLParser::ParseMetadata(Metadata *&MD, PerFunctionState *PFS) {
 
   // MDNode:
   // !{ ... }
-  if (Lex.getKind() == lltok::lbrace) {
-    MDNode *N;
-    if (ParseMDTuple(N))
-      return true;
-    MD = N;
-    return false;
-  }
-
-  // Standalone metadata reference
-  // !42
+  // !7
   MDNode *N;
-  if (ParseMDNodeID(N))
+  if (ParseMDNodeTail(N))
     return true;
   MD = N;
   return false;
