@@ -619,13 +619,12 @@ void MDNode::replaceOperandWith(unsigned I, Metadata *New) {
   if (getOperand(I) == New)
     return;
 
-  if (auto *N = dyn_cast<GenericMDNode>(this)) {
-    N->handleChangedOperand(mutable_begin() + I, New);
+  if (isStoredDistinctInContext() || isa<MDNodeFwdDecl>(this)) {
+    setOperand(I, New);
     return;
   }
 
-  assert(isa<MDNodeFwdDecl>(this) && "Expected an MDNode");
-  setOperand(I, New);
+  cast<GenericMDNode>(this)->handleChangedOperand(mutable_begin() + I, New);
 }
 
 void MDNode::setOperand(unsigned I, Metadata *New) {
