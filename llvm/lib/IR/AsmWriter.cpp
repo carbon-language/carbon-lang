@@ -1249,12 +1249,9 @@ static void WriteConstantInternal(raw_ostream &Out, const Constant *CV,
   Out << "<placeholder or erroneous Constant>";
 }
 
-static void WriteMDNodeBodyInternal(raw_ostream &Out, const MDNode *Node,
-                                    TypePrinting *TypePrinter,
-                                    SlotTracker *Machine,
-                                    const Module *Context) {
-  if (Node->isDistinct())
-    Out << "distinct ";
+static void writeMDTuple(raw_ostream &Out, const MDTuple *Node,
+                         TypePrinting *TypePrinter, SlotTracker *Machine,
+                         const Module *Context) {
   Out << "!{";
   for (unsigned mi = 0, me = Node->getNumOperands(); mi != me; ++mi) {
     const Metadata *MD = Node->getOperand(mi);
@@ -1273,6 +1270,27 @@ static void WriteMDNodeBodyInternal(raw_ostream &Out, const MDNode *Node,
   }
 
   Out << "}";
+}
+
+static void WriteMDNodeBodyInternal(raw_ostream &Out, const MDNode *Node,
+                                    TypePrinting *TypePrinter,
+                                    SlotTracker *Machine,
+                                    const Module *Context) {
+  assert(isa<UniquableMDNode>(Node) && "Expected uniquable MDNode");
+
+  auto *Uniquable = cast<UniquableMDNode>(Node);
+  if (Uniquable->isDistinct())
+    Out << "distinct ";
+
+  switch (Uniquable->getMetadataID()) {
+  default:
+    llvm_unreachable("Expected uniquable MDNode");
+#define HANDLE_UNIQUABLE_LEAF(CLASS)                                           \
+  case Metadata::CLASS##Kind:                                                  \
+    write##CLASS(Out, cast<CLASS>(Uniquable), TypePrinter, Machine, Context);  \
+    break;
+#include "llvm/IR/Metadata.def"
+  }
 }
 
 // Full implementation of printing a Value as an operand with support for
