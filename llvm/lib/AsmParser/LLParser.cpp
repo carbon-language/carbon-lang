@@ -47,27 +47,6 @@ bool LLParser::Run() {
 /// ValidateEndOfModule - Do final validity and sanity checks at the end of the
 /// module.
 bool LLParser::ValidateEndOfModule() {
-  // Handle any instruction metadata forward references.
-  if (!ForwardRefInstMetadata.empty()) {
-    for (DenseMap<Instruction*, std::vector<MDRef> >::iterator
-         I = ForwardRefInstMetadata.begin(), E = ForwardRefInstMetadata.end();
-         I != E; ++I) {
-      Instruction *Inst = I->first;
-      const std::vector<MDRef> &MDList = I->second;
-
-      for (unsigned i = 0, e = MDList.size(); i != e; ++i) {
-        unsigned SlotNo = MDList[i].MDSlot;
-
-        if (SlotNo >= NumberedMetadata.size() ||
-            NumberedMetadata[SlotNo] == nullptr)
-          return Error(MDList[i].Loc, "use of undefined metadata '!" +
-                       Twine(SlotNo) + "'");
-        Inst->setMetadata(MDList[i].MDKind, NumberedMetadata[SlotNo]);
-      }
-    }
-    ForwardRefInstMetadata.clear();
-  }
-
   for (unsigned I = 0, E = InstsWithTBAATag.size(); I < E; I++)
     UpgradeInstWithTBAATag(InstsWithTBAATag[I]);
 
@@ -1522,33 +1501,22 @@ bool LLParser::ParseInstructionMetadata(Instruction *Inst,
     unsigned MDK = M->getMDKindID(Name);
     Lex.Lex();
 
-    MDNode *Node;
-    SMLoc Loc = Lex.getLoc();
-
     if (ParseToken(lltok::exclaim, "expected '!' here"))
       return true;
 
-    // This code is similar to that of ParseMetadata, however it needs to
-    // have special-case code for a forward reference; see the comments on
-    // ForwardRefInstMetadata for details. Also, MDStrings are not supported
-    // at the top level here.
+    // This code is similar to that of ParseMetadata.  However, only MDNodes
+    // are supported here.
     if (Lex.getKind() == lltok::lbrace) {
       MDNode *N;
       if (ParseMDNode(N))
         return true;
       Inst->setMetadata(MDK, N);
     } else {
-      unsigned NodeID = 0;
-      if (ParseMDNodeID(Node, NodeID))
+      MDNode *Node;
+      if (ParseMDNodeID(Node))
         return true;
-      if (Node) {
-        // If we got the node, add it to the instruction.
-        Inst->setMetadata(MDK, Node);
-      } else {
-        MDRef R = { Loc, MDK, NodeID };
-        // Otherwise, remember that this should be resolved later.
-        ForwardRefInstMetadata[Inst].push_back(R);
-      }
+      // If we got the node, add it to the instruction.
+      Inst->setMetadata(MDK, Node);
     }
 
     if (MDK == LLVMContext::MD_tbaa)

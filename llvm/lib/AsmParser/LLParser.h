@@ -102,7 +102,6 @@ namespace llvm {
       SMLoc Loc;
       unsigned MDKind, MDSlot;
     };
-    DenseMap<Instruction*, std::vector<MDRef> > ForwardRefInstMetadata;
 
     SmallVector<Instruction*, 64> InstsWithTBAATag;
 
