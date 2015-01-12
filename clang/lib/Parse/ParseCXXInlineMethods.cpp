@@ -337,14 +337,16 @@ void Parser::ParseLexedMethodDeclaration(LateParsedMethodDeclaration &LM) {
         DefArgResult = ParseBraceInitializer();
       } else
         DefArgResult = ParseAssignmentExpression();
+      bool DefArgTokenFound =
+          Tok.is(tok::eof) && Tok.getEofData() == LM.DefaultArgs[I].Param;
+      if (DefArgTokenFound)
+        ConsumeAnyToken();
       DefArgResult = Actions.CorrectDelayedTyposInExpr(DefArgResult);
-      if (DefArgResult.isInvalid())
+      if (DefArgResult.isInvalid()) {
         Actions.ActOnParamDefaultArgumentError(LM.DefaultArgs[I].Param,
                                                EqualLoc);
-      else {
-        if (Tok.is(tok::eof) && Tok.getEofData() == LM.DefaultArgs[I].Param) {
-          ConsumeAnyToken();
-        } else {
+      } else {
+        if (!DefArgTokenFound) {
           // The last two tokens are the terminator and the saved value of
           // Tok; the last token in the default argument is the one before
           // those.
