@@ -588,7 +588,7 @@ bool LLParser::ParseStandaloneMetadata() {
 
   bool IsDistinct = EatIfPresent(lltok::kw_distinct);
   if (ParseToken(lltok::exclaim, "Expected '!' here") ||
-      ParseMDNode(Init, IsDistinct))
+      ParseMDTuple(Init, IsDistinct))
     return true;
 
   // See if this was forward referenced, if so, handle it.
@@ -1497,7 +1497,7 @@ bool LLParser::ParseInstructionMetadata(Instruction *Inst,
     // are supported here.
     if (Lex.getKind() == lltok::lbrace) {
       MDNode *N;
-      if (ParseMDNode(N))
+      if (ParseMDTuple(N))
         return true;
       Inst->setMetadata(MDK, N);
     } else {
@@ -2903,7 +2903,7 @@ bool LLParser::ParseGlobalValueVector(SmallVectorImpl<Constant *> &Elts) {
   return false;
 }
 
-bool LLParser::ParseMDNode(MDNode *&MD, bool IsDistinct) {
+bool LLParser::ParseMDTuple(MDNode *&MD, bool IsDistinct) {
   SmallVector<Metadata *, 16> Elts;
   if (ParseMDNodeVector(Elts))
     return true;
@@ -2973,7 +2973,7 @@ bool LLParser::ParseMetadata(Metadata *&MD, PerFunctionState *PFS) {
   // !{ ... }
   if (Lex.getKind() == lltok::lbrace) {
     MDNode *N;
-    if (ParseMDNode(N))
+    if (ParseMDTuple(N))
       return true;
     MD = N;
     return false;
