@@ -3,7 +3,7 @@
 
 #include <stdio.h>
 
-char bigchunk[1 << 29];
+char bigchunk[1 << 30];
 
 int main() {
   printf("Hello, world!\n");

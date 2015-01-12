@@ -79,6 +79,13 @@
 // || `[0x48000000, 0x4bffffff]` || ShadowGap  ||
 // || `[0x40000000, 0x47ffffff]` || LowShadow  ||
 // || `[0x00000000, 0x3fffffff]` || LowMem     ||
+//
+// Default Windows/i386 mapping:
+// || `[0x60000000, 0xffffffff]` || HighMem    ||
+// || `[0x4c000000, 0x5fffffff]` || HighShadow ||
+// || `[0x48000000, 0x4bffffff]` || ShadowGap  ||
+// || `[0x40000000, 0x47ffffff]` || LowShadow  ||
+// || `[0x00000000, 0x3fffffff]` || LowMem     ||
 
 static const u64 kDefaultShadowScale = 3;
 static const u64 kDefaultShadowOffset32 = 1ULL << 29;  // 0x20000000
@@ -91,6 +98,7 @@ static const u64 kMIPS64_ShadowOffset64 = 1ULL << 36;
 static const u64 kPPC64_ShadowOffset64 = 1ULL << 41;
 static const u64 kFreeBSD_ShadowOffset32 = 1ULL << 30;  // 0x40000000
 static const u64 kFreeBSD_ShadowOffset64 = 1ULL << 46;  // 0x400000000000
+static const u64 kWindowsShadowOffset32 = 1ULL << 30;  // 0x40000000
 
 #define SHADOW_SCALE kDefaultShadowScale
 #if SANITIZER_ANDROID
@@ -101,12 +109,12 @@ static const u64 kFreeBSD_ShadowOffset64 = 1ULL << 46;  // 0x400000000000
 #    define SHADOW_OFFSET kMIPS32_ShadowOffset32
 #  elif SANITIZER_FREEBSD
 #    define SHADOW_OFFSET kFreeBSD_ShadowOffset32
+#  elif SANITIZER_IOS
+#    define SHADOW_OFFSET kIosShadowOffset32
+#  elif SANITIZER_WINDOWS
+#    define SHADOW_OFFSET kWindowsShadowOffset32
 #  else
-#    if SANITIZER_IOS
-#      define SHADOW_OFFSET kIosShadowOffset32
-#    else
-#      define SHADOW_OFFSET kDefaultShadowOffset32
-#    endif
+#    define SHADOW_OFFSET kDefaultShadowOffset32
 #  endif
 # else
 #  if defined(__aarch64__)
