@@ -762,6 +762,7 @@ private:
   void handleChangedOperand(void *Ref, Metadata *New);
 
   void resolve();
+  void resolveAfterOperandChange(Metadata *Old, Metadata *New);
 };
 
 /// \brief Forward declaration of metadata.

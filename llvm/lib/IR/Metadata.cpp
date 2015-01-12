@@ -449,6 +449,22 @@ void GenericMDNode::resolve() {
   Uses->resolveAllUses();
 }
 
+void GenericMDNode::resolveAfterOperandChange(Metadata *Old, Metadata *New) {
+  assert(SubclassData32 != 0 && "Expected unresolved operands");
+
+  // Check if the last unresolved operand has just been resolved; if so,
+  // resolve this as well.
+  if (isOperandUnresolved(Old)) {
+    if (!isOperandUnresolved(New)) {
+      if (!--SubclassData32)
+        resolve();
+    }
+  } else {
+    // Operands shouldn't become unresolved.
+    assert(isOperandUnresolved(New) && "Operand just became unresolved");
+  }
+}
+
 void GenericMDNode::resolveCycles() {
   if (isResolved())
     return;
@@ -546,21 +562,8 @@ void GenericMDNode::handleChangedOperand(void *Ref, Metadata *New) {
   if (I == Store.end()) {
     Store.insert(this);
 
-    if (!isResolved()) {
-      assert(SubclassData32 != 0 && "Expected unresolved operands");
-
-      // Check if the last unresolved operand has just been resolved; if so,
-      // resolve this as well.
-      if (isOperandUnresolved(Old)) {
-        if (!isOperandUnresolved(New)) {
-          if (!--SubclassData32)
-            resolve();
-        }
-      } else {
-        // Operands shouldn't become unresolved.
-        assert(isOperandUnresolved(New) && "Operand just became unresolved");
-      }
-    }
+    if (!isResolved())
+      resolveAfterOperandChange(Old, New);
 
     return;
   }
