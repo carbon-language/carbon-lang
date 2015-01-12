@@ -651,7 +651,9 @@ public:
   ///
   /// Distinct nodes are not uniqued, and will not be returned by \a
   /// MDNode::get().
-  bool isDistinct() const { return IsDistinctInContext; }
+  bool isDistinct() const {
+    return isStoredDistinctInContext() || isa<MDNodeFwdDecl>(this);
+  }
 
 protected:
   /// \brief Set an operand.

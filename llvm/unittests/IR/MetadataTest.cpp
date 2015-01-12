@@ -269,6 +269,12 @@ TEST_F(MDNodeTest, getDistinct) {
   ASSERT_EQ(Empty, MDNode::get(Context, None));
 }
 
+TEST_F(MDNodeTest, TempIsDistinct) {
+  MDNode *T = MDNode::getTemporary(Context, None);
+  EXPECT_TRUE(T->isDistinct());
+  MDNode::deleteTemporary(T);
+}
+
 TEST_F(MDNodeTest, getDistinctWithUnresolvedOperands) {
   // temporary !{}
   MDNodeFwdDecl *Temp = MDNode::getTemporary(Context, None);
