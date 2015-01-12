@@ -314,6 +314,7 @@ TEST_F(MDNodeTest, handleChangedOperandRecursion) {
   Metadata *Ops3[] = {N2};
   MDNode *N3 = MDNode::get(Context, Ops3);
   Temp3->replaceAllUsesWith(N3);
+  delete Temp3;
 
   // !4 = !{!1}
   Metadata *Ops4[] = {N1};
