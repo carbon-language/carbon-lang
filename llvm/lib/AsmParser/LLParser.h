@@ -265,7 +265,6 @@ namespace llvm {
     bool ParseNamedMetadata();
     bool ParseMDString(MDString *&Result);
     bool ParseMDNodeID(MDNode *&Result);
-    bool ParseMDNodeID(MDNode *&Result, unsigned &SlotNo);
     bool ParseUnnamedAttrGrp();
     bool ParseFnAttributeValuePairs(AttrBuilder &B,
                                     std::vector<unsigned> &FwdRefAttrGrps,

@@ -518,28 +518,17 @@ bool LLParser::ParseMDString(MDString *&Result) {
 
 // MDNode:
 //   ::= '!' MDNodeNumber
-//
-/// This version of ParseMDNodeID returns the slot number and null in the case
-/// of a forward reference.
-bool LLParser::ParseMDNodeID(MDNode *&Result, unsigned &SlotNo) {
-  // !{ ..., !42, ... }
-  if (ParseUInt32(SlotNo)) return true;
-
-  // Check existing MDNode.
-  if (SlotNo < NumberedMetadata.size() && NumberedMetadata[SlotNo] != nullptr)
-    Result = NumberedMetadata[SlotNo];
-  else
-    Result = nullptr;
-  return false;
-}
-
 bool LLParser::ParseMDNodeID(MDNode *&Result) {
   // !{ ..., !42, ... }
   unsigned MID = 0;
-  if (ParseMDNodeID(Result, MID)) return true;
+  if (ParseUInt32(MID))
+    return true;
 
   // If not a forward reference, just return it now.
-  if (Result) return false;
+  if (MID < NumberedMetadata.size() && NumberedMetadata[MID] != nullptr) {
+    Result = NumberedMetadata[MID];
+    return false;
+  }
 
   // Otherwise, create MDNode forward reference.
   MDNodeFwdDecl *FwdNode = MDNode::getTemporary(Context, None);
