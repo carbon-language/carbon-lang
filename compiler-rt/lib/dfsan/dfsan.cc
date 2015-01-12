@@ -256,7 +256,7 @@ dfsan_read_label(const void *addr, uptr size) {
   return __dfsan_union_load(shadow_for(addr), size);
 }
 
-SANITIZER_INTERFACE_ATTRIBUTE
+extern "C" SANITIZER_INTERFACE_ATTRIBUTE
 const struct dfsan_label_info *dfsan_get_label_info(dfsan_label label) {
   return &__dfsan_label_info[label];
 }
