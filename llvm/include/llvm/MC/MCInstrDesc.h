@@ -44,11 +44,12 @@ namespace MCOI {
 
   /// Operand Type - Operands are tagged with one of the values of this enum.
   enum OperandType {
-    OPERAND_UNKNOWN,
-    OPERAND_IMMEDIATE,
-    OPERAND_REGISTER,
-    OPERAND_MEMORY,
-    OPERAND_PCREL
+    OPERAND_UNKNOWN      = 0,
+    OPERAND_IMMEDIATE    = 1,
+    OPERAND_REGISTER     = 2,
+    OPERAND_MEMORY       = 3,
+    OPERAND_PCREL        = 4,
+    OPERAND_FIRST_TARGET = 5
   };
 }
 

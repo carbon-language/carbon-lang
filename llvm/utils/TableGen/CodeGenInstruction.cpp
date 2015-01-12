@@ -68,10 +68,13 @@ CGIOperandList::CGIOperandList(Record *R) : TheDef(R) {
     std::string PrintMethod = "printOperand";
     std::string EncoderMethod;
     std::string OperandType = "OPERAND_UNKNOWN";
+    std::string OperandNamespace = "MCOI";
     unsigned NumOps = 1;
     DagInit *MIOpInfo = nullptr;
     if (Rec->isSubClassOf("RegisterOperand")) {
       PrintMethod = Rec->getValueAsString("PrintMethod");
+      OperandType = Rec->getValueAsString("OperandType");
+      OperandNamespace = Rec->getValueAsString("OperandNamespace");
     } else if (Rec->isSubClassOf("Operand")) {
       PrintMethod = Rec->getValueAsString("PrintMethod");
       OperandType = Rec->getValueAsString("OperandType");
@@ -113,8 +116,8 @@ CGIOperandList::CGIOperandList(Record *R) : TheDef(R) {
                       Twine(i) + " has the same name as a previous operand!");
 
     OperandList.push_back(OperandInfo(Rec, ArgName, PrintMethod, EncoderMethod,
-                                      OperandType, MIOperandNo, NumOps,
-                                      MIOpInfo));
+                                      OperandNamespace + "::" + OperandType,
+				      MIOperandNo, NumOps, MIOpInfo));
     MIOperandNo += NumOps;
   }
 

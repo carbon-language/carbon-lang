@@ -624,6 +624,9 @@ class RegisterOperand<RegisterClass regclass, string pm = "printOperand">
   // can match a subset of some other class, in which case the AsmOperandClass
   // should declare the other operand as one of its super classes.
   AsmOperandClass ParserMatchClass;
+
+  string OperandNamespace = "MCOI";
+  string OperandType = "OPERAND_REGISTER";
 }
 
 let OperandType = "OPERAND_IMMEDIATE" in {
