@@ -7,6 +7,8 @@
 const int N = 10;
 
 Val Arr[N];
+dependent<Val> v;
+dependent<Val> *pv;
 Val &func(Val &);
 void sideEffect(int);
 
@@ -49,6 +51,25 @@ void aliasing() {
   // CHECK-NEXT: Val t = elem;
   // CHECK-NEXT: int y = t.x;
   // CHECK-NEXT: int z = elem.x + t.x;
+
+  // The same for pseudo-arrays like std::vector<T> (or here dependent<Val>)
+  // which provide a subscript operator[].
+  for (int i = 0; i < v.size(); ++i) {
+    Val &t = v[i]; { }
+    int y = t.x;
+  }
+  // CHECK: for (auto & t : v)
+  // CHECK-NEXT: { }
+  // CHECK-NEXT: int y = t.x;
+
+  // The same with a call to at()
+  for (int i = 0; i < pv->size(); ++i) {
+    Val &t = pv->at(i); { }
+    int y = t.x;
+  }
+  // CHECK: for (auto & t : *pv)
+  // CHECK-NEXT: { }
+  // CHECK-NEXT: int y = t.x;
 
   for (int i = 0; i < N; ++i) {
     Val &t = func(Arr[i]);
