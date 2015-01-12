@@ -129,6 +129,10 @@ TEST_F(MDNodeTest, Delete) {
   delete I;
 }
 
+TEST_F(MDNodeTest, DeleteMDNodeFwdDecl) {
+  delete MDNode::getTemporary(Context, None);
+}
+
 TEST_F(MDNodeTest, SelfReference) {
   // !0 = !{!0}
   // !1 = !{!0}

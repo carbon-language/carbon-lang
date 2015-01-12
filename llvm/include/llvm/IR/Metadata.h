@@ -818,9 +818,11 @@ class MDNodeFwdDecl : public MDNode, ReplaceableMetadataImpl {
 
   MDNodeFwdDecl(LLVMContext &C, ArrayRef<Metadata *> Vals)
       : MDNode(C, MDNodeFwdDeclKind, Vals) {}
-  ~MDNodeFwdDecl() { dropAllReferences(); }
 
 public:
+  ~MDNodeFwdDecl() { dropAllReferences(); }
+  using MDNode::operator delete;
+
   static bool classof(const Metadata *MD) {
     return MD->getMetadataID() == MDNodeFwdDeclKind;
   }
