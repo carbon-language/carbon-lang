@@ -761,9 +761,6 @@ public:
 private:
   void handleChangedOperand(void *Ref, Metadata *New);
 
-  bool hasUnresolvedOperands() const { return SubclassData32; }
-  void incrementUnresolvedOperands() { ++SubclassData32; }
-  void decrementUnresolvedOperands() { --SubclassData32; }
   void resolve();
 };
 

@@ -228,8 +228,7 @@ void ReplaceableMetadataImpl::resolveAllUses(bool ResolveUsers) {
       continue;
     if (OwnerMD->isResolved())
       continue;
-    OwnerMD->decrementUnresolvedOperands();
-    if (!OwnerMD->hasUnresolvedOperands())
+    if (!--OwnerMD->SubclassData32)
       OwnerMD->resolve();
   }
 }
@@ -418,12 +417,15 @@ GenericMDNode::GenericMDNode(LLVMContext &C, ArrayRef<Metadata *> Vals,
     return;
 
   // Check whether any operands are unresolved, requiring re-uniquing.
+  unsigned NumUnresolved = 0;
   for (const auto &Op : operands())
-    if (isOperandUnresolved(Op))
-      incrementUnresolvedOperands();
+    NumUnresolved += unsigned(isOperandUnresolved(Op));
 
-  if (hasUnresolvedOperands())
-    ReplaceableUses.reset(new ReplaceableMetadataImpl);
+  if (!NumUnresolved)
+    return;
+
+  ReplaceableUses.reset(new ReplaceableMetadataImpl);
+  SubclassData32 = NumUnresolved;
 }
 
 GenericMDNode::~GenericMDNode() {
@@ -545,12 +547,13 @@ void GenericMDNode::handleChangedOperand(void *Ref, Metadata *New) {
     Store.insert(this);
 
     if (!isResolved()) {
+      assert(SubclassData32 != 0 && "Expected unresolved operands");
+
       // Check if the last unresolved operand has just been resolved; if so,
       // resolve this as well.
       if (isOperandUnresolved(Old)) {
         if (!isOperandUnresolved(New)) {
-          decrementUnresolvedOperands();
-          if (!hasUnresolvedOperands())
+          if (!--SubclassData32)
             resolve();
         }
       } else {
