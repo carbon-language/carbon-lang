@@ -247,6 +247,10 @@ void MipsLongBranch::replaceBranch(MachineBasicBlock &MBB, Iter Br,
 }
 
 // Expand branch instructions to long branches.
+// TODO: This function has to be fixed for beqz16 and bnez16, because it
+// currently assumes that all branches have 16-bit offsets, and will produce
+// wrong code if branches whose allowed offsets are [-128, -126, ..., 126]
+// are present.
 void MipsLongBranch::expandToLongBranch(MBBInfo &I) {
   MachineBasicBlock::iterator Pos;
   MachineBasicBlock *MBB = I.Br->getParent(), *TgtMBB = getTargetMBB(*I.Br);

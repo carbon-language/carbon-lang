@@ -227,6 +227,17 @@ class BRKSDBBP16_FM_MM<bits<6> op> {
   let Inst{3-0}   = code_;
 }
 
+class BEQNEZ_FM_MM16<bits<6> op> {
+  bits<3> rs;
+  bits<7> offset;
+
+  bits<16> Inst;
+
+  let Inst{15-10} = op;
+  let Inst{9-7}   = rs;
+  let Inst{6-0}   = offset;
+}
+
 //===----------------------------------------------------------------------===//
 // MicroMIPS 32-bit Instruction Formats
 //===----------------------------------------------------------------------===//

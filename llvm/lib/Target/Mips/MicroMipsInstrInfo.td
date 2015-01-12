@@ -128,6 +128,13 @@ def calltarget_mm : Operand<iPTR> {
   let EncoderMethod = "getJumpTargetOpValueMM";
 }
 
+def brtarget7_mm : Operand<OtherVT> {
+  let EncoderMethod = "getBranchTarget7OpValueMM";
+  let OperandType   = "OPERAND_PCREL";
+  let DecoderMethod = "DecodeBranchTarget7MM";
+  let ParserMatchClass = MipsJumpTargetAsmOperand;
+}
+
 def brtarget_mm : Operand<OtherVT> {
   let EncoderMethod = "getBranchTargetOpValueMM";
   let OperandType   = "OPERAND_PCREL";
@@ -382,6 +389,15 @@ class BrkSdbbp16MM<string opstr> :
                   !strconcat(opstr, "\t$code_"),
                   [], NoItinerary, FrmOther>;
 
+class CBranchZeroMM<string opstr, DAGOperand opnd, RegisterOperand RO> :
+  MicroMipsInst16<(outs), (ins RO:$rs, opnd:$offset),
+                  !strconcat(opstr, "\t$rs, $offset"), [], IIBranch, FrmI> {
+  let isBranch = 1;
+  let isTerminator = 1;
+  let hasDelaySlot = 1;
+  let Defs = [AT];
+}
+
 // MicroMIPS Jump and Link (Call) - Short Delay Slot
 let isCall = 1, hasDelaySlot = 1, Defs = [RA] in {
   class JumpLinkMM<string opstr, DAGOperand opnd> :
@@ -512,6 +528,10 @@ def JALRS16_MM : JumpLinkRegSMM16<"jalrs16", GPR32Opnd>, JALR_FM_MM16<0x0f>;
 def JRC16_MM : JumpRegCMM16<"jrc", GPR32Opnd>, JALR_FM_MM16<0x0d>;
 def JRADDIUSP : JumpRAddiuStackMM16, JRADDIUSP_FM_MM16<0x18>;
 def JR16_MM : JumpRegMM16<"jr16", GPR32Opnd>, JALR_FM_MM16<0x0c>;
+def BEQZ16_MM : CBranchZeroMM<"beqz16", brtarget7_mm, GPRMM16Opnd>,
+                BEQNEZ_FM_MM16<0x23>;
+def BNEZ16_MM : CBranchZeroMM<"bnez16", brtarget7_mm, GPRMM16Opnd>,
+                BEQNEZ_FM_MM16<0x2b>;
 def BREAK16_MM : BrkSdbbp16MM<"break16">, BRKSDBBP16_FM_MM<0x28>;
 def SDBBP16_MM : BrkSdbbp16MM<"sdbbp16">, BRKSDBBP16_FM_MM<0x2C>;
 

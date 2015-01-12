@@ -468,3 +468,9 @@
 
 # CHECK: sw $4, 124($sp)
 0xc8 0x9f
+
+# CHECK: beqz16 $6, 20
+0x8f 0x0a
+
+# CHECK: bnez16 $6, 20
+0xaf 0x0a

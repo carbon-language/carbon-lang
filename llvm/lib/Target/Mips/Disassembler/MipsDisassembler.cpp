@@ -228,6 +228,13 @@ static DecodeStatus DecodeBranchTarget26(MCInst &Inst,
                                          uint64_t Address,
                                          const void *Decoder);
 
+// DecodeBranchTarget7MM - Decode microMIPS branch offset, which is
+// shifted left by 1 bit.
+static DecodeStatus DecodeBranchTarget7MM(MCInst &Inst,
+                                          unsigned Offset,
+                                          uint64_t Address,
+                                          const void *Decoder);
+
 // DecodeBranchTargetMM - Decode microMIPS branch offset, which is
 // shifted left by 1 bit.
 static DecodeStatus DecodeBranchTargetMM(MCInst &Inst,
@@ -1536,6 +1543,15 @@ static DecodeStatus DecodeBranchTarget26(MCInst &Inst,
                                          const void *Decoder) {
   int32_t BranchOffset = SignExtend32<26>(Offset) * 4;
 
+  Inst.addOperand(MCOperand::CreateImm(BranchOffset));
+  return MCDisassembler::Success;
+}
+
+static DecodeStatus DecodeBranchTarget7MM(MCInst &Inst,
+                                          unsigned Offset,
+                                          uint64_t Address,
+                                          const void *Decoder) {
+  int32_t BranchOffset = SignExtend32<7>(Offset) << 1;
   Inst.addOperand(MCOperand::CreateImm(BranchOffset));
   return MCDisassembler::Success;
 }

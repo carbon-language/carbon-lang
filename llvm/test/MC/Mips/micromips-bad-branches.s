@@ -126,6 +126,11 @@
 # CHECK: error: branch target out of range
 # CHECK:        bc1t $fcc0, 65536
 
+# CHECK: error: branch to misaligned address
+# CHECK:        beqz16 $6, 31
+# CHECK: error: branch target out of range
+# CHECK:        beqz16 $6, 130
+
         b -65535
         b -65536
         b -65537
@@ -223,3 +228,6 @@
         bc1t $fcc0, 65534
         bc1t $fcc0, 65535
         bc1t $fcc0, 65536
+
+        beqz16 $6, 31
+        beqz16 $6, 130
