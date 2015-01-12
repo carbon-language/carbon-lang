@@ -144,6 +144,22 @@ different:
   ret i1 %cmp3
 }
 
+; CHECK-LABEL: @test6_fp(
+define i1 @test6_fp(float %x, float %y) {
+  %cmp2 = fcmp une float %x, %y
+  %cmp = fcmp oeq float %x, %y
+  %cmp3 = fcmp oeq float  %x, %y
+  br i1 %cmp, label %same, label %different
+
+same:
+; CHECK: ret i1 false
+  ret i1 %cmp2
+
+different:
+; CHECK: ret i1 false
+  ret i1 %cmp3
+}
+
 ; CHECK-LABEL: @test7(
 define i1 @test7(i32 %x, i32 %y) {
   %cmp = icmp sgt i32 %x, %y
@@ -160,11 +176,43 @@ different:
   ret i1 %cmp3
 }
 
+; CHECK-LABEL: @test7_fp(
+define i1 @test7_fp(float %x, float %y) {
+  %cmp = fcmp ogt float %x, %y
+  br i1 %cmp, label %same, label %different
+
+same:
+  %cmp2 = fcmp ule float %x, %y
+; CHECK: ret i1 false
+  ret i1 %cmp2
+
+different:
+  %cmp3 = fcmp ogt float %x, %y
+; CHECK: ret i1 false
+  ret i1 %cmp3
+}
+
 ; CHECK-LABEL: @test8(
 define i1 @test8(i32 %x, i32 %y) {
   %cmp2 = icmp sle i32 %x, %y
   %cmp = icmp sgt i32 %x, %y
   %cmp3 = icmp sgt i32 %x, %y
+  br i1 %cmp, label %same, label %different
+
+same:
+; CHECK: ret i1 false
+  ret i1 %cmp2
+
+different:
+; CHECK: ret i1 false
+  ret i1 %cmp3
+}
+
+; CHECK-LABEL: @test8_fp(
+define i1 @test8_fp(float %x, float %y) {
+  %cmp2 = fcmp ule float %x, %y
+  %cmp = fcmp ogt float %x, %y
+  %cmp3 = fcmp ogt float %x, %y
   br i1 %cmp, label %same, label %different
 
 same:

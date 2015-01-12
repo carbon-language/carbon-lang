@@ -2171,13 +2171,18 @@ bool GVN::propagateEquality(Value *LHS, Value *RHS,
     // If we are propagating an equality like "(A == B)" == "true" then also
     // propagate the equality A == B.  When propagating a comparison such as
     // "(A >= B)" == "true", replace all instances of "A < B" with "false".
-    if (ICmpInst *Cmp = dyn_cast<ICmpInst>(LHS)) {
+    if (CmpInst *Cmp = dyn_cast<CmpInst>(LHS)) {
       Value *Op0 = Cmp->getOperand(0), *Op1 = Cmp->getOperand(1);
 
       // If "A == B" is known true, or "A != B" is known false, then replace
       // A with B everywhere in the scope.
       if ((isKnownTrue && Cmp->getPredicate() == CmpInst::ICMP_EQ) ||
           (isKnownFalse && Cmp->getPredicate() == CmpInst::ICMP_NE))
+        Worklist.push_back(std::make_pair(Op0, Op1));
+
+      // Handle the floating point versions of equality comparisons too.
+      if ((isKnownTrue && Cmp->getPredicate() == CmpInst::FCMP_OEQ) ||
+          (isKnownFalse && Cmp->getPredicate() == CmpInst::FCMP_UNE))
         Worklist.push_back(std::make_pair(Op0, Op1));
 
       // If "A >= B" is known true, replace "A < B" with false everywhere.

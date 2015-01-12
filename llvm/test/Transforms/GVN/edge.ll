@@ -58,3 +58,38 @@ bb2:
 ; CHECK: call void @g(i1 %y)
   ret void
 }
+
+define double @fcmp_oeq(double %x, double %y) {
+entry:
+  %cmp = fcmp oeq double %y, 2.0
+  br i1 %cmp, label %if, label %return
+
+if:
+  %div = fdiv double %x, %y
+  br label %return
+
+return:
+  %retval.0 = phi double [ %div, %if ], [ %x, %entry ]
+  ret double %retval.0
+
+; CHECK-LABEL: define double @fcmp_oeq(
+; CHECK: %div = fdiv double %x, 2.000000e+00
+}
+
+define double @fcmp_une(double %x, double %y) {
+entry:
+  %cmp = fcmp une double %y, 2.0
+  br i1 %cmp, label %return, label %else
+
+else:
+  %div = fdiv double %x, %y
+  br label %return
+
+return:
+  %retval.0 = phi double [ %div, %else ], [ %x, %entry ]
+  ret double %retval.0
+
+; CHECK-LABEL: define double @fcmp_une(
+; CHECK: %div = fdiv double %x, 2.000000e+00
+}
+
