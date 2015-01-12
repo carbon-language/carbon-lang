@@ -27,7 +27,7 @@ define void @s_usubo_i32(i32 addrspace(1)* %out, i1 addrspace(1)* %carryout, i32
 }
 
 ; FUNC-LABEL: {{^}}v_usubo_i32:
-; SI: v_sub_i32_e32
+; SI: v_subrev_i32_e32
 define void @v_usubo_i32(i32 addrspace(1)* %out, i1 addrspace(1)* %carryout, i32 addrspace(1)* %aptr, i32 addrspace(1)* %bptr) nounwind {
   %a = load i32 addrspace(1)* %aptr, align 4
   %b = load i32 addrspace(1)* %bptr, align 4

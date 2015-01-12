@@ -1682,10 +1682,8 @@ SDValue SITargetLowering::PerformDAGCombine(SDNode *N,
 static bool isVSrc(unsigned RegClass) {
   switch(RegClass) {
     default: return false;
-    case AMDGPU::VSrc_32RegClassID:
-    case AMDGPU::VCSrc_32RegClassID:
-    case AMDGPU::VSrc_64RegClassID:
-    case AMDGPU::VCSrc_64RegClassID:
+    case AMDGPU::VS_32RegClassID:
+    case AMDGPU::VS_64RegClassID:
       return true;
   }
 }

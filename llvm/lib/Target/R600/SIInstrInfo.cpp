@@ -1023,9 +1023,9 @@ bool SIInstrInfo::isImmOperandLegal(const MachineInstr *MI, unsigned OpNo,
     return false;
 
   if (isLiteralConstant(MO))
-    return RI.regClassCanUseLiteralConstant(OpInfo.RegClass);
+    return RI.opCanUseLiteralConstant(OpInfo.OperandType);
 
-  return RI.regClassCanUseInlineConstant(OpInfo.RegClass);
+  return RI.opCanUseInlineConstant(OpInfo.OperandType);
 }
 
 bool SIInstrInfo::canFoldOffset(unsigned OffsetSize, unsigned AS) const {

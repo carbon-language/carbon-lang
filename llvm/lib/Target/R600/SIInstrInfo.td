@@ -492,7 +492,7 @@ multiclass SOP2_64_32 <sop2 op, string opName, list<dag> pattern> {
 }
 
 
-class SOPC_Helper <bits<7> op, RegisterClass rc, ValueType vt,
+class SOPC_Helper <bits<7> op, RegisterOperand rc, ValueType vt,
                     string opName, PatLeaf cond> : SOPC <
   op, (outs SCCReg:$dst), (ins rc:$src0, rc:$src1),
   opName#" $dst, $src0, $src1", []>;
@@ -620,7 +620,7 @@ class getVALUDstForVT<ValueType VT> {
 // Returns the register class to use for source 0 of VOP[12C]
 // instructions for the given VT.
 class getVOPSrc0ForVT<ValueType VT> {
-  RegisterClass ret = !if(!eq(VT.Size, 32), VSrc_32, VSrc_64);
+  RegisterOperand ret = !if(!eq(VT.Size, 32), VSrc_32, VSrc_64);
 }
 
 // Returns the register class to use for source 1 of VOP[12C] for the
@@ -632,7 +632,7 @@ class getVOPSrc1ForVT<ValueType VT> {
 // Returns the register classes for the source arguments of a VOP[12C]
 // instruction for the given SrcVTs.
 class getInRC32 <list<ValueType> SrcVT> {
-  list<RegisterClass> ret = [
+  list<DAGOperand> ret = [
     getVOPSrc0ForVT<SrcVT[0]>.ret,
     getVOPSrc1ForVT<SrcVT[1]>.ret
   ];
@@ -641,13 +641,13 @@ class getInRC32 <list<ValueType> SrcVT> {
 // Returns the register class to use for sources of VOP3 instructions for the
 // given VT.
 class getVOP3SrcForVT<ValueType VT> {
-  RegisterClass ret = !if(!eq(VT.Size, 32), VCSrc_32, VCSrc_64);
+  RegisterOperand ret = !if(!eq(VT.Size, 32), VCSrc_32, VCSrc_64);
 }
 
 // Returns the register classes for the source arguments of a VOP3
 // instruction for the given SrcVTs.
 class getInRC64 <list<ValueType> SrcVT> {
-  list<RegisterClass> ret = [
+  list<DAGOperand> ret = [
     getVOP3SrcForVT<SrcVT[0]>.ret,
     getVOP3SrcForVT<SrcVT[1]>.ret,
     getVOP3SrcForVT<SrcVT[2]>.ret
@@ -661,15 +661,15 @@ class hasModifiers<ValueType SrcVT> {
 }
 
 // Returns the input arguments for VOP[12C] instructions for the given SrcVT.
-class getIns32 <RegisterClass Src0RC, RegisterClass Src1RC, int NumSrcArgs> {
+class getIns32 <RegisterOperand Src0RC, RegisterClass Src1RC, int NumSrcArgs> {
   dag ret = !if(!eq(NumSrcArgs, 1), (ins Src0RC:$src0),               // VOP1
             !if(!eq(NumSrcArgs, 2), (ins Src0RC:$src0, Src1RC:$src1), // VOP2
                                     (ins)));
 }
 
 // Returns the input arguments for VOP3 instructions for the given SrcVT.
-class getIns64 <RegisterClass Src0RC, RegisterClass Src1RC,
-                RegisterClass Src2RC, int NumSrcArgs,
+class getIns64 <RegisterOperand Src0RC, RegisterOperand Src1RC,
+                RegisterOperand Src2RC, int NumSrcArgs,
                 bit HasModifiers> {
 
   dag ret =
@@ -740,11 +740,11 @@ class VOPProfile <list<ValueType> _ArgVT> {
   field ValueType Src1VT = ArgVT[2];
   field ValueType Src2VT = ArgVT[3];
   field RegisterClass DstRC = getVALUDstForVT<DstVT>.ret;
-  field RegisterClass Src0RC32 = getVOPSrc0ForVT<Src0VT>.ret;
+  field RegisterOperand Src0RC32 = getVOPSrc0ForVT<Src0VT>.ret;
   field RegisterClass Src1RC32 = getVOPSrc1ForVT<Src1VT>.ret;
-  field RegisterClass Src0RC64 = getVOP3SrcForVT<Src0VT>.ret;
-  field RegisterClass Src1RC64 = getVOP3SrcForVT<Src1VT>.ret;
-  field RegisterClass Src2RC64 = getVOP3SrcForVT<Src2VT>.ret;
+  field RegisterOperand Src0RC64 = getVOP3SrcForVT<Src0VT>.ret;
+  field RegisterOperand Src1RC64 = getVOP3SrcForVT<Src1VT>.ret;
+  field RegisterOperand Src2RC64 = getVOP3SrcForVT<Src2VT>.ret;
 
   field int NumSrcArgs = getNumSrcArgs<Src1VT, Src2VT>.ret;
   field bit HasModifiers = hasModifiers<Src0VT>.ret;
@@ -1240,7 +1240,7 @@ class VOP3InstVI <bits<10> op, string opName, VOPProfile P,
   P.NumSrcArgs, P.HasModifiers
 >;
 
-multiclass VOP3b_Helper <vop op, RegisterClass vrc, RegisterClass arc,
+multiclass VOP3b_Helper <vop op, RegisterClass vrc, RegisterOperand arc,
                     string opName, list<dag> pattern> :
   VOP3b_2_m <
   op, (outs vrc:$vdst, SReg_64:$sdst),

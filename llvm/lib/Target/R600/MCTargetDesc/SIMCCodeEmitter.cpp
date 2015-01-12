@@ -85,14 +85,10 @@ MCCodeEmitter *llvm::createSIMCCodeEmitter(const MCInstrInfo &MCII,
 
 bool SIMCCodeEmitter::isSrcOperand(const MCInstrDesc &Desc,
                                    unsigned OpNo) const {
-  unsigned RegClass = Desc.OpInfo[OpNo].RegClass;
-  return (AMDGPU::SSrc_32RegClassID == RegClass) ||
-         (AMDGPU::SSrc_64RegClassID == RegClass) ||
-         (AMDGPU::VSrc_32RegClassID == RegClass) ||
-         (AMDGPU::VSrc_64RegClassID == RegClass) ||
-         (AMDGPU::VCSrc_32RegClassID == RegClass) ||
-         (AMDGPU::VCSrc_64RegClassID == RegClass) ||
-         (AMDGPU::SCSrc_32RegClassID == RegClass);
+  unsigned OpType = Desc.OpInfo[OpNo].OperandType;
+
+  return OpType == AMDGPU::OPERAND_REG_IMM32 ||
+         OpType == AMDGPU::OPERAND_REG_INLINE_C;
 }
 
 uint32_t SIMCCodeEmitter::getLitEncoding(const MCOperand &MO) const {

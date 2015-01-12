@@ -14,6 +14,7 @@
 
 #include "AMDGPUMCTargetDesc.h"
 #include "AMDGPUMCAsmInfo.h"
+#include "SIDefines.h"
 #include "InstPrinter/AMDGPUInstPrinter.h"
 #include "llvm/MC/MCCodeGenInfo.h"
 #include "llvm/MC/MCInstrInfo.h"

@@ -8,6 +8,8 @@
 /// \file
 //===----------------------------------------------------------------------===//
 
+#include "llvm/MC/MCInstrDesc.h"
+
 #ifndef LLVM_LIB_TARGET_R600_SIDEFINES_H
 #define LLVM_LIB_TARGET_R600_SIDEFINES_H
 
@@ -35,6 +37,17 @@ enum {
   MIMG = 1 << 18,
   FLAT = 1 << 19
 };
+}
+
+namespace llvm {
+namespace AMDGPU {
+  enum OperandType {
+    /// Operand with register or 32-bit immediate
+    OPERAND_REG_IMM32 = llvm::MCOI::OPERAND_FIRST_TARGET,
+    /// Operand with register or inline constant
+    OPERAND_REG_INLINE_C
+  };
+}
 }
 
 namespace SIInstrFlags {

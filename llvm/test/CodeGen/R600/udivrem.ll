@@ -32,8 +32,8 @@
 ; SI-DAG: v_sub_i32_e32 [[NEG_RCP_LO:v[0-9]+]], 0, [[RCP_LO]]
 ; SI: v_cndmask_b32_e64
 ; SI: v_mul_hi_u32 [[E:v[0-9]+]], {{v[0-9]+}}, [[RCP]]
-; SI-DAG: v_add_i32_e32 [[RCP_A_E:v[0-9]+]], [[RCP]], [[E]]
-; SI-DAG: v_sub_i32_e32 [[RCP_S_E:v[0-9]+]], [[RCP]], [[E]]
+; SI-DAG: v_add_i32_e32 [[RCP_A_E:v[0-9]+]], [[E]], [[RCP]]
+; SI-DAG: v_subrev_i32_e32 [[RCP_S_E:v[0-9]+]], [[E]], [[RCP]]
 ; SI: v_cndmask_b32_e64
 ; SI: v_mul_hi_u32 [[Quotient:v[0-9]+]]
 ; SI: v_mul_lo_i32 [[Num_S_Remainder:v[0-9]+]]
@@ -112,8 +112,8 @@ define void @test_udivrem(i32 addrspace(1)* %out, i32 %x, i32 %y) {
 ; SI-DAG: v_sub_i32_e32 [[FIRST_NEG_RCP_LO:v[0-9]+]], 0, [[FIRST_RCP_LO]]
 ; SI-DAG: v_cndmask_b32_e64
 ; SI-DAG: v_mul_hi_u32 [[FIRST_E:v[0-9]+]], {{v[0-9]+}}, [[FIRST_RCP]]
-; SI-DAG: v_add_i32_e32 [[FIRST_RCP_A_E:v[0-9]+]], [[FIRST_RCP]], [[FIRST_E]]
-; SI-DAG: v_sub_i32_e32 [[FIRST_RCP_S_E:v[0-9]+]], [[FIRST_RCP]], [[FIRST_E]]
+; SI-DAG: v_add_i32_e32 [[FIRST_RCP_A_E:v[0-9]+]], [[FIRST_E]], [[FIRST_RCP]]
+; SI-DAG: v_subrev_i32_e32 [[FIRST_RCP_S_E:v[0-9]+]], [[FIRST_E]], [[FIRST_RCP]]
 ; SI-DAG: v_cndmask_b32_e64
 ; SI-DAG: v_mul_hi_u32 [[FIRST_Quotient:v[0-9]+]]
 ; SI-DAG: v_mul_lo_i32 [[FIRST_Num_S_Remainder:v[0-9]+]]
@@ -135,8 +135,8 @@ define void @test_udivrem(i32 addrspace(1)* %out, i32 %x, i32 %y) {
 ; SI-DAG: v_sub_i32_e32 [[SECOND_NEG_RCP_LO:v[0-9]+]], 0, [[SECOND_RCP_LO]]
 ; SI-DAG: v_cndmask_b32_e64
 ; SI-DAG: v_mul_hi_u32 [[SECOND_E:v[0-9]+]], {{v[0-9]+}}, [[SECOND_RCP]]
-; SI-DAG: v_add_i32_e32 [[SECOND_RCP_A_E:v[0-9]+]], [[SECOND_RCP]], [[SECOND_E]]
-; SI-DAG: v_sub_i32_e32 [[SECOND_RCP_S_E:v[0-9]+]], [[SECOND_RCP]], [[SECOND_E]]
+; SI-DAG: v_add_i32_e32 [[SECOND_RCP_A_E:v[0-9]+]], [[SECOND_E]], [[SECOND_RCP]]
+; SI-DAG: v_subrev_i32_e32 [[SECOND_RCP_S_E:v[0-9]+]], [[SECOND_E]], [[SECOND_RCP]]
 ; SI-DAG: v_cndmask_b32_e64
 ; SI-DAG: v_mul_hi_u32 [[SECOND_Quotient:v[0-9]+]]
 ; SI-DAG: v_mul_lo_i32 [[SECOND_Num_S_Remainder:v[0-9]+]]
@@ -262,8 +262,8 @@ define void @test_udivrem_v2(<2 x i32> addrspace(1)* %out, <2 x i32> %x, <2 x i3
 ; SI-DAG: v_sub_i32_e32 [[FIRST_NEG_RCP_LO:v[0-9]+]], 0, [[FIRST_RCP_LO]]
 ; SI-DAG: v_cndmask_b32_e64
 ; SI-DAG: v_mul_hi_u32 [[FIRST_E:v[0-9]+]], {{v[0-9]+}}, [[FIRST_RCP]]
-; SI-DAG: v_add_i32_e32 [[FIRST_RCP_A_E:v[0-9]+]], [[FIRST_RCP]], [[FIRST_E]]
-; SI-DAG: v_sub_i32_e32 [[FIRST_RCP_S_E:v[0-9]+]], [[FIRST_RCP]], [[FIRST_E]]
+; SI-DAG: v_add_i32_e32 [[FIRST_RCP_A_E:v[0-9]+]], [[FIRST_E]], [[FIRST_RCP]]
+; SI-DAG: v_subrev_i32_e32 [[FIRST_RCP_S_E:v[0-9]+]], [[FIRST_E]], [[FIRST_RCP]]
 ; SI-DAG: v_cndmask_b32_e64
 ; SI-DAG: v_mul_hi_u32 [[FIRST_Quotient:v[0-9]+]]
 ; SI-DAG: v_mul_lo_i32 [[FIRST_Num_S_Remainder:v[0-9]+]]
@@ -285,8 +285,8 @@ define void @test_udivrem_v2(<2 x i32> addrspace(1)* %out, <2 x i32> %x, <2 x i3
 ; SI-DAG: v_sub_i32_e32 [[SECOND_NEG_RCP_LO:v[0-9]+]], 0, [[SECOND_RCP_LO]]
 ; SI-DAG: v_cndmask_b32_e64
 ; SI-DAG: v_mul_hi_u32 [[SECOND_E:v[0-9]+]], {{v[0-9]+}}, [[SECOND_RCP]]
-; SI-DAG: v_add_i32_e32 [[SECOND_RCP_A_E:v[0-9]+]], [[SECOND_RCP]], [[SECOND_E]]
-; SI-DAG: v_sub_i32_e32 [[SECOND_RCP_S_E:v[0-9]+]], [[SECOND_RCP]], [[SECOND_E]]
+; SI-DAG: v_add_i32_e32 [[SECOND_RCP_A_E:v[0-9]+]], [[SECOND_E]], [[SECOND_RCP]]
+; SI-DAG: v_subrev_i32_e32 [[SECOND_RCP_S_E:v[0-9]+]], [[SECOND_E]], [[SECOND_RCP]]
 ; SI-DAG: v_cndmask_b32_e64
 ; SI-DAG: v_mul_hi_u32 [[SECOND_Quotient:v[0-9]+]]
 ; SI-DAG: v_mul_lo_i32 [[SECOND_Num_S_Remainder:v[0-9]+]]
@@ -308,8 +308,8 @@ define void @test_udivrem_v2(<2 x i32> addrspace(1)* %out, <2 x i32> %x, <2 x i3
 ; SI-DAG: v_sub_i32_e32 [[THIRD_NEG_RCP_LO:v[0-9]+]], 0, [[THIRD_RCP_LO]]
 ; SI-DAG: v_cndmask_b32_e64
 ; SI-DAG: v_mul_hi_u32 [[THIRD_E:v[0-9]+]], {{v[0-9]+}}, [[THIRD_RCP]]
-; SI-DAG: v_add_i32_e32 [[THIRD_RCP_A_E:v[0-9]+]], [[THIRD_RCP]], [[THIRD_E]]
-; SI-DAG: v_sub_i32_e32 [[THIRD_RCP_S_E:v[0-9]+]], [[THIRD_RCP]], [[THIRD_E]]
+; SI-DAG: v_add_i32_e32 [[THIRD_RCP_A_E:v[0-9]+]], [[THIRD_E]], [[THIRD_RCP]]
+; SI-DAG: v_subrev_i32_e32 [[THIRD_RCP_S_E:v[0-9]+]], [[THIRD_E]], [[THIRD_RCP]]
 ; SI-DAG: v_cndmask_b32_e64
 ; SI-DAG: v_mul_hi_u32 [[THIRD_Quotient:v[0-9]+]]
 ; SI-DAG: v_mul_lo_i32 [[THIRD_Num_S_Remainder:v[0-9]+]]
@@ -331,8 +331,8 @@ define void @test_udivrem_v2(<2 x i32> addrspace(1)* %out, <2 x i32> %x, <2 x i3
 ; SI-DAG: v_sub_i32_e32 [[FOURTH_NEG_RCP_LO:v[0-9]+]], 0, [[FOURTH_RCP_LO]]
 ; SI-DAG: v_cndmask_b32_e64
 ; SI-DAG: v_mul_hi_u32 [[FOURTH_E:v[0-9]+]], {{v[0-9]+}}, [[FOURTH_RCP]]
-; SI-DAG: v_add_i32_e32 [[FOURTH_RCP_A_E:v[0-9]+]], [[FOURTH_RCP]], [[FOURTH_E]]
-; SI-DAG: v_sub_i32_e32 [[FOURTH_RCP_S_E:v[0-9]+]], [[FOURTH_RCP]], [[FOURTH_E]]
+; SI-DAG: v_add_i32_e32 [[FOURTH_RCP_A_E:v[0-9]+]], [[FOURTH_E]], [[FOURTH_RCP]]
+; SI-DAG: v_subrev_i32_e32 [[FOURTH_RCP_S_E:v[0-9]+]], [[FOURTH_E]], [[FOURTH_RCP]]
 ; SI-DAG: v_cndmask_b32_e64
 ; SI-DAG: v_mul_hi_u32 [[FOURTH_Quotient:v[0-9]+]]
 ; SI-DAG: v_mul_lo_i32 [[FOURTH_Num_S_Remainder:v[0-9]+]]
