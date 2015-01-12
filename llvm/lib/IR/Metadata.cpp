@@ -522,7 +522,6 @@ void GenericMDNode::handleChangedOperand(void *Ref, Metadata *New) {
   // Drop uniquing for self-reference cycles.
   if (New == this) {
     storeDistinctInContext();
-    setHash(0);
     if (!isResolved())
       resolve();
     return;
@@ -569,7 +568,6 @@ void GenericMDNode::handleChangedOperand(void *Ref, Metadata *New) {
   }
 
   // Store in non-uniqued form if this node has already been resolved.
-  setHash(0);
   storeDistinctInContext();
 }
 
