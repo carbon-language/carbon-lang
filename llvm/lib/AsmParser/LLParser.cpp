@@ -2966,6 +2966,16 @@ bool LLParser::ParseMetadata(Metadata *&MD, PerFunctionState *PFS) {
   assert(Lex.getKind() == lltok::exclaim && "Expected '!' here");
   Lex.Lex();
 
+  // MDString:
+  //   ::= '!' STRINGCONSTANT
+  if (Lex.getKind() == lltok::StringConstant) {
+    MDString *S;
+    if (ParseMDString(S))
+      return true;
+    MD = S;
+    return false;
+  }
+
   // MDNode:
   // !{ ... }
   if (Lex.getKind() == lltok::lbrace) {
@@ -2978,20 +2988,10 @@ bool LLParser::ParseMetadata(Metadata *&MD, PerFunctionState *PFS) {
 
   // Standalone metadata reference
   // !42
-  if (Lex.getKind() == lltok::APSInt) {
-    MDNode *N;
-    if (ParseMDNodeID(N))
-      return true;
-    MD = N;
-    return false;
-  }
-
-  // MDString:
-  //   ::= '!' STRINGCONSTANT
-  MDString *S;
-  if (ParseMDString(S))
+  MDNode *N;
+  if (ParseMDNodeID(N))
     return true;
-  MD = S;
+  MD = N;
   return false;
 }
 
