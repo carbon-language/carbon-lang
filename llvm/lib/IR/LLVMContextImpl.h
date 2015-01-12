@@ -166,11 +166,11 @@ struct FunctionTypeKeyInfo {
   }
 };
 
-/// \brief DenseMapInfo for GenericMDNode.
+/// \brief DenseMapInfo for MDTuple.
 ///
 /// Note that we don't need the is-function-local bit, since that's implicit in
 /// the operands.
-struct GenericMDNodeInfo {
+struct MDTupleInfo {
   struct KeyTy {
     ArrayRef<Metadata *> RawOps;
     ArrayRef<MDOperand> Ops;
@@ -179,10 +179,10 @@ struct GenericMDNodeInfo {
     KeyTy(ArrayRef<Metadata *> Ops)
         : RawOps(Ops), Hash(hash_combine_range(Ops.begin(), Ops.end())) {}
 
-    KeyTy(GenericMDNode *N)
+    KeyTy(MDTuple *N)
         : Ops(N->op_begin(), N->op_end()), Hash(N->getHash()) {}
 
-    bool operator==(const GenericMDNode *RHS) const {
+    bool operator==(const MDTuple *RHS) const {
       if (RHS == getEmptyKey() || RHS == getTombstoneKey())
         return false;
       if (Hash != RHS->getHash())
@@ -191,26 +191,26 @@ struct GenericMDNodeInfo {
       return RawOps.empty() ? compareOps(Ops, RHS) : compareOps(RawOps, RHS);
     }
     template <class T>
-    static bool compareOps(ArrayRef<T> Ops, const GenericMDNode *RHS) {
+    static bool compareOps(ArrayRef<T> Ops, const MDTuple *RHS) {
       if (Ops.size() != RHS->getNumOperands())
         return false;
       return std::equal(Ops.begin(), Ops.end(), RHS->op_begin());
     }
   };
-  static inline GenericMDNode *getEmptyKey() {
-    return DenseMapInfo<GenericMDNode *>::getEmptyKey();
+  static inline MDTuple *getEmptyKey() {
+    return DenseMapInfo<MDTuple *>::getEmptyKey();
   }
-  static inline GenericMDNode *getTombstoneKey() {
-    return DenseMapInfo<GenericMDNode *>::getTombstoneKey();
+  static inline MDTuple *getTombstoneKey() {
+    return DenseMapInfo<MDTuple *>::getTombstoneKey();
   }
   static unsigned getHashValue(const KeyTy &Key) { return Key.Hash; }
-  static unsigned getHashValue(const GenericMDNode *U) {
+  static unsigned getHashValue(const MDTuple *U) {
     return U->getHash();
   }
-  static bool isEqual(const KeyTy &LHS, const GenericMDNode *RHS) {
+  static bool isEqual(const KeyTy &LHS, const MDTuple *RHS) {
     return LHS == RHS;
   }
-  static bool isEqual(const GenericMDNode *LHS, const GenericMDNode *RHS) {
+  static bool isEqual(const MDTuple *LHS, const MDTuple *RHS) {
     return LHS == RHS;
   }
 };
@@ -245,13 +245,13 @@ public:
   DenseMap<Value *, ValueAsMetadata *> ValuesAsMetadata;
   DenseMap<Metadata *, MetadataAsValue *> MetadataAsValues;
 
-  DenseSet<GenericMDNode *, GenericMDNodeInfo> MDNodeSet;
+  DenseSet<MDTuple *, MDTupleInfo> MDTuples;
 
   // MDNodes may be uniqued or not uniqued.  When they're not uniqued, they
   // aren't in the MDNodeSet, but they're still shared between objects, so no
   // one object can destroy them.  This set allows us to at least destroy them
   // on Context destruction.
-  SmallPtrSet<GenericMDNode *, 1> NonUniquedMDNodes;
+  SmallPtrSet<UniquableMDNode *, 1> DistinctMDNodes;
 
   DenseMap<Type*, ConstantAggregateZero*> CAZConstants;
 

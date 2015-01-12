@@ -169,8 +169,8 @@ bool LLParser::ValidateEndOfModule() {
 
   // Resolve metadata cycles.
   for (auto &N : NumberedMetadata)
-    if (auto *G = cast_or_null<GenericMDNode>(N))
-      G->resolveCycles();
+    if (auto *U = cast_or_null<UniquableMDNode>(N))
+      U->resolveCycles();
 
   // Look for intrinsic functions and CallInst that need to be upgraded
   for (Module::iterator FI = M->begin(), FE = M->end(); FI != FE; )

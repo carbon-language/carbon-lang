@@ -55,7 +55,8 @@ DIBuilder::DIBuilder(Module &m, bool AllowUnresolvedNodes)
       AllowUnresolvedNodes(AllowUnresolvedNodes) {}
 
 static bool isUnresolved(MDNode *N) {
-  return N && (isa<MDNodeFwdDecl>(N) || !cast<GenericMDNode>(N)->isResolved());
+  return N &&
+         (isa<MDNodeFwdDecl>(N) || !cast<UniquableMDNode>(N)->isResolved());
 }
 
 void DIBuilder::trackIfUnresolved(MDNode *N) {
@@ -110,7 +111,7 @@ void DIBuilder::finalize() {
   // cycles.
   for (const auto &N : UnresolvedNodes)
     if (N)
-      cast<GenericMDNode>(N)->resolveCycles();
+      cast<UniquableMDNode>(N)->resolveCycles();
   UnresolvedNodes.clear();
 
   // Can't handle unresolved nodes anymore.

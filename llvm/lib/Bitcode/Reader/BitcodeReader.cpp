@@ -558,8 +558,8 @@ void BitcodeReaderMDValueList::tryToResolveCycles() {
   // Resolve any cycles.
   for (auto &MD : MDValuePtrs) {
     assert(!(MD && isa<MDNodeFwdDecl>(MD)) && "Unexpected forward reference");
-    if (auto *G = dyn_cast_or_null<GenericMDNode>(MD))
-      G->resolveCycles();
+    if (auto *N = dyn_cast_or_null<UniquableMDNode>(MD))
+      N->resolveCycles();
   }
 }
 

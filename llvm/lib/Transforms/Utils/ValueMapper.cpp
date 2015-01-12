@@ -260,8 +260,8 @@ Metadata *llvm::MapMetadata(const Metadata *MD, ValueToValueMapTy &VM,
                             ValueMaterializer *Materializer) {
   Metadata *NewMD = MapMetadataImpl(MD, VM, Flags, TypeMapper, Materializer);
   if (NewMD && NewMD != MD)
-    if (auto *G = dyn_cast<GenericMDNode>(NewMD))
-      G->resolveCycles();
+    if (auto *N = dyn_cast<UniquableMDNode>(NewMD))
+      N->resolveCycles();
   return NewMD;
 }
 

@@ -56,7 +56,7 @@ protected:
 
 public:
   enum MetadataKind {
-    GenericMDNodeKind,
+    MDTupleKind,
     MDNodeFwdDeclKind,
     ConstantAsMetadataKind,
     LocalAsMetadataKind,
@@ -158,7 +158,7 @@ public:
   /// \brief Resolve all uses of this.
   ///
   /// Resolve all uses of this, turning off RAUW permanently.  If \c
-  /// ResolveUsers, call \a GenericMDNode::resolve() on any users whose last
+  /// ResolveUsers, call \a UniquableMDNode::resolve() on any users whose last
   /// operand is resolved.
   void resolveAllUses(bool ResolveUsers = true);
 
@@ -682,7 +682,7 @@ public:
 
   /// \brief Methods for support type inquiry through isa, cast, and dyn_cast:
   static bool classof(const Metadata *MD) {
-    return MD->getMetadataID() == GenericMDNodeKind ||
+    return MD->getMetadataID() == MDTupleKind ||
            MD->getMetadataID() == MDNodeFwdDeclKind;
   }
 
@@ -698,46 +698,46 @@ public:
   static MDNode *getMostGenericRange(MDNode *A, MDNode *B);
 };
 
-/// \brief Generic metadata node.
+/// \brief Uniquable metadata node.
 ///
-/// Generic metadata nodes, with opt-out support for uniquing.
+/// A uniquable metadata node.  This contains the basic functionality
+/// for implementing sub-types of \a MDNode that can be uniqued like
+/// constants.
 ///
-/// Although nodes are uniqued by default, \a GenericMDNode has no support for
-/// RAUW.  If an operand change (due to RAUW or otherwise) causes a uniquing
-/// collision, the uniquing bit is dropped.
-class GenericMDNode : public MDNode {
-  friend class Metadata;
+/// There is limited support for RAUW at construction time.  At
+/// construction time, if any operands are an instance of \a
+/// MDNodeFwdDecl (or another unresolved \a UniquableMDNode, which
+/// indicates an \a MDNodeFwdDecl in its path), the node itself will be
+/// unresolved.  As soon as all operands become resolved, it will drop
+/// RAUW support permanently.
+///
+/// If an unresolved node is part of a cycle, \a resolveCycles() needs
+/// to be called on some member of the cycle when each \a MDNodeFwdDecl
+/// has been removed.
+class UniquableMDNode : public MDNode {
+  friend class ReplaceableMetadataImpl;
   friend class MDNode;
   friend class LLVMContextImpl;
-  friend class ReplaceableMetadataImpl;
 
   /// \brief Support RAUW as long as one of its arguments is replaceable.
-  ///
-  /// If an operand is an \a MDNodeFwdDecl (or a replaceable \a GenericMDNode),
-  /// support RAUW to support uniquing as forward declarations are resolved.
-  /// As soon as operands have been resolved, drop support.
   ///
   /// FIXME: Save memory by storing this in a pointer union with the
   /// LLVMContext, and adding an LLVMContext reference to RMI.
   std::unique_ptr<ReplaceableMetadataImpl> ReplaceableUses;
 
+protected:
   /// \brief Create a new node.
   ///
   /// If \c AllowRAUW, then if any operands are unresolved support RAUW.  RAUW
   /// will be dropped once all operands have been resolved (or if \a
   /// resolveCycles() is called).
-  GenericMDNode(LLVMContext &C, ArrayRef<Metadata *> Vals, bool AllowRAUW);
-  ~GenericMDNode();
-
-  void setHash(unsigned Hash) { MDNodeSubclassData = Hash; }
-  void recalculateHash();
+  UniquableMDNode(LLVMContext &C, unsigned ID, ArrayRef<Metadata *> Vals,
+                  bool AllowRAUW);
+  ~UniquableMDNode();
 
 public:
-  /// \brief Get the hash, if any.
-  unsigned getHash() const { return MDNodeSubclassData; }
-
   static bool classof(const Metadata *MD) {
-    return MD->getMetadataID() == GenericMDNodeKind;
+    return MD->getMetadataID() == MDTupleKind;
   }
 
   /// \brief Check whether any operands are forward declarations.
@@ -766,11 +766,36 @@ private:
   void decrementUnresolvedOperandCount();
 };
 
+/// \brief Tuple of metadata.
+///
+/// This is the simple \a MDNode arbitrary tuple.  Nodes are uniqued by
+/// default based on their operands.
+class MDTuple : public UniquableMDNode {
+  friend class LLVMContextImpl;
+  friend class UniquableMDNode;
+  friend class MDNode;
+
+  MDTuple(LLVMContext &C, ArrayRef<Metadata *> Vals, bool AllowRAUW)
+      : UniquableMDNode(C, MDTupleKind, Vals, AllowRAUW) {}
+  ~MDTuple();
+
+  void setHash(unsigned Hash) { MDNodeSubclassData = Hash; }
+  void recalculateHash();
+
+public:
+  /// \brief Get the hash, if any.
+  unsigned getHash() const { return MDNodeSubclassData; }
+
+  static bool classof(const Metadata *MD) {
+    return MD->getMetadataID() == MDTupleKind;
+  }
+};
+
 /// \brief Forward declaration of metadata.
 ///
-/// Forward declaration of metadata, in the form of a metadata node.  Unlike \a
-/// GenericMDNode, this class has support for RAUW and is suitable for forward
-/// references.
+/// Forward declaration of metadata, in the form of a basic tuple.  Unlike \a
+/// MDTuple, this class has full support for RAUW, is not owned, is not
+/// uniqued, and is suitable for forward references.
 class MDNodeFwdDecl : public MDNode, ReplaceableMetadataImpl {
   friend class Metadata;
   friend class MDNode;
