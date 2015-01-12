@@ -607,14 +607,10 @@ MDTuple *MDTuple::getDistinct(LLVMContext &Context, ArrayRef<Metadata *> MDs) {
 
 MDNodeFwdDecl *MDNode::getTemporary(LLVMContext &Context,
                                     ArrayRef<Metadata *> MDs) {
-  MDNodeFwdDecl *N = new (MDs.size()) MDNodeFwdDecl(Context, MDs);
-  return N;
+  return MDNodeFwdDecl::get(Context, MDs);
 }
 
-void MDNode::deleteTemporary(MDNode *N) {
-  assert(isa<MDNodeFwdDecl>(N) && "Expected forward declaration");
-  delete cast<MDNodeFwdDecl>(N);
-}
+void MDNode::deleteTemporary(MDNode *N) { delete cast<MDNodeFwdDecl>(N); }
 
 void UniquableMDNode::storeDistinctInContext() {
   assert(!IsDistinctInContext && "Expected newly distinct metadata");

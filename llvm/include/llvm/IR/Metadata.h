@@ -813,7 +813,6 @@ MDNode *MDNode::getDistinct(LLVMContext &Context, ArrayRef<Metadata *> MDs) {
 /// uniqued, and is suitable for forward references.
 class MDNodeFwdDecl : public MDNode, ReplaceableMetadataImpl {
   friend class Metadata;
-  friend class MDNode;
   friend class ReplaceableMetadataImpl;
 
   MDNodeFwdDecl(LLVMContext &C, ArrayRef<Metadata *> Vals)
@@ -822,6 +821,10 @@ class MDNodeFwdDecl : public MDNode, ReplaceableMetadataImpl {
 public:
   ~MDNodeFwdDecl() { dropAllReferences(); }
   using MDNode::operator delete;
+
+  static MDNodeFwdDecl *get(LLVMContext &Context, ArrayRef<Metadata *> MDs) {
+    return new (MDs.size()) MDNodeFwdDecl(Context, MDs);
+  }
 
   static bool classof(const Metadata *MD) {
     return MD->getMetadataID() == MDNodeFwdDeclKind;
