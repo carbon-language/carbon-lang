@@ -28,6 +28,7 @@ protected:
   TargetMachine &TM;
 public:
   DwarfExpression(TargetMachine &TM) : TM(TM) {}
+  virtual ~DwarfExpression() {};
 
   virtual void EmitOp(uint8_t Op, const char* Comment = nullptr) = 0;
   virtual void EmitSigned(int Value) = 0;
