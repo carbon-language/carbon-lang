@@ -333,8 +333,9 @@ CodeGenModule::EmitCXXGlobalVarDeclInitFunc(const VarDecl *D,
     AddGlobalCtor(Fn, 65535, COMDATKey);
     DelayedCXXInitPosition.erase(D);
   } else if (D->hasAttr<SelectAnyAttr>()) {
-    // SelectAny globals will be comdat-folded. Put the initializer into a COMDAT
-    // group associated with the global, so the initializers get folded too.
+    // SelectAny globals will be comdat-folded. Put the initializer into a
+    // COMDAT group associated with the global, so the initializers get folded
+    // too.
     AddGlobalCtor(Fn, 65535, COMDATKey);
     DelayedCXXInitPosition.erase(D);
   } else {
