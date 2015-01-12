@@ -293,6 +293,69 @@ TEST_F(MDNodeTest, getDistinctWithUnresolvedOperands) {
   EXPECT_EQ(Empty, Distinct->getOperand(0));
 }
 
+TEST_F(MDNodeTest, handleChangedOperandRecursion) {
+  // !0 = !{}
+  MDNode *N0 = MDNode::get(Context, None);
+
+  // !1 = !{!3, null}
+  MDNodeFwdDecl *Temp3 = MDNode::getTemporary(Context, None);
+  Metadata *Ops1[] = {Temp3, nullptr};
+  MDNode *N1 = MDNode::get(Context, Ops1);
+
+  // !2 = !{!3, !0}
+  Metadata *Ops2[] = {Temp3, N0};
+  MDNode *N2 = MDNode::get(Context, Ops2);
+
+  // !3 = !{!2}
+  Metadata *Ops3[] = {N2};
+  MDNode *N3 = MDNode::get(Context, Ops3);
+  Temp3->replaceAllUsesWith(N3);
+
+  // !4 = !{!1}
+  Metadata *Ops4[] = {N1};
+  MDNode *N4 = MDNode::get(Context, Ops4);
+
+  // Confirm that the cycle prevented RAUW from getting dropped.
+  EXPECT_TRUE(N0->isResolved());
+  EXPECT_FALSE(N1->isResolved());
+  EXPECT_FALSE(N2->isResolved());
+  EXPECT_FALSE(N3->isResolved());
+  EXPECT_FALSE(N4->isResolved());
+
+  // Create a couple of distinct nodes to observe what's going on.
+  //
+  // !5 = distinct !{!2}
+  // !6 = distinct !{!3}
+  Metadata *Ops5[] = {N2};
+  MDNode *N5 = MDNode::getDistinct(Context, Ops5);
+  Metadata *Ops6[] = {N3};
+  MDNode *N6 = MDNode::getDistinct(Context, Ops6);
+
+  // Mutate !2 to look like !1, causing a uniquing collision (and an RAUW).
+  // This will ripple up, with !3 colliding with !4, and RAUWing.  Since !2
+  // references !3, this can cause a re-entry of handleChangedOperand() when !3
+  // is not ready for it.
+  //
+  // !2->replaceOperandWith(1, nullptr)
+  // !2: !{!3, !0} => !{!3, null}
+  // !2->replaceAllUsesWith(!1)
+  // !3: !{!2] => !{!1}
+  // !3->replaceAllUsesWith(!4)
+  N2->replaceOperandWith(1, nullptr);
+
+  // If all has gone well, N2 and N3 will have been RAUW'ed and deleted from
+  // under us.  Just check that the other nodes are sane.
+  //
+  // !1 = !{!4, null}
+  // !4 = !{!1}
+  // !5 = distinct !{!1}
+  // !6 = distinct !{!4}
+  EXPECT_EQ(N4, N1->getOperand(0));
+  EXPECT_EQ(N1, N4->getOperand(0));
+  EXPECT_EQ(N1, N5->getOperand(0));
+  EXPECT_EQ(N4, N6->getOperand(0));
+}
+
 typedef MetadataTest MetadataAsValueTest;
 
 TEST_F(MetadataAsValueTest, MDNode) {

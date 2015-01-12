@@ -537,8 +537,6 @@ void GenericMDNode::handleChangedOperand(void *Ref, Metadata *New) {
   if (InRAUW) {
     // We just hit a recursion due to RAUW.  Set the operand and move on, since
     // we're about to be deleted.
-    //
-    // FIXME: Can this cycle really happen?
     setOperand(Op, New);
     return;
   }
