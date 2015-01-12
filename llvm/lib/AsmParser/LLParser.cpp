@@ -2908,10 +2908,7 @@ bool LLParser::ParseMDTuple(MDNode *&MD, bool IsDistinct) {
   if (ParseMDNodeVector(Elts))
     return true;
 
-  if (IsDistinct)
-    MD = MDNode::getDistinct(Context, Elts);
-  else
-    MD = MDNode::get(Context, Elts);
+  MD = (IsDistinct ? MDNode::getDistinct : MDNode::get)(Context, Elts);
   return false;
 }
 
