@@ -64,6 +64,7 @@ private:
   SmallVector<const LocalAsMetadata *, 8> FunctionLocalMDs;
   typedef DenseMap<const Metadata *, unsigned> MetadataMapType;
   MetadataMapType MDValueMap;
+  bool HasMDString;
 
   typedef DenseMap<AttributeSet, unsigned> AttributeGroupMapType;
   AttributeGroupMapType AttributeGroupMap;
@@ -108,6 +109,8 @@ public:
 
   unsigned getValueID(const Value *V) const;
   unsigned getMetadataID(const Metadata *V) const;
+
+  bool hasMDString() const { return HasMDString; }
 
   unsigned getTypeID(Type *T) const {
     TypeMapType::const_iterator I = TypeMap.find(T);

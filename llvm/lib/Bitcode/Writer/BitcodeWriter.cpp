@@ -783,52 +783,44 @@ static void WriteModuleMetadata(const Module *M,
                                 const ValueEnumerator &VE,
                                 BitstreamWriter &Stream) {
   const auto &MDs = VE.getMDs();
-  bool StartedMetadataBlock = false;
+  if (MDs.empty() && M->named_metadata_empty())
+    return;
+
+  Stream.EnterSubblock(bitc::METADATA_BLOCK_ID, 3);
+
   unsigned MDSAbbrev = 0;
+  if (VE.hasMDString()) {
+    // Abbrev for METADATA_STRING.
+    BitCodeAbbrev *Abbv = new BitCodeAbbrev();
+    Abbv->Add(BitCodeAbbrevOp(bitc::METADATA_STRING));
+    Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Array));
+    Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 8));
+    MDSAbbrev = Stream.EmitAbbrev(Abbv);
+  }
+
   SmallVector<uint64_t, 64> Record;
   for (unsigned i = 0, e = MDs.size(); i != e; ++i) {
     if (const MDNode *N = dyn_cast<MDNode>(MDs[i])) {
-      if (!StartedMetadataBlock) {
-        Stream.EnterSubblock(bitc::METADATA_BLOCK_ID, 3);
-        StartedMetadataBlock = true;
-      }
       WriteMDNode(N, VE, Stream, Record);
-    } else if (const auto *MDC = dyn_cast<ConstantAsMetadata>(MDs[i])) {
-      if (!StartedMetadataBlock) {
-        Stream.EnterSubblock(bitc::METADATA_BLOCK_ID, 3);
-        StartedMetadataBlock = true;
-      }
-      WriteValueAsMetadata(MDC, VE, Stream, Record);
-    } else if (const MDString *MDS = dyn_cast<MDString>(MDs[i])) {
-      if (!StartedMetadataBlock) {
-        Stream.EnterSubblock(bitc::METADATA_BLOCK_ID, 3);
-
-        // Abbrev for METADATA_STRING.
-        BitCodeAbbrev *Abbv = new BitCodeAbbrev();
-        Abbv->Add(BitCodeAbbrevOp(bitc::METADATA_STRING));
-        Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Array));
-        Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 8));
-        MDSAbbrev = Stream.EmitAbbrev(Abbv);
-        StartedMetadataBlock = true;
-      }
-
-      // Code: [strchar x N]
-      Record.append(MDS->bytes_begin(), MDS->bytes_end());
-
-      // Emit the finished record.
-      Stream.EmitRecord(bitc::METADATA_STRING, Record, MDSAbbrev);
-      Record.clear();
+      continue;
     }
+    if (const auto *MDC = dyn_cast<ConstantAsMetadata>(MDs[i])) {
+      WriteValueAsMetadata(MDC, VE, Stream, Record);
+      continue;
+    }
+    const MDString *MDS = cast<MDString>(MDs[i]);
+    // Code: [strchar x N]
+    Record.append(MDS->bytes_begin(), MDS->bytes_end());
+
+    // Emit the finished record.
+    Stream.EmitRecord(bitc::METADATA_STRING, Record, MDSAbbrev);
+    Record.clear();
   }
 
   // Write named metadata.
   for (Module::const_named_metadata_iterator I = M->named_metadata_begin(),
        E = M->named_metadata_end(); I != E; ++I) {
     const NamedMDNode *NMD = I;
-    if (!StartedMetadataBlock)  {
-      Stream.EnterSubblock(bitc::METADATA_BLOCK_ID, 3);
-      StartedMetadataBlock = true;
-    }
 
     // Write name.
     StringRef Str = NMD->getName();
@@ -844,8 +836,7 @@ static void WriteModuleMetadata(const Module *M,
     Record.clear();
   }
 
-  if (StartedMetadataBlock)
-    Stream.ExitBlock();
+  Stream.ExitBlock();
 }
 
 static void WriteFunctionLocalMetadata(const Function &F,
