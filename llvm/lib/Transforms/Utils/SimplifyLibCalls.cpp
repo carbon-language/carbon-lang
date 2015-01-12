@@ -116,6 +116,70 @@ static bool hasUnaryFloatFn(const TargetLibraryInfo *TLI, Type *Ty,
   }
 }
 
+/// \brief Returns whether \p F matches the signature expected for the
+/// string/memory copying library function \p Func.
+/// Acceptable functions are st[rp][n]?cpy, memove, memcpy, and memset.
+/// Their fortified (_chk) counterparts are also accepted.
+static bool checkStringCopyLibFuncSignature(Function *F, LibFunc::Func Func,
+                                            const DataLayout *DL) {
+  FunctionType *FT = F->getFunctionType();
+  LLVMContext &Context = F->getContext();
+  Type *PCharTy = Type::getInt8PtrTy(Context);
+  Type *SizeTTy = DL ? DL->getIntPtrType(Context) : nullptr;
+  unsigned NumParams = FT->getNumParams();
+
+  // All string libfuncs return the same type as the first parameter.
+  if (FT->getReturnType() != FT->getParamType(0))
+    return false;
+
+  switch (Func) {
+  default:
+    llvm_unreachable("Can't check signature for non-string-copy libfunc.");
+  case LibFunc::stpncpy_chk:
+  case LibFunc::strncpy_chk:
+    --NumParams; // fallthrough
+  case LibFunc::stpncpy:
+  case LibFunc::strncpy: {
+    if (NumParams != 3 || FT->getParamType(0) != FT->getParamType(1) ||
+        FT->getParamType(0) != PCharTy || !FT->getParamType(2)->isIntegerTy())
+      return false;
+    break;
+  }
+  case LibFunc::strcpy_chk:
+  case LibFunc::stpcpy_chk:
+    --NumParams; // fallthrough
+  case LibFunc::stpcpy:
+  case LibFunc::strcpy: {
+    if (NumParams != 2 || FT->getParamType(0) != FT->getParamType(1) ||
+        FT->getParamType(0) != PCharTy)
+      return false;
+    break;
+  }
+  case LibFunc::memmove_chk:
+  case LibFunc::memcpy_chk:
+    --NumParams; // fallthrough
+  case LibFunc::memmove:
+  case LibFunc::memcpy: {
+    if (NumParams != 3 || !FT->getParamType(0)->isPointerTy() ||
+        !FT->getParamType(1)->isPointerTy() || FT->getParamType(2) != SizeTTy)
+      return false;
+    break;
+  }
+  case LibFunc::memset_chk:
+    --NumParams; // fallthrough
+  case LibFunc::memset: {
+    if (NumParams != 3 || !FT->getParamType(0)->isPointerTy() ||
+        !FT->getParamType(1)->isIntegerTy() || FT->getParamType(2) != SizeTTy)
+      return false;
+    break;
+  }
+  }
+  // If this is a fortified libcall, the last parameter is a size_t.
+  if (NumParams == FT->getNumParams() - 1)
+    return FT->getParamType(FT->getNumParams() - 1) == SizeTTy;
+  return true;
+}
+
 //===----------------------------------------------------------------------===//
 // Fortified Library Call Optimizations
 //===----------------------------------------------------------------------===//
@@ -600,11 +664,8 @@ Value *LibCallSimplifier::optimizeStrNCmp(CallInst *CI, IRBuilder<> &B) {
 
 Value *LibCallSimplifier::optimizeStrCpy(CallInst *CI, IRBuilder<> &B) {
   Function *Callee = CI->getCalledFunction();
-  // Verify the "strcpy" function prototype.
-  FunctionType *FT = Callee->getFunctionType();
-  if (FT->getNumParams() != 2 || FT->getReturnType() != FT->getParamType(0) ||
-      FT->getParamType(0) != FT->getParamType(1) ||
-      FT->getParamType(0) != B.getInt8PtrTy())
+
+  if (!checkStringCopyLibFuncSignature(Callee, LibFunc::strcpy, DL))
     return nullptr;
 
   Value *Dst = CI->getArgOperand(0), *Src = CI->getArgOperand(1);
@@ -631,9 +692,8 @@ Value *LibCallSimplifier::optimizeStpCpy(CallInst *CI, IRBuilder<> &B) {
   Function *Callee = CI->getCalledFunction();
   // Verify the "stpcpy" function prototype.
   FunctionType *FT = Callee->getFunctionType();
-  if (FT->getNumParams() != 2 || FT->getReturnType() != FT->getParamType(0) ||
-      FT->getParamType(0) != FT->getParamType(1) ||
-      FT->getParamType(0) != B.getInt8PtrTy())
+
+  if (!checkStringCopyLibFuncSignature(Callee, LibFunc::stpcpy, DL))
     return nullptr;
 
   // These optimizations require DataLayout.
@@ -665,10 +725,8 @@ Value *LibCallSimplifier::optimizeStpCpy(CallInst *CI, IRBuilder<> &B) {
 Value *LibCallSimplifier::optimizeStrNCpy(CallInst *CI, IRBuilder<> &B) {
   Function *Callee = CI->getCalledFunction();
   FunctionType *FT = Callee->getFunctionType();
-  if (FT->getNumParams() != 3 || FT->getReturnType() != FT->getParamType(0) ||
-      FT->getParamType(0) != FT->getParamType(1) ||
-      FT->getParamType(0) != B.getInt8PtrTy() ||
-      !FT->getParamType(2)->isIntegerTy())
+
+  if (!checkStringCopyLibFuncSignature(Callee, LibFunc::strncpy, DL))
     return nullptr;
 
   Value *Dst = CI->getArgOperand(0);
@@ -976,11 +1034,7 @@ Value *LibCallSimplifier::optimizeMemCpy(CallInst *CI, IRBuilder<> &B) {
   if (!DL)
     return nullptr;
 
-  FunctionType *FT = Callee->getFunctionType();
-  if (FT->getNumParams() != 3 || FT->getReturnType() != FT->getParamType(0) ||
-      !FT->getParamType(0)->isPointerTy() ||
-      !FT->getParamType(1)->isPointerTy() ||
-      FT->getParamType(2) != DL->getIntPtrType(CI->getContext()))
+  if (!checkStringCopyLibFuncSignature(Callee, LibFunc::memcpy, DL))
     return nullptr;
 
   // memcpy(x, y, n) -> llvm.memcpy(x, y, n, 1)
@@ -995,11 +1049,7 @@ Value *LibCallSimplifier::optimizeMemMove(CallInst *CI, IRBuilder<> &B) {
   if (!DL)
     return nullptr;
 
-  FunctionType *FT = Callee->getFunctionType();
-  if (FT->getNumParams() != 3 || FT->getReturnType() != FT->getParamType(0) ||
-      !FT->getParamType(0)->isPointerTy() ||
-      !FT->getParamType(1)->isPointerTy() ||
-      FT->getParamType(2) != DL->getIntPtrType(CI->getContext()))
+  if (!checkStringCopyLibFuncSignature(Callee, LibFunc::memmove, DL))
     return nullptr;
 
   // memmove(x, y, n) -> llvm.memmove(x, y, n, 1)
@@ -1014,11 +1064,7 @@ Value *LibCallSimplifier::optimizeMemSet(CallInst *CI, IRBuilder<> &B) {
   if (!DL)
     return nullptr;
 
-  FunctionType *FT = Callee->getFunctionType();
-  if (FT->getNumParams() != 3 || FT->getReturnType() != FT->getParamType(0) ||
-      !FT->getParamType(0)->isPointerTy() ||
-      !FT->getParamType(1)->isIntegerTy() ||
-      FT->getParamType(2) != DL->getIntPtrType(FT->getParamType(0)))
+  if (!checkStringCopyLibFuncSignature(Callee, LibFunc::memset, DL))
     return nullptr;
 
   // memset(p, v, n) -> llvm.memset(p, v, n, 1)
