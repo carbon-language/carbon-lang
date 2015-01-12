@@ -619,7 +619,7 @@ void MDNode::replaceOperandWith(unsigned I, Metadata *New) {
   if (getOperand(I) == New)
     return;
 
-  if (isStoredDistinctInContext() || isa<MDNodeFwdDecl>(this)) {
+  if (isDistinct()) {
     setOperand(I, New);
     return;
   }
