@@ -763,6 +763,7 @@ private:
 
   void resolve();
   void resolveAfterOperandChange(Metadata *Old, Metadata *New);
+  void decrementUnresolvedOperandCount();
 };
 
 /// \brief Forward declaration of metadata.

@@ -228,8 +228,7 @@ void ReplaceableMetadataImpl::resolveAllUses(bool ResolveUsers) {
       continue;
     if (OwnerMD->isResolved())
       continue;
-    if (!--OwnerMD->SubclassData32)
-      OwnerMD->resolve();
+    OwnerMD->decrementUnresolvedOperandCount();
   }
 }
 
@@ -455,14 +454,17 @@ void GenericMDNode::resolveAfterOperandChange(Metadata *Old, Metadata *New) {
   // Check if the last unresolved operand has just been resolved; if so,
   // resolve this as well.
   if (isOperandUnresolved(Old)) {
-    if (!isOperandUnresolved(New)) {
-      if (!--SubclassData32)
-        resolve();
-    }
+    if (!isOperandUnresolved(New))
+      decrementUnresolvedOperandCount();
   } else {
     // Operands shouldn't become unresolved.
     assert(isOperandUnresolved(New) && "Operand just became unresolved");
   }
+}
+
+void GenericMDNode::decrementUnresolvedOperandCount() {
+  if (!--SubclassData32)
+    resolve();
 }
 
 void GenericMDNode::resolveCycles() {
