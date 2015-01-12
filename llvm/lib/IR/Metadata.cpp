@@ -547,12 +547,16 @@ void GenericMDNode::handleChangedOperand(void *Ref, Metadata *New) {
     if (!isResolved()) {
       // Check if the last unresolved operand has just been resolved; if so,
       // resolve this as well.
-      if (isOperandUnresolved(Old))
-        decrementUnresolvedOperands();
-      if (isOperandUnresolved(New))
-        incrementUnresolvedOperands();
-      if (!hasUnresolvedOperands())
-        resolve();
+      if (isOperandUnresolved(Old)) {
+        if (!isOperandUnresolved(New)) {
+          decrementUnresolvedOperands();
+          if (!hasUnresolvedOperands())
+            resolve();
+        }
+      } else {
+        // Operands shouldn't become unresolved.
+        assert(isOperandUnresolved(New) && "Operand just became unresolved");
+      }
     }
 
     return;
