@@ -9652,7 +9652,6 @@ static SDValue lowerV16I8VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
         V2InUse |= (ZeroMask != V2Idx);
       }
     }
-    assert((V1InUse || V2InUse) && "Shuffling to a zeroable vector");
 
     if (V1InUse)
       V1 = DAG.getNode(X86ISD::PSHUFB, DL, MVT::v16i8, V1,
@@ -9668,6 +9667,8 @@ static SDValue lowerV16I8VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
       return V1; // Single inputs are easy.
     if (V2InUse)
       return V2; // Single inputs are easy.
+    // Shuffling to a zeroable vector.
+    return getZeroVector(MVT::v16i8, Subtarget, DAG, DL);
   }
 
   // There are special ways we can lower some single-element blends.
