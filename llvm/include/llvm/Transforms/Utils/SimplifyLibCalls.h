@@ -84,6 +84,8 @@ private:
   Value *optimizeMemCpy(CallInst *CI, IRBuilder<> &B);
   Value *optimizeMemMove(CallInst *CI, IRBuilder<> &B);
   Value *optimizeMemSet(CallInst *CI, IRBuilder<> &B);
+  // Wrapper for all String/Memory Library Call Optimizations
+  Value *optimizeStringMemoryLibCall(CallInst *CI, IRBuilder<> &B);
 
   // Math Library Optimizations
   Value *optimizeUnaryDoubleFP(CallInst *CI, IRBuilder<> &B, bool CheckRetType);

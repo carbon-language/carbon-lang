@@ -2060,6 +2060,70 @@ bool LibCallSimplifier::hasFloatVersion(StringRef FuncName) {
   return false;
 }
 
+Value *LibCallSimplifier::optimizeStringMemoryLibCall(CallInst *CI,
+                                                      IRBuilder<> &Builder) {
+  LibFunc::Func Func;
+  Function *Callee = CI->getCalledFunction();
+  StringRef FuncName = Callee->getName();
+
+  // Check for string/memory library functions.
+  if (TLI->getLibFunc(FuncName, Func) && TLI->has(Func)) {
+    // Make sure we never change the calling convention.
+    assert((ignoreCallingConv(Func) ||
+            CI->getCallingConv() == llvm::CallingConv::C) &&
+      "Optimizing string/memory libcall would change the calling convention");
+    switch (Func) {
+    case LibFunc::strcat:
+      return optimizeStrCat(CI, Builder);
+    case LibFunc::strncat:
+      return optimizeStrNCat(CI, Builder);
+    case LibFunc::strchr:
+      return optimizeStrChr(CI, Builder);
+    case LibFunc::strrchr:
+      return optimizeStrRChr(CI, Builder);
+    case LibFunc::strcmp:
+      return optimizeStrCmp(CI, Builder);
+    case LibFunc::strncmp:
+      return optimizeStrNCmp(CI, Builder);
+    case LibFunc::strcpy:
+      return optimizeStrCpy(CI, Builder);
+    case LibFunc::stpcpy:
+      return optimizeStpCpy(CI, Builder);
+    case LibFunc::strncpy:
+      return optimizeStrNCpy(CI, Builder);
+    case LibFunc::strlen:
+      return optimizeStrLen(CI, Builder);
+    case LibFunc::strpbrk:
+      return optimizeStrPBrk(CI, Builder);
+    case LibFunc::strtol:
+    case LibFunc::strtod:
+    case LibFunc::strtof:
+    case LibFunc::strtoul:
+    case LibFunc::strtoll:
+    case LibFunc::strtold:
+    case LibFunc::strtoull:
+      return optimizeStrTo(CI, Builder);
+    case LibFunc::strspn:
+      return optimizeStrSpn(CI, Builder);
+    case LibFunc::strcspn:
+      return optimizeStrCSpn(CI, Builder);
+    case LibFunc::strstr:
+      return optimizeStrStr(CI, Builder);
+    case LibFunc::memcmp:
+      return optimizeMemCmp(CI, Builder);
+    case LibFunc::memcpy:
+      return optimizeMemCpy(CI, Builder);
+    case LibFunc::memmove:
+      return optimizeMemMove(CI, Builder);
+    case LibFunc::memset:
+      return optimizeMemSet(CI, Builder);
+    default:
+      break;
+    }
+  }
+  return nullptr;
+}
+
 Value *LibCallSimplifier::optimizeCall(CallInst *CI) {
   if (CI->isNoBuiltin())
     return nullptr;
@@ -2107,51 +2171,9 @@ Value *LibCallSimplifier::optimizeCall(CallInst *CI) {
     // We never change the calling convention.
     if (!ignoreCallingConv(Func) && !isCallingConvC)
       return nullptr;
+    if (Value *V = optimizeStringMemoryLibCall(CI, Builder))
+      return V;
     switch (Func) {
-    case LibFunc::strcat:
-      return optimizeStrCat(CI, Builder);
-    case LibFunc::strncat:
-      return optimizeStrNCat(CI, Builder);
-    case LibFunc::strchr:
-      return optimizeStrChr(CI, Builder);
-    case LibFunc::strrchr:
-      return optimizeStrRChr(CI, Builder);
-    case LibFunc::strcmp:
-      return optimizeStrCmp(CI, Builder);
-    case LibFunc::strncmp:
-      return optimizeStrNCmp(CI, Builder);
-    case LibFunc::strcpy:
-      return optimizeStrCpy(CI, Builder);
-    case LibFunc::stpcpy:
-      return optimizeStpCpy(CI, Builder);
-    case LibFunc::strncpy:
-      return optimizeStrNCpy(CI, Builder);
-    case LibFunc::strlen:
-      return optimizeStrLen(CI, Builder);
-    case LibFunc::strpbrk:
-      return optimizeStrPBrk(CI, Builder);
-    case LibFunc::strtol:
-    case LibFunc::strtod:
-    case LibFunc::strtof:
-    case LibFunc::strtoul:
-    case LibFunc::strtoll:
-    case LibFunc::strtold:
-    case LibFunc::strtoull:
-      return optimizeStrTo(CI, Builder);
-    case LibFunc::strspn:
-      return optimizeStrSpn(CI, Builder);
-    case LibFunc::strcspn:
-      return optimizeStrCSpn(CI, Builder);
-    case LibFunc::strstr:
-      return optimizeStrStr(CI, Builder);
-    case LibFunc::memcmp:
-      return optimizeMemCmp(CI, Builder);
-    case LibFunc::memcpy:
-      return optimizeMemCpy(CI, Builder);
-    case LibFunc::memmove:
-      return optimizeMemMove(CI, Builder);
-    case LibFunc::memset:
-      return optimizeMemSet(CI, Builder);
     case LibFunc::cosf:
     case LibFunc::cos:
     case LibFunc::cosl:
