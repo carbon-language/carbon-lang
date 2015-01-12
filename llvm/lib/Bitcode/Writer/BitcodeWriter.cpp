@@ -799,16 +799,16 @@ static void WriteModuleMetadata(const Module *M,
   }
 
   SmallVector<uint64_t, 64> Record;
-  for (unsigned i = 0, e = MDs.size(); i != e; ++i) {
-    if (const MDNode *N = dyn_cast<MDNode>(MDs[i])) {
+  for (const Metadata *MD : MDs) {
+    if (const MDNode *N = dyn_cast<MDNode>(MD)) {
       WriteMDNode(N, VE, Stream, Record);
       continue;
     }
-    if (const auto *MDC = dyn_cast<ConstantAsMetadata>(MDs[i])) {
+    if (const auto *MDC = dyn_cast<ConstantAsMetadata>(MD)) {
       WriteValueAsMetadata(MDC, VE, Stream, Record);
       continue;
     }
-    const MDString *MDS = cast<MDString>(MDs[i]);
+    const MDString *MDS = cast<MDString>(MD);
     // Code: [strchar x N]
     Record.append(MDS->bytes_begin(), MDS->bytes_end());
 
