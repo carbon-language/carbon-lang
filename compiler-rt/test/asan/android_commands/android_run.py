@@ -14,7 +14,7 @@ def build_env():
     args.append('LD_LIBRARY_PATH=%s:%s' %
                 (ANDROID_TMPDIR, os.environ.get('LD_LIBRARY_PATH', '')))
     for (key, value) in os.environ.items():
-        if key in ['ASAN_OPTIONS']:
+        if key in ['ASAN_OPTIONS', 'ASAN_ACTIVATION_OPTIONS']:
             args.append('%s="%s"' % (key, value))
     return ' '.join(args)
 
