@@ -98,3 +98,8 @@ void PR22122() {
 }
 
 template void PR22122<int>();
+
+struct S {
+  template <typename T>
+  void m (T x =[0); // expected-error{{expected variable name or 'this' in lambda capture list}}
+} s;
