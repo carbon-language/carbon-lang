@@ -585,8 +585,6 @@ protected:
   unsigned MDNodeSubclassData;
 
   void *operator new(size_t Size, unsigned NumOps);
-
-  /// \brief Required by std, but never called.
   void operator delete(void *Mem);
 
   /// \brief Required by std, but never called.
