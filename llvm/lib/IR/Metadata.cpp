@@ -451,19 +451,16 @@ void GenericMDNode::resolve() {
 void GenericMDNode::resolveAfterOperandChange(Metadata *Old, Metadata *New) {
   assert(SubclassData32 != 0 && "Expected unresolved operands");
 
-  // Check if the last unresolved operand has just been resolved; if so,
-  // resolve this as well.
-  if (isOperandUnresolved(Old)) {
-    if (!isOperandUnresolved(New))
-      decrementUnresolvedOperandCount();
-  } else {
-    // Operands shouldn't become unresolved.
+  // Check if an operand was resolved.
+  if (!isOperandUnresolved(Old))
     assert(isOperandUnresolved(New) && "Operand just became unresolved");
-  }
+  else if (!isOperandUnresolved(New))
+    decrementUnresolvedOperandCount();
 }
 
 void GenericMDNode::decrementUnresolvedOperandCount() {
   if (!--SubclassData32)
+    // Last unresolved operand has just been resolved.
     resolve();
 }
 
