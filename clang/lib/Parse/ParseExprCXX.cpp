@@ -716,16 +716,9 @@ ExprResult Parser::ParseLambdaExpression() {
   Optional<unsigned> DiagID = ParseLambdaIntroducer(Intro);
   if (DiagID) {
     Diag(Tok, DiagID.getValue());
-    auto SkipUntilLambdaToken = [&](tok::TokenKind LambdaToken) {
-      // Don't skip past the end of the default argument.
-      SkipUntil(LambdaToken, tok::cxx_defaultarg_end,
-                StopAtSemi | StopBeforeMatch);
-      if (Tok.is(LambdaToken))
-        ConsumeAnyToken();
-    };
-    SkipUntilLambdaToken(tok::r_square);
-    SkipUntilLambdaToken(tok::l_brace);
-    SkipUntilLambdaToken(tok::r_brace);
+    SkipUntil(tok::r_square, StopAtSemi);
+    SkipUntil(tok::l_brace, StopAtSemi);
+    SkipUntil(tok::r_brace, StopAtSemi);
     return ExprError();
   }
 

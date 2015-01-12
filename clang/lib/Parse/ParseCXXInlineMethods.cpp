@@ -652,6 +652,7 @@ bool Parser::ConsumeAndStoreUntil(tok::TokenKind T1, tok::TokenKind T2,
 
     switch (Tok.getKind()) {
     case tok::eof:
+    case tok::cxx_defaultarg_end:
     case tok::annot_module_begin:
     case tok::annot_module_end:
     case tok::annot_module_include:

@@ -262,6 +262,10 @@ bool Parser::SkipUntil(ArrayRef<tok::TokenKind> Toks, SkipUntilFlags Flags) {
       // Ran out of tokens.
       return false;
 
+    case tok::cxx_defaultarg_end:
+      // It's never desirable to consume the 'end-of-default-argument' token.
+      return false;
+
     case tok::annot_pragma_openmp_end:
       // Stop before an OpenMP pragma boundary.
     case tok::annot_module_begin:
@@ -1948,7 +1952,7 @@ bool BalancedDelimiterTracker::diagnoseMissingClose() {
   // token.
   if (P.Tok.isNot(tok::r_paren) && P.Tok.isNot(tok::r_brace) &&
       P.Tok.isNot(tok::r_square) &&
-      P.SkipUntil(Close, FinalToken, tok::cxx_defaultarg_end,
+      P.SkipUntil(Close, FinalToken,
                   Parser::StopAtSemi | Parser::StopBeforeMatch) &&
       P.Tok.is(Close))
     LClose = P.ConsumeAnyToken();
