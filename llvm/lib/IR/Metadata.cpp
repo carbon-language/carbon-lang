@@ -427,13 +427,6 @@ UniquableMDNode::UniquableMDNode(LLVMContext &C, unsigned ID,
   SubclassData32 = NumUnresolved;
 }
 
-UniquableMDNode::~UniquableMDNode() {
-  if (isStoredDistinctInContext())
-    getContext().pImpl->DistinctMDNodes.erase(this);
-
-  dropAllReferences();
-}
-
 void UniquableMDNode::resolve() {
   assert(!isResolved() && "Expected this to be unresolved");
 
@@ -479,11 +472,6 @@ void UniquableMDNode::resolveCycles() {
       if (!N->isResolved())
         N->resolveCycles();
   }
-}
-
-MDTuple::~MDTuple() {
-  if (!isStoredDistinctInContext())
-    getContext().pImpl->MDTuples.erase(this);
 }
 
 void MDTuple::recalculateHash() {
