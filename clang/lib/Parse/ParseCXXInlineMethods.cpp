@@ -418,7 +418,7 @@ void Parser::ParseLexedMethodDeclaration(LateParsedMethodDeclaration &LM) {
                                        ExceptionSpecTokens);
 
     // Clean up the remaining tokens.
-    if (Tok.is(tok::cxx_exceptspec_end))
+    if (Tok.is(tok::eof) && Tok.getEofData() == Actions.CurScope)
       ConsumeToken();
     else if (EST != EST_None)
       Diag(Tok.getLocation(), diag::err_except_spec_unparsed);
@@ -437,8 +437,11 @@ void Parser::ParseLexedMethodDeclaration(LateParsedMethodDeclaration &LM) {
 
     // There could be leftover tokens (e.g. because of an error).
     // Skip through until we reach the original token position.
-    while (Tok.getLocation() != origLoc && Tok.isNot(tok::eof))
+    while (Tok.getLocation() != origLoc) {
+      if (Tok.is(tok::eof) && Tok.getEofData() != Actions.CurScope)
+        break;
       ConsumeAnyToken();
+    }
 
     delete Toks;
     LM.ExceptionSpecTokens = nullptr;
