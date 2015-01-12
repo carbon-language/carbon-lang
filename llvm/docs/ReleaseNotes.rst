@@ -183,7 +183,25 @@ Miscellaneous
 Changes to the PowerPC Target
 -----------------------------
 
-During this release ...
+There are numerous improvements to the PowerPC target in this release:
+
+* LLVM now generates the Vector-Scalar eXtension (VSX) instructions from
+  version 2.06 of the Power ISA, for both big- and little-endian targets.
+
+* LLVM now has a POWER8 instruction scheduling description.
+
+* Address Sanitizer (ASAN) support is now fully functional.
+
+* Performance of simple atomic accesses has been greatly improved.
+
+* Atomic fences now use light-weight syncs where possible, again providing
+  significant performance benefit.
+
+* The PowerPC target now supports PIC levels (-fPIC vs. -fpic).
+
+* PPC32 SVR4 now supports small-model PIC.
+
+* There have been many smaller bug fixes and performance improvements.
 
 External Open Source Projects Using LLVM 3.6
 ============================================
