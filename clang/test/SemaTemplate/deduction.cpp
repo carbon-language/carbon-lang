@@ -202,8 +202,3 @@ namespace PR19372 {
     using T = S<int, int>;
   }
 }
-
-namespace PR18645 {
-  template<typename F> F Quux(F &&f);
-  auto Baz = Quux(Quux<float>);
-}
