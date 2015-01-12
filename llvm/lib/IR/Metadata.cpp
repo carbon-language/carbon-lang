@@ -581,15 +581,15 @@ void UniquableMDNode::handleChangedOperand(void *Ref, Metadata *New) {
   storeDistinctInContext();
 }
 
-MDNode *MDNode::getMDNode(LLVMContext &Context, ArrayRef<Metadata *> MDs,
-                          bool Insert) {
-  auto &Store = Context.pImpl->MDTuples;
-
+MDTuple *MDTuple::getImpl(LLVMContext &Context, ArrayRef<Metadata *> MDs,
+                          bool ShouldCreate) {
   MDTupleInfo::KeyTy Key(MDs);
+
+  auto &Store = Context.pImpl->MDTuples;
   auto I = Store.find_as(Key);
   if (I != Store.end())
     return *I;
-  if (!Insert)
+  if (!ShouldCreate)
     return nullptr;
 
   // Coallocate space for the node and Operands together, then placement new.
@@ -599,7 +599,7 @@ MDNode *MDNode::getMDNode(LLVMContext &Context, ArrayRef<Metadata *> MDs,
   return N;
 }
 
-MDNode *MDNode::getDistinct(LLVMContext &Context, ArrayRef<Metadata *> MDs) {
+MDTuple *MDTuple::getDistinct(LLVMContext &Context, ArrayRef<Metadata *> MDs) {
   auto *N = new (MDs.size()) MDTuple(Context, MDs, /* AllowRAUW */ false);
   N->storeDistinctInContext();
   return N;

@@ -604,25 +604,15 @@ protected:
 
   void dropAllReferences();
 
-  static MDNode *getMDNode(LLVMContext &C, ArrayRef<Metadata *> MDs,
-                           bool Insert = true);
-
   MDOperand *mutable_begin() { return mutable_end() - NumOperands; }
   MDOperand *mutable_end() { return reinterpret_cast<MDOperand *>(this); }
 
 public:
-  static MDNode *get(LLVMContext &Context, ArrayRef<Metadata *> MDs) {
-    return getMDNode(Context, MDs, true);
-  }
-
-  static MDNode *getIfExists(LLVMContext &Context, ArrayRef<Metadata *> MDs) {
-    return getMDNode(Context, MDs, false);
-  }
-
-  /// \brief Return a distinct node.
-  ///
-  /// Return a distinct node -- i.e., a node that is not uniqued.
-  static MDNode *getDistinct(LLVMContext &Context, ArrayRef<Metadata *> MDs);
+  static inline MDNode *get(LLVMContext &Context, ArrayRef<Metadata *> MDs);
+  static inline MDNode *getIfExists(LLVMContext &Context,
+                                    ArrayRef<Metadata *> MDs);
+  static inline MDNode *getDistinct(LLVMContext &Context,
+                                    ArrayRef<Metadata *> MDs);
 
   /// \brief Return a temporary MDNode
   ///
@@ -774,7 +764,6 @@ private:
 class MDTuple : public UniquableMDNode {
   friend class LLVMContextImpl;
   friend class UniquableMDNode;
-  friend class MDNode;
 
   MDTuple(LLVMContext &C, ArrayRef<Metadata *> Vals, bool AllowRAUW)
       : UniquableMDNode(C, MDTupleKind, Vals, AllowRAUW) {}
@@ -783,14 +772,39 @@ class MDTuple : public UniquableMDNode {
   void setHash(unsigned Hash) { MDNodeSubclassData = Hash; }
   void recalculateHash();
 
+  static MDTuple *getImpl(LLVMContext &Context, ArrayRef<Metadata *> MDs,
+                          bool ShouldCreate);
+
 public:
   /// \brief Get the hash, if any.
   unsigned getHash() const { return MDNodeSubclassData; }
+
+  static MDTuple *get(LLVMContext &Context, ArrayRef<Metadata *> MDs) {
+    return getImpl(Context, MDs, /* ShouldCreate */ true);
+  }
+  static MDTuple *getIfExists(LLVMContext &Context, ArrayRef<Metadata *> MDs) {
+    return getImpl(Context, MDs, /* ShouldCreate */ false);
+  }
+
+  /// \brief Return a distinct node.
+  ///
+  /// Return a distinct node -- i.e., a node that is not uniqued.
+  static MDTuple *getDistinct(LLVMContext &Context, ArrayRef<Metadata *> MDs);
 
   static bool classof(const Metadata *MD) {
     return MD->getMetadataID() == MDTupleKind;
   }
 };
+
+MDNode *MDNode::get(LLVMContext &Context, ArrayRef<Metadata *> MDs) {
+  return MDTuple::get(Context, MDs);
+}
+MDNode *MDNode::getIfExists(LLVMContext &Context, ArrayRef<Metadata *> MDs) {
+  return MDTuple::getIfExists(Context, MDs);
+}
+MDNode *MDNode::getDistinct(LLVMContext &Context, ArrayRef<Metadata *> MDs) {
+  return MDTuple::getDistinct(Context, MDs);
+}
 
 /// \brief Forward declaration of metadata.
 ///
