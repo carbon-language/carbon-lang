@@ -548,6 +548,11 @@ void Driver::generateCompilationDiagnostics(Compilation &C,
     Cmd.Print(ScriptOS, "\n", /*Quote=*/true, &CrashInfo);
     Diag(clang::diag::note_drv_command_failed_diag_msg) << Script;
   }
+
+  for (const auto &A : C.getArgs().filtered(options::OPT_frewrite_map_file,
+                                            options::OPT_frewrite_map_file_EQ))
+    Diag(clang::diag::note_drv_command_failed_diag_msg) << A->getValue();
+
   Diag(clang::diag::note_drv_command_failed_diag_msg)
       << "\n\n********************";
 }
