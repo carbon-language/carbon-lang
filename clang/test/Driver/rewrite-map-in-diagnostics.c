@@ -7,3 +7,6 @@
 #pragma clang __debug parser_crash
 
 // CHECK: note: diagnostic msg: {{.*}}rewrite.map
+
+// FIXME: This doesn't fail on "env clang". Investigating.
+// REQUIRES: shell
