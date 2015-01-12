@@ -1,4 +1,4 @@
-// RUN: %clangxx -fsanitize=nonnull-attribute -fno-sanitize-recover %s -O3 -o %t
+// RUN: %clangxx -fsanitize=nonnull-attribute -fno-sanitize-recover=all %s -O3 -o %t
 // RUN: %run %t nc
 // RUN: %run %t nm
 // RUN: %run %t nf

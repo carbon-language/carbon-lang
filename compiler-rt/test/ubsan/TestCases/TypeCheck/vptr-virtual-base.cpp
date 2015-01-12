@@ -1,4 +1,4 @@
-// RUN: %clangxx -fsanitize=vptr -fno-sanitize-recover -g %s -O3 -o %t
+// RUN: %clangxx -fsanitize=vptr -fno-sanitize-recover=vptr -g %s -O3 -o %t
 // RUN: not %run %t 2>&1 | FileCheck %s
 
 // FIXME: This test produces linker errors on Darwin.

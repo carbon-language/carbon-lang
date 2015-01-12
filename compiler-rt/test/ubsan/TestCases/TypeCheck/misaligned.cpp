@@ -9,7 +9,7 @@
 // RUN: %run %t u1 2>&1 | FileCheck %s --check-prefix=CHECK-UPCAST
 // RUN: UBSAN_OPTIONS=print_stacktrace=1 %run %t l1 2>&1 | FileCheck %s --check-prefix=CHECK-LOAD --check-prefix=CHECK-%os-STACK-LOAD
 
-// RUN: %clangxx -fsanitize=alignment -fno-sanitize-recover %s -O3 -o %t
+// RUN: %clangxx -fsanitize=alignment -fno-sanitize-recover=alignment %s -O3 -o %t
 // RUN: not %run %t w1 2>&1 | FileCheck %s --check-prefix=CHECK-WILD
 
 #include <new>
