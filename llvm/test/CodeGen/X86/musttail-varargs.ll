@@ -1,5 +1,6 @@
 ; RUN: llc < %s -enable-tail-merge=0 -mtriple=x86_64-linux | FileCheck %s --check-prefix=LINUX
 ; RUN: llc < %s -enable-tail-merge=0 -mtriple=x86_64-windows | FileCheck %s --check-prefix=WINDOWS
+; RUN: llc < %s -enable-tail-merge=0 -mtriple=i686-windows | FileCheck %s --check-prefix=X86
 
 ; Test that we actually spill and reload all arguments in the variadic argument
 ; pack. Doing a normal call will clobber all argument registers, and we will
@@ -72,6 +73,12 @@ define void @f_thunk(i8* %this, ...) {
 ; WINDOWS-NOT: mov{{.}}ps
 ; WINDOWS: jmpq *{{.*}} # TAILCALL
 
+; No regparms on normal x86 conventions.
+
+; X86-LABEL: _f_thunk:
+; X86: calll _get_f
+; X86: jmpl *{{.*}} # TAILCALL
+
 ; This thunk shouldn't require any spills and reloads, assuming the register
 ; allocator knows what it's doing.
 
@@ -88,6 +95,9 @@ define void @g_thunk(i8* %fptr_i8, ...) {
 ; WINDOWS-LABEL: g_thunk:
 ; WINDOWS-NOT: movq
 ; WINDOWS: jmpq *%rcx # TAILCALL
+
+; X86-LABEL: _g_thunk:
+; X86: jmpl *%eax # TAILCALL
 
 ; Do a simple multi-exit multi-bb test.
 
@@ -124,3 +134,7 @@ else:
 ; WINDOWS: jne
 ; WINDOWS: jmpq *{{.*}} # TAILCALL
 ; WINDOWS: jmpq *{{.*}} # TAILCALL
+; X86-LABEL: _h_thunk:
+; X86: jne
+; X86: jmpl *{{.*}} # TAILCALL
+; X86: jmpl *{{.*}} # TAILCALL

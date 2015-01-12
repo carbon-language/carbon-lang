@@ -181,15 +181,28 @@ void CCState::AnalyzeCallResult(MVT VT, CCAssignFn Fn) {
   }
 }
 
+static bool isValueTypeInRegForCC(CallingConv::ID CC, MVT VT) {
+  if (VT.isVector())
+    return true; // Assume -msse-regparm might be in effect.
+  if (!VT.isInteger())
+    return false;
+  if (CC == CallingConv::X86_VectorCall || CC == CallingConv::X86_FastCall)
+    return true;
+  return false;
+}
+
 void CCState::getRemainingRegParmsForType(SmallVectorImpl<MCPhysReg> &Regs,
                                           MVT VT, CCAssignFn Fn) {
   unsigned SavedStackOffset = StackOffset;
   unsigned NumLocs = Locs.size();
 
-  // Allocate something of this value type repeatedly with just the inreg flag
-  // set until we get assigned a location in memory.
+  // Set the 'inreg' flag if it is used for this calling convention.
   ISD::ArgFlagsTy Flags;
-  Flags.setInReg();
+  if (isValueTypeInRegForCC(CallingConv, VT))
+    Flags.setInReg();
+
+  // Allocate something of this value type repeatedly until we get assigned a
+  // location in memory.
   bool HaveRegParm = true;
   while (HaveRegParm) {
     if (Fn(0, VT, VT, CCValAssign::Full, Flags, *this)) {
