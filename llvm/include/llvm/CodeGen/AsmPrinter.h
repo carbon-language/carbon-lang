@@ -133,6 +133,7 @@ public:
   virtual ~AsmPrinter();
 
   DwarfDebug *getDwarfDebug() { return DD; }
+  DwarfDebug *getDwarfDebug() const { return DD; }
 
   /// Return true if assembly output should contain comments.
   ///

@@ -18,16 +18,20 @@
 
 namespace llvm {
 
-class TargetMachine;
+class AsmPrinter;
+class TargetRegisterInfo;
 
 /// Base class containing the logic for constructing DWARF expressions
 /// independently of whether they are emitted into a DIE or into a .debug_loc
 /// entry.
 class DwarfExpression {
 protected:
-  TargetMachine &TM;
+  const AsmPrinter &AP;
+  // Various convenience accessors that extract things out of AsmPrinter.
+  const TargetRegisterInfo *getTRI() const;
+
 public:
-  DwarfExpression(TargetMachine &TM) : TM(TM) {}
+  DwarfExpression(const AsmPrinter &AP) : AP(AP) {}
   virtual ~DwarfExpression() {}
 
   virtual void EmitOp(uint8_t Op, const char* Comment = nullptr) = 0;

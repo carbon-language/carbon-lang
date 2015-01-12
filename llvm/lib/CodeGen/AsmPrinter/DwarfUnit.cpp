@@ -49,8 +49,8 @@ class DIEDwarfExpression : public DwarfExpression {
   DwarfUnit &DU;
   DIELoc &DIE;
 public:
-  DIEDwarfExpression(TargetMachine &TM, DwarfUnit &DU, DIELoc &DIE)
-  : DwarfExpression(TM), DU(DU), DIE(DIE) {}
+  DIEDwarfExpression(const AsmPrinter &AP, DwarfUnit &DU, DIELoc &DIE)
+  : DwarfExpression(AP), DU(DU), DIE(DIE) {}
 
   void EmitOp(uint8_t Op, const char* Comment = nullptr) override;
   void EmitSigned(int Value) override;
@@ -68,8 +68,7 @@ void DIEDwarfExpression::EmitUnsigned(unsigned Value) {
   DU.addUInt(DIE, dwarf::DW_FORM_udata, Value);
 }
 unsigned DIEDwarfExpression::getFrameRegister() {
-  const TargetRegisterInfo *TRI = TM.getSubtargetImpl()->getRegisterInfo();
-  return TRI->getFrameRegister(*DU.getAsmPrinter()->MF);
+  return getTRI()->getFrameRegister(*AP.MF);
 }
 
 
@@ -431,7 +430,7 @@ void DwarfUnit::addSourceLine(DIE &Die, DINameSpace NS) {
 /// addRegisterOp - Add register operand.
 bool DwarfUnit::addRegisterOpPiece(DIELoc &TheDie, unsigned Reg,
                                    unsigned SizeInBits, unsigned OffsetInBits) {
-  DIEDwarfExpression Expr(Asm->TM, *this, TheDie);
+  DIEDwarfExpression Expr(*Asm, *this, TheDie);
   Expr.AddMachineRegPiece(Reg, SizeInBits, OffsetInBits);
   return true;
 }
@@ -439,7 +438,7 @@ bool DwarfUnit::addRegisterOpPiece(DIELoc &TheDie, unsigned Reg,
 /// addRegisterOffset - Add register offset.
 bool DwarfUnit::addRegisterOffset(DIELoc &TheDie, unsigned Reg,
                                   int64_t Offset) {
-  DIEDwarfExpression Expr(Asm->TM, *this, TheDie);
+  DIEDwarfExpression Expr(*Asm, *this, TheDie);
   return Expr.AddMachineRegIndirect(Reg, Offset);
 }
 

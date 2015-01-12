@@ -37,8 +37,8 @@ class DebugLocDwarfExpression : public DwarfExpression {
   ByteStreamer &BS;
 
 public:
-  DebugLocDwarfExpression(TargetMachine &TM, ByteStreamer &BS)
-      : DwarfExpression(TM), BS(BS) {}
+  DebugLocDwarfExpression(const AsmPrinter &AP, ByteStreamer &BS)
+      : DwarfExpression(AP), BS(BS) {}
 
   void EmitOp(uint8_t Op, const char *Comment) override;
   void EmitSigned(int Value) override;
@@ -222,14 +222,14 @@ void AsmPrinter::EmitDwarfRegOpPiece(ByteStreamer &Streamer,
                                      unsigned PieceSizeInBits,
                                      unsigned PieceOffsetInBits) const {
   assert(MLoc.isReg() && "MLoc must be a register");
-  DebugLocDwarfExpression Expr(TM, Streamer);
+  DebugLocDwarfExpression Expr(*this, Streamer);
   Expr.AddMachineRegPiece(MLoc.getReg(), PieceSizeInBits, PieceOffsetInBits);
 }
 
 void AsmPrinter::EmitDwarfOpPiece(ByteStreamer &Streamer,
                                   unsigned PieceSizeInBits,
                                   unsigned PieceOffsetInBits) const {
-  DebugLocDwarfExpression Expr(TM, Streamer);
+  DebugLocDwarfExpression Expr(*this, Streamer);
   Expr.AddOpPiece(PieceSizeInBits, PieceOffsetInBits);
 }
 
@@ -237,7 +237,7 @@ void AsmPrinter::EmitDwarfOpPiece(ByteStreamer &Streamer,
 void AsmPrinter::EmitDwarfRegOp(ByteStreamer &Streamer,
                                 const MachineLocation &MLoc,
                                 bool Indirect) const {
-  DebugLocDwarfExpression Expr(TM, Streamer);
+  DebugLocDwarfExpression Expr(*this, Streamer);
   const TargetRegisterInfo *TRI = TM.getSubtargetImpl()->getRegisterInfo();
   int Reg = TRI->getDwarfRegNum(MLoc.getReg(), false);
   if (Reg < 0) {

@@ -12,7 +12,10 @@
 //===----------------------------------------------------------------------===//
 
 #include "DwarfExpression.h"
+
+#include "DwarfDebug.h"
 #include "llvm/ADT/SmallBitVector.h"
+#include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/Support/Dwarf.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetRegisterInfo.h"
@@ -20,6 +23,10 @@
 
 
 using namespace llvm;
+
+const TargetRegisterInfo *DwarfExpression::getTRI() const {
+  return AP.TM.getSubtargetImpl()->getRegisterInfo();
+}
 
 void DwarfExpression::AddReg(int DwarfReg, const char* Comment) {
   assert(DwarfReg >= 0 && "invalid negative dwarf register number");
@@ -66,8 +73,7 @@ void DwarfExpression::AddShr(unsigned ShiftBy) {
 }
 
 bool DwarfExpression::AddMachineRegIndirect(unsigned MachineReg, int Offset) {
-  const TargetRegisterInfo *TRI = TM.getSubtargetImpl()->getRegisterInfo();
-  int DwarfReg = TRI->getDwarfRegNum(MachineReg, false);
+  int DwarfReg = getTRI()->getDwarfRegNum(MachineReg, false);
   if (DwarfReg < 0)
     return false;
 
@@ -84,7 +90,7 @@ bool DwarfExpression::AddMachineRegIndirect(unsigned MachineReg, int Offset) {
 void DwarfExpression::AddMachineRegPiece(unsigned MachineReg,
                                          unsigned PieceSizeInBits,
                                          unsigned PieceOffsetInBits) {
-  const TargetRegisterInfo *TRI = TM.getSubtargetImpl()->getRegisterInfo();
+  const TargetRegisterInfo *TRI = getTRI();
   int Reg = TRI->getDwarfRegNum(MachineReg, false);
 
   // If this is a valid register number, emit it.
