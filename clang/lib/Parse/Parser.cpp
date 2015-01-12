@@ -1948,7 +1948,7 @@ bool BalancedDelimiterTracker::diagnoseMissingClose() {
   // token.
   if (P.Tok.isNot(tok::r_paren) && P.Tok.isNot(tok::r_brace) &&
       P.Tok.isNot(tok::r_square) &&
-      P.SkipUntil(Close, FinalToken,
+      P.SkipUntil(Close, FinalToken, tok::cxx_defaultarg_end,
                   Parser::StopAtSemi | Parser::StopBeforeMatch) &&
       P.Tok.is(Close))
     LClose = P.ConsumeAnyToken();

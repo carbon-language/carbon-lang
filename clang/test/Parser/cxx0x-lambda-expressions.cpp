@@ -103,3 +103,8 @@ struct S {
   template <typename T>
   void m (T x =[0); // expected-error{{expected variable name or 'this' in lambda capture list}}
 } s;
+
+struct U {
+  template <typename T>
+  void m_fn1(T x = 0[0); // expected-error{{expected ']'}} expected-note{{to match this '['}}
+} *U;
