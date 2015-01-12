@@ -826,7 +826,9 @@ class MDNodeFwdDecl : public MDNode, ReplaceableMetadataImpl {
 
 public:
   ~MDNodeFwdDecl() { dropAllReferences(); }
-  using MDNode::operator delete;
+
+  // MSVC doesn't seem to see the alternaive: "using MDNode::operator delete".
+  void operator delete(void *Mem) { MDNode::operator delete(Mem); }
 
   static MDNodeFwdDecl *get(LLVMContext &Context, ArrayRef<Metadata *> MDs) {
     return new (MDs.size()) MDNodeFwdDecl(Context, MDs);
