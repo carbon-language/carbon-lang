@@ -660,15 +660,15 @@ void UnwrappedLineParser::parseStructuralElement() {
     }
     break;
   case tok::kw_asm:
-    FormatTok->Finalized = true;
     nextToken();
     if (FormatTok->is(tok::l_brace)) {
+      nextToken();
       while (FormatTok && FormatTok->isNot(tok::eof)) {
-        FormatTok->Finalized = true;
         if (FormatTok->is(tok::r_brace)) {
           nextToken();
           break;
         }
+        FormatTok->Finalized = true;
         nextToken();
       }
     }

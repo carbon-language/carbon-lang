@@ -2191,11 +2191,11 @@ TEST_F(FormatTest, FormatsInlineASM) {
       "    : \"a\"(value));");
   EXPECT_EQ(
       "void NS_InvokeByIndex(void *that, unsigned int methodIndex) {\n"
-      "    __asm {\n"
+      "  __asm {\n"
       "        mov     edx,[that] // vtable in edx\n"
       "        mov     eax,methodIndex\n"
       "        call    [edx][eax*4] // stdcall\n"
-      "    }\n"
+      "  }\n"
       "}",
       format("void NS_InvokeByIndex(void *that,   unsigned int methodIndex) {\n"
              "    __asm {\n"
@@ -2204,6 +2204,10 @@ TEST_F(FormatTest, FormatsInlineASM) {
              "        call    [edx][eax*4] // stdcall\n"
              "    }\n"
              "}"));
+  verifyFormat("void function() {\n"
+               "  // comment\n"
+               "  asm(\"\");\n"
+               "}");
 }
 
 TEST_F(FormatTest, FormatTryCatch) {
