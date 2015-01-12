@@ -3573,6 +3573,20 @@ void PrepareTailCall(SelectionDAG &DAG, SDValue &InFlag, SDValue &Chain,
   InFlag = Chain.getValue(1);
 }
 
+// Is this global address that of a function that can be called by name? (as
+// opposed to something that must hold a descriptor for an indirect call).
+static bool isFunctionGlobalAddress(SDValue Callee) {
+  if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee)) {
+    if (Callee.getOpcode() == ISD::GlobalTLSAddress ||
+        Callee.getOpcode() == ISD::TargetGlobalTLSAddress)
+      return false;
+
+    return G->getGlobal()->getType()->getElementType()->isFunctionTy();
+  }
+
+  return false;
+}
+
 static
 unsigned PrepareCall(SelectionDAG &DAG, SDValue &Callee, SDValue &InFlag,
                      SDValue &Chain, SDLoc dl, int SPDiff, bool isTailCall,
@@ -3598,7 +3612,10 @@ unsigned PrepareCall(SelectionDAG &DAG, SDValue &Callee, SDValue &InFlag,
       needIndirectCall = false;
     }
 
-  if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee)) {
+  if (isFunctionGlobalAddress(Callee)) {
+    GlobalAddressSDNode *G = cast<GlobalAddressSDNode>(Callee);
+    // A call to a TLS address is actually an indirect call to a
+    // thread-specific pointer.
     unsigned OpFlags = 0;
     if ((DAG.getTarget().getRelocationModel() != Reloc::Static &&
          (Subtarget.getTargetTriple().isMacOSX() &&
@@ -4649,8 +4666,8 @@ PPCTargetLowering::LowerCall_64SVR4(SDValue Chain, SDValue Callee,
   // See PrepareCall() for more information about calls through function
   // pointers in the 64-bit SVR4 ABI.
   if (!isTailCall &&
-      !dyn_cast<GlobalAddressSDNode>(Callee) &&
-      !dyn_cast<ExternalSymbolSDNode>(Callee)) {
+      !isFunctionGlobalAddress(Callee) &&
+      !isa<ExternalSymbolSDNode>(Callee)) {
     // Load r2 into a virtual register and store it to the TOC save area.
     SDValue Val = DAG.getCopyFromReg(Chain, dl, PPC::X2, MVT::i64);
     // TOC save area offset.
@@ -5053,8 +5070,8 @@ PPCTargetLowering::LowerCall_Darwin(SDValue Chain, SDValue Callee,
   // not mean the MTCTR instruction must use R12; it's easier to model this as
   // an extra parameter, so do that.
   if (!isTailCall &&
-      !dyn_cast<GlobalAddressSDNode>(Callee) &&
-      !dyn_cast<ExternalSymbolSDNode>(Callee) &&
+      !isFunctionGlobalAddress(Callee) &&
+      !isa<ExternalSymbolSDNode>(Callee) &&
       !isBLACompatibleAddress(Callee, DAG))
     RegsToPass.push_back(std::make_pair((unsigned)(isPPC64 ? PPC::X12 :
                                                    PPC::R12), Callee));
