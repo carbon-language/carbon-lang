@@ -1,8 +1,7 @@
 ; RUN: llc < %s - | FileCheck %s
 ; Radar 9309221
 ; Test dwarf reg no for s16
-;CHECK: super-register
-;CHECK-NEXT: DW_OP_regx
+;CHECK: super-register DW_OP_regx
 ;CHECK-NEXT: ascii
 ;CHECK-NEXT: DW_OP_piece
 ;CHECK-NEXT: 4

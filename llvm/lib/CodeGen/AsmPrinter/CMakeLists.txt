@@ -11,6 +11,7 @@ add_llvm_library(LLVMAsmPrinter
   DwarfCFIException.cpp
   DwarfCompileUnit.cpp
   DwarfDebug.cpp
+  DwarfExpression.cpp
   DwarfFile.cpp
   DwarfStringPool.cpp
   DwarfUnit.cpp
