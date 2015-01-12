@@ -247,7 +247,8 @@ INTERCEPTOR(int, pthread_create, void *thread,
 INTERCEPTOR(int, pthread_join, void *t, void **arg) {
   return real_pthread_join(t, arg);
 }
-DEFINE_REAL_PTHREAD_FUNCTIONS;
+
+DEFINE_REAL_PTHREAD_FUNCTIONS
 #endif  // ASAN_INTERCEPT_PTHREAD_CREATE
 
 #if ASAN_INTERCEPT_SIGNAL_AND_SIGACTION

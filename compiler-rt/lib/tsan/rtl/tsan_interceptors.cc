@@ -950,7 +950,7 @@ TSAN_INTERCEPTOR(int, pthread_join, void *th, void **ret) {
   return res;
 }
 
-DEFINE_REAL_PTHREAD_FUNCTIONS;
+DEFINE_REAL_PTHREAD_FUNCTIONS
 
 TSAN_INTERCEPTOR(int, pthread_detach, void *th) {
   SCOPED_TSAN_INTERCEPTOR(pthread_detach, th);
