@@ -35,22 +35,21 @@ using namespace llvm;
 /// DwarfExpression implementation for .debug_loc entries.
 class DebugLocDwarfExpression : public DwarfExpression {
   ByteStreamer &BS;
+
 public:
   DebugLocDwarfExpression(TargetMachine &TM, ByteStreamer &BS)
-    : DwarfExpression(TM), BS(BS) {}
+      : DwarfExpression(TM), BS(BS) {}
 
-  void EmitOp(uint8_t Op, const char* Comment) override;
+  void EmitOp(uint8_t Op, const char *Comment) override;
   void EmitSigned(int Value) override;
   void EmitUnsigned(unsigned Value) override;
-  unsigned getFrameRegister() override {
-    llvm_unreachable("not available");
-  };
+  unsigned getFrameRegister() override { llvm_unreachable("not available"); };
 };
 
-void DebugLocDwarfExpression::EmitOp(uint8_t Op, const char* Comment) {
-  BS.EmitInt8(Op, Comment
-    ? Twine(Comment)+" "+dwarf::OperationEncodingString(Op)
-    : dwarf::OperationEncodingString(Op));
+void DebugLocDwarfExpression::EmitOp(uint8_t Op, const char *Comment) {
+  BS.EmitInt8(
+      Op, Comment ? Twine(Comment) + " " + dwarf::OperationEncodingString(Op)
+                  : dwarf::OperationEncodingString(Op));
 }
 void DebugLocDwarfExpression::EmitSigned(int Value) {
   BS.EmitSLEB128(Value, Twine(Value));
@@ -58,7 +57,6 @@ void DebugLocDwarfExpression::EmitSigned(int Value) {
 void DebugLocDwarfExpression::EmitUnsigned(unsigned Value) {
   BS.EmitULEB128(Value, Twine(Value));
 }
-
 
 //===----------------------------------------------------------------------===//
 // Dwarf Emission Helper Routines
@@ -249,8 +247,8 @@ void AsmPrinter::EmitDwarfRegOp(ByteStreamer &Streamer,
       // caller might be in the middle of a dwarf expression. We should
       // probably assert that Reg >= 0 once debug info generation is more
       // mature.
-    return Expr.EmitOp(dwarf::DW_OP_nop,
-                       "nop (could not find a dwarf register number)");
+      return Expr.EmitOp(dwarf::DW_OP_nop,
+                         "nop (could not find a dwarf register number)");
 
     // Attempt to find a valid super- or sub-register.
     return Expr.AddMachineRegPiece(MLoc.getReg());
