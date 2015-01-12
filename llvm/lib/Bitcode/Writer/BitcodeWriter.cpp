@@ -836,8 +836,8 @@ static void WriteModuleMetadata(const Module *M,
     Record.clear();
 
     // Write named metadata operands.
-    for (unsigned i = 0, e = NMD.getNumOperands(); i != e; ++i)
-      Record.push_back(VE.getMetadataID(NMD.getOperand(i)));
+    for (const MDNode *N : NMD.operands())
+      Record.push_back(VE.getMetadataID(N));
     Stream.EmitRecord(bitc::METADATA_NAMED_NODE, Record, 0);
     Record.clear();
   }
