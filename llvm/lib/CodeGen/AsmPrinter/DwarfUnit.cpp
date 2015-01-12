@@ -16,6 +16,7 @@
 #include "DwarfAccelTable.h"
 #include "DwarfCompileUnit.h"
 #include "DwarfDebug.h"
+#include "DwarfExpression.h"
 #include "llvm/ADT/APFloat.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DIBuilder.h"
@@ -42,6 +43,35 @@ static cl::opt<bool>
 GenerateDwarfTypeUnits("generate-type-units", cl::Hidden,
                        cl::desc("Generate DWARF4 type units."),
                        cl::init(false));
+
+/// DwarfExpression implementation for DwarfUnit.
+class DIEDwarfExpression : public DwarfExpression {
+  DwarfUnit &DU;
+  DIELoc &DIE;
+public:
+  DIEDwarfExpression(TargetMachine &TM, DwarfUnit &DU, DIELoc &DIE)
+  : DwarfExpression(TM), DU(DU), DIE(DIE) {}
+
+  void EmitOp(uint8_t Op, const char* Comment = nullptr) override;
+  void EmitSigned(int Value) override;
+  void EmitUnsigned(unsigned Value) override;
+  unsigned getFrameRegister() override;
+};
+
+void DIEDwarfExpression::EmitOp(uint8_t Op, const char* Comment) {
+  DU.addUInt(DIE, dwarf::DW_FORM_data1, Op);
+}
+void DIEDwarfExpression::EmitSigned(int Value) {
+  DU.addSInt(DIE, dwarf::DW_FORM_sdata, Value);
+}
+void DIEDwarfExpression::EmitUnsigned(unsigned Value) {
+  DU.addUInt(DIE, dwarf::DW_FORM_udata, Value);
+}
+unsigned DIEDwarfExpression::getFrameRegister() {
+  const TargetRegisterInfo *TRI = TM.getSubtargetImpl()->getRegisterInfo();
+  return TRI->getFrameRegister(*DU.getAsmPrinter()->MF);
+}
+
 
 /// Unit - Unit constructor.
 DwarfUnit::DwarfUnit(unsigned UID, dwarf::Tag UnitTag, DICompileUnit Node,
@@ -463,22 +493,8 @@ bool DwarfUnit::addRegisterOpPiece(DIELoc &TheDie, unsigned Reg,
 /// addRegisterOffset - Add register offset.
 bool DwarfUnit::addRegisterOffset(DIELoc &TheDie, unsigned Reg,
                                   int64_t Offset) {
-  const TargetRegisterInfo *TRI = Asm->TM.getSubtargetImpl()->getRegisterInfo();
-  int DWReg = TRI->getDwarfRegNum(Reg, false);
-  if (DWReg < 0)
-    return false;
-
-  if (Reg == TRI->getFrameRegister(*Asm->MF))
-    // If variable offset is based in frame register then use fbreg.
-    addUInt(TheDie, dwarf::DW_FORM_data1, dwarf::DW_OP_fbreg);
-  else if (DWReg < 32)
-    addUInt(TheDie, dwarf::DW_FORM_data1, dwarf::DW_OP_breg0 + DWReg);
-  else {
-    addUInt(TheDie, dwarf::DW_FORM_data1, dwarf::DW_OP_bregx);
-    addUInt(TheDie, dwarf::DW_FORM_udata, DWReg);
-  }
-  addSInt(TheDie, dwarf::DW_FORM_sdata, Offset);
-  return true;
+  DIEDwarfExpression Expr(Asm->TM, *this, TheDie);
+  return Expr.AddMachineRegIndirect(Reg, Offset);
 }
 
 /* Byref variables, in Blocks, are declared by the programmer as "SomeType

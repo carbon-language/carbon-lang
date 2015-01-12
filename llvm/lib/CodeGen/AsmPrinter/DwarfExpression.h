@@ -24,6 +24,7 @@ class TargetMachine;
 /// independently of whether they are emitted into a DIE or into a .debug_loc
 /// entry.
 class DwarfExpression {
+protected:
   TargetMachine &TM;
 public:
   DwarfExpression(TargetMachine &TM) : TM(TM) {}
@@ -31,6 +32,9 @@ public:
   virtual void EmitOp(uint8_t Op, const char* Comment = nullptr) = 0;
   virtual void EmitSigned(int Value) = 0;
   virtual void EmitUnsigned(unsigned Value) = 0;
+
+  virtual unsigned getFrameRegister() = 0;
+
   /// Emit a dwarf register operation.
   void AddReg(int DwarfReg, const char* Comment = nullptr);
   /// Emit an (double-)indirect dwarf register operation.
@@ -42,6 +46,10 @@ public:
   void AddOpPiece(unsigned SizeInBits, unsigned OffsetInBits = 0);
   /// Emit a shift-right dwarf expression.
   void AddShr(unsigned ShiftBy);
+
+  /// Emit an indirect dwarf register operation for the given machine register.
+  /// Returns false if no DWARF register exists for MachineReg.
+  bool AddMachineRegIndirect(unsigned MachineReg, int Offset);
 
   /// \brief Emit a partial DWARF register operation.
   /// \param MLoc             the register

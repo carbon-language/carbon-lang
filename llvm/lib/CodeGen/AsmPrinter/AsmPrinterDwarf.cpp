@@ -42,6 +42,9 @@ public:
   void EmitOp(uint8_t Op, const char* Comment) override;
   void EmitSigned(int Value) override;
   void EmitUnsigned(unsigned Value) override;
+  unsigned getFrameRegister() override {
+    llvm_unreachable("not available");
+  };
 };
 
 void DebugLocDwarfExpression::EmitOp(uint8_t Op, const char* Comment) {
