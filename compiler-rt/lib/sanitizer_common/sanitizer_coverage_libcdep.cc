@@ -66,6 +66,8 @@ namespace __sanitizer {
 class CoverageData {
  public:
   void Init();
+  void Enable();
+  void Disable();
   void ReInit();
   void BeforeFork();
   void AfterFork(int child_pid);
@@ -150,10 +152,13 @@ void CoverageData::DirectOpen() {
 }
 
 void CoverageData::Init() {
+  pc_fd = kInvalidFd;
+}
+
+void CoverageData::Enable() {
   CHECK_EQ(pc_array, nullptr);
   pc_array = reinterpret_cast<uptr *>(
       MmapNoReserveOrDie(sizeof(uptr) * kPcArrayMaxSize, "CovInit"));
-  pc_fd = kInvalidFd;
   atomic_store(&pc_array_index, 0, memory_order_relaxed);
   if (common_flags()->coverage_direct) {
     atomic_store(&pc_array_size, 0, memory_order_relaxed);
@@ -184,22 +189,40 @@ void CoverageData::InitializeGuardArray(s32 *guards) {
   }
 }
 
-void CoverageData::ReInit() {
+void CoverageData::Disable() {
   if (pc_array) {
     internal_munmap(pc_array, sizeof(uptr) * kPcArrayMaxSize);
     pc_array = nullptr;
   }
-  if (pc_fd != kInvalidFd) internal_close(pc_fd);
+  if (cc_array) {
+    internal_munmap(cc_array, sizeof(uptr *) * kCcArrayMaxSize);
+    cc_array = nullptr;
+  }
+  if (tr_event_array) {
+    internal_munmap(tr_event_array,
+                    sizeof(tr_event_array[0]) * kTrEventArrayMaxSize +
+                        GetMmapGranularity());
+    tr_event_array = nullptr;
+    tr_event_pointer = nullptr;
+  }
+  if (pc_fd != kInvalidFd) {
+    internal_close(pc_fd);
+    pc_fd = kInvalidFd;
+  }
+}
+
+void CoverageData::ReInit() {
+  Disable();
   if (coverage_enabled) {
     if (common_flags()->coverage_direct) {
       // In memory-mapped mode we must extend the new file to the known array
       // size.
       uptr size = atomic_load(&pc_array_size, memory_order_relaxed);
-      Init();
+      Enable();
       if (size) Extend(size);
       if (coverage_enabled) CovUpdateMapping(coverage_dir);
     } else {
-      Init();
+      Enable();
     }
   }
   // Re-initialize the guards.
@@ -602,7 +625,8 @@ void InitializeCoverage(bool enabled, const char *dir) {
     return;  // May happen if two sanitizer enable coverage in the same process.
   coverage_enabled = enabled;
   coverage_dir = dir;
-  if (enabled) coverage_data.Init();
+  coverage_data.Init();
+  if (enabled) coverage_data.Enable();
 #if !SANITIZER_WINDOWS
   if (!common_flags()->coverage_direct) Atexit(__sanitizer_cov_dump);
 #endif
