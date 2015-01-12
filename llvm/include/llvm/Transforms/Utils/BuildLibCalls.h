@@ -115,20 +115,6 @@ namespace llvm {
   /// a pointer, Size is an 'intptr_t', and File is a pointer to FILE.
   Value *EmitFWrite(Value *Ptr, Value *Size, Value *File, IRBuilder<> &B,
                     const DataLayout *TD, const TargetLibraryInfo *TLI);
-
-  /// SimplifyFortifiedLibCalls - Helper class for folding checked library
-  /// calls (e.g. __strcpy_chk) into their unchecked counterparts.
-  class SimplifyFortifiedLibCalls {
-  protected:
-    CallInst *CI;
-    virtual void replaceCall(Value *With) = 0;
-    virtual bool isFoldable(unsigned SizeCIOp, unsigned SizeArgOp,
-                            bool isString) const = 0;
-
-  public:
-    virtual ~SimplifyFortifiedLibCalls();
-    bool fold(CallInst *CI, const DataLayout *TD, const TargetLibraryInfo *TLI);
-  };
 }
 
 #endif

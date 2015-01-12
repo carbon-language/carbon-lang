@@ -45,6 +45,7 @@
 #include "llvm/Transforms/Utils/BuildLibCalls.h"
 #include "llvm/Transforms/Utils/BypassSlowDivision.h"
 #include "llvm/Transforms/Utils/Local.h"
+#include "llvm/Transforms/Utils/SimplifyLibCalls.h"
 using namespace llvm;
 using namespace llvm::PatternMatch;
 
@@ -847,22 +848,6 @@ static bool OptimizeExtractBits(BinaryOperator *ShiftI, ConstantInt *CI,
   return MadeChange;
 }
 
-namespace {
-class CodeGenPrepareFortifiedLibCalls : public SimplifyFortifiedLibCalls {
-protected:
-  void replaceCall(Value *With) override {
-    CI->replaceAllUsesWith(With);
-    CI->eraseFromParent();
-  }
-  bool isFoldable(unsigned SizeCIOp, unsigned, bool) const override {
-      if (ConstantInt *SizeCI =
-                             dyn_cast<ConstantInt>(CI->getArgOperand(SizeCIOp)))
-        return SizeCI->isAllOnesValue();
-    return false;
-  }
-};
-} // end anonymous namespace
-
 //  ScalarizeMaskedLoad() translates masked load intrinsic, like 
 // <16 x i32 > @llvm.masked.load( <16 x i32>* %addr, i32 align,
 //                               <16 x i1> %mask, <16 x i32> %passthru)
@@ -1152,10 +1137,15 @@ bool CodeGenPrepare::OptimizeCallInst(CallInst *CI, bool& ModifiedDT) {
 
   // Lower all default uses of _chk calls.  This is very similar
   // to what InstCombineCalls does, but here we are only lowering calls
-  // that have the default "don't know" as the objectsize.  Anything else
-  // should be left alone.
-  CodeGenPrepareFortifiedLibCalls Simplifier;
-  return Simplifier.fold(CI, TD, TLInfo);
+  // to fortified library functions (e.g. __memcpy_chk) that have the default
+  // "don't know" as the objectsize.  Anything else should be left alone.
+  FortifiedLibCallSimplifier Simplifier(TD, TLInfo, true);
+  if (Value *V = Simplifier.optimizeCall(CI)) {
+    CI->replaceAllUsesWith(V);
+    CI->eraseFromParent();
+    return true;
+  }
+  return false;
 }
 
 /// DupRetToEnableTailCallOpts - Look for opportunities to duplicate return

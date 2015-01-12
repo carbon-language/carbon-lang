@@ -181,209 +181,6 @@ static bool checkStringCopyLibFuncSignature(Function *F, LibFunc::Func Func,
 }
 
 //===----------------------------------------------------------------------===//
-// Fortified Library Call Optimizations
-//===----------------------------------------------------------------------===//
-
-static bool isFortifiedCallFoldable(CallInst *CI, unsigned SizeCIOp, unsigned SizeArgOp,
-                       bool isString) {
-  if (CI->getArgOperand(SizeCIOp) == CI->getArgOperand(SizeArgOp))
-    return true;
-  if (ConstantInt *SizeCI =
-          dyn_cast<ConstantInt>(CI->getArgOperand(SizeCIOp))) {
-    if (SizeCI->isAllOnesValue())
-      return true;
-    if (isString) {
-      uint64_t Len = GetStringLength(CI->getArgOperand(SizeArgOp));
-      // If the length is 0 we don't know how long it is and so we can't
-      // remove the check.
-      if (Len == 0)
-        return false;
-      return SizeCI->getZExtValue() >= Len;
-    }
-    if (ConstantInt *Arg = dyn_cast<ConstantInt>(CI->getArgOperand(SizeArgOp)))
-      return SizeCI->getZExtValue() >= Arg->getZExtValue();
-  }
-  return false;
-}
-
-Value *LibCallSimplifier::optimizeMemCpyChk(CallInst *CI, IRBuilder<> &B) {
-  Function *Callee = CI->getCalledFunction();
-  FunctionType *FT = Callee->getFunctionType();
-  LLVMContext &Context = CI->getContext();
-
-  // Check if this has the right signature.
-  if (FT->getNumParams() != 4 || FT->getReturnType() != FT->getParamType(0) ||
-      !FT->getParamType(0)->isPointerTy() ||
-      !FT->getParamType(1)->isPointerTy() ||
-      FT->getParamType(2) != DL->getIntPtrType(Context) ||
-      FT->getParamType(3) != DL->getIntPtrType(Context))
-    return nullptr;
-
-  if (isFortifiedCallFoldable(CI, 3, 2, false)) {
-    B.CreateMemCpy(CI->getArgOperand(0), CI->getArgOperand(1),
-                   CI->getArgOperand(2), 1);
-    return CI->getArgOperand(0);
-  }
-  return nullptr;
-}
-
-Value *LibCallSimplifier::optimizeMemMoveChk(CallInst *CI, IRBuilder<> &B) {
-  Function *Callee = CI->getCalledFunction();
-  FunctionType *FT = Callee->getFunctionType();
-  LLVMContext &Context = CI->getContext();
-
-  // Check if this has the right signature.
-  if (FT->getNumParams() != 4 || FT->getReturnType() != FT->getParamType(0) ||
-      !FT->getParamType(0)->isPointerTy() ||
-      !FT->getParamType(1)->isPointerTy() ||
-      FT->getParamType(2) != DL->getIntPtrType(Context) ||
-      FT->getParamType(3) != DL->getIntPtrType(Context))
-    return nullptr;
-
-  if (isFortifiedCallFoldable(CI, 3, 2, false)) {
-    B.CreateMemMove(CI->getArgOperand(0), CI->getArgOperand(1),
-                    CI->getArgOperand(2), 1);
-    return CI->getArgOperand(0);
-  }
-  return nullptr;
-}
-
-Value *LibCallSimplifier::optimizeMemSetChk(CallInst *CI, IRBuilder<> &B) {
-  Function *Callee = CI->getCalledFunction();
-  FunctionType *FT = Callee->getFunctionType();
-  LLVMContext &Context = CI->getContext();
-
-  // Check if this has the right signature.
-  if (FT->getNumParams() != 4 || FT->getReturnType() != FT->getParamType(0) ||
-      !FT->getParamType(0)->isPointerTy() ||
-      !FT->getParamType(1)->isIntegerTy() ||
-      FT->getParamType(2) != DL->getIntPtrType(Context) ||
-      FT->getParamType(3) != DL->getIntPtrType(Context))
-    return nullptr;
-
-  if (isFortifiedCallFoldable(CI, 3, 2, false)) {
-    Value *Val = B.CreateIntCast(CI->getArgOperand(1), B.getInt8Ty(), false);
-    B.CreateMemSet(CI->getArgOperand(0), Val, CI->getArgOperand(2), 1);
-    return CI->getArgOperand(0);
-  }
-  return nullptr;
-}
-
-Value *LibCallSimplifier::optimizeStrCpyChk(CallInst *CI, IRBuilder<> &B) {
-  Function *Callee = CI->getCalledFunction();
-  StringRef Name = Callee->getName();
-  FunctionType *FT = Callee->getFunctionType();
-  LLVMContext &Context = CI->getContext();
-
-  // Check if this has the right signature.
-  if (FT->getNumParams() != 3 || FT->getReturnType() != FT->getParamType(0) ||
-      FT->getParamType(0) != FT->getParamType(1) ||
-      FT->getParamType(0) != Type::getInt8PtrTy(Context) ||
-      FT->getParamType(2) != DL->getIntPtrType(Context))
-    return nullptr;
-
-  Value *Dst = CI->getArgOperand(0), *Src = CI->getArgOperand(1);
-  if (Dst == Src) // __strcpy_chk(x,x)  -> x
-    return Src;
-
-  // If a) we don't have any length information, or b) we know this will
-  // fit then just lower to a plain strcpy. Otherwise we'll keep our
-  // strcpy_chk call which may fail at runtime if the size is too long.
-  // TODO: It might be nice to get a maximum length out of the possible
-  // string lengths for varying.
-  if (isFortifiedCallFoldable(CI, 2, 1, true)) {
-    Value *Ret = EmitStrCpy(Dst, Src, B, DL, TLI, Name.substr(2, 6));
-    return Ret;
-  } else {
-    // Maybe we can stil fold __strcpy_chk to __memcpy_chk.
-    uint64_t Len = GetStringLength(Src);
-    if (Len == 0)
-      return nullptr;
-
-    // This optimization require DataLayout.
-    if (!DL)
-      return nullptr;
-
-    Value *Ret = EmitMemCpyChk(
-        Dst, Src, ConstantInt::get(DL->getIntPtrType(Context), Len),
-        CI->getArgOperand(2), B, DL, TLI);
-    return Ret;
-  }
-  return nullptr;
-}
-
-Value *LibCallSimplifier::optimizeStpCpyChk(CallInst *CI, IRBuilder<> &B) {
-  Function *Callee = CI->getCalledFunction();
-  StringRef Name = Callee->getName();
-  FunctionType *FT = Callee->getFunctionType();
-  LLVMContext &Context = CI->getContext();
-
-  // Check if this has the right signature.
-  if (FT->getNumParams() != 3 || FT->getReturnType() != FT->getParamType(0) ||
-      FT->getParamType(0) != FT->getParamType(1) ||
-      FT->getParamType(0) != Type::getInt8PtrTy(Context) ||
-      FT->getParamType(2) != DL->getIntPtrType(FT->getParamType(0)))
-    return nullptr;
-
-  Value *Dst = CI->getArgOperand(0), *Src = CI->getArgOperand(1);
-  if (Dst == Src) { // stpcpy(x,x)  -> x+strlen(x)
-    Value *StrLen = EmitStrLen(Src, B, DL, TLI);
-    return StrLen ? B.CreateInBoundsGEP(Dst, StrLen) : nullptr;
-  }
-
-  // If a) we don't have any length information, or b) we know this will
-  // fit then just lower to a plain stpcpy. Otherwise we'll keep our
-  // stpcpy_chk call which may fail at runtime if the size is too long.
-  // TODO: It might be nice to get a maximum length out of the possible
-  // string lengths for varying.
-  if (isFortifiedCallFoldable(CI, 2, 1, true)) {
-    Value *Ret = EmitStrCpy(Dst, Src, B, DL, TLI, Name.substr(2, 6));
-    return Ret;
-  } else {
-    // Maybe we can stil fold __stpcpy_chk to __memcpy_chk.
-    uint64_t Len = GetStringLength(Src);
-    if (Len == 0)
-      return nullptr;
-
-    // This optimization require DataLayout.
-    if (!DL)
-      return nullptr;
-
-    Type *PT = FT->getParamType(0);
-    Value *LenV = ConstantInt::get(DL->getIntPtrType(PT), Len);
-    Value *DstEnd =
-        B.CreateGEP(Dst, ConstantInt::get(DL->getIntPtrType(PT), Len - 1));
-    if (!EmitMemCpyChk(Dst, Src, LenV, CI->getArgOperand(2), B, DL, TLI))
-      return nullptr;
-    return DstEnd;
-  }
-  return nullptr;
-}
-
-Value *LibCallSimplifier::optimizeStrNCpyChk(CallInst *CI, IRBuilder<> &B) {
-  Function *Callee = CI->getCalledFunction();
-  StringRef Name = Callee->getName();
-  FunctionType *FT = Callee->getFunctionType();
-  LLVMContext &Context = CI->getContext();
-
-  // Check if this has the right signature.
-  if (FT->getNumParams() != 4 || FT->getReturnType() != FT->getParamType(0) ||
-      FT->getParamType(0) != FT->getParamType(1) ||
-      FT->getParamType(0) != Type::getInt8PtrTy(Context) ||
-      !FT->getParamType(2)->isIntegerTy() ||
-      FT->getParamType(3) != DL->getIntPtrType(Context))
-    return nullptr;
-
-  if (isFortifiedCallFoldable(CI, 3, 2, false)) {
-    Value *Ret =
-        EmitStrNCpy(CI->getArgOperand(0), CI->getArgOperand(1),
-                    CI->getArgOperand(2), B, DL, TLI, Name.substr(2, 7));
-    return Ret;
-  }
-  return nullptr;
-}
-
-//===----------------------------------------------------------------------===//
 // String and Memory Library Call Optimizations
 //===----------------------------------------------------------------------===//
 
@@ -2166,6 +1963,15 @@ Value *LibCallSimplifier::optimizeCall(CallInst *CI) {
     }
   }
 
+  // Also try to simplify calls to fortified library functions.
+  if (Value *SimplifiedFortifiedCI = FortifiedSimplifier.optimizeCall(CI)) {
+    // Try to further simplify the result.
+    if (CallInst *SimplifiedCI = dyn_cast<CallInst>(SimplifiedFortifiedCI))
+      if (Value *V = optimizeStringMemoryLibCall(SimplifiedCI, Builder))
+        return V;
+    return SimplifiedFortifiedCI;
+  }
+
   // Then check for known library functions.
   if (TLI->getLibFunc(FuncName, Func) && TLI->has(Func)) {
     // We never change the calling convention.
@@ -2270,29 +2076,16 @@ Value *LibCallSimplifier::optimizeCall(CallInst *CI) {
       if (hasFloatVersion(FuncName))
         return optimizeBinaryDoubleFP(CI, Builder);
       return nullptr;
-    case LibFunc::memcpy_chk:
-      return optimizeMemCpyChk(CI, Builder);
-    case LibFunc::memmove_chk:
-      return optimizeMemMoveChk(CI, Builder);
-    case LibFunc::memset_chk:
-      return optimizeMemSetChk(CI, Builder);
-    case LibFunc::strcpy_chk:
-      return optimizeStrCpyChk(CI, Builder);
-    case LibFunc::stpcpy_chk:
-      return optimizeStpCpyChk(CI, Builder);
-    case LibFunc::stpncpy_chk:
-    case LibFunc::strncpy_chk:
-      return optimizeStrNCpyChk(CI, Builder);
     default:
       return nullptr;
     }
   }
-
   return nullptr;
 }
 
 LibCallSimplifier::LibCallSimplifier(const DataLayout *DL,
                                      const TargetLibraryInfo *TLI) :
+                                     FortifiedSimplifier(DL, TLI),
                                      DL(DL),
                                      TLI(TLI),
                                      UnsafeFPShrink(false) {
@@ -2350,3 +2143,184 @@ void LibCallSimplifier::replaceAllUsesWith(Instruction *I, Value *With) const {
 //   * trunc(cnst) -> cnst'
 //
 //
+
+//===----------------------------------------------------------------------===//
+// Fortified Library Call Optimizations
+//===----------------------------------------------------------------------===//
+
+bool FortifiedLibCallSimplifier::isFortifiedCallFoldable(CallInst *CI,
+                                                         unsigned ObjSizeOp,
+                                                         unsigned SizeOp,
+                                                         bool isString) {
+  if (CI->getArgOperand(ObjSizeOp) == CI->getArgOperand(SizeOp))
+    return true;
+  if (ConstantInt *ObjSizeCI =
+          dyn_cast<ConstantInt>(CI->getArgOperand(ObjSizeOp))) {
+    if (ObjSizeCI->isAllOnesValue())
+      return true;
+    // If the object size wasn't -1 (unknown), bail out if we were asked to.
+    if (OnlyLowerUnknownSize)
+      return false;
+    if (isString) {
+      uint64_t Len = GetStringLength(CI->getArgOperand(SizeOp));
+      // If the length is 0 we don't know how long it is and so we can't
+      // remove the check.
+      if (Len == 0)
+        return false;
+      return ObjSizeCI->getZExtValue() >= Len;
+    }
+    if (ConstantInt *SizeCI = dyn_cast<ConstantInt>(CI->getArgOperand(SizeOp)))
+      return ObjSizeCI->getZExtValue() >= SizeCI->getZExtValue();
+  }
+  return false;
+}
+
+Value *FortifiedLibCallSimplifier::optimizeMemCpyChk(CallInst *CI, IRBuilder<> &B) {
+  Function *Callee = CI->getCalledFunction();
+
+  if (!checkStringCopyLibFuncSignature(Callee, LibFunc::memcpy_chk, DL))
+    return nullptr;
+
+  if (isFortifiedCallFoldable(CI, 3, 2, false)) {
+    B.CreateMemCpy(CI->getArgOperand(0), CI->getArgOperand(1),
+                   CI->getArgOperand(2), 1);
+    return CI->getArgOperand(0);
+  }
+  return nullptr;
+}
+
+Value *FortifiedLibCallSimplifier::optimizeMemMoveChk(CallInst *CI, IRBuilder<> &B) {
+  Function *Callee = CI->getCalledFunction();
+
+  if (!checkStringCopyLibFuncSignature(Callee, LibFunc::memmove_chk, DL))
+    return nullptr;
+
+  if (isFortifiedCallFoldable(CI, 3, 2, false)) {
+    B.CreateMemMove(CI->getArgOperand(0), CI->getArgOperand(1),
+                    CI->getArgOperand(2), 1);
+    return CI->getArgOperand(0);
+  }
+  return nullptr;
+}
+
+Value *FortifiedLibCallSimplifier::optimizeMemSetChk(CallInst *CI, IRBuilder<> &B) {
+  Function *Callee = CI->getCalledFunction();
+
+  if (!checkStringCopyLibFuncSignature(Callee, LibFunc::memset_chk, DL))
+    return nullptr;
+
+  if (isFortifiedCallFoldable(CI, 3, 2, false)) {
+    Value *Val = B.CreateIntCast(CI->getArgOperand(1), B.getInt8Ty(), false);
+    B.CreateMemSet(CI->getArgOperand(0), Val, CI->getArgOperand(2), 1);
+    return CI->getArgOperand(0);
+  }
+  return nullptr;
+}
+
+Value *FortifiedLibCallSimplifier::optimizeStrCpyChk(CallInst *CI, IRBuilder<> &B) {
+  Function *Callee = CI->getCalledFunction();
+  StringRef Name = Callee->getName();
+  LibFunc::Func Func =
+      Name.startswith("str") ? LibFunc::strcpy_chk : LibFunc::stpcpy_chk;
+
+  if (!checkStringCopyLibFuncSignature(Callee, Func, DL))
+    return nullptr;
+
+  Value *Dst = CI->getArgOperand(0), *Src = CI->getArgOperand(1),
+        *ObjSize = CI->getArgOperand(2);
+
+  // __stpcpy_chk(x,x,...)  -> x+strlen(x)
+  if (!OnlyLowerUnknownSize && Dst == Src) {
+    Value *StrLen = EmitStrLen(Src, B, DL, TLI);
+    return StrLen ? B.CreateInBoundsGEP(Dst, StrLen) : nullptr;
+  }
+
+  // If a) we don't have any length information, or b) we know this will
+  // fit then just lower to a plain st[rp]cpy. Otherwise we'll keep our
+  // st[rp]cpy_chk call which may fail at runtime if the size is too long.
+  // TODO: It might be nice to get a maximum length out of the possible
+  // string lengths for varying.
+  if (isFortifiedCallFoldable(CI, 2, 1, true)) {
+    Value *Ret = EmitStrCpy(Dst, Src, B, DL, TLI, Name.substr(2, 6));
+    return Ret;
+  } else if (!OnlyLowerUnknownSize) {
+    // Maybe we can stil fold __st[rp]cpy_chk to __memcpy_chk.
+    uint64_t Len = GetStringLength(Src);
+    if (Len == 0)
+      return nullptr;
+
+    // This optimization requires DataLayout.
+    if (!DL)
+      return nullptr;
+
+    Type *SizeTTy = DL->getIntPtrType(CI->getContext());
+    Value *LenV = ConstantInt::get(SizeTTy, Len);
+    Value *Ret = EmitMemCpyChk(Dst, Src, LenV, ObjSize, B, DL, TLI);
+    // If the function was an __stpcpy_chk, and we were able to fold it into
+    // a __memcpy_chk, we still need to return the correct end pointer.
+    if (Ret && Func == LibFunc::stpcpy_chk)
+      return B.CreateGEP(Dst, ConstantInt::get(SizeTTy, Len - 1));
+    return Ret;
+  }
+  return nullptr;
+}
+
+Value *FortifiedLibCallSimplifier::optimizeStrNCpyChk(CallInst *CI, IRBuilder<> &B) {
+  Function *Callee = CI->getCalledFunction();
+  StringRef Name = Callee->getName();
+  LibFunc::Func Func =
+      Name.startswith("str") ? LibFunc::strncpy_chk : LibFunc::stpncpy_chk;
+
+  if (!checkStringCopyLibFuncSignature(Callee, Func, DL))
+    return nullptr;
+  if (isFortifiedCallFoldable(CI, 3, 2, false)) {
+    Value *Ret =
+        EmitStrNCpy(CI->getArgOperand(0), CI->getArgOperand(1),
+                    CI->getArgOperand(2), B, DL, TLI, Name.substr(2, 7));
+    return Ret;
+  }
+  return nullptr;
+}
+
+Value *FortifiedLibCallSimplifier::optimizeCall(CallInst *CI) {
+  if (CI->isNoBuiltin())
+    return nullptr;
+
+  LibFunc::Func Func;
+  Function *Callee = CI->getCalledFunction();
+  StringRef FuncName = Callee->getName();
+  IRBuilder<> Builder(CI);
+  bool isCallingConvC = CI->getCallingConv() == llvm::CallingConv::C;
+
+  // First, check that this is a known library functions.
+  if (!TLI->getLibFunc(FuncName, Func) || !TLI->has(Func))
+    return nullptr;
+
+  // We never change the calling convention.
+  if (!ignoreCallingConv(Func) && !isCallingConvC)
+    return nullptr;
+
+  switch (Func) {
+  case LibFunc::memcpy_chk:
+    return optimizeMemCpyChk(CI, Builder);
+  case LibFunc::memmove_chk:
+    return optimizeMemMoveChk(CI, Builder);
+  case LibFunc::memset_chk:
+    return optimizeMemSetChk(CI, Builder);
+  case LibFunc::stpcpy_chk:
+  case LibFunc::strcpy_chk:
+    return optimizeStrCpyChk(CI, Builder);
+  case LibFunc::stpncpy_chk:
+  case LibFunc::strncpy_chk:
+    return optimizeStrNCpyChk(CI, Builder);
+  default:
+    break;
+  }
+  return nullptr;
+}
+
+FortifiedLibCallSimplifier::
+FortifiedLibCallSimplifier(const DataLayout *DL, const TargetLibraryInfo *TLI,
+                           bool OnlyLowerUnknownSize)
+  : DL(DL), TLI(TLI), OnlyLowerUnknownSize(OnlyLowerUnknownSize) {
+}
