@@ -256,7 +256,7 @@ public:
 
   bool IsBlocksDefault() const override {
     // Always allow blocks on Apple; users interested in versioning are
-    // expected to use /usr/include/Blocks.h.
+    // expected to use /usr/include/Block.h.
     return true;
   }
   bool IsIntegratedAssemblerDefault() const override {
