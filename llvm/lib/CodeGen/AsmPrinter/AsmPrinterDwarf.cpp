@@ -49,7 +49,7 @@ public:
 
 void DebugLocDwarfExpression::EmitOp(uint8_t Op, const char* Comment) {
   BS.EmitInt8(Op, Comment
-    ? Twine(Comment)+Twine(" ")+Twine(dwarf::OperationEncodingString(Op))
+    ? Twine(Comment)+" "+dwarf::OperationEncodingString(Op)
     : dwarf::OperationEncodingString(Op));
 }
 void DebugLocDwarfExpression::EmitSigned(int Value) {
