@@ -342,7 +342,9 @@ void Parser::ParseLexedMethodDeclaration(LateParsedMethodDeclaration &LM) {
         Actions.ActOnParamDefaultArgumentError(LM.DefaultArgs[I].Param,
                                                EqualLoc);
       else {
-        if (!TryConsumeToken(tok::cxx_defaultarg_end)) {
+        if (Tok.is(tok::eof) && Tok.getEofData() == LM.DefaultArgs[I].Param) {
+          ConsumeAnyToken();
+        } else {
           // The last two tokens are the terminator and the saved value of
           // Tok; the last token in the default argument is the one before
           // those.
@@ -360,8 +362,11 @@ void Parser::ParseLexedMethodDeclaration(LateParsedMethodDeclaration &LM) {
              "ParseAssignmentExpression went over the default arg tokens!");
       // There could be leftover tokens (e.g. because of an error).
       // Skip through until we reach the original token position.
-      while (Tok.getLocation() != origLoc && Tok.isNot(tok::eof))
+      while (Tok.getLocation() != origLoc) {
+        if (Tok.is(tok::eof) && Tok.getEofData() != LM.DefaultArgs[I].Param)
+          break;
         ConsumeAnyToken();
+      }
 
       delete Toks;
       LM.DefaultArgs[I].Toks = nullptr;
@@ -652,7 +657,6 @@ bool Parser::ConsumeAndStoreUntil(tok::TokenKind T1, tok::TokenKind T2,
 
     switch (Tok.getKind()) {
     case tok::eof:
-    case tok::cxx_defaultarg_end:
     case tok::annot_module_begin:
     case tok::annot_module_end:
     case tok::annot_module_include:

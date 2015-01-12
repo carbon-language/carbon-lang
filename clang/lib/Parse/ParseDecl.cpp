@@ -5631,8 +5631,9 @@ void Parser::ParseParameterDeclarationClause(
             // stop when we parse it later on.
             Token DefArgEnd;
             DefArgEnd.startToken();
-            DefArgEnd.setKind(tok::cxx_defaultarg_end);
+            DefArgEnd.setKind(tok::eof);
             DefArgEnd.setLocation(Tok.getLocation());
+            DefArgEnd.setEofData(Param);
             DefArgToks->push_back(DefArgEnd);
             Actions.ActOnParamUnparsedDefaultArgument(Param, EqualLoc,
                                                 (*DefArgToks)[1].getLocation());
