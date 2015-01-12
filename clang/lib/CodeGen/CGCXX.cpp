@@ -167,9 +167,9 @@ bool CodeGenModule::TryEmitDefinitionAsAlias(GlobalDecl AliasDecl,
   }
 
   if (!InEveryTU) {
-    /// If we don't have a definition for the destructor yet, don't
-    /// emit.  We can't emit aliases to declarations; that's just not
-    /// how aliases work.
+    // If we don't have a definition for the destructor yet, don't
+    // emit.  We can't emit aliases to declarations; that's just not
+    // how aliases work.
     if (Ref->isDeclaration())
       return true;
   }
