@@ -15,6 +15,7 @@
 #include "lldb/Interpreter/OptionValueArgs.h"
 #include "lldb/Interpreter/OptionValueArray.h"
 #include "lldb/Interpreter/OptionValueBoolean.h"
+#include "lldb/Interpreter/OptionValueChar.h"
 #include "lldb/Interpreter/OptionValueDictionary.h"
 #include "lldb/Interpreter/OptionValueEnumeration.h"
 #include "lldb/Interpreter/OptionValueFileSpec.h"

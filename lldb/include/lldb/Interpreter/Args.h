@@ -394,7 +394,9 @@ public:
 
     static bool
     StringToBoolean (const char *s, bool fail_value, bool *success_ptr);
-    
+
+    static char StringToChar(const char *s, char fail_value, bool *success_ptr);
+
     static int64_t
     StringToOptionEnum (const char *s, OptionEnumValueElement *enum_values, int32_t fail_value, Error &error);
 

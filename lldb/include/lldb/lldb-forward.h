@@ -140,6 +140,7 @@ class   OptionValueArch;
 class   OptionValueArgs;
 class   OptionValueArray;
 class   OptionValueBoolean;
+class   OptionValueChar;
 class   OptionValueDictionary;
 class   OptionValueEnumeration;
 class   OptionValueFileSpec;

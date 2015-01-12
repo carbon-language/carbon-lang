@@ -64,6 +64,7 @@ OptionValueDictionary::DumpValue (const ExecutionContext *exe_ctx, Stream &strm,
                     break;
 
                 case eTypeBoolean:
+                case eTypeChar:
                 case eTypeEnum:
                 case eTypeFileSpec:
                 case eTypeFormat:

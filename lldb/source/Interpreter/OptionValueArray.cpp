@@ -53,6 +53,7 @@ OptionValueArray::DumpValue (const ExecutionContext *exe_ctx, Stream &strm, uint
                     break;
                     
                 case eTypeBoolean:
+                case eTypeChar:
                 case eTypeEnum:
                 case eTypeFileSpec:
                 case eTypeFormat:

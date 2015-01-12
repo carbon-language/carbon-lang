@@ -71,6 +71,21 @@ OptionValue::GetAsBoolean () const
     return nullptr;
 }
 
+const OptionValueChar *
+OptionValue::GetAsChar () const
+{
+    if (GetType () == OptionValue::eTypeChar)
+        return static_cast<const OptionValueChar *>(this);
+    return nullptr;
+}
+
+OptionValueChar *
+OptionValue::GetAsChar ()
+{
+    if (GetType () == OptionValue::eTypeChar)
+        return static_cast<OptionValueChar *>(this);
+    return nullptr;
+}
 
 OptionValueFileSpec *
 OptionValue::GetAsFileSpec ()
@@ -342,6 +357,27 @@ OptionValue::SetBooleanValue (bool new_value)
     return false;
 }
 
+char
+OptionValue::GetCharValue(char fail_value) const
+{
+    const OptionValueChar *option_value = GetAsChar();
+    if (option_value)
+        return option_value->GetCurrentValue();
+    return fail_value;
+}
+
+char
+OptionValue::SetCharValue(char new_value)
+{
+    OptionValueChar *option_value = GetAsChar();
+    if (option_value)
+    {
+        option_value->SetCurrentValue(new_value);
+        return true;
+    }
+    return false;
+}
+
 int64_t
 OptionValue::GetEnumerationValue (int64_t fail_value) const
 {
@@ -520,6 +556,8 @@ OptionValue::GetBuiltinTypeAsCString (Type t)
         case eTypeArgs:         return "arguments";
         case eTypeArray:        return "array";
         case eTypeBoolean:      return "boolean";
+        case eTypeChar:
+            return "char";
         case eTypeDictionary:   return "dictionary";
         case eTypeEnum:         return "enum";
         case eTypeFileSpec:     return "file";
@@ -547,6 +585,7 @@ OptionValue::CreateValueFromCStringForTypeMask (const char *value_cstr, uint32_t
     {
     case 1u << eTypeArch:       value_sp.reset(new OptionValueArch()); break;
     case 1u << eTypeBoolean:    value_sp.reset(new OptionValueBoolean(false)); break;
+    case 1u << eTypeChar:       value_sp.reset(new OptionValueChar('\0')); break;
     case 1u << eTypeFileSpec:   value_sp.reset(new OptionValueFileSpec()); break;
     case 1u << eTypeFormat:     value_sp.reset(new OptionValueFormat(eFormatInvalid));    break;
     case 1u << eTypeSInt64:     value_sp.reset(new OptionValueSInt64()); break;

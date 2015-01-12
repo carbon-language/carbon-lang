@@ -969,6 +969,26 @@ Args::StringToBoolean (const char *s, bool fail_value, bool *success_ptr)
     return fail_value;
 }
 
+char
+Args::StringToChar(const char *s, char fail_value, bool *success_ptr)
+{
+    bool success = false;
+    char result = fail_value;
+
+    if (s)
+    {
+        size_t length = strlen(s);
+        if (length == 1)
+        {
+            success = true;
+            result = s[0];
+        }
+    }
+    if (success_ptr)
+        *success_ptr = success;
+    return result;
+}
+
 const char *
 Args::StringToVersion (const char *s, uint32_t &major, uint32_t &minor, uint32_t &update)
 {
