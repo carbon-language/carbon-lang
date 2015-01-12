@@ -818,20 +818,17 @@ static void WriteModuleMetadata(const Module *M,
   }
 
   // Write named metadata.
-  for (Module::const_named_metadata_iterator I = M->named_metadata_begin(),
-       E = M->named_metadata_end(); I != E; ++I) {
-    const NamedMDNode *NMD = I;
-
+  for (const NamedMDNode &NMD : M->named_metadata()) {
     // Write name.
-    StringRef Str = NMD->getName();
+    StringRef Str = NMD.getName();
     for (unsigned i = 0, e = Str.size(); i != e; ++i)
       Record.push_back(Str[i]);
     Stream.EmitRecord(bitc::METADATA_NAME, Record, 0/*TODO*/);
     Record.clear();
 
     // Write named metadata operands.
-    for (unsigned i = 0, e = NMD->getNumOperands(); i != e; ++i)
-      Record.push_back(VE.getMetadataID(NMD->getOperand(i)));
+    for (unsigned i = 0, e = NMD.getNumOperands(); i != e; ++i)
+      Record.push_back(VE.getMetadataID(NMD.getOperand(i)));
     Stream.EmitRecord(bitc::METADATA_NAMED_NODE, Record, 0);
     Record.clear();
   }
