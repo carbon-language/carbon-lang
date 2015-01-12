@@ -142,7 +142,7 @@ LLVMContextImpl::~LLVMContextImpl() {
     I->dropAllReferences();
 
   for (UniquableMDNode *I : DistinctMDNodes)
-    delete cast<MDTuple>(I);
+    I->deleteAsSubclass();
   for (MDTuple *I : MDTuples)
     delete I;
 

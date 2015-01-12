@@ -755,6 +755,10 @@ private:
   void resolve();
   void resolveAfterOperandChange(Metadata *Old, Metadata *New);
   void decrementUnresolvedOperandCount();
+
+  void deleteAsSubclass();
+  UniquableMDNode *uniquify();
+  void eraseFromStore();
 };
 
 /// \brief Tuple of metadata.
@@ -794,6 +798,10 @@ public:
   static bool classof(const Metadata *MD) {
     return MD->getMetadataID() == MDTupleKind;
   }
+
+private:
+  MDTuple *uniquifyImpl();
+  void eraseFromStoreImpl();
 };
 
 MDNode *MDNode::get(LLVMContext &Context, ArrayRef<Metadata *> MDs) {
