@@ -19658,6 +19658,22 @@ void X86TargetLowering::ReplaceNodeResults(SDNode *N,
   switch (N->getOpcode()) {
   default:
     llvm_unreachable("Do not know how to custom type legalize this operation!");
+  // We might have generated v2f32 FMIN/FMAX operations. Widen them to v4f32.
+  case X86ISD::FMINC:
+  case X86ISD::FMIN:
+  case X86ISD::FMAXC:
+  case X86ISD::FMAX: {
+    EVT VT = N->getValueType(0);
+    if (VT != MVT::v2f32)
+      llvm_unreachable("Unexpected type (!= v2f32) on FMIN/FMAX.");
+    SDValue UNDEF = DAG.getUNDEF(VT);
+    SDValue LHS = DAG.getNode(ISD::CONCAT_VECTORS, dl, MVT::v4f32,
+                              N->getOperand(0), UNDEF);
+    SDValue RHS = DAG.getNode(ISD::CONCAT_VECTORS, dl, MVT::v4f32,
+                              N->getOperand(1), UNDEF);
+    Results.push_back(DAG.getNode(N->getOpcode(), dl, MVT::v4f32, LHS, RHS));
+    return;
+  }
   case ISD::SIGN_EXTEND_INREG:
   case ISD::ADDC:
   case ISD::ADDE:
@@ -23077,8 +23093,9 @@ static SDValue PerformSELECTCombine(SDNode *N, SelectionDAG &DAG,
   // instructions match the semantics of the common C idiom x<y?x:y but not
   // x<=y?x:y, because of how they handle negative zero (which can be
   // ignored in unsafe-math mode).
+  // We also try to create v2f32 min/max nodes, which we later widen to v4f32.
   if (Cond.getOpcode() == ISD::SETCC && VT.isFloatingPoint() &&
-      VT != MVT::f80 && TLI.isTypeLegal(VT) &&
+      VT != MVT::f80 && (TLI.isTypeLegal(VT) || VT == MVT::v2f32) &&
       (Subtarget->hasSSE2() ||
        (Subtarget->hasSSE1() && VT.getScalarType() == MVT::f32))) {
     ISD::CondCode CC = cast<CondCodeSDNode>(Cond.getOperand(2))->get();

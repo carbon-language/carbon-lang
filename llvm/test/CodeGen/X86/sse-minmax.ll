@@ -989,3 +989,39 @@ define <4 x float> @test_minps(<4 x float> %x, <4 x float> %y) nounwind {
   %min = select <4 x i1> %min_is_x, <4 x float> %x, <4 x float> %y
   ret <4 x float> %min
 }
+
+; UNSAFE-LABEL: test_maxps_illegal_v2f32:
+; UNSAFE-NEXT: maxps %xmm1, %xmm0
+; UNSAFE-NEXT: ret
+define <2 x float> @test_maxps_illegal_v2f32(<2 x float> %x, <2 x float> %y) nounwind {
+  %max_is_x = fcmp oge <2 x float> %x, %y
+  %max = select <2 x i1> %max_is_x, <2 x float> %x, <2 x float> %y
+  ret <2 x float> %max
+}
+
+; UNSAFE-LABEL: test_minps_illegal_v2f32:
+; UNSAFE-NEXT: minps %xmm1, %xmm0
+; UNSAFE-NEXT: ret
+define <2 x float> @test_minps_illegal_v2f32(<2 x float> %x, <2 x float> %y) nounwind {
+  %min_is_x = fcmp ole <2 x float> %x, %y
+  %min = select <2 x i1> %min_is_x, <2 x float> %x, <2 x float> %y
+  ret <2 x float> %min
+}
+
+; UNSAFE-LABEL: test_maxps_illegal_v3f32:
+; UNSAFE-NEXT: maxps %xmm1, %xmm0
+; UNSAFE-NEXT: ret
+define <3 x float> @test_maxps_illegal_v3f32(<3 x float> %x, <3 x float> %y) nounwind {
+  %max_is_x = fcmp oge <3 x float> %x, %y
+  %max = select <3 x i1> %max_is_x, <3 x float> %x, <3 x float> %y
+  ret <3 x float> %max
+}
+
+; UNSAFE-LABEL: test_minps_illegal_v3f32:
+; UNSAFE-NEXT: minps %xmm1, %xmm0
+; UNSAFE-NEXT: ret
+define <3 x float> @test_minps_illegal_v3f32(<3 x float> %x, <3 x float> %y) nounwind {
+  %min_is_x = fcmp ole <3 x float> %x, %y
+  %min = select <3 x i1> %min_is_x, <3 x float> %x, <3 x float> %y
+  ret <3 x float> %min
+}
