@@ -4564,7 +4564,7 @@ void RewriteModernObjC::GetBlockDeclRefExprs(Stmt *S) {
     }
   // Handle specific things.
   if (DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(S))
-    if (DRE->refersToCapturedVariable() ||
+    if (DRE->refersToEnclosingVariableOrCapture() ||
         HasLocalVariableExternalStorage(DRE->getDecl()))
       // FIXME: Handle enums.
       BlockDeclRefs.push_back(DRE);
@@ -4591,7 +4591,7 @@ void RewriteModernObjC::GetInnerBlockDeclRefExprs(Stmt *S,
     }
   // Handle specific things.
   if (DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(S)) {
-    if (DRE->refersToCapturedVariable() ||
+    if (DRE->refersToEnclosingVariableOrCapture() ||
         HasLocalVariableExternalStorage(DRE->getDecl())) {
       if (!InnerContexts.count(DRE->getDecl()->getDeclContext()))
         InnerBlockDeclRefs.push_back(DRE);
@@ -4772,7 +4772,7 @@ Stmt *RewriteModernObjC::RewriteBlockDeclRefExpr(DeclRefExpr *DeclRefExp) {
   // Rewrite the byref variable into BYREFVAR->__forwarding->BYREFVAR 
   // for each DeclRefExp where BYREFVAR is name of the variable.
   ValueDecl *VD = DeclRefExp->getDecl();
-  bool isArrow = DeclRefExp->refersToCapturedVariable() ||
+  bool isArrow = DeclRefExp->refersToEnclosingVariableOrCapture() ||
                  HasLocalVariableExternalStorage(DeclRefExp->getDecl());
 
   FieldDecl *FD = FieldDecl::Create(*Context, nullptr, SourceLocation(),

@@ -792,9 +792,10 @@ llvm::Value *CodeGenFunction::EmitBlockLiteral(const CGBlockInfo &blockInfo) {
       // emission.
       src = LocalDeclMap.lookup(variable);
       if (!src) {
-        DeclRefExpr declRef(const_cast<VarDecl *>(variable),
-                            /*refersToEnclosing*/ CI.isNested(), type,
-                            VK_LValue, SourceLocation());
+        DeclRefExpr declRef(
+            const_cast<VarDecl *>(variable),
+            /*RefersToEnclosingVariableOrCapture*/ CI.isNested(), type,
+            VK_LValue, SourceLocation());
         src = EmitDeclRefLValue(&declRef).getAddress();
       }
     }
@@ -863,9 +864,9 @@ llvm::Value *CodeGenFunction::EmitBlockLiteral(const CGBlockInfo &blockInfo) {
 
       // We use one of these or the other depending on whether the
       // reference is nested.
-      DeclRefExpr declRef(const_cast<VarDecl*>(variable),
-                          /*refersToEnclosing*/ CI.isNested(), type,
-                          VK_LValue, SourceLocation());
+      DeclRefExpr declRef(const_cast<VarDecl *>(variable),
+                          /*RefersToEnclosingVariableOrCapture*/ CI.isNested(),
+                          type, VK_LValue, SourceLocation());
 
       ImplicitCastExpr l2r(ImplicitCastExpr::OnStack, type, CK_LValueToRValue,
                            &declRef, VK_RValue);

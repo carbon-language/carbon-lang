@@ -115,7 +115,7 @@ DeclRefExpr *ASTMaker::makeDeclRefExpr(const VarDecl *D) {
                         /* QualifierLoc = */ NestedNameSpecifierLoc(),
                         /* TemplateKWLoc = */ SourceLocation(),
                         /* D = */ const_cast<VarDecl*>(D),
-                        /* RefersToCapturedVariable = */ false,
+                        /* RefersToEnclosingVariableOrCapture = */ false,
                         /* NameLoc = */ SourceLocation(),
                         /* T = */ D->getType(),
                         /* VK = */ VK_LValue);
