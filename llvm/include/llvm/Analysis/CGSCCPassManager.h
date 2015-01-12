@@ -51,13 +51,13 @@ public:
 
 private:
   // Pull in the concept type and model template specialized for SCCs.
-  typedef detail::PassConcept<LazyCallGraph::SCC &, CGSCCAnalysisManager>
+  typedef detail::PassConcept<LazyCallGraph::SCC, CGSCCAnalysisManager>
   CGSCCPassConcept;
   template <typename PassT>
   struct CGSCCPassModel
-      : detail::PassModel<LazyCallGraph::SCC &, CGSCCAnalysisManager, PassT> {
+      : detail::PassModel<LazyCallGraph::SCC, CGSCCAnalysisManager, PassT> {
     CGSCCPassModel(PassT Pass)
-        : detail::PassModel<LazyCallGraph::SCC &, CGSCCAnalysisManager, PassT>(
+        : detail::PassModel<LazyCallGraph::SCC, CGSCCAnalysisManager, PassT>(
               std::move(Pass)) {}
   };
 
@@ -70,11 +70,11 @@ private:
 /// \brief A function analysis manager to coordinate and cache analyses run over
 /// a module.
 class CGSCCAnalysisManager : public detail::AnalysisManagerBase<
-                                 CGSCCAnalysisManager, LazyCallGraph::SCC &> {
+                                 CGSCCAnalysisManager, LazyCallGraph::SCC> {
   friend class detail::AnalysisManagerBase<CGSCCAnalysisManager,
-                                           LazyCallGraph::SCC &>;
+                                           LazyCallGraph::SCC>;
   typedef detail::AnalysisManagerBase<CGSCCAnalysisManager,
-                                      LazyCallGraph::SCC &> BaseT;
+                                      LazyCallGraph::SCC> BaseT;
   typedef BaseT::ResultConceptT ResultConceptT;
   typedef BaseT::PassConceptT PassConceptT;
 
@@ -129,7 +129,7 @@ private:
   /// half of a bijection and provides storage for the actual result concept.
   typedef std::list<
       std::pair<void *, std::unique_ptr<detail::AnalysisResultConcept<
-                            LazyCallGraph::SCC &>>>> CGSCCAnalysisResultListT;
+                            LazyCallGraph::SCC>>>> CGSCCAnalysisResultListT;
 
   /// \brief Map type from function pointer to our custom list type.
   typedef DenseMap<LazyCallGraph::SCC *, CGSCCAnalysisResultListT>

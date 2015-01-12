@@ -57,7 +57,7 @@ ModuleAnalysisManager::getResultImpl(void *PassID, Module &M) {
   ModuleAnalysisResultMapT::iterator RI;
   bool Inserted;
   std::tie(RI, Inserted) = ModuleAnalysisResults.insert(std::make_pair(
-      PassID, std::unique_ptr<detail::AnalysisResultConcept<Module &>>()));
+      PassID, std::unique_ptr<detail::AnalysisResultConcept<Module>>()));
 
   // If we don't have a cached result for this module, look up the pass and run
   // it to produce a result, which we then add to the cache.

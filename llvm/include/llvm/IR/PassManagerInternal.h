@@ -40,7 +40,7 @@ template <typename IRUnitT, typename AnalysisManagerT> struct PassConcept {
   /// Note that actual pass object can omit the analysis manager argument if
   /// desired. Also that the analysis manager may be null if there is no
   /// analysis manager in the pass pipeline.
-  virtual PreservedAnalyses run(IRUnitT IR, AnalysisManagerT *AM) = 0;
+  virtual PreservedAnalyses run(IRUnitT &IR, AnalysisManagerT *AM) = 0;
 
   /// \brief Polymorphic method to access the name of a pass.
   virtual StringRef name() = 0;
@@ -56,7 +56,7 @@ class PassRunAcceptsAnalysisManager {
     char a, b;
   };
 
-  template <typename T, ResultT (T::*)(IRUnitT, AnalysisManagerT *)>
+  template <typename T, ResultT (T::*)(IRUnitT &, AnalysisManagerT *)>
   struct Checker;
 
   template <typename T> static SmallType f(Checker<T, &T::run> *);
@@ -97,7 +97,7 @@ struct PassModel<IRUnitT, AnalysisManagerT, PassT, PreservedAnalysesT, true>
     return *this;
   }
 
-  PreservedAnalysesT run(IRUnitT IR, AnalysisManagerT *AM) override {
+  PreservedAnalysesT run(IRUnitT &IR, AnalysisManagerT *AM) override {
     return Pass.run(IR, AM);
   }
   StringRef name() override { return PassT::name(); }
@@ -124,7 +124,7 @@ struct PassModel<IRUnitT, AnalysisManagerT, PassT, PreservedAnalysesT, false>
     return *this;
   }
 
-  PreservedAnalysesT run(IRUnitT IR, AnalysisManagerT *AM) override {
+  PreservedAnalysesT run(IRUnitT &IR, AnalysisManagerT *AM) override {
     return Pass.run(IR);
   }
   StringRef name() override { return PassT::name(); }
@@ -148,7 +148,7 @@ template <typename IRUnitT> struct AnalysisResultConcept {
   /// took care to update or preserve the analysis result in some way.
   ///
   /// \returns true if the result is indeed invalid (the default).
-  virtual bool invalidate(IRUnitT IR, const PreservedAnalyses &PA) = 0;
+  virtual bool invalidate(IRUnitT &IR, const PreservedAnalyses &PA) = 0;
 };
 
 /// \brief SFINAE metafunction for computing whether \c ResultT provides an
@@ -159,7 +159,7 @@ template <typename IRUnitT, typename ResultT> class ResultHasInvalidateMethod {
     char a, b;
   };
 
-  template <typename T, bool (T::*)(IRUnitT, const PreservedAnalyses &)>
+  template <typename T, bool (T::*)(IRUnitT &, const PreservedAnalyses &)>
   struct Checker;
 
   template <typename T> static SmallType f(Checker<T, &T::invalidate> *);
@@ -207,7 +207,7 @@ struct AnalysisResultModel<IRUnitT, PassT, ResultT, PreservedAnalysesT, false>
   // FIXME: We should actually use two different concepts for analysis results
   // rather than two different models, and avoid the indirect function call for
   // ones that use the trivial behavior.
-  bool invalidate(IRUnitT, const PreservedAnalysesT &PA) override {
+  bool invalidate(IRUnitT &, const PreservedAnalysesT &PA) override {
     return !PA.preserved(PassT::ID());
   }
 
@@ -236,7 +236,7 @@ struct AnalysisResultModel<IRUnitT, PassT, ResultT, PreservedAnalysesT, true>
   }
 
   /// \brief The model delegates to the \c ResultT method.
-  bool invalidate(IRUnitT IR, const PreservedAnalysesT &PA) override {
+  bool invalidate(IRUnitT &IR, const PreservedAnalysesT &PA) override {
     return Result.invalidate(IR, PA);
   }
 
@@ -255,7 +255,7 @@ struct AnalysisPassConcept {
   /// \returns A unique_ptr to the analysis result object to be queried by
   /// users.
   virtual std::unique_ptr<AnalysisResultConcept<IRUnitT>>
-  run(IRUnitT IR, AnalysisManagerT *AM) = 0;
+  run(IRUnitT &IR, AnalysisManagerT *AM) = 0;
 
   /// \brief Polymorphic method to access the name of a pass.
   virtual StringRef name() = 0;
@@ -298,7 +298,7 @@ struct AnalysisPassModel<IRUnitT, AnalysisManagerT, PassT, true>
   ///
   /// The return is wrapped in an \c AnalysisResultModel.
   std::unique_ptr<AnalysisResultConcept<IRUnitT>>
-  run(IRUnitT IR, AnalysisManagerT *AM) override {
+  run(IRUnitT &IR, AnalysisManagerT *AM) override {
     return make_unique<ResultModelT>(Pass.run(IR, AM));
   }
 
@@ -337,7 +337,7 @@ struct AnalysisPassModel<IRUnitT, AnalysisManagerT, PassT, false>
   ///
   /// The return is wrapped in an \c AnalysisResultModel.
   std::unique_ptr<AnalysisResultConcept<IRUnitT>>
-  run(IRUnitT IR, AnalysisManagerT *) override {
+  run(IRUnitT &IR, AnalysisManagerT *) override {
     return make_unique<ResultModelT>(Pass.run(IR));
   }
 

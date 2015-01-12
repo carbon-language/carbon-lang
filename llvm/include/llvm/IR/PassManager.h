@@ -203,13 +203,13 @@ public:
 
 private:
   // Pull in the concept type and model template specialized for modules.
-  typedef detail::PassConcept<Module &, ModuleAnalysisManager>
+  typedef detail::PassConcept<Module, ModuleAnalysisManager>
       ModulePassConcept;
   template <typename PassT>
   struct ModulePassModel
-      : detail::PassModel<Module &, ModuleAnalysisManager, PassT> {
+      : detail::PassModel<Module, ModuleAnalysisManager, PassT> {
     ModulePassModel(PassT Pass)
-        : detail::PassModel<Module &, ModuleAnalysisManager, PassT>(
+        : detail::PassModel<Module, ModuleAnalysisManager, PassT>(
               std::move(Pass)) {}
   };
 
@@ -268,13 +268,13 @@ public:
 
 private:
   // Pull in the concept type and model template specialized for functions.
-  typedef detail::PassConcept<Function &, FunctionAnalysisManager>
+  typedef detail::PassConcept<Function, FunctionAnalysisManager>
       FunctionPassConcept;
   template <typename PassT>
   struct FunctionPassModel
-      : detail::PassModel<Function &, FunctionAnalysisManager, PassT> {
+      : detail::PassModel<Function, FunctionAnalysisManager, PassT> {
     FunctionPassModel(PassT Pass)
-        : detail::PassModel<Function &, FunctionAnalysisManager, PassT>(
+        : detail::PassModel<Function, FunctionAnalysisManager, PassT>(
               std::move(Pass)) {}
   };
 
@@ -330,7 +330,7 @@ public:
   ///
   /// If there is not a valid cached result in the manager already, this will
   /// re-run the analysis to produce a valid result.
-  template <typename PassT> typename PassT::Result &getResult(IRUnitT IR) {
+  template <typename PassT> typename PassT::Result &getResult(IRUnitT &IR) {
     assert(AnalysisPasses.count(PassT::ID()) &&
            "This analysis pass was not registered prior to being queried");
 
@@ -347,7 +347,7 @@ public:
   ///
   /// \returns null if there is no cached result.
   template <typename PassT>
-  typename PassT::Result *getCachedResult(IRUnitT IR) const {
+  typename PassT::Result *getCachedResult(IRUnitT &IR) const {
     assert(AnalysisPasses.count(PassT::ID()) &&
            "This analysis pass was not registered prior to being queried");
 
@@ -376,7 +376,7 @@ public:
   /// \brief Invalidate a specific analysis pass for an IR module.
   ///
   /// Note that the analysis result can disregard invalidation.
-  template <typename PassT> void invalidate(IRUnitT IR) {
+  template <typename PassT> void invalidate(IRUnitT &IR) {
     assert(AnalysisPasses.count(PassT::ID()) &&
            "This analysis pass was not registered prior to being invalidated");
     derived_this()->invalidateImpl(PassT::ID(), IR);
@@ -389,7 +389,7 @@ public:
   /// We accept the PreservedAnalyses set by value and update it with each
   /// analyis pass which has been successfully invalidated and thus can be
   /// preserved going forward. The updated set is returned.
-  PreservedAnalyses invalidate(IRUnitT IR, PreservedAnalyses PA) {
+  PreservedAnalyses invalidate(IRUnitT &IR, PreservedAnalyses PA) {
     return derived_this()->invalidateImpl(IR, std::move(PA));
   }
 
@@ -423,9 +423,9 @@ private:
 /// \brief A module analysis pass manager with lazy running and caching of
 /// results.
 class ModuleAnalysisManager
-    : public detail::AnalysisManagerBase<ModuleAnalysisManager, Module &> {
-  friend class detail::AnalysisManagerBase<ModuleAnalysisManager, Module &>;
-  typedef detail::AnalysisManagerBase<ModuleAnalysisManager, Module &> BaseT;
+    : public detail::AnalysisManagerBase<ModuleAnalysisManager, Module> {
+  friend class detail::AnalysisManagerBase<ModuleAnalysisManager, Module>;
+  typedef detail::AnalysisManagerBase<ModuleAnalysisManager, Module> BaseT;
   typedef BaseT::ResultConceptT ResultConceptT;
   typedef BaseT::PassConceptT PassConceptT;
 
@@ -462,7 +462,7 @@ private:
   /// \brief Map type from module analysis pass ID to pass result concept
   /// pointer.
   typedef DenseMap<void *,
-                   std::unique_ptr<detail::AnalysisResultConcept<Module &>>>
+                   std::unique_ptr<detail::AnalysisResultConcept<Module>>>
       ModuleAnalysisResultMapT;
 
   /// \brief Cache of computed module analysis results for this module.
@@ -472,9 +472,9 @@ private:
 /// \brief A function analysis manager to coordinate and cache analyses run over
 /// a module.
 class FunctionAnalysisManager
-    : public detail::AnalysisManagerBase<FunctionAnalysisManager, Function &> {
-  friend class detail::AnalysisManagerBase<FunctionAnalysisManager, Function &>;
-  typedef detail::AnalysisManagerBase<FunctionAnalysisManager, Function &>
+    : public detail::AnalysisManagerBase<FunctionAnalysisManager, Function> {
+  friend class detail::AnalysisManagerBase<FunctionAnalysisManager, Function>;
+  typedef detail::AnalysisManagerBase<FunctionAnalysisManager, Function>
       BaseT;
   typedef BaseT::ResultConceptT ResultConceptT;
   typedef BaseT::PassConceptT PassConceptT;
@@ -529,7 +529,7 @@ private:
   /// erases. Provides both the pass ID and concept pointer such that it is
   /// half of a bijection and provides storage for the actual result concept.
   typedef std::list<std::pair<
-      void *, std::unique_ptr<detail::AnalysisResultConcept<Function &>>>>
+      void *, std::unique_ptr<detail::AnalysisResultConcept<Function>>>>
       FunctionAnalysisResultListT;
 
   /// \brief Map type from function pointer to our custom list type.
@@ -788,10 +788,10 @@ template <typename AnalysisT> struct RequireAnalysisPass {
   /// provided they satisfy the basic API requirements. When this pass is
   /// created, these methods can be instantiated to satisfy whatever the
   /// context requires.
-  template <typename T, typename AnalysisManagerT>
-  PreservedAnalyses run(T &&Arg, AnalysisManagerT *AM) {
+  template <typename IRUnitT, typename AnalysisManagerT>
+  PreservedAnalyses run(IRUnitT &Arg, AnalysisManagerT *AM) {
     if (AM)
-      (void)AM->template getResult<AnalysisT>(std::forward<T>(Arg));
+      (void)AM->template getResult<AnalysisT>(Arg);
 
     return PreservedAnalyses::all();
   }
@@ -811,12 +811,12 @@ template <typename AnalysisT> struct InvalidateAnalysisPass {
   /// provided they satisfy the basic API requirements. When this pass is
   /// created, these methods can be instantiated to satisfy whatever the
   /// context requires.
-  template <typename T, typename AnalysisManagerT>
-  PreservedAnalyses run(T &&Arg, AnalysisManagerT *AM) {
+  template <typename IRUnitT, typename AnalysisManagerT>
+  PreservedAnalyses run(IRUnitT &Arg, AnalysisManagerT *AM) {
     if (AM)
       // We have to directly invalidate the analysis result as we can't
       // enumerate all other analyses and use the preserved set to control it.
-      (void)AM->template invalidate<AnalysisT>(std::forward<T>(Arg));
+      (void)AM->template invalidate<AnalysisT>(Arg);
 
     return PreservedAnalyses::all();
   }
