@@ -90,7 +90,8 @@ void DwarfExpression::AddMachineRegPiece(unsigned MachineReg,
   // If this is a valid register number, emit it.
   if (Reg >= 0) {
     AddReg(Reg);
-    AddOpPiece(PieceSizeInBits, PieceOffsetInBits);
+    if (PieceSizeInBits)
+      AddOpPiece(PieceSizeInBits, PieceOffsetInBits);
     return;
   }
 

@@ -429,64 +429,10 @@ void DwarfUnit::addSourceLine(DIE &Die, DINameSpace NS) {
 }
 
 /// addRegisterOp - Add register operand.
-// FIXME: Ideally, this would share the implementation with
-// AsmPrinter::EmitDwarfRegOpPiece.
 bool DwarfUnit::addRegisterOpPiece(DIELoc &TheDie, unsigned Reg,
                                    unsigned SizeInBits, unsigned OffsetInBits) {
-  const TargetRegisterInfo *RI = Asm->TM.getSubtargetImpl()->getRegisterInfo();
-  int DWReg = RI->getDwarfRegNum(Reg, false);
-  bool isSubRegister = DWReg < 0;
-
-  unsigned Idx = 0;
-
-  // Go up the super-register chain until we hit a valid dwarf register number.
-  for (MCSuperRegIterator SR(Reg, RI); SR.isValid() && DWReg < 0; ++SR) {
-    DWReg = RI->getDwarfRegNum(*SR, false);
-    if (DWReg >= 0)
-      Idx = RI->getSubRegIndex(*SR, Reg);
-  }
-
-  if (DWReg < 0)
-    return false;
-
-  // Emit register.
-  if (DWReg < 32)
-    addUInt(TheDie, dwarf::DW_FORM_data1, dwarf::DW_OP_reg0 + DWReg);
-  else {
-    addUInt(TheDie, dwarf::DW_FORM_data1, dwarf::DW_OP_regx);
-    addUInt(TheDie, dwarf::DW_FORM_udata, DWReg);
-  }
-
-  // Emit mask.
-  bool isPiece = SizeInBits > 0;
-  if (isSubRegister || isPiece) {
-    const unsigned SizeOfByte = 8;
-    unsigned RegSizeInBits = RI->getSubRegIdxSize(Idx);
-    unsigned RegOffsetInBits = RI->getSubRegIdxOffset(Idx);
-    unsigned PieceSizeInBits = std::max(SizeInBits, RegSizeInBits);
-    unsigned PieceOffsetInBits = OffsetInBits ? OffsetInBits : RegOffsetInBits;
-    assert(RegSizeInBits >= SizeInBits && "register smaller than value");
-
-    if (RegOffsetInBits != PieceOffsetInBits) {
-      // Manually shift the value into place, since the DW_OP_piece
-      // describes the part of the variable, not the position of the
-      // subregister.
-      addUInt(TheDie, dwarf::DW_FORM_data1, dwarf::DW_OP_constu);
-      addUInt(TheDie, dwarf::DW_FORM_data1, RegOffsetInBits);
-      addUInt(TheDie, dwarf::DW_FORM_data1, dwarf::DW_OP_shr);
-    }
-
-    if (PieceOffsetInBits > 0 || PieceSizeInBits % SizeOfByte) {
-      assert(PieceSizeInBits > 0 && "piece has zero size");
-      addUInt(TheDie, dwarf::DW_FORM_data1, dwarf::DW_OP_bit_piece);
-      addUInt(TheDie, dwarf::DW_FORM_data1, PieceSizeInBits);
-      addUInt(TheDie, dwarf::DW_FORM_data1, PieceOffsetInBits);
-     } else {
-      assert(PieceSizeInBits > 0 && "piece has zero size");
-      addUInt(TheDie, dwarf::DW_FORM_data1, dwarf::DW_OP_piece);
-      addUInt(TheDie, dwarf::DW_FORM_data1, PieceSizeInBits/SizeOfByte);
-    }
-  }
+  DIEDwarfExpression Expr(Asm->TM, *this, TheDie);
+  Expr.AddMachineRegPiece(Reg, SizeInBits, OffsetInBits);
   return true;
 }
 
