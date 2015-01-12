@@ -632,6 +632,7 @@ unsigned ContinuationIndenter::moveStateToNextToken(LineState &State,
     //       ^ line up here.
     State.Stack.back().Indent =
         State.Column + (Style.BreakConstructorInitializersBeforeComma ? 0 : 2);
+    State.Stack.back().NestedBlockIndent = State.Stack.back().Indent;
     if (Style.ConstructorInitializerAllOnOneLineOrOnePerLine)
       State.Stack.back().AvoidBinPacking = true;
     State.Stack.back().BreakBeforeParameter = false;

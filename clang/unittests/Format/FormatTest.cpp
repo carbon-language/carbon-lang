@@ -9380,6 +9380,10 @@ TEST_F(FormatTest, FormatsLambdas) {
   verifyFormat("string abc = SomeFunction(aaaaaaaaaaaaa, aaaaa, []() {\n"
                "  SomeOtherFunctioooooooooooooooooooooooooon();\n"
                "});");
+  verifyFormat("Constructor()\n"
+               "    : Field([] { // comment\n"
+               "        int i;\n"
+               "      }) {}");
 
   // Lambdas with return types.
   verifyFormat("int c = []() -> int { return 2; }();\n");
