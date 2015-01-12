@@ -1033,10 +1033,6 @@ are listed below.
 
    Extra features of UndefinedBehaviorSanitizer:
 
-   -  ``-fno-sanitize-recover``: By default, after a sanitizer diagnoses
-      an issue, it will attempt to continue executing the program if there
-      is a reasonable behavior it can give to the faulting operation. This
-      option causes the program to abort instead.
    -  ``-fsanitize-undefined-trap-on-error``: Causes traps to be emitted
       rather than calls to runtime libraries when a problem is detected.
       This option is intended for use in cases where the sanitizer runtime
@@ -1055,6 +1051,17 @@ are listed below.
    ``-fsanitize=thread``, and ``-fsanitize=memory`` checkers in the same
    program. The ``-fsanitize=undefined`` checks can be combined with other
    sanitizers.
+
+**-f[no-]sanitize-recover=check1,check2,...**
+
+   Controls which checks enabled by ``-fsanitize=`` flag are non-fatal.
+   If the check is fatal, program will halt after the first error
+   of this kind is detected and error report is printed.
+
+   By default, non-fatal checks are those enabled by UndefinedBehaviorSanitizer,
+   except for ``-fsanitize=return`` and ``-fsanitize=unreachable``. Some
+   sanitizers (e.g. :doc:`AddressSanitizer`) may not support recovery,
+   and always crash the program after the issue is detected.
 
 .. option:: -fno-assume-sane-operator-new
 

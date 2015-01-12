@@ -22,7 +22,7 @@ class ToolChain;
 
 class SanitizerArgs {
   SanitizerSet Sanitizers;
-  bool SanitizeRecover;
+  SanitizerSet RecoverableSanitizers;
 
   std::string BlacklistFile;
   int SanitizeCoverage;

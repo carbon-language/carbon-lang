@@ -534,11 +534,17 @@ def fno_sanitize_memory_track_origins : Flag<["-"], "fno-sanitize-memory-track-o
 def fsanitize_address_field_padding : Joined<["-"], "fsanitize-address-field-padding=">,
                                         Group<f_clang_Group>, Flags<[CC1Option]>,
                                         HelpText<"Level of field padding for AddressSanitizer">;
-def fsanitize_recover : Flag<["-"], "fsanitize-recover">,
-                        Group<f_clang_Group>;
+def fsanitize_recover : Flag<["-"], "fsanitize-recover">, Group<f_clang_Group>;
 def fno_sanitize_recover : Flag<["-"], "fno-sanitize-recover">,
-                           Group<f_clang_Group>, Flags<[CC1Option]>,
-                           HelpText<"Disable sanitizer check recovery">;
+                           Group<f_clang_Group>;
+def fsanitize_recover_EQ : CommaJoined<["-"], "fsanitize-recover=">,
+                           Group<f_clang_Group>,
+                           Flags<[CC1Option]>,
+                           HelpText<"Enable recovery for specified sanitizers">;
+def fno_sanitize_recover_EQ
+    : CommaJoined<["-"], "fno-sanitize-recover=">,
+      Group<f_clang_Group>,
+      HelpText<"Disable recovery for specified sanitizers">;
 def fsanitize_undefined_trap_on_error : Flag<["-"], "fsanitize-undefined-trap-on-error">,
                                         Group<f_clang_Group>, Flags<[CC1Option]>;
 def fno_sanitize_undefined_trap_on_error : Flag<["-"], "fno-sanitize-undefined-trap-on-error">,

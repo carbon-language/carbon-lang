@@ -160,9 +160,6 @@ ENUM_CODEGENOPT(Inlining, InliningMethod, 2, NoInlining)
 /// The default TLS model to use.
 ENUM_CODEGENOPT(DefaultTLSModel, TLSModel, 2, GeneralDynamicTLSModel)
 
-CODEGENOPT(SanitizeRecover, 1, 1) ///< Attempt to recover from sanitizer checks
-                                  ///< by continuing execution when possible
-
 #undef CODEGENOPT
 #undef ENUM_CODEGENOPT
 #undef VALUE_CODEGENOPT

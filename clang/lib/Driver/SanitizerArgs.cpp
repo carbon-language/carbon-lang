@@ -44,7 +44,10 @@ ID = ALIAS, ID##Group = 1 << SO_##ID##Group,
   NotAllowedWithTrap = Vptr,
   RequiresPIE = Memory | DataFlow,
   NeedsUnwindTables = Address | Thread | Memory | DataFlow,
-  SupportsCoverage = Address | Memory | Leak | Undefined | Integer
+  SupportsCoverage = Address | Memory | Leak | Undefined | Integer,
+  RecoverableByDefault = Undefined | Integer,
+  Unrecoverable = Address | Unreachable | Return,
+  LegacyFsanitizeRecoverMask = Undefined | Integer
 };
 }
 
@@ -145,7 +148,7 @@ bool SanitizerArgs::needsUnwindTables() const {
 
 void SanitizerArgs::clear() {
   Sanitizers.clear();
-  SanitizeRecover = false;
+  RecoverableSanitizers.clear();
   BlacklistFile = "";
   SanitizeCoverage = 0;
   MsanTrackOrigins = 0;
@@ -204,8 +207,40 @@ SanitizerArgs::SanitizerArgs(const ToolChain &TC,
   }
   addAllOf(Sanitizers, Kinds);
 
-  SanitizeRecover = Args.hasFlag(options::OPT_fsanitize_recover,
-                                 options::OPT_fno_sanitize_recover, true);
+  // Parse -f(no-)?sanitize-recover flags.
+  unsigned RecoverableKinds = RecoverableByDefault;
+  unsigned DiagnosedUnrecoverableKinds = 0;
+  for (const auto *Arg : Args) {
+    if (Arg->getOption().matches(options::OPT_fsanitize_recover)) {
+      // FIXME: Add deprecation notice, and then remove this flag.
+      RecoverableKinds |= expandGroups(LegacyFsanitizeRecoverMask);
+      Arg->claim();
+    } else if (Arg->getOption().matches(options::OPT_fno_sanitize_recover)) {
+      // FIXME: Add deprecation notice, and then remove this flag.
+      RecoverableKinds &= ~expandGroups(LegacyFsanitizeRecoverMask);
+      Arg->claim();
+    } else if (Arg->getOption().matches(options::OPT_fsanitize_recover_EQ)) {
+      unsigned Add = parseArgValues(D, Arg, true);
+      // Report error if user explicitly tries to recover from unrecoverable
+      // sanitizer.
+      if (unsigned KindsToDiagnose =
+              Add & Unrecoverable & ~DiagnosedUnrecoverableKinds) {
+        SanitizerSet SetToDiagnose;
+        addAllOf(SetToDiagnose, KindsToDiagnose);
+        D.Diag(diag::err_drv_unsupported_option_argument)
+            << Arg->getOption().getName() << toString(SetToDiagnose);
+        DiagnosedUnrecoverableKinds |= KindsToDiagnose;
+      }
+      RecoverableKinds |= expandGroups(Add);
+      Arg->claim();
+    } else if (Arg->getOption().matches(options::OPT_fno_sanitize_recover_EQ)) {
+      RecoverableKinds &= ~expandGroups(parseArgValues(D, Arg, true));
+      Arg->claim();
+    }
+  }
+  RecoverableKinds &= Kinds;
+  RecoverableKinds &= ~Unrecoverable;
+  addAllOf(RecoverableSanitizers, RecoverableKinds);
 
   UbsanTrapOnError =
     Args.hasFlag(options::OPT_fsanitize_undefined_trap_on_error,
@@ -361,8 +396,9 @@ void SanitizerArgs::addArgs(const llvm::opt::ArgList &Args,
     return;
   CmdArgs.push_back(Args.MakeArgString("-fsanitize=" + toString(Sanitizers)));
 
-  if (!SanitizeRecover)
-    CmdArgs.push_back("-fno-sanitize-recover");
+  if (!RecoverableSanitizers.empty())
+    CmdArgs.push_back(Args.MakeArgString("-fsanitize-recover=" +
+                                         toString(RecoverableSanitizers)));
 
   if (UbsanTrapOnError)
     CmdArgs.push_back("-fsanitize-undefined-trap-on-error");
@@ -426,7 +462,9 @@ unsigned expandGroups(unsigned Kinds) {
 unsigned parseArgValues(const Driver &D, const llvm::opt::Arg *A,
                         bool DiagnoseErrors) {
   assert((A->getOption().matches(options::OPT_fsanitize_EQ) ||
-          A->getOption().matches(options::OPT_fno_sanitize_EQ)) &&
+          A->getOption().matches(options::OPT_fno_sanitize_EQ) ||
+          A->getOption().matches(options::OPT_fsanitize_recover_EQ) ||
+          A->getOption().matches(options::OPT_fno_sanitize_recover_EQ)) &&
          "Invalid argument in parseArgValues!");
   unsigned Kinds = 0;
   for (unsigned I = 0, N = A->getNumValues(); I != N; ++I) {
