@@ -803,11 +803,18 @@ define double @ule_inverse_y(double %x) nounwind {
 ; Test a few more misc. cases.
 
 ; CHECK-LABEL: clampTo3k_a:
-; CHECK: minsd
+; CHECK-NEXT: movsd {{[^,]*}}, %xmm1
+; CHECK-NEXT: minsd %xmm0, %xmm1
+; CHECK-NEXT: movaps %xmm1, %xmm0
+; CHECK-NEXT: ret
 ; UNSAFE-LABEL: clampTo3k_a:
-; UNSAFE: minsd
+; UNSAFE-NEXT: minsd {{[^,]*}}, %xmm0
+; UNSAFE-NEXT: ret
 ; FINITE-LABEL: clampTo3k_a:
-; FINITE: minsd
+; FINITE-NEXT: movsd {{[^,]*}}, %xmm1
+; FINITE-NEXT: minsd %xmm0, %xmm1
+; FINITE-NEXT: movaps %xmm1, %xmm0
+; FINITE-NEXT: ret
 define double @clampTo3k_a(double %x) nounwind readnone {
 entry:
   %0 = fcmp ogt double %x, 3.000000e+03           ; <i1> [#uses=1]
@@ -816,11 +823,16 @@ entry:
 }
 
 ; CHECK-LABEL: clampTo3k_b:
-; CHECK: minsd
+; CHECK-NEXT: minsd {{[^,]*}}, %xmm0
+; CHECK-NEXT: ret
 ; UNSAFE-LABEL: clampTo3k_b:
-; UNSAFE: minsd
+; UNSAFE-NEXT: minsd {{[^,]*}}, %xmm0
+; UNSAFE-NEXT: ret
 ; FINITE-LABEL: clampTo3k_b:
-; FINITE: minsd
+; FINITE-NEXT: movsd {{[^,]*}}, %xmm1
+; FINITE-NEXT: minsd %xmm0, %xmm1
+; FINITE-NEXT: movaps %xmm1, %xmm0
+; FINITE-NEXT: ret
 define double @clampTo3k_b(double %x) nounwind readnone {
 entry:
   %0 = fcmp uge double %x, 3.000000e+03           ; <i1> [#uses=1]
@@ -829,11 +841,18 @@ entry:
 }
 
 ; CHECK-LABEL: clampTo3k_c:
-; CHECK: maxsd
+; CHECK-NEXT: movsd {{[^,]*}}, %xmm1
+; CHECK-NEXT: maxsd %xmm0, %xmm1
+; CHECK-NEXT: movaps %xmm1, %xmm0
+; CHECK-NEXT: ret
 ; UNSAFE-LABEL: clampTo3k_c:
-; UNSAFE: maxsd
+; UNSAFE-NEXT: maxsd {{[^,]*}}, %xmm0
+; UNSAFE-NEXT: ret
 ; FINITE-LABEL: clampTo3k_c:
-; FINITE: maxsd
+; FINITE-NEXT: movsd {{[^,]*}}, %xmm1
+; FINITE-NEXT: maxsd %xmm0, %xmm1
+; FINITE-NEXT: movaps %xmm1, %xmm0
+; FINITE-NEXT: ret
 define double @clampTo3k_c(double %x) nounwind readnone {
 entry:
   %0 = fcmp olt double %x, 3.000000e+03           ; <i1> [#uses=1]
@@ -842,11 +861,16 @@ entry:
 }
 
 ; CHECK-LABEL: clampTo3k_d:
-; CHECK: maxsd
+; CHECK-NEXT: maxsd {{[^,]*}}, %xmm0
+; CHECK-NEXT: ret
 ; UNSAFE-LABEL: clampTo3k_d:
-; UNSAFE: maxsd
+; UNSAFE-NEXT: maxsd {{[^,]*}}, %xmm0
+; UNSAFE-NEXT: ret
 ; FINITE-LABEL: clampTo3k_d:
-; FINITE: maxsd
+; FINITE-NEXT: movsd {{[^,]*}}, %xmm1
+; FINITE-NEXT: maxsd %xmm0, %xmm1
+; FINITE-NEXT: movaps %xmm1, %xmm0
+; FINITE-NEXT: ret
 define double @clampTo3k_d(double %x) nounwind readnone {
 entry:
   %0 = fcmp ule double %x, 3.000000e+03           ; <i1> [#uses=1]
@@ -855,11 +879,18 @@ entry:
 }
 
 ; CHECK-LABEL: clampTo3k_e:
-; CHECK: maxsd
+; CHECK-NEXT: movsd {{[^,]*}}, %xmm1
+; CHECK-NEXT: maxsd %xmm0, %xmm1
+; CHECK-NEXT: movaps %xmm1, %xmm0
+; CHECK-NEXT: ret
 ; UNSAFE-LABEL: clampTo3k_e:
-; UNSAFE: maxsd
+; UNSAFE-NEXT: maxsd {{[^,]*}}, %xmm0
+; UNSAFE-NEXT: ret
 ; FINITE-LABEL: clampTo3k_e:
-; FINITE: maxsd
+; FINITE-NEXT: movsd {{[^,]*}}, %xmm1
+; FINITE-NEXT: maxsd %xmm0, %xmm1
+; FINITE-NEXT: movaps %xmm1, %xmm0
+; FINITE-NEXT: ret
 define double @clampTo3k_e(double %x) nounwind readnone {
 entry:
   %0 = fcmp olt double %x, 3.000000e+03           ; <i1> [#uses=1]
@@ -868,11 +899,16 @@ entry:
 }
 
 ; CHECK-LABEL: clampTo3k_f:
-; CHECK: maxsd
+; CHECK-NEXT: maxsd {{[^,]*}}, %xmm0
+; CHECK-NEXT: ret
 ; UNSAFE-LABEL: clampTo3k_f:
-; UNSAFE: maxsd
+; UNSAFE-NEXT: maxsd {{[^,]*}}, %xmm0
+; UNSAFE-NEXT: ret
 ; FINITE-LABEL: clampTo3k_f:
-; FINITE: maxsd
+; FINITE-NEXT: movsd {{[^,]*}}, %xmm1
+; FINITE-NEXT: maxsd %xmm0, %xmm1
+; FINITE-NEXT: movaps %xmm1, %xmm0
+; FINITE-NEXT: ret
 define double @clampTo3k_f(double %x) nounwind readnone {
 entry:
   %0 = fcmp ule double %x, 3.000000e+03           ; <i1> [#uses=1]
@@ -881,11 +917,18 @@ entry:
 }
 
 ; CHECK-LABEL: clampTo3k_g:
-; CHECK: minsd
+; CHECK-NEXT: movsd {{[^,]*}}, %xmm1
+; CHECK-NEXT: minsd %xmm0, %xmm1
+; CHECK-NEXT: movaps %xmm1, %xmm0
+; CHECK-NEXT: ret
 ; UNSAFE-LABEL: clampTo3k_g:
-; UNSAFE: minsd
+; UNSAFE-NEXT: minsd {{[^,]*}}, %xmm0
+; UNSAFE-NEXT: ret
 ; FINITE-LABEL: clampTo3k_g:
-; FINITE: minsd
+; FINITE-NEXT: movsd {{[^,]*}}, %xmm1
+; FINITE-NEXT: minsd %xmm0, %xmm1
+; FINITE-NEXT: movaps %xmm1, %xmm0
+; FINITE-NEXT: ret
 define double @clampTo3k_g(double %x) nounwind readnone {
 entry:
   %0 = fcmp ogt double %x, 3.000000e+03           ; <i1> [#uses=1]
@@ -894,11 +937,16 @@ entry:
 }
 
 ; CHECK-LABEL: clampTo3k_h:
-; CHECK: minsd
+; CHECK-NEXT: minsd {{[^,]*}}, %xmm0
+; CHECK-NEXT: ret
 ; UNSAFE-LABEL: clampTo3k_h:
-; UNSAFE: minsd
+; UNSAFE-NEXT: minsd {{[^,]*}}, %xmm0
+; UNSAFE-NEXT: ret
 ; FINITE-LABEL: clampTo3k_h:
-; FINITE: minsd
+; FINITE-NEXT: movsd {{[^,]*}}, %xmm1
+; FINITE-NEXT: minsd %xmm0, %xmm1
+; FINITE-NEXT: movaps %xmm1, %xmm0
+; FINITE-NEXT: ret
 define double @clampTo3k_h(double %x) nounwind readnone {
 entry:
   %0 = fcmp uge double %x, 3.000000e+03           ; <i1> [#uses=1]
@@ -907,32 +955,36 @@ entry:
 }
 
 ; UNSAFE-LABEL: test_maxpd:
-; UNSAFE: maxpd
-define <2 x double> @test_maxpd(<2 x double> %x, <2 x double> %y) {
+; UNSAFE-NEXT: maxpd %xmm1, %xmm0
+; UNSAFE-NEXT: ret
+define <2 x double> @test_maxpd(<2 x double> %x, <2 x double> %y) nounwind {
   %max_is_x = fcmp oge <2 x double> %x, %y
   %max = select <2 x i1> %max_is_x, <2 x double> %x, <2 x double> %y
   ret <2 x double> %max
 }
 
 ; UNSAFE-LABEL: test_minpd:
-; UNSAFE: minpd
-define <2 x double> @test_minpd(<2 x double> %x, <2 x double> %y) {
+; UNSAFE-NEXT: minpd %xmm1, %xmm0
+; UNSAFE-NEXT: ret
+define <2 x double> @test_minpd(<2 x double> %x, <2 x double> %y) nounwind {
   %min_is_x = fcmp ole <2 x double> %x, %y
   %min = select <2 x i1> %min_is_x, <2 x double> %x, <2 x double> %y
   ret <2 x double> %min
 }
 
 ; UNSAFE-LABEL: test_maxps:
-; UNSAFE: maxps
-define <4 x float> @test_maxps(<4 x float> %x, <4 x float> %y) {
+; UNSAFE-NEXT: maxps %xmm1, %xmm0
+; UNSAFE-NEXT: ret
+define <4 x float> @test_maxps(<4 x float> %x, <4 x float> %y) nounwind {
   %max_is_x = fcmp oge <4 x float> %x, %y
   %max = select <4 x i1> %max_is_x, <4 x float> %x, <4 x float> %y
   ret <4 x float> %max
 }
 
 ; UNSAFE-LABEL: test_minps:
-; UNSAFE: minps
-define <4 x float> @test_minps(<4 x float> %x, <4 x float> %y) {
+; UNSAFE-NEXT: minps %xmm1, %xmm0
+; UNSAFE-NEXT: ret
+define <4 x float> @test_minps(<4 x float> %x, <4 x float> %y) nounwind {
   %min_is_x = fcmp ole <4 x float> %x, %y
   %min = select <4 x i1> %min_is_x, <4 x float> %x, <4 x float> %y
   ret <4 x float> %min
