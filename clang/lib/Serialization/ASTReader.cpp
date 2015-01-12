@@ -7161,13 +7161,17 @@ void ASTReader::ReadMethodPool(Selector Sel) {
   Sema &S = *getSema();
   Sema::GlobalMethodPool::iterator Pos
     = S.MethodPool.insert(std::make_pair(Sel, Sema::GlobalMethods())).first;
-  
-  addMethodsToPool(S, Visitor.getInstanceMethods(), Pos->second.first);
-  addMethodsToPool(S, Visitor.getFactoryMethods(), Pos->second.second);
+
   Pos->second.first.setBits(Visitor.getInstanceBits());
   Pos->second.first.setHasMoreThanOneDecl(Visitor.instanceHasMoreThanOneDecl());
   Pos->second.second.setBits(Visitor.getFactoryBits());
   Pos->second.second.setHasMoreThanOneDecl(Visitor.factoryHasMoreThanOneDecl());
+
+  // Add methods to the global pool *after* setting hasMoreThanOneDecl, since
+  // when building a module we keep every method individually and may need to
+  // update hasMoreThanOneDecl as we add the methods.
+  addMethodsToPool(S, Visitor.getInstanceMethods(), Pos->second.first);
+  addMethodsToPool(S, Visitor.getFactoryMethods(), Pos->second.second);
 }
 
 void ASTReader::ReadKnownNamespaces(
