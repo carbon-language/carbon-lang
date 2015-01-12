@@ -616,7 +616,7 @@ void MDNode::deleteTemporary(MDNode *N) {
   delete cast<MDNodeFwdDecl>(N);
 }
 
-void MDNode::storeDistinctInContext() {
+void UniquableMDNode::storeDistinctInContext() {
   assert(!IsDistinctInContext && "Expected newly distinct metadata");
   IsDistinctInContext = true;
   auto *T = cast<MDTuple>(this);

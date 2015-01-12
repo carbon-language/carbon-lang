@@ -603,7 +603,6 @@ protected:
   ~MDNode() {}
 
   void dropAllReferences();
-  void storeDistinctInContext();
 
   static MDNode *getMDNode(LLVMContext &C, ArrayRef<Metadata *> MDs,
                            bool Insert = true);
@@ -734,6 +733,8 @@ protected:
   UniquableMDNode(LLVMContext &C, unsigned ID, ArrayRef<Metadata *> Vals,
                   bool AllowRAUW);
   ~UniquableMDNode();
+
+  void storeDistinctInContext();
 
 public:
   static bool classof(const Metadata *MD) {
