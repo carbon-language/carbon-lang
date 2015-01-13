@@ -32,6 +32,12 @@ endif
 
 include $(LEVEL)/Makefile.common
 
+# Used in out-of-tree builds of OCaml bindings only.
+ifdef SYSTEM_LLVM_CONFIG
+LLVM_CONFIG = $(SYSTEM_LLVM_CONFIG)
+LLVMLibsOptions += $(shell $(LLVM_CONFIG) --ldflags)
+endif
+
 # Intentionally ignore PROJ_prefix here. We want the ocaml stdlib. However, the
 # user can override this with OCAML_LIBDIR or configure --with-ocaml-libdir=.
 PROJ_libocamldir := $(DESTDIR)$(OCAML_LIBDIR)
@@ -261,8 +267,9 @@ uninstall-shared::
 endif
 
 
-##===- Deposit dependent libraries adjacent to Ocaml libs -----------------===##
+##===- Deposit dependent libraries adjacent to OCaml libs -----------------===##
 
+ifndef SYSTEM_LLVM_CONFIG
 all-local:: build-deplibs
 clean-local:: clean-deplibs
 install-local:: install-deplibs
@@ -287,7 +294,7 @@ install-deplibs:
 
 uninstall-deplibs:
 	$(Verb) $(RM) -f $(DestLibs)
-
+endif
 
 ##===- Build ocaml interfaces (.mli's -> .cmi's) --------------------------===##
 
