@@ -123,5 +123,7 @@ uint32_t *StackMapLiveness::createRegisterMask() const {
   for (LivePhysRegs::const_iterator RI = LiveRegs.begin(), RE = LiveRegs.end();
        RI != RE; ++RI)
     Mask[*RI / 32] |= 1U << (*RI % 32);
+
+  TRI->adjustStackMapLiveOutMask(Mask);
   return Mask;
 }

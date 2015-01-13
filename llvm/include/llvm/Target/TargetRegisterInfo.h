@@ -456,6 +456,11 @@ public:
   /// used by register scavenger to determine what registers are free.
   virtual BitVector getReservedRegs(const MachineFunction &MF) const = 0;
 
+  /// Prior to adding the live-out mask to a stackmap or patchpoint
+  /// instruction, provide the target the opportunity to adjust it (mainly to
+  /// remove pseudo-registers that should be ignored).
+  virtual void adjustStackMapLiveOutMask(uint32_t *Mask) const { }
+
   /// getMatchingSuperReg - Return a super-register of the specified register
   /// Reg so its sub-register of index SubIdx is Reg.
   unsigned getMatchingSuperReg(unsigned Reg, unsigned SubIdx,
