@@ -443,9 +443,11 @@ void UniquableMDNode::resolveAfterOperandChange(Metadata *Old, Metadata *New) {
   assert(SubclassData32 != 0 && "Expected unresolved operands");
 
   // Check if an operand was resolved.
-  if (!isOperandUnresolved(Old))
-    assert(isOperandUnresolved(New) && "Operand just became unresolved");
-  else if (!isOperandUnresolved(New))
+  if (!isOperandUnresolved(Old)) {
+    if (isOperandUnresolved(New))
+      // An operand was un-resolved!
+      ++SubclassData32;
+  } else if (!isOperandUnresolved(New))
     decrementUnresolvedOperandCount();
 }
 
