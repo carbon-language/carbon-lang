@@ -129,6 +129,9 @@ public:
                              EVT ExtVT) const override;
 
   bool isLoadBitCastBeneficial(EVT, EVT) const override;
+  bool isCheapToSpeculateCttz() const override;
+  bool isCheapToSpeculateCtlz() const override;
+
   SDValue LowerReturn(SDValue Chain, CallingConv::ID CallConv,
                       bool isVarArg,
                       const SmallVectorImpl<ISD::OutputArg> &Outs,

@@ -471,6 +471,18 @@ bool AMDGPUTargetLowering::isLoadBitCastBeneficial(EVT LoadTy,
           (LScalarSize < 32));
 }
 
+// SI+ has instructions for cttz / ctlz for 32-bit values. This is probably also
+// profitable with the expansion for 64-bit since it's generally good to
+// speculate things.
+// FIXME: These should really have the size as a parameter.
+bool AMDGPUTargetLowering::isCheapToSpeculateCttz() const {
+  return true;
+}
+
+bool AMDGPUTargetLowering::isCheapToSpeculateCtlz() const {
+  return true;
+}
+
 //===---------------------------------------------------------------------===//
 // Target Properties
 //===---------------------------------------------------------------------===//
