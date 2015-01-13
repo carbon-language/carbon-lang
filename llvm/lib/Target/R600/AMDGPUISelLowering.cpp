@@ -2567,6 +2567,24 @@ const char* AMDGPUTargetLowering::getTargetNodeName(unsigned Opcode) const {
   }
 }
 
+SDValue AMDGPUTargetLowering::getRsqrtEstimate(SDValue Operand,
+                                               DAGCombinerInfo &DCI,
+                                               unsigned &RefinementSteps,
+                                               bool &UseOneConstNR) const {
+  SelectionDAG &DAG = DCI.DAG;
+  EVT VT = Operand.getValueType();
+
+  if (VT == MVT::f32) {
+    RefinementSteps = 0;
+    return DAG.getNode(AMDGPUISD::RSQ, SDLoc(Operand), VT, Operand);
+  }
+
+  // TODO: There is also f64 rsq instruction, but the documentation is less
+  // clear on its precision.
+
+  return SDValue();
+}
+
 static void computeKnownBitsForMinMax(const SDValue Op0,
                                       const SDValue Op1,
                                       APInt &KnownZero,

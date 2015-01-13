@@ -1,4 +1,7 @@
-; RUN: llc < %s -march=amdgcn -mcpu=tahiti -verify-machineinstrs | FileCheck %s
+; RUN: llc -march=amdgcn -mcpu=tahiti -verify-machineinstrs < %s | FileCheck %s
+; RUN: llc -march=amdgcn -mcpu=tahiti -verify-machineinstrs -enable-unsafe-fp-math < %s | FileCheck %s
+
+; Run with unsafe-fp-math to make sure nothing tries to turn this into 1 / rsqrt(x)
 
 ; CHECK: {{^}}fsqrt_f32:
 ; CHECK: v_sqrt_f32_e32 {{v[0-9]+, v[0-9]+}}

@@ -167,6 +167,11 @@ public:
 
   const char* getTargetNodeName(unsigned Opcode) const override;
 
+  SDValue getRsqrtEstimate(SDValue Operand,
+                           DAGCombinerInfo &DCI,
+                           unsigned &RefinementSteps,
+                           bool &UseOneConstNR) const override;
+
   virtual SDNode *PostISelFolding(MachineSDNode *N,
                                   SelectionDAG &DAG) const {
     return N;
