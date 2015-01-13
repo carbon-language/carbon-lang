@@ -585,6 +585,15 @@ ModuleMap::inferFrameworkModule(StringRef ModuleName,
                                 const DirectoryEntry *FrameworkDir,
                                 bool IsSystem,
                                 Module *Parent) {
+  Attributes Attrs;
+  Attrs.IsSystem = IsSystem;
+  return inferFrameworkModule(ModuleName, FrameworkDir, Attrs, Parent);
+}
+
+Module *ModuleMap::inferFrameworkModule(StringRef ModuleName,
+                                        const DirectoryEntry *FrameworkDir,
+                                        Attributes Attrs, Module *Parent) {
+
   // Check whether we've already found this module.
   if (Module *Mod = lookupModuleQualified(ModuleName, Parent))
     return Mod;
@@ -625,7 +634,7 @@ ModuleMap::inferFrameworkModule(StringRef ModuleName,
           bool IsFrameworkDir = Parent.endswith(".framework");
           if (const FileEntry *ModMapFile =
                 HeaderInfo.lookupModuleMapFile(ParentDir, IsFrameworkDir)) {
-            parseModuleMapFile(ModMapFile, IsSystem, ParentDir);
+            parseModuleMapFile(ModMapFile, Attrs.IsSystem, ParentDir);
             inferred = InferredDirectories.find(ParentDir);
           }
 
@@ -642,8 +651,9 @@ ModuleMap::inferFrameworkModule(StringRef ModuleName,
                                inferred->second.ExcludedModules.end(),
                                Name) == inferred->second.ExcludedModules.end();
 
-          if (inferred->second.InferSystemModules)
-            IsSystem = true;
+          Attrs.IsSystem |= inferred->second.Attrs.IsSystem;
+          Attrs.IsExternC |= inferred->second.Attrs.IsExternC;
+          Attrs.IsExhaustive |= inferred->second.Attrs.IsExhaustive;
           ModuleMapFile = inferred->second.ModuleMapFile;
         }
       }
@@ -675,9 +685,11 @@ ModuleMap::inferFrameworkModule(StringRef ModuleName,
     SourceModule = Result;
     SourceModuleName = ModuleName;
   }
-  if (IsSystem)
-    Result->IsSystem = IsSystem;
-  
+
+  Result->IsSystem |= Attrs.IsSystem;
+  Result->IsExternC |= Attrs.IsExternC;
+  Result->ConfigMacrosExhaustive |= Attrs.IsExhaustive;
+
   if (!Parent)
     Modules[ModuleName] = Result;
   
@@ -732,8 +744,8 @@ ModuleMap::inferFrameworkModule(StringRef ModuleName,
       // FIXME: Do we want to warn about subframeworks without umbrella headers?
       SmallString<32> NameBuf;
       inferFrameworkModule(sanitizeFilenameAsIdentifier(
-                             llvm::sys::path::stem(Dir->path()), NameBuf),
-                           SubframeworkDir, IsSystem, Result);
+                               llvm::sys::path::stem(Dir->path()), NameBuf),
+                           SubframeworkDir, Attrs, Result);
     }
   }
 
@@ -972,21 +984,6 @@ namespace clang {
     }
   };
 
-  /// \brief The set of attributes that can be attached to a module.
-  struct Attributes {
-    Attributes() : IsSystem(), IsExternC(), IsExhaustive() { }
-
-    /// \brief Whether this is a system module.
-    unsigned IsSystem : 1;
-
-    /// \brief Whether this is an extern "C" module.
-    unsigned IsExternC : 1;
-
-    /// \brief Whether this is an exhaustive set of configuration macros.
-    unsigned IsExhaustive : 1;
-  };
-  
-
   class ModuleMapParser {
     Lexer &L;
     SourceManager &SourceMgr;
@@ -1045,6 +1042,8 @@ namespace clang {
     void parseConfigMacros();
     void parseConflict();
     void parseInferredModuleDecl(bool Framework, bool Explicit);
+
+    typedef ModuleMap::Attributes Attributes;
     bool parseOptionalAttributes(Attributes &Attrs);
     
   public:
@@ -2117,7 +2116,7 @@ void ModuleMapParser::parseInferredModuleDecl(bool Framework, bool Explicit) {
   } else {
     // We'll be inferring framework modules for this directory.
     Map.InferredDirectories[Directory].InferModules = true;
-    Map.InferredDirectories[Directory].InferSystemModules = Attrs.IsSystem;
+    Map.InferredDirectories[Directory].Attrs = Attrs;
     Map.InferredDirectories[Directory].ModuleMapFile = ModuleMapFile;
     // FIXME: Handle the 'framework' keyword.
   }

@@ -127,15 +127,29 @@ private:
   /// header.
   llvm::DenseMap<const DirectoryEntry *, Module *> UmbrellaDirs;
 
+  /// \brief The set of attributes that can be attached to a module.
+  struct Attributes {
+    Attributes() : IsSystem(), IsExternC(), IsExhaustive() {}
+
+    /// \brief Whether this is a system module.
+    unsigned IsSystem : 1;
+
+    /// \brief Whether this is an extern "C" module.
+    unsigned IsExternC : 1;
+
+    /// \brief Whether this is an exhaustive set of configuration macros.
+    unsigned IsExhaustive : 1;
+  };
+
   /// \brief A directory for which framework modules can be inferred.
   struct InferredDirectory {
-    InferredDirectory() : InferModules(), InferSystemModules() { }
+    InferredDirectory() : InferModules() {}
 
     /// \brief Whether to infer modules from this directory.
     unsigned InferModules : 1;
 
-    /// \brief Whether the modules we infer are [system] modules.
-    unsigned InferSystemModules : 1;
+    /// \brief The attributes to use for inferred modules.
+    Attributes Attrs;
 
     /// \brief If \c InferModules is non-zero, the module map file that allowed
     /// inferred modules.  Otherwise, nullptr.
@@ -213,6 +227,10 @@ private:
     SmallVector<const DirectoryEntry *, 2> IntermediateDirs;
     return static_cast<bool>(findHeaderInUmbrellaDirs(File, IntermediateDirs));
   }
+
+  Module *inferFrameworkModule(StringRef ModuleName,
+                               const DirectoryEntry *FrameworkDir,
+                               Attributes Attrs, Module *Parent);
 
 public:
   /// \brief Construct a new module map.
