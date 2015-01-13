@@ -10481,9 +10481,11 @@ Decl *Sema::ActOnFinishFunctionBody(Decl *dcl, Stmt *Body,
       DiagnoseSizeOfParametersAndReturnValue(FD->param_begin(), FD->param_end(),
                                              FD->getReturnType(), FD);
 
-      // If this is a constructor, we need a vtable.
+      // If this is a structor, we need a vtable.
       if (CXXConstructorDecl *Constructor = dyn_cast<CXXConstructorDecl>(FD))
         MarkVTableUsed(FD->getLocation(), Constructor->getParent());
+      else if (CXXDestructorDecl *Destructor = dyn_cast<CXXDestructorDecl>(FD))
+        MarkVTableUsed(FD->getLocation(), Destructor->getParent());
       
       // Try to apply the named return value optimization. We have to check
       // if we can do this here because lambdas keep return statements around

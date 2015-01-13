@@ -25,6 +25,24 @@ template<>
 void X<int>::f() { }
 }
 
+// Like PR5557, but with a defined destructor instead of a defined constructor.
+namespace PR5557_dtor {
+template <class T> struct A {
+  A(); // Don't have an implicit constructor.
+  ~A(); // expected-note{{instantiation}}
+  virtual int a(T x);
+};
+template<class T> A<T>::~A() {}
+
+template<class T> int A<T>::a(T x) { 
+  return *x; // expected-error{{requires pointer operand}}
+}
+
+void f() {
+  A<int> x; // expected-note{{instantiation}}
+}
+}
+
 template<typename T>
 struct Base {
   virtual ~Base() { 
