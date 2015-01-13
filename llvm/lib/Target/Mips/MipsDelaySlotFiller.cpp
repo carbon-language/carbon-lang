@@ -210,7 +210,7 @@ namespace {
     template<typename IterTy>
     bool searchRange(MachineBasicBlock &MBB, IterTy Begin, IterTy End,
                      RegDefsUses &RegDU, InspectMemInstr &IM,
-                     IterTy &Filler) const;
+                     IterTy &Filler, Iter Slot) const;
 
     /// This function searches in the backward direction for an instruction that
     /// can be moved to the delay slot. Returns true on success.
@@ -612,7 +612,7 @@ FunctionPass *llvm::createMipsDelaySlotFillerPass(MipsTargetMachine &tm) {
 template<typename IterTy>
 bool Filler::searchRange(MachineBasicBlock &MBB, IterTy Begin, IterTy End,
                          RegDefsUses &RegDU, InspectMemInstr& IM,
-                         IterTy &Filler) const {
+                         IterTy &Filler, Iter Slot) const {
   for (IterTy I = Begin; I != End; ++I) {
     // skip debug value
     if (I->isDebugValue())
@@ -640,6 +640,15 @@ bool Filler::searchRange(MachineBasicBlock &MBB, IterTy Begin, IterTy End,
         continue;
     }
 
+    bool InMicroMipsMode = TM.getSubtarget<MipsSubtarget>().inMicroMipsMode();
+    const MipsInstrInfo *TII = static_cast<const MipsInstrInfo *>(
+        TM.getSubtargetImpl()->getInstrInfo());
+    unsigned Opcode = (*Slot).getOpcode();
+    if (InMicroMipsMode && TII->GetInstSizeInBytes(&(*I)) == 2 &&
+        (Opcode == Mips::JR || Opcode == Mips::PseudoIndirectBranch ||
+         Opcode == Mips::PseudoReturn))
+      continue;
+
     Filler = I;
     return true;
   }
@@ -657,7 +666,8 @@ bool Filler::searchBackward(MachineBasicBlock &MBB, Iter Slot) const {
 
   RegDU.init(*Slot);
 
-  if (!searchRange(MBB, ReverseIter(Slot), MBB.rend(), RegDU, MemDU, Filler))
+  if (!searchRange(MBB, ReverseIter(Slot), MBB.rend(), RegDU, MemDU, Filler,
+      Slot))
     return false;
 
   MBB.splice(std::next(Slot), &MBB, std::next(Filler).base());
@@ -677,7 +687,7 @@ bool Filler::searchForward(MachineBasicBlock &MBB, Iter Slot) const {
 
   RegDU.setCallerSaved(*Slot);
 
-  if (!searchRange(MBB, std::next(Slot), MBB.end(), RegDU, NM, Filler))
+  if (!searchRange(MBB, std::next(Slot), MBB.end(), RegDU, NM, Filler, Slot))
     return false;
 
   MBB.splice(std::next(Slot), &MBB, Filler);
@@ -720,7 +730,8 @@ bool Filler::searchSuccBBs(MachineBasicBlock &MBB, Iter Slot) const {
     IM.reset(new MemDefsUses(MFI));
   }
 
-  if (!searchRange(MBB, SuccBB->begin(), SuccBB->end(), RegDU, *IM, Filler))
+  if (!searchRange(MBB, SuccBB->begin(), SuccBB->end(), RegDU, *IM, Filler,
+      Slot))
     return false;
 
   insertDelayFiller(Filler, BrMap);
