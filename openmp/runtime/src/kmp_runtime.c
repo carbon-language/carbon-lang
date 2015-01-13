@@ -2268,10 +2268,8 @@ __kmp_set_num_threads( int new_nth, int gtid )
             KMP_DEBUG_ASSERT( hot_team->t.t_threads[f] != NULL );
             hot_team->t.t_threads[f]->th.th_team_nproc = new_nth;
         }
-#if KMP_MIC
         // Special flag in case omp_set_num_threads() call
         hot_team->t.t_size_changed = -1;
-#endif
     }
 
 }
@@ -2837,9 +2835,7 @@ __kmp_initialize_root( kmp_root_t *root )
     // TODO???: hot_team->t.t_max_active_levels = __kmp_dflt_max_active_levels;
     hot_team->t.t_sched.r_sched_type = r_sched.r_sched_type;
     hot_team->t.t_sched.chunk        = r_sched.chunk;
-#if KMP_MIC
     hot_team->t.t_size_changed = 0;
-#endif
 
 }
 
@@ -4411,7 +4407,6 @@ __kmp_allocate_team( kmp_root_t *root, int new_nproc, int max_nproc,
            put that case first. */
         if (team->t.t_nproc == new_nproc) { // Check changes in number of threads
             KA_TRACE( 20, ("__kmp_allocate_team: reusing hot team\n" ));
-#if KMP_MIC
             // This case can mean that omp_set_num_threads() was called and the hot team size
             // was already reduced, so we check the special flag
             if ( team->t.t_size_changed == -1 ) {
@@ -4419,7 +4414,6 @@ __kmp_allocate_team( kmp_root_t *root, int new_nproc, int max_nproc,
             } else {
                 team->t.t_size_changed = 0;
             }
-#endif
 
             // TODO???: team->t.t_max_active_levels = new_max_active_levels;
             team->t.t_sched =  new_icvs->sched;
@@ -4451,9 +4445,7 @@ __kmp_allocate_team( kmp_root_t *root, int new_nproc, int max_nproc,
         else if( team->t.t_nproc > new_nproc ) {
             KA_TRACE( 20, ("__kmp_allocate_team: decreasing hot team thread count to %d\n", new_nproc ));
 
-#if KMP_MIC
             team->t.t_size_changed = 1;
-#endif
             if ( __kmp_tasking_mode != tskm_immediate_exec ) {
                 kmp_task_team_t *task_team = team->t.t_task_team;
                 if ( ( task_team != NULL ) && TCR_SYNC_4(task_team->tt.tt_active) ) {
@@ -4541,9 +4533,7 @@ __kmp_allocate_team( kmp_root_t *root, int new_nproc, int max_nproc,
 
             KA_TRACE( 20, ("__kmp_allocate_team: increasing hot team thread count to %d\n", new_nproc ));
 
-#if KMP_MIC
             team->t.t_size_changed = 1;
-#endif
 
 
 #if KMP_NESTED_HOT_TEAMS

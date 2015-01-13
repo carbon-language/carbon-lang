@@ -2128,14 +2128,12 @@ __kmp_parse_affinity_env( char const * name, char const * value,
             __kmp_nested_proc_bind.bind_types[0] = proc_bind_intel;
 # endif
             buf = next;
-# if KMP_MIC
         } else if (__kmp_match_str("balanced", buf, (const char **)&next)) {
             set_type( affinity_balanced );
 #  if OMP_40_ENABLED
             __kmp_nested_proc_bind.bind_types[0] = proc_bind_intel;
 #  endif
             buf = next;
-# endif
         } else if (__kmp_match_str("disabled", buf, (const char **)&next)) {
             set_type( affinity_disabled );
 # if OMP_40_ENABLED
@@ -2309,7 +2307,6 @@ __kmp_parse_affinity_env( char const * name, char const * value,
                 KMP_WARNING( AffManyParamsForLogic, name, number[ 1 ] );
             }; // if
         } break;
-# if KMP_MIC
         case affinity_balanced: {
             if ( count > 0 ) {
                 *out_compact = number[ 0 ];
@@ -2318,16 +2315,20 @@ __kmp_parse_affinity_env( char const * name, char const * value,
                 *out_offset = number[ 1 ];
             }; // if
 
-            // If granularity is neither thread nor core let it be default value=fine
-            if( __kmp_affinity_gran != affinity_gran_default && __kmp_affinity_gran != affinity_gran_fine
-                && __kmp_affinity_gran != affinity_gran_thread && __kmp_affinity_gran != affinity_gran_core ) {
+            if ( __kmp_affinity_gran == affinity_gran_default ) {
+# if KMP_MIC
+                if( __kmp_affinity_verbose || __kmp_affinity_warnings ) {
+                    KMP_WARNING( AffGranUsing, "KMP_AFFINITY", "fine" );
+                }
+                __kmp_affinity_gran = affinity_gran_fine;
+# else
                 if( __kmp_affinity_verbose || __kmp_affinity_warnings ) {
                     KMP_WARNING( AffGranUsing, "KMP_AFFINITY", "core" );
                 }
-                __kmp_affinity_gran = affinity_gran_fine;
+                __kmp_affinity_gran = affinity_gran_core;
+# endif /* KMP_MIC */
             }
         } break;
-# endif
         case affinity_scatter:
         case affinity_compact: {
             if ( count > 0 ) {
@@ -2468,12 +2469,10 @@ __kmp_stg_print_affinity( kmp_str_buf_t * buffer, char const * name, void * data
             __kmp_str_buf_print( buffer, "%s=[%s],%s", "proclist",
               __kmp_affinity_proclist, "explicit" );
             break;
-# if KMP_MIC
         case affinity_balanced:
             __kmp_str_buf_print( buffer, "%s,%d,%d", "balanced",
               __kmp_affinity_compact, __kmp_affinity_offset );
             break;
-# endif
         case affinity_disabled:
             __kmp_str_buf_print( buffer, "%s", "disabled");
             break;
@@ -3026,10 +3025,15 @@ __kmp_stg_parse_proc_bind( char const * name, char const * value, void * data )
     __kmp_stg_parse_bool( name, value, & enabled );
     if ( enabled ) {
             //
-            // OMP_PROC_BIND => granularity=core,scatter
+            // OMP_PROC_BIND => granularity=fine,scatter on MIC
+            // OMP_PROC_BIND => granularity=core,scatter elsewhere
             //
             __kmp_affinity_type = affinity_scatter;
+#  if KMP_MIC
+            __kmp_affinity_gran = affinity_gran_fine;
+#  else
             __kmp_affinity_gran = affinity_gran_core;
+#  endif /* KMP_MIC */
     }
     else {
         __kmp_affinity_type = affinity_none;
@@ -4987,9 +4991,7 @@ __kmp_env_initialize( char const * string ) {
           && ( FIND( aff_str, "compact" ) == NULL )
           && ( FIND( aff_str, "scatter" ) == NULL )
           && ( FIND( aff_str, "explicit" ) == NULL )
-# if KMP_MIC
           && ( FIND( aff_str, "balanced" ) == NULL )
-# endif
           && ( FIND( aff_str, "disabled" ) == NULL ) ) {
             __kmp_affinity_notype = __kmp_stg_find( "KMP_AFFINITY"  );
         }

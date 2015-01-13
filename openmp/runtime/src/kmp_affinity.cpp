@@ -3819,9 +3819,8 @@ __kmp_aux_affinity_initialize(void)
         }
         goto sortAddresses;
 
-# if KMP_MIC
         case affinity_balanced:
-        // Balanced works only for the case of a single package and uniform topology
+        // Balanced works only for the case of a single package
         if( nPackages > 1 ) {
             if( __kmp_affinity_verbose || __kmp_affinity_warnings ) {
                 KMP_WARNING( AffBalancedNotAvail, "KMP_AFFINITY" );
@@ -3872,7 +3871,6 @@ __kmp_aux_affinity_initialize(void)
 
             break;
         }
-# endif
 
         sortAddresses:
         //
@@ -4019,10 +4017,7 @@ __kmp_affinity_set_init_mask(int gtid, int isa_root)
     if (__kmp_nested_proc_bind.bind_types[0] == proc_bind_intel)
 # endif
     {
-        if ((__kmp_affinity_type == affinity_none)
-# if KMP_MIC
-          || (__kmp_affinity_type == affinity_balanced)
-# endif
+        if ((__kmp_affinity_type == affinity_none) || (__kmp_affinity_type == affinity_balanced)
           ) {
 # if KMP_OS_WINDOWS && KMP_ARCH_X86_64
             if (__kmp_num_proc_groups > 1) {
@@ -4397,7 +4392,6 @@ __kmp_aux_get_affinity_mask_proc(int proc, void **mask)
     return KMP_CPU_ISSET(proc, (kmp_affin_mask_t *)(*mask));
 }
 
-# if KMP_MIC
 
 // Dynamic affinity settings - Affinity balanced
 void __kmp_balanced_affinity( int tid, int nthreads )
@@ -4625,8 +4619,6 @@ void __kmp_balanced_affinity( int tid, int nthreads )
         __kmp_set_system_affinity( mask, TRUE );
     }
 }
-
-# endif /* KMP_MIC */
 
 #else
     // affinity not supported

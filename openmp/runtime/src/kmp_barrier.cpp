@@ -1536,12 +1536,12 @@ __kmp_fork_barrier(int gtid, int tid)
     kmp_proc_bind_t proc_bind = team->t.t_proc_bind;
     if (proc_bind == proc_bind_intel) {
 #endif
-#if KMP_MIC
+#if KMP_AFFINITY_SUPPORTED
         // Call dynamic affinity settings
         if(__kmp_affinity_type == affinity_balanced && team->t.t_size_changed) {
             __kmp_balanced_affinity(tid, team->t.t_nproc);
         }
-#endif
+#endif // KMP_AFFINITY_SUPPORTED
 #if OMP_40_ENABLED && KMP_AFFINITY_SUPPORTED
     }
     else if ((proc_bind != proc_bind_false)

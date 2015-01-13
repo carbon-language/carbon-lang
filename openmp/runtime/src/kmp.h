@@ -679,9 +679,7 @@ enum affinity_type {
     affinity_compact,
     affinity_scatter,
     affinity_explicit,
-#if KMP_MIC
     affinity_balanced,
-#endif
     affinity_disabled,  // not used outsize the env var parser
     affinity_default
 };
@@ -2336,9 +2334,7 @@ typedef struct KMP_ALIGN_CACHE kmp_base_team {
     int                      t_first_place;  // first & last place in parent thread's partition.
     int                      t_last_place;   // Restore these values to master after par region.
 #endif // OMP_40_ENABLED && KMP_AFFINITY_SUPPORTED
-#if KMP_MIC
     int t_size_changed; // team size was changed?: 0: no, 1: yes, -1: changed via omp_set_num_threads() call
-#endif
 
     // Read/write by workers as well -----------------------------------------------------------------------
 #if KMP_ARCH_X86 || KMP_ARCH_X86_64
