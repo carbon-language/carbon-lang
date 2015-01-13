@@ -15,7 +15,6 @@
 
 #include "PPC.h"
 #include "MCTargetDesc/PPCPredicates.h"
-#include "PPCCallingConv.h"
 #include "PPCISelLowering.h"
 #include "PPCSubtarget.h"
 #include "PPCTargetMachine.h"
@@ -120,8 +119,6 @@ class PPCFastISel final : public FastISel {
                              unsigned Op0, bool Op0IsKill,
                              unsigned Op1, bool Op1IsKill);
 
-    bool fastLowerCall(CallLoweringInfo &CLI) override;
-
   // Instruction selection routines.
   private:
     bool SelectLoad(const Instruction *I);
@@ -133,6 +130,7 @@ class PPCFastISel final : public FastISel {
     bool SelectIToFP(const Instruction *I, bool IsSigned);
     bool SelectFPToI(const Instruction *I, bool IsSigned);
     bool SelectBinaryIntOp(const Instruction *I, unsigned ISDOpcode);
+    bool SelectCall(const Instruction *I);
     bool SelectRet(const Instruction *I);
     bool SelectTrunc(const Instruction *I);
     bool SelectIntExt(const Instruction *I);
@@ -176,7 +174,9 @@ class PPCFastISel final : public FastISel {
                          CallingConv::ID CC,
                          unsigned &NumBytes,
                          bool IsVarArg);
-    bool finishCall(MVT RetVT, CallLoweringInfo &CLI, unsigned &NumBytes);
+    void finishCall(MVT RetVT, SmallVectorImpl<unsigned> &UsedRegs,
+                    const Instruction *I, CallingConv::ID CC,
+                    unsigned &NumBytes, bool IsVarArg);
     CCAssignFn *usePPC32CCs(unsigned Flag);
 
   private:
@@ -1339,9 +1339,9 @@ bool PPCFastISel::processCallArgs(SmallVectorImpl<Value*> &Args,
 
 // For a call that we've determined we can fast-select, finish the
 // call sequence and generate a copy to obtain the return value (if any).
-bool PPCFastISel::finishCall(MVT RetVT, CallLoweringInfo &CLI, unsigned &NumBytes) {
-  CallingConv::ID CC = CLI.CallConv;
-
+void PPCFastISel::finishCall(MVT RetVT, SmallVectorImpl<unsigned> &UsedRegs,
+                             const Instruction *I, CallingConv::ID CC,
+                             unsigned &NumBytes, bool IsVarArg) {
   // Issue CallSEQ_END.
   BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc,
           TII.get(TII.getCallFrameDestroyOpcode()))
@@ -1352,7 +1352,7 @@ bool PPCFastISel::finishCall(MVT RetVT, CallLoweringInfo &CLI, unsigned &NumByte
   // any real difficulties there.
   if (RetVT != MVT::isVoid) {
     SmallVector<CCValAssign, 16> RVLocs;
-    CCState CCInfo(CC, false, *FuncInfo.MF, RVLocs, *Context);
+    CCState CCInfo(CC, IsVarArg, *FuncInfo.MF, RVLocs, *Context);
     CCInfo.AnalyzeCallResult(RetVT, RetCC_PPC64_ELF_FIS);
     CCValAssign &VA = RVLocs[0];
     assert(RVLocs.size() == 1 && "No support for multi-reg return values!");
@@ -1397,35 +1397,39 @@ bool PPCFastISel::finishCall(MVT RetVT, CallLoweringInfo &CLI, unsigned &NumByte
     }
 
     assert(ResultReg && "ResultReg unset!");
-    CLI.InRegs.push_back(SourcePhysReg);
-    CLI.ResultReg = ResultReg;
-    CLI.NumResultRegs = 1;
+    UsedRegs.push_back(SourcePhysReg);
+    updateValueMap(I, ResultReg);
   }
-
-  return true;
 }
 
-bool PPCFastISel::fastLowerCall(CallLoweringInfo &CLI) {
-  CallingConv::ID CC  = CLI.CallConv;
-  bool IsTailCall     = CLI.IsTailCall;
-  bool IsVarArg       = CLI.IsVarArg;
-  const Value *Callee = CLI.Callee;
-  const char *SymName = CLI.SymName;
+// Attempt to fast-select a call instruction.
+bool PPCFastISel::SelectCall(const Instruction *I) {
+  const CallInst *CI = cast<CallInst>(I);
+  const Value *Callee = CI->getCalledValue();
 
-  if (!Callee && !SymName)
+  // Can't handle inline asm.
+  if (isa<InlineAsm>(Callee))
     return false;
 
   // Allow SelectionDAG isel to handle tail calls.
-  if (IsTailCall)
+  if (CI->isTailCall())
     return false;
 
-  // Let SDISel handle vararg functions.
+  // Obtain calling convention.
+  ImmutableCallSite CS(CI);
+  CallingConv::ID CC = CS.getCallingConv();
+
+  PointerType *PT = cast<PointerType>(CS.getCalledValue()->getType());
+  FunctionType *FTy = cast<FunctionType>(PT->getElementType());
+  bool IsVarArg = FTy->isVarArg();
+
+  // Not ready for varargs yet.
   if (IsVarArg)
     return false;
 
   // Handle simple calls for now, with legal return types and
   // those that can be extended.
-  Type *RetTy = CLI.RetTy;
+  Type *RetTy = I->getType();
   MVT RetVT;
   if (RetTy->isVoidTy())
     RetVT = MVT::isVoid;
@@ -1446,7 +1450,7 @@ bool PPCFastISel::fastLowerCall(CallLoweringInfo &CLI) {
 
   // Bail early if more than 8 arguments, as we only currently
   // handle arguments passed in registers.
-  unsigned NumArgs = CLI.OutVals.size();
+  unsigned NumArgs = CS.arg_size();
   if (NumArgs > 8)
     return false;
 
@@ -1461,16 +1465,28 @@ bool PPCFastISel::fastLowerCall(CallLoweringInfo &CLI) {
   ArgVTs.reserve(NumArgs);
   ArgFlags.reserve(NumArgs);
 
-  for (unsigned i = 0, ie = NumArgs; i != ie; ++i) {
+  for (ImmutableCallSite::arg_iterator II = CS.arg_begin(), IE = CS.arg_end();
+       II != IE; ++II) {
+    // FIXME: ARM does something for intrinsic calls here, check into that.
+
+    unsigned AttrIdx = II - CS.arg_begin() + 1;
+    
     // Only handle easy calls for now.  It would be reasonably easy
     // to handle <= 8-byte structures passed ByVal in registers, but we
     // have to ensure they are right-justified in the register.
-    ISD::ArgFlagsTy Flags = CLI.OutFlags[i];
-    if (Flags.isInReg() || Flags.isSRet() || Flags.isNest() || Flags.isByVal())
+    if (CS.paramHasAttr(AttrIdx, Attribute::InReg) ||
+        CS.paramHasAttr(AttrIdx, Attribute::StructRet) ||
+        CS.paramHasAttr(AttrIdx, Attribute::Nest) ||
+        CS.paramHasAttr(AttrIdx, Attribute::ByVal))
       return false;
 
-    Value *ArgValue = CLI.OutVals[i];
-    Type *ArgTy = ArgValue->getType();
+    ISD::ArgFlagsTy Flags;
+    if (CS.paramHasAttr(AttrIdx, Attribute::SExt))
+      Flags.setSExt();
+    if (CS.paramHasAttr(AttrIdx, Attribute::ZExt))
+      Flags.setZExt();
+
+    Type *ArgTy = (*II)->getType();
     MVT ArgVT;
     if (!isTypeLegal(ArgTy, ArgVT) && ArgVT != MVT::i16 && ArgVT != MVT::i8)
       return false;
@@ -1478,11 +1494,14 @@ bool PPCFastISel::fastLowerCall(CallLoweringInfo &CLI) {
     if (ArgVT.isVector())
       return false;
 
-    unsigned Arg = getRegForValue(ArgValue);
+    unsigned Arg = getRegForValue(*II);
     if (Arg == 0)
       return false;
 
-    Args.push_back(ArgValue);
+    unsigned OriginalAlignment = DL.getABITypeAlignment(ArgTy);
+    Flags.setOrigAlign(OriginalAlignment);
+
+    Args.push_back(*II);
     ArgRegs.push_back(Arg);
     ArgVTs.push_back(ArgVT);
     ArgFlags.push_back(Flags);
@@ -1496,28 +1515,18 @@ bool PPCFastISel::fastLowerCall(CallLoweringInfo &CLI) {
                        RegArgs, CC, NumBytes, IsVarArg))
     return false;
 
-  MachineInstrBuilder MIB;
   // FIXME: No handling for function pointers yet.  This requires
   // implementing the function descriptor (OPD) setup.
   const GlobalValue *GV = dyn_cast<GlobalValue>(Callee);
-  if (!GV) {
-    // patchpoints are a special case; they always dispatch to a pointer value.
-    // However, we don't actually want to generate the indirect call sequence
-    // here (that will be generated, as necessary, during asm printing), and
-    // the call we generate here will be erased by FastISel::selectPatchpoint,
-    // so don't try very hard...
-    if (CLI.IsPatchPoint)
-      MIB = BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(PPC::NOP));
-    else
-      return false;
-  } else {
-    // Build direct call with NOP for TOC restore.
-    // FIXME: We can and should optimize away the NOP for local calls.
-    MIB = BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc,
-                  TII.get(PPC::BL8_NOP));
-    // Add callee.
-    MIB.addGlobalAddress(GV);
-  }
+  if (!GV)
+    return false;
+
+  // Build direct call with NOP for TOC restore.
+  // FIXME: We can and should optimize away the NOP for local calls.
+  MachineInstrBuilder MIB = BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc,
+                                    TII.get(PPC::BL8_NOP));
+  // Add callee.
+  MIB.addGlobalAddress(GV);
 
   // Add implicit physical register uses to the call.
   for (unsigned II = 0, IE = RegArgs.size(); II != IE; ++II)
@@ -1531,10 +1540,14 @@ bool PPCFastISel::fastLowerCall(CallLoweringInfo &CLI) {
   // defs for return values will be added by setPhysRegsDeadExcept().
   MIB.addRegMask(TRI.getCallPreservedMask(CC));
 
-  CLI.Call = MIB;
-
   // Finish off the call including any return values.
-  return finishCall(RetVT, CLI, NumBytes);
+  SmallVector<unsigned, 4> UsedRegs;
+  finishCall(RetVT, UsedRegs, I, CC, NumBytes, IsVarArg);
+
+  // Set all unused physregs defs as dead.
+  static_cast<MachineInstr *>(MIB)->setPhysRegsDeadExcept(UsedRegs, TRI);
+
+  return true;
 }
 
 // Attempt to fast-select a return instruction.
@@ -1824,7 +1837,9 @@ bool PPCFastISel::fastSelectInstruction(const Instruction *I) {
     case Instruction::Sub:
       return SelectBinaryIntOp(I, ISD::SUB);
     case Instruction::Call:
-      return selectCall(I);
+      if (dyn_cast<IntrinsicInst>(I))
+        return false;
+      return SelectCall(I);
     case Instruction::Ret:
       return SelectRet(I);
     case Instruction::Trunc:
