@@ -1128,7 +1128,7 @@ void Verifier::visitFunction(const Function &F) {
 
     // Check the entry node
     const BasicBlock *Entry = &F.getEntryBlock();
-    Assert1(pred_begin(Entry) == pred_end(Entry),
+    Assert1(pred_empty(Entry),
             "Entry block to function must not have predecessors!", Entry);
 
     // The address of the entry block cannot be taken, unless it is dead.

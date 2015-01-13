@@ -286,6 +286,8 @@ public:
     return iterator_range<const_use_iterator>(use_begin(), use_end());
   }
 
+  bool               user_empty() const { return UseList == nullptr; }
+
   typedef user_iterator_impl<User>       user_iterator;
   typedef user_iterator_impl<const User> const_user_iterator;
   user_iterator       user_begin()       { return user_iterator(UseList); }

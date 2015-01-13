@@ -3020,7 +3020,7 @@ bool SimplifyCFGOpt::SimplifyReturn(ReturnInst *RI, IRBuilder<> &Builder) {
     }
 
     // If we eliminated all predecessors of the block, delete the block now.
-    if (pred_begin(BB) == pred_end(BB))
+    if (pred_empty(BB))
       // We know there are no successors, so just nuke the block.
       BB->eraseFromParent();
 
@@ -3193,7 +3193,7 @@ bool SimplifyCFGOpt::SimplifyUnreachable(UnreachableInst *UI) {
   }
 
   // If this block is now dead, remove it.
-  if (pred_begin(BB) == pred_end(BB) &&
+  if (pred_empty(BB) &&
       BB != &BB->getParent()->getEntryBlock()) {
     // We know there are no successors, so just nuke the block.
     BB->eraseFromParent();
@@ -4587,7 +4587,7 @@ bool SimplifyCFGOpt::run(BasicBlock *BB) {
 
   // Remove basic blocks that have no predecessors (except the entry block)...
   // or that just have themself as a predecessor.  These are unreachable.
-  if ((pred_begin(BB) == pred_end(BB) &&
+  if ((pred_emtpy(BB) &&
        BB != &BB->getParent()->getEntryBlock()) ||
       BB->getSinglePredecessor() == BB) {
     DEBUG(dbgs() << "Removing BB: \n" << *BB);

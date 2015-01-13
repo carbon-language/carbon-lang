@@ -188,7 +188,7 @@ bool JumpThreading::runOnFunction(Function &F) {
 
       // If the block is trivially dead, zap it.  This eliminates the successor
       // edges which simplifies the CFG.
-      if (pred_begin(BB) == pred_end(BB) &&
+      if (pred_empty(BB) &&
           BB != &BB->getParent()->getEntryBlock()) {
         DEBUG(dbgs() << "  JT: Deleting dead block '" << BB->getName()
               << "' with terminator: " << *BB->getTerminator() << '\n');
@@ -662,7 +662,7 @@ static bool hasAddressTakenAndUsed(BasicBlock *BB) {
 bool JumpThreading::ProcessBlock(BasicBlock *BB) {
   // If the block is trivially dead, just return and let the caller nuke it.
   // This simplifies other transformations.
-  if (pred_begin(BB) == pred_end(BB) &&
+  if (pred_empty(BB) &&
       BB != &BB->getParent()->getEntryBlock())
     return false;
 

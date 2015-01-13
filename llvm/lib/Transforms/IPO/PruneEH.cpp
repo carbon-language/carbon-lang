@@ -200,7 +200,7 @@ bool PruneEH::SimplifyFunction(Function *F) {
         BB->getInstList().pop_back();
 
         // If the unwind block is now dead, nuke it.
-        if (pred_begin(UnwindBlock) == pred_end(UnwindBlock))
+        if (pred_empty(UnwindBlock))
           DeleteBasicBlock(UnwindBlock);  // Delete the new BB.
 
         ++NumRemoved;
@@ -234,7 +234,7 @@ bool PruneEH::SimplifyFunction(Function *F) {
 /// updating the callgraph to reflect any now-obsolete edges due to calls that
 /// exist in the BB.
 void PruneEH::DeleteBasicBlock(BasicBlock *BB) {
-  assert(pred_begin(BB) == pred_end(BB) && "BB is not dead!");
+  assert(pred_empty(BB) && "BB is not dead!");
   CallGraph &CG = getAnalysis<CallGraphWrapperPass>().getCallGraph();
 
   CallGraphNode *CGN = CG[BB->getParent()];

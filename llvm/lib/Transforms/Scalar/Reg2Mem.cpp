@@ -73,7 +73,7 @@ bool RegToMem::runOnFunction(Function &F) {
 
   // Insert all new allocas into entry block.
   BasicBlock *BBEntry = &F.getEntryBlock();
-  assert(pred_begin(BBEntry) == pred_end(BBEntry) &&
+  assert(pred_empty(BBEntry) &&
          "Entry block to function must not have predecessors!");
 
   // Find first non-alloca instruction and create insertion point. This is

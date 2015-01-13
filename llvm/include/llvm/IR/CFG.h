@@ -93,6 +93,9 @@ inline pred_iterator pred_end(BasicBlock *BB) { return pred_iterator(BB, true);}
 inline const_pred_iterator pred_end(const BasicBlock *BB) {
   return const_pred_iterator(BB, true);
 }
+inline bool pred_empty(const BasicBlock *BB) {
+  return pred_begin(BB) == pred_end(BB);
+}
 
 
 
@@ -256,6 +259,9 @@ inline succ_iterator succ_end(BasicBlock *BB) {
 }
 inline succ_const_iterator succ_end(const BasicBlock *BB) {
   return succ_const_iterator(BB->getTerminator(), true);
+}
+inline bool succ_empty(const BasicBlock *BB) {
+  return succ_begin(BB) == succ_end(BB);
 }
 
 template <typename T, typename U> struct isPodLike<SuccIterator<T, U> > {
