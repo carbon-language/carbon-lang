@@ -14,7 +14,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "lld/Driver/Driver.h"
-#include "lld/Driver/GnuLdInputGraph.h"
+#include "lld/Driver/WrapperInputGraph.h"
+#include "lld/ReaderWriter/ELFLinkingContext.h"
 #include "lld/ReaderWriter/LinkerScript.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/Optional.h"
@@ -172,16 +173,6 @@ bool GnuLdDriver::linkELF(int argc, const char *argv[],
     return false;
   if (!options)
     return true;
-
-  // Register possible input file parsers.
-  options->registry().addSupportELFObjects(options->mergeCommonStrings(),
-                                           options->targetHandler());
-  options->registry().addSupportArchives(options->logInputFiles());
-  options->registry().addSupportYamlFiles();
-  options->registry().addSupportNativeObjects();
-  if (options->allowLinkWithDynamicLibraries())
-    options->registry().addSupportELFDynamicSharedObjects(
-        options->useShlibUndefines(), options->targetHandler());
   return link(*options, diagnostics);
 }
 
@@ -218,6 +209,23 @@ static bool isLinkerScript(StringRef path, raw_ostream &diag) {
   return magic == llvm::sys::fs::file_magic::unknown;
 }
 
+static ErrorOr<StringRef>
+findFile(ELFLinkingContext &ctx, StringRef path, bool dashL) {
+  // If the path was referred to by using a -l argument, let's search
+  // for the file in the search path.
+  if (dashL) {
+    ErrorOr<StringRef> pathOrErr = ctx.searchLibrary(path);
+    if (std::error_code ec = pathOrErr.getError())
+      return make_dynamic_error_code(
+          Twine("Unable to find library -l") + path + ": " + ec.message());
+    path = pathOrErr->str();
+  }
+  if (!llvm::sys::fs::exists(path))
+    return make_dynamic_error_code(
+        Twine("lld: cannot find file ") + path);
+  return path;
+}
+
 static bool isPathUnderSysroot(StringRef sysroot, StringRef path) {
   if (sysroot.empty())
     return false;
@@ -234,8 +242,6 @@ evaluateLinkerScript(ELFLinkingContext &ctx, InputGraph *inputGraph,
       MemoryBuffer::getFileOrSTDIN(path);
   if (std::error_code ec = mb.getError())
     return ec;
-  if (ctx.logInputFiles())
-    diag << path << "\n";
   auto lexer = llvm::make_unique<script::Lexer>(std::move(mb.get()));
   auto parser = llvm::make_unique<script::Parser>(*lexer);
   script::LinkerScript *script = parser->parse();
@@ -253,13 +259,26 @@ evaluateLinkerScript(ELFLinkingContext &ctx, InputGraph *inputGraph,
     int numfiles = 0;
     for (const script::Path &path : group->getPaths()) {
       // TODO : Propagate Set WholeArchive/dashlPrefix
-      ELFFileNode::Attributes attr;
+      ELFLinkingContext::Attributes attr;
       attr.setSysRooted(sysroot);
       attr.setAsNeeded(path._asNeeded);
       attr.setDashlPrefix(path._isDashlPrefix);
-      ++numfiles;
-      inputGraph->addInputElement(llvm::make_unique<ELFFileNode>(
-                                      ctx, ctx.allocateString(path._path), attr));
+
+      ErrorOr<StringRef> pathOrErr = path._isDashlPrefix
+          ? ctx.searchLibrary(path._path) : ctx.searchFile(path._path, sysroot);
+      if (std::error_code ec = pathOrErr.getError())
+        return make_dynamic_error_code(
+            Twine("Unable to find file ") + path._path + ": " + ec.message());
+
+      std::vector<std::unique_ptr<File>> files
+          = loadFile(ctx, pathOrErr.get(), false);
+      for (std::unique_ptr<File> &file : files) {
+        if (ctx.logInputFiles())
+          diag << file->path() << "\n";
+        inputGraph->addInputElement(
+            std::unique_ptr<InputElement>(new WrapperNode(std::move(file))));
+        ++numfiles;
+      }
     }
     inputGraph->addInputElement(llvm::make_unique<GroupEnd>(numfiles));
   }
@@ -341,7 +360,7 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
   std::stack<int> groupStack;
   int numfiles = 0;
 
-  ELFFileNode::Attributes attributes;
+  ELFLinkingContext::Attributes attributes;
 
   bool _outputOptionSet = false;
 
@@ -379,7 +398,6 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
       ctx->setPrintRemainingUndefines(false);
       ctx->setAllowRemainingUndefines(true);
       break;
-
     case OPT_static:
       ctx->setOutputELFType(llvm::ELF::ET_EXEC);
       ctx->setIsStaticExecutable(true);
@@ -415,6 +433,37 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
     }
   }
 
+  for (auto inputArg : *parsedArgs) {
+    switch (inputArg->getOption().getID()) {
+    case OPT_merge_strings:
+      ctx->setMergeCommonStrings(true);
+      break;
+    case OPT_t:
+      ctx->setLogInputFiles(true);
+      break;
+    case OPT_use_shlib_undefs:
+      ctx->setUseShlibUndefines(true);
+      break;
+    case OPT_no_allow_shlib_undefs:
+      ctx->setAllowShlibUndefines(false);
+      break;
+    case OPT_allow_shlib_undefs:
+      ctx->setAllowShlibUndefines(true);
+      break;
+    }
+  }
+
+  // Register possible input file parsers.
+  ctx->registry().addSupportELFObjects(
+      ctx->mergeCommonStrings(),
+      ctx->targetHandler());
+  ctx->registry().addSupportArchives(ctx->logInputFiles());
+  ctx->registry().addSupportYamlFiles();
+  ctx->registry().addSupportNativeObjects();
+  if (ctx->allowLinkWithDynamicLibraries())
+    ctx->registry().addSupportELFDynamicSharedObjects(
+        ctx->useShlibUndefines(), ctx->targetHandler());
+
   // Process all the arguments and create Input Elements
   for (auto inputArg : *parsedArgs) {
     switch (inputArg->getOption().getID()) {
@@ -436,26 +485,6 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
 
     case OPT_export_dynamic:
       ctx->setExportDynamic(true);
-      break;
-
-    case OPT_merge_strings:
-      ctx->setMergeCommonStrings(true);
-      break;
-
-    case OPT_t:
-      ctx->setLogInputFiles(true);
-      break;
-
-    case OPT_no_allow_shlib_undefs:
-      ctx->setAllowShlibUndefines(false);
-      break;
-
-    case OPT_allow_shlib_undefs:
-      ctx->setAllowShlibUndefines(true);
-      break;
-
-    case OPT_use_shlib_undefs:
-      ctx->setUseShlibUndefines(true);
       break;
 
     case OPT_allow_multiple_definition:
@@ -560,25 +589,19 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
       bool dashL = (inputArg->getOption().getID() == OPT_l);
       attributes.setDashlPrefix(dashL);
       StringRef path = inputArg->getValue();
-      std::string realpath = path;
 
-      // If the path was referred to by using a -l argument, let's search
-      // for the file in the search path.
-      if (dashL) {
-        ErrorOr<StringRef> pathOrErr = ctx->searchLibrary(path);
-        if (!pathOrErr) {
-          diagnostics << " Unable to find library -l" << path << "\n";
-          return false;
-        }
-        realpath = pathOrErr->str();
-      }
-      if (!llvm::sys::fs::exists(realpath)) {
-        diagnostics << "lld: cannot find file " << path << "\n";
+      ErrorOr<StringRef> pathOrErr = findFile(*ctx, path, dashL);
+      if (std::error_code ec = pathOrErr.getError()) {
+        diagnostics << ec.message() << "\n";
         return false;
       }
+      std::string realpath = pathOrErr.get();
+
       bool isScript =
           (!path.endswith(".objtxt") && isLinkerScript(realpath, diagnostics));
       if (isScript) {
+        if (ctx->logInputFiles())
+          diagnostics << path << "\n";
         std::error_code ec = evaluateLinkerScript(
             *ctx, inputGraph.get(), realpath, diagnostics);
         if (ec) {
@@ -588,9 +611,15 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
         }
         break;
       }
-      ++numfiles;
-      inputGraph->addInputElement(
-          llvm::make_unique<ELFFileNode>(*ctx, path, attributes));
+      std::vector<std::unique_ptr<File>> files
+          = loadFile(*ctx, realpath, attributes._isWholeArchive);
+      for (std::unique_ptr<File> &file : files) {
+        if (ctx->logInputFiles())
+          diagnostics << file->path() << "\n";
+        inputGraph->addInputElement(
+            std::unique_ptr<InputElement>(new WrapperNode(std::move(file))));
+      }
+      numfiles += files.size();
       break;
     }
 

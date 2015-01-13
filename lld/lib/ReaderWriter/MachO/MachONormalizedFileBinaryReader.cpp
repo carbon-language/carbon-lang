@@ -527,8 +527,8 @@ public:
   }
 
   std::error_code
-  parseFile(std::unique_ptr<MemoryBuffer> mb, const Registry &registry,
-            std::vector<std::unique_ptr<File>> &result) const override {
+  loadFile(std::unique_ptr<MemoryBuffer> mb, const Registry &registry,
+           std::vector<std::unique_ptr<File>> &result) const override {
     auto *file = new MachOFile(std::move(mb), &_ctx);
     result.push_back(std::unique_ptr<MachOFile>(file));
     return std::error_code();
@@ -554,8 +554,8 @@ public:
   }
 
   std::error_code
-  parseFile(std::unique_ptr<MemoryBuffer> mb, const Registry &registry,
-            std::vector<std::unique_ptr<File>> &result) const override {
+  loadFile(std::unique_ptr<MemoryBuffer> mb, const Registry &registry,
+           std::vector<std::unique_ptr<File>> &result) const override {
     auto *file = new MachODylibFile(std::move(mb), &_ctx);
     result.push_back(std::unique_ptr<MachODylibFile>(file));
     return std::error_code();
@@ -580,4 +580,3 @@ void Registry::addSupportMachOObjects(MachOLinkingContext &ctx) {
 
 
 } // namespace lld
-

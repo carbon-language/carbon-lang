@@ -49,13 +49,13 @@ FileVector parseMemberFiles(FileVector &files) {
   return members;
 }
 
-FileVector parseFile(LinkingContext &ctx, StringRef path, bool wholeArchive) {
+FileVector loadFile(LinkingContext &ctx, StringRef path, bool wholeArchive) {
   ErrorOr<std::unique_ptr<MemoryBuffer>> mb
       = MemoryBuffer::getFileOrSTDIN(path);
   if (std::error_code ec = mb.getError())
     return makeErrorFile(path, ec);
   std::vector<std::unique_ptr<File>> files;
-  if (std::error_code ec = ctx.registry().parseFile(std::move(mb.get()), files))
+  if (std::error_code ec = ctx.registry().loadFile(std::move(mb.get()), files))
     return makeErrorFile(path, ec);
   if (wholeArchive)
     return parseMemberFiles(files);

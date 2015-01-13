@@ -1077,8 +1077,8 @@ public:
   }
 
   std::error_code
-  parseFile(std::unique_ptr<MemoryBuffer> mb, const Registry &,
-            std::vector<std::unique_ptr<File>> &result) const override {
+  loadFile(std::unique_ptr<MemoryBuffer> mb, const Registry &,
+           std::vector<std::unique_ptr<File>> &result) const override {
     // Parse the memory buffer as PECOFF file.
     auto *file = new FileCOFF(std::move(mb), _ctx);
     result.push_back(std::unique_ptr<File>(file));

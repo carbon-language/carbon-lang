@@ -648,7 +648,7 @@ template <> struct MappingTraits<const lld::File *> {
     }
 
     virtual std::error_code
-    parseAllMembers(std::vector<std::unique_ptr<File>> &result) const override {
+    parseAllMembers(std::vector<std::unique_ptr<File>> &result) override {
       return std::error_code();
     }
 
@@ -1325,8 +1325,8 @@ public:
   }
 
   std::error_code
-  parseFile(std::unique_ptr<MemoryBuffer> mb, const class Registry &,
-            std::vector<std::unique_ptr<File>> &result) const override {
+  loadFile(std::unique_ptr<MemoryBuffer> mb, const class Registry &,
+           std::vector<std::unique_ptr<File>> &result) const override {
     // Create YAML Input Reader.
     YamlContext yamlContext;
     yamlContext._registry = &_registry;
@@ -1343,7 +1343,7 @@ public:
 
     std::shared_ptr<MemoryBuffer> smb(mb.release());
     for (const File *file : createdFiles) {
-      // Note: parseFile() should return vector of *const* File
+      // Note: loadFile() should return vector of *const* File
       File *f = const_cast<File *>(file);
       f->setLastError(std::error_code());
       f->setSharedMemoryBuffer(smb);

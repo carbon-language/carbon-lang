@@ -12,8 +12,8 @@
 #include "File.h"
 #include "MachONormalizedFile.h"
 #include "MachOPasses.h"
+#include "lld/Core/ArchiveLibraryFile.h"
 #include "lld/Core/PassManager.h"
-#include "lld/Driver/DarwinInputGraph.h"
 #include "lld/Passes/LayoutPass.h"
 #include "lld/Passes/RoundTripYAMLPass.h"
 #include "lld/ReaderWriter/Reader.h"
@@ -605,20 +605,18 @@ Writer &MachOLinkingContext::writer() const {
 }
 
 MachODylibFile* MachOLinkingContext::loadIndirectDylib(StringRef path) {
-  std::unique_ptr<MachOFileNode> node(new MachOFileNode(path, *this));
-  std::error_code ec = node->parse(*this, llvm::errs());
-  if (ec)
+  ErrorOr<std::unique_ptr<MemoryBuffer>> mbOrErr
+      = MemoryBuffer::getFileOrSTDIN(path);
+  if (mbOrErr.getError())
     return nullptr;
 
-  assert(node->files().size() == 1 && "expected one file in dylib");
-  // lld::File object is owned by MachOFileNode object. This method returns
-  // an unowned pointer to the lld::File object.
-  MachODylibFile* result = reinterpret_cast<MachODylibFile*>(
-                                                   node->files().front().get());
-
+  std::vector<std::unique_ptr<File>> files;
+  if (registry().loadFile(std::move(mbOrErr.get()), files))
+    return nullptr;
+  assert(files.size() == 1 && "expected one file in dylib");
+  MachODylibFile* result = reinterpret_cast<MachODylibFile*>(files[0].get());
   // Node object now owned by _indirectDylibs vector.
-  _indirectDylibs.push_back(std::move(node));
-
+  _indirectDylibs.push_back(std::move(files[0]));
   return result;
 }
 

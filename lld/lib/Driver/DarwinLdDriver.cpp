@@ -13,8 +13,11 @@
 ///
 //===----------------------------------------------------------------------===//
 
+#include "lld/Core/File.h"
+#include "lld/Core/ArchiveLibraryFile.h"
+#include "lld/Core/SharedLibraryFile.h"
 #include "lld/Driver/Driver.h"
-#include "lld/Driver/DarwinInputGraph.h"
+#include "lld/Driver/WrapperInputGraph.h"
 #include "lld/ReaderWriter/MachOLinkingContext.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/STLExtras.h"
@@ -22,6 +25,7 @@
 #include "llvm/Option/Arg.h"
 #include "llvm/Option/Option.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Format.h"
 #include "llvm/Support/Host.h"
@@ -68,6 +72,50 @@ public:
   DarwinLdOptTable() : OptTable(infoTable, llvm::array_lengthof(infoTable)){}
 };
 
+std::vector<std::unique_ptr<File>>
+loadFiles(MachOLinkingContext &ctx, StringRef path,
+          raw_ostream &diag, bool wholeArchive, bool upwardDylib) {
+  ErrorOr<std::unique_ptr<MemoryBuffer>> mbOrErr =
+    MemoryBuffer::getFileOrSTDIN(path);
+  if (std::error_code ec = mbOrErr.getError())
+    return makeErrorFile(path, ec);
+  std::unique_ptr<MemoryBuffer> mb = std::move(mbOrErr.get());
+
+  ctx.addInputFileDependency(path);
+  if (ctx.logInputFiles())
+    diag << path << "\n";
+
+  // If buffer contains a fat file, find required arch in fat buffer
+  // and switch buffer to point to just that required slice.
+  // Check if buffer is a "fat" file that contains needed arch.
+  uint32_t offset;
+  uint32_t size;
+  if (ctx.sliceFromFatFile(*mb, offset, size)) {
+    // Create new buffer containing just the needed slice.
+    auto subuf = MemoryBuffer::getFileSlice(path, size, offset);
+    if (std::error_code ec = subuf.getError())
+      return makeErrorFile(path, ec);
+    // The assignment to mb will release previous buffer.
+    mb = std::move(subuf.get());
+  }
+
+  std::vector<std::unique_ptr<File>> files;
+  if (std::error_code ec = ctx.registry().loadFile(std::move(mb), files))
+    return makeErrorFile(path, ec);
+  for (std::unique_ptr<File> &pf : files) {
+    // If file is a dylib, inform LinkingContext about it.
+    if (SharedLibraryFile *shl = dyn_cast<SharedLibraryFile>(pf.get())) {
+      if (std::error_code ec = shl->parse())
+        return makeErrorFile(path, ec);
+      ctx.registerDylib(reinterpret_cast<mach_o::MachODylibFile*>(shl),
+                        upwardDylib);
+    }
+  }
+  if (wholeArchive)
+    return parseMemberFiles(files);
+  return files;
+}
+
 } // anonymous namespace
 
 // Test may be running on Windows. Canonicalize the path
@@ -85,13 +133,12 @@ static std::string canonicalizePath(StringRef path) {
 
 static void addFile(StringRef path, std::unique_ptr<InputGraph> &inputGraph,
                     MachOLinkingContext &ctx, bool loadWholeArchive,
-                    bool upwardDylib) {
-  auto node = llvm::make_unique<MachOFileNode>(path, ctx);
-  if (loadWholeArchive)
-    node->setLoadWholeArchive();
-  if (upwardDylib)
-    node->setUpwardDylib();
-  inputGraph->addInputElement(std::move(node));
+                    bool upwardDylib, raw_ostream &diag) {
+  std::vector<std::unique_ptr<File>> files =
+      loadFiles(ctx, path, diag, loadWholeArchive, upwardDylib);
+  for (std::unique_ptr<File> &file : files)
+    inputGraph->addInputElement(
+        llvm::make_unique<WrapperNode>(std::move(file)));
 }
 
 // Export lists are one symbol per line.  Blank lines are ignored.
@@ -184,10 +231,10 @@ static std::error_code parseOrderFile(StringRef orderFilePath,
 // In this variant, the path is to a text file which contains a partial path
 // per line. The <dir> prefix is prepended to each partial path.
 //
-static std::error_code parseFileList(StringRef fileListPath,
-                                     std::unique_ptr<InputGraph> &inputGraph,
-                                     MachOLinkingContext &ctx, bool forceLoad,
-                                     raw_ostream &diagnostics) {
+static std::error_code loadFileList(StringRef fileListPath,
+                                    std::unique_ptr<InputGraph> &inputGraph,
+                                    MachOLinkingContext &ctx, bool forceLoad,
+                                    raw_ostream &diagnostics) {
   // If there is a comma, split off <dir>.
   std::pair<StringRef, StringRef> opt = fileListPath.split(',');
   StringRef filePath = opt.first;
@@ -222,7 +269,7 @@ static std::error_code parseFileList(StringRef fileListPath,
     if (ctx.testingFileUsage()) {
       diagnostics << "Found filelist entry " << canonicalizePath(path) << '\n';
     }
-    addFile(path, inputGraph, ctx, forceLoad, false);
+    addFile(path, inputGraph, ctx, forceLoad, false, diagnostics);
     buffer = lineAndRest.second;
   }
   return std::error_code();
@@ -244,13 +291,6 @@ bool DarwinLdDriver::linkMachO(int argc, const char *argv[],
     return false;
   if (ctx.doNothing())
     return true;
-
-  // Register possible input file parsers.
-  ctx.registry().addSupportMachOObjects(ctx);
-  ctx.registry().addSupportArchives(ctx.logInputFiles());
-  ctx.registry().addSupportNativeObjects();
-  ctx.registry().addSupportYamlFiles();
-
   return link(ctx, diagnostics);
 }
 
@@ -310,15 +350,15 @@ bool DarwinLdDriver::parse(int argc, const char *argv[],
     }
   }
   // If no -arch specified, scan input files to find first non-fat .o file.
-  if ((arch == MachOLinkingContext::arch_unknown)
-      && !parsedArgs->getLastArg(OPT_test_file_usage)) {
+  if (arch == MachOLinkingContext::arch_unknown) {
     for (auto &inFile: parsedArgs->filtered(OPT_INPUT)) {
       // This is expensive because it opens and maps the file.  But that is
       // ok because no -arch is rare.
       if (MachOLinkingContext::isThinObjectFile(inFile->getValue(), arch))
         break;
     }
-    if (arch == MachOLinkingContext::arch_unknown) {
+    if (arch == MachOLinkingContext::arch_unknown
+        && !parsedArgs->getLastArg(OPT_test_file_usage)) {
       // If no -arch and no options at all, print usage message.
       if (parsedArgs->size() == 0)
         table.PrintHelp(llvm::outs(), argv[0], "LLVM Linker", false);
@@ -521,6 +561,13 @@ bool DarwinLdDriver::parse(int argc, const char *argv[],
     }
   }
 
+  // Register possible input file parsers.
+  if (!ctx.doNothing()) {
+    ctx.registry().addSupportMachOObjects(ctx);
+    ctx.registry().addSupportArchives(ctx.logInputFiles());
+    ctx.registry().addSupportNativeObjects();
+    ctx.registry().addSupportYamlFiles();
+  }
   std::unique_ptr<InputGraph> inputGraph(new InputGraph());
 
   // Now construct the set of library search directories, following ld64's
@@ -745,13 +792,13 @@ bool DarwinLdDriver::parse(int argc, const char *argv[],
     default:
       continue;
     case OPT_INPUT:
-      addFile(arg->getValue(), inputGraph, ctx, globalWholeArchive, false);
+      addFile(arg->getValue(), inputGraph, ctx, globalWholeArchive, false, diagnostics);
       break;
     case OPT_upward_library:
-      addFile(arg->getValue(), inputGraph, ctx, false, true);
+      addFile(arg->getValue(), inputGraph, ctx, false, true, diagnostics);
       break;
     case OPT_force_load:
-      addFile(arg->getValue(), inputGraph, ctx, true, false);
+      addFile(arg->getValue(), inputGraph, ctx, true, false, diagnostics);
       break;
     case OPT_l:
     case OPT_upward_l:
@@ -765,7 +812,7 @@ bool DarwinLdDriver::parse(int argc, const char *argv[],
         diagnostics << "Found " << (upward ? "upward " : " ") << "library "
                    << canonicalizePath(resolvedPath.get()) << '\n';
       }
-      addFile(resolvedPath.get(), inputGraph, ctx, globalWholeArchive, upward);
+      addFile(resolvedPath.get(), inputGraph, ctx, globalWholeArchive, upward, diagnostics);
       break;
     case OPT_framework:
     case OPT_upward_framework:
@@ -779,12 +826,12 @@ bool DarwinLdDriver::parse(int argc, const char *argv[],
         diagnostics << "Found " << (upward ? "upward " : " ") << "framework "
                     << canonicalizePath(resolvedPath.get()) << '\n';
       }
-      addFile(resolvedPath.get(), inputGraph, ctx, globalWholeArchive, upward);
+      addFile(resolvedPath.get(), inputGraph, ctx, globalWholeArchive, upward, diagnostics);
       break;
     case OPT_filelist:
-      if (std::error_code ec = parseFileList(arg->getValue(), inputGraph,
-                                             ctx, globalWholeArchive,
-                                             diagnostics)) {
+      if (std::error_code ec = loadFileList(arg->getValue(), inputGraph,
+                                            ctx, globalWholeArchive,
+                                            diagnostics)) {
         diagnostics << "error: " << ec.message()
                     << ", processing '-filelist " << arg->getValue()
                     << "'\n";
