@@ -1,6 +1,6 @@
 ; Test the FPR constraint "f".
 ;
-; RUN: llc < %s -mtriple=s390x-linux-gnu | FileCheck %s
+; RUN: llc < %s -mtriple=s390x-linux-gnu -no-integrated-as | FileCheck %s
 
 define float @f1() {
 ; CHECK-LABEL: f1:

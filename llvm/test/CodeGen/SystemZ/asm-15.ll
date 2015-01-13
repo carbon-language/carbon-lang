@@ -1,6 +1,6 @@
 ; Test the "M" constraint (0x7fffffff)
 ;
-; RUN: llc < %s -mtriple=s390x-linux-gnu | FileCheck %s
+; RUN: llc < %s -mtriple=s390x-linux-gnu -no-integrated-as | FileCheck %s
 
 ; Test 1 below the valid value.
 define i32 @f1() {

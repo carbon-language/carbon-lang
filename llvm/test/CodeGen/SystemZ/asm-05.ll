@@ -1,6 +1,6 @@
 ; Test the "m" asm constraint, which is equivalent to "T".
 ;
-; RUN: llc < %s -mtriple=s390x-linux-gnu | FileCheck %s
+; RUN: llc < %s -mtriple=s390x-linux-gnu -no-integrated-as | FileCheck %s
 
 define void @f1(i64 %base) {
 ; CHECK-LABEL: f1:

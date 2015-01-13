@@ -1,7 +1,7 @@
 ; Test that floating-point compares are omitted if CC already has the
 ; right value.
 ;
-; RUN: llc < %s -mtriple=s390x-linux-gnu -mcpu=z10 | FileCheck %s
+; RUN: llc < %s -mtriple=s390x-linux-gnu -mcpu=z10 -no-integrated-as | FileCheck %s
 
 declare float @llvm.fabs.f32(float %f)
 

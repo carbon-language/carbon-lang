@@ -1,6 +1,6 @@
 ; Test memchr using SRST, with the correct prototype.
 ;
-; RUN: llc < %s -mtriple=s390x-linux-gnu | FileCheck %s
+; RUN: llc < %s -mtriple=s390x-linux-gnu -no-integrated-as | FileCheck %s
 
 declare i8 *@memchr(i8 *%src, i32 %char, i64 %len)
 

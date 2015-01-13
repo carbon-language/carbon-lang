@@ -1,7 +1,7 @@
 ; Test the "T" asm constraint, which accepts addresses that have a base,
 ; an index and a 20-bit displacement.
 ;
-; RUN: llc < %s -mtriple=s390x-linux-gnu | FileCheck %s
+; RUN: llc < %s -mtriple=s390x-linux-gnu -no-integrated-as | FileCheck %s
 
 define void @f1(i64 %base) {
 ; CHECK-LABEL: f1:

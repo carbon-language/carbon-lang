@@ -1,7 +1,7 @@
 ; Test the "R" asm constraint, which accepts addresses that have a base,
 ; an index and a 12-bit displacement.
 ;
-; RUN: llc < %s -mtriple=s390x-linux-gnu | FileCheck %s
+; RUN: llc < %s -mtriple=s390x-linux-gnu -no-integrated-as | FileCheck %s
 
 ; Check the lowest range.
 define void @f1(i64 %base) {

@@ -1,7 +1,7 @@
 ; Test that compares are omitted if CC already has the right value
 ; (z196 version).
 ;
-; RUN: llc < %s -mtriple=s390x-linux-gnu -mcpu=z196 | FileCheck %s
+; RUN: llc < %s -mtriple=s390x-linux-gnu -mcpu=z196 -no-integrated-as | FileCheck %s
 
 ; Addition provides enough for equality comparisons with zero.  First teest
 ; the EQ case with LOC.
