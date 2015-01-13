@@ -319,7 +319,8 @@ AssemblyParse_x86::nonvolatile_reg_p (int machine_regno)
 #define REX_W_DSTREG(opcode) ((opcode) & 0x1)
 
 // pushq %rbp [0x55]
-bool AssemblyParse_x86::push_rbp_pattern_p ()
+bool 
+AssemblyParse_x86::push_rbp_pattern_p ()
 {
     uint8_t *p = m_cur_insn_bytes;
     if (*p == 0x55)
@@ -328,7 +329,8 @@ bool AssemblyParse_x86::push_rbp_pattern_p ()
 }
 
 // pushq $0 ; the first instruction in start() [0x6a 0x00]
-bool AssemblyParse_x86::push_0_pattern_p ()
+bool 
+AssemblyParse_x86::push_0_pattern_p ()
 {
     uint8_t *p = m_cur_insn_bytes;
     if (*p == 0x6a && *(p + 1) == 0x0)
@@ -338,7 +340,8 @@ bool AssemblyParse_x86::push_0_pattern_p ()
 
 // pushq $0
 // pushl $0
-bool AssemblyParse_x86::push_imm_pattern_p ()
+bool 
+AssemblyParse_x86::push_imm_pattern_p ()
 {
     uint8_t *p = m_cur_insn_bytes;
     if (*p == 0x68 || *p == 0x6a)
@@ -348,7 +351,8 @@ bool AssemblyParse_x86::push_imm_pattern_p ()
 
 // movq %rsp, %rbp [0x48 0x8b 0xec] or [0x48 0x89 0xe5]
 // movl %esp, %ebp [0x8b 0xec] or [0x89 0xe5]
-bool AssemblyParse_x86::mov_rsp_rbp_pattern_p ()
+bool 
+AssemblyParse_x86::mov_rsp_rbp_pattern_p ()
 {
     uint8_t *p = m_cur_insn_bytes;
     if (m_wordsize == 8 && *p == 0x48)
@@ -361,7 +365,8 @@ bool AssemblyParse_x86::mov_rsp_rbp_pattern_p ()
 }
 
 // subq $0x20, %rsp
-bool AssemblyParse_x86::sub_rsp_pattern_p (int& amount)
+bool 
+AssemblyParse_x86::sub_rsp_pattern_p (int& amount)
 {
     uint8_t *p = m_cur_insn_bytes;
     if (m_wordsize == 8 && *p == 0x48)
@@ -382,7 +387,8 @@ bool AssemblyParse_x86::sub_rsp_pattern_p (int& amount)
 }
 
 // addq $0x20, %rsp
-bool AssemblyParse_x86::add_rsp_pattern_p (int& amount)
+bool 
+AssemblyParse_x86::add_rsp_pattern_p (int& amount)
 {
     uint8_t *p = m_cur_insn_bytes;
     if (m_wordsize == 8 && *p == 0x48)
@@ -404,7 +410,8 @@ bool AssemblyParse_x86::add_rsp_pattern_p (int& amount)
 
 // pushq %rbx
 // pushl %ebx
-bool AssemblyParse_x86::push_reg_p (int& regno)
+bool 
+AssemblyParse_x86::push_reg_p (int& regno)
 {
     uint8_t *p = m_cur_insn_bytes;
     int regno_prefix_bit = 0;
@@ -424,7 +431,8 @@ bool AssemblyParse_x86::push_reg_p (int& regno)
 
 // popq %rbx
 // popl %ebx
-bool AssemblyParse_x86::pop_reg_p (int& regno)
+bool 
+AssemblyParse_x86::pop_reg_p (int& regno)
 {
     uint8_t *p = m_cur_insn_bytes;
     int regno_prefix_bit = 0;
@@ -444,14 +452,16 @@ bool AssemblyParse_x86::pop_reg_p (int& regno)
 
 // popq %rbp [0x5d]
 // popl %ebp [0x5d]
-bool AssemblyParse_x86::pop_rbp_pattern_p ()
+bool 
+AssemblyParse_x86::pop_rbp_pattern_p ()
 {
     uint8_t *p = m_cur_insn_bytes;
     return (*p == 0x5d);
 }
 
 // call $0 [0xe8 0x0 0x0 0x0 0x0]
-bool AssemblyParse_x86::call_next_insn_pattern_p ()
+bool 
+AssemblyParse_x86::call_next_insn_pattern_p ()
 {
     uint8_t *p = m_cur_insn_bytes;
     return (*p == 0xe8) && (*(p+1) == 0x0) && (*(p+2) == 0x0)
@@ -469,7 +479,8 @@ bool AssemblyParse_x86::call_next_insn_pattern_p ()
 // the actual location.  The positive value returned for the offset
 // is a convention used elsewhere for CFA offsets et al.
 
-bool AssemblyParse_x86::mov_reg_to_local_stack_frame_p (int& regno, int& rbp_offset)
+bool 
+AssemblyParse_x86::mov_reg_to_local_stack_frame_p (int& regno, int& rbp_offset)
 {
     uint8_t *p = m_cur_insn_bytes;
     int src_reg_prefix_bit = 0;
@@ -603,7 +614,6 @@ bool
 AssemblyParse_x86::get_non_call_site_unwind_plan (UnwindPlan &unwind_plan)
 {
     UnwindPlan::RowSP row(new UnwindPlan::Row);
-    int non_prologue_insn_count = 0;
     m_cur_insn = m_func_bounds.GetBaseAddress ();
     int current_func_text_offset = 0;
     int current_sp_bytes_offset_from_cfa = 0;
@@ -647,18 +657,29 @@ AssemblyParse_x86::get_non_call_site_unwind_plan (UnwindPlan &unwind_plan)
 
     const bool prefer_file_cache = true;
 
+    // Once the prologue has completed we'll save a copy of the unwind instructions
+    // If there is an epilogue in the middle of the function, after that epilogue we'll reinstate
+    // the unwind setup -- we assume that some code path jumps over the mid-function epilogue
+
+    bool in_epilogue = false;                          // we're in the middle of an epilogue sequence
+    UnwindPlan::RowSP prologue_completed_row;          // copy of prologue row of CFI
+    int prologue_completed_sp_bytes_offset_from_cfa;   // The sp value before the epilogue started executed
+
     Target *target = m_exe_ctx.GetTargetPtr();
-    while (m_func_bounds.ContainsFileAddress (m_cur_insn) && non_prologue_insn_count < 10)
+    while (m_func_bounds.ContainsFileAddress (m_cur_insn))
     {
         int stack_offset, insn_len;
         int machine_regno;          // register numbers masked directly out of instructions
         uint32_t lldb_regno;        // register numbers in lldb's eRegisterKindLLDB numbering scheme
+
+        bool row_updated = false;
 
         if (!instruction_length (m_cur_insn, insn_len) || insn_len == 0 || insn_len > kMaxInstructionByteSize)
         {
             // An unrecognized/junk instruction
             break;
         }
+
         if (target->ReadMemory (m_cur_insn, prefer_file_cache, m_cur_insn_bytes,
                                 insn_len, error) == static_cast<size_t>(-1))
         {
@@ -668,124 +689,133 @@ AssemblyParse_x86::get_non_call_site_unwind_plan (UnwindPlan &unwind_plan)
 
         if (push_rbp_pattern_p ())
         {
-            row->SetOffset (current_func_text_offset + insn_len);
             current_sp_bytes_offset_from_cfa += m_wordsize;
             row->SetCFAOffset (current_sp_bytes_offset_from_cfa);
             UnwindPlan::Row::RegisterLocation regloc;
             regloc.SetAtCFAPlusOffset (-row->GetCFAOffset());
             row->SetRegisterInfo (m_lldb_fp_regnum, regloc);
-            unwind_plan.AppendRow (row);
-            // Allocate a new Row, populate it with the existing Row contents.
-            newrow = new UnwindPlan::Row;
-            *newrow = *row.get();
-            row.reset(newrow);
-            goto loopnext;
+            saved_registers[m_machine_fp_regnum] = true;
+            row_updated = true;
         }
 
-        if (mov_rsp_rbp_pattern_p ())
+        else if (mov_rsp_rbp_pattern_p ())
         {
-            row->SetOffset (current_func_text_offset + insn_len);
             row->SetCFARegister (m_lldb_fp_regnum);
-            unwind_plan.AppendRow (row);
-            // Allocate a new Row, populate it with the existing Row contents.
-            newrow = new UnwindPlan::Row;
-            *newrow = *row.get();
-            row.reset(newrow);
-            goto loopnext;
+            row_updated = true;
         }
 
         // This is the start() function (or a pthread equivalent), it starts with a pushl $0x0 which puts the
         // saved pc value of 0 on the stack.  In this case we want to pretend we didn't see a stack movement at all --
         // normally the saved pc value is already on the stack by the time the function starts executing.
-        if (push_0_pattern_p ())
+        else if (push_0_pattern_p ())
         {
-            goto loopnext;
         }
 
-        if (push_reg_p (machine_regno))
+        else if (push_reg_p (machine_regno))
         {
             current_sp_bytes_offset_from_cfa += m_wordsize;
-            bool need_to_push_row = false;
             // the PUSH instruction has moved the stack pointer - if the CFA is set in terms of the stack pointer,
             // we need to add a new row of instructions.
             if (row->GetCFARegister() == m_lldb_sp_regnum)
             {
-                need_to_push_row = true;
                 row->SetCFAOffset (current_sp_bytes_offset_from_cfa);
+                row_updated = true;
             }
             // record where non-volatile (callee-saved, spilled) registers are saved on the stack
             if (nonvolatile_reg_p (machine_regno) 
                 && machine_regno_to_lldb_regno (machine_regno, lldb_regno)
                 && saved_registers[machine_regno] == false)
             {
-                need_to_push_row = true;
                 UnwindPlan::Row::RegisterLocation regloc;
                 regloc.SetAtCFAPlusOffset (-current_sp_bytes_offset_from_cfa);
                 row->SetRegisterInfo (lldb_regno, regloc);
                 saved_registers[machine_regno] = true;
+                row_updated = true;
             }
-            if (need_to_push_row)
-            {
-                row->SetOffset (current_func_text_offset + insn_len);
-                unwind_plan.AppendRow (row);
-                // Allocate a new Row, populate it with the existing Row contents.
-                newrow = new UnwindPlan::Row;
-                *newrow = *row.get();
-                row.reset(newrow);
-            }
-            goto loopnext;
         }
 
-        if (mov_reg_to_local_stack_frame_p (machine_regno, stack_offset) && nonvolatile_reg_p (machine_regno))
+        else if (pop_reg_p (machine_regno))
         {
-            if (machine_regno_to_lldb_regno (machine_regno, lldb_regno) && saved_registers[machine_regno] == false)
+            current_sp_bytes_offset_from_cfa -= m_wordsize;
+
+            if (nonvolatile_reg_p (machine_regno) 
+                && machine_regno_to_lldb_regno (machine_regno, lldb_regno)
+                && saved_registers[machine_regno] == true)
             {
-                saved_registers[machine_regno] = true;
+                saved_registers[machine_regno] = false;
+                row->RemoveRegisterInfo (lldb_regno);
 
-                row->SetOffset (current_func_text_offset + insn_len);
-                UnwindPlan::Row::RegisterLocation regloc;
+                if (machine_regno == m_machine_fp_regnum)
+                {
+                    row->SetCFARegister (m_lldb_sp_regnum);
+                }
 
-                // stack_offset for 'movq %r15, -80(%rbp)' will be 80.
-                // In the Row, we want to express this as the offset from the CFA.  If the frame base
-                // is rbp (like the above instruction), the CFA offset for rbp is probably 16.  So we
-                // want to say that the value is stored at the CFA address - 96.
-                regloc.SetAtCFAPlusOffset (-(stack_offset + row->GetCFAOffset()));
+                in_epilogue = true;
+                row_updated = true;
+            }
 
-                row->SetRegisterInfo (lldb_regno, regloc);
-                unwind_plan.AppendRow (row);
-                // Allocate a new Row, populate it with the existing Row contents.
-                newrow = new UnwindPlan::Row;
-                *newrow = *row.get();
-                row.reset(newrow);
-                goto loopnext;
+            // the POP instruction has moved the stack pointer - if the CFA is set in terms of the stack pointer,
+            // we need to add a new row of instructions.
+            if (row->GetCFARegister() == m_lldb_sp_regnum)
+            {
+                row->SetCFAOffset (current_sp_bytes_offset_from_cfa);
+                row_updated = true;
             }
         }
 
-        if (sub_rsp_pattern_p (stack_offset))
+        else if (mov_reg_to_local_stack_frame_p (machine_regno, stack_offset) 
+                 && nonvolatile_reg_p (machine_regno)
+                 && machine_regno_to_lldb_regno (machine_regno, lldb_regno) 
+                 && saved_registers[machine_regno] == false)
+        {
+            saved_registers[machine_regno] = true;
+
+            UnwindPlan::Row::RegisterLocation regloc;
+
+            // stack_offset for 'movq %r15, -80(%rbp)' will be 80.
+            // In the Row, we want to express this as the offset from the CFA.  If the frame base
+            // is rbp (like the above instruction), the CFA offset for rbp is probably 16.  So we
+            // want to say that the value is stored at the CFA address - 96.
+            regloc.SetAtCFAPlusOffset (-(stack_offset + row->GetCFAOffset()));
+
+            row->SetRegisterInfo (lldb_regno, regloc);
+
+            row_updated = true;
+        }
+
+        else if (sub_rsp_pattern_p (stack_offset))
         {
             current_sp_bytes_offset_from_cfa += stack_offset;
             if (row->GetCFARegister() == m_lldb_sp_regnum)
             {
-                row->SetOffset (current_func_text_offset + insn_len);
                 row->SetCFAOffset (current_sp_bytes_offset_from_cfa);
-                unwind_plan.AppendRow (row);
-                // Allocate a new Row, populate it with the existing Row contents.
-                newrow = new UnwindPlan::Row;
-                *newrow = *row.get();
-                row.reset(newrow);
+                row_updated = true;
             }
-            goto loopnext;
         }
 
-        if (ret_pattern_p ())
+        else if (add_rsp_pattern_p (stack_offset))
         {
-            // we know where the end of the function is; set the limit on the PlanValidAddressRange
-            // in case our initial "high pc" value was overly large
-            // int original_size = m_func_bounds.GetByteSize();
-            // int calculated_size = m_cur_insn.GetOffset() - m_func_bounds.GetBaseAddress().GetOffset() + insn_len + 1;
-            // m_func_bounds.SetByteSize (calculated_size);
-            // unwind_plan.SetPlanValidAddressRange (m_func_bounds);
-            break;
+            current_sp_bytes_offset_from_cfa -= stack_offset;
+            if (row->GetCFARegister() == m_lldb_sp_regnum)
+            {
+                row->SetCFAOffset (current_sp_bytes_offset_from_cfa);
+                row_updated = true;
+            }
+            in_epilogue = true;
+        }
+
+        else if (ret_pattern_p () && prologue_completed_row.get())
+        {
+            // Reinstate the saved prologue setup for any instructions
+            // that come after the ret instruction
+
+            UnwindPlan::Row *newrow = new UnwindPlan::Row;
+            *newrow = *prologue_completed_row.get();
+            row.reset (newrow);
+            current_sp_bytes_offset_from_cfa = prologue_completed_sp_bytes_offset_from_cfa;
+
+            in_epilogue = true;
+            row_updated = true;
         }
 
         // FIXME recognize the i386 picbase setup instruction sequence,
@@ -793,107 +823,36 @@ AssemblyParse_x86::get_non_call_site_unwind_plan (UnwindPlan &unwind_plan)
         // 0x1f1b:  popl   %eax
         // and record the temporary stack movements if the CFA is not expressed in terms of ebp.
 
-        non_prologue_insn_count++;
-loopnext:
+        if (row_updated)
+        {
+            if (current_func_text_offset + insn_len < m_func_bounds.GetByteSize())
+            {
+                row->SetOffset (current_func_text_offset + insn_len);
+                unwind_plan.AppendRow (row);
+                // Allocate a new Row, populate it with the existing Row contents.
+                newrow = new UnwindPlan::Row;
+                *newrow = *row.get();
+                row.reset(newrow);
+            }
+        }
+
+        if (in_epilogue == false && row_updated)
+        {
+            // If we're not in an epilogue sequence, save the updated Row
+            UnwindPlan::Row *newrow = new UnwindPlan::Row;
+            *newrow = *row.get();
+            prologue_completed_row.reset (newrow);
+        }
+
+        // We may change the sp value without adding a new Row necessarily -- keep
+        // track of it either way.
+        if (in_epilogue == false)
+        {
+            prologue_completed_sp_bytes_offset_from_cfa = current_sp_bytes_offset_from_cfa;
+        }
+
         m_cur_insn.SetOffset (m_cur_insn.GetOffset() + insn_len);
         current_func_text_offset += insn_len;
-    }
-
-    // Now look at the byte at the end of the AddressRange for a limited attempt at describing the
-    // epilogue.  We're looking for the sequence
-
-    //  [ 0x5d ] mov %rbp, %rsp  (aka pop %rbp)
-    //  [ 0xc3 ] ret
-
-    // or
-
-    //  [ 0x5d ] mov %rbp, %rsp  (aka pop %rbp)
-    //  [ 0xe9 xx xx xx xx ] jmp objc_retainAutoreleaseReturnValue  (this is sometimes the final insn in the function)
-
-    // or
-
-    //  [ 0x5d ] mov %rbp, %rsp  (aka pop %rbp)
-    //  [ 0xc3 ] ret
-    //  [ 0xe8 xx xx xx xx ] call __stack_chk_fail  (this is sometimes the final insn in the function)
-
-    // or
-
-    //  [ 0x5d ] mov %rbp, %rsp  (aka pop %rbp)
-    //  [ 0xc3 ] ret
-    //  [ 0x0f 0x1f 0x44 xx xx ] nopl (%rax,%rax)   (aka nop)
-
-    // We want to add a Row describing how to unwind when we're stopped on the 'ret' instruction where the
-    // CFA is no longer defined in terms of rbp, but is now defined in terms of rsp like on function entry.
-    // (or the 'jmp' instruction in the second case)
-
-    uint64_t ret_insn_offset = LLDB_INVALID_ADDRESS;
-    Address end_of_fun(m_func_bounds.GetBaseAddress());
-    end_of_fun.SetOffset (end_of_fun.GetOffset() + m_func_bounds.GetByteSize());
-
-    if (m_func_bounds.GetByteSize() > 7)
-    {
-        uint8_t bytebuf[7];
-        Address last_seven_bytes(end_of_fun);
-        last_seven_bytes.SetOffset (last_seven_bytes.GetOffset() - 7);
-        if (target->ReadMemory (last_seven_bytes, prefer_file_cache, bytebuf, 7,
-                                error) != static_cast<size_t>(-1))
-        {
-            if (bytebuf[5] == 0x5d && bytebuf[6] == 0xc3)  // mov & ret
-            {
-                ret_insn_offset = m_func_bounds.GetByteSize() - 1;
-            }
-            else if (bytebuf[1] == 0x5d && bytebuf[2] == 0xe9)  // mov & jmp
-            {
-                // When the pc is sitting on the 'jmp' instruction, we have the same
-                // unwind state as if it was sitting on a 'ret' instruction.
-                ret_insn_offset = m_func_bounds.GetByteSize() - 5;
-            }
-            else if (bytebuf[0] == 0x5d && bytebuf[1] == 0xc3 && bytebuf[2] == 0xe8) // mov & ret & call
-            {
-                ret_insn_offset = m_func_bounds.GetByteSize() - 6;
-            }
-            else if (bytebuf[0] == 0x5d && bytebuf[1] == 0xc3
-                     && bytebuf[2] == 0x0f && bytebuf[3] == 0x1f && bytebuf[4] == 0x44) // mov & ret & nop
-            {
-                ret_insn_offset = m_func_bounds.GetByteSize() - 6;
-            }
-        }
-    }
-    else if (m_func_bounds.GetByteSize() > 2)
-    {
-        uint8_t bytebuf[2];
-        Address last_two_bytes(end_of_fun);
-        last_two_bytes.SetOffset (last_two_bytes.GetOffset() - 2);
-        if (target->ReadMemory (last_two_bytes, prefer_file_cache, bytebuf, 2,
-                                error) != static_cast<size_t>(-1))
-        {
-            if (bytebuf[0] == 0x5d && bytebuf[1] == 0xc3) // mov & ret
-            {
-                ret_insn_offset = m_func_bounds.GetByteSize() - 1;
-            }
-        }
-    }
-
-    if (ret_insn_offset != LLDB_INVALID_ADDRESS)
-    {
-        // Create a fresh, empty Row and RegisterLocation - don't mention any other registers
-        UnwindPlan::RowSP epi_row(new UnwindPlan::Row);
-        UnwindPlan::Row::RegisterLocation epi_regloc;
-
-        // When the ret instruction is about to be executed, here's our state
-        epi_row->SetOffset (ret_insn_offset);
-        epi_row->SetCFARegister (m_lldb_sp_regnum);
-        epi_row->SetCFAOffset (m_wordsize);
-
-        // caller's stack pointer value before the call insn is the CFA address
-        epi_regloc.SetIsCFAPlusOffset (0);
-        epi_row->SetRegisterInfo (m_lldb_sp_regnum, epi_regloc);
-
-        // saved instruction pointer can be found at CFA - wordsize
-        epi_regloc.SetAtCFAPlusOffset (-m_wordsize);
-        epi_row->SetRegisterInfo (m_lldb_ip_regnum, epi_regloc);
-
-        unwind_plan.AppendRow (epi_row);
     }
 
     unwind_plan.SetSourceName ("assembly insn profiling");

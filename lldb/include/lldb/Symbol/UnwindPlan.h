@@ -257,7 +257,10 @@ public:
     
         void
         SetRegisterInfo (uint32_t reg_num, const RegisterLocation register_location);
-    
+
+        void
+        RemoveRegisterInfo (uint32_t reg_num);
+
         lldb::addr_t
         GetOffset() const
         {

@@ -84,10 +84,11 @@ public:
     Address
     GetPersonalityRoutinePtrAddress (Target &target);
 
-private:
 
-    lldb::UnwindAssemblySP
-    GetUnwindAssemblyProfiler ();
+
+    // The following methods to retrieve specific unwind plans should rarely be used.
+    // Instead, clients should ask for the *behavior* they are looking for, using one
+    // of the above UnwindPlan retrieval methods.
 
     lldb::UnwindPlanSP
     GetAssemblyUnwindPlan (Target &target, Thread &thread, int current_offset);
@@ -102,13 +103,15 @@ private:
     GetCompactUnwindUnwindPlan (Target &target, int current_offset);
 
     lldb::UnwindPlanSP
-    GetFastUnwindPlan (Target &target, int current_offset);
+    GetArchDefaultUnwindPlan (Thread &thread);
 
     lldb::UnwindPlanSP
-    GetArchDefaultUnwindPlan (Target &target, int current_offset);
+    GetArchDefaultAtFuncEntryUnwindPlan (Thread &thread);
 
-    lldb::UnwindPlanSP
-    GetArchDefaultAtFuncEntryUnwindPlan (Target &target, int current_offset);
+private:
+
+    lldb::UnwindAssemblySP
+    GetUnwindAssemblyProfiler ();
 
     UnwindTable& m_unwind_table;
     AddressRange m_range;
