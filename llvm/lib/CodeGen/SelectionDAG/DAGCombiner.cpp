@@ -738,10 +738,9 @@ SDValue DAGCombiner::ReassociateOps(unsigned Opc, SDLoc DL,
     if (SDNode *L = isConstantBuildVectorOrConstantInt(N0.getOperand(1))) {
       if (SDNode *R = isConstantBuildVectorOrConstantInt(N1)) {
         // reassoc. (op (op x, c1), c2) -> (op x, (op c1, c2))
-        SDValue OpNode = DAG.FoldConstantArithmetic(Opc, VT, L, R);
-        if (!OpNode.getNode())
-          return SDValue();
-        return DAG.getNode(Opc, DL, VT, N0.getOperand(0), OpNode);
+        if (SDValue OpNode = DAG.FoldConstantArithmetic(Opc, VT, L, R))
+          return DAG.getNode(Opc, DL, VT, N0.getOperand(0), OpNode);
+        return SDValue();
       }
       if (N0.hasOneUse()) {
         // reassoc. (op (op x, c1), y) -> (op (op x, y), c1) iff x+c1 has one
@@ -759,10 +758,9 @@ SDValue DAGCombiner::ReassociateOps(unsigned Opc, SDLoc DL,
     if (SDNode *R = isConstantBuildVectorOrConstantInt(N1.getOperand(1))) {
       if (SDNode *L = isConstantBuildVectorOrConstantInt(N0)) {
         // reassoc. (op c2, (op x, c1)) -> (op x, (op c1, c2))
-        SDValue OpNode = DAG.FoldConstantArithmetic(Opc, VT, R, L);
-        if (!OpNode.getNode())
-          return SDValue();
-        return DAG.getNode(Opc, DL, VT, N1.getOperand(0), OpNode);
+        if (SDValue OpNode = DAG.FoldConstantArithmetic(Opc, VT, R, L))
+          return DAG.getNode(Opc, DL, VT, N1.getOperand(0), OpNode);
+        return SDValue();
       }
       if (N1.hasOneUse()) {
         // reassoc. (op y, (op x, c1)) -> (op (op x, y), c1) iff x+c1 has one
@@ -3449,12 +3447,11 @@ SDValue DAGCombiner::visitOR(SDNode *N) {
              isa<ConstantSDNode>(N0.getOperand(1))) {
     ConstantSDNode *C1 = cast<ConstantSDNode>(N0.getOperand(1));
     if ((C1->getAPIntValue() & N1C->getAPIntValue()) != 0) {
-      SDValue COR = DAG.FoldConstantArithmetic(ISD::OR, VT, N1C, C1);
-      if (!COR.getNode())
-        return SDValue();
-      return DAG.getNode(ISD::AND, SDLoc(N), VT,
-                         DAG.getNode(ISD::OR, SDLoc(N0), VT,
-                                     N0.getOperand(0), N1), COR);
+      if (SDValue COR = DAG.FoldConstantArithmetic(ISD::OR, VT, N1C, C1))
+        return DAG.getNode(
+            ISD::AND, SDLoc(N), VT,
+            DAG.getNode(ISD::OR, SDLoc(N0), VT, N0.getOperand(0), N1), COR);
+      return SDValue();
     }
   }
   // fold (or (setcc x), (setcc y)) -> (setcc (or x, y))
@@ -4070,8 +4067,7 @@ SDValue DAGCombiner::visitSHL(SDNode *N) {
         if (N01CV && N01CV->isConstant() && N00.getOpcode() == ISD::SETCC &&
             TLI.getBooleanContents(N00.getOperand(0).getValueType()) ==
                 TargetLowering::ZeroOrNegativeOneBooleanContent) {
-          SDValue C = DAG.FoldConstantArithmetic(ISD::SHL, VT, N01CV, N1CV);
-          if (C.getNode())
+          if (SDValue C = DAG.FoldConstantArithmetic(ISD::SHL, VT, N01CV, N1CV))
             return DAG.getNode(ISD::AND, SDLoc(N), VT, N00, C);
         }
       } else {
