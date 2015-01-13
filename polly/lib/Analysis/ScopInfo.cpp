@@ -1469,6 +1469,8 @@ static unsigned getMaxLoopDepthInRegion(const Region &R, LoopInfo &LI) {
   unsigned MinLD = INT_MAX, MaxLD = 0;
   for (BasicBlock *BB : R.blocks()) {
     if (Loop *L = LI.getLoopFor(BB)) {
+      if (!R.contains(L))
+        continue;
       unsigned LD = L->getLoopDepth();
       MinLD = std::min(MinLD, LD);
       MaxLD = std::max(MaxLD, LD);
@@ -1672,6 +1674,7 @@ void Scop::print(raw_ostream &OS) const {
   OS.indent(4) << "Function: " << getRegion().getEntry()->getParent()->getName()
                << "\n";
   OS.indent(4) << "Region: " << getNameStr() << "\n";
+  OS.indent(4) << "Max Loop Depth:  " << getMaxLoopDepth() << "\n";
   printContext(OS.indent(4));
   printAliasAssumptions(OS);
   printStatements(OS.indent(4));
