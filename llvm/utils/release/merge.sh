@@ -66,9 +66,11 @@ svn log -c $rev http://llvm.org/svn/llvm-project/$proj/trunk >> $tempfile 2>&1
 cd $proj.src
 echo "# Updating tree"
 svn up
-echo "# Merging r$rev into $proj"
+echo "# Merging r$rev into $proj locally"
 svn merge -c $rev https://llvm.org/svn/llvm-project/$proj/trunk . || exit 1
-echo "# Committing changes"
-svn commit -F $tempfile || exit 1
-rm -f $tempfile
+
+echo
+echo "# To commit the merge, run the following in $proj.src/:"
+echo svn commit -F $tempfile
+
 exit 0
