@@ -3,19 +3,17 @@
 
 namespace PR5557 {
 template <class T> struct A {
-  A();
-  virtual void anchor();
+  A(); // expected-note{{instantiation}}
   virtual int a(T x);
 };
 template<class T> A<T>::A() {}
-template<class T> void A<T>::anchor() { }
 
 template<class T> int A<T>::a(T x) { 
   return *x; // expected-error{{requires pointer operand}}
 }
 
-void f(A<int> x) {
-  x.anchor(); // expected-note{{instantiation}}
+void f() {
+  A<int> x; // expected-note{{instantiation}}
 }
 
 template<typename T>
