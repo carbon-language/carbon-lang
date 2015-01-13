@@ -3141,9 +3141,10 @@ static void handleNoDebugAttr(Sema &S, Decl *D, const AttributeList &Attr) {
 }
 
 AlwaysInlineAttr *Sema::mergeAlwaysInlineAttr(Decl *D, SourceRange Range,
+                                              IdentifierInfo *Ident,
                                               unsigned AttrSpellingListIndex) {
   if (OptimizeNoneAttr *Optnone = D->getAttr<OptimizeNoneAttr>()) {
-    Diag(Range.getBegin(), diag::warn_attribute_ignored) << "'always_inline'";
+    Diag(Range.getBegin(), diag::warn_attribute_ignored) << Ident;
     Diag(Optnone->getLocation(), diag::note_conflicting_attribute);
     return nullptr;
   }
@@ -3191,34 +3192,23 @@ OptimizeNoneAttr *Sema::mergeOptimizeNoneAttr(Decl *D, SourceRange Range,
 
 static void handleAlwaysInlineAttr(Sema &S, Decl *D,
                                    const AttributeList &Attr) {
-  if (checkAttrMutualExclusion<OptimizeNoneAttr>(S, D, Attr))
-    return;
-
-  D->addAttr(::new (S.Context)
-             AlwaysInlineAttr(Attr.getRange(), S.Context,
-                              Attr.getAttributeSpellingListIndex()));
+  if (AlwaysInlineAttr *Inline = S.mergeAlwaysInlineAttr(
+          D, Attr.getRange(), Attr.getName(),
+          Attr.getAttributeSpellingListIndex()))
+    D->addAttr(Inline);
 }
 
-static void handleMinSizeAttr(Sema &S, Decl *D,
-                              const AttributeList &Attr) {
-  if (checkAttrMutualExclusion<OptimizeNoneAttr>(S, D, Attr))
-    return;
-
-  D->addAttr(::new (S.Context)
-             MinSizeAttr(Attr.getRange(), S.Context,
-                         Attr.getAttributeSpellingListIndex()));
+static void handleMinSizeAttr(Sema &S, Decl *D, const AttributeList &Attr) {
+  if (MinSizeAttr *MinSize = S.mergeMinSizeAttr(
+          D, Attr.getRange(), Attr.getAttributeSpellingListIndex()))
+    D->addAttr(MinSize);
 }
 
 static void handleOptimizeNoneAttr(Sema &S, Decl *D,
                                    const AttributeList &Attr) {
-  if (checkAttrMutualExclusion<AlwaysInlineAttr>(S, D, Attr))
-    return;
-  if (checkAttrMutualExclusion<MinSizeAttr>(S, D, Attr))
-    return;
-
-  D->addAttr(::new (S.Context)
-             OptimizeNoneAttr(Attr.getRange(), S.Context,
-                              Attr.getAttributeSpellingListIndex()));
+  if (OptimizeNoneAttr *Optnone = S.mergeOptimizeNoneAttr(
+          D, Attr.getRange(), Attr.getAttributeSpellingListIndex()))
+    D->addAttr(Optnone);
 }
 
 static void handleGlobalAttr(Sema &S, Decl *D, const AttributeList &Attr) {

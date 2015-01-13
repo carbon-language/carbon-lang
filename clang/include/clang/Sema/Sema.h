@@ -2009,6 +2009,7 @@ public:
   SectionAttr *mergeSectionAttr(Decl *D, SourceRange Range, StringRef Name,
                                 unsigned AttrSpellingListIndex);
   AlwaysInlineAttr *mergeAlwaysInlineAttr(Decl *D, SourceRange Range,
+                                          IdentifierInfo *Ident,
                                           unsigned AttrSpellingListIndex);
   MinSizeAttr *mergeMinSizeAttr(Decl *D, SourceRange Range,
                                 unsigned AttrSpellingListIndex);

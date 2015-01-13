@@ -3,8 +3,8 @@
 int foo() __attribute__((optnone));
 int bar() __attribute__((optnone)) __attribute__((noinline));
 
-int baz() __attribute__((always_inline)) __attribute__((optnone)); // expected-error{{'always_inline' and 'optnone' attributes are not compatible}}
-int quz() __attribute__((optnone)) __attribute__((always_inline)); // expected-error{{'optnone' and 'always_inline' attributes are not compatible}}
+int baz() __attribute__((always_inline)) __attribute__((optnone)); // expected-warning{{'always_inline' attribute ignored}} expected-note{{conflicting attribute is here}}
+int quz() __attribute__((optnone)) __attribute__((always_inline)); // expected-warning{{'always_inline' attribute ignored}} expected-note{{conflicting attribute is here}}
 
 __attribute__((always_inline)) int baz1(); // expected-warning{{'always_inline' attribute ignored}}
 __attribute__((optnone)) int baz1() { return 1; } // expected-note{{conflicting attribute is here}}
@@ -12,8 +12,8 @@ __attribute__((optnone)) int baz1() { return 1; } // expected-note{{conflicting 
 __attribute__((optnone)) int quz1(); // expected-note{{conflicting attribute is here}}
 __attribute__((always_inline)) int quz1() { return 1; } // expected-warning{{'always_inline' attribute ignored}}
 
-int bay() __attribute__((minsize)) __attribute__((optnone)); // expected-error{{'minsize' and 'optnone' attributes are not compatible}}
-int quy() __attribute__((optnone)) __attribute__((minsize)); // expected-error{{'optnone' and 'minsize' attributes are not compatible}}
+int bay() __attribute__((minsize)) __attribute__((optnone)); // expected-warning{{'minsize' attribute ignored}} expected-note{{conflicting}}
+int quy() __attribute__((optnone)) __attribute__((minsize)); // expected-warning{{'minsize' attribute ignored}} expected-note{{conflicting}}
 
 __attribute__((minsize)) int bay1(); // expected-warning{{'minsize' attribute ignored}}
 __attribute__((optnone)) int bay1() { return 1; } // expected-note{{conflicting attribute is here}}
@@ -27,8 +27,13 @@ void bay2();
 __attribute__((optnone)) // expected-note 2 {{conflicting}}
 void bay2() {}
 
-__forceinline __attribute__((optnone)) int bax(); // expected-error{{'__forceinline' and 'optnone' attributes are not compatible}}
-__attribute__((optnone)) __forceinline int qux(); // expected-error{{'optnone' and '__forceinline' attributes are not compatible}}
+__forceinline __attribute__((optnone)) int bax(); // expected-warning{{'__forceinline' attribute ignored}} expected-note{{conflicting}}
+__attribute__((optnone)) __forceinline int qux(); // expected-warning{{'__forceinline' attribute ignored}} expected-note{{conflicting}}
+
+__forceinline int bax2(); // expected-warning{{'__forceinline' attribute ignored}}
+__attribute__((optnone)) int bax2() { return 1; } // expected-note{{conflicting}}
+__attribute__((optnone)) int qux2(); // expected-note{{conflicting}}
+__forceinline int qux2() { return 1; } // expected-warning{{'__forceinline' attribute ignored}}
 
 int globalVar __attribute__((optnone)); // expected-warning{{'optnone' attribute only applies to functions}}
 
@@ -50,8 +55,8 @@ int foo2();
 [[clang::optnone]]
 int bar2() __attribute__((noinline));
 
-[[clang::optnone]]
-int baz2() __attribute__((always_inline)); // expected-error{{'always_inline' and 'optnone' attributes are not compatible}}
+[[clang::optnone]] // expected-note {{conflicting}}
+int baz2() __attribute__((always_inline)); // expected-warning{{'always_inline' attribute ignored}}
 
 [[clang::optnone]] int globalVar2; //expected-warning{{'optnone' attribute only applies to functions}}
 
