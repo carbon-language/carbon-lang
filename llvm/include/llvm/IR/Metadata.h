@@ -857,7 +857,9 @@ public:
   unsigned getColumn() const { return SubclassData16; }
   Metadata *getScope() const { return getOperand(0); }
   Metadata *getInlinedAt() const {
-    return getNumOperands() == 2 ? getOperand(1) : nullptr;
+    if (getNumOperands() == 2)
+      return getOperand(1);
+    return nullptr;
   }
 
   static bool classof(const Metadata *MD) {
