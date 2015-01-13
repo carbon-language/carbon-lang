@@ -83,7 +83,3 @@ __private_extern__ int g19;
 int g19 = 0;
 
 __private_extern__ int g20 = 0;
-
-void f10(int g20) { // expected-note{{previous definition is here}}
-  extern int g20; // expected-error{{extern declaration of 'g20' follows non-extern declaration}}
-}
