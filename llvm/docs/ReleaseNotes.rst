@@ -203,6 +203,32 @@ There are numerous improvements to the PowerPC target in this release:
 
 * There have been many smaller bug fixes and performance improvements.
 
+Changes to the OCaml bindings
+-----------------------------
+
+* The bindings now require OCaml >=4.00.0, ocamlfind,
+  ctypes >=0.3.0 <0.4 and OUnit 2 if tests are enabled.
+
+* The bindings can now be built using cmake as well as autoconf.
+
+* LLVM 3.5 has, unfortunately, shipped a broken Llvm_executionengine
+  implementation. In LLVM 3.6, the bindings now fully support MCJIT,
+  however the interface is reworked from scratch using ctypes
+  and is not backwards compatible.
+
+* Llvm_linker.Mode was removed following the changes in LLVM.
+  This breaks the interface of Llvm_linker.
+
+* All combinations of ocamlc/ocamlc -custom/ocamlopt and shared/static
+  builds of LLVM are now supported.
+
+* Absolute paths are not embedded into the OCaml libraries anymore.
+  Either OCaml >=4.02.2 must be used, which includes an rpath-like $ORIGIN
+  mechanism, or META file must be updated for out-of-tree installations;
+  see r221139.
+
+* As usual, many more functions have been exposed to OCaml.
+
 External Open Source Projects Using LLVM 3.6
 ============================================
 
