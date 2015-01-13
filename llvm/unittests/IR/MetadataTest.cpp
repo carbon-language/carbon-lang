@@ -370,7 +370,7 @@ TEST_F(MDNodeTest, replaceResolvedOperand) {
   std::unique_ptr<MDNodeFwdDecl> Temp(MDNodeFwdDecl::get(Context, None));
   Metadata *Ops[] = {nullptr, Temp.get()};
 
-  MDNode *Empty = MDTuple::get(Context, {});
+  MDNode *Empty = MDTuple::get(Context, ArrayRef<Metadata *>());
   MDNode *N = MDTuple::get(Context, Ops);
   EXPECT_EQ(nullptr, N->getOperand(0));
   ASSERT_FALSE(N->isResolved());
