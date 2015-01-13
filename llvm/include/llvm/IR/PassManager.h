@@ -236,24 +236,19 @@ public:
   }
 
   template <typename PassT> void addPass(PassT Pass) {
-    Passes.emplace_back(new PassModel<PassT>(std::move(Pass)));
+    typedef detail::PassModel<IRUnitT, PassT> PassModelT;
+    Passes.emplace_back(new PassModelT(std::move(Pass)));
   }
 
   static StringRef name() { return "PassManager"; }
 
 private:
-  // Pull in the concept type and model template specialized for modules.
-  typedef detail::PassConcept<IRUnitT> PassConcept;
-  template <typename PassT>
-  struct PassModel : detail::PassModel<IRUnitT, PassT> {
-    PassModel(PassT Pass)
-        : detail::PassModel<IRUnitT, PassT>(std::move(Pass)) {}
-  };
+  typedef detail::PassConcept<IRUnitT> PassConceptT;
 
   PassManager(const PassManager &) LLVM_DELETED_FUNCTION;
   PassManager &operator=(const PassManager &) LLVM_DELETED_FUNCTION;
 
-  std::vector<std::unique_ptr<PassConcept>> Passes;
+  std::vector<std::unique_ptr<PassConceptT>> Passes;
 };
 
 /// \brief Convenience typedef for a pass manager over modules.
