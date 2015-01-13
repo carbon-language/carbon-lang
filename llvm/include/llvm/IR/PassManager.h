@@ -169,11 +169,8 @@ private:
   SmallPtrSet<void *, 2> PreservedPassIDs;
 };
 
-// Forward declare the analysis manager template and two typedefs used in the
-// pass managers.
+// Forward declare the analysis manager template.
 template <typename IRUnitT> class AnalysisManager;
-typedef AnalysisManager<Module> ModuleAnalysisManager;
-typedef AnalysisManager<Function> FunctionAnalysisManager;
 
 /// \brief Manages a sequence of passes over units of IR.
 ///
@@ -566,6 +563,12 @@ private:
   /// analysis result.
   AnalysisResultMapT AnalysisResults;
 };
+
+/// \brief Convenience typedef for the Module analysis manager.
+typedef AnalysisManager<Module> ModuleAnalysisManager;
+
+/// \brief Convenience typedef for the Function analysis manager.
+typedef AnalysisManager<Function> FunctionAnalysisManager;
 
 /// \brief A module analysis which acts as a proxy for a function analysis
 /// manager.
