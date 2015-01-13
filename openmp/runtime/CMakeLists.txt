@@ -32,6 +32,7 @@ include(CommonFlags) # compiler, assembler, fortran, linker flags common for all
 include(SourceFiles) # source files to compile 
 include(PerlFlags)   # Perl flags for generate-def.pl and expand-vars.pl
 include(FindPerl) # Standard cmake module to check for Perl
+include(GetArchitecture) # get_architecture()
 
 ####################################################################
 #                         CONFIGURATION
@@ -56,30 +57,26 @@ set(lib_type_possible_values    normal profile stubs)
 set(mic_arch_possible_values    knf knc)
 set(mic_os_possible_values      bsd lin)
 
-# Below, cmake will try and determine the operating system and architecture for you (it assumes Intel architecture)
+# Below, cmake will try and determine the operating system and architecture for you.
 # These values are set in CMakeCache.txt when cmake is first run (-Dvar_name=... will take precedence)
 #  parameter  | default value             
 # ----------------------------
 # Right now, this build system considers os=lin to mean "Unix-like that is not MAC"
 if(${APPLE}) # Apple goes first because CMake considers Mac to be a Unix based operating system, while libiomp5 considers it a special case
-    set(os             mac         CACHE STRING "The operating system to build for (lin/mac/win/mic)")
+    set(temp_os mac)
 elseif(${UNIX})
-    set(os             lin         CACHE STRING "The operating system to build for (lin/mac/win/mic)")
+    set(temp_os lin)
 elseif(${WIN32})       
-    set(os             win         CACHE STRING "The operating system to build for (lin/mac/win/mic)")
+    set(temp_os win)
 else()
-    set(os             lin         CACHE STRING "The operating system to build for (lin/mac/win/mic)")
+    set(temp_os lin)
 endif()
 
-# set to default architecture if the user did not specify an architecture explicitly
-if(NOT arch)	
-	if("${CMAKE_SIZEOF_VOID_P}" STREQUAL "4")
-    	set(arch           32          CACHE STRING "The architecture to build for (32e/32/arm/ppc64).  32e is Intel(R) 64 architecture, 32 is IA-32 architecture")
-	else()
-    	set(arch           32e         CACHE STRING "The architecture to build for (32e/32/arm/ppc64).  32e is Intel(R) 64 architecture, 32 is IA-32 architecture")
-	endif()
-endif()
+# If adding a new architecture, take a look at cmake/GetArchitecture.cmake
+get_architecture(detected_arch)
 
+set(os            ${temp_os}     CACHE STRING "The operating system to build for (lin/mac/win/mic)")
+set(arch          ${detected_arch}   CACHE STRING "The architecture to build for (32e/32/arm/ppc64).  32e is Intel(R) 64 architecture, 32 is IA-32 architecture")
 set(lib_type       normal        CACHE STRING "Performance,Profiling,Stubs library (normal/profile/stubs)")
 set(version        5             CACHE STRING "Produce libguide (version 4) or libiomp5 (version 5)")
 set(omp_version    40            CACHE STRING "The OpenMP version (40/30)")
