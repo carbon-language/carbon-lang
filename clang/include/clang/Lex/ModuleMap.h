@@ -331,22 +331,6 @@ public:
                                                bool IsFramework,
                                                bool IsExplicit);
 
-  /// \brief Determine whether we can infer a framework module a framework
-  /// with the given name in the given
-  ///
-  /// \param ParentDir The directory that is the parent of the framework
-  /// directory.
-  ///
-  /// \param Name The name of the module.
-  ///
-  /// \param IsSystem Will be set to 'true' if the inferred module must be a
-  /// system module.
-  ///
-  /// \returns true if we are allowed to infer a framework module, and false
-  /// otherwise.
-  bool canInferFrameworkModule(const DirectoryEntry *ParentDir,
-                               StringRef Name, bool &IsSystem) const;
-
   /// \brief Infer the contents of a framework module map from the given
   /// framework directory.
   Module *inferFrameworkModule(StringRef ModuleName, 
