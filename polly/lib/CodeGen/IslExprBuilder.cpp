@@ -127,7 +127,8 @@ Value *IslExprBuilder::createAccessAddress(isl_ast_expr *Expr) {
     if (!IndexOp)
       IndexOp = NextIndex;
     else
-      IndexOp = Builder.CreateAdd(IndexOp, NextIndex);
+      IndexOp =
+          Builder.CreateAdd(IndexOp, NextIndex, "polly.access.add." + BaseName);
 
     // For every but the last dimension multiply the size, for the last
     // dimension we can exit the loop.
@@ -135,9 +136,17 @@ Value *IslExprBuilder::createAccessAddress(isl_ast_expr *Expr) {
       break;
 
     const SCEV *DimSCEV = SAI->getDimensionSize(u - 1);
-    Value *DimSize = Expander.expandCodeFor(DimSCEV, IndexOp->getType(),
+    Value *DimSize = Expander.expandCodeFor(DimSCEV, DimSCEV->getType(),
                                             Builder.GetInsertPoint());
-    IndexOp = Builder.CreateMul(IndexOp, DimSize);
+
+    Type *Ty = getWidestType(DimSize->getType(), IndexOp->getType());
+
+    if (Ty != IndexOp->getType())
+      IndexOp = Builder.CreateSExtOrTrunc(IndexOp, Ty,
+                                          "polly.access.sext." + BaseName);
+
+    IndexOp =
+        Builder.CreateMul(IndexOp, DimSize, "polly.access.mul." + BaseName);
   }
 
   Access = Builder.CreateGEP(Base, IndexOp, "polly.access." + BaseName);
