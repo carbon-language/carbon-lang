@@ -22,8 +22,7 @@
 
 namespace llvm {
 
-class Function;
-class Module;
+template <typename IRUnitT> class AnalysisManager;
 class PreservedAnalyses;
 
 /// \brief Implementation details of the pass manager interfaces.
@@ -31,7 +30,7 @@ namespace detail {
 
 /// \brief Template for the abstract base class used to dispatch
 /// polymorphically over pass objects.
-template <typename IRUnitT, typename AnalysisManagerT> struct PassConcept {
+template <typename IRUnitT> struct PassConcept {
   // Boiler plate necessary for the container of derived classes.
   virtual ~PassConcept() {}
 
@@ -40,23 +39,22 @@ template <typename IRUnitT, typename AnalysisManagerT> struct PassConcept {
   /// Note that actual pass object can omit the analysis manager argument if
   /// desired. Also that the analysis manager may be null if there is no
   /// analysis manager in the pass pipeline.
-  virtual PreservedAnalyses run(IRUnitT &IR, AnalysisManagerT *AM) = 0;
+  virtual PreservedAnalyses run(IRUnitT &IR, AnalysisManager<IRUnitT> *AM) = 0;
 
   /// \brief Polymorphic method to access the name of a pass.
   virtual StringRef name() = 0;
 };
 
 /// \brief SFINAE metafunction for computing whether \c PassT has a run method
-/// accepting an \c AnalysisManagerT.
-template <typename IRUnitT, typename AnalysisManagerT, typename PassT,
-          typename ResultT>
+/// accepting an \c AnalysisManager<IRUnitT>.
+template <typename IRUnitT, typename PassT, typename ResultT>
 class PassRunAcceptsAnalysisManager {
   typedef char SmallType;
   struct BigType {
     char a, b;
   };
 
-  template <typename T, ResultT (T::*)(IRUnitT &, AnalysisManagerT *)>
+  template <typename T, ResultT (T::*)(IRUnitT &, AnalysisManager<IRUnitT> *)>
   struct Checker;
 
   template <typename T> static SmallType f(Checker<T, &T::run> *);
@@ -70,19 +68,19 @@ public:
 ///
 /// Can be instantiated for any object which provides a \c run method accepting
 /// an \c IRUnitT. It requires the pass to be a copyable object. When the
-/// \c run method also accepts an \c AnalysisManagerT*, we pass it along.
-template <typename IRUnitT, typename AnalysisManagerT, typename PassT,
+/// \c run method also accepts an \c AnalysisManager<IRUnitT>*, we pass it
+/// along.
+template <typename IRUnitT, typename PassT,
           typename PreservedAnalysesT = PreservedAnalyses,
           bool AcceptsAnalysisManager = PassRunAcceptsAnalysisManager<
-              IRUnitT, AnalysisManagerT, PassT, PreservedAnalysesT>::Value>
+              IRUnitT, PassT, PreservedAnalysesT>::Value>
 struct PassModel;
 
 /// \brief Specialization of \c PassModel for passes that accept an analyis
 /// manager.
-template <typename IRUnitT, typename AnalysisManagerT, typename PassT,
-          typename PreservedAnalysesT>
-struct PassModel<IRUnitT, AnalysisManagerT, PassT, PreservedAnalysesT, true>
-    : PassConcept<IRUnitT, AnalysisManagerT> {
+template <typename IRUnitT, typename PassT, typename PreservedAnalysesT>
+struct PassModel<IRUnitT, PassT, PreservedAnalysesT, true>
+    : PassConcept<IRUnitT> {
   explicit PassModel(PassT Pass) : Pass(std::move(Pass)) {}
   // We have to explicitly define all the special member functions because MSVC
   // refuses to generate them.
@@ -97,7 +95,7 @@ struct PassModel<IRUnitT, AnalysisManagerT, PassT, PreservedAnalysesT, true>
     return *this;
   }
 
-  PreservedAnalysesT run(IRUnitT &IR, AnalysisManagerT *AM) override {
+  PreservedAnalysesT run(IRUnitT &IR, AnalysisManager<IRUnitT> *AM) override {
     return Pass.run(IR, AM);
   }
   StringRef name() override { return PassT::name(); }
@@ -106,10 +104,9 @@ struct PassModel<IRUnitT, AnalysisManagerT, PassT, PreservedAnalysesT, true>
 
 /// \brief Specialization of \c PassModel for passes that accept an analyis
 /// manager.
-template <typename IRUnitT, typename AnalysisManagerT, typename PassT,
-          typename PreservedAnalysesT>
-struct PassModel<IRUnitT, AnalysisManagerT, PassT, PreservedAnalysesT, false>
-    : PassConcept<IRUnitT, AnalysisManagerT> {
+template <typename IRUnitT, typename PassT, typename PreservedAnalysesT>
+struct PassModel<IRUnitT, PassT, PreservedAnalysesT, false>
+    : PassConcept<IRUnitT> {
   explicit PassModel(PassT Pass) : Pass(std::move(Pass)) {}
   // We have to explicitly define all the special member functions because MSVC
   // refuses to generate them.
@@ -124,7 +121,7 @@ struct PassModel<IRUnitT, AnalysisManagerT, PassT, PreservedAnalysesT, false>
     return *this;
   }
 
-  PreservedAnalysesT run(IRUnitT &IR, AnalysisManagerT *AM) override {
+  PreservedAnalysesT run(IRUnitT &IR, AnalysisManager<IRUnitT> *AM) override {
     return Pass.run(IR);
   }
   StringRef name() override { return PassT::name(); }
@@ -247,15 +244,14 @@ struct AnalysisResultModel<IRUnitT, PassT, ResultT, PreservedAnalysesT, true>
 ///
 /// This concept is parameterized over the IR unit that it can run over and
 /// produce an analysis result.
-template <typename IRUnitT, typename AnalysisManagerT>
-struct AnalysisPassConcept {
+template <typename IRUnitT> struct AnalysisPassConcept {
   virtual ~AnalysisPassConcept() {}
 
   /// \brief Method to run this analysis over a unit of IR.
   /// \returns A unique_ptr to the analysis result object to be queried by
   /// users.
   virtual std::unique_ptr<AnalysisResultConcept<IRUnitT>>
-  run(IRUnitT &IR, AnalysisManagerT *AM) = 0;
+  run(IRUnitT &IR, AnalysisManager<IRUnitT> *AM) = 0;
 
   /// \brief Polymorphic method to access the name of a pass.
   virtual StringRef name() = 0;
@@ -266,16 +262,15 @@ struct AnalysisPassConcept {
 /// Can wrap any type which implements a suitable \c run method. The method
 /// must accept the IRUnitT as an argument and produce an object which can be
 /// wrapped in a \c AnalysisResultModel.
-template <typename IRUnitT, typename AnalysisManagerT, typename PassT,
+template <typename IRUnitT, typename PassT,
           bool AcceptsAnalysisManager = PassRunAcceptsAnalysisManager<
-              IRUnitT, AnalysisManagerT, PassT, typename PassT::Result>::Value>
+              IRUnitT, PassT, typename PassT::Result>::Value>
 struct AnalysisPassModel;
 
 /// \brief Specialization of \c AnalysisPassModel which passes an
 /// \c AnalysisManager to PassT's run method.
-template <typename IRUnitT, typename AnalysisManagerT, typename PassT>
-struct AnalysisPassModel<IRUnitT, AnalysisManagerT, PassT, true>
-    : AnalysisPassConcept<IRUnitT, AnalysisManagerT> {
+template <typename IRUnitT, typename PassT>
+struct AnalysisPassModel<IRUnitT, PassT, true> : AnalysisPassConcept<IRUnitT> {
   explicit AnalysisPassModel(PassT Pass) : Pass(std::move(Pass)) {}
   // We have to explicitly define all the special member functions because MSVC
   // refuses to generate them.
@@ -298,7 +293,7 @@ struct AnalysisPassModel<IRUnitT, AnalysisManagerT, PassT, true>
   ///
   /// The return is wrapped in an \c AnalysisResultModel.
   std::unique_ptr<AnalysisResultConcept<IRUnitT>>
-  run(IRUnitT &IR, AnalysisManagerT *AM) override {
+  run(IRUnitT &IR, AnalysisManager<IRUnitT> *AM) override {
     return make_unique<ResultModelT>(Pass.run(IR, AM));
   }
 
@@ -312,9 +307,8 @@ struct AnalysisPassModel<IRUnitT, AnalysisManagerT, PassT, true>
 
 /// \brief Specialization of \c AnalysisPassModel which does not pass an
 /// \c AnalysisManager to PassT's run method.
-template <typename IRUnitT, typename AnalysisManagerT, typename PassT>
-struct AnalysisPassModel<IRUnitT, AnalysisManagerT, PassT, false>
-    : AnalysisPassConcept<IRUnitT, AnalysisManagerT> {
+template <typename IRUnitT, typename PassT>
+struct AnalysisPassModel<IRUnitT, PassT, false> : AnalysisPassConcept<IRUnitT> {
   explicit AnalysisPassModel(PassT Pass) : Pass(std::move(Pass)) {}
   // We have to explicitly define all the special member functions because MSVC
   // refuses to generate them.
@@ -337,7 +331,7 @@ struct AnalysisPassModel<IRUnitT, AnalysisManagerT, PassT, false>
   ///
   /// The return is wrapped in an \c AnalysisResultModel.
   std::unique_ptr<AnalysisResultConcept<IRUnitT>>
-  run(IRUnitT &IR, AnalysisManagerT *) override {
+  run(IRUnitT &IR, AnalysisManager<IRUnitT> *) override {
     return make_unique<ResultModelT>(Pass.run(IR));
   }
 

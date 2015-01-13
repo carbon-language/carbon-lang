@@ -243,13 +243,11 @@ public:
 
 private:
   // Pull in the concept type and model template specialized for modules.
-  typedef detail::PassConcept<IRUnitT, AnalysisManager<IRUnitT>> PassConcept;
+  typedef detail::PassConcept<IRUnitT> PassConcept;
   template <typename PassT>
-  struct PassModel
-      : detail::PassModel<IRUnitT, AnalysisManager<IRUnitT>, PassT> {
+  struct PassModel : detail::PassModel<IRUnitT, PassT> {
     PassModel(PassT Pass)
-        : detail::PassModel<IRUnitT, AnalysisManager<IRUnitT>, PassT>(
-              std::move(Pass)) {}
+        : detail::PassModel<IRUnitT, PassT>(std::move(Pass)) {}
   };
 
   PassManager(const PassManager &) LLVM_DELETED_FUNCTION;
@@ -295,7 +293,7 @@ template <typename DerivedT, typename IRUnitT> class AnalysisManagerBase {
 
 protected:
   typedef detail::AnalysisResultConcept<IRUnitT> ResultConceptT;
-  typedef detail::AnalysisPassConcept<IRUnitT, DerivedT> PassConceptT;
+  typedef detail::AnalysisPassConcept<IRUnitT> PassConceptT;
 
   // FIXME: Provide template aliases for the models when we're using C++11 in
   // a mode supporting them.
@@ -354,7 +352,7 @@ public:
   template <typename PassT> void registerPass(PassT Pass) {
     assert(!AnalysisPasses.count(PassT::ID()) &&
            "Registered the same analysis pass twice!");
-    typedef detail::AnalysisPassModel<IRUnitT, DerivedT, PassT> PassModelT;
+    typedef detail::AnalysisPassModel<IRUnitT, PassT> PassModelT;
     AnalysisPasses[PassT::ID()].reset(new PassModelT(std::move(Pass)));
   }
 
@@ -823,8 +821,8 @@ template <typename AnalysisT> struct RequireAnalysisPass {
   /// provided they satisfy the basic API requirements. When this pass is
   /// created, these methods can be instantiated to satisfy whatever the
   /// context requires.
-  template <typename IRUnitT, typename AnalysisManagerT>
-  PreservedAnalyses run(IRUnitT &Arg, AnalysisManagerT *AM) {
+  template <typename IRUnitT>
+  PreservedAnalyses run(IRUnitT &Arg, AnalysisManager<IRUnitT> *AM) {
     if (AM)
       (void)AM->template getResult<AnalysisT>(Arg);
 
@@ -846,8 +844,8 @@ template <typename AnalysisT> struct InvalidateAnalysisPass {
   /// provided they satisfy the basic API requirements. When this pass is
   /// created, these methods can be instantiated to satisfy whatever the
   /// context requires.
-  template <typename IRUnitT, typename AnalysisManagerT>
-  PreservedAnalyses run(IRUnitT &Arg, AnalysisManagerT *AM) {
+  template <typename IRUnitT>
+  PreservedAnalyses run(IRUnitT &Arg, AnalysisManager<IRUnitT> *AM) {
     if (AM)
       // We have to directly invalidate the analysis result as we can't
       // enumerate all other analyses and use the preserved set to control it.
