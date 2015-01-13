@@ -175,123 +175,94 @@ template <typename IRUnitT> class AnalysisManager;
 typedef AnalysisManager<Module> ModuleAnalysisManager;
 typedef AnalysisManager<Function> FunctionAnalysisManager;
 
-/// \brief Manages a sequence of passes over Modules of IR.
+/// \brief Manages a sequence of passes over units of IR.
 ///
-/// A module pass manager contains a sequence of module passes. It is also
-/// itself a module pass. When it is run over a module of LLVM IR, it will
-/// sequentially run each pass it contains over that module.
+/// A pass manager contains a sequence of passes to run over units of IR. It is
+/// itself a valid pass over that unit of IR, and when over some given IR will
+/// run each pass in sequence. This is the primary and most basic building
+/// block of a pass pipeline.
 ///
-/// If it is run with a \c ModuleAnalysisManager argument, it will propagate
+/// If it is run with an \c AnalysisManager<IRUnitT> argument, it will propagate
 /// that analysis manager to each pass it runs, as well as calling the analysis
 /// manager's invalidation routine with the PreservedAnalyses of each pass it
 /// runs.
-///
-/// Module passes can rely on having exclusive access to the module they are
-/// run over. No other threads will access that module, and they can mutate it
-/// freely. However, they must not mutate other LLVM IR modules.
-class ModulePassManager {
+template <typename IRUnitT> class PassManager {
 public:
   // We have to explicitly define all the special member functions because MSVC
   // refuses to generate them.
-  ModulePassManager() {}
-  ModulePassManager(ModulePassManager &&Arg) : Passes(std::move(Arg.Passes)) {}
-  ModulePassManager &operator=(ModulePassManager &&RHS) {
+  PassManager() {}
+  PassManager(PassManager &&Arg) : Passes(std::move(Arg.Passes)) {}
+  PassManager &operator=(PassManager &&RHS) {
     Passes = std::move(RHS.Passes);
     return *this;
   }
 
-  /// \brief Run all of the module passes in this module pass manager over
-  /// a module.
-  ///
-  /// This method should only be called for a single module as there is the
-  /// expectation that the lifetime of a pass is bounded to that of a module.
-  PreservedAnalyses run(Module &M, ModuleAnalysisManager *AM = nullptr);
+  /// \brief Run all of the passes in this manager over the IR.
+  PreservedAnalyses run(IRUnitT &IR, AnalysisManager<IRUnitT> *AM = nullptr) {
+    PreservedAnalyses PA = PreservedAnalyses::all();
 
-  template <typename ModulePassT> void addPass(ModulePassT Pass) {
-    Passes.emplace_back(new ModulePassModel<ModulePassT>(std::move(Pass)));
+    if (detail::DebugPM)
+      dbgs() << "Starting pass manager run.\n";
+
+    for (unsigned Idx = 0, Size = Passes.size(); Idx != Size; ++Idx) {
+      if (detail::DebugPM)
+        dbgs() << "Running pass: " << Passes[Idx]->name() << "\n";
+
+      PreservedAnalyses PassPA = Passes[Idx]->run(IR, AM);
+
+      // If we have an active analysis manager at this level we want to ensure
+      // we update it as each pass runs and potentially invalidates analyses.
+      // We also update the preserved set of analyses based on what analyses we
+      // have already handled the invalidation for here and don't need to
+      // invalidate when finished.
+      if (AM)
+        PassPA = AM->invalidate(IR, std::move(PassPA));
+
+      // Finally, we intersect the final preserved analyses to compute the
+      // aggregate preserved set for this pass manager.
+      PA.intersect(std::move(PassPA));
+
+      // FIXME: Historically, the pass managers all called the LLVM context's
+      // yield function here. We don't have a generic way to acquire the
+      // context and it isn't yet clear what the right pattern is for yielding
+      // in the new pass manager so it is currently omitted.
+      //IR.getContext().yield();
+    }
+
+    if (detail::DebugPM)
+      dbgs() << "Finished pass manager run.\n";
+
+    return PA;
   }
 
-  static StringRef name() { return "ModulePassManager"; }
+  template <typename PassT> void addPass(PassT Pass) {
+    Passes.emplace_back(new PassModel<PassT>(std::move(Pass)));
+  }
+
+  static StringRef name() { return "PassManager"; }
 
 private:
   // Pull in the concept type and model template specialized for modules.
-  typedef detail::PassConcept<Module, ModuleAnalysisManager> ModulePassConcept;
+  typedef detail::PassConcept<IRUnitT, AnalysisManager<IRUnitT>> PassConcept;
   template <typename PassT>
-  struct ModulePassModel
-      : detail::PassModel<Module, ModuleAnalysisManager, PassT> {
-    ModulePassModel(PassT Pass)
-        : detail::PassModel<Module, ModuleAnalysisManager, PassT>(
+  struct PassModel
+      : detail::PassModel<IRUnitT, AnalysisManager<IRUnitT>, PassT> {
+    PassModel(PassT Pass)
+        : detail::PassModel<IRUnitT, AnalysisManager<IRUnitT>, PassT>(
               std::move(Pass)) {}
   };
 
-  ModulePassManager(const ModulePassManager &) LLVM_DELETED_FUNCTION;
-  ModulePassManager &operator=(const ModulePassManager &) LLVM_DELETED_FUNCTION;
+  PassManager(const PassManager &) LLVM_DELETED_FUNCTION;
+  PassManager &operator=(const PassManager &) LLVM_DELETED_FUNCTION;
 
-  std::vector<std::unique_ptr<ModulePassConcept>> Passes;
+  std::vector<std::unique_ptr<PassConcept>> Passes;
 };
 
-/// \brief Manages a sequence of passes over a Function of IR.
-///
-/// A function pass manager contains a sequence of function passes. It is also
-/// itself a function pass. When it is run over a function of LLVM IR, it will
-/// sequentially run each pass it contains over that function.
-///
-/// If it is run with a \c FunctionAnalysisManager argument, it will propagate
-/// that analysis manager to each pass it runs, as well as calling the analysis
-/// manager's invalidation routine with the PreservedAnalyses of each pass it
-/// runs.
-///
-/// Function passes can rely on having exclusive access to the function they
-/// are run over. They should not read or modify any other functions! Other
-/// threads or systems may be manipulating other functions in the module, and
-/// so their state should never be relied on.
-/// FIXME: Make the above true for all of LLVM's actual passes, some still
-/// violate this principle.
-///
-/// Function passes can also read the module containing the function, but they
-/// should not modify that module outside of the use lists of various globals.
-/// For example, a function pass is not permitted to add functions to the
-/// module.
-/// FIXME: Make the above true for all of LLVM's actual passes, some still
-/// violate this principle.
-class FunctionPassManager {
-public:
-  // We have to explicitly define all the special member functions because MSVC
-  // refuses to generate them.
-  FunctionPassManager() {}
-  FunctionPassManager(FunctionPassManager &&Arg)
-      : Passes(std::move(Arg.Passes)) {}
-  FunctionPassManager &operator=(FunctionPassManager &&RHS) {
-    Passes = std::move(RHS.Passes);
-    return *this;
-  }
+/// \brief Convenience typedef for a pass manager over modules.
+typedef PassManager<Module> ModulePassManager;
 
-  template <typename FunctionPassT> void addPass(FunctionPassT Pass) {
-    Passes.emplace_back(new FunctionPassModel<FunctionPassT>(std::move(Pass)));
-  }
-
-  PreservedAnalyses run(Function &F, FunctionAnalysisManager *AM = nullptr);
-
-  static StringRef name() { return "FunctionPassManager"; }
-
-private:
-  // Pull in the concept type and model template specialized for functions.
-  typedef detail::PassConcept<Function, FunctionAnalysisManager>
-      FunctionPassConcept;
-  template <typename PassT>
-  struct FunctionPassModel
-      : detail::PassModel<Function, FunctionAnalysisManager, PassT> {
-    FunctionPassModel(PassT Pass)
-        : detail::PassModel<Function, FunctionAnalysisManager, PassT>(
-              std::move(Pass)) {}
-  };
-
-  FunctionPassManager(const FunctionPassManager &) LLVM_DELETED_FUNCTION;
-  FunctionPassManager &
-  operator=(const FunctionPassManager &) LLVM_DELETED_FUNCTION;
-
-  std::vector<std::unique_ptr<FunctionPassConcept>> Passes;
-};
+/// \brief Convenience typedef for a pass manager over functions.
+typedef PassManager<Function> FunctionPassManager;
 
 namespace detail {
 
@@ -761,6 +732,20 @@ private:
 /// \c FunctionAnalysisManagerModuleProxy analysis prior to running the function
 /// pass over the module to enable a \c FunctionAnalysisManager to be used
 /// within this run safely.
+///
+/// Function passes run within this adaptor can rely on having exclusive access
+/// to the function they are run over. They should not read or modify any other
+/// functions! Other threads or systems may be manipulating other functions in
+/// the module, and so their state should never be relied on.
+/// FIXME: Make the above true for all of LLVM's actual passes, some still
+/// violate this principle.
+///
+/// Function passes can also read the module containing the function, but they
+/// should not modify that module outside of the use lists of various globals.
+/// For example, a function pass is not permitted to add functions to the
+/// module.
+/// FIXME: Make the above true for all of LLVM's actual passes, some still
+/// violate this principle.
 template <typename FunctionPassT> class ModuleToFunctionPassAdaptor {
 public:
   explicit ModuleToFunctionPassAdaptor(FunctionPassT Pass)

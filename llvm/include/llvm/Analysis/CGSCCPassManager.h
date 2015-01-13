@@ -26,6 +26,13 @@
 
 namespace llvm {
 
+/// \brief The CGSCC pass manager.
+///
+/// See the documentation for the PassManager template for details. It runs
+/// a sequency of SCC passes over each SCC that the manager is run over. This
+/// typedef serves as a convenient way to refer to this construct.
+typedef PassManager<LazyCallGraph::SCC> CGSCCPassManager;
+
 /// \brief The CGSCC analysis manager.
 ///
 /// See the documentation for the AnalysisManager template for detail
@@ -33,45 +40,6 @@ namespace llvm {
 /// construct in the adaptors and proxies used to integrate this into the larger
 /// pass manager infrastructure.
 typedef AnalysisManager<LazyCallGraph::SCC> CGSCCAnalysisManager;
-
-class CGSCCPassManager {
-public:
-  // We have to explicitly define all the special member functions because MSVC
-  // refuses to generate them.
-  CGSCCPassManager() {}
-  CGSCCPassManager(CGSCCPassManager &&Arg) : Passes(std::move(Arg.Passes)) {}
-  CGSCCPassManager &operator=(CGSCCPassManager &&RHS) {
-    Passes = std::move(RHS.Passes);
-    return *this;
-  }
-
-  /// \brief Run all of the CGSCC passes in this pass manager over a SCC.
-  PreservedAnalyses run(LazyCallGraph::SCC &C,
-                        CGSCCAnalysisManager *AM = nullptr);
-
-  template <typename CGSCCPassT> void addPass(CGSCCPassT Pass) {
-    Passes.emplace_back(new CGSCCPassModel<CGSCCPassT>(std::move(Pass)));
-  }
-
-  static StringRef name() { return "CGSCCPassManager"; }
-
-private:
-  // Pull in the concept type and model template specialized for SCCs.
-  typedef detail::PassConcept<LazyCallGraph::SCC, CGSCCAnalysisManager>
-      CGSCCPassConcept;
-  template <typename PassT>
-  struct CGSCCPassModel
-      : detail::PassModel<LazyCallGraph::SCC, CGSCCAnalysisManager, PassT> {
-    CGSCCPassModel(PassT Pass)
-        : detail::PassModel<LazyCallGraph::SCC, CGSCCAnalysisManager, PassT>(
-              std::move(Pass)) {}
-  };
-
-  CGSCCPassManager(const CGSCCPassManager &) LLVM_DELETED_FUNCTION;
-  CGSCCPassManager &operator=(const CGSCCPassManager &) LLVM_DELETED_FUNCTION;
-
-  std::vector<std::unique_ptr<CGSCCPassConcept>> Passes;
-};
 
 /// \brief A module analysis which acts as a proxy for a CGSCC analysis
 /// manager.
