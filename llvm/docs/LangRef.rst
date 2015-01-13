@@ -7281,7 +7281,7 @@ Note that calling this intrinsic does not prevent function inlining or
 other aggressive transformations, so the value returned may not be that
 of the obvious source-language caller.
 
-'``llvm.frameallocate``' and '``llvm.recoverframeallocation``' Intrinsics
+'``llvm.frameallocate``' and '``llvm.framerecover``' Intrinsics
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Syntax:
@@ -7290,13 +7290,13 @@ Syntax:
 ::
 
       declare i8* @llvm.frameallocate(i32 %size)
-      declare i8* @llvm.recoverframeallocation(i8* %func, i8* %fp)
+      declare i8* @llvm.framerecover(i8* %func, i8* %fp)
 
 Overview:
 """""""""
 
 The '``llvm.frameallocate``' intrinsic allocates stack memory at some fixed
-offset from the frame pointer, and the '``llvm.recoverframeallocation``'
+offset from the frame pointer, and the '``llvm.framerecover``'
 intrinsic applies that offset to a live frame pointer to recover the address of
 the allocation. The offset is computed during frame layout of the caller of
 ``llvm.frameallocate``.
@@ -7308,12 +7308,12 @@ The ``size`` argument to '``llvm.frameallocate``' must be a constant integer
 indicating the amount of stack memory to allocate. As with allocas, allocating
 zero bytes is legal, but the result is undefined.
 
-The ``func`` argument to '``llvm.recoverframeallocation``' must be a constant
+The ``func`` argument to '``llvm.framerecover``' must be a constant
 bitcasted pointer to a function defined in the current module. The code
 generator cannot determine the frame allocation offset of functions defined in
 other modules.
 
-The ``fp`` argument to '``llvm.recoverframeallocation``' must be a frame
+The ``fp`` argument to '``llvm.framerecover``' must be a frame
 pointer of a call frame that is currently live. The return value of
 '``llvm.frameaddress``' is one way to produce such a value, but most platforms
 also expose the frame pointer through stack unwinding mechanisms.
@@ -7328,7 +7328,7 @@ memory is only aligned to the ABI-required stack alignment.  Each function may
 only call '``llvm.frameallocate``' one or zero times from the function entry
 block.  The frame allocation intrinsic inhibits inlining, as any frame
 allocations in the inlined function frame are likely to be at a different
-offset from the one used by '``llvm.recoverframeallocation``' called with the
+offset from the one used by '``llvm.framerecover``' called with the
 uninlined function.
 
 .. _int_read_register:

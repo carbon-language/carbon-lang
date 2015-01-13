@@ -2617,10 +2617,10 @@ void Verifier::visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI) {
             "llvm.frameallocate argument must be constant integer size", &CI);
     break;
   }
-  case Intrinsic::recoverframeallocation: {
+  case Intrinsic::framerecover: {
     Value *FnArg = CI.getArgOperand(0)->stripPointerCasts();
     Function *Fn = dyn_cast<Function>(FnArg);
-    Assert1(Fn && !Fn->isDeclaration(), "llvm.recoverframeallocation first "
+    Assert1(Fn && !Fn->isDeclaration(), "llvm.framerecover first "
             "argument must be function defined in this module", &CI);
     break;
   }

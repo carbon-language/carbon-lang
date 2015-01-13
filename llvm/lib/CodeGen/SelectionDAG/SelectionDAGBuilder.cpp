@@ -5608,8 +5608,8 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
     return nullptr;
   }
 
-  case Intrinsic::recoverframeallocation: {
-    // i8* @llvm.recoverframeallocation(i8* %fn, i8* %fp)
+  case Intrinsic::framerecover: {
+    // i8* @llvm.framerecover(i8* %fn, i8* %fp)
     MachineFunction &MF = DAG.getMachineFunction();
     MVT PtrVT = TLI.getPointerTy(0);
 
@@ -5624,7 +5624,7 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
     assert(Name.size() == strlen(Name.data()) && "not null terminated");
     SDValue OffsetSym = DAG.getTargetExternalSymbol(Name.data(), PtrVT);
     SDValue OffsetVal =
-        DAG.getNode(ISD::RECOVER_FRAME_ALLOC, sdl, PtrVT, OffsetSym);
+        DAG.getNode(ISD::FRAME_ALLOC_RECOVER, sdl, PtrVT, OffsetSym);
 
     // Add the offset to the FP.
     Value *FP = I.getArgOperand(1);

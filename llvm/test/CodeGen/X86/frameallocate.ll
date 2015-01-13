@@ -2,13 +2,13 @@
 
 declare i8* @llvm.frameallocate(i32)
 declare i8* @llvm.frameaddress(i32)
-declare i8* @llvm.recoverframeallocation(i8*, i8*)
+declare i8* @llvm.framerecover(i8*, i8*)
 declare i32 @printf(i8*, ...)
 
 @str = internal constant [10 x i8] c"asdf: %d\0A\00"
 
 define void @print_framealloc_from_fp(i8* %fp) {
-  %alloc = call i8* @llvm.recoverframeallocation(i8* bitcast (void(i32*, i32*)* @alloc_func to i8*), i8* %fp)
+  %alloc = call i8* @llvm.framerecover(i8* bitcast (void(i32*, i32*)* @alloc_func to i8*), i8* %fp)
   %alloc_i32 = bitcast i8* %alloc to i32*
   %r = load i32* %alloc_i32
   call i32 (i8*, ...)* @printf(i8* getelementptr ([10 x i8]* @str, i32 0, i32 0), i32 %r)

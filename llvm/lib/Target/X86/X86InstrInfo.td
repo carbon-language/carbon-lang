@@ -194,7 +194,7 @@ def X86rdpmc   : SDNode<"X86ISD::RDPMC_DAG", SDTX86Void,
 def X86Wrapper    : SDNode<"X86ISD::Wrapper",     SDTX86Wrapper>;
 def X86WrapperRIP : SDNode<"X86ISD::WrapperRIP",  SDTX86Wrapper>;
 
-def X86RecoverFrameAlloc : SDNode<"ISD::RECOVER_FRAME_ALLOC",
+def X86RecoverFrameAlloc : SDNode<"ISD::FRAME_ALLOC_RECOVER",
                                   SDTypeProfile<1, 1, [SDTCisSameAs<0, 1>,
                                                        SDTCisInt<1>]>>;
 

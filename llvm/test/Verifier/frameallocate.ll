@@ -1,7 +1,7 @@
 ; RUN: not llvm-as %s -o /dev/null 2>&1 | FileCheck %s
 
 declare i8* @llvm.frameallocate(i32)
-declare i8* @llvm.recoverframeallocation(i8*, i8*)
+declare i8* @llvm.framerecover(i8*, i8*)
 
 define internal void @f() {
   call i8* @llvm.frameallocate(i32 4)
@@ -26,23 +26,23 @@ not_entry:
 ; CHECK: llvm.frameallocate used outside of entry block
 
 define internal void @h() {
-  call i8* @llvm.recoverframeallocation(i8* null, i8* null)
+  call i8* @llvm.framerecover(i8* null, i8* null)
   ret void
 }
-; CHECK: llvm.recoverframeallocation first argument must be function defined in this module
+; CHECK: llvm.framerecover first argument must be function defined in this module
 
 @global = constant i8 0
 
 declare void @declaration()
 
 define internal void @i() {
-  call i8* @llvm.recoverframeallocation(i8* @global, i8* null)
+  call i8* @llvm.framerecover(i8* @global, i8* null)
   ret void
 }
-; CHECK: llvm.recoverframeallocation first argument must be function defined in this module
+; CHECK: llvm.framerecover first argument must be function defined in this module
 
 define internal void @j() {
-  call i8* @llvm.recoverframeallocation(i8* bitcast(void()* @declaration to i8*), i8* null)
+  call i8* @llvm.framerecover(i8* bitcast(void()* @declaration to i8*), i8* null)
   ret void
 }
-; CHECK: llvm.recoverframeallocation first argument must be function defined in this module
+; CHECK: llvm.framerecover first argument must be function defined in this module
