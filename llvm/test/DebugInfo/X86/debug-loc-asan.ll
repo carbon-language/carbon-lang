@@ -21,10 +21,10 @@
 ; CHECK: .Ldebug_loc{{[0-9]+}}:
 ; We expect two location ranges for the variable.
 
-; First, it is stored in %rdx:
+; First, its address is stored in %rdi:
 ; CHECK:      .quad .Lfunc_begin0-.Lfunc_begin0
 ; CHECK-NEXT: .quad [[START_LABEL]]-.Lfunc_begin0
-; CHECK: DW_OP_reg5
+; CHECK: DW_OP_breg5
 
 ; Then it's addressed via %rsp:
 ; CHECK:      .quad [[START_LABEL]]-.Lfunc_begin0

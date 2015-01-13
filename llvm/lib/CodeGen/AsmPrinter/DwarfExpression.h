@@ -15,6 +15,7 @@
 #define LLVM_LIB_CODEGEN_ASMPRINTER_DWARFEXPRESSION_H
 
 #include "llvm/Support/DataTypes.h"
+#include "llvm/IR/DebugInfo.h"
 
 namespace llvm {
 
@@ -81,8 +82,18 @@ public:
   void AddSignedConstant(int Value);
   /// Emit an unsigned constant.
   void AddUnsignedConstant(unsigned Value);
-};
 
+  /// Emit an entire DIExpression on top of a machine register location.
+  /// \param PieceOffsetInBits If this is one piece out of a fragmented
+  /// location, this is the offset of the piece inside the entire variable.
+  void AddMachineRegExpression(DIExpression Expr, unsigned MachineReg,
+                               unsigned PieceOffsetInBits = 0);
+  /// Emit a the operations in a DIExpression, starting from element I.
+  /// \param PieceOffsetInBits If this is one piece out of a fragmented
+  /// location, this is the offset of the piece inside the entire variable.
+  void AddExpression(DIExpression Expr, unsigned PieceOffsetInBits = 0,
+                     unsigned I = 0);
+};
 
 /// DwarfExpression implementation for .debug_loc entries.
 class DebugLocDwarfExpression : public DwarfExpression {

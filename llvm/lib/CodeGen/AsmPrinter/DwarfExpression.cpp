@@ -191,3 +191,67 @@ void DwarfExpression::AddUnsignedConstant(unsigned Value) {
   if (getDwarfVersion() >= 4)
     EmitOp(dwarf::DW_OP_stack_value);
 }
+
+static unsigned getOffsetOrZero(unsigned OffsetInBits,
+                                unsigned PieceOffsetInBits) {
+  if (OffsetInBits == PieceOffsetInBits)
+    return 0;
+  assert(OffsetInBits >= PieceOffsetInBits && "overlapping pieces");
+  return OffsetInBits;
+}
+
+void DwarfExpression::AddMachineRegExpression(DIExpression Expr,
+                                              unsigned MachineReg,
+                                              unsigned PieceOffsetInBits) {
+  unsigned N = Expr.getNumElements();
+  unsigned I = 0;
+  // Pattern-match combinations for which more efficient representations exist
+  // first.
+  if (N >= 3 && Expr.getElement(0) == dwarf::DW_OP_piece) {
+    unsigned SizeOfByte = 8;
+    unsigned OffsetInBits = Expr.getElement(1) * SizeOfByte;
+    unsigned SizeInBits = Expr.getElement(2) * SizeOfByte;
+    AddMachineRegPiece(MachineReg, SizeInBits,
+                       getOffsetOrZero(OffsetInBits, PieceOffsetInBits));
+    I = 3;
+  } else if (N >= 3 && Expr.getElement(0) == dwarf::DW_OP_plus &&
+             Expr.getElement(2) == dwarf::DW_OP_deref) {
+    // [DW_OP_reg,Offset,DW_OP_plus,DW_OP_deref] --> [DW_OP_breg,Offset].
+    unsigned Offset = Expr.getElement(1);
+    AddMachineRegIndirect(MachineReg, Offset);
+    I = 3;
+  } else if (N >= 1 && Expr.getElement(0) == dwarf::DW_OP_deref) {
+    // [DW_OP_reg,DW_OP_deref] --> [DW_OP_breg].
+    AddMachineRegIndirect(MachineReg);
+    I = 1;
+  } else
+    AddMachineRegPiece(MachineReg);
+
+  // Emit remaining elements of the expression.
+  AddExpression(Expr, I);
+}
+
+void DwarfExpression::AddExpression(DIExpression Expr, unsigned I,
+                                    unsigned PieceOffsetInBits) {
+  unsigned N = Expr.getNumElements();
+  for (; I < N; ++I) {
+    switch (Expr.getElement(I)) {
+    case dwarf::DW_OP_piece: {
+      unsigned SizeOfByte = 8;
+      unsigned OffsetInBits = Expr.getElement(++I) * SizeOfByte;
+      unsigned SizeInBits = Expr.getElement(++I) * SizeOfByte;
+      AddOpPiece(SizeInBits, getOffsetOrZero(OffsetInBits, PieceOffsetInBits));
+      break;
+    }
+    case dwarf::DW_OP_plus:
+      EmitOp(dwarf::DW_OP_plus_uconst);
+      EmitUnsigned(Expr.getElement(++I));
+      break;
+    case dwarf::DW_OP_deref:
+      EmitOp(dwarf::DW_OP_deref);
+      break;
+    default:
+      llvm_unreachable("unhandled opcode found in DIExpression");
+    }
+  }
+}
