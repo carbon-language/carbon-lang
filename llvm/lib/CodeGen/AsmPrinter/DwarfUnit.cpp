@@ -55,7 +55,7 @@ public:
   void EmitOp(uint8_t Op, const char* Comment = nullptr) override;
   void EmitSigned(int Value) override;
   void EmitUnsigned(unsigned Value) override;
-  unsigned getFrameRegister() override;
+  bool isFrameRegister(unsigned MachineReg) override;
 };
 
 void DIEDwarfExpression::EmitOp(uint8_t Op, const char* Comment) {
@@ -67,8 +67,8 @@ void DIEDwarfExpression::EmitSigned(int Value) {
 void DIEDwarfExpression::EmitUnsigned(unsigned Value) {
   DU.addUInt(DIE, dwarf::DW_FORM_udata, Value);
 }
-unsigned DIEDwarfExpression::getFrameRegister() {
-  return getTRI()->getFrameRegister(*AP.MF);
+bool DIEDwarfExpression::isFrameRegister(unsigned MachineReg) {
+  return MachineReg == getTRI()->getFrameRegister(*AP.MF);
 }
 
 

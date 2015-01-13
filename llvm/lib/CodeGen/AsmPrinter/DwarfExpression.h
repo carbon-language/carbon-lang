@@ -40,7 +40,7 @@ public:
   virtual void EmitSigned(int Value) = 0;
   virtual void EmitUnsigned(unsigned Value) = 0;
 
-  virtual unsigned getFrameRegister() = 0;
+  virtual bool isFrameRegister(unsigned MachineReg) = 0;
 
   /// Emit a dwarf register operation.
   void AddReg(int DwarfReg, const char* Comment = nullptr);
@@ -92,7 +92,7 @@ public:
   void EmitOp(uint8_t Op, const char *Comment) override;
   void EmitSigned(int Value) override;
   void EmitUnsigned(unsigned Value) override;
-  unsigned getFrameRegister() override;
+  bool isFrameRegister(unsigned MachineReg) override;
 };
 
 }

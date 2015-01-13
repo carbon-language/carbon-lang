@@ -79,7 +79,7 @@ bool DwarfExpression::AddMachineRegIndirect(unsigned MachineReg, int Offset) {
   if (DwarfReg < 0)
     return false;
 
-  if (MachineReg == getFrameRegister()) {
+  if (isFrameRegister(MachineReg)) {
     // If variable offset is based in frame register then use fbreg.
     EmitOp(dwarf::DW_OP_fbreg);
     EmitSigned(Offset);

@@ -46,8 +46,9 @@ void DebugLocDwarfExpression::EmitUnsigned(unsigned Value) {
   BS.EmitULEB128(Value, Twine(Value));
 }
 
-unsigned DebugLocDwarfExpression::getFrameRegister() {
- llvm_unreachable("not available");
+bool DebugLocDwarfExpression::isFrameRegister(unsigned MachineReg) {
+  // This information is not available while emitting .debug_loc entries.
+  return false;
 }
 
 //===----------------------------------------------------------------------===//
