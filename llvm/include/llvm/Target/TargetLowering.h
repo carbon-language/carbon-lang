@@ -1500,6 +1500,14 @@ public:
     return isZExtFree(Val.getValueType(), VT2);
   }
 
+  /// Return true if an fpext operation is free (for instance, because
+  /// single-precision floating-point numbers are implicitly extended to
+  /// double-precision).
+  virtual bool isFPExtFree(EVT VT) const {
+    assert(VT.isFloatingPoint());
+    return false;
+  }
+
   /// Return true if an fneg operation is free to the point where it is never
   /// worthwhile to replace it with a bitwise operation.
   virtual bool isFNegFree(EVT VT) const {

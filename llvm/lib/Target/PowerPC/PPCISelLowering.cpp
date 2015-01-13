@@ -9817,6 +9817,11 @@ bool PPCTargetLowering::isZExtFree(SDValue Val, EVT VT2) const {
   return TargetLowering::isZExtFree(Val, VT2);
 }
 
+bool PPCTargetLowering::isFPExtFree(EVT VT) const {
+  assert(VT.isFloatingPoint());
+  return true;
+}
+
 bool PPCTargetLowering::isLegalICmpImmediate(int64_t Imm) const {
   return isInt<16>(Imm) || isUInt<16>(Imm);
 }
