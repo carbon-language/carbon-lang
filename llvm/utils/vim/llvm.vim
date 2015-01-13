@@ -62,7 +62,7 @@ syn keyword llvmKeyword uselistorder_bb
 syn keyword llvmError  getresult begin end
 
 " Misc syntax.
-syn match   llvmNoName /[%@]\d\+\>/
+syn match   llvmNoName /[%@!]\d\+\>/
 syn match   llvmNumber /-\?\<\d\+\>/
 syn match   llvmFloat  /-\?\<\d\+\.\d*\(e[+-]\d\+\)\?\>/
 syn match   llvmFloat  /\<0x\x\+\>/
@@ -72,6 +72,11 @@ syn match   llvmComment /;.*$/
 syn region  llvmString start=/"/ skip=/\\"/ end=/"/
 syn match   llvmLabel /[-a-zA-Z$._][-a-zA-Z$._0-9]*:/
 syn match   llvmIdentifier /[%@][-a-zA-Z$._][-a-zA-Z$._0-9]*/
+
+" Named metadata and specialized metadata keywords.
+syn match   llvmIdentifier /![-a-zA-Z$._][-a-zA-Z$._0-9]*\ze\s*$/
+syn match   llvmIdentifier /![-a-zA-Z$._][-a-zA-Z$._0-9]*\ze\s*[=!]/
+syn match   llvmType /!\zs\a\+\ze\s*(/
 
 " Syntax-highlight dejagnu test commands.
 syn match  llvmSpecialComment /;\s*RUN:.*$/

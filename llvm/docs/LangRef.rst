@@ -2883,6 +2883,23 @@ attached to the ``add`` instruction using the ``!dbg`` identifier:
 More information about specific metadata nodes recognized by the
 optimizers and code generator is found below.
 
+Specialized Metadata Nodes
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Specialized metadata nodes are custom data structures in metadata (as opposed
+to generic tuples).  Their fields are labelled, and can be specified in any
+order.
+
+MDLocation
+""""""""""
+
+``MDLocation`` nodes represent source debug locations.  The ``scope:`` field is
+mandatory.
+
+.. code-block:: llvm
+
+    !0 = !MDLocation(line: 2900, column: 42, scope: !1, inlinedAt: !2)
+
 '``tbaa``' Metadata
 ^^^^^^^^^^^^^^^^^^^
 

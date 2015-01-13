@@ -282,7 +282,8 @@ static bool isIntOrIntVectorValue(const std::pair<const Value*, unsigned> &V) {
   return V.first->getType()->isIntOrIntVectorTy();
 }
 
-ValueEnumerator::ValueEnumerator(const Module &M) : HasMDString(false) {
+ValueEnumerator::ValueEnumerator(const Module &M)
+    : HasMDString(false), HasMDLocation(false) {
   if (shouldPreserveBitcodeUseListOrder())
     UseListOrders = predictUseListOrder(M);
 
@@ -547,6 +548,7 @@ void ValueEnumerator::EnumerateMetadata(const Metadata *MD) {
     EnumerateValue(C->getValue());
 
   HasMDString |= isa<MDString>(MD);
+  HasMDLocation |= isa<MDLocation>(MD);
 
   // Replace the dummy ID inserted above with the correct one.  MDValueMap may
   // have changed by inserting operands, so we need a fresh lookup here.

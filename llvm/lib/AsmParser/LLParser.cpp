@@ -587,8 +587,11 @@ bool LLParser::ParseStandaloneMetadata() {
     return TokError("unexpected type in metadata definition");
 
   bool IsDistinct = EatIfPresent(lltok::kw_distinct);
-  if (ParseToken(lltok::exclaim, "Expected '!' here") ||
-      ParseMDTuple(Init, IsDistinct))
+  if (Lex.getKind() == lltok::MetadataVar) {
+    if (ParseSpecializedMDNode(Init, IsDistinct))
+      return true;
+  } else if (ParseToken(lltok::exclaim, "Expected '!' here") ||
+             ParseMDTuple(Init, IsDistinct))
     return true;
 
   // See if this was forward referenced, if so, handle it.
@@ -2902,7 +2905,11 @@ bool LLParser::ParseMDTuple(MDNode *&MD, bool IsDistinct) {
 /// MDNode:
 ///  ::= !{ ... }
 ///  ::= !7
+///  ::= !MDLocation(...)
 bool LLParser::ParseMDNode(MDNode *&N) {
+  if (Lex.getKind() == lltok::MetadataVar)
+    return ParseSpecializedMDNode(N);
+
   return ParseToken(lltok::exclaim, "expected '!' here") ||
          ParseMDNodeTail(N);
 }
@@ -2915,6 +2922,106 @@ bool LLParser::ParseMDNodeTail(MDNode *&N) {
   // !42
   return ParseMDNodeID(N);
 }
+
+bool LLParser::ParseMDField(LocTy Loc, StringRef Name,
+                            MDUnsignedField<uint32_t> &Result) {
+  if (Result.Seen)
+    return Error(Loc,
+                 "field '" + Name + "' cannot be specified more than once");
+
+  if (Lex.getKind() != lltok::APSInt || Lex.getAPSIntVal().isSigned())
+    return TokError("expected unsigned integer");
+  uint64_t Val64 = Lex.getAPSIntVal().getLimitedValue(Result.Max + 1ull);
+
+  if (Val64 > Result.Max)
+    return TokError("value for '" + Name + "' too large, limit is " +
+                    Twine(Result.Max));
+  Result.assign(Val64);
+  Lex.Lex();
+  return false;
+}
+
+bool LLParser::ParseMDField(LocTy Loc, StringRef Name, MDField &Result) {
+  if (Result.Seen)
+    return Error(Loc,
+                 "field '" + Name + "' cannot be specified more than once");
+
+  Metadata *MD;
+  if (ParseMetadata(MD, nullptr))
+    return true;
+
+  Result.assign(MD);
+  return false;
+}
+
+template <class ParserTy>
+bool LLParser::ParseMDFieldsImpl(ParserTy parseField) {
+  assert(Lex.getKind() == lltok::MetadataVar && "Expected metadata type name");
+  Lex.Lex();
+
+  if (ParseToken(lltok::lparen, "expected '(' here"))
+    return true;
+  if (EatIfPresent(lltok::rparen))
+    return false;
+
+  do {
+    if (Lex.getKind() != lltok::LabelStr)
+      return TokError("expected field label here");
+
+    if (parseField())
+      return true;
+  } while (EatIfPresent(lltok::comma));
+
+  return ParseToken(lltok::rparen, "expected ')' here");
+}
+
+bool LLParser::ParseSpecializedMDNode(MDNode *&N, bool IsDistinct) {
+  assert(Lex.getKind() == lltok::MetadataVar && "Expected metadata type name");
+#define DISPATCH_TO_PARSER(CLASS)                                              \
+  if (Lex.getStrVal() == #CLASS)                                               \
+    return Parse##CLASS(N, IsDistinct);
+
+  DISPATCH_TO_PARSER(MDLocation);
+#undef DISPATCH_TO_PARSER
+
+  return TokError("expected metadata type");
+}
+
+#define PARSE_MD_FIELD(NAME)                                                   \
+  do {                                                                         \
+    if (Lex.getStrVal() == #NAME) {                                            \
+      LocTy Loc = Lex.getLoc();                                                \
+      Lex.Lex();                                                               \
+      if (ParseMDField(Loc, #NAME, NAME))                                      \
+        return true;                                                           \
+      return false;                                                            \
+    }                                                                          \
+  } while (0)
+
+/// ParseMDLocationFields:
+///   ::= !MDLocation(line: 43, column: 8, scope: !5, inlinedAt: !6)
+bool LLParser::ParseMDLocation(MDNode *&Result, bool IsDistinct) {
+  MDUnsignedField<uint32_t> line(0, ~0u >> 8);
+  MDUnsignedField<uint32_t> column(0, ~0u >> 24);
+  MDField scope;
+  MDField inlinedAt;
+  if (ParseMDFieldsImpl([&]() -> bool {
+        PARSE_MD_FIELD(line);
+        PARSE_MD_FIELD(column);
+        PARSE_MD_FIELD(scope);
+        PARSE_MD_FIELD(inlinedAt);
+        return TokError(Twine("invalid field '") + Lex.getStrVal() + "'");
+      }))
+    return true;
+
+  if (!scope.Seen)
+    return TokError("missing required field 'scope'");
+
+  auto get = (IsDistinct ? MDLocation::getDistinct : MDLocation::get);
+  Result = get(Context, line.Val, column.Val, scope.Val, inlinedAt.Val);
+  return false;
+}
+#undef PARSE_MD_FIELD
 
 /// ParseMetadataAsValue
 ///  ::= metadata i32 %local
@@ -2960,7 +3067,16 @@ bool LLParser::ParseValueAsMetadata(Metadata *&MD, PerFunctionState *PFS) {
 ///  ::= !42
 ///  ::= !{...}
 ///  ::= !"string"
+///  ::= !MDLocation(...)
 bool LLParser::ParseMetadata(Metadata *&MD, PerFunctionState *PFS) {
+  if (Lex.getKind() == lltok::MetadataVar) {
+    MDNode *N;
+    if (ParseSpecializedMDNode(N))
+      return true;
+    MD = N;
+    return false;
+  }
+
   // ValueAsMetadata:
   // <type> <value>
   if (Lex.getKind() != lltok::exclaim)

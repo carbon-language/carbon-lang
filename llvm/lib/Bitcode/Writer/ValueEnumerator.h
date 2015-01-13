@@ -65,6 +65,7 @@ private:
   typedef DenseMap<const Metadata *, unsigned> MetadataMapType;
   MetadataMapType MDValueMap;
   bool HasMDString;
+  bool HasMDLocation;
 
   typedef DenseMap<AttributeSet, unsigned> AttributeGroupMapType;
   AttributeGroupMapType AttributeGroupMap;
@@ -111,6 +112,7 @@ public:
   unsigned getMetadataID(const Metadata *V) const;
 
   bool hasMDString() const { return HasMDString; }
+  bool hasMDLocation() const { return HasMDLocation; }
 
   unsigned getTypeID(Type *T) const {
     TypeMapType::const_iterator I = TypeMap.find(T);

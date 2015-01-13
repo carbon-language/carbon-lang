@@ -80,6 +80,31 @@ namespace llvm {
     }
   };
 
+  /// Structure to represent an optional metadata field.
+  template <class FieldTy> struct MDFieldImpl {
+    typedef MDFieldImpl ImplTy;
+    FieldTy Val;
+    bool Seen;
+
+    void assign(FieldTy Val) {
+      Seen = true;
+      this->Val = Val;
+    }
+
+    explicit MDFieldImpl(FieldTy Default) : Val(Default), Seen(false) {}
+  };
+  template <class NumTy> struct MDUnsignedField : public MDFieldImpl<NumTy> {
+    typedef typename MDUnsignedField::ImplTy ImplTy;
+    NumTy Max;
+
+    MDUnsignedField(NumTy Default = 0,
+                    NumTy Max = std::numeric_limits<NumTy>::max())
+        : ImplTy(Default), Max(Max) {}
+  };
+  struct MDField : public MDFieldImpl<Metadata *> {
+    MDField() : ImplTy(nullptr) {}
+  };
+
   class LLParser {
   public:
     typedef LLLexer::LocTy LocTy;
@@ -392,6 +417,13 @@ namespace llvm {
     bool ParseMDNodeTail(MDNode *&MD);
     bool ParseMDNodeVector(SmallVectorImpl<Metadata *> &MDs);
     bool ParseInstructionMetadata(Instruction *Inst, PerFunctionState *PFS);
+
+    bool ParseMDField(LocTy Loc, StringRef Name,
+                      MDUnsignedField<uint32_t> &Result);
+    bool ParseMDField(LocTy Loc, StringRef Name, MDField &Result);
+    template <class ParserTy> bool ParseMDFieldsImpl(ParserTy parseField);
+    bool ParseSpecializedMDNode(MDNode *&N, bool IsDistinct = false);
+    bool ParseMDLocation(MDNode *&Result, bool IsDistinct);
 
     // Function Parsing.
     struct ArgInfo {
