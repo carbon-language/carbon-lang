@@ -46,11 +46,11 @@
 #include "llvm/IR/BasicBlock.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/Module.h"
+#include "llvm/IR/PassManager.h"
 #include "llvm/Support/Allocator.h"
 #include <iterator>
 
 namespace llvm {
-class ModuleAnalysisManager;
 class PreservedAnalyses;
 class raw_ostream;
 

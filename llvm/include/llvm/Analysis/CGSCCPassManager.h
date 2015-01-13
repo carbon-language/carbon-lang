@@ -26,7 +26,13 @@
 
 namespace llvm {
 
-class CGSCCAnalysisManager;
+/// \brief The CGSCC analysis manager.
+///
+/// See the documentation for the AnalysisManager template for detail
+/// documentation. This typedef serves as a convenient way to refer to this
+/// construct in the adaptors and proxies used to integrate this into the larger
+/// pass manager infrastructure.
+typedef AnalysisManager<LazyCallGraph::SCC> CGSCCAnalysisManager;
 
 class CGSCCPassManager {
 public:
@@ -65,92 +71,6 @@ private:
   CGSCCPassManager &operator=(const CGSCCPassManager &) LLVM_DELETED_FUNCTION;
 
   std::vector<std::unique_ptr<CGSCCPassConcept>> Passes;
-};
-
-/// \brief A function analysis manager to coordinate and cache analyses run over
-/// a module.
-class CGSCCAnalysisManager
-    : public detail::AnalysisManagerBase<CGSCCAnalysisManager,
-                                         LazyCallGraph::SCC> {
-  friend class detail::AnalysisManagerBase<CGSCCAnalysisManager,
-                                           LazyCallGraph::SCC>;
-  typedef detail::AnalysisManagerBase<CGSCCAnalysisManager, LazyCallGraph::SCC>
-      BaseT;
-  typedef BaseT::ResultConceptT ResultConceptT;
-  typedef BaseT::PassConceptT PassConceptT;
-
-public:
-  // Most public APIs are inherited from the CRTP base class.
-
-  // We have to explicitly define all the special member functions because MSVC
-  // refuses to generate them.
-  CGSCCAnalysisManager() {}
-  CGSCCAnalysisManager(CGSCCAnalysisManager &&Arg)
-      : BaseT(std::move(static_cast<BaseT &>(Arg))),
-        CGSCCAnalysisResults(std::move(Arg.CGSCCAnalysisResults)) {}
-  CGSCCAnalysisManager &operator=(CGSCCAnalysisManager &&RHS) {
-    BaseT::operator=(std::move(static_cast<BaseT &>(RHS)));
-    CGSCCAnalysisResults = std::move(RHS.CGSCCAnalysisResults);
-    return *this;
-  }
-
-  /// \brief Returns true if the analysis manager has an empty results cache.
-  bool empty() const;
-
-  /// \brief Clear the function analysis result cache.
-  ///
-  /// This routine allows cleaning up when the set of functions itself has
-  /// potentially changed, and thus we can't even look up a a result and
-  /// invalidate it directly. Notably, this does *not* call invalidate
-  /// functions as there is nothing to be done for them.
-  void clear();
-
-private:
-  CGSCCAnalysisManager(const CGSCCAnalysisManager &) LLVM_DELETED_FUNCTION;
-  CGSCCAnalysisManager &
-  operator=(const CGSCCAnalysisManager &) LLVM_DELETED_FUNCTION;
-
-  /// \brief Get a function pass result, running the pass if necessary.
-  ResultConceptT &getResultImpl(void *PassID, LazyCallGraph::SCC &C);
-
-  /// \brief Get a cached function pass result or return null.
-  ResultConceptT *getCachedResultImpl(void *PassID,
-                                      LazyCallGraph::SCC &C) const;
-
-  /// \brief Invalidate a function pass result.
-  void invalidateImpl(void *PassID, LazyCallGraph::SCC &C);
-
-  /// \brief Invalidate the results for a function..
-  PreservedAnalyses invalidateImpl(LazyCallGraph::SCC &C, PreservedAnalyses PA);
-
-  /// \brief List of function analysis pass IDs and associated concept pointers.
-  ///
-  /// Requires iterators to be valid across appending new entries and arbitrary
-  /// erases. Provides both the pass ID and concept pointer such that it is
-  /// half of a bijection and provides storage for the actual result concept.
-  typedef std::list<std::pair<
-      void *,
-      std::unique_ptr<detail::AnalysisResultConcept<LazyCallGraph::SCC>>>>
-      CGSCCAnalysisResultListT;
-
-  /// \brief Map type from function pointer to our custom list type.
-  typedef DenseMap<LazyCallGraph::SCC *, CGSCCAnalysisResultListT>
-      CGSCCAnalysisResultListMapT;
-
-  /// \brief Map from function to a list of function analysis results.
-  ///
-  /// Provides linear time removal of all analysis results for a function and
-  /// the ultimate storage for a particular cached analysis result.
-  CGSCCAnalysisResultListMapT CGSCCAnalysisResultLists;
-
-  /// \brief Map type from a pair of analysis ID and function pointer to an
-  /// iterator into a particular result list.
-  typedef DenseMap<std::pair<void *, LazyCallGraph::SCC *>,
-                   CGSCCAnalysisResultListT::iterator> CGSCCAnalysisResultMapT;
-
-  /// \brief Map from an analysis ID and function to a particular cached
-  /// analysis result.
-  CGSCCAnalysisResultMapT CGSCCAnalysisResults;
 };
 
 /// \brief A module analysis which acts as a proxy for a CGSCC analysis

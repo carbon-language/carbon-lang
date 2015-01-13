@@ -17,12 +17,10 @@
 #define LLVM_TOOLS_OPT_PASSES_H
 
 #include "llvm/ADT/StringRef.h"
+#include "llvm/IR/PassManager.h"
+#include "llvm/Analysis/CGSCCPassManager.h"
 
 namespace llvm {
-class CGSCCAnalysisManager;
-class FunctionAnalysisManager;
-class ModuleAnalysisManager;
-class ModulePassManager;
 
 /// \brief Registers all available module analysis passes.
 ///
