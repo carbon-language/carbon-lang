@@ -661,9 +661,9 @@ AssemblyParse_x86::get_non_call_site_unwind_plan (UnwindPlan &unwind_plan)
     // If there is an epilogue in the middle of the function, after that epilogue we'll reinstate
     // the unwind setup -- we assume that some code path jumps over the mid-function epilogue
 
-    bool in_epilogue = false;                          // we're in the middle of an epilogue sequence
     UnwindPlan::RowSP prologue_completed_row;          // copy of prologue row of CFI
     int prologue_completed_sp_bytes_offset_from_cfa;   // The sp value before the epilogue started executed
+    std::vector<bool> prologue_completed_saved_registers;
 
     Target *target = m_exe_ctx.GetTargetPtr();
     while (m_func_bounds.ContainsFileAddress (m_cur_insn))
@@ -672,7 +672,8 @@ AssemblyParse_x86::get_non_call_site_unwind_plan (UnwindPlan &unwind_plan)
         int machine_regno;          // register numbers masked directly out of instructions
         uint32_t lldb_regno;        // register numbers in lldb's eRegisterKindLLDB numbering scheme
 
-        bool row_updated = false;
+        bool in_epilogue = false;                          // we're in the middle of an epilogue sequence
+        bool row_updated = false;                          // The UnwindPlan::Row 'row' has been updated
 
         if (!instruction_length (m_cur_insn, insn_len) || insn_len == 0 || insn_len > kMaxInstructionByteSize)
         {
@@ -814,6 +815,13 @@ AssemblyParse_x86::get_non_call_site_unwind_plan (UnwindPlan &unwind_plan)
             row.reset (newrow);
             current_sp_bytes_offset_from_cfa = prologue_completed_sp_bytes_offset_from_cfa;
 
+            saved_registers.clear();
+            saved_registers.resize(prologue_completed_saved_registers.size(), false);
+            for (size_t i = 0; i < prologue_completed_saved_registers.size(); ++i)
+            {
+                saved_registers[i] = prologue_completed_saved_registers[i];
+            }
+
             in_epilogue = true;
             row_updated = true;
         }
@@ -851,6 +859,13 @@ AssemblyParse_x86::get_non_call_site_unwind_plan (UnwindPlan &unwind_plan)
             UnwindPlan::Row *newrow = new UnwindPlan::Row;
             *newrow = *row.get();
             prologue_completed_row.reset (newrow);
+
+            prologue_completed_saved_registers.clear();
+            prologue_completed_saved_registers.resize(saved_registers.size(), false);
+            for (size_t i = 0; i < saved_registers.size(); ++i)
+            {
+                prologue_completed_saved_registers[i] = saved_registers[i];
+            }
         }
 
         // We may change the sp value without adding a new Row necessarily -- keep
