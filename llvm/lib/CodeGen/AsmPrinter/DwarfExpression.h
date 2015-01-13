@@ -19,6 +19,7 @@
 namespace llvm {
 
 class AsmPrinter;
+class ByteStreamer;
 class TargetRegisterInfo;
 
 /// Base class containing the logic for constructing DWARF expressions
@@ -29,6 +30,7 @@ protected:
   const AsmPrinter &AP;
   // Various convenience accessors that extract things out of AsmPrinter.
   const TargetRegisterInfo *getTRI() const;
+  unsigned getDwarfVersion() const;
 
 public:
   DwarfExpression(const AsmPrinter &AP) : AP(AP) {}
@@ -71,6 +73,26 @@ public:
   void AddMachineRegPiece(unsigned MachineReg,
                           unsigned PieceSizeInBits = 0,
                           unsigned PieceOffsetInBits = 0);
+
+  /// Emit a signed constant.
+  void AddSignedConstant(int Value);
+  /// Emit an unsigned constant.
+  void AddUnsignedConstant(unsigned Value);
+};
+
+
+/// DwarfExpression implementation for .debug_loc entries.
+class DebugLocDwarfExpression : public DwarfExpression {
+  ByteStreamer &BS;
+
+public:
+  DebugLocDwarfExpression(const AsmPrinter &AP, ByteStreamer &BS)
+      : DwarfExpression(AP), BS(BS) {}
+
+  void EmitOp(uint8_t Op, const char *Comment) override;
+  void EmitSigned(int Value) override;
+  void EmitUnsigned(unsigned Value) override;
+  unsigned getFrameRegister() override;
 };
 
 }

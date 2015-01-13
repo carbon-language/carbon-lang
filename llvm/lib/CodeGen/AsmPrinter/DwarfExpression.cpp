@@ -21,14 +21,17 @@
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Target/TargetSubtargetInfo.h"
 
-
 using namespace llvm;
 
 const TargetRegisterInfo *DwarfExpression::getTRI() const {
   return AP.TM.getSubtargetImpl()->getRegisterInfo();
 }
 
-void DwarfExpression::AddReg(int DwarfReg, const char* Comment) {
+unsigned DwarfExpression::getDwarfVersion() const {
+  return AP.getDwarfDebug()->getDwarfVersion();
+}
+
+void DwarfExpression::AddReg(int DwarfReg, const char *Comment) {
   assert(DwarfReg >= 0 && "invalid negative dwarf register number");
   if (DwarfReg < 32) {
     EmitOp(dwarf::DW_OP_reg0 + DwarfReg, Comment);
@@ -51,8 +54,7 @@ void DwarfExpression::AddRegIndirect(int DwarfReg, int Offset, bool Deref) {
     EmitOp(dwarf::DW_OP_deref);
 }
 
-void DwarfExpression::AddOpPiece(unsigned SizeInBits,
-                                 unsigned OffsetInBits) {
+void DwarfExpression::AddOpPiece(unsigned SizeInBits, unsigned OffsetInBits) {
   assert(SizeInBits > 0 && "piece has size zero");
   const unsigned SizeOfByte = 8;
   if (OffsetInBits > 0 || SizeInBits % SizeOfByte) {
@@ -163,4 +165,29 @@ void DwarfExpression::AddMachineRegPiece(unsigned MachineReg,
   if (CurPos == PieceOffsetInBits)
     // FIXME: We have no reasonable way of handling errors in here.
     EmitOp(dwarf::DW_OP_nop, "nop (could not find a dwarf register number)");
+}
+
+void DwarfExpression::AddSignedConstant(int Value) {
+  EmitOp(dwarf::DW_OP_consts);
+  EmitSigned(Value);
+  // The proper way to describe a constant value is
+  // DW_OP_constu <const>, DW_OP_stack_value.
+  // Unfortunately, DW_OP_stack_value was not available until DWARF-4,
+  // so we will continue to generate DW_OP_constu <const> for DWARF-2
+  // and DWARF-3. Technically, this is incorrect since DW_OP_const <const>
+  // actually describes a value at a constant addess, not a constant value.
+  // However, in the past there was no better way  to describe a constant
+  // value, so the producers and consumers started to rely on heuristics
+  // to disambiguate the value vs. location status of the expression.
+  // See PR21176 for more details.
+  if (getDwarfVersion() >= 4)
+    EmitOp(dwarf::DW_OP_stack_value);
+}
+
+void DwarfExpression::AddUnsignedConstant(unsigned Value) {
+  EmitOp(dwarf::DW_OP_constu);
+  EmitUnsigned(Value);
+  // cf. comment in DwarfExpression::AddSignedConstant().
+  if (getDwarfVersion() >= 4)
+    EmitOp(dwarf::DW_OP_stack_value);
 }

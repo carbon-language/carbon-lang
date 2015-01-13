@@ -14,6 +14,7 @@
 #include "DwarfDebug.h"
 
 #include "ByteStreamer.h"
+#include "DwarfExpression.h"
 #include "DwarfCompileUnit.h"
 #include "DIEHash.h"
 #include "DwarfUnit.h"
@@ -1717,29 +1718,15 @@ void DwarfDebug::emitDebugLocEntry(ByteStreamer &Streamer,
 void DwarfDebug::emitDebugLocValue(ByteStreamer &Streamer,
                                    const DebugLocEntry::Value &Value) {
   DIVariable DV = Value.getVariable();
+  DebugLocDwarfExpression Expr(*Asm, Streamer);
   // Regular entry.
   if (Value.isInt()) {
     DIBasicType BTy(resolve(DV.getType()));
     if (BTy.Verify() && (BTy.getEncoding() == dwarf::DW_ATE_signed ||
-                         BTy.getEncoding() == dwarf::DW_ATE_signed_char)) {
-      Streamer.EmitInt8(dwarf::DW_OP_consts, "DW_OP_consts");
-      Streamer.EmitSLEB128(Value.getInt());
-    } else {
-      Streamer.EmitInt8(dwarf::DW_OP_constu, "DW_OP_constu");
-      Streamer.EmitULEB128(Value.getInt());
-    }
-    // The proper way to describe a constant value is 
-    // DW_OP_constu <const>, DW_OP_stack_value. 
-    // Unfortunately, DW_OP_stack_value was not available until DWARF-4,
-    // so we will continue to generate DW_OP_constu <const> for DWARF-2
-    // and DWARF-3. Technically, this is incorrect since DW_OP_const <const>
-    // actually describes a value at a constant addess, not a constant value. 
-    // However, in the past there was no better way  to describe a constant 
-    // value, so the producers and consumers started to rely on heuristics 
-    // to disambiguate the value vs. location status of the expression. 
-    // See PR21176 for more details.
-    if (getDwarfVersion() >= 4)
-      Streamer.EmitInt8(dwarf::DW_OP_stack_value, "DW_OP_stack_value");
+                         BTy.getEncoding() == dwarf::DW_ATE_signed_char))
+      Expr.AddSignedConstant(Value.getInt());
+    else
+      Expr.AddUnsignedConstant(Value.getInt());
   } else if (Value.isLocation()) {
     MachineLocation Loc = Value.getLoc();
     DIExpression Expr = Value.getExpression();

@@ -32,30 +32,22 @@ using namespace llvm;
 
 #define DEBUG_TYPE "asm-printer"
 
-/// DwarfExpression implementation for .debug_loc entries.
-class DebugLocDwarfExpression : public DwarfExpression {
-  ByteStreamer &BS;
-
-public:
-  DebugLocDwarfExpression(const AsmPrinter &AP, ByteStreamer &BS)
-      : DwarfExpression(AP), BS(BS) {}
-
-  void EmitOp(uint8_t Op, const char *Comment) override;
-  void EmitSigned(int Value) override;
-  void EmitUnsigned(unsigned Value) override;
-  unsigned getFrameRegister() override { llvm_unreachable("not available"); };
-};
-
 void DebugLocDwarfExpression::EmitOp(uint8_t Op, const char *Comment) {
   BS.EmitInt8(
       Op, Comment ? Twine(Comment) + " " + dwarf::OperationEncodingString(Op)
                   : dwarf::OperationEncodingString(Op));
 }
+
 void DebugLocDwarfExpression::EmitSigned(int Value) {
   BS.EmitSLEB128(Value, Twine(Value));
 }
+
 void DebugLocDwarfExpression::EmitUnsigned(unsigned Value) {
   BS.EmitULEB128(Value, Twine(Value));
+}
+
+unsigned DebugLocDwarfExpression::getFrameRegister() {
+ llvm_unreachable("not available");
 }
 
 //===----------------------------------------------------------------------===//
