@@ -131,8 +131,8 @@ foreach Index = 0-31 in {
 }
 
 // The reprsentation of r0 when treated as the constant 0.
-def ZERO  : GPR<0, "0">;
-def ZERO8 : GP8<ZERO, "0">;
+def ZERO  : GPR<0, "0">,    DwarfRegAlias<R0>;
+def ZERO8 : GP8<ZERO, "0">, DwarfRegAlias<X0>;
 
 // Representations of the frame pointer used by ISD::FRAMEADDR.
 def FP   : GPR<0 /* arbitrary */, "**FRAME POINTER**">;
@@ -203,7 +203,7 @@ def VRSAVE: SPR<256, "vrsave">, DwarfRegNum<[109]>;
 // Carry bit.  In the architecture this is really bit 0 of the XER register
 // (which really is SPR register 1);  this is the only bit interesting to a
 // compiler.
-def CARRY: SPR<1, "ca">;
+def CARRY: SPR<1, "ca">, DwarfRegNum<[76]>;
 
 // FP rounding mode:  bits 30 and 31 of the FP status and control register
 // This is not allocated as a normal register; it appears only in
@@ -212,8 +212,7 @@ def CARRY: SPR<1, "ca">;
 // most registers, it has to be done in code; to make this work all the
 // return and call instructions are described as Uses of RM, so instructions
 // that do nothing but change RM will not get deleted.
-// Also, in the architecture it is not really a SPR; 512 is arbitrary.
-def RM: SPR<512, "**ROUNDING MODE**">;
+def RM: PPCReg<"**ROUNDING MODE**">;
 
 /// Register classes
 // Allocate volatiles first
