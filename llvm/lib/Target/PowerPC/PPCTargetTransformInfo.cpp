@@ -183,6 +183,15 @@ unsigned PPCTTI::getIntImmCost(Intrinsic::ID IID, unsigned Idx,
     if ((Idx == 1) && Imm.getBitWidth() <= 64 && isInt<16>(Imm.getSExtValue()))
       return TCC_Free;
     break;
+  case Intrinsic::experimental_stackmap:
+    if ((Idx < 2) || (Imm.getBitWidth() <= 64 && isInt<64>(Imm.getSExtValue())))
+      return TCC_Free;
+    break;
+  case Intrinsic::experimental_patchpoint_void:
+  case Intrinsic::experimental_patchpoint_i64:
+    if ((Idx < 4) || (Imm.getBitWidth() <= 64 && isInt<64>(Imm.getSExtValue())))
+      return TCC_Free;
+    break;
   }
   return PPCTTI::getIntImmCost(Imm, Ty);
 }

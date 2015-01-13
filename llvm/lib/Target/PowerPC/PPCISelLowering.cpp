@@ -13,6 +13,7 @@
 
 #include "PPCISelLowering.h"
 #include "MCTargetDesc/PPCPredicates.h"
+#include "PPCCallingConv.h"
 #include "PPCMachineFunctionInfo.h"
 #include "PPCPerfectShuffle.h"
 #include "PPCTargetMachine.h"
@@ -3590,6 +3591,7 @@ static bool isFunctionGlobalAddress(SDValue Callee) {
 static
 unsigned PrepareCall(SelectionDAG &DAG, SDValue &Callee, SDValue &InFlag,
                      SDValue &Chain, SDLoc dl, int SPDiff, bool isTailCall,
+                     bool IsPatchPoint,
                      SmallVectorImpl<std::pair<unsigned, SDValue> > &RegsToPass,
                      SmallVectorImpl<SDValue> &Ops, std::vector<EVT> &NodeTys,
                      const PPCSubtarget &Subtarget) {
@@ -3663,7 +3665,7 @@ unsigned PrepareCall(SelectionDAG &DAG, SDValue &Callee, SDValue &InFlag,
     // to do the call, we can't use PPCISD::CALL.
     SDValue MTCTROps[] = {Chain, Callee, InFlag};
 
-    if (isSVR4ABI && isPPC64 && !isELFv2ABI) {
+    if (isSVR4ABI && isPPC64 && !isELFv2ABI && !IsPatchPoint) {
       // Function pointers in the 64-bit SVR4 ABI do not point to the function
       // entry point, but to the function descriptor (the function entry point
       // address is part of the function descriptor though).
@@ -3732,9 +3734,11 @@ unsigned PrepareCall(SelectionDAG &DAG, SDValue &Callee, SDValue &InFlag,
       MTCTROps[2] = InFlag;
     }
 
-    Chain = DAG.getNode(PPCISD::MTCTR, dl, NodeTys,
-                        makeArrayRef(MTCTROps, InFlag.getNode() ? 3 : 2));
-    InFlag = Chain.getValue(1);
+    if (!IsPatchPoint) {
+      Chain = DAG.getNode(PPCISD::MTCTR, dl, NodeTys,
+                          makeArrayRef(MTCTROps, InFlag.getNode() ? 3 : 2));
+      InFlag = Chain.getValue(1);
+    }
 
     NodeTys.clear();
     NodeTys.push_back(MVT::Other);
@@ -3743,7 +3747,7 @@ unsigned PrepareCall(SelectionDAG &DAG, SDValue &Callee, SDValue &InFlag,
     CallOpc = PPCISD::BCTRL;
     Callee.setNode(nullptr);
     // Add use of X11 (holding environment pointer)
-    if (isSVR4ABI && isPPC64 && !isELFv2ABI)
+    if (isSVR4ABI && isPPC64 && !isELFv2ABI && !IsPatchPoint)
       Ops.push_back(DAG.getRegister(PPC::X11, PtrVT));
     // Add CTR register as callee so a bctr can be emitted later.
     if (isTailCall)
@@ -3783,7 +3787,7 @@ unsigned PrepareCall(SelectionDAG &DAG, SDValue &Callee, SDValue &InFlag,
                                   RegsToPass[i].second.getValueType()));
 
   // Direct calls in the ELFv2 ABI need the TOC register live into the call.
-  if (Callee.getNode() && isELFv2ABI)
+  if (Callee.getNode() && isELFv2ABI && !IsPatchPoint)
     Ops.push_back(DAG.getRegister(PPC::X2, PtrVT));
 
   return CallOpc;
@@ -3846,7 +3850,7 @@ PPCTargetLowering::LowerCallResult(SDValue Chain, SDValue InFlag,
 
 SDValue
 PPCTargetLowering::FinishCall(CallingConv::ID CallConv, SDLoc dl,
-                              bool isTailCall, bool isVarArg,
+                              bool isTailCall, bool isVarArg, bool IsPatchPoint,
                               SelectionDAG &DAG,
                               SmallVector<std::pair<unsigned, SDValue>, 8>
                                 &RegsToPass,
@@ -3860,8 +3864,8 @@ PPCTargetLowering::FinishCall(CallingConv::ID CallConv, SDLoc dl,
   std::vector<EVT> NodeTys;
   SmallVector<SDValue, 8> Ops;
   unsigned CallOpc = PrepareCall(DAG, Callee, InFlag, Chain, dl, SPDiff,
-                                 isTailCall, RegsToPass, Ops, NodeTys,
-                                 Subtarget);
+                                 isTailCall, IsPatchPoint, RegsToPass, Ops,
+                                 NodeTys, Subtarget);
 
   // Add implicit use of CR bit 6 for 32-bit SVR4 vararg calls
   if (isVarArg && Subtarget.isSVR4ABI() && !Subtarget.isPPC64())
@@ -3963,6 +3967,7 @@ PPCTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
   bool &isTailCall                      = CLI.IsTailCall;
   CallingConv::ID CallConv              = CLI.CallConv;
   bool isVarArg                         = CLI.IsVarArg;
+  bool IsPatchPoint                     = CLI.IsPatchPoint;
 
   if (isTailCall)
     isTailCall = IsEligibleForTailCallOptimization(Callee, CallConv, isVarArg,
@@ -3975,23 +3980,23 @@ PPCTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
   if (Subtarget.isSVR4ABI()) {
     if (Subtarget.isPPC64())
       return LowerCall_64SVR4(Chain, Callee, CallConv, isVarArg,
-                              isTailCall, Outs, OutVals, Ins,
+                              isTailCall, IsPatchPoint, Outs, OutVals, Ins,
                               dl, DAG, InVals);
     else
       return LowerCall_32SVR4(Chain, Callee, CallConv, isVarArg,
-                              isTailCall, Outs, OutVals, Ins,
+                              isTailCall, IsPatchPoint, Outs, OutVals, Ins,
                               dl, DAG, InVals);
   }
 
   return LowerCall_Darwin(Chain, Callee, CallConv, isVarArg,
-                          isTailCall, Outs, OutVals, Ins,
+                          isTailCall, IsPatchPoint, Outs, OutVals, Ins,
                           dl, DAG, InVals);
 }
 
 SDValue
 PPCTargetLowering::LowerCall_32SVR4(SDValue Chain, SDValue Callee,
                                     CallingConv::ID CallConv, bool isVarArg,
-                                    bool isTailCall,
+                                    bool isTailCall, bool IsPatchPoint,
                                     const SmallVectorImpl<ISD::OutputArg> &Outs,
                                     const SmallVectorImpl<SDValue> &OutVals,
                                     const SmallVectorImpl<ISD::InputArg> &Ins,
@@ -4201,7 +4206,7 @@ PPCTargetLowering::LowerCall_32SVR4(SDValue Chain, SDValue Callee,
     PrepareTailCall(DAG, InFlag, Chain, dl, false, SPDiff, NumBytes, LROp, FPOp,
                     false, TailCallArguments);
 
-  return FinishCall(CallConv, dl, isTailCall, isVarArg, DAG,
+  return FinishCall(CallConv, dl, isTailCall, isVarArg, IsPatchPoint, DAG,
                     RegsToPass, InFlag, Chain, Callee, SPDiff, NumBytes,
                     Ins, InVals);
 }
@@ -4229,7 +4234,7 @@ PPCTargetLowering::createMemcpyOutsideCallSeq(SDValue Arg, SDValue PtrOff,
 SDValue
 PPCTargetLowering::LowerCall_64SVR4(SDValue Chain, SDValue Callee,
                                     CallingConv::ID CallConv, bool isVarArg,
-                                    bool isTailCall,
+                                    bool isTailCall, bool IsPatchPoint,
                                     const SmallVectorImpl<ISD::OutputArg> &Outs,
                                     const SmallVectorImpl<SDValue> &OutVals,
                                     const SmallVectorImpl<ISD::InputArg> &Ins,
@@ -4665,7 +4670,7 @@ PPCTargetLowering::LowerCall_64SVR4(SDValue Chain, SDValue Callee,
   // Check if this is an indirect call (MTCTR/BCTRL).
   // See PrepareCall() for more information about calls through function
   // pointers in the 64-bit SVR4 ABI.
-  if (!isTailCall &&
+  if (!isTailCall && !IsPatchPoint &&
       !isFunctionGlobalAddress(Callee) &&
       !isa<ExternalSymbolSDNode>(Callee)) {
     // Load r2 into a virtual register and store it to the TOC save area.
@@ -4679,7 +4684,7 @@ PPCTargetLowering::LowerCall_64SVR4(SDValue Chain, SDValue Callee,
     // In the ELFv2 ABI, R12 must contain the address of an indirect callee.
     // This does not mean the MTCTR instruction must use R12; it's easier
     // to model this as an extra parameter, so do that.
-    if (isELFv2ABI)
+    if (isELFv2ABI && !IsPatchPoint)
       RegsToPass.push_back(std::make_pair((unsigned)PPC::X12, Callee));
   }
 
@@ -4696,7 +4701,7 @@ PPCTargetLowering::LowerCall_64SVR4(SDValue Chain, SDValue Callee,
     PrepareTailCall(DAG, InFlag, Chain, dl, true, SPDiff, NumBytes, LROp,
                     FPOp, true, TailCallArguments);
 
-  return FinishCall(CallConv, dl, isTailCall, isVarArg, DAG,
+  return FinishCall(CallConv, dl, isTailCall, isVarArg, IsPatchPoint, DAG,
                     RegsToPass, InFlag, Chain, Callee, SPDiff, NumBytes,
                     Ins, InVals);
 }
@@ -4704,7 +4709,7 @@ PPCTargetLowering::LowerCall_64SVR4(SDValue Chain, SDValue Callee,
 SDValue
 PPCTargetLowering::LowerCall_Darwin(SDValue Chain, SDValue Callee,
                                     CallingConv::ID CallConv, bool isVarArg,
-                                    bool isTailCall,
+                                    bool isTailCall, bool IsPatchPoint,
                                     const SmallVectorImpl<ISD::OutputArg> &Outs,
                                     const SmallVectorImpl<SDValue> &OutVals,
                                     const SmallVectorImpl<ISD::InputArg> &Ins,
@@ -5089,7 +5094,7 @@ PPCTargetLowering::LowerCall_Darwin(SDValue Chain, SDValue Callee,
     PrepareTailCall(DAG, InFlag, Chain, dl, isPPC64, SPDiff, NumBytes, LROp,
                     FPOp, true, TailCallArguments);
 
-  return FinishCall(CallConv, dl, isTailCall, isVarArg, DAG,
+  return FinishCall(CallConv, dl, isTailCall, isVarArg, IsPatchPoint, DAG,
                     RegsToPass, InFlag, Chain, Callee, SPDiff, NumBytes,
                     Ins, InVals);
 }
@@ -7246,6 +7251,10 @@ PPCTargetLowering::emitEHSjLjLongJmp(MachineInstr *MI,
 MachineBasicBlock *
 PPCTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
                                                MachineBasicBlock *BB) const {
+  if (MI->getOpcode() == TargetOpcode::STACKMAP ||
+      MI->getOpcode() == TargetOpcode::PATCHPOINT)
+    return emitPatchPoint(MI, BB);
+
   if (MI->getOpcode() == PPC::EH_SjLj_SetJmp32 ||
       MI->getOpcode() == PPC::EH_SjLj_SetJmp64) {
     return emitEHSjLjSetJmp(MI, BB);
@@ -9880,6 +9889,19 @@ bool PPCTargetLowering::isFMAFasterThanFMulAndFAdd(EVT VT) const {
   }
 
   return false;
+}
+
+const MCPhysReg *
+PPCTargetLowering::getScratchRegisters(CallingConv::ID) const {
+  // LR is a callee-save register, but we must treat it as clobbered by any call
+  // site. Hence we include LR in the scratch registers, which are in turn added
+  // as implicit-defs for stackmaps and patchpoints. The same reasoning applies
+  // to CTR, which is used by any indirect call.
+  static const MCPhysReg ScratchRegs[] = {
+    PPC::X11, PPC::X12, PPC::LR8, PPC::CTR8, 0
+  };
+
+  return ScratchRegs;
 }
 
 bool

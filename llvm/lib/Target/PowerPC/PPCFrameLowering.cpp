@@ -450,6 +450,7 @@ bool PPCFrameLowering::needsFP(const MachineFunction &MF) const {
 
   return MF.getTarget().Options.DisableFramePointerElim(MF) ||
     MFI->hasVarSizedObjects() ||
+    MFI->hasStackMap() || MFI->hasPatchPoint() ||
     (MF.getTarget().Options.GuaranteedTailCallOpt &&
      MF.getInfo<PPCFunctionInfo>()->hasFastCall());
 }

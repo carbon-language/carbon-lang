@@ -28,8 +28,21 @@ class CCIfNotSubtarget<string F, CCAction A>
 // Return Value Calling Convention
 //===----------------------------------------------------------------------===//
 
+// PPC64 AnyReg return-value convention. No explicit register is specified for
+// the return-value. The register allocator is allowed and expected to choose
+// any free register.
+//
+// This calling convention is currently only supported by the stackmap and
+// patchpoint intrinsics. All other uses will result in an assert on Debug
+// builds. On Release builds we fallback to the PPC C calling convention.
+def RetCC_PPC64_AnyReg : CallingConv<[
+  CCCustom<"CC_PPC_AnyReg_Error">
+]>;
+
 // Return-value convention for PowerPC
 def RetCC_PPC : CallingConv<[
+  CCIfCC<"CallingConv::AnyReg", CCDelegateTo<RetCC_PPC64_AnyReg>>,
+
   // On PPC64, integer return values are always promoted to i64
   CCIfType<[i32, i1], CCIfSubtarget<"isPPC64()", CCPromoteToType<i64>>>,
   CCIfType<[i1], CCIfNotSubtarget<"isPPC64()", CCPromoteToType<i32>>>,
@@ -51,6 +64,15 @@ def RetCC_PPC : CallingConv<[
            CCAssignToReg<[VSH2, VSH3, VSH4, VSH5, VSH6, VSH7, VSH8, VSH9]>>
 ]>;
 
+// No explicit register is specified for the AnyReg calling convention. The
+// register allocator may assign the arguments to any free register.
+//
+// This calling convention is currently only supported by the stackmap and
+// patchpoint intrinsics. All other uses will result in an assert on Debug
+// builds. On Release builds we fallback to the PPC C calling convention.
+def CC_PPC64_AnyReg : CallingConv<[
+  CCCustom<"CC_PPC_AnyReg_Error">
+]>;
 
 // Note that we don't currently have calling conventions for 64-bit
 // PowerPC, but handle all the complexities of the ABI in the lowering
@@ -61,6 +83,8 @@ def RetCC_PPC : CallingConv<[
 // Only handle ints and floats.  All ints are promoted to i64.
 // Vector types and quadword ints are not handled.
 def CC_PPC64_ELF_FIS : CallingConv<[
+  CCIfCC<"CallingConv::AnyReg", CCDelegateTo<CC_PPC64_AnyReg>>,
+
   CCIfType<[i1],  CCPromoteToType<i64>>,
   CCIfType<[i8],  CCPromoteToType<i64>>,
   CCIfType<[i16], CCPromoteToType<i64>>,
@@ -74,6 +98,8 @@ def CC_PPC64_ELF_FIS : CallingConv<[
 // and multiple register returns are "supported" to avoid compile
 // errors, but none are handled by the fast selector.
 def RetCC_PPC64_ELF_FIS : CallingConv<[
+  CCIfCC<"CallingConv::AnyReg", CCDelegateTo<RetCC_PPC64_AnyReg>>,
+
   CCIfType<[i1],   CCPromoteToType<i64>>,
   CCIfType<[i8],   CCPromoteToType<i64>>,
   CCIfType<[i16],  CCPromoteToType<i64>>,
@@ -202,4 +228,16 @@ def CSR_SVR464   : CalleeSavedRegs<(add X14, X15, X16, X17, X18, X19, X20,
 def CSR_SVR464_Altivec : CalleeSavedRegs<(add CSR_SVR464, CSR_Altivec)>;
 
 def CSR_NoRegs : CalleeSavedRegs<(add)>;
+
+def CSR_64_AllRegs: CalleeSavedRegs<(add X0, (sequence "X%u", 3, 10),
+                                             (sequence "X%u", 14, 31),
+                                             (sequence "F%u", 0, 31),
+                                             (sequence "CR%u", 0, 7))>;
+
+def CSR_64_AllRegs_Altivec : CalleeSavedRegs<(add CSR_64_AllRegs,
+                                             (sequence "V%u", 0, 31))>;
+
+def CSR_64_AllRegs_VSX : CalleeSavedRegs<(add CSR_64_AllRegs_Altivec,
+                                         (sequence "VSL%u", 0, 31),
+                                         (sequence "VSH%u", 0, 31))>;
 
