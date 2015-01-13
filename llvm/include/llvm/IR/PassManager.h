@@ -56,13 +56,6 @@ namespace llvm {
 class Module;
 class Function;
 
-namespace detail {
-
-// Declare our debug option here so we can refer to it from templates.
-extern cl::opt<bool> DebugPM;
-
-} // End detail namespace
-
 /// \brief An abstract set of preserved analyses following a transformation pass
 /// run.
 ///
@@ -185,12 +178,18 @@ template <typename IRUnitT> class AnalysisManager;
 /// runs.
 template <typename IRUnitT> class PassManager {
 public:
+  /// \brief Construct a pass manager.
+  ///
+  /// It can be passed a flag to get debug logging as the passes are run.
+  PassManager(bool DebugLogging = false) : DebugLogging(DebugLogging) {}
   // We have to explicitly define all the special member functions because MSVC
   // refuses to generate them.
-  PassManager() {}
-  PassManager(PassManager &&Arg) : Passes(std::move(Arg.Passes)) {}
+  PassManager(PassManager &&Arg)
+      : Passes(std::move(Arg.Passes)),
+        DebugLogging(std::move(Arg.DebugLogging)) {}
   PassManager &operator=(PassManager &&RHS) {
     Passes = std::move(RHS.Passes);
+    DebugLogging = std::move(RHS.DebugLogging);
     return *this;
   }
 
@@ -198,11 +197,11 @@ public:
   PreservedAnalyses run(IRUnitT &IR, AnalysisManager<IRUnitT> *AM = nullptr) {
     PreservedAnalyses PA = PreservedAnalyses::all();
 
-    if (detail::DebugPM)
+    if (DebugLogging)
       dbgs() << "Starting pass manager run.\n";
 
     for (unsigned Idx = 0, Size = Passes.size(); Idx != Size; ++Idx) {
-      if (detail::DebugPM)
+      if (DebugLogging)
         dbgs() << "Running pass: " << Passes[Idx]->name() << "\n";
 
       PreservedAnalyses PassPA = Passes[Idx]->run(IR, AM);
@@ -226,7 +225,7 @@ public:
       //IR.getContext().yield();
     }
 
-    if (detail::DebugPM)
+    if (DebugLogging)
       dbgs() << "Finished pass manager run.\n";
 
     return PA;
@@ -246,6 +245,9 @@ private:
   PassManager &operator=(const PassManager &) LLVM_DELETED_FUNCTION;
 
   std::vector<std::unique_ptr<PassConceptT>> Passes;
+
+  /// \brief Flag indicating whether we should do debug logging.
+  bool DebugLogging;
 };
 
 /// \brief Convenience typedef for a pass manager over modules.
@@ -412,15 +414,22 @@ class AnalysisManager
 public:
   // Most public APIs are inherited from the CRTP base class.
 
+  /// \brief Construct an empty analysis manager.
+  ///
+  /// A flag can be passed to indicate that the manager should perform debug
+  /// logging.
+  AnalysisManager(bool DebugLogging = false) : DebugLogging(DebugLogging) {}
+
   // We have to explicitly define all the special member functions because MSVC
   // refuses to generate them.
-  AnalysisManager() {}
   AnalysisManager(AnalysisManager &&Arg)
       : BaseT(std::move(static_cast<BaseT &>(Arg))),
-        AnalysisResults(std::move(Arg.AnalysisResults)) {}
+        AnalysisResults(std::move(Arg.AnalysisResults)),
+        DebugLogging(std::move(Arg.DebugLogging)) {}
   AnalysisManager &operator=(AnalysisManager &&RHS) {
     BaseT::operator=(std::move(static_cast<BaseT &>(RHS)));
     AnalysisResults = std::move(RHS.AnalysisResults);
+    DebugLogging = std::move(RHS.DebugLogging);
     return *this;
   }
 
@@ -458,7 +467,7 @@ private:
     // run it to produce a result, which we then add to the cache.
     if (Inserted) {
       auto &P = this->lookupPass(PassID);
-      if (detail::DebugPM)
+      if (DebugLogging)
         dbgs() << "Running analysis: " << P.name() << "\n";
       AnalysisResultListT &ResultList = AnalysisResultLists[&IR];
       ResultList.emplace_back(PassID, P.run(IR, this));
@@ -482,7 +491,7 @@ private:
     if (RI == AnalysisResults.end())
       return;
 
-    if (detail::DebugPM)
+    if (DebugLogging)
       dbgs() << "Invalidating analysis: " << this->lookupPass(PassID).name()
              << "\n";
     AnalysisResultLists[&IR].erase(RI->second);
@@ -495,7 +504,7 @@ private:
     if (PA.areAllPreserved())
       return std::move(PA);
 
-    if (detail::DebugPM)
+    if (DebugLogging)
       dbgs() << "Invalidating all non-preserved analyses for: "
              << IR.getName() << "\n";
 
@@ -512,7 +521,7 @@ private:
       // necessary. The analysis pass can return false if no action on the part
       // of the analysis manager is required for this invalidation event.
       if (I->second->invalidate(IR, PA)) {
-        if (detail::DebugPM)
+        if (DebugLogging)
           dbgs() << "Invalidating analysis: " << this->lookupPass(PassID).name()
                  << "\n";
 
@@ -562,6 +571,9 @@ private:
   /// \brief Map from an analysis ID and function to a particular cached
   /// analysis result.
   AnalysisResultMapT AnalysisResults;
+
+  /// \brief A flag indicating whether debug logging is enabled.
+  bool DebugLogging;
 };
 
 /// \brief Convenience typedef for the Module analysis manager.

@@ -196,15 +196,16 @@ static bool parseFunctionPassName(FunctionPassManager &FPM, StringRef Name) {
 
 static bool parseFunctionPassPipeline(FunctionPassManager &FPM,
                                       StringRef &PipelineText,
-                                      bool VerifyEachPass) {
+                                      bool VerifyEachPass, bool DebugLogging) {
   for (;;) {
     // Parse nested pass managers by recursing.
     if (PipelineText.startswith("function(")) {
-      FunctionPassManager NestedFPM;
+      FunctionPassManager NestedFPM(DebugLogging);
 
       // Parse the inner pipeline inte the nested manager.
       PipelineText = PipelineText.substr(strlen("function("));
-      if (!parseFunctionPassPipeline(NestedFPM, PipelineText, VerifyEachPass) ||
+      if (!parseFunctionPassPipeline(NestedFPM, PipelineText, VerifyEachPass,
+                                     DebugLogging) ||
           PipelineText.empty())
         return false;
       assert(PipelineText[0] == ')');
@@ -232,16 +233,17 @@ static bool parseFunctionPassPipeline(FunctionPassManager &FPM,
 }
 
 static bool parseCGSCCPassPipeline(CGSCCPassManager &CGPM,
-                                      StringRef &PipelineText,
-                                      bool VerifyEachPass) {
+                                   StringRef &PipelineText, bool VerifyEachPass,
+                                   bool DebugLogging) {
   for (;;) {
     // Parse nested pass managers by recursing.
     if (PipelineText.startswith("cgscc(")) {
-      CGSCCPassManager NestedCGPM;
+      CGSCCPassManager NestedCGPM(DebugLogging);
 
       // Parse the inner pipeline into the nested manager.
       PipelineText = PipelineText.substr(strlen("cgscc("));
-      if (!parseCGSCCPassPipeline(NestedCGPM, PipelineText, VerifyEachPass) ||
+      if (!parseCGSCCPassPipeline(NestedCGPM, PipelineText, VerifyEachPass,
+                                  DebugLogging) ||
           PipelineText.empty())
         return false;
       assert(PipelineText[0] == ')');
@@ -250,11 +252,12 @@ static bool parseCGSCCPassPipeline(CGSCCPassManager &CGPM,
       // Add the nested pass manager with the appropriate adaptor.
       CGPM.addPass(std::move(NestedCGPM));
     } else if (PipelineText.startswith("function(")) {
-      FunctionPassManager NestedFPM;
+      FunctionPassManager NestedFPM(DebugLogging);
 
       // Parse the inner pipeline inte the nested manager.
       PipelineText = PipelineText.substr(strlen("function("));
-      if (!parseFunctionPassPipeline(NestedFPM, PipelineText, VerifyEachPass) ||
+      if (!parseFunctionPassPipeline(NestedFPM, PipelineText, VerifyEachPass,
+                                     DebugLogging) ||
           PipelineText.empty())
         return false;
       assert(PipelineText[0] == ')');
@@ -282,15 +285,16 @@ static bool parseCGSCCPassPipeline(CGSCCPassManager &CGPM,
 
 static bool parseModulePassPipeline(ModulePassManager &MPM,
                                     StringRef &PipelineText,
-                                    bool VerifyEachPass) {
+                                    bool VerifyEachPass, bool DebugLogging) {
   for (;;) {
     // Parse nested pass managers by recursing.
     if (PipelineText.startswith("module(")) {
-      ModulePassManager NestedMPM;
+      ModulePassManager NestedMPM(DebugLogging);
 
       // Parse the inner pipeline into the nested manager.
       PipelineText = PipelineText.substr(strlen("module("));
-      if (!parseModulePassPipeline(NestedMPM, PipelineText, VerifyEachPass) ||
+      if (!parseModulePassPipeline(NestedMPM, PipelineText, VerifyEachPass,
+                                   DebugLogging) ||
           PipelineText.empty())
         return false;
       assert(PipelineText[0] == ')');
@@ -299,11 +303,12 @@ static bool parseModulePassPipeline(ModulePassManager &MPM,
       // Now add the nested manager as a module pass.
       MPM.addPass(std::move(NestedMPM));
     } else if (PipelineText.startswith("cgscc(")) {
-      CGSCCPassManager NestedCGPM;
+      CGSCCPassManager NestedCGPM(DebugLogging);
 
       // Parse the inner pipeline inte the nested manager.
       PipelineText = PipelineText.substr(strlen("cgscc("));
-      if (!parseCGSCCPassPipeline(NestedCGPM, PipelineText, VerifyEachPass) ||
+      if (!parseCGSCCPassPipeline(NestedCGPM, PipelineText, VerifyEachPass,
+                                  DebugLogging) ||
           PipelineText.empty())
         return false;
       assert(PipelineText[0] == ')');
@@ -313,11 +318,12 @@ static bool parseModulePassPipeline(ModulePassManager &MPM,
       MPM.addPass(
           createModuleToPostOrderCGSCCPassAdaptor(std::move(NestedCGPM)));
     } else if (PipelineText.startswith("function(")) {
-      FunctionPassManager NestedFPM;
+      FunctionPassManager NestedFPM(DebugLogging);
 
       // Parse the inner pipeline inte the nested manager.
       PipelineText = PipelineText.substr(strlen("function("));
-      if (!parseFunctionPassPipeline(NestedFPM, PipelineText, VerifyEachPass) ||
+      if (!parseFunctionPassPipeline(NestedFPM, PipelineText, VerifyEachPass,
+                                     DebugLogging) ||
           PipelineText.empty())
         return false;
       assert(PipelineText[0] == ')');
@@ -348,11 +354,11 @@ static bool parseModulePassPipeline(ModulePassManager &MPM,
 // FIXME: Should this routine accept a TargetMachine or require the caller to
 // pre-populate the analysis managers with target-specific stuff?
 bool llvm::parsePassPipeline(ModulePassManager &MPM, StringRef PipelineText,
-                             bool VerifyEachPass) {
+                             bool VerifyEachPass, bool DebugLogging) {
   // By default, try to parse the pipeline as-if it were within an implicit
   // 'module(...)' pass pipeline. If this will parse at all, it needs to
   // consume the entire string.
-  if (parseModulePassPipeline(MPM, PipelineText, VerifyEachPass))
+  if (parseModulePassPipeline(MPM, PipelineText, VerifyEachPass, DebugLogging))
     return PipelineText.empty();
 
   // This isn't parsable as a module pipeline, look for the end of a pass name
@@ -365,8 +371,9 @@ bool llvm::parsePassPipeline(ModulePassManager &MPM, StringRef PipelineText,
   // If this looks like a CGSCC pass, parse the whole thing as a CGSCC
   // pipeline.
   if (isCGSCCPassName(FirstName)) {
-    CGSCCPassManager CGPM;
-    if (!parseCGSCCPassPipeline(CGPM, PipelineText, VerifyEachPass) ||
+    CGSCCPassManager CGPM(DebugLogging);
+    if (!parseCGSCCPassPipeline(CGPM, PipelineText, VerifyEachPass,
+                                DebugLogging) ||
         !PipelineText.empty())
       return false;
     MPM.addPass(createModuleToPostOrderCGSCCPassAdaptor(std::move(CGPM)));
@@ -376,8 +383,9 @@ bool llvm::parsePassPipeline(ModulePassManager &MPM, StringRef PipelineText,
   // Similarly, if this looks like a Function pass, parse the whole thing as
   // a Function pipelien.
   if (isFunctionPassName(FirstName)) {
-    FunctionPassManager FPM;
-    if (!parseFunctionPassPipeline(FPM, PipelineText, VerifyEachPass) ||
+    FunctionPassManager FPM(DebugLogging);
+    if (!parseFunctionPassPipeline(FPM, PipelineText, VerifyEachPass,
+                                   DebugLogging) ||
         !PipelineText.empty())
       return false;
     MPM.addPass(createModuleToFunctionPassAdaptor(std::move(FPM)));

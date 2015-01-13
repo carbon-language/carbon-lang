@@ -12,11 +12,6 @@
 #include "llvm/IR/PassManager.h"
 
 using namespace llvm;
-using llvm::detail::DebugPM;
-
-cl::opt<bool> llvm::detail::DebugPM(
-    "debug-pass-manager", cl::Hidden,
-    cl::desc("Print pass management debugging information"));
 
 char FunctionAnalysisManagerModuleProxy::PassID;
 
