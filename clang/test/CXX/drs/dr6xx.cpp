@@ -256,7 +256,9 @@ const bool MB_EQ_WC =
     '&' == L'&' && '|' == L'|' && '~' == L'~' && '!' == L'!' && '=' == L'=' &&
     ',' == L',' && '\\' == L'\\' && '"' == L'"' && '\'' == L'\'';
 #if __STDC_MB_MIGHT_NEQ_WC__
+#ifndef __FreeBSD__ // PR22208, FreeBSD expects us to give a bad (but conforming) answer here.
 _Static_assert(!MB_EQ_WC, "__STDC_MB_MIGHT_NEQ_WC__ but all basic source characters have same representation"); // expected-error {{C11}}
+#endif
 #else
 _Static_assert(MB_EQ_WC, "!__STDC_MB_MIGHT_NEQ_WC__ but some character differs"); // expected-error {{C11}}
 #endif
