@@ -44,6 +44,7 @@ OptionValueSInt64::SetValueFromCString (const char *value_cstr, VarSetOperationT
     {
         case eVarSetOperationClear:
             Clear();
+            NotifyValueChanged();
             break;
             
         case eVarSetOperationReplace:
@@ -57,6 +58,7 @@ OptionValueSInt64::SetValueFromCString (const char *value_cstr, VarSetOperationT
                     {
                         m_value_was_set = true;
                         m_current_value = value;
+                        NotifyValueChanged();
                     }
                     else
                         error.SetErrorStringWithFormat ("%" PRIi64 " is out of range, valid values must be between %" PRIi64 " and %" PRIi64 ".",

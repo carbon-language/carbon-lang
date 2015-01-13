@@ -62,7 +62,8 @@ namespace lldb_private {
 class ProcessProperties : public Properties
 {
 public:
-    ProcessProperties(bool is_global);
+    // Pass NULL for "process" if the ProcessProperties are to be the global copy
+    ProcessProperties (lldb_private::Process *process);
 
     virtual
     ~ProcessProperties();
@@ -108,6 +109,13 @@ public:
     
     void
     SetDetachKeepsStopped (bool keep_stopped);
+
+protected:
+
+    static void
+    OptionValueChangedCallback (void *baton, OptionValue *option_value);
+
+    Process * m_process; // Can be NULL for global ProcessProperties
 };
 
 typedef std::shared_ptr<ProcessProperties> ProcessPropertiesSP;
@@ -2814,6 +2822,7 @@ public:
         Process &m_process;
     };
     friend class ProcessEventHijacker;
+    friend class ProcessProperties;
     //------------------------------------------------------------------
     /// If you need to ensure that you and only you will hear about some public
     /// event, then make a new listener, set to listen to process events, and
@@ -3279,6 +3288,8 @@ protected:
     bool
     StateChangedIsExternallyHijacked();
 
+    void
+    LoadOperatingSystemPlugin(bool flush);
 private:
     //------------------------------------------------------------------
     // For Process only

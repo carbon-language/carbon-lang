@@ -94,30 +94,32 @@ OptionValueString::SetValueFromCString (const char *value_cstr,
 
     case eVarSetOperationAppend:
         {
-        std::string new_value(m_current_value);
-        if (value_cstr && value_cstr[0])
-        {
-            if (m_options.Test (eOptionEncodeCharacterEscapeSequences))
+            std::string new_value(m_current_value);
+            if (value_cstr && value_cstr[0])
             {
-                std::string str;
-                Args::EncodeEscapeSequences (value_cstr, str);
-                new_value.append(str);
+                if (m_options.Test (eOptionEncodeCharacterEscapeSequences))
+                {
+                    std::string str;
+                    Args::EncodeEscapeSequences (value_cstr, str);
+                    new_value.append(str);
+                }
+                else
+                    new_value.append(value_cstr);
             }
-            else
-                new_value.append(value_cstr);
-        }
-        if (m_validator)
-        {
-            error = m_validator(new_value.c_str(),m_validator_baton);
-            if (error.Fail())
-                return error;
-        }
-        m_current_value.assign(new_value);
+            if (m_validator)
+            {
+                error = m_validator(new_value.c_str(),m_validator_baton);
+                if (error.Fail())
+                    return error;
+            }
+            m_current_value.assign(new_value);
+            NotifyValueChanged();
         }
         break;
 
     case eVarSetOperationClear:
         Clear ();
+        NotifyValueChanged();
         break;
 
     case eVarSetOperationReplace:
@@ -137,6 +139,7 @@ OptionValueString::SetValueFromCString (const char *value_cstr,
         {
             SetCurrentValue (value_cstr);
         }
+        NotifyValueChanged();
         break;
     }
     return error;

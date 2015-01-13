@@ -51,6 +51,7 @@ OptionValueUInt64::SetValueFromCString (const char *value_cstr, VarSetOperationT
     {
         case eVarSetOperationClear:
             Clear ();
+            NotifyValueChanged();
             break;
             
         case eVarSetOperationReplace:
@@ -62,6 +63,7 @@ OptionValueUInt64::SetValueFromCString (const char *value_cstr, VarSetOperationT
             {
                 m_value_was_set = true;
                 m_current_value = value;
+                NotifyValueChanged();
             }
             else
             {

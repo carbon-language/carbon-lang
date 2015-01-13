@@ -45,6 +45,7 @@ OptionValueUUID::SetValueFromCString (const char *value_cstr,
     {
         case eVarSetOperationClear:
             Clear();
+            NotifyValueChanged();
             break;
             
         case eVarSetOperationReplace:
@@ -53,7 +54,10 @@ OptionValueUUID::SetValueFromCString (const char *value_cstr,
                 if (m_uuid.SetFromCString(value_cstr) == 0)
                     error.SetErrorStringWithFormat ("invalid uuid string value '%s'", value_cstr);
                 else
+                {
                     m_value_was_set = true;
+                    NotifyValueChanged();
+                }
             }
             break;
             

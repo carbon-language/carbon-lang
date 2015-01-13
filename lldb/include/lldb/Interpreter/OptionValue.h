@@ -60,11 +60,15 @@ namespace lldb_private {
 
         
         OptionValue () :
+            m_callback (nullptr),
+            m_baton(nullptr),
             m_value_was_set (false)
         {
         }
         
         OptionValue (const OptionValue &rhs) :
+            m_callback (rhs.m_callback),
+            m_baton (rhs.m_baton),
             m_value_was_set (rhs.m_value_was_set)
         {
         }
@@ -381,8 +385,26 @@ namespace lldb_private {
         {
             m_parent_wp = parent_sp;
         }
+
+        void
+        SetValueChangedCallback (OptionValueChangedCallback callback,
+                                 void *baton)
+        {
+            assert (m_callback == NULL);
+            m_callback = callback;
+            m_baton = baton;
+        }
+
+        void
+        NotifyValueChanged ()
+        {
+            if (m_callback)
+                m_callback (m_baton, this);
+        }
     protected:
         lldb::OptionValueWP m_parent_wp;
+        OptionValueChangedCallback m_callback;
+        void *m_baton;
         bool m_value_was_set; // This can be used to see if a value has been set
                               // by a call to SetValueFromCString(). It is often
                               // handy to know if an option value was set from

@@ -221,7 +221,10 @@ Error
 OptionValueDictionary::SetValueFromCString (const char *value_cstr, VarSetOperationType op)
 {
     Args args(value_cstr);
-    return SetArgs (args, op);
+    Error error = SetArgs (args, op);
+    if (error.Success())
+        NotifyValueChanged();
+    return error;
 }
 
 lldb::OptionValueSP

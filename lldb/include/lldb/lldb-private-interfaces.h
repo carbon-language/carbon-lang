@@ -36,6 +36,7 @@ namespace lldb_private
     typedef SymbolVendor* (*SymbolVendorCreateInstance) (const lldb::ModuleSP &module_sp, lldb_private::Stream *feedback_strm);   // Module can be NULL for default system symbol vendor
     typedef bool (*BreakpointHitCallback) (void *baton, StoppointCallbackContext *context, lldb::user_id_t break_id, lldb::user_id_t break_loc_id);
     typedef bool (*WatchpointHitCallback) (void *baton, StoppointCallbackContext *context, lldb::user_id_t watch_id);
+    typedef void (*OptionValueChangedCallback) (void *baton, OptionValue *option_value);
     typedef bool (*ThreadPlanShouldStopHereCallback) (ThreadPlan *current_plan, Flags &flags, lldb::FrameComparison operation, void *baton);
     typedef lldb::ThreadPlanSP (*ThreadPlanStepFromHereCallback) (ThreadPlan *current_plan, Flags &flags, lldb::FrameComparison operation, void *baton);
     typedef UnwindAssembly* (*UnwindAssemblyCreateInstance) (const ArchSpec &arch);

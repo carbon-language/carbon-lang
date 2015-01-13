@@ -43,6 +43,7 @@ OptionValueFormat::SetValueFromCString (const char *value_cstr, VarSetOperationT
     {
     case eVarSetOperationClear:
         Clear();
+        NotifyValueChanged();
         break;
         
     case eVarSetOperationReplace:
@@ -54,6 +55,7 @@ OptionValueFormat::SetValueFromCString (const char *value_cstr, VarSetOperationT
             {
                 m_value_was_set = true;
                 m_current_value = new_format;
+                NotifyValueChanged();
             }
         }
         break;

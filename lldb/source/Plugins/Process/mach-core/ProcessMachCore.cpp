@@ -397,7 +397,7 @@ ProcessMachCore::UpdateThreadList (ThreadList &old_thread_list, ThreadList &new_
     {
         const uint32_t num_threads = old_thread_list.GetSize(false);
         for (uint32_t i=0; i<num_threads; ++i)
-            new_thread_list.AddThread (old_thread_list.GetThreadAtIndex (i));
+            new_thread_list.AddThread (old_thread_list.GetThreadAtIndex (i, false));
     }
     return new_thread_list.GetSize(false) > 0;
 }

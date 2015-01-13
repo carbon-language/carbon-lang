@@ -43,6 +43,7 @@ OptionValuePathMappings::SetValueFromCString (const char *value, VarSetOperation
     {
         case eVarSetOperationClear:
             Clear ();
+            NotifyValueChanged();
             break;
             
         case eVarSetOperationReplace:
@@ -64,6 +65,7 @@ OptionValuePathMappings::SetValueFromCString (const char *value, VarSetOperation
                         if (!m_path_mappings.Replace (a, b, idx, m_notify_changes))
                             m_path_mappings.Append(a, b, m_notify_changes);
                     }
+                    NotifyValueChanged();
                 }
             }
             else
@@ -97,6 +99,7 @@ OptionValuePathMappings::SetValueFromCString (const char *value, VarSetOperation
                     m_path_mappings.Append(a, b, m_notify_changes);
                     m_value_was_set = true;
                 }
+                NotifyValueChanged();
             }
             break;
             
@@ -121,6 +124,7 @@ OptionValuePathMappings::SetValueFromCString (const char *value, VarSetOperation
                         ConstString b(args.GetArgumentAtIndex(i+1));
                         m_path_mappings.Insert (a, b, idx, m_notify_changes);
                     }
+                    NotifyValueChanged();
                 }
             }
             else
@@ -156,6 +160,7 @@ OptionValuePathMappings::SetValueFromCString (const char *value, VarSetOperation
                             m_path_mappings.Remove (j, m_notify_changes);
                         }
                     }
+                    NotifyValueChanged();
                 }
                 else
                 {

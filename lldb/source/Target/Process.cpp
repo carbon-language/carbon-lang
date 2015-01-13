@@ -127,11 +127,13 @@ enum {
     ePropertyMemCacheLineSize
 };
 
-ProcessProperties::ProcessProperties (bool is_global) :
-    Properties ()
+ProcessProperties::ProcessProperties (lldb_private::Process *process) :
+    Properties (),
+    m_process (process) // Can be NULL for global ProcessProperties
 {
-    if (is_global)
+    if (process == NULL)
     {
+        // Global process properties, set them up one time
         m_collection_sp.reset (new ProcessOptionValueProperties(ConstString("process")));
         m_collection_sp->Initialize(g_properties);
         m_collection_sp->AppendProperty(ConstString("thread"),
@@ -140,11 +142,22 @@ ProcessProperties::ProcessProperties (bool is_global) :
                                         Thread::GetGlobalProperties()->GetValueProperties());
     }
     else
+    {
         m_collection_sp.reset (new ProcessOptionValueProperties(Process::GetGlobalProperties().get()));
+        m_collection_sp->SetValueChangedCallback(ePropertyPythonOSPluginPath, ProcessProperties::OptionValueChangedCallback, this);
+    }
 }
 
 ProcessProperties::~ProcessProperties()
 {
+}
+
+void
+ProcessProperties::OptionValueChangedCallback (void *baton, OptionValue *option_value)
+{
+    ProcessProperties *properties = (ProcessProperties *)baton;
+    if (properties->m_process)
+        properties->m_process->LoadOperatingSystemPlugin(true);
 }
 
 bool
@@ -673,7 +686,7 @@ Process::Process(Target &target, Listener &listener) :
 }
 
 Process::Process(Target &target, Listener &listener, const UnixSignalsSP &unix_signals_sp) :
-    ProcessProperties (false),
+    ProcessProperties (this),
     UserID (LLDB_INVALID_PROCESS_ID),
     Broadcaster (&(target.GetDebugger()), "lldb.process"),
     m_target (target),
@@ -786,7 +799,7 @@ Process::GetGlobalProperties()
 {
     static ProcessPropertiesSP g_settings_sp;
     if (!g_settings_sp)
-        g_settings_sp.reset (new ProcessProperties (true));
+        g_settings_sp.reset (new ProcessProperties (NULL));
     return g_settings_sp;
 }
 
@@ -2994,6 +3007,16 @@ Process::WaitForProcessStopPrivate (const TimeValue *timeout, EventSP &event_sp)
     return state;
 }
 
+void
+Process::LoadOperatingSystemPlugin(bool flush)
+{
+    if (flush)
+        m_thread_list.Clear();
+    m_os_ap.reset (OperatingSystem::FindPlugin (this, NULL));
+    if (flush)
+        Flush();
+}
+
 Error
 Process::Launch (ProcessLaunchInfo &launch_info)
 {
@@ -3084,7 +3107,7 @@ Process::Launch (ProcessLaunchInfo &launch_info)
                         if (system_runtime)
                             system_runtime->DidLaunch();
 
-                        m_os_ap.reset (OperatingSystem::FindPlugin (this, NULL));
+                        LoadOperatingSystemPlugin(false);
 
                         // Note, the stop event was consumed above, but not handled. This was done
                         // to give DidLaunch a chance to run. The target is either stopped or crashed.
@@ -6142,21 +6165,21 @@ Process::GetThreadStatus (Stream &strm,
     // ID's, and look them up one by one:
     
     uint32_t num_threads;
-    std::vector<uint32_t> thread_index_array;
+    std::vector<lldb::tid_t> thread_id_array;
     //Scope for thread list locker;
     {
         Mutex::Locker locker (GetThreadList().GetMutex());
         ThreadList &curr_thread_list = GetThreadList();
         num_threads = curr_thread_list.GetSize();
         uint32_t idx;
-        thread_index_array.resize(num_threads);
+        thread_id_array.resize(num_threads);
         for (idx = 0; idx < num_threads; ++idx)
-            thread_index_array[idx] = curr_thread_list.GetThreadAtIndex(idx)->GetID();
+            thread_id_array[idx] = curr_thread_list.GetThreadAtIndex(idx)->GetID();
     }
     
     for (uint32_t i = 0; i < num_threads; i++)
     {
-        ThreadSP thread_sp(GetThreadList().FindThreadByID(thread_index_array[i]));
+        ThreadSP thread_sp(GetThreadList().FindThreadByID(thread_id_array[i]));
         if (thread_sp)
         {
             if (only_threads_with_stop_reason)

@@ -57,6 +57,7 @@ OptionValueRegex::SetValueFromCString (const char *value_cstr,
 
     case eVarSetOperationClear:
         Clear();
+        NotifyValueChanged();
         break;
 
     case eVarSetOperationReplace:
@@ -64,6 +65,7 @@ OptionValueRegex::SetValueFromCString (const char *value_cstr,
         if (m_regex.Compile (value_cstr, m_regex.GetCompileFlags()))
         {
             m_value_was_set = true;
+            NotifyValueChanged();
         }
         else
         {

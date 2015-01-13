@@ -45,6 +45,7 @@ OptionValueBoolean::SetValueFromCString (const char *value_cstr,
     {
     case eVarSetOperationClear:
         Clear();
+        NotifyValueChanged();
         break;
 
     case eVarSetOperationReplace:
@@ -56,6 +57,7 @@ OptionValueBoolean::SetValueFromCString (const char *value_cstr,
             {
                 m_value_was_set = true;
                 m_current_value = value;
+                NotifyValueChanged();
             }
             else
             {

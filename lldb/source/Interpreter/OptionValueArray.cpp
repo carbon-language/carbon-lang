@@ -76,6 +76,7 @@ Error
 OptionValueArray::SetValueFromCString (const char *value, VarSetOperationType op)
 {
     Args args(value);
+    NotifyValueChanged();
     return SetArgs (args, op);
 }
 

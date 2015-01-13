@@ -277,3 +277,12 @@ Property::DumpDescription (CommandInterpreter &interpreter,
     }
 }
 
+
+void
+Property::SetValueChangedCallback (OptionValueChangedCallback callback, void *baton)
+{
+    if (m_value_sp)
+        m_value_sp->SetValueChangedCallback (callback, baton);
+}
+
+

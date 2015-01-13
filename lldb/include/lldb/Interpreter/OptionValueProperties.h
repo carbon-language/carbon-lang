@@ -243,8 +243,20 @@ public:
     GetSubProperty (const ExecutionContext *exe_ctx,
                     const ConstString &name);
 
+    void
+    SetValueChangedCallback (uint32_t property_idx,
+                             OptionValueChangedCallback callback,
+                             void *baton);
 protected:
-    
+
+    Property *
+    ProtectedGetPropertyAtIndex (uint32_t idx)
+    {
+        if (idx < m_properties.size())
+            return &m_properties[idx];
+        return NULL;
+    }
+
     const Property *
     ProtectedGetPropertyAtIndex (uint32_t idx) const
     {

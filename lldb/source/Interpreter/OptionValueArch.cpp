@@ -50,6 +50,7 @@ OptionValueArch::SetValueFromCString (const char *value_cstr, VarSetOperationTyp
     {
     case eVarSetOperationClear:
         Clear();
+        NotifyValueChanged();
         break;
         
     case eVarSetOperationReplace:
@@ -57,7 +58,10 @@ OptionValueArch::SetValueFromCString (const char *value_cstr, VarSetOperationTyp
         if (value_cstr && value_cstr[0])
         {
             if (m_current_value.SetTriple (value_cstr))
+            {
                 m_value_was_set = true;
+                NotifyValueChanged();
+            }
             else
                 error.SetErrorStringWithFormat("unsupported architecture '%s'", value_cstr);
         }

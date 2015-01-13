@@ -81,6 +81,16 @@ OptionValueProperties::Initialize (const PropertyDefinition *defs)
 }
 
 void
+OptionValueProperties::SetValueChangedCallback (uint32_t property_idx,
+                                                OptionValueChangedCallback callback,
+                                                void *baton)
+{
+    Property *property = ProtectedGetPropertyAtIndex (property_idx);
+    if (property)
+        property->SetValueChangedCallback (callback, baton);
+}
+
+void
 OptionValueProperties::AppendProperty(const ConstString &name,
                                       const ConstString &desc,
                                       bool is_global,
