@@ -49,7 +49,7 @@ public:
   typedef FileVectorT::iterator FileIterT;
 
   /// \brief Initialize the inputgraph
-  InputGraph() : _nextElementIndex(0), _currentInputElement(nullptr) {}
+  InputGraph() : _index(0) {}
   virtual ~InputGraph();
 
   /// getNextFile returns the next file that needs to be processed by
@@ -79,11 +79,7 @@ protected:
   // Input arguments
   InputElementVectorT _inputArgs;
   // Index of the next element to be processed
-  uint32_t _nextElementIndex;
-  InputElement *_currentInputElement;
-
-private:
-  InputElement *getNextInputElement();
+  size_t _index;
 };
 
 /// \brief This describes each element in the InputGraph. The Kind

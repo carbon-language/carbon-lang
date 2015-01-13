@@ -16,18 +16,11 @@ using namespace lld;
 InputGraph::~InputGraph() { }
 
 File *InputGraph::getNextFile() {
-  // Try to get the next file of _currentInputElement. If the current input
-  // element points to an archive file, and there's a file left in the archive,
-  // it will succeed. If not, try to get the next file in the input graph.
   for (;;) {
-    if (_currentInputElement)
-      if (File *next = _currentInputElement->getNextFile())
-        return next;
-
-    InputElement *elt = getNextInputElement();
-    if (!elt)
+    if (_index >= _inputArgs.size())
       return nullptr;
-    _currentInputElement = elt;
+    if (FileNode *node = dyn_cast<FileNode>(_inputArgs[_index++].get()))
+      return node->getFile();
   }
 }
 
@@ -39,33 +32,23 @@ void InputGraph::addInputElementFront(std::unique_ptr<InputElement> ie) {
   _inputArgs.insert(_inputArgs.begin(), std::move(ie));
 }
 
-/// \brief Helper functions for the resolver
-InputElement *InputGraph::getNextInputElement() {
-  if (_nextElementIndex >= _inputArgs.size())
-    return nullptr;
-  InputElement *elem = _inputArgs[_nextElementIndex++].get();
-  if (isa<GroupEnd>(elem))
-    return getNextInputElement();
-  return elem;
-}
-
 // If we are at the end of a group, return its size (which indicates
 // how many files we need to go back in the command line).
 // Returns 0 if we are not at the end of a group.
 int InputGraph::getGroupSize() {
-  if (_nextElementIndex >= _inputArgs.size())
+  if (_index >= _inputArgs.size())
     return 0;
-  InputElement *elem = _inputArgs[_nextElementIndex].get();
+  InputElement *elem = _inputArgs[_index].get();
   if (const GroupEnd *group = dyn_cast<GroupEnd>(elem))
     return group->getSize();
   return 0;
 }
 
 void InputGraph::skipGroup() {
-  if (_nextElementIndex >= _inputArgs.size())
+  if (_index >= _inputArgs.size())
     return;
-  if (isa<GroupEnd>(_inputArgs[_nextElementIndex].get()))
-    _nextElementIndex++;
+  if (isa<GroupEnd>(_inputArgs[_index].get()))
+    _index++;
 }
 
 std::error_code FileNode::parse(const LinkingContext &, raw_ostream &) {
