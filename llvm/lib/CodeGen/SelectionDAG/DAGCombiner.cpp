@@ -4617,6 +4617,43 @@ SDValue DAGCombiner::visitCTPOP(SDNode *N) {
   return SDValue();
 }
 
+
+/// \brief Generate Min/Max node
+static SDValue combineMinNumMaxNum(SDLoc DL, EVT VT, SDValue LHS, SDValue RHS,
+                                   SDValue True, SDValue False,
+                                   ISD::CondCode CC, const TargetLowering &TLI,
+                                   SelectionDAG &DAG) {
+  if (!(LHS == True && RHS == False) && !(LHS == False && RHS == True))
+    return SDValue();
+
+  switch (CC) {
+  case ISD::SETOLT:
+  case ISD::SETOLE:
+  case ISD::SETLT:
+  case ISD::SETLE:
+  case ISD::SETULT:
+  case ISD::SETULE: {
+    unsigned Opcode = (LHS == True) ? ISD::FMINNUM : ISD::FMAXNUM;
+    if (TLI.isOperationLegal(Opcode, VT))
+      return DAG.getNode(Opcode, DL, VT, LHS, RHS);
+    return SDValue();
+  }
+  case ISD::SETOGT:
+  case ISD::SETOGE:
+  case ISD::SETGT:
+  case ISD::SETGE:
+  case ISD::SETUGT:
+  case ISD::SETUGE: {
+    unsigned Opcode = (LHS == True) ? ISD::FMAXNUM : ISD::FMINNUM;
+    if (TLI.isOperationLegal(Opcode, VT))
+      return DAG.getNode(Opcode, DL, VT, LHS, RHS);
+    return SDValue();
+  }
+  default:
+    return SDValue();
+  }
+}
+
 SDValue DAGCombiner::visitSELECT(SDNode *N) {
   SDValue N0 = N->getOperand(0);
   SDValue N1 = N->getOperand(1);
@@ -4696,6 +4733,28 @@ SDValue DAGCombiner::visitSELECT(SDNode *N) {
 
   // fold selects based on a setcc into other things, such as min/max/abs
   if (N0.getOpcode() == ISD::SETCC) {
+    // select x, y (fcmp lt x, y) -> fminnum x, y
+    // select x, y (fcmp gt x, y) -> fmaxnum x, y
+    //
+    // This is OK if we don't care about what happens if either operand is a
+    // NaN.
+    //
+
+    // FIXME: Instead of testing for UnsafeFPMath, this should be checking for
+    // no signed zeros as well as no nans.
+    const TargetOptions &Options = DAG.getTarget().Options;
+    if (Options.UnsafeFPMath &&
+        VT.isFloatingPoint() && N0.hasOneUse() &&
+        DAG.isKnownNeverNaN(N1) && DAG.isKnownNeverNaN(N2)) {
+      ISD::CondCode CC = cast<CondCodeSDNode>(N0.getOperand(2))->get();
+
+      SDValue FMinMax =
+          combineMinNumMaxNum(SDLoc(N), VT, N0.getOperand(0), N0.getOperand(1),
+                              N1, N2, CC, TLI, DAG);
+      if (FMinMax)
+        return FMinMax;
+    }
+
     if ((!LegalOperations &&
          TLI.isOperationLegalOrCustom(ISD::SELECT_CC, VT)) ||
         TLI.isOperationLegal(ISD::SELECT_CC, VT))
