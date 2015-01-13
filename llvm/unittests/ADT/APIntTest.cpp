@@ -678,6 +678,9 @@ TEST(APIntTest, nearestLogBase2) {
   EXPECT_EQ(A9.nearestLogBase2(), UINT32_MAX);
 }
 
+// Disable the warning that triggers on exactly what is being tested.
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wself-move"
 TEST(APIntTest, SelfMoveAssignment) {
   APInt X(32, 0xdeadbeef);
   X = std::move(X);
@@ -694,5 +697,6 @@ TEST(APIntTest, SelfMoveAssignment) {
   EXPECT_EQ(0xdeadbeefdeadbeefULL, Raw[0]);
   EXPECT_EQ(0xdeadbeefdeadbeefULL, Raw[1]);
 }
+#pragma clang diagnostic pop
 
 }
