@@ -303,19 +303,18 @@ TEST_F(MDNodeTest, handleChangedOperandRecursion) {
   MDNode *N0 = MDNode::get(Context, None);
 
   // !1 = !{!3, null}
-  MDNodeFwdDecl *Temp3 = MDNode::getTemporary(Context, None);
-  Metadata *Ops1[] = {Temp3, nullptr};
+  std::unique_ptr<MDNodeFwdDecl> Temp3(MDNode::getTemporary(Context, None));
+  Metadata *Ops1[] = {Temp3.get(), nullptr};
   MDNode *N1 = MDNode::get(Context, Ops1);
 
   // !2 = !{!3, !0}
-  Metadata *Ops2[] = {Temp3, N0};
+  Metadata *Ops2[] = {Temp3.get(), N0};
   MDNode *N2 = MDNode::get(Context, Ops2);
 
   // !3 = !{!2}
   Metadata *Ops3[] = {N2};
   MDNode *N3 = MDNode::get(Context, Ops3);
   Temp3->replaceAllUsesWith(N3);
-  delete Temp3;
 
   // !4 = !{!1}
   Metadata *Ops4[] = {N1};
