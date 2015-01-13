@@ -36,7 +36,7 @@
 
 #if KMP_OS_LINUX && !KMP_OS_CNK
 # include <sys/sysinfo.h>
-# if KMP_OS_LINUX && (KMP_ARCH_X86 || KMP_ARCH_X86_64 || KMP_ARCH_ARM)
+# if KMP_OS_LINUX && (KMP_ARCH_X86 || KMP_ARCH_X86_64 || KMP_ARCH_ARM || KMP_ARCH_AARCH64)
 // We should really include <futex.h>, but that causes compatibility problems on different
 // Linux* OS distributions that either require that you include (or break when you try to include)
 // <pci/types.h>.
@@ -63,7 +63,7 @@
 #include <fcntl.h>
 
 // For non-x86 architecture
-#if KMP_COMPILER_GCC && !(KMP_ARCH_X86 || KMP_ARCH_X86_64 || KMP_ARCH_PPC64)
+#if KMP_COMPILER_GCC && !(KMP_ARCH_X86 || KMP_ARCH_X86_64 || KMP_ARCH_PPC64 || KMP_ARCH_AARCH64)
 # include <stdbool.h>
 # include <ffi.h>
 #endif
@@ -134,6 +134,18 @@ __kmp_print_cond( char *buffer, kmp_cond_align_t *cond )
 #   ifndef __NR_sched_getaffinity
 #    define __NR_sched_getaffinity  242
 #   elif __NR_sched_getaffinity != 242
+#    error Wrong code for getaffinity system call.
+#   endif /* __NR_sched_getaffinity */
+
+#  elif KMP_ARCH_AARCH64
+#   ifndef __NR_sched_setaffinity
+#    define __NR_sched_setaffinity  122
+#   elif __NR_sched_setaffinity != 122
+#    error Wrong code for setaffinity system call.
+#   endif /* __NR_sched_setaffinity */
+#   ifndef __NR_sched_getaffinity
+#    define __NR_sched_getaffinity  123
+#   elif __NR_sched_getaffinity != 123
 #    error Wrong code for getaffinity system call.
 #   endif /* __NR_sched_getaffinity */
 
@@ -460,7 +472,7 @@ __kmp_change_thread_affinity_mask( int gtid, kmp_affin_mask_t *new_mask,
 /* ------------------------------------------------------------------------ */
 /* ------------------------------------------------------------------------ */
 
-#if KMP_OS_LINUX && (KMP_ARCH_X86 || KMP_ARCH_X86_64 || KMP_ARCH_ARM) && !KMP_OS_CNK
+#if KMP_OS_LINUX && (KMP_ARCH_X86 || KMP_ARCH_X86_64 || KMP_ARCH_ARM || KMP_ARCH_AARCH64) && !KMP_OS_CNK
 
 int
 __kmp_futex_determine_capable()
@@ -522,7 +534,7 @@ __kmp_test_then_and32( volatile kmp_int32 *p, kmp_int32 d )
     return old_value;
 }
 
-# if KMP_ARCH_X86 || KMP_ARCH_PPC64
+# if KMP_ARCH_X86 || KMP_ARCH_PPC64 || KMP_ARCH_AARCH64
 kmp_int64
 __kmp_test_then_add64( volatile kmp_int64 *p, kmp_int64 d )
 {
@@ -2600,7 +2612,7 @@ __kmp_get_load_balance( int max )
 #endif // USE_LOAD_BALANCE
 
 
-#if KMP_COMPILER_GCC && !(KMP_ARCH_X86 || KMP_ARCH_X86_64 || KMP_ARCH_PPC64)
+#if KMP_COMPILER_GCC && !(KMP_ARCH_X86 || KMP_ARCH_X86_64 || KMP_ARCH_PPC64 || KMP_ARCH_AARCH64)
 
 int __kmp_invoke_microtask( microtask_t pkfn, int gtid, int tid, int argc,
         void *p_argv[] )
@@ -2636,7 +2648,7 @@ int __kmp_invoke_microtask( microtask_t pkfn, int gtid, int tid, int argc,
 
 #endif // KMP_COMPILER_GCC && !(KMP_ARCH_X86 || KMP_ARCH_X86_64 || KMP_ARCH_PPC64)
 
-#if KMP_ARCH_PPC64
+#if KMP_ARCH_PPC64 || KMP_ARCH_AARCH64
 
 // we really only need the case with 1 argument, because CLANG always build
 // a struct of pointers to shared variables referenced in the outlined function

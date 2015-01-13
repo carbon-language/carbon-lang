@@ -24,14 +24,16 @@ endif()
 
 if(arch)	
 	set(ARCH ${arch}) #acquire from command line
-else() #assume default
-  set(ARCH "32e")
+else() # Ensure ARCH is set
+  message(FATAL_ERROR "ARCH not set. Possible values are 32e 32 arm ppc64 aarch64. Example -DARCH=e32 for x86-64/Intel64")
 endif()
 
 if("${arch}" STREQUAL "32e")
   set(ARCH_STR "Intel(R) 64")
 elseif("${arch}" STREQUAL "ppc64")
   set(ARCH_STR "PPC64")
+elseif("${arch}" STREQUAL "aarch64")                       
+  set(ARCH_STR "AARCH64")  
 endif()
 
 set(FEATURE_FLAGS "-D USE_ITT_BUILD")
@@ -67,7 +69,7 @@ set(FEATURE_FLAGS "${FEATURE_FLAGS} -D GUIDEDLL_EXPORTS")
 set(FEATURE_FLAGS "${FEATURE_FLAGS} -D KMP_GOMP_COMPAT")
 
 #adaptive locks use x86 assembly - disable for ppc64
-if("${arch}" STREQUAL "32e" OR "${arch}" STREQUAL "32" OR "${arch}" STREQUAL "arm")
+if("${arch}" STREQUAL "32e" OR "${arch}" STREQUAL "32")
 	set(FEATURE_FLAGS "${FEATURE_FLAGS} -D KMP_USE_ADAPTIVE_LOCKS=1")
 	set(FEATURE_FLAGS "${FEATURE_FLAGS} -D KMP_DEBUG_ADAPTIVE_LOCKS=0")
 endif()
@@ -144,17 +146,19 @@ add_custom_command(
 )
 
 if("${ARCH}" STREQUAL "ppc64")
-	add_custom_command(
-		OUTPUT z_Linux_asm.o
-    		       COMMAND ${CMAKE_CXX_COMPILER} -c -o z_Linux_asm.o -D KMP_ASM_INTRINS -D KMP_GOMP_COMPAT -D KMP_ARCH_PPC64 -x assembler-with-cpp ${CMAKE_CURRENT_SOURCE_DIR}/${ASM_SOURCES}
-		       )
-else()
-	add_custom_command(
-		OUTPUT z_Linux_asm.o
-    		       COMMAND ${CMAKE_CXX_COMPILER} -c -o z_Linux_asm.o -D KMP_ASM_INTRINS -D KMP_GOMP_COMPAT -D KMP_ARCH_X86_64 -x assembler-with-cpp ${CMAKE_CURRENT_SOURCE_DIR}/${ASM_SOURCES}
-		       )
+  set(KMP_ARCH_TEMP "KMP_ARCH_PPC64")
+elseif("${ARCH}" STREQUAL "arm")
+  set(KMP_ARCH_TEMP "KMP_ARCH_ARM")
+elseif("${ARCH}" STREQUAL "aarch64")
+  set(KMP_ARCH_TEMP "KMP_ARCH_AARCH64")
+else
+  set(KMP_ARCH_TEMP "KMP_ARCH_X86_64")
 endif()
 
+add_custom_command(
+  OUTPUT z_Linux_asm.o
+    COMMAND ${CMAKE_CXX_COMPILER} -c -o z_Linux_asm.o -D KMP_ASM_INTRINS -D KMP_GOMP_COMPAT -D ${KMP_ARCH_TEMP} -x assembler-with-cpp ${CMAKE_CURRENT_SOURCE_DIR}/${ASM_SOURCES}
+)
 
 add_custom_target(gen_kmp_i18n DEPENDS kmp_i18n_id.inc kmp_i18n_default.inc omp.h z_Linux_asm.o)
 

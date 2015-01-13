@@ -1377,7 +1377,7 @@ __kmp_unnamed_critical_addr:
     .size __kmp_unnamed_critical_addr,4
 #endif /* KMP_ARCH_ARM */
 
-#if KMP_ARCH_PPC64
+#if KMP_ARCH_PPC64 || KMP_ARCH_AARCH64
     .data
     .comm .gomp_critical_user_,32,8
     .data
@@ -1386,7 +1386,7 @@ __kmp_unnamed_critical_addr:
 __kmp_unnamed_critical_addr:
     .8byte .gomp_critical_user_
     .size __kmp_unnamed_critical_addr,8
-#endif /* KMP_ARCH_PPC64 */
+#endif /* KMP_ARCH_PPC64 || KMP_ARCH_AARCH64 */
 
 #if defined(__linux__)
 # if KMP_ARCH_ARM

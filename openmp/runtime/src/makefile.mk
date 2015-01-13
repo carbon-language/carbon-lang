@@ -326,11 +326,11 @@ ifeq "$(CPLUSPLUS)" "on"
     ifeq "$(os)" "win"
         c-flags   += -TP
     else ifeq "$(arch)" "ppc64"
-    # c++0x on ppc64 linux removes definition of preproc. macros, needed in .hs
-      c-flags   += -x c++ -std=gnu++0x
+    # c++11 on ppc64 linux removes definition of preproc. macros, needed in .hs
+      c-flags   += -x c++ -std=gnu++11
     else
         ifneq "$(filter gcc clang,$(c))" ""
-            c-flags   += -x c++ -std=c++0x
+            c-flags   += -x c++ -std=c++11
         else
             c-flags   += -Kc++
         endif
@@ -497,6 +497,14 @@ else
 	cpp-flags += -D CACHE_LINE=64
 endif
 
+# customize aarch64 cache line size to 128, 64 otherwise magic won't happen
+# Just kidding.. can we have some documentation on this, please
+ifeq "$(arch)" "aarch64"
+	cpp-flags += -D CACHE_LINE=128
+else 
+	cpp-flags += -D CACHE_LINE=64
+endif
+
 cpp-flags += -D KMP_ADJUST_BLOCKTIME=1
 cpp-flags += -D BUILD_PARALLEL_ORDERED
 cpp-flags += -D KMP_ASM_INTRINS
@@ -630,6 +638,9 @@ ifneq "$(os)" "win"
     else ifeq "$(arch)" "ppc64" 
         z_Linux_asm$(obj) : \
 			cpp-flags += -D KMP_ARCH_PPC64		    
+    else ifeq "$(arch)" "aarch64"
+        z_Linux_asm$(obj) : \                            
+                        cpp-flags += -D KMP_ARCH_AARCH64
     else
         z_Linux_asm$(obj) : \
 		    cpp-flags += -D KMP_ARCH_X86$(if $(filter 32e,$(arch)),_64)
@@ -1466,6 +1477,10 @@ ifneq "$(filter %-dyna win-%,$(os)-$(LINK_TYPE))" ""
         ifeq "$(arch)" "ppc64"
             td_exp += libc.so.6
             td_exp += ld64.so.1
+        endif
+        ifeq "$(arch)" "aarch"
+            td_exp += libc.so.6
+            td_exp += ld-linux-aarch64.so.1
         endif
         ifeq "$(std_cpp_lib)" "1"
             td_exp += libstdc++.so.6

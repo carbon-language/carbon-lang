@@ -128,6 +128,11 @@
 #  define ITT_ARCH_IA32E 2
 #endif /* ITT_ARCH_IA32E */
 
+/* Was there a magical reason we didn't have 3 here before? */
+#ifndef ITT_ARCH_AARCH64
+#  define ITT_ARCH_AARCH64  3
+#endif /* ITT_ARCH_AARCH64 */
+
 #ifndef ITT_ARCH_ARM
 #  define ITT_ARCH_ARM  4
 #endif /* ITT_ARCH_ARM */
@@ -148,6 +153,8 @@
 #    define ITT_ARCH ITT_ARCH_ARM
 #  elif defined __powerpc64__
 #    define ITT_ARCH ITT_ARCH_PPC64
+#  elif defined __aarch64__
+#    define ITT_ARCH ITT_ARCH_AARCH64
 #  endif
 #endif
 
@@ -281,7 +288,7 @@ ITT_INLINE long __TBB_machine_fetchadd4(volatile void* ptr, long addend)
                           : "memory");
     return result;
 }
-#elif ITT_ARCH==ITT_ARCH_ARM || ITT_ARCH==ITT_ARCH_PPC64
+#elif ITT_ARCH==ITT_ARCH_ARM || ITT_ARCH==ITT_ARCH_PPC64 || ITT_ARCH==ITT_ARCH_AARCH64
 #define __TBB_machine_fetchadd4(addr, val) __sync_fetch_and_add(addr, val)
 #endif /* ITT_ARCH==ITT_ARCH_IA64 */
 #ifndef ITT_SIMPLE_INIT

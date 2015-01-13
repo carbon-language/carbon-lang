@@ -15,7 +15,7 @@
 //===----------------------------------------------------------------------===//
 
 
-#if defined(__x86_64) || defined (__powerpc64__)
+#if defined(__x86_64) || defined (__powerpc64__) || defined(__aarch64__)
 # define KMP_I8
 #endif
 #include "kmp.h"
@@ -40,7 +40,6 @@ xexpand(KMP_API_NAME_GOMP_BARRIER)(void)
 }
 
 
-/**/
 //
 // Mutual exclusion
 //
@@ -216,7 +215,6 @@ xexpand(KMP_API_NAME_GOMP_ORDERED_END)(void)
 }
 
 
-/**/
 //
 // Dispatch macro defs
 //
@@ -239,7 +237,6 @@ xexpand(KMP_API_NAME_GOMP_ORDERED_END)(void)
 # define KMP_DISPATCH_NEXT_ULL          __kmpc_dispatch_next_8u
 
 
-/**/
 //
 // The parallel contruct
 //
@@ -288,7 +285,7 @@ __kmp_GOMP_fork_call(ident_t *loc, int gtid, microtask_t wrapper, int argc,...)
     va_start(ap, argc);
 
     rc = __kmp_fork_call(loc, gtid, fork_context_gnu, argc, wrapper, __kmp_invoke_task_func,
-#if (KMP_ARCH_X86_64 || KMP_ARCH_ARM) && KMP_OS_LINUX
+#if (KMP_ARCH_X86_64 || KMP_ARCH_ARM || KMP_ARCH_AARCH64) && KMP_OS_LINUX
       &ap
 #else
       ap
@@ -344,7 +341,6 @@ xexpand(KMP_API_NAME_GOMP_PARALLEL_END)(void)
 }
 
 
-/**/
 //
 // Loop worksharing constructs
 //
@@ -500,7 +496,6 @@ xexpand(KMP_API_NAME_GOMP_LOOP_END_NOWAIT)(void)
 }
 
 
-/**/
 //
 // Unsigned long long loop worksharing constructs
 //
@@ -622,7 +617,6 @@ LOOP_NEXT_ULL(xexpand(KMP_API_NAME_GOMP_LOOP_ULL_ORDERED_RUNTIME_NEXT), \
     { KMP_DISPATCH_FINI_CHUNK_ULL(&loc, gtid); })
 
 
-/**/
 //
 // Combined parallel / loop worksharing constructs
 //
@@ -666,7 +660,6 @@ PARALLEL_LOOP_START(xexpand(KMP_API_NAME_GOMP_PARALLEL_LOOP_GUIDED_START), kmp_s
 PARALLEL_LOOP_START(xexpand(KMP_API_NAME_GOMP_PARALLEL_LOOP_RUNTIME_START), kmp_sch_runtime)
 
 
-/**/
 //
 // Tasking constructs
 //
@@ -739,7 +732,6 @@ xexpand(KMP_API_NAME_GOMP_TASKWAIT)(void)
 }
 
 
-/**/
 //
 // Sections worksharing constructs
 //

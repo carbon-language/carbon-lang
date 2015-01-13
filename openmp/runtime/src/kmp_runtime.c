@@ -1422,7 +1422,7 @@ __kmp_fork_call(
     microtask_t microtask,
     launch_t    invoker,
 /* TODO: revert workaround for Intel(R) 64 tracker #96 */
-#if (KMP_ARCH_X86_64 || KMP_ARCH_ARM) && KMP_OS_LINUX
+#if (KMP_ARCH_X86_64 || KMP_ARCH_ARM || KMP_ARCH_AARCH64) && KMP_OS_LINUX
     va_list   * ap
 #else
     va_list     ap
@@ -1504,7 +1504,7 @@ __kmp_fork_call(
         argv = (void**)parent_team->t.t_argv;
         for( i=argc-1; i >= 0; --i )
 /* TODO: revert workaround for Intel(R) 64 tracker #96 */
-#if (KMP_ARCH_X86_64 || KMP_ARCH_ARM) && KMP_OS_LINUX
+#if (KMP_ARCH_X86_64 || KMP_ARCH_ARM || KMP_ARCH_AARCH64) && KMP_OS_LINUX
             *argv++ = va_arg( *ap, void * );
 #else
             *argv++ = va_arg( ap, void * );
@@ -1598,11 +1598,11 @@ __kmp_fork_call(
     /* create a serialized parallel region? */
     if ( nthreads == 1 ) {
         /* josh todo: hypothetical question: what do we do for OS X*? */
-#if KMP_OS_LINUX && ( KMP_ARCH_X86 || KMP_ARCH_X86_64 || KMP_ARCH_ARM )
+#if KMP_OS_LINUX && ( KMP_ARCH_X86 || KMP_ARCH_X86_64 || KMP_ARCH_ARM || KMP_ARCH_AARCH64)
         void *   args[ argc ];
 #else
         void * * args = (void**) alloca( argc * sizeof( void * ) );
-#endif /* KMP_OS_LINUX && ( KMP_ARCH_X86 || KMP_ARCH_X86_64 || KMP_ARCH_ARM ) */
+#endif /* KMP_OS_LINUX && ( KMP_ARCH_X86 || KMP_ARCH_X86_64 || KMP_ARCH_ARM || KMP_ARCH_AARCH64) */
 
         __kmp_release_bootstrap_lock( &__kmp_forkjoin_lock );
         KA_TRACE( 20, ("__kmp_fork_call: T#%d serializing parallel region\n", gtid ));
@@ -1632,7 +1632,7 @@ __kmp_fork_call(
                 if ( ap ) {
                     for( i=argc-1; i >= 0; --i )
 // TODO: revert workaround for Intel(R) 64 tracker #96
-# if (KMP_ARCH_X86_64 || KMP_ARCH_ARM) && KMP_OS_LINUX
+# if (KMP_ARCH_X86_64 || KMP_ARCH_ARM || KMP_ARCH_AARCH64) && KMP_OS_LINUX
                         *argv++ = va_arg( *ap, void * );
 # else
                         *argv++ = va_arg( ap, void * );
@@ -1655,7 +1655,7 @@ __kmp_fork_call(
                 argv = args;
                 for( i=argc-1; i >= 0; --i )
 // TODO: revert workaround for Intel(R) 64 tracker #96
-#if (KMP_ARCH_X86_64 || KMP_ARCH_ARM) && KMP_OS_LINUX
+#if (KMP_ARCH_X86_64 || KMP_ARCH_ARM || KMP_ARCH_AARCH64) && KMP_OS_LINUX
                     *argv++ = va_arg( *ap, void * );
 #else
                     *argv++ = va_arg( ap, void * );
@@ -1823,7 +1823,7 @@ __kmp_fork_call(
 #endif /* OMP_40_ENABLED */
         for ( i=argc-1; i >= 0; --i )
 // TODO: revert workaround for Intel(R) 64 tracker #96
-#if (KMP_ARCH_X86_64 || KMP_ARCH_ARM) && KMP_OS_LINUX
+#if (KMP_ARCH_X86_64 || KMP_ARCH_ARM || KMP_ARCH_AARCH64) && KMP_OS_LINUX
             *argv++ = va_arg( *ap, void * );
 #else
             *argv++ = va_arg( ap, void * );
@@ -6943,7 +6943,7 @@ __kmp_determine_reduction_method( ident_t *loc, kmp_int32 global_tid,
         int atomic_available = FAST_REDUCTION_ATOMIC_METHOD_GENERATED;
         int tree_available   = FAST_REDUCTION_TREE_METHOD_GENERATED;
 
-        #if KMP_ARCH_X86_64 || KMP_ARCH_PPC64
+        #if KMP_ARCH_X86_64 || KMP_ARCH_PPC64 || KMP_ARCH_AARCH64
 
             #if KMP_OS_LINUX || KMP_OS_FREEBSD || KMP_OS_WINDOWS || KMP_OS_DARWIN
                 #if KMP_MIC
@@ -6966,7 +6966,7 @@ __kmp_determine_reduction_method( ident_t *loc, kmp_int32 global_tid,
                 #error "Unknown or unsupported OS"
             #endif // KMP_OS_LINUX || KMP_OS_FREEBSD || KMP_OS_WINDOWS || KMP_OS_DARWIN
 
-        #elif KMP_ARCH_X86 || KMP_ARCH_ARM
+        #elif KMP_ARCH_X86 || KMP_ARCH_ARM || KMP_ARCH_AARCH
 
             #if KMP_OS_LINUX || KMP_OS_WINDOWS
 

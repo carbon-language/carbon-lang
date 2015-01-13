@@ -23,7 +23,7 @@
 #include "kmp_lock.h"
 #include "kmp_io.h"
 
-#if KMP_OS_LINUX && (KMP_ARCH_X86 || KMP_ARCH_X86_64 || KMP_ARCH_ARM)
+#if KMP_OS_LINUX && (KMP_ARCH_X86 || KMP_ARCH_X86_64 || KMP_ARCH_ARM || KMP_ARCH_AARCH64)
 # include <unistd.h>
 # include <sys/syscall.h>
 // We should really include <futex.h>, but that causes compatibility problems on different
@@ -359,7 +359,7 @@ __kmp_destroy_nested_tas_lock_with_checks( kmp_tas_lock_t *lck )
 }
 
 
-#if KMP_OS_LINUX && (KMP_ARCH_X86 || KMP_ARCH_X86_64 || KMP_ARCH_ARM)
+#if KMP_OS_LINUX && (KMP_ARCH_X86 || KMP_ARCH_X86_64 || KMP_ARCH_ARM || KMP_ARCH_AARCH64)
 
 /* ------------------------------------------------------------------------ */
 /* futex locks */

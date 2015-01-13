@@ -174,7 +174,7 @@ extern void __kmp_init_nested_tas_lock( kmp_tas_lock_t *lck );
 extern void __kmp_destroy_nested_tas_lock( kmp_tas_lock_t *lck );
 
 
-#if KMP_OS_LINUX && (KMP_ARCH_X86 || KMP_ARCH_X86_64 || KMP_ARCH_ARM)
+#if KMP_OS_LINUX && (KMP_ARCH_X86 || KMP_ARCH_X86_64 || KMP_ARCH_ARM || KMP_ARCH_AARCH64)
 
 // ----------------------------------------------------------------------------
 // futex locks.  futex locks are only available on Linux* OS.
@@ -224,7 +224,7 @@ extern void __kmp_release_nested_futex_lock( kmp_futex_lock_t *lck, kmp_int32 gt
 extern void __kmp_init_nested_futex_lock( kmp_futex_lock_t *lck );
 extern void __kmp_destroy_nested_futex_lock( kmp_futex_lock_t *lck );
 
-#endif // KMP_OS_LINUX && (KMP_ARCH_X86 || KMP_ARCH_X86_64 || KMP_ARCH_ARM)
+#endif // KMP_OS_LINUX && (KMP_ARCH_X86 || KMP_ARCH_X86_64 || KMP_ARCH_ARM || KMP_ARCH_AARCH64)
 
 
 // ----------------------------------------------------------------------------
@@ -590,7 +590,7 @@ __kmp_destroy_lock( kmp_lock_t *lck )
 enum kmp_lock_kind {
     lk_default = 0,
     lk_tas,
-#if KMP_OS_LINUX && (KMP_ARCH_X86 || KMP_ARCH_X86_64 || KMP_ARCH_ARM)
+#if KMP_OS_LINUX && (KMP_ARCH_X86 || KMP_ARCH_X86_64 || KMP_ARCH_ARM || KMP_ARCH_AARCH64)
     lk_futex,
 #endif
     lk_ticket,
@@ -607,7 +607,7 @@ extern kmp_lock_kind_t __kmp_user_lock_kind;
 
 union kmp_user_lock {
     kmp_tas_lock_t     tas;
-#if KMP_OS_LINUX && (KMP_ARCH_X86 || KMP_ARCH_X86_64 || KMP_ARCH_ARM)
+#if KMP_OS_LINUX && (KMP_ARCH_X86 || KMP_ARCH_X86_64 || KMP_ARCH_ARM || KMP_ARCH_AARCH64)
     kmp_futex_lock_t   futex;
 #endif
     kmp_ticket_lock_t  ticket;
@@ -635,7 +635,7 @@ __kmp_get_user_lock_owner( kmp_user_lock_p lck )
 
 extern void ( *__kmp_acquire_user_lock_with_checks_ )( kmp_user_lock_p lck, kmp_int32 gtid );
 
-#if KMP_OS_LINUX && (KMP_ARCH_X86 || KMP_ARCH_X86_64 || KMP_ARCH_ARM)
+#if KMP_OS_LINUX && (KMP_ARCH_X86 || KMP_ARCH_X86_64 || KMP_ARCH_ARM || KMP_ARCH_AARCH64)
 
 #define __kmp_acquire_user_lock_with_checks(lck,gtid)                                           \
     if (__kmp_user_lock_kind == lk_tas) {                                                       \
@@ -685,7 +685,7 @@ __kmp_acquire_user_lock_with_checks( kmp_user_lock_p lck, kmp_int32 gtid )
 
 extern int ( *__kmp_test_user_lock_with_checks_ )( kmp_user_lock_p lck, kmp_int32 gtid );
 
-#if KMP_OS_LINUX && (KMP_ARCH_X86 || KMP_ARCH_X86_64 || KMP_ARCH_ARM)
+#if KMP_OS_LINUX && (KMP_ARCH_X86 || KMP_ARCH_X86_64 || KMP_ARCH_ARM || KMP_ARCH_AARCH64)
 
 #include "kmp_i18n.h"                       /* AC: KMP_FATAL definition */
 extern int __kmp_env_consistency_check;     /* AC: copy from kmp.h here */

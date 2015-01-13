@@ -50,7 +50,7 @@ include(GetArchitecture) # get_architecture()
 
 # Build Configuration
 set(os_possible_values          lin mac win mic)
-set(arch_possible_values        32e 32 arm ppc64)
+set(arch_possible_values        32e 32 arm ppc64 aarch64)
 set(build_type_possible_values  release debug relwithdebinfo)
 set(omp_version_possible_values 40 30)
 set(lib_type_possible_values    normal profile stubs)
@@ -170,6 +170,7 @@ endif()
 set(IA32 FALSE)
 set(INTEL64 FALSE)
 set(ARM FALSE)
+set(AARCH64 FALSE)
 set(PPC64 FALSE)
 if("${arch}" STREQUAL "32")      # IA-32 architecture
     set(IA32 TRUE)
@@ -177,6 +178,8 @@ elseif("${arch}" STREQUAL "32e") # Intel(R) 64 architecture
     set(INTEL64 TRUE)
 elseif("${arch}" STREQUAL "arm") # ARM architecture
     set(ARM TRUE)
+elseif("${arch}" STREQUAL "aarch64") # AARCH64 architecture
+    set(AARCH64 TRUE)
 elseif("${arch}" STREQUAL "ppc64") # PPC64 architecture
     set(PPC64 TRUE)
 endif()
@@ -644,6 +647,8 @@ set_source_files_properties(${src_dir}/kmp_version.c  PROPERTIES COMPILE_DEFINIT
 # z_Linux_asm.o : -D KMP_ARCH_*
 if(${ARM})
     set_source_files_properties(${src_dir}/z_Linux_asm.s PROPERTIES COMPILE_DEFINITIONS "KMP_ARCH_ARM")
+elseif(${AARCH64})
+    set_source_files_properties(${src_dir}/z_Linux_asm.s PROPERTIES COMPILE_DEFINITIONS "KMP_ARCH_AARCH64")     
 elseif(${INTEL64})
     set_source_files_properties(${src_dir}/z_Linux_asm.s PROPERTIES COMPILE_DEFINITIONS "KMP_ARCH_X86_64")
 elseif(${IA32})

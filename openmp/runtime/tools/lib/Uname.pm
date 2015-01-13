@@ -149,6 +149,8 @@ if ( 0 ) {
         $values{ hardware_platform } = "arm";
     } elsif ( $values{ machine } =~ m{\Appc64\z} ) {
         $values{ hardware_platform } = "ppc64";
+    } elsif ( $values{ machine } =~ m{\Aaarch64\z} ) {
+        $values{ hardware_platform } = "aarch64";
     } else {
         die "Unsupported machine (\"$values{ machine }\") returned by POSIX::uname(); stopped";
     }; # if

@@ -74,8 +74,9 @@
 #define KMP_OS_UNIX     0  /* disjunction of KMP_OS_LINUX, KMP_OS_DARWIN etc. */
 
 #define KMP_ARCH_X86        0
-#define KMP_ARCH_X86_64	    0
+#define KMP_ARCH_X86_64     0
 #define KMP_ARCH_PPC64      0
+#define KMP_ARCH_AARCH64    0
 
 #ifdef _WIN32
 # undef KMP_OS_WINDOWS
@@ -142,7 +143,10 @@
 # elif defined __powerpc64__
 #  undef KMP_ARCH_PPC64
 #  define KMP_ARCH_PPC64 1
-# endif
+# elif defined __aarch64__           
+#  undef KMP_ARCH_AARCH64          
+#  define KMP_ARCH_AARCH64 1  
+# endif        
 #endif
 
 #if defined(__ARM_ARCH_7__)   || defined(__ARM_ARCH_7R__)  || \
@@ -181,7 +185,8 @@
 # define KMP_ARCH_ARM 1
 #endif
 
-#if (1 != KMP_ARCH_X86 + KMP_ARCH_X86_64 + KMP_ARCH_ARM + KMP_ARCH_PPC64)
+// TODO: Fixme - This is clever, but really fugly 
+#if (1 != KMP_ARCH_X86 + KMP_ARCH_X86_64 + KMP_ARCH_ARM + KMP_ARCH_PPC64 + KMP_ARCH_AARCH64)
 # error Unknown or unsupported architecture
 #endif
 
@@ -259,7 +264,7 @@
 
 #if KMP_ARCH_X86 || KMP_ARCH_ARM
 # define KMP_SIZE_T_SPEC KMP_UINT32_SPEC
-#elif KMP_ARCH_X86_64 || KMP_ARCH_PPC64
+#elif KMP_ARCH_X86_64 || KMP_ARCH_PPC64 || KMP_ARCH_AARCH64
 # define KMP_SIZE_T_SPEC KMP_UINT64_SPEC
 #else
 # error "Can't determine size_t printf format specifier."
@@ -721,7 +726,7 @@ extern kmp_real64 __kmp_xchg_real64( volatile kmp_real64 *p, kmp_real64 v );
 #define TCX_SYNC_8(a,b,c)   KMP_COMPARE_AND_STORE_REL64((volatile kmp_int64 *)(volatile void *)&(a), (kmp_int64)(b), (kmp_int64)(c))
 
 #if KMP_ARCH_X86
-
+// What about ARM?
     #define TCR_PTR(a)          ((void *)TCR_4(a))
     #define TCW_PTR(a,b)        TCW_4((a),(b))
     #define TCR_SYNC_PTR(a)     ((void *)TCR_SYNC_4(a))
