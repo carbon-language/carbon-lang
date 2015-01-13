@@ -389,6 +389,14 @@ bool llvm::EmitAnyX86InstComments(const MCInst *MI, raw_ostream &OS,
     DestName = getRegName(MI->getOperand(0).getReg());
     DecodeUNPCKHMask(MVT::v8i32, ShuffleMask);
     break;
+  case X86::VPUNPCKHDQZrr:
+    Src2Name = getRegName(MI->getOperand(2).getReg());
+    // FALL THROUGH.
+  case X86::VPUNPCKHDQZrm:
+    Src1Name = getRegName(MI->getOperand(1).getReg());
+    DestName = getRegName(MI->getOperand(0).getReg());
+    DecodeUNPCKHMask(MVT::v16i32, ShuffleMask);
+    break;
   case X86::PUNPCKHQDQrr:
   case X86::VPUNPCKHQDQrr:
     Src2Name = getRegName(MI->getOperand(2).getReg());
@@ -406,6 +414,14 @@ bool llvm::EmitAnyX86InstComments(const MCInst *MI, raw_ostream &OS,
     Src1Name = getRegName(MI->getOperand(1).getReg());
     DestName = getRegName(MI->getOperand(0).getReg());
     DecodeUNPCKHMask(MVT::v4i64, ShuffleMask);
+    break;
+  case X86::VPUNPCKHQDQZrr:
+    Src2Name = getRegName(MI->getOperand(2).getReg());
+    // FALL THROUGH.
+  case X86::VPUNPCKHQDQZrm:
+    Src1Name = getRegName(MI->getOperand(1).getReg());
+    DestName = getRegName(MI->getOperand(0).getReg());
+    DecodeUNPCKHMask(MVT::v8i64, ShuffleMask);
     break;
 
   case X86::PUNPCKLBWrr:
@@ -462,6 +478,14 @@ bool llvm::EmitAnyX86InstComments(const MCInst *MI, raw_ostream &OS,
     DestName = getRegName(MI->getOperand(0).getReg());
     DecodeUNPCKLMask(MVT::v8i32, ShuffleMask);
     break;
+  case X86::VPUNPCKLDQZrr:
+    Src2Name = getRegName(MI->getOperand(2).getReg());
+    // FALL THROUGH.
+  case X86::VPUNPCKLDQZrm:
+    Src1Name = getRegName(MI->getOperand(1).getReg());
+    DestName = getRegName(MI->getOperand(0).getReg());
+    DecodeUNPCKLMask(MVT::v16i32, ShuffleMask);
+    break;
   case X86::PUNPCKLQDQrr:
   case X86::VPUNPCKLQDQrr:
     Src2Name = getRegName(MI->getOperand(2).getReg());
@@ -479,6 +503,14 @@ bool llvm::EmitAnyX86InstComments(const MCInst *MI, raw_ostream &OS,
     Src1Name = getRegName(MI->getOperand(1).getReg());
     DestName = getRegName(MI->getOperand(0).getReg());
     DecodeUNPCKLMask(MVT::v4i64, ShuffleMask);
+    break;
+  case X86::VPUNPCKLQDQZrr:
+    Src2Name = getRegName(MI->getOperand(2).getReg());
+    // FALL THROUGH.
+  case X86::VPUNPCKLQDQZrm:
+    Src1Name = getRegName(MI->getOperand(1).getReg());
+    DestName = getRegName(MI->getOperand(0).getReg());
+    DecodeUNPCKLMask(MVT::v8i64, ShuffleMask);
     break;
 
   case X86::SHUFPDrri:
@@ -549,6 +581,14 @@ bool llvm::EmitAnyX86InstComments(const MCInst *MI, raw_ostream &OS,
     Src1Name = getRegName(MI->getOperand(1).getReg());
     DestName = getRegName(MI->getOperand(0).getReg());
     break;
+  case X86::VUNPCKLPDZrr:
+    Src2Name = getRegName(MI->getOperand(2).getReg());
+    // FALL THROUGH.
+  case X86::VUNPCKLPDZrm:
+    DecodeUNPCKLMask(MVT::v8f64, ShuffleMask);
+    Src1Name = getRegName(MI->getOperand(1).getReg());
+    DestName = getRegName(MI->getOperand(0).getReg());
+    break;
   case X86::UNPCKLPSrr:
   case X86::VUNPCKLPSrr:
     Src2Name = getRegName(MI->getOperand(2).getReg());
@@ -564,6 +604,14 @@ bool llvm::EmitAnyX86InstComments(const MCInst *MI, raw_ostream &OS,
     // FALL THROUGH.
   case X86::VUNPCKLPSYrm:
     DecodeUNPCKLMask(MVT::v8f32, ShuffleMask);
+    Src1Name = getRegName(MI->getOperand(1).getReg());
+    DestName = getRegName(MI->getOperand(0).getReg());
+    break;
+  case X86::VUNPCKLPSZrr:
+    Src2Name = getRegName(MI->getOperand(2).getReg());
+    // FALL THROUGH.
+  case X86::VUNPCKLPSZrm:
+    DecodeUNPCKLMask(MVT::v16f32, ShuffleMask);
     Src1Name = getRegName(MI->getOperand(1).getReg());
     DestName = getRegName(MI->getOperand(0).getReg());
     break;
@@ -585,6 +633,14 @@ bool llvm::EmitAnyX86InstComments(const MCInst *MI, raw_ostream &OS,
     Src1Name = getRegName(MI->getOperand(1).getReg());
     DestName = getRegName(MI->getOperand(0).getReg());
     break;
+  case X86::VUNPCKHPDZrr:
+    Src2Name = getRegName(MI->getOperand(2).getReg());
+    // FALL THROUGH.
+  case X86::VUNPCKHPDZrm:
+    DecodeUNPCKHMask(MVT::v8f64, ShuffleMask);
+    Src1Name = getRegName(MI->getOperand(1).getReg());
+    DestName = getRegName(MI->getOperand(0).getReg());
+    break;
   case X86::UNPCKHPSrr:
   case X86::VUNPCKHPSrr:
     Src2Name = getRegName(MI->getOperand(2).getReg());
@@ -600,6 +656,14 @@ bool llvm::EmitAnyX86InstComments(const MCInst *MI, raw_ostream &OS,
     // FALL THROUGH.
   case X86::VUNPCKHPSYrm:
     DecodeUNPCKHMask(MVT::v8f32, ShuffleMask);
+    Src1Name = getRegName(MI->getOperand(1).getReg());
+    DestName = getRegName(MI->getOperand(0).getReg());
+    break;
+  case X86::VUNPCKHPSZrr:
+    Src2Name = getRegName(MI->getOperand(2).getReg());
+    // FALL THROUGH.
+  case X86::VUNPCKHPSZrm:
+    DecodeUNPCKHMask(MVT::v16f32, ShuffleMask);
     Src1Name = getRegName(MI->getOperand(1).getReg());
     DestName = getRegName(MI->getOperand(0).getReg());
     break;
