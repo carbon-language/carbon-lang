@@ -19,18 +19,20 @@ rc=""
 rebranch="no"
 projects="llvm cfe dragonegg test-suite compiler-rt libcxx libcxxabi clang-tools-extra polly lldb lld openmp"
 dryrun=""
+revision="HEAD"
 
 base_url="https://llvm.org/svn/llvm-project"
 
 function usage() {
-    echo "usage: `basename $0` -release <num> [-rebranch] [-dry-run]"
+    echo "usage: `basename $0` -release <num> [-rebranch] [-revision <num>] [-dry-run]"
     echo "usage: `basename $0` -release <num> -rc <num> [-dry-run]"
     echo " "
-    echo "  -release <num>  The version number of the release"
-    echo "  -rc <num>       The release candidate number"
-    echo "  -rebranch       Remove existing branch, if present, before branching"
-    echo "  -final          Tag final release candidate"
-    echo "  -dry-run        Make no changes to the repository, just print the commands"
+    echo "  -release <num>   The version number of the release"
+    echo "  -rc <num>        The release candidate number"
+    echo "  -rebranch        Remove existing branch, if present, before branching"
+    echo "  -final           Tag final release candidate"
+    echo "  -revision <num>  Revision to branch off (default: HEAD)"
+    echo "  -dry-run         Make no changes to the repository, just print the commands"
 }
 
 function tag_version() {
@@ -43,7 +45,8 @@ function tag_version() {
             ${dryrun} svn remove -m "Removing old release_$branch_release branch for rebranching." \
                 $base_url/$proj/branches/release_$branch_release
         fi
-        ${dryrun} svn copy -m "Creating release_$branch_release branch" \
+        ${dryrun} svn copy -m "Creating release_$branch_release branch off revision ${revision}" \
+            -r ${revision} \
             $base_url/$proj/trunk \
             $base_url/$proj/branches/release_$branch_release
     done
@@ -81,6 +84,10 @@ while [ $# -gt 0 ]; do
         -final | --final )
             rc="final"
             ;;
+        -revision | --revision )
+            shift
+            revision="$1"
+            ;;
         -dry-run | --dry-run )
             dryrun="echo"
             ;;
@@ -110,6 +117,13 @@ tag_release=`echo $release | sed -e 's,\.,,g'`
 if [ "x$rc" = "x" ]; then
     tag_version
 else
+    if [ "x$revision" != "x" ]; then
+        echo "error: cannot use -revision with -rc"
+        echo
+        usage
+        exit 1
+    fi
+
     tag_release_candidate
 fi
 
