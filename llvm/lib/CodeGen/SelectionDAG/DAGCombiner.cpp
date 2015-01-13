@@ -7538,7 +7538,8 @@ SDValue DAGCombiner::visitFREM(SDNode *N) {
 }
 
 SDValue DAGCombiner::visitFSQRT(SDNode *N) {
-  if (DAG.getTarget().Options.UnsafeFPMath) {
+  if (DAG.getTarget().Options.UnsafeFPMath &&
+      !TLI.isFsqrtCheap()) {
     // Compute this as X * (1/sqrt(X)) = X * (X ** -0.5)
     if (SDValue RV = BuildRsqrtEstimate(N->getOperand(0))) {
       EVT VT = RV.getValueType();

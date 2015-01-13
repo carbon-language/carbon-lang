@@ -710,6 +710,7 @@ TargetLoweringBase::TargetLoweringBase(const TargetMachine &tm)
   HasMultipleConditionRegisters = false;
   HasExtractBitsInsn = false;
   IntDivIsCheap = false;
+  FsqrtIsCheap = false;
   Pow2SDivIsCheap = false;
   JumpIsExpensive = false;
   PredictableSelectIsExpensive = false;

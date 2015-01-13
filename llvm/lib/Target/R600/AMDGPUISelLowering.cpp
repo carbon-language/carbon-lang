@@ -403,6 +403,7 @@ AMDGPUTargetLowering::AMDGPUTargetLowering(TargetMachine &TM) :
   // large sequence of instructions.
   setIntDivIsCheap(false);
   setPow2SDivIsCheap(false);
+  setFsqrtIsCheap(true);
 
   // FIXME: Need to really handle these.
   MaxStoresPerMemcpy  = 4096;
@@ -2580,6 +2581,28 @@ SDValue AMDGPUTargetLowering::getRsqrtEstimate(SDValue Operand,
   }
 
   // TODO: There is also f64 rsq instruction, but the documentation is less
+  // clear on its precision.
+
+  return SDValue();
+}
+
+SDValue AMDGPUTargetLowering::getRecipEstimate(SDValue Operand,
+                                               DAGCombinerInfo &DCI,
+                                               unsigned &RefinementSteps) const {
+  SelectionDAG &DAG = DCI.DAG;
+  EVT VT = Operand.getValueType();
+
+  if (VT == MVT::f32) {
+    // Reciprocal, < 1 ulp error.
+    //
+    // This reciprocal approximation converges to < 0.5 ulp error with one
+    // newton rhapson performed with two fused multiple adds (FMAs).
+
+    RefinementSteps = 0;
+    return DAG.getNode(AMDGPUISD::RCP, SDLoc(Operand), VT, Operand);
+  }
+
+  // TODO: There is also f64 rcp instruction, but the documentation is less
   // clear on its precision.
 
   return SDValue();

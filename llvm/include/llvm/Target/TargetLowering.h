@@ -217,6 +217,11 @@ public:
   /// several shifts, adds, and multiplies for this target.
   bool isIntDivCheap() const { return IntDivIsCheap; }
 
+  /// Return true if sqrt(x) is as cheap or cheaper than 1 / rsqrt(x)
+  bool isFsqrtCheap() const {
+    return FsqrtIsCheap;
+  }
+
   /// Returns true if target has indicated at least one type should be bypassed.
   bool isSlowDivBypassed() const { return !BypassSlowDivWidths.empty(); }
 
@@ -1183,7 +1188,11 @@ protected:
   /// possible, should be replaced by an alternate sequence of instructions not
   /// containing an integer divide.
   void setIntDivIsCheap(bool isCheap = true) { IntDivIsCheap = isCheap; }
-  
+
+  /// Tells the code generator that fsqrt is cheap, and should not be replaced
+  /// with an alternative sequence of instructions.
+  void setFsqrtIsCheap(bool isCheap = true) { FsqrtIsCheap = isCheap; }
+
   /// Tells the code generator that this target supports floating point
   /// exceptions and cares about preserving floating point exception behavior.
   void setHasFloatingPointExceptions(bool FPExceptions = true) {
@@ -1624,6 +1633,9 @@ private:
   /// model is in place.  If we ever optimize for size, this will be set to true
   /// unconditionally.
   bool IntDivIsCheap;
+
+  // Don't expand fsqrt with an approximation based on the inverse sqrt.
+  bool FsqrtIsCheap;
 
   /// Tells the code generator to bypass slow divide or remainder
   /// instructions. For example, BypassSlowDivWidths[32,8] tells the code

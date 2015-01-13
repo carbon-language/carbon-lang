@@ -171,6 +171,9 @@ public:
                            DAGCombinerInfo &DCI,
                            unsigned &RefinementSteps,
                            bool &UseOneConstNR) const override;
+  SDValue getRecipEstimate(SDValue Operand,
+                           DAGCombinerInfo &DCI,
+                           unsigned &RefinementSteps) const override;
 
   virtual SDNode *PostISelFolding(MachineSDNode *N,
                                   SelectionDAG &DAG) const {
