@@ -241,7 +241,7 @@ void StackMaps::recordStackMapOpers(const MachineInstr &MI, uint64_t ID,
   // entry.
   const MCExpr *CSOffsetExpr = MCBinaryExpr::CreateSub(
     MCSymbolRefExpr::Create(MILabel, OutContext),
-    MCSymbolRefExpr::Create(AP.CurrentFnSym, OutContext),
+    MCSymbolRefExpr::Create(AP.CurrentFnSymForSize, OutContext),
     OutContext);
 
   CSInfos.emplace_back(CSOffsetExpr, ID, std::move(Locations),
