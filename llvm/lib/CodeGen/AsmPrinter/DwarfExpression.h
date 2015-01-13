@@ -36,14 +36,18 @@ public:
   DwarfExpression(const AsmPrinter &AP) : AP(AP) {}
   virtual ~DwarfExpression() {}
 
-  virtual void EmitOp(uint8_t Op, const char* Comment = nullptr) = 0;
+  /// Output a dwarf operand and an optional assembler comment.
+  virtual void EmitOp(uint8_t Op, const char *Comment = nullptr) = 0;
+  /// Emit a raw signed value.
   virtual void EmitSigned(int Value) = 0;
+  /// Emit a raw unsigned value.
   virtual void EmitUnsigned(unsigned Value) = 0;
-
+  /// Return whether the given machine register is the frame register in the
+  /// current function.
   virtual bool isFrameRegister(unsigned MachineReg) = 0;
 
   /// Emit a dwarf register operation.
-  void AddReg(int DwarfReg, const char* Comment = nullptr);
+  void AddReg(int DwarfReg, const char *Comment = nullptr);
   /// Emit an (double-)indirect dwarf register operation.
   void AddRegIndirect(int DwarfReg, int Offset, bool Deref = false);
 
@@ -56,13 +60,13 @@ public:
 
   /// Emit an indirect dwarf register operation for the given machine register.
   /// Returns false if no DWARF register exists for MachineReg.
-  bool AddMachineRegIndirect(unsigned MachineReg, int Offset);
+  bool AddMachineRegIndirect(unsigned MachineReg, int Offset = 0);
 
   /// \brief Emit a partial DWARF register operation.
-  /// \param MLoc             the register
-  /// \param PieceSize        size and
-  /// \param PieceOffset      offset of the piece in bits, if this is one
-  ///                         piece of an aggregate value.
+  /// \param MachineReg        the register
+  /// \param PieceSizeInBits   size and
+  /// \param PieceOffsetInBits offset of the piece in bits, if this is one
+  ///                          piece of an aggregate value.
   ///
   /// If size and offset is zero an operation for the entire
   /// register is emitted: Some targets do not provide a DWARF
@@ -70,8 +74,7 @@ public:
   /// function will attempt to emit a DWARF register by emitting a
   /// piece of a super-register or by piecing together multiple
   /// subregisters that alias the register.
-  void AddMachineRegPiece(unsigned MachineReg,
-                          unsigned PieceSizeInBits = 0,
+  void AddMachineRegPiece(unsigned MachineReg, unsigned PieceSizeInBits = 0,
                           unsigned PieceOffsetInBits = 0);
 
   /// Emit a signed constant.
@@ -89,12 +92,11 @@ public:
   DebugLocDwarfExpression(const AsmPrinter &AP, ByteStreamer &BS)
       : DwarfExpression(AP), BS(BS) {}
 
-  void EmitOp(uint8_t Op, const char *Comment) override;
+  void EmitOp(uint8_t Op, const char *Comment = nullptr) override;
   void EmitSigned(int Value) override;
   void EmitUnsigned(unsigned Value) override;
   bool isFrameRegister(unsigned MachineReg) override;
 };
-
 }
 
 #endif
