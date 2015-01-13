@@ -83,9 +83,6 @@ public:
   // \brief Returns the number of input files.
   size_t size() const { return _inputArgs.size(); }
 
-  /// \brief Dump the input Graph
-  bool dump(raw_ostream &diagnostics = llvm::errs());
-
 protected:
   // Input arguments
   InputElementVectorT _inputArgs;

@@ -48,13 +48,6 @@ void InputGraph::addInputElementFront(std::unique_ptr<InputElement> ie) {
   _inputArgs.insert(_inputArgs.begin(), std::move(ie));
 }
 
-bool InputGraph::dump(raw_ostream &diagnostics) {
-  for (std::unique_ptr<InputElement> &ie : _inputArgs)
-    if (!ie->dump(diagnostics))
-      return false;
-  return true;
-}
-
 /// \brief Helper functions for the resolver
 InputElement *InputGraph::getNextInputElement() {
   if (_nextElementIndex >= _inputArgs.size())
