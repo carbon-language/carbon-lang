@@ -3154,14 +3154,6 @@ Parser::tryParseExceptionSpecification(bool Delayed,
                          /*StopAtSemi=*/true,
                          /*ConsumeFinalToken=*/true);
     SpecificationRange.setEnd(Tok.getLocation());
-    
-    // Add the 'stop' token.
-    Token End;
-    End.startToken();
-    End.setKind(tok::eof);
-    End.setLocation(Tok.getLocation());
-    End.setEofData(Actions.CurScope);
-    ExceptionSpecTokens->push_back(End);
     return EST_Unparsed;
   }
   

@@ -5630,14 +5630,6 @@ void Parser::ParseParameterDeclarationClause(
             DefArgToks = nullptr;
             Actions.ActOnParamDefaultArgumentError(Param, EqualLoc);
           } else {
-            // Mark the end of the default argument so that we know when to
-            // stop when we parse it later on.
-            Token DefArgEnd;
-            DefArgEnd.startToken();
-            DefArgEnd.setKind(tok::eof);
-            DefArgEnd.setLocation(Tok.getLocation());
-            DefArgEnd.setEofData(Param);
-            DefArgToks->push_back(DefArgEnd);
             Actions.ActOnParamUnparsedDefaultArgument(Param, EqualLoc,
                                                 (*DefArgToks)[1].getLocation());
           }
