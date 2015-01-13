@@ -96,6 +96,9 @@ class TempClass {
 static __thread int t; // expected-note {{'t' defined here}}
 #pragma omp threadprivate (t) // expected-error {{variable 't' cannot be threadprivate because it is thread-local}}
 
+register int reg0 __asm__("0"); // expected-note {{'reg0' defined here}}
+#pragma omp threadprivate (reg0) // expected-error {{variable 'reg0' cannot be threadprivate because it is a global named register variable}}
+
 int o; // expected-note {{candidate found by name lookup is 'o'}}
 #pragma omp threadprivate (o)
 namespace {

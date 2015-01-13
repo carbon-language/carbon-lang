@@ -391,7 +391,8 @@ DSAStackTy::DSAVarData DSAStackTy::getTopDSA(VarDecl *D, bool FromParent) {
   // OpenMP [2.9.1.1, Data-sharing Attribute Rules for Variables Referenced
   // in a Construct, C/C++, predetermined, p.1]
   //  Variables appearing in threadprivate directives are threadprivate.
-  if (D->getTLSKind() != VarDecl::TLS_None) {
+  if (D->getTLSKind() != VarDecl::TLS_None ||
+      D->getStorageClass() == SC_Register) {
     DVar.CKind = OMPC_threadprivate;
     return DVar;
   }
@@ -841,8 +842,10 @@ Sema::CheckOMPThreadPrivateDecl(SourceLocation Loc, ArrayRef<Expr *> VarList) {
     }
 
     // Check if this is a TLS variable.
-    if (VD->getTLSKind()) {
-      Diag(ILoc, diag::err_omp_var_thread_local) << VD;
+    if (VD->getTLSKind() != VarDecl::TLS_None ||
+        VD->getStorageClass() == SC_Register) {
+      Diag(ILoc, diag::err_omp_var_thread_local)
+          << VD << ((VD->getTLSKind() != VarDecl::TLS_None) ? 0 : 1);
       bool IsDecl =
           VD->isThisDeclarationADefinition(Context) == VarDecl::DeclarationOnly;
       Diag(VD->getLocation(),
