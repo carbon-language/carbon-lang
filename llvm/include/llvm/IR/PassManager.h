@@ -203,8 +203,7 @@ public:
 
 private:
   // Pull in the concept type and model template specialized for modules.
-  typedef detail::PassConcept<Module, ModuleAnalysisManager>
-      ModulePassConcept;
+  typedef detail::PassConcept<Module, ModuleAnalysisManager> ModulePassConcept;
   template <typename PassT>
   struct ModulePassModel
       : detail::PassModel<Module, ModuleAnalysisManager, PassT> {
@@ -474,8 +473,7 @@ private:
 class FunctionAnalysisManager
     : public detail::AnalysisManagerBase<FunctionAnalysisManager, Function> {
   friend class detail::AnalysisManagerBase<FunctionAnalysisManager, Function>;
-  typedef detail::AnalysisManagerBase<FunctionAnalysisManager, Function>
-      BaseT;
+  typedef detail::AnalysisManagerBase<FunctionAnalysisManager, Function> BaseT;
   typedef BaseT::ResultConceptT ResultConceptT;
   typedef BaseT::PassConceptT PassConceptT;
 
@@ -830,8 +828,7 @@ template <typename AnalysisT> struct InvalidateAnalysisPass {
 /// analysis passes to be re-run to produce fresh results if any are needed.
 struct InvalidateAllAnalysesPass {
   /// \brief Run this pass over some unit of IR.
-  template <typename T>
-  PreservedAnalyses run(T &&Arg) {
+  template <typename T> PreservedAnalyses run(T &&Arg) {
     return PreservedAnalyses::none();
   }
 

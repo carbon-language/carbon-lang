@@ -52,7 +52,7 @@ public:
 private:
   // Pull in the concept type and model template specialized for SCCs.
   typedef detail::PassConcept<LazyCallGraph::SCC, CGSCCAnalysisManager>
-  CGSCCPassConcept;
+      CGSCCPassConcept;
   template <typename PassT>
   struct CGSCCPassModel
       : detail::PassModel<LazyCallGraph::SCC, CGSCCAnalysisManager, PassT> {
@@ -69,12 +69,13 @@ private:
 
 /// \brief A function analysis manager to coordinate and cache analyses run over
 /// a module.
-class CGSCCAnalysisManager : public detail::AnalysisManagerBase<
-                                 CGSCCAnalysisManager, LazyCallGraph::SCC> {
+class CGSCCAnalysisManager
+    : public detail::AnalysisManagerBase<CGSCCAnalysisManager,
+                                         LazyCallGraph::SCC> {
   friend class detail::AnalysisManagerBase<CGSCCAnalysisManager,
                                            LazyCallGraph::SCC>;
-  typedef detail::AnalysisManagerBase<CGSCCAnalysisManager,
-                                      LazyCallGraph::SCC> BaseT;
+  typedef detail::AnalysisManagerBase<CGSCCAnalysisManager, LazyCallGraph::SCC>
+      BaseT;
   typedef BaseT::ResultConceptT ResultConceptT;
   typedef BaseT::PassConceptT PassConceptT;
 
@@ -127,13 +128,14 @@ private:
   /// Requires iterators to be valid across appending new entries and arbitrary
   /// erases. Provides both the pass ID and concept pointer such that it is
   /// half of a bijection and provides storage for the actual result concept.
-  typedef std::list<
-      std::pair<void *, std::unique_ptr<detail::AnalysisResultConcept<
-                            LazyCallGraph::SCC>>>> CGSCCAnalysisResultListT;
+  typedef std::list<std::pair<
+      void *,
+      std::unique_ptr<detail::AnalysisResultConcept<LazyCallGraph::SCC>>>>
+      CGSCCAnalysisResultListT;
 
   /// \brief Map type from function pointer to our custom list type.
   typedef DenseMap<LazyCallGraph::SCC *, CGSCCAnalysisResultListT>
-  CGSCCAnalysisResultListMapT;
+      CGSCCAnalysisResultListMapT;
 
   /// \brief Map from function to a list of function analysis results.
   ///
@@ -201,8 +203,7 @@ public:
       : CGAM(&CGAM) {}
   // We have to explicitly define all the special member functions because MSVC
   // refuses to generate them.
-  CGSCCAnalysisManagerModuleProxy(
-      const CGSCCAnalysisManagerModuleProxy &Arg)
+  CGSCCAnalysisManagerModuleProxy(const CGSCCAnalysisManagerModuleProxy &Arg)
       : CGAM(Arg.CGAM) {}
   CGSCCAnalysisManagerModuleProxy(CGSCCAnalysisManagerModuleProxy &&Arg)
       : CGAM(std::move(Arg.CGAM)) {}
@@ -273,8 +274,7 @@ public:
       : MAM(&MAM) {}
   // We have to explicitly define all the special member functions because MSVC
   // refuses to generate them.
-  ModuleAnalysisManagerCGSCCProxy(
-      const ModuleAnalysisManagerCGSCCProxy &Arg)
+  ModuleAnalysisManagerCGSCCProxy(const ModuleAnalysisManagerCGSCCProxy &Arg)
       : MAM(Arg.MAM) {}
   ModuleAnalysisManagerCGSCCProxy(ModuleAnalysisManagerCGSCCProxy &&Arg)
       : MAM(std::move(Arg.MAM)) {}
@@ -541,7 +541,8 @@ public:
       : Pass(Arg.Pass) {}
   CGSCCToFunctionPassAdaptor(CGSCCToFunctionPassAdaptor &&Arg)
       : Pass(std::move(Arg.Pass)) {}
-  friend void swap(CGSCCToFunctionPassAdaptor &LHS, CGSCCToFunctionPassAdaptor &RHS) {
+  friend void swap(CGSCCToFunctionPassAdaptor &LHS,
+                   CGSCCToFunctionPassAdaptor &RHS) {
     using std::swap;
     swap(LHS.Pass, RHS.Pass);
   }
@@ -597,7 +598,6 @@ CGSCCToFunctionPassAdaptor<FunctionPassT>
 createCGSCCToFunctionPassAdaptor(FunctionPassT Pass) {
   return std::move(CGSCCToFunctionPassAdaptor<FunctionPassT>(std::move(Pass)));
 }
-
 }
 
 #endif

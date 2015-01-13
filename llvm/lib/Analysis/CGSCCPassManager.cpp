@@ -14,8 +14,8 @@
 using namespace llvm;
 
 static cl::opt<bool>
-DebugPM("debug-cgscc-pass-manager", cl::Hidden,
-        cl::desc("Print CGSCC pass management debugging information"));
+    DebugPM("debug-cgscc-pass-manager", cl::Hidden,
+            cl::desc("Print CGSCC pass management debugging information"));
 
 PreservedAnalyses CGSCCPassManager::run(LazyCallGraph::SCC &C,
                                         CGSCCAnalysisManager *AM) {

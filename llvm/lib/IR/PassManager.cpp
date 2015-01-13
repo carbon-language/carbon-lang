@@ -107,8 +107,8 @@ PreservedAnalyses ModuleAnalysisManager::invalidateImpl(Module &M,
     // of the analysis manager is required for this invalidation event.
     if (I->second->invalidate(M, PA)) {
       if (DebugPM)
-        dbgs() << "Invalidating module analysis: "
-               << lookupPass(PassID).name() << "\n";
+        dbgs() << "Invalidating module analysis: " << lookupPass(PassID).name()
+               << "\n";
 
       ModuleAnalysisResults.erase(I);
     }
