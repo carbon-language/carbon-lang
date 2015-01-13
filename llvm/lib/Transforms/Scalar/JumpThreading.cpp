@@ -797,7 +797,7 @@ bool JumpThreading::ProcessBlock(BasicBlock *BB) {
       }
 
     } else if (CondBr && CondConst && CondBr->isConditional()) {
-      // There might be an invairant in the same block with the conditional
+      // There might be an invariant in the same block with the conditional
       // that can determine the predicate.
 
       LazyValueInfo::Tristate Ret =
