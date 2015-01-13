@@ -120,7 +120,7 @@ class PPCFastISel final : public FastISel {
                              unsigned Op0, bool Op0IsKill,
                              unsigned Op1, bool Op1IsKill);
 
-    bool fastLowerCall(CallLoweringInfo &CLI);
+    bool fastLowerCall(CallLoweringInfo &CLI) override;
 
   // Instruction selection routines.
   private:
