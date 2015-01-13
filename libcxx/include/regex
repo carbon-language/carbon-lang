@@ -2599,9 +2599,7 @@ public:
         assign(_ForwardIterator __first, _ForwardIterator __last,
                             flag_type __f = regex_constants::ECMAScript)
         {
-            __member_init(__f);
-            __parse(__first, __last);
-            return *this;
+            return assign(basic_regex(__first, __last, __f));
         }
 
 #ifndef _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
