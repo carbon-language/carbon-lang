@@ -261,7 +261,9 @@ public:
                      unsigned &TrueOp, unsigned &FalseOp,
                      bool &Optimizable) const override;
 
-  MachineInstr *optimizeSelect(MachineInstr *MI, bool) const override;
+  MachineInstr *optimizeSelect(MachineInstr *MI,
+                               SmallPtrSetImpl<MachineInstr *> &SeenMIs,
+                               bool) const override;
 
   /// FoldImmediate - 'Reg' is known to be defined by a move immediate
   /// instruction, try to fold the immediate into the use instruction.

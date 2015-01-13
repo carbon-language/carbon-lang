@@ -603,9 +603,12 @@ public:
   /// a side.
   ///
   /// @param MI          Optimizable select instruction.
+  /// @param SeenMIs     Set that record all MIs in the basic block up to \p
+  /// MI. Has to be updated with any newly created MI or deleted ones.
   /// @param PreferFalse Try to optimize FalseOp instead of TrueOp.
   /// @returns Optimized instruction or NULL.
   virtual MachineInstr *optimizeSelect(MachineInstr *MI,
+                                       SmallPtrSetImpl<MachineInstr *> &NewMIs,
                                        bool PreferFalse = false) const {
     // This function must be implemented if Optimizable is ever set.
     llvm_unreachable("Target must implement TargetInstrInfo::optimizeSelect!");

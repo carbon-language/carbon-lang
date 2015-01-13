@@ -133,7 +133,8 @@ namespace {
     bool optimizeCmpInstr(MachineInstr *MI, MachineBasicBlock *MBB);
     bool optimizeExtInstr(MachineInstr *MI, MachineBasicBlock *MBB,
                           SmallPtrSetImpl<MachineInstr*> &LocalMIs);
-    bool optimizeSelect(MachineInstr *MI);
+    bool optimizeSelect(MachineInstr *MI,
+                        SmallPtrSetImpl<MachineInstr *> &LocalMIs);
     bool optimizeCondBranch(MachineInstr *MI);
     bool optimizeCopyOrBitcast(MachineInstr *MI);
     bool optimizeCoalescableCopy(MachineInstr *MI);
@@ -482,7 +483,8 @@ bool PeepholeOptimizer::optimizeCmpInstr(MachineInstr *MI,
 }
 
 /// Optimize a select instruction.
-bool PeepholeOptimizer::optimizeSelect(MachineInstr *MI) {
+bool PeepholeOptimizer::optimizeSelect(MachineInstr *MI,
+                            SmallPtrSetImpl<MachineInstr *> &LocalMIs) {
   unsigned TrueOp = 0;
   unsigned FalseOp = 0;
   bool Optimizable = false;
@@ -491,7 +493,7 @@ bool PeepholeOptimizer::optimizeSelect(MachineInstr *MI) {
     return false;
   if (!Optimizable)
     return false;
-  if (!TII->optimizeSelect(MI))
+  if (!TII->optimizeSelect(MI, LocalMIs))
     return false;
   MI->eraseFromParent();
   ++NumSelects;
@@ -1072,6 +1074,13 @@ bool PeepholeOptimizer::runOnMachineFunction(MachineFunction &MF) {
     MachineBasicBlock *MBB = &*I;
 
     bool SeenMoveImm = false;
+
+    // During this forward scan, at some point it needs to answer the question
+    // "given a pointer to an MI in the current BB, is it located before or
+    // after the current instruction".
+    // To perform this, the following set keeps track of the MIs already seen
+    // during the scan, if a MI is not in the set, it is assumed to be located
+    // after. Newly created MIs have to be inserted in the set as well.
     SmallPtrSet<MachineInstr*, 16> LocalMIs;
     SmallSet<unsigned, 4> ImmDefRegs;
     DenseMap<unsigned, MachineInstr*> ImmDefMIs;
@@ -1102,7 +1111,7 @@ bool PeepholeOptimizer::runOnMachineFunction(MachineFunction &MF) {
       if ((isUncoalescableCopy(*MI) &&
            optimizeUncoalescableCopy(MI, LocalMIs)) ||
           (MI->isCompare() && optimizeCmpInstr(MI, MBB)) ||
-          (MI->isSelect() && optimizeSelect(MI))) {
+          (MI->isSelect() && optimizeSelect(MI, LocalMIs))) {
         // MI is deleted.
         LocalMIs.erase(MI);
         Changed = true;
