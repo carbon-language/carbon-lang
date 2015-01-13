@@ -16,7 +16,7 @@ package irgen
 import (
 	"strconv"
 
-	"llvm.org/llgo/third_party/go.tools/go/types"
+	"llvm.org/llgo/third_party/gotools/go/types"
 
 	"llvm.org/llvm/bindings/go/llvm"
 )

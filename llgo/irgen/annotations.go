@@ -16,9 +16,9 @@ package irgen
 import (
 	"go/ast"
 	"go/token"
-	"llvm.org/llgo/third_party/go.tools/go/loader"
-	"llvm.org/llgo/third_party/go.tools/go/ssa"
-	"llvm.org/llgo/third_party/go.tools/go/types"
+	"llvm.org/llgo/third_party/gotools/go/loader"
+	"llvm.org/llgo/third_party/gotools/go/ssa"
+	"llvm.org/llgo/third_party/gotools/go/types"
 	"llvm.org/llvm/bindings/go/llvm"
 )
 

@@ -26,11 +26,11 @@ import (
 	"llvm.org/llgo/debug"
 	"llvm.org/llvm/bindings/go/llvm"
 
-	"llvm.org/llgo/third_party/go.tools/go/gccgoimporter"
-	"llvm.org/llgo/third_party/go.tools/go/importer"
-	"llvm.org/llgo/third_party/go.tools/go/loader"
-	"llvm.org/llgo/third_party/go.tools/go/ssa"
-	"llvm.org/llgo/third_party/go.tools/go/types"
+	"llvm.org/llgo/third_party/gotools/go/gccgoimporter"
+	"llvm.org/llgo/third_party/gotools/go/importer"
+	"llvm.org/llgo/third_party/gotools/go/loader"
+	"llvm.org/llgo/third_party/gotools/go/ssa"
+	"llvm.org/llgo/third_party/gotools/go/types"
 )
 
 type Module struct {

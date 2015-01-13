@@ -21,9 +21,9 @@ import (
 	"sort"
 
 	"llvm.org/llgo/ssaopt"
-	"llvm.org/llgo/third_party/go.tools/go/ssa"
-	"llvm.org/llgo/third_party/go.tools/go/ssa/ssautil"
-	"llvm.org/llgo/third_party/go.tools/go/types"
+	"llvm.org/llgo/third_party/gotools/go/ssa"
+	"llvm.org/llgo/third_party/gotools/go/ssa/ssautil"
+	"llvm.org/llgo/third_party/gotools/go/types"
 	"llvm.org/llvm/bindings/go/llvm"
 )
 

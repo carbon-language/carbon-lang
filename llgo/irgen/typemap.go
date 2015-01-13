@@ -21,10 +21,10 @@ import (
 	"strconv"
 	"strings"
 
-	"llvm.org/llgo/third_party/go.tools/go/ssa"
-	"llvm.org/llgo/third_party/go.tools/go/ssa/ssautil"
-	"llvm.org/llgo/third_party/go.tools/go/types"
-	"llvm.org/llgo/third_party/go.tools/go/types/typeutil"
+	"llvm.org/llgo/third_party/gotools/go/ssa"
+	"llvm.org/llgo/third_party/gotools/go/ssa/ssautil"
+	"llvm.org/llgo/third_party/gotools/go/types"
+	"llvm.org/llgo/third_party/gotools/go/types/typeutil"
 	"llvm.org/llvm/bindings/go/llvm"
 )
 

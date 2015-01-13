@@ -88,6 +88,6 @@ licenses, and/or restrictions:
 
 Program             Directory
 -------             ---------
-go.tools            third_party/go.tools
+go.tools            third_party/gotools
 gofrontend          third_party/gofrontend
 

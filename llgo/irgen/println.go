@@ -17,7 +17,7 @@ package irgen
 import (
 	"fmt"
 
-	"llvm.org/llgo/third_party/go.tools/go/types"
+	"llvm.org/llgo/third_party/gotools/go/types"
 )
 
 func (fr *frame) printValues(println_ bool, values ...*govalue) {

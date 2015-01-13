@@ -7,7 +7,7 @@ package ssaopt
 import (
 	"go/token"
 
-	"llvm.org/llgo/third_party/go.tools/go/ssa"
+	"llvm.org/llgo/third_party/gotools/go/ssa"
 )
 
 func escapes(val ssa.Value, bb *ssa.BasicBlock, pending []ssa.Value) bool {

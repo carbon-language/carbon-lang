@@ -14,7 +14,7 @@
 package irgen
 
 import (
-	"llvm.org/llgo/third_party/go.tools/go/types"
+	"llvm.org/llgo/third_party/gotools/go/types"
 )
 
 func deref(t types.Type) types.Type {

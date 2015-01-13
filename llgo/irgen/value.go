@@ -17,8 +17,8 @@ package irgen
 import (
 	"fmt"
 	"go/token"
-	"llvm.org/llgo/third_party/go.tools/go/exact"
-	"llvm.org/llgo/third_party/go.tools/go/types"
+	"llvm.org/llgo/third_party/gotools/go/exact"
+	"llvm.org/llgo/third_party/gotools/go/types"
 	"llvm.org/llvm/bindings/go/llvm"
 )
 
