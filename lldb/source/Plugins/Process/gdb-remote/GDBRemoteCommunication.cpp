@@ -22,9 +22,9 @@
 #include "lldb/Core/StreamString.h"
 #include "lldb/Host/ConnectionFileDescriptor.h"
 #include "lldb/Host/FileSpec.h"
-#include "lldb/Host/FileSystem.h"
 #include "lldb/Host/Host.h"
 #include "lldb/Host/HostInfo.h"
+#include "lldb/Host/Pipe.h"
 #include "lldb/Host/Socket.h"
 #include "lldb/Host/ThreadLauncher.h"
 #include "lldb/Host/TimeValue.h"
@@ -763,6 +763,7 @@ GDBRemoteCommunication::StartDebugserverProcess (const char *hostname,
 
         char named_pipe_path[PATH_MAX];
         named_pipe_path[0] = '\0';
+        Pipe port_named_pipe;
 
         bool listen = false;
         if (host_and_port[0])
@@ -788,15 +789,11 @@ GDBRemoteCommunication::StartDebugserverProcess (const char *hostname,
 
                 if (::mktemp (named_pipe_path))
                 {
-#if defined(_WIN32)
-                    if ( false )
-#else
-                    if (::mkfifo(named_pipe_path, 0600) == 0)
-#endif
-                    {
-                        debugserver_args.AppendArgument("--named-pipe");
-                        debugserver_args.AppendArgument(named_pipe_path);
-                    }
+                    error = port_named_pipe.CreateNew(named_pipe_path, false);
+                    if (error.Fail())
+                        return error;
+                    debugserver_args.AppendArgument("--named-pipe");
+                    debugserver_args.AppendArgument(named_pipe_path);
                 }
             }
             else
@@ -879,20 +876,41 @@ GDBRemoteCommunication::StartDebugserverProcess (const char *hostname,
         {
             if (named_pipe_path[0])
             {
-                File name_pipe_file;
-                error = name_pipe_file.Open(named_pipe_path, File::eOpenOptionRead);
+                const auto timeout = std::chrono::microseconds(10 * 1000000);
+                error = port_named_pipe.OpenAsReaderWithTimeout(named_pipe_path, false, timeout);
                 if (error.Success())
                 {
                     char port_cstr[256];
                     port_cstr[0] = '\0';
                     size_t num_bytes = sizeof(port_cstr);
-                    error = name_pipe_file.Read(port_cstr, num_bytes);
-                    assert (error.Success());
-                    assert (num_bytes > 0 && port_cstr[num_bytes-1] == '\0');
-                    out_port = Args::StringToUInt32(port_cstr, 0);
-                    name_pipe_file.Close();
+                    // Read port from pipe with 10 second timeout.
+                    error = port_named_pipe.ReadWithTimeout(port_cstr, num_bytes, timeout, num_bytes);
+                    if (error.Success())
+                    {
+                        assert (num_bytes > 0 && port_cstr[num_bytes-1] == '\0');
+                        out_port = Args::StringToUInt32(port_cstr, 0);
+                        if (log)
+                            log->Printf("GDBRemoteCommunication::%s() debugserver listens %u port", __FUNCTION__, out_port);
+                    }
+                    else
+                    {
+                        if (log)
+                            log->Printf("GDBRemoteCommunication::%s() failed to read a port value from named pipe %s: %s", __FUNCTION__, named_pipe_path, error.AsCString());
+
+                    }
+                    port_named_pipe.Close();
                 }
-                FileSystem::Unlink(named_pipe_path);
+                else
+                {
+                    if (log)
+                        log->Printf("GDBRemoteCommunication::%s() failed to open named pipe %s for reading: %s", __FUNCTION__, named_pipe_path, error.AsCString());
+                }
+                const auto err = port_named_pipe.Delete(named_pipe_path);
+                if (err.Fail())
+                {
+                    if (log)
+                        log->Printf ("GDBRemoteCommunication::%s failed to delete pipe %s: %s", __FUNCTION__, named_pipe_path, err.AsCString());
+                }
             }
             else if (listen)
             {

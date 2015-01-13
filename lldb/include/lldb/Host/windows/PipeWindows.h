@@ -31,8 +31,8 @@ class PipeWindows : public PipeBase
 
     Error CreateNew(bool child_process_inherit) override;
     Error CreateNew(llvm::StringRef name, bool child_process_inherit) override;
-    Error OpenAsReader(llvm::StringRef name, bool child_process_inherit) override;
-    Error OpenAsWriter(llvm::StringRef name, bool child_process_inherit) override;
+    Error OpenAsReaderWithTimeout(llvm::StringRef name, bool child_process_inherit, const std::chrono::microseconds &timeout) override;
+    Error OpenAsWriterWithTimeout(llvm::StringRef name, bool child_process_inherit, const std::chrono::microseconds &timeout) override;
 
     bool CanRead() const override;
     bool CanWrite() const override;
@@ -44,9 +44,10 @@ class PipeWindows : public PipeBase
 
     void Close() override;
 
+    Error Delete(llvm::StringRef name) override;
+
     Error Write(const void *buf, size_t size, size_t &bytes_written) override;
-    Error Read(void *buf, size_t size, size_t &bytes_read) override;
-    Error ReadWithTimeout(void *buf, size_t size, const std::chrono::milliseconds &timeout, size_t &bytes_read) override;
+    Error ReadWithTimeout(void *buf, size_t size, const std::chrono::microseconds &timeout, size_t &bytes_read) override;
 
     // PipeWindows specific methods.  These allow access to the underlying OS handle.
     HANDLE GetReadNativeHandle();

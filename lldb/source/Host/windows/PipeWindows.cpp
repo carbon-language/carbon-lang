@@ -90,7 +90,7 @@ PipeWindows::CreateNew(llvm::StringRef name, bool child_process_inherit)
 }
 
 Error
-PipeWindows::OpenAsReader(llvm::StringRef name, bool child_process_inherit)
+PipeWindows::OpenAsReaderWithTimeout(llvm::StringRef name, bool child_process_inherit, const std::chrono::microseconds &timeout)
 {
     if (CanRead() || CanWrite())
         return Error(ERROR_ALREADY_EXISTS, eErrorTypeWin32);
@@ -99,7 +99,7 @@ PipeWindows::OpenAsReader(llvm::StringRef name, bool child_process_inherit)
 }
 
 Error
-PipeWindows::OpenAsWriter(llvm::StringRef name, bool child_process_inherit)
+PipeWindows::OpenAsWriterWithTimeout(llvm::StringRef name, bool child_process_inherit, const std::chrono::microseconds &timeout)
 {
     if (CanRead() || CanWrite())
         return Error(ERROR_ALREADY_EXISTS, eErrorTypeWin32);
@@ -217,6 +217,12 @@ PipeWindows::Close()
     CloseWriteEndpoint();
 }
 
+Error
+PipeWindows::Delete(llvm::StringRef name)
+{
+    return Error();
+}
+
 bool
 PipeWindows::CanRead() const
 {
@@ -242,13 +248,7 @@ PipeWindows::GetWriteNativeHandle()
 }
 
 Error
-PipeWindows::Read(void *buf, size_t size, size_t &bytes_read)
-{
-    return ReadWithTimeout(buf, size, std::chrono::milliseconds::zero(), bytes_read);
-}
-
-Error
-PipeWindows::ReadWithTimeout(void *buf, size_t size, const std::chrono::milliseconds &duration, size_t &bytes_read)
+PipeWindows::ReadWithTimeout(void *buf, size_t size, const std::chrono::microseconds &duration, size_t &bytes_read)
 {
     if (!CanRead())
         return Error(ERROR_INVALID_HANDLE, eErrorTypeWin32);
@@ -259,7 +259,7 @@ PipeWindows::ReadWithTimeout(void *buf, size_t size, const std::chrono::millisec
     if (!result && GetLastError() != ERROR_IO_PENDING)
         return Error(::GetLastError(), eErrorTypeWin32);
 
-    DWORD timeout = (duration == std::chrono::milliseconds::zero()) ? INFINITE : duration.count();
+    DWORD timeout = (duration == std::chrono::microseconds::zero()) ? INFINITE : duration.count() * 1000;
     DWORD wait_result = ::WaitForSingleObject(m_read_overlapped.hEvent, timeout);
     if (wait_result != WAIT_OBJECT_0)
     {

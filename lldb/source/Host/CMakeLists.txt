@@ -21,6 +21,7 @@ add_host_subdirectory(common
   common/NativeProcessProtocol.cpp
   common/NativeThreadProtocol.cpp
   common/OptionParser.cpp
+  common/PipeBase.cpp
   common/ProcessRunLock.cpp
   common/Socket.cpp
   common/SocketAddress.cpp

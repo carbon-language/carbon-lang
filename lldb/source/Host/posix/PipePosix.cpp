@@ -8,11 +8,16 @@
 //===----------------------------------------------------------------------===//
 
 #include "lldb/Host/posix/PipePosix.h"
+#include "lldb/Host/FileSystem.h"
+
+#include <functional>
+#include <thread>
 
 #include <errno.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/types.h>
+#include <sys/stat.h>
 
 using namespace lldb;
 using namespace lldb_private;
@@ -32,6 +37,8 @@ enum PIPES { READ, WRITE }; // Constants 0 and 1 for READ and WRITE
 namespace
 {
 
+constexpr auto OPEN_WRITER_SLEEP_TIMEOUT_MSECS = 100;
+
 #if defined(FD_CLOEXEC) && !PIPE2_SUPPORTED
 bool SetCloexecFlag(int fd)
 {
@@ -41,6 +48,79 @@ bool SetCloexecFlag(int fd)
     return (::fcntl(fd, F_SETFD, flags | FD_CLOEXEC) == 0);
 }
 #endif
+
+std::chrono::time_point<std::chrono::steady_clock>
+Now()
+{
+    return std::chrono::steady_clock::now();
+}
+
+Error
+SelectIO(int handle, bool is_read, const std::function<Error(bool&)> &io_handler, const std::chrono::microseconds &timeout)
+{
+    Error error;
+    fd_set fds;
+    bool done = false;
+
+    using namespace std::chrono;
+
+    const auto finish_time = Now() + timeout;
+
+    while (!done)
+    {
+        struct timeval tv = {0, 0};
+        if (timeout != microseconds::zero())
+        {
+            const auto remaining_dur = duration_cast<microseconds>(finish_time - Now());
+            if (remaining_dur.count() <= 0)
+            {
+                error.SetErrorString("timeout exceeded");
+                break;
+            }
+            const auto dur_secs = duration_cast<seconds>(remaining_dur);
+            const auto dur_usecs = remaining_dur % seconds(1);
+
+            tv.tv_sec = dur_secs.count();
+            tv.tv_usec = dur_usecs.count();
+        }
+        else
+            tv.tv_sec = 1;
+
+        FD_ZERO(&fds);
+        FD_SET(handle, &fds);
+
+        const auto retval = ::select(handle + 1,
+                                     (is_read) ? &fds : nullptr,
+                                     (is_read) ? nullptr : &fds,
+                                     nullptr, &tv);
+        if (retval == -1)
+        {
+            if (errno == EINTR)
+                continue;
+            error.SetErrorToErrno();
+            break;
+        }
+        if (retval == 0)
+        {
+            error.SetErrorString("timeout exceeded");
+            break;
+        }
+        if (!FD_ISSET(handle, &fds))
+        {
+            error.SetErrorString("invalid state");
+            break;
+        }
+
+        error = io_handler(done);
+        if (error.Fail())
+        {
+          if (error.GetError() == EINTR)
+              continue;
+            break;
+        }
+    }
+    return error;
+}
 
 }
 
@@ -58,13 +138,10 @@ PipePosix::~PipePosix()
 Error
 PipePosix::CreateNew(bool child_processes_inherit)
 {
-    Error error;
     if (CanRead() || CanWrite())
-    {
-        error.SetError(EINVAL, eErrorTypePOSIX);
-        return error;
-    }
+        return Error(EINVAL, eErrorTypePOSIX);
 
+    Error error;
 #if PIPE2_SUPPORTED
     if (::pipe2(m_fds, (child_processes_inherit) ? 0 : O_CLOEXEC) == 0)
         return error;
@@ -86,49 +163,85 @@ PipePosix::CreateNew(bool child_processes_inherit)
     }
 #endif
 
+    error.SetErrorToErrno();
     m_fds[READ] = PipePosix::kInvalidDescriptor;
     m_fds[WRITE] = PipePosix::kInvalidDescriptor;
-    error.SetErrorToErrno();
     return error;
 }
 
 Error
 PipePosix::CreateNew(llvm::StringRef name, bool child_process_inherit)
 {
-    Error error;
     if (CanRead() || CanWrite())
-        error.SetErrorString("Pipe is already opened");
-    else if (name.empty())
-        error.SetErrorString("Cannot create named pipe with empty name.");
-    else
-        error.SetErrorString("Not implemented");
+        return Error("Pipe is already opened");
+
+    Error error;
+    if (::mkfifo(name.data(), 0660) != 0)
+        error.SetErrorToErrno();
+
     return error;
 }
 
 Error
-PipePosix::OpenAsReader(llvm::StringRef name, bool child_process_inherit)
+PipePosix::OpenAsReaderWithTimeout(llvm::StringRef name, bool child_process_inherit, const std::chrono::microseconds &timeout)
 {
-    Error error;
     if (CanRead() || CanWrite())
-        error.SetErrorString("Pipe is already opened");
-    else if (name.empty())
-        error.SetErrorString("Cannot open named pipe with empty name.");
+        return Error("Pipe is already opened");
+
+    int flags = O_RDONLY | O_NONBLOCK;
+    if (!child_process_inherit)
+        flags |= O_CLOEXEC;
+
+    Error error;
+    int fd = ::open(name.data(), flags);
+    if (fd != -1)
+        m_fds[READ] = fd;
     else
-        error.SetErrorString("Not implemented");
+        error.SetErrorToErrno();
+
     return error;
 }
 
 Error
-PipePosix::OpenAsWriter(llvm::StringRef name, bool child_process_inherit)
+PipePosix::OpenAsWriterWithTimeout(llvm::StringRef name, bool child_process_inherit, const std::chrono::microseconds &timeout)
 {
-    Error error;
     if (CanRead() || CanWrite())
-        error.SetErrorString("Pipe is already opened");
-    else if (name.empty())
-        error.SetErrorString("Cannot create named pipe with empty name.");
-    else
-        error.SetErrorString("Not implemented");
-    return error;
+        return Error("Pipe is already opened");
+
+    int flags = O_WRONLY | O_NONBLOCK;
+    if (!child_process_inherit)
+        flags |= O_CLOEXEC;
+
+    using namespace std::chrono;
+    const auto finish_time = Now() + timeout;
+
+    while (!CanWrite())
+    {
+        if (timeout != microseconds::zero())
+        {
+            const auto dur = duration_cast<microseconds>(finish_time - Now()).count();
+            if (dur <= 0)
+                return Error("timeout exceeded - reader hasn't opened so far");
+        }
+
+        errno = 0;
+        int fd = ::open(name.data(), flags);
+        if (fd == -1)
+        {
+            const auto errno_copy = errno;
+            // We may get ENXIO if a reader side of the pipe hasn't opened yet.
+            if (errno_copy != ENXIO)
+                return Error(errno_copy, eErrorTypePOSIX);
+
+            std::this_thread::sleep_for(milliseconds(OPEN_WRITER_SLEEP_TIMEOUT_MSECS));
+        }
+        else
+        {
+            m_fds[WRITE] = fd;
+        }
+    }
+
+    return Error();
 }
 
 int
@@ -166,6 +279,12 @@ PipePosix::Close()
     CloseWriteFileDescriptor();
 }
 
+Error
+PipePosix::Delete(llvm::StringRef name)
+{
+    return FileSystem::Unlink(name.data());
+}
+
 bool
 PipePosix::CanRead() const
 {
@@ -183,8 +302,7 @@ PipePosix::CloseReadFileDescriptor()
 {
     if (CanRead())
     {
-        int err;
-        err = close(m_fds[READ]);
+        close(m_fds[READ]);
         m_fds[READ] = PipePosix::kInvalidDescriptor;
     }
 }
@@ -194,59 +312,67 @@ PipePosix::CloseWriteFileDescriptor()
 {
     if (CanWrite())
     {
-        int err;
-        err = close(m_fds[WRITE]);
+        close(m_fds[WRITE]);
         m_fds[WRITE] = PipePosix::kInvalidDescriptor;
     }
 }
 
 Error
-PipePosix::Read(void *buf, size_t num_bytes, size_t &bytes_read)
+PipePosix::ReadWithTimeout(void *buf, size_t size, const std::chrono::microseconds &timeout, size_t &bytes_read)
 {
     bytes_read = 0;
-    Error error;
+    if (!CanRead())
+        return Error(EINVAL, eErrorTypePOSIX);
 
-    if (CanRead())
-    {
-        const int fd = GetReadFileDescriptor();
-        int result = read(fd, buf, num_bytes);
-        if (result >= 0)
-            bytes_read = result;
-        else
-            error.SetErrorToErrno();
-    }
-    else
-        error.SetError(EINVAL, eErrorTypePOSIX);
+    auto handle = GetReadFileDescriptor();
+    return SelectIO(handle,
+                    true,
+                    [=, &bytes_read](bool &done)
+                    {
+                      Error error;
+                      auto result = ::read(handle,
+                                           reinterpret_cast<char*>(buf) + bytes_read,
+                                           size - bytes_read);
+                      if (result != -1)
+                      {
+                          bytes_read += result;
+                          if (bytes_read == size || result == 0)
+                              done = true;
+                      }
+                      else
+                          error.SetErrorToErrno();
 
-    return error;
+                      return error;
+                  },
+                  timeout);
 }
 
 Error
-PipePosix::ReadWithTimeout(void *buf, size_t num_bytes, const std::chrono::milliseconds &duration, size_t &bytes_read)
-{
-    bytes_read = 0;
-    Error error;
-    error.SetErrorString("Not implemented");
-    return error;
-}
-
-Error
-PipePosix::Write(const void *buf, size_t num_bytes, size_t &bytes_written)
+PipePosix::Write(const void *buf, size_t size, size_t &bytes_written)
 {
     bytes_written = 0;
-    Error error;
+    if (!CanWrite())
+        return Error(EINVAL, eErrorTypePOSIX);
 
-    if (CanWrite())
-    {
-        const int fd = GetWriteFileDescriptor();
-        int result = write(fd, buf, num_bytes);
-        if (result >= 0)
-            bytes_written = result;
-        else
-            error.SetErrorToErrno();
-    }
-    else
-        error.SetError(EINVAL, eErrorTypePOSIX);
+    auto handle = GetWriteFileDescriptor();
+    return SelectIO(handle,
+                    false,
+                    [=, &bytes_written](bool &done)
+                    {
+                        Error error;
+                        auto result = ::write(handle,
+                                              reinterpret_cast<const char*>(buf) + bytes_written,
+                                              size - bytes_written);
+                        if (result != -1)
+                        {
+                            bytes_written += result;
+                            if (bytes_written == size)
+                                done = true;
+                        }
+                        else
+                            error.SetErrorToErrno();
 
-    return error;
+                        return error;
+                    },
+                    std::chrono::microseconds::zero());
 }
