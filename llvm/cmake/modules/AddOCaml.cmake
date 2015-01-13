@@ -53,6 +53,8 @@ function(add_ocaml_library name)
   endif()
 
   set(ocaml_flags "-lstdc++" "-ldopt" "-L${LLVM_LIBRARY_DIR}"
+                  "-ccopt" "-L\\$CAMLORIGIN/.."
+                  "-ccopt" "-Wl,-rpath,\\$CAMLORIGIN/.."
                   ${ocaml_pkgs})
 
   foreach( ocaml_dep ${ARG_OCAMLDEP} )

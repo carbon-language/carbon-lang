@@ -65,6 +65,10 @@ OCAMLRPATH     := $(RPATH) -Wl,'$$ORIGIN/../../lib'
 endif
 endif
 
+# See http://caml.inria.fr/mantis/view.php?id=6642
+OCAMLORIGIN    := -ccopt -L'$$CAMLORIGIN/..' \
+                  -ccopt $(RPATH) -ccopt -Wl,'$$CAMLORIGIN/..'
+
 # Tools
 OCAMLCFLAGS += -I $(OcamlDir) $(addprefix -package ,$(FindlibPackages))
 
@@ -92,16 +96,18 @@ Compile.CMX  := $(strip $(OCAMLFIND) opt -c $(OCAMLCFLAGS) $(OCAMLDEBUGFLAG) -o)
 ifdef OCAMLSTUBS
 # -dllib is engaged with ocamlc builds, $(OCAMLSTUBFLAGS) in ocamlc -custom builds.
 Archive.CMA  := $(strip $(OCAMLFIND) c -a -dllib -l$(LIBRARYNAME) $(OCAMLSTUBFLAGS) \
-																			 $(OCAMLDEBUGFLAG) -o)
+																			 $(OCAMLDEBUGFLAG) $(OCAMLORIGIN) -o)
 else
 Archive.CMA  := $(strip $(OCAMLFIND) c -a -custom $(OCAMLAFLAGS) $(OCAMLDEBUGFLAG) \
-                                       -o)
+                                       $(OCAMLORIGIN) -o)
 endif
 
 ifdef OCAMLSTUBS
-Archive.CMXA := $(strip $(OCAMLFIND) opt -a $(OCAMLSTUBFLAGS) $(OCAMLDEBUGFLAG) -o)
+Archive.CMXA := $(strip $(OCAMLFIND) opt -a $(OCAMLSTUBFLAGS) $(OCAMLDEBUGFLAG) \
+                                         $(OCAMLORIGIN) -o)
 else
-Archive.CMXA := $(strip $(OCAMLFIND) opt -a $(OCAMLAFLAGS) $(OCAMLDEBUGFLAG) -o)
+Archive.CMXA := $(strip $(OCAMLFIND) opt -a $(OCAMLAFLAGS) $(OCAMLDEBUGFLAG) \
+                                         $(OCAMLORIGIN) -o)
 endif
 
 # Source files
