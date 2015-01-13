@@ -2299,6 +2299,7 @@ public:
     SelectionDAG &DAG;
     SDLoc DL;
     ImmutableCallSite *CS;
+    bool IsPatchPoint;
     SmallVector<ISD::OutputArg, 32> Outs;
     SmallVector<SDValue, 32> OutVals;
     SmallVector<ISD::InputArg, 32> Ins;
@@ -2307,7 +2308,7 @@ public:
       : RetTy(nullptr), RetSExt(false), RetZExt(false), IsVarArg(false),
         IsInReg(false), DoesNotReturn(false), IsReturnValueUsed(true),
         IsTailCall(false), NumFixedArgs(-1), CallConv(CallingConv::C),
-        DAG(DAG), CS(nullptr) {}
+        DAG(DAG), CS(nullptr), IsPatchPoint(false) {}
 
     CallLoweringInfo &setDebugLoc(SDLoc dl) {
       DL = dl;
@@ -2386,6 +2387,11 @@ public:
 
     CallLoweringInfo &setZExtResult(bool Value = true) {
       RetZExt = Value;
+      return *this;
+    }
+
+    CallLoweringInfo &setIsPatchPoint(bool Value = true) {
+      IsPatchPoint = Value;
       return *this;
     }
 

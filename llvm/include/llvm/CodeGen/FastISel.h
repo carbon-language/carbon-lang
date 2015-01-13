@@ -76,6 +76,8 @@ public:
     unsigned ResultReg;
     unsigned NumResultRegs;
 
+    bool IsPatchPoint;
+
     SmallVector<Value *, 16> OutVals;
     SmallVector<ISD::ArgFlagsTy, 16> OutFlags;
     SmallVector<unsigned, 16> OutRegs;
@@ -87,7 +89,7 @@ public:
           IsInReg(false), DoesNotReturn(false), IsReturnValueUsed(true),
           IsTailCall(false), NumFixedArgs(-1), CallConv(CallingConv::C),
           Callee(nullptr), SymName(nullptr), CS(nullptr), Call(nullptr),
-          ResultReg(0), NumResultRegs(0) {}
+          ResultReg(0), NumResultRegs(0), IsPatchPoint(false) {}
 
     CallLoweringInfo &setCallee(Type *ResultTy, FunctionType *FuncTy,
                                 const Value *Target, ArgListTy &&ArgsList,
@@ -159,6 +161,11 @@ public:
 
     CallLoweringInfo &setTailCall(bool Value = true) {
       IsTailCall = Value;
+      return *this;
+    }
+
+    CallLoweringInfo &setIsPatchPoint(bool Value = true) {
+      IsPatchPoint = Value;
       return *this;
     }
 

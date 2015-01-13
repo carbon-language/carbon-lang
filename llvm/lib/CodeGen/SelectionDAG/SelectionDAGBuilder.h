@@ -653,7 +653,8 @@ public:
           unsigned NumArgs,
           SDValue Callee,
           bool UseVoidTy = false,
-          MachineBasicBlock *LandingPad = nullptr);
+          MachineBasicBlock *LandingPad = nullptr,
+          bool IsPatchPoint = false);
 
   /// UpdateSplitBlock - When an MBB was split during scheduling, update the
   /// references that need to refer to the last resulting block.
