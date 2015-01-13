@@ -174,45 +174,6 @@ private:
   mutable llvm::BumpPtrAllocator _alloc;
 };
 
-class ResolvableSymbols {
-public:
-  void add(File *file) {
-    std::lock_guard<std::mutex> lock(_mutex);
-    if (_seen.count(file) > 0)
-      return;
-    _seen.insert(file);
-    _queue.insert(file);
-  }
-
-  const std::set<std::string> &defined() {
-    readAllSymbols();
-    return _defined;
-  }
-
-private:
-  // Files are read lazily, so that it has no runtime overhead if
-  // no one accesses this class.
-  void readAllSymbols() {
-    std::lock_guard<std::mutex> lock(_mutex);
-    for (File *file : _queue) {
-      if (auto *archive = dyn_cast<ArchiveLibraryFile>(file)) {
-        for (const std::string &sym : archive->getDefinedSymbols())
-          _defined.insert(sym);
-        continue;
-      }
-      for (const DefinedAtom *atom : file->defined())
-        if (!atom->name().empty())
-          _defined.insert(atom->name());
-    }
-    _queue.clear();
-  }
-
-  std::set<std::string> _defined;
-  std::set<File *> _seen;
-  std::set<File *> _queue;
-  std::mutex _mutex;
-};
-
 // A ExportedSymbolRenameFile is a virtual archive file for dllexported symbols.
 //
 // One usually has to specify the exact symbol name to resolve it. That's true
@@ -246,7 +207,7 @@ private:
 class ExportedSymbolRenameFile : public impl::VirtualArchiveLibraryFile {
 public:
   ExportedSymbolRenameFile(const PECOFFLinkingContext &ctx,
-                           std::shared_ptr<ResolvableSymbols> syms)
+                           ResolvableSymbols *syms)
       : VirtualArchiveLibraryFile("<export>"), _syms(syms),
         _ctx(const_cast<PECOFFLinkingContext *>(&ctx)) {
     for (PECOFFLinkingContext::ExportDesc &desc : _ctx->getDllExports())
@@ -258,7 +219,7 @@ public:
     if (_exportedSyms.count(sym) == 0)
       return nullptr;
     std::string replace;
-    if (!findDecoratedSymbol(_ctx, _syms.get(), sym.str(), replace))
+    if (!findDecoratedSymbol(_ctx, _syms, sym.str(), replace))
       return nullptr;
 
     for (ExportDesc &exp : _ctx->getDllExports())
@@ -271,7 +232,7 @@ public:
 
 private:
   std::set<std::string> _exportedSyms;
-  std::shared_ptr<ResolvableSymbols> _syms;
+  ResolvableSymbols *_syms;
   mutable llvm::BumpPtrAllocator _alloc;
   mutable PECOFFLinkingContext *_ctx;
 };
@@ -284,7 +245,7 @@ private:
 class EntryPointFile : public SimpleFile {
 public:
   EntryPointFile(const PECOFFLinkingContext &ctx,
-                 std::shared_ptr<ResolvableSymbols> syms)
+                 ResolvableSymbols *syms)
       : SimpleFile("<entry>"), _ctx(const_cast<PECOFFLinkingContext *>(&ctx)),
         _syms(syms), _firstTime(true) {}
 
@@ -316,7 +277,7 @@ private:
     StringRef opt = _ctx->getEntrySymbolName();
     if (!opt.empty()) {
       std::string mangled;
-      if (findDecoratedSymbol(_ctx, _syms.get(), opt, mangled))
+      if (findDecoratedSymbol(_ctx, _syms, opt, mangled))
         return mangled;
       return _ctx->decorateSymbol(opt);
     }
@@ -341,7 +302,7 @@ private:
       if (_syms->defined().count(sym))
         return true;
       std::string ignore;
-      return findDecoratedSymbol(_ctx, _syms.get(), sym, ignore);
+      return findDecoratedSymbol(_ctx, _syms, sym, ignore);
     };
 
     switch (_ctx->getSubsystem()) {
@@ -372,7 +333,7 @@ private:
   PECOFFLinkingContext *_ctx;
   atom_collection_vector<UndefinedAtom> _undefinedAtoms;
   std::mutex _mutex;
-  std::shared_ptr<ResolvableSymbols> _syms;
+  ResolvableSymbols *_syms;
   llvm::BumpPtrAllocator _alloc;
   bool _firstTime;
 };

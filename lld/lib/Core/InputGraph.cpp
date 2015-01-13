@@ -20,24 +20,15 @@ File *InputGraph::getNextFile() {
   // element points to an archive file, and there's a file left in the archive,
   // it will succeed. If not, try to get the next file in the input graph.
   for (;;) {
-    if (_currentInputElement) {
-      File *next = _currentInputElement->getNextFile();
-      if (next) {
-        for (const std::function<void(File *)> &observer : _observers)
-          observer(next);
+    if (_currentInputElement)
+      if (File *next = _currentInputElement->getNextFile())
         return next;
-      }
-    }
 
     InputElement *elt = getNextInputElement();
     if (!elt)
       return nullptr;
     _currentInputElement = elt;
   }
-}
-
-void InputGraph::registerObserver(std::function<void(File *)> fn) {
-  _observers.push_back(fn);
 }
 
 void InputGraph::addInputElement(std::unique_ptr<InputElement> ie) {

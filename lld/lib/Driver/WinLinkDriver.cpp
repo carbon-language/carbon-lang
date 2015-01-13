@@ -842,6 +842,7 @@ void addFiles(PECOFFLinkingContext &ctx, StringRef path, raw_ostream &diag,
   for (std::unique_ptr<File> &file : loadFile(ctx, path, false)) {
     if (ctx.logInputFiles())
       diag << file->path() << "\n";
+    ctx.getResolvableSymsFile()->add(file.get());
     files.push_back(std::move(file));
   }
 }
