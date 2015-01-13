@@ -3149,15 +3149,10 @@ Parser::tryParseExceptionSpecification(bool Delayed,
     ExceptionSpecTokens->push_back(StartTok); // 'throw' or 'noexcept'
     ExceptionSpecTokens->push_back(Tok); // '('
     SpecificationRange.setEnd(ConsumeParen()); // '('
-    
-    if (!ConsumeAndStoreUntil(tok::r_paren, *ExceptionSpecTokens,
-                              /*StopAtSemi=*/true,
-                              /*ConsumeFinalToken=*/true)) {
-      NoexceptExpr = 0;
-      delete ExceptionSpecTokens;
-      ExceptionSpecTokens = 0;
-      return IsNoexcept? EST_BasicNoexcept : EST_DynamicNone;
-    }
+
+    ConsumeAndStoreUntil(tok::r_paren, *ExceptionSpecTokens,
+                         /*StopAtSemi=*/true,
+                         /*ConsumeFinalToken=*/true);
     SpecificationRange.setEnd(Tok.getLocation());
     
     // Add the 'stop' token.

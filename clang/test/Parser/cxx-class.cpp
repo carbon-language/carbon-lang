@@ -179,6 +179,14 @@ class X1 { a::operator=; }; // expected-error {{undeclared identifier 'a'}}
 class X2 { a::a; }; // expected-error {{undeclared identifier 'a'}}
 }
 
+class BadExceptionSpec {
+  void f() throw(int; // expected-error {{expected ')'}} expected-note {{to match}}
+  void g() throw( // expected-note {{to match}}
+      int( // expected-note {{to match}}
+          ; // expected-error 2{{expected ')'}} expected-error {{unexpected end of exception specification}}
+          ));
+};
+
 // PR11109 must appear at the end of the source file
 class pr11109r3 { // expected-note{{to match this '{'}}
   public // expected-error{{expected ':'}} expected-error{{expected '}'}} expected-error{{expected ';' after class}}
