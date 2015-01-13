@@ -871,6 +871,7 @@ void PPCFrameLowering::emitEpilogue(MachineFunction &MF,
   DebugLoc dl;
 
   assert((RetOpcode == PPC::BLR ||
+          RetOpcode == PPC::BLR8 ||
           RetOpcode == PPC::TCRETURNri ||
           RetOpcode == PPC::TCRETURNdi ||
           RetOpcode == PPC::TCRETURNai ||
@@ -1057,7 +1058,8 @@ void PPCFrameLowering::emitEpilogue(MachineFunction &MF,
 
   // Callee pop calling convention. Pop parameter/linkage area. Used for tail
   // call optimization
-  if (MF.getTarget().Options.GuaranteedTailCallOpt && RetOpcode == PPC::BLR &&
+  if (MF.getTarget().Options.GuaranteedTailCallOpt &&
+      (RetOpcode == PPC::BLR || RetOpcode == PPC::BLR8) &&
       MF.getFunction()->getCallingConv() == CallingConv::Fast) {
      PPCFunctionInfo *FI = MF.getInfo<PPCFunctionInfo>();
      unsigned CallerAllocatedAmt = FI->getMinReservedArea();

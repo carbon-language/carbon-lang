@@ -1658,7 +1658,7 @@ bool PPCFastISel::SelectRet(const Instruction *I) {
   }
 
   MachineInstrBuilder MIB = BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc,
-                                    TII.get(PPC::BLR));
+                                    TII.get(PPC::BLR8));
 
   for (unsigned i = 0, e = RetRegs.size(); i != e; ++i)
     MIB.addReg(RetRegs[i], RegState::Implicit);
