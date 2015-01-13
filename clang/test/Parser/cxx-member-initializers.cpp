@@ -66,12 +66,12 @@ namespace PR16480 {
 
     struct T { int n; };
     template<typename> struct A { int n; };
-  }; // expected-error +{{}}
+  };
 
   // FIXME: This is valid now, but may be made ill-formed by DR1607.
   struct G : X<0> {
     G() : X<0 && [](){return 0;}()>{} // expected-error +{{}}
-  }; // expected-error +{{}}
+  };
 
   struct Errs : X<0> {
     Errs(X<0>) : decltype X<0>() {} // expected-error {{expected '(' after 'decltype'}}

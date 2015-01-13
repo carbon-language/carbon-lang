@@ -484,10 +484,16 @@ void Parser::ParseLexedMethodDef(LexedMethod &LM) {
     Actions.ActOnReenterTemplateScope(getCurScope(), LM.D);
     ++CurTemplateDepthTracker;
   }
-  // Save the current token position.
-  SourceLocation origLoc = Tok.getLocation();
 
   assert(!LM.Toks.empty() && "Empty body!");
+  Token LastBodyToken = LM.Toks.back();
+  Token BodyEnd;
+  BodyEnd.startToken();
+  BodyEnd.setKind(tok::eof);
+  BodyEnd.setLocation(
+      LastBodyToken.getLocation().getLocWithOffset(LastBodyToken.getLength()));
+  BodyEnd.setEofData(LM.D);
+  LM.Toks.push_back(BodyEnd);
   // Append the current token at the end of the new token stream so that it
   // doesn't get lost.
   LM.Toks.push_back(Tok);
@@ -505,12 +511,11 @@ void Parser::ParseLexedMethodDef(LexedMethod &LM) {
 
   if (Tok.is(tok::kw_try)) {
     ParseFunctionTryBlock(LM.D, FnScope);
-    assert(!PP.getSourceManager().isBeforeInTranslationUnit(origLoc,
-                                                         Tok.getLocation()) &&
-           "ParseFunctionTryBlock went over the cached tokens!");
-    // There could be leftover tokens (e.g. because of an error).
-    // Skip through until we reach the original token position.
-    while (Tok.getLocation() != origLoc && Tok.isNot(tok::eof))
+
+    while (Tok.isNot(tok::eof))
+      ConsumeAnyToken();
+
+    if (Tok.is(tok::eof) && Tok.getEofData() == LM.D)
       ConsumeAnyToken();
     return;
   }
@@ -521,7 +526,11 @@ void Parser::ParseLexedMethodDef(LexedMethod &LM) {
     if (!Tok.is(tok::l_brace)) {
       FnScope.Exit();
       Actions.ActOnFinishFunctionBody(LM.D, nullptr);
-      while (Tok.getLocation() != origLoc && Tok.isNot(tok::eof))
+
+      while (Tok.isNot(tok::eof))
+        ConsumeAnyToken();
+
+      if (Tok.is(tok::eof) && Tok.getEofData() == LM.D)
         ConsumeAnyToken();
       return;
     }
@@ -541,17 +550,11 @@ void Parser::ParseLexedMethodDef(LexedMethod &LM) {
   if (LM.D)
     LM.D->getAsFunction()->setLateTemplateParsed(false);
 
-  if (Tok.getLocation() != origLoc) {
-    // Due to parsing error, we either went over the cached tokens or
-    // there are still cached tokens left. If it's the latter case skip the
-    // leftover tokens.
-    // Since this is an uncommon situation that should be avoided, use the
-    // expensive isBeforeInTranslationUnit call.
-    if (PP.getSourceManager().isBeforeInTranslationUnit(Tok.getLocation(),
-                                                        origLoc))
-      while (Tok.getLocation() != origLoc && Tok.isNot(tok::eof))
-        ConsumeAnyToken();
-  }
+  while (Tok.isNot(tok::eof))
+    ConsumeAnyToken();
+
+  if (Tok.is(tok::eof) && Tok.getEofData() == LM.D)
+    ConsumeAnyToken();
 
   if (CXXMethodDecl *MD = dyn_cast_or_null<CXXMethodDecl>(LM.D))
     Actions.ActOnFinishInlineMethodDef(MD);
