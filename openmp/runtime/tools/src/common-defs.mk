@@ -45,7 +45,7 @@ endif
 # Description:
 #     The function return printable name of specified architecture, IA-32 architecture or Intel(R) 64.
 #
-legal_arch = $(if $(filter 32,$(1)),IA-32,$(if $(filter 32e,$(1)),Intel(R) 64,$(if $(filter l1,$(1)),L1OM,$(if $(filter arm,$(1)),ARM,$(if $(filter ppc64,$(1)),PPC64,$(if $(filter aarch64,$(1)),AArch64,$(error Bad architecture specified: $(1)))))))
+legal_arch = $(if $(filter 32,$(1)),IA-32,$(if $(filter 32e,$(1)),Intel(R) 64,$(if $(filter l1,$(1)),L1OM,$(if $(filter arm,$(1)),ARM,$(if $(filter ppc64,$(1)),PPC64,$(if $(filter aarch64,$(1)),AArch64,$(error Bad architecture specified: $(1))))))))
 
 # Synopsis:
 #     var_name = $(call check_variable,var,list)
