@@ -66,7 +66,8 @@ To upload a new patch:
 * Leave the drop down on *Create a new Revision...* and click *Continue*.
 * Enter a descriptive title and summary; add reviewers and mailing
   lists that you want to be included in the review. If your patch is
-  for LLVM, cc llvm-commits; if your patch is for Clang, cc cfe-commits.
+  for LLVM, add llvm-commits as a subscriber; if your patch is for Clang,
+  add cfe-commits.
 * Click *Save*.
 
 To submit an updated patch:
