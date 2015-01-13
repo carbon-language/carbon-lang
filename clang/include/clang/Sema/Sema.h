@@ -3326,6 +3326,10 @@ public:
   void DiagnoseEmptyLoopBody(const Stmt *S,
                              const Stmt *PossibleBody);
 
+  /// Warn if a value is moved to itself.
+  void DiagnoseSelfMove(const Expr *LHSExpr, const Expr *RHSExpr,
+                        SourceLocation OpLoc);
+
   ParsingDeclState PushParsingDeclaration(sema::DelayedDiagnosticPool &pool) {
     return DelayedDiagnostics.push(pool);
   }

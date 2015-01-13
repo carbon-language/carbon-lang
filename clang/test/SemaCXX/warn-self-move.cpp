@@ -38,3 +38,18 @@ class field_test {
     other.x = std::move(other.x);  // expected-warning{{explicitly moving}}
   }
 };
+
+struct A {};
+struct B { A a; };
+struct C { C() {}; ~C() {} };
+void struct_test() {
+  A a;
+  a = std::move(a);  // expected-warning{{explicitly moving}}
+
+  B b;
+  b = std::move(b);  // expected-warning{{explicitly moving}}
+  b.a = std::move(b.a);  // expected-warning{{explicitly moving}}
+
+  C c;
+  c = std::move(c);  // expected-warning{{explicitly moving}}
+}
