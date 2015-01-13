@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=powerpc64-unknown-linux-gnu | FileCheck %s
+; RUN: llc < %s -mtriple=powerpc64-unknown-linux-gnu -no-integrated-as | FileCheck %s
 
 define void @f() {
 ; CHECK: @f

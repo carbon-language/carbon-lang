@@ -14,8 +14,8 @@ entry:
 }
 
 ; CHECK: ld
-; CHECK-NOT: addi   3,3,4294967295
-; CHECK: addi   3,3,-1
+; CHECK-NOT: addi   3, 3, 4294967295
+; CHECK: addi   3, 3, -1
 ; CHECK: blr
 
 ; Function Attrs: nounwind
