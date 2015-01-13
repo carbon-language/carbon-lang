@@ -187,6 +187,7 @@ AddressSanitizer is supported on
 * Linux i386/x86\_64 (tested on Ubuntu 12.04);
 * MacOS 10.6 - 10.9 (i386/x86\_64).
 * Android ARM
+* FreeBSD i386/x86\_64 (tested on FreeBSD 11-current)
 
 Ports to various other platforms are in progress.
 
