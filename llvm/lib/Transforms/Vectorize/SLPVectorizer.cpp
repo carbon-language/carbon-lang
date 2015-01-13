@@ -857,7 +857,7 @@ private:
   };
 
   /// Attaches the BlockScheduling structures to basic blocks.
-  DenseMap<BasicBlock *, std::unique_ptr<BlockScheduling>> BlocksSchedules;
+  MapVector<BasicBlock *, std::unique_ptr<BlockScheduling>> BlocksSchedules;
 
   /// Performs the "real" scheduling. Done before vectorization is actually
   /// performed in a basic block.
