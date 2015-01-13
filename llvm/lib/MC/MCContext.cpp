@@ -130,6 +130,11 @@ MCSymbol *MCContext::getOrCreateSectionSymbol(const MCSectionELF &Section) {
   return Sym;
 }
 
+MCSymbol *MCContext::getOrCreateFrameAllocSymbol(StringRef FuncName) {
+  return GetOrCreateSymbol(Twine(MAI->getPrivateGlobalPrefix()) +
+                           "frameallocation_" + FuncName);
+}
+
 MCSymbol *MCContext::CreateSymbol(StringRef Name) {
   // Determine whether this is an assembler temporary or normal label, if used.
   bool isTemporary = false;

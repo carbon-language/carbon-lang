@@ -516,6 +516,10 @@ public:
   /// on the stack.  Returns an index with a negative value.
   int CreateFixedSpillStackObject(uint64_t Size, int64_t SPOffset);
 
+  /// Allocates memory at a fixed, target-specific offset from the frame
+  /// pointer. Marks the function as having its frame address taken.
+  int CreateFrameAllocation(uint64_t Size);
+
   /// isFixedObjectIndex - Returns true if the specified index corresponds to a
   /// fixed stack object.
   bool isFixedObjectIndex(int ObjectIdx) const {

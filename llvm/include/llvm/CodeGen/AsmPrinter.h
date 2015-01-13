@@ -205,6 +205,8 @@ public:
 
   void emitCFIInstruction(const MachineInstr &MI);
 
+  void emitFrameAlloc(const MachineInstr &MI);
+
   enum CFIMoveType { CFI_M_None, CFI_M_EH, CFI_M_Debug };
   CFIMoveType needsCFIMoves();
 

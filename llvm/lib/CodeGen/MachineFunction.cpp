@@ -587,6 +587,14 @@ int MachineFrameInfo::CreateFixedSpillStackObject(uint64_t Size,
   return -++NumFixedObjects;
 }
 
+int MachineFrameInfo::CreateFrameAllocation(uint64_t Size) {
+  // Force the use of a frame pointer. The intention is that this intrinsic be
+  // used in conjunction with unwind mechanisms that leak the frame pointer.
+  setFrameAddressIsTaken(true);
+  Size = RoundUpToAlignment(Size, StackAlignment);
+  return CreateStackObject(Size, StackAlignment, false);
+}
+
 BitVector
 MachineFrameInfo::getPristineRegs(const MachineBasicBlock *MBB) const {
   assert(MBB && "MBB must be valid");
