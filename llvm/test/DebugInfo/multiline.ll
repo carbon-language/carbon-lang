@@ -14,7 +14,7 @@
 
 
 ; CHECK: .loc	1 2 0{{$}}
-; CHECK-NOT: .loc
+; CHECK-NOT: .loc{{ }}
 ; CHECK: .loc	1 3 3 prologue_end{{$}}
 ; CHECK-NOT: .loc
 ; CHECK: .loc	1 3 9 is_stmt 0{{$}}
