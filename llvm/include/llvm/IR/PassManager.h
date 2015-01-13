@@ -828,7 +828,7 @@ template <typename AnalysisT> struct InvalidateAnalysisPass {
 /// analysis passes to be re-run to produce fresh results if any are needed.
 struct InvalidateAllAnalysesPass {
   /// \brief Run this pass over some unit of IR.
-  template <typename T> PreservedAnalyses run(T &&Arg) {
+  template <typename IRUnitT> PreservedAnalyses run(IRUnitT &Arg) {
     return PreservedAnalyses::none();
   }
 
