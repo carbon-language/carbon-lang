@@ -151,10 +151,10 @@ static void emitComments(LLVMDisasmContext *DC,
   DC->CommentStream.resync();
 }
 
-/// \brief Gets latency information for \p Inst form the itinerary
+/// \brief Gets latency information for \p Inst from the itinerary
 /// scheduling model, based on \p DC information.
 /// \return The maximum expected latency over all the operands or -1
-/// if no information are available.
+/// if no information is available.
 static int getItineraryLatency(LLVMDisasmContext *DC, const MCInst &Inst) {
   const int NoInformationAvailable = -1;
 
@@ -179,7 +179,7 @@ static int getItineraryLatency(LLVMDisasmContext *DC, const MCInst &Inst) {
 
 /// \brief Gets latency information for \p Inst, based on \p DC information.
 /// \return The maximum expected latency over all the definitions or -1
-/// if no information are available.
+/// if no information is available.
 static int getLatency(LLVMDisasmContext *DC, const MCInst &Inst) {
   // Try to compute scheduling information.
   const MCSubtargetInfo *STI = DC->getSubtargetInfo();
@@ -220,7 +220,7 @@ static int getLatency(LLVMDisasmContext *DC, const MCInst &Inst) {
 static void emitLatency(LLVMDisasmContext *DC, const MCInst &Inst) {
   int Latency = getLatency(DC, Inst);
 
-  // Report only interesting latency.
+  // Report only interesting latencies.
   if (Latency < 2)
     return;
 
