@@ -7,7 +7,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/ADT/STLExtras.h"
 #include "llvm/IR/Metadata.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/Instructions.h"
@@ -360,28 +359,6 @@ TEST_F(MDNodeTest, handleChangedOperandRecursion) {
   EXPECT_EQ(N1, N4->getOperand(0));
   EXPECT_EQ(N1, N5->getOperand(0));
   EXPECT_EQ(N4, N6->getOperand(0));
-}
-
-TEST_F(MDNodeTest, replaceResolvedOperand) {
-  // Check code for replacing one resolved operand with another.  If doing this
-  // directly (via replaceOperandWith()) becomes illegal, change the operand to
-  // a global value that gets RAUW'ed.
-  //
-  // Use a temporary node to keep N from being resolved.
-  std::unique_ptr<MDNodeFwdDecl> Temp(MDNodeFwdDecl::get(Context, None));
-  Metadata *Ops[] = {nullptr, Temp.get()};
-
-  MDNode *Empty = MDTuple::get(Context, {});
-  MDNode *N = MDTuple::get(Context, Ops);
-  EXPECT_EQ(nullptr, N->getOperand(0));
-  ASSERT_FALSE(N->isResolved());
-
-  // Check code for replacing resolved nodes.
-  N->replaceOperandWith(0, Empty);
-  EXPECT_EQ(Empty, N->getOperand(0));
-
-  // Remove the reference to Temp; required for teardown.
-  N->replaceOperandWith(1, nullptr);
 }
 
 typedef MetadataTest MetadataAsValueTest;
