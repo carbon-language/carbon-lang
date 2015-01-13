@@ -10750,6 +10750,13 @@ static SDValue lowerV8F64VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
   ArrayRef<int> Mask = SVOp->getMask();
   assert(Mask.size() == 8 && "Unexpected mask size for v8 shuffle!");
 
+  // X86 has dedicated unpack instructions that can handle specific blend
+  // operations: UNPCKH and UNPCKL.
+  if (isShuffleEquivalent(Mask, 0, 8, 2, 10, 4, 12, 6, 14))
+    return DAG.getNode(X86ISD::UNPCKL, DL, MVT::v8f64, V1, V2);
+  if (isShuffleEquivalent(Mask, 1, 9, 3, 11, 5, 13, 7, 15))
+    return DAG.getNode(X86ISD::UNPCKH, DL, MVT::v8f64, V1, V2);
+
   // FIXME: Implement direct support for this type!
   return splitAndLowerVectorShuffle(DL, MVT::v8f64, V1, V2, Mask, DAG);
 }
@@ -10764,6 +10771,16 @@ static SDValue lowerV16F32VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
   ShuffleVectorSDNode *SVOp = cast<ShuffleVectorSDNode>(Op);
   ArrayRef<int> Mask = SVOp->getMask();
   assert(Mask.size() == 16 && "Unexpected mask size for v16 shuffle!");
+
+  // Use dedicated unpack instructions for masks that match their pattern.
+  if (isShuffleEquivalent(Mask,
+                          0, 16, 1, 17, 4, 20, 5, 21,
+                          8, 24, 9, 25, 12, 28, 13, 29))
+    return DAG.getNode(X86ISD::UNPCKL, DL, MVT::v16f32, V1, V2);
+  if (isShuffleEquivalent(Mask,
+                          2, 18, 3, 19, 6, 22, 7, 23,
+                          10, 26, 11, 27, 14, 30, 15, 31))
+    return DAG.getNode(X86ISD::UNPCKH, DL, MVT::v16f32, V1, V2);
 
   // FIXME: Implement direct support for this type!
   return splitAndLowerVectorShuffle(DL, MVT::v16f32, V1, V2, Mask, DAG);
@@ -10780,6 +10797,13 @@ static SDValue lowerV8I64VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
   ArrayRef<int> Mask = SVOp->getMask();
   assert(Mask.size() == 8 && "Unexpected mask size for v8 shuffle!");
 
+  // X86 has dedicated unpack instructions that can handle specific blend
+  // operations: UNPCKH and UNPCKL.
+  if (isShuffleEquivalent(Mask, 0, 8, 2, 10, 4, 12, 6, 14))
+    return DAG.getNode(X86ISD::UNPCKL, DL, MVT::v8i64, V1, V2);
+  if (isShuffleEquivalent(Mask, 1, 9, 3, 11, 5, 13, 7, 15))
+    return DAG.getNode(X86ISD::UNPCKH, DL, MVT::v8i64, V1, V2);
+
   // FIXME: Implement direct support for this type!
   return splitAndLowerVectorShuffle(DL, MVT::v8i64, V1, V2, Mask, DAG);
 }
@@ -10794,6 +10818,16 @@ static SDValue lowerV16I32VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
   ShuffleVectorSDNode *SVOp = cast<ShuffleVectorSDNode>(Op);
   ArrayRef<int> Mask = SVOp->getMask();
   assert(Mask.size() == 16 && "Unexpected mask size for v16 shuffle!");
+
+  // Use dedicated unpack instructions for masks that match their pattern.
+  if (isShuffleEquivalent(Mask,
+                          0, 16, 1, 17, 4, 20, 5, 21,
+                          8, 24, 9, 25, 12, 28, 13, 29))
+    return DAG.getNode(X86ISD::UNPCKL, DL, MVT::v16i32, V1, V2);
+  if (isShuffleEquivalent(Mask,
+                          2, 18, 3, 19, 6, 22, 7, 23,
+                          10, 26, 11, 27, 14, 30, 15, 31))
+    return DAG.getNode(X86ISD::UNPCKH, DL, MVT::v16i32, V1, V2);
 
   // FIXME: Implement direct support for this type!
   return splitAndLowerVectorShuffle(DL, MVT::v16i32, V1, V2, Mask, DAG);
