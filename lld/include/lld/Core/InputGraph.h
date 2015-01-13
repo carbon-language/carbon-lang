@@ -50,12 +50,6 @@ public:
 
   /// \brief Initialize the inputgraph
   InputGraph() : _index(0) {}
-  virtual ~InputGraph();
-
-  /// getNextFile returns the next file that needs to be processed by
-  /// the resolver. When there are no more files to be processed, an
-  /// nullptr is returned.
-  File *getNextFile();
 
   /// \brief Adds a node into the InputGraph
   void addInputElement(std::unique_ptr<InputElement>);
@@ -63,14 +57,7 @@ public:
   /// \brief Adds a node at the beginning of the InputGraph
   void addInputElementFront(std::unique_ptr<InputElement>);
 
-  InputElementVectorT &inputElements() {
-    return _inputArgs;
-  }
-
-  // Returns the current group size if we are at an --end-group.
-  // Otherwise returns 0.
-  int getGroupSize();
-  void skipGroup();
+  InputElementVectorT &inputElements() { return _inputArgs; }
 
   // \brief Returns the number of input files.
   size_t size() const { return _inputArgs.size(); }
