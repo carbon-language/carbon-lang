@@ -1,4 +1,4 @@
-module _Builtin_intrinsics [system] {
+module _Builtin_intrinsics [system] [extern_c] {
   explicit module altivec {
     requires altivec
     header "altivec.h"
