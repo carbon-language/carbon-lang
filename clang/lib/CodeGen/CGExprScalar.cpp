@@ -3315,8 +3315,12 @@ Value *ScalarExprEmitter::VisitVAArgExpr(VAArgExpr *VE) {
   llvm::Value *Val = Builder.CreateLoad(ArgPtr);
 
   // If EmitVAArg promoted the type, we must truncate it.
-  if (ArgTy != Val->getType())
-    Val = Builder.CreateTrunc(Val, ArgTy);
+  if (ArgTy != Val->getType()) {
+    if (ArgTy->isPointerTy() && !Val->getType()->isPointerTy())
+      Val = Builder.CreateIntToPtr(Val, ArgTy);
+    else
+      Val = Builder.CreateTrunc(Val, ArgTy);
+  }
 
   return Val;
 }

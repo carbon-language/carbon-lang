@@ -136,6 +136,55 @@ long long test_i64(char *fmt, ...) {
 // ALL:   ret i64 [[ARG1]]
 // ALL: }
 
+char *test_ptr(char *fmt, ...) {
+  va_list va;
+
+  va_start(va, fmt);
+  char *v = va_arg(va, char *);
+  va_end(va);
+
+  return v;
+}
+
+// ALL-LABEL: define i8* @test_ptr(i8*{{.*}} %fmt, ...)
+//
+// O32:   %va = alloca i8*, align [[PTRALIGN:4]]
+// N32:   %va = alloca i8*, align [[PTRALIGN:4]]
+// N64:   %va = alloca i8*, align [[PTRALIGN:8]]
+//
+// ALL:   [[VA1:%.+]] = bitcast i8** %va to i8*
+// ALL:   call void @llvm.va_start(i8* [[VA1]])
+//
+// O32:   [[TMP0:%.+]] = bitcast i8** %va to i8***
+// O32:   [[AP_CUR:%.+]] = load i8*** [[TMP0]], align [[PTRALIGN]]
+// N32 differs because the vararg is not a N32 pointer. It's been promoted to 64-bit.
+// N32:   [[TMP0:%.+]] = bitcast i8** %va to i64**
+// N32:   [[AP_CUR:%.+]] = load i64** [[TMP0]], align [[PTRALIGN]]
+// N64:   [[TMP0:%.+]] = bitcast i8** %va to i8***
+// N64:   [[AP_CUR:%.+]] = load i8*** [[TMP0]], align [[PTRALIGN]]
+//
+// O32:   [[AP_NEXT:%.+]] = getelementptr i8** [[AP_CUR]], i32 1
+// N32 differs because the vararg is not a N32 pointer. It's been promoted to 64-bit.
+// N32:   [[AP_NEXT:%.+]] = getelementptr i64* [[AP_CUR]], {{i32|i64}} 1
+// N64:   [[AP_NEXT:%.+]] = getelementptr i8** [[AP_CUR]], {{i32|i64}} 1
+//
+// O32:   store i8** [[AP_NEXT]], i8*** [[TMP0]], align [[PTRALIGN]]
+// N32 differs because the vararg is not a N32 pointer. It's been promoted to 64-bit.
+// N32:   store i64* [[AP_NEXT]], i64** [[TMP0]], align [[PTRALIGN]]
+// N64:   store i8** [[AP_NEXT]], i8*** [[TMP0]], align [[PTRALIGN]]
+//
+// O32:   [[ARG1:%.+]] = load i8** [[AP_CUR]], align 4
+// N32 differs because the vararg is not a N32 pointer. It's been promoted to
+// 64-bit so we must truncate the excess and bitcast to a N32 pointer.
+// N32:   [[TMP2:%.+]] = load i64* [[AP_CUR]], align 8
+// N32:   [[TMP3:%.+]] = trunc i64 [[TMP2]] to i32
+// N32:   [[ARG1:%.+]] = inttoptr i32 [[TMP3]] to i8*
+// N64:   [[ARG1:%.+]] = load i8** [[AP_CUR]], align 8
+//
+// ALL:   call void @llvm.va_end(i8* [[VA1]])
+// ALL:   ret i8* [[ARG1]]
+// ALL: }
+
 int test_v4i32(char *fmt, ...) {
   va_list va;
 
