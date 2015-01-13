@@ -147,6 +147,10 @@ public:
       : InputElement(InputElement::Kind::File), _path(path), _done(false) {
   }
 
+  FileNode(StringRef path, std::unique_ptr<File> f)
+      : InputElement(InputElement::Kind::File), _path(path), _file(std::move(f)),
+        _done(false) {}
+
   virtual ErrorOr<StringRef> getPath(const LinkingContext &) const {
     return _path;
   }
@@ -171,7 +175,7 @@ public:
   virtual void addFiles(InputGraph::FileVectorT files) {
     assert(files.size() == 1);
     assert(!_file);
-    _file.swap(files[0]);
+    _file = std::move(files[0]);
   }
 
   /// \brief Return the next File thats part of this node to the
@@ -188,7 +192,7 @@ public:
 
 protected:
   StringRef _path;                       // The path of the Input file
-  std::unique_ptr<File> _file;        // A vector of lld File objects
+  std::unique_ptr<File> _file;           // An lld File object
 
   // The next file that would be processed by the resolver
   bool _done;
@@ -199,15 +203,13 @@ class SimpleFileNode : public FileNode {
 public:
   SimpleFileNode(StringRef path) : FileNode(path) {}
   SimpleFileNode(StringRef path, std::unique_ptr<File> f)
-      : FileNode(path) {
-    _file.swap(f);
-  }
+      : FileNode(path, std::move(f)) {}
 
   virtual ~SimpleFileNode() {}
 
   /// \brief add a file to the list of files
   virtual void appendInputFile(std::unique_ptr<File> f) {
-    _file.swap(f);
+    _file = std::move(f);
   }
 };
 
