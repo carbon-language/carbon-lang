@@ -36,3 +36,7 @@ struct T {
 struct S { 
   void f(int &r = error);  // expected-error {{use of undeclared identifier 'error'}}
 };
+
+struct U {
+  void i(int x = ) {} // expected-error{{expected expression}}
+};
