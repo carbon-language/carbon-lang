@@ -57,6 +57,7 @@ protected:
 public:
   enum MetadataKind {
     MDTupleKind,
+    MDLocationKind,
     MDNodeFwdDeclKind,
     ConstantAsMetadataKind,
     LocalAsMetadataKind,
@@ -670,6 +671,7 @@ public:
   /// \brief Methods for support type inquiry through isa, cast, and dyn_cast:
   static bool classof(const Metadata *MD) {
     return MD->getMetadataID() == MDTupleKind ||
+           MD->getMetadataID() == MDLocationKind ||
            MD->getMetadataID() == MDNodeFwdDeclKind;
   }
 
@@ -726,7 +728,8 @@ protected:
 
 public:
   static bool classof(const Metadata *MD) {
-    return MD->getMetadataID() == MDTupleKind;
+    return MD->getMetadataID() == MDTupleKind ||
+           MD->getMetadataID() == MDLocationKind;
   }
 
   /// \brief Check whether any operands are forward declarations.
@@ -811,6 +814,60 @@ MDNode *MDNode::getIfExists(LLVMContext &Context, ArrayRef<Metadata *> MDs) {
 MDNode *MDNode::getDistinct(LLVMContext &Context, ArrayRef<Metadata *> MDs) {
   return MDTuple::getDistinct(Context, MDs);
 }
+
+/// \brief Debug location.
+///
+/// A debug location in source code, used for debug info and otherwise.
+class MDLocation : public UniquableMDNode {
+  friend class LLVMContextImpl;
+  friend class UniquableMDNode;
+
+  MDLocation(LLVMContext &C, unsigned Line, unsigned Column,
+             ArrayRef<Metadata *> MDs, bool AllowRAUW);
+  ~MDLocation() { dropAllReferences(); }
+
+  static MDLocation *constructHelper(LLVMContext &Context, unsigned Line,
+                                     unsigned Column, Metadata *Scope,
+                                     Metadata *InlinedAt, bool AllowRAUW);
+
+  static MDLocation *getImpl(LLVMContext &Context, unsigned Line,
+                             unsigned Column, Metadata *Scope,
+                             Metadata *InlinedAt, bool ShouldCreate);
+
+  // Disallow replacing operands.
+  void replaceOperandWith(unsigned I, Metadata *New) LLVM_DELETED_FUNCTION;
+
+public:
+  static MDLocation *get(LLVMContext &Context, unsigned Line, unsigned Column,
+                         Metadata *Scope, Metadata *InlinedAt = nullptr) {
+    return getImpl(Context, Line, Column, Scope, InlinedAt,
+                   /* ShouldCreate */ true);
+  }
+  static MDLocation *getIfExists(LLVMContext &Context, unsigned Line,
+                                 unsigned Column, Metadata *Scope,
+                                 Metadata *InlinedAt = nullptr) {
+    return getImpl(Context, Line, Column, Scope, InlinedAt,
+                   /* ShouldCreate */ false);
+  }
+  static MDLocation *getDistinct(LLVMContext &Context, unsigned Line,
+                                 unsigned Column, Metadata *Scope,
+                                 Metadata *InlinedAt = nullptr);
+
+  unsigned getLine() const { return MDNodeSubclassData; }
+  unsigned getColumn() const { return SubclassData16; }
+  Metadata *getScope() const { return getOperand(0); }
+  Metadata *getInlinedAt() const {
+    return getNumOperands() == 2 ? getOperand(1) : nullptr;
+  }
+
+  static bool classof(const Metadata *MD) {
+    return MD->getMetadataID() == MDLocationKind;
+  }
+
+private:
+  MDLocation *uniquifyImpl();
+  void eraseFromStoreImpl();
+};
 
 /// \brief Forward declaration of metadata.
 ///

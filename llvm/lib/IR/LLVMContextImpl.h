@@ -215,6 +215,48 @@ struct MDTupleInfo {
   }
 };
 
+/// \brief DenseMapInfo for MDLocation.
+struct MDLocationInfo {
+  struct KeyTy {
+    unsigned Line;
+    unsigned Column;
+    Metadata *Scope;
+    Metadata *InlinedAt;
+
+    KeyTy(unsigned Line, unsigned Column, Metadata *Scope, Metadata *InlinedAt)
+        : Line(Line), Column(Column), Scope(Scope), InlinedAt(InlinedAt) {}
+
+    KeyTy(const MDLocation *L)
+        : Line(L->getLine()), Column(L->getColumn()), Scope(L->getScope()),
+          InlinedAt(L->getInlinedAt()) {}
+
+    bool operator==(const MDLocation *RHS) const {
+      if (RHS == getEmptyKey() || RHS == getTombstoneKey())
+        return false;
+      return Line == RHS->getLine() && Column == RHS->getColumn() &&
+             Scope == RHS->getScope() && InlinedAt == RHS->getInlinedAt();
+    }
+  };
+  static inline MDLocation *getEmptyKey() {
+    return DenseMapInfo<MDLocation *>::getEmptyKey();
+  }
+  static inline MDLocation *getTombstoneKey() {
+    return DenseMapInfo<MDLocation *>::getTombstoneKey();
+  }
+  static unsigned getHashValue(const KeyTy &Key) {
+    return hash_combine(Key.Line, Key.Column, Key.Scope, Key.InlinedAt);
+  }
+  static unsigned getHashValue(const MDLocation *U) {
+    return getHashValue(KeyTy(U));
+  }
+  static bool isEqual(const KeyTy &LHS, const MDLocation *RHS) {
+    return LHS == RHS;
+  }
+  static bool isEqual(const MDLocation *LHS, const MDLocation *RHS) {
+    return LHS == RHS;
+  }
+};
+
 class LLVMContextImpl {
 public:
   /// OwnedModules - The set of modules instantiated in this context, and which
@@ -246,6 +288,7 @@ public:
   DenseMap<Metadata *, MetadataAsValue *> MetadataAsValues;
 
   DenseSet<MDTuple *, MDTupleInfo> MDTuples;
+  DenseSet<MDLocation *, MDLocationInfo> MDLocations;
 
   // MDNodes may be uniqued or not uniqued.  When they're not uniqued, they
   // aren't in the MDNodeSet, but they're still shared between objects, so no

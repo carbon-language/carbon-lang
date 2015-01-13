@@ -1272,6 +1272,39 @@ static void writeMDTuple(raw_ostream &Out, const MDTuple *Node,
   Out << "}";
 }
 
+namespace {
+struct FieldSeparator {
+  bool Skip;
+  FieldSeparator() : Skip(true) {}
+};
+raw_ostream &operator<<(raw_ostream &OS, FieldSeparator &FS) {
+  if (FS.Skip) {
+    FS.Skip = false;
+    return OS;
+  }
+  return OS << ", ";
+}
+} // end namespace
+
+static void writeMDLocation(raw_ostream &Out, const MDLocation *DL,
+                            TypePrinting *TypePrinter, SlotTracker *Machine,
+                            const Module *Context) {
+  Out << "!MDLocation(";
+  FieldSeparator FS;
+  if (DL->getLine())
+    Out << FS << "line: " << DL->getLine();
+  if (DL->getColumn())
+    Out << FS << "column: " << DL->getColumn();
+  Out << FS << "scope: ";
+  WriteAsOperandInternal(Out, DL->getScope(), TypePrinter, Machine, Context);
+  if (DL->getInlinedAt()) {
+    Out << FS << "inlinedAt: ";
+    WriteAsOperandInternal(Out, DL->getInlinedAt(), TypePrinter, Machine,
+                           Context);
+  }
+  Out << ")";
+}
+
 static void WriteMDNodeBodyInternal(raw_ostream &Out, const MDNode *Node,
                                     TypePrinting *TypePrinter,
                                     SlotTracker *Machine,

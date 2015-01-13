@@ -640,6 +640,93 @@ MDTuple *MDTuple::uniquifyImpl() {
 
 void MDTuple::eraseFromStoreImpl() { getContext().pImpl->MDTuples.erase(this); }
 
+MDLocation::MDLocation(LLVMContext &C, unsigned Line, unsigned Column,
+                       ArrayRef<Metadata *> MDs, bool AllowRAUW)
+    : UniquableMDNode(C, MDLocationKind, MDs, AllowRAUW) {
+  assert((MDs.size() == 1 || MDs.size() == 2) &&
+         "Expected a scope and optional inlined-at");
+
+  // Set line and column.
+  assert(Line < (1u << 24) && "Expected 24-bit line");
+  assert(Column < (1u << 8) && "Expected 8-bit column");
+
+  MDNodeSubclassData = Line;
+  SubclassData16 = Column;
+}
+
+MDLocation *MDLocation::constructHelper(LLVMContext &Context, unsigned Line,
+                                        unsigned Column, Metadata *Scope,
+                                        Metadata *InlinedAt, bool AllowRAUW) {
+  SmallVector<Metadata *, 2> Ops;
+  Ops.push_back(Scope);
+  if (InlinedAt)
+    Ops.push_back(InlinedAt);
+  return new (Ops.size()) MDLocation(Context, Line, Column, Ops, AllowRAUW);
+}
+
+static void adjustLine(unsigned &Line) {
+  // Set to unknown on overflow.  Still use 24 bits for now.
+  if (Line >= (1u << 24))
+    Line = 0;
+}
+
+static void adjustColumn(unsigned &Column) {
+  // Set to unknown on overflow.  Still use 8 bits for now.
+  if (Column >= (1u << 8))
+    Column = 0;
+}
+
+MDLocation *MDLocation::getImpl(LLVMContext &Context, unsigned Line,
+                                unsigned Column, Metadata *Scope,
+                                Metadata *InlinedAt, bool ShouldCreate) {
+  // Fixup line/column.
+  adjustLine(Line);
+  adjustColumn(Column);
+
+  MDLocationInfo::KeyTy Key(Line, Column, Scope, InlinedAt);
+
+  auto &Store = Context.pImpl->MDLocations;
+  auto I = Store.find_as(Key);
+  if (I != Store.end())
+    return *I;
+  if (!ShouldCreate)
+    return nullptr;
+
+  auto *N = constructHelper(Context, Line, Column, Scope, InlinedAt,
+                            /* AllowRAUW */ true);
+  Store.insert(N);
+  return N;
+}
+
+MDLocation *MDLocation::getDistinct(LLVMContext &Context, unsigned Line,
+                                    unsigned Column, Metadata *Scope,
+                                    Metadata *InlinedAt) {
+  // Fixup line/column.
+  adjustLine(Line);
+  adjustColumn(Column);
+
+  auto *N = constructHelper(Context, Line, Column, Scope, InlinedAt,
+                            /* AllowRAUW */ false);
+  N->storeDistinctInContext();
+  return N;
+}
+
+MDLocation *MDLocation::uniquifyImpl() {
+  MDLocationInfo::KeyTy Key(this);
+
+  auto &Store = getContext().pImpl->MDLocations;
+  auto I = Store.find_as(Key);
+  if (I == Store.end()) {
+    Store.insert(this);
+    return this;
+  }
+  return *I;
+}
+
+void MDLocation::eraseFromStoreImpl() {
+  getContext().pImpl->MDLocations.erase(this);
+}
+
 MDNodeFwdDecl *MDNode::getTemporary(LLVMContext &Context,
                                     ArrayRef<Metadata *> MDs) {
   return MDNodeFwdDecl::get(Context, MDs);
@@ -650,9 +737,9 @@ void MDNode::deleteTemporary(MDNode *N) { delete cast<MDNodeFwdDecl>(N); }
 void UniquableMDNode::storeDistinctInContext() {
   assert(!IsDistinctInContext && "Expected newly distinct metadata");
   IsDistinctInContext = true;
-  auto *T = cast<MDTuple>(this);
-  T->setHash(0);
-  getContext().pImpl->DistinctMDNodes.insert(T);
+  if (auto *T = dyn_cast<MDTuple>(this))
+    T->setHash(0);
+  getContext().pImpl->DistinctMDNodes.insert(this);
 }
 
 void MDNode::replaceOperandWith(unsigned I, Metadata *New) {

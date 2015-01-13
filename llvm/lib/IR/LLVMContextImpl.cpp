@@ -140,10 +140,14 @@ LLVMContextImpl::~LLVMContextImpl() {
     I->dropAllReferences();
   for (auto *I : MDTuples)
     I->dropAllReferences();
+  for (auto *I : MDLocations)
+    I->dropAllReferences();
 
   for (UniquableMDNode *I : DistinctMDNodes)
     I->deleteAsSubclass();
   for (MDTuple *I : MDTuples)
+    delete I;
+  for (MDLocation *I : MDLocations)
     delete I;
 
   // Destroy MDStrings.
