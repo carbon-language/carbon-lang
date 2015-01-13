@@ -13,10 +13,6 @@
 
 using namespace llvm;
 
-static cl::opt<bool>
-    DebugPM("debug-cgscc-pass-manager", cl::Hidden,
-            cl::desc("Print CGSCC pass management debugging information"));
-
 char CGSCCAnalysisManagerModuleProxy::PassID;
 
 CGSCCAnalysisManagerModuleProxy::Result
