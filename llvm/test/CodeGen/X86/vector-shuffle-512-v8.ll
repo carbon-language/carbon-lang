@@ -1419,8 +1419,8 @@ define <8 x i64> @shuffle_v8i64_6caa87e5(<8 x i64> %a, <8 x i64> %b) {
   ret <8 x i64> %shuffle
 }
 
-define <8 x double> @shuffle_v4f64_082a4c6e(<8 x double> %a, <8 x double> %b) {
-; ALL-LABEL: shuffle_v4f64_082a4c6e:
+define <8 x double> @shuffle_v8f64_082a4c6e(<8 x double> %a, <8 x double> %b) {
+; ALL-LABEL: shuffle_v8f64_082a4c6e:
 ; ALL:       # BB#0:
 ; ALL-NEXT:    vunpcklpd {{.*#+}} zmm0 = zmm0[0],zmm1[0],zmm0[2],zmm1[2],zmm0[4],zmm1[4],zmm0[6],zmm1[6]
 ; ALL-NEXT:    retq
@@ -1428,8 +1428,8 @@ define <8 x double> @shuffle_v4f64_082a4c6e(<8 x double> %a, <8 x double> %b) {
   ret <8 x double> %shuffle
 }
 
-define <8 x i64> @shuffle_v4i64_082a4c6e(<8 x i64> %a, <8 x i64> %b) {
-; ALL-LABEL: shuffle_v4i64_082a4c6e:
+define <8 x i64> @shuffle_v8i64_082a4c6e(<8 x i64> %a, <8 x i64> %b) {
+; ALL-LABEL: shuffle_v8i64_082a4c6e:
 ; ALL:       # BB#0:
 ; ALL-NEXT:    vpunpcklqdq {{.*#+}} zmm0 = zmm0[0],zmm1[0],zmm0[2],zmm1[2],zmm0[4],zmm1[4],zmm0[6],zmm1[6]
 ; ALL-NEXT:    retq
@@ -1437,8 +1437,8 @@ define <8 x i64> @shuffle_v4i64_082a4c6e(<8 x i64> %a, <8 x i64> %b) {
   ret <8 x i64> %shuffle
 }
 
-define <8 x double> @shuffle_v4f64_193b5d7f(<8 x double> %a, <8 x double> %b) {
-; ALL-LABEL: shuffle_v4f64_193b5d7f:
+define <8 x double> @shuffle_v8f64_193b5d7f(<8 x double> %a, <8 x double> %b) {
+; ALL-LABEL: shuffle_v8f64_193b5d7f:
 ; ALL:       # BB#0:
 ; ALL-NEXT:    vunpckhpd {{.*#+}} zmm0 = zmm0[1],zmm1[1],zmm0[3],zmm1[3],zmm0[5],zmm1[5],zmm0[7],zmm1[7]
 ; ALL-NEXT:    retq
@@ -1446,8 +1446,8 @@ define <8 x double> @shuffle_v4f64_193b5d7f(<8 x double> %a, <8 x double> %b) {
   ret <8 x double> %shuffle
 }
 
-define <8 x i64> @shuffle_v4i64_193b5d7f(<8 x i64> %a, <8 x i64> %b) {
-; ALL-LABEL: shuffle_v4i64_193b5d7f:
+define <8 x i64> @shuffle_v8i64_193b5d7f(<8 x i64> %a, <8 x i64> %b) {
+; ALL-LABEL: shuffle_v8i64_193b5d7f:
 ; ALL:       # BB#0:
 ; ALL-NEXT:    vpunpckhqdq {{.*#+}} zmm0 = zmm0[1],zmm1[1],zmm0[3],zmm1[3],zmm0[5],zmm1[5],zmm0[7],zmm1[7]
 ; ALL-NEXT:    retq
