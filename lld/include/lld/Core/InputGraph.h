@@ -63,9 +63,6 @@ public:
   /// \brief Adds a node at the beginning of the InputGraph
   void addInputElementFront(std::unique_ptr<InputElement>);
 
-  /// Normalize the InputGraph. It calls getReplacements() on each element.
-  void normalize();
-
   InputElementVectorT &inputElements() {
     return _inputArgs;
   }
@@ -115,11 +112,6 @@ public:
 
   /// Get the next file to be processed by the resolver
   virtual File *getNextFile() = 0;
-
-  /// Get the elements that we want to expand with.
-  virtual bool getReplacements(InputGraph::InputElementVectorT &) {
-    return false;
-  }
 
 protected:
   Kind _kind; // The type of the Element
@@ -189,11 +181,10 @@ public:
       _files.push_back(std::move(ai));
   }
 
-  bool getReplacements(InputGraph::InputElementVectorT &result) override;
-
   /// \brief Return the next File thats part of this node to the
   /// resolver.
   File *getNextFile() override {
+    assert(_files.size() == 1);
     if (_nextFileIndex == _files.size())
       return nullptr;
     return _files[_nextFileIndex++].get();

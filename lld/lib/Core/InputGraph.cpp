@@ -49,16 +49,6 @@ InputElement *InputGraph::getNextInputElement() {
   return elem;
 }
 
-void InputGraph::normalize() {
-  std::vector<std::unique_ptr<InputElement>> vec;
-  for (std::unique_ptr<InputElement> &elt : _inputArgs) {
-    if (elt->getReplacements(vec))
-      continue;
-    vec.push_back(std::move(elt));
-  }
-  _inputArgs = std::move(vec);
-}
-
 // If we are at the end of a group, return its size (which indicates
 // how many files we need to go back in the command line).
 // Returns 0 if we are not at the end of a group.
@@ -76,14 +66,6 @@ void InputGraph::skipGroup() {
     return;
   if (isa<GroupEnd>(_inputArgs[_nextElementIndex].get()))
     _nextElementIndex++;
-}
-
-bool FileNode::getReplacements(InputGraph::InputElementVectorT &result) {
-  if (_files.size() < 2)
-    return false;
-  for (std::unique_ptr<File> &file : _files)
-    result.push_back(llvm::make_unique<SimpleFileNode>(_path, std::move(file)));
-  return true;
 }
 
 std::error_code FileNode::parse(const LinkingContext &, raw_ostream &) {

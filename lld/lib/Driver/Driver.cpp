@@ -77,7 +77,6 @@ bool Driver::link(LinkingContext &context, raw_ostream &diagnostics) {
   InputGraph &inputGraph = context.getInputGraph();
   if (!inputGraph.size())
     return false;
-  inputGraph.normalize();
 
   bool fail = false;
 
