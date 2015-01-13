@@ -1229,16 +1229,42 @@ UnwindAssembly_x86::AugmentUnwindPlanFromCallSite (AddressRange& func, Thread& t
     UnwindPlan::RowSP first_row = unwind_plan.GetRowForFunctionOffset (0);
     UnwindPlan::RowSP last_row = unwind_plan.GetRowForFunctionOffset (-1);
     
-    // If the UnwindPlan correctly describes the prologue and the epilogue, then
-    // we shouldn't do any augmentation (and risk messing up correct unwind instructions)
+    int wordsize = 8;
+    ProcessSP process_sp (thread.GetProcess());
+    if (process_sp)
+    {
+        wordsize = process_sp->GetTarget().GetArchitecture().GetAddressByteSize();
+    }
 
-    // See if the first row (which should be the register state on function entry)
-    // and the last row (which should be the register state on function exit) match.
+    RegisterNumber sp_regnum (thread, eRegisterKindGeneric, LLDB_REGNUM_GENERIC_SP);
+    RegisterNumber pc_regnum (thread, eRegisterKindGeneric, LLDB_REGNUM_GENERIC_PC);
+
+    // Does this UnwindPlan describe the prologue?  I want to see that the CFA is set
+    // in terms of the stack pointer plus an offset, and I want to see that rip is 
+    // retrieved at the CFA-wordsize.
+    // If there is no description of the prologue, don't try to augment this eh_frame
+    // unwinder code, fall back to assembly parsing instead.
+
+    if (first_row->GetCFAType() != UnwindPlan::Row::CFAType::CFAIsRegisterPlusOffset
+        || RegisterNumber (thread, unwind_plan.GetRegisterKind(), first_row->GetCFARegister()) != sp_regnum
+        || first_row->GetCFAOffset() != wordsize)
+    {
+        return false;
+    }
+    UnwindPlan::Row::RegisterLocation first_row_pc_loc;
+    if (first_row->GetRegisterInfo (pc_regnum.GetAsKind (unwind_plan.GetRegisterKind()), first_row_pc_loc) == false
+        || first_row_pc_loc.IsAtCFAPlusOffset() == false
+        || first_row_pc_loc.GetOffset() != -wordsize)
+    {
+            return false;
+    }
+
+
+    // It looks like the prologue is described.  Now check to see if the epilogue has the same
+    // unwind state.
 
     if (first_row != last_row && first_row->GetOffset() != last_row->GetOffset())
     {
-        RegisterNumber sp_regnum (thread, eRegisterKindGeneric, LLDB_REGNUM_GENERIC_SP);
-
         // The first & last row have the same CFA register
         // and the same CFA offset value
         // and the CFA register is esp/rsp (the stack pointer).
@@ -1246,23 +1272,16 @@ UnwindAssembly_x86::AugmentUnwindPlanFromCallSite (AddressRange& func, Thread& t
         // We're checking that both of them have an unwind rule like "CFA=esp+4" or CFA+rsp+8".
 
         if (first_row->GetCFAType() == last_row->GetCFAType()
-            && first_row->GetCFAType() == UnwindPlan::Row::CFAType::CFAIsRegisterPlusOffset
             && first_row->GetCFARegister() == last_row->GetCFARegister()
-            && first_row->GetCFAOffset() == last_row->GetCFAOffset()
-            && RegisterNumber (thread, unwind_plan.GetRegisterKind(), first_row->GetCFARegister()) == sp_regnum)
+            && first_row->GetCFAOffset() == last_row->GetCFAOffset())
         {
-            RegisterNumber pc_regnum (thread, eRegisterKindGeneric, LLDB_REGNUM_GENERIC_PC);
-
             // Get the register locations for eip/rip from the first & last rows.
             // Are they both CFA plus an offset?  Is it the same offset?
 
-            UnwindPlan::Row::RegisterLocation first_row_pc_loc;
             UnwindPlan::Row::RegisterLocation last_row_pc_loc;
-            if (first_row->GetRegisterInfo (pc_regnum.GetAsKind (unwind_plan.GetRegisterKind()), first_row_pc_loc)
-                && last_row->GetRegisterInfo (pc_regnum.GetAsKind (unwind_plan.GetRegisterKind()), last_row_pc_loc))
+            if (last_row->GetRegisterInfo (pc_regnum.GetAsKind (unwind_plan.GetRegisterKind()), last_row_pc_loc))
             {
-                if (first_row_pc_loc.IsAtCFAPlusOffset() 
-                    && last_row_pc_loc.IsAtCFAPlusOffset()
+                if (last_row_pc_loc.IsAtCFAPlusOffset()
                     && first_row_pc_loc.GetOffset() == last_row_pc_loc.GetOffset())
                 {
             
@@ -1272,7 +1291,7 @@ UnwindAssembly_x86::AugmentUnwindPlanFromCallSite (AddressRange& func, Thread& t
                     // If so, we have an UnwindPlan that already describes the epilogue and we don't need
                     // to modify it at all.
 
-                    if (first_row_pc_loc.GetOffset() == -4 || first_row_pc_loc.GetOffset() == -8)
+                    if (first_row_pc_loc.GetOffset() == -wordsize)
                     {
                         do_augment_unwindplan = false;
                     }

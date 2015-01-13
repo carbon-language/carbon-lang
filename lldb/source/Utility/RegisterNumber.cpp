@@ -101,6 +101,12 @@ RegisterNumber::operator == (RegisterNumber &rhs)
 }
 
 bool
+RegisterNumber::operator != (RegisterNumber &rhs)
+{
+    return !(*this == rhs);
+}
+
+bool
 RegisterNumber::IsValid () const
 {
     return m_reg_ctx_sp.get()

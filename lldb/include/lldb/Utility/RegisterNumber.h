@@ -39,6 +39,9 @@ public:
     operator == (RegisterNumber &rhs);
 
     bool
+    operator != (RegisterNumber &rhs);
+
+    bool
     IsValid () const;
 
     uint32_t
