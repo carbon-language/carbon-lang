@@ -736,8 +736,8 @@ MachineInstr *SIInstrInfo::commuteInstruction(MachineInstr *MI,
     }
 
   if (!Src1.isReg()) {
-    // Allow commuting instructions with Imm or FPImm operands.
-    if (NewMI || (!Src1.isImm() && !Src1.isFPImm()) ||
+    // Allow commuting instructions with Imm operands.
+    if (NewMI || !Src1.isImm() ||
        (!isVOP2(MI->getOpcode()) && !isVOP3(MI->getOpcode()))) {
       return nullptr;
     }
@@ -765,8 +765,6 @@ MachineInstr *SIInstrInfo::commuteInstruction(MachineInstr *MI,
     unsigned SubReg = Src0.getSubReg();
     if (Src1.isImm())
       Src0.ChangeToImmediate(Src1.getImm());
-    else if (Src1.isFPImm())
-      Src0.ChangeToFPImmediate(Src1.getFPImm());
     else
       llvm_unreachable("Should only have immediates");
 
@@ -981,16 +979,11 @@ bool SIInstrInfo::isInlineConstant(const MachineOperand &MO) const {
   if (MO.isImm())
     return isInlineConstant(APInt(32, MO.getImm(), true));
 
-  if (MO.isFPImm()) {
-    APFloat FpImm = MO.getFPImm()->getValueAPF();
-    return isInlineConstant(FpImm.bitcastToAPInt());
-  }
-
   return false;
 }
 
 bool SIInstrInfo::isLiteralConstant(const MachineOperand &MO) const {
-  return (MO.isImm() || MO.isFPImm()) && !isInlineConstant(MO);
+  return MO.isImm() && !isInlineConstant(MO);
 }
 
 static bool compareMachineOp(const MachineOperand &Op0,
@@ -1003,8 +996,6 @@ static bool compareMachineOp(const MachineOperand &Op0,
     return Op0.getReg() == Op1.getReg();
   case MachineOperand::MO_Immediate:
     return Op0.getImm() == Op1.getImm();
-  case MachineOperand::MO_FPImmediate:
-    return Op0.getFPImm() == Op1.getFPImm();
   default:
     llvm_unreachable("Didn't expect to be comparing these operand types");
   }
@@ -1014,7 +1005,7 @@ bool SIInstrInfo::isImmOperandLegal(const MachineInstr *MI, unsigned OpNo,
                                  const MachineOperand &MO) const {
   const MCOperandInfo &OpInfo = get(MI->getOpcode()).OpInfo[OpNo];
 
-  assert(MO.isImm() || MO.isFPImm() || MO.isTargetIndex() || MO.isFI());
+  assert(MO.isImm() || MO.isTargetIndex() || MO.isFI());
 
   if (OpInfo.OperandType == MCOI::OPERAND_IMMEDIATE)
     return true;
@@ -1121,9 +1112,15 @@ bool SIInstrInfo::verifyInstruction(const MachineInstr *MI,
 
   // Make sure the register classes are correct
   for (int i = 0, e = Desc.getNumOperands(); i != e; ++i) {
+    if (MI->getOperand(i).isFPImm()) {
+      ErrInfo = "FPImm Machine Operands are not supported. ISel should bitcast "
+                "all fp values to integers.";
+      return false;
+    }
+
     switch (Desc.OpInfo[i].OperandType) {
     case MCOI::OPERAND_REGISTER: {
-      if ((MI->getOperand(i).isImm() || MI->getOperand(i).isFPImm()) &&
+      if (MI->getOperand(i).isImm() &&
           !isImmOperandLegal(MI, i, MI->getOperand(i))) {
           ErrInfo = "Illegal immediate value for operand.";
           return false;
@@ -1134,8 +1131,7 @@ bool SIInstrInfo::verifyInstruction(const MachineInstr *MI,
       // Check if this operand is an immediate.
       // FrameIndex operands will be replaced by immediates, so they are
       // allowed.
-      if (!MI->getOperand(i).isImm() && !MI->getOperand(i).isFPImm() &&
-          !MI->getOperand(i).isFI()) {
+      if (!MI->getOperand(i).isImm() && !MI->getOperand(i).isFI()) {
         ErrInfo = "Expected immediate, but got non-immediate";
         return false;
       }
@@ -1195,7 +1191,7 @@ bool SIInstrInfo::verifyInstruction(const MachineInstr *MI,
   // Verify SRC1 for VOP2 and VOPC
   if (Src1Idx != -1 && (isVOP2(Opcode) || isVOPC(Opcode))) {
     const MachineOperand &Src1 = MI->getOperand(Src1Idx);
-    if (Src1.isImm() || Src1.isFPImm()) {
+    if (Src1.isImm()) {
       ErrInfo = "VOP[2C] src1 cannot be an immediate.";
       return false;
     }
@@ -1479,7 +1475,7 @@ bool SIInstrInfo::isOperandLegal(const MachineInstr *MI, unsigned OpIdx,
 
 
   // Handle non-register types that are treated like immediates.
-  assert(MO->isImm() || MO->isFPImm() || MO->isTargetIndex() || MO->isFI());
+  assert(MO->isImm() || MO->isTargetIndex() || MO->isFI());
 
   if (!DefinedRC) {
     // This operand expects an immediate.

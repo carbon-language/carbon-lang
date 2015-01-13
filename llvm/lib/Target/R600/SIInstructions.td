@@ -2552,7 +2552,7 @@ def : Pat <
 
 def : Pat <
   (SGPRImm<(f32 fpimm)>:$imm),
-  (S_MOV_B32 fpimm:$imm)
+  (S_MOV_B32 (f32 (bitcast_fpimm_to_i32 $imm)))
 >;
 
 def : Pat <
@@ -2562,7 +2562,7 @@ def : Pat <
 
 def : Pat <
   (f32 fpimm:$imm),
-  (V_MOV_B32_e32 fpimm:$imm)
+  (V_MOV_B32_e32 (f32 (bitcast_fpimm_to_i32 $imm)))
 >;
 
 def : Pat <
@@ -2580,7 +2580,7 @@ def : Pat <
 
 def : Pat <
   (f64 InlineFPImm<f64>:$imm),
-  (S_MOV_B64 InlineFPImm<f64>:$imm)
+  (S_MOV_B64 (f64 (bitcast_fpimm_to_i64 InlineFPImm<f64>:$imm)))
 >;
 
 /********** ===================== **********/

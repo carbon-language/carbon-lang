@@ -1077,7 +1077,7 @@ SDValue SITargetLowering::LowerFDIV32(SDValue Op, SelectionDAG &DAG) const {
   const APFloat K1Val(BitsToFloat(0x2f800000));
   const SDValue K1 = DAG.getConstantFP(K1Val, MVT::f32);
 
-  const SDValue One = DAG.getTargetConstantFP(1.0, MVT::f32);
+  const SDValue One = DAG.getConstantFP(1.0, MVT::f32);
 
   EVT SetCCVT = getSetCCResultType(*DAG.getContext(), MVT::f32);
 
@@ -1549,7 +1549,7 @@ SDValue SITargetLowering::PerformDAGCombine(SDNode *N,
     if (LHS.getOpcode() == ISD::FADD) {
       SDValue A = LHS.getOperand(0);
       if (A == LHS.getOperand(1)) {
-        const SDValue Two = DAG.getTargetConstantFP(2.0, MVT::f32);
+        const SDValue Two = DAG.getConstantFP(2.0, MVT::f32);
         return DAG.getNode(AMDGPUISD::MAD, DL, VT, Two, A, RHS);
       }
     }
@@ -1558,7 +1558,7 @@ SDValue SITargetLowering::PerformDAGCombine(SDNode *N,
     if (RHS.getOpcode() == ISD::FADD) {
       SDValue A = RHS.getOperand(0);
       if (A == RHS.getOperand(1)) {
-        const SDValue Two = DAG.getTargetConstantFP(2.0, MVT::f32);
+        const SDValue Two = DAG.getConstantFP(2.0, MVT::f32);
         return DAG.getNode(AMDGPUISD::MAD, DL, VT, Two, A, LHS);
       }
     }
@@ -1602,7 +1602,7 @@ SDValue SITargetLowering::PerformDAGCombine(SDNode *N,
 
         SDValue A = LHS.getOperand(0);
         if (A == LHS.getOperand(1)) {
-          const SDValue Two = DAG.getTargetConstantFP(2.0, MVT::f32);
+          const SDValue Two = DAG.getConstantFP(2.0, MVT::f32);
           SDValue NegRHS = DAG.getNode(ISD::FNEG, DL, VT, RHS);
 
           return DAG.getNode(AMDGPUISD::MAD, DL, VT, Two, A, NegRHS);
@@ -1614,7 +1614,7 @@ SDValue SITargetLowering::PerformDAGCombine(SDNode *N,
 
         SDValue A = RHS.getOperand(0);
         if (A == RHS.getOperand(1)) {
-          const SDValue NegTwo = DAG.getTargetConstantFP(-2.0, MVT::f32);
+          const SDValue NegTwo = DAG.getConstantFP(-2.0, MVT::f32);
           return DAG.getNode(AMDGPUISD::MAD, DL, VT, NegTwo, A, LHS);
         }
       }

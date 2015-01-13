@@ -68,18 +68,6 @@ void AMDGPUMCInstLower::lower(const MachineInstr *MI, MCInst &OutMI) const {
     switch (MO.getType()) {
     default:
       llvm_unreachable("unknown operand type");
-    case MachineOperand::MO_FPImmediate: {
-      const APFloat &FloatValue = MO.getFPImm()->getValueAPF();
-
-      if (&FloatValue.getSemantics() == &APFloat::IEEEsingle)
-        MCOp = MCOperand::CreateFPImm(FloatValue.convertToFloat());
-      else if (&FloatValue.getSemantics() == &APFloat::IEEEdouble)
-        MCOp = MCOperand::CreateFPImm(FloatValue.convertToDouble());
-      else
-        llvm_unreachable("Unhandled floating point type");
-
-      break;
-    }
     case MachineOperand::MO_Immediate:
       MCOp = MCOperand::CreateImm(MO.getImm());
       break;

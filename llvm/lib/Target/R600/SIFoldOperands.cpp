@@ -173,7 +173,7 @@ bool SIFoldOperands::runOnMachineFunction(MachineFunction &MF) {
         continue;
 
       MachineOperand &OpToFold = MI.getOperand(1);
-      bool FoldingImm = OpToFold.isImm() || OpToFold.isFPImm();
+      bool FoldingImm = OpToFold.isImm();
 
       // FIXME: We could also be folding things like FrameIndexes and
       // TargetIndexes.
@@ -210,12 +210,7 @@ bool SIFoldOperands::runOnMachineFunction(MachineFunction &MF) {
 
         if (FoldingImm) {
           const TargetRegisterClass *UseRC = MRI.getRegClass(UseOp.getReg());
-
-          if (OpToFold.isFPImm()) {
-            Imm = OpToFold.getFPImm()->getValueAPF().bitcastToAPInt();
-          } else {
-            Imm = APInt(64, OpToFold.getImm());
-          }
+          Imm = APInt(64, OpToFold.getImm());
 
           // Split 64-bit constants into 32-bits for folding.
           if (UseOp.getSubReg()) {

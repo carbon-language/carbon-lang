@@ -308,10 +308,9 @@ void SILowerControlFlowPass::Kill(MachineInstr &MI) {
 #endif
 
   // Clear this thread from the exec mask if the operand is negative
-  if ((Op.isImm() || Op.isFPImm())) {
+  if ((Op.isImm())) {
     // Constant operand: Set exec mask to 0 or do nothing
-    if (Op.isImm() ? (Op.getImm() & 0x80000000) :
-        Op.getFPImm()->isNegative()) {
+    if (Op.getImm() & 0x80000000) {
       BuildMI(MBB, &MI, DL, TII->get(AMDGPU::S_MOV_B64), AMDGPU::EXEC)
               .addImm(0);
     }
