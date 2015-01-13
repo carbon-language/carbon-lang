@@ -1670,19 +1670,18 @@ void DwarfDebug::emitLocPieces(ByteStreamer &Streamer,
 
   unsigned Offset = 0;
   for (auto Piece : Values) {
+    const unsigned SizeOfByte = 8;
     DIExpression Expr = Piece.getExpression();
     unsigned PieceOffset = Expr.getPieceOffset();
     unsigned PieceSize = Expr.getPieceSize();
     assert(Offset <= PieceOffset && "overlapping or duplicate pieces");
     if (Offset < PieceOffset) {
       // The DWARF spec seriously mandates pieces with no locations for gaps.
-      Asm->EmitDwarfOpPiece(Streamer, (PieceOffset-Offset)*8);
+      Asm->EmitDwarfOpPiece(Streamer, (PieceOffset-Offset)*SizeOfByte);
       Offset += PieceOffset-Offset;
     }
-
     Offset += PieceSize;
 
-    const unsigned SizeOfByte = 8;
 #ifndef NDEBUG
     DIVariable Var = Piece.getVariable();
     assert(!Var.isIndirect() && "indirect address for piece");
