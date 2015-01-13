@@ -69,8 +69,8 @@ void InputGraph::skipGroup() {
 }
 
 std::error_code FileNode::parse(const LinkingContext &, raw_ostream &) {
-  for (std::unique_ptr<File> &file : _files)
-    if (std::error_code ec = file->parse())
+  if (_file)
+    if (std::error_code ec = _file->parse())
       return ec;
   return std::error_code();
 }

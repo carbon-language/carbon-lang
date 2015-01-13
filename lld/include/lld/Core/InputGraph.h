@@ -148,7 +148,7 @@ private:
 class FileNode : public InputElement {
 public:
   FileNode(StringRef path)
-      : InputElement(InputElement::Kind::File), _path(path), _nextFileIndex(0) {
+      : InputElement(InputElement::Kind::File), _path(path), _done(false) {
   }
 
   virtual ErrorOr<StringRef> getPath(const LinkingContext &) const {
@@ -169,35 +169,33 @@ public:
   }
 
   /// \brief Get the list of files
-  range<InputGraph::FileIterT> files() {
-    return make_range(_files.begin(), _files.end());
-  }
+  File *getFile() { return _file.get(); }
 
   /// \brief add a file to the list of files
   virtual void addFiles(InputGraph::FileVectorT files) {
     assert(files.size() == 1);
-    assert(_files.empty());
-    for (std::unique_ptr<File> &ai : files)
-      _files.push_back(std::move(ai));
+    assert(!_file);
+    _file.swap(files[0]);
   }
 
   /// \brief Return the next File thats part of this node to the
   /// resolver.
   File *getNextFile() override {
-    assert(_files.size() == 1);
-    if (_nextFileIndex == _files.size())
+    assert(_file);
+    if (_done)
       return nullptr;
-    return _files[_nextFileIndex++].get();
+    _done = true;
+    return _file.get();
   }
 
   std::error_code parse(const LinkingContext &, raw_ostream &) override;
 
 protected:
   StringRef _path;                       // The path of the Input file
-  InputGraph::FileVectorT _files;        // A vector of lld File objects
+  std::unique_ptr<File> _file;        // A vector of lld File objects
 
   // The next file that would be processed by the resolver
-  uint32_t _nextFileIndex;
+  bool _done;
 };
 
 /// \brief Represents Internal Input files
@@ -206,14 +204,14 @@ public:
   SimpleFileNode(StringRef path) : FileNode(path) {}
   SimpleFileNode(StringRef path, std::unique_ptr<File> f)
       : FileNode(path) {
-    _files.push_back(std::move(f));
+    _file.swap(f);
   }
 
   virtual ~SimpleFileNode() {}
 
   /// \brief add a file to the list of files
   virtual void appendInputFile(std::unique_ptr<File> f) {
-    _files.push_back(std::move(f));
+    _file.swap(f);
   }
 };
 

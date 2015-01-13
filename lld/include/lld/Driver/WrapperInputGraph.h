@@ -22,7 +22,7 @@ namespace lld {
 class WrapperNode : public FileNode {
 public:
   WrapperNode(std::unique_ptr<File> file) : FileNode(file->path()) {
-    _files.push_back(std::move(file));
+    _file.swap(file);
   }
 };
 
