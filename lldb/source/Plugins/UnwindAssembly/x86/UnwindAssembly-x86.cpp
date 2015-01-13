@@ -818,10 +818,19 @@ AssemblyParse_x86::get_non_call_site_unwind_plan (UnwindPlan &unwind_plan)
             row_updated = true;
         }
 
-        // FIXME recognize the i386 picbase setup instruction sequence,
-        // 0x1f16:  call   0x1f1b                   ; main + 11 at /private/tmp/a.c:3
-        // 0x1f1b:  popl   %eax
-        // and record the temporary stack movements if the CFA is not expressed in terms of ebp.
+        // call next instruction
+        //     call 0
+        //  => pop  %ebx
+        // This is used in i386 programs to get the PIC base address for finding global data
+        else if (call_next_insn_pattern_p ())
+        {
+            current_sp_bytes_offset_from_cfa += m_wordsize;
+            if (row->GetCFARegister() == m_lldb_sp_regnum)
+            {
+                row->SetCFAOffset (current_sp_bytes_offset_from_cfa);
+                row_updated = true;
+            }
+        }
 
         if (row_updated)
         {
@@ -884,12 +893,20 @@ AssemblyParse_x86::augment_unwind_plan_from_call_site (AddressRange& func, Unwin
     if (cfa_reg != m_lldb_sp_regnum || first_row->GetCFAOffset() != m_wordsize)
         return false;
 
+    UnwindPlan::RowSP original_last_row = unwind_plan.GetRowForFunctionOffset (-1);
+
     Target *target = m_exe_ctx.GetTargetPtr();
     m_cur_insn = func.GetBaseAddress();
     uint64_t offset = 0;
     int row_id = 1;
     bool unwind_plan_updated = false;
     UnwindPlan::RowSP row(new UnwindPlan::Row(*first_row));
+
+    // After a mid-function epilogue we will need to re-insert the original unwind rules
+    // so unwinds work for the remainder of the function.  These aren't common with clang/gcc
+    // on x86 but it is possible.
+    bool reinstate_unwind_state = false;
+
     while (func.ContainsFileAddress (m_cur_insn))
     {
         int insn_len;
@@ -911,6 +928,23 @@ AssemblyParse_x86::augment_unwind_plan_from_call_site (AddressRange& func, Unwin
         // Advance offsets.
         offset += insn_len;
         m_cur_insn.SetOffset(m_cur_insn.GetOffset() + insn_len);
+
+        if (reinstate_unwind_state)
+        {
+            // that was the last instruction of this function
+            if (func.ContainsFileAddress (m_cur_insn) == false)
+                continue;
+
+            UnwindPlan::RowSP new_row(new UnwindPlan::Row());
+            *new_row = *original_last_row;
+            new_row->SetOffset (offset);
+            unwind_plan.AppendRow (new_row);
+            row.reset (new UnwindPlan::Row());
+            *row = *new_row;
+            reinstate_unwind_state = false;
+            unwind_plan_updated = true;
+            continue;
+        }
 
         // If we already have one row for this instruction, we can continue.
         while (row_id < unwind_plan.GetRowCount()
@@ -1016,6 +1050,11 @@ AssemblyParse_x86::augment_unwind_plan_from_call_site (AddressRange& func, Unwin
                 unwind_plan_updated = true;
                 continue;
             }
+            if (ret_pattern_p ())
+            {
+                reinstate_unwind_state = true;
+                continue;
+            }
         }
         else if (cfa_reg == m_lldb_fp_regnum)
         {
@@ -1037,6 +1076,7 @@ AssemblyParse_x86::augment_unwind_plan_from_call_site (AddressRange& func, Unwin
                     UnwindPlan::RowSP new_row(new UnwindPlan::Row(*row));
                     unwind_plan.InsertRow (new_row);
                     unwind_plan_updated = true;
+                    reinstate_unwind_state = true;
                     continue;
                 }
             }
@@ -1260,8 +1300,8 @@ UnwindAssembly_x86::AugmentUnwindPlanFromCallSite (AddressRange& func, Thread& t
     }
 
 
-    // It looks like the prologue is described.  Now check to see if the epilogue has the same
-    // unwind state.
+    // It looks like the prologue is described.  
+    // Is the epilogue described?  If it is, no need to do any augmentation.
 
     if (first_row != last_row && first_row->GetOffset() != last_row->GetOffset())
     {
