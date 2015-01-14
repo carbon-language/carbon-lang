@@ -9879,10 +9879,10 @@ generated for this intrinsic, and instructions that contribute only to the
 provided condition are not used for code generation. If the condition is
 violated during execution, the behavior is undefined.
 
-Please note that optimizer might limit the transformations performed on values
+Note that the optimizer might limit the transformations performed on values
 used by the ``llvm.assume`` intrinsic in order to preserve the instructions
 only used to form the intrinsic's input argument. This might prove undesirable
-if the extra information provided by the ``llvm.assume`` intrinsic does cause
+if the extra information provided by the ``llvm.assume`` intrinsic does not cause
 sufficient overall improvement in code quality. For this reason,
 ``llvm.assume`` should not be used to document basic mathematical invariants
 that the optimizer can otherwise deduce or facts that are of little use to the
