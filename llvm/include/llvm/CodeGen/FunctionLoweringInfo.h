@@ -232,11 +232,6 @@ private:
 /// floating-point support.
 void ComputeUsesVAFloatArgument(const CallInst &I, MachineModuleInfo *MMI);
 
-/// AddCatchInfo - Extract the personality and type infos from an eh.selector
-/// call, and add them to the specified machine basic block.
-void AddCatchInfo(const CallInst &I,
-                  MachineModuleInfo *MMI, MachineBasicBlock *MBB);
-
 /// AddLandingPadInfo - Extract the exception handling information from the
 /// landingpad instruction and add them to the specified machine module info.
 void AddLandingPadInfo(const LandingPadInst &I, MachineModuleInfo &MMI,

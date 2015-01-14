@@ -471,60 +471,6 @@ void llvm::ComputeUsesVAFloatArgument(const CallInst &I,
   }
 }
 
-/// AddCatchInfo - Extract the personality and type infos from an eh.selector
-/// call, and add them to the specified machine basic block.
-void llvm::AddCatchInfo(const CallInst &I, MachineModuleInfo *MMI,
-                        MachineBasicBlock *MBB) {
-  // Inform the MachineModuleInfo of the personality for this landing pad.
-  const ConstantExpr *CE = cast<ConstantExpr>(I.getArgOperand(1));
-  assert(CE->getOpcode() == Instruction::BitCast &&
-         isa<Function>(CE->getOperand(0)) &&
-         "Personality should be a function");
-  MMI->addPersonality(MBB, cast<Function>(CE->getOperand(0)));
-
-  // Gather all the type infos for this landing pad and pass them along to
-  // MachineModuleInfo.
-  std::vector<const GlobalValue *> TyInfo;
-  unsigned N = I.getNumArgOperands();
-
-  for (unsigned i = N - 1; i > 1; --i) {
-    if (const ConstantInt *CI = dyn_cast<ConstantInt>(I.getArgOperand(i))) {
-      unsigned FilterLength = CI->getZExtValue();
-      unsigned FirstCatch = i + FilterLength + !FilterLength;
-      assert(FirstCatch <= N && "Invalid filter length");
-
-      if (FirstCatch < N) {
-        TyInfo.reserve(N - FirstCatch);
-        for (unsigned j = FirstCatch; j < N; ++j)
-          TyInfo.push_back(ExtractTypeInfo(I.getArgOperand(j)));
-        MMI->addCatchTypeInfo(MBB, TyInfo);
-        TyInfo.clear();
-      }
-
-      if (!FilterLength) {
-        // Cleanup.
-        MMI->addCleanup(MBB);
-      } else {
-        // Filter.
-        TyInfo.reserve(FilterLength - 1);
-        for (unsigned j = i + 1; j < FirstCatch; ++j)
-          TyInfo.push_back(ExtractTypeInfo(I.getArgOperand(j)));
-        MMI->addFilterTypeInfo(MBB, TyInfo);
-        TyInfo.clear();
-      }
-
-      N = i;
-    }
-  }
-
-  if (N > 2) {
-    TyInfo.reserve(N - 2);
-    for (unsigned j = 2; j < N; ++j)
-      TyInfo.push_back(ExtractTypeInfo(I.getArgOperand(j)));
-    MMI->addCatchTypeInfo(MBB, TyInfo);
-  }
-}
-
 /// AddLandingPadInfo - Extract the exception handling information from the
 /// landingpad instruction and add them to the specified machine module info.
 void llvm::AddLandingPadInfo(const LandingPadInst &I, MachineModuleInfo &MMI,
