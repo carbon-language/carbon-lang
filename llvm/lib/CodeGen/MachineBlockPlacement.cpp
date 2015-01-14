@@ -60,6 +60,17 @@ static cl::opt<unsigned> AlignAllBlock("align-all-blocks",
                                                 "blocks in the function."),
                                        cl::init(0), cl::Hidden);
 
+static cl::opt<bool> OnlyHotBadCFGConflictCheck(
+    "only-hot-bad-cfg-conflict-check",
+    cl::desc("Only check that a hot successor doesn't have a hot predecessor."),
+    cl::init(false), cl::Hidden);
+
+static cl::opt<bool> NoBadCFGConflictCheck(
+    "no-bad-cfg-conflict-check",
+    cl::desc("Don't check whether a hot successor has a more important "
+             "predecessor."),
+    cl::init(false), cl::Hidden);
+
 // FIXME: Find a good default for this flag and remove the flag.
 static cl::opt<unsigned>
 ExitBlockBias("block-placement-exit-block-bias",
@@ -374,28 +385,32 @@ MachineBasicBlock *MachineBlockPlacement::selectBestSuccessor(
         continue;
       }
 
-      // Make sure that a hot successor doesn't have a globally more important
-      // predecessor.
-      BlockFrequency CandidateEdgeFreq
-        = MBFI->getBlockFreq(BB) * SuccProb * HotProb.getCompl();
-      bool BadCFGConflict = false;
-      for (MachineBasicBlock::pred_iterator PI = (*SI)->pred_begin(),
-                                            PE = (*SI)->pred_end();
-           PI != PE; ++PI) {
-        if (*PI == *SI || (BlockFilter && !BlockFilter->count(*PI)) ||
-            BlockToChain[*PI] == &Chain)
-          continue;
-        BlockFrequency PredEdgeFreq
-          = MBFI->getBlockFreq(*PI) * MBPI->getEdgeProbability(*PI, *SI);
-        if (PredEdgeFreq >= CandidateEdgeFreq) {
-          BadCFGConflict = true;
-          break;
+      if (!NoBadCFGConflictCheck) {
+        // Make sure that a hot successor doesn't have a globally more
+        // important predecessor.
+        BlockFrequency CandidateEdgeFreq =
+            OnlyHotBadCFGConflictCheck
+                ? MBFI->getBlockFreq(BB) * SuccProb
+                : MBFI->getBlockFreq(BB) * SuccProb * HotProb.getCompl();
+        bool BadCFGConflict = false;
+        for (MachineBasicBlock::pred_iterator PI = (*SI)->pred_begin(),
+                                              PE = (*SI)->pred_end();
+             PI != PE; ++PI) {
+          if (*PI == *SI || (BlockFilter && !BlockFilter->count(*PI)) ||
+              BlockToChain[*PI] == &Chain)
+            continue;
+          BlockFrequency PredEdgeFreq =
+              MBFI->getBlockFreq(*PI) * MBPI->getEdgeProbability(*PI, *SI);
+          if (PredEdgeFreq >= CandidateEdgeFreq) {
+            BadCFGConflict = true;
+            break;
+          }
         }
-      }
-      if (BadCFGConflict) {
-        DEBUG(dbgs() << "    " << getBlockName(*SI) << " -> " << SuccProb
-                     << " (prob) (non-cold CFG conflict)\n");
-        continue;
+        if (BadCFGConflict) {
+          DEBUG(dbgs() << "    " << getBlockName(*SI) << " -> " << SuccProb
+                       << " (prob) (non-cold CFG conflict)\n");
+          continue;
+        }
       }
     }
 
