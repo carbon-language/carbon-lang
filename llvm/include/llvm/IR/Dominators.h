@@ -31,6 +31,11 @@
 
 namespace llvm {
 
+// FIXME: Replace this brittle forward declaration with the include of the new
+// PassManager.h when doing so doesn't break the PassManagerBuilder.
+template <typename IRUnitT> class AnalysisManager;
+class PreservedAnalyses;
+
 EXTERN_TEMPLATE_INSTANTIATION(class DomTreeNodeBase<BasicBlock>);
 EXTERN_TEMPLATE_INSTANTIATION(class DominatorTreeBase<BasicBlock>);
 
@@ -162,6 +167,43 @@ template <> struct GraphTraits<DominatorTree*>
 };
 
 /// \brief Analysis pass which computes a \c DominatorTree.
+class DominatorTreeAnalysis {
+public:
+  /// \brief Provide the result typedef for this analysis pass.
+  typedef DominatorTree Result;
+
+  /// \brief Opaque, unique identifier for this analysis pass.
+  static void *ID() { return (void *)&PassID; }
+
+  /// \brief Run the analysis pass over a function and produce a dominator tree.
+  DominatorTree run(Function &F);
+
+  /// \brief Provide access to a name for this pass for debugging purposes.
+  static StringRef name() { return "DominatorTreeAnalysis"; }
+
+private:
+  static char PassID;
+};
+
+/// \brief Printer pass for the \c DominatorTree.
+class DominatorTreePrinterPass {
+  raw_ostream &OS;
+
+public:
+  explicit DominatorTreePrinterPass(raw_ostream &OS);
+  PreservedAnalyses run(Function &F, AnalysisManager<Function> *AM);
+
+  static StringRef name() { return "DominatorTreePrinterPass"; }
+};
+
+/// \brief Verifier pass for the \c DominatorTree.
+struct DominatorTreeVerifierPass {
+  PreservedAnalyses run(Function &F, AnalysisManager<Function> *AM);
+
+  static StringRef name() { return "DominatorTreeVerifierPass"; }
+};
+
+/// \brief Legacy analysis pass which computes a \c DominatorTree.
 class DominatorTreeWrapperPass : public FunctionPass {
   DominatorTree DT;
 

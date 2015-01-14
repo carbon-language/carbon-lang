@@ -20,6 +20,7 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/IR/CFG.h"
 #include "llvm/IR/Instructions.h"
+#include "llvm/IR/PassManager.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
@@ -298,10 +299,45 @@ void DominatorTree::verifyDomTree() const {
 }
 
 //===----------------------------------------------------------------------===//
+//  DominatorTreeAnalysis and related pass implementations
+//===----------------------------------------------------------------------===//
+//
+// This implements the DominatorTreeAnalysis which is used with the new pass
+// manager. It also implements some methods from utility passes.
+//
+//===----------------------------------------------------------------------===//
+
+DominatorTree DominatorTreeAnalysis::run(Function &F) {
+  DominatorTree DT;
+  DT.recalculate(F);
+  return DT;
+}
+
+char DominatorTreeAnalysis::PassID;
+
+DominatorTreePrinterPass::DominatorTreePrinterPass(raw_ostream &OS) : OS(OS) {}
+
+PreservedAnalyses DominatorTreePrinterPass::run(Function &F,
+                                                FunctionAnalysisManager *AM) {
+  OS << "DominatorTree for function: " << F.getName() << "\n";
+  AM->getResult<DominatorTreeAnalysis>(F).print(OS);
+
+  return PreservedAnalyses::all();
+}
+
+PreservedAnalyses DominatorTreeVerifierPass::run(Function &F,
+                                                 FunctionAnalysisManager *AM) {
+  AM->getResult<DominatorTreeAnalysis>(F).verifyDomTree();
+
+  return PreservedAnalyses::all();
+}
+
+//===----------------------------------------------------------------------===//
 //  DominatorTreeWrapperPass Implementation
 //===----------------------------------------------------------------------===//
 //
-// The implementation details of the wrapper pass that holds a DominatorTree.
+// The implementation details of the wrapper pass that holds a DominatorTree
+// suitable for use with the legacy pass manager.
 //
 //===----------------------------------------------------------------------===//
 
