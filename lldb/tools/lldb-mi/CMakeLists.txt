@@ -164,7 +164,11 @@ add_lldb_executable(lldb-mi
   )
 endif ()
 
-target_link_libraries(lldb-mi liblldb pthread)
+target_link_libraries(lldb-mi liblldb)
+if ( NOT CMAKE_SYSTEM_NAME MATCHES "Windows" )
+  target_link_libraries(lldb-mi pthread)
+endif ()
+
 # TODO: why isn't this done by add_lldb_executable?
 #target_link_libraries(lldb-mi ${LLDB_USED_LIBS})
 #llvm_config(lldb-mi ${LLVM_LINK_COMPONENTS})
