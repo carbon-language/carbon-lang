@@ -489,8 +489,6 @@ bool TargetInfo::validateOutputConstraint(ConstraintInfo &Info) const {
     case '#': // Ignore as constraint.
       while (Name[1] && Name[1] != ',')
         Name++;
-      if (Name[1] != ',')
-        return false;
       break;
     case '?': // Disparage slightly code.
     case '!': // Disparage severely.
@@ -637,8 +635,6 @@ bool TargetInfo::validateInputConstraint(ConstraintInfo *OutputConstraints,
     case '#': // Ignore as constraint.
       while (Name[1] && Name[1] != ',')
         Name++;
-      if (Name[1] != ',')
-        return false;
       break;
     case '?': // Disparage slightly code.
     case '!': // Disparage severely.

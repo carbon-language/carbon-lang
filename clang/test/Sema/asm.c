@@ -188,7 +188,7 @@ void fn4() {
   int l;
  __asm__(""
           : "=r"(l)
-          : "#m"(l)); // expected-error {{invalid input constraint '#m' in asm}}
+          : "m#"(l));
 }
 
 void fn5() {
