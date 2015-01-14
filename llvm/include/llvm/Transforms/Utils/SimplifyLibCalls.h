@@ -46,6 +46,7 @@ public:
   /// \brief Take the given call instruction and return a more
   /// optimal value to replace the instruction with or 0 if a more
   /// optimal form can't be found.
+  /// The call must not be an indirect call.
   Value *optimizeCall(CallInst *CI);
 
 private:
@@ -83,6 +84,7 @@ public:
   /// be equal to the instruction being optimized.  In this case all
   /// other instructions that use the given instruction were modified
   /// and the given instruction is dead.
+  /// The call must not be an indirect call.
   Value *optimizeCall(CallInst *CI);
 
   /// replaceAllUsesWith - This method is used when the library call
