@@ -1,5 +1,5 @@
 =====================================
-Clang 3.6 (In-Progress) Release Notes
+Clang 3.7 (In-Progress) Release Notes
 =====================================
 
 .. contents::
@@ -10,7 +10,7 @@ Written by the `LLVM Team <http://llvm.org/>`_
 
 .. warning::
 
-   These are in-progress notes for the upcoming Clang 3.6 release. You may
+   These are in-progress notes for the upcoming Clang 3.7 release. You may
    prefer the `Clang 3.5 Release Notes
    <http://llvm.org/releases/3.5/tools/clang/docs/ReleaseNotes.html>`_.
 
@@ -18,7 +18,7 @@ Introduction
 ============
 
 This document contains the release notes for the Clang C/C++/Objective-C
-frontend, part of the LLVM Compiler Infrastructure, release 3.6. Here we
+frontend, part of the LLVM Compiler Infrastructure, release 3.7. Here we
 describe the status of Clang in some detail, including major
 improvements from the previous release and new feature work. For the
 general LLVM release notes, see `the LLVM
@@ -36,7 +36,7 @@ main Clang web page, this document applies to the *next* release, not
 the current one. To see the release notes for a specific release, please
 see the `releases page <http://llvm.org/releases/>`_.
 
-What's New in Clang 3.6?
+What's New in Clang 3.7?
 ========================
 
 Some of the major new features and improvements to Clang are listed
@@ -47,11 +47,7 @@ sections with improvements to Clang's support for those languages.
 Major New Features
 ------------------
 
-- The __has_attribute built-in macro no longer queries for attributes across
-  multiple attribute syntaxes (GNU, C++11, __declspec, etc). Instead, it only
-  queries GNU-style attributes. With the addition of __has_cpp_attribute and
-  __has_declspec_attribute, this allows for more precise coverage of attribute
-  syntax querying.
+- Feature ...
 
 
 Improvements to Clang's diagnostics
@@ -113,7 +109,7 @@ OpenCL C Language Changes in Clang
 Internal API Changes
 --------------------
 
-These are major API changes that have happened since the 3.5 release of
+These are major API changes that have happened since the 3.6 release of
 Clang. If upgrading an external codebase that uses Clang as a library,
 this section should help get you past the largest hurdles of upgrading.
 
