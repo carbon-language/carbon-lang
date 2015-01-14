@@ -14,11 +14,11 @@
 #ifndef LLVM_CLANG_FRONTEND_CODEGENOPTIONS_H
 #define LLVM_CLANG_FRONTEND_CODEGENOPTIONS_H
 
+#include "clang/Basic/Sanitizers.h"
+#include "llvm/Support/Regex.h"
 #include <memory>
 #include <string>
 #include <vector>
-#include "clang/Basic/Sanitizers.h"
-#include "llvm/Support/Regex.h"
 
 namespace clang {
 

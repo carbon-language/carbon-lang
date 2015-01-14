@@ -15,10 +15,10 @@
 #include "CodeGenFunction.h"
 #include "clang/AST/StmtVisitor.h"
 #include "clang/Lex/Lexer.h"
-#include "llvm/ProfileData/InstrProfReader.h"
 #include "llvm/ProfileData/CoverageMapping.h"
-#include "llvm/ProfileData/CoverageMappingWriter.h"
 #include "llvm/ProfileData/CoverageMappingReader.h"
+#include "llvm/ProfileData/CoverageMappingWriter.h"
+#include "llvm/ProfileData/InstrProfReader.h"
 #include "llvm/Support/FileSystem.h"
 
 using namespace clang;

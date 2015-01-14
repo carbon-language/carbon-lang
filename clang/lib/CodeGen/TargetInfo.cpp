@@ -25,7 +25,6 @@
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/Type.h"
 #include "llvm/Support/raw_ostream.h"
-
 #include <algorithm>    // std::sort
 
 using namespace clang;

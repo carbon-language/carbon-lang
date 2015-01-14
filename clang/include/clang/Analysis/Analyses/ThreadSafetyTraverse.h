@@ -18,7 +18,6 @@
 #define LLVM_CLANG_ANALYSIS_ANALYSES_THREADSAFETYTRAVERSE_H
 
 #include "ThreadSafetyTIL.h"
-
 #include <ostream>
 
 namespace clang {

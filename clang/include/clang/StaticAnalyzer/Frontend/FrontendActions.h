@@ -11,8 +11,8 @@
 #define LLVM_CLANG_STATICANALYZER_FRONTEND_FRONTENDACTIONS_H
 
 #include "clang/Frontend/FrontendAction.h"
-#include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/StringMap.h"
+#include "llvm/ADT/StringRef.h"
 
 namespace clang {
 

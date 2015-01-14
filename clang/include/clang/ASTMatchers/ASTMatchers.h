@@ -45,9 +45,9 @@
 #ifndef LLVM_CLANG_ASTMATCHERS_ASTMATCHERS_H
 #define LLVM_CLANG_ASTMATCHERS_ASTMATCHERS_H
 
+#include "clang/AST/ASTContext.h"
 #include "clang/AST/DeclFriend.h"
 #include "clang/AST/DeclTemplate.h"
-#include "clang/AST/ASTContext.h"
 #include "clang/ASTMatchers/ASTMatchersInternal.h"
 #include "clang/ASTMatchers/ASTMatchersMacros.h"
 #include "llvm/ADT/Twine.h"

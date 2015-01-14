@@ -14,9 +14,9 @@
 #include "CGOpenMPRuntime.h"
 #include "CodeGenFunction.h"
 #include "CodeGenModule.h"
+#include "TargetInfo.h"
 #include "clang/AST/Stmt.h"
 #include "clang/AST/StmtOpenMP.h"
-#include "TargetInfo.h"
 using namespace clang;
 using namespace CodeGen;
 

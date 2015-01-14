@@ -18,8 +18,8 @@
 #include "llvm/ADT/Optional.h"
 #include "llvm/Support/ErrorOr.h"
 #include "llvm/Support/FileSystem.h"
-#include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/SourceMgr.h"
+#include "llvm/Support/raw_ostream.h"
 
 namespace llvm {
 class MemoryBuffer;

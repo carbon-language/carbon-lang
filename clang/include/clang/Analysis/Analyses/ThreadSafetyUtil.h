@@ -14,17 +14,16 @@
 #ifndef LLVM_CLANG_ANALYSIS_ANALYSES_THREADSAFETYUTIL_H
 #define LLVM_CLANG_ANALYSIS_ANALYSES_THREADSAFETYUTIL_H
 
+#include "clang/AST/ExprCXX.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/AlignOf.h"
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/Compiler.h"
-#include "clang/AST/ExprCXX.h"
-
 #include <cassert>
 #include <cstddef>
-#include <vector>
-#include <utility>
 #include <ostream>
+#include <utility>
+#include <vector>
 
 namespace clang {
 namespace threadSafety {

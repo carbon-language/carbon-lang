@@ -27,7 +27,6 @@
 #include "clang/Analysis/Analyses/ThreadSafetyTraverse.h"
 #include "clang/Analysis/AnalysisContext.h"
 #include "clang/Basic/OperatorKinds.h"
-
 #include <memory>
 #include <ostream>
 #include <sstream>

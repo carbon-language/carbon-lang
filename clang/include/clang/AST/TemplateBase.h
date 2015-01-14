@@ -18,8 +18,8 @@
 #include "clang/AST/TemplateName.h"
 #include "clang/AST/Type.h"
 #include "llvm/ADT/APSInt.h"
-#include "llvm/ADT/iterator_range.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/iterator_range.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/ErrorHandling.h"
 

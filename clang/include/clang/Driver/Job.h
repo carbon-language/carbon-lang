@@ -12,8 +12,8 @@
 
 #include "clang/Basic/LLVM.h"
 #include "llvm/ADT/SmallVector.h"
-#include "llvm/Option/Option.h"
 #include "llvm/ADT/iterator.h"
+#include "llvm/Option/Option.h"
 #include <memory>
 
 namespace llvm {

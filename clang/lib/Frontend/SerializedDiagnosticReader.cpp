@@ -8,8 +8,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Frontend/SerializedDiagnosticReader.h"
-#include "clang/Frontend/SerializedDiagnostics.h"
 #include "clang/Basic/FileManager.h"
+#include "clang/Frontend/SerializedDiagnostics.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/MemoryBuffer.h"
 

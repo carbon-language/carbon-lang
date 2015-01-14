@@ -11,7 +11,6 @@
 //
 //===----------------------------------------------------------------------===//
 #include "clang/Sema/Overload.h"
-#include "clang/Sema/SemaInternal.h"
 #include "clang/AST/ASTLambda.h"
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/DeclObjC.h"
@@ -22,6 +21,7 @@
 #include "clang/Sema/Lookup.h"
 #include "clang/Sema/Scope.h"
 #include "clang/Sema/ScopeInfo.h"
+#include "clang/Sema/SemaInternal.h"
 
 using namespace clang;
 using namespace sema;

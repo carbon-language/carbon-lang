@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <string.h>
 #include "clang/Frontend/CodeGenOptions.h"
+#include <string.h>
 
 namespace clang {
 

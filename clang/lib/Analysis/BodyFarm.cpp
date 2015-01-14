@@ -13,11 +13,11 @@
 //===----------------------------------------------------------------------===//
 
 #include "BodyFarm.h"
-#include "clang/Analysis/CodeInjector.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/ExprObjC.h"
+#include "clang/Analysis/CodeInjector.h"
 #include "llvm/ADT/StringSwitch.h"
 
 using namespace clang;

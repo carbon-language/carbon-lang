@@ -11,10 +11,10 @@
 
 #include "clang/Basic/VirtualFileSystem.h"
 #include "llvm/ADT/DenseMap.h"
-#include "llvm/ADT/iterator_range.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringSet.h"
+#include "llvm/ADT/iterator_range.h"
 #include "llvm/Support/Errc.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/Path.h"

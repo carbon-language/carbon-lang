@@ -16,7 +16,6 @@
 
 #include "clang/Basic/LLVM.h"
 #include "llvm/Support/Compiler.h"
-
 #include <memory>
 
 namespace llvm {

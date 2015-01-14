@@ -13,9 +13,9 @@
 #ifndef LLVM_CLANG_LIB_CODEGEN_SANITIZERMETADATA_H
 #define LLVM_CLANG_LIB_CODEGEN_SANITIZERMETADATA_H
 
+#include "clang/AST/Type.h"
 #include "clang/Basic/LLVM.h"
 #include "clang/Basic/SourceLocation.h"
-#include "clang/AST/Type.h"
 
 namespace llvm {
 class GlobalVariable;

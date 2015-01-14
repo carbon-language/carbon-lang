@@ -15,7 +15,6 @@
 #define LLVM_CLANG_FRONTEND_ASTCONSUMERS_H
 
 #include "clang/Basic/LLVM.h"
-
 #include <memory>
 
 namespace clang {

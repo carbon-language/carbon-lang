@@ -50,11 +50,10 @@
 // All clang include dependencies for this file must be put in
 // ThreadSafetyUtil.h.
 #include "ThreadSafetyUtil.h"
-
-#include <stdint.h>
 #include <algorithm>
 #include <cassert>
 #include <cstddef>
+#include <stdint.h>
 #include <utility>
 
 

@@ -17,10 +17,10 @@
 
 #include "clang/AST/Decl.h"
 #include "clang/AST/Expr.h"
+#include "clang/AST/LambdaCapture.h"
 #include "clang/AST/TemplateBase.h"
 #include "clang/AST/UnresolvedSet.h"
 #include "clang/Basic/ExpressionTraits.h"
-#include "clang/AST/LambdaCapture.h"
 #include "clang/Basic/TypeTraits.h"
 #include "llvm/Support/Compiler.h"
 
