@@ -260,6 +260,7 @@ void Calculate(DominatorTreeBase<typename GraphTraits<NodeT>::NodeType>& DT,
   for (unsigned i = 2; i <= N; ++i) {
     typename GraphT::NodeType* W = DT.Vertex[i];
 
+    // Don't replace this with 'count', the insertion side effect is important
     if (DT.DomTreeNodes[W])
       continue; // Haven't calculated this node yet?
 
