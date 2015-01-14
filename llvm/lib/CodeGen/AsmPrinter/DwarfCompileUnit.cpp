@@ -1,5 +1,6 @@
 #include "DwarfCompileUnit.h"
 
+#include "DwarfExpression.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/GlobalValue.h"
@@ -771,53 +772,19 @@ void DwarfCompileUnit::addComplexAddress(const DbgVariable &DV, DIE &Die,
                                          dwarf::Attribute Attribute,
                                          const MachineLocation &Location) {
   DIELoc *Loc = new (DIEValueAllocator) DIELoc();
-  unsigned N = DV.getNumAddrElements();
-  unsigned i = 0;
-  bool validReg;
-  if (Location.isReg()) {
-    if (N >= 2 && DV.getAddrElement(0) == dwarf::DW_OP_plus) {
-      assert(!DV.getVariable().isIndirect() &&
-             "double indirection not handled");
-      // If first address element is OpPlus then emit
-      // DW_OP_breg + Offset instead of DW_OP_reg + Offset.
-      validReg = addRegisterOffset(*Loc, Location.getReg(), DV.getAddrElement(1));
-      i = 2;
-    } else if (N >= 2 && DV.getAddrElement(0) == dwarf::DW_OP_deref) {
-      assert(!DV.getVariable().isIndirect() &&
-             "double indirection not handled");
-      validReg = addRegisterOpPiece(*Loc, Location.getReg(),
-                                 DV.getExpression().getPieceSize(),
-                                 DV.getExpression().getPieceOffset());
-      i = 3;
-    } else
-      validReg = addRegisterOpPiece(*Loc, Location.getReg());
-  } else
-    validReg = addRegisterOffset(*Loc, Location.getReg(), Location.getOffset());
-
-  if (!validReg)
-    return;
-
-  for (; i < N; ++i) {
-    uint64_t Element = DV.getAddrElement(i);
-    if (Element == dwarf::DW_OP_plus) {
-      addUInt(*Loc, dwarf::DW_FORM_data1, dwarf::DW_OP_plus_uconst);
-      addUInt(*Loc, dwarf::DW_FORM_udata, DV.getAddrElement(++i));
-
-    } else if (Element == dwarf::DW_OP_deref) {
-      if (!Location.isReg())
-        addUInt(*Loc, dwarf::DW_FORM_data1, dwarf::DW_OP_deref);
-
-    } else if (Element == dwarf::DW_OP_piece) {
-      const unsigned SizeOfByte = 8;
-      unsigned PieceOffsetInBits = DV.getAddrElement(++i) * SizeOfByte;
-      unsigned PieceSizeInBits = DV.getAddrElement(++i) * SizeOfByte;
-      // Emit DW_OP_bit_piece Size Offset.
-      assert(PieceSizeInBits > 0 && "piece has zero size");
-      addUInt(*Loc, dwarf::DW_FORM_data1, dwarf::DW_OP_bit_piece);
-      addUInt(*Loc, dwarf::DW_FORM_udata, PieceSizeInBits);
-      addUInt(*Loc, dwarf::DW_FORM_udata, PieceOffsetInBits);
-    } else
-      llvm_unreachable("unknown DIBuilder Opcode");
+  DIEDwarfExpression DwarfExpr(*Asm, *this, *Loc);
+  DIExpression Expr = DV.getExpression();
+  if (Location.getOffset()) {
+    if (DwarfExpr.AddMachineRegIndirect(Location.getReg(),
+                                        Location.getOffset())) {
+      DwarfExpr.AddExpression(Expr);
+      assert(!DV.getVariable().isIndirect()
+             && "double indirection not handled");
+    }
+  } else {
+    if (DwarfExpr.AddMachineRegExpression(Expr, Location.getReg()))
+      if (DV.getVariable().isIndirect())
+        DwarfExpr.EmitOp(dwarf::DW_OP_deref);
   }
 
   // Now attach the location information to the DIE.
