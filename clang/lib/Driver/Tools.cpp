@@ -3737,6 +3737,17 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
       getToolChain().getTriple().getArch() == llvm::Triple::aarch64_be)
     CmdArgs.push_back("-fallow-half-arguments-and-returns");
 
+  // Translate -frandom-seed to seed the LLVM RNG
+  if (Args.hasArg(options::OPT_frandom_seed_EQ)) {
+    StringRef seed = Args.getLastArgValue(options::OPT_frandom_seed_EQ);
+    CmdArgs.push_back("-backend-option");
+    CmdArgs.push_back(Args.MakeArgString("-rng-seed=" + seed));
+  }
+
+  if (Args.hasArg(options::OPT_fdiversify)) {
+    CmdArgs.push_back("-noop-insertion");
+  }
+
   if (Arg *A = Args.getLastArg(options::OPT_mrestrict_it,
                                options::OPT_mno_restrict_it)) {
     if (A->getOption().matches(options::OPT_mrestrict_it)) {

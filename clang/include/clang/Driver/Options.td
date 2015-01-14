@@ -469,6 +469,7 @@ def fdiagnostics_show_category_EQ : Joined<["-"], "fdiagnostics-show-category=">
 def fdiagnostics_show_template_tree : Flag<["-"], "fdiagnostics-show-template-tree">,
     Group<f_Group>, Flags<[CC1Option]>,
     HelpText<"Print a template comparison tree for differing templates">;
+def fdiversify : Flag<["-"], "fdiversify">, Group<f_clang_Group>;
 def fdollars_in_identifiers : Flag<["-"], "fdollars-in-identifiers">, Group<f_Group>,
   HelpText<"Allow '$' in identifiers">, Flags<[CC1Option]>;
 def fdwarf2_cfi_asm : Flag<["-"], "fdwarf2-cfi-asm">, Group<clang_ignored_f_Group>;
@@ -857,7 +858,7 @@ def fprofile_arcs : Flag<["-"], "fprofile-arcs">, Group<f_Group>;
 def fno_profile_arcs : Flag<["-"], "fno-profile-arcs">, Group<f_Group>;
 def fprofile_generate : Flag<["-"], "fprofile-generate">, Group<f_Group>;
 def framework : Separate<["-"], "framework">, Flags<[LinkerInput]>;
-def frandom_seed_EQ : Joined<["-"], "frandom-seed=">, Group<clang_ignored_f_Group>;
+def frandom_seed_EQ : Joined<["-"], "frandom-seed=">, Group<f_Group>, Flags<[CC1Option]>;
 def freg_struct_return : Flag<["-"], "freg-struct-return">, Group<f_Group>, Flags<[CC1Option]>,
   HelpText<"Override the default ABI to return small structs in registers">;
 def frtti : Flag<["-"], "frtti">, Group<f_Group>;
