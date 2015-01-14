@@ -153,9 +153,9 @@ define void @sextload_global_v64i16_to_v64i32(<64 x i32> addrspace(1)* %out, <64
 }
 
 ; FUNC-LABEL: {{^}}zextload_global_i16_to_i64:
-; SI: buffer_load_ushort [[LOAD:v[0-9]+]],
-; SI: v_mov_b32_e32 {{v[0-9]+}}, 0{{$}}
-; SI: buffer_store_dwordx2
+; SI: buffer_load_ushort v[[LO:[0-9]+]],
+; SI: v_mov_b32_e32 v[[HI:[0-9]+]], 0{{$}}
+; SI: buffer_store_dwordx2 v{{\[}}[[LO]]:[[HI]]]
 define void @zextload_global_i16_to_i64(i64 addrspace(1)* %out, i16 addrspace(1)* %in) nounwind {
   %a = load i16 addrspace(1)* %in
   %ext = zext i16 %a to i64

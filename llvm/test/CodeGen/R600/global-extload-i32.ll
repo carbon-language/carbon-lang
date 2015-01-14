@@ -2,10 +2,9 @@
 ; RUN: llc -march=r600 -mcpu=cypress < %s | FileCheck -check-prefix=EG -check-prefix=FUNC %s
 
 ; FUNC-LABEL: {{^}}zextload_global_i32_to_i64:
-; SI: buffer_load_dword [[LOAD:v[0-9]+]],
-; SI: v_mov_b32_e32 {{v[0-9]+}}, 0{{$}}
-; SI: buffer_store_dwordx2
-; SI: s_endpgm
+; SI: buffer_load_dword v[[LO:[0-9]+]],
+; SI: v_mov_b32_e32 v[[HI:[0-9]+]], 0{{$}}
+; SI: buffer_store_dwordx2 v{{\[}}[[LO]]:[[HI]]]
 define void @zextload_global_i32_to_i64(i64 addrspace(1)* %out, i32 addrspace(1)* %in) nounwind {
   %a = load i32 addrspace(1)* %in
   %ext = zext i32 %a to i64
