@@ -1,12 +1,16 @@
 @ RUN: not llvm-mc -triple thumbv7-eabi -filetype asm -o - %s 2>&1 \
 @ RUN:     | FileCheck %s
+@ RUN: not llvm-mc -triple thumbv7a-eabi -filetype asm -o - %s 2>&1 \
+@ RUN: | FileCheck --check-prefix=CHECK --check-prefix=CHECK-V7A %s
+@ RUN: not llvm-mc -triple thumbv7m-eabi -filetype asm -o - %s 2>&1 \
+@ RUN: | FileCheck --check-prefix=CHECK --check-prefix=CHECK-V7M %s
 
 	.syntax unified
 	.thumb
 
 	.global ldm
 	.type ldm,%function
-ldb:
+ldm:
 	ldm r0!, {r1, sp}
 @ CHECK: error: SP may not be in the register list
 @ CHECK: ldm r0!, {r1, sp}
@@ -27,7 +31,7 @@ ldb:
 ldmdb:
 	ldmdb r0!, {r1, sp}
 @ CHECK: error: SP may not be in the register list
-	ldm r0!, {lr, pc}
+	ldmdb r0!, {lr, pc}
 @ error: PC and LR may not be in the register list simultaneously
 	itt eq
 	ldmeq r0!, {r1, pc}
@@ -63,12 +67,14 @@ push:
 @ CHECK: error: SP may not be in the register list
 	push {pc}
 @ CHECK: error: PC may not be in the register list
-	push {sp,pc}
+	push {sp, pc}
 @ CHECK: error: SP and PC may not be in the register list
 
 	.global pop
 	.type pop,%function
 pop:
+        pop {sp}
+@ CHECK-V7M: error: SP may not be in the register list
 	pop {lr, pc}
 @ CHECK: error: PC and LR may not be in the register list simultaneously
 @ CHECK: pop {lr, pc}
@@ -84,9 +90,9 @@ pop:
 	.type valid,%function
 valid:
 	pop {sp}
-@ CHECK: ldr sp, [sp], #4
+@ CHECK-V7A: ldr sp, [sp], #4
 	pop {sp, pc}
-@ CHECK: pop.w {sp, pc}
+@ CHECK-V7A: pop.w {sp, pc}
 	push.w {r0}
 @ CHECK: str r0, [sp, #-4]
 	pop.w {r0}

@@ -190,7 +190,7 @@ class ARMAsmParser : public MCTargetAsmParser {
   }
 
   bool validatetLDMRegList(MCInst Inst, const OperandVector &Operands,
-                           unsigned ListNo, bool IsPop = false);
+                           unsigned ListNo, bool IsARPop = false);
   bool validatetSTMRegList(MCInst Inst, const OperandVector &Operands,
                            unsigned ListNo);
 
@@ -6027,7 +6027,7 @@ static bool instIsBreakpoint(const MCInst &Inst) {
 
 bool ARMAsmParser::validatetLDMRegList(MCInst Inst,
                                        const OperandVector &Operands,
-                                       unsigned ListNo, bool IsPop) {
+                                       unsigned ListNo, bool IsARPop) {
   const ARMOperand &Op = static_cast<const ARMOperand &>(*Operands[ListNo]);
   bool HasWritebackToken = Op.isToken() && Op.getToken() == "!";
 
@@ -6035,7 +6035,7 @@ bool ARMAsmParser::validatetLDMRegList(MCInst Inst,
   bool ListContainsLR = listContainsReg(Inst, ListNo, ARM::LR);
   bool ListContainsPC = listContainsReg(Inst, ListNo, ARM::PC);
 
-  if (!IsPop && ListContainsSP)
+  if (!IsARPop && ListContainsSP)
     return Error(Operands[ListNo + HasWritebackToken]->getStartLoc(),
                  "SP may not be in the register list");
   else if (ListContainsPC && ListContainsLR)
@@ -6338,7 +6338,7 @@ bool ARMAsmParser::validateInstruction(MCInst &Inst,
         !isThumbTwo())
       return Error(Operands[2]->getStartLoc(),
                    "registers must be in range r0-r7 or pc");
-    if (validatetLDMRegList(Inst, Operands, 2, /*IsPop=*/true))
+    if (validatetLDMRegList(Inst, Operands, 2, !isMClass()))
       return true;
     break;
   }
