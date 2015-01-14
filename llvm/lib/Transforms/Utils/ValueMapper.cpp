@@ -183,8 +183,8 @@ static Metadata *mapMetadataOp(Metadata *Op, ValueToValueMapTy &VM,
 /// \brief Map a distinct MDNode.
 ///
 /// Distinct nodes are not uniqued, so they must always recreated.
-static Metadata *mapDistinctNode(const MDNode *Node, ValueToValueMapTy &VM,
-                                 RemapFlags Flags,
+static Metadata *mapDistinctNode(const UniquableMDNode *Node,
+                                 ValueToValueMapTy &VM, RemapFlags Flags,
                                  ValueMapTypeRemapper *TypeMapper,
                                  ValueMaterializer *Materializer) {
   assert(Node->isDistinct() && "Expected distinct node");
@@ -234,7 +234,7 @@ static Metadata *MapMetadataImpl(const Metadata *MD, ValueToValueMapTy &VM,
     return nullptr;
   }
 
-  const MDNode *Node = cast<MDNode>(MD);
+  const UniquableMDNode *Node = cast<UniquableMDNode>(MD);
   assert(Node->isResolved() && "Unexpected unresolved node");
 
   // If this is a module-level metadata and we know that nothing at the
