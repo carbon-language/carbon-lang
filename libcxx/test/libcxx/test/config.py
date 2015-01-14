@@ -419,7 +419,7 @@ class Configuration(object):
                 self.config.available_features.add('tsan')
             else:
                 self.lit_config.fatal('unsupported value for '
-                                      'libcxx_use_san: {0}'.format(san))
+                                      'use_sanitizer: {0}'.format(san))
 
     def configure_triple(self):
         # Get or infer the target triple.
