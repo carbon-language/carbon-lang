@@ -11,47 +11,7 @@
 
 #include "int_lib.h"
 
-/*
- * _Unwind_* stuff based on C++ ABI public documentation
- * http://refspecs.freestandards.org/abi-eh-1.21.html
- */
-
-typedef enum {
-    _URC_NO_REASON = 0,
-    _URC_FOREIGN_EXCEPTION_CAUGHT = 1,
-    _URC_FATAL_PHASE2_ERROR = 2,
-    _URC_FATAL_PHASE1_ERROR = 3,
-    _URC_NORMAL_STOP = 4,
-    _URC_END_OF_STACK = 5,
-    _URC_HANDLER_FOUND = 6,
-    _URC_INSTALL_CONTEXT = 7,
-    _URC_CONTINUE_UNWIND = 8
-} _Unwind_Reason_Code;
-
-typedef enum {
-    _UA_SEARCH_PHASE = 1,
-    _UA_CLEANUP_PHASE = 2,
-    _UA_HANDLER_FRAME = 4,
-    _UA_FORCE_UNWIND = 8,
-    _UA_END_OF_STACK = 16
-} _Unwind_Action;
-
-typedef struct _Unwind_Context* _Unwind_Context_t;
-
-struct _Unwind_Exception {
-    uint64_t                exception_class;
-    void                    (*exception_cleanup)(_Unwind_Reason_Code reason, 
-                                                 struct _Unwind_Exception* exc);
-    uintptr_t                private_1;    
-    uintptr_t                private_2;    
-};
-
-COMPILER_RT_ABI  const uint8_t*    _Unwind_GetLanguageSpecificData(_Unwind_Context_t c);
-COMPILER_RT_ABI  void              _Unwind_SetGR(_Unwind_Context_t c, int i, uintptr_t n);
-COMPILER_RT_ABI  void              _Unwind_SetIP(_Unwind_Context_t, uintptr_t new_value);
-COMPILER_RT_ABI  uintptr_t         _Unwind_GetIP(_Unwind_Context_t context);
-COMPILER_RT_ABI  uintptr_t         _Unwind_GetRegionStart(_Unwind_Context_t context);
-
+#include <unwind.h>
 
 /*
  * Pointer encodings documented at:
@@ -185,12 +145,12 @@ static uintptr_t readEncodedPointer(const uint8_t** data, uint8_t encoding)
 COMPILER_RT_ABI _Unwind_Reason_Code
 __gcc_personality_sj0(int version, _Unwind_Action actions,
          uint64_t exceptionClass, struct _Unwind_Exception* exceptionObject,
-         _Unwind_Context_t context)
+         struct _Unwind_Context *context)
 #else
 COMPILER_RT_ABI _Unwind_Reason_Code
 __gcc_personality_v0(int version, _Unwind_Action actions,
          uint64_t exceptionClass, struct _Unwind_Exception* exceptionObject,
-         _Unwind_Context_t context)
+         struct _Unwind_Context *context)
 #endif
 {
     /* Since C does not have catch clauses, there is nothing to do during */

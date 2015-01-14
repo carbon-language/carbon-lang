@@ -79,7 +79,6 @@ set(GENERIC_SOURCES
   floatuntidf.c
   floatuntisf.c
   floatuntixf.c
-  gcc_personality_v0.c
   int_util.c
   lshrdi3.c
   lshrti3.c
@@ -136,6 +135,12 @@ set(GENERIC_SOURCES
   umoddi3.c
   umodsi3.c
   umodti3.c)
+
+if (HAVE_UNWIND_H)
+  set(GENERIC_SOURCES
+      ${GENERIC_SOURCES}
+      gcc_personality_v0.c)
+endif ()
 
 set(x86_64_SOURCES
   x86_64/floatdidf.c

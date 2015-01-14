@@ -203,6 +203,9 @@ pythonize_bool(COMPILER_RT_DEBUG)
 #================================
 # Setup Compiler Flags
 #================================
+include(CheckIncludeFile)
+check_include_file(unwind.h HAVE_UNWIND_H)
+
 include(config-ix)
 
 if(MSVC)
