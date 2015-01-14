@@ -1077,6 +1077,25 @@ void MachineVerifier::checkLiveness(const MachineOperand *MO, unsigned MONum) {
             }
           }
         }
+        // If there is an additional implicit-use of a super register we stop
+        // here. By definition we are fine if the super register is not
+        // (completely) dead, if the complete super register is dead we will
+        // get a report for its operand.
+        if (Bad) {
+          for (const MachineOperand &MOP : MI->uses()) {
+            if (!MOP.isReg())
+              continue;
+            if (!MOP.isImplicit())
+              continue;
+            for (MCSubRegIterator SubRegs(MOP.getReg(), TRI); SubRegs.isValid();
+                 ++SubRegs) {
+              if (*SubRegs == Reg) {
+                Bad = false;
+                break;
+              }
+            }
+          }
+        }
         if (Bad)
           report("Using an undefined physical register", MO, MONum);
       } else if (MRI->def_empty(Reg)) {
