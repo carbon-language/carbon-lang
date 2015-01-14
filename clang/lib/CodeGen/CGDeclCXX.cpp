@@ -445,6 +445,8 @@ void CodeGenFunction::GenerateCXXGlobalVarDeclInitFunc(llvm::Function *Fn,
   if (D->hasAttr<NoDebugAttr>())
     DebugInfo = nullptr; // disable debug info indefinitely for this function
 
+  CurEHLocation = D->getLocStart();
+
   StartFunction(GlobalDecl(D), getContext().VoidTy, Fn,
                 getTypes().arrangeNullaryFunction(),
                 FunctionArgList(), D->getLocation(),
@@ -553,6 +555,8 @@ llvm::Function *CodeGenFunction::generateDestroyHelper(
   llvm::FunctionType *FTy = CGM.getTypes().GetFunctionType(FI);
   llvm::Function *fn = CGM.CreateGlobalInitOrDestructFunction(
       FTy, "__cxx_global_array_dtor", VD->getLocation());
+
+  CurEHLocation = VD->getLocStart();
 
   StartFunction(VD, getContext().VoidTy, fn, FI, args);
 

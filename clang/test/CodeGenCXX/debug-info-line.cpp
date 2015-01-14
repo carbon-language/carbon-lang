@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -g -std=c++11 -S -emit-llvm %s -o - | FileCheck %s
+// RUN: %clang_cc1 -fexceptions -fcxx-exceptions -g -std=c++11 -S -emit-llvm %s -o - | FileCheck %s
 
 int &src();
 int *sink();
@@ -110,6 +110,29 @@ void f10() {
       new (void_src()) int(src()));
 }
 
+// noexcept just to simplify the codegen a bit
+void fn() noexcept(true);
+
+struct bar {
+  bar();
+  // noexcept(false) to convolute the global dtor
+  ~bar() noexcept(false);
+};
+// global ctor cleanup
+// CHECK-LABEL: define
+// CHECK: invoke{{ }}
+// CHECK: invoke{{ }}
+// CHECK:   to label {{.*}}, !dbg [[DBG_GLBL_CTOR_B:!.*]]
+// global dtor cleanup
+// CHECK-LABEL: define
+// CHECK: invoke{{ }}
+// CHECK: invoke{{ }}
+// CHECK:   to label {{.*}}, !dbg [[DBG_GLBL_DTOR_B:!.*]]
+#line 1500
+bar b[1] = { //
+    (fn(),   //
+     bar())};
+
 // CHECK: [[DBG_F1]] = !{i32 100,
 // CHECK: [[DBG_FOO_VALUE]] = !{i32 200,
 // CHECK: [[DBG_FOO_REF]] = !{i32 202,
@@ -124,3 +147,5 @@ void f10() {
 // CHECK: [[DBG_F9]] = !{i32 1000,
 // CHECK: [[DBG_F10_ICMP]] = !{i32 1100,
 // CHECK: [[DBG_F10_STORE]] = !{i32 1100,
+// CHECK: [[DBG_GLBL_CTOR_B]] = !{i32 1500,
+// CHECK: [[DBG_GLBL_DTOR_B]] = !{i32 1500,

@@ -6,11 +6,25 @@ struct foo {
   ~foo();
 };
 
-void func() {
+void f1() {
   ^{
     foo f;
     fn();
-    // CHECK: cleanup, !dbg [[LINE:![0-9]*]]
-    // CHECK: [[LINE]] = !{i32 [[@LINE+1]], 
+    // CHECK: cleanup, !dbg [[DBG_F1:![0-9]*]]
+#line 100
   }();
 }
+
+// CHECK-LABEL: define internal i8* @"\01-[TNSObject init]"
+@implementation TNSObject
+- (id)init
+{
+  foo f;
+  fn();
+  // CHECK: cleanup, !dbg [[DBG_TNSO:![0-9]*]]
+#line 200
+}
+@end
+
+// CHECK: [[DBG_F1]] = !{i32 100,
+// CHECK: [[DBG_TNSO]] = !{i32 200,

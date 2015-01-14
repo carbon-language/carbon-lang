@@ -476,6 +476,7 @@ void CodeGenFunction::StartObjCMethod(const ObjCMethodDecl *OMD,
     args.push_back(PI);
 
   CurGD = OMD;
+  CurEHLocation = OMD->getLocEnd();
 
   StartFunction(OMD, OMD->getReturnType(), Fn, FI, args,
                 OMD->getLocation(), StartLoc);
