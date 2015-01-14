@@ -67,9 +67,7 @@ public:
 
   /// \brief parse each member
   std::error_code
-  parseAllMembers(std::vector<std::unique_ptr<File>> &result) override {
-    if (std::error_code ec = parse())
-      return ec;
+  parseAllMembers(std::vector<std::unique_ptr<File>> &result) const override {
     for (auto mf = _archive->child_begin(), me = _archive->child_end();
          mf != me; ++mf) {
       std::unique_ptr<File> file;
@@ -154,12 +152,9 @@ private:
         mb.getBuffer(), memberPath, false));
 
     std::vector<std::unique_ptr<File>> files;
-    if (std::error_code ec = _registry.loadFile(std::move(memberMB), files))
-      return ec;
+    _registry.parseFile(std::move(memberMB), files);
     assert(files.size() == 1);
     result = std::move(files[0]);
-    if (std::error_code ec = result->parse())
-      return ec;
 
     // The memory buffer is co-owned by the archive file and the children,
     // so that the bufffer is deallocated when all the members are destructed.
@@ -237,8 +232,8 @@ public:
   }
 
   std::error_code
-  loadFile(std::unique_ptr<MemoryBuffer> mb, const Registry &reg,
-           std::vector<std::unique_ptr<File>> &result) const override {
+  parseFile(std::unique_ptr<MemoryBuffer> mb, const Registry &reg,
+            std::vector<std::unique_ptr<File>> &result) const override {
     StringRef path = mb->getBufferIdentifier();
     std::unique_ptr<FileArchive> file(
         new FileArchive(std::move(mb), reg, path, _logLoading));

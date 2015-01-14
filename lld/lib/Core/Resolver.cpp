@@ -231,52 +231,52 @@ void Resolver::addAtoms(const std::vector<const DefinedAtom *> &newAtoms) {
 
 // Returns true if at least one of N previous files has created an
 // undefined symbol.
-bool Resolver::undefinesAdded(int begin, int end) {
-  std::vector<std::unique_ptr<InputElement>> &inputs =
-      _context.getInputGraph().inputElements();
-  for (int i = begin; i < end; ++i)
-    if (FileNode *node = dyn_cast<FileNode>(inputs[i].get()))
-      if (_newUndefinesAdded[node->getFile()])
-	return true;
+bool Resolver::undefinesAdded(int n) {
+  for (size_t i = _fileIndex - n; i < _fileIndex; ++i)
+    if (_newUndefinesAdded[_files[i]])
+      return true;
   return false;
 }
 
-File *Resolver::getFile(int &index, int &groupLevel) {
-  std::vector<std::unique_ptr<InputElement>> &inputs
-      = _context.getInputGraph().inputElements();
-  if ((size_t)index >= inputs.size())
-    return nullptr;
-  if (GroupEnd *group = dyn_cast<GroupEnd>(inputs[index].get())) {
+File *Resolver::nextFile(bool &inGroup) {
+  if (size_t groupSize = _context.getInputGraph().getGroupSize()) {
     // We are at the end of the current group. If one or more new
     // undefined atom has been added in the last groupSize files, we
     // reiterate over the files.
-    int size = group->getSize();
-    if (undefinesAdded(index - size, index)) {
-      index -= size;
-      ++groupLevel;
-      return getFile(index, groupLevel);
-    }
-    ++index;
-    --groupLevel;
-    return getFile(index, groupLevel);
+    if (undefinesAdded(groupSize))
+      _fileIndex -= groupSize;
+    _context.getInputGraph().skipGroup();
+    return nextFile(inGroup);
   }
-  return cast<FileNode>(inputs[index++].get())->getFile();
+  if (_fileIndex < _files.size()) {
+    // We are still in the current group.
+    inGroup = true;
+    return _files[_fileIndex++];
+  }
+  // We are not in a group. Get a new file.
+  File *file = _context.getInputGraph().getNextFile();
+  if (!file)
+    return nullptr;
+  _files.push_back(&*file);
+  ++_fileIndex;
+  inGroup = false;
+  return file;
 }
 
 // Keep adding atoms until _context.getNextFile() returns an error. This
 // function is where undefined atoms are resolved.
 void Resolver::resolveUndefines() {
   ScopedTask task(getDefaultDomain(), "resolveUndefines");
-  int index = 0;
-  int groupLevel = 0;
+
   for (;;) {
+    bool inGroup = false;
     bool undefAdded = false;
-    File *file = getFile(index, groupLevel);
+    File *file = nextFile(inGroup);
     if (!file)
       return;
     switch (file->kind()) {
     case File::kindObject:
-      if (groupLevel > 0)
+      if (inGroup)
         break;
       assert(!file->hasOrdinal());
       file->setOrdinal(_context.getNextOrdinalAndIncrement());
@@ -293,7 +293,7 @@ void Resolver::resolveUndefines() {
       handleSharedLibrary(*file);
       break;
     }
-    _newUndefinesAdded[file] = undefAdded;
+    _newUndefinesAdded[&*file] = undefAdded;
   }
 }
 

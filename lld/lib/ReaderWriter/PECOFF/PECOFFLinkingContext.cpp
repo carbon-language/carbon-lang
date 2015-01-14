@@ -118,7 +118,9 @@ bool PECOFFLinkingContext::createImplicitFiles(
       llvm::make_unique<pecoff::LocallyImportedSymbolFile>(*this));
   getInputGraph().addInputElement(std::move(impFileNode));
 
-  pecoff::ResolvableSymbols* syms = getResolvableSymsFile();
+  std::shared_ptr<pecoff::ResolvableSymbols> syms(
+      new pecoff::ResolvableSymbols());
+  getInputGraph().registerObserver([=](File *file) { syms->add(file); });
 
   // Create a file for dllexported symbols.
   auto exportNode = llvm::make_unique<SimpleFileNode>("<export>");
@@ -327,29 +329,6 @@ void PECOFFLinkingContext::addPasses(PassManager &pm) {
   pm.add(std::unique_ptr<Pass>(new pecoff::LoadConfigPass(*this)));
   pm.add(std::unique_ptr<Pass>(new pecoff::GroupedSectionsPass()));
   pm.add(std::unique_ptr<Pass>(new pecoff::InferSubsystemPass(*this)));
-}
-
-void pecoff::ResolvableSymbols::add(File *file) {
-  std::lock_guard<std::mutex> lock(_mutex);
-  if (_seen.count(file) > 0)
-    return;
-  _seen.insert(file);
-  _queue.insert(file);
-}
-
-void pecoff::ResolvableSymbols::readAllSymbols() {
-  std::lock_guard<std::mutex> lock(_mutex);
-  for (File *file : _queue) {
-    if (auto *archive = dyn_cast<ArchiveLibraryFile>(file)) {
-      for (const std::string &sym : archive->getDefinedSymbols())
-	_defined.insert(sym);
-      continue;
-    }
-    for (const DefinedAtom *atom : file->defined())
-      if (!atom->name().empty())
-	_defined.insert(atom->name());
-  }
-  _queue.clear();
 }
 
 } // end namespace lld

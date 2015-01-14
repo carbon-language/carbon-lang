@@ -36,7 +36,7 @@ typedef std::vector<std::unique_ptr<File>> FileVector;
 
 FileVector makeErrorFile(StringRef path, std::error_code ec);
 FileVector parseMemberFiles(FileVector &files);
-FileVector loadFile(LinkingContext &ctx, StringRef path, bool wholeArchive);
+FileVector parseFile(LinkingContext &ctx, StringRef path, bool wholeArchive);
 
 /// Base class for all Drivers.
 class Driver {

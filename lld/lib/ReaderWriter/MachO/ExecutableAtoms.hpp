@@ -91,7 +91,7 @@ public:
   }
 
   std::error_code
-  parseAllMembers(std::vector<std::unique_ptr<File>> &result) override {
+  parseAllMembers(std::vector<std::unique_ptr<File>> &result) const override {
     return std::error_code();
   }
 

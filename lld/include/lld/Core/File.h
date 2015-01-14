@@ -274,8 +274,7 @@ protected:
 /// can do unit testing a driver using non-existing file paths.
 class ErrorFile : public File {
 public:
-  ErrorFile(StringRef path, std::error_code ec)
-      : File(path, kindObject), _ec(ec) {}
+  ErrorFile(StringRef p, std::error_code ec) : File(p, kindObject), _ec(ec) {}
 
   std::error_code doParse() override { return _ec; }
 
