@@ -301,3 +301,11 @@ namespace PR18044 {
   using E::a; // ok!
   E b = a;
 }
+
+namespace test11 {
+  enum class E { a };
+  typedef E E2;
+  E2 f1() { return E::a; }
+
+  bool f() { return !f1(); } // expected-error {{invalid argument type 'E2' (aka 'test11::E') to unary expression}}
+}
