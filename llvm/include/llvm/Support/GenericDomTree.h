@@ -29,10 +29,8 @@
 
 namespace llvm {
 
-//===----------------------------------------------------------------------===//
-/// DominatorBase - Base class that other, more interesting dominator analyses
+/// \brief Base class that other, more interesting dominator analyses
 /// inherit from.
-///
 template <class NodeT>
 class DominatorBase {
 protected:
@@ -54,11 +52,10 @@ public:
 };
 
 
-//===----------------------------------------------------------------------===//
-// DomTreeNodeBase - Dominator Tree Node
 template<class NodeT> class DominatorTreeBase;
 struct PostDominatorTree;
 
+/// \brief Base class for the actual dominator tree node.
 template <class NodeT>
 class DomTreeNodeBase {
   NodeT *TheBB;
@@ -169,14 +166,15 @@ inline void PrintDomTree(const DomTreeNodeBase<NodeT> *N, raw_ostream &o,
     PrintDomTree<NodeT>(*I, o, Lev+1);
 }
 
-//===----------------------------------------------------------------------===//
-/// DominatorTree - Calculate the immediate dominator tree for a function.
-///
-
+// The calculate routine is provided in a separate header but referenced here.
 template<class FuncT, class N>
 void Calculate(DominatorTreeBase<typename GraphTraits<N>::NodeType>& DT,
                FuncT& F);
 
+/// \brief Core dominator tree base class.
+///
+/// This class is a generic template over graph nodes. It is instantiated for
+/// various graphs in the LLVM IR or in the code generator.
 template<class NodeT>
 class DominatorTreeBase : public DominatorBase<NodeT> {
   bool dominatedBySlowTreeWalk(const DomTreeNodeBase<NodeT> *A,
