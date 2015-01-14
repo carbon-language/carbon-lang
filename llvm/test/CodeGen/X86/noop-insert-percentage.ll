@@ -1,3 +1,5 @@
+; REQUIRES: disabled
+
 ; RUN: llc < %s -mtriple=x86_64-linux -rng-seed=5 -noop-insertion -noop-insertion-percentage=10 \
 ; RUN:     | FileCheck %s --check-prefix=PERCENT10
 ; RUN: llc < %s -mtriple=x86_64-linux -rng-seed=5 -noop-insertion -noop-insertion-percentage=50 \

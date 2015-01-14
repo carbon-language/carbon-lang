@@ -1,3 +1,5 @@
+; REQUIRES: disabled
+
 ; RUN: llc < %s -mtriple=x86_64-linux -noop-insertion | FileCheck %s
 ; RUN: llc < %s -mtriple=x86_64-linux -noop-insertion -rng-seed=1 | FileCheck %s --check-prefix=SEED1
 ; RUN: llc < %s -mtriple=x86_64-linux -noop-insertion -rng-seed=20 | FileCheck %s --check-prefix=SEED2
