@@ -10,8 +10,9 @@
 
 // FreeBSD9-STABLE requires this to know about size_t in cxxabi.h
 #include <cstddef>
-#if defined(_MSC_VER) 
-// Cannot enable the builtin demangler on msvc as it does not support the cpp11 within the implementation.
+#if defined(_MSC_VER)
+#include "lldb/Host/windows/windows.h"
+#include <Dbghelp.h>
 #elif defined (__FreeBSD__)
 #define LLDB_USE_BUILTIN_DEMANGLER
 #else
@@ -4998,7 +4999,11 @@ static inline bool
 cstring_is_mangled (const char *s)
 {
     if (s)
-        return s[0] == '_' && s[1] == 'Z';
+#if defined(_MSC_VER)
+        return (s[0] == '?');
+#else
+        return (s[0] == '_' && s[1] == 'Z');
+#endif
     return false;
 }
 
@@ -5226,17 +5231,27 @@ Mangled::GetDemangledName () const
                 if (!demangled_name)
                     demangled_name = __cxa_demangle (mangled_cstr, NULL, NULL, NULL);
 #elif defined(_MSC_VER)
-                // Cannot demangle on msvc.
-                char *demangled_name = nullptr;
+                char *demangled_name = (char *)::malloc(1024);
+                ::ZeroMemory(demangled_name, 1024);
+                DWORD result = ::UnDecorateSymbolName(mangled_cstr, demangled_name, 1023,
+                                                      UNDNAME_NO_ACCESS_SPECIFIERS |       // Strip public, private, protected keywords
+                                                          UNDNAME_NO_ALLOCATION_LANGUAGE | // Strip __thiscall, __stdcall, etc keywords
+                                                          UNDNAME_NO_THROW_SIGNATURES |    // Strip throw() specifications
+                                                          UNDNAME_NO_MEMBER_TYPE |         // Strip virtual, static, etc specifiers
+                                                          UNDNAME_NO_MS_KEYWORDS           // Strip all MS extension keywords
+                                                      );
+                if (result > 0)
+                    m_demangled.SetCStringWithMangledCounterpart(demangled_name, m_mangled);
+                free(demangled_name);
 #else
                 char *demangled_name = abi::__cxa_demangle (mangled_cstr, NULL, NULL, NULL);
-#endif
 
                 if (demangled_name)
                 {
-                    m_demangled.SetCStringWithMangledCounterpart(demangled_name, m_mangled);                    
+                    m_demangled.SetCStringWithMangledCounterpart(demangled_name, m_mangled);
                     free (demangled_name);
                 }
+#endif
             }
         }
         if (!m_demangled)
