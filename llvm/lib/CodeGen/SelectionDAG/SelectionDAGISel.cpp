@@ -941,6 +941,10 @@ void SelectionDAGISel::PrepareEHLandingPad() {
         *MBB, MBB->begin(), SDB->getCurDebugLoc(), TII->get(TargetOpcode::PHI),
         FuncInfo->ExceptionSelectorVirtReg);
     for (unsigned I = 0, E = LPadInst->getNumClauses(); I != E; ++I) {
+      // Skip filter clauses, we can't implement them yet.
+      if (LPadInst->isFilter(I))
+        continue;
+
       MachineBasicBlock *ClauseBB = MF->CreateMachineBasicBlock(LLVMBB);
       MF->insert(MBB, ClauseBB);
 

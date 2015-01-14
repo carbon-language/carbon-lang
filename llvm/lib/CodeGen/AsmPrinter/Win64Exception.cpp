@@ -103,18 +103,13 @@ void Win64Exception::endFunction(const MachineFunction *) {
     // Emit an UNWIND_INFO struct describing the prologue.
     Asm->OutStreamer.EmitWinEHHandlerData();
 
-    // Emit either MSVC-compatible tables or the usual Itanium-style LSDA after
-    // the UNWIND_INFO struct.
-    if (Asm->MAI->getExceptionHandlingType() == ExceptionHandling::MSVC) {
-      const Function *Per = MMI->getPersonalities()[MMI->getPersonalityIndex()];
-      if (Per->getName() == "__C_specific_handler")
-        emitCSpecificHandlerTable();
-      else
-        report_fatal_error(Twine("unexpected personality function: ") +
-                           Per->getName());
-    } else {
+    // Emit the tables appropriate to the personality function in use. If we
+    // don't recognize the personality, assume it uses an Itanium-style LSDA.
+    const Function *Per = MMI->getPersonalities()[MMI->getPersonalityIndex()];
+    if (Per->getName() == "__C_specific_handler")
+      emitCSpecificHandlerTable();
+    else
       emitExceptionTable();
-    }
 
     Asm->OutStreamer.PopSection();
   }
