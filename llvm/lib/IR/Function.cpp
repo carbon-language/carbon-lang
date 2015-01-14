@@ -455,6 +455,10 @@ unsigned Function::lookupIntrinsicID() const {
 /// which can't be confused with it's prefix.  This ensures we don't have
 /// collisions between two unrelated function types. Otherwise, you might
 /// parse ffXX as f(fXX) or f(fX)X.  (X is a placeholder for any other type.)
+/// Manglings of integers, floats, and vectors ('i', 'f', and 'v' prefix in most
+/// cases) fall back to the MVT codepath, where they could be mangled to
+/// 'x86mmx', for example; matching on derived types is not sufficient to mangle
+/// everything.
 static std::string getMangledTypeStr(Type* Ty) {
   std::string Result;
   if (PointerType* PTyp = dyn_cast<PointerType>(Ty)) {
