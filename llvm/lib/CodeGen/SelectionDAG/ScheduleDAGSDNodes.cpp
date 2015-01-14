@@ -551,6 +551,14 @@ void ScheduleDAGSDNodes::RegDefIter::InitNodeNumDefs() {
     NodeNumDefs = 0;
     return;
   }
+  if (POpc == TargetOpcode::PATCHPOINT &&
+      Node->getValueType(0) == MVT::Other) {
+    // PATCHPOINT is defined to have one result, but it might really have none
+    // if we're not using CallingConv::AnyReg. Don't mistake the chain for a
+    // real definition.
+    NodeNumDefs = 0;
+    return;
+  }
   unsigned NRegDefs = SchedDAG->TII->get(Node->getMachineOpcode()).getNumDefs();
   // Some instructions define regs that are not represented in the selection DAG
   // (e.g. unused flags). See tMOVi8. Make sure we don't access past NumValues.
