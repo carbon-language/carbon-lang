@@ -488,7 +488,7 @@ void SIInstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
     LLVMContext &Ctx = MF->getFunction()->getContext();
     Ctx.emitError("SIInstrInfo::storeRegToStackSlot - Do not know how to"
                   " spill register");
-    BuildMI(MBB, MI, DL, get(AMDGPU::V_MOV_B32_e32), AMDGPU::VGPR0)
+    BuildMI(MBB, MI, DL, get(AMDGPU::KILL))
             .addReg(SrcReg);
   }
 }
@@ -535,8 +535,7 @@ void SIInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
     LLVMContext &Ctx = MF->getFunction()->getContext();
     Ctx.emitError("SIInstrInfo::loadRegFromStackSlot - Do not know how to"
                   " restore register");
-    BuildMI(MBB, MI, DL, get(AMDGPU::V_MOV_B32_e32), DestReg)
-            .addReg(AMDGPU::VGPR0);
+    BuildMI(MBB, MI, DL, get(AMDGPU::IMPLICIT_DEF), DestReg);
   }
 }
 
