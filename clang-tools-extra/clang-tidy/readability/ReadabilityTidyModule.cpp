@@ -11,6 +11,7 @@
 #include "../ClangTidyModule.h"
 #include "../ClangTidyModuleRegistry.h"
 #include "BracesAroundStatementsCheck.h"
+#include "ElseAfterReturnCheck.h"
 #include "FunctionSize.h"
 #include "RedundantSmartptrGet.h"
 
@@ -23,6 +24,8 @@ public:
   void addCheckFactories(ClangTidyCheckFactories &CheckFactories) override {
     CheckFactories.registerCheck<BracesAroundStatementsCheck>(
         "readability-braces-around-statements");
+    CheckFactories.registerCheck<ElseAfterReturnCheck>(
+        "readability-else-after-return");
     CheckFactories.registerCheck<FunctionSizeCheck>(
         "readability-function-size");
     CheckFactories.registerCheck<RedundantSmartptrGet>(
