@@ -70,6 +70,9 @@ SBStream::Printf (const char *format, ...)
 void
 SBStream::RedirectToFile (const char *path, bool append)
 {
+    if (path == nullptr)
+        return;
+
     std::string local_data;
     if (m_opaque_ap.get())
     {
@@ -104,6 +107,9 @@ SBStream::RedirectToFile (const char *path, bool append)
 void
 SBStream::RedirectToFileHandle (FILE *fh, bool transfer_fh_ownership)
 {
+    if (fh == nullptr)
+        return;
+
     std::string local_data;
     if (m_opaque_ap.get())
     {
