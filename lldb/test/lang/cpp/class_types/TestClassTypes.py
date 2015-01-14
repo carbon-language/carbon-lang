@@ -128,7 +128,7 @@ class ClassTypesTestCase(TestBase):
         filespec = target.GetExecutable()
         self.assertTrue(filespec, VALID_FILESPEC)
 
-        fsDir = filespec.GetDirectory()
+        fsDir = os.path.normpath(filespec.GetDirectory())
         fsFile = filespec.GetFilename()
 
         self.assertTrue(fsDir == os.getcwd() and fsFile == "a.out",
@@ -238,7 +238,7 @@ class ClassTypesTestCase(TestBase):
         filespec = target.GetExecutable()
         self.assertTrue(filespec, VALID_FILESPEC)
 
-        fsDir = filespec.GetDirectory()
+        fsDir = os.path.normpath(filespec.GetDirectory())
         fsFile = filespec.GetFilename()
 
         self.assertTrue(fsDir == os.getcwd() and fsFile == "a.out",

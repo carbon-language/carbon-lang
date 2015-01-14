@@ -332,7 +332,7 @@ ProcessWindows::RefreshStateAfterStop()
             break_id = site->GetID();
         }
 
-        stop_info = StopInfo::CreateStopReasonWithBreakpointSiteID(*stop_thread, break_id, should_stop);
+        stop_info = StopInfo::CreateStopReasonWithBreakpointSiteID(*stop_thread, break_id);
         stop_thread->SetStopInfo(stop_info);
     }
     else

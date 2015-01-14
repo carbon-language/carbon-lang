@@ -35,12 +35,14 @@ class BreakpointConditionsTestCase(TestBase):
         self.breakpoint_conditions_python()
 
     @dwarf_test
+    @unittest2.skipIf(sys.platform.startswith("win32"), "Requires EE to support COFF on Windows (http://llvm.org/pr22232)")
     def test_breakpoint_condition_with_dwarf_and_run_command(self):
         """Exercise breakpoint condition with 'breakpoint modify -c <expr> id'."""
         self.buildDwarf()
         self.breakpoint_conditions()
 
     @dwarf_test
+    @unittest2.skipIf(sys.platform.startswith("win32"), "Requires EE to support COFF on Windows (http://llvm.org/pr22232)")
     def test_breakpoint_condition_inline_with_dwarf_and_run_command(self):
         """Exercise breakpoint condition inline with 'breakpoint set'."""
         self.buildDwarf()
@@ -48,6 +50,7 @@ class BreakpointConditionsTestCase(TestBase):
 
     @python_api_test
     @dwarf_test
+    @unittest2.skipIf(sys.platform.startswith("win32"), "Requires EE to support COFF on Windows (http://llvm.org/pr22232)")
     def test_breakpoint_condition_with_dwarf_and_python_api(self):
         """Use Python APIs to set breakpoint conditions."""
         self.buildDwarf()

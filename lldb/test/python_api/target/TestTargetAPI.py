@@ -310,7 +310,7 @@ class TargetAPITestCase(TestBase):
 
         # While we are at it, let's also exercise the similar SBModule.FindGlobalVariables() API.
         for m in target.module_iter():
-            if m.GetFileSpec().GetDirectory() == os.getcwd() and m.GetFileSpec().GetFilename() == exe_name:
+            if os.path.normpath(m.GetFileSpec().GetDirectory()) == os.getcwd() and m.GetFileSpec().GetFilename() == exe_name:
                 value_list = m.FindGlobalVariables(target, 'my_global_var_of_char_type', 3)
                 self.assertTrue(value_list.GetSize() == 1)
                 self.assertTrue(value_list.GetValueAtIndex(0).GetValue() == "'X'")
