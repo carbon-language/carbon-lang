@@ -160,8 +160,6 @@ ENUM_CODEGENOPT(Inlining, InliningMethod, 2, NoInlining)
 /// The default TLS model to use.
 ENUM_CODEGENOPT(DefaultTLSModel, TLSModel, 2, GeneralDynamicTLSModel)
 
-CODEGENOPT(NoopInsertion, 1, 0) ///< Randomly add NOPs
-
 #undef CODEGENOPT
 #undef ENUM_CODEGENOPT
 #undef VALUE_CODEGENOPT
