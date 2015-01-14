@@ -60,7 +60,7 @@ void Win64Exception::beginFunction(const MachineFunction *MF) {
 
   const TargetLoweringObjectFile &TLOF = Asm->getObjFileLowering();
   unsigned PerEncoding = TLOF.getPersonalityEncoding();
-  const Function *Per = MMI->getPersonalities()[MMI->getPersonalityIndex()];
+  const Function *Per = MF->getMMI().getPersonality();
 
   shouldEmitPersonality = hasLandingPads &&
     PerEncoding != dwarf::DW_EH_PE_omit && Per;
@@ -105,7 +105,7 @@ void Win64Exception::endFunction(const MachineFunction *) {
 
     // Emit the tables appropriate to the personality function in use. If we
     // don't recognize the personality, assume it uses an Itanium-style LSDA.
-    const Function *Per = MMI->getPersonalities()[MMI->getPersonalityIndex()];
+    const Function *Per = MMI->getPersonality();
     if (Per->getName() == "__C_specific_handler")
       emitCSpecificHandlerTable();
     else

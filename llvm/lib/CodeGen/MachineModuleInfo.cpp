@@ -554,8 +554,6 @@ try_next:;
 
 /// getPersonality - Return the personality function for the current function.
 const Function *MachineModuleInfo::getPersonality() const {
-  // FIXME: Until PR1414 will be fixed, we're using 1 personality function per
-  // function
   return !LandingPads.empty() ? LandingPads[0].Personality : nullptr;
 }
 
