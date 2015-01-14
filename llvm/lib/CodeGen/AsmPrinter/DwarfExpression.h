@@ -22,6 +22,8 @@ namespace llvm {
 class AsmPrinter;
 class ByteStreamer;
 class TargetRegisterInfo;
+class DwarfUnit;
+class DIELoc;
 
 /// Base class containing the logic for constructing DWARF expressions
 /// independently of whether they are emitted into a DIE or into a .debug_loc
@@ -102,6 +104,21 @@ class DebugLocDwarfExpression : public DwarfExpression {
 public:
   DebugLocDwarfExpression(const AsmPrinter &AP, ByteStreamer &BS)
       : DwarfExpression(AP), BS(BS) {}
+
+  void EmitOp(uint8_t Op, const char *Comment = nullptr) override;
+  void EmitSigned(int Value) override;
+  void EmitUnsigned(unsigned Value) override;
+  bool isFrameRegister(unsigned MachineReg) override;
+};
+
+/// DwarfExpression implementation for singular DW_AT_location.
+class DIEDwarfExpression : public DwarfExpression {
+  DwarfUnit &DU;
+  DIELoc &DIE;
+
+public:
+  DIEDwarfExpression(const AsmPrinter &AP, DwarfUnit &DU, DIELoc &DIE)
+      : DwarfExpression(AP), DU(DU), DIE(DIE) {}
 
   void EmitOp(uint8_t Op, const char *Comment = nullptr) override;
   void EmitSigned(int Value) override;

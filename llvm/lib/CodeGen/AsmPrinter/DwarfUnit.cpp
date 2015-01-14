@@ -44,20 +44,6 @@ GenerateDwarfTypeUnits("generate-type-units", cl::Hidden,
                        cl::desc("Generate DWARF4 type units."),
                        cl::init(false));
 
-/// DwarfExpression implementation for DwarfUnit.
-class DIEDwarfExpression : public DwarfExpression {
-  DwarfUnit &DU;
-  DIELoc &DIE;
-public:
-  DIEDwarfExpression(const AsmPrinter &AP, DwarfUnit &DU, DIELoc &DIE)
-  : DwarfExpression(AP), DU(DU), DIE(DIE) {}
-
-  void EmitOp(uint8_t Op, const char* Comment = nullptr) override;
-  void EmitSigned(int Value) override;
-  void EmitUnsigned(unsigned Value) override;
-  bool isFrameRegister(unsigned MachineReg) override;
-};
-
 void DIEDwarfExpression::EmitOp(uint8_t Op, const char* Comment) {
   DU.addUInt(DIE, dwarf::DW_FORM_data1, Op);
 }
