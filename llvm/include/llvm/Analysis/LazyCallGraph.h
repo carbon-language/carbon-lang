@@ -462,12 +462,6 @@ public:
 
   ///@}
 
-  /// \brief Print out the CFG to the provided stream.
-  ///
-  /// This will fully traverse the call graph (and so is non-const) and print
-  /// it out to the provided stream.
-  void print(raw_ostream &OS, Module &M);
-
 private:
   /// \brief Allocator that holds all the call graph nodes.
   SpecificBumpPtrAllocator<Node> BPA;

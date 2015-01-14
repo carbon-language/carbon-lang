@@ -542,43 +542,6 @@ void LazyCallGraph::removeEdge(Node &CallerN, Function &Callee) {
   return CallerN.removeEdgeInternal(Callee);
 }
 
-static void printNodes(raw_ostream &OS, LazyCallGraph::Node &N,
-                       SmallPtrSetImpl<LazyCallGraph::Node *> &Printed) {
-  // Recurse depth first through the nodes.
-  for (LazyCallGraph::Node &ChildN : N)
-    if (Printed.insert(&ChildN).second)
-      printNodes(OS, ChildN, Printed);
-
-  OS << "  Call edges in function: " << N.getFunction().getName() << "\n";
-  for (LazyCallGraph::iterator I = N.begin(), E = N.end(); I != E; ++I)
-    OS << "    -> " << I->getFunction().getName() << "\n";
-
-  OS << "\n";
-}
-
-static void printSCC(raw_ostream &OS, LazyCallGraph::SCC &SCC) {
-  ptrdiff_t SCCSize = std::distance(SCC.begin(), SCC.end());
-  OS << "  SCC with " << SCCSize << " functions:\n";
-
-  for (LazyCallGraph::Node *N : SCC)
-    OS << "    " << N->getFunction().getName() << "\n";
-
-  OS << "\n";
-}
-
-void LazyCallGraph::print(raw_ostream &OS, Module &M) {
-  OS << "Printing the call graph for module: " << M.getModuleIdentifier()
-     << "\n\n";
-
-  SmallPtrSet<LazyCallGraph::Node *, 16> Printed;
-  for (LazyCallGraph::Node &N : *this)
-    if (Printed.insert(&N).second)
-      printNodes(OS, N, Printed);
-
-  for (LazyCallGraph::SCC &SCC : this->postorder_sccs())
-    printSCC(OS, SCC);
-}
-
 LazyCallGraph::Node &LazyCallGraph::insertInto(Function &F, Node *&MappedN) {
   return *new (MappedN = BPA.Allocate()) Node(*this, F);
 }
@@ -721,9 +684,44 @@ char LazyCallGraphAnalysis::PassID;
 
 LazyCallGraphPrinterPass::LazyCallGraphPrinterPass(raw_ostream &OS) : OS(OS) {}
 
+static void printNodes(raw_ostream &OS, LazyCallGraph::Node &N,
+                       SmallPtrSetImpl<LazyCallGraph::Node *> &Printed) {
+  // Recurse depth first through the nodes.
+  for (LazyCallGraph::Node &ChildN : N)
+    if (Printed.insert(&ChildN).second)
+      printNodes(OS, ChildN, Printed);
+
+  OS << "  Call edges in function: " << N.getFunction().getName() << "\n";
+  for (LazyCallGraph::iterator I = N.begin(), E = N.end(); I != E; ++I)
+    OS << "    -> " << I->getFunction().getName() << "\n";
+
+  OS << "\n";
+}
+
+static void printSCC(raw_ostream &OS, LazyCallGraph::SCC &SCC) {
+  ptrdiff_t SCCSize = std::distance(SCC.begin(), SCC.end());
+  OS << "  SCC with " << SCCSize << " functions:\n";
+
+  for (LazyCallGraph::Node *N : SCC)
+    OS << "    " << N->getFunction().getName() << "\n";
+
+  OS << "\n";
+}
+
 PreservedAnalyses LazyCallGraphPrinterPass::run(Module &M,
                                                 ModuleAnalysisManager *AM) {
-  AM->getResult<LazyCallGraphAnalysis>(M).print(OS, M);
+  LazyCallGraph &G = AM->getResult<LazyCallGraphAnalysis>(M);
+
+  OS << "Printing the call graph for module: " << M.getModuleIdentifier()
+     << "\n\n";
+
+  SmallPtrSet<LazyCallGraph::Node *, 16> Printed;
+  for (LazyCallGraph::Node &N : G)
+    if (Printed.insert(&N).second)
+      printNodes(OS, N, Printed);
+
+  for (LazyCallGraph::SCC &SCC : G.postorder_sccs())
+    printSCC(OS, SCC);
 
   return PreservedAnalyses::all();
 }
