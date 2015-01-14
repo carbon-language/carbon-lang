@@ -337,11 +337,23 @@ class Configuration(object):
         if abi_library_path:
             self.link_flags += ['-L' + abi_library_path,
                                 '-Wl,-rpath,' + abi_library_path]
+
         # Configure libraries
+        self.configure_link_flags_cxx_library()
+        self.configure_link_flags_abi_library()
+        self.configure_extra_library_flags()
+
+        link_flags_str = self.get_lit_conf('link_flags', '')
+        self.link_flags += shlex.split(link_flags_str)
+
+    def configure_link_flags_cxx_library(self):
+        libcxx_library = self.get_lit_conf('libcxx_library')
         if libcxx_library:
             self.link_flags += [libcxx_library]
         else:
             self.link_flags += ['-lc++']
+
+    def configure_link_flags_abi_library(self):
         cxx_abi = self.get_lit_conf('cxx_abi', 'libcxxabi')
         if cxx_abi == 'libstdc++':
             self.link_flags += ['-lstdc++']
@@ -356,7 +368,8 @@ class Configuration(object):
         else:
             self.lit_config.fatal(
                 'C++ ABI setting %s unsupported for tests' % cxx_abi)
-        # Configure extra libraries.
+
+    def configure_extra_library_flags(self):
         if sys.platform == 'darwin':
             self.link_flags += ['-lSystem']
         elif sys.platform.startswith('linux'):
@@ -366,9 +379,6 @@ class Configuration(object):
             self.link_flags += ['-lc', '-lm', '-pthread', '-lgcc_s']
         else:
             self.lit_config.fatal("unrecognized system: %r" % sys.platform)
-
-        link_flags_str = self.get_lit_conf('link_flags', '')
-        self.link_flags += shlex.split(link_flags_str)
 
     def configure_sanitizer(self):
         san = self.get_lit_conf('use_sanitizer', '').strip()
