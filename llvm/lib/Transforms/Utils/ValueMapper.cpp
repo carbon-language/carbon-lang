@@ -180,6 +180,28 @@ static Metadata *mapMetadataOp(Metadata *Op, ValueToValueMapTy &VM,
   return nullptr;
 }
 
+/// \brief Map a distinct MDNode.
+///
+/// Distinct nodes are not uniqued, so they must always recreated.
+static Metadata *mapDistinctNode(const MDNode *Node, ValueToValueMapTy &VM,
+                                 RemapFlags Flags,
+                                 ValueMapTypeRemapper *TypeMapper,
+                                 ValueMaterializer *Materializer) {
+  assert(Node->isDistinct() && "Expected distinct node");
+
+  // Create the node first so it's available for cyclical references.
+  SmallVector<Metadata *, 4> EmptyOps(Node->getNumOperands());
+  MDTuple *NewMD = MDTuple::getDistinct(Node->getContext(), EmptyOps);
+  mapToMetadata(VM, Node, NewMD);
+
+  // Fix the operands.
+  for (unsigned I = 0, E = Node->getNumOperands(); I != E; ++I)
+    NewMD->replaceOperandWith(I, mapMetadataOp(Node->getOperand(I), VM, Flags,
+                                               TypeMapper, Materializer));
+
+  return NewMD;
+}
+
 static Metadata *MapMetadataImpl(const Metadata *MD, ValueToValueMapTy &VM,
                                  RemapFlags Flags,
                                  ValueMapTypeRemapper *TypeMapper,
@@ -220,20 +242,8 @@ static Metadata *MapMetadataImpl(const Metadata *MD, ValueToValueMapTy &VM,
   if (Flags & RF_NoModuleLevelChanges)
     return mapToSelf(VM, MD);
 
-  // Distinct nodes are always recreated.
-  if (Node->isDistinct()) {
-    // Create the node first so it's available for cyclical references.
-    SmallVector<Metadata *, 4> EmptyOps(Node->getNumOperands());
-    MDTuple *NewMD = MDTuple::getDistinct(Node->getContext(), EmptyOps);
-    mapToMetadata(VM, Node, NewMD);
-
-    // Fix the operands.
-    for (unsigned I = 0, E = Node->getNumOperands(); I != E; ++I)
-      NewMD->replaceOperandWith(I, mapMetadataOp(Node->getOperand(I), VM, Flags,
-                                                 TypeMapper, Materializer));
-
-    return NewMD;
-  }
+  if (Node->isDistinct())
+    return mapDistinctNode(Node, VM, Flags, TypeMapper, Materializer);
 
   // Create a dummy node in case we have a metadata cycle.
   MDNodeFwdDecl *Dummy = MDNode::getTemporary(Node->getContext(), None);
