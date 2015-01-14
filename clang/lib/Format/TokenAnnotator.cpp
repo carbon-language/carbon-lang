@@ -1939,7 +1939,7 @@ bool TokenAnnotator::canBreakBefore(const AnnotatedLine &Line,
   if (Left.Tok.getObjCKeywordID() == tok::objc_interface)
     return false;
   if (Left.isOneOf(TT_JavaAnnotation, TT_LeadingJavaAnnotation))
-    return true;
+    return !Right.is(tok::l_paren);
   if (Right.isOneOf(TT_StartOfName, TT_FunctionDeclarationName) ||
       Right.is(tok::kw_operator))
     return true;

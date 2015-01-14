@@ -279,6 +279,10 @@ TEST_F(FormatTestJava, Annotations) {
   verifyFormat("@Test(a)\n"
                "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa =\n"
                "    aaaaaaaaaaaaaaaaaaaaaaaaaaaa(aaaaaaaaaaaaaaaaaaaaaaa);");
+  verifyFormat("@SomeAnnotation(\n"
+               "    aaaaaaaaaaaaaaaaa, aaaaaaaaaaaaaaaaaaaa)\n"
+               "int i;",
+               getStyleWithColumns(50));
 }
 
 TEST_F(FormatTestJava, Generics) {
