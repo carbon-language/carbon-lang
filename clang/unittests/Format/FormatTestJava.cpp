@@ -361,6 +361,17 @@ TEST_F(FormatTestJava, TryCatchFinally) {
                "}");
 }
 
+TEST_F(FormatTestJava, TryWithResources) {
+  verifyFormat("try (SomeResource rs = someFunction()) {\n"
+               "  Something();\n"
+               "}");
+  verifyFormat("try (SomeResource rs = someFunction()) {\n"
+               "  Something();\n"
+               "} catch (SomeException e) {\n"
+               "  HandleException(e);\n"
+               "}");
+}
+
 TEST_F(FormatTestJava, SynchronizedKeyword) {
   verifyFormat("synchronized (mData) {\n"
                "  // ...\n"
