@@ -276,6 +276,9 @@ TEST_F(FormatTestJava, Annotations) {
                "DataLoader loooooooooooooooooooooooader =\n"
                "    aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa;",
                getStyleWithColumns(60));
+  verifyFormat("@Test(a)\n"
+               "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa =\n"
+               "    aaaaaaaaaaaaaaaaaaaaaaaaaaaa(aaaaaaaaaaaaaaaaaaaaaaa);");
 }
 
 TEST_F(FormatTestJava, Generics) {

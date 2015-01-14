@@ -458,7 +458,8 @@ private:
         return false;
       if (Line.MustBeDeclaration && Contexts.size() == 1 &&
           !Contexts.back().IsExpression && Line.First->isNot(TT_ObjCProperty) &&
-          (!Tok->Previous || Tok->Previous->isNot(tok::kw_decltype)))
+          (!Tok->Previous ||
+           !Tok->Previous->isOneOf(tok::kw_decltype, TT_LeadingJavaAnnotation)))
         Line.MightBeFunctionDecl = true;
       break;
     case tok::l_square:
