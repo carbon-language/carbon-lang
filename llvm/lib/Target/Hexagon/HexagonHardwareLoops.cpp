@@ -553,7 +553,7 @@ CountValue *HexagonHardwareLoops::getLoopTripCount(MachineLoop *L,
       Cmp = !Negated ? Comparison::GTs : Comparison::LEs;
       break;
     // Very limited support for byte/halfword compares.
-    case Hexagon::CMPbEQri_V4:
+    case Hexagon::A4_cmpbeqi:
     case Hexagon::CMPhEQri_V4: {
       if (IVBump != 1)
         return nullptr;
@@ -574,7 +574,7 @@ CountValue *HexagonHardwareLoops::getLoopTripCount(MachineLoop *L,
       }
       if (InitV >= EndV)
         return nullptr;
-      if (CondOpc == Hexagon::CMPbEQri_V4) {
+      if (CondOpc == Hexagon::A4_cmpbeqi) {
         if (!isInt<8>(InitV) || !isInt<8>(EndV))
           return nullptr;
       } else {  // Hexagon::CMPhEQri_V4

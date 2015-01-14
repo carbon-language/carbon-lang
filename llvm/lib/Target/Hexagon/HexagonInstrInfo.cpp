@@ -358,7 +358,7 @@ bool HexagonInstrInfo::analyzeCompare(const MachineInstr *MI,
       SrcReg = MI->getOperand(1).getReg();
       Mask = ~0;
       break;
-    case Hexagon::CMPbEQri_V4:
+    case Hexagon::A4_cmpbeqi:
     case Hexagon::CMPbEQrr_sbsb_V4:
     case Hexagon::CMPbEQrr_ubub_V4:
     case Hexagon::CMPbGTUri_V4:
@@ -400,7 +400,7 @@ bool HexagonInstrInfo::analyzeCompare(const MachineInstr *MI,
     case Hexagon::C2_cmpeqi:
     case Hexagon::C2_cmpgtui:
     case Hexagon::C2_cmpgti:
-    case Hexagon::CMPbEQri_V4:
+    case Hexagon::A4_cmpbeqi:
     case Hexagon::CMPbGTUri_V4:
     case Hexagon::CMPhEQri_V4:
     case Hexagon::CMPhGTUri_V4:

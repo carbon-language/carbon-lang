@@ -146,6 +146,8 @@ class CmpInReg<PatFrag Op>
 def: T_cmp32_rr_pat<A4_rcmpeq,  CmpInReg<seteq>, i32>;
 def: T_cmp32_rr_pat<A4_rcmpneq, CmpInReg<setne>, i32>;
 
+def: T_cmp32_rr_pat<C4_cmpneq,  setne,  i1>;
+
 class T_CMP_rrbh<string mnemonic, bits<3> MinOp, bit IsComm>
   : SInst<(outs PredRegs:$Pd), (ins IntRegs:$Rs, IntRegs:$Rt),
     "$Pd = "#mnemonic#"($Rs, $Rt)", [], "", S_3op_tc_2early_SLOT23>,
@@ -2710,47 +2712,9 @@ let opExtentBits = 9 in
 def C4_cmplteui : CMP_NOT_REG_IMM <"gtu", 0b10, u9Ext, [(set (i1 PredRegs:$dst),
                   (not (setugt (i32 IntRegs:$src1), u9ExtPred:$src2)))]>;
 
-
-
-// p=!cmp.eq(r1,r2)
-let isCompare = 1, validSubTargets = HasV4SubT in
-def CMPnotEQ_rr : ALU32_rr<(outs PredRegs:$dst),
-                           (ins IntRegs:$src1, IntRegs:$src2),
-      "$dst = !cmp.eq($src1, $src2)",
-      [(set (i1 PredRegs:$dst),
-            (setne (i32 IntRegs:$src1), (i32 IntRegs:$src2)))]>,
-      Requires<[HasV4T]>;
-
-// p=!cmp.gt(r1,r2)
-let isCompare = 1, validSubTargets = HasV4SubT in
-def CMPnotGT_rr : ALU32_rr<(outs PredRegs:$dst),
-                           (ins IntRegs:$src1, IntRegs:$src2),
-      "$dst = !cmp.gt($src1, $src2)",
-      [(set (i1 PredRegs:$dst),
-            (not (setgt (i32 IntRegs:$src1), (i32 IntRegs:$src2))))]>,
-      Requires<[HasV4T]>;
-
-
-// p=!cmp.gtu(r1,r2)
-let isCompare = 1, validSubTargets = HasV4SubT in
-def CMPnotGTU_rr : ALU32_rr<(outs PredRegs:$dst),
-                            (ins IntRegs:$src1, IntRegs:$src2),
-      "$dst = !cmp.gtu($src1, $src2)",
-      [(set (i1 PredRegs:$dst),
-            (not (setugt (i32 IntRegs:$src1), (i32 IntRegs:$src2))))]>,
-      Requires<[HasV4T]>;
-
-let isCompare = 1, validSubTargets = HasV4SubT in
-def CMPbEQri_V4 : MInst<(outs PredRegs:$dst),
-            (ins IntRegs:$src1, u8Imm:$src2),
-            "$dst = cmpb.eq($src1, #$src2)",
-            [(set (i1 PredRegs:$dst),
-                  (seteq (and (i32 IntRegs:$src1), 255), u8ImmPred:$src2))]>,
-            Requires<[HasV4T]>;
-
 def : Pat <(brcond (i1 (setne (and (i32 IntRegs:$src1), 255), u8ImmPred:$src2)),
                        bb:$offset),
-      (J2_jumpf (CMPbEQri_V4 (i32 IntRegs:$src1), u8ImmPred:$src2),
+      (J2_jumpf (A4_cmpbeqi (i32 IntRegs:$src1), u8ImmPred:$src2),
                 bb:$offset)>,
       Requires<[HasV4T]>;
 
@@ -2809,7 +2773,7 @@ def DEC_CONST_BYTE : SDNodeXForm<imm, [{
 //   if (!Pd.new) Rd=#0
 def : Pat <(i32 (zext (i1 (seteq (i32 (and (i32 IntRegs:$Rs), 255)),
                                            u8ExtPred:$u8)))),
-           (i32 (TFR_condset_ii (i1 (CMPbEQri_V4 (i32 IntRegs:$Rs),
+           (i32 (TFR_condset_ii (i1 (A4_cmpbeqi (i32 IntRegs:$Rs),
                                                  (u8ExtPred:$u8))),
                                 1, 0))>,
            Requires<[HasV4T]>;
@@ -2822,7 +2786,7 @@ def : Pat <(i32 (zext (i1 (seteq (i32 (and (i32 IntRegs:$Rs), 255)),
 //   if (!Pd.new) Rd=#1
 def : Pat <(i32 (zext (i1 (setne (i32 (and (i32 IntRegs:$Rs), 255)),
                                            u8ExtPred:$u8)))),
-           (i32 (TFR_condset_ii (i1 (CMPbEQri_V4 (i32 IntRegs:$Rs),
+           (i32 (TFR_condset_ii (i1 (A4_cmpbeqi (i32 IntRegs:$Rs),
                                                  (u8ExtPred:$u8))),
                                 0, 1))>,
            Requires<[HasV4T]>;
