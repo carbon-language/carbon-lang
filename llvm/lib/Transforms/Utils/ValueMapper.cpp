@@ -202,6 +202,45 @@ static Metadata *mapDistinctNode(const UniquableMDNode *Node,
   return NewMD;
 }
 
+/// \brief Map a uniqued MDNode.
+///
+/// Uniqued nodes may not need to be recreated (they may map to themselves).
+static Metadata *mapUniquedNode(const UniquableMDNode *Node,
+                                 ValueToValueMapTy &VM, RemapFlags Flags,
+                                 ValueMapTypeRemapper *TypeMapper,
+                                 ValueMaterializer *Materializer) {
+  assert(!Node->isDistinct() && "Expected uniqued node");
+
+  // Create a dummy node in case we have a metadata cycle.
+  MDNodeFwdDecl *Dummy = MDNode::getTemporary(Node->getContext(), None);
+  mapToMetadata(VM, Node, Dummy);
+
+  // Check all operands to see if any need to be remapped.
+  for (unsigned I = 0, E = Node->getNumOperands(); I != E; ++I) {
+    Metadata *Op = Node->getOperand(I);
+    Metadata *MappedOp = mapMetadataOp(Op, VM, Flags, TypeMapper, Materializer);
+    if (Op == MappedOp)
+      continue;
+
+    // Ok, at least one operand needs remapping.
+    SmallVector<Metadata *, 4> Elts;
+    Elts.reserve(Node->getNumOperands());
+    for (I = 0; I != E; ++I)
+      Elts.push_back(mapMetadataOp(Node->getOperand(I), VM, Flags, TypeMapper,
+                                   Materializer));
+
+    MDNode *NewMD = MDTuple::get(Node->getContext(), Elts);
+    Dummy->replaceAllUsesWith(NewMD);
+    MDNode::deleteTemporary(Dummy);
+    return mapToMetadata(VM, Node, NewMD);
+  }
+
+  // No operands needed remapping.  Use an identity mapping.
+  mapToSelf(VM, Node);
+  MDNode::deleteTemporary(Dummy);
+  return const_cast<Metadata *>(static_cast<const Metadata *>(Node));
+}
+
 static Metadata *MapMetadataImpl(const Metadata *MD, ValueToValueMapTy &VM,
                                  RemapFlags Flags,
                                  ValueMapTypeRemapper *TypeMapper,
@@ -245,34 +284,7 @@ static Metadata *MapMetadataImpl(const Metadata *MD, ValueToValueMapTy &VM,
   if (Node->isDistinct())
     return mapDistinctNode(Node, VM, Flags, TypeMapper, Materializer);
 
-  // Create a dummy node in case we have a metadata cycle.
-  MDNodeFwdDecl *Dummy = MDNode::getTemporary(Node->getContext(), None);
-  mapToMetadata(VM, Node, Dummy);
-
-  // Check all operands to see if any need to be remapped.
-  for (unsigned I = 0, E = Node->getNumOperands(); I != E; ++I) {
-    Metadata *Op = Node->getOperand(I);
-    Metadata *MappedOp = mapMetadataOp(Op, VM, Flags, TypeMapper, Materializer);
-    if (Op == MappedOp)
-      continue;
-
-    // Ok, at least one operand needs remapping.
-    SmallVector<Metadata *, 4> Elts;
-    Elts.reserve(Node->getNumOperands());
-    for (I = 0; I != E; ++I)
-      Elts.push_back(mapMetadataOp(Node->getOperand(I), VM, Flags, TypeMapper,
-                                   Materializer));
-
-    MDNode *NewMD = MDTuple::get(Node->getContext(), Elts);
-    Dummy->replaceAllUsesWith(NewMD);
-    MDNode::deleteTemporary(Dummy);
-    return mapToMetadata(VM, Node, NewMD);
-  }
-
-  // No operands needed remapping.  Use an identity mapping.
-  mapToSelf(VM, MD);
-  MDNode::deleteTemporary(Dummy);
-  return const_cast<Metadata *>(MD);
+  return mapUniquedNode(Node, VM, Flags, TypeMapper, Materializer);
 }
 
 Metadata *llvm::MapMetadata(const Metadata *MD, ValueToValueMapTy &VM,
