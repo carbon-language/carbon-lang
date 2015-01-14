@@ -122,6 +122,8 @@ void PPCSubtarget::initializeEnvironment() {
   DeprecatedMFTB = false;
   DeprecatedDST = false;
   HasLazyResolverStubs = false;
+  HasICBT = false;
+
 }
 
 void PPCSubtarget::initSubtargetFeatures(StringRef CPU, StringRef FS) {
