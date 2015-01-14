@@ -11,8 +11,8 @@
 #define LLD_READER_WRITER_ELF_PPC_PPC_TARGET_HANDLER_H
 
 #include "DefaultTargetHandler.h"
-#include "TargetLayout.h"
 #include "PPCELFReader.h"
+#include "TargetLayout.h"
 
 namespace lld {
 namespace elf {
