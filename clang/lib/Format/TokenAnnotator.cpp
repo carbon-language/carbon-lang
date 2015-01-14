@@ -621,7 +621,8 @@ public:
          CurrentToken->is(Keywords.kw_package)) ||
         (Info && Info->getPPKeywordID() == tok::pp_import &&
          CurrentToken->Next &&
-         CurrentToken->Next->isOneOf(tok::string_literal, tok::identifier))) {
+         CurrentToken->Next->isOneOf(tok::string_literal, tok::identifier,
+                                     tok::kw_static))) {
       next();
       parseIncludeDirective();
       return LT_ImportStatement;

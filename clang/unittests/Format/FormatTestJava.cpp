@@ -369,6 +369,8 @@ TEST_F(FormatTestJava, PackageDeclarations) {
 TEST_F(FormatTestJava, ImportDeclarations) {
   verifyFormat("import some.really.loooooooooooooooooooooong.imported.Class;",
                getStyleWithColumns(50));
+  verifyFormat("import static some.really.looooooooooooooooong.imported.Class;",
+               getStyleWithColumns(50));
 }
 
 TEST_F(FormatTestJava, MethodDeclarations) {
