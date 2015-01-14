@@ -839,6 +839,39 @@ _mm512_cvt_roundpd_epu32(__m512d __A, const int __R)
                 __R);
 }
 
+/* Unpack and Interleave */
+static __inline __m512d __attribute__((__always_inline__, __nodebug__))
+_mm512_unpackhi_pd(__m512d __a, __m512d __b)
+{
+  return __builtin_shufflevector(__a, __b, 1, 9, 1+2, 9+2, 1+4, 9+4, 1+6, 9+6);
+}
+
+static __inline __m512d __attribute__((__always_inline__, __nodebug__))
+_mm512_unpacklo_pd(__m512d __a, __m512d __b)
+{
+  return __builtin_shufflevector(__a, __b, 0, 8, 0+2, 8+2, 0+4, 8+4, 0+6, 8+6);
+}
+
+static __inline __m512 __attribute__((__always_inline__, __nodebug__))
+_mm512_unpackhi_ps(__m512 __a, __m512 __b)
+{
+  return __builtin_shufflevector(__a, __b,
+                                 2,    18,    3,    19,
+                                 2+4,  18+4,  3+4,  19+4,
+                                 2+8,  18+8,  3+8,  19+8,
+                                 2+12, 18+12, 3+12, 19+12);
+}
+
+static __inline __m512 __attribute__((__always_inline__, __nodebug__))
+_mm512_unpacklo_ps(__m512 __a, __m512 __b)
+{
+  return __builtin_shufflevector(__a, __b,
+                                 0,    16,    1,    17,
+                                 0+4,  16+4,  1+4,  17+4,
+                                 0+8,  16+8,  1+8,  17+8,
+                                 0+12, 16+12, 1+12, 17+12);
+}
+
 /* Bit Test */
 
 static __inline __mmask16 __attribute__ ((__always_inline__, __nodebug__))
