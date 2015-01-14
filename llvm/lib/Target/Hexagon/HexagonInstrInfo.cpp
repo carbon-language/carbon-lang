@@ -359,11 +359,10 @@ bool HexagonInstrInfo::analyzeCompare(const MachineInstr *MI,
       Mask = ~0;
       break;
     case Hexagon::A4_cmpbeqi:
-    case Hexagon::CMPbEQrr_sbsb_V4:
-    case Hexagon::CMPbEQrr_ubub_V4:
-    case Hexagon::CMPbGTUri_V4:
-    case Hexagon::CMPbGTUrr_V4:
-    case Hexagon::CMPbGTrr_V4:
+    case Hexagon::A4_cmpbeq:
+    case Hexagon::A4_cmpbgtui:
+    case Hexagon::A4_cmpbgtu:
+    case Hexagon::A4_cmpbgt:
       SrcReg = MI->getOperand(1).getReg();
       Mask = 0xFF;
       break;
@@ -386,10 +385,9 @@ bool HexagonInstrInfo::analyzeCompare(const MachineInstr *MI,
     case Hexagon::C2_cmpgtup:
     case Hexagon::C2_cmpgtu:
     case Hexagon::C2_cmpgt:
-    case Hexagon::CMPbEQrr_sbsb_V4:
-    case Hexagon::CMPbEQrr_ubub_V4:
-    case Hexagon::CMPbGTUrr_V4:
-    case Hexagon::CMPbGTrr_V4:
+    case Hexagon::A4_cmpbeq:
+    case Hexagon::A4_cmpbgtu:
+    case Hexagon::A4_cmpbgt:
     case Hexagon::CMPhEQrr_shl_V4:
     case Hexagon::CMPhEQrr_xor_V4:
     case Hexagon::CMPhGTUrr_V4:
@@ -401,7 +399,7 @@ bool HexagonInstrInfo::analyzeCompare(const MachineInstr *MI,
     case Hexagon::C2_cmpgtui:
     case Hexagon::C2_cmpgti:
     case Hexagon::A4_cmpbeqi:
-    case Hexagon::CMPbGTUri_V4:
+    case Hexagon::A4_cmpbgtui:
     case Hexagon::CMPhEQri_V4:
     case Hexagon::CMPhGTUri_V4:
       SrcReg2 = 0;

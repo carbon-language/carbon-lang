@@ -2718,46 +2718,6 @@ def : Pat <(brcond (i1 (setne (and (i32 IntRegs:$src1), 255), u8ImmPred:$src2)),
                 bb:$offset)>,
       Requires<[HasV4T]>;
 
-// Pd=cmpb.eq(Rs,Rt)
-let isCompare = 1, validSubTargets = HasV4SubT in
-def CMPbEQrr_ubub_V4 : MInst<(outs PredRegs:$dst),
-            (ins IntRegs:$src1, IntRegs:$src2),
-            "$dst = cmpb.eq($src1, $src2)",
-            [(set (i1 PredRegs:$dst),
-                  (seteq (and (xor (i32 IntRegs:$src1),
-                                   (i32 IntRegs:$src2)), 255), 0))]>,
-            Requires<[HasV4T]>;
-
-// Pd=cmpb.eq(Rs,Rt)
-let isCompare = 1, validSubTargets = HasV4SubT in
-def CMPbEQrr_sbsb_V4 : MInst<(outs PredRegs:$dst),
-            (ins IntRegs:$src1, IntRegs:$src2),
-            "$dst = cmpb.eq($src1, $src2)",
-            [(set (i1 PredRegs:$dst),
-                  (seteq (shl (i32 IntRegs:$src1), (i32 24)),
-                         (shl (i32 IntRegs:$src2), (i32 24))))]>,
-            Requires<[HasV4T]>;
-
-// Pd=cmpb.gt(Rs,Rt)
-let isCompare = 1, validSubTargets = HasV4SubT in
-def CMPbGTrr_V4 : MInst<(outs PredRegs:$dst),
-            (ins IntRegs:$src1, IntRegs:$src2),
-            "$dst = cmpb.gt($src1, $src2)",
-            [(set (i1 PredRegs:$dst),
-                  (setgt (shl (i32 IntRegs:$src1), (i32 24)),
-                         (shl (i32 IntRegs:$src2), (i32 24))))]>,
-            Requires<[HasV4T]>;
-
-// Pd=cmpb.gtu(Rs,#u7)
-let isExtendable = 1, opExtendable = 2, isExtentSigned = 0, opExtentBits = 7,
-isCompare = 1, validSubTargets = HasV4SubT, CextOpcode = "CMPbGTU", InputType = "imm" in
-def CMPbGTUri_V4 : MInst<(outs PredRegs:$dst),
-            (ins IntRegs:$src1, u7Ext:$src2),
-            "$dst = cmpb.gtu($src1, #$src2)",
-            [(set (i1 PredRegs:$dst), (setugt (and (i32 IntRegs:$src1), 255),
-                                              u7ExtPred:$src2))]>,
-            Requires<[HasV4T]>, ImmRegRel;
-
 // SDNode for converting immediate C to C-1.
 def DEC_CONST_BYTE : SDNodeXForm<imm, [{
    // Return the byte immediate const-1 as an SDNode.
@@ -2799,7 +2759,7 @@ def : Pat <(i32 (zext (i1 (setne (i32 (and (i32 IntRegs:$Rs), 255)),
 //   if (!Pd.new) Rd=#0
 def : Pat <(i32 (zext (i1 (seteq (i32 IntRegs:$Rt),
                                  (i32 (and (i32 IntRegs:$Rs), 255)))))),
-           (i32 (TFR_condset_ii (i1 (CMPbEQrr_ubub_V4 (i32 IntRegs:$Rs),
+           (i32 (TFR_condset_ii (i1 (A4_cmpbeq (i32 IntRegs:$Rs),
                                                       (i32 IntRegs:$Rt))),
                                 1, 0))>,
            Requires<[HasV4T]>;
@@ -2812,7 +2772,7 @@ def : Pat <(i32 (zext (i1 (seteq (i32 IntRegs:$Rt),
 //   if (!Pd.new) Rd=#1
 def : Pat <(i32 (zext (i1 (setne (i32 IntRegs:$Rt),
                                  (i32 (and (i32 IntRegs:$Rs), 255)))))),
-           (i32 (TFR_condset_ii (i1 (CMPbEQrr_ubub_V4 (i32 IntRegs:$Rs),
+           (i32 (TFR_condset_ii (i1 (A4_cmpbeq (i32 IntRegs:$Rs),
                                                       (i32 IntRegs:$Rt))),
                                 0, 1))>,
            Requires<[HasV4T]>;
@@ -2825,7 +2785,7 @@ def : Pat <(i32 (zext (i1 (setne (i32 IntRegs:$Rt),
 //   if (!Pd.new) Rd=#0
 def : Pat <(i32 (zext (i1 (setugt (i32 (and (i32 IntRegs:$Rs), 255)),
                                             u8ExtPred:$u8)))),
-           (i32 (TFR_condset_ii (i1 (CMPbGTUri_V4 (i32 IntRegs:$Rs),
+           (i32 (TFR_condset_ii (i1 (A4_cmpbgtui (i32 IntRegs:$Rs),
                                                   (u8ExtPred:$u8))),
                                 1, 0))>,
            Requires<[HasV4T]>;
@@ -2838,7 +2798,7 @@ def : Pat <(i32 (zext (i1 (setugt (i32 (and (i32 IntRegs:$Rs), 255)),
 //   if (!Pd.new) Rd=#0
 def : Pat <(i32 (zext (i1 (setugt (i32 (and (i32 IntRegs:$Rs), 254)),
                                             u8ExtPred:$u8)))),
-           (i32 (TFR_condset_ii (i1 (CMPbGTUri_V4 (i32 IntRegs:$Rs),
+           (i32 (TFR_condset_ii (i1 (A4_cmpbgtui (i32 IntRegs:$Rs),
                                                   (u8ExtPred:$u8))),
                                 1, 0))>,
            Requires<[HasV4T]>;
@@ -2959,20 +2919,10 @@ def : Pat <(i32 (zext (i1 (setle (i32 IntRegs:$Rs), (i32 IntRegs:$Rt))))),
 let AddedComplexity = 139 in
 def : Pat <(i32 (zext (i1 (setult (i32 (and (i32 IntRegs:$src1), 255)),
                                   u7StrictPosImmPred:$src2)))),
-  (i32 (C2_muxii (i1 (CMPbGTUri_V4 (i32 IntRegs:$src1),
+  (i32 (C2_muxii (i1 (A4_cmpbgtui (i32 IntRegs:$src1),
                                  (DEC_CONST_BYTE u7StrictPosImmPred:$src2))),
                    0, 1))>,
                    Requires<[HasV4T]>;
-
-// Pd=cmpb.gtu(Rs,Rt)
-let isCompare = 1, validSubTargets = HasV4SubT, CextOpcode = "CMPbGTU",
-InputType = "reg" in
-def CMPbGTUrr_V4 : MInst<(outs PredRegs:$dst),
-            (ins IntRegs:$src1, IntRegs:$src2),
-            "$dst = cmpb.gtu($src1, $src2)",
-            [(set (i1 PredRegs:$dst), (setugt (and (i32 IntRegs:$src1), 255),
-                                             (and (i32 IntRegs:$src2), 255)))]>,
-            Requires<[HasV4T]>, ImmRegRel;
 
 // Following instruction is not being extended as it results into the incorrect
 // code for negative numbers.
