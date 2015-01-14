@@ -1101,7 +1101,6 @@ isValidOffset(const int Opcode, const int Offset) const {
       (Offset <= Hexagon_MEMW_OFFSET_MAX);
 
   case Hexagon::L2_loadrd_io:
-  case Hexagon::LDrid_f:
   case Hexagon::S2_storerd_io:
   case Hexagon::STrid_f:
     return (Offset >= Hexagon_MEMD_OFFSET_MIN) &&

@@ -112,6 +112,8 @@ def S5_popcountp : ALU64_rr<(outs IntRegs:$Rd), (ins DoubleRegs:$Rss),
     let Inst{20-16} = Rss;
   }
 
+defm: Loadx_pat<load, f64, s11_3ExtPred, L2_loadrd_io>;
+
 let isFP = 1, hasNewValue = 1, opNewValue = 0 in
 class T_MInstFloat <string mnemonic, bits<3> MajOp, bits<3> MinOp>
   : MInst<(outs IntRegs:$Rd),
@@ -482,26 +484,6 @@ def F2_sfimm_n : T_fimm <"sfmake", IntRegs, 0b0110, 1>;
 def F2_dfimm_p : T_fimm <"dfmake", DoubleRegs, 0b1001, 0>;
 def F2_dfimm_n : T_fimm <"dfmake", DoubleRegs, 0b1001, 1>;
 }
-
-// Convert single precision to double precision and vice-versa.
-def CONVERT_sf2df : ALU64_rr<(outs DoubleRegs:$dst), (ins IntRegs:$src),
-                "$dst = convert_sf2df($src)",
-                [(set DoubleRegs:$dst, (fextend IntRegs:$src))]>,
-          Requires<[HasV5T]>;
-
-def CONVERT_df2sf : ALU64_rr<(outs IntRegs:$dst), (ins DoubleRegs:$src),
-                "$dst = convert_df2sf($src)",
-                [(set IntRegs:$dst, (fround DoubleRegs:$src))]>,
-          Requires<[HasV5T]>;
-
-
-// Load.
-def LDrid_f : LDInst<(outs DoubleRegs:$dst),
-            (ins MEMri:$addr),
-            "$dst = memd($addr)",
-            [(set DoubleRegs:$dst, (f64 (load ADDRriS11_3:$addr)))]>,
-          Requires<[HasV5T]>;
-
 
 let AddedComplexity = 20 in
 def LDrid_indexed_f : LDInst<(outs DoubleRegs:$dst),

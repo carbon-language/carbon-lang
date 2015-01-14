@@ -1558,6 +1558,15 @@ defm loadri: LD_Idxd <"memw", "LDriw", IntRegs, s11_2Ext, u6_2Ext, 0b1100>;
 let accessSize = DoubleWordAccess, opExtentAlign = 3, isCodeGenOnly = 0 in
 defm loadrd: LD_Idxd <"memd", "LDrid", DoubleRegs, s11_3Ext, u6_3Ext, 0b1110>;
 
+// Patterns to select load-indexed (i.e. load from base+offset).
+multiclass Loadx_pat<PatFrag Load, ValueType VT, PatLeaf ImmPred,
+                     InstHexagon MI> {
+  def: Pat<(VT (Load AddrFI:$fi)), (VT (MI AddrFI:$fi, 0))>;
+  def: Pat<(VT (Load (add (i32 IntRegs:$Rs), ImmPred:$Off))),
+           (VT (MI IntRegs:$Rs, imm:$Off))>;
+  def: Pat<(VT (Load (i32 IntRegs:$Rs))), (VT (MI IntRegs:$Rs, 0))>;
+}
+
 def : Pat < (i32 (sextloadi8 ADDRriS11_0:$addr)),
             (L2_loadrb_io AddrFI:$addr, 0) >;
 

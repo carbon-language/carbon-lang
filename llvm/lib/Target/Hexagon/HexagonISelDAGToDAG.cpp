@@ -79,6 +79,8 @@ public:
   bool SelectADDRriU6_1(SDValue& N, SDValue &R1, SDValue &R2);
   bool SelectADDRriU6_2(SDValue& N, SDValue &R1, SDValue &R2);
 
+  bool SelectAddrFI(SDValue &N, SDValue &R);
+
   const char *getPassName() const override {
     return "Hexagon DAG->DAG Pattern Instruction Selection";
   }
@@ -1682,4 +1684,12 @@ bool HexagonDAGToDAGISel::foldGlobalAddressImpl(SDValue &N, SDValue &R,
     }
   }
   return false;
+}
+
+bool HexagonDAGToDAGISel::SelectAddrFI(SDValue& N, SDValue &R) {
+  if (N.getOpcode() != ISD::FrameIndex)
+    return false;
+  FrameIndexSDNode *FX = cast<FrameIndexSDNode>(N);
+  R = CurDAG->getTargetFrameIndex(FX->getIndex(), MVT::i32);
+  return true;
 }
