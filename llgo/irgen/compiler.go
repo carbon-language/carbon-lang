@@ -98,6 +98,10 @@ type CompilerOptions struct {
 	// loader.Config, see the documentation for that package for more
 	// information.
 	PackageCreated func(*types.Package)
+
+	// DisableUnusedImportCheck disables the unused import check performed
+	// by go/types if set to true.
+	DisableUnusedImportCheck bool
 }
 
 type Compiler struct {
@@ -206,6 +210,7 @@ func (compiler *compiler) compile(fset *token.FileSet, astFiles []*ast.File, imp
 		TypeChecker: types.Config{
 			Import: compiler.Importer,
 			Sizes:  compiler.llvmtypes,
+			DisableUnusedImportCheck: compiler.DisableUnusedImportCheck,
 		},
 		Build:          &buildctx.Context,
 		PackageCreated: compiler.PackageCreated,
