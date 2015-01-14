@@ -189,6 +189,7 @@ void AMDGPUPassConfig::addPostRegAlloc() {
   const AMDGPUSubtarget &ST = TM->getSubtarget<AMDGPUSubtarget>();
 
   if (ST.getGeneration() > AMDGPUSubtarget::NORTHERN_ISLANDS) {
+    addPass(createSIPrepareScratchRegs(), false);
     addPass(createSIShrinkInstructionsPass(), false);
   }
 }

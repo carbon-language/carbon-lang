@@ -105,7 +105,14 @@ struct SIRegisterInfo : public AMDGPURegisterInfo {
   unsigned getPreloadedValue(const MachineFunction &MF,
                              enum PreloadedValue Value) const;
 
-  unsigned findUnusedVGPR(const MachineRegisterInfo &MRI) const;
+  unsigned findUnusedRegister(const MachineRegisterInfo &MRI,
+                              const TargetRegisterClass *RC) const;
+
+private:
+  void buildScratchLoadStore(MachineBasicBlock::iterator MI,
+                             unsigned LoadStoreOp, unsigned Value,
+                             unsigned ScratchPtr, unsigned ScratchOffset,
+                             int64_t Offset, RegScavenger *RS) const;
 };
 
 } // End namespace llvm

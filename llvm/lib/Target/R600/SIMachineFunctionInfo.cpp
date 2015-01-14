@@ -29,6 +29,7 @@ void SIMachineFunctionInfo::anchor() {}
 SIMachineFunctionInfo::SIMachineFunctionInfo(const MachineFunction &MF)
   : AMDGPUMachineFunction(MF),
     TIDReg(AMDGPU::NoRegister),
+    HasSpilledVGPRs(false),
     PSInputAddr(0),
     NumUserSGPRs(0),
     LDSWaveSpillSize(0) { }
@@ -50,7 +51,7 @@ SIMachineFunctionInfo::SpilledReg SIMachineFunctionInfo::getSpilledReg(
   struct SpilledReg Spill;
 
   if (!LaneVGPRs.count(LaneVGPRIdx)) {
-    unsigned LaneVGPR = TRI->findUnusedVGPR(MRI);
+    unsigned LaneVGPR = TRI->findUnusedRegister(MRI, &AMDGPU::VGPR_32RegClass);
     LaneVGPRs[LaneVGPRIdx] = LaneVGPR;
     MRI.setPhysRegUsed(LaneVGPR);
 
