@@ -182,8 +182,6 @@ def HasMips64r6  :    Predicate<"Subtarget->hasMips64r6()">,
                       AssemblerPredicate<"FeatureMips64r6">;
 def NotMips64r6  :    Predicate<"!Subtarget->hasMips64r6()">,
                       AssemblerPredicate<"!FeatureMips64r6">;
-def IsN64       :     Predicate<"Subtarget->isABI_N64()">,
-                      AssemblerPredicate<"FeatureN64">;
 def InMips16Mode :    Predicate<"Subtarget->inMips16Mode()">,
                       AssemblerPredicate<"FeatureMips16">;
 def HasCnMips    :    Predicate<"Subtarget->hasCnMips()">,
