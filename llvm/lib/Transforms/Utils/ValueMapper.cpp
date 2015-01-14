@@ -218,7 +218,7 @@ static Metadata *cloneMDNode(const UniquableMDNode *Node, ValueToValueMapTy &VM,
 #define HANDLE_UNIQUABLE_LEAF(CLASS)                                           \
   case Metadata::CLASS##Kind:                                                  \
     return clone##CLASS(cast<CLASS>(Node), VM, Flags, TypeMapper,              \
-                        Materializer, IsDistinct);                             \
+                        Materializer, IsDistinct);
 #include "llvm/IR/Metadata.def"
   }
 }
