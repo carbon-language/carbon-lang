@@ -93,6 +93,11 @@ type CompilerOptions struct {
 	// compiler will set this field automatically using MakeImporter().
 	// If Importer is non-nil, InitMap must be non-nil also.
 	InitMap map[*types.Package]gccgoimporter.InitData
+
+	// PackageCreated is a hook passed to the go/loader package via
+	// loader.Config, see the documentation for that package for more
+	// information.
+	PackageCreated func(*types.Package)
 }
 
 type Compiler struct {
@@ -202,7 +207,8 @@ func (compiler *compiler) compile(fset *token.FileSet, astFiles []*ast.File, imp
 			Import: compiler.Importer,
 			Sizes:  compiler.llvmtypes,
 		},
-		Build: &buildctx.Context,
+		Build:          &buildctx.Context,
+		PackageCreated: compiler.PackageCreated,
 	}
 	// If no import path is specified, then set the import
 	// path to be the same as the package's name.
