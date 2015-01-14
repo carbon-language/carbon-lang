@@ -68,6 +68,7 @@ class InstSI <dag outs, dag ins, string asm, list<dag> pattern> :
   // Most instructions require adjustments after selection to satisfy
   // operand requirements.
   let hasPostISelHook = 1;
+  let SchedRW = [Write32Bit];
 }
 
 class Enc32 {
@@ -214,9 +215,9 @@ class SMRDe <bits<5> op, bits<1> imm> : Enc32 {
   let Inst{31-27} = 0x18; //encoding
 }
 
+let SchedRW = [WriteSALU] in {
 class SOP1 <dag outs, dag ins, string asm, list<dag> pattern> :
     InstSI<outs, ins, asm, pattern> {
-
   let mayLoad = 0;
   let mayStore = 0;
   let hasSideEffects = 0;
@@ -274,6 +275,8 @@ class SOPP <bits<7> op, dag ins, string asm, list<dag> pattern = []> :
   let UseNamedOperandTable = 1;
 }
 
+} // let SchedRW = [WriteSALU]
+
 class SMRD <dag outs, dag ins, string asm, list<dag> pattern> :
     InstSI<outs, ins, asm, pattern> {
 
@@ -283,6 +286,7 @@ class SMRD <dag outs, dag ins, string asm, list<dag> pattern> :
   let mayLoad = 1;
   let hasSideEffects = 0;
   let UseNamedOperandTable = 1;
+  let SchedRW = [WriteSMEM];
 }
 
 //===----------------------------------------------------------------------===//
@@ -588,6 +592,7 @@ class DS <dag outs, dag ins, string asm, list<dag> pattern> :
   let DS = 1;
   let UseNamedOperandTable = 1;
   let DisableEncoding = "$m0";
+  let SchedRW = [WriteLDS];
 }
 
 class DS_si <bits<8> op, dag outs, dag ins, string asm, list<dag> pattern> :
@@ -602,6 +607,7 @@ class MUBUF <dag outs, dag ins, string asm, list<dag> pattern> :
 
   let hasSideEffects = 0;
   let UseNamedOperandTable = 1;
+  let SchedRW = [WriteVMEM];
 }
 
 class MTBUF <dag outs, dag ins, string asm, list<dag> pattern> :
@@ -613,6 +619,7 @@ class MTBUF <dag outs, dag ins, string asm, list<dag> pattern> :
 
   let hasSideEffects = 0;
   let UseNamedOperandTable = 1;
+  let SchedRW = [WriteVMEM];
 }
 
 class FLAT <bits<7> op, dag outs, dag ins, string asm, list<dag> pattern> :
@@ -639,7 +646,6 @@ class MIMG <bits<7> op, dag outs, dag ins, string asm, list<dag> pattern> :
 
   let hasSideEffects = 0; // XXX ????
 }
-
 
 
 } // End Uses = [EXEC]

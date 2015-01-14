@@ -83,34 +83,38 @@ def : Proc<"cayman",     R600_VLIW4_Itin,
 // Southern Islands
 //===----------------------------------------------------------------------===//
 
-def : Proc<"SI",         SI_Itin, [FeatureSouthernIslands]>;
+def : ProcessorModel<"SI",       SIFullSpeedModel, [FeatureSouthernIslands]>;
 
-def : Proc<"tahiti",     SI_Itin, [FeatureSouthernIslands]>;
+def : ProcessorModel<"tahiti",   SIFullSpeedModel, [FeatureSouthernIslands]>;
 
-def : Proc<"pitcairn",   SI_Itin, [FeatureSouthernIslands]>;
+def : ProcessorModel<"pitcairn", SIQuarterSpeedModel, [FeatureSouthernIslands]>;
 
-def : Proc<"verde",      SI_Itin, [FeatureSouthernIslands]>;
+def : ProcessorModel<"verde",    SIQuarterSpeedModel, [FeatureSouthernIslands]>;
 
-def : Proc<"oland",      SI_Itin, [FeatureSouthernIslands]>;
+def : ProcessorModel<"oland",    SIQuarterSpeedModel, [FeatureSouthernIslands]>;
 
-def : Proc<"hainan",     SI_Itin, [FeatureSouthernIslands]>;
+def : ProcessorModel<"hainan",   SIQuarterSpeedModel, [FeatureSouthernIslands]>;
 
 //===----------------------------------------------------------------------===//
 // Sea Islands
 //===----------------------------------------------------------------------===//
 
-def : Proc<"bonaire",    SI_Itin, [FeatureSeaIslands]>;
+def : ProcessorModel<"bonaire",    SIQuarterSpeedModel, [FeatureSeaIslands]>;
 
-def : Proc<"kabini",     SI_Itin, [FeatureSeaIslands]>;
+def : ProcessorModel<"kabini",     SIQuarterSpeedModel, [FeatureSeaIslands]>;
 
-def : Proc<"kaveri",     SI_Itin, [FeatureSeaIslands]>;
+def : ProcessorModel<"kaveri",     SIQuarterSpeedModel, [FeatureSeaIslands]>;
 
-def : Proc<"hawaii",     SI_Itin, [FeatureSeaIslands]>;
+def : ProcessorModel<"hawaii",     SIFullSpeedModel, [FeatureSeaIslands]>;
 
-def : Proc<"mullins",    SI_Itin, [FeatureSeaIslands]>;
+def : ProcessorModel<"mullins",    SIQuarterSpeedModel, [FeatureSeaIslands]>;
 
-def : Proc<"tonga",      SI_Itin, [FeatureVolcanicIslands]>;
+//===----------------------------------------------------------------------===//
+// Volcanic Islands
+//===----------------------------------------------------------------------===//
 
-def : Proc<"iceland",      SI_Itin, [FeatureVolcanicIslands]>;
+def : ProcessorModel<"tonga",   SIFullSpeedModel, [FeatureVolcanicIslands]>;
 
-def : Proc<"carrizo",      SI_Itin, [FeatureVolcanicIslands]>;
+def : ProcessorModel<"iceland", SIQuarterSpeedModel, [FeatureVolcanicIslands]>;
+
+def : ProcessorModel<"carrizo", SIQuarterSpeedModel, [FeatureVolcanicIslands]>;
