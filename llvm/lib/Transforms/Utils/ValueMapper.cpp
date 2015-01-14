@@ -203,6 +203,21 @@ static Metadata *cloneMDLocation(const MDLocation *Node, ValueToValueMapTy &VM,
       mapMetadataOp(Node->getInlinedAt(), VM, Flags, TypeMapper, Materializer));
 }
 
+static Metadata *cloneMDNode(const UniquableMDNode *Node, ValueToValueMapTy &VM,
+                             RemapFlags Flags, ValueMapTypeRemapper *TypeMapper,
+                             ValueMaterializer *Materializer) {
+  switch (Node->getMetadataID()) {
+  default:
+    llvm_unreachable("Invalid UniquableMDNode subclass");
+#define HANDLE_UNIQUABLE_LEAF(CLASS)                                           \
+  case Metadata::CLASS##Kind:                                                  \
+    return clone##CLASS(cast<CLASS>(Node), VM, Flags, TypeMapper,              \
+                        Materializer);                                         \
+    break;
+#include "llvm/IR/Metadata.def"
+  }
+}
+
 /// \brief Map a distinct MDNode.
 ///
 /// Distinct nodes are not uniqued, so they must always recreated.
@@ -264,17 +279,7 @@ static Metadata *mapUniquedNode(const UniquableMDNode *Node,
   }
 
   // At least one operand needs remapping.
-  Metadata *NewMD;
-  switch (Node->getMetadataID()) {
-  default:
-    llvm_unreachable("Invalid UniquableMDNode subclass");
-#define HANDLE_UNIQUABLE_LEAF(CLASS)                                           \
-  case Metadata::CLASS##Kind:                                                  \
-    NewMD =                                                                    \
-        clone##CLASS(cast<CLASS>(Node), VM, Flags, TypeMapper, Materializer);  \
-    break;
-#include "llvm/IR/Metadata.def"
-  }
+  Metadata *NewMD = cloneMDNode(Node, VM, Flags, TypeMapper, Materializer);
   Dummy->replaceAllUsesWith(NewMD);
   MDNode::deleteTemporary(Dummy);
   return mapToMetadata(VM, Node, NewMD);
