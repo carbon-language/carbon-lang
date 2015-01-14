@@ -202,6 +202,23 @@ static Metadata *mapDistinctNode(const UniquableMDNode *Node,
   return NewMD;
 }
 
+/// \brief Check whether a uniqued node needs to be remapped.
+///
+/// Check whether a uniqued node needs to be remapped (due to any operands
+/// changing).
+static bool shouldRemapUniquedNode(const UniquableMDNode *Node,
+                                   ValueToValueMapTy &VM, RemapFlags Flags,
+                                   ValueMapTypeRemapper *TypeMapper,
+                                   ValueMaterializer *Materializer) {
+  // Check all operands to see if any need to be remapped.
+  for (unsigned I = 0, E = Node->getNumOperands(); I != E; ++I) {
+    Metadata *Op = Node->getOperand(I);
+    if (Op != mapMetadataOp(Op, VM, Flags, TypeMapper, Materializer))
+      return true;
+  }
+  return false;
+}
+
 /// \brief Map a uniqued MDNode.
 ///
 /// Uniqued nodes may not need to be recreated (they may map to themselves).
@@ -216,28 +233,24 @@ static Metadata *mapUniquedNode(const UniquableMDNode *Node,
   mapToMetadata(VM, Node, Dummy);
 
   // Check all operands to see if any need to be remapped.
-  for (unsigned I = 0, E = Node->getNumOperands(); I != E; ++I) {
-    Metadata *Op = Node->getOperand(I);
-    if (Op == mapMetadataOp(Op, VM, Flags, TypeMapper, Materializer))
-      continue;
-
-    // Ok, at least one operand needs remapping.
-    SmallVector<Metadata *, 4> Elts;
-    Elts.reserve(Node->getNumOperands());
-    for (I = 0; I != E; ++I)
-      Elts.push_back(mapMetadataOp(Node->getOperand(I), VM, Flags, TypeMapper,
-                                   Materializer));
-
-    MDNode *NewMD = MDTuple::get(Node->getContext(), Elts);
-    Dummy->replaceAllUsesWith(NewMD);
+  if (!shouldRemapUniquedNode(Node, VM, Flags, TypeMapper, Materializer)) {
+    // Use an identity mapping.
+    mapToSelf(VM, Node);
     MDNode::deleteTemporary(Dummy);
-    return mapToMetadata(VM, Node, NewMD);
+    return const_cast<Metadata *>(static_cast<const Metadata *>(Node));
   }
 
-  // No operands needed remapping.  Use an identity mapping.
-  mapToSelf(VM, Node);
+  // At least one operand needs remapping.
+  SmallVector<Metadata *, 4> Elts;
+  Elts.reserve(Node->getNumOperands());
+  for (unsigned I = 0, E = Node->getNumOperands(); I != E; ++I)
+    Elts.push_back(mapMetadataOp(Node->getOperand(I), VM, Flags, TypeMapper,
+                                 Materializer));
+
+  MDNode *NewMD = MDTuple::get(Node->getContext(), Elts);
+  Dummy->replaceAllUsesWith(NewMD);
   MDNode::deleteTemporary(Dummy);
-  return const_cast<Metadata *>(static_cast<const Metadata *>(Node));
+  return mapToMetadata(VM, Node, NewMD);
 }
 
 static Metadata *MapMetadataImpl(const Metadata *MD, ValueToValueMapTy &VM,
