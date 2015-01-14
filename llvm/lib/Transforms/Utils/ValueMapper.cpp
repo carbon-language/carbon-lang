@@ -216,7 +216,7 @@ static Metadata *MapMetadataImpl(const Metadata *MD, ValueToValueMapTy &VM,
   if (Node->isDistinct()) {
     // Create the node first so it's available for cyclical references.
     SmallVector<Metadata *, 4> EmptyOps(Node->getNumOperands());
-    MDNode *NewMD = MDNode::getDistinct(Node->getContext(), EmptyOps);
+    MDTuple *NewMD = MDTuple::getDistinct(Node->getContext(), EmptyOps);
     mapToMetadata(VM, Node, NewMD);
 
     // Fix the operands.
@@ -243,7 +243,7 @@ static Metadata *MapMetadataImpl(const Metadata *MD, ValueToValueMapTy &VM,
     for (I = 0; I != E; ++I)
       Elts.push_back(getMappedOp(Node->getOperand(I)));
 
-    MDNode *NewMD = MDNode::get(Node->getContext(), Elts);
+    MDNode *NewMD = MDTuple::get(Node->getContext(), Elts);
     Dummy->replaceAllUsesWith(NewMD);
     MDNode::deleteTemporary(Dummy);
     return mapToMetadata(VM, Node, NewMD);
