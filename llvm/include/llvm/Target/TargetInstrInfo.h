@@ -32,6 +32,7 @@ class MDNode;
 class MCInst;
 struct MCSchedModel;
 class MCSymbolRefExpr;
+class RandomNumberGenerator;
 class SDNode;
 class ScheduleHazardRecognizer;
 class SelectionDAG;
@@ -875,6 +876,14 @@ public:
   virtual void insertNoop(MachineBasicBlock &MBB,
                           MachineBasicBlock::iterator MI) const;
 
+  /// insertNoop - Insert a type of noop into the instruction stream at the
+  /// specified point to introduce fine-grained diversity. A target may randomly
+  /// choose from a pool of valid noops using the provided RNG.
+  virtual void insertNoop(MachineBasicBlock &MBB,
+                          MachineBasicBlock::iterator MI,
+                          RandomNumberGenerator&) const {
+    insertNoop(MBB, MI);
+  }
 
   /// Return the noop instruction to use for a noop.
   virtual void getNoopForMachoTarget(MCInst &NopInst) const;

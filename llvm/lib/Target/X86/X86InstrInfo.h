@@ -361,6 +361,13 @@ public:
   bool shouldScheduleAdjacent(MachineInstr* First,
                               MachineInstr *Second) const override;
 
+  void insertNoop(MachineBasicBlock &MBB,
+                  MachineBasicBlock::iterator MI) const override;
+
+  void insertNoop(MachineBasicBlock &MBB,
+                  MachineBasicBlock::iterator MI,
+                  RandomNumberGenerator &RNG) const override;
+
   void getNoopForMachoTarget(MCInst &NopInst) const override;
 
   bool

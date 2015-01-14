@@ -583,6 +583,9 @@ void TargetPassConfig::addMachinePasses() {
       addPass(createGCInfoPrinter(dbgs()), false, false);
   }
 
+  if (TM->Options.NoopInsertion)
+    addPass(&NoopInsertionID);
+
   // Basic block placement.
   if (getOptLevel() != CodeGenOpt::None)
     addBlockPlacement();

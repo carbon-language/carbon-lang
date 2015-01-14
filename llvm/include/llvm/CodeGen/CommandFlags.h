@@ -207,6 +207,12 @@ FunctionSections("function-sections",
                  cl::desc("Emit functions into separate sections"),
                  cl::init(false));
 
+cl::opt<bool>
+NoopInsertion("noop-insertion",
+             cl::desc("Randomly add Noop instructions to create fine-grained "
+                      "code layout diversity."),
+             cl::init(false));
+
 cl::opt<llvm::JumpTable::JumpTableType>
 JTableType("jump-table-type",
           cl::desc("Choose the type of Jump-Instruction Table for jumptable."),
@@ -284,6 +290,7 @@ static inline TargetOptions InitTargetOptionsFromCodeGenFlags() {
   Options.UseInitArray = !UseCtors;
   Options.DataSections = DataSections;
   Options.FunctionSections = FunctionSections;
+  Options.NoopInsertion = NoopInsertion;
 
   Options.MCOptions = InitMCTargetOptionsFromFlags();
   Options.JTType = JTableType;
