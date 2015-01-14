@@ -324,15 +324,11 @@ ProcessWindows::RefreshStateAfterStop()
         // to ask the Platform how big a breakpoint opcode is.
         --pc;
         BreakpointSiteSP site(GetBreakpointSiteList().FindByAddress(pc));
-        lldb::break_id_t break_id = LLDB_INVALID_BREAK_ID;
-        bool should_stop = true;
-        if (site)
+        if (site && site->ValidForThisThread(stop_thread.get()))
         {
-            should_stop = site->ValidForThisThread(stop_thread.get());
-            break_id = site->GetID();
+            lldb::break_id_t break_id = LLDB_INVALID_BREAK_ID;
+            stop_info = StopInfo::CreateStopReasonWithBreakpointSiteID(*stop_thread, site->GetID());
         }
-
-        stop_info = StopInfo::CreateStopReasonWithBreakpointSiteID(*stop_thread, break_id);
         stop_thread->SetStopInfo(stop_info);
     }
     else
