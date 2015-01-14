@@ -89,7 +89,7 @@ bool DwarfExpression::AddMachineRegIndirect(unsigned MachineReg, int Offset) {
   return true;
 }
 
-void DwarfExpression::AddMachineRegPiece(unsigned MachineReg,
+bool DwarfExpression::AddMachineRegPiece(unsigned MachineReg,
                                          unsigned PieceSizeInBits,
                                          unsigned PieceOffsetInBits) {
   const TargetRegisterInfo *TRI = getTRI();
@@ -100,7 +100,7 @@ void DwarfExpression::AddMachineRegPiece(unsigned MachineReg,
     AddReg(Reg);
     if (PieceSizeInBits)
       AddOpPiece(PieceSizeInBits, PieceOffsetInBits);
-    return;
+    return true;
   }
 
   // Walk up the super-register chain until we find a valid number.
@@ -123,7 +123,7 @@ void DwarfExpression::AddMachineRegPiece(unsigned MachineReg,
           AddShr(RegOffset);
         AddOpPiece(Size, PieceOffsetInBits);
       }
-      return;
+      return true;
     }
   }
 
@@ -162,9 +162,7 @@ void DwarfExpression::AddMachineRegPiece(unsigned MachineReg,
     }
   }
 
-  if (CurPos == PieceOffsetInBits)
-    // FIXME: We have no reasonable way of handling errors in here.
-    EmitOp(dwarf::DW_OP_nop, "nop (could not find a dwarf register number)");
+  return CurPos > PieceOffsetInBits;
 }
 
 void DwarfExpression::AddSignedConstant(int Value) {
@@ -200,35 +198,41 @@ static unsigned getOffsetOrZero(unsigned OffsetInBits,
   return OffsetInBits;
 }
 
-void DwarfExpression::AddMachineRegExpression(DIExpression Expr,
+bool DwarfExpression::AddMachineRegExpression(DIExpression Expr,
                                               unsigned MachineReg,
                                               unsigned PieceOffsetInBits) {
   unsigned N = Expr.getNumElements();
   unsigned I = 0;
+  bool ValidReg = false;
   // Pattern-match combinations for which more efficient representations exist
   // first.
   if (N >= 3 && Expr.getElement(0) == dwarf::DW_OP_piece) {
     unsigned SizeOfByte = 8;
     unsigned OffsetInBits = Expr.getElement(1) * SizeOfByte;
     unsigned SizeInBits = Expr.getElement(2) * SizeOfByte;
-    AddMachineRegPiece(MachineReg, SizeInBits,
-                       getOffsetOrZero(OffsetInBits, PieceOffsetInBits));
+    ValidReg =
+        AddMachineRegPiece(MachineReg, SizeInBits,
+                           getOffsetOrZero(OffsetInBits, PieceOffsetInBits));
     I = 3;
   } else if (N >= 3 && Expr.getElement(0) == dwarf::DW_OP_plus &&
              Expr.getElement(2) == dwarf::DW_OP_deref) {
     // [DW_OP_reg,Offset,DW_OP_plus,DW_OP_deref] --> [DW_OP_breg,Offset].
     unsigned Offset = Expr.getElement(1);
-    AddMachineRegIndirect(MachineReg, Offset);
+    ValidReg = AddMachineRegIndirect(MachineReg, Offset);
     I = 3;
   } else if (N >= 1 && Expr.getElement(0) == dwarf::DW_OP_deref) {
     // [DW_OP_reg,DW_OP_deref] --> [DW_OP_breg].
-    AddMachineRegIndirect(MachineReg);
+    ValidReg = AddMachineRegIndirect(MachineReg);
     I = 1;
   } else
-    AddMachineRegPiece(MachineReg);
+    ValidReg = AddMachineRegPiece(MachineReg);
+
+  if (!ValidReg)
+    return false;
 
   // Emit remaining elements of the expression.
   AddExpression(Expr, I);
+  return true;
 }
 
 void DwarfExpression::AddExpression(DIExpression Expr, unsigned I,

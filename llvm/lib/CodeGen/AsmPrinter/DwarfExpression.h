@@ -62,7 +62,7 @@ public:
   void AddShr(unsigned ShiftBy);
 
   /// Emit an indirect dwarf register operation for the given machine register.
-  /// Returns false if no DWARF register exists for MachineReg.
+  /// \return false if no DWARF register exists for MachineReg.
   bool AddMachineRegIndirect(unsigned MachineReg, int Offset = 0);
 
   /// \brief Emit a partial DWARF register operation.
@@ -77,7 +77,9 @@ public:
   /// function will attempt to emit a DWARF register by emitting a
   /// piece of a super-register or by piecing together multiple
   /// subregisters that alias the register.
-  void AddMachineRegPiece(unsigned MachineReg, unsigned PieceSizeInBits = 0,
+  ///
+  /// \return false if no DWARF register exists for MachineReg.
+  bool AddMachineRegPiece(unsigned MachineReg, unsigned PieceSizeInBits = 0,
                           unsigned PieceOffsetInBits = 0);
 
   /// Emit a signed constant.
@@ -88,7 +90,8 @@ public:
   /// Emit an entire DIExpression on top of a machine register location.
   /// \param PieceOffsetInBits If this is one piece out of a fragmented
   /// location, this is the offset of the piece inside the entire variable.
-  void AddMachineRegExpression(DIExpression Expr, unsigned MachineReg,
+  /// \return false if no DWARF register exists for MachineReg.
+  bool AddMachineRegExpression(DIExpression Expr, unsigned MachineReg,
                                unsigned PieceOffsetInBits = 0);
   /// Emit a the operations in a DIExpression, starting from element I.
   /// \param PieceOffsetInBits If this is one piece out of a fragmented

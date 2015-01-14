@@ -244,7 +244,10 @@ void AsmPrinter::EmitDwarfRegOp(ByteStreamer &Streamer,
                          "nop (could not find a dwarf register number)");
 
     // Attempt to find a valid super- or sub-register.
-    return Expr.AddMachineRegPiece(MLoc.getReg());
+    if (!Expr.AddMachineRegPiece(MLoc.getReg()))
+      Expr.EmitOp(dwarf::DW_OP_nop,
+                  "nop (could not find a dwarf register number)");
+    return;
   }
 
   if (MLoc.isIndirect())
