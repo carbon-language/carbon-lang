@@ -219,6 +219,19 @@ static bool shouldRemapUniquedNode(const UniquableMDNode *Node,
   return false;
 }
 
+static Metadata *cloneMDTuple(const UniquableMDNode *Node,
+                              ValueToValueMapTy &VM, RemapFlags Flags,
+                              ValueMapTypeRemapper *TypeMapper,
+                              ValueMaterializer *Materializer) {
+  SmallVector<Metadata *, 4> Elts;
+  Elts.reserve(Node->getNumOperands());
+  for (unsigned I = 0, E = Node->getNumOperands(); I != E; ++I)
+    Elts.push_back(mapMetadataOp(Node->getOperand(I), VM, Flags, TypeMapper,
+                                 Materializer));
+
+  return MDTuple::get(Node->getContext(), Elts);
+}
+
 /// \brief Map a uniqued MDNode.
 ///
 /// Uniqued nodes may not need to be recreated (they may map to themselves).
@@ -241,13 +254,7 @@ static Metadata *mapUniquedNode(const UniquableMDNode *Node,
   }
 
   // At least one operand needs remapping.
-  SmallVector<Metadata *, 4> Elts;
-  Elts.reserve(Node->getNumOperands());
-  for (unsigned I = 0, E = Node->getNumOperands(); I != E; ++I)
-    Elts.push_back(mapMetadataOp(Node->getOperand(I), VM, Flags, TypeMapper,
-                                 Materializer));
-
-  MDNode *NewMD = MDTuple::get(Node->getContext(), Elts);
+  Metadata *NewMD = cloneMDTuple(Node, VM, Flags, TypeMapper, Materializer);
   Dummy->replaceAllUsesWith(NewMD);
   MDNode::deleteTemporary(Dummy);
   return mapToMetadata(VM, Node, NewMD);
