@@ -157,6 +157,32 @@ static Metadata *mapToSelf(ValueToValueMapTy &VM, const Metadata *MD) {
 static Metadata *MapMetadataImpl(const Metadata *MD, ValueToValueMapTy &VM,
                                  RemapFlags Flags,
                                  ValueMapTypeRemapper *TypeMapper,
+                                 ValueMaterializer *Materializer);
+
+static Metadata *mapMetadataOp(Metadata *Op, ValueToValueMapTy &VM,
+                                 RemapFlags Flags,
+                                 ValueMapTypeRemapper *TypeMapper,
+                                 ValueMaterializer *Materializer) {
+  if (!Op)
+    return nullptr;
+  if (Metadata *MappedOp =
+          MapMetadataImpl(Op, VM, Flags, TypeMapper, Materializer))
+    return MappedOp;
+  // Use identity map if MappedOp is null and we can ignore missing entries.
+  if (Flags & RF_IgnoreMissingEntries)
+    return Op;
+
+  // FIXME: This assert crashes during bootstrap, but I think it should be
+  // correct.  For now, just match behaviour from before the metadata/value
+  // split.
+  //
+  //    llvm_unreachable("Referenced metadata not in value map!");
+  return nullptr;
+}
+
+static Metadata *MapMetadataImpl(const Metadata *MD, ValueToValueMapTy &VM,
+                                 RemapFlags Flags,
+                                 ValueMapTypeRemapper *TypeMapper,
                                  ValueMaterializer *Materializer) {
   // If the value already exists in the map, use it.
   if (Metadata *NewMD = VM.MD().lookup(MD).get())
@@ -190,21 +216,7 @@ static Metadata *MapMetadataImpl(const Metadata *MD, ValueToValueMapTy &VM,
   assert(Node->isResolved() && "Unexpected unresolved node");
 
   auto getMappedOp = [&](Metadata *Op) -> Metadata *{
-    if (!Op)
-      return nullptr;
-    if (Metadata *MappedOp =
-            MapMetadataImpl(Op, VM, Flags, TypeMapper, Materializer))
-      return MappedOp;
-    // Use identity map if MappedOp is null and we can ignore missing entries.
-    if (Flags & RF_IgnoreMissingEntries)
-      return Op;
-
-    // FIXME: This assert crashes during bootstrap, but I think it should be
-    // correct.  For now, just match behaviour from before the metadata/value
-    // split.
-    //
-    //    llvm_unreachable("Referenced metadata not in value map!");
-    return nullptr;
+    return mapMetadataOp(Op, VM, Flags, TypeMapper, Materializer);
   };
 
   // If this is a module-level metadata and we know that nothing at the
