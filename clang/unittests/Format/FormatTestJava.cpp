@@ -287,6 +287,12 @@ TEST_F(FormatTestJava, Annotations) {
                "ReturnType doSomething(\n"
                "    String aaaaaaaaaaaaa, String bbbbbbbbbbbbbbb) {}",
                getStyleWithColumns(60));
+  verifyFormat("{\n"
+               "  boolean someFunction(\n"
+               "      @Param(aaaaaaaaaaaaaaaa) String aaaaa,\n"
+               "      String bbbbbbbbbbbbbbb) {}\n"
+               "}",
+               getStyleWithColumns(60));
 }
 
 TEST_F(FormatTestJava, Generics) {

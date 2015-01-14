@@ -1587,6 +1587,8 @@ unsigned TokenAnnotator::splitPenalty(const AnnotatedLine &Line,
     return Left.ParameterCount > 1 ? Style.PenaltyBreakBeforeFirstCallParameter
                                    : 19;
   }
+  if (Left.is(TT_JavaAnnotation))
+    return 50;
 
   if (Right.is(tok::lessless)) {
     if (Left.is(tok::string_literal)) {
