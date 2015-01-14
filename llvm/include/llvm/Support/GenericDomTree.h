@@ -35,7 +35,7 @@ template <class NodeT> class DominatorBase {
 protected:
   std::vector<NodeT *> Roots;
   const bool IsPostDominators;
-  inline explicit DominatorBase(bool isPostDom)
+  explicit DominatorBase(bool isPostDom)
       : Roots(), IsPostDominators(isPostDom) {}
 
 public:
@@ -43,7 +43,7 @@ public:
   /// multiple blocks if we are computing post dominators.  For forward
   /// dominators, this will always be a single block (the entry node).
   ///
-  inline const std::vector<NodeT *> &getRoots() const { return Roots; }
+  const std::vector<NodeT *> &getRoots() const { return Roots; }
 
   /// isPostDominator - Returns true if analysis based of postdoms
   ///
@@ -140,8 +140,7 @@ private:
 };
 
 template <class NodeT>
-inline raw_ostream &operator<<(raw_ostream &o,
-                               const DomTreeNodeBase<NodeT> *Node) {
+raw_ostream &operator<<(raw_ostream &o, const DomTreeNodeBase<NodeT> *Node) {
   if (Node->getBlock())
     Node->getBlock()->printAsOperand(o, false);
   else
@@ -153,8 +152,8 @@ inline raw_ostream &operator<<(raw_ostream &o,
 }
 
 template <class NodeT>
-inline void PrintDomTree(const DomTreeNodeBase<NodeT> *N, raw_ostream &o,
-                         unsigned Lev) {
+void PrintDomTree(const DomTreeNodeBase<NodeT> *N, raw_ostream &o,
+                  unsigned Lev) {
   o.indent(2 * Lev) << "[" << Lev << "] " << N;
   for (typename DomTreeNodeBase<NodeT>::const_iterator I = N->begin(),
                                                        E = N->end();
@@ -324,13 +323,11 @@ public:
   /// getNode - return the (Post)DominatorTree node for the specified basic
   /// block.  This is the same as using operator[] on this class.
   ///
-  inline DomTreeNodeBase<NodeT> *getNode(NodeT *BB) const {
+  DomTreeNodeBase<NodeT> *getNode(NodeT *BB) const {
     return DomTreeNodes.lookup(BB);
   }
 
-  inline DomTreeNodeBase<NodeT> *operator[](NodeT *BB) const {
-    return getNode(BB);
-  }
+  DomTreeNodeBase<NodeT> *operator[](NodeT *BB) const { return getNode(BB); }
 
   /// getRootNode - This returns the entry node for the CFG of the function.  If
   /// this tree represents the post-dominance relations for a function, however,
@@ -380,15 +377,13 @@ public:
     return isReachableFromEntry(getNode(const_cast<NodeT *>(A)));
   }
 
-  inline bool isReachableFromEntry(const DomTreeNodeBase<NodeT> *A) const {
-    return A;
-  }
+  bool isReachableFromEntry(const DomTreeNodeBase<NodeT> *A) const { return A; }
 
   /// dominates - Returns true iff A dominates B.  Note that this is not a
   /// constant time operation!
   ///
-  inline bool dominates(const DomTreeNodeBase<NodeT> *A,
-                        const DomTreeNodeBase<NodeT> *B) const {
+  bool dominates(const DomTreeNodeBase<NodeT> *A,
+                 const DomTreeNodeBase<NodeT> *B) const {
     // A node trivially dominates itself.
     if (B == A)
       return true;
@@ -662,9 +657,9 @@ protected:
     return this->DomTreeNodes[BB] = IDomNode->addChild(C);
   }
 
-  inline NodeT *getIDom(NodeT *BB) const { return IDoms.lookup(BB); }
+  NodeT *getIDom(NodeT *BB) const { return IDoms.lookup(BB); }
 
-  inline void addRoot(NodeT *BB) { this->Roots.push_back(BB); }
+  void addRoot(NodeT *BB) { this->Roots.push_back(BB); }
 
 public:
   /// recalculate - compute a dominator tree for the given function
