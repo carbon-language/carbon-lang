@@ -753,7 +753,7 @@ namespace ISD {
     LAST_LOADEXT_TYPE
   };
 
-  NodeType getExtForLoadExtType(LoadExtType);
+  NodeType getExtForLoadExtType(bool IsFP, LoadExtType);
 
   //===--------------------------------------------------------------------===//
   /// ISD::CondCode enum - These are ordered carefully to make the bitfields

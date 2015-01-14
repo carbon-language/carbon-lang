@@ -216,6 +216,14 @@ AMDGPUTargetLowering::AMDGPUTargetLowering(TargetMachine &TM) :
   setOperationAction(ISD::EXTRACT_SUBVECTOR, MVT::v8f32, Custom);
   setOperationAction(ISD::EXTRACT_SUBVECTOR, MVT::v8i32, Custom);
 
+  // There are no 64-bit extloads. These should be done as a 32-bit extload and
+  // an extension to 64-bit.
+  for (MVT VT : MVT::integer_valuetypes()) {
+    setLoadExtAction(ISD::EXTLOAD, MVT::i64, VT, Expand);
+    setLoadExtAction(ISD::SEXTLOAD, MVT::i64, VT, Expand);
+    setLoadExtAction(ISD::ZEXTLOAD, MVT::i64, VT, Expand);
+  }
+
   for (MVT VT : MVT::integer_vector_valuetypes()) {
     setLoadExtAction(ISD::EXTLOAD, VT, MVT::v2i8, Expand);
     setLoadExtAction(ISD::SEXTLOAD, VT, MVT::v2i8, Expand);
@@ -1411,24 +1419,6 @@ SDValue AMDGPUTargetLowering::LowerLOAD(SDValue Op, SelectionDAG &DAG) const {
   ISD::LoadExtType ExtType = Load->getExtensionType();
   EVT VT = Op.getValueType();
   EVT MemVT = Load->getMemoryVT();
-
-  if (ExtType != ISD::NON_EXTLOAD && !VT.isVector() && VT.getSizeInBits() > 32) {
-    // We can do the extload to 32-bits, and then need to separately extend to
-    // 64-bits.
-
-    SDValue ExtLoad32 = DAG.getExtLoad(ExtType, DL, MVT::i32,
-                                       Load->getChain(),
-                                       Load->getBasePtr(),
-                                       MemVT,
-                                       Load->getMemOperand());
-
-    SDValue Ops[] = {
-      DAG.getNode(ISD::getExtForLoadExtType(ExtType), DL, VT, ExtLoad32),
-      ExtLoad32.getValue(1)
-    };
-
-    return DAG.getMergeValues(Ops, DL);
-  }
 
   if (ExtType == ISD::NON_EXTLOAD && VT.getSizeInBits() < 32) {
     assert(VT == MVT::i1 && "Only i1 non-extloads expected");

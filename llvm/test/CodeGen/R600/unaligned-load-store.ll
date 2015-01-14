@@ -1,9 +1,8 @@
 ; RUN: llc -march=amdgcn -mcpu=SI -verify-machineinstrs< %s | FileCheck -check-prefix=SI %s
 
-; FIXME: This is probably wrong. This probably needs to expand to 8-bit reads and writes.
 ; SI-LABEL: {{^}}unaligned_load_store_i32:
-; SI: ds_read_u16
-; SI: ds_read_u16
+; SI: ds_read_u8
+; SI: ds_read_u8
 ; SI: ds_write_b32
 ; SI: s_endpgm
 define void @unaligned_load_store_i32(i32 addrspace(3)* %p, i32 addrspace(3)* %r) nounwind {
@@ -13,14 +12,26 @@ define void @unaligned_load_store_i32(i32 addrspace(3)* %p, i32 addrspace(3)* %r
 }
 
 ; SI-LABEL: {{^}}unaligned_load_store_v4i32:
-; SI: ds_read_u16
-; SI: ds_read_u16
-; SI: ds_read_u16
-; SI: ds_read_u16
-; SI: ds_read_u16
-; SI: ds_read_u16
-; SI: ds_read_u16
-; SI: ds_read_u16
+; SI: ds_read_u8
+; SI: ds_read_u8
+; SI: ds_read_u8
+; SI: ds_read_u8
+
+; SI: ds_read_u8
+; SI: ds_read_u8
+; SI: ds_read_u8
+; SI: ds_read_u8
+
+; SI: ds_read_u8
+; SI: ds_read_u8
+; SI: ds_read_u8
+; SI: ds_read_u8
+
+; SI: ds_read_u8
+; SI: ds_read_u8
+; SI: ds_read_u8
+; SI: ds_read_u8
+
 ; SI: ds_write_b32
 ; SI: ds_write_b32
 ; SI: ds_write_b32

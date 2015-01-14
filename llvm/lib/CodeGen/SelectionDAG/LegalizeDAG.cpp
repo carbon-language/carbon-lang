@@ -1090,22 +1090,25 @@ void SelectionDAGLegalize::LegalizeLoadOps(SDNode *Node) {
       break;
     }
     case TargetLowering::Expand:
-      if (!TLI.isLoadExtLegal(ISD::EXTLOAD, Node->getValueType(0),
-                              SrcVT) && TLI.isTypeLegal(SrcVT)) {
-        SDValue Load = DAG.getLoad(SrcVT, dl, Chain, Ptr, LD->getMemOperand());
-        unsigned ExtendOp;
-        switch (ExtType) {
-        case ISD::EXTLOAD:
-          ExtendOp = (SrcVT.isFloatingPoint() ?
-                      ISD::FP_EXTEND : ISD::ANY_EXTEND);
+      if (!TLI.isLoadExtLegal(ISD::EXTLOAD, Node->getValueType(0), SrcVT)) {
+        // If the source type is not legal, see if there is a legal extload to
+        // an intermediate type that we can then extend further.
+        EVT LoadVT = TLI.getRegisterType(SrcVT.getSimpleVT());
+        if (TLI.isTypeLegal(SrcVT) || // Same as SrcVT == LoadVT?
+            TLI.isLoadExtLegal(ExtType, LoadVT, SrcVT)) {
+          // If we are loading a legal type, this is a non-extload followed by a
+          // full extend.
+          ISD::LoadExtType MidExtType =
+              (LoadVT == SrcVT) ? ISD::NON_EXTLOAD : ExtType;
+
+          SDValue Load = DAG.getExtLoad(MidExtType, dl, LoadVT, Chain, Ptr,
+                                        SrcVT, LD->getMemOperand());
+          unsigned ExtendOp =
+              ISD::getExtForLoadExtType(SrcVT.isFloatingPoint(), ExtType);
+          Value = DAG.getNode(ExtendOp, dl, Node->getValueType(0), Load);
+          Chain = Load.getValue(1);
           break;
-        case ISD::SEXTLOAD: ExtendOp = ISD::SIGN_EXTEND; break;
-        case ISD::ZEXTLOAD: ExtendOp = ISD::ZERO_EXTEND; break;
-        default: llvm_unreachable("Unexpected extend load type!");
         }
-        Value = DAG.getNode(ExtendOp, dl, Node->getValueType(0), Load);
-        Chain = Load.getValue(1);
-        break;
       }
 
       assert(!SrcVT.isVector() &&

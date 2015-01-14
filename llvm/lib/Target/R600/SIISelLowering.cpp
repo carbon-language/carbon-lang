@@ -131,19 +131,22 @@ SITargetLowering::SITargetLowering(TargetMachine &TM) :
   setOperationAction(ISD::BRCOND, MVT::Other, Custom);
 
   for (MVT VT : MVT::integer_valuetypes()) {
+    if (VT == MVT::i64)
+      continue;
+
     setLoadExtAction(ISD::SEXTLOAD, VT, MVT::i1, Promote);
-    setLoadExtAction(ISD::SEXTLOAD, VT, MVT::i8, Custom);
-    setLoadExtAction(ISD::SEXTLOAD, VT, MVT::i16, Custom);
+    setLoadExtAction(ISD::SEXTLOAD, VT, MVT::i8, Legal);
+    setLoadExtAction(ISD::SEXTLOAD, VT, MVT::i16, Legal);
     setLoadExtAction(ISD::SEXTLOAD, VT, MVT::i32, Expand);
 
     setLoadExtAction(ISD::ZEXTLOAD, VT, MVT::i1, Promote);
-    setLoadExtAction(ISD::ZEXTLOAD, VT, MVT::i8, Custom);
-    setLoadExtAction(ISD::ZEXTLOAD, VT, MVT::i16, Custom);
+    setLoadExtAction(ISD::ZEXTLOAD, VT, MVT::i8, Legal);
+    setLoadExtAction(ISD::ZEXTLOAD, VT, MVT::i16, Legal);
     setLoadExtAction(ISD::ZEXTLOAD, VT, MVT::i32, Expand);
 
     setLoadExtAction(ISD::EXTLOAD, VT, MVT::i1, Promote);
-    setLoadExtAction(ISD::EXTLOAD, VT, MVT::i8, Custom);
-    setLoadExtAction(ISD::EXTLOAD, VT, MVT::i16, Custom);
+    setLoadExtAction(ISD::EXTLOAD, VT, MVT::i8, Legal);
+    setLoadExtAction(ISD::EXTLOAD, VT, MVT::i16, Legal);
     setLoadExtAction(ISD::EXTLOAD, VT, MVT::i32, Expand);
   }
 

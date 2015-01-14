@@ -234,10 +234,10 @@ bool ISD::allOperandsUndef(const SDNode *N) {
   return true;
 }
 
-ISD::NodeType ISD::getExtForLoadExtType(ISD::LoadExtType ExtType) {
+ISD::NodeType ISD::getExtForLoadExtType(bool IsFP, ISD::LoadExtType ExtType) {
   switch (ExtType) {
   case ISD::EXTLOAD:
-    return ISD::ANY_EXTEND;
+    return IsFP ? ISD::FP_EXTEND : ISD::ANY_EXTEND;
   case ISD::SEXTLOAD:
     return ISD::SIGN_EXTEND;
   case ISD::ZEXTLOAD:
