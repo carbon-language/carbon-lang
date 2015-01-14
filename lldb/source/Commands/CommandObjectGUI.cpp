@@ -42,10 +42,22 @@ CommandObjectGUI::DoExecute (Args& args, CommandReturnObject &result)
     if (args.GetArgumentCount() == 0)
     {
         Debugger &debugger = m_interpreter.GetDebugger();
-        IOHandlerSP io_handler_sp (new IOHandlerCursesGUI (debugger));
-        if (io_handler_sp)
-            debugger.PushIOHandler(io_handler_sp);
-        result.SetStatus (eReturnStatusSuccessFinishResult);
+
+        lldb::StreamFileSP input_sp = debugger.GetInputFile();
+        if (input_sp &&
+            input_sp->GetFile().GetIsRealTerminal() &&
+            input_sp->GetFile().GetIsInteractive())
+        {
+            IOHandlerSP io_handler_sp (new IOHandlerCursesGUI (debugger));
+            if (io_handler_sp)
+                debugger.PushIOHandler(io_handler_sp);
+            result.SetStatus (eReturnStatusSuccessFinishResult);
+        }
+        else
+        {
+            result.AppendError("the gui command requires an interactive terminal.");
+            result.SetStatus (eReturnStatusFailed);
+        }
     }
     else
     {
