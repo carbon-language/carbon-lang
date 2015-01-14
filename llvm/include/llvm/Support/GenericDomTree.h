@@ -314,7 +314,7 @@ protected:
 public:
   explicit DominatorTreeBase(bool isPostDom)
       : DominatorBase<NodeT>(isPostDom), DFSInfoValid(false), SlowQueries(0) {}
-  virtual ~DominatorTreeBase() { reset(); }
+  ~DominatorTreeBase() { reset(); }
 
   DominatorTreeBase(DominatorTreeBase &&Arg)
       : DominatorBase<NodeT>(
@@ -368,7 +368,7 @@ public:
     return false;
   }
 
-  virtual void releaseMemory() { reset(); }
+  void releaseMemory() { reset(); }
 
   /// getNode - return the (Post)DominatorTree node for the specified basic
   /// block.  This is the same as using operator[] on this class.
