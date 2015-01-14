@@ -295,7 +295,8 @@ DIE &DwarfCompileUnit::updateSubprogramScopeDIE(DISubprogram SP) {
     const TargetRegisterInfo *RI =
         Asm->TM.getSubtargetImpl()->getRegisterInfo();
     MachineLocation Location(RI->getFrameRegister(*Asm->MF));
-    addAddress(*SPDie, dwarf::DW_AT_frame_base, Location);
+    if (RI->isPhysicalRegister(Location.getReg()))
+      addAddress(*SPDie, dwarf::DW_AT_frame_base, Location);
   }
 
   // Add name to the name table, we do this here because we're guaranteed
