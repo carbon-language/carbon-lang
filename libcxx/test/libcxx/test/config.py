@@ -370,11 +370,21 @@ class Configuration(object):
                 'C++ ABI setting %s unsupported for tests' % cxx_abi)
 
     def configure_extra_library_flags(self):
+        enable_threads = self.get_lit_bool('enable_threads', True)
+        llvm_unwinder = self.get_lit_conf('llvm_unwinder', False)
         if sys.platform == 'darwin':
             self.link_flags += ['-lSystem']
         elif sys.platform.startswith('linux'):
-            self.link_flags += ['-lgcc_eh', '-lc', '-lm', '-lpthread',
-                                '-lrt', '-lgcc_s']
+            if not llvm_unwinder:
+                self.link_flags += ['-lgcc_eh']
+            self.link_flags += ['-lc', '-lm']
+            if enable_threads:
+                self.link_flags += ['-lpthread']
+            self.link_flags += ['-lrt']
+            if llvm_unwinder:
+                self.link_flags += ['-lunwind', '-ldl']
+            else:
+                self.link_flags += ['-lgcc_s']
         elif sys.platform.startswith('freebsd'):
             self.link_flags += ['-lc', '-lm', '-pthread', '-lgcc_s']
         else:
