@@ -3285,12 +3285,12 @@ void Sema::MergeVarDecl(VarDecl *New, LookupResult &Previous) {
 
   // Check if extern is followed by non-extern and vice-versa.
   if (New->hasExternalStorage() &&
-      !Old->hasLinkage() && Old->isLocalVarDecl()) {
+      !Old->hasLinkage() && Old->isLocalVarDeclOrParm()) {
     Diag(New->getLocation(), diag::err_extern_non_extern) << New->getDeclName();
     Diag(OldLocation, PrevDiag);
     return New->setInvalidDecl();
   }
-  if (Old->hasLinkage() && New->isLocalVarDecl() &&
+  if (Old->hasLinkage() && New->isLocalVarDeclOrParm() &&
       !New->hasExternalStorage()) {
     Diag(New->getLocation(), diag::err_non_extern_extern) << New->getDeclName();
     Diag(OldLocation, PrevDiag);

@@ -60,3 +60,7 @@ int *p=&g19; // expected-error{{use of undeclared identifier 'g19'}} \
 static int a;
 extern int a; // expected-note {{previous declaration is here}}
 int a;	// expected-error {{non-static declaration of 'a' follows static declaration}}
+
+void f(int x) { // expected-note {{previous definition is here}}
+  extern int x; // expected-error {{extern declaration of 'x' follows non-extern declaration}}
+}

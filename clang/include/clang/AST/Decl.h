@@ -906,6 +906,11 @@ public:
     return false;
   }
 
+  /// \brief Similar to isLocalVarDecl but also includes parameters.
+  bool isLocalVarDeclOrParm() const {
+    return isLocalVarDecl() || getKind() == Decl::ParmVar;
+  }
+
   /// isFunctionOrMethodVarDecl - Similar to isLocalVarDecl, but
   /// excludes variables declared in blocks.
   bool isFunctionOrMethodVarDecl() const {
