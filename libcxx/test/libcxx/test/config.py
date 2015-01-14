@@ -19,7 +19,7 @@ class Configuration(object):
         self.cxx = None
         self.src_root = None
         self.obj_root = None
-        self.library_root = None
+        self.libcxx_library_root = None
         self.env = {}
         self.compile_flags = []
         self.link_flags = []
@@ -144,8 +144,8 @@ class Configuration(object):
         self.obj_root = self.get_lit_conf('libcxx_obj_root', self.src_root)
 
     def configure_library_root(self):
-        self.library_root = self.get_lit_conf('libcxx_library_root',
-                                              self.obj_root)
+        self.libcxx_library_root = self.get_lit_conf('libcxx_library_root',
+                                                     self.obj_root)
 
     def configure_use_system_lib(self):
         # This test suite supports testing against either the system library or
@@ -344,8 +344,8 @@ class Configuration(object):
             self.link_flags += ['-Wl,-rpath,' +
                                 os.path.dirname(libcxx_library)]
         elif not self.use_system_lib:
-            self.link_flags += ['-L' + self.library_root,
-                                '-Wl,-rpath,' + self.library_root]
+            self.link_flags += ['-L' + self.libcxx_library_root,
+                                '-Wl,-rpath,' + self.libcxx_library_root]
         # Configure ABI library paths.
         abi_library_path = self.get_lit_conf('abi_library_path', '')
         if abi_library_path:
@@ -474,7 +474,7 @@ class Configuration(object):
         if sys.platform == 'darwin' and not self.use_system_lib:
             libcxx_library = self.get_lit_conf('libcxx_library')
             if libcxx_library:
-                library_root = os.path.dirname(libcxx_library)
+                libcxx_library_root = os.path.dirname(libcxx_library)
             else:
-                library_root = self.library_root
-            self.env['DYLD_LIBRARY_PATH'] = library_root
+                libcxx_library_root = self.libcxx_library_root
+            self.env['DYLD_LIBRARY_PATH'] = libcxx_library_root
