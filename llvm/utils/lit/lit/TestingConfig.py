@@ -26,7 +26,11 @@ class TestingConfig:
                      'LD_PRELOAD', 'ASAN_OPTIONS', 'UBSAN_OPTIONS',
                      'LSAN_OPTIONS']
         for var in pass_vars:
-            environment[var] = os.environ.get(var, '')
+            val = os.environ.get(var, '')
+            # Check for empty string as some variables such as LD_PRELOAD cannot be empty
+            # ('') for OS's such as OpenBSD.
+            if val:
+                environment[var] = val
 
         if sys.platform == 'win32':
             environment.update({
