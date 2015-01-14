@@ -49,6 +49,8 @@ public:
   const uint32_t *getCallPreservedMask(CallingConv::ID CC) const override;
   const uint32_t *getNoPreservedMask() const;
 
+  void adjustStackMapLiveOutMask(uint32_t *Mask) const override;
+
   BitVector getReservedRegs(const MachineFunction &MF) const override;
 
   /// We require the register scavenger.

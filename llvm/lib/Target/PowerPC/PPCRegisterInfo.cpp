@@ -99,6 +99,14 @@ PPCRegisterInfo::getPointerRegClass(const MachineFunction &MF, unsigned Kind)
 
 const MCPhysReg*
 PPCRegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
+  if (MF->getFunction()->getCallingConv() == CallingConv::AnyReg) {
+    if (Subtarget.hasVSX())
+      return CSR_64_AllRegs_VSX_SaveList;
+    if (Subtarget.hasAltivec())
+      return CSR_64_AllRegs_Altivec_SaveList;
+    return CSR_64_AllRegs_SaveList;
+  }
+
   if (Subtarget.isDarwinABI())
     return Subtarget.isPPC64() ? (Subtarget.hasAltivec() ?
                                   CSR_Darwin64_Altivec_SaveList :
@@ -117,6 +125,14 @@ PPCRegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
 
 const uint32_t*
 PPCRegisterInfo::getCallPreservedMask(CallingConv::ID CC) const {
+  if (CC == CallingConv::AnyReg) {
+    if (Subtarget.hasVSX())
+      return CSR_64_AllRegs_VSX_RegMask;
+    if (Subtarget.hasAltivec())
+      return CSR_64_AllRegs_Altivec_RegMask;
+    return CSR_64_AllRegs_RegMask;
+  }
+
   if (Subtarget.isDarwinABI())
     return Subtarget.isPPC64() ? (Subtarget.hasAltivec() ?
                                   CSR_Darwin64_Altivec_RegMask :
@@ -136,6 +152,14 @@ PPCRegisterInfo::getCallPreservedMask(CallingConv::ID CC) const {
 const uint32_t*
 PPCRegisterInfo::getNoPreservedMask() const {
   return CSR_NoRegs_RegMask;
+}
+
+void PPCRegisterInfo::adjustStackMapLiveOutMask(uint32_t *Mask) const {
+  unsigned PseudoRegs[] = { PPC::ZERO, PPC::ZERO8, PPC::RM };
+  for (unsigned i = 0, ie = array_lengthof(PseudoRegs); i != ie; ++i) {
+    unsigned Reg = PseudoRegs[i];
+    Mask[Reg / 32] &= ~(1u << (Reg % 32));
+  }
 }
 
 BitVector PPCRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
@@ -700,7 +724,10 @@ static unsigned getOffsetONFromFION(const MachineInstr &MI,
   // Take into account whether it's an add or mem instruction
   unsigned OffsetOperandNo = (FIOperandNum == 2) ? 1 : 2;
   if (MI.isInlineAsm())
-    OffsetOperandNo = FIOperandNum-1;
+    OffsetOperandNo = FIOperandNum - 1;
+  else if (MI.getOpcode() == TargetOpcode::STACKMAP ||
+           MI.getOpcode() == TargetOpcode::PATCHPOINT)
+    OffsetOperandNo = FIOperandNum + 1;
 
   return OffsetOperandNo;
 }
@@ -772,7 +799,8 @@ PPCRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
 
   // If the instruction is not present in ImmToIdxMap, then it has no immediate
   // form (and must be r+r).
-  bool noImmForm = !MI.isInlineAsm() && !ImmToIdxMap.count(OpC);
+  bool noImmForm = !MI.isInlineAsm() && OpC != TargetOpcode::STACKMAP &&
+                   OpC != TargetOpcode::PATCHPOINT && !ImmToIdxMap.count(OpC);
 
   // Now add the frame object offset to the offset from r1.
   int Offset = MFI->getObjectOffset(FrameIndex);
@@ -796,8 +824,10 @@ PPCRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   // only "std" to a stack slot that is at least 4-byte aligned, but it can
   // happen in invalid code.
   assert(OpC != PPC::DBG_VALUE &&
-         "This should be handle in a target independent way");
-  if (!noImmForm && isInt<16>(Offset) && (!isIXAddr || (Offset & 3) == 0)) {
+         "This should be handled in a target-independent way");
+  if (!noImmForm && ((isInt<16>(Offset) && (!isIXAddr || (Offset & 3) == 0)) ||
+                     OpC == TargetOpcode::STACKMAP ||
+                     OpC == TargetOpcode::PATCHPOINT)) {
     MI.getOperand(OffsetOperandNo).ChangeToImmediate(Offset);
     return;
   }
@@ -1008,6 +1038,8 @@ bool PPCRegisterInfo::isFrameOffsetLegal(const MachineInstr *MI,
   Offset += MI->getOperand(OffsetOperandNo).getImm();
 
   return MI->getOpcode() == PPC::DBG_VALUE || // DBG_VALUE is always Reg+Imm
+         MI->getOpcode() == TargetOpcode::STACKMAP ||
+         MI->getOpcode() == TargetOpcode::PATCHPOINT ||
          (isInt<16>(Offset) && (!usesIXAddr(*MI) || (Offset & 3) == 0));
 }
 

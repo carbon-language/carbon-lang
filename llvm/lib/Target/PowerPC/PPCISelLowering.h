@@ -570,6 +570,8 @@ namespace llvm {
     /// expanded to fmul + fadd.
     bool isFMAFasterThanFMulAndFAdd(EVT VT) const override;
 
+    const MCPhysReg *getScratchRegisters(CallingConv::ID CC) const override;
+
     // Should we expand the build vector with shuffles?
     bool
     shouldExpandBuildVectorWithShuffles(EVT VT,
@@ -681,7 +683,7 @@ namespace llvm {
                             SDLoc dl, SelectionDAG &DAG,
                             SmallVectorImpl<SDValue> &InVals) const;
     SDValue FinishCall(CallingConv::ID CallConv, SDLoc dl, bool isTailCall,
-                       bool isVarArg,
+                       bool isVarArg, bool IsPatchPoint,
                        SelectionDAG &DAG,
                        SmallVector<std::pair<unsigned, SDValue>, 8>
                          &RegsToPass,
@@ -746,7 +748,7 @@ namespace llvm {
     SDValue
       LowerCall_Darwin(SDValue Chain, SDValue Callee,
                        CallingConv::ID CallConv,
-                       bool isVarArg, bool isTailCall,
+                       bool isVarArg, bool isTailCall, bool IsPatchPoint,
                        const SmallVectorImpl<ISD::OutputArg> &Outs,
                        const SmallVectorImpl<SDValue> &OutVals,
                        const SmallVectorImpl<ISD::InputArg> &Ins,
@@ -755,7 +757,7 @@ namespace llvm {
     SDValue
       LowerCall_64SVR4(SDValue Chain, SDValue Callee,
                        CallingConv::ID CallConv,
-                       bool isVarArg, bool isTailCall,
+                       bool isVarArg, bool isTailCall, bool IsPatchPoint,
                        const SmallVectorImpl<ISD::OutputArg> &Outs,
                        const SmallVectorImpl<SDValue> &OutVals,
                        const SmallVectorImpl<ISD::InputArg> &Ins,
@@ -763,7 +765,7 @@ namespace llvm {
                        SmallVectorImpl<SDValue> &InVals) const;
     SDValue
     LowerCall_32SVR4(SDValue Chain, SDValue Callee, CallingConv::ID CallConv,
-                     bool isVarArg, bool isTailCall,
+                     bool isVarArg, bool isTailCall, bool IsPatchPoint,
                      const SmallVectorImpl<ISD::OutputArg> &Outs,
                      const SmallVectorImpl<SDValue> &OutVals,
                      const SmallVectorImpl<ISD::InputArg> &Ins,

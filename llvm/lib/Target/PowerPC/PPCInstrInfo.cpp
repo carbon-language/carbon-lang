@@ -29,6 +29,7 @@
 #include "llvm/CodeGen/PseudoSourceValue.h"
 #include "llvm/CodeGen/ScheduleDAG.h"
 #include "llvm/CodeGen/SlotIndexes.h"
+#include "llvm/CodeGen/StackMaps.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
@@ -1596,6 +1597,11 @@ unsigned PPCInstrInfo::GetInstSizeInBytes(const MachineInstr *MI) const {
     const MachineFunction *MF = MI->getParent()->getParent();
     const char *AsmStr = MI->getOperand(0).getSymbolName();
     return getInlineAsmLength(AsmStr, *MF->getTarget().getMCAsmInfo());
+  } else if (Opcode == TargetOpcode::STACKMAP) {
+    return MI->getOperand(1).getImm();
+  } else if (Opcode == TargetOpcode::PATCHPOINT) {
+    PatchPointOpers Opers(MI);
+    return Opers.getMetaOper(PatchPointOpers::NBytesPos).getImm();
   } else {
     const MCInstrDesc &Desc = get(Opcode);
     return Desc.getSize();
