@@ -19,11 +19,11 @@ class Configuration(object):
         self.cxx = None
         self.src_root = None
         self.obj_root = None
-        self.libcxx_library_root = None
+        self.cxx_library_root = None
         self.env = {}
         self.compile_flags = []
         self.link_flags = []
-        self.use_system_lib = False
+        self.use_system_cxx_lib = False
         self.use_clang_verify = False
         self.use_ccache = False
         self.long_tests = None
@@ -56,8 +56,8 @@ class Configuration(object):
         self.configure_triple()
         self.configure_src_root()
         self.configure_obj_root()
-        self.configure_library_root()
-        self.configure_use_system_lib()
+        self.configure_cxx_library_root()
+        self.configure_use_system_cxx_lib()
         self.configure_use_clang_verify()
         self.configure_ccache()
         self.configure_env()
@@ -143,21 +143,21 @@ class Configuration(object):
     def configure_obj_root(self):
         self.obj_root = self.get_lit_conf('libcxx_obj_root', self.src_root)
 
-    def configure_library_root(self):
-        self.libcxx_library_root = self.get_lit_conf('libcxx_library_root',
-                                                     self.obj_root)
+    def configure_cxx_library_root(self):
+        self.cxx_library_root = self.get_lit_conf('cxx_library_root',
+                                                  self.obj_root)
 
-    def configure_use_system_lib(self):
+    def configure_use_system_cxx_lib(self):
         # This test suite supports testing against either the system library or
         # the locally built one; the former mode is useful for testing ABI
         # compatibility between the current headers and a shipping dynamic
         # library.
-        self.use_system_lib = self.get_lit_bool('use_system_lib')
-        if self.use_system_lib is None:
+        self.use_system_cxx_lib = self.get_lit_bool('use_system_cxx_lib')
+        if self.use_system_cxx_lib is None:
             # Default to testing against the locally built libc++ library.
-            self.use_system_lib = False
+            self.use_system_cxx_lib = False
             self.lit_config.note(
-                "inferred use_system_lib as: %r" % self.use_system_lib)
+                "inferred use_system_cxx_lib as: %r" % self.use_system_cxx_lib)
 
     def configure_use_clang_verify(self):
         '''If set, run clang with -verify on failing tests.'''
@@ -228,12 +228,12 @@ class Configuration(object):
         locale.setlocale(locale.LC_ALL, default_locale)
 
         # Write an "available feature" that combines the triple when
-        # use_system_lib is enabled. This is so that we can easily write XFAIL
+        # use_system_cxx_lib is enabled. This is so that we can easily write XFAIL
         # markers for tests that are known to fail with versions of libc++ as
         # were shipped with a particular triple.
-        if self.use_system_lib:
+        if self.use_system_cxx_lib:
             self.config.available_features.add(
-                'with_system_lib=%s' % self.config.target_triple)
+                'with_system_cxx_lib=%s' % self.config.target_triple)
 
         # Some linux distributions have different locale data than others.
         # Insert the distributions name and name-version into the available
@@ -337,15 +337,15 @@ class Configuration(object):
                 self.lit_config.fatal(
                     "libcxx_library='%s' is not a valid file." %
                     libcxx_library)
-            if self.use_system_lib:
+            if self.use_system_cxx_lib:
                 self.lit_config.fatal(
                     "Conflicting options: 'libcxx_library' cannot be used "
-                    "with 'use_system_lib=true'")
+                    "with 'use_system_cxx_lib=true'")
             self.link_flags += ['-Wl,-rpath,' +
                                 os.path.dirname(libcxx_library)]
-        elif not self.use_system_lib:
-            self.link_flags += ['-L' + self.libcxx_library_root,
-                                '-Wl,-rpath,' + self.libcxx_library_root]
+        elif not self.use_system_cxx_lib:
+            self.link_flags += ['-L' + self.cxx_library_root,
+                                '-Wl,-rpath,' + self.cxx_library_root]
         # Configure ABI library paths.
         abi_library_path = self.get_lit_conf('abi_library_path', '')
         if abi_library_path:
@@ -471,10 +471,10 @@ class Configuration(object):
                 "inferred target_triple as: %r" % self.config.target_triple)
 
     def configure_env(self):
-        if sys.platform == 'darwin' and not self.use_system_lib:
+        if sys.platform == 'darwin' and not self.use_system_cxx_lib:
             libcxx_library = self.get_lit_conf('libcxx_library')
             if libcxx_library:
-                libcxx_library_root = os.path.dirname(libcxx_library)
+                cxx_library_root = os.path.dirname(libcxx_library)
             else:
-                libcxx_library_root = self.libcxx_library_root
-            self.env['DYLD_LIBRARY_PATH'] = libcxx_library_root
+                cxx_library_root = self.cxx_library_root
+            self.env['DYLD_LIBRARY_PATH'] = cxx_library_root
