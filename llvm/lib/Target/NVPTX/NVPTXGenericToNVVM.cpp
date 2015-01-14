@@ -408,19 +408,8 @@ MDNode *GenericToNVVM::remapMDNode(Module *M, MDNode *N) {
       } else if (auto *C = dyn_cast<ConstantAsMetadata>(Operand)) {
         if (auto *G = dyn_cast<GlobalVariable>(C->getValue())) {
           GVMapTy::iterator I = GVMap.find(G);
-          if (I != GVMap.end()) {
+          if (I != GVMap.end())
             NewOperand = ConstantAsMetadata::get(I->second);
-            if (++i < NumOperands) {
-              NewOperands.push_back(NewOperand);
-              // Address space of the global variable follows the global
-              // variable
-              // in the global variable debug info (see createGlobalVariable in
-              // lib/Analysis/DIBuilder.cpp).
-              NewOperand = ConstantAsMetadata::get(
-                  ConstantInt::get(Type::getInt32Ty(M->getContext()),
-                                   I->second->getType()->getAddressSpace()));
-            }
-          }
         }
       }
     }
