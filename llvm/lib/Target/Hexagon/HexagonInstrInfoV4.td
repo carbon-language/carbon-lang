@@ -2924,20 +2924,6 @@ def : Pat <(i32 (zext (i1 (setult (i32 (and (i32 IntRegs:$src1), 255)),
                    0, 1))>,
                    Requires<[HasV4T]>;
 
-let validSubTargets = HasV4SubT in
-def NTSTBIT_rr : SInst<(outs PredRegs:$dst), (ins IntRegs:$src1, IntRegs:$src2),
-    "$dst = !tstbit($src1, $src2)",
-    [(set (i1 PredRegs:$dst),
-          (seteq (and (shl 1, (i32 IntRegs:$src2)), (i32 IntRegs:$src1)), 0))]>,
-    Requires<[HasV4T]>;
-
-let validSubTargets = HasV4SubT in
-def NTSTBIT_ri : SInst<(outs PredRegs:$dst), (ins IntRegs:$src1, u5Imm:$src2),
-    "$dst = !tstbit($src1, $src2)",
-    [(set (i1 PredRegs:$dst),
-          (seteq (and (shl 1, u5ImmPred:$src2), (i32 IntRegs:$src1)), 0))]>,
-    Requires<[HasV4T]>;
-
 //===----------------------------------------------------------------------===//
 // XTYPE/PRED -
 //===----------------------------------------------------------------------===//
