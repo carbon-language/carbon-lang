@@ -876,15 +876,14 @@ GDBRemoteCommunication::StartDebugserverProcess (const char *hostname,
         {
             if (named_pipe_path[0])
             {
-                const auto timeout = std::chrono::microseconds(10 * 1000000);
-                error = port_named_pipe.OpenAsReaderWithTimeout(named_pipe_path, false, timeout);
+                error = port_named_pipe.OpenAsReader(named_pipe_path, false);
                 if (error.Success())
                 {
                     char port_cstr[256];
                     port_cstr[0] = '\0';
                     size_t num_bytes = sizeof(port_cstr);
                     // Read port from pipe with 10 second timeout.
-                    error = port_named_pipe.ReadWithTimeout(port_cstr, num_bytes, timeout, num_bytes);
+                    error = port_named_pipe.ReadWithTimeout(port_cstr, num_bytes, std::chrono::microseconds(10 * 1000000), num_bytes);
                     if (error.Success())
                     {
                         assert (num_bytes > 0 && port_cstr[num_bytes-1] == '\0');

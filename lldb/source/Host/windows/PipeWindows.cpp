@@ -90,7 +90,7 @@ PipeWindows::CreateNew(llvm::StringRef name, bool child_process_inherit)
 }
 
 Error
-PipeWindows::OpenAsReaderWithTimeout(llvm::StringRef name, bool child_process_inherit, const std::chrono::microseconds &timeout)
+PipeWindows::OpenAsReader(llvm::StringRef name, bool child_process_inherit)
 {
     if (CanRead() || CanWrite())
         return Error(ERROR_ALREADY_EXISTS, eErrorTypeWin32);

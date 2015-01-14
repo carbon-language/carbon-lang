@@ -26,8 +26,7 @@ class PipeBase
     virtual Error CreateNew(bool child_process_inherit) = 0;
     virtual Error CreateNew(llvm::StringRef name, bool child_process_inherit) = 0;
 
-    Error OpenAsReader(llvm::StringRef name, bool child_process_inherit);
-    virtual Error OpenAsReaderWithTimeout(llvm::StringRef name, bool child_process_inherit, const std::chrono::microseconds &timeout) = 0;
+    virtual Error OpenAsReader(llvm::StringRef name, bool child_process_inherit) = 0;
 
     Error OpenAsWriter(llvm::StringRef name, bool child_process_inherit);
     virtual Error OpenAsWriterWithTimeout(llvm::StringRef name, bool child_process_inherit, const std::chrono::microseconds &timeout) = 0;

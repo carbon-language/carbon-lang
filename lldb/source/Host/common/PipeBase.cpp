@@ -15,12 +15,6 @@ using namespace lldb_private;
 PipeBase::~PipeBase() = default;
 
 Error
-PipeBase::OpenAsReader(llvm::StringRef name, bool child_process_inherit)
-{
-    return OpenAsReaderWithTimeout(name, child_process_inherit, std::chrono::microseconds::zero());
-}
-
-Error
 PipeBase::OpenAsWriter(llvm::StringRef name, bool child_process_inherit)
 {
     return OpenAsWriterWithTimeout(name, child_process_inherit, std::chrono::microseconds::zero());

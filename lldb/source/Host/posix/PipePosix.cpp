@@ -183,7 +183,7 @@ PipePosix::CreateNew(llvm::StringRef name, bool child_process_inherit)
 }
 
 Error
-PipePosix::OpenAsReaderWithTimeout(llvm::StringRef name, bool child_process_inherit, const std::chrono::microseconds &timeout)
+PipePosix::OpenAsReader(llvm::StringRef name, bool child_process_inherit)
 {
     if (CanRead() || CanWrite())
         return Error("Pipe is already opened");
