@@ -215,10 +215,6 @@ static Metadata *MapMetadataImpl(const Metadata *MD, ValueToValueMapTy &VM,
   const MDNode *Node = cast<MDNode>(MD);
   assert(Node->isResolved() && "Unexpected unresolved node");
 
-  auto getMappedOp = [&](Metadata *Op) -> Metadata *{
-    return mapMetadataOp(Op, VM, Flags, TypeMapper, Materializer);
-  };
-
   // If this is a module-level metadata and we know that nothing at the
   // module level is changing, then use an identity mapping.
   if (Flags & RF_NoModuleLevelChanges)
@@ -233,7 +229,8 @@ static Metadata *MapMetadataImpl(const Metadata *MD, ValueToValueMapTy &VM,
 
     // Fix the operands.
     for (unsigned I = 0, E = Node->getNumOperands(); I != E; ++I)
-      NewMD->replaceOperandWith(I, getMappedOp(Node->getOperand(I)));
+      NewMD->replaceOperandWith(I, mapMetadataOp(Node->getOperand(I), VM, Flags,
+                                                 TypeMapper, Materializer));
 
     return NewMD;
   }
@@ -245,7 +242,7 @@ static Metadata *MapMetadataImpl(const Metadata *MD, ValueToValueMapTy &VM,
   // Check all operands to see if any need to be remapped.
   for (unsigned I = 0, E = Node->getNumOperands(); I != E; ++I) {
     Metadata *Op = Node->getOperand(I);
-    Metadata *MappedOp = getMappedOp(Op);
+    Metadata *MappedOp = mapMetadataOp(Op, VM, Flags, TypeMapper, Materializer);
     if (Op == MappedOp)
       continue;
 
@@ -253,7 +250,8 @@ static Metadata *MapMetadataImpl(const Metadata *MD, ValueToValueMapTy &VM,
     SmallVector<Metadata *, 4> Elts;
     Elts.reserve(Node->getNumOperands());
     for (I = 0; I != E; ++I)
-      Elts.push_back(getMappedOp(Node->getOperand(I)));
+      Elts.push_back(mapMetadataOp(Node->getOperand(I), VM, Flags, TypeMapper,
+                                   Materializer));
 
     MDNode *NewMD = MDTuple::get(Node->getContext(), Elts);
     Dummy->replaceAllUsesWith(NewMD);
