@@ -509,9 +509,8 @@ def fsignaling_math : Flag<["-"], "fsignaling-math">, Group<f_Group>;
 def fno_signaling_math : Flag<["-"], "fno-signaling-math">, Group<f_Group>;
 def fsanitize_EQ : CommaJoined<["-"], "fsanitize=">, Group<f_clang_Group>,
                    Flags<[CC1Option, CoreOption]>, MetaVarName<"<check>">,
-                   HelpText<"Enable runtime instrumentation for bug detection: "
-                            "address (memory errors) | thread (race detection) | "
-                            "undefined (miscellaneous undefined behavior)">;
+                   HelpText<"Turn on runtime checks for various forms of undefined "
+                            "or suspicious behavior. See user manual for available checks ">;
 def fno_sanitize_EQ : CommaJoined<["-"], "fno-sanitize=">, Group<f_clang_Group>;
 def fsanitize_blacklist : Joined<["-"], "fsanitize-blacklist=">,
                           Group<f_clang_Group>, Flags<[CC1Option, CoreOption]>,
