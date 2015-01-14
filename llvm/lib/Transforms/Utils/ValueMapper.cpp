@@ -180,6 +180,29 @@ static Metadata *mapMetadataOp(Metadata *Op, ValueToValueMapTy &VM,
   return nullptr;
 }
 
+static Metadata *cloneMDTuple(const MDTuple *Node, ValueToValueMapTy &VM,
+                              RemapFlags Flags,
+                              ValueMapTypeRemapper *TypeMapper,
+                              ValueMaterializer *Materializer) {
+  SmallVector<Metadata *, 4> Elts;
+  Elts.reserve(Node->getNumOperands());
+  for (unsigned I = 0, E = Node->getNumOperands(); I != E; ++I)
+    Elts.push_back(mapMetadataOp(Node->getOperand(I), VM, Flags, TypeMapper,
+                                 Materializer));
+
+  return MDTuple::get(Node->getContext(), Elts);
+}
+
+static Metadata *cloneMDLocation(const MDLocation *Node, ValueToValueMapTy &VM,
+                                 RemapFlags Flags,
+                                 ValueMapTypeRemapper *TypeMapper,
+                                 ValueMaterializer *Materializer) {
+  return MDLocation::get(
+      Node->getContext(), Node->getLine(), Node->getColumn(),
+      mapMetadataOp(Node->getScope(), VM, Flags, TypeMapper, Materializer),
+      mapMetadataOp(Node->getInlinedAt(), VM, Flags, TypeMapper, Materializer));
+}
+
 /// \brief Map a distinct MDNode.
 ///
 /// Distinct nodes are not uniqued, so they must always recreated.
@@ -217,29 +240,6 @@ static bool shouldRemapUniquedNode(const UniquableMDNode *Node,
       return true;
   }
   return false;
-}
-
-static Metadata *cloneMDTuple(const MDTuple *Node, ValueToValueMapTy &VM,
-                              RemapFlags Flags,
-                              ValueMapTypeRemapper *TypeMapper,
-                              ValueMaterializer *Materializer) {
-  SmallVector<Metadata *, 4> Elts;
-  Elts.reserve(Node->getNumOperands());
-  for (unsigned I = 0, E = Node->getNumOperands(); I != E; ++I)
-    Elts.push_back(mapMetadataOp(Node->getOperand(I), VM, Flags, TypeMapper,
-                                 Materializer));
-
-  return MDTuple::get(Node->getContext(), Elts);
-}
-
-static Metadata *cloneMDLocation(const MDLocation *Node, ValueToValueMapTy &VM,
-                                 RemapFlags Flags,
-                                 ValueMapTypeRemapper *TypeMapper,
-                                 ValueMaterializer *Materializer) {
-  return MDLocation::get(
-      Node->getContext(), Node->getLine(), Node->getColumn(),
-      mapMetadataOp(Node->getScope(), VM, Flags, TypeMapper, Materializer),
-      mapMetadataOp(Node->getInlinedAt(), VM, Flags, TypeMapper, Materializer));
 }
 
 /// \brief Map a uniqued MDNode.
