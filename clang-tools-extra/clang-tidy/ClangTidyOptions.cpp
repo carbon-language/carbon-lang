@@ -11,12 +11,12 @@
 #include "ClangTidyModuleRegistry.h"
 #include "clang/Basic/LLVM.h"
 #include "llvm/ADT/SmallString.h"
-#include "llvm/Support/Errc.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/Errc.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Path.h"
-#include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/YAMLTraits.h"
+#include "llvm/Support/raw_ostream.h"
 #include <utility>
 
 #define DEBUG_TYPE "clang-tidy-options"

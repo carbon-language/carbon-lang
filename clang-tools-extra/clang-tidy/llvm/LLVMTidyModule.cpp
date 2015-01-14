@@ -10,9 +10,9 @@
 #include "../ClangTidy.h"
 #include "../ClangTidyModule.h"
 #include "../ClangTidyModuleRegistry.h"
+#include "../readability/NamespaceCommentCheck.h"
 #include "HeaderGuardCheck.h"
 #include "IncludeOrderCheck.h"
-#include "../readability/NamespaceCommentCheck.h"
 #include "TwineLocalCheck.h"
 
 namespace clang {

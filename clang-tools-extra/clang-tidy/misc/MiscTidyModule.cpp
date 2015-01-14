@@ -14,8 +14,8 @@
 #include "BoolPointerImplicitConversion.h"
 #include "SwappedArgumentsCheck.h"
 #include "UndelegatedConstructor.h"
-#include "UnusedRAII.h"
 #include "UniqueptrResetRelease.h"
+#include "UnusedRAII.h"
 #include "UseOverride.h"
 
 namespace clang {

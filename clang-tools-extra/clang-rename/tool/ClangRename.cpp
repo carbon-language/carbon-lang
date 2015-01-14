@@ -25,21 +25,21 @@
 #include "clang/Frontend/CompilerInstance.h"
 #include "clang/Frontend/FrontendAction.h"
 #include "clang/Frontend/TextDiagnosticPrinter.h"
-#include "clang/Lex/Preprocessor.h"
 #include "clang/Lex/Lexer.h"
-#include "clang/Parse/Parser.h"
+#include "clang/Lex/Preprocessor.h"
 #include "clang/Parse/ParseAST.h"
+#include "clang/Parse/Parser.h"
 #include "clang/Rewrite/Core/Rewriter.h"
 #include "clang/Tooling/CommonOptionsParser.h"
 #include "clang/Tooling/Refactoring.h"
 #include "clang/Tooling/Tooling.h"
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
 #include "llvm/Support/Host.h"
+#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <time.h>
-#include <ctype.h>
 #include <string>
+#include <time.h>
 #include <vector>
 
 using namespace llvm;

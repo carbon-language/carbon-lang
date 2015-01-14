@@ -8,9 +8,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "MemsetZeroLengthCheck.h"
+#include "clang/AST/ASTContext.h"
 #include "clang/ASTMatchers/ASTMatchFinder.h"
 #include "clang/ASTMatchers/ASTMatchers.h"
-#include "clang/AST/ASTContext.h"
 #include "clang/Lex/Lexer.h"
 
 using namespace clang::ast_matchers;

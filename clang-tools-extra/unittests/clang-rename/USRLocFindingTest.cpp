@@ -1,9 +1,9 @@
 #include "USRFindingAction.h"
-#include "gtest/gtest.h"
 #include "clang/Tooling/Tooling.h"
-#include <stdio.h>
-#include <set>
+#include "gtest/gtest.h"
 #include <map>
+#include <set>
+#include <stdio.h>
 #include <vector>
 
 namespace clang {

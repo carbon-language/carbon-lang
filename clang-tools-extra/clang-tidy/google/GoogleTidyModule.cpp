@@ -10,6 +10,10 @@
 #include "../ClangTidy.h"
 #include "../ClangTidyModule.h"
 #include "../ClangTidyModuleRegistry.h"
+#include "../readability/BracesAroundStatementsCheck.h"
+#include "../readability/FunctionSize.h"
+#include "../readability/NamespaceCommentCheck.h"
+#include "../readability/RedundantSmartptrGet.h"
 #include "AvoidCStyleCastsCheck.h"
 #include "ExplicitConstructorCheck.h"
 #include "ExplicitMakePairCheck.h"
@@ -21,10 +25,6 @@
 #include "TodoCommentCheck.h"
 #include "UnnamedNamespaceInHeaderCheck.h"
 #include "UsingNamespaceDirectiveCheck.h"
-#include "../readability/BracesAroundStatementsCheck.h"
-#include "../readability/FunctionSize.h"
-#include "../readability/NamespaceCommentCheck.h"
-#include "../readability/RedundantSmartptrGet.h"
 
 using namespace clang::ast_matchers;
 
