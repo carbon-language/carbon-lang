@@ -4,7 +4,7 @@ int outer1; // expected-note{{previous definition is here}}
 extern int outer2; // expected-note{{previous definition is here}}
 int outer4;
 int outer4; // expected-note{{previous definition is here}}
-int outer5; // expected-note{{previous definition is here}}
+int outer5;
 int outer6(float); // expected-note{{previous definition is here}}
 int outer7(float);
 
@@ -13,7 +13,7 @@ void outer_test() {
   extern float outer2; // expected-error{{redefinition of 'outer2' with a different type}}
   extern float outer3; // expected-note{{previous definition is here}}
   double outer4;
-  extern int outer5;
+  extern int outer5; // expected-note{{previous definition is here}}
   extern int outer6; // expected-error{{redefinition of 'outer6' as different kind of symbol}}
   int outer7;
   extern int outer8; // expected-note{{previous definition is here}}
@@ -64,3 +64,7 @@ int a;	// expected-error {{non-static declaration of 'a' follows static declarat
 void f(int x) { // expected-note {{previous definition is here}}
   extern int x; // expected-error {{extern declaration of 'x' follows non-extern declaration}}
 }
+
+extern int b[];
+void g20() { extern int b[3]; } // expected-note{{previous definition is here}}
+void g21() { extern int b[4]; } // expected-error{{redefinition of 'b' with a different type: 'int [4]' vs 'int [3]'}}
