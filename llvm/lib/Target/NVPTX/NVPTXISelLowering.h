@@ -507,6 +507,8 @@ public:
 
   bool isFMAFasterThanFMulAndFAdd(EVT) const override { return true; }
 
+  bool enableAggressiveFMAFusion(EVT VT) const override { return true; }
+
 private:
   const NVPTXSubtarget &nvptxSubtarget; // cache the subtarget here
 
