@@ -10,7 +10,7 @@
 
 declare void @_Z3bari(i32)
 
-; CHECK-LINUX: .text._Z3fooILi1EEvi,"axG",@progbits,_Z3fooILi1EEvi,comdat
+; CHECK-LINUX: _Z3fooILi1EEvi:
 define linkonce void @_Z3fooILi1EEvi(i32 %Y) nounwind {
 entry:
 ; CHECK:       L0$pb
