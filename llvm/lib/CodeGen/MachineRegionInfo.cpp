@@ -1,8 +1,8 @@
 
 #include "llvm/CodeGen/MachineRegionInfo.h"
-#include "llvm/CodeGen/MachinePostDominators.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/RegionInfoImpl.h"
+#include "llvm/CodeGen/MachinePostDominators.h"
 
 #define DEBUG_TYPE "region"
 

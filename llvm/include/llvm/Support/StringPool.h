@@ -29,8 +29,8 @@
 #ifndef LLVM_SUPPORT_STRINGPOOL_H
 #define LLVM_SUPPORT_STRINGPOOL_H
 
-#include "llvm/Support/Compiler.h"
 #include "llvm/ADT/StringMap.h"
+#include "llvm/Support/Compiler.h"
 #include <cassert>
 #include <new>
 

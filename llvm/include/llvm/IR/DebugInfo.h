@@ -18,10 +18,10 @@
 #define LLVM_IR_DEBUGINFO_H
 
 #include "llvm/ADT/DenseMap.h"
-#include "llvm/ADT/iterator_range.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
+#include "llvm/ADT/iterator_range.h"
 #include "llvm/IR/Metadata.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/Dwarf.h"

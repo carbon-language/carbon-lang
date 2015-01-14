@@ -12,7 +12,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Support/ScaledNumber.h"
-
 #include "llvm/ADT/APFloat.h"
 #include "llvm/Support/Debug.h"
 

@@ -14,6 +14,7 @@
 #ifndef LLVM_LIB_CODEGEN_SELECTIONDAG_SELECTIONDAGBUILDER_H
 #define LLVM_LIB_CODEGEN_SELECTIONDAG_SELECTIONDAGBUILDER_H
 
+#include "StatepointLowering.h"
 #include "llvm/ADT/APInt.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/CodeGen/SelectionDAG.h"
@@ -22,7 +23,6 @@
 #include "llvm/IR/Constants.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Target/TargetLowering.h"
-#include "StatepointLowering.h"
 #include <vector>
 
 namespace llvm {

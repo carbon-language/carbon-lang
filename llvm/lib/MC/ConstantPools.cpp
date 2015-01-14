@@ -11,10 +11,10 @@
 //
 //===----------------------------------------------------------------------===//
 #include "llvm/ADT/MapVector.h"
+#include "llvm/MC/ConstantPools.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCStreamer.h"
-#include "llvm/MC/ConstantPools.h"
 
 using namespace llvm;
 //

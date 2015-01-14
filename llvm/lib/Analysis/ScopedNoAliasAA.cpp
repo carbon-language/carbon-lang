@@ -33,8 +33,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/ADT/SmallPtrSet.h"
-#include "llvm/Analysis/Passes.h"
 #include "llvm/Analysis/AliasAnalysis.h"
+#include "llvm/Analysis/Passes.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Metadata.h"

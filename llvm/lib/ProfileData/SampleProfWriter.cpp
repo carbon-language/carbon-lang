@@ -21,9 +21,9 @@
 #include "llvm/ProfileData/SampleProfWriter.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorOr.h"
-#include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/LEB128.h"
 #include "llvm/Support/LineIterator.h"
+#include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/Regex.h"
 
 using namespace llvm::sampleprof;

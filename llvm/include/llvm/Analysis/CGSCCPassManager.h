@@ -21,8 +21,8 @@
 #ifndef LLVM_ANALYSIS_CGSCCPASSMANAGER_H
 #define LLVM_ANALYSIS_CGSCCPASSMANAGER_H
 
-#include "llvm/IR/PassManager.h"
 #include "llvm/Analysis/LazyCallGraph.h"
+#include "llvm/IR/PassManager.h"
 
 namespace llvm {
 

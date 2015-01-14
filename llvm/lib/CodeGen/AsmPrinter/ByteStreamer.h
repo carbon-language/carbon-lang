@@ -15,10 +15,10 @@
 #ifndef LLVM_LIB_CODEGEN_ASMPRINTER_BYTESTREAMER_H
 #define LLVM_LIB_CODEGEN_ASMPRINTER_BYTESTREAMER_H
 
+#include "DIEHash.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/MC/MCStreamer.h"
-#include "DIEHash.h"
 
 namespace llvm {
 class ByteStreamer {

@@ -16,16 +16,16 @@
 #define LLVM_MC_MCDWARF_H
 
 #include "llvm/ADT/ArrayRef.h"
-#include "llvm/ADT/StringRef.h"
-#include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/MapVector.h"
+#include "llvm/ADT/StringMap.h"
+#include "llvm/ADT/StringRef.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Dwarf.h"
 #include "llvm/Support/raw_ostream.h"
 #include <map>
-#include <vector>
 #include <string>
 #include <utility>
+#include <vector>
 
 namespace llvm {
 class MCAsmBackend;

@@ -13,8 +13,8 @@
 
 #include "ByteStreamer.h"
 #include "DwarfExpression.h"
-#include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/ADT/Twine.h"
+#include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCSection.h"

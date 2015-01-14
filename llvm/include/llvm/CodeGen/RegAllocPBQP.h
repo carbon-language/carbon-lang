@@ -17,9 +17,9 @@
 #define LLVM_CODEGEN_REGALLOCPBQP_H
 
 #include "llvm/CodeGen/MachineFunctionPass.h"
-#include "llvm/CodeGen/PBQPRAConstraint.h"
 #include "llvm/CodeGen/PBQP/CostAllocator.h"
 #include "llvm/CodeGen/PBQP/ReductionRules.h"
+#include "llvm/CodeGen/PBQPRAConstraint.h"
 #include "llvm/Support/ErrorHandling.h"
 
 namespace llvm {

@@ -11,8 +11,8 @@
 #define MIPSABIINFO_H
 
 #include "llvm/ADT/ArrayRef.h"
-#include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/IR/CallingConv.h"
+#include "llvm/MC/MCRegisterInfo.h"
 
 namespace llvm {
 

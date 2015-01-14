@@ -15,8 +15,8 @@
 #ifndef LLVM_IR_DEBUGLOC_H
 #define LLVM_IR_DEBUGLOC_H
 
-#include "llvm/Support/DataTypes.h"
 #include "llvm/IR/TrackingMDRef.h"
+#include "llvm/Support/DataTypes.h"
 
 namespace llvm {
 

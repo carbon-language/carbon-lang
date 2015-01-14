@@ -12,11 +12,11 @@
 #ifndef LLVM_ANALYSIS_REGIONINFOIMPL_H
 #define LLVM_ANALYSIS_REGIONINFOIMPL_H
 
-#include "llvm/Analysis/RegionInfo.h"
 #include "llvm/ADT/PostOrderIterator.h"
 #include "llvm/Analysis/DominanceFrontier.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/PostDominators.h"
+#include "llvm/Analysis/RegionInfo.h"
 #include "llvm/Analysis/RegionIterator.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"

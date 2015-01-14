@@ -10,9 +10,8 @@
 #ifndef LLVM_SUPPORT_CRASHRECOVERYCONTEXT_H
 #define LLVM_SUPPORT_CRASHRECOVERYCONTEXT_H
 
-#include <string>
-
 #include "llvm/ADT/STLExtras.h"
+#include <string>
 
 namespace llvm {
 class StringRef;

@@ -11,8 +11,8 @@
 #define LLVM_LIB_CODEGEN_ASMPRINTER_DEBUGLOCENTRY_H
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DebugInfo.h"
-#include "llvm/MC/MachineLocation.h"
 #include "llvm/MC/MCSymbol.h"
+#include "llvm/MC/MachineLocation.h"
 
 namespace llvm {
 class MDNode;

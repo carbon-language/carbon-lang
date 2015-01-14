@@ -15,16 +15,16 @@
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/GlobalVariable.h"
+#include "llvm/IR/InstIterator.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/Operator.h"
+#include "llvm/Support/ManagedStatic.h"
+#include "llvm/Support/MutexGuard.h"
 #include <algorithm>
 #include <cstring>
 #include <map>
 #include <string>
 #include <vector>
-#include "llvm/Support/ManagedStatic.h"
-#include "llvm/IR/InstIterator.h"
-#include "llvm/Support/MutexGuard.h"
 
 using namespace llvm;
 

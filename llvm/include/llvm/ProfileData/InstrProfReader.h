@@ -18,12 +18,11 @@
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ProfileData/InstrProf.h"
+#include "llvm/Support/EndianStream.h"
 #include "llvm/Support/ErrorOr.h"
 #include "llvm/Support/LineIterator.h"
 #include "llvm/Support/MemoryBuffer.h"
-#include "llvm/Support/EndianStream.h"
 #include "llvm/Support/OnDiskHashTable.h"
-
 #include <iterator>
 
 namespace llvm {

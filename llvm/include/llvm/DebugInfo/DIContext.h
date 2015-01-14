@@ -21,7 +21,6 @@
 #include "llvm/Object/RelocVisitor.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/DataTypes.h"
-
 #include <string>
 
 namespace llvm {

@@ -16,12 +16,12 @@
 //===          is guaranteed to work on *all* UNIX variants.
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Config/config.h"
-#include "llvm/ADT/StringRef.h"
 #include "Unix.h"
-#include <sys/utsname.h>
+#include "llvm/ADT/StringRef.h"
+#include "llvm/Config/config.h"
 #include <cctype>
 #include <string>
+#include <sys/utsname.h>
 
 using namespace llvm;
 

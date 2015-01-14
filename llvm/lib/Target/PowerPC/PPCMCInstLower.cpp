@@ -13,8 +13,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "PPC.h"
-#include "PPCSubtarget.h"
 #include "MCTargetDesc/PPCMCExpr.h"
+#include "PPCSubtarget.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/CodeGen/AsmPrinter.h"

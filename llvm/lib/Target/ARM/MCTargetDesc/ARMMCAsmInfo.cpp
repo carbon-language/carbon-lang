@@ -12,8 +12,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "ARMMCAsmInfo.h"
-#include "llvm/Support/CommandLine.h"
 #include "llvm/ADT/Triple.h"
+#include "llvm/Support/CommandLine.h"
 
 using namespace llvm;
 

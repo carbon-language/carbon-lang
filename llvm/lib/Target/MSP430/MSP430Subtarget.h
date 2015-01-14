@@ -15,8 +15,8 @@
 #define LLVM_LIB_TARGET_MSP430_MSP430SUBTARGET_H
 
 #include "MSP430FrameLowering.h"
-#include "MSP430InstrInfo.h"
 #include "MSP430ISelLowering.h"
+#include "MSP430InstrInfo.h"
 #include "MSP430RegisterInfo.h"
 #include "MSP430SelectionDAGInfo.h"
 #include "llvm/IR/DataLayout.h"

@@ -14,8 +14,8 @@
 #ifndef LLVM_LIB_CODEGEN_ASMPRINTER_DIEHASH_H
 #define LLVM_LIB_CODEGEN_ASMPRINTER_DIEHASH_H
 
-#include "llvm/CodeGen/DIE.h"
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/CodeGen/DIE.h"
 #include "llvm/Support/MD5.h"
 
 namespace llvm {

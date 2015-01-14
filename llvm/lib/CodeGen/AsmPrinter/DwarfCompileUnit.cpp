@@ -1,5 +1,4 @@
 #include "DwarfCompileUnit.h"
-
 #include "DwarfExpression.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/IR/DataLayout.h"
@@ -11,8 +10,8 @@
 #include "llvm/Target/TargetFrameLowering.h"
 #include "llvm/Target/TargetLoweringObjectFile.h"
 #include "llvm/Target/TargetMachine.h"
-#include "llvm/Target/TargetSubtargetInfo.h"
 #include "llvm/Target/TargetRegisterInfo.h"
+#include "llvm/Target/TargetSubtargetInfo.h"
 
 namespace llvm {
 

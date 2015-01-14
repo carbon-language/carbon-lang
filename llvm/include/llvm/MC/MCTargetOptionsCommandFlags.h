@@ -15,8 +15,8 @@
 #ifndef LLVM_MC_MCTARGETOPTIONSCOMMANDFLAGS_H
 #define LLVM_MC_MCTARGETOPTIONSCOMMANDFLAGS_H
 
-#include "llvm/Support/CommandLine.h"
 #include "llvm/MC/MCTargetOptions.h"
+#include "llvm/Support/CommandLine.h"
 using namespace llvm;
 
 cl::opt<MCTargetOptions::AsmInstrumentation> AsmInstrumentation(

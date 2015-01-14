@@ -15,14 +15,13 @@
 #ifndef LLVM_PROFILEDATA_COVERAGEMAPPINGREADER_H
 #define LLVM_PROFILEDATA_COVERAGEMAPPINGREADER_H
 
-#include "llvm/ProfileData/InstrProf.h"
-#include "llvm/ProfileData/CoverageMapping.h"
-#include "llvm/Object/ObjectFile.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/StringRef.h"
-#include "llvm/Support/MemoryBuffer.h"
+#include "llvm/Object/ObjectFile.h"
+#include "llvm/ProfileData/CoverageMapping.h"
+#include "llvm/ProfileData/InstrProf.h"
 #include "llvm/Support/FileSystem.h"
-
+#include "llvm/Support/MemoryBuffer.h"
 #include <iterator>
 
 namespace llvm {

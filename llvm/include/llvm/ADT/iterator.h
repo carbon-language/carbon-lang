@@ -10,8 +10,8 @@
 #ifndef LLVM_ADT_ITERATOR_H
 #define LLVM_ADT_ITERATOR_H
 
-#include <iterator>
 #include <cstddef>
+#include <iterator>
 
 namespace llvm {
 

@@ -8,13 +8,12 @@
 //===----------------------------------------------------------------------===//
 
 #include "DwarfFile.h"
-
 #include "DwarfDebug.h"
 #include "DwarfUnit.h"
+#include "llvm/ADT/STLExtras.h"
+#include "llvm/IR/DataLayout.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/Support/LEB128.h"
-#include "llvm/IR/DataLayout.h"
-#include "llvm/ADT/STLExtras.h"
 #include "llvm/Target/TargetLoweringObjectFile.h"
 
 namespace llvm {

@@ -8,7 +8,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Support/ScaledNumber.h"
-
 #include "llvm/Support/DataTypes.h"
 #include "gtest/gtest.h"
 

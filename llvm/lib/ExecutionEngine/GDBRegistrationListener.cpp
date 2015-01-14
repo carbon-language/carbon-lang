@@ -12,9 +12,9 @@
 #include "llvm/Object/ObjectFile.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/Mutex.h"
 #include "llvm/Support/MutexGuard.h"
-#include "llvm/Support/ManagedStatic.h"
 
 using namespace llvm;
 using namespace llvm::object;

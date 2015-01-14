@@ -14,8 +14,8 @@
 #ifndef LLVM_ANALYSIS_SCALAREVOLUTIONEXPRESSIONS_H
 #define LLVM_ANALYSIS_SCALAREVOLUTIONEXPRESSIONS_H
 
-#include "llvm/ADT/iterator_range.h"
 #include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/ADT/iterator_range.h"
 #include "llvm/Analysis/ScalarEvolution.h"
 #include "llvm/Support/ErrorHandling.h"
 

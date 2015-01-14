@@ -7,9 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 #include "DebugMap.h"
-
-#include "llvm/ADT/iterator_range.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/iterator_range.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/Format.h"
 #include "llvm/Support/raw_ostream.h"

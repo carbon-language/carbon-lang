@@ -36,8 +36,8 @@
 #include "llvm/Support/PrettyStackTrace.h"
 #include "llvm/Support/Program.h"
 #include "llvm/Support/Signals.h"
-#include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/TargetSelect.h"
+#include "llvm/Support/raw_ostream.h"
 #include <algorithm>
 #include <cctype>
 #include <cerrno>

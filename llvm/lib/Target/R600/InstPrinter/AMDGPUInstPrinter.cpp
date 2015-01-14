@@ -9,9 +9,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "AMDGPUInstPrinter.h"
-#include "SIDefines.h"
-
 #include "MCTargetDesc/AMDGPUMCTargetDesc.h"
+#include "SIDefines.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCInstrInfo.h"

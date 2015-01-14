@@ -14,8 +14,8 @@
 #ifndef LLVM_LIB_CODEGEN_ASMPRINTER_DWARFEXPRESSION_H
 #define LLVM_LIB_CODEGEN_ASMPRINTER_DWARFEXPRESSION_H
 
-#include "llvm/Support/DataTypes.h"
 #include "llvm/IR/DebugInfo.h"
+#include "llvm/Support/DataTypes.h"
 
 namespace llvm {
 

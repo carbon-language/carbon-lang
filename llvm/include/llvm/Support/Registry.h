@@ -16,7 +16,6 @@
 
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/Compiler.h"
-
 #include <memory>
 
 namespace llvm {

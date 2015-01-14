@@ -19,7 +19,6 @@
 
 #include "HexagonMCTargetDesc.h"
 #include "llvm/Support/ErrorHandling.h"
-
 #include <stdint.h>
 
 namespace llvm {

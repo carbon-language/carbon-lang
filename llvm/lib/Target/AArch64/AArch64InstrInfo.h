@@ -16,8 +16,8 @@
 
 #include "AArch64.h"
 #include "AArch64RegisterInfo.h"
-#include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/CodeGen/MachineCombinerPattern.h"
+#include "llvm/Target/TargetInstrInfo.h"
 
 #define GET_INSTRINFO_HEADER
 #include "AArch64GenInstrInfo.inc"

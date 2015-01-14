@@ -2,18 +2,18 @@
 //---------------------===//
 
 #include "llvm/CodeGen/FunctionLoweringInfo.h"
+#include "MipsCCState.h"
+#include "MipsISelLowering.h"
+#include "MipsMachineFunction.h"
+#include "MipsRegisterInfo.h"
+#include "MipsSubtarget.h"
+#include "MipsTargetMachine.h"
 #include "llvm/CodeGen/FastISel.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/IR/GlobalAlias.h"
 #include "llvm/IR/GlobalVariable.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetLibraryInfo.h"
-#include "MipsCCState.h"
-#include "MipsRegisterInfo.h"
-#include "MipsISelLowering.h"
-#include "MipsMachineFunction.h"
-#include "MipsSubtarget.h"
-#include "MipsTargetMachine.h"
 
 using namespace llvm;
 

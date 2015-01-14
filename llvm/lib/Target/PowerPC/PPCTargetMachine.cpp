@@ -12,8 +12,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "PPCTargetMachine.h"
-#include "PPCTargetObjectFile.h"
 #include "PPC.h"
+#include "PPCTargetObjectFile.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/IR/Function.h"
 #include "llvm/MC/MCStreamer.h"

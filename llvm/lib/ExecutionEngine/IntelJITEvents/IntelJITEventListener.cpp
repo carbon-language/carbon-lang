@@ -13,21 +13,20 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Config/config.h"
-#include "llvm/ExecutionEngine/JITEventListener.h"
-
-#include "llvm/IR/DebugInfo.h"
-#include "llvm/IR/Function.h"
-#include "llvm/IR/Metadata.h"
+#include "EventListenerCommon.h"
+#include "IntelJITEventsWrapper.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/DebugInfo/DIContext.h"
+#include "llvm/ExecutionEngine/JITEventListener.h"
+#include "llvm/IR/DebugInfo.h"
+#include "llvm/IR/Function.h"
+#include "llvm/IR/Metadata.h"
+#include "llvm/IR/ValueHandle.h"
 #include "llvm/Object/ObjectFile.h"
 #include "llvm/Support/Debug.h"
-#include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Errno.h"
-#include "llvm/IR/ValueHandle.h"
-#include "EventListenerCommon.h"
-#include "IntelJITEventsWrapper.h"
+#include "llvm/Support/raw_ostream.h"
 
 using namespace llvm;
 using namespace llvm::jitprofiling;

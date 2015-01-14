@@ -14,26 +14,25 @@
 #ifndef LLVM_LIB_CODEGEN_ASMPRINTER_DWARFDEBUG_H
 #define LLVM_LIB_CODEGEN_ASMPRINTER_DWARFDEBUG_H
 
-#include "DwarfFile.h"
 #include "AsmPrinterHandler.h"
 #include "DbgValueHistoryCalculator.h"
 #include "DebugLocEntry.h"
 #include "DebugLocList.h"
 #include "DwarfAccelTable.h"
+#include "DwarfFile.h"
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/MapVector.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/StringMap.h"
-#include "llvm/ADT/FoldingSet.h"
 #include "llvm/CodeGen/DIE.h"
 #include "llvm/CodeGen/LexicalScopes.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/IR/DebugInfo.h"
 #include "llvm/IR/DebugLoc.h"
-#include "llvm/MC/MachineLocation.h"
 #include "llvm/MC/MCDwarf.h"
+#include "llvm/MC/MachineLocation.h"
 #include "llvm/Support/Allocator.h"
-
 #include <memory>
 
 namespace llvm {

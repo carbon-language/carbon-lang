@@ -37,7 +37,6 @@
 #include "llvm/ADT/StringMap.h"
 #include "llvm/IR/DebugLoc.h"
 #include "llvm/Pass.h"
-
 #include <memory>
 
 namespace llvm {

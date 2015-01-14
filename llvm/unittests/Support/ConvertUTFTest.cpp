@@ -10,8 +10,8 @@
 #include "llvm/Support/ConvertUTF.h"
 #include "gtest/gtest.h"
 #include <string>
-#include <vector>
 #include <utility>
+#include <vector>
 
 using namespace llvm;
 

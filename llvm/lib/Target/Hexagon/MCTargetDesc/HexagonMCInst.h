@@ -16,7 +16,6 @@
 
 #include "HexagonTargetMachine.h"
 #include "llvm/MC/MCInst.h"
-
 #include <memory>
 
 extern "C" void LLVMInitializeHexagonTargetMC();

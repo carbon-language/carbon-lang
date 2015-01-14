@@ -14,9 +14,9 @@
 #ifndef LLVM_SUPPORT_COMPRESSION_H
 #define LLVM_SUPPORT_COMPRESSION_H
 
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/DataTypes.h"
 #include <memory>
-#include "llvm/ADT/SmallVector.h"
 
 namespace llvm {
 

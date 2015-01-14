@@ -15,13 +15,14 @@
 #include "ARMFrameLowering.h"
 #include "ARMISelLowering.h"
 #include "ARMInstrInfo.h"
+#include "ARMMachineFunctionInfo.h"
 #include "ARMSelectionDAGInfo.h"
 #include "ARMSubtarget.h"
-#include "ARMMachineFunctionInfo.h"
 #include "ARMTargetMachine.h"
 #include "Thumb1FrameLowering.h"
 #include "Thumb1InstrInfo.h"
 #include "Thumb2InstrInfo.h"
+#include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/IR/Attributes.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/GlobalValue.h"
@@ -29,7 +30,6 @@
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Target/TargetRegisterInfo.h"
-#include "llvm/CodeGen/MachineRegisterInfo.h"
 
 using namespace llvm;
 

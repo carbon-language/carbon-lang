@@ -11,8 +11,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "ARM.h"
-#include "ARMTargetMachine.h"
 #include "ARMFrameLowering.h"
+#include "ARMTargetMachine.h"
 #include "ARMTargetObjectFile.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/IR/Function.h"

@@ -16,11 +16,11 @@
 #include "NVPTX.h"
 #include "NVPTXMachineFunctionInfo.h"
 #include "NVPTXSubtarget.h"
+#include "llvm/ADT/DenseSet.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/ADT/DenseSet.h"
 
 using namespace llvm;
 

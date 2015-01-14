@@ -18,9 +18,9 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/CodeGen/CallingConvLower.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
-#include "llvm/Target/TargetLowering.h"
 #include "llvm/IR/CallingConv.h"
 #include "llvm/IR/IntrinsicInst.h"
+#include "llvm/Target/TargetLowering.h"
 
 namespace llvm {
 

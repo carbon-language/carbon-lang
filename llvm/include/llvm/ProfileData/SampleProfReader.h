@@ -14,12 +14,12 @@
 #define LLVM_PROFILEDATA_SAMPLEPROFREADER_H
 
 #include "llvm/ADT/DenseMap.h"
-#include "llvm/IR/DiagnosticInfo.h"
-#include "llvm/IR/Function.h"
-#include "llvm/IR/LLVMContext.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/Twine.h"
+#include "llvm/IR/DiagnosticInfo.h"
+#include "llvm/IR/Function.h"
+#include "llvm/IR/LLVMContext.h"
 #include "llvm/ProfileData/SampleProf.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"

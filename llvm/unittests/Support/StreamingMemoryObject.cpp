@@ -9,7 +9,6 @@
 
 #include "llvm/Support/StreamingMemoryObject.h"
 #include "gtest/gtest.h"
-
 #include <string.h>
 
 using namespace llvm;

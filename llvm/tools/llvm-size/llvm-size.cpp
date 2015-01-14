@@ -15,9 +15,9 @@
 
 #include "llvm/ADT/APInt.h"
 #include "llvm/Object/Archive.h"
-#include "llvm/Object/ObjectFile.h"
 #include "llvm/Object/MachO.h"
 #include "llvm/Object/MachOUniversal.h"
+#include "llvm/Object/ObjectFile.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/FileSystem.h"

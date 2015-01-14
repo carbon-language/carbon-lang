@@ -33,10 +33,10 @@
 #ifndef LLVM_ADT_DEPTHFIRSTITERATOR_H
 #define LLVM_ADT_DEPTHFIRSTITERATOR_H
 
-#include "llvm/ADT/iterator_range.h"
 #include "llvm/ADT/GraphTraits.h"
 #include "llvm/ADT/PointerIntPair.h"
 #include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/ADT/iterator_range.h"
 #include <set>
 #include <vector>
 

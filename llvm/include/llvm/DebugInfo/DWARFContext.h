@@ -12,6 +12,7 @@
 
 #include "llvm/ADT/MapVector.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/DebugInfo/DIContext.h"
 #include "llvm/DebugInfo/DWARFCompileUnit.h"
 #include "llvm/DebugInfo/DWARFDebugAranges.h"
 #include "llvm/DebugInfo/DWARFDebugFrame.h"
@@ -20,7 +21,6 @@
 #include "llvm/DebugInfo/DWARFDebugRangeList.h"
 #include "llvm/DebugInfo/DWARFSection.h"
 #include "llvm/DebugInfo/DWARFTypeUnit.h"
-#include "llvm/DebugInfo/DIContext.h"
 #include <vector>
 
 namespace llvm {

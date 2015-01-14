@@ -12,11 +12,10 @@
 //===----------------------------------------------------------------------===//
 
 #include "DwarfDebug.h"
-
 #include "ByteStreamer.h"
-#include "DwarfExpression.h"
-#include "DwarfCompileUnit.h"
 #include "DIEHash.h"
+#include "DwarfCompileUnit.h"
+#include "DwarfExpression.h"
 #include "DwarfUnit.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/Statistic.h"

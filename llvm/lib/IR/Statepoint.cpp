@@ -13,9 +13,8 @@
 #include "llvm/IR/Function.h"
 #include "llvm/IR/Constant.h"
 #include "llvm/IR/Constants.h"
-#include "llvm/Support/CommandLine.h"
-
 #include "llvm/IR/Statepoint.h"
+#include "llvm/Support/CommandLine.h"
 
 using namespace std;
 using namespace llvm;

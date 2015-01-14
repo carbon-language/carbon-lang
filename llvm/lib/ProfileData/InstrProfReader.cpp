@@ -13,10 +13,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/ProfileData/InstrProfReader.h"
-#include "llvm/ProfileData/InstrProf.h"
-
 #include "InstrProfIndexed.h"
-
+#include "llvm/ProfileData/InstrProf.h"
 #include <cassert>
 
 using namespace llvm;

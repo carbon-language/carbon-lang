@@ -18,9 +18,9 @@
 
 #include "PPC.h"
 #include "InstPrinter/PPCInstPrinter.h"
-#include "PPCMachineFunctionInfo.h"
 #include "MCTargetDesc/PPCMCExpr.h"
 #include "MCTargetDesc/PPCPredicates.h"
+#include "PPCMachineFunctionInfo.h"
 #include "PPCSubtarget.h"
 #include "PPCTargetMachine.h"
 #include "PPCTargetStreamer.h"

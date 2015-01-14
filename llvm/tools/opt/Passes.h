@@ -17,8 +17,8 @@
 #define LLVM_TOOLS_OPT_PASSES_H
 
 #include "llvm/ADT/StringRef.h"
-#include "llvm/IR/PassManager.h"
 #include "llvm/Analysis/CGSCCPassManager.h"
+#include "llvm/IR/PassManager.h"
 
 namespace llvm {
 

@@ -23,10 +23,10 @@
 #include "llvm/IR/OperandTraits.h"
 #include "llvm/IR/Operator.h"
 #include "llvm/Support/DataStream.h"
+#include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/Support/ManagedStatic.h"
 
 using namespace llvm;
 

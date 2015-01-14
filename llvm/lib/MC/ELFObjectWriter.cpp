@@ -31,8 +31,8 @@
 #include "llvm/MC/StringTableBuilder.h"
 #include "llvm/Support/Compression.h"
 #include "llvm/Support/Debug.h"
-#include "llvm/Support/Endian.h"
 #include "llvm/Support/ELF.h"
+#include "llvm/Support/Endian.h"
 #include "llvm/Support/ErrorHandling.h"
 #include <vector>
 using namespace llvm;

@@ -14,8 +14,8 @@
 #include "CoverageReport.h"
 #include "CoverageSummary.h"
 #include "RenderingSupport.h"
-#include "llvm/Support/Format.h"
 #include "llvm/Support/FileSystem.h"
+#include "llvm/Support/Format.h"
 
 using namespace llvm;
 namespace {

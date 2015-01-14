@@ -15,8 +15,8 @@
 #define LLVM_LIB_TARGET_HEXAGON_HEXAGONSUBTARGET_H
 
 #include "HexagonFrameLowering.h"
-#include "HexagonInstrInfo.h"
 #include "HexagonISelLowering.h"
+#include "HexagonInstrInfo.h"
 #include "HexagonSelectionDAGInfo.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/Target/TargetMachine.h"

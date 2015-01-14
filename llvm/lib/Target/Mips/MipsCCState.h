@@ -10,9 +10,9 @@
 #ifndef MIPSCCSTATE_H
 #define MIPSCCSTATE_H
 
+#include "MipsISelLowering.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/CodeGen/CallingConvLower.h"
-#include "MipsISelLowering.h"
 
 namespace llvm {
 class SDNode;

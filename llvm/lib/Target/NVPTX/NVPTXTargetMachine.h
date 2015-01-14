@@ -14,8 +14,8 @@
 #ifndef LLVM_LIB_TARGET_NVPTX_NVPTXTARGETMACHINE_H
 #define LLVM_LIB_TARGET_NVPTX_NVPTXTARGETMACHINE_H
 
-#include "NVPTXSubtarget.h"
 #include "ManagedStringPool.h"
+#include "NVPTXSubtarget.h"
 #include "llvm/Target/TargetFrameLowering.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetSelectionDAGInfo.h"

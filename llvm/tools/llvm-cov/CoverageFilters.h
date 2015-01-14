@@ -15,8 +15,8 @@
 #define LLVM_COV_COVERAGEFILTERS_H
 
 #include "llvm/ProfileData/CoverageMapping.h"
-#include <vector>
 #include <memory>
+#include <vector>
 
 namespace llvm {
 

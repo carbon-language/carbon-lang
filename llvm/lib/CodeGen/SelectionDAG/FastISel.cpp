@@ -40,12 +40,12 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/CodeGen/Analysis.h"
-#include "llvm/CodeGen/FastISel.h"
 #include "llvm/ADT/Optional.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/BranchProbabilityInfo.h"
 #include "llvm/Analysis/Loads.h"
 #include "llvm/CodeGen/Analysis.h"
+#include "llvm/CodeGen/FastISel.h"
 #include "llvm/CodeGen/FunctionLoweringInfo.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"

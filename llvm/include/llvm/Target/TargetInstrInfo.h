@@ -14,10 +14,10 @@
 #ifndef LLVM_TARGET_TARGETINSTRINFO_H
 #define LLVM_TARGET_TARGETINSTRINFO_H
 
-#include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/DenseMap.h"
-#include "llvm/CodeGen/MachineFunction.h"
+#include "llvm/ADT/SmallSet.h"
 #include "llvm/CodeGen/MachineCombinerPattern.h"
+#include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/MC/MCInstrInfo.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 

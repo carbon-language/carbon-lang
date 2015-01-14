@@ -15,8 +15,8 @@
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/ConvertUTF.h"
 #include "llvm/Support/FileSystem.h"
-#include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/WindowsError.h"
+#include "llvm/Support/raw_ostream.h"
 #include <cstdio>
 #include <fcntl.h>
 #include <io.h>

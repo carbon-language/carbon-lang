@@ -18,7 +18,6 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Pass.h"
 #include "llvm/Target/TargetOptions.h"
-
 #include <string>
 
 namespace llvm {

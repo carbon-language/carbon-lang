@@ -8,9 +8,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/ADT/SmallString.h"
+#include "llvm/AsmParser/Parser.h"
 #include "llvm/Bitcode/BitstreamWriter.h"
 #include "llvm/Bitcode/ReaderWriter.h"
-#include "llvm/AsmParser/Parser.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/LLVMContext.h"

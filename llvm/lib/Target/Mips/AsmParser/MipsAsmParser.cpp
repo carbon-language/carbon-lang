@@ -12,8 +12,8 @@
 #include "MipsRegisterInfo.h"
 #include "MipsTargetStreamer.h"
 #include "llvm/ADT/APInt.h"
-#include "llvm/ADT/StringSwitch.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/StringSwitch.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
@@ -26,8 +26,8 @@
 #include "llvm/MC/MCTargetAsmParser.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/MathExtras.h"
-#include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/SourceMgr.h"
+#include "llvm/Support/TargetRegistry.h"
 #include <memory>
 
 using namespace llvm;

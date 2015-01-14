@@ -16,8 +16,8 @@
 
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/Triple.h"
-#include "llvm/Object/Binary.h"
 #include "llvm/Object/Archive.h"
+#include "llvm/Object/Binary.h"
 #include "llvm/Object/MachO.h"
 #include "llvm/Support/ErrorOr.h"
 #include "llvm/Support/MachO.h"

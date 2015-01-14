@@ -16,8 +16,8 @@
 #ifndef LLVM_ANALYSIS_FUNCTIONTARGETTRANSFORMINFO_H
 #define LLVM_ANALYSIS_FUNCTIONTARGETTRANSFORMINFO_H
 
-#include "llvm/Pass.h"
 #include "TargetTransformInfo.h"
+#include "llvm/Pass.h"
 
 namespace llvm {
 class FunctionTargetTransformInfo final : public FunctionPass {

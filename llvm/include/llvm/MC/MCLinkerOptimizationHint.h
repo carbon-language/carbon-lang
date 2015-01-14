@@ -18,8 +18,8 @@
 #define LLVM_MC_MCLINKEROPTIMIZATIONHINT_H
 
 #include "llvm/ADT/SmallVector.h"
-#include "llvm/ADT/StringSwitch.h"
 #include "llvm/ADT/StringRef.h"
+#include "llvm/ADT/StringSwitch.h"
 #include "llvm/MC/MCMachObjectWriter.h"
 #include "llvm/Support/raw_ostream.h"
 

@@ -14,8 +14,8 @@
 #ifndef LLVM_COV_COVERAGEREPORT_H
 #define LLVM_COV_COVERAGEREPORT_H
 
-#include "CoverageViewOptions.h"
 #include "CoverageSummary.h"
+#include "CoverageViewOptions.h"
 
 namespace llvm {
 

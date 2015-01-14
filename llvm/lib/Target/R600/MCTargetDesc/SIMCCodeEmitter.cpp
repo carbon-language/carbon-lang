@@ -14,10 +14,10 @@
 //===----------------------------------------------------------------------===//
 
 #include "AMDGPU.h"
-#include "SIDefines.h"
-#include "MCTargetDesc/AMDGPUMCTargetDesc.h"
-#include "MCTargetDesc/AMDGPUMCCodeEmitter.h"
 #include "MCTargetDesc/AMDGPUFixupKinds.h"
+#include "MCTargetDesc/AMDGPUMCCodeEmitter.h"
+#include "MCTargetDesc/AMDGPUMCTargetDesc.h"
+#include "SIDefines.h"
 #include "llvm/MC/MCCodeEmitter.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCFixup.h"

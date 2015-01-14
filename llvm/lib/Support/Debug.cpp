@@ -25,9 +25,9 @@
 
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/Signals.h"
 #include "llvm/Support/circular_raw_ostream.h"
-#include "llvm/Support/ManagedStatic.h"
 
 using namespace llvm;
 

@@ -14,6 +14,7 @@
 #ifndef LLVM_LIB_PROFILEDATA_INSTRPROFINDEXED_H
 #define LLVM_LIB_PROFILEDATA_INSTRPROFINDEXED_H
 
+#include "llvm/Support/Endian.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MD5.h"
 

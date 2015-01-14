@@ -13,19 +13,17 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Config/config.h"
-#include "llvm/ExecutionEngine/JITEventListener.h"
-
-#include "llvm/IR/DebugInfo.h"
-#include "llvm/IR/Function.h"
+#include "EventListenerCommon.h"
 #include "llvm/CodeGen/MachineFunction.h"
+#include "llvm/ExecutionEngine/JITEventListener.h"
 #include "llvm/ExecutionEngine/OProfileWrapper.h"
 #include "llvm/ExecutionEngine/RuntimeDyld.h"
+#include "llvm/IR/DebugInfo.h"
+#include "llvm/IR/Function.h"
 #include "llvm/Object/ObjectFile.h"
 #include "llvm/Support/Debug.h"
-#include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Errno.h"
-#include "EventListenerCommon.h"
-
+#include "llvm/Support/raw_ostream.h"
 #include <dirent.h>
 #include <fcntl.h>
 

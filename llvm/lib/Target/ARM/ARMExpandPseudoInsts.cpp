@@ -22,8 +22,8 @@
 #include "MCTargetDesc/ARMAddressingModes.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
-#include "llvm/CodeGen/MachineInstrBundle.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
+#include "llvm/CodeGen/MachineInstrBundle.h"
 #include "llvm/IR/GlobalValue.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/raw_ostream.h" // FIXME: for debug only. remove!

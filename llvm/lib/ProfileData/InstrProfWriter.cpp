@@ -13,11 +13,10 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/ProfileData/InstrProfWriter.h"
+#include "InstrProfIndexed.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/EndianStream.h"
 #include "llvm/Support/OnDiskHashTable.h"
-
-#include "InstrProfIndexed.h"
 
 using namespace llvm;
 

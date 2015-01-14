@@ -18,8 +18,8 @@
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/IR/BasicBlock.h"
-#include "llvm/Target/TargetSubtargetInfo.h"
 #include "llvm/Pass.h"
+#include "llvm/Target/TargetSubtargetInfo.h"
 
 namespace llvm {
   class FastISel;

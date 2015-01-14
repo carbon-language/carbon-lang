@@ -12,13 +12,12 @@
 //===----------------------------------------------------------------------===//
 
 #include "RuntimeDyldMachO.h"
-#include "llvm/ADT/STLExtras.h"
-#include "llvm/ADT/StringRef.h"
-
-#include "Targets/RuntimeDyldMachOARM.h"
 #include "Targets/RuntimeDyldMachOAArch64.h"
+#include "Targets/RuntimeDyldMachOARM.h"
 #include "Targets/RuntimeDyldMachOI386.h"
 #include "Targets/RuntimeDyldMachOX86_64.h"
+#include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/StringRef.h"
 
 using namespace llvm;
 using namespace llvm::object;

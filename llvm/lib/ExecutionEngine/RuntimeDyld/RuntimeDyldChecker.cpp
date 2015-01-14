@@ -8,13 +8,13 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/ADT/STLExtras.h"
+#include "RuntimeDyldCheckerImpl.h"
+#include "RuntimeDyldImpl.h"
 #include "llvm/ExecutionEngine/RuntimeDyldChecker.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCDisassembler.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/Support/Path.h"
-#include "RuntimeDyldCheckerImpl.h"
-#include "RuntimeDyldImpl.h"
 #include <cctype>
 #include <memory>
 

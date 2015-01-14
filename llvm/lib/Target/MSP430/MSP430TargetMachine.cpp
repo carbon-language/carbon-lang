@@ -12,9 +12,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "MSP430TargetMachine.h"
-#include "llvm/CodeGen/TargetLoweringObjectFileImpl.h"
 #include "MSP430.h"
 #include "llvm/CodeGen/Passes.h"
+#include "llvm/CodeGen/TargetLoweringObjectFileImpl.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/PassManager.h"
 #include "llvm/Support/TargetRegistry.h"

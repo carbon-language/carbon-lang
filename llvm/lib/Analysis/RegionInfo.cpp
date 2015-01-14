@@ -10,10 +10,10 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Analysis/RegionInfo.h"
-#include "llvm/Analysis/RegionInfoImpl.h"
 #include "llvm/ADT/PostOrderIterator.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/LoopInfo.h"
+#include "llvm/Analysis/RegionInfoImpl.h"
 #include "llvm/Analysis/RegionIterator.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"

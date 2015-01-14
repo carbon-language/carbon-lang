@@ -10,7 +10,6 @@
 #include "MCTargetDesc/HexagonBaseInfo.h"
 #include "MCTargetDesc/HexagonMCInst.h"
 #include "MCTargetDesc/HexagonMCTargetDesc.h"
-
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCDisassembler.h"
 #include "llvm/MC/MCExpr.h"
@@ -19,14 +18,13 @@
 #include "llvm/MC/MCInstrDesc.h"
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/Endian.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/LEB128.h"
-#include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/TargetRegistry.h"
-#include "llvm/Support/Endian.h"
-
-#include <vector>
+#include "llvm/Support/raw_ostream.h"
 #include <array>
+#include <vector>
 
 using namespace llvm;
 

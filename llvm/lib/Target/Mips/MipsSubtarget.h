@@ -14,6 +14,7 @@
 #ifndef LLVM_LIB_TARGET_MIPS_MIPSSUBTARGET_H
 #define LLVM_LIB_TARGET_MIPS_MIPSSUBTARGET_H
 
+#include "MCTargetDesc/MipsABIInfo.h"
 #include "MipsFrameLowering.h"
 #include "MipsISelLowering.h"
 #include "MipsInstrInfo.h"
@@ -22,7 +23,6 @@
 #include "llvm/MC/MCInstrItineraries.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Target/TargetSubtargetInfo.h"
-#include "MCTargetDesc/MipsABIInfo.h"
 #include <string>
 
 #define GET_SUBTARGETINFO_HEADER

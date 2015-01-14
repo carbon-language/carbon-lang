@@ -15,8 +15,8 @@
 #define LLVM_LIB_TARGET_POWERPC_PPCSUBTARGET_H
 
 #include "PPCFrameLowering.h"
-#include "PPCInstrInfo.h"
 #include "PPCISelLowering.h"
+#include "PPCInstrInfo.h"
 #include "PPCSelectionDAGInfo.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/IR/DataLayout.h"

@@ -16,7 +16,6 @@
 
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/Pass.h"
-
 #include <vector>
 
 namespace llvm {

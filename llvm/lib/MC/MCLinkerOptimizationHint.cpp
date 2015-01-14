@@ -9,8 +9,8 @@
 
 #include "llvm/MC/MCLinkerOptimizationHint.h"
 #include "llvm/MC/MCAsmLayout.h"
-#include "llvm/Support/LEB128.h"
 #include "llvm/MC/MCStreamer.h"
+#include "llvm/Support/LEB128.h"
 
 using namespace llvm;
 

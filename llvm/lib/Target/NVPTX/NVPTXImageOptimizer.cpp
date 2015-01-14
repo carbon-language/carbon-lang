@@ -16,11 +16,11 @@
 
 #include "NVPTX.h"
 #include "NVPTXUtilities.h"
+#include "llvm/Analysis/ConstantFolding.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/Intrinsics.h"
 #include "llvm/IR/Module.h"
 #include "llvm/Pass.h"
-#include "llvm/Analysis/ConstantFolding.h"
 
 using namespace llvm;
 

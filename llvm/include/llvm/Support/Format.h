@@ -25,7 +25,6 @@
 
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/DataTypes.h"
-
 #include <cassert>
 #include <cstdio>
 #ifdef _MSC_VER

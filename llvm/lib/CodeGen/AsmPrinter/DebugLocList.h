@@ -10,8 +10,8 @@
 #ifndef LLVM_LIB_CODEGEN_ASMPRINTER_DEBUGLOCLIST_H
 #define LLVM_LIB_CODEGEN_ASMPRINTER_DEBUGLOCLIST_H
 
-#include "llvm/ADT/SmallVector.h"
 #include "DebugLocEntry.h"
+#include "llvm/ADT/SmallVector.h"
 
 namespace llvm {
 class DwarfCompileUnit;

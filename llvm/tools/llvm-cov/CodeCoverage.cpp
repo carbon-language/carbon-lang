@@ -14,23 +14,23 @@
 //===----------------------------------------------------------------------===//
 
 #include "RenderingSupport.h"
-#include "CoverageViewOptions.h"
 #include "CoverageFilters.h"
-#include "SourceCoverageView.h"
-#include "CoverageSummary.h"
 #include "CoverageReport.h"
-#include "llvm/ADT/StringRef.h"
+#include "CoverageSummary.h"
+#include "CoverageViewOptions.h"
+#include "SourceCoverageView.h"
 #include "llvm/ADT/SmallString.h"
-#include "llvm/ProfileData/InstrProfReader.h"
+#include "llvm/ADT/StringRef.h"
 #include "llvm/ProfileData/CoverageMapping.h"
 #include "llvm/ProfileData/CoverageMappingReader.h"
+#include "llvm/ProfileData/InstrProfReader.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/FileSystem.h"
-#include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/Format.h"
+#include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/Path.h"
-#include "llvm/Support/Signals.h"
 #include "llvm/Support/PrettyStackTrace.h"
+#include "llvm/Support/Signals.h"
 #include <functional>
 #include <system_error>
 

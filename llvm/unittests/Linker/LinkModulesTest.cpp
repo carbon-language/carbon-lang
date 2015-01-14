@@ -8,12 +8,12 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/AsmParser/Parser.h"
-#include "llvm/Linker/Linker.h"
 #include "llvm/IR/BasicBlock.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/Module.h"
+#include "llvm/Linker/Linker.h"
 #include "llvm/Support/SourceMgr.h"
 #include "gtest/gtest.h"
 

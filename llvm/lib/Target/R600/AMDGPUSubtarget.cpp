@@ -16,10 +16,8 @@
 #include "R600ISelLowering.h"
 #include "R600InstrInfo.h"
 #include "R600MachineScheduler.h"
-#include "SIInstrInfo.h"
 #include "SIISelLowering.h"
-#include "llvm/ADT/SmallString.h"
-
+#include "SIInstrInfo.h"
 #include "llvm/ADT/SmallString.h"
 
 using namespace llvm;

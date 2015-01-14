@@ -16,10 +16,10 @@
 
 #include "ARMSubtarget.h"
 #include "llvm/ADT/BitVector.h"
+#include "llvm/ADT/DenseMap.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetRegisterInfo.h"
-#include "llvm/ADT/DenseMap.h"
 
 namespace llvm {
 

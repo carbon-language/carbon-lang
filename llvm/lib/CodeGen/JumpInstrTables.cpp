@@ -13,7 +13,6 @@
 #define DEBUG_TYPE "jt"
 
 #include "llvm/CodeGen/JumpInstrTables.h"
-
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/JumpInstrTableInfo.h"
 #include "llvm/CodeGen/Passes.h"
@@ -30,7 +29,6 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
-
 #include <vector>
 
 using namespace llvm;
