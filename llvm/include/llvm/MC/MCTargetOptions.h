@@ -10,7 +10,11 @@
 #ifndef LLVM_MC_MCTARGETOPTIONS_H
 #define LLVM_MC_MCTARGETOPTIONS_H
 
+#include <string>
+
 namespace llvm {
+
+class StringRef;
 
 class MCTargetOptions {
 public:
@@ -31,6 +35,11 @@ public:
   bool ShowMCInst : 1;
   bool AsmVerbose : 1;
   int DwarfVersion;
+  /// getABIName - If this returns a non-empty string this represents the
+  /// textual name of the ABI that we want the backend to use, e.g. o32, or
+  /// aapcs-linux.
+  StringRef getABIName() const;
+  std::string ABIName;
   MCTargetOptions();
 };
 
@@ -45,7 +54,8 @@ inline bool operator==(const MCTargetOptions &LHS, const MCTargetOptions &RHS) {
           ARE_EQUAL(ShowMCEncoding) &&
           ARE_EQUAL(ShowMCInst) &&
           ARE_EQUAL(AsmVerbose) &&
-          ARE_EQUAL(DwarfVersion));
+          ARE_EQUAL(DwarfVersion) &&
+	  ARE_EQUAL(ABIName));
 #undef ARE_EQUAL
 }
 

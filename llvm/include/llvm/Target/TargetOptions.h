@@ -79,7 +79,7 @@ namespace llvm {
           UseInitArray(false), DisableIntegratedAS(false),
           CompressDebugSections(false), FunctionSections(false),
           DataSections(false), TrapUnreachable(false), TrapFuncName(),
-          ABIName(), FloatABIType(FloatABI::Default),
+          FloatABIType(FloatABI::Default),
           AllowFPOpFusion(FPOpFusion::Standard), JTType(JumpTable::Single),
           FCFI(false), ThreadModel(ThreadModel::POSIX),
           CFIType(CFIntegrity::Sub), CFIEnforcing(false), CFIFuncName() {}
@@ -207,12 +207,6 @@ namespace llvm {
     std::string TrapFuncName;
     StringRef getTrapFunctionName() const;
 
-    /// getABIName - If this returns a non-empty string this represents the
-    /// textual name of the ABI that we want the backend to use, e.g. o32, or
-    /// aapcs-linux.
-    std::string ABIName;
-    StringRef getABIName() const;
-
     /// FloatABIType - This setting is set by -float-abi=xxx option is specfied
     /// on the command line. This setting may either be Default, Soft, or Hard.
     /// Default selects the target's default behavior. Soft selects the ABI for
@@ -292,7 +286,6 @@ inline bool operator==(const TargetOptions &LHS,
     ARE_EQUAL(UseInitArray) &&
     ARE_EQUAL(TrapUnreachable) &&
     ARE_EQUAL(TrapFuncName) &&
-    ARE_EQUAL(ABIName) &&
     ARE_EQUAL(FloatABIType) &&
     ARE_EQUAL(AllowFPOpFusion) &&
     ARE_EQUAL(JTType) &&

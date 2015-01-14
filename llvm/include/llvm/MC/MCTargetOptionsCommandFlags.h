@@ -40,6 +40,11 @@ cl::opt<bool> ShowMCInst("asm-show-inst",
                          cl::desc("Emit internal instruction representation to "
                                   "assembly file"));
 
+cl::opt<std::string>
+ABIName("target-abi", cl::Hidden,
+        cl::desc("The name of the ABI to be targeted from the backend."),
+        cl::init(""));
+
 static inline MCTargetOptions InitMCTargetOptionsFromFlags() {
   MCTargetOptions Options;
   Options.SanitizeAddress =
@@ -47,6 +52,7 @@ static inline MCTargetOptions InitMCTargetOptionsFromFlags() {
   Options.MCRelaxAll = RelaxAll;
   Options.DwarfVersion = DwarfVersion;
   Options.ShowMCInst = ShowMCInst;
+  Options.ABIName = ABIName;
   return Options;
 }
 
