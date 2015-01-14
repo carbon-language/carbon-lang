@@ -554,7 +554,7 @@ CountValue *HexagonHardwareLoops::getLoopTripCount(MachineLoop *L,
       break;
     // Very limited support for byte/halfword compares.
     case Hexagon::A4_cmpbeqi:
-    case Hexagon::CMPhEQri_V4: {
+    case Hexagon::A4_cmpheqi: {
       if (IVBump != 1)
         return nullptr;
 
