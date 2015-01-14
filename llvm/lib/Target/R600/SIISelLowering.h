@@ -50,8 +50,8 @@ class SITargetLowering : public AMDGPUTargetLowering {
   void adjustWritemask(MachineSDNode *&N, SelectionDAG &DAG) const;
   MachineSDNode *AdjustRegClass(MachineSDNode *N, SelectionDAG &DAG) const;
 
-  static SDValue performUCharToFloatCombine(SDNode *N,
-                                            DAGCombinerInfo &DCI);
+  SDValue performUCharToFloatCombine(SDNode *N,
+                                     DAGCombinerInfo &DCI) const;
   SDValue performSHLPtrCombine(SDNode *N,
                                unsigned AS,
                                DAGCombinerInfo &DCI) const;

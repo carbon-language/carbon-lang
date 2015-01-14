@@ -36,7 +36,7 @@ define void @load_v2i8_to_v2f32(<2 x float> addrspace(1)* noalias %out, <2 x i8>
 ; SI-DAG: v_cvt_f32_ubyte0_e32
 ; SI: buffer_store_dwordx2 v{{\[}}[[LORESULT]]:[[HIRESULT]]{{\]}},
 define void @load_v3i8_to_v3f32(<3 x float> addrspace(1)* noalias %out, <3 x i8> addrspace(1)* noalias %in) nounwind {
-  %load = load <3 x i8> addrspace(1)* %in, align 1
+  %load = load <3 x i8> addrspace(1)* %in, align 4
   %cvt = uitofp <3 x i8> %load to <3 x float>
   store <3 x float> %cvt, <3 x float> addrspace(1)* %out, align 16
   ret void
@@ -66,23 +66,13 @@ define void @load_v4i8_to_v4f32(<4 x float> addrspace(1)* noalias %out, <4 x i8>
 ; SI: buffer_load_ubyte [[LOADREG1:v[0-9]+]]
 ; SI: buffer_load_ubyte [[LOADREG2:v[0-9]+]]
 ; SI: buffer_load_ubyte [[LOADREG3:v[0-9]+]]
+; SI-NOT: v_lshlrev_b32
+; SI-NOT: v_or_b32
 
-; SI: v_lshlrev_b32
-; SI: v_or_b32
-; SI: v_lshlrev_b32
-; SI: v_or_b32
-; SI: v_lshlrev_b32
-; SI: v_or_b32
-
-; XSI-DAG: v_cvt_f32_ubyte0_e32 v[[HIRESULT:[0-9]+]], [[LOADREG0]]
-; XSI-DAG: v_cvt_f32_ubyte0_e32 v{{[0-9]+}}, [[LOADREG1]]
-; XSI-DAG: v_cvt_f32_ubyte0_e32 v{{[0-9]+}}, [[LOADREG2]]
-; XSI-DAG: v_cvt_f32_ubyte0_e32 v[[LORESULT:[0-9]+]], [[LOADREG3]]
-
-; SI-DAG: v_cvt_f32_ubyte0_e32
-; SI-DAG: v_cvt_f32_ubyte1_e32
-; SI-DAG: v_cvt_f32_ubyte2_e32
-; SI-DAG: v_cvt_f32_ubyte3_e32
+; SI-DAG: v_cvt_f32_ubyte0_e32 v[[LORESULT:[0-9]+]], [[LOADREG0]]
+; SI-DAG: v_cvt_f32_ubyte0_e32 v{{[0-9]+}}, [[LOADREG1]]
+; SI-DAG: v_cvt_f32_ubyte0_e32 v{{[0-9]+}}, [[LOADREG2]]
+; SI-DAG: v_cvt_f32_ubyte0_e32 v[[HIRESULT:[0-9]+]], [[LOADREG3]]
 
 ; SI: buffer_store_dwordx4 v{{\[}}[[LORESULT]]:[[HIRESULT]]{{\]}},
 define void @load_v4i8_to_v4f32_unaligned(<4 x float> addrspace(1)* noalias %out, <4 x i8> addrspace(1)* noalias %in) nounwind {

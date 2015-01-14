@@ -302,7 +302,7 @@ bool SITargetLowering::isLegalAddressingMode(const AddrMode &AM,
   return true;
 }
 
-bool SITargetLowering::allowsMisalignedMemoryAccesses(EVT  VT,
+bool SITargetLowering::allowsMisalignedMemoryAccesses(EVT VT,
                                                       unsigned AddrSpace,
                                                       unsigned Align,
                                                       bool *IsFast) const {
@@ -1167,7 +1167,7 @@ SDValue SITargetLowering::LowerTrig(SDValue Op, SelectionDAG &DAG) const {
 //===----------------------------------------------------------------------===//
 
 SDValue SITargetLowering::performUCharToFloatCombine(SDNode *N,
-                                                     DAGCombinerInfo &DCI) {
+                                                     DAGCombinerInfo &DCI) const {
   EVT VT = N->getValueType(0);
   EVT ScalarVT = VT.getScalarType();
   if (ScalarVT != MVT::f32)
@@ -1215,8 +1215,21 @@ SDValue SITargetLowering::performUCharToFloatCombine(SDNode *N,
     EVT LoadVT = getEquivalentMemType(*DAG.getContext(), SrcVT);
     EVT RegVT = getEquivalentLoadRegType(*DAG.getContext(), SrcVT);
     EVT FloatVT = EVT::getVectorVT(*DAG.getContext(), MVT::f32, NElts);
-
     LoadSDNode *Load = cast<LoadSDNode>(Src);
+
+    unsigned AS = Load->getAddressSpace();
+    unsigned Align = Load->getAlignment();
+    Type *Ty = LoadVT.getTypeForEVT(*DAG.getContext());
+    unsigned ABIAlignment = getDataLayout()->getABITypeAlignment(Ty);
+
+    // Don't try to replace the load if we have to expand it due to alignment
+    // problems. Otherwise we will end up scalarizing the load, and trying to
+    // repack into the vector for no real reason.
+    if (Align < ABIAlignment &&
+        !allowsMisalignedMemoryAccesses(LoadVT, AS, Align, nullptr)) {
+      return SDValue();
+    }
+
     SDValue NewLoad = DAG.getExtLoad(ISD::ZEXTLOAD, DL, RegVT,
                                      Load->getChain(),
                                      Load->getBasePtr(),
