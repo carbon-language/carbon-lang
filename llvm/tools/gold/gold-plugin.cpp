@@ -633,7 +633,7 @@ getModuleForFile(LLVMContext &Context, claimed_file &F, raw_fd_ostream *ApiFile,
       break;
 
     case LDPR_UNDEF:
-      if (!GV->hasExternalWeakLinkage()) {
+      if (!GV->isDeclarationForLinker()) {
         assert(GV->hasComdat());
         Drop.insert(GV);
       }
