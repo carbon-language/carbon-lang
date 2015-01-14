@@ -219,8 +219,8 @@ static bool shouldRemapUniquedNode(const UniquableMDNode *Node,
   return false;
 }
 
-static Metadata *cloneMDTuple(const UniquableMDNode *Node,
-                              ValueToValueMapTy &VM, RemapFlags Flags,
+static Metadata *cloneMDTuple(const MDTuple *Node, ValueToValueMapTy &VM,
+                              RemapFlags Flags,
                               ValueMapTypeRemapper *TypeMapper,
                               ValueMaterializer *Materializer) {
   SmallVector<Metadata *, 4> Elts;
@@ -230,6 +230,16 @@ static Metadata *cloneMDTuple(const UniquableMDNode *Node,
                                  Materializer));
 
   return MDTuple::get(Node->getContext(), Elts);
+}
+
+static Metadata *cloneMDLocation(const MDLocation *Node, ValueToValueMapTy &VM,
+                                 RemapFlags Flags,
+                                 ValueMapTypeRemapper *TypeMapper,
+                                 ValueMaterializer *Materializer) {
+  return MDLocation::get(
+      Node->getContext(), Node->getLine(), Node->getColumn(),
+      mapMetadataOp(Node->getScope(), VM, Flags, TypeMapper, Materializer),
+      mapMetadataOp(Node->getInlinedAt(), VM, Flags, TypeMapper, Materializer));
 }
 
 /// \brief Map a uniqued MDNode.
@@ -254,7 +264,17 @@ static Metadata *mapUniquedNode(const UniquableMDNode *Node,
   }
 
   // At least one operand needs remapping.
-  Metadata *NewMD = cloneMDTuple(Node, VM, Flags, TypeMapper, Materializer);
+  Metadata *NewMD;
+  switch (Node->getMetadataID()) {
+  default:
+    llvm_unreachable("Invalid UniquableMDNode subclass");
+#define HANDLE_UNIQUABLE_LEAF(CLASS)                                           \
+  case Metadata::CLASS##Kind:                                                  \
+    NewMD =                                                                    \
+        clone##CLASS(cast<CLASS>(Node), VM, Flags, TypeMapper, Materializer);  \
+    break;
+#include "llvm/IR/Metadata.def"
+  }
   Dummy->replaceAllUsesWith(NewMD);
   MDNode::deleteTemporary(Dummy);
   return mapToMetadata(VM, Node, NewMD);
