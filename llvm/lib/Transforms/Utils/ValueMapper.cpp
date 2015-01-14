@@ -218,8 +218,7 @@ static Metadata *mapUniquedNode(const UniquableMDNode *Node,
   // Check all operands to see if any need to be remapped.
   for (unsigned I = 0, E = Node->getNumOperands(); I != E; ++I) {
     Metadata *Op = Node->getOperand(I);
-    Metadata *MappedOp = mapMetadataOp(Op, VM, Flags, TypeMapper, Materializer);
-    if (Op == MappedOp)
+    if (Op == mapMetadataOp(Op, VM, Flags, TypeMapper, Materializer))
       continue;
 
     // Ok, at least one operand needs remapping.
