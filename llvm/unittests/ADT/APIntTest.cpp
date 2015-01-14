@@ -679,6 +679,9 @@ TEST(APIntTest, nearestLogBase2) {
 }
 
 #if defined(__clang__)
+// Disable the pragma warning from versions of Clang without -Wself-move
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunknown-pragmas"
 // Disable the warning that triggers on exactly what is being tested.
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wself-move"
@@ -700,6 +703,7 @@ TEST(APIntTest, SelfMoveAssignment) {
   EXPECT_EQ(0xdeadbeefdeadbeefULL, Raw[1]);
 }
 #if defined(__clang__)
+#pragma clang diagnostic pop
 #pragma clang diagnostic pop
 #endif
 }
