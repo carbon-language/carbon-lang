@@ -34,7 +34,6 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
-#include "llvm/Support/RandomNumberGenerator.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetOptions.h"
 #include <limits>
@@ -5619,66 +5618,6 @@ void X86InstrInfo::setExecutionDomain(MachineInstr *MI, unsigned Domain) const {
   }
   assert(table && "Cannot change domain");
   MI->setDesc(get(table[Domain-1]));
-}
-
-/// insertNoop - Insert a noop into the instruction stream at the specified
-/// point.
-void X86InstrInfo::insertNoop(MachineBasicBlock &MBB,
-                              MachineBasicBlock::iterator MI) const {
-  DebugLoc DL;
-  BuildMI(MBB, MI, DL, get(X86::NOOP));
-}
-
-/// insertNoop - Insert a randomly chosen type of noop into the instruction
-/// stream at the specified point to introduce fine-grained diversity.
-void X86InstrInfo::insertNoop(MachineBasicBlock &MBB,
-                              MachineBasicBlock::iterator MI,
-                              RandomNumberGenerator &RNG) const {
-  // This set of Noop instructions was carefully chosen so that
-  // misaligned parses of these instructions do not introduce new,
-  // useful ROP gadgets. The ASM instructions noted are for misaligned
-  // parses of the noop in 32 and 64 bits.
-  enum {
-    NOP,    // 90
-    MOV_BP, // 89 ed, 48 89 ed -- IN EAX, IN AL (privileged)
-    MOV_SP, // 89 e4, 48 89 e4 -- IN AL, IN EAX (privileged)
-    LEA_SI, // 8d 36, 48 8d 36 -- SS segment override, NULL
-            // prefix (does not add new gadget)
-    LEA_DI, // 8d 3f, 48 8d 3f -- AAS (bcd->hex), invalid
-    MAX_NOPS
-  };
-
-  static const unsigned NopRegs[MAX_NOPS][2] = {
-      {0, 0},
-      {X86::EBP, X86::RBP},
-      {X86::ESP, X86::RSP},
-      {X86::ESI, X86::RSI},
-      {X86::EDI, X86::RDI},
-  };
-
-  std::uniform_int_distribution<unsigned> Distribution(0, MAX_NOPS - 1);
-
-  unsigned Type = Distribution(RNG);
-
-  DebugLoc DL;
-  bool is64Bit = Subtarget.is64Bit();
-  unsigned Reg = NopRegs[Type][is64Bit];
-
-  switch (Type) {
-  case NOP:
-    BuildMI(MBB, MI, DL, get(X86::NOOP));
-    break;
-  case MOV_BP:
-  case MOV_SP:
-    copyPhysReg(MBB, MI, DL, Reg, Reg, false);
-    break;
-  case LEA_SI:
-  case LEA_DI: {
-    unsigned opc = is64Bit ? X86::LEA64r : X86::LEA32r;
-    addRegOffset(BuildMI(MBB, MI, DL, get(opc), Reg), Reg, false, 0);
-    break;
-  }
-  }
 }
 
 /// getNoopForMachoTarget - Return the noop instruction to use for a noop.

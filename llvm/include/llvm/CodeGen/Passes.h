@@ -603,10 +603,6 @@ namespace llvm {
   /// the intrinsic for later emission to the StackMap.
   extern char &StackMapLivenessID;
 
-  /// NoopInsertion - This pass adds fine-grained diversity by displacing code
-  /// using randomly placed (optionally target supplied) Noop instructions.
-  extern char &NoopInsertionID;
-
   /// createJumpInstrTables - This pass creates jump-instruction tables.
   ModulePass *createJumpInstrTablesPass();
 
