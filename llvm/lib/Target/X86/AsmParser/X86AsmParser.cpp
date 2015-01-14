@@ -2277,11 +2277,11 @@ bool X86AsmParser::validateInstruction(MCInst &Inst, const OperandVector &Ops) {
   switch (Inst.getOpcode()) {
   default: return true;
   case X86::INT:
-    if (Inst.getNumOperands() == 0)
-      return true;
-    assert(Inst.getOperand(0).isImm() && "expected immediate");
-    if (Inst.getOperand(0).getImm() > 255) {
-      Error(Ops[1]->getStartLoc(), "interrupt vector must be in range [0-255]");
+    X86Operand &Op = static_cast<X86Operand &>(*Ops[1]);
+    assert(Op.isImm() && "expected immediate");
+    int64_t Res;
+    if (!Op.getImm()->EvaluateAsAbsolute(Res) || Res > 255) {
+      Error(Op.getStartLoc(), "interrupt vector must be in range [0-255]");
       return false;
     }
     return true;
