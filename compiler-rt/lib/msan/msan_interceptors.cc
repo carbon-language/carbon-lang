@@ -318,6 +318,8 @@ INTERCEPTOR(char *, stpcpy, char *dest, const char *src) {  // NOLINT
 INTERCEPTOR(char *, strdup, char *src) {
   ENSURE_MSAN_INITED();
   GET_STORE_STACK_TRACE;
+  // On FreeBSD strdup() leverages strlen().
+  InterceptorScope interceptor_scope;
   SIZE_T n = REAL(strlen)(src);
   char *res = REAL(strdup)(src);
   CopyPoison(res, src, n + 1, &stack);
@@ -341,6 +343,8 @@ INTERCEPTOR(char *, __strdup, char *src) {
 INTERCEPTOR(char *, strndup, char *src, SIZE_T n) {
   ENSURE_MSAN_INITED();
   GET_STORE_STACK_TRACE;
+  // On FreeBSD strndup() leverages strnlen().
+  InterceptorScope interceptor_scope;
   SIZE_T copy_size = REAL(strnlen)(src, n);
   char *res = REAL(strndup)(src, n);
   CopyPoison(res, src, copy_size, &stack);
