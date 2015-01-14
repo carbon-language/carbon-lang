@@ -185,14 +185,17 @@ static Metadata *cloneMDTuple(const MDTuple *Node, ValueToValueMapTy &VM,
                               ValueMapTypeRemapper *TypeMapper,
                               ValueMaterializer *Materializer,
                               bool IsDistinct) {
+  // Distinct MDTuples have their own code path.
+  assert(!IsDistinct && "Unexpected distinct tuple");
+  (void)IsDistinct;
+
   SmallVector<Metadata *, 4> Elts;
   Elts.reserve(Node->getNumOperands());
   for (unsigned I = 0, E = Node->getNumOperands(); I != E; ++I)
     Elts.push_back(mapMetadataOp(Node->getOperand(I), VM, Flags, TypeMapper,
                                  Materializer));
 
-  return (IsDistinct ? MDTuple::getDistinct : MDTuple::get)(Node->getContext(),
-                                                            Elts);
+  return MDTuple::get(Node->getContext(), Elts);
 }
 
 static Metadata *cloneMDLocation(const MDLocation *Node, ValueToValueMapTy &VM,
@@ -230,17 +233,30 @@ static Metadata *mapDistinctNode(const UniquableMDNode *Node,
                                  ValueMaterializer *Materializer) {
   assert(Node->isDistinct() && "Expected distinct node");
 
-  // Create the node first so it's available for cyclical references.
-  SmallVector<Metadata *, 4> EmptyOps(Node->getNumOperands());
-  MDTuple *NewMD = MDTuple::getDistinct(Node->getContext(), EmptyOps);
-  mapToMetadata(VM, Node, NewMD);
+  // Optimization for MDTuples.
+  if (isa<MDTuple>(Node)) {
+    // Create the node first so it's available for cyclical references.
+    SmallVector<Metadata *, 4> EmptyOps(Node->getNumOperands());
+    MDTuple *NewMD = MDTuple::getDistinct(Node->getContext(), EmptyOps);
+    mapToMetadata(VM, Node, NewMD);
 
-  // Fix the operands.
-  for (unsigned I = 0, E = Node->getNumOperands(); I != E; ++I)
-    NewMD->replaceOperandWith(I, mapMetadataOp(Node->getOperand(I), VM, Flags,
-                                               TypeMapper, Materializer));
+    // Fix the operands.
+    for (unsigned I = 0, E = Node->getNumOperands(); I != E; ++I)
+      NewMD->replaceOperandWith(I, mapMetadataOp(Node->getOperand(I), VM, Flags,
+                                                 TypeMapper, Materializer));
 
-  return NewMD;
+    return NewMD;
+  }
+
+  // In general we need a dummy node, since whether the operands are null can
+  // affect the size of the node.
+  std::unique_ptr<MDNodeFwdDecl> Dummy(
+      MDNode::getTemporary(Node->getContext(), None));
+  mapToMetadata(VM, Node, Dummy.get());
+  Metadata *NewMD = cloneMDNode(Node, VM, Flags, TypeMapper, Materializer,
+                                /* IsDistinct */ true);
+  Dummy->replaceAllUsesWith(NewMD);
+  return mapToMetadata(VM, Node, NewMD);
 }
 
 /// \brief Check whether a uniqued node needs to be remapped.
