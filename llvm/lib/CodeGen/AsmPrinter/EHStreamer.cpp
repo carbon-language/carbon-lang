@@ -121,7 +121,8 @@ computeActionsTable(const SmallVectorImpl<const LandingPadInfo*> &LandingPads,
       for (unsigned J = NumShared, M = TypeIds.size(); J != M; ++J) {
         int TypeID = TypeIds[J];
         assert(-1 - TypeID < (int)FilterOffsets.size() && "Unknown filter id!");
-        int ValueForTypeID = TypeID < 0 ? FilterOffsets[-1 - TypeID] : TypeID;
+        int ValueForTypeID =
+            isFilterEHSelector(TypeID) ? FilterOffsets[-1 - TypeID] : TypeID;
         unsigned SizeTypeID = getSLEB128Size(ValueForTypeID);
 
         int NextAction = SizeAction ? -(SizeAction + SizeTypeID) : 0;
@@ -269,14 +270,14 @@ computeCallSiteTable(SmallVectorImpl<CallSiteEntry> &CallSites,
         CallSiteEntry Site = {
           BeginLabel,
           LastLabel,
-          LandingPad->LandingPadLabel,
+          LandingPad,
           FirstActions[P.PadIndex]
         };
 
         // Try to merge with the previous call-site. SJLJ doesn't do this
         if (PreviousIsInvoke && !IsSJLJ) {
           CallSiteEntry &Prev = CallSites.back();
-          if (Site.PadLabel == Prev.PadLabel && Site.Action == Prev.Action) {
+          if (Site.LPad == Prev.LPad && Site.Action == Prev.Action) {
             // Extend the range of the previous entry.
             Prev.EndLabel = Site.EndLabel;
             continue;
@@ -576,15 +577,15 @@ void EHStreamer::emitExceptionTable() {
 
       // Offset of the landing pad, counted in 16-byte bundles relative to the
       // @LPStart address.
-      if (!S.PadLabel) {
+      if (!S.LPad) {
         if (VerboseAsm)
           Asm->OutStreamer.AddComment("    has no landing pad");
         Asm->OutStreamer.EmitIntValue(0, 4/*size*/);
       } else {
         if (VerboseAsm)
           Asm->OutStreamer.AddComment(Twine("    jumps to ") +
-                                      S.PadLabel->getName());
-        Asm->EmitLabelDifference(S.PadLabel, EHFuncBeginSym, 4);
+                                      S.LPad->LandingPadLabel->getName());
+        Asm->EmitLabelDifference(S.LPad->LandingPadLabel, EHFuncBeginSym, 4);
       }
 
       // Offset of the first associated action record, relative to the start of
@@ -681,7 +682,7 @@ void EHStreamer::emitTypeInfos(unsigned TTypeEncoding) {
     unsigned TypeID = *I;
     if (VerboseAsm) {
       --Entry;
-      if (TypeID != 0)
+      if (isFilterEHSelector(TypeID))
         Asm->OutStreamer.AddComment("FilterInfo " + Twine(Entry));
     }
 

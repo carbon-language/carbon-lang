@@ -713,6 +713,8 @@ public:
   void visitJumpTable(JumpTable &JT);
   void visitJumpTableHeader(JumpTable &JT, JumpTableHeader &JTH,
                             MachineBasicBlock *SwitchBB);
+  unsigned visitLandingPadClauseBB(GlobalValue *ClauseGV,
+                                   MachineBasicBlock *LPadMBB);
 
 private:
   // These all get lowered before this pass.
