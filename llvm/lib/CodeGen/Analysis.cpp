@@ -51,6 +51,7 @@ unsigned llvm::ComputeLinearIndex(Type *Ty,
         return ComputeLinearIndex(*EI, Indices+1, IndicesEnd, CurIndex);
       CurIndex = ComputeLinearIndex(*EI, nullptr, nullptr, CurIndex);
     }
+    assert(!Indices && "Unexpected out of bound");
     return CurIndex;
   }
   // Given an array type, recursively traverse the elements.
@@ -59,13 +60,13 @@ unsigned llvm::ComputeLinearIndex(Type *Ty,
     unsigned NumElts = ATy->getNumElements();
     // Compute the Linear offset when jumping one element of the array
     unsigned EltLinearOffset = ComputeLinearIndex(EltTy, nullptr, nullptr, 0);
-    if (Indices && *Indices < NumElts) {
+    if (Indices) {
+      assert(*Indices < NumElts && "Unexpected out of bound");
       // If the indice is inside the array, compute the index to the requested
       // elt and recurse inside the element with the end of the indices list
       CurIndex += EltLinearOffset* *Indices;
       return ComputeLinearIndex(EltTy, Indices+1, IndicesEnd, CurIndex);
     }
-    // Out of bound? Assert instead?
     CurIndex += EltLinearOffset*NumElts;
     return CurIndex;
   }
