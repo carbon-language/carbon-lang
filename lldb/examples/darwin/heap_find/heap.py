@@ -406,6 +406,7 @@ info''' % (options.max_frames, options.max_history, addr);
     expr_options.SetIgnoreBreakpoints(True);
     expr_options.SetTimeoutInMicroSeconds (5*1000*1000) # 5 second timeout
     expr_options.SetTryAllThreads (True)
+    expr_options.SetLanguage(lldb.eLanguageTypeObjC_plus_plus)
     expr_sbvalue = frame.EvaluateExpression (expr, expr_options)
     if options.verbose:
         print "expression:"
@@ -443,6 +444,7 @@ def display_match_results (result, options, arg_str_description, expr, print_no_
     expr_options.SetFetchDynamicValue(lldb.eNoDynamicValues);
     expr_options.SetTimeoutInMicroSeconds (30*1000*1000) # 30 second timeout
     expr_options.SetTryAllThreads (False)
+    expr_options.SetLanguage (lldb.eLanguageTypeObjC_plus_plus)
     expr_sbvalue = frame.EvaluateExpression (expr, expr_options)
     if options.verbose:
         print "expression:"
@@ -990,6 +992,7 @@ def objc_refs(debugger, command, result, dict):
     expr_options.SetIgnoreBreakpoints(True);
     expr_options.SetTimeoutInMicroSeconds (3*1000*1000) # 3 second infinite timeout
     expr_options.SetTryAllThreads (True)
+    expr_options.SetLanguage(lldb.eLanguageTypeObjC_plus_plus)
     num_objc_classes_value = frame.EvaluateExpression("(int)objc_getClassList((void *)0, (int)0)", expr_options)
     if not num_objc_classes_value.error.Success():
         result.AppendMessage('error: %s' % num_objc_classes_value.error.GetCString())
@@ -1093,6 +1096,7 @@ int nc = (int)objc_getClassList(baton.classes, sizeof(baton.classes)/sizeof(Clas
             expr_options.SetIgnoreBreakpoints(True);
             expr_options.SetTimeoutInMicroSeconds (1*1000*1000) # 1 second timeout
             expr_options.SetTryAllThreads (True)
+            expr_options.SetLanguage(lldb.eLanguageTypeObjC_plus_plus)
             expr_sbvalue = frame.EvaluateExpression (addr_expr_str, expr_options)
             if expr_sbvalue.error.Success():
                 isa = expr_sbvalue.unsigned
