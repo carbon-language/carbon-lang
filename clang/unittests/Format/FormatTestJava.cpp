@@ -283,6 +283,10 @@ TEST_F(FormatTestJava, Annotations) {
                "    aaaaaaaaaaaaaaaaa, aaaaaaaaaaaaaaaaaaaa)\n"
                "int i;",
                getStyleWithColumns(50));
+  verifyFormat("@Test\n"
+               "ReturnType doSomething(\n"
+               "    String aaaaaaaaaaaaa, String bbbbbbbbbbbbbbb) {}",
+               getStyleWithColumns(60));
 }
 
 TEST_F(FormatTestJava, Generics) {

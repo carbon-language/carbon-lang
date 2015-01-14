@@ -900,6 +900,9 @@ private:
     if (Tok.isNot(tok::identifier) || !Tok.Previous)
       return false;
 
+    if (Tok.Previous->is(TT_LeadingJavaAnnotation))
+        return false;
+
     // Skip "const" as it does not have an influence on whether this is a name.
     FormatToken *PreviousNotConst = Tok.Previous;
     while (PreviousNotConst && PreviousNotConst->is(tok::kw_const))
