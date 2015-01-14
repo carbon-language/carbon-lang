@@ -36,12 +36,12 @@ void func() {
   // CHECK: = !{!"0x100\00{{.*}}", [[FOR:![0-9]*]], {{.*}} ; [ DW_TAG_auto_variable ] [i] [line [[@LINE+2]]]
   // CHECK: [[FOR]] = !{!"0xb\00[[@LINE+1]]\00{{.*}}", !{{.*}}} ; [ DW_TAG_lexical_block ]
   for (int i = 0; i != 10; ++i) {
-  // FIXME: Do not include scopes that have only other scopes (and no variables
-  // or using declarations) as direct children, they just waste
-  // space/relocations/etc.
-  // CHECK: = !{!"0x100\00{{.*}}", [[FOR_COMPOUND:![0-9]*]], {{.*}} ; [ DW_TAG_auto_variable ] [b] [line [[@LINE+3]]]
-  // CHECK: [[FOR_COMPOUND]] = !{!"0xb\00[[@LINE-5]]\00{{.*}}", !{{[0-9]+}}, [[FOR_BODY:![0-9]+]]} ; [ DW_TAG_lexical_block ]
-  // CHECK: [[FOR_BODY]] = !{!"0xb\00[[@LINE-6]]\00{{.*}}", !{{[0-9]+}}, [[FOR]]} ; [ DW_TAG_lexical_block ]
+    // FIXME: Do not include scopes that have only other scopes (and no variables
+    // or using declarations) as direct children, they just waste
+    // space/relocations/etc.
+    // CHECK: [[FOR_LOOP_INCLUDING_COND:!.*]] = !{!"0xb\00[[@LINE-4]]\00{{.*}}", !{{[0-9]+}}, [[FOR]]} ; [ DW_TAG_lexical_block ]
+    // CHECK: = !{!"0x100\00{{.*}}", [[FOR_COMPOUND:![0-9]*]], {{.*}} ; [ DW_TAG_auto_variable ] [b] [line [[@LINE+2]]]
+    // CHECK: [[FOR_COMPOUND]] = !{!"0xb\00[[@LINE-6]]\00{{.*}}", !{{[0-9]+}}, [[FOR_LOOP_INCLUDING_COND]]} ; [ DW_TAG_lexical_block ]
     bool b = i % 2;
   }
 
