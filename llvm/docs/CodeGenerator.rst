@@ -464,7 +464,7 @@ code:
   mov %EAX, %EDX
   sar %EDX, 31
   idiv %ECX
-  ret 
+  ret
 
 This approach is extremely general (if it can handle the X86 architecture, it
 can handle anything!) and allows all of the target specific knowledge about the
@@ -847,6 +847,10 @@ The ``-view-sunit-dags`` displays the Scheduler's dependency graph.  This graph
 is based on the final SelectionDAG, with nodes that must be scheduled together
 bundled into a single scheduling-unit node, and with immediate operands and
 other nodes that aren't relevant for scheduling omitted.
+
+The option ``-filter-view-dags`` allows to select the name of the basic block
+that you are interested to visualize and filters all the previous
+``view-*-dags`` options.
 
 .. _Build initial DAG:
 
