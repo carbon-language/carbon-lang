@@ -236,7 +236,15 @@ else ()
 endif ()
 
 macro(add_lldb_library name)
-  llvm_process_sources(srcs ${ARGN})
+  # only supported parameters to this macro are the optional 
+  # MODULE;SHARED;STATIC library type and source files
+  cmake_parse_arguments(PARAM
+    "MODULE;SHARED;STATIC"
+    ""
+    ""
+    ${ARGN})
+  llvm_process_sources(srcs ${PARAM_UNPARSED_ARGUMENTS})
+  
   if (MSVC_IDE OR XCODE)
     string(REGEX MATCHALL "/[^/]+" split_path ${CMAKE_CURRENT_SOURCE_DIR})
     list(GET split_path -1 dir)
@@ -244,13 +252,17 @@ macro(add_lldb_library name)
       ../../include/lldb${dir}/*.h)
     set(srcs ${srcs} ${headers})
   endif()
-  if (MODULE)
+  if (PARAM_MODULE)
     set(libkind MODULE)
-  elseif (SHARED_LIBRARY)
+  elseif (PARAM_SHARED)
     set(libkind SHARED)
-  else()
+  elseif (PARAM_STATIC)
     set(libkind STATIC)
+  else ()
+    # library type unspecified - controlled by BUILD_SHARED_LIBS
+    unset(libkind)
   endif()
+
   #PIC not needed on Win
   if (NOT MSVC)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")

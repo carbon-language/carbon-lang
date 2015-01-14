@@ -30,6 +30,7 @@ endif ()
 if (NOT CMAKE_SYSTEM_NAME MATCHES "Windows" )
   add_subdirectory(API)
 endif ()
+
 add_subdirectory(Breakpoint)
 add_subdirectory(Commands)
 add_subdirectory(Core)
@@ -44,8 +45,6 @@ add_subdirectory(Utility)
 
 include(../cmake/LLDBDependencies.cmake)
 
-set(SHARED_LIBRARY 1)
-
 if ( CMAKE_SYSTEM_NAME MATCHES "Windows" )
 add_definitions( -DEXPORT_LIBLLDB )
 endif()
@@ -56,7 +55,7 @@ if ( CMAKE_SYSTEM_NAME MATCHES "Windows" )
 # On Non-Windows, the corresponding file list is maintained in
 # source\API\CMakeLists.txt.  When editing this list, do not forget to make a
 # corresponding change in that file as well (when appropriate).
-add_lldb_library(liblldb
+add_lldb_library(liblldb SHARED
   lldb.cpp
   lldb-log.cpp
   API/SBAddress.cpp

@@ -164,7 +164,7 @@ add_lldb_executable(lldb-mi
   )
 endif ()
 
-target_link_libraries(lldb-mi liblldb)
+target_link_libraries(lldb-mi liblldb pthread)
 # TODO: why isn't this done by add_lldb_executable?
 #target_link_libraries(lldb-mi ${LLDB_USED_LIBS})
 #llvm_config(lldb-mi ${LLVM_LINK_COMPONENTS})
