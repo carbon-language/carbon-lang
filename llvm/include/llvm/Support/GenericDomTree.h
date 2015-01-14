@@ -34,9 +34,20 @@ namespace llvm {
 template <class NodeT> class DominatorBase {
 protected:
   std::vector<NodeT *> Roots;
-  const bool IsPostDominators;
+  bool IsPostDominators;
   explicit DominatorBase(bool isPostDom)
       : Roots(), IsPostDominators(isPostDom) {}
+  DominatorBase(DominatorBase &&Arg)
+      : Roots(std::move(Arg.Roots)),
+        IsPostDominators(std::move(Arg.IsPostDominators)) {
+    Arg.Roots.clear();
+  }
+  DominatorBase &operator=(DominatorBase &&RHS) {
+    Roots = std::move(RHS.Roots);
+    IsPostDominators = std::move(RHS.IsPostDominators);
+    RHS.Roots.clear();
+    return *this;
+  }
 
 public:
   /// getRoots - Return the root blocks of the current CFG.  This may include
@@ -171,6 +182,9 @@ void Calculate(DominatorTreeBase<typename GraphTraits<N>::NodeType> &DT,
 /// This class is a generic template over graph nodes. It is instantiated for
 /// various graphs in the LLVM IR or in the code generator.
 template <class NodeT> class DominatorTreeBase : public DominatorBase<NodeT> {
+  DominatorTreeBase(const DominatorTreeBase &) LLVM_DELETED_FUNCTION;
+  DominatorTreeBase &operator=(const DominatorTreeBase &) LLVM_DELETED_FUNCTION;
+
   bool dominatedBySlowTreeWalk(const DomTreeNodeBase<NodeT> *A,
                                const DomTreeNodeBase<NodeT> *B) const {
     assert(A != B);
@@ -181,6 +195,18 @@ template <class NodeT> class DominatorTreeBase : public DominatorBase<NodeT> {
     while ((IDom = B->getIDom()) != nullptr && IDom != A && IDom != B)
       B = IDom; // Walk up the tree
     return IDom != nullptr;
+  }
+
+  /// \brief Wipe this tree's state without releasing any resources.
+  ///
+  /// This is essentially a post-move helper only. It leaves the object in an
+  /// assignable and destroyable state, but otherwise invalid.
+  void wipe() {
+    DomTreeNodes.clear();
+    IDoms.clear();
+    Vertex.clear();
+    Info.clear();
+    RootNode = nullptr;
   }
 
 protected:
@@ -289,6 +315,30 @@ public:
   explicit DominatorTreeBase(bool isPostDom)
       : DominatorBase<NodeT>(isPostDom), DFSInfoValid(false), SlowQueries(0) {}
   virtual ~DominatorTreeBase() { reset(); }
+
+  DominatorTreeBase(DominatorTreeBase &&Arg)
+      : DominatorBase<NodeT>(
+            std::move(static_cast<DominatorBase<NodeT> &>(Arg))),
+        DomTreeNodes(std::move(Arg.DomTreeNodes)),
+        RootNode(std::move(Arg.RootNode)),
+        DFSInfoValid(std::move(Arg.DFSInfoValid)),
+        SlowQueries(std::move(Arg.SlowQueries)), IDoms(std::move(Arg.IDoms)),
+        Vertex(std::move(Arg.Vertex)), Info(std::move(Arg.Info)) {
+    Arg.wipe();
+  }
+  DominatorTreeBase &operator=(DominatorTreeBase &&RHS) {
+    DominatorBase<NodeT>::operator=(
+        std::move(static_cast<DominatorBase<NodeT> &>(RHS)));
+    DomTreeNodes = std::move(RHS.DomTreeNodes);
+    RootNode = std::move(RHS.RootNode);
+    DFSInfoValid = std::move(RHS.DFSInfoValid);
+    SlowQueries = std::move(RHS.SlowQueries);
+    IDoms = std::move(RHS.IDoms);
+    Vertex = std::move(RHS.Vertex);
+    Info = std::move(RHS.Info);
+    RHS.wipe();
+    return *this;
+  }
 
   /// compare - Return false if the other dominator tree base matches this
   /// dominator tree base. Otherwise return true.
