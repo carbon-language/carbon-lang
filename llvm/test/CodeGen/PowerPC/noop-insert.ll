@@ -1,6 +1,6 @@
-; RUN: llc < %s -march=ppc32 -noop-insertion | FileCheck %s
-; RUN: llc < %s -march=ppc32 -noop-insertion -rng-seed=1 | FileCheck %s --check-prefix=SEED1
-; RUN: llc < %s -march=ppc32 -noop-insertion -noop-insertion-percentage=100 | FileCheck %s --check-prefix=100PERCENT
+; RUN: llc < %s -march=ppc32 -mcpu=g4 -noop-insertion | FileCheck %s
+; RUN: llc < %s -march=ppc32 -mcpu=g4 -noop-insertion -rng-seed=1 | FileCheck %s --check-prefix=SEED1
+; RUN: llc < %s -march=ppc32 -mcpu=g4 -noop-insertion -noop-insertion-percentage=100 | FileCheck %s --check-prefix=100PERCENT
 
 ; This test case checks that NOOPs are inserted correctly for PowerPC.
 
