@@ -629,8 +629,12 @@ getModuleForFile(LLVMContext &Context, claimed_file &F, raw_fd_ostream *ApiFile,
     case LDPR_RESOLVED_IR:
     case LDPR_RESOLVED_EXEC:
     case LDPR_RESOLVED_DYN:
-    case LDPR_UNDEF:
       assert(GV->isDeclarationForLinker());
+      break;
+
+    case LDPR_UNDEF:
+      assert(GV->hasComdat());
+      Drop.insert(GV);
       break;
 
     case LDPR_PREVAILING_DEF_IRONLY: {

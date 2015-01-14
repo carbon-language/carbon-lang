@@ -1,4 +1,9 @@
 $c2 = comdat any
+$c1 = comdat any
+
+; This is only present in this file. The linker will keep $c1 from the first
+; file and this will be undefined.
+@will_be_undefined = global i32 1, comdat($c1)
 
 @v1 = weak_odr global i32 41, comdat($c2)
 define weak_odr protected i32 @f1(i8* %this) comdat($c2) {
