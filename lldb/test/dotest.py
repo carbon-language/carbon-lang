@@ -1067,6 +1067,18 @@ def setupSysPath():
         if lldb_dash_p_result and not lldb_dash_p_result.startswith(("<", "lldb: invalid option:")) \
 							  and not lldb_dash_p_result.startswith("Traceback"):
             lines = lldb_dash_p_result.splitlines()
+
+            # Workaround for readline vs libedit issue on FreeBSD.  If stdout
+            # is not a terminal Python executes
+            #     rl_variable_bind ("enable-meta-key", "off");
+            # This produces a warning with FreeBSD's libedit because the
+            # enable-meta-key variable is unknown.  Not an issue on Apple
+            # because cpython commit f0ab6f9f0603 added a #ifndef __APPLE__
+            # around the call.  See http://bugs.python.org/issue19884 for more
+            # information.  For now we just discard the warning output.
+            if len(lines) >= 1 and lines[0].startswith("bind: Invalid command"):
+                lines.pop(0)
+
             if len(lines) >= 1 and os.path.isfile(os.path.join(lines[0], init_in_python_dir)):
                 lldbPath = lines[0]
                 if "freebsd" in sys.platform or "linux" in sys.platform:
