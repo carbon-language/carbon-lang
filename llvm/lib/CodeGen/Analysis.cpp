@@ -30,10 +30,9 @@
 
 using namespace llvm;
 
-/// ComputeLinearIndex - Given an LLVM IR aggregate type and a sequence
-/// of insertvalue or extractvalue indices that identify a member, return
-/// the linearized index of the start of the member.
-///
+/// Compute the linearized index of a member in a nested aggregate/struct/array
+/// by recursing and accumulating CurIndex as long as there are indices in the
+/// index list.
 unsigned llvm::ComputeLinearIndex(Type *Ty,
                                   const unsigned *Indices,
                                   const unsigned *IndicesEnd,
@@ -57,11 +56,17 @@ unsigned llvm::ComputeLinearIndex(Type *Ty,
   // Given an array type, recursively traverse the elements.
   else if (ArrayType *ATy = dyn_cast<ArrayType>(Ty)) {
     Type *EltTy = ATy->getElementType();
-    for (unsigned i = 0, e = ATy->getNumElements(); i != e; ++i) {
-      if (Indices && *Indices == i)
-        return ComputeLinearIndex(EltTy, Indices+1, IndicesEnd, CurIndex);
-      CurIndex = ComputeLinearIndex(EltTy, nullptr, nullptr, CurIndex);
+    unsigned NumElts = ATy->getNumElements();
+    // Compute the Linear offset when jumping one element of the array
+    unsigned EltLinearOffset = ComputeLinearIndex(EltTy, nullptr, nullptr, 0);
+    if (Indices && *Indices < NumElts) {
+      // If the indice is inside the array, compute the index to the requested
+      // elt and recurse inside the element with the end of the indices list
+      CurIndex += EltLinearOffset* *Indices;
+      return ComputeLinearIndex(EltTy, Indices+1, IndicesEnd, CurIndex);
     }
+    // Out of bound? Assert instead?
+    CurIndex += EltLinearOffset*NumElts;
     return CurIndex;
   }
   // We haven't found the type we're looking for, so keep searching.

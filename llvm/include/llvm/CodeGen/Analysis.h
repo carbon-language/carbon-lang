@@ -31,10 +31,21 @@ class SDValue;
 class SelectionDAG;
 struct EVT;
 
-/// ComputeLinearIndex - Given an LLVM IR aggregate type and a sequence
-/// of insertvalue or extractvalue indices that identify a member, return
-/// the linearized index of the start of the member.
+/// \brief Compute the linearized index of a member in a nested
+/// aggregate/struct/array.
 ///
+/// Given an LLVM IR aggregate type and a sequence of insertvalue or
+/// extractvalue indices that identify a member, return the linearized index of
+/// the start of the member, i.e the number of element in memory before the
+/// seeked one. This is disconnected from the number of bytes.
+///
+/// \param Ty is the type indexed by \p Indices.
+/// \param Indices is an optional pointer in the indices list to the current
+/// index.
+/// \param IndicesEnd is the end of the indices list.
+/// \param CurIndex is the current index in the recursion.
+///
+/// \returns \p CurIndex plus the linear index in \p Ty  the indices list.
 unsigned ComputeLinearIndex(Type *Ty,
                             const unsigned *Indices,
                             const unsigned *IndicesEnd,
