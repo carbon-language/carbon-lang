@@ -11,10 +11,6 @@
 //
 // clang-cc1
 // CHECK: "-Wall" "-Wdocumentation"
-// CHECK: "-o" "{{[^"]+}}.s"
-//
-// gnu-as
-// CHECK: as{{[^"]*}}"
 // CHECK: "-o" "{{[^"]+}}.o"
 //
 // gcc-ld
