@@ -15,8 +15,8 @@
 #define LLVM_CLANG_TOOLS_LIBCLANG_CXCOMMENT_H
 
 #include "CXTranslationUnit.h"
-#include "clang-c/Index.h"
 #include "clang-c/Documentation.h"
+#include "clang-c/Index.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Comment.h"
 #include "clang/Frontend/ASTUnit.h"

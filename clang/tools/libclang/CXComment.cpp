@@ -12,10 +12,10 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang-c/Index.h"
-#include "clang-c/Documentation.h"
 #include "CXComment.h"
 #include "CXCursor.h"
 #include "CXString.h"
+#include "clang-c/Documentation.h"
 #include "clang/AST/Decl.h"
 #include "clang/Index/CommentToXML.h"
 #include "llvm/ADT/StringExtras.h"

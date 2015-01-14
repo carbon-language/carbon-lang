@@ -8,11 +8,11 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang-c/Index.h"
-#include "gtest/gtest.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Support/raw_ostream.h"
+#include "gtest/gtest.h"
 #include <fstream>
 #include <set>
 #define DEBUG_TYPE "libclang-test"

@@ -15,7 +15,6 @@
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/ASTVector.h"
 #include "clang/Basic/Builtins.h"
-
 #include "gtest/gtest.h"
 
 using namespace clang;
