@@ -10,7 +10,7 @@ declare zeroext i32 @return_i32()
 declare i32* @return_i32ptr()
 declare float @return_float()
 
-define i1 @test_i1_return() {
+define i1 @test_i1_return() gc "statepoint-example" {
 ; CHECK-LABEL: test_i1_return
 ; This is just checking that a i1 gets lowered normally when there's no extra
 ; state arguments to the statepoint
@@ -24,7 +24,7 @@ entry:
   ret i1 %call1
 }
 
-define i32 @test_i32_return() {
+define i32 @test_i32_return() gc "statepoint-example" {
 ; CHECK-LABEL: test_i32_return
 ; CHECK: pushq %rax
 ; CHECK: callq return_i32
@@ -36,7 +36,7 @@ entry:
   ret i32 %call1
 }
 
-define i32* @test_i32ptr_return() {
+define i32* @test_i32ptr_return() gc "statepoint-example" {
 ; CHECK-LABEL: test_i32ptr_return
 ; CHECK: pushq %rax
 ; CHECK: callq return_i32ptr
@@ -48,7 +48,7 @@ entry:
   ret i32* %call1
 }
 
-define float @test_float_return() {
+define float @test_float_return() gc "statepoint-example" {
 ; CHECK-LABEL: test_float_return
 ; CHECK: pushq %rax
 ; CHECK: callq return_float
@@ -60,7 +60,7 @@ entry:
   ret float %call1
 }
 
-define i1 @test_relocate(i32* %a) {
+define i1 @test_relocate(i32 addrspace(1)* %a) gc "statepoint-example" {
 ; CHECK-LABEL: test_relocate
 ; Check that an ununsed relocate has no code-generation impact
 ; CHECK: pushq %rax
@@ -69,8 +69,8 @@ define i1 @test_relocate(i32* %a) {
 ; CHECK-NEXT: popq %rdx
 ; CHECK-NEXT: retq
 entry:
-  %safepoint_token = tail call i32 (i1 ()*, i32, i32, ...)* @llvm.experimental.gc.statepoint.p0f_i1f(i1 ()* @return_i1, i32 0, i32 0, i32 0, i32* %a)
-  %call1 = call i32* @llvm.experimental.gc.relocate.p0i32(i32 %safepoint_token, i32 4, i32 4)
+  %safepoint_token = tail call i32 (i1 ()*, i32, i32, ...)* @llvm.experimental.gc.statepoint.p0f_i1f(i1 ()* @return_i1, i32 0, i32 0, i32 0, i32 addrspace(1)* %a)
+  %call1 = call i32 addrspace(1)* @llvm.experimental.gc.relocate.p1i32(i32 %safepoint_token, i32 4, i32 4)
   %call2 = call zeroext i1 @llvm.experimental.gc.result.int.i1(i32 %safepoint_token)
   ret i1 %call2
 }
@@ -87,4 +87,4 @@ declare i32* @llvm.experimental.gc.result.ptr.p0i32(i32)
 declare i32 @llvm.experimental.gc.statepoint.p0f_f32f(float ()*, i32, i32, ...)
 declare float @llvm.experimental.gc.result.float.f32(i32)
 
-declare i32* @llvm.experimental.gc.relocate.p0i32(i32, i32, i32)
+declare i32 addrspace(1)* @llvm.experimental.gc.relocate.p1i32(i32, i32, i32)

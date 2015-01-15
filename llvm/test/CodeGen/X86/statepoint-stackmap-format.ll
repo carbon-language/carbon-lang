@@ -8,7 +8,7 @@ target triple = "x86_64-pc-linux-gnu"
 
 declare zeroext i1 @return_i1()
 
-define i1 @test(i32 addrspace(1)* %ptr) {
+define i1 @test(i32 addrspace(1)* %ptr) gc "statepoint-example" {
 ; CHECK-LABEL: test
 ; Do we see one spill for the local value and the store to the
 ; alloca?
