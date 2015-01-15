@@ -113,3 +113,9 @@ void t22(int *ptr, int (*array)[3]) {
   decays(array);
   no_decay(array);
 }
+
+void const Bar (void); // ok on decl
+// PR 20146
+void const Bar (void) // expected-error {{function cannot return qualified void type 'const void'}}
+{
+}
