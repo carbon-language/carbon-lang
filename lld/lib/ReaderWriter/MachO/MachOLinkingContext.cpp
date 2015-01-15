@@ -928,14 +928,12 @@ bool MachOLinkingContext::customAtomOrderer(const DefinedAtom *left,
   return true;
 }
 
-static File *getFirstFile(const std::unique_ptr<Node> &elem) {
-  FileNode *e = dyn_cast<FileNode>(const_cast<Node *>(elem.get()));
-  return e ? e->getFile() : nullptr;
-}
-
 static bool isLibrary(const std::unique_ptr<Node> &elem) {
-  File *f = getFirstFile(elem);
-  return f && (isa<SharedLibraryFile>(f) || isa<ArchiveLibraryFile>(f));
+  if (FileNode *node = dyn_cast<FileNode>(const_cast<Node *>(elem.get()))) {
+    File *file = node->getFile();
+    return isa<SharedLibraryFile>(file) || isa<ArchiveLibraryFile>(file);
+  }
+  return false;
 }
 
 // The darwin linker processes input files in two phases.  The first phase
