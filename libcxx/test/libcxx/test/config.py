@@ -330,6 +330,20 @@ class Configuration(object):
 
     def configure_link_flags(self):
         self.link_flags += ['-nodefaultlibs']
+
+        # Configure library path
+        self.configure_link_flags_cxx_library_path()
+        self.configure_link_flags_abi_library_path()
+
+        # Configure libraries
+        self.configure_link_flags_cxx_library()
+        self.configure_link_flags_abi_library()
+        self.configure_extra_library_flags()
+
+        link_flags_str = self.get_lit_conf('link_flags', '')
+        self.link_flags += shlex.split(link_flags_str)
+
+    def configure_link_flags_cxx_library_path(self):
         libcxx_library = self.get_lit_conf('libcxx_library')
         # Configure libc++ library paths.
         if libcxx_library is not None:
@@ -347,19 +361,13 @@ class Configuration(object):
         elif not self.use_system_cxx_lib:
             self.link_flags += ['-L' + self.cxx_library_root,
                                 '-Wl,-rpath,' + self.cxx_library_root]
+
+    def configure_link_flags_abi_library_path(self):
         # Configure ABI library paths.
         abi_library_path = self.get_lit_conf('abi_library_path', '')
         if abi_library_path:
             self.link_flags += ['-L' + abi_library_path,
                                 '-Wl,-rpath,' + abi_library_path]
-
-        # Configure libraries
-        self.configure_link_flags_cxx_library()
-        self.configure_link_flags_abi_library()
-        self.configure_extra_library_flags()
-
-        link_flags_str = self.get_lit_conf('link_flags', '')
-        self.link_flags += shlex.split(link_flags_str)
 
     def configure_link_flags_cxx_library(self):
         libcxx_library = self.get_lit_conf('libcxx_library')
