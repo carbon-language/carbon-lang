@@ -37,7 +37,7 @@ TEST_F(WinLinkParserTest, Basic) {
   EXPECT_EQ(llvm::COFF::IMAGE_FILE_MACHINE_I386, _context.getMachineType());
   EXPECT_EQ("a.exe", _context.outputPath());
   EXPECT_EQ("start", _context.getEntrySymbolName());
-  EXPECT_EQ(5, inputFileCount());
+  EXPECT_EQ(4, inputFileCount());
   EXPECT_EQ("a.obj", inputFile(0));
   EXPECT_EQ("b.obj", inputFile(1));
   EXPECT_EQ("c.obj", inputFile(2));
@@ -77,7 +77,7 @@ TEST_F(WinLinkParserTest, StartsWithHyphen) {
       parse("link.exe", "-subsystem:console", "-out:a.exe", "a.obj", nullptr));
   EXPECT_EQ(llvm::COFF::IMAGE_SUBSYSTEM_WINDOWS_CUI, _context.getSubsystem());
   EXPECT_EQ("a.exe", _context.outputPath());
-  EXPECT_EQ(3, inputFileCount());
+  EXPECT_EQ(2, inputFileCount());
   EXPECT_EQ("a.obj", inputFile(0));
 }
 
@@ -86,7 +86,7 @@ TEST_F(WinLinkParserTest, UppercaseOption) {
       parse("link.exe", "/SUBSYSTEM:CONSOLE", "/OUT:a.exe", "a.obj", nullptr));
   EXPECT_EQ(llvm::COFF::IMAGE_SUBSYSTEM_WINDOWS_CUI, _context.getSubsystem());
   EXPECT_EQ("a.exe", _context.outputPath());
-  EXPECT_EQ(3, inputFileCount());
+  EXPECT_EQ(2, inputFileCount());
   EXPECT_EQ("a.obj", inputFile(0));
 }
 
@@ -109,7 +109,7 @@ TEST_F(WinLinkParserTest, NoInputFiles) {
 TEST_F(WinLinkParserTest, NoFileExtension) {
   EXPECT_TRUE(parse("link.exe", "foo", "bar", nullptr));
   EXPECT_EQ("foo.exe", _context.outputPath());
-  EXPECT_EQ(4, inputFileCount());
+  EXPECT_EQ(3, inputFileCount());
   EXPECT_EQ("foo.obj", inputFile(0));
   EXPECT_EQ("bar.obj", inputFile(1));
 }
@@ -117,7 +117,7 @@ TEST_F(WinLinkParserTest, NoFileExtension) {
 TEST_F(WinLinkParserTest, NonStandardFileExtension) {
   EXPECT_TRUE(parse("link.exe", "foo.o", nullptr));
   EXPECT_EQ("foo.exe", _context.outputPath());
-  EXPECT_EQ(3, inputFileCount());
+  EXPECT_EQ(2, inputFileCount());
   EXPECT_EQ("foo.o", inputFile(0));
 }
 
@@ -137,11 +137,11 @@ TEST_F(WinLinkParserTest, Libpath) {
 TEST_F(WinLinkParserTest, InputOrder) {
   EXPECT_TRUE(parse("link.exe", "a.lib", "b.obj", "c.obj", "a.lib", "d.obj",
                     nullptr));
-  EXPECT_EQ(6, inputFileCount());
+  EXPECT_EQ(5, inputFileCount());
   EXPECT_EQ("b.obj", inputFile(0));
   EXPECT_EQ("c.obj", inputFile(1));
   EXPECT_EQ("d.obj", inputFile(2));
-  EXPECT_EQ("a.lib", inputFile(4));
+  EXPECT_EQ("a.lib", inputFile(3));
 }
 
 //
@@ -393,42 +393,42 @@ TEST_F(WinLinkParserTest, SectionMultiple) {
 TEST_F(WinLinkParserTest, DefaultLib) {
   EXPECT_TRUE(parse("link.exe", "/defaultlib:user32.lib",
                     "/defaultlib:kernel32", "a.obj", nullptr));
-  EXPECT_EQ(5, inputFileCount());
+  EXPECT_EQ(4, inputFileCount());
   EXPECT_EQ("a.obj", inputFile(0));
-  EXPECT_EQ("user32.lib", inputFile(2));
-  EXPECT_EQ("kernel32.lib", inputFile(3));
+  EXPECT_EQ("user32.lib", inputFile(1));
+  EXPECT_EQ("kernel32.lib", inputFile(2));
 }
 
 TEST_F(WinLinkParserTest, DefaultLibDuplicates) {
   EXPECT_TRUE(parse("link.exe", "/defaultlib:user32.lib",
                     "/defaultlib:user32.lib", "a.obj", nullptr));
-  EXPECT_EQ(4, inputFileCount());
+  EXPECT_EQ(3, inputFileCount());
   EXPECT_EQ("a.obj", inputFile(0));
-  EXPECT_EQ("user32.lib", inputFile(2));
+  EXPECT_EQ("user32.lib", inputFile(1));
 }
 
 TEST_F(WinLinkParserTest, NoDefaultLib) {
   EXPECT_TRUE(parse("link.exe", "/defaultlib:user32.lib",
                     "/defaultlib:kernel32", "/nodefaultlib:user32.lib", "a.obj",
                     nullptr));
-  EXPECT_EQ(4, inputFileCount());
+  EXPECT_EQ(3, inputFileCount());
   EXPECT_EQ("a.obj", inputFile(0));
-  EXPECT_EQ("kernel32.lib", inputFile(2));
+  EXPECT_EQ("kernel32.lib", inputFile(1));
 }
 
 TEST_F(WinLinkParserTest, NoDefaultLibCase) {
   EXPECT_TRUE(parse("link.exe", "/defaultlib:user32",
                     "/defaultlib:kernel32", "/nodefaultlib:USER32.LIB", "a.obj",
                     nullptr));
-  EXPECT_EQ(4, inputFileCount());
+  EXPECT_EQ(3, inputFileCount());
   EXPECT_EQ("a.obj", inputFile(0));
-  EXPECT_EQ("kernel32.lib", inputFile(2));
+  EXPECT_EQ("kernel32.lib", inputFile(1));
 }
 
 TEST_F(WinLinkParserTest, NoDefaultLibAll) {
   EXPECT_TRUE(parse("link.exe", "/defaultlib:user32.lib",
                     "/defaultlib:kernel32", "/nodefaultlib", "a.obj", nullptr));
-  EXPECT_EQ(3, inputFileCount());
+  EXPECT_EQ(2, inputFileCount());
   EXPECT_EQ("a.obj", inputFile(0));
 }
 
@@ -436,9 +436,9 @@ TEST_F(WinLinkParserTest, DisallowLib) {
   EXPECT_TRUE(parse("link.exe", "/defaultlib:user32.lib",
                     "/defaultlib:kernel32", "/disallowlib:user32.lib", "a.obj",
                     nullptr));
-  EXPECT_EQ(4, inputFileCount());
+  EXPECT_EQ(3, inputFileCount());
   EXPECT_EQ("a.obj", inputFile(0));
-  EXPECT_EQ("kernel32.lib", inputFile(2));
+  EXPECT_EQ("kernel32.lib", inputFile(1));
 }
 
 //
@@ -704,7 +704,7 @@ TEST_F(WinLinkParserTest, Ignore) {
                     "/safeseh:no", "/functionpadmin", "/maxilksize:1024",
                     "a.obj", nullptr));
   EXPECT_EQ("", errorMessage());
-  EXPECT_EQ(3, inputFileCount());
+  EXPECT_EQ(2, inputFileCount());
   EXPECT_EQ("a.obj", inputFile(0));
 }
 
@@ -717,7 +717,7 @@ TEST_F(WinLinkParserTest, DashDash) {
                     "--", "b.obj", "-c.obj", nullptr));
   EXPECT_EQ(llvm::COFF::IMAGE_SUBSYSTEM_WINDOWS_CUI, _context.getSubsystem());
   EXPECT_EQ("a.exe", _context.outputPath());
-  EXPECT_EQ(5, inputFileCount());
+  EXPECT_EQ(4, inputFileCount());
   EXPECT_EQ("a.obj", inputFile(0));
   EXPECT_EQ("b.obj", inputFile(1));
   EXPECT_EQ("-c.obj", inputFile(2));

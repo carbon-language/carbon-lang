@@ -106,6 +106,14 @@ void PECOFFLinkingContext::addLibraryFile(std::unique_ptr<FileNode> file) {
 
 bool PECOFFLinkingContext::createImplicitFiles(
     std::vector<std::unique_ptr<File>> &) {
+  pecoff::ResolvableSymbols* syms = getResolvableSymsFile();
+
+  // Create a file for the entry point function.
+  std::unique_ptr<SimpleFileNode> entry(new SimpleFileNode("<entry>"));
+  entry->appendInputFile(
+      llvm::make_unique<pecoff::EntryPointFile>(*this, syms));
+  getInputGraph().addInputElementFront(std::move(entry));
+
   // Create a file for __ImageBase.
   auto fileNode = llvm::make_unique<SimpleFileNode>("Implicit Files");
   fileNode->appendInputFile(
@@ -118,17 +126,12 @@ bool PECOFFLinkingContext::createImplicitFiles(
       llvm::make_unique<pecoff::LocallyImportedSymbolFile>(*this));
   getInputGraph().addInputElement(std::move(impFileNode));
 
-  pecoff::ResolvableSymbols* syms = getResolvableSymsFile();
-
   // Create a file for dllexported symbols.
   auto exportNode = llvm::make_unique<SimpleFileNode>("<export>");
   exportNode->appendInputFile(
       llvm::make_unique<pecoff::ExportedSymbolRenameFile>(*this, syms));
   addLibraryFile(std::move(exportNode));
 
-  // Create a file for the entry point function.
-  getEntryNode()->appendInputFile(
-      llvm::make_unique<pecoff::EntryPointFile>(*this, syms));
   return true;
 }
 

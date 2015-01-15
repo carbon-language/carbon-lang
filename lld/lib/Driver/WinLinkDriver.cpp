@@ -1423,11 +1423,6 @@ bool WinLinkDriver::parse(int argc, const char *argv[],
 
   // Add the library group to the input graph.
   if (!isReadingDirectiveSection) {
-    // The container for the entry point file.
-    std::unique_ptr<SimpleFileNode> entry(new SimpleFileNode("<entry>"));
-    ctx.setEntryNode(entry.get());
-    ctx.getInputGraph().addInputElement(std::move(entry));
-
     // Add a group-end marker.
     ctx.getInputGraph().addInputElement(llvm::make_unique<GroupEnd>(0));
   }
