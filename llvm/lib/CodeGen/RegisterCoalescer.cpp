@@ -1209,10 +1209,10 @@ bool RegisterCoalescer::canJoinPhys(const CoalescerPair &CP) {
   }
 
   LiveInterval &JoinVInt = LIS->getInterval(CP.getSrcReg());
-  if (JoinVInt.containsOneValue())
+  if (CP.isFlipped() && JoinVInt.containsOneValue())
     return true;
 
-  DEBUG(dbgs() << "\tCannot join complex intervals into reserved register.\n");
+  DEBUG(dbgs() << "\tCannot join defs into reserved register.\n");
   return false;
 }
 
@@ -1431,7 +1431,8 @@ bool RegisterCoalescer::joinReservedPhysReg(CoalescerPair &CP) {
   LiveInterval &RHS = LIS->getInterval(CP.getSrcReg());
   DEBUG(dbgs() << "\t\tRHS = " << RHS << '\n');
 
-  assert(RHS.containsOneValue() && "Invalid join with reserved register");
+  assert(CP.isFlipped() && RHS.containsOneValue() &&
+         "Invalid join with reserved register");
 
   // Optimization for reserved registers like ESP. We can only merge with a
   // reserved physreg if RHS has a single value that is a copy of CP.DstReg().
@@ -1452,18 +1453,7 @@ bool RegisterCoalescer::joinReservedPhysReg(CoalescerPair &CP) {
   // defs are there.
 
   // Delete the identity copy.
-  MachineInstr *CopyMI;
-  if (CP.isFlipped()) {
-    CopyMI = MRI->getVRegDef(RHS.reg);
-  } else {
-    if (!MRI->hasOneNonDBGUse(RHS.reg)) {
-      DEBUG(dbgs() << "\t\tMultiple vreg uses\n");
-      return false;
-    }
-
-    CopyMI = &*MRI->use_instr_nodbg_begin(RHS.reg);
-  }
-  
+  MachineInstr *CopyMI = MRI->getVRegDef(RHS.reg);
   LIS->RemoveMachineInstrFromMaps(CopyMI);
   CopyMI->eraseFromParent();
 
