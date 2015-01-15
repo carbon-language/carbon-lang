@@ -2774,6 +2774,26 @@ defm storerd: ST_PostInc <"memd", "STrid", DoubleRegs, s4_3Imm, 0b1110>;
 let accessSize = HalfWordAccess, isNVStorable = 0, isCodeGenOnly = 0 in
 defm storerf: ST_PostInc <"memh", "STrih_H", IntRegs, s4_1Imm, 0b1011, 1>;
 
+// Patterns for generating stores, where the address takes different forms:
+// - frameindex,,
+// - base + offset,
+// - simple (base address without offset).
+// These would usually be used together (via Storex_pat defined below), but
+// in some cases one may want to apply different properties (such as
+// AddedComplexity) to the individual patterns.
+class Storex_fi_pat<PatFrag Store, PatFrag Value, InstHexagon MI>
+  : Pat<(Store Value:$Rs, AddrFI:$fi), (MI AddrFI:$fi, 0, Value:$Rs)>;
+class Storex_add_pat<PatFrag Store, PatFrag Value, PatFrag ImmPred,
+                     InstHexagon MI>
+  : Pat<(Store Value:$Rt, (add (i32 IntRegs:$Rs), ImmPred:$Off)),
+        (MI IntRegs:$Rs, imm:$Off, Value:$Rt)>;
+
+multiclass Storex_pat<PatFrag Store, PatFrag Value, PatLeaf ImmPred,
+                      InstHexagon MI> {
+  def: Storex_fi_pat  <Store, Value, MI>;
+  def: Storex_add_pat <Store, Value, ImmPred, MI>;
+}
+
 def : Pat<(post_truncsti8 (i32 IntRegs:$src1), IntRegs:$src2,
                            s4_3ImmPred:$offset),
           (S2_storerb_pi IntRegs:$src2, s4_0ImmPred:$offset, IntRegs:$src1)>;

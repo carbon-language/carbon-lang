@@ -164,8 +164,7 @@ void HexagonRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
            (MI.getOpcode() == Hexagon::L2_loadrh_io) ||
            (MI.getOpcode() == Hexagon::L2_loadruh_io) ||
            (MI.getOpcode() == Hexagon::L2_loadrb_io) ||
-           (MI.getOpcode() == Hexagon::L2_loadrub_io) ||
-           (MI.getOpcode() == Hexagon::LDriw_f)) {
+           (MI.getOpcode() == Hexagon::L2_loadrub_io)) {
         unsigned dstReg = (MI.getOpcode() == Hexagon::L2_loadrd_io) ?
           getSubReg(MI.getOperand(0).getReg(), Hexagon::subreg_loreg) :
           MI.getOperand(0).getReg();
@@ -188,9 +187,7 @@ void HexagonRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
       } else if ((MI.getOpcode() == Hexagon::S2_storeri_io) ||
                  (MI.getOpcode() == Hexagon::S2_storerd_io) ||
                  (MI.getOpcode() == Hexagon::S2_storerh_io) ||
-                 (MI.getOpcode() == Hexagon::S2_storerb_io) ||
-                 (MI.getOpcode() == Hexagon::STrid_f) ||
-                 (MI.getOpcode() == Hexagon::STriw_f)) {
+                 (MI.getOpcode() == Hexagon::S2_storerb_io)) {
         // For stores, we need a reserved register. Change
         // memw(r30 + #10000) = r0 to:
         //

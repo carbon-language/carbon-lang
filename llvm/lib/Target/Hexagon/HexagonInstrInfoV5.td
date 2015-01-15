@@ -112,7 +112,11 @@ def S5_popcountp : ALU64_rr<(outs IntRegs:$Rd), (ins DoubleRegs:$Rss),
     let Inst{20-16} = Rss;
   }
 
+defm: Loadx_pat<load, f32, s11_2ExtPred, L2_loadri_io>;
 defm: Loadx_pat<load, f64, s11_3ExtPred, L2_loadrd_io>;
+
+defm: Storex_pat<store, F32, s11_2ExtPred, S2_storeri_io>;
+defm: Storex_pat<store, F64, s11_3ExtPred, S2_storerd_io>;
 
 let isFP = 1, hasNewValue = 1, opNewValue = 0 in
 class T_MInstFloat <string mnemonic, bits<3> MajOp, bits<3> MinOp>
@@ -484,59 +488,6 @@ def F2_sfimm_n : T_fimm <"sfmake", IntRegs, 0b0110, 1>;
 def F2_dfimm_p : T_fimm <"dfmake", DoubleRegs, 0b1001, 0>;
 def F2_dfimm_n : T_fimm <"dfmake", DoubleRegs, 0b1001, 1>;
 }
-
-let AddedComplexity = 20 in
-def LDrid_indexed_f : LDInst<(outs DoubleRegs:$dst),
-            (ins IntRegs:$src1, s11_3Imm:$offset),
-            "$dst = memd($src1+#$offset)",
-            [(set DoubleRegs:$dst, (f64 (load (add IntRegs:$src1,
-                                              s11_3ImmPred:$offset))))]>,
-          Requires<[HasV5T]>;
-
-def LDriw_f : LDInst<(outs IntRegs:$dst),
-            (ins MEMri:$addr), "$dst = memw($addr)",
-            [(set IntRegs:$dst, (f32 (load ADDRriS11_2:$addr)))]>,
-          Requires<[HasV5T]>;
-
-
-let AddedComplexity = 20 in
-def LDriw_indexed_f : LDInst<(outs IntRegs:$dst),
-            (ins IntRegs:$src1, s11_2Imm:$offset),
-            "$dst = memw($src1+#$offset)",
-            [(set IntRegs:$dst, (f32 (load (add IntRegs:$src1,
-                                           s11_2ImmPred:$offset))))]>,
-          Requires<[HasV5T]>;
-
-// Store.
-def STriw_f : STInst<(outs),
-            (ins MEMri:$addr, IntRegs:$src1),
-            "memw($addr) = $src1",
-            [(store (f32 IntRegs:$src1), ADDRriS11_2:$addr)]>,
-          Requires<[HasV5T]>;
-
-let AddedComplexity = 10 in
-def STriw_indexed_f : STInst<(outs),
-            (ins IntRegs:$src1, s11_2Imm:$src2, IntRegs:$src3),
-            "memw($src1+#$src2) = $src3",
-            [(store (f32 IntRegs:$src3),
-                (add IntRegs:$src1, s11_2ImmPred:$src2))]>,
-          Requires<[HasV5T]>;
-
-def STrid_f : STInst<(outs),
-            (ins MEMri:$addr, DoubleRegs:$src1),
-            "memd($addr) = $src1",
-            [(store (f64 DoubleRegs:$src1), ADDRriS11_2:$addr)]>,
-          Requires<[HasV5T]>;
-
-// Indexed store double word.
-let AddedComplexity = 10 in
-def STrid_indexed_f : STInst<(outs),
-            (ins IntRegs:$src1, s11_3Imm:$src2,  DoubleRegs:$src3),
-            "memd($src1+#$src2) = $src3",
-            [(store (f64 DoubleRegs:$src3),
-                                (add IntRegs:$src1, s11_3ImmPred:$src2))]>,
-          Requires<[HasV5T]>;
-
 
 // Add
 let isCommutable = 1 in

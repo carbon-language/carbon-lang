@@ -770,14 +770,6 @@ getMatchingCondBranchOpcode(int Opc, bool invertPredicate) const {
     return !invertPredicate ? Hexagon::C2_ccombinewt :
                               Hexagon::C2_ccombinewf;
 
-  // Word.
-  case Hexagon::STriw_f:
-    return !invertPredicate ? Hexagon::S2_pstorerit_io:
-                              Hexagon::S2_pstorerif_io;
-  case Hexagon::STriw_indexed_f:
-    return !invertPredicate ? Hexagon::S2_pstorerit_io:
-                              Hexagon::S2_pstorerif_io;
-
   // DEALLOC_RETURN.
   case Hexagon::L4_return:
     return !invertPredicate ? Hexagon::L4_return_t:
@@ -1094,15 +1086,12 @@ isValidOffset(const int Opcode, const int Offset) const {
   switch(Opcode) {
 
   case Hexagon::L2_loadri_io:
-  case Hexagon::LDriw_f:
   case Hexagon::S2_storeri_io:
-  case Hexagon::STriw_f:
     return (Offset >= Hexagon_MEMW_OFFSET_MIN) &&
       (Offset <= Hexagon_MEMW_OFFSET_MAX);
 
   case Hexagon::L2_loadrd_io:
   case Hexagon::S2_storerd_io:
-  case Hexagon::STrid_f:
     return (Offset >= Hexagon_MEMD_OFFSET_MIN) &&
       (Offset <= Hexagon_MEMD_OFFSET_MAX);
 
@@ -1549,12 +1538,6 @@ int HexagonInstrInfo::GetDotNewOp(const MachineInstr* MI) const {
 
   case Hexagon::STrih_shl_V4:
     return Hexagon::STrih_shl_nv_V4;
-
-  case Hexagon::STriw_f:
-    return Hexagon::S2_storerinew_io;
-
-  case Hexagon::STriw_indexed_f:
-    return Hexagon::S4_storerinew_rr;
 
   case Hexagon::STriw_shl_V4:
     return Hexagon::STriw_shl_nv_V4;
