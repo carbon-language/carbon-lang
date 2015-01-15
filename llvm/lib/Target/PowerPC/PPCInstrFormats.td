@@ -945,6 +945,25 @@ class XLForm_3<bits<6> opcode, bits<10> xo, dag OOL, dag IOL, string asmstr,
   let Inst{31}    = 0;
 }
 
+class XLForm_4<bits<6> opcode, bits<10> xo, dag OOL, dag IOL, string asmstr,
+               InstrItinClass itin>
+         : I<opcode, OOL, IOL, asmstr, itin> {
+  bits<3> BF;
+  bit W;
+  bits<4> U;
+  
+  bit RC = 0;
+  
+  let Inst{6-8}   = BF;
+  let Inst{9-10}  = 0;
+  let Inst{11-14} = 0;
+  let Inst{15}    = W;
+  let Inst{16-19} = U;
+  let Inst{20}    = 0;
+  let Inst{21-30} = xo;
+  let Inst{31}    = RC;
+}
+
 class XLForm_2_and_DSForm_1<bits<6> opcode1, bits<10> xo1, bit lk,
                             bits<6> opcode2, bits<2> xo2,
                             dag OOL, dag IOL, string asmstr,
@@ -1077,6 +1096,25 @@ class XFLForm<bits<6> opcode, bits<10> xo, dag OOL, dag IOL, string asmstr,
   let Inst{7-14}  = FM;
   let Inst{15} = 0;
   let Inst{16-20} = rT;
+  let Inst{21-30} = xo;
+  let Inst{31}    = RC;
+}
+
+class XFLForm_1<bits<6> opcode, bits<10> xo, dag OOL, dag IOL, string asmstr,
+                InstrItinClass itin, list<dag>pattern>
+  : I<opcode, OOL, IOL, asmstr, itin> {
+  bit L;
+  bits<8> FLM;
+  bit W;
+  bits<5> FRB;
+
+  bit RC = 0;    // set by isDOT
+  let Pattern = pattern;
+
+  let Inst{6}     = L;
+  let Inst{7-14}  = FLM;
+  let Inst{15}    = W;
+  let Inst{16-20} = FRB;
   let Inst{21-30} = xo;
   let Inst{31}    = RC;
 }

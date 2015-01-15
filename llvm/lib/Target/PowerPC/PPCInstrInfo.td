@@ -2193,15 +2193,20 @@ let Uses = [RM], Defs = [RM] in {
   def MTFSB1 : XForm_43<63, 38, (outs), (ins u5imm:$FM),
                         "mtfsb1 $FM", IIC_IntMTFSB0, []>,
                PPC970_DGroup_Single, PPC970_Unit_FPU;
-  def MTFSF  : XFLForm<63, 711, (outs), (ins i32imm:$FM, f8rc:$rT),
-                       "mtfsf $FM, $rT", IIC_IntMTFSB0, []>,
-               PPC970_DGroup_Single, PPC970_Unit_FPU;
+  let isCodeGenOnly = 1 in
+  def MTFSFb  : XFLForm<63, 711, (outs), (ins i32imm:$FM, f8rc:$rT),
+                        "mtfsf $FM, $rT", IIC_IntMTFSB0, []>,
+                PPC970_DGroup_Single, PPC970_Unit_FPU;
 }
 let Uses = [RM] in {
   def MFFS   : XForm_42<63, 583, (outs f8rc:$rT), (ins),
                          "mffs $rT", IIC_IntMFFS,
                          [(set f64:$rT, (PPCmffs))]>,
                PPC970_DGroup_Single, PPC970_Unit_FPU;
+
+  let Defs = [CR1] in
+  def MFFSo : XForm_42<63, 583, (outs f8rc:$rT), (ins),
+                      "mffs. $rT", IIC_IntMFFS, []>, isDOT;
 }
 
 
@@ -3186,6 +3191,28 @@ def MFMSR : XForm_rs<31, 83, (outs gprc:$RT), (ins),
 
 def MTMSRD : XForm_mtmsr<31, 178, (outs), (ins gprc:$RS, i32imm:$L),
                     "mtmsrd $RS, $L", IIC_SprMTMSRD>;
+
+def MCRFS : XLForm_3<63, 64, (outs crrc:$BF), (ins crrc:$BFA),
+                     "mcrfs $BF, $BFA", IIC_BrMCR>;
+
+def MTFSFI : XLForm_4<63, 134, (outs crrc:$BF), (ins i32imm:$U, i32imm:$W),
+                      "mtfsfi $BF, $U, $W", IIC_IntMFFS>;
+
+def MTFSFIo : XLForm_4<63, 134, (outs crrc:$BF), (ins i32imm:$U, i32imm:$W),
+                       "mtfsfi. $BF, $U, $W", IIC_IntMFFS>, isDOT;
+
+def : InstAlias<"mtfsfi $BF, $U", (MTFSFI crrc:$BF, i32imm:$U, 0)>;
+def : InstAlias<"mtfsfi. $BF, $U", (MTFSFIo crrc:$BF, i32imm:$U, 0)>;
+
+def MTFSF : XFLForm_1<63, 711, (outs),
+                      (ins i32imm:$FLM, f8rc:$FRB, i32imm:$L, i32imm:$W),
+                      "mtfsf $FLM, $FRB, $L, $W", IIC_IntMFFS, []>;
+def MTFSFo : XFLForm_1<63, 711, (outs),
+                       (ins i32imm:$FLM, f8rc:$FRB, i32imm:$L, i32imm:$W),
+                       "mtfsf. $FLM, $FRB, $L, $W", IIC_IntMFFS, []>, isDOT;
+
+def : InstAlias<"mtfsf $FLM, $FRB", (MTFSF i32imm:$FLM, f8rc:$FRB, 0, 0)>;
+def : InstAlias<"mtfsf. $FLM, $FRB", (MTFSFo i32imm:$FLM, f8rc:$FRB, 0, 0)>;
 
 def SLBIE : XForm_16b<31, 434, (outs), (ins gprc:$RB),
                         "slbie $RB", IIC_SprSLBIE, []>;

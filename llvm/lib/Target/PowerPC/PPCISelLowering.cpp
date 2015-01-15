@@ -7718,7 +7718,7 @@ PPCTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
     BuildMI(*BB, MI, dl, TII->get(PPC::FADD), Dest).addReg(Src1).addReg(Src2);
 
     // Restore FPSCR value.
-    BuildMI(*BB, MI, dl, TII->get(PPC::MTFSF)).addImm(1).addReg(MFFSReg);
+    BuildMI(*BB, MI, dl, TII->get(PPC::MTFSFb)).addImm(1).addReg(MFFSReg);
   } else if (MI->getOpcode() == PPC::ANDIo_1_EQ_BIT ||
              MI->getOpcode() == PPC::ANDIo_1_GT_BIT ||
              MI->getOpcode() == PPC::ANDIo_1_EQ_BIT8 ||
