@@ -1230,8 +1230,10 @@ defm V_CVT_F16_F32 : VOP1Inst <vop1<0xa>, "v_cvt_f16_f32",
 defm V_CVT_F32_F16 : VOP1Inst <vop1<0xb>, "v_cvt_f32_f16",
   VOP_F32_I32, f16_to_fp
 >;
-//defm V_CVT_RPI_I32_F32 : VOP1_32 <0x0000000c, "v_cvt_rpi_i32_f32", []>;
-//defm V_CVT_FLR_I32_F32 : VOP1_32 <0x0000000d, "v_cvt_flr_i32_f32", []>;
+defm V_CVT_RPI_I32_F32 : VOP1Inst <vop1<0xc>, "v_cvt_rpi_i32_f32",
+  VOP_I32_F32, cvt_rpi_i32_f32>;
+defm V_CVT_FLR_I32_F32 : VOP1Inst <vop1<0xd>, "v_cvt_flr_i32_f32",
+  VOP_I32_F32, cvt_flr_i32_f32>;
 //defm V_CVT_OFF_F32_I4 : VOP1_32 <0x0000000e, "v_cvt_off_f32_i4", []>;
 defm V_CVT_F32_F64 : VOP1Inst <vop1<0xf>, "v_cvt_f32_f64",
   VOP_F32_F64, fround
