@@ -747,19 +747,13 @@ CodeGenModule::getVTableLinkage(const CXXRecordDecl *RD) {
   llvm_unreachable("Invalid TemplateSpecializationKind!");
 }
 
-/// This is a callback from Sema to tell us that it believes that a
-/// particular v-table is required to be emitted in this translation
-/// unit.
+/// This is a callback from Sema to tell us that that a particular v-table is
+/// required to be emitted in this translation unit.
 ///
-/// The reason we don't simply trust this callback is because Sema
-/// will happily report that something is used even when it's used
-/// only in code that we don't actually have to emit.
-///
-/// \param isRequired - if true, the v-table is mandatory, e.g.
-///   because the translation unit defines the key function
-void CodeGenModule::EmitVTable(CXXRecordDecl *theClass, bool isRequired) {
-  if (!isRequired) return;
-
+/// This is only called for vtables that _must_ be emitted (mainly due to key
+/// functions).  For weak vtables, CodeGen tracks when they are needed and
+/// emits them as-needed.
+void CodeGenModule::EmitVTable(CXXRecordDecl *theClass) {
   VTables.GenerateClassData(theClass);
 }
 

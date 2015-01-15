@@ -211,11 +211,11 @@ namespace {
       Builder->EmitTentativeDefinition(D);
     }
 
-    void HandleVTable(CXXRecordDecl *RD, bool DefinitionRequired) override {
+    void HandleVTable(CXXRecordDecl *RD) override {
       if (Diags.hasErrorOccurred())
         return;
 
-      Builder->EmitVTable(RD, DefinitionRequired);
+      Builder->EmitVTable(RD);
     }
 
     void HandleLinkerOptionPragma(llvm::StringRef Opts) override {

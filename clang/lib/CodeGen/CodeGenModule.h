@@ -993,7 +993,7 @@ public:
 
   void EmitTentativeDefinition(const VarDecl *D);
 
-  void EmitVTable(CXXRecordDecl *Class, bool DefinitionRequired);
+  void EmitVTable(CXXRecordDecl *Class);
 
   /// Emit the RTTI descriptors for the builtin types.
   void EmitFundamentalRTTIDescriptors();

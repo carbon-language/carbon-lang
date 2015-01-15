@@ -196,8 +196,8 @@ namespace clang {
       Gen->CompleteTentativeDefinition(D);
     }
 
-    void HandleVTable(CXXRecordDecl *RD, bool DefinitionRequired) override {
-      Gen->HandleVTable(RD, DefinitionRequired);
+    void HandleVTable(CXXRecordDecl *RD) override {
+      Gen->HandleVTable(RD);
     }
 
     void HandleLinkerOptionPragma(llvm::StringRef Opts) override {

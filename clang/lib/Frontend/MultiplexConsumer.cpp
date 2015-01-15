@@ -292,10 +292,9 @@ void MultiplexConsumer::CompleteTentativeDefinition(VarDecl *D) {
     Consumer->CompleteTentativeDefinition(D);
 }
 
-void MultiplexConsumer::HandleVTable(
-    CXXRecordDecl *RD, bool DefinitionRequired) {
+void MultiplexConsumer::HandleVTable(CXXRecordDecl *RD) {
   for (auto &Consumer : Consumers)
-    Consumer->HandleVTable(RD, DefinitionRequired);
+    Consumer->HandleVTable(RD);
 }
 
 ASTMutationListener *MultiplexConsumer::GetASTMutationListener() {
