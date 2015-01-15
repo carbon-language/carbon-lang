@@ -19,12 +19,12 @@
 #include "sanitizer_common/sanitizer_atomic.h"
 #include "sanitizer_common/sanitizer_common.h"
 #include "sanitizer_common/sanitizer_flags.h"
+#include "sanitizer_common/sanitizer_flag_parser.h"
 #include "sanitizer_common/sanitizer_libc.h"
 #include "sanitizer_common/sanitizer_procmaps.h"
 #include "sanitizer_common/sanitizer_stacktrace.h"
 #include "sanitizer_common/sanitizer_symbolizer.h"
 #include "sanitizer_common/sanitizer_stackdepot.h"
-
 
 // ACHTUNG! No system header includes in this file.
 
@@ -102,20 +102,40 @@ void Flags::SetDefaults() {
 #undef MSAN_FLAG
 }
 
-void Flags::ParseFromString(const char *str) {
-  // keep_going is an old name for halt_on_error,
-  // and it has inverse meaning.
-  halt_on_error = !halt_on_error;
-  ParseFlag(str, &halt_on_error, "keep_going", "");
-  halt_on_error = !halt_on_error;
+// keep_going is an old name for halt_on_error,
+// and it has inverse meaning.
+class FlagHandlerKeepGoing : public FlagHandlerBase {
+  bool *halt_on_error_;
 
-#define MSAN_FLAG(Type, Name, DefaultValue, Description)                     \
-  ParseFlag(str, &Name, #Name, Description);
+ public:
+  explicit FlagHandlerKeepGoing(bool *halt_on_error)
+      : halt_on_error_(halt_on_error) {}
+  bool Parse(const char *value) {
+    bool tmp;
+    FlagHandler<bool> h(&tmp);
+    if (!h.Parse(value)) return false;
+    *halt_on_error_ = !tmp;
+    return true;
+  }
+};
+
+void RegisterMsanFlags(FlagParser *parser, Flags *f) {
+#define MSAN_FLAG(Type, Name, DefaultValue, Description) \
+  RegisterFlag(parser, #Name, Description, &f->Name);
 #include "msan_flags.inc"
 #undef MSAN_FLAG
+
+  FlagHandlerKeepGoing *fh_keep_going =
+      new (INTERNAL_ALLOC) FlagHandlerKeepGoing(&f->halt_on_error);  // NOLINT
+  parser->RegisterHandler("keep_going", fh_keep_going,
+                          "deprecated, use halt_on_error");
 }
 
 static void InitializeFlags(Flags *f, const char *options) {
+  FlagParser parser;
+  RegisterMsanFlags(&parser, f);
+  RegisterCommonFlags(&parser);
+
   SetCommonFlagsDefaults();
   {
     CommonFlags cf;
@@ -132,13 +152,12 @@ static void InitializeFlags(Flags *f, const char *options) {
   f->SetDefaults();
 
   // Override from user-specified string.
-  if (__msan_default_options) {
-    f->ParseFromString(__msan_default_options());
-    ParseCommonFlagsFromString(__msan_default_options());
-  }
+  if (__msan_default_options)
+    parser.ParseString(__msan_default_options());
 
-  f->ParseFromString(options);
-  ParseCommonFlagsFromString(options);
+  parser.ParseString(options);
+
+  if (common_flags()->help) parser.PrintFlagDescriptions();
 
   // Check flag values:
   if (f->exit_code < 0 || f->exit_code > 127) {
@@ -328,7 +347,6 @@ void __msan_init() {
 
   const char *msan_options = GetEnv("MSAN_OPTIONS");
   InitializeFlags(&msan_flags, msan_options);
-  if (common_flags()->help) PrintFlagDescriptions();
   __sanitizer_set_report_path(common_flags()->log_path);
 
   InitializeInterceptors();

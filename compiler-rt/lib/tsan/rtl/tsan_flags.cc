@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "sanitizer_common/sanitizer_flags.h"
+#include "sanitizer_common/sanitizer_flag_parser.h"
 #include "sanitizer_common/sanitizer_libc.h"
 #include "tsan_flags.h"
 #include "tsan_rtl.h"
@@ -41,16 +42,18 @@ void Flags::SetDefaults() {
   second_deadlock_stack = false;
 }
 
-void Flags::ParseFromString(const char *str) {
-#define TSAN_FLAG(Type, Name, DefaultValue, Description)                     \
-  ParseFlag(str, &Name, #Name, Description);
+void RegisterTsanFlags(FlagParser *parser, Flags *f) {
+#define TSAN_FLAG(Type, Name, DefaultValue, Description) \
+  RegisterFlag(parser, #Name, Description, &f->Name);
 #include "tsan_flags.inc"
 #undef TSAN_FLAG
-  // DDFlags
-  ParseFlag(str, &second_deadlock_stack, "second_deadlock_stack", "");
 }
 
 void InitializeFlags(Flags *f, const char *env) {
+  FlagParser parser;
+  RegisterTsanFlags(&parser, f);
+  RegisterCommonFlags(&parser);
+
   f->SetDefaults();
 
   SetCommonFlagsDefaults();
@@ -66,11 +69,9 @@ void InitializeFlags(Flags *f, const char *env) {
   }
 
   // Let a frontend override.
-  f->ParseFromString(__tsan_default_options());
-  ParseCommonFlagsFromString(__tsan_default_options());
+  parser.ParseString(__tsan_default_options());
   // Override from command line.
-  f->ParseFromString(env);
-  ParseCommonFlagsFromString(env);
+  parser.ParseString(env);
 
   // Sanity check.
   if (!f->report_bugs) {
@@ -80,7 +81,7 @@ void InitializeFlags(Flags *f, const char *env) {
   }
 
   if (common_flags()->help)
-    PrintFlagDescriptions();
+    parser.PrintFlagDescriptions();
 
   if (f->history_size < 0 || f->history_size > 7) {
     Printf("ThreadSanitizer: incorrect value for history_size"

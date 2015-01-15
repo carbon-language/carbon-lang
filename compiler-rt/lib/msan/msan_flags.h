@@ -21,7 +21,6 @@ struct Flags {
 #undef MSAN_FLAG
 
   void SetDefaults();
-  void ParseFromString(const char *str);
 };
 
 Flags *flags();

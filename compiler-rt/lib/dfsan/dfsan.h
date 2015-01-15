@@ -61,7 +61,6 @@ struct Flags {
 #undef DFSAN_FLAG
 
   void SetDefaults();
-  void ParseFromString(const char *str);
 };
 
 extern Flags flags_data;

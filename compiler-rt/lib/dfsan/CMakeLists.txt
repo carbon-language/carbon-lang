@@ -5,7 +5,7 @@ set(DFSAN_RTL_SOURCES
   dfsan.cc
   dfsan_custom.cc
   dfsan_interceptors.cc)
-set(DFSAN_COMMON_CFLAGS ${SANITIZER_COMMON_CFLAGS})
+set(DFSAN_COMMON_CFLAGS ${SANITIZER_COMMON_CFLAGS} -fno-rtti)
 # Prevent clang from generating libc calls.
 append_list_if(COMPILER_RT_HAS_FFREESTANDING_FLAG -ffreestanding DFSAN_COMMON_CFLAGS)
 

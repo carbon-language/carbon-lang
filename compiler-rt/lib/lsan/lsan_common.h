@@ -43,7 +43,6 @@ struct Flags {
 #undef LSAN_FLAG
 
   void SetDefaults();
-  void ParseFromString(const char *str);
   uptr pointer_alignment() const {
     return use_unaligned ? 1 : sizeof(uptr);
   }

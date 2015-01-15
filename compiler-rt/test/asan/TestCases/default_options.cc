@@ -4,12 +4,12 @@
 // __asan_default_options() are not supported on Windows.
 // XFAIL: win32
 
-const char *kAsanDefaultOptions="verbosity=1 foo=bar";
+const char *kAsanDefaultOptions="verbosity=1 strip_path_prefix=bar";
 
 extern "C"
 __attribute__((no_sanitize_address))
 const char *__asan_default_options() {
-  // CHECK: Using the defaults from __asan_default_options: {{.*}} foo=bar
+  // CHECK: Using the defaults from __asan_default_options: {{.*}} strip_path_prefix=bar
   return kAsanDefaultOptions;
 }
 

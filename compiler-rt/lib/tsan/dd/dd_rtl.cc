@@ -11,6 +11,7 @@
 #include "sanitizer_common/sanitizer_common.h"
 #include "sanitizer_common/sanitizer_placement_new.h"
 #include "sanitizer_common/sanitizer_flags.h"
+#include "sanitizer_common/sanitizer_flag_parser.h"
 #include "sanitizer_common/sanitizer_stacktrace.h"
 #include "sanitizer_common/sanitizer_stackdepot.h"
 
@@ -80,8 +81,10 @@ void InitializeFlags(Flags *f, const char *env) {
   }
 
   // Override from command line.
-  ParseFlag(env, &f->second_deadlock_stack, "second_deadlock_stack", "");
-  ParseCommonFlagsFromString(env);
+  FlagParser parser;
+  RegisterFlag(&parser, "second_deadlock_stack", "", &f->second_deadlock_stack);
+  RegisterCommonFlags(&parser);
+  parser.ParseString(env);
 }
 
 void Initialize() {

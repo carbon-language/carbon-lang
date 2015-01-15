@@ -32,6 +32,9 @@ static struct AsanDeactivatedFlags {
   void OverrideFromActivationFlags() {
     Flags f;
     CommonFlags cf;
+    FlagParser parser;
+    RegisterAsanFlags(&parser, &f);
+    RegisterCommonFlags(&parser, &cf);
 
     // Copy the current activation flags.
     allocator_options.CopyTo(&f, &cf);
@@ -44,15 +47,13 @@ static struct AsanDeactivatedFlags {
     // FIXME: Add diagnostic to check that activation flags string doesn't
     // contain any other flags.
     if (const char *env = GetEnv("ASAN_ACTIVATION_OPTIONS")) {
-      cf.ParseFromString(env);
-      f.ParseFromString(env);
+      parser.ParseString(env);
     }
 
     // Override from getprop asan.options.
     char buf[100];
     GetExtraActivationFlags(buf, sizeof(buf));
-    cf.ParseFromString(buf);
-    f.ParseFromString(buf);
+    parser.ParseString(buf);
 
     allocator_options.SetFrom(&f, &cf);
     malloc_context_size = cf.malloc_context_size;

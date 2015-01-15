@@ -16,6 +16,7 @@
 
 #include "sanitizer_common/sanitizer_common.h"
 #include "sanitizer_common/sanitizer_flags.h"
+#include "sanitizer_common/sanitizer_flag_parser.h"
 #include "sanitizer_common/sanitizer_placement_new.h"
 #include "sanitizer_common/sanitizer_procmaps.h"
 #include "sanitizer_common/sanitizer_stackdepot.h"
@@ -42,19 +43,20 @@ void Flags::SetDefaults() {
 #undef LSAN_FLAG
 }
 
-void Flags::ParseFromString(const char *str) {
-#define LSAN_FLAG(Type, Name, DefaultValue, Description)                       \
-  ParseFlag(str, &Name, #Name, Description);
+static void RegisterLsanFlags(FlagParser *parser, Flags *f) {
+#define LSAN_FLAG(Type, Name, DefaultValue, Description) \
+  RegisterFlag(parser, #Name, Description, &f->Name);
 #include "lsan_flags.inc"
 #undef LSAN_FLAG
 }
 
 static void InitializeFlags(bool standalone) {
   Flags *f = flags();
-  f->SetDefaults();
+  FlagParser parser;
+  RegisterLsanFlags(&parser, f);
+  RegisterCommonFlags(&parser);
 
-  const char *options = GetEnv("LSAN_OPTIONS");
-  f->ParseFromString(options);
+  f->SetDefaults();
 
   // Set defaults for common flags (only in standalone mode) and parse
   // them from LSAN_OPTIONS.
@@ -67,7 +69,9 @@ static void InitializeFlags(bool standalone) {
     cf.detect_leaks = true;
     OverrideCommonFlags(cf);
   }
-  ParseCommonFlagsFromString(options);
+
+  const char *options = GetEnv("LSAN_OPTIONS");
+  parser.ParseString(options);
 }
 
 #define LOG_POINTERS(...)                           \

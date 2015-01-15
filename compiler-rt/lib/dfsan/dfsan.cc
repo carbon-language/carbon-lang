@@ -22,6 +22,7 @@
 #include "sanitizer_common/sanitizer_atomic.h"
 #include "sanitizer_common/sanitizer_common.h"
 #include "sanitizer_common/sanitizer_flags.h"
+#include "sanitizer_common/sanitizer_flag_parser.h"
 #include "sanitizer_common/sanitizer_libc.h"
 
 #include "dfsan/dfsan.h"
@@ -316,16 +317,18 @@ void Flags::SetDefaults() {
 #undef DFSAN_FLAG
 }
 
-void Flags::ParseFromString(const char *str) {
-#define DFSAN_FLAG(Type, Name, DefaultValue, Description)                     \
-  ParseFlag(str, &Name, #Name, Description);
+void RegisterDfsanFlags(FlagParser *parser, Flags *f) {
+#define DFSAN_FLAG(Type, Name, DefaultValue, Description) \
+  RegisterFlag(parser, #Name, Description, &f->Name);
 #include "dfsan_flags.inc"
 #undef DFSAN_FLAG
 }
 
 static void InitializeFlags(Flags &f, const char *env) {
+  FlagParser parser;
+  RegisterDfsanFlags(&parser, &f);
   f.SetDefaults();
-  f.ParseFromString(env);
+  parser.ParseString(env);
 }
 
 static void dfsan_fini() {

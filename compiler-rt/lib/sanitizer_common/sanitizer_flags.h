@@ -18,22 +18,12 @@
 
 namespace __sanitizer {
 
-void ParseFlag(const char *env, bool *flag,
-    const char *name, const char *descr);
-void ParseFlag(const char *env, int *flag,
-    const char *name, const char *descr);
-void ParseFlag(const char *env, uptr *flag,
-    const char *name, const char *descr);
-void ParseFlag(const char *env, const char **flag,
-    const char *name, const char *descr);
-
 struct CommonFlags {
 #define COMMON_FLAG(Type, Name, DefaultValue, Description) Type Name;
 #include "sanitizer_flags.inc"
 #undef COMMON_FLAG
 
   void SetDefaults();
-  void ParseFromString(const char *str);
   void CopyFrom(const CommonFlags &other);
 };
 
@@ -47,10 +37,6 @@ inline void SetCommonFlagsDefaults() {
   common_flags_dont_use.SetDefaults();
 }
 
-inline void ParseCommonFlagsFromString(const char *str) {
-  common_flags_dont_use.ParseFromString(str);
-}
-
 // This function can only be used to setup tool-specific overrides for
 // CommonFlags defaults. Generally, it should only be used right after
 // SetCommonFlagsDefaults(), but before ParseCommonFlagsFromString(), and
@@ -60,8 +46,9 @@ inline void OverrideCommonFlags(const CommonFlags &cf) {
   common_flags_dont_use.CopyFrom(cf);
 }
 
-void PrintFlagDescriptions();
-
+class FlagParser;
+void RegisterCommonFlags(FlagParser *parser,
+                         CommonFlags *cf = &common_flags_dont_use);
 }  // namespace __sanitizer
 
 #endif  // SANITIZER_FLAGS_H

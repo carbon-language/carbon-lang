@@ -101,6 +101,14 @@ char* internal_strdup(const char *s) {
   return s2;
 }
 
+char* internal_strndup(const char *s, uptr n) {
+  uptr len = internal_strnlen(s, n);
+  char *s2 = (char*)InternalAlloc(len + 1);
+  internal_memcpy(s2, s, len);
+  s2[len] = 0;
+  return s2;
+}
+
 int internal_strcmp(const char *s1, const char *s2) {
   while (true) {
     unsigned c1 = *s1;

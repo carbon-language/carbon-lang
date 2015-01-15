@@ -30,7 +30,8 @@ set(ASAN_UNITTEST_COMMON_CFLAGS
   -fno-rtti
   -O2
   -Wno-format
-  -Werror=sign-compare)
+  -Werror=sign-compare
+  -Wno-non-virtual-dtor)
 append_list_if(COMPILER_RT_HAS_WVARIADIC_MACROS_FLAG -Wno-variadic-macros ASAN_UNITTEST_COMMON_CFLAGS)
 
 # -gline-tables-only must be enough for ASan, so use it if possible.

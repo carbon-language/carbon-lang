@@ -19,6 +19,7 @@
 #include "lsan/lsan_common.h"
 #include "sanitizer_common/sanitizer_common.h"
 #include "sanitizer_common/sanitizer_flags.h"
+#include "sanitizer_common/sanitizer_flag_parser.h"
 
 namespace __asan {
 
@@ -45,14 +46,18 @@ void Flags::SetDefaults() {
 #undef ASAN_FLAG
 }
 
-void Flags::ParseFromString(const char *str) {
-#define ASAN_FLAG(Type, Name, DefaultValue, Description)                     \
-  ParseFlag(str, &Name, #Name, Description);
+void RegisterAsanFlags(FlagParser *parser, Flags *f) {
+#define ASAN_FLAG(Type, Name, DefaultValue, Description) \
+  RegisterFlag(parser, #Name, Description, &f->Name);
 #include "asan_flags.inc"
 #undef ASAN_FLAG
 }
 
 void InitializeFlags(Flags *f) {
+  FlagParser parser;
+  RegisterAsanFlags(&parser, f);
+  RegisterCommonFlags(&parser);
+
   SetCommonFlagsDefaults();
   {
     CommonFlags cf;
@@ -69,20 +74,17 @@ void InitializeFlags(Flags *f) {
 
   // Override from compile definition.
   const char *compile_def = MaybeUseAsanDefaultOptionsCompileDefinition();
-  ParseCommonFlagsFromString(compile_def);
-  f->ParseFromString(compile_def);
+  parser.ParseString(compile_def);
 
   // Override from user-specified string.
   const char *default_options = MaybeCallAsanDefaultOptions();
-  ParseCommonFlagsFromString(default_options);
-  f->ParseFromString(default_options);
+  parser.ParseString(default_options);
   VReport(1, "Using the defaults from __asan_default_options: %s\n",
           MaybeCallAsanDefaultOptions());
 
   // Override from command line.
   if (const char *env = GetEnv("ASAN_OPTIONS")) {
-    ParseCommonFlagsFromString(env);
-    f->ParseFromString(env);
+    parser.ParseString(env);
     VReport(1, "Parsed ASAN_OPTIONS: %s\n", env);
   }
 
@@ -91,14 +93,13 @@ void InitializeFlags(Flags *f) {
   if (!flags()->start_deactivated) {
     char buf[100];
     GetExtraActivationFlags(buf, sizeof(buf));
-    ParseCommonFlagsFromString(buf);
-    f->ParseFromString(buf);
+    parser.ParseString(buf);
     if (buf[0] != '\0')
       VReport(1, "Parsed activation flags: %s\n", buf);
   }
 
   if (common_flags()->help) {
-    PrintFlagDescriptions();
+    parser.PrintFlagDescriptions();
   }
 
   // Flag validation:
