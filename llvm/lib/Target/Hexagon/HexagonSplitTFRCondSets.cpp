@@ -90,39 +90,8 @@ bool HexagonSplitTFRCondSets::runOnMachineFunction(MachineFunction &Fn) {
     for (MachineBasicBlock::iterator MII = MBB->begin(); MII != MBB->end();
          ++MII) {
       MachineInstr *MI = MII;
-      int Opc1, Opc2;
       switch(MI->getOpcode()) {
-        case Hexagon::TFR_condset_rr_f:
-        case Hexagon::TFR_condset_rr64_f: {
-          int DestReg = MI->getOperand(0).getReg();
-          int SrcReg1 = MI->getOperand(2).getReg();
-          int SrcReg2 = MI->getOperand(3).getReg();
-
-          if (MI->getOpcode() == Hexagon::TFR_condset_rr_f) {
-            Opc1 = Hexagon::A2_tfrt;
-            Opc2 = Hexagon::A2_tfrf;
-          }
-          else if (MI->getOpcode() == Hexagon::TFR_condset_rr64_f) {
-            Opc1 = Hexagon::A2_tfrpt;
-            Opc2 = Hexagon::A2_tfrpf;
-          }
-
-          // Minor optimization: do not emit the predicated copy if the source
-          // and the destination is the same register.
-          if (DestReg != SrcReg1) {
-            BuildMI(*MBB, MII, MI->getDebugLoc(), TII->get(Opc1),
-                    DestReg).addReg(MI->getOperand(1).getReg()).addReg(SrcReg1);
-          }
-          if (DestReg != SrcReg2) {
-            BuildMI(*MBB, MII, MI->getDebugLoc(), TII->get(Opc2),
-                    DestReg).addReg(MI->getOperand(1).getReg()).addReg(SrcReg2);
-          }
-          MII = MBB->erase(MI);
-          --MII;
-          break;
-        }
-        case Hexagon::TFR_condset_ri:
-        case Hexagon::TFR_condset_ri_f: {
+        case Hexagon::TFR_condset_ri: {
           int DestReg = MI->getOperand(0).getReg();
           int SrcReg1 = MI->getOperand(2).getReg();
 
@@ -133,38 +102,23 @@ bool HexagonSplitTFRCondSets::runOnMachineFunction(MachineFunction &Fn) {
               TII->get(Hexagon::A2_tfrt), DestReg).
               addReg(MI->getOperand(1).getReg()).addReg(SrcReg1);
           }
-          if (MI->getOpcode() ==  Hexagon::TFR_condset_ri ) {
-            BuildMI(*MBB, MII, MI->getDebugLoc(),
-              TII->get(Hexagon::C2_cmoveif), DestReg).
-              addReg(MI->getOperand(1).getReg()).
-              addImm(MI->getOperand(3).getImm());
-          } else if (MI->getOpcode() ==  Hexagon::TFR_condset_ri_f ) {
-            BuildMI(*MBB, MII, MI->getDebugLoc(),
-              TII->get(Hexagon::TFRI_cNotPt_f), DestReg).
-              addReg(MI->getOperand(1).getReg()).
-              addFPImm(MI->getOperand(3).getFPImm());
-          }
+          BuildMI(*MBB, MII, MI->getDebugLoc(),
+            TII->get(Hexagon::C2_cmoveif), DestReg).
+            addReg(MI->getOperand(1).getReg()).
+            addImm(MI->getOperand(3).getImm());
 
           MII = MBB->erase(MI);
           --MII;
           break;
         }
-        case Hexagon::TFR_condset_ir:
-        case Hexagon::TFR_condset_ir_f: {
+        case Hexagon::TFR_condset_ir: {
           int DestReg = MI->getOperand(0).getReg();
           int SrcReg2 = MI->getOperand(3).getReg();
 
-          if (MI->getOpcode() ==  Hexagon::TFR_condset_ir ) {
-            BuildMI(*MBB, MII, MI->getDebugLoc(),
-              TII->get(Hexagon::C2_cmoveit), DestReg).
-              addReg(MI->getOperand(1).getReg()).
-              addImm(MI->getOperand(2).getImm());
-          } else if (MI->getOpcode() ==  Hexagon::TFR_condset_ir_f ) {
-            BuildMI(*MBB, MII, MI->getDebugLoc(),
-              TII->get(Hexagon::TFRI_cPt_f), DestReg).
-              addReg(MI->getOperand(1).getReg()).
-              addFPImm(MI->getOperand(2).getFPImm());
-          }
+          BuildMI(*MBB, MII, MI->getDebugLoc(),
+            TII->get(Hexagon::C2_cmoveit), DestReg).
+            addReg(MI->getOperand(1).getReg()).
+            addImm(MI->getOperand(2).getImm());
 
           // Do not emit the predicated copy if the source and
           // the destination is the same register.
@@ -177,30 +131,18 @@ bool HexagonSplitTFRCondSets::runOnMachineFunction(MachineFunction &Fn) {
           --MII;
           break;
         }
-        case Hexagon::TFR_condset_ii:
-        case Hexagon::TFR_condset_ii_f: {
+        case Hexagon::TFR_condset_ii: {
           int DestReg = MI->getOperand(0).getReg();
           int SrcReg1 = MI->getOperand(1).getReg();
 
-          if (MI->getOpcode() ==  Hexagon::TFR_condset_ii ) {
-            int Immed1 = MI->getOperand(2).getImm();
-            int Immed2 = MI->getOperand(3).getImm();
-            BuildMI(*MBB, MII, MI->getDebugLoc(),
-                    TII->get(Hexagon::C2_cmoveit),
-                    DestReg).addReg(SrcReg1).addImm(Immed1);
-            BuildMI(*MBB, MII, MI->getDebugLoc(),
-                    TII->get(Hexagon::C2_cmoveif),
-                    DestReg).addReg(SrcReg1).addImm(Immed2);
-          } else if (MI->getOpcode() ==  Hexagon::TFR_condset_ii_f ) {
-            BuildMI(*MBB, MII, MI->getDebugLoc(),
-                    TII->get(Hexagon::TFRI_cPt_f), DestReg).
-                    addReg(SrcReg1).
-                    addFPImm(MI->getOperand(2).getFPImm());
-            BuildMI(*MBB, MII, MI->getDebugLoc(),
-                    TII->get(Hexagon::TFRI_cNotPt_f), DestReg).
-                    addReg(SrcReg1).
-                    addFPImm(MI->getOperand(3).getFPImm());
-          }
+          int Immed1 = MI->getOperand(2).getImm();
+          int Immed2 = MI->getOperand(3).getImm();
+          BuildMI(*MBB, MII, MI->getDebugLoc(),
+                  TII->get(Hexagon::C2_cmoveit),
+                  DestReg).addReg(SrcReg1).addImm(Immed1);
+          BuildMI(*MBB, MII, MI->getDebugLoc(),
+                  TII->get(Hexagon::C2_cmoveif),
+                  DestReg).addReg(SrcReg1).addImm(Immed2);
           MII = MBB->erase(MI);
           --MII;
           break;

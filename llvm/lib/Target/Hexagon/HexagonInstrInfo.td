@@ -1069,6 +1069,25 @@ def: T_cmp64_rr_pat<C2_cmpgtup, setugt>;
 def: T_cmp64_rr_pat<C2_cmpgtp,  RevCmp<setlt>>;
 def: T_cmp64_rr_pat<C2_cmpgtup, RevCmp<setult>>;
 
+let isCodeGenOnly = 0 in
+def C2_vmux : ALU64_rr<(outs DoubleRegs:$Rd),
+      (ins PredRegs:$Pu, DoubleRegs:$Rs, DoubleRegs:$Rt),
+      "$Rd = vmux($Pu, $Rs, $Rt)", [], "", ALU64_tc_1_SLOT23> {
+  let hasSideEffects = 0;
+
+  bits<5> Rd;
+  bits<2> Pu;
+  bits<5> Rs;
+  bits<5> Rt;
+
+  let IClass = 0b1101;
+  let Inst{27-24} = 0b0001;
+  let Inst{20-16} = Rs;
+  let Inst{12-8} = Rt;
+  let Inst{6-5} = Pu;
+  let Inst{4-0} = Rd;
+}
+
 class T_ALU64_rr<string mnemonic, string suffix, bits<4> RegType,
                  bits<3> MajOp, bits<3> MinOp, bit OpsRev, bit IsComm,
                  string Op2Pfx>

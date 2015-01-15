@@ -64,3 +64,5 @@
 # CHECK: p3 = !tstbit(r17, r21)
 0x11 0xc2 0x03 0x89
 # CHECK: r17 = vitpack(p3, p2)
+0x70 0xde 0x14 0xd1
+# CHECK: r17:16 = vmux(p3, r21:20, r31:30)
