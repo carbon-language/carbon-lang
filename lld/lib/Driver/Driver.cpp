@@ -93,14 +93,14 @@ bool Driver::link(LinkingContext &context, raw_ostream &diagnostics) {
       std::string buf;
       llvm::raw_string_ostream stream(buf);
 
-      if (std::error_code ec = ie->parse(context, stream)) {
-        if (FileNode *fileNode = dyn_cast<FileNode>(ie.get())) {
-          stream << "Cannot open " + fileNode->getFile()->path()
-                 << ": " << ec.message() << "\n";
-        } else {
-          llvm_unreachable("Unknown type of input element");
-        }
-        fail = true;
+      if (FileNode *node = dyn_cast<FileNode>(ie.get())) {
+	if (File *file = node->getFile()) {
+	  if (std::error_code ec = file->parse()) {
+	    stream << "Cannot open " + file->path()
+		   << ": " << ec.message() << "\n";
+	    fail = true;
+	  }
+	}
       }
 
       stream.flush();
@@ -116,7 +116,7 @@ bool Driver::link(LinkingContext &context, raw_ostream &diagnostics) {
   if (fail)
     return false;
 
-  InputGraph::FileVectorT internalFiles;
+  std::vector<std::unique_ptr<File>> internalFiles;
   context.createInternalFiles(internalFiles);
   for (auto i = internalFiles.rbegin(), e = internalFiles.rend(); i != e; ++i) {
     context.getInputGraph().addInputElementFront(
@@ -124,7 +124,7 @@ bool Driver::link(LinkingContext &context, raw_ostream &diagnostics) {
   }
 
   // Give target a chance to add files.
-  InputGraph::FileVectorT implicitFiles;
+  std::vector<std::unique_ptr<File>> implicitFiles;
   context.createImplicitFiles(implicitFiles);
   for (auto i = implicitFiles.rbegin(), e = implicitFiles.rend(); i != e; ++i) {
     context.getInputGraph().addInputElementFront(

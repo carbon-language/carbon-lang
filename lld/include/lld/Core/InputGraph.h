@@ -33,24 +33,8 @@ namespace lld {
 class InputElement;
 class LinkingContext;
 
-/// \brief The inputs to the linker are represented by an InputGraph. The
-/// nodes in the input graph contains Input elements. The InputElements are
-/// either Input Files or Control Options. The Input Files represent each Input
-/// File to the linker and the control option specify what the linker needs
-/// to do when it processes the option.
-/// Each InputElement that is part of the Graph has an Ordinal value
-/// associated with it. The ordinal value is needed for the Writer to figure out
-/// the relative position of the arguments that appeared in the Command Line.
 class InputGraph {
 public:
-  typedef std::vector<std::unique_ptr<InputElement> > InputElementVectorT;
-  typedef InputElementVectorT::iterator InputElementIterT;
-  typedef std::vector<std::unique_ptr<File> > FileVectorT;
-  typedef FileVectorT::iterator FileIterT;
-
-  /// \brief Initialize the inputgraph
-  InputGraph() : _index(0) {}
-
   /// \brief Adds a node into the InputGraph
   void addInputElement(std::unique_ptr<InputElement> ie) {
     _members.push_back(std::move(ie));
@@ -61,13 +45,12 @@ public:
     _members.insert(_members.begin(), std::move(ie));
   }
 
-  InputElementVectorT &members() { return _members; }
+  std::vector<std::unique_ptr<InputElement>> &members() {
+    return _members;
+  }
 
 protected:
-  // Input arguments
-  InputElementVectorT _members;
-  // Index of the next element to be processed
-  size_t _index;
+  std::vector<std::unique_ptr<InputElement>> _members;
 };
 
 /// \brief This describes each element in the InputGraph. The Kind
@@ -86,9 +69,6 @@ public:
   /// Return the Element Type for an Input Element
   virtual Kind kind() const { return _kind; }
 
-  /// \brief parse the input element
-  virtual std::error_code parse(const LinkingContext &, raw_ostream &) = 0;
-
 protected:
   Kind _kind; // The type of the Element
 };
@@ -105,50 +85,26 @@ public:
     return a->kind() == Kind::GroupEnd;
   }
 
-  /// \brief Parse the group members.
-  std::error_code parse(const LinkingContext &ctx, raw_ostream &diag) override {
-    return std::error_code();
-  }
-
 private:
   int _size;
 };
 
-/// \brief Represents an Input file in the graph
-///
-/// This class represents an input to the linker. It create the MemoryBuffer
-/// lazily when needed based on the file path. It can also take a MemoryBuffer
-/// directly.
+// A container of File.
 class FileNode : public InputElement {
 public:
   explicit FileNode(std::unique_ptr<File> f)
-      : InputElement(InputElement::Kind::File), _file(std::move(f)),
-        _done(false) {}
+      : InputElement(InputElement::Kind::File), _file(std::move(f)) {}
 
   virtual ~FileNode() {}
 
-  /// \brief Casting support
   static inline bool classof(const InputElement *a) {
     return a->kind() == InputElement::Kind::File;
   }
 
-  /// \brief Get the list of files
   File *getFile() { return _file.get(); }
 
-  /// \brief add a file to the list of files
-  virtual void addFiles(InputGraph::FileVectorT files) {
-    assert(files.size() == 1);
-    assert(!_file);
-    _file = std::move(files[0]);
-  }
-
-  std::error_code parse(const LinkingContext &, raw_ostream &) override;
-
 protected:
-  std::unique_ptr<File> _file;           // An lld File object
-
-  // The next file that would be processed by the resolver
-  bool _done;
+  std::unique_ptr<File> _file;
 };
 
 } // namespace lld
