@@ -319,7 +319,7 @@ const CallInst *llvm::isFreeCall(const Value *I, const TargetLibraryInfo *TLI) {
   if (!CI || isa<IntrinsicInst>(CI))
     return nullptr;
   Function *Callee = CI->getCalledFunction();
-  if (Callee == nullptr || !Callee->isDeclaration())
+  if (Callee == nullptr)
     return nullptr;
 
   StringRef FnName = Callee->getName();
