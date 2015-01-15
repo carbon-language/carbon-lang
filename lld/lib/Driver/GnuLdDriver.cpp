@@ -218,7 +218,7 @@ findFile(ELFLinkingContext &ctx, StringRef path, bool dashL) {
     if (std::error_code ec = pathOrErr.getError())
       return make_dynamic_error_code(
           Twine("Unable to find library -l") + path + ": " + ec.message());
-    path = pathOrErr->str();
+    path = pathOrErr.get();
   }
   if (!llvm::sys::fs::exists(path))
     return make_dynamic_error_code(
