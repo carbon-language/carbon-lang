@@ -55,8 +55,8 @@ public:
 private:
   typedef std::function<void(StringRef, bool)> UndefCallback;
 
-  bool undefinesAdded(int count);
-  File *nextFile(bool &inGroup);
+  bool undefinesAdded(int begin, int end);
+  File *getFile(int &index, int &groupLevel);
 
   /// \brief Add section group/.gnu.linkonce if it does not exist previously.
   void maybeAddSectionGroupOrGnuLinkOnce(const DefinedAtom &atom);

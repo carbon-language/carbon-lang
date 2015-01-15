@@ -4,7 +4,6 @@ add_lld_unittest(DriverTests
   DarwinLdDriverTest.cpp
   WinLinkDriverTest.cpp
   WinLinkModuleDefTest.cpp
-  InputGraphTest.cpp
   )
 
 target_link_libraries(DriverTests

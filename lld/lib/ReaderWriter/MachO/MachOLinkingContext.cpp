@@ -930,9 +930,7 @@ bool MachOLinkingContext::customAtomOrderer(const DefinedAtom *left,
 
 static File *getFirstFile(const std::unique_ptr<InputElement> &elem) {
   FileNode *e = dyn_cast<FileNode>(const_cast<InputElement *>(elem.get()));
-  if (!e || e->files().empty())
-    return nullptr;
-  return e->files()[0].get();
+  return e ? e->getFile() : nullptr;
 }
 
 static bool isLibrary(const std::unique_ptr<InputElement> &elem) {

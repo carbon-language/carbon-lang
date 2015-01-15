@@ -689,9 +689,6 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
     }
   }
 
-  if (ctx->outputFileType() == LinkingContext::OutputFileType::YAML)
-    inputGraph->dump(diagnostics);
-
   // Validate the combination of options used.
   if (!ctx->validate(diagnostics))
     return false;

@@ -1416,6 +1416,7 @@ bool WinLinkDriver::parse(int argc, const char *argv[],
     if (isReadingDirectiveSection)
       if (file->parse())
         return false;
+    ctx.getResolvableSymsFile()->add(file.get());
     ctx.getInputGraph().addInputElement(
       std::unique_ptr<InputElement>(new WrapperNode(std::move(file))));
   }
@@ -1437,6 +1438,7 @@ bool WinLinkDriver::parse(int argc, const char *argv[],
       if (isReadingDirectiveSection)
         if (file->parse())
           return false;
+      ctx.getResolvableSymsFile()->add(file.get());
       ctx.addLibraryFile(
 	std::unique_ptr<FileNode>(new WrapperNode(std::move(file))));
     }

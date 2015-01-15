@@ -21,9 +21,7 @@ namespace lld {
 
 class WrapperNode : public FileNode {
 public:
-  WrapperNode(std::unique_ptr<File> file) : FileNode(file->path()) {
-    _files.push_back(std::move(file));
-  }
+  WrapperNode(std::unique_ptr<File> f) : FileNode(f->path(), std::move(f)) {}
 };
 
 }

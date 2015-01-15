@@ -49,18 +49,7 @@ public:
   typedef FileVectorT::iterator FileIterT;
 
   /// \brief Initialize the inputgraph
-  InputGraph() : _nextElementIndex(0), _currentInputElement(nullptr) {}
-  virtual ~InputGraph();
-
-  /// getNextFile returns the next file that needs to be processed by
-  /// the resolver. When there are no more files to be processed, an
-  /// nullptr is returned.
-  File *getNextFile();
-
-  /// Adds an observer of getNextFile(). Each time a new file is about to be
-  /// returned from getNextFile(), registered observers are called with the file
-  /// being returned.
-  void registerObserver(std::function<void(File *)>);
+  InputGraph() : _index(0) {}
 
   /// \brief Adds a node into the InputGraph
   void addInputElement(std::unique_ptr<InputElement>);
@@ -68,34 +57,16 @@ public:
   /// \brief Adds a node at the beginning of the InputGraph
   void addInputElementFront(std::unique_ptr<InputElement>);
 
-  /// Normalize the InputGraph. It calls getReplacements() on each element.
-  void normalize();
-
-  InputElementVectorT &inputElements() {
-    return _inputArgs;
-  }
-
-  // Returns the current group size if we are at an --end-group.
-  // Otherwise returns 0.
-  int getGroupSize();
-  void skipGroup();
+  InputElementVectorT &inputElements() { return _inputArgs; }
 
   // \brief Returns the number of input files.
   size_t size() const { return _inputArgs.size(); }
-
-  /// \brief Dump the input Graph
-  bool dump(raw_ostream &diagnostics = llvm::errs());
 
 protected:
   // Input arguments
   InputElementVectorT _inputArgs;
   // Index of the next element to be processed
-  uint32_t _nextElementIndex;
-  InputElement *_currentInputElement;
-  std::vector<std::function<void(File *)>> _observers;
-
-private:
-  InputElement *getNextInputElement();
+  size_t _index;
 };
 
 /// \brief This describes each element in the InputGraph. The Kind
@@ -124,11 +95,6 @@ public:
 
   /// Get the next file to be processed by the resolver
   virtual File *getNextFile() = 0;
-
-  /// Get the elements that we want to expand with.
-  virtual bool getReplacements(InputGraph::InputElementVectorT &) {
-    return false;
-  }
 
 protected:
   Kind _kind; // The type of the Element
@@ -165,8 +131,12 @@ private:
 class FileNode : public InputElement {
 public:
   FileNode(StringRef path)
-      : InputElement(InputElement::Kind::File), _path(path), _nextFileIndex(0) {
+      : InputElement(InputElement::Kind::File), _path(path), _done(false) {
   }
+
+  FileNode(StringRef path, std::unique_ptr<File> f)
+      : InputElement(InputElement::Kind::File), _path(path), _file(std::move(f)),
+        _done(false) {}
 
   virtual ErrorOr<StringRef> getPath(const LinkingContext &) const {
     return _path;
@@ -186,36 +156,33 @@ public:
   }
 
   /// \brief Get the list of files
-  range<InputGraph::FileIterT> files() {
-    return make_range(_files.begin(), _files.end());
-  }
+  File *getFile() { return _file.get(); }
 
   /// \brief add a file to the list of files
   virtual void addFiles(InputGraph::FileVectorT files) {
     assert(files.size() == 1);
-    assert(_files.empty());
-    for (std::unique_ptr<File> &ai : files)
-      _files.push_back(std::move(ai));
+    assert(!_file);
+    _file = std::move(files[0]);
   }
-
-  bool getReplacements(InputGraph::InputElementVectorT &result) override;
 
   /// \brief Return the next File thats part of this node to the
   /// resolver.
   File *getNextFile() override {
-    if (_nextFileIndex == _files.size())
+    assert(_file);
+    if (_done)
       return nullptr;
-    return _files[_nextFileIndex++].get();
+    _done = true;
+    return _file.get();
   }
 
   std::error_code parse(const LinkingContext &, raw_ostream &) override;
 
 protected:
   StringRef _path;                       // The path of the Input file
-  InputGraph::FileVectorT _files;        // A vector of lld File objects
+  std::unique_ptr<File> _file;           // An lld File object
 
   // The next file that would be processed by the resolver
-  uint32_t _nextFileIndex;
+  bool _done;
 };
 
 /// \brief Represents Internal Input files
@@ -223,15 +190,13 @@ class SimpleFileNode : public FileNode {
 public:
   SimpleFileNode(StringRef path) : FileNode(path) {}
   SimpleFileNode(StringRef path, std::unique_ptr<File> f)
-      : FileNode(path) {
-    _files.push_back(std::move(f));
-  }
+      : FileNode(path, std::move(f)) {}
 
   virtual ~SimpleFileNode() {}
 
   /// \brief add a file to the list of files
   virtual void appendInputFile(std::unique_ptr<File> f) {
-    _files.push_back(std::move(f));
+    _file = std::move(f);
   }
 };
 
