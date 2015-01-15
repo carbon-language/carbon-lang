@@ -501,41 +501,21 @@ def : Pat <(i64 (load (add IntRegs:$src1,
             Requires<[HasV4T]>;
 }
 
-
 // 'def pats' for load instruction base + register offset and
 // zero immediate value.
-let AddedComplexity = 10 in {
-def : Pat <(i64 (load (add IntRegs:$src1, IntRegs:$src2))),
-           (L4_loadrd_rr IntRegs:$src1, IntRegs:$src2, 0)>,
-            Requires<[HasV4T]>;
+class Loadxs_simple_pat<PatFrag Load, ValueType VT, InstHexagon MI>
+  : Pat<(VT (Load (add (i32 IntRegs:$Rs), (i32 IntRegs:$Rt)))),
+        (VT (MI IntRegs:$Rs, IntRegs:$Rt, 0))>;
 
-def : Pat <(i32 (sextloadi8 (add IntRegs:$src1, IntRegs:$src2))),
-           (L4_loadrb_rr IntRegs:$src1, IntRegs:$src2, 0)>,
-            Requires<[HasV4T]>;
-
-def : Pat <(i32 (zextloadi8 (add IntRegs:$src1, IntRegs:$src2))),
-           (L4_loadrub_rr IntRegs:$src1, IntRegs:$src2, 0)>,
-            Requires<[HasV4T]>;
-
-def : Pat <(i32 (extloadi8 (add IntRegs:$src1, IntRegs:$src2))),
-           (L4_loadrub_rr IntRegs:$src1, IntRegs:$src2, 0)>,
-            Requires<[HasV4T]>;
-
-def : Pat <(i32 (sextloadi16 (add IntRegs:$src1, IntRegs:$src2))),
-           (L4_loadrh_rr IntRegs:$src1, IntRegs:$src2, 0)>,
-            Requires<[HasV4T]>;
-
-def : Pat <(i32 (zextloadi16 (add IntRegs:$src1, IntRegs:$src2))),
-           (L4_loadruh_rr IntRegs:$src1, IntRegs:$src2, 0)>,
-            Requires<[HasV4T]>;
-
-def : Pat <(i32 (extloadi16 (add IntRegs:$src1, IntRegs:$src2))),
-           (L4_loadruh_rr IntRegs:$src1, IntRegs:$src2, 0)>,
-            Requires<[HasV4T]>;
-
-def : Pat <(i32 (load (add IntRegs:$src1, IntRegs:$src2))),
-           (L4_loadri_rr IntRegs:$src1, IntRegs:$src2, 0)>,
-            Requires<[HasV4T]>;
+let AddedComplexity = 20 in {
+  def: Loadxs_simple_pat<extloadi8,   i32, L4_loadrub_rr>;
+  def: Loadxs_simple_pat<zextloadi8,  i32, L4_loadrub_rr>;
+  def: Loadxs_simple_pat<sextloadi8,  i32, L4_loadrb_rr>;
+  def: Loadxs_simple_pat<extloadi16,  i32, L4_loadruh_rr>;
+  def: Loadxs_simple_pat<zextloadi16, i32, L4_loadruh_rr>;
+  def: Loadxs_simple_pat<sextloadi16, i32, L4_loadrh_rr>;
+  def: Loadxs_simple_pat<load,        i32, L4_loadri_rr>;
+  def: Loadxs_simple_pat<load,        i64, L4_loadrd_rr>;
 }
 
 // zext i1->i64

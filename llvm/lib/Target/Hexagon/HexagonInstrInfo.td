@@ -1567,9 +1567,9 @@ let AddedComplexity = 20 in {
   defm: Loadx_pat<atomic_load_64, i64, s11_3ExtPred, L2_loadrd_io>;
 
   defm: Loadx_pat<extloadi1,      i32, s11_0ExtPred, L2_loadrub_io>;
-  //defm: Loadx_pat<extloadi8,      i32, s11_0ExtPred, L2_loadrub_io>;
+  defm: Loadx_pat<extloadi8,      i32, s11_0ExtPred, L2_loadrub_io>;
   defm: Loadx_pat<extloadi16,     i32, s11_1ExtPred, L2_loadruh_io>;
-  //defm: Loadx_pat<sextloadi8,     i32, s11_0ExtPred, L2_loadrb_io>;
+  defm: Loadx_pat<sextloadi8,     i32, s11_0ExtPred, L2_loadrb_io>;
   defm: Loadx_pat<sextloadi16,    i32, s11_1ExtPred, L2_loadrh_io>;
   defm: Loadx_pat<zextloadi1,     i32, s11_0ExtPred, L2_loadrub_io>;
   defm: Loadx_pat<zextloadi8,     i32, s11_0ExtPred, L2_loadrub_io>;
@@ -1702,33 +1702,6 @@ defm loadri : LD_PostInc <"memw", "LDriw", IntRegs, s4_2Imm, 0b1100>;
 // post increment doubleword loads with immediate offset
 let accessSize = DoubleWordAccess, opExtentAlign = 3, isCodeGenOnly = 0 in
 defm loadrd : LD_PostInc <"memd", "LDrid", DoubleRegs, s4_3Imm, 0b1110>;
-
-def : Pat< (i32 (extloadi1 ADDRriS11_0:$addr)),
-           (i32 (L2_loadrb_io AddrFI:$addr, 0)) >;
-
-// Load byte any-extend.
-def : Pat < (i32 (extloadi8 ADDRriS11_0:$addr)),
-            (i32 (L2_loadrb_io AddrFI:$addr, 0)) >;
-
-// Indexed load byte any-extend.
-let AddedComplexity = 20 in
-def : Pat < (i32 (extloadi8 (add IntRegs:$src1, s11_0ImmPred:$offset))),
-            (i32 (L2_loadrb_io IntRegs:$src1, s11_0ImmPred:$offset)) >;
-
-def : Pat < (i32 (extloadi16 ADDRriS11_1:$addr)),
-            (i32 (L2_loadrh_io AddrFI:$addr, 0))>;
-
-let AddedComplexity = 20 in
-def : Pat < (i32 (extloadi16 (add IntRegs:$src1, s11_1ImmPred:$offset))),
-            (i32 (L2_loadrh_io IntRegs:$src1, s11_1ImmPred:$offset)) >;
-
-let AddedComplexity = 10 in
-def : Pat < (i32 (zextloadi1 ADDRriS11_0:$addr)),
-            (i32 (L2_loadrub_io AddrFI:$addr, 0))>;
-
-let AddedComplexity = 20 in
-def : Pat < (i32 (zextloadi1 (add IntRegs:$src1, s11_0ImmPred:$offset))),
-            (i32 (L2_loadrub_io IntRegs:$src1, s11_0ImmPred:$offset))>;
 
 //===----------------------------------------------------------------------===//
 // Template class for post increment loads with register offset.
