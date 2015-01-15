@@ -692,9 +692,11 @@ namespace llvm {
     };
   }
 
-/// TargetLibraryInfo - This immutable pass captures information about what
-/// library functions are available for the current target, and allows a
-/// frontend to disable optimizations through -fno-builtin etc.
+/// \brief Provides information about what library functions are available for
+/// the current target.
+///
+/// This both allows optimizations to handle them specially and frontends to
+/// disable such optimizations through -fno-builtin etc.
 class TargetLibraryInfo : public ImmutablePass {
   virtual void anchor();
   unsigned char AvailableArray[(LibFunc::NumLibFuncs+3)/4];
@@ -720,18 +722,19 @@ public:
   TargetLibraryInfo(const Triple &T);
   explicit TargetLibraryInfo(const TargetLibraryInfo &TLI);
 
-  /// getLibFunc - Search for a particular function name.  If it is one of the
-  /// known library functions, return true and set F to the corresponding value.
+  /// \brief Searches for a particular function name.
+  ///
+  /// If it is one of the known library functions, return true and set F to the
+  /// corresponding value.
   bool getLibFunc(StringRef funcName, LibFunc::Func &F) const;
 
-  /// has - This function is used by optimizations that want to match on or form
-  /// a given library function.
+  /// \brief Tests wether a library function is available.
   bool has(LibFunc::Func F) const {
     return getState(F) != Unavailable;
   }
 
-  /// hasOptimizedCodeGen - Return true if the function is both available as
-  /// a builtin and a candidate for optimized code generation.
+  /// \brief Tests if the function is both available and a candidate for
+  /// optimized code generation.
   bool hasOptimizedCodeGen(LibFunc::Func F) const {
     if (getState(F) == Unavailable)
       return false;
@@ -772,16 +775,18 @@ public:
     return CustomNames.find(F)->second;
   }
 
-  /// setUnavailable - this can be used by whatever sets up TargetLibraryInfo to
-  /// ban use of specific library functions.
+  /// \brief Forces a function to be marked as unavailable.
   void setUnavailable(LibFunc::Func F) {
     setState(F, Unavailable);
   }
 
+  /// \brief Forces a function to be marked as available.
   void setAvailable(LibFunc::Func F) {
     setState(F, StandardName);
   }
 
+  /// \brief Forces a function to be marked as available and provide an
+  /// alternate name that must be used.
   void setAvailableWithName(LibFunc::Func F, StringRef Name) {
     if (StandardNames[F] != Name) {
       setState(F, CustomName);
@@ -792,8 +797,9 @@ public:
     }
   }
 
-  /// disableAllFunctions - This disables all builtins, which is used for
-  /// options like -fno-builtin.
+  /// \brief Disables all builtins.
+  ///
+  /// This can be used for options like -fno-builtin.
   void disableAllFunctions();
 };
 
