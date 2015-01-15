@@ -1,4 +1,4 @@
-//===-- llvm/Target/TargetLibraryInfo.h - Library information ---*- C++ -*-===//
+//===-- TargetLibraryInfo.h - Library information ---------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TARGET_TARGETLIBRARYINFO_H
-#define LLVM_TARGET_TARGETLIBRARYINFO_H
+#ifndef LLVM_ANALYSIS_TARGETLIBRARYINFO_H
+#define LLVM_ANALYSIS_TARGETLIBRARYINFO_H
 
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/Pass.h"

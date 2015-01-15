@@ -8,12 +8,12 @@
 #include "MipsRegisterInfo.h"
 #include "MipsSubtarget.h"
 #include "MipsTargetMachine.h"
+#include "llvm/Analysis/TargetLibraryInfo.h"
 #include "llvm/CodeGen/FastISel.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/IR/GlobalAlias.h"
 #include "llvm/IR/GlobalVariable.h"
 #include "llvm/Target/TargetInstrInfo.h"
-#include "llvm/Target/TargetLibraryInfo.h"
 
 using namespace llvm;
 
