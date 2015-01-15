@@ -561,9 +561,7 @@ static bool createASMAsString(Module *New, const StringRef &Triple,
   // Build up all of the passes that we want to do to the module.
   PassManager PM;
 
-  TargetLibraryInfo *TLI = new TargetLibraryInfo(TheTriple);
-  PM.add(TLI);
-
+  PM.add(new TargetLibraryInfoWrapperPass(TheTriple));
   PM.add(new DataLayoutPass(*Target.getDataLayout()));
   Target.addAnalysisPasses(PM);
 
