@@ -254,6 +254,13 @@ ProcessWindows::DoResume()
             m_session_data->m_debugger->ContinueAsyncException(ExceptionResult::MaskException);
         }
 
+        for (int i = 0; i < m_thread_list.GetSize(); ++i)
+        {
+            typedef std::shared_ptr<TargetThreadWindows> TargetThreadWindowsSP;
+            TargetThreadWindowsSP thread = std::static_pointer_cast<TargetThreadWindows>(m_thread_list.GetThreadAtIndex(i));
+            thread->DoResume();
+        }
+
         SetPrivateState(eStateRunning);
     }
     return error;
@@ -319,16 +326,19 @@ ProcessWindows::RefreshStateAfterStop()
     uint64_t pc = register_context->GetPC();
     if (active_exception->GetExceptionCode() == EXCEPTION_BREAKPOINT)
     {
-        // TODO(zturner): The current EIP is AFTER the BP opcode, which is one byte.  So
-        // to find the breakpoint, move the PC back.  A better way to do this is probably
-        // to ask the Platform how big a breakpoint opcode is.
-        --pc;
-        BreakpointSiteSP site(GetBreakpointSiteList().FindByAddress(pc));
+        // TODO(zturner): The current EIP is AFTER the BP opcode, which is one byte.
+        BreakpointSiteSP site(GetBreakpointSiteList().FindByAddress(pc - 1));
         if (site && site->ValidForThisThread(stop_thread.get()))
         {
             lldb::break_id_t break_id = LLDB_INVALID_BREAK_ID;
             stop_info = StopInfo::CreateStopReasonWithBreakpointSiteID(*stop_thread, site->GetID());
+            register_context->SetPC(pc - 1);
         }
+        stop_thread->SetStopInfo(stop_info);
+    }
+    else if (active_exception->GetExceptionCode() == EXCEPTION_SINGLE_STEP)
+    {
+        stop_info = StopInfo::CreateStopReasonToTrace(*stop_thread);
         stop_thread->SetStopInfo(stop_info);
     }
     else
@@ -498,7 +508,14 @@ ProcessWindows::OnDebugException(bool first_chance, const ExceptionRecord &recor
     if (!m_session_data)
         return ExceptionResult::SendToApplication;
 
+    if (!first_chance)
+    {
+        // Any second chance exception is an application crash by definition.
+        SetPrivateState(eStateCrashed);
+    }
+
     ExceptionResult result = ExceptionResult::SendToApplication;
+    lldb::StateType state = GetPrivateState();
     switch (record.GetExceptionCode())
     {
         case EXCEPTION_BREAKPOINT:
@@ -510,7 +527,11 @@ ProcessWindows::OnDebugException(bool first_chance, const ExceptionRecord &recor
                 m_session_data->m_initial_stop_received = true;
                 ::SetEvent(m_session_data->m_initial_stop_event);
             }
-
+            SetPrivateState(eStateStopped);
+            break;
+        case EXCEPTION_SINGLE_STEP:
+            result = ExceptionResult::BreakInDebugger;
+            SetPrivateState(eStateStopped);
             break;
         default:
             // For non-breakpoints, give the application a chance to handle the exception first.
@@ -518,23 +539,6 @@ ProcessWindows::OnDebugException(bool first_chance, const ExceptionRecord &recor
                 result = ExceptionResult::SendToApplication;
             else
                 result = ExceptionResult::BreakInDebugger;
-    }
-
-    if (!first_chance)
-    {
-        // Any second chance exception is an application crash by definition.
-        SetPrivateState(eStateCrashed);
-    }
-    else if (result == ExceptionResult::BreakInDebugger)
-    {
-        // For first chance exceptions that we can handle, the process is stopped so the user
-        // can interact with the debugger.
-        SetPrivateState(eStateStopped);
-    }
-    else
-    {
-        // For first chance exceptions that we either eat or send back to the application, don't
-        // modify the state of the application.
     }
 
     return result;

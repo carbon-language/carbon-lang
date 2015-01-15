@@ -343,12 +343,13 @@ RegisterContextWindows_x86::CacheAllRegisterValues()
 {
     if (!m_context_stale)
         return true;
+
     if (!m_cached_context && !InitializeContextDataBuffer(m_cached_context, &m_context_ptr))
         return false;
 
     TargetThreadWindows &wthread = static_cast<TargetThreadWindows &>(m_thread);
     if (!::GetThreadContext(wthread.GetHostThread().GetNativeThread().GetSystemHandle(), m_context_ptr))
         return false;
-    m_context_stale = true;
+    m_context_stale = false;
     return true;
 }

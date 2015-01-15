@@ -38,12 +38,15 @@ TargetThreadWindows::~TargetThreadWindows()
 void
 TargetThreadWindows::RefreshStateAfterStop()
 {
+    DWORD old_suspend_count = ::SuspendThread(m_host_thread.GetNativeThread().GetSystemHandle());
+
     GetRegisterContext()->InvalidateIfNeeded(false);
 }
 
 void
 TargetThreadWindows::WillResume(lldb::StateType resume_state)
 {
+    SetResumeState(resume_state);
 }
 
 void
@@ -118,28 +121,22 @@ TargetThreadWindows::DoResume()
     if (resume_state == current_state)
         return true;
 
-    bool success = false;
-    DWORD suspend_count = 0;
-    switch (resume_state)
+    if (resume_state == eStateStepping)
     {
-        case eStateRunning:
-            SetState(resume_state);
-            do
-            {
-                suspend_count = ::ResumeThread(m_host_thread.GetNativeThread().GetSystemHandle());
-            } while (suspend_count > 1 && suspend_count != (DWORD)-1);
-            success = (suspend_count != (DWORD)-1);
-            break;
-        case eStateStopped:
-        case eStateSuspended:
-            if (current_state != eStateStopped && current_state != eStateSuspended)
-            {
-                suspend_count = SuspendThread(m_host_thread.GetNativeThread().GetSystemHandle());
-                success = (suspend_count != (DWORD)-1);
-            }
-            break;
-        default:
-            success = false;
+        uint32_t flags_index = GetRegisterContext()->ConvertRegisterKindToRegisterNumber(eRegisterKindGeneric, LLDB_REGNUM_GENERIC_FLAGS);
+        uint64_t flags_value = GetRegisterContext()->ReadRegisterAsUnsigned(flags_index, 0);
+        flags_value |= 0x100; // Set the trap flag on the CPU
+        GetRegisterContext()->WriteRegisterFromUnsigned(flags_index, flags_value);
     }
-    return success;
+
+    if (resume_state == eStateStepping || resume_state == eStateRunning)
+    {
+        DWORD previous_suspend_count = 0;
+        HANDLE thread_handle = m_host_thread.GetNativeThread().GetSystemHandle();
+        do
+        {
+            previous_suspend_count = ::ResumeThread(thread_handle);
+        } while (previous_suspend_count > 0);
+    }
+    return true;
 }
