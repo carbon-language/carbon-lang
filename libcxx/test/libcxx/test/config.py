@@ -71,6 +71,7 @@ class Configuration(object):
         # Print as list to prevent "set([...])" from being printed.
         self.lit_config.note('Using available_features: %s' %
                              list(self.config.available_features))
+        self.lit_config.note('Using environment: %r' % self.env)
 
     def get_test_format(self):
         return LibcxxTestFormat(
