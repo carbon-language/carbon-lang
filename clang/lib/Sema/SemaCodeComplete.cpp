@@ -495,7 +495,6 @@ bool ResultBuilder::isInterestingDecl(const NamedDecl *ND,
   AsNestedNameSpecifier = false;
 
   ND = ND->getUnderlyingDecl();
-  unsigned IDNS = ND->getIdentifierNamespace();
 
   // Skip unnamed entities.
   if (!ND->getDeclName())
@@ -503,7 +502,7 @@ bool ResultBuilder::isInterestingDecl(const NamedDecl *ND,
   
   // Friend declarations and declarations introduced due to friends are never
   // added as results.
-  if (IDNS & (Decl::IDNS_OrdinaryFriend | Decl::IDNS_TagFriend))
+  if (ND->getFriendObjectKind() == Decl::FOK_Undeclared)
     return false;
   
   // Class template (partial) specializations are never added as results.
@@ -2309,7 +2308,11 @@ static void AddTemplateParameterChunks(ASTContext &Context,
                                        unsigned Start = 0,
                                        bool InDefaultArg = false) {
   bool FirstParameter = true;
-  
+
+  // Prefer to take the template parameter names from the first declaration of
+  // the template.
+  Template = cast<TemplateDecl>(Template->getCanonicalDecl());
+
   TemplateParameterList *Params = Template->getTemplateParameters();
   TemplateParameterList::iterator PEnd = Params->end();
   if (MaxParameters)
