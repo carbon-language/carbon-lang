@@ -714,6 +714,19 @@ protected:
     bool
     IgnoreCountShouldStop ();
 
+    void
+    IncrementHitCount()
+    {
+        m_hit_count++;
+    }
+
+    void
+    DecrementHitCount()
+    {
+        assert (m_hit_count > 0);
+        m_hit_count--;
+    }
+
 private:
     // This one should only be used by Target to copy breakpoints from target to target - primarily from the dummy
     // target to prime new targets.
@@ -733,7 +746,10 @@ private:
     BreakpointLocationList m_locations;       // The list of locations currently found for this breakpoint.
     std::string m_kind_description;
     bool m_resolve_indirect_symbols;
-    
+    uint32_t    m_hit_count;                   // Number of times this breakpoint/watchpoint has been hit.  This is kept
+                                               // separately from the locations hit counts, since locations can go away when
+                                               // their backing library gets unloaded, and we would lose hit counts.
+
     void
     SendBreakpointChangedEvent (lldb::BreakpointEventType eventKind);
     

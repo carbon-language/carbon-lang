@@ -60,7 +60,8 @@ Breakpoint::Breakpoint(Target &target,
     m_resolver_sp (resolver_sp),
     m_options (),
     m_locations (*this),
-    m_resolve_indirect_symbols(resolve_indirect_symbols)
+    m_resolve_indirect_symbols(resolve_indirect_symbols),
+    m_hit_count(0)
 {
     m_being_created = false;
 }
@@ -72,7 +73,8 @@ Breakpoint::Breakpoint (Target &new_target, Breakpoint &source_bp) :
     m_name_list (source_bp.m_name_list),
     m_options (source_bp.m_options),
     m_locations(*this),
-    m_resolve_indirect_symbols(source_bp.m_resolve_indirect_symbols)
+    m_resolve_indirect_symbols(source_bp.m_resolve_indirect_symbols),
+    m_hit_count(0)
 {
     // Now go through and copy the filter & resolver:
     m_resolver_sp = source_bp.m_resolver_sp->CopyForBreakpoint(*this);
@@ -207,7 +209,7 @@ Breakpoint::IgnoreCountShouldStop ()
 uint32_t
 Breakpoint::GetHitCount () const
 {
-    return m_locations.GetHitCount();
+    return m_hit_count;
 }
 
 bool

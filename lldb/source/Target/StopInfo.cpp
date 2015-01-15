@@ -479,7 +479,12 @@ protected:
                                                  condition_says_stop);
                                 }
                                 if (!condition_says_stop)
+                                {
+                                    // We don't want to increment the hit count of breakpoints if the condition fails.
+                                    // We've already bumped it by the time we get here, so undo the bump:
+                                    bp_loc_sp->UndoBumpHitCount();
                                     continue;
+                                }
                             }
                         }
 

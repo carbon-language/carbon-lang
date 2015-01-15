@@ -477,7 +477,22 @@ void
 BreakpointLocation::BumpHitCount()
 {
     if (IsEnabled())
+    {
+        // Step our hit count, and also step the hit count of the owner.
         IncrementHitCount();
+        m_owner.IncrementHitCount();
+    }
+}
+
+void
+BreakpointLocation::UndoBumpHitCount()
+{
+    if (IsEnabled())
+    {
+        // Step our hit count, and also step the hit count of the owner.
+        DecrementHitCount();
+        m_owner.DecrementHitCount();
+    }
 }
 
 bool

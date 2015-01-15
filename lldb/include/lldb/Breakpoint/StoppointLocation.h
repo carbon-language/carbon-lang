@@ -134,6 +134,9 @@ protected:
         ++m_hit_count;
     }
 
+    void
+    DecrementHitCount ();
+
 private:
     //------------------------------------------------------------------
     // For StoppointLocation only

@@ -90,10 +90,10 @@ class BreakpointConditionsTestCase(TestBase):
             startstr = '(int) val = 3')
 
         # Also check the hit count, which should be 3, by design.
-        self.expect("breakpoint list -f", BREAKPOINT_HIT_THRICE,
+        self.expect("breakpoint list -f", BREAKPOINT_HIT_ONCE,
             substrs = ["resolved = 1",
                        "Condition: val == 3",
-                       "hit count = 3"])
+                       "hit count = 1"])
 
         # The frame #0 should correspond to main.c:36, the executable statement
         # in function name 'c'.  And the parent frame should point to main.c:24.
@@ -188,8 +188,8 @@ class BreakpointConditionsTestCase(TestBase):
         self.assertTrue(frame0.GetLineEntry().GetLine() == self.line1 and
                         var.GetValue() == '3')
 
-        # The hit count for the breakpoint should be 3.
-        self.assertTrue(breakpoint.GetHitCount() == 3)
+        # The hit count for the breakpoint should be 1.
+        self.assertTrue(breakpoint.GetHitCount() == 1)
 
         process.Continue()
 

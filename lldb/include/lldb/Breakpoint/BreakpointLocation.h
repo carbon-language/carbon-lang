@@ -390,6 +390,7 @@ protected:
     friend class BreakpointSite;
     friend class BreakpointLocationList;
     friend class Process;
+    friend class StopInfoBreakpoint;
 
     //------------------------------------------------------------------
     /// Set the breakpoint site for this location to \a bp_site_sp.
@@ -416,6 +417,9 @@ private:
 
     void
     BumpHitCount();
+
+    void
+    UndoBumpHitCount();
 
 
     //------------------------------------------------------------------

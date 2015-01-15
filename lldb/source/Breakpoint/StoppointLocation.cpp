@@ -46,3 +46,10 @@ StoppointLocation::StoppointLocation (break_id_t bid, addr_t addr, uint32_t byte
 StoppointLocation::~StoppointLocation()
 {
 }
+
+void
+StoppointLocation::DecrementHitCount ()
+{
+    assert (m_hit_count > 0);
+    --m_hit_count;
+}
