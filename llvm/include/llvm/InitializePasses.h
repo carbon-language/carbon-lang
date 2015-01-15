@@ -142,6 +142,7 @@ void initializeIPCPPass(PassRegistry&);
 void initializeIPSCCPPass(PassRegistry&);
 void initializeIVUsersPass(PassRegistry&);
 void initializeIfConverterPass(PassRegistry&);
+void initializeInductiveRangeCheckEliminationPass(PassRegistry&);
 void initializeIndVarSimplifyPass(PassRegistry&);
 void initializeInlineCostAnalysisPass(PassRegistry&);
 void initializeInstCombinerPass(PassRegistry&);
