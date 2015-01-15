@@ -744,7 +744,7 @@ Symbols::DownloadObjectAndSymbolFile (ModuleSpec &module_spec, bool force_lookup
                                                      &signo,            // Signal int *
                                                      &command_output,   // Command output
                                                      30,                // Large timeout to allow for long dsym download times
-                                                     NULL);             // Don't run in a shell (we don't need shell expansion)
+                                                     false);            // Don't run in a shell (we don't need shell expansion)
                 if (error.Success() && exit_status == 0 && !command_output.empty())
                 {
                     CFCData data (CFDataCreateWithBytesNoCopy (NULL,
