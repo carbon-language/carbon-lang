@@ -4916,7 +4916,8 @@ void Parser::ParseDirectDeclarator(Declarator &D) {
     }
 
     if (D.getCXXScopeSpec().isValid()) {
-      if (Actions.ShouldEnterDeclaratorScope(getCurScope(), D.getCXXScopeSpec()))
+      if (Actions.ShouldEnterDeclaratorScope(getCurScope(),
+                                             D.getCXXScopeSpec()))
         // Change the declaration context for name lookup, until this function
         // is exited (and the declarator has been parsed).
         DeclScopeObj.EnterDeclaratorScope();
@@ -4968,6 +4969,7 @@ void Parser::ParseDirectDeclarator(Declarator &D) {
         AllowConstructorName = (D.getContext() == Declarator::MemberContext);
 
       SourceLocation TemplateKWLoc;
+      bool HadScope = D.getCXXScopeSpec().isValid();
       if (ParseUnqualifiedId(D.getCXXScopeSpec(),
                              /*EnteringContext=*/true,
                              /*AllowDestructorName=*/true,
@@ -4981,6 +4983,13 @@ void Parser::ParseDirectDeclarator(Declarator &D) {
         D.SetIdentifier(nullptr, Tok.getLocation());
         D.setInvalidType(true);
       } else {
+        // ParseUnqualifiedId might have parsed a scope specifier during error
+        // recovery. If it did so, enter that scope.
+        if (!HadScope && D.getCXXScopeSpec().isValid() &&
+            Actions.ShouldEnterDeclaratorScope(getCurScope(),
+                                               D.getCXXScopeSpec()))
+          DeclScopeObj.EnterDeclaratorScope();
+
         // Parsed the unqualified-id; update range information and move along.
         if (D.getSourceRange().getBegin().isInvalid())
           D.SetRangeBegin(D.getName().getSourceRange().getBegin());

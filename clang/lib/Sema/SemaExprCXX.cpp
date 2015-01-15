@@ -113,6 +113,9 @@ ParsedType Sema::getDestructorName(SourceLocation TildeLoc,
   bool isDependent = false;
   bool LookInScope = false;
 
+  if (SS.isInvalid())
+    return ParsedType();
+
   // If we have an object type, it's because we are in a
   // pseudo-destructor-expression or a member access expression, and
   // we know what type we're looking for.

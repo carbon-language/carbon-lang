@@ -17,7 +17,7 @@ namespace PR6161 {
   {
     static locale::id id; // expected-error{{use of undeclared identifier}}
   };
-  numpunct<char>::~numpunct(); // expected-error{{expected the class name after '~' to name a destructor}}
+  numpunct<char>::~numpunct();
 }
 
 namespace PR12331 {
