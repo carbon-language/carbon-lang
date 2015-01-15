@@ -88,7 +88,7 @@ bool UnreachableBlockElim::runOnFunction(Function &F) {
     DeadBlocks[i]->eraseFromParent();
   }
 
-  return DeadBlocks.size();
+  return !DeadBlocks.empty();
 }
 
 
@@ -204,5 +204,5 @@ bool UnreachableMachineBlockElim::runOnMachineFunction(MachineFunction &F) {
 
   F.RenumberBlocks();
 
-  return (DeadBlocks.size() || ModifiedPHI);
+  return (!DeadBlocks.empty() || ModifiedPHI);
 }

@@ -472,7 +472,7 @@ void DFAPacketizerEmitter::run(raw_ostream &OS) {
           current->canAddInsnClass(InsnClass)) {
         const State *NewState;
         current->AddInsnClass(InsnClass, NewStateResources);
-        assert(NewStateResources.size() && "New states must be generated");
+        assert(!NewStateResources.empty() && "New states must be generated");
 
         //
         // If we have seen this state before, then do not create a new state.

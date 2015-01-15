@@ -309,7 +309,7 @@ public:
       while (!ActiveRegions.empty() &&
              ActiveRegions.back()->endLoc() <= Region.startLoc())
         popRegion();
-      if (Segments.size() && Segments.back().Line == Region.LineStart &&
+      if (!Segments.empty() && Segments.back().Line == Region.LineStart &&
           Segments.back().Col == Region.ColumnStart) {
         if (Region.Kind != coverage::CounterMappingRegion::SkippedRegion)
           Segments.back().addCount(Region.ExecutionCount);

@@ -96,7 +96,7 @@ AddCodeToMergeInOperand(Record *R, BitsInit *BI, const std::string &VarName,
     /// generated emitter, skip it.
     while (NumberedOp < NumberOps &&
            (CGI.Operands.isFlatOperandNotEmitted(NumberedOp) ||
-              (NamedOpIndices.size() && NamedOpIndices.count(
+              (!NamedOpIndices.empty() && NamedOpIndices.count(
                 CGI.Operands.getSubOperandNumber(NumberedOp).first)))) {
       ++NumberedOp;
 

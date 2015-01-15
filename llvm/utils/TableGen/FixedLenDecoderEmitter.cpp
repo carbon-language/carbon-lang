@@ -540,7 +540,7 @@ void Filter::recurse() {
   // Starts by inheriting our parent filter chooser's filter bit values.
   std::vector<bit_value_t> BitValueArray(Owner->FilterBitValues);
 
-  if (VariableInstructions.size()) {
+  if (!VariableInstructions.empty()) {
     // Conservatively marks each segment position as BIT_UNSET.
     for (unsigned bitIndex = 0; bitIndex < NumBits; ++bitIndex)
       BitValueArray[StartBit + bitIndex] = BIT_UNSET;
@@ -676,7 +676,7 @@ void Filter::emitTableEntry(DecoderTableInfo &TableInfo) const {
 // Returns the number of fanout produced by the filter.  More fanout implies
 // the filter distinguishes more categories of instructions.
 unsigned Filter::usefulness() const {
-  if (VariableInstructions.size())
+  if (!VariableInstructions.empty())
     return FilteredInstructions.size();
   else
     return FilteredInstructions.size() + 1;
@@ -1780,7 +1780,7 @@ static bool populateInstruction(CodeGenTarget &Target,
       unsigned NumberOps = CGI.Operands.size();
       while (NumberedOp < NumberOps &&
              (CGI.Operands.isFlatOperandNotEmitted(NumberedOp) ||
-              (NamedOpIndices.size() && NamedOpIndices.count(
+              (!NamedOpIndices.empty() && NamedOpIndices.count(
                 CGI.Operands.getSubOperandNumber(NumberedOp).first))))
         ++NumberedOp;
 

@@ -1760,7 +1760,7 @@ int BoUpSLP::getTreeCost() {
 
   // We only vectorize tiny trees if it is fully vectorizable.
   if (VectorizableTree.size() < 3 && !isFullyVectorizableTinyTree()) {
-    if (!VectorizableTree.size()) {
+    if (VectorizableTree.empty()) {
       assert(!ExternalUses.size() && "We should not have any external users");
     }
     return INT_MAX;

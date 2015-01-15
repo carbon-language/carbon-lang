@@ -183,7 +183,7 @@ void MCMachOStreamer::EmitDataRegionEnd() {
   if (!getAssembler().getBackend().hasDataInCodeSupport())
     return;
   std::vector<DataRegionData> &Regions = getAssembler().getDataRegions();
-  assert(Regions.size() && "Mismatched .end_data_region!");
+  assert(!Regions.empty() && "Mismatched .end_data_region!");
   DataRegionData &Data = Regions.back();
   assert(!Data.End && "Mismatched .end_data_region!");
   // Create a temporary label to mark the end of the data region.

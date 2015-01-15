@@ -376,7 +376,7 @@ unsigned MapTableEmitter::emitBinSearchTable(raw_ostream &OS) {
     std::vector<Record*> ColInstrs = MapTable[CurInstr];
     std::string OutStr("");
     unsigned RelExists = 0;
-    if (ColInstrs.size()) {
+    if (!ColInstrs.empty()) {
       for (unsigned j = 0; j < NumCol; j++) {
         if (ColInstrs[j] != nullptr) {
           RelExists = 1;
@@ -567,7 +567,7 @@ void EmitMapTable(RecordKeeper &Records, raw_ostream &OS) {
   std::vector<Record*> InstrMapVec;
   InstrMapVec = Records.getAllDerivedDefinitions("InstrMapping");
 
-  if (!InstrMapVec.size())
+  if (InstrMapVec.empty())
     return;
 
   OS << "#ifdef GET_INSTRMAP_INFO\n";
