@@ -11,10 +11,14 @@
 #define LLVM_ANALYSIS_TARGETLIBRARYINFO_H
 
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/Optional.h"
+#include "llvm/ADT/Triple.h"
+#include "llvm/IR/Module.h"
+#include "llvm/IR/Module.h"
 #include "llvm/Pass.h"
 
 namespace llvm {
-  class Triple;
+class PreservedAnalyses;
 
   namespace LibFunc {
     enum Func {
@@ -718,7 +722,12 @@ class TargetLibraryInfo {
 public:
   TargetLibraryInfo();
   explicit TargetLibraryInfo(const Triple &T);
-  explicit TargetLibraryInfo(const TargetLibraryInfo &TLI);
+
+  // Provide value semantics.
+  TargetLibraryInfo(const TargetLibraryInfo &TLI);
+  TargetLibraryInfo(TargetLibraryInfo &&TLI);
+  TargetLibraryInfo &operator=(const TargetLibraryInfo &TLI);
+  TargetLibraryInfo &operator=(TargetLibraryInfo &&TLI);
 
   /// \brief Searches for a particular function name.
   ///
@@ -799,6 +808,66 @@ public:
   ///
   /// This can be used for options like -fno-builtin.
   void disableAllFunctions();
+
+  /// \brief Handle invalidation from the pass manager.
+  ///
+  /// If we try to invalidate this info, just return false. It cannot become
+  /// invalid even if the module changes.
+  bool invalidate(Module &, const PreservedAnalyses &) { return false; }
+};
+
+/// \brief Analysis pass providing the \c TargetLibraryInfo.
+///
+/// Note that this pass's result cannot be invalidated, it is immutable for the
+/// life of the module.
+class TargetLibraryAnalysis {
+public:
+  typedef TargetLibraryInfo Result;
+
+  /// \brief Opaque, unique identifier for this analysis pass.
+  static void *ID() { return (void *)&PassID; }
+
+  /// \brief Default construct the library analysis.
+  ///
+  /// This will use the module's triple to construct the library info for that
+  /// module.
+  TargetLibraryAnalysis() {}
+
+  /// \brief Construct a library analysis with preset info.
+  ///
+  /// This will directly copy the preset info into the result without
+  /// consulting the module's triple.
+  TargetLibraryAnalysis(TargetLibraryInfo PresetInfo)
+      : PresetInfo(std::move(PresetInfo)) {}
+
+  // Value semantics. We spell out the constructors for MSVC.
+  TargetLibraryAnalysis(const TargetLibraryAnalysis &Arg)
+      : PresetInfo(Arg.PresetInfo) {}
+  TargetLibraryAnalysis(TargetLibraryAnalysis &&Arg)
+      : PresetInfo(std::move(Arg.PresetInfo)) {}
+  TargetLibraryAnalysis &operator=(const TargetLibraryAnalysis &RHS) {
+    PresetInfo = RHS.PresetInfo;
+    return *this;
+  }
+  TargetLibraryAnalysis &operator=(TargetLibraryAnalysis &&RHS) {
+    PresetInfo = std::move(RHS.PresetInfo);
+    return *this;
+  }
+
+  TargetLibraryInfo run(Module &M) {
+    if (PresetInfo)
+      return *PresetInfo;
+
+    return TargetLibraryInfo(Triple(M.getTargetTriple()));
+  }
+
+  /// \brief Provide access to a name for this pass for debugging purposes.
+  static StringRef name() { return "TargetLibraryAnalysis"; }
+
+private:
+  static char PassID;
+
+  Optional<TargetLibraryInfo> PresetInfo;
 };
 
 class TargetLibraryInfoWrapperPass : public ImmutablePass {

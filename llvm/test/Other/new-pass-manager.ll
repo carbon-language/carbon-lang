@@ -266,6 +266,18 @@
 ; CHECK-INVALIDATE-ALL-CG-NOT: Running analysis: NoOpModuleAnalysis
 ; CHECK-INVALIDATE-ALL-CG: Finished pass manager
 
+; RUN: opt -disable-output -disable-verify -debug-pass-manager %s 2>&1 \
+; RUN:     -passes='require<targetlibinfo>,invalidate<all>,require<targetlibinfo>' \
+; RUN:     | FileCheck %s --check-prefix=CHECK-TLI
+; CHECK-TLI: Starting pass manager
+; CHECK-TLI: Running pass: RequireAnalysisPass
+; CHECK-TLI: Running analysis: TargetLibraryAnalysis
+; CHECK-TLI: Running pass: InvalidateAllAnalysesPass
+; CHECK-TLI-NOT: Invalidating analysis: TargetLibraryAnalysis
+; CHECK-TLI: Running pass: RequireAnalysisPass
+; CHECK-TLI-NOT: Running analysis: TargetLibraryAnalysis
+; CHECK-TLI: Finished pass manager
+
 define void @foo() {
   ret void
 }

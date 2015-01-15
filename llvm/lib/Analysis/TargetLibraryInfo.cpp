@@ -690,9 +690,28 @@ TargetLibraryInfo::TargetLibraryInfo(const Triple &T) {
   initialize(*this, T, StandardNames);
 }
 
-TargetLibraryInfo::TargetLibraryInfo(const TargetLibraryInfo &TLI) {
+TargetLibraryInfo::TargetLibraryInfo(const TargetLibraryInfo &TLI)
+    : CustomNames(TLI.CustomNames) {
   memcpy(AvailableArray, TLI.AvailableArray, sizeof(AvailableArray));
+}
+
+TargetLibraryInfo::TargetLibraryInfo(TargetLibraryInfo &&TLI)
+    : CustomNames(std::move(TLI.CustomNames)) {
+  std::move(std::begin(TLI.AvailableArray), std::end(TLI.AvailableArray),
+            AvailableArray);
+}
+
+TargetLibraryInfo &TargetLibraryInfo::operator=(const TargetLibraryInfo &TLI) {
   CustomNames = TLI.CustomNames;
+  memcpy(AvailableArray, TLI.AvailableArray, sizeof(AvailableArray));
+  return *this;
+}
+
+TargetLibraryInfo &TargetLibraryInfo::operator=(TargetLibraryInfo &&TLI) {
+  CustomNames = std::move(TLI.CustomNames);
+  std::move(std::begin(TLI.AvailableArray), std::end(TLI.AvailableArray),
+            AvailableArray);
+  return *this;
 }
 
 namespace {
@@ -755,6 +774,8 @@ TargetLibraryInfoWrapperPass::TargetLibraryInfoWrapperPass(
     : ImmutablePass(ID), TLI(TLI) {
   initializeTargetLibraryInfoWrapperPassPass(*PassRegistry::getPassRegistry());
 }
+
+char TargetLibraryAnalysis::PassID;
 
 // Register the basic pass.
 INITIALIZE_PASS(TargetLibraryInfoWrapperPass, "targetlibinfo",
