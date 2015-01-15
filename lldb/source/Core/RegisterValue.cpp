@@ -19,6 +19,7 @@
 #include "lldb/Core/Stream.h"
 #include "lldb/Core/StreamString.h"
 #include "lldb/Interpreter/Args.h"
+#include "lldb/Host/StringConvert.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -467,7 +468,7 @@ RegisterValue::SetValueFromCString (const RegisterInfo *reg_info, const char *va
         case eEncodingUint:
             if (byte_size <= sizeof (uint64_t))
             {
-                uint64_t uval64 = Args::StringToUInt64(value_str, UINT64_MAX, 0, &success);
+                uint64_t uval64 = StringConvert::ToUInt64(value_str, UINT64_MAX, 0, &success);
                 if (!success)
                     error.SetErrorStringWithFormat ("'%s' is not a valid unsigned integer string value", value_str);
                 else if (!Args::UInt64ValueIsValidForByteSize (uval64, byte_size))
@@ -488,7 +489,7 @@ RegisterValue::SetValueFromCString (const RegisterInfo *reg_info, const char *va
         case eEncodingSint:
             if (byte_size <= sizeof (long long))
             {
-                uint64_t sval64 = Args::StringToSInt64(value_str, INT64_MAX, 0, &success);
+                uint64_t sval64 = StringConvert::ToSInt64(value_str, INT64_MAX, 0, &success);
                 if (!success)
                     error.SetErrorStringWithFormat ("'%s' is not a valid signed integer string value", value_str);
                 else if (!Args::SInt64ValueIsValidForByteSize (sval64, byte_size))

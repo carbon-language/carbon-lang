@@ -27,6 +27,7 @@
 #include "lldb/Core/Timer.h"
 #include "lldb/Core/ValueObjectVariable.h"
 #include "lldb/DataFormatters/ValueObjectPrinter.h"
+#include "lldb/Host/StringConvert.h"
 #include "lldb/Host/Symbols.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
 #include "lldb/Interpreter/CommandReturnObject.h"
@@ -522,7 +523,7 @@ protected:
         {
             bool success = false;
             const char *target_idx_arg = args.GetArgumentAtIndex(0);
-            uint32_t target_idx = Args::StringToUInt32 (target_idx_arg, UINT32_MAX, 0, &success);
+            uint32_t target_idx = StringConvert::ToUInt32 (target_idx_arg, UINT32_MAX, 0, &success);
             if (success)
             {
                 TargetList &target_list = m_interpreter.GetDebugger().GetTargetList();
@@ -629,7 +630,7 @@ protected:
             for (uint32_t arg_idx = 0; success && arg_idx < argc; ++arg_idx)
             {
                 const char *target_idx_arg = args.GetArgumentAtIndex(arg_idx);
-                uint32_t target_idx = Args::StringToUInt32 (target_idx_arg, UINT32_MAX, 0, &success);
+                uint32_t target_idx = StringConvert::ToUInt32 (target_idx_arg, UINT32_MAX, 0, &success);
                 if (success)
                 {
                     if (target_idx < num_targets)
@@ -1260,7 +1261,7 @@ protected:
             {
                 bool success = false;
 
-                uint32_t insert_idx = Args::StringToUInt32(command.GetArgumentAtIndex(0), UINT32_MAX, 0, &success);
+                uint32_t insert_idx = StringConvert::ToUInt32(command.GetArgumentAtIndex(0), UINT32_MAX, 0, &success);
 
                 if (!success)
                 {
@@ -2963,7 +2964,7 @@ protected:
                                         {
                                             ConstString const_sect_name(sect_name);
                                             bool success = false;
-                                            addr_t load_addr = Args::StringToUInt64(load_addr_cstr, LLDB_INVALID_ADDRESS, 0, &success);
+                                            addr_t load_addr = StringConvert::ToUInt64(load_addr_cstr, LLDB_INVALID_ADDRESS, 0, &success);
                                             if (success)
                                             {
                                                 SectionSP section_sp (section_list->FindSectionByName(const_sect_name));
@@ -3890,7 +3891,7 @@ public:
                     break;
 
                 case 'o':
-                    m_offset = Args::StringToUInt64(option_arg, LLDB_INVALID_ADDRESS);
+                    m_offset = StringConvert::ToUInt64(option_arg, LLDB_INVALID_ADDRESS);
                     if (m_offset == LLDB_INVALID_ADDRESS)
                         error.SetErrorStringWithFormat ("invalid offset string '%s'", option_arg);
                     break;
@@ -3910,7 +3911,7 @@ public:
                     break;
 
                 case 'l':
-                    m_line_number = Args::StringToUInt32(option_arg, UINT32_MAX);
+                    m_line_number = StringConvert::ToUInt32(option_arg, UINT32_MAX);
                     if (m_line_number == UINT32_MAX)
                         error.SetErrorStringWithFormat ("invalid line number string '%s'", option_arg);
                     else if (m_line_number == 0)
@@ -4873,7 +4874,7 @@ public:
                 break;
 
                 case 'e':
-                    m_line_end = Args::StringToUInt32 (option_arg, UINT_MAX, 0, &success);
+                    m_line_end = StringConvert::ToUInt32 (option_arg, UINT_MAX, 0, &success);
                     if (!success)
                     {
                         error.SetErrorStringWithFormat ("invalid end line number: \"%s\"", option_arg);
@@ -4883,7 +4884,7 @@ public:
                 break;
 
                 case 'l':
-                    m_line_start = Args::StringToUInt32 (option_arg, 0, 0, &success);
+                    m_line_start = StringConvert::ToUInt32 (option_arg, 0, 0, &success);
                     if (!success)
                     {
                         error.SetErrorStringWithFormat ("invalid start line number: \"%s\"", option_arg);
@@ -4912,7 +4913,7 @@ public:
                 break;
                 case 't' :
                 {
-                    m_thread_id = Args::StringToUInt64(option_arg, LLDB_INVALID_THREAD_ID, 0);
+                    m_thread_id = StringConvert::ToUInt64(option_arg, LLDB_INVALID_THREAD_ID, 0);
                     if (m_thread_id == LLDB_INVALID_THREAD_ID)
                        error.SetErrorStringWithFormat ("invalid thread id string '%s'", option_arg);
                     m_thread_specified = true;
@@ -4928,7 +4929,7 @@ public:
                     break;
                 case 'x':
                 {
-                    m_thread_index = Args::StringToUInt32(option_arg, UINT32_MAX, 0);
+                    m_thread_index = StringConvert::ToUInt32(option_arg, UINT32_MAX, 0);
                     if (m_thread_id == UINT32_MAX)
                        error.SetErrorStringWithFormat ("invalid thread index string '%s'", option_arg);
                     m_thread_specified = true;
@@ -5233,7 +5234,7 @@ protected:
                 bool success;
                 for (size_t i = 0; i < num_args; i++)
                 {
-                    lldb::user_id_t user_id = Args::StringToUInt32 (command.GetArgumentAtIndex(i), 0, 0, &success);
+                    lldb::user_id_t user_id = StringConvert::ToUInt32 (command.GetArgumentAtIndex(i), 0, 0, &success);
                     if (!success)
                     {
                         result.AppendErrorWithFormat ("invalid stop hook id: \"%s\".\n", command.GetArgumentAtIndex(i));
@@ -5302,7 +5303,7 @@ protected:
             {
                 for (size_t i = 0; i < num_args; i++)
                 {
-                    lldb::user_id_t user_id = Args::StringToUInt32 (command.GetArgumentAtIndex(i), 0, 0, &success);
+                    lldb::user_id_t user_id = StringConvert::ToUInt32 (command.GetArgumentAtIndex(i), 0, 0, &success);
                     if (!success)
                     {
                         result.AppendErrorWithFormat ("invalid stop hook id: \"%s\".\n", command.GetArgumentAtIndex(i));

@@ -22,6 +22,7 @@
 #include "lldb/Core/Module.h"
 #include "lldb/Core/PluginManager.h"
 #include "lldb/Host/Host.h"
+#include "lldb/Host/StringConvert.h"
 #include "lldb/Interpreter/Args.h"
 #include "lldb/Interpreter/Options.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
@@ -353,7 +354,7 @@ public:
 
                 case 'p':   
                     {
-                        lldb::pid_t pid = Args::StringToUInt32 (option_arg, LLDB_INVALID_PROCESS_ID, 0, &success);
+                        lldb::pid_t pid = StringConvert::ToUInt32 (option_arg, LLDB_INVALID_PROCESS_ID, 0, &success);
                         if (!success || pid == LLDB_INVALID_PROCESS_ID)
                         {
                             error.SetErrorStringWithFormat("invalid process ID '%s'", option_arg);
@@ -714,7 +715,7 @@ protected:
             switch (short_option)
             {
                 case 'i':
-                    m_ignore = Args::StringToUInt32 (option_arg, 0, 0, &success);
+                    m_ignore = StringConvert::ToUInt32 (option_arg, 0, 0, &success);
                     if (!success)
                         error.SetErrorStringWithFormat ("invalid value for ignore option: \"%s\", should be a number.", option_arg);
                     break;
@@ -1297,7 +1298,7 @@ protected:
         for (uint32_t i=0; i<argc; ++i)
         {
             const char *image_token_cstr = command.GetArgumentAtIndex(i);
-            uint32_t image_token = Args::StringToUInt32(image_token_cstr, LLDB_INVALID_IMAGE_TOKEN, 0);
+            uint32_t image_token = StringConvert::ToUInt32(image_token_cstr, LLDB_INVALID_IMAGE_TOKEN, 0);
             if (image_token == LLDB_INVALID_IMAGE_TOKEN)
             {
                 result.AppendErrorWithFormat ("invalid image index argument '%s'", image_token_cstr);
@@ -1371,7 +1372,7 @@ protected:
             
             const char *signal_name = command.GetArgumentAtIndex(0);
             if (::isxdigit (signal_name[0]))
-                signo = Args::StringToSInt32(signal_name, LLDB_INVALID_SIGNAL_NUMBER, 0);
+                signo = StringConvert::ToSInt32(signal_name, LLDB_INVALID_SIGNAL_NUMBER, 0);
             else
                 signo = process->GetUnixSignals().GetSignalNumberFromName (signal_name);
             
@@ -1754,7 +1755,7 @@ public:
         else
         {
             // If the value isn't 'true' or 'false', it had better be 0 or 1.
-            real_value = Args::StringToUInt32 (option.c_str(), 3);
+            real_value = StringConvert::ToUInt32 (option.c_str(), 3);
             if (real_value != 0 && real_value != 1)
                 okay = false;
         }

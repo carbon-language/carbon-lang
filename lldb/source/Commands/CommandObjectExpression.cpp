@@ -15,7 +15,6 @@
 // C++ Includes
 // Other libraries and framework includes
 // Project includes
-#include "lldb/Interpreter/Args.h"
 #include "lldb/Core/Value.h"
 #include "lldb/Core/ValueObjectVariable.h"
 #include "lldb/DataFormatters/ValueObjectPrinter.h"
@@ -24,6 +23,7 @@
 #include "lldb/Expression/ClangFunction.h"
 #include "lldb/Expression/DWARFExpression.h"
 #include "lldb/Host/Host.h"
+#include "lldb/Host/StringConvert.h"
 #include "lldb/Core/Debugger.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
 #include "lldb/Interpreter/CommandReturnObject.h"
@@ -119,7 +119,7 @@ CommandObjectExpression::CommandOptions::SetOptionValue (CommandInterpreter &int
         {
             bool success;
             uint32_t result;
-            result = Args::StringToUInt32(option_arg, 0, 0, &success);
+            result = StringConvert::ToUInt32(option_arg, 0, 0, &success);
             if (success)
                 timeout = result;
             else

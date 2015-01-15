@@ -17,6 +17,7 @@
 #include "lldb/Core/Stream.h"
 #include "lldb/Core/DataExtractor.h"
 #include "lldb/Host/Endian.h"
+#include "lldb/Host/StringConvert.h"
 
 #include "Plugins/Process/Utility/InstructionUtils.h"
 
@@ -1790,7 +1791,7 @@ Scalar::SetValueFromCString (const char *value_str, Encoding encoding, size_t by
     case eEncodingUint:
         if (byte_size <= sizeof (unsigned long long))
         {
-            uint64_t uval64 = Args::StringToUInt64(value_str, UINT64_MAX, 0, &success);
+            uint64_t uval64 = StringConvert::ToUInt64(value_str, UINT64_MAX, 0, &success);
             if (!success)
                 error.SetErrorStringWithFormat ("'%s' is not a valid unsigned integer string value", value_str);
             else if (!UIntValueIsValidForSize (uval64, byte_size))
@@ -1819,7 +1820,7 @@ Scalar::SetValueFromCString (const char *value_str, Encoding encoding, size_t by
     case eEncodingSint:
         if (byte_size <= sizeof (long long))
         {
-            uint64_t sval64 = Args::StringToSInt64(value_str, INT64_MAX, 0, &success);
+            uint64_t sval64 = StringConvert::ToSInt64(value_str, INT64_MAX, 0, &success);
             if (!success)
                 error.SetErrorStringWithFormat ("'%s' is not a valid signed integer string value", value_str);
             else if (!SIntValueIsValidForSize (sval64, byte_size))

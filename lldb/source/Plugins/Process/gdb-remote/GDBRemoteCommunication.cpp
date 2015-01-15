@@ -26,6 +26,7 @@
 #include "lldb/Host/HostInfo.h"
 #include "lldb/Host/Pipe.h"
 #include "lldb/Host/Socket.h"
+#include "lldb/Host/StringConvert.h"
 #include "lldb/Host/ThreadLauncher.h"
 #include "lldb/Host/TimeValue.h"
 #include "lldb/Target/Process.h"
@@ -887,7 +888,7 @@ GDBRemoteCommunication::StartDebugserverProcess (const char *hostname,
                     if (error.Success())
                     {
                         assert (num_bytes > 0 && port_cstr[num_bytes-1] == '\0');
-                        out_port = Args::StringToUInt32(port_cstr, 0);
+                        out_port = StringConvert::ToUInt32(port_cstr, 0);
                         if (log)
                             log->Printf("GDBRemoteCommunication::%s() debugserver listens %u port", __FUNCTION__, out_port);
                     }

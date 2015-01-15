@@ -28,6 +28,7 @@
 #include "lldb/Host/Endian.h"
 #include "lldb/Host/Host.h"
 #include "lldb/Host/HostInfo.h"
+#include "lldb/Host/StringConvert.h"
 #include "lldb/Host/TimeValue.h"
 #include "lldb/Target/Target.h"
 
@@ -1559,7 +1560,7 @@ GDBRemoteCommunicationClient::GetGDBServerVersion()
                         size_t dot_pos = value.find('.');
                         if (dot_pos != std::string::npos)
                             value[dot_pos] = '\0';
-                        const uint32_t version = Args::StringToUInt32(value.c_str(), UINT32_MAX, 0);
+                        const uint32_t version = StringConvert::ToUInt32(value.c_str(), UINT32_MAX, 0);
                         if (version != UINT32_MAX)
                         {
                             success = true;
@@ -1625,14 +1626,14 @@ GDBRemoteCommunicationClient::GetHostInfo (bool force)
                     if (name.compare("cputype") == 0)
                     {
                         // exception type in big endian hex
-                        cpu = Args::StringToUInt32 (value.c_str(), LLDB_INVALID_CPUTYPE, 0);
+                        cpu = StringConvert::ToUInt32 (value.c_str(), LLDB_INVALID_CPUTYPE, 0);
                         if (cpu != LLDB_INVALID_CPUTYPE)
                             ++num_keys_decoded;
                     }
                     else if (name.compare("cpusubtype") == 0)
                     {
                         // exception count in big endian hex
-                        sub = Args::StringToUInt32 (value.c_str(), 0, 0);
+                        sub = StringConvert::ToUInt32 (value.c_str(), 0, 0);
                         if (sub != 0)
                             ++num_keys_decoded;
                     }
@@ -1700,7 +1701,7 @@ GDBRemoteCommunicationClient::GetHostInfo (bool force)
                     }
                     else if (name.compare("ptrsize") == 0)
                     {
-                        pointer_byte_size = Args::StringToUInt32 (value.c_str(), 0, 0);
+                        pointer_byte_size = StringConvert::ToUInt32 (value.c_str(), 0, 0);
                         if (pointer_byte_size != 0)
                             ++num_keys_decoded;
                     }
@@ -1725,7 +1726,7 @@ GDBRemoteCommunicationClient::GetHostInfo (bool force)
                     }
                     else if (name.compare("default_packet_timeout") == 0)
                     {
-                        m_default_packet_timeout = Args::StringToUInt32(value.c_str(), 0);
+                        m_default_packet_timeout = StringConvert::ToUInt32(value.c_str(), 0);
                         if (m_default_packet_timeout > 0)
                         {
                             SetPacketTimeout(m_default_packet_timeout);
@@ -2006,13 +2007,13 @@ GDBRemoteCommunicationClient::GetMemoryRegionInfo (lldb::addr_t addr,
             {
                 if (name.compare ("start") == 0)
                 {
-                    addr_value = Args::StringToUInt64(value.c_str(), LLDB_INVALID_ADDRESS, 16, &success);
+                    addr_value = StringConvert::ToUInt64(value.c_str(), LLDB_INVALID_ADDRESS, 16, &success);
                     if (success)
                         region_info.GetRange().SetRangeBase(addr_value);
                 }
                 else if (name.compare ("size") == 0)
                 {
-                    addr_value = Args::StringToUInt64(value.c_str(), 0, 16, &success);
+                    addr_value = StringConvert::ToUInt64(value.c_str(), 0, 16, &success);
                     if (success)
                         region_info.GetRange().SetByteSize (addr_value);
                 }
@@ -2107,7 +2108,7 @@ GDBRemoteCommunicationClient::GetWatchpointSupportInfo (uint32_t &num)
             {
                 if (name.compare ("num") == 0)
                 {
-                    num = Args::StringToUInt32(value.c_str(), 0, 0);
+                    num = StringConvert::ToUInt32(value.c_str(), 0, 0);
                     m_num_supported_hardware_watchpoints = num;
                 }
             }
@@ -2309,27 +2310,27 @@ GDBRemoteCommunicationClient::DecodeProcessInfoResponse (StringExtractorGDBRemot
         {
             if (name.compare("pid") == 0)
             {
-                process_info.SetProcessID (Args::StringToUInt32 (value.c_str(), LLDB_INVALID_PROCESS_ID, 0));
+                process_info.SetProcessID (StringConvert::ToUInt32 (value.c_str(), LLDB_INVALID_PROCESS_ID, 0));
             }
             else if (name.compare("ppid") == 0)
             {
-                process_info.SetParentProcessID (Args::StringToUInt32 (value.c_str(), LLDB_INVALID_PROCESS_ID, 0));
+                process_info.SetParentProcessID (StringConvert::ToUInt32 (value.c_str(), LLDB_INVALID_PROCESS_ID, 0));
             }
             else if (name.compare("uid") == 0)
             {
-                process_info.SetUserID (Args::StringToUInt32 (value.c_str(), UINT32_MAX, 0));
+                process_info.SetUserID (StringConvert::ToUInt32 (value.c_str(), UINT32_MAX, 0));
             }
             else if (name.compare("euid") == 0)
             {
-                process_info.SetEffectiveUserID (Args::StringToUInt32 (value.c_str(), UINT32_MAX, 0));
+                process_info.SetEffectiveUserID (StringConvert::ToUInt32 (value.c_str(), UINT32_MAX, 0));
             }
             else if (name.compare("gid") == 0)
             {
-                process_info.SetGroupID (Args::StringToUInt32 (value.c_str(), UINT32_MAX, 0));
+                process_info.SetGroupID (StringConvert::ToUInt32 (value.c_str(), UINT32_MAX, 0));
             }
             else if (name.compare("egid") == 0)
             {
-                process_info.SetEffectiveGroupID (Args::StringToUInt32 (value.c_str(), UINT32_MAX, 0));
+                process_info.SetEffectiveGroupID (StringConvert::ToUInt32 (value.c_str(), UINT32_MAX, 0));
             }
             else if (name.compare("triple") == 0)
             {
@@ -2351,11 +2352,11 @@ GDBRemoteCommunicationClient::DecodeProcessInfoResponse (StringExtractorGDBRemot
             }
             else if (name.compare("cputype") == 0)
             {
-                cpu = Args::StringToUInt32 (value.c_str(), LLDB_INVALID_CPUTYPE, 16);
+                cpu = StringConvert::ToUInt32 (value.c_str(), LLDB_INVALID_CPUTYPE, 16);
             }
             else if (name.compare("cpusubtype") == 0)
             {
-                sub = Args::StringToUInt32 (value.c_str(), 0, 16);
+                sub = StringConvert::ToUInt32 (value.c_str(), 0, 16);
             }
             else if (name.compare("vendor") == 0)
             {
@@ -2441,13 +2442,13 @@ GDBRemoteCommunicationClient::GetCurrentProcessInfo ()
             {
                 if (name.compare("cputype") == 0)
                 {
-                    cpu = Args::StringToUInt32 (value.c_str(), LLDB_INVALID_CPUTYPE, 16);
+                    cpu = StringConvert::ToUInt32 (value.c_str(), LLDB_INVALID_CPUTYPE, 16);
                     if (cpu != LLDB_INVALID_CPUTYPE)
                         ++num_keys_decoded;
                 }
                 else if (name.compare("cpusubtype") == 0)
                 {
-                    sub = Args::StringToUInt32 (value.c_str(), 0, 16);
+                    sub = StringConvert::ToUInt32 (value.c_str(), 0, 16);
                     if (sub != 0)
                         ++num_keys_decoded;
                 }
@@ -2483,13 +2484,13 @@ GDBRemoteCommunicationClient::GetCurrentProcessInfo ()
                 }
                 else if (name.compare("ptrsize") == 0)
                 {
-                    pointer_byte_size = Args::StringToUInt32 (value.c_str(), 0, 16);
+                    pointer_byte_size = StringConvert::ToUInt32 (value.c_str(), 0, 16);
                     if (pointer_byte_size != 0)
                         ++num_keys_decoded;
                 }
                 else if (name.compare("pid") == 0)
                 {
-                    pid = Args::StringToUInt64(value.c_str(), 0, 16);
+                    pid = StringConvert::ToUInt64(value.c_str(), 0, 16);
                     if (pid != LLDB_INVALID_PROCESS_ID)
                         ++num_keys_decoded;
                 }
@@ -2857,9 +2858,9 @@ GDBRemoteCommunicationClient::LaunchGDBserverAndGetPort (lldb::pid_t &pid, const
         while (response.GetNameColonValue(name, value))
         {
             if (name.compare("port") == 0)
-                port = Args::StringToUInt32(value.c_str(), 0, 0);
+                port = StringConvert::ToUInt32(value.c_str(), 0, 0);
             else if (name.compare("pid") == 0)
-                pid = Args::StringToUInt64(value.c_str(), LLDB_INVALID_PROCESS_ID, 0);
+                pid = StringConvert::ToUInt64(value.c_str(), LLDB_INVALID_PROCESS_ID, 0);
         }
         return port;
     }

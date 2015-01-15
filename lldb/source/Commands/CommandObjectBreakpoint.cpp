@@ -19,6 +19,7 @@
 #include "lldb/Breakpoint/Breakpoint.h"
 #include "lldb/Breakpoint/BreakpointIDList.h"
 #include "lldb/Breakpoint/BreakpointLocation.h"
+#include "lldb/Host/StringConvert.h"
 #include "lldb/Interpreter/Options.h"
 #include "lldb/Interpreter/OptionValueString.h"
 #include "lldb/Interpreter/OptionValueUInt64.h"
@@ -140,7 +141,7 @@ public:
                     break;
 
                 case 'C':
-                    m_column = Args::StringToUInt32 (option_arg, 0);
+                    m_column = StringConvert::ToUInt32 (option_arg, 0);
                     break;
 
                 case 'c':
@@ -207,7 +208,7 @@ public:
 
                 case 'i':
                 {
-                    m_ignore_count = Args::StringToUInt32(option_arg, UINT32_MAX, 0);
+                    m_ignore_count = StringConvert::ToUInt32(option_arg, UINT32_MAX, 0);
                     if (m_ignore_count == UINT32_MAX)
                        error.SetErrorStringWithFormat ("invalid ignore count '%s'", option_arg);
                     break;
@@ -229,7 +230,7 @@ public:
                 break;
 
                 case 'l':
-                    m_line_num = Args::StringToUInt32 (option_arg, 0);
+                    m_line_num = StringConvert::ToUInt32 (option_arg, 0);
                     break;
 
                 case 'M':
@@ -276,7 +277,7 @@ public:
 
                 case 't' :
                 {
-                    m_thread_id = Args::StringToUInt64(option_arg, LLDB_INVALID_THREAD_ID, 0);
+                    m_thread_id = StringConvert::ToUInt64(option_arg, LLDB_INVALID_THREAD_ID, 0);
                     if (m_thread_id == LLDB_INVALID_THREAD_ID)
                        error.SetErrorStringWithFormat ("invalid thread id string '%s'", option_arg);
                 }
@@ -297,7 +298,7 @@ public:
 
                 case 'x':
                 {
-                    m_thread_index = Args::StringToUInt32(option_arg, UINT32_MAX, 0);
+                    m_thread_index = StringConvert::ToUInt32(option_arg, UINT32_MAX, 0);
                     if (m_thread_id == UINT32_MAX)
                        error.SetErrorStringWithFormat ("invalid thread index string '%s'", option_arg);
                     
@@ -838,7 +839,7 @@ public:
                     break;
                 case 'i':
                 {
-                    m_ignore_count = Args::StringToUInt32(option_arg, UINT32_MAX, 0);
+                    m_ignore_count = StringConvert::ToUInt32(option_arg, UINT32_MAX, 0);
                     if (m_ignore_count == UINT32_MAX)
                        error.SetErrorStringWithFormat ("invalid ignore count '%s'", option_arg);
                 }
@@ -865,7 +866,7 @@ public:
                     }
                     else
                     {
-                        m_thread_id = Args::StringToUInt64(option_arg, LLDB_INVALID_THREAD_ID, 0);
+                        m_thread_id = StringConvert::ToUInt64(option_arg, LLDB_INVALID_THREAD_ID, 0);
                         if (m_thread_id == LLDB_INVALID_THREAD_ID)
                            error.SetErrorStringWithFormat ("invalid thread id string '%s'", option_arg);
                         else
@@ -896,7 +897,7 @@ public:
                     }
                     else
                     {
-                        m_thread_index = Args::StringToUInt32 (option_arg, UINT32_MAX, 0);
+                        m_thread_index = StringConvert::ToUInt32 (option_arg, UINT32_MAX, 0);
                         if (m_thread_id == UINT32_MAX)
                            error.SetErrorStringWithFormat ("invalid thread index string '%s'", option_arg);
                         else
@@ -1555,7 +1556,7 @@ public:
                     break;
 
                 case 'l':
-                    m_line_num = Args::StringToUInt32 (option_arg, 0);
+                    m_line_num = StringConvert::ToUInt32 (option_arg, 0);
                     break;
 
                 default:

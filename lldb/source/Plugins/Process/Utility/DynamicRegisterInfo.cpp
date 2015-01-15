@@ -15,7 +15,7 @@
 // C++ Includes
 // Other libraries and framework includes
 // Project includes
-#include "lldb/Interpreter/Args.h"
+#include "lldb/Host/StringConvert.h"
 #include "lldb/Core/RegularExpression.h"
 #include "lldb/Core/StreamFile.h"
 #include "lldb/DataFormatters/FormatManager.h"
@@ -158,8 +158,8 @@ DynamicRegisterInfo::SetRegisterInfo (const lldb_private::PythonDictionary &dict
                                 regex_match.GetMatchAtIndex(slice_cstr, 2, msbit_str) &&
                                 regex_match.GetMatchAtIndex(slice_cstr, 3, lsbit_str))
                             {
-                                const uint32_t msbit = Args::StringToUInt32(msbit_str.c_str(), UINT32_MAX);
-                                const uint32_t lsbit = Args::StringToUInt32(lsbit_str.c_str(), UINT32_MAX);
+                                const uint32_t msbit = StringConvert::ToUInt32(msbit_str.c_str(), UINT32_MAX);
+                                const uint32_t lsbit = StringConvert::ToUInt32(lsbit_str.c_str(), UINT32_MAX);
                                 if (msbit != UINT32_MAX && lsbit != UINT32_MAX)
                                 {
                                     if (msbit > lsbit)

@@ -585,6 +585,9 @@
 		26FFC19E14FC072100087D58 /* DynamicLoaderPOSIXDYLD.h in Headers */ = {isa = PBXBuildFile; fileRef = 26FFC19814FC072100087D58 /* DynamicLoaderPOSIXDYLD.h */; };
 		33064C9A1A5C7A330033D415 /* UriParser.cpp in CopyFiles */ = {isa = PBXBuildFile; fileRef = 33064C991A5C7A330033D415 /* UriParser.cpp */; };
 		33064C9C1A5C7A490033D415 /* UriParser.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 33064C9B1A5C7A490033D415 /* UriParser.h */; };
+		33E5E8421A672A240024ED68 /* StringConvert.cpp in CopyFiles */ = {isa = PBXBuildFile; fileRef = 33E5E8411A672A240024ED68 /* StringConvert.cpp */; };
+		33E5E8461A6736D30024ED68 /* StringConvert.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 33E5E8451A6736D30024ED68 /* StringConvert.h */; };
+		33E5E8471A674FB60024ED68 /* StringConvert.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 33E5E8411A672A240024ED68 /* StringConvert.cpp */; };
 		3FDFDDBD199C3A06009756A7 /* FileAction.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3FDFDDBC199C3A06009756A7 /* FileAction.cpp */; };
 		3FDFDDBF199D345E009756A7 /* FileCache.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3FDFDDBE199D345E009756A7 /* FileCache.cpp */; };
 		3FDFDDC6199D37ED009756A7 /* FileSystem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3FDFDDC5199D37ED009756A7 /* FileSystem.cpp */; };
@@ -937,7 +940,9 @@
 			dstSubfolderSpec = 0;
 			files = (
 				AF90106515AB7D3600FF120D /* lldb.1 in CopyFiles */,
+				33E5E8461A6736D30024ED68 /* StringConvert.h in CopyFiles */,
 				33064C9C1A5C7A490033D415 /* UriParser.h in CopyFiles */,
+				33E5E8421A672A240024ED68 /* StringConvert.cpp in CopyFiles */,
 				33064C9A1A5C7A330033D415 /* UriParser.cpp in CopyFiles */,
 			);
 			runOnlyForDeploymentPostprocessing = 1;
@@ -1806,6 +1811,8 @@
 		26FFC19814FC072100087D58 /* DynamicLoaderPOSIXDYLD.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DynamicLoaderPOSIXDYLD.h; sourceTree = "<group>"; };
 		33064C991A5C7A330033D415 /* UriParser.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = UriParser.cpp; path = source/Utility/UriParser.cpp; sourceTree = "<group>"; };
 		33064C9B1A5C7A490033D415 /* UriParser.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = UriParser.h; path = source/Utility/UriParser.h; sourceTree = "<group>"; };
+		33E5E8411A672A240024ED68 /* StringConvert.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = StringConvert.cpp; sourceTree = "<group>"; };
+		33E5E8451A6736D30024ED68 /* StringConvert.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = StringConvert.h; path = include/lldb/Host/StringConvert.h; sourceTree = SOURCE_ROOT; };
 		3F5E8AF31A40D4A500A73232 /* PipeBase.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = PipeBase.h; path = include/lldb/Host/PipeBase.h; sourceTree = "<group>"; };
 		3FDFD6C3199C396E009756A7 /* FileAction.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = FileAction.h; path = include/lldb/Target/FileAction.h; sourceTree = "<group>"; };
 		3FDFDDBC199C3A06009756A7 /* FileAction.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = FileAction.cpp; path = source/Target/FileAction.cpp; sourceTree = "<group>"; };
@@ -3681,6 +3688,7 @@
 		26BC7DD010F1B7C100F91463 /* Host */ = {
 			isa = PBXGroup;
 			children = (
+				33E5E8451A6736D30024ED68 /* StringConvert.h */,
 				69A01E1A1236C5D400C660B5 /* common */,
 				3FDFE53919A29399009756A7 /* freebsd */,
 				233B009C19610D130090E598 /* linux */,
@@ -4321,6 +4329,7 @@
 		69A01E1A1236C5D400C660B5 /* common */ = {
 			isa = PBXGroup;
 			children = (
+				33E5E8411A672A240024ED68 /* StringConvert.cpp */,
 				25420ED11A649D88009ADBCB /* PipeBase.cpp */,
 				26CFDCA2186163A4000E63E5 /* Editline.cpp */,
 				260C6EA213011581005E16B0 /* File.cpp */,
@@ -5106,6 +5115,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				33E5E8471A674FB60024ED68 /* StringConvert.cpp in Sources */,
 				26D1804216CEDF0700EDFB5B /* TimeSpecTimeout.cpp in Sources */,
 				2689FFDA13353D9D00698AC0 /* lldb.cpp in Sources */,
 				2689FFDB13353DA300698AC0 /* lldb-log.cpp in Sources */,
@@ -6121,6 +6131,7 @@
 					"-DLLDB_USE_BUILTIN_DEMANGLER",
 				);
 				OTHER_LDFLAGS = "";
+				PATH = /opt/local/bin;
 				PRODUCT_NAME = "lib$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
 				STANDARD_C_PLUS_PLUS_LIBRARY_TYPE = static;
@@ -6157,6 +6168,7 @@
 					"-DLLDB_USE_BUILTIN_DEMANGLER",
 				);
 				OTHER_LDFLAGS = "";
+				PATH = /opt/local/bin;
 				PRODUCT_NAME = "lib$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
 				STANDARD_C_PLUS_PLUS_LIBRARY_TYPE = static;
@@ -6193,6 +6205,7 @@
 					"-DLLDB_USE_BUILTIN_DEMANGLER",
 				);
 				OTHER_LDFLAGS = "";
+				PATH = /opt/local/bin;
 				PRODUCT_NAME = "lib$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
 				STANDARD_C_PLUS_PLUS_LIBRARY_TYPE = static;
@@ -7253,6 +7266,7 @@
 					"-DLLDB_USE_BUILTIN_DEMANGLER",
 				);
 				OTHER_LDFLAGS = "";
+				PATH = /opt/local/bin;
 				PRODUCT_NAME = "lib$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
 				STANDARD_C_PLUS_PLUS_LIBRARY_TYPE = static;

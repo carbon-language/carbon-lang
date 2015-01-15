@@ -19,7 +19,7 @@
 #include "lldb/Core/Disassembler.h"
 #include "lldb/Core/Module.h"
 #include "lldb/Core/SourceManager.h"
-#include "lldb/Interpreter/Args.h"
+#include "lldb/Host/StringConvert.h"
 #include "lldb/Interpreter/CommandCompletions.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
 #include "lldb/Interpreter/CommandReturnObject.h"
@@ -76,13 +76,13 @@ CommandObjectDisassemble::CommandOptions::SetOptionValue (uint32_t option_idx, c
         break;
 
     case 'C':
-        num_lines_context = Args::StringToUInt32(option_arg, 0, 0, &success);
+        num_lines_context = StringConvert::ToUInt32(option_arg, 0, 0, &success);
         if (!success)
             error.SetErrorStringWithFormat ("invalid num context lines string: \"%s\"", option_arg);
         break;
 
     case 'c':
-        num_instructions = Args::StringToUInt32(option_arg, 0, 0, &success);
+        num_instructions = StringConvert::ToUInt32(option_arg, 0, 0, &success);
         if (!success)
             error.SetErrorStringWithFormat ("invalid num of instructions string: \"%s\"", option_arg);
         break;

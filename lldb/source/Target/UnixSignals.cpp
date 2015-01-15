@@ -13,7 +13,7 @@
 // C++ Includes
 // Other libraries and framework includes
 // Project includes
-#include "lldb/Interpreter/Args.h"
+#include "lldb/Host/StringConvert.h"
 
 using namespace lldb_private;
 
@@ -148,7 +148,7 @@ UnixSignals::GetSignalNumberFromName (const char *name) const
             return pos->first;
     }
     
-    const int32_t signo = Args::StringToSInt32(name, LLDB_INVALID_SIGNAL_NUMBER, 0);
+    const int32_t signo = StringConvert::ToSInt32(name, LLDB_INVALID_SIGNAL_NUMBER, 0);
     if (signo != LLDB_INVALID_SIGNAL_NUMBER)
         return signo;
     return LLDB_INVALID_SIGNAL_NUMBER;

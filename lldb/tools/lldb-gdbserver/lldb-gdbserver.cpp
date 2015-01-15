@@ -34,6 +34,7 @@
 #include "lldb/Host/Pipe.h"
 #include "lldb/Host/OptionParser.h"
 #include "lldb/Host/Socket.h"
+#include "lldb/Host/StringConvert.h"
 #include "lldb/Host/ThreadLauncher.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
 #include "lldb/Interpreter/CommandReturnObject.h"
@@ -347,7 +348,7 @@ ConnectToRemote (GDBRemoteCommunicationServer &gdb_server, bool reverse_connect,
         {
             connection_host = final_host_and_port.substr (0, colon_pos);
             connection_port = final_host_and_port.substr (colon_pos + 1);
-            connection_portno = Args::StringToUInt32 (connection_port.c_str (), 0);
+            connection_portno = StringConvert::ToUInt32 (connection_port.c_str (), 0);
         }
         else
         {

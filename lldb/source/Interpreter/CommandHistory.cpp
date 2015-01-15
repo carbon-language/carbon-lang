@@ -7,8 +7,10 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include <inttypes.h>
+
 #include "lldb/Interpreter/CommandHistory.h"
-#include "lldb/Interpreter/Args.h"
+#include "lldb/Host/StringConvert.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -47,7 +49,7 @@ CommandHistory::FindString (const char* input_str) const
     if (input_str[1] == '-')
     {
         bool success;
-        size_t idx = Args::StringToUInt32 (input_str+2, 0, 0, &success);
+        size_t idx = StringConvert::ToUInt32 (input_str+2, 0, 0, &success);
         if (!success)
             return nullptr;
         if (idx > m_history.size())
@@ -66,7 +68,7 @@ CommandHistory::FindString (const char* input_str) const
     else
     {
         bool success;
-        uint32_t idx = Args::StringToUInt32 (input_str+1, 0, 0, &success);
+        uint32_t idx = StringConvert::ToUInt32 (input_str+1, 0, 0, &success);
         if (!success)
             return nullptr;
         if (idx >= m_history.size())

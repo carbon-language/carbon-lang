@@ -15,7 +15,6 @@
 // C++ Includes
 // Other libraries and framework includes
 // Project includes
-#include "lldb/Interpreter/Args.h"
 #include "lldb/Core/Debugger.h"
 #include "lldb/Core/FileLineResolver.h"
 #include "lldb/Core/Module.h"
@@ -24,6 +23,7 @@
 #include "lldb/Interpreter/CommandInterpreter.h"
 #include "lldb/Interpreter/CommandReturnObject.h"
 #include "lldb/Host/FileSpec.h"
+#include "lldb/Host/StringConvert.h"
 #include "lldb/Symbol/CompileUnit.h"
 #include "lldb/Symbol/Function.h"
 #include "lldb/Symbol/Symbol.h"
@@ -63,7 +63,7 @@ class CommandObjectSourceInfo : public CommandObjectParsed
             switch (short_option)
             {
             case 'l':
-                start_line = Args::StringToUInt32 (option_arg, 0);
+                start_line = StringConvert::ToUInt32 (option_arg, 0);
                 if (start_line == 0)
                     error.SetErrorStringWithFormat("invalid line number: '%s'", option_arg);
                 break;
@@ -171,13 +171,13 @@ class CommandObjectSourceList : public CommandObjectParsed
             switch (short_option)
             {
             case 'l':
-                start_line = Args::StringToUInt32 (option_arg, 0);
+                start_line = StringConvert::ToUInt32 (option_arg, 0);
                 if (start_line == 0)
                     error.SetErrorStringWithFormat("invalid line number: '%s'", option_arg);
                 break;
 
             case 'c':
-                num_lines = Args::StringToUInt32 (option_arg, 0);
+                num_lines = StringConvert::ToUInt32 (option_arg, 0);
                 if (num_lines == 0)
                     error.SetErrorStringWithFormat("invalid line count: '%s'", option_arg);
                 break;

@@ -26,6 +26,7 @@ add_host_subdirectory(common
   common/Socket.cpp
   common/SocketAddress.cpp
   common/SoftwareBreakpoint.cpp
+  common/StringConvert.cpp
   common/Symbols.cpp
   common/Terminal.cpp
   common/ThisThread.cpp

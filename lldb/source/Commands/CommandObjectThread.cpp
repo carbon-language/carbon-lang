@@ -19,6 +19,7 @@
 #include "lldb/Core/State.h"
 #include "lldb/Core/SourceManager.h"
 #include "lldb/Host/Host.h"
+#include "lldb/Host/StringConvert.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
 #include "lldb/Interpreter/CommandReturnObject.h"
 #include "lldb/Interpreter/Options.h"
@@ -95,7 +96,7 @@ public:
             {
                 bool success;
                 
-                uint32_t thread_idx = Args::StringToUInt32(command.GetArgumentAtIndex(i), 0, 0, &success);
+                uint32_t thread_idx = StringConvert::ToUInt32(command.GetArgumentAtIndex(i), 0, 0, &success);
                 if (!success)
                 {
                     result.AppendErrorWithFormat ("invalid thread specification: \"%s\"\n", command.GetArgumentAtIndex(i));
@@ -178,7 +179,7 @@ public:
                 case 'c':
                 {
                     bool success;
-                    int32_t input_count =  Args::StringToSInt32 (option_arg, -1, 0, &success);
+                    int32_t input_count =  StringConvert::ToSInt32 (option_arg, -1, 0, &success);
                     if (!success)
                         error.SetErrorStringWithFormat("invalid integer value for option '%c'", short_option);
                     if (input_count < -1)
@@ -190,7 +191,7 @@ public:
                 case 's':
                 {
                     bool success;
-                    m_start =  Args::StringToUInt32 (option_arg, 0, 0, &success);
+                    m_start =  StringConvert::ToUInt32 (option_arg, 0, 0, &success);
                     if (!success)
                         error.SetErrorStringWithFormat("invalid integer value for option '%c'", short_option);
                 }
@@ -384,7 +385,7 @@ public:
             
             case 'c':
                 {
-                    m_step_count = Args::StringToUInt32(option_arg, UINT32_MAX, 0);
+                    m_step_count = StringConvert::ToUInt32(option_arg, UINT32_MAX, 0);
                     if (m_step_count == UINT32_MAX)
                        error.SetErrorStringWithFormat ("invalid ignore count '%s'", option_arg);
                     break;
@@ -522,7 +523,7 @@ protected:
         else
         {
             const char *thread_idx_cstr = command.GetArgumentAtIndex(0);
-            uint32_t step_thread_idx = Args::StringToUInt32 (thread_idx_cstr, LLDB_INVALID_INDEX32);
+            uint32_t step_thread_idx = StringConvert::ToUInt32 (thread_idx_cstr, LLDB_INVALID_INDEX32);
             if (step_thread_idx == LLDB_INVALID_INDEX32)
             {
                 result.AppendErrorWithFormat ("invalid thread index '%s'.\n", thread_idx_cstr);
@@ -812,7 +813,7 @@ public:
                 {
                     bool success;
                     const int base = 0;
-                    uint32_t thread_idx = Args::StringToUInt32 (command.GetArgumentAtIndex(i), LLDB_INVALID_INDEX32, base, &success);
+                    uint32_t thread_idx = StringConvert::ToUInt32 (command.GetArgumentAtIndex(i), LLDB_INVALID_INDEX32, base, &success);
                     if (success)
                     {
                         Thread *thread = process->GetThreadList().FindThreadByIndexID(thread_idx).get();
@@ -986,7 +987,7 @@ public:
             {
                 case 't':
                 {
-                    m_thread_idx = Args::StringToUInt32 (option_arg, LLDB_INVALID_INDEX32);
+                    m_thread_idx = StringConvert::ToUInt32 (option_arg, LLDB_INVALID_INDEX32);
                     if (m_thread_idx == LLDB_INVALID_INDEX32)
                     {
                         error.SetErrorStringWithFormat ("invalid thread index '%s'", option_arg);
@@ -995,7 +996,7 @@ public:
                 break;
                 case 'f':
                 {
-                    m_frame_idx = Args::StringToUInt32 (option_arg, LLDB_INVALID_FRAME_ID);
+                    m_frame_idx = StringConvert::ToUInt32 (option_arg, LLDB_INVALID_FRAME_ID);
                     if (m_frame_idx == LLDB_INVALID_FRAME_ID)
                     {
                         error.SetErrorStringWithFormat ("invalid frame index '%s'", option_arg);
@@ -1119,7 +1120,7 @@ protected:
                 return false;
             }
 
-            line_number = Args::StringToUInt32 (command.GetArgumentAtIndex(0), UINT32_MAX);
+            line_number = StringConvert::ToUInt32 (command.GetArgumentAtIndex(0), UINT32_MAX);
             if (line_number == UINT32_MAX)
             {
                 result.AppendErrorWithFormat ("invalid line number: '%s'.\n", command.GetArgumentAtIndex(0));
@@ -1351,7 +1352,7 @@ protected:
             return false;
         }
 
-        uint32_t index_id = Args::StringToUInt32(command.GetArgumentAtIndex(0), 0, 0);
+        uint32_t index_id = StringConvert::ToUInt32(command.GetArgumentAtIndex(0), 0, 0);
 
         Thread *new_thread = process->GetThreadList().FindThreadByIndexID(index_id).get();
         if (new_thread == NULL)
@@ -1796,12 +1797,12 @@ public:
                         return Error("only one source file expected.");
                     break;
                 case 'l':
-                    m_line_num = Args::StringToUInt32 (option_arg, 0, 0, &success);
+                    m_line_num = StringConvert::ToUInt32 (option_arg, 0, 0, &success);
                     if (!success || m_line_num == 0)
                         return Error("invalid line number: '%s'.", option_arg);
                     break;
                 case 'b':
-                    m_line_offset = Args::StringToSInt32 (option_arg, 0, 0, &success);
+                    m_line_offset = StringConvert::ToSInt32 (option_arg, 0, 0, &success);
                     if (!success)
                         return Error("invalid line offset: '%s'.", option_arg);
                     break;
@@ -2120,7 +2121,7 @@ public:
         }
 
         bool success;
-        uint32_t thread_plan_idx = Args::StringToUInt32(args.GetArgumentAtIndex(0), 0, 0, &success);
+        uint32_t thread_plan_idx = StringConvert::ToUInt32(args.GetArgumentAtIndex(0), 0, 0, &success);
         if (!success)
         {
             result.AppendErrorWithFormat("Invalid thread index: \"%s\" - should be unsigned int.",

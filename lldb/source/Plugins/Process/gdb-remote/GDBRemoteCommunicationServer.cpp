@@ -34,6 +34,7 @@
 #include "lldb/Host/FileSystem.h"
 #include "lldb/Host/Host.h"
 #include "lldb/Host/HostInfo.h"
+#include "lldb/Host/StringConvert.h"
 #include "lldb/Host/TimeValue.h"
 #include "lldb/Target/FileAction.h"
 #include "lldb/Target/Platform.h"
@@ -1512,27 +1513,27 @@ GDBRemoteCommunicationServer::Handle_qfProcessInfo (StringExtractorGDBRemote &pa
             }
             else if (key.compare("pid") == 0)
             {
-                match_info.GetProcessInfo().SetProcessID (Args::StringToUInt32(value.c_str(), LLDB_INVALID_PROCESS_ID, 0, &success));
+                match_info.GetProcessInfo().SetProcessID (StringConvert::ToUInt32(value.c_str(), LLDB_INVALID_PROCESS_ID, 0, &success));
             }
             else if (key.compare("parent_pid") == 0)
             {
-                match_info.GetProcessInfo().SetParentProcessID (Args::StringToUInt32(value.c_str(), LLDB_INVALID_PROCESS_ID, 0, &success));
+                match_info.GetProcessInfo().SetParentProcessID (StringConvert::ToUInt32(value.c_str(), LLDB_INVALID_PROCESS_ID, 0, &success));
             }
             else if (key.compare("uid") == 0)
             {
-                match_info.GetProcessInfo().SetUserID (Args::StringToUInt32(value.c_str(), UINT32_MAX, 0, &success));
+                match_info.GetProcessInfo().SetUserID (StringConvert::ToUInt32(value.c_str(), UINT32_MAX, 0, &success));
             }
             else if (key.compare("gid") == 0)
             {
-                match_info.GetProcessInfo().SetGroupID (Args::StringToUInt32(value.c_str(), UINT32_MAX, 0, &success));
+                match_info.GetProcessInfo().SetGroupID (StringConvert::ToUInt32(value.c_str(), UINT32_MAX, 0, &success));
             }
             else if (key.compare("euid") == 0)
             {
-                match_info.GetProcessInfo().SetEffectiveUserID (Args::StringToUInt32(value.c_str(), UINT32_MAX, 0, &success));
+                match_info.GetProcessInfo().SetEffectiveUserID (StringConvert::ToUInt32(value.c_str(), UINT32_MAX, 0, &success));
             }
             else if (key.compare("egid") == 0)
             {
-                match_info.GetProcessInfo().SetEffectiveGroupID (Args::StringToUInt32(value.c_str(), UINT32_MAX, 0, &success));
+                match_info.GetProcessInfo().SetEffectiveGroupID (StringConvert::ToUInt32(value.c_str(), UINT32_MAX, 0, &success));
             }
             else if (key.compare("all_users") == 0)
             {
@@ -1627,7 +1628,7 @@ GDBRemoteCommunicationServer::Handle_qSpeedTest (StringExtractorGDBRemote &packe
     bool success = packet.GetNameColonValue(key, value);
     if (success && key.compare("response_size") == 0)
     {
-        uint32_t response_size = Args::StringToUInt32(value.c_str(), 0, 0, &success);
+        uint32_t response_size = StringConvert::ToUInt32(value.c_str(), 0, 0, &success);
         if (success)
         {
             if (response_size == 0)
@@ -1901,7 +1902,7 @@ GDBRemoteCommunicationServer::Handle_qLaunchGDBServer (StringExtractorGDBRemote 
             if (name.compare ("host") == 0)
                 hostname.swap(value);
             else if (name.compare ("port") == 0)
-                port = Args::StringToUInt32(value.c_str(), 0, 0);
+                port = StringConvert::ToUInt32(value.c_str(), 0, 0);
         }
         if (port == UINT16_MAX)
             port = GetNextAvailablePort();

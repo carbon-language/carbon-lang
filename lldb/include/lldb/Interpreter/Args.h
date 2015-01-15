@@ -347,18 +347,6 @@ public:
                  bool trailing = true,
                  bool return_null_if_empty = true);
 
-    static int32_t
-    StringToSInt32 (const char *s, int32_t fail_value = 0, int base = 0, bool *success_ptr = NULL);
-
-    static uint32_t
-    StringToUInt32 (const char *s, uint32_t fail_value = 0, int base = 0, bool *success_ptr = NULL);
-
-    static int64_t
-    StringToSInt64 (const char *s, int64_t fail_value = 0, int base = 0, bool *success_ptr = NULL);
-
-    static uint64_t
-    StringToUInt64 (const char *s, uint64_t fail_value = 0, int base = 0, bool *success_ptr = NULL);
-
     static bool
     UInt64ValueIsValidForByteSize (uint64_t uval64, size_t total_byte_size)
     {

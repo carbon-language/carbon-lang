@@ -16,7 +16,7 @@
 // Other libraries and framework includes
 // Project includes
 #include "lldb/Core/UserSettingsController.h"
-#include "lldb/Interpreter/Args.h"
+#include "lldb/Host/StringConvert.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
 #include "lldb/Interpreter/OptionValues.h"
 
@@ -137,7 +137,7 @@ Property::Property (const PropertyDefinition &definition) :
             // "definition.default_cstr_value" is NULL, otherwise interpret
             // "definition.default_cstr_value" as a string value that represents the default
             // value.
-            m_value_sp.reset (new OptionValueSInt64(definition.default_cstr_value ? Args::StringToSInt64 (definition.default_cstr_value) : definition.default_uint_value));
+            m_value_sp.reset (new OptionValueSInt64(definition.default_cstr_value ? StringConvert::ToSInt64 (definition.default_cstr_value) : definition.default_uint_value));
             break;
             
         case OptionValue::eTypeUInt64:
@@ -145,7 +145,7 @@ Property::Property (const PropertyDefinition &definition) :
             // "definition.default_cstr_value" is NULL, otherwise interpret
             // "definition.default_cstr_value" as a string value that represents the default
             // value.
-            m_value_sp.reset (new OptionValueUInt64(definition.default_cstr_value ? Args::StringToUInt64 (definition.default_cstr_value) : definition.default_uint_value));
+            m_value_sp.reset (new OptionValueUInt64(definition.default_cstr_value ? StringConvert::ToUInt64 (definition.default_cstr_value) : definition.default_uint_value));
             break;
             
         case OptionValue::eTypeUUID:

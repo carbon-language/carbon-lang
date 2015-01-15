@@ -117,7 +117,7 @@ add_lldb_library(liblldb SHARED
   ${LLDB_VERS_GENERATED_FILE}
   )
 else ()
-add_lldb_library(liblldb
+add_lldb_library(liblldb SHARED
   lldb.cpp
   lldb-log.cpp
   ${LLDB_WRAP_PYTHON}

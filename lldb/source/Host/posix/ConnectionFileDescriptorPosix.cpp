@@ -19,6 +19,7 @@
 #include "lldb/Host/IOObject.h"
 #include "lldb/Host/SocketAddress.h"
 #include "lldb/Host/Socket.h"
+#include "lldb/Host/StringConvert.h"
 
 // C Includes
 #include <errno.h>
@@ -173,7 +174,7 @@ ConnectionFileDescriptor::Connect(const char *s, Error *error_ptr)
             // that is already opened (possibly from a service or other source).
             s += strlen("fd://");
             bool success = false;
-            int fd = Args::StringToSInt32(s, -1, 0, &success);
+            int fd = StringConvert::ToSInt32(s, -1, 0, &success);
 
             if (success)
             {

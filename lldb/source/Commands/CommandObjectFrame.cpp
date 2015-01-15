@@ -27,6 +27,7 @@
 #include "lldb/DataFormatters/DataVisualization.h"
 #include "lldb/DataFormatters/ValueObjectPrinter.h"
 #include "lldb/Host/Host.h"
+#include "lldb/Host/StringConvert.h"
 #include "lldb/Interpreter/Args.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
 #include "lldb/Interpreter/CommandReturnObject.h"
@@ -119,7 +120,7 @@ public:
             switch (short_option)
             {
             case 'r':   
-                relative_frame_offset = Args::StringToSInt32 (option_arg, INT32_MIN, 0, &success);
+                relative_frame_offset = StringConvert::ToSInt32 (option_arg, INT32_MIN, 0, &success);
                 if (!success)
                     error.SetErrorStringWithFormat ("invalid frame offset argument '%s'", option_arg);
                 break;
@@ -246,7 +247,7 @@ protected:
             {
                 const char *frame_idx_cstr = command.GetArgumentAtIndex(0);
                 bool success = false;
-                frame_idx = Args::StringToUInt32 (frame_idx_cstr, UINT32_MAX, 0, &success);
+                frame_idx = StringConvert::ToUInt32 (frame_idx_cstr, UINT32_MAX, 0, &success);
                 if (!success)
                 {
                     result.AppendErrorWithFormat ("invalid frame index argument '%s'", frame_idx_cstr);

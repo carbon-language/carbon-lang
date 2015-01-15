@@ -15,8 +15,8 @@
 #include "lldb/Host/FileSystem.h"
 #include "lldb/Host/Host.h"
 #include "lldb/Host/SocketAddress.h"
+#include "lldb/Host/StringConvert.h"
 #include "lldb/Host/TimeValue.h"
-#include "lldb/Interpreter/Args.h"
 
 #ifdef __ANDROID_NDK__
 #include <linux/tcp.h>
@@ -533,7 +533,7 @@ Socket::DecodeHostAndPort(llvm::StringRef host_and_port,
         if (regex_match.GetMatchAtIndex (host_and_port.data(), 1, host_str) &&
             regex_match.GetMatchAtIndex (host_and_port.data(), 2, port_str))
         {
-            port = Args::StringToSInt32 (port_str.c_str(), INT32_MIN);
+            port = StringConvert::ToSInt32 (port_str.c_str(), INT32_MIN);
             if (port != INT32_MIN)
             {
                 if (error_ptr)
@@ -547,7 +547,7 @@ Socket::DecodeHostAndPort(llvm::StringRef host_and_port,
     // a port with an empty host.
     host_str.clear();
     port_str.clear();
-    port = Args::StringToSInt32(host_and_port.data(), INT32_MIN);
+    port = StringConvert::ToSInt32(host_and_port.data(), INT32_MIN);
     if (port != INT32_MIN)
     {
         port_str = host_and_port;

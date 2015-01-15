@@ -13,7 +13,7 @@
 #include "lldb/Core/Module.h"
 #include "lldb/Core/ModuleSpec.h"
 #include "lldb/Host/Host.h"
-#include "lldb/Interpreter/Args.h"
+#include "lldb/Host/StringConvert.h"
 #include "lldb/Symbol/Block.h"
 #include "lldb/Symbol/ClangASTContext.h"
 #include "lldb/Symbol/CompileUnit.h"
@@ -778,12 +778,12 @@ SymbolContextSpecifier::AddSpecification (const char *spec_string, Specification
         m_type |= eFileSpecified;
         break;
     case eLineStartSpecified:
-        m_start_line = Args::StringToSInt32(spec_string, 0, 0, &return_value);
+        m_start_line = StringConvert::ToSInt32(spec_string, 0, 0, &return_value);
         if (return_value)
             m_type |= eLineStartSpecified;
         break;
     case eLineEndSpecified:
-        m_end_line = Args::StringToSInt32(spec_string, 0, 0, &return_value);
+        m_end_line = StringConvert::ToSInt32(spec_string, 0, 0, &return_value);
         if (return_value)
             m_type |= eLineEndSpecified;
         break;

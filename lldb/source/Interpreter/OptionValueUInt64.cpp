@@ -14,7 +14,7 @@
 // Other libraries and framework includes
 // Project includes
 #include "lldb/Core/Stream.h"
-#include "lldb/Interpreter/Args.h"
+#include "lldb/Host/StringConvert.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -58,7 +58,7 @@ OptionValueUInt64::SetValueFromCString (const char *value_cstr, VarSetOperationT
         case eVarSetOperationAssign:
         {
             bool success = false;
-            uint64_t value = Args::StringToUInt64 (value_cstr, 0, 0, &success);
+            uint64_t value = StringConvert::ToUInt64 (value_cstr, 0, 0, &success);
             if (success)
             {
                 m_value_was_set = true;

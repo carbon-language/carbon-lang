@@ -42,6 +42,7 @@
 #include "lldb/Core/Timer.h"
 #include "lldb/Core/Value.h"
 #include "lldb/Host/HostThread.h"
+#include "lldb/Host/StringConvert.h"
 #include "lldb/Host/Symbols.h"
 #include "lldb/Host/ThreadLauncher.h"
 #include "lldb/Host/TimeValue.h"
@@ -431,11 +432,11 @@ ProcessGDBRemote::BuildDynamicRegisterInfo (bool force)
                     }
                     else if (name.compare("bitsize") == 0)
                     {
-                        reg_info.byte_size = Args::StringToUInt32(value.c_str(), 0, 0) / CHAR_BIT;
+                        reg_info.byte_size = StringConvert::ToUInt32(value.c_str(), 0, 0) / CHAR_BIT;
                     }
                     else if (name.compare("offset") == 0)
                     {
-                        uint32_t offset = Args::StringToUInt32(value.c_str(), UINT32_MAX, 0);
+                        uint32_t offset = StringConvert::ToUInt32(value.c_str(), UINT32_MAX, 0);
                         if (reg_offset != offset)
                         {
                             reg_offset = offset;
@@ -483,11 +484,11 @@ ProcessGDBRemote::BuildDynamicRegisterInfo (bool force)
                     }
                     else if (name.compare("gcc") == 0)
                     {
-                        reg_info.kinds[eRegisterKindGCC] = Args::StringToUInt32(value.c_str(), LLDB_INVALID_REGNUM, 0);
+                        reg_info.kinds[eRegisterKindGCC] = StringConvert::ToUInt32(value.c_str(), LLDB_INVALID_REGNUM, 0);
                     }
                     else if (name.compare("dwarf") == 0)
                     {
-                        reg_info.kinds[eRegisterKindDWARF] = Args::StringToUInt32(value.c_str(), LLDB_INVALID_REGNUM, 0);
+                        reg_info.kinds[eRegisterKindDWARF] = StringConvert::ToUInt32(value.c_str(), LLDB_INVALID_REGNUM, 0);
                     }
                     else if (name.compare("generic") == 0)
                     {
@@ -502,7 +503,7 @@ ProcessGDBRemote::BuildDynamicRegisterInfo (bool force)
                             value_pair = value_pair.second.split(',');
                             if (!value_pair.first.empty())
                             {
-                                uint32_t reg = Args::StringToUInt32 (value_pair.first.str().c_str(), LLDB_INVALID_REGNUM, 16);
+                                uint32_t reg = StringConvert::ToUInt32 (value_pair.first.str().c_str(), LLDB_INVALID_REGNUM, 16);
                                 if (reg != LLDB_INVALID_REGNUM)
                                     value_regs.push_back (reg);
                             }
@@ -517,7 +518,7 @@ ProcessGDBRemote::BuildDynamicRegisterInfo (bool force)
                             value_pair = value_pair.second.split(',');
                             if (!value_pair.first.empty())
                             {
-                                uint32_t reg = Args::StringToUInt32 (value_pair.first.str().c_str(), LLDB_INVALID_REGNUM, 16);
+                                uint32_t reg = StringConvert::ToUInt32 (value_pair.first.str().c_str(), LLDB_INVALID_REGNUM, 16);
                                 if (reg != LLDB_INVALID_REGNUM)
                                     invalidate_regs.push_back (reg);
                             }
@@ -1656,17 +1657,17 @@ ProcessGDBRemote::SetThreadStopInfo (StringExtractor& stop_packet)
                 if (name.compare("metype") == 0)
                 {
                     // exception type in big endian hex
-                    exc_type = Args::StringToUInt32 (value.c_str(), 0, 16);
+                    exc_type = StringConvert::ToUInt32 (value.c_str(), 0, 16);
                 }
                 else if (name.compare("medata") == 0)
                 {
                     // exception data in big endian hex
-                    exc_data.push_back(Args::StringToUInt64 (value.c_str(), 0, 16));
+                    exc_data.push_back(StringConvert::ToUInt64 (value.c_str(), 0, 16));
                 }
                 else if (name.compare("thread") == 0)
                 {
                     // thread in big endian hex
-                    lldb::tid_t tid = Args::StringToUInt64 (value.c_str(), LLDB_INVALID_THREAD_ID, 16);
+                    lldb::tid_t tid = StringConvert::ToUInt64 (value.c_str(), LLDB_INVALID_THREAD_ID, 16);
                     // m_thread_list_real does have its own mutex, but we need to
                     // hold onto the mutex between the call to m_thread_list_real.FindThreadByID(...)
                     // and the m_thread_list_real.AddThread(...) so it doesn't change on us
@@ -1702,12 +1703,12 @@ ProcessGDBRemote::SetThreadStopInfo (StringExtractor& stop_packet)
                     {
                         value[comma_pos] = '\0';
                         // thread in big endian hex
-                        tid = Args::StringToUInt64 (value.c_str(), LLDB_INVALID_THREAD_ID, 16);
+                        tid = StringConvert::ToUInt64 (value.c_str(), LLDB_INVALID_THREAD_ID, 16);
                         if (tid != LLDB_INVALID_THREAD_ID)
                             m_thread_ids.push_back (tid);
                         value.erase(0, comma_pos + 1);
                     }
-                    tid = Args::StringToUInt64 (value.c_str(), LLDB_INVALID_THREAD_ID, 16);
+                    tid = StringConvert::ToUInt64 (value.c_str(), LLDB_INVALID_THREAD_ID, 16);
                     if (tid != LLDB_INVALID_THREAD_ID)
                         m_thread_ids.push_back (tid);
                 }
@@ -1726,7 +1727,7 @@ ProcessGDBRemote::SetThreadStopInfo (StringExtractor& stop_packet)
                 }
                 else if (name.compare("qaddr") == 0)
                 {
-                    thread_dispatch_qaddr = Args::StringToUInt64 (value.c_str(), 0, 16);
+                    thread_dispatch_qaddr = StringConvert::ToUInt64 (value.c_str(), 0, 16);
                 }
                 else if (name.compare("reason") == 0)
                 {
@@ -1747,7 +1748,7 @@ ProcessGDBRemote::SetThreadStopInfo (StringExtractor& stop_packet)
                     // so it won't have to go and read it.
                     if (gdb_thread)
                     {
-                        uint32_t reg = Args::StringToUInt32 (name.c_str(), UINT32_MAX, 16);
+                        uint32_t reg = StringConvert::ToUInt32 (name.c_str(), UINT32_MAX, 16);
 
                         if (reg != UINT32_MAX)
                         {

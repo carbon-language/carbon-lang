@@ -19,14 +19,13 @@
 #include "lldb/Core/StreamFile.h"
 #include "lldb/Core/StreamString.h"
 #include "lldb/DataFormatters/FormatManager.h"
+#include "lldb/Host/StringConvert.h"
 #include "lldb/Interpreter/Options.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
 #include "lldb/Interpreter/CommandReturnObject.h"
 #include "lldb/Target/Process.h"
-//#include "lldb/Target/RegisterContext.h"
 #include "lldb/Target/StackFrame.h"
 #include "lldb/Target/Target.h"
-//#include "lldb/Target/Thread.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -722,77 +721,6 @@ Args::Clear ()
     m_args_quote_char.clear();
 }
 
-int32_t
-Args::StringToSInt32 (const char *s, int32_t fail_value, int base, bool *success_ptr)
-{
-    if (s && s[0])
-    {
-        char *end = nullptr;
-        const long sval = ::strtol (s, &end, base);
-        if (*end == '\0')
-        {
-            if (success_ptr)
-                *success_ptr = ((sval <= INT32_MAX) && (sval >= INT32_MIN));
-            return (int32_t)sval; // All characters were used, return the result
-        }
-    }
-    if (success_ptr) *success_ptr = false;
-    return fail_value;
-}
-
-uint32_t
-Args::StringToUInt32 (const char *s, uint32_t fail_value, int base, bool *success_ptr)
-{
-    if (s && s[0])
-    {
-        char *end = nullptr;
-        const unsigned long uval = ::strtoul (s, &end, base);
-        if (*end == '\0')
-        {
-            if (success_ptr)
-                *success_ptr = (uval <= UINT32_MAX);
-            return (uint32_t)uval; // All characters were used, return the result
-        }
-    }
-    if (success_ptr) *success_ptr = false;
-    return fail_value;
-}
-
-
-int64_t
-Args::StringToSInt64 (const char *s, int64_t fail_value, int base, bool *success_ptr)
-{
-    if (s && s[0])
-    {
-        char *end = nullptr;
-        int64_t uval = ::strtoll (s, &end, base);
-        if (*end == '\0')
-        {
-            if (success_ptr) *success_ptr = true;
-            return uval; // All characters were used, return the result
-        }
-    }
-    if (success_ptr) *success_ptr = false;
-    return fail_value;
-}
-
-uint64_t
-Args::StringToUInt64 (const char *s, uint64_t fail_value, int base, bool *success_ptr)
-{
-    if (s && s[0])
-    {
-        char *end = nullptr;
-        uint64_t uval = ::strtoull (s, &end, base);
-        if (*end == '\0')
-        {
-            if (success_ptr) *success_ptr = true;
-            return uval; // All characters were used, return the result
-        }
-    }
-    if (success_ptr) *success_ptr = false;
-    return fail_value;
-}
-
 lldb::addr_t
 Args::StringToAddress (const ExecutionContext *exe_ctx, const char *s, lldb::addr_t fail_value, Error *error_ptr)
 {
@@ -878,7 +806,7 @@ Args::StringToAddress (const ExecutionContext *exe_ctx, const char *s, lldb::add
                                 
                                 if (regex_match.GetMatchAtIndex(s, 3, str))
                                 {
-                                    offset = Args::StringToUInt64(str.c_str(), 0, 0, &success);
+                                    offset = StringConvert::ToUInt64(str.c_str(), 0, 0, &success);
                                     
                                     if (success)
                                     {

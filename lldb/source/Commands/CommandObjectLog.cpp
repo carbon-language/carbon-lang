@@ -29,6 +29,7 @@
 #include "lldb/Core/Timer.h"
 
 #include "lldb/Core/Debugger.h"
+#include "lldb/Host/StringConvert.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
 #include "lldb/Interpreter/CommandReturnObject.h"
 
@@ -444,7 +445,7 @@ protected:
             if (strcasecmp(sub_command, "enable") == 0)
             {
                 bool success;
-                uint32_t depth = Args::StringToUInt32(args.GetArgumentAtIndex(1), 0, 0, &success);
+                uint32_t depth = StringConvert::ToUInt32(args.GetArgumentAtIndex(1), 0, 0, &success);
                 if (success)
                 {
                     Timer::SetDisplayDepth (depth);

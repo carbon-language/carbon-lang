@@ -24,6 +24,7 @@
 #include "lldb/Core/StreamString.h"
 #include "lldb/Core/ValueObjectMemory.h"
 #include "lldb/DataFormatters/ValueObjectPrinter.h"
+#include "lldb/Host/StringConvert.h"
 #include "lldb/Interpreter/Args.h"
 #include "lldb/Interpreter/CommandReturnObject.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
@@ -1293,7 +1294,7 @@ public:
                 case 'o':
                     {
                         bool success;
-                        m_infile_offset = Args::StringToUInt64(option_arg, 0, 0, &success);
+                        m_infile_offset = StringConvert::ToUInt64(option_arg, 0, 0, &success);
                         if (!success)
                         {
                             error.SetErrorStringWithFormat("invalid offset string '%s'", option_arg);
@@ -1539,7 +1540,7 @@ protected:
             case eFormatPointer:
                 
                 // Decode hex bytes
-                uval64 = Args::StringToUInt64(value_str, UINT64_MAX, 16, &success);
+                uval64 = StringConvert::ToUInt64(value_str, UINT64_MAX, 16, &success);
                 if (!success)
                 {
                     result.AppendErrorWithFormat ("'%s' is not a valid hex string value.\n", value_str);
@@ -1567,7 +1568,7 @@ protected:
                 break;
 
             case eFormatBinary:
-                uval64 = Args::StringToUInt64(value_str, UINT64_MAX, 2, &success);
+                uval64 = StringConvert::ToUInt64(value_str, UINT64_MAX, 2, &success);
                 if (!success)
                 {
                     result.AppendErrorWithFormat ("'%s' is not a valid binary string value.\n", value_str);
@@ -1607,7 +1608,7 @@ protected:
                 break;
 
             case eFormatDecimal:
-                sval64 = Args::StringToSInt64(value_str, INT64_MAX, 0, &success);
+                sval64 = StringConvert::ToSInt64(value_str, INT64_MAX, 0, &success);
                 if (!success)
                 {
                     result.AppendErrorWithFormat ("'%s' is not a valid signed decimal value.\n", value_str);
@@ -1624,7 +1625,7 @@ protected:
                 break;
 
             case eFormatUnsigned:
-                uval64 = Args::StringToUInt64(value_str, UINT64_MAX, 0, &success);
+                uval64 = StringConvert::ToUInt64(value_str, UINT64_MAX, 0, &success);
                 if (!success)
                 {
                     result.AppendErrorWithFormat ("'%s' is not a valid unsigned decimal string value.\n", value_str);
@@ -1641,7 +1642,7 @@ protected:
                 break;
 
             case eFormatOctal:
-                uval64 = Args::StringToUInt64(value_str, UINT64_MAX, 8, &success);
+                uval64 = StringConvert::ToUInt64(value_str, UINT64_MAX, 8, &success);
                 if (!success)
                 {
                     result.AppendErrorWithFormat ("'%s' is not a valid octal string value.\n", value_str);

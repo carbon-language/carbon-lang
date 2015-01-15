@@ -21,6 +21,7 @@
 #include "lldb/Core/StreamString.h"
 #include "lldb/Core/ValueObject.h"
 #include "lldb/Core/ValueObjectVariable.h"
+#include "lldb/Host/StringConvert.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
 #include "lldb/Interpreter/CommandReturnObject.h"
 #include "lldb/Interpreter/CommandCompletions.h"
@@ -639,7 +640,7 @@ public:
             {
                 case 'i':
                 {
-                    m_ignore_count = Args::StringToUInt32(option_arg, UINT32_MAX, 0);
+                    m_ignore_count = StringConvert::ToUInt32(option_arg, UINT32_MAX, 0);
                     if (m_ignore_count == UINT32_MAX)
                        error.SetErrorStringWithFormat ("invalid ignore count '%s'", option_arg);
                 }
