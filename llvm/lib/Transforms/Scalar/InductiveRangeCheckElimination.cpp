@@ -378,11 +378,11 @@ static Value *MaybeSimplify(Value *V) {
 
 static Value *ConstructSMinOf(Value *X, Value *Y, IRBuilder<> &B) {
   return MaybeSimplify(B.CreateSelect(B.CreateICmpSLT(X, Y), X, Y));
-};
+}
 
 static Value *ConstructSMaxOf(Value *X, Value *Y, IRBuilder<> &B) {
   return MaybeSimplify(B.CreateSelect(B.CreateICmpSGT(X, Y), X, Y));
-};
+}
 
 namespace {
 
@@ -573,7 +573,7 @@ public:
   // Entry point for the algorithm.  Returns true on success.
   bool run();
 };
-};
+}
 
 void LoopConstrainer::replacePHIBlock(PHINode *PN, BasicBlock *Block,
                                       BasicBlock *ReplaceBy) {
