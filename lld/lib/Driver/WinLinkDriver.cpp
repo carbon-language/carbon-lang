@@ -1416,14 +1416,14 @@ bool WinLinkDriver::parse(int argc, const char *argv[],
       if (file->parse())
         return false;
     ctx.getResolvableSymsFile()->add(file.get());
-    ctx.getInputGraph().addInputElement(
+    ctx.getInputGraph().members().push_back(
       std::unique_ptr<InputElement>(new FileNode(std::move(file))));
   }
 
   // Add the library group to the input graph.
   if (!isReadingDirectiveSection) {
     // Add a group-end marker.
-    ctx.getInputGraph().addInputElement(llvm::make_unique<GroupEnd>(0));
+    ctx.getInputGraph().members().push_back(llvm::make_unique<GroupEnd>(0));
   }
 
   // Add the library files to the library group.

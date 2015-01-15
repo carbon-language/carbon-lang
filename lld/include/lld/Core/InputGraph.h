@@ -35,16 +35,6 @@ class LinkingContext;
 
 class InputGraph {
 public:
-  /// \brief Adds a node into the InputGraph
-  void addInputElement(std::unique_ptr<InputElement> ie) {
-    _members.push_back(std::move(ie));
-  }
-
-  /// \brief Adds a node at the beginning of the InputGraph
-  void addInputElementFront(std::unique_ptr<InputElement> ie) {
-    _members.insert(_members.begin(), std::move(ie));
-  }
-
   std::vector<std::unique_ptr<InputElement>> &members() {
     return _members;
   }

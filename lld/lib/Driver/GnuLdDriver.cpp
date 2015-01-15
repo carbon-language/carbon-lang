@@ -274,12 +274,12 @@ evaluateLinkerScript(ELFLinkingContext &ctx, InputGraph *inputGraph,
       for (std::unique_ptr<File> &file : files) {
         if (ctx.logInputFiles())
           diag << file->path() << "\n";
-        inputGraph->addInputElement(
+        inputGraph->members().push_back(
             std::unique_ptr<InputElement>(new FileNode(std::move(file))));
         ++numfiles;
       }
     }
-    inputGraph->addInputElement(llvm::make_unique<GroupEnd>(numfiles));
+    inputGraph->members().push_back(llvm::make_unique<GroupEnd>(numfiles));
   }
   return std::error_code();
 }
@@ -550,7 +550,7 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
         return false;
       }
       int startGroupPos = groupStack.top();
-      inputGraph->addInputElement(
+      inputGraph->members().push_back(
           llvm::make_unique<GroupEnd>(numfiles - startGroupPos));
       groupStack.pop();
       break;
@@ -615,7 +615,7 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
       for (std::unique_ptr<File> &file : files) {
         if (ctx->logInputFiles())
           diagnostics << file->path() << "\n";
-        inputGraph->addInputElement(
+        inputGraph->members().push_back(
             std::unique_ptr<InputElement>(new FileNode(std::move(file))));
       }
       numfiles += files.size();

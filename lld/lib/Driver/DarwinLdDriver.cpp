@@ -119,7 +119,7 @@ static void addFile(StringRef path, std::unique_ptr<InputGraph> &inputGraph,
   std::vector<std::unique_ptr<File>> files =
       loadFile(ctx, path, diag, loadWholeArchive, upwardDylib);
   for (std::unique_ptr<File> &file : files)
-    inputGraph->addInputElement(
+    inputGraph->members().push_back(
         llvm::make_unique<FileNode>(std::move(file)));
 }
 

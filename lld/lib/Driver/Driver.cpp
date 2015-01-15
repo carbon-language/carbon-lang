@@ -118,16 +118,16 @@ bool Driver::link(LinkingContext &context, raw_ostream &diagnostics) {
   std::vector<std::unique_ptr<File>> internalFiles;
   context.createInternalFiles(internalFiles);
   for (auto i = internalFiles.rbegin(), e = internalFiles.rend(); i != e; ++i) {
-    context.getInputGraph().addInputElementFront(
-        llvm::make_unique<FileNode>(std::move(*i)));
+    auto &members = context.getInputGraph().members();
+    members.insert(members.begin(), llvm::make_unique<FileNode>(std::move(*i)));
   }
 
   // Give target a chance to add files.
   std::vector<std::unique_ptr<File>> implicitFiles;
   context.createImplicitFiles(implicitFiles);
   for (auto i = implicitFiles.rbegin(), e = implicitFiles.rend(); i != e; ++i) {
-    context.getInputGraph().addInputElementFront(
-        llvm::make_unique<FileNode>(std::move(*i)));
+    auto &members = context.getInputGraph().members();
+    members.insert(members.begin(), llvm::make_unique<FileNode>(std::move(*i)));
   }
 
   // Give target a chance to sort the input files.
