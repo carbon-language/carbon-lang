@@ -1997,18 +1997,7 @@ public:
 
   UnaryExprOrTypeTraitExpr(UnaryExprOrTypeTrait ExprKind, Expr *E,
                            QualType resultType, SourceLocation op,
-                           SourceLocation rp) :
-      Expr(UnaryExprOrTypeTraitExprClass, resultType, VK_RValue, OK_Ordinary,
-           false, // Never type-dependent (C++ [temp.dep.expr]p3).
-           // Value-dependent if the argument is type-dependent.
-           E->isTypeDependent(),
-           E->isInstantiationDependent(),
-           E->containsUnexpandedParameterPack()),
-      OpLoc(op), RParenLoc(rp) {
-    UnaryExprOrTypeTraitExprBits.Kind = ExprKind;
-    UnaryExprOrTypeTraitExprBits.IsType = false;
-    Argument.Ex = E;
-  }
+                           SourceLocation rp);
 
   /// \brief Construct an empty sizeof/alignof expression.
   explicit UnaryExprOrTypeTraitExpr(EmptyShell Empty)

@@ -1360,6 +1360,44 @@ IdentifierInfo *OffsetOfExpr::OffsetOfNode::getFieldName() const {
   return reinterpret_cast<IdentifierInfo *> (Data & ~(uintptr_t)Mask);
 }
 
+UnaryExprOrTypeTraitExpr::UnaryExprOrTypeTraitExpr(
+    UnaryExprOrTypeTrait ExprKind, Expr *E, QualType resultType,
+    SourceLocation op, SourceLocation rp)
+    : Expr(UnaryExprOrTypeTraitExprClass, resultType, VK_RValue, OK_Ordinary,
+           false, // Never type-dependent (C++ [temp.dep.expr]p3).
+           // Value-dependent if the argument is type-dependent.
+           E->isTypeDependent(), E->isInstantiationDependent(),
+           E->containsUnexpandedParameterPack()),
+      OpLoc(op), RParenLoc(rp) {
+  UnaryExprOrTypeTraitExprBits.Kind = ExprKind;
+  UnaryExprOrTypeTraitExprBits.IsType = false;
+  Argument.Ex = E;
+
+  // Check to see if we are in the situation where alignof(decl) should be
+  // dependent because decl's alignment is dependent.
+  if (ExprKind == UETT_AlignOf) {
+    if (!isValueDependent() || !isInstantiationDependent()) {
+      E = E->IgnoreParens();
+
+      const ValueDecl *D = nullptr;
+      if (const auto *DRE = dyn_cast<DeclRefExpr>(E))
+        D = DRE->getDecl();
+      else if (const auto *ME = dyn_cast<MemberExpr>(E))
+        D = ME->getMemberDecl();
+
+      if (D) {
+        for (const auto *I : D->specific_attrs<AlignedAttr>()) {
+          if (I->isAlignmentDependent()) {
+            setValueDependent(true);
+            setInstantiationDependent(true);
+            break;
+          }
+        }
+      }
+    }
+  }
+}
+
 MemberExpr *MemberExpr::Create(const ASTContext &C, Expr *base, bool isarrow,
                                NestedNameSpecifierLoc QualifierLoc,
                                SourceLocation TemplateKWLoc,

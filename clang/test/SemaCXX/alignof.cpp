@@ -77,3 +77,10 @@ namespace alignof_array_expr {
   // ok, does not complete type of S<-1>::a
   static_assert(alignof(S<-1>::a) == alignof(int), ""); // expected-warning {{GNU extension}}
 }
+
+template <typename T> void n(T) {
+  alignas(T) int T1;
+  char k[__alignof__(T1)];
+  static_assert(sizeof(k) == alignof(long long), "");
+}
+template void n(long long);
