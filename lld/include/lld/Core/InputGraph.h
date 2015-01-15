@@ -121,17 +121,9 @@ private:
 /// directly.
 class FileNode : public InputElement {
 public:
-  FileNode(StringRef path)
-      : InputElement(InputElement::Kind::File), _path(path), _done(false) {
-  }
-
-  FileNode(StringRef path, std::unique_ptr<File> f)
-      : InputElement(InputElement::Kind::File), _path(path), _file(std::move(f)),
+  explicit FileNode(std::unique_ptr<File> f)
+      : InputElement(InputElement::Kind::File), _file(std::move(f)),
         _done(false) {}
-
-  virtual ErrorOr<StringRef> getPath(const LinkingContext &) const {
-    return _path;
-  }
 
   virtual ~FileNode() {}
 
@@ -153,7 +145,6 @@ public:
   std::error_code parse(const LinkingContext &, raw_ostream &) override;
 
 protected:
-  StringRef _path;                       // The path of the Input file
   std::unique_ptr<File> _file;           // An lld File object
 
   // The next file that would be processed by the resolver

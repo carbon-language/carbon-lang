@@ -804,7 +804,7 @@ static bool hasLibrary(const PECOFFLinkingContext &ctx, File *file) {
   StringRef path = file->path();
   for (std::unique_ptr<InputElement> &p : ctx.getInputGraph().members())
     if (auto *f = dyn_cast<FileNode>(p.get()))
-      if (*f->getPath(ctx) == path)
+      if (f->getFile()->path() == path)
         return true;
   return false;
 }
