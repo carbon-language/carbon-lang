@@ -224,6 +224,7 @@ public:
         eCommandTypesBuiltin = 0x0001,  // native commands such as "frame"
         eCommandTypesUserDef = 0x0002,  // scripted commands
         eCommandTypesAliases = 0x0004,  // aliases such as "po"
+        eCommandTypesHidden  = 0x0008,  // commands prefixed with an underscore
         eCommandTypesAllThem = 0xFFFF   // all commands
     };
 
@@ -431,6 +432,11 @@ public:
                   StreamString &help_string);
 
     void
+    OutputFormattedHelpText (Stream &strm,
+                             const char *prefix,
+                             const char *help_text);
+
+    void
     OutputFormattedHelpText (Stream &stream,
                              const char *command_word,
                              const char *separator,
@@ -606,6 +612,9 @@ public:
                                     IOHandlerDelegate &delegate,
                                     bool asynchronously,
                                     void *baton);
+
+    const char *
+    GetCommandPrefix ();
 
     //------------------------------------------------------------------
     // Properties

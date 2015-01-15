@@ -62,10 +62,13 @@ public:
             switch (short_option)
             {
                 case 'a':
-                    m_show_aliases = true;
+                    m_show_aliases = false;
                     break;
                 case 'u':
                     m_show_user_defined = false;
+                    break;
+                case 'h':
+                    m_show_hidden = true;
                     break;
                 default:
                     error.SetErrorStringWithFormat ("unrecognized option '%c'", short_option);
@@ -78,8 +81,9 @@ public:
         void
         OptionParsingStarting ()
         {
-            m_show_aliases = false;
+            m_show_aliases = true;
             m_show_user_defined = true;
+            m_show_hidden = false;
         }
         
         const OptionDefinition*
@@ -95,7 +99,8 @@ public:
         // Instance variables to hold the values for command options.
         
         bool m_show_aliases;
-        bool m_show_user_defined;        
+        bool m_show_user_defined;
+        bool m_show_hidden;
     };
     
     virtual Options *

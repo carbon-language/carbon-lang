@@ -158,8 +158,6 @@ public:
     // To get the target's source manager, call GetSourceManager on the target instead.
     SourceManager &
     GetSourceManager ();
-
-public:
     
     lldb::TargetSP
     GetSelectedTarget ()
@@ -223,6 +221,12 @@ public:
 
     ConstString
     GetTopIOHandlerControlSequence(char ch);
+
+    const char *
+    GetIOHandlerCommandPrefix();
+
+    const char *
+    GetIOHandlerHelpPrologue();
 
     bool
     HideTopIOHandler();
@@ -352,7 +356,6 @@ public:
     
     bool
     GetNotifyVoid () const;
-
     
     const ConstString &
     GetInstanceName()

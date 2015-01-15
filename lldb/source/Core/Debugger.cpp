@@ -927,6 +927,18 @@ Debugger::GetTopIOHandlerControlSequence(char ch)
     return m_input_reader_stack.GetTopIOHandlerControlSequence (ch);
 }
 
+const char *
+Debugger::GetIOHandlerCommandPrefix()
+{
+    return m_input_reader_stack.GetTopIOHandlerCommandPrefix();
+}
+
+const char *
+Debugger::GetIOHandlerHelpPrologue()
+{
+    return m_input_reader_stack.GetTopIOHandlerHelpPrologue();
+}
+
 void
 Debugger::RunIOHandler (const IOHandlerSP& reader_sp)
 {

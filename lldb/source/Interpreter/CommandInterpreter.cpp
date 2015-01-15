@@ -1170,17 +1170,25 @@ void
 CommandInterpreter::GetHelp (CommandReturnObject &result,
                              uint32_t cmd_types)
 {
+    const char * help_prologue = GetDebugger().GetIOHandlerHelpPrologue();
+    if (help_prologue != NULL)
+    {
+        OutputFormattedHelpText(result.GetOutputStream(), NULL, help_prologue);
+    }
+
     CommandObject::CommandMap::const_iterator pos;
     size_t max_len = FindLongestCommandWord (m_command_dict);
     
     if ( (cmd_types & eCommandTypesBuiltin) == eCommandTypesBuiltin )
     {
-    
-        result.AppendMessage("The following is a list of built-in, permanent debugger commands:");
+        result.AppendMessage("Debugger commands:");
         result.AppendMessage("");
 
         for (pos = m_command_dict.begin(); pos != m_command_dict.end(); ++pos)
         {
+            if (!(cmd_types & eCommandTypesHidden) && (pos->first.compare(0, 1, "_") == 0))
+                continue;
+
             OutputFormattedHelpText (result.GetOutputStream(), pos->first.c_str(), "--", pos->second->GetHelp(),
                                      max_len);
         }
@@ -1190,8 +1198,9 @@ CommandInterpreter::GetHelp (CommandReturnObject &result,
 
     if (!m_alias_dict.empty() && ( (cmd_types & eCommandTypesAliases) == eCommandTypesAliases ))
     {
-        result.AppendMessage("The following is a list of your current command abbreviations "
-                             "(see 'help command alias' for more info):");
+        result.AppendMessageWithFormat("Current command abbreviations "
+                                       "(type '%shelp command alias' for more info):\n",
+                                       GetCommandPrefix());
         result.AppendMessage("");
         max_len = FindLongestCommandWord (m_alias_dict);
 
@@ -1212,7 +1221,7 @@ CommandInterpreter::GetHelp (CommandReturnObject &result,
 
     if (!m_user_dict.empty() && ( (cmd_types & eCommandTypesUserDef) == eCommandTypesUserDef ))
     {
-        result.AppendMessage ("The following is a list of your current user-defined commands:");
+        result.AppendMessage ("Current user-defined commands:");
         result.AppendMessage("");
         max_len = FindLongestCommandWord (m_user_dict);
         for (pos = m_user_dict.begin(); pos != m_user_dict.end(); ++pos)
@@ -1223,7 +1232,8 @@ CommandInterpreter::GetHelp (CommandReturnObject &result,
         result.AppendMessage("");
     }
 
-    result.AppendMessage("For more information on any particular command, try 'help <command-name>'.");
+    result.AppendMessageWithFormat("For more information on any command, type '%shelp <command-name>'.\n",
+                                   GetCommandPrefix());
 }
 
 CommandObject *
@@ -2496,6 +2506,13 @@ CommandInterpreter::SourceInitFile (bool in_cwd, CommandReturnObject &result)
     }
 }
 
+const char *
+CommandInterpreter::GetCommandPrefix()
+{
+    const char * prefix = GetDebugger().GetIOHandlerCommandPrefix();
+    return prefix == NULL ? "" : prefix;
+}
+
 PlatformSP
 CommandInterpreter::GetPlatform (bool prefer_target_platform)
 {
@@ -2887,84 +2904,74 @@ CommandInterpreter::SetSynchronous (bool value)
 
 void
 CommandInterpreter::OutputFormattedHelpText (Stream &strm,
+                                             const char *prefix,
+                                             const char *help_text)
+{
+    const uint32_t max_columns = m_debugger.GetTerminalWidth();
+    if (prefix == NULL)
+        prefix = "";
+
+    size_t prefix_width = strlen(prefix);
+    size_t line_width_max = max_columns - prefix_width;
+    const char *help_text_end = help_text + strlen(help_text);
+    const char *line_start = help_text;
+    if (line_width_max < 16)
+        line_width_max = help_text_end - help_text + prefix_width;
+
+    strm.IndentMore (prefix_width);
+    while (line_start < help_text_end)
+    {
+        // Break each line at the first newline or last space/tab before
+        // the maximum number of characters that fit on a line.  Lines with no
+        // natural break are left unbroken to wrap.
+        const char *line_end = help_text_end;
+        const char *line_scan = line_start;
+        const char *line_scan_end = help_text_end;
+        while (line_scan < line_scan_end)
+        {
+            char next = *line_scan;
+            if (next == '\t' || next == ' ')
+            {
+                line_end = line_scan;
+                line_scan_end = line_start + line_width_max;
+            }
+            else if (next == '\n' || next == '\0')
+            {
+                line_end = line_scan;
+                break;
+            }
+            ++line_scan;
+        }
+        
+        // Prefix the first line, indent subsequent lines to line up
+        if (line_start == help_text)
+            strm.Write (prefix, prefix_width);
+        else
+            strm.Indent();
+        strm.Write (line_start, line_end - line_start);
+        strm.EOL();
+
+        // When a line breaks at whitespace consume it before continuing
+        line_start = line_end;
+        char next = *line_start;
+        if (next == '\n')
+            ++line_start;
+        else while (next == ' ' || next == '\t')
+            next = *(++line_start);
+    }
+    strm.IndentLess (prefix_width);
+}
+
+void
+CommandInterpreter::OutputFormattedHelpText (Stream &strm,
                                              const char *word_text,
                                              const char *separator,
                                              const char *help_text,
                                              size_t max_word_len)
 {
-    const uint32_t max_columns = m_debugger.GetTerminalWidth();
-
-    int indent_size = max_word_len + strlen (separator) + 2;
-
-    strm.IndentMore (indent_size);
-    
-    StreamString text_strm;
-    text_strm.Printf ("%-*s %s %s",  (int)max_word_len, word_text, separator, help_text);
-    
-    size_t len = text_strm.GetSize();
-    const char *text = text_strm.GetData();
-    if (text[len - 1] == '\n')
-    {
-        text_strm.EOL();
-        len = text_strm.GetSize();
-    }
-
-    if (len  < max_columns)
-    {
-        // Output it as a single line.
-        strm.Printf ("%s", text);
-    }
-    else
-    {
-        // We need to break it up into multiple lines.
-        bool first_line = true;
-        int text_width;
-        size_t start = 0;
-        size_t end = start;
-        const size_t final_end = strlen (text);
-        
-        while (end < final_end)
-        {
-            if (first_line)
-                text_width = max_columns - 1;
-            else
-                text_width = max_columns - indent_size - 1;
-
-            // Don't start the 'text' on a space, since we're already outputting the indentation.
-            if (!first_line)
-            {
-                while ((start < final_end) && (text[start] == ' '))
-                  start++;
-            }
-
-            end = start + text_width;
-            if (end > final_end)
-                end = final_end;
-            else
-            {
-                // If we're not at the end of the text, make sure we break the line on white space.
-                while (end > start
-                       && text[end] != ' ' && text[end] != '\t' && text[end] != '\n')
-                    end--;
-                assert (end > 0);
-            }
-
-            const size_t sub_len = end - start;
-            if (start != 0)
-              strm.EOL();
-            if (!first_line)
-                strm.Indent();
-            else
-                first_line = false;
-            assert (start <= final_end);
-            assert (start + sub_len <= final_end);
-            if (sub_len > 0)
-                strm.Write (text + start, sub_len);
-            start = end + 1;
-        }
-    }
-    strm.EOL();
-    strm.IndentLess(indent_size);
+    StreamString prefix_stream;
+    prefix_stream.Printf ("  %-*s %s ",  (int)max_word_len, word_text, separator);
+    OutputFormattedHelpText (strm, prefix_stream.GetData(), help_text);
 }
 
 void
