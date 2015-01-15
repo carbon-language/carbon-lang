@@ -3725,11 +3725,11 @@ def STriw_offset_ext_V4 : STInst<(outs),
             Requires<[HasV4T]>;
 
 def : Pat<(i64 (ctlz (i64 DoubleRegs:$src1))),
-          (i64 (A4_combineir (i32 0), (i32 (CTLZ64_rr DoubleRegs:$src1))))>,
+          (i64 (A4_combineir (i32 0), (i32 (S2_cl0p DoubleRegs:$src1))))>,
           Requires<[HasV4T]>;
 
 def : Pat<(i64 (cttz (i64 DoubleRegs:$src1))),
-          (i64 (A4_combineir (i32 0), (i32 (CTTZ64_rr DoubleRegs:$src1))))>,
+          (i64 (A4_combineir (i32 0), (i32 (S2_ct0p DoubleRegs:$src1))))>,
           Requires<[HasV4T]>;
 
 

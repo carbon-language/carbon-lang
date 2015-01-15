@@ -355,11 +355,11 @@ static unsigned doesIntrinsicContainPredicate(unsigned ID)
     case Intrinsic::hexagon_C2_muxii:
       return Hexagon::C2_muxii;
     case Intrinsic::hexagon_C2_vmux:
-      return Hexagon::VMUX_prr64;
+      return Hexagon::C2_vmux;
     case Intrinsic::hexagon_S2_valignrb:
-      return Hexagon::VALIGN_rrp;
+      return Hexagon::S2_valignrb;
     case Intrinsic::hexagon_S2_vsplicerb:
-      return Hexagon::VSPLICE_rrp;
+      return Hexagon::S2_vsplicerb;
   }
 }
 

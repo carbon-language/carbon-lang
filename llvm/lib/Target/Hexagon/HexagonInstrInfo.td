@@ -30,6 +30,20 @@ def F64 : PatLeaf<(f64 DoubleRegs:$R)>;
 def LoReg: OutPatFrag<(ops node:$Rs),
                       (EXTRACT_SUBREG (i64 $Rs), subreg_loreg)>;
 
+// SDNode for converting immediate C to C-1.
+def DEC_CONST_SIGNED : SDNodeXForm<imm, [{
+   // Return the byte immediate const-1 as an SDNode.
+   int32_t imm = N->getSExtValue();
+   return XformSToSM1Imm(imm);
+}]>;
+
+// SDNode for converting immediate C to C-1.
+def DEC_CONST_UNSIGNED : SDNodeXForm<imm, [{
+   // Return the byte immediate const-1 as an SDNode.
+   uint32_t imm = N->getZExtValue();
+   return XformUToUM1Imm(imm);
+}]>;
+
 //===----------------------------------------------------------------------===//
 
 //===----------------------------------------------------------------------===//
@@ -799,14 +813,6 @@ def: Pat<(sra I32:$src1, (i32 16)),   (A2_asrh I32:$src1)>;
 def: Pat<(sext_inreg I32:$src1, i8),  (A2_sxtb I32:$src1)>;
 def: Pat<(sext_inreg I32:$src1, i16), (A2_sxth I32:$src1)>;
 
-// Mux.
-def VMUX_prr64 : ALU64_rr<(outs DoubleRegs:$dst), (ins PredRegs:$src1,
-                                                   DoubleRegs:$src2,
-                                                   DoubleRegs:$src3),
-            "$dst = vmux($src1, $src2, $src3)",
-            []>;
-
-
 //===----------------------------------------------------------------------===//
 // ALU32/PERM -
 //===----------------------------------------------------------------------===//
@@ -815,28 +821,6 @@ def VMUX_prr64 : ALU64_rr<(outs DoubleRegs:$dst), (ins PredRegs:$src1,
 //===----------------------------------------------------------------------===//
 // ALU32/PRED +
 //===----------------------------------------------------------------------===//
-
-// SDNode for converting immediate C to C-1.
-def DEC_CONST_SIGNED : SDNodeXForm<imm, [{
-   // Return the byte immediate const-1 as an SDNode.
-   int32_t imm = N->getSExtValue();
-   return XformSToSM1Imm(imm);
-}]>;
-
-// SDNode for converting immediate C to C-1.
-def DEC_CONST_UNSIGNED : SDNodeXForm<imm, [{
-   // Return the byte immediate const-1 as an SDNode.
-   uint32_t imm = N->getZExtValue();
-   return XformUToUM1Imm(imm);
-}]>;
-
-def CTLZ64_rr : SInst<(outs IntRegs:$dst), (ins DoubleRegs:$src1),
-    "$dst = cl0($src1)",
-    [(set (i32 IntRegs:$dst), (i32 (trunc (ctlz (i64 DoubleRegs:$src1)))))]>;
-
-def CTTZ64_rr : SInst<(outs IntRegs:$dst), (ins DoubleRegs:$src1),
-    "$dst = ct0($src1)",
-    [(set (i32 IntRegs:$dst), (i32 (trunc (cttz (i64 DoubleRegs:$src1)))))]>;
 
 //===----------------------------------------------------------------------===//
 // ALU32/PRED -
@@ -1252,18 +1236,6 @@ def C2_mask : SInst<(outs DoubleRegs:$Rd), (ins PredRegs:$Pt),
   let Inst{9-8} = Pt;
   let Inst{4-0} = Rd;
 }
-
-def VALIGN_rrp : SInst<(outs DoubleRegs:$dst), (ins DoubleRegs:$src1,
-                                                    DoubleRegs:$src2,
-                                                    PredRegs:$src3),
-             "$dst = valignb($src1, $src2, $src3)",
-             []>;
-
-def VSPLICE_rrp : SInst<(outs DoubleRegs:$dst), (ins DoubleRegs:$src1,
-                                                     DoubleRegs:$src2,
-                                                     PredRegs:$src3),
-             "$dst = vspliceb($src1, $src2, $src3)",
-             []>;
 
 // User control register transfer.
 //===----------------------------------------------------------------------===//
@@ -4940,6 +4912,32 @@ class T_S3op_64 <string mnemonic, bits<2> MajOp, bits<3> MinOp, bit SwapOps,
 
 let isCodeGenOnly = 0 in
 def S2_lfsp : T_S3op_64 < "lfs", 0b10, 0b110, 0>;
+
+let hasSideEffects = 0 in
+class T_S3op_2 <string mnemonic, bits<3> MajOp, bit SwapOps>
+  : SInst < (outs DoubleRegs:$Rdd),
+            (ins DoubleRegs:$Rss, DoubleRegs:$Rtt, PredRegs:$Pu),
+  "$Rdd = "#mnemonic#"($Rss, $Rtt, $Pu)",
+  [], "", S_3op_tc_1_SLOT23 > {
+    bits<5> Rdd;
+    bits<5> Rss;
+    bits<5> Rtt;
+    bits<2> Pu;
+
+    let IClass = 0b1100;
+
+    let Inst{27-24} = 0b0010;
+    let Inst{23-21} = MajOp;
+    let Inst{20-16} = !if (SwapOps, Rtt, Rss);
+    let Inst{12-8} = !if (SwapOps, Rss, Rtt);
+    let Inst{6-5} = Pu;
+    let Inst{4-0} = Rdd;
+  }
+
+let isCodeGenOnly = 0 in {
+def S2_valignrb  : T_S3op_2 < "valignb",  0b000, 1>;
+def S2_vsplicerb : T_S3op_2 < "vspliceb", 0b100, 0>;
+}
 
 //===----------------------------------------------------------------------===//
 // Template class used by vector shift, vector rotate, vector neg,
