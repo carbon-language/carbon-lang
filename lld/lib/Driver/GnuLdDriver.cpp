@@ -273,8 +273,7 @@ evaluateLinkerScript(ELFLinkingContext &ctx, StringRef path,
       for (std::unique_ptr<File> &file : files) {
         if (ctx.logInputFiles())
           diag << file->path() << "\n";
-        ctx.getNodes().push_back(
-            std::unique_ptr<Node>(new FileNode(std::move(file))));
+        ctx.getNodes().push_back(llvm::make_unique<FileNode>(std::move(file)));
         ++numfiles;
       }
     }
@@ -590,8 +589,7 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
       ErrorOr<StringRef> pathOrErr = findFile(*ctx, path, dashL);
       if (std::error_code ec = pathOrErr.getError()) {
         auto file = llvm::make_unique<ErrorFile>(path, ec);
-        ctx->getNodes().push_back(
-            std::unique_ptr<FileNode>(new FileNode(std::move(file))));
+        ctx->getNodes().push_back(llvm::make_unique<FileNode>(std::move(file)));
         break;
       }
       std::string realpath = pathOrErr.get();
@@ -614,8 +612,7 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
       for (std::unique_ptr<File> &file : files) {
         if (ctx->logInputFiles())
           diagnostics << file->path() << "\n";
-        ctx->getNodes().push_back(
-            std::unique_ptr<Node>(new FileNode(std::move(file))));
+        ctx->getNodes().push_back(llvm::make_unique<FileNode>(std::move(file)));
       }
       numfiles += files.size();
       break;

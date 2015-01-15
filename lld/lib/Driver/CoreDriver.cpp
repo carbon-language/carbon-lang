@@ -150,10 +150,8 @@ bool CoreDriver::parse(int argc, const char *argv[], CoreLinkingContext &ctx,
     case OPT_INPUT: {
       std::vector<std::unique_ptr<File>> files
         = loadFile(ctx, inputArg->getValue(), false);
-      for (std::unique_ptr<File> &file : files) {
-        ctx.getNodes().push_back(std::unique_ptr<Node>(
-            new FileNode(std::move(file))));
-      }
+      for (std::unique_ptr<File> &file : files)
+        ctx.getNodes().push_back(llvm::make_unique<FileNode>(std::move(file)));
       break;
     }
 

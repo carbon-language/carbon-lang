@@ -1414,8 +1414,7 @@ bool WinLinkDriver::parse(int argc, const char *argv[],
       if (file->parse())
         return false;
     ctx.getResolvableSymsFile()->add(file.get());
-    ctx.getNodes().push_back(
-      std::unique_ptr<Node>(new FileNode(std::move(file))));
+    ctx.getNodes().push_back(llvm::make_unique<FileNode>(std::move(file)));
   }
 
   // Add the library group to the input graph.
@@ -1431,8 +1430,7 @@ bool WinLinkDriver::parse(int argc, const char *argv[],
         if (file->parse())
           return false;
       ctx.getResolvableSymsFile()->add(file.get());
-      ctx.addLibraryFile(
-	std::unique_ptr<FileNode>(new FileNode(std::move(file))));
+      ctx.addLibraryFile(llvm::make_unique<FileNode>(std::move(file)));
     }
   }
 
