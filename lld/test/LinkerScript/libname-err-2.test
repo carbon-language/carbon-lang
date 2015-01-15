@@ -7,5 +7,5 @@ GROUP( -l )
 ENTRY(init)
 
 /*
-CHECK: test/LinkerScript/libname-err-2.test:6:10: error: expected )
+CHECK: libname-err-2.test:6:10: error: expected )
 */
