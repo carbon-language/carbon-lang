@@ -86,16 +86,8 @@ public:
   /// Return the Element Type for an Input Element
   virtual Kind kind() const { return _kind; }
 
-  /// \brief Dump the Input Element
-  virtual bool dump(raw_ostream &diagnostics) { return true; }
-
   /// \brief parse the input element
   virtual std::error_code parse(const LinkingContext &, raw_ostream &) = 0;
-
-  /// \brief functions for the resolver to use
-
-  /// Get the next file to be processed by the resolver
-  virtual File *getNextFile() = 0;
 
 protected:
   Kind _kind; // The type of the Element
@@ -117,8 +109,6 @@ public:
   std::error_code parse(const LinkingContext &ctx, raw_ostream &diag) override {
     return std::error_code();
   }
-
-  File *getNextFile() override { llvm_unreachable("shouldn't be here."); }
 
 private:
   int _size;
@@ -158,16 +148,6 @@ public:
     assert(files.size() == 1);
     assert(!_file);
     _file = std::move(files[0]);
-  }
-
-  /// \brief Return the next File thats part of this node to the
-  /// resolver.
-  File *getNextFile() override {
-    assert(_file);
-    if (_done)
-      return nullptr;
-    _done = true;
-    return _file.get();
   }
 
   std::error_code parse(const LinkingContext &, raw_ostream &) override;
