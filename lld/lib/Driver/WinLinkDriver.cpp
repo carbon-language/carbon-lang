@@ -802,7 +802,7 @@ parseArgs(int argc, const char **argv, PECOFFLinkingContext &ctx,
 // graph.
 static bool hasLibrary(const PECOFFLinkingContext &ctx, File *file) {
   StringRef path = file->path();
-  for (std::unique_ptr<InputElement> &p : ctx.getInputGraph().inputElements())
+  for (std::unique_ptr<InputElement> &p : ctx.getInputGraph().members())
     if (auto *f = dyn_cast<FileNode>(p.get()))
       if (*f->getPath(ctx) == path)
         return true;

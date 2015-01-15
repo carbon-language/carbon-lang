@@ -947,7 +947,7 @@ static bool isLibrary(const std::unique_ptr<InputElement> &elem) {
 // new undefines from libraries.
 void MachOLinkingContext::maybeSortInputFiles() {
   std::vector<std::unique_ptr<InputElement>> &elements
-      = getInputGraph().inputElements();
+      = getInputGraph().members();
   std::stable_sort(elements.begin(), elements.end(),
                    [](const std::unique_ptr<InputElement> &a,
                       const std::unique_ptr<InputElement> &b) {

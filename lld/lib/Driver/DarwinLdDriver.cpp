@@ -843,7 +843,7 @@ bool DarwinLdDriver::parse(int argc, const char *argv[],
     }
   }
 
-  if (!inputGraph->size()) {
+  if (inputGraph->members().empty()) {
     diagnostics << "No input files\n";
     return false;
   }

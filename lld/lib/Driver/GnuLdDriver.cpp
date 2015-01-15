@@ -668,7 +668,7 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
     } // end switch on option ID
   }   // end for
 
-  if (!inputGraph->size()) {
+  if (inputGraph->members().empty()) {
     diagnostics << "No input files\n";
     return false;
   }

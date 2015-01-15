@@ -92,7 +92,7 @@ void PECOFFLinkingContext::addLibraryFile(std::unique_ptr<FileNode> file) {
   GroupEnd *currentGroupEnd;
   int pos = -1;
   std::vector<std::unique_ptr<InputElement>> &elements
-      = getInputGraph().inputElements();
+      = getInputGraph().members();
   for (int i = 0, e = elements.size(); i < e; ++i) {
     if ((currentGroupEnd = dyn_cast<GroupEnd>(elements[i].get()))) {
       pos = i;

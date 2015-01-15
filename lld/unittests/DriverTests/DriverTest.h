@@ -26,12 +26,14 @@ protected:
   std::string &errorMessage() { return  _errorMessage; }
 
   // Convenience method for getting number of input files.
-  int inputFileCount() { return linkingContext()->getInputGraph().size(); }
+  int inputFileCount() {
+    return linkingContext()->getInputGraph().members().size();
+  }
 
   // Convenience method for getting i'th input files name.
   std::string inputFile(int index) {
     const InputElement &inputElement =
-        *linkingContext()->getInputGraph().inputElements()[index];
+        *linkingContext()->getInputGraph().members()[index];
     if (inputElement.kind() == InputElement::Kind::File)
       return *cast<FileNode>(&inputElement)->getPath(*linkingContext());
     llvm_unreachable("not handling other types of input files");

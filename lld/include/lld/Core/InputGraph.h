@@ -52,19 +52,20 @@ public:
   InputGraph() : _index(0) {}
 
   /// \brief Adds a node into the InputGraph
-  void addInputElement(std::unique_ptr<InputElement>);
+  void addInputElement(std::unique_ptr<InputElement> ie) {
+    _members.push_back(std::move(ie));
+  }
 
   /// \brief Adds a node at the beginning of the InputGraph
-  void addInputElementFront(std::unique_ptr<InputElement>);
+  void addInputElementFront(std::unique_ptr<InputElement> ie) {
+    _members.insert(_members.begin(), std::move(ie));
+  }
 
-  InputElementVectorT &inputElements() { return _inputArgs; }
-
-  // \brief Returns the number of input files.
-  size_t size() const { return _inputArgs.size(); }
+  InputElementVectorT &members() { return _members; }
 
 protected:
   // Input arguments
-  InputElementVectorT _inputArgs;
+  InputElementVectorT _members;
   // Index of the next element to be processed
   size_t _index;
 };
