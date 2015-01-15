@@ -155,7 +155,7 @@ class SourceManagerTestCase(TestBase):
         def restore_file():
             #print "os.path.getmtime() before restore:", os.path.getmtime('main.c')
             time.sleep(1)
-            with open('main.c', 'w') as f:
+            with open('main.c', 'wb') as f:
                 f.write(original_content)
             if self.TraceOn():
                 with open('main.c', 'r') as f:
@@ -168,7 +168,7 @@ class SourceManagerTestCase(TestBase):
 
 
         # Modify the source code file.
-        with open('main.c', 'w') as f:
+        with open('main.c', 'wb') as f:
             time.sleep(1)
             f.write(new_content)
             if self.TraceOn():
