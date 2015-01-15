@@ -1,4 +1,4 @@
-; RUN: llc -mtriple=arm-eabi %s -o /dev/null
+; RUN: llc -mcpu=generic -mtriple=arm-eabi -verify-machineinstrs < %s | FileCheck %s
 
 %struct.comment = type { i8**, i32*, i32, i8* }
 %struct.info = type { i32, i32, i32, i32, i32, i32, i32, i8* }
@@ -7,6 +7,18 @@
 @str215 = external global [2 x i8]
 
 define void @t1(%struct.state* %v) {
+
+; Make sure we generate:
+;   sub	sp, sp, r1
+; instead of:
+;   sub	r1, sp, r1
+;   mov	sp, r1
+
+; CHECK-LABEL: @t1
+; CHECK: bic [[REG1:r[0-9]+]],
+; CHECK-NOT: sub r{{[0-9]+}}, sp, [[REG1]]
+; CHECK: sub sp, sp, [[REG1]]
+
   %tmp6 = load i32* null
   %tmp8 = alloca float, i32 %tmp6
   store i32 1, i32* null

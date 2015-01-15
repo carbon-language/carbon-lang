@@ -1209,10 +1209,10 @@ bool RegisterCoalescer::canJoinPhys(const CoalescerPair &CP) {
   }
 
   LiveInterval &JoinVInt = LIS->getInterval(CP.getSrcReg());
-  if (CP.isFlipped() && JoinVInt.containsOneValue())
+  if (JoinVInt.containsOneValue())
     return true;
 
-  DEBUG(dbgs() << "\tCannot join defs into reserved register.\n");
+  DEBUG(dbgs() << "\tCannot join complex intervals into reserved register.\n");
   return false;
 }
 
@@ -1431,8 +1431,7 @@ bool RegisterCoalescer::joinReservedPhysReg(CoalescerPair &CP) {
   LiveInterval &RHS = LIS->getInterval(CP.getSrcReg());
   DEBUG(dbgs() << "\t\tRHS = " << RHS << '\n');
 
-  assert(CP.isFlipped() && RHS.containsOneValue() &&
-         "Invalid join with reserved register");
+  assert(RHS.containsOneValue() && "Invalid join with reserved register");
 
   // Optimization for reserved registers like ESP. We can only merge with a
   // reserved physreg if RHS has a single value that is a copy of CP.DstReg().
@@ -1453,7 +1452,50 @@ bool RegisterCoalescer::joinReservedPhysReg(CoalescerPair &CP) {
   // defs are there.
 
   // Delete the identity copy.
-  MachineInstr *CopyMI = MRI->getVRegDef(RHS.reg);
+  MachineInstr *CopyMI;
+  if (CP.isFlipped()) {
+    CopyMI = MRI->getVRegDef(RHS.reg);
+  } else {
+    if (!MRI->hasOneNonDBGUse(RHS.reg)) {
+      DEBUG(dbgs() << "\t\tMultiple vreg uses!\n");
+      return false;
+    }
+
+    MachineInstr *DestMI = MRI->getVRegDef(RHS.reg);
+    CopyMI = &*MRI->use_instr_nodbg_begin(RHS.reg);
+    const SlotIndex CopyRegIdx = LIS->getInstructionIndex(CopyMI).getRegSlot();
+    const SlotIndex DestRegIdx = LIS->getInstructionIndex(DestMI).getRegSlot();
+
+    // We checked above that there are no interfering defs of the physical
+    // register. However, for this case, where we indent to move up the def of
+    // the physical register, we also need to check for interfering uses.
+    SlotIndexes *Indexes = LIS->getSlotIndexes();
+    for (SlotIndex SI = Indexes->getNextNonNullIndex(DestRegIdx);
+         SI != CopyRegIdx; SI = Indexes->getNextNonNullIndex(SI)) {
+      MachineInstr *MI = LIS->getInstructionFromIndex(SI);
+      if (MI->readsRegister(CP.getDstReg(), TRI)) {
+        DEBUG(dbgs() << "\t\tInterference (read): " << *MI);
+        return false;
+      }
+    }
+
+    // We're going to remove the copy which defines a physical reserved
+    // register, so remove its valno, etc.
+    for (MCRegUnitIterator UI(CP.getDstReg(), TRI); UI.isValid(); ++UI) {
+      LiveRange &LR = LIS->getRegUnit(*UI);
+      VNInfo *OrigRegVNI = LR.getVNInfoAt(CopyRegIdx);
+      if (!OrigRegVNI)
+        continue;
+
+      DEBUG(dbgs() << "\t\tRemoving: " << CopyRegIdx << " from " << LR << "\n");
+      LR.removeSegment(CopyRegIdx, CopyRegIdx.getDeadSlot());
+      LR.removeValNo(OrigRegVNI);
+
+      // Create a new dead def at the new def location.
+      LR.createDeadDef(DestRegIdx, LIS->getVNInfoAllocator());
+    }
+  }
+  
   LIS->RemoveMachineInstrFromMaps(CopyMI);
   CopyMI->eraseFromParent();
 
