@@ -3009,6 +3009,40 @@ def S2_storerd_pci : T_store_pci<"memd", DoubleRegs, s4_3Imm, 0b1110,
                                         DoubleWordAccess>;
 }
 
+let Uses = [CS], isNewValue = 1, mayStore = 1, isNVStore = 1, opNewValue = 4 in
+class T_storenew_pci <string mnemonic, Operand Imm,
+                             bits<2>MajOp, MemAccessSize AlignSize>
+  : NVInst < (outs IntRegs:$_dst_),
+  (ins IntRegs:$Rz, Imm:$offset, ModRegs:$Mu, IntRegs:$Nt),
+  #mnemonic#"($Rz ++ #$offset:circ($Mu)) = $Nt.new",
+  [],
+  "$Rz = $_dst_"> {
+    bits<5> Rz;
+    bits<6> offset;
+    bits<1> Mu;
+    bits<3> Nt;
+
+    let accessSize = AlignSize;
+
+    let IClass = 0b1010;
+    let Inst{27-21} = 0b1001101;
+    let Inst{20-16} = Rz;
+    let Inst{13} = Mu;
+    let Inst{12-11} = MajOp;
+    let Inst{10-8} = Nt;
+    let Inst{7} = 0b0;
+    let Inst{6-3} =
+      !if (!eq(!cast<string>(AlignSize), "WordAccess"),     offset{5-2},
+      !if (!eq(!cast<string>(AlignSize), "HalfWordAccess"), offset{4-1},
+                                       /* ByteAccess */     offset{3-0}));
+    let Inst{1} = 0b0;
+  }
+let isCodeGenOnly = 0 in {
+def S2_storerbnew_pci : T_storenew_pci <"memb", s4_0Imm, 0b00, ByteAccess>;
+def S2_storerhnew_pci : T_storenew_pci <"memh", s4_1Imm, 0b01, HalfWordAccess>;
+def S2_storerinew_pci : T_storenew_pci <"memw", s4_2Imm, 0b10, WordAccess>;
+}
+
 //===----------------------------------------------------------------------===//
 // Circular stores with auto-increment register
 //===----------------------------------------------------------------------===//
@@ -3043,6 +3077,39 @@ def S2_storeri_pcr : T_store_pcr<"memw", IntRegs, 0b1100, WordAccess>;
 def S2_storerd_pcr : T_store_pcr<"memd", DoubleRegs, 0b1110, DoubleWordAccess>;
 def S2_storerf_pcr : T_store_pcr<"memh", IntRegs, 0b1011,
                                  HalfWordAccess, "Rt.h">;
+}
+
+//===----------------------------------------------------------------------===//
+// Circular .new stores with auto-increment register
+//===----------------------------------------------------------------------===//
+let Uses = [CS], isNewValue = 1, mayStore = 1, isNVStore = 1, opNewValue = 3 in
+class T_storenew_pcr <string mnemonic, bits<2>MajOp,
+                                   MemAccessSize AlignSize>
+  : NVInst <(outs IntRegs:$_dst_),
+  (ins IntRegs:$Rz, ModRegs:$Mu, IntRegs:$Nt),
+  #mnemonic#"($Rz ++ I:circ($Mu)) = $Nt.new" ,
+  [] ,
+  "$Rz = $_dst_"> {
+    bits<5> Rz;
+    bits<1> Mu;
+    bits<3> Nt;
+
+    let accessSize = AlignSize;
+
+    let IClass = 0b1010;
+    let Inst{27-21} = 0b1001101;
+    let Inst{20-16} = Rz;
+    let Inst{13} = Mu;
+    let Inst{12-11} = MajOp;
+    let Inst{10-8} = Nt;
+    let Inst{7} = 0b0;
+    let Inst{1} = 0b1;
+  }
+
+let isCodeGenOnly = 0 in {
+def S2_storerbnew_pcr : T_storenew_pcr <"memb", 0b00, ByteAccess>;
+def S2_storerhnew_pcr : T_storenew_pcr <"memh", 0b01, HalfWordAccess>;
+def S2_storerinew_pcr : T_storenew_pcr <"memw", 0b10, WordAccess>;
 }
 
 //===----------------------------------------------------------------------===//
@@ -3089,6 +3156,40 @@ let isCodeGenOnly = 0 in {
 def S2_storerf_pbr : T_store_pbr<"memh", IntRegs, HalfWordAccess, 0b011, 1>;
 def S2_storerd_pbr : T_store_pbr<"memd", DoubleRegs, DoubleWordAccess, 0b110>;
 }
+
+//===----------------------------------------------------------------------===//
+// Bit-reversed .new stores with auto-increment register
+//===----------------------------------------------------------------------===//
+let isNewValue = 1, mayStore = 1, isNVStore = 1, opNewValue = 3,
+    hasSideEffects = 0 in
+class T_storenew_pbr<string mnemonic, MemAccessSize addrSize, bits<2> majOp>
+  : NVInst <(outs IntRegs:$_dst_),
+            (ins IntRegs:$Rz, ModRegs:$Mu, IntRegs:$Nt),
+     #mnemonic#"($Rz ++ $Mu:brev) = $Nt.new", [],
+     "$Rz = $_dst_">, NewValueRel {
+    let accessSize = addrSize;
+    bits<5> Rz;
+    bits<1> Mu;
+    bits<3> Nt;
+
+    let IClass = 0b1010;
+
+    let Inst{27-21} = 0b1111101;
+    let Inst{12-11} = majOp;
+    let Inst{7} = 0b0;
+    let Inst{20-16} = Rz;
+    let Inst{13} = Mu;
+    let Inst{10-8} = Nt;
+  }
+
+let BaseOpcode = "S2_storerb_pbr", isCodeGenOnly = 0 in
+def S2_storerbnew_pbr : T_storenew_pbr<"memb", ByteAccess, 0b00>;
+
+let BaseOpcode = "S2_storerh_pbr", isCodeGenOnly = 0 in
+def S2_storerhnew_pbr : T_storenew_pbr<"memh", HalfWordAccess, 0b01>;
+
+let BaseOpcode = "S2_storeri_pbr", isCodeGenOnly = 0 in
+def S2_storerinew_pbr : T_storenew_pbr<"memw", WordAccess, 0b10>;
 
 //===----------------------------------------------------------------------===//
 // ST -
@@ -3157,6 +3258,9 @@ let Defs = [USR_OVF], isCodeGenOnly = 0 in {
 }
 
 let Itinerary = S_2op_tc_2_SLOT23, isCodeGenOnly = 0 in {
+  // Bit reverse
+  def S2_brev : T_S2op_1_ii <"brev", 0b01, 0b110>;
+
   // Absolute value word
   def A2_abs    : T_S2op_1_ii <"abs", 0b10, 0b100>;
 
