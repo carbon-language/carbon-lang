@@ -1,0 +1,14 @@
+// RUN: env GOPATH=%S/Inputs llgoi < %s | FileCheck %s
+
+// make sure user symbols do not conflict with imported source package
+Answer := 1
+
+import "foo"
+// CHECK: # bar
+// CHECK: # foo
+
+foo.Answer()
+// CHECK: #0 int = 42
+
+import "foo_cgo"
+// CHECK: foo_cgo: cannot load cgo package

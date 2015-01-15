@@ -39,12 +39,6 @@ llvm_add_go_executable(llgo llvm.org/llgo/cmd/gllgo ALL DEPENDS
   ssaopt/esc.go
 )
 
-install(FILES ${CMAKE_BINARY_DIR}/bin/llgo${CMAKE_EXECUTABLE_SUFFIX}
-        DESTINATION bin
-        PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE
-                    GROUP_READ GROUP_EXECUTE
-                    WORLD_READ WORLD_EXECUTE)
-
 llvm_add_go_executable(llgo-stage2 llvm.org/llgo/cmd/gllgo
   DEPENDS libgo ${CMAKE_BINARY_DIR}/bin/llgo${CMAKE_EXECUTABLE_SUFFIX}
   GOFLAGS "cc=${CMAKE_BINARY_DIR}/bin/clang"
@@ -62,6 +56,22 @@ llvm_add_go_executable(llgo-stage3 llvm.org/llgo/cmd/gllgo
 llvm_add_go_executable(cc-wrapper llvm.org/llgo/cmd/cc-wrapper DEPENDS
   cmd/cc-wrapper/main.go
 )
+
+llvm_add_go_executable(llgoi llvm.org/llgo/cmd/llgoi
+  DEPENDS libgo ${CMAKE_BINARY_DIR}/bin/llgo${CMAKE_EXECUTABLE_SUFFIX}
+          cmd/llgoi/isatty_posix.go
+          cmd/llgoi/llgoi.go
+  GOFLAGS "cc=${CMAKE_BINARY_DIR}/bin/clang"
+          "cxx=${CMAKE_BINARY_DIR}/bin/clang++"
+          "llgo=${CMAKE_BINARY_DIR}/bin/llgo${CMAKE_EXECUTABLE_SUFFIX}"
+)
+
+install(FILES ${CMAKE_BINARY_DIR}/bin/llgo${CMAKE_EXECUTABLE_SUFFIX}
+              ${CMAKE_BINARY_DIR}/bin/llgoi${CMAKE_EXECUTABLE_SUFFIX}
+        DESTINATION bin
+        PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE
+                    GROUP_READ GROUP_EXECUTE
+                    WORLD_READ WORLD_EXECUTE)
 
 function(add_clobber_steps name)
   ExternalProject_Add_Step(${name} force-reconfigure

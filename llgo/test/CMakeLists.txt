@@ -9,6 +9,7 @@ add_lit_testsuite(check-llgo "Running the llgo regression tests"
     FileCheck
     count
     llgo
+    llgoi
     libgo
     not
   )
