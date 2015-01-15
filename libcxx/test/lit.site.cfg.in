@@ -13,6 +13,7 @@ config.enable_monotonic_clock   = "@LIBCXX_ENABLE_MONOTONIC_CLOCK@"
 config.cxx_abi                  = "@LIBCXX_CXX_ABI_LIBNAME@"
 config.use_sanitizer            = "@LLVM_USE_SANITIZER@"
 config.abi_library_path         = "@LIBCXX_CXX_ABI_LIBRARY_PATH@"
+config.configuration_variant    = "@LIBCXX_LIT_VARIANT@"
 
 # Let the main config do the real work.
 lit_config.load_config(config, "@LIBCXX_SOURCE_DIR@/test/lit.cfg")

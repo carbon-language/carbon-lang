@@ -23,6 +23,8 @@ if(PYTHONINTERP_FOUND)
   set(LIT_ARGS "${LLVM_LIT_ARGS}")
   separate_arguments(LIT_ARGS)
 
+  option(LIBCXX_LIT_VARIANT "Configuration variant to use for LIT." "libcxx")
+
   pythonize_bool(LIBCXX_ENABLE_EXCEPTIONS)
   pythonize_bool(LIBCXX_ENABLE_RTTI)
   pythonize_bool(LIBCXX_ENABLE_SHARED)
