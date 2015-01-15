@@ -1,0 +1,51 @@
+// No crash, might not be totally invalid
+RUN: llvm-objdump -private-headers %p/Inputs/macho-invalid-zero-ncmds
+
+RUN: not llvm-objdump -private-headers %p/Inputs/macho64-invalid-incomplete-load-command 2>&1 \
+RUN:      | FileCheck -check-prefix INCOMPLETE-LOADC %s
+
+RUN: not llvm-objdump -private-headers %p/Inputs/macho-invalid-too-small-load-command 2>&1 \
+RUN:      | FileCheck -check-prefix SMALL-LOADC-SIZE %s
+RUN: not llvm-objdump -private-headers %p/Inputs/macho64-invalid-too-small-load-command 2>&1 \
+RUN:      | FileCheck -check-prefix SMALL-LOADC-SIZE %s
+
+RUN: not llvm-objdump -private-headers %p/Inputs/macho-invalid-too-small-segment-load-command 2>&1 \
+RUN:      | FileCheck -check-prefix SMALL-SEGLOADC-SIZE %s
+RUN: not llvm-objdump -private-headers %p/Inputs/macho64-invalid-too-small-segment-load-command 2>&1 \
+RUN:      | FileCheck -check-prefix SMALL-SEGLOADC-SIZE %s
+
+RUN: not llvm-objdump -private-headers %p/Inputs/macho-invalid-no-size-for-sections 2>&1 \
+RUN:      | FileCheck -check-prefix TOO-MANY-SECTS %s
+RUN: not llvm-objdump -private-headers %p/Inputs/macho64-invalid-no-size-for-sections 2>&1 \
+RUN:      | FileCheck -check-prefix TOO-MANY-SECTS %s
+
+RUN: not llvm-objdump -t %p/Inputs/macho-invalid-bad-symbol-index 2>&1 \
+RUN:      | FileCheck -check-prefix BAD-SYMBOL %s
+
+RUN: not llvm-objdump -t %p/Inputs/macho-invalid-symbol-name-past-eof 2>&1 \
+RUN:      | FileCheck -check-prefix NAME-PAST-EOF %s
+
+RUN: not llvm-objdump -t %p/Inputs/macho-invalid-section-index-getSectionRawFinalSegmentName 2>&1 \
+RUN:      | FileCheck -check-prefix INVALID-SECTION-IDX-SEG-NAME %s
+
+RUN: not llvm-nm %p/Inputs/macho-invalid-section-index-getSectionRawName 2>&1 \
+RUN:      | FileCheck -check-prefix INVALID-SECTION-IDX-SECT-NAME %s
+
+RUN: not llvm-objdump -t %p/Inputs/macho-invalid-getsection-index 2>&1 \
+RUN:      | FileCheck -check-prefix INVALID-SECTION-IDX-GETSECT %s
+
+RUN: not llvm-objdump -t %p/Inputs/macho64-invalid-getsection-index 2>&1 \
+RUN:      | FileCheck -check-prefix INVALID-SECTION-IDX-GETSECT64 %s
+
+
+SMALL-LOADC-SIZE: Load command with size < 8 bytes
+SMALL-SEGLOADC-SIZE: Segment load command size is too small
+INCOMPLETE-LOADC: Malformed MachO file
+TOO-MANY-SECTS: Number of sections too large for size of load command
+BAD-SYMBOL: Requested symbol index is out of range
+NAME-PAST-EOF: Symbol name entry points past end of file
+
+INVALID-SECTION-IDX-SEG-NAME: getSectionRawFinalSegmentName: Invalid section index
+INVALID-SECTION-IDX-SECT-NAME: getSectionRawName: Invalid section index
+INVALID-SECTION-IDX-GETSECT: getSection: Invalid section index
+INVALID-SECTION-IDX-GETSECT64: getSection64: Invalid section index
