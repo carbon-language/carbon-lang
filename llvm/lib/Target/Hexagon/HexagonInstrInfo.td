@@ -1558,43 +1558,31 @@ multiclass Loadx_pat<PatFrag Load, ValueType VT, PatLeaf ImmPred,
   def: Pat<(VT (Load (i32 IntRegs:$Rs))), (VT (MI IntRegs:$Rs, 0))>;
 }
 
-def : Pat < (i32 (sextloadi8 ADDRriS11_0:$addr)),
-            (L2_loadrb_io AddrFI:$addr, 0) >;
-
-def : Pat < (i32 (zextloadi8 ADDRriS11_0:$addr)),
-            (L2_loadrub_io AddrFI:$addr, 0) >;
-
-def : Pat < (i32 (sextloadi16 ADDRriS11_1:$addr)),
-            (L2_loadrh_io AddrFI:$addr, 0) >;
-
-def : Pat < (i32 (zextloadi16 ADDRriS11_1:$addr)),
-            (L2_loadruh_io AddrFI:$addr, 0) >;
-
-def : Pat < (i32 (load ADDRriS11_2:$addr)),
-            (L2_loadri_io AddrFI:$addr, 0) >;
-
-def : Pat < (i64 (load ADDRriS11_3:$addr)),
-            (L2_loadrd_io AddrFI:$addr, 0) >;
-
 let AddedComplexity = 20 in {
-def : Pat < (i32 (sextloadi8 (add IntRegs:$src1, s11_0ExtPred:$offset))),
-            (L2_loadrb_io IntRegs:$src1, s11_0ExtPred:$offset) >;
+  defm: Loadx_pat<load,           i32, s11_2ExtPred, L2_loadri_io>;
+  defm: Loadx_pat<load,           i64, s11_3ExtPred, L2_loadrd_io>;
+  defm: Loadx_pat<atomic_load_8 , i32, s11_0ExtPred, L2_loadrub_io>;
+  defm: Loadx_pat<atomic_load_16, i32, s11_1ExtPred, L2_loadruh_io>;
+  defm: Loadx_pat<atomic_load_32, i32, s11_2ExtPred, L2_loadri_io>;
+  defm: Loadx_pat<atomic_load_64, i64, s11_3ExtPred, L2_loadrd_io>;
 
-def : Pat < (i32 (zextloadi8 (add IntRegs:$src1, s11_0ExtPred:$offset))),
-            (L2_loadrub_io IntRegs:$src1, s11_0ExtPred:$offset) >;
-
-def : Pat < (i32 (sextloadi16 (add IntRegs:$src1, s11_1ExtPred:$offset))),
-            (L2_loadrh_io IntRegs:$src1, s11_1ExtPred:$offset) >;
-
-def : Pat < (i32 (zextloadi16 (add IntRegs:$src1, s11_1ExtPred:$offset))),
-            (L2_loadruh_io IntRegs:$src1, s11_1ExtPred:$offset) >;
-
-def : Pat < (i32 (load (add IntRegs:$src1, s11_2ExtPred:$offset))),
-            (L2_loadri_io IntRegs:$src1, s11_2ExtPred:$offset) >;
-
-def : Pat < (i64 (load (add IntRegs:$src1, s11_3ExtPred:$offset))),
-            (L2_loadrd_io IntRegs:$src1, s11_3ExtPred:$offset) >;
+  defm: Loadx_pat<extloadi1,      i32, s11_0ExtPred, L2_loadrub_io>;
+  //defm: Loadx_pat<extloadi8,      i32, s11_0ExtPred, L2_loadrub_io>;
+  defm: Loadx_pat<extloadi16,     i32, s11_1ExtPred, L2_loadruh_io>;
+  //defm: Loadx_pat<sextloadi8,     i32, s11_0ExtPred, L2_loadrb_io>;
+  defm: Loadx_pat<sextloadi16,    i32, s11_1ExtPred, L2_loadrh_io>;
+  defm: Loadx_pat<zextloadi1,     i32, s11_0ExtPred, L2_loadrub_io>;
+  defm: Loadx_pat<zextloadi8,     i32, s11_0ExtPred, L2_loadrub_io>;
+  defm: Loadx_pat<zextloadi16,    i32, s11_1ExtPred, L2_loadruh_io>;
+  // No sextloadi1.
 }
+
+// Sign-extending loads of i1 need to replicate the lowest bit throughout
+// the 32-bit value. Since the loaded value can only be 0 or 1, 0-v should
+// do the trick.
+let AddedComplexity = 20 in
+def: Pat<(i32 (sextloadi1 (i32 IntRegs:$Rs))),
+         (SUB_ri 0, (L2_loadrub_io IntRegs:$Rs, 0))>;
 
 //===----------------------------------------------------------------------===//
 // Post increment load
