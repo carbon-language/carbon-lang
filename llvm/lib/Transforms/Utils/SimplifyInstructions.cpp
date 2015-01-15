@@ -43,7 +43,7 @@ namespace {
     void getAnalysisUsage(AnalysisUsage &AU) const override {
       AU.setPreservesCFG();
       AU.addRequired<AssumptionCacheTracker>();
-      AU.addRequired<TargetLibraryInfo>();
+      AU.addRequired<TargetLibraryInfoWrapperPass>();
     }
 
     /// runOnFunction - Remove instructions that simplify.
@@ -53,7 +53,8 @@ namespace {
       const DominatorTree *DT = DTWP ? &DTWP->getDomTree() : nullptr;
       DataLayoutPass *DLP = getAnalysisIfAvailable<DataLayoutPass>();
       const DataLayout *DL = DLP ? &DLP->getDataLayout() : nullptr;
-      const TargetLibraryInfo *TLI = &getAnalysis<TargetLibraryInfo>();
+      const TargetLibraryInfo *TLI =
+          &getAnalysis<TargetLibraryInfoWrapperPass>().getTLI();
       AssumptionCache *AC =
           &getAnalysis<AssumptionCacheTracker>().getAssumptionCache(F);
       SmallPtrSet<const Instruction*, 8> S1, S2, *ToSimplify = &S1, *Next = &S2;
@@ -106,7 +107,7 @@ char InstSimplifier::ID = 0;
 INITIALIZE_PASS_BEGIN(InstSimplifier, "instsimplify",
                       "Remove redundant instructions", false, false)
 INITIALIZE_PASS_DEPENDENCY(AssumptionCacheTracker)
-INITIALIZE_PASS_DEPENDENCY(TargetLibraryInfo)
+INITIALIZE_PASS_DEPENDENCY(TargetLibraryInfoWrapperPass)
 INITIALIZE_PASS_END(InstSimplifier, "instsimplify",
                     "Remove redundant instructions", false, false)
 char &llvm::InstructionSimplifierID = InstSimplifier::ID;

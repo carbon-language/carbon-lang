@@ -42,7 +42,8 @@ namespace {
     bool runOnBasicBlock(BasicBlock &BB) override {
       if (skipOptnoneFunction(BB))
         return false;
-      TargetLibraryInfo *TLI = getAnalysisIfAvailable<TargetLibraryInfo>();
+      auto *TLIP = getAnalysisIfAvailable<TargetLibraryInfoWrapperPass>();
+      TargetLibraryInfo *TLI = TLIP ? &TLIP->getTLI() : nullptr;
       bool Changed = false;
       for (BasicBlock::iterator DI = BB.begin(); DI != BB.end(); ) {
         Instruction *Inst = DI++;
@@ -95,7 +96,8 @@ bool DCE::runOnFunction(Function &F) {
   if (skipOptnoneFunction(F))
     return false;
 
-  TargetLibraryInfo *TLI = getAnalysisIfAvailable<TargetLibraryInfo>();
+  auto *TLIP = getAnalysisIfAvailable<TargetLibraryInfoWrapperPass>();
+  TargetLibraryInfo *TLI = TLIP ? &TLIP->getTLI() : nullptr;
 
   // Start out with all of the instructions in the worklist...
   std::vector<Instruction*> WorkList;

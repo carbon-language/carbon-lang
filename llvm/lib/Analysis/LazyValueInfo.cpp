@@ -41,7 +41,7 @@ char LazyValueInfo::ID = 0;
 INITIALIZE_PASS_BEGIN(LazyValueInfo, "lazy-value-info",
                 "Lazy Value Information Analysis", false, true)
 INITIALIZE_PASS_DEPENDENCY(AssumptionCacheTracker)
-INITIALIZE_PASS_DEPENDENCY(TargetLibraryInfo)
+INITIALIZE_PASS_DEPENDENCY(TargetLibraryInfoWrapperPass)
 INITIALIZE_PASS_END(LazyValueInfo, "lazy-value-info",
                 "Lazy Value Information Analysis", false, true)
 
@@ -1121,7 +1121,7 @@ bool LazyValueInfo::runOnFunction(Function &F) {
   DataLayoutPass *DLP = getAnalysisIfAvailable<DataLayoutPass>();
   DL = DLP ? &DLP->getDataLayout() : nullptr;
 
-  TLI = &getAnalysis<TargetLibraryInfo>();
+  TLI = &getAnalysis<TargetLibraryInfoWrapperPass>().getTLI();
 
   if (PImpl)
     getCache(PImpl, AC, DL, DT).clear();
@@ -1133,7 +1133,7 @@ bool LazyValueInfo::runOnFunction(Function &F) {
 void LazyValueInfo::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.setPreservesAll();
   AU.addRequired<AssumptionCacheTracker>();
-  AU.addRequired<TargetLibraryInfo>();
+  AU.addRequired<TargetLibraryInfoWrapperPass>();
 }
 
 void LazyValueInfo::releaseMemory() {

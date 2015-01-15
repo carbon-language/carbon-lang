@@ -401,12 +401,12 @@ int main(int argc, char **argv) {
   PassManager Passes;
 
   // Add an appropriate TargetLibraryInfo pass for the module's triple.
-  TargetLibraryInfo *TLI = new TargetLibraryInfo(Triple(M->getTargetTriple()));
+  TargetLibraryInfo TLI(Triple(M->getTargetTriple()));
 
   // The -disable-simplify-libcalls flag actually disables all builtin optzns.
   if (DisableSimplifyLibCalls)
-    TLI->disableAllFunctions();
-  Passes.add(TLI);
+    TLI.disableAllFunctions();
+  Passes.add(new TargetLibraryInfoWrapperPass(TLI));
 
   // Add an appropriate DataLayout instance for this module.
   const DataLayout *DL = M->getDataLayout();

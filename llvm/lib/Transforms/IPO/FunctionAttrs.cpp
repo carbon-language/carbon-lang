@@ -124,7 +124,7 @@ namespace {
     void getAnalysisUsage(AnalysisUsage &AU) const override {
       AU.setPreservesCFG();
       AU.addRequired<AliasAnalysis>();
-      AU.addRequired<TargetLibraryInfo>();
+      AU.addRequired<TargetLibraryInfoWrapperPass>();
       CallGraphSCCPass::getAnalysisUsage(AU);
     }
 
@@ -139,7 +139,7 @@ INITIALIZE_PASS_BEGIN(FunctionAttrs, "functionattrs",
                 "Deduce function attributes", false, false)
 INITIALIZE_AG_DEPENDENCY(AliasAnalysis)
 INITIALIZE_PASS_DEPENDENCY(CallGraphWrapperPass)
-INITIALIZE_PASS_DEPENDENCY(TargetLibraryInfo)
+INITIALIZE_PASS_DEPENDENCY(TargetLibraryInfoWrapperPass)
 INITIALIZE_PASS_END(FunctionAttrs, "functionattrs",
                 "Deduce function attributes", false, false)
 
@@ -1702,7 +1702,7 @@ bool FunctionAttrs::annotateLibraryCalls(const CallGraphSCC &SCC) {
 
 bool FunctionAttrs::runOnSCC(CallGraphSCC &SCC) {
   AA = &getAnalysis<AliasAnalysis>();
-  TLI = &getAnalysis<TargetLibraryInfo>();
+  TLI = &getAnalysis<TargetLibraryInfoWrapperPass>().getTLI();
 
   bool Changed = annotateLibraryCalls(SCC);
   Changed |= AddReadAttrs(SCC);

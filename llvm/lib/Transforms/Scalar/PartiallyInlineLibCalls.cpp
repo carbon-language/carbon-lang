@@ -52,7 +52,7 @@ INITIALIZE_PASS(PartiallyInlineLibCalls, "partially-inline-libcalls",
                 "Partially inline calls to library functions", false, false)
 
 void PartiallyInlineLibCalls::getAnalysisUsage(AnalysisUsage &AU) const {
-  AU.addRequired<TargetLibraryInfo>();
+  AU.addRequired<TargetLibraryInfoWrapperPass>();
   AU.addRequired<TargetTransformInfo>();
   FunctionPass::getAnalysisUsage(AU);
 }
@@ -60,7 +60,8 @@ void PartiallyInlineLibCalls::getAnalysisUsage(AnalysisUsage &AU) const {
 bool PartiallyInlineLibCalls::runOnFunction(Function &F) {
   bool Changed = false;
   Function::iterator CurrBB;
-  TargetLibraryInfo *TLI = &getAnalysis<TargetLibraryInfo>();
+  TargetLibraryInfo *TLI =
+      &getAnalysis<TargetLibraryInfoWrapperPass>().getTLI();
   const TargetTransformInfo *TTI = &getAnalysis<TargetTransformInfo>();
   for (Function::iterator BB = F.begin(), BE = F.end(); BB != BE;) {
     CurrBB = BB++;

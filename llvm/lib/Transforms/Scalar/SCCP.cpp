@@ -1504,7 +1504,7 @@ namespace {
   ///
   struct SCCP : public FunctionPass {
     void getAnalysisUsage(AnalysisUsage &AU) const override {
-      AU.addRequired<TargetLibraryInfo>();
+      AU.addRequired<TargetLibraryInfoWrapperPass>();
     }
     static char ID; // Pass identification, replacement for typeid
     SCCP() : FunctionPass(ID) {
@@ -1563,7 +1563,8 @@ bool SCCP::runOnFunction(Function &F) {
   DEBUG(dbgs() << "SCCP on function '" << F.getName() << "'\n");
   const DataLayoutPass *DLP = getAnalysisIfAvailable<DataLayoutPass>();
   const DataLayout *DL = DLP ? &DLP->getDataLayout() : nullptr;
-  const TargetLibraryInfo *TLI = &getAnalysis<TargetLibraryInfo>();
+  const TargetLibraryInfo *TLI =
+      &getAnalysis<TargetLibraryInfoWrapperPass>().getTLI();
   SCCPSolver Solver(DL, TLI);
 
   // Mark the first block of the function as being executable.
@@ -1637,7 +1638,7 @@ namespace {
   ///
   struct IPSCCP : public ModulePass {
     void getAnalysisUsage(AnalysisUsage &AU) const override {
-      AU.addRequired<TargetLibraryInfo>();
+      AU.addRequired<TargetLibraryInfoWrapperPass>();
     }
     static char ID;
     IPSCCP() : ModulePass(ID) {
@@ -1651,7 +1652,7 @@ char IPSCCP::ID = 0;
 INITIALIZE_PASS_BEGIN(IPSCCP, "ipsccp",
                 "Interprocedural Sparse Conditional Constant Propagation",
                 false, false)
-INITIALIZE_PASS_DEPENDENCY(TargetLibraryInfo)
+INITIALIZE_PASS_DEPENDENCY(TargetLibraryInfoWrapperPass)
 INITIALIZE_PASS_END(IPSCCP, "ipsccp",
                 "Interprocedural Sparse Conditional Constant Propagation",
                 false, false)
@@ -1692,7 +1693,8 @@ static bool AddressIsTaken(const GlobalValue *GV) {
 bool IPSCCP::runOnModule(Module &M) {
   DataLayoutPass *DLP = getAnalysisIfAvailable<DataLayoutPass>();
   const DataLayout *DL = DLP ? &DLP->getDataLayout() : nullptr;
-  const TargetLibraryInfo *TLI = &getAnalysis<TargetLibraryInfo>();
+  const TargetLibraryInfo *TLI =
+      &getAnalysis<TargetLibraryInfoWrapperPass>().getTLI();
   SCCPSolver Solver(DL, TLI);
 
   // AddressTakenFunctions - This set keeps track of the address-taken functions

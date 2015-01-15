@@ -115,7 +115,7 @@ namespace {
     void getAnalysisUsage(AnalysisUsage &AU) const override {
       AU.addRequired<LazyValueInfo>();
       AU.addPreserved<LazyValueInfo>();
-      AU.addRequired<TargetLibraryInfo>();
+      AU.addRequired<TargetLibraryInfoWrapperPass>();
     }
 
     void FindLoopHeaders(Function &F);
@@ -145,7 +145,7 @@ char JumpThreading::ID = 0;
 INITIALIZE_PASS_BEGIN(JumpThreading, "jump-threading",
                 "Jump Threading", false, false)
 INITIALIZE_PASS_DEPENDENCY(LazyValueInfo)
-INITIALIZE_PASS_DEPENDENCY(TargetLibraryInfo)
+INITIALIZE_PASS_DEPENDENCY(TargetLibraryInfoWrapperPass)
 INITIALIZE_PASS_END(JumpThreading, "jump-threading",
                 "Jump Threading", false, false)
 
@@ -161,7 +161,7 @@ bool JumpThreading::runOnFunction(Function &F) {
   DEBUG(dbgs() << "Jump threading on function '" << F.getName() << "'\n");
   DataLayoutPass *DLP = getAnalysisIfAvailable<DataLayoutPass>();
   DL = DLP ? &DLP->getDataLayout() : nullptr;
-  TLI = &getAnalysis<TargetLibraryInfo>();
+  TLI = &getAnalysis<TargetLibraryInfoWrapperPass>().getTLI();
   LVI = &getAnalysis<LazyValueInfo>();
 
   // Remove unreachable blocks from function as they may result in infinite

@@ -94,7 +94,7 @@ namespace {
       AU.addRequired<AliasAnalysis>();
       AU.addPreserved<AliasAnalysis>();
       AU.addPreserved<ScalarEvolution>();
-      AU.addRequired<TargetLibraryInfo>();
+      AU.addRequired<TargetLibraryInfoWrapperPass>();
     }
 
     using llvm::Pass::doFinalization;
@@ -214,7 +214,7 @@ INITIALIZE_PASS_DEPENDENCY(LoopInfo)
 INITIALIZE_PASS_DEPENDENCY(LoopSimplify)
 INITIALIZE_PASS_DEPENDENCY(LCSSA)
 INITIALIZE_PASS_DEPENDENCY(ScalarEvolution)
-INITIALIZE_PASS_DEPENDENCY(TargetLibraryInfo)
+INITIALIZE_PASS_DEPENDENCY(TargetLibraryInfoWrapperPass)
 INITIALIZE_AG_DEPENDENCY(AliasAnalysis)
 INITIALIZE_PASS_END(LICM, "licm", "Loop Invariant Code Motion", false, false)
 
@@ -237,7 +237,7 @@ bool LICM::runOnLoop(Loop *L, LPPassManager &LPM) {
 
   DataLayoutPass *DLP = getAnalysisIfAvailable<DataLayoutPass>();
   DL = DLP ? &DLP->getDataLayout() : nullptr;
-  TLI = &getAnalysis<TargetLibraryInfo>();
+  TLI = &getAnalysis<TargetLibraryInfoWrapperPass>().getTLI();
 
   assert(L->isLCSSAForm(*DT) && "Loop is not in LCSSA form.");
 

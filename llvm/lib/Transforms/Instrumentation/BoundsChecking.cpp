@@ -50,7 +50,7 @@ namespace {
 
     void getAnalysisUsage(AnalysisUsage &AU) const override {
       AU.addRequired<DataLayoutPass>();
-      AU.addRequired<TargetLibraryInfo>();
+      AU.addRequired<TargetLibraryInfoWrapperPass>();
     }
 
   private:
@@ -166,7 +166,7 @@ bool BoundsChecking::instrument(Value *Ptr, Value *InstVal) {
 
 bool BoundsChecking::runOnFunction(Function &F) {
   DL = &getAnalysis<DataLayoutPass>().getDataLayout();
-  TLI = &getAnalysis<TargetLibraryInfo>();
+  TLI = &getAnalysis<TargetLibraryInfoWrapperPass>().getTLI();
 
   TrapBB = nullptr;
   BuilderTy TheBuilder(F.getContext(), TargetFolder(DL));

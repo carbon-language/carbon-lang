@@ -161,7 +161,7 @@ class TypePromotionTransaction;
 
     void getAnalysisUsage(AnalysisUsage &AU) const override {
       AU.addPreserved<DominatorTreeWrapperPass>();
-      AU.addRequired<TargetLibraryInfo>();
+      AU.addRequired<TargetLibraryInfoWrapperPass>();
       AU.addRequired<TargetTransformInfo>();
     }
 
@@ -212,7 +212,7 @@ bool CodeGenPrepare::runOnFunction(Function &F) {
   ModifiedDT = false;
   if (TM)
     TLI = TM->getSubtargetImpl()->getTargetLowering();
-  TLInfo = &getAnalysis<TargetLibraryInfo>();
+  TLInfo = &getAnalysis<TargetLibraryInfoWrapperPass>().getTLI();
   TTI = &getAnalysis<TargetTransformInfo>();
   DominatorTreeWrapperPass *DTWP =
       getAnalysisIfAvailable<DominatorTreeWrapperPass>();

@@ -697,8 +697,7 @@ namespace llvm {
 ///
 /// This both allows optimizations to handle them specially and frontends to
 /// disable such optimizations through -fno-builtin etc.
-class TargetLibraryInfo : public ImmutablePass {
-  virtual void anchor();
+class TargetLibraryInfo {
   unsigned char AvailableArray[(LibFunc::NumLibFuncs+3)/4];
   llvm::DenseMap<unsigned, std::string> CustomNames;
   static const char* StandardNames[LibFunc::NumLibFuncs];
@@ -717,9 +716,8 @@ class TargetLibraryInfo : public ImmutablePass {
   }
 
 public:
-  static char ID;
   TargetLibraryInfo();
-  TargetLibraryInfo(const Triple &T);
+  explicit TargetLibraryInfo(const Triple &T);
   explicit TargetLibraryInfo(const TargetLibraryInfo &TLI);
 
   /// \brief Searches for a particular function name.
@@ -801,6 +799,21 @@ public:
   ///
   /// This can be used for options like -fno-builtin.
   void disableAllFunctions();
+};
+
+class TargetLibraryInfoWrapperPass : public ImmutablePass {
+  TargetLibraryInfo TLI;
+
+  virtual void anchor();
+
+public:
+  static char ID;
+  TargetLibraryInfoWrapperPass();
+  explicit TargetLibraryInfoWrapperPass(const Triple &T);
+  explicit TargetLibraryInfoWrapperPass(const TargetLibraryInfo &TLI);
+
+  TargetLibraryInfo &getTLI() { return TLI; }
+  const TargetLibraryInfo &getTLI() const { return TLI; }
 };
 
 } // end namespace llvm

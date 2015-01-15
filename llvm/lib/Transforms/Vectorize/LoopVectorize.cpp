@@ -1281,7 +1281,8 @@ struct LoopVectorize : public FunctionPass {
     TTI = &getAnalysis<TargetTransformInfo>();
     DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
     BFI = &getAnalysis<BlockFrequencyInfo>();
-    TLI = getAnalysisIfAvailable<TargetLibraryInfo>();
+    auto *TLIP = getAnalysisIfAvailable<TargetLibraryInfoWrapperPass>();
+    TLI = TLIP ? &TLIP->getTLI() : nullptr;
     AA = &getAnalysis<AliasAnalysis>();
     AC = &getAnalysis<AssumptionCacheTracker>().getAssumptionCache(F);
 

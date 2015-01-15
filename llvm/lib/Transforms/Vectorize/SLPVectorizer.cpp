@@ -2890,7 +2890,8 @@ struct SLPVectorizer : public FunctionPass {
     DataLayoutPass *DLP = getAnalysisIfAvailable<DataLayoutPass>();
     DL = DLP ? &DLP->getDataLayout() : nullptr;
     TTI = &getAnalysis<TargetTransformInfo>();
-    TLI = getAnalysisIfAvailable<TargetLibraryInfo>();
+    auto *TLIP = getAnalysisIfAvailable<TargetLibraryInfoWrapperPass>();
+    TLI = TLIP ? &TLIP->getTLI() : nullptr;
     AA = &getAnalysis<AliasAnalysis>();
     LI = &getAnalysis<LoopInfo>();
     DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();

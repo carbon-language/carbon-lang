@@ -121,7 +121,7 @@ namespace {
       AU.setPreservesAll();
       AU.addRequired<AliasAnalysis>();
       AU.addRequired<AssumptionCacheTracker>();
-      AU.addRequired<TargetLibraryInfo>();
+      AU.addRequired<TargetLibraryInfoWrapperPass>();
       AU.addRequired<DominatorTreeWrapperPass>();
     }
     void print(raw_ostream &O, const Module *M) const override {}
@@ -155,7 +155,7 @@ char Lint::ID = 0;
 INITIALIZE_PASS_BEGIN(Lint, "lint", "Statically lint-checks LLVM IR",
                       false, true)
 INITIALIZE_PASS_DEPENDENCY(AssumptionCacheTracker)
-INITIALIZE_PASS_DEPENDENCY(TargetLibraryInfo)
+INITIALIZE_PASS_DEPENDENCY(TargetLibraryInfoWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass)
 INITIALIZE_AG_DEPENDENCY(AliasAnalysis)
 INITIALIZE_PASS_END(Lint, "lint", "Statically lint-checks LLVM IR",
@@ -183,7 +183,7 @@ bool Lint::runOnFunction(Function &F) {
   DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
   DataLayoutPass *DLP = getAnalysisIfAvailable<DataLayoutPass>();
   DL = DLP ? &DLP->getDataLayout() : nullptr;
-  TLI = &getAnalysis<TargetLibraryInfo>();
+  TLI = &getAnalysis<TargetLibraryInfoWrapperPass>().getTLI();
   visit(F);
   dbgs() << MessagesStr.str();
   Messages.clear();

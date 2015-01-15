@@ -265,7 +265,7 @@ void initializeDataLayoutPassPass(PassRegistry &);
 void initializeTargetTransformInfoAnalysisGroup(PassRegistry&);
 void initializeFunctionTargetTransformInfoPass(PassRegistry &);
 void initializeNoTTIPass(PassRegistry&);
-void initializeTargetLibraryInfoPass(PassRegistry&);
+void initializeTargetLibraryInfoWrapperPassPass(PassRegistry &);
 void initializeAssumptionCacheTrackerPass(PassRegistry &);
 void initializeTwoAddressInstructionPassPass(PassRegistry&);
 void initializeTypeBasedAliasAnalysisPass(PassRegistry&);

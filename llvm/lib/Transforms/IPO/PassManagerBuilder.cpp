@@ -143,7 +143,8 @@ void PassManagerBuilder::populateFunctionPassManager(FunctionPassManager &FPM) {
   addExtensionsToPM(EP_EarlyAsPossible, FPM);
 
   // Add LibraryInfo if we have some.
-  if (LibraryInfo) FPM.add(new TargetLibraryInfo(*LibraryInfo));
+  if (LibraryInfo)
+    FPM.add(new TargetLibraryInfoWrapperPass(*LibraryInfo));
 
   if (OptLevel == 0) return;
 
@@ -182,7 +183,8 @@ void PassManagerBuilder::populateModulePassManager(PassManagerBase &MPM) {
   }
 
   // Add LibraryInfo if we have some.
-  if (LibraryInfo) MPM.add(new TargetLibraryInfo(*LibraryInfo));
+  if (LibraryInfo)
+    MPM.add(new TargetLibraryInfoWrapperPass(*LibraryInfo));
 
   addInitialAliasAnalysisPasses(MPM);
 
@@ -485,7 +487,7 @@ void PassManagerBuilder::populateLTOPassManager(PassManagerBase &PM,
   }
 
   if (LibraryInfo)
-    PM.add(new TargetLibraryInfo(*LibraryInfo));
+    PM.add(new TargetLibraryInfoWrapperPass(*LibraryInfo));
 
   if (VerifyInput)
     PM.add(createVerifierPass());

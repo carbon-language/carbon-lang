@@ -48,7 +48,7 @@ namespace {
       AU.addPreservedID(LoopSimplifyID);
       AU.addPreservedID(LCSSAID);
       AU.addPreserved("scalar-evolution");
-      AU.addRequired<TargetLibraryInfo>();
+      AU.addRequired<TargetLibraryInfoWrapperPass>();
     }
   };
 }
@@ -57,7 +57,7 @@ char LoopInstSimplify::ID = 0;
 INITIALIZE_PASS_BEGIN(LoopInstSimplify, "loop-instsimplify",
                 "Simplify instructions in loops", false, false)
 INITIALIZE_PASS_DEPENDENCY(AssumptionCacheTracker)
-INITIALIZE_PASS_DEPENDENCY(TargetLibraryInfo)
+INITIALIZE_PASS_DEPENDENCY(TargetLibraryInfoWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(LoopInfo)
 INITIALIZE_PASS_DEPENDENCY(LCSSA)
@@ -78,7 +78,8 @@ bool LoopInstSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
   LoopInfo *LI = &getAnalysis<LoopInfo>();
   DataLayoutPass *DLP = getAnalysisIfAvailable<DataLayoutPass>();
   const DataLayout *DL = DLP ? &DLP->getDataLayout() : nullptr;
-  const TargetLibraryInfo *TLI = &getAnalysis<TargetLibraryInfo>();
+  const TargetLibraryInfo *TLI =
+      &getAnalysis<TargetLibraryInfoWrapperPass>().getTLI();
   auto &AC = getAnalysis<AssumptionCacheTracker>().getAssumptionCache(
       *L->getHeader()->getParent());
 

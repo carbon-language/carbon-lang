@@ -35,7 +35,7 @@ inline LLVMTargetLibraryInfoRef wrap(const TargetLibraryInfo *P) {
 
 void llvm::initializeTarget(PassRegistry &Registry) {
   initializeDataLayoutPassPass(Registry);
-  initializeTargetLibraryInfoPass(Registry);
+  initializeTargetLibraryInfoWrapperPassPass(Registry);
 }
 
 void LLVMInitializeTarget(LLVMPassRegistryRef R) {
@@ -54,7 +54,7 @@ void LLVMAddTargetData(LLVMTargetDataRef TD, LLVMPassManagerRef PM) {
 
 void LLVMAddTargetLibraryInfo(LLVMTargetLibraryInfoRef TLI,
                               LLVMPassManagerRef PM) {
-  unwrap(PM)->add(new TargetLibraryInfo(*unwrap(TLI)));
+  unwrap(PM)->add(new TargetLibraryInfoWrapperPass(*unwrap(TLI)));
 }
 
 char *LLVMCopyStringRepOfTargetData(LLVMTargetDataRef TD) {

@@ -175,7 +175,7 @@ namespace {
       AU.addPreserved<ScalarEvolution>();
       AU.addPreserved<DominatorTreeWrapperPass>();
       AU.addRequired<DominatorTreeWrapperPass>();
-      AU.addRequired<TargetLibraryInfo>();
+      AU.addRequired<TargetLibraryInfoWrapperPass>();
       AU.addRequired<TargetTransformInfo>();
     }
 
@@ -197,7 +197,10 @@ namespace {
     }
 
     TargetLibraryInfo *getTargetLibraryInfo() {
-      return TLI ? TLI : (TLI = &getAnalysis<TargetLibraryInfo>());
+      if (!TLI)
+        TLI = &getAnalysis<TargetLibraryInfoWrapperPass>().getTLI();
+
+      return TLI;
     }
 
     const TargetTransformInfo *getTargetTransformInfo() {
@@ -220,7 +223,7 @@ INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(LoopSimplify)
 INITIALIZE_PASS_DEPENDENCY(LCSSA)
 INITIALIZE_PASS_DEPENDENCY(ScalarEvolution)
-INITIALIZE_PASS_DEPENDENCY(TargetLibraryInfo)
+INITIALIZE_PASS_DEPENDENCY(TargetLibraryInfoWrapperPass)
 INITIALIZE_AG_DEPENDENCY(AliasAnalysis)
 INITIALIZE_AG_DEPENDENCY(TargetTransformInfo)
 INITIALIZE_PASS_END(LoopIdiomRecognize, "loop-idiom", "Recognize loop idioms",
@@ -667,7 +670,7 @@ bool LoopIdiomRecognize::runOnCountableLoop() {
   (void)getDominatorTree();
 
   LoopInfo &LI = getAnalysis<LoopInfo>();
-  TLI = &getAnalysis<TargetLibraryInfo>();
+  TLI = &getAnalysis<TargetLibraryInfoWrapperPass>().getTLI();
 
   // set TLI
   (void)getTargetLibraryInfo();

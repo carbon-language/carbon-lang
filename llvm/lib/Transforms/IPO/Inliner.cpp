@@ -446,7 +446,8 @@ bool Inliner::runOnSCC(CallGraphSCC &SCC) {
   AssumptionCacheTracker *ACT = &getAnalysis<AssumptionCacheTracker>();
   DataLayoutPass *DLP = getAnalysisIfAvailable<DataLayoutPass>();
   const DataLayout *DL = DLP ? &DLP->getDataLayout() : nullptr;
-  const TargetLibraryInfo *TLI = getAnalysisIfAvailable<TargetLibraryInfo>();
+  auto *TLIP = getAnalysisIfAvailable<TargetLibraryInfoWrapperPass>();
+  const TargetLibraryInfo *TLI = TLIP ? &TLIP->getTLI() : nullptr;
   AliasAnalysis *AA = &getAnalysis<AliasAnalysis>();
 
   SmallPtrSet<Function*, 8> SCCFunctions;

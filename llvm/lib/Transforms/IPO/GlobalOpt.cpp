@@ -68,7 +68,7 @@ STATISTIC(NumCXXDtorsRemoved, "Number of global C++ destructors removed");
 namespace {
   struct GlobalOpt : public ModulePass {
     void getAnalysisUsage(AnalysisUsage &AU) const override {
-      AU.addRequired<TargetLibraryInfo>();
+      AU.addRequired<TargetLibraryInfoWrapperPass>();
     }
     static char ID; // Pass identification, replacement for typeid
     GlobalOpt() : ModulePass(ID) {
@@ -95,7 +95,7 @@ namespace {
 char GlobalOpt::ID = 0;
 INITIALIZE_PASS_BEGIN(GlobalOpt, "globalopt",
                 "Global Variable Optimizer", false, false)
-INITIALIZE_PASS_DEPENDENCY(TargetLibraryInfo)
+INITIALIZE_PASS_DEPENDENCY(TargetLibraryInfoWrapperPass)
 INITIALIZE_PASS_END(GlobalOpt, "globalopt",
                 "Global Variable Optimizer", false, false)
 
@@ -3042,7 +3042,7 @@ bool GlobalOpt::runOnModule(Module &M) {
 
   DataLayoutPass *DLP = getAnalysisIfAvailable<DataLayoutPass>();
   DL = DLP ? &DLP->getDataLayout() : nullptr;
-  TLI = &getAnalysis<TargetLibraryInfo>();
+  TLI = &getAnalysis<TargetLibraryInfoWrapperPass>().getTLI();
 
   bool LocalChange = true;
   while (LocalChange) {

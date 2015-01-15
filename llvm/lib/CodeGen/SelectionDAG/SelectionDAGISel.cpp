@@ -351,7 +351,8 @@ SelectionDAGISel::SelectionDAGISel(TargetMachine &tm,
     initializeGCModuleInfoPass(*PassRegistry::getPassRegistry());
     initializeAliasAnalysisAnalysisGroup(*PassRegistry::getPassRegistry());
     initializeBranchProbabilityInfoPass(*PassRegistry::getPassRegistry());
-    initializeTargetLibraryInfoPass(*PassRegistry::getPassRegistry());
+    initializeTargetLibraryInfoWrapperPassPass(
+        *PassRegistry::getPassRegistry());
   }
 
 SelectionDAGISel::~SelectionDAGISel() {
@@ -365,7 +366,7 @@ void SelectionDAGISel::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addPreserved<AliasAnalysis>();
   AU.addRequired<GCModuleInfo>();
   AU.addPreserved<GCModuleInfo>();
-  AU.addRequired<TargetLibraryInfo>();
+  AU.addRequired<TargetLibraryInfoWrapperPass>();
   if (UseMBPI && OptLevel != CodeGenOpt::None)
     AU.addRequired<BranchProbabilityInfo>();
   MachineFunctionPass::getAnalysisUsage(AU);
@@ -435,7 +436,7 @@ bool SelectionDAGISel::runOnMachineFunction(MachineFunction &mf) {
   TLI = MF->getSubtarget().getTargetLowering();
   RegInfo = &MF->getRegInfo();
   AA = &getAnalysis<AliasAnalysis>();
-  LibInfo = &getAnalysis<TargetLibraryInfo>();
+  LibInfo = &getAnalysis<TargetLibraryInfoWrapperPass>().getTLI();
   GFI = Fn.hasGC() ? &getAnalysis<GCModuleInfo>().getFunctionInfo(Fn) : nullptr;
 
   DEBUG(dbgs() << "\n\n\n=== " << Fn.getName() << "\n");

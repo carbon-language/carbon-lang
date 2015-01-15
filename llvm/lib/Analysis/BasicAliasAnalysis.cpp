@@ -468,7 +468,7 @@ namespace {
     void getAnalysisUsage(AnalysisUsage &AU) const override {
       AU.addRequired<AliasAnalysis>();
       AU.addRequired<AssumptionCacheTracker>();
-      AU.addRequired<TargetLibraryInfo>();
+      AU.addRequired<TargetLibraryInfoWrapperPass>();
     }
 
     AliasResult alias(const Location &LocA, const Location &LocB) override {
@@ -591,7 +591,7 @@ INITIALIZE_AG_PASS_BEGIN(BasicAliasAnalysis, AliasAnalysis, "basicaa",
                    "Basic Alias Analysis (stateless AA impl)",
                    false, true, false)
 INITIALIZE_PASS_DEPENDENCY(AssumptionCacheTracker)
-INITIALIZE_PASS_DEPENDENCY(TargetLibraryInfo)
+INITIALIZE_PASS_DEPENDENCY(TargetLibraryInfoWrapperPass)
 INITIALIZE_AG_PASS_END(BasicAliasAnalysis, AliasAnalysis, "basicaa",
                    "Basic Alias Analysis (stateless AA impl)",
                    false, true, false)
@@ -718,7 +718,8 @@ BasicAliasAnalysis::getModRefBehavior(const Function *F) {
   if (F->onlyReadsMemory())
     Min = OnlyReadsMemory;
 
-  const TargetLibraryInfo &TLI = getAnalysis<TargetLibraryInfo>();
+  const TargetLibraryInfo &TLI =
+      getAnalysis<TargetLibraryInfoWrapperPass>().getTLI();
   if (isMemsetPattern16(F, TLI))
     Min = OnlyAccessesArgumentPointees;
 
@@ -730,7 +731,8 @@ AliasAnalysis::Location
 BasicAliasAnalysis::getArgLocation(ImmutableCallSite CS, unsigned ArgIdx,
                                    ModRefResult &Mask) {
   Location Loc = AliasAnalysis::getArgLocation(CS, ArgIdx, Mask);
-  const TargetLibraryInfo &TLI = getAnalysis<TargetLibraryInfo>();
+  const TargetLibraryInfo &TLI =
+      getAnalysis<TargetLibraryInfoWrapperPass>().getTLI();
   const IntrinsicInst *II = dyn_cast<IntrinsicInst>(CS.getInstruction());
   if (II != nullptr)
     switch (II->getIntrinsicID()) {
