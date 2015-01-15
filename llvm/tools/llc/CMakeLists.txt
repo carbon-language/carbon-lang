@@ -1,5 +1,6 @@
 set(LLVM_LINK_COMPONENTS
   ${LLVM_TARGETS_TO_BUILD}
+  Analysis
   AsmPrinter
   CodeGen
   Core
@@ -8,7 +9,6 @@ set(LLVM_LINK_COMPONENTS
   ScalarOpts
   SelectionDAG
   Support
-  Target
   )
 
 # Support plugins.

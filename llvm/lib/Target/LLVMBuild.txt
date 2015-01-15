@@ -45,7 +45,7 @@ parent = Libraries
 type = Library
 name = Target
 parent = Libraries
-required_libraries = Core MC Support
+required_libraries = Analysis Core MC Support
 
 ; This is a special group whose required libraries are extended (by llvm-build)
 ; with every built target, which makes it easy for tools to include every
