@@ -543,7 +543,8 @@ bool EmitAssemblyHelper::AddEmitPasses(BackendAction Action,
 
   // Add LibraryInfo.
   llvm::Triple TargetTriple(TheModule->getTargetTriple());
-  PM->add(createTLI(TargetTriple, CodeGenOpts));
+  std::unique_ptr<TargetLibraryInfo> TLI(createTLI(TargetTriple, CodeGenOpts));
+  PM->add(new TargetLibraryInfoWrapperPass(*TLI));
 
   // Add Target specific analysis passes.
   TM->addAnalysisPasses(*PM);
