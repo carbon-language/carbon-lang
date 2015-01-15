@@ -154,6 +154,9 @@ def: Pat<(f32 (fadd F32:$src1, F32:$src2)),
 def: Pat<(f32 (fsub F32:$src1, F32:$src2)),
          (F2_sfsub F32:$src1, F32:$src2)>;
 
+def: Pat<(f32 (fmul F32:$src1, F32:$src2)),
+         (F2_sfmpy F32:$src1, F32:$src2)>;
+
 let Itinerary = M_tc_3x_SLOT23, isCodeGenOnly = 0 in {
   def F2_sfmax : T_MInstFloat < "sfmax", 0b100, 0b000>;
   def F2_sfmin : T_MInstFloat < "sfmin", 0b100, 0b001>;
@@ -495,172 +498,124 @@ def F2_dfimm_p : T_fimm <"dfmake", DoubleRegs, 0b1001, 0>;
 def F2_dfimm_n : T_fimm <"dfmake", DoubleRegs, 0b1001, 1>;
 }
 
-let isCommutable = 1 in
-def fMUL_rr : ALU64_rr<(outs IntRegs:$dst),
-            (ins IntRegs:$src1, IntRegs:$src2),
-            "$dst = sfmpy($src1, $src2)",
-            [(set IntRegs:$dst, (fmul IntRegs:$src1, IntRegs:$src2))]>,
-            Requires<[HasV5T]>;
-
-let isCommutable = 1 in
-def fMUL64_rr : ALU64_rr<(outs DoubleRegs:$dst), (ins DoubleRegs:$src1,
-                                                     DoubleRegs:$src2),
-               "$dst = dfmpy($src1, $src2)",
-               [(set DoubleRegs:$dst, (fmul DoubleRegs:$src1,
-                                           DoubleRegs:$src2))]>,
-               Requires<[HasV5T]>;
-
-// Compare.
-let isCompare = 1 in {
-multiclass FCMP64_rr<string OpcStr, PatFrag OpNode> {
-  def _rr : ALU64_rr<(outs PredRegs:$dst), (ins DoubleRegs:$b, DoubleRegs:$c),
-                 !strconcat("$dst = ", !strconcat(OpcStr, "($b, $c)")),
-                 [(set PredRegs:$dst,
-                        (OpNode (f64 DoubleRegs:$b), (f64 DoubleRegs:$c)))]>,
-                 Requires<[HasV5T]>;
-}
-
-multiclass FCMP32_rr<string OpcStr, PatFrag OpNode> {
-  def _rr : ALU64_rr<(outs PredRegs:$dst), (ins IntRegs:$b, IntRegs:$c),
-                 !strconcat("$dst = ", !strconcat(OpcStr, "($b, $c)")),
-                 [(set PredRegs:$dst,
-                        (OpNode (f32 IntRegs:$b), (f32 IntRegs:$c)))]>,
-                 Requires<[HasV5T]>;
-}
-}
-
-defm FCMPOEQ64 : FCMP64_rr<"dfcmp.eq", setoeq>;
-defm FCMPUEQ64 : FCMP64_rr<"dfcmp.eq", setueq>;
-defm FCMPOGT64 : FCMP64_rr<"dfcmp.gt", setogt>;
-defm FCMPUGT64 : FCMP64_rr<"dfcmp.gt", setugt>;
-defm FCMPOGE64 : FCMP64_rr<"dfcmp.ge", setoge>;
-defm FCMPUGE64 : FCMP64_rr<"dfcmp.ge", setuge>;
-
-defm FCMPOEQ32 : FCMP32_rr<"sfcmp.eq", setoeq>;
-defm FCMPUEQ32 : FCMP32_rr<"sfcmp.eq", setueq>;
-defm FCMPOGT32 : FCMP32_rr<"sfcmp.gt", setogt>;
-defm FCMPUGT32 : FCMP32_rr<"sfcmp.gt", setugt>;
-defm FCMPOGE32 : FCMP32_rr<"sfcmp.ge", setoge>;
-defm FCMPUGE32 : FCMP32_rr<"sfcmp.ge", setuge>;
-
 // olt.
 def : Pat <(i1 (setolt (f32 IntRegs:$src1), (f32 IntRegs:$src2))),
-      (i1 (FCMPOGT32_rr IntRegs:$src2, IntRegs:$src1))>,
+      (i1 (F2_sfcmpgt IntRegs:$src2, IntRegs:$src1))>,
       Requires<[HasV5T]>;
 
 def : Pat <(i1 (setolt (f32 IntRegs:$src1), (fpimm:$src2))),
-      (i1 (FCMPOGT32_rr (f32 (TFRI_f fpimm:$src2)), (f32 IntRegs:$src1)))>,
+      (i1 (F2_sfcmpgt (f32 (TFRI_f fpimm:$src2)), (f32 IntRegs:$src1)))>,
       Requires<[HasV5T]>;
 
 def : Pat <(i1 (setolt (f64 DoubleRegs:$src1), (f64 DoubleRegs:$src2))),
-      (i1 (FCMPOGT64_rr DoubleRegs:$src2, DoubleRegs:$src1))>,
+      (i1 (F2_dfcmpgt DoubleRegs:$src2, DoubleRegs:$src1))>,
       Requires<[HasV5T]>;
 
 def : Pat <(i1 (setolt (f64 DoubleRegs:$src1), (fpimm:$src2))),
-      (i1 (FCMPOGT64_rr (f64 (CONST64_Float_Real fpimm:$src2)),
+      (i1 (F2_dfcmpgt (f64 (CONST64_Float_Real fpimm:$src2)),
                         (f64 DoubleRegs:$src1)))>,
       Requires<[HasV5T]>;
 
 // gt.
 def : Pat <(i1 (setugt (f64 DoubleRegs:$src1), (fpimm:$src2))),
-      (i1 (FCMPUGT64_rr (f64 DoubleRegs:$src1),
+      (i1 (F2_dfcmpgt (f64 DoubleRegs:$src1),
                         (f64 (CONST64_Float_Real fpimm:$src2))))>,
       Requires<[HasV5T]>;
 
 def : Pat <(i1 (setugt (f32 IntRegs:$src1), (fpimm:$src2))),
-      (i1 (FCMPUGT32_rr (f32 IntRegs:$src1), (f32 (TFRI_f fpimm:$src2))))>,
+      (i1 (F2_sfcmpgt (f32 IntRegs:$src1), (f32 (TFRI_f fpimm:$src2))))>,
       Requires<[HasV5T]>;
 
 // ult.
 def : Pat <(i1 (setult (f32 IntRegs:$src1), (f32 IntRegs:$src2))),
-      (i1 (FCMPUGT32_rr IntRegs:$src2, IntRegs:$src1))>,
+      (i1 (F2_sfcmpgt IntRegs:$src2, IntRegs:$src1))>,
       Requires<[HasV5T]>;
 
 def : Pat <(i1 (setult (f32 IntRegs:$src1), (fpimm:$src2))),
-      (i1 (FCMPUGT32_rr (f32 (TFRI_f fpimm:$src2)), (f32 IntRegs:$src1)))>,
+      (i1 (F2_sfcmpgt (f32 (TFRI_f fpimm:$src2)), (f32 IntRegs:$src1)))>,
       Requires<[HasV5T]>;
 
 def : Pat <(i1 (setult (f64 DoubleRegs:$src1), (f64 DoubleRegs:$src2))),
-      (i1 (FCMPUGT64_rr DoubleRegs:$src2, DoubleRegs:$src1))>,
+      (i1 (F2_dfcmpgt DoubleRegs:$src2, DoubleRegs:$src1))>,
       Requires<[HasV5T]>;
 
 def : Pat <(i1 (setult (f64 DoubleRegs:$src1), (fpimm:$src2))),
-      (i1 (FCMPUGT64_rr (f64 (CONST64_Float_Real fpimm:$src2)),
+      (i1 (F2_dfcmpgt (f64 (CONST64_Float_Real fpimm:$src2)),
                         (f64 DoubleRegs:$src1)))>,
       Requires<[HasV5T]>;
 
 // le.
 // rs <= rt -> rt >= rs.
 def : Pat<(i1 (setole (f32 IntRegs:$src1), (f32 IntRegs:$src2))),
-      (i1 (FCMPOGE32_rr IntRegs:$src2, IntRegs:$src1))>,
+      (i1 (F2_sfcmpge IntRegs:$src2, IntRegs:$src1))>,
       Requires<[HasV5T]>;
 
 def : Pat<(i1 (setole (f32 IntRegs:$src1), (fpimm:$src2))),
-      (i1 (FCMPOGE32_rr (f32 (TFRI_f fpimm:$src2)), IntRegs:$src1))>,
+      (i1 (F2_sfcmpge (f32 (TFRI_f fpimm:$src2)), IntRegs:$src1))>,
       Requires<[HasV5T]>;
 
 
 // Rss <= Rtt -> Rtt >= Rss.
 def : Pat<(i1 (setole (f64 DoubleRegs:$src1), (f64 DoubleRegs:$src2))),
-      (i1 (FCMPOGE64_rr DoubleRegs:$src2, DoubleRegs:$src1))>,
+      (i1 (F2_dfcmpge DoubleRegs:$src2, DoubleRegs:$src1))>,
       Requires<[HasV5T]>;
 
 def : Pat<(i1 (setole (f64 DoubleRegs:$src1), (fpimm:$src2))),
-      (i1 (FCMPOGE64_rr (f64 (CONST64_Float_Real fpimm:$src2)),
+      (i1 (F2_dfcmpge (f64 (CONST64_Float_Real fpimm:$src2)),
                                 DoubleRegs:$src1))>,
       Requires<[HasV5T]>;
 
 // rs <= rt -> rt >= rs.
 def : Pat<(i1 (setule (f32 IntRegs:$src1), (f32 IntRegs:$src2))),
-      (i1 (FCMPUGE32_rr IntRegs:$src2, IntRegs:$src1))>,
+      (i1 (F2_sfcmpge IntRegs:$src2, IntRegs:$src1))>,
       Requires<[HasV5T]>;
 
 def : Pat<(i1 (setule (f32 IntRegs:$src1), (fpimm:$src2))),
-      (i1 (FCMPUGE32_rr (f32 (TFRI_f fpimm:$src2)), IntRegs:$src1))>,
+      (i1 (F2_sfcmpge (f32 (TFRI_f fpimm:$src2)), IntRegs:$src1))>,
       Requires<[HasV5T]>;
 
 // Rss <= Rtt -> Rtt >= Rss.
 def : Pat<(i1 (setule (f64 DoubleRegs:$src1), (f64 DoubleRegs:$src2))),
-      (i1 (FCMPUGE64_rr DoubleRegs:$src2, DoubleRegs:$src1))>,
+      (i1 (F2_dfcmpge DoubleRegs:$src2, DoubleRegs:$src1))>,
       Requires<[HasV5T]>;
 
 def : Pat<(i1 (setule (f64 DoubleRegs:$src1), (fpimm:$src2))),
-      (i1 (FCMPUGE64_rr (f64 (CONST64_Float_Real fpimm:$src2)),
+      (i1 (F2_dfcmpge (f64 (CONST64_Float_Real fpimm:$src2)),
                                 DoubleRegs:$src1))>,
       Requires<[HasV5T]>;
 
 // ne.
 def : Pat<(i1 (setone (f32 IntRegs:$src1), (f32 IntRegs:$src2))),
-      (i1 (C2_not (FCMPOEQ32_rr IntRegs:$src1, IntRegs:$src2)))>,
+      (i1 (C2_not (F2_sfcmpeq IntRegs:$src1, IntRegs:$src2)))>,
       Requires<[HasV5T]>;
 
 def : Pat<(i1 (setone (f64 DoubleRegs:$src1), (f64 DoubleRegs:$src2))),
-      (i1 (C2_not (FCMPOEQ64_rr DoubleRegs:$src1, DoubleRegs:$src2)))>,
+      (i1 (C2_not (F2_dfcmpeq DoubleRegs:$src1, DoubleRegs:$src2)))>,
       Requires<[HasV5T]>;
 
 def : Pat<(i1 (setune (f32 IntRegs:$src1), (f32 IntRegs:$src2))),
-      (i1 (C2_not (FCMPUEQ32_rr IntRegs:$src1, IntRegs:$src2)))>,
+      (i1 (C2_not (F2_sfcmpeq IntRegs:$src1, IntRegs:$src2)))>,
       Requires<[HasV5T]>;
 
 def : Pat<(i1 (setune (f64 DoubleRegs:$src1), (f64 DoubleRegs:$src2))),
-      (i1 (C2_not (FCMPUEQ64_rr DoubleRegs:$src1, DoubleRegs:$src2)))>,
+      (i1 (C2_not (F2_dfcmpeq DoubleRegs:$src1, DoubleRegs:$src2)))>,
       Requires<[HasV5T]>;
 
 def : Pat<(i1 (setone (f32 IntRegs:$src1), (fpimm:$src2))),
-      (i1 (C2_not (FCMPOEQ32_rr IntRegs:$src1, (f32 (TFRI_f fpimm:$src2)))))>,
+      (i1 (C2_not (F2_sfcmpeq IntRegs:$src1, (f32 (TFRI_f fpimm:$src2)))))>,
       Requires<[HasV5T]>;
 
 def : Pat<(i1 (setone (f64 DoubleRegs:$src1), (fpimm:$src2))),
-      (i1 (C2_not (FCMPOEQ64_rr DoubleRegs:$src1,
+      (i1 (C2_not (F2_dfcmpeq DoubleRegs:$src1,
                               (f64 (CONST64_Float_Real fpimm:$src2)))))>,
       Requires<[HasV5T]>;
 
 def : Pat<(i1 (setune (f32 IntRegs:$src1), (fpimm:$src2))),
-      (i1 (C2_not (FCMPUEQ32_rr IntRegs:$src1,  (f32 (TFRI_f fpimm:$src2)))))>,
+      (i1 (C2_not (F2_sfcmpeq IntRegs:$src1,  (f32 (TFRI_f fpimm:$src2)))))>,
       Requires<[HasV5T]>;
 
 def : Pat<(i1 (setune (f64 DoubleRegs:$src1), (fpimm:$src2))),
-      (i1 (C2_not (FCMPUEQ64_rr DoubleRegs:$src1,
+      (i1 (C2_not (F2_dfcmpeq DoubleRegs:$src1,
                               (f64 (CONST64_Float_Real fpimm:$src2)))))>,
       Requires<[HasV5T]>;
 
@@ -900,13 +855,13 @@ def TFR_condset_ii_f : ALU32_rr<(outs IntRegs:$dst),
 def : Pat <(select (i1 (setult (f32 IntRegs:$src1), (f32 IntRegs:$src2))),
                    (f32 IntRegs:$src3),
                    (f32 IntRegs:$src4)),
-    (TFR_condset_rr_f (FCMPUGT32_rr IntRegs:$src2, IntRegs:$src1), IntRegs:$src4,
+    (TFR_condset_rr_f (F2_sfcmpgt IntRegs:$src2, IntRegs:$src1), IntRegs:$src4,
                       IntRegs:$src3)>, Requires<[HasV5T]>;
 
 def : Pat <(select (i1 (setult (f64 DoubleRegs:$src1), (f64 DoubleRegs:$src2))),
                    (f64 DoubleRegs:$src3),
                    (f64 DoubleRegs:$src4)),
-      (TFR_condset_rr64_f (FCMPUGT64_rr DoubleRegs:$src2, DoubleRegs:$src1),
+      (TFR_condset_rr64_f (F2_dfcmpgt DoubleRegs:$src2, DoubleRegs:$src1),
                 DoubleRegs:$src4, DoubleRegs:$src3)>, Requires<[HasV5T]>;
 
 // Map from p0 = pnot(p0); r0 = mux(p0, #i, #j) => r0 = mux(p0, #j, #i).

@@ -1111,6 +1111,7 @@ HexagonTargetLowering::HexagonTargetLowering(const TargetMachine &targetmachine)
 
   setLibcallName(RTLIB::ADD_F64, "__hexagon_adddf3");
   setLibcallName(RTLIB::SUB_F64, "__hexagon_subdf3");
+  setLibcallName(RTLIB::MUL_F64, "__hexagon_muldf3");
 
   setOperationAction(ISD::FSQRT, MVT::f32, Expand);
   setOperationAction(ISD::FSQRT, MVT::f64, Expand);
@@ -1123,6 +1124,7 @@ HexagonTargetLowering::HexagonTargetLowering(const TargetMachine &targetmachine)
     setOperationAction(ISD::FADD, MVT::f64, Expand);
     setOperationAction(ISD::FSUB, MVT::f32, Legal);
     setOperationAction(ISD::FSUB, MVT::f64, Expand);
+    setOperationAction(ISD::FMUL, MVT::f64, Expand);
     setOperationAction(ISD::FP_EXTEND, MVT::f32, Legal);
     setCondCodeAction(ISD::SETOEQ, MVT::f32, Legal);
     setCondCodeAction(ISD::SETOEQ, MVT::f64, Legal);
@@ -1255,7 +1257,6 @@ HexagonTargetLowering::HexagonTargetLowering(const TargetMachine &targetmachine)
     setLibcallName(RTLIB::OLT_F32, "__hexagon_ltsf2");
     setCondCodeAction(ISD::SETOLT, MVT::f32, Expand);
 
-    setLibcallName(RTLIB::MUL_F64, "__hexagon_muldf3");
     setOperationAction(ISD::FMUL, MVT::f64, Expand);
 
     setLibcallName(RTLIB::MUL_F32, "__hexagon_mulsf3");
