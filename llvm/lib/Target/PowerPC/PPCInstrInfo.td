@@ -145,11 +145,6 @@ def PPCcall_nop  : SDNode<"PPCISD::CALL_NOP", SDT_PPCCall,
 def PPCcall_nop_tls : SDNode<"PPCISD::CALL_NOP_TLS", SDT_PPCCall,
                              [SDNPHasChain, SDNPOptInGlue, SDNPOutGlue,
                               SDNPVariadic]>;
-def PPCload   : SDNode<"PPCISD::LOAD", SDTypeProfile<1, 1, []>,
-                       [SDNPHasChain, SDNPOptInGlue, SDNPOutGlue]>;
-def PPCload_toc : SDNode<"PPCISD::LOAD_TOC", SDTypeProfile<0, 1, []>,
-                          [SDNPHasChain, SDNPSideEffect,
-                           SDNPInGlue, SDNPOutGlue]>;
 def PPCmtctr      : SDNode<"PPCISD::MTCTR", SDT_PPCCall,
                            [SDNPHasChain, SDNPOptInGlue, SDNPOutGlue]>;
 def PPCbctrl : SDNode<"PPCISD::BCTRL", SDTNone,

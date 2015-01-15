@@ -113,6 +113,11 @@ def FeatureP8Vector  : SubtargetFeature<"power8-vector", "HasP8Vector", "true",
                                         "Enable POWER8 vector instructions",
                                         [FeatureVSX, FeatureAltivec]>;
 
+def FeatureInvariantFunctionDescriptors :
+  SubtargetFeature<"invariant-function-descriptors",
+                   "HasInvariantFunctionDescriptors", "true",
+                   "Assume function descriptors are invariant">;
+
 def DeprecatedMFTB   : SubtargetFeature<"", "DeprecatedMFTB", "true",
                                         "Treat mftb as deprecated">;
 def DeprecatedDST    : SubtargetFeature<"", "DeprecatedDST", "true",

@@ -123,7 +123,7 @@ void PPCSubtarget::initializeEnvironment() {
   DeprecatedDST = false;
   HasLazyResolverStubs = false;
   HasICBT = false;
-
+  HasInvariantFunctionDescriptors = false;
 }
 
 void PPCSubtarget::initSubtargetFeatures(StringRef CPU, StringRef FS) {
