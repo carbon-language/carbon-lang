@@ -3202,5 +3202,7 @@ void ItaniumCXXABI::emitCXXStructor(const CXXMethodDecl *MD,
       getMangleContext().mangleCXXCtorComdat(CD, Out);
     llvm::Comdat *C = CGM.getModule().getOrInsertComdat(Out.str());
     Fn->setComdat(C);
+  } else {
+    CGM.maybeSetTrivialComdat(*MD, *Fn);
   }
 }

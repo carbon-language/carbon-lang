@@ -1953,6 +1953,13 @@ static bool shouldBeInCOMDAT(CodeGenModule &CGM, const Decl &D) {
   llvm_unreachable("No such linkage");
 }
 
+void CodeGenModule::maybeSetTrivialComdat(const Decl &D,
+                                          llvm::GlobalObject &GO) {
+  if (!shouldBeInCOMDAT(*this, D))
+    return;
+  GO.setComdat(TheModule.getOrInsertComdat(GO.getName()));
+}
+
 void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
   llvm::Constant *Init = nullptr;
   QualType ASTTy = D->getType();
@@ -2096,8 +2103,7 @@ void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
     setTLSMode(GV, *D);
   }
 
-  if (shouldBeInCOMDAT(*this, *D))
-    GV->setComdat(TheModule.getOrInsertComdat(GV->getName()));
+  maybeSetTrivialComdat(*D, *GV);
 
   // Emit the initializer function if necessary.
   if (NeedsGlobalCtor || NeedsGlobalDtor)
@@ -2433,8 +2439,7 @@ void CodeGenModule::EmitGlobalFunctionDefinition(GlobalDecl GD,
 
   MaybeHandleStaticInExternC(D, Fn);
 
-  if (shouldBeInCOMDAT(*this, *D))
-    Fn->setComdat(TheModule.getOrInsertComdat(Fn->getName()));
+  maybeSetTrivialComdat(*D, *Fn);
 
   CodeGenFunction(*this).GenerateCode(D, Fn, FI);
 

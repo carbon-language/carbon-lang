@@ -22,7 +22,10 @@ namespace test1 {
 // CHECK1-NOT: comdat
 
 // COFF doesn't support comdats with arbitrary names (C5/D5).
-// COFF-NOT: comdat
+// COFF: define weak_odr {{.*}} void @_ZN5test16foobarIvEC2Ev({{.*}} comdat align
+// COFF: define weak_odr {{.*}} void @_ZN5test16foobarIvEC1Ev({{.*}} comdat align
+// COFF: define weak_odr {{.*}} void @_ZN5test16foobarIvED2Ev({{.*}} comdat align
+// COFF: define weak_odr {{.*}} void @_ZN5test16foobarIvED0Ev({{.*}} comdat align
 
 template <typename T>
 struct foobar {
@@ -39,7 +42,7 @@ namespace test2 {
 
 // CHECK1: define internal void @__cxx_global_var_init()
 // CHECK1: call void @_ZN5test26foobarIvEC2Ev
-// CHECK1: define linkonce_odr void @_ZN5test26foobarIvEC2Ev(
+// CHECK1: define linkonce_odr void @_ZN5test26foobarIvEC2Ev({{.*}} comdat align
 void g();
 template <typename T> struct foobar {
   foobar() { g(); }
@@ -72,13 +75,13 @@ namespace test4 {
 
   // CHECK1: define internal void @__cxx_global_var_init2()
   // CHECK1: call i32 @__cxa_atexit{{.*}}_ZN5test41AD2Ev
-  // CHECK1: define linkonce_odr void @_ZN5test41AD2Ev(
+  // CHECK1: define linkonce_odr void @_ZN5test41AD2Ev({{.*}} comdat align
 
   // test that we don't do this optimization at -O0 so that the debugger can
   // see both destructors.
   // NOOPT: define internal void @__cxx_global_var_init2()
   // NOOPT: call i32 @__cxa_atexit{{.*}}@_ZN5test41BD2Ev
-  // NOOPT: define linkonce_odr void @_ZN5test41BD2Ev
+  // NOOPT: define linkonce_odr void @_ZN5test41BD2Ev({{.*}} comdat align
   struct A {
     virtual ~A() {}
   };
@@ -93,7 +96,7 @@ namespace test5 {
 
   // CHECK2: define internal void @__cxx_global_var_init3()
   // CHECK2: call i32 @__cxa_atexit{{.*}}_ZN5test51AD2Ev
-  // CHECK2: define linkonce_odr void @_ZN5test51AD2Ev(
+  // CHECK2: define linkonce_odr void @_ZN5test51AD2Ev({{.*}} comdat align
   struct A {
     virtual ~A() {}
   };
