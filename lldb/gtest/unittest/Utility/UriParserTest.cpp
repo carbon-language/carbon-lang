@@ -57,7 +57,7 @@ public:
 
 TEST_F (UriParserTest, Minimal)
 {
-    const UriTestCase testCase("x://y", "x", "y", 0, "/");
+    const UriTestCase testCase("x://y", "x", "y", -1, "/");
     VALIDATE
 }
 
@@ -69,7 +69,7 @@ TEST_F (UriParserTest, MinimalPort)
 
 TEST_F (UriParserTest, MinimalPath)
 {
-    const UriTestCase testCase("x://y/", "x", "y", 0, "/");
+    const UriTestCase testCase("x://y/", "x", "y", -1, "/");
     VALIDATE
 }
 
@@ -124,6 +124,12 @@ TEST_F (UriParserTest, BadPort2)
 TEST_F (UriParserTest, Empty)
 {
     const UriTestCase testCase("");
+    VALIDATE
+}
+
+TEST_F (UriParserTest, PortOverflow)
+{
+    const UriTestCase testCase("x://y:0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789/");
     VALIDATE
 }
 

@@ -15,6 +15,9 @@
 // C++ Includes
 // Other libraries and framework includes
 // Project includes
+#include "lldb/Host/StringConvert.h"
+
+using namespace lldb_private;
 
 //----------------------------------------------------------------------
 // UriParser::Parse
@@ -33,17 +36,21 @@ UriParser::Parse(const char* uri,
     char path_buf[2049] = {'/', 0};
   
     bool ok = false;
-         if (4==sscanf(uri, "%99[^:/]://%255[^/:]:%[^/]/%2047s", scheme_buf, hostname_buf, port_buf, path_buf+1)) { ok = true; }
-    else if (3==sscanf(uri, "%99[^:/]://%255[^/:]:%[^/]", scheme_buf, hostname_buf, port_buf)) { ok = true; }
+         if (4==sscanf(uri, "%99[^:/]://%255[^/:]:%10[^/]/%2047s", scheme_buf, hostname_buf, port_buf, path_buf+1)) { ok = true; }
+    else if (3==sscanf(uri, "%99[^:/]://%255[^/:]:%10[^/]", scheme_buf, hostname_buf, port_buf)) { ok = true; }
     else if (3==sscanf(uri, "%99[^:/]://%255[^/]/%2047s", scheme_buf, hostname_buf, path_buf+1)) { ok = true; }
     else if (2==sscanf(uri, "%99[^:/]://%255[^/]", scheme_buf, hostname_buf)) { ok = true; }
 
-    char* end = port_buf;
-    int port_tmp = strtoul(port_buf, &end, 10);
-    if (*end != 0)
+    bool success = false;
+    int port_tmp = -1;
+    if (port_buf[0])
     {
-        // there are invalid characters in port_buf
-        return false;
+        port_tmp = StringConvert::ToUInt32(port_buf, UINT32_MAX, 10, &success);
+        if (!success || port_tmp > 65535)
+        {
+            // there are invalid characters in port_buf
+            return false;
+        }
     }
 
     if (ok)

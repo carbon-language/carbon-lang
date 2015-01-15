@@ -20,6 +20,14 @@
 class UriParser
 {
 public:
+    // Parses
+    // RETURN VALUE
+    //   if url is valid, function returns true and 
+    //   scheme/hostname/port/path are set to the parsed values
+    //   port it set to -1 if it is not included in the URL
+    //
+    //   if the url is invalid, function returns false and
+    //   output parameters remain unchanged
     static bool Parse(const char* uri,
         std::string& scheme,
         std::string& hostname,
