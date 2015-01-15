@@ -979,6 +979,7 @@ static std::string getEnumNameForToken(StringRef Str) {
     case '.': Res += "_DOT_"; break;
     case '<': Res += "_LT_"; break;
     case '>': Res += "_GT_"; break;
+    case '-': Res += "_MINUS_"; break;
     default:
       if ((*it >= 'A' && *it <= 'Z') ||
           (*it >= 'a' && *it <= 'z') ||
@@ -1848,6 +1849,7 @@ static void emitConvertFuncs(CodeGenTarget &Target, StringRef ClassName,
       case MatchableInfo::ResOperand::ImmOperand: {
         int64_t Val = OpInfo.ImmVal;
         std::string Ty = "imm_" + itostr(Val);
+        Ty = getEnumNameForToken(Ty);
         Signature += "__" + Ty;
 
         std::string Name = "CVT_" + Ty;
