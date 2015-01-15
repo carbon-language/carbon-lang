@@ -185,21 +185,6 @@ protected:
   bool _done;
 };
 
-/// \brief Represents Internal Input files
-class SimpleFileNode : public FileNode {
-public:
-  SimpleFileNode(StringRef path) : FileNode(path) {}
-  SimpleFileNode(StringRef path, std::unique_ptr<File> f)
-      : FileNode(path, std::move(f)) {}
-
-  virtual ~SimpleFileNode() {}
-
-  /// \brief add a file to the list of files
-  virtual void appendInputFile(std::unique_ptr<File> f) {
-    _file = std::move(f);
-  }
-};
-
 } // namespace lld
 
 #endif // LLD_CORE_INPUT_GRAPH_H

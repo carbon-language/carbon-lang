@@ -7,7 +7,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "lld/Driver/Driver.h"
 #include "lld/Core/ArchiveLibraryFile.h"
 #include "lld/Core/File.h"
 #include "lld/Core/Instrumentation.h"
@@ -15,6 +14,8 @@
 #include "lld/Core/Parallel.h"
 #include "lld/Core/PassManager.h"
 #include "lld/Core/Resolver.h"
+#include "lld/Driver/Driver.h"
+#include "lld/Driver/WrapperInputGraph.h"
 #include "lld/Passes/RoundTripNativePass.h"
 #include "lld/Passes/RoundTripYAMLPass.h"
 #include "lld/ReaderWriter/Reader.h"
@@ -117,7 +118,7 @@ bool Driver::link(LinkingContext &context, raw_ostream &diagnostics) {
   context.createInternalFiles(internalFiles);
   for (auto i = internalFiles.rbegin(), e = internalFiles.rend(); i != e; ++i) {
     context.getInputGraph().addInputElementFront(
-        llvm::make_unique<SimpleFileNode>("internal", std::move(*i)));
+        llvm::make_unique<WrapperNode>(std::move(*i)));
   }
 
   // Give target a chance to add files.
@@ -125,7 +126,7 @@ bool Driver::link(LinkingContext &context, raw_ostream &diagnostics) {
   context.createImplicitFiles(implicitFiles);
   for (auto i = implicitFiles.rbegin(), e = implicitFiles.rend(); i != e; ++i) {
     context.getInputGraph().addInputElementFront(
-        llvm::make_unique<SimpleFileNode>("implicit", std::move(*i)));
+        llvm::make_unique<WrapperNode>(std::move(*i)));
   }
 
   // Give target a chance to sort the input files.
