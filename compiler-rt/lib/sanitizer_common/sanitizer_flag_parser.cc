@@ -71,10 +71,7 @@ void FlagParser::parse_flag() {
   InternalFree((void *)value);
 }
 
-void FlagParser::ParseString(const char *s) {
-  if (!s) return;
-  buf_ = s;
-  pos_ = 0;
+void FlagParser::parse_flags() {
   while (true) {
     skip_whitespace();
     if (buf_[pos_] == 0) break;
@@ -84,6 +81,20 @@ void FlagParser::ParseString(const char *s) {
   // Do a sanity check for certain flags.
   if (common_flags_dont_use.malloc_context_size < 1)
     common_flags_dont_use.malloc_context_size = 1;
+}
+
+void FlagParser::ParseString(const char *s) {
+  if (!s) return;
+  // Backup current parser state to allow nested ParseString() calls.
+  const char *old_buf_ = buf_;
+  uptr old_pos_ = pos_;
+  buf_ = s;
+  pos_ = 0;
+
+  parse_flags();
+
+  buf_ = old_buf_;
+  pos_ = old_pos_;
 }
 
 bool FlagParser::run_handler(const char *name, const char *value) {

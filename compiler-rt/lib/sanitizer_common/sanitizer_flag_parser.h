@@ -101,6 +101,7 @@ class FlagParser {
   void fatal_error(const char *err);
   bool is_space(char c);
   void skip_whitespace();
+  void parse_flags();
   void parse_flag();
   bool run_handler(const char *name, const char *value);
 };
