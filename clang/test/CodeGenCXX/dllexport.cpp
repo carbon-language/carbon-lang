@@ -631,6 +631,17 @@ template <typename T> struct ExplicitInstConstexprMembers {
 };
 template struct __declspec(dllexport) ExplicitInstConstexprMembers<void>;
 
+template <typename T> struct ExplicitInstantiationDeclTemplate { void f() {} };
+extern template struct __declspec(dllexport) ExplicitInstantiationDeclTemplate<int>;
+USEMEMFUNC(ExplicitInstantiationDeclTemplate<int>, f);
+// M32-DAG: {{declare|define available_externally}} x86_thiscallcc void @"\01?f@?$ExplicitInstantiationDeclTemplate@H@@QAEXXZ"
+
+template <typename T> struct __declspec(dllexport) ExplicitInstantiationDeclExportedTemplate { void f() {} };
+extern template struct ExplicitInstantiationDeclExportedTemplate<int>;
+USEMEMFUNC(ExplicitInstantiationDeclExportedTemplate<int>, f);
+// M32-DAG: {{declare|define available_externally}} x86_thiscallcc void @"\01?f@?$ExplicitInstantiationDeclExportedTemplate@H@@QAEXXZ"
+
+
 //===----------------------------------------------------------------------===//
 // Classes with template base classes
 //===----------------------------------------------------------------------===//
