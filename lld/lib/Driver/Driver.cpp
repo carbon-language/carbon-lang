@@ -94,10 +94,12 @@ bool Driver::link(LinkingContext &context, raw_ostream &diagnostics) {
       llvm::raw_string_ostream stream(buf);
 
       if (std::error_code ec = ie->parse(context, stream)) {
-        if (FileNode *fileNode = dyn_cast<FileNode>(ie.get()))
-          stream << fileNode->errStr(ec) << "\n";
-        else
+        if (FileNode *fileNode = dyn_cast<FileNode>(ie.get())) {
+          stream << "Cannot open " + fileNode->getFile()->path()
+                 << ": " << ec.message() << "\n";
+        } else {
           llvm_unreachable("Unknown type of input element");
+        }
         fail = true;
       }
 

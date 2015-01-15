@@ -149,12 +149,6 @@ public:
     return a->kind() == InputElement::Kind::File;
   }
 
-  /// \brief create an error string for printing purposes
-  virtual std::string errStr(std::error_code errc) {
-    std::string msg = errc.message();
-    return (Twine("Cannot open ") + _path + ": " + msg).str();
-  }
-
   /// \brief Get the list of files
   File *getFile() { return _file.get(); }
 
