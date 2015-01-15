@@ -186,10 +186,10 @@ ASTStructExtractor::CompleteTentativeDefinition(VarDecl *D)
 }
 
 void
-ASTStructExtractor::HandleVTable(CXXRecordDecl *RD, bool DefinitionRequired)
+ASTStructExtractor::HandleVTable(CXXRecordDecl *RD)
 {
     if (m_passthrough)
-        m_passthrough->HandleVTable(RD, DefinitionRequired);
+        m_passthrough->HandleVTable(RD);
 }
 
 void

@@ -99,7 +99,7 @@ public:
     //----------------------------------------------------------------------
     /// Passthrough stub
     //----------------------------------------------------------------------
-    void HandleVTable(clang::CXXRecordDecl *RD, bool DefinitionRequired);
+    void HandleVTable(clang::CXXRecordDecl *RD);
     
     //----------------------------------------------------------------------
     /// Passthrough stub

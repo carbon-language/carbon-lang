@@ -480,10 +480,10 @@ ASTResultSynthesizer::CompleteTentativeDefinition(VarDecl *D)
 }
 
 void
-ASTResultSynthesizer::HandleVTable(CXXRecordDecl *RD, bool DefinitionRequired)
+ASTResultSynthesizer::HandleVTable(CXXRecordDecl *RD)
 {
     if (m_passthrough)
-        m_passthrough->HandleVTable(RD, DefinitionRequired);
+        m_passthrough->HandleVTable(RD);
 }
 
 void
