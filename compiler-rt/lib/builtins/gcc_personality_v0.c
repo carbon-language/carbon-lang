@@ -159,7 +159,7 @@ __gcc_personality_v0(int version, _Unwind_Action actions,
         return _URC_CONTINUE_UNWIND;
         
     /* There is nothing to do if there is no LSDA for this frame. */
-    const uint8_t* lsda = _Unwind_GetLanguageSpecificData(context);
+    const uint8_t* lsda = (uint8_t*)_Unwind_GetLanguageSpecificData(context);
     if ( lsda == (uint8_t*) 0 )
         return _URC_CONTINUE_UNWIND;
 
