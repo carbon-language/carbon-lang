@@ -15,7 +15,6 @@
 
 #include "lld/Driver/Driver.h"
 #include "lld/Driver/WinLinkModuleDef.h"
-#include "lld/Driver/WrapperInputGraph.h"
 #include "lld/ReaderWriter/PECOFFLinkingContext.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/Optional.h"
@@ -1418,7 +1417,7 @@ bool WinLinkDriver::parse(int argc, const char *argv[],
         return false;
     ctx.getResolvableSymsFile()->add(file.get());
     ctx.getInputGraph().addInputElement(
-      std::unique_ptr<InputElement>(new WrapperNode(std::move(file))));
+      std::unique_ptr<InputElement>(new FileNode(std::move(file))));
   }
 
   // Add the library group to the input graph.
@@ -1435,7 +1434,7 @@ bool WinLinkDriver::parse(int argc, const char *argv[],
           return false;
       ctx.getResolvableSymsFile()->add(file.get());
       ctx.addLibraryFile(
-	std::unique_ptr<FileNode>(new WrapperNode(std::move(file))));
+	std::unique_ptr<FileNode>(new FileNode(std::move(file))));
     }
   }
 

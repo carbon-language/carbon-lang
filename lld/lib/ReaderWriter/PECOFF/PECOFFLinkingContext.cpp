@@ -17,7 +17,6 @@
 #include "PDBPass.h"
 #include "lld/Core/PassManager.h"
 #include "lld/Core/Simple.h"
-#include "lld/Driver/WrapperInputGraph.h"
 #include "lld/Passes/LayoutPass.h"
 #include "lld/Passes/RoundTripNativePass.h"
 #include "lld/Passes/RoundTripYAMLPass.h"
@@ -110,22 +109,22 @@ bool PECOFFLinkingContext::createImplicitFiles(
   pecoff::ResolvableSymbols* syms = getResolvableSymsFile();
 
   // Create a file for the entry point function.
-  std::unique_ptr<WrapperNode> entry(new WrapperNode(
+  std::unique_ptr<FileNode> entry(new FileNode(
       llvm::make_unique<pecoff::EntryPointFile>(*this, syms)));
   getInputGraph().addInputElementFront(std::move(entry));
 
   // Create a file for __ImageBase.
-  std::unique_ptr<WrapperNode> fileNode(new WrapperNode(
+  std::unique_ptr<FileNode> fileNode(new FileNode(
       llvm::make_unique<pecoff::LinkerGeneratedSymbolFile>(*this)));
   getInputGraph().addInputElement(std::move(fileNode));
 
   // Create a file for _imp_ symbols.
-  std::unique_ptr<WrapperNode> impFileNode(new WrapperNode(
+  std::unique_ptr<FileNode> impFileNode(new FileNode(
       llvm::make_unique<pecoff::LocallyImportedSymbolFile>(*this)));
   getInputGraph().addInputElement(std::move(impFileNode));
 
   // Create a file for dllexported symbols.
-  std::unique_ptr<WrapperNode> exportNode(new WrapperNode(
+  std::unique_ptr<FileNode> exportNode(new FileNode(
       llvm::make_unique<pecoff::ExportedSymbolRenameFile>(*this, syms)));
   addLibraryFile(std::move(exportNode));
 

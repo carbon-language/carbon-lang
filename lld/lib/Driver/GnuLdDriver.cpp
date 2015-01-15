@@ -14,7 +14,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "lld/Driver/Driver.h"
-#include "lld/Driver/WrapperInputGraph.h"
 #include "lld/ReaderWriter/ELFLinkingContext.h"
 #include "lld/ReaderWriter/LinkerScript.h"
 #include "llvm/ADT/ArrayRef.h"
@@ -276,7 +275,7 @@ evaluateLinkerScript(ELFLinkingContext &ctx, InputGraph *inputGraph,
         if (ctx.logInputFiles())
           diag << file->path() << "\n";
         inputGraph->addInputElement(
-            std::unique_ptr<InputElement>(new WrapperNode(std::move(file))));
+            std::unique_ptr<InputElement>(new FileNode(std::move(file))));
         ++numfiles;
       }
     }
@@ -617,7 +616,7 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
         if (ctx->logInputFiles())
           diagnostics << file->path() << "\n";
         inputGraph->addInputElement(
-            std::unique_ptr<InputElement>(new WrapperNode(std::move(file))));
+            std::unique_ptr<InputElement>(new FileNode(std::move(file))));
       }
       numfiles += files.size();
       break;

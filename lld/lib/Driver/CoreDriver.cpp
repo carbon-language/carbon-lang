@@ -8,7 +8,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "lld/Driver/Driver.h"
-#include "lld/Driver/WrapperInputGraph.h"
 #include "lld/ReaderWriter/CoreLinkingContext.h"
 #include "lld/ReaderWriter/Reader.h"
 #include "llvm/ADT/ArrayRef.h"
@@ -155,7 +154,7 @@ bool CoreDriver::parse(int argc, const char *argv[], CoreLinkingContext &ctx,
         = loadFile(ctx, inputArg->getValue(), false);
       for (std::unique_ptr<File> &file : files) {
         inputGraph->addInputElement(std::unique_ptr<InputElement>(
-            new WrapperNode(std::move(file))));
+            new FileNode(std::move(file))));
       }
       break;
     }

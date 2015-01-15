@@ -17,7 +17,6 @@
 #include "lld/Core/ArchiveLibraryFile.h"
 #include "lld/Core/SharedLibraryFile.h"
 #include "lld/Driver/Driver.h"
-#include "lld/Driver/WrapperInputGraph.h"
 #include "lld/ReaderWriter/MachOLinkingContext.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/STLExtras.h"
@@ -121,7 +120,7 @@ static void addFile(StringRef path, std::unique_ptr<InputGraph> &inputGraph,
       loadFile(ctx, path, diag, loadWholeArchive, upwardDylib);
   for (std::unique_ptr<File> &file : files)
     inputGraph->addInputElement(
-        llvm::make_unique<WrapperNode>(std::move(file)));
+        llvm::make_unique<FileNode>(std::move(file)));
 }
 
 // Export lists are one symbol per line.  Blank lines are ignored.
