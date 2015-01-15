@@ -43,7 +43,7 @@ SMALL-SEGLOADC-SIZE: Segment load command size is too small
 INCOMPLETE-LOADC: Malformed MachO file
 TOO-MANY-SECTS: Number of sections too large for size of load command
 BAD-SYMBOL: Requested symbol index is out of range
-NAME-PAST-EOF: Symbol name entry points past end of file
+NAME-PAST-EOF: Symbol name entry points before beginning or past end of file
 
 INVALID-SECTION-IDX-SEG-NAME: getSectionRawFinalSegmentName: Invalid section index
 INVALID-SECTION-IDX-SECT-NAME: getSectionRawName: Invalid section index
