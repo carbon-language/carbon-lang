@@ -66,9 +66,14 @@ static cl::opt<bool>
     PrintImmHex("print-imm-hex",
                 cl::desc("Use hex format for immediate values"));
 
+cl::opt<bool> llvm::UniversalHeaders("universal-headers",
+                                     cl::desc("Print Mach-O universal headers "
+                                              "(requires -macho)"));
+
 cl::opt<bool>
-    llvm::UniversalHeaders("universal-headers",
-                           cl::desc("Print Mach-O universal headers"));
+    llvm::ArchiveHeaders("archive-headers",
+                         cl::desc("Print archive headers for Mach-O archives "
+                                  "(requires -macho)"));
 
 static cl::list<std::string>
     ArchFlags("arch", cl::desc("architecture(s) from a Mach-O file to dump"),
@@ -514,6 +519,106 @@ static void printMachOUniversalHeaders(const object::MachOUniversalBinary *UB,
   }
 }
 
+static void printArchiveChild(Archive::Child &C, bool verbose,
+                              bool print_offset) {
+  if (print_offset)
+    outs() << C.getChildOffset() << "\t";
+  sys::fs::perms Mode = C.getAccessMode();
+  if (verbose) {
+    // FIXME: this first dash, "-", is for (Mode & S_IFMT) == S_IFREG.
+    // But there is nothing in sys::fs::perms for S_IFMT or S_IFREG.
+    outs() << "-";
+    if (Mode & sys::fs::owner_read)
+      outs() << "r";
+    else
+      outs() << "-";
+    if (Mode & sys::fs::owner_write)
+      outs() << "w";
+    else
+      outs() << "-";
+    if (Mode & sys::fs::owner_exe)
+      outs() << "x";
+    else
+      outs() << "-";
+    if (Mode & sys::fs::group_read)
+      outs() << "r";
+    else
+      outs() << "-";
+    if (Mode & sys::fs::group_write)
+      outs() << "w";
+    else
+      outs() << "-";
+    if (Mode & sys::fs::group_exe)
+      outs() << "x";
+    else
+      outs() << "-";
+    if (Mode & sys::fs::others_read)
+      outs() << "r";
+    else
+      outs() << "-";
+    if (Mode & sys::fs::others_write)
+      outs() << "w";
+    else
+      outs() << "-";
+    if (Mode & sys::fs::others_exe)
+      outs() << "x";
+    else
+      outs() << "-";
+  } else {
+    outs() << format("0%o ", Mode);
+  }
+
+  unsigned UID = C.getUID();
+  outs() << format("%3d/", UID);
+  unsigned GID = C.getGID();
+  outs() << format("%-3d ", GID);
+  uint64_t Size = C.getRawSize() - sizeof(object::ArchiveMemberHeader);
+  outs() << format("%5d ", Size);
+
+  StringRef RawLastModified = C.getRawLastModified();
+  if (verbose) {
+    unsigned Seconds;
+    if (RawLastModified.getAsInteger(10, Seconds))
+      outs() << "(date: \"%s\" contains non-decimal chars) " << RawLastModified;
+    else {
+      // Since cime(3) returns a 26 character string of the form:
+      // "Sun Sep 16 01:03:52 1973\n\0"
+      // just print 24 characters.
+      time_t t = Seconds;
+      outs() << format("%.24s ", ctime(&t));
+    }
+  } else {
+    outs() << RawLastModified << " ";
+  }
+
+  if (verbose) {
+    ErrorOr<StringRef> NameOrErr = C.getName();
+    if (NameOrErr.getError()) {
+      StringRef RawName = C.getRawName();
+      outs() << RawName << "\n";
+    } else {
+      StringRef Name = NameOrErr.get();
+      outs() << Name << "\n";
+    }
+  } else {
+    StringRef RawName = C.getRawName();
+    outs() << RawName << "\n";
+  }
+}
+
+static void printArchiveHeaders(Archive *A, bool verbose, bool print_offset) {
+  if (A->hasSymbolTable()) {
+    Archive::child_iterator S = A->getSymbolTableChild();
+    Archive::Child C = *S;
+    printArchiveChild(C, verbose, print_offset);
+  }
+  for (Archive::child_iterator I = A->child_begin(), E = A->child_end(); I != E;
+       ++I) {
+    Archive::Child C = *I;
+    printArchiveChild(C, verbose, print_offset);
+  }
+}
+
 // ParseInputMachO() parses the named Mach-O file in Filename and handles the
 // -arch flags selecting just those slices as specified by them and also parses
 // archive files.  Then for each individual Mach-O file ProcessMachO() is
@@ -542,6 +647,8 @@ void llvm::ParseInputMachO(StringRef Filename) {
 
   if (Archive *A = dyn_cast<Archive>(&Bin)) {
     outs() << "Archive : " << Filename << "\n";
+    if (ArchiveHeaders)
+      printArchiveHeaders(A, true, false);
     for (Archive::child_iterator I = A->child_begin(), E = A->child_end();
          I != E; ++I) {
       ErrorOr<std::unique_ptr<Binary>> ChildOrErr = I->getAsBinary();
@@ -587,6 +694,8 @@ void llvm::ParseInputMachO(StringRef Filename) {
               if (!ArchitectureName.empty())
                 outs() << " (architecture " << ArchitectureName << ")";
               outs() << "\n";
+              if (ArchiveHeaders)
+                printArchiveHeaders(A.get(), true, false);
               for (Archive::child_iterator AI = A->child_begin(),
                                            AE = A->child_end();
                    AI != AE; ++AI) {
@@ -627,6 +736,8 @@ void llvm::ParseInputMachO(StringRef Filename) {
                          I->getAsArchive()) {
             std::unique_ptr<Archive> &A = *AOrErr;
             outs() << "Archive : " << Filename << "\n";
+            if (ArchiveHeaders)
+              printArchiveHeaders(A.get(), true, false);
             for (Archive::child_iterator AI = A->child_begin(),
                                          AE = A->child_end();
                  AI != AE; ++AI) {
@@ -662,6 +773,8 @@ void llvm::ParseInputMachO(StringRef Filename) {
         if (!ArchitectureName.empty())
           outs() << " (architecture " << ArchitectureName << ")";
         outs() << "\n";
+        if (ArchiveHeaders)
+          printArchiveHeaders(A.get(), true, false);
         for (Archive::child_iterator AI = A->child_begin(), AE = A->child_end();
              AI != AE; ++AI) {
           ErrorOr<std::unique_ptr<Binary>> ChildOrErr = AI->getAsBinary();

@@ -110,6 +110,12 @@ uint64_t Archive::Child::getSize() const {
   return Data.size() - StartOfFile;
 }
 
+uint64_t Archive::Child::getRawSize() const {
+  if (Parent->IsThin)
+    return getHeader()->getSize();
+  return Data.size();
+}
+
 Archive::Child Archive::Child::getNext() const {
   size_t SpaceToSkip = Data.size();
   // If it's odd, add 1 to make it even.
@@ -123,6 +129,13 @@ Archive::Child Archive::Child::getNext() const {
     return Child(Parent, nullptr);
 
   return Child(Parent, NextLoc);
+}
+
+uint64_t Archive::Child::getChildOffset() const {
+  const char *a = Parent->Data.getBuffer().data();
+  const char *c = Data.data();
+  uint64_t offset = c - a;
+  return offset;
 }
 
 ErrorOr<StringRef> Archive::Child::getName() const {

@@ -41,6 +41,9 @@ struct ArchiveMemberHeader {
 
   sys::fs::perms getAccessMode() const;
   sys::TimeValue getLastModified() const;
+  llvm::StringRef getRawLastModified() const {
+    return StringRef(LastModified, sizeof(LastModified)).rtrim(" ");
+  }
   unsigned getUID() const;
   unsigned getGID() const;
 };
@@ -78,6 +81,9 @@ public:
     sys::TimeValue getLastModified() const {
       return getHeader()->getLastModified();
     }
+    StringRef getRawLastModified() const {
+      return getHeader()->getRawLastModified();
+    }
     unsigned getUID() const { return getHeader()->getUID(); }
     unsigned getGID() const { return getHeader()->getGID(); }
     sys::fs::perms getAccessMode() const {
@@ -85,10 +91,13 @@ public:
     }
     /// \return the size of the archive member without the header or padding.
     uint64_t getSize() const;
+    /// \return the size of the archive member with the header and padding.
+    uint64_t getRawSize() const;
 
     StringRef getBuffer() const {
       return StringRef(Data.data() + StartOfFile, getSize());
     }
+    uint64_t getChildOffset() const;
 
     ErrorOr<MemoryBufferRef> getMemoryBufferRef() const;
 
@@ -194,6 +203,7 @@ public:
   child_iterator findSym(StringRef name) const;
 
   bool hasSymbolTable() const;
+  child_iterator getSymbolTableChild() const { return SymbolTable; }
 
 private:
   child_iterator SymbolTable;

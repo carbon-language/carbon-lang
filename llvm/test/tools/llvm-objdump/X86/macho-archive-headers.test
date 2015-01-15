@@ -1,0 +1,10 @@
+RUN: llvm-objdump %p/Inputs/macho-universal-archive.x86_64.i386 -macho -archive-headers -arch all \
+RUN: | FileCheck %s
+
+# Note the date as printed by ctime(3) is time zone dependent and not checked.
+CHECK: Archive : {{.*}}/macho-universal-archive.x86_64.i386 (architecture x86_64)
+CHECK: -rw-r--r--124/11     44 {{.*}} __.SYMDEF SORTED
+CHECK: -rw-r--r--124/0     860 {{.*}} hello.o
+CHECK: Archive : {{.*}}/macho-universal-archive.x86_64.i386 (architecture i386)
+CHECK: -rw-r--r--124/11     60 {{.*}} __.SYMDEF SORTED
+CHECK: -rw-r--r--124/0     388 {{.*}} foo.o
