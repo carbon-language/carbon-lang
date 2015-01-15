@@ -2786,6 +2786,59 @@ SymbolFileDWARF::GetFunction (DWARFCompileUnit* dwarf_cu, const DWARFDebugInfoEn
     return false;
 }
 
+
+
+SymbolFileDWARF::GlobalVariableMap &
+SymbolFileDWARF::GetGlobalAranges()
+{
+    if (!m_global_aranges_ap)
+    {
+        m_global_aranges_ap.reset (new GlobalVariableMap());
+
+        ModuleSP module_sp = GetObjectFile()->GetModule();
+        if (module_sp)
+        {
+            const size_t num_cus = module_sp->GetNumCompileUnits();
+            for (size_t i = 0; i < num_cus; ++i)
+            {
+                CompUnitSP cu_sp = module_sp->GetCompileUnitAtIndex(i);
+                if (cu_sp)
+                {
+                    VariableListSP globals_sp = cu_sp->GetVariableList(true);
+                    if (globals_sp)
+                    {
+                        const size_t num_globals = globals_sp->GetSize();
+                        for (size_t g = 0; g < num_globals; ++g)
+                        {
+                            VariableSP var_sp = globals_sp->GetVariableAtIndex(g);
+                            if (var_sp && !var_sp->GetLocationIsConstantValueData())
+                            {
+                                const DWARFExpression &location = var_sp->LocationExpression();
+                                Value location_result;
+                                Error error;
+                                if (location.Evaluate(NULL, NULL, NULL, LLDB_INVALID_ADDRESS, NULL, location_result, &error))
+                                {
+                                    if (location_result.GetValueType() == Value::eValueTypeFileAddress)
+                                    {
+                                        lldb::addr_t file_addr = location_result.GetScalar().ULongLong();
+                                        lldb::addr_t byte_size = 1;
+                                        if (var_sp->GetType())
+                                            byte_size = var_sp->GetType()->GetByteSize();
+                                        m_global_aranges_ap->Append(GlobalVariableMap::Entry(file_addr, byte_size, var_sp.get()));
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        m_global_aranges_ap->Sort();
+    }
+    return *m_global_aranges_ap;
+}
+
+
 uint32_t
 SymbolFileDWARF::ResolveSymbolContext (const Address& so_addr, uint32_t resolve_scope, SymbolContext& sc)
 {
@@ -2794,10 +2847,11 @@ SymbolFileDWARF::ResolveSymbolContext (const Address& so_addr, uint32_t resolve_
                        static_cast<void*>(so_addr.GetSection().get()),
                        so_addr.GetOffset(), resolve_scope);
     uint32_t resolved = 0;
-    if (resolve_scope & (   eSymbolContextCompUnit |
-                            eSymbolContextFunction |
-                            eSymbolContextBlock |
-                            eSymbolContextLineEntry))
+    if (resolve_scope & (   eSymbolContextCompUnit  |
+                            eSymbolContextFunction  |
+                            eSymbolContextBlock     |
+                            eSymbolContextLineEntry |
+                            eSymbolContextVariable  ))
     {
         lldb::addr_t file_vm_addr = so_addr.GetFileAddress();
 
@@ -2805,7 +2859,30 @@ SymbolFileDWARF::ResolveSymbolContext (const Address& so_addr, uint32_t resolve_
         if (debug_info)
         {
             const dw_offset_t cu_offset = debug_info->GetCompileUnitAranges().FindAddress(file_vm_addr);
-            if (cu_offset != DW_INVALID_OFFSET)
+            if (cu_offset == DW_INVALID_OFFSET)
+            {
+                // Global variables are not in the compile unit address ranges. The only way to
+                // currently find global variables is to iterate over the .debug_pubnames or the
+                // __apple_names table and find all items in there that point to DW_TAG_variable
+                // DIEs and then find the address that matches.
+                if (resolve_scope & eSymbolContextVariable)
+                {
+                    GlobalVariableMap &map = GetGlobalAranges();
+                    const GlobalVariableMap::Entry *entry = map.FindEntryThatContains(file_vm_addr);
+                    if (entry && entry->data)
+                    {
+                        Variable *variable = entry->data;
+                        SymbolContextScope *scc = variable->GetSymbolContextScope();
+                        if (scc)
+                        {
+                            scc->CalculateSymbolContext(&sc);
+                            sc.variable = variable;
+                        }
+                        return sc.GetResolvedMask();
+                    }
+                }
+            }
+            else
             {
                 uint32_t cu_idx = DW_INVALID_INDEX;
                 DWARFCompileUnit* dwarf_cu = debug_info->GetCompileUnit(cu_offset, &cu_idx).get();

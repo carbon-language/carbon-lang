@@ -290,7 +290,11 @@ namespace lldb {
         eSymbolContextBlock      = (1u << 4), ///< Set when the deepest \a block is requested from a query, or was located in query results
         eSymbolContextLineEntry  = (1u << 5), ///< Set when \a line_entry is requested from a query, or was located in query results
         eSymbolContextSymbol     = (1u << 6), ///< Set when \a symbol is requested from a query, or was located in query results
-        eSymbolContextEverything = ((eSymbolContextSymbol << 1) - 1u)  ///< Indicates to try and lookup everything up during a query.
+        eSymbolContextEverything = ((eSymbolContextSymbol << 1) - 1u),  ///< Indicates to try and lookup everything up during a routine symbol context query.
+        eSymbolContextVariable   = (1u << 7)  ///< Set when \a global or static variable is requested from a query, or was located in query results.
+                                              ///< eSymbolContextVariable is potentially expensive to lookup so it isn't included in
+                                              ///< eSymbolContextEverything which stops it from being used during frame PC lookups and
+                                              ///< many other potential address to symbol context lookups.
     } SymbolContextItem;
 
     typedef enum Permissions

@@ -4078,7 +4078,7 @@ public:
                     if (LookupAddressInModule (m_interpreter, 
                                                result.GetOutputStream(), 
                                                module, 
-                                               eSymbolContextEverything, 
+                                               eSymbolContextEverything | (m_options.m_verbose ? eSymbolContextVariable : 0),
                                                m_options.m_addr, 
                                                m_options.m_offset,
                                                m_options.m_verbose))

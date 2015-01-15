@@ -347,6 +347,7 @@ public:
     Block *         block;      ///< The Block for a given query
     LineEntry       line_entry; ///< The LineEntry for a given query
     Symbol *        symbol;     ///< The Symbol for a given query
+    Variable *      variable;   ///< The global variable matching the given query
 };
 
 

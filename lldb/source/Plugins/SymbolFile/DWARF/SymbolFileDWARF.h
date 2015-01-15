@@ -29,6 +29,7 @@
 #include "lldb/Core/ConstString.h"
 #include "lldb/Core/dwarf.h"
 #include "lldb/Core/Flags.h"
+#include "lldb/Core/RangeMap.h"
 #include "lldb/Core/UniqueCStringMap.h"
 #include "lldb/Symbol/ClangASTContext.h"
 #include "lldb/Symbol/SymbolFile.h"
@@ -557,6 +558,11 @@ protected:
               uint32_t type_mask,
               TypeSet &type_set);
 
+    typedef lldb_private::RangeDataVector<lldb::addr_t, lldb::addr_t, lldb_private::Variable *> GlobalVariableMap;
+
+    GlobalVariableMap &
+    GetGlobalAranges();
+
     lldb::ModuleWP                        m_debug_map_module_wp;
     SymbolFileDWARFDebugMap *             m_debug_map_symfile;
     clang::TranslationUnitDecl *          m_clang_tu_decl;
@@ -584,6 +590,7 @@ protected:
     std::unique_ptr<DWARFMappedHash::MemoryTable> m_apple_types_ap;
     std::unique_ptr<DWARFMappedHash::MemoryTable> m_apple_namespaces_ap;
     std::unique_ptr<DWARFMappedHash::MemoryTable> m_apple_objc_ap;
+    std::unique_ptr<GlobalVariableMap>  m_global_aranges_ap;
     NameToDIE                           m_function_basename_index;  // All concrete functions
     NameToDIE                           m_function_fullname_index;  // All concrete functions
     NameToDIE                           m_function_method_index;    // All inlined functions
