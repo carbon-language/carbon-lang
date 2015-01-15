@@ -329,7 +329,6 @@ ClangExpressionParser::ClangExpressionParser (ExecutionContextScope *exe_scope,
     m_code_generator.reset(CreateLLVMCodeGen(m_compiler->getDiagnostics(),
                                              module_name,
                                              m_compiler->getCodeGenOpts(),
-                                             m_compiler->getTargetOpts(),
                                              *m_llvm_context));
 }
 
