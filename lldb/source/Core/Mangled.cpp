@@ -5240,18 +5240,20 @@ Mangled::GetDemangledName () const
                                                           UNDNAME_NO_MEMBER_TYPE |         // Strip virtual, static, etc specifiers
                                                           UNDNAME_NO_MS_KEYWORDS           // Strip all MS extension keywords
                                                       );
-                if (result > 0)
-                    m_demangled.SetCStringWithMangledCounterpart(demangled_name, m_mangled);
-                free(demangled_name);
+                if (result == 0)
+                {
+                    free (demangled_name);
+                    demangled_name = nullptr;
+                }
 #else
                 char *demangled_name = abi::__cxa_demangle (mangled_cstr, NULL, NULL, NULL);
+#endif
 
                 if (demangled_name)
                 {
                     m_demangled.SetCStringWithMangledCounterpart(demangled_name, m_mangled);
                     free (demangled_name);
                 }
-#endif
             }
         }
         if (!m_demangled)
