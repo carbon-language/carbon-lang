@@ -148,6 +148,12 @@ let isCommutable = 1, isCodeGenOnly = 0 in {
 let isCodeGenOnly = 0 in
 def F2_sfsub : T_MInstFloat < "sfsub", 0b000, 0b001>;
 
+def: Pat<(f32 (fadd F32:$src1, F32:$src2)),
+         (F2_sfadd F32:$src1, F32:$src2)>;
+
+def: Pat<(f32 (fsub F32:$src1, F32:$src2)),
+         (F2_sfsub F32:$src1, F32:$src2)>;
+
 let Itinerary = M_tc_3x_SLOT23, isCodeGenOnly = 0 in {
   def F2_sfmax : T_MInstFloat < "sfmax", 0b100, 0b000>;
   def F2_sfmin : T_MInstFloat < "sfmin", 0b100, 0b001>;
@@ -488,35 +494,6 @@ def F2_sfimm_n : T_fimm <"sfmake", IntRegs, 0b0110, 1>;
 def F2_dfimm_p : T_fimm <"dfmake", DoubleRegs, 0b1001, 0>;
 def F2_dfimm_n : T_fimm <"dfmake", DoubleRegs, 0b1001, 1>;
 }
-
-// Add
-let isCommutable = 1 in
-def fADD_rr : ALU64_rr<(outs IntRegs:$dst),
-            (ins IntRegs:$src1, IntRegs:$src2),
-            "$dst = sfadd($src1, $src2)",
-            [(set IntRegs:$dst, (fadd IntRegs:$src1, IntRegs:$src2))]>,
-          Requires<[HasV5T]>;
-
-let isCommutable = 1 in
-def fADD64_rr : ALU64_rr<(outs DoubleRegs:$dst), (ins DoubleRegs:$src1,
-                                                     DoubleRegs:$src2),
-               "$dst = dfadd($src1, $src2)",
-               [(set DoubleRegs:$dst, (fadd DoubleRegs:$src1,
-                                           DoubleRegs:$src2))]>,
-          Requires<[HasV5T]>;
-
-def fSUB_rr : ALU64_rr<(outs IntRegs:$dst),
-            (ins IntRegs:$src1, IntRegs:$src2),
-            "$dst = sfsub($src1, $src2)",
-            [(set IntRegs:$dst, (fsub IntRegs:$src1, IntRegs:$src2))]>,
-          Requires<[HasV5T]>;
-
-def fSUB64_rr : ALU64_rr<(outs DoubleRegs:$dst), (ins DoubleRegs:$src1,
-                                                     DoubleRegs:$src2),
-               "$dst = dfsub($src1, $src2)",
-               [(set DoubleRegs:$dst, (fsub DoubleRegs:$src1,
-                                           DoubleRegs:$src2))]>,
-               Requires<[HasV5T]>;
 
 let isCommutable = 1 in
 def fMUL_rr : ALU64_rr<(outs IntRegs:$dst),
