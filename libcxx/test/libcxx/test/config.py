@@ -17,7 +17,7 @@ class Configuration(object):
         self.lit_config = lit_config
         self.config = config
         self.cxx = None
-        self.src_root = None
+        self.libcxx_src_root = None
         self.obj_root = None
         self.cxx_library_root = None
         self.env = {}
@@ -137,11 +137,12 @@ class Configuration(object):
                 compiler_name, major_ver, minor_ver))
 
     def configure_src_root(self):
-        self.src_root = self.get_lit_conf(
+        self.libcxx_src_root = self.get_lit_conf(
             'libcxx_src_root', os.path.dirname(self.config.test_source_root))
 
     def configure_obj_root(self):
-        self.obj_root = self.get_lit_conf('libcxx_obj_root', self.src_root)
+        self.obj_root = self.get_lit_conf('libcxx_obj_root',
+                                          self.libcxx_src_root)
 
     def configure_cxx_library_root(self):
         self.cxx_library_root = self.get_lit_conf('cxx_library_root',
@@ -297,9 +298,9 @@ class Configuration(object):
         self.compile_flags += shlex.split(compile_flags_str)
 
     def configure_compile_flags_header_includes(self):
-        self.compile_flags += ['-I' + self.src_root + '/test/support']
+        self.compile_flags += ['-I' + self.libcxx_src_root + '/test/support']
         libcxx_headers = self.get_lit_conf('libcxx_headers',
-                                           self.src_root + '/include')
+                                           self.libcxx_src_root + '/include')
         if not os.path.isdir(libcxx_headers):
             self.lit_config.fatal("libcxx_headers='%s' is not a directory."
                                   % libcxx_headers)
