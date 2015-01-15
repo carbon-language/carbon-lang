@@ -999,8 +999,8 @@ public:
   }
 
   virtual std::error_code
-  parseFile(std::unique_ptr<MemoryBuffer> mb, const class Registry &,
-            std::vector<std::unique_ptr<File>> &result) const override {
+  loadFile(std::unique_ptr<MemoryBuffer> mb, const class Registry &,
+           std::vector<std::unique_ptr<File>> &result) const override {
     auto *file = new lld::native::File(std::move(mb));
     result.push_back(std::unique_ptr<File>(file));
     return std::error_code();

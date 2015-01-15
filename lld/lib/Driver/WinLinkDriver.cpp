@@ -14,8 +14,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "lld/Driver/Driver.h"
-#include "lld/Driver/WinLinkInputGraph.h"
 #include "lld/Driver/WinLinkModuleDef.h"
+#include "lld/Driver/WrapperInputGraph.h"
 #include "lld/ReaderWriter/PECOFFLinkingContext.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/Optional.h"
@@ -800,13 +800,11 @@ parseArgs(int argc, const char **argv, PECOFFLinkingContext &ctx,
 
 // Returns true if the given file node has already been added to the input
 // graph.
-static bool hasLibrary(const PECOFFLinkingContext &ctx, FileNode *fileNode) {
-  ErrorOr<StringRef> path = fileNode->getPath(ctx);
-  if (!path)
-    return false;
+static bool hasLibrary(const PECOFFLinkingContext &ctx, File *file) {
+  StringRef path = file->path();
   for (std::unique_ptr<InputElement> &p : ctx.getInputGraph().inputElements())
     if (auto *f = dyn_cast<FileNode>(p.get()))
-      if (*path == *f->getPath(ctx))
+      if (*f->getPath(ctx) == path)
         return true;
   return false;
 }
@@ -838,6 +836,16 @@ static bool maybeRunLibCommand(int argc, const char **argv, raw_ostream &diag) {
   return true;
 }
 
+/// \brief Parse the input file to lld::File.
+void addFiles(PECOFFLinkingContext &ctx, StringRef path, raw_ostream &diag,
+	      std::vector<std::unique_ptr<File>> &files) {
+  for (std::unique_ptr<File> &file : loadFile(ctx, path, false)) {
+    if (ctx.logInputFiles())
+      diag << file->path() << "\n";
+    files.push_back(std::move(file));
+  }
+}
+
 //
 // Main driver
 //
@@ -847,6 +855,12 @@ bool WinLinkDriver::linkPECOFF(int argc, const char **argv, raw_ostream &diag) {
     return true;
 
   PECOFFLinkingContext ctx;
+  ctx.registry().addSupportCOFFObjects(ctx);
+  ctx.registry().addSupportCOFFImportLibraries(ctx);
+  ctx.registry().addSupportArchives(ctx.logInputFiles());
+  ctx.registry().addSupportNativeObjects();
+  ctx.registry().addSupportYamlFiles();
+
   std::vector<const char *> newargv = processLinkEnv(ctx, argc, argv);
   processLibEnv(ctx);
   if (!parse(newargv.size() - 1, &newargv[0], ctx, diag))
@@ -856,13 +870,6 @@ bool WinLinkDriver::linkPECOFF(int argc, const char **argv, raw_ostream &diag) {
   if (ctx.getCreateManifest() && !ctx.getEmbedManifest())
     if (!createSideBySideManifestFile(ctx, diag))
       return false;
-
-  // Register possible input file parsers.
-  ctx.registry().addSupportCOFFObjects(ctx);
-  ctx.registry().addSupportCOFFImportLibraries(ctx);
-  ctx.registry().addSupportArchives(ctx.logInputFiles());
-  ctx.registry().addSupportNativeObjects();
-  ctx.registry().addSupportYamlFiles();
 
   return link(ctx, diag);
 }
@@ -884,8 +891,8 @@ bool WinLinkDriver::parse(int argc, const char *argv[],
     return false;
 
   // The list of input files.
-  std::vector<std::unique_ptr<FileNode> > files;
-  std::vector<std::unique_ptr<FileNode> > libraries;
+  std::vector<std::unique_ptr<File>> files;
+  std::vector<std::unique_ptr<File>> libraries;
 
   // Handle /help
   if (parsedArgs->getLastArg(OPT_help)) {
@@ -1363,11 +1370,9 @@ bool WinLinkDriver::parse(int argc, const char *argv[],
   for (StringRef path : inputFiles) {
     path = ctx.allocate(path);
     if (isLibraryFile(path)) {
-      libraries.push_back(std::unique_ptr<FileNode>(
-          new PECOFFFileNode(ctx, getLibraryPath(ctx, path))));
+      addFiles(ctx, getLibraryPath(ctx, path), diag, libraries);
     } else {
-      files.push_back(std::unique_ptr<FileNode>(
-          new PECOFFFileNode(ctx, getObjectPath(ctx, path))));
+      addFiles(ctx, getObjectPath(ctx, path), diag, files);
     }
   }
 
@@ -1389,8 +1394,7 @@ bool WinLinkDriver::parse(int argc, const char *argv[],
   if (!ctx.getNoDefaultLibAll())
     for (const StringRef path : defaultLibs)
       if (!ctx.hasNoDefaultLib(path))
-        libraries.push_back(std::unique_ptr<FileNode>(
-            new PECOFFFileNode(ctx, getLibraryPath(ctx, path.lower()))));
+	addFiles(ctx, getLibraryPath(ctx, path.lower()), diag, libraries);
 
   if (files.empty() && !isReadingDirectiveSection) {
     diag << "No input files\n";
@@ -1401,18 +1405,19 @@ bool WinLinkDriver::parse(int argc, const char *argv[],
   // constructed by replacing an extension of the first input file
   // with ".exe".
   if (ctx.outputPath().empty()) {
-    StringRef path = *cast<FileNode>(&*files[0])->getPath(ctx);
+    StringRef path = files[0]->path();
     ctx.setOutputPath(replaceExtension(ctx, path, ".exe"));
   }
 
   // Add the input files to the input graph.
   if (!ctx.hasInputGraph())
     ctx.setInputGraph(std::unique_ptr<InputGraph>(new InputGraph()));
-  for (std::unique_ptr<FileNode> &file : files) {
+  for (std::unique_ptr<File> &file : files) {
     if (isReadingDirectiveSection)
-      if (file->parse(ctx, diag))
+      if (file->parse())
         return false;
-    ctx.getInputGraph().addInputElement(std::move(file));
+    ctx.getInputGraph().addInputElement(
+      std::unique_ptr<InputElement>(new WrapperNode(std::move(file))));
   }
 
   // Add the library group to the input graph.
@@ -1427,12 +1432,13 @@ bool WinLinkDriver::parse(int argc, const char *argv[],
   }
 
   // Add the library files to the library group.
-  for (std::unique_ptr<FileNode> &lib : libraries) {
-    if (!hasLibrary(ctx, lib.get())) {
+  for (std::unique_ptr<File> &file : libraries) {
+    if (!hasLibrary(ctx, file.get())) {
       if (isReadingDirectiveSection)
-        if (lib->parse(ctx, diag))
+        if (file->parse())
           return false;
-      ctx.addLibraryFile(std::move(lib));
+      ctx.addLibraryFile(
+	std::unique_ptr<FileNode>(new WrapperNode(std::move(file))));
     }
   }
 

@@ -12,14 +12,11 @@ add_public_tablegen_target(DriverOptionsTableGen)
 
 add_lld_library(lldDriver
   CoreDriver.cpp
-  DarwinInputGraph.cpp
   DarwinLdDriver.cpp
   Driver.cpp
   GnuLdDriver.cpp
-  GnuLdInputGraph.cpp
   UniversalDriver.cpp
   WinLinkDriver.cpp
-  WinLinkInputGraph.cpp
   WinLinkModuleDef.cpp
   )
 

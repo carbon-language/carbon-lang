@@ -35,7 +35,7 @@ public:
   virtual const File *find(StringRef name, bool dataSymbolOnly) const = 0;
 
   virtual std::error_code
-  parseAllMembers(std::vector<std::unique_ptr<File>> &result) const = 0;
+  parseAllMembers(std::vector<std::unique_ptr<File>> &result) = 0;
 
   /// Returns a set of all defined symbols in the archive, i.e. all
   /// resolvable symbol using this file.

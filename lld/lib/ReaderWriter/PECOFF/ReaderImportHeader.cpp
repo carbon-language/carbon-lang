@@ -354,7 +354,7 @@ private:
 
 class COFFImportLibraryReader : public Reader {
 public:
-  COFFImportLibraryReader(MachineTypes machine) : _machine(machine) {}
+  COFFImportLibraryReader(PECOFFLinkingContext &ctx) : _ctx(ctx) {}
 
   bool canParse(file_magic magic, StringRef,
                 const MemoryBuffer &mb) const override {
@@ -364,22 +364,21 @@ public:
   }
 
   std::error_code
-  parseFile(std::unique_ptr<MemoryBuffer> mb, const class Registry &,
-            std::vector<std::unique_ptr<File> > &result) const override {
-    auto *file = new FileImportLibrary(std::move(mb), _machine);
+  loadFile(std::unique_ptr<MemoryBuffer> mb, const class Registry &,
+           std::vector<std::unique_ptr<File> > &result) const override {
+    auto *file = new FileImportLibrary(std::move(mb), _ctx.getMachineType());
     result.push_back(std::unique_ptr<File>(file));
     return std::error_code();
   }
 
 private:
-  MachineTypes _machine;
+  PECOFFLinkingContext &_ctx;
 };
 
 } // end anonymous namespace
 
 void Registry::addSupportCOFFImportLibraries(PECOFFLinkingContext &ctx) {
-  MachineTypes machine = ctx.getMachineType();
-  add(llvm::make_unique<COFFImportLibraryReader>(machine));
+  add(llvm::make_unique<COFFImportLibraryReader>(ctx));
 }
 
 } // end namespace lld

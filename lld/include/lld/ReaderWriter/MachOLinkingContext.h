@@ -350,7 +350,7 @@ private:
   mutable llvm::StringMap<mach_o::MachODylibFile*> _pathToDylibMap;
   mutable std::set<mach_o::MachODylibFile*> _allDylibs;
   mutable std::set<mach_o::MachODylibFile*> _upwardDylibs;
-  mutable std::vector<std::unique_ptr<class MachOFileNode>> _indirectDylibs;
+  mutable std::vector<std::unique_ptr<File>> _indirectDylibs;
   ExportMode _exportMode;
   llvm::StringSet<> _exportedSymbols;
   DebugInfoMode _debugInfoMode;

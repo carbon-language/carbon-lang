@@ -36,7 +36,7 @@ typedef std::vector<std::unique_ptr<File>> FileVector;
 
 FileVector makeErrorFile(StringRef path, std::error_code ec);
 FileVector parseMemberFiles(FileVector &files);
-FileVector parseFile(LinkingContext &ctx, StringRef path, bool wholeArchive);
+FileVector loadFile(LinkingContext &ctx, StringRef path, bool wholeArchive);
 
 /// Base class for all Drivers.
 class Driver {
@@ -100,6 +100,11 @@ public:
   /// Returns true iff there was an error.
   static bool parse(int argc, const char *argv[], MachOLinkingContext &info,
                     raw_ostream &diagnostics = llvm::errs());
+
+  // Reads a file from disk to memory. Returns only a needed chunk
+  // if a fat binary.
+  static ErrorOr<std::unique_ptr<MemoryBuffer>>
+  getMemoryBuffer(MachOLinkingContext &ctx, StringRef path);
 
 private:
   DarwinLdDriver() LLVM_DELETED_FUNCTION;
