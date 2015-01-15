@@ -7010,12 +7010,12 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
 
         // Check that we can declare a template here.
         if (CheckTemplateDeclScope(S, TemplateParams))
-          return nullptr;
+          NewFD->setInvalidDecl();
 
         // A destructor cannot be a template.
         if (Name.getNameKind() == DeclarationName::CXXDestructorName) {
           Diag(NewFD->getLocation(), diag::err_destructor_template);
-          return nullptr;
+          NewFD->setInvalidDecl();
         }
         
         // If we're adding a template to a dependent context, we may need to 

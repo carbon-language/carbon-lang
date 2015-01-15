@@ -146,3 +146,9 @@ namespace redecl {
     };
   };
 }
+
+extern "C" template <typename T> // expected-error{{templates must have C++ linkage}}
+void DontCrashOnThis() {
+  T &pT = T();
+  pT;
+}

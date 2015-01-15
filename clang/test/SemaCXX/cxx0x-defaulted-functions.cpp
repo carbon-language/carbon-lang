@@ -173,7 +173,7 @@ namespace PR14577 {
 
 extern "C" {
  template<typename _Tp> // expected-error {{templates must have C++ linkage}}
- void PR13573(const _Tp&) = delete; // expected-error {{only functions can have deleted definitions}}
+ void PR13573(const _Tp&) = delete;
 }
 
 namespace PR15597 {
