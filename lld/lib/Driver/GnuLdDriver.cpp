@@ -589,8 +589,10 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
 
       ErrorOr<StringRef> pathOrErr = findFile(*ctx, path, dashL);
       if (std::error_code ec = pathOrErr.getError()) {
-        diagnostics << ec.message() << "\n";
-        return false;
+        auto file = llvm::make_unique<ErrorFile>(path, ec);
+        ctx->getNodes().push_back(
+            std::unique_ptr<FileNode>(new FileNode(std::move(file))));
+        break;
       }
       std::string realpath = pathOrErr.get();
 
