@@ -30,48 +30,42 @@
 
 namespace lld {
 
-class InputElement;
+class Node;
 class LinkingContext;
 
 class InputGraph {
 public:
-  std::vector<std::unique_ptr<InputElement>> &members() {
+  std::vector<std::unique_ptr<Node>> &members() {
     return _members;
   }
 
 protected:
-  std::vector<std::unique_ptr<InputElement>> _members;
+  std::vector<std::unique_ptr<Node>> _members;
 };
 
-/// \brief This describes each element in the InputGraph. The Kind
-/// determines what the current node contains.
-class InputElement {
+// A Node represents a FileNode or other type of Node. In the latter case,
+// the node contains meta information about the input file list.
+// Currently only GroupEnd node is defined as a meta node.
+class Node {
 public:
-  /// Each input element in the graph can be a File or a control
-  enum class Kind : uint8_t {
-    File,       // Represents a type associated with File Nodes
-    GroupEnd,
-  };
-
-  InputElement(Kind type) : _kind(type) {}
-  virtual ~InputElement() {}
-
-  /// Return the Element Type for an Input Element
+  enum class Kind { File, GroupEnd };
+  Node(Kind type) : _kind(type) {}
+  virtual ~Node() {}
   virtual Kind kind() const { return _kind; }
 
-protected:
-  Kind _kind; // The type of the Element
+private:
+  Kind _kind;
 };
 
 // This is a marker for --end-group. getSize() returns the number of
 // files between the corresponding --start-group and this marker.
-class GroupEnd : public InputElement {
+class GroupEnd : public Node {
 public:
-  GroupEnd(int size) : InputElement(Kind::GroupEnd), _size(size) {}
+  GroupEnd(int size) : Node(Kind::GroupEnd), _size(size) {}
 
   int getSize() const { return _size; }
 
-  static inline bool classof(const InputElement *a) {
+  static inline bool classof(const Node *a) {
     return a->kind() == Kind::GroupEnd;
   }
 
@@ -80,15 +74,15 @@ private:
 };
 
 // A container of File.
-class FileNode : public InputElement {
+class FileNode : public Node {
 public:
   explicit FileNode(std::unique_ptr<File> f)
-      : InputElement(InputElement::Kind::File), _file(std::move(f)) {}
+      : Node(Node::Kind::File), _file(std::move(f)) {}
 
   virtual ~FileNode() {}
 
-  static inline bool classof(const InputElement *a) {
-    return a->kind() == InputElement::Kind::File;
+  static inline bool classof(const Node *a) {
+    return a->kind() == Node::Kind::File;
   }
 
   File *getFile() { return _file.get(); }

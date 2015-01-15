@@ -26,7 +26,7 @@ class PassManager;
 class File;
 class Writer;
 class InputGraph;
-class InputElement;
+class Node;
 class SharedLibraryFile;
 
 /// \brief The LinkingContext class encapsulates "what and how" to link.

@@ -153,7 +153,7 @@ bool CoreDriver::parse(int argc, const char *argv[], CoreLinkingContext &ctx,
       std::vector<std::unique_ptr<File>> files
         = loadFile(ctx, inputArg->getValue(), false);
       for (std::unique_ptr<File> &file : files) {
-        inputGraph->members().push_back(std::unique_ptr<InputElement>(
+        inputGraph->members().push_back(std::unique_ptr<Node>(
             new FileNode(std::move(file))));
       }
       break;

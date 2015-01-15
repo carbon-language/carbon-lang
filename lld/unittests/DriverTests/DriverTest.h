@@ -32,10 +32,9 @@ protected:
 
   // Convenience method for getting i'th input files name.
   std::string inputFile(int index) {
-    InputElement &inputElement =
-        *linkingContext()->getInputGraph().members()[index];
-    if (inputElement.kind() == InputElement::Kind::File)
-      return cast<FileNode>(&inputElement)->getFile()->path();
+    Node &node = *linkingContext()->getInputGraph().members()[index];
+    if (node.kind() == Node::Kind::File)
+      return cast<FileNode>(&node)->getFile()->path();
     llvm_unreachable("not handling other types of input files");
   }
 

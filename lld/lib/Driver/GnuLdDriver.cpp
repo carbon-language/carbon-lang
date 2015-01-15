@@ -275,7 +275,7 @@ evaluateLinkerScript(ELFLinkingContext &ctx, InputGraph *inputGraph,
         if (ctx.logInputFiles())
           diag << file->path() << "\n";
         inputGraph->members().push_back(
-            std::unique_ptr<InputElement>(new FileNode(std::move(file))));
+            std::unique_ptr<Node>(new FileNode(std::move(file))));
         ++numfiles;
       }
     }
@@ -616,7 +616,7 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
         if (ctx->logInputFiles())
           diagnostics << file->path() << "\n";
         inputGraph->members().push_back(
-            std::unique_ptr<InputElement>(new FileNode(std::move(file))));
+            std::unique_ptr<Node>(new FileNode(std::move(file))));
       }
       numfiles += files.size();
       break;

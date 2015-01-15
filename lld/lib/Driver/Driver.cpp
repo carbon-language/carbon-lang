@@ -84,7 +84,7 @@ bool Driver::link(LinkingContext &context, raw_ostream &diagnostics) {
   ScopedTask readTask(getDefaultDomain(), "Read Args");
   TaskGroup tg;
   std::mutex diagnosticsMutex;
-  for (std::unique_ptr<InputElement> &ie : inputGraph.members()) {
+  for (std::unique_ptr<Node> &ie : inputGraph.members()) {
     tg.spawn([&] {
       // Writes to the same output stream is not guaranteed to be thread-safe.
       // We buffer the diagnostics output to a separate string-backed output

@@ -801,7 +801,7 @@ parseArgs(int argc, const char **argv, PECOFFLinkingContext &ctx,
 // graph.
 static bool hasLibrary(const PECOFFLinkingContext &ctx, File *file) {
   StringRef path = file->path();
-  for (std::unique_ptr<InputElement> &p : ctx.getInputGraph().members())
+  for (std::unique_ptr<Node> &p : ctx.getInputGraph().members())
     if (auto *f = dyn_cast<FileNode>(p.get()))
       if (f->getFile()->path() == path)
         return true;
@@ -1417,7 +1417,7 @@ bool WinLinkDriver::parse(int argc, const char *argv[],
         return false;
     ctx.getResolvableSymsFile()->add(file.get());
     ctx.getInputGraph().members().push_back(
-      std::unique_ptr<InputElement>(new FileNode(std::move(file))));
+      std::unique_ptr<Node>(new FileNode(std::move(file))));
   }
 
   // Add the library group to the input graph.

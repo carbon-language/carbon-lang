@@ -928,12 +928,12 @@ bool MachOLinkingContext::customAtomOrderer(const DefinedAtom *left,
   return true;
 }
 
-static File *getFirstFile(const std::unique_ptr<InputElement> &elem) {
-  FileNode *e = dyn_cast<FileNode>(const_cast<InputElement *>(elem.get()));
+static File *getFirstFile(const std::unique_ptr<Node> &elem) {
+  FileNode *e = dyn_cast<FileNode>(const_cast<Node *>(elem.get()));
   return e ? e->getFile() : nullptr;
 }
 
-static bool isLibrary(const std::unique_ptr<InputElement> &elem) {
+static bool isLibrary(const std::unique_ptr<Node> &elem) {
   File *f = getFirstFile(elem);
   return f && (isa<SharedLibraryFile>(f) || isa<ArchiveLibraryFile>(f));
 }
@@ -946,11 +946,11 @@ static bool isLibrary(const std::unique_ptr<InputElement> &elem) {
 // so that the Resolver will reiterate over the libraries as long as we find
 // new undefines from libraries.
 void MachOLinkingContext::maybeSortInputFiles() {
-  std::vector<std::unique_ptr<InputElement>> &elements
+  std::vector<std::unique_ptr<Node>> &elements
       = getInputGraph().members();
   std::stable_sort(elements.begin(), elements.end(),
-                   [](const std::unique_ptr<InputElement> &a,
-                      const std::unique_ptr<InputElement> &b) {
+                   [](const std::unique_ptr<Node> &a,
+                      const std::unique_ptr<Node> &b) {
                      return !isLibrary(a) && isLibrary(b);
                    });
   size_t numLibs = std::count_if(elements.begin(), elements.end(), isLibrary);
