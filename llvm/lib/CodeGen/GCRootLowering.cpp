@@ -38,12 +38,7 @@ namespace {
 /// directed by the GCStrategy. It also performs automatic root initialization
 /// and custom intrinsic lowering.
 class LowerIntrinsics : public FunctionPass {
-  static bool NeedsDefaultLoweringPass(const GCStrategy &C);
-  static bool NeedsCustomLoweringPass(const GCStrategy &C);
-  static bool CouldBecomeSafePoint(Instruction *I);
   bool PerformDefaultLowering(Function &F, GCStrategy &Coll);
-  static bool InsertRootInitializers(Function &F, AllocaInst **Roots,
-                                     unsigned Count);
 
 public:
   static char ID;
@@ -108,6 +103,20 @@ void LowerIntrinsics::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addPreserved<DominatorTreeWrapperPass>();
 }
 
+static bool NeedsDefaultLoweringPass(const GCStrategy &C) {
+  // Default lowering is necessary only if read or write barriers have a default
+  // action. The default for roots is no action.
+  return !C.customWriteBarrier() || !C.customReadBarrier() ||
+         C.initializeRoots();
+}
+
+static bool NeedsCustomLoweringPass(const GCStrategy &C) {
+  // Custom lowering is only necessary if enabled for some action.
+  return C.customWriteBarrier() || C.customReadBarrier() || C.customRoots();
+}
+
+
+
 /// doInitialization - If this module uses the GC intrinsics, find them now.
 bool LowerIntrinsics::doInitialization(Module &M) {
   // FIXME: This is rather antisocial in the context of a JIT since it performs
@@ -129,8 +138,37 @@ bool LowerIntrinsics::doInitialization(Module &M) {
   return MadeChange;
 }
 
-bool LowerIntrinsics::InsertRootInitializers(Function &F, AllocaInst **Roots,
-                                             unsigned Count) {
+
+/// CouldBecomeSafePoint - Predicate to conservatively determine whether the
+/// instruction could introduce a safe point.
+static bool CouldBecomeSafePoint(Instruction *I) {
+  // The natural definition of instructions which could introduce safe points
+  // are:
+  //
+  //   - call, invoke (AfterCall, BeforeCall)
+  //   - phis (Loops)
+  //   - invoke, ret, unwind (Exit)
+  //
+  // However, instructions as seemingly inoccuous as arithmetic can become
+  // libcalls upon lowering (e.g., div i64 on a 32-bit platform), so instead
+  // it is necessary to take a conservative approach.
+
+  if (isa<AllocaInst>(I) || isa<GetElementPtrInst>(I) || isa<StoreInst>(I) ||
+      isa<LoadInst>(I))
+    return false;
+
+  // llvm.gcroot is safe because it doesn't do anything at runtime.
+  if (CallInst *CI = dyn_cast<CallInst>(I))
+    if (Function *F = CI->getCalledFunction())
+      if (unsigned IID = F->getIntrinsicID())
+        if (IID == Intrinsic::gcroot)
+          return false;
+
+  return true;
+}
+
+static bool InsertRootInitializers(Function &F, AllocaInst **Roots,
+                                   unsigned Count) {
   // Scroll past alloca instructions.
   BasicBlock::iterator IP = F.getEntryBlock().begin();
   while (isa<AllocaInst>(IP))
@@ -160,45 +198,6 @@ bool LowerIntrinsics::InsertRootInitializers(Function &F, AllocaInst **Roots,
   return MadeChange;
 }
 
-bool LowerIntrinsics::NeedsDefaultLoweringPass(const GCStrategy &C) {
-  // Default lowering is necessary only if read or write barriers have a default
-  // action. The default for roots is no action.
-  return !C.customWriteBarrier() || !C.customReadBarrier() ||
-         C.initializeRoots();
-}
-
-bool LowerIntrinsics::NeedsCustomLoweringPass(const GCStrategy &C) {
-  // Custom lowering is only necessary if enabled for some action.
-  return C.customWriteBarrier() || C.customReadBarrier() || C.customRoots();
-}
-
-/// CouldBecomeSafePoint - Predicate to conservatively determine whether the
-/// instruction could introduce a safe point.
-bool LowerIntrinsics::CouldBecomeSafePoint(Instruction *I) {
-  // The natural definition of instructions which could introduce safe points
-  // are:
-  //
-  //   - call, invoke (AfterCall, BeforeCall)
-  //   - phis (Loops)
-  //   - invoke, ret, unwind (Exit)
-  //
-  // However, instructions as seemingly inoccuous as arithmetic can become
-  // libcalls upon lowering (e.g., div i64 on a 32-bit platform), so instead
-  // it is necessary to take a conservative approach.
-
-  if (isa<AllocaInst>(I) || isa<GetElementPtrInst>(I) || isa<StoreInst>(I) ||
-      isa<LoadInst>(I))
-    return false;
-
-  // llvm.gcroot is safe because it doesn't do anything at runtime.
-  if (CallInst *CI = dyn_cast<CallInst>(I))
-    if (Function *F = CI->getCalledFunction())
-      if (unsigned IID = F->getIntrinsicID())
-        if (IID == Intrinsic::gcroot)
-          return false;
-
-  return true;
-}
 
 /// runOnFunction - Replace gcread/gcwrite intrinsics with loads and stores.
 /// Leave gcroot intrinsics; the code generator needs to see those.
