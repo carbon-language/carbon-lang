@@ -1037,23 +1037,6 @@ SymbolFileDWARF::ParseCompileUnitAtIndex(uint32_t cu_idx)
     return cu_sp;
 }
 
-static void
-AddRangesToBlock (Block& block,
-                  DWARFDebugRanges::RangeList& ranges,
-                  addr_t block_base_addr)
-{
-    const size_t num_ranges = ranges.GetSize();
-    for (size_t i = 0; i<num_ranges; ++i)
-    {
-        const DWARFDebugRanges::Range &range = ranges.GetEntryRef (i);
-        const addr_t range_base = range.GetRangeBase();
-        assert (range_base >= block_base_addr);
-        block.AddRange(Block::Range (range_base - block_base_addr, range.GetByteSize()));;
-    }
-    block.FinalizeRanges ();
-}
-
-
 Function *
 SymbolFileDWARF::ParseCompileUnitFunction (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu, const DWARFDebugInfoEntry *die)
 {
@@ -1397,8 +1380,24 @@ SymbolFileDWARF::ParseFunctionBlocks
                             subprogram_low_pc = ranges.GetMinRangeBase(0);
                         }
                     }
-                    
-                    AddRangesToBlock (*block, ranges, subprogram_low_pc);
+
+                    const size_t num_ranges = ranges.GetSize();
+                    for (size_t i = 0; i<num_ranges; ++i)
+                    {
+                        const DWARFDebugRanges::Range &range = ranges.GetEntryRef (i);
+                        const addr_t range_base = range.GetRangeBase();
+                        if (range_base >= subprogram_low_pc)
+                            block->AddRange(Block::Range (range_base - subprogram_low_pc, range.GetByteSize()));
+                        else
+                        {
+                            GetObjectFile()->GetModule()->ReportError ("0x%8.8" PRIx64 ": adding range [0x%" PRIx64 "-0x%" PRIx64 ") which has a base that is less than the function's low PC 0x%" PRIx64 ". Please file a bug and attach the file at the start of this error message",
+                                                                       block->GetID(),
+                                                                       range_base,
+                                                                       range.GetRangeEnd(),
+                                                                       subprogram_low_pc);
+                        }
+                    }
+                    block->FinalizeRanges ();
 
                     if (tag != DW_TAG_subprogram && (name != NULL || mangled_name != NULL))
                     {
