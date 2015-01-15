@@ -1,4 +1,4 @@
-//===- lld/Core/InputGraph.h - Input Graph --------------------------------===//
+//===- lld/Core/Node.h - Input file class ---------------------------------===//
 //
 //                             The LLVM Linker
 //
@@ -9,12 +9,12 @@
 ///
 /// \file
 ///
-/// Inputs to the linker in the form of a Graph.
+/// The classes in this file represents inputs to the linker.
 ///
 //===----------------------------------------------------------------------===//
 
-#ifndef LLD_CORE_INPUT_GRAPH_H
-#define LLD_CORE_INPUT_GRAPH_H
+#ifndef LLD_CORE_NODE_H
+#define LLD_CORE_NODE_H
 
 #include "lld/Core/File.h"
 #include "llvm/Option/ArgList.h"
@@ -73,4 +73,4 @@ protected:
 
 } // namespace lld
 
-#endif // LLD_CORE_INPUT_GRAPH_H
+#endif // LLD_CORE_NODE_H

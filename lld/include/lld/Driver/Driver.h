@@ -17,8 +17,8 @@
 #ifndef LLD_DRIVER_DRIVER_H
 #define LLD_DRIVER_DRIVER_H
 
-#include "lld/Core/InputGraph.h"
 #include "lld/Core/LLVM.h"
+#include "lld/Core/Node.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/Support/raw_ostream.h"
 #include <memory>

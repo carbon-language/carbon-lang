@@ -11,8 +11,8 @@
 #define LLD_CORE_LINKING_CONTEXT_H
 
 #include "lld/Core/Error.h"
-#include "lld/Core/InputGraph.h"
 #include "lld/Core/LLVM.h"
+#include "lld/Core/Node.h"
 #include "lld/Core/Reference.h"
 #include "lld/Core/range.h"
 #include "lld/ReaderWriter/Reader.h"
