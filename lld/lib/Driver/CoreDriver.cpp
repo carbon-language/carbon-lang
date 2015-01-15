@@ -103,8 +103,6 @@ bool CoreDriver::parse(int argc, const char *argv[], CoreLinkingContext &ctx,
     return false;
   }
 
-  std::unique_ptr<InputGraph> inputGraph(new InputGraph());
-
   // Set default options
   ctx.setOutputPath("-");
   ctx.setDeadStripping(false);
@@ -153,7 +151,7 @@ bool CoreDriver::parse(int argc, const char *argv[], CoreLinkingContext &ctx,
       std::vector<std::unique_ptr<File>> files
         = loadFile(ctx, inputArg->getValue(), false);
       for (std::unique_ptr<File> &file : files) {
-        inputGraph->members().push_back(std::unique_ptr<Node>(
+        ctx.getNodes().push_back(std::unique_ptr<Node>(
             new FileNode(std::move(file))));
       }
       break;
@@ -164,12 +162,10 @@ bool CoreDriver::parse(int argc, const char *argv[], CoreLinkingContext &ctx,
     }
   }
 
-  if (inputGraph->members().empty()) {
+  if (ctx.getNodes().empty()) {
     diagnostics << "No input files\n";
     return false;
   }
-
-  ctx.setInputGraph(std::move(inputGraph));
 
   // Validate the combination of options used.
   return ctx.validate(diagnostics);

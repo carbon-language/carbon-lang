@@ -113,14 +113,13 @@ static std::string canonicalizePath(StringRef path) {
   }
 }
 
-static void addFile(StringRef path, std::unique_ptr<InputGraph> &inputGraph,
-                    MachOLinkingContext &ctx, bool loadWholeArchive,
+static void addFile(StringRef path, MachOLinkingContext &ctx,
+                    bool loadWholeArchive,
                     bool upwardDylib, raw_ostream &diag) {
   std::vector<std::unique_ptr<File>> files =
       loadFile(ctx, path, diag, loadWholeArchive, upwardDylib);
   for (std::unique_ptr<File> &file : files)
-    inputGraph->members().push_back(
-        llvm::make_unique<FileNode>(std::move(file)));
+    ctx.getNodes().push_back(llvm::make_unique<FileNode>(std::move(file)));
 }
 
 // Export lists are one symbol per line.  Blank lines are ignored.
@@ -214,7 +213,6 @@ static std::error_code parseOrderFile(StringRef orderFilePath,
 // per line. The <dir> prefix is prepended to each partial path.
 //
 static std::error_code loadFileList(StringRef fileListPath,
-                                    std::unique_ptr<InputGraph> &inputGraph,
                                     MachOLinkingContext &ctx, bool forceLoad,
                                     raw_ostream &diagnostics) {
   // If there is a comma, split off <dir>.
@@ -251,7 +249,7 @@ static std::error_code loadFileList(StringRef fileListPath,
     if (ctx.testingFileUsage()) {
       diagnostics << "Found filelist entry " << canonicalizePath(path) << '\n';
     }
-    addFile(path, inputGraph, ctx, forceLoad, false, diagnostics);
+    addFile(path, ctx, forceLoad, false, diagnostics);
     buffer = lineAndRest.second;
   }
   return std::error_code();
@@ -569,7 +567,6 @@ bool DarwinLdDriver::parse(int argc, const char *argv[],
     ctx.registry().addSupportNativeObjects();
     ctx.registry().addSupportYamlFiles();
   }
-  std::unique_ptr<InputGraph> inputGraph(new InputGraph());
 
   // Now construct the set of library search directories, following ld64's
   // baroque set of accumulated hacks. Mostly, the algorithm constructs
@@ -793,13 +790,13 @@ bool DarwinLdDriver::parse(int argc, const char *argv[],
     default:
       continue;
     case OPT_INPUT:
-      addFile(arg->getValue(), inputGraph, ctx, globalWholeArchive, false, diagnostics);
+      addFile(arg->getValue(), ctx, globalWholeArchive, false, diagnostics);
       break;
     case OPT_upward_library:
-      addFile(arg->getValue(), inputGraph, ctx, false, true, diagnostics);
+      addFile(arg->getValue(), ctx, false, true, diagnostics);
       break;
     case OPT_force_load:
-      addFile(arg->getValue(), inputGraph, ctx, true, false, diagnostics);
+      addFile(arg->getValue(), ctx, true, false, diagnostics);
       break;
     case OPT_l:
     case OPT_upward_l:
@@ -813,7 +810,7 @@ bool DarwinLdDriver::parse(int argc, const char *argv[],
         diagnostics << "Found " << (upward ? "upward " : " ") << "library "
                    << canonicalizePath(resolvedPath.get()) << '\n';
       }
-      addFile(resolvedPath.get(), inputGraph, ctx, globalWholeArchive, upward, diagnostics);
+      addFile(resolvedPath.get(), ctx, globalWholeArchive, upward, diagnostics);
       break;
     case OPT_framework:
     case OPT_upward_framework:
@@ -827,10 +824,10 @@ bool DarwinLdDriver::parse(int argc, const char *argv[],
         diagnostics << "Found " << (upward ? "upward " : " ") << "framework "
                     << canonicalizePath(resolvedPath.get()) << '\n';
       }
-      addFile(resolvedPath.get(), inputGraph, ctx, globalWholeArchive, upward, diagnostics);
+      addFile(resolvedPath.get(), ctx, globalWholeArchive, upward, diagnostics);
       break;
     case OPT_filelist:
-      if (std::error_code ec = loadFileList(arg->getValue(), inputGraph,
+      if (std::error_code ec = loadFileList(arg->getValue(),
                                             ctx, globalWholeArchive,
                                             diagnostics)) {
         diagnostics << "error: " << ec.message()
@@ -842,12 +839,10 @@ bool DarwinLdDriver::parse(int argc, const char *argv[],
     }
   }
 
-  if (inputGraph->members().empty()) {
+  if (ctx.getNodes().empty()) {
     diagnostics << "No input files\n";
     return false;
   }
-
-  ctx.setInputGraph(std::move(inputGraph));
 
   // Validate the combination of options used.
   return ctx.validate(diagnostics);

@@ -232,8 +232,7 @@ void Resolver::addAtoms(const std::vector<const DefinedAtom *> &newAtoms) {
 // Returns true if at least one of N previous files has created an
 // undefined symbol.
 bool Resolver::undefinesAdded(int begin, int end) {
-  std::vector<std::unique_ptr<Node>> &inputs =
-      _context.getInputGraph().members();
+  std::vector<std::unique_ptr<Node>> &inputs = _context.getNodes();
   for (int i = begin; i < end; ++i)
     if (FileNode *node = dyn_cast<FileNode>(inputs[i].get()))
       if (_newUndefinesAdded[node->getFile()])
@@ -242,8 +241,7 @@ bool Resolver::undefinesAdded(int begin, int end) {
 }
 
 File *Resolver::getFile(int &index, int &groupLevel) {
-  std::vector<std::unique_ptr<Node>> &inputs
-      = _context.getInputGraph().members();
+  std::vector<std::unique_ptr<Node>> &inputs = _context.getNodes();
   if ((size_t)index >= inputs.size())
     return nullptr;
   if (GroupEnd *group = dyn_cast<GroupEnd>(inputs[index].get())) {

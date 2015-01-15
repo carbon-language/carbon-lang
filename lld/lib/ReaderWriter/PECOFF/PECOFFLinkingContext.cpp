@@ -90,8 +90,7 @@ std::unique_ptr<File> PECOFFLinkingContext::createUndefinedSymbolFile() const {
 void PECOFFLinkingContext::addLibraryFile(std::unique_ptr<FileNode> file) {
   GroupEnd *currentGroupEnd;
   int pos = -1;
-  std::vector<std::unique_ptr<Node>> &elements
-      = getInputGraph().members();
+  std::vector<std::unique_ptr<Node>> &elements = getNodes();
   for (int i = 0, e = elements.size(); i < e; ++i) {
     if ((currentGroupEnd = dyn_cast<GroupEnd>(elements[i].get()))) {
       pos = i;
@@ -107,8 +106,7 @@ void PECOFFLinkingContext::addLibraryFile(std::unique_ptr<FileNode> file) {
 bool PECOFFLinkingContext::createImplicitFiles(
     std::vector<std::unique_ptr<File>> &) {
   pecoff::ResolvableSymbols* syms = getResolvableSymsFile();
-  std::vector<std::unique_ptr<Node>> &members
-      = getInputGraph().members();
+  std::vector<std::unique_ptr<Node>> &members = getNodes();
 
   // Create a file for the entry point function.
   std::unique_ptr<FileNode> entry(new FileNode(

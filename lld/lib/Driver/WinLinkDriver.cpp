@@ -799,9 +799,9 @@ parseArgs(int argc, const char **argv, PECOFFLinkingContext &ctx,
 
 // Returns true if the given file node has already been added to the input
 // graph.
-static bool hasLibrary(const PECOFFLinkingContext &ctx, File *file) {
+static bool hasLibrary(PECOFFLinkingContext &ctx, File *file) {
   StringRef path = file->path();
-  for (std::unique_ptr<Node> &p : ctx.getInputGraph().members())
+  for (std::unique_ptr<Node> &p : ctx.getNodes())
     if (auto *f = dyn_cast<FileNode>(p.get()))
       if (f->getFile()->path() == path)
         return true;
@@ -1409,21 +1409,19 @@ bool WinLinkDriver::parse(int argc, const char *argv[],
   }
 
   // Add the input files to the input graph.
-  if (!ctx.hasInputGraph())
-    ctx.setInputGraph(std::unique_ptr<InputGraph>(new InputGraph()));
   for (std::unique_ptr<File> &file : files) {
     if (isReadingDirectiveSection)
       if (file->parse())
         return false;
     ctx.getResolvableSymsFile()->add(file.get());
-    ctx.getInputGraph().members().push_back(
+    ctx.getNodes().push_back(
       std::unique_ptr<Node>(new FileNode(std::move(file))));
   }
 
   // Add the library group to the input graph.
   if (!isReadingDirectiveSection) {
     // Add a group-end marker.
-    ctx.getInputGraph().members().push_back(llvm::make_unique<GroupEnd>(0));
+    ctx.getNodes().push_back(llvm::make_unique<GroupEnd>(0));
   }
 
   // Add the library files to the library group.

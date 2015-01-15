@@ -74,8 +74,7 @@ bool Driver::link(LinkingContext &context, raw_ostream &diagnostics) {
     args[numArgs + 1] = 0;
     llvm::cl::ParseCommandLineOptions(numArgs + 1, args);
   }
-  InputGraph &inputGraph = context.getInputGraph();
-  if (inputGraph.members().empty())
+  if (context.getNodes().empty())
     return false;
 
   bool fail = false;
@@ -84,7 +83,7 @@ bool Driver::link(LinkingContext &context, raw_ostream &diagnostics) {
   ScopedTask readTask(getDefaultDomain(), "Read Args");
   TaskGroup tg;
   std::mutex diagnosticsMutex;
-  for (std::unique_ptr<Node> &ie : inputGraph.members()) {
+  for (std::unique_ptr<Node> &ie : context.getNodes()) {
     tg.spawn([&] {
       // Writes to the same output stream is not guaranteed to be thread-safe.
       // We buffer the diagnostics output to a separate string-backed output
@@ -118,7 +117,7 @@ bool Driver::link(LinkingContext &context, raw_ostream &diagnostics) {
   std::vector<std::unique_ptr<File>> internalFiles;
   context.createInternalFiles(internalFiles);
   for (auto i = internalFiles.rbegin(), e = internalFiles.rend(); i != e; ++i) {
-    auto &members = context.getInputGraph().members();
+    auto &members = context.getNodes();
     members.insert(members.begin(), llvm::make_unique<FileNode>(std::move(*i)));
   }
 
@@ -126,7 +125,7 @@ bool Driver::link(LinkingContext &context, raw_ostream &diagnostics) {
   std::vector<std::unique_ptr<File>> implicitFiles;
   context.createImplicitFiles(implicitFiles);
   for (auto i = implicitFiles.rbegin(), e = implicitFiles.rend(); i != e; ++i) {
-    auto &members = context.getInputGraph().members();
+    auto &members = context.getNodes();
     members.insert(members.begin(), llvm::make_unique<FileNode>(std::move(*i)));
   }
 

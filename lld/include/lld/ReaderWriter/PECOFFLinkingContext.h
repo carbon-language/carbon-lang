@@ -334,8 +334,6 @@ public:
     return *r;
   }
 
-  virtual bool hasInputGraph() { return !!_inputGraph; }
-
   void addLibraryFile(std::unique_ptr<FileNode> file);
 
   void setModuleDefinitionFile(const std::string val) {

@@ -25,7 +25,6 @@ namespace lld {
 class PassManager;
 class File;
 class Writer;
-class InputGraph;
 class Node;
 class SharedLibraryFile;
 
@@ -216,10 +215,8 @@ public:
     return _aliasSymbols;
   }
 
-  void setInputGraph(std::unique_ptr<InputGraph> inputGraph) {
-    _inputGraph = std::move(inputGraph);
-  }
-  InputGraph &getInputGraph() const { return *_inputGraph; }
+  std::vector<std::unique_ptr<Node>> &getNodes() { return _nodes; }
+  const std::vector<std::unique_ptr<Node>> &getNodes() const { return _nodes; }
 
   /// Notify the LinkingContext when an atom is added to the symbol table.
   /// This is an opportunity for flavor specific work to be done.
@@ -365,7 +362,7 @@ protected:
   std::map<std::string, std::string> _aliasSymbols;
   std::vector<const char *> _llvmOptions;
   StringRefVector _initialUndefinedSymbols;
-  std::unique_ptr<InputGraph> _inputGraph;
+  std::vector<std::unique_ptr<Node>> _nodes;
   mutable llvm::BumpPtrAllocator _allocator;
   mutable uint64_t _nextOrdinal;
   Registry _registry;

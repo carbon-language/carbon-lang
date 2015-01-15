@@ -17,31 +17,11 @@
 #define LLD_CORE_INPUT_GRAPH_H
 
 #include "lld/Core/File.h"
-#include "lld/Core/range.h"
-#include "llvm/ADT/STLExtras.h"
 #include "llvm/Option/ArgList.h"
-#include "llvm/Support/ErrorOr.h"
-#include "llvm/Support/MemoryBuffer.h"
-#include "llvm/Support/raw_ostream.h"
-#include <functional>
 #include <memory>
-#include <stack>
 #include <vector>
 
 namespace lld {
-
-class Node;
-class LinkingContext;
-
-class InputGraph {
-public:
-  std::vector<std::unique_ptr<Node>> &members() {
-    return _members;
-  }
-
-protected:
-  std::vector<std::unique_ptr<Node>> _members;
-};
 
 // A Node represents a FileNode or other type of Node. In the latter case,
 // the node contains meta information about the input file list.

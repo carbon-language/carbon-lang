@@ -111,7 +111,6 @@ maybeExpandResponseFiles(int argc, const char **argv, BumpPtrAllocator &alloc) {
   return std::make_tuple(argc, copy);
 }
 
-// Get the Input file magic for creating appropriate InputGraph nodes.
 static std::error_code
 getFileMagic(StringRef path, llvm::sys::fs::file_magic &magic) {
   std::error_code ec = llvm::sys::fs::identify_magic(path, magic);
@@ -234,8 +233,8 @@ static bool isPathUnderSysroot(StringRef sysroot, StringRef path) {
 }
 
 static std::error_code
-evaluateLinkerScript(ELFLinkingContext &ctx, InputGraph *inputGraph,
-                     StringRef path, raw_ostream &diag) {
+evaluateLinkerScript(ELFLinkingContext &ctx, StringRef path,
+                     raw_ostream &diag) {
   // Read the script file from disk and parse.
   ErrorOr<std::unique_ptr<MemoryBuffer>> mb =
       MemoryBuffer::getFileOrSTDIN(path);
@@ -274,12 +273,12 @@ evaluateLinkerScript(ELFLinkingContext &ctx, InputGraph *inputGraph,
       for (std::unique_ptr<File> &file : files) {
         if (ctx.logInputFiles())
           diag << file->path() << "\n";
-        inputGraph->members().push_back(
+        ctx.getNodes().push_back(
             std::unique_ptr<Node>(new FileNode(std::move(file))));
         ++numfiles;
       }
     }
-    inputGraph->members().push_back(llvm::make_unique<GroupEnd>(numfiles));
+    ctx.getNodes().push_back(llvm::make_unique<GroupEnd>(numfiles));
   }
   return std::error_code();
 }
@@ -355,7 +354,6 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
     return false;
   }
 
-  std::unique_ptr<InputGraph> inputGraph(new InputGraph());
   std::stack<int> groupStack;
   int numfiles = 0;
 
@@ -550,7 +548,7 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
         return false;
       }
       int startGroupPos = groupStack.top();
-      inputGraph->members().push_back(
+      ctx->getNodes().push_back(
           llvm::make_unique<GroupEnd>(numfiles - startGroupPos));
       groupStack.pop();
       break;
@@ -601,8 +599,7 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
       if (isScript) {
         if (ctx->logInputFiles())
           diagnostics << path << "\n";
-        std::error_code ec = evaluateLinkerScript(
-            *ctx, inputGraph.get(), realpath, diagnostics);
+        std::error_code ec = evaluateLinkerScript(*ctx, realpath, diagnostics);
         if (ec) {
           diagnostics << path << ": Error parsing linker script: "
                       << ec.message() << "\n";
@@ -615,7 +612,7 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
       for (std::unique_ptr<File> &file : files) {
         if (ctx->logInputFiles())
           diagnostics << file->path() << "\n";
-        inputGraph->members().push_back(
+        ctx->getNodes().push_back(
             std::unique_ptr<Node>(new FileNode(std::move(file))));
       }
       numfiles += files.size();
@@ -667,7 +664,7 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
     } // end switch on option ID
   }   // end for
 
-  if (inputGraph->members().empty()) {
+  if (ctx->getNodes().empty()) {
     diagnostics << "No input files\n";
     return false;
   }
@@ -692,7 +689,6 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
   if (!ctx->validate(diagnostics))
     return false;
 
-  ctx->setInputGraph(std::move(inputGraph));
   context.swap(ctx);
   return true;
 }
