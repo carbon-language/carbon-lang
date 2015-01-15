@@ -3485,9 +3485,11 @@ SymbolFileDWARF::ResolveFunction (DWARFCompileUnit *cu,
         // Parse all blocks if needed
         if (inlined_die)
         {
-            sc.block = sc.function->GetBlock (true).FindBlockByID (MakeUserID(inlined_die->GetOffset()));
-            assert (sc.block != NULL);
-            if (sc.block->GetStartAddress (addr) == false)
+            Block &function_block = sc.function->GetBlock (true);
+            sc.block = function_block.FindBlockByID (MakeUserID(inlined_die->GetOffset()));
+            if (sc.block == NULL)
+                sc.block = function_block.FindBlockByID (inlined_die->GetOffset());
+            if (sc.block == NULL || sc.block->GetStartAddress (addr) == false)
                 addr.Clear();
         }
         else 
