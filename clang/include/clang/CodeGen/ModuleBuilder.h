@@ -27,7 +27,6 @@ namespace clang {
   class CoverageSourceInfo;
   class LangOptions;
   class CodeGenOptions;
-  class TargetOptions;
   class Decl;
 
   class CodeGenerator : public ASTConsumer {
@@ -44,7 +43,6 @@ namespace clang {
   CodeGenerator *CreateLLVMCodeGen(DiagnosticsEngine &Diags,
                                    const std::string &ModuleName,
                                    const CodeGenOptions &CGO,
-                                   const TargetOptions &TO,
                                    llvm::LLVMContext& C,
                                    CoverageSourceInfo *CoverageInfo = nullptr);
 }

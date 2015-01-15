@@ -63,7 +63,6 @@ TEST(BufferSourceTest, EmitCXXGlobalInitFunc) {
             compiler.getDiagnostics(),
             "EmitCXXGlobalInitFuncTest",
             compiler.getCodeGenOpts(),
-            compiler.getTargetOpts(),
             llvm::getGlobalContext())));
 
     compiler.createSema(clang::TU_Prefix,NULL);

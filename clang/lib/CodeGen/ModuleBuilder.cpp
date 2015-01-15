@@ -238,7 +238,6 @@ void CodeGenerator::anchor() { }
 CodeGenerator *clang::CreateLLVMCodeGen(DiagnosticsEngine &Diags,
                                         const std::string& ModuleName,
                                         const CodeGenOptions &CGO,
-                                        const TargetOptions &/*TO*/,
                                         llvm::LLVMContext& C,
                                         CoverageSourceInfo *CoverageInfo) {
   return new CodeGeneratorImpl(Diags, ModuleName, CGO, C, CoverageInfo);
