@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 %s -triple=x86_64-apple-darwin10 -emit-llvm -o %t
+// RUN: %clang_cc1 %s -triple=x86_64-pc-linux -emit-llvm -o %t
 // RUN: %clang_cc1 %s -triple=x86_64-apple-darwin10 -disable-llvm-optzns -O3 -emit-llvm -o %t.opt
 // RUN: FileCheck --check-prefix=CHECK %s < %t
 // RUN: FileCheck --check-prefix=CHECK-OPT %s < %t.opt
@@ -89,10 +89,10 @@ void use_F() {
 
 // C has no key function, so its vtable should have weak_odr linkage
 // and hidden visibility (rdar://problem/7523229).
-// CHECK-DAG: @_ZTV1C = linkonce_odr unnamed_addr constant
-// CHECK-DAG: @_ZTS1C = linkonce_odr constant
-// CHECK-DAG: @_ZTI1C = linkonce_odr constant
-// CHECK-DAG: @_ZTT1C = linkonce_odr unnamed_addr constant
+// CHECK-DAG: @_ZTV1C = linkonce_odr unnamed_addr constant {{.*}}, comdat,
+// CHECK-DAG: @_ZTS1C = linkonce_odr constant {{.*}}, comdat{{$}}
+// CHECK-DAG: @_ZTI1C = linkonce_odr constant {{.*}}, comdat{{$}}
+// CHECK-DAG: @_ZTT1C = linkonce_odr unnamed_addr constant {{.*}}, comdat{{$}}
 
 // D has a key function that is defined in this translation unit so its vtable is
 // defined in the translation unit.
@@ -110,28 +110,28 @@ void use_F() {
 // E<short> is an explicit template instantiation with a key function
 // defined in this translation unit, so its vtable should have
 // weak_odr linkage.
-// CHECK-DAG: @_ZTV1EIsE = weak_odr unnamed_addr constant
-// CHECK-DAG: @_ZTS1EIsE = weak_odr constant
-// CHECK-DAG: @_ZTI1EIsE = weak_odr constant
+// CHECK-DAG: @_ZTV1EIsE = weak_odr unnamed_addr constant {{.*}}, comdat,
+// CHECK-DAG: @_ZTS1EIsE = weak_odr constant {{.*}}, comdat{{$}}
+// CHECK-DAG: @_ZTI1EIsE = weak_odr constant {{.*}}, comdat{{$}}
 
 // F<short> is an explicit template instantiation without a key
 // function, so its vtable should have weak_odr linkage
-// CHECK-DAG: @_ZTV1FIsE = weak_odr unnamed_addr constant
-// CHECK-DAG: @_ZTS1FIsE = weak_odr constant
-// CHECK-DAG: @_ZTI1FIsE = weak_odr constant
+// CHECK-DAG: @_ZTV1FIsE = weak_odr unnamed_addr constant {{.*}}, comdat,
+// CHECK-DAG: @_ZTS1FIsE = weak_odr constant {{.*}}, comdat{{$}}
+// CHECK-DAG: @_ZTI1FIsE = weak_odr constant {{.*}}, comdat{{$}}
 
 // E<long> is an implicit template instantiation with a key function
 // defined in this translation unit, so its vtable should have
 // linkonce_odr linkage.
-// CHECK-DAG: @_ZTV1EIlE = linkonce_odr unnamed_addr constant
-// CHECK-DAG: @_ZTS1EIlE = linkonce_odr constant
-// CHECK-DAG: @_ZTI1EIlE = linkonce_odr constant
+// CHECK-DAG: @_ZTV1EIlE = linkonce_odr unnamed_addr constant {{.*}}, comdat,
+// CHECK-DAG: @_ZTS1EIlE = linkonce_odr constant {{.*}}, comdat{{$}}
+// CHECK-DAG: @_ZTI1EIlE = linkonce_odr constant {{.*}}, comdat{{$}}
 
 // F<long> is an implicit template instantiation with no key function,
 // so its vtable should have linkonce_odr linkage.
-// CHECK-DAG: @_ZTV1FIlE = linkonce_odr unnamed_addr constant
-// CHECK-DAG: @_ZTS1FIlE = linkonce_odr constant
-// CHECK-DAG: @_ZTI1FIlE = linkonce_odr constant
+// CHECK-DAG: @_ZTV1FIlE = linkonce_odr unnamed_addr constant {{.*}}, comdat,
+// CHECK-DAG: @_ZTS1FIlE = linkonce_odr constant {{.*}}, comdat{{$}}
+// CHECK-DAG: @_ZTI1FIlE = linkonce_odr constant {{.*}}, comdat{{$}}
 
 // F<int> is an explicit template instantiation declaration without a
 // key function, so its vtable should have external linkage.
@@ -158,11 +158,11 @@ void use_F() {
 
 // F<char> is an explicit specialization without a key function, so
 // its vtable should have linkonce_odr linkage.
-// CHECK-DAG: @_ZTV1FIcE = linkonce_odr unnamed_addr constant
-// CHECK-DAG: @_ZTS1FIcE = linkonce_odr constant
-// CHECK-DAG: @_ZTI1FIcE = linkonce_odr constant
+// CHECK-DAG: @_ZTV1FIcE = linkonce_odr unnamed_addr constant {{.*}}, comdat,
+// CHECK-DAG: @_ZTS1FIcE = linkonce_odr constant {{.*}}, comdat{{$}}
+// CHECK-DAG: @_ZTI1FIcE = linkonce_odr constant {{.*}}, comdat{{$}}
 
-// CHECK-DAG: @_ZTV1GIiE = linkonce_odr unnamed_addr constant
+// CHECK-DAG: @_ZTV1GIiE = linkonce_odr unnamed_addr constant {{.*}}, comdat,
 template <typename T>
 class G {
 public:
@@ -178,7 +178,7 @@ void G_f0()  { new G<int>(); }
 
 // H<int> has a key function without a body but it's a template instantiation
 // so its VTable must be emitted.
-// CHECK-DAG: @_ZTV1HIiE = linkonce_odr unnamed_addr constant
+// CHECK-DAG: @_ZTV1HIiE = linkonce_odr unnamed_addr constant {{.*}}, comdat,
 template <typename T>
 class H {
 public:

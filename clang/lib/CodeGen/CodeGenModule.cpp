@@ -1828,7 +1828,10 @@ CodeGenModule::CreateOrReplaceCXXRuntimeVariable(StringRef Name,
     
     OldGV->eraseFromParent();
   }
-  
+
+  if (supportsCOMDAT() && GV->isWeakForLinker())
+    GV->setComdat(TheModule.getOrInsertComdat(GV->getName()));
+
   return GV;
 }
 

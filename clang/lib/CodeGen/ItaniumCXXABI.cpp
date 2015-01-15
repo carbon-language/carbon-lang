@@ -1256,6 +1256,9 @@ void ItaniumCXXABI::emitVTableDefinitions(CodeGenVTables &CGVT,
   // Set the correct linkage.
   VTable->setLinkage(Linkage);
 
+  if (CGM.supportsCOMDAT() && VTable->isWeakForLinker())
+    VTable->setComdat(CGM.getModule().getOrInsertComdat(VTable->getName()));
+
   // Set the right visibility.
   CGM.setGlobalVisibility(VTable, RD);
 
@@ -2716,9 +2719,13 @@ llvm::Constant *ItaniumRTTIBuilder::BuildTypeInfo(QualType Ty, bool Force) {
 
   llvm::Constant *Init = llvm::ConstantStruct::getAnon(Fields);
 
+  llvm::Module &M = CGM.getModule();
   llvm::GlobalVariable *GV =
-    new llvm::GlobalVariable(CGM.getModule(), Init->getType(),
-                             /*Constant=*/true, Linkage, Init, Name);
+      new llvm::GlobalVariable(M, Init->getType(),
+                               /*Constant=*/true, Linkage, Init, Name);
+
+  if (CGM.supportsCOMDAT() && GV->isWeakForLinker())
+    GV->setComdat(M.getOrInsertComdat(GV->getName()));
 
   // If there's already an old global variable, replace it with the new one.
   if (OldGV) {
