@@ -29,7 +29,7 @@ namespace lld {
 class Node {
 public:
   enum class Kind { File, GroupEnd };
-  Node(Kind type) : _kind(type) {}
+  explicit Node(Kind type) : _kind(type) {}
   virtual ~Node() {}
   virtual Kind kind() const { return _kind; }
 
@@ -41,7 +41,7 @@ private:
 // files between the corresponding --start-group and this marker.
 class GroupEnd : public Node {
 public:
-  GroupEnd(int size) : Node(Kind::GroupEnd), _size(size) {}
+  explicit GroupEnd(int size) : Node(Kind::GroupEnd), _size(size) {}
 
   int getSize() const { return _size; }
 
