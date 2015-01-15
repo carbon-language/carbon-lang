@@ -2113,7 +2113,7 @@ multiclass avx512_load_vl<bits<8> opc, string OpcodeStr, string ld_pat,
 multiclass avx512_store<bits<8> opc, string OpcodeStr, PatFrag st_frag,
                         ValueType OpVT, RegisterClass KRC, RegisterClass RC,
                         X86MemOperand memop, Domain d> {
-  let isAsmParserOnly = 1, hasSideEffects = 0 in {
+  let isCodeGenOnly = 1, ForceDisassemble = 1, hasSideEffects = 0 in {
   def rr_alt : AVX512PI<opc, MRMDestReg, (outs RC:$dst), (ins RC:$src),
               !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"), [], d>,
               EVEX;
