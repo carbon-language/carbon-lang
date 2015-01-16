@@ -41,161 +41,159 @@
 #include <memory>
 
 namespace llvm {
-  class AsmPrinter;
-  class Constant;
-  class MCSymbol;
+class AsmPrinter;
+class Constant;
+class MCSymbol;
 
-  /// GCPoint - Metadata for a collector-safe point in machine code.
+/// GCPoint - Metadata for a collector-safe point in machine code.
+///
+struct GCPoint {
+  GC::PointKind Kind; ///< The kind of the safe point.
+  MCSymbol *Label;    ///< A label.
+  DebugLoc Loc;
+
+  GCPoint(GC::PointKind K, MCSymbol *L, DebugLoc DL)
+      : Kind(K), Label(L), Loc(DL) {}
+};
+
+/// GCRoot - Metadata for a pointer to an object managed by the garbage
+/// collector.
+struct GCRoot {
+  int Num;                  ///< Usually a frame index.
+  int StackOffset;          ///< Offset from the stack pointer.
+  const Constant *Metadata; ///< Metadata straight from the call
+                            ///< to llvm.gcroot.
+
+  GCRoot(int N, const Constant *MD) : Num(N), StackOffset(-1), Metadata(MD) {}
+};
+
+/// Garbage collection metadata for a single function.  Currently, this
+/// information only applies to GCStrategies which use GCRoot.
+class GCFunctionInfo {
+public:
+  typedef std::vector<GCPoint>::iterator iterator;
+  typedef std::vector<GCRoot>::iterator roots_iterator;
+  typedef std::vector<GCRoot>::const_iterator live_iterator;
+
+private:
+  const Function &F;
+  GCStrategy &S;
+  uint64_t FrameSize;
+  std::vector<GCRoot> Roots;
+  std::vector<GCPoint> SafePoints;
+
+  // FIXME: Liveness. A 2D BitVector, perhaps?
+  //
+  //   BitVector Liveness;
+  //
+  //   bool islive(int point, int root) =
+  //     Liveness[point * SafePoints.size() + root]
+  //
+  // The bit vector is the more compact representation where >3.2% of roots
+  // are live per safe point (1.5% on 64-bit hosts).
+
+public:
+  GCFunctionInfo(const Function &F, GCStrategy &S);
+  ~GCFunctionInfo();
+
+  /// getFunction - Return the function to which this metadata applies.
   ///
-  struct GCPoint {
-    GC::PointKind Kind; ///< The kind of the safe point.
-    MCSymbol *Label;    ///< A label.
-    DebugLoc Loc;
+  const Function &getFunction() const { return F; }
 
-    GCPoint(GC::PointKind K, MCSymbol *L, DebugLoc DL)
-        : Kind(K), Label(L), Loc(DL) {}
-  };
+  /// getStrategy - Return the GC strategy for the function.
+  ///
+  GCStrategy &getStrategy() { return S; }
 
-  /// GCRoot - Metadata for a pointer to an object managed by the garbage
-  /// collector.
-  struct GCRoot {
-    int Num;            ///< Usually a frame index.
-    int StackOffset;    ///< Offset from the stack pointer.
-    const Constant *Metadata; ///< Metadata straight from the call
-                              ///< to llvm.gcroot.
+  /// addStackRoot - Registers a root that lives on the stack. Num is the
+  ///                stack object ID for the alloca (if the code generator is
+  //                 using  MachineFrameInfo).
+  void addStackRoot(int Num, const Constant *Metadata) {
+    Roots.push_back(GCRoot(Num, Metadata));
+  }
 
-    GCRoot(int N, const Constant *MD) : Num(N), StackOffset(-1), Metadata(MD) {}
-  };
+  /// removeStackRoot - Removes a root.
+  roots_iterator removeStackRoot(roots_iterator position) {
+    return Roots.erase(position);
+  }
 
+  /// addSafePoint - Notes the existence of a safe point. Num is the ID of the
+  /// label just prior to the safe point (if the code generator is using
+  /// MachineModuleInfo).
+  void addSafePoint(GC::PointKind Kind, MCSymbol *Label, DebugLoc DL) {
+    SafePoints.push_back(GCPoint(Kind, Label, DL));
+  }
 
-  /// Garbage collection metadata for a single function.  Currently, this
-  /// information only applies to GCStrategies which use GCRoot.
-  class GCFunctionInfo {
-  public:
-    typedef std::vector<GCPoint>::iterator iterator;
-    typedef std::vector<GCRoot>::iterator roots_iterator;
-    typedef std::vector<GCRoot>::const_iterator live_iterator;
+  /// getFrameSize/setFrameSize - Records the function's frame size.
+  ///
+  uint64_t getFrameSize() const { return FrameSize; }
+  void setFrameSize(uint64_t S) { FrameSize = S; }
 
-  private:
-    const Function &F;
-    GCStrategy &S;
-    uint64_t FrameSize;
-    std::vector<GCRoot> Roots;
-    std::vector<GCPoint> SafePoints;
+  /// begin/end - Iterators for safe points.
+  ///
+  iterator begin() { return SafePoints.begin(); }
+  iterator end() { return SafePoints.end(); }
+  size_t size() const { return SafePoints.size(); }
 
-    // FIXME: Liveness. A 2D BitVector, perhaps?
-    //
-    //   BitVector Liveness;
-    //
-    //   bool islive(int point, int root) =
-    //     Liveness[point * SafePoints.size() + root]
-    //
-    // The bit vector is the more compact representation where >3.2% of roots
-    // are live per safe point (1.5% on 64-bit hosts).
+  /// roots_begin/roots_end - Iterators for all roots in the function.
+  ///
+  roots_iterator roots_begin() { return Roots.begin(); }
+  roots_iterator roots_end() { return Roots.end(); }
+  size_t roots_size() const { return Roots.size(); }
 
-  public:
-    GCFunctionInfo(const Function &F, GCStrategy &S);
-    ~GCFunctionInfo();
+  /// live_begin/live_end - Iterators for live roots at a given safe point.
+  ///
+  live_iterator live_begin(const iterator &p) { return roots_begin(); }
+  live_iterator live_end(const iterator &p) { return roots_end(); }
+  size_t live_size(const iterator &p) const { return roots_size(); }
+};
 
-    /// getFunction - Return the function to which this metadata applies.
-    ///
-    const Function &getFunction() const { return F; }
+/// An analysis pass which caches information about the entire Module.
+/// Records both the function level information used by GCRoots and a
+/// cache of the 'active' gc strategy objects for the current Module.
+class GCModuleInfo : public ImmutablePass {
+  /// A list of GCStrategies which are active in this Module.  These are
+  /// not owning pointers.
+  std::vector<GCStrategy *> StrategyList;
 
-    /// getStrategy - Return the GC strategy for the function.
-    ///
-    GCStrategy &getStrategy() { return S; }
+public:
+  /// List of per function info objects.  In theory, Each of these
+  /// may be associated with a different GC.
+  typedef std::vector<std::unique_ptr<GCFunctionInfo>> FuncInfoVec;
 
-    /// addStackRoot - Registers a root that lives on the stack. Num is the
-    ///                stack object ID for the alloca (if the code generator is
-    //                 using  MachineFrameInfo).
-    void addStackRoot(int Num, const Constant *Metadata) {
-      Roots.push_back(GCRoot(Num, Metadata));
-    }
+  FuncInfoVec::iterator funcinfo_begin() { return Functions.begin(); }
+  FuncInfoVec::iterator funcinfo_end() { return Functions.end(); }
 
-    /// removeStackRoot - Removes a root.
-    roots_iterator removeStackRoot(roots_iterator position) {
-      return Roots.erase(position);
-    }
+private:
+  /// Owning list of all GCFunctionInfos associated with this Module
+  FuncInfoVec Functions;
 
-    /// addSafePoint - Notes the existence of a safe point. Num is the ID of the
-    /// label just prior to the safe point (if the code generator is using
-    /// MachineModuleInfo).
-    void addSafePoint(GC::PointKind Kind, MCSymbol *Label, DebugLoc DL) {
-      SafePoints.push_back(GCPoint(Kind, Label, DL));
-    }
+  /// Non-owning map to bypass linear search when finding the GCFunctionInfo
+  /// associated with a particular Function.
+  typedef DenseMap<const Function *, GCFunctionInfo *> finfo_map_type;
+  finfo_map_type FInfoMap;
 
-    /// getFrameSize/setFrameSize - Records the function's frame size.
-    ///
-    uint64_t getFrameSize() const { return FrameSize; }
-    void setFrameSize(uint64_t S) { FrameSize = S; }
+public:
+  typedef std::vector<GCStrategy *>::const_iterator iterator;
 
-    /// begin/end - Iterators for safe points.
-    ///
-    iterator begin() { return SafePoints.begin(); }
-    iterator end()   { return SafePoints.end();   }
-    size_t size() const { return SafePoints.size(); }
+  static char ID;
 
-    /// roots_begin/roots_end - Iterators for all roots in the function.
-    ///
-    roots_iterator roots_begin() { return Roots.begin(); }
-    roots_iterator roots_end  () { return Roots.end();   }
-    size_t roots_size() const { return Roots.size(); }
+  GCModuleInfo();
 
-    /// live_begin/live_end - Iterators for live roots at a given safe point.
-    ///
-    live_iterator live_begin(const iterator &p) { return roots_begin(); }
-    live_iterator live_end  (const iterator &p) { return roots_end();   }
-    size_t live_size(const iterator &p) const { return roots_size(); }
-  };
+  /// clear - Resets the pass. Any pass, which uses GCModuleInfo, should
+  /// call it in doFinalization().
+  ///
+  void clear();
 
-  /// An analysis pass which caches information about the entire Module.
-  /// Records both the function level information used by GCRoots and a
-  /// cache of the 'active' gc strategy objects for the current Module.
-  class GCModuleInfo : public ImmutablePass {
-    /// A list of GCStrategies which are active in this Module.  These are
-    /// not owning pointers.
-    std::vector<GCStrategy*> StrategyList;
-  public:
-    /// List of per function info objects.  In theory, Each of these
-    /// may be associated with a different GC.
-    typedef std::vector<std::unique_ptr<GCFunctionInfo>> FuncInfoVec;
+  /// begin/end - Iterators for used strategies.
+  ///
+  iterator begin() const { return StrategyList.begin(); }
+  iterator end() const { return StrategyList.end(); }
 
-    FuncInfoVec::iterator funcinfo_begin() { return Functions.begin(); }
-    FuncInfoVec::iterator funcinfo_end()   { return Functions.end();   }
-    
-
-  private:
-    /// Owning list of all GCFunctionInfos associated with this Module
-    FuncInfoVec Functions;
-
-    /// Non-owning map to bypass linear search when finding the GCFunctionInfo
-    /// associated with a particular Function.
-    typedef DenseMap<const Function*,GCFunctionInfo*> finfo_map_type;
-    finfo_map_type FInfoMap;
-  public:
-
-    typedef std::vector<GCStrategy*>::const_iterator iterator;
-
-    static char ID;
-
-    GCModuleInfo();
-
-    /// clear - Resets the pass. Any pass, which uses GCModuleInfo, should
-    /// call it in doFinalization().
-    ///
-    void clear();
-
-    /// begin/end - Iterators for used strategies.
-    ///
-    iterator begin() const { return StrategyList.begin(); }
-    iterator end()   const { return StrategyList.end();   }
-
-    /// get - Look up function metadata.  This is currently assumed
-    /// have the side effect of initializing the associated GCStrategy.  That
-    /// will soon change.
-    GCFunctionInfo &getFunctionInfo(const Function &F);
-  };
-
+  /// get - Look up function metadata.  This is currently assumed
+  /// have the side effect of initializing the associated GCStrategy.  That
+  /// will soon change.
+  GCFunctionInfo &getFunctionInfo(const Function &F);
+};
 }
 
 #endif

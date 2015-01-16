@@ -24,22 +24,20 @@
 using namespace llvm;
 
 namespace {
-  
-  class Printer : public FunctionPass {
-    static char ID;
-    raw_ostream &OS;
-    
-  public:
-    explicit Printer(raw_ostream &OS) : FunctionPass(ID), OS(OS) {}
 
+class Printer : public FunctionPass {
+  static char ID;
+  raw_ostream &OS;
 
-    const char *getPassName() const override;
-    void getAnalysisUsage(AnalysisUsage &AU) const override;
+public:
+  explicit Printer(raw_ostream &OS) : FunctionPass(ID), OS(OS) {}
 
-    bool runOnFunction(Function &F) override;
-    bool doFinalization(Module &M) override;
-  };
+  const char *getPassName() const override;
+  void getAnalysisUsage(AnalysisUsage &AU) const override;
 
+  bool runOnFunction(Function &F) override;
+  bool doFinalization(Module &M) override;
+};
 }
 
 INITIALIZE_PASS(GCModuleInfo, "collector-metadata",
@@ -48,7 +46,7 @@ INITIALIZE_PASS(GCModuleInfo, "collector-metadata",
 // -----------------------------------------------------------------------------
 
 GCFunctionInfo::GCFunctionInfo(const Function &F, GCStrategy &S)
-  : F(F), S(S), FrameSize(~0LL) {}
+    : F(F), S(S), FrameSize(~0LL) {}
 
 GCFunctionInfo::~GCFunctionInfo() {}
 
@@ -56,19 +54,18 @@ GCFunctionInfo::~GCFunctionInfo() {}
 
 char GCModuleInfo::ID = 0;
 
-GCModuleInfo::GCModuleInfo()
-    : ImmutablePass(ID) {
+GCModuleInfo::GCModuleInfo() : ImmutablePass(ID) {
   initializeGCModuleInfoPass(*PassRegistry::getPassRegistry());
 }
 
 GCFunctionInfo &GCModuleInfo::getFunctionInfo(const Function &F) {
   assert(!F.isDeclaration() && "Can only get GCFunctionInfo for a definition!");
   assert(F.hasGC());
-  
+
   finfo_map_type::iterator I = FInfoMap.find(&F);
   if (I != FInfoMap.end())
     return *I->second;
-  
+
   GCStrategy *S = F.getGCStrategy();
   if (!S) {
     std::string error = std::string("unsupported GC: ") + F.getGC();
@@ -76,7 +73,7 @@ GCFunctionInfo &GCModuleInfo::getFunctionInfo(const Function &F) {
   }
   // Save the fact this strategy is associated with this module.  Note that
   // these are non-owning references, the GCStrategy remains owned by the
-  // Context. 
+  // Context.
   StrategyList.push_back(S);
   Functions.push_back(make_unique<GCFunctionInfo>(F, *S));
   GCFunctionInfo *GFI = Functions.back().get();
@@ -98,7 +95,6 @@ FunctionPass *llvm::createGCInfoPrinter(raw_ostream &OS) {
   return new Printer(OS);
 }
 
-
 const char *Printer::getPassName() const {
   return "Print Garbage Collector Information";
 }
@@ -111,42 +107,49 @@ void Printer::getAnalysisUsage(AnalysisUsage &AU) const {
 
 static const char *DescKind(GC::PointKind Kind) {
   switch (Kind) {
-    case GC::Loop:     return "loop";
-    case GC::Return:   return "return";
-    case GC::PreCall:  return "pre-call";
-    case GC::PostCall: return "post-call";
+  case GC::Loop:
+    return "loop";
+  case GC::Return:
+    return "return";
+  case GC::PreCall:
+    return "pre-call";
+  case GC::PostCall:
+    return "post-call";
   }
   llvm_unreachable("Invalid point kind");
 }
 
 bool Printer::runOnFunction(Function &F) {
-  if (F.hasGC()) return false;
-  
+  if (F.hasGC())
+    return false;
+
   GCFunctionInfo *FD = &getAnalysis<GCModuleInfo>().getFunctionInfo(F);
-  
+
   OS << "GC roots for " << FD->getFunction().getName() << ":\n";
   for (GCFunctionInfo::roots_iterator RI = FD->roots_begin(),
-                                      RE = FD->roots_end(); RI != RE; ++RI)
+                                      RE = FD->roots_end();
+       RI != RE; ++RI)
     OS << "\t" << RI->Num << "\t" << RI->StackOffset << "[sp]\n";
-  
+
   OS << "GC safe points for " << FD->getFunction().getName() << ":\n";
-  for (GCFunctionInfo::iterator PI = FD->begin(),
-                                PE = FD->end(); PI != PE; ++PI) {
-    
-    OS << "\t" << PI->Label->getName() << ": "
-       << DescKind(PI->Kind) << ", live = {";
-    
+  for (GCFunctionInfo::iterator PI = FD->begin(), PE = FD->end(); PI != PE;
+       ++PI) {
+
+    OS << "\t" << PI->Label->getName() << ": " << DescKind(PI->Kind)
+       << ", live = {";
+
     for (GCFunctionInfo::live_iterator RI = FD->live_begin(PI),
-                                       RE = FD->live_end(PI);;) {
+                                       RE = FD->live_end(PI);
+         ;) {
       OS << " " << RI->Num;
       if (++RI == RE)
         break;
       OS << ",";
     }
-    
+
     OS << " }\n";
   }
-  
+
   return false;
 }
 

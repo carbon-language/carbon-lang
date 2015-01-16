@@ -116,8 +116,6 @@ static bool NeedsCustomLoweringPass(const GCStrategy &C) {
   return C.customWriteBarrier() || C.customReadBarrier() || C.customRoots();
 }
 
-
-
 /// doInitialization - If this module uses the GC intrinsics, find them now.
 bool LowerIntrinsics::doInitialization(Module &M) {
   // FIXME: This is rather antisocial in the context of a JIT since it performs
@@ -138,7 +136,6 @@ bool LowerIntrinsics::doInitialization(Module &M) {
 
   return MadeChange;
 }
-
 
 /// CouldBecomeSafePoint - Predicate to conservatively determine whether the
 /// instruction could introduce a safe point.
@@ -198,7 +195,6 @@ static bool InsertRootInitializers(Function &F, AllocaInst **Roots,
 
   return MadeChange;
 }
-
 
 /// runOnFunction - Replace gcread/gcwrite intrinsics with loads and stores.
 /// Leave gcroot intrinsics; the code generator needs to see those.

@@ -34,18 +34,16 @@ using namespace llvm;
 
 namespace {
 
-  class ErlangGCPrinter : public GCMetadataPrinter {
-  public:
-    void finishAssembly(Module &M, GCModuleInfo &Info,
-                        AsmPrinter &AP) override;
-  };
-
+class ErlangGCPrinter : public GCMetadataPrinter {
+public:
+  void finishAssembly(Module &M, GCModuleInfo &Info, AsmPrinter &AP) override;
+};
 }
 
 static GCMetadataPrinterRegistry::Add<ErlangGCPrinter>
-X("erlang", "erlang-compatible garbage collector");
+    X("erlang", "erlang-compatible garbage collector");
 
-void llvm::linkErlangGCPrinter() { }
+void llvm::linkErlangGCPrinter() {}
 
 void ErlangGCPrinter::finishAssembly(Module &M, GCModuleInfo &Info,
                                      AsmPrinter &AP) {
@@ -54,13 +52,13 @@ void ErlangGCPrinter::finishAssembly(Module &M, GCModuleInfo &Info,
       AP.TM.getSubtargetImpl()->getDataLayout()->getPointerSize();
 
   // Put this in a custom .note section.
-  AP.OutStreamer.SwitchSection(AP.getObjFileLowering().getContext()
-    .getELFSection(".note.gc", ELF::SHT_PROGBITS, 0,
-                   SectionKind::getDataRel()));
+  AP.OutStreamer.SwitchSection(
+      AP.getObjFileLowering().getContext().getELFSection(
+          ".note.gc", ELF::SHT_PROGBITS, 0, SectionKind::getDataRel()));
 
   // For each function...
   for (GCModuleInfo::FuncInfoVec::iterator FI = Info.funcinfo_begin(),
-         IE = Info.funcinfo_end();
+                                           IE = Info.funcinfo_end();
        FI != IE; ++FI) {
     GCFunctionInfo &MD = **FI;
     if (MD.getStrategy().getName() != getStrategy().getName())
@@ -91,7 +89,7 @@ void ErlangGCPrinter::finishAssembly(Module &M, GCModuleInfo &Info,
       // Emit the address of the safe point.
       OS.AddComment("safe point address");
       MCSymbol *Label = PI->Label;
-      AP.EmitLabelPlusOffset(Label/*Hi*/, 0/*Offset*/, 4/*Size*/);
+      AP.EmitLabelPlusOffset(Label /*Hi*/, 0 /*Offset*/, 4 /*Size*/);
     }
 
     // Stack information never change in safe points! Only print info from the
@@ -104,8 +102,9 @@ void ErlangGCPrinter::finishAssembly(Module &M, GCModuleInfo &Info,
 
     // Emit stack arity, i.e. the number of stacked arguments.
     unsigned RegisteredArgs = IntPtrSize == 4 ? 5 : 6;
-    unsigned StackArity = MD.getFunction().arg_size() > RegisteredArgs ?
-                          MD.getFunction().arg_size() - RegisteredArgs : 0;
+    unsigned StackArity = MD.getFunction().arg_size() > RegisteredArgs
+                              ? MD.getFunction().arg_size() - RegisteredArgs
+                              : 0;
     OS.AddComment("stack arity");
     AP.EmitInt16(StackArity);
 
@@ -116,7 +115,7 @@ void ErlangGCPrinter::finishAssembly(Module &M, GCModuleInfo &Info,
     // And for each live root...
     for (GCFunctionInfo::live_iterator LI = MD.live_begin(PI),
                                        LE = MD.live_end(PI);
-                                       LI != LE; ++LI) {
+         LI != LE; ++LI) {
       // Emit live root's offset within the stack frame.
       OS.AddComment("stack index (offset / wordsize)");
       AP.EmitInt16(LI->StackOffset / IntPtrSize);

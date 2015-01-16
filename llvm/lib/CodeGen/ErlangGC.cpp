@@ -27,17 +27,16 @@ using namespace llvm;
 
 namespace {
 
-  class ErlangGC : public GCStrategy {
-  public:
-    ErlangGC();
-  };
-
+class ErlangGC : public GCStrategy {
+public:
+  ErlangGC();
+};
 }
 
-static GCRegistry::Add<ErlangGC>
-X("erlang", "erlang-compatible garbage collector");
+static GCRegistry::Add<ErlangGC> X("erlang",
+                                   "erlang-compatible garbage collector");
 
-void llvm::linkErlangGC() { }
+void llvm::linkErlangGC() {}
 
 ErlangGC::ErlangGC() {
   InitRoots = false;

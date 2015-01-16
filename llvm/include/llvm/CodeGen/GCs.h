@@ -15,29 +15,29 @@
 #define LLVM_CODEGEN_GCS_H
 
 namespace llvm {
-  class GCStrategy;
-  class GCMetadataPrinter;
+class GCStrategy;
+class GCMetadataPrinter;
 
-  /// FIXME: Collector instances are not useful on their own. These no longer
-  ///        serve any purpose except to link in the plugins.
+/// FIXME: Collector instances are not useful on their own. These no longer
+///        serve any purpose except to link in the plugins.
 
-  /// Creates an ocaml-compatible garbage collector.
-  void linkOcamlGC();
+/// Creates an ocaml-compatible garbage collector.
+void linkOcamlGC();
 
-  /// Creates an ocaml-compatible metadata printer.
-  void linkOcamlGCPrinter();
+/// Creates an ocaml-compatible metadata printer.
+void linkOcamlGCPrinter();
 
-  /// Creates an erlang-compatible garbage collector.
-  void linkErlangGC();
+/// Creates an erlang-compatible garbage collector.
+void linkErlangGC();
 
-  /// Creates an erlang-compatible metadata printer.
-  void linkErlangGCPrinter();
+/// Creates an erlang-compatible metadata printer.
+void linkErlangGCPrinter();
 
-  /// Creates a shadow stack garbage collector. This collector requires no code
-  /// generator support.
-  void linkShadowStackGC();
+/// Creates a shadow stack garbage collector. This collector requires no code
+/// generator support.
+void linkShadowStackGC();
 
-  void linkStatepointExampleGC();
+void linkStatepointExampleGC();
 }
 
 #endif
