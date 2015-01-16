@@ -1420,6 +1420,10 @@ llvm::GlobalVariable *MicrosoftCXXABI::getAddrOfVTable(const CXXRecordDecl *RD,
         } else {
           llvm_unreachable("unexpected linkage for vftable!");
         }
+      } else {
+        if (llvm::GlobalValue::isWeakForLinker(VFTableLinkage))
+          VTable->setComdat(
+              CGM.getModule().getOrInsertComdat(VTable->getName()));
       }
       VFTable->setLinkage(VFTableLinkage);
       CGM.setGlobalVisibility(VFTable, RD);
