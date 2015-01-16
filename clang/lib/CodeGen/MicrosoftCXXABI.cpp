@@ -3037,7 +3037,8 @@ static void emitCXXConstructor(CodeGenModule &CGM,
                                const CXXConstructorDecl *ctor,
                                StructorType ctorType) {
   // There are no constructor variants, always emit the complete destructor.
-  CGM.codegenCXXStructor(ctor, StructorType::Complete);
+  llvm::Function *Fn = CGM.codegenCXXStructor(ctor, StructorType::Complete);
+  CGM.maybeSetTrivialComdat(*ctor, *Fn);
 }
 
 static void emitCXXDestructor(CodeGenModule &CGM, const CXXDestructorDecl *dtor,
@@ -3063,7 +3064,8 @@ static void emitCXXDestructor(CodeGenModule &CGM, const CXXDestructorDecl *dtor,
   if (dtorType == StructorType::Base && !CGM.TryEmitBaseDestructorAsAlias(dtor))
     return;
 
-  CGM.codegenCXXStructor(dtor, dtorType);
+  llvm::Function *Fn = CGM.codegenCXXStructor(dtor, dtorType);
+  CGM.maybeSetTrivialComdat(*dtor, *Fn);
 }
 
 void MicrosoftCXXABI::emitCXXStructor(const CXXMethodDecl *MD,
