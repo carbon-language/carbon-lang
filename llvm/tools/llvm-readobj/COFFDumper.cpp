@@ -1107,6 +1107,7 @@ static StringRef getBaseRelocTypeName(uint8_t Type) {
   case COFF::IMAGE_REL_BASED_LOW: return "LOW";
   case COFF::IMAGE_REL_BASED_HIGHLOW: return "HIGHLOW";
   case COFF::IMAGE_REL_BASED_HIGHADJ: return "HIGHADJ";
+  case COFF::IMAGE_REL_BASED_ARM_MOV32T: return "ARM_MOV32(T)";
   case COFF::IMAGE_REL_BASED_DIR64: return "DIR64";
   default: return "unknown (" + llvm::utostr(Type) + ")";
   }
