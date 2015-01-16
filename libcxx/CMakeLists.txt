@@ -85,21 +85,6 @@ set_property(CACHE LIBCXX_CXX_ABI PROPERTY STRINGS ;${CXXABIS})
 # Configure System
 #===============================================================================
 
-# Get triples.
-include(GetTriple)
-get_host_triple(LIBCXX_HOST_TRIPLE
-  LIBCXX_HOST_ARCH
-  LIBCXX_HOST_VENDOR
-  LIBCXX_HOST_OS
-  )
-set(LIBCXX_HOST_TRIPLE ${LIBCXX_HOST_TRIPLE} CACHE STRING "Host triple.")
-get_target_triple(LIBCXX_TARGET_TRIPLE
-  LIBCXX_TARGET_ARCH
-  LIBCXX_TARGET_VENDOR
-  LIBCXX_TARGET_OS
-  )
-set(LIBCXX_TARGET_TRIPLE ${LIBCXX_TARGET_TRIPLE} CACHE STRING "Target triple.")
-
 set(LIBCXX_COMPILER    ${CMAKE_CXX_COMPILER})
 set(LIBCXX_SOURCE_DIR  ${CMAKE_CURRENT_SOURCE_DIR})
 set(LIBCXX_BINARY_DIR  ${CMAKE_CURRENT_BINARY_DIR})
@@ -279,7 +264,8 @@ if (LIBCXX_BUILT_STANDALONE)
   endif()
 endif()
 
-list(APPEND LIBCXX_CXX_FLAGS "-target ${LIBCXX_TARGET_TRIPLE}")
+append_if(LIBCXX_CXX_FLAGS LIBCXX_TARGET_TRIPLE
+          "-target ${LIBCXX_TARGET_TRIPLE}")
 append_if(LIBCXX_CXX_FLAGS LIBCXX_SYSROOT "--sysroot ${LIBCXX_SYSROOT}")
 append_if(LIBCXX_CXX_FLAGS LIBCXX_GCC_TOOLCHAIN
           "-gcc-toolchain ${LIBCXX_GCC_TOOLCHAIN}")
