@@ -2906,6 +2906,23 @@ let addrMode = BaseImmOffset, InputType = "imm", isCodeGenOnly = 0 in {
                             u6_1Ext, 0b011, 1>;
 }
 
+class Storex_simple_pat<PatFrag Store, PatFrag Value, InstHexagon MI>
+  : Pat<(Store Value:$Rt, (i32 IntRegs:$Rs)),
+        (MI IntRegs:$Rs, 0, Value:$Rt)>;
+		
+// Regular stores in the DAG have two operands: value and address.
+// Atomic stores also have two, but they are reversed: address, value.
+// To use atomic stores with the patterns, they need to have their operands
+// swapped. This relies on the knowledge that the F.Fragment uses names
+// "ptr" and "val".
+class SwapSt<PatFrag F>
+  : PatFrag<(ops node:$val, node:$ptr), F.Fragment>;
+
+def: Storex_simple_pat<SwapSt<atomic_store_8>,  I32, S2_storerb_io>;
+def: Storex_simple_pat<SwapSt<atomic_store_16>, I32, S2_storerh_io>;
+def: Storex_simple_pat<SwapSt<atomic_store_32>, I32, S2_storeri_io>;
+def: Storex_simple_pat<SwapSt<atomic_store_64>, I64, S2_storerd_io>;
+
 def : Pat<(truncstorei8 (i32 IntRegs:$src1), ADDRriS11_0:$addr),
           (S2_storerb_io AddrFI:$addr, 0, (i32 IntRegs:$src1))>;
 
