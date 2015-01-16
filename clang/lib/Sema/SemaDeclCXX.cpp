@@ -2159,7 +2159,8 @@ Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
       assert(Member && "HandleField never returns null");
     }
   } else {
-    assert(InitStyle == ICIS_NoInit || D.getDeclSpec().getStorageClassSpec() == DeclSpec::SCS_static);
+    assert(InitStyle == ICIS_NoInit ||
+           D.getDeclSpec().getStorageClassSpec() == DeclSpec::SCS_static);
 
     Member = HandleDeclarator(S, D, TemplateParameterLists);
     if (!Member)
