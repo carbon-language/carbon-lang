@@ -43,8 +43,7 @@ template <class ELFT> class TargetLayout;
 class TargetRelocationHandler {
 public:
   /// Constructor
-  TargetRelocationHandler(ELFLinkingContext &targetInfo)
-      : _context(targetInfo) {}
+  TargetRelocationHandler(ELFLinkingContext &targetInfo) : _ctx(targetInfo) {}
   virtual ~TargetRelocationHandler() {}
 
   virtual std::error_code applyRelocation(ELFWriter &, llvm::FileOutputBuffer &,
@@ -55,14 +54,12 @@ protected:
   void unhandledReferenceType(const Atom &atom, const Reference &ref) const {
     llvm::errs() << "Unhandled reference type in file " << atom.file().path()
                  << ": reference from " << atom.name() << "+"
-                 << ref.offsetInAtom() << " to " << ref.target()->name()
-                 << "+" << ref.addend() << " of type ";
+                 << ref.offsetInAtom() << " to " << ref.target()->name() << "+"
+                 << ref.addend() << " of type ";
 
     StringRef kindValStr;
-    if (!_context.registry().referenceKindToString(ref.kindNamespace(),
-                                                   ref.kindArch(),
-                                                   ref.kindValue(),
-                                                   kindValStr)) {
+    if (!_ctx.registry().referenceKindToString(
+            ref.kindNamespace(), ref.kindArch(), ref.kindValue(), kindValStr)) {
       kindValStr = "unknown";
     }
 
@@ -71,7 +68,7 @@ protected:
   }
 
 private:
-  ELFLinkingContext &_context;
+  ELFLinkingContext &_ctx;
 };
 
 /// \brief TargetHandler contains all the information responsible to handle a
