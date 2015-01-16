@@ -1,6 +1,8 @@
-; RUN: llc                             < %s | FileCheck %s
-; RUN: llc -fast-isel -fast-isel-abort < %s | FileCheck %s
-target datalayout = "E-m:e-i64:64-n32:64"
+; RUN: llc                             < %s | FileCheck %s -check-prefix=CHECK -check-prefix=CHECK-BE
+; RUN: llc -fast-isel -fast-isel-abort < %s | FileCheck %s -check-prefix=CHECK -check-prefix=CHECK-BE
+; RUN: llc -mtriple=powerpc64le-unknown-linux-gnu                             < %s | FileCheck %s -check-prefix=CHECK -check-prefix=CHECK-LE
+; RUN: llc -mtriple=powerpc64le-unknown-linux-gnu -fast-isel -fast-isel-abort < %s | FileCheck %s -check-prefix=CHECK -check-prefix=CHECK-LE
+
 target triple = "powerpc64-unknown-linux-gnu"
 
 ; Trivial patchpoint codegen
@@ -9,18 +11,18 @@ define i64 @trivial_patchpoint_codegen(i64 %p1, i64 %p2, i64 %p3, i64 %p4) {
 entry:
 ; CHECK-LABEL: trivial_patchpoint_codegen:
 
-; CHECK: li 11, -8531
-; CHECK-NEXT: rldic 11, 11, 32, 16
-; CHECK-NEXT: oris 11, 11, 48879
-; CHECK-NEXT: ori 11, 11, 51966
-; CHECK-NEXT: mtctr 11
+; CHECK: li 12, -8531
+; CHECK-NEXT: rldic 12, 12, 32, 16
+; CHECK-NEXT: oris 12, 12, 48879
+; CHECK-NEXT: ori 12, 12, 51966
+; CHECK-NEXT: mtctr 12
 ; CHECK-NEXT: bctrl
 
-; CHECK: li 11, -8531
-; CHECK-NEXT: rldic 11, 11, 32, 16
-; CHECK-NEXT: oris 11, 11, 48879
-; CHECK-NEXT: ori 11, 11, 51967
-; CHECK-NEXT: mtctr 11
+; CHECK: li 12, -8531
+; CHECK-NEXT: rldic 12, 12, 32, 16
+; CHECK-NEXT: oris 12, 12, 48879
+; CHECK-NEXT: ori 12, 12, 51967
+; CHECK-NEXT: mtctr 12
 ; CHECK-NEXT: bctrl
 
 ; CHECK: blr
@@ -36,9 +38,11 @@ entry:
 ; as a leaf function.
 ;
 ; CHECK-LABEL: caller_meta_leaf
-; CHECK: stdu 1, -80(1)
+; CHECK-BE: stdu 1, -80(1)
+; CHECK-LE: stdu 1, -64(1)
 ; CHECK: Ltmp
-; CHECK: addi 1, 1, 80
+; CHECK-BE: addi 1, 1, 80
+; CHECK-LE: addi 1, 1, 64
 ; CHECK: blr
 
 define void @caller_meta_leaf() {

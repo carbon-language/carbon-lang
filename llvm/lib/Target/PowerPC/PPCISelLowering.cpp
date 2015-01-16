@@ -9910,8 +9910,16 @@ PPCTargetLowering::getScratchRegisters(CallingConv::ID) const {
   // site. Hence we include LR in the scratch registers, which are in turn added
   // as implicit-defs for stackmaps and patchpoints. The same reasoning applies
   // to CTR, which is used by any indirect call.
+  if (Subtarget.isELFv2ABI()) {
+    static const MCPhysReg ScratchRegs[] = {
+      PPC::X12, PPC::LR8, PPC::CTR8, 0
+    };
+
+    return ScratchRegs;
+  }
+
   static const MCPhysReg ScratchRegs[] = {
-    PPC::X11, PPC::X12, PPC::LR8, PPC::CTR8, 0
+    PPC::X12, PPC::X11, PPC::LR8, PPC::CTR8, 0
   };
 
   return ScratchRegs;
