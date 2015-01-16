@@ -59,3 +59,12 @@ P* fun();
          [self->obj count];
 }
 @end
+
+
+@interface Rdar19038838
+@property id newItem; // should be marked objc_method_family(none), but isn't.
+@end
+
+id testRdar19038838(Rdar19038838 *obj) {
+  return [obj newItem];
+}
