@@ -329,8 +329,15 @@ void GCMachineCodeAnalysis::FindSafePoints(MachineFunction &MF) {
        ++BBI)
     for (MachineBasicBlock::iterator MI = BBI->begin(), ME = BBI->end();
          MI != ME; ++MI)
-      if (MI->isCall())
+      if (MI->isCall()) {
+        // Do not treat tail or sibling call sites as safe points.  This is
+        // legal since any arguments passed to the callee which live in the
+        // remnants of the callers frame will be owned and updated by the
+        // callee if required.
+        if (MI->isTerminator())
+          continue;
         VisitCallPoint(MI);
+      }
 }
 
 void GCMachineCodeAnalysis::FindStackOffsets(MachineFunction &MF) {
@@ -366,11 +373,7 @@ bool GCMachineCodeAnalysis::runOnMachineFunction(MachineFunction &MF) {
   FI->setFrameSize(MF.getFrameInfo()->getStackSize());
 
   // Find all safe points.
-  if (FI->getStrategy().customSafePoints()) {
-    FI->getStrategy().findCustomSafePoints(*FI, MF);
-  } else {
-    FindSafePoints(MF);
-  }
+  FindSafePoints(MF);
 
   // Find the stack offsets for all roots.
   FindStackOffsets(MF);

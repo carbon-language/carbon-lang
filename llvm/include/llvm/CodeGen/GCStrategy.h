@@ -76,8 +76,6 @@ namespace llvm {
     bool CustomReadBarriers;   ///< Default is to insert loads.
     bool CustomWriteBarriers;  ///< Default is to insert stores.
     bool CustomRoots;          ///< Default is to pass through to backend.
-    bool CustomSafePoints;     ///< Default is to use NeededSafePoints
-                               ///< to find safe points.
     bool InitRoots;            ///< If set, roots are nulled during lowering.
     bool UsesMetadata;         ///< If set, backend must emit metadata tables.
     
@@ -124,7 +122,7 @@ namespace llvm {
     /// True if safe points of any kind are required. By default, none are
     /// recorded. 
     bool needsSafePoints() const {
-      return CustomSafePoints || NeededSafePoints != 0;
+      return NeededSafePoints != 0;
     }
     
     /// True if the given kind of safe point is required. By default, none are
@@ -137,10 +135,6 @@ namespace llvm {
     /// stack map. If true, then performCustomLowering must delete them.
     bool customRoots() const { return CustomRoots; }
 
-    /// By default, the GC analysis will find safe points according to
-    /// NeededSafePoints. If true, then findCustomSafePoints must create them.
-    bool customSafePoints() const { return CustomSafePoints; }
-    
     /// If set, gcroot intrinsics should initialize their allocas to null
     /// before the first use. This is necessary for most GCs and is enabled by
     /// default. 
@@ -169,14 +163,6 @@ namespace llvm {
     virtual bool performCustomLowering(Function &F) {
       llvm_unreachable("GCStrategy subclass specified a configuration which"
                        "requires a custom lowering without providing one");
-    }
-    ///@}
-    /// Called if customSafepoints returns true, used only by gc.root
-    /// implementations. 
-    virtual bool findCustomSafePoints(GCFunctionInfo& FI, MachineFunction& MF) {
-      llvm_unreachable("GCStrategy subclass specified a configuration which"
-                       "requests custom safepoint identification without"
-                       "providing an implementation for such");
     }
   };
 

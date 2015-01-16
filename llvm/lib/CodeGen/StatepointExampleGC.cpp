@@ -33,7 +33,6 @@ public:
     NeededSafePoints = 0;
     UsesMetadata = false;
     CustomRoots = false;
-    CustomSafePoints = false;
   }
   Optional<bool> isGCManagedPointer(const Value *V) const override {
     // Method is only valid on pointer typed values.
