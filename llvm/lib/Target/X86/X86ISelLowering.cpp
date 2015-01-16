@@ -25874,8 +25874,11 @@ SDValue X86TargetLowering::PerformDAGCombine(SDNode *N,
   case ISD::FMA:            return PerformFMACombine(N, DAG, Subtarget);
   case ISD::INTRINSIC_WO_CHAIN:
     return PerformINTRINSIC_WO_CHAINCombine(N, DAG, Subtarget);
-  case X86ISD::INSERTPS:
-    return PerformINSERTPSCombine(N, DAG, Subtarget);
+  case X86ISD::INSERTPS: {
+    if (getTargetMachine().getOptLevel() > CodeGenOpt::None)
+      return PerformINSERTPSCombine(N, DAG, Subtarget);
+    break;
+  }
   case ISD::BUILD_VECTOR: return PerformBUILD_VECTORCombine(N, DAG, Subtarget);
   }
 
