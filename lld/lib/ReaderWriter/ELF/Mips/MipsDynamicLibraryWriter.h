@@ -47,7 +47,6 @@ protected:
 
 private:
   MipsELFWriter<ELFT> _writeHelper;
-  MipsLinkingContext &_mipsContext;
   MipsTargetLayout<Mips32ElELFType> &_mipsTargetLayout;
 };
 
@@ -55,7 +54,7 @@ template <class ELFT>
 MipsDynamicLibraryWriter<ELFT>::MipsDynamicLibraryWriter(
     MipsLinkingContext &ctx, MipsTargetLayout<ELFT> &layout)
     : DynamicLibraryWriter<ELFT>(ctx, layout), _writeHelper(ctx, layout),
-      _mipsContext(ctx), _mipsTargetLayout(layout) {}
+      _mipsTargetLayout(layout) {}
 
 template <class ELFT>
 bool MipsDynamicLibraryWriter<ELFT>::createImplicitFiles(
@@ -76,7 +75,7 @@ template <class ELFT>
 LLD_UNIQUE_BUMP_PTR(SymbolTable<ELFT>)
     MipsDynamicLibraryWriter<ELFT>::createSymbolTable() {
   return LLD_UNIQUE_BUMP_PTR(SymbolTable<ELFT>)(new (
-      this->_alloc) MipsSymbolTable<ELFT>(_mipsContext));
+      this->_alloc) MipsSymbolTable<ELFT>(this->_context));
 }
 
 /// \brief create dynamic table
@@ -84,7 +83,7 @@ template <class ELFT>
 LLD_UNIQUE_BUMP_PTR(DynamicTable<ELFT>)
     MipsDynamicLibraryWriter<ELFT>::createDynamicTable() {
   return LLD_UNIQUE_BUMP_PTR(DynamicTable<ELFT>)(new (
-      this->_alloc) MipsDynamicTable<ELFT>(_mipsContext, _mipsTargetLayout));
+      this->_alloc) MipsDynamicTable<ELFT>(this->_context, _mipsTargetLayout));
 }
 
 /// \brief create dynamic symbol table
@@ -93,7 +92,7 @@ LLD_UNIQUE_BUMP_PTR(DynamicSymbolTable<ELFT>)
     MipsDynamicLibraryWriter<ELFT>::createDynamicSymbolTable() {
   return LLD_UNIQUE_BUMP_PTR(
       DynamicSymbolTable<ELFT>)(new (this->_alloc) MipsDynamicSymbolTable<ELFT>(
-      _mipsContext, _mipsTargetLayout));
+      this->_context, _mipsTargetLayout));
 }
 
 } // namespace elf

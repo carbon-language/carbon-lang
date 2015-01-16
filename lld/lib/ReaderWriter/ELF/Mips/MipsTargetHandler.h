@@ -120,7 +120,7 @@ template <class ELFT> class MipsSymbolTable : public SymbolTable<ELFT> {
 public:
   typedef llvm::object::Elf_Sym_Impl<ELFT> Elf_Sym;
 
-  MipsSymbolTable(const MipsLinkingContext &ctx)
+  MipsSymbolTable(const ELFLinkingContext &ctx)
       : SymbolTable<ELFT>(ctx, ".symtab",
                           DefaultLayout<ELFT>::ORDER_SYMBOL_TABLE) {}
 
@@ -161,7 +161,7 @@ public:
 template <class ELFT>
 class MipsDynamicSymbolTable : public DynamicSymbolTable<ELFT> {
 public:
-  MipsDynamicSymbolTable(const MipsLinkingContext &ctx,
+  MipsDynamicSymbolTable(const ELFLinkingContext &ctx,
                          MipsTargetLayout<ELFT> &layout)
       : DynamicSymbolTable<ELFT>(ctx, layout, ".dynsym",
                                  DefaultLayout<ELFT>::ORDER_DYNAMIC_SYMBOLS),

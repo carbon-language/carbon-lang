@@ -15,13 +15,12 @@
 namespace lld {
 namespace elf {
 
-class MipsLinkingContext;
 template <class ELFType> class MipsTargetLayout;
 
 template <class MipsELFType>
 class MipsDynamicTable : public DynamicTable<MipsELFType> {
 public:
-  MipsDynamicTable(MipsLinkingContext &ctx,
+  MipsDynamicTable(const ELFLinkingContext &ctx,
                    MipsTargetLayout<MipsELFType> &layout)
       : DynamicTable<MipsELFType>(ctx, layout, ".dynamic",
                                   DefaultLayout<MipsELFType>::ORDER_DYNAMIC),
