@@ -24,9 +24,6 @@ namespace elf {
 template <class ELFT>
 class DefaultTargetHandler : public TargetHandler<ELFT> {
 public:
-  DefaultTargetHandler(ELFLinkingContext &context)
-      : TargetHandler<ELFT>(context) {}
-
   const TargetRelocationHandler &getRelocationHandler() const = 0;
 
   virtual std::unique_ptr<Reader> getObjReader(bool atomizeStrings) = 0;

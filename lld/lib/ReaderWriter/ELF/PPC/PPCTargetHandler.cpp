@@ -59,7 +59,7 @@ std::error_code PPCTargetRelocationHandler::applyRelocation(
 }
 
 PPCTargetHandler::PPCTargetHandler(PPCLinkingContext &context)
-    : DefaultTargetHandler(context), _ppcLinkingContext(context),
+    : _ppcLinkingContext(context),
       _ppcTargetLayout(new PPCTargetLayout<PPCELFType>(context)),
       _ppcRelocationHandler(new PPCTargetRelocationHandler(context)) {}
 

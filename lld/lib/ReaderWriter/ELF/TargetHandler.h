@@ -76,9 +76,6 @@ private:
 /// of creating atoms and how the atoms are written to the output file.
 template <class ELFT> class TargetHandler : public TargetHandlerBase {
 public:
-  /// Constructor
-  TargetHandler(ELFLinkingContext &targetInfo) {}
-
   /// The layout determined completely by the Target.
   virtual TargetLayout<ELFT> &getTargetLayout() = 0;
 
