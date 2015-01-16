@@ -131,8 +131,8 @@ void NORETURN CheckFailed(const char *file, int line, const char *cond,
   Die();
 }
 
-uptr ReadFileToBuffer(const char *file_name, char **buff,
-                      uptr *buff_size, uptr max_len) {
+uptr ReadFileToBuffer(const char *file_name, char **buff, uptr *buff_size,
+                      uptr max_len, int *errno_p) {
   uptr PageSize = GetPageSizeCached();
   uptr kMinFileLen = PageSize;
   uptr read_len = 0;
@@ -141,7 +141,7 @@ uptr ReadFileToBuffer(const char *file_name, char **buff,
   // The files we usually open are not seekable, so try different buffer sizes.
   for (uptr size = kMinFileLen; size <= max_len; size *= 2) {
     uptr openrv = OpenFile(file_name, /*write*/ false);
-    if (internal_iserror(openrv)) return 0;
+    if (internal_iserror(openrv, errno_p)) return 0;
     fd_t fd = openrv;
     UnmapOrDie(*buff, *buff_size);
     *buff = (char*)MmapOrDie(size, __func__);
@@ -151,6 +151,10 @@ uptr ReadFileToBuffer(const char *file_name, char **buff,
     bool reached_eof = false;
     while (read_len + PageSize <= size) {
       uptr just_read = internal_read(fd, *buff + read_len, PageSize);
+      if (internal_iserror(just_read, errno_p)) {
+        UnmapOrDie(*buff, *buff_size);
+        return 0;
+      }
       if (just_read == 0) {
         reached_eof = true;
         break;

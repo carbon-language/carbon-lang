@@ -180,8 +180,8 @@ uptr OpenFile(const char *filename, bool write);
 // The resulting buffer is mmaped and stored in '*buff'.
 // The size of the mmaped region is stored in '*buff_size',
 // Returns the number of read bytes or 0 if file can not be opened.
-uptr ReadFileToBuffer(const char *file_name, char **buff,
-                      uptr *buff_size, uptr max_len);
+uptr ReadFileToBuffer(const char *file_name, char **buff, uptr *buff_size,
+                      uptr max_len, int *errno_p = nullptr);
 // Maps given file to virtual memory, and returns pointer to it
 // (or NULL if the mapping failes). Stores the size of mmaped region
 // in '*buff_size'.
