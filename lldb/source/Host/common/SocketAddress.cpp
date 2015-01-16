@@ -41,11 +41,13 @@ const char* inet_ntop(int af, const void * src,
     {
         case AF_INET:
         {
-            const char* formatted = inet_ntoa(*static_cast<const in_addr*>(src));
-            if (formatted && strlen(formatted) < size)
             {
-                strncpy(dst, formatted, size);
-                return dst;
+                const char* formatted = inet_ntoa(*static_cast<const in_addr*>(src));
+                if (formatted && strlen(formatted) < size)
+                {
+                    strncpy(dst, formatted, size);
+                    return dst;
+                }
             }
             return nullptr;
         case AF_INET6:
@@ -57,7 +59,7 @@ const char* inet_ntop(int af, const void * src,
                                           ntohs(src16[0]), ntohs(src16[1]), ntohs(src16[2]), ntohs(src16[3]),
                                           ntohs(src16[4]), ntohs(src16[5]), ntohs(src16[6]), ntohs(src16[7])
                                           );
-                if (full_size < size)
+                if (full_size < static_cast<int>(size))
                 {
                     strncpy(dst,tmp,size);
                     return dst;
@@ -65,9 +67,9 @@ const char* inet_ntop(int af, const void * src,
                 return nullptr;
             }
         }
-        return nullptr;
     }
-    
+    return nullptr;
+} 
 #endif
     
 
