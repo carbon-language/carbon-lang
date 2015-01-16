@@ -45,10 +45,10 @@ void FlagParser::parse_flag() {
   uptr name_start = pos_;
   while (buf_[pos_] != 0 && buf_[pos_] != '=' && !is_space(buf_[pos_])) ++pos_;
   if (buf_[pos_] != '=') fatal_error("expected '='");
-  const char *name = internal_strndup(buf_ + name_start, pos_ - name_start);
+  char *name = internal_strndup(buf_ + name_start, pos_ - name_start);
 
   uptr value_start = ++pos_;
-  const char *value;
+  char *value;
   if (buf_[pos_] == '\'' || buf_[pos_] == '"') {
     char quote = buf_[pos_++];
     while (buf_[pos_] != 0 && buf_[pos_] != quote) ++pos_;
@@ -67,8 +67,8 @@ void FlagParser::parse_flag() {
     Printf("Flag parsing failed.");
     Die();
   }
-  InternalFree((void *)name);
-  InternalFree((void *)value);
+  InternalFree(name);
+  InternalFree(value);
 }
 
 void FlagParser::parse_flags() {
