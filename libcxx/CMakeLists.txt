@@ -57,6 +57,8 @@ option(LIBCXX_ENABLE_MONOTONIC_CLOCK
    This option may only be used when LIBCXX_ENABLE_THREADS=OFF." ON)
 option(LIBCXX_INSTALL_HEADERS "Install the libc++ headers." ON)
 option(LIBCXX_INSTALL_SUPPORT_HEADERS "Install libc++ support headers." ON)
+set(LIBCXX_SYSROOT "" CACHE STRING "Use alternate sysroot.")
+set(LIBCXX_GCC_TOOLCHAIN "" CACHE STRING "Use alternate GCC toolchain.")
 if (LIBCXX_BUILT_STANDALONE)
   set(LLVM_USE_SANITIZER "" CACHE STRING
       "Define the sanitizer used to build the library and tests")
@@ -276,6 +278,11 @@ if (LIBCXX_BUILT_STANDALONE)
     message(WARNING "LLVM_USE_SANITIZER is not supported with MSVC")
   endif()
 endif()
+
+list(APPEND LIBCXX_CXX_FLAGS "-target ${LIBCXX_TARGET_TRIPLE}")
+append_if(LIBCXX_CXX_FLAGS LIBCXX_SYSROOT "--sysroot ${LIBCXX_SYSROOT}")
+append_if(LIBCXX_CXX_FLAGS LIBCXX_GCC_TOOLCHAIN
+          "-gcc-toolchain ${LIBCXX_GCC_TOOLCHAIN}")
 
 string(REPLACE ";" " " LIBCXX_CXX_FLAGS "${LIBCXX_CXX_FLAGS}")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${LIBCXX_CXX_FLAGS}")

@@ -230,9 +230,9 @@ class Configuration(object):
         locale.setlocale(locale.LC_ALL, default_locale)
 
         # Write an "available feature" that combines the triple when
-        # use_system_cxx_lib is enabled. This is so that we can easily write XFAIL
-        # markers for tests that are known to fail with versions of libc++ as
-        # were shipped with a particular triple.
+        # use_system_cxx_lib is enabled. This is so that we can easily write
+        # XFAIL markers for tests that are known to fail with versions of
+        # libc++ as were shipped with a particular triple.
         if self.use_system_cxx_lib:
             self.config.available_features.add(
                 'with_system_cxx_lib=%s' % self.config.target_triple)
@@ -288,7 +288,7 @@ class Configuration(object):
         if not enable_threads:
             self.configure_compile_flags_no_threads()
             if not enable_monotonic_clock:
-                self.configure_compile_flags_no_monotonic_clock() 
+                self.configure_compile_flags_no_monotonic_clock()
         elif not enable_monotonic_clock:
             self.lit_config.fatal('enable_monotonic_clock cannot be false when'
                                   ' enable_threads is true.')
@@ -297,6 +297,15 @@ class Configuration(object):
         # Configure extra compile flags.
         compile_flags_str = self.get_lit_conf('compile_flags', '')
         self.compile_flags += shlex.split(compile_flags_str)
+
+        sysroot = self.get_lit_conf('sysroot')
+        if sysroot:
+            self.compile_flags += ['--sysroot', sysroot]
+        gcc_toolchain = self.get_lit_conf('gcc_toolchain')
+        if gcc_toolchain:
+            self.compile_flags += ['-gcc-toolchain', gcc_toolchain]
+
+        self.compile_flags += ['-target', self.config.target_triple]
 
     def configure_compile_flags_header_includes(self):
         self.compile_flags += ['-I' + self.libcxx_src_root + '/test/support']
