@@ -24,22 +24,6 @@ public:
   static ErrorOr<std::unique_ptr<DynamicFile>>
   create(std::unique_ptr<llvm::MemoryBuffer> mb, bool useShlibUndefines);
 
-  const atom_collection<DefinedAtom> &defined() const override {
-    return _definedAtoms;
-  }
-
-  const atom_collection<UndefinedAtom> &undefined() const override {
-    return _undefinedAtoms;
-  }
-
-  const atom_collection<SharedLibraryAtom> &sharedLibrary() const override {
-    return _sharedLibraryAtoms;
-  }
-
-  const atom_collection<AbsoluteAtom> &absolute() const override {
-    return _absoluteAtoms;
-  }
-
   const SharedLibraryAtom *exports(StringRef name,
                                    bool dataSymbolOnly) const override {
     assert(!dataSymbolOnly && "Invalid option for ELF exports!");
@@ -106,10 +90,6 @@ private:
 
   mutable llvm::BumpPtrAllocator _alloc;
   std::unique_ptr<llvm::object::ELFFile<ELFT>> _objFile;
-  atom_collection_vector<DefinedAtom> _definedAtoms;
-  atom_collection_vector<UndefinedAtom> _undefinedAtoms;
-  atom_collection_vector<SharedLibraryAtom> _sharedLibraryAtoms;
-  atom_collection_vector<AbsoluteAtom> _absoluteAtoms;
   /// \brief DT_SONAME
   StringRef _soname;
 

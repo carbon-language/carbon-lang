@@ -227,22 +227,6 @@ public:
     return exports(name, _installName);
   }
 
-  const atom_collection<DefinedAtom> &defined() const override {
-    return _definedAtoms;
-  }
-
-  const atom_collection<UndefinedAtom> &undefined() const override {
-    return _undefinedAtoms;
-  }
-
-  const atom_collection<SharedLibraryAtom> &sharedLibrary() const override {
-    return _sharedLibraryAtoms;
-  }
-
-  const atom_collection<AbsoluteAtom> &absolute() const override {
-    return _absoluteAtoms;
-  }
-
   /// Adds symbol name that this dylib exports. The corresponding
   /// SharedLibraryAtom is created lazily (since most symbols are not used).
   void addExportedSymbol(StringRef name, bool weakDef, bool copyRefs) {
@@ -333,10 +317,6 @@ private:
   StringRef                                  _installName;
   uint32_t                                   _currentVersion;
   uint32_t                                   _compatVersion;
-  atom_collection_vector<DefinedAtom>        _definedAtoms;
-  atom_collection_vector<UndefinedAtom>      _undefinedAtoms;
-  atom_collection_vector<SharedLibraryAtom>  _sharedLibraryAtoms;
-  atom_collection_vector<AbsoluteAtom>       _absoluteAtoms;
   std::vector<ReExportedDylib>               _reExportedDylibs;
   mutable std::unordered_map<StringRef, AtomAndFlags> _nameToAtom;
 };
