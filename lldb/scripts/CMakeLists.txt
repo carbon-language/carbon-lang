@@ -18,7 +18,7 @@ if ( LLDB_ENABLE_PYTHON_SCRIPTS_SWIG_API_GENERATION )
 	  COMMENT "Python script building LLDB Python wrapper")  
 	set_source_files_properties(${CMAKE_CURRENT_BINARY_DIR}/LLDBWrapPython.cpp PROPERTIES GENERATED 1)
 
-	ADD_CUSTOM_TARGET(swig_wrapper ALL echo -n
+	add_custom_target(swig_wrapper ALL
 		DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/LLDBWrapPython.cpp
 		)
 
@@ -39,7 +39,7 @@ else ()
 	  COMMENT "Building lldb python wrapper")
 	set_source_files_properties(${CMAKE_CURRENT_BINARY_DIR}/LLDBWrapPython.cpp PROPERTIES GENERATED 1)
 
-	ADD_CUSTOM_TARGET(swig_wrapper ALL echo -n
+	add_custom_target(swig_wrapper ALL
 		DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/LLDBWrapPython.cpp
 		)
 
