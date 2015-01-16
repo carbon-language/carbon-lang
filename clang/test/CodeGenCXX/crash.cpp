@@ -34,13 +34,3 @@ template <class ELFT> void finalizeDefaultAtomValues() {
 
 void f() { finalizeDefaultAtomValues<int>(); }
 }
-
-namespace PR22096 {
-template <class> struct c {
-  c();
-  template <class U> __attribute__((__always_inline__)) c(c<U>) {}
-};
-struct {
-  c<double> v = c<int>();
-} o;
-}
