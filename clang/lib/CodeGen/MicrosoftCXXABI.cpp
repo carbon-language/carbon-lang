@@ -1861,7 +1861,9 @@ void MicrosoftCXXABI::EmitGuardedInit(CodeGenFunction &CGF, const VarDecl &D,
   if (!D.isStaticLocal()) {
     assert(GV->hasWeakLinkage() || GV->hasLinkOnceLinkage());
     // GlobalOpt is allowed to discard the initializer, so use linkonce_odr.
-    CGF.CurFn->setLinkage(llvm::GlobalValue::LinkOnceODRLinkage);
+    llvm::Function *F = CGF.CurFn;
+    F->setLinkage(llvm::GlobalValue::LinkOnceODRLinkage);
+    F->setComdat(CGM.getModule().getOrInsertComdat(F->getName()));
     CGF.EmitCXXGlobalVarDeclInit(D, GV, PerformInit);
     return;
   }
