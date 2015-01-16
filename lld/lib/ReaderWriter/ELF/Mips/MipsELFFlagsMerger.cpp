@@ -15,6 +15,47 @@
 
 using namespace lld;
 using namespace lld::elf;
+using namespace llvm::ELF;
+
+struct MipsISATreeEdge {
+  unsigned child;
+  unsigned parent;
+};
+
+static MipsISATreeEdge isaTree[] = {
+    // MIPS64 extensions.
+    {EF_MIPS_ARCH_64R2, EF_MIPS_ARCH_64},
+    // MIPS V extensions.
+    {EF_MIPS_ARCH_64, EF_MIPS_ARCH_5},
+    // MIPS IV extensions.
+    {EF_MIPS_ARCH_5, EF_MIPS_ARCH_4},
+    // MIPS III extensions.
+    {EF_MIPS_ARCH_4, EF_MIPS_ARCH_3},
+    // MIPS32 extensions.
+    {EF_MIPS_ARCH_32R2, EF_MIPS_ARCH_32},
+    // MIPS II extensions.
+    {EF_MIPS_ARCH_3, EF_MIPS_ARCH_2},
+    {EF_MIPS_ARCH_32, EF_MIPS_ARCH_2},
+    // MIPS I extensions.
+    {EF_MIPS_ARCH_2, EF_MIPS_ARCH_1},
+};
+
+static bool matchMipsISA(unsigned base, unsigned ext) {
+  if (base == ext)
+    return true;
+  if (base == EF_MIPS_ARCH_32 && matchMipsISA(EF_MIPS_ARCH_64, ext))
+    return true;
+  if (base == EF_MIPS_ARCH_32R2 && matchMipsISA(EF_MIPS_ARCH_64R2, ext))
+    return true;
+  for (const auto &edge : isaTree) {
+    if (ext == edge.child) {
+      ext = edge.parent;
+      if (ext == base)
+        return true;
+    }
+  }
+  return false;
+}
 
 MipsELFFlagsMerger::MipsELFFlagsMerger() : _flags(0) {}
 
@@ -36,12 +77,16 @@ std::error_code MipsELFFlagsMerger::merge(uint8_t newClass, uint32_t newFlags) {
   switch (newArch) {
   case llvm::ELF::EF_MIPS_ARCH_1:
   case llvm::ELF::EF_MIPS_ARCH_2:
+  case llvm::ELF::EF_MIPS_ARCH_3:
+  case llvm::ELF::EF_MIPS_ARCH_4:
+  case llvm::ELF::EF_MIPS_ARCH_5:
   case llvm::ELF::EF_MIPS_ARCH_32:
+  case llvm::ELF::EF_MIPS_ARCH_64:
   case llvm::ELF::EF_MIPS_ARCH_32R2:
-  case llvm::ELF::EF_MIPS_ARCH_32R6:
+  case llvm::ELF::EF_MIPS_ARCH_64R2:
     break;
   default:
-    return make_dynamic_error_code(Twine("Unsupported architecture"));
+    return make_dynamic_error_code(Twine("Unsupported instruction set"));
   }
 
   // ... and still do not support MIPS-16 extension.
@@ -80,13 +125,20 @@ std::error_code MipsELFFlagsMerger::merge(uint8_t newClass, uint32_t newFlags) {
     return make_dynamic_error_code(
         Twine("Linking -mnan=2008 and -mnan=legacy modules"));
 
-  // Set the "largest" ISA.
+  // Check ISA compatibility and update the extension flag.
   uint32_t oldArch = _flags & llvm::ELF::EF_MIPS_ARCH;
-  _flags |= std::max(newArch, oldArch);
+  if (!matchMipsISA(newArch, oldArch)) {
+    if (!matchMipsISA(oldArch, newArch))
+      return make_dynamic_error_code(
+          Twine("Linking modules with icompatible ISA"));
+    _flags &= ~EF_MIPS_ARCH;
+    _flags |= newArch;
+  }
 
   _flags |= newFlags & llvm::ELF::EF_MIPS_NOREORDER;
   _flags |= newFlags & llvm::ELF::EF_MIPS_MICROMIPS;
   _flags |= newFlags & llvm::ELF::EF_MIPS_NAN2008;
+  _flags |= newFlags & llvm::ELF::EF_MIPS_32BITMODE;
 
   return std::error_code();
 }

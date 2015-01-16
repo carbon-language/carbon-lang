@@ -5,24 +5,11 @@
 # RUN: not lld -flavor gnu -target mipsel -e T -o %t.exe %t-no-abi.o 2>&1 | \
 # RUN:   FileCheck -check-prefix=INVALID-ABI %s
 
-# RUN: yaml2obj -format=elf -docnum 2 %s > %t-arch3.o
-# RUN: not lld -flavor gnu -target mipsel -e T -o %t.exe %t-arch3.o 2>&1 | \
-# RUN:   FileCheck -check-prefix=INVALID-ARCH %s
-
-# RUN: yaml2obj -format=elf -docnum 3 %s > %t-arch4.o
-# RUN: not lld -flavor gnu -target mipsel -e T -o %t.exe %t-arch4.o 2>&1 | \
-# RUN:   FileCheck -check-prefix=INVALID-ARCH %s
-
-# RUN: yaml2obj -format=elf -docnum 4 %s > %t-arch64.o
-# RUN: not lld -flavor gnu -target mipsel -e T -o %t.exe %t-arch64.o 2>&1 | \
-# RUN:   FileCheck -check-prefix=INVALID-ARCH %s
-
-# RUN: yaml2obj -format=elf -docnum 5 %s > %t-mips16.o
+# RUN: yaml2obj -format=elf -docnum 2 %s > %t-mips16.o
 # RUN: not lld -flavor gnu -target mipsel -e T -o %t.exe %t-mips16.o 2>&1 | \
 # RUN:   FileCheck -check-prefix=MIPS16 %s
 
 # INVALID-ABI: Unsupported ABI
-# INVALID-ARCH: Unsupported architecture
 # MIPS16: Unsupported extension: MIPS16
 
 # no-abi.o
@@ -33,69 +20,6 @@ FileHeader:
   Type:            ET_REL
   Machine:         EM_MIPS
   Flags:           []
-
-Sections:
-  - Name:          .text
-    Type:          SHT_PROGBITS
-    Flags:         [ SHF_ALLOC, SHF_EXECINSTR ]
-    AddressAlign:  0x04
-    Size:          0x04
-
-Symbols:
-  Global:
-    - Name:        T
-      Section:     .text
-
-# arch3.o
----
-FileHeader:
-  Class:           ELFCLASS32
-  Data:            ELFDATA2LSB
-  Type:            ET_REL
-  Machine:         EM_MIPS
-  Flags:           [EF_MIPS_ABI_O32, EF_MIPS_ARCH_3]
-
-Sections:
-  - Name:          .text
-    Type:          SHT_PROGBITS
-    Flags:         [ SHF_ALLOC, SHF_EXECINSTR ]
-    AddressAlign:  0x04
-    Size:          0x04
-
-Symbols:
-  Global:
-    - Name:        T
-      Section:     .text
-
-# arch4.o
----
-FileHeader:
-  Class:           ELFCLASS32
-  Data:            ELFDATA2LSB
-  Type:            ET_REL
-  Machine:         EM_MIPS
-  Flags:           [EF_MIPS_ABI_O32, EF_MIPS_ARCH_4]
-
-Sections:
-  - Name:          .text
-    Type:          SHT_PROGBITS
-    Flags:         [ SHF_ALLOC, SHF_EXECINSTR ]
-    AddressAlign:  0x04
-    Size:          0x04
-
-Symbols:
-  Global:
-    - Name:        T
-      Section:     .text
-
-# arch64.o
----
-FileHeader:
-  Class:           ELFCLASS32
-  Data:            ELFDATA2LSB
-  Type:            ET_REL
-  Machine:         EM_MIPS
-  Flags:           [EF_MIPS_ABI_O32, EF_MIPS_ARCH_64]
 
 Sections:
   - Name:          .text
