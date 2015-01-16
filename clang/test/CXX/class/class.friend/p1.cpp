@@ -66,6 +66,10 @@ class A {
   class facet;
   friend class facet;  // should not assert
   class facet {};
+
+  friend int Unknown::thing(); // expected-error {{use of undeclared identifier}}
+  friend int friendfunc(), Unknown::thing(); // expected-error {{use of undeclared identifier}}
+  friend int friendfunc(), Unknown::thing() : 4; // expected-error {{use of undeclared identifier}}
 };
 
 A::UndeclaredSoFar y; // expected-error {{no type named 'UndeclaredSoFar' in 'A'}}
