@@ -39,7 +39,9 @@ public:
     PointerType *PT = cast<PointerType>(V->getType());
     // For the sake of this example GC, we arbitrarily pick addrspace(1) as our
     // GC managed heap.  We know that a pointer into this heap needs to be
-    // updated and that no other pointer does.
+    // updated and that no other pointer does.  Note that addrspace(1) is used
+    // only as an example, it has no special meaning, and is not reserved for
+    // GC usage.
     return (1 == PT->getAddressSpace());
   }
 };
