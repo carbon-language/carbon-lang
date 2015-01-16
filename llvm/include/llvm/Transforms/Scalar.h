@@ -98,6 +98,13 @@ FunctionPass *createScalarReplAggregatesPass(signed Threshold = -1,
 
 //===----------------------------------------------------------------------===//
 //
+// InductiveRangeCheckElimination - Transform loops to elide range checks on
+// linear functions of the induction variable.
+//
+Pass *createInductiveRangeCheckEliminationPass();
+
+//===----------------------------------------------------------------------===//
+//
 // InductionVariableSimplify - Transform induction variables in a program to all
 // use a single canonical induction variable per loop.
 //

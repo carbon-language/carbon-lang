@@ -40,6 +40,7 @@ void llvm::initializeScalarOpts(PassRegistry &Registry) {
   initializeGVNPass(Registry);
   initializeEarlyCSEPass(Registry);
   initializeFlattenCFGPassPass(Registry);
+  initializeInductiveRangeCheckEliminationPass(Registry);
   initializeIndVarSimplifyPass(Registry);
   initializeJumpThreadingPass(Registry);
   initializeLICMPass(Registry);
