@@ -13,9 +13,9 @@ namespace lld {
 namespace pecoff {
 
 // Find decorated symbol, namely /sym@[0-9]+/ or /\?sym@@.+/.
-bool findDecoratedSymbol(PECOFFLinkingContext *ctx, ResolvableSymbols *syms,
+bool findDecoratedSymbol(PECOFFLinkingContext *ctx,
                          std::string sym, std::string &res) {
-  const std::set<std::string> &defined = syms->defined();
+  const std::set<std::string> &defined = ctx->definedSymbols();
   // Search for /sym@[0-9]+/
   {
     std::string s = sym + '@';

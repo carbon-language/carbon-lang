@@ -78,6 +78,29 @@ bool PECOFFLinkingContext::validateImpl(raw_ostream &diagnostics) {
   return true;
 }
 
+const std::set<std::string> &PECOFFLinkingContext::definedSymbols() {
+  std::lock_guard<std::recursive_mutex> lock(_mutex);
+  for (std::unique_ptr<Node> &node : getNodes()) {
+    if (_seen.count(node.get()) > 0)
+      continue;
+    FileNode *fnode = dyn_cast<FileNode>(node.get());
+    if (!fnode)
+      continue;
+    File *file = fnode->getFile();
+    if (file->parse())
+      continue;
+    if (auto *archive = dyn_cast<ArchiveLibraryFile>(file)) {
+      for (const std::string &sym : archive->getDefinedSymbols())
+        _definedSyms.insert(sym);
+      continue;
+    }
+    for (const DefinedAtom *atom : file->defined())
+      if (!atom->name().empty())
+        _definedSyms.insert(atom->name());
+  }
+  return _definedSyms;
+}
+
 std::unique_ptr<File> PECOFFLinkingContext::createEntrySymbolFile() const {
   return LinkingContext::createEntrySymbolFile("<command line option /entry>");
 }
@@ -112,12 +135,11 @@ void PECOFFLinkingContext::addLibraryFile(std::unique_ptr<FileNode> file) {
 
 bool PECOFFLinkingContext::createImplicitFiles(
     std::vector<std::unique_ptr<File>> &) {
-  pecoff::ResolvableSymbols* syms = getResolvableSymsFile();
   std::vector<std::unique_ptr<Node>> &members = getNodes();
 
   // Create a file for the entry point function.
   std::unique_ptr<FileNode> entry(new FileNode(
-      llvm::make_unique<pecoff::EntryPointFile>(*this, syms)));
+      llvm::make_unique<pecoff::EntryPointFile>(*this)));
   members.insert(members.begin() + getGroupStartPos(members), std::move(entry));
 
   // Create a file for __ImageBase.
@@ -132,7 +154,7 @@ bool PECOFFLinkingContext::createImplicitFiles(
 
   // Create a file for dllexported symbols.
   std::unique_ptr<FileNode> exportNode(new FileNode(
-      llvm::make_unique<pecoff::ExportedSymbolRenameFile>(*this, syms)));
+      llvm::make_unique<pecoff::ExportedSymbolRenameFile>(*this)));
   addLibraryFile(std::move(exportNode));
 
   return true;
@@ -333,31 +355,6 @@ void PECOFFLinkingContext::addPasses(PassManager &pm) {
   pm.add(std::unique_ptr<Pass>(new pecoff::LoadConfigPass(*this)));
   pm.add(std::unique_ptr<Pass>(new pecoff::GroupedSectionsPass()));
   pm.add(std::unique_ptr<Pass>(new pecoff::InferSubsystemPass(*this)));
-}
-
-void pecoff::ResolvableSymbols::add(File *file) {
-  std::lock_guard<std::mutex> lock(_mutex);
-  if (_seen.count(file) > 0)
-    return;
-  _seen.insert(file);
-  _queue.insert(file);
-}
-
-void pecoff::ResolvableSymbols::readAllSymbols() {
-  std::lock_guard<std::mutex> lock(_mutex);
-  for (File *file : _queue) {
-    if (file->parse())
-      return;
-    if (auto *archive = dyn_cast<ArchiveLibraryFile>(file)) {
-      for (const std::string &sym : archive->getDefinedSymbols())
-	_defined.insert(sym);
-      continue;
-    }
-    for (const DefinedAtom *atom : file->defined())
-      if (!atom->name().empty())
-	_defined.insert(atom->name());
-  }
-  _queue.clear();
 }
 
 } // end namespace lld

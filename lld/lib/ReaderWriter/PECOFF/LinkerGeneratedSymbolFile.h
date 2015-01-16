@@ -20,8 +20,7 @@ using llvm::COFF::WindowsSubsystem;
 namespace lld {
 namespace pecoff {
 
-class ResolvableSymbols;
-bool findDecoratedSymbol(PECOFFLinkingContext *ctx, ResolvableSymbols *syms,
+bool findDecoratedSymbol(PECOFFLinkingContext *ctx,
                          std::string sym, std::string &res);
 
 namespace impl {
@@ -206,9 +205,8 @@ private:
 // next visit.
 class ExportedSymbolRenameFile : public impl::VirtualArchiveLibraryFile {
 public:
-  ExportedSymbolRenameFile(const PECOFFLinkingContext &ctx,
-                           ResolvableSymbols *syms)
-      : VirtualArchiveLibraryFile("<export>"), _syms(syms),
+  ExportedSymbolRenameFile(const PECOFFLinkingContext &ctx)
+      : VirtualArchiveLibraryFile("<export>"),
         _ctx(const_cast<PECOFFLinkingContext *>(&ctx)) {
     for (PECOFFLinkingContext::ExportDesc &desc : _ctx->getDllExports())
       _exportedSyms.insert(desc.name);
@@ -219,7 +217,7 @@ public:
     if (_exportedSyms.count(sym) == 0)
       return nullptr;
     std::string replace;
-    if (!findDecoratedSymbol(_ctx, _syms, sym.str(), replace))
+    if (!findDecoratedSymbol(_ctx, sym.str(), replace))
       return nullptr;
 
     for (ExportDesc &exp : _ctx->getDllExports())
@@ -232,7 +230,6 @@ public:
 
 private:
   std::set<std::string> _exportedSyms;
-  ResolvableSymbols *_syms;
   mutable llvm::BumpPtrAllocator _alloc;
   mutable PECOFFLinkingContext *_ctx;
 };
@@ -244,10 +241,9 @@ private:
 // http://msdn.microsoft.com/en-us/library/f9t8842e.aspx
 class EntryPointFile : public SimpleFile {
 public:
-  EntryPointFile(const PECOFFLinkingContext &ctx,
-                 ResolvableSymbols *syms)
+  EntryPointFile(const PECOFFLinkingContext &ctx)
       : SimpleFile("<entry>"), _ctx(const_cast<PECOFFLinkingContext *>(&ctx)),
-        _syms(syms), _firstTime(true) {}
+        _firstTime(true) {}
 
   const atom_collection<UndefinedAtom> &undefined() const override {
     return const_cast<EntryPointFile *>(this)->getUndefinedAtoms();
@@ -277,7 +273,7 @@ private:
     StringRef opt = _ctx->getEntrySymbolName();
     if (!opt.empty()) {
       std::string mangled;
-      if (findDecoratedSymbol(_ctx, _syms, opt, mangled))
+      if (findDecoratedSymbol(_ctx, opt, mangled))
         return mangled;
       return _ctx->decorateSymbol(opt);
     }
@@ -299,10 +295,10 @@ private:
     // Returns true if a given name exists in an input object file.
     auto defined = [&](StringRef name) -> bool {
       StringRef sym = _ctx->decorateSymbol(name);
-      if (_syms->defined().count(sym))
+      if (_ctx->definedSymbols().count(sym))
         return true;
       std::string ignore;
-      return findDecoratedSymbol(_ctx, _syms, sym, ignore);
+      return findDecoratedSymbol(_ctx, sym, ignore);
     };
 
     switch (_ctx->getSubsystem()) {
@@ -333,7 +329,6 @@ private:
   PECOFFLinkingContext *_ctx;
   atom_collection_vector<UndefinedAtom> _undefinedAtoms;
   std::mutex _mutex;
-  ResolvableSymbols *_syms;
   llvm::BumpPtrAllocator _alloc;
   bool _firstTime;
 };

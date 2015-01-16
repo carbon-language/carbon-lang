@@ -1414,7 +1414,6 @@ bool WinLinkDriver::parse(int argc, const char *argv[],
       File *f = file.get();
       ctx.getTaskGroup().spawn([f] { f->parse(); });
     }
-    ctx.getResolvableSymsFile()->add(file.get());
     ctx.getNodes().push_back(llvm::make_unique<FileNode>(std::move(file)));
   }
 
@@ -1431,7 +1430,6 @@ bool WinLinkDriver::parse(int argc, const char *argv[],
         File *f = file.get();
         ctx.getTaskGroup().spawn([f] { f->parse(); });
       }
-      ctx.getResolvableSymsFile()->add(file.get());
       ctx.addLibraryFile(llvm::make_unique<FileNode>(std::move(file)));
     }
   }
