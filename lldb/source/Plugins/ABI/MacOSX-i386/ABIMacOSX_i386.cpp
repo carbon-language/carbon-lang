@@ -786,6 +786,11 @@ ABIMacOSX_i386::RegisterIsVolatile (const RegisterInfo *reg_info)
 }
 
 // v. http://developer.apple.com/library/mac/#documentation/developertools/Conceptual/LowLevelABI/130-IA-32_Function_Calling_Conventions/IA32.html#//apple_ref/doc/uid/TP40002492-SW4
+//
+// This document ("OS X ABI Function Call Guide", chapter "IA-32 Function Calling Conventions")
+// says that the following registers on i386 are preserved aka non-volatile aka callee-saved:
+// 
+// ebx, ebp, esi, edi, esp
 
 bool
 ABIMacOSX_i386::RegisterIsCalleeSaved (const RegisterInfo *reg_info)
