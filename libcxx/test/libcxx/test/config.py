@@ -262,6 +262,14 @@ class Configuration(object):
             self.config.available_features.add('long_tests')
 
     def configure_compile_flags(self):
+      no_default_flags = self.get_lit_bool('no_default_flags', False)
+      if not no_default_flags:
+        self.configure_default_compile_flags()
+      # Configure extra flags
+      compile_flags_str = self.get_lit_conf('compile_flags', '')
+      self.compile_flags += shlex.split(compile_flags_str)
+
+    def configure_default_compile_flags(self):
         # Try and get the std version from the command line. Fall back to
         # default given in lit.site.cfg is not present. If default is not
         # present then force c++11.
@@ -294,10 +302,6 @@ class Configuration(object):
                                   ' enable_threads is true.')
         # Use verbose output for better errors
         self.compile_flags += ['-v']
-        # Configure extra compile flags.
-        compile_flags_str = self.get_lit_conf('compile_flags', '')
-        self.compile_flags += shlex.split(compile_flags_str)
-
         sysroot = self.get_lit_conf('sysroot')
         if sysroot:
             self.compile_flags += ['--sysroot', sysroot]
@@ -339,16 +343,18 @@ class Configuration(object):
         self.config.available_features.add('libcpp-has-no-monotonic-clock')
 
     def configure_link_flags(self):
-        self.link_flags += ['-nodefaultlibs']
+        no_default_flags = self.get_lit_bool('no_default_flags', False)
+        if not no_default_flags:
+          self.link_flags += ['-nodefaultlibs']
 
-        # Configure library path
-        self.configure_link_flags_cxx_library_path()
-        self.configure_link_flags_abi_library_path()
+          # Configure library path
+          self.configure_link_flags_cxx_library_path()
+          self.configure_link_flags_abi_library_path()
 
-        # Configure libraries
-        self.configure_link_flags_cxx_library()
-        self.configure_link_flags_abi_library()
-        self.configure_extra_library_flags()
+          # Configure libraries
+          self.configure_link_flags_cxx_library()
+          self.configure_link_flags_abi_library()
+          self.configure_extra_library_flags()
 
         link_flags_str = self.get_lit_conf('link_flags', '')
         self.link_flags += shlex.split(link_flags_str)
