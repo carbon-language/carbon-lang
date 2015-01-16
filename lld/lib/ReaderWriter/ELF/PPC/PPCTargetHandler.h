@@ -29,9 +29,9 @@ public:
   PPCTargetRelocationHandler(ELFLinkingContext &context)
       : TargetRelocationHandler<PPCELFType>(context) {}
 
-  virtual std::error_code applyRelocation(ELFWriter &, llvm::FileOutputBuffer &,
-                                          const lld::AtomLayout &,
-                                          const Reference &) const override;
+  std::error_code applyRelocation(ELFWriter &, llvm::FileOutputBuffer &,
+                                  const lld::AtomLayout &,
+                                  const Reference &) const override;
 };
 
 class PPCTargetHandler final
