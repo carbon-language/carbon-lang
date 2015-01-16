@@ -16,15 +16,10 @@ class LibcxxTestFormat(lit.formats.FileBasedTest):
       FOO.fail.cpp - Negative test case which is expected to fail compilation.
     """
 
-    def __init__(self, cxx_under_test, use_verify_for_fail,
-                 cpp_flags, ld_flags, exec_env,
-                 use_ccache=False):
-        self.cxx_under_test = cxx_under_test
+    def __init__(self, cxx, use_verify_for_fail, exec_env):
+        self.cxx = cxx
         self.use_verify_for_fail = use_verify_for_fail
-        self.cpp_flags = list(cpp_flags)
-        self.ld_flags = list(ld_flags)
         self.exec_env = dict(exec_env)
-        self.use_ccache = use_ccache
 
     def execute(self, test, lit_config):
         while True:
@@ -93,30 +88,23 @@ class LibcxxTestFormat(lit.formats.FileBasedTest):
         return cmd, report, rc
 
     def _compile(self, output_path, source_path, use_verify=False):
-        cmd = [self.cxx_under_test, '-c', '-o', output_path, source_path]
-        cmd += self.cpp_flags
+        extra_flags = []
         if use_verify:
-            cmd += ['-Xclang', '-verify']
-        if self.use_ccache:
-            cmd = ['ccache'] + cmd
-        out, err, rc = lit.util.executeCommand(cmd)
-        return cmd, out, err, rc
+            extra_flags += ['-Xclang', '-verify']
+        return self.cxx.compile(source_path, out=output_path, flags=extra_flags)
 
     def _link(self, exec_path, object_path):
-        cmd = [self.cxx_under_test, '-o', exec_path, object_path]
-        cmd += self.cpp_flags + self.ld_flags
-        out, err, rc = lit.util.executeCommand(cmd)
-        return cmd, out, err, rc
+        return self.cxx.link(object_path, out=exec_path)
 
     def _compile_and_link(self, exec_path, source_path):
         object_file = tempfile.NamedTemporaryFile(suffix=".o", delete=False)
         object_path = object_file.name
         object_file.close()
         try:
-            cmd, out, err, rc = self._compile(object_path, source_path)
+            cmd, out, err, rc = self.cxx.compile(source_path, out=object_path)
             if rc != 0:
                 return cmd, out, err, rc
-            return self._link(exec_path, object_path)
+            return self.cxx.link(object_path, out=exec_path)
         finally:
             try:
                 os.remove(object_path)
