@@ -1,0 +1,14 @@
+# RUN: yaml2obj -format coff -o %t.obj %p/Inputs/armnt-ImageBase.obj.yaml
+# RUN: llvm-readobj -r %t.obj | FileCheck %s -check-prefix BEFORE
+# RUN: lld -flavor link /out:%t.exe %t.obj /subsystem:console
+# RUN: llvm-readobj -r %t.exe | FileCheck %s -check-prefix AFTER
+
+BEFORE: Relocations [
+BEFORE:   Section {{.*}} .text {
+BEFORE:     0x4 IMAGE_REL_ARM_ADDR32 __ImageBase
+BEFORE:   }
+BEFORE: ]
+
+AFTER: Relocations [
+AFTER-NEXT: ]
+

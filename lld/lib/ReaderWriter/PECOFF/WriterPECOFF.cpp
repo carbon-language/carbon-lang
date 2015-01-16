@@ -588,7 +588,7 @@ void AtomChunk::applyRelocationsARM(uint8_t *Buffer,
         continue;
 
       bool AssumeTHUMBCode = false;
-      if (auto Target = cast_or_null<DefinedAtom>(R->target()))
+      if (auto Target = dyn_cast<DefinedAtom>(R->target()))
         AssumeTHUMBCode = Target->permissions() == DefinedAtom::permR_X ||
                           Target->permissions() == DefinedAtom::permRWX;
 
