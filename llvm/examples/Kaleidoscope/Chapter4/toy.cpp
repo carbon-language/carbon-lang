@@ -385,8 +385,7 @@ static PrototypeAST *ParseExtern() {
 //===----------------------------------------------------------------------===//
 
 // FIXME: Obviously we can do better than this
-std::string GenerateUniqueName(const char *root)
-{
+std::string GenerateUniqueName(const char *root) {
   static int i = 0;
   char s[16];
   sprintf(s, "%s%d", root, i++);
@@ -394,11 +393,10 @@ std::string GenerateUniqueName(const char *root)
   return S;
 }
 
-std::string MakeLegalFunctionName(std::string Name)
-{
+std::string MakeLegalFunctionName(std::string Name) {
   std::string NewName;
   if (!Name.length())
-      return GenerateUniqueName("anon_func_");
+    return GenerateUniqueName("anon_func_");
 
   // Start with what we have
   NewName = Name;
@@ -409,9 +407,11 @@ std::string MakeLegalFunctionName(std::string Name)
   }
 
   // Replace illegal characters with their ASCII equivalent
-  std::string legal_elements = "_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  std::string legal_elements =
+      "_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
   size_t pos;
-  while ((pos = NewName.find_first_not_of(legal_elements)) != std::string::npos) {
+  while ((pos = NewName.find_first_not_of(legal_elements)) !=
+         std::string::npos) {
     char old_c = NewName.at(pos);
     char new_str[16];
     sprintf(new_str, "%d", (int)old_c);
@@ -425,32 +425,30 @@ std::string MakeLegalFunctionName(std::string Name)
 // MCJIT helper class
 //===----------------------------------------------------------------------===//
 
-class MCJITHelper
-{
+class MCJITHelper {
 public:
-  MCJITHelper(LLVMContext& C) : Context(C), OpenModule(NULL) {}
+  MCJITHelper(LLVMContext &C) : Context(C), OpenModule(NULL) {}
   ~MCJITHelper();
 
   Function *getFunction(const std::string FnName);
   Module *getModuleForNewFunction();
-  void *getPointerToFunction(Function* F);
+  void *getPointerToFunction(Function *F);
   void *getSymbolAddress(const std::string &Name);
   void dump();
 
 private:
-  typedef std::vector<Module*> ModuleVector;
-  typedef std::vector<ExecutionEngine*> EngineVector;
+  typedef std::vector<Module *> ModuleVector;
+  typedef std::vector<ExecutionEngine *> EngineVector;
 
-  LLVMContext  &Context;
-  Module       *OpenModule;
-  ModuleVector  Modules;
-  EngineVector  Engines;
+  LLVMContext &Context;
+  Module *OpenModule;
+  ModuleVector Modules;
+  EngineVector Engines;
 };
 
-class HelpingMemoryManager : public SectionMemoryManager
-{
-  HelpingMemoryManager(const HelpingMemoryManager&) LLVM_DELETED_FUNCTION;
-  void operator=(const HelpingMemoryManager&) LLVM_DELETED_FUNCTION;
+class HelpingMemoryManager : public SectionMemoryManager {
+  HelpingMemoryManager(const HelpingMemoryManager &) LLVM_DELETED_FUNCTION;
+  void operator=(const HelpingMemoryManager &) LLVM_DELETED_FUNCTION;
 
 public:
   HelpingMemoryManager(MCJITHelper *Helper) : MasterHelper(Helper) {}
@@ -461,17 +459,17 @@ public:
   /// modules associated with the MCJITHelper to cross link symbols
   /// from one generated module to another.
   virtual uint64_t getSymbolAddress(const std::string &Name) override;
+
 private:
   MCJITHelper *MasterHelper;
 };
 
-uint64_t HelpingMemoryManager::getSymbolAddress(const std::string &Name)
-{
+uint64_t HelpingMemoryManager::getSymbolAddress(const std::string &Name) {
   uint64_t FnAddr = SectionMemoryManager::getSymbolAddress(Name);
   if (FnAddr)
     return FnAddr;
 
-  uint64_t HelperFun = (uint64_t) MasterHelper->getSymbolAddress(Name);
+  uint64_t HelperFun = (uint64_t)MasterHelper->getSymbolAddress(Name);
   if (!HelperFun)
     report_fatal_error("Program used extern function '" + Name +
                        "' which could not be resolved!");
@@ -479,8 +477,7 @@ uint64_t HelpingMemoryManager::getSymbolAddress(const std::string &Name)
   return HelperFun;
 }
 
-MCJITHelper::~MCJITHelper()
-{
+MCJITHelper::~MCJITHelper() {
   if (OpenModule)
     delete OpenModule;
   EngineVector::iterator begin = Engines.begin();
@@ -498,7 +495,7 @@ Function *MCJITHelper::getFunction(const std::string FnName) {
     Function *F = (*it)->getFunction(FnName);
     if (F) {
       if (*it == OpenModule)
-          return F;
+        return F;
 
       assert(OpenModule != NULL);
 
@@ -512,10 +509,8 @@ Function *MCJITHelper::getFunction(const std::string FnName) {
 
       // If we don't have a prototype yet, create one.
       if (!PF)
-        PF = Function::Create(F->getFunctionType(), 
-                                      Function::ExternalLinkage, 
-                                      FnName, 
-                                      OpenModule);
+        PF = Function::Create(F->getFunctionType(), Function::ExternalLinkage,
+                              FnName, OpenModule);
       return PF;
     }
   }
@@ -535,7 +530,7 @@ Module *MCJITHelper::getModuleForNewFunction() {
   return M;
 }
 
-void *MCJITHelper::getPointerToFunction(Function* F) {
+void *MCJITHelper::getPointerToFunction(Function *F) {
   // See if an existing instance of MCJIT has this function.
   EngineVector::iterator begin = Engines.begin();
   EngineVector::iterator end = Engines.end();
@@ -549,10 +544,12 @@ void *MCJITHelper::getPointerToFunction(Function* F) {
   // If we didn't find the function, see if we can generate it.
   if (OpenModule) {
     std::string ErrStr;
-    ExecutionEngine *NewEngine = EngineBuilder(std::unique_ptr<Module>(OpenModule))
-                                              .setErrorStr(&ErrStr)
-                                              .setMCJITMemoryManager(std::unique_ptr<HelpingMemoryManager>(new HelpingMemoryManager(this)))
-                                              .create();
+    ExecutionEngine *NewEngine =
+        EngineBuilder(std::unique_ptr<Module>(OpenModule))
+            .setErrorStr(&ErrStr)
+            .setMCJITMemoryManager(std::unique_ptr<HelpingMemoryManager>(
+                new HelpingMemoryManager(this)))
+            .create();
     if (!NewEngine) {
       fprintf(stderr, "Could not create ExecutionEngine: %s\n", ErrStr.c_str());
       exit(1);
@@ -598,8 +595,7 @@ void *MCJITHelper::getPointerToFunction(Function* F) {
   return NULL;
 }
 
-void *MCJITHelper::getSymbolAddress(const std::string &Name)
-{
+void *MCJITHelper::getSymbolAddress(const std::string &Name) {
   // Look for the symbol in each of our execution engines.
   EngineVector::iterator begin = Engines.begin();
   EngineVector::iterator end = Engines.end();
@@ -607,14 +603,13 @@ void *MCJITHelper::getSymbolAddress(const std::string &Name)
   for (it = begin; it != end; ++it) {
     uint64_t FAddr = (*it)->getFunctionAddress(Name);
     if (FAddr) {
-       return (void *)FAddr; 
+      return (void *)FAddr;
     }
   }
   return NULL;
 }
 
-void MCJITHelper::dump()
-{
+void MCJITHelper::dump() {
   ModuleVector::iterator begin = Modules.begin();
   ModuleVector::iterator end = Modules.end();
   ModuleVector::iterator it;
@@ -698,15 +693,14 @@ Function *PrototypeAST::Codegen() {
 
   Module *M = JITHelper->getModuleForNewFunction();
 
-  Function *F =
-      Function::Create(FT, Function::ExternalLinkage, FnName, M);
+  Function *F = Function::Create(FT, Function::ExternalLinkage, FnName, M);
 
   // If F conflicted, there was already something named 'Name'.  If it has a
   // body, don't allow redefinition or reextern.
   if (F->getName() != FnName) {
     // Delete the one we just made and get the existing one.
     F->eraseFromParent();
-    F = JITHelper->getFunction(Name); 
+    F = JITHelper->getFunction(Name);
     // If F already has a body, reject this.
     if (!F->empty()) {
       ErrorF("redefinition of function");
