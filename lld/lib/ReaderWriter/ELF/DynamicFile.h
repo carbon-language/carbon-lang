@@ -55,6 +55,8 @@ public:
         *this, name, _soname, sym->second._symbol);
   }
 
+  StringRef getDSOName() const override { return _soname; }
+
 protected:
   std::error_code doParse() override {
     std::error_code ec;

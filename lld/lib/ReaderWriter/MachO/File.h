@@ -273,6 +273,8 @@ public:
     }
   }
 
+  StringRef getDSOName() const override { return _installName; }
+
   std::error_code doParse() override {
     // Convert binary file to normalized mach-o.
     auto normFile = normalized::readBinary(_mb, _ctx->arch());

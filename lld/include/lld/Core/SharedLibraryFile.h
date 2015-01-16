@@ -31,6 +31,11 @@ public:
   /// symbol.  Otherwise return nullptr.
   virtual const SharedLibraryAtom *exports(StringRef name,
                                            bool dataSymbolOnly) const = 0;
+
+  // Returns DSO name. It's the soname (ELF), the install name (MachO) or
+  // the import name (Windows).
+  virtual StringRef getDSOName() const = 0;
+
 protected:
   /// only subclasses of SharedLibraryFile can be instantiated
   explicit SharedLibraryFile(StringRef path) : File(path, kindSharedLibrary) {}

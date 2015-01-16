@@ -259,7 +259,6 @@ evaluateLinkerScript(ELFLinkingContext &ctx, StringRef path,
       // TODO : Propagate Set WholeArchive/dashlPrefix
       ELFLinkingContext::Attributes attr;
       attr.setSysRooted(sysroot);
-      attr.setAsNeeded(path._asNeeded);
       attr.setDashlPrefix(path._isDashlPrefix);
 
       ErrorOr<StringRef> pathOrErr = path._isDashlPrefix
@@ -357,6 +356,7 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
   int numfiles = 0;
 
   ELFLinkingContext::Attributes attributes;
+  bool asNeeded = false;
 
   bool _outputOptionSet = false;
 
@@ -516,11 +516,11 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
       break;
 
     case OPT_as_needed:
-      attributes.setAsNeeded(true);
+      asNeeded = true;
       break;
 
     case OPT_no_as_needed:
-      attributes.setAsNeeded(false);
+      asNeeded = false;
       break;
 
     case OPT_defsym: {
@@ -612,7 +612,9 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
       for (std::unique_ptr<File> &file : files) {
         if (ctx->logInputFiles())
           diagnostics << file->path() << "\n";
-        ctx->getNodes().push_back(llvm::make_unique<FileNode>(std::move(file)));
+        auto node = llvm::make_unique<FileNode>(std::move(file));
+        node->setAsNeeded(asNeeded);
+        ctx->getNodes().push_back(std::move(node));
       }
       numfiles += files.size();
       break;

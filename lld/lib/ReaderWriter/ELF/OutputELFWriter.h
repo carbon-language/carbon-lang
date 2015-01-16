@@ -14,6 +14,7 @@
 #include "TargetLayout.h"
 #include "lld/Core/Instrumentation.h"
 #include "lld/Core/Parallel.h"
+#include "lld/Core/SharedLibraryFile.h"
 #include "lld/ReaderWriter/ELFLinkingContext.h"
 #include "lld/ReaderWriter/Writer.h"
 #include "llvm/ADT/StringSet.h"
@@ -143,6 +144,9 @@ protected:
   LLD_UNIQUE_BUMP_PTR(HashSection<ELFT>) _hashTable;
   llvm::StringSet<> _soNeeded;
   /// @}
+
+private:
+  static StringRef maybeGetSOName(Node *node);
 };
 
 //===----------------------------------------------------------------------===//
@@ -177,6 +181,17 @@ void OutputELFWriter<ELFT>::buildStaticSymbolTable(const File &file) {
     _symtab->addSymbol(a, ELF::SHN_UNDEF);
 }
 
+// Returns the DSO name for a given input file if it's a shared library
+// file and not marked as --as-needed.
+template <class ELFT>
+StringRef OutputELFWriter<ELFT>::maybeGetSOName(Node *node) {
+  if (auto *fnode = dyn_cast<FileNode>(node))
+    if (!fnode->asNeeded())
+      if (auto *file = dyn_cast<SharedLibraryFile>(fnode->getFile()))
+        return file->getDSOName();
+  return "";
+}
+
 template <class ELFT>
 void OutputELFWriter<ELFT>::buildDynamicSymbolTable(const File &file) {
   ScopedTask task(getDefaultDomain(), "buildDynamicSymbolTable");
@@ -188,6 +203,11 @@ void OutputELFWriter<ELFT>::buildDynamicSymbolTable(const File &file) {
     }
     if (isNeededTagRequired(sla))
       _soNeeded.insert(sla->loadName());
+  }
+  for (const std::unique_ptr<Node> &node : _context.getNodes()) {
+    StringRef soname = maybeGetSOName(node.get());
+    if (!soname.empty())
+      _soNeeded.insert(soname);
   }
   // Never mark the dynamic linker as DT_NEEDED
   _soNeeded.erase(sys::path::filename(_context.getInterpreter()));

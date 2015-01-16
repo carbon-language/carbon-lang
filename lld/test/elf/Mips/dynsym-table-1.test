@@ -10,7 +10,7 @@
 # RUN: yaml2obj -format=elf -docnum 3 %s > %t-main.o
 # RUN: lld -flavor gnu -target mipsel -shared -o %t-bar.so %t-bar.o
 # RUN: lld -flavor gnu -target mipsel -shared -o %t-foo.so %t-foo.o %t-bar.so
-# RUN: lld -flavor gnu -target mipsel -e T0 -o %t.exe \
+# RUN: lld -flavor gnu -target mipsel -e T0 -o %t.exe --as-needed \
 # RUN:     %t-main.o %t-foo.so %t-bar.so
 # RUN: llvm-readobj -dt -dynamic-table %t.exe | FileCheck %s
 

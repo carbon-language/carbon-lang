@@ -57,9 +57,7 @@ private:
 class FileNode : public Node {
 public:
   explicit FileNode(std::unique_ptr<File> f)
-      : Node(Node::Kind::File), _file(std::move(f)) {}
-
-  virtual ~FileNode() {}
+      : Node(Node::Kind::File), _file(std::move(f)), _asNeeded(false) {}
 
   static inline bool classof(const Node *a) {
     return a->kind() == Node::Kind::File;
@@ -67,8 +65,12 @@ public:
 
   File *getFile() { return _file.get(); }
 
+  void setAsNeeded(bool val) { _asNeeded = val; }
+  bool asNeeded() const { return _asNeeded; }
+
 protected:
   std::unique_ptr<File> _file;
+  bool _asNeeded;
 };
 
 } // namespace lld
