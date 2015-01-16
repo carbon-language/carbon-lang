@@ -17,7 +17,9 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/Format.h"
 #include "llvm/Support/MemoryBuffer.h"
+#include <future>
 #include <memory>
+#include <mutex>
 #include <set>
 #include <unordered_map>
 
@@ -57,12 +59,54 @@ public:
       return nullptr;
 
     _membersInstantiated.insert(memberStart);
+
+    // Check if a file is preloaded.
+    {
+      std::lock_guard<std::mutex> lock(_mutex);
+      auto it = _preloaded.find(memberStart);
+      if (it != _preloaded.end()) {
+        std::future<const File *> &future = it->second;
+        return future.get();
+      }
+    }
+
     std::unique_ptr<File> result;
     if (instantiateMember(ci, result))
       return nullptr;
 
     // give up the pointer so that this object no longer manages it
     return result.release();
+  }
+
+  // Instantiate a member file containing a given symbol name.
+  void preload(TaskGroup &group, StringRef name) override {
+    auto member = _symbolMemberMap.find(name);
+    if (member == _symbolMemberMap.end())
+      return;
+    Archive::child_iterator ci = member->second;
+
+    // Do nothing if a member is already instantiated.
+    const char *memberStart = ci->getBuffer().data();
+    if (_membersInstantiated.count(memberStart))
+      return;
+
+    std::lock_guard<std::mutex> lock(_mutex);
+    if (_preloaded.find(memberStart) != _preloaded.end())
+      return;
+
+    // Instantiate the member
+    auto *promise = new std::promise<const File *>;
+    _preloaded[memberStart] = promise->get_future();
+    _promises.push_back(std::unique_ptr<std::promise<const File *>>(promise));
+
+    group.spawn([=] {
+      std::unique_ptr<File> result;
+      if (instantiateMember(ci, result)) {
+        promise->set_value(nullptr);
+        return;
+      }
+      promise->set_value(result.release());
+    });
   }
 
   /// \brief parse each member
@@ -117,7 +161,8 @@ public:
   }
 
   /// Returns a set of all defined symbols in the archive.
-  std::set<StringRef> getDefinedSymbols() const override {
+  std::set<StringRef> getDefinedSymbols() override {
+    parse();
     std::set<StringRef> ret;
     for (const auto &e : _symbolMemberMap)
       ret.insert(e.first);
@@ -225,6 +270,9 @@ private:
   atom_collection_vector<AbsoluteAtom> _absoluteAtoms;
   bool _logLoading;
   mutable std::vector<std::unique_ptr<MemoryBuffer>> _memberBuffers;
+  mutable std::map<const char *, std::future<const File *>> _preloaded;
+  mutable std::vector<std::unique_ptr<std::promise<const File *>>> _promises;
+  mutable std::mutex _mutex;
 };
 
 class ArchiveReader : public Reader {

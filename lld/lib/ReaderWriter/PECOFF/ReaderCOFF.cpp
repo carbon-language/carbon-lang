@@ -106,6 +106,8 @@ public:
     return _absoluteAtoms;
   }
 
+  void beforeLink() override;
+
   void addDefinedAtom(AliasAtom *atom) {
     atom->setOrdinal(_ordinal++);
     _definedAtoms._atoms.push_back(atom);
@@ -382,7 +384,10 @@ std::error_code FileCOFF::doParse() {
   // The mapping for /alternatename is in the context object. This helper
   // function iterate over defined atoms and create alias atoms if needed.
   createAlternateNameAtoms();
+  return std::error_code();
+}
 
+void FileCOFF::beforeLink() {
   // Acquire the mutex to mutate _ctx.
   std::lock_guard<std::recursive_mutex> lock(_ctx.getMutex());
 
@@ -392,10 +397,8 @@ std::error_code FileCOFF::doParse() {
     _ctx.setSafeSEH(false);
 
   if (_ctx.deadStrip())
-    for (StringRef sym : undefinedSymbols)
-      _ctx.addDeadStripRoot(sym);
-
-  return std::error_code();
+    for (const UndefinedAtom *undef : undefined())
+      _ctx.addDeadStripRoot(undef->name());
 }
 
 /// Iterate over the symbol table to retrieve all symbols.

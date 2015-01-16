@@ -31,9 +31,12 @@ bool Resolver::handleFile(const File &file) {
   bool undefAdded = false;
   for (const DefinedAtom *atom : file.defined())
     doDefinedAtom(*atom);
-  for (const UndefinedAtom *atom : file.undefined())
-    if (doUndefinedAtom(*atom))
+  for (const UndefinedAtom *atom : file.undefined()) {
+    if (doUndefinedAtom(*atom)) {
       undefAdded = true;
+      maybePreloadArchiveMember(atom->name());
+    }
+  }
   for (const SharedLibraryAtom *atom : file.sharedLibrary())
     doSharedLibraryAtom(*atom);
   for (const AbsoluteAtom *atom : file.absolute())
@@ -229,6 +232,17 @@ void Resolver::addAtoms(const std::vector<const DefinedAtom *> &newAtoms) {
     doDefinedAtom(*newAtom);
 }
 
+// Instantiate an archive file member if there's a file containing a
+// defined symbol for a given symbol name. Instantiation is done in a
+// different worker thread and has no visible side effect.
+void Resolver::maybePreloadArchiveMember(StringRef sym) {
+  auto it = _archiveMap.find(sym);
+  if (it == _archiveMap.end())
+    return;
+  ArchiveLibraryFile *archive = it->second;
+  archive->preload(_context.getTaskGroup(), sym);
+}
+
 // Returns true if at least one of N previous files has created an
 // undefined symbol.
 bool Resolver::undefinesAdded(int begin, int end) {
@@ -261,6 +275,16 @@ File *Resolver::getFile(int &index, int &groupLevel) {
   return cast<FileNode>(inputs[index++].get())->getFile();
 }
 
+// Make a map of Symbol -> ArchiveFile.
+void Resolver::makePreloadArchiveMap() {
+  std::vector<std::unique_ptr<Node>> &nodes = _context.getNodes();
+  for (auto it = nodes.rbegin(), e = nodes.rend(); it != e; ++it)
+    if (auto *fnode = dyn_cast<FileNode>(it->get()))
+      if (auto *archive = dyn_cast<ArchiveLibraryFile>(fnode->getFile()))
+        for (StringRef sym : archive->getDefinedSymbols())
+          _archiveMap[sym] = archive;
+}
+
 // Keep adding atoms until _context.getNextFile() returns an error. This
 // function is where undefined atoms are resolved.
 bool Resolver::resolveUndefines() {
@@ -277,6 +301,7 @@ bool Resolver::resolveUndefines() {
                    << ": " << ec.message() << "\n";
       return false;
     }
+    file->beforeLink();
     switch (file->kind()) {
     case File::kindObject:
       if (groupLevel > 0)
@@ -446,6 +471,7 @@ void Resolver::removeCoalescedAwayAtoms() {
 }
 
 bool Resolver::resolve() {
+  makePreloadArchiveMap();
   if (!resolveUndefines())
     return false;
   updateReferences();

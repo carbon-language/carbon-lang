@@ -10,6 +10,7 @@
 #ifndef LLD_CORE_RESOLVER_H
 #define LLD_CORE_RESOLVER_H
 
+#include "lld/Core/ArchiveLibraryFile.h"
 #include "lld/Core/File.h"
 #include "lld/Core/SharedLibraryFile.h"
 #include "lld/Core/Simple.h"
@@ -63,6 +64,7 @@ private:
   void maybeAddSectionGroupOrGnuLinkOnce(const DefinedAtom &atom);
 
   /// \brief The main function that iterates over the files to resolve
+  void makePreloadArchiveMap();
   bool resolveUndefines();
   void updateReferences();
   void deadStripOptimize();
@@ -73,6 +75,7 @@ private:
 
   void markLive(const Atom *atom);
   void addAtoms(const std::vector<const DefinedAtom *>&);
+  void maybePreloadArchiveMember(StringRef sym);
 
   class MergedFile : public SimpleFile {
   public:
@@ -93,6 +96,9 @@ private:
   std::vector<File *> _files;
   std::map<File *, bool> _newUndefinesAdded;
   size_t _fileIndex;
+
+  // Preloading
+  std::map<StringRef, ArchiveLibraryFile *> _archiveMap;
 };
 
 } // namespace lld
