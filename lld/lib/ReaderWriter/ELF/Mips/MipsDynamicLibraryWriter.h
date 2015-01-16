@@ -25,8 +25,7 @@ template <class ELFT>
 class MipsDynamicLibraryWriter : public DynamicLibraryWriter<ELFT> {
 public:
   MipsDynamicLibraryWriter(MipsLinkingContext &ctx,
-                           MipsTargetLayout<ELFT> &layout,
-                           MipsELFFlagsMerger &elfFlagsMerger);
+                           MipsTargetLayout<ELFT> &layout);
 
 protected:
   // Add any runtime files and their atoms to the output
@@ -54,11 +53,9 @@ private:
 
 template <class ELFT>
 MipsDynamicLibraryWriter<ELFT>::MipsDynamicLibraryWriter(
-    MipsLinkingContext &ctx, MipsTargetLayout<ELFT> &layout,
-    MipsELFFlagsMerger &elfFlagsMerger)
-    : DynamicLibraryWriter<ELFT>(ctx, layout),
-      _writeHelper(ctx, layout, elfFlagsMerger), _mipsContext(ctx),
-      _mipsTargetLayout(layout) {}
+    MipsLinkingContext &ctx, MipsTargetLayout<ELFT> &layout)
+    : DynamicLibraryWriter<ELFT>(ctx, layout), _writeHelper(ctx, layout),
+      _mipsContext(ctx), _mipsTargetLayout(layout) {}
 
 template <class ELFT>
 bool MipsDynamicLibraryWriter<ELFT>::createImplicitFiles(

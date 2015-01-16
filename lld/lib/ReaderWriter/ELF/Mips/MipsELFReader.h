@@ -12,6 +12,7 @@
 #include "ELFReader.h"
 #include "MipsELFFile.h"
 #include "MipsELFFlagsMerger.h"
+#include "MipsLinkingContext.h"
 
 namespace lld {
 namespace elf {
@@ -44,9 +45,9 @@ class MipsELFObjectReader
       BaseReaderType;
 
 public:
-  MipsELFObjectReader(MipsELFFlagsMerger &flagMerger, bool atomizeStrings)
+  MipsELFObjectReader(MipsLinkingContext &ctx, bool atomizeStrings)
       : BaseReaderType(atomizeStrings, llvm::ELF::EM_MIPS),
-        _flagMerger(flagMerger) {}
+        _flagMerger(ctx.getELFFlagsMerger()) {}
 
   std::error_code
   loadFile(std::unique_ptr<MemoryBuffer> mb, const Registry &registry,
@@ -67,9 +68,9 @@ class MipsELFDSOReader
       BaseReaderType;
 
 public:
-  MipsELFDSOReader(MipsELFFlagsMerger &flagMerger, bool useUndefines)
+  MipsELFDSOReader(MipsLinkingContext &ctx, bool useUndefines)
       : BaseReaderType(useUndefines, llvm::ELF::EM_MIPS),
-        _flagMerger(flagMerger) {}
+        _flagMerger(ctx.getELFFlagsMerger()) {}
 
   std::error_code
   loadFile(std::unique_ptr<MemoryBuffer> mb, const Registry &registry,

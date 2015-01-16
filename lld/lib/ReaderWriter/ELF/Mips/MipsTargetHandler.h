@@ -10,7 +10,6 @@
 #define LLD_READER_WRITER_ELF_MIPS_MIPS_TARGET_HANDLER_H
 
 #include "DefaultTargetHandler.h"
-#include "MipsELFFlagsMerger.h"
 #include "MipsELFReader.h"
 #include "MipsLinkingContext.h"
 #include "MipsRelocationHandler.h"
@@ -87,22 +86,18 @@ class MipsTargetHandler final : public DefaultTargetHandler<Mips32ElELFType> {
 public:
   MipsTargetHandler(MipsLinkingContext &ctx);
 
-  const MipsELFFlagsMerger &getELFFlagsMerger() const {
-    return _elfFlagsMerger;
-  }
-
   MipsTargetLayout<Mips32ElELFType> &getTargetLayout() override {
     return *_targetLayout;
   }
 
   std::unique_ptr<Reader> getObjReader(bool atomizeStrings) override {
     return std::unique_ptr<Reader>(
-        new MipsELFObjectReader(_elfFlagsMerger, atomizeStrings));
+        new MipsELFObjectReader(_ctx, atomizeStrings));
   }
 
   std::unique_ptr<Reader> getDSOReader(bool useShlibUndefines) override {
     return std::unique_ptr<Reader>(
-        new MipsELFDSOReader(_elfFlagsMerger, useShlibUndefines));
+        new MipsELFDSOReader(_ctx, useShlibUndefines));
   }
 
   const MipsTargetRelocationHandler &getRelocationHandler() const override {
@@ -116,7 +111,6 @@ public:
 private:
   static const Registry::KindStrings kindStrings[];
   MipsLinkingContext &_ctx;
-  MipsELFFlagsMerger _elfFlagsMerger;
   std::unique_ptr<MipsRuntimeFile<Mips32ElELFType>> _runtimeFile;
   std::unique_ptr<MipsTargetLayout<Mips32ElELFType>> _targetLayout;
   std::unique_ptr<MipsTargetRelocationHandler> _relocationHandler;

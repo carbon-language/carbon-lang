@@ -21,9 +21,11 @@ MipsLinkingContext::MipsLinkingContext(llvm::Triple triple)
                                     new MipsTargetHandler(*this))) {}
 
 uint32_t MipsLinkingContext::getMergedELFFlags() const {
-  const auto &handler = static_cast<MipsTargetHandler &>(
-      ELFLinkingContext::getTargetHandler<Mips32ElELFType>());
-  return handler.getELFFlagsMerger().getMergedELFFlags();
+  return _flagsMerger.getMergedELFFlags();
+}
+
+MipsELFFlagsMerger &MipsLinkingContext::getELFFlagsMerger() {
+  return _flagsMerger;
 }
 
 uint64_t MipsLinkingContext::getBaseAddress() const {

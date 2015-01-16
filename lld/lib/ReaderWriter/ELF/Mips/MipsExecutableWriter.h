@@ -22,8 +22,7 @@ template <typename ELFT> class MipsTargetLayout;
 template <class ELFT>
 class MipsExecutableWriter : public ExecutableWriter<ELFT> {
 public:
-  MipsExecutableWriter(MipsLinkingContext &ctx, MipsTargetLayout<ELFT> &layout,
-                       MipsELFFlagsMerger &elfFlagsMerger);
+  MipsExecutableWriter(MipsLinkingContext &ctx, MipsTargetLayout<ELFT> &layout);
 
 protected:
   void buildDynamicSymbolTable(const File &file) override;
@@ -47,12 +46,10 @@ private:
 };
 
 template <class ELFT>
-MipsExecutableWriter<ELFT>::MipsExecutableWriter(
-    MipsLinkingContext &ctx, MipsTargetLayout<ELFT> &layout,
-    MipsELFFlagsMerger &elfFlagsMerger)
-    : ExecutableWriter<ELFT>(ctx, layout),
-      _writeHelper(ctx, layout, elfFlagsMerger), _mipsContext(ctx),
-      _mipsTargetLayout(layout) {}
+MipsExecutableWriter<ELFT>::MipsExecutableWriter(MipsLinkingContext &ctx,
+                                                 MipsTargetLayout<ELFT> &layout)
+    : ExecutableWriter<ELFT>(ctx, layout), _writeHelper(ctx, layout),
+      _mipsContext(ctx), _mipsTargetLayout(layout) {}
 
 template <class ELFT>
 std::error_code MipsExecutableWriter<ELFT>::setELFHeader() {

@@ -9,7 +9,6 @@
 #ifndef LLD_READER_WRITER_ELF_MIPS_MIPS_ELF_WRITERS_H
 #define LLD_READER_WRITER_ELF_MIPS_MIPS_ELF_WRITERS_H
 
-#include "MipsELFFlagsMerger.h"
 #include "MipsLinkingContext.h"
 #include "OutputELFWriter.h"
 
@@ -22,10 +21,8 @@ template <class ELFT> class MipsTargetLayout;
 
 template <typename ELFT> class MipsELFWriter {
 public:
-  MipsELFWriter(MipsLinkingContext &ctx, MipsTargetLayout<ELFT> &targetLayout,
-                MipsELFFlagsMerger &elfFlagsMerger)
-      : _ctx(ctx), _targetLayout(targetLayout),
-        _elfFlagsMerger(elfFlagsMerger) {}
+  MipsELFWriter(MipsLinkingContext &ctx, MipsTargetLayout<ELFT> &targetLayout)
+      : _ctx(ctx), _targetLayout(targetLayout) {}
 
   void setELFHeader(ELFHeader<ELFT> &elfHeader) {
     elfHeader.e_version(1);
@@ -36,7 +33,7 @@ public:
     else
       elfHeader.e_ident(llvm::ELF::EI_ABIVERSION, 0);
 
-    elfHeader.e_flags(_elfFlagsMerger.getMergedELFFlags());
+    elfHeader.e_flags(_ctx.getMergedELFFlags());
   }
 
   void finalizeMipsRuntimeAtomValues() {
@@ -71,7 +68,6 @@ public:
 private:
   MipsLinkingContext &_ctx;
   MipsTargetLayout<ELFT> &_targetLayout;
-  MipsELFFlagsMerger &_elfFlagsMerger;
 
   void setAtomValue(StringRef name, uint64_t value) {
     auto atom = _targetLayout.findAbsoluteAtom(name);

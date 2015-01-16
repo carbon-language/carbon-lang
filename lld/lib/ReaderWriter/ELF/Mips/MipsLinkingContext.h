@@ -9,6 +9,7 @@
 #ifndef LLD_READER_WRITER_ELF_MIPS_MIPS_LINKING_CONTEXT_H
 #define LLD_READER_WRITER_ELF_MIPS_MIPS_LINKING_CONTEXT_H
 
+#include "MipsELFFlagsMerger.h"
 #include "lld/ReaderWriter/ELFLinkingContext.h"
 
 namespace lld {
@@ -41,6 +42,7 @@ public:
   MipsLinkingContext(llvm::Triple triple);
 
   uint32_t getMergedELFFlags() const;
+  MipsELFFlagsMerger &getELFFlagsMerger();
 
   // ELFLinkingContext
   uint64_t getBaseAddress() const override;
@@ -52,6 +54,9 @@ public:
                            const Reference &r) const override;
   bool isCopyRelocation(const Reference &r) const override;
   bool isPLTRelocation(const DefinedAtom &, const Reference &r) const override;
+
+private:
+  MipsELFFlagsMerger _flagsMerger;
 };
 
 } // elf
