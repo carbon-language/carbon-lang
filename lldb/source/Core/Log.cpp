@@ -7,8 +7,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "lldb/lldb-python.h"
-
 // C Includes
 #include <stdio.h>
 #include <stdarg.h>
@@ -20,7 +18,6 @@
 
 // Other libraries and framework includes
 // Project includes
-#include "lldb/Core/Debugger.h"
 #include "lldb/Core/Log.h"
 #include "lldb/Core/PluginManager.h"
 #include "lldb/Core/StreamFile.h"
@@ -218,7 +215,6 @@ Log::LogIf (uint32_t bits, const char *format, ...)
         va_end (args);
     }
 }
-
 
 //----------------------------------------------------------------------
 // Printing of errors that are not fatal.
