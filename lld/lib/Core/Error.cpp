@@ -10,7 +10,7 @@
 #include "lld/Core/Error.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/ErrorHandling.h"
-#include "llvm/Support/Mutex.h"
+#include <mutex>
 #include <string>
 #include <vector>
 
@@ -117,9 +117,9 @@ public:
     // The value is an index into the string vector.
     return _messages[ev];
   }
-  
+
   int add(std::string msg) {
-    llvm::sys::SmartScopedLock<true> lock(_mutex);
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
     // Value zero is always the successs value.
     if (_messages.empty())
       _messages.push_back("Success");
@@ -127,10 +127,10 @@ public:
     // Return the index of the string just appended.
     return _messages.size() - 1;
   }
-  
+
 private:
   std::vector<std::string> _messages;
-  llvm::sys::SmartMutex<true> _mutex;
+  std::recursive_mutex _mutex;
 };
 
 static dynamic_error_category categorySingleton;
@@ -144,4 +144,3 @@ std::error_code make_dynamic_error_code(const Twine &msg) {
 }
 
 }
-
