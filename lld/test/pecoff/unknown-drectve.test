@@ -3,4 +3,4 @@
 # RUN: not lld -flavor link /out:%t.exe -- %t.obj >& %t.log
 # RUN: FileCheck -check-prefix=ERROR %s < %t.log
 
-ERROR: Failed to parse '/nosuchoption:foobar'
+ERROR: Cannot open /nosuchoption:foobar

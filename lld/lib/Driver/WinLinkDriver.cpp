@@ -837,7 +837,7 @@ static bool maybeRunLibCommand(int argc, const char **argv, raw_ostream &diag) {
 
 /// \brief Parse the input file to lld::File.
 void addFiles(PECOFFLinkingContext &ctx, StringRef path, raw_ostream &diag,
-	      std::vector<std::unique_ptr<File>> &files) {
+              std::vector<std::unique_ptr<File>> &files) {
   for (std::unique_ptr<File> &file : loadFile(ctx, path, false)) {
     if (ctx.logInputFiles())
       diag << file->path() << "\n";
@@ -1393,7 +1393,7 @@ bool WinLinkDriver::parse(int argc, const char *argv[],
   if (!ctx.getNoDefaultLibAll())
     for (const StringRef path : defaultLibs)
       if (!ctx.hasNoDefaultLib(path))
-	addFiles(ctx, getLibraryPath(ctx, path.lower()), diag, libraries);
+        addFiles(ctx, getLibraryPath(ctx, path.lower()), diag, libraries);
 
   if (files.empty() && !isReadingDirectiveSection) {
     diag << "No input files\n";
@@ -1410,9 +1410,10 @@ bool WinLinkDriver::parse(int argc, const char *argv[],
 
   // Add the input files to the input graph.
   for (std::unique_ptr<File> &file : files) {
-    if (isReadingDirectiveSection)
-      if (file->parse())
-        return false;
+    if (isReadingDirectiveSection) {
+      File *f = file.get();
+      ctx.getTaskGroup().spawn([f] { f->parse(); });
+    }
     ctx.getResolvableSymsFile()->add(file.get());
     ctx.getNodes().push_back(llvm::make_unique<FileNode>(std::move(file)));
   }
@@ -1426,9 +1427,10 @@ bool WinLinkDriver::parse(int argc, const char *argv[],
   // Add the library files to the library group.
   for (std::unique_ptr<File> &file : libraries) {
     if (!hasLibrary(ctx, file.get())) {
-      if (isReadingDirectiveSection)
-        if (file->parse())
-          return false;
+      if (isReadingDirectiveSection) {
+        File *f = file.get();
+        ctx.getTaskGroup().spawn([f] { f->parse(); });
+      }
       ctx.getResolvableSymsFile()->add(file.get());
       ctx.addLibraryFile(llvm::make_unique<FileNode>(std::move(file)));
     }
