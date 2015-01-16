@@ -32,7 +32,14 @@ LSAN_LIT_TEST_LINT_FILTER=${LSAN_RTL_LINT_FILTER},-whitespace/line_length
 DFSAN_RTL_LINT_FILTER=${COMMON_LINT_FILTER},-runtime/int,-runtime/printf,-runtime/references,-readability/function
 COMMON_RTL_INC_LINT_FILTER=${COMMON_LINT_FILTER},-runtime/int,-runtime/sizeof,-runtime/printf,-readability/fn_size
 SANITIZER_INCLUDES_LINT_FILTER=${COMMON_LINT_FILTER},-runtime/int
-MKTEMP="mktemp -q /tmp/tmp.XXXXXXXXXX"
+
+MKTEMP_DIR=$(mktemp -qd /tmp/check_lint.XXXXXXXXXX)
+MKTEMP="mktemp -q ${MKTEMP_DIR}/tmp.XXXXXXXXXX"
+function cleanup {
+  rm -rf $MKTEMP_DIR
+}
+trap cleanup EXIT
+
 cd ${LLVM_CHECKOUT}
 
 EXITSTATUS=0
