@@ -53,11 +53,6 @@ DebugLoc DebugLoc::get(unsigned Line, unsigned Col,
   if (!Scope)
     return DebugLoc();
 
-  // Saturate line and col to "unknown".
-  // FIXME: Allow 16-bits for columns.
-  if (Col > 255) Col = 0;
-  if (Line >= (1 << 24)) Line = 0;
-
   return getFromDILocation(
       MDLocation::get(Scope->getContext(), Line, Col, Scope, InlinedAt));
 }
