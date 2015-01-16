@@ -58,7 +58,7 @@ Instructions to Build
  $ cmake -DCMAKE_C_COMPILER=<C Compiler> -DCMAKE_CXX_COMPILER=<C++ Compiler> ..
 
  [ Intel(R) Many Integrated Core Library (Intel(R) MIC Library) ]
- $ cmake -DCMAKE_C_COMPILER=<C Compiler> -DCMAKE_CXX_COMPILER=<C++ Compiler> -Dos=mic -Darch=32e ..
+ $ cmake -DCMAKE_C_COMPILER=<C Compiler> -DCMAKE_CXX_COMPILER=<C++ Compiler> -Darch=mic ..
 
  [ Windows Libraries ]
  $ cmake -G "Unix Makefiles" -DCMAKE_C_COMPILER=<C Compiler> -DCMAKE_CXX_COMPILER=<C++ Compiler> -DCMAKE_ASM_MASM_COMPILER=[ml | ml64] -DCMAKE_BUILD_TYPE=Release ..
@@ -104,15 +104,14 @@ Build options
 ==========================
 ==== Operating System ====
 ==========================
--Dos=lin|mac|win|mic
-* Operating system can be lin (Linux*), mac (Mac*), win (Windows*), or
-  mic (Intel(R) Many Integrated Core Architecture (Intel(R) MIC Architecture)).
+-Dos=lin|mac|win
+* Operating system can be lin (Linux*), mac (Mac*), or win (Windows*). 
   If not specified, cmake will try to determine your current operating system.
 
 ======================
 ==== Architecture ====
 ======================
--Darch=32|32e|arm|ppc64|aarch64
+-Darch=32|32e|arm|ppc64|aarch64|mic
 * Architecture can be 32 (IA-32 architecture), 32e (Intel(R) 64 architecture),
   arm (ARM architecture), aarch64 (ARMv8 architecture) or ppc64 (PPC64 architecture).
   This option, by default is chosen based on the
@@ -140,10 +139,6 @@ OpenMP version can be either 40 or 30.
 Intel(R) MIC Architecture, can be knf or knc.
 This value is ignored if os != mic
   
--Dmic_os=lin|bsd
-Operating system on Intel(R) MIC Architecture.
-Can be either bsd or lin.  This value is ignored if os != mic
-
 -Dcreate_fortran_modules=off|on
 Should the Fortran modules be created (requires Fortran compiler)
 
@@ -194,6 +189,18 @@ Should adaptive (TSX-based) locks be included?
 These are x86 specific.  This feature is turned on by default 
 for IA-32 architecture and Intel(R) 64 architecture. 
 Otherwise, it is turned off.
+
+-DUSE_INTERNODE_ALIGNMENT=false|true
+Should 4096-byte alignment be used for certain data structures?
+This option is useful on multinode systems where a small CACHE_LINE
+setting leads to false sharing.  This option is off by default.
+
+-DUSE_VERSION_SYMBOLS=true|false
+Should versioned symbols be used for building the library?
+This option only makes sense for ELF based libraries where version
+symbols are supported (Linux, some BSD* variants).  It is off
+by default for Windows and Mac, but on for other Unix based operating
+systems.
 
 -DUSE_PREDEFINED_LINKER_FLAGS=true|false
 Should the predefined linker flags in CommonFlags.cmake be included

@@ -157,7 +157,7 @@ endif()
 
 # test-relo 
 add_custom_target(test-relo DEPENDS test-relo/.success)
-if((${LINUX} OR ${MIC}) AND ${test_relo} AND ${tests})
+if(${LINUX} AND ${test_relo} AND ${tests})
     file(MAKE_DIRECTORY ${build_dir}/test-relo)
     add_custom_command(
         OUTPUT  test-relo/.success
@@ -184,7 +184,7 @@ if(${LINUX} AND ${test_execstack} AND ${tests})
     file(MAKE_DIRECTORY ${build_dir}/test-execstack)
     add_custom_command(
         OUTPUT  test-execstack/.success
-        COMMAND ${PERL_EXECUTABLE} ${tools_dir}/check-execstack.pl ${build_dir}/${lib_file}
+        COMMAND ${PERL_EXECUTABLE} ${tools_dir}/check-execstack.pl ${oa_opts} ${build_dir}/${lib_file}
         COMMAND ${CMAKE_COMMAND} -E touch test-execstack/.success
         DEPENDS ${build_dir}/${lib_file}
     )
@@ -206,7 +206,7 @@ if(${MIC} AND ${test_instr} AND ${tests})
     file(MAKE_DIRECTORY ${build_dir}/test-instr)
     add_custom_command(
         OUTPUT  test-instr/.success
-        COMMAND ${PERL_EXECUTABLE} ${tools_dir}/check-instruction-set.pl ${oa_opts} --show --mic-arch=${mic_arch} --mic-os=${mic_os} ${build_dir}/${lib_file}
+        COMMAND ${PERL_EXECUTABLE} ${tools_dir}/check-instruction-set.pl ${oa_opts} --show --mic-arch=${mic_arch} ${build_dir}/${lib_file}
         COMMAND ${CMAKE_COMMAND} -E touch test-instr/.success
         DEPENDS ${build_dir}/${lib_file} ${tools_dir}/check-instruction-set.pl
     )
@@ -228,7 +228,22 @@ if(${test_deps} AND ${tests})
     set(td_exp)
     if(${FREEBSD})
         set(td_exp libc.so.7 libthr.so.3 libunwind.so.5)
+    elseif(${MAC})
+        set(td_exp /usr/lib/libSystem.B.dylib)
+    elseif(${WINDOWS})
+        set(td_exp kernel32.dll)
     elseif(${LINUX})
+        if(${MIC})
+            set(td_exp libc.so.6,libpthread.so.0,libdl.so.2)
+            if(${STD_CPP_LIB})
+                set(td_exp ${td_exp},libstdc++.so.6)
+            endif()
+            if("${mic_arch}" STREQUAL "knf")
+                set(td_exp ${td_exp},ld-linux-l1om.so.2,libgcc_s.so.1)
+            elseif("${mic_arch}" STREQUAL "knc")
+                set(td_exp ${td_exp},ld-linux-k1om.so.2)
+            endif()
+        else()
         set(td_exp libdl.so.2,libgcc_s.so.1)
         if(${IA32})
             set(td_exp ${td_exp},libc.so.6,ld-linux.so.2)  
@@ -245,24 +260,7 @@ if(${test_deps} AND ${tests})
         if(NOT ${STUBS_LIBRARY})
             set(td_exp ${td_exp},libpthread.so.0)
         endif()
-    elseif(${MIC})
-        if("${mic_os}" STREQUAL "lin")
-            set(td_exp libc.so.6,libpthread.so.0,libdl.so.2)
-            if(${STD_CPP_LIB})
-                set(td_exp ${td_exp},libstdc++.so.6)
             endif()
-            if("${mic_arch}" STREQUAL "knf")
-                set(td_exp ${td_exp},ld-linux-l1om.so.2,libgcc_s.so.1)
-            elseif("${mic_arch}" STREQUAL "knc")
-                set(td_exp ${td_exp},ld-linux-k1om.so.2)
-            endif()
-        elseif("${mic_os}" STREQUAL "bsd")
-            set(td_exp libc.so.7,libthr.so.3,libunwind.so.5)
-        endif()
-    elseif(${MAC})
-        set(td_exp /usr/lib/libSystem.B.dylib)
-    elseif(${WINDOWS})
-        set(td_exp kernel32.dll)
     endif()
 
     file(MAKE_DIRECTORY ${build_dir}/test-deps)

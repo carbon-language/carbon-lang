@@ -69,11 +69,8 @@ function(append_cpp_flags input_cpp_flags)
         endif()
     endif()
 
-    #######################################
-    # Intel(R) MIC Architecture definitions
-    if(${MIC})
-        append_definitions("-D KMP_TDATA_GTID")
-    else() # Other than Intel(R) MIC Architecture...
+    # Any architecture other than Intel(R) MIC Architecture
+    if(NOT ${MIC}) 
         append_definitions("-D USE_LOAD_BALANCE")
     endif()
 

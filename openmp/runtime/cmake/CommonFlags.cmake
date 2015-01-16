@@ -103,7 +103,6 @@ function(append_linker_flags_common input_ld_flags input_ld_flags_libs)
             append_linker_flags("-Wl,--version-script=${src_dir}/exports_so.txt") # Use exports_so.txt as version script to create versioned symbols for ELF libraries
             if(NOT ${STUBS_LIBRARY})
                 append_linker_flags_library("-pthread") # link in pthread library
-                append_linker_flags_library("-ldl") # link in libdl (dynamic loader library)
             endif()
             if(${STATS_GATHERING})
                 append_linker_flags_library("-Wl,-lstdc++") # link in standard c++ library (stats-gathering needs it)
@@ -121,9 +120,6 @@ function(append_linker_flags_common input_ld_flags input_ld_flags_libs)
                                                                          # executable or shared object is unloaded, by setting DT_FINI to the 
                                                                          # address of the function.  By default, the linker uses "_fini" as the function to call.
                 append_linker_flags_library("-pthread") # link pthread library
-                if(NOT ${FREEBSD})
-                    append_linker_flags_library("-Wl,-ldl") # link in libdl (dynamic loader library)
-                endif()
             endif()
         endif() # if(${OPERATING_SYSTEM}) ...
 

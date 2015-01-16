@@ -49,13 +49,12 @@ include(GetArchitecture) # get_architecture()
 # If you want to change the compiler, then empty the build directory and rerun cmake.
 
 # Build Configuration
-set(os_possible_values          lin mac win mic)
-set(arch_possible_values        32e 32 arm ppc64 aarch64)
+set(os_possible_values          lin mac win)
+set(arch_possible_values        32e 32 arm ppc64 aarch64 mic)
 set(build_type_possible_values  release debug relwithdebinfo)
 set(omp_version_possible_values 40 30)
 set(lib_type_possible_values    normal profile stubs)
 set(mic_arch_possible_values    knf knc)
-set(mic_os_possible_values      bsd lin)
 
 # Below, cmake will try and determine the operating system and architecture for you.
 # These values are set in CMakeCache.txt when cmake is first run (-Dvar_name=... will take precedence)
@@ -75,14 +74,13 @@ endif()
 # If adding a new architecture, take a look at cmake/GetArchitecture.cmake
 get_architecture(detected_arch)
 
-set(os            ${temp_os}     CACHE STRING "The operating system to build for (lin/mac/win/mic)")
-set(arch          ${detected_arch}   CACHE STRING "The architecture to build for (32e/32/arm/ppc64).  32e is Intel(R) 64 architecture, 32 is IA-32 architecture")
+set(os            ${temp_os}     CACHE STRING "The operating system to build for (lin/mac/win)")
+set(arch          ${detected_arch}   CACHE STRING "The architecture to build for (32e/32/arm/ppc64/aarch64/mic).  32e is Intel(R) 64 architecture, 32 is IA-32 architecture")
 set(lib_type       normal        CACHE STRING "Performance,Profiling,Stubs library (normal/profile/stubs)")
 set(version        5             CACHE STRING "Produce libguide (version 4) or libiomp5 (version 5)")
 set(omp_version    40            CACHE STRING "The OpenMP version (40/30)")
 set(mic_arch       knc           CACHE STRING "Intel(R) Many Integrated Core Architecture (Intel(R) MIC Architecture) (knf/knc).   Ignored if not Intel(R) MIC Architecture build.")
-set(mic_os         lin           CACHE STRING "Intel(R) MIC Architecture operating system (bsd/lin).   Ignored if not Intel(R) MIC Architecture build.")
-set(create_fortran_modules false CACHE STRING "Create Fortran module files? (requires fortran compiler)")
+set(create_fortran_modules false CACHE BOOL   "Create Fortran module files? (requires fortran compiler)")
 
 # - These tests are little tests performed after the library is formed.
 # - The library won't be copied to the exports directory until it has passed/skipped all below tests
@@ -98,13 +96,13 @@ set(tests           false        CACHE BOOL   "Perform touch, relo, execstack, i
 #   particular openmp regions are recorded.
 set(stats           false         CACHE BOOL   "Stats-Gathering functionality?"                         )
 
-# User specified flags.  These are appended to the predetermined flags found in CommonFlags.cmake and ${CMAKE_C_COMPILER_ID}/*Flags.cmake (i.e., GNU/CFlags.cmake)
+# User specified flags.  These are appended to the predetermined flags found in CommonFlags.cmake and ${CMAKE_C_COMPILER_ID}/*Flags.cmake (e.g., GNU/CFlags.cmake)
 set(USER_C_FLAGS      "" CACHE STRING "Appended user specified C compiler flags."             )
 set(USER_CXX_FLAGS    "" CACHE STRING "Appended user specified C++ compiler flags."           )
 set(USER_CPP_FLAGS    "" CACHE STRING "Appended user specified C preprocessor flags."         )
 set(USER_ASM_FLAGS    "" CACHE STRING "Appended user specified assembler flags."              )
 set(USER_LD_FLAGS     "" CACHE STRING "Appended user specified linker flags."                 )
-set(USER_LD_LIB_FLAGS "" CACHE STRING "Appended user specified linked libs flags. (i.e., -lm)")
+set(USER_LD_LIB_FLAGS "" CACHE STRING "Appended user specified linked libs flags. (e.g., -lm)")
 set(USER_F_FLAGS      "" CACHE STRING "Appended user specified Fortran compiler flags.  These are only used if create_fortran_modules==true."       )
 
 # - Allow three build types: Release, Debug, RelWithDebInfo (these relate to build.pl's release, debug, and diag settings respectively)
@@ -130,9 +128,8 @@ check_variable(os          "${os_possible_values}"         )
 check_variable(arch        "${arch_possible_values}"       )
 check_variable(omp_version "${omp_version_possible_values}")
 check_variable(lib_type    "${lib_type_possible_values}"   )
-if("${os}" STREQUAL "mic")
+if("${arch}" STREQUAL "mic")
     check_variable(mic_arch "${mic_arch_possible_values}"  )
-    check_variable(mic_os   "${mic_os_possible_values}"    )
 endif()
 # Get the build number from kmp_version.c
 get_build_number("${LIBOMP_WORK}" build_number)
@@ -158,9 +155,6 @@ elseif("${os}" STREQUAL "mac")
 elseif("${os}" STREQUAL "win")
     set(WINDOWS TRUE)
     set(real_os win)
-elseif("${os}" STREQUAL "mic")
-    set(MIC TRUE)
-    set(real_os lrb)
 endif()
 if("${CMAKE_SYSTEM_NAME}" STREQUAL "FreeBSD")
     set(FREEBSD TRUE)
@@ -182,6 +176,8 @@ elseif("${arch}" STREQUAL "aarch64") # AARCH64 architecture
     set(AARCH64 TRUE)
 elseif("${arch}" STREQUAL "ppc64") # PPC64 architecture
     set(PPC64 TRUE)
+elseif("${arch}" STREQUAL "mic") # Intel(R) Many Integrated Core Architecture
+    set(MIC TRUE)
 endif()
 
 # Set some flags based on build_type
@@ -228,7 +224,7 @@ endif()
 #   This is the compiler's quad-precision data type.
 # ** TODO: This isn't complete yet. Finish it. Requires changing macros in kmp_os.h **
 set(COMPILER_SUPPORTS_QUAD_PRECISION false CACHE BOOL   "*INCOMPLETE* Does the compiler support a 128-bit floating point type?")
-set(COMPILER_QUAD_TYPE               ""    CACHE STRING "*INCOMPLETE* The quad precision data type (i.e., for gcc, __float128)")
+set(COMPILER_QUAD_TYPE               ""    CACHE STRING "*INCOMPLETE* The quad precision data type (e.g., for gcc, __float128)")
 
 # - Should the orignal build rules for builds be used? (cmake/OriginalBuildRules.cmake).  This setting is off by default.
 # - This always compiles with -g.  And if it is a release build, the debug info is stripped out via objcopy and put into libiomp5.dbg.
@@ -245,14 +241,14 @@ set(USE_INTERNODE_ALIGNMENT false CACHE BOOL "Should larger alignment (4096 byte
 if(${LINUX} AND NOT ${PPC64})
     set(USE_VERSION_SYMBOLS true CACHE BOOL "Should version symbols be used? These provide binary compatibility with libgomp.")
 else()
-    set(USE_VERSION_SYMBOLS false CACHE BOOL "Should version symbols be used? These provide binary compatibility with libgomp.")
+    set(USE_VERSION_SYMBOLS false CACHE BOOL "Version symbols not supported." FORCE)
 endif()
 
 # - TSX based locks have __asm code which can be troublesome for some compilers.  This feature is also x86 specific.
 if(${IA32} OR ${INTEL64})
     set(USE_ADAPTIVE_LOCKS true CACHE BOOL "Should TSX-based lock be compiled (adaptive lock in kmp_lock.cpp).  These are x86 specific.")
 else()
-    set(USE_ADAPTIVE_LOCKS false CACHE BOOL "Should TSX-based lock be compiled (adaptive lock in kmp_lock.cpp).  These are x86 specific.")
+    set(USE_ADAPTIVE_LOCKS false CACHE BOOL "TSX-based locks not supported.  These are x86 specific." FORCE)
 endif()
 
 ##################################
@@ -260,7 +256,7 @@ endif()
 if(${STATS_GATHERING} AND (${WINDOWS} OR ${MAC}))
     error_say("Stats-gathering functionality is only supported on x86-Linux and Intel(R) MIC Architecture")
 endif()
-if(${STATS_GATHERING} AND NOT (${IA32} OR ${INTEL64}))
+if(${STATS_GATHERING} AND NOT (${IA32} OR ${INTEL64} OR ${MIC}))
     error_say("Stats-gathering functionality is only supported on x86-Linux and Intel(R) MIC Architecture")
 endif()
 if(${USE_ADAPTIVE_LOCKS} AND NOT(${IA32} OR ${INTEL64}))
@@ -283,14 +279,6 @@ endif()
 if(${STATS_GATHERING})
     set(suffix "${suffix}.s1")
 endif()
-if(${MIC})
-    if(NOT "${mic_arch}" STREQUAL "knf")
-        set(suffix "${suffix}.${mic_arch}")
-    endif()
-    if(NOT "${mic_os}" STREQUAL "bsd")
-        set(suffix "${suffix}.${mic_os}")
-    endif()
-endif()
 
 ####################################
 # Setting file extensions / suffixes
@@ -308,15 +296,19 @@ endif()
 
 #########################
 # Setting directory names
-set(platform       "${real_os}_${arch}"                ) # i.e., lin_32e, mac_32
+if(${MIC})
+    set(platform       "${real_os}_${mic_arch}"        ) # e.g., lin_knf, lin_knc
+else()
+    set(platform       "${real_os}_${arch}"            ) # e.g., lin_32e, mac_32
+endif()
 set(build_dir      "${CMAKE_CURRENT_BINARY_DIR}"       ) # build directory (Where CMakeCache.txt is created, build files generated)
 set(src_dir        "${LIBOMP_WORK}/src"                )
 set(tools_dir      "${LIBOMP_WORK}/tools"              ) 
 set(export_dir     "${LIBOMP_WORK}/exports"            ) 
 set(export_cmn_dir "${export_dir}/common${suffix}"     ) 
 set(export_ptf_dir "${export_dir}/${platform}${suffix}")
-_export_lib_dir(${platform} export_lib_dir)  # set exports directory (relative to build_dir) i.e., ../exports/lin_32e/lib/
-                                             # or i.e., ../exports/mac_32e/lib.thin/ for mac
+_export_lib_dir(${platform} export_lib_dir)  # set exports directory (relative to build_dir) e.g., ../exports/lin_32e/lib/
+                                             # or ../exports/mac_32e/lib.thin/ for mac
 if(${MAC})
     # macs use lib.thin/ subdirectory for non-fat libraries that only contain one architecture
     # macs use lib/ subdirectory for fat libraries that contain both IA-32 architecture and Intel(R) 64 architecture code.
@@ -617,7 +609,7 @@ set_target_properties(iomp5 PROPERTIES
 add_dependencies(lib iomp5)
 
 # Linking command will include libraries in LD_LIB_FLAGS
-target_link_libraries(iomp5 ${LD_LIB_FLAGS})
+target_link_libraries(iomp5 ${LD_LIB_FLAGS} ${CMAKE_DL_LIBS})
 
 # Create *.inc and omp.h before compiling any sources
 add_dependencies(iomp5 needed-headers)
@@ -649,7 +641,7 @@ if(${ARM})
     set_source_files_properties(${src_dir}/z_Linux_asm.s PROPERTIES COMPILE_DEFINITIONS "KMP_ARCH_ARM")
 elseif(${AARCH64})
     set_source_files_properties(${src_dir}/z_Linux_asm.s PROPERTIES COMPILE_DEFINITIONS "KMP_ARCH_AARCH64")     
-elseif(${INTEL64})
+elseif(${INTEL64} OR ${MIC})
     set_source_files_properties(${src_dir}/z_Linux_asm.s PROPERTIES COMPILE_DEFINITIONS "KMP_ARCH_X86_64")
 elseif(${IA32})
     set_source_files_properties(${src_dir}/z_Linux_asm.s PROPERTIES COMPILE_DEFINITIONS "KMP_ARCH_X86")
@@ -819,14 +811,13 @@ expand_vars_recipe(libiomp.rc)
 say("")
 say("----------------------- CONFIGURATION -----------------------")
 say("Operating System   : ${os}")
-say("Architecture       : ${arch}")
-say("Build Type         : ${CMAKE_BUILD_TYPE}")
-say("OpenMP Version     : ${omp_version}")
-say("Lib Type           : ${lib_type}")
+say("Target Architecture  : ${arch}")
 if(${MIC})
     say("Intel(R) MIC Architecture    : ${mic_arch}")
-    say("Intel(R) MIC Architecture OS : ${mic_os}")
 endif()
+say("Build Type           : ${CMAKE_BUILD_TYPE}")
+say("OpenMP Version       : ${omp_version}")
+say("Lib Type             : ${lib_type}")
 say("Fortran Modules    : ${create_fortran_modules}")
 # will say development if all zeros
 if("${build_number}" STREQUAL "00000000")
