@@ -13,6 +13,7 @@
 #include "lld/Core/Error.h"
 #include "lld/Core/LLVM.h"
 #include "lld/Core/Node.h"
+#include "lld/Core/Parallel.h"
 #include "lld/Core/Reference.h"
 #include "lld/Core/range.h"
 #include "lld/ReaderWriter/Reader.h"
@@ -323,6 +324,8 @@ public:
   // Derived classes may use that chance to rearrange the input files.
   virtual void maybeSortInputFiles() {}
 
+  TaskGroup &getTaskGroup() { return _taskGroup; }
+
   /// @}
 protected:
   LinkingContext(); // Must be subclassed
@@ -370,6 +373,7 @@ protected:
 private:
   /// Validate the subclass bits. Only called by validate.
   virtual bool validateImpl(raw_ostream &diagnostics) = 0;
+  TaskGroup _taskGroup;
 };
 
 } // end namespace lld

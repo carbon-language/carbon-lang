@@ -77,42 +77,9 @@ bool Driver::link(LinkingContext &context, raw_ostream &diagnostics) {
   if (context.getNodes().empty())
     return false;
 
-  bool fail = false;
-
-  // Read inputs
-  ScopedTask readTask(getDefaultDomain(), "Read Args");
-  TaskGroup tg;
-  std::mutex diagnosticsMutex;
-  for (std::unique_ptr<Node> &ie : context.getNodes()) {
-    tg.spawn([&] {
-      // Writes to the same output stream is not guaranteed to be thread-safe.
-      // We buffer the diagnostics output to a separate string-backed output
-      // stream, acquire the lock, and then print it out.
-      std::string buf;
-      llvm::raw_string_ostream stream(buf);
-
-      if (FileNode *node = dyn_cast<FileNode>(ie.get())) {
-	if (File *file = node->getFile()) {
-	  if (std::error_code ec = file->parse()) {
-	    stream << "Cannot open " + file->path()
-		   << ": " << ec.message() << "\n";
-	    fail = true;
-	  }
-	}
-      }
-
-      stream.flush();
-      if (!buf.empty()) {
-        std::lock_guard<std::mutex> lock(diagnosticsMutex);
-        diagnostics << buf;
-      }
-    });
-  }
-  tg.sync();
-  readTask.end();
-
-  if (fail)
-    return false;
+  for (std::unique_ptr<Node> &ie : context.getNodes())
+    if (FileNode *node = dyn_cast<FileNode>(ie.get()))
+      context.getTaskGroup().spawn([node] { node->getFile()->parse(); });
 
   std::vector<std::unique_ptr<File>> internalFiles;
   context.createInternalFiles(internalFiles);

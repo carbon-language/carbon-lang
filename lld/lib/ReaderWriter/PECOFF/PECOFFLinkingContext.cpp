@@ -87,6 +87,13 @@ std::unique_ptr<File> PECOFFLinkingContext::createUndefinedSymbolFile() const {
       "<command line option /include>");
 }
 
+static int getGroupStartPos(std::vector<std::unique_ptr<Node>> &nodes) {
+  for (int i = 0, e = nodes.size(); i < e; ++i)
+    if (GroupEnd *group = dyn_cast<GroupEnd>(nodes[i].get()))
+      return i - group->getSize();
+  llvm::report_fatal_error("internal error");
+}
+
 void PECOFFLinkingContext::addLibraryFile(std::unique_ptr<FileNode> file) {
   GroupEnd *currentGroupEnd;
   int pos = -1;
@@ -111,7 +118,7 @@ bool PECOFFLinkingContext::createImplicitFiles(
   // Create a file for the entry point function.
   std::unique_ptr<FileNode> entry(new FileNode(
       llvm::make_unique<pecoff::EntryPointFile>(*this, syms)));
-  members.insert(members.begin(), std::move(entry));
+  members.insert(members.begin() + getGroupStartPos(members), std::move(entry));
 
   // Create a file for __ImageBase.
   std::unique_ptr<FileNode> fileNode(new FileNode(
@@ -339,6 +346,8 @@ void pecoff::ResolvableSymbols::add(File *file) {
 void pecoff::ResolvableSymbols::readAllSymbols() {
   std::lock_guard<std::mutex> lock(_mutex);
   for (File *file : _queue) {
+    if (file->parse())
+      return;
     if (auto *archive = dyn_cast<ArchiveLibraryFile>(file)) {
       for (const std::string &sym : archive->getDefinedSymbols())
 	_defined.insert(sym);

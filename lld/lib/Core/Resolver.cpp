@@ -236,7 +236,7 @@ bool Resolver::undefinesAdded(int begin, int end) {
   for (int i = begin; i < end; ++i)
     if (FileNode *node = dyn_cast<FileNode>(inputs[i].get()))
       if (_newUndefinesAdded[node->getFile()])
-	return true;
+        return true;
   return false;
 }
 
@@ -263,7 +263,7 @@ File *Resolver::getFile(int &index, int &groupLevel) {
 
 // Keep adding atoms until _context.getNextFile() returns an error. This
 // function is where undefined atoms are resolved.
-void Resolver::resolveUndefines() {
+bool Resolver::resolveUndefines() {
   ScopedTask task(getDefaultDomain(), "resolveUndefines");
   int index = 0;
   int groupLevel = 0;
@@ -271,7 +271,12 @@ void Resolver::resolveUndefines() {
     bool undefAdded = false;
     File *file = getFile(index, groupLevel);
     if (!file)
-      return;
+      return true;
+    if (std::error_code ec = file->parse()) {
+      llvm::errs() << "Cannot open " + file->path()
+                   << ": " << ec.message() << "\n";
+      return false;
+    }
     switch (file->kind()) {
     case File::kindObject:
       if (groupLevel > 0)
@@ -441,7 +446,8 @@ void Resolver::removeCoalescedAwayAtoms() {
 }
 
 bool Resolver::resolve() {
-  resolveUndefines();
+  if (!resolveUndefines())
+    return false;
   updateReferences();
   deadStripOptimize();
   if (checkUndefines())

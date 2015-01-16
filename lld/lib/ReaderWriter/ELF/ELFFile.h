@@ -116,7 +116,9 @@ template <class ELFT> class ELFFile : public File {
 
 public:
   ELFFile(StringRef name)
-      : File(name, kindObject), _ordinal(0), _doStringsMerge(false) {}
+      : File(name, kindObject), _ordinal(0), _doStringsMerge(false) {
+    setLastError(std::error_code());
+  }
 
   ELFFile(std::unique_ptr<MemoryBuffer> mb, bool atomizeStrings = false)
       : File(mb->getBufferIdentifier(), kindObject), _mb(std::move(mb)),

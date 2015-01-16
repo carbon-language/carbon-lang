@@ -9,6 +9,7 @@
 
 #include "lld/Core/File.h"
 #include "lld/Core/LLVM.h"
+#include <mutex>
 
 namespace lld {
 
@@ -18,5 +19,12 @@ File::atom_collection_empty<DefinedAtom>       File::_noDefinedAtoms;
 File::atom_collection_empty<UndefinedAtom>     File::_noUndefinedAtoms;
 File::atom_collection_empty<SharedLibraryAtom> File::_noSharedLibraryAtoms;
 File::atom_collection_empty<AbsoluteAtom>      File::_noAbsoluteAtoms;
+
+std::error_code File::parse() {
+  std::lock_guard<std::mutex> lock(_parseMutex);
+  if (!_lastError.hasValue())
+    _lastError = doParse();
+  return _lastError.getValue();
+}
 
 } // namespace lld
