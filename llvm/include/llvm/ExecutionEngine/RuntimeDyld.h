@@ -81,9 +81,13 @@ public:
   /// and resolve relocatons based on where they put it).
   void *getSymbolAddress(StringRef Name) const;
 
-  /// Get the address of the target copy of the symbol. This is the address
-  /// used for relocation.
+  /// Get the address of the target copy of the symbol (works for both exported
+  /// and non-exported symbols). This is the address used for relocation.
   uint64_t getSymbolLoadAddress(StringRef Name) const;
+
+  /// Get the address of the target copy of the symbol (works for exported
+  /// symbols only). This is the address used for relocation.
+  uint64_t getExportedSymbolLoadAddress(StringRef Name) const;
 
   /// Resolve the relocations for all symbols we currently know about.
   void resolveRelocations();
