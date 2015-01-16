@@ -125,7 +125,7 @@ public:
     case Blob:
       return false;
     }
-    llvm_unreachable("Invalid encoding");
+    report_fatal_error("Invalid encoding");
   }
 
   /// isChar6 - Return true if this character is legal in the Char6 encoding.

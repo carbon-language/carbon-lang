@@ -1,0 +1,1 @@
+RUN: not llvm-dis -disable-output %p/Inputs/invalid-pr20485.bc
