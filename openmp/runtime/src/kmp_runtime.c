@@ -810,8 +810,8 @@ __kmp_enter_single( int gtid, ident_t *id_ref, int push_ws )
     if ( status ) {
         __kmp_itt_single_start( gtid );
     }
-    if( __itt_metadata_add_ptr && __kmp_forkjoin_frames_mode == 3 ) {
-        __kmp_itt_metadata_single();
+    if( __itt_metadata_add_ptr && __kmp_forkjoin_frames_mode == 3 && KMP_MASTER_GTID(gtid)) {
+        __kmp_itt_metadata_single( id_ref );
     }
 
 #endif /* USE_ITT_BUILD */
@@ -1850,7 +1850,7 @@ __kmp_fork_call(
 
 #if USE_ITT_BUILD
     // Mark start of "parallel" region for VTune. Only use one of frame notification scheme at the moment.
-    if ((__itt_frame_begin_v3_ptr && __kmp_forkjoin_frames && !__kmp_forkjoin_frames_mode) || KMP_ITT_DEBUG)
+    if ((__itt_frame_begin_v3_ptr && __kmp_forkjoin_frames && !__kmp_forkjoin_frames_mode) || KMP_ITT_DEBUG) {
 # if OMP_40_ENABLED
         if (!master_th->th.th_teams_microtask || microtask == (microtask_t)__kmp_teams_master)
             // Either not in teams or the outer fork of the teams construct
@@ -1858,24 +1858,27 @@ __kmp_fork_call(
         {
             __kmp_itt_region_forking(gtid, team->t.t_nproc, 0);
         }
-    kmp_uint64 tmp_time = 0;
+    }
 #if USE_ITT_NOTIFY
-    if ( __itt_get_timestamp_ptr )
-        tmp_time = __itt_get_timestamp();
-#endif
-    if ((__itt_frame_submit_v3_ptr && __kmp_forkjoin_frames_mode==3)|| KMP_ITT_DEBUG)
+    kmp_uint64 tmp_time = 0;
+    if (((__kmp_forkjoin_frames_mode == 1 || __kmp_forkjoin_frames_mode == 3) && __itt_frame_submit_v3_ptr) || KMP_ITT_DEBUG) {
+        if (!(team->t.t_active_level > 1)) {
 # if OMP_40_ENABLED
-        if (!master_th->th.th_teams_microtask || microtask == (microtask_t)__kmp_teams_master)
+            if (!master_th->th.th_teams_microtask || microtask == (microtask_t)__kmp_teams_master) {
             // Either not in teams or the outer fork of the teams construct
 # endif /* OMP_40_ENABLED */
-            team->t.t_region_time = tmp_time;
-
+                if ( __itt_get_timestamp_ptr )
+                    tmp_time = __itt_get_timestamp();
     // Internal fork - report frame begin
-    if ((__kmp_forkjoin_frames_mode == 1 || __kmp_forkjoin_frames_mode == 3) && __itt_frame_submit_v3_ptr ) {
-        if (!(team->t.t_active_level > 1)) {
             master_th->th.th_frame_time  = tmp_time;
+                if ( __kmp_forkjoin_frames_mode==3 )
+                    team->t.t_region_time = tmp_time;
+# if OMP_40_ENABLED
+            }
+# endif /* OMP_40_ENABLED */
         }
     }
+#endif /* USE_ITT_NOTIFY */
 #endif /* USE_ITT_BUILD */
 
     /* now go on and do the work */
@@ -1998,7 +2001,7 @@ __kmp_join_call(ident_t *loc, int gtid
     }
 
     // Mark end of "parallel" region for VTune. Only use one of frame notification scheme at the moment.
-    if ( ( __itt_frame_end_v3_ptr && __kmp_forkjoin_frames && ! __kmp_forkjoin_frames_mode ) || KMP_ITT_DEBUG )
+    if ( ( __itt_frame_end_v3_ptr && __kmp_forkjoin_frames && ! __kmp_forkjoin_frames_mode ) || KMP_ITT_DEBUG ) {
 # if OMP_40_ENABLED
     if ( !master_th->th.th_teams_microtask /* not in teams */ ||
          ( !exit_teams && team->t.t_level == master_th->th.th_teams_level ) )
@@ -2009,7 +2012,8 @@ __kmp_join_call(ident_t *loc, int gtid
         master_th->th.th_ident = loc;
         __kmp_itt_region_joined( gtid );
     }
-    if ( ( __itt_frame_submit_v3_ptr && __kmp_forkjoin_frames_mode == 3 ) || KMP_ITT_DEBUG )
+    }
+    if ( ( __itt_frame_submit_v3_ptr && __kmp_forkjoin_frames_mode == 3 ) || KMP_ITT_DEBUG ) {
 # if OMP_40_ENABLED
     if ( !master_th->th.th_teams_microtask /* not in teams */ ||
          ( !exit_teams && team->t.t_level == master_th->th.th_teams_level ) )
@@ -2019,6 +2023,7 @@ __kmp_join_call(ident_t *loc, int gtid
     {
         master_th->th.th_ident = loc;
         __kmp_itt_frame_submit( gtid, team->t.t_region_time, master_th->th.th_frame_time, 0, loc, master_th->th.th_team_nproc, 1 );
+    }
     }
 #endif /* USE_ITT_BUILD */
 

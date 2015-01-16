@@ -368,7 +368,7 @@ __kmp_itt_metadata_loop( ident_t * loc, kmp_uint64 sched_type, kmp_uint64 iterat
 // -------------------------------------------------------------------------------------------------
 
 LINKAGE void
-__kmp_itt_metadata_single( ) {
+__kmp_itt_metadata_single( ident_t * loc ) {
 #if USE_ITT_NOTIFY
     if( metadata_domain == NULL) {
         __kmp_acquire_bootstrap_lock( & metadata_lock );
@@ -381,8 +381,14 @@ __kmp_itt_metadata_single( ) {
     }
 
     __itt_string_handle * string_handle = __itt_string_handle_create( "omp_metadata_single");
+    kmp_str_loc_t str_loc = __kmp_str_loc_init( loc->psource, 1 );
+    kmp_uint64 single_data[ 2 ];
+    single_data[ 0 ] = str_loc.line;
+    single_data[ 1 ] = str_loc.col;
 
-    __itt_metadata_add(metadata_domain, __itt_null, string_handle, __itt_metadata_u64, 0, NULL);
+    __kmp_str_loc_free( &str_loc );
+
+    __itt_metadata_add(metadata_domain, __itt_null, string_handle, __itt_metadata_u64, 2, single_data);
 #endif
 } // __kmp_itt_metadata_single
 

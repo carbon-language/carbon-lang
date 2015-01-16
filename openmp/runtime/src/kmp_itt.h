@@ -68,7 +68,7 @@ __kmp_inline void __kmp_itt_frame_submit( int gtid, __itt_timestamp begin, __itt
 __kmp_inline void __kmp_itt_metadata_imbalance( int gtid, kmp_uint64 begin, kmp_uint64 end, kmp_uint64 imbalance, kmp_uint64 reduction );
 // sched_type: 0 - static, 1 - dynamic, 2 - guided, 3 - custom (all others); iterations - loop trip count, chunk - chunk size
 __kmp_inline void __kmp_itt_metadata_loop( ident_t * loc, kmp_uint64 sched_type, kmp_uint64 iterations, kmp_uint64 chunk );
-__kmp_inline void __kmp_itt_metadata_single();
+__kmp_inline void __kmp_itt_metadata_single( ident_t * loc );
 
 // --- Barrier reporting ---
 __kmp_inline void * __kmp_itt_barrier_object( int gtid, int bt, int set_name = 0, int delta = 0 );
