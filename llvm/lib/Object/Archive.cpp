@@ -111,8 +111,6 @@ uint64_t Archive::Child::getSize() const {
 }
 
 uint64_t Archive::Child::getRawSize() const {
-  if (Parent->IsThin)
-    return getHeader()->getSize();
   return Data.size();
 }
 
