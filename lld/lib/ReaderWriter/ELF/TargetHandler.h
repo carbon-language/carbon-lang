@@ -40,7 +40,7 @@ template <class ELFT> class ELFHeader;
 template <class ELFT> class Section;
 template <class ELFT> class TargetLayout;
 
-template <class ELFT> class TargetRelocationHandler {
+class TargetRelocationHandler {
 public:
   /// Constructor
   TargetRelocationHandler(ELFLinkingContext &targetInfo)
@@ -86,7 +86,7 @@ public:
   virtual TargetLayout<ELFT> &getTargetLayout() = 0;
 
   /// Determine how relocations need to be applied.
-  virtual const TargetRelocationHandler<ELFT> &getRelocationHandler() const = 0;
+  virtual const TargetRelocationHandler &getRelocationHandler() const = 0;
 
   /// How does the target deal with reading input files.
   virtual std::unique_ptr<Reader> getObjReader(bool) = 0;

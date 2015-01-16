@@ -18,13 +18,11 @@ namespace elf {
 
 class HexagonTargetHandler;
 
-class HexagonTargetRelocationHandler final :
-    public TargetRelocationHandler<HexagonELFType> {
+class HexagonTargetRelocationHandler final : public TargetRelocationHandler {
 public:
   HexagonTargetRelocationHandler(HexagonTargetLayout<HexagonELFType> &layout,
                                  ELFLinkingContext &targetInfo)
-      : TargetRelocationHandler<HexagonELFType>(targetInfo),
-        _hexagonTargetLayout(layout) {}
+      : TargetRelocationHandler(targetInfo), _hexagonTargetLayout(layout) {}
 
   std::error_code applyRelocation(ELFWriter &, llvm::FileOutputBuffer &,
                                   const lld::AtomLayout &,

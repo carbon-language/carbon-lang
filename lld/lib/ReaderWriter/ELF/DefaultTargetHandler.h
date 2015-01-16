@@ -27,7 +27,7 @@ public:
   DefaultTargetHandler(ELFLinkingContext &context)
       : TargetHandler<ELFT>(context) {}
 
-  const TargetRelocationHandler<ELFT> &getRelocationHandler() const = 0;
+  const TargetRelocationHandler &getRelocationHandler() const = 0;
 
   virtual std::unique_ptr<Reader> getObjReader(bool atomizeStrings) = 0;
 

@@ -23,11 +23,10 @@ public:
   PPCTargetLayout(PPCLinkingContext &context) : TargetLayout<ELFT>(context) {}
 };
 
-class PPCTargetRelocationHandler final
-    : public TargetRelocationHandler<PPCELFType> {
+class PPCTargetRelocationHandler final : public TargetRelocationHandler {
 public:
   PPCTargetRelocationHandler(ELFLinkingContext &context)
-      : TargetRelocationHandler<PPCELFType>(context) {}
+      : TargetRelocationHandler(context) {}
 
   std::error_code applyRelocation(ELFWriter &, llvm::FileOutputBuffer &,
                                   const lld::AtomLayout &,
