@@ -1,105 +1,50 @@
-; RUN: llc -march=amdgcn -mcpu=bonaire -verify-machineinstrs < %s | FileCheck -check-prefix=CI -check-prefix=FUNC %s
 ; RUN: llc -march=amdgcn -mcpu=SI -verify-machineinstrs < %s | FileCheck -check-prefix=SI -check-prefix=FUNC %s
+; RUN: llc -march=r600 -mcpu=redwood < %s | FileCheck -check-prefix=R600 -check-prefix=FUNC %s
 
-declare double @llvm.floor.f64(double) nounwind readnone
-declare <2 x double> @llvm.floor.v2f64(<2 x double>) nounwind readnone
-declare <3 x double> @llvm.floor.v3f64(<3 x double>) nounwind readnone
-declare <4 x double> @llvm.floor.v4f64(<4 x double>) nounwind readnone
-declare <8 x double> @llvm.floor.v8f64(<8 x double>) nounwind readnone
-declare <16 x double> @llvm.floor.v16f64(<16 x double>) nounwind readnone
-
-; FUNC-LABEL: {{^}}ffloor_f64:
-; CI: v_floor_f64_e32
-
-; SI: s_bfe_u32 [[SEXP:s[0-9]+]], {{s[0-9]+}}, 0xb0014
-; SI: s_add_i32 s{{[0-9]+}}, [[SEXP]], 0xfffffc01
-; SI: s_lshr_b64
-; SI: s_not_b64
-; SI: s_and_b64
-; SI-DAG: s_and_b32 s{{[0-9]+}}, s{{[0-9]+}}, 0x80000000
-; SI-DAG: cmp_lt_i32
-; SI: cndmask_b32
-; SI: cndmask_b32
-; SI: cmp_gt_i32
-; SI: cndmask_b32
-; SI: cndmask_b32
-; SI: v_cmp_lg_f64
-; SI: v_cmp_lt_f64
-; SI: s_and_b64
-; SI: v_cndmask_b32
-; SI: v_cndmask_b32
-; SI: v_add_f64
-; SI: s_endpgm
-define void @ffloor_f64(double addrspace(1)* %out, double %x) {
-  %y = call double @llvm.floor.f64(double %x) nounwind readnone
-  store double %y, double addrspace(1)* %out
+; FUNC-LABEL: {{^}}floor_f32:
+; SI: v_floor_f32_e32
+; R600: FLOOR
+define void @floor_f32(float addrspace(1)* %out, float %in) {
+  %tmp = call float @llvm.floor.f32(float %in) #0
+  store float %tmp, float addrspace(1)* %out
   ret void
 }
 
-; FUNC-LABEL: {{^}}ffloor_v2f64:
-; CI: v_floor_f64_e32
-; CI: v_floor_f64_e32
-define void @ffloor_v2f64(<2 x double> addrspace(1)* %out, <2 x double> %x) {
-  %y = call <2 x double> @llvm.floor.v2f64(<2 x double> %x) nounwind readnone
-  store <2 x double> %y, <2 x double> addrspace(1)* %out
+; FUNC-LABEL: {{^}}floor_v2f32:
+; SI: v_floor_f32_e32
+; SI: v_floor_f32_e32
+
+; R600: FLOOR
+; R600: FLOOR
+define void @floor_v2f32(<2 x float> addrspace(1)* %out, <2 x float> %in) {
+  %tmp = call <2 x float> @llvm.floor.v2f32(<2 x float> %in) #0
+  store <2 x float> %tmp, <2 x float> addrspace(1)* %out
   ret void
 }
 
-; FIXME-FUNC-LABEL: {{^}}ffloor_v3f64:
-; FIXME-CI: v_floor_f64_e32
-; FIXME-CI: v_floor_f64_e32
-; FIXME-CI: v_floor_f64_e32
-; define void @ffloor_v3f64(<3 x double> addrspace(1)* %out, <3 x double> %x) {
-;   %y = call <3 x double> @llvm.floor.v3f64(<3 x double> %x) nounwind readnone
-;   store <3 x double> %y, <3 x double> addrspace(1)* %out
-;   ret void
-; }
+; FUNC-LABEL: {{^}}floor_v4f32:
+; SI: v_floor_f32_e32
+; SI: v_floor_f32_e32
+; SI: v_floor_f32_e32
+; SI: v_floor_f32_e32
 
-; FUNC-LABEL: {{^}}ffloor_v4f64:
-; CI: v_floor_f64_e32
-; CI: v_floor_f64_e32
-; CI: v_floor_f64_e32
-; CI: v_floor_f64_e32
-define void @ffloor_v4f64(<4 x double> addrspace(1)* %out, <4 x double> %x) {
-  %y = call <4 x double> @llvm.floor.v4f64(<4 x double> %x) nounwind readnone
-  store <4 x double> %y, <4 x double> addrspace(1)* %out
+; R600: FLOOR
+; R600: FLOOR
+; R600: FLOOR
+; R600: FLOOR
+define void @floor_v4f32(<4 x float> addrspace(1)* %out, <4 x float> %in) {
+  %tmp = call <4 x float> @llvm.floor.v4f32(<4 x float> %in) #0
+  store <4 x float> %tmp, <4 x float> addrspace(1)* %out
   ret void
 }
 
-; FUNC-LABEL: {{^}}ffloor_v8f64:
-; CI: v_floor_f64_e32
-; CI: v_floor_f64_e32
-; CI: v_floor_f64_e32
-; CI: v_floor_f64_e32
-; CI: v_floor_f64_e32
-; CI: v_floor_f64_e32
-; CI: v_floor_f64_e32
-; CI: v_floor_f64_e32
-define void @ffloor_v8f64(<8 x double> addrspace(1)* %out, <8 x double> %x) {
-  %y = call <8 x double> @llvm.floor.v8f64(<8 x double> %x) nounwind readnone
-  store <8 x double> %y, <8 x double> addrspace(1)* %out
-  ret void
-}
+; Function Attrs: nounwind readonly
+declare float @llvm.floor.f32(float) #0
 
-; FUNC-LABEL: {{^}}ffloor_v16f64:
-; CI: v_floor_f64_e32
-; CI: v_floor_f64_e32
-; CI: v_floor_f64_e32
-; CI: v_floor_f64_e32
-; CI: v_floor_f64_e32
-; CI: v_floor_f64_e32
-; CI: v_floor_f64_e32
-; CI: v_floor_f64_e32
-; CI: v_floor_f64_e32
-; CI: v_floor_f64_e32
-; CI: v_floor_f64_e32
-; CI: v_floor_f64_e32
-; CI: v_floor_f64_e32
-; CI: v_floor_f64_e32
-; CI: v_floor_f64_e32
-; CI: v_floor_f64_e32
-define void @ffloor_v16f64(<16 x double> addrspace(1)* %out, <16 x double> %x) {
-  %y = call <16 x double> @llvm.floor.v16f64(<16 x double> %x) nounwind readnone
-  store <16 x double> %y, <16 x double> addrspace(1)* %out
-  ret void
-}
+; Function Attrs: nounwind readonly
+declare <2 x float> @llvm.floor.v2f32(<2 x float>) #0
+
+; Function Attrs: nounwind readonly
+declare <4 x float> @llvm.floor.v4f32(<4 x float>) #0
+
+attributes #0 = { nounwind readonly }
