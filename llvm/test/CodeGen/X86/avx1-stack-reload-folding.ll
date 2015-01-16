@@ -3,81 +3,79 @@
 target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
 target triple = "x86_64-unknown-unknown"
 
-; Stack reload folding tests - we use the 'big vectors' pattern to guarantee spilling to stack.
+; Stack reload folding tests.
 ;
-; Many of these tests are primarily to check memory folding with specific instructions. Using a basic
-; load/cvt/store pattern to test for this would mean that it wouldn't be the memory folding code thats
-; being tested - the load-execute version of the instruction from the tables would be matched instead.
+; By including a nop call with sideeffects we can force a partial register spill of the
+; relevant registers and check that the reload is correctly folded into the instruction.
 
-define void @stack_fold_vmulpd(<64 x double>* %a, <64 x double>* %b, <64 x double>* %c) {
-  ;CHECK-LABEL: stack_fold_vmulpd
-  ;CHECK:       vmulpd {{[0-9]*}}(%rsp), {{%ymm[0-9][0-9]*}}, {{%ymm[0-9][0-9]*}} {{.*#+}} 32-byte Folded Reload
-
-  %1 = load <64 x double>* %a
-  %2 = load <64 x double>* %b
-  %3 = fadd <64 x double> %1, %2
-  %4 = fsub <64 x double> %1, %2
-  %5 = fmul <64 x double> %3, %4
-  store <64 x double> %5, <64 x double>* %c
-  ret void
-}
-
-define void @stack_fold_cvtdq2ps(<128 x i32>* %a, <128 x i32>* %b, <128 x float>* %c) {
+define <4 x float> @stack_fold_cvtdq2ps(<4 x i32> %a) {
   ;CHECK-LABEL: stack_fold_cvtdq2ps
-  ;CHECK:   vcvtdq2ps {{[0-9]*}}(%rsp), {{%ymm[0-9][0-9]*}} {{.*#+}} 32-byte Folded Reload
-
-  %1 = load <128 x i32>* %a
-  %2 = load <128 x i32>* %b
-  %3 = and <128 x i32> %1, %2
-  %4 = xor <128 x i32> %1, %2
-  %5 = sitofp <128 x i32> %3 to <128 x float>
-  %6 = sitofp <128 x i32> %4 to <128 x float>
-  %7 = fadd <128 x float> %5, %6
-  store <128 x float> %7, <128 x float>* %c
-  ret void
+  ;CHECK:   vcvtdq2ps {{-?[0-9]*}}(%rsp), {{%xmm[0-9][0-9]*}} {{.*#+}} 16-byte Folded Reload
+  %1 = tail call <4 x i64> asm sideeffect "nop", "=x,~{xmm1},~{xmm2},~{xmm3},~{xmm4},~{xmm5},~{xmm6},~{xmm7},~{xmm8},~{xmm9},~{xmm10},~{xmm11},~{xmm12},~{xmm13},~{xmm14},~{xmm15}"()
+  %2 = sitofp <4 x i32> %a to <4 x float>
+  ret <4 x float> %2
 }
 
-define void @stack_fold_cvtpd2ps(<128 x double>* %a, <128 x double>* %b, <128 x float>* %c) {
+define <8 x float> @stack_fold_cvtdq2ps_ymm(<8 x i32> %a) {
+  ;CHECK-LABEL: stack_fold_cvtdq2ps_ymm
+  ;CHECK:   vcvtdq2ps {{-?[0-9]*}}(%rsp), {{%ymm[0-9][0-9]*}} {{.*#+}} 32-byte Folded Reload
+  %1 = tail call <4 x i64> asm sideeffect "nop", "=x,~{xmm1},~{xmm2},~{xmm3},~{xmm4},~{xmm5},~{xmm6},~{xmm7},~{xmm8},~{xmm9},~{xmm10},~{xmm11},~{xmm12},~{xmm13},~{xmm14},~{xmm15}"()
+  %2 = sitofp <8 x i32> %a to <8 x float>
+  ret <8 x float> %2
+}
+
+define <4 x i32> @stack_fold_cvttpd2dq_ymm(<4 x double> %a) {
+  ;CHECK-LABEL: stack_fold_cvttpd2dq_ymm
+  ;CHECK:  vcvttpd2dqy {{-?[0-9]*}}(%rsp), {{%xmm[0-9][0-9]*}} {{.*#+}} 32-byte Folded Reload
+  %1 = tail call <4 x i64> asm sideeffect "nop", "=x,~{xmm1},~{xmm2},~{xmm3},~{xmm4},~{xmm5},~{xmm6},~{xmm7},~{xmm8},~{xmm9},~{xmm10},~{xmm11},~{xmm12},~{xmm13},~{xmm14},~{xmm15}"()
+  %2 = fptosi <4 x double> %a to <4 x i32>
+  ret <4 x i32> %2
+}
+
+define <2 x float> @stack_fold_cvtpd2ps(<2 x double> %a) {
   ;CHECK-LABEL: stack_fold_cvtpd2ps
-  ;CHECK:   vcvtpd2psy {{[0-9]*}}(%rsp), {{%xmm[0-9][0-9]*}} {{.*#+}} 32-byte Folded Reload
-
-  %1 = load <128 x double>* %a
-  %2 = load <128 x double>* %b
-  %3 = fadd <128 x double> %1, %2
-  %4 = fsub <128 x double> %1, %2
-  %5 = fptrunc <128 x double> %3 to <128 x float>
-  %6 = fptrunc <128 x double> %4 to <128 x float>
-  %7 = fadd <128 x float> %5, %6
-  store <128 x float> %7, <128 x float>* %c
-  ret void
+  ;CHECK:   vcvtpd2psx {{-?[0-9]*}}(%rsp), {{%xmm[0-9][0-9]*}} {{.*#+}} 16-byte Folded Reload
+  %1 = tail call <4 x i64> asm sideeffect "nop", "=x,~{xmm1},~{xmm2},~{xmm3},~{xmm4},~{xmm5},~{xmm6},~{xmm7},~{xmm8},~{xmm9},~{xmm10},~{xmm11},~{xmm12},~{xmm13},~{xmm14},~{xmm15}"()
+  %2 = fptrunc <2 x double> %a to <2 x float>
+  ret <2 x float> %2
 }
 
-define void @stack_fold_cvttpd2dq(<64 x double>* %a, <64 x double>* %b, <64 x i32>* %c) #0 {
-  ;CHECK-LABEL: stack_fold_cvttpd2dq
-  ;CHECK:  vcvttpd2dqy {{[0-9]*}}(%rsp), {{%xmm[0-9][0-9]*}} {{.*#+}} 32-byte Folded Reload
-
-  %1 = load <64 x double>* %a
-  %2 = load <64 x double>* %b
-  %3 = fadd <64 x double> %1, %2
-  %4 = fsub <64 x double> %1, %2
-  %5 = fptosi <64 x double> %3 to <64 x i32>
-  %6 = fptosi <64 x double> %4 to <64 x i32>
-  %7 = or <64 x i32> %5, %6
-  store <64 x i32> %7, <64 x i32>* %c
-  ret void
+define <4 x float> @stack_fold_cvtpd2ps_ymm(<4 x double> %a) {
+  ;CHECK-LABEL: stack_fold_cvtpd2ps_ymm
+  ;CHECK:   vcvtpd2psy {{-?[0-9]*}}(%rsp), {{%xmm[0-9][0-9]*}} {{.*#+}} 32-byte Folded Reload
+  %1 = tail call <4 x i64> asm sideeffect "nop", "=x,~{xmm1},~{xmm2},~{xmm3},~{xmm4},~{xmm5},~{xmm6},~{xmm7},~{xmm8},~{xmm9},~{xmm10},~{xmm11},~{xmm12},~{xmm13},~{xmm14},~{xmm15}"()
+  %2 = fptrunc <4 x double> %a to <4 x float>
+  ret <4 x float> %2
 }
 
-define void @stack_fold_cvttps2dq(<128 x float>* %a, <128 x float>* %b, <128 x i32>* %c) #0 {
+define <4 x i32> @stack_fold_cvttps2dq(<4 x float> %a) {
   ;CHECK-LABEL: stack_fold_cvttps2dq
-  ;CHECK:   vcvttps2dq {{[0-9]*}}(%rsp), {{%ymm[0-9][0-9]*}} {{.*#+}} 32-byte Folded Reload
+  ;CHECK:  vcvttps2dq {{-?[0-9]*}}(%rsp), {{%xmm[0-9][0-9]*}} {{.*#+}} 16-byte Folded Reload
+  %1 = tail call <4 x i64> asm sideeffect "nop", "=x,~{xmm1},~{xmm2},~{xmm3},~{xmm4},~{xmm5},~{xmm6},~{xmm7},~{xmm8},~{xmm9},~{xmm10},~{xmm11},~{xmm12},~{xmm13},~{xmm14},~{xmm15}"()
+  %2 = fptosi <4 x float> %a to <4 x i32>
+  ret <4 x i32> %2
+}
 
-  %1 = load <128 x float>* %a
-  %2 = load <128 x float>* %b
-  %3 = fadd <128 x float> %1, %2
-  %4 = fsub <128 x float> %1, %2
-  %5 = fptosi <128 x float> %3 to <128 x i32>
-  %6 = fptosi <128 x float> %4 to <128 x i32>
-  %7 = or <128 x i32> %5, %6
-  store <128 x i32> %7, <128 x i32>* %c
-  ret void
+define <8 x i32> @stack_fold_cvttps2dq_ymm(<8 x float> %a) {
+  ;CHECK-LABEL: stack_fold_cvttps2dq_ymm
+  ;CHECK:  vcvttps2dq {{-?[0-9]*}}(%rsp), {{%ymm[0-9][0-9]*}} {{.*#+}} 32-byte Folded Reload
+  %1 = tail call <4 x i64> asm sideeffect "nop", "=x,~{xmm1},~{xmm2},~{xmm3},~{xmm4},~{xmm5},~{xmm6},~{xmm7},~{xmm8},~{xmm9},~{xmm10},~{xmm11},~{xmm12},~{xmm13},~{xmm14},~{xmm15}"()
+  %2 = fptosi <8 x float> %a to <8 x i32>
+  ret <8 x i32> %2
+}
+
+define <2 x double> @stack_fold_vmulpd(<2 x double> %a, <2 x double> %b) {
+  ;CHECK-LABEL: stack_fold_vmulpd
+  ;CHECK:       vmulpd {{-?[0-9]*}}(%rsp), {{%xmm[0-9][0-9]*}}, {{%xmm[0-9][0-9]*}} {{.*#+}} 16-byte Folded Reload
+  %1 = tail call <4 x i64> asm sideeffect "nop", "=x,~{xmm2},~{xmm3},~{xmm4},~{xmm5},~{xmm6},~{xmm7},~{xmm8},~{xmm9},~{xmm10},~{xmm11},~{xmm12},~{xmm13},~{xmm14},~{xmm15}"()
+  %2 = fmul <2 x double> %a, %b
+  ret <2 x double> %2
+}
+
+define <4 x double> @stack_fold_vmulpd_ymm(<4 x double> %a, <4 x double> %b) {
+  ;CHECK-LABEL: stack_fold_vmulpd_ymm
+  ;CHECK:       vmulpd {{-?[0-9]*}}(%rsp), {{%ymm[0-9][0-9]*}}, {{%ymm[0-9][0-9]*}} {{.*#+}} 32-byte Folded Reload
+  %1 = tail call <4 x i64> asm sideeffect "nop", "=x,~{xmm2},~{xmm3},~{xmm4},~{xmm5},~{xmm6},~{xmm7},~{xmm8},~{xmm9},~{xmm10},~{xmm11},~{xmm12},~{xmm13},~{xmm14},~{xmm15}"()
+  %2 = fmul <4 x double> %a, %b
+  ret <4 x double> %2
 }
