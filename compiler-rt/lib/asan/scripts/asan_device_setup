@@ -184,7 +184,7 @@ cp "$ASAN_RT_PATH/$ASAN_RT" "$TMPDIR/"
 ASAN_OPTIONS=start_deactivated=1,alloc_dealloc_mismatch=0
 
 # On Android-L not allowing user segv handler breaks some applications.
-if $ADB shell 'echo $LD_PRELOAD' | grep libsigchain.so >&/dev/null; then
+if [[ PRE_L -eq 0 ]]; then
     ASAN_OPTIONS="$ASAN_OPTIONS,allow_user_segv_handler=1"
 fi
 
