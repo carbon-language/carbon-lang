@@ -233,6 +233,32 @@ static bool isPathUnderSysroot(StringRef sysroot, StringRef path) {
 }
 
 static std::error_code
+evaluateLinkerScriptGroup(ELFLinkingContext &ctx, StringRef path,
+                          const script::Group *group, raw_ostream &diag) {
+  bool sysroot = (!ctx.getSysroot().empty()
+                  && isPathUnderSysroot(ctx.getSysroot(), path));
+  int numfiles = 0;
+  for (const script::Path &path : group->getPaths()) {
+    ErrorOr<StringRef> pathOrErr = path._isDashlPrefix
+      ? ctx.searchLibrary(path._path) : ctx.searchFile(path._path, sysroot);
+    if (std::error_code ec = pathOrErr.getError())
+      return make_dynamic_error_code(
+        Twine("Unable to find file ") + path._path + ": " + ec.message());
+
+    std::vector<std::unique_ptr<File>> files
+      = loadFile(ctx, pathOrErr.get(), false);
+    for (std::unique_ptr<File> &file : files) {
+      if (ctx.logInputFiles())
+        diag << file->path() << "\n";
+      ctx.getNodes().push_back(llvm::make_unique<FileNode>(std::move(file)));
+      ++numfiles;
+    }
+  }
+  ctx.getNodes().push_back(llvm::make_unique<GroupEnd>(numfiles));
+  return std::error_code();
+}
+
+static std::error_code
 evaluateLinkerScript(ELFLinkingContext &ctx, StringRef path,
                      raw_ostream &diag) {
   // Read the script file from disk and parse.
@@ -248,32 +274,10 @@ evaluateLinkerScript(ELFLinkingContext &ctx, StringRef path,
 
   // Evaluate script commands.
   // Currently we only recognize GROUP() command.
-  bool sysroot = (!ctx.getSysroot().empty()
-                  && isPathUnderSysroot(ctx.getSysroot(), path));
-  for (const script::Command *c : script->_commands) {
-    auto *group = dyn_cast<script::Group>(c);
-    if (!group)
-      continue;
-    int numfiles = 0;
-    for (const script::Path &path : group->getPaths()) {
-      // TODO : Propagate Set WholeArchive/dashlPrefix
-      ErrorOr<StringRef> pathOrErr = path._isDashlPrefix
-          ? ctx.searchLibrary(path._path) : ctx.searchFile(path._path, sysroot);
-      if (std::error_code ec = pathOrErr.getError())
-        return make_dynamic_error_code(
-            Twine("Unable to find file ") + path._path + ": " + ec.message());
-
-      std::vector<std::unique_ptr<File>> files
-          = loadFile(ctx, pathOrErr.get(), false);
-      for (std::unique_ptr<File> &file : files) {
-        if (ctx.logInputFiles())
-          diag << file->path() << "\n";
-        ctx.getNodes().push_back(llvm::make_unique<FileNode>(std::move(file)));
-        ++numfiles;
-      }
-    }
-    ctx.getNodes().push_back(llvm::make_unique<GroupEnd>(numfiles));
-  }
+  for (const script::Command *c : script->_commands)
+    if (auto *group = dyn_cast<script::Group>(c))
+      if (std::error_code ec = evaluateLinkerScriptGroup(ctx, path, group, diag))
+        return ec;
   return std::error_code();
 }
 
