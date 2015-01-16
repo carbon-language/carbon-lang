@@ -155,33 +155,7 @@ public:
     else
       llvm_unreachable("atom has unknown definition kind");
   }
-
-  DefinedAtomRange definedAtoms() override {
-    return range<std::vector<const DefinedAtom *>::iterator>(
-        _definedAtoms._atoms.begin(), _definedAtoms._atoms.end());
-  }
-
-  const atom_collection<DefinedAtom> &defined() const override {
-    return _definedAtoms;
-  }
-  const atom_collection<UndefinedAtom> &undefined() const override {
-    return _undefinedAtoms;
-  }
-  const atom_collection<SharedLibraryAtom> &sharedLibrary() const override {
-    return _sharedLibraryAtoms;
-  }
-  const atom_collection<AbsoluteAtom> &absolute() const override {
-    return _absoluteAtoms;
-  }
-
-private:
-  atom_collection_vector<DefinedAtom> _definedAtoms;
-  atom_collection_vector<UndefinedAtom> _undefinedAtoms;
-  atom_collection_vector<SharedLibraryAtom> _sharedLibraryAtoms;
-  atom_collection_vector<AbsoluteAtom> _absoluteAtoms;
 };
-
-
 
 } // anonymous namespace
 

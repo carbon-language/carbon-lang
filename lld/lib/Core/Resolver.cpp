@@ -458,32 +458,6 @@ bool Resolver::resolve() {
   return true;
 }
 
-void Resolver::MergedFile::addAtom(const Atom &atom) {
-  if (auto *def = dyn_cast<DefinedAtom>(&atom)) {
-    _definedAtoms._atoms.push_back(def);
-  } else if (auto *undef = dyn_cast<UndefinedAtom>(&atom)) {
-    _undefinedAtoms._atoms.push_back(undef);
-  } else if (auto *shared = dyn_cast<SharedLibraryAtom>(&atom)) {
-    _sharedLibraryAtoms._atoms.push_back(shared);
-  } else if (auto *abs = dyn_cast<AbsoluteAtom>(&atom)) {
-    _absoluteAtoms._atoms.push_back(abs);
-  } else {
-    llvm_unreachable("atom has unknown definition kind");
-  }
-}
-
-MutableFile::DefinedAtomRange Resolver::MergedFile::definedAtoms() {
-  return range<std::vector<const DefinedAtom *>::iterator>(
-      _definedAtoms._atoms.begin(), _definedAtoms._atoms.end());
-}
-
-void Resolver::MergedFile::removeDefinedAtomsIf(
-    std::function<bool(const DefinedAtom *)> pred) {
-  auto &atoms = _definedAtoms._atoms;
-  auto newEnd = std::remove_if(atoms.begin(), atoms.end(), pred);
-  atoms.erase(newEnd, atoms.end());
-}
-
 void Resolver::MergedFile::addAtoms(std::vector<const Atom *> &all) {
   ScopedTask task(getDefaultDomain(), "addAtoms");
   DEBUG_WITH_TYPE("resolver", llvm::dbgs() << "Resolver final atom list:\n");
