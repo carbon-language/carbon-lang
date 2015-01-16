@@ -1,4 +1,6 @@
-// RUN: %clang_cc1  -std=c99 %s -emit-llvm -o - | grep -v llvm.isunordered | not grep call
+// RUN: %clang_cc1  -std=c99 %s -emit-llvm -o - | FileCheck %s
+// CHECK: @Test
+// CHECK-NOT: call
 
 _Bool A, B, C, D, E, F;
 void TestF(float X, float Y) {
