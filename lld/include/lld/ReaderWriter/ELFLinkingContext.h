@@ -296,16 +296,8 @@ public:
   /// ELFFileNode class keeps growing. This achieves code to be clean as well.
   class Attributes {
   public:
-    Attributes()
-        : _isWholeArchive(false), _isDashlPrefix(false), _isSysRooted(false) {}
-    void setWholeArchive(bool isWholeArchive) {
-      _isWholeArchive = isWholeArchive;
-    }
-    void setDashlPrefix(bool isDashlPrefix) { _isDashlPrefix = isDashlPrefix; }
+    Attributes() : _isSysRooted(false) {}
     void setSysRooted(bool isSysRooted) { _isSysRooted = isSysRooted; }
-
-    bool _isWholeArchive;
-    bool _isDashlPrefix;
     bool _isSysRooted;
   };
 

@@ -257,10 +257,6 @@ evaluateLinkerScript(ELFLinkingContext &ctx, StringRef path,
     int numfiles = 0;
     for (const script::Path &path : group->getPaths()) {
       // TODO : Propagate Set WholeArchive/dashlPrefix
-      ELFLinkingContext::Attributes attr;
-      attr.setSysRooted(sysroot);
-      attr.setDashlPrefix(path._isDashlPrefix);
-
       ErrorOr<StringRef> pathOrErr = path._isDashlPrefix
           ? ctx.searchLibrary(path._path) : ctx.searchFile(path._path, sysroot);
       if (std::error_code ec = pathOrErr.getError())
@@ -355,8 +351,8 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
   std::stack<int> groupStack;
   int numfiles = 0;
 
-  ELFLinkingContext::Attributes attributes;
   bool asNeeded = false;
+  bool wholeArchive = false;
 
   bool _outputOptionSet = false;
 
@@ -508,11 +504,11 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
       break;
 
     case OPT_no_whole_archive:
-      attributes.setWholeArchive(false);
+      wholeArchive = false;
       break;
 
     case OPT_whole_archive:
-      attributes.setWholeArchive(true);
+      wholeArchive = true;
       break;
 
     case OPT_as_needed:
@@ -583,7 +579,6 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
     case OPT_INPUT:
     case OPT_l: {
       bool dashL = (inputArg->getOption().getID() == OPT_l);
-      attributes.setDashlPrefix(dashL);
       StringRef path = inputArg->getValue();
 
       ErrorOr<StringRef> pathOrErr = findFile(*ctx, path, dashL);
@@ -608,7 +603,7 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
         break;
       }
       std::vector<std::unique_ptr<File>> files
-          = loadFile(*ctx, realpath, attributes._isWholeArchive);
+          = loadFile(*ctx, realpath, wholeArchive);
       for (std::unique_ptr<File> &file : files) {
         if (ctx->logInputFiles())
           diagnostics << file->path() << "\n";
