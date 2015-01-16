@@ -6,7 +6,7 @@
 
 // CHECK: @align = global i8 [[ALIGN:[0-9]+]]
 // ITANIUM: @.str = private unnamed_addr constant [6 x i8] c"hello\00"
-// MSABI: @"\01??_C@_05CJBACGMB@hello?$AA@" = linkonce_odr unnamed_addr constant [6 x i8] c"hello\00", align 1
+// MSABI: @"\01??_C@_05CJBACGMB@hello?$AA@" = linkonce_odr unnamed_addr constant [6 x i8] c"hello\00", comdat, align 1
 // ITANIUM: @f1.x = internal global i8* getelementptr inbounds ([6 x i8]* @.str, i32 0, i32 0)
 // MSABI: @f1.x = internal global i8* getelementptr inbounds ([6 x i8]* @"\01??_C@_05CJBACGMB@hello?$AA@", i32 0, i32 0)
 // CHECK: @f2.x = internal global [6 x i8] c"hello\00", align [[ALIGN]]
