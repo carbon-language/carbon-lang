@@ -485,7 +485,7 @@ $input_file = $ARGV[ 0 ];
 
 
 my $generate_message;
-if ( $target_os =~ m{\A(?:lin|lrb|mac)\z} ) {
+if ( $target_os =~ m{\A(?:lin|mac)\z} ) {
     $generate_message = \&generate_message_unix;
 } elsif ( $target_os eq "win" ) {
     $generate_message = \&generate_message_windows;

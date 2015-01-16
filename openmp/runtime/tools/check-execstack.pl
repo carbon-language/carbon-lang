@@ -18,6 +18,7 @@ use FindBin;
 use lib "$FindBin::Bin/lib";
 
 use tools;
+use Platform ":vars";
 
 our $VERSION = "0.002";
 
@@ -25,7 +26,13 @@ sub execstack($) {
     my ( $file ) = @_;
     my @output;
     my @stack;
-    execute( [ "readelf", "-l", "-W", $file ], -stdout => \@output );
+    my $tool;
+    if($target_arch eq "mic") {
+        $tool = "x86_64-k1om-linux-readelf";
+    } else {
+        $tool = "readelf";
+    }
+    execute( [ $tool, "-l", "-W", $file ], -stdout => \@output );
     @stack = grep( $_ =~ m{\A\s*(?:GNU_)?STACK\s+}, @output );
     if ( not @stack ) {
         # Interpret missed "STACK" line as error.
@@ -49,6 +56,7 @@ sub execstack($) {
 }; # sub execstack
 
 get_options(
+    Platform::target_options(),
 );
 
 foreach my $file ( @ARGV ) {

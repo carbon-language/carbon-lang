@@ -24,48 +24,34 @@ our $VERSION = "0.004";
 
 my $hex = qr{[0-9a-f]}i;    # hex digit.
 
-# lrb_32e-specific details.
+# mic-specific details.
 
-my $mic_arch; # either knf or knc
-my $mic_os;   # either bsd or lin
-sub bad_lrb_fmt($) {
+sub bad_mic_fmt($) {
     # Before we allowed both elf64-x86-64-freebsd and elf-l1om-freebsd.
     # Now the first one is obsolete, only elf64-l1om-freebsd is allowed.
     my ( $fmt ) = @_;
     if ( 0 ) {
-    } elsif ( "$mic_os" eq "bsd" ) {
-	if ( "$mic_arch" eq "knf" ) {
-	    return $fmt !~ m{\Aelf64-l1om(?:-freebsd)?\z};
-	} else {
-	    return $fmt !~ m{\Aelf64-x86-64(?:-freebsd)?\z};
-	};
-    } elsif ( "$mic_os" eq "lin" ) {
-	if ( 0 ) {
-	} elsif ( "$mic_arch" eq "knf" ) {
+    } elsif ( "$target_mic_arch" eq "knf" ) {
 	    return $fmt !~ m{\Aelf64-l1om?\z};
-	} elsif ( "$mic_arch" eq "knc" ) {
+    } elsif ( "$target_mic_arch" eq "knc" ) {
 	    return $fmt !~ m{\Aelf64-k1om?\z};
 	} else {
 	    return 1;
 	};
-    } else {
-	return 1;
-    };
-}; # sub bad_lrb_fmt
+}; # sub bad_mic_fmt
 
-# Undesired instructions for lrb: all x87 and some other.
+# Undesired instructions for mic: all x87 and some other.
 # AC: Since compiler 2010-06-30 x87 instructions are supported, removed the check of x87.
-my $lrb_bad_re;
-sub bad_lrb_instr($$) {
+my $mic_bad_re;
+sub bad_mic_instr($$) {
     my ( $instr, $args ) = @_;
-#    if ( "$mic_os" eq "lin" and "$mic_arch" eq "knf" ) {
-    if ( "$mic_os" eq "lin" or "$mic_arch" eq "knc" ) {
+    if ( "$target_mic_arch" eq "knc" ) {
 	# workaround of bad code generation on KNF Linux* OS:
-	return ( defined( $instr ) and $instr =~ $lrb_bad_re );
+	return ( defined( $instr ) and $instr =~ $mic_bad_re );
     } else {
-	return ( defined( $instr ) and $instr =~ $lrb_bad_re or defined( $args ) and $args =~ m{xmm}i );
+	return ( defined( $instr ) and $instr =~ $mic_bad_re or defined( $args ) and $args =~ m{xmm}i );
     }
-}; # sub bad_lrb_instr
+}; # sub bad_mic_instr
 
 # lin_32-specific details.
 
@@ -133,11 +119,7 @@ sub check_file($;$$) {
         $max_instructions = 100;
     }; # if
 
-    if ( "$mic_os" eq "bsd" ) {
-        execute( [ "x86_64-freebsd-objdump", "-d", $file ], -stdout => \@bulk );
-    } else {
-        execute( [ "objdump", "-d", $file ], -stdout => \@bulk );
-    }
+    execute( [ "x86_64-k1om-linux-objdump", "-d", $file ], -stdout => \@bulk );
 
     my $n = 0;
     my $errors = 0;
@@ -202,24 +184,22 @@ my $show_instructions;
 get_options(
     "max-instructions=i" => \$max_instructions,
     "show-instructions!" => \$show_instructions,
-    "mic-arch=s"         => \$mic_arch,
-    "mic-os=s"           => \$mic_os,
     Platform::target_options(),
 );
-if ( "$mic_os" eq "lin" and "$mic_arch" eq "knf" ) {
-    $lrb_bad_re = qr{^(?:pause|[slm]fence|scatter|gather|cmpxchg16b|clevict[12])}i;
+if ( "$target_os" eq "lin" and "$target_mic_arch" eq "knf" ) {
+    $mic_bad_re = qr{^(?:pause|[slm]fence|scatter|gather|cmpxchg16b|clevict[12])}i;
 } else {
-    $lrb_bad_re = qr{^(?:pause|[slm]fence|scatter|gather|cmov|cmpxchg16b|clevict[12])}i;
+    $mic_bad_re = qr{^(?:pause|[slm]fence|scatter|gather|cmov|cmpxchg16b|clevict[12])}i;
 };
 if ( 0 ) {
-} elsif ( $target_platform eq "lrb_32e" ) {
-    *bad_instr = \*bad_lrb_instr;
-    *bad_fmt   = \*bad_lrb_fmt;
+} elsif ( $target_os eq "lin" and $target_arch eq "mic" ) {
+    *bad_instr = \*bad_mic_instr;
+    *bad_fmt   = \*bad_mic_fmt;
 } elsif ( $target_platform eq "lin_32" ) {
     *bad_instr = \*bad_ia32_instr;
     *bad_fmt   = \*bad_ia32_fmt;
 } else {
-    runtime_error( "Only works on lin_32 and lrb_32e platforms." );
+    runtime_error( "Only works on lin_32 and lin_mic platforms." );
 }; # if
 
 # Do the work.
@@ -322,7 +302,7 @@ Currently the script works only for:
 
 =over
 
-=item C<lrb_32e>
+=item C<lin_mic>
 
 Intel(R) Many Integrated Core Architecture target OS. Undesired unstructions are: all x87 instructions and some others.
 

@@ -45,7 +45,7 @@ endif
 # Description:
 #     The function return printable name of specified architecture, IA-32 architecture or Intel(R) 64.
 #
-legal_arch = $(if $(filter 32,$(1)),IA-32,$(if $(filter 32e,$(1)),Intel(R) 64,$(if $(filter l1,$(1)),L1OM,$(if $(filter arm,$(1)),ARM,$(if $(filter ppc64,$(1)),PPC64,$(if $(filter aarch64,$(1)),AArch64,$(error Bad architecture specified: $(1))))))))
+legal_arch = $(if $(filter 32,$(1)),IA-32,$(if $(filter 32e,$(1)),Intel(R) 64,$(if $(filter l1,$(1)),L1OM,$(if $(filter arm,$(1)),ARM,$(if $(filter ppc64,$(1)),PPC64,$(if $(filter aarch64,$(1)),AArch64,$(if $(filter mic,$(1)),Intel(R) Many Integrated Core Architecture,$(error Bad architecture specified: $(1)))))))))
 
 # Synopsis:
 #     var_name = $(call check_variable,var,list)
@@ -127,10 +127,14 @@ endif
 # Mandatory variables passed from build.pl.
 # --------------------------------------------------------------------------------------------------
 
-os       := $(call check_variable,os,lin lrb mac win)
-arch     := $(call check_variable,arch,32 32e 64 arm ppc64 aarch64)
-platform := $(os)_$(arch)
-platform := $(call check_variable,platform,lin_32 lin_32e lin_64 lin_arm lrb_32e mac_32 mac_32e win_32 win_32e win_64 lin_ppc64 lin_aarch64)
+os       := $(call check_variable,os,lin mac win)
+arch     := $(call check_variable,arch,32 32e 64 arm ppc64 aarch64 mic)
+ifeq "$(arch)" "mic" # We want the flavor of mic (knf, knc, knl, etc.)
+    platform := $(os)_$(MIC_ARCH)
+else
+    platform := $(os)_$(arch)
+endif
+platform := $(call check_variable,platform,lin_32 lin_32e lin_64 lin_arm lin_knc lin_knf mac_32 mac_32e win_32 win_32e win_64 lin_ppc64 lin_aarch64)
 # oa-opts means "os and arch options". They are passed to almost all perl scripts.
 oa-opts  := --os=$(os) --arch=$(arch)
 
@@ -155,7 +159,7 @@ ifeq "$(os)" "win" # win
     dll = .dll
     exe = .exe
     cat = $(dll)
-else # lin, lrb or mac
+else # lin, mic or mac
     asm = .s
     obj = .o
     lib = .a
@@ -180,7 +184,7 @@ ifeq "$(os)" "win"
     touch = touch
     perl  = perl
     slash = \\
-else # lin, lrb or mac
+else # lin, mic or mac
     cp    = cp -f
     rm    = rm -f
     mkdir = mkdir -p

@@ -34,7 +34,7 @@
 # "No rule to build .\kmp_i18n.inc". Using "./" solves the problem.
 cpp-flags += -I ./
 # For non-x86 architecture
-ifeq "$(filter 32 32e 64,$(arch))" ""
+ifeq "$(filter 32 32e 64 mic,$(arch))" ""
     cpp-flags += $(shell pkg-config --cflags libffi)
 endif
 # Add all VPATH directories to path for searching include files.
@@ -57,7 +57,7 @@ endif
 
 # --- Linux* OS, Intel(R) Many Integrated Core Architecture and OS X* definitions ---
 
-ifneq "$(filter lin lrb mac,$(os))" ""
+ifneq "$(filter lin mac,$(os))" ""
     # --- C/C++ ---
     ifeq "$(c)" ""
         c = icc
@@ -160,6 +160,7 @@ endif
 # --- Linux* OS definitions ---
 
 ifeq "$(os)" "lin"
+ifneq "$(arch)" "mic"
     # --- C/C++ ---
     # On lin_32, we want to maintain stack alignment to be conpatible with GNU binaries built with
     # compiler.
@@ -212,15 +213,16 @@ ifeq "$(os)" "lin"
         ld-flags-dll += -Wl,-soname=$(@F)
     endif
 endif
+endif
 
 # --- Intel(R) Many Integrated Core Architecture definitions ---
 
-ifeq "$(os)" "lrb"
+ifeq "$(arch)" "mic"
     # --- C/C++ ---
     # Intel(R) Many Integrated Core Architecture specific options, need clarification for purpose:
     #c-flags     += -mmic -mP2OPT_intrin_disable_name=memcpy -mP2OPT_intrin_disable_name=memset -mGLOB_freestanding -mGLOB_nonstandard_lib -nostdlib -fno-builtin
     #cxx-flags   += -mmic -mP2OPT_intrin_disable_name=memcpy -mP2OPT_intrin_disable_name=memset -mGLOB_freestanding -mGLOB_nonstandard_lib -nostdlib -fno-builtin
-    # icc for lrb has a bug: it generates dependencies for target like file.obj, while real object
+    # icc for mic has a bug: it generates dependencies for target like file.obj, while real object
     # files are named file.o. -MT is a workaround for the problem.
     c-flags-m   += -MT $(basename $@).o
     cxx-flags-m += -MT $(basename $@).o

@@ -117,9 +117,15 @@ sub _load_symbols_nm($) {
 
     if ( %$objects ) {
         # Do not run nm if a set of objects is empty -- nm will try to open a.out in this case.
+        my $tool;
+        if($target_arch eq "mic") {
+            $tool = "x86_64-k1om-linux-nm"
+        } else {
+            $tool = "nm"
+        }
         execute(
             [
-                "nm",
+                $tool,
                 "-g",    # Display only external (global) symbols.
                 "-o",    # Precede each symbol by the name of the input file.
                 keys( %$objects )
@@ -397,9 +403,16 @@ sub copy_objects($$;$\@) {
     my $target  = shift( @_ );
     my $prefix  = shift( @_ );
     my $symbols = shift( @_ );
+    my $tool;
     my @redefine;
     my @redefine_;
     my $syms_file = "__kmp_sym_pairs.log";
+
+    if ( $target_arch eq "mic" ) {
+        $tool = "x86_64-k1om-linux-objcopy"
+    } else {
+        $tool = "objcopy"
+    }
 
     if ( not -e $target ) {
         die "\"$target\" directory does not exist\n";
@@ -420,7 +433,7 @@ sub copy_objects($$;$\@) {
     foreach my $src ( sort( keys( %$objects ) ) ) {
         my $dst = cat_file( $target, get_file( $src ) );
         if ( @redefine ) {
-            execute( [ "objcopy", "--redefine-syms", $syms_file, $src, $dst ] );
+            execute( [ $tool, "--redefine-syms", $syms_file, $src, $dst ] );
         } else {
             copy_file( $src, $dst, -overwrite => 1 );
         }; # if
@@ -482,7 +495,7 @@ if ( not %$base ) {
 
 if ( $target_os eq "win" ) {
     *load_symbols = \&_load_symbols_link;
-} elsif ( $target_os eq "lin" or $target_os eq "lrb" ) {
+} elsif ( $target_os eq "lin" ) {
     *load_symbols = \&_load_symbols_nm;
 } elsif ( $target_os eq "mac" ) {
     *load_symbols = \&_load_symbols_nm;

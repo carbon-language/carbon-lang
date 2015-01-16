@@ -55,26 +55,22 @@ my %makefiles = (
 #     * params: A hash of possible option values. "*" denotes default option value. For example,
 #         if "versio" option is not specified, "--version=5" will be used implicitly.
 #     * suffux: Only for extra options. Subroutine returning suffix for build and output
-#         directories.
+#         directories. ** When you do not want an option to be part of the suffix, set its base=2
 my $opts = {
     "target"          => { targets => "",                  base => 1, parms => { map( ( $_ => "" ), keys( %makefiles ) ), rtl => "*" }, },
     "version"         => { targets => "rtl",               base => 1, parms => { 5       => "*", 4         => ""              }, },
     "lib-type"        => { targets => "rtl",               base => 1, parms => { normal  => "*", stubs => ""                  }, },
     "link-type"       => { targets => "rtl",               base => 1, parms => { dynamic => "*", static    => ""              }, },
-    "target-compiler" => { targets => "rtl,dsl",           base => 0, parms => { 12      => "*", 11        => ""              }, suffix => sub { $_[ 0 ];                       } },
     "mode"            => { targets => "rtl,dsl,timelimit", base => 0, parms => { release => "*", diag      => "", debug => "" }, suffix => sub { substr( $_[ 0 ], 0, 3 );       } },
     "omp-version"     => { targets => "rtl",               base => 0, parms => { 40 => "*", 30 => "", 25 => "" }, suffix => sub { $_[ 0 ]; } },
     "coverage"        => { targets => "rtl",               base => 0, parms => { off     => "*", on        => ""              }, suffix => sub { $_[ 0 ] eq "on" ? "c1" : "c0"; } },
-    "tcheck"          => { targets => "rtl",               base => 0, parms => { 0       => "*", 1         => "", 2 => ""     }, suffix => sub { "t" . $_[ 0 ];                 } },
-    "mic-arch"        => { targets => "rtl",               base => 0, parms => { knf     => "*", knc       => "", knl => ""   }, suffix => sub { $_[ 0 ];                       } },
-    "mic-os"          => { targets => "rtl",               base => 0, parms => { bsd     => "*", lin       => ""              }, suffix => sub { $_[ 0 ];                       } },
-    "mic-comp"        => { targets => "rtl",               base => 0, parms => { native  => "*", offload   => ""              }, suffix => sub { substr( $_[ 0 ], 0, 3 );       } },
+    "stats"           => { targets => "rtl",               base => 0, parms => { off     => "*", on        => ""              }, suffix => sub { $_[ 0 ] eq "on" ? "s1" : "s0"; } },
 };
 my $synonyms = {
     "debug" => [ qw{ dbg debg } ],
 };
 # This array specifies order of options to process, so it cannot be initialized with keys( %$opts ).
-my @all_opts   = qw{ target version lib-type link-type target-compiler mode omp-version coverage tcheck mic-arch mic-os mic-comp };
+my @all_opts   = qw{ target version lib-type link-type mode omp-version coverage stats };
 # This is the list of base options.
 my @base_opts  = grep( $opts->{ $_ }->{ base } == 1, @all_opts );
 # This is the list of extra options.
@@ -241,7 +237,7 @@ sub enqueue_jobs($$@) {
             # Shortened version of @extra -- only non-default values.
         my $suffix    = ( @extra ? "." . join( ".", @extra ) : "" );
         my $knights   = index( $suffix, "kn" ) - 1;
-        if ( $target_platform !~ "lrb" and $knights > 0 ) {
+        if ( $target_arch !~ "mic" and $knights > 0 ) {
             $suffix = substr( $suffix, 0, $knights );
         }
         my $suf       = ( @ex ? "." . join( ".", @ex ) : "" );
@@ -256,9 +252,7 @@ sub enqueue_jobs($$@) {
                 make_args => [
                     "os="   . $target_os,
                     "arch=" . $target_arch,
-                    "MIC_OS=" . $set->{ "mic-os" },
-                    "MIC_ARCH=" . $set->{ "mic-arch" },
-                    "MIC_COMP=" . $set->{ "mic-comp" },
+                    "MIC_ARCH=" . $target_mic_arch,
                     "date=" . Build::tstr( $Build::start ),
                     "TEST_DEPS=" . ( $test_deps   ? "on" : "off" ),
                     "TEST_TOUCH=" . ( $test_touch ? "on" : "off" ),
@@ -274,10 +268,9 @@ sub enqueue_jobs($$@) {
                     "LIB_TYPE=" . substr( $set->{ "lib-type" }, 0, 4 ),
                     "LINK_TYPE=" . substr( $set->{ "link-type" }, 0, 4 ),
                     "OMP_VERSION=" . $set->{ "omp-version" },
-                    "USE_TCHECK=" . $set->{ tcheck },
                     "VERSION=" . $set->{ version },
-                    "TARGET_COMPILER=" . $set->{ "target-compiler" },
                     "suffix=" . $suf,
+                    "stats=" . $set->{ stats },
                     @goals,
                 ],
                 build_dir  => $build_dir
@@ -371,28 +364,19 @@ Use specified string as default answer to all questions.
 =item B<--architecture=>I<arch>
 
 Specify target architecture to build. Default is architecture of host machine. I<arch> can be C<32>,
-C<32e>, or one of known aliases like C<IA32>.
+C<32e>, C<mic>, or one of known aliases like C<IA32>.
 
 If architecture is not specified explicitly, value of LIBOMP_ARCH environment variable is used.
 If LIBOMP_ARCH is not defined, host architecture detected.
 
 =item B<--os=>I<os>
 
-Specify target OS. Default is OS of host machine. I<os> can be C<lin>, C<lrb>, C<mac>, C<win>,
+Specify target OS. Default is OS of host machine. I<os> can be C<lin>, C<mac>, C<win>,
 or one of known aliases like C<Linux>, C<WinNT>, etc.
-
-=item B<--mic-os=>I<os>
-
-Specify OS on Intel(R) Many Integrated Core Architecture card. Default is C<bsd>. I<os> can be C<bsd>, C<lin>.
 
 =item B<--mic-arch=>I<arch>
 
 Specify architecture of Intel(R) Many Integrated Core Architecture card. Default is C<knf>. I<arch> can be C<knf>, C<knc>, C<knl>.
-
-=item B<--mic-comp=>I<compiler-type>
-
-Specify whether the Intel(R) Many Integrated Core Compiler is native or offload. Default is C<native>.
-I<compiler-type> can be C<native> or C<offload>.
 
 =item B<-->[B<no->]B<test-deps>
 
@@ -444,10 +428,6 @@ Mode controls 3 features:
     diagnostics (asserts, traces)    o      o
     code optimization                       o      o
     ---------------------------------------------------
-
-=item B<--target-compiler=>I<version>
-
-Build files for specified target compiler, C<11> or C<12>.
 
 =back
 

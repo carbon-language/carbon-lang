@@ -79,9 +79,9 @@
 
 %$(obj) : %$(asm) .rebuild
 	$(target)
-        # There is a bug on lrb: icc does not work with "-x assembler-with-cpp" option, so we have
+        # There is a bug on mic: icc does not work with "-x assembler-with-cpp" option, so we have
         # to preprocess file manually and then assembly it.
-        ifeq "$(os)" "lrb"
+        ifeq "$(arch)" "mic"
 	    $(c) -E $(cpp-flags) $< > $@.tmp
 	    $(as) $(as-flags) -x assembler $(as-out)$@ $@.tmp
         else
@@ -130,8 +130,12 @@ expand-vars = $(perl) $(tools_dir)expand-vars.pl --strict $(ev-flags) $< $@
         # strip debug info in case it is requested (works for Linux* OS only)
         ifneq "$(dbg_strip)" ""
             ifeq "$(DEBUG_INFO)" "off"
+                ifeq "$(arch)" "mic"
+	            x86_64-k1om-linux-objcopy --strip-debug $@
+                else
 	        objcopy --strip-debug $@
             endif
+        endif
         endif
 
 # -- Making dynamic library ---
@@ -156,7 +160,11 @@ expand-vars = $(perl) $(tools_dir)expand-vars.pl --strict $(ev-flags) $< $@
 
 %.dbg : %$(dll) .rebuild
 	$(target)
+        ifeq "$(arch)" "mic"
+	    x86_64-k1om-linux-objcopy  --only-keep-debug $< $@
+        else
 	objcopy --only-keep-debug $< $@ 
+        endif
 
 
 .PRECIOUS: %.res                       # Do not delete automatically created files.

@@ -32,12 +32,12 @@ use Uname;
 my @vars;
 
 BEGIN {
-    @vars = qw{ $host_arch $host_os $host_platform $target_arch $target_os $target_platform };
+    @vars = qw{ $host_arch $host_os $host_platform $target_arch $target_mic_arch $target_os $target_platform };
 }
 
 our $VERSION     = "0.014";
 our @EXPORT      = qw{};
-our @EXPORT_OK   = ( qw{ canon_arch canon_os legal_arch arch_opt }, @vars );
+our @EXPORT_OK   = ( qw{ canon_arch canon_os canon_mic_arch legal_arch arch_opt }, @vars );
 our %EXPORT_TAGS = ( all => [ @EXPORT_OK ], vars => \@vars );
 
 # Canonize architecture name.
@@ -54,6 +54,8 @@ sub canon_arch($) {
         	$arch = "ppc64";            
         } elsif ( $arch =~ m{\Aaarch64} ) {               
                 $arch = "aarch64";
+        } elsif ( $arch =~ m{\Amic} ) {
+            $arch = "mic";
         } else {
             $arch = undef;
         }; # if
@@ -61,12 +63,30 @@ sub canon_arch($) {
     return $arch;
 }; # sub canon_arch
 
+# Canonize Intel(R) Many Integrated Core Architecture name.
+sub canon_mic_arch($) {
+    my ( $mic_arch ) = @_;
+    if ( defined( $mic_arch ) ) {
+        if ( $mic_arch =~ m{\Aknf} ) {
+            $mic_arch = "knf";
+        } elsif ( $mic_arch =~ m{\Aknc}) {
+            $mic_arch = "knc";
+        } elsif ( $mic_arch =~ m{\Aknl} ) {
+            $mic_arch = "knl";
+        } else {
+            $mic_arch = undef;
+        }; # if
+    }; # if
+    return $mic_arch;
+}; # sub canon_mic_arch
+
 {  # Return legal approved architecture name.
     my %legal = (
         "32"  => "IA-32 architecture",
         "32e" => "Intel(R) 64",
         "arm" => "ARM",
         "aarch64" => "AArch64",
+        "mic" => "Intel(R) Many Integrated Core Architecture",
     );
 
     sub legal_arch($) {
@@ -86,6 +106,7 @@ sub canon_arch($) {
         "64"  => "ia64",
         "arm" => "arm",
         "aarch64" => "aarch",
+        "mic" => "intel64",
     );
 
     sub arch_opt($) {
@@ -104,8 +125,6 @@ sub canon_os($) {
     if ( defined( $os ) ) {
         if ( $os =~ m{\A\s*(?:Linux|lin|l)\s*\z}i ) {
             $os = "lin";
-        } elsif ( $os =~ m{\A\s*(?:lrb)\s*\z}i ) {
-            $os = "lrb";
         } elsif ( $os =~ m{\A\s*(?:Mac(?:\s*OS(?:\s*X)?)?|mac|m|Darwin)\s*\z}i ) {
             $os = "mac";
         } elsif ( $os =~ m{\A\s*(?:Win(?:dows)?(?:(?:_|\s*)?(?:NT|XP|95|98|2003))?|w)\s*\z}i ) {
@@ -117,7 +136,10 @@ sub canon_os($) {
     return $os;
 }; # sub canon_os
 
-my ( $_host_os, $_host_arch, $_target_os, $_target_arch );
+my ( $_host_os, $_host_arch, $_target_os, $_target_arch, $_target_mic_arch, $_default_mic_arch);
+
+# Set the default mic-arch value.
+$_default_mic_arch = "knc";
 
 sub set_target_arch($) {
     my ( $arch ) = canon_arch( $_[ 0 ] );
@@ -127,6 +149,15 @@ sub set_target_arch($) {
     }; # if
     return $arch;
 }; # sub set_target_arch
+
+sub set_target_mic_arch($) {
+    my ( $mic_arch ) = canon_mic_arch( $_[ 0 ] );
+    if ( defined( $mic_arch ) ) {
+        $_target_mic_arch       = $mic_arch;
+        $ENV{ LIBOMP_MIC_ARCH } = $mic_arch;
+    }; # if
+    return $mic_arch;
+}; # sub set_target_mic_arch
 
 sub set_target_os($) {
     my ( $os ) = canon_os( $_[ 0 ] );
@@ -148,6 +179,11 @@ sub target_options() {
            sub {
                set_target_arch( $_[ 1 ] ) or
                    die "Bad value of --target-architecture option: \"$_[ 1 ]\"\n";
+           },
+        "target-mic-architecture|targert-mic-arch|mic-architecture|mic-arch=s" =>
+           sub {
+               set_target_mic_arch( $_[ 1 ] ) or
+                   die "Bad value of --target-mic-architecture option: \"$_[ 1 ]\"\n";
            },
     );
     return @options;
@@ -205,6 +241,19 @@ if ( defined( $ENV{ LIBOMP_ARCH } ) ) {
 }; # if
 $ENV{ LIBOMP_ARCH } = $_target_arch;
 
+# Detect target Intel(R) Many Integrated Core Architecture.
+if ( defined( $ENV{ LIBOMP_MIC_ARCH } ) ) {
+    # Use mic arch specified in LIBOMP_MIC_ARCH.
+    $_target_mic_arch = canon_mic_arch( $ENV{ LIBOMP_MIC_ARCH } );
+    if ( not defined( $_target_mic_arch ) ) {
+        die "Unknown architecture specified in LIBOMP_MIC_ARCH environment variable: \"$ENV{ LIBOMP_MIC_ARCH }\"";
+    }; # if
+} else {
+    # Otherwise use default Intel(R) Many Integrated Core Architecture.
+    $_target_mic_arch = $_default_mic_arch;
+}; # if
+$ENV{ LIBOMP_MIC_ARCH } = $_target_mic_arch;
+
 # Detect target OS.
 if ( defined( $ENV{ LIBOMP_OS } ) ) {
     # Use OS specified in LIBOMP_OS.
@@ -224,6 +273,7 @@ tie( $host_arch,       "Platform::host_arch" );
 tie( $host_os,         "Platform::host_os" );
 tie( $host_platform,   "Platform::host_platform" );
 tie( $target_arch,     "Platform::target_arch" );
+tie( $target_mic_arch, "Platform::target_mic_arch" );
 tie( $target_os,       "Platform::target_os" );
 tie( $target_platform, "Platform::target_platform" );
 
@@ -269,6 +319,13 @@ tie( $target_platform, "Platform::target_platform" );
     }; # sub FETCH
 } # package Platform::target_arch
 
+{ package Platform::target_mic_arch;
+    use base "Platform::base";
+    sub FETCH {
+        return $_target_mic_arch;
+    }; # sub FETCH
+} # package Platform::target_mic_arch
+
 { package Platform::target_os;
     use base "Platform::base";
     sub FETCH {
@@ -279,7 +336,11 @@ tie( $target_platform, "Platform::target_platform" );
 { package Platform::target_platform;
     use base "Platform::base";
     sub FETCH {
+        if ($_target_arch eq "mic") {
+            return "${_target_os}_${_target_mic_arch}";
+        } else {
         return "${_target_os}_${_target_arch}";
+        }
     }; # sub FETCH
 } # package Platform::target_platform
 
@@ -330,7 +391,7 @@ the script assumes host architecture is target one.
 
 Input string is an architecture name to canonize. The function recognizes many variants, for example:
 C<32e>, C<Intel64>, C<Intel(R) 64>, etc. Returned string is a canononized architecture name,
-one of: C<32>, C<32e>, C<64>, or C<undef> is input string is not recognized.
+one of: C<32>, C<32e>, C<64>, C<arm>, C<ppc64>, C<mic>, or C<undef> is input string is not recognized.
 
 =item B<legal_arch( $arch )>
 
@@ -347,7 +408,7 @@ recognized.
 
 =item B<canon_os( $os )>
 
-Input string is OS name to canonize. The function recognizes many variants, for example: C<mac>, C<OS X>, etc. Returned string is a canonized OS name, one of: C<lin>, C<lrb>,
+Input string is OS name to canonize. The function recognizes many variants, for example: C<mac>, C<OS X>, etc. Returned string is a canonized OS name, one of: C<lin>,
 C<mac>, C<win>, or C<undef> is input string is not recognized.
 
 =item B<target_options()>

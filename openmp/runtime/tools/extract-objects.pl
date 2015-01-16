@@ -141,7 +141,7 @@ if ( not -w $output ) {
 
 if ( $target_os eq "win" ) {
     *process = \&windows;
-} elsif ( $target_os eq "lin" or $target_os eq "lrb" ) {
+} elsif ( $target_os eq "lin") {
     *process = \&linux;
 } elsif ( $target_os eq "mac" ) {
     *process = \&darwin;

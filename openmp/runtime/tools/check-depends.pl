@@ -95,9 +95,15 @@ sub get_deps_ldd($) {
 sub get_deps_readelf($) {
 
     my $file = shift ( @_ );
-    my $tool = "readelf";
+    my $tool;
     my @bulk;
     my @deps;
+
+    if($target_arch eq "mic") {
+        $tool = "x86_64-k1om-linux-readelf";
+    } else {
+        $tool = "readelf";
+    }
 
     execute( [ $tool, "-d", $file ], -stdout => \@bulk );
     debug( @bulk, "(eof)" );
@@ -346,7 +352,7 @@ if ( not -e $lib ){
 
 # Select appropriate get_deps implementation.
 if ( 0 ) {
-} elsif ( $target_os eq "lin" or $target_os eq "lrb" ) {
+} elsif ( $target_os eq "lin" ) {
     *get_deps = \*get_deps_readelf;
 } elsif ( $target_os eq "mac" ) {
     *get_deps = \*get_deps_otool;

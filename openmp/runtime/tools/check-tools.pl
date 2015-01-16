@@ -190,7 +190,7 @@ sub get_intel_compiler_version($) {
     if ( not defined( $ic_arch ) ) {
         return @ret;
     }; # if
-    if ( Platform::canon_arch( $ic_arch ) ne $target_arch ) {
+    if ( Platform::canon_arch( $ic_arch ) ne $target_arch and not (Platform::canon_arch($ic_arch) eq "32e" and $target_arch eq "mic" )) {
         warning( "Target architecture is $target_arch, $tool for $ic_arch found." );
         return @ret;
     }; # if
@@ -391,7 +391,6 @@ my $fortran     = 0;             # Check for corresponding Fortran compiler, ifo
 my $clang       = 0;             # Check Clang Compilers.
 my $intel_compilers = {
     "lin" => { c => "icc", cpp => "icpc", f => "ifort" },
-    "lrb" => { c => "icc", cpp => "icpc", f => "ifort" },
     "mac" => { c => "icc", cpp => "icpc", f => "ifort" },
     "win" => { c => "icl", cpp => undef,  f => "ifort" },
 };

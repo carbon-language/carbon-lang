@@ -39,6 +39,9 @@ info:
 	@echo omp_root=$(omp_root)
 	@echo omp_os=$(omp_os)
 	@echo arch=$(arch)
+ifeq "$(arch)" "mic"
+	@echo mic_arch=$(mic_arch)	
+endif
 	@echo compiler=$(compiler)	
 	@echo mic=$(mic)
 	@echo mode=$(mode)
