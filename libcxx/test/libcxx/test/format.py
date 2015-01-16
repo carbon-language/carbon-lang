@@ -25,7 +25,7 @@ class LibcxxTestFormat(lit.formats.FileBasedTest):
         while True:
             try:
                 return self._execute(test, lit_config)
-            except OSError, oe:
+            except OSError as oe:
                 if oe.errno != errno.ETXTBSY:
                     raise
                 time.sleep(0.1)
