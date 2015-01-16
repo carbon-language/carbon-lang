@@ -446,8 +446,8 @@ ExprResult Parser::ParseCastExpression(bool isUnaryExpression,
 namespace {
 class CastExpressionIdValidator : public CorrectionCandidateCallback {
  public:
-  CastExpressionIdValidator(bool AllowTypes, bool AllowNonTypes)
-      : AllowNonTypes(AllowNonTypes) {
+  CastExpressionIdValidator(Token Next, bool AllowTypes, bool AllowNonTypes)
+      : NextToken(Next), AllowNonTypes(AllowNonTypes) {
     WantTypeSpecifiers = WantFunctionLikeCasts = AllowTypes;
   }
 
@@ -458,11 +458,24 @@ class CastExpressionIdValidator : public CorrectionCandidateCallback {
 
     if (isa<TypeDecl>(ND))
       return WantTypeSpecifiers;
-    return AllowNonTypes &&
-           CorrectionCandidateCallback::ValidateCandidate(candidate);
+
+    if (!AllowNonTypes || !CorrectionCandidateCallback::ValidateCandidate(candidate))
+      return false;
+
+    if (!(NextToken.is(tok::equal) || NextToken.is(tok::arrow) ||
+          NextToken.is(tok::period)))
+      return true;
+
+    for (auto *C : candidate) {
+      NamedDecl *ND = C->getUnderlyingDecl();
+      if (isa<ValueDecl>(ND) && !isa<FunctionDecl>(ND))
+        return true;
+    }
+    return false;
   }
 
  private:
+  Token NextToken;
   bool AllowNonTypes;
 };
 }
@@ -908,7 +921,7 @@ ExprResult Parser::ParseCastExpression(bool isUnaryExpression,
     SourceLocation TemplateKWLoc;
     Token Replacement;
     auto Validator = llvm::make_unique<CastExpressionIdValidator>(
-        isTypeCast != NotTypeCast, isTypeCast != IsTypeCast);
+        Tok, isTypeCast != NotTypeCast, isTypeCast != IsTypeCast);
     Validator->IsAddressOfOperand = isAddressOfOperand;
     Validator->WantRemainingKeywords = Tok.isNot(tok::r_paren);
     Name.setIdentifier(&II, ILoc);
