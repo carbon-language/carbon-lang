@@ -4,44 +4,61 @@ import sys
 import subprocess
 import tempfile
 import time
+import os
+
+class Printer(object):
+    def __init__(self):
+        pass
+    
+    @classmethod
+    def write(self, message):
+        sys.stdout.write("%s\n" % message)
+        sys.stdout.flush()
 
 def command():
     return ' '.join(sys.argv[1:])
 
 def tmpfile(suffix=None):
+    if suffix is None: suffix = ""
     return tempfile.NamedTemporaryFile(prefix='shush', suffix=suffix, delete=False)
 
-def launch(sin=None, sout=None, serr=None):
+def launch(cmd="/bin/ls", sin=None, sout=None):
     class Process(object):
-        def __init__(self, p, i, o, e):
+        def __init__(self, p, i, o):
             self.p = p
             self.stdin = i
             self.stdout = o
-            self.stderr = e
         
         def poll(self):
             self.returncode = self.p.poll()
             return self.returncode
 
-    return Process(subprocess.Popen(command(), shell=True, stdin=sin, stdout=sout, stderr=serr), sin, sout, serr)
+    return Process(subprocess.Popen(cmd, shell=True, stdin=sin, stdout=sout, stderr=subprocess.STDOUT), sin, sout)
 
 def wait(p):
     while p.poll() is None:
         time.sleep(5)
-        print "still running..." # fool Xcode into thinking that I am doing something...
+        Printer.write("still running @ %s..." % time.strftime("%Y%m%d%H%M%S")) # fool Xcode into thinking that I am doing something...
     return p
 
 def exit(p):
     code = p.returncode
     if code != 0:
-        print "error: sucks to be you"
-        print ("error: shushed process failed - go check %s and %s for details" % (p.stdout.name, p.stderr.name))
+        Printer.write("error: sucks to be you")
+        Printer.write("error: shushed process failed - go check %s for details" % (p.stdout.name))
+    else:
+        Printer.write("shush: success - output is going away")
+        try:
+            os.remove(p.stdout.name)
+        finally:
+            pass
     sys.exit(code)
 
 def main():
-    out = tmpfile(suffix="stdout")
-    err = tmpfile(suffix="stderr")
-    p = wait(launch(sout=out, serr=err))
+    out = tmpfile()
+    cmd = command()
+    Printer.write("shush: launching '%s' - std{out|err}=%s" % (cmd, out.name))
+    p = wait(launch(cmd=cmd, sout=out))
     exit(p)
 
 main()
