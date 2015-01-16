@@ -3927,11 +3927,10 @@ def TFR_FI : ALU32_ri<(outs IntRegs:$dst), (ins FrameIndex:$src1),
 
 // Support for generating global address.
 // Taken from X86InstrInfo.td.
-def SDTHexagonCONST32 : SDTypeProfile<1, 1, [
-                                            SDTCisVT<0, i32>,
-                                            SDTCisVT<1, i32>,
-                                            SDTCisPtrTy<0>]>;
-def HexagonCONST32 : SDNode<"HexagonISD::CONST32",     SDTHexagonCONST32>;
+def SDTHexagonCONST32 : SDTypeProfile<1, 1, [SDTCisVT<0, i32>,
+                                             SDTCisVT<1, i32>,
+                                             SDTCisPtrTy<0>]>;
+def HexagonCONST32    : SDNode<"HexagonISD::CONST32",        SDTHexagonCONST32>;
 def HexagonCONST32_GP : SDNode<"HexagonISD::CONST32_GP",     SDTHexagonCONST32>;
 
 // HI/LO Instructions
@@ -4028,29 +4027,17 @@ def TFR_PdFalse : SInst<(outs PredRegs:$dst), (ins),
                   "$dst = xor($dst, $dst)",
                   [(set (i1 PredRegs:$dst), 0)]>;
 
-def MPY_trsext : MInst<(outs IntRegs:$dst), (ins IntRegs:$src1, IntRegs:$src2),
-       "$dst = mpy($src1, $src2)",
-       [(set (i32 IntRegs:$dst),
-             (trunc (i64 (srl (i64 (mul (i64 (sext (i32 IntRegs:$src1))),
-                                        (i64 (sext (i32 IntRegs:$src2))))),
-                              (i32 32)))))]>;
-
 // Pseudo instructions.
 def SDT_SPCallSeqStart : SDCallSeqStart<[ SDTCisVT<0, i32> ]>;
-
-def SDT_SPCallSeqEnd : SDCallSeqEnd<[ SDTCisVT<0, i32>,
+def SDT_SPCallSeqEnd   : SDCallSeqEnd<[ SDTCisVT<0, i32>,
                                         SDTCisVT<1, i32> ]>;
-
-def callseq_end : SDNode<"ISD::CALLSEQ_END",   SDT_SPCallSeqEnd,
-                  [SDNPHasChain, SDNPOptInGlue, SDNPOutGlue]>;
 
 def callseq_start : SDNode<"ISD::CALLSEQ_START", SDT_SPCallSeqStart,
                     [SDNPHasChain, SDNPOutGlue]>;
+def callseq_end   : SDNode<"ISD::CALLSEQ_END",   SDT_SPCallSeqEnd,
+                    [SDNPHasChain, SDNPOptInGlue, SDNPOutGlue]>;
 
-def SDT_SPCall : SDTypeProfile<0, 1, [SDTCisVT<0, i32>]>;
-
-def call : SDNode<"HexagonISD::CALL", SDT_SPCall,
-           [SDNPHasChain, SDNPOptInGlue, SDNPOutGlue, SDNPVariadic]>;
+def SDT_SPCall  : SDTypeProfile<0, 1, [SDTCisVT<0, i32>]>;
 
 // For tailcalls a HexagonTCRet SDNode has 3 SDNode Properties - a chain,
 // Optional Flag and Variable Arguments.
@@ -4094,13 +4081,6 @@ isTerminator = 1, isCodeGenOnly = 1 in {
       [], "", J_tc_2early_SLOT23>;
 }
 
-// Map call instruction.
-def : Pat<(call (i32 IntRegs:$dst)),
-      (J2_callr (i32 IntRegs:$dst))>, Requires<[HasV2TOnly]>;
-def : Pat<(call tglobaladdr:$dst),
-      (CALL tglobaladdr:$dst)>, Requires<[HasV2TOnly]>;
-def : Pat<(call texternalsym:$dst),
-      (CALL texternalsym:$dst)>, Requires<[HasV2TOnly]>;
 //Tail calls.
 def : Pat<(HexagonTCRet tglobaladdr:$dst),
       (TCRETURNtg tglobaladdr:$dst)>;

@@ -67,6 +67,9 @@ multiclass T_Calls<string ExtStr> {
 let isCodeGenOnly = 0 in
 defm J2_call: T_Calls<"">, PredRel;
 
+let isCodeGenOnly = 1, isCall = 1, hasSideEffects = 1, Defs = VolatileV3.Regs in
+def CALLv3nr :  T_Call<"">, PredRel;
+
 //===----------------------------------------------------------------------===//
 // J -
 //===----------------------------------------------------------------------===//
@@ -76,13 +79,11 @@ defm J2_call: T_Calls<"">, PredRel;
 // JR +
 //===----------------------------------------------------------------------===//
 // Call subroutine from register.
-let isCall = 1, hasSideEffects = 0,
-  Defs = [D0, D1, D2, D3, D4, D5, D6, D7, R28, R31,
-                P0, P1, P2, P3, LC0, LC1, SA0, SA1] in {
-  def CALLRv3 : JRInst<(outs), (ins IntRegs:$dst),
-              "callr $dst",
-              []>, Requires<[HasV3TOnly]>;
- }
+
+let isCodeGenOnly = 1, Defs = VolatileV3.Regs, validSubTargets = HasV3SubT in {
+  def CALLRv3nr : JUMPR_MISC_CALLR<0, 1>; // Call, no return.
+}
+
 
 //===----------------------------------------------------------------------===//
 // JR -
@@ -178,11 +179,19 @@ let AddedComplexity = 200 in {
 //def : Pat <(brcond (i1 (setgt (i32 IntRegs:$src1), -1)), bb:$offset),
 //      (JMP_RegGezt (i32 IntRegs:$src1), bb:$offset)>, Requires<[HasV3T]>;
 
-
 // Map call instruction
-def : Pat<(call (i32 IntRegs:$dst)),
-      (J2_call (i32 IntRegs:$dst))>, Requires<[HasV3T]>;
-def : Pat<(call tglobaladdr:$dst),
+def : Pat<(callv3 (i32 IntRegs:$dst)),
+      (J2_callr (i32 IntRegs:$dst))>, Requires<[HasV3T]>;
+def : Pat<(callv3 tglobaladdr:$dst),
       (J2_call tglobaladdr:$dst)>, Requires<[HasV3T]>;
-def : Pat<(call texternalsym:$dst),
+def : Pat<(callv3 texternalsym:$dst),
       (J2_call texternalsym:$dst)>, Requires<[HasV3T]>;
+def : Pat<(callv3 tglobaltlsaddr:$dst),
+      (J2_call tglobaltlsaddr:$dst)>, Requires<[HasV3T]>;
+
+def : Pat<(callv3nr (i32 IntRegs:$dst)),
+      (CALLRv3nr (i32 IntRegs:$dst))>, Requires<[HasV3T]>;
+def : Pat<(callv3nr tglobaladdr:$dst),
+      (CALLv3nr tglobaladdr:$dst)>, Requires<[HasV3T]>;
+def : Pat<(callv3nr texternalsym:$dst),
+      (CALLv3nr texternalsym:$dst)>, Requires<[HasV3T]>;

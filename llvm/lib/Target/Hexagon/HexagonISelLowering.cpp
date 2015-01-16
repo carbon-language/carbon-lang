@@ -404,6 +404,7 @@ HexagonTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
   bool &isTailCall                      = CLI.IsTailCall;
   CallingConv::ID CallConv              = CLI.CallConv;
   bool isVarArg                         = CLI.IsVarArg;
+  bool doesNotReturn                    = CLI.DoesNotReturn;
 
   bool IsStructRet    = (Outs.empty()) ? false : Outs[0].Flags.isSRet();
 
@@ -597,7 +598,8 @@ HexagonTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
   if (isTailCall)
     return DAG.getNode(HexagonISD::TC_RETURN, dl, NodeTys, Ops);
 
-  Chain = DAG.getNode(HexagonISD::CALL, dl, NodeTys, Ops);
+  int OpCode = doesNotReturn ? HexagonISD::CALLv3nr : HexagonISD::CALLv3;
+  Chain = DAG.getNode(OpCode, dl, NodeTys, Ops);
   InFlag = Chain.getValue(1);
 
   // Create the CALLSEQ_END node.
@@ -1487,7 +1489,9 @@ HexagonTargetLowering::getTargetNodeName(unsigned Opcode) const {
     case HexagonISD::Lo:          return "HexagonISD::Lo";
     case HexagonISD::FTOI:        return "HexagonISD::FTOI";
     case HexagonISD::ITOF:        return "HexagonISD::ITOF";
-    case HexagonISD::CALL:        return "HexagonISD::CALL";
+    case HexagonISD::CALLv3:      return "HexagonISD::CALLv3";
+    case HexagonISD::CALLv3nr:    return "HexagonISD::CALLv3nr";
+    case HexagonISD::CALLR:       return "HexagonISD::CALLR";
     case HexagonISD::RET_FLAG:    return "HexagonISD::RET_FLAG";
     case HexagonISD::BR_JT:       return "HexagonISD::BR_JT";
     case HexagonISD::TC_RETURN:   return "HexagonISD::TC_RETURN";
