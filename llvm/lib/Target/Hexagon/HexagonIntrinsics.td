@@ -132,6 +132,39 @@ def : T_RRR_pat <M2_mpy_nac_sat_hl_s0, int_hexagon_M2_mpy_nac_sat_hl_s0>;
 def : T_RRR_pat <M2_mpy_nac_sat_hh_s1, int_hexagon_M2_mpy_nac_sat_hh_s1>;
 def : T_RRR_pat <M2_mpy_nac_sat_hh_s0, int_hexagon_M2_mpy_nac_sat_hh_s0>;
 
+
+//===----------------------------------------------------------------------===//
+// Multiply signed/unsigned halfwords with and without saturation and rounding
+// into a 64-bits destination register.
+//===----------------------------------------------------------------------===//
+
+def : T_RR_pat <M2_mpyd_hh_s0, int_hexagon_M2_mpyd_hh_s0>;
+def : T_RR_pat <M2_mpyd_hl_s0, int_hexagon_M2_mpyd_hl_s0>;
+def : T_RR_pat <M2_mpyd_lh_s0, int_hexagon_M2_mpyd_lh_s0>;
+def : T_RR_pat <M2_mpyd_ll_s0, int_hexagon_M2_mpyd_ll_s0>;
+def : T_RR_pat <M2_mpyd_hh_s1, int_hexagon_M2_mpyd_hh_s1>;
+def : T_RR_pat <M2_mpyd_hl_s1, int_hexagon_M2_mpyd_hl_s1>;
+def : T_RR_pat <M2_mpyd_lh_s1, int_hexagon_M2_mpyd_lh_s1>;
+def : T_RR_pat <M2_mpyd_ll_s1, int_hexagon_M2_mpyd_ll_s1>;
+
+def : T_RR_pat <M2_mpyd_rnd_hh_s0, int_hexagon_M2_mpyd_rnd_hh_s0>;
+def : T_RR_pat <M2_mpyd_rnd_hl_s0, int_hexagon_M2_mpyd_rnd_hl_s0>;
+def : T_RR_pat <M2_mpyd_rnd_lh_s0, int_hexagon_M2_mpyd_rnd_lh_s0>;
+def : T_RR_pat <M2_mpyd_rnd_ll_s0, int_hexagon_M2_mpyd_rnd_ll_s0>;
+def : T_RR_pat <M2_mpyd_rnd_hh_s1, int_hexagon_M2_mpyd_rnd_hh_s1>;
+def : T_RR_pat <M2_mpyd_rnd_hl_s1, int_hexagon_M2_mpyd_rnd_hl_s1>;
+def : T_RR_pat <M2_mpyd_rnd_lh_s1, int_hexagon_M2_mpyd_rnd_lh_s1>;
+def : T_RR_pat <M2_mpyd_rnd_ll_s1, int_hexagon_M2_mpyd_rnd_ll_s1>;
+
+def : T_RR_pat <M2_mpyud_hh_s0, int_hexagon_M2_mpyud_hh_s0>;
+def : T_RR_pat <M2_mpyud_hl_s0, int_hexagon_M2_mpyud_hl_s0>;
+def : T_RR_pat <M2_mpyud_lh_s0, int_hexagon_M2_mpyud_lh_s0>;
+def : T_RR_pat <M2_mpyud_ll_s0, int_hexagon_M2_mpyud_ll_s0>;
+def : T_RR_pat <M2_mpyud_hh_s1, int_hexagon_M2_mpyud_hh_s1>;
+def : T_RR_pat <M2_mpyud_hl_s1, int_hexagon_M2_mpyud_hl_s1>;
+def : T_RR_pat <M2_mpyud_lh_s1, int_hexagon_M2_mpyud_lh_s1>;
+def : T_RR_pat <M2_mpyud_ll_s1, int_hexagon_M2_mpyud_ll_s1>;
+
 //
 // ALU 32 types.
 //
@@ -2684,43 +2717,6 @@ def HEXAGON_M2_dpmpyss_nac_s0:
 /********************************************************************
 *            MTYPE/MPYS                                             *
 *********************************************************************/
-
-//Rdd=mpy(Rs.[H|L],Rt.[H|L])[[:<<0|:<<1]|[:<<0:rnd|:<<1:rnd]]
-def HEXAGON_M2_mpyd_hh_s0:
-  di_MInst_sisi_hh                <"mpy",     int_hexagon_M2_mpyd_hh_s0>;
-def HEXAGON_M2_mpyd_hh_s1:
-  di_MInst_sisi_hh_s1             <"mpy",     int_hexagon_M2_mpyd_hh_s1>;
-def HEXAGON_M2_mpyd_rnd_hh_s1:
-  di_MInst_sisi_rnd_hh_s1         <"mpy",     int_hexagon_M2_mpyd_rnd_hh_s1>;
-def HEXAGON_M2_mpyd_rnd_hh_s0:
-  di_MInst_sisi_rnd_hh            <"mpy",     int_hexagon_M2_mpyd_rnd_hh_s0>;
-
-def HEXAGON_M2_mpyd_hl_s0:
-  di_MInst_sisi_hl                <"mpy",     int_hexagon_M2_mpyd_hl_s0>;
-def HEXAGON_M2_mpyd_hl_s1:
-  di_MInst_sisi_hl_s1             <"mpy",     int_hexagon_M2_mpyd_hl_s1>;
-def HEXAGON_M2_mpyd_rnd_hl_s1:
-  di_MInst_sisi_rnd_hl_s1         <"mpy",     int_hexagon_M2_mpyd_rnd_hl_s1>;
-def HEXAGON_M2_mpyd_rnd_hl_s0:
-  di_MInst_sisi_rnd_hl            <"mpy",     int_hexagon_M2_mpyd_rnd_hl_s0>;
-
-def HEXAGON_M2_mpyd_lh_s0:
-  di_MInst_sisi_lh                <"mpy",     int_hexagon_M2_mpyd_lh_s0>;
-def HEXAGON_M2_mpyd_lh_s1:
-  di_MInst_sisi_lh_s1             <"mpy",     int_hexagon_M2_mpyd_lh_s1>;
-def HEXAGON_M2_mpyd_rnd_lh_s1:
-  di_MInst_sisi_rnd_lh_s1         <"mpy",     int_hexagon_M2_mpyd_rnd_lh_s1>;
-def HEXAGON_M2_mpyd_rnd_lh_s0:
-  di_MInst_sisi_rnd_lh            <"mpy",     int_hexagon_M2_mpyd_rnd_lh_s0>;
-
-def HEXAGON_M2_mpyd_ll_s0:
-  di_MInst_sisi_ll                <"mpy",     int_hexagon_M2_mpyd_ll_s0>;
-def HEXAGON_M2_mpyd_ll_s1:
-  di_MInst_sisi_ll_s1             <"mpy",     int_hexagon_M2_mpyd_ll_s1>;
-def HEXAGON_M2_mpyd_rnd_ll_s1:
-  di_MInst_sisi_rnd_ll_s1         <"mpy",     int_hexagon_M2_mpyd_rnd_ll_s1>;
-def HEXAGON_M2_mpyd_rnd_ll_s0:
-  di_MInst_sisi_rnd_ll            <"mpy",     int_hexagon_M2_mpyd_rnd_ll_s0>;
 
 //Rx+=mpy(Rs.[H|L],Rt.[H|L:<<0|:<<1]
 def HEXAGON_M2_mpyd_acc_hh_s0:
