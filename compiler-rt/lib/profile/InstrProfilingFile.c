@@ -11,6 +11,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/errno.h>
 
 #define UNCONST(ptr) ((void *)(uintptr_t)(ptr))
 
@@ -175,7 +176,11 @@ int __llvm_profile_write_file(void) {
     return -1;
 
   /* Write the file. */
-  return writeFileWithName(__llvm_profile_CurrentFilename);
+  int rc = writeFileWithName(__llvm_profile_CurrentFilename);
+  if (rc && getenv("LLVM_PROFILE_VERBOSE_ERRORS"))
+    fprintf(stderr, "LLVM Profile: Failed to write file \"%s\": %s\n",
+            __llvm_profile_CurrentFilename, strerror(errno));
+  return rc;
 }
 
 static void writeFileWithoutReturn(void) {
