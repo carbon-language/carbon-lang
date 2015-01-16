@@ -45,11 +45,13 @@ public:
   /// Constructor
   TargetRelocationHandler(ELFLinkingContext &targetInfo)
       : _context(targetInfo) {}
+  virtual ~TargetRelocationHandler() {}
 
   virtual std::error_code applyRelocation(ELFWriter &, llvm::FileOutputBuffer &,
                                           const lld::AtomLayout &,
                                           const Reference &) const = 0;
 
+protected:
   void unhandledReferenceType(const Atom &atom, const Reference &ref) const {
     llvm::errs() << "Unhandled reference type in file " << atom.file().path()
                  << ": reference from " << atom.name() << "+"
@@ -68,7 +70,6 @@ public:
     llvm::report_fatal_error("unhandled reference type");
   }
 
-  virtual ~TargetRelocationHandler() {}
 private:
   ELFLinkingContext &_context;
 };
