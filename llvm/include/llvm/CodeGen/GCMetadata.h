@@ -36,25 +36,14 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/IR/DebugLoc.h"
+#include "llvm/IR/GCStrategy.h"
 #include "llvm/Pass.h"
 #include <memory>
 
 namespace llvm {
   class AsmPrinter;
-  class GCStrategy;
   class Constant;
   class MCSymbol;
-
-  namespace GC {
-    /// PointKind - The type of a collector-safe point.
-    ///
-    enum PointKind {
-      Loop,    ///< Instr is a loop (backwards branch).
-      Return,  ///< Instr is a return instruction.
-      PreCall, ///< Instr is a call instruction.
-      PostCall ///< Instr is the return address of a call.
-    };
-  }
 
   /// GCPoint - Metadata for a collector-safe point in machine code.
   ///
@@ -163,14 +152,9 @@ namespace llvm {
   /// Records both the function level information used by GCRoots and a
   /// cache of the 'active' gc strategy objects for the current Module.
   class GCModuleInfo : public ImmutablePass {
-    typedef StringMap<GCStrategy*> strategy_map_type;
-    typedef std::vector<std::unique_ptr<GCStrategy>> list_type;
-
-    strategy_map_type StrategyMap;
-    list_type StrategyList;
-
-    GCStrategy *getOrCreateStrategy(const Module *M, const std::string &Name);
-
+    /// A list of GCStrategies which are active in this Module.  These are
+    /// not owning pointers.
+    std::vector<GCStrategy*> StrategyList;
   public:
     /// List of per function info objects.  In theory, Each of these
     /// may be associated with a different GC.
@@ -190,7 +174,7 @@ namespace llvm {
     finfo_map_type FInfoMap;
   public:
 
-    typedef list_type::const_iterator iterator;
+    typedef std::vector<GCStrategy*>::const_iterator iterator;
 
     static char ID;
 

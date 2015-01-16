@@ -29,6 +29,7 @@
 namespace llvm {
 
 class FunctionType;
+class GCStrategy;  
 class LLVMContext;
 
 // Traits for intrusive list of basic blocks...
@@ -224,6 +225,10 @@ public:
   const char *getGC() const;
   void setGC(const char *Str);
   void clearGC();
+
+  /// Returns the GCStrategy associated with the specified garbage collector
+  /// algorithm or nullptr if one is not set.
+  GCStrategy *getGCStrategy() const;
 
   /// @brief adds the attribute to the list of attributes.
   void addAttribute(unsigned i, Attribute::AttrKind attr);

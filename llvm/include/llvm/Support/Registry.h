@@ -120,6 +120,10 @@ namespace llvm {
     static iterator begin() { return iterator(Head); }
     static iterator end()   { return iterator(nullptr); }
 
+    static iterator_range<iterator> entries() {
+      return iterator_range<iterator>(begin(), end());
+    }
+
 
     /// Abstract base class for registry listeners, which are informed when new
     /// entries are added to the registry. Simply subclass and instantiate:

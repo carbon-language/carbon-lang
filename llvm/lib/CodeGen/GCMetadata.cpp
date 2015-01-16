@@ -12,10 +12,10 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/CodeGen/GCMetadata.h"
-#include "llvm/CodeGen/GCStrategy.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/IR/Function.h"
+#include "llvm/IR/GCStrategy.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/Debug.h"
@@ -61,27 +61,6 @@ GCModuleInfo::GCModuleInfo()
   initializeGCModuleInfoPass(*PassRegistry::getPassRegistry());
 }
 
-GCStrategy *GCModuleInfo::getOrCreateStrategy(const Module *M,
-                                              const std::string &Name) {
-  strategy_map_type::iterator NMI = StrategyMap.find(Name);
-  if (NMI != StrategyMap.end())
-    return NMI->getValue();
-  
-  for (GCRegistry::iterator I = GCRegistry::begin(),
-                            E = GCRegistry::end(); I != E; ++I) {
-    if (Name == I->getName()) {
-      std::unique_ptr<GCStrategy> S = I->instantiate();
-      S->Name = Name;
-      StrategyMap[Name] = S.get();
-      StrategyList.push_back(std::move(S));
-      return StrategyList.back().get();
-    }
-  }
- 
-  dbgs() << "unsupported GC: " << Name << "\n";
-  llvm_unreachable(nullptr);
-}
-
 GCFunctionInfo &GCModuleInfo::getFunctionInfo(const Function &F) {
   assert(!F.isDeclaration() && "Can only get GCFunctionInfo for a definition!");
   assert(F.hasGC());
@@ -90,7 +69,15 @@ GCFunctionInfo &GCModuleInfo::getFunctionInfo(const Function &F) {
   if (I != FInfoMap.end())
     return *I->second;
   
-  GCStrategy *S = getOrCreateStrategy(F.getParent(), F.getGC());
+  GCStrategy *S = F.getGCStrategy();
+  if (!S) {
+    std::string error = std::string("unsupported GC: ") + F.getGC();
+    report_fatal_error(error);
+  }
+  // Save the fact this strategy is associated with this module.  Note that
+  // these are non-owning references, the GCStrategy remains owned by the
+  // Context. 
+  StrategyList.push_back(S);
   Functions.push_back(make_unique<GCFunctionInfo>(F, *S));
   GCFunctionInfo *GFI = Functions.back().get();
   FInfoMap[&F] = GFI;
@@ -100,7 +87,6 @@ GCFunctionInfo &GCModuleInfo::getFunctionInfo(const Function &F) {
 void GCModuleInfo::clear() {
   Functions.clear();
   FInfoMap.clear();
-  StrategyMap.clear();
   StrategyList.clear();
 }
 
