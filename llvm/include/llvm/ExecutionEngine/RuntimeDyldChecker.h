@@ -52,6 +52,7 @@ class raw_ostream;
 ///
 /// ident_expr = 'decode_operand' '(' symbol ',' operand-index ')'
 ///            | 'next_pc'        '(' symbol ')'
+///            | 'stub_addr' '(' file-name ',' section-name ',' symbol ')'
 ///            | symbol
 ///
 /// binary_expr = expr '+' expr
