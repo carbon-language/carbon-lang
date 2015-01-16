@@ -653,7 +653,7 @@ MDLocation::MDLocation(LLVMContext &C, unsigned Line, unsigned Column,
 
   // Set line and column.
   assert(Line < (1u << 24) && "Expected 24-bit line");
-  assert(Column < (1u << 8) && "Expected 8-bit column");
+  assert(Column < (1u << 16) && "Expected 16-bit column");
 
   MDNodeSubclassData = Line;
   SubclassData16 = Column;
@@ -676,8 +676,8 @@ static void adjustLine(unsigned &Line) {
 }
 
 static void adjustColumn(unsigned &Column) {
-  // Set to unknown on overflow.  Still use 8 bits for now.
-  if (Column >= (1u << 8))
+  // Set to unknown on overflow.  We only have 16 bits to play with here.
+  if (Column >= (1u << 16))
     Column = 0;
 }
 

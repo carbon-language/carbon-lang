@@ -3002,7 +3002,7 @@ bool LLParser::ParseSpecializedMDNode(MDNode *&N, bool IsDistinct) {
 ///   ::= !MDLocation(line: 43, column: 8, scope: !5, inlinedAt: !6)
 bool LLParser::ParseMDLocation(MDNode *&Result, bool IsDistinct) {
   MDUnsignedField<uint32_t> line(0, ~0u >> 8);
-  MDUnsignedField<uint32_t> column(0, ~0u >> 24);
+  MDUnsignedField<uint32_t> column(0, ~0u >> 16);
   MDField scope;
   MDField inlinedAt;
   if (ParseMDFieldsImpl([&]() -> bool {
