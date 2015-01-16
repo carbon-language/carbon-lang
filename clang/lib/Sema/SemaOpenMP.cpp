@@ -421,21 +421,23 @@ DSAStackTy::DSAVarData DSAStackTy::getTopDSA(VarDecl *D, bool FromParent) {
       DVar.CKind = OMPC_private;
       return DVar;
     }
-  }
 
-  // OpenMP [2.9.1.1, Data-sharing Attribute Rules for Variables Referenced
-  // in a Construct, C/C++, predetermined, p.4]
-  //  Static data members are shared.
-  if (D->isStaticDataMember()) {
-    // Variables with const-qualified type having no mutable member may be
-    // listed in a firstprivate clause, even if they are static data members.
-    DSAVarData DVarTemp = hasDSA(D, MatchesAnyClause(OMPC_firstprivate),
-                                 MatchesAlways(), FromParent);
-    if (DVarTemp.CKind == OMPC_firstprivate && DVarTemp.RefExpr)
+    // OpenMP [2.9.1.1, Data-sharing Attribute Rules for Variables Referenced
+    // in a Construct, C/C++, predetermined, p.4]
+    //  Static data members are shared.
+    if (D->isStaticDataMember()) {
+      DVar.CKind = OMPC_shared;
       return DVar;
+    }
 
-    DVar.CKind = OMPC_shared;
-    return DVar;
+    // OpenMP [2.9.1.1, Data-sharing Attribute Rules for Variables Referenced
+    // in a Construct, C/C++, predetermined, p.7]
+    //  Variables with static storage duration that are declared in a scope
+    //  inside the construct are shared.
+    if (D->isStaticLocal()) {
+      DVar.CKind = OMPC_shared;
+      return DVar;
+    }
   }
 
   QualType Type = D->getType().getNonReferenceType().getCanonicalType();
@@ -459,15 +461,6 @@ DSAStackTy::DSAVarData DSAStackTy::getTopDSA(VarDecl *D, bool FromParent) {
     if (DVarTemp.CKind == OMPC_firstprivate && DVarTemp.RefExpr)
       return DVar;
 
-    DVar.CKind = OMPC_shared;
-    return DVar;
-  }
-
-  // OpenMP [2.9.1.1, Data-sharing Attribute Rules for Variables Referenced
-  // in a Construct, C/C++, predetermined, p.7]
-  //  Variables with static storage duration that are declared in a scope
-  //  inside the construct are shared.
-  if (D->isStaticLocal()) {
     DVar.CKind = OMPC_shared;
     return DVar;
   }

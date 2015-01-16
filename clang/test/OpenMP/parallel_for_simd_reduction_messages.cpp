@@ -16,7 +16,7 @@ class S2 {
 public:
   S2() : a(0) {}
   S2(S2 &s2) : a(s2.a) {}
-  static float S2s; // expected-note 2 {{static data member is predetermined as shared}}
+  static float S2s;
   static const float S2sc;
 };
 const float S2::S2sc = 0; // expected-note 2 {{'S2sc' defined here}}
@@ -135,7 +135,7 @@ T tmain(T argc) {        // expected-note 2 {{'argc' defined here}}
 #pragma omp parallel for simd reduction(^ : fl) // expected-error {{variable of type 'float' is not valid for specified reduction operation}}
   for (int i = 0; i < 10; ++i)
     foo();
-#pragma omp parallel for simd reduction(&& : S2::S2s) // expected-error {{shared variable cannot be reduction}}
+#pragma omp parallel for simd reduction(&& : S2::S2s)
   for (int i = 0; i < 10; ++i)
     foo();
 #pragma omp parallel for simd reduction(&& : S2::S2sc) // expected-error {{const-qualified variable cannot be reduction}}
@@ -249,7 +249,7 @@ int main(int argc, char **argv) {
 #pragma omp parallel for simd reduction(^ : fl) // expected-error {{variable of type 'float' is not valid for specified reduction operation}}
   for (int i = 0; i < 10; ++i)
     foo();
-#pragma omp parallel for simd reduction(&& : S2::S2s) // expected-error {{shared variable cannot be reduction}}
+#pragma omp parallel for simd reduction(&& : S2::S2s)
   for (int i = 0; i < 10; ++i)
     foo();
 #pragma omp parallel for simd reduction(&& : S2::S2sc) // expected-error {{const-qualified variable cannot be reduction}}
