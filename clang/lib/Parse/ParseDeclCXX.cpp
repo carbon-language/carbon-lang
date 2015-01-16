@@ -2357,7 +2357,7 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
       ProhibitAttributes(FnAttrs);
     }
 
-    if (DefinitionKind) {
+    if (DefinitionKind != FDK_Declaration) {
       if (!DeclaratorInfo.isFunctionDeclarator()) {
         Diag(DeclaratorInfo.getIdentifierLoc(), diag::err_func_def_no_params);
         ConsumeBrace();
