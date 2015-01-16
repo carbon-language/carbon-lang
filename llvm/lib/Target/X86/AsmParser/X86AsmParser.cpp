@@ -2668,7 +2668,7 @@ bool X86AsmParser::MatchAndEmitIntelInstruction(SMLoc IDLoc, unsigned &Opcode,
   }
 
   // If we haven't matched anything yet, this is not a basic integer or FPU
-  // operation.  There shouldn't be any ambiguity in our mneumonic table, so try
+  // operation.  There shouldn't be any ambiguity in our mnemonic table, so try
   // matching with the unsized operand.
   if (Match.empty()) {
     Match.push_back(MatchInstructionImpl(Operands, Inst, ErrorInfo,
