@@ -4,7 +4,7 @@ add_subdirectory(Native)
 add_subdirectory(PECOFF)
 add_subdirectory(YAML)
 
-set(LLVM_LINK_COMPONENTS object)
+set(LLVM_LINK_COMPONENTS object support)
 
 add_lld_library(lldReaderWriter
   CoreLinkingContext.cpp

@@ -1,3 +1,5 @@
+set(LLVM_LINK_COMPONENTS support)
+
 add_lld_library(lldAArch64ELFTarget
   AArch64LinkingContext.cpp
   AArch64TargetHandler.cpp

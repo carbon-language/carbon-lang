@@ -1,3 +1,5 @@
+set(LLVM_LINK_COMPONENTS object support)
+
 add_lld_library(lldPECOFF
   EdataPass.cpp
   IdataPass.cpp

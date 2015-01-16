@@ -1,3 +1,5 @@
+set(LLVM_LINK_COMPONENTS support)
+
 add_lld_library(lldX86ELFTarget
   X86LinkingContext.cpp
   X86TargetHandler.cpp

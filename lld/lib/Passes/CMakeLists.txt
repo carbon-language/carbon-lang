@@ -1,3 +1,5 @@
+set(LLVM_LINK_COMPONENTS support)
+
 add_lld_library(lldPasses
   LayoutPass.cpp
   RoundTripNativePass.cpp
