@@ -7545,7 +7545,7 @@ static QualType DecodeTypeFromStr(const char *&Str, const ASTContext &Context,
       break;
     case 'U':
       assert(!Signed && "Can't use both 'S' and 'U' modifiers!");
-      assert(!Unsigned && "Can't use 'S' modifier multiple times!");
+      assert(!Unsigned && "Can't use 'U' modifier multiple times!");
       Unsigned = true;
       break;
     case 'L':
@@ -7580,7 +7580,7 @@ static QualType DecodeTypeFromStr(const char *&Str, const ASTContext &Context,
     break;
   case 'h':
     assert(HowLong == 0 && !Signed && !Unsigned &&
-           "Bad modifiers used with 'f'!");
+           "Bad modifiers used with 'h'!");
     Type = Context.HalfTy;
     break;
   case 'f':
