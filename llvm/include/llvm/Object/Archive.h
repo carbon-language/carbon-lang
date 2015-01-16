@@ -91,7 +91,7 @@ public:
     }
     /// \return the size of the archive member without the header or padding.
     uint64_t getSize() const;
-    /// \return the size of the archive member with the header and padding.
+    /// \return the size in the archive header for this member.
     uint64_t getRawSize() const;
 
     StringRef getBuffer() const {

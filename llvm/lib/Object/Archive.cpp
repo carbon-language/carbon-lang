@@ -111,7 +111,7 @@ uint64_t Archive::Child::getSize() const {
 }
 
 uint64_t Archive::Child::getRawSize() const {
-  return Data.size();
+  return getHeader()->getSize();
 }
 
 Archive::Child Archive::Child::getNext() const {

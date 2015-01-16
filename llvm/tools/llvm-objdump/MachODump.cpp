@@ -572,7 +572,7 @@ static void printArchiveChild(Archive::Child &C, bool verbose,
   outs() << format("%3d/", UID);
   unsigned GID = C.getGID();
   outs() << format("%-3d ", GID);
-  uint64_t Size = C.getRawSize() - sizeof(object::ArchiveMemberHeader);
+  uint64_t Size = C.getRawSize();
   outs() << format("%5d ", Size);
 
   StringRef RawLastModified = C.getRawLastModified();
