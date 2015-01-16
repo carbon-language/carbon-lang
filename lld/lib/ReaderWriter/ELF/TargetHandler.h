@@ -75,10 +75,9 @@ private:
 /// a particular target on ELF. A target might wish to override implementation
 /// of creating atoms and how the atoms are written to the output file.
 template <class ELFT> class TargetHandler : public TargetHandlerBase {
-
 public:
   /// Constructor
-  TargetHandler(ELFLinkingContext &targetInfo) : _context(targetInfo) {}
+  TargetHandler(ELFLinkingContext &targetInfo) {}
 
   /// The layout determined completely by the Target.
   virtual TargetLayout<ELFT> &getTargetLayout() = 0;
@@ -94,9 +93,6 @@ public:
 
   /// How does the target deal with writing ELF output.
   virtual std::unique_ptr<Writer> getWriter() = 0;
-
-private:
-  ELFLinkingContext &_context;
 };
 } // end namespace elf
 } // end namespace lld
