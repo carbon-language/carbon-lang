@@ -75,11 +75,25 @@ void test_mm512_storeu_pd(void *p, __m512d a)
   _mm512_storeu_pd(p, a);
 }
 
+void test_mm512_mask_store_ps(void *p, __m512 a, __mmask16 m)
+{
+  // CHECK-LABEL: @test_mm512_mask_store_ps
+  // CHECK: @llvm.x86.avx512.mask.store.ps.512
+  _mm512_mask_store_ps(p, m, a);
+}
+
 void test_mm512_store_ps(void *p, __m512 a)
 {
   // CHECK-LABEL: @test_mm512_store_ps
   // CHECK: store <16 x float>
   _mm512_store_ps(p, a);
+}
+
+void test_mm512_mask_store_pd(void *p, __m512d a, __mmask8 m)
+{
+  // CHECK-LABEL: @test_mm512_mask_store_pd
+  // CHECK: @llvm.x86.avx512.mask.store.pd.512
+  _mm512_mask_store_pd(p, m, a);
 }
 
 void test_mm512_store_pd(void *p, __m512d a)
@@ -101,6 +115,34 @@ __m512d test_mm512_loadu_pd(void *p)
   // CHECK-LABEL: @test_mm512_loadu_pd
   // CHECK: load <8 x double>* {{.*}}, align 1{{$}}
   return _mm512_loadu_pd(p);
+}
+
+__m512 test_mm512_maskz_load_ps(void *p, __mmask16 m)
+{
+  // CHECK-LABEL: @test_mm512_maskz_load_ps
+  // CHECK: @llvm.x86.avx512.mask.load.ps.512
+  return _mm512_maskz_load_ps(m, p);
+}
+
+__m512 test_mm512_load_ps(void *p)
+{
+  // CHECK-LABEL: @test_mm512_load_ps
+  // CHECK: @llvm.x86.avx512.mask.load.ps.512
+  return _mm512_load_ps(p);
+}
+
+__m512d test_mm512_maskz_load_pd(void *p, __mmask8 m)
+{
+  // CHECK-LABEL: @test_mm512_maskz_load_pd
+  // CHECK: @llvm.x86.avx512.mask.load.pd.512
+  return _mm512_maskz_load_pd(m, p);
+}
+
+__m512d test_mm512_load_pd(void *p)
+{
+  // CHECK-LABEL: @test_mm512_load_pd
+  // CHECK: @llvm.x86.avx512.mask.load.pd.512
+  return _mm512_load_pd(p);
 }
 
 __m512d test_mm512_set1_pd(double d)
