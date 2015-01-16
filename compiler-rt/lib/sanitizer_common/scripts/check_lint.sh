@@ -35,7 +35,7 @@ SANITIZER_INCLUDES_LINT_FILTER=${COMMON_LINT_FILTER},-runtime/int
 
 MKTEMP_DIR=$(mktemp -qd /tmp/check_lint.XXXXXXXXXX)
 MKTEMP="mktemp -q ${MKTEMP_DIR}/tmp.XXXXXXXXXX"
-function cleanup {
+cleanup() {
   rm -rf $MKTEMP_DIR
 }
 trap cleanup EXIT
