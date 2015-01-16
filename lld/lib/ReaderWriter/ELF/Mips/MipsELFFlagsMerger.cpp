@@ -63,40 +63,40 @@ uint32_t MipsELFFlagsMerger::getMergedELFFlags() const { return _flags; }
 
 std::error_code MipsELFFlagsMerger::merge(uint8_t newClass, uint32_t newFlags) {
   // Reject 64-bit binaries.
-  if (newClass != llvm::ELF::ELFCLASS32)
+  if (newClass != ELFCLASS32)
     return make_dynamic_error_code(
         Twine("Bitness is incompatible with that of the selected target"));
 
   // We support the only ABI - O32 ...
-  uint32_t abi = newFlags & llvm::ELF::EF_MIPS_ABI;
-  if (abi != llvm::ELF::EF_MIPS_ABI_O32)
+  uint32_t abi = newFlags & EF_MIPS_ABI;
+  if (abi != EF_MIPS_ABI_O32)
     return make_dynamic_error_code(Twine("Unsupported ABI"));
 
   // ... and reduced set of architectures ...
-  uint32_t newArch = newFlags & llvm::ELF::EF_MIPS_ARCH;
+  uint32_t newArch = newFlags & EF_MIPS_ARCH;
   switch (newArch) {
-  case llvm::ELF::EF_MIPS_ARCH_1:
-  case llvm::ELF::EF_MIPS_ARCH_2:
-  case llvm::ELF::EF_MIPS_ARCH_3:
-  case llvm::ELF::EF_MIPS_ARCH_4:
-  case llvm::ELF::EF_MIPS_ARCH_5:
-  case llvm::ELF::EF_MIPS_ARCH_32:
-  case llvm::ELF::EF_MIPS_ARCH_64:
-  case llvm::ELF::EF_MIPS_ARCH_32R2:
-  case llvm::ELF::EF_MIPS_ARCH_64R2:
+  case EF_MIPS_ARCH_1:
+  case EF_MIPS_ARCH_2:
+  case EF_MIPS_ARCH_3:
+  case EF_MIPS_ARCH_4:
+  case EF_MIPS_ARCH_5:
+  case EF_MIPS_ARCH_32:
+  case EF_MIPS_ARCH_64:
+  case EF_MIPS_ARCH_32R2:
+  case EF_MIPS_ARCH_64R2:
     break;
   default:
     return make_dynamic_error_code(Twine("Unsupported instruction set"));
   }
 
   // ... and still do not support MIPS-16 extension.
-  if (newFlags & llvm::ELF::EF_MIPS_ARCH_ASE_M16)
+  if (newFlags & EF_MIPS_ARCH_ASE_M16)
     return make_dynamic_error_code(Twine("Unsupported extension: MIPS16"));
 
   // PIC code is inherently CPIC and may not set CPIC flag explicitly.
   // Ensure that this flag will exist in the linked file.
-  if (newFlags & llvm::ELF::EF_MIPS_PIC)
-    newFlags |= llvm::ELF::EF_MIPS_CPIC;
+  if (newFlags & EF_MIPS_PIC)
+    newFlags |= EF_MIPS_CPIC;
 
   std::lock_guard<std::mutex> lock(_mutex);
 
@@ -107,26 +107,24 @@ std::error_code MipsELFFlagsMerger::merge(uint8_t newClass, uint32_t newFlags) {
   }
 
   // Check PIC / CPIC flags compatibility.
-  uint32_t newPic =
-      newFlags & (llvm::ELF::EF_MIPS_PIC | llvm::ELF::EF_MIPS_CPIC);
-  uint32_t oldPic = _flags & (llvm::ELF::EF_MIPS_PIC | llvm::ELF::EF_MIPS_CPIC);
+  uint32_t newPic = newFlags & (EF_MIPS_PIC | EF_MIPS_CPIC);
+  uint32_t oldPic = _flags & (EF_MIPS_PIC | EF_MIPS_CPIC);
 
   if ((newPic != 0) != (oldPic != 0))
     llvm::errs() << "lld warning: linking abicalls and non-abicalls files\n";
 
-  if (!(newPic & llvm::ELF::EF_MIPS_PIC))
-    _flags &= ~llvm::ELF::EF_MIPS_PIC;
+  if (!(newPic & EF_MIPS_PIC))
+    _flags &= ~EF_MIPS_PIC;
   if (newPic)
-    _flags |= llvm::ELF::EF_MIPS_CPIC;
+    _flags |= EF_MIPS_CPIC;
 
   // Check mixing -mnan=2008 / -mnan=legacy modules.
-  if ((newFlags & llvm::ELF::EF_MIPS_NAN2008) !=
-      (_flags & llvm::ELF::EF_MIPS_NAN2008))
+  if ((newFlags & EF_MIPS_NAN2008) != (_flags & EF_MIPS_NAN2008))
     return make_dynamic_error_code(
         Twine("Linking -mnan=2008 and -mnan=legacy modules"));
 
   // Check ISA compatibility and update the extension flag.
-  uint32_t oldArch = _flags & llvm::ELF::EF_MIPS_ARCH;
+  uint32_t oldArch = _flags & EF_MIPS_ARCH;
   if (!matchMipsISA(newArch, oldArch)) {
     if (!matchMipsISA(oldArch, newArch))
       return make_dynamic_error_code(
@@ -135,10 +133,10 @@ std::error_code MipsELFFlagsMerger::merge(uint8_t newClass, uint32_t newFlags) {
     _flags |= newArch;
   }
 
-  _flags |= newFlags & llvm::ELF::EF_MIPS_NOREORDER;
-  _flags |= newFlags & llvm::ELF::EF_MIPS_MICROMIPS;
-  _flags |= newFlags & llvm::ELF::EF_MIPS_NAN2008;
-  _flags |= newFlags & llvm::ELF::EF_MIPS_32BITMODE;
+  _flags |= newFlags & EF_MIPS_NOREORDER;
+  _flags |= newFlags & EF_MIPS_MICROMIPS;
+  _flags |= newFlags & EF_MIPS_NAN2008;
+  _flags |= newFlags & EF_MIPS_32BITMODE;
 
   return std::error_code();
 }
