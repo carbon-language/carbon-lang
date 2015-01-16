@@ -615,6 +615,11 @@ StmtResult Parser::ParseAsmStatement(bool &msAsm) {
     msAsm = true;
     return ParseMicrosoftAsmStatement(AsmLoc);
   }
+
+  // Check if GNU-style inline Asm is disabled.
+  if (!getLangOpts().GNUAsm)
+    Diag(AsmLoc, diag::err_gnu_inline_asm_disabled);
+
   DeclSpec DS(AttrFactory);
   SourceLocation Loc = Tok.getLocation();
   ParseTypeQualifierListOpt(DS, AR_VendorAttributesParsed);
