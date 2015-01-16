@@ -551,7 +551,73 @@ define void @test_store2(<8 x double> %data, i8* %ptr, i8 %mask) {
   ret void
 }
 
-declare void @llvm.x86.avx512.mask.storeu.pd.512(i8*, <8 x double>, i8 )
+declare void @llvm.x86.avx512.mask.storeu.pd.512(i8*, <8 x double>, i8)
+
+define void @test_mask_store_aligned_ps(<16 x float> %data, i8* %ptr, i16 %mask) {
+; CHECK-LABEL: test_mask_store_aligned_ps:
+; CHECK:       ## BB#0:
+; CHECK-NEXT:    kmovw %esi, %k1
+; CHECK-NEXT:    vmovaps %zmm0, (%rdi) {%k1}
+; CHECK-NEXT:    retq
+  call void @llvm.x86.avx512.mask.store.ps.512(i8* %ptr, <16 x float> %data, i16 %mask)
+  ret void
+}
+
+declare void @llvm.x86.avx512.mask.store.ps.512(i8*, <16 x float>, i16 )
+
+define void @test_mask_store_aligned_pd(<8 x double> %data, i8* %ptr, i8 %mask) {
+; CHECK-LABEL: test_mask_store_aligned_pd:
+; CHECK:       ## BB#0:
+; CHECK-NEXT:    kmovw %esi, %k1
+; CHECK-NEXT:    vmovapd %zmm0, (%rdi) {%k1}
+; CHECK-NEXT:    retq
+  call void @llvm.x86.avx512.mask.store.pd.512(i8* %ptr, <8 x double> %data, i8 %mask)
+  ret void
+}
+
+declare void @llvm.x86.avx512.mask.store.pd.512(i8*, <8 x double>, i8)
+
+define <16 x float> @test_maskz_load_aligned_ps(<16 x float> %data, i8* %ptr, i16 %mask) {
+; CHECK-LABEL: test_maskz_load_aligned_ps:
+; CHECK:       ## BB#0:
+; CHECK-NEXT:    kmovw %esi, %k1
+; CHECK-NEXT:    vmovaps (%rdi), %zmm0 {%k1} {z}
+; CHECK-NEXT:    retq
+  %res = call <16 x float> @llvm.x86.avx512.mask.load.ps.512(i8* %ptr, <16 x float> zeroinitializer, i16 %mask)
+  ret <16 x float> %res
+}
+
+declare <16 x float> @llvm.x86.avx512.mask.load.ps.512(i8*, <16 x float>, i16)
+
+define <8 x double> @test_maskz_load_aligned_pd(<8 x double> %data, i8* %ptr, i8 %mask) {
+; CHECK-LABEL: test_maskz_load_aligned_pd:
+; CHECK:       ## BB#0:
+; CHECK-NEXT:    kmovw %esi, %k1
+; CHECK-NEXT:    vmovapd (%rdi), %zmm0 {%k1} {z}
+; CHECK-NEXT:    retq
+  %res = call <8 x double> @llvm.x86.avx512.mask.load.pd.512(i8* %ptr, <8 x double> zeroinitializer, i8 %mask)
+  ret <8 x double> %res
+}
+
+declare <8 x double> @llvm.x86.avx512.mask.load.pd.512(i8*, <8 x double>, i8)
+
+define <16 x float> @test_load_aligned_ps(<16 x float> %data, i8* %ptr, i16 %mask) {
+; CHECK-LABEL: test_load_aligned_ps:
+; CHECK:       ## BB#0:
+; CHECK-NEXT:    vmovaps (%rdi), %zmm0
+; CHECK-NEXT:    retq
+  %res = call <16 x float> @llvm.x86.avx512.mask.load.ps.512(i8* %ptr, <16 x float> zeroinitializer, i16 -1)
+  ret <16 x float> %res
+}
+
+define <8 x double> @test_load_aligned_pd(<8 x double> %data, i8* %ptr, i8 %mask) {
+; CHECK-LABEL: test_load_aligned_pd:
+; CHECK:       ## BB#0:
+; CHECK-NEXT:    vmovapd (%rdi), %zmm0
+; CHECK-NEXT:    retq
+  %res = call <8 x double> @llvm.x86.avx512.mask.load.pd.512(i8* %ptr, <8 x double> zeroinitializer, i8 -1)
+  ret <8 x double> %res
+}
 
 define <16 x float> @test_vpermt2ps(<16 x float>%x, <16 x float>%y, <16 x i32>%perm) {
 ; CHECK: vpermt2ps {{.*}}encoding: [0x62,0xf2,0x6d,0x48,0x7f,0xc1]
