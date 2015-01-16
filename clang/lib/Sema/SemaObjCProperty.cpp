@@ -19,6 +19,7 @@
 #include "clang/AST/ExprObjC.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Lex/Lexer.h"
+#include "clang/Lex/Preprocessor.h"
 #include "clang/Sema/Initialization.h"
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/SmallString.h"
@@ -1854,6 +1855,39 @@ void Sema::DiagnoseOwningPropertyGetterSynthesis(const ObjCImplementationDecl *D
           Diag(PD->getLocation(), diag::err_cocoa_naming_owned_rule);
         else
           Diag(PD->getLocation(), diag::warn_cocoa_naming_owned_rule);
+
+        // Look for a getter explicitly declared alongside the property.
+        // If we find one, use its location for the note.
+        SourceLocation noteLoc = PD->getLocation();
+        SourceLocation fixItLoc;
+        for (auto *getterRedecl : method->redecls()) {
+          if (getterRedecl->isImplicit())
+            continue;
+          if (getterRedecl->getDeclContext() != PD->getDeclContext())
+            continue;
+          noteLoc = getterRedecl->getLocation();
+          fixItLoc = getterRedecl->getLocEnd();
+        }
+
+        Preprocessor &PP = getPreprocessor();
+        TokenValue tokens[] = {
+          tok::kw___attribute, tok::l_paren, tok::l_paren,
+          PP.getIdentifierInfo("objc_method_family"), tok::l_paren,
+          PP.getIdentifierInfo("none"), tok::r_paren,
+          tok::r_paren, tok::r_paren
+        };
+        StringRef spelling = "__attribute__((objc_method_family(none)))";
+        StringRef macroName = PP.getLastMacroWithSpelling(noteLoc, tokens);
+        if (!macroName.empty())
+          spelling = macroName;
+
+        auto noteDiag = Diag(noteLoc, diag::note_cocoa_naming_declare_family)
+            << method->getDeclName() << spelling;
+        if (fixItLoc.isValid()) {
+          SmallString<64> fixItText(" ");
+          fixItText += spelling;
+          noteDiag << FixItHint::CreateInsertion(fixItLoc, fixItText);
+        }
       }
     }
   }

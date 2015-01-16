@@ -54,13 +54,13 @@ void func()
 // rdar://15757510
 
 @interface J
-@property (retain) id newFoo; // expected-error {{property follows Cocoa naming convention for returning 'owned' objects}}
-@property (strong) id copyBar;  // expected-error {{property follows Cocoa naming convention for returning 'owned' objects}}
-@property (copy) id allocBaz; // expected-error {{property follows Cocoa naming convention for returning 'owned' objects}}
+@property (retain) id newFoo; // expected-error {{property follows Cocoa naming convention for returning 'owned' objects}} expected-note{{explicitly declare getter '-newFoo' with '__attribute__((objc_method_family(none)))' to return an 'unowned' object}}
+@property (strong) id copyBar;  // expected-error {{property follows Cocoa naming convention for returning 'owned' objects}} expected-note{{explicitly declare getter '-copyBar' with '__attribute__((objc_method_family(none)))' to return an 'unowned' object}}
+@property (copy) id allocBaz; // expected-error {{property follows Cocoa naming convention for returning 'owned' objects}} expected-note{{explicitly declare getter '-allocBaz' with '__attribute__((objc_method_family(none)))' to return an 'unowned' object}}
 @property (copy, nonatomic) id new;
-@property (retain) id newDFoo; // expected-error {{property follows Cocoa naming convention for returning 'owned' objects}}
-@property (strong) id copyDBar; // expected-error {{property follows Cocoa naming convention for returning 'owned' objects}}
-@property (copy) id allocDBaz; // expected-error {{property follows Cocoa naming convention for returning 'owned' objects}}
+@property (retain) id newDFoo; // expected-error {{property follows Cocoa naming convention for returning 'owned' objects}} expected-note{{explicitly declare getter '-newDFoo' with '__attribute__((objc_method_family(none)))' to return an 'unowned' object}}
+@property (strong) id copyDBar; // expected-error {{property follows Cocoa naming convention for returning 'owned' objects}} expected-note{{explicitly declare getter '-copyDBar' with '__attribute__((objc_method_family(none)))' to return an 'unowned' object}}
+@property (copy) id allocDBaz; // expected-error {{property follows Cocoa naming convention for returning 'owned' objects}} expected-note{{explicitly declare getter '-allocDBaz' with '__attribute__((objc_method_family(none)))' to return an 'unowned' object}}
 @end
 
 @implementation J
@@ -73,6 +73,29 @@ void func()
 @dynamic newDFoo;
 @dynamic copyDBar; 
 @dynamic allocDBaz;
+@end
+
+
+@interface MethodFamilyDiags
+@property (retain) id newFoo; // expected-error {{property follows Cocoa naming convention for returning 'owned' objects}}
+- (id)newFoo; // expected-note {{explicitly declare getter '-newFoo' with '__attribute__((objc_method_family(none)))' to return an 'unowned' object}}
+
+#define OBJC_METHOD_FAMILY_NONE __attribute__((objc_method_family(none)))
+- (id)newBar; // expected-note {{explicitly declare getter '-newBar' with 'OBJC_METHOD_FAMILY_NONE' to return an 'unowned' object}}
+@property (retain) id newBar; // expected-error {{property follows Cocoa naming convention for returning 'owned' objects}}
+
+@property (retain) id newBaz; // expected-error {{property follows Cocoa naming convention for returning 'owned' objects}} expected-note {{explicitly declare getter '-newBaz' with 'OBJC_METHOD_FAMILY_NONE' to return an 'unowned' object}}
+#undef OBJC_METHOD_FAMILY_NONE
+
+@property (retain, readonly) id newGarply; // expected-error {{property follows Cocoa naming convention for returning 'owned' objects}} expected-note {{explicitly declare getter '-newGarply' with '__attribute__((objc_method_family(none)))' to return an 'unowned' object}}
+@end
+
+@interface MethodFamilyDiags (Redeclarations)
+- (id)newGarply; // no note here
+@end
+
+@implementation MethodFamilyDiags
+@synthesize newGarply;
 @end
 
 

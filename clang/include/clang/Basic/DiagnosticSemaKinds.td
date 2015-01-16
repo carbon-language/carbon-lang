@@ -797,6 +797,12 @@ def warn_cocoa_naming_owned_rule : Warning<
   "property follows Cocoa naming"
   " convention for returning 'owned' objects">,
   InGroup<DiagGroup<"objc-property-matches-cocoa-ownership-rule">>;
+def err_cocoa_naming_owned_rule : Error<
+  "property follows Cocoa naming"
+  " convention for returning 'owned' objects">;
+def note_cocoa_naming_declare_family : Note<
+  "explicitly declare getter %objcinstance0 with '%1' to return an 'unowned' "
+  "object">;
 def warn_auto_synthesizing_protocol_property :Warning<
   "auto property synthesis will not synthesize property %0"
   " declared in protocol %1">,
@@ -828,9 +834,6 @@ def warn_property_getter_owning_mismatch : Warning<
 def error_property_setter_ambiguous_use : Error<
   "synthesized properties %0 and %1 both claim setter %2 -"
   " use of this setter will cause unexpected behavior">;
-def err_cocoa_naming_owned_rule : Error<
-  "property follows Cocoa naming"
-  " convention for returning 'owned' objects">;
 def warn_default_atomic_custom_getter_setter : Warning<
   "atomic by default property %0 has a user defined %select{getter|setter}1 "
   "(property should be marked 'atomic' if this is intended)">,
