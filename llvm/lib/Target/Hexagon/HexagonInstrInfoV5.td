@@ -237,6 +237,251 @@ def F2_sfcmpeq : T_fcmp32<"sfcmp.eq", setoeq, 0b011>;
 def F2_sfcmpgt : T_fcmp32<"sfcmp.gt", setogt, 0b100>;
 }
 
+//===----------------------------------------------------------------------===//
+// Multiclass to define 'Def Pats' for ordered gt, ge, eq operations.
+//===----------------------------------------------------------------------===//
+
+let Predicates = [HasV5T] in
+multiclass T_fcmp_pats<PatFrag cmpOp, InstHexagon IntMI, InstHexagon DoubleMI> {
+  // IntRegs
+  def: Pat<(i1 (cmpOp F32:$src1, F32:$src2)),
+           (IntMI F32:$src1, F32:$src2)>;
+  // DoubleRegs
+  def: Pat<(i1 (cmpOp F64:$src1, F64:$src2)),
+           (DoubleMI F64:$src1, F64:$src2)>;
+}
+
+defm : T_fcmp_pats <seteq, F2_sfcmpeq, F2_dfcmpeq>;
+defm : T_fcmp_pats <setgt, F2_sfcmpgt, F2_dfcmpgt>;
+defm : T_fcmp_pats <setge, F2_sfcmpge, F2_dfcmpge>;
+
+//===----------------------------------------------------------------------===//
+// Multiclass to define 'Def Pats' for unordered gt, ge, eq operations.
+//===----------------------------------------------------------------------===//
+let Predicates = [HasV5T] in
+multiclass unord_Pats <PatFrag cmpOp, InstHexagon IntMI, InstHexagon DoubleMI> {
+  // IntRegs
+  def: Pat<(i1 (cmpOp F32:$src1, F32:$src2)),
+           (C2_or (F2_sfcmpuo F32:$src1, F32:$src2),
+                  (IntMI F32:$src1, F32:$src2))>;
+
+  // DoubleRegs
+  def: Pat<(i1 (cmpOp F64:$src1, F64:$src2)),
+           (C2_or (F2_dfcmpuo F64:$src1, F64:$src2),
+                  (DoubleMI F64:$src1, F64:$src2))>;
+}
+
+defm : unord_Pats <setuge, F2_sfcmpge, F2_dfcmpge>;
+defm : unord_Pats <setugt, F2_sfcmpgt, F2_dfcmpgt>;
+defm : unord_Pats <setueq, F2_sfcmpeq, F2_dfcmpeq>;
+
+//===----------------------------------------------------------------------===//
+// Multiclass to define 'Def Pats' for the following dags:
+// seteq(setoeq(op1, op2), 0) -> not(setoeq(op1, op2))
+// seteq(setoeq(op1, op2), 1) -> setoeq(op1, op2)
+// setne(setoeq(op1, op2), 0) -> setoeq(op1, op2)
+// setne(setoeq(op1, op2), 1) -> not(setoeq(op1, op2))
+//===----------------------------------------------------------------------===//
+let Predicates = [HasV5T] in
+multiclass eq_ordgePats <PatFrag cmpOp, InstHexagon IntMI,
+                         InstHexagon DoubleMI> {
+  // IntRegs
+  def: Pat<(i1 (seteq (i1 (cmpOp F32:$src1, F32:$src2)), 0)),
+           (C2_not (IntMI F32:$src1, F32:$src2))>;
+  def: Pat<(i1 (seteq (i1 (cmpOp F32:$src1, F32:$src2)), 1)),
+           (IntMI F32:$src1, F32:$src2)>;
+  def: Pat<(i1 (setne (i1 (cmpOp F32:$src1, F32:$src2)), 0)),
+           (IntMI F32:$src1, F32:$src2)>;
+  def: Pat<(i1 (setne (i1 (cmpOp F32:$src1, F32:$src2)), 1)),
+           (C2_not (IntMI F32:$src1, F32:$src2))>;
+
+  // DoubleRegs
+  def : Pat<(i1 (seteq (i1 (cmpOp F64:$src1, F64:$src2)), 0)),
+            (C2_not (DoubleMI F64:$src1, F64:$src2))>;
+  def : Pat<(i1 (seteq (i1 (cmpOp F64:$src1, F64:$src2)), 1)),
+            (DoubleMI F64:$src1, F64:$src2)>;
+  def : Pat<(i1 (setne (i1 (cmpOp F64:$src1, F64:$src2)), 0)),
+            (DoubleMI F64:$src1, F64:$src2)>;
+  def : Pat<(i1 (setne (i1 (cmpOp F64:$src1, F64:$src2)), 1)),
+            (C2_not (DoubleMI F64:$src1, F64:$src2))>;
+}
+
+defm : eq_ordgePats<setoeq, F2_sfcmpeq, F2_dfcmpeq>;
+defm : eq_ordgePats<setoge, F2_sfcmpge, F2_dfcmpge>;
+defm : eq_ordgePats<setogt, F2_sfcmpgt, F2_dfcmpgt>;
+
+//===----------------------------------------------------------------------===//
+// Multiclass to define 'Def Pats' for the following dags:
+// seteq(setolt(op1, op2), 0) -> not(setogt(op2, op1))
+// seteq(setolt(op1, op2), 1) -> setogt(op2, op1)
+// setne(setolt(op1, op2), 0) -> setogt(op2, op1)
+// setne(setolt(op1, op2), 1) -> not(setogt(op2, op1))
+//===----------------------------------------------------------------------===//
+let Predicates = [HasV5T] in
+multiclass eq_ordltPats <PatFrag cmpOp, InstHexagon IntMI,
+                         InstHexagon DoubleMI> {
+  // IntRegs
+  def: Pat<(i1 (seteq (i1 (cmpOp F32:$src1, F32:$src2)), 0)),
+           (C2_not (IntMI F32:$src2, F32:$src1))>;
+  def: Pat<(i1 (seteq (i1 (cmpOp F32:$src1, F32:$src2)), 1)),
+           (IntMI F32:$src2, F32:$src1)>;
+  def: Pat<(i1 (setne (i1 (cmpOp F32:$src1, F32:$src2)), 0)),
+           (IntMI F32:$src2, F32:$src1)>;
+  def: Pat<(i1 (setne (i1 (cmpOp F32:$src1, F32:$src2)), 1)),
+           (C2_not (IntMI F32:$src2, F32:$src1))>;
+
+  // DoubleRegs
+  def: Pat<(i1 (seteq (i1 (cmpOp F64:$src1, F64:$src2)), 0)),
+           (C2_not (DoubleMI F64:$src2, F64:$src1))>;
+  def: Pat<(i1 (seteq (i1 (cmpOp F64:$src1, F64:$src2)), 1)),
+           (DoubleMI F64:$src2, F64:$src1)>;
+  def: Pat<(i1 (setne (i1 (cmpOp F64:$src1, F64:$src2)), 0)),
+           (DoubleMI F64:$src2, F64:$src1)>;
+  def: Pat<(i1 (setne (i1 (cmpOp F64:$src1, F64:$src2)), 0)),
+           (C2_not (DoubleMI F64:$src2, F64:$src1))>;
+}
+
+defm : eq_ordltPats<setole, F2_sfcmpge, F2_dfcmpge>;
+defm : eq_ordltPats<setolt, F2_sfcmpgt, F2_dfcmpgt>;
+
+
+// o. seto inverse of setuo. http://llvm.org/docs/LangRef.html#i_fcmp
+let Predicates = [HasV5T] in {
+  def: Pat<(i1 (seto F32:$src1, F32:$src2)),
+           (C2_not (F2_sfcmpuo F32:$src2, F32:$src1))>;
+  def: Pat<(i1 (seto F32:$src1, fpimm:$src2)),
+           (C2_not (F2_sfcmpuo (TFRI_f fpimm:$src2), F32:$src1))>;
+  def: Pat<(i1 (seto F64:$src1, F64:$src2)),
+           (C2_not (F2_dfcmpuo F64:$src2, F64:$src1))>;
+  def: Pat<(i1 (seto F64:$src1, fpimm:$src2)),
+           (C2_not (F2_dfcmpuo (CONST64_Float_Real fpimm:$src2), F64:$src1))>;
+}
+
+// Ordered lt.
+let Predicates = [HasV5T] in {
+  def: Pat<(i1 (setolt F32:$src1, F32:$src2)),
+           (F2_sfcmpgt F32:$src2, F32:$src1)>;
+  def: Pat<(i1 (setolt F32:$src1, fpimm:$src2)),
+           (F2_sfcmpgt (f32 (TFRI_f fpimm:$src2)), F32:$src1)>;
+  def: Pat<(i1 (setolt F64:$src1, F64:$src2)),
+           (F2_dfcmpgt F64:$src2, F64:$src1)>;
+  def: Pat<(i1 (setolt F64:$src1, fpimm:$src2)),
+           (F2_dfcmpgt (CONST64_Float_Real fpimm:$src2), F64:$src1)>;
+}
+
+// Unordered lt.
+let Predicates = [HasV5T] in {
+  def: Pat<(i1 (setult F32:$src1, F32:$src2)),
+           (C2_or (F2_sfcmpuo  F32:$src1, F32:$src2),
+                  (F2_sfcmpgt F32:$src2, F32:$src1))>;
+  def: Pat<(i1 (setult F32:$src1, fpimm:$src2)),
+           (C2_or (F2_sfcmpuo  F32:$src1, (TFRI_f fpimm:$src2)),
+                  (F2_sfcmpgt (TFRI_f fpimm:$src2), F32:$src1))>;
+  def: Pat<(i1 (setult F64:$src1, F64:$src2)),
+           (C2_or (F2_dfcmpuo  F64:$src1, F64:$src2),
+                  (F2_dfcmpgt F64:$src2, F64:$src1))>;
+  def: Pat<(i1 (setult F64:$src1, fpimm:$src2)),
+           (C2_or (F2_dfcmpuo  F64:$src1, (CONST64_Float_Real fpimm:$src2)),
+                  (F2_dfcmpgt (CONST64_Float_Real fpimm:$src2), F64:$src1))>;
+}
+
+// Ordered le.
+let Predicates = [HasV5T] in {
+  // rs <= rt -> rt >= rs.
+  def: Pat<(i1 (setole F32:$src1, F32:$src2)),
+           (F2_sfcmpge F32:$src2, F32:$src1)>;
+  def: Pat<(i1 (setole F32:$src1, fpimm:$src2)),
+           (F2_sfcmpge (TFRI_f fpimm:$src2), F32:$src1)>;
+
+  // Rss <= Rtt -> Rtt >= Rss.
+  def: Pat<(i1 (setole F64:$src1, F64:$src2)),
+           (F2_dfcmpge F64:$src2, F64:$src1)>;
+  def: Pat<(i1 (setole F64:$src1, fpimm:$src2)),
+           (F2_dfcmpge (CONST64_Float_Real fpimm:$src2), F64:$src1)>;
+}
+
+// Unordered le.
+let Predicates = [HasV5T] in {
+// rs <= rt -> rt >= rs.
+  def: Pat<(i1 (setule F32:$src1, F32:$src2)),
+           (C2_or (F2_sfcmpuo  F32:$src1, F32:$src2),
+                  (F2_sfcmpge F32:$src2, F32:$src1))>;
+  def: Pat<(i1 (setule F32:$src1, fpimm:$src2)),
+           (C2_or (F2_sfcmpuo  F32:$src1, (TFRI_f fpimm:$src2)),
+                  (F2_sfcmpge (TFRI_f fpimm:$src2), F32:$src1))>;
+  def: Pat<(i1 (setule F64:$src1, F64:$src2)),
+           (C2_or (F2_dfcmpuo  F64:$src1, F64:$src2),
+                  (F2_dfcmpge F64:$src2, F64:$src1))>;
+  def: Pat<(i1 (setule F64:$src1, fpimm:$src2)),
+           (C2_or (F2_dfcmpuo  F64:$src1, (CONST64_Float_Real fpimm:$src2)),
+                  (F2_dfcmpge (CONST64_Float_Real fpimm:$src2), F64:$src1))>;
+}
+
+// Ordered ne.
+let Predicates = [HasV5T] in {
+  def: Pat<(i1 (setone F32:$src1, F32:$src2)),
+           (C2_not (F2_sfcmpeq F32:$src1, F32:$src2))>;
+  def: Pat<(i1 (setone F64:$src1, F64:$src2)),
+           (C2_not (F2_dfcmpeq F64:$src1, F64:$src2))>;
+  def: Pat<(i1 (setone F32:$src1, fpimm:$src2)),
+           (C2_not (F2_sfcmpeq F32:$src1, (TFRI_f fpimm:$src2)))>;
+  def: Pat<(i1 (setone F64:$src1, fpimm:$src2)),
+           (C2_not (F2_dfcmpeq F64:$src1, (CONST64_Float_Real fpimm:$src2)))>;
+}
+
+// Unordered ne.
+let Predicates = [HasV5T] in {
+  def: Pat<(i1 (setune F32:$src1, F32:$src2)),
+           (C2_or (F2_sfcmpuo F32:$src1, F32:$src2),
+                  (C2_not (F2_sfcmpeq F32:$src1, F32:$src2)))>;
+  def: Pat<(i1 (setune F64:$src1, F64:$src2)),
+           (C2_or (F2_dfcmpuo F64:$src1, F64:$src2),
+                  (C2_not (F2_dfcmpeq F64:$src1, F64:$src2)))>;
+  def: Pat<(i1 (setune F32:$src1, fpimm:$src2)),
+           (C2_or (F2_sfcmpuo F32:$src1, (TFRI_f fpimm:$src2)),
+                  (C2_not (F2_sfcmpeq F32:$src1, (TFRI_f fpimm:$src2))))>;
+  def: Pat<(i1 (setune F64:$src1, fpimm:$src2)),
+           (C2_or (F2_dfcmpuo F64:$src1, (CONST64_Float_Real fpimm:$src2)),
+                  (C2_not (F2_dfcmpeq F64:$src1,
+                                        (CONST64_Float_Real fpimm:$src2))))>;
+}
+
+// Besides set[o|u][comparions], we also need set[comparisons].
+let Predicates = [HasV5T] in {
+  // lt.
+  def: Pat<(i1 (setlt F32:$src1, F32:$src2)),
+           (F2_sfcmpgt F32:$src2, F32:$src1)>;
+  def: Pat<(i1 (setlt F32:$src1, fpimm:$src2)),
+           (F2_sfcmpgt (TFRI_f fpimm:$src2), F32:$src1)>;
+  def: Pat<(i1 (setlt F64:$src1, F64:$src2)),
+           (F2_dfcmpgt F64:$src2, F64:$src1)>;
+  def: Pat<(i1 (setlt F64:$src1, fpimm:$src2)),
+           (F2_dfcmpgt (CONST64_Float_Real fpimm:$src2), F64:$src1)>;
+
+  // le.
+  // rs <= rt -> rt >= rs.
+  def: Pat<(i1 (setle F32:$src1, F32:$src2)),
+           (F2_sfcmpge F32:$src2, F32:$src1)>;
+  def: Pat<(i1 (setle F32:$src1, fpimm:$src2)),
+           (F2_sfcmpge (TFRI_f fpimm:$src2), F32:$src1)>;
+
+  // Rss <= Rtt -> Rtt >= Rss.
+  def: Pat<(i1 (setle F64:$src1, F64:$src2)),
+           (F2_dfcmpge F64:$src2, F64:$src1)>;
+  def: Pat<(i1 (setle F64:$src1, fpimm:$src2)),
+           (F2_dfcmpge (CONST64_Float_Real fpimm:$src2), F64:$src1)>;
+
+  // ne.
+  def: Pat<(i1 (setne F32:$src1, F32:$src2)),
+           (C2_not (F2_sfcmpeq F32:$src1, F32:$src2))>;
+  def: Pat<(i1 (setne F64:$src1, F64:$src2)),
+           (C2_not (F2_dfcmpeq F64:$src1, F64:$src2))>;
+  def: Pat<(i1 (setne F32:$src1, fpimm:$src2)),
+           (C2_not (F2_sfcmpeq F32:$src1, (TFRI_f fpimm:$src2)))>;
+  def: Pat<(i1 (setne F64:$src1, fpimm:$src2)),
+           (C2_not (F2_dfcmpeq F64:$src1, (CONST64_Float_Real fpimm:$src2)))>;
+}
+
 // F2 convert template classes:
 let isFP = 1 in
 class F2_RDD_RSS_CONVERT<string mnemonic, bits<3> MinOp,
@@ -397,6 +642,14 @@ def F2_sffixupr: SInst<(outs IntRegs:$Rd), (ins IntRegs:$Rs),
     let Inst{4-0}   = Rd;
   }
 
+// Bitcast is different than [fp|sint|uint]_to_[sint|uint|fp].
+let Predicates = [HasV5T] in {
+  def: Pat <(i32 (bitconvert F32:$src)), (I32:$src)>;
+  def: Pat <(f32 (bitconvert I32:$src)), (F32:$src)>;
+  def: Pat <(i64 (bitconvert F64:$src)), (I64:$src)>;
+  def: Pat <(f64 (bitconvert I64:$src)), (F64:$src)>;
+}
+
 // F2_sffma: Floating-point fused multiply add.
 let isFP = 1, hasNewValue = 1 in
 class T_sfmpy_acc <bit isSub, bit isLib>
@@ -513,170 +766,6 @@ def F2_sfimm_n : T_fimm <"sfmake", IntRegs, 0b0110, 1>;
 def F2_dfimm_p : T_fimm <"dfmake", DoubleRegs, 0b1001, 0>;
 def F2_dfimm_n : T_fimm <"dfmake", DoubleRegs, 0b1001, 1>;
 }
-
-// olt.
-def : Pat <(i1 (setolt (f32 IntRegs:$src1), (f32 IntRegs:$src2))),
-      (i1 (F2_sfcmpgt IntRegs:$src2, IntRegs:$src1))>,
-      Requires<[HasV5T]>;
-
-def : Pat <(i1 (setolt (f32 IntRegs:$src1), (fpimm:$src2))),
-      (i1 (F2_sfcmpgt (f32 (TFRI_f fpimm:$src2)), (f32 IntRegs:$src1)))>,
-      Requires<[HasV5T]>;
-
-def : Pat <(i1 (setolt (f64 DoubleRegs:$src1), (f64 DoubleRegs:$src2))),
-      (i1 (F2_dfcmpgt DoubleRegs:$src2, DoubleRegs:$src1))>,
-      Requires<[HasV5T]>;
-
-def : Pat <(i1 (setolt (f64 DoubleRegs:$src1), (fpimm:$src2))),
-      (i1 (F2_dfcmpgt (f64 (CONST64_Float_Real fpimm:$src2)),
-                        (f64 DoubleRegs:$src1)))>,
-      Requires<[HasV5T]>;
-
-// gt.
-def : Pat <(i1 (setugt (f64 DoubleRegs:$src1), (fpimm:$src2))),
-      (i1 (F2_dfcmpgt (f64 DoubleRegs:$src1),
-                        (f64 (CONST64_Float_Real fpimm:$src2))))>,
-      Requires<[HasV5T]>;
-
-def : Pat <(i1 (setugt (f32 IntRegs:$src1), (fpimm:$src2))),
-      (i1 (F2_sfcmpgt (f32 IntRegs:$src1), (f32 (TFRI_f fpimm:$src2))))>,
-      Requires<[HasV5T]>;
-
-// ult.
-def : Pat <(i1 (setult (f32 IntRegs:$src1), (f32 IntRegs:$src2))),
-      (i1 (F2_sfcmpgt IntRegs:$src2, IntRegs:$src1))>,
-      Requires<[HasV5T]>;
-
-def : Pat <(i1 (setult (f32 IntRegs:$src1), (fpimm:$src2))),
-      (i1 (F2_sfcmpgt (f32 (TFRI_f fpimm:$src2)), (f32 IntRegs:$src1)))>,
-      Requires<[HasV5T]>;
-
-def : Pat <(i1 (setult (f64 DoubleRegs:$src1), (f64 DoubleRegs:$src2))),
-      (i1 (F2_dfcmpgt DoubleRegs:$src2, DoubleRegs:$src1))>,
-      Requires<[HasV5T]>;
-
-def : Pat <(i1 (setult (f64 DoubleRegs:$src1), (fpimm:$src2))),
-      (i1 (F2_dfcmpgt (f64 (CONST64_Float_Real fpimm:$src2)),
-                        (f64 DoubleRegs:$src1)))>,
-      Requires<[HasV5T]>;
-
-// le.
-// rs <= rt -> rt >= rs.
-def : Pat<(i1 (setole (f32 IntRegs:$src1), (f32 IntRegs:$src2))),
-      (i1 (F2_sfcmpge IntRegs:$src2, IntRegs:$src1))>,
-      Requires<[HasV5T]>;
-
-def : Pat<(i1 (setole (f32 IntRegs:$src1), (fpimm:$src2))),
-      (i1 (F2_sfcmpge (f32 (TFRI_f fpimm:$src2)), IntRegs:$src1))>,
-      Requires<[HasV5T]>;
-
-
-// Rss <= Rtt -> Rtt >= Rss.
-def : Pat<(i1 (setole (f64 DoubleRegs:$src1), (f64 DoubleRegs:$src2))),
-      (i1 (F2_dfcmpge DoubleRegs:$src2, DoubleRegs:$src1))>,
-      Requires<[HasV5T]>;
-
-def : Pat<(i1 (setole (f64 DoubleRegs:$src1), (fpimm:$src2))),
-      (i1 (F2_dfcmpge (f64 (CONST64_Float_Real fpimm:$src2)),
-                                DoubleRegs:$src1))>,
-      Requires<[HasV5T]>;
-
-// rs <= rt -> rt >= rs.
-def : Pat<(i1 (setule (f32 IntRegs:$src1), (f32 IntRegs:$src2))),
-      (i1 (F2_sfcmpge IntRegs:$src2, IntRegs:$src1))>,
-      Requires<[HasV5T]>;
-
-def : Pat<(i1 (setule (f32 IntRegs:$src1), (fpimm:$src2))),
-      (i1 (F2_sfcmpge (f32 (TFRI_f fpimm:$src2)), IntRegs:$src1))>,
-      Requires<[HasV5T]>;
-
-// Rss <= Rtt -> Rtt >= Rss.
-def : Pat<(i1 (setule (f64 DoubleRegs:$src1), (f64 DoubleRegs:$src2))),
-      (i1 (F2_dfcmpge DoubleRegs:$src2, DoubleRegs:$src1))>,
-      Requires<[HasV5T]>;
-
-def : Pat<(i1 (setule (f64 DoubleRegs:$src1), (fpimm:$src2))),
-      (i1 (F2_dfcmpge (f64 (CONST64_Float_Real fpimm:$src2)),
-                                DoubleRegs:$src1))>,
-      Requires<[HasV5T]>;
-
-// ne.
-def : Pat<(i1 (setone (f32 IntRegs:$src1), (f32 IntRegs:$src2))),
-      (i1 (C2_not (F2_sfcmpeq IntRegs:$src1, IntRegs:$src2)))>,
-      Requires<[HasV5T]>;
-
-def : Pat<(i1 (setone (f64 DoubleRegs:$src1), (f64 DoubleRegs:$src2))),
-      (i1 (C2_not (F2_dfcmpeq DoubleRegs:$src1, DoubleRegs:$src2)))>,
-      Requires<[HasV5T]>;
-
-def : Pat<(i1 (setune (f32 IntRegs:$src1), (f32 IntRegs:$src2))),
-      (i1 (C2_not (F2_sfcmpeq IntRegs:$src1, IntRegs:$src2)))>,
-      Requires<[HasV5T]>;
-
-def : Pat<(i1 (setune (f64 DoubleRegs:$src1), (f64 DoubleRegs:$src2))),
-      (i1 (C2_not (F2_dfcmpeq DoubleRegs:$src1, DoubleRegs:$src2)))>,
-      Requires<[HasV5T]>;
-
-def : Pat<(i1 (setone (f32 IntRegs:$src1), (fpimm:$src2))),
-      (i1 (C2_not (F2_sfcmpeq IntRegs:$src1, (f32 (TFRI_f fpimm:$src2)))))>,
-      Requires<[HasV5T]>;
-
-def : Pat<(i1 (setone (f64 DoubleRegs:$src1), (fpimm:$src2))),
-      (i1 (C2_not (F2_dfcmpeq DoubleRegs:$src1,
-                              (f64 (CONST64_Float_Real fpimm:$src2)))))>,
-      Requires<[HasV5T]>;
-
-def : Pat<(i1 (setune (f32 IntRegs:$src1), (fpimm:$src2))),
-      (i1 (C2_not (F2_sfcmpeq IntRegs:$src1,  (f32 (TFRI_f fpimm:$src2)))))>,
-      Requires<[HasV5T]>;
-
-def : Pat<(i1 (setune (f64 DoubleRegs:$src1), (fpimm:$src2))),
-      (i1 (C2_not (F2_dfcmpeq DoubleRegs:$src1,
-                              (f64 (CONST64_Float_Real fpimm:$src2)))))>,
-      Requires<[HasV5T]>;
-
-// Bitcast is different than [fp|sint|uint]_to_[sint|uint|fp].
-def : Pat <(i32 (bitconvert (f32 IntRegs:$src))),
-           (i32 (A2_tfr IntRegs:$src))>,
-          Requires<[HasV5T]>;
-
-def : Pat <(f32 (bitconvert (i32 IntRegs:$src))),
-           (f32 (A2_tfr IntRegs:$src))>,
-          Requires<[HasV5T]>;
-
-def : Pat <(i64 (bitconvert (f64 DoubleRegs:$src))),
-           (i64 (A2_tfrp DoubleRegs:$src))>,
-          Requires<[HasV5T]>;
-
-def : Pat <(f64 (bitconvert (i64 DoubleRegs:$src))),
-           (f64 (A2_tfrp DoubleRegs:$src))>,
-          Requires<[HasV5T]>;
-
-def : Pat <(select (i1 (setult (f32 IntRegs:$src1), (f32 IntRegs:$src2))),
-                   (f32 IntRegs:$src3),
-                   (f32 IntRegs:$src4)),
-    (C2_mux (F2_sfcmpgt IntRegs:$src2, IntRegs:$src1), IntRegs:$src4,
-                      IntRegs:$src3)>, Requires<[HasV5T]>;
-
-def : Pat <(select (i1 (setult (f64 DoubleRegs:$src1), (f64 DoubleRegs:$src2))),
-                   (f64 DoubleRegs:$src3),
-                   (f64 DoubleRegs:$src4)),
-      (C2_vmux (F2_dfcmpgt DoubleRegs:$src2, DoubleRegs:$src1),
-                DoubleRegs:$src4, DoubleRegs:$src3)>, Requires<[HasV5T]>;
-
-// Map from p0 = pnot(p0); r0 = select(p0, #i, r1)
-// => r0 = TFR_condset_ri(p0, r1, #i)
-def : Pat <(select (not PredRegs:$src1), fpimm:$src2, IntRegs:$src3),
-      (MUX_ri_f PredRegs:$src1, IntRegs:$src3, fpimm:$src2)>;
-
-// Map from p0 = pnot(p0); r0 = mux(p0, r1, #i)
-// => r0 = TFR_condset_ir(p0, #i, r1)
-def : Pat <(select (not PredRegs:$src1), IntRegs:$src2, fpimm:$src3),
-      (MUX_ir_f PredRegs:$src1, fpimm:$src3, IntRegs:$src2)>;
-
-def : Pat <(i32 (fp_to_sint (f64 DoubleRegs:$src1))),
-          (i32 (EXTRACT_SUBREG (i64 (F2_conv_df2d_chop (f64 DoubleRegs:$src1))), subreg_loreg))>,
-          Requires<[HasV5T]>;
 
 def : Pat <(fabs (f32 IntRegs:$src1)),
            (S2_clrbit_i (f32 IntRegs:$src1), 31)>,
