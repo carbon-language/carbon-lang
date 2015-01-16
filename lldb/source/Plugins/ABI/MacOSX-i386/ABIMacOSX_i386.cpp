@@ -732,6 +732,10 @@ ABIMacOSX_i386::GetReturnValueObjectImpl (Thread &thread,
     return return_valobj_sp;
 }
 
+// This defines the CFA as esp+4
+// the saved pc is at CFA-4 (i.e. esp+0)
+// The saved esp is CFA+0
+
 bool
 ABIMacOSX_i386::CreateFunctionEntryUnwindPlan (UnwindPlan &unwind_plan)
 {
@@ -745,11 +749,17 @@ ABIMacOSX_i386::CreateFunctionEntryUnwindPlan (UnwindPlan &unwind_plan)
     row->SetCFARegister (sp_reg_num);
     row->SetCFAOffset (4);
     row->SetRegisterLocationToAtCFAPlusOffset(pc_reg_num, -4, false);
+    row->SetRegisterLocationToIsCFAPlusOffset(sp_reg_num, 0, true);
     unwind_plan.AppendRow (row);
     unwind_plan.SetSourceName ("i386 at-func-entry default");
     unwind_plan.SetSourcedFromCompiler (eLazyBoolNo);
     return true;
 }
+
+// This defines the CFA as ebp+8
+// The saved pc is at CFA-4 (i.e. ebp+4)
+// The saved ebp is at CFA-8 (i.e. ebp+0)
+// The saved esp is CFA+0
 
 bool
 ABIMacOSX_i386::CreateDefaultUnwindPlan (UnwindPlan &unwind_plan)

@@ -1070,6 +1070,10 @@ ABISysV_x86_64::GetReturnValueObjectImpl (Thread &thread, ClangASTType &return_c
     return return_valobj_sp;
 }
 
+// This defines the CFA as rsp+8
+// the saved pc is at CFA-8 (i.e. rsp+0)
+// The saved rsp is CFA+0
+
 bool
 ABISysV_x86_64::CreateFunctionEntryUnwindPlan (UnwindPlan &unwind_plan)
 {
@@ -1083,11 +1087,17 @@ ABISysV_x86_64::CreateFunctionEntryUnwindPlan (UnwindPlan &unwind_plan)
     row->SetCFARegister (sp_reg_num);
     row->SetCFAOffset (8);
     row->SetRegisterLocationToAtCFAPlusOffset(pc_reg_num, -8, false);
+    row->SetRegisterLocationToIsCFAPlusOffset(sp_reg_num, 0, true);
     unwind_plan.AppendRow (row);
     unwind_plan.SetSourceName ("x86_64 at-func-entry default");
     unwind_plan.SetSourcedFromCompiler (eLazyBoolNo);
     return true;
 }
+
+// This defines the CFA as rbp+16
+// The saved pc is at CFA-8 (i.e. rbp+8)
+// The saved rbp is at CFA-16 (i.e. rbp+0)
+// The saved rsp is CFA+0
 
 bool
 ABISysV_x86_64::CreateDefaultUnwindPlan (UnwindPlan &unwind_plan)

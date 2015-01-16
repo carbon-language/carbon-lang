@@ -290,6 +290,7 @@ DNBArchMachARM::GetVFPState(bool force)
     // Read the registers from our thread
     mach_msg_type_number_t count = ARM_VFP_STATE_COUNT;
     kret = ::thread_get_state(m_thread->MachPortNumber(), ARM_VFP_STATE, (thread_state_t)&m_state.context.vfp, &count);
+
     if (DNBLogEnabledForAny (LOG_THREAD))
     {
         uint32_t *r = &m_state.context.vfp.__r[0];
@@ -308,6 +309,7 @@ DNBArchMachARM::GetVFPState(bool force)
         DNBLogThreaded("  s48=%8.8x s49=%8.8x s50=%8.8x s51=%8.8x s52=%8.8x s53=%8.8x s54=%8.8x s55=%8.8x",r[48],r[49],r[50],r[51],r[52],r[53],r[54],r[55]);
         DNBLogThreaded("  s56=%8.8x s57=%8.8x s58=%8.8x s59=%8.8x s60=%8.8x s61=%8.8x s62=%8.8x s63=%8.8x fpscr=%8.8x",r[56],r[57],r[58],r[59],r[60],r[61],r[62],r[63],r[64]);
     }
+
 #endif
     m_state.SetError(set, Read, kret);
     return kret;
@@ -433,7 +435,27 @@ DNBArchMachARM::SetVFPState()
                        m_state.context.vfp.__fpsr,
                        m_state.context.vfp.__fpcr);
     }
+#else
+    if (DNBLogEnabledForAny (LOG_THREAD))
+    {
+        uint32_t *r = &m_state.context.vfp.__r[0];
+        DNBLogThreaded ("thread_get_state(0x%4.4x, %u, &gpr, %u) => 0x%8.8x (count => %u)",
+                        m_thread->MachPortNumber(), 
+                        ARM_THREAD_STATE, 
+                        ARM_THREAD_STATE_COUNT, 
+                        kret,
+                        count);
+        DNBLogThreaded("   s0=%8.8x  s1=%8.8x  s2=%8.8x  s3=%8.8x  s4=%8.8x  s5=%8.8x  s6=%8.8x  s7=%8.8x",r[ 0],r[ 1],r[ 2],r[ 3],r[ 4],r[ 5],r[ 6],r[ 7]);
+        DNBLogThreaded("   s8=%8.8x  s9=%8.8x s10=%8.8x s11=%8.8x s12=%8.8x s13=%8.8x s14=%8.8x s15=%8.8x",r[ 8],r[ 9],r[10],r[11],r[12],r[13],r[14],r[15]);
+        DNBLogThreaded("  s16=%8.8x s17=%8.8x s18=%8.8x s19=%8.8x s20=%8.8x s21=%8.8x s22=%8.8x s23=%8.8x",r[16],r[17],r[18],r[19],r[20],r[21],r[22],r[23]);
+        DNBLogThreaded("  s24=%8.8x s25=%8.8x s26=%8.8x s27=%8.8x s28=%8.8x s29=%8.8x s30=%8.8x s31=%8.8x",r[24],r[25],r[26],r[27],r[28],r[29],r[30],r[31]);
+        DNBLogThreaded("  s32=%8.8x s33=%8.8x s34=%8.8x s35=%8.8x s36=%8.8x s37=%8.8x s38=%8.8x s39=%8.8x",r[32],r[33],r[34],r[35],r[36],r[37],r[38],r[39]);
+        DNBLogThreaded("  s40=%8.8x s41=%8.8x s42=%8.8x s43=%8.8x s44=%8.8x s45=%8.8x s46=%8.8x s47=%8.8x",r[40],r[41],r[42],r[43],r[44],r[45],r[46],r[47]);
+        DNBLogThreaded("  s48=%8.8x s49=%8.8x s50=%8.8x s51=%8.8x s52=%8.8x s53=%8.8x s54=%8.8x s55=%8.8x",r[48],r[49],r[50],r[51],r[52],r[53],r[54],r[55]);
+        DNBLogThreaded("  s56=%8.8x s57=%8.8x s58=%8.8x s59=%8.8x s60=%8.8x s61=%8.8x s62=%8.8x s63=%8.8x fpscr=%8.8x",r[56],r[57],r[58],r[59],r[60],r[61],r[62],r[63],r[64]);
+    }
 #endif
+
     m_state.SetError(set, Write, kret);         // Set the current write error for this register set
     m_state.InvalidateRegisterSetState(set);    // Invalidate the current register state in case registers are read back differently
     return kret;                                // Return the error code
