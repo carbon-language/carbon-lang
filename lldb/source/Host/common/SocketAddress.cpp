@@ -21,6 +21,56 @@
 // Other libraries and framework includes
 // Project includes
 
+// WindowsXP needs an inet_ntop implementation
+#ifdef _WIN32
+
+#ifndef INET6_ADDRSTRLEN // might not be defined in older Windows SDKs
+#define INET6_ADDRSTRLEN 46
+#endif
+
+// TODO: implement shortened form "::" for runs of zeros
+const char* inet_ntop(int af, const void * src,
+                      char * dst, socklen_t size)
+{
+    if (size==0)
+    {
+        return nullptr;
+    }
+    
+    switch (af)
+    {
+        case AF_INET:
+        {
+            const char* formatted = inet_ntoa(*static_cast<const in_addr*>(src));
+            if (formatted && strlen(formatted) < size)
+            {
+                strncpy(dst, formatted, size);
+                return dst;
+            }
+            return nullptr;
+        case AF_INET6:
+            {
+                char tmp[INET6_ADDRSTRLEN] = {0};
+                const uint16_t* src16 = static_cast<const uint16_t*>(src);
+                int full_size = _snprintf(tmp, sizeof(tmp),
+                                          "%x:%x:%x:%x:%x:%x:%x:%x",
+                                          ntohs(src16[0]), ntohs(src16[1]), ntohs(src16[2]), ntohs(src16[3]),
+                                          ntohs(src16[4]), ntohs(src16[5]), ntohs(src16[6]), ntohs(src16[7])
+                                          );
+                if (full_size < size)
+                {
+                    strncpy(dst,tmp,size);
+                    return dst;
+                }
+                return nullptr;
+            }
+        }
+        return nullptr;
+    }
+    
+#endif
+    
+
 using namespace lldb_private;
 
 //----------------------------------------------------------------------
@@ -122,6 +172,26 @@ SocketAddress::SetFamily (sa_family_t family)
 #if defined(__APPLE__) || defined(__FreeBSD__) || defined(__NetBSD__)
     m_socket_addr.sa.sa_len = GetFamilyLength (family);
 #endif
+}
+
+std::string
+SocketAddress::GetIPAddress () const
+{
+    char str[INET6_ADDRSTRLEN] = {0};
+    switch (GetFamily())
+    {
+        case AF_INET:
+            if (inet_ntop(GetFamily(), &m_socket_addr.sa_ipv4.sin_addr, str, sizeof(str)))
+            {
+                return str;
+            }
+        case AF_INET6:
+            if (inet_ntop(GetFamily(), &m_socket_addr.sa_ipv6.sin6_addr, str, sizeof(str)))
+            {
+                return str;
+            }
+    }
+    return "";
 }
 
 uint16_t

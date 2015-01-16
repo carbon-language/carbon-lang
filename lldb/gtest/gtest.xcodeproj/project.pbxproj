@@ -12,6 +12,10 @@
 		236ED33619D490B0008CA7D7 /* Makefile.rules */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = Makefile.rules; sourceTree = "<group>"; };
 		33064C981A5C7A1A0033D415 /* UriParserTest.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = UriParserTest.cpp; path = Utility/UriParserTest.cpp; sourceTree = "<group>"; };
 		33064C9D1A5C7AC90033D415 /* do-gtest.py */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.python; path = "do-gtest.py"; sourceTree = "<group>"; };
+		330E475C1A609CF600FD2884 /* Makefile */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.make; name = Makefile; path = Host/Makefile; sourceTree = "<group>"; };
+		330E475D1A609CF600FD2884 /* SocketTest.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SocketTest.cpp; path = Host/SocketTest.cpp; sourceTree = "<group>"; };
+		330E475E1A60B31F00FD2884 /* SocketTestMock.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SocketTestMock.cpp; path = Host/SocketTestMock.cpp; sourceTree = "<group>"; };
+		330E47621A62451800FD2884 /* SocketAddressTest.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = SocketAddressTest.cpp; path = Host/SocketAddressTest.cpp; sourceTree = "<group>"; };
 		338C47F41A1E67B900B46077 /* Makefile */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.make; name = Makefile; path = Utility/Makefile; sourceTree = "<group>"; };
 		338C47F51A1E67B900B46077 /* StringExtractorTest.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = StringExtractorTest.cpp; path = Utility/StringExtractorTest.cpp; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -20,6 +24,7 @@
 		236ED32F19D4901D008CA7D7 /* unittest */ = {
 			isa = PBXGroup;
 			children = (
+				330E475B1A609CDF00FD2884 /* Host */,
 				338C47F31A1E677900B46077 /* Utility */,
 				236ED33019D4903E008CA7D7 /* Plugins */,
 			);
@@ -66,6 +71,17 @@
 				236ED33519D49098008CA7D7 /* make */,
 				236ED32F19D4901D008CA7D7 /* unittest */,
 			);
+			sourceTree = "<group>";
+		};
+		330E475B1A609CDF00FD2884 /* Host */ = {
+			isa = PBXGroup;
+			children = (
+				330E475E1A60B31F00FD2884 /* SocketTestMock.cpp */,
+				330E475C1A609CF600FD2884 /* Makefile */,
+				330E475D1A609CF600FD2884 /* SocketTest.cpp */,
+				330E47621A62451800FD2884 /* SocketAddressTest.cpp */,
+			);
+			name = Host;
 			sourceTree = "<group>";
 		};
 		338C47F31A1E677900B46077 /* Utility */ = {

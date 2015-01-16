@@ -31,6 +31,7 @@ typedef ADDRESS_FAMILY sa_family_t;
 // C++ Includes
 // Other libraries and framework includes
 // Project includes
+#include <string>
 
 namespace lldb_private {
 
@@ -98,6 +99,12 @@ public:
     //------------------------------------------------------------------
     void
     SetFamily (sa_family_t family);
+
+    //------------------------------------------------------------------
+    // Get the address
+    //------------------------------------------------------------------
+    std::string
+    GetIPAddress () const;
 
     //------------------------------------------------------------------
     // Get the port if the socket address for the family has a port
