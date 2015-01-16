@@ -381,13 +381,253 @@ static PrototypeAST *ParseExtern() {
 }
 
 //===----------------------------------------------------------------------===//
+// Quick and dirty hack
+//===----------------------------------------------------------------------===//
+
+// FIXME: Obviously we can do better than this
+std::string GenerateUniqueName(const char *root)
+{
+  static int i = 0;
+  char s[16];
+  sprintf(s, "%s%d", root, i++);
+  std::string S = s;
+  return S;
+}
+
+std::string MakeLegalFunctionName(std::string Name)
+{
+  std::string NewName;
+  if (!Name.length())
+      return GenerateUniqueName("anon_func_");
+
+  // Start with what we have
+  NewName = Name;
+
+  // Look for a numberic first character
+  if (NewName.find_first_of("0123456789") == 0) {
+    NewName.insert(0, 1, 'n');
+  }
+
+  // Replace illegal characters with their ASCII equivalent
+  std::string legal_elements = "_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  size_t pos;
+  while ((pos = NewName.find_first_not_of(legal_elements)) != std::string::npos) {
+    char old_c = NewName.at(pos);
+    char new_str[16];
+    sprintf(new_str, "%d", (int)old_c);
+    NewName = NewName.replace(pos, 1, new_str);
+  }
+
+  return NewName;
+}
+
+//===----------------------------------------------------------------------===//
+// MCJIT helper class
+//===----------------------------------------------------------------------===//
+
+class MCJITHelper
+{
+public:
+  MCJITHelper(LLVMContext& C) : Context(C), OpenModule(NULL) {}
+  ~MCJITHelper();
+
+  Function *getFunction(const std::string FnName);
+  Module *getModuleForNewFunction();
+  void *getPointerToFunction(Function* F);
+  void *getSymbolAddress(const std::string &Name);
+  void dump();
+
+private:
+  typedef std::vector<Module*> ModuleVector;
+  typedef std::vector<ExecutionEngine*> EngineVector;
+
+  LLVMContext  &Context;
+  Module       *OpenModule;
+  ModuleVector  Modules;
+  EngineVector  Engines;
+};
+
+class HelpingMemoryManager : public SectionMemoryManager
+{
+  HelpingMemoryManager(const HelpingMemoryManager&) LLVM_DELETED_FUNCTION;
+  void operator=(const HelpingMemoryManager&) LLVM_DELETED_FUNCTION;
+
+public:
+  HelpingMemoryManager(MCJITHelper *Helper) : MasterHelper(Helper) {}
+  virtual ~HelpingMemoryManager() {}
+
+  /// This method returns the address of the specified symbol.
+  /// Our implementation will attempt to find symbols in other
+  /// modules associated with the MCJITHelper to cross link symbols
+  /// from one generated module to another.
+  virtual uint64_t getSymbolAddress(const std::string &Name) override;
+private:
+  MCJITHelper *MasterHelper;
+};
+
+uint64_t HelpingMemoryManager::getSymbolAddress(const std::string &Name)
+{
+  uint64_t FnAddr = SectionMemoryManager::getSymbolAddress(Name);
+  if (FnAddr)
+    return FnAddr;
+
+  uint64_t HelperFun = (uint64_t) MasterHelper->getSymbolAddress(Name);
+  if (!HelperFun)
+    report_fatal_error("Program used extern function '" + Name +
+                       "' which could not be resolved!");
+
+  return HelperFun;
+}
+
+MCJITHelper::~MCJITHelper()
+{
+  if (OpenModule)
+    delete OpenModule;
+  EngineVector::iterator begin = Engines.begin();
+  EngineVector::iterator end = Engines.end();
+  EngineVector::iterator it;
+  for (it = begin; it != end; ++it)
+    delete *it;
+}
+
+Function *MCJITHelper::getFunction(const std::string FnName) {
+  ModuleVector::iterator begin = Modules.begin();
+  ModuleVector::iterator end = Modules.end();
+  ModuleVector::iterator it;
+  for (it = begin; it != end; ++it) {
+    Function *F = (*it)->getFunction(FnName);
+    if (F) {
+      if (*it == OpenModule)
+          return F;
+
+      assert(OpenModule != NULL);
+
+      // This function is in a module that has already been JITed.
+      // We need to generate a new prototype for external linkage.
+      Function *PF = OpenModule->getFunction(FnName);
+      if (PF && !PF->empty()) {
+        ErrorF("redefinition of function across modules");
+        return 0;
+      }
+
+      // If we don't have a prototype yet, create one.
+      if (!PF)
+        PF = Function::Create(F->getFunctionType(), 
+                                      Function::ExternalLinkage, 
+                                      FnName, 
+                                      OpenModule);
+      return PF;
+    }
+  }
+  return NULL;
+}
+
+Module *MCJITHelper::getModuleForNewFunction() {
+  // If we have a Module that hasn't been JITed, use that.
+  if (OpenModule)
+    return OpenModule;
+
+  // Otherwise create a new Module.
+  std::string ModName = GenerateUniqueName("mcjit_module_");
+  Module *M = new Module(ModName, Context);
+  Modules.push_back(M);
+  OpenModule = M;
+  return M;
+}
+
+void *MCJITHelper::getPointerToFunction(Function* F) {
+  // See if an existing instance of MCJIT has this function.
+  EngineVector::iterator begin = Engines.begin();
+  EngineVector::iterator end = Engines.end();
+  EngineVector::iterator it;
+  for (it = begin; it != end; ++it) {
+    void *P = (*it)->getPointerToFunction(F);
+    if (P)
+      return P;
+  }
+
+  // If we didn't find the function, see if we can generate it.
+  if (OpenModule) {
+    std::string ErrStr;
+    ExecutionEngine *NewEngine = EngineBuilder(std::unique_ptr<Module>(OpenModule))
+                                              .setErrorStr(&ErrStr)
+                                              .setMCJITMemoryManager(std::unique_ptr<HelpingMemoryManager>(new HelpingMemoryManager(this)))
+                                              .create();
+    if (!NewEngine) {
+      fprintf(stderr, "Could not create ExecutionEngine: %s\n", ErrStr.c_str());
+      exit(1);
+    }
+
+    // Create a function pass manager for this engine
+    FunctionPassManager *FPM = new FunctionPassManager(OpenModule);
+
+    // Set up the optimizer pipeline.  Start with registering info about how the
+    // target lays out data structures.
+    OpenModule->setDataLayout(NewEngine->getDataLayout());
+    FPM->add(new DataLayoutPass());
+    // Provide basic AliasAnalysis support for GVN.
+    FPM->add(createBasicAliasAnalysisPass());
+    // Promote allocas to registers.
+    FPM->add(createPromoteMemoryToRegisterPass());
+    // Do simple "peephole" optimizations and bit-twiddling optzns.
+    FPM->add(createInstructionCombiningPass());
+    // Reassociate expressions.
+    FPM->add(createReassociatePass());
+    // Eliminate Common SubExpressions.
+    FPM->add(createGVNPass());
+    // Simplify the control flow graph (deleting unreachable blocks, etc).
+    FPM->add(createCFGSimplificationPass());
+    FPM->doInitialization();
+
+    // For each function in the module
+    Module::iterator it;
+    Module::iterator end = OpenModule->end();
+    for (it = OpenModule->begin(); it != end; ++it) {
+      // Run the FPM on this function
+      FPM->run(*it);
+    }
+
+    // We don't need this anymore
+    delete FPM;
+
+    OpenModule = NULL;
+    Engines.push_back(NewEngine);
+    NewEngine->finalizeObject();
+    return NewEngine->getPointerToFunction(F);
+  }
+  return NULL;
+}
+
+void *MCJITHelper::getSymbolAddress(const std::string &Name)
+{
+  // Look for the symbol in each of our execution engines.
+  EngineVector::iterator begin = Engines.begin();
+  EngineVector::iterator end = Engines.end();
+  EngineVector::iterator it;
+  for (it = begin; it != end; ++it) {
+    uint64_t FAddr = (*it)->getFunctionAddress(Name);
+    if (FAddr) {
+       return (void *)FAddr; 
+    }
+  }
+  return NULL;
+}
+
+void MCJITHelper::dump()
+{
+  ModuleVector::iterator begin = Modules.begin();
+  ModuleVector::iterator end = Modules.end();
+  ModuleVector::iterator it;
+  for (it = begin; it != end; ++it)
+    (*it)->dump();
+}
+//===----------------------------------------------------------------------===//
 // Code Generation
 //===----------------------------------------------------------------------===//
 
-static Module *TheModule;
+static MCJITHelper *JITHelper;
 static IRBuilder<> Builder(getGlobalContext());
 static std::map<std::string, Value *> NamedValues;
-static FunctionPassManager *TheFPM;
 
 Value *ErrorV(const char *Str) {
   Error(Str);
@@ -429,7 +669,7 @@ Value *BinaryExprAST::Codegen() {
 
 Value *CallExprAST::Codegen() {
   // Look up the name in the global module table.
-  Function *CalleeF = TheModule->getFunction(Callee);
+  Function *CalleeF = JITHelper->getFunction(Callee);
   if (CalleeF == 0)
     return ErrorV("Unknown function referenced");
 
@@ -454,16 +694,19 @@ Function *PrototypeAST::Codegen() {
   FunctionType *FT =
       FunctionType::get(Type::getDoubleTy(getGlobalContext()), Doubles, false);
 
+  std::string FnName = MakeLegalFunctionName(Name);
+
+  Module *M = JITHelper->getModuleForNewFunction();
+
   Function *F =
-      Function::Create(FT, Function::ExternalLinkage, Name, TheModule);
+      Function::Create(FT, Function::ExternalLinkage, FnName, M);
 
   // If F conflicted, there was already something named 'Name'.  If it has a
   // body, don't allow redefinition or reextern.
-  if (F->getName() != Name) {
+  if (F->getName() != FnName) {
     // Delete the one we just made and get the existing one.
     F->eraseFromParent();
-    F = TheModule->getFunction(Name);
-
+    F = JITHelper->getFunction(Name); 
     // If F already has a body, reject this.
     if (!F->empty()) {
       ErrorF("redefinition of function");
@@ -508,9 +751,6 @@ Function *FunctionAST::Codegen() {
     // Validate the generated code, checking for consistency.
     verifyFunction(*TheFunction);
 
-    // Optimize the function.
-    TheFPM->run(*TheFunction);
-
     return TheFunction;
   }
 
@@ -522,8 +762,6 @@ Function *FunctionAST::Codegen() {
 //===----------------------------------------------------------------------===//
 // Top-Level parsing and JIT Driver
 //===----------------------------------------------------------------------===//
-
-static ExecutionEngine *TheExecutionEngine;
 
 static void HandleDefinition() {
   if (FunctionAST *F = ParseDefinition()) {
@@ -553,9 +791,8 @@ static void HandleTopLevelExpression() {
   // Evaluate a top-level expression into an anonymous function.
   if (FunctionAST *F = ParseTopLevelExpr()) {
     if (Function *LF = F->Codegen()) {
-      TheExecutionEngine->finalizeObject();
       // JIT the function, returning a function pointer.
-      void *FPtr = TheExecutionEngine->getPointerToFunction(LF);
+      void *FPtr = JITHelper->getPointerToFunction(LF);
 
       // Cast it to the right type (takes no arguments, returns a double) so we
       // can call it as a native function.
@@ -610,6 +847,7 @@ int main() {
   InitializeNativeTargetAsmPrinter();
   InitializeNativeTargetAsmParser();
   LLVMContext &Context = getGlobalContext();
+  JITHelper = new MCJITHelper(Context);
 
   // Install standard binary operators.
   // 1 is lowest precedence.
@@ -622,51 +860,11 @@ int main() {
   fprintf(stderr, "ready> ");
   getNextToken();
 
-  // Make the module, which holds all the code.
-  std::unique_ptr<Module> Owner = make_unique<Module>("my cool jit", Context);
-  TheModule = Owner.get();
-
-  // Create the JIT.  This takes ownership of the module.
-  std::string ErrStr;
-  TheExecutionEngine =
-      EngineBuilder(std::move(Owner))
-          .setErrorStr(&ErrStr)
-          .setMCJITMemoryManager(llvm::make_unique<SectionMemoryManager>())
-          .create();
-  if (!TheExecutionEngine) {
-    fprintf(stderr, "Could not create ExecutionEngine: %s\n", ErrStr.c_str());
-    exit(1);
-  }
-
-  FunctionPassManager OurFPM(TheModule);
-
-  // Set up the optimizer pipeline.  Start with registering info about how the
-  // target lays out data structures.
-  TheModule->setDataLayout(TheExecutionEngine->getDataLayout());
-  OurFPM.add(new DataLayoutPass());
-  // Provide basic AliasAnalysis support for GVN.
-  OurFPM.add(createBasicAliasAnalysisPass());
-  // Do simple "peephole" optimizations and bit-twiddling optzns.
-  OurFPM.add(createInstructionCombiningPass());
-  // Reassociate expressions.
-  OurFPM.add(createReassociatePass());
-  // Eliminate Common SubExpressions.
-  OurFPM.add(createGVNPass());
-  // Simplify the control flow graph (deleting unreachable blocks, etc).
-  OurFPM.add(createCFGSimplificationPass());
-
-  OurFPM.doInitialization();
-
-  // Set the global so the code gen can use this.
-  TheFPM = &OurFPM;
-
   // Run the main "interpreter loop" now.
   MainLoop();
 
-  TheFPM = 0;
-
   // Print out all of the generated code.
-  TheModule->dump();
+  JITHelper->dump();
 
   return 0;
 }
