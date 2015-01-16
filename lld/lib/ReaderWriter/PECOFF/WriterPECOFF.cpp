@@ -250,6 +250,9 @@ private:
 /// An AtomChunk represents a section containing atoms.
 class AtomChunk : public SectionChunk {
 public:
+  typedef std::pair<uint64_t, llvm::COFF::BaseRelocationType> BaseRelocation;
+  typedef std::vector<BaseRelocation> BaseRelocationList;
+
   AtomChunk(const PECOFFLinkingContext &ctx, StringRef name,
             const std::vector<const DefinedAtom *> &atoms);
 
@@ -273,7 +276,7 @@ public:
                            uint64_t imageBaseAddress);
 
   void printAtomAddresses(uint64_t baseAddr) const;
-  void addBaseRelocations(std::vector<uint64_t> &relocSites) const;
+  void addBaseRelocations(BaseRelocationList &relocSites) const;
 
   void setVirtualAddress(uint32_t rva) override;
   uint64_t getAtomVirtualAddress(StringRef name) const;
@@ -335,9 +338,12 @@ private:
 /// executable.
 class BaseRelocChunk : public SectionChunk {
   typedef std::vector<std::unique_ptr<Chunk> > ChunkVectorT;
-  typedef std::map<uint64_t, std::vector<uint16_t> > PageOffsetT;
 
 public:
+  typedef std::pair<uint16_t, llvm::COFF::BaseRelocationType> BaseRelocation;
+  typedef std::vector<BaseRelocation> BaseRelocations;
+  typedef std::map<uint64_t, BaseRelocations> RelocationBlocks;
+
   BaseRelocChunk(ChunkVectorT &chunks, const PECOFFLinkingContext &ctx)
       : SectionChunk(kindSection, ".reloc", characteristics, ctx),
         _ctx(ctx), _contents(createContents(chunks)) {}
@@ -359,15 +365,15 @@ private:
 
   // Returns a list of RVAs that needs to be relocated if the binary is loaded
   // at an address different from its preferred one.
-  std::vector<uint64_t> listRelocSites(ChunkVectorT &chunks) const;
+  AtomChunk::BaseRelocationList listRelocSites(ChunkVectorT &chunks) const;
 
   // Divide the given RVAs into blocks.
-  PageOffsetT groupByPage(const std::vector<uint64_t> &relocSites) const;
+  RelocationBlocks
+  groupByPage(const AtomChunk::BaseRelocationList &relocSites) const;
 
   // Create the content of a relocation block.
   std::vector<uint8_t>
-  createBaseRelocBlock(uint64_t pageAddr,
-                       const std::vector<uint16_t> &offsets) const;
+  createBaseRelocBlock(uint64_t pageAddr, const BaseRelocations &relocs) const;
 
   const PECOFFLinkingContext &_ctx;
   std::vector<uint8_t> _contents;
@@ -755,33 +761,36 @@ void AtomChunk::printAtomAddresses(uint64_t baseAddr) const {
 /// to be fixed up if image base is relocated. The only relocation type that
 /// needs to be fixed is DIR32 on i386. REL32 is not (and should not be)
 /// fixed up because it's PC-relative.
-void AtomChunk::addBaseRelocations(std::vector<uint64_t> &relocSites) const {
-  // TODO: llvm-objdump doesn't support parsing the base relocation table, so
-  // we can't really test this at the moment. As a temporary solution, we
-  // should output debug messages with atom names and addresses so that we
-  // can inspect relocations, and fix the tests (base-reloc.test, maybe
-  // others) to use those messages.
-
-  int16_t relType = 0; /* IMAGE_REL_*_ABSOLUTE */
-  switch (_machineType) {
-  default: llvm_unreachable("unsupported machine type");
-  case llvm::COFF::IMAGE_FILE_MACHINE_I386:
-    relType = llvm::COFF::IMAGE_REL_I386_DIR32;
-    break;
-  case llvm::COFF::IMAGE_FILE_MACHINE_AMD64:
-    relType = llvm::COFF::IMAGE_REL_AMD64_ADDR64;
-    break;
-  case llvm::COFF::IMAGE_FILE_MACHINE_ARMNT:
-    relType = llvm::COFF::IMAGE_REL_ARM_ADDR32;
-    break;
-  }
-
+void AtomChunk::addBaseRelocations(BaseRelocationList &relocSites) const {
   for (const auto *layout : _atomLayouts) {
     const DefinedAtom *atom = cast<DefinedAtom>(layout->_atom);
-    for (const Reference *ref : *atom)
-      if ((ref->kindNamespace() == Reference::KindNamespace::COFF) &&
-          (ref->kindValue() == relType))
-        relocSites.push_back(layout->_virtualAddr + ref->offsetInAtom());
+    for (const Reference *ref : *atom) {
+      if (ref->kindNamespace() != Reference::KindNamespace::COFF)
+        continue;
+
+      uint64_t address = layout->_virtualAddr + ref->offsetInAtom();
+      switch (_machineType) {
+      default: llvm_unreachable("unsupported machine type");
+      case llvm::COFF::IMAGE_FILE_MACHINE_I386:
+        if (ref->kindValue() == llvm::COFF::IMAGE_REL_I386_DIR32)
+          relocSites.push_back(
+              std::make_pair(address, llvm::COFF::IMAGE_REL_BASED_HIGHLOW));
+        break;
+      case llvm::COFF::IMAGE_FILE_MACHINE_AMD64:
+        if (ref->kindValue() == llvm::COFF::IMAGE_REL_AMD64_ADDR64)
+          relocSites.push_back(
+              std::make_pair(address, llvm::COFF::IMAGE_REL_BASED_DIR64));
+        break;
+      case llvm::COFF::IMAGE_FILE_MACHINE_ARMNT:
+        if (ref->kindValue() == llvm::COFF::IMAGE_REL_ARM_ADDR32)
+          relocSites.push_back(
+              std::make_pair(address, llvm::COFF::IMAGE_REL_BASED_HIGHLOW));
+        else if (ref->kindValue() == llvm::COFF::IMAGE_REL_ARM_MOV32T)
+          relocSites.push_back(
+              std::make_pair(address, llvm::COFF::IMAGE_REL_BASED_ARM_MOV32T));
+        break;
+      }
+    }
   }
 }
 
@@ -925,12 +934,12 @@ SectionHeaderTableChunk::createSectionHeader(SectionChunk *chunk) {
 std::vector<uint8_t>
 BaseRelocChunk::createContents(ChunkVectorT &chunks) const {
   std::vector<uint8_t> contents;
-  std::vector<uint64_t> relocSites = listRelocSites(chunks);
-  PageOffsetT blocks = groupByPage(relocSites);
+  AtomChunk::BaseRelocationList relocSites = listRelocSites(chunks);
+  RelocationBlocks blocks = groupByPage(relocSites);
   for (auto &i : blocks) {
     uint64_t pageAddr = i.first;
-    const std::vector<uint16_t> &offsetsInPage = i.second;
-    std::vector<uint8_t> block = createBaseRelocBlock(pageAddr, offsetsInPage);
+    const BaseRelocations &relocs = i.second;
+    std::vector<uint8_t> block = createBaseRelocBlock(pageAddr, relocs);
     contents.insert(contents.end(), block.begin(), block.end());
   }
   return contents;
@@ -938,9 +947,9 @@ BaseRelocChunk::createContents(ChunkVectorT &chunks) const {
 
 // Returns a list of RVAs that needs to be relocated if the binary is loaded
 // at an address different from its preferred one.
-std::vector<uint64_t>
+AtomChunk::BaseRelocationList
 BaseRelocChunk::listRelocSites(ChunkVectorT &chunks) const {
-  std::vector<uint64_t> ret;
+  AtomChunk::BaseRelocationList ret;
   for (auto &cp : chunks)
     if (AtomChunk *chunk = dyn_cast<AtomChunk>(&*cp))
       chunk->addBaseRelocations(ret);
@@ -948,22 +957,24 @@ BaseRelocChunk::listRelocSites(ChunkVectorT &chunks) const {
 }
 
 // Divide the given RVAs into blocks.
-BaseRelocChunk::PageOffsetT
-BaseRelocChunk::groupByPage(const std::vector<uint64_t> &relocSites) const {
-  PageOffsetT blocks;
+BaseRelocChunk::RelocationBlocks BaseRelocChunk::groupByPage(
+    const AtomChunk::BaseRelocationList &relocSites) const {
+  RelocationBlocks blocks;
   uint64_t mask = _ctx.getPageSize() - 1;
-  for (uint64_t addr : relocSites)
-    blocks[addr & ~mask].push_back(addr & mask);
+  for (const auto &reloc : relocSites)
+    blocks[reloc.first & ~mask].push_back(
+        std::make_pair(reloc.first & mask, reloc.second));
   return blocks;
 }
 
 // Create the content of a relocation block.
-std::vector<uint8_t> BaseRelocChunk::createBaseRelocBlock(
-    uint64_t pageAddr, const std::vector<uint16_t> &offsets) const {
+std::vector<uint8_t>
+BaseRelocChunk::createBaseRelocBlock(uint64_t pageAddr,
+                                     const BaseRelocations &relocs) const {
   // Relocation blocks should be padded with IMAGE_REL_I386_ABSOLUTE to be
   // aligned to a DWORD size boundary.
   uint32_t size = llvm::RoundUpToAlignment(
-      sizeof(ulittle32_t) * 2 + sizeof(ulittle16_t) * offsets.size(),
+      sizeof(ulittle32_t) * 2 + sizeof(ulittle16_t) * relocs.size(),
       sizeof(ulittle32_t));
   std::vector<uint8_t> contents(size);
   uint8_t *ptr = &contents[0];
@@ -977,12 +988,9 @@ std::vector<uint8_t> BaseRelocChunk::createBaseRelocBlock(
   *reinterpret_cast<ulittle32_t *>(ptr) = size;
   ptr += sizeof(ulittle32_t);
 
-  // The rest of the block consists of offsets in the page.
-  uint16_t type = _ctx.is64Bit() ? llvm::COFF::IMAGE_REL_BASED_DIR64
-                                 : llvm::COFF::IMAGE_REL_BASED_HIGHLOW;
-  for (uint16_t offset : offsets) {
-    assert(offset < _ctx.getPageSize());
-    *reinterpret_cast<ulittle16_t *>(ptr) = (type << 12) | offset;
+  for (const auto &reloc : relocs) {
+    assert(reloc.first < _ctx.getPageSize());
+    *reinterpret_cast<ulittle16_t *>(ptr) = (reloc.second << 12) | reloc.first;
     ptr += sizeof(ulittle16_t);
   }
   return contents;
