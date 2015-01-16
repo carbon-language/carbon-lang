@@ -238,9 +238,9 @@ public:
   bool hasMTHC1() const { return hasMips32r2(); }
 
   bool allowMixed16_32() const { return inMips16ModeDefault() |
-                                        AllowMixed16_32;}
+                                        AllowMixed16_32; }
 
-  bool os16() const { return Os16;};
+  bool os16() const { return Os16; }
 
   bool isTargetNaCl() const { return TargetTriple.isOSNaCl(); }
 
