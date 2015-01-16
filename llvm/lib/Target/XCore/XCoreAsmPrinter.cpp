@@ -105,7 +105,6 @@ void XCoreAsmPrinter::emitArrayBound(MCSymbol *Sym, const GlobalVariable *GV) {
                                                       OutContext));
     if (GV->hasWeakLinkage() || GV->hasLinkOnceLinkage() ||
         GV->hasCommonLinkage()) {
-      // TODO Use COMDAT groups for LinkOnceLinkage
       OutStreamer.EmitSymbolAttribute(SymGlob, MCSA_Weak);
     }
   }
@@ -140,7 +139,6 @@ void XCoreAsmPrinter::EmitGlobalVariable(const GlobalVariable *GV) {
     emitArrayBound(GVSym, GV);
     OutStreamer.EmitSymbolAttribute(GVSym, MCSA_Global);
 
-    // TODO Use COMDAT groups for LinkOnceLinkage
     if (GV->hasWeakLinkage() || GV->hasLinkOnceLinkage() ||
         GV->hasCommonLinkage())
       OutStreamer.EmitSymbolAttribute(GVSym, MCSA_Weak);

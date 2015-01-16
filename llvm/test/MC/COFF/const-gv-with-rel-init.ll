@@ -8,4 +8,4 @@ define void @f() {
 ; CHECK:  .section  .CRT$XLB,"rd"
 
 @weak_array = weak_odr unnamed_addr constant [1 x i8*] [i8* bitcast (void ()* @f to i8*)]
-; CHECK:  .section  .rdata,"rd",discard,weak_array
+; CHECK:  .section  .rdata,"rd"

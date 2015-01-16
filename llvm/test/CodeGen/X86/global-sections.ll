@@ -85,7 +85,6 @@ define void @F1() {
 @"foo bar" = linkonce global i32 42
 
 ; LINUX: .type  "foo bar",@object
-; LINUX: .section ".data.foo bar","aGw",@progbits,"foo bar",comdat
 ; LINUX: .weak  "foo bar"
 ; LINUX: "foo bar":
 
@@ -98,7 +97,6 @@ define void @F1() {
 @G6 = weak_odr unnamed_addr constant [1 x i8] c"\01"
 
 ; LINUX:   .type        G6,@object
-; LINUX:   .section     .rodata.G6,"aG",@progbits,G6,comdat
 ; LINUX:   .weak        G6
 ; LINUX: G6:
 ; LINUX:   .byte        1

@@ -17,19 +17,16 @@ define dllexport void @f2() unnamed_addr {
 	ret void
 }
 
-; CHECK: .section .text,"xr",discard,lnk1
 ; CHECK: .globl lnk1
 define linkonce_odr dllexport void @lnk1() {
 	ret void
 }
 
-; CHECK: .section .text,"xr",discard,lnk2
 ; CHECK: .globl lnk2
 define linkonce_odr dllexport void @lnk2() alwaysinline {
 	ret void
 }
 
-; CHECK: .section .text,"xr",discard,weak1
 ; CHECK: .globl weak1
 define weak_odr dllexport void @weak1() {
 	ret void
@@ -47,11 +44,9 @@ define weak_odr dllexport void @weak1() {
 ; CHECK: .comm Var3
 @Var3 = common dllexport global i32 0, align 4
 
-; CHECK: .section .data,"wd",discard,WeakVar1
 ; CHECK: .globl WeakVar1
 @WeakVar1 = weak_odr dllexport global i32 1, align 4
 
-; CHECK: .section .rdata,"rd",discard,WeakVar2
 ; CHECK: .globl WeakVar2
 @WeakVar2 = weak_odr dllexport unnamed_addr constant i32 1
 

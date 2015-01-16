@@ -16,7 +16,7 @@ entry:
   ret void
 }
 
-; CHECK: .section .text.test3,"axG",%progbits,test3,comdat
+; CHECK: .text
 ; CHECK: .weak test3
 ; CHECK: .type test3,%function
 define linkonce_odr void @test3() {
