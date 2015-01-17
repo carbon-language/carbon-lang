@@ -191,17 +191,17 @@ bool CodePreparation::eliminatePHINodes(Function &F) {
 }
 
 void CodePreparation::getAnalysisUsage(AnalysisUsage &AU) const {
-  AU.addRequired<LoopInfo>();
+  AU.addRequired<LoopInfoWrapperPass>();
   AU.addRequired<ScalarEvolution>();
 
-  AU.addPreserved<LoopInfo>();
+  AU.addPreserved<LoopInfoWrapperPass>();
   AU.addPreserved<RegionInfoPass>();
   AU.addPreserved<DominatorTreeWrapperPass>();
   AU.addPreserved<DominanceFrontier>();
 }
 
 bool CodePreparation::runOnFunction(Function &F) {
-  LI = &getAnalysis<LoopInfo>();
+  LI = &getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
   SE = &getAnalysis<ScalarEvolution>();
 
   splitEntryBlockForAlloca(&F.getEntryBlock(), this);
@@ -222,6 +222,6 @@ Pass *polly::createCodePreparationPass() { return new CodePreparation(); }
 
 INITIALIZE_PASS_BEGIN(CodePreparation, "polly-prepare",
                       "Polly - Prepare code for polly", false, false)
-INITIALIZE_PASS_DEPENDENCY(LoopInfo)
+INITIALIZE_PASS_DEPENDENCY(LoopInfoWrapperPass)
 INITIALIZE_PASS_END(CodePreparation, "polly-prepare",
                     "Polly - Prepare code for polly", false, false)

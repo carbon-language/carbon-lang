@@ -336,7 +336,7 @@ bool TempScopInfo::runOnFunction(Function &F) {
   DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
   PDT = &getAnalysis<PostDominatorTree>();
   SE = &getAnalysis<ScalarEvolution>();
-  LI = &getAnalysis<LoopInfo>();
+  LI = &getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
   SD = &getAnalysis<ScopDetection>();
   AA = &getAnalysis<AliasAnalysis>();
   TD = &getAnalysis<DataLayoutPass>().getDataLayout();
@@ -356,7 +356,7 @@ void TempScopInfo::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addRequired<DataLayoutPass>();
   AU.addRequiredTransitive<DominatorTreeWrapperPass>();
   AU.addRequiredTransitive<PostDominatorTree>();
-  AU.addRequiredTransitive<LoopInfo>();
+  AU.addRequiredTransitive<LoopInfoWrapperPass>();
   AU.addRequiredTransitive<ScalarEvolution>();
   AU.addRequiredTransitive<ScopDetection>();
   AU.addRequiredID(IndependentBlocksID);
@@ -384,7 +384,7 @@ INITIALIZE_PASS_BEGIN(TempScopInfo, "polly-analyze-ir",
                       false, false);
 INITIALIZE_AG_DEPENDENCY(AliasAnalysis);
 INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass);
-INITIALIZE_PASS_DEPENDENCY(LoopInfo);
+INITIALIZE_PASS_DEPENDENCY(LoopInfoWrapperPass);
 INITIALIZE_PASS_DEPENDENCY(PostDominatorTree);
 INITIALIZE_PASS_DEPENDENCY(RegionInfoPass);
 INITIALIZE_PASS_DEPENDENCY(ScalarEvolution);

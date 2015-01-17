@@ -26,7 +26,7 @@ BasicBlock *polly::executeScopConditionally(Scop &S, Pass *P, Value *RTC) {
   PollyIRBuilder Builder(R.getEntry());
   DominatorTree &DT = P->getAnalysis<DominatorTreeWrapperPass>().getDomTree();
   RegionInfo &RI = P->getAnalysis<RegionInfoPass>().getRegionInfo();
-  LoopInfo &LI = P->getAnalysis<LoopInfo>();
+  LoopInfo &LI = P->getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
 
   // Split the entry edge of the region and generate a new basic block on this
   // edge. This function also updates ScopInfo and RegionInfo.

@@ -214,8 +214,8 @@ void BlockGenerator::copyInstruction(const Instruction *Inst, ValueMapT &BBMap,
   if (Inst->isTerminator())
     return;
 
-  if (canSynthesize(Inst, &P->getAnalysis<LoopInfo>(), &SE,
-                    &Statement.getParent()->getRegion()))
+  if (canSynthesize(Inst, &P->getAnalysis<LoopInfoWrapperPass>().getLoopInfo(),
+                    &SE, &Statement.getParent()->getRegion()))
     return;
 
   if (const LoadInst *Load = dyn_cast<LoadInst>(Inst)) {
@@ -539,8 +539,8 @@ void VectorBlockGenerator::copyInstruction(const Instruction *Inst,
   if (Inst->isTerminator())
     return;
 
-  if (canSynthesize(Inst, &P->getAnalysis<LoopInfo>(), &SE,
-                    &Statement.getParent()->getRegion()))
+  if (canSynthesize(Inst, &P->getAnalysis<LoopInfoWrapperPass>().getLoopInfo(),
+                    &SE, &Statement.getParent()->getRegion()))
     return;
 
   if (const LoadInst *Load = dyn_cast<LoadInst>(Inst)) {

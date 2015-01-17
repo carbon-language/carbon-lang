@@ -498,8 +498,8 @@ void IndependentBlocks::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addPreserved<PostDominatorTree>();
   AU.addRequired<RegionInfoPass>();
   AU.addPreserved<RegionInfoPass>();
-  AU.addRequired<LoopInfo>();
-  AU.addPreserved<LoopInfo>();
+  AU.addRequired<LoopInfoWrapperPass>();
+  AU.addPreserved<LoopInfoWrapperPass>();
   AU.addRequired<ScalarEvolution>();
   AU.addPreserved<ScalarEvolution>();
   AU.addRequired<ScopDetection>();
@@ -510,7 +510,7 @@ bool IndependentBlocks::runOnFunction(llvm::Function &F) {
   bool Changed = false;
 
   RI = &getAnalysis<RegionInfoPass>().getRegionInfo();
-  LI = &getAnalysis<LoopInfo>();
+  LI = &getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
   SD = &getAnalysis<ScopDetection>();
   SE = &getAnalysis<ScalarEvolution>();
 
@@ -555,7 +555,7 @@ Pass *polly::createIndependentBlocksPass() { return new IndependentBlocks(); }
 
 INITIALIZE_PASS_BEGIN(IndependentBlocks, "polly-independent",
                       "Polly - Create independent blocks", false, false);
-INITIALIZE_PASS_DEPENDENCY(LoopInfo);
+INITIALIZE_PASS_DEPENDENCY(LoopInfoWrapperPass);
 INITIALIZE_PASS_DEPENDENCY(RegionInfoPass);
 INITIALIZE_PASS_DEPENDENCY(ScalarEvolution);
 INITIALIZE_PASS_DEPENDENCY(ScopDetection);
