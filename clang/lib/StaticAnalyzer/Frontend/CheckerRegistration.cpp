@@ -125,7 +125,7 @@ ento::createCheckerManager(AnalyzerOptions &opts, const LangOptions &langOpts,
 
   }
 
-  return std::move(checkerMgr);
+  return checkerMgr;
 }
 
 void ento::printCheckerHelp(raw_ostream &out, ArrayRef<std::string> plugins) {
