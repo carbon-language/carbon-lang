@@ -699,12 +699,14 @@ void LoopInfoWrapperPass::verifyAnalysis() const {
   }
 
   // Verify that blocks are mapped to valid loops.
+#ifndef NDEBUG
   for (auto &Entry : LI.LI.BBMap) {
     BasicBlock *BB = Entry.first;
     Loop *L = Entry.second;
     assert(Loops.count(L) && "orphaned loop");
     assert(L->contains(BB) && "orphaned block");
   }
+#endif
 }
 
 void LoopInfoWrapperPass::getAnalysisUsage(AnalysisUsage &AU) const {
