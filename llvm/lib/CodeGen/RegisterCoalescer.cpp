@@ -2345,19 +2345,21 @@ void JoinVals::eraseInstrs(SmallPtrSetImpl<MachineInstr*> &ErasedInstrs,
     // Get the def location before markUnused() below invalidates it.
     SlotIndex Def = LR.getValNumInfo(i)->def;
     switch (Vals[i].Resolution) {
-    case CR_Keep:
+    case CR_Keep: {
       // If an IMPLICIT_DEF value is pruned, it doesn't serve a purpose any
       // longer. The IMPLICIT_DEF instructions are only inserted by
       // PHIElimination to guarantee that all PHI predecessors have a value.
       if (!Vals[i].ErasableImplicitDef || !Vals[i].Pruned)
         break;
-      // Remove value number i from LR. Note that this VNInfo is still present
-      // in NewVNInfo, so it will appear as an unused value number in the final
-      // joined interval.
-      LR.getValNumInfo(i)->markUnused();
-      LR.removeValNo(LR.getValNumInfo(i));
+      // Remove value number i from LR.
+      VNInfo *VNI = LR.getValNumInfo(i);
+      LR.removeValNo(VNI);
+      // Note that this VNInfo is reused and still referenced in NewVNInfo,
+      // make it appear like an unused value number.
+      VNI->markUnused();
       DEBUG(dbgs() << "\t\tremoved " << i << '@' << Def << ": " << LR << '\n');
       // FALL THROUGH.
+    }
 
     case CR_Erase: {
       MachineInstr *MI = Indexes->getInstructionFromIndex(Def);
