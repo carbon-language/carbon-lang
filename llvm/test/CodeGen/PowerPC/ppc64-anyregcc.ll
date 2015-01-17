@@ -26,9 +26,9 @@ target triple = "powerpc64-unknown-linux-gnu"
 ; CHECK-NEXT:   .quad property_access3
 ; CHECK-NEXT:   .quad 128
 ; CHECK-NEXT:   .quad anyreg_test1
-; CHECK-NEXT:   .quad 160
+; CHECK-NEXT:   .quad 144
 ; CHECK-NEXT:   .quad anyreg_test2
-; CHECK-NEXT:   .quad 160
+; CHECK-NEXT:   .quad 144
 ; CHECK-NEXT:   .quad patchpoint_spilldef
 ; CHECK-NEXT:   .quad 256
 ; CHECK-NEXT:   .quad patchpoint_spillargs

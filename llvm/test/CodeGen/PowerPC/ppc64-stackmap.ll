@@ -36,7 +36,7 @@ target triple = "powerpc64-unknown-linux-gnu"
 ; CHECK-NEXT:   .quad jsIntCall
 ; CHECK-NEXT:   .quad 128
 ; CHECK-NEXT:   .quad spilledValue
-; CHECK-NEXT:   .quad 320
+; CHECK-NEXT:   .quad 304
 ; CHECK-NEXT:   .quad spilledStackMapValue
 ; CHECK-NEXT:   .quad 224
 ; CHECK-NEXT:   .quad liveConstant
