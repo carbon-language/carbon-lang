@@ -633,7 +633,8 @@ FormatDiagnostic(const char *DiagStr, const char *DiagEnd,
   // When the diagnostic string is only "%0", the entire string is being given
   // by an outside source.  Remove unprintable characters from this string
   // and skip all the other string processing.
-  if (DiagEnd - DiagStr == 2 && DiagStr[0] == '%' && DiagStr[1] == '0' &&
+  if (DiagEnd - DiagStr == 2 &&
+      StringRef(DiagStr, DiagEnd - DiagStr).equals("%0") &&
       getArgKind(0) == DiagnosticsEngine::ak_std_string) {
     const std::string &S = getArgStdStr(0);
     for (char c : S) {
