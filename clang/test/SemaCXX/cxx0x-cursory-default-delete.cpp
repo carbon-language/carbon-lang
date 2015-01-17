@@ -42,6 +42,16 @@ struct bad_decls {
   bad_decls& operator = (const bad_decls&) const = default; // expected-error {{may not have 'const', 'constexpr' or 'volatile' qualifiers}}
 };
 
+struct DefaultDelete {
+  DefaultDelete() = default; // expected-note {{previous declaration is here}}
+  DefaultDelete() = delete; // expected-error {{constructor cannot be redeclared}}
+};
+
+struct DeleteDefault {
+  DeleteDefault() = delete; // expected-note {{previous definition is here}}
+  DeleteDefault() = default; // expected-error {{constructor cannot be redeclared}}
+};
+
 struct A {}; struct B {};
 
 struct except_spec_a {
