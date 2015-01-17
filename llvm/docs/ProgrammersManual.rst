@@ -1408,7 +1408,7 @@ llvm/ADT/IntervalMap.h
 
 IntervalMap is a compact map for small keys and values.  It maps key intervals
 instead of single keys, and it will automatically coalesce adjacent intervals.
-When then map only contains a few intervals, they are stored in the map object
+When the map only contains a few intervals, they are stored in the map object
 itself to avoid allocations.
 
 The IntervalMap iterators are quite big, so they should not be passed around as
