@@ -11347,7 +11347,8 @@ static SDValue simplifyShuffleOperands(ShuffleVectorSDNode *SVN, SDValue N0,
   return DAG.getVectorShuffle(VT, SDLoc(SVN), S0, S1, SVN->getMask());
 }
 
-// Tries to turn a shuffle of two CONCAT_VECTORS into a single concat.
+// Tries to turn a shuffle of two CONCAT_VECTORS into a single concat,
+// or turn a shuffle of a single concat into simpler shuffle then concat.
 static SDValue partitionShuffleOfConcats(SDNode *N, SelectionDAG &DAG) {
   EVT VT = N->getValueType(0);
   unsigned NumElts = VT.getVectorNumElements();
@@ -11360,6 +11361,18 @@ static SDValue partitionShuffleOfConcats(SDNode *N, SelectionDAG &DAG) {
   EVT ConcatVT = N0.getOperand(0).getValueType();
   unsigned NumElemsPerConcat = ConcatVT.getVectorNumElements();
   unsigned NumConcats = NumElts / NumElemsPerConcat;
+
+  // Special case: shuffle(concat(A,B)) can be more efficiently represented
+  // as concat(shuffle(A,B),UNDEF) if the shuffle doesn't set any of the high
+  // half vector elements.
+  if (NumElemsPerConcat * 2 == NumElts && N1.getOpcode() == ISD::UNDEF &&
+      std::all_of(SVN->getMask().begin() + NumElemsPerConcat,
+                  SVN->getMask().end(), [](int i) { return i == -1; })) {
+    N0 = DAG.getVectorShuffle(ConcatVT, SDLoc(N), N0.getOperand(0), N0.getOperand(1),
+                              ArrayRef<int>(SVN->getMask().begin(), NumElemsPerConcat));
+    N1 = DAG.getUNDEF(ConcatVT);
+    return DAG.getNode(ISD::CONCAT_VECTORS, SDLoc(N), VT, N0, N1);
+  }
 
   // Look at every vector that's inserted. We're looking for exact
   // subvector-sized copies from a concatenated vector
