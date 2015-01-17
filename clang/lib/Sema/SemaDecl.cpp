@@ -2761,6 +2761,7 @@ bool Sema::MergeFunctionDecl(FunctionDecl *New, NamedDecl *&OldD,
             << New << New->getType();
         }
         Diag(OldLocation, PrevDiag) << Old << Old->getType();
+        return true;
 
       // Complain if this is an explicit declaration of a special
       // member that was initially declared implicitly.

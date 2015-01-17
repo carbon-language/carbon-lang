@@ -110,8 +110,8 @@ namespace ellipsis {
   template<typename...T>
   struct S {
     void e(S::S());
-    void f(S(...args[sizeof(T)])); // expected-note {{here}}
-    void f(S(...args)[sizeof(T)]); // expected-error {{redeclared}} expected-note {{here}}
+    void f(S(...args[sizeof(T)])); // expected-note {{here}} expected-note {{here}}
+    void f(S(...args)[sizeof(T)]); // expected-error {{redeclared}}
     void f(S ...args[sizeof(T)]); // expected-error {{redeclared}}
     void g(S(...[sizeof(T)])); // expected-note {{here}} expected-warning {{ISO C++11 requires a parenthesized pack declaration to have a name}}
     void g(S(...)[sizeof(T)]); // expected-error {{function cannot return array type}}

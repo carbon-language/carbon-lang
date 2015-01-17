@@ -119,9 +119,9 @@ struct C4 {
 // PR5415 - don't hang!
 struct S
 {
-  void f(); // expected-note 1 {{previous declaration}}
-  void S::f() {} // expected-error {{extra qualification on member}} expected-error {{class member cannot be redeclared}} expected-note {{previous declaration}} expected-note {{previous definition}}
-  void f() {} // expected-error {{class member cannot be redeclared}} expected-error {{redefinition}}
+  void f(); // expected-note 1 {{previous declaration}} expected-note {{previous declaration}}
+  void S::f() {} // expected-error {{extra qualification on member}} expected-error {{class member cannot be redeclared}}
+  void f() {} // expected-error {{class member cannot be redeclared}}
 };
 
 // Don't crash on this bogus code.
