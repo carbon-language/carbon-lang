@@ -56,7 +56,8 @@ class FlagHandlerInclude : public FlagHandlerBase {
     uptr data_mapped_size;
     int err;
     uptr len =
-      ReadFileToBuffer(value, &data, &data_mapped_size, kMaxIncludeSize, &err);
+      ReadFileToBuffer(value, &data, &data_mapped_size,
+                       Max(kMaxIncludeSize, GetPageSizeCached()), &err);
     if (!len) {
       Printf("Failed to read options from '%s': error %d\n", value, err);
       return false;
