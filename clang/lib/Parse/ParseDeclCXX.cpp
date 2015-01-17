@@ -2533,8 +2533,8 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
     // Parse the next declarator.
     DeclaratorInfo.clear();
     VS.clear();
-    BitfieldSize = nullptr;
-    Init = true;
+    BitfieldSize = ExprResult(/*Invalid=*/false);
+    Init = ExprResult(/*Invalid=*/false);
     HasInitializer = false;
     DeclaratorInfo.setCommaLoc(CommaLoc);
 
