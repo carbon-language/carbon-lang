@@ -56,6 +56,9 @@ public:
            lldb::ConnectionStatus &status, 
            lldb_private::Error *error_ptr);
 
+    virtual std::string
+    GetURI();
+
     lldb::ConnectionStatus
     BootstrapCheckIn (const char *port_name, 
                       lldb_private::Error *error_ptr);
@@ -83,6 +86,7 @@ protected:
     mach_port_t m_port;
 
 private:
+    std::string m_uri;
     
 
     DISALLOW_COPY_AND_ASSIGN (ConnectionMachPort);

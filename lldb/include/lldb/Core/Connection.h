@@ -133,13 +133,13 @@ public:
     ///
     /// Subclasses must override this function.
     ///
-    /// @param[in] src
-    ///     A source buffer that must be at least \a src_len bytes
+    /// @param[in] dst
+    ///     A desination buffer that must be at least \a dst_len bytes
     ///     long.
     ///
-    /// @param[in] src_len
+    /// @param[in] dst_len
     ///     The number of bytes to attempt to write, and also the
-    ///     number of bytes are currently available in \a src.
+    ///     number of bytes are currently available in \a dst.
     ///
     /// @param[out] error_ptr
     ///     A pointer to an error object that should be given an
@@ -150,7 +150,18 @@ public:
     ///     The number of bytes actually Written.
     //------------------------------------------------------------------
     virtual size_t
-    Write (const void *buffer, size_t length, lldb::ConnectionStatus &status, Error *error_ptr) = 0;
+    Write (const void *dst, size_t dst_len, lldb::ConnectionStatus &status, Error *error_ptr) = 0;
+
+    //------------------------------------------------------------------
+    /// Returns a URI that describes this connection object
+    ///
+    /// Subclasses may override this function.
+    ///
+    /// @return
+    ///     Returns URI or an empty string if disconnecteds
+    //------------------------------------------------------------------
+    virtual std::string
+    GetURI() = 0;
 
 private:
     //------------------------------------------------------------------

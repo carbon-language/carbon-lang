@@ -53,6 +53,9 @@ public:
     virtual size_t
     Write (const void *src, size_t src_len, lldb::ConnectionStatus &status, Error *error_ptr);
 
+    virtual std::string
+    GetURI();
+
     lldb::ConnectionStatus
     Open (bool create, const char *name, size_t size, Error *error_ptr);
 

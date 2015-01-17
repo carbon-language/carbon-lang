@@ -50,6 +50,8 @@ class ConnectionFileDescriptor : public Connection
 
     virtual size_t Write(const void *src, size_t src_len, lldb::ConnectionStatus &status, Error *error_ptr);
 
+    virtual std::string GetURI();
+
     lldb::ConnectionStatus BytesAvailable(uint32_t timeout_usec, Error *error_ptr);
 
     bool InterruptRead();
@@ -75,7 +77,7 @@ class ConnectionFileDescriptor : public Connection
 
     void CloseCommandPipe();
 
-    lldb::ConnectionStatus SocketListen(const char *host_and_port, Error *error_ptr);
+    lldb::ConnectionStatus SocketListenAndAccept(const char *host_and_port, Error *error_ptr);
 
     lldb::ConnectionStatus ConnectTCP(const char *host_and_port, Error *error_ptr);
 
@@ -98,6 +100,8 @@ class ConnectionFileDescriptor : public Connection
                                        // BytesAvailable to disconnect, we won't try to read again.
     bool m_waiting_for_accept;
     bool m_child_processes_inherit;
+
+    std::string m_uri;
 
   private:
     DISALLOW_COPY_AND_ASSIGN(ConnectionFileDescriptor);

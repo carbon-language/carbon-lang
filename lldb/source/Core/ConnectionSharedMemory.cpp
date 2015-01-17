@@ -107,6 +107,13 @@ ConnectionSharedMemory::Write (const void *src, size_t src_len, ConnectionStatus
     return 0;
 }
 
+std::string
+ConnectionSharedMemory::GetURI()
+{
+    // TODO: fix when Connect is fixed?
+    return "";
+}
+
 ConnectionStatus
 ConnectionSharedMemory::BytesAvailable (uint32_t timeout_usec, Error *error_ptr)
 {

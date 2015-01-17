@@ -38,6 +38,8 @@ class ConnectionGenericFile : public lldb_private::Connection
 
     virtual size_t Write(const void *src, size_t src_len, lldb::ConnectionStatus &status, Error *error_ptr);
 
+    virtual std::string GetURI();
+
     bool InterruptRead();
 
   protected:
@@ -56,6 +58,8 @@ class ConnectionGenericFile : public lldb_private::Connection
   private:
     void InitializeEventHandles();
     void IncrementFilePointer(DWORD amount);
+
+    std::string m_uri;
 
     DISALLOW_COPY_AND_ASSIGN(ConnectionGenericFile);
 };

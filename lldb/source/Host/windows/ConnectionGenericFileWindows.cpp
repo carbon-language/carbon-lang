@@ -147,6 +147,7 @@ ConnectionGenericFile::Connect(const char *s, Error *error_ptr)
     }
 
     m_owns_file = true;
+    m_uri.assign(s);
     return eConnectionStatusSuccess;
 }
 
@@ -175,6 +176,7 @@ ConnectionGenericFile::Disconnect(Error *error_ptr)
 
     ::ZeroMemory(&m_file_position, sizeof(m_file_position));
     m_owns_file = false;
+    m_uri.clear();
     return eConnectionStatusSuccess;
 }
 
@@ -326,6 +328,12 @@ finish:
                     return_info.GetError().AsCString());
     }
     return return_info.GetBytes();
+}
+
+std::string
+ConnectionGenericFile::GetURI()
+{
+    return m_uri;
 }
 
 bool

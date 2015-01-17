@@ -190,7 +190,7 @@ Error Socket::TcpListen(llvm::StringRef host_and_port, bool child_processes_inhe
 
     Log *log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_CONNECTION));
     if (log)
-        log->Printf ("ConnectionFileDescriptor::SocketListen (%s)", host_and_port.data());
+        log->Printf ("Socket::TcpListen (%s)", host_and_port.data());
 
     std::string host_str;
     std::string port_str;
