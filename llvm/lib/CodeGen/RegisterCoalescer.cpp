@@ -1407,21 +1407,22 @@ bool RegisterCoalescer::joinCopy(MachineInstr *CopyMI, bool &Again) {
 }
 
 bool RegisterCoalescer::joinReservedPhysReg(CoalescerPair &CP) {
+  unsigned DstReg = CP.getDstReg();
   assert(CP.isPhys() && "Must be a physreg copy");
-  assert(MRI->isReserved(CP.getDstReg()) && "Not a reserved register");
+  assert(MRI->isReserved(DstReg) && "Not a reserved register");
   LiveInterval &RHS = LIS->getInterval(CP.getSrcReg());
   DEBUG(dbgs() << "\t\tRHS = " << RHS << '\n');
 
   assert(RHS.containsOneValue() && "Invalid join with reserved register");
 
   // Optimization for reserved registers like ESP. We can only merge with a
-  // reserved physreg if RHS has a single value that is a copy of CP.DstReg().
+  // reserved physreg if RHS has a single value that is a copy of DstReg.
   // The live range of the reserved register will look like a set of dead defs
   // - we don't properly track the live range of reserved registers.
 
   // Deny any overlapping intervals.  This depends on all the reserved
   // register live ranges to look like dead defs.
-  for (MCRegUnitIterator UI(CP.getDstReg(), TRI); UI.isValid(); ++UI)
+  for (MCRegUnitIterator UI(DstReg, TRI); UI.isValid(); ++UI)
     if (RHS.overlaps(LIS->getRegUnit(*UI))) {
       DEBUG(dbgs() << "\t\tInterference: " << PrintRegUnit(*UI, TRI) << '\n');
       return false;
@@ -1454,7 +1455,7 @@ bool RegisterCoalescer::joinReservedPhysReg(CoalescerPair &CP) {
     for (SlotIndex SI = Indexes->getNextNonNullIndex(DestRegIdx);
          SI != CopyRegIdx; SI = Indexes->getNextNonNullIndex(SI)) {
       MachineInstr *MI = LIS->getInstructionFromIndex(SI);
-      if (MI->readsRegister(CP.getDstReg(), TRI)) {
+      if (MI->readsRegister(DstReg, TRI)) {
         DEBUG(dbgs() << "\t\tInterference (read): " << *MI);
         return false;
       }
@@ -1462,7 +1463,7 @@ bool RegisterCoalescer::joinReservedPhysReg(CoalescerPair &CP) {
 
     // We're going to remove the copy which defines a physical reserved
     // register, so remove its valno, etc.
-    for (MCRegUnitIterator UI(CP.getDstReg(), TRI); UI.isValid(); ++UI) {
+    for (MCRegUnitIterator UI(DstReg, TRI); UI.isValid(); ++UI) {
       LiveRange &LR = LIS->getRegUnit(*UI);
       VNInfo *OrigRegVNI = LR.getVNInfoAt(CopyRegIdx);
       if (!OrigRegVNI)
