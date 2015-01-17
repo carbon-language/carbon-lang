@@ -207,7 +207,7 @@ RuntimeDyldImpl::loadObjectImpl(const object::ObjectFile &Obj) {
         SymbolInfo::Visibility Vis =
           (Flags & SymbolRef::SF_Exported) ?
             SymbolInfo::Default : SymbolInfo::Hidden;
-        GlobalSymbolTable[Name] = {SectionID, SectOffset, Vis};
+        GlobalSymbolTable[Name] = SymbolInfo(SectionID, SectOffset, Vis);
       }
     }
     DEBUG(dbgs() << "\tType: " << SymType << " Name: " << Name << "\n");
@@ -482,7 +482,7 @@ void RuntimeDyldImpl::emitCommonSymbols(const ObjectFile &Obj,
     SymbolInfo::Visibility Vis =
       (Flags & SymbolRef::SF_Exported) ?
         SymbolInfo::Default : SymbolInfo::Hidden;
-    SymbolTable[Name.data()] = {SectionID, Offset, Vis};
+    SymbolTable[Name.data()] = SymbolInfo(SectionID, Offset, Vis);
     Offset += Size;
     Addr += Size;
   }
