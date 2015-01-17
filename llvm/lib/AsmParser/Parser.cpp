@@ -38,7 +38,7 @@ std::unique_ptr<Module> llvm::parseAssembly(MemoryBufferRef F,
   if (parseAssemblyInto(F, *M, Err))
     return nullptr;
 
-  return std::move(M);
+  return M;
 }
 
 std::unique_ptr<Module> llvm::parseAssemblyFile(StringRef Filename,
