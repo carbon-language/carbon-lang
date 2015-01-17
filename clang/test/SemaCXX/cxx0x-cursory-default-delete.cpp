@@ -45,11 +45,23 @@ struct bad_decls {
 struct DefaultDelete {
   DefaultDelete() = default; // expected-note {{previous declaration is here}}
   DefaultDelete() = delete; // expected-error {{constructor cannot be redeclared}}
+
+  ~DefaultDelete() = default; // expected-note {{previous declaration is here}}
+  ~DefaultDelete() = delete; // expected-error {{destructor cannot be redeclared}}
+
+  DefaultDelete &operator=(const DefaultDelete &) = default; // expected-note {{previous declaration is here}}
+  DefaultDelete &operator=(const DefaultDelete &) = delete; // expected-error {{class member cannot be redeclared}}
 };
 
 struct DeleteDefault {
   DeleteDefault() = delete; // expected-note {{previous definition is here}}
   DeleteDefault() = default; // expected-error {{constructor cannot be redeclared}}
+
+  ~DeleteDefault() = delete; // expected-note {{previous definition is here}}
+  ~DeleteDefault() = default; // expected-error {{destructor cannot be redeclared}}
+
+  DeleteDefault &operator=(const DeleteDefault &) = delete; // expected-note {{previous definition is here}}
+  DeleteDefault &operator=(const DeleteDefault &) = default; // expected-error {{class member cannot be redeclared}}
 };
 
 struct A {}; struct B {};
