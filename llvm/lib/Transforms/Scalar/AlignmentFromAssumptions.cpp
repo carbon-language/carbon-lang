@@ -58,7 +58,7 @@ struct AlignmentFromAssumptions : public FunctionPass {
     AU.addRequired<DominatorTreeWrapperPass>();
 
     AU.setPreservesCFG();
-    AU.addPreserved<LoopInfo>();
+    AU.addPreserved<LoopInfoWrapperPass>();
     AU.addPreserved<DominatorTreeWrapperPass>();
     AU.addPreserved<ScalarEvolution>();
   }

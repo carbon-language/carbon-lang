@@ -180,8 +180,8 @@ bool llvm::MergeBlockIntoPredecessor(BasicBlock *BB, Pass *P) {
         DT.eraseNode(BB);
       }
 
-      if (LoopInfo *LI = P->getAnalysisIfAvailable<LoopInfo>())
-        LI->removeBlock(BB);
+      if (auto *LIWP = P->getAnalysisIfAvailable<LoopInfoWrapperPass>())
+        LIWP->getLoopInfo().removeBlock(BB);
 
       if (MemoryDependenceAnalysis *MD =
             P->getAnalysisIfAvailable<MemoryDependenceAnalysis>())
@@ -290,9 +290,11 @@ BasicBlock *llvm::SplitBlock(BasicBlock *Old, Instruction *SplitPt, Pass *P) {
 
   // The new block lives in whichever loop the old one did. This preserves
   // LCSSA as well, because we force the split point to be after any PHI nodes.
-  if (LoopInfo *LI = P->getAnalysisIfAvailable<LoopInfo>())
-    if (Loop *L = LI->getLoopFor(Old))
-      L->addBasicBlockToLoop(New, LI->getBase());
+  if (auto *LIWP = P->getAnalysisIfAvailable<LoopInfoWrapperPass>()) {
+    LoopInfo &LI = LIWP->getLoopInfo();
+    if (Loop *L = LI.getLoopFor(Old))
+      L->addBasicBlockToLoop(New, LI.getBase());
+  }
 
   if (DominatorTreeWrapperPass *DTWP =
           P->getAnalysisIfAvailable<DominatorTreeWrapperPass>()) {
@@ -321,7 +323,8 @@ static void UpdateAnalysisInformation(BasicBlock *OldBB, BasicBlock *NewBB,
                                       Pass *P, bool &HasLoopExit) {
   if (!P) return;
 
-  LoopInfo *LI = P->getAnalysisIfAvailable<LoopInfo>();
+  auto *LIWP = P->getAnalysisIfAvailable<LoopInfoWrapperPass>();
+  LoopInfo *LI = LIWP ? &LIWP->getLoopInfo() : nullptr;
   Loop *L = LI ? LI->getLoopFor(OldBB) : nullptr;
 
   // If we need to preserve loop analyses, collect some information about how

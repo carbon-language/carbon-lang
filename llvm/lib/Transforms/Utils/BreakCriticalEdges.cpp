@@ -48,7 +48,7 @@ namespace {
 
     void getAnalysisUsage(AnalysisUsage &AU) const override {
       AU.addPreserved<DominatorTreeWrapperPass>();
-      AU.addPreserved<LoopInfo>();
+      AU.addPreserved<LoopInfoWrapperPass>();
 
       // No loop canonicalization guarantees are broken by this pass.
       AU.addPreservedID(LoopSimplifyID);
@@ -199,7 +199,8 @@ BasicBlock *llvm::SplitCriticalEdge(TerminatorInst *TI, unsigned SuccNum,
   DominatorTreeWrapperPass *DTWP =
       P->getAnalysisIfAvailable<DominatorTreeWrapperPass>();
   DominatorTree *DT = DTWP ? &DTWP->getDomTree() : nullptr;
-  LoopInfo *LI = P->getAnalysisIfAvailable<LoopInfo>();
+  auto *LIWP = P->getAnalysisIfAvailable<LoopInfoWrapperPass>();
+  LoopInfo *LI = LIWP ? &LIWP->getLoopInfo() : nullptr;
 
   // If we have nothing to update, just return.
   if (!DT && !LI)

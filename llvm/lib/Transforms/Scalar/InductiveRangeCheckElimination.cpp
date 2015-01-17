@@ -169,7 +169,7 @@ public:
   }
 
   void getAnalysisUsage(AnalysisUsage &AU) const override {
-    AU.addRequired<LoopInfo>();
+    AU.addRequired<LoopInfoWrapperPass>();
     AU.addRequiredID(LoopSimplifyID);
     AU.addRequiredID(LCSSAID);
     AU.addRequired<ScalarEvolution>();
@@ -1176,7 +1176,8 @@ bool InductiveRangeCheckElimination::runOnLoop(Loop *L, LPPassManager &LPM) {
   if (!SafeIterRange.hasValue())
     return false;
 
-  LoopConstrainer LC(*L, getAnalysis<LoopInfo>(), SE, SafeIterRange.getValue());
+  LoopConstrainer LC(*L, getAnalysis<LoopInfoWrapperPass>().getLoopInfo(), SE,
+                     SafeIterRange.getValue());
   bool Changed = LC.run();
 
   if (Changed) {

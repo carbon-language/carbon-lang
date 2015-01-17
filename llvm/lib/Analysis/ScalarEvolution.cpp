@@ -117,7 +117,7 @@ VerifySCEV("verify-scev",
 INITIALIZE_PASS_BEGIN(ScalarEvolution, "scalar-evolution",
                 "Scalar Evolution Analysis", false, true)
 INITIALIZE_PASS_DEPENDENCY(AssumptionCacheTracker)
-INITIALIZE_PASS_DEPENDENCY(LoopInfo)
+INITIALIZE_PASS_DEPENDENCY(LoopInfoWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(TargetLibraryInfoWrapperPass)
 INITIALIZE_PASS_END(ScalarEvolution, "scalar-evolution",
@@ -7867,7 +7867,7 @@ ScalarEvolution::ScalarEvolution()
 bool ScalarEvolution::runOnFunction(Function &F) {
   this->F = &F;
   AC = &getAnalysis<AssumptionCacheTracker>().getAssumptionCache(F);
-  LI = &getAnalysis<LoopInfo>();
+  LI = &getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
   DataLayoutPass *DLP = getAnalysisIfAvailable<DataLayoutPass>();
   DL = DLP ? &DLP->getDataLayout() : nullptr;
   TLI = &getAnalysis<TargetLibraryInfoWrapperPass>().getTLI();
@@ -7908,7 +7908,7 @@ void ScalarEvolution::releaseMemory() {
 void ScalarEvolution::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.setPreservesAll();
   AU.addRequired<AssumptionCacheTracker>();
-  AU.addRequiredTransitive<LoopInfo>();
+  AU.addRequiredTransitive<LoopInfoWrapperPass>();
   AU.addRequiredTransitive<DominatorTreeWrapperPass>();
   AU.addRequired<TargetLibraryInfoWrapperPass>();
 }

@@ -799,8 +799,9 @@ Instruction *InstCombiner::FoldOpIntoPhi(Instruction &I) {
     // If the incoming non-constant value is in I's block, we will remove one
     // instruction, but insert another equivalent one, leading to infinite
     // instcombine.
+    auto *LIWP = getAnalysisIfAvailable<LoopInfoWrapperPass>();
     if (isPotentiallyReachable(I.getParent(), NonConstBB, DT,
-                               getAnalysisIfAvailable<LoopInfo>()))
+                               LIWP ? &LIWP->getLoopInfo() : nullptr))
       return nullptr;
   }
 

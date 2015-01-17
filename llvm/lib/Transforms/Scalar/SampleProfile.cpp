@@ -95,7 +95,7 @@ public:
 
   void getAnalysisUsage(AnalysisUsage &AU) const override {
     AU.setPreservesCFG();
-    AU.addRequired<LoopInfo>();
+    AU.addRequired<LoopInfoWrapperPass>();
     AU.addRequired<DominatorTreeWrapperPass>();
     AU.addRequired<PostDominatorTree>();
   }
@@ -731,7 +731,7 @@ INITIALIZE_PASS_BEGIN(SampleProfileLoader, "sample-profile",
                       "Sample Profile loader", false, false)
 INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(PostDominatorTree)
-INITIALIZE_PASS_DEPENDENCY(LoopInfo)
+INITIALIZE_PASS_DEPENDENCY(LoopInfoWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(AddDiscriminators)
 INITIALIZE_PASS_END(SampleProfileLoader, "sample-profile",
                     "Sample Profile loader", false, false)
@@ -762,7 +762,7 @@ bool SampleProfileLoader::runOnFunction(Function &F) {
 
   DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
   PDT = &getAnalysis<PostDominatorTree>();
-  LI = &getAnalysis<LoopInfo>();
+  LI = &getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
   Ctx = &F.getParent()->getContext();
   Samples = Reader->getSamplesFor(F);
   if (!Samples->empty())

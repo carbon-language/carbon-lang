@@ -43,7 +43,7 @@ namespace {
     void getAnalysisUsage(AnalysisUsage &AU) const override {
       AU.setPreservesCFG();
       AU.addRequired<AssumptionCacheTracker>();
-      AU.addRequired<LoopInfo>();
+      AU.addRequired<LoopInfoWrapperPass>();
       AU.addRequiredID(LoopSimplifyID);
       AU.addPreservedID(LoopSimplifyID);
       AU.addPreservedID(LCSSAID);
@@ -59,7 +59,7 @@ INITIALIZE_PASS_BEGIN(LoopInstSimplify, "loop-instsimplify",
 INITIALIZE_PASS_DEPENDENCY(AssumptionCacheTracker)
 INITIALIZE_PASS_DEPENDENCY(TargetLibraryInfoWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass)
-INITIALIZE_PASS_DEPENDENCY(LoopInfo)
+INITIALIZE_PASS_DEPENDENCY(LoopInfoWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(LCSSA)
 INITIALIZE_PASS_END(LoopInstSimplify, "loop-instsimplify",
                 "Simplify instructions in loops", false, false)
@@ -75,7 +75,7 @@ bool LoopInstSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
   DominatorTreeWrapperPass *DTWP =
       getAnalysisIfAvailable<DominatorTreeWrapperPass>();
   DominatorTree *DT = DTWP ? &DTWP->getDomTree() : nullptr;
-  LoopInfo *LI = &getAnalysis<LoopInfo>();
+  LoopInfo *LI = &getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
   DataLayoutPass *DLP = getAnalysisIfAvailable<DataLayoutPass>();
   const DataLayout *DL = DLP ? &DLP->getDataLayout() : nullptr;
   const TargetLibraryInfo *TLI =

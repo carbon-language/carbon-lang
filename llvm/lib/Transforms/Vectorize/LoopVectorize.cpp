@@ -1277,7 +1277,7 @@ struct LoopVectorize : public FunctionPass {
     SE = &getAnalysis<ScalarEvolution>();
     DataLayoutPass *DLP = getAnalysisIfAvailable<DataLayoutPass>();
     DL = DLP ? &DLP->getDataLayout() : nullptr;
-    LI = &getAnalysis<LoopInfo>();
+    LI = &getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
     TTI = &getAnalysis<TargetTransformInfo>();
     DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
     BFI = &getAnalysis<BlockFrequencyInfo>();
@@ -1496,11 +1496,11 @@ struct LoopVectorize : public FunctionPass {
     AU.addRequiredID(LCSSAID);
     AU.addRequired<BlockFrequencyInfo>();
     AU.addRequired<DominatorTreeWrapperPass>();
-    AU.addRequired<LoopInfo>();
+    AU.addRequired<LoopInfoWrapperPass>();
     AU.addRequired<ScalarEvolution>();
     AU.addRequired<TargetTransformInfo>();
     AU.addRequired<AliasAnalysis>();
-    AU.addPreserved<LoopInfo>();
+    AU.addPreserved<LoopInfoWrapperPass>();
     AU.addPreserved<DominatorTreeWrapperPass>();
     AU.addPreserved<AliasAnalysis>();
   }
@@ -6160,7 +6160,7 @@ INITIALIZE_PASS_DEPENDENCY(BlockFrequencyInfo)
 INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(ScalarEvolution)
 INITIALIZE_PASS_DEPENDENCY(LCSSA)
-INITIALIZE_PASS_DEPENDENCY(LoopInfo)
+INITIALIZE_PASS_DEPENDENCY(LoopInfoWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(LoopSimplify)
 INITIALIZE_PASS_END(LoopVectorize, LV_NAME, lv_name, false, false)
 

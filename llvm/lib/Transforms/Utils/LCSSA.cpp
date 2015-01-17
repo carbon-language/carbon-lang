@@ -294,7 +294,7 @@ struct LCSSA : public FunctionPass {
     AU.setPreservesCFG();
 
     AU.addRequired<DominatorTreeWrapperPass>();
-    AU.addRequired<LoopInfo>();
+    AU.addRequired<LoopInfoWrapperPass>();
     AU.addPreservedID(LoopSimplifyID);
     AU.addPreserved<AliasAnalysis>();
     AU.addPreserved<ScalarEvolution>();
@@ -308,7 +308,7 @@ private:
 char LCSSA::ID = 0;
 INITIALIZE_PASS_BEGIN(LCSSA, "lcssa", "Loop-Closed SSA Form Pass", false, false)
 INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass)
-INITIALIZE_PASS_DEPENDENCY(LoopInfo)
+INITIALIZE_PASS_DEPENDENCY(LoopInfoWrapperPass)
 INITIALIZE_PASS_END(LCSSA, "lcssa", "Loop-Closed SSA Form Pass", false, false)
 
 Pass *llvm::createLCSSAPass() { return new LCSSA(); }
@@ -318,7 +318,7 @@ char &llvm::LCSSAID = LCSSA::ID;
 /// Process all loops in the function, inner-most out.
 bool LCSSA::runOnFunction(Function &F) {
   bool Changed = false;
-  LI = &getAnalysis<LoopInfo>();
+  LI = &getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
   DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
   SE = getAnalysisIfAvailable<ScalarEvolution>();
 

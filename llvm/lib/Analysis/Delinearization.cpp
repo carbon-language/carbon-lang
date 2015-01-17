@@ -59,14 +59,14 @@ public:
 
 void Delinearization::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.setPreservesAll();
-  AU.addRequired<LoopInfo>();
+  AU.addRequired<LoopInfoWrapperPass>();
   AU.addRequired<ScalarEvolution>();
 }
 
 bool Delinearization::runOnFunction(Function &F) {
   this->F = &F;
   SE = &getAnalysis<ScalarEvolution>();
-  LI = &getAnalysis<LoopInfo>();
+  LI = &getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
   return false;
 }
 
@@ -141,7 +141,7 @@ char Delinearization::ID = 0;
 static const char delinearization_name[] = "Delinearization";
 INITIALIZE_PASS_BEGIN(Delinearization, DL_NAME, delinearization_name, true,
                       true)
-INITIALIZE_PASS_DEPENDENCY(LoopInfo)
+INITIALIZE_PASS_DEPENDENCY(LoopInfoWrapperPass)
 INITIALIZE_PASS_END(Delinearization, DL_NAME, delinearization_name, true, true)
 
 FunctionPass *llvm::createDelinearizationPass() { return new Delinearization; }

@@ -853,7 +853,7 @@ Example implementations of ``getAnalysisUsage``
   // This example modifies the program, but does not modify the CFG
   void LICM::getAnalysisUsage(AnalysisUsage &AU) const {
     AU.setPreservesCFG();
-    AU.addRequired<LoopInfo>();
+    AU.addRequired<LoopInfoWrapperPass>();
   }
 
 .. _writing-an-llvm-pass-getAnalysis:
@@ -870,7 +870,7 @@ you want, and returns a reference to that pass.  For example:
 .. code-block:: c++
 
   bool LICM::runOnFunction(Function &F) {
-    LoopInfo &LI = getAnalysis<LoopInfo>();
+    LoopInfo &LI = getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
     //...
   }
 

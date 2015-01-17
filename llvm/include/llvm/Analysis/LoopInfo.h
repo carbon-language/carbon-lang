@@ -495,6 +495,7 @@ class LoopInfoBase {
   std::vector<LoopT *> TopLevelLoops;
   friend class LoopBase<BlockT, LoopT>;
   friend class LoopInfo;
+  friend class LoopInfoWrapperPass;
 
   void operator=(const LoopInfoBase &) LLVM_DELETED_FUNCTION;
   LoopInfoBase(const LoopInfo &) LLVM_DELETED_FUNCTION;
@@ -626,18 +627,15 @@ public:
 __extension__ extern template class LoopInfoBase<BasicBlock, Loop>;
 #endif
 
-class LoopInfo : public FunctionPass {
+class LoopInfo {
   LoopInfoBase<BasicBlock, Loop> LI;
   friend class LoopBase<BasicBlock, Loop>;
+  friend class LoopInfoWrapperPass;
 
   void operator=(const LoopInfo &) LLVM_DELETED_FUNCTION;
   LoopInfo(const LoopInfo &) LLVM_DELETED_FUNCTION;
 public:
-  static char ID; // Pass identification, replacement for typeid
-
-  LoopInfo() : FunctionPass(ID) {
-    initializeLoopInfoPass(*PassRegistry::getPassRegistry());
-  }
+  LoopInfo() {}
 
   LoopInfoBase<BasicBlock, Loop>& getBase() { return LI; }
 
@@ -677,18 +675,6 @@ public:
     return LI.isLoopHeader(BB);
   }
 
-  /// runOnFunction - Calculate the natural loop information.
-  ///
-  bool runOnFunction(Function &F) override;
-
-  void verifyAnalysis() const override;
-
-  void releaseMemory() override { LI.releaseMemory(); }
-
-  void print(raw_ostream &O, const Module* M = nullptr) const override;
-
-  void getAnalysisUsage(AnalysisUsage &AU) const override;
-
   /// removeLoop - This removes the specified top-level loop from this loop info
   /// object.  The loop is not deleted, as it will presumably be inserted into
   /// another loop.
@@ -720,6 +706,8 @@ public:
     LI.removeBlock(BB);
   }
 
+  void releaseMemory() { LI.releaseMemory(); }
+
   /// updateUnloop - Update LoopInfo after removing the last backedge from a
   /// loop--now the "unloop". This updates the loop forest and parent loops for
   /// each block so that Unloop is no longer referenced, but the caller must
@@ -748,7 +736,6 @@ public:
   }
 };
 
-
 // Allow clients to walk the list of nested loops...
 template <> struct GraphTraits<const Loop*> {
   typedef const Loop NodeType;
@@ -774,6 +761,32 @@ template <> struct GraphTraits<Loop*> {
   static inline ChildIteratorType child_end(NodeType *N) {
     return N->end();
   }
+};
+
+/// \brief The legacy pass manager's analysis pass to compute loop information.
+class LoopInfoWrapperPass : public FunctionPass {
+  LoopInfo LI;
+
+public:
+  static char ID; // Pass identification, replacement for typeid
+
+  LoopInfoWrapperPass() : FunctionPass(ID) {
+    initializeLoopInfoWrapperPassPass(*PassRegistry::getPassRegistry());
+  }
+
+  LoopInfo &getLoopInfo() { return LI; }
+  const LoopInfo &getLoopInfo() const { return LI; }
+
+  /// \brief Calculate the natural loop information for a given function.
+  bool runOnFunction(Function &F) override;
+
+  void verifyAnalysis() const override;
+
+  void releaseMemory() override { LI.releaseMemory(); }
+
+  void print(raw_ostream &O, const Module *M = nullptr) const override;
+
+  void getAnalysisUsage(AnalysisUsage &AU) const override;
 };
 
 } // End llvm namespace

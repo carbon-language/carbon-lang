@@ -762,8 +762,8 @@ namespace {
       AU.addRequired<DominatorTreeWrapperPass>();
       AU.addPreserved<DominatorTreeWrapperPass>();
 
-      AU.addRequired<LoopInfo>();
-      AU.addPreserved<LoopInfo>();
+      AU.addRequired<LoopInfoWrapperPass>();
+      AU.addPreserved<LoopInfoWrapperPass>();
 
       AU.addPreserved<AliasAnalysis>();
       AU.addPreserved<ScalarEvolution>();
@@ -781,7 +781,7 @@ INITIALIZE_PASS_BEGIN(LoopSimplify, "loop-simplify",
                 "Canonicalize natural loops", false, false)
 INITIALIZE_PASS_DEPENDENCY(AssumptionCacheTracker)
 INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass)
-INITIALIZE_PASS_DEPENDENCY(LoopInfo)
+INITIALIZE_PASS_DEPENDENCY(LoopInfoWrapperPass)
 INITIALIZE_PASS_END(LoopSimplify, "loop-simplify",
                 "Canonicalize natural loops", false, false)
 
@@ -795,7 +795,7 @@ Pass *llvm::createLoopSimplifyPass() { return new LoopSimplify(); }
 bool LoopSimplify::runOnFunction(Function &F) {
   bool Changed = false;
   AA = getAnalysisIfAvailable<AliasAnalysis>();
-  LI = &getAnalysis<LoopInfo>();
+  LI = &getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
   DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
   SE = getAnalysisIfAvailable<ScalarEvolution>();
   DataLayoutPass *DLP = getAnalysisIfAvailable<DataLayoutPass>();

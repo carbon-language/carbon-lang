@@ -72,7 +72,7 @@ protected:
         PassInfo *PI = new PassInfo("isPotentiallyReachable testing pass",
                                     "", &ID, nullptr, true, true);
         PassRegistry::getPassRegistry()->registerPass(*PI, false);
-        initializeLoopInfoPass(*PassRegistry::getPassRegistry());
+        initializeLoopInfoWrapperPassPass(*PassRegistry::getPassRegistry());
         initializeDominatorTreeWrapperPassPass(
             *PassRegistry::getPassRegistry());
         return 0;
@@ -80,7 +80,7 @@ protected:
 
       void getAnalysisUsage(AnalysisUsage &AU) const {
         AU.setPreservesAll();
-        AU.addRequired<LoopInfo>();
+        AU.addRequired<LoopInfoWrapperPass>();
         AU.addRequired<DominatorTreeWrapperPass>();
       }
 
@@ -88,7 +88,7 @@ protected:
         if (!F.hasName() || F.getName() != "test")
           return false;
 
-        LoopInfo *LI = &getAnalysis<LoopInfo>();
+        LoopInfo *LI = &getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
         DominatorTree *DT =
             &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
         EXPECT_EQ(isPotentiallyReachable(A, B, nullptr, nullptr),

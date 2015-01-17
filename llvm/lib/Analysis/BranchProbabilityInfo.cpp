@@ -28,7 +28,7 @@ using namespace llvm;
 
 INITIALIZE_PASS_BEGIN(BranchProbabilityInfo, "branch-prob",
                       "Branch Probability Analysis", false, true)
-INITIALIZE_PASS_DEPENDENCY(LoopInfo)
+INITIALIZE_PASS_DEPENDENCY(LoopInfoWrapperPass)
 INITIALIZE_PASS_END(BranchProbabilityInfo, "branch-prob",
                     "Branch Probability Analysis", false, true)
 
@@ -484,7 +484,7 @@ bool BranchProbabilityInfo::calcInvokeHeuristics(BasicBlock *BB) {
 }
 
 void BranchProbabilityInfo::getAnalysisUsage(AnalysisUsage &AU) const {
-  AU.addRequired<LoopInfo>();
+  AU.addRequired<LoopInfoWrapperPass>();
   AU.setPreservesAll();
 }
 
@@ -492,7 +492,7 @@ bool BranchProbabilityInfo::runOnFunction(Function &F) {
   DEBUG(dbgs() << "---- Branch Probability Info : " << F.getName()
                << " ----\n\n");
   LastF = &F; // Store the last function we ran on for printing.
-  LI = &getAnalysis<LoopInfo>();
+  LI = &getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
   assert(PostDominatedByUnreachable.empty());
   assert(PostDominatedByColdCall.empty());
 

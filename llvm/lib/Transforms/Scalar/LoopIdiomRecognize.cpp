@@ -163,8 +163,8 @@ namespace {
     /// loop preheaders be inserted into the CFG.
     ///
     void getAnalysisUsage(AnalysisUsage &AU) const override {
-      AU.addRequired<LoopInfo>();
-      AU.addPreserved<LoopInfo>();
+      AU.addRequired<LoopInfoWrapperPass>();
+      AU.addPreserved<LoopInfoWrapperPass>();
       AU.addRequiredID(LoopSimplifyID);
       AU.addPreservedID(LoopSimplifyID);
       AU.addRequiredID(LCSSAID);
@@ -218,7 +218,7 @@ namespace {
 char LoopIdiomRecognize::ID = 0;
 INITIALIZE_PASS_BEGIN(LoopIdiomRecognize, "loop-idiom", "Recognize loop idioms",
                       false, false)
-INITIALIZE_PASS_DEPENDENCY(LoopInfo)
+INITIALIZE_PASS_DEPENDENCY(LoopInfoWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(LoopSimplify)
 INITIALIZE_PASS_DEPENDENCY(LCSSA)
@@ -669,7 +669,7 @@ bool LoopIdiomRecognize::runOnCountableLoop() {
   // set DT
   (void)getDominatorTree();
 
-  LoopInfo &LI = getAnalysis<LoopInfo>();
+  LoopInfo &LI = getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
   TLI = &getAnalysis<TargetLibraryInfoWrapperPass>().getTLI();
 
   // set TLI

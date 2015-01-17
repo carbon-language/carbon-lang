@@ -114,7 +114,7 @@ Delinearize("da-delinearize", cl::init(false), cl::Hidden, cl::ZeroOrMore,
 
 INITIALIZE_PASS_BEGIN(DependenceAnalysis, "da",
                       "Dependence Analysis", true, true)
-INITIALIZE_PASS_DEPENDENCY(LoopInfo)
+INITIALIZE_PASS_DEPENDENCY(LoopInfoWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(ScalarEvolution)
 INITIALIZE_AG_DEPENDENCY(AliasAnalysis)
 INITIALIZE_PASS_END(DependenceAnalysis, "da",
@@ -132,7 +132,7 @@ bool DependenceAnalysis::runOnFunction(Function &F) {
   this->F = &F;
   AA = &getAnalysis<AliasAnalysis>();
   SE = &getAnalysis<ScalarEvolution>();
-  LI = &getAnalysis<LoopInfo>();
+  LI = &getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
   return false;
 }
 
@@ -145,7 +145,7 @@ void DependenceAnalysis::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.setPreservesAll();
   AU.addRequiredTransitive<AliasAnalysis>();
   AU.addRequiredTransitive<ScalarEvolution>();
-  AU.addRequiredTransitive<LoopInfo>();
+  AU.addRequiredTransitive<LoopInfoWrapperPass>();
 }
 
 

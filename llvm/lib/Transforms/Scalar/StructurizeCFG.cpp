@@ -249,7 +249,7 @@ public:
   void getAnalysisUsage(AnalysisUsage &AU) const override {
     AU.addRequiredID(LowerSwitchID);
     AU.addRequired<DominatorTreeWrapperPass>();
-    AU.addRequired<LoopInfo>();
+    AU.addRequired<LoopInfoWrapperPass>();
     AU.addPreserved<DominatorTreeWrapperPass>();
     RegionPass::getAnalysisUsage(AU);
   }
@@ -866,7 +866,7 @@ bool StructurizeCFG::runOnRegion(Region *R, RGPassManager &RGM) {
   ParentRegion = R;
 
   DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
-  LI = &getAnalysis<LoopInfo>();
+  LI = &getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
 
   orderNodes();
   collectInfos();

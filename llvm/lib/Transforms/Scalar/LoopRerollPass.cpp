@@ -130,8 +130,8 @@ namespace {
 
     void getAnalysisUsage(AnalysisUsage &AU) const override {
       AU.addRequired<AliasAnalysis>();
-      AU.addRequired<LoopInfo>();
-      AU.addPreserved<LoopInfo>();
+      AU.addRequired<LoopInfoWrapperPass>();
+      AU.addPreserved<LoopInfoWrapperPass>();
       AU.addRequired<DominatorTreeWrapperPass>();
       AU.addPreserved<DominatorTreeWrapperPass>();
       AU.addRequired<ScalarEvolution>();
@@ -339,7 +339,7 @@ protected:
 char LoopReroll::ID = 0;
 INITIALIZE_PASS_BEGIN(LoopReroll, "loop-reroll", "Reroll loops", false, false)
 INITIALIZE_AG_DEPENDENCY(AliasAnalysis)
-INITIALIZE_PASS_DEPENDENCY(LoopInfo)
+INITIALIZE_PASS_DEPENDENCY(LoopInfoWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(ScalarEvolution)
 INITIALIZE_PASS_DEPENDENCY(TargetLibraryInfoWrapperPass)
@@ -1129,7 +1129,7 @@ bool LoopReroll::runOnLoop(Loop *L, LPPassManager &LPM) {
     return false;
 
   AA = &getAnalysis<AliasAnalysis>();
-  LI = &getAnalysis<LoopInfo>();
+  LI = &getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
   SE = &getAnalysis<ScalarEvolution>();
   TLI = &getAnalysis<TargetLibraryInfoWrapperPass>().getTLI();
   DataLayoutPass *DLP = getAnalysisIfAvailable<DataLayoutPass>();

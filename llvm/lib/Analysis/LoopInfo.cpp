@@ -45,11 +45,6 @@ static cl::opt<bool,true>
 VerifyLoopInfoX("verify-loop-info", cl::location(VerifyLoopInfo),
                 cl::desc("Verify loop info (time consuming)"));
 
-char LoopInfo::ID = 0;
-INITIALIZE_PASS_BEGIN(LoopInfo, "loops", "Natural Loop Information", true, true)
-INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass)
-INITIALIZE_PASS_END(LoopInfo, "loops", "Natural Loop Information", true, true)
-
 // Loop identifier metadata name.
 static const char *const LoopMDName = "llvm.loop";
 
@@ -609,15 +604,6 @@ Loop *UnloopUpdater::getNearestLoop(BasicBlock *BB, Loop *BBLoop) {
   return NearLoop;
 }
 
-//===----------------------------------------------------------------------===//
-// LoopInfo implementation
-//
-bool LoopInfo::runOnFunction(Function &) {
-  releaseMemory();
-  LI.Analyze(getAnalysis<DominatorTreeWrapperPass>().getDomTree());
-  return false;
-}
-
 /// updateUnloop - The last backedge has been removed from a loop--now the
 /// "unloop". Find a new parent for the blocks contained within unloop and
 /// update the loop tree. We don't necessarily have valid dominators at this
@@ -680,36 +666,54 @@ void LoopInfo::updateUnloop(Loop *Unloop) {
   }
 }
 
-void LoopInfo::verifyAnalysis() const {
-  // LoopInfo is a FunctionPass, but verifying every loop in the function
-  // each time verifyAnalysis is called is very expensive. The
+//===----------------------------------------------------------------------===//
+// LoopInfo implementation
+//
+
+char LoopInfoWrapperPass::ID = 0;
+INITIALIZE_PASS_BEGIN(LoopInfoWrapperPass, "loops", "Natural Loop Information",
+                      true, true)
+INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass)
+INITIALIZE_PASS_END(LoopInfoWrapperPass, "loops", "Natural Loop Information",
+                    true, true)
+
+bool LoopInfoWrapperPass::runOnFunction(Function &) {
+  releaseMemory();
+  LI.getBase().Analyze(getAnalysis<DominatorTreeWrapperPass>().getDomTree());
+  return false;
+}
+
+void LoopInfoWrapperPass::verifyAnalysis() const {
+  // LoopInfoWrapperPass is a FunctionPass, but verifying every loop in the
+  // function each time verifyAnalysis is called is very expensive. The
   // -verify-loop-info option can enable this. In order to perform some
-  // checking by default, LoopPass has been taught to call verifyLoop
-  // manually during loop pass sequences.
+  // checking by default, LoopPass has been taught to call verifyLoop manually
+  // during loop pass sequences.
 
   if (!VerifyLoopInfo) return;
 
   DenseSet<const Loop*> Loops;
-  for (iterator I = begin(), E = end(); I != E; ++I) {
+  for (LoopInfo::iterator I = LI.begin(), E = LI.end(); I != E; ++I) {
     assert(!(*I)->getParentLoop() && "Top-level loop has a parent!");
     (*I)->verifyLoopNest(&Loops);
   }
 
   // Verify that blocks are mapped to valid loops.
-  for (DenseMap<BasicBlock*, Loop*>::const_iterator I = LI.BBMap.begin(),
-         E = LI.BBMap.end(); I != E; ++I) {
-    assert(Loops.count(I->second) && "orphaned loop");
-    assert(I->second->contains(I->first) && "orphaned block");
+  for (auto &Entry : LI.LI.BBMap) {
+    BasicBlock *BB = Entry.first;
+    Loop *L = Entry.second;
+    assert(Loops.count(L) && "orphaned loop");
+    assert(L->contains(BB) && "orphaned block");
   }
 }
 
-void LoopInfo::getAnalysisUsage(AnalysisUsage &AU) const {
+void LoopInfoWrapperPass::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.setPreservesAll();
   AU.addRequired<DominatorTreeWrapperPass>();
 }
 
-void LoopInfo::print(raw_ostream &OS, const Module*) const {
-  LI.print(OS);
+void LoopInfoWrapperPass::print(raw_ostream &OS, const Module *) const {
+  LI.LI.print(OS);
 }
 
 //===----------------------------------------------------------------------===//

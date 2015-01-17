@@ -33,7 +33,7 @@ using namespace llvm;
 char IVUsers::ID = 0;
 INITIALIZE_PASS_BEGIN(IVUsers, "iv-users",
                       "Induction Variable Users", false, true)
-INITIALIZE_PASS_DEPENDENCY(LoopInfo)
+INITIALIZE_PASS_DEPENDENCY(LoopInfoWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(ScalarEvolution)
 INITIALIZE_PASS_END(IVUsers, "iv-users",
@@ -241,7 +241,7 @@ IVUsers::IVUsers()
 }
 
 void IVUsers::getAnalysisUsage(AnalysisUsage &AU) const {
-  AU.addRequired<LoopInfo>();
+  AU.addRequired<LoopInfoWrapperPass>();
   AU.addRequired<DominatorTreeWrapperPass>();
   AU.addRequired<ScalarEvolution>();
   AU.setPreservesAll();
@@ -250,7 +250,7 @@ void IVUsers::getAnalysisUsage(AnalysisUsage &AU) const {
 bool IVUsers::runOnLoop(Loop *l, LPPassManager &LPM) {
 
   L = l;
-  LI = &getAnalysis<LoopInfo>();
+  LI = &getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
   DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
   SE = &getAnalysis<ScalarEvolution>();
   DataLayoutPass *DLP = getAnalysisIfAvailable<DataLayoutPass>();
