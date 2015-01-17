@@ -68,18 +68,24 @@ size_t
 TypeFilterImpl::FrontEnd::GetIndexOfChildWithName (const ConstString &name)
 {
     const char* name_cstr = name.GetCString();
-    for (size_t i = 0; i < filter->GetCount(); i++)
+    if (name_cstr)
     {
-        const char* expr_cstr = filter->GetExpressionPathAtIndex(i);
-        if (expr_cstr)
+        for (size_t i = 0; i < filter->GetCount(); i++)
         {
-            if (*expr_cstr == '.')
-                expr_cstr++;
-            else if (*expr_cstr == '-' && *(expr_cstr+1) == '>')
-                expr_cstr += 2;
+            const char* expr_cstr = filter->GetExpressionPathAtIndex(i);
+            if (expr_cstr)
+            {
+                if (*expr_cstr == '.')
+                    expr_cstr++;
+                else if (*expr_cstr == '-' && *(expr_cstr+1) == '>')
+                    expr_cstr += 2;
+            }
+            if (expr_cstr)
+            {
+                if (!::strcmp(name_cstr, expr_cstr))
+                    return i;
+            }
         }
-        if (!::strcmp(name_cstr, expr_cstr))
-            return i;
     }
     return UINT32_MAX;
 }
