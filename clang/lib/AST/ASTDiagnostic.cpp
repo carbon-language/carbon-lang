@@ -1034,7 +1034,8 @@ class TemplateDiff {
       if (!HasToInt && ToExpr)
         HasToInt = GetInt(Context, ToIter, ToExpr, ToInt);
       Tree.SetNode(FromInt, ToInt, HasFromInt, HasToInt);
-      Tree.SetSame(IsSameConvertedInt(ParamWidth, FromInt, ToInt));
+      Tree.SetSame(HasFromInt && HasToInt &&
+                   IsSameConvertedInt(ParamWidth, FromInt, ToInt));
       Tree.SetDefault(FromIter.isEnd() && HasFromInt,
                       ToIter.isEnd() && HasToInt);
       Tree.SetKind(DiffTree::Integer);
