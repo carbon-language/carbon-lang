@@ -1467,7 +1467,7 @@ bool RegisterCoalescer::joinReservedPhysReg(CoalescerPair &CP) {
     const SlotIndex DestRegIdx = LIS->getInstructionIndex(DestMI).getRegSlot();
 
     // We checked above that there are no interfering defs of the physical
-    // register. However, for this case, where we indent to move up the def of
+    // register. However, for this case, where we intent to move up the def of
     // the physical register, we also need to check for interfering uses.
     SlotIndexes *Indexes = LIS->getSlotIndexes();
     for (SlotIndex SI = Indexes->getNextNonNullIndex(DestRegIdx);
@@ -1495,7 +1495,7 @@ bool RegisterCoalescer::joinReservedPhysReg(CoalescerPair &CP) {
       LR.createDeadDef(DestRegIdx, LIS->getVNInfoAllocator());
     }
   }
-  
+
   LIS->RemoveMachineInstrFromMaps(CopyMI);
   CopyMI->eraseFromParent();
 
