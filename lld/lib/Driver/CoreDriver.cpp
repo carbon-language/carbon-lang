@@ -111,7 +111,7 @@ bool CoreDriver::parse(int argc, const char *argv[], CoreLinkingContext &ctx,
   ctx.setAllowRemainingUndefines(true);
   ctx.setSearchArchivesToOverrideTentativeDefinitions(false);
 
-  // Process all the arguments and create Input Elements
+  // Process all the arguments and create input files.
   for (auto inputArg : *parsedArgs) {
     switch (inputArg->getOption().getID()) {
     case OPT_mllvm:

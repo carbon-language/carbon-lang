@@ -947,7 +947,7 @@ bool WinLinkDriver::parse(int argc, const char *argv[],
 
   std::vector<StringRef> inputFiles;
 
-  // Process all the arguments and create Input Elements
+  // Process all the arguments and create input files
   for (auto inputArg : *parsedArgs) {
     switch (inputArg->getOption().getID()) {
     case OPT_mllvm:
@@ -1365,7 +1365,7 @@ bool WinLinkDriver::parse(int argc, const char *argv[],
     }
   }
 
-  // Prepare objects to add them to input graph.
+  // Prepare objects to add them to the list of input files.
   for (StringRef path : inputFiles) {
     path = ctx.allocate(path);
     if (isLibraryFile(path)) {
@@ -1408,7 +1408,7 @@ bool WinLinkDriver::parse(int argc, const char *argv[],
     ctx.setOutputPath(replaceExtension(ctx, path, ".exe"));
   }
 
-  // Add the input files to the input graph.
+  // Add the input files to the linking context.
   for (std::unique_ptr<File> &file : files) {
     if (isReadingDirectiveSection) {
       File *f = file.get();
@@ -1417,7 +1417,7 @@ bool WinLinkDriver::parse(int argc, const char *argv[],
     ctx.getNodes().push_back(llvm::make_unique<FileNode>(std::move(file)));
   }
 
-  // Add the library group to the input graph.
+  // Add the library group to the linking context.
   if (!isReadingDirectiveSection) {
     // Add a group-end marker.
     ctx.getNodes().push_back(llvm::make_unique<GroupEnd>(0));

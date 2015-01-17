@@ -460,7 +460,7 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
     ctx->registry().addSupportELFDynamicSharedObjects(
         ctx->useShlibUndefines(), ctx->targetHandler());
 
-  // Process all the arguments and create Input Elements
+  // Process all the arguments and create input files.
   for (auto inputArg : *parsedArgs) {
     switch (inputArg->getOption().getID()) {
     case OPT_mllvm:
