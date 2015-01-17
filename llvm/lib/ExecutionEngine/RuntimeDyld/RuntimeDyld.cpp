@@ -159,43 +159,34 @@ RuntimeDyldImpl::loadObjectImpl(const object::ObjectFile &Obj) {
   ObjSectionToIDMap LocalSections;
 
   // Common symbols requiring allocation, with their sizes and alignments
-  CommonSymbolMap CommonSymbols;
-  // Maximum required total memory to allocate all common symbols
-  uint64_t CommonSize = 0;
+  CommonSymbolList CommonSymbols;
 
   // Parse symbols
   DEBUG(dbgs() << "Parse symbols:\n");
   for (symbol_iterator I = Obj.symbol_begin(), E = Obj.symbol_end(); I != E;
        ++I) {
-    object::SymbolRef::Type SymType;
-    StringRef Name;
-    Check(I->getType(SymType));
-    Check(I->getName(Name));
-
     uint32_t Flags = I->getFlags();
 
     bool IsCommon = Flags & SymbolRef::SF_Common;
-    if (IsCommon) {
-      // Add the common symbols to a list.  We'll allocate them all below.
-      if (!GlobalSymbolTable.count(Name)) {
-        uint32_t Align;
-        Check(I->getAlignment(Align));
-        uint64_t Size = 0;
-        Check(I->getSize(Size));
-        CommonSize += Size + Align;
-        CommonSymbols[*I] = CommonSymbolInfo(Size, Align);
-      }
-    } else {
+    if (IsCommon)
+      CommonSymbols.push_back(*I);
+    else {
+      object::SymbolRef::Type SymType;
+      Check(I->getType(SymType));
+
       if (SymType == object::SymbolRef::ST_Function ||
           SymType == object::SymbolRef::ST_Data ||
           SymType == object::SymbolRef::ST_Unknown) {
+
+        StringRef Name;
         uint64_t SectOffset;
-        StringRef SectionData;
-        section_iterator SI = Obj.section_end();
+        Check(I->getName(Name));
         Check(getOffset(*I, SectOffset));
+        section_iterator SI = Obj.section_end();
         Check(I->getSection(SI));
         if (SI == Obj.section_end())
           continue;
+        StringRef SectionData;
         Check(SI->getContents(SectionData));
         bool IsCode = SI->isText();
         unsigned SectionID =
@@ -210,12 +201,10 @@ RuntimeDyldImpl::loadObjectImpl(const object::ObjectFile &Obj) {
         GlobalSymbolTable[Name] = SymbolInfo(SectionID, SectOffset, Vis);
       }
     }
-    DEBUG(dbgs() << "\tType: " << SymType << " Name: " << Name << "\n");
   }
 
   // Allocate common symbols
-  if (CommonSize != 0)
-    emitCommonSymbols(Obj, CommonSymbols, CommonSize, GlobalSymbolTable);
+  emitCommonSymbols(Obj, CommonSymbols);
 
   // Parse and process relocations
   DEBUG(dbgs() << "Parse relocations:\n");
@@ -447,42 +436,72 @@ void RuntimeDyldImpl::writeBytesUnaligned(uint64_t Value, uint8_t *Dst,
 }
 
 void RuntimeDyldImpl::emitCommonSymbols(const ObjectFile &Obj,
-                                        const CommonSymbolMap &CommonSymbols,
-                                        uint64_t TotalSize,
-                                        RTDyldSymbolTable &SymbolTable) {
+                                        CommonSymbolList &CommonSymbols) {
+  if (CommonSymbols.empty())
+    return;
+
+  uint64_t CommonSize = 0;
+  CommonSymbolList SymbolsToAllocate;
+
+  DEBUG(dbgs() << "Processing common symbols...\n");
+
+  for (const auto &Sym : CommonSymbols) {
+    StringRef Name;
+    Check(Sym.getName(Name));
+
+    assert((GlobalSymbolTable.find(Name) == GlobalSymbolTable.end()) &&
+           "Common symbol in global symbol table.");
+
+    // Skip common symbols already elsewhere.
+    if (GlobalSymbolTable.count(Name)) {
+      DEBUG(dbgs() << "\tSkipping already emitted common symbol '" << Name
+                   << "'\n");
+      continue;
+    }
+
+    uint32_t Align = 0;
+    uint64_t Size = 0;
+    Check(Sym.getAlignment(Align));
+    Check(Sym.getSize(Size));
+
+    CommonSize += Align + Size;
+    SymbolsToAllocate.push_back(Sym);
+  }
+
   // Allocate memory for the section
   unsigned SectionID = Sections.size();
-  uint8_t *Addr = MemMgr->allocateDataSection(TotalSize, sizeof(void *),
+  uint8_t *Addr = MemMgr->allocateDataSection(CommonSize, sizeof(void *),
                                               SectionID, StringRef(), false);
   if (!Addr)
     report_fatal_error("Unable to allocate memory for common symbols!");
   uint64_t Offset = 0;
-  Sections.push_back(SectionEntry("<common symbols>", Addr, TotalSize, 0));
-  memset(Addr, 0, TotalSize);
+  Sections.push_back(SectionEntry("<common symbols>", Addr, CommonSize, 0));
+  memset(Addr, 0, CommonSize);
 
   DEBUG(dbgs() << "emitCommonSection SectionID: " << SectionID << " new addr: "
-               << format("%p", Addr) << " DataSize: " << TotalSize << "\n");
+               << format("%p", Addr) << " DataSize: " << CommonSize << "\n");
 
   // Assign the address of each symbol
-  for (CommonSymbolMap::const_iterator it = CommonSymbols.begin(),
-       itEnd = CommonSymbols.end(); it != itEnd; ++it) {
-    uint64_t Size = it->second.first;
-    uint64_t Align = it->second.second;
+  for (auto &Sym : SymbolsToAllocate) {
+    uint32_t Align;
+    uint64_t Size;
     StringRef Name;
-    it->first.getName(Name);
+    Check(Sym.getAlignment(Align));
+    Check(Sym.getSize(Size));
+    Check(Sym.getName(Name));
     if (Align) {
       // This symbol has an alignment requirement.
       uint64_t AlignOffset = OffsetToAlignment((uint64_t)Addr, Align);
       Addr += AlignOffset;
       Offset += AlignOffset;
-      DEBUG(dbgs() << "Allocating common symbol " << Name << " address "
-                   << format("%p\n", Addr));
     }
-    uint32_t Flags = it->first.getFlags();
+    uint32_t Flags = Sym.getFlags();
     SymbolInfo::Visibility Vis =
       (Flags & SymbolRef::SF_Exported) ?
         SymbolInfo::Default : SymbolInfo::Hidden;
-    SymbolTable[Name.data()] = SymbolInfo(SectionID, Offset, Vis);
+    DEBUG(dbgs() << "Allocating common symbol " << Name << " address "
+                 << format("%p", Addr) << "\n");
+    GlobalSymbolTable[Name] = SymbolInfo(SectionID, Offset, Vis);
     Offset += Size;
     Addr += Size;
   }
