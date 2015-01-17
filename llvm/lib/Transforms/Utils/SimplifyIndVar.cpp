@@ -48,7 +48,6 @@ namespace {
     Loop             *L;
     LoopInfo         *LI;
     ScalarEvolution  *SE;
-    const DataLayout *DL; // May be NULL
 
     SmallVectorImpl<WeakVH> &DeadInsts;
 
@@ -56,9 +55,8 @@ namespace {
 
   public:
     SimplifyIndvar(Loop *Loop, ScalarEvolution *SE, LoopInfo *LI,
-                   const DataLayout *DL, SmallVectorImpl<WeakVH> &Dead,
-                   IVUsers *IVU = nullptr)
-        : L(Loop), LI(LI), SE(SE), DL(DL), DeadInsts(Dead), Changed(false) {
+                   SmallVectorImpl<WeakVH> &Dead, IVUsers *IVU = nullptr)
+        : L(Loop), LI(LI), SE(SE), DeadInsts(Dead), Changed(false) {
       assert(LI && "IV simplification requires LoopInfo");
     }
 
@@ -557,10 +555,8 @@ void IVVisitor::anchor() { }
 bool simplifyUsersOfIV(PHINode *CurrIV, ScalarEvolution *SE, LPPassManager *LPM,
                        SmallVectorImpl<WeakVH> &Dead, IVVisitor *V)
 {
-  DataLayoutPass *DLP = LPM->getAnalysisIfAvailable<DataLayoutPass>();
   LoopInfo *LI = &LPM->getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
-  SimplifyIndvar SIV(LI->getLoopFor(CurrIV->getParent()), SE, LI,
-                     DLP ? &DLP->getDataLayout() : nullptr, Dead);
+  SimplifyIndvar SIV(LI->getLoopFor(CurrIV->getParent()), SE, LI, Dead);
   SIV.simplifyUsers(CurrIV, V);
   return SIV.hasChanged();
 }
