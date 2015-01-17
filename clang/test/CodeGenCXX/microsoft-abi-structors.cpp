@@ -206,7 +206,7 @@ F::~F() {
 void foo() {
   F f;
 }
-// DTORS3-LABEL: define linkonce_odr x86_thiscallcc void @"\01??_DF@test2@@UAE@XZ"
+// DTORS3-LABEL: define linkonce_odr x86_thiscallcc void @"\01??_DF@test2@@UAE@XZ"({{.*}} {{.*}} comdat
 //      Do an adjustment from C* to F*.
 // DTORS3:   getelementptr i8* %{{.*}}, i32 20
 // DTORS3:   bitcast i8* %{{.*}} to %"struct.test2::F"*
@@ -365,7 +365,7 @@ void call_vbase_complete(D *d) {
 }
 
 // The complete dtor should call the base dtors for D and the vbase A (once).
-// CHECK: define linkonce_odr x86_thiscallcc void @"\01??_DD@dtors@@QAE@XZ"
+// CHECK: define linkonce_odr x86_thiscallcc void @"\01??_DD@dtors@@QAE@XZ"({{.*}}) {{.*}} comdat
 // CHECK-NOT: call
 // CHECK: call x86_thiscallcc void @"\01??1D@dtors@@QAE@XZ"
 // CHECK-NOT: call

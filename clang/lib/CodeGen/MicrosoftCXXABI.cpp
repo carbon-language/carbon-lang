@@ -3080,7 +3080,8 @@ static void emitCXXDestructor(CodeGenModule &CGM, const CXXDestructorDecl *dtor,
     return;
 
   llvm::Function *Fn = CGM.codegenCXXStructor(dtor, dtorType);
-  CGM.maybeSetTrivialComdat(*dtor, *Fn);
+  if (Fn->isWeakForLinker())
+    Fn->setComdat(CGM.getModule().getOrInsertComdat(Fn->getName()));
 }
 
 void MicrosoftCXXABI::emitCXXStructor(const CXXMethodDecl *MD,
