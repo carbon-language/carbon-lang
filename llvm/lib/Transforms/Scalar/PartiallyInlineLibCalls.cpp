@@ -127,7 +127,7 @@ bool PartiallyInlineLibCalls::optimizeSQRT(CallInst *Call,
 
   // Move all instructions following Call to newly created block JoinBB.
   // Create phi and replace all uses.
-  BasicBlock *JoinBB = llvm::SplitBlock(&CurrBB, Call->getNextNode(), this);
+  BasicBlock *JoinBB = llvm::SplitBlock(&CurrBB, Call->getNextNode());
   IRBuilder<> Builder(JoinBB, JoinBB->begin());
   PHINode *Phi = Builder.CreatePHI(Call->getType(), 2);
   Call->replaceAllUsesWith(Phi);

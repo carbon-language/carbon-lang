@@ -737,7 +737,7 @@ void LoopUnswitch::UnswitchTrivialCondition(Loop *L, Value *Cond,
   // without actually branching to it (the exit block should be dominated by the
   // loop header, not the preheader).
   assert(!L->contains(ExitBlock) && "Exit block is in the loop?");
-  BasicBlock *NewExit = SplitBlock(ExitBlock, ExitBlock->begin(), this);
+  BasicBlock *NewExit = SplitBlock(ExitBlock, ExitBlock->begin(), DT, LI);
 
   // Okay, now we have a position to branch from and a position to branch to,
   // insert the new conditional branch.

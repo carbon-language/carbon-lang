@@ -153,7 +153,8 @@ BasicBlock *SplitEdge(BasicBlock *From, BasicBlock *To, Pass *P);
 /// to a new block.  The two blocks are joined by an unconditional branch and
 /// the loop info is updated.
 ///
-BasicBlock *SplitBlock(BasicBlock *Old, Instruction *SplitPt, Pass *P);
+BasicBlock *SplitBlock(BasicBlock *Old, Instruction *SplitPt,
+                       DominatorTree *DT = nullptr, LoopInfo *LI = nullptr);
 
 /// SplitBlockPredecessors - This method transforms BB by introducing a new
 /// basic block into the function, and moving some of the predecessors of BB to

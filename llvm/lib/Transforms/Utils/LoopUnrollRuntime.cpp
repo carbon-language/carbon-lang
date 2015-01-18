@@ -28,6 +28,7 @@
 #include "llvm/Analysis/ScalarEvolution.h"
 #include "llvm/Analysis/ScalarEvolutionExpander.h"
 #include "llvm/IR/BasicBlock.h"
+#include "llvm/IR/Dominators.h"
 #include "llvm/IR/Metadata.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
@@ -316,13 +317,17 @@ bool llvm::UnrollRuntimeLoopProlog(Loop *L, unsigned Count, LoopInfo *LI,
   if (Loop *ParentLoop = L->getParentLoop())
     SE->forgetLoop(ParentLoop);
 
+  // Grab the dominator tree so we can preserve it.
+  auto *DTWP = LPM->getAnalysisIfAvailable<DominatorTreeWrapperPass>();
+  auto *DT = DTWP ? &DTWP->getDomTree() : nullptr;
+
   BasicBlock *PH = L->getLoopPreheader();
   BasicBlock *Header = L->getHeader();
   BasicBlock *Latch = L->getLoopLatch();
   // It helps to splits the original preheader twice, one for the end of the
   // prolog code and one for a new loop preheader
   BasicBlock *PEnd = SplitEdge(PH, Header, LPM->getAsPass());
-  BasicBlock *NewPH = SplitBlock(PEnd, PEnd->getTerminator(), LPM->getAsPass());
+  BasicBlock *NewPH = SplitBlock(PEnd, PEnd->getTerminator(), DT, LI);
   BranchInst *PreHeaderBR = cast<BranchInst>(PH->getTerminator());
 
   // Compute the number of extra iterations required, which is:

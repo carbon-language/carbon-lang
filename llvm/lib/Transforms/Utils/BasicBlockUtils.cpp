@@ -239,6 +239,11 @@ BasicBlock *llvm::SplitEdge(BasicBlock *BB, BasicBlock *Succ, Pass *P) {
   if (SplitCriticalEdge(LatchTerm, SuccNum, P))
     return LatchTerm->getSuccessor(SuccNum);
 
+  auto *DTWP = P->getAnalysisIfAvailable<DominatorTreeWrapperPass>();
+  auto *DT = DTWP ? &DTWP->getDomTree() : nullptr;
+  auto *LIWP = P->getAnalysisIfAvailable<LoopInfoWrapperPass>();
+  auto *LI = LIWP ? &LIWP->getLoopInfo() : nullptr;
+
   // If the edge isn't critical, then BB has a single successor or Succ has a
   // single pred.  Split the block.
   if (BasicBlock *SP = Succ->getSinglePredecessor()) {
@@ -246,14 +251,14 @@ BasicBlock *llvm::SplitEdge(BasicBlock *BB, BasicBlock *Succ, Pass *P) {
     // block.
     assert(SP == BB && "CFG broken");
     SP = nullptr;
-    return SplitBlock(Succ, Succ->begin(), P);
+    return SplitBlock(Succ, Succ->begin(), DT, LI);
   }
 
   // Otherwise, if BB has a single successor, split it at the bottom of the
   // block.
   assert(BB->getTerminator()->getNumSuccessors() == 1 &&
          "Should have a single succ!");
-  return SplitBlock(BB, BB->getTerminator(), P);
+  return SplitBlock(BB, BB->getTerminator(), DT, LI);
 }
 
 unsigned llvm::SplitAllCriticalEdges(Function &F, Pass *P) {
@@ -273,7 +278,8 @@ unsigned llvm::SplitAllCriticalEdges(Function &F, Pass *P) {
 /// to a new block.  The two blocks are joined by an unconditional branch and
 /// the loop info is updated.
 ///
-BasicBlock *llvm::SplitBlock(BasicBlock *Old, Instruction *SplitPt, Pass *P) {
+BasicBlock *llvm::SplitBlock(BasicBlock *Old, Instruction *SplitPt,
+                             DominatorTree *DT, LoopInfo *LI) {
   BasicBlock::iterator SplitIt = SplitPt;
   while (isa<PHINode>(SplitIt) || isa<LandingPadInst>(SplitIt))
     ++SplitIt;
@@ -281,28 +287,23 @@ BasicBlock *llvm::SplitBlock(BasicBlock *Old, Instruction *SplitPt, Pass *P) {
 
   // The new block lives in whichever loop the old one did. This preserves
   // LCSSA as well, because we force the split point to be after any PHI nodes.
-  if (auto *LIWP = P->getAnalysisIfAvailable<LoopInfoWrapperPass>()) {
-    LoopInfo &LI = LIWP->getLoopInfo();
-    if (Loop *L = LI.getLoopFor(Old))
-      L->addBasicBlockToLoop(New, LI);
-  }
+  if (LI)
+    if (Loop *L = LI->getLoopFor(Old))
+      L->addBasicBlockToLoop(New, *LI);
 
-  if (DominatorTreeWrapperPass *DTWP =
-          P->getAnalysisIfAvailable<DominatorTreeWrapperPass>()) {
-    DominatorTree &DT = DTWP->getDomTree();
+  if (DT)
     // Old dominates New. New node dominates all other nodes dominated by Old.
-    if (DomTreeNode *OldNode = DT.getNode(Old)) {
+    if (DomTreeNode *OldNode = DT->getNode(Old)) {
       std::vector<DomTreeNode *> Children;
       for (DomTreeNode::iterator I = OldNode->begin(), E = OldNode->end();
            I != E; ++I)
         Children.push_back(*I);
 
-      DomTreeNode *NewNode = DT.addNewBlock(New, Old);
+      DomTreeNode *NewNode = DT->addNewBlock(New, Old);
       for (std::vector<DomTreeNode *>::iterator I = Children.begin(),
              E = Children.end(); I != E; ++I)
-        DT.changeImmediateDominator(*I, NewNode);
+        DT->changeImmediateDominator(*I, NewNode);
     }
-  }
 
   return New;
 }
