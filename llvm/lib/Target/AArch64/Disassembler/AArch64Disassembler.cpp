@@ -221,13 +221,11 @@ DecodeStatus AArch64Disassembler::getInstruction(MCInst &MI, uint64_t &Size,
 
 static MCSymbolizer *
 createAArch64ExternalSymbolizer(StringRef TT, LLVMOpInfoCallback GetOpInfo,
-                              LLVMSymbolLookupCallback SymbolLookUp,
-                              void *DisInfo, MCContext *Ctx,
-                              MCRelocationInfo *RelInfo) {
-  return new llvm::AArch64ExternalSymbolizer(
-                                     *Ctx,
-                                     std::unique_ptr<MCRelocationInfo>(RelInfo),
-                                     GetOpInfo, SymbolLookUp, DisInfo);
+                                LLVMSymbolLookupCallback SymbolLookUp,
+                                void *DisInfo, MCContext *Ctx,
+                                std::unique_ptr<MCRelocationInfo> &&RelInfo) {
+  return new llvm::AArch64ExternalSymbolizer(*Ctx, move(RelInfo), GetOpInfo,
+                                             SymbolLookUp, DisInfo);
 }
 
 extern "C" void LLVMInitializeAArch64Disassembler() {

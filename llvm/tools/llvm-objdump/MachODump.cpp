@@ -2172,7 +2172,7 @@ static void DisassembleMachO(StringRef Filename, MachOObjectFile *MachOOF) {
   if (RelInfo) {
     Symbolizer.reset(TheTarget->createMCSymbolizer(
         TripleName, SymbolizerGetOpInfo, SymbolizerSymbolLookUp,
-        &SymbolizerInfo, &Ctx, RelInfo.release()));
+        &SymbolizerInfo, &Ctx, std::move(RelInfo)));
     DisAsm->setSymbolizer(std::move(Symbolizer));
   }
   int AsmPrinterVariant = AsmInfo->getAssemblerDialect();
@@ -2220,7 +2220,7 @@ static void DisassembleMachO(StringRef Filename, MachOObjectFile *MachOOF) {
     if (ThumbRelInfo) {
       ThumbSymbolizer.reset(ThumbTarget->createMCSymbolizer(
           ThumbTripleName, SymbolizerGetOpInfo, SymbolizerSymbolLookUp,
-          &ThumbSymbolizerInfo, PtrThumbCtx, ThumbRelInfo.release()));
+          &ThumbSymbolizerInfo, PtrThumbCtx, std::move(ThumbRelInfo)));
       ThumbDisAsm->setSymbolizer(std::move(ThumbSymbolizer));
     }
     int ThumbAsmPrinterVariant = ThumbAsmInfo->getAssemblerDialect();

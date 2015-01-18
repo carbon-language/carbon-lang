@@ -62,9 +62,8 @@ namespace llvm {
 
   MCSymbolizer *createMCSymbolizer(StringRef TT, LLVMOpInfoCallback GetOpInfo,
                                    LLVMSymbolLookupCallback SymbolLookUp,
-                                   void *DisInfo,
-                                   MCContext *Ctx,
-                                   MCRelocationInfo *RelInfo);
+                                   void *DisInfo, MCContext *Ctx,
+                                   std::unique_ptr<MCRelocationInfo> &&RelInfo);
 
   /// Target - Wrapper for Target specific information.
   ///
@@ -142,12 +141,10 @@ namespace llvm {
     typedef MCStreamer *(*NullStreamerCtorTy)(MCContext &Ctx);
     typedef MCRelocationInfo *(*MCRelocationInfoCtorTy)(StringRef TT,
                                                         MCContext &Ctx);
-    typedef MCSymbolizer *(*MCSymbolizerCtorTy)(StringRef TT,
-                                   LLVMOpInfoCallback GetOpInfo,
-                                   LLVMSymbolLookupCallback SymbolLookUp,
-                                   void *DisInfo,
-                                   MCContext *Ctx,
-                                   MCRelocationInfo *RelInfo);
+    typedef MCSymbolizer *(*MCSymbolizerCtorTy)(
+        StringRef TT, LLVMOpInfoCallback GetOpInfo,
+        LLVMSymbolLookupCallback SymbolLookUp, void *DisInfo, MCContext *Ctx,
+        std::unique_ptr<MCRelocationInfo> &&RelInfo);
 
   private:
     /// Next - The next registered target in the linked list, maintained by the
@@ -479,12 +476,12 @@ namespace llvm {
     /// \param RelInfo The relocation information for this target. Takes ownership.
     MCSymbolizer *
     createMCSymbolizer(StringRef TT, LLVMOpInfoCallback GetOpInfo,
-                       LLVMSymbolLookupCallback SymbolLookUp,
-                       void *DisInfo,
-                       MCContext *Ctx, MCRelocationInfo *RelInfo) const {
+                       LLVMSymbolLookupCallback SymbolLookUp, void *DisInfo,
+                       MCContext *Ctx,
+                       std::unique_ptr<MCRelocationInfo> &&RelInfo) const {
       MCSymbolizerCtorTy Fn =
           MCSymbolizerCtorFn ? MCSymbolizerCtorFn : llvm::createMCSymbolizer;
-      return Fn(TT, GetOpInfo, SymbolLookUp, DisInfo, Ctx, RelInfo);
+      return Fn(TT, GetOpInfo, SymbolLookUp, DisInfo, Ctx, std::move(RelInfo));
     }
 
     /// @}

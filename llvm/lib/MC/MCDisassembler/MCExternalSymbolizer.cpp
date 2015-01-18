@@ -186,13 +186,11 @@ void MCExternalSymbolizer::tryAddingPcLoadReferenceComment(raw_ostream &cStream,
 namespace llvm {
 MCSymbolizer *createMCSymbolizer(StringRef TT, LLVMOpInfoCallback GetOpInfo,
                                  LLVMSymbolLookupCallback SymbolLookUp,
-                                 void *DisInfo,
-                                 MCContext *Ctx,
-                                 MCRelocationInfo *RelInfo) {
+                                 void *DisInfo, MCContext *Ctx,
+                                 std::unique_ptr<MCRelocationInfo> &&RelInfo) {
   assert(Ctx && "No MCContext given for symbolic disassembly");
 
-  return new MCExternalSymbolizer(*Ctx,
-                                  std::unique_ptr<MCRelocationInfo>(RelInfo),
-                                  GetOpInfo, SymbolLookUp, DisInfo);
+  return new MCExternalSymbolizer(*Ctx, std::move(RelInfo), GetOpInfo,
+                                  SymbolLookUp, DisInfo);
 }
 }
