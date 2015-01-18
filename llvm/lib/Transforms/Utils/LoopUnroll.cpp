@@ -311,7 +311,7 @@ bool llvm::UnrollLoop(Loop *L, unsigned Count, unsigned TripCount,
       // Tell LI about New.
       if (*BB == Header) {
         assert(LI->getLoopFor(*BB) == L && "Header should not be in a sub-loop");
-        L->addBasicBlockToLoop(New, LI->getBase());
+        L->addBasicBlockToLoop(New, *LI);
       } else {
         // Figure out which loop New is in.
         const Loop *OldLoop = LI->getLoopFor(*BB);
@@ -333,7 +333,7 @@ bool llvm::UnrollLoop(Loop *L, unsigned Count, unsigned TripCount,
           if (SE)
             SE->forgetLoop(OldLoop);
         }
-        NewLoop->addBasicBlockToLoop(New, LI->getBase());
+        NewLoop->addBasicBlockToLoop(New, *LI);
       }
 
       if (*BB == Header)

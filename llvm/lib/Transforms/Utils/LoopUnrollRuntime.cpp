@@ -160,9 +160,9 @@ static void CloneLoopBlocks(Loop *L, Value *NewIter, const bool UnrollProlog,
     NewBlocks.push_back(NewBB);
 
     if (NewLoop)
-      NewLoop->addBasicBlockToLoop(NewBB, LI->getBase());
+      NewLoop->addBasicBlockToLoop(NewBB, *LI);
     else if (ParentLoop)
-      ParentLoop->addBasicBlockToLoop(NewBB, LI->getBase());
+      ParentLoop->addBasicBlockToLoop(NewBB, *LI);
 
     VMap[*BB] = NewBB;
     if (Header == *BB) {

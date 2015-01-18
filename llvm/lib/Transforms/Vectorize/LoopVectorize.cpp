@@ -1991,7 +1991,7 @@ void InnerLoopVectorizer::scalarizeInstruction(Instruction *Instr, bool IfPredic
         Cmp = Builder.CreateICmp(ICmpInst::ICMP_EQ, Cmp, ConstantInt::get(Cmp->getType(), 1));
         CondBlock = IfBlock->splitBasicBlock(InsertPt, "cond.store");
         LoopVectorBody.push_back(CondBlock);
-        VectorLp->addBasicBlockToLoop(CondBlock, LI->getBase());
+        VectorLp->addBasicBlockToLoop(CondBlock, *LI);
         // Update Builder with newly created basic block.
         Builder.SetInsertPoint(InsertPt);
       }
@@ -2020,7 +2020,7 @@ void InnerLoopVectorizer::scalarizeInstruction(Instruction *Instr, bool IfPredic
       if (IfPredicateStore) {
          BasicBlock *NewIfBlock = CondBlock->splitBasicBlock(InsertPt, "else");
          LoopVectorBody.push_back(NewIfBlock);
-         VectorLp->addBasicBlockToLoop(NewIfBlock, LI->getBase());
+         VectorLp->addBasicBlockToLoop(NewIfBlock, *LI);
          Builder.SetInsertPoint(InsertPt);
          Instruction *OldBr = IfBlock->getTerminator();
          BranchInst::Create(CondBlock, NewIfBlock, Cmp, OldBr);
@@ -2298,13 +2298,13 @@ void InnerLoopVectorizer::createEmptyLoop() {
   // before calling any utilities such as SCEV that require valid LoopInfo.
   if (ParentLoop) {
     ParentLoop->addChildLoop(Lp);
-    ParentLoop->addBasicBlockToLoop(ScalarPH, LI->getBase());
-    ParentLoop->addBasicBlockToLoop(VectorPH, LI->getBase());
-    ParentLoop->addBasicBlockToLoop(MiddleBlock, LI->getBase());
+    ParentLoop->addBasicBlockToLoop(ScalarPH, *LI);
+    ParentLoop->addBasicBlockToLoop(VectorPH, *LI);
+    ParentLoop->addBasicBlockToLoop(MiddleBlock, *LI);
   } else {
     LI->addTopLevelLoop(Lp);
   }
-  Lp->addBasicBlockToLoop(VecBody, LI->getBase());
+  Lp->addBasicBlockToLoop(VecBody, *LI);
 
   // Use this IR builder to create the loop instructions (Phi, Br, Cmp)
   // inside the loop.
@@ -2359,7 +2359,7 @@ void InnerLoopVectorizer::createEmptyLoop() {
     BasicBlock *CheckBlock =
       LastBypassBlock->splitBasicBlock(PastOverflowCheck, "overflow.checked");
     if (ParentLoop)
-      ParentLoop->addBasicBlockToLoop(CheckBlock, LI->getBase());
+      ParentLoop->addBasicBlockToLoop(CheckBlock, *LI);
     LoopBypassBlocks.push_back(CheckBlock);
     Instruction *OldTerm = LastBypassBlock->getTerminator();
     BranchInst::Create(ScalarPH, CheckBlock, CheckBCOverflow, OldTerm);
@@ -2379,7 +2379,7 @@ void InnerLoopVectorizer::createEmptyLoop() {
     BasicBlock *CheckBlock =
         LastBypassBlock->splitBasicBlock(FirstCheckInst, "vector.stridecheck");
     if (ParentLoop)
-      ParentLoop->addBasicBlockToLoop(CheckBlock, LI->getBase());
+      ParentLoop->addBasicBlockToLoop(CheckBlock, *LI);
     LoopBypassBlocks.push_back(CheckBlock);
 
     // Replace the branch into the memory check block with a conditional branch
@@ -2403,7 +2403,7 @@ void InnerLoopVectorizer::createEmptyLoop() {
     BasicBlock *CheckBlock =
         LastBypassBlock->splitBasicBlock(MemRuntimeCheck, "vector.memcheck");
     if (ParentLoop)
-      ParentLoop->addBasicBlockToLoop(CheckBlock, LI->getBase());
+      ParentLoop->addBasicBlockToLoop(CheckBlock, *LI);
     LoopBypassBlocks.push_back(CheckBlock);
 
     // Replace the branch into the memory check block with a conditional branch
@@ -6258,7 +6258,7 @@ void InnerLoopUnroller::scalarizeInstruction(Instruction *Instr,
                                ConstantInt::get(Cond[Part]->getType(), 1));
       CondBlock = IfBlock->splitBasicBlock(InsertPt, "cond.store");
       LoopVectorBody.push_back(CondBlock);
-      VectorLp->addBasicBlockToLoop(CondBlock, LI->getBase());
+      VectorLp->addBasicBlockToLoop(CondBlock, *LI);
       // Update Builder with newly created basic block.
       Builder.SetInsertPoint(InsertPt);
     }
@@ -6284,7 +6284,7 @@ void InnerLoopUnroller::scalarizeInstruction(Instruction *Instr,
       if (IfPredicateStore) {
         BasicBlock *NewIfBlock = CondBlock->splitBasicBlock(InsertPt, "else");
         LoopVectorBody.push_back(NewIfBlock);
-        VectorLp->addBasicBlockToLoop(NewIfBlock, LI->getBase());
+        VectorLp->addBasicBlockToLoop(NewIfBlock, *LI);
         Builder.SetInsertPoint(InsertPt);
         Instruction *OldBr = IfBlock->getTerminator();
         BranchInst::Create(CondBlock, NewIfBlock, Cmp, OldBr);

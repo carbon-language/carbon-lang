@@ -460,7 +460,7 @@ static BasicBlock *insertUniqueBackedgeBlock(Loop *L, BasicBlock *Preheader,
 
   // Update Loop Information - we know that this block is now in the current
   // loop and all parent loops.
-  L->addBasicBlockToLoop(BEBlock, LI->getBase());
+  L->addBasicBlockToLoop(BEBlock, *LI);
 
   // Update dominator information
   DT->splitBlock(BEBlock);

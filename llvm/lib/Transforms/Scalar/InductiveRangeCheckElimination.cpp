@@ -982,9 +982,8 @@ void LoopConstrainer::addToParentLoopIfNeeded(IteratorTy Begin,
   if (!ParentLoop)
     return;
 
-  auto &LoopInfoBase = OriginalLoopInfo.getBase();
   for (; Begin != End; Begin++)
-    ParentLoop->addBasicBlockToLoop(*Begin, LoopInfoBase);
+    ParentLoop->addBasicBlockToLoop(*Begin, OriginalLoopInfo);
 }
 
 bool LoopConstrainer::run() {

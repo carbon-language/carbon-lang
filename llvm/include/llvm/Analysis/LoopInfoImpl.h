@@ -545,6 +545,25 @@ void LoopInfoBase<BlockT, LoopT>::print(raw_ostream &OS) const {
 #endif
 }
 
+template<class BlockT, class LoopT>
+void LoopInfoBase<BlockT, LoopT>::verify() const {
+  DenseSet<const LoopT*> Loops;
+  for (iterator I = begin(), E = end(); I != E; ++I) {
+    assert(!(*I)->getParentLoop() && "Top-level loop has a parent!");
+    (*I)->verifyLoopNest(&Loops);
+  }
+
+  // Verify that blocks are mapped to valid loops.
+#ifndef NDEBUG
+  for (auto &Entry : BBMap) {
+    BlockT *BB = Entry.first;
+    LoopT *L = Entry.second;
+    assert(Loops.count(L) && "orphaned loop");
+    assert(L->contains(BB) && "orphaned block");
+  }
+#endif
+}
+
 } // End llvm namespace
 
 #endif

@@ -495,7 +495,6 @@ class LoopInfoBase {
   std::vector<LoopT *> TopLevelLoops;
   friend class LoopBase<BlockT, LoopT>;
   friend class LoopInfo;
-  friend class LoopInfoWrapperPass;
 
   void operator=(const LoopInfoBase &) LLVM_DELETED_FUNCTION;
   LoopInfoBase(const LoopInfo &) LLVM_DELETED_FUNCTION;
@@ -618,8 +617,9 @@ public:
   void Analyze(DominatorTreeBase<BlockT> &DomTree);
 
   // Debugging
-
   void print(raw_ostream &OS) const;
+
+  void verify() const;
 };
 
 // Implementation in LoopInfoImpl.h
@@ -627,86 +627,17 @@ public:
 __extension__ extern template class LoopInfoBase<BasicBlock, Loop>;
 #endif
 
-class LoopInfo {
-  LoopInfoBase<BasicBlock, Loop> LI;
+class LoopInfo : public LoopInfoBase<BasicBlock, Loop> {
+  typedef LoopInfoBase<BasicBlock, Loop> BaseT;
+
   friend class LoopBase<BasicBlock, Loop>;
-  friend class LoopInfoWrapperPass;
 
   void operator=(const LoopInfo &) LLVM_DELETED_FUNCTION;
   LoopInfo(const LoopInfo &) LLVM_DELETED_FUNCTION;
 public:
   LoopInfo() {}
 
-  LoopInfoBase<BasicBlock, Loop>& getBase() { return LI; }
-
-  /// iterator/begin/end - The interface to the top-level loops in the current
-  /// function.
-  ///
-  typedef LoopInfoBase<BasicBlock, Loop>::iterator iterator;
-  typedef LoopInfoBase<BasicBlock, Loop>::reverse_iterator reverse_iterator;
-  inline iterator begin() const { return LI.begin(); }
-  inline iterator end() const { return LI.end(); }
-  inline reverse_iterator rbegin() const { return LI.rbegin(); }
-  inline reverse_iterator rend() const { return LI.rend(); }
-  bool empty() const { return LI.empty(); }
-
-  /// getLoopFor - Return the inner most loop that BB lives in.  If a basic
-  /// block is in no loop (for example the entry node), null is returned.
-  ///
-  inline Loop *getLoopFor(const BasicBlock *BB) const {
-    return LI.getLoopFor(BB);
-  }
-
-  /// operator[] - same as getLoopFor...
-  ///
-  inline const Loop *operator[](const BasicBlock *BB) const {
-    return LI.getLoopFor(BB);
-  }
-
-  /// getLoopDepth - Return the loop nesting level of the specified block.  A
-  /// depth of 0 means the block is not inside any loop.
-  ///
-  inline unsigned getLoopDepth(const BasicBlock *BB) const {
-    return LI.getLoopDepth(BB);
-  }
-
-  // isLoopHeader - True if the block is a loop header node
-  inline bool isLoopHeader(BasicBlock *BB) const {
-    return LI.isLoopHeader(BB);
-  }
-
-  /// removeLoop - This removes the specified top-level loop from this loop info
-  /// object.  The loop is not deleted, as it will presumably be inserted into
-  /// another loop.
-  inline Loop *removeLoop(iterator I) { return LI.removeLoop(I); }
-
-  /// changeLoopFor - Change the top-level loop that contains BB to the
-  /// specified loop.  This should be used by transformations that restructure
-  /// the loop hierarchy tree.
-  inline void changeLoopFor(BasicBlock *BB, Loop *L) {
-    LI.changeLoopFor(BB, L);
-  }
-
-  /// changeTopLevelLoop - Replace the specified loop in the top-level loops
-  /// list with the indicated loop.
-  inline void changeTopLevelLoop(Loop *OldLoop, Loop *NewLoop) {
-    LI.changeTopLevelLoop(OldLoop, NewLoop);
-  }
-
-  /// addTopLevelLoop - This adds the specified loop to the collection of
-  /// top-level loops.
-  inline void addTopLevelLoop(Loop *New) {
-    LI.addTopLevelLoop(New);
-  }
-
-  /// removeBlock - This method completely removes BB from all data structures,
-  /// including all of the Loop objects it is nested in and our mapping from
-  /// BasicBlocks to loops.
-  void removeBlock(BasicBlock *BB) {
-    LI.removeBlock(BB);
-  }
-
-  void releaseMemory() { LI.releaseMemory(); }
+  // Most of the public interface is provided via LoopInfoBase.
 
   /// updateUnloop - Update LoopInfo after removing the last backedge from a
   /// loop--now the "unloop". This updates the loop forest and parent loops for

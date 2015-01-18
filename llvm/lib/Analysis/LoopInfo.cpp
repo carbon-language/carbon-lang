@@ -617,7 +617,8 @@ void LoopInfo::updateUnloop(Loop *Unloop) {
   if (!Unloop->getParentLoop()) {
     // Since BBLoop had no parent, Unloop blocks are no longer in a loop.
     for (Loop::block_iterator I = Unloop->block_begin(),
-         E = Unloop->block_end(); I != E; ++I) {
+                              E = Unloop->block_end();
+         I != E; ++I) {
 
       // Don't reparent blocks in subloops.
       if (getLoopFor(*I) != Unloop)
@@ -625,21 +626,21 @@ void LoopInfo::updateUnloop(Loop *Unloop) {
 
       // Blocks no longer have a parent but are still referenced by Unloop until
       // the Unloop object is deleted.
-      LI.changeLoopFor(*I, nullptr);
+      changeLoopFor(*I, nullptr);
     }
 
     // Remove the loop from the top-level LoopInfo object.
-    for (LoopInfo::iterator I = LI.begin();; ++I) {
-      assert(I != LI.end() && "Couldn't find loop");
+    for (iterator I = begin();; ++I) {
+      assert(I != end() && "Couldn't find loop");
       if (*I == Unloop) {
-        LI.removeLoop(I);
+        removeLoop(I);
         break;
       }
     }
 
     // Move all of the subloops to the top-level.
     while (!Unloop->empty())
-      LI.addTopLevelLoop(Unloop->removeChildLoop(std::prev(Unloop->end())));
+      addTopLevelLoop(Unloop->removeChildLoop(std::prev(Unloop->end())));
 
     return;
   }
@@ -679,7 +680,7 @@ INITIALIZE_PASS_END(LoopInfoWrapperPass, "loops", "Natural Loop Information",
 
 bool LoopInfoWrapperPass::runOnFunction(Function &) {
   releaseMemory();
-  LI.getBase().Analyze(getAnalysis<DominatorTreeWrapperPass>().getDomTree());
+  LI.Analyze(getAnalysis<DominatorTreeWrapperPass>().getDomTree());
   return false;
 }
 
@@ -689,24 +690,8 @@ void LoopInfoWrapperPass::verifyAnalysis() const {
   // -verify-loop-info option can enable this. In order to perform some
   // checking by default, LoopPass has been taught to call verifyLoop manually
   // during loop pass sequences.
-
-  if (!VerifyLoopInfo) return;
-
-  DenseSet<const Loop*> Loops;
-  for (LoopInfo::iterator I = LI.begin(), E = LI.end(); I != E; ++I) {
-    assert(!(*I)->getParentLoop() && "Top-level loop has a parent!");
-    (*I)->verifyLoopNest(&Loops);
-  }
-
-  // Verify that blocks are mapped to valid loops.
-#ifndef NDEBUG
-  for (auto &Entry : LI.LI.BBMap) {
-    BasicBlock *BB = Entry.first;
-    Loop *L = Entry.second;
-    assert(Loops.count(L) && "orphaned loop");
-    assert(L->contains(BB) && "orphaned block");
-  }
-#endif
+  if (VerifyLoopInfo)
+    LI.verify();
 }
 
 void LoopInfoWrapperPass::getAnalysisUsage(AnalysisUsage &AU) const {
@@ -715,7 +700,7 @@ void LoopInfoWrapperPass::getAnalysisUsage(AnalysisUsage &AU) const {
 }
 
 void LoopInfoWrapperPass::print(raw_ostream &OS, const Module *) const {
-  LI.LI.print(OS);
+  LI.print(OS);
 }
 
 //===----------------------------------------------------------------------===//

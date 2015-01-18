@@ -293,7 +293,7 @@ BasicBlock *llvm::SplitBlock(BasicBlock *Old, Instruction *SplitPt, Pass *P) {
   if (auto *LIWP = P->getAnalysisIfAvailable<LoopInfoWrapperPass>()) {
     LoopInfo &LI = LIWP->getLoopInfo();
     if (Loop *L = LI.getLoopFor(Old))
-      L->addBasicBlockToLoop(New, LI.getBase());
+      L->addBasicBlockToLoop(New, LI);
   }
 
   if (DominatorTreeWrapperPass *DTWP =
@@ -385,9 +385,9 @@ static void UpdateAnalysisInformation(BasicBlock *OldBB, BasicBlock *NewBB,
     }
 
     if (InnermostPredLoop)
-      InnermostPredLoop->addBasicBlockToLoop(NewBB, LI->getBase());
+      InnermostPredLoop->addBasicBlockToLoop(NewBB, *LI);
   } else {
-    L->addBasicBlockToLoop(NewBB, LI->getBase());
+    L->addBasicBlockToLoop(NewBB, *LI);
     if (SplitMakesNewLoopHeader)
       L->moveToHeader(NewBB);
   }
