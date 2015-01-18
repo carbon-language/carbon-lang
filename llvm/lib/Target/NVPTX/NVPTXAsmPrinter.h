@@ -298,8 +298,8 @@ private:
   bool EmitGeneric;
 
 public:
-  NVPTXAsmPrinter(TargetMachine &TM, MCStreamer &Streamer)
-      : AsmPrinter(TM, Streamer),
+  NVPTXAsmPrinter(TargetMachine &TM, std::unique_ptr<MCStreamer> Streamer)
+      : AsmPrinter(TM, std::move(Streamer)),
         nvptxSubtarget(TM.getSubtarget<NVPTXSubtarget>()) {
     CurrentBankselLabelInBasicBlock = "";
     reader = nullptr;

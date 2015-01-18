@@ -55,9 +55,10 @@ namespace {
     XCoreTargetStreamer &getTargetStreamer();
 
   public:
-    explicit XCoreAsmPrinter(TargetMachine &TM, MCStreamer &Streamer)
-      : AsmPrinter(TM, Streamer), Subtarget(TM.getSubtarget<XCoreSubtarget>()),
-        MCInstLowering(*this) {}
+    explicit XCoreAsmPrinter(TargetMachine &TM,
+                             std::unique_ptr<MCStreamer> Streamer)
+        : AsmPrinter(TM, std::move(Streamer)),
+          Subtarget(TM.getSubtarget<XCoreSubtarget>()), MCInstLowering(*this) {}
 
     const char *getPassName() const override {
       return "XCore Assembly Printer";

@@ -99,9 +99,11 @@ public:
   // reside on the TargetMachine, but are on the subtarget currently
   // and we need them for the beginning of file output before we've
   // seen a single function.
-  explicit MipsAsmPrinter(TargetMachine &TM, MCStreamer &Streamer)
-      : AsmPrinter(TM, Streamer), MCP(nullptr), InConstantPool(false),
-        Subtarget(&TM.getSubtarget<MipsSubtarget>()), MCInstLowering(*this) {}
+  explicit MipsAsmPrinter(TargetMachine &TM,
+                          std::unique_ptr<MCStreamer> Streamer)
+      : AsmPrinter(TM, std::move(Streamer)), MCP(nullptr),
+        InConstantPool(false), Subtarget(&TM.getSubtarget<MipsSubtarget>()),
+        MCInstLowering(*this) {}
 
   const char *getPassName() const override {
     return "Mips Assembly Printer";

@@ -85,7 +85,8 @@ private:
                           const SIProgramInfo &KernelInfo) const;
 
 public:
-  explicit AMDGPUAsmPrinter(TargetMachine &TM, MCStreamer &Streamer);
+  explicit AMDGPUAsmPrinter(TargetMachine &TM,
+                            std::unique_ptr<MCStreamer> Streamer);
 
   bool runOnMachineFunction(MachineFunction &MF) override;
 

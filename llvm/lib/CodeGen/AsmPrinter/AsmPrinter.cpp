@@ -98,15 +98,15 @@ static unsigned getGVAlignmentLog2(const GlobalValue *GV, const DataLayout &TD,
   return NumBits;
 }
 
-AsmPrinter::AsmPrinter(TargetMachine &tm, MCStreamer &Streamer)
+AsmPrinter::AsmPrinter(TargetMachine &tm, std::unique_ptr<MCStreamer> Streamer)
     : MachineFunctionPass(ID), TM(tm), MAI(tm.getMCAsmInfo()),
       MII(tm.getSubtargetImpl()->getInstrInfo()),
-      OutContext(Streamer.getContext()), OutStreamer(Streamer), LastMI(nullptr),
-      LastFn(0), Counter(~0U), SetCounter(0) {
+      OutContext(Streamer->getContext()), OutStreamer(*Streamer.release()),
+      LastMI(nullptr), LastFn(0), Counter(~0U), SetCounter(0) {
   DD = nullptr; MMI = nullptr; LI = nullptr; MF = nullptr;
   CurrentFnSym = CurrentFnSymForSize = nullptr;
   GCMetadataPrinters = nullptr;
-  VerboseAsm = Streamer.isVerboseAsm();
+  VerboseAsm = OutStreamer.isVerboseAsm();
 }
 
 AsmPrinter::~AsmPrinter() {

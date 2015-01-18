@@ -43,8 +43,9 @@ namespace {
           *OutStreamer.getTargetStreamer());
     }
   public:
-    explicit SparcAsmPrinter(TargetMachine &TM, MCStreamer &Streamer)
-      : AsmPrinter(TM, Streamer) {}
+    explicit SparcAsmPrinter(TargetMachine &TM,
+                             std::unique_ptr<MCStreamer> Streamer)
+        : AsmPrinter(TM, std::move(Streamer)) {}
 
     const char *getPassName() const override {
       return "Sparc Assembly Printer";

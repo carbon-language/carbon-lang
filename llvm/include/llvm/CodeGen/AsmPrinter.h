@@ -127,7 +127,7 @@ private:
   DwarfDebug *DD;
 
 protected:
-  explicit AsmPrinter(TargetMachine &TM, MCStreamer &Streamer);
+  explicit AsmPrinter(TargetMachine &TM, std::unique_ptr<MCStreamer> Streamer);
 
 public:
   virtual ~AsmPrinter();

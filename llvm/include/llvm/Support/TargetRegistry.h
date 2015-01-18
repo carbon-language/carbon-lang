@@ -23,6 +23,7 @@
 #include "llvm/ADT/Triple.h"
 #include "llvm/Support/CodeGen.h"
 #include <cassert>
+#include <memory>
 #include <string>
 
 namespace llvm {
@@ -99,8 +100,11 @@ namespace llvm {
                                                   Reloc::Model RM,
                                                   CodeModel::Model CM,
                                                   CodeGenOpt::Level OL);
-    typedef AsmPrinter *(*AsmPrinterCtorTy)(TargetMachine &TM,
-                                            MCStreamer &Streamer);
+    // If it weren't for layering issues (this header is in llvm/Support, but
+    // depends on MC?) this should take the Streamer by value rather than rvalue
+    // reference.
+    typedef AsmPrinter *(*AsmPrinterCtorTy)(
+        TargetMachine &TM, std::unique_ptr<MCStreamer> &&Streamer);
     typedef MCAsmBackend *(*MCAsmBackendCtorTy)(const Target &T,
                                                 const MCRegisterInfo &MRI,
                                                 StringRef TT,
@@ -376,10 +380,11 @@ namespace llvm {
 
     /// createAsmPrinter - Create a target specific assembly printer pass.  This
     /// takes ownership of the MCStreamer object.
-    AsmPrinter *createAsmPrinter(TargetMachine &TM, MCStreamer &Streamer) const{
+    AsmPrinter *createAsmPrinter(TargetMachine &TM,
+                                 std::unique_ptr<MCStreamer> Streamer) const {
       if (!AsmPrinterCtorFn)
         return nullptr;
-      return AsmPrinterCtorFn(TM, Streamer);
+      return AsmPrinterCtorFn(TM, std::move(Streamer));
     }
 
     MCDisassembler *createMCDisassembler(const MCSubtargetInfo &STI,
@@ -1121,8 +1126,9 @@ namespace llvm {
     }
 
   private:
-    static AsmPrinter *Allocator(TargetMachine &TM, MCStreamer &Streamer) {
-      return new AsmPrinterImpl(TM, Streamer);
+    static AsmPrinter *Allocator(TargetMachine &TM,
+                                 std::unique_ptr<MCStreamer> &&Streamer) {
+      return new AsmPrinterImpl(TM, std::move(Streamer));
     }
   };
 

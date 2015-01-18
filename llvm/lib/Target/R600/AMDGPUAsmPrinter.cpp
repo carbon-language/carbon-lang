@@ -73,9 +73,10 @@ static uint32_t getFPMode(const MachineFunction &F) {
          FP_DENORM_MODE_DP(FP64Denormals);
 }
 
-static AsmPrinter *createAMDGPUAsmPrinterPass(TargetMachine &tm,
-                                              MCStreamer &Streamer) {
-  return new AMDGPUAsmPrinter(tm, Streamer);
+static AsmPrinter *
+createAMDGPUAsmPrinterPass(TargetMachine &tm,
+                           std::unique_ptr<MCStreamer> &&Streamer) {
+  return new AMDGPUAsmPrinter(tm, std::move(Streamer));
 }
 
 extern "C" void LLVMInitializeR600AsmPrinter() {
@@ -83,8 +84,9 @@ extern "C" void LLVMInitializeR600AsmPrinter() {
   TargetRegistry::RegisterAsmPrinter(TheGCNTarget, createAMDGPUAsmPrinterPass);
 }
 
-AMDGPUAsmPrinter::AMDGPUAsmPrinter(TargetMachine &TM, MCStreamer &Streamer)
-    : AsmPrinter(TM, Streamer) {
+AMDGPUAsmPrinter::AMDGPUAsmPrinter(TargetMachine &TM,
+                                   std::unique_ptr<MCStreamer> Streamer)
+    : AsmPrinter(TM, std::move(Streamer)) {
   DisasmEnabled = TM.getSubtarget<AMDGPUSubtarget>().dumpCode();
 }
 

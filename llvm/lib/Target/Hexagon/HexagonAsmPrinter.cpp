@@ -61,6 +61,12 @@ static cl::opt<bool> AlignCalls(
          "hexagon-align-calls", cl::Hidden, cl::init(true),
           cl::desc("Insert falign after call instruction for Hexagon target"));
 
+HexagonAsmPrinter::HexagonAsmPrinter(TargetMachine &TM,
+                                     std::unique_ptr<MCStreamer> Streamer)
+    : AsmPrinter(TM, std::move(Streamer)) {
+  Subtarget = &TM.getSubtarget<HexagonSubtarget>();
+}
+
 void HexagonAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
                                     raw_ostream &O) {
   const MachineOperand &MO = MI->getOperand(OpNo);
