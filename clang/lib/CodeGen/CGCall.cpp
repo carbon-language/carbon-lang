@@ -2680,10 +2680,6 @@ void CodeGenFunction::EmitCallArgs(CallArgList &Args,
                                    const FunctionDecl *CalleeDecl,
                                    unsigned ParamsToSkip,
                                    bool ForceColumnInfo) {
-  CGDebugInfo *DI = getDebugInfo();
-  SourceLocation CallLoc;
-  if (DI) CallLoc = DI->getLocation();
-
   // We *have* to evaluate arguments from right to left in the MS C++ ABI,
   // because arguments are destroyed left to right in the callee.
   if (CGM.getTarget().getCXXABI().areArgsDestroyedLeftToRightInCallee()) {
@@ -2704,8 +2700,6 @@ void CodeGenFunction::EmitCallArgs(CallArgList &Args,
       EmitCallArg(Args, *Arg, ArgTypes[I]);
       emitNonNullArgCheck(*this, Args.back().RV, ArgTypes[I], Arg->getExprLoc(),
                           CalleeDecl, ParamsToSkip + I);
-      // Restore the debug location.
-      if (DI) DI->EmitLocation(Builder, CallLoc, ForceColumnInfo);
     }
 
     // Un-reverse the arguments we just evaluated so they match up with the LLVM
@@ -2720,8 +2714,6 @@ void CodeGenFunction::EmitCallArgs(CallArgList &Args,
     EmitCallArg(Args, *Arg, ArgTypes[I]);
     emitNonNullArgCheck(*this, Args.back().RV, ArgTypes[I], Arg->getExprLoc(),
                         CalleeDecl, ParamsToSkip + I);
-    // Restore the debug location.
-    if (DI) DI->EmitLocation(Builder, CallLoc, ForceColumnInfo);
   }
 }
 
