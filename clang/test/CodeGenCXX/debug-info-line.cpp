@@ -173,12 +173,12 @@ struct f14 {
 // CHECK-LABEL: define
 // CHECK-LABEL: define
 // CHECK-LABEL: define
-// CHECK: call {{.*}}, !dbg [[DBG_F14_CTOR_CALL:![0-9]*]]
-// FIXME: The ctor call should be attributed to the line of the NSDMI, not the
-// start of this declaration.
-#line 1600
 struct {
-  f14 v = 1;
+// CHECK: call {{.*}}, !dbg [[DBG_F14_CTOR_CALL:![0-9]*]]
+#line 1600
+  f14 v
+      =
+      1;
 } f14_inst;
 
 // CHECK-LABEL: define
