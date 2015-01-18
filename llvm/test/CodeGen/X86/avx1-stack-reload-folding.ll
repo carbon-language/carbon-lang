@@ -873,10 +873,28 @@ define <8 x float> @stack_fold_maxps_ymm(<8 x float> %a0, <8 x float> %a1) {
 }
 declare <8 x float> @llvm.x86.avx.max.ps.256(<8 x float>, <8 x float>) nounwind readnone
 
-; TODO stack_fold_maxsd (+ int)
+define double @stack_fold_maxsd(double %a0, double %a1) {
+  ;CHECK-LABEL: stack_fold_maxsd
+  ;CHECK:       vmaxsd {{-?[0-9]*}}(%rsp), {{%xmm[0-9][0-9]*}}, {{%xmm[0-9][0-9]*}} {{.*#+}} 8-byte Folded Reload
+  %1 = tail call <4 x i64> asm sideeffect "nop", "=x,~{xmm2},~{xmm3},~{xmm4},~{xmm5},~{xmm6},~{xmm7},~{xmm8},~{xmm9},~{xmm10},~{xmm11},~{xmm12},~{xmm13},~{xmm14},~{xmm15},~{flags}"()
+  %2 = fcmp ogt double %a0, %a1
+  %3 = select i1 %2, double %a0, double %a1
+  ret double %3
+}
+
+; TODO stack_fold_maxsd_int
 declare <2 x double> @llvm.x86.sse2.max.sd(<2 x double>, <2 x double>) nounwind readnone
 
-; TODO stack_fold_maxss (+ int)
+define float @stack_fold_maxss(float %a0, float %a1) {
+  ;CHECK-LABEL: stack_fold_maxss
+  ;CHECK:       vmaxss {{-?[0-9]*}}(%rsp), {{%xmm[0-9][0-9]*}}, {{%xmm[0-9][0-9]*}} {{.*#+}} 4-byte Folded Reload
+  %1 = tail call <4 x i64> asm sideeffect "nop", "=x,~{xmm2},~{xmm3},~{xmm4},~{xmm5},~{xmm6},~{xmm7},~{xmm8},~{xmm9},~{xmm10},~{xmm11},~{xmm12},~{xmm13},~{xmm14},~{xmm15},~{flags}"()
+  %2 = fcmp ogt float %a0, %a1
+  %3 = select i1 %2, float %a0, float %a1
+  ret float %3
+}
+
+; TODO stack_fold_maxss_int
 declare <4 x float> @llvm.x86.sse.max.ss(<4 x float>, <4 x float>) nounwind readnone
 
 define <2 x double> @stack_fold_minpd(<2 x double> %a0, <2 x double> %a1) {
@@ -915,10 +933,28 @@ define <8 x float> @stack_fold_minps_ymm(<8 x float> %a0, <8 x float> %a1) {
 }
 declare <8 x float> @llvm.x86.avx.min.ps.256(<8 x float>, <8 x float>) nounwind readnone
 
-; TODO stack_fold_minsd (+ int)
+define double @stack_fold_minsd(double %a0, double %a1) {
+  ;CHECK-LABEL: stack_fold_minsd
+  ;CHECK:       vminsd {{-?[0-9]*}}(%rsp), {{%xmm[0-9][0-9]*}}, {{%xmm[0-9][0-9]*}} {{.*#+}} 8-byte Folded Reload
+  %1 = tail call <4 x i64> asm sideeffect "nop", "=x,~{xmm2},~{xmm3},~{xmm4},~{xmm5},~{xmm6},~{xmm7},~{xmm8},~{xmm9},~{xmm10},~{xmm11},~{xmm12},~{xmm13},~{xmm14},~{xmm15},~{flags}"()
+  %2 = fcmp olt double %a0, %a1
+  %3 = select i1 %2, double %a0, double %a1
+  ret double %3
+}
+
+; TODO stack_fold_minsd_int
 declare <2 x double> @llvm.x86.sse2.min.sd(<2 x double>, <2 x double>) nounwind readnone
 
-; TODO stack_fold_minss (+ int)
+define float @stack_fold_minss(float %a0, float %a1) {
+  ;CHECK-LABEL: stack_fold_minss
+  ;CHECK:       vminss {{-?[0-9]*}}(%rsp), {{%xmm[0-9][0-9]*}}, {{%xmm[0-9][0-9]*}} {{.*#+}} 4-byte Folded Reload
+  %1 = tail call <4 x i64> asm sideeffect "nop", "=x,~{xmm2},~{xmm3},~{xmm4},~{xmm5},~{xmm6},~{xmm7},~{xmm8},~{xmm9},~{xmm10},~{xmm11},~{xmm12},~{xmm13},~{xmm14},~{xmm15},~{flags}"()
+  %2 = fcmp olt float %a0, %a1
+  %3 = select i1 %2, float %a0, float %a1
+  ret float %3
+}
+
+; TODO stack_fold_minss_int
 declare <4 x float> @llvm.x86.sse.min.ss(<4 x float>, <4 x float>) nounwind readnone
 
 ; TODO stack_fold_movd (load / store)
