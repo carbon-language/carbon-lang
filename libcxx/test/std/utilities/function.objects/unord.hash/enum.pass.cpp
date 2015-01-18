@@ -12,9 +12,7 @@
 // make sure that we can hash enumeration values
 // Not very portable
 
-#include <__config>
-
-#if _LIBCPP_STD_VER > 11
+#if __cplusplus >= 201402L
 
 #include <functional>
 #include <cassert>

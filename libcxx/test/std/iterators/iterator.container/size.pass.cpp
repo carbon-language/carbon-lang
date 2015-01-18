@@ -15,9 +15,6 @@
 int main () {}
 #else
 
-
-#include <__config>
-
 #include <iterator>
 #include <cassert>
 #include <vector>

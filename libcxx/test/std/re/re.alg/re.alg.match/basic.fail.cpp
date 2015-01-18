@@ -18,9 +18,7 @@
 //                    regex_constants::match_flag_type = 
 //                      regex_constants::match_default) = delete;
 
-#include <__config>
-
-#if _LIBCPP_STD_VER <= 11
+#if __cplusplus <= 201402L
 #error
 #else
 
