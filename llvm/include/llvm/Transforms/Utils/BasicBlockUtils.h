@@ -23,6 +23,7 @@
 namespace llvm {
 
 class AliasAnalysis;
+class MemoryDependenceAnalysis;
 class DominatorTree;
 class Instruction;
 class MDNode;
@@ -39,7 +40,8 @@ void DeleteDeadBlock(BasicBlock *BB);
 /// any single-entry PHI nodes in it, fold them away.  This handles the case
 /// when all entries to the PHI nodes in a block are guaranteed equal, such as
 /// when the block has exactly one predecessor.
-void FoldSingleEntryPHINodes(BasicBlock *BB, Pass *P = nullptr);
+void FoldSingleEntryPHINodes(BasicBlock *BB, AliasAnalysis *AA = nullptr,
+                             MemoryDependenceAnalysis *MemDep = nullptr);
 
 /// DeleteDeadPHIs - Examine each PHI in the given block and delete it if it
 /// is dead. Also recursively delete any operands that become dead as

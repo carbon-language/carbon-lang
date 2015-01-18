@@ -65,15 +65,9 @@ void llvm::DeleteDeadBlock(BasicBlock *BB) {
 /// any single-entry PHI nodes in it, fold them away.  This handles the case
 /// when all entries to the PHI nodes in a block are guaranteed equal, such as
 /// when the block has exactly one predecessor.
-void llvm::FoldSingleEntryPHINodes(BasicBlock *BB, Pass *P) {
+void llvm::FoldSingleEntryPHINodes(BasicBlock *BB, AliasAnalysis *AA,
+                                   MemoryDependenceAnalysis *MemDep) {
   if (!isa<PHINode>(BB->begin())) return;
-
-  AliasAnalysis *AA = nullptr;
-  MemoryDependenceAnalysis *MemDep = nullptr;
-  if (P) {
-    AA = P->getAnalysisIfAvailable<AliasAnalysis>();
-    MemDep = P->getAnalysisIfAvailable<MemoryDependenceAnalysis>();
-  }
 
   while (PHINode *PN = dyn_cast<PHINode>(BB->begin())) {
     if (PN->getIncomingValue(0) != PN)
@@ -148,8 +142,11 @@ bool llvm::MergeBlockIntoPredecessor(BasicBlock *BB, Pass *P) {
   }
 
   // Begin by getting rid of unneeded PHIs.
-  if (isa<PHINode>(BB->front()))
-    FoldSingleEntryPHINodes(BB, P);
+  if (isa<PHINode>(BB->front())) {
+    auto *AA = P ? P->getAnalysisIfAvailable<AliasAnalysis>() : nullptr;
+    auto *MemDep = P ? P->getAnalysisIfAvailable<MemoryDependenceAnalysis>() : nullptr;
+    FoldSingleEntryPHINodes(BB, AA, MemDep);
+  }
 
   // Delete the unconditional branch from the predecessor...
   PredBB->getInstList().pop_back();
