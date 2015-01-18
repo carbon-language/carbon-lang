@@ -1258,8 +1258,10 @@ public:
   void EmitLambdaStaticInvokeFunction(const CXXMethodDecl *MD);
   void EmitAsanPrologueOrEpilogue(bool Prologue);
 
-  /// EmitReturnBlock - Emit the unified return block, trying to avoid its
-  /// emission when possible.
+  /// \brief Emit the unified return block, trying to avoid its emission when
+  /// possible.
+  /// \return The debug location of the user written return statement if the
+  /// return block is is avoided.
   llvm::DebugLoc EmitReturnBlock();
 
   /// FinishFunction - Complete IR generation of the current function. It is
