@@ -241,7 +241,7 @@ void BlockGenerator::copyBB(ValueMapT &GlobalMap, LoopToScevMapT &LTS) {
   auto *DTWP = P->getAnalysisIfAvailable<DominatorTreeWrapperPass>();
   auto *DT = DTWP ? &DTWP->getDomTree() : nullptr;
   auto *LIWP = P->getAnalysisIfAvailable<LoopInfoWrapperPass>();
-  auto *LI = LIWP ? &LIWP->getLoopInfo() : nullptr;;
+  auto *LI = LIWP ? &LIWP->getLoopInfo() : nullptr;
 
   BasicBlock *BB = Statement.getBasicBlock();
   BasicBlock *CopyBB =
@@ -580,7 +580,7 @@ void VectorBlockGenerator::copyBB() {
   auto *DTWP = P->getAnalysisIfAvailable<DominatorTreeWrapperPass>();
   auto *DT = DTWP ? &DTWP->getDomTree() : nullptr;
   auto *LIWP = P->getAnalysisIfAvailable<LoopInfoWrapperPass>();
-  auto *LI = LIWP ? &LIWP->getLoopInfo() : nullptr;;
+  auto *LI = LIWP ? &LIWP->getLoopInfo() : nullptr;
 
   BasicBlock *BB = Statement.getBasicBlock();
   BasicBlock *CopyBB =
