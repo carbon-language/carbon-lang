@@ -736,8 +736,24 @@ declare <4 x float> @llvm.x86.sse.div.ss(<4 x float>, <4 x float>) nounwind read
 ; TODO stack_fold_dpps
 ; TODO stack_fold_dpps_ymm
 
-; TODO stack_fold_extractf128
-; TODO stack_fold_extractps
+define <4 x float> @stack_fold_extractf128(<8 x float> %a0, <8 x float> %a1) {
+  ;CHECK-LABEL: stack_fold_extractf128
+  ;CHECK:       vextractf128 $1, {{%ymm[0-9][0-9]*}}, {{-?[0-9]*}}(%rsp) {{.*#+}} 16-byte Folded Spill
+  ;CHECK:       vmovaps {{-?[0-9]*}}(%rsp), %xmm0 {{.*#+}} 16-byte Reload
+  %1 = shufflevector <8 x float> %a0, <8 x float> %a1, <4 x i32> <i32 4, i32 5, i32 6, i32 7>
+  %2 = tail call <4 x i64> asm sideeffect "nop", "=x,~{xmm1},~{xmm2},~{xmm3},~{xmm4},~{xmm5},~{xmm6},~{xmm7},~{xmm8},~{xmm9},~{xmm10},~{xmm11},~{xmm12},~{xmm13},~{xmm14},~{xmm15},~{flags}"()
+  ret <4 x float> %1
+}
+
+define i32 @stack_fold_extractps(<4 x float> %a0) {
+  ;CHECK-LABEL: stack_fold_extractps
+  ;CHECK:       vextractps $1, {{%xmm[0-9][0-9]*}}, {{-?[0-9]*}}(%rsp) {{.*#+}} 4-byte Folded Spill
+  ;CHECK:       movl    {{-?[0-9]*}}(%rsp), %eax {{.*#+}} 4-byte Reload
+  %1 = extractelement <4 x float> %a0, i32 1
+  %2 = bitcast float %1 to i32
+  %3 = tail call <4 x i64> asm sideeffect "nop", "=x,~{rax},~{rbx},~{rcx},~{rdx},~{rsi},~{rdi},~{rbp},~{r8},~{r9},~{r10},~{r11},~{r12},~{r13},~{r14},~{r15}"()
+  ret i32 %2
+}
 
 define <2 x double> @stack_fold_haddpd(<2 x double> %a0, <2 x double> %a1) {
   ;CHECK-LABEL: stack_fold_haddpd
@@ -811,7 +827,14 @@ define <8 x float> @stack_fold_hsubps_ymm(<8 x float> %a0, <8 x float> %a1) {
 }
 declare <8 x float> @llvm.x86.avx.hsub.ps.256(<8 x float>, <8 x float>) nounwind readnone
 
-; TODO stack_fold_insertf128
+define <8 x float> @stack_fold_insertf128(<4 x float> %a0, <4 x float> %a1) {
+  ;CHECK-LABEL: stack_fold_insertf128
+  ;CHECK:       vinsertf128 $1, {{-?[0-9]*}}(%rsp), {{%ymm[0-9][0-9]*}}, {{%ymm[0-9][0-9]*}} {{.*#+}} 16-byte Folded Reload
+  %1 = tail call <4 x i64> asm sideeffect "nop", "=x,~{xmm2},~{xmm3},~{xmm4},~{xmm5},~{xmm6},~{xmm7},~{xmm8},~{xmm9},~{xmm10},~{xmm11},~{xmm12},~{xmm13},~{xmm14},~{xmm15},~{flags}"()
+  %2 = shufflevector <4 x float> %a0, <4 x float> %a1, <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7>
+  ret <8 x float> %2
+}
+
 ; TODO stack_fold_insertps
 
 define <2 x double> @stack_fold_maxpd(<2 x double> %a0, <2 x double> %a1) {
