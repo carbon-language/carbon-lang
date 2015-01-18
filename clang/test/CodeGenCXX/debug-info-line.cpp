@@ -182,12 +182,21 @@ struct f14_use {
 f14_use::f14_use() = default;
 
 // CHECK-LABEL: define
+// CHECK-LABEL: define
 void func(foo);
 void f15(foo *f) {
   func(
 // CHECK: getelementptr {{.*}}, !dbg [[DBG_F15:![0-9]*]]
 #line 1700
       f[3]);
+}
+
+// CHECK-LABEL: define
+void f16(__complex float f) {
+  __complex float g = //
+// CHECK: add {{.*}}, !dbg [[DBG_F16:![0-9]*]]
+#line 1800
+      f + 1;
 }
 
 // CHECK: [[DBG_F1]] = !MDLocation(line: 100,
@@ -211,3 +220,4 @@ void f15(foo *f) {
 // CHECK: [[DBG_F13]] = !MDLocation(line: 1500,
 // CHECK: [[DBG_F14_CTOR_CALL]] = !MDLocation(line: 1600,
 // CHECK: [[DBG_F15]] = !MDLocation(line: 1700,
+// CHECK: [[DBG_F16]] = !MDLocation(line: 1800,
