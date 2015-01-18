@@ -1275,7 +1275,7 @@ bool PPCFastISel::processCallArgs(SmallVectorImpl<Value*> &Args,
 
   // Prepare to assign register arguments.  Every argument uses up a
   // GPR protocol register even if it's passed in a floating-point
-  // register.
+  // register (unless we're using the fast calling convention).
   unsigned NextGPR = PPC::X3;
   unsigned NextFPR = PPC::F1;
 
@@ -1325,7 +1325,8 @@ bool PPCFastISel::processCallArgs(SmallVectorImpl<Value*> &Args,
     unsigned ArgReg;
     if (ArgVT == MVT::f32 || ArgVT == MVT::f64) {
       ArgReg = NextFPR++;
-      ++NextGPR;
+      if (CC != CallingConv::Fast)
+        ++NextGPR;
     } else
       ArgReg = NextGPR++;
 
