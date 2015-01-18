@@ -711,8 +711,8 @@ void IslNodeBuilder::createIf(__isl_take isl_ast_node *If) {
 
   Loop *L = LI.getLoopFor(CondBB);
   if (L) {
-    L->addBasicBlockToLoop(ThenBB, LI.getBase());
-    L->addBasicBlockToLoop(ElseBB, LI.getBase());
+    L->addBasicBlockToLoop(ThenBB, LI);
+    L->addBasicBlockToLoop(ElseBB, LI);
   }
 
   CondBB->getTerminator()->eraseFromParent();

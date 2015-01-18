@@ -60,7 +60,7 @@ BasicBlock *polly::executeScopConditionally(Scop &S, Pass *P, Value *RTC) {
   Builder.SetInsertPoint(SplitBlock);
   Builder.CreateCondBr(RTC, StartBlock, R.getEntry());
   if (Loop *L = LI.getLoopFor(SplitBlock))
-    L->addBasicBlockToLoop(StartBlock, LI.getBase());
+    L->addBasicBlockToLoop(StartBlock, LI);
   DT.addNewBlock(StartBlock, SplitBlock);
   Builder.SetInsertPoint(StartBlock);
 
