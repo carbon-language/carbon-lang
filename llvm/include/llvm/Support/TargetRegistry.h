@@ -381,7 +381,7 @@ namespace llvm {
     /// createAsmPrinter - Create a target specific assembly printer pass.  This
     /// takes ownership of the MCStreamer object.
     AsmPrinter *createAsmPrinter(TargetMachine &TM,
-                                 std::unique_ptr<MCStreamer> Streamer) const {
+                                 std::unique_ptr<MCStreamer> &&Streamer) const {
       if (!AsmPrinterCtorFn)
         return nullptr;
       return AsmPrinterCtorFn(TM, std::move(Streamer));
