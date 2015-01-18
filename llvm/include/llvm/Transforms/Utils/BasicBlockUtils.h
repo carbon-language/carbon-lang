@@ -168,8 +168,12 @@ BasicBlock *SplitBlock(BasicBlock *Old, Instruction *SplitPt,
 /// complicated to handle the case where one of the edges being split
 /// is an exit of a loop with other exits).
 ///
-BasicBlock *SplitBlockPredecessors(BasicBlock *BB, ArrayRef<BasicBlock*> Preds,
-                                   const char *Suffix, Pass *P = nullptr);
+BasicBlock *SplitBlockPredecessors(BasicBlock *BB, ArrayRef<BasicBlock *> Preds,
+                                   const char *Suffix,
+                                   AliasAnalysis *AA = nullptr,
+                                   DominatorTree *DT = nullptr,
+                                   LoopInfo *LI = nullptr,
+                                   bool PreserveLCSSA = false);
 
 /// SplitLandingPadPredecessors - This method transforms the landing pad,
 /// OrigBB, by introducing two new basic blocks into the function. One of those

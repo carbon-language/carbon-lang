@@ -113,6 +113,14 @@ static void placeSplitBlockCarefully(BasicBlock *NewBB,
 BasicBlock *llvm::InsertPreheaderForLoop(Loop *L, Pass *PP) {
   BasicBlock *Header = L->getHeader();
 
+  // Get analyses that we try to update.
+  auto *AA = PP->getAnalysisIfAvailable<AliasAnalysis>();
+  auto *DTWP = PP->getAnalysisIfAvailable<DominatorTreeWrapperPass>();
+  auto *DT = DTWP ? &DTWP->getDomTree() : nullptr;
+  auto *LIWP = PP->getAnalysisIfAvailable<LoopInfoWrapperPass>();
+  auto *LI = LIWP ? &LIWP->getLoopInfo() : nullptr;
+  bool PreserveLCSSA = PP->mustPreserveAnalysisID(LCSSAID);
+
   // Compute the set of predecessors of the loop that are not in the loop.
   SmallVector<BasicBlock*, 8> OutsideBlocks;
   for (pred_iterator PI = pred_begin(Header), PE = pred_end(Header);
@@ -133,7 +141,7 @@ BasicBlock *llvm::InsertPreheaderForLoop(Loop *L, Pass *PP) {
   BasicBlock *PreheaderBB;
   if (!Header->isLandingPad()) {
     PreheaderBB = SplitBlockPredecessors(Header, OutsideBlocks, ".preheader",
-                                         PP);
+                                         AA, DT, LI, PreserveLCSSA);
   } else {
     SmallVector<BasicBlock*, 2> NewBBs;
     SplitLandingPadPredecessors(Header, OutsideBlocks, ".preheader",
@@ -157,7 +165,9 @@ BasicBlock *llvm::InsertPreheaderForLoop(Loop *L, Pass *PP) {
 ///
 /// This method is used to split exit blocks that have predecessors outside of
 /// the loop.
-static BasicBlock *rewriteLoopExitBlock(Loop *L, BasicBlock *Exit, Pass *PP) {
+static BasicBlock *rewriteLoopExitBlock(Loop *L, BasicBlock *Exit,
+                                        AliasAnalysis *AA, DominatorTree *DT,
+                                        LoopInfo *LI, Pass *PP) {
   SmallVector<BasicBlock*, 8> LoopBlocks;
   for (pred_iterator I = pred_begin(Exit), E = pred_end(Exit); I != E; ++I) {
     BasicBlock *P = *I;
@@ -172,6 +182,8 @@ static BasicBlock *rewriteLoopExitBlock(Loop *L, BasicBlock *Exit, Pass *PP) {
   assert(!LoopBlocks.empty() && "No edges coming in from outside the loop?");
   BasicBlock *NewExitBB = nullptr;
 
+  bool PreserveLCSSA = PP->mustPreserveAnalysisID(LCSSAID);
+
   if (Exit->isLandingPad()) {
     SmallVector<BasicBlock*, 2> NewBBs;
     SplitLandingPadPredecessors(Exit, LoopBlocks,
@@ -179,7 +191,8 @@ static BasicBlock *rewriteLoopExitBlock(Loop *L, BasicBlock *Exit, Pass *PP) {
                                 PP, NewBBs);
     NewExitBB = NewBBs[0];
   } else {
-    NewExitBB = SplitBlockPredecessors(Exit, LoopBlocks, ".loopexit", PP);
+    NewExitBB = SplitBlockPredecessors(Exit, LoopBlocks, ".loopexit", AA, DT,
+                                       LI, PreserveLCSSA);
   }
 
   DEBUG(dbgs() << "LoopSimplify: Creating dedicated exit block "
@@ -287,9 +300,11 @@ static Loop *separateNestedLoop(Loop *L, BasicBlock *Preheader,
   if (SE)
     SE->forgetLoop(L);
 
+  bool PreserveLCSSA = PP->mustPreserveAnalysisID(LCSSAID);
+
   BasicBlock *Header = L->getHeader();
-  BasicBlock *NewBB =
-    SplitBlockPredecessors(Header, OuterLoopPreds,  ".outer", PP);
+  BasicBlock *NewBB = SplitBlockPredecessors(Header, OuterLoopPreds, ".outer",
+                                             AA, DT, LI, PreserveLCSSA);
 
   // Make sure that NewBB is put someplace intelligent, which doesn't mess up
   // code layout too horribly.
@@ -567,7 +582,7 @@ ReprocessLoop:
       // Must be exactly this loop: no subloops, parent loops, or non-loop preds
       // allowed.
       if (!L->contains(*PI)) {
-        if (rewriteLoopExitBlock(L, ExitBlock, PP)) {
+        if (rewriteLoopExitBlock(L, ExitBlock, AA, DT, LI, PP)) {
           ++NumInserted;
           Changed = true;
         }

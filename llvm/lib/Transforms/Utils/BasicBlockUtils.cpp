@@ -312,46 +312,46 @@ BasicBlock *llvm::SplitBlock(BasicBlock *Old, Instruction *SplitPt,
 /// analysis information.
 static void UpdateAnalysisInformation(BasicBlock *OldBB, BasicBlock *NewBB,
                                       ArrayRef<BasicBlock *> Preds,
-                                      Pass *P, bool &HasLoopExit) {
-  if (!P) return;
+                                      DominatorTree *DT, LoopInfo *LI,
+                                      bool PreserveLCSSA, bool &HasLoopExit) {
+  // Update dominator tree if available.
+  if (DT)
+    DT->splitBlock(NewBB);
 
-  auto *LIWP = P->getAnalysisIfAvailable<LoopInfoWrapperPass>();
-  LoopInfo *LI = LIWP ? &LIWP->getLoopInfo() : nullptr;
-  Loop *L = LI ? LI->getLoopFor(OldBB) : nullptr;
+  // The rest of the logic is only relevant for updating the loop structures.
+  if (!LI)
+    return;
+
+  Loop *L = LI->getLoopFor(OldBB);
 
   // If we need to preserve loop analyses, collect some information about how
   // this split will affect loops.
   bool IsLoopEntry = !!L;
   bool SplitMakesNewLoopHeader = false;
-  if (LI) {
-    bool PreserveLCSSA = P->mustPreserveAnalysisID(LCSSAID);
-    for (ArrayRef<BasicBlock*>::iterator
-           i = Preds.begin(), e = Preds.end(); i != e; ++i) {
-      BasicBlock *Pred = *i;
+  for (ArrayRef<BasicBlock *>::iterator i = Preds.begin(), e = Preds.end();
+       i != e; ++i) {
+    BasicBlock *Pred = *i;
 
-      // If we need to preserve LCSSA, determine if any of the preds is a loop
-      // exit.
-      if (PreserveLCSSA)
-        if (Loop *PL = LI->getLoopFor(Pred))
-          if (!PL->contains(OldBB))
-            HasLoopExit = true;
+    // If we need to preserve LCSSA, determine if any of the preds is a loop
+    // exit.
+    if (PreserveLCSSA)
+      if (Loop *PL = LI->getLoopFor(Pred))
+        if (!PL->contains(OldBB))
+          HasLoopExit = true;
 
-      // If we need to preserve LoopInfo, note whether any of the preds crosses
-      // an interesting loop boundary.
-      if (!L) continue;
-      if (L->contains(Pred))
-        IsLoopEntry = false;
-      else
-        SplitMakesNewLoopHeader = true;
-    }
+    // If we need to preserve LoopInfo, note whether any of the preds crosses
+    // an interesting loop boundary.
+    if (!L)
+      continue;
+    if (L->contains(Pred))
+      IsLoopEntry = false;
+    else
+      SplitMakesNewLoopHeader = true;
   }
 
-  // Update dominator tree if available.
-  if (DominatorTreeWrapperPass *DTWP =
-          P->getAnalysisIfAvailable<DominatorTreeWrapperPass>())
-    DTWP->getDomTree().splitBlock(NewBB);
-
-  if (!L) return;
+  // Unless we have a loop for OldBB, nothing else to do here.
+  if (!L)
+    return;
 
   if (IsLoopEntry) {
     // Add the new block to the nearest enclosing loop (and not an adjacent
@@ -388,10 +388,9 @@ static void UpdateAnalysisInformation(BasicBlock *OldBB, BasicBlock *NewBB,
 /// UpdatePHINodes - Update the PHI nodes in OrigBB to include the values coming
 /// from NewBB. This also updates AliasAnalysis, if available.
 static void UpdatePHINodes(BasicBlock *OrigBB, BasicBlock *NewBB,
-                           ArrayRef<BasicBlock*> Preds, BranchInst *BI,
-                           Pass *P, bool HasLoopExit) {
+                           ArrayRef<BasicBlock *> Preds, BranchInst *BI,
+                           AliasAnalysis *AA, bool HasLoopExit) {
   // Otherwise, create a new PHI node in NewBB for each PHI node in OrigBB.
-  AliasAnalysis *AA = P ? P->getAnalysisIfAvailable<AliasAnalysis>() : nullptr;
   SmallPtrSet<BasicBlock *, 16> PredSet(Preds.begin(), Preds.end());
   for (BasicBlock::iterator I = OrigBB->begin(); isa<PHINode>(I); ) {
     PHINode *PN = cast<PHINode>(I++);
@@ -468,8 +467,10 @@ static void UpdatePHINodes(BasicBlock *OrigBB, BasicBlock *NewBB,
 /// of the edges being split is an exit of a loop with other exits).
 ///
 BasicBlock *llvm::SplitBlockPredecessors(BasicBlock *BB,
-                                         ArrayRef<BasicBlock*> Preds,
-                                         const char *Suffix, Pass *P) {
+                                         ArrayRef<BasicBlock *> Preds,
+                                         const char *Suffix, AliasAnalysis *AA,
+                                         DominatorTree *DT, LoopInfo *LI,
+                                         bool PreserveLCSSA) {
   // Create new basic block, insert right before the original block.
   BasicBlock *NewBB = BasicBlock::Create(BB->getContext(), BB->getName()+Suffix,
                                          BB->getParent(), BB);
@@ -500,10 +501,11 @@ BasicBlock *llvm::SplitBlockPredecessors(BasicBlock *BB,
 
   // Update DominatorTree, LoopInfo, and LCCSA analysis information.
   bool HasLoopExit = false;
-  UpdateAnalysisInformation(BB, NewBB, Preds, P, HasLoopExit);
+  UpdateAnalysisInformation(BB, NewBB, Preds, DT, LI, PreserveLCSSA,
+                            HasLoopExit);
 
   // Update the PHI nodes in BB with the values coming from NewBB.
-  UpdatePHINodes(BB, NewBB, Preds, BI, P, HasLoopExit);
+  UpdatePHINodes(BB, NewBB, Preds, BI, AA, HasLoopExit);
   return NewBB;
 }
 
@@ -548,11 +550,18 @@ void llvm::SplitLandingPadPredecessors(BasicBlock *OrigBB,
   }
 
   // Update DominatorTree, LoopInfo, and LCCSA analysis information.
+  auto *DTWP = P->getAnalysisIfAvailable<DominatorTreeWrapperPass>();
+  auto *DT = DTWP ? &DTWP->getDomTree() : nullptr;
+  auto *LIWP = P->getAnalysisIfAvailable<LoopInfoWrapperPass>();
+  auto *LI = LIWP ? &LIWP->getLoopInfo() : nullptr;
+  bool PreserveLCSSA = P->mustPreserveAnalysisID(LCSSAID);
   bool HasLoopExit = false;
-  UpdateAnalysisInformation(OrigBB, NewBB1, Preds, P, HasLoopExit);
+  UpdateAnalysisInformation(OrigBB, NewBB1, Preds, DT, LI, PreserveLCSSA,
+                            HasLoopExit);
 
   // Update the PHI nodes in OrigBB with the values coming from NewBB1.
-  UpdatePHINodes(OrigBB, NewBB1, Preds, BI1, P, HasLoopExit);
+  AliasAnalysis *AA = P ? P->getAnalysisIfAvailable<AliasAnalysis>() : nullptr;
+  UpdatePHINodes(OrigBB, NewBB1, Preds, BI1, AA, HasLoopExit);
 
   // Move the remaining edges from OrigBB to point to NewBB2.
   SmallVector<BasicBlock*, 8> NewBB2Preds;
@@ -584,10 +593,11 @@ void llvm::SplitLandingPadPredecessors(BasicBlock *OrigBB,
 
     // Update DominatorTree, LoopInfo, and LCCSA analysis information.
     HasLoopExit = false;
-    UpdateAnalysisInformation(OrigBB, NewBB2, NewBB2Preds, P, HasLoopExit);
+    UpdateAnalysisInformation(OrigBB, NewBB2, NewBB2Preds, DT, LI,
+                              PreserveLCSSA, HasLoopExit);
 
     // Update the PHI nodes in OrigBB with the values coming from NewBB2.
-    UpdatePHINodes(OrigBB, NewBB2, NewBB2Preds, BI2, P, HasLoopExit);
+    UpdatePHINodes(OrigBB, NewBB2, NewBB2Preds, BI2, AA, HasLoopExit);
   }
 
   LandingPadInst *LPad = OrigBB->getLandingPadInst();
