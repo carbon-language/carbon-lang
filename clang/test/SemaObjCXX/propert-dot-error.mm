@@ -64,6 +64,6 @@ class Forward;
 void testD(D *d) {
   d.Forward::property = 17; // expected-error{{property access cannot be qualified with 'Forward::'}}
   d->Forward::ivar = 12; // expected-error{{instance variable access cannot be qualified with 'Forward::'}}
-  d.D::property = 17; // expected-error{{'D' is not a class, namespace, or scoped enumeration}}
-  d->D::ivar = 12; // expected-error{{'D' is not a class, namespace, or scoped enumeration}}
+  d.D::property = 17; // expected-error{{'D' is not a class, namespace, or enumeration}}
+  d->D::ivar = 12; // expected-error{{'D' is not a class, namespace, or enumeration}}
 }

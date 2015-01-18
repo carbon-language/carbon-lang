@@ -21,7 +21,7 @@ public:
     T *q = new T();
     t.T::~T();
     q->~T();
-    // expected-error@+2 {{'int' is not a class, namespace, or scoped enumeration}}
+    // expected-error@+2 {{'int' is not a class, namespace, or enumeration}}
     // expected-error@+1 {{no member named '~Colors' in 'Colors'}}
     q->A::~A();
     // expected-error@+2 {{no member named '~int' in 'Q'}}

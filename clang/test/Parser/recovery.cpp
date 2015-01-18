@@ -154,17 +154,17 @@ namespace pr15133 {
   void func_1(int x) {
     switch(x) {
     case 0: break;
-    case ns::V1:: break; // expected-error{{'V1' cannot appear before '::' because it is not a class, namespace, or scoped enumeration; did you mean ':'?}}
-    case C1::V2:: break; // expected-error{{'V2' cannot appear before '::' because it is not a class, namespace, or scoped enumeration; did you mean ':'?}}
-    case C1::V3:: break; // expected-error{{'V3' cannot appear before '::' because it is not a class, namespace, or scoped enumeration; did you mean ':'?}}
-    case V4:: break; // expected-error{{'V4' cannot appear before '::' because it is not a class, namespace, or scoped enumeration; did you mean ':'?}}
-    case V6:: func_3();   // expected-error{{'V6' cannot appear before '::' because it is not a class, namespace, or scoped enumeration; did you mean ':'?}}
+    case ns::V1:: break; // expected-error{{'V1' cannot appear before '::' because it is not a class, namespace, or enumeration; did you mean ':'?}}
+    case C1::V2:: break; // expected-error{{'V2' cannot appear before '::' because it is not a class, namespace, or enumeration; did you mean ':'?}}
+    case C1::V3:: break; // expected-error{{'V3' cannot appear before '::' because it is not a class, namespace, or enumeration; did you mean ':'?}}
+    case V4:: break; // expected-error{{'V4' cannot appear before '::' because it is not a class, namespace, or enumeration; did you mean ':'?}}
+    case V6:: func_3();   // expected-error{{'V6' cannot appear before '::' because it is not a class, namespace, or enumeration; did you mean ':'?}}
     }
   }
   void func_2(EC3 x) {
     switch(x) {
     case EC3::V0:  break;
-    case EC3::V5:: break; // expected-error{{'V5' cannot appear before '::' because it is not a class, namespace, or scoped enumeration; did you mean ':'?}}
+    case EC3::V5:: break; // expected-error{{'V5' cannot appear before '::' because it is not a class, namespace, or enumeration; did you mean ':'?}}
     }
   }
 
@@ -186,13 +186,13 @@ namespace pr15133 {
   };
 
   int func_3(int x) {
-    return x ? S::n :: 0;  // expected-error{{'n' cannot appear before '::' because it is not a class, namespace, or scoped enumeration; did you mean ':'?}}
+    return x ? S::n :: 0;  // expected-error{{'n' cannot appear before '::' because it is not a class, namespace, or enumeration; did you mean ':'?}}
   }
   int func_4(int x, S &s) {
-    return x ? s.nn :: x;  // expected-error{{'nn' cannot appear before '::' because it is not a class, namespace, or scoped enumeration; did you mean ':'?}}
+    return x ? s.nn :: x;  // expected-error{{'nn' cannot appear before '::' because it is not a class, namespace, or enumeration; did you mean ':'?}}
   }
   int func_5(int x, S &s) {
-    return x ? s.nn :: S::n;  // expected-error{{'nn' cannot appear before '::' because it is not a class, namespace, or scoped enumeration; did you mean ':'?}}
+    return x ? s.nn :: S::n;  // expected-error{{'nn' cannot appear before '::' because it is not a class, namespace, or enumeration; did you mean ':'?}}
   }
 
   struct S2 {

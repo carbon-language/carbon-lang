@@ -13,7 +13,7 @@ namespace A {
 }
 
 A:: ; // expected-error {{expected unqualified-id}}
-::A::ax::undef ex3; // expected-error {{'ax' is not a class, namespace, or scoped enumeration}}
+::A::ax::undef ex3; // expected-error {{'ax' is not a class, namespace, or enumeration}}
 A::undef1::undef2 ex4; // expected-error {{no member named 'undef1'}}
 
 int A::C::Ag1() { return 0; }
@@ -88,9 +88,9 @@ void f3() {
   // declared here", "template 'X' declared here", etc) to help explain what it
   // is if it's 'not a class, namespace, or scoped enumeration'.
   int N; // expected-note {{'N' declared here}}
-  N::x = 0; // expected-error {{'N' is not a class, namespace, or scoped enumeration}}
+  N::x = 0; // expected-error {{'N' is not a class, namespace, or enumeration}}
   { int A;           A::ax = 0; }
-  { typedef int A;   A::ax = 0; } // expected-error{{'A' (aka 'int') is not a class, namespace, or scoped enumeration}}
+  { typedef int A;   A::ax = 0; } // expected-error{{'A' (aka 'int') is not a class, namespace, or enumeration}}
   { typedef A::C A;  A::ax = 0; } // expected-error {{no member named 'ax'}}
   { typedef A::C A;  A::cx = 0; }
 }
@@ -116,7 +116,7 @@ namespace E {
     };
 
     void f() {
-      return E::X; // expected-error{{'E::Nested::E' is not a class, namespace, or scoped enumeration}}
+      return E::X; // expected-error{{'E::Nested::E' is not a class, namespace, or enumeration}}
     }
   }
 }
@@ -310,7 +310,7 @@ namespace N {
 }
 
 namespace TypedefNamespace { typedef int F; };
-TypedefNamespace::F::NonexistentName BadNNSWithCXXScopeSpec; // expected-error {{'F' (aka 'int') is not a class, namespace, or scoped enumeration}}
+TypedefNamespace::F::NonexistentName BadNNSWithCXXScopeSpec; // expected-error {{'F' (aka 'int') is not a class, namespace, or enumeration}}
 
 namespace PR18587 {
 

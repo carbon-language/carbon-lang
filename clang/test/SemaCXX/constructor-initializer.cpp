@@ -94,7 +94,7 @@ struct Current : Derived {
                            Derived::Base1(), // expected-error {{type 'Derived::Base1' is not a direct or virtual base of 'Current'}}
                            Derived::V(),
                            ::NonExisting(), // expected-error {{member initializer 'NonExisting' does not name a non-static data member or}}
-                           INT::NonExisting()  {} // expected-error {{'INT' (aka 'int') is not a class, namespace, or scoped enumeration}} \
+                           INT::NonExisting()  {} // expected-error {{'INT' (aka 'int') is not a class, namespace, or enumeration}} \
                                                   // expected-error {{member initializer 'NonExisting' does not name a non-static data member or}}
 };
 

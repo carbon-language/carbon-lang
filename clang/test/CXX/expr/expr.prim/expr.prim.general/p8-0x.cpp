@@ -47,8 +47,8 @@ namespace PR10127 {
   decltype()::middle::fail g; // expected-error{{expected expression}}
   
   decltype(int()) h;
-  decltype(int())::PR10127::outer i; // expected-error{{'decltype(int())' (aka 'int') is not a class, namespace, or scoped enumeration}}
-  decltype(int())::global j; // expected-error{{'decltype(int())' (aka 'int') is not a class, namespace, or scoped enumeration}}
+  decltype(int())::PR10127::outer i; // expected-error{{'decltype(int())' (aka 'int') is not a class, namespace, or enumeration}}
+  decltype(int())::global j; // expected-error{{'decltype(int())' (aka 'int') is not a class, namespace, or enumeration}}
   
   outer::middle k = decltype(outer())::middle();
   outer::middle::inner l = decltype(outer())::middle::inner();
