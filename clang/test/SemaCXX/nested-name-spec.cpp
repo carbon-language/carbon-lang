@@ -115,8 +115,8 @@ namespace E {
       X = 0
     };
 
-    void f() {
-      return E::X; // expected-error{{'E::Nested::E' is not a class, namespace, or enumeration}}
+    int f() {
+      return E::X; // expected-warning{{use of enumeration in a nested name specifier is a C++11 extension}}
     }
   }
 }
@@ -408,5 +408,30 @@ struct S7b {
 struct S7c {
   T1<B1::B2>::C1 m1 : T1<B1:B2>::N1;  // expected-error{{unexpected ':' in nested name specifier; did you mean '::'?}}
 };
+
+}
+
+namespace PR16951 {
+  namespace ns {
+    enum an_enumeration {
+      ENUMERATOR  // expected-note{{'ENUMERATOR' declared here}}
+    };
+  }
+
+  int x1 = ns::an_enumeration::ENUMERATOR; // expected-warning{{use of enumeration in a nested name specifier is a C++11 extension}}
+
+  int x2 = ns::an_enumeration::ENUMERATOR::vvv; // expected-warning{{use of enumeration in a nested name specifier is a C++11 extension}} \
+                                                // expected-error{{'ENUMERATOR' is not a class, namespace, or enumeration}} \
+
+  int x3 = ns::an_enumeration::X; // expected-warning{{use of enumeration in a nested name specifier is a C++11 extension}} \
+                                  // expected-error{{no member named 'X'}}
+
+  enum enumerator_2 {
+    ENUMERATOR_2
+  };
+
+  int x4 = enumerator_2::ENUMERATOR_2; // expected-warning{{use of enumeration in a nested name specifier is a C++11 extension}}
+  int x5 = enumerator_2::X2; // expected-warning{{use of enumeration in a nested name specifier is a C++11 extension}} \
+                             // expected-error{{no member named 'X2' in 'PR16951::enumerator_2'}}
 
 }

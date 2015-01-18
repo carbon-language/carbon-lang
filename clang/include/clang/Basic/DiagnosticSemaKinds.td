@@ -1231,6 +1231,9 @@ def warn_cxx98_compat_enum_nested_name_spec : Warning<
 def err_nested_name_spec_is_not_class : Error<
   "%0 cannot appear before '::' because it is not a class"
   "%select{ or namespace|, namespace, or enumeration}1; did you mean ':'?">;
+def ext_nested_name_spec_is_enum : ExtWarn<
+  "use of enumeration in a nested name specifier is a C++11 extension">,
+  InGroup<CXX11>;
 
 // C++ class members
 def err_storageclass_invalid_for_member : Error<

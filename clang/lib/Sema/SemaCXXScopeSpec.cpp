@@ -282,7 +282,11 @@ bool Sema::ActOnSuperScopeSpecifier(SourceLocation SuperLoc,
 
 /// \brief Determines whether the given declaration is an valid acceptable
 /// result for name lookup of a nested-name-specifier.
-bool Sema::isAcceptableNestedNameSpecifier(const NamedDecl *SD) {
+/// \param SD Declaration checked for nested-name-specifier.
+/// \param IsExtension If not null and the declaration is accepted as an
+/// extension, the pointed variable is assigned true.
+bool Sema::isAcceptableNestedNameSpecifier(const NamedDecl *SD,
+                                           bool *IsExtension) {
   if (!SD)
     return false;
 
@@ -298,14 +302,23 @@ bool Sema::isAcceptableNestedNameSpecifier(const NamedDecl *SD) {
   QualType T = Context.getTypeDeclType(cast<TypeDecl>(SD));
   if (T->isDependentType())
     return true;
-  else if (const TypedefNameDecl *TD = dyn_cast<TypedefNameDecl>(SD)) {
-    if (TD->getUnderlyingType()->isRecordType() ||
-        (Context.getLangOpts().CPlusPlus11 &&
-         TD->getUnderlyingType()->isEnumeralType()))
+  if (const TypedefNameDecl *TD = dyn_cast<TypedefNameDecl>(SD)) {
+    if (TD->getUnderlyingType()->isRecordType())
       return true;
-  } else if (isa<RecordDecl>(SD) ||
-             (Context.getLangOpts().CPlusPlus11 && isa<EnumDecl>(SD)))
+    if (TD->getUnderlyingType()->isEnumeralType()) {
+      if (Context.getLangOpts().CPlusPlus11)
+        return true;
+      if (IsExtension)
+        *IsExtension = true;
+    }
+  } else if (isa<RecordDecl>(SD)) {
     return true;
+  } else if (isa<EnumDecl>(SD)) {
+    if (Context.getLangOpts().CPlusPlus11)
+      return true;
+    if (IsExtension)
+      *IsExtension = true;
+  }
 
   return false;
 }
@@ -599,7 +612,13 @@ bool Sema::BuildCXXNestedNameSpecifier(Scope *S,
   }
 
   NamedDecl *SD = Found.getAsSingle<NamedDecl>();
-  if (isAcceptableNestedNameSpecifier(SD)) {
+  bool IsExtension = false;
+  bool AcceptSpec = isAcceptableNestedNameSpecifier(SD, &IsExtension);
+  if (!AcceptSpec && IsExtension) {
+    AcceptSpec = true;
+    Diag(IdentifierLoc, diag::ext_nested_name_spec_is_enum);
+  }
+  if (AcceptSpec) {
     if (!ObjectType.isNull() && !ObjectTypeSearchedInScope &&
         !getLangOpts().CPlusPlus11) {
       // C++03 [basic.lookup.classref]p4:
