@@ -107,7 +107,9 @@ bool llvm::DeleteDeadPHIs(BasicBlock *BB, const TargetLibraryInfo *TLI) {
 
 /// MergeBlockIntoPredecessor - Attempts to merge a block into its predecessor,
 /// if possible.  The return value indicates success or failure.
-bool llvm::MergeBlockIntoPredecessor(BasicBlock *BB, Pass *P) {
+bool llvm::MergeBlockIntoPredecessor(BasicBlock *BB, DominatorTree *DT,
+                                     LoopInfo *LI, AliasAnalysis *AA,
+                                     MemoryDependenceAnalysis *MemDep) {
   // Don't merge away blocks who have their address taken.
   if (BB->hasAddressTaken()) return false;
 
@@ -142,11 +144,8 @@ bool llvm::MergeBlockIntoPredecessor(BasicBlock *BB, Pass *P) {
   }
 
   // Begin by getting rid of unneeded PHIs.
-  if (isa<PHINode>(BB->front())) {
-    auto *AA = P ? P->getAnalysisIfAvailable<AliasAnalysis>() : nullptr;
-    auto *MemDep = P ? P->getAnalysisIfAvailable<MemoryDependenceAnalysis>() : nullptr;
+  if (isa<PHINode>(BB->front()))
     FoldSingleEntryPHINodes(BB, AA, MemDep);
-  }
 
   // Delete the unconditional branch from the predecessor...
   PredBB->getInstList().pop_back();
@@ -163,28 +162,23 @@ bool llvm::MergeBlockIntoPredecessor(BasicBlock *BB, Pass *P) {
     PredBB->takeName(BB);
 
   // Finally, erase the old block and update dominator info.
-  if (P) {
-    if (DominatorTreeWrapperPass *DTWP =
-            P->getAnalysisIfAvailable<DominatorTreeWrapperPass>()) {
-      DominatorTree &DT = DTWP->getDomTree();
-      if (DomTreeNode *DTN = DT.getNode(BB)) {
-        DomTreeNode *PredDTN = DT.getNode(PredBB);
-        SmallVector<DomTreeNode*, 8> Children(DTN->begin(), DTN->end());
-        for (SmallVectorImpl<DomTreeNode *>::iterator DI = Children.begin(),
-             DE = Children.end(); DI != DE; ++DI)
-          DT.changeImmediateDominator(*DI, PredDTN);
+  if (DT)
+    if (DomTreeNode *DTN = DT->getNode(BB)) {
+      DomTreeNode *PredDTN = DT->getNode(PredBB);
+      SmallVector<DomTreeNode *, 8> Children(DTN->begin(), DTN->end());
+      for (SmallVectorImpl<DomTreeNode *>::iterator DI = Children.begin(),
+                                                    DE = Children.end();
+           DI != DE; ++DI)
+        DT->changeImmediateDominator(*DI, PredDTN);
 
-        DT.eraseNode(BB);
-      }
-
-      if (auto *LIWP = P->getAnalysisIfAvailable<LoopInfoWrapperPass>())
-        LIWP->getLoopInfo().removeBlock(BB);
-
-      if (MemoryDependenceAnalysis *MD =
-            P->getAnalysisIfAvailable<MemoryDependenceAnalysis>())
-        MD->invalidateCachedPredecessors();
+      DT->eraseNode(BB);
     }
-  }
+
+  if (LI)
+    LI->removeBlock(BB);
+
+  if (MemDep)
+    MemDep->invalidateCachedPredecessors();
 
   BB->eraseFromParent();
   return true;

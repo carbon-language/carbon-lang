@@ -2363,7 +2363,8 @@ bool GVN::runOnFunction(Function& F) {
   for (Function::iterator FI = F.begin(), FE = F.end(); FI != FE; ) {
     BasicBlock *BB = FI++;
 
-    bool removedBlock = MergeBlockIntoPredecessor(BB, this);
+    bool removedBlock = MergeBlockIntoPredecessor(
+        BB, DT, /* LoopInfo */ nullptr, VN.getAliasAnalysis(), MD);
     if (removedBlock) ++NumGVNBlocks;
 
     Changed |= removedBlock;

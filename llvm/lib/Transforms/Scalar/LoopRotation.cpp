@@ -593,7 +593,7 @@ bool LoopRotate::rotateLoop(Loop *L, bool SimplifiedLatch) {
   // the OrigHeader block into OrigLatch.  This will succeed if they are
   // connected by an unconditional branch.  This is just a cleanup so the
   // emitted code isn't too gross in this common case.
-  MergeBlockIntoPredecessor(OrigHeader, this);
+  MergeBlockIntoPredecessor(OrigHeader, DT, LI);
 
   DEBUG(dbgs() << "LoopRotation: into "; L->dump());
 
