@@ -47,4 +47,4 @@ declare <2 x float> @llvm.floor.v2f32(<2 x float>) #0
 ; Function Attrs: nounwind readonly
 declare <4 x float> @llvm.floor.v4f32(<4 x float>) #0
 
-attributes #0 = { nounwind readonly }
+attributes #0 = { nounwind readnone }
