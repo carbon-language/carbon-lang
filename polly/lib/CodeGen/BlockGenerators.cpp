@@ -238,9 +238,14 @@ void BlockGenerator::copyInstruction(const Instruction *Inst, ValueMapT &BBMap,
 }
 
 void BlockGenerator::copyBB(ValueMapT &GlobalMap, LoopToScevMapT &LTS) {
+  auto *DTWP = P->getAnalysisIfAvailable<DominatorTreeWrapperPass>();
+  auto *DT = DTWP ? &DTWP->getDomTree() : nullptr;
+  auto *LIWP = P->getAnalysisIfAvailable<LoopInfoWrapperPass>();
+  auto *LI = LIWP ? &LIWP->getLoopInfo() : nullptr;;
+
   BasicBlock *BB = Statement.getBasicBlock();
   BasicBlock *CopyBB =
-      SplitBlock(Builder.GetInsertBlock(), Builder.GetInsertPoint(), P);
+      SplitBlock(Builder.GetInsertBlock(), Builder.GetInsertPoint(), DT, LI);
   CopyBB->setName("polly.stmt." + BB->getName());
   Builder.SetInsertPoint(CopyBB->begin());
 
@@ -572,9 +577,14 @@ void VectorBlockGenerator::copyInstruction(const Instruction *Inst,
 }
 
 void VectorBlockGenerator::copyBB() {
+  auto *DTWP = P->getAnalysisIfAvailable<DominatorTreeWrapperPass>();
+  auto *DT = DTWP ? &DTWP->getDomTree() : nullptr;
+  auto *LIWP = P->getAnalysisIfAvailable<LoopInfoWrapperPass>();
+  auto *LI = LIWP ? &LIWP->getLoopInfo() : nullptr;;
+
   BasicBlock *BB = Statement.getBasicBlock();
   BasicBlock *CopyBB =
-      SplitBlock(Builder.GetInsertBlock(), Builder.GetInsertPoint(), P);
+      SplitBlock(Builder.GetInsertBlock(), Builder.GetInsertPoint(), DT, LI);
   CopyBB->setName("polly.stmt." + BB->getName());
   Builder.SetInsertPoint(CopyBB->begin());
 

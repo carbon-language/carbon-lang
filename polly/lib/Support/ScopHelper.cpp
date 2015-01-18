@@ -13,6 +13,7 @@
 
 #include "polly/Support/ScopHelper.h"
 #include "polly/ScopInfo.h"
+#include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/RegionInfo.h"
 #include "llvm/Analysis/ScalarEvolution.h"
@@ -89,7 +90,13 @@ BasicBlock *polly::createSingleExitEdge(Region *R, Pass *P) {
     if (R->contains(*PI))
       Preds.push_back(*PI);
 
-  return SplitBlockPredecessors(BB, Preds, ".region", P);
+  auto *AA = P->getAnalysisIfAvailable<AliasAnalysis>();
+  auto *DTWP = P->getAnalysisIfAvailable<DominatorTreeWrapperPass>();
+  auto *DT = DTWP ? &DTWP->getDomTree() : nullptr;
+  auto *LIWP = P->getAnalysisIfAvailable<LoopInfoWrapperPass>();
+  auto *LI = LIWP ? &LIWP->getLoopInfo() : nullptr;
+
+  return SplitBlockPredecessors(BB, Preds, ".region", AA, DT, LI);
 }
 
 static void replaceScopAndRegionEntry(polly::Scop *S, BasicBlock *OldEntry,
@@ -110,7 +117,12 @@ BasicBlock *polly::simplifyRegion(Scop *S, Pass *P) {
 
   // Create single entry edge if the region has multiple entry edges.
   if (!EnteringBB) {
-    NewEntry = SplitBlock(OldEntry, OldEntry->begin(), P);
+    auto *DTWP = P->getAnalysisIfAvailable<DominatorTreeWrapperPass>();
+    auto *DT = DTWP ? &DTWP->getDomTree() : nullptr;
+    auto *LIWP = P->getAnalysisIfAvailable<LoopInfoWrapperPass>();
+    auto *LI = LIWP ? &LIWP->getLoopInfo() : nullptr;
+
+    NewEntry = SplitBlock(OldEntry, OldEntry->begin(), DT, LI);
     EnteringBB = OldEntry;
   }
 
@@ -171,8 +183,13 @@ void polly::splitEntryBlockForAlloca(BasicBlock *EntryBlock, Pass *P) {
   while (isa<AllocaInst>(I))
     ++I;
 
+  auto *DTWP = P->getAnalysisIfAvailable<DominatorTreeWrapperPass>();
+  auto *DT = DTWP ? &DTWP->getDomTree() : nullptr;
+  auto *LIWP = P->getAnalysisIfAvailable<LoopInfoWrapperPass>();
+  auto *LI = LIWP ? &LIWP->getLoopInfo() : nullptr;
+
   // SplitBlock updates DT, DF and LI.
-  BasicBlock *NewEntry = SplitBlock(EntryBlock, I, P);
+  BasicBlock *NewEntry = SplitBlock(EntryBlock, I, DT, LI);
   if (RegionInfoPass *RIP = P->getAnalysisIfAvailable<RegionInfoPass>())
     RIP->getRegionInfo().splitBlock(NewEntry, EntryBlock);
 }
