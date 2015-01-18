@@ -699,7 +699,7 @@ void PPCAsmPrinter::EmitInstruction(const MachineInstr *MI) {
                               OutContext);
     EmitToStreamer(OutStreamer, MCInstBuilder(PPC::ADDIS8)
                                 .addReg(MI->getOperand(0).getReg())
-                                .addReg(PPC::X2)
+                                .addReg(MI->getOperand(1).getReg())
                                 .addExpr(SymGotTprel));
     return;
   }
@@ -778,7 +778,7 @@ void PPCAsmPrinter::EmitInstruction(const MachineInstr *MI) {
                               OutContext);
     EmitToStreamer(OutStreamer, MCInstBuilder(PPC::ADDIS8)
                                 .addReg(MI->getOperand(0).getReg())
-                                .addReg(PPC::X2)
+                                .addReg(MI->getOperand(1).getReg())
                                 .addExpr(SymGotTlsGD));
     return;
   }
@@ -815,7 +815,7 @@ void PPCAsmPrinter::EmitInstruction(const MachineInstr *MI) {
                               OutContext);
     EmitToStreamer(OutStreamer, MCInstBuilder(PPC::ADDIS8)
                                 .addReg(MI->getOperand(0).getReg())
-                                .addReg(PPC::X2)
+                                .addReg(MI->getOperand(1).getReg())
                                 .addExpr(SymGotTlsLD));
     return;
   }
