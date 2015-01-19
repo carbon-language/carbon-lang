@@ -33,13 +33,13 @@
 ; CHECK: @available_externally.var = available_externally constant i32 0{{$}}
 
 @linkonce.var = linkonce constant i32 0
-; CHECK: @linkonce.var = linkonce constant i32 0{{$}}
+; CHECK: @linkonce.var = linkonce constant i32 0, comdat{{$}}
 
 @weak.var = weak constant i32 0
-; CHECK: @weak.var = weak constant i32 0{{$}}
+; CHECK: @weak.var = weak constant i32 0, comdat{{$}}
 
 @linkonce_odr.var = linkonce_odr constant i32 0
-; CHECK: @linkonce_odr.var = linkonce_odr constant i32 0{{$}}
+; CHECK: @linkonce_odr.var = linkonce_odr constant i32 0, comdat{{$}}
 
 @linkonce_odr_auto_hide.var = linkonce_odr_auto_hide constant i32 0
 ; CHECK: @linkonce_odr_auto_hide.var = constant i32 0{{$}}
@@ -90,19 +90,19 @@ define available_externally void @available_externally()
 }
 
 define linkonce void @linkonce()
-; CHECK: define linkonce void @linkonce() {
+; CHECK: define linkonce void @linkonce() comdat {
 {
   ret void
 }
 
 define weak void @weak()
-; CHECK: define weak void @weak() {
+; CHECK: define weak void @weak() comdat {
 {
   ret void
 }
 
 define linkonce_odr void @linkonce_odr()
-; CHECK: define linkonce_odr void @linkonce_odr() {
+; CHECK: define linkonce_odr void @linkonce_odr() comdat {
 {
   ret void
 }

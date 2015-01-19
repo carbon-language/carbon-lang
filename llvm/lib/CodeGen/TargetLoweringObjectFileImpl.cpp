@@ -257,8 +257,7 @@ SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
 
   // If this global is linkonce/weak and the target handles this by emitting it
   // into a 'uniqued' section name, create and return the section now.
-  if ((GV->isWeakForLinker() || EmitUniquedSection || GV->hasComdat()) &&
-      !Kind.isCommon()) {
+  if ((EmitUniquedSection && !Kind.isCommon()) || GV->hasComdat()) {
     StringRef Prefix = getSectionPrefixForGlobal(Kind);
 
     SmallString<128> Name(Prefix);
@@ -266,12 +265,9 @@ SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
 
     StringRef Group = "";
     unsigned Flags = getELFSectionFlags(Kind);
-    if (GV->isWeakForLinker() || GV->hasComdat()) {
-      if (const Comdat *C = getELFComdat(GV))
-        Group = C->getName();
-      else
-        Group = Name.substr(Prefix.size());
+    if (const Comdat *C = getELFComdat(GV)) {
       Flags |= ELF::SHF_GROUP;
+      Group = C->getName();
     }
 
     return getContext().getELFSection(Name.str(),
@@ -801,7 +797,7 @@ const MCSection *TargetLoweringObjectFileCOFF::getExplicitSectionGlobal(
   unsigned Characteristics = getCOFFSectionFlags(Kind);
   StringRef Name = GV->getSection();
   StringRef COMDATSymName = "";
-  if ((GV->isWeakForLinker() || GV->hasComdat()) && !Kind.isCommon()) {
+  if (GV->hasComdat()) {
     Selection = getSelectionForCOFF(GV);
     const GlobalValue *ComdatGV;
     if (Selection == COFF::IMAGE_COMDAT_SELECT_ASSOCIATIVE)
@@ -848,12 +844,7 @@ SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
   else
     EmitUniquedSection = TM.getDataSections();
 
-  // If this global is linkonce/weak and the target handles this by emitting it
-  // into a 'uniqued' section name, create and return the section now.
-  // Section names depend on the name of the symbol which is not feasible if the
-  // symbol has private linkage.
-  if ((GV->isWeakForLinker() || EmitUniquedSection || GV->hasComdat()) &&
-      !Kind.isCommon()) {
+  if ((EmitUniquedSection && !Kind.isCommon()) || GV->hasComdat()) {
     const char *Name = getCOFFSectionNameForUniqueGlobal(Kind);
     unsigned Characteristics = getCOFFSectionFlags(Kind);
 
