@@ -2596,6 +2596,7 @@ TEST_F(FormatTest, MacroDefinitionsWithIncompleteCode) {
   verifyFormat("#pragma omp threadprivate( \\\n"
                "    y)), // expected-warning",
                getLLVMStyleWithColumns(28));
+  verifyFormat("#d, = };");
 }
 
 TEST_F(FormatTest, MacrosWithoutTrailingSemicolon) {

@@ -783,7 +783,6 @@ void ContinuationIndenter::moveStatePastFakeLParens(LineState &State,
 void ContinuationIndenter::moveStatePastFakeRParens(LineState &State) {
   for (unsigned i = 0, e = State.NextToken->FakeRParens; i != e; ++i) {
     unsigned VariablePos = State.Stack.back().VariablePos;
-    assert(State.Stack.size() > 1);
     if (State.Stack.size() == 1) {
       // Do not pop the last element.
       break;
