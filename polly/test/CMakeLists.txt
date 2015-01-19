@@ -66,7 +66,7 @@ else (NOT DEFINED LLVM_MAIN_SRC_DIR)
 
   set(LLVM_BINARY_DIR "${LLVM_BINARY_DIR}")
   set(LLVM_TOOLS_DIR "${LLVM_TOOLS_BINARY_DIR}")
-  set(LLVM_LIBS_DIR "${LLVM_BINARY_DIR}/lib")
+  set(LLVM_LIBS_DIR "${LLVM_BINARY_DIR}/lib${LLVM_LIBDIR_SUFFIX}")
   set(POLLY_LIB_DIR "${LLVM_LIBS_DIR}")
 
   add_lit_testsuite(check-polly "Running polly regression tests"
