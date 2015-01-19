@@ -70,8 +70,13 @@ static void InitializeFlags(bool standalone) {
     OverrideCommonFlags(cf);
   }
 
+  bool help_before = common_flags()->help;
+
   const char *options = GetEnv("LSAN_OPTIONS");
   parser.ParseString(options);
+
+  if (!help_before && common_flags()->help)
+    parser.PrintFlagDescriptions();
 }
 
 #define LOG_POINTERS(...)                           \
