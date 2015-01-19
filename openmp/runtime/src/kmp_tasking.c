@@ -835,7 +835,7 @@ __kmp_task_alloc( ident_t *loc_ref, kmp_int32 gtid, kmp_tasking_flags_t *flags,
     task                      = KMP_TASKDATA_TO_TASK(taskdata);
 
     // Make sure task & taskdata are aligned appropriately
-#if KMP_ARCH_X86
+#if KMP_ARCH_X86 || !KMP_HAVE_QUAD
     KMP_DEBUG_ASSERT( ( ((kmp_uintptr_t)taskdata) & (sizeof(double)-1) ) == 0 );
     KMP_DEBUG_ASSERT( ( ((kmp_uintptr_t)task) & (sizeof(double)-1) ) == 0 );
 #else
