@@ -611,6 +611,21 @@ static T *getUniqued(DenseSet<T *, InfoT> &Store,
   return I == Store.end() ? nullptr : *I;
 }
 
+template <class T, class StoreT>
+T *UniquableMDNode::storeImpl(T *N, StorageType Storage, StoreT &Store) {
+  switch (Storage) {
+  case Uniqued:
+    Store.insert(N);
+    break;
+  case Distinct:
+    N->storeDistinctInContext();
+    break;
+  case Temporary:
+    llvm_unreachable("Unexpected temporary node");
+  }
+  return N;
+}
+
 MDTuple *MDTuple::getImpl(LLVMContext &Context, ArrayRef<Metadata *> MDs,
                           StorageType Storage, bool ShouldCreate) {
   unsigned Hash = 0;
@@ -625,20 +640,8 @@ MDTuple *MDTuple::getImpl(LLVMContext &Context, ArrayRef<Metadata *> MDs,
     assert(ShouldCreate && "Expected non-uniqued nodes to always be created");
   }
 
-  auto *N = new (MDs.size()) MDTuple(Context, Storage, Hash, MDs);
-
-  switch (Storage) {
-  case Uniqued:
-    Context.pImpl->MDTuples.insert(N);
-    break;
-  case Distinct:
-    N->storeDistinctInContext();
-    break;
-  case Temporary:
-    llvm_unreachable("Unexpected temporary node");
-  }
-
-  return N;
+  return storeImpl(new (MDs.size()) MDTuple(Context, Storage, Hash, MDs),
+                   Storage, Context.pImpl->MDTuples);
 }
 
 MDTuple *MDTuple::uniquifyImpl() {
@@ -702,20 +705,9 @@ MDLocation *MDLocation::getImpl(LLVMContext &Context, unsigned Line,
   Ops.push_back(Scope);
   if (InlinedAt)
     Ops.push_back(InlinedAt);
-  auto *N = new (Ops.size()) MDLocation(Context, Storage, Line, Column, Ops);
-
-  switch (Storage) {
-  case Uniqued:
-    Context.pImpl->MDLocations.insert(N);
-    break;
-  case Distinct:
-    N->storeDistinctInContext();
-    break;
-  case Temporary:
-    llvm_unreachable("Unexpected temporary node");
-  }
-
-  return N;
+  return storeImpl(new (Ops.size())
+                       MDLocation(Context, Storage, Line, Column, Ops),
+                   Storage, Context.pImpl->MDLocations);
 }
 
 MDLocation *MDLocation::uniquifyImpl() {
