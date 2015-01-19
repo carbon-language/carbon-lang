@@ -107,6 +107,26 @@ entry:
   ret void
 }
 
+; CHECK: r{{[0-9]+}}.l{{ *}}={{ *}}#48242
+
+define void @test11() #0 {
+entry:
+  %0 = load i32* @d, align 4
+  %1 = tail call i32 @llvm.hexagon.A2.tfril(i32 %0, i32 48242)
+  store i32 %1, i32* @d, align 4
+  ret void
+}
+
+; CHECK: r{{[0-9]+}}.h{{ *}}={{ *}}#50826
+
+define void @test12() #0 {
+entry:
+  %0 = load i32* @d, align 4
+  %1 = tail call i32 @llvm.hexagon.A2.tfrih(i32 %0, i32 50826)
+  store i32 %1, i32* @d, align 4
+  ret void
+}
+
 declare i32 @llvm.hexagon.A2.add(i32, i32) #1
 declare i32 @llvm.hexagon.A2.sub(i32, i32) #1
 declare i32 @llvm.hexagon.A2.and(i32, i32) #1
@@ -117,3 +137,5 @@ declare i32 @llvm.hexagon.A2.addi(i32, i32) #1
 declare i32 @llvm.hexagon.A2.andir(i32, i32) #1
 declare i32 @llvm.hexagon.A2.orir(i32, i32) #1
 declare i32 @llvm.hexagon.A2.subri(i32, i32)
+declare i32 @llvm.hexagon.A2.tfril(i32, i32) #1
+declare i32 @llvm.hexagon.A2.tfrih(i32, i32) #1

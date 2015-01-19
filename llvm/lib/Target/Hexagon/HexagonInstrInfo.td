@@ -29,6 +29,8 @@ def F64 : PatLeaf<(f64 DoubleRegs:$R)>;
 // 64-bit value.
 def LoReg: OutPatFrag<(ops node:$Rs),
                       (EXTRACT_SUBREG (i64 $Rs), subreg_loreg)>;
+def HiReg: OutPatFrag<(ops node:$Rs),
+                      (EXTRACT_SUBREG (i64 $Rs), subreg_hireg)>;
 
 // SDNode for converting immediate C to C-1.
 def DEC_CONST_SIGNED : SDNodeXForm<imm, [{

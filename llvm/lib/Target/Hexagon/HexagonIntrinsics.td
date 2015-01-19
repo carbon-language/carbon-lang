@@ -13,6 +13,14 @@
 // March 4, 2008
 //===----------------------------------------------------------------------===//
 
+class T_I_pat <InstHexagon MI, Intrinsic IntID>
+  : Pat <(IntID imm:$Is),
+         (MI imm:$Is)>;
+
+class T_R_pat <InstHexagon MI, Intrinsic IntID>
+  : Pat <(IntID I32:$Rs),
+         (MI I32:$Rs)>;
+
 class T_RI_pat <InstHexagon MI, Intrinsic IntID, PatLeaf ImmPred = PatLeaf<(i32 imm)>>
   : Pat<(IntID I32:$Rs, ImmPred:$It),
         (MI I32:$Rs, ImmPred:$It)>;
@@ -236,6 +244,28 @@ def : T_RR_pat<A2_or,       int_hexagon_A2_or>;
 def : T_RI_pat<OR_ri,       int_hexagon_A2_orir>;
 def : T_RR_pat<A2_xor,      int_hexagon_A2_xor>;
 def : T_RR_pat<A2_combinew, int_hexagon_A2_combinew>;
+
+// Assembler mapped from Rd32=not(Rs32) to Rd32=sub(#-1,Rs32)
+def : Pat <(int_hexagon_A2_not (I32:$Rs)),
+           (SUB_ri -1, IntRegs:$Rs)>;
+
+// Assembler mapped from Rd32=neg(Rs32) to Rd32=sub(#0,Rs32)
+def : Pat <(int_hexagon_A2_neg IntRegs:$Rs),
+           (SUB_ri 0, IntRegs:$Rs)>;
+
+// Transfer immediate
+def  : Pat <(int_hexagon_A2_tfril (I32:$Rs), u16_0ImmPred:$Is),
+            (A2_tfril IntRegs:$Rs, u16_0ImmPred:$Is)>;
+def  : Pat <(int_hexagon_A2_tfrih (I32:$Rs), u16_0ImmPred:$Is),
+            (A2_tfrih IntRegs:$Rs, u16_0ImmPred:$Is)>;
+
+//  Transfer Register/immediate.
+def : T_R_pat <A2_tfr, int_hexagon_A2_tfr>;
+def : T_I_pat <A2_tfrsi, int_hexagon_A2_tfrsi>;
+
+// Assembler mapped from Rdd32=Rss32 to Rdd32=combine(Rss.H32,Rss.L32)
+def : Pat<(int_hexagon_A2_tfrp DoubleRegs:$src),
+          (A2_combinew (HiReg DoubleRegs:$src), (LoReg DoubleRegs:$src))>;
 
 //
 // ALU 32 types.
@@ -2079,29 +2109,6 @@ class di_LDInstPI_diu4<string opc, Intrinsic IntID>
            "$src1 = $dst">;
 
 /********************************************************************
-*            ALU32/ALU                                              *
-*********************************************************************/
-
-
-// ALU32 / ALU / Negate.
-def HEXAGON_A2_neg:
-  si_ALU32_si                     <"neg",      int_hexagon_A2_neg>;
-
-// ALU32 / ALU / Transfer Immediate.
-def HEXAGON_A2_tfril:
-  si_lo_ALU32_siu16               <"",         int_hexagon_A2_tfril>;
-def HEXAGON_A2_tfrih:
-  si_hi_ALU32_siu16               <"",         int_hexagon_A2_tfrih>;
-def HEXAGON_A2_tfrsi:
-  si_ALU32_s16                    <"",         int_hexagon_A2_tfrsi>;
-def HEXAGON_A2_tfrpi:
-  di_ALU32_s8                     <"",         int_hexagon_A2_tfrpi>;
-
-// ALU32 / ALU / Transfer Register.
-def HEXAGON_A2_tfr:
-  si_ALU32_si_tfr                  <"",        int_hexagon_A2_tfr>;
-
-/********************************************************************
 *            ALU32/PERM                                             *
 *********************************************************************/
 
@@ -2840,12 +2847,6 @@ def HEXAGON_A2_absp:
   di_SInst_di                     <"abs",     int_hexagon_A2_absp>;
 def HEXAGON_A2_abssat:
   si_SInst_si_sat                 <"abs",     int_hexagon_A2_abssat>;
-
-// STYPE / ALU / Negate.
-def HEXAGON_A2_negp:
-  di_SInst_di                     <"neg",     int_hexagon_A2_negp>;
-def HEXAGON_A2_negsat:
-  si_SInst_si_sat                 <"neg",     int_hexagon_A2_negsat>;
 
 // STYPE / ALU / Logical Not.
 def HEXAGON_A2_notp:
