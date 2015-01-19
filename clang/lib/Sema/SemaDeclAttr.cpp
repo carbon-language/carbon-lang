@@ -1492,6 +1492,20 @@ static void handleAliasAttr(Sema &S, Decl *D, const AttributeList &Attr) {
     return;
   }
 
+  // Aliases should be on declarations, not definitions.
+  if (const auto *FD = dyn_cast<FunctionDecl>(D)) {
+    if (FD->isThisDeclarationADefinition()) {
+      S.Diag(Attr.getLoc(), diag::err_alias_is_definition) << FD;
+      return;
+    }
+  } else {
+    const auto *VD = cast<VarDecl>(D);
+    if (VD->isThisDeclarationADefinition() && VD->isExternallyVisible()) {
+      S.Diag(Attr.getLoc(), diag::err_alias_is_definition) << VD;
+      return;
+    }
+  }
+
   // FIXME: check if target symbol exists in current file
 
   D->addAttr(::new (S.Context) AliasAttr(Attr.getRange(), S.Context, Str,

@@ -2219,18 +2219,8 @@ static void checkNewAttributesAfterDef(Sema &S, Decl *New, const Decl *Old) {
     const Attr *NewAttribute = NewAttributes[I];
 
     if (isa<AliasAttr>(NewAttribute)) {
-      if (FunctionDecl *FD = dyn_cast<FunctionDecl>(New))
-        S.CheckForFunctionRedefinition(FD, cast<FunctionDecl>(Def));
-      else {
-        VarDecl *VD = cast<VarDecl>(New);
-        unsigned Diag = cast<VarDecl>(Def)->isThisDeclarationADefinition() ==
-                                VarDecl::TentativeDefinition
-                            ? diag::err_alias_after_tentative
-                            : diag::err_redefinition;
-        S.Diag(VD->getLocation(), Diag) << VD->getDeclName();
-        S.Diag(Def->getLocation(), diag::note_previous_definition);
-        VD->setInvalidDecl();
-      }
+      FunctionDecl *FD = cast<FunctionDecl>(New);
+      S.CheckForFunctionRedefinition(FD, cast<FunctionDecl>(Def));
       ++I;
       continue;
     }
@@ -5103,6 +5093,18 @@ static void checkAttributesAfterMerging(Sema &S, NamedDecl &ND) {
     if (ND.isExternallyVisible()) {
       S.Diag(Attr->getLocation(), diag::err_attribute_weakref_not_static);
       ND.dropAttr<WeakRefAttr>();
+      ND.dropAttr<AliasAttr>();
+    }
+  }
+
+  if (auto *VD = dyn_cast<VarDecl>(&ND)) {
+    if (VD->hasInit()) {
+      if (const auto *Attr = VD->getAttr<AliasAttr>()) {
+        assert(VD->isThisDeclarationADefinition() &&
+               !VD->isExternallyVisible() && "Broken AliasAttr handled late!");
+        S.Diag(Attr->getLocation(), diag::err_alias_is_definition) << VD;
+        VD->dropAttr<AliasAttr>();
+      }
     }
   }
 
@@ -9614,18 +9616,6 @@ Sema::FinalizeDeclaration(Decl *ThisDecl) {
     if (!Attr->isInherited() && !VD->isThisDeclarationADefinition()) {
       Diag(Attr->getLocation(), diag::warn_attribute_ignored) << Attr;
       VD->dropAttr<UsedAttr>();
-    }
-  }
-
-  if (!VD->isInvalidDecl() &&
-      VD->isThisDeclarationADefinition() == VarDecl::TentativeDefinition) {
-    if (const VarDecl *Def = VD->getDefinition()) {
-      if (Def->hasAttr<AliasAttr>()) {
-        Diag(VD->getLocation(), diag::err_tentative_after_alias)
-            << VD->getDeclName();
-        Diag(Def->getLocation(), diag::note_previous_definition);
-        VD->setInvalidDecl();
-      }
     }
   }
 

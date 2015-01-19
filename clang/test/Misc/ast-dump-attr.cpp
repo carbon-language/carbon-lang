@@ -79,7 +79,7 @@ void TestInt(void) __attribute__((constructor(123)));
 // CHECK:      FunctionDecl{{.*}}TestInt
 // CHECK-NEXT:   ConstructorAttr{{.*}} 123
 
-int TestString __attribute__((alias("alias1")));
+static int TestString __attribute__((alias("alias1")));
 // CHECK:      VarDecl{{.*}}TestString
 // CHECK-NEXT:   AliasAttr{{.*}} "alias1"
 
