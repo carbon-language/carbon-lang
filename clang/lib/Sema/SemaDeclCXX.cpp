@@ -1652,6 +1652,7 @@ bool Sema::AttachBaseSpecifiers(CXXRecordDecl *Class, CXXBaseSpecifier **Bases,
       bool found
         = Class->isDerivedFrom(CanonicalBase->getAsCXXRecordDecl(), Paths);
       assert(found);
+      (void)found;
 
       if (Paths.isAmbiguous(CanonicalBase))
         Diag(Bases[idx]->getLocStart (), diag::warn_inaccessible_base_class)
