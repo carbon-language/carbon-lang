@@ -160,9 +160,9 @@ static Metadata *MapMetadataImpl(const Metadata *MD, ValueToValueMapTy &VM,
                                  ValueMaterializer *Materializer);
 
 static Metadata *mapMetadataOp(Metadata *Op, ValueToValueMapTy &VM,
-                                 RemapFlags Flags,
-                                 ValueMapTypeRemapper *TypeMapper,
-                                 ValueMaterializer *Materializer) {
+                               RemapFlags Flags,
+                               ValueMapTypeRemapper *TypeMapper,
+                               ValueMaterializer *Materializer) {
   if (!Op)
     return nullptr;
   if (Metadata *MappedOp =
