@@ -421,7 +421,8 @@ namespace llvm {
     bool ParseMDField(LocTy Loc, StringRef Name,
                       MDUnsignedField<uint32_t> &Result);
     bool ParseMDField(LocTy Loc, StringRef Name, MDField &Result);
-    template <class ParserTy> bool ParseMDFieldsImpl(ParserTy parseField);
+    template <class ParserTy>
+    bool ParseMDFieldsImpl(ParserTy parseField, LocTy &ClosingLoc);
     bool ParseSpecializedMDNode(MDNode *&N, bool IsDistinct = false);
     bool ParseMDLocation(MDNode *&Result, bool IsDistinct);
 
