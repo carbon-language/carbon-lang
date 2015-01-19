@@ -1524,8 +1524,9 @@ bool PPCFastISel::fastLowerCall(CallLoweringInfo &CLI) {
   for (unsigned II = 0, IE = RegArgs.size(); II != IE; ++II)
     MIB.addReg(RegArgs[II], RegState::Implicit);
 
-  // Direct calls in the ELFv2 ABI need the TOC register live into the call.
-  if (PPCSubTarget->isELFv2ABI())
+  // Direct calls, in both the ELF V1 and V2 ABIs, need the TOC register live
+  // into the call.
+  if (!CLI.IsPatchPoint)
     MIB.addReg(PPC::X2, RegState::Implicit);
 
   // Add a register mask with the call-preserved registers.  Proper

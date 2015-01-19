@@ -15,10 +15,10 @@ entry:
 ; INVFUNCDESC-DAG: ld [[REG3:[0-9]+]], 0(3)
 
 ; INVFUNCDESC: %for.body
+; INVFUNCDESC: std 2, 40(1)
 ; INVFUNCDESC-DAG: mtctr [[REG3]]
 ; INVFUNCDESC-DAG: mr 11, [[REG2]]
-; INVFUNCDESC-DAG: std 2, 40(1)
-; INVFUNCDESC: mr 2, [[REG1]]
+; INVFUNCDESC-DAG: mr 2, [[REG1]]
 ; INVFUNCDESC: bctrl
 ; INVFUNCDESC-NEXT: ld 2, 40(1)
 

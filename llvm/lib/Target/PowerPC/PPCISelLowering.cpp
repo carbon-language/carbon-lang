@@ -3823,8 +3823,9 @@ unsigned PrepareCall(SelectionDAG &DAG, SDValue &Callee, SDValue &InFlag,
     Ops.push_back(DAG.getRegister(RegsToPass[i].first,
                                   RegsToPass[i].second.getValueType()));
 
-  // Direct calls in the ELFv2 ABI need the TOC register live into the call.
-  if (Callee.getNode() && isELFv2ABI && !IsPatchPoint)
+  // All calls, in both the ELF V1 and V2 ABIs, need the TOC register live
+  // into the call.
+  if (isSVR4ABI && isPPC64 && !IsPatchPoint)
     Ops.push_back(DAG.getRegister(PPC::X2, PtrVT));
 
   return CallOpc;
@@ -7368,8 +7369,19 @@ MachineBasicBlock *
 PPCTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
                                                MachineBasicBlock *BB) const {
   if (MI->getOpcode() == TargetOpcode::STACKMAP ||
-      MI->getOpcode() == TargetOpcode::PATCHPOINT)
+      MI->getOpcode() == TargetOpcode::PATCHPOINT) {
+    if (Subtarget.isPPC64() && Subtarget.isSVR4ABI() &&
+        MI->getOpcode() == TargetOpcode::PATCHPOINT) {
+      // Call lowering should have added an r2 operand to indicate a dependence
+      // on the TOC base pointer value. It can't however, because there is no
+      // way to mark the dependence as implicit there, and so the stackmap code
+      // will confuse it with a regular operand. Instead, add the dependence
+      // here.
+      MI->addOperand(MachineOperand::CreateReg(PPC::X2, false, true));
+    }
+
     return emitPatchPoint(MI, BB);
+  }
 
   if (MI->getOpcode() == PPC::EH_SjLj_SetJmp32 ||
       MI->getOpcode() == PPC::EH_SjLj_SetJmp64) {
