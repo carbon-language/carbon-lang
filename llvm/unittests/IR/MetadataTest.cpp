@@ -483,6 +483,14 @@ TEST_F(MDLocationTest, getDistinct) {
   EXPECT_EQ(L1, MDLocation::get(Context, 2, 7, N));
 }
 
+TEST_F(MDLocationTest, getTemporary) {
+  MDNode *N = MDNode::get(Context, None);
+  MDLocation *L = MDLocation::getTemporary(Context, 2, 7, N);
+  EXPECT_TRUE(L->isTemporary());
+  EXPECT_FALSE(L->isResolved());
+  MDNode::deleteTemporary(L);
+}
+
 typedef MetadataTest MetadataAsValueTest;
 
 TEST_F(MetadataAsValueTest, MDNode) {

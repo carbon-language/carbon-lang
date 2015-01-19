@@ -945,6 +945,11 @@ public:
                                  Metadata *InlinedAt = nullptr) {
     return getImpl(Context, Line, Column, Scope, InlinedAt, Distinct);
   }
+  static MDLocation *getTemporary(LLVMContext &Context, unsigned Line,
+                                  unsigned Column, Metadata *Scope,
+                                  Metadata *InlinedAt = nullptr) {
+    return getImpl(Context, Line, Column, Scope, InlinedAt, Temporary);
+  }
 
   unsigned getLine() const { return MDNodeSubclassData; }
   unsigned getColumn() const { return SubclassData16; }
