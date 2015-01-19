@@ -27,6 +27,10 @@ CXX_SOURCES := $(CXX_SOURCES) \
     $(LEVEL)/../../source/Host/common/Mutex.cpp
 endif
 
+ifeq ($(OS),Linux)
+    LD_EXTRAS := -lncurses -ldl
+endif
+
 MAKE_DSYM := NO
 
 include $(LEVEL)/Makefile.rules
