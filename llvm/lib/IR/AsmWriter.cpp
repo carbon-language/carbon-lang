@@ -1309,7 +1309,7 @@ static void WriteMDNodeBodyInternal(raw_ostream &Out, const MDNode *Node,
                                     TypePrinting *TypePrinter,
                                     SlotTracker *Machine,
                                     const Module *Context) {
-  assert(isa<UniquableMDNode>(Node) && "Expected uniquable MDNode");
+  assert(!Node->isTemporary() && "Unexpected forward declaration");
 
   auto *Uniquable = cast<UniquableMDNode>(Node);
   if (Uniquable->isDistinct())
