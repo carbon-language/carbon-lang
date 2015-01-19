@@ -432,6 +432,7 @@ UniquableMDNode::UniquableMDNode(LLVMContext &C, unsigned ID,
 }
 
 void UniquableMDNode::resolve() {
+  assert(Storage == Uniqued && "Expected this to be uniqued");
   assert(!isResolved() && "Expected this to be unresolved");
 
   // Move the map, so that this immediately looks resolved.
@@ -539,9 +540,9 @@ void UniquableMDNode::handleChangedOperand(void *Ref, Metadata *New) {
 
   // Drop uniquing for self-reference cycles.
   if (New == this) {
-    storeDistinctInContext();
     if (!isResolved())
       resolve();
+    storeDistinctInContext();
     return;
   }
 
@@ -738,6 +739,7 @@ MDNodeFwdDecl *MDNode::getTemporary(LLVMContext &Context,
 void MDNode::deleteTemporary(MDNode *N) { delete cast<MDNodeFwdDecl>(N); }
 
 void UniquableMDNode::storeDistinctInContext() {
+  assert(isResolved() && "Expected resolved nodes");
   Storage = Distinct;
   if (auto *T = dyn_cast<MDTuple>(this))
     T->setHash(0);
