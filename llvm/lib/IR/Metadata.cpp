@@ -403,20 +403,19 @@ MDNode::MDNode(LLVMContext &Context, unsigned ID, StorageType Storage,
   for (unsigned I = 0, E = MDs.size(); I != E; ++I)
     setOperand(I, MDs[I]);
 
-  if (isTemporary())
-    this->Context.makeReplaceable(
-        make_unique<ReplaceableMetadataImpl>(Context));
-
-  if (!isUniqued())
+  if (isDistinct())
     return;
 
-  // Check whether any operands are unresolved, requiring re-uniquing.
-  unsigned NumUnresolved = countUnresolvedOperands();
-  if (!NumUnresolved)
-    return;
+  if (isUniqued()) {
+    // Check whether any operands are unresolved, requiring re-uniquing.
+    unsigned NumUnresolved = countUnresolvedOperands();
+    if (!NumUnresolved)
+      return;
+
+    SubclassData32 = NumUnresolved;
+  }
 
   this->Context.makeReplaceable(make_unique<ReplaceableMetadataImpl>(Context));
-  SubclassData32 = NumUnresolved;
 }
 
 static bool isOperandUnresolved(Metadata *Op) {
