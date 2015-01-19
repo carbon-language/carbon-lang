@@ -25,9 +25,9 @@ namespace llvm {
 template <typename EltTy>
 class TinyPtrVector {
 public:
-  using VecTy = llvm::SmallVector<EltTy, 4>;
-  using value_type = typename VecTy::value_type;
-  using PtrUnion = llvm::PointerUnion<EltTy, VecTy *>;
+  typedef llvm::SmallVector<EltTy, 4> VecTy;
+  typedef typename VecTy::value_type value_type;
+  typedef llvm::PointerUnion<EltTy, VecTy *> PtrUnion;
 
 private:
   PtrUnion Val;
