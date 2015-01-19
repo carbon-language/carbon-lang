@@ -614,13 +614,39 @@ void UniquableMDNode::deleteAsSubclass() {
   }
 }
 
+template <class T, class InfoT>
+static T *getUniqued(DenseSet<T *, InfoT> &Store,
+                     const typename InfoT::KeyTy &Key) {
+  auto I = Store.find_as(Key);
+  return I == Store.end() ? nullptr : *I;
+}
+
+template <class T, class InfoT>
+static T *uniquifyImpl(T *N, DenseSet<T *, InfoT> &Store) {
+  if (T *U = getUniqued(Store, N))
+    return U;
+
+  Store.insert(N);
+  return N;
+}
+
 UniquableMDNode *UniquableMDNode::uniquify() {
+  // Recalculate hash, if necessary.
+  switch (getMetadataID()) {
+  default:
+    break;
+  case MDTupleKind:
+    cast<MDTuple>(this)->recalculateHash();
+    break;
+  }
+
+  // Try to insert into uniquing store.
   switch (getMetadataID()) {
   default:
     llvm_unreachable("Invalid subclass of UniquableMDNode");
 #define HANDLE_UNIQUABLE_LEAF(CLASS)                                           \
   case CLASS##Kind:                                                            \
-    return cast<CLASS>(this)->uniquifyImpl();
+    return uniquifyImpl(cast<CLASS>(this), getContext().pImpl->CLASS##s);
 #include "llvm/IR/Metadata.def"
   }
 }
@@ -635,13 +661,6 @@ void UniquableMDNode::eraseFromStore() {
     break;
 #include "llvm/IR/Metadata.def"
   }
-}
-
-template <class T, class InfoT>
-static T *getUniqued(DenseSet<T *, InfoT> &Store,
-                     const typename InfoT::KeyTy &Key) {
-  auto I = Store.find_as(Key);
-  return I == Store.end() ? nullptr : *I;
 }
 
 template <class T, class StoreT>
@@ -675,16 +694,6 @@ MDTuple *MDTuple::getImpl(LLVMContext &Context, ArrayRef<Metadata *> MDs,
 
   return storeImpl(new (MDs.size()) MDTuple(Context, Storage, Hash, MDs),
                    Storage, Context.pImpl->MDTuples);
-}
-
-MDTuple *MDTuple::uniquifyImpl() {
-  recalculateHash();
-  auto &Store = getContext().pImpl->MDTuples;
-  if (MDTuple *N = getUniqued(Store, this))
-    return N;
-
-  Store.insert(this);
-  return this;
 }
 
 MDLocation::MDLocation(LLVMContext &C, StorageType Storage, unsigned Line,
@@ -739,15 +748,6 @@ MDLocation *MDLocation::getImpl(LLVMContext &Context, unsigned Line,
   return storeImpl(new (Ops.size())
                        MDLocation(Context, Storage, Line, Column, Ops),
                    Storage, Context.pImpl->MDLocations);
-}
-
-MDLocation *MDLocation::uniquifyImpl() {
-  auto &Store = getContext().pImpl->MDLocations;
-  if (MDLocation *N = getUniqued(Store, this))
-    return N;
-
-  Store.insert(this);
-  return this;
 }
 
 void MDNode::deleteTemporary(MDNode *N) {
