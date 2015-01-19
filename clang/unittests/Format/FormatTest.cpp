@@ -2930,6 +2930,12 @@ TEST_F(FormatTest, LayoutStatementsAroundPreprocessorDirectives) {
                "#if a\n"
                "#else\n"
                "#endif");
+
+  verifyFormat("void f(\n"
+               "#if A\n"
+               "    );\n"
+               "#else\n"
+               "#endif");
 }
 
 TEST_F(FormatTest, GraciouslyHandleIncorrectPreprocessorConditions) {
