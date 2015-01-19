@@ -706,9 +706,7 @@ void LoopUnswitch::EmitPreheaderBranchOnCondition(Value *LIC, Constant *Val,
 
   // If either edge is critical, split it. This helps preserve LoopSimplify
   // form for enclosing loops.
-  auto Options = CriticalEdgeSplittingOptions(DT, LI)
-                     .setPreserveLCSSA()
-                     .setSplitLandingPads();
+  auto Options = CriticalEdgeSplittingOptions(DT, LI).setPreserveLCSSA();
   SplitCriticalEdge(BI, 0, Options);
   SplitCriticalEdge(BI, 1, Options);
 }

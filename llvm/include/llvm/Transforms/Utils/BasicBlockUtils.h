@@ -86,27 +86,23 @@ struct CriticalEdgeSplittingOptions {
   LoopInfo *LI;
   bool MergeIdenticalEdges;
   bool DontDeleteUselessPHIs;
-  bool SplitLandingPads;
   bool PreserveLCSSA;
 
   CriticalEdgeSplittingOptions()
       : AA(nullptr), DT(nullptr), LI(nullptr), MergeIdenticalEdges(false),
-        DontDeleteUselessPHIs(false), SplitLandingPads(false),
-        PreserveLCSSA(false) {}
+        DontDeleteUselessPHIs(false), PreserveLCSSA(false) {}
 
   /// \brief Basic case of setting up all the analysis.
   CriticalEdgeSplittingOptions(AliasAnalysis *AA, DominatorTree *DT = nullptr,
                                LoopInfo *LI = nullptr)
       : AA(AA), DT(DT), LI(LI), MergeIdenticalEdges(false),
-        DontDeleteUselessPHIs(false), SplitLandingPads(false),
-        PreserveLCSSA(false) {}
+        DontDeleteUselessPHIs(false), PreserveLCSSA(false) {}
 
   /// \brief A common pattern is to preserve the dominator tree and loop
   /// info but not care about AA.
   CriticalEdgeSplittingOptions(DominatorTree *DT, LoopInfo *LI)
       : AA(nullptr), DT(DT), LI(LI), MergeIdenticalEdges(false),
-        DontDeleteUselessPHIs(false), SplitLandingPads(false),
-        PreserveLCSSA(false) {}
+        DontDeleteUselessPHIs(false), PreserveLCSSA(false) {}
 
   CriticalEdgeSplittingOptions &setMergeIdenticalEdges() {
     MergeIdenticalEdges = true;
@@ -115,11 +111,6 @@ struct CriticalEdgeSplittingOptions {
 
   CriticalEdgeSplittingOptions &setDontDeleteUselessPHIs() {
     DontDeleteUselessPHIs = true;
-    return *this;
-  }
-
-  CriticalEdgeSplittingOptions &setSplitLandingPads() {
-    SplitLandingPads = true;
     return *this;
   }
 
