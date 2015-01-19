@@ -163,6 +163,40 @@ LLVMContextImpl::~LLVMContextImpl() {
   MDStringCache.clear();
 }
 
+namespace llvm {
+/// \brief Make MDOperand transparent for hashing.
+///
+/// This overload of an implementation detail of the hashing library makes
+/// MDOperand hash to the same value as a \a Metadata pointer.
+///
+/// Note that overloading \a hash_value() as follows:
+///
+/// \code
+///     size_t hash_value(const MDOperand &X) { return hash_value(X.get()); }
+/// \endcode
+///
+/// does not cause MDOperand to be transparent.  In particular, a bare pointer
+/// doesn't get hashed before it's combined, whereas \a MDOperand would.
+static const Metadata *get_hashable_data(const MDOperand &X) { return X.get(); }
+}
+
+unsigned MDNodeOpsKey::calculateHash(MDNode *N) {
+  unsigned Hash = hash_combine_range(N->op_begin(), N->op_end());
+#ifndef NDEBUG
+  {
+    SmallVector<Metadata *, 8> MDs(N->op_begin(), N->op_end());
+    unsigned RawHash = calculateHash(MDs);
+    assert(Hash == RawHash &&
+           "Expected hash of MDOperand to equal hash of Metadata*");
+  }
+#endif
+  return Hash;
+}
+
+unsigned MDNodeOpsKey::calculateHash(ArrayRef<Metadata *> Ops) {
+  return hash_combine_range(Ops.begin(), Ops.end());
+}
+
 // ConstantsContext anchors
 void UnaryConstantExpr::anchor() { }
 

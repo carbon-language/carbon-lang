@@ -515,15 +515,7 @@ void UniquableMDNode::resolveCycles() {
 }
 
 void MDTuple::recalculateHash() {
-  setHash(hash_combine_range(op_begin(), op_end()));
-#ifndef NDEBUG
-  {
-    SmallVector<Metadata *, 8> MDs(op_begin(), op_end());
-    unsigned RawHash = hash_combine_range(MDs.begin(), MDs.end());
-    assert(getHash() == RawHash &&
-           "Expected hash of MDOperand to equal hash of Metadata*");
-  }
-#endif
+  setHash(MDTupleInfo::KeyTy::calculateHash(this));
 }
 
 void MDNode::dropAllReferences() {
@@ -534,23 +526,6 @@ void MDNode::dropAllReferences() {
       N->Context.getReplaceableUses()->resolveAllUses(/* ResolveUsers */ false);
       (void)N->Context.takeReplaceableUses();
     }
-}
-
-namespace llvm {
-/// \brief Make MDOperand transparent for hashing.
-///
-/// This overload of an implementation detail of the hashing library makes
-/// MDOperand hash to the same value as a \a Metadata pointer.
-///
-/// Note that overloading \a hash_value() as follows:
-///
-/// \code
-///     size_t hash_value(const MDOperand &X) { return hash_value(X.get()); }
-/// \endcode
-///
-/// does not cause MDOperand to be transparent.  In particular, a bare pointer
-/// doesn't get hashed before it's combined, whereas \a MDOperand would.
-static const Metadata *get_hashable_data(const MDOperand &X) { return X.get(); }
 }
 
 void UniquableMDNode::handleChangedOperand(void *Ref, Metadata *New) {
@@ -687,7 +662,7 @@ MDTuple *MDTuple::getImpl(LLVMContext &Context, ArrayRef<Metadata *> MDs,
       return N;
     if (!ShouldCreate)
       return nullptr;
-    Hash = Key.Hash;
+    Hash = Key.getHash();
   } else {
     assert(ShouldCreate && "Expected non-uniqued nodes to always be created");
   }

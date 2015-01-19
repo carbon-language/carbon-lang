@@ -167,35 +167,62 @@ struct FunctionTypeKeyInfo {
   }
 };
 
+/// \brief Structure for hashing arbitrary MDNode operands.
+class MDNodeOpsKey {
+  ArrayRef<Metadata *> RawOps;
+  ArrayRef<MDOperand> Ops;
+
+  unsigned Hash;
+
+protected:
+  MDNodeOpsKey(ArrayRef<Metadata *> Ops)
+      : RawOps(Ops), Hash(calculateHash(Ops)) {}
+
+  template <class NodeTy>
+  MDNodeOpsKey(NodeTy *N)
+      : Ops(N->op_begin(), N->op_end()), Hash(N->getHash()) {}
+
+  template <class NodeTy> bool compareOps(const NodeTy *RHS) const {
+    if (getHash() != RHS->getHash())
+      return false;
+
+    assert((RawOps.empty() || Ops.empty()) && "Two sets of operands?");
+    return RawOps.empty() ? compareOps(Ops, RHS) : compareOps(RawOps, RHS);
+  }
+
+  static unsigned calculateHash(MDNode *N);
+
+private:
+  template <class T>
+  static bool compareOps(ArrayRef<T> Ops, const MDNode *RHS) {
+    if (Ops.size() != RHS->getNumOperands())
+      return false;
+    return std::equal(Ops.begin(), Ops.end(), RHS->op_begin());
+  }
+
+  static unsigned calculateHash(ArrayRef<Metadata *> Ops);
+
+public:
+  unsigned getHash() const { return Hash; }
+};
+
 /// \brief DenseMapInfo for MDTuple.
 ///
 /// Note that we don't need the is-function-local bit, since that's implicit in
 /// the operands.
 struct MDTupleInfo {
-  struct KeyTy {
-    ArrayRef<Metadata *> RawOps;
-    ArrayRef<MDOperand> Ops;
-    unsigned Hash;
-
-    KeyTy(ArrayRef<Metadata *> Ops)
-        : RawOps(Ops), Hash(hash_combine_range(Ops.begin(), Ops.end())) {}
-
-    KeyTy(MDTuple *N)
-        : Ops(N->op_begin(), N->op_end()), Hash(N->getHash()) {}
+  struct KeyTy : MDNodeOpsKey {
+    KeyTy(ArrayRef<Metadata *> Ops) : MDNodeOpsKey(Ops) {}
+    KeyTy(MDTuple *N) : MDNodeOpsKey(N) {}
 
     bool operator==(const MDTuple *RHS) const {
       if (RHS == getEmptyKey() || RHS == getTombstoneKey())
         return false;
-      if (Hash != RHS->getHash())
-        return false;
-      assert((RawOps.empty() || Ops.empty()) && "Two sets of operands?");
-      return RawOps.empty() ? compareOps(Ops, RHS) : compareOps(RawOps, RHS);
+      return compareOps(RHS);
     }
-    template <class T>
-    static bool compareOps(ArrayRef<T> Ops, const MDTuple *RHS) {
-      if (Ops.size() != RHS->getNumOperands())
-        return false;
-      return std::equal(Ops.begin(), Ops.end(), RHS->op_begin());
+
+    static unsigned calculateHash(MDTuple *N) {
+      return MDNodeOpsKey::calculateHash(N);
     }
   };
   static inline MDTuple *getEmptyKey() {
@@ -204,10 +231,8 @@ struct MDTupleInfo {
   static inline MDTuple *getTombstoneKey() {
     return DenseMapInfo<MDTuple *>::getTombstoneKey();
   }
-  static unsigned getHashValue(const KeyTy &Key) { return Key.Hash; }
-  static unsigned getHashValue(const MDTuple *U) {
-    return U->getHash();
-  }
+  static unsigned getHashValue(const KeyTy &Key) { return Key.getHash(); }
+  static unsigned getHashValue(const MDTuple *U) { return U->getHash(); }
   static bool isEqual(const KeyTy &LHS, const MDTuple *RHS) {
     return LHS == RHS;
   }
