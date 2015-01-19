@@ -228,9 +228,9 @@ static Metadata *mapDistinctNode(const UniquableMDNode *Node,
 ///
 /// Uniqued nodes may not need to be recreated (they may map to themselves).
 static Metadata *mapUniquedNode(const UniquableMDNode *Node,
-                                 ValueToValueMapTy &VM, RemapFlags Flags,
-                                 ValueMapTypeRemapper *TypeMapper,
-                                 ValueMaterializer *Materializer) {
+                                ValueToValueMapTy &VM, RemapFlags Flags,
+                                ValueMapTypeRemapper *TypeMapper,
+                                ValueMaterializer *Materializer) {
   assert(Node->isUniqued() && "Expected uniqued node");
 
   // Create a temporary node upfront in case we have a metadata cycle.
