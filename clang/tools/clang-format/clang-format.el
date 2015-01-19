@@ -76,11 +76,11 @@ of the buffer."
                (when (cdr children)
                  (error "More than one child node in <replacement> node"))
 
-               (setq offset (1+ (string-to-number offset)))
+               (setq offset (string-to-number offset))
                (setq length (string-to-number length))
                (push (list offset length text) replacements)))
             ('cursor
-             (setq cursor (1+ (string-to-number text))))))))
+             (setq cursor (string-to-number text)))))))
 
     ;; Sort by decreasing offset, length.
     (setq replacements (sort (delq nil replacements)
@@ -92,13 +92,15 @@ of the buffer."
     (cons replacements cursor)))
 
 (defun clang-format--replace (offset length &optional text)
-  (goto-char offset)
-  (delete-char length)
-  (when text
-    (insert text)))
+  (let ((start (byte-to-position (1+ offset)))
+        (end (byte-to-position (+ 1 offset length))))
+    (goto-char start)
+    (delete-region start end)
+    (when text
+      (insert text))))
 
 ;;;###autoload
-(defun clang-format-region (start end &optional style)
+(defun clang-format-region (char-start char-end &optional style)
   "Use clang-format to format the code between START and END according to STYLE.
 If called interactively uses the region or the current statement if there
 is no active region.  If no style is given uses `clang-format-style'."
@@ -110,7 +112,10 @@ is no active region.  If no style is given uses `clang-format-style'."
   (unless style
     (setq style clang-format-style))
 
-  (let ((temp-buffer (generate-new-buffer " *clang-format-temp*"))
+  (let ((start (1- (position-bytes char-start)))
+        (end (1- (position-bytes char-end)))
+        (cursor (1- (position-bytes (point))))
+        (temp-buffer (generate-new-buffer " *clang-format-temp*"))
         (temp-file (make-temp-file "clang-format")))
     (unwind-protect
         (let (status stderr operations)
@@ -122,9 +127,9 @@ is no active region.  If no style is given uses `clang-format-style'."
                  "-output-replacements-xml"
                  "-assume-filename" (or (buffer-file-name) "")
                  "-style" style
-                 "-offset" (number-to-string (1- start))
+                 "-offset" (number-to-string start)
                  "-length" (number-to-string (- end start))
-                 "-cursor" (number-to-string (1- (point)))))
+                 "-cursor" (number-to-string cursor)))
           (setq stderr
                 (with-temp-buffer
                   (insert-file-contents temp-file)
@@ -150,7 +155,7 @@ is no active region.  If no style is given uses `clang-format-style'."
                       (apply #'clang-format--replace rpl))
                     replacements))
             (when cursor
-              (goto-char cursor))))
+              (goto-char (byte-to-position (1+ cursor))))))
       (delete-file temp-file)
       (when (buffer-name temp-buffer) (kill-buffer temp-buffer)))))
 
