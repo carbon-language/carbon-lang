@@ -774,7 +774,9 @@ public:
   /// it.  Takes ownership of the temporary node.
   template <class T>
   static typename std::enable_if<std::is_base_of<MDNode, T>::value, T *>::type
-  replaceWithUniqued(std::unique_ptr<T, TempMDNodeDeleter> N);
+  replaceWithUniqued(std::unique_ptr<T, TempMDNodeDeleter> N) {
+    return cast<T>(N.release()->replaceWithUniquedImpl());
+  }
 
   /// \brief Replace a temporary node with a distinct one.
   ///
@@ -782,7 +784,13 @@ public:
   /// it.  Takes ownership of the temporary node.
   template <class T>
   static typename std::enable_if<std::is_base_of<MDNode, T>::value, T *>::type
-  replaceWithDistinct(std::unique_ptr<T, TempMDNodeDeleter> N);
+  replaceWithDistinct(std::unique_ptr<T, TempMDNodeDeleter> N) {
+    return cast<T>(N.release()->replaceWithDistinctImpl());
+  }
+
+private:
+  MDNode *replaceWithUniquedImpl();
+  MDNode *replaceWithDistinctImpl();
 
 protected:
   /// \brief Set an operand.
@@ -855,28 +863,6 @@ public:
   static MDNode *getMostGenericFPMath(MDNode *A, MDNode *B);
   static MDNode *getMostGenericRange(MDNode *A, MDNode *B);
 };
-
-template <class NodeTy>
-typename std::enable_if<std::is_base_of<MDNode, NodeTy>::value, NodeTy *>::type
-MDNode::replaceWithUniqued(std::unique_ptr<NodeTy, TempMDNodeDeleter> Node) {
-  // Try to uniquify in place.
-  MDNode *UniquedNode = Node->uniquify();
-  if (UniquedNode == Node.get()) {
-    Node->makeUniqued();
-    return Node.release();
-  }
-
-  // Collision, so RAUW instead.
-  Node->replaceAllUsesWith(UniquedNode);
-  return cast<NodeTy>(UniquedNode);
-}
-
-template <class NodeTy>
-typename std::enable_if<std::is_base_of<MDNode, NodeTy>::value, NodeTy *>::type
-MDNode::replaceWithDistinct(std::unique_ptr<NodeTy, TempMDNodeDeleter> Node) {
-  Node->makeDistinct();
-  return Node.release();
-}
 
 /// \brief Tuple of metadata.
 ///

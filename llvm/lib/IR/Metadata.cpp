@@ -509,6 +509,25 @@ void MDNode::resolveCycles() {
   }
 }
 
+MDNode *MDNode::replaceWithUniquedImpl() {
+  // Try to uniquify in place.
+  MDNode *UniquedNode = uniquify();
+  if (UniquedNode == this) {
+    makeUniqued();
+    return this;
+  }
+
+  // Collision, so RAUW instead.
+  replaceAllUsesWith(UniquedNode);
+  deleteAsSubclass();
+  return UniquedNode;
+}
+
+MDNode *MDNode::replaceWithDistinctImpl() {
+  makeDistinct();
+  return this;
+}
+
 void MDTuple::recalculateHash() {
   setHash(MDTupleInfo::KeyTy::calculateHash(this));
 }
