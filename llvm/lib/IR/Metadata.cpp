@@ -750,7 +750,7 @@ void MDNode::replaceOperandWith(unsigned I, Metadata *New) {
   if (getOperand(I) == New)
     return;
 
-  if (isDistinct()) {
+  if (!isUniqued()) {
     setOperand(I, New);
     return;
   }

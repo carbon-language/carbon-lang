@@ -646,13 +646,9 @@ public:
   /// \brief Check if node is fully resolved.
   bool isResolved() const;
 
-  /// \brief Check if node is distinct.
-  ///
-  /// Distinct nodes are not uniqued, and will not be returned by \a
-  /// MDNode::get().
-  bool isDistinct() const {
-    return isStoredDistinctInContext() || isa<MDNodeFwdDecl>(this);
-  }
+  bool isUniqued() const { return Storage == Uniqued; }
+  bool isDistinct() const { return Storage == Distinct; }
+  bool isTemporary() const { return Storage == Temporary; }
 
 protected:
   /// \brief Set an operand.

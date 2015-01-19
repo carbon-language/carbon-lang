@@ -274,9 +274,33 @@ TEST_F(MDNodeTest, getDistinct) {
   ASSERT_EQ(Empty, MDNode::get(Context, None));
 }
 
-TEST_F(MDNodeTest, TempIsDistinct) {
-  MDNode *T = MDNode::getTemporary(Context, None);
-  EXPECT_TRUE(T->isDistinct());
+TEST_F(MDNodeTest, isUniqued) {
+  MDNode *U = MDTuple::get(Context, None);
+  MDNode *D = MDTuple::getDistinct(Context, None);
+  MDNode *T = MDTuple::getTemporary(Context, None);
+  EXPECT_TRUE(U->isUniqued());
+  EXPECT_FALSE(D->isUniqued());
+  EXPECT_FALSE(T->isUniqued());
+  MDNode::deleteTemporary(T);
+}
+
+TEST_F(MDNodeTest, isDistinct) {
+  MDNode *U = MDTuple::get(Context, None);
+  MDNode *D = MDTuple::getDistinct(Context, None);
+  MDNode *T = MDTuple::getTemporary(Context, None);
+  EXPECT_FALSE(U->isDistinct());
+  EXPECT_TRUE(D->isDistinct());
+  EXPECT_FALSE(T->isDistinct());
+  MDNode::deleteTemporary(T);
+}
+
+TEST_F(MDNodeTest, isTemporary) {
+  MDNode *U = MDTuple::get(Context, None);
+  MDNode *D = MDTuple::getDistinct(Context, None);
+  MDNode *T = MDTuple::getTemporary(Context, None);
+  EXPECT_FALSE(U->isTemporary());
+  EXPECT_FALSE(D->isTemporary());
+  EXPECT_TRUE(T->isTemporary());
   MDNode::deleteTemporary(T);
 }
 

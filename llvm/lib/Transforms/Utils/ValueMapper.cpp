@@ -282,7 +282,7 @@ static Metadata *mapUniquedNode(const UniquableMDNode *Node,
                                  ValueToValueMapTy &VM, RemapFlags Flags,
                                  ValueMapTypeRemapper *TypeMapper,
                                  ValueMaterializer *Materializer) {
-  assert(!Node->isDistinct() && "Expected uniqued node");
+  assert(Node->isUniqued() && "Expected uniqued node");
 
   // Create a dummy node in case we have a metadata cycle.
   MDNodeFwdDecl *Dummy = MDNode::getTemporary(Node->getContext(), None);
