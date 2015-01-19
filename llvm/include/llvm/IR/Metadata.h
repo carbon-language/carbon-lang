@@ -802,7 +802,6 @@ public:
   static MDNode *concatenate(MDNode *A, MDNode *B);
   static MDNode *intersect(MDNode *A, MDNode *B);
   static MDNode *getMostGenericTBAA(MDNode *A, MDNode *B);
-  static AAMDNodes getMostGenericAA(const AAMDNodes &A, const AAMDNodes &B);
   static MDNode *getMostGenericFPMath(MDNode *A, MDNode *B);
   static MDNode *getMostGenericRange(MDNode *A, MDNode *B);
 };
