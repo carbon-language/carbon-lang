@@ -1185,7 +1185,8 @@ class T2I_exta_rrot<bits<3> opcod, string opc, PatFrag opnode>
 
 class T2I_exta_rrot_np<bits<3> opcod, string opc>
   : T2ThreeReg<(outs rGPR:$Rd), (ins rGPR:$Rn, rGPR:$Rm,rot_imm:$rot),
-               IIC_iEXTAsr, opc, "\t$Rd, $Rn, $Rm$rot", []> {
+               IIC_iEXTAsr, opc, "\t$Rd, $Rn, $Rm$rot", []>,
+               Requires<[HasT2ExtractPack, IsThumb2]> {
   bits<2> rot;
   let Inst{31-27} = 0b11111;
   let Inst{26-23} = 0b0100;
@@ -4585,17 +4586,21 @@ def : t2InstAlias<"strh${p} $Rt, $addr",
                   (t2STRHs rGPR:$Rt, t2addrmode_so_reg:$addr, pred:$p)>;
 
 // Extend instruction optional rotate operand.
-def : t2InstAlias<"sxtab${p} $Rd, $Rn, $Rm",
-                (t2SXTAB rGPR:$Rd, rGPR:$Rn, rGPR:$Rm, 0, pred:$p)>;
-def : t2InstAlias<"sxtah${p} $Rd, $Rn, $Rm",
-                (t2SXTAH rGPR:$Rd, rGPR:$Rn, rGPR:$Rm, 0, pred:$p)>;
-def : t2InstAlias<"sxtab16${p} $Rd, $Rn, $Rm",
-                (t2SXTAB16 rGPR:$Rd, rGPR:$Rn, rGPR:$Rm, 0, pred:$p)>;
+def : InstAlias<"sxtab${p} $Rd, $Rn, $Rm",
+              (t2SXTAB rGPR:$Rd, rGPR:$Rn, rGPR:$Rm, 0, pred:$p)>,
+              Requires<[HasT2ExtractPack, IsThumb2]>;
+def : InstAlias<"sxtah${p} $Rd, $Rn, $Rm",
+              (t2SXTAH rGPR:$Rd, rGPR:$Rn, rGPR:$Rm, 0, pred:$p)>,
+              Requires<[HasT2ExtractPack, IsThumb2]>;
+def : InstAlias<"sxtab16${p} $Rd, $Rn, $Rm",
+              (t2SXTAB16 rGPR:$Rd, rGPR:$Rn, rGPR:$Rm, 0, pred:$p)>,
+              Requires<[HasT2ExtractPack, IsThumb2]>;
+def : InstAlias<"sxtb16${p} $Rd, $Rm",
+              (t2SXTB16 rGPR:$Rd, rGPR:$Rm, 0, pred:$p)>,
+              Requires<[HasT2ExtractPack, IsThumb2]>;
 
 def : t2InstAlias<"sxtb${p} $Rd, $Rm",
                 (t2SXTB rGPR:$Rd, rGPR:$Rm, 0, pred:$p)>;
-def : t2InstAlias<"sxtb16${p} $Rd, $Rm",
-                (t2SXTB16 rGPR:$Rd, rGPR:$Rm, 0, pred:$p)>;
 def : t2InstAlias<"sxth${p} $Rd, $Rm",
                 (t2SXTH rGPR:$Rd, rGPR:$Rm, 0, pred:$p)>;
 def : t2InstAlias<"sxtb${p}.w $Rd, $Rm",
@@ -4603,19 +4608,23 @@ def : t2InstAlias<"sxtb${p}.w $Rd, $Rm",
 def : t2InstAlias<"sxth${p}.w $Rd, $Rm",
                 (t2SXTH rGPR:$Rd, rGPR:$Rm, 0, pred:$p)>;
 
-def : t2InstAlias<"uxtab${p} $Rd, $Rn, $Rm",
-                (t2UXTAB rGPR:$Rd, rGPR:$Rn, rGPR:$Rm, 0, pred:$p)>;
-def : t2InstAlias<"uxtah${p} $Rd, $Rn, $Rm",
-                (t2UXTAH rGPR:$Rd, rGPR:$Rn, rGPR:$Rm, 0, pred:$p)>;
-def : t2InstAlias<"uxtab16${p} $Rd, $Rn, $Rm",
-                (t2UXTAB16 rGPR:$Rd, rGPR:$Rn, rGPR:$Rm, 0, pred:$p)>;
+def : InstAlias<"uxtab${p} $Rd, $Rn, $Rm",
+              (t2UXTAB rGPR:$Rd, rGPR:$Rn, rGPR:$Rm, 0, pred:$p)>,
+              Requires<[HasT2ExtractPack, IsThumb2]>;
+def : InstAlias<"uxtah${p} $Rd, $Rn, $Rm",
+              (t2UXTAH rGPR:$Rd, rGPR:$Rn, rGPR:$Rm, 0, pred:$p)>,
+              Requires<[HasT2ExtractPack, IsThumb2]>;
+def : InstAlias<"uxtab16${p} $Rd, $Rn, $Rm",
+              (t2UXTAB16 rGPR:$Rd, rGPR:$Rn, rGPR:$Rm, 0, pred:$p)>,
+              Requires<[HasT2ExtractPack, IsThumb2]>;
+def : InstAlias<"uxtb16${p} $Rd, $Rm",
+              (t2UXTB16 rGPR:$Rd, rGPR:$Rm, 0, pred:$p)>,
+              Requires<[HasT2ExtractPack, IsThumb2]>;
+
 def : t2InstAlias<"uxtb${p} $Rd, $Rm",
                 (t2UXTB rGPR:$Rd, rGPR:$Rm, 0, pred:$p)>;
-def : t2InstAlias<"uxtb16${p} $Rd, $Rm",
-                (t2UXTB16 rGPR:$Rd, rGPR:$Rm, 0, pred:$p)>;
 def : t2InstAlias<"uxth${p} $Rd, $Rm",
                 (t2UXTH rGPR:$Rd, rGPR:$Rm, 0, pred:$p)>;
-
 def : t2InstAlias<"uxtb${p}.w $Rd, $Rm",
                 (t2UXTB rGPR:$Rd, rGPR:$Rm, 0, pred:$p)>;
 def : t2InstAlias<"uxth${p}.w $Rd, $Rm",
@@ -4624,15 +4633,17 @@ def : t2InstAlias<"uxth${p}.w $Rd, $Rm",
 // Extend instruction w/o the ".w" optional width specifier.
 def : t2InstAlias<"uxtb${p} $Rd, $Rm$rot",
                   (t2UXTB rGPR:$Rd, rGPR:$Rm, rot_imm:$rot, pred:$p)>;
-def : t2InstAlias<"uxtb16${p} $Rd, $Rm$rot",
-                  (t2UXTB16 rGPR:$Rd, rGPR:$Rm, rot_imm:$rot, pred:$p)>;
+def : InstAlias<"uxtb16${p} $Rd, $Rm$rot",
+                (t2UXTB16 rGPR:$Rd, rGPR:$Rm, rot_imm:$rot, pred:$p)>,
+                Requires<[HasT2ExtractPack, IsThumb2]>;
 def : t2InstAlias<"uxth${p} $Rd, $Rm$rot",
                   (t2UXTH rGPR:$Rd, rGPR:$Rm, rot_imm:$rot, pred:$p)>;
 
 def : t2InstAlias<"sxtb${p} $Rd, $Rm$rot",
                   (t2SXTB rGPR:$Rd, rGPR:$Rm, rot_imm:$rot, pred:$p)>;
-def : t2InstAlias<"sxtb16${p} $Rd, $Rm$rot",
-                  (t2SXTB16 rGPR:$Rd, rGPR:$Rm, rot_imm:$rot, pred:$p)>;
+def : InstAlias<"sxtb16${p} $Rd, $Rm$rot",
+                (t2SXTB16 rGPR:$Rd, rGPR:$Rm, rot_imm:$rot, pred:$p)>,
+                Requires<[HasT2ExtractPack, IsThumb2]>;
 def : t2InstAlias<"sxth${p} $Rd, $Rm$rot",
                   (t2SXTH rGPR:$Rd, rGPR:$Rm, rot_imm:$rot, pred:$p)>;
 
