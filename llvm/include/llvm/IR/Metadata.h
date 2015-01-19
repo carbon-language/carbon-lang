@@ -47,8 +47,11 @@ class Metadata {
   const unsigned char SubclassID;
 
 protected:
+  /// \brief Active type of storage.
+  enum StorageType { Uniqued, Distinct, Temporary };
+
   /// \brief Storage flag for non-uniqued, otherwise unowned, metadata.
-  bool IsDistinctInContext : 1;
+  StorageType Storage : 2;
   // TODO: expose remaining bits to subclasses.
 
   unsigned short SubclassData16;
@@ -65,13 +68,13 @@ public:
   };
 
 protected:
-  Metadata(unsigned ID)
-      : SubclassID(ID), IsDistinctInContext(false), SubclassData16(0),
-        SubclassData32(0) {}
+  Metadata(unsigned ID, StorageType Storage)
+      : SubclassID(ID), Storage(Storage), SubclassData16(0), SubclassData32(0) {
+  }
   ~Metadata() {}
 
   /// \brief Store this in a big non-uniqued untyped bucket.
-  bool isStoredDistinctInContext() const { return IsDistinctInContext; }
+  bool isStoredDistinctInContext() const { return Storage == Distinct; }
 
   /// \brief Default handling of a changed operand, which asserts.
   ///
@@ -195,7 +198,7 @@ class ValueAsMetadata : public Metadata, ReplaceableMetadataImpl {
 
 protected:
   ValueAsMetadata(unsigned ID, Value *V)
-      : Metadata(ID), V(V) {
+      : Metadata(ID, Uniqued), V(V) {
     assert(V && "Expected valid value");
   }
   ~ValueAsMetadata() {}
@@ -446,8 +449,8 @@ class MDString : public Metadata {
   MDString &operator=(const MDString &) LLVM_DELETED_FUNCTION;
 
   StringMapEntry<MDString> *Entry;
-  MDString() : Metadata(MDStringKind), Entry(nullptr) {}
-  MDString(MDString &&) : Metadata(MDStringKind) {}
+  MDString() : Metadata(MDStringKind, Uniqued), Entry(nullptr) {}
+  MDString(MDString &&) : Metadata(MDStringKind, Uniqued) {}
 
 public:
   static MDString *get(LLVMContext &Context, StringRef Str);
@@ -606,7 +609,8 @@ protected:
     llvm_unreachable("Constructor throws?");
   }
 
-  MDNode(LLVMContext &Context, unsigned ID, ArrayRef<Metadata *> MDs);
+  MDNode(LLVMContext &Context, unsigned ID, StorageType Storage,
+         ArrayRef<Metadata *> MDs);
   ~MDNode() {}
 
   void dropAllReferences();
@@ -728,8 +732,8 @@ protected:
   /// If \c AllowRAUW, then if any operands are unresolved support RAUW.  RAUW
   /// will be dropped once all operands have been resolved (or if \a
   /// resolveCycles() is called).
-  UniquableMDNode(LLVMContext &C, unsigned ID, ArrayRef<Metadata *> Vals,
-                  bool AllowRAUW);
+  UniquableMDNode(LLVMContext &C, unsigned ID, StorageType Storage,
+                  ArrayRef<Metadata *> Vals);
   ~UniquableMDNode() {}
 
   void storeDistinctInContext();
@@ -778,8 +782,8 @@ class MDTuple : public UniquableMDNode {
   friend class LLVMContextImpl;
   friend class UniquableMDNode;
 
-  MDTuple(LLVMContext &C, ArrayRef<Metadata *> Vals, bool AllowRAUW)
-      : UniquableMDNode(C, MDTupleKind, Vals, AllowRAUW) {}
+  MDTuple(LLVMContext &C, StorageType Storage, ArrayRef<Metadata *> Vals)
+      : UniquableMDNode(C, MDTupleKind, Storage, Vals) {}
   ~MDTuple() { dropAllReferences(); }
 
   void setHash(unsigned Hash) { MDNodeSubclassData = Hash; }
@@ -830,13 +834,13 @@ class MDLocation : public UniquableMDNode {
   friend class LLVMContextImpl;
   friend class UniquableMDNode;
 
-  MDLocation(LLVMContext &C, unsigned Line, unsigned Column,
-             ArrayRef<Metadata *> MDs, bool AllowRAUW);
+  MDLocation(LLVMContext &C, StorageType Storage, unsigned Line,
+             unsigned Column, ArrayRef<Metadata *> MDs);
   ~MDLocation() { dropAllReferences(); }
 
-  static MDLocation *constructHelper(LLVMContext &Context, unsigned Line,
-                                     unsigned Column, Metadata *Scope,
-                                     Metadata *InlinedAt, bool AllowRAUW);
+  static MDLocation *constructHelper(LLVMContext &Context, StorageType Storage,
+                                     unsigned Line, unsigned Column,
+                                     Metadata *Scope, Metadata *InlinedAt);
 
   static MDLocation *getImpl(LLVMContext &Context, unsigned Line,
                              unsigned Column, Metadata *Scope,
@@ -889,7 +893,7 @@ class MDNodeFwdDecl : public MDNode, ReplaceableMetadataImpl {
   friend class ReplaceableMetadataImpl;
 
   MDNodeFwdDecl(LLVMContext &C, ArrayRef<Metadata *> Vals)
-      : MDNode(C, MDNodeFwdDeclKind, Vals) {}
+      : MDNode(C, MDNodeFwdDeclKind, Temporary, Vals) {}
 
 public:
   ~MDNodeFwdDecl() { dropAllReferences(); }

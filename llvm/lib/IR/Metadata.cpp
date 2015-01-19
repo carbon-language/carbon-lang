@@ -395,8 +395,9 @@ void MDNode::operator delete(void *Mem) {
   ::operator delete(O);
 }
 
-MDNode::MDNode(LLVMContext &Context, unsigned ID, ArrayRef<Metadata *> MDs)
-    : Metadata(ID), Context(Context), NumOperands(MDs.size()),
+MDNode::MDNode(LLVMContext &Context, unsigned ID, StorageType Storage,
+               ArrayRef<Metadata *> MDs)
+    : Metadata(ID, Storage), Context(Context), NumOperands(MDs.size()),
       MDNodeSubclassData(0) {
   for (unsigned I = 0, E = MDs.size(); I != E; ++I)
     setOperand(I, MDs[I]);
@@ -415,9 +416,9 @@ static bool isOperandUnresolved(Metadata *Op) {
 }
 
 UniquableMDNode::UniquableMDNode(LLVMContext &C, unsigned ID,
-                                 ArrayRef<Metadata *> Vals, bool AllowRAUW)
-    : MDNode(C, ID, Vals) {
-  if (!AllowRAUW)
+                                 StorageType Storage, ArrayRef<Metadata *> Vals)
+    : MDNode(C, ID, Storage, Vals) {
+  if (Storage != Uniqued)
     return;
 
   // Check whether any operands are unresolved, requiring re-uniquing.
@@ -618,14 +619,14 @@ MDTuple *MDTuple::getImpl(LLVMContext &Context, ArrayRef<Metadata *> MDs,
     return nullptr;
 
   // Coallocate space for the node and Operands together, then placement new.
-  auto *N = new (MDs.size()) MDTuple(Context, MDs, /* AllowRAUW */ true);
+  auto *N = new (MDs.size()) MDTuple(Context, Uniqued, MDs);
   N->setHash(Key.Hash);
   Store.insert(N);
   return N;
 }
 
 MDTuple *MDTuple::getDistinct(LLVMContext &Context, ArrayRef<Metadata *> MDs) {
-  auto *N = new (MDs.size()) MDTuple(Context, MDs, /* AllowRAUW */ false);
+  auto *N = new (MDs.size()) MDTuple(Context, Distinct, MDs);
   N->storeDistinctInContext();
   return N;
 }
@@ -645,9 +646,9 @@ MDTuple *MDTuple::uniquifyImpl() {
 
 void MDTuple::eraseFromStoreImpl() { getContext().pImpl->MDTuples.erase(this); }
 
-MDLocation::MDLocation(LLVMContext &C, unsigned Line, unsigned Column,
-                       ArrayRef<Metadata *> MDs, bool AllowRAUW)
-    : UniquableMDNode(C, MDLocationKind, MDs, AllowRAUW) {
+MDLocation::MDLocation(LLVMContext &C, StorageType Storage, unsigned Line,
+                       unsigned Column, ArrayRef<Metadata *> MDs)
+    : UniquableMDNode(C, MDLocationKind, Storage, MDs) {
   assert((MDs.size() == 1 || MDs.size() == 2) &&
          "Expected a scope and optional inlined-at");
 
@@ -659,14 +660,15 @@ MDLocation::MDLocation(LLVMContext &C, unsigned Line, unsigned Column,
   SubclassData16 = Column;
 }
 
-MDLocation *MDLocation::constructHelper(LLVMContext &Context, unsigned Line,
+MDLocation *MDLocation::constructHelper(LLVMContext &Context,
+                                        StorageType Storage, unsigned Line,
                                         unsigned Column, Metadata *Scope,
-                                        Metadata *InlinedAt, bool AllowRAUW) {
+                                        Metadata *InlinedAt) {
   SmallVector<Metadata *, 2> Ops;
   Ops.push_back(Scope);
   if (InlinedAt)
     Ops.push_back(InlinedAt);
-  return new (Ops.size()) MDLocation(Context, Line, Column, Ops, AllowRAUW);
+  return new (Ops.size()) MDLocation(Context, Storage, Line, Column, Ops);
 }
 
 static void adjustLine(unsigned &Line) {
@@ -697,8 +699,7 @@ MDLocation *MDLocation::getImpl(LLVMContext &Context, unsigned Line,
   if (!ShouldCreate)
     return nullptr;
 
-  auto *N = constructHelper(Context, Line, Column, Scope, InlinedAt,
-                            /* AllowRAUW */ true);
+  auto *N = constructHelper(Context, Uniqued, Line, Column, Scope, InlinedAt);
   Store.insert(N);
   return N;
 }
@@ -710,8 +711,7 @@ MDLocation *MDLocation::getDistinct(LLVMContext &Context, unsigned Line,
   adjustLine(Line);
   adjustColumn(Column);
 
-  auto *N = constructHelper(Context, Line, Column, Scope, InlinedAt,
-                            /* AllowRAUW */ false);
+  auto *N = constructHelper(Context, Distinct, Line, Column, Scope, InlinedAt);
   N->storeDistinctInContext();
   return N;
 }
@@ -740,8 +740,7 @@ MDNodeFwdDecl *MDNode::getTemporary(LLVMContext &Context,
 void MDNode::deleteTemporary(MDNode *N) { delete cast<MDNodeFwdDecl>(N); }
 
 void UniquableMDNode::storeDistinctInContext() {
-  assert(!IsDistinctInContext && "Expected newly distinct metadata");
-  IsDistinctInContext = true;
+  Storage = Distinct;
   if (auto *T = dyn_cast<MDTuple>(this))
     T->setHash(0);
   getContext().pImpl->DistinctMDNodes.insert(this);
