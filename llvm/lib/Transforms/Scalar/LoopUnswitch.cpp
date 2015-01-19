@@ -727,7 +727,7 @@ void LoopUnswitch::UnswitchTrivialCondition(Loop *L, Value *Cond,
   // First step, split the preheader, so that we know that there is a safe place
   // to insert the conditional branch.  We will change loopPreheader to have a
   // conditional branch on Cond.
-  BasicBlock *NewPH = SplitEdge(loopPreheader, loopHeader, this);
+  BasicBlock *NewPH = SplitEdge(loopPreheader, loopHeader, DT, LI);
 
   // Now that we have a place to insert the conditional branch, create a place
   // to branch to: this is the exit block out of the loop that we should
@@ -801,7 +801,7 @@ void LoopUnswitch::UnswitchNontrivialCondition(Value *LIC, Constant *Val,
 
   // First step, split the preheader and exit blocks, and add these blocks to
   // the LoopBlocks list.
-  BasicBlock *NewPreheader = SplitEdge(loopPreheader, loopHeader, this);
+  BasicBlock *NewPreheader = SplitEdge(loopPreheader, loopHeader, DT, LI);
   LoopBlocks.push_back(NewPreheader);
 
   // We want the loop to come after the preheader, but before the exit blocks.
@@ -1047,7 +1047,7 @@ void LoopUnswitch::RewriteLoopBodyWithConditionConstant(Loop *L, Value *LIC,
     // and hooked up so as to preserve the loop structure, because
     // trying to update it is complicated.  So instead we preserve the
     // loop structure and put the block on a dead code path.
-    SplitEdge(Switch, SISucc, this);
+    SplitEdge(Switch, SISucc, DT, LI);
     // Compute the successors instead of relying on the return value
     // of SplitEdge, since it may have split the switch successor
     // after PHI nodes.

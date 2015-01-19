@@ -28,7 +28,6 @@ class DominatorTree;
 class LoopInfo;
 class Instruction;
 class MDNode;
-class Pass;
 class ReturnInst;
 class TargetLibraryInfo;
 class TerminatorInst;
@@ -191,9 +190,9 @@ unsigned SplitAllCriticalEdges(Function &F,
                                const CriticalEdgeSplittingOptions &Options =
                                    CriticalEdgeSplittingOptions());
 
-/// SplitEdge -  Split the edge connecting specified block. Pass P must
-/// not be NULL.
-BasicBlock *SplitEdge(BasicBlock *From, BasicBlock *To, Pass *P);
+/// SplitEdge -  Split the edge connecting specified block.
+BasicBlock *SplitEdge(BasicBlock *From, BasicBlock *To,
+                      DominatorTree *DT = nullptr, LoopInfo *LI = nullptr);
 
 /// SplitBlock - Split the specified block at the specified instruction - every
 /// thing before SplitPt stays in Old and everything starting with SplitPt moves

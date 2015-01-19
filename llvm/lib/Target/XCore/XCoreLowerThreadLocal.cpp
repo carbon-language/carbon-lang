@@ -137,7 +137,7 @@ static bool replaceConstantExprOp(ConstantExpr *CE, Pass *P) {
             if (PN->getIncomingValue(I) == CE) {
               BasicBlock *PredBB = PN->getIncomingBlock(I);
               if (PredBB->getTerminator()->getNumSuccessors() > 1)
-                PredBB = SplitEdge(PredBB, PN->getParent(), P);
+                PredBB = SplitEdge(PredBB, PN->getParent());
               Instruction *InsertPos = PredBB->getTerminator();
               Instruction *NewInst = createReplacementInstr(CE, InsertPos);
               PN->setOperand(I, NewInst);

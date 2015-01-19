@@ -1575,7 +1575,7 @@ bool JumpThreading::DuplicateCondBranchOnPHIIntoPred(BasicBlock *BB,
   BranchInst *OldPredBranch = dyn_cast<BranchInst>(PredBB->getTerminator());
 
   if (!OldPredBranch || !OldPredBranch->isUnconditional()) {
-    PredBB = SplitEdge(PredBB, BB, this);
+    PredBB = SplitEdge(PredBB, BB);
     OldPredBranch = cast<BranchInst>(PredBB->getTerminator());
   }
 

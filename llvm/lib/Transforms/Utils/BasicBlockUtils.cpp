@@ -231,22 +231,14 @@ void llvm::ReplaceInstWithInst(Instruction *From, Instruction *To) {
 
 /// SplitEdge -  Split the edge connecting specified block. Pass P must
 /// not be NULL.
-BasicBlock *llvm::SplitEdge(BasicBlock *BB, BasicBlock *Succ, Pass *P) {
+BasicBlock *llvm::SplitEdge(BasicBlock *BB, BasicBlock *Succ, DominatorTree *DT,
+                            LoopInfo *LI) {
   unsigned SuccNum = GetSuccessorNumber(BB, Succ);
-
-  auto *AA = P->getAnalysisIfAvailable<AliasAnalysis>();
-  auto *DTWP = P->getAnalysisIfAvailable<DominatorTreeWrapperPass>();
-  auto *DT = DTWP ? &DTWP->getDomTree() : nullptr;
-  auto *LIWP = P->getAnalysisIfAvailable<LoopInfoWrapperPass>();
-  auto *LI = LIWP ? &LIWP->getLoopInfo() : nullptr;
-  bool PreserveLCSSA = P->mustPreserveAnalysisID(LCSSAID);
-  auto Options = CriticalEdgeSplittingOptions(AA, DT, LI);
-  if (PreserveLCSSA)
-    Options.setPreserveLCSSA();
 
   // If this is a critical edge, let SplitCriticalEdge do it.
   TerminatorInst *LatchTerm = BB->getTerminator();
-  if (SplitCriticalEdge(LatchTerm, SuccNum, Options))
+  if (SplitCriticalEdge(LatchTerm, SuccNum, CriticalEdgeSplittingOptions(DT, LI)
+                                                .setPreserveLCSSA()))
     return LatchTerm->getSuccessor(SuccNum);
 
   // If the edge isn't critical, then BB has a single successor or Succ has a
