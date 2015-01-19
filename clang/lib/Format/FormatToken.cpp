@@ -59,7 +59,8 @@ void TokenRole::precomputeFormattingInfos(const FormatToken *Token) {}
 unsigned CommaSeparatedList::formatAfterToken(LineState &State,
                                               ContinuationIndenter *Indenter,
                                               bool DryRun) {
-  if (!State.NextToken->Previous || !State.NextToken->Previous->Previous)
+  if (State.NextToken == nullptr || !State.NextToken->Previous ||
+      !State.NextToken->Previous->Previous)
     return 0;
 
   // Ensure that we start on the opening brace.
