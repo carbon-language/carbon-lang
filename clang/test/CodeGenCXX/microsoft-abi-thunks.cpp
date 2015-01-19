@@ -31,12 +31,12 @@ struct C : A, B {
   C();
 
   virtual ~C();
-  // MANGLING-DAG: @"\01??1C@@UAE@XZ"
-  // MANGLING-DAG: @"\01??_GC@@UAEPAXI@Z"
-  // MANGLING-DAG: @"\01??_EC@@W3AEPAXI@Z"
-  // MANGLING-X64-DAG: @"\01??1C@@UEAA@XZ"
-  // MANGLING-X64-DAG: @"\01??_GC@@UEAAPEAXI@Z"
-  // MANGLING-X64-DAG: @"\01??_EC@@W7EAAPEAXI@Z"
+  // MANGLING-DAG: declare {{.*}} @"\01??1C@@UAE@XZ"({{.*}})
+  // MANGLING-DAG: define {{.*}} @"\01??_GC@@UAEPAXI@Z"({{.*}})
+  // MANGLING-DAG: define {{.*}} @"\01??_EC@@W3AEPAXI@Z"({{.*}})
+  // MANGLING-X64-DAG: declare {{.*}} @"\01??1C@@UEAA@XZ"({{.*}})
+  // MANGLING-X64-DAG: define {{.*}} @"\01??_GC@@UEAAPEAXI@Z"({{.*}})
+  // MANGLING-X64-DAG: define {{.*}} @"\01??_EC@@W7EAAPEAXI@Z"({{.*}})
 
   // Overrides public_f() of two subobjects with distinct vfptrs, thus needs a thunk.
   virtual void public_f();
