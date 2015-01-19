@@ -40,18 +40,8 @@ const int kClkBits = 42;
 const unsigned kMaxTidReuse = (1 << (64 - kClkBits)) - 1;
 const uptr kShadowStackSize = 64 * 1024;
 
-#ifdef TSAN_SHADOW_COUNT
-# if TSAN_SHADOW_COUNT == 2 \
-  || TSAN_SHADOW_COUNT == 4 || TSAN_SHADOW_COUNT == 8
-const uptr kShadowCnt = TSAN_SHADOW_COUNT;
-# else
-#   error "TSAN_SHADOW_COUNT must be one of 2,4,8"
-# endif
-#else
 // Count of shadow values in a shadow cell.
-#define TSAN_SHADOW_COUNT 4
 const uptr kShadowCnt = 4;
-#endif
 
 // That many user bytes are mapped onto a single shadow cell.
 const uptr kShadowCell = 8;
@@ -96,16 +86,6 @@ void build_consistency_stats();
 void build_consistency_nostats();
 #endif
 
-#if TSAN_SHADOW_COUNT == 1
-void build_consistency_shadow1();
-#elif TSAN_SHADOW_COUNT == 2
-void build_consistency_shadow2();
-#elif TSAN_SHADOW_COUNT == 4
-void build_consistency_shadow4();
-#else
-void build_consistency_shadow8();
-#endif
-
 static inline void USED build_consistency() {
 #if SANITIZER_DEBUG
   build_consistency_debug();
@@ -116,15 +96,6 @@ static inline void USED build_consistency() {
   build_consistency_stats();
 #else
   build_consistency_nostats();
-#endif
-#if TSAN_SHADOW_COUNT == 1
-  build_consistency_shadow1();
-#elif TSAN_SHADOW_COUNT == 2
-  build_consistency_shadow2();
-#elif TSAN_SHADOW_COUNT == 4
-  build_consistency_shadow4();
-#else
-  build_consistency_shadow8();
 #endif
 }
 
