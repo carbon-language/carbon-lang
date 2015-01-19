@@ -6,6 +6,7 @@ set(LLVM_LINK_COMPONENTS
   MC
   ScalarOpts
   Support
+  TransformUtils
   native
   mcjit
   )
