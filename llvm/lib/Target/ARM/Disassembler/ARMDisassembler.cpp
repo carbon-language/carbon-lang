@@ -4971,7 +4971,7 @@ static DecodeStatus DecodeT2ShifterImmOperand(MCInst &Inst, uint32_t Val,
   DecodeStatus S = MCDisassembler::Success;
 
   // Shift of "asr #32" is not allowed in Thumb2 mode.
-  if (Val == 0x20) S = MCDisassembler::SoftFail;
+  if (Val == 0x20) S = MCDisassembler::Fail;
   Inst.addOperand(MCOperand::CreateImm(Val));
   return S;
 }

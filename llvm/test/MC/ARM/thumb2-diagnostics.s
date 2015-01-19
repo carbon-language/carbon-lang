@@ -87,4 +87,7 @@ foo2:
 @ CHECK-ERRORS: error: invalid operand for instruction
 @ CHECK-ERRORS: error: invalid operand for instruction
 
-
+ssat r0, #1, r0, asr #32
+usat r0, #1, r0, asr #32
+@ CHECK-ERRORS: error: 'asr #32' shift amount not allowed in Thumb mode
+@ CHECK-ERRORS: error: 'asr #32' shift amount not allowed in Thumb mode
