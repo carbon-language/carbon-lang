@@ -10,6 +10,7 @@
 #include "MCTargetDesc/X86MCTargetDesc.h"
 #include "MCTargetDesc/X86FixupKinds.h"
 #include "llvm/ADT/Twine.h"
+#include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCAsmLayout.h"
 #include "llvm/MC/MCAssembler.h"
 #include "llvm/MC/MCContext.h"
@@ -47,23 +48,21 @@ class X86MachObjectWriter : public MCMachObjectTargetWriter {
                               const MCFixup &Fixup,
                               MCValue Target,
                               uint64_t &FixedValue);
-  void RecordX86_64Relocation(MachObjectWriter *Writer,
-                              const MCAssembler &Asm,
+  void RecordX86_64Relocation(MachObjectWriter *Writer, MCAssembler &Asm,
                               const MCAsmLayout &Layout,
-                              const MCFragment *Fragment,
-                              const MCFixup &Fixup,
-                              MCValue Target,
-                              uint64_t &FixedValue);
+                              const MCFragment *Fragment, const MCFixup &Fixup,
+                              MCValue Target, uint64_t &FixedValue);
+
 public:
   X86MachObjectWriter(bool Is64Bit, uint32_t CPUType,
                       uint32_t CPUSubtype)
     : MCMachObjectTargetWriter(Is64Bit, CPUType, CPUSubtype,
                                /*UseAggressiveSymbolFolding=*/Is64Bit) {}
 
-  void RecordRelocation(MachObjectWriter *Writer,
-                        const MCAssembler &Asm, const MCAsmLayout &Layout,
-                        const MCFragment *Fragment, const MCFixup &Fixup,
-                        MCValue Target, uint64_t &FixedValue) override {
+  void RecordRelocation(MachObjectWriter *Writer, MCAssembler &Asm,
+                        const MCAsmLayout &Layout, const MCFragment *Fragment,
+                        const MCFixup &Fixup, MCValue Target,
+                        uint64_t &FixedValue) override {
     if (Writer->is64Bit())
       RecordX86_64Relocation(Writer, Asm, Layout, Fragment, Fixup, Target,
                              FixedValue);
@@ -97,13 +96,10 @@ static unsigned getFixupKindLog2Size(unsigned Kind) {
   }
 }
 
-void X86MachObjectWriter::RecordX86_64Relocation(MachObjectWriter *Writer,
-                                                 const MCAssembler &Asm,
-                                                 const MCAsmLayout &Layout,
-                                                 const MCFragment *Fragment,
-                                                 const MCFixup &Fixup,
-                                                 MCValue Target,
-                                                 uint64_t &FixedValue) {
+void X86MachObjectWriter::RecordX86_64Relocation(
+    MachObjectWriter *Writer, MCAssembler &Asm, const MCAsmLayout &Layout,
+    const MCFragment *Fragment, const MCFixup &Fixup, MCValue Target,
+    uint64_t &FixedValue) {
   unsigned IsPCRel = Writer->isFixupKindPCRel(Asm, Fixup.getKind());
   unsigned IsRIPRel = isFixupKindRIPRel(Fixup.getKind());
   unsigned Log2Size = getFixupKindLog2Size(Fixup.getKind());
@@ -117,6 +113,7 @@ void X86MachObjectWriter::RecordX86_64Relocation(MachObjectWriter *Writer,
   unsigned Index = 0;
   unsigned IsExtern = 0;
   unsigned Type = 0;
+  const MCSymbolData *RelSymbol = nullptr;
 
   Value = Target.getConstant();
 
@@ -132,7 +129,6 @@ void X86MachObjectWriter::RecordX86_64Relocation(MachObjectWriter *Writer,
   if (Target.isAbsolute()) { // constant
     // SymbolNum of 0 indicates the absolute section.
     Type = MachO::X86_64_RELOC_UNSIGNED;
-    Index = 0;
 
     // FIXME: I believe this is broken, I don't think the linker can understand
     // it. I think it would require a local relocation, but I'm not sure if that
@@ -193,36 +189,30 @@ void X86MachObjectWriter::RecordX86_64Relocation(MachObjectWriter *Writer,
     Value -= Writer->getSymbolAddress(&B_SD, Layout) -
       (!B_Base ? 0 : Writer->getSymbolAddress(B_Base, Layout));
 
-    if (A_Base) {
-      Index = A_Base->getIndex();
-      IsExtern = 1;
-    } else {
+    if (!A_Base)
       Index = A_SD.getFragment()->getParent()->getOrdinal() + 1;
-      IsExtern = 0;
-    }
     Type = MachO::X86_64_RELOC_UNSIGNED;
 
     MachO::any_relocation_info MRE;
     MRE.r_word0 = FixupOffset;
-    MRE.r_word1 = ((Index     <<  0) |
-                   (IsPCRel   << 24) |
-                   (Log2Size  << 25) |
-                   (IsExtern  << 27) |
-                   (Type      << 28));
-    Writer->addRelocation(Fragment->getParent(), MRE);
+    MRE.r_word1 =
+        (Index << 0) | (IsPCRel << 24) | (Log2Size << 25) | (Type << 28);
+    Writer->addRelocation(A_Base, Fragment->getParent(), MRE);
 
-    if (B_Base) {
-      Index = B_Base->getIndex();
-      IsExtern = 1;
-    } else {
+    if (B_Base)
+      RelSymbol = B_Base;
+    else
       Index = B_SD.getFragment()->getParent()->getOrdinal() + 1;
-      IsExtern = 0;
-    }
     Type = MachO::X86_64_RELOC_SUBTRACTOR;
   } else {
     const MCSymbol *Symbol = &Target.getSymA()->getSymbol();
+    if (Symbol->isTemporary() && Value) {
+      const MCSection &Sec = Symbol->getSection();
+      if (!Asm.getContext().getAsmInfo()->isSectionAtomizableBySymbols(Sec))
+        Asm.addLocalUsedInReloc(*Symbol);
+    }
     const MCSymbolData &SD = Asm.getSymbolData(*Symbol);
-    const MCSymbolData *Base = Asm.getAtom(&SD);
+    RelSymbol = Asm.getAtom(&SD);
 
     // Relocations inside debug sections always use local relocations when
     // possible. This seems to be done because the debugger doesn't fully
@@ -232,23 +222,20 @@ void X86MachObjectWriter::RecordX86_64Relocation(MachObjectWriter *Writer,
       const MCSectionMachO &Section = static_cast<const MCSectionMachO&>(
         Fragment->getParent()->getSection());
       if (Section.hasAttribute(MachO::S_ATTR_DEBUG))
-        Base = nullptr;
+        RelSymbol = nullptr;
     }
 
     // x86_64 almost always uses external relocations, except when there is no
     // symbol to use as a base address (a local symbol with no preceding
     // non-local symbol).
-    if (Base) {
-      Index = Base->getIndex();
-      IsExtern = 1;
-
+    if (RelSymbol) {
       // Add the local offset, if needed.
-      if (Base != &SD)
-        Value += Layout.getSymbolOffset(&SD) - Layout.getSymbolOffset(Base);
+      if (RelSymbol != &SD)
+        Value +=
+            Layout.getSymbolOffset(&SD) - Layout.getSymbolOffset(RelSymbol);
     } else if (Symbol->isInSection() && !Symbol->isVariable()) {
       // The index is the section ordinal (1-based).
       Index = SD.getFragment()->getParent()->getOrdinal() + 1;
-      IsExtern = 0;
       Value += Writer->getSymbolAddress(&SD, Layout);
 
       if (IsPCRel)
@@ -347,12 +334,9 @@ void X86MachObjectWriter::RecordX86_64Relocation(MachObjectWriter *Writer,
   // struct relocation_info (8 bytes)
   MachO::any_relocation_info MRE;
   MRE.r_word0 = FixupOffset;
-  MRE.r_word1 = ((Index     <<  0) |
-                 (IsPCRel   << 24) |
-                 (Log2Size  << 25) |
-                 (IsExtern  << 27) |
-                 (Type      << 28));
-  Writer->addRelocation(Fragment->getParent(), MRE);
+  MRE.r_word1 = (Index << 0) | (IsPCRel << 24) | (Log2Size << 25) |
+                (IsExtern << 27) | (Type << 28);
+  Writer->addRelocation(RelSymbol, Fragment->getParent(), MRE);
 }
 
 bool X86MachObjectWriter::RecordScatteredRelocation(MachObjectWriter *Writer,
@@ -424,7 +408,7 @@ bool X86MachObjectWriter::RecordScatteredRelocation(MachObjectWriter *Writer,
                    (IsPCRel                   << 30) |
                    MachO::R_SCATTERED);
     MRE.r_word1 = Value2;
-    Writer->addRelocation(Fragment->getParent(), MRE);
+    Writer->addRelocation(nullptr, Fragment->getParent(), MRE);
   } else {
     // If the offset is more than 24-bits, it won't fit in a scattered
     // relocation offset field, so we fall back to using a non-scattered
@@ -446,7 +430,7 @@ bool X86MachObjectWriter::RecordScatteredRelocation(MachObjectWriter *Writer,
                  (IsPCRel     << 30) |
                  MachO::R_SCATTERED);
   MRE.r_word1 = Value;
-  Writer->addRelocation(Fragment->getParent(), MRE);
+  Writer->addRelocation(nullptr, Fragment->getParent(), MRE);
   return true;
 }
 
@@ -467,7 +451,6 @@ void X86MachObjectWriter::RecordTLVPRelocation(MachObjectWriter *Writer,
 
   // Get the symbol data.
   const MCSymbolData *SD_A = &Asm.getSymbolData(Target.getSymA()->getSymbol());
-  unsigned Index = SD_A->getIndex();
 
   // We're only going to have a second symbol in pic mode and it'll be a
   // subtraction from the picbase. For 32-bit pic the addend is the difference
@@ -490,12 +473,9 @@ void X86MachObjectWriter::RecordTLVPRelocation(MachObjectWriter *Writer,
   // struct relocation_info (8 bytes)
   MachO::any_relocation_info MRE;
   MRE.r_word0 = Value;
-  MRE.r_word1 = ((Index                    <<  0) |
-                 (IsPCRel                  << 24) |
-                 (Log2Size                 << 25) |
-                 (1                        << 27) | // r_extern
-                 (MachO::GENERIC_RELOC_TLV << 28)); // r_type
-  Writer->addRelocation(Fragment->getParent(), MRE);
+  MRE.r_word1 =
+      (IsPCRel << 24) | (Log2Size << 25) | (MachO::GENERIC_RELOC_TLV << 28);
+  Writer->addRelocation(SD_A, Fragment->getParent(), MRE);
 }
 
 void X86MachObjectWriter::RecordX86Relocation(MachObjectWriter *Writer,
@@ -546,8 +526,8 @@ void X86MachObjectWriter::RecordX86Relocation(MachObjectWriter *Writer,
   // See <reloc.h>.
   uint32_t FixupOffset = Layout.getFragmentOffset(Fragment)+Fixup.getOffset();
   unsigned Index = 0;
-  unsigned IsExtern = 0;
   unsigned Type = 0;
+  const MCSymbolData *RelSymbol = nullptr;
 
   if (Target.isAbsolute()) { // constant
     // SymbolNum of 0 indicates the absolute section.
@@ -568,8 +548,7 @@ void X86MachObjectWriter::RecordX86Relocation(MachObjectWriter *Writer,
 
     // Check whether we need an external or internal relocation.
     if (Writer->doesSymbolRequireExternRelocation(SD)) {
-      IsExtern = 1;
-      Index = SD->getIndex();
+      RelSymbol = SD;
       // For external relocations, make sure to offset the fixup value to
       // compensate for the addend of the symbol address, if it was
       // undefined. This occurs with weak definitions, for example.
@@ -591,12 +570,9 @@ void X86MachObjectWriter::RecordX86Relocation(MachObjectWriter *Writer,
   // struct relocation_info (8 bytes)
   MachO::any_relocation_info MRE;
   MRE.r_word0 = FixupOffset;
-  MRE.r_word1 = ((Index     <<  0) |
-                 (IsPCRel   << 24) |
-                 (Log2Size  << 25) |
-                 (IsExtern  << 27) |
-                 (Type      << 28));
-  Writer->addRelocation(Fragment->getParent(), MRE);
+  MRE.r_word1 =
+      (Index << 0) | (IsPCRel << 24) | (Log2Size << 25) | (Type << 28);
+  Writer->addRelocation(RelSymbol, Fragment->getParent(), MRE);
 }
 
 MCObjectWriter *llvm::createX86MachObjectWriter(raw_ostream &OS,
