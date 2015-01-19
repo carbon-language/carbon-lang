@@ -457,7 +457,7 @@ DisassemblerLLVMC::LLVMCDisassembler::LLVMCDisassembler (const char *triple, uns
         std::unique_ptr<llvm::MCSymbolizer> symbolizer_up(curr_target->createMCSymbolizer(triple, NULL,
                        DisassemblerLLVMC::SymbolLookupCallback,
                        (void *) &owner,
-                       m_context_ap.get(), RelInfo.release()));
+                       m_context_ap.get(), std::move(RelInfo)));
         m_disasm_ap->setSymbolizer(std::move(symbolizer_up));
 
 
