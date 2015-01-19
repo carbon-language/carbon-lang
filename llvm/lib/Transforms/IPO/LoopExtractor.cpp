@@ -242,7 +242,7 @@ void BlockExtractorPass::SplitLandingPadPreds(Function *F) {
     if (!Split) continue;
 
     SmallVector<BasicBlock*, 2> NewBBs;
-    SplitLandingPadPredecessors(LPad, Parent, ".1", ".2", nullptr, NewBBs);
+    SplitLandingPadPredecessors(LPad, Parent, ".1", ".2", NewBBs);
   }
 }
 

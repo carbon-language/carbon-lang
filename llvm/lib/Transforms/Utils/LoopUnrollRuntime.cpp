@@ -125,7 +125,8 @@ static void ConnectProlog(Loop *L, Value *TripCount, unsigned Count,
   } else {
     SmallVector<BasicBlock*, 2> NewBBs;
     SplitLandingPadPredecessors(Exit, Preds, ".unr1-lcssa", ".unr2-lcssa",
-                                P, NewBBs);
+                                NewBBs, AA, DT, LI,
+                                P->mustPreserveAnalysisID(LCSSAID));
   }
   // Add the branch to the exit block (around the unrolled loop)
   BranchInst::Create(Exit, NewPH, BrLoopExit, InsertPt);

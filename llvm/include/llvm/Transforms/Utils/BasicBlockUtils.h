@@ -188,9 +188,14 @@ BasicBlock *SplitBlockPredecessors(BasicBlock *BB, ArrayRef<BasicBlock *> Preds,
 /// case where one of the edges being split is an exit of a loop with other
 /// exits).
 ///
-void SplitLandingPadPredecessors(BasicBlock *OrigBB,ArrayRef<BasicBlock*> Preds,
+void SplitLandingPadPredecessors(BasicBlock *OrigBB,
+                                 ArrayRef<BasicBlock *> Preds,
                                  const char *Suffix, const char *Suffix2,
-                                 Pass *P, SmallVectorImpl<BasicBlock*> &NewBBs);
+                                 SmallVectorImpl<BasicBlock *> &NewBBs,
+                                 AliasAnalysis *AA = nullptr,
+                                 DominatorTree *DT = nullptr,
+                                 LoopInfo *LI = nullptr,
+                                 bool PreserveLCSSA = false);
 
 /// FoldReturnIntoUncondBranch - This method duplicates the specified return
 /// instruction into a predecessor which ends in an unconditional branch. If

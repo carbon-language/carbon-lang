@@ -145,7 +145,7 @@ BasicBlock *llvm::InsertPreheaderForLoop(Loop *L, Pass *PP) {
   } else {
     SmallVector<BasicBlock*, 2> NewBBs;
     SplitLandingPadPredecessors(Header, OutsideBlocks, ".preheader",
-                                ".split-lp", PP, NewBBs);
+                                ".split-lp", NewBBs, AA, DT, LI, PreserveLCSSA);
     PreheaderBB = NewBBs[0];
   }
 
@@ -186,9 +186,8 @@ static BasicBlock *rewriteLoopExitBlock(Loop *L, BasicBlock *Exit,
 
   if (Exit->isLandingPad()) {
     SmallVector<BasicBlock*, 2> NewBBs;
-    SplitLandingPadPredecessors(Exit, LoopBlocks,
-                                ".loopexit", ".nonloopexit",
-                                PP, NewBBs);
+    SplitLandingPadPredecessors(Exit, LoopBlocks, ".loopexit", ".nonloopexit",
+                                NewBBs, AA, DT, LI, PreserveLCSSA);
     NewExitBB = NewBBs[0];
   } else {
     NewExitBB = SplitBlockPredecessors(Exit, LoopBlocks, ".loopexit", AA, DT,

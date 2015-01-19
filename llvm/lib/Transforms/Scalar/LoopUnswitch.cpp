@@ -775,7 +775,8 @@ void LoopUnswitch::SplitExitEdges(Loop *L,
     } else {
       SmallVector<BasicBlock*, 2> NewBBs;
       SplitLandingPadPredecessors(ExitBlock, Preds, ".us-lcssa", ".us-lcssa",
-                                  this, NewBBs);
+                                  NewBBs, /*AliasAnalysis*/ nullptr, DT, LI,
+                                  /*PreserveLCSSA*/ true);
     }
   }
 }
