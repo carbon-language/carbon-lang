@@ -54,10 +54,7 @@ DIBuilder::DIBuilder(Module &m, bool AllowUnresolvedNodes)
       DeclareFn(nullptr), ValueFn(nullptr),
       AllowUnresolvedNodes(AllowUnresolvedNodes) {}
 
-static bool isUnresolved(MDNode *N) {
-  return N &&
-         (isa<MDNodeFwdDecl>(N) || !cast<UniquableMDNode>(N)->isResolved());
-}
+static bool isUnresolved(MDNode *N) { return N && !N->isResolved(); }
 
 void DIBuilder::trackIfUnresolved(MDNode *N) {
   if (!AllowUnresolvedNodes) {
