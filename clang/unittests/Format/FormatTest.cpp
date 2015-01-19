@@ -2230,6 +2230,9 @@ TEST_F(FormatTest, FormatTryCatch) {
                "    throw;\n"
                "  }\n"
                "};\n");
+
+  // Incomplete try-catch blocks.
+  verifyFormat("try {} catch (");
 }
 
 TEST_F(FormatTest, IncompleteTryCatchBlocks) {

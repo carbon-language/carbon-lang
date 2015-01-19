@@ -1198,7 +1198,7 @@ void UnwrappedLineParser::parseTryCatch() {
         parseParens();
         continue;
       }
-      if (FormatTok->isOneOf(tok::semi, tok::r_brace))
+      if (FormatTok->isOneOf(tok::semi, tok::r_brace, tok::eof))
         return;
       nextToken();
     }
