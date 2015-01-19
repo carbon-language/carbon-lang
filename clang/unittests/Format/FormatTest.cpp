@@ -2600,6 +2600,7 @@ TEST_F(FormatTest, MacroDefinitionsWithIncompleteCode) {
                "    y)), // expected-warning",
                getLLVMStyleWithColumns(28));
   verifyFormat("#d, = };");
+  verifyFormat("#if \"a");
 }
 
 TEST_F(FormatTest, MacrosWithoutTrailingSemicolon) {
