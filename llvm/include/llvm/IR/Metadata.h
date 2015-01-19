@@ -657,6 +657,7 @@ struct TempMDNodeDeleter {
 
 #define HANDLE_UNIQUABLE_LEAF(CLASS)                                           \
   typedef std::unique_ptr<CLASS, TempMDNodeDeleter> Temp##CLASS;
+#define HANDLE_UNIQUABLE_BRANCH(CLASS) HANDLE_UNIQUABLE_LEAF(CLASS)
 #include "llvm/IR/Metadata.def"
 
 //===----------------------------------------------------------------------===//
