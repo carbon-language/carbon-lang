@@ -97,6 +97,13 @@ void MachODebugMapParser::switchToNewDebugMapObject(StringRef Filename) {
   CurrentDebugMapObject = &Result->addDebugMapObject(Path);
 }
 
+static Triple getTriple(const object::MachOObjectFile &Obj) {
+  Triple TheTriple("unknown-unknown-unknown");
+  TheTriple.setArch(Triple::ArchType(Obj.getArch()));
+  TheTriple.setObjectFormat(Triple::MachO);
+  return TheTriple;
+}
+
 /// This main parsing routine tries to open the main binary and if
 /// successful iterates over the STAB entries. The real parsing is
 /// done in handleStabSymbolTableEntry.
@@ -107,7 +114,7 @@ ErrorOr<std::unique_ptr<DebugMap>> MachODebugMapParser::parse() {
 
   const MachOObjectFile &MainBinary = *MainBinOrError;
   loadMainBinarySymbols();
-  Result = make_unique<DebugMap>();
+  Result = make_unique<DebugMap>(getTriple(MainBinary));
   MainBinaryStrings = MainBinary.getStringTableData();
   for (const SymbolRef &Symbol : MainBinary.symbols()) {
     const DataRefImpl &DRI = Symbol.getRawDataRefImpl();

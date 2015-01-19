@@ -8,7 +8,7 @@ RUN: not llvm-dsymutil -v -parse-only %p/Inputs/inexistant 2>&1 | FileCheck %s -
 Check that We can parse the debug map of the basic executable.
 
 CHECK-NOT: error
-CHECK: DEBUG MAP:
+CHECK: DEBUG MAP: x86_64-unknown-unknown-macho
 CHECK: /Inputs/basic1.macho.x86_64.o:
 CHECK: 	0000000000000000 => 0000000100000ea0	_main
 CHECK: /Inputs/basic2.macho.x86_64.o:
@@ -26,7 +26,7 @@ CHECK: END DEBUG MAP
 Check that we can parse the debug-map of the basic-lto executable
 
 CHECK-LTO-NOT: error
-CHECK-LTO: DEBUG MAP:
+CHECK-LTO: DEBUG MAP: x86_64-unknown-unknown-macho
 CHECK-LTO: /Inputs/basic-lto.macho.x86_64.o:
 CHECK-LTO: 	0000000000000050 => 0000000100000f90	_bar
 CHECK-LTO: 	0000000000000658 => 0000000100001000	_baz
@@ -48,7 +48,8 @@ CHECK-ARCHIVE-NEXT: 	opened new archive {{.*}}/libbasic.a'
 CHECK-ARCHIVE-NEXT: 	found member in current archive.
 CHECK-ARCHIVE-NEXT: trying to open {{.*}}/libbasic.a(basic3.macho.x86_64.o)'
 CHECK-ARCHIVE-NEXT: 	found member in current archive.
-CHECK-ARCHIVE: DEBUG MAP:   object addr =>  executable addr	symbol name
+CHECK-ARCHIVE: DEBUG MAP: x86_64-unknown-unknown-macho
+CHECK-ARCHIVE:       object addr =>  executable addr	symbol name
 CHECK-ARCHIVE: /Inputs/basic1.macho.x86_64.o:
 CHECK-ARCHIVE: 	0000000000000000 => 0000000100000ea0	_main
 CHECK-ARCHIVE: /Inputs/./libbasic.a(basic2.macho.x86_64.o):
@@ -69,6 +70,7 @@ NOT-FOUND: cannot open{{.*}}"/Inputs/basic1.macho.x86_64.o": {{[Nn]o}} such file
 NOT-FOUND: cannot open{{.*}}"/Inputs/basic2.macho.x86_64.o": {{[Nn]o}} such file
 NOT-FOUND: cannot open{{.*}}"/Inputs/basic3.macho.x86_64.o": {{[Nn]o}} such file
 NOT-FOUND: DEBUG MAP:
+NOT-FOUND-NEXT:  object addr =>  executable addr	symbol name
 NOT-FOUND-NEXT: END DEBUG MAP
 
 Check that we correctly error out on invalid executatble.

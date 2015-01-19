@@ -22,6 +22,7 @@
 #define LLVM_TOOLS_DSYMUTIL_DEBUGMAP_H
 
 #include "llvm/ADT/StringMap.h"
+#include "llvm/ADT/Triple.h"
 #include "llvm/ADT/iterator_range.h"
 #include "llvm/Object/ObjectFile.h"
 #include "llvm/Support/ErrorOr.h"
@@ -60,10 +61,13 @@ class DebugMapObject;
 ///     }
 /// }
 class DebugMap {
+  Triple BinaryTriple;
   typedef std::vector<std::unique_ptr<DebugMapObject>> ObjectContainer;
   ObjectContainer Objects;
 
 public:
+  DebugMap(const Triple &BinaryTriple) : BinaryTriple(BinaryTriple) {}
+
   typedef ObjectContainer::const_iterator const_iterator;
 
   iterator_range<const_iterator> objects() const {
@@ -77,6 +81,8 @@ public:
   /// This function adds an DebugMapObject to the list owned by this
   /// debug map.
   DebugMapObject &addDebugMapObject(StringRef ObjectFilePath);
+
+  const Triple &getTriple() { return BinaryTriple; }
 
   void print(raw_ostream &OS) const;
 

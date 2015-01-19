@@ -67,7 +67,8 @@ DebugMapObject::lookupSymbol(StringRef SymbolName) const {
 }
 
 void DebugMap::print(raw_ostream &OS) const {
-  OS << "DEBUG MAP:   object addr =>  executable addr\tsymbol name\n";
+  OS << "DEBUG MAP: " << BinaryTriple.getTriple()
+     << "\n\tobject addr =>  executable addr\tsymbol name\n";
   for (const auto &Obj : objects())
     Obj->print(OS);
   OS << "END DEBUG MAP\n";
