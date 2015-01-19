@@ -127,6 +127,15 @@ entry:
   ret void
 }
 
+; CHECK: r{{[0-9]+}}:{{[0-9]+}}{{ *}}={{ *}}combine(##-1280{{ *}},{{ *}}#120)
+
+define void @test25(i32 %a) #0 {
+entry:
+  %0 = tail call i64 @llvm.hexagon.A2.combineii(i32 -1280, i32 120)
+  store i64 %0, i64* @c, align 4
+  ret void
+}
+
 declare i32 @llvm.hexagon.A2.add(i32, i32) #1
 declare i32 @llvm.hexagon.A2.sub(i32, i32) #1
 declare i32 @llvm.hexagon.A2.and(i32, i32) #1
@@ -139,3 +148,4 @@ declare i32 @llvm.hexagon.A2.orir(i32, i32) #1
 declare i32 @llvm.hexagon.A2.subri(i32, i32)
 declare i32 @llvm.hexagon.A2.tfril(i32, i32) #1
 declare i32 @llvm.hexagon.A2.tfrih(i32, i32) #1
+declare i64 @llvm.hexagon.A2.combineii(i32, i32) #1

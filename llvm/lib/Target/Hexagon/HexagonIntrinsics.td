@@ -21,6 +21,10 @@ class T_R_pat <InstHexagon MI, Intrinsic IntID>
   : Pat <(IntID I32:$Rs),
          (MI I32:$Rs)>;
 
+class T_II_pat <InstHexagon MI, Intrinsic IntID, PatFrag Imm1, PatFrag Imm2>
+  : Pat<(IntID Imm1:$Is, Imm2:$It),
+        (MI Imm1:$Is, Imm2:$It)>;
+
 class T_RI_pat <InstHexagon MI, Intrinsic IntID, PatLeaf ImmPred = PatLeaf<(i32 imm)>>
   : Pat<(IntID I32:$Rs, ImmPred:$It),
         (MI I32:$Rs, ImmPred:$It)>;
@@ -32,6 +36,18 @@ class T_IR_pat <InstHexagon MI, Intrinsic IntID, PatFrag ImmPred = PatLeaf<(i32 
 class T_RR_pat <InstHexagon MI, Intrinsic IntID>
   : Pat <(IntID I32:$Rs, I32:$Rt),
          (MI I32:$Rs, I32:$Rt)>;
+
+class T_QII_pat <InstHexagon MI, Intrinsic IntID, PatFrag Imm1, PatFrag Imm2>
+  : Pat <(IntID (i32 PredRegs:$Ps), Imm1:$Is, Imm2:$It),
+         (MI PredRegs:$Ps, Imm1:$Is, Imm2:$It)>;
+
+class T_QRI_pat <InstHexagon MI, Intrinsic IntID, PatFrag ImmPred>
+  : Pat <(IntID (i32 PredRegs:$Ps), I32:$Rs, ImmPred:$Is),
+         (MI PredRegs:$Ps, I32:$Rs, ImmPred:$Is)>;
+
+class T_QIR_pat <InstHexagon MI, Intrinsic IntID, PatFrag ImmPred>
+  : Pat <(IntID (i32 PredRegs:$Ps), ImmPred:$Is, I32:$Rs),
+         (MI PredRegs:$Ps, ImmPred:$Is, I32:$Rs)>;
 
 class T_RRR_pat <InstHexagon MI, Intrinsic IntID>
   : Pat <(IntID I32:$Rs, I32:$Rt, I32:$Ru),
@@ -266,6 +282,32 @@ def : T_I_pat <A2_tfrsi, int_hexagon_A2_tfrsi>;
 // Assembler mapped from Rdd32=Rss32 to Rdd32=combine(Rss.H32,Rss.L32)
 def : Pat<(int_hexagon_A2_tfrp DoubleRegs:$src),
           (A2_combinew (HiReg DoubleRegs:$src), (LoReg DoubleRegs:$src))>;
+
+/********************************************************************
+*            ALU32/PERM                                             *
+*********************************************************************/
+// Combine
+def: T_RR_pat<A2_combine_hh, int_hexagon_A2_combine_hh>;
+def: T_RR_pat<A2_combine_hl, int_hexagon_A2_combine_hl>;
+def: T_RR_pat<A2_combine_lh, int_hexagon_A2_combine_lh>;
+def: T_RR_pat<A2_combine_ll, int_hexagon_A2_combine_ll>;
+
+def: T_II_pat<A2_combineii, int_hexagon_A2_combineii, s8ExtPred, s8ImmPred>;
+
+def: Pat<(i32 (int_hexagon_C2_mux (I32:$Rp), (I32:$Rs),
+                                                     (I32:$Rt))),
+         (i32 (C2_mux (C2_tfrrp IntRegs:$Rp), IntRegs:$Rs, IntRegs:$Rt))>;
+
+// Shift halfword
+def : T_R_pat<A2_aslh, int_hexagon_A2_aslh>;
+def : T_R_pat<A2_asrh, int_hexagon_A2_asrh>;
+def : T_R_pat<A2_asrh, int_hexagon_SI_to_SXTHI_asrh>;
+
+// Sign/zero extend
+def : T_R_pat<A2_sxth, int_hexagon_A2_sxth>;
+def : T_R_pat<A2_sxtb, int_hexagon_A2_sxtb>;
+def : T_R_pat<A2_zxth, int_hexagon_A2_zxth>;
+def : T_R_pat<A2_zxtb, int_hexagon_A2_zxtb>;
 
 //
 // ALU 32 types.
