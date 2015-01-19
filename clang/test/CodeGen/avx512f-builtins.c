@@ -252,3 +252,15 @@ __m512 test_mm512_unpacklo_ps(__m512 a, __m512 b)
   // CHECK: shufflevector <16 x float> {{.*}} <i32 0, i32 16, i32 1, i32 17, i32 4, i32 20, i32 5, i32 21, i32 8, i32 24, i32 9, i32 25, i32 12, i32 28, i32 13, i32 29>
   return _mm512_unpacklo_ps(a, b);
 }
+
+__mmask16 test_mm512_cmp_ps_mask(__m512 __a, __m512 __b) {
+  // CHECK-LABEL: @test_mm512_cmp_ps_mask
+  // CHECK: @llvm.x86.avx512.mask.cmp.ps.512
+  return _mm512_cmp_ps_mask(__a, __b, 0);
+}
+
+__mmask8 test_mm512_cmp_pd_mask(__m512 __a, __m512 __b) {
+  // CHECK-LABEL: @test_mm512_cmp_pd_mask
+  // CHECK: @llvm.x86.avx512.mask.cmp.pd.512
+  return _mm512_cmp_pd_mask(__a, __b, 0);
+}

@@ -669,22 +669,19 @@ _mm512_mask_blend_epi32(__mmask16 __U, __m512i __A, __m512i __W)
 
 /* Compare */
 
-static __inline __mmask16 __attribute__ ((__always_inline__, __nodebug__))
-_mm512_cmp_ps_mask(__m512 a, __m512 b, const int p)
-{
-  return (__mmask16) __builtin_ia32_cmpps512_mask ((__v16sf) a,
-               (__v16sf) b, p, (__mmask16) -1,
-               _MM_FROUND_CUR_DIRECTION);
-}
+#define _mm512_cmp_ps_mask(a, b, p) __extension__ ({ \
+  __m512 __a = (a); \
+  __m512 __b = (b); \
+  (__mmask16)__builtin_ia32_cmpps512_mask((__v16sf)__a, (__v16sf)__b, (p), \
+                                          (__mmask16)-1,                   \
+                                          _MM_FROUND_CUR_DIRECTION); })
 
-static __inline __mmask8 __attribute__ ((__always_inline__, __nodebug__)) 
-_mm512_cmp_pd_mask(__m512d __X, __m512d __Y, const int __P)
-{
-  return (__mmask8) __builtin_ia32_cmppd512_mask ((__v8df) __X,
-              (__v8df) __Y, __P,
-              (__mmask8) -1,
-              _MM_FROUND_CUR_DIRECTION);
-}
+#define _mm512_cmp_pd_mask(a, b, p) __extension__ ({ \
+  __m512 __a = (a); \
+  __m512 __b = (b); \
+  (__mmask8)__builtin_ia32_cmppd512_mask((__v8df)__a, (__v8df)__b, (p), \
+                                          (__mmask8)-1,                 \
+                                          _MM_FROUND_CUR_DIRECTION); })
 
 /* Conversion */
 
