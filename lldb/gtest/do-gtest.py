@@ -63,8 +63,7 @@ def line_combine_printer(file, previous_data, new_line_subn_result):
             return (new_line, remaining_count)
         else:
             # Time to write it out.
-            if len(new_line) > 0:
-                print(new_line, file=file)
+            print(new_line, file=file)
             return ("", 0)
 
 def call_make(makefile_dir, extra_args=None, stdout=sys.stdout, stderr=sys.stderr):
@@ -98,17 +97,17 @@ def call_make(makefile_dir, extra_args=None, stdout=sys.stdout, stderr=sys.stder
 
             # Drain stdout.
             while True:
-                line = proc.stdout.readline().rstrip()
+                line = proc.stdout.readline()
                 if line and len(line) > 0:
-                    stdout_data = line_combine_printer(stdout, stdout_data, filter_run_line(sub_expr, line))
+                    stdout_data = line_combine_printer(stdout, stdout_data, filter_run_line(sub_expr, line.rstrip()))
                 else:
                     break
 
             # Drain stderr.
             while True:
-                line = proc.stderr.readline().rstrip()
+                line = proc.stderr.readline()
                 if line and len(line) > 0:
-                    stderr_data = line_combine_printer(stderr, stderr_data, filter_run_line(sub_expr, line))
+                    stderr_data = line_combine_printer(stderr, stderr_data, filter_run_line(sub_expr, line.rstrip()))
                 else:
                     break
 
