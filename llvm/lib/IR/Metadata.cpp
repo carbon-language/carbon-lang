@@ -604,19 +604,23 @@ void UniquableMDNode::eraseFromStore() {
   }
 }
 
+template <class T, class InfoT>
+static T *getUniqued(DenseSet<T *, InfoT> &Store,
+                     const typename InfoT::KeyTy &Key) {
+  auto I = Store.find_as(Key);
+  return I == Store.end() ? nullptr : *I;
+}
+
 MDTuple *MDTuple::getImpl(LLVMContext &Context, ArrayRef<Metadata *> MDs,
                           StorageType Storage, bool ShouldCreate) {
   unsigned Hash = 0;
   if (Storage == Uniqued) {
     MDTupleInfo::KeyTy Key(MDs);
-    Hash = Key.Hash;
-
-    auto &Store = Context.pImpl->MDTuples;
-    auto I = Store.find_as(Key);
-    if (I != Store.end())
-      return *I;
+    if (auto *N = getUniqued(Context.pImpl->MDTuples, Key))
+      return N;
     if (!ShouldCreate)
       return nullptr;
+    Hash = Key.Hash;
   } else {
     assert(ShouldCreate && "Expected non-uniqued nodes to always be created");
   }
@@ -639,15 +643,12 @@ MDTuple *MDTuple::getImpl(LLVMContext &Context, ArrayRef<Metadata *> MDs,
 
 MDTuple *MDTuple::uniquifyImpl() {
   recalculateHash();
-  MDTupleInfo::KeyTy Key(this);
-
   auto &Store = getContext().pImpl->MDTuples;
-  auto I = Store.find_as(Key);
-  if (I == Store.end()) {
-    Store.insert(this);
-    return this;
-  }
-  return *I;
+  if (MDTuple *N = getUniqued(Store, this))
+    return N;
+
+  Store.insert(this);
+  return this;
 }
 
 void MDTuple::eraseFromStoreImpl() { getContext().pImpl->MDTuples.erase(this); }
@@ -687,12 +688,10 @@ MDLocation *MDLocation::getImpl(LLVMContext &Context, unsigned Line,
   adjustColumn(Column);
 
   if (Storage == Uniqued) {
-    MDLocationInfo::KeyTy Key(Line, Column, Scope, InlinedAt);
-
-    auto &Store = Context.pImpl->MDLocations;
-    auto I = Store.find_as(Key);
-    if (I != Store.end())
-      return *I;
+    if (auto *N = getUniqued(
+            Context.pImpl->MDLocations,
+            MDLocationInfo::KeyTy(Line, Column, Scope, InlinedAt)))
+      return N;
     if (!ShouldCreate)
       return nullptr;
   } else {
@@ -720,15 +719,12 @@ MDLocation *MDLocation::getImpl(LLVMContext &Context, unsigned Line,
 }
 
 MDLocation *MDLocation::uniquifyImpl() {
-  MDLocationInfo::KeyTy Key(this);
-
   auto &Store = getContext().pImpl->MDLocations;
-  auto I = Store.find_as(Key);
-  if (I == Store.end()) {
-    Store.insert(this);
-    return this;
-  }
-  return *I;
+  if (MDLocation *N = getUniqued(Store, this))
+    return N;
+
+  Store.insert(this);
+  return this;
 }
 
 void MDLocation::eraseFromStoreImpl() {
