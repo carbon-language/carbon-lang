@@ -32,7 +32,7 @@ target triple = "arm64-apple-ios3.0.0"
 ; Function Attrs: nounwind ssp
 define i32 @return_five_int(%struct.five* %f) #0 {
 entry:
-  call void @llvm.dbg.declare(metadata %struct.five* %f, metadata !17, metadata !{!"0x102"}), !dbg !18
+  call void @llvm.dbg.declare(metadata %struct.five* %f, metadata !17, metadata !{!"0x102\006"}), !dbg !18
   %a = getelementptr inbounds %struct.five* %f, i32 0, i32 0, !dbg !19
   %0 = load i32* %a, align 4, !dbg !19
   ret i32 %0, !dbg !19
@@ -64,7 +64,7 @@ attributes #1 = { nounwind readnone }
 !14 = !{!"0xd\00d\006\0032\0032\0096\000", !1, !9, !8} ; [ DW_TAG_member ] [d] [line 6, size 32, align 32, offset 96] [from int]
 !15 = !{!"0xd\00e\007\0032\0032\00128\000", !1, !9, !8} ; [ DW_TAG_member ] [e] [line 7, size 32, align 32, offset 128] [from int]
 !16 = !{i32 2, !"Dwarf Version", i32 2}
-!17 = !{!"0x101\00f\0016777229\008192", !4, !5, !9} ; [ DW_TAG_arg_variable ] [f] [line 13]
+!17 = !{!"0x101\00f\0016777229\000", !4, !5, !9} ; [ DW_TAG_arg_variable ] [f] [line 13]
 !18 = !MDLocation(line: 13, scope: !4)
 !19 = !MDLocation(line: 16, scope: !4)
 !20 = !{i32 1, !"Debug Info Version", i32 2}

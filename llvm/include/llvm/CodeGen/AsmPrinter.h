@@ -431,8 +431,8 @@ public:
 
   /// EmitDwarfRegOp - Emit a dwarf register operation.
   /// \param Indirect   whether this is a register-indirect address
-  virtual void EmitDwarfRegOp(ByteStreamer &BS, const MachineLocation &MLoc,
-                              bool Indirect) const;
+  virtual void EmitDwarfRegOp(ByteStreamer &BS,
+                              const MachineLocation &MLoc) const;
 
   //===------------------------------------------------------------------===//
   // Dwarf Lowering Routines

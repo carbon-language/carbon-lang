@@ -23,7 +23,7 @@ entry:
   %conv = fptosi float %r to i32, !dbg !23
   tail call void @llvm.dbg.declare(metadata i32 %conv, metadata !12, metadata !{!"0x102"}), !dbg !23
   %vla = alloca float, i32 %conv, align 4, !dbg !24
-  tail call void @llvm.dbg.declare(metadata float* %vla, metadata !14, metadata !{!"0x102"}), !dbg !24
+  tail call void @llvm.dbg.declare(metadata float* %vla, metadata !14, metadata !{!"0x102\006"}), !dbg !24
 ; The VLA alloca should be described by a dbg.declare:
 ; CHECK: call void @llvm.dbg.declare(metadata float* %vla, metadata ![[VLA:.*]], metadata {{.*}})
 ; The VLA alloca and following store into the array should not be lowered to like this:
@@ -81,7 +81,7 @@ attributes #1 = { nounwind readnone }
 !11 = !{!"0x101\00r\0016777217\000", !4, !6, !9} ; [ DW_TAG_arg_variable ] [r] [line 1]
 !12 = !{!"0x100\00count\003\000", !4, !6, !13} ; [ DW_TAG_auto_variable ] [count] [line 3]
 !13 = !{!"0x24\00int\000\0032\0032\000\000\005", null, null} ; [ DW_TAG_base_type ] [int] [line 0, size 32, align 32, offset 0, enc DW_ATE_signed]
-!14 = !{!"0x100\00vla\004\008192", !4, !6, !15} ; [ DW_TAG_auto_variable ] [vla] [line 4]
+!14 = !{!"0x100\00vla\004\000", !4, !6, !15} ; [ DW_TAG_auto_variable ] [vla] [line 4]
 !15 = !{!"0x1\00\000\000\0032\000\000", null, null, !9, !16, i32 0, null, null, null} ; [ DW_TAG_array_type ] [line 0, size 0, align 32, offset 0] [from float]
 !16 = !{!17}
 !17 = !{!"0x21\000\00-1"}       ; [ DW_TAG_subrange_type ] [unbounded]

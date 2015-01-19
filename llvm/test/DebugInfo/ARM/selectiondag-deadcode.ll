@@ -13,7 +13,7 @@ _ZN7Vector39NormalizeEv.exit:                     ; preds = %1, %0
   ; and SelectionDAGISel crashes.  It should definitely not
   ; crash. Drop the dbg_value instead.
   ; CHECK-NOT: "matrix"
-  tail call void @llvm.dbg.declare(metadata %class.Matrix3.0.6.10* %agg.result, metadata !45, metadata !{!"0x102"})
+  tail call void @llvm.dbg.declare(metadata %class.Matrix3.0.6.10* %agg.result, metadata !45, metadata !{!"0x102\006"})
   %2 = getelementptr inbounds %class.Matrix3.0.6.10* %agg.result, i32 0, i32 0, i32 8
   ret void
 }
@@ -24,4 +24,4 @@ declare arm_aapcscc void @_ZL4Sqrtd() #2
 !39 = !{!"0x2e\00GetMatrix\00GetMatrix\00_Z9GetMatrixv\0032\000\001\000\006\00256\001\0032", !5, !40, !41, null, void (%class.Matrix3.0.6.10*)* @_Z9GetMatrixv, null, null, null} ; [ DW_TAG_subprogram ] [line 32] [def] [GetMatrix]
 !40 = !{!"0x29", !5}         ; [ DW_TAG_file_type ] [/Volumes/Data/radar/15094721/test.ii]
 !41 = !{!"0x15\00\000\000\000\000\000\000", i32 0, null, null, null, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
-!45 = !{!"0x100\00matrix\0035\008192", !39, !40, !4} ; [ DW_TAG_auto_variable ] [matrix] [line 35]
+!45 = !{!"0x100\00matrix\0035\000", !39, !40, !4} ; [ DW_TAG_auto_variable ] [matrix] [line 35]

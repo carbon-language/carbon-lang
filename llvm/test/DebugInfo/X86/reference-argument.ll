@@ -21,7 +21,7 @@ entry:
   %this.addr = alloca %class.A*, align 8
   store %class.A* %this, %class.A** %this.addr, align 8
   call void @llvm.dbg.declare(metadata %class.A** %this.addr, metadata !59, metadata !{!"0x102"}), !dbg !61
-  call void @llvm.dbg.declare(metadata %class.SVal* %v, metadata !62, metadata !{!"0x102"}), !dbg !61
+  call void @llvm.dbg.declare(metadata %class.SVal* %v, metadata !62, metadata !{!"0x102\006"}), !dbg !61
   %this1 = load %class.A** %this.addr
   call void @_Z3barR4SVal(%class.SVal* %v), !dbg !61
   ret void, !dbg !61
@@ -94,7 +94,7 @@ declare void @_ZN4SValD2Ev(%class.SVal* %this)
 !59 = !{!"0x101\00this\0016777238\001088", !35, !5, !60} ; [ DW_TAG_arg_variable ] [this] [line 22]
 !60 = !{!"0xf\00\000\0064\0064\000\000", null, null, !39} ; [ DW_TAG_pointer_type ] [line 0, size 64, align 64, offset 0] [from A]
 !61 = !MDLocation(line: 22, scope: !35)
-!62 = !{!"0x101\00v\0033554454\008192", !35, !5, !9} ; [ DW_TAG_arg_variable ] [v] [line 22]
+!62 = !{!"0x101\00v\0033554454\000", !35, !5, !9} ; [ DW_TAG_arg_variable ] [v] [line 22]
 !63 = !{!"0x101\00this\0016777230\001088", !33, !5, !64} ; [ DW_TAG_arg_variable ] [this] [line 14]
 !64 = !{!"0xf\00\000\0064\0064\000\000", null, null, !9} ; [ DW_TAG_pointer_type ] [line 0, size 64, align 64, offset 0] [from SVal]
 !65 = !MDLocation(line: 14, scope: !33)

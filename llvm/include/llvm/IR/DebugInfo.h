@@ -138,9 +138,8 @@ public:
     FlagObjectPointer     = 1 << 10,
     FlagVector            = 1 << 11,
     FlagStaticMember      = 1 << 12,
-    FlagIndirectVariable  = 1 << 13,
-    FlagLValueReference   = 1 << 14,
-    FlagRValueReference   = 1 << 15
+    FlagLValueReference   = 1 << 13,
+    FlagRValueReference   = 1 << 14
   };
 
 protected:
@@ -814,11 +813,6 @@ public:
 
   bool isObjectPointer() const {
     return (getHeaderFieldAs<unsigned>(3) & FlagObjectPointer) != 0;
-  }
-
-  /// \brief Return true if this variable is represented as a pointer.
-  bool isIndirect() const {
-    return (getHeaderFieldAs<unsigned>(3) & FlagIndirectVariable) != 0;
   }
 
   /// \brief If this variable is inlined then return inline location.

@@ -737,27 +737,22 @@ void DwarfCompileUnit::addVariableAddress(const DbgVariable &DV, DIE &Die,
   else if (DV.isBlockByrefVariable())
     addBlockByrefAddress(DV, Die, dwarf::DW_AT_location, Location);
   else
-    addAddress(Die, dwarf::DW_AT_location, Location,
-               DV.getVariable().isIndirect());
+    addAddress(Die, dwarf::DW_AT_location, Location);
 }
 
 /// Add an address attribute to a die based on the location provided.
 void DwarfCompileUnit::addAddress(DIE &Die, dwarf::Attribute Attribute,
-                                  const MachineLocation &Location,
-                                  bool Indirect) {
+                                  const MachineLocation &Location) {
   DIELoc *Loc = new (DIEValueAllocator) DIELoc();
 
   bool validReg;
-  if (Location.isReg() && !Indirect)
+  if (Location.isReg())
     validReg = addRegisterOpPiece(*Loc, Location.getReg());
   else
     validReg = addRegisterOffset(*Loc, Location.getReg(), Location.getOffset());
 
   if (!validReg)
     return;
-
-  if (!Location.isReg() && Indirect)
-    addUInt(*Loc, dwarf::DW_FORM_data1, dwarf::DW_OP_deref);
 
   // Now attach the location information to the DIE.
   addBlock(Die, Attribute, Loc);
@@ -775,16 +770,10 @@ void DwarfCompileUnit::addComplexAddress(const DbgVariable &DV, DIE &Die,
   DIExpression Expr = DV.getExpression();
   if (Location.getOffset()) {
     if (DwarfExpr.AddMachineRegIndirect(Location.getReg(),
-                                        Location.getOffset())) {
+                                        Location.getOffset()))
       DwarfExpr.AddExpression(Expr);
-      assert(!DV.getVariable().isIndirect()
-             && "double indirection not handled");
-    }
-  } else {
-    if (DwarfExpr.AddMachineRegExpression(Expr, Location.getReg()))
-      if (DV.getVariable().isIndirect())
-        DwarfExpr.EmitOp(dwarf::DW_OP_deref);
-  }
+  } else
+    DwarfExpr.AddMachineRegExpression(Expr, Location.getReg());
 
   // Now attach the location information to the DIE.
   addBlock(Die, Attribute, Loc);

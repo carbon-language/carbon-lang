@@ -33,7 +33,7 @@ entry:
   %2 = call i8* @llvm.stacksave(), !dbg !17
   store i8* %2, i8** %saved_stack, !dbg !17
   %vla = alloca i32, i64 %1, align 16, !dbg !17
-  call void @llvm.dbg.declare(metadata i32* %vla, metadata !18, metadata !{!"0x102"}), !dbg !17
+  call void @llvm.dbg.declare(metadata i32* %vla, metadata !18, metadata !{!"0x102\006"}), !dbg !17
   %arrayidx = getelementptr inbounds i32* %vla, i64 0, !dbg !22
   store i32 42, i32* %arrayidx, align 4, !dbg !22
   %3 = load i32* %n.addr, align 4, !dbg !23
@@ -93,7 +93,7 @@ entry:
 !15 = !{!"0x101\00n\0016777217\000", !4, !5, !8} ; [ DW_TAG_arg_variable ] [n] [line 1]
 !16 = !MDLocation(line: 1, scope: !4)
 !17 = !MDLocation(line: 2, scope: !4)
-!18 = !{!"0x100\00a\002\008192", !4, !5, !19} ; [ DW_TAG_auto_variable ] [a] [line 2]
+!18 = !{!"0x100\00a\002\000", !4, !5, !19} ; [ DW_TAG_auto_variable ] [a] [line 2]
 !19 = !{!"0x1\00\000\000\0032\000\000", null, null, !8, !20, i32 0, null, null, null} ; [ DW_TAG_array_type ] [line 0, size 0, align 32, offset 0] [from int]
 !20 = !{!21}
 !21 = !{!"0x21\000\00-1"}       ; [ DW_TAG_subrange_type ] [unbounded]

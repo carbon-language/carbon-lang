@@ -92,7 +92,7 @@ declare void @llvm.stackrestore(i8*) nounwind
 !11 = !MDLocation(line: 1, column: 26, scope: !5)
 !12 = !MDLocation(line: 3, column: 13, scope: !13)
 !13 = !{!"0xb\002\001\000", !28, !5} ; [ DW_TAG_lexical_block ]
-!14 = !{!"0x100\00vla\003\008192", !13, !6, !15} ; [ DW_TAG_auto_variable ]
+!14 = !{!"0x100\00vla\003\000", !13, !6, !15} ; [ DW_TAG_auto_variable ]
 !15 = !{!"0x1\00\000\000\0032\000\000", null, null, !9, !16, i32 0, null, null, null} ; [ DW_TAG_array_type ] [line 0, size 0, align 32, offset 0] [from int]
 !16 = !{!17}
 !17 = !{!"0x21\000\00-1"}        ; [ DW_TAG_subrange_type ]
@@ -108,4 +108,4 @@ declare void @llvm.stackrestore(i8*) nounwind
 !27 = !MDLocation(line: 8, column: 1, scope: !13)
 !28 = !{!"bar.c", !"/Users/echristo/tmp"}
 !29 = !{i32 1, !"Debug Info Version", i32 2}
-!30 = !{!"0x102\006"} ; [ DW_TAG_expression ] [DW_OP_deref]
+!30 = !{!"0x102\006\006"} ; [ DW_TAG_expression ] [DW_OP_deref]

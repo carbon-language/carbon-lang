@@ -43,7 +43,7 @@ entry:
   call void @llvm.dbg.declare(metadata i64** %offset.addr, metadata !45, metadata !{!"0x102"}), !dbg !46
   store i64* %limit, i64** %limit.addr, align 8
   call void @llvm.dbg.declare(metadata i64** %limit.addr, metadata !47, metadata !{!"0x102"}), !dbg !46
-  call void @llvm.dbg.declare(metadata %"class.std::basic_string"* %range, metadata !48, metadata !{!"0x102"}), !dbg !49
+  call void @llvm.dbg.declare(metadata %"class.std::basic_string"* %range, metadata !48, metadata !{!"0x102\006"}), !dbg !49
   %call = call i32 @_ZNKSs7compareEmmPKc(%"class.std::basic_string"* %range, i64 0, i64 6, i8* getelementptr inbounds ([7 x i8]* @.str, i32 0, i32 0)), !dbg !50
   %cmp = icmp ne i32 %call, 0, !dbg !50
   br i1 %cmp, label %if.then, label %lor.lhs.false, !dbg !50
@@ -132,7 +132,7 @@ attributes #2 = { "less-precise-fpmad"="false" "no-frame-pointer-elim"="true" "n
 !45 = !{!"0x101\00offset\0016777219\000", !13, !14, !17} ; [ DW_TAG_arg_variable ] [offset] [line 3]
 !46 = !MDLocation(line: 3, scope: !13)
 !47 = !{!"0x101\00limit\0033554435\000", !13, !14, !17} ; [ DW_TAG_arg_variable ] [limit] [line 3]
-!48 = !{!"0x101\00range\0050331652\008192", !13, !14, !19} ; [ DW_TAG_arg_variable ] [range] [line 4]
+!48 = !{!"0x101\00range\0050331652\000", !13, !14, !19} ; [ DW_TAG_arg_variable ] [range] [line 4]
 !49 = !MDLocation(line: 4, scope: !13)
 !50 = !MDLocation(line: 5, scope: !51)
 !51 = !{!"0xb\005\000\000", !1, !13} ; [ DW_TAG_lexical_block ] [/llvm_cmake_gcc/pr19307.cc]

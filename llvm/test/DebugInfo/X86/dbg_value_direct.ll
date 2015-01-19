@@ -70,7 +70,7 @@ entry:
 
 ; <label>:28                                      ; preds = %22, %entry
   store i32 %0, i32* %3, align 4
-  call void @llvm.dbg.declare(metadata %struct.A* %agg.result, metadata !24, metadata !{!"0x102"}), !dbg !25
+  call void @llvm.dbg.declare(metadata %struct.A* %agg.result, metadata !24, metadata !{!"0x102\006"}), !dbg !25
   call void @_ZN1AC1Ev(%struct.A* %agg.result), !dbg !25
   store i64 1172321806, i64* %4, !dbg !26
   %29 = inttoptr i64 %10 to i32*, !dbg !26
@@ -171,7 +171,7 @@ attributes #2 = { "less-precise-fpmad"="false" "no-frame-pointer-elim"="true" "n
 !21 = !{!"0x24\00int\000\0032\0032\000\000\005", null, null} ; [ DW_TAG_base_type ] [int] [line 0, size 32, align 32, offset 0, enc DW_ATE_signed]
 !22 = !{i32 2, !"Dwarf Version", i32 3}
 !23 = !{!"0x101\00\0016777222\000", !4, !5, !21} ; [ DW_TAG_arg_variable ] [line 6]
-!24 = !{!"0x100\00a\007\008192", !4, !5, !8} ; [ DW_TAG_auto_variable ] [a] [line 7]
+!24 = !{!"0x100\00a\007\000", !4, !5, !8} ; [ DW_TAG_auto_variable ] [a] [line 7]
 !25 = !MDLocation(line: 7, scope: !4)
 !26 = !MDLocation(line: 8, scope: !4)
 !27 = !{i32 1, !"Debug Info Version", i32 2}

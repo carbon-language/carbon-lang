@@ -98,7 +98,7 @@ entry:
   call void @llvm.dbg.declare(metadata %class.B** %this.addr, metadata !89, metadata !{!"0x102"}), !dbg !91
   %this1 = load %class.B** %this.addr
   store i1 false, i1* %nrvo, !dbg !92
-  call void @llvm.dbg.declare(metadata %class.A* %agg.result, metadata !93, metadata !{!"0x102"}), !dbg !92
+  call void @llvm.dbg.declare(metadata %class.A* %agg.result, metadata !93, metadata !{!"0x102\006"}), !dbg !92
   call void @_ZN1AC1Ei(%class.A* %agg.result, i32 12), !dbg !92
   store i1 true, i1* %nrvo, !dbg !94
   store i32 1, i32* %cleanup.dest.slot
@@ -349,7 +349,7 @@ attributes #7 = { builtin nounwind }
 !90 = !{!"0xf\00\000\0064\0064\000\000", null, null, !"_ZTS1B"} ; [ DW_TAG_pointer_type ] [line 0, size 64, align 64, offset 0] [from _ZTS1B]
 !91 = !MDLocation(line: 0, scope: !53)
 !92 = !MDLocation(line: 49, scope: !53)
-!93 = !{!"0x100\00a\0049\008192", !53, !7, !4} ; [ DW_TAG_auto_variable ] [a] [line 49]
+!93 = !{!"0x100\00a\0049\000", !53, !7, !4} ; [ DW_TAG_auto_variable ] [a] [line 49]
 !94 = !MDLocation(line: 50, scope: !53)
 !95 = !MDLocation(line: 51, scope: !53)
 !96 = !MDLocation(line: 51, scope: !97)

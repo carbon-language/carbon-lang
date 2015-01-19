@@ -42,7 +42,7 @@
 ; Function Attrs: uwtable
 define void @_ZN7pr147634funcENS_3fooE(%"struct.pr14763::foo"* noalias sret %agg.result, %"struct.pr14763::foo"* %f) #0 {
 entry:
-  call void @llvm.dbg.declare(metadata %"struct.pr14763::foo"* %f, metadata !22, metadata !{!"0x102"}), !dbg !24
+  call void @llvm.dbg.declare(metadata %"struct.pr14763::foo"* %f, metadata !22, metadata !{!"0x102\006"}), !dbg !24
   call void @_ZN7pr147633fooC1ERKS0_(%"struct.pr14763::foo"* %agg.result, %"struct.pr14763::foo"* %f), !dbg !25
   ret void, !dbg !25
 }
@@ -59,7 +59,7 @@ entry:
   %frombool = zext i1 %b to i8
   store i8 %frombool, i8* %b.addr, align 1
   call void @llvm.dbg.declare(metadata i8* %b.addr, metadata !26, metadata !{!"0x102"}), !dbg !27
-  call void @llvm.dbg.declare(metadata %"struct.pr14763::foo"* %g, metadata !28, metadata !{!"0x102"}), !dbg !27
+  call void @llvm.dbg.declare(metadata %"struct.pr14763::foo"* %g, metadata !28, metadata !{!"0x102\006"}), !dbg !27
   %0 = load i8* %b.addr, align 1, !dbg !29
   %tobool = trunc i8 %0 to i1, !dbg !29
   br i1 %tobool, label %if.then, label %if.end, !dbg !29
@@ -104,13 +104,13 @@ attributes #2 = { "less-precise-fpmad"="false" "no-frame-pointer-elim"="true" "n
 !19 = !{null, !20, !8}
 !20 = !{!"0x24\00bool\000\008\008\000\000\002", null, null} ; [ DW_TAG_base_type ] [bool] [line 0, size 8, align 8, offset 0, enc DW_ATE_boolean]
 !21 = !{i32 2, !"Dwarf Version", i32 3}
-!22 = !{!"0x101\00f\0016777222\008192", !4, !23, !8} ; [ DW_TAG_arg_variable ] [f] [line 6]
+!22 = !{!"0x101\00f\0016777222\000", !4, !23, !8} ; [ DW_TAG_arg_variable ] [f] [line 6]
 !23 = !{!"0x29", !1}         ; [ DW_TAG_file_type ] [/tmp/pass.cpp]
 !24 = !MDLocation(line: 6, scope: !4)
 !25 = !MDLocation(line: 7, scope: !4)
 !26 = !{!"0x101\00b\0016777228\000", !17, !23, !20} ; [ DW_TAG_arg_variable ] [b] [line 12]
 !27 = !MDLocation(line: 12, scope: !17)
-!28 = !{!"0x101\00g\0033554444\008192", !17, !23, !8} ; [ DW_TAG_arg_variable ] [g] [line 12]
+!28 = !{!"0x101\00g\0033554444\000", !17, !23, !8} ; [ DW_TAG_arg_variable ] [g] [line 12]
 !29 = !MDLocation(line: 13, scope: !30)
 !30 = !{!"0xb\0013\000\000", !1, !17} ; [ DW_TAG_lexical_block ] [/tmp/pass.cpp]
 !31 = !MDLocation(line: 14, scope: !30)

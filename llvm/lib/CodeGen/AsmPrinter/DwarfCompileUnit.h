@@ -213,7 +213,7 @@ public:
                           MachineLocation Location);
   /// Add an address attribute to a die based on the location provided.
   void addAddress(DIE &Die, dwarf::Attribute Attribute,
-                  const MachineLocation &Location, bool Indirect = false);
+                  const MachineLocation &Location);
 
   /// Start with the address based on the location provided, and generate the
   /// DWARF information necessary to find the actual variable (navigating the

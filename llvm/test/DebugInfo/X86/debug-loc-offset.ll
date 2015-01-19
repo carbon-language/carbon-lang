@@ -76,7 +76,7 @@ declare void @llvm.dbg.declare(metadata, metadata, metadata) #1
 define void @_Z3baz1A(%struct.A* %a) #2 {
 entry:
   %z = alloca i32, align 4
-  call void @llvm.dbg.declare(metadata %struct.A* %a, metadata !24, metadata !{!"0x102"}), !dbg !25
+  call void @llvm.dbg.declare(metadata %struct.A* %a, metadata !24, metadata !{!"0x102\006"}), !dbg !25
   call void @llvm.dbg.declare(metadata i32* %z, metadata !26, metadata !{!"0x102"}), !dbg !27
   store i32 2, i32* %z, align 4, !dbg !27
   %var = getelementptr inbounds %struct.A* %a, i32 0, i32 1, !dbg !28
@@ -140,7 +140,7 @@ attributes #2 = { "less-precise-fpmad"="false" "no-frame-pointer-elim"="true" "n
 !21 = !{!"0x101\00b\0016777217\000", !4, !5, !8} ; [ DW_TAG_arg_variable ] [b] [line 1]
 !22 = !MDLocation(line: 1, scope: !4)
 !23 = !MDLocation(line: 2, scope: !4)
-!24 = !{!"0x101\00a\0016777222\008192", !14, !15, !"_ZTS1A"} ; [ DW_TAG_arg_variable ] [a] [line 6]
+!24 = !{!"0x101\00a\0016777222\000", !14, !15, !"_ZTS1A"} ; [ DW_TAG_arg_variable ] [a] [line 6]
 !25 = !MDLocation(line: 6, scope: !14)
 !26 = !{!"0x100\00z\007\000", !14, !15, !8} ; [ DW_TAG_auto_variable ] [z] [line 7]
 !27 = !MDLocation(line: 7, scope: !14)
