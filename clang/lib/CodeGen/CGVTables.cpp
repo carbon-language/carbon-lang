@@ -377,7 +377,10 @@ void CodeGenFunction::GenerateThunk(llvm::Function *Fn,
 
   // Set the right linkage.
   CGM.setFunctionLinkage(GD, Fn);
-  
+
+  if (CGM.supportsCOMDAT() && Fn->isWeakForLinker())
+    Fn->setComdat(CGM.getModule().getOrInsertComdat(Fn->getName()));
+
   // Set the right visibility.
   const CXXMethodDecl *MD = cast<CXXMethodDecl>(GD.getDecl());
   setThunkVisibility(CGM, MD, Thunk, Fn);

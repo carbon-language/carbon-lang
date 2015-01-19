@@ -33,10 +33,10 @@ struct C : A, B {
   virtual ~C();
   // MANGLING-DAG: declare {{.*}} @"\01??1C@@UAE@XZ"({{.*}})
   // MANGLING-DAG: define {{.*}} @"\01??_GC@@UAEPAXI@Z"({{.*}})
-  // MANGLING-DAG: define {{.*}} @"\01??_EC@@W3AEPAXI@Z"({{.*}})
+  // MANGLING-DAG: define {{.*}} @"\01??_EC@@W3AEPAXI@Z"({{.*}}) {{.*}} comdat
   // MANGLING-X64-DAG: declare {{.*}} @"\01??1C@@UEAA@XZ"({{.*}})
   // MANGLING-X64-DAG: define {{.*}} @"\01??_GC@@UEAAPEAXI@Z"({{.*}})
-  // MANGLING-X64-DAG: define {{.*}} @"\01??_EC@@W7EAAPEAXI@Z"({{.*}})
+  // MANGLING-X64-DAG: define {{.*}} @"\01??_EC@@W7EAAPEAXI@Z"({{.*}}) {{.*}} comdat
 
   // Overrides public_f() of two subobjects with distinct vfptrs, thus needs a thunk.
   virtual void public_f();
@@ -61,7 +61,7 @@ struct C : A, B {
 
 C::C() {}  // Emits vftable and forces thunk generation.
 
-// CODEGEN-LABEL: define linkonce_odr x86_thiscallcc i8* @"\01??_EC@@W3AEPAXI@Z"(%struct.C* %this, i32 %should_call_delete)
+// CODEGEN-LABEL: define linkonce_odr x86_thiscallcc i8* @"\01??_EC@@W3AEPAXI@Z"(%struct.C* %this, i32 %should_call_delete) {{.*}} comdat
 // CODEGEN:   getelementptr i8* {{.*}}, i32 -4
 // FIXME: should actually call _EC, not _GC.
 // CODEGEN:   call x86_thiscallcc i8* @"\01??_GC@@UAEPAXI@Z"
