@@ -605,26 +605,35 @@ void UniquableMDNode::eraseFromStore() {
 }
 
 MDTuple *MDTuple::getImpl(LLVMContext &Context, ArrayRef<Metadata *> MDs,
-                          bool ShouldCreate) {
-  MDTupleInfo::KeyTy Key(MDs);
+                          StorageType Storage, bool ShouldCreate) {
+  unsigned Hash = 0;
+  if (Storage == Uniqued) {
+    MDTupleInfo::KeyTy Key(MDs);
+    Hash = Key.Hash;
 
-  auto &Store = Context.pImpl->MDTuples;
-  auto I = Store.find_as(Key);
-  if (I != Store.end())
-    return *I;
-  if (!ShouldCreate)
-    return nullptr;
+    auto &Store = Context.pImpl->MDTuples;
+    auto I = Store.find_as(Key);
+    if (I != Store.end())
+      return *I;
+    if (!ShouldCreate)
+      return nullptr;
+  } else {
+    assert(ShouldCreate && "Expected non-uniqued nodes to always be created");
+  }
 
-  // Coallocate space for the node and Operands together, then placement new.
-  auto *N = new (MDs.size()) MDTuple(Context, Uniqued, MDs);
-  N->setHash(Key.Hash);
-  Store.insert(N);
-  return N;
-}
+  auto *N = new (MDs.size()) MDTuple(Context, Storage, Hash, MDs);
 
-MDTuple *MDTuple::getDistinct(LLVMContext &Context, ArrayRef<Metadata *> MDs) {
-  auto *N = new (MDs.size()) MDTuple(Context, Distinct, MDs);
-  N->storeDistinctInContext();
+  switch (Storage) {
+  case Uniqued:
+    Context.pImpl->MDTuples.insert(N);
+    break;
+  case Distinct:
+    N->storeDistinctInContext();
+    break;
+  case Temporary:
+    llvm_unreachable("Unexpected temporary node");
+  }
+
   return N;
 }
 
@@ -657,17 +666,6 @@ MDLocation::MDLocation(LLVMContext &C, StorageType Storage, unsigned Line,
   SubclassData16 = Column;
 }
 
-MDLocation *MDLocation::constructHelper(LLVMContext &Context,
-                                        StorageType Storage, unsigned Line,
-                                        unsigned Column, Metadata *Scope,
-                                        Metadata *InlinedAt) {
-  SmallVector<Metadata *, 2> Ops;
-  Ops.push_back(Scope);
-  if (InlinedAt)
-    Ops.push_back(InlinedAt);
-  return new (Ops.size()) MDLocation(Context, Storage, Line, Column, Ops);
-}
-
 static void adjustLine(unsigned &Line) {
   // Set to unknown on overflow.  Still use 24 bits for now.
   if (Line >= (1u << 24))
@@ -682,34 +680,42 @@ static void adjustColumn(unsigned &Column) {
 
 MDLocation *MDLocation::getImpl(LLVMContext &Context, unsigned Line,
                                 unsigned Column, Metadata *Scope,
-                                Metadata *InlinedAt, bool ShouldCreate) {
+                                Metadata *InlinedAt, StorageType Storage,
+                                bool ShouldCreate) {
   // Fixup line/column.
   adjustLine(Line);
   adjustColumn(Column);
 
-  MDLocationInfo::KeyTy Key(Line, Column, Scope, InlinedAt);
+  if (Storage == Uniqued) {
+    MDLocationInfo::KeyTy Key(Line, Column, Scope, InlinedAt);
 
-  auto &Store = Context.pImpl->MDLocations;
-  auto I = Store.find_as(Key);
-  if (I != Store.end())
-    return *I;
-  if (!ShouldCreate)
-    return nullptr;
+    auto &Store = Context.pImpl->MDLocations;
+    auto I = Store.find_as(Key);
+    if (I != Store.end())
+      return *I;
+    if (!ShouldCreate)
+      return nullptr;
+  } else {
+    assert(ShouldCreate && "Expected non-uniqued nodes to always be created");
+  }
 
-  auto *N = constructHelper(Context, Uniqued, Line, Column, Scope, InlinedAt);
-  Store.insert(N);
-  return N;
-}
+  SmallVector<Metadata *, 2> Ops;
+  Ops.push_back(Scope);
+  if (InlinedAt)
+    Ops.push_back(InlinedAt);
+  auto *N = new (Ops.size()) MDLocation(Context, Storage, Line, Column, Ops);
 
-MDLocation *MDLocation::getDistinct(LLVMContext &Context, unsigned Line,
-                                    unsigned Column, Metadata *Scope,
-                                    Metadata *InlinedAt) {
-  // Fixup line/column.
-  adjustLine(Line);
-  adjustColumn(Column);
+  switch (Storage) {
+  case Uniqued:
+    Context.pImpl->MDLocations.insert(N);
+    break;
+  case Distinct:
+    N->storeDistinctInContext();
+    break;
+  case Temporary:
+    llvm_unreachable("Unexpected temporary node");
+  }
 
-  auto *N = constructHelper(Context, Distinct, Line, Column, Scope, InlinedAt);
-  N->storeDistinctInContext();
   return N;
 }
 

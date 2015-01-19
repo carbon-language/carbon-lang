@@ -855,31 +855,36 @@ class MDTuple : public UniquableMDNode {
   friend class LLVMContextImpl;
   friend class UniquableMDNode;
 
-  MDTuple(LLVMContext &C, StorageType Storage, ArrayRef<Metadata *> Vals)
-      : UniquableMDNode(C, MDTupleKind, Storage, Vals) {}
+  MDTuple(LLVMContext &C, StorageType Storage, unsigned Hash,
+          ArrayRef<Metadata *> Vals)
+      : UniquableMDNode(C, MDTupleKind, Storage, Vals) {
+    setHash(Hash);
+  }
   ~MDTuple() { dropAllReferences(); }
 
   void setHash(unsigned Hash) { MDNodeSubclassData = Hash; }
   void recalculateHash();
 
   static MDTuple *getImpl(LLVMContext &Context, ArrayRef<Metadata *> MDs,
-                          bool ShouldCreate);
+                          StorageType Storage, bool ShouldCreate = true);
 
 public:
   /// \brief Get the hash, if any.
   unsigned getHash() const { return MDNodeSubclassData; }
 
   static MDTuple *get(LLVMContext &Context, ArrayRef<Metadata *> MDs) {
-    return getImpl(Context, MDs, /* ShouldCreate */ true);
+    return getImpl(Context, MDs, Uniqued);
   }
   static MDTuple *getIfExists(LLVMContext &Context, ArrayRef<Metadata *> MDs) {
-    return getImpl(Context, MDs, /* ShouldCreate */ false);
+    return getImpl(Context, MDs, Uniqued, /* ShouldCreate */ false);
   }
 
   /// \brief Return a distinct node.
   ///
   /// Return a distinct node -- i.e., a node that is not uniqued.
-  static MDTuple *getDistinct(LLVMContext &Context, ArrayRef<Metadata *> MDs);
+  static MDTuple *getDistinct(LLVMContext &Context, ArrayRef<Metadata *> MDs) {
+    return getImpl(Context, MDs, Distinct);
+  }
 
   static bool classof(const Metadata *MD) {
     return MD->getMetadataID() == MDTupleKind;
@@ -911,13 +916,10 @@ class MDLocation : public UniquableMDNode {
              unsigned Column, ArrayRef<Metadata *> MDs);
   ~MDLocation() { dropAllReferences(); }
 
-  static MDLocation *constructHelper(LLVMContext &Context, StorageType Storage,
-                                     unsigned Line, unsigned Column,
-                                     Metadata *Scope, Metadata *InlinedAt);
-
   static MDLocation *getImpl(LLVMContext &Context, unsigned Line,
                              unsigned Column, Metadata *Scope,
-                             Metadata *InlinedAt, bool ShouldCreate);
+                             Metadata *InlinedAt, StorageType Storage,
+                             bool ShouldCreate = true);
 
   // Disallow replacing operands.
   void replaceOperandWith(unsigned I, Metadata *New) LLVM_DELETED_FUNCTION;
@@ -925,18 +927,19 @@ class MDLocation : public UniquableMDNode {
 public:
   static MDLocation *get(LLVMContext &Context, unsigned Line, unsigned Column,
                          Metadata *Scope, Metadata *InlinedAt = nullptr) {
-    return getImpl(Context, Line, Column, Scope, InlinedAt,
-                   /* ShouldCreate */ true);
+    return getImpl(Context, Line, Column, Scope, InlinedAt, Uniqued);
   }
   static MDLocation *getIfExists(LLVMContext &Context, unsigned Line,
                                  unsigned Column, Metadata *Scope,
                                  Metadata *InlinedAt = nullptr) {
-    return getImpl(Context, Line, Column, Scope, InlinedAt,
+    return getImpl(Context, Line, Column, Scope, InlinedAt, Uniqued,
                    /* ShouldCreate */ false);
   }
   static MDLocation *getDistinct(LLVMContext &Context, unsigned Line,
                                  unsigned Column, Metadata *Scope,
-                                 Metadata *InlinedAt = nullptr);
+                                 Metadata *InlinedAt = nullptr) {
+    return getImpl(Context, Line, Column, Scope, InlinedAt, Distinct);
+  }
 
   unsigned getLine() const { return MDNodeSubclassData; }
   unsigned getColumn() const { return SubclassData16; }
