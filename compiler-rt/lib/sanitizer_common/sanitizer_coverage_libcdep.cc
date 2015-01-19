@@ -156,7 +156,8 @@ void CoverageData::Init() {
 }
 
 void CoverageData::Enable() {
-  CHECK_EQ(pc_array, nullptr);
+  if (pc_array)
+    return;
   pc_array = reinterpret_cast<uptr *>(
       MmapNoReserveOrDie(sizeof(uptr) * kPcArrayMaxSize, "CovInit"));
   atomic_store(&pc_array_index, 0, memory_order_relaxed);
@@ -182,6 +183,7 @@ void CoverageData::Enable() {
 }
 
 void CoverageData::InitializeGuardArray(s32 *guards) {
+  Enable();  // Make sure coverage is enabled at this point.
   s32 n = guards[0];
   for (s32 j = 1; j <= n; j++) {
     uptr idx = atomic_fetch_add(&pc_array_index, 1, memory_order_relaxed);
