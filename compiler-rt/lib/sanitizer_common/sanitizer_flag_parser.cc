@@ -63,10 +63,7 @@ void FlagParser::parse_flag() {
   }
 
   bool res = run_handler(name, value);
-  if (!res) {
-    Printf("Flag parsing failed.");
-    Die();
-  }
+  if (!res) fatal_error("Flag parsing failed.");
   InternalFree(name);
   InternalFree(value);
 }
@@ -108,7 +105,7 @@ bool FlagParser::run_handler(const char *name, const char *value) {
 
 void FlagParser::RegisterHandler(const char *name, FlagHandlerBase *handler,
                                  const char *desc) {
-  CHECK(n_flags_ < kMaxFlags);
+  CHECK_LT(n_flags_, kMaxFlags);
   flags_[n_flags_].name = name;
   flags_[n_flags_].desc = desc;
   flags_[n_flags_].handler = handler;
