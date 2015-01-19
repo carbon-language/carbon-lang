@@ -13,6 +13,14 @@
 // March 4, 2008
 //===----------------------------------------------------------------------===//
 
+class T_RI_pat <InstHexagon MI, Intrinsic IntID, PatLeaf ImmPred = PatLeaf<(i32 imm)>>
+  : Pat<(IntID I32:$Rs, ImmPred:$It),
+        (MI I32:$Rs, ImmPred:$It)>;
+
+class T_IR_pat <InstHexagon MI, Intrinsic IntID, PatFrag ImmPred = PatLeaf<(i32 imm)>>
+  : Pat<(IntID ImmPred:$Is, I32:$Rt),
+        (MI ImmPred:$Is, I32:$Rt)>;
+
 class T_RR_pat <InstHexagon MI, Intrinsic IntID>
   : Pat <(IntID I32:$Rs, I32:$Rt),
          (MI I32:$Rs, I32:$Rt)>;
@@ -214,6 +222,20 @@ def : T_PRR_pat <M2_mpyud_nac_hh_s1, int_hexagon_M2_mpyud_nac_hh_s1>;
 def : T_PRR_pat <M2_mpyud_nac_hl_s1, int_hexagon_M2_mpyud_nac_hl_s1>;
 def : T_PRR_pat <M2_mpyud_nac_lh_s1, int_hexagon_M2_mpyud_nac_lh_s1>;
 def : T_PRR_pat <M2_mpyud_nac_ll_s1, int_hexagon_M2_mpyud_nac_ll_s1>;
+
+/********************************************************************
+*            ALU32/ALU                                              *
+*********************************************************************/
+def : T_RR_pat<A2_add,      int_hexagon_A2_add>;
+def : T_RI_pat<ADD_ri,      int_hexagon_A2_addi>;
+def : T_RR_pat<A2_sub,      int_hexagon_A2_sub>;
+def : T_IR_pat<SUB_ri,      int_hexagon_A2_subri>;
+def : T_RR_pat<A2_and,      int_hexagon_A2_and>;
+def : T_RI_pat<AND_ri,      int_hexagon_A2_andir>;
+def : T_RR_pat<A2_or,       int_hexagon_A2_or>;
+def : T_RI_pat<OR_ri,       int_hexagon_A2_orir>;
+def : T_RR_pat<A2_xor,      int_hexagon_A2_xor>;
+def : T_RR_pat<A2_combinew, int_hexagon_A2_combinew>;
 
 //
 // ALU 32 types.
@@ -2045,11 +2067,6 @@ class si_MInst_didi<string opc, Intrinsic IntID>
              !strconcat("$dst = ", !strconcat(opc , "($src1, $src2)")),
              [(set IntRegs:$dst, (IntID DoubleRegs:$src1, DoubleRegs:$src2))]>;
 
-
-class T_RI_pat <InstHexagon MI, Intrinsic IntID>
-  : Pat<(IntID (i32 IntRegs:$Rs), imm:$It),
-        (MI IntRegs:$Rs, imm:$It)>;
-
 //
 // LDInst classes.
 //
@@ -2065,35 +2082,10 @@ class di_LDInstPI_diu4<string opc, Intrinsic IntID>
 *            ALU32/ALU                                              *
 *********************************************************************/
 
-// ALU32 / ALU / Add.
-def HEXAGON_A2_add:
-  si_ALU32_sisi                   <"add",      int_hexagon_A2_add>;
-def HEXAGON_A2_addi:
-  si_ALU32_sis16                  <"add",      int_hexagon_A2_addi>;
-
-// ALU32 / ALU / Logical operations.
-def HEXAGON_A2_and:
-  si_ALU32_sisi                   <"and",      int_hexagon_A2_and>;
-def HEXAGON_A2_andir:
-  si_ALU32_sis10                  <"and",      int_hexagon_A2_andir>;
-def HEXAGON_A2_not:
-  si_ALU32_si                     <"not",      int_hexagon_A2_not>;
-def HEXAGON_A2_or:
-  si_ALU32_sisi                   <"or",       int_hexagon_A2_or>;
-def HEXAGON_A2_orir:
-  si_ALU32_sis10                  <"or",       int_hexagon_A2_orir>;
-def HEXAGON_A2_xor:
-  si_ALU32_sisi                   <"xor",      int_hexagon_A2_xor>;
 
 // ALU32 / ALU / Negate.
 def HEXAGON_A2_neg:
   si_ALU32_si                     <"neg",      int_hexagon_A2_neg>;
-
-// ALU32 / ALU / Subtract.
-def HEXAGON_A2_sub:
-  si_ALU32_sisi                   <"sub",      int_hexagon_A2_sub>;
-def HEXAGON_A2_subri:
-  si_ALU32_s10si                  <"sub",      int_hexagon_A2_subri>;
 
 // ALU32 / ALU / Transfer Immediate.
 def HEXAGON_A2_tfril:
