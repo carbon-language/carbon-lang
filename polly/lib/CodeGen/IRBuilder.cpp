@@ -35,9 +35,9 @@ static MDNode *getID(LLVMContext &Ctx, Metadata *arg0 = nullptr,
   MDNode *ID;
   SmallVector<Metadata *, 3> Args;
   // Use a temporary node to safely create a unique pointer for the first arg.
-  MDNode *TempNode = MDNode::getTemporary(Ctx, None);
+  auto TempNode = MDNode::getTemporary(Ctx, None);
   // Reserve operand 0 for loop id self reference.
-  Args.push_back(TempNode);
+  Args.push_back(TempNode.get());
 
   if (arg0)
     Args.push_back(arg0);
@@ -46,7 +46,6 @@ static MDNode *getID(LLVMContext &Ctx, Metadata *arg0 = nullptr,
 
   ID = MDNode::get(Ctx, Args);
   ID->replaceOperandWith(0, ID);
-  MDNode::deleteTemporary(TempNode);
   return ID;
 }
 
