@@ -401,6 +401,10 @@ MDNode::MDNode(LLVMContext &Context, unsigned ID, StorageType Storage,
       MDNodeSubclassData(0) {
   for (unsigned I = 0, E = MDs.size(); I != E; ++I)
     setOperand(I, MDs[I]);
+
+  if (Storage == Temporary)
+    this->Context.makeReplaceable(
+        make_unique<ReplaceableMetadataImpl>(Context));
 }
 
 bool MDNode::isResolved() const {
@@ -429,7 +433,7 @@ UniquableMDNode::UniquableMDNode(LLVMContext &C, unsigned ID,
   if (!NumUnresolved)
     return;
 
-  ReplaceableUses.reset(new ReplaceableMetadataImpl);
+  this->Context.makeReplaceable(make_unique<ReplaceableMetadataImpl>(C));
   SubclassData32 = NumUnresolved;
 }
 
@@ -437,7 +441,7 @@ void UniquableMDNode::resolve() {
   assert(!isResolved() && "Expected this to be unresolved");
 
   // Move the map, so that this immediately looks resolved.
-  auto Uses = std::move(ReplaceableUses);
+  auto Uses = Context.takeReplaceableUses();
   SubclassData32 = 0;
   assert(isResolved() && "Expected this to be resolved");
 
@@ -499,8 +503,8 @@ void MDNode::dropAllReferences() {
     setOperand(I, nullptr);
   if (auto *N = dyn_cast<UniquableMDNode>(this))
     if (!N->isResolved()) {
-      N->ReplaceableUses->resolveAllUses(/* ResolveUsers */ false);
-      N->ReplaceableUses.reset();
+      N->Context.getReplaceableUses()->resolveAllUses(/* ResolveUsers */ false);
+      (void)N->Context.takeReplaceableUses();
     }
 }
 
@@ -563,7 +567,7 @@ void UniquableMDNode::handleChangedOperand(void *Ref, Metadata *New) {
     // dropAllReferences(), but we still need the use-list).
     for (unsigned O = 0, E = getNumOperands(); O != E; ++O)
       setOperand(O, nullptr);
-    ReplaceableUses->replaceAllUsesWith(Uniqued);
+    Context.getReplaceableUses()->replaceAllUsesWith(Uniqued);
     deleteAsSubclass();
     return;
   }

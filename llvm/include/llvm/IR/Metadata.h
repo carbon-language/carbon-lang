@@ -148,14 +148,18 @@ public:
   typedef MetadataTracking::OwnerTy OwnerTy;
 
 private:
+  LLVMContext &Context;
   uint64_t NextIndex;
   SmallDenseMap<void *, std::pair<OwnerTy, uint64_t>, 4> UseMap;
 
 public:
-  ReplaceableMetadataImpl() : NextIndex(0) {}
+  ReplaceableMetadataImpl(LLVMContext &Context)
+      : Context(Context), NextIndex(0) {}
   ~ReplaceableMetadataImpl() {
     assert(UseMap.empty() && "Cannot destroy in-use replaceable metadata");
   }
+
+  LLVMContext &getContext() const { return Context; }
 
   /// \brief Replace all uses of this with MD.
   ///
@@ -198,7 +202,7 @@ class ValueAsMetadata : public Metadata, ReplaceableMetadataImpl {
 
 protected:
   ValueAsMetadata(unsigned ID, Value *V)
-      : Metadata(ID, Uniqued), V(V) {
+      : Metadata(ID, Uniqued), ReplaceableMetadataImpl(V->getContext()), V(V) {
     assert(V && "Expected valid value");
   }
   ~ValueAsMetadata() {}
@@ -583,14 +587,87 @@ template <> struct simplify_type<const MDOperand> {
   static SimpleType getSimplifiedValue(const MDOperand &MD) { return MD.get(); }
 };
 
+/// \brief Pointer to the context, with optional RAUW support.
+///
+/// Either a raw (non-null) pointer to the \a LLVMContext, or an owned pointer
+/// to \a ReplaceableMetadataImpl (which has a reference to \a LLVMContext).
+class ContextAndReplaceableUses {
+  PointerUnion<LLVMContext *, ReplaceableMetadataImpl *> Ptr;
+
+  ContextAndReplaceableUses() LLVM_DELETED_FUNCTION;
+  ContextAndReplaceableUses(ContextAndReplaceableUses &&)
+      LLVM_DELETED_FUNCTION;
+  ContextAndReplaceableUses(const ContextAndReplaceableUses &)
+      LLVM_DELETED_FUNCTION;
+  ContextAndReplaceableUses &
+  operator=(ContextAndReplaceableUses &&) LLVM_DELETED_FUNCTION;
+  ContextAndReplaceableUses &
+  operator=(const ContextAndReplaceableUses &) LLVM_DELETED_FUNCTION;
+
+public:
+  ContextAndReplaceableUses(LLVMContext &Context) : Ptr(&Context) {}
+  ContextAndReplaceableUses(
+      std::unique_ptr<ReplaceableMetadataImpl> ReplaceableUses)
+      : Ptr(ReplaceableUses.release()) {
+    assert(getReplaceableUses() && "Expected non-null replaceable uses");
+  }
+  ~ContextAndReplaceableUses() { delete getReplaceableUses(); }
+
+  operator LLVMContext &() { return getContext(); }
+
+  /// \brief Whether this contains RAUW support.
+  bool hasReplaceableUses() const {
+    return Ptr.is<ReplaceableMetadataImpl *>();
+  }
+  LLVMContext &getContext() const {
+    if (hasReplaceableUses())
+      return getReplaceableUses()->getContext();
+    return *Ptr.get<LLVMContext *>();
+  }
+  ReplaceableMetadataImpl *getReplaceableUses() const {
+    if (hasReplaceableUses())
+      return Ptr.get<ReplaceableMetadataImpl *>();
+    return nullptr;
+  }
+
+  /// \brief Assign RAUW support to this.
+  ///
+  /// Make this replaceable, taking ownership of \c ReplaceableUses (which must
+  /// not be null).
+  void
+  makeReplaceable(std::unique_ptr<ReplaceableMetadataImpl> ReplaceableUses) {
+    assert(ReplaceableUses && "Expected non-null replaceable uses");
+    assert(&ReplaceableUses->getContext() == &getContext() &&
+           "Expected same context");
+    delete getReplaceableUses();
+    Ptr = ReplaceableUses.release();
+  }
+
+  /// \brief Drop RAUW support.
+  ///
+  /// Cede ownership of RAUW support, returning it.
+  std::unique_ptr<ReplaceableMetadataImpl> takeReplaceableUses() {
+    assert(hasReplaceableUses() && "Expected to own replaceable uses");
+    std::unique_ptr<ReplaceableMetadataImpl> ReplaceableUses(
+        getReplaceableUses());
+    Ptr = &ReplaceableUses->getContext();
+    return ReplaceableUses;
+  }
+};
+
 //===----------------------------------------------------------------------===//
 /// \brief Tuple of metadata.
 class MDNode : public Metadata {
+  friend class ReplaceableMetadataImpl;
+
   MDNode(const MDNode &) LLVM_DELETED_FUNCTION;
   void operator=(const MDNode &) LLVM_DELETED_FUNCTION;
   void *operator new(size_t) LLVM_DELETED_FUNCTION;
 
-  LLVMContext &Context;
+protected:
+  ContextAndReplaceableUses Context;
+
+private:
   unsigned NumOperands;
 
 protected:
@@ -638,7 +715,7 @@ public:
   /// The node must not have any users.
   static void deleteTemporary(MDNode *N);
 
-  LLVMContext &getContext() const { return Context; }
+  LLVMContext &getContext() const { return Context.getContext(); }
 
   /// \brief Replace a specific operand.
   void replaceOperandWith(unsigned I, Metadata *New);
@@ -716,12 +793,6 @@ class UniquableMDNode : public MDNode {
   friend class MDNode;
   friend class LLVMContextImpl;
 
-  /// \brief Support RAUW as long as one of its arguments is replaceable.
-  ///
-  /// FIXME: Save memory by storing this in a pointer union with the
-  /// LLVMContext, and adding an LLVMContext reference to RMI.
-  std::unique_ptr<ReplaceableMetadataImpl> ReplaceableUses;
-
 protected:
   /// \brief Create a new node.
   ///
@@ -748,7 +819,7 @@ public:
   /// As forward declarations are resolved, their containers should get
   /// resolved automatically.  However, if this (or one of its operands) is
   /// involved in a cycle, \a resolveCycles() needs to be called explicitly.
-  bool isResolved() const { return !ReplaceableUses; }
+  bool isResolved() const { return !Context.hasReplaceableUses(); }
 
   /// \brief Resolve cycles.
   ///
@@ -884,9 +955,8 @@ private:
 /// Forward declaration of metadata, in the form of a basic tuple.  Unlike \a
 /// MDTuple, this class has full support for RAUW, is not owned, is not
 /// uniqued, and is suitable for forward references.
-class MDNodeFwdDecl : public MDNode, ReplaceableMetadataImpl {
+class MDNodeFwdDecl : public MDNode {
   friend class Metadata;
-  friend class ReplaceableMetadataImpl;
 
   MDNodeFwdDecl(LLVMContext &C, ArrayRef<Metadata *> Vals)
       : MDNode(C, MDNodeFwdDeclKind, Temporary, Vals) {}
@@ -905,7 +975,10 @@ public:
     return MD->getMetadataID() == MDNodeFwdDeclKind;
   }
 
-  using ReplaceableMetadataImpl::replaceAllUsesWith;
+  void replaceAllUsesWith(Metadata *MD) {
+    assert(Context.hasReplaceableUses() && "Expected RAUW support");
+    Context.getReplaceableUses()->replaceAllUsesWith(MD);
+  }
 };
 
 //===----------------------------------------------------------------------===//

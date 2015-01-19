@@ -20,6 +20,43 @@ using namespace llvm;
 
 namespace {
 
+TEST(ContextAndReplaceableUsesTest, FromContext) {
+  LLVMContext Context;
+  ContextAndReplaceableUses CRU(Context);
+  EXPECT_EQ(&Context, &CRU.getContext());
+  EXPECT_FALSE(CRU.hasReplaceableUses());
+  EXPECT_FALSE(CRU.getReplaceableUses());
+}
+
+TEST(ContextAndReplaceableUsesTest, FromReplaceableUses) {
+  LLVMContext Context;
+  ContextAndReplaceableUses CRU(make_unique<ReplaceableMetadataImpl>(Context));
+  EXPECT_EQ(&Context, &CRU.getContext());
+  EXPECT_TRUE(CRU.hasReplaceableUses());
+  EXPECT_TRUE(CRU.getReplaceableUses());
+}
+
+TEST(ContextAndReplaceableUsesTest, makeReplaceable) {
+  LLVMContext Context;
+  ContextAndReplaceableUses CRU(Context);
+  CRU.makeReplaceable(make_unique<ReplaceableMetadataImpl>(Context));
+  EXPECT_EQ(&Context, &CRU.getContext());
+  EXPECT_TRUE(CRU.hasReplaceableUses());
+  EXPECT_TRUE(CRU.getReplaceableUses());
+}
+
+TEST(ContextAndReplaceableUsesTest, takeReplaceableUses) {
+  LLVMContext Context;
+  auto ReplaceableUses = make_unique<ReplaceableMetadataImpl>(Context);
+  auto *Ptr = ReplaceableUses.get();
+  ContextAndReplaceableUses CRU(std::move(ReplaceableUses));
+  ReplaceableUses = CRU.takeReplaceableUses();
+  EXPECT_EQ(&Context, &CRU.getContext());
+  EXPECT_FALSE(CRU.hasReplaceableUses());
+  EXPECT_FALSE(CRU.getReplaceableUses());
+  EXPECT_EQ(Ptr, ReplaceableUses.get());
+}
+
 class MetadataTest : public testing::Test {
 protected:
   LLVMContext Context;
