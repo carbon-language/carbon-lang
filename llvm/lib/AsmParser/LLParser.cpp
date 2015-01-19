@@ -2992,7 +2992,12 @@ bool LLParser::ParseSpecializedMDNode(MDNode *&N, bool IsDistinct) {
   return TokError("expected metadata type");
 }
 
-#define PARSE_MD_FIELD(NAME)                                                   \
+#define DECLARE_FIELD(NAME, TYPE, INIT) TYPE NAME INIT
+#define NOP_FIELD(NAME, TYPE, INIT)
+#define REQUIRE_FIELD(NAME, TYPE, INIT)                                        \
+  if (!NAME.Seen)                                                              \
+    return Error(ClosingLoc, "missing required field '" #NAME "'");
+#define PARSE_MD_FIELD(NAME, TYPE, DEFAULT)                                    \
   do {                                                                         \
     if (Lex.getStrVal() == #NAME) {                                            \
       LocTy Loc = Lex.getLoc();                                                \
@@ -3002,31 +3007,37 @@ bool LLParser::ParseSpecializedMDNode(MDNode *&N, bool IsDistinct) {
       return false;                                                            \
     }                                                                          \
   } while (0)
+#define PARSE_MD_FIELDS()                                                      \
+  VISIT_MD_FIELDS(DECLARE_FIELD, DECLARE_FIELD)                                \
+  do {                                                                         \
+    LocTy ClosingLoc;                                                          \
+    if (ParseMDFieldsImpl([&]() -> bool {                                      \
+      VISIT_MD_FIELDS(PARSE_MD_FIELD, PARSE_MD_FIELD)                          \
+      return TokError(Twine("invalid field '") + Lex.getStrVal() + "'");       \
+    }, ClosingLoc))                                                            \
+      return true;                                                             \
+    VISIT_MD_FIELDS(NOP_FIELD, REQUIRE_FIELD)                                  \
+  } while (false)
 
 /// ParseMDLocationFields:
 ///   ::= !MDLocation(line: 43, column: 8, scope: !5, inlinedAt: !6)
 bool LLParser::ParseMDLocation(MDNode *&Result, bool IsDistinct) {
-  MDUnsignedField<uint32_t> line(0, ~0u >> 8);
-  MDUnsignedField<uint32_t> column(0, ~0u >> 16);
-  MDField scope;
-  MDField inlinedAt;
-  LocTy Loc;
-  if (ParseMDFieldsImpl([&]() -> bool {
-    PARSE_MD_FIELD(line);
-    PARSE_MD_FIELD(column);
-    PARSE_MD_FIELD(scope);
-    PARSE_MD_FIELD(inlinedAt);
-    return TokError(Twine("invalid field '") + Lex.getStrVal() + "'");
-  }, Loc))
-    return true;
+#define VISIT_MD_FIELDS(OPTIONAL, REQUIRED)                                    \
+  OPTIONAL(line, MDUnsignedField<uint32_t>, (0, ~0u >> 8));                    \
+  OPTIONAL(column, MDUnsignedField<uint32_t>, (0, ~0u >> 16));                 \
+  REQUIRED(scope, MDField, );                                                  \
+  OPTIONAL(inlinedAt, MDField, );
+  PARSE_MD_FIELDS();
+#undef VISIT_MD_FIELDS
 
-  if (!scope.Seen)
-    return Error(Loc, "missing required field 'scope'");
   auto get = (IsDistinct ? MDLocation::getDistinct : MDLocation::get);
   Result = get(Context, line.Val, column.Val, scope.Val, inlinedAt.Val);
   return false;
 }
 #undef PARSE_MD_FIELD
+#undef NOP_FIELD
+#undef REQUIRE_FIELD
+#undef DECLARE_FIELD
 
 /// ParseMetadataAsValue
 ///  ::= metadata i32 %local
