@@ -631,7 +631,7 @@ void UniquableMDNode::eraseFromStore() {
     llvm_unreachable("Invalid subclass of UniquableMDNode");
 #define HANDLE_UNIQUABLE_LEAF(CLASS)                                           \
   case CLASS##Kind:                                                            \
-    cast<CLASS>(this)->eraseFromStoreImpl();                                   \
+    getContext().pImpl->CLASS##s.erase(cast<CLASS>(this));                     \
     break;
 #include "llvm/IR/Metadata.def"
   }
@@ -686,8 +686,6 @@ MDTuple *MDTuple::uniquifyImpl() {
   Store.insert(this);
   return this;
 }
-
-void MDTuple::eraseFromStoreImpl() { getContext().pImpl->MDTuples.erase(this); }
 
 MDLocation::MDLocation(LLVMContext &C, StorageType Storage, unsigned Line,
                        unsigned Column, ArrayRef<Metadata *> MDs)
@@ -750,10 +748,6 @@ MDLocation *MDLocation::uniquifyImpl() {
 
   Store.insert(this);
   return this;
-}
-
-void MDLocation::eraseFromStoreImpl() {
-  getContext().pImpl->MDLocations.erase(this);
 }
 
 void MDNode::deleteTemporary(MDNode *N) {
