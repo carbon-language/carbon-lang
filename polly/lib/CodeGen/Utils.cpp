@@ -30,7 +30,7 @@ BasicBlock *polly::executeScopConditionally(Scop &S, Pass *P, Value *RTC) {
 
   // Split the entry edge of the region and generate a new basic block on this
   // edge. This function also updates ScopInfo and RegionInfo.
-  NewBlock = SplitEdge(R.getEnteringBlock(), R.getEntry(), P);
+  NewBlock = SplitEdge(R.getEnteringBlock(), R.getEntry(), &DT, &LI);
   if (DT.dominates(R.getEntry(), NewBlock)) {
     BasicBlock *OldBlock = R.getEntry();
     std::string OldName = OldBlock->getName();
@@ -71,7 +71,7 @@ BasicBlock *polly::executeScopConditionally(Scop &S, Pass *P, Value *RTC) {
     // PHI nodes that would complicate life.
     MergeBlock = R.getExit();
   else {
-    MergeBlock = SplitEdge(R.getExitingBlock(), R.getExit(), P);
+    MergeBlock = SplitEdge(R.getExitingBlock(), R.getExit(), &DT, &LI);
     // SplitEdge will never split R.getExit(), as R.getExit() has more than
     // one predecessor. Hence, mergeBlock is always a newly generated block.
     R.replaceExitRecursive(MergeBlock);

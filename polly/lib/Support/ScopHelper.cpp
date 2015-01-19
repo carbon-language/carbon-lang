@@ -115,13 +115,13 @@ BasicBlock *polly::simplifyRegion(Scop *S, Pass *P) {
   BasicBlock *OldEntry = R->getEntry();
   BasicBlock *NewEntry = nullptr;
 
+  auto *DTWP = P->getAnalysisIfAvailable<DominatorTreeWrapperPass>();
+  auto *DT = DTWP ? &DTWP->getDomTree() : nullptr;
+  auto *LIWP = P->getAnalysisIfAvailable<LoopInfoWrapperPass>();
+  auto *LI = LIWP ? &LIWP->getLoopInfo() : nullptr;
+
   // Create single entry edge if the region has multiple entry edges.
   if (!EnteringBB) {
-    auto *DTWP = P->getAnalysisIfAvailable<DominatorTreeWrapperPass>();
-    auto *DT = DTWP ? &DTWP->getDomTree() : nullptr;
-    auto *LIWP = P->getAnalysisIfAvailable<LoopInfoWrapperPass>();
-    auto *LI = LIWP ? &LIWP->getLoopInfo() : nullptr;
-
     NewEntry = SplitBlock(OldEntry, OldEntry->begin(), DT, LI);
     EnteringBB = OldEntry;
   }
@@ -129,7 +129,7 @@ BasicBlock *polly::simplifyRegion(Scop *S, Pass *P) {
   // Create an unconditional entry edge.
   if (EnteringBB->getTerminator()->getNumSuccessors() != 1) {
     BasicBlock *EntryBB = NewEntry ? NewEntry : OldEntry;
-    BasicBlock *SplitEdgeBB = SplitEdge(EnteringBB, EntryBB, P);
+    BasicBlock *SplitEdgeBB = SplitEdge(EnteringBB, EntryBB, DT, LI);
 
     // Once the edge between EnteringBB and EntryBB is split, two cases arise.
     // The first is simple. The new block is inserted between EnteringBB and
