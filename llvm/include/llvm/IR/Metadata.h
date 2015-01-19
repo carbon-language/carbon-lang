@@ -684,14 +684,11 @@ class MDNode : public Metadata {
   void operator=(const MDNode &) LLVM_DELETED_FUNCTION;
   void *operator new(size_t) LLVM_DELETED_FUNCTION;
 
+  unsigned NumOperands;
+  unsigned NumUnresolved;
+
 protected:
   ContextAndReplaceableUses Context;
-
-private:
-  unsigned NumOperands;
-
-protected:
-  unsigned MDNodeSubclassData;
 
   void *operator new(size_t Size, unsigned NumOps);
   void operator delete(void *Mem);
@@ -808,7 +805,7 @@ private:
   void resolve();
   void resolveAfterOperandChange(Metadata *Old, Metadata *New);
   void decrementUnresolvedOperandCount();
-  unsigned countUnresolvedOperands() const;
+  unsigned countUnresolvedOperands();
 
   /// \brief Mutate this to be "uniqued".
   ///
@@ -879,7 +876,7 @@ class MDTuple : public MDNode {
   }
   ~MDTuple() { dropAllReferences(); }
 
-  void setHash(unsigned Hash) { MDNodeSubclassData = Hash; }
+  void setHash(unsigned Hash) { SubclassData32 = Hash; }
   void recalculateHash();
 
   static MDTuple *getImpl(LLVMContext &Context, ArrayRef<Metadata *> MDs,
@@ -887,7 +884,7 @@ class MDTuple : public MDNode {
 
 public:
   /// \brief Get the hash, if any.
-  unsigned getHash() const { return MDNodeSubclassData; }
+  unsigned getHash() const { return SubclassData32; }
 
   static MDTuple *get(LLVMContext &Context, ArrayRef<Metadata *> MDs) {
     return getImpl(Context, MDs, Uniqued);
@@ -978,7 +975,7 @@ public:
         getImpl(Context, Line, Column, Scope, InlinedAt, Temporary));
   }
 
-  unsigned getLine() const { return MDNodeSubclassData; }
+  unsigned getLine() const { return SubclassData32; }
   unsigned getColumn() const { return SubclassData16; }
   Metadata *getScope() const { return getOperand(0); }
   Metadata *getInlinedAt() const {

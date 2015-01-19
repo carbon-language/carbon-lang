@@ -398,22 +398,19 @@ void MDNode::operator delete(void *Mem) {
 
 MDNode::MDNode(LLVMContext &Context, unsigned ID, StorageType Storage,
                ArrayRef<Metadata *> MDs)
-    : Metadata(ID, Storage), Context(Context), NumOperands(MDs.size()),
-      MDNodeSubclassData(0) {
+    : Metadata(ID, Storage), NumOperands(MDs.size()), NumUnresolved(0),
+      Context(Context) {
   for (unsigned I = 0, E = MDs.size(); I != E; ++I)
     setOperand(I, MDs[I]);
 
   if (isDistinct())
     return;
 
-  if (isUniqued()) {
-    // Check whether any operands are unresolved, requiring re-uniquing.
-    unsigned NumUnresolved = countUnresolvedOperands();
-    if (!NumUnresolved)
+  if (isUniqued())
+    // Check whether any operands are unresolved, requiring re-uniquing.  If
+    // not, don't support RAUW.
+    if (!countUnresolvedOperands())
       return;
-
-    SubclassData32 = NumUnresolved;
-  }
 
   this->Context.makeReplaceable(make_unique<ReplaceableMetadataImpl>(Context));
 }
@@ -424,8 +421,8 @@ static bool isOperandUnresolved(Metadata *Op) {
   return false;
 }
 
-unsigned MDNode::countUnresolvedOperands() const {
-  unsigned NumUnresolved = 0;
+unsigned MDNode::countUnresolvedOperands() {
+  assert(NumUnresolved == 0 && "Expected unresolved ops to be uncounted");
   for (const auto &Op : operands())
     NumUnresolved += unsigned(isOperandUnresolved(Op));
   return NumUnresolved;
@@ -437,9 +434,7 @@ void MDNode::makeUniqued() {
 
   // Make this 'uniqued'.
   Storage = Uniqued;
-  if (unsigned NumUnresolved = countUnresolvedOperands())
-    SubclassData32 = NumUnresolved;
-  else
+  if (!countUnresolvedOperands())
     resolve();
 
   assert(isUniqued() && "Expected this to be uniqued");
@@ -464,7 +459,7 @@ void MDNode::resolve() {
 
   // Move the map, so that this immediately looks resolved.
   auto Uses = Context.takeReplaceableUses();
-  SubclassData32 = 0;
+  NumUnresolved = 0;
   assert(isResolved() && "Expected this to be resolved");
 
   // Drop RAUW support.
@@ -472,19 +467,19 @@ void MDNode::resolve() {
 }
 
 void MDNode::resolveAfterOperandChange(Metadata *Old, Metadata *New) {
-  assert(SubclassData32 != 0 && "Expected unresolved operands");
+  assert(NumUnresolved != 0 && "Expected unresolved operands");
 
   // Check if an operand was resolved.
   if (!isOperandUnresolved(Old)) {
     if (isOperandUnresolved(New))
       // An operand was un-resolved!
-      ++SubclassData32;
+      ++NumUnresolved;
   } else if (!isOperandUnresolved(New))
     decrementUnresolvedOperandCount();
 }
 
 void MDNode::decrementUnresolvedOperandCount() {
-  if (!--SubclassData32)
+  if (!--NumUnresolved)
     // Last unresolved operand has just been resolved.
     resolve();
 }
@@ -694,7 +689,7 @@ MDLocation::MDLocation(LLVMContext &C, StorageType Storage, unsigned Line,
   assert(Line < (1u << 24) && "Expected 24-bit line");
   assert(Column < (1u << 16) && "Expected 16-bit column");
 
-  MDNodeSubclassData = Line;
+  SubclassData32 = Line;
   SubclassData16 = Column;
 }
 
