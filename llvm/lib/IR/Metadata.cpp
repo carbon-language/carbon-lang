@@ -421,15 +421,19 @@ UniquableMDNode::UniquableMDNode(LLVMContext &C, unsigned ID,
     return;
 
   // Check whether any operands are unresolved, requiring re-uniquing.
-  unsigned NumUnresolved = 0;
-  for (const auto &Op : operands())
-    NumUnresolved += unsigned(isOperandUnresolved(Op));
-
+  unsigned NumUnresolved = countUnresolvedOperands();
   if (!NumUnresolved)
     return;
 
   this->Context.makeReplaceable(make_unique<ReplaceableMetadataImpl>(C));
   SubclassData32 = NumUnresolved;
+}
+
+unsigned UniquableMDNode::countUnresolvedOperands() const {
+  unsigned NumUnresolved = 0;
+  for (const auto &Op : operands())
+    NumUnresolved += unsigned(isOperandUnresolved(Op));
+  return NumUnresolved;
 }
 
 void UniquableMDNode::resolve() {
