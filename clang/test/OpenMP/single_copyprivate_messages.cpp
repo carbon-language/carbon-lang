@@ -152,6 +152,8 @@ int main(int argc, char **argv) {
 #pragma omp parallel
 #pragma omp single firstprivate(i) copyprivate(i) // expected-error {{firstprivate variable cannot be copyprivate}} expected-note {{defined as firstprivate}}
   foo();
+#pragma omp single copyprivate(i) nowait // expected-error {{the 'copyprivate' clause must not be used with the 'nowait' clause}} expected-note {{'nowait' clause is here}}
+  foo();
 
   return tmain(argc, argv); // expected-note {{in instantiation of function template specialization 'tmain<int, char>' requested here}}
 }

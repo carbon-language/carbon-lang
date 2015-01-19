@@ -14,10 +14,16 @@ T tmain(T argc) {
   static T a;
 // CHECK: static T a;
 #pragma omp parallel private(g)
-#pragma omp single private(argc, b), firstprivate(c, d), nowait copyprivate(g)
+#pragma omp single private(argc, b), firstprivate(c, d), nowait
   foo();
   // CHECK-NEXT: #pragma omp parallel private(g)
-  // CHECK-NEXT: #pragma omp single private(argc,b) firstprivate(c,d) nowait copyprivate(g)
+  // CHECK-NEXT: #pragma omp single private(argc,b) firstprivate(c,d) nowait
+  // CHECK-NEXT: foo();
+#pragma omp parallel private(g)
+#pragma omp single private(argc, b), firstprivate(c, d), copyprivate(g)
+  foo();
+  // CHECK-NEXT: #pragma omp parallel private(g)
+  // CHECK-NEXT: #pragma omp single private(argc,b) firstprivate(c,d) copyprivate(g)
   // CHECK-NEXT: foo();
   return T();
 }
@@ -27,10 +33,16 @@ int main(int argc, char **argv) {
   static int a;
 // CHECK: static int a;
 #pragma omp parallel private(g)
-#pragma omp single private(argc, b), firstprivate(argv, c), nowait copyprivate(g)
+#pragma omp single private(argc, b), firstprivate(argv, c), nowait
   foo();
   // CHECK-NEXT: #pragma omp parallel private(g)
-  // CHECK-NEXT: #pragma omp single private(argc,b) firstprivate(argv,c) nowait copyprivate(g)
+  // CHECK-NEXT: #pragma omp single private(argc,b) firstprivate(argv,c) nowait
+  // CHECK-NEXT: foo();
+#pragma omp parallel private(g)
+#pragma omp single private(argc, b), firstprivate(c, d), copyprivate(g)
+  foo();
+  // CHECK-NEXT: #pragma omp parallel private(g)
+  // CHECK-NEXT: #pragma omp single private(argc,b) firstprivate(c,d) copyprivate(g)
   // CHECK-NEXT: foo();
   return (tmain<int, 5>(argc) + tmain<char, 1>(argv[0][0]));
 }
