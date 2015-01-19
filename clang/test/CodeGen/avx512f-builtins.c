@@ -264,3 +264,17 @@ __mmask8 test_mm512_cmp_pd_mask(__m512 __a, __m512 __b) {
   // CHECK: @llvm.x86.avx512.mask.cmp.pd.512
   return _mm512_cmp_pd_mask(__a, __b, 0);
 }
+
+__m256d test_mm512_extractf64x4_pd(__m512d a)
+{
+  // CHECK-LABEL: @test_mm512_extractf64x4_pd
+  // CHECK: @llvm.x86.avx512.mask.vextractf64x4.512
+  return _mm512_extractf64x4_pd(a, 1);
+}
+
+__m128 test_mm512_extractf32x4_ps(__m512 a)
+{
+  // CHECK-LABEL: @test_mm512_extractf32x4_ps
+  // CHECK: @llvm.x86.avx512.mask.vextractf32x4.512
+  return _mm512_extractf32x4_ps(a, 1);
+}

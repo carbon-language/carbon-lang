@@ -633,6 +633,24 @@ _mm512_valign_epi32(__m512i __A, __m512i __B, const int __I)
                                                 (__mmask16) -1);
 }
 
+/* Vector Extract */
+
+#define _mm512_extractf64x4_pd(A, I) __extension__ ({                    \
+      __m512d __A = (A);                                                 \
+      (__m256d)                                                          \
+        __builtin_ia32_extractf64x4_mask((__v8df)__A,                    \
+                                         (I),                            \
+                                         (__v4df)_mm256_setzero_si256(), \
+                                         (__mmask8) -1); })
+
+#define _mm512_extractf32x4_ps(A, I) __extension__ ({                    \
+      __m512 __A = (A);                                                  \
+      (__m128)                                                           \
+        __builtin_ia32_extractf32x4_mask((__v16sf)__A,                   \
+                                         (I),                            \
+                                         (__v4sf)_mm_setzero_ps(),       \
+                                         (__mmask8) -1); })
+
 /* Vector Blend */
 
 static __inline __m512d __attribute__ ((__always_inline__, __nodebug__))
