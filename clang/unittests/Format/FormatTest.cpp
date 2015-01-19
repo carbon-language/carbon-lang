@@ -67,6 +67,12 @@ protected:
     verifyFormat(llvm::Twine("void f() { " + text + " }").str());
   }
 
+  /// \brief Verify that clang-format does not crash on the given input.
+  void verifyNoCrash(llvm::StringRef Code,
+                     const FormatStyle &Style = getLLVMStyle()) {
+    format(Code, Style);
+  }
+
   int ReplacementCount;
 };
 
@@ -5622,6 +5628,8 @@ TEST_F(FormatTest, FormatsArrays) {
       "aaaaaaaaaaa aaaaaaaaaaaaaaa = aaaaaaaaaaaaaaaaaaaaaaaaaa->aaaaaaaaa[0]\n"
       "                                  .aaaaaaa[0]\n"
       "                                  .aaaaaaaaaaaaaaaaaaaaaa();");
+
+  verifyNoCrash("a[,Y?)]", getLLVMStyleWithColumns(10));
 }
 
 TEST_F(FormatTest, LineStartsWithSpecialCharacter) {

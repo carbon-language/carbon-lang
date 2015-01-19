@@ -516,7 +516,7 @@ unsigned ContinuationIndenter::getNewLineColumn(const LineState &State) {
   if (NextNonComment->is(tok::l_brace) && NextNonComment->BlockKind == BK_Block)
     return Current.NestingLevel == 0 ? State.FirstIndent
                                      : State.Stack.back().Indent;
-  if (Current.isOneOf(tok::r_brace, tok::r_square)) {
+  if (Current.isOneOf(tok::r_brace, tok::r_square) && State.Stack.size() > 1) {
     if (Current.closesBlockTypeList(Style))
       return State.Stack[State.Stack.size() - 2].NestedBlockIndent;
     if (Current.MatchingParen &&
