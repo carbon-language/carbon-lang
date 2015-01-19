@@ -436,6 +436,33 @@ unsigned UniquableMDNode::countUnresolvedOperands() const {
   return NumUnresolved;
 }
 
+void UniquableMDNode::makeUniqued() {
+  assert(isTemporary() && "Expected this to be temporary");
+  assert(!isResolved() && "Expected this to be unresolved");
+
+  // Make this 'uniqued'.
+  Storage = Uniqued;
+  if (unsigned NumUnresolved = countUnresolvedOperands())
+    SubclassData32 = NumUnresolved;
+  else
+    resolve();
+
+  assert(isUniqued() && "Expected this to be uniqued");
+}
+
+void UniquableMDNode::makeDistinct() {
+  assert(isTemporary() && "Expected this to be temporary");
+  assert(!isResolved() && "Expected this to be unresolved");
+
+  // Pretend to be uniqued, resolve the node, and then store in distinct table.
+  Storage = Uniqued;
+  resolve();
+  storeDistinctInContext();
+
+  assert(isDistinct() && "Expected this to be distinct");
+  assert(isResolved() && "Expected this to be resolved");
+}
+
 void UniquableMDNode::resolve() {
   assert(isUniqued() && "Expected this to be uniqued");
   assert(!isResolved() && "Expected this to be unresolved");

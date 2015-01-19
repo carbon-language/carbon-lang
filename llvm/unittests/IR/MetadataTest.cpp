@@ -438,6 +438,85 @@ TEST_F(MDNodeTest, replaceResolvedOperand) {
   Temp->replaceAllUsesWith(nullptr);
 }
 
+TEST_F(MDNodeTest, replaceWithUniqued) {
+  auto *Empty = MDTuple::get(Context, None);
+  MDTuple *FirstUniqued;
+  {
+    Metadata *Ops[] = {Empty};
+    auto Temp = MDTuple::getTemporary(Context, Ops);
+    EXPECT_TRUE(Temp->isTemporary());
+
+    // Don't expect a collision.
+    auto *Current = Temp.get();
+    FirstUniqued = MDNode::replaceWithUniqued(std::move(Temp));
+    EXPECT_TRUE(FirstUniqued->isUniqued());
+    EXPECT_TRUE(FirstUniqued->isResolved());
+    EXPECT_EQ(Current, FirstUniqued);
+  }
+  {
+    Metadata *Ops[] = {Empty};
+    auto Temp = MDTuple::getTemporary(Context, Ops);
+    EXPECT_TRUE(Temp->isTemporary());
+
+    // Should collide with Uniqued above this time.
+    auto *Uniqued = MDNode::replaceWithUniqued(std::move(Temp));
+    EXPECT_TRUE(Uniqued->isUniqued());
+    EXPECT_TRUE(Uniqued->isResolved());
+    EXPECT_EQ(FirstUniqued, Uniqued);
+  }
+  {
+    auto Unresolved = MDTuple::getTemporary(Context, None);
+    Metadata *Ops[] = {Unresolved.get()};
+    auto Temp = MDTuple::getTemporary(Context, Ops);
+    EXPECT_TRUE(Temp->isTemporary());
+
+    // Shouldn't be resolved.
+    auto *Uniqued = MDNode::replaceWithUniqued(std::move(Temp));
+    EXPECT_TRUE(Uniqued->isUniqued());
+    EXPECT_FALSE(Uniqued->isResolved());
+
+    // Should be a different node.
+    EXPECT_NE(FirstUniqued, Uniqued);
+
+    // Should resolve when we update its node (note: be careful to avoid a
+    // collision with any other nodes above).
+    Uniqued->replaceOperandWith(0, nullptr);
+    EXPECT_TRUE(Uniqued->isResolved());
+  }
+}
+
+TEST_F(MDNodeTest, replaceWithDistinct) {
+  {
+    auto *Empty = MDTuple::get(Context, None);
+    Metadata *Ops[] = {Empty};
+    auto Temp = MDTuple::getTemporary(Context, Ops);
+    EXPECT_TRUE(Temp->isTemporary());
+
+    // Don't expect a collision.
+    auto *Current = Temp.get();
+    auto *Distinct = MDNode::replaceWithDistinct(std::move(Temp));
+    EXPECT_TRUE(Distinct->isDistinct());
+    EXPECT_TRUE(Distinct->isResolved());
+    EXPECT_EQ(Current, Distinct);
+  }
+  {
+    auto Unresolved = MDTuple::getTemporary(Context, None);
+    Metadata *Ops[] = {Unresolved.get()};
+    auto Temp = MDTuple::getTemporary(Context, Ops);
+    EXPECT_TRUE(Temp->isTemporary());
+
+    // Don't expect a collision.
+    auto *Current = Temp.get();
+    auto *Distinct = MDNode::replaceWithDistinct(std::move(Temp));
+    EXPECT_TRUE(Distinct->isDistinct());
+    EXPECT_TRUE(Distinct->isResolved());
+    EXPECT_EQ(Current, Distinct);
+
+    // Cleanup; required for teardown.
+    Unresolved->replaceAllUsesWith(nullptr);
+  }
+}
+
 typedef MetadataTest MDLocationTest;
 
 TEST_F(MDLocationTest, Overflow) {

@@ -744,6 +744,24 @@ public:
     Context.getReplaceableUses()->replaceAllUsesWith(MD);
   }
 
+  /// \brief Replace a temporary node with a uniqued one.
+  ///
+  /// Create a uniqued version of \c N -- in place, if possible -- and return
+  /// it.  Takes ownership of the temporary node.
+  template <class T>
+  static typename std::enable_if<std::is_base_of<UniquableMDNode, T>::value,
+                                 T *>::type
+  replaceWithUniqued(std::unique_ptr<T, TempMDNodeDeleter> N);
+
+  /// \brief Replace a temporary node with a distinct one.
+  ///
+  /// Create a distinct version of \c N -- in place, if possible -- and return
+  /// it.  Takes ownership of the temporary node.
+  template <class T>
+  static typename std::enable_if<std::is_base_of<UniquableMDNode, T>::value,
+                                 T *>::type
+  replaceWithDistinct(std::unique_ptr<T, TempMDNodeDeleter> N);
+
 protected:
   /// \brief Set an operand.
   ///
@@ -787,6 +805,30 @@ public:
   static MDNode *getMostGenericFPMath(MDNode *A, MDNode *B);
   static MDNode *getMostGenericRange(MDNode *A, MDNode *B);
 };
+
+template <class NodeTy>
+typename std::enable_if<std::is_base_of<UniquableMDNode, NodeTy>::value,
+                        NodeTy *>::type
+MDNode::replaceWithUniqued(std::unique_ptr<NodeTy, TempMDNodeDeleter> Node) {
+  // Try to uniquify in place.
+  UniquableMDNode *UniquedNode = Node->uniquify();
+  if (UniquedNode == Node.get()) {
+    Node->makeUniqued();
+    return Node.release();
+  }
+
+  // Collision, so RAUW instead.
+  Node->replaceAllUsesWith(UniquedNode);
+  return cast<NodeTy>(UniquedNode);
+}
+
+template <class NodeTy>
+typename std::enable_if<std::is_base_of<UniquableMDNode, NodeTy>::value,
+                        NodeTy *>::type
+MDNode::replaceWithDistinct(std::unique_ptr<NodeTy, TempMDNodeDeleter> Node) {
+  Node->makeDistinct();
+  return Node.release();
+}
 
 /// \brief Uniquable metadata node.
 ///
@@ -843,6 +885,19 @@ private:
   void resolveAfterOperandChange(Metadata *Old, Metadata *New);
   void decrementUnresolvedOperandCount();
   unsigned countUnresolvedOperands() const;
+
+  /// \brief Mutate this to be "uniqued".
+  ///
+  /// Mutate this so that \a isUniqued().
+  /// \pre \a isTemporary().
+  /// \pre already added to uniquing set.
+  void makeUniqued();
+
+  /// \brief Mutate this to be "distinct".
+  ///
+  /// Mutate this so that \a isDistinct().
+  /// \pre \a isTemporary().
+  void makeDistinct();
 
   void deleteAsSubclass();
   UniquableMDNode *uniquify();
