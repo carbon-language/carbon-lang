@@ -17,7 +17,6 @@
 #include "sanitizer_internal_defs.h"
 #include "sanitizer_libc.h"
 #include "sanitizer_common.h"
-#include "sanitizer_allocator_internal.h"
 
 namespace __sanitizer {
 
@@ -91,11 +90,12 @@ class FlagParser {
 
  public:
   FlagParser();
-  ~FlagParser();
   void RegisterHandler(const char *name, FlagHandlerBase *handler,
                        const char *desc);
   void ParseString(const char *s);
   void PrintFlagDescriptions();
+
+  static LowLevelAllocator Alloc;
 
  private:
   void fatal_error(const char *err);
@@ -104,12 +104,13 @@ class FlagParser {
   void parse_flags();
   void parse_flag();
   bool run_handler(const char *name, const char *value);
+  char *ll_strndup(const char *s, uptr n);
 };
 
 template <typename T>
 static void RegisterFlag(FlagParser *parser, const char *name, const char *desc,
                          T *var) {
-  FlagHandler<T> *fh = new (INTERNAL_ALLOC) FlagHandler<T>(var);  // NOLINT
+  FlagHandler<T> *fh = new (FlagParser::Alloc) FlagHandler<T>(var);  // NOLINT
   parser->RegisterHandler(name, fh, desc);
 }
 

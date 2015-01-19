@@ -75,7 +75,7 @@ void RegisterCommonFlags(FlagParser *parser, CommonFlags *cf) {
 #undef COMMON_FLAG
 
   FlagHandlerInclude *fh_include =
-      new (INTERNAL_ALLOC) FlagHandlerInclude(parser);  // NOLINT
+      new (FlagParser::Alloc) FlagHandlerInclude(parser);  // NOLINT
   parser->RegisterHandler("include", fh_include,
                           "read more options from the given file");
 }

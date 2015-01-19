@@ -17,9 +17,18 @@
 #include "sanitizer_libc.h"
 #include "sanitizer_flags.h"
 #include "sanitizer_flag_parser.h"
-#include "sanitizer_allocator_internal.h"
 
 namespace __sanitizer {
+
+LowLevelAllocator FlagParser::Alloc;
+
+char *FlagParser::ll_strndup(const char *s, uptr n) {
+  uptr len = internal_strnlen(s, n);
+  char *s2 = (char*)Alloc.Allocate(len + 1);
+  internal_memcpy(s2, s, len);
+  s2[len] = 0;
+  return s2;
+}
 
 void FlagParser::PrintFlagDescriptions() {
   Printf("Available flags for %s:\n", SanitizerToolName);
@@ -45,7 +54,7 @@ void FlagParser::parse_flag() {
   uptr name_start = pos_;
   while (buf_[pos_] != 0 && buf_[pos_] != '=' && !is_space(buf_[pos_])) ++pos_;
   if (buf_[pos_] != '=') fatal_error("expected '='");
-  char *name = internal_strndup(buf_ + name_start, pos_ - name_start);
+  char *name = ll_strndup(buf_ + name_start, pos_ - name_start);
 
   uptr value_start = ++pos_;
   char *value;
@@ -53,19 +62,17 @@ void FlagParser::parse_flag() {
     char quote = buf_[pos_++];
     while (buf_[pos_] != 0 && buf_[pos_] != quote) ++pos_;
     if (buf_[pos_] == 0) fatal_error("unterminated string");
-    value = internal_strndup(buf_ + value_start + 1, pos_ - value_start - 1);
+    value = ll_strndup(buf_ + value_start + 1, pos_ - value_start - 1);
     ++pos_; // consume the closing quote
   } else {
     while (buf_[pos_] != 0 && !is_space(buf_[pos_])) ++pos_;
     if (buf_[pos_] != 0 && !is_space(buf_[pos_]))
       fatal_error("expected separator or eol");
-    value = internal_strndup(buf_ + value_start, pos_ - value_start);
+    value = ll_strndup(buf_ + value_start, pos_ - value_start);
   }
 
   bool res = run_handler(name, value);
   if (!res) fatal_error("Flag parsing failed.");
-  InternalFree(name);
-  InternalFree(value);
 }
 
 void FlagParser::parse_flags() {
@@ -113,13 +120,7 @@ void FlagParser::RegisterHandler(const char *name, FlagHandlerBase *handler,
 }
 
 FlagParser::FlagParser() : n_flags_(0), buf_(nullptr), pos_(0) {
-  flags_ = (Flag *)InternalAlloc(sizeof(Flag) * kMaxFlags);
-}
-
-FlagParser::~FlagParser() {
-  for (int i = 0; i < n_flags_; ++i)
-    InternalFree(flags_[i].handler);
-  InternalFree(flags_);
+  flags_ = (Flag *)Alloc.Allocate(sizeof(Flag) * kMaxFlags);
 }
 
 }  // namespace __sanitizer
