@@ -171,11 +171,10 @@ TEST_F(MDNodeTest, SelfReference) {
   // !0 = !{!0}
   // !1 = !{!0}
   {
-    MDNode *Temp = MDNode::getTemporary(Context, None);
-    Metadata *Args[] = {Temp};
+    auto Temp = MDNode::getTemporary(Context, None);
+    Metadata *Args[] = {Temp.get()};
     MDNode *Self = MDNode::get(Context, Args);
     Self->replaceOperandWith(0, Self);
-    MDNode::deleteTemporary(Temp);
     ASSERT_EQ(Self, Self->getOperand(0));
 
     // Self-references should be distinct, so MDNode::get() should grab a
@@ -190,11 +189,10 @@ TEST_F(MDNodeTest, SelfReference) {
   // !0 = !{!0, !{}}
   // !1 = !{!0, !{}}
   {
-    MDNode *Temp = MDNode::getTemporary(Context, None);
-    Metadata *Args[] = {Temp, MDNode::get(Context, None)};
+    auto Temp = MDNode::getTemporary(Context, None);
+    Metadata *Args[] = {Temp.get(), MDNode::get(Context, None)};
     MDNode *Self = MDNode::get(Context, Args);
     Self->replaceOperandWith(0, Self);
-    MDNode::deleteTemporary(Temp);
     ASSERT_EQ(Self, Self->getOperand(0));
 
     // Self-references should be distinct, so MDNode::get() should grab a
@@ -310,48 +308,44 @@ TEST_F(MDNodeTest, getDistinct) {
 TEST_F(MDNodeTest, isUniqued) {
   MDNode *U = MDTuple::get(Context, None);
   MDNode *D = MDTuple::getDistinct(Context, None);
-  MDNode *T = MDTuple::getTemporary(Context, None);
+  auto T = MDTuple::getTemporary(Context, None);
   EXPECT_TRUE(U->isUniqued());
   EXPECT_FALSE(D->isUniqued());
   EXPECT_FALSE(T->isUniqued());
-  MDNode::deleteTemporary(T);
 }
 
 TEST_F(MDNodeTest, isDistinct) {
   MDNode *U = MDTuple::get(Context, None);
   MDNode *D = MDTuple::getDistinct(Context, None);
-  MDNode *T = MDTuple::getTemporary(Context, None);
+  auto T = MDTuple::getTemporary(Context, None);
   EXPECT_FALSE(U->isDistinct());
   EXPECT_TRUE(D->isDistinct());
   EXPECT_FALSE(T->isDistinct());
-  MDNode::deleteTemporary(T);
 }
 
 TEST_F(MDNodeTest, isTemporary) {
   MDNode *U = MDTuple::get(Context, None);
   MDNode *D = MDTuple::getDistinct(Context, None);
-  MDNode *T = MDTuple::getTemporary(Context, None);
+  auto T = MDTuple::getTemporary(Context, None);
   EXPECT_FALSE(U->isTemporary());
   EXPECT_FALSE(D->isTemporary());
   EXPECT_TRUE(T->isTemporary());
-  MDNode::deleteTemporary(T);
 }
 
 TEST_F(MDNodeTest, getDistinctWithUnresolvedOperands) {
   // temporary !{}
-  MDTuple *Temp = MDTuple::getTemporary(Context, None);
+  auto Temp = MDTuple::getTemporary(Context, None);
   ASSERT_FALSE(Temp->isResolved());
 
   // distinct !{temporary !{}}
-  Metadata *Ops[] = {Temp};
+  Metadata *Ops[] = {Temp.get()};
   MDNode *Distinct = MDNode::getDistinct(Context, Ops);
   EXPECT_TRUE(Distinct->isResolved());
-  EXPECT_EQ(Temp, Distinct->getOperand(0));
+  EXPECT_EQ(Temp.get(), Distinct->getOperand(0));
 
   // temporary !{} => !{}
   MDNode *Empty = MDNode::get(Context, None);
   Temp->replaceAllUsesWith(Empty);
-  MDNode::deleteTemporary(Temp);
   EXPECT_EQ(Empty, Distinct->getOperand(0));
 }
 
@@ -360,19 +354,18 @@ TEST_F(MDNodeTest, handleChangedOperandRecursion) {
   MDNode *N0 = MDNode::get(Context, None);
 
   // !1 = !{!3, null}
-  MDTuple *Temp3 = MDTuple::getTemporary(Context, None);
-  Metadata *Ops1[] = {Temp3, nullptr};
+  auto Temp3 = MDTuple::getTemporary(Context, None);
+  Metadata *Ops1[] = {Temp3.get(), nullptr};
   MDNode *N1 = MDNode::get(Context, Ops1);
 
   // !2 = !{!3, !0}
-  Metadata *Ops2[] = {Temp3, N0};
+  Metadata *Ops2[] = {Temp3.get(), N0};
   MDNode *N2 = MDNode::get(Context, Ops2);
 
   // !3 = !{!2}
   Metadata *Ops3[] = {N2};
   MDNode *N3 = MDNode::get(Context, Ops3);
   Temp3->replaceAllUsesWith(N3);
-  MDNode::deleteTemporary(Temp3);
 
   // !4 = !{!1}
   Metadata *Ops4[] = {N1};
@@ -425,8 +418,8 @@ TEST_F(MDNodeTest, replaceResolvedOperand) {
   // a global value that gets RAUW'ed.
   //
   // Use a temporary node to keep N from being resolved.
-  MDTuple *Temp = MDTuple::getTemporary(Context, None);
-  Metadata *Ops[] = {nullptr, Temp};
+  auto Temp = MDTuple::getTemporary(Context, None);
+  Metadata *Ops[] = {nullptr, Temp.get()};
 
   MDNode *Empty = MDTuple::get(Context, ArrayRef<Metadata *>());
   MDNode *N = MDTuple::get(Context, Ops);
@@ -438,12 +431,11 @@ TEST_F(MDNodeTest, replaceResolvedOperand) {
   EXPECT_EQ(Empty, N->getOperand(0));
 
   // Check code for adding another unresolved operand.
-  N->replaceOperandWith(0, Temp);
-  EXPECT_EQ(Temp, N->getOperand(0));
+  N->replaceOperandWith(0, Temp.get());
+  EXPECT_EQ(Temp.get(), N->getOperand(0));
 
   // Remove the references to Temp; required for teardown.
   Temp->replaceAllUsesWith(nullptr);
-  MDNode::deleteTemporary(Temp);
 }
 
 typedef MetadataTest MDLocationTest;
@@ -485,10 +477,9 @@ TEST_F(MDLocationTest, getDistinct) {
 
 TEST_F(MDLocationTest, getTemporary) {
   MDNode *N = MDNode::get(Context, None);
-  MDLocation *L = MDLocation::getTemporary(Context, 2, 7, N);
+  auto L = MDLocation::getTemporary(Context, 2, 7, N);
   EXPECT_TRUE(L->isTemporary());
   EXPECT_FALSE(L->isResolved());
-  MDNode::deleteTemporary(L);
 }
 
 typedef MetadataTest MetadataAsValueTest;
@@ -557,11 +548,11 @@ TEST_F(ValueAsMetadataTest, CollidingDoubleUpdates) {
       ConstantInt::get(getGlobalContext(), APInt(8, 0)));
 
   // Create a temporary to prevent nodes from resolving.
-  MDTuple *Temp = MDTuple::getTemporary(Context, None);
+  auto Temp = MDTuple::getTemporary(Context, None);
 
   // When the first operand of N1 gets reset to nullptr, it'll collide with N2.
-  Metadata *Ops1[] = {CI, CI, Temp};
-  Metadata *Ops2[] = {nullptr, CI, Temp};
+  Metadata *Ops1[] = {CI, CI, Temp.get()};
+  Metadata *Ops2[] = {nullptr, CI, Temp.get()};
 
   auto *N1 = MDTuple::get(Context, Ops1);
   auto *N2 = MDTuple::get(Context, Ops2);
@@ -573,11 +564,10 @@ TEST_F(ValueAsMetadataTest, CollidingDoubleUpdates) {
   ValueAsMetadata::handleDeletion(CI->getValue());
   EXPECT_EQ(nullptr, N2->getOperand(0));
   EXPECT_EQ(nullptr, N2->getOperand(1));
-  EXPECT_EQ(Temp, N2->getOperand(2));
+  EXPECT_EQ(Temp.get(), N2->getOperand(2));
 
   // Clean up Temp for teardown.
   Temp->replaceAllUsesWith(nullptr);
-  MDNode::deleteTemporary(Temp);
 }
 
 typedef MetadataTest TrackingMDRefTest;

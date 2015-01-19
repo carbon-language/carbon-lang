@@ -319,13 +319,12 @@ static void CloneAliasScopeMetadata(CallSite CS, ValueToValueMapTy &VMap) {
 
   // Now we have a complete set of all metadata in the chains used to specify
   // the noalias scopes and the lists of those scopes.
-  SmallVector<MDTuple *, 16> DummyNodes;
+  SmallVector<TempMDTuple, 16> DummyNodes;
   DenseMap<const MDNode *, TrackingMDNodeRef> MDMap;
   for (SetVector<const MDNode *>::iterator I = MD.begin(), IE = MD.end();
        I != IE; ++I) {
-    MDTuple *Dummy = MDTuple::getTemporary(CalledFunc->getContext(), None);
-    DummyNodes.push_back(Dummy);
-    MDMap[*I].reset(Dummy);
+    DummyNodes.push_back(MDTuple::getTemporary(CalledFunc->getContext(), None));
+    MDMap[*I].reset(DummyNodes.back().get());
   }
 
   // Create new metadata nodes to replace the dummy nodes, replacing old
@@ -389,10 +388,6 @@ static void CloneAliasScopeMetadata(CallSite CS, ValueToValueMapTy &VMap) {
         NI->setMetadata(LLVMContext::MD_noalias, M);
     }
   }
-
-  // Now that everything has been replaced, delete the dummy nodes.
-  for (unsigned i = 0, ie = DummyNodes.size(); i != ie; ++i)
-    MDNode::deleteTemporary(DummyNodes[i]);
 }
 
 /// AddAliasScopeMetadata - If the inlined function has noalias arguments, then

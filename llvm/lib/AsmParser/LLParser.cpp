@@ -531,13 +531,13 @@ bool LLParser::ParseMDNodeID(MDNode *&Result) {
   }
 
   // Otherwise, create MDNode forward reference.
-  MDTuple *FwdNode = MDTuple::getTemporary(Context, None);
-  ForwardRefMDNodes[MID] = std::make_pair(FwdNode, Lex.getLoc());
+  auto &FwdRef = ForwardRefMDNodes[MID];
+  FwdRef = std::make_pair(MDTuple::getTemporary(Context, None), Lex.getLoc());
 
   if (NumberedMetadata.size() <= MID)
     NumberedMetadata.resize(MID+1);
-  NumberedMetadata[MID].reset(FwdNode);
-  Result = FwdNode;
+  Result = FwdRef.first.get();
+  NumberedMetadata[MID].reset(Result);
   return false;
 }
 
@@ -597,9 +597,7 @@ bool LLParser::ParseStandaloneMetadata() {
   // See if this was forward referenced, if so, handle it.
   auto FI = ForwardRefMDNodes.find(MetadataID);
   if (FI != ForwardRefMDNodes.end()) {
-    MDTuple *Temp = FI->second.first;
-    Temp->replaceAllUsesWith(Init);
-    MDNode::deleteTemporary(Temp);
+    FI->second.first->replaceAllUsesWith(Init);
     ForwardRefMDNodes.erase(FI);
 
     assert(NumberedMetadata[MetadataID] == Init && "Tracking VH didn't work");

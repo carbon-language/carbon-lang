@@ -651,6 +651,15 @@ public:
   }
 };
 
+template <class T>
+struct TempMDNodeDeleter {
+  inline void operator()(T *Node) const;
+};
+
+#define HANDLE_UNIQUABLE_LEAF(CLASS)                                           \
+  typedef std::unique_ptr<CLASS, TempMDNodeDeleter<CLASS>> Temp##CLASS;
+#include "llvm/IR/Metadata.def"
+
 //===----------------------------------------------------------------------===//
 /// \brief Tuple of metadata.
 class MDNode : public Metadata {
@@ -697,8 +706,8 @@ public:
                                      ArrayRef<Metadata *> MDs);
   static inline MDTuple *getDistinct(LLVMContext &Context,
                                      ArrayRef<Metadata *> MDs);
-  static inline MDTuple *getTemporary(LLVMContext &Context,
-                                      ArrayRef<Metadata *> MDs);
+  static inline TempMDTuple getTemporary(LLVMContext &Context,
+                                         ArrayRef<Metadata *> MDs);
 
   /// \brief Deallocate a node created by getTemporary.
   ///
@@ -884,8 +893,9 @@ public:
   /// For use in constructing cyclic MDNode structures. A temporary MDNode is
   /// not uniqued, may be RAUW'd, and must be manually deleted with
   /// deleteTemporary.
-  static MDTuple *getTemporary(LLVMContext &Context, ArrayRef<Metadata *> MDs) {
-    return getImpl(Context, MDs, Temporary);
+  static TempMDTuple getTemporary(LLVMContext &Context,
+                                  ArrayRef<Metadata *> MDs) {
+    return TempMDTuple(getImpl(Context, MDs, Temporary));
   }
 
   static bool classof(const Metadata *MD) {
@@ -906,8 +916,13 @@ MDTuple *MDNode::getIfExists(LLVMContext &Context, ArrayRef<Metadata *> MDs) {
 MDTuple *MDNode::getDistinct(LLVMContext &Context, ArrayRef<Metadata *> MDs) {
   return MDTuple::getDistinct(Context, MDs);
 }
-MDTuple *MDNode::getTemporary(LLVMContext &Context, ArrayRef<Metadata *> MDs) {
+TempMDTuple MDNode::getTemporary(LLVMContext &Context,
+                                 ArrayRef<Metadata *> MDs) {
   return MDTuple::getTemporary(Context, MDs);
+}
+template <class T>
+void TempMDNodeDeleter<T>::operator()(T *Node) const {
+  MDNode::deleteTemporary(Node);
 }
 
 /// \brief Debug location.
@@ -945,10 +960,11 @@ public:
                                  Metadata *InlinedAt = nullptr) {
     return getImpl(Context, Line, Column, Scope, InlinedAt, Distinct);
   }
-  static MDLocation *getTemporary(LLVMContext &Context, unsigned Line,
-                                  unsigned Column, Metadata *Scope,
-                                  Metadata *InlinedAt = nullptr) {
-    return getImpl(Context, Line, Column, Scope, InlinedAt, Temporary);
+  static TempMDLocation getTemporary(LLVMContext &Context, unsigned Line,
+                                     unsigned Column, Metadata *Scope,
+                                     Metadata *InlinedAt = nullptr) {
+    return TempMDLocation(
+        getImpl(Context, Line, Column, Scope, InlinedAt, Temporary));
   }
 
   unsigned getLine() const { return MDNodeSubclassData; }

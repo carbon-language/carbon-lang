@@ -541,9 +541,8 @@ void BitcodeReaderMDValueList::AssignValue(Metadata *MD, unsigned Idx) {
   }
 
   // If there was a forward reference to this value, replace it.
-  MDTuple *PrevMD = cast<MDTuple>(OldMD.get());
+  TempMDTuple PrevMD(cast<MDTuple>(OldMD.get()));
   PrevMD->replaceAllUsesWith(MD);
-  MDNode::deleteTemporary(PrevMD);
   --NumFwdRefs;
 }
 
@@ -557,7 +556,7 @@ Metadata *BitcodeReaderMDValueList::getValueFwdRef(unsigned Idx) {
   // Create and return a placeholder, which will later be RAUW'd.
   AnyFwdRefs = true;
   ++NumFwdRefs;
-  Metadata *MD = MDNode::getTemporary(Context, None);
+  Metadata *MD = MDNode::getTemporary(Context, None).release();
   MDValuePtrs[Idx].reset(MD);
   return MD;
 }
