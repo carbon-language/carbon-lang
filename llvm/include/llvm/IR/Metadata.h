@@ -721,7 +721,17 @@ public:
   void replaceOperandWith(unsigned I, Metadata *New);
 
   /// \brief Check if node is fully resolved.
-  bool isResolved() const;
+  ///
+  /// If \a isTemporary(), this always returns \c false; if \a isDistinct(),
+  /// this always returns \c true.
+  ///
+  /// If \a isUniqued(), returns \c true if this has already dropped RAUW
+  /// support (because all operands are resolved).
+  ///
+  /// As forward declarations are resolved, their containers should get
+  /// resolved automatically.  However, if this (or one of its operands) is
+  /// involved in a cycle, \a resolveCycles() needs to be called explicitly.
+  bool isResolved() const { return !Context.hasReplaceableUses(); }
 
   bool isUniqued() const { return Storage == Uniqued; }
   bool isDistinct() const { return Storage == Distinct; }
@@ -810,16 +820,6 @@ public:
     return MD->getMetadataID() == MDTupleKind ||
            MD->getMetadataID() == MDLocationKind;
   }
-
-  /// \brief Check whether any operands are forward declarations.
-  ///
-  /// Returns \c true as long as any operands (or their operands, etc.) are \a
-  /// MDNodeFwdDecl.
-  ///
-  /// As forward declarations are resolved, their containers should get
-  /// resolved automatically.  However, if this (or one of its operands) is
-  /// involved in a cycle, \a resolveCycles() needs to be called explicitly.
-  bool isResolved() const { return !Context.hasReplaceableUses(); }
 
   /// \brief Resolve cycles.
   ///

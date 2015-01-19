@@ -407,12 +407,6 @@ MDNode::MDNode(LLVMContext &Context, unsigned ID, StorageType Storage,
         make_unique<ReplaceableMetadataImpl>(Context));
 }
 
-bool MDNode::isResolved() const {
-  if (isa<MDNodeFwdDecl>(this))
-    return false;
-  return cast<UniquableMDNode>(this)->isResolved();
-}
-
 static bool isOperandUnresolved(Metadata *Op) {
   if (auto *N = dyn_cast_or_null<MDNode>(Op))
     return !N->isResolved();
