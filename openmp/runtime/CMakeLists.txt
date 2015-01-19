@@ -50,7 +50,7 @@ include(GetArchitecture) # get_architecture()
 
 # Build Configuration
 set(os_possible_values          lin mac win)
-set(arch_possible_values        32e 32 arm ppc64 aarch64 mic)
+set(arch_possible_values        32e 32 arm ppc64 ppc64le aarch64 mic)
 set(build_type_possible_values  release debug relwithdebinfo)
 set(omp_version_possible_values 40 30)
 set(lib_type_possible_values    normal profile stubs)
@@ -75,7 +75,7 @@ endif()
 get_architecture(detected_arch)
 
 set(os            ${temp_os}     CACHE STRING "The operating system to build for (lin/mac/win)")
-set(arch          ${detected_arch}   CACHE STRING "The architecture to build for (32e/32/arm/ppc64/aarch64/mic).  32e is Intel(R) 64 architecture, 32 is IA-32 architecture")
+set(arch          ${detected_arch}   CACHE STRING "The architecture to build for (32e/32/arm/ppc64/ppc64le/aarch64/mic).  32e is Intel(R) 64 architecture, 32 is IA-32 architecture")
 set(lib_type       normal        CACHE STRING "Performance,Profiling,Stubs library (normal/profile/stubs)")
 set(version        5             CACHE STRING "Produce libguide (version 4) or libiomp5 (version 5)")
 set(omp_version    40            CACHE STRING "The OpenMP version (40/30)")
@@ -165,6 +165,8 @@ set(IA32 FALSE)
 set(INTEL64 FALSE)
 set(ARM FALSE)
 set(AARCH64 FALSE)
+set(PPC64BE FALSE)
+set(PPC64LE FALSE)
 set(PPC64 FALSE)
 if("${arch}" STREQUAL "32")      # IA-32 architecture
     set(IA32 TRUE)
@@ -172,10 +174,14 @@ elseif("${arch}" STREQUAL "32e") # Intel(R) 64 architecture
     set(INTEL64 TRUE)
 elseif("${arch}" STREQUAL "arm") # ARM architecture
     set(ARM TRUE)
+elseif("${arch}" STREQUAL "ppc64") # PPC64BE architecture
+    set(PPC64BE TRUE)
+    set(PPC64 TRUE)
+elseif("${arch}" STREQUAL "ppc64le") # PPC64LE architecture
+    set(PPC64LE TRUE)
+    set(PPC64 TRUE)
 elseif("${arch}" STREQUAL "aarch64") # AARCH64 architecture
     set(AARCH64 TRUE)
-elseif("${arch}" STREQUAL "ppc64") # PPC64 architecture
-    set(PPC64 TRUE)
 elseif("${arch}" STREQUAL "mic") # Intel(R) Many Integrated Core Architecture
     set(MIC TRUE)
 endif()

@@ -379,7 +379,7 @@ ifeq "$(os)" "lin"
             ld-flags-extra += -lirc_pic
             endif
         endif
-        ifeq "$(filter 32 32e 64 ppc64,$(arch))" ""
+        ifeq "$(filter 32 32e 64 ppc64 ppc64le,$(arch))" ""
             ld-flags-extra += $(shell pkg-config --libs libffi)
         endif
     else
@@ -478,16 +478,13 @@ endif
 cpp-flags += -D KMP_LIBRARY_FILE=\"$(lib_file)\"
 cpp-flags += -D KMP_VERSION_MAJOR=$(VERSION)
 
-# customize ppc64 cache line size to 128, 64 otherwise
-ifeq "$(arch)" "ppc64"
-	cpp-flags += -D CACHE_LINE=128
-else 
-	cpp-flags += -D CACHE_LINE=64
-endif
-
-# customize aarch64 cache line size to 128, 64 otherwise magic won't happen
-# Just kidding.. can we have some documentation on this, please
-ifeq "$(arch)" "aarch64"
+# Customize ppc64 and aarch64 cache line size to 128, use 64 otherwise
+# Almost all data structures (kmp.h) are aligned to a cache line to reduce false sharing, thus
+# increasing performance.  For heavily accessed data structures (e.g., kmp_base_info), there are
+# members of the data structure that are grouped together according to their memory access 
+# pattern.  For example, readonly data is put on cache lines together. Then, on separate cachelines,
+# private data used by the working thread is put on its own cache lines. etc.
+ifneq "$(filter aarch64 ppc64 ppc64le,$(arch))" ""
 	cpp-flags += -D CACHE_LINE=128
 else 
 	cpp-flags += -D CACHE_LINE=64
@@ -498,8 +495,9 @@ cpp-flags += -D BUILD_PARALLEL_ORDERED
 cpp-flags += -D KMP_ASM_INTRINS
 cpp-flags += -D KMP_USE_INTERNODE_ALIGNMENT=0
 # Linux and MIC compile with version symbols
+# ppc64 and ppc64le architectures don't compile with version symbols
 ifneq "$(filter lin,$(os))" ""
-ifeq "$(filter ppc64,$(arch))" ""
+ifeq "$(filter ppc64 ppc64le,$(arch))" ""
     cpp-flags += -D KMP_USE_VERSION_SYMBOLS
 endif
 endif
@@ -623,9 +621,9 @@ ifneq "$(os)" "win"
     ifeq "$(arch)" "arm"
         z_Linux_asm$(obj) : \
 		    cpp-flags += -D KMP_ARCH_ARM
-    else ifeq "$(arch)" "ppc64" 
+    else ifneq "$(filter ppc64 ppc64le,$(arch))" ""
         z_Linux_asm$(obj) : \
-			cpp-flags += -D KMP_ARCH_PPC64		    
+			cpp-flags += -D KMP_ARCH_PPC64
     else ifeq "$(arch)" "aarch64"
         z_Linux_asm$(obj) : \                            
                         cpp-flags += -D KMP_ARCH_AARCH64
@@ -1471,9 +1469,12 @@ ifneq "$(filter %-dyna win-%,$(os)-$(LINK_TYPE))" ""
             td_exp += ld-linux-armhf.so.3
             td_exp += libgcc_s.so.1
         endif
-        ifeq "$(arch)" "ppc64"
+        ifneq "$(filter ppc64 ppc64le,$(arch))" ""
             td_exp += libc.so.6
             td_exp += ld64.so.1
+            # warning: this is for ppc64le, but as we do not currently
+            # distinguish it from ppc64, we need to add this dep here
+            td_exp += ld64.so.2
             td_exp += libgcc_s.so.1
         endif
         ifeq "$(arch)" "aarch"
@@ -1494,7 +1495,7 @@ ifneq "$(filter %-dyna win-%,$(os)-$(LINK_TYPE))" ""
         endif
 
         td_exp += libdl.so.2
-        ifeq "$(filter 32 32e 64 ppc64 mic,$(arch))" ""
+        ifeq "$(filter 32 32e 64 ppc64 ppc64le mic,$(arch))" ""
             td_exp += libffi.so.6
             td_exp += libffi.so.5
         endif

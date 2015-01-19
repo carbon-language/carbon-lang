@@ -75,8 +75,12 @@
 
 #define KMP_ARCH_X86        0
 #define KMP_ARCH_X86_64     0
-#define KMP_ARCH_PPC64      0
 #define KMP_ARCH_AARCH64    0
+#define KMP_ARCH_PPC64_BE   0
+#define KMP_ARCH_PPC64_LE   0
+
+#define KMP_ARCH_PPC64 (KMP_ARCH_PPC64_LE || KMP_ARCH_PPC64_BE)
+
 
 #ifdef _WIN32
 # undef KMP_OS_WINDOWS
@@ -141,8 +145,13 @@
 #  undef KMP_ARCH_X86
 #  define KMP_ARCH_X86 1
 # elif defined __powerpc64__
-#  undef KMP_ARCH_PPC64
-#  define KMP_ARCH_PPC64 1
+#  if defined __LITTLE_ENDIAN__
+#   undef KMP_ARCH_PPC64_LE
+#   define KMP_ARCH_PPC64_LE 1
+#  else
+#   undef KMP_ARCH_PPC64_BE
+#   define KMP_ARCH_PPC64_BE 1
+#  endif
 # elif defined __aarch64__           
 #  undef KMP_ARCH_AARCH64          
 #  define KMP_ARCH_AARCH64 1  

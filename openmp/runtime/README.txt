@@ -46,6 +46,8 @@ arch:        Architecture. By default, the build will attempt to
                  "32" for IA-32 architecture 
                  "32e" for Intel(R) 64 architecture
                  "mic" for Intel(R) Many Integrated Core Architecture
+                 "ppc64" for IBM(R) Power architecture (big endian)
+                 "ppc64le" for IBM(R) Power architecture (little endian)
 
              If "mic" is specified then "icc" will be used as the
 	     compiler, and appropriate k1om binutils will be used. The

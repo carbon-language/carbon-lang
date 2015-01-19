@@ -45,7 +45,7 @@ endif
 # Description:
 #     The function return printable name of specified architecture, IA-32 architecture or Intel(R) 64.
 #
-legal_arch = $(if $(filter 32,$(1)),IA-32,$(if $(filter 32e,$(1)),Intel(R) 64,$(if $(filter l1,$(1)),L1OM,$(if $(filter arm,$(1)),ARM,$(if $(filter ppc64,$(1)),PPC64,$(if $(filter aarch64,$(1)),AArch64,$(if $(filter mic,$(1)),Intel(R) Many Integrated Core Architecture,$(error Bad architecture specified: $(1)))))))))
+legal_arch = $(if $(filter 32,$(1)),IA-32,$(if $(filter 32e,$(1)),Intel(R) 64,$(if $(filter l1,$(1)),L1OM,$(if $(filter arm,$(1)),ARM,$(if $(filter ppc64,$(1)),PPC64,$(if $(filter ppc64le,$(1)),PPC64LE,$(if $(filter aarch64,$(1)),AArch64,$(if $(filter mic,$(1)),Intel(R) Many Integrated Core Architecture,$(error Bad architecture specified: $(1))))))))))
 
 # Synopsis:
 #     var_name = $(call check_variable,var,list)
@@ -128,13 +128,13 @@ endif
 # --------------------------------------------------------------------------------------------------
 
 os       := $(call check_variable,os,lin mac win)
-arch     := $(call check_variable,arch,32 32e 64 arm ppc64 aarch64 mic)
+arch     := $(call check_variable,arch,32 32e 64 arm ppc64 ppc64le aarch64 mic)
 ifeq "$(arch)" "mic" # We want the flavor of mic (knf, knc, knl, etc.)
     platform := $(os)_$(MIC_ARCH)
 else
     platform := $(os)_$(arch)
 endif
-platform := $(call check_variable,platform,lin_32 lin_32e lin_64 lin_arm lin_knc lin_knf mac_32 mac_32e win_32 win_32e win_64 lin_ppc64 lin_aarch64)
+platform := $(call check_variable,platform,lin_32 lin_32e lin_64 lin_arm lin_knc lin_knf mac_32 mac_32e win_32 win_32e win_64 lin_ppc64 lin_ppc64le lin_aarch64)
 # oa-opts means "os and arch options". They are passed to almost all perl scripts.
 oa-opts  := --os=$(os) --arch=$(arch)
 
