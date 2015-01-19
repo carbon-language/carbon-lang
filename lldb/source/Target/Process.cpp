@@ -3643,7 +3643,8 @@ Process::PrivateResume ()
         }
         else
         {
-            // Somebody wanted to run without running.  So generate a continue & a stopped event,
+            // Somebody wanted to run without running (e.g. we were faking a step from one frame of a set of inlined
+            // frames that share the same PC to another.)  So generate a continue & a stopped event,
             // and let the world handle them.
             if (log)
                 log->Printf ("Process::PrivateResume() asked to simulate a start & stop.");

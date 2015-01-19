@@ -678,13 +678,16 @@ public:
     bool
     IsLastResumeForUserExpression () const
     {
+        // If we haven't yet resumed the target, then it can't be for a user expression...
+        if (m_resume_id == 0)
+            return false;
+
         return m_resume_id == m_last_user_expression_resume;
     }
     
     void
     SetRunningUserExpression (bool on)
     {
-        // REMOVEME printf ("Setting running user expression %s at resume id %d - value: %d.\n", on ? "on" : "off", m_resume_id, m_running_user_expression);
         if (on)
             m_running_user_expression++;
         else

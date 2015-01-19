@@ -705,7 +705,11 @@ ExecutionContextRef::SetTargetPtr (Target* target, bool adopt_selected)
                     if (process_sp)
                     {
                         // Only fill in the thread and frame if our process is stopped
-                        if (StateIsStoppedState (process_sp->GetState(), true))
+                        // Don't just check the state, since we might be in the middle of
+                        // resuming.
+                        Process::StopLocker stop_locker;
+
+                        if (stop_locker.TryLock(&process_sp->GetRunLock()) && StateIsStoppedState (process_sp->GetState(), true))
                         {
                             lldb::ThreadSP thread_sp (process_sp->GetThreadList().GetSelectedThread());
                             if (!thread_sp)
