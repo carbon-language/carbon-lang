@@ -2953,16 +2953,7 @@ bool LLParser::ParseMDField(LocTy Loc, StringRef Name, MDField &Result) {
 }
 
 template <class ParserTy>
-bool LLParser::ParseMDFieldsImpl(ParserTy parseField, LocTy &ClosingLoc) {
-  assert(Lex.getKind() == lltok::MetadataVar && "Expected metadata type name");
-  Lex.Lex();
-
-  if (ParseToken(lltok::lparen, "expected '(' here"))
-    return true;
-  ClosingLoc = Lex.getLoc();
-  if (EatIfPresent(lltok::rparen))
-    return false;
-
+bool LLParser::ParseMDFieldsImplBody(ParserTy parseField) {
   do {
     if (Lex.getKind() != lltok::LabelStr)
       return TokError("expected field label here");
@@ -2970,6 +2961,20 @@ bool LLParser::ParseMDFieldsImpl(ParserTy parseField, LocTy &ClosingLoc) {
     if (parseField())
       return true;
   } while (EatIfPresent(lltok::comma));
+
+  return false;
+}
+
+template <class ParserTy>
+bool LLParser::ParseMDFieldsImpl(ParserTy parseField, LocTy &ClosingLoc) {
+  assert(Lex.getKind() == lltok::MetadataVar && "Expected metadata type name");
+  Lex.Lex();
+
+  if (ParseToken(lltok::lparen, "expected '(' here"))
+    return true;
+  if (Lex.getKind() != lltok::rparen)
+    if (ParseMDFieldsImplBody(parseField))
+      return true;
 
   ClosingLoc = Lex.getLoc();
   return ParseToken(lltok::rparen, "expected ')' here");
