@@ -291,16 +291,17 @@ BasicBlock *llvm::SplitCriticalEdge(TerminatorInst *TI, unsigned SuccNum,
             P->addBasicBlockToLoop(NewBB, *LI);
         }
       }
+
       // If TIBB is in a loop and DestBB is outside of that loop, we may need
       // to update LoopSimplify form and LCSSA form.
-      if (!TIL->contains(DestBB) &&
-          P->mustPreserveAnalysisID(LoopSimplifyID)) {
+      if (!TIL->contains(DestBB)) {
         assert(!TIL->contains(NewBB) &&
                "Split point for loop exit is contained in loop!");
 
         // Update LCSSA form in the newly created exit block.
-        if (PreserveLCSSA)
+        if (PreserveLCSSA) {
           createPHIsForSplitLoopExit(TIBB, NewBB, DestBB);
+        }
 
         // The only that we can break LoopSimplify form by splitting a critical
         // edge is if after the split there exists some edge from TIL to DestBB
@@ -333,13 +334,6 @@ BasicBlock *llvm::SplitCriticalEdge(TerminatorInst *TI, unsigned SuccNum,
             createPHIsForSplitLoopExit(LoopPreds, NewExitBB, DestBB);
         }
       }
-      // LCSSA form was updated above for the case where LoopSimplify is
-      // available, which means that all predecessors of loop exit blocks
-      // are within the loop. Without LoopSimplify form, it would be
-      // necessary to insert a new phi.
-      assert((!PreserveLCSSA || P->mustPreserveAnalysisID(LoopSimplifyID)) &&
-             "SplitCriticalEdge doesn't know how to update LCCSA form "
-             "without LoopSimplify!");
     }
   }
 
