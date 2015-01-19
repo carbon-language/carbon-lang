@@ -4728,9 +4728,10 @@ void LSRInstance::RewriteForPHI(PHINode *PN,
           // Split the critical edge.
           BasicBlock *NewBB = nullptr;
           if (!Parent->isLandingPad()) {
-            NewBB = SplitCriticalEdge(BB, Parent, P,
-                                      /*MergeIdenticalEdges=*/true,
-                                      /*DontDeleteUselessPhis=*/true);
+            NewBB = SplitCriticalEdge(BB, Parent,
+                                      CriticalEdgeSplittingOptions(&DT, &LI)
+                                          .setMergeIdenticalEdges()
+                                          .setDontDeleteUselessPHIs());
           } else {
             SmallVector<BasicBlock*, 2> NewBBs;
             SplitLandingPadPredecessors(Parent, BB, "", "", NewBBs,

@@ -199,7 +199,7 @@ bool SanitizerCoverageModule::runOnFunction(Function &F) {
   if (F.getName().find(".module_ctor") != std::string::npos)
     return false;  // Should not instrument sanitizer init functions.
   if (CoverageLevel >= 3)
-    SplitAllCriticalEdges(F, this);
+    SplitAllCriticalEdges(F);
   SmallVector<Instruction*, 8> IndirCalls;
   SmallVector<BasicBlock*, 16> AllBlocks;
   for (auto &BB : F) {

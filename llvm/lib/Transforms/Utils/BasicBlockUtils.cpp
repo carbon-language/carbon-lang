@@ -234,15 +234,20 @@ void llvm::ReplaceInstWithInst(Instruction *From, Instruction *To) {
 BasicBlock *llvm::SplitEdge(BasicBlock *BB, BasicBlock *Succ, Pass *P) {
   unsigned SuccNum = GetSuccessorNumber(BB, Succ);
 
-  // If this is a critical edge, let SplitCriticalEdge do it.
-  TerminatorInst *LatchTerm = BB->getTerminator();
-  if (SplitCriticalEdge(LatchTerm, SuccNum, P))
-    return LatchTerm->getSuccessor(SuccNum);
-
+  auto *AA = P->getAnalysisIfAvailable<AliasAnalysis>();
   auto *DTWP = P->getAnalysisIfAvailable<DominatorTreeWrapperPass>();
   auto *DT = DTWP ? &DTWP->getDomTree() : nullptr;
   auto *LIWP = P->getAnalysisIfAvailable<LoopInfoWrapperPass>();
   auto *LI = LIWP ? &LIWP->getLoopInfo() : nullptr;
+  bool PreserveLCSSA = P->mustPreserveAnalysisID(LCSSAID);
+  auto Options = CriticalEdgeSplittingOptions(AA, DT, LI);
+  if (PreserveLCSSA)
+    Options.setPreserveLCSSA();
+
+  // If this is a critical edge, let SplitCriticalEdge do it.
+  TerminatorInst *LatchTerm = BB->getTerminator();
+  if (SplitCriticalEdge(LatchTerm, SuccNum, Options))
+    return LatchTerm->getSuccessor(SuccNum);
 
   // If the edge isn't critical, then BB has a single successor or Succ has a
   // single pred.  Split the block.
@@ -261,13 +266,15 @@ BasicBlock *llvm::SplitEdge(BasicBlock *BB, BasicBlock *Succ, Pass *P) {
   return SplitBlock(BB, BB->getTerminator(), DT, LI);
 }
 
-unsigned llvm::SplitAllCriticalEdges(Function &F, Pass *P) {
+unsigned
+llvm::SplitAllCriticalEdges(Function &F,
+                            const CriticalEdgeSplittingOptions &Options) {
   unsigned NumBroken = 0;
   for (Function::iterator I = F.begin(), E = F.end(); I != E; ++I) {
     TerminatorInst *TI = I->getTerminator();
     if (TI->getNumSuccessors() > 1 && !isa<IndirectBrInst>(TI))
       for (unsigned i = 0, e = TI->getNumSuccessors(); i != e; ++i)
-        if (SplitCriticalEdge(TI, i, P))
+        if (SplitCriticalEdge(TI, i, Options))
           ++NumBroken;
   }
   return NumBroken;

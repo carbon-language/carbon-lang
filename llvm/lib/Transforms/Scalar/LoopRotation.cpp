@@ -519,7 +519,9 @@ bool LoopRotate::rotateLoop(Loop *L, bool SimplifiedLatch) {
     // Right now OrigPreHeader has two successors, NewHeader and ExitBlock, and
     // thus is not a preheader anymore.
     // Split the edge to form a real preheader.
-    BasicBlock *NewPH = SplitCriticalEdge(OrigPreheader, NewHeader, this);
+    BasicBlock *NewPH = SplitCriticalEdge(
+        OrigPreheader, NewHeader,
+        CriticalEdgeSplittingOptions(DT, LI).setPreserveLCSSA());
     NewPH->setName(NewHeader->getName() + ".lr.ph");
 
     // Preserve canonical loop form, which means that 'Exit' should have only
@@ -536,7 +538,8 @@ bool LoopRotate::rotateLoop(Loop *L, bool SimplifiedLatch) {
       if (!PredLoop || PredLoop->contains(Exit))
         continue;
       SplitLatchEdge |= L->getLoopLatch() == *PI;
-      BasicBlock *ExitSplit = SplitCriticalEdge(*PI, Exit, this);
+      BasicBlock *ExitSplit = SplitCriticalEdge(
+          *PI, Exit, CriticalEdgeSplittingOptions(DT, LI).setPreserveLCSSA());
       ExitSplit->moveBefore(Exit);
     }
     assert(SplitLatchEdge &&
