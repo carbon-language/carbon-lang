@@ -703,7 +703,15 @@ INTERCEPTOR(int, __fxstat64, int magic, int fd, void *buf) {
 #define MSAN_MAYBE_INTERCEPT___FXSTAT64
 #endif
 
-#if !SANITIZER_FREEBSD
+#if SANITIZER_FREEBSD
+INTERCEPTOR(int, fstatat, int fd, char *pathname, void *buf, int flags) {
+  ENSURE_MSAN_INITED();
+  int res = REAL(fstatat)(fd, pathname, buf, flags);
+  if (!res) __msan_unpoison(buf, __sanitizer::struct_stat_sz);
+  return res;
+}
+# define MSAN_INTERCEPT_FSTATAT INTERCEPT_FUNCTION(fstatat)
+#else
 INTERCEPTOR(int, __fxstatat, int magic, int fd, char *pathname, void *buf,
             int flags) {
   ENSURE_MSAN_INITED();
@@ -711,9 +719,7 @@ INTERCEPTOR(int, __fxstatat, int magic, int fd, char *pathname, void *buf,
   if (!res) __msan_unpoison(buf, __sanitizer::struct_stat_sz);
   return res;
 }
-#define MSAN_MAYBE_INTERCEPT___FXSTATAT INTERCEPT_FUNCTION(__fxstatat)
-#else
-#define MSAN_MAYBE_INTERCEPT___FXSTATAT
+# define MSAN_INTERCEPT_FSTATAT INTERCEPT_FUNCTION(__fxstatat)
 #endif
 
 #if !SANITIZER_FREEBSD
@@ -729,7 +735,16 @@ INTERCEPTOR(int, __fxstatat64, int magic, int fd, char *pathname, void *buf,
 #define MSAN_MAYBE_INTERCEPT___FXSTATAT64
 #endif
 
-#if !SANITIZER_FREEBSD
+#if SANITIZER_FREEBSD
+INTERCEPTOR(int, stat, char *path, void *buf) {
+  ENSURE_MSAN_INITED();
+  int res = REAL(stat)(path, buf);
+  if (!res)
+    __msan_unpoison(buf, __sanitizer::struct_stat_sz);
+  return res;
+}
+# define MSAN_INTERCEPT_STAT INTERCEPT_FUNCTION(stat)
+#else
 INTERCEPTOR(int, __xstat, int magic, char *path, void *buf) {
   ENSURE_MSAN_INITED();
   int res = REAL(__xstat)(magic, path, buf);
@@ -737,9 +752,7 @@ INTERCEPTOR(int, __xstat, int magic, char *path, void *buf) {
     __msan_unpoison(buf, __sanitizer::struct_stat_sz);
   return res;
 }
-#define MSAN_MAYBE_INTERCEPT___XSTAT INTERCEPT_FUNCTION(__xstat)
-#else
-#define MSAN_MAYBE_INTERCEPT___XSTAT
+# define MSAN_INTERCEPT_STAT INTERCEPT_FUNCTION(__xstat)
 #endif
 
 #if !SANITIZER_FREEBSD
@@ -1634,8 +1647,8 @@ void InitializeInterceptors() {
   INTERCEPT_FUNCTION(gettimeofday);
   INTERCEPT_FUNCTION(fcvt);
   MSAN_MAYBE_INTERCEPT___FXSTAT;
-  MSAN_MAYBE_INTERCEPT___FXSTATAT;
-  MSAN_MAYBE_INTERCEPT___XSTAT;
+  MSAN_INTERCEPT_FSTATAT;
+  MSAN_INTERCEPT_STAT;
   MSAN_MAYBE_INTERCEPT___LXSTAT;
   MSAN_MAYBE_INTERCEPT___FXSTAT64;
   MSAN_MAYBE_INTERCEPT___FXSTATAT64;
