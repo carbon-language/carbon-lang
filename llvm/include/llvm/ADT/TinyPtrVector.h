@@ -116,6 +116,15 @@ public:
     return *Val.template get<VecTy*>();
   }
 
+  // implicit conversion operator to MutableArrayRef.
+  operator MutableArrayRef<EltTy>() {
+    if (Val.isNull())
+      return None;
+    if (Val.template is<EltTy>())
+      return *Val.getAddrOfPtr1();
+    return *Val.template get<VecTy*>();
+  }
+
   bool empty() const {
     // This vector can be empty if it contains no element, or if it
     // contains a pointer to an empty vector.
