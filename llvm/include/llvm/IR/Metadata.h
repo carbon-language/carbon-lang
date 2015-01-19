@@ -73,9 +73,6 @@ protected:
   }
   ~Metadata() {}
 
-  /// \brief Store this in a big non-uniqued untyped bucket.
-  bool isStoredDistinctInContext() const { return Storage == Distinct; }
-
   /// \brief Default handling of a changed operand, which asserts.
   ///
   /// If subclasses pass themselves in as owners to a tracking node reference,
