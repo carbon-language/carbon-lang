@@ -651,13 +651,12 @@ public:
   }
 };
 
-template <class T>
 struct TempMDNodeDeleter {
-  inline void operator()(T *Node) const;
+  inline void operator()(MDNode *Node) const;
 };
 
 #define HANDLE_UNIQUABLE_LEAF(CLASS)                                           \
-  typedef std::unique_ptr<CLASS, TempMDNodeDeleter<CLASS>> Temp##CLASS;
+  typedef std::unique_ptr<CLASS, TempMDNodeDeleter> Temp##CLASS;
 #include "llvm/IR/Metadata.def"
 
 //===----------------------------------------------------------------------===//
@@ -921,8 +920,8 @@ TempMDTuple MDNode::getTemporary(LLVMContext &Context,
                                  ArrayRef<Metadata *> MDs) {
   return MDTuple::getTemporary(Context, MDs);
 }
-template <class T>
-void TempMDNodeDeleter<T>::operator()(T *Node) const {
+
+void TempMDNodeDeleter::operator()(MDNode *Node) const {
   MDNode::deleteTemporary(Node);
 }
 
