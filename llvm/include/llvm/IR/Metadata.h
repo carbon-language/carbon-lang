@@ -693,11 +693,11 @@ protected:
   MDOperand *mutable_end() { return reinterpret_cast<MDOperand *>(this); }
 
 public:
-  static inline MDNode *get(LLVMContext &Context, ArrayRef<Metadata *> MDs);
-  static inline MDNode *getIfExists(LLVMContext &Context,
-                                    ArrayRef<Metadata *> MDs);
-  static inline MDNode *getDistinct(LLVMContext &Context,
-                                    ArrayRef<Metadata *> MDs);
+  static inline MDTuple *get(LLVMContext &Context, ArrayRef<Metadata *> MDs);
+  static inline MDTuple *getIfExists(LLVMContext &Context,
+                                     ArrayRef<Metadata *> MDs);
+  static inline MDTuple *getDistinct(LLVMContext &Context,
+                                     ArrayRef<Metadata *> MDs);
 
   /// \brief Return a temporary MDNode
   ///
@@ -881,13 +881,13 @@ private:
   void eraseFromStoreImpl();
 };
 
-MDNode *MDNode::get(LLVMContext &Context, ArrayRef<Metadata *> MDs) {
+MDTuple *MDNode::get(LLVMContext &Context, ArrayRef<Metadata *> MDs) {
   return MDTuple::get(Context, MDs);
 }
-MDNode *MDNode::getIfExists(LLVMContext &Context, ArrayRef<Metadata *> MDs) {
+MDTuple *MDNode::getIfExists(LLVMContext &Context, ArrayRef<Metadata *> MDs) {
   return MDTuple::getIfExists(Context, MDs);
 }
-MDNode *MDNode::getDistinct(LLVMContext &Context, ArrayRef<Metadata *> MDs) {
+MDTuple *MDNode::getDistinct(LLVMContext &Context, ArrayRef<Metadata *> MDs) {
   return MDTuple::getDistinct(Context, MDs);
 }
 
