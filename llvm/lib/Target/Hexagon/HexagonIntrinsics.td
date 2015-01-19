@@ -21,6 +21,10 @@ class T_RRR_pat <InstHexagon MI, Intrinsic IntID>
   : Pat <(IntID I32:$Rs, I32:$Rt, I32:$Ru),
          (MI I32:$Rs, I32:$Rt, I32:$Ru)>;
 
+class T_PRR_pat <InstHexagon MI, Intrinsic IntID>
+  : Pat <(IntID I64:$Rs, I32:$Rt, I32:$Ru),
+         (MI DoubleRegs:$Rs, I32:$Rt, I32:$Ru)>;
+
 //===----------------------------------------------------------------------===//
 // MPYS / Multipy signed/unsigned halfwords
 //Rd=mpy[u](Rs.[H|L],Rt.[H|L])[:<<1][:rnd][:sat]
@@ -164,6 +168,52 @@ def : T_RR_pat <M2_mpyud_hh_s1, int_hexagon_M2_mpyud_hh_s1>;
 def : T_RR_pat <M2_mpyud_hl_s1, int_hexagon_M2_mpyud_hl_s1>;
 def : T_RR_pat <M2_mpyud_lh_s1, int_hexagon_M2_mpyud_lh_s1>;
 def : T_RR_pat <M2_mpyud_ll_s1, int_hexagon_M2_mpyud_ll_s1>;
+
+//===----------------------------------------------------------------------===//
+// MPYS / Multipy signed/unsigned halfwords and add/subtract the
+// result from the 64-bit destination register.
+//Rxx [-+]= mpy[u](Rs.[H|L],Rt.[H|L])[:<<1][:sat]
+//===----------------------------------------------------------------------===//
+
+def : T_PRR_pat <M2_mpyd_acc_hh_s0, int_hexagon_M2_mpyd_acc_hh_s0>;
+def : T_PRR_pat <M2_mpyd_acc_hl_s0, int_hexagon_M2_mpyd_acc_hl_s0>;
+def : T_PRR_pat <M2_mpyd_acc_lh_s0, int_hexagon_M2_mpyd_acc_lh_s0>;
+def : T_PRR_pat <M2_mpyd_acc_ll_s0, int_hexagon_M2_mpyd_acc_ll_s0>;
+
+def : T_PRR_pat <M2_mpyd_acc_hh_s1, int_hexagon_M2_mpyd_acc_hh_s1>;
+def : T_PRR_pat <M2_mpyd_acc_hl_s1, int_hexagon_M2_mpyd_acc_hl_s1>;
+def : T_PRR_pat <M2_mpyd_acc_lh_s1, int_hexagon_M2_mpyd_acc_lh_s1>;
+def : T_PRR_pat <M2_mpyd_acc_ll_s1, int_hexagon_M2_mpyd_acc_ll_s1>;
+
+def : T_PRR_pat <M2_mpyd_nac_hh_s0, int_hexagon_M2_mpyd_nac_hh_s0>;
+def : T_PRR_pat <M2_mpyd_nac_hl_s0, int_hexagon_M2_mpyd_nac_hl_s0>;
+def : T_PRR_pat <M2_mpyd_nac_lh_s0, int_hexagon_M2_mpyd_nac_lh_s0>;
+def : T_PRR_pat <M2_mpyd_nac_ll_s0, int_hexagon_M2_mpyd_nac_ll_s0>;
+
+def : T_PRR_pat <M2_mpyd_nac_hh_s1, int_hexagon_M2_mpyd_nac_hh_s1>;
+def : T_PRR_pat <M2_mpyd_nac_hl_s1, int_hexagon_M2_mpyd_nac_hl_s1>;
+def : T_PRR_pat <M2_mpyd_nac_lh_s1, int_hexagon_M2_mpyd_nac_lh_s1>;
+def : T_PRR_pat <M2_mpyd_nac_ll_s1, int_hexagon_M2_mpyd_nac_ll_s1>;
+
+def : T_PRR_pat <M2_mpyud_acc_hh_s0, int_hexagon_M2_mpyud_acc_hh_s0>;
+def : T_PRR_pat <M2_mpyud_acc_hl_s0, int_hexagon_M2_mpyud_acc_hl_s0>;
+def : T_PRR_pat <M2_mpyud_acc_lh_s0, int_hexagon_M2_mpyud_acc_lh_s0>;
+def : T_PRR_pat <M2_mpyud_acc_ll_s0, int_hexagon_M2_mpyud_acc_ll_s0>;
+
+def : T_PRR_pat <M2_mpyud_acc_hh_s1, int_hexagon_M2_mpyud_acc_hh_s1>;
+def : T_PRR_pat <M2_mpyud_acc_hl_s1, int_hexagon_M2_mpyud_acc_hl_s1>;
+def : T_PRR_pat <M2_mpyud_acc_lh_s1, int_hexagon_M2_mpyud_acc_lh_s1>;
+def : T_PRR_pat <M2_mpyud_acc_ll_s1, int_hexagon_M2_mpyud_acc_ll_s1>;
+
+def : T_PRR_pat <M2_mpyud_nac_hh_s0, int_hexagon_M2_mpyud_nac_hh_s0>;
+def : T_PRR_pat <M2_mpyud_nac_hl_s0, int_hexagon_M2_mpyud_nac_hl_s0>;
+def : T_PRR_pat <M2_mpyud_nac_lh_s0, int_hexagon_M2_mpyud_nac_lh_s0>;
+def : T_PRR_pat <M2_mpyud_nac_ll_s0, int_hexagon_M2_mpyud_nac_ll_s0>;
+
+def : T_PRR_pat <M2_mpyud_nac_hh_s1, int_hexagon_M2_mpyud_nac_hh_s1>;
+def : T_PRR_pat <M2_mpyud_nac_hl_s1, int_hexagon_M2_mpyud_nac_hl_s1>;
+def : T_PRR_pat <M2_mpyud_nac_lh_s1, int_hexagon_M2_mpyud_nac_lh_s1>;
+def : T_PRR_pat <M2_mpyud_nac_ll_s1, int_hexagon_M2_mpyud_nac_ll_s1>;
 
 //
 // ALU 32 types.
@@ -2712,147 +2762,6 @@ def HEXAGON_M2_dpmpyss_acc_s0:
   di_MInst_disisi_acc             <"mpy",      int_hexagon_M2_dpmpyss_acc_s0>;
 def HEXAGON_M2_dpmpyss_nac_s0:
   di_MInst_disisi_nac             <"mpy",      int_hexagon_M2_dpmpyss_nac_s0>;
-
-
-/********************************************************************
-*            MTYPE/MPYS                                             *
-*********************************************************************/
-
-//Rx+=mpy(Rs.[H|L],Rt.[H|L:<<0|:<<1]
-def HEXAGON_M2_mpyd_acc_hh_s0:
-  di_MInst_disisi_acc_hh          <"mpy",    int_hexagon_M2_mpyd_acc_hh_s0>;
-def HEXAGON_M2_mpyd_acc_hh_s1:
-  di_MInst_disisi_acc_hh_s1       <"mpy",    int_hexagon_M2_mpyd_acc_hh_s1>;
-
-def HEXAGON_M2_mpyd_acc_hl_s0:
-  di_MInst_disisi_acc_hl          <"mpy",    int_hexagon_M2_mpyd_acc_hl_s0>;
-def HEXAGON_M2_mpyd_acc_hl_s1:
-  di_MInst_disisi_acc_hl_s1       <"mpy",    int_hexagon_M2_mpyd_acc_hl_s1>;
-
-def HEXAGON_M2_mpyd_acc_lh_s0:
-  di_MInst_disisi_acc_lh          <"mpy",    int_hexagon_M2_mpyd_acc_lh_s0>;
-def HEXAGON_M2_mpyd_acc_lh_s1:
-  di_MInst_disisi_acc_lh_s1       <"mpy",    int_hexagon_M2_mpyd_acc_lh_s1>;
-
-def HEXAGON_M2_mpyd_acc_ll_s0:
-  di_MInst_disisi_acc_ll          <"mpy",    int_hexagon_M2_mpyd_acc_ll_s0>;
-def HEXAGON_M2_mpyd_acc_ll_s1:
-  di_MInst_disisi_acc_ll_s1       <"mpy",    int_hexagon_M2_mpyd_acc_ll_s1>;
-
-//Rx-=mpy(Rs.[H|L],Rt.[H|L:<<0|:<<1]
-def HEXAGON_M2_mpyd_nac_hh_s0:
-  di_MInst_disisi_nac_hh          <"mpy",    int_hexagon_M2_mpyd_nac_hh_s0>;
-def HEXAGON_M2_mpyd_nac_hh_s1:
-  di_MInst_disisi_nac_hh_s1       <"mpy",    int_hexagon_M2_mpyd_nac_hh_s1>;
-
-def HEXAGON_M2_mpyd_nac_hl_s0:
-  di_MInst_disisi_nac_hl          <"mpy",    int_hexagon_M2_mpyd_nac_hl_s0>;
-def HEXAGON_M2_mpyd_nac_hl_s1:
-  di_MInst_disisi_nac_hl_s1       <"mpy",    int_hexagon_M2_mpyd_nac_hl_s1>;
-
-def HEXAGON_M2_mpyd_nac_lh_s0:
-  di_MInst_disisi_nac_lh          <"mpy",    int_hexagon_M2_mpyd_nac_lh_s0>;
-def HEXAGON_M2_mpyd_nac_lh_s1:
-  di_MInst_disisi_nac_lh_s1       <"mpy",    int_hexagon_M2_mpyd_nac_lh_s1>;
-
-def HEXAGON_M2_mpyd_nac_ll_s0:
-  di_MInst_disisi_nac_ll          <"mpy",    int_hexagon_M2_mpyd_nac_ll_s0>;
-def HEXAGON_M2_mpyd_nac_ll_s1:
-  di_MInst_disisi_nac_ll_s1       <"mpy",    int_hexagon_M2_mpyd_nac_ll_s1>;
-
-// MTYPE / MPYS / Scalar 16x16 multiply unsigned.
-//Rd=mpyu(Rs.[H|L],Rt.[H|L])[:<<0|:<<1]
-def HEXAGON_M2_mpyu_hh_s0:
-  si_MInst_sisi_hh                <"mpyu",    int_hexagon_M2_mpyu_hh_s0>;
-def HEXAGON_M2_mpyu_hh_s1:
-  si_MInst_sisi_hh_s1             <"mpyu",    int_hexagon_M2_mpyu_hh_s1>;
-def HEXAGON_M2_mpyu_hl_s0:
-  si_MInst_sisi_hl                <"mpyu",    int_hexagon_M2_mpyu_hl_s0>;
-def HEXAGON_M2_mpyu_hl_s1:
-  si_MInst_sisi_hl_s1             <"mpyu",    int_hexagon_M2_mpyu_hl_s1>;
-def HEXAGON_M2_mpyu_lh_s0:
-  si_MInst_sisi_lh                <"mpyu",    int_hexagon_M2_mpyu_lh_s0>;
-def HEXAGON_M2_mpyu_lh_s1:
-  si_MInst_sisi_lh_s1             <"mpyu",    int_hexagon_M2_mpyu_lh_s1>;
-def HEXAGON_M2_mpyu_ll_s0:
-  si_MInst_sisi_ll                <"mpyu",    int_hexagon_M2_mpyu_ll_s0>;
-def HEXAGON_M2_mpyu_ll_s1:
-  si_MInst_sisi_ll_s1             <"mpyu",    int_hexagon_M2_mpyu_ll_s1>;
-
-//Rdd=mpyu(Rs.[H|L],Rt.[H|L])[:<<0|:<<1]
-def HEXAGON_M2_mpyud_hh_s0:
-  di_MInst_sisi_hh                <"mpyu",    int_hexagon_M2_mpyud_hh_s0>;
-def HEXAGON_M2_mpyud_hh_s1:
-  di_MInst_sisi_hh_s1             <"mpyu",    int_hexagon_M2_mpyud_hh_s1>;
-def HEXAGON_M2_mpyud_hl_s0:
-  di_MInst_sisi_hl                <"mpyu",    int_hexagon_M2_mpyud_hl_s0>;
-def HEXAGON_M2_mpyud_hl_s1:
-  di_MInst_sisi_hl_s1             <"mpyu",    int_hexagon_M2_mpyud_hl_s1>;
-def HEXAGON_M2_mpyud_lh_s0:
-  di_MInst_sisi_lh                <"mpyu",    int_hexagon_M2_mpyud_lh_s0>;
-def HEXAGON_M2_mpyud_lh_s1:
-  di_MInst_sisi_lh_s1             <"mpyu",    int_hexagon_M2_mpyud_lh_s1>;
-def HEXAGON_M2_mpyud_ll_s0:
-  di_MInst_sisi_ll                <"mpyu",    int_hexagon_M2_mpyud_ll_s0>;
-def HEXAGON_M2_mpyud_ll_s1:
-  di_MInst_sisi_ll_s1             <"mpyu",    int_hexagon_M2_mpyud_ll_s1>;
-
-//Rd+=mpyu(Rs.[H|L],Rt.[H|L])[:<<0|:<<1]
-def HEXAGON_M2_mpyu_acc_hh_s0:
-  si_MInst_sisisi_acc_hh            <"mpyu",    int_hexagon_M2_mpyu_acc_hh_s0>;
-def HEXAGON_M2_mpyu_acc_hh_s1:
-  si_MInst_sisisi_acc_hh_s1         <"mpyu",    int_hexagon_M2_mpyu_acc_hh_s1>;
-def HEXAGON_M2_mpyu_acc_hl_s0:
-  si_MInst_sisisi_acc_hl            <"mpyu",    int_hexagon_M2_mpyu_acc_hl_s0>;
-def HEXAGON_M2_mpyu_acc_hl_s1:
-  si_MInst_sisisi_acc_hl_s1         <"mpyu",    int_hexagon_M2_mpyu_acc_hl_s1>;
-def HEXAGON_M2_mpyu_acc_lh_s0:
-  si_MInst_sisisi_acc_lh            <"mpyu",    int_hexagon_M2_mpyu_acc_lh_s0>;
-def HEXAGON_M2_mpyu_acc_lh_s1:
-  si_MInst_sisisi_acc_lh_s1         <"mpyu",    int_hexagon_M2_mpyu_acc_lh_s1>;
-
-//Rd+=mpyu(Rs.[H|L],Rt.[H|L])[:<<0|:<<1]
-def HEXAGON_M2_mpyu_nac_hh_s0:
-  si_MInst_sisisi_nac_hh            <"mpyu",    int_hexagon_M2_mpyu_nac_hh_s0>;
-def HEXAGON_M2_mpyu_nac_hh_s1:
-  si_MInst_sisisi_nac_hh_s1         <"mpyu",    int_hexagon_M2_mpyu_nac_hh_s1>;
-def HEXAGON_M2_mpyu_nac_hl_s0:
-  si_MInst_sisisi_nac_hl            <"mpyu",    int_hexagon_M2_mpyu_nac_hl_s0>;
-def HEXAGON_M2_mpyu_nac_hl_s1:
-  si_MInst_sisisi_nac_hl_s1         <"mpyu",    int_hexagon_M2_mpyu_nac_hl_s1>;
-def HEXAGON_M2_mpyu_nac_lh_s0:
-  si_MInst_sisisi_nac_lh            <"mpyu",    int_hexagon_M2_mpyu_nac_lh_s0>;
-def HEXAGON_M2_mpyu_nac_lh_s1:
-  si_MInst_sisisi_nac_lh_s1         <"mpyu",    int_hexagon_M2_mpyu_nac_lh_s1>;
-
-//Rdd+=mpyu(Rs.[H|L],Rt.[H|L])[:<<0|:<<1]
-def HEXAGON_M2_mpyud_acc_hh_s0:
-  di_MInst_disisi_acc_hh            <"mpyu", int_hexagon_M2_mpyud_acc_hh_s0>;
-def HEXAGON_M2_mpyud_acc_hh_s1:
-  di_MInst_disisi_acc_hh_s1         <"mpyu", int_hexagon_M2_mpyud_acc_hh_s1>;
-def HEXAGON_M2_mpyud_acc_hl_s0:
-  di_MInst_disisi_acc_hl            <"mpyu", int_hexagon_M2_mpyud_acc_hl_s0>;
-def HEXAGON_M2_mpyud_acc_hl_s1:
-  di_MInst_disisi_acc_hl_s1         <"mpyu", int_hexagon_M2_mpyud_acc_hl_s1>;
-def HEXAGON_M2_mpyud_acc_lh_s0:
-  di_MInst_disisi_acc_lh            <"mpyu", int_hexagon_M2_mpyud_acc_lh_s0>;
-def HEXAGON_M2_mpyud_acc_lh_s1:
-  di_MInst_disisi_acc_lh_s1         <"mpyu", int_hexagon_M2_mpyud_acc_lh_s1>;
-
-//Rdd-=mpyu(Rs.[H|L],Rt.[H|L])[:<<0|:<<1]
-def HEXAGON_M2_mpyud_nac_hh_s0:
-  di_MInst_disisi_nac_hh            <"mpyu", int_hexagon_M2_mpyud_nac_hh_s0>;
-def HEXAGON_M2_mpyud_nac_hh_s1:
-  di_MInst_disisi_nac_hh_s1         <"mpyu", int_hexagon_M2_mpyud_nac_hh_s1>;
-def HEXAGON_M2_mpyud_nac_hl_s0:
-  di_MInst_disisi_nac_hl            <"mpyu", int_hexagon_M2_mpyud_nac_hl_s0>;
-def HEXAGON_M2_mpyud_nac_hl_s1:
-  di_MInst_disisi_nac_hl_s1         <"mpyu", int_hexagon_M2_mpyud_nac_hl_s1>;
-def HEXAGON_M2_mpyud_nac_lh_s0:
-  di_MInst_disisi_nac_lh            <"mpyu", int_hexagon_M2_mpyud_nac_lh_s0>;
-def HEXAGON_M2_mpyud_nac_lh_s1:
-  di_MInst_disisi_nac_lh_s1         <"mpyu", int_hexagon_M2_mpyud_nac_lh_s1>;
-
 
 /********************************************************************
 *            MTYPE/VB                                               *
