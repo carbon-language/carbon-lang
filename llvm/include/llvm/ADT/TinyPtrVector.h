@@ -25,11 +25,14 @@ namespace llvm {
 template <typename EltTy>
 class TinyPtrVector {
 public:
-  typedef llvm::SmallVector<EltTy, 4> VecTy;
-  typedef typename VecTy::value_type value_type;
+  using VecTy = llvm::SmallVector<EltTy, 4>;
+  using value_type = typename VecTy::value_type;
+  using PtrUnion = llvm::PointerUnion<EltTy, VecTy *>;
 
-  llvm::PointerUnion<EltTy, VecTy*> Val;
+private:
+  PtrUnion Val;
 
+public:
   TinyPtrVector() {}
   ~TinyPtrVector() {
     if (VecTy *V = Val.template dyn_cast<VecTy*>())
@@ -96,12 +99,13 @@ public:
     return *this;
   }
 
-  /// Constructor from a single element.
-  explicit TinyPtrVector(EltTy Elt) : Val(Elt) {}
-
   /// Constructor from an ArrayRef.
+  ///
+  /// This also is a constructor for individual array elements due to the single
+  /// element constructor for ArrayRef.
   explicit TinyPtrVector(ArrayRef<EltTy> Elts)
-      : Val(new VecTy(Elts.begin(), Elts.end())) {}
+      : Val(Elts.size() == 1 ? PtrUnion(Elts[0])
+                             : PtrUnion(new VecTy(Elts.begin(), Elts.end()))) {}
 
   // implicit conversion operator to ArrayRef.
   operator ArrayRef<EltTy>() const {
