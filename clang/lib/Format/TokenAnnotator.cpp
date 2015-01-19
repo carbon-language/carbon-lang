@@ -838,10 +838,8 @@ private:
                (!Current.Previous || Current.Previous->isNot(tok::l_square))) {
       Current.Type = TT_BinaryOperator;
     } else if (Current.is(tok::comment)) {
-      if (Current.TokenText.startswith("//"))
-        Current.Type = TT_LineComment;
-      else
-        Current.Type = TT_BlockComment;
+      Current.Type =
+          Current.TokenText.startswith("/*") ? TT_BlockComment : TT_LineComment;
     } else if (Current.is(tok::r_paren)) {
       if (rParenEndsCast(Current))
         Current.Type = TT_CastRParen;

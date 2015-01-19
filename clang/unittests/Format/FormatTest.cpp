@@ -1035,6 +1035,9 @@ TEST_F(FormatTest, UnderstandsSingleLineComments) {
                    "     // spanning two lines\n"
                    " x + 3) {\n"
                    "}"));
+
+  verifyNoCrash("/\\\n/");
+  verifyNoCrash("/\\\n* */");
 }
 
 TEST_F(FormatTest, KeepsParameterWithTrailingCommentsOnTheirOwnLine) {
