@@ -1,9 +1,9 @@
 set(LLVM_LINK_COMPONENTS
   Core
   ExecutionEngine
+  MCJIT
   Support
   native
-  mcjit
   )
 
 set(LLVM_REQUIRES_RTTI 1)
