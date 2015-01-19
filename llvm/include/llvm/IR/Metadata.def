@@ -12,8 +12,8 @@
 //===----------------------------------------------------------------------===//
 
 #if !(defined HANDLE_METADATA || defined HANDLE_METADATA_LEAF ||               \
-      defined HANDLE_METADATA_BRANCH || defined HANDLE_UNIQUABLE_LEAF ||       \
-      defined HANDLE_UNIQUABLE_BRANCH)
+      defined HANDLE_METADATA_BRANCH || defined HANDLE_MDNODE_LEAF ||          \
+      defined HANDLE_MDNODE_BRANCH)
 #error "Missing macro definition of HANDLE_METADATA*"
 #endif
 
@@ -32,27 +32,26 @@
 #define HANDLE_METADATA_BRANCH(CLASS) HANDLE_METADATA(CLASS)
 #endif
 
-// Handler for leaf nodes under UniquableMDNode.
-#ifndef HANDLE_UNIQUABLE_LEAF
-#define HANDLE_UNIQUABLE_LEAF(CLASS) HANDLE_METADATA_LEAF(CLASS)
+// Handler for leaf nodes under MDNode.
+#ifndef HANDLE_MDNODE_LEAF
+#define HANDLE_MDNODE_LEAF(CLASS) HANDLE_METADATA_LEAF(CLASS)
 #endif
 
-// Handler for non-leaf nodes under UniquableMDNode.
-#ifndef HANDLE_UNIQUABLE_BRANCH
-#define HANDLE_UNIQUABLE_BRANCH(CLASS) HANDLE_METADATA_BRANCH(CLASS)
+// Handler for non-leaf nodes under MDNode.
+#ifndef HANDLE_MDNODE_BRANCH
+#define HANDLE_MDNODE_BRANCH(CLASS) HANDLE_METADATA_BRANCH(CLASS)
 #endif
 
 HANDLE_METADATA_LEAF(MDString)
 HANDLE_METADATA_BRANCH(ValueAsMetadata)
 HANDLE_METADATA_LEAF(ConstantAsMetadata)
 HANDLE_METADATA_LEAF(LocalAsMetadata)
-HANDLE_METADATA_BRANCH(MDNode)
-HANDLE_UNIQUABLE_BRANCH(UniquableMDNode)
-HANDLE_UNIQUABLE_LEAF(MDTuple)
-HANDLE_UNIQUABLE_LEAF(MDLocation)
+HANDLE_MDNODE_BRANCH(MDNode)
+HANDLE_MDNODE_LEAF(MDTuple)
+HANDLE_MDNODE_LEAF(MDLocation)
 
 #undef HANDLE_METADATA
 #undef HANDLE_METADATA_LEAF
 #undef HANDLE_METADATA_BRANCH
-#undef HANDLE_UNIQUABLE_LEAF
-#undef HANDLE_UNIQUABLE_BRANCH
+#undef HANDLE_MDNODE_LEAF
+#undef HANDLE_MDNODE_BRANCH

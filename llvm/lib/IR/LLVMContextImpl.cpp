@@ -90,7 +90,7 @@ LLVMContextImpl::~LLVMContextImpl() {
     Pair.second->dropUse();
 
   // Destroy MDNodes.
-  for (UniquableMDNode *I : DistinctMDNodes)
+  for (MDNode *I : DistinctMDNodes)
     I->deleteAsSubclass();
   for (MDTuple *I : MDTuples)
     delete I;

@@ -572,7 +572,7 @@ void BitcodeReaderMDValueList::tryToResolveCycles() {
 
   // Resolve any cycles.
   for (auto &MD : MDValuePtrs) {
-    auto *N = dyn_cast_or_null<UniquableMDNode>(MD);
+    auto *N = dyn_cast_or_null<MDNode>(MD);
     if (!N)
       continue;
 

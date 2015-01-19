@@ -105,8 +105,8 @@ void DIBuilder::finalize() {
   // Now that all temp nodes have been replaced or deleted, resolve remaining
   // cycles.
   for (const auto &N : UnresolvedNodes)
-    if (N)
-      cast<UniquableMDNode>(N)->resolveCycles();
+    if (N && !N->isResolved())
+      N->resolveCycles();
   UnresolvedNodes.clear();
 
   // Can't handle unresolved nodes anymore.

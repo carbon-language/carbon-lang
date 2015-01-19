@@ -320,7 +320,7 @@ public:
   // aren't in the MDNodeSet, but they're still shared between objects, so no
   // one object can destroy them.  This set allows us to at least destroy them
   // on Context destruction.
-  SmallPtrSet<UniquableMDNode *, 1> DistinctMDNodes;
+  SmallPtrSet<MDNode *, 1> DistinctMDNodes;
 
   DenseMap<Type*, ConstantAggregateZero*> CAZConstants;
 

@@ -1311,16 +1311,15 @@ static void WriteMDNodeBodyInternal(raw_ostream &Out, const MDNode *Node,
                                     const Module *Context) {
   assert(!Node->isTemporary() && "Unexpected forward declaration");
 
-  auto *Uniquable = cast<UniquableMDNode>(Node);
-  if (Uniquable->isDistinct())
+  if (Node->isDistinct())
     Out << "distinct ";
 
-  switch (Uniquable->getMetadataID()) {
+  switch (Node->getMetadataID()) {
   default:
     llvm_unreachable("Expected uniquable MDNode");
-#define HANDLE_UNIQUABLE_LEAF(CLASS)                                           \
+#define HANDLE_MDNODE_LEAF(CLASS)                                              \
   case Metadata::CLASS##Kind:                                                  \
-    write##CLASS(Out, cast<CLASS>(Uniquable), TypePrinter, Machine, Context);  \
+    write##CLASS(Out, cast<CLASS>(Node), TypePrinter, Machine, Context);       \
     break;
 #include "llvm/IR/Metadata.def"
   }

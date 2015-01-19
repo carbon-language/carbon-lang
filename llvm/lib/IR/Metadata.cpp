@@ -228,8 +228,8 @@ void ReplaceableMetadataImpl::resolveAllUses(bool ResolveUsers) {
     if (Owner.is<MetadataAsValue *>())
       continue;
 
-    // Resolve UniquableMDNodes that point at this.
-    auto *OwnerMD = dyn_cast<UniquableMDNode>(Owner.get<Metadata *>());
+    // Resolve MDNodes that point at this.
+    auto *OwnerMD = dyn_cast<MDNode>(Owner.get<Metadata *>());
     if (!OwnerMD)
       continue;
     if (OwnerMD->isResolved())
@@ -406,17 +406,7 @@ MDNode::MDNode(LLVMContext &Context, unsigned ID, StorageType Storage,
   if (isTemporary())
     this->Context.makeReplaceable(
         make_unique<ReplaceableMetadataImpl>(Context));
-}
 
-static bool isOperandUnresolved(Metadata *Op) {
-  if (auto *N = dyn_cast_or_null<MDNode>(Op))
-    return !N->isResolved();
-  return false;
-}
-
-UniquableMDNode::UniquableMDNode(LLVMContext &C, unsigned ID,
-                                 StorageType Storage, ArrayRef<Metadata *> Vals)
-    : MDNode(C, ID, Storage, Vals) {
   if (!isUniqued())
     return;
 
@@ -425,18 +415,24 @@ UniquableMDNode::UniquableMDNode(LLVMContext &C, unsigned ID,
   if (!NumUnresolved)
     return;
 
-  this->Context.makeReplaceable(make_unique<ReplaceableMetadataImpl>(C));
+  this->Context.makeReplaceable(make_unique<ReplaceableMetadataImpl>(Context));
   SubclassData32 = NumUnresolved;
 }
 
-unsigned UniquableMDNode::countUnresolvedOperands() const {
+static bool isOperandUnresolved(Metadata *Op) {
+  if (auto *N = dyn_cast_or_null<MDNode>(Op))
+    return !N->isResolved();
+  return false;
+}
+
+unsigned MDNode::countUnresolvedOperands() const {
   unsigned NumUnresolved = 0;
   for (const auto &Op : operands())
     NumUnresolved += unsigned(isOperandUnresolved(Op));
   return NumUnresolved;
 }
 
-void UniquableMDNode::makeUniqued() {
+void MDNode::makeUniqued() {
   assert(isTemporary() && "Expected this to be temporary");
   assert(!isResolved() && "Expected this to be unresolved");
 
@@ -450,7 +446,7 @@ void UniquableMDNode::makeUniqued() {
   assert(isUniqued() && "Expected this to be uniqued");
 }
 
-void UniquableMDNode::makeDistinct() {
+void MDNode::makeDistinct() {
   assert(isTemporary() && "Expected this to be temporary");
   assert(!isResolved() && "Expected this to be unresolved");
 
@@ -463,7 +459,7 @@ void UniquableMDNode::makeDistinct() {
   assert(isResolved() && "Expected this to be resolved");
 }
 
-void UniquableMDNode::resolve() {
+void MDNode::resolve() {
   assert(isUniqued() && "Expected this to be uniqued");
   assert(!isResolved() && "Expected this to be unresolved");
 
@@ -476,7 +472,7 @@ void UniquableMDNode::resolve() {
   Uses->resolveAllUses();
 }
 
-void UniquableMDNode::resolveAfterOperandChange(Metadata *Old, Metadata *New) {
+void MDNode::resolveAfterOperandChange(Metadata *Old, Metadata *New) {
   assert(SubclassData32 != 0 && "Expected unresolved operands");
 
   // Check if an operand was resolved.
@@ -488,13 +484,13 @@ void UniquableMDNode::resolveAfterOperandChange(Metadata *Old, Metadata *New) {
     decrementUnresolvedOperandCount();
 }
 
-void UniquableMDNode::decrementUnresolvedOperandCount() {
+void MDNode::decrementUnresolvedOperandCount() {
   if (!--SubclassData32)
     // Last unresolved operand has just been resolved.
     resolve();
 }
 
-void UniquableMDNode::resolveCycles() {
+void MDNode::resolveCycles() {
   if (isResolved())
     return;
 
@@ -503,7 +499,7 @@ void UniquableMDNode::resolveCycles() {
 
   // Resolve all operands.
   for (const auto &Op : operands()) {
-    auto *N = dyn_cast_or_null<UniquableMDNode>(Op);
+    auto *N = dyn_cast_or_null<MDNode>(Op);
     if (!N)
       continue;
 
@@ -521,14 +517,13 @@ void MDTuple::recalculateHash() {
 void MDNode::dropAllReferences() {
   for (unsigned I = 0, E = NumOperands; I != E; ++I)
     setOperand(I, nullptr);
-  if (auto *N = dyn_cast<UniquableMDNode>(this))
-    if (!N->isResolved()) {
-      N->Context.getReplaceableUses()->resolveAllUses(/* ResolveUsers */ false);
-      (void)N->Context.takeReplaceableUses();
-    }
+  if (!isResolved()) {
+    Context.getReplaceableUses()->resolveAllUses(/* ResolveUsers */ false);
+    (void)Context.takeReplaceableUses();
+  }
 }
 
-void UniquableMDNode::handleChangedOperand(void *Ref, Metadata *New) {
+void MDNode::handleChangedOperand(void *Ref, Metadata *New) {
   unsigned Op = static_cast<MDOperand *>(Ref) - op_begin();
   assert(Op < getNumOperands() && "Expected valid operand");
 
@@ -577,11 +572,11 @@ void UniquableMDNode::handleChangedOperand(void *Ref, Metadata *New) {
   storeDistinctInContext();
 }
 
-void UniquableMDNode::deleteAsSubclass() {
+void MDNode::deleteAsSubclass() {
   switch (getMetadataID()) {
   default:
-    llvm_unreachable("Invalid subclass of UniquableMDNode");
-#define HANDLE_UNIQUABLE_LEAF(CLASS)                                           \
+    llvm_unreachable("Invalid subclass of MDNode");
+#define HANDLE_MDNODE_LEAF(CLASS)                                              \
   case CLASS##Kind:                                                            \
     delete cast<CLASS>(this);                                                  \
     break;
@@ -605,7 +600,7 @@ static T *uniquifyImpl(T *N, DenseSet<T *, InfoT> &Store) {
   return N;
 }
 
-UniquableMDNode *UniquableMDNode::uniquify() {
+MDNode *MDNode::uniquify() {
   // Recalculate hash, if necessary.
   switch (getMetadataID()) {
   default:
@@ -618,19 +613,19 @@ UniquableMDNode *UniquableMDNode::uniquify() {
   // Try to insert into uniquing store.
   switch (getMetadataID()) {
   default:
-    llvm_unreachable("Invalid subclass of UniquableMDNode");
-#define HANDLE_UNIQUABLE_LEAF(CLASS)                                           \
+    llvm_unreachable("Invalid subclass of MDNode");
+#define HANDLE_MDNODE_LEAF(CLASS)                                              \
   case CLASS##Kind:                                                            \
     return uniquifyImpl(cast<CLASS>(this), getContext().pImpl->CLASS##s);
 #include "llvm/IR/Metadata.def"
   }
 }
 
-void UniquableMDNode::eraseFromStore() {
+void MDNode::eraseFromStore() {
   switch (getMetadataID()) {
   default:
-    llvm_unreachable("Invalid subclass of UniquableMDNode");
-#define HANDLE_UNIQUABLE_LEAF(CLASS)                                           \
+    llvm_unreachable("Invalid subclass of MDNode");
+#define HANDLE_MDNODE_LEAF(CLASS)                                              \
   case CLASS##Kind:                                                            \
     getContext().pImpl->CLASS##s.erase(cast<CLASS>(this));                     \
     break;
@@ -639,7 +634,7 @@ void UniquableMDNode::eraseFromStore() {
 }
 
 template <class T, class StoreT>
-T *UniquableMDNode::storeImpl(T *N, StorageType Storage, StoreT &Store) {
+T *MDNode::storeImpl(T *N, StorageType Storage, StoreT &Store) {
   switch (Storage) {
   case Uniqued:
     Store.insert(N);
@@ -673,7 +668,7 @@ MDTuple *MDTuple::getImpl(LLVMContext &Context, ArrayRef<Metadata *> MDs,
 
 MDLocation::MDLocation(LLVMContext &C, StorageType Storage, unsigned Line,
                        unsigned Column, ArrayRef<Metadata *> MDs)
-    : UniquableMDNode(C, MDLocationKind, Storage, MDs) {
+    : MDNode(C, MDLocationKind, Storage, MDs) {
   assert((MDs.size() == 1 || MDs.size() == 2) &&
          "Expected a scope and optional inlined-at");
 
@@ -727,10 +722,10 @@ MDLocation *MDLocation::getImpl(LLVMContext &Context, unsigned Line,
 
 void MDNode::deleteTemporary(MDNode *N) {
   assert(N->isTemporary() && "Expected temporary node");
-  cast<UniquableMDNode>(N)->deleteAsSubclass();
+  N->deleteAsSubclass();
 }
 
-void UniquableMDNode::storeDistinctInContext() {
+void MDNode::storeDistinctInContext() {
   assert(isResolved() && "Expected resolved nodes");
   Storage = Distinct;
   if (auto *T = dyn_cast<MDTuple>(this))
@@ -747,7 +742,7 @@ void MDNode::replaceOperandWith(unsigned I, Metadata *New) {
     return;
   }
 
-  cast<UniquableMDNode>(this)->handleChangedOperand(mutable_begin() + I, New);
+  handleChangedOperand(mutable_begin() + I, New);
 }
 
 void MDNode::setOperand(unsigned I, Metadata *New) {
