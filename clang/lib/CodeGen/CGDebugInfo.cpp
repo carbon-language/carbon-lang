@@ -2810,6 +2810,7 @@ void CGDebugInfo::EmitDeclare(const VarDecl *VD, llvm::dwarf::LLVMConstants Tag,
     Line = getLineNumber(VD->getLocation());
     Column = getColumnNumber(VD->getLocation());
   }
+  SmallVector<int64_t, 9> Expr;
   unsigned Flags = 0;
   if (VD->isImplicit())
     Flags |= llvm::DIDescriptor::FlagArtificial;
@@ -2823,7 +2824,7 @@ void CGDebugInfo::EmitDeclare(const VarDecl *VD, llvm::dwarf::LLVMConstants Tag,
   if (llvm::Argument *Arg = dyn_cast<llvm::Argument>(Storage))
     if (Arg->getType()->isPointerTy() && !Arg->hasByValAttr() &&
         !VD->getType()->isPointerType())
-      Flags |= llvm::DIDescriptor::FlagIndirectVariable;
+      Expr.push_back(llvm::dwarf::DW_OP_deref);
 
   llvm::MDNode *Scope = LexicalBlockStack.back();
 
@@ -2831,17 +2832,16 @@ void CGDebugInfo::EmitDeclare(const VarDecl *VD, llvm::dwarf::LLVMConstants Tag,
   if (!Name.empty()) {
     if (VD->hasAttr<BlocksAttr>()) {
       CharUnits offset = CharUnits::fromQuantity(32);
-      SmallVector<int64_t, 9> addr;
-      addr.push_back(llvm::dwarf::DW_OP_plus);
+      Expr.push_back(llvm::dwarf::DW_OP_plus);
       // offset of __forwarding field
       offset = CGM.getContext().toCharUnitsFromBits(
           CGM.getTarget().getPointerWidth(0));
-      addr.push_back(offset.getQuantity());
-      addr.push_back(llvm::dwarf::DW_OP_deref);
-      addr.push_back(llvm::dwarf::DW_OP_plus);
+      Expr.push_back(offset.getQuantity());
+      Expr.push_back(llvm::dwarf::DW_OP_deref);
+      Expr.push_back(llvm::dwarf::DW_OP_plus);
       // offset of x field
       offset = CGM.getContext().toCharUnitsFromBits(XOffset);
-      addr.push_back(offset.getQuantity());
+      Expr.push_back(offset.getQuantity());
 
       // Create the descriptor for the variable.
       llvm::DIVariable D = DBuilder.createLocalVariable(
@@ -2849,12 +2849,12 @@ void CGDebugInfo::EmitDeclare(const VarDecl *VD, llvm::dwarf::LLVMConstants Tag,
 
       // Insert an llvm.dbg.declare into the current block.
       llvm::Instruction *Call =
-          DBuilder.insertDeclare(Storage, D, DBuilder.createExpression(addr),
+          DBuilder.insertDeclare(Storage, D, DBuilder.createExpression(Expr),
                                  Builder.GetInsertBlock());
       Call->setDebugLoc(llvm::DebugLoc::get(Line, Column, Scope));
       return;
     } else if (isa<VariableArrayType>(VD->getType()))
-      Flags |= llvm::DIDescriptor::FlagIndirectVariable;
+      Expr.push_back(llvm::dwarf::DW_OP_deref);
   } else if (const RecordType *RT = dyn_cast<RecordType>(VD->getType())) {
     // If VD is an anonymous union then Storage represents value for
     // all union fields.
@@ -2875,7 +2875,8 @@ void CGDebugInfo::EmitDeclare(const VarDecl *VD, llvm::dwarf::LLVMConstants Tag,
 
         // Insert an llvm.dbg.declare into the current block.
         llvm::Instruction *Call = DBuilder.insertDeclare(
-            Storage, D, DBuilder.createExpression(), Builder.GetInsertBlock());
+            Storage, D, DBuilder.createExpression(Expr),
+            Builder.GetInsertBlock());
         Call->setDebugLoc(llvm::DebugLoc::get(Line, Column, Scope));
       }
       return;
@@ -2889,7 +2890,7 @@ void CGDebugInfo::EmitDeclare(const VarDecl *VD, llvm::dwarf::LLVMConstants Tag,
 
   // Insert an llvm.dbg.declare into the current block.
   llvm::Instruction *Call = DBuilder.insertDeclare(
-      Storage, D, DBuilder.createExpression(), Builder.GetInsertBlock());
+      Storage, D, DBuilder.createExpression(Expr), Builder.GetInsertBlock());
   Call->setDebugLoc(llvm::DebugLoc::get(Line, Column, Scope));
 }
 

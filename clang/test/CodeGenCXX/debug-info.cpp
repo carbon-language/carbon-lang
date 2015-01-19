@@ -53,6 +53,9 @@ namespace VirtualBase {
   }
 }
 
+// CHECK: define void @_ZN7pr147634funcENS_3fooE
+// CHECK: call void @llvm.dbg.declare({{.*}}, metadata ![[F:.*]], metadata ![[EXPR:.*]])
+
 // MSVC: [[VBASE_B:![0-9]+]] = distinct !{!"0x13\00B\00{{[0-9]+}}\0096\0032\000\000\000", {{.*}}, null, [[VBASE_B_DEF:![0-9]+]], {{.*}}} ; [ DW_TAG_structure_type ] [B] [line 49, size 96, align 32, offset 0] [def] [from ]
 // MSVC: [[VBASE_B_DEF]] = !{[[VBASE_A_IN_B:![0-9]+]],
 //
@@ -112,7 +115,8 @@ incomplete (*x)[3];
 }
 
 // For some reason function arguments ended up down here
-// CHECK: = !{!"0x101\00f\00{{.*}}\008192", [[FUNC]], {{![0-9]+}}, !"[[FOO]]"} ; [ DW_TAG_arg_variable ] [f]
+// CHECK: ![[F]] = !{!"0x101\00f\00{{.*}}\000", [[FUNC]], {{![0-9]+}}, !"[[FOO]]"} ; [ DW_TAG_arg_variable ] [f]
+// CHECK: ![[EXPR]] = {{.*}} ; [ DW_TAG_expression ] [DW_OP_deref]
 
 // CHECK: ; [ DW_TAG_auto_variable ] [c]
 
