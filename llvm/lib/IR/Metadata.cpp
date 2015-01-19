@@ -758,11 +758,7 @@ void MDNode::replaceOperandWith(unsigned I, Metadata *New) {
 
 void MDNode::setOperand(unsigned I, Metadata *New) {
   assert(I < NumOperands);
-  if (isStoredDistinctInContext() || isa<MDNodeFwdDecl>(this))
-    // No need for a callback, this isn't uniqued.
-    mutable_begin()[I].reset(New, nullptr);
-  else
-    mutable_begin()[I].reset(New, this);
+  mutable_begin()[I].reset(New, isUniqued() ? this : nullptr);
 }
 
 /// \brief Get a node, or a self-reference that looks like it.
