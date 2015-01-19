@@ -402,7 +402,7 @@ MDNode::MDNode(LLVMContext &Context, unsigned ID, StorageType Storage,
   for (unsigned I = 0, E = MDs.size(); I != E; ++I)
     setOperand(I, MDs[I]);
 
-  if (Storage == Temporary)
+  if (isTemporary())
     this->Context.makeReplaceable(
         make_unique<ReplaceableMetadataImpl>(Context));
 }
@@ -416,7 +416,7 @@ static bool isOperandUnresolved(Metadata *Op) {
 UniquableMDNode::UniquableMDNode(LLVMContext &C, unsigned ID,
                                  StorageType Storage, ArrayRef<Metadata *> Vals)
     : MDNode(C, ID, Storage, Vals) {
-  if (Storage != Uniqued)
+  if (!isUniqued())
     return;
 
   // Check whether any operands are unresolved, requiring re-uniquing.
@@ -432,7 +432,7 @@ UniquableMDNode::UniquableMDNode(LLVMContext &C, unsigned ID,
 }
 
 void UniquableMDNode::resolve() {
-  assert(Storage == Uniqued && "Expected this to be uniqued");
+  assert(isUniqued() && "Expected this to be uniqued");
   assert(!isResolved() && "Expected this to be unresolved");
 
   // Move the map, so that this immediately looks resolved.
