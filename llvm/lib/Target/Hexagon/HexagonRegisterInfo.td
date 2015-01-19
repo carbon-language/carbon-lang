@@ -174,7 +174,7 @@ def DoubleRegs : RegisterClass<"Hexagon", [i64,f64], 64,
                                     (sequence "D%u", 6, 13), D5, D14, D15)>;
 
 
-def PredRegs : RegisterClass<"Hexagon", [i1], 32, (add (sequence "P%u", 0, 3))>
+def PredRegs : RegisterClass<"Hexagon", [i1, i32], 32, (add (sequence "P%u", 0, 3))>
 {
   let Size = 32;
 }

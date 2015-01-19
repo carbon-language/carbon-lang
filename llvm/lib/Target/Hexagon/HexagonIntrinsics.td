@@ -298,6 +298,11 @@ def: Pat<(i32 (int_hexagon_C2_mux (I32:$Rp), (I32:$Rs),
                                                      (I32:$Rt))),
          (i32 (C2_mux (C2_tfrrp IntRegs:$Rp), IntRegs:$Rs, IntRegs:$Rt))>;
 
+// Mux
+def : T_QRI_pat<C2_muxir, int_hexagon_C2_muxir, s8ExtPred>;
+def : T_QIR_pat<C2_muxri, int_hexagon_C2_muxri, s8ExtPred>;
+def : T_QII_pat<C2_muxii, int_hexagon_C2_muxii, s8ExtPred, s8ImmPred>;
+
 // Shift halfword
 def : T_R_pat<A2_aslh, int_hexagon_A2_aslh>;
 def : T_R_pat<A2_asrh, int_hexagon_A2_asrh>;
@@ -2171,12 +2176,6 @@ def HEXAGON_A2_combineii:
 // ALU32 / PERM / Mux.
 def HEXAGON_C2_mux:
   si_ALU32_qisisi                 <"mux",      int_hexagon_C2_mux>;
-def HEXAGON_C2_muxri:
-  si_ALU32_qis8si                 <"mux",      int_hexagon_C2_muxri>;
-def HEXAGON_C2_muxir:
-  si_ALU32_qisis8                 <"mux",      int_hexagon_C2_muxir>;
-def HEXAGON_C2_muxii:
-  si_ALU32_qis8s8                 <"mux",      int_hexagon_C2_muxii>;
 
 // ALU32 / PERM / Shift halfword.
 def HEXAGON_A2_aslh:

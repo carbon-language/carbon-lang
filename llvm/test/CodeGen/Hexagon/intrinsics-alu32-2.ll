@@ -127,6 +127,39 @@ entry:
   ret void
 }
 
+; CHECK: r{{[0-9]+}}{{ *}}={{ *}}mux(p{{[0-3]+}}{{ *}},{{ *}}r{{[0-9]+}}{{ *}},{{ *}}##71230)
+
+define void @test21(i32 %a) #0 {
+entry:
+  %0 = load i8* @b, align 1
+  %conv = zext i8 %0 to i32
+  %1 = tail call i32 @llvm.hexagon.C2.muxir(i32 %conv, i32 %a, i32 71230)
+  store i32 %1, i32* @d, align 4
+  ret void
+}
+
+; CHECK: r{{[0-9]+}}{{ *}}={{ *}}mux(p{{[0-3]+}}{{ *}},{{ *}}##5000{{ *}},{{ *}}r{{[0-9]+}})
+
+define void @test23(i32 %a) #0 {
+entry:
+  %0 = load i8* @b, align 1
+  %conv = zext i8 %0 to i32
+  %1 = tail call i32 @llvm.hexagon.C2.muxri(i32 %conv, i32 5000, i32 %a)
+  store i32 %1, i32* @d, align 4
+  ret void
+}
+
+; CHECK: r{{[0-9]+}}{{ *}}={{ *}}mux(p{{[0-3]+}}{{ *}},{{ *}}##-4900{{ *}},{{ *}}#94)
+
+define void @test24(i32 %a) #0 {
+entry:
+  %0 = load i8* @b, align 1
+  %conv = zext i8 %0 to i32
+  %1 = tail call i32 @llvm.hexagon.C2.muxii(i32 %conv, i32 -4900, i32 94)
+  store i32 %1, i32* @d, align 4
+  ret void
+}
+
 ; CHECK: r{{[0-9]+}}:{{[0-9]+}}{{ *}}={{ *}}combine(##-1280{{ *}},{{ *}}#120)
 
 define void @test25(i32 %a) #0 {
@@ -148,4 +181,7 @@ declare i32 @llvm.hexagon.A2.orir(i32, i32) #1
 declare i32 @llvm.hexagon.A2.subri(i32, i32)
 declare i32 @llvm.hexagon.A2.tfril(i32, i32) #1
 declare i32 @llvm.hexagon.A2.tfrih(i32, i32) #1
+declare i32 @llvm.hexagon.C2.muxir(i32, i32, i32) #1
+declare i32 @llvm.hexagon.C2.muxri(i32, i32, i32) #1
+declare i32 @llvm.hexagon.C2.muxii(i32, i32, i32) #1
 declare i64 @llvm.hexagon.A2.combineii(i32, i32) #1
