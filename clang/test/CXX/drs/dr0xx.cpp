@@ -425,7 +425,7 @@ namespace dr39 { // dr39: no
       using V::z;
       float &z(float);
     };
-    struct C : A, B, virtual V {} c;
+    struct C : A, B, virtual V {} c; // expected-warning {{direct base 'dr39::example2::A' is inaccessible due to ambiguity:\n    struct dr39::example2::C -> struct dr39::example2::A\n    struct dr39::example2::C -> struct dr39::example2::B -> struct dr39::example2::A}}
     int &x = c.x(0); // expected-error {{found in multiple base classes}}
     // FIXME: This is valid, because we find the same static data member either way.
     int &y = c.y(0); // expected-error {{found in multiple base classes}}

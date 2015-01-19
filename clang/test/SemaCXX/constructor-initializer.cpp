@@ -26,7 +26,7 @@ public:
   D() : B(), C() { }
 };
 
-class E : public D, public B { 
+class E : public D, public B {  // expected-warning{{direct base 'B' is inaccessible due to ambiguity:\n    class E -> class D -> class C -> class B\n    class E -> class B}}
 public:
   E() : B(), D() { } // expected-error{{base class initializer 'B' names both a direct base class and an inherited virtual base class}}
 };
@@ -204,7 +204,8 @@ struct A {
 };
 
 struct B : virtual A { };
-struct C : A, B { };
+
+  struct C : A, B { }; // expected-warning{{direct base 'Test2::A' is inaccessible due to ambiguity:\n    struct Test2::C -> struct Test2::A\n    struct Test2::C -> struct Test2::B -> struct Test2::A}}
 
 C f(C c) {
   return c;

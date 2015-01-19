@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify %s
+// RUN: %clang_cc1 -fsyntax-only -verify -Wno-inaccessible-base %s
 struct A {
   virtual void f() = 0; // expected-note 2{{overridden virtual function}}
 };

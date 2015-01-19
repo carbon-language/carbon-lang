@@ -8,7 +8,7 @@ struct T0 {
   };
 };
 template <typename T>
-struct T1 : public T0, public T { 
+struct T1 : public T0, public T { //expected-warning{{direct base 'T0' is inaccessible due to ambiguity:\n    struct T1<struct A> -> struct T0\n    struct T1<struct A> -> struct A -> struct T0}}
   void f0() { 
     m0 = 0; // expected-error{{ambiguous conversion}}
   } 
@@ -16,7 +16,7 @@ struct T1 : public T0, public T {
 
 struct A : public T0 { };
 
-void f1(T1<A> *S) { S->f0(); } // expected-note{{instantiation of member function}}
+void f1(T1<A> *S) { S->f0(); } // expected-note{{instantiation of member function}} expected-note{{in instantiation of template class 'T1<A>' requested here}}
 
 namespace rdar8635664 {
   template<typename T>

@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -triple x86_64-unknown-unknown %s -fsyntax-only -verify 
+// RUN: %clang_cc1 -triple x86_64-unknown-unknown %s -fsyntax-only -verify -Wno-inaccessible-base
 // expected-no-diagnostics
 
 #define SA(n, p) int a##n[(p) ? 1 : -1]

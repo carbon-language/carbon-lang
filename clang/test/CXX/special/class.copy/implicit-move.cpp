@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify -std=c++11 %s
+// RUN: %clang_cc1 -fsyntax-only -verify -std=c++11 -Wno-inaccessible-base %s
 
 // Tests for implicit (non-)declaration of move constructor and
 // assignment: p9, p11, p20, p23.

@@ -16,7 +16,8 @@ struct ValueEnum {
 struct ValueBoth : ValueInt, ValueEnum { };
 
 struct IndirectValueInt : ValueInt { };
-struct TwoValueInts : ValueInt, IndirectValueInt { };
+struct TwoValueInts : ValueInt, IndirectValueInt { }; // expected-warning{{direct base 'ValueInt' is inaccessible due to ambiguity:\n    struct TwoValueInts -> struct ValueInt\n    struct TwoValueInts -> struct IndirectValueInt -> struct ValueInt}}
+
 
 void test() {
   (void)new int[ValueInt(10)]; // expected-warning{{implicit conversion from array size expression of type 'ValueInt' to integral type 'int' is a C++11 extension}}

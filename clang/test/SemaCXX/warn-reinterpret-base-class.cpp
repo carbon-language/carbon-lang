@@ -20,7 +20,7 @@ class DVA : public virtual A {
 };
 class DDVA : public virtual DA {
 };
-class DMA : public virtual A, public virtual DA {
+class DMA : public virtual A, public virtual DA { //expected-warning{{direct base 'A' is inaccessible due to ambiguity:\n    class DMA -> class A\n    class DMA -> class DA -> class A}}
 };
 
 class B;
