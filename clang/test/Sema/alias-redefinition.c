@@ -25,3 +25,6 @@ void __attribute((alias("f5"))) fun5(void) {} // expected-error {{redefinition o
 
 int var1 __attribute((alias("v1"))); // expected-error {{definition 'var1' cannot also be an alias}}
 static int var2 __attribute((alias("v2"))) = 2; // expected-error {{definition 'var2' cannot also be an alias}}
+
+extern int var3 __attribute__((alias("C"))); // expected-note{{previous definition is here}}
+int var3 = 3; // expected-error{{redefinition of 'var3'}}
