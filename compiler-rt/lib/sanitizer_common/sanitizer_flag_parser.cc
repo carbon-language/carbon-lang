@@ -22,6 +22,32 @@ namespace __sanitizer {
 
 LowLevelAllocator FlagParser::Alloc;
 
+class UnknownFlags {
+  static const int kMaxUnknownFlags = 20;
+  const char *unknown_flags_[kMaxUnknownFlags];
+  int n_unknown_flags_;
+
+ public:
+  void Add(const char *name) {
+    CHECK_LT(n_unknown_flags_, kMaxUnknownFlags);
+    unknown_flags_[n_unknown_flags_++] = name;
+  }
+
+  void Report() {
+    if (!n_unknown_flags_) return;
+    Printf("WARNING: found %d unrecognized flag(s):\n", n_unknown_flags_);
+    for (int i = 0; i < n_unknown_flags_; ++i)
+      Printf("    %s\n", unknown_flags_[i]);
+    n_unknown_flags_ = 0;
+  }
+};
+
+UnknownFlags unknown_flags;
+
+void ReportUnrecognizedFlags() {
+  unknown_flags.Report();
+}
+
 char *FlagParser::ll_strndup(const char *s, uptr n) {
   uptr len = internal_strnlen(s, n);
   char *s2 = (char*)Alloc.Allocate(len + 1);
@@ -106,8 +132,9 @@ bool FlagParser::run_handler(const char *name, const char *value) {
     if (internal_strcmp(name, flags_[i].name) == 0)
       return flags_[i].handler->Parse(value);
   }
-  Printf("ERROR: Unknown flag: '%s'\n", name);
-  return false;
+  // Unrecognized flag. This is not a fatal error, we may print a warning later.
+  unknown_flags.Add(name);
+  return true;
 }
 
 void FlagParser::RegisterHandler(const char *name, FlagHandlerBase *handler,

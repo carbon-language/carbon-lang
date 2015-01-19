@@ -1,7 +1,15 @@
 // RUN: %clangxx -O0 %s -o %t
-// RUN: %tool_options=invalid_option_name=10 not %run %t 2>&1 | FileCheck %s
+// RUN: %tool_options=invalid_option_name=10,verbosity=1 %run %t 2>&1 | FileCheck %s --check-prefix=CHECK-V1
+// RUN: %tool_options=invalid_option_name=10 %run %t 2>&1 | FileCheck %s --check-prefix=CHECK-V0
+
+#include <stdio.h>
 
 int main() {
+  fprintf(stderr, "done\n");
 }
 
-// CHECK: Unknown flag{{.*}}invalid_option_name
+// CHECK-V1: WARNING: found 1 unrecognized
+// CHECK-V1:     invalid_option_name
+// CHECK-V0-NOT: WARNING: found 1 unrecognized
+// CHECK-V0-NOT:     invalid_option_name
+// CHECK: done

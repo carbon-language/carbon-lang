@@ -114,6 +114,8 @@ static void RegisterFlag(FlagParser *parser, const char *name, const char *desc,
   parser->RegisterHandler(name, fh, desc);
 }
 
+void ReportUnrecognizedFlags();
+
 }  // namespace __sanitizer
 
 #endif  // SANITIZER_FLAG_REGISTRY_H

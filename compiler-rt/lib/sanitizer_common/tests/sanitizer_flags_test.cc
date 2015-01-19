@@ -63,9 +63,14 @@ TEST(SanitizerCommon, IntFlags) {
   TestFlag(-11, "flag_name=0", 0);
   TestFlag(-11, "flag_name=42", 42);
   TestFlag(-11, "flag_name=-42", -42);
+
+  // Unrecognized flags are ignored.
+  TestFlag(-11, "--flag_name=42", -11);
+  TestFlag(-11, "zzzzzzz=42", -11);
+
   EXPECT_DEATH(TestFlag(-11, "flag_name", 0), "expected '='");
-  EXPECT_DEATH(TestFlag(-11, "--flag_name=42", 0),
-               "Unknown flag: '--flag_name'");
+  EXPECT_DEATH(TestFlag(-11, "flag_name=42U", 0),
+               "Invalid value for int option");
 }
 
 TEST(SanitizerCommon, StrFlags) {

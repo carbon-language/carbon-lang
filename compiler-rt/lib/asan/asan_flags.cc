@@ -98,9 +98,9 @@ void InitializeFlags(Flags *f) {
       VReport(1, "Parsed activation flags: %s\n", buf);
   }
 
-  if (common_flags()->help) {
-    parser.PrintFlagDescriptions();
-  }
+  if (common_flags()->verbosity) ReportUnrecognizedFlags();
+
+  if (common_flags()->help) parser.PrintFlagDescriptions();
 
   // Flag validation:
   if (!CAN_SANITIZE_LEAKS && common_flags()->detect_leaks) {

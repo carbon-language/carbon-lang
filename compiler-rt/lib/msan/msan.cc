@@ -157,6 +157,8 @@ static void InitializeFlags(Flags *f, const char *options) {
 
   parser.ParseString(options);
 
+  if (common_flags()->verbosity) ReportUnrecognizedFlags();
+
   if (common_flags()->help) parser.PrintFlagDescriptions();
 
   // Check flag values:

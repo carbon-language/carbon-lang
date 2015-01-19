@@ -80,8 +80,9 @@ void InitializeFlags(Flags *f, const char *env) {
     f->report_signal_unsafe = false;
   }
 
-  if (common_flags()->help)
-    parser.PrintFlagDescriptions();
+  if (common_flags()->verbosity) ReportUnrecognizedFlags();
+
+  if (common_flags()->help) parser.PrintFlagDescriptions();
 
   if (f->history_size < 0 || f->history_size > 7) {
     Printf("ThreadSanitizer: incorrect value for history_size"
