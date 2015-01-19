@@ -155,7 +155,8 @@ void ReplaceableMetadataImpl::moveRef(void *Ref, void *New,
 }
 
 void ReplaceableMetadataImpl::replaceAllUsesWith(Metadata *MD) {
-  assert(!(MD && isa<MDNodeFwdDecl>(MD)) && "Expected non-temp node");
+  assert(!(MD && isa<MDNode>(MD) && cast<MDNode>(MD)->isTemporary()) &&
+         "Expected non-temp node");
 
   if (UseMap.empty())
     return;
@@ -471,13 +472,14 @@ void UniquableMDNode::resolveCycles() {
 
   // Resolve all operands.
   for (const auto &Op : operands()) {
-    if (!Op)
+    auto *N = dyn_cast_or_null<UniquableMDNode>(Op);
+    if (!N)
       continue;
-    assert(!isa<MDNodeFwdDecl>(Op) &&
+
+    assert(!N->isTemporary() &&
            "Expected all forward declarations to be resolved");
-    if (auto *N = dyn_cast<UniquableMDNode>(Op))
-      if (!N->isResolved())
-        N->resolveCycles();
+    if (!N->isResolved())
+      N->resolveCycles();
   }
 }
 
@@ -621,7 +623,7 @@ T *UniquableMDNode::storeImpl(T *N, StorageType Storage, StoreT &Store) {
     N->storeDistinctInContext();
     break;
   case Temporary:
-    llvm_unreachable("Unexpected temporary node");
+    break;
   }
   return N;
 }
@@ -723,12 +725,10 @@ void MDLocation::eraseFromStoreImpl() {
   getContext().pImpl->MDLocations.erase(this);
 }
 
-MDNodeFwdDecl *MDNode::getTemporary(LLVMContext &Context,
-                                    ArrayRef<Metadata *> MDs) {
-  return MDNodeFwdDecl::get(Context, MDs);
+void MDNode::deleteTemporary(MDNode *N) {
+  assert(N->isTemporary() && "Expected temporary node");
+  cast<UniquableMDNode>(N)->deleteAsSubclass();
 }
-
-void MDNode::deleteTemporary(MDNode *N) { delete cast<MDNodeFwdDecl>(N); }
 
 void UniquableMDNode::storeDistinctInContext() {
   assert(isResolved() && "Expected resolved nodes");

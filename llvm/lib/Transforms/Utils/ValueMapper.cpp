@@ -249,12 +249,12 @@ static Metadata *mapDistinctNode(const UniquableMDNode *Node,
 
   // In general we need a dummy node, since whether the operands are null can
   // affect the size of the node.
-  std::unique_ptr<MDNodeFwdDecl> Dummy(
-      MDNode::getTemporary(Node->getContext(), None));
-  mapToMetadata(VM, Node, Dummy.get());
+  MDTuple *Dummy = MDTuple::getTemporary(Node->getContext(), None);
+  mapToMetadata(VM, Node, Dummy);
   Metadata *NewMD = cloneMDNode(Node, VM, Flags, TypeMapper, Materializer,
                                 /* IsDistinct */ true);
   Dummy->replaceAllUsesWith(NewMD);
+  MDNode::deleteTemporary(Dummy);
   return mapToMetadata(VM, Node, NewMD);
 }
 
@@ -285,7 +285,7 @@ static Metadata *mapUniquedNode(const UniquableMDNode *Node,
   assert(Node->isUniqued() && "Expected uniqued node");
 
   // Create a dummy node in case we have a metadata cycle.
-  MDNodeFwdDecl *Dummy = MDNode::getTemporary(Node->getContext(), None);
+  MDTuple *Dummy = MDTuple::getTemporary(Node->getContext(), None);
   mapToMetadata(VM, Node, Dummy);
 
   // Check all operands to see if any need to be remapped.

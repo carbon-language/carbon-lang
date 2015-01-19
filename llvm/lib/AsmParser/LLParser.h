@@ -136,7 +136,7 @@ namespace llvm {
     std::vector<std::pair<Type*, LocTy> > NumberedTypes;
 
     std::vector<TrackingMDNodeRef> NumberedMetadata;
-    std::map<unsigned, std::pair<MDNodeFwdDecl *, LocTy>> ForwardRefMDNodes;
+    std::map<unsigned, std::pair<MDTuple *, LocTy>> ForwardRefMDNodes;
 
     // Global Value reference information.
     std::map<std::string, std::pair<GlobalValue*, LocTy> > ForwardRefVals;

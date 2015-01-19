@@ -617,7 +617,7 @@ void Verifier::visitMDNode(MDNode &MD) {
   }
 
   // Check these last, so we diagnose problems in operands first.
-  Assert1(!isa<MDNodeFwdDecl>(MD), "Expected no forward declarations!", &MD);
+  Assert1(!MD.isTemporary(), "Expected no forward declarations!", &MD);
   Assert1(MD.isResolved(), "All nodes should be resolved!", &MD);
 }
 

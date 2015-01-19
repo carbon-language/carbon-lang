@@ -541,7 +541,7 @@ void BitcodeReaderMDValueList::AssignValue(Metadata *MD, unsigned Idx) {
   }
 
   // If there was a forward reference to this value, replace it.
-  MDNodeFwdDecl *PrevMD = cast<MDNodeFwdDecl>(OldMD.get());
+  MDTuple *PrevMD = cast<MDTuple>(OldMD.get());
   PrevMD->replaceAllUsesWith(MD);
   MDNode::deleteTemporary(PrevMD);
   --NumFwdRefs;
@@ -573,9 +573,12 @@ void BitcodeReaderMDValueList::tryToResolveCycles() {
 
   // Resolve any cycles.
   for (auto &MD : MDValuePtrs) {
-    assert(!(MD && isa<MDNodeFwdDecl>(MD)) && "Unexpected forward reference");
-    if (auto *N = dyn_cast_or_null<UniquableMDNode>(MD))
-      N->resolveCycles();
+    auto *N = dyn_cast_or_null<UniquableMDNode>(MD);
+    if (!N)
+      continue;
+
+    assert(!N->isTemporary() && "Unexpected forward reference");
+    N->resolveCycles();
   }
 }
 

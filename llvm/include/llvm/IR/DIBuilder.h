@@ -85,7 +85,7 @@ namespace llvm {
 
     /// \brief Create a temporary.
     ///
-    /// Create an \a MDNodeFwdDecl and track it in \a UnresolvedNodes.
+    /// Create an \a temporary node and track it in \a UnresolvedNodes.
     void trackIfUnresolved(MDNode *N);
 
   public:

@@ -319,11 +319,11 @@ static void CloneAliasScopeMetadata(CallSite CS, ValueToValueMapTy &VMap) {
 
   // Now we have a complete set of all metadata in the chains used to specify
   // the noalias scopes and the lists of those scopes.
-  SmallVector<MDNode *, 16> DummyNodes;
+  SmallVector<MDTuple *, 16> DummyNodes;
   DenseMap<const MDNode *, TrackingMDNodeRef> MDMap;
   for (SetVector<const MDNode *>::iterator I = MD.begin(), IE = MD.end();
        I != IE; ++I) {
-    MDNode *Dummy = MDNode::getTemporary(CalledFunc->getContext(), None);
+    MDTuple *Dummy = MDTuple::getTemporary(CalledFunc->getContext(), None);
     DummyNodes.push_back(Dummy);
     MDMap[*I].reset(Dummy);
   }
@@ -343,7 +343,8 @@ static void CloneAliasScopeMetadata(CallSite CS, ValueToValueMapTy &VMap) {
     }
 
     MDNode *NewM = MDNode::get(CalledFunc->getContext(), NewOps);
-    MDNodeFwdDecl *TempM = cast<MDNodeFwdDecl>(MDMap[*I]);
+    MDTuple *TempM = cast<MDTuple>(MDMap[*I]);
+    assert(TempM->isTemporary() && "Expected temporary node");
 
     TempM->replaceAllUsesWith(NewM);
   }

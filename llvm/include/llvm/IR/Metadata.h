@@ -61,7 +61,6 @@ public:
   enum MetadataKind {
     MDTupleKind,
     MDLocationKind,
-    MDNodeFwdDeclKind,
     ConstantAsMetadataKind,
     LocalAsMetadataKind,
     MDStringKind
@@ -698,14 +697,8 @@ public:
                                      ArrayRef<Metadata *> MDs);
   static inline MDTuple *getDistinct(LLVMContext &Context,
                                      ArrayRef<Metadata *> MDs);
-
-  /// \brief Return a temporary MDNode
-  ///
-  /// For use in constructing cyclic MDNode structures. A temporary MDNode is
-  /// not uniqued, may be RAUW'd, and must be manually deleted with
-  /// deleteTemporary.
-  static MDNodeFwdDecl *getTemporary(LLVMContext &Context,
-                                     ArrayRef<Metadata *> MDs);
+  static inline MDTuple *getTemporary(LLVMContext &Context,
+                                      ArrayRef<Metadata *> MDs);
 
   /// \brief Deallocate a node created by getTemporary.
   ///
@@ -772,8 +765,7 @@ public:
   /// \brief Methods for support type inquiry through isa, cast, and dyn_cast:
   static bool classof(const Metadata *MD) {
     return MD->getMetadataID() == MDTupleKind ||
-           MD->getMetadataID() == MDLocationKind ||
-           MD->getMetadataID() == MDNodeFwdDeclKind;
+           MD->getMetadataID() == MDLocationKind;
   }
 
   /// \brief Check whether MDNode is a vtable access.
@@ -794,16 +786,15 @@ public:
 /// for implementing sub-types of \a MDNode that can be uniqued like
 /// constants.
 ///
-/// There is limited support for RAUW at construction time.  At
-/// construction time, if any operands are an instance of \a
-/// MDNodeFwdDecl (or another unresolved \a UniquableMDNode, which
-/// indicates an \a MDNodeFwdDecl in its path), the node itself will be
-/// unresolved.  As soon as all operands become resolved, it will drop
-/// RAUW support permanently.
+/// There is limited support for RAUW at construction time.  At construction
+/// time, if any operand is a temporary node (or an unresolved uniqued node,
+/// which indicates a transitive temporary operand), the node itself will be
+/// unresolved.  As soon as all operands become resolved, it will drop RAUW
+/// support permanently.
 ///
 /// If an unresolved node is part of a cycle, \a resolveCycles() needs
-/// to be called on some member of the cycle when each \a MDNodeFwdDecl
-/// has been removed.
+/// to be called on some member of the cycle once all temporary nodes have been
+/// replaced.
 class UniquableMDNode : public MDNode {
   friend class ReplaceableMetadataImpl;
   friend class MDNode;
@@ -834,7 +825,7 @@ public:
   /// Once all forward declarations have been resolved, force cycles to be
   /// resolved.
   ///
-  /// \pre No operands (or operands' operands, etc.) are \a MDNodeFwdDecl.
+  /// \pre No operands (or operands' operands, etc.) have \a isTemporary().
   void resolveCycles();
 
 private:
@@ -888,6 +879,15 @@ public:
     return getImpl(Context, MDs, Distinct);
   }
 
+  /// \brief Return a temporary node.
+  ///
+  /// For use in constructing cyclic MDNode structures. A temporary MDNode is
+  /// not uniqued, may be RAUW'd, and must be manually deleted with
+  /// deleteTemporary.
+  static MDTuple *getTemporary(LLVMContext &Context, ArrayRef<Metadata *> MDs) {
+    return getImpl(Context, MDs, Temporary);
+  }
+
   static bool classof(const Metadata *MD) {
     return MD->getMetadataID() == MDTupleKind;
   }
@@ -905,6 +905,9 @@ MDTuple *MDNode::getIfExists(LLVMContext &Context, ArrayRef<Metadata *> MDs) {
 }
 MDTuple *MDNode::getDistinct(LLVMContext &Context, ArrayRef<Metadata *> MDs) {
   return MDTuple::getDistinct(Context, MDs);
+}
+MDTuple *MDNode::getTemporary(LLVMContext &Context, ArrayRef<Metadata *> MDs) {
+  return MDTuple::getTemporary(Context, MDs);
 }
 
 /// \brief Debug location.
@@ -959,32 +962,6 @@ public:
 private:
   MDLocation *uniquifyImpl();
   void eraseFromStoreImpl();
-};
-
-/// \brief Forward declaration of metadata.
-///
-/// Forward declaration of metadata, in the form of a basic tuple.  Unlike \a
-/// MDTuple, this class has full support for RAUW, is not owned, is not
-/// uniqued, and is suitable for forward references.
-class MDNodeFwdDecl : public MDNode {
-  friend class Metadata;
-
-  MDNodeFwdDecl(LLVMContext &C, ArrayRef<Metadata *> Vals)
-      : MDNode(C, MDNodeFwdDeclKind, Temporary, Vals) {}
-
-public:
-  ~MDNodeFwdDecl() { dropAllReferences(); }
-
-  // MSVC doesn't see the alternative: "using MDNode::operator delete".
-  void operator delete(void *Mem) { MDNode::operator delete(Mem); }
-
-  static MDNodeFwdDecl *get(LLVMContext &Context, ArrayRef<Metadata *> MDs) {
-    return new (MDs.size()) MDNodeFwdDecl(Context, MDs);
-  }
-
-  static bool classof(const Metadata *MD) {
-    return MD->getMetadataID() == MDNodeFwdDeclKind;
-  }
 };
 
 //===----------------------------------------------------------------------===//
