@@ -524,9 +524,7 @@ void UniquableMDNode::handleChangedOperand(void *Ref, Metadata *New) {
   unsigned Op = static_cast<MDOperand *>(Ref) - op_begin();
   assert(Op < getNumOperands() && "Expected valid operand");
 
-  if (isStoredDistinctInContext()) {
-    assert(isResolved() && "Expected distinct node to be resolved");
-
+  if (!isUniqued()) {
     // This node is not uniqued.  Just set the operand and be done with it.
     setOperand(Op, New);
     return;
