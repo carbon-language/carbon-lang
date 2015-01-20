@@ -209,7 +209,7 @@ struct PlatformMemoryMapParams {
 };
 
 // i386 Linux
-static const MemoryMapParams LinuxMemoryMapParams32 = {
+static const MemoryMapParams Linux_I386_MemoryMapParams = {
   0x000080000000,  // AndMask
   0,               // XorMask (not used)
   0,               // ShadowBase (not used)
@@ -217,15 +217,23 @@ static const MemoryMapParams LinuxMemoryMapParams32 = {
 };
 
 // x86_64 Linux
-static const MemoryMapParams LinuxMemoryMapParams64 = {
+static const MemoryMapParams Linux_X86_64_MemoryMapParams = {
   0x400000000000,  // AndMask
   0,               // XorMask (not used)
   0,               // ShadowBase (not used)
   0x200000000000,  // OriginBase
 };
 
+// mips64 Linux
+static const MemoryMapParams Linux_MIPS64_MemoryMapParams = {
+  0x004000000000,  // AndMask
+  0,               // XorMask (not used)
+  0,               // ShadowBase (not used)
+  0x002000000000,  // OriginBase
+};
+
 // i386 FreeBSD
-static const MemoryMapParams FreeBSDMemoryMapParams32 = {
+static const MemoryMapParams FreeBSD_I386_MemoryMapParams = {
   0x000180000000,  // AndMask
   0x000040000000,  // XorMask
   0x000020000000,  // ShadowBase
@@ -233,21 +241,26 @@ static const MemoryMapParams FreeBSDMemoryMapParams32 = {
 };
 
 // x86_64 FreeBSD
-static const MemoryMapParams FreeBSDMemoryMapParams64 = {
+static const MemoryMapParams FreeBSD_X86_64_MemoryMapParams = {
   0xc00000000000,  // AndMask
   0x200000000000,  // XorMask
   0x100000000000,  // ShadowBase
   0x380000000000,  // OriginBase
 };
 
-static const PlatformMemoryMapParams LinuxMemoryMapParams = {
-  &LinuxMemoryMapParams32,
-  &LinuxMemoryMapParams64,
+static const PlatformMemoryMapParams Linux_X86_MemoryMapParams = {
+  &Linux_I386_MemoryMapParams,
+  &Linux_X86_64_MemoryMapParams,
 };
 
-static const PlatformMemoryMapParams FreeBSDMemoryMapParams = {
-  &FreeBSDMemoryMapParams32,
-  &FreeBSDMemoryMapParams64,
+static const PlatformMemoryMapParams Linux_MIPS_MemoryMapParams = {
+  NULL,
+  &Linux_MIPS64_MemoryMapParams,
+};
+
+static const PlatformMemoryMapParams FreeBSD_X86_MemoryMapParams = {
+  &FreeBSD_I386_MemoryMapParams,
+  &FreeBSD_X86_64_MemoryMapParams,
 };
 
 /// \brief An instrumentation pass implementing detection of uninitialized
@@ -440,26 +453,40 @@ bool MemorySanitizer::doInitialization(Module &M) {
   DL = &DLP->getDataLayout();
 
   Triple TargetTriple(M.getTargetTriple());
-  const PlatformMemoryMapParams *PlatformMapParams;
-  if (TargetTriple.getOS() == Triple::FreeBSD)
-    PlatformMapParams = &FreeBSDMemoryMapParams;
-  else
-    PlatformMapParams = &LinuxMemoryMapParams;
-
-  C = &(M.getContext());
-  unsigned PtrSize = DL->getPointerSizeInBits(/* AddressSpace */0);
-  switch (PtrSize) {
-    case 64:
-      MapParams = PlatformMapParams->bits64;
+  switch (TargetTriple.getOS()) {
+    case Triple::FreeBSD:
+      switch (TargetTriple.getArch()) {
+        case Triple::x86_64:
+          MapParams = FreeBSD_X86_MemoryMapParams.bits64;
+          break;
+        case Triple::x86:
+          MapParams = FreeBSD_X86_MemoryMapParams.bits32;
+          break;
+        default:
+          report_fatal_error("unsupported architecture");
+      }
       break;
-    case 32:
-      MapParams = PlatformMapParams->bits32;
+    case Triple::Linux:
+      switch (TargetTriple.getArch()) {
+        case Triple::x86_64:
+          MapParams = Linux_X86_MemoryMapParams.bits64;
+          break;
+        case Triple::x86:
+          MapParams = Linux_X86_MemoryMapParams.bits32;
+          break;
+        case Triple::mips64:
+        case Triple::mips64el:
+          MapParams = Linux_MIPS_MemoryMapParams.bits64;
+          break;
+        default:
+          report_fatal_error("unsupported architecture");
+      }
       break;
     default:
-      report_fatal_error("unsupported pointer size");
-      break;
+      report_fatal_error("unsupported operating system");
   }
 
+  C = &(M.getContext());
   IRBuilder<> IRB(*C);
   IntptrTy = IRB.getIntPtrTy(DL);
   OriginTy = IRB.getInt32Ty();
