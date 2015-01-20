@@ -503,11 +503,10 @@ public:
   ~LoopInfoBase() { releaseMemory(); }
 
   void releaseMemory() {
-    for (typename std::vector<LoopT *>::iterator I =
-         TopLevelLoops.begin(), E = TopLevelLoops.end(); I != E; ++I)
-      delete *I;   // Delete all of the loops...
+    BBMap.clear();
 
-    BBMap.clear();                           // Reset internal state of analysis
+    for (auto *L : TopLevelLoops)
+      delete L;
     TopLevelLoops.clear();
   }
 
@@ -576,8 +575,7 @@ public:
   /// list with the indicated loop.
   void changeTopLevelLoop(LoopT *OldLoop,
                           LoopT *NewLoop) {
-    typename std::vector<LoopT *>::iterator I =
-                 std::find(TopLevelLoops.begin(), TopLevelLoops.end(), OldLoop);
+    auto I = std::find(TopLevelLoops.begin(), TopLevelLoops.end(), OldLoop);
     assert(I != TopLevelLoops.end() && "Old loop not at top level!");
     *I = NewLoop;
     assert(!NewLoop->ParentLoop && !OldLoop->ParentLoop &&
@@ -595,7 +593,7 @@ public:
   /// including all of the Loop objects it is nested in and our mapping from
   /// BasicBlocks to loops.
   void removeBlock(BlockT *BB) {
-    typename DenseMap<BlockT *, LoopT *>::iterator I = BBMap.find(BB);
+    auto I = BBMap.find(BB);
     if (I != BBMap.end()) {
       for (LoopT *L = I->second; L; L = L->getParentLoop())
         L->removeBlockFromLoop(BB);
