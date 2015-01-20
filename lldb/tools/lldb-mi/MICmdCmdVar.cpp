@@ -28,8 +28,8 @@
 //--
 
 // Third Party Headers:
-#include <lldb/API/SBStream.h>
-#include <lldb/API/SBThread.h>
+#include "lldb/API/SBStream.h"
+#include "lldb/API/SBThread.h"
 
 // In-house headers:
 #include "MICmdCmdVar.h"

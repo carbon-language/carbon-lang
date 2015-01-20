@@ -36,7 +36,7 @@
 #pragma once
 
 // Third party headers:
-#include <lldb/API/SBBreakpoint.h>
+#include "lldb/API/SBBreakpoint.h"
 
 // In-house headers:
 #include "MICmdBase.h"

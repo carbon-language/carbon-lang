@@ -22,7 +22,7 @@
 // Third party headers:
 #include <stdarg.h> // va_list, va_start, var_end
 #include <iostream>
-#include <lldb/API/SBError.h>
+#include "lldb/API/SBError.h"
 
 // In-house headers:
 #include "Driver.h"

@@ -38,8 +38,8 @@ MI commands implemented are:
 
 // Third party headers:
 #include <vector>
-#include <lldb/API/SBBreakpoint.h>
-#include <lldb/API/SBCommandReturnObject.h>
+#include "lldb/API/SBBreakpoint.h"
+#include "lldb/API/SBCommandReturnObject.h"
 
 // In-house headers:
 #include "MICmdBase.h"

@@ -27,17 +27,17 @@
 #ifdef _MSC_VER
 #include <lldb\Host\windows\getopt\GetOptInc.h>
 #endif // _MSC_VER
-#include <lldb/API/SBBreakpoint.h>
-#include <lldb/API/SBCommandInterpreter.h>
-#include <lldb/API/SBCommandReturnObject.h>
-#include <lldb/API/SBCommunication.h>
-#include <lldb/API/SBEvent.h>
-#include <lldb/API/SBHostOS.h>
-#include <lldb/API/SBListener.h>
-#include <lldb/API/SBStream.h>
-#include <lldb/API/SBTarget.h>
-#include <lldb/API/SBThread.h>
-#include <lldb/API/SBProcess.h>
+#include "lldb/API/SBBreakpoint.h"
+#include "lldb/API/SBCommandInterpreter.h"
+#include "lldb/API/SBCommandReturnObject.h"
+#include "lldb/API/SBCommunication.h"
+#include "lldb/API/SBEvent.h"
+#include "lldb/API/SBHostOS.h"
+#include "lldb/API/SBListener.h"
+#include "lldb/API/SBStream.h"
+#include "lldb/API/SBTarget.h"
+#include "lldb/API/SBThread.h"
+#include "lldb/API/SBProcess.h"
 
 using namespace lldb;
 

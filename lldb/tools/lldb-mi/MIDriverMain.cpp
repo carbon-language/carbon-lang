@@ -49,7 +49,7 @@
 
 // Third party headers:
 #include <stdio.h>
-#include <lldb/API/SBHostOS.h>
+#include "lldb/API/SBHostOS.h"
 
 // In house headers:
 #include "MICmnConfig.h"

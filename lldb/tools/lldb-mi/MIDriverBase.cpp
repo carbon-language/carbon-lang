@@ -20,8 +20,8 @@
 //--
 
 // Third party headers:
-#include <lldb/API/SBEvent.h>
-#include <lldb/API/SBBroadcaster.h>
+#include "lldb/API/SBEvent.h"
+#include "lldb/API/SBBroadcaster.h"
 
 // In-house headers:
 #include "MIDriverBase.h"

@@ -14,6 +14,7 @@
 				AF90106415AB7D2900FF120D /* CopyFiles */,
 			);
 			dependencies = (
+				26B391F11A6DCCBE00456239 /* PBXTargetDependency */,
 				26CEF3B014FD591F007286B2 /* PBXTargetDependency */,
 				2687EACD1508115900DD8C2E /* PBXTargetDependency */,
 			);
@@ -30,6 +31,7 @@
 				26CEF3B914FD5952007286B2 /* PBXTargetDependency */,
 				26CEF3B714FD594E007286B2 /* PBXTargetDependency */,
 				26CEF3BB14FD595B007286B2 /* PBXTargetDependency */,
+				26B391EF1A6DCCAF00456239 /* PBXTargetDependency */,
 				2687EACB1508115000DD8C2E /* PBXTargetDependency */,
 			);
 			name = desktop;
@@ -216,6 +218,85 @@
 		26680336116005EF008E1FE4 /* SBBreakpointLocation.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9AF16CC7114086A1007A7B3F /* SBBreakpointLocation.cpp */; };
 		26680337116005F1008E1FE4 /* SBBreakpoint.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9AF16A9C11402D5B007A7B3F /* SBBreakpoint.cpp */; };
 		2668035C11601108008E1FE4 /* LLDB.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 26680207115FD0ED008E1FE4 /* LLDB.framework */; };
+		266941FE1A6DC2AC0063BE93 /* Driver.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2669415C1A6DC2AB0063BE93 /* Driver.cpp */; };
+		266942001A6DC2AC0063BE93 /* MICmdArgContext.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 266941601A6DC2AB0063BE93 /* MICmdArgContext.cpp */; };
+		266942011A6DC2AC0063BE93 /* MICmdArgSet.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 266941621A6DC2AB0063BE93 /* MICmdArgSet.cpp */; };
+		266942021A6DC2AC0063BE93 /* MICmdArgValBase.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 266941641A6DC2AB0063BE93 /* MICmdArgValBase.cpp */; };
+		266942031A6DC2AC0063BE93 /* MICmdArgValConsume.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 266941661A6DC2AB0063BE93 /* MICmdArgValConsume.cpp */; };
+		266942041A6DC2AC0063BE93 /* MICmdArgValFile.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 266941681A6DC2AB0063BE93 /* MICmdArgValFile.cpp */; };
+		266942051A6DC2AC0063BE93 /* MICmdArgValListBase.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2669416A1A6DC2AC0063BE93 /* MICmdArgValListBase.cpp */; };
+		266942061A6DC2AC0063BE93 /* MICmdArgValListOfN.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2669416C1A6DC2AC0063BE93 /* MICmdArgValListOfN.cpp */; };
+		266942071A6DC2AC0063BE93 /* MICmdArgValNumber.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2669416E1A6DC2AC0063BE93 /* MICmdArgValNumber.cpp */; };
+		266942081A6DC2AC0063BE93 /* MICmdArgValOptionLong.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 266941701A6DC2AC0063BE93 /* MICmdArgValOptionLong.cpp */; };
+		266942091A6DC2AC0063BE93 /* MICmdArgValOptionShort.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 266941721A6DC2AC0063BE93 /* MICmdArgValOptionShort.cpp */; };
+		2669420A1A6DC2AC0063BE93 /* MICmdArgValString.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 266941741A6DC2AC0063BE93 /* MICmdArgValString.cpp */; };
+		2669420B1A6DC2AC0063BE93 /* MICmdArgValThreadGrp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 266941761A6DC2AC0063BE93 /* MICmdArgValThreadGrp.cpp */; };
+		2669420C1A6DC2AC0063BE93 /* MICmdBase.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 266941781A6DC2AC0063BE93 /* MICmdBase.cpp */; };
+		2669420D1A6DC2AC0063BE93 /* MICmdCmd.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2669417A1A6DC2AC0063BE93 /* MICmdCmd.cpp */; };
+		2669420E1A6DC2AC0063BE93 /* MICmdCmdBreak.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2669417C1A6DC2AC0063BE93 /* MICmdCmdBreak.cpp */; };
+		2669420F1A6DC2AC0063BE93 /* MICmdCmdData.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2669417E1A6DC2AC0063BE93 /* MICmdCmdData.cpp */; };
+		266942101A6DC2AC0063BE93 /* MICmdCmdEnviro.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 266941801A6DC2AC0063BE93 /* MICmdCmdEnviro.cpp */; };
+		266942111A6DC2AC0063BE93 /* MICmdCmdExec.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 266941821A6DC2AC0063BE93 /* MICmdCmdExec.cpp */; };
+		266942121A6DC2AC0063BE93 /* MICmdCmdFile.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 266941841A6DC2AC0063BE93 /* MICmdCmdFile.cpp */; };
+		266942131A6DC2AC0063BE93 /* MICmdCmdGdbInfo.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 266941861A6DC2AC0063BE93 /* MICmdCmdGdbInfo.cpp */; };
+		266942141A6DC2AC0063BE93 /* MICmdCmdGdbSet.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 266941881A6DC2AC0063BE93 /* MICmdCmdGdbSet.cpp */; };
+		266942151A6DC2AC0063BE93 /* MICmdCmdGdbThread.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2669418A1A6DC2AC0063BE93 /* MICmdCmdGdbThread.cpp */; };
+		266942161A6DC2AC0063BE93 /* MICmdCmdMiscellanous.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2669418C1A6DC2AC0063BE93 /* MICmdCmdMiscellanous.cpp */; };
+		266942171A6DC2AC0063BE93 /* MICmdCmdStack.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2669418E1A6DC2AC0063BE93 /* MICmdCmdStack.cpp */; };
+		266942181A6DC2AC0063BE93 /* MICmdCmdSupportInfo.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 266941901A6DC2AC0063BE93 /* MICmdCmdSupportInfo.cpp */; };
+		266942191A6DC2AC0063BE93 /* MICmdCmdSupportList.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 266941921A6DC2AC0063BE93 /* MICmdCmdSupportList.cpp */; };
+		2669421A1A6DC2AC0063BE93 /* MICmdCmdTarget.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 266941941A6DC2AC0063BE93 /* MICmdCmdTarget.cpp */; };
+		2669421B1A6DC2AC0063BE93 /* MICmdCmdThread.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 266941961A6DC2AC0063BE93 /* MICmdCmdThread.cpp */; };
+		2669421C1A6DC2AC0063BE93 /* MICmdCmdTrace.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 266941981A6DC2AC0063BE93 /* MICmdCmdTrace.cpp */; };
+		2669421D1A6DC2AC0063BE93 /* MICmdCmdVar.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2669419A1A6DC2AC0063BE93 /* MICmdCmdVar.cpp */; };
+		2669421E1A6DC2AC0063BE93 /* MICmdCommands.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2669419C1A6DC2AC0063BE93 /* MICmdCommands.cpp */; };
+		2669421F1A6DC2AC0063BE93 /* MICmdData.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2669419E1A6DC2AC0063BE93 /* MICmdData.cpp */; };
+		266942201A6DC2AC0063BE93 /* MICmdFactory.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 266941A01A6DC2AC0063BE93 /* MICmdFactory.cpp */; };
+		266942211A6DC2AC0063BE93 /* MICmdInterpreter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 266941A21A6DC2AC0063BE93 /* MICmdInterpreter.cpp */; };
+		266942221A6DC2AC0063BE93 /* MICmdInvoker.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 266941A41A6DC2AC0063BE93 /* MICmdInvoker.cpp */; };
+		266942231A6DC2AC0063BE93 /* MICmdMgr.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 266941A61A6DC2AC0063BE93 /* MICmdMgr.cpp */; };
+		266942241A6DC2AC0063BE93 /* MICmdMgrSetCmdDeleteCallback.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 266941A81A6DC2AC0063BE93 /* MICmdMgrSetCmdDeleteCallback.cpp */; };
+		266942251A6DC2AC0063BE93 /* MICmnBase.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 266941AA1A6DC2AC0063BE93 /* MICmnBase.cpp */; };
+		266942261A6DC2AC0063BE93 /* MICmnLLDBBroadcaster.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 266941AD1A6DC2AC0063BE93 /* MICmnLLDBBroadcaster.cpp */; };
+		266942271A6DC2AC0063BE93 /* MICmnLLDBDebugger.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 266941AF1A6DC2AC0063BE93 /* MICmnLLDBDebugger.cpp */; };
+		266942281A6DC2AC0063BE93 /* MICmnLLDBDebuggerHandleEvents.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 266941B11A6DC2AC0063BE93 /* MICmnLLDBDebuggerHandleEvents.cpp */; };
+		266942291A6DC2AC0063BE93 /* MICmnLLDBDebugSessionInfo.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 266941B31A6DC2AC0063BE93 /* MICmnLLDBDebugSessionInfo.cpp */; };
+		2669422A1A6DC2AC0063BE93 /* MICmnLLDBDebugSessionInfoVarObj.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 266941B51A6DC2AC0063BE93 /* MICmnLLDBDebugSessionInfoVarObj.cpp */; };
+		2669422B1A6DC2AC0063BE93 /* MICmnLLDBProxySBValue.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 266941B71A6DC2AC0063BE93 /* MICmnLLDBProxySBValue.cpp */; };
+		2669422C1A6DC2AC0063BE93 /* MICmnLLDBUtilSBValue.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 266941B91A6DC2AC0063BE93 /* MICmnLLDBUtilSBValue.cpp */; };
+		2669422D1A6DC2AC0063BE93 /* MICmnLog.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 266941BB1A6DC2AC0063BE93 /* MICmnLog.cpp */; };
+		2669422E1A6DC2AC0063BE93 /* MICmnLogMediumFile.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 266941BD1A6DC2AC0063BE93 /* MICmnLogMediumFile.cpp */; };
+		2669422F1A6DC2AC0063BE93 /* MICmnMIOutOfBandRecord.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 266941BF1A6DC2AC0063BE93 /* MICmnMIOutOfBandRecord.cpp */; };
+		266942301A6DC2AC0063BE93 /* MICmnMIResultRecord.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 266941C11A6DC2AC0063BE93 /* MICmnMIResultRecord.cpp */; };
+		266942311A6DC2AC0063BE93 /* MICmnMIValue.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 266941C31A6DC2AC0063BE93 /* MICmnMIValue.cpp */; };
+		266942321A6DC2AC0063BE93 /* MICmnMIValueConst.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 266941C51A6DC2AC0063BE93 /* MICmnMIValueConst.cpp */; };
+		266942331A6DC2AC0063BE93 /* MICmnMIValueList.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 266941C71A6DC2AC0063BE93 /* MICmnMIValueList.cpp */; };
+		266942341A6DC2AC0063BE93 /* MICmnMIValueResult.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 266941C91A6DC2AC0063BE93 /* MICmnMIValueResult.cpp */; };
+		266942351A6DC2AC0063BE93 /* MICmnMIValueTuple.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 266941CB1A6DC2AC0063BE93 /* MICmnMIValueTuple.cpp */; };
+		266942361A6DC2AC0063BE93 /* MICmnResources.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 266941CD1A6DC2AC0063BE93 /* MICmnResources.cpp */; };
+		266942371A6DC2AC0063BE93 /* MICmnStreamStderr.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 266941CF1A6DC2AC0063BE93 /* MICmnStreamStderr.cpp */; };
+		266942381A6DC2AC0063BE93 /* MICmnStreamStdin.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 266941D11A6DC2AC0063BE93 /* MICmnStreamStdin.cpp */; };
+		266942391A6DC2AC0063BE93 /* MICmnStreamStdinLinux.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 266941D31A6DC2AC0063BE93 /* MICmnStreamStdinLinux.cpp */; };
+		2669423A1A6DC2AC0063BE93 /* MICmnStreamStdinWindows.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 266941D51A6DC2AC0063BE93 /* MICmnStreamStdinWindows.cpp */; };
+		2669423B1A6DC2AC0063BE93 /* MICmnStreamStdout.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 266941D71A6DC2AC0063BE93 /* MICmnStreamStdout.cpp */; };
+		2669423C1A6DC2AC0063BE93 /* MICmnThreadMgrStd.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 266941D91A6DC2AC0063BE93 /* MICmnThreadMgrStd.cpp */; };
+		2669423D1A6DC2AC0063BE93 /* MIDriver.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 266941DC1A6DC2AC0063BE93 /* MIDriver.cpp */; };
+		2669423E1A6DC2AC0063BE93 /* MIDriverBase.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 266941DE1A6DC2AC0063BE93 /* MIDriverBase.cpp */; };
+		2669423F1A6DC2AC0063BE93 /* MIDriverMain.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 266941E01A6DC2AC0063BE93 /* MIDriverMain.cpp */; };
+		266942401A6DC2AC0063BE93 /* MIDriverMgr.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 266941E11A6DC2AC0063BE93 /* MIDriverMgr.cpp */; };
+		266942411A6DC2AC0063BE93 /* MIUtilDateTimeStd.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 266941E41A6DC2AC0063BE93 /* MIUtilDateTimeStd.cpp */; };
+		266942421A6DC2AC0063BE93 /* MIUtilDebug.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 266941E61A6DC2AC0063BE93 /* MIUtilDebug.cpp */; };
+		266942431A6DC2AC0063BE93 /* MIUtilFileStd.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 266941E81A6DC2AC0063BE93 /* MIUtilFileStd.cpp */; };
+		266942441A6DC2AC0063BE93 /* MIUtilMapIdToVariant.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 266941EA1A6DC2AC0063BE93 /* MIUtilMapIdToVariant.cpp */; };
+		266942451A6DC2AC0063BE93 /* MIUtilString.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 266941EE1A6DC2AC0063BE93 /* MIUtilString.cpp */; };
+		266942461A6DC2AC0063BE93 /* MIUtilSystemLinux.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 266941F01A6DC2AC0063BE93 /* MIUtilSystemLinux.cpp */; };
+		266942471A6DC2AC0063BE93 /* MIUtilSystemOsx.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 266941F21A6DC2AC0063BE93 /* MIUtilSystemOsx.cpp */; };
+		266942481A6DC2AC0063BE93 /* MIUtilSystemWindows.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 266941F41A6DC2AC0063BE93 /* MIUtilSystemWindows.cpp */; };
+		266942491A6DC2AC0063BE93 /* MIUtilTermios.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 266941F61A6DC2AC0063BE93 /* MIUtilTermios.cpp */; };
+		2669424A1A6DC2AC0063BE93 /* MIUtilThreadBaseStd.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 266941F81A6DC2AC0063BE93 /* MIUtilThreadBaseStd.cpp */; };
+		2669424B1A6DC2AC0063BE93 /* MIUtilVariant.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 266941FA1A6DC2AC0063BE93 /* MIUtilVariant.cpp */; };
+		2669424C1A6DC2AC0063BE93 /* Platform.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 266941FC1A6DC2AC0063BE93 /* Platform.cpp */; };
+		2669424D1A6DC32B0063BE93 /* LLDB.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 26680207115FD0ED008E1FE4 /* LLDB.framework */; };
 		266DFE9713FD656E00D0C574 /* OperatingSystem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 266DFE9613FD656E00D0C574 /* OperatingSystem.cpp */; };
 		2670F8121862B44A006B332C /* libncurses.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 2670F8111862B44A006B332C /* libncurses.dylib */; };
 		2671A0D013482601003A87BB /* ConnectionMachPort.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2671A0CF13482601003A87BB /* ConnectionMachPort.cpp */; };
@@ -858,6 +939,20 @@
 			remoteGlobalIDString = 2689FFC913353D7A00698AC0;
 			remoteInfo = "lldb-core";
 		};
+		26B391EE1A6DCCAF00456239 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 08FB7793FE84155DC02AAC07 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 2690CD161A6DC0D000E717C8;
+			remoteInfo = "lldb-mi";
+		};
+		26B391F01A6DCCBE00456239 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 08FB7793FE84155DC02AAC07 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 2690CD161A6DC0D000E717C8;
+			remoteInfo = "lldb-mi";
+		};
 		26CE059F115C31E50022F371 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 265E9BE1115C2BAA00D0DCCB /* debugserver.xcodeproj */;
@@ -913,6 +1008,13 @@
 			proxyType = 1;
 			remoteGlobalIDString = 2689FFC913353D7A00698AC0;
 			remoteInfo = "lldb-core";
+		};
+		26DF745F1A6DCDB300B85563 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 08FB7793FE84155DC02AAC07 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 26680206115FD0ED008E1FE4;
+			remoteInfo = LLDB;
 		};
 		94E829C8152D33B4006F96A3 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -1310,6 +1412,169 @@
 		266603C91345B5A8004DA8B6 /* ConnectionSharedMemory.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ConnectionSharedMemory.cpp; path = source/Core/ConnectionSharedMemory.cpp; sourceTree = "<group>"; };
 		266603CC1345B5C0004DA8B6 /* ConnectionSharedMemory.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ConnectionSharedMemory.h; path = include/lldb/Core/ConnectionSharedMemory.h; sourceTree = "<group>"; };
 		26680207115FD0ED008E1FE4 /* LLDB.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = LLDB.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		2669415B1A6DC2AB0063BE93 /* CMakeLists.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = CMakeLists.txt; path = "tools/lldb-mi/CMakeLists.txt"; sourceTree = SOURCE_ROOT; };
+		2669415C1A6DC2AB0063BE93 /* Driver.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Driver.cpp; path = "tools/lldb-mi/Driver.cpp"; sourceTree = SOURCE_ROOT; };
+		2669415D1A6DC2AB0063BE93 /* Driver.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Driver.h; path = "tools/lldb-mi/Driver.h"; sourceTree = SOURCE_ROOT; };
+		2669415E1A6DC2AB0063BE93 /* lldb-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = "lldb-Info.plist"; path = "tools/lldb-mi/lldb-Info.plist"; sourceTree = SOURCE_ROOT; };
+		2669415F1A6DC2AB0063BE93 /* Makefile */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.make; name = Makefile; path = "tools/lldb-mi/Makefile"; sourceTree = SOURCE_ROOT; };
+		266941601A6DC2AB0063BE93 /* MICmdArgContext.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MICmdArgContext.cpp; path = "tools/lldb-mi/MICmdArgContext.cpp"; sourceTree = SOURCE_ROOT; };
+		266941611A6DC2AB0063BE93 /* MICmdArgContext.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MICmdArgContext.h; path = "tools/lldb-mi/MICmdArgContext.h"; sourceTree = SOURCE_ROOT; };
+		266941621A6DC2AB0063BE93 /* MICmdArgSet.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MICmdArgSet.cpp; path = "tools/lldb-mi/MICmdArgSet.cpp"; sourceTree = SOURCE_ROOT; };
+		266941631A6DC2AB0063BE93 /* MICmdArgSet.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MICmdArgSet.h; path = "tools/lldb-mi/MICmdArgSet.h"; sourceTree = SOURCE_ROOT; };
+		266941641A6DC2AB0063BE93 /* MICmdArgValBase.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MICmdArgValBase.cpp; path = "tools/lldb-mi/MICmdArgValBase.cpp"; sourceTree = SOURCE_ROOT; };
+		266941651A6DC2AB0063BE93 /* MICmdArgValBase.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MICmdArgValBase.h; path = "tools/lldb-mi/MICmdArgValBase.h"; sourceTree = SOURCE_ROOT; };
+		266941661A6DC2AB0063BE93 /* MICmdArgValConsume.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MICmdArgValConsume.cpp; path = "tools/lldb-mi/MICmdArgValConsume.cpp"; sourceTree = SOURCE_ROOT; };
+		266941671A6DC2AB0063BE93 /* MICmdArgValConsume.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MICmdArgValConsume.h; path = "tools/lldb-mi/MICmdArgValConsume.h"; sourceTree = SOURCE_ROOT; };
+		266941681A6DC2AB0063BE93 /* MICmdArgValFile.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MICmdArgValFile.cpp; path = "tools/lldb-mi/MICmdArgValFile.cpp"; sourceTree = SOURCE_ROOT; };
+		266941691A6DC2AB0063BE93 /* MICmdArgValFile.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MICmdArgValFile.h; path = "tools/lldb-mi/MICmdArgValFile.h"; sourceTree = SOURCE_ROOT; };
+		2669416A1A6DC2AC0063BE93 /* MICmdArgValListBase.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MICmdArgValListBase.cpp; path = "tools/lldb-mi/MICmdArgValListBase.cpp"; sourceTree = SOURCE_ROOT; };
+		2669416B1A6DC2AC0063BE93 /* MICmdArgValListBase.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MICmdArgValListBase.h; path = "tools/lldb-mi/MICmdArgValListBase.h"; sourceTree = SOURCE_ROOT; };
+		2669416C1A6DC2AC0063BE93 /* MICmdArgValListOfN.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MICmdArgValListOfN.cpp; path = "tools/lldb-mi/MICmdArgValListOfN.cpp"; sourceTree = SOURCE_ROOT; };
+		2669416D1A6DC2AC0063BE93 /* MICmdArgValListOfN.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MICmdArgValListOfN.h; path = "tools/lldb-mi/MICmdArgValListOfN.h"; sourceTree = SOURCE_ROOT; };
+		2669416E1A6DC2AC0063BE93 /* MICmdArgValNumber.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MICmdArgValNumber.cpp; path = "tools/lldb-mi/MICmdArgValNumber.cpp"; sourceTree = SOURCE_ROOT; };
+		2669416F1A6DC2AC0063BE93 /* MICmdArgValNumber.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MICmdArgValNumber.h; path = "tools/lldb-mi/MICmdArgValNumber.h"; sourceTree = SOURCE_ROOT; };
+		266941701A6DC2AC0063BE93 /* MICmdArgValOptionLong.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MICmdArgValOptionLong.cpp; path = "tools/lldb-mi/MICmdArgValOptionLong.cpp"; sourceTree = SOURCE_ROOT; };
+		266941711A6DC2AC0063BE93 /* MICmdArgValOptionLong.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MICmdArgValOptionLong.h; path = "tools/lldb-mi/MICmdArgValOptionLong.h"; sourceTree = SOURCE_ROOT; };
+		266941721A6DC2AC0063BE93 /* MICmdArgValOptionShort.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MICmdArgValOptionShort.cpp; path = "tools/lldb-mi/MICmdArgValOptionShort.cpp"; sourceTree = SOURCE_ROOT; };
+		266941731A6DC2AC0063BE93 /* MICmdArgValOptionShort.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MICmdArgValOptionShort.h; path = "tools/lldb-mi/MICmdArgValOptionShort.h"; sourceTree = SOURCE_ROOT; };
+		266941741A6DC2AC0063BE93 /* MICmdArgValString.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MICmdArgValString.cpp; path = "tools/lldb-mi/MICmdArgValString.cpp"; sourceTree = SOURCE_ROOT; };
+		266941751A6DC2AC0063BE93 /* MICmdArgValString.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MICmdArgValString.h; path = "tools/lldb-mi/MICmdArgValString.h"; sourceTree = SOURCE_ROOT; };
+		266941761A6DC2AC0063BE93 /* MICmdArgValThreadGrp.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MICmdArgValThreadGrp.cpp; path = "tools/lldb-mi/MICmdArgValThreadGrp.cpp"; sourceTree = SOURCE_ROOT; };
+		266941771A6DC2AC0063BE93 /* MICmdArgValThreadGrp.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MICmdArgValThreadGrp.h; path = "tools/lldb-mi/MICmdArgValThreadGrp.h"; sourceTree = SOURCE_ROOT; };
+		266941781A6DC2AC0063BE93 /* MICmdBase.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MICmdBase.cpp; path = "tools/lldb-mi/MICmdBase.cpp"; sourceTree = SOURCE_ROOT; };
+		266941791A6DC2AC0063BE93 /* MICmdBase.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MICmdBase.h; path = "tools/lldb-mi/MICmdBase.h"; sourceTree = SOURCE_ROOT; };
+		2669417A1A6DC2AC0063BE93 /* MICmdCmd.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MICmdCmd.cpp; path = "tools/lldb-mi/MICmdCmd.cpp"; sourceTree = SOURCE_ROOT; };
+		2669417B1A6DC2AC0063BE93 /* MICmdCmd.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MICmdCmd.h; path = "tools/lldb-mi/MICmdCmd.h"; sourceTree = SOURCE_ROOT; };
+		2669417C1A6DC2AC0063BE93 /* MICmdCmdBreak.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MICmdCmdBreak.cpp; path = "tools/lldb-mi/MICmdCmdBreak.cpp"; sourceTree = SOURCE_ROOT; };
+		2669417D1A6DC2AC0063BE93 /* MICmdCmdBreak.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MICmdCmdBreak.h; path = "tools/lldb-mi/MICmdCmdBreak.h"; sourceTree = SOURCE_ROOT; };
+		2669417E1A6DC2AC0063BE93 /* MICmdCmdData.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MICmdCmdData.cpp; path = "tools/lldb-mi/MICmdCmdData.cpp"; sourceTree = SOURCE_ROOT; };
+		2669417F1A6DC2AC0063BE93 /* MICmdCmdData.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MICmdCmdData.h; path = "tools/lldb-mi/MICmdCmdData.h"; sourceTree = SOURCE_ROOT; };
+		266941801A6DC2AC0063BE93 /* MICmdCmdEnviro.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MICmdCmdEnviro.cpp; path = "tools/lldb-mi/MICmdCmdEnviro.cpp"; sourceTree = SOURCE_ROOT; };
+		266941811A6DC2AC0063BE93 /* MICmdCmdEnviro.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MICmdCmdEnviro.h; path = "tools/lldb-mi/MICmdCmdEnviro.h"; sourceTree = SOURCE_ROOT; };
+		266941821A6DC2AC0063BE93 /* MICmdCmdExec.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MICmdCmdExec.cpp; path = "tools/lldb-mi/MICmdCmdExec.cpp"; sourceTree = SOURCE_ROOT; };
+		266941831A6DC2AC0063BE93 /* MICmdCmdExec.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MICmdCmdExec.h; path = "tools/lldb-mi/MICmdCmdExec.h"; sourceTree = SOURCE_ROOT; };
+		266941841A6DC2AC0063BE93 /* MICmdCmdFile.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MICmdCmdFile.cpp; path = "tools/lldb-mi/MICmdCmdFile.cpp"; sourceTree = SOURCE_ROOT; };
+		266941851A6DC2AC0063BE93 /* MICmdCmdFile.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MICmdCmdFile.h; path = "tools/lldb-mi/MICmdCmdFile.h"; sourceTree = SOURCE_ROOT; };
+		266941861A6DC2AC0063BE93 /* MICmdCmdGdbInfo.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MICmdCmdGdbInfo.cpp; path = "tools/lldb-mi/MICmdCmdGdbInfo.cpp"; sourceTree = SOURCE_ROOT; };
+		266941871A6DC2AC0063BE93 /* MICmdCmdGdbInfo.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MICmdCmdGdbInfo.h; path = "tools/lldb-mi/MICmdCmdGdbInfo.h"; sourceTree = SOURCE_ROOT; };
+		266941881A6DC2AC0063BE93 /* MICmdCmdGdbSet.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MICmdCmdGdbSet.cpp; path = "tools/lldb-mi/MICmdCmdGdbSet.cpp"; sourceTree = SOURCE_ROOT; };
+		266941891A6DC2AC0063BE93 /* MICmdCmdGdbSet.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MICmdCmdGdbSet.h; path = "tools/lldb-mi/MICmdCmdGdbSet.h"; sourceTree = SOURCE_ROOT; };
+		2669418A1A6DC2AC0063BE93 /* MICmdCmdGdbThread.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MICmdCmdGdbThread.cpp; path = "tools/lldb-mi/MICmdCmdGdbThread.cpp"; sourceTree = SOURCE_ROOT; };
+		2669418B1A6DC2AC0063BE93 /* MICmdCmdGdbThread.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MICmdCmdGdbThread.h; path = "tools/lldb-mi/MICmdCmdGdbThread.h"; sourceTree = SOURCE_ROOT; };
+		2669418C1A6DC2AC0063BE93 /* MICmdCmdMiscellanous.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MICmdCmdMiscellanous.cpp; path = "tools/lldb-mi/MICmdCmdMiscellanous.cpp"; sourceTree = SOURCE_ROOT; };
+		2669418D1A6DC2AC0063BE93 /* MICmdCmdMiscellanous.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MICmdCmdMiscellanous.h; path = "tools/lldb-mi/MICmdCmdMiscellanous.h"; sourceTree = SOURCE_ROOT; };
+		2669418E1A6DC2AC0063BE93 /* MICmdCmdStack.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MICmdCmdStack.cpp; path = "tools/lldb-mi/MICmdCmdStack.cpp"; sourceTree = SOURCE_ROOT; };
+		2669418F1A6DC2AC0063BE93 /* MICmdCmdStack.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MICmdCmdStack.h; path = "tools/lldb-mi/MICmdCmdStack.h"; sourceTree = SOURCE_ROOT; };
+		266941901A6DC2AC0063BE93 /* MICmdCmdSupportInfo.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MICmdCmdSupportInfo.cpp; path = "tools/lldb-mi/MICmdCmdSupportInfo.cpp"; sourceTree = SOURCE_ROOT; };
+		266941911A6DC2AC0063BE93 /* MICmdCmdSupportInfo.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MICmdCmdSupportInfo.h; path = "tools/lldb-mi/MICmdCmdSupportInfo.h"; sourceTree = SOURCE_ROOT; };
+		266941921A6DC2AC0063BE93 /* MICmdCmdSupportList.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MICmdCmdSupportList.cpp; path = "tools/lldb-mi/MICmdCmdSupportList.cpp"; sourceTree = SOURCE_ROOT; };
+		266941931A6DC2AC0063BE93 /* MICmdCmdSupportList.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MICmdCmdSupportList.h; path = "tools/lldb-mi/MICmdCmdSupportList.h"; sourceTree = SOURCE_ROOT; };
+		266941941A6DC2AC0063BE93 /* MICmdCmdTarget.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MICmdCmdTarget.cpp; path = "tools/lldb-mi/MICmdCmdTarget.cpp"; sourceTree = SOURCE_ROOT; };
+		266941951A6DC2AC0063BE93 /* MICmdCmdTarget.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MICmdCmdTarget.h; path = "tools/lldb-mi/MICmdCmdTarget.h"; sourceTree = SOURCE_ROOT; };
+		266941961A6DC2AC0063BE93 /* MICmdCmdThread.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MICmdCmdThread.cpp; path = "tools/lldb-mi/MICmdCmdThread.cpp"; sourceTree = SOURCE_ROOT; };
+		266941971A6DC2AC0063BE93 /* MICmdCmdThread.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MICmdCmdThread.h; path = "tools/lldb-mi/MICmdCmdThread.h"; sourceTree = SOURCE_ROOT; };
+		266941981A6DC2AC0063BE93 /* MICmdCmdTrace.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MICmdCmdTrace.cpp; path = "tools/lldb-mi/MICmdCmdTrace.cpp"; sourceTree = SOURCE_ROOT; };
+		266941991A6DC2AC0063BE93 /* MICmdCmdTrace.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MICmdCmdTrace.h; path = "tools/lldb-mi/MICmdCmdTrace.h"; sourceTree = SOURCE_ROOT; };
+		2669419A1A6DC2AC0063BE93 /* MICmdCmdVar.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MICmdCmdVar.cpp; path = "tools/lldb-mi/MICmdCmdVar.cpp"; sourceTree = SOURCE_ROOT; };
+		2669419B1A6DC2AC0063BE93 /* MICmdCmdVar.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MICmdCmdVar.h; path = "tools/lldb-mi/MICmdCmdVar.h"; sourceTree = SOURCE_ROOT; };
+		2669419C1A6DC2AC0063BE93 /* MICmdCommands.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MICmdCommands.cpp; path = "tools/lldb-mi/MICmdCommands.cpp"; sourceTree = SOURCE_ROOT; };
+		2669419D1A6DC2AC0063BE93 /* MICmdCommands.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MICmdCommands.h; path = "tools/lldb-mi/MICmdCommands.h"; sourceTree = SOURCE_ROOT; };
+		2669419E1A6DC2AC0063BE93 /* MICmdData.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MICmdData.cpp; path = "tools/lldb-mi/MICmdData.cpp"; sourceTree = SOURCE_ROOT; };
+		2669419F1A6DC2AC0063BE93 /* MICmdData.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MICmdData.h; path = "tools/lldb-mi/MICmdData.h"; sourceTree = SOURCE_ROOT; };
+		266941A01A6DC2AC0063BE93 /* MICmdFactory.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MICmdFactory.cpp; path = "tools/lldb-mi/MICmdFactory.cpp"; sourceTree = SOURCE_ROOT; };
+		266941A11A6DC2AC0063BE93 /* MICmdFactory.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MICmdFactory.h; path = "tools/lldb-mi/MICmdFactory.h"; sourceTree = SOURCE_ROOT; };
+		266941A21A6DC2AC0063BE93 /* MICmdInterpreter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MICmdInterpreter.cpp; path = "tools/lldb-mi/MICmdInterpreter.cpp"; sourceTree = SOURCE_ROOT; };
+		266941A31A6DC2AC0063BE93 /* MICmdInterpreter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MICmdInterpreter.h; path = "tools/lldb-mi/MICmdInterpreter.h"; sourceTree = SOURCE_ROOT; };
+		266941A41A6DC2AC0063BE93 /* MICmdInvoker.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MICmdInvoker.cpp; path = "tools/lldb-mi/MICmdInvoker.cpp"; sourceTree = SOURCE_ROOT; };
+		266941A51A6DC2AC0063BE93 /* MICmdInvoker.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MICmdInvoker.h; path = "tools/lldb-mi/MICmdInvoker.h"; sourceTree = SOURCE_ROOT; };
+		266941A61A6DC2AC0063BE93 /* MICmdMgr.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MICmdMgr.cpp; path = "tools/lldb-mi/MICmdMgr.cpp"; sourceTree = SOURCE_ROOT; };
+		266941A71A6DC2AC0063BE93 /* MICmdMgr.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MICmdMgr.h; path = "tools/lldb-mi/MICmdMgr.h"; sourceTree = SOURCE_ROOT; };
+		266941A81A6DC2AC0063BE93 /* MICmdMgrSetCmdDeleteCallback.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MICmdMgrSetCmdDeleteCallback.cpp; path = "tools/lldb-mi/MICmdMgrSetCmdDeleteCallback.cpp"; sourceTree = SOURCE_ROOT; };
+		266941A91A6DC2AC0063BE93 /* MICmdMgrSetCmdDeleteCallback.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MICmdMgrSetCmdDeleteCallback.h; path = "tools/lldb-mi/MICmdMgrSetCmdDeleteCallback.h"; sourceTree = SOURCE_ROOT; };
+		266941AA1A6DC2AC0063BE93 /* MICmnBase.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MICmnBase.cpp; path = "tools/lldb-mi/MICmnBase.cpp"; sourceTree = SOURCE_ROOT; };
+		266941AB1A6DC2AC0063BE93 /* MICmnBase.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MICmnBase.h; path = "tools/lldb-mi/MICmnBase.h"; sourceTree = SOURCE_ROOT; };
+		266941AC1A6DC2AC0063BE93 /* MICmnConfig.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MICmnConfig.h; path = "tools/lldb-mi/MICmnConfig.h"; sourceTree = SOURCE_ROOT; };
+		266941AD1A6DC2AC0063BE93 /* MICmnLLDBBroadcaster.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MICmnLLDBBroadcaster.cpp; path = "tools/lldb-mi/MICmnLLDBBroadcaster.cpp"; sourceTree = SOURCE_ROOT; };
+		266941AE1A6DC2AC0063BE93 /* MICmnLLDBBroadcaster.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MICmnLLDBBroadcaster.h; path = "tools/lldb-mi/MICmnLLDBBroadcaster.h"; sourceTree = SOURCE_ROOT; };
+		266941AF1A6DC2AC0063BE93 /* MICmnLLDBDebugger.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MICmnLLDBDebugger.cpp; path = "tools/lldb-mi/MICmnLLDBDebugger.cpp"; sourceTree = SOURCE_ROOT; };
+		266941B01A6DC2AC0063BE93 /* MICmnLLDBDebugger.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MICmnLLDBDebugger.h; path = "tools/lldb-mi/MICmnLLDBDebugger.h"; sourceTree = SOURCE_ROOT; };
+		266941B11A6DC2AC0063BE93 /* MICmnLLDBDebuggerHandleEvents.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MICmnLLDBDebuggerHandleEvents.cpp; path = "tools/lldb-mi/MICmnLLDBDebuggerHandleEvents.cpp"; sourceTree = SOURCE_ROOT; };
+		266941B21A6DC2AC0063BE93 /* MICmnLLDBDebuggerHandleEvents.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MICmnLLDBDebuggerHandleEvents.h; path = "tools/lldb-mi/MICmnLLDBDebuggerHandleEvents.h"; sourceTree = SOURCE_ROOT; };
+		266941B31A6DC2AC0063BE93 /* MICmnLLDBDebugSessionInfo.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MICmnLLDBDebugSessionInfo.cpp; path = "tools/lldb-mi/MICmnLLDBDebugSessionInfo.cpp"; sourceTree = SOURCE_ROOT; };
+		266941B41A6DC2AC0063BE93 /* MICmnLLDBDebugSessionInfo.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MICmnLLDBDebugSessionInfo.h; path = "tools/lldb-mi/MICmnLLDBDebugSessionInfo.h"; sourceTree = SOURCE_ROOT; };
+		266941B51A6DC2AC0063BE93 /* MICmnLLDBDebugSessionInfoVarObj.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MICmnLLDBDebugSessionInfoVarObj.cpp; path = "tools/lldb-mi/MICmnLLDBDebugSessionInfoVarObj.cpp"; sourceTree = SOURCE_ROOT; };
+		266941B61A6DC2AC0063BE93 /* MICmnLLDBDebugSessionInfoVarObj.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MICmnLLDBDebugSessionInfoVarObj.h; path = "tools/lldb-mi/MICmnLLDBDebugSessionInfoVarObj.h"; sourceTree = SOURCE_ROOT; };
+		266941B71A6DC2AC0063BE93 /* MICmnLLDBProxySBValue.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MICmnLLDBProxySBValue.cpp; path = "tools/lldb-mi/MICmnLLDBProxySBValue.cpp"; sourceTree = SOURCE_ROOT; };
+		266941B81A6DC2AC0063BE93 /* MICmnLLDBProxySBValue.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MICmnLLDBProxySBValue.h; path = "tools/lldb-mi/MICmnLLDBProxySBValue.h"; sourceTree = SOURCE_ROOT; };
+		266941B91A6DC2AC0063BE93 /* MICmnLLDBUtilSBValue.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MICmnLLDBUtilSBValue.cpp; path = "tools/lldb-mi/MICmnLLDBUtilSBValue.cpp"; sourceTree = SOURCE_ROOT; };
+		266941BA1A6DC2AC0063BE93 /* MICmnLLDBUtilSBValue.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MICmnLLDBUtilSBValue.h; path = "tools/lldb-mi/MICmnLLDBUtilSBValue.h"; sourceTree = SOURCE_ROOT; };
+		266941BB1A6DC2AC0063BE93 /* MICmnLog.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MICmnLog.cpp; path = "tools/lldb-mi/MICmnLog.cpp"; sourceTree = SOURCE_ROOT; };
+		266941BC1A6DC2AC0063BE93 /* MICmnLog.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MICmnLog.h; path = "tools/lldb-mi/MICmnLog.h"; sourceTree = SOURCE_ROOT; };
+		266941BD1A6DC2AC0063BE93 /* MICmnLogMediumFile.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MICmnLogMediumFile.cpp; path = "tools/lldb-mi/MICmnLogMediumFile.cpp"; sourceTree = SOURCE_ROOT; };
+		266941BE1A6DC2AC0063BE93 /* MICmnLogMediumFile.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MICmnLogMediumFile.h; path = "tools/lldb-mi/MICmnLogMediumFile.h"; sourceTree = SOURCE_ROOT; };
+		266941BF1A6DC2AC0063BE93 /* MICmnMIOutOfBandRecord.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MICmnMIOutOfBandRecord.cpp; path = "tools/lldb-mi/MICmnMIOutOfBandRecord.cpp"; sourceTree = SOURCE_ROOT; };
+		266941C01A6DC2AC0063BE93 /* MICmnMIOutOfBandRecord.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MICmnMIOutOfBandRecord.h; path = "tools/lldb-mi/MICmnMIOutOfBandRecord.h"; sourceTree = SOURCE_ROOT; };
+		266941C11A6DC2AC0063BE93 /* MICmnMIResultRecord.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MICmnMIResultRecord.cpp; path = "tools/lldb-mi/MICmnMIResultRecord.cpp"; sourceTree = SOURCE_ROOT; };
+		266941C21A6DC2AC0063BE93 /* MICmnMIResultRecord.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MICmnMIResultRecord.h; path = "tools/lldb-mi/MICmnMIResultRecord.h"; sourceTree = SOURCE_ROOT; };
+		266941C31A6DC2AC0063BE93 /* MICmnMIValue.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MICmnMIValue.cpp; path = "tools/lldb-mi/MICmnMIValue.cpp"; sourceTree = SOURCE_ROOT; };
+		266941C41A6DC2AC0063BE93 /* MICmnMIValue.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MICmnMIValue.h; path = "tools/lldb-mi/MICmnMIValue.h"; sourceTree = SOURCE_ROOT; };
+		266941C51A6DC2AC0063BE93 /* MICmnMIValueConst.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MICmnMIValueConst.cpp; path = "tools/lldb-mi/MICmnMIValueConst.cpp"; sourceTree = SOURCE_ROOT; };
+		266941C61A6DC2AC0063BE93 /* MICmnMIValueConst.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MICmnMIValueConst.h; path = "tools/lldb-mi/MICmnMIValueConst.h"; sourceTree = SOURCE_ROOT; };
+		266941C71A6DC2AC0063BE93 /* MICmnMIValueList.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MICmnMIValueList.cpp; path = "tools/lldb-mi/MICmnMIValueList.cpp"; sourceTree = SOURCE_ROOT; };
+		266941C81A6DC2AC0063BE93 /* MICmnMIValueList.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MICmnMIValueList.h; path = "tools/lldb-mi/MICmnMIValueList.h"; sourceTree = SOURCE_ROOT; };
+		266941C91A6DC2AC0063BE93 /* MICmnMIValueResult.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MICmnMIValueResult.cpp; path = "tools/lldb-mi/MICmnMIValueResult.cpp"; sourceTree = SOURCE_ROOT; };
+		266941CA1A6DC2AC0063BE93 /* MICmnMIValueResult.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MICmnMIValueResult.h; path = "tools/lldb-mi/MICmnMIValueResult.h"; sourceTree = SOURCE_ROOT; };
+		266941CB1A6DC2AC0063BE93 /* MICmnMIValueTuple.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MICmnMIValueTuple.cpp; path = "tools/lldb-mi/MICmnMIValueTuple.cpp"; sourceTree = SOURCE_ROOT; };
+		266941CC1A6DC2AC0063BE93 /* MICmnMIValueTuple.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MICmnMIValueTuple.h; path = "tools/lldb-mi/MICmnMIValueTuple.h"; sourceTree = SOURCE_ROOT; };
+		266941CD1A6DC2AC0063BE93 /* MICmnResources.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MICmnResources.cpp; path = "tools/lldb-mi/MICmnResources.cpp"; sourceTree = SOURCE_ROOT; };
+		266941CE1A6DC2AC0063BE93 /* MICmnResources.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MICmnResources.h; path = "tools/lldb-mi/MICmnResources.h"; sourceTree = SOURCE_ROOT; };
+		266941CF1A6DC2AC0063BE93 /* MICmnStreamStderr.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MICmnStreamStderr.cpp; path = "tools/lldb-mi/MICmnStreamStderr.cpp"; sourceTree = SOURCE_ROOT; };
+		266941D01A6DC2AC0063BE93 /* MICmnStreamStderr.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MICmnStreamStderr.h; path = "tools/lldb-mi/MICmnStreamStderr.h"; sourceTree = SOURCE_ROOT; };
+		266941D11A6DC2AC0063BE93 /* MICmnStreamStdin.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MICmnStreamStdin.cpp; path = "tools/lldb-mi/MICmnStreamStdin.cpp"; sourceTree = SOURCE_ROOT; };
+		266941D21A6DC2AC0063BE93 /* MICmnStreamStdin.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MICmnStreamStdin.h; path = "tools/lldb-mi/MICmnStreamStdin.h"; sourceTree = SOURCE_ROOT; };
+		266941D31A6DC2AC0063BE93 /* MICmnStreamStdinLinux.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MICmnStreamStdinLinux.cpp; path = "tools/lldb-mi/MICmnStreamStdinLinux.cpp"; sourceTree = SOURCE_ROOT; };
+		266941D41A6DC2AC0063BE93 /* MICmnStreamStdinLinux.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MICmnStreamStdinLinux.h; path = "tools/lldb-mi/MICmnStreamStdinLinux.h"; sourceTree = SOURCE_ROOT; };
+		266941D51A6DC2AC0063BE93 /* MICmnStreamStdinWindows.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MICmnStreamStdinWindows.cpp; path = "tools/lldb-mi/MICmnStreamStdinWindows.cpp"; sourceTree = SOURCE_ROOT; };
+		266941D61A6DC2AC0063BE93 /* MICmnStreamStdinWindows.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MICmnStreamStdinWindows.h; path = "tools/lldb-mi/MICmnStreamStdinWindows.h"; sourceTree = SOURCE_ROOT; };
+		266941D71A6DC2AC0063BE93 /* MICmnStreamStdout.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MICmnStreamStdout.cpp; path = "tools/lldb-mi/MICmnStreamStdout.cpp"; sourceTree = SOURCE_ROOT; };
+		266941D81A6DC2AC0063BE93 /* MICmnStreamStdout.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MICmnStreamStdout.h; path = "tools/lldb-mi/MICmnStreamStdout.h"; sourceTree = SOURCE_ROOT; };
+		266941D91A6DC2AC0063BE93 /* MICmnThreadMgrStd.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MICmnThreadMgrStd.cpp; path = "tools/lldb-mi/MICmnThreadMgrStd.cpp"; sourceTree = SOURCE_ROOT; };
+		266941DA1A6DC2AC0063BE93 /* MICmnThreadMgrStd.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MICmnThreadMgrStd.h; path = "tools/lldb-mi/MICmnThreadMgrStd.h"; sourceTree = SOURCE_ROOT; };
+		266941DB1A6DC2AC0063BE93 /* MIDataTypes.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MIDataTypes.h; path = "tools/lldb-mi/MIDataTypes.h"; sourceTree = SOURCE_ROOT; };
+		266941DC1A6DC2AC0063BE93 /* MIDriver.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MIDriver.cpp; path = "tools/lldb-mi/MIDriver.cpp"; sourceTree = SOURCE_ROOT; };
+		266941DD1A6DC2AC0063BE93 /* MIDriver.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MIDriver.h; path = "tools/lldb-mi/MIDriver.h"; sourceTree = SOURCE_ROOT; };
+		266941DE1A6DC2AC0063BE93 /* MIDriverBase.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MIDriverBase.cpp; path = "tools/lldb-mi/MIDriverBase.cpp"; sourceTree = SOURCE_ROOT; };
+		266941DF1A6DC2AC0063BE93 /* MIDriverBase.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MIDriverBase.h; path = "tools/lldb-mi/MIDriverBase.h"; sourceTree = SOURCE_ROOT; };
+		266941E01A6DC2AC0063BE93 /* MIDriverMain.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MIDriverMain.cpp; path = "tools/lldb-mi/MIDriverMain.cpp"; sourceTree = SOURCE_ROOT; };
+		266941E11A6DC2AC0063BE93 /* MIDriverMgr.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MIDriverMgr.cpp; path = "tools/lldb-mi/MIDriverMgr.cpp"; sourceTree = SOURCE_ROOT; };
+		266941E21A6DC2AC0063BE93 /* MIDriverMgr.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MIDriverMgr.h; path = "tools/lldb-mi/MIDriverMgr.h"; sourceTree = SOURCE_ROOT; };
+		266941E31A6DC2AC0063BE93 /* MIReadMe.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = MIReadMe.txt; path = "tools/lldb-mi/MIReadMe.txt"; sourceTree = SOURCE_ROOT; };
+		266941E41A6DC2AC0063BE93 /* MIUtilDateTimeStd.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MIUtilDateTimeStd.cpp; path = "tools/lldb-mi/MIUtilDateTimeStd.cpp"; sourceTree = SOURCE_ROOT; };
+		266941E51A6DC2AC0063BE93 /* MIUtilDateTimeStd.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MIUtilDateTimeStd.h; path = "tools/lldb-mi/MIUtilDateTimeStd.h"; sourceTree = SOURCE_ROOT; };
+		266941E61A6DC2AC0063BE93 /* MIUtilDebug.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MIUtilDebug.cpp; path = "tools/lldb-mi/MIUtilDebug.cpp"; sourceTree = SOURCE_ROOT; };
+		266941E71A6DC2AC0063BE93 /* MIUtilDebug.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MIUtilDebug.h; path = "tools/lldb-mi/MIUtilDebug.h"; sourceTree = SOURCE_ROOT; };
+		266941E81A6DC2AC0063BE93 /* MIUtilFileStd.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MIUtilFileStd.cpp; path = "tools/lldb-mi/MIUtilFileStd.cpp"; sourceTree = SOURCE_ROOT; };
+		266941E91A6DC2AC0063BE93 /* MIUtilFileStd.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MIUtilFileStd.h; path = "tools/lldb-mi/MIUtilFileStd.h"; sourceTree = SOURCE_ROOT; };
+		266941EA1A6DC2AC0063BE93 /* MIUtilMapIdToVariant.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MIUtilMapIdToVariant.cpp; path = "tools/lldb-mi/MIUtilMapIdToVariant.cpp"; sourceTree = SOURCE_ROOT; };
+		266941EB1A6DC2AC0063BE93 /* MIUtilMapIdToVariant.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MIUtilMapIdToVariant.h; path = "tools/lldb-mi/MIUtilMapIdToVariant.h"; sourceTree = SOURCE_ROOT; };
+		266941EC1A6DC2AC0063BE93 /* MIUtilSingletonBase.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MIUtilSingletonBase.h; path = "tools/lldb-mi/MIUtilSingletonBase.h"; sourceTree = SOURCE_ROOT; };
+		266941ED1A6DC2AC0063BE93 /* MIUtilSingletonHelper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MIUtilSingletonHelper.h; path = "tools/lldb-mi/MIUtilSingletonHelper.h"; sourceTree = SOURCE_ROOT; };
+		266941EE1A6DC2AC0063BE93 /* MIUtilString.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MIUtilString.cpp; path = "tools/lldb-mi/MIUtilString.cpp"; sourceTree = SOURCE_ROOT; };
+		266941EF1A6DC2AC0063BE93 /* MIUtilString.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MIUtilString.h; path = "tools/lldb-mi/MIUtilString.h"; sourceTree = SOURCE_ROOT; };
+		266941F01A6DC2AC0063BE93 /* MIUtilSystemLinux.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MIUtilSystemLinux.cpp; path = "tools/lldb-mi/MIUtilSystemLinux.cpp"; sourceTree = SOURCE_ROOT; };
+		266941F11A6DC2AC0063BE93 /* MIUtilSystemLinux.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MIUtilSystemLinux.h; path = "tools/lldb-mi/MIUtilSystemLinux.h"; sourceTree = SOURCE_ROOT; };
+		266941F21A6DC2AC0063BE93 /* MIUtilSystemOsx.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MIUtilSystemOsx.cpp; path = "tools/lldb-mi/MIUtilSystemOsx.cpp"; sourceTree = SOURCE_ROOT; };
+		266941F31A6DC2AC0063BE93 /* MIUtilSystemOsx.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MIUtilSystemOsx.h; path = "tools/lldb-mi/MIUtilSystemOsx.h"; sourceTree = SOURCE_ROOT; };
+		266941F41A6DC2AC0063BE93 /* MIUtilSystemWindows.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MIUtilSystemWindows.cpp; path = "tools/lldb-mi/MIUtilSystemWindows.cpp"; sourceTree = SOURCE_ROOT; };
+		266941F51A6DC2AC0063BE93 /* MIUtilSystemWindows.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MIUtilSystemWindows.h; path = "tools/lldb-mi/MIUtilSystemWindows.h"; sourceTree = SOURCE_ROOT; };
+		266941F61A6DC2AC0063BE93 /* MIUtilTermios.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MIUtilTermios.cpp; path = "tools/lldb-mi/MIUtilTermios.cpp"; sourceTree = SOURCE_ROOT; };
+		266941F71A6DC2AC0063BE93 /* MIUtilTermios.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MIUtilTermios.h; path = "tools/lldb-mi/MIUtilTermios.h"; sourceTree = SOURCE_ROOT; };
+		266941F81A6DC2AC0063BE93 /* MIUtilThreadBaseStd.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MIUtilThreadBaseStd.cpp; path = "tools/lldb-mi/MIUtilThreadBaseStd.cpp"; sourceTree = SOURCE_ROOT; };
+		266941F91A6DC2AC0063BE93 /* MIUtilThreadBaseStd.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MIUtilThreadBaseStd.h; path = "tools/lldb-mi/MIUtilThreadBaseStd.h"; sourceTree = SOURCE_ROOT; };
+		266941FA1A6DC2AC0063BE93 /* MIUtilVariant.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MIUtilVariant.cpp; path = "tools/lldb-mi/MIUtilVariant.cpp"; sourceTree = SOURCE_ROOT; };
+		266941FB1A6DC2AC0063BE93 /* MIUtilVariant.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MIUtilVariant.h; path = "tools/lldb-mi/MIUtilVariant.h"; sourceTree = SOURCE_ROOT; };
+		266941FC1A6DC2AC0063BE93 /* Platform.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Platform.cpp; path = "tools/lldb-mi/Platform.cpp"; sourceTree = SOURCE_ROOT; };
+		266941FD1A6DC2AC0063BE93 /* Platform.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Platform.h; path = "tools/lldb-mi/Platform.h"; sourceTree = SOURCE_ROOT; };
 		266960591199F4230075C61A /* build-llvm.pl */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.perl; path = "build-llvm.pl"; sourceTree = "<group>"; };
 		2669605A1199F4230075C61A /* build-swig-wrapper-classes.sh */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.sh; path = "build-swig-wrapper-classes.sh"; sourceTree = "<group>"; };
 		2669605B1199F4230075C61A /* checkpoint-llvm.pl */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.perl; path = "checkpoint-llvm.pl"; sourceTree = "<group>"; };
@@ -1368,6 +1633,7 @@
 		268F9D54123AA16600B91E9B /* SBSymbolContextList.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SBSymbolContextList.cpp; path = source/API/SBSymbolContextList.cpp; sourceTree = "<group>"; };
 		2690B36F1381D5B600ECFBAE /* Memory.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Memory.h; path = include/lldb/Target/Memory.h; sourceTree = "<group>"; };
 		2690B3701381D5C300ECFBAE /* Memory.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Memory.cpp; path = source/Target/Memory.cpp; sourceTree = "<group>"; };
+		2690CD171A6DC0D000E717C8 /* lldb-mi */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = "lldb-mi"; sourceTree = BUILT_PRODUCTS_DIR; };
 		2692BA13136610C100F9E14D /* UnwindAssemblyInstEmulation.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = UnwindAssemblyInstEmulation.cpp; sourceTree = "<group>"; };
 		2692BA14136610C100F9E14D /* UnwindAssemblyInstEmulation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = UnwindAssemblyInstEmulation.h; sourceTree = "<group>"; };
 		269416AD119A024800FF2715 /* CommandObjectTarget.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CommandObjectTarget.cpp; path = source/Commands/CommandObjectTarget.cpp; sourceTree = "<group>"; };
@@ -2327,6 +2593,14 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		2690CD141A6DC0D000E717C8 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				2669424D1A6DC32B0063BE93 /* LLDB.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		26D6F3E4183E7F4E00194858 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -2388,6 +2662,7 @@
 				264E8576159BE51A00E9D7A2 /* Resources */,
 				08FB7795FE84155DC02AAC07 /* Source */,
 				26F5C22410F3D950009D5894 /* Tools */,
+				2690CD181A6DC0D000E717C8 /* lldb-mi */,
 				1AB674ADFE9D54B511CA2CBB /* Products */,
 			);
 			name = lldb;
@@ -2431,6 +2706,7 @@
 				EDC6D49914E5C19B001B75F8 /* com.apple.lldb.launcherXPCService.xpc */,
 				EDE274EC14EDCE1F005B0F75 /* com.apple.lldb.launcherRootXPCService.xpc */,
 				26D6F3E7183E7F4E00194858 /* lldb-gdbserver */,
+				2690CD171A6DC0D000E717C8 /* lldb-mi */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -3096,6 +3372,176 @@
 				268A683D1321B53B000E3FB8 /* DynamicLoaderStatic.cpp */,
 			);
 			path = Static;
+			sourceTree = "<group>";
+		};
+		2690CD181A6DC0D000E717C8 /* lldb-mi */ = {
+			isa = PBXGroup;
+			children = (
+				2669415B1A6DC2AB0063BE93 /* CMakeLists.txt */,
+				2669415C1A6DC2AB0063BE93 /* Driver.cpp */,
+				2669415D1A6DC2AB0063BE93 /* Driver.h */,
+				2669415E1A6DC2AB0063BE93 /* lldb-Info.plist */,
+				2669415F1A6DC2AB0063BE93 /* Makefile */,
+				266941601A6DC2AB0063BE93 /* MICmdArgContext.cpp */,
+				266941611A6DC2AB0063BE93 /* MICmdArgContext.h */,
+				266941621A6DC2AB0063BE93 /* MICmdArgSet.cpp */,
+				266941631A6DC2AB0063BE93 /* MICmdArgSet.h */,
+				266941641A6DC2AB0063BE93 /* MICmdArgValBase.cpp */,
+				266941651A6DC2AB0063BE93 /* MICmdArgValBase.h */,
+				266941661A6DC2AB0063BE93 /* MICmdArgValConsume.cpp */,
+				266941671A6DC2AB0063BE93 /* MICmdArgValConsume.h */,
+				266941681A6DC2AB0063BE93 /* MICmdArgValFile.cpp */,
+				266941691A6DC2AB0063BE93 /* MICmdArgValFile.h */,
+				2669416A1A6DC2AC0063BE93 /* MICmdArgValListBase.cpp */,
+				2669416B1A6DC2AC0063BE93 /* MICmdArgValListBase.h */,
+				2669416C1A6DC2AC0063BE93 /* MICmdArgValListOfN.cpp */,
+				2669416D1A6DC2AC0063BE93 /* MICmdArgValListOfN.h */,
+				2669416E1A6DC2AC0063BE93 /* MICmdArgValNumber.cpp */,
+				2669416F1A6DC2AC0063BE93 /* MICmdArgValNumber.h */,
+				266941701A6DC2AC0063BE93 /* MICmdArgValOptionLong.cpp */,
+				266941711A6DC2AC0063BE93 /* MICmdArgValOptionLong.h */,
+				266941721A6DC2AC0063BE93 /* MICmdArgValOptionShort.cpp */,
+				266941731A6DC2AC0063BE93 /* MICmdArgValOptionShort.h */,
+				266941741A6DC2AC0063BE93 /* MICmdArgValString.cpp */,
+				266941751A6DC2AC0063BE93 /* MICmdArgValString.h */,
+				266941761A6DC2AC0063BE93 /* MICmdArgValThreadGrp.cpp */,
+				266941771A6DC2AC0063BE93 /* MICmdArgValThreadGrp.h */,
+				266941781A6DC2AC0063BE93 /* MICmdBase.cpp */,
+				266941791A6DC2AC0063BE93 /* MICmdBase.h */,
+				2669417A1A6DC2AC0063BE93 /* MICmdCmd.cpp */,
+				2669417B1A6DC2AC0063BE93 /* MICmdCmd.h */,
+				2669417C1A6DC2AC0063BE93 /* MICmdCmdBreak.cpp */,
+				2669417D1A6DC2AC0063BE93 /* MICmdCmdBreak.h */,
+				2669417E1A6DC2AC0063BE93 /* MICmdCmdData.cpp */,
+				2669417F1A6DC2AC0063BE93 /* MICmdCmdData.h */,
+				266941801A6DC2AC0063BE93 /* MICmdCmdEnviro.cpp */,
+				266941811A6DC2AC0063BE93 /* MICmdCmdEnviro.h */,
+				266941821A6DC2AC0063BE93 /* MICmdCmdExec.cpp */,
+				266941831A6DC2AC0063BE93 /* MICmdCmdExec.h */,
+				266941841A6DC2AC0063BE93 /* MICmdCmdFile.cpp */,
+				266941851A6DC2AC0063BE93 /* MICmdCmdFile.h */,
+				266941861A6DC2AC0063BE93 /* MICmdCmdGdbInfo.cpp */,
+				266941871A6DC2AC0063BE93 /* MICmdCmdGdbInfo.h */,
+				266941881A6DC2AC0063BE93 /* MICmdCmdGdbSet.cpp */,
+				266941891A6DC2AC0063BE93 /* MICmdCmdGdbSet.h */,
+				2669418A1A6DC2AC0063BE93 /* MICmdCmdGdbThread.cpp */,
+				2669418B1A6DC2AC0063BE93 /* MICmdCmdGdbThread.h */,
+				2669418C1A6DC2AC0063BE93 /* MICmdCmdMiscellanous.cpp */,
+				2669418D1A6DC2AC0063BE93 /* MICmdCmdMiscellanous.h */,
+				2669418E1A6DC2AC0063BE93 /* MICmdCmdStack.cpp */,
+				2669418F1A6DC2AC0063BE93 /* MICmdCmdStack.h */,
+				266941901A6DC2AC0063BE93 /* MICmdCmdSupportInfo.cpp */,
+				266941911A6DC2AC0063BE93 /* MICmdCmdSupportInfo.h */,
+				266941921A6DC2AC0063BE93 /* MICmdCmdSupportList.cpp */,
+				266941931A6DC2AC0063BE93 /* MICmdCmdSupportList.h */,
+				266941941A6DC2AC0063BE93 /* MICmdCmdTarget.cpp */,
+				266941951A6DC2AC0063BE93 /* MICmdCmdTarget.h */,
+				266941961A6DC2AC0063BE93 /* MICmdCmdThread.cpp */,
+				266941971A6DC2AC0063BE93 /* MICmdCmdThread.h */,
+				266941981A6DC2AC0063BE93 /* MICmdCmdTrace.cpp */,
+				266941991A6DC2AC0063BE93 /* MICmdCmdTrace.h */,
+				2669419A1A6DC2AC0063BE93 /* MICmdCmdVar.cpp */,
+				2669419B1A6DC2AC0063BE93 /* MICmdCmdVar.h */,
+				2669419C1A6DC2AC0063BE93 /* MICmdCommands.cpp */,
+				2669419D1A6DC2AC0063BE93 /* MICmdCommands.h */,
+				2669419E1A6DC2AC0063BE93 /* MICmdData.cpp */,
+				2669419F1A6DC2AC0063BE93 /* MICmdData.h */,
+				266941A01A6DC2AC0063BE93 /* MICmdFactory.cpp */,
+				266941A11A6DC2AC0063BE93 /* MICmdFactory.h */,
+				266941A21A6DC2AC0063BE93 /* MICmdInterpreter.cpp */,
+				266941A31A6DC2AC0063BE93 /* MICmdInterpreter.h */,
+				266941A41A6DC2AC0063BE93 /* MICmdInvoker.cpp */,
+				266941A51A6DC2AC0063BE93 /* MICmdInvoker.h */,
+				266941A61A6DC2AC0063BE93 /* MICmdMgr.cpp */,
+				266941A71A6DC2AC0063BE93 /* MICmdMgr.h */,
+				266941A81A6DC2AC0063BE93 /* MICmdMgrSetCmdDeleteCallback.cpp */,
+				266941A91A6DC2AC0063BE93 /* MICmdMgrSetCmdDeleteCallback.h */,
+				266941AA1A6DC2AC0063BE93 /* MICmnBase.cpp */,
+				266941AB1A6DC2AC0063BE93 /* MICmnBase.h */,
+				266941AC1A6DC2AC0063BE93 /* MICmnConfig.h */,
+				266941AD1A6DC2AC0063BE93 /* MICmnLLDBBroadcaster.cpp */,
+				266941AE1A6DC2AC0063BE93 /* MICmnLLDBBroadcaster.h */,
+				266941AF1A6DC2AC0063BE93 /* MICmnLLDBDebugger.cpp */,
+				266941B01A6DC2AC0063BE93 /* MICmnLLDBDebugger.h */,
+				266941B11A6DC2AC0063BE93 /* MICmnLLDBDebuggerHandleEvents.cpp */,
+				266941B21A6DC2AC0063BE93 /* MICmnLLDBDebuggerHandleEvents.h */,
+				266941B31A6DC2AC0063BE93 /* MICmnLLDBDebugSessionInfo.cpp */,
+				266941B41A6DC2AC0063BE93 /* MICmnLLDBDebugSessionInfo.h */,
+				266941B51A6DC2AC0063BE93 /* MICmnLLDBDebugSessionInfoVarObj.cpp */,
+				266941B61A6DC2AC0063BE93 /* MICmnLLDBDebugSessionInfoVarObj.h */,
+				266941B71A6DC2AC0063BE93 /* MICmnLLDBProxySBValue.cpp */,
+				266941B81A6DC2AC0063BE93 /* MICmnLLDBProxySBValue.h */,
+				266941B91A6DC2AC0063BE93 /* MICmnLLDBUtilSBValue.cpp */,
+				266941BA1A6DC2AC0063BE93 /* MICmnLLDBUtilSBValue.h */,
+				266941BB1A6DC2AC0063BE93 /* MICmnLog.cpp */,
+				266941BC1A6DC2AC0063BE93 /* MICmnLog.h */,
+				266941BD1A6DC2AC0063BE93 /* MICmnLogMediumFile.cpp */,
+				266941BE1A6DC2AC0063BE93 /* MICmnLogMediumFile.h */,
+				266941BF1A6DC2AC0063BE93 /* MICmnMIOutOfBandRecord.cpp */,
+				266941C01A6DC2AC0063BE93 /* MICmnMIOutOfBandRecord.h */,
+				266941C11A6DC2AC0063BE93 /* MICmnMIResultRecord.cpp */,
+				266941C21A6DC2AC0063BE93 /* MICmnMIResultRecord.h */,
+				266941C31A6DC2AC0063BE93 /* MICmnMIValue.cpp */,
+				266941C41A6DC2AC0063BE93 /* MICmnMIValue.h */,
+				266941C51A6DC2AC0063BE93 /* MICmnMIValueConst.cpp */,
+				266941C61A6DC2AC0063BE93 /* MICmnMIValueConst.h */,
+				266941C71A6DC2AC0063BE93 /* MICmnMIValueList.cpp */,
+				266941C81A6DC2AC0063BE93 /* MICmnMIValueList.h */,
+				266941C91A6DC2AC0063BE93 /* MICmnMIValueResult.cpp */,
+				266941CA1A6DC2AC0063BE93 /* MICmnMIValueResult.h */,
+				266941CB1A6DC2AC0063BE93 /* MICmnMIValueTuple.cpp */,
+				266941CC1A6DC2AC0063BE93 /* MICmnMIValueTuple.h */,
+				266941CD1A6DC2AC0063BE93 /* MICmnResources.cpp */,
+				266941CE1A6DC2AC0063BE93 /* MICmnResources.h */,
+				266941CF1A6DC2AC0063BE93 /* MICmnStreamStderr.cpp */,
+				266941D01A6DC2AC0063BE93 /* MICmnStreamStderr.h */,
+				266941D11A6DC2AC0063BE93 /* MICmnStreamStdin.cpp */,
+				266941D21A6DC2AC0063BE93 /* MICmnStreamStdin.h */,
+				266941D31A6DC2AC0063BE93 /* MICmnStreamStdinLinux.cpp */,
+				266941D41A6DC2AC0063BE93 /* MICmnStreamStdinLinux.h */,
+				266941D51A6DC2AC0063BE93 /* MICmnStreamStdinWindows.cpp */,
+				266941D61A6DC2AC0063BE93 /* MICmnStreamStdinWindows.h */,
+				266941D71A6DC2AC0063BE93 /* MICmnStreamStdout.cpp */,
+				266941D81A6DC2AC0063BE93 /* MICmnStreamStdout.h */,
+				266941D91A6DC2AC0063BE93 /* MICmnThreadMgrStd.cpp */,
+				266941DA1A6DC2AC0063BE93 /* MICmnThreadMgrStd.h */,
+				266941DB1A6DC2AC0063BE93 /* MIDataTypes.h */,
+				266941DC1A6DC2AC0063BE93 /* MIDriver.cpp */,
+				266941DD1A6DC2AC0063BE93 /* MIDriver.h */,
+				266941DE1A6DC2AC0063BE93 /* MIDriverBase.cpp */,
+				266941DF1A6DC2AC0063BE93 /* MIDriverBase.h */,
+				266941E01A6DC2AC0063BE93 /* MIDriverMain.cpp */,
+				266941E11A6DC2AC0063BE93 /* MIDriverMgr.cpp */,
+				266941E21A6DC2AC0063BE93 /* MIDriverMgr.h */,
+				266941E31A6DC2AC0063BE93 /* MIReadMe.txt */,
+				266941E41A6DC2AC0063BE93 /* MIUtilDateTimeStd.cpp */,
+				266941E51A6DC2AC0063BE93 /* MIUtilDateTimeStd.h */,
+				266941E61A6DC2AC0063BE93 /* MIUtilDebug.cpp */,
+				266941E71A6DC2AC0063BE93 /* MIUtilDebug.h */,
+				266941E81A6DC2AC0063BE93 /* MIUtilFileStd.cpp */,
+				266941E91A6DC2AC0063BE93 /* MIUtilFileStd.h */,
+				266941EA1A6DC2AC0063BE93 /* MIUtilMapIdToVariant.cpp */,
+				266941EB1A6DC2AC0063BE93 /* MIUtilMapIdToVariant.h */,
+				266941EC1A6DC2AC0063BE93 /* MIUtilSingletonBase.h */,
+				266941ED1A6DC2AC0063BE93 /* MIUtilSingletonHelper.h */,
+				266941EE1A6DC2AC0063BE93 /* MIUtilString.cpp */,
+				266941EF1A6DC2AC0063BE93 /* MIUtilString.h */,
+				266941F01A6DC2AC0063BE93 /* MIUtilSystemLinux.cpp */,
+				266941F11A6DC2AC0063BE93 /* MIUtilSystemLinux.h */,
+				266941F21A6DC2AC0063BE93 /* MIUtilSystemOsx.cpp */,
+				266941F31A6DC2AC0063BE93 /* MIUtilSystemOsx.h */,
+				266941F41A6DC2AC0063BE93 /* MIUtilSystemWindows.cpp */,
+				266941F51A6DC2AC0063BE93 /* MIUtilSystemWindows.h */,
+				266941F61A6DC2AC0063BE93 /* MIUtilTermios.cpp */,
+				266941F71A6DC2AC0063BE93 /* MIUtilTermios.h */,
+				266941F81A6DC2AC0063BE93 /* MIUtilThreadBaseStd.cpp */,
+				266941F91A6DC2AC0063BE93 /* MIUtilThreadBaseStd.h */,
+				266941FA1A6DC2AC0063BE93 /* MIUtilVariant.cpp */,
+				266941FB1A6DC2AC0063BE93 /* MIUtilVariant.h */,
+				266941FC1A6DC2AC0063BE93 /* Platform.cpp */,
+				266941FD1A6DC2AC0063BE93 /* Platform.h */,
+			);
+			path = "lldb-mi";
 			sourceTree = "<group>";
 		};
 		2692BA12136610C100F9E14D /* InstEmulation */ = {
@@ -4778,6 +5224,23 @@
 			productReference = 2689FFCA13353D7A00698AC0 /* liblldb-core.a */;
 			productType = "com.apple.product-type.library.dynamic";
 		};
+		2690CD161A6DC0D000E717C8 /* lldb-mi */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 2690CD1F1A6DC0D000E717C8 /* Build configuration list for PBXNativeTarget "lldb-mi" */;
+			buildPhases = (
+				2690CD131A6DC0D000E717C8 /* Sources */,
+				2690CD141A6DC0D000E717C8 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				26DF74601A6DCDB300B85563 /* PBXTargetDependency */,
+			);
+			name = "lldb-mi";
+			productName = "lldb-mi";
+			productReference = 2690CD171A6DC0D000E717C8 /* lldb-mi */;
+			productType = "com.apple.product-type.tool";
+		};
 		26D6F3E6183E7F4E00194858 /* lldb-gdbserver */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 26D6F3F1183E7F4F00194858 /* Build configuration list for PBXNativeTarget "lldb-gdbserver" */;
@@ -4872,6 +5335,11 @@
 			isa = PBXProject;
 			attributes = {
 				LastUpgradeCheck = 0600;
+				TargetAttributes = {
+					2690CD161A6DC0D000E717C8 = {
+						CreatedOnToolsVersion = 6.3;
+					};
+				};
 			};
 			buildConfigurationList = 1DEB91EF08733DB70010E9CD /* Build configuration list for PBXProject "lldb" */;
 			compatibilityVersion = "Xcode 3.2";
@@ -4902,6 +5370,7 @@
 				EDC6D49814E5C19B001B75F8 /* launcherXPCService */,
 				EDE274E214EDCE1F005B0F75 /* launcherRootXPCService */,
 				2687EAC51508110B00DD8C2E /* install-headers */,
+				2690CD161A6DC0D000E717C8 /* lldb-mi */,
 			);
 		};
 /* End PBXProject section */
@@ -5607,6 +6076,91 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		2690CD131A6DC0D000E717C8 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				2669423C1A6DC2AC0063BE93 /* MICmnThreadMgrStd.cpp in Sources */,
+				266942031A6DC2AC0063BE93 /* MICmdArgValConsume.cpp in Sources */,
+				2669422A1A6DC2AC0063BE93 /* MICmnLLDBDebugSessionInfoVarObj.cpp in Sources */,
+				266942151A6DC2AC0063BE93 /* MICmdCmdGdbThread.cpp in Sources */,
+				266942451A6DC2AC0063BE93 /* MIUtilString.cpp in Sources */,
+				266942131A6DC2AC0063BE93 /* MICmdCmdGdbInfo.cpp in Sources */,
+				266942011A6DC2AC0063BE93 /* MICmdArgSet.cpp in Sources */,
+				266942071A6DC2AC0063BE93 /* MICmdArgValNumber.cpp in Sources */,
+				2669420B1A6DC2AC0063BE93 /* MICmdArgValThreadGrp.cpp in Sources */,
+				2669420A1A6DC2AC0063BE93 /* MICmdArgValString.cpp in Sources */,
+				2669421D1A6DC2AC0063BE93 /* MICmdCmdVar.cpp in Sources */,
+				266942411A6DC2AC0063BE93 /* MIUtilDateTimeStd.cpp in Sources */,
+				266942001A6DC2AC0063BE93 /* MICmdArgContext.cpp in Sources */,
+				266942171A6DC2AC0063BE93 /* MICmdCmdStack.cpp in Sources */,
+				266942121A6DC2AC0063BE93 /* MICmdCmdFile.cpp in Sources */,
+				2669424B1A6DC2AC0063BE93 /* MIUtilVariant.cpp in Sources */,
+				266942471A6DC2AC0063BE93 /* MIUtilSystemOsx.cpp in Sources */,
+				2669421E1A6DC2AC0063BE93 /* MICmdCommands.cpp in Sources */,
+				266942161A6DC2AC0063BE93 /* MICmdCmdMiscellanous.cpp in Sources */,
+				266942281A6DC2AC0063BE93 /* MICmnLLDBDebuggerHandleEvents.cpp in Sources */,
+				2669421B1A6DC2AC0063BE93 /* MICmdCmdThread.cpp in Sources */,
+				266942261A6DC2AC0063BE93 /* MICmnLLDBBroadcaster.cpp in Sources */,
+				266942141A6DC2AC0063BE93 /* MICmdCmdGdbSet.cpp in Sources */,
+				2669423A1A6DC2AC0063BE93 /* MICmnStreamStdinWindows.cpp in Sources */,
+				2669423F1A6DC2AC0063BE93 /* MIDriverMain.cpp in Sources */,
+				266942481A6DC2AC0063BE93 /* MIUtilSystemWindows.cpp in Sources */,
+				266942041A6DC2AC0063BE93 /* MICmdArgValFile.cpp in Sources */,
+				2669422D1A6DC2AC0063BE93 /* MICmnLog.cpp in Sources */,
+				2669420E1A6DC2AC0063BE93 /* MICmdCmdBreak.cpp in Sources */,
+				266942401A6DC2AC0063BE93 /* MIDriverMgr.cpp in Sources */,
+				266942111A6DC2AC0063BE93 /* MICmdCmdExec.cpp in Sources */,
+				266942061A6DC2AC0063BE93 /* MICmdArgValListOfN.cpp in Sources */,
+				266942201A6DC2AC0063BE93 /* MICmdFactory.cpp in Sources */,
+				266942241A6DC2AC0063BE93 /* MICmdMgrSetCmdDeleteCallback.cpp in Sources */,
+				266942251A6DC2AC0063BE93 /* MICmnBase.cpp in Sources */,
+				2669421A1A6DC2AC0063BE93 /* MICmdCmdTarget.cpp in Sources */,
+				2669424A1A6DC2AC0063BE93 /* MIUtilThreadBaseStd.cpp in Sources */,
+				266942101A6DC2AC0063BE93 /* MICmdCmdEnviro.cpp in Sources */,
+				266941FE1A6DC2AC0063BE93 /* Driver.cpp in Sources */,
+				266942191A6DC2AC0063BE93 /* MICmdCmdSupportList.cpp in Sources */,
+				266942441A6DC2AC0063BE93 /* MIUtilMapIdToVariant.cpp in Sources */,
+				266942341A6DC2AC0063BE93 /* MICmnMIValueResult.cpp in Sources */,
+				266942391A6DC2AC0063BE93 /* MICmnStreamStdinLinux.cpp in Sources */,
+				266942181A6DC2AC0063BE93 /* MICmdCmdSupportInfo.cpp in Sources */,
+				266942311A6DC2AC0063BE93 /* MICmnMIValue.cpp in Sources */,
+				266942081A6DC2AC0063BE93 /* MICmdArgValOptionLong.cpp in Sources */,
+				2669420D1A6DC2AC0063BE93 /* MICmdCmd.cpp in Sources */,
+				2669422C1A6DC2AC0063BE93 /* MICmnLLDBUtilSBValue.cpp in Sources */,
+				266942381A6DC2AC0063BE93 /* MICmnStreamStdin.cpp in Sources */,
+				266942051A6DC2AC0063BE93 /* MICmdArgValListBase.cpp in Sources */,
+				2669422E1A6DC2AC0063BE93 /* MICmnLogMediumFile.cpp in Sources */,
+				266942361A6DC2AC0063BE93 /* MICmnResources.cpp in Sources */,
+				266942371A6DC2AC0063BE93 /* MICmnStreamStderr.cpp in Sources */,
+				266942351A6DC2AC0063BE93 /* MICmnMIValueTuple.cpp in Sources */,
+				2669422B1A6DC2AC0063BE93 /* MICmnLLDBProxySBValue.cpp in Sources */,
+				2669423E1A6DC2AC0063BE93 /* MIDriverBase.cpp in Sources */,
+				2669424C1A6DC2AC0063BE93 /* Platform.cpp in Sources */,
+				266942461A6DC2AC0063BE93 /* MIUtilSystemLinux.cpp in Sources */,
+				266942021A6DC2AC0063BE93 /* MICmdArgValBase.cpp in Sources */,
+				266942091A6DC2AC0063BE93 /* MICmdArgValOptionShort.cpp in Sources */,
+				266942291A6DC2AC0063BE93 /* MICmnLLDBDebugSessionInfo.cpp in Sources */,
+				266942211A6DC2AC0063BE93 /* MICmdInterpreter.cpp in Sources */,
+				266942321A6DC2AC0063BE93 /* MICmnMIValueConst.cpp in Sources */,
+				2669423B1A6DC2AC0063BE93 /* MICmnStreamStdout.cpp in Sources */,
+				266942271A6DC2AC0063BE93 /* MICmnLLDBDebugger.cpp in Sources */,
+				2669421C1A6DC2AC0063BE93 /* MICmdCmdTrace.cpp in Sources */,
+				266942331A6DC2AC0063BE93 /* MICmnMIValueList.cpp in Sources */,
+				266942491A6DC2AC0063BE93 /* MIUtilTermios.cpp in Sources */,
+				266942221A6DC2AC0063BE93 /* MICmdInvoker.cpp in Sources */,
+				2669420C1A6DC2AC0063BE93 /* MICmdBase.cpp in Sources */,
+				266942301A6DC2AC0063BE93 /* MICmnMIResultRecord.cpp in Sources */,
+				266942231A6DC2AC0063BE93 /* MICmdMgr.cpp in Sources */,
+				2669421F1A6DC2AC0063BE93 /* MICmdData.cpp in Sources */,
+				266942431A6DC2AC0063BE93 /* MIUtilFileStd.cpp in Sources */,
+				2669422F1A6DC2AC0063BE93 /* MICmnMIOutOfBandRecord.cpp in Sources */,
+				2669420F1A6DC2AC0063BE93 /* MICmdCmdData.cpp in Sources */,
+				266942421A6DC2AC0063BE93 /* MIUtilDebug.cpp in Sources */,
+				2669423D1A6DC2AC0063BE93 /* MIDriver.cpp in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		26D6F3E3183E7F4E00194858 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -5688,6 +6242,16 @@
 			target = 2689FFC913353D7A00698AC0 /* lldb-core */;
 			targetProxy = 2689011413353E9B00698AC0 /* PBXContainerItemProxy */;
 		};
+		26B391EF1A6DCCAF00456239 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 2690CD161A6DC0D000E717C8 /* lldb-mi */;
+			targetProxy = 26B391EE1A6DCCAF00456239 /* PBXContainerItemProxy */;
+		};
+		26B391F11A6DCCBE00456239 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 2690CD161A6DC0D000E717C8 /* lldb-mi */;
+			targetProxy = 26B391F01A6DCCBE00456239 /* PBXContainerItemProxy */;
+		};
 		26CEF3B014FD591F007286B2 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 26F5C26910F3D9A4009D5894 /* lldb-tool */;
@@ -5722,6 +6286,11 @@
 			isa = PBXTargetDependency;
 			target = 2689FFC913353D7A00698AC0 /* lldb-core */;
 			targetProxy = 26DC6A151337FE7300FF7998 /* PBXContainerItemProxy */;
+		};
+		26DF74601A6DCDB300B85563 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 26680206115FD0ED008E1FE4 /* LLDB */;
+			targetProxy = 26DF745F1A6DCDB300B85563 /* PBXContainerItemProxy */;
 		};
 		94E829C9152D33B4006F96A3 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
@@ -6323,7 +6892,7 @@
 				);
 				PRODUCT_NAME = lldb;
 				STRIP_INSTALLED_PRODUCT = YES;
-				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/include $(SRCROOT)/source $(LLVM_SOURCE_DIR)/include $(LLVM_SOURCE_DIR)/tools/clang/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/tools/clang/include";
+				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/include $(SRCROOT)/source";
 				VERSIONING_SYSTEM = "apple-generic";
 			};
 			name = BuildAndIntegration;
@@ -6392,6 +6961,155 @@
 				PRODUCT_NAME = LLDB;
 				STRIP_INSTALLED_PRODUCT = YES;
 				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/include $(SRCROOT)/source $(LLVM_SOURCE_DIR)/include $(LLVM_SOURCE_DIR)/tools/clang/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/tools/clang/include";
+				VERSIONING_SYSTEM = "apple-generic";
+			};
+			name = BuildAndIntegration;
+		};
+		2690CD1B1A6DC0D000E717C8 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CURRENT_PROJECT_VERSION = 330.99.0;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				INSTALL_PATH = "$(LLDB_TOOLS_INSTALL_DIR)";
+				MACOSX_DEPLOYMENT_TARGET = 10.10;
+				MTL_ENABLE_DEBUG_INFO = YES;
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-sectcreate",
+					__TEXT,
+					__info_plist,
+					"$(PROJECT_DIR)/tools/lldb-mi/lldb-Info.plist",
+					"-Wl,-rpath,@loader_path/",
+				);
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/include $(SRCROOT)/source";
+				VERSIONING_SYSTEM = "apple-generic";
+			};
+			name = Debug;
+		};
+		2690CD1C1A6DC0D000E717C8 /* DebugClang */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CURRENT_PROJECT_VERSION = 330.99.0;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				INSTALL_PATH = "$(LLDB_TOOLS_INSTALL_DIR)";
+				MACOSX_DEPLOYMENT_TARGET = 10.10;
+				MTL_ENABLE_DEBUG_INFO = YES;
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-sectcreate",
+					__TEXT,
+					__info_plist,
+					"$(PROJECT_DIR)/tools/lldb-mi/lldb-Info.plist",
+					"-Wl,-rpath,@loader_path/",
+				);
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/include $(SRCROOT)/source";
+				VERSIONING_SYSTEM = "apple-generic";
+			};
+			name = DebugClang;
+		};
+		2690CD1D1A6DC0D000E717C8 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CURRENT_PROJECT_VERSION = 330.99.0;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				INSTALL_PATH = "$(LLDB_TOOLS_INSTALL_DIR)";
+				MACOSX_DEPLOYMENT_TARGET = 10.10;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-sectcreate",
+					__TEXT,
+					__info_plist,
+					"$(PROJECT_DIR)/tools/lldb-mi/lldb-Info.plist",
+					"-Wl,-rpath,@loader_path/",
+				);
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/include $(SRCROOT)/source";
+				VERSIONING_SYSTEM = "apple-generic";
+			};
+			name = Release;
+		};
+		2690CD1E1A6DC0D000E717C8 /* BuildAndIntegration */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				COPY_PHASE_STRIP = YES;
+				CURRENT_PROJECT_VERSION = 330.99.0;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				INSTALL_PATH = "$(LLDB_TOOLS_INSTALL_DIR)";
+				MACOSX_DEPLOYMENT_TARGET = 10.10;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				"OTHER_LDFLAGS[sdk=iphoneos*]" = (
+					"$(inherited)",
+					"-sectcreate",
+					__TEXT,
+					__info_plist,
+					"$(PROJECT_DIR)/tools/lldb-mi/lldb-Info.plist",
+					"-Wl,-rpath,@loader_path/../../../System/Library/PrivateFrameworks",
+				);
+				"OTHER_LDFLAGS[sdk=macosx*]" = (
+					"$(inherited)",
+					"-sectcreate",
+					__TEXT,
+					__info_plist,
+					"$(PROJECT_DIR)/tools/lldb-mi/lldb-Info.plist",
+					"-Wl,-rpath,@loader_path/../../Library/PrivateFrameworks/",
+					"-Wl,-rpath,@loader_path/../../../SharedFrameworks",
+					"-Wl,-rpath,@loader_path/../../System/Library/PrivateFrameworks",
+					"-Wl,-rpath,@loader_path/../../Library/PrivateFrameworks",
+				);
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				STRIP_INSTALLED_PRODUCT = YES;
+				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/include $(SRCROOT)/source";
 				VERSIONING_SYSTEM = "apple-generic";
 			};
 			name = BuildAndIntegration;
@@ -6994,7 +7712,7 @@
 					"-Wl,-rpath,@loader_path/",
 				);
 				PRODUCT_NAME = lldb;
-				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/include $(SRCROOT)/source $(LLVM_SOURCE_DIR)/include $(LLVM_SOURCE_DIR)/tools/clang/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/tools/clang/include";
+				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/include $(SRCROOT)/source";
 				VERSIONING_SYSTEM = "apple-generic";
 			};
 			name = Debug;
@@ -7022,7 +7740,7 @@
 					"-Wl,-rpath,@loader_path/",
 				);
 				PRODUCT_NAME = lldb;
-				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/include $(SRCROOT)/source $(LLVM_SOURCE_DIR)/include $(LLVM_SOURCE_DIR)/tools/clang/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/tools/clang/include";
+				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/include $(SRCROOT)/source";
 				VERSIONING_SYSTEM = "apple-generic";
 			};
 			name = Release;
@@ -7154,7 +7872,7 @@
 					"-Wl,-rpath,@loader_path/",
 				);
 				PRODUCT_NAME = lldb;
-				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/include $(SRCROOT)/source $(LLVM_SOURCE_DIR)/include $(LLVM_SOURCE_DIR)/tools/clang/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/tools/clang/include";
+				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/include $(SRCROOT)/source";
 				VERSIONING_SYSTEM = "apple-generic";
 			};
 			name = DebugClang;
@@ -7666,6 +8384,17 @@
 				49BB8F3B1611172B00BDD462 /* DebugClang */,
 				2689FFD613353D7A00698AC0 /* Release */,
 				2689FFD713353D7A00698AC0 /* BuildAndIntegration */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = BuildAndIntegration;
+		};
+		2690CD1F1A6DC0D000E717C8 /* Build configuration list for PBXNativeTarget "lldb-mi" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				2690CD1B1A6DC0D000E717C8 /* Debug */,
+				2690CD1C1A6DC0D000E717C8 /* DebugClang */,
+				2690CD1D1A6DC0D000E717C8 /* Release */,
+				2690CD1E1A6DC0D000E717C8 /* BuildAndIntegration */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = BuildAndIntegration;

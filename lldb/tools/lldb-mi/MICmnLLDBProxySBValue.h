@@ -22,7 +22,7 @@
 #pragma once
 
 // Third Party Headers:
-#include <lldb/API/SBValue.h>
+#include "lldb/API/SBValue.h"
 
 // In-house headers:
 #include "MIDataTypes.h"

@@ -20,8 +20,8 @@
 //--
 
 // Third Party Headers:
-#include <lldb/API/SBBreakpointLocation.h>
-#include <lldb/API/SBThread.h>
+#include "lldb/API/SBBreakpointLocation.h"
+#include "lldb/API/SBThread.h"
 
 // In-house headers:
 #include "MICmdCmdThread.h"

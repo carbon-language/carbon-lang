@@ -23,7 +23,7 @@
 //--
 
 // Third Party Headers:
-#include <lldb/API/SBThread.h>
+#include "lldb/API/SBThread.h"
 
 // In-house headers:
 #include "MICmdCmdStack.h"

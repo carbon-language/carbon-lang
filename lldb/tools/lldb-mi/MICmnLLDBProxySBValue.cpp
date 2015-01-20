@@ -22,7 +22,7 @@
 #include <stdlib.h>
 
 // Third Party Headers:
-#include <lldb/API/SBError.h>
+#include "lldb/API/SBError.h"
 
 // In-house headers:
 #include "MICmnLLDBProxySBValue.h"

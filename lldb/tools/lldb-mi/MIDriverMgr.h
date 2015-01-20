@@ -23,7 +23,7 @@
 
 // Third party headers:
 #include <map>
-#include <lldb/API/SBDebugger.h>
+#include "lldb/API/SBDebugger.h"
 
 // In-house headers:
 #include "MICmnBase.h"

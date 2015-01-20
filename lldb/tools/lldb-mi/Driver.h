@@ -15,17 +15,17 @@
 #define lldb_Driver_h_
 
 //#include "Platform.h" // IOR removed
-#include <lldb/Utility/PseudoTerminal.h>
+#include "lldb/Utility/PseudoTerminal.h"
 
 #include <set>
 #include <bitset>
 #include <string>
 #include <vector>
 
-#include <lldb/API/SBDefines.h>
-#include <lldb/API/SBBroadcaster.h>
-#include <lldb/API/SBDebugger.h>
-#include <lldb/API/SBError.h>
+#include "lldb/API/SBDefines.h"
+#include "lldb/API/SBBroadcaster.h"
+#include "lldb/API/SBDebugger.h"
+#include "lldb/API/SBError.h"
 #include "MIDriverMgr.h"
 #include "MIDriverBase.h"
 

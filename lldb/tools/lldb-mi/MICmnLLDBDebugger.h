@@ -24,9 +24,9 @@
 // Third party headers
 #include <queue>
 #include <map>
-#include <lldb/API/SBDebugger.h>
-#include <lldb/API/SBListener.h>
-#include <lldb/API/SBEvent.h>
+#include "lldb/API/SBDebugger.h"
+#include "lldb/API/SBListener.h"
+#include "lldb/API/SBEvent.h"
 
 // In-house headers:
 #include "MICmnBase.h"

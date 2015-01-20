@@ -20,13 +20,13 @@
 //--
 
 // Third party headers:
-#include <lldb/API/SBThread.h>
+#include "lldb/API/SBThread.h"
 #ifdef _WIN32
 #include <io.h> // For the ::_access()
 #else
 #include <unistd.h> // For the ::access()
 #endif              // _WIN32
-#include <lldb/API/SBBreakpointLocation.h>
+#include "lldb/API/SBBreakpointLocation.h"
 
 // In-house headers:
 #include "MICmnLLDBDebugSessionInfo.h"
