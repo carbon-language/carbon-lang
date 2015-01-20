@@ -497,7 +497,7 @@ class LoopInfoBase {
   friend class LoopInfo;
 
   void operator=(const LoopInfoBase &) LLVM_DELETED_FUNCTION;
-  LoopInfoBase(const LoopInfo &) LLVM_DELETED_FUNCTION;
+  LoopInfoBase(const LoopInfoBase &) LLVM_DELETED_FUNCTION;
 public:
   LoopInfoBase() { }
   ~LoopInfoBase() { releaseMemory(); }
