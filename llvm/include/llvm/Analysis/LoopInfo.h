@@ -514,14 +514,12 @@ public:
     Arg.TopLevelLoops.clear();
   }
   LoopInfoBase &operator=(LoopInfoBase &&RHS) {
-    if (&RHS != this) {
-      BBMap = std::move(RHS.BBMap);
+    BBMap = std::move(RHS.BBMap);
 
-      for (auto *L : TopLevelLoops)
-        delete L;
-      TopLevelLoops = std::move(RHS.TopLevelLoops);
-      RHS.TopLevelLoops.clear();
-    }
+    for (auto *L : TopLevelLoops)
+      delete L;
+    TopLevelLoops = std::move(RHS.TopLevelLoops);
+    RHS.TopLevelLoops.clear();
     return *this;
   }
 
