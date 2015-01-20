@@ -1721,7 +1721,9 @@ void Linker::deleteModule() {
 bool Linker::linkInModule(Module *Src) {
   ModuleLinker TheLinker(Composite, IdentifiedStructTypes, Src,
                          DiagnosticHandler);
-  return TheLinker.run();
+  bool RetCode = TheLinker.run();
+  Composite->dropTriviallyDeadConstantArrays();
+  return RetCode;
 }
 
 //===----------------------------------------------------------------------===//
