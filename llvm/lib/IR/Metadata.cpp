@@ -753,6 +753,10 @@ GenericDwarfNode *GenericDwarfNode::getImpl(LLVMContext &Context, unsigned Tag,
                                             ArrayRef<Metadata *> DwarfOps,
                                             StorageType Storage,
                                             bool ShouldCreate) {
+  // Canonicalize empty string to a nullptr.
+  if (Header && Header->getString().empty())
+    Header = nullptr;
+
   unsigned Hash = 0;
   if (Storage == Uniqued) {
     GenericDwarfNodeInfo::KeyTy Key(Tag, Header, DwarfOps);

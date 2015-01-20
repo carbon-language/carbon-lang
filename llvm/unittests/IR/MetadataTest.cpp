@@ -596,6 +596,14 @@ TEST_F(GenericDwarfNodeTest, get) {
   EXPECT_EQ(N, GenericDwarfNode::get(Context, 15, Header, Ops1));
 }
 
+TEST_F(GenericDwarfNodeTest, getEmptyHeader) {
+  // Canonicalize !"" to null.
+  auto *Header = MDString::get(Context, "");
+  EXPECT_NE(nullptr, Header);
+  auto *N = GenericDwarfNode::get(Context, 15, Header, None);
+  EXPECT_EQ(nullptr, N->getHeader());
+}
+
 typedef MetadataTest MetadataAsValueTest;
 
 TEST_F(MetadataAsValueTest, MDNode) {
