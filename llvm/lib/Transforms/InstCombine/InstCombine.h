@@ -104,8 +104,7 @@ public:
 /// combine them, as well as the pass infrastructure for running this as part
 /// of the LLVM pass pipeline.
 class LLVM_LIBRARY_VISIBILITY InstCombiner
-    : public FunctionPass,
-      public InstVisitor<InstCombiner, Instruction *> {
+    : public InstVisitor<InstCombiner, Instruction *> {
   AssumptionCache *AC;
   const DataLayout *DL;
   TargetLibraryInfo *TLI;
@@ -124,20 +123,15 @@ public:
   typedef IRBuilder<true, TargetFolder, InstCombineIRInserter> BuilderTy;
   BuilderTy *Builder;
 
-  static char ID; // Pass identification, replacement for typeid
-  InstCombiner()
-      : FunctionPass(ID), DL(nullptr), DT(nullptr), LI(nullptr),
-        Builder(nullptr) {
+  InstCombiner() : DL(nullptr), DT(nullptr), LI(nullptr), Builder(nullptr) {
     MinimizeSize = false;
-    initializeInstCombinerPass(*PassRegistry::getPassRegistry());
   }
 
 public:
-  bool runOnFunction(Function &F) override;
+  bool run(Function &F, AssumptionCache *AC, const DataLayout *DL,
+           TargetLibraryInfo *TLI, DominatorTree *DT, LoopInfo *LI);
 
   bool DoOneIteration(Function &F, unsigned ItNum);
-
-  void getAnalysisUsage(AnalysisUsage &AU) const override;
 
   AssumptionCache *getAssumptionCache() const { return AC; }
 

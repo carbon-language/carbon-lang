@@ -72,33 +72,6 @@ STATISTIC(NumExpand,    "Number of expansions");
 STATISTIC(NumFactor   , "Number of factorizations");
 STATISTIC(NumReassoc  , "Number of reassociations");
 
-// Initialization Routines
-void llvm::initializeInstCombine(PassRegistry &Registry) {
-  initializeInstCombinerPass(Registry);
-}
-
-void LLVMInitializeInstCombine(LLVMPassRegistryRef R) {
-  initializeInstCombine(*unwrap(R));
-}
-
-char InstCombiner::ID = 0;
-INITIALIZE_PASS_BEGIN(InstCombiner, "instcombine",
-                "Combine redundant instructions", false, false)
-INITIALIZE_PASS_DEPENDENCY(AssumptionCacheTracker)
-INITIALIZE_PASS_DEPENDENCY(TargetLibraryInfoWrapperPass)
-INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass)
-INITIALIZE_PASS_END(InstCombiner, "instcombine",
-                "Combine redundant instructions", false, false)
-
-void InstCombiner::getAnalysisUsage(AnalysisUsage &AU) const {
-  AU.setPreservesCFG();
-  AU.addRequired<AssumptionCacheTracker>();
-  AU.addRequired<TargetLibraryInfoWrapperPass>();
-  AU.addRequired<DominatorTreeWrapperPass>();
-  AU.addPreserved<DominatorTreeWrapperPass>();
-}
-
-
 Value *InstCombiner::EmitGEPOffset(User *GEP) {
   return llvm::EmitGEPOffset(Builder, *getDataLayout(), GEP);
 }
@@ -2965,17 +2938,19 @@ public:
 };
 }
 
-bool InstCombiner::runOnFunction(Function &F) {
-  if (skipOptnoneFunction(F))
-    return false;
-
-  AC = &getAnalysis<AssumptionCacheTracker>().getAssumptionCache(F);
-  DataLayoutPass *DLP = getAnalysisIfAvailable<DataLayoutPass>();
-  DL = DLP ? &DLP->getDataLayout() : nullptr;
-  DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
-  auto *LIWP = getAnalysisIfAvailable<LoopInfoWrapperPass>();
-  LI = LIWP ? &LIWP->getLoopInfo() : nullptr;
-  TLI = &getAnalysis<TargetLibraryInfoWrapperPass>().getTLI();
+// FIXME: Passing all of the analyses here in the run method is ugly. We should
+// separate out the worklist from the combiner so that we can construct
+// a combiner once per function while re-using the storage of an external
+// worklist.
+bool InstCombiner::run(Function &F, AssumptionCache *AC, const DataLayout *DL,
+                       TargetLibraryInfo *TLI, DominatorTree *DT,
+                       LoopInfo *LI) {
+  // Set up our analysis pointers.
+  this->AC = AC;
+  this->DL = DL;
+  this->TLI = TLI;
+  this->DT = DT;
+  this->LI = LI;
 
   // Minimizing size?
   MinimizeSize = F.getAttributes().hasAttribute(AttributeSet::FunctionIndex,
@@ -3005,6 +2980,67 @@ bool InstCombiner::runOnFunction(Function &F) {
   return EverMadeChange;
 }
 
+namespace {
+/// \brief The legacy pass manager's instcombine pass.
+///
+/// This is a basic whole-function wrapper around the instcombine utility. It
+/// will try to combine all instructions in the function.
+class InstructionCombiningPass : public FunctionPass {
+  InstCombiner IC;
+
+public:
+  static char ID; // Pass identification, replacement for typeid
+
+  InstructionCombiningPass() : FunctionPass(ID) {
+    initializeInstructionCombiningPassPass(*PassRegistry::getPassRegistry());
+  }
+
+  void getAnalysisUsage(AnalysisUsage &AU) const override;
+  bool runOnFunction(Function &F) override;
+};
+}
+
+void InstructionCombiningPass::getAnalysisUsage(AnalysisUsage &AU) const {
+  AU.setPreservesCFG();
+  AU.addRequired<AssumptionCacheTracker>();
+  AU.addRequired<TargetLibraryInfoWrapperPass>();
+  AU.addRequired<DominatorTreeWrapperPass>();
+  AU.addPreserved<DominatorTreeWrapperPass>();
+}
+
+bool InstructionCombiningPass::runOnFunction(Function &F) {
+  if (skipOptnoneFunction(F))
+    return false;
+
+  auto &AC = getAnalysis<AssumptionCacheTracker>().getAssumptionCache(F);
+  auto *DLP = getAnalysisIfAvailable<DataLayoutPass>();
+  auto *DL = DLP ? &DLP->getDataLayout() : nullptr;
+  auto &TLI = getAnalysis<TargetLibraryInfoWrapperPass>().getTLI();
+  auto &DT = getAnalysis<DominatorTreeWrapperPass>().getDomTree();
+  auto *LIWP = getAnalysisIfAvailable<LoopInfoWrapperPass>();
+  auto *LI = LIWP ? &LIWP->getLoopInfo() : nullptr;
+
+  return IC.run(F, &AC, DL, &TLI, &DT, LI);
+}
+
+char InstructionCombiningPass::ID = 0;
+INITIALIZE_PASS_BEGIN(InstructionCombiningPass, "instcombine",
+                      "Combine redundant instructions", false, false)
+INITIALIZE_PASS_DEPENDENCY(AssumptionCacheTracker)
+INITIALIZE_PASS_DEPENDENCY(TargetLibraryInfoWrapperPass)
+INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass)
+INITIALIZE_PASS_END(InstructionCombiningPass, "instcombine",
+                    "Combine redundant instructions", false, false)
+
+// Initialization Routines
+void llvm::initializeInstCombine(PassRegistry &Registry) {
+  initializeInstructionCombiningPassPass(Registry);
+}
+
+void LLVMInitializeInstCombine(LLVMPassRegistryRef R) {
+  initializeInstructionCombiningPassPass(*unwrap(R));
+}
+
 FunctionPass *llvm::createInstructionCombiningPass() {
-  return new InstCombiner();
+  return new InstructionCombiningPass();
 }
