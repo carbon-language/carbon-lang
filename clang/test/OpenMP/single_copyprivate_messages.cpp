@@ -44,6 +44,7 @@ S5 m(4); // expected-note 2 {{'m' defined here}}
 template <class T, class C>
 T tmain(T argc, C **argv) {
   T i;
+  static T TA;
 #pragma omp parallel
 #pragma omp single copyprivate // expected-error {{expected '(' after 'copyprivate'}}
 #pragma omp parallel
@@ -95,12 +96,18 @@ T tmain(T argc, C **argv) {
 #pragma omp parallel
 #pragma omp single firstprivate(i) copyprivate(i) // expected-error {{firstprivate variable cannot be copyprivate}} expected-note {{defined as firstprivate}}
   foo();
+#pragma omp parallel private(TA)
+  {
+#pragma omp single copyprivate(TA)
+    TA = 99;
+  }
 
   return T();
 }
 
 int main(int argc, char **argv) {
   int i;
+  static int intA;
 #pragma omp parallel
 #pragma omp single copyprivate // expected-error {{expected '(' after 'copyprivate'}}
 #pragma omp parallel
@@ -154,6 +161,11 @@ int main(int argc, char **argv) {
   foo();
 #pragma omp single copyprivate(i) nowait // expected-error {{the 'copyprivate' clause must not be used with the 'nowait' clause}} expected-note {{'nowait' clause is here}}
   foo();
+#pragma omp parallel private(intA)
+  {
+#pragma omp single copyprivate(intA)
+    intA = 99;
+  }
 
   return tmain(argc, argv); // expected-note {{in instantiation of function template specialization 'tmain<int, char>' requested here}}
 }

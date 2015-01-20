@@ -425,16 +425,16 @@ DSAStackTy::DSAVarData DSAStackTy::getTopDSA(VarDecl *D, bool FromParent) {
     // OpenMP [2.9.1.1, Data-sharing Attribute Rules for Variables Referenced
     // in a Construct, C/C++, predetermined, p.4]
     //  Static data members are shared.
-    if (D->isStaticDataMember()) {
-      DVar.CKind = OMPC_shared;
-      return DVar;
-    }
-
     // OpenMP [2.9.1.1, Data-sharing Attribute Rules for Variables Referenced
     // in a Construct, C/C++, predetermined, p.7]
     //  Variables with static storage duration that are declared in a scope
     //  inside the construct are shared.
-    if (D->isStaticLocal()) {
+    if (D->isStaticDataMember() || D->isStaticLocal()) {
+      DSAVarData DVarTemp =
+          hasDSA(D, isOpenMPPrivate, MatchesAlways(), FromParent);
+      if (DVarTemp.CKind != OMPC_unknown && DVarTemp.RefExpr)
+        return DVar;
+
       DVar.CKind = OMPC_shared;
       return DVar;
     }
