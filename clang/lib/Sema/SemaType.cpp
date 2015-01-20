@@ -2476,8 +2476,24 @@ getCCForDeclaratorChunk(Sema &S, Declarator &D,
     }
   }
 
-  return S.Context.getDefaultCallingConvention(FTI.isVariadic,
-                                               IsCXXInstanceMethod);
+  CallingConv CC = S.Context.getDefaultCallingConvention(FTI.isVariadic,
+                                                         IsCXXInstanceMethod);
+
+  // Attribute AT_OpenCLKernel affects the calling convention only on
+  // the SPIR target, hence it cannot be treated as a calling
+  // convention attribute. This is the simplest place to infer
+  // "spir_kernel" for OpenCL kernels on SPIR.
+  if (CC == CC_SpirFunction) {
+    for (const AttributeList *Attr = D.getDeclSpec().getAttributes().getList();
+         Attr; Attr = Attr->getNext()) {
+      if (Attr->getKind() == AttributeList::AT_OpenCLKernel) {
+        CC = CC_SpirKernel;
+        break;
+      }
+    }
+  }
+
+  return CC;
 }
 
 static TypeSourceInfo *GetFullTypeForDeclarator(TypeProcessingState &state,
