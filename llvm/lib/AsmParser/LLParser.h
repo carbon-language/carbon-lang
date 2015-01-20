@@ -421,6 +421,7 @@ namespace llvm {
     bool ParseMDField(LocTy Loc, StringRef Name,
                       MDUnsignedField<uint32_t> &Result);
     bool ParseMDField(LocTy Loc, StringRef Name, MDField &Result);
+    template <class FieldTy> bool ParseMDField(StringRef Name, FieldTy &Result);
     template <class ParserTy>
     bool ParseMDFieldsImplBody(ParserTy parseField);
     template <class ParserTy>

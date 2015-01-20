@@ -2972,6 +2972,16 @@ bool LLParser::ParseMDFieldsImpl(ParserTy parseField, LocTy &ClosingLoc) {
   return ParseToken(lltok::rparen, "expected ')' here");
 }
 
+template <class FieldTy>
+bool LLParser::ParseMDField(StringRef Name, FieldTy &Result) {
+  if (Result.Seen)
+    return TokError("field '" + Name + "' cannot be specified more than once");
+
+  LocTy Loc = Lex.getLoc();
+  Lex.Lex();
+  return ParseMDField(Loc, Name, Result);
+}
+
 bool LLParser::ParseSpecializedMDNode(MDNode *&N, bool IsDistinct) {
   assert(Lex.getKind() == lltok::MetadataVar && "Expected metadata type name");
 #define DISPATCH_TO_PARSER(CLASS)                                              \
@@ -2990,19 +3000,8 @@ bool LLParser::ParseSpecializedMDNode(MDNode *&N, bool IsDistinct) {
   if (!NAME.Seen)                                                              \
     return Error(ClosingLoc, "missing required field '" #NAME "'");
 #define PARSE_MD_FIELD(NAME, TYPE, DEFAULT)                                    \
-  do {                                                                         \
-    if (Lex.getStrVal() == #NAME) {                                            \
-      if (NAME.Seen)                                                           \
-        return TokError("field '" #NAME                                        \
-                        "' cannot be specified more than once");               \
-                                                                               \
-      LocTy Loc = Lex.getLoc();                                                \
-      Lex.Lex();                                                               \
-      if (ParseMDField(Loc, #NAME, NAME))                                      \
-        return true;                                                           \
-      return false;                                                            \
-    }                                                                          \
-  } while (0)
+  if (Lex.getStrVal() == #NAME)                                                \
+    return ParseMDField(#NAME, NAME);
 #define PARSE_MD_FIELDS()                                                      \
   VISIT_MD_FIELDS(DECLARE_FIELD, DECLARE_FIELD)                                \
   do {                                                                         \
