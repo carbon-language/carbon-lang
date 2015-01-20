@@ -418,6 +418,17 @@ MDNode::MDNode(LLVMContext &Context, unsigned ID, StorageType Storage,
   this->Context.makeReplaceable(make_unique<ReplaceableMetadataImpl>(Context));
 }
 
+TempMDNode MDNode::clone() const {
+  switch (getMetadataID()) {
+  default:
+    llvm_unreachable("Invalid MDNode subclass");
+#define HANDLE_MDNODE_LEAF(CLASS)                                              \
+  case CLASS##Kind:                                                            \
+    return cast<CLASS>(this)->cloneImpl();
+#include "llvm/IR/Metadata.def"
+  }
+}
+
 static bool isOperandUnresolved(Metadata *Op) {
   if (auto *N = dyn_cast_or_null<MDNode>(Op))
     return !N->isResolved();

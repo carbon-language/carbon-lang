@@ -180,37 +180,6 @@ static Metadata *mapMetadataOp(Metadata *Op, ValueToValueMapTy &VM,
   return nullptr;
 }
 
-static TempMDTuple cloneMDTuple(const MDTuple *Node) {
-  SmallVector<Metadata *, 4> Elts;
-  Elts.append(Node->op_begin(), Node->op_end());
-  return MDTuple::getTemporary(Node->getContext(), Elts);
-}
-
-static TempMDLocation cloneMDLocation(const MDLocation *Node) {
-  return MDLocation::getTemporary(Node->getContext(), Node->getLine(),
-                                  Node->getColumn(), Node->getScope(),
-                                  Node->getInlinedAt());
-}
-
-static TempGenericDwarfNode
-cloneGenericDwarfNode(const GenericDwarfNode *Node) {
-  SmallVector<Metadata *, 4> DwarfOps;
-  DwarfOps.append(Node->dwarf_op_begin(), Node->dwarf_op_end());
-  return GenericDwarfNode::getTemporary(Node->getContext(), Node->getTag(),
-                                        Node->getHeader(), DwarfOps);
-}
-
-static TempMDNode cloneMDNode(const MDNode *Node) {
-  switch (Node->getMetadataID()) {
-  default:
-    llvm_unreachable("Invalid MDNode subclass");
-#define HANDLE_MDNODE_LEAF(CLASS)                                              \
-  case Metadata::CLASS##Kind:                                                  \
-    return clone##CLASS(cast<CLASS>(Node));
-#include "llvm/IR/Metadata.def"
-  }
-}
-
 /// \brief Remap nodes.
 ///
 /// Insert \c NewNode in the value map, and then remap \c OldNode's operands.
@@ -253,7 +222,7 @@ static Metadata *mapDistinctNode(const MDNode *Node, ValueToValueMapTy &VM,
                                  ValueMaterializer *Materializer) {
   assert(Node->isDistinct() && "Expected distinct node");
 
-  MDNode *NewMD = MDNode::replaceWithDistinct(cloneMDNode(Node));
+  MDNode *NewMD = MDNode::replaceWithDistinct(Node->clone());
   remap(Node, NewMD, VM, Flags, TypeMapper, Materializer);
   return NewMD;
 }
@@ -268,8 +237,7 @@ static Metadata *mapUniquedNode(const MDNode *Node, ValueToValueMapTy &VM,
   assert(Node->isUniqued() && "Expected uniqued node");
 
   // Create a temporary node upfront in case we have a metadata cycle.
-  auto ClonedMD = cloneMDNode(Node);
-
+  auto ClonedMD = Node->clone();
   if (!remap(Node, ClonedMD.get(), VM, Flags, TypeMapper, Materializer))
     // No operands changed, so use the identity mapping.
     return mapToSelf(VM, Node);
