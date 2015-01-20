@@ -51,6 +51,7 @@ CGSCC_PASS("no-op-cgscc", NoOpCGSCCPass())
 #define FUNCTION_ANALYSIS(NAME, CREATE_PASS)
 #endif
 FUNCTION_ANALYSIS("domtree", DominatorTreeAnalysis())
+FUNCTION_ANALYSIS("loops", LoopAnalysis())
 FUNCTION_ANALYSIS("no-op-function", NoOpFunctionAnalysis())
 #undef FUNCTION_ANALYSIS
 
@@ -61,6 +62,7 @@ FUNCTION_PASS("invalidate<all>", InvalidateAllAnalysesPass())
 FUNCTION_PASS("no-op-function", NoOpFunctionPass())
 FUNCTION_PASS("print", PrintFunctionPass(dbgs()))
 FUNCTION_PASS("print<domtree>", DominatorTreePrinterPass(dbgs()))
+FUNCTION_PASS("print<loops>", LoopPrinterPass(dbgs()))
 FUNCTION_PASS("verify", VerifierPass())
 FUNCTION_PASS("verify<domtree>", DominatorTreeVerifierPass())
 #undef FUNCTION_PASS

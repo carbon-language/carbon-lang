@@ -42,6 +42,11 @@
 
 namespace llvm {
 
+// FIXME: Replace this brittle forward declaration with the include of the new
+// PassManager.h when doing so doesn't break the PassManagerBuilder.
+template <typename IRUnitT> class AnalysisManager;
+class PreservedAnalyses;
+
 template<typename T>
 inline void RemoveFromVector(std::vector<T*> &V, T *N) {
   typename std::vector<T*>::iterator I = std::find(V.begin(), V.end(), N);
@@ -714,6 +719,39 @@ template <> struct GraphTraits<Loop*> {
   static inline ChildIteratorType child_end(NodeType *N) {
     return N->end();
   }
+};
+
+/// \brief Analysis pass that exposes the \c LoopInfo for a function.
+class LoopAnalysis {
+  static char PassID;
+
+public:
+  typedef LoopInfo Result;
+
+  /// \brief Opaque, unique identifier for this analysis pass.
+  static void *ID() { return (void *)&PassID; }
+
+  /// \brief Provide a name for the analysis for debugging and logging.
+  static StringRef name() { return "LoopAnalysis"; }
+
+  LoopAnalysis() {}
+  LoopAnalysis(const LoopAnalysis &Arg) {}
+  LoopAnalysis(LoopAnalysis &&Arg) {}
+  LoopAnalysis &operator=(const LoopAnalysis &RHS) { return *this; }
+  LoopAnalysis &operator=(LoopAnalysis &&RHS) { return *this; }
+
+  LoopInfo run(Function &F, AnalysisManager<Function> *AM);
+};
+
+/// \brief Printer pass for the \c LoopAnalysis results.
+class LoopPrinterPass {
+  raw_ostream &OS;
+
+public:
+  explicit LoopPrinterPass(raw_ostream &OS) : OS(OS) {}
+  PreservedAnalyses run(Function &F, AnalysisManager<Function> *AM);
+
+  static StringRef name() { return "LoopPrinterPass"; }
 };
 
 /// \brief The legacy pass manager's analysis pass to compute loop information.

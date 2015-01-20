@@ -26,6 +26,7 @@
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Metadata.h"
+#include "llvm/IR/PassManager.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include <algorithm>
@@ -665,6 +666,26 @@ void LoopInfo::updateUnloop(Loop *Unloop) {
       break;
     }
   }
+}
+
+char LoopAnalysis::PassID;
+
+LoopInfo LoopAnalysis::run(Function &F, AnalysisManager<Function> *AM) {
+  // FIXME: Currently we create a LoopInfo from scratch for every function.
+  // This may prove to be too wasteful due to deallocating and re-allocating
+  // memory each time for the underlying map and vector datastructures. At some
+  // point it may prove worthwhile to use a freelist and recycle LoopInfo
+  // objects. I don't want to add that kind of complexity until the scope of
+  // the problem is better understood.
+  LoopInfo LI;
+  LI.Analyze(AM->getResult<DominatorTreeAnalysis>(F));
+  return std::move(LI);
+}
+
+PreservedAnalyses LoopPrinterPass::run(Function &F,
+                                       AnalysisManager<Function> *AM) {
+  AM->getResult<LoopAnalysis>(F).print(OS);
+  return PreservedAnalyses::all();
 }
 
 //===----------------------------------------------------------------------===//
