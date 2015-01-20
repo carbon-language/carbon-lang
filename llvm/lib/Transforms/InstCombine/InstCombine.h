@@ -142,7 +142,7 @@ public:
   AssumptionCache *getAssumptionCache() const { return AC; }
 
   const DataLayout *getDataLayout() const { return DL; }
-  
+
   DominatorTree *getDominatorTree() const { return DT; }
 
   LoopInfo *getLoopInfo() const { return LI; }
@@ -340,7 +340,7 @@ public:
       V = UndefValue::get(I.getType());
 
     DEBUG(dbgs() << "IC: Replacing " << I << "\n"
-                    "    with " << *V << '\n');
+                 << "    with " << *V << '\n');
 
     I.replaceAllUsesWith(V);
     return &I;
@@ -350,16 +350,16 @@ public:
   /// \p Result and a constant \p Overflow value. If \p ReUseName is true the
   /// \p Result's name is taken from \p II.
   Instruction *CreateOverflowTuple(IntrinsicInst *II, Value *Result,
-                                    bool Overflow, bool ReUseName = true) {
+                                   bool Overflow, bool ReUseName = true) {
     if (ReUseName)
       Result->takeName(II);
-    Constant *V[] = { UndefValue::get(Result->getType()),
-                      Overflow ? Builder->getTrue() : Builder->getFalse() };
+    Constant *V[] = {UndefValue::get(Result->getType()),
+                     Overflow ? Builder->getTrue() : Builder->getFalse()};
     StructType *ST = cast<StructType>(II->getType());
     Constant *Struct = ConstantStruct::get(ST, V);
     return InsertValueInst::Create(Struct, Result, 0);
   }
-        
+
   /// \brief Combiner aware instruction erasure.
   ///
   /// When dealing with an instruction that has side effects or produces a void
@@ -388,8 +388,7 @@ public:
                                   DT);
   }
 
-  bool MaskedValueIsZero(Value *V, const APInt &Mask,
-                         unsigned Depth = 0,
+  bool MaskedValueIsZero(Value *V, const APInt &Mask, unsigned Depth = 0,
                          Instruction *CxtI = nullptr) const {
     return llvm::MaskedValueIsZero(V, Mask, DL, Depth, AC, CxtI, DT);
   }
@@ -416,7 +415,8 @@ private:
   /// or commutative.
   bool SimplifyAssociativeOrCommutative(BinaryOperator &I);
 
-  /// \brief Tries to simplify binary operations which some other binary operation distributes over.
+  /// \brief Tries to simplify binary operations which some other binary
+  /// operation distributes over.
   ///
   /// It does this by either by factorizing out common terms (eg "(A*B)+(A*C)"
   /// -> "A*(B+C)") or expanding out if this results in simplifications (eg: "A
