@@ -93,3 +93,75 @@ entry:
   %res2 = zext i1 %res to i64
   ret i64 %res2
 }
+
+define i64 @bbit0(i64 %a) nounwind {
+entry:
+; OCTEON-LABEL: bbit0:
+; OCTEON: bbit0   $4, 3, $[[BB0:BB[0-9_]+]]
+; MIPS64-LABEL: bbit0:
+; MIPS64: andi  $[[T0:[0-9]+]], $4, 8
+; MIPS64: beqz  $[[T0]], $[[BB0:BB[0-9_]+]]
+  %bit = and i64 %a, 8
+  %res = icmp eq i64 %bit, 0
+  br i1 %res, label %endif, label %if
+if:
+  ret i64 48
+
+endif:
+  ret i64 12
+}
+
+define i64 @bbit032(i64 %a) nounwind {
+entry:
+; OCTEON-LABEL: bbit032:
+; OCTEON: bbit032 $4, 3, $[[BB0:BB[0-9_]+]]
+; MIPS64-LABEL: bbit032:
+; MIPS64: daddiu  $[[T0:[0-9]+]], $zero, 1
+; MIPS64: dsll    $[[T1:[0-9]+]], $[[T0]], 35
+; MIPS64: and     $[[T2:[0-9]+]], $4, $[[T1]]
+; MIPS64: beqz    $[[T2]], $[[BB0:BB[0-9_]+]]
+  %bit = and i64 %a, 34359738368
+  %res = icmp eq i64 %bit, 0
+  br i1 %res, label %endif, label %if
+if:
+  ret i64 48
+
+endif:
+  ret i64 12
+}
+
+define i64 @bbit1(i64 %a) nounwind {
+entry:
+; OCTEON-LABEL: bbit1:
+; OCTEON: bbit1 $4, 3, $[[BB0:BB[0-9_]+]]
+; MIPS64-LABEL: bbit1:
+; MIPS64: andi  $[[T0:[0-9]+]], $4, 8
+; MIPS64: beqz  $[[T0]], $[[BB0:BB[0-9_]+]]
+  %bit = and i64 %a, 8
+  %res = icmp ne i64 %bit, 0
+  br i1 %res, label %endif, label %if
+if:
+  ret i64 48
+
+endif:
+  ret i64 12
+}
+
+define i64 @bbit132(i64 %a) nounwind {
+entry:
+; OCTEON-LABEL: bbit132:
+; OCTEON: bbit132 $4, 3, $[[BB0:BB[0-9_]+]]
+; MIPS64-LABEL: bbit132:
+; MIPS64: daddiu  $[[T0:[0-9]+]], $zero, 1
+; MIPS64: dsll    $[[T1:[0-9]+]], $[[T0]], 35
+; MIPS64: and     $[[T2:[0-9]+]], $4, $[[T1]]
+; MIPS64: beqz    $[[T2]], $[[BB0:BB[0-9_]+]]
+  %bit = and i64 %a, 34359738368
+  %res = icmp ne i64 %bit, 0
+  br i1 %res, label %endif, label %if
+if:
+  ret i64 48
+
+endif:
+  ret i64 12
+}

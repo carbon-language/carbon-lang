@@ -3,6 +3,10 @@
 # CHECK: baddu $9, $6, $7             # encoding: [0x70,0xc7,0x48,0x28]
 # CHECK: baddu $17, $18, $19          # encoding: [0x72,0x53,0x88,0x28]
 # CHECK: baddu $2, $2, $3             # encoding: [0x70,0x43,0x10,0x28]
+# CHECK: bbit0 $19, 22, foo           # encoding: [0xca,0x76,A,A]
+# CHECK: bbit032 $fp, 11, foo         # encoding: [0xdb,0xcb,A,A]
+# CHECK: bbit1 $3, 31, foo            # encoding: [0xe8,0x7f,A,A]
+# CHECK: bbit132 $24, 10, foo         # encoding: [0xfb,0x0a,A,A]
 # CHECK: cins  $25, $10, 22, 2        # encoding: [0x71,0x59,0x15,0xb2]
 # CHECK: cins  $9, $9, 17, 29         # encoding: [0x71,0x29,0xec,0x72]
 # CHECK: cins32 $15, $2, 18, 8        # encoding: [0x70,0x4f,0x44,0xb3]
@@ -46,9 +50,14 @@
 # CHECK: vmulu $sp, $10, $17          # encoding: [0x71,0x51,0xe8,0x0f]
 # CHECK: vmulu $27, $27, $6           # encoding: [0x73,0x66,0xd8,0x0f]
 
+foo:
   baddu $9, $6, $7
   baddu $17, $18, $19
   baddu $2, $3
+  bbit0 $19, 22, foo
+  bbit032 $30, 11, foo
+  bbit1 $3, 31, foo
+  bbit132 $24, 10, foo
   cins  $25, $10, 22, 2
   cins  $9, 17, 29
   cins32 $15, $2, 18, 8

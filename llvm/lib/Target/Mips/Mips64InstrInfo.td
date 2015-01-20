@@ -16,6 +16,10 @@
 //===----------------------------------------------------------------------===//
 
 // Unsigned Operand
+def uimm5_64      : Operand<i64> {
+  let PrintMethod = "printUnsignedImm";
+}
+
 def uimm16_64      : Operand<i64> {
   let PrintMethod = "printUnsignedImm";
 }
@@ -40,6 +44,38 @@ def immSExt10_64 : PatLeaf<(i64 imm),
 
 def immZExt16_64 : PatLeaf<(i64 imm),
                            [{ return isInt<16>(N->getZExtValue()); }]>;
+
+def immZExt5_64 : ImmLeaf<i64, [{ return Imm == (Imm & 0x1f); }]>;
+
+// Transformation function: get log2 of low 32 bits of immediate
+def Log2LO : SDNodeXForm<imm, [{
+  return getImm(N, Log2_64((unsigned) N->getZExtValue()));
+}]>;
+
+// Transformation function: get log2 of high 32 bits of immediate
+def Log2HI : SDNodeXForm<imm, [{
+  return getImm(N, Log2_64((unsigned) (N->getZExtValue() >> 32)));
+}]>;
+
+// Predicate: True if immediate is a power of 2 and fits 32 bits
+def PowerOf2LO : PatLeaf<(imm), [{
+  if (N->getValueType(0) == MVT::i64) {
+    uint64_t Imm = N->getZExtValue();
+    return isPowerOf2_64(Imm) && (Imm & 0xffffffff) == Imm;
+  }
+  else
+    return false;
+}]>;
+
+// Predicate: True if immediate is a power of 2 and exceeds 32 bits
+def PowerOf2HI : PatLeaf<(imm), [{
+  if (N->getValueType(0) == MVT::i64) {
+    uint64_t Imm = N->getZExtValue();
+    return isPowerOf2_64(Imm) && (Imm & 0xffffffff00000000) == Imm;
+  }
+  else
+    return false;
+}]>;
 
 //===----------------------------------------------------------------------===//
 // Instructions specific format
@@ -305,11 +341,33 @@ class SetCC64_I<string opstr, PatFrag cond_op>:
   let TwoOperandAliasConstraint = "$rt = $rs";
 }
 
+class CBranchBitNum<string opstr, DAGOperand opnd, PatFrag cond_op,
+                    RegisterOperand RO, bits<64> shift = 1> :
+  InstSE<(outs), (ins RO:$rs, uimm5_64:$p, opnd:$offset),
+         !strconcat(opstr, "\t$rs, $p, $offset"),
+         [(brcond (i32 (cond_op (and RO:$rs, (shl shift, immZExt5_64:$p)), 0)),
+                  bb:$offset)], IIBranch, FrmI, opstr> {
+  let isBranch = 1;
+  let isTerminator = 1;
+  let hasDelaySlot = 1;
+  let Defs = [AT];
+}
+
 // Unsigned Byte Add
 let Pattern = [(set GPR64Opnd:$rd,
                     (and (add GPR64Opnd:$rs, GPR64Opnd:$rt), 255))] in
 def BADDu  : ArithLogicR<"baddu", GPR64Opnd, 1, II_BADDU>,
                               ADD_FM<0x1c, 0x28>;
+
+// Branch on Bit Clear /+32
+def BBIT0  : CBranchBitNum<"bbit0", brtarget, seteq, GPR64Opnd>, BBIT_FM<0x32>;
+def BBIT032: CBranchBitNum<"bbit032", brtarget, seteq, GPR64Opnd, 0x100000000>,
+                           BBIT_FM<0x36>;
+
+// Branch on Bit Set /+32
+def BBIT1  : CBranchBitNum<"bbit1", brtarget, setne, GPR64Opnd>, BBIT_FM<0x3a>;
+def BBIT132: CBranchBitNum<"bbit132", brtarget, setne, GPR64Opnd, 0x100000000>,
+                           BBIT_FM<0x3e>;
 
 // Multiply Doubleword to GPR
 let Defs = [HI0, LO0, P0, P1, P2] in
@@ -439,6 +497,18 @@ def : MipsPat<(i64 (sext_inreg GPR64:$src, i32)),
 
 // bswap MipsPattern
 def : MipsPat<(bswap GPR64:$rt), (DSHD (DSBH GPR64:$rt))>;
+
+// Octeon bbit0/bbit1 MipsPattern
+let Predicates = [HasMips64, HasCnMips] in {
+def : MipsPat<(brcond (i32 (seteq (and i64:$lhs, PowerOf2LO:$mask), 0)), bb:$dst),
+              (BBIT0 i64:$lhs, (Log2LO PowerOf2LO:$mask), bb:$dst)>;
+def : MipsPat<(brcond (i32 (seteq (and i64:$lhs, PowerOf2HI:$mask), 0)), bb:$dst),
+              (BBIT032 i64:$lhs, (Log2HI PowerOf2HI:$mask), bb:$dst)>;
+def : MipsPat<(brcond (i32 (setne (and i64:$lhs, PowerOf2LO:$mask), 0)), bb:$dst),
+              (BBIT1 i64:$lhs, (Log2LO PowerOf2LO:$mask), bb:$dst)>;
+def : MipsPat<(brcond (i32 (setne (and i64:$lhs, PowerOf2HI:$mask), 0)), bb:$dst),
+              (BBIT132 i64:$lhs, (Log2HI PowerOf2HI:$mask), bb:$dst)>;
+}
 
 //===----------------------------------------------------------------------===//
 // Instruction aliases

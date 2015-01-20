@@ -297,6 +297,19 @@ class BGEZ_FM<bits<6> op, bits<5> funct> : StdArch {
   let Inst{15-0}  = offset;
 }
 
+class BBIT_FM<bits<6> op> : StdArch {
+  bits<5>  rs;
+  bits<5>  p;
+  bits<16> offset;
+
+  bits<32> Inst;
+
+  let Inst{31-26} = op;
+  let Inst{25-21} = rs;
+  let Inst{20-16} = p;
+  let Inst{15-0}  = offset;
+}
+
 class SLTI_FM<bits<6> op> : StdArch {
   bits<5> rt;
   bits<5> rs;
