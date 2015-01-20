@@ -12,6 +12,7 @@
 
 #include "InstCombineWorklist.h"
 #include "llvm/Analysis/AssumptionCache.h"
+#include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/TargetFolder.h"
 #include "llvm/Analysis/ValueTracking.h"
 #include "llvm/IR/Dominators.h"
@@ -100,6 +101,7 @@ class LLVM_LIBRARY_VISIBILITY InstCombiner
   const DataLayout *DL;
   TargetLibraryInfo *TLI;
   DominatorTree *DT;
+  LoopInfo *LI;
   bool MadeIRChange;
   LibCallSimplifier *Simplifier;
   bool MinimizeSize;
@@ -115,7 +117,8 @@ public:
 
   static char ID; // Pass identification, replacement for typeid
   InstCombiner()
-      : FunctionPass(ID), DL(nullptr), DT(nullptr), Builder(nullptr) {
+      : FunctionPass(ID), DL(nullptr), DT(nullptr), LI(nullptr),
+        Builder(nullptr) {
     MinimizeSize = false;
     initializeInstCombinerPass(*PassRegistry::getPassRegistry());
   }
@@ -132,6 +135,8 @@ public:
   const DataLayout *getDataLayout() const { return DL; }
   
   DominatorTree *getDominatorTree() const { return DT; }
+
+  LoopInfo *getLoopInfo() const { return LI; }
 
   TargetLibraryInfo *getTargetLibraryInfo() const { return TLI; }
 

@@ -799,9 +799,7 @@ Instruction *InstCombiner::FoldOpIntoPhi(Instruction &I) {
     // If the incoming non-constant value is in I's block, we will remove one
     // instruction, but insert another equivalent one, leading to infinite
     // instcombine.
-    auto *LIWP = getAnalysisIfAvailable<LoopInfoWrapperPass>();
-    if (isPotentiallyReachable(I.getParent(), NonConstBB, DT,
-                               LIWP ? &LIWP->getLoopInfo() : nullptr))
+    if (isPotentiallyReachable(I.getParent(), NonConstBB, DT, LI))
       return nullptr;
   }
 
@@ -2975,6 +2973,8 @@ bool InstCombiner::runOnFunction(Function &F) {
   DataLayoutPass *DLP = getAnalysisIfAvailable<DataLayoutPass>();
   DL = DLP ? &DLP->getDataLayout() : nullptr;
   DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
+  auto *LIWP = getAnalysisIfAvailable<LoopInfoWrapperPass>();
+  LI = LIWP ? &LIWP->getLoopInfo() : nullptr;
   TLI = &getAnalysis<TargetLibraryInfoWrapperPass>().getTLI();
 
   // Minimizing size?
