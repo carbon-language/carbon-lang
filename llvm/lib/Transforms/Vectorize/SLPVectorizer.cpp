@@ -268,104 +268,6 @@ static bool CanReuseExtract(ArrayRef<Value *> VL) {
   return true;
 }
 
-static void reorderInputsAccordingToOpcode(ArrayRef<Value *> VL,
-                                           SmallVectorImpl<Value *> &Left,
-                                           SmallVectorImpl<Value *> &Right) {
-
-  SmallVector<Value *, 16> OrigLeft, OrigRight;
-
-  bool AllSameOpcodeLeft = true;
-  bool AllSameOpcodeRight = true;
-  for (unsigned i = 0, e = VL.size(); i != e; ++i) {
-    Instruction *I = cast<Instruction>(VL[i]);
-    Value *V0 = I->getOperand(0);
-    Value *V1 = I->getOperand(1);
-
-    OrigLeft.push_back(V0);
-    OrigRight.push_back(V1);
-
-    Instruction *I0 = dyn_cast<Instruction>(V0);
-    Instruction *I1 = dyn_cast<Instruction>(V1);
-
-    // Check whether all operands on one side have the same opcode. In this case
-    // we want to preserve the original order and not make things worse by
-    // reordering.
-    AllSameOpcodeLeft = I0;
-    AllSameOpcodeRight = I1;
-
-    if (i && AllSameOpcodeLeft) {
-      if(Instruction *P0 = dyn_cast<Instruction>(OrigLeft[i-1])) {
-        if(P0->getOpcode() != I0->getOpcode())
-          AllSameOpcodeLeft = false;
-      } else
-        AllSameOpcodeLeft = false;
-    }
-    if (i && AllSameOpcodeRight) {
-      if(Instruction *P1 = dyn_cast<Instruction>(OrigRight[i-1])) {
-        if(P1->getOpcode() != I1->getOpcode())
-          AllSameOpcodeRight = false;
-      } else
-        AllSameOpcodeRight = false;
-    }
-
-    // Sort two opcodes. In the code below we try to preserve the ability to use
-    // broadcast of values instead of individual inserts.
-    // vl1 = load
-    // vl2 = phi
-    // vr1 = load
-    // vr2 = vr2
-    //    = vl1 x vr1
-    //    = vl2 x vr2
-    // If we just sorted according to opcode we would leave the first line in
-    // tact but we would swap vl2 with vr2 because opcode(phi) > opcode(load).
-    //    = vl1 x vr1
-    //    = vr2 x vl2
-    // Because vr2 and vr1 are from the same load we loose the opportunity of a
-    // broadcast for the packed right side in the backend: we have [vr1, vl2]
-    // instead of [vr1, vr2=vr1].
-    if (I0 && I1) {
-       if(!i && I0->getOpcode() > I1->getOpcode()) {
-         Left.push_back(I1);
-         Right.push_back(I0);
-       } else if (i && I0->getOpcode() > I1->getOpcode() && Right[i-1] != I1) {
-         // Try not to destroy a broad cast for no apparent benefit.
-         Left.push_back(I1);
-         Right.push_back(I0);
-       } else if (i && I0->getOpcode() == I1->getOpcode() && Right[i-1] ==  I0) {
-         // Try preserve broadcasts.
-         Left.push_back(I1);
-         Right.push_back(I0);
-       } else if (i && I0->getOpcode() == I1->getOpcode() && Left[i-1] == I1) {
-         // Try preserve broadcasts.
-         Left.push_back(I1);
-         Right.push_back(I0);
-       } else {
-         Left.push_back(I0);
-         Right.push_back(I1);
-       }
-       continue;
-    }
-    // One opcode, put the instruction on the right.
-    if (I0) {
-      Left.push_back(V1);
-      Right.push_back(I0);
-      continue;
-    }
-    Left.push_back(V0);
-    Right.push_back(V1);
-  }
-
-  bool LeftBroadcast = isSplat(Left);
-  bool RightBroadcast = isSplat(Right);
-
-  // Don't reorder if the operands where good to begin with.
-  if (!(LeftBroadcast || RightBroadcast) &&
-      (AllSameOpcodeRight || AllSameOpcodeLeft)) {
-    Left = OrigLeft;
-    Right = OrigRight;
-  }
-}
-
 /// \returns True if in-tree use also needs extract. This refers to
 /// possible scalar operand in vectorized instruction.
 static bool InTreeUserNeedToExtract(Value *Scalar, Instruction *UserInst,
@@ -508,6 +410,16 @@ private:
   /// be beneficial even the tree height is tiny.
   bool isFullyVectorizableTinyTree();
 
+  /// \reorder commutative operands in alt shuffle if they result in
+  ///  vectorized code.
+  void reorderAltShuffleOperands(ArrayRef<Value *> VL,
+                                 SmallVectorImpl<Value *> &Left,
+                                 SmallVectorImpl<Value *> &Right);
+  /// \reorder commutative operands to get better probability of
+  /// generating vectorized code.
+  void reorderInputsAccordingToOpcode(ArrayRef<Value *> VL,
+                                      SmallVectorImpl<Value *> &Left,
+                                      SmallVectorImpl<Value *> &Right);
   struct TreeEntry {
     TreeEntry() : Scalars(), VectorizedValue(nullptr),
     NeedToGather(0) {}
@@ -1441,6 +1353,16 @@ void BoUpSLP::buildTree_rec(ArrayRef<Value *> VL, unsigned Depth) {
       }
       newTreeEntry(VL, true);
       DEBUG(dbgs() << "SLP: added a ShuffleVector op.\n");
+
+      // Reorder operands if reordering would enable vectorization.
+      if (isa<BinaryOperator>(VL0)) {
+        ValueList Left, Right;
+        reorderAltShuffleOperands(VL, Left, Right);
+        buildTree_rec(Left, Depth + 1);
+        buildTree_rec(Right, Depth + 1);
+        return;
+      }
+
       for (unsigned i = 0, e = VL0->getNumOperands(); i < e; ++i) {
         ValueList Operands;
         // Prepare the operand vector.
@@ -1878,6 +1800,195 @@ bool BoUpSLP::isConsecutiveAccess(Value *A, Value *B) {
   return X == PtrSCEVB;
 }
 
+// Reorder commutative operations in alternate shuffle if the resulting vectors
+// are consecutive loads. This would allow us to vectorize the tree.
+// If we have something like-
+// load a[0] - load b[0]
+// load b[1] + load a[1]
+// load a[2] - load b[2]
+// load a[3] + load b[3]
+// Reordering the second load b[1]  load a[1] would allow us to vectorize this
+// code.
+void BoUpSLP::reorderAltShuffleOperands(ArrayRef<Value *> VL,
+                                        SmallVectorImpl<Value *> &Left,
+                                        SmallVectorImpl<Value *> &Right) {
+
+  // Push left and right operands of binary operation into Left and Right
+  for (unsigned i = 0, e = VL.size(); i < e; ++i) {
+    Left.push_back(cast<Instruction>(VL[i])->getOperand(0));
+    Right.push_back(cast<Instruction>(VL[i])->getOperand(1));
+  }
+
+  // Reorder if we have a commutative operation and consecutive access
+  // are on either side of the alternate instructions.
+  for (unsigned j = 0; j < VL.size() - 1; ++j) {
+    if (LoadInst *L = dyn_cast<LoadInst>(Left[j])) {
+      if (LoadInst *L1 = dyn_cast<LoadInst>(Right[j + 1])) {
+        Instruction *VL1 = cast<Instruction>(VL[j]);
+        Instruction *VL2 = cast<Instruction>(VL[j + 1]);
+        if (isConsecutiveAccess(L, L1) && VL1->isCommutative()) {
+          std::swap(Left[j], Right[j]);
+          continue;
+        } else if (isConsecutiveAccess(L, L1) && VL2->isCommutative()) {
+          std::swap(Left[j + 1], Right[j + 1]);
+          continue;
+        }
+        // else unchanged
+      }
+    }
+    if (LoadInst *L = dyn_cast<LoadInst>(Right[j])) {
+      if (LoadInst *L1 = dyn_cast<LoadInst>(Left[j + 1])) {
+        Instruction *VL1 = cast<Instruction>(VL[j]);
+        Instruction *VL2 = cast<Instruction>(VL[j + 1]);
+        if (isConsecutiveAccess(L, L1) && VL1->isCommutative()) {
+          std::swap(Left[j], Right[j]);
+          continue;
+        } else if (isConsecutiveAccess(L, L1) && VL2->isCommutative()) {
+          std::swap(Left[j + 1], Right[j + 1]);
+          continue;
+        }
+        // else unchanged
+      }
+    }
+  }
+}
+
+void BoUpSLP::reorderInputsAccordingToOpcode(ArrayRef<Value *> VL,
+                                             SmallVectorImpl<Value *> &Left,
+                                             SmallVectorImpl<Value *> &Right) {
+
+  SmallVector<Value *, 16> OrigLeft, OrigRight;
+
+  bool AllSameOpcodeLeft = true;
+  bool AllSameOpcodeRight = true;
+  for (unsigned i = 0, e = VL.size(); i != e; ++i) {
+    Instruction *I = cast<Instruction>(VL[i]);
+    Value *VLeft = I->getOperand(0);
+    Value *VRight = I->getOperand(1);
+
+    OrigLeft.push_back(VLeft);
+    OrigRight.push_back(VRight);
+
+    Instruction *ILeft = dyn_cast<Instruction>(VLeft);
+    Instruction *IRight = dyn_cast<Instruction>(VRight);
+
+    // Check whether all operands on one side have the same opcode. In this case
+    // we want to preserve the original order and not make things worse by
+    // reordering.
+    if (i && AllSameOpcodeLeft && ILeft) {
+      if (Instruction *PLeft = dyn_cast<Instruction>(OrigLeft[i - 1])) {
+        if (PLeft->getOpcode() != ILeft->getOpcode())
+          AllSameOpcodeLeft = false;
+      } else
+        AllSameOpcodeLeft = false;
+    }
+    if (i && AllSameOpcodeRight && IRight) {
+      if (Instruction *PRight = dyn_cast<Instruction>(OrigRight[i - 1])) {
+        if (PRight->getOpcode() != IRight->getOpcode())
+          AllSameOpcodeRight = false;
+      } else
+        AllSameOpcodeRight = false;
+    }
+
+    // Sort two opcodes. In the code below we try to preserve the ability to use
+    // broadcast of values instead of individual inserts.
+    // vl1 = load
+    // vl2 = phi
+    // vr1 = load
+    // vr2 = vr2
+    //    = vl1 x vr1
+    //    = vl2 x vr2
+    // If we just sorted according to opcode we would leave the first line in
+    // tact but we would swap vl2 with vr2 because opcode(phi) > opcode(load).
+    //    = vl1 x vr1
+    //    = vr2 x vl2
+    // Because vr2 and vr1 are from the same load we loose the opportunity of a
+    // broadcast for the packed right side in the backend: we have [vr1, vl2]
+    // instead of [vr1, vr2=vr1].
+    if (ILeft && IRight) {
+      if (!i && ILeft->getOpcode() > IRight->getOpcode()) {
+        Left.push_back(IRight);
+        Right.push_back(ILeft);
+      } else if (i && ILeft->getOpcode() > IRight->getOpcode() &&
+                 Right[i - 1] != IRight) {
+        // Try not to destroy a broad cast for no apparent benefit.
+        Left.push_back(IRight);
+        Right.push_back(ILeft);
+      } else if (i && ILeft->getOpcode() == IRight->getOpcode() &&
+                 Right[i - 1] == ILeft) {
+        // Try preserve broadcasts.
+        Left.push_back(IRight);
+        Right.push_back(ILeft);
+      } else if (i && ILeft->getOpcode() == IRight->getOpcode() &&
+                 Left[i - 1] == IRight) {
+        // Try preserve broadcasts.
+        Left.push_back(IRight);
+        Right.push_back(ILeft);
+      } else {
+        Left.push_back(ILeft);
+        Right.push_back(IRight);
+      }
+      continue;
+    }
+    // One opcode, put the instruction on the right.
+    if (ILeft) {
+      Left.push_back(VRight);
+      Right.push_back(ILeft);
+      continue;
+    }
+    Left.push_back(VLeft);
+    Right.push_back(VRight);
+  }
+
+  bool LeftBroadcast = isSplat(Left);
+  bool RightBroadcast = isSplat(Right);
+
+  // If operands end up being broadcast return this operand order.
+  if (LeftBroadcast || RightBroadcast)
+    return;
+
+  // Don't reorder if the operands where good to begin.
+  if (AllSameOpcodeRight || AllSameOpcodeLeft) {
+    Left = OrigLeft;
+    Right = OrigRight;
+  }
+
+  // Finally check if we can get longer vectorizable chain by reordering
+  // without breaking the good operand order detected above.
+  // E.g. If we have something like-
+  // load a[0]  load b[0]
+  // load b[1]  load a[1]
+  // load a[2]  load b[2]
+  // load a[3]  load b[3]
+  // Reordering the second load b[1]  load a[1] would allow us to vectorize
+  // this code and we still retain AllSameOpcode property.
+  // FIXME: This load reordering might break AllSameOpcode in some rare cases
+  // such as-
+  // add a[0],c[0]  load b[0]
+  // add a[1],c[2]  load b[1]
+  // b[2]           load b[2]
+  // add a[3],c[3]  load b[3]
+  for (unsigned j = 0; j < VL.size() - 1; ++j) {
+    if (LoadInst *L = dyn_cast<LoadInst>(Left[j])) {
+      if (LoadInst *L1 = dyn_cast<LoadInst>(Right[j + 1])) {
+        if (isConsecutiveAccess(L, L1)) {
+          std::swap(Left[j + 1], Right[j + 1]);
+          continue;
+        }
+      }
+    }
+    if (LoadInst *L = dyn_cast<LoadInst>(Right[j])) {
+      if (LoadInst *L1 = dyn_cast<LoadInst>(Left[j + 1])) {
+        if (isConsecutiveAccess(L, L1)) {
+          std::swap(Left[j + 1], Right[j + 1]);
+          continue;
+        }
+      }
+    }
+    // else unchanged
+  }
+}
+
 void BoUpSLP::setInsertPointAfterBundle(ArrayRef<Value *> VL) {
   Instruction *VL0 = cast<Instruction>(VL[0]);
   BasicBlock::iterator NextInst = VL0;
@@ -2274,10 +2385,8 @@ Value *BoUpSLP::vectorizeTree(TreeEntry *E) {
     }
     case Instruction::ShuffleVector: {
       ValueList LHSVL, RHSVL;
-      for (int i = 0, e = E->Scalars.size(); i < e; ++i) {
-        LHSVL.push_back(cast<Instruction>(E->Scalars[i])->getOperand(0));
-        RHSVL.push_back(cast<Instruction>(E->Scalars[i])->getOperand(1));
-      }
+      assert(isa<BinaryOperator>(VL0) && "Invalid Shuffle Vector Operand");
+      reorderAltShuffleOperands(E->Scalars, LHSVL, RHSVL);
       setInsertPointAfterBundle(E->Scalars);
 
       Value *LHS = vectorizeTree(LHSVL);

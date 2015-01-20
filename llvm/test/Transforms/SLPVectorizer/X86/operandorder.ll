@@ -232,3 +232,113 @@ for.body3:
 for.end:
   ret void
 }
+
+; Check vectorization of following code for double data type-
+;  c[0] = a[0]+b[0];
+;  c[1] = b[1]+a[1]; // swapped b[1] and a[1]
+
+; CHECK-LABEL: load_reorder_double
+; CHECK: load <2 x double>*
+; CHECK: fadd <2 x double>
+define void @load_reorder_double(double* nocapture %c, double* noalias nocapture readonly %a, double* noalias nocapture readonly %b){
+  %1 = load double* %a
+  %2 = load double* %b
+  %3 = fadd double %1, %2
+  store double %3, double* %c
+  %4 = getelementptr inbounds double* %b, i64 1
+  %5 = load double* %4
+  %6 = getelementptr inbounds double* %a, i64 1
+  %7 = load double* %6
+  %8 = fadd double %5, %7
+  %9 = getelementptr inbounds double* %c, i64 1
+  store double %8, double* %9
+  ret void
+}
+
+; Check vectorization of following code for float data type-
+;  c[0] = a[0]+b[0];
+;  c[1] = b[1]+a[1]; // swapped b[1] and a[1]
+;  c[2] = a[2]+b[2];
+;  c[3] = a[3]+b[3];
+
+; CHECK-LABEL: load_reorder_float
+; CHECK: load <4 x float>*
+; CHECK: fadd <4 x float>
+define void @load_reorder_float(float* nocapture %c, float* noalias nocapture readonly %a, float* noalias nocapture readonly %b){
+  %1 = load float* %a
+  %2 = load float* %b
+  %3 = fadd float %1, %2
+  store float %3, float* %c
+  %4 = getelementptr inbounds float* %b, i64 1
+  %5 = load float* %4
+  %6 = getelementptr inbounds float* %a, i64 1
+  %7 = load float* %6
+  %8 = fadd float %5, %7
+  %9 = getelementptr inbounds float* %c, i64 1
+  store float %8, float* %9
+  %10 = getelementptr inbounds float* %a, i64 2
+  %11 = load float* %10
+  %12 = getelementptr inbounds float* %b, i64 2
+  %13 = load float* %12
+  %14 = fadd float %11, %13
+  %15 = getelementptr inbounds float* %c, i64 2
+  store float %14, float* %15
+  %16 = getelementptr inbounds float* %a, i64 3
+  %17 = load float* %16
+  %18 = getelementptr inbounds float* %b, i64 3
+  %19 = load float* %18
+  %20 = fadd float %17, %19
+  %21 = getelementptr inbounds float* %c, i64 3
+  store float %20, float* %21
+  ret void
+}
+
+; Check we properly reorder the below code so that it gets vectorized optimally-
+; a[0] = (b[0]+c[0])+d[0];
+; a[1] = d[1]+(b[1]+c[1]);
+; a[2] = (b[2]+c[2])+d[2];
+; a[3] = (b[3]+c[3])+d[3];
+
+; CHECK-LABEL: opcode_reorder
+; CHECK: load <4 x float>*
+; CHECK: fadd <4 x float>
+define void @opcode_reorder(float* noalias nocapture %a, float* noalias nocapture readonly %b, 
+                            float* noalias nocapture readonly %c,float* noalias nocapture readonly %d){
+  %1 = load float* %b
+  %2 = load float* %c
+  %3 = fadd float %1, %2
+  %4 = load float* %d
+  %5 = fadd float %3, %4
+  store float %5, float* %a
+  %6 = getelementptr inbounds float* %d, i64 1
+  %7 = load float* %6
+  %8 = getelementptr inbounds float* %b, i64 1
+  %9 = load float* %8
+  %10 = getelementptr inbounds float* %c, i64 1
+  %11 = load float* %10
+  %12 = fadd float %9, %11
+  %13 = fadd float %7, %12
+  %14 = getelementptr inbounds float* %a, i64 1
+  store float %13, float* %14
+  %15 = getelementptr inbounds float* %b, i64 2
+  %16 = load float* %15
+  %17 = getelementptr inbounds float* %c, i64 2
+  %18 = load float* %17
+  %19 = fadd float %16, %18
+  %20 = getelementptr inbounds float* %d, i64 2
+  %21 = load float* %20
+  %22 = fadd float %19, %21
+  %23 = getelementptr inbounds float* %a, i64 2
+  store float %22, float* %23
+  %24 = getelementptr inbounds float* %b, i64 3
+  %25 = load float* %24
+  %26 = getelementptr inbounds float* %c, i64 3
+  %27 = load float* %26
+  %28 = fadd float %25, %27
+  %29 = getelementptr inbounds float* %d, i64 3
+  %30 = load float* %29
+  %31 = fadd float %28, %30
+  %32 = getelementptr inbounds float* %a, i64 3
+  store float %31, float* %32
+  ret void
+}
