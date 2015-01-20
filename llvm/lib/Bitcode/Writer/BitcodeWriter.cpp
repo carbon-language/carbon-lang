@@ -762,10 +762,9 @@ static void WriteValueAsMetadata(const ValueAsMetadata *MD,
   Record.clear();
 }
 
-static void WriteMDNode(const MDNode *N,
-                        const ValueEnumerator &VE,
-                        BitstreamWriter &Stream,
-                        SmallVectorImpl<uint64_t> &Record) {
+static void WriteMDTuple(const MDTuple *N, const ValueEnumerator &VE,
+                         BitstreamWriter &Stream,
+                         SmallVectorImpl<uint64_t> &Record) {
   for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i) {
     Metadata *MD = N->getOperand(i);
     assert(!(MD && isa<LocalAsMetadata>(MD)) &&
@@ -844,7 +843,7 @@ static void WriteModuleMetadata(const Module *M,
       continue;
     }
     if (const MDNode *N = dyn_cast<MDNode>(MD)) {
-      WriteMDNode(N, VE, Stream, Record);
+      WriteMDTuple(cast<MDTuple>(N), VE, Stream, Record);
       continue;
     }
     if (const auto *MDC = dyn_cast<ConstantAsMetadata>(MD)) {
