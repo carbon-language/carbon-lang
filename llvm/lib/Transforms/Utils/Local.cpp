@@ -489,7 +489,7 @@ void llvm::RemovePredecessorAndSimplify(BasicBlock *BB, BasicBlock *Pred,
 /// between them, moving the instructions in the predecessor into DestBB and
 /// deleting the predecessor block.
 ///
-void llvm::MergeBasicBlockIntoOnlyPred(BasicBlock *DestBB, Pass *P) {
+void llvm::MergeBasicBlockIntoOnlyPred(BasicBlock *DestBB, DominatorTree *DT) {
   // If BB has single-entry PHI nodes, fold them.
   while (PHINode *PN = dyn_cast<PHINode>(DestBB->begin())) {
     Value *NewVal = PN->getIncomingValue(0);
@@ -525,14 +525,10 @@ void llvm::MergeBasicBlockIntoOnlyPred(BasicBlock *DestBB, Pass *P) {
   if (PredBB == &DestBB->getParent()->getEntryBlock())
     DestBB->moveAfter(PredBB);
 
-  if (P) {
-    if (DominatorTreeWrapperPass *DTWP =
-            P->getAnalysisIfAvailable<DominatorTreeWrapperPass>()) {
-      DominatorTree &DT = DTWP->getDomTree();
-      BasicBlock *PredBBIDom = DT.getNode(PredBB)->getIDom()->getBlock();
-      DT.changeImmediateDominator(DestBB, PredBBIDom);
-      DT.eraseNode(PredBB);
-    }
+  if (DT) {
+    BasicBlock *PredBBIDom = DT->getNode(PredBB)->getIDom()->getBlock();
+    DT->changeImmediateDominator(DestBB, PredBBIDom);
+    DT->eraseNode(PredBB);
   }
   // Nuke BB.
   PredBB->eraseFromParent();

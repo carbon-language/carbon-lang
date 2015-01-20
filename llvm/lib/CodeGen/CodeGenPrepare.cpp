@@ -342,7 +342,7 @@ bool CodeGenPrepare::EliminateFallThrough(Function &F) {
       // Remember if SinglePred was the entry block of the function.
       // If so, we will need to move BB back to the entry position.
       bool isEntry = SinglePred == &SinglePred->getParent()->getEntryBlock();
-      MergeBasicBlockIntoOnlyPred(BB, this);
+      MergeBasicBlockIntoOnlyPred(BB, DT);
 
       if (isEntry && BB != &BB->getParent()->getEntryBlock())
         BB->moveBefore(&BB->getParent()->getEntryBlock());
@@ -482,7 +482,7 @@ void CodeGenPrepare::EliminateMostlyEmptyBlock(BasicBlock *BB) {
       // Remember if SinglePred was the entry block of the function.  If so, we
       // will need to move BB back to the entry position.
       bool isEntry = SinglePred == &SinglePred->getParent()->getEntryBlock();
-      MergeBasicBlockIntoOnlyPred(DestBB, this);
+      MergeBasicBlockIntoOnlyPred(DestBB, DT);
 
       if (isEntry && BB != &BB->getParent()->getEntryBlock())
         BB->moveBefore(&BB->getParent()->getEntryBlock());

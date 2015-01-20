@@ -31,7 +31,6 @@ class DbgDeclareInst;
 class StoreInst;
 class LoadInst;
 class Value;
-class Pass;
 class PHINode;
 class AllocaInst;
 class AssumptionCache;
@@ -115,7 +114,7 @@ void RemovePredecessorAndSimplify(BasicBlock *BB, BasicBlock *Pred,
 /// between them, moving the instructions in the predecessor into BB.  This
 /// deletes the predecessor block.
 ///
-void MergeBasicBlockIntoOnlyPred(BasicBlock *BB, Pass *P = nullptr);
+void MergeBasicBlockIntoOnlyPred(BasicBlock *BB, DominatorTree *DT = nullptr);
 
 /// TryToSimplifyUncondBranchFromEmptyBlock - BB is known to contain an
 /// unconditional branch, and contains no instructions other than PHI nodes,
