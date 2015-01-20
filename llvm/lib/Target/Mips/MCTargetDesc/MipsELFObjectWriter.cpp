@@ -165,9 +165,6 @@ unsigned MipsELFObjectWriter::GetRelocType(const MCValue &Target,
   case Mips::fixup_MICROMIPS_PC7_S1:
     Type = ELF::R_MICROMIPS_PC7_S1;
     break;
-  case Mips::fixup_MICROMIPS_PC10_S1:
-    Type = ELF::R_MICROMIPS_PC10_S1;
-    break;
   case Mips::fixup_MICROMIPS_PC16_S1:
     Type = ELF::R_MICROMIPS_PC16_S1;
     break;
