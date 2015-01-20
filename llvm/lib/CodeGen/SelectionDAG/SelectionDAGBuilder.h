@@ -687,6 +687,8 @@ private:
                                CaseRecVector& WorkList,
                                const Value* SV,
                                MachineBasicBlock *SwitchBB);
+  void splitSwitchCase(CaseRec &CR, CaseItr Pivot, CaseRecVector &WorkList,
+                       const Value *SV, MachineBasicBlock *SwitchBB);
   bool handleBitTestsSwitchCase(CaseRec& CR,
                                 CaseRecVector& WorkList,
                                 const Value* SV,
