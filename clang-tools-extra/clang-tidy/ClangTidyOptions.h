@@ -95,7 +95,7 @@ public:
 
   /// \brief Returns options applying to a specific translation unit with the
   /// specified \p FileName.
-  virtual const ClangTidyOptions &getOptions(llvm::StringRef FileName) = 0;
+  virtual ClangTidyOptions getOptions(llvm::StringRef FileName) = 0;
 };
 
 /// \brief Implementation of the \c ClangTidyOptionsProvider interface, which
@@ -108,7 +108,7 @@ public:
   const ClangTidyGlobalOptions &getGlobalOptions() override {
     return GlobalOptions;
   }
-  const ClangTidyOptions &getOptions(llvm::StringRef /*FileName*/) override {
+  ClangTidyOptions getOptions(llvm::StringRef /*FileName*/) override {
     return DefaultOptions;
   }
 
@@ -187,7 +187,7 @@ public:
                       const ClangTidyOptions &OverrideOptions,
                       const ConfigFileHandlers &ConfigHandlers);
 
-  const ClangTidyOptions &getOptions(llvm::StringRef FileName) override;
+  ClangTidyOptions getOptions(llvm::StringRef FileName) override;
 
 private:
   /// \brief Try to read configuration files from \p Directory using registered
