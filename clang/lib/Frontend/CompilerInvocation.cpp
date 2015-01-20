@@ -523,6 +523,13 @@ static bool ParseCodeGenArgs(CodeGenOptions &Opts, ArgList &Args, InputKind IK,
     Opts.StackAlignment = StackAlignment;
   }
 
+  if (Arg *A = Args.getLastArg(OPT_mstack_probe_size)) {
+    StringRef Val = A->getValue();
+    unsigned StackProbeSize = Opts.StackProbeSize;
+    Val.getAsInteger(0, StackProbeSize);
+    Opts.StackProbeSize = StackProbeSize;
+  }
+
   if (Arg *A = Args.getLastArg(OPT_fobjc_dispatch_method_EQ)) {
     StringRef Name = A->getValue();
     unsigned Method = llvm::StringSwitch<unsigned>(Name)

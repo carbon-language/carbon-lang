@@ -62,6 +62,8 @@ def _SLASH_GR : CLFlag<"GR">, HelpText<"Enable emission of RTTI data">;
 def _SLASH_GR_ : CLFlag<"GR-">, HelpText<"Disable emission of RTTI data">;
 def _SLASH_GF_ : CLFlag<"GF-">, HelpText<"Disable string pooling">,
   Alias<fwritable_strings>;
+def _SLASH_Gs : CLJoined<"Gs">, HelpText<"Set stack probe size">,
+  Alias<mstack_probe_size>;
 def _SLASH_Gy : CLFlag<"Gy">, HelpText<"Put each function in its own section">,
   Alias<ffunction_sections>;
 def _SLASH_Gy_ : CLFlag<"Gy-">, HelpText<"Don't put each function in its own section">,
@@ -260,7 +262,6 @@ def _SLASH_Gm : CLFlag<"Gm">;
 def _SLASH_Gm_ : CLFlag<"Gm-">;
 def _SLASH_Gr : CLFlag<"Gr">;
 def _SLASH_GS : CLFlag<"GS">;
-def _SLASH_Gs : CLJoined<"Gs">;
 def _SLASH_GT : CLFlag<"GT">;
 def _SLASH_GX : CLFlag<"GX">;
 def _SLASH_Gv : CLFlag<"Gv">;

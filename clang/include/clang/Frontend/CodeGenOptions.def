@@ -138,6 +138,8 @@ CODEGENOPT(UseInitArray      , 1, 0) ///< Control whether to use .init_array or
                                      ///< .ctors.
 VALUE_CODEGENOPT(StackAlignment    , 32, 0) ///< Overrides default stack 
                                             ///< alignment, if not 0.
+VALUE_CODEGENOPT(StackProbeSize    , 32, 4096) ///< Overrides default stack
+                                               ///< probe size, even if 0.
 CODEGENOPT(DebugColumnInfo, 1, 0) ///< Whether or not to use column information
                                   ///< in debug info.
 
