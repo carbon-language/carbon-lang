@@ -22,6 +22,7 @@ class Configuration(object):
         self.obj_root = None
         self.cxx_library_root = None
         self.env = {}
+        self.use_target = False
         self.use_system_cxx_lib = False
         self.use_clang_verify = False
         self.long_tests = None
@@ -278,8 +279,8 @@ class Configuration(object):
         gcc_toolchain = self.get_lit_conf('gcc_toolchain')
         if gcc_toolchain:
             self.cxx.flags += ['-gcc-toolchain', gcc_toolchain]
-
-        self.cxx.flags += ['-target', self.config.target_triple]
+        if self.use_target:
+            self.cxx.flags += ['-target', self.config.target_triple]
 
     def configure_compile_flags_header_includes(self):
         self.cxx.compile_flags += ['-I' + self.libcxx_src_root + '/test/support']
@@ -444,9 +445,10 @@ class Configuration(object):
     def configure_triple(self):
         # Get or infer the target triple.
         self.config.target_triple = self.get_lit_conf('target_triple')
+        self.use_target = bool(self.config.target_triple)
         # If no target triple was given, try to infer it from the compiler
         # under test.
-        if not self.config.target_triple:
+        if not self.use_target:
             target_triple = self.cxx.getTriple()
             # Drop sub-major version components from the triple, because the
             # current XFAIL handling expects exact matches for feature checks.
