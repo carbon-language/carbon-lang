@@ -10,7 +10,7 @@ class CXXCompiler(object):
         self.link_flags = list(link_flags)
         self.use_ccache = use_ccache
         self.type = None
-        self.version = (None, None, None)
+        self.version = None
         self._initTypeAndVersion()
 
     def _initTypeAndVersion(self):
@@ -99,7 +99,7 @@ class CXXCompiler(object):
                                             cwd=cwd)
         if rc != 0:
             return None
-        parsed_macros = dict()
+        parsed_macros = {}
         lines = [l.strip() for l in out.split('\n') if l.strip()]
         for l in lines:
             assert l.startswith('#define ')

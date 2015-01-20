@@ -9,7 +9,7 @@ import lit.Test  # pylint: disable=import-error,no-name-in-module
 import lit.util  # pylint: disable=import-error,no-name-in-module
 
 from libcxx.test.format import LibcxxTestFormat
-from libcxx.test.compiler import CXXCompiler
+from libcxx.compiler import CXXCompiler
 
 
 class Configuration(object):
@@ -95,8 +95,9 @@ class Configuration(object):
                                   '(e.g., --param=cxx_under_test=clang++)')
         self.cxx = CXXCompiler(cxx)
         cxx_type = self.cxx.type
-        maj_v, min_v, _ = self.cxx.version
         if cxx_type is not None:
+            assert self.cxx.version is not None
+            maj_v, min_v, _ = self.cxx.version
             self.config.available_features.add(cxx_type)
             self.config.available_features.add('%s-%s.%s' % (
                 cxx_type, maj_v, min_v))
@@ -413,24 +414,25 @@ class Configuration(object):
             if sys.platform.startswith('linux'):
                 self.cxx.link_flags += ['-ldl']
             if san == 'Address':
-                self.cxx.compile_flags += ['-fsanitize=address']
+                self.cxx.flags += ['-fsanitize=address']
                 if llvm_symbolizer is not None:
                     self.env['ASAN_SYMBOLIZER_PATH'] = llvm_symbolizer
                 self.config.available_features.add('asan')
             elif san == 'Memory' or san == 'MemoryWithOrigins':
-                self.cxx.compile_flags += ['-fsanitize=memory']
+                self.cxx.flags += ['-fsanitize=memory']
                 if san == 'MemoryWithOrigins':
                     self.cxx.compile_flags += ['-fsanitize-memory-track-origins']
                 if llvm_symbolizer is not None:
                     self.env['MSAN_SYMBOLIZER_PATH'] = llvm_symbolizer
                 self.config.available_features.add('msan')
             elif san == 'Undefined':
-                self.cxx.compile_flags += ['-fsanitize=undefined',
-                                       '-fno-sanitize=vptr,function',
-                                       '-fno-sanitize-recover', '-O3']
+                self.cxx.flags += ['-fsanitize=undefined',
+                                   '-fno-sanitize=vptr,function',
+                                   '-fno-sanitize-recover']
+                self.cxx.compile_flags += ['-O3']
                 self.config.available_features.add('ubsan')
             elif san == 'Thread':
-                self.cxx.compile_flags += ['-fsanitize=thread']
+                self.cxx.flags += ['-fsanitize=thread']
                 self.config.available_features.add('tsan')
             else:
                 self.lit_config.fatal('unsupported value for '
