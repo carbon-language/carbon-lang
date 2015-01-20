@@ -65,7 +65,7 @@ FileSpec::ResolveUsername (llvm::SmallVectorImpl<char> &path)
     if (path.empty() || path[0] != '~')
         return;
     
-    llvm::StringRef path_str(path.data());
+    llvm::StringRef path_str(path.data(), path.size());
     size_t slash_pos = path_str.find_first_of("/", 1);
     if (slash_pos == 1 || path.size() == 1)
     {
