@@ -286,6 +286,9 @@ public:
     if ((_symbol->getType() == llvm::ELF::STT_COMMON) ||
         _symbol->st_shndx == llvm::ELF::SHN_COMMON) {
       return Alignment(llvm::Log2_64(_symbol->st_value));
+    } else if (_section->sh_addralign == 0) {
+      // sh_addralign of 0 means no alignment
+      return Alignment(0, _symbol->st_value);
     }
     return Alignment(llvm::Log2_64(_section->sh_addralign),
                      _symbol->st_value % _section->sh_addralign);
