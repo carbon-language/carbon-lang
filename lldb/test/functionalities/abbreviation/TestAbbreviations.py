@@ -34,7 +34,7 @@ class AbbreviationsTestCase(TestBase):
 
         # Only one matching command: execute it.
         self.expect("h",
-                    startstr = "The following is a list of built-in, permanent debugger commands:")
+                    startstr = "Debugger commands:")
 
         # Execute cleanup function during test tear down
         def cleanup():

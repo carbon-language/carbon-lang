@@ -16,18 +16,18 @@ class HelpCommandTestCase(TestBase):
     def test_simplehelp(self):
         """A simple test of 'help' command and its output."""
         self.expect("help",
-            startstr = 'The following is a list of built-in, permanent debugger commands')
+            startstr = 'Debugger commands:')
 
-        self.expect("help", matching=False,
+        self.expect("help -a", matching=False,
                     substrs = ['next'])
         
-        self.expect("help -a", matching=True,
+        self.expect("help", matching=True,
                     substrs = ['next'])
     
     def test_help_on_help(self):
         """Testing the help on the help facility."""
         self.expect("help help", matching=True,
-                    substrs = ['--show-aliases',
+                    substrs = ['--hide-aliases',
                                '--hide-user-commands'])
 
     def version_number_string(self):
@@ -97,7 +97,7 @@ class HelpCommandTestCase(TestBase):
             substrs = ['error: 0 is out of range, valid values must be between'])
         # self.runCmd("settings set term-width 0")
         self.expect("help",
-            startstr = 'The following is a list of built-in, permanent debugger commands')
+            startstr = 'Debugger commands:')
 
     def test_help_breakpoint_set(self):
         """Test that 'help breakpoint set' does not print out redundant lines of:

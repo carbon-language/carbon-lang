@@ -114,10 +114,10 @@ class AliasTestCase(TestBase):
         self.expect ("help -a run",
                      substrs = [ "'run' is an abbreviation for 'process launch -c /bin/sh --'" ])
 
-        self.expect ("help -a",
+        self.expect ("help",
                      substrs = [ 'run', 'process launch -c /bin/sh' ])
 
-        self.expect ("help", matching=False,
+        self.expect ("help -a", matching=False,
                      substrs = [ "'run'", 'process launch -c /bin/sh' ])
 
         self.expect ("run",
