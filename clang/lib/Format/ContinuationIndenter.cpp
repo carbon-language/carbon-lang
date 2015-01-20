@@ -1081,8 +1081,9 @@ bool ContinuationIndenter::nextIsMultilineString(const LineState &State) {
   if (Current.getNextNonComment() &&
       Current.getNextNonComment()->isStringLiteral())
     return true; // Implicit concatenation.
-  if (State.Column + Current.ColumnWidth + Current.UnbreakableTailLength >
-      Style.ColumnLimit)
+  if (Style.ColumnLimit != 0 &&
+      State.Column + Current.ColumnWidth + Current.UnbreakableTailLength >
+          Style.ColumnLimit)
     return true; // String will be split.
   return false;
 }

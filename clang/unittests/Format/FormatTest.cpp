@@ -4611,6 +4611,9 @@ TEST_F(FormatTest, AlwaysBreakBeforeMultilineStrings) {
             format("NSString *const kString = @\"aaaa\"\n"
                    "\"bbbb\";",
                    Break));
+
+  Break.ColumnLimit = 0;
+  verifyFormat("const char *hello = \"hello llvm\";", Break);
 }
 
 TEST_F(FormatTest, AlignsPipes) {
