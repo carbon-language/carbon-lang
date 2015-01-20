@@ -68,16 +68,20 @@ class FlagHandlerInclude : public FlagHandlerBase {
   }
 };
 
+void RegisterIncludeFlag(FlagParser *parser, CommonFlags *cf) {
+  FlagHandlerInclude *fh_include =
+      new (FlagParser::Alloc) FlagHandlerInclude(parser);  // NOLINT
+  parser->RegisterHandler("include", fh_include,
+                          "read more options from the given file");
+}
+
 void RegisterCommonFlags(FlagParser *parser, CommonFlags *cf) {
 #define COMMON_FLAG(Type, Name, DefaultValue, Description) \
   RegisterFlag(parser, #Name, Description, &cf->Name);
 #include "sanitizer_flags.inc"
 #undef COMMON_FLAG
 
-  FlagHandlerInclude *fh_include =
-      new (FlagParser::Alloc) FlagHandlerInclude(parser);  // NOLINT
-  parser->RegisterHandler("include", fh_include,
-                          "read more options from the given file");
+  RegisterIncludeFlag(parser, cf);
 }
 
 }  // namespace __sanitizer

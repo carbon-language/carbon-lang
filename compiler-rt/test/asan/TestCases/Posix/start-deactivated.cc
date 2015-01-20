@@ -6,7 +6,12 @@
 // RUN: %clangxx -O0 %s -c -o %t.o
 // RUN: %clangxx_asan -O0 %t.o %libdl -o %t
 // RUN: ASAN_OPTIONS=start_deactivated=1,allocator_may_return_null=0 \
-// RUN:   ASAN_ACTIVATION_OPTIONS=allocator_may_return_null=1 not %run %t 2>&1 | FileCheck %s
+// RUN:   ASAN_ACTIVATION_OPTIONS=allocator_may_return_null=1 not %run %t 2>&1 | FileCheck %s --check-prefix=CHECK
+// RUN: ASAN_OPTIONS=start_deactivated=1 \
+// RUN:   ASAN_ACTIVATION_OPTIONS=help=1 not %run %t 2>&1 | FileCheck %s --check-prefix=CHECK-HELP
+// RUN: ASAN_OPTIONS=start_deactivated=1,verbosity=1 \
+// RUN:   ASAN_ACTIVATION_OPTIONS=help=1,handle_segv=0 not %run %t 2>&1 | FileCheck %s --check-prefix=CHECK-UNSUPPORTED
+
 // XFAIL: arm-linux-gnueabi
 // XFAIL: armv7l-unknown-linux-gnueabihf
 
@@ -75,3 +80,13 @@ extern "C" void do_another_bad_thing() {
   printf("%hhx\n", p[105]);
 }
 #endif  // SHARED_LIB
+
+// help=1 in activation flags lists only flags are are supported at activation
+// CHECK-HELP: Available flags for {{.*}}Sanitizer:
+// CHECK-HELP-NOT: handle_segv
+// CHECK-HELP: max_redzone
+// CHECK-HELP-NOT: handle_segv
+
+// unsupported activation flags produce a warning
+// CHECK-UNSUPPORTED: WARNING: found 1 unrecognized
+// CHECK-UNSUPPORTED:   handle_segv
