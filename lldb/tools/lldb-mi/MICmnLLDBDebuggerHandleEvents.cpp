@@ -807,6 +807,9 @@ CMICmnLLDBDebuggerHandleEvents::HandleProcessEventStateStopped(bool &vwrbShouldB
         case lldb::eStopReasonThreadExiting:
             pEventType = "eStopReasonThreadExiting";
             break;
+        case lldb::eStopReasonInstrumentation:
+            pEventType = "eStopReasonInstrumentation";
+            break;
     }
 
     // ToDo: Remove when finished coding application
