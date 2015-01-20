@@ -31,7 +31,7 @@ void ExprEngine::VisitBinaryOperator(const BinaryOperator* B,
   ExplodedNodeSet Tmp2;
   getCheckerManager().runCheckersForPreStmt(CheckedSet, Pred, B, *this);
     
-  // With both the LHS and RHS evaluated, process the operation itself.    
+  // With both the LHS and RHS evaluated, process the operation itself.
   for (ExplodedNodeSet::iterator it=CheckedSet.begin(), ei=CheckedSet.end();
          it != ei; ++it) {
       
