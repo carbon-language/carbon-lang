@@ -1286,6 +1286,12 @@ raw_ostream &operator<<(raw_ostream &OS, FieldSeparator &FS) {
 }
 } // end namespace
 
+static void writeGenericDwarfNode(raw_ostream &, const GenericDwarfNode *,
+                                  TypePrinting *, SlotTracker *,
+                                  const Module *) {
+  llvm_unreachable("Unimplemented write");
+}
+
 static void writeMDLocation(raw_ostream &Out, const MDLocation *DL,
                             TypePrinting *TypePrinter, SlotTracker *Machine,
                             const Module *Context) {

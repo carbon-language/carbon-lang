@@ -179,25 +179,27 @@ protected:
       : RawOps(Ops), Hash(calculateHash(Ops)) {}
 
   template <class NodeTy>
-  MDNodeOpsKey(NodeTy *N)
-      : Ops(N->op_begin(), N->op_end()), Hash(N->getHash()) {}
+  MDNodeOpsKey(NodeTy *N, unsigned Offset = 0)
+      : Ops(N->op_begin() + Offset, N->op_end()), Hash(N->getHash()) {}
 
-  template <class NodeTy> bool compareOps(const NodeTy *RHS) const {
+  template <class NodeTy>
+  bool compareOps(const NodeTy *RHS, unsigned Offset = 0) const {
     if (getHash() != RHS->getHash())
       return false;
 
     assert((RawOps.empty() || Ops.empty()) && "Two sets of operands?");
-    return RawOps.empty() ? compareOps(Ops, RHS) : compareOps(RawOps, RHS);
+    return RawOps.empty() ? compareOps(Ops, RHS, Offset)
+                          : compareOps(RawOps, RHS, Offset);
   }
 
-  static unsigned calculateHash(MDNode *N);
+  static unsigned calculateHash(MDNode *N, unsigned Offset = 0);
 
 private:
   template <class T>
-  static bool compareOps(ArrayRef<T> Ops, const MDNode *RHS) {
-    if (Ops.size() != RHS->getNumOperands())
+  static bool compareOps(ArrayRef<T> Ops, const MDNode *RHS, unsigned Offset) {
+    if (Ops.size() != RHS->getNumOperands() - Offset)
       return false;
-    return std::equal(Ops.begin(), Ops.end(), RHS->op_begin());
+    return std::equal(Ops.begin(), Ops.end(), RHS->op_begin() + Offset);
   }
 
   static unsigned calculateHash(ArrayRef<Metadata *> Ops);
@@ -283,6 +285,48 @@ struct MDLocationInfo {
   }
 };
 
+/// \brief DenseMapInfo for GenericDwarfNode.
+struct GenericDwarfNodeInfo {
+  struct KeyTy : MDNodeOpsKey {
+    unsigned Tag;
+    MDString *Header;
+    KeyTy(unsigned Tag, MDString *Header, ArrayRef<Metadata *> DwarfOps)
+        : MDNodeOpsKey(DwarfOps), Tag(Tag), Header(Header) {}
+    KeyTy(GenericDwarfNode *N)
+        : MDNodeOpsKey(N, 1), Tag(N->getTag()), Header(N->getHeader()) {}
+
+    bool operator==(const GenericDwarfNode *RHS) const {
+      if (RHS == getEmptyKey() || RHS == getTombstoneKey())
+        return false;
+      return Tag == RHS->getTag() && Header == RHS->getHeader() &&
+             compareOps(RHS, 1);
+    }
+
+    static unsigned calculateHash(GenericDwarfNode *N) {
+      return MDNodeOpsKey::calculateHash(N, 1);
+    }
+  };
+  static inline GenericDwarfNode *getEmptyKey() {
+    return DenseMapInfo<GenericDwarfNode *>::getEmptyKey();
+  }
+  static inline GenericDwarfNode *getTombstoneKey() {
+    return DenseMapInfo<GenericDwarfNode *>::getTombstoneKey();
+  }
+  static unsigned getHashValue(const KeyTy &Key) {
+    return hash_combine(Key.getHash(), Key.Tag, Key.Header);
+  }
+  static unsigned getHashValue(const GenericDwarfNode *U) {
+    return hash_combine(U->getHash(), U->getTag(), U->getHeader());
+  }
+  static bool isEqual(const KeyTy &LHS, const GenericDwarfNode *RHS) {
+    return LHS == RHS;
+  }
+  static bool isEqual(const GenericDwarfNode *LHS,
+                      const GenericDwarfNode *RHS) {
+    return LHS == RHS;
+  }
+};
+
 class LLVMContextImpl {
 public:
   /// OwnedModules - The set of modules instantiated in this context, and which
@@ -315,6 +359,7 @@ public:
 
   DenseSet<MDTuple *, MDTupleInfo> MDTuples;
   DenseSet<MDLocation *, MDLocationInfo> MDLocations;
+  DenseSet<GenericDwarfNode *, GenericDwarfNodeInfo> GenericDwarfNodes;
 
   // MDNodes may be uniqued or not uniqued.  When they're not uniqued, they
   // aren't in the MDNodeSet, but they're still shared between objects, so no

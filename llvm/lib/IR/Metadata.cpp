@@ -397,11 +397,14 @@ void MDNode::operator delete(void *Mem) {
 }
 
 MDNode::MDNode(LLVMContext &Context, unsigned ID, StorageType Storage,
-               ArrayRef<Metadata *> MDs)
-    : Metadata(ID, Storage), NumOperands(MDs.size()), NumUnresolved(0),
-      Context(Context) {
-  for (unsigned I = 0, E = MDs.size(); I != E; ++I)
-    setOperand(I, MDs[I]);
+               ArrayRef<Metadata *> Ops1, ArrayRef<Metadata *> Ops2)
+    : Metadata(ID, Storage), NumOperands(Ops1.size() + Ops2.size()),
+      NumUnresolved(0), Context(Context) {
+  unsigned Op = 0;
+  for (Metadata *MD : Ops1)
+    setOperand(Op++, MD);
+  for (Metadata *MD : Ops2)
+    setOperand(Op++, MD);
 
   if (isDistinct())
     return;
@@ -527,6 +530,10 @@ void MDTuple::recalculateHash() {
   setHash(MDTupleInfo::KeyTy::calculateHash(this));
 }
 
+void GenericDwarfNode::recalculateHash() {
+  setHash(GenericDwarfNodeInfo::KeyTy::calculateHash(this));
+}
+
 void MDNode::dropAllReferences() {
   for (unsigned I = 0, E = NumOperands; I != E; ++I)
     setOperand(I, nullptr);
@@ -620,6 +627,9 @@ MDNode *MDNode::uniquify() {
     break;
   case MDTupleKind:
     cast<MDTuple>(this)->recalculateHash();
+    break;
+  case GenericDwarfNodeKind:
+    cast<GenericDwarfNode>(this)->recalculateHash();
     break;
   }
 
@@ -733,6 +743,29 @@ MDLocation *MDLocation::getImpl(LLVMContext &Context, unsigned Line,
                    Storage, Context.pImpl->MDLocations);
 }
 
+GenericDwarfNode *GenericDwarfNode::getImpl(LLVMContext &Context, unsigned Tag,
+                                            MDString *Header,
+                                            ArrayRef<Metadata *> DwarfOps,
+                                            StorageType Storage,
+                                            bool ShouldCreate) {
+  unsigned Hash = 0;
+  if (Storage == Uniqued) {
+    GenericDwarfNodeInfo::KeyTy Key(Tag, Header, DwarfOps);
+    if (auto *N = getUniqued(Context.pImpl->GenericDwarfNodes, Key))
+      return N;
+    if (!ShouldCreate)
+      return nullptr;
+    Hash = Key.getHash();
+  } else {
+    assert(ShouldCreate && "Expected non-uniqued nodes to always be created");
+  }
+
+  Metadata *PreOps[] = {Header};
+  return storeImpl(new (DwarfOps.size() + 1) GenericDwarfNode(
+                       Context, Storage, Hash, Tag, PreOps, DwarfOps),
+                   Storage, Context.pImpl->GenericDwarfNodes);
+}
+
 void MDNode::deleteTemporary(MDNode *N) {
   assert(N->isTemporary() && "Expected temporary node");
   N->deleteAsSubclass();
@@ -743,6 +776,8 @@ void MDNode::storeDistinctInContext() {
   Storage = Distinct;
   if (auto *T = dyn_cast<MDTuple>(this))
     T->setHash(0);
+  else if (auto *G = dyn_cast<GenericDwarfNode>(this))
+    G->setHash(0);
   getContext().pImpl->DistinctMDNodes.insert(this);
 }
 

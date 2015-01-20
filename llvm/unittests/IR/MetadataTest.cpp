@@ -561,6 +561,41 @@ TEST_F(MDLocationTest, getTemporary) {
   EXPECT_FALSE(L->isResolved());
 }
 
+typedef MetadataTest GenericDwarfNodeTest;
+
+TEST_F(GenericDwarfNodeTest, get) {
+  auto *Header = MDString::get(Context, "header");
+  auto *Empty = MDNode::get(Context, None);
+  Metadata *Ops1[] = {Empty};
+  auto *N = GenericDwarfNode::get(Context, 15, Header, Ops1);
+  EXPECT_EQ(15u, N->getTag());
+  EXPECT_EQ(2u, N->getNumOperands());
+  EXPECT_EQ(Header, N->getHeader());
+  EXPECT_EQ(Header, N->getOperand(0));
+  EXPECT_EQ(1u, N->getNumDwarfOperands());
+  EXPECT_EQ(Empty, N->getDwarfOperand(0));
+  EXPECT_EQ(Empty, N->getOperand(1));
+  ASSERT_TRUE(N->isUniqued());
+
+  EXPECT_EQ(N, GenericDwarfNode::get(Context, 15, Header, Ops1));
+
+  N->replaceOperandWith(1, nullptr);
+  EXPECT_EQ(15u, N->getTag());
+  EXPECT_EQ(Header, N->getHeader());
+  EXPECT_EQ(nullptr, N->getDwarfOperand(0));
+  ASSERT_TRUE(N->isUniqued());
+
+  Metadata *Ops2[] = {nullptr};
+  EXPECT_EQ(N, GenericDwarfNode::get(Context, 15, Header, Ops2));
+
+  N->replaceDwarfOperandWith(0, Empty);
+  EXPECT_EQ(15u, N->getTag());
+  EXPECT_EQ(Header, N->getHeader());
+  EXPECT_EQ(Empty, N->getDwarfOperand(0));
+  ASSERT_TRUE(N->isUniqued());
+  EXPECT_EQ(N, GenericDwarfNode::get(Context, 15, Header, Ops1));
+}
+
 typedef MetadataTest MetadataAsValueTest;
 
 TEST_F(MetadataAsValueTest, MDNode) {

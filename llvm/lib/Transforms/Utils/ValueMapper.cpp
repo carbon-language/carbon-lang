@@ -192,6 +192,14 @@ static TempMDLocation cloneMDLocation(const MDLocation *Node) {
                                   Node->getInlinedAt());
 }
 
+static TempGenericDwarfNode
+cloneGenericDwarfNode(const GenericDwarfNode *Node) {
+  SmallVector<Metadata *, 4> DwarfOps;
+  DwarfOps.append(Node->dwarf_op_begin(), Node->dwarf_op_end());
+  return GenericDwarfNode::getTemporary(Node->getContext(), Node->getTag(),
+                                        Node->getHeader(), DwarfOps);
+}
+
 static TempMDNode cloneMDNode(const MDNode *Node) {
   switch (Node->getMetadataID()) {
   default:

@@ -180,11 +180,11 @@ namespace llvm {
 static const Metadata *get_hashable_data(const MDOperand &X) { return X.get(); }
 }
 
-unsigned MDNodeOpsKey::calculateHash(MDNode *N) {
-  unsigned Hash = hash_combine_range(N->op_begin(), N->op_end());
+unsigned MDNodeOpsKey::calculateHash(MDNode *N, unsigned Offset) {
+  unsigned Hash = hash_combine_range(N->op_begin() + Offset, N->op_end());
 #ifndef NDEBUG
   {
-    SmallVector<Metadata *, 8> MDs(N->op_begin(), N->op_end());
+    SmallVector<Metadata *, 8> MDs(N->op_begin() + Offset, N->op_end());
     unsigned RawHash = calculateHash(MDs);
     assert(Hash == RawHash &&
            "Expected hash of MDOperand to equal hash of Metadata*");
