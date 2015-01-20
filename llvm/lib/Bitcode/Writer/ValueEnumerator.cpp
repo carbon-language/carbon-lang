@@ -410,12 +410,6 @@ unsigned ValueEnumerator::getValueID(const Value *V) const {
   return I->second-1;
 }
 
-unsigned ValueEnumerator::getMetadataID(const Metadata *MD) const {
-  auto I = MDValueMap.find(MD);
-  assert(I != MDValueMap.end() && "Metadata not in slotcalculator!");
-  return I->second - 1;
-}
-
 void ValueEnumerator::dump() const {
   print(dbgs(), ValueMap, "Default");
   dbgs() << '\n';

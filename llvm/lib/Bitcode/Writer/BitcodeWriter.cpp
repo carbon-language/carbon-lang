@@ -768,12 +768,9 @@ static void WriteMDNode(const MDNode *N,
                         SmallVectorImpl<uint64_t> &Record) {
   for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i) {
     Metadata *MD = N->getOperand(i);
-    if (!MD) {
-      Record.push_back(0);
-      continue;
-    }
-    assert(!isa<LocalAsMetadata>(MD) && "Unexpected function-local metadata");
-    Record.push_back(VE.getMetadataID(MD) + 1);
+    assert(!(MD && isa<LocalAsMetadata>(MD)) &&
+           "Unexpected function-local metadata");
+    Record.push_back(VE.getMetadataOrNullID(MD));
   }
   Stream.EmitRecord(N->isDistinct() ? bitc::METADATA_DISTINCT_NODE
                                     : bitc::METADATA_NODE,
@@ -789,12 +786,7 @@ static void WriteMDLocation(const MDLocation *N, const ValueEnumerator &VE,
   Record.push_back(N->getLine());
   Record.push_back(N->getColumn());
   Record.push_back(VE.getMetadataID(N->getScope()));
-
-  // Always emit the inlined-at location, even though it's optional.
-  if (Metadata *InlinedAt = N->getInlinedAt())
-    Record.push_back(VE.getMetadataID(InlinedAt) + 1);
-  else
-    Record.push_back(0);
+  Record.push_back(VE.getMetadataOrNullID(N->getInlinedAt()));
 
   Stream.EmitRecord(bitc::METADATA_LOCATION, Record, Abbrev);
   Record.clear();
@@ -1754,8 +1746,8 @@ static void WriteFunction(const Function &F, ValueEnumerator &VE,
 
         Vals.push_back(DL.getLine());
         Vals.push_back(DL.getCol());
-        Vals.push_back(Scope ? VE.getMetadataID(Scope) + 1 : 0);
-        Vals.push_back(IA ? VE.getMetadataID(IA) + 1 : 0);
+        Vals.push_back(VE.getMetadataOrNullID(Scope));
+        Vals.push_back(VE.getMetadataOrNullID(IA));
         Stream.EmitRecord(bitc::FUNC_CODE_DEBUG_LOC, Vals);
         Vals.clear();
 
