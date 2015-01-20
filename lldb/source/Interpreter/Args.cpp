@@ -165,7 +165,7 @@ Args::SetCommandString (const char *command)
     if (command && command[0])
     {
         static const char *k_space_separators = " \t";
-        static const char *k_space_separators_with_slash_and_quotes = " \t \\'\"";
+        static const char *k_escapable_characters = " \t\\'\"";
         const char *arg_end = nullptr;
         const char *arg_pos;
         for (arg_pos = command;
@@ -201,7 +201,7 @@ Args::SetCommandString (const char *command)
 
             do
             {
-                arg_end = ::strcspn (arg_pos, k_space_separators_with_slash_and_quotes) + arg_pos;
+                arg_end = ::strcspn (arg_pos, k_escapable_characters) + arg_pos;
 
                 switch (arg_end[0])
                 {
@@ -215,7 +215,6 @@ Args::SetCommandString (const char *command)
                         arg.append (arg_piece_start);
                     arg_complete = true;
                     break;
-                    
                 case '\\':
                     // Backslash character
                     switch (arg_end[1])
@@ -227,22 +226,21 @@ Args::SetCommandString (const char *command)
                             break;
 
                         default:
-                            if (quote_char == '\0')
+                            // Only consider this two-character sequence an escape sequence if we're unquoted and
+                            // the character after the backslash is a whitelisted escapable character.  Otherwise
+                            // leave the character sequence untouched.
+                            if (quote_char == '\0' && (nullptr != strchr(k_escapable_characters, arg_end[1])))
                             {
                                 arg.append (arg_piece_start, arg_end - arg_piece_start);
-                                if (arg_end[1] != '\0')
-                                {
-                                    arg.append (arg_end + 1, 1);
-                                    arg_pos = arg_end + 2;
-                                    arg_piece_start = arg_pos;
-                                }
+                                arg.append (arg_end + 1, 1);
+                                arg_pos = arg_end + 2;
+                                arg_piece_start = arg_pos;
                             }
                             else
                                 arg_pos = arg_end + 2;
                             break;
                     }
                     break;
-                
                 case '"':
                 case '\'':
                 case '`':
