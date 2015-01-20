@@ -51,6 +51,8 @@ static unsigned ClangCallConvToLLVMCallConv(CallingConv CC) {
   case CC_X86Pascal: return llvm::CallingConv::C;
   // TODO: Add support for __vectorcall to LLVM.
   case CC_X86VectorCall: return llvm::CallingConv::X86_VectorCall;
+  case CC_SpirFunction: return llvm::CallingConv::SPIR_FUNC;
+  case CC_SpirKernel: return llvm::CallingConv::SPIR_KERNEL;
   }
 }
 

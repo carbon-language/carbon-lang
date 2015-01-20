@@ -6346,6 +6346,15 @@ namespace {
     BuiltinVaListKind getBuiltinVaListKind() const override {
       return TargetInfo::VoidPtrBuiltinVaList;
     }
+
+    CallingConvCheckResult checkCallingConvention(CallingConv CC) const override {
+      return (CC == CC_SpirFunction ||
+              CC == CC_SpirKernel) ? CCCR_OK : CCCR_Warning;
+    }
+
+    CallingConv getDefaultCallingConv(CallingConvMethodType MT) const override {
+      return CC_SpirFunction;
+    }
   };
 
 
