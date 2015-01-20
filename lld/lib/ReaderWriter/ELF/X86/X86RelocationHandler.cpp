@@ -52,7 +52,7 @@ std::error_code X86TargetRelocationHandler::applyRelocation(
     relocPC32(location, relocVAddress, targetVAddress, ref.addend());
     break;
   default:
-    unhandledReferenceType(*atom._atom, ref);
+    return make_unhandled_reloc_error();
   }
 
   return std::error_code();

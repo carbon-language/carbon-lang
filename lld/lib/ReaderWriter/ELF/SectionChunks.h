@@ -28,6 +28,7 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FileOutputBuffer.h"
 #include <memory>
+#include <mutex>
 
 namespace lld {
 namespace elf {
@@ -269,6 +270,31 @@ protected:
   int32_t _contentPermissions;
   bool _isLoadedInMemory;
   std::vector<lld::AtomLayout *> _atoms;
+  mutable std::mutex _outputMutex;
+
+  void printError(const std::string &errorStr, const AtomLayout &atom,
+                  const Reference &ref) const {
+    StringRef kindValStr;
+    if (!this->_context.registry().referenceKindToString(ref.kindNamespace(),
+                                                         ref.kindArch(),
+                                                         ref.kindValue(),
+                                                         kindValStr)) {
+      kindValStr = "unknown";
+    }
+
+    std::string errStr = (Twine(errorStr) + " in file " +
+                          atom._atom->file().path() +
+                          ": reference from " + atom._atom->name() +
+                          "+" + Twine(ref.offsetInAtom()) +
+                          " to " + ref.target()->name() +
+                          "+" + Twine(ref.addend()) +
+                          " of type " + Twine(ref.kindValue()) +
+                          " (" + kindValStr + ")\n").str();
+
+    // Take the lock to prevent output getting interleaved between threads
+    std::lock_guard<std::mutex> lock(_outputMutex);
+    llvm::errs() << errStr;
+  }
 };
 
 /// Align the offset to the required modulus defined by the atom alignment
@@ -377,6 +403,7 @@ template <class ELFT>
 void AtomSection<ELFT>::write(ELFWriter *writer, TargetLayout<ELFT> &layout,
                               llvm::FileOutputBuffer &buffer) {
   uint8_t *chunkBuffer = buffer.getBufferStart();
+  bool success = true;
   parallel_for_each(_atoms.begin(), _atoms.end(), [&](lld::AtomLayout * ai) {
     DEBUG_WITH_TYPE("Section",
                     llvm::dbgs() << "Writing atom: " << ai->_atom->name()
@@ -393,9 +420,16 @@ void AtomSection<ELFT>::write(ELFWriter *writer, TargetLayout<ELFT> &layout,
     std::memcpy(atomContent, content.data(), contentSize);
     const TargetRelocationHandler &relHandler =
         this->_context.template getTargetHandler<ELFT>().getRelocationHandler();
-    for (const auto ref : *definedAtom)
-      relHandler.applyRelocation(*writer, buffer, *ai, *ref);
+    for (const auto ref : *definedAtom) {
+      if (std::error_code ec = relHandler.applyRelocation(*writer, buffer,
+                                                          *ai, *ref)) {
+        printError(ec.message(), *ai, *ref);
+        success = false;
+      }
+    }
   });
+  if (!success)
+    llvm::report_fatal_error("relocating output");
 }
 
 /// \brief A OutputSection represents a set of sections grouped by the same

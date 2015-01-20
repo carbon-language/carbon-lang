@@ -123,7 +123,7 @@ std::error_code X86_64TargetRelocationHandler::applyRelocation(
   case R_X86_64_DTPOFF64:
     break;
   default:
-    unhandledReferenceType(*atom._atom, ref);
+    return make_unhandled_reloc_error();
   }
 
   return std::error_code();

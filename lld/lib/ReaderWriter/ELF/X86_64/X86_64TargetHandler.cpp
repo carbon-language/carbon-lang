@@ -20,7 +20,7 @@ X86_64TargetHandler::X86_64TargetHandler(X86_64LinkingContext &context)
     : _context(context),
       _x86_64TargetLayout(new X86_64TargetLayout<X86_64ELFType>(context)),
       _x86_64RelocationHandler(new X86_64TargetRelocationHandler(
-          *_x86_64TargetLayout.get(), context)) {}
+          *_x86_64TargetLayout.get())) {}
 
 void X86_64TargetHandler::registerRelocationNames(Registry &registry) {
   registry.addKindTable(Reference::KindNamespace::ELF,

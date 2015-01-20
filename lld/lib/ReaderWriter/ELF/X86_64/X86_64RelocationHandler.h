@@ -20,10 +20,8 @@ template <class ELFT> class X86_64TargetLayout;
 
 class X86_64TargetRelocationHandler final : public TargetRelocationHandler {
 public:
-  X86_64TargetRelocationHandler(X86_64TargetLayout<X86_64ELFType> &layout,
-                                ELFLinkingContext &targetInfo)
-      : TargetRelocationHandler(targetInfo), _tlsSize(0),
-        _x86_64Layout(layout) {}
+  X86_64TargetRelocationHandler(X86_64TargetLayout<X86_64ELFType> &layout)
+      : _tlsSize(0), _x86_64Layout(layout) {}
 
   std::error_code applyRelocation(ELFWriter &, llvm::FileOutputBuffer &,
                                   const lld::AtomLayout &,

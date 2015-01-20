@@ -341,7 +341,7 @@ std::error_code MipsTargetRelocationHandler::applyRelocation(
     // Do nothing.
     break;
   default:
-    unhandledReferenceType(*atom._atom, ref);
+    return make_unhandled_reloc_error();
   }
 
   if (shuffle)

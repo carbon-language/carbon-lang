@@ -20,9 +20,6 @@ template <class ELFT> class AArch64TargetLayout;
 
 class AArch64TargetRelocationHandler final : public TargetRelocationHandler {
 public:
-  AArch64TargetRelocationHandler(ELFLinkingContext &targetInfo)
-      : TargetRelocationHandler(targetInfo) {}
-
   std::error_code applyRelocation(ELFWriter &, llvm::FileOutputBuffer &,
                                   const lld::AtomLayout &,
                                   const Reference &) const override;

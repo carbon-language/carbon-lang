@@ -21,8 +21,7 @@ typedef llvm::object::ELFType<llvm::support::little, 2, false> Mips32ElELFType;
 MipsTargetHandler::MipsTargetHandler(MipsLinkingContext &ctx)
     : _ctx(ctx), _runtimeFile(new MipsRuntimeFile<Mips32ElELFType>(ctx)),
       _targetLayout(new MipsTargetLayout<Mips32ElELFType>(ctx)),
-      _relocationHandler(new MipsTargetRelocationHandler(*_targetLayout, ctx)) {
-}
+      _relocationHandler(new MipsTargetRelocationHandler(*_targetLayout)) {}
 
 std::unique_ptr<Writer> MipsTargetHandler::getWriter() {
   switch (_ctx.getOutputELFType()) {

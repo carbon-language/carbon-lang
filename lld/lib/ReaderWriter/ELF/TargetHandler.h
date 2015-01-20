@@ -43,32 +43,12 @@ template <class ELFT> class TargetLayout;
 class TargetRelocationHandler {
 public:
   /// Constructor
-  TargetRelocationHandler(ELFLinkingContext &targetInfo) : _ctx(targetInfo) {}
+  TargetRelocationHandler() {}
   virtual ~TargetRelocationHandler() {}
 
   virtual std::error_code applyRelocation(ELFWriter &, llvm::FileOutputBuffer &,
                                           const lld::AtomLayout &,
                                           const Reference &) const = 0;
-
-protected:
-  void unhandledReferenceType(const Atom &atom, const Reference &ref) const {
-    llvm::errs() << "Unhandled reference type in file " << atom.file().path()
-                 << ": reference from " << atom.name() << "+"
-                 << ref.offsetInAtom() << " to " << ref.target()->name() << "+"
-                 << ref.addend() << " of type ";
-
-    StringRef kindValStr;
-    if (!_ctx.registry().referenceKindToString(
-            ref.kindNamespace(), ref.kindArch(), ref.kindValue(), kindValStr)) {
-      kindValStr = "unknown";
-    }
-
-    llvm::errs() << ref.kindValue() << " (" << kindValStr << ")\n";
-    llvm::report_fatal_error("unhandled reference type");
-  }
-
-private:
-  ELFLinkingContext &_ctx;
 };
 
 /// \brief TargetHandler contains all the information responsible to handle a
@@ -91,6 +71,15 @@ public:
   /// How does the target deal with writing ELF output.
   virtual std::unique_ptr<Writer> getWriter() = 0;
 };
+
+inline std::error_code make_unhandled_reloc_error() {
+  return make_dynamic_error_code(Twine("Unhandled reference type"));
+}
+
+inline std::error_code make_out_of_range_reloc_error() {
+  return make_dynamic_error_code(Twine("Relocation out of range"));
+}
+
 } // end namespace elf
 } // end namespace lld
 

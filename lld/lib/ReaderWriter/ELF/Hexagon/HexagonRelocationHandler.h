@@ -20,9 +20,8 @@ class HexagonTargetHandler;
 
 class HexagonTargetRelocationHandler final : public TargetRelocationHandler {
 public:
-  HexagonTargetRelocationHandler(HexagonTargetLayout<HexagonELFType> &layout,
-                                 ELFLinkingContext &targetInfo)
-      : TargetRelocationHandler(targetInfo), _hexagonTargetLayout(layout) {}
+  HexagonTargetRelocationHandler(HexagonTargetLayout<HexagonELFType> &layout)
+      : _hexagonTargetLayout(layout) {}
 
   std::error_code applyRelocation(ELFWriter &, llvm::FileOutputBuffer &,
                                   const lld::AtomLayout &,

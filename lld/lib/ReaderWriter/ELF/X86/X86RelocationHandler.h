@@ -18,9 +18,6 @@ typedef llvm::object::ELFType<llvm::support::little, 2, false> X86ELFType;
 
 class X86TargetRelocationHandler final : public TargetRelocationHandler {
 public:
-  X86TargetRelocationHandler(ELFLinkingContext &targetInfo)
-      : TargetRelocationHandler(targetInfo) {}
-
   std::error_code applyRelocation(ELFWriter &, llvm::FileOutputBuffer &,
                                   const lld::AtomLayout &,
                                   const Reference &) const override;

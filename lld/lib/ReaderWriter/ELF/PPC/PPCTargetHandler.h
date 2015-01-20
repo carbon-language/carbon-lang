@@ -25,9 +25,6 @@ public:
 
 class PPCTargetRelocationHandler final : public TargetRelocationHandler {
 public:
-  PPCTargetRelocationHandler(ELFLinkingContext &context)
-      : TargetRelocationHandler(context) {}
-
   std::error_code applyRelocation(ELFWriter &, llvm::FileOutputBuffer &,
                                   const lld::AtomLayout &,
                                   const Reference &) const override;

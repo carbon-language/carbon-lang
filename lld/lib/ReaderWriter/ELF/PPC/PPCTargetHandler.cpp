@@ -52,7 +52,7 @@ std::error_code PPCTargetRelocationHandler::applyRelocation(
     break;
 
   default:
-    unhandledReferenceType(*atom._atom, ref);
+    return make_unhandled_reloc_error();
   }
 
   return std::error_code();
@@ -61,7 +61,7 @@ std::error_code PPCTargetRelocationHandler::applyRelocation(
 PPCTargetHandler::PPCTargetHandler(PPCLinkingContext &context)
     : _ppcLinkingContext(context),
       _ppcTargetLayout(new PPCTargetLayout<PPCELFType>(context)),
-      _ppcRelocationHandler(new PPCTargetRelocationHandler(context)) {}
+      _ppcRelocationHandler(new PPCTargetRelocationHandler()) {}
 
 void PPCTargetHandler::registerRelocationNames(Registry &registry) {
   registry.addKindTable(Reference::KindNamespace::ELF,

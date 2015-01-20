@@ -23,7 +23,7 @@ HexagonTargetHandler::HexagonTargetHandler(HexagonLinkingContext &context)
       _hexagonRuntimeFile(new HexagonRuntimeFile<HexagonELFType>(context)),
       _hexagonTargetLayout(new HexagonTargetLayout<HexagonELFType>(context)),
       _hexagonRelocationHandler(new HexagonTargetRelocationHandler(
-          *_hexagonTargetLayout.get(), context)) {}
+          *_hexagonTargetLayout.get())) {}
 
 std::unique_ptr<Writer> HexagonTargetHandler::getWriter() {
   switch (_hexagonLinkingContext.getOutputELFType()) {
