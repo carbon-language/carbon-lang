@@ -764,7 +764,7 @@ static void WriteValueAsMetadata(const ValueAsMetadata *MD,
 
 static void WriteMDTuple(const MDTuple *N, const ValueEnumerator &VE,
                          BitstreamWriter &Stream,
-                         SmallVectorImpl<uint64_t> &Record) {
+                         SmallVectorImpl<uint64_t> &Record, unsigned Abbrev) {
   for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i) {
     Metadata *MD = N->getOperand(i);
     assert(!(MD && isa<LocalAsMetadata>(MD)) &&
@@ -773,7 +773,7 @@ static void WriteMDTuple(const MDTuple *N, const ValueEnumerator &VE,
   }
   Stream.EmitRecord(N->isDistinct() ? bitc::METADATA_DISTINCT_NODE
                                     : bitc::METADATA_NODE,
-                    Record);
+                    Record, Abbrev);
   Record.clear();
 }
 
@@ -789,6 +789,12 @@ static void WriteMDLocation(const MDLocation *N, const ValueEnumerator &VE,
 
   Stream.EmitRecord(bitc::METADATA_LOCATION, Record, Abbrev);
   Record.clear();
+}
+
+static void WriteGenericDwarfNode(const GenericDwarfNode *,
+                                  const ValueEnumerator &, BitstreamWriter &,
+                                  SmallVectorImpl<uint64_t> &, unsigned) {
+  llvm_unreachable("unimplemented");
 }
 
 static void WriteModuleMetadata(const Module *M,
@@ -810,7 +816,7 @@ static void WriteModuleMetadata(const Module *M,
     MDSAbbrev = Stream.EmitAbbrev(Abbv);
   }
 
-  unsigned LocAbbrev = 0;
+  unsigned MDLocationAbbrev = 0;
   if (VE.hasMDLocation()) {
     // Abbrev for METADATA_LOCATION.
     //
@@ -823,7 +829,7 @@ static void WriteModuleMetadata(const Module *M,
     Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 8));
     Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 6));
     Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 6));
-    LocAbbrev = Stream.EmitAbbrev(Abbv);
+    MDLocationAbbrev = Stream.EmitAbbrev(Abbv);
   }
 
   unsigned NameAbbrev = 0;
@@ -836,15 +842,20 @@ static void WriteModuleMetadata(const Module *M,
     NameAbbrev = Stream.EmitAbbrev(Abbv);
   }
 
+  unsigned MDTupleAbbrev = 0;
+  unsigned GenericDwarfNodeAbbrev = 0;
   SmallVector<uint64_t, 64> Record;
   for (const Metadata *MD : MDs) {
-    if (const MDLocation *Loc = dyn_cast<MDLocation>(MD)) {
-      WriteMDLocation(Loc, VE, Stream, Record, LocAbbrev);
-      continue;
-    }
     if (const MDNode *N = dyn_cast<MDNode>(MD)) {
-      WriteMDTuple(cast<MDTuple>(N), VE, Stream, Record);
-      continue;
+      switch (N->getMetadataID()) {
+      default:
+        llvm_unreachable("Invalid MDNode subclass");
+#define HANDLE_MDNODE_LEAF(CLASS)                                              \
+  case Metadata::CLASS##Kind:                                                  \
+    Write##CLASS(cast<CLASS>(N), VE, Stream, Record, CLASS##Abbrev);           \
+    continue;
+#include "llvm/IR/Metadata.def"
+      }
     }
     if (const auto *MDC = dyn_cast<ConstantAsMetadata>(MD)) {
       WriteValueAsMetadata(MDC, VE, Stream, Record);
