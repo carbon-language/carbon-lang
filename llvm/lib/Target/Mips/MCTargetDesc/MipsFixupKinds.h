@@ -161,6 +161,9 @@ namespace Mips {
     // resulting in - R_MICROMIPS_PC7_S1
     fixup_MICROMIPS_PC7_S1,
 
+    // resulting in - R_MICROMIPS_PC10_S1
+    fixup_MICROMIPS_PC10_S1,
+
     // resulting in - R_MICROMIPS_PC16_S1
     fixup_MICROMIPS_PC16_S1,
 

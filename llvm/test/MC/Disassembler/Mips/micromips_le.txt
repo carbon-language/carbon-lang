@@ -474,3 +474,6 @@
 
 # CHECK: bnez16 $6, 20
 0x0a 0xaf
+
+# CHECK: b16 132
+0x42 0xcc

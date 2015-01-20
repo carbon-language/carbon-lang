@@ -171,6 +171,8 @@ class MipsAsmParser : public MCTargetAsmParser {
 
   bool expandLoadAddressReg(MCInst &Inst, SMLoc IDLoc,
                             SmallVectorImpl<MCInst> &Instructions);
+  bool expandUncondBranchMMPseudo(MCInst &Inst, SMLoc IDLoc,
+                                  SmallVectorImpl<MCInst> &Instructions);
 
   void expandLoadAddressSym(MCInst &Inst, SMLoc IDLoc,
                             SmallVectorImpl<MCInst> &Instructions);
@@ -1414,6 +1416,7 @@ bool MipsAsmParser::needsExpansion(MCInst &Inst) {
   case Mips::LoadAddr32Imm:
   case Mips::LoadAddr32Reg:
   case Mips::LoadImm64Reg:
+  case Mips::B_MM_Pseudo:
     return true;
   default:
     return false;
@@ -1436,6 +1439,8 @@ bool MipsAsmParser::expandInstruction(MCInst &Inst, SMLoc IDLoc,
     return expandLoadAddressImm(Inst, IDLoc, Instructions);
   case Mips::LoadAddr32Reg:
     return expandLoadAddressReg(Inst, IDLoc, Instructions);
+  case Mips::B_MM_Pseudo:
+    return expandUncondBranchMMPseudo(Inst, IDLoc, Instructions);
   }
 }
 
@@ -1719,6 +1724,51 @@ MipsAsmParser::expandLoadAddressSym(MCInst &Inst, SMLoc IDLoc,
     createShiftOr<false>(MCOperand::CreateExpr(LoExpr), RegNo, SMLoc(),
                          Instructions);
   }
+}
+
+bool MipsAsmParser::
+expandUncondBranchMMPseudo(MCInst &Inst, SMLoc IDLoc,
+                           SmallVectorImpl<MCInst> &Instructions) {
+  const MCInstrDesc &MCID = getInstDesc(Inst.getOpcode());
+
+  assert(MCID.getNumOperands() == 1 && "unexpected number of operands");
+
+  MCOperand Offset = Inst.getOperand(0);
+  if (Offset.isExpr()) {
+    Inst.clear();
+    Inst.setOpcode(Mips::BEQ_MM);
+    Inst.addOperand(MCOperand::CreateReg(Mips::ZERO));
+    Inst.addOperand(MCOperand::CreateReg(Mips::ZERO));
+    Inst.addOperand(MCOperand::CreateExpr(Offset.getExpr()));
+  } else {
+    assert(Offset.isImm() && "expected immediate operand kind");
+    if (isIntN(11, Offset.getImm())) {
+      // If offset fits into 11 bits then this instruction becomes microMIPS
+      // 16-bit unconditional branch instruction.
+      Inst.setOpcode(Mips::B16_MM);
+    } else {
+      if (!isIntN(17, Offset.getImm()))
+        Error(IDLoc, "branch target out of range");
+      if (OffsetToAlignment(Offset.getImm(), 1LL << 1))
+        Error(IDLoc, "branch to misaligned address");
+      Inst.clear();
+      Inst.setOpcode(Mips::BEQ_MM);
+      Inst.addOperand(MCOperand::CreateReg(Mips::ZERO));
+      Inst.addOperand(MCOperand::CreateReg(Mips::ZERO));
+      Inst.addOperand(MCOperand::CreateImm(Offset.getImm()));
+    }
+  }
+  Instructions.push_back(Inst);
+
+  if (AssemblerOptions.back()->isReorder()) {
+    // If .set reorder is active, emit a NOP after the branch instruction.
+    MCInst NopInst;
+    NopInst.setOpcode(Mips::MOVE16_MM);
+    NopInst.addOperand(MCOperand::CreateReg(Mips::ZERO));
+    NopInst.addOperand(MCOperand::CreateReg(Mips::ZERO));
+    Instructions.push_back(NopInst);
+  }
+  return false;
 }
 
 void MipsAsmParser::expandMemInst(MCInst &Inst, SMLoc IDLoc,
