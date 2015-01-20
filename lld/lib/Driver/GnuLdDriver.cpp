@@ -591,7 +591,7 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
         ctx->getNodes().push_back(llvm::make_unique<FileNode>(std::move(file)));
         break;
       }
-      std::string realpath = pathOrErr.get();
+      StringRef realpath = pathOrErr.get();
 
       bool isScript =
           (!path.endswith(".objtxt") && isLinkerScript(realpath, diagnostics));
