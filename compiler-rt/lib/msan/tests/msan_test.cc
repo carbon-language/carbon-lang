@@ -78,10 +78,12 @@
 # define FILE_TO_READ "/bin/cat"
 # define DIR_TO_READ "/bin"
 # define SUBFILE_TO_READ "cat"
+# define SYMLINK_TO_READ "/usr/bin/tar"
 #else
 # define FILE_TO_READ "/proc/self/stat"
 # define DIR_TO_READ "/proc/self"
 # define SUBFILE_TO_READ "stat"
+# define SYMLINK_TO_READ "/proc/self/exe"
 #endif
 
 static const size_t kPageSize = 4096;
@@ -668,7 +670,7 @@ TEST(MemorySanitizer, DISABLED_ioctl) {
 
 TEST(MemorySanitizer, readlink) {
   char *x = new char[1000];
-  readlink("/proc/self/exe", x, 1000);
+  readlink(SYMLINK_TO_READ, x, 1000);
   EXPECT_NOT_POISONED(x[0]);
   delete [] x;
 }
