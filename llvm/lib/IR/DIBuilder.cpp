@@ -25,15 +25,24 @@ using namespace llvm::dwarf;
 
 namespace {
 class HeaderBuilder {
+  /// \brief Whether there are any fields yet.
+  ///
+  /// Note that this is not equivalent to \c Chars.empty(), since \a concat()
+  /// may have been called already with an empty string.
+  bool IsEmpty;
   SmallVector<char, 256> Chars;
 
 public:
-  explicit HeaderBuilder(Twine T) { T.toVector(Chars); }
-  HeaderBuilder(const HeaderBuilder &X) : Chars(X.Chars) {}
-  HeaderBuilder(HeaderBuilder &&X) : Chars(std::move(X.Chars)) {}
+  HeaderBuilder() : IsEmpty(true) {}
+  HeaderBuilder(const HeaderBuilder &X) : IsEmpty(X.IsEmpty), Chars(X.Chars) {}
+  HeaderBuilder(HeaderBuilder &&X)
+      : IsEmpty(X.IsEmpty), Chars(std::move(X.Chars)) {}
 
   template <class Twineable> HeaderBuilder &concat(Twineable &&X) {
-    Chars.push_back(0);
+    if (IsEmpty)
+      IsEmpty = false;
+    else
+      Chars.push_back(0);
     Twine(X).toVector(Chars);
     return *this;
   }
@@ -43,7 +52,7 @@ public:
   }
 
   static HeaderBuilder get(unsigned Tag) {
-    return HeaderBuilder("0x" + Twine::utohexstr(Tag));
+    return HeaderBuilder().concat("0x" + Twine::utohexstr(Tag));
   }
 };
 }
@@ -739,8 +748,10 @@ static HeaderBuilder setTypeFlagsInHeader(StringRef Header,
     Flags = 0;
   Flags |= FlagsToSet;
 
-  return HeaderBuilder(Twine(I.getPrefix())).concat(Flags).concat(
-      I.getSuffix());
+  return HeaderBuilder()
+      .concat(I.getPrefix())
+      .concat(Flags)
+      .concat(I.getSuffix());
 }
 
 static DIType createTypeWithFlags(LLVMContext &Context, DIType Ty,
