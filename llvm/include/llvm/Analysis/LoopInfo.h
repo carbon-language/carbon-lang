@@ -502,6 +502,24 @@ public:
   LoopInfoBase() { }
   ~LoopInfoBase() { releaseMemory(); }
 
+  LoopInfoBase(LoopInfoBase &&Arg)
+      : BBMap(std::move(Arg.BBMap)),
+        TopLevelLoops(std::move(Arg.TopLevelLoops)) {
+    // We have to clear the arguments top level loops as we've taken ownership.
+    Arg.TopLevelLoops.clear();
+  }
+  LoopInfoBase &operator=(LoopInfoBase &&RHS) {
+    if (&RHS != this) {
+      BBMap = std::move(RHS.BBMap);
+
+      for (auto *L : TopLevelLoops)
+        delete L;
+      TopLevelLoops = std::move(RHS.TopLevelLoops);
+      RHS.TopLevelLoops.clear();
+    }
+    return *this;
+  }
+
   void releaseMemory() {
     BBMap.clear();
 
@@ -634,6 +652,12 @@ class LoopInfo : public LoopInfoBase<BasicBlock, Loop> {
   LoopInfo(const LoopInfo &) LLVM_DELETED_FUNCTION;
 public:
   LoopInfo() {}
+
+  LoopInfo(LoopInfo &&Arg) : BaseT(std::move(static_cast<BaseT &>(Arg))) {}
+  LoopInfo &operator=(LoopInfo &&RHS) {
+    BaseT::operator=(std::move(static_cast<BaseT &>(RHS)));
+    return *this;
+  }
 
   // Most of the public interface is provided via LoopInfoBase.
 
