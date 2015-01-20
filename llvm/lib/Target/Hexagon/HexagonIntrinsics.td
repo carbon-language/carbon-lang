@@ -37,6 +37,10 @@ class T_RR_pat <InstHexagon MI, Intrinsic IntID>
   : Pat <(IntID I32:$Rs, I32:$Rt),
          (MI I32:$Rs, I32:$Rt)>;
 
+class T_PP_pat <InstHexagon MI, Intrinsic IntID>
+  : Pat <(IntID I64:$Rs, I64:$Rt),
+         (MI DoubleRegs:$Rs, DoubleRegs:$Rt)>;
+
 class T_QII_pat <InstHexagon MI, Intrinsic IntID, PatFrag Imm1, PatFrag Imm2>
   : Pat <(IntID (i32 PredRegs:$Ps), Imm1:$Is, Imm2:$It),
          (MI PredRegs:$Ps, Imm1:$Is, Imm2:$It)>;
@@ -313,6 +317,21 @@ def : T_R_pat<A2_sxth, int_hexagon_A2_sxth>;
 def : T_R_pat<A2_sxtb, int_hexagon_A2_sxtb>;
 def : T_R_pat<A2_zxth, int_hexagon_A2_zxth>;
 def : T_R_pat<A2_zxtb, int_hexagon_A2_zxtb>;
+
+/********************************************************************
+*            ALU64/ALU                                              *
+*********************************************************************/
+def: T_RR_pat<A2_addsat,   int_hexagon_A2_addsat>;
+def: T_RR_pat<A2_subsat,   int_hexagon_A2_subsat>;
+def: T_PP_pat<A2_addp,     int_hexagon_A2_addp>;
+def: T_PP_pat<A2_subp,     int_hexagon_A2_subp>;
+
+def: T_PP_pat<A2_andp,     int_hexagon_A2_andp>;
+def: T_PP_pat<A2_orp,      int_hexagon_A2_orp>;
+def: T_PP_pat<A2_xorp,     int_hexagon_A2_xorp>;
+
+def: T_PP_pat<S2_parityp,  int_hexagon_S2_parityp>;
+def: T_RR_pat<S2_packhl,   int_hexagon_S2_packhl>;
 
 //
 // ALU 32 types.
