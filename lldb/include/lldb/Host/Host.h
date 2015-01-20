@@ -246,9 +246,6 @@ public:
     static const lldb_private::UnixSignalsSP&
     GetUnixSignals ();
 
-    static lldb::pid_t
-    LaunchApplication (const FileSpec &app_file_spec);
-
     static Error
     LaunchProcess (ProcessLaunchInfo &launch_info);
 

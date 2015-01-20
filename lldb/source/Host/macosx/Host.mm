@@ -128,49 +128,6 @@ Host::ResolveExecutableInBundle (FileSpec &file)
   return false;
 }
 
-lldb::pid_t
-Host::LaunchApplication (const FileSpec &app_file_spec)
-{
-#if defined (__arm__) || defined(__arm64__) || defined(__aarch64__)
-    return LLDB_INVALID_PROCESS_ID;
-#else
-    char app_path[PATH_MAX];
-    app_file_spec.GetPath(app_path, sizeof(app_path));
-
-    LSApplicationParameters app_params;
-    ::memset (&app_params, 0, sizeof (app_params));
-    app_params.flags = kLSLaunchDefaults | 
-                       kLSLaunchDontAddToRecents | 
-                       kLSLaunchNewInstance;
-    
-    
-    FSRef app_fsref;
-    CFCString app_cfstr (app_path, kCFStringEncodingUTF8);
-    
-    OSStatus error = ::FSPathMakeRef ((const UInt8 *)app_path, &app_fsref, NULL);
-    
-    // If we found the app, then store away the name so we don't have to re-look it up.
-    if (error != noErr)
-        return LLDB_INVALID_PROCESS_ID;
-    
-    app_params.application = &app_fsref;
-
-    ProcessSerialNumber psn;
-
-    error = ::LSOpenApplication (&app_params, &psn);
-
-    if (error != noErr)
-        return LLDB_INVALID_PROCESS_ID;
-
-    ::pid_t pid = LLDB_INVALID_PROCESS_ID;
-    error = ::GetProcessPID(&psn, &pid);
-    if (error != noErr)
-        return LLDB_INVALID_PROCESS_ID;
-    return pid;
-#endif
-}
-
-
 static void *
 AcceptPIDFromInferior (void *arg)
 {

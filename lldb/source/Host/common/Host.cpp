@@ -1052,12 +1052,6 @@ Host::SetCrashDescription (const char *description)
 {
 }
 
-lldb::pid_t
-Host::LaunchApplication (const FileSpec &app_file_spec)
-{
-    return LLDB_INVALID_PROCESS_ID;
-}
-
 #endif
 
 #if !defined (__linux__) && !defined (__FreeBSD__) && !defined (__NetBSD__)
