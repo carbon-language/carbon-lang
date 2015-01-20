@@ -24,6 +24,7 @@ class MiProgramArgsTestCase(TestBase):
 
     @unittest2.skip("lldb-mi can't pass params to app.")
     @lldbmi_test
+    @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
     def test_lldbmi_paramargs(self):
         """Test that 'lldb-mi --interpreter' can pass arguments to the app."""
         import pexpect

@@ -16,6 +16,7 @@ class RunHooksThenSteppingsBench(BenchBase):
             self.count = 50
 
     @benchmarks_test
+    @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
     def test_lldb_runhooks_then_steppings(self):
         """Test lldb steppings on a large executable."""
         print

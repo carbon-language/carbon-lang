@@ -23,6 +23,7 @@ class MiLaunchTestCase(TestBase):
             pass
 
     @lldbmi_test
+    @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
     def test_lldbmi_exe(self):
         """Test that 'lldb-mi --interpreter' works for -file-exec-and-symbols exe."""
         import pexpect
@@ -62,6 +63,7 @@ class MiLaunchTestCase(TestBase):
                 print from_child
 
     @lldbmi_test
+    @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
     def test_lldbmi_abspathexe(self):
         """Test that 'lldb-mi --interpreter' works for -file-exec-and-symbols fullpath/exe."""
         import pexpect
@@ -102,6 +104,7 @@ class MiLaunchTestCase(TestBase):
                 print from_child
 
     @lldbmi_test
+    @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
     def test_lldbmi_relpathexe(self):
         """Test that 'lldb-mi --interpreter' works for -file-exec-and-symbols relpath/exe."""
         import pexpect
@@ -142,6 +145,7 @@ class MiLaunchTestCase(TestBase):
                 print from_child
 
     @lldbmi_test
+    @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
     def test_lldbmi_badpathexe(self):
         """Test that 'lldb-mi --interpreter' works for -file-exec-and-symbols badpath/exe."""
         import pexpect

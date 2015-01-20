@@ -23,6 +23,7 @@ class MiBreakpointTestCase(TestBase):
             pass
 
     @lldbmi_test
+    @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
     def test_lldbmi_pendbreakonsym(self):
         """Test that 'lldb-mi --interpreter' works for pending symbol breakpoints."""
         import pexpect
@@ -71,6 +72,7 @@ class MiBreakpointTestCase(TestBase):
                 substrs = ["breakpoint-hit"])
 
     @lldbmi_test
+    @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
     def test_lldbmi_pendbreakonsrc(self):
         """Test that 'lldb-mi --interpreter' works for pending source breakpoints."""
         import pexpect
@@ -122,6 +124,7 @@ class MiBreakpointTestCase(TestBase):
                 substrs = ["breakpoint-hit"])
 
     @lldbmi_test
+    @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
     def test_lldbmi_breakpoints(self):
         """Test that 'lldb-mi --interpreter' works for breakpoints."""
         import pexpect

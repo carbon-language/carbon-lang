@@ -12,6 +12,7 @@ class ConnectRemoteTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
+    @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
     def test_connect_remote(self):
         """Test "process connect connect:://localhost:[port]"."""
 

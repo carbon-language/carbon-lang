@@ -23,6 +23,7 @@ class MiSyntaxTestCase(TestBase):
             pass
 
     @lldbmi_test
+    @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
     def test_lldbmi_tokens(self):
         """Test that 'lldb-mi --interpreter' echos command tokens."""
         import pexpect

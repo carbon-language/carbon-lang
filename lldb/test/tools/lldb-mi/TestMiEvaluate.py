@@ -23,6 +23,7 @@ class MiEvaluateTestCase(TestBase):
             pass
 
     @lldbmi_test
+    @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
     def test_lldbmi_eval(self):
         """Test that 'lldb-mi --interpreter' works for evaluating."""
         import pexpect

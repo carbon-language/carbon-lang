@@ -22,6 +22,7 @@ class StopHookForMultipleThreadsTestCase(TestBase):
     @dwarf_test
     @expectedFailureFreeBSD("llvm.org/pr15037")
     @expectedFailureLinux("llvm.org/pr15037") # stop hooks sometimes fail to fire on Linux
+    @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
     def test_stop_hook_multiple_threads_with_dwarf(self):
         """Test that lldb stop-hook works for multiple threads."""
         self.buildDwarf(dictionary=self.d)

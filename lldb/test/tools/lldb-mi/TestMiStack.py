@@ -23,6 +23,7 @@ class MiStackTestCase(TestBase):
             pass
 
     @lldbmi_test
+    @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
     def test_lldbmi_stackargs(self):
         """Test that 'lldb-mi --interpreter' can shows arguments."""
         import pexpect
@@ -69,6 +70,7 @@ class MiStackTestCase(TestBase):
                 print from_child
 
     @lldbmi_test
+    @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
     def test_lldbmi_locals(self):
         """Test that 'lldb-mi --interpreter' can shows local variables."""
         import pexpect

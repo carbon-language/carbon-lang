@@ -5,7 +5,10 @@ Test that the lldb driver's batch mode works correctly.
 import os, time
 import unittest2
 import lldb
-import pexpect
+try:
+    import pexpect
+except:
+    pexpect = None
 from lldbtest import *
 
 class DriverBatchModeTest (TestBase):
@@ -22,6 +25,7 @@ class DriverBatchModeTest (TestBase):
         self.batch_mode ()
 
     @unittest2.expectedFailure("<rdar://problem/18684124>, lldb doesn't reliably print the prompt when run under pexpect")
+    @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
     @dwarf_test
     def test_driver_batch_mode_with_dwarf(self):
         """Test that the lldb driver's batch mode works correctly."""

@@ -25,6 +25,7 @@ class FrameVariableResponseBench(BenchBase):
             self.count = 20
 
     @benchmarks_test
+    @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
     def test_startup_delay(self):
         """Test response time for the 'frame variable' command."""
         print

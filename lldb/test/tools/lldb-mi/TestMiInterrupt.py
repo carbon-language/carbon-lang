@@ -23,6 +23,7 @@ class MiInterruptTestCase(TestBase):
             pass
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
     @lldbmi_test
     def test_lldbmi_interrupt(self):
         """Test that 'lldb-mi --interpreter' interrupt and resume a looping app."""

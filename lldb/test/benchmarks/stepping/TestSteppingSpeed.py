@@ -28,6 +28,7 @@ class SteppingSpeedBench(BenchBase):
         #print "self.break_spec=%s" % self.break_spec
 
     @benchmarks_test
+    @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
     def test_run_lldb_steppings(self):
         """Test lldb steppings on a large executable."""
         print

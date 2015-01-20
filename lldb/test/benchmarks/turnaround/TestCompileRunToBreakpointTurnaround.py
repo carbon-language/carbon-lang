@@ -22,6 +22,7 @@ class CompileRunToBreakpointBench(BenchBase):
         self.gdb_avg = None
 
     @benchmarks_test
+    @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
     def test_run_lldb_then_gdb(self):
         """Benchmark turnaround time with lldb vs. gdb."""
         print
