@@ -410,3 +410,11 @@ __attribute__((objc_root_class))
   return [super init];
 }
 @end
+
+@interface ExtensionForMissingInterface() // expected-error{{cannot find interface declaration}}
+- (instancetype)init NS_DESIGNATED_INITIALIZER;
+@end
+
+@interface CategoryForMissingInterface(Cat) // expected-error{{cannot find interface declaration}}
+- (instancetype)init NS_DESIGNATED_INITIALIZER; // expected-error{{only applies to init methods of interface or class extension declarations}}
+@end

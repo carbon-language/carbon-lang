@@ -3783,6 +3783,10 @@ static void handleObjCDesignatedInitializer(Sema &S, Decl *D,
     IFace = CatDecl->getClassInterface();
   else
     IFace = cast<ObjCInterfaceDecl>(D->getDeclContext());
+
+  if (!IFace)
+    return;
+
   IFace->setHasDesignatedInitializers();
   D->addAttr(::new (S.Context)
                   ObjCDesignatedInitializerAttr(Attr.getRange(), S.Context,
@@ -5059,7 +5063,8 @@ static bool isDeclDeprecated(Decl *D) {
       return true;
     // A category implicitly has the availability of the interface.
     if (const ObjCCategoryDecl *CatD = dyn_cast<ObjCCategoryDecl>(D))
-      return CatD->getClassInterface()->isDeprecated();
+      if (const ObjCInterfaceDecl *Interface = CatD->getClassInterface())
+        return Interface->isDeprecated();
   } while ((D = cast_or_null<Decl>(D->getDeclContext())));
   return false;
 }
@@ -5070,7 +5075,8 @@ static bool isDeclUnavailable(Decl *D) {
       return true;
     // A category implicitly has the availability of the interface.
     if (const ObjCCategoryDecl *CatD = dyn_cast<ObjCCategoryDecl>(D))
-      return CatD->getClassInterface()->isUnavailable();
+      if (const ObjCInterfaceDecl *Interface = CatD->getClassInterface())
+        return Interface->isUnavailable();
   } while ((D = cast_or_null<Decl>(D->getDeclContext())));
   return false;
 }

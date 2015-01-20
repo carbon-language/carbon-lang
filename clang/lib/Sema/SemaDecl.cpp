@@ -13979,7 +13979,10 @@ Decl *Sema::getObjCDeclContext() const {
 }
 
 AvailabilityResult Sema::getCurContextAvailability() const {
-  const Decl *D = cast<Decl>(getCurObjCLexicalContext());
+  const Decl *D = cast_or_null<Decl>(getCurObjCLexicalContext());
+  if (!D)
+    return AR_Available;
+
   // If we are within an Objective-C method, we should consult
   // both the availability of the method as well as the
   // enclosing class.  If the class is (say) deprecated,
