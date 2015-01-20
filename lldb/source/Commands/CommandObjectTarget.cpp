@@ -427,7 +427,7 @@ protected:
         }
         else
         {
-            result.AppendErrorWithFormat("'%s' takes exactly one executable path argument, or use the --core-file option.\n", m_cmd_name.c_str());
+            result.AppendErrorWithFormat("'%s' takes exactly one executable path argument, or use the --core option.\n", m_cmd_name.c_str());
             result.SetStatus (eReturnStatusFailed);
         }
         return result.Succeeded();
