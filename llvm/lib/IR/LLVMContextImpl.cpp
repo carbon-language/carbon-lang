@@ -78,10 +78,10 @@ LLVMContextImpl::~LLVMContextImpl() {
   // unnecessary RAUW when nodes are still unresolved.
   for (auto *I : DistinctMDNodes)
     I->dropAllReferences();
-  for (auto *I : MDTuples)
+#define HANDLE_MDNODE_LEAF(CLASS)                                              \
+  for (auto *I : CLASS##s)                                                     \
     I->dropAllReferences();
-  for (auto *I : MDLocations)
-    I->dropAllReferences();
+#include "llvm/IR/Metadata.def"
 
   // Also drop references that come from the Value bridges.
   for (auto &Pair : ValuesAsMetadata)
@@ -92,10 +92,10 @@ LLVMContextImpl::~LLVMContextImpl() {
   // Destroy MDNodes.
   for (MDNode *I : DistinctMDNodes)
     I->deleteAsSubclass();
-  for (MDTuple *I : MDTuples)
+#define HANDLE_MDNODE_LEAF(CLASS)                                              \
+  for (CLASS *I : CLASS##s)                                                    \
     delete I;
-  for (MDLocation *I : MDLocations)
-    delete I;
+#include "llvm/IR/Metadata.def"
 
   // Free the constants.  This is important to do here to ensure that they are
   // freed before the LeakDetector is torn down.
