@@ -53,6 +53,7 @@ static struct AsanDeactivatedFlags {
     f.poison_heap = poison_heap;
     cf.coverage = coverage;
     cf.coverage_dir = coverage_dir;
+    cf.verbosity = Verbosity();
     cf.help = false; // this is activation-specific help
 
     // Check if activation flags need to be overriden.
@@ -65,7 +66,9 @@ static struct AsanDeactivatedFlags {
     GetExtraActivationFlags(buf, sizeof(buf));
     parser.ParseString(buf);
 
-    if (common_flags()->verbosity) ReportUnrecognizedFlags();
+    SetVerbosity(cf.verbosity);
+
+    if (Verbosity()) ReportUnrecognizedFlags();
 
     if (cf.help) parser.PrintFlagDescriptions();
 
@@ -130,7 +133,7 @@ void AsanActivate() {
   ReInitializeAllocator(asan_deactivated_flags.allocator_options);
 
   asan_is_deactivated = false;
-  if (common_flags()->verbosity) {
+  if (Verbosity()) {
     Report("Activated with flags:\n");
     asan_deactivated_flags.Print();
   }

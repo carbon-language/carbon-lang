@@ -255,7 +255,7 @@ void ReportUMRInsideAddressRange(const char *what, const void *start, uptr size,
   Printf("%sUninitialized bytes in %s%s%s at offset %zu inside [%p, %zu)%s\n",
          d.Warning(), d.Name(), what, d.Warning(), offset, start, size,
          d.End());
-  if (__sanitizer::common_flags()->verbosity > 0)
+  if (__sanitizer::Verbosity())
     DescribeMemoryRange(start, size);
 }
 

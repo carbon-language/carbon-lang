@@ -75,7 +75,9 @@ static void InitializeFlags(bool standalone) {
   const char *options = GetEnv("LSAN_OPTIONS");
   parser.ParseString(options);
 
-  if (common_flags()->verbosity) ReportUnrecognizedFlags();
+  SetVerbosity(common_flags()->verbosity);
+
+  if (Verbosity()) ReportUnrecognizedFlags();
 
   if (!help_before && common_flags()->help)
     parser.PrintFlagDescriptions();

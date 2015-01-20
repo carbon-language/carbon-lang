@@ -11,6 +11,12 @@
 // RUN:   ASAN_ACTIVATION_OPTIONS=help=1 not %run %t 2>&1 | FileCheck %s --check-prefix=CHECK-HELP
 // RUN: ASAN_OPTIONS=start_deactivated=1,verbosity=1 \
 // RUN:   ASAN_ACTIVATION_OPTIONS=help=1,handle_segv=0 not %run %t 2>&1 | FileCheck %s --check-prefix=CHECK-UNSUPPORTED
+// RUN: ASAN_OPTIONS=start_deactivated=1 \
+// RUN:   ASAN_ACTIVATION_OPTIONS=help=1,handle_segv=0 not %run %t 2>&1 | FileCheck %s --check-prefix=CHECK-UNSUPPORTED-V0
+
+// Check that verbosity=1 in activation flags affects reporting of unrecognized activation flags.
+// RUN: ASAN_OPTIONS=start_deactivated=1 \
+// RUN:   ASAN_ACTIVATION_OPTIONS=help=1,handle_segv=0,verbosity=1 not %run %t 2>&1 | FileCheck %s --check-prefix=CHECK-UNSUPPORTED
 
 // XFAIL: arm-linux-gnueabi
 // XFAIL: armv7l-unknown-linux-gnueabihf
@@ -87,6 +93,9 @@ extern "C" void do_another_bad_thing() {
 // CHECK-HELP: max_redzone
 // CHECK-HELP-NOT: handle_segv
 
-// unsupported activation flags produce a warning
+// unsupported activation flags produce a warning ...
 // CHECK-UNSUPPORTED: WARNING: found 1 unrecognized
 // CHECK-UNSUPPORTED:   handle_segv
+
+// ... but not at verbosity=0
+// CHECK-UNSUPPORTED-V0-NOT: WARNING: found {{.*}} unrecognized

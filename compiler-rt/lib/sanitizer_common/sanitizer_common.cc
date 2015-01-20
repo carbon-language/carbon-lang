@@ -21,6 +21,8 @@ namespace __sanitizer {
 
 const char *SanitizerToolName = "SanitizerTool";
 
+atomic_uint32_t current_verbosity;
+
 uptr GetPageSizeCached() {
   static uptr PageSize;
   if (!PageSize)

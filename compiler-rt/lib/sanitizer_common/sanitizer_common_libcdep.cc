@@ -75,7 +75,7 @@ void BackgroundThread(void *arg) {
   while (true) {
     SleepForMillis(100);
     uptr current_rss_mb = GetRSS() >> 20;
-    if (common_flags()->verbosity) {
+    if (Verbosity()) {
       // If RSS has grown 10% since last time, print some information.
       if (prev_reported_rss * 11 / 10 < current_rss_mb) {
         Printf("%s: RSS: %zdMb\n", SanitizerToolName, current_rss_mb);

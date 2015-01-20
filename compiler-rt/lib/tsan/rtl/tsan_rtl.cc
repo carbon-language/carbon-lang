@@ -365,8 +365,7 @@ int Finalize(ThreadState *thr) {
   ctx->report_mtx.Unlock();
 
 #ifndef SANITIZER_GO
-  if (common_flags()->verbosity)
-    AllocatorPrintStats();
+  if (Verbosity()) AllocatorPrintStats();
 #endif
 
   ThreadFinalize(thr);

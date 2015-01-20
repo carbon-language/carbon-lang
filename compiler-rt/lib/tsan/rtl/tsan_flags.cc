@@ -80,7 +80,9 @@ void InitializeFlags(Flags *f, const char *env) {
     f->report_signal_unsafe = false;
   }
 
-  if (common_flags()->verbosity) ReportUnrecognizedFlags();
+  SetVerbosity(common_flags()->verbosity);
+
+  if (Verbosity()) ReportUnrecognizedFlags();
 
   if (common_flags()->help) parser.PrintFlagDescriptions();
 

@@ -41,6 +41,14 @@ const uptr kMaxThreadStackSize = 1 << 30;  // 1Gb
 
 extern const char *SanitizerToolName;  // Can be changed by the tool.
 
+extern atomic_uint32_t current_verbosity;
+INLINE void SetVerbosity(int verbosity) {
+  atomic_store(&current_verbosity, verbosity, memory_order_relaxed);
+}
+INLINE int Verbosity() {
+  return atomic_load(&current_verbosity, memory_order_relaxed);
+}
+
 uptr GetPageSize();
 uptr GetPageSizeCached();
 uptr GetMmapGranularity();
@@ -136,11 +144,11 @@ void Report(const char *format, ...);
 void SetPrintfAndReportCallback(void (*callback)(const char *));
 #define VReport(level, ...)                                              \
   do {                                                                   \
-    if ((uptr)common_flags()->verbosity >= (level)) Report(__VA_ARGS__); \
+    if ((uptr)Verbosity() >= (level)) Report(__VA_ARGS__); \
   } while (0)
 #define VPrintf(level, ...)                                              \
   do {                                                                   \
-    if ((uptr)common_flags()->verbosity >= (level)) Printf(__VA_ARGS__); \
+    if ((uptr)Verbosity() >= (level)) Printf(__VA_ARGS__); \
   } while (0)
 
 // Can be used to prevent mixing error reports from different sanitizers.

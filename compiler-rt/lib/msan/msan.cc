@@ -157,7 +157,9 @@ static void InitializeFlags(Flags *f, const char *options) {
 
   parser.ParseString(options);
 
-  if (common_flags()->verbosity) ReportUnrecognizedFlags();
+  SetVerbosity(common_flags()->verbosity);
+
+  if (Verbosity()) ReportUnrecognizedFlags();
 
   if (common_flags()->help) parser.PrintFlagDescriptions();
 

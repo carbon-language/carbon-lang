@@ -74,10 +74,10 @@ void FlushUnneededASanShadowMemory(uptr p, uptr size) {
 
 void AsanPoisonOrUnpoisonIntraObjectRedzone(uptr ptr, uptr size, bool poison) {
   uptr end = ptr + size;
-  if (common_flags()->verbosity) {
+  if (Verbosity()) {
     Printf("__asan_%spoison_intra_object_redzone [%p,%p) %zd\n",
            poison ? "" : "un", ptr, end, size);
-    if (common_flags()->verbosity >= 2)
+    if (Verbosity() >= 2)
       PRINT_CURRENT_STACK();
   }
   CHECK(size);

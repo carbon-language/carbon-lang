@@ -85,6 +85,7 @@ void InitializeFlags(Flags *f, const char *env) {
   RegisterFlag(&parser, "second_deadlock_stack", "", &f->second_deadlock_stack);
   RegisterCommonFlags(&parser);
   parser.ParseString(env);
+  SetVerbosity(common_flags()->verbosity);
 }
 
 void Initialize() {

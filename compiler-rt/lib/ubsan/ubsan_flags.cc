@@ -66,6 +66,7 @@ void InitializeFlags(bool standalone) {
   parser.ParseString(MaybeCallUbsanDefaultOptions());
   // Override from environment variable.
   parser.ParseString(GetEnv("UBSAN_OPTIONS"));
+  SetVerbosity(common_flags()->verbosity);
 }
 
 }  // namespace __ubsan

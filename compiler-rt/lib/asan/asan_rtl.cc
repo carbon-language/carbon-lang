@@ -353,8 +353,7 @@ static void AsanInitInternal() {
   }
 #endif
 
-  if (common_flags()->verbosity)
-    PrintAddressSpaceLayout();
+  if (Verbosity()) PrintAddressSpaceLayout();
 
   DisableCoreDumperIfNecessary();
 

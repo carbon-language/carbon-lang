@@ -313,7 +313,7 @@ asan_block_context_t *alloc_asan_context(void *ctxt, dispatch_function_t func,
                                   dispatch_function_t func) {                 \
     GET_STACK_TRACE_THREAD;                                                   \
     asan_block_context_t *asan_ctxt = alloc_asan_context(ctxt, func, &stack); \
-    if (common_flags()->verbosity >= 2) {                                     \
+    if (Verbosity() >= 2) {                                     \
       Report(#dispatch_x_f "(): context: %p, pthread_self: %p\n",             \
              asan_ctxt, pthread_self());                                      \
       PRINT_CURRENT_STACK();                                                  \
@@ -331,7 +331,7 @@ INTERCEPTOR(void, dispatch_after_f, dispatch_time_t when,
                                     dispatch_function_t func) {
   GET_STACK_TRACE_THREAD;
   asan_block_context_t *asan_ctxt = alloc_asan_context(ctxt, func, &stack);
-  if (common_flags()->verbosity >= 2) {
+  if (Verbosity() >= 2) {
     Report("dispatch_after_f: %p\n", asan_ctxt);
     PRINT_CURRENT_STACK();
   }
@@ -344,7 +344,7 @@ INTERCEPTOR(void, dispatch_group_async_f, dispatch_group_t group,
                                           dispatch_function_t func) {
   GET_STACK_TRACE_THREAD;
   asan_block_context_t *asan_ctxt = alloc_asan_context(ctxt, func, &stack);
-  if (common_flags()->verbosity >= 2) {
+  if (Verbosity() >= 2) {
     Report("dispatch_group_async_f(): context: %p, pthread_self: %p\n",
            asan_ctxt, pthread_self());
     PRINT_CURRENT_STACK();
