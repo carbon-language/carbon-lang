@@ -9,6 +9,7 @@ declare zeroext i1 @return_i1()
 declare zeroext i32 @return_i32()
 declare i32* @return_i32ptr()
 declare float @return_float()
+declare void @varargf(i32, ...)
 
 define i1 @test_i1_return() gc "statepoint-example" {
 ; CHECK-LABEL: test_i1_return
@@ -75,6 +76,17 @@ entry:
   ret i1 %call2
 }
 
+define void @test_void_vararg() gc "statepoint-example" {
+; CHECK-LABEL: test_void_vararg
+; Check a statepoint wrapping a *void* returning vararg function works
+; CHECK: callq varargf
+entry:
+  %safepoint_token = tail call i32 (void (i32, ...)*, i32, i32, ...)* @llvm.experimental.gc.statepoint.p0f_isVoidi32varargf(void (i32, ...)* @varargf, i32 2, i32 0, i32 42, i32 43, i32 0)
+  ;; if we try to use the result from a statepoint wrapping a
+  ;; non-void-returning varargf, we will experience a crash.
+  ret void
+}
+
 declare i32 @llvm.experimental.gc.statepoint.p0f_i1f(i1 ()*, i32, i32, ...)
 declare i1 @llvm.experimental.gc.result.int.i1(i32)
 
@@ -86,5 +98,7 @@ declare i32* @llvm.experimental.gc.result.ptr.p0i32(i32)
 
 declare i32 @llvm.experimental.gc.statepoint.p0f_f32f(float ()*, i32, i32, ...)
 declare float @llvm.experimental.gc.result.float.f32(i32)
+
+declare i32 @llvm.experimental.gc.statepoint.p0f_isVoidi32varargf(void (i32, ...)*, i32, i32, ...)
 
 declare i32 addrspace(1)* @llvm.experimental.gc.relocate.p1i32(i32, i32, i32)
