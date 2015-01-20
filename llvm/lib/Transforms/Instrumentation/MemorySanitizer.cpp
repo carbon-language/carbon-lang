@@ -611,11 +611,15 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
                              OriginAlignment);
     } else {
       Value *ConvertedShadow = convertToShadowTyNoVec(Shadow, IRB);
-      // TODO(eugenis): handle non-zero constant shadow by inserting an
-      // unconditional check (can not simply fail compilation as this could
-      // be in the dead code).
-      if (!ClCheckConstantShadow)
-        if (isa<Constant>(ConvertedShadow)) return;
+      Constant *ConstantShadow = dyn_cast_or_null<Constant>(ConvertedShadow);
+      if (ConstantShadow) {
+        if (ClCheckConstantShadow && !ConstantShadow->isZeroValue())
+          IRB.CreateAlignedStore(updateOrigin(Origin, IRB),
+                                 getOriginPtr(Addr, IRB, Alignment),
+                                 OriginAlignment);
+        return;
+      }
+
       unsigned TypeSizeInBits =
           MS.DL->getTypeSizeInBits(ConvertedShadow->getType());
       unsigned SizeIndex = TypeSizeToSizeIndex(TypeSizeInBits);
@@ -670,9 +674,23 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
     DEBUG(dbgs() << "  SHAD0 : " << *Shadow << "\n");
     Value *ConvertedShadow = convertToShadowTyNoVec(Shadow, IRB);
     DEBUG(dbgs() << "  SHAD1 : " << *ConvertedShadow << "\n");
-    // See the comment in storeOrigin().
-    if (!ClCheckConstantShadow)
-      if (isa<Constant>(ConvertedShadow)) return;
+
+    Constant *ConstantShadow = dyn_cast_or_null<Constant>(ConvertedShadow);
+    if (ConstantShadow) {
+      if (ClCheckConstantShadow && !ConstantShadow->isZeroValue()) {
+        if (MS.TrackOrigins) {
+          IRB.CreateStore(Origin ? (Value *)Origin : (Value *)IRB.getInt32(0),
+                          MS.OriginTLS);
+        }
+        IRB.CreateCall(MS.WarningFn);
+        IRB.CreateCall(MS.EmptyAsm);
+        // FIXME: Insert UnreachableInst if !ClKeepGoing?
+        // This may invalidate some of the following checks and needs to be done
+        // at the very end.
+      }
+      return;
+    }
+
     unsigned TypeSizeInBits =
         MS.DL->getTypeSizeInBits(ConvertedShadow->getType());
     unsigned SizeIndex = TypeSizeToSizeIndex(TypeSizeInBits);
