@@ -62,7 +62,10 @@ class Configuration(object):
         self.configure_link_flags()
         self.configure_sanitizer()
         self.configure_features()
+
+    def print_config_info(self):
         # Print the final compile and link flags.
+        self.lit_config.note('Using compiler: %s' % self.cxx.path)
         self.lit_config.note('Using flags: %s' % self.cxx.flags)
         self.lit_config.note('Using compile flags: %s' % self.cxx.compile_flags)
         self.lit_config.note('Using link flags: %s' % self.cxx.link_flags)
@@ -410,7 +413,7 @@ class Configuration(object):
             llvm_symbolizer = lit.util.which('llvm-symbolizer',
                                              symbolizer_search_paths)
             # Setup the sanitizer compile flags
-            self.cxx.compile_flags += ['-g', '-fno-omit-frame-pointer']
+            self.cxx.flags += ['-g', '-fno-omit-frame-pointer']
             if sys.platform.startswith('linux'):
                 self.cxx.link_flags += ['-ldl']
             if san == 'Address':
