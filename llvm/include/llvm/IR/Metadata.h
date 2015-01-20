@@ -51,7 +51,7 @@ protected:
   enum StorageType { Uniqued, Distinct, Temporary };
 
   /// \brief Storage flag for non-uniqued, otherwise unowned, metadata.
-  StorageType Storage : 2;
+  unsigned Storage : 2;
   // TODO: expose remaining bits to subclasses.
 
   unsigned short SubclassData16;
