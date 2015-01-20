@@ -2923,10 +2923,6 @@ bool LLParser::ParseMDNodeTail(MDNode *&N) {
 
 bool LLParser::ParseMDField(LocTy Loc, StringRef Name,
                             MDUnsignedField<uint32_t> &Result) {
-  if (Result.Seen)
-    return Error(Loc,
-                 "field '" + Name + "' cannot be specified more than once");
-
   if (Lex.getKind() != lltok::APSInt || Lex.getAPSIntVal().isSigned())
     return TokError("expected unsigned integer");
   uint64_t Val64 = Lex.getAPSIntVal().getLimitedValue(Result.Max + 1ull);
@@ -2940,10 +2936,6 @@ bool LLParser::ParseMDField(LocTy Loc, StringRef Name,
 }
 
 bool LLParser::ParseMDField(LocTy Loc, StringRef Name, MDField &Result) {
-  if (Result.Seen)
-    return Error(Loc,
-                 "field '" + Name + "' cannot be specified more than once");
-
   Metadata *MD;
   if (ParseMetadata(MD, nullptr))
     return true;
@@ -3000,6 +2992,10 @@ bool LLParser::ParseSpecializedMDNode(MDNode *&N, bool IsDistinct) {
 #define PARSE_MD_FIELD(NAME, TYPE, DEFAULT)                                    \
   do {                                                                         \
     if (Lex.getStrVal() == #NAME) {                                            \
+      if (NAME.Seen)                                                           \
+        return TokError("field '" #NAME                                        \
+                        "' cannot be specified more than once");               \
+                                                                               \
       LocTy Loc = Lex.getLoc();                                                \
       Lex.Lex();                                                               \
       if (ParseMDField(Loc, #NAME, NAME))                                      \
