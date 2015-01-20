@@ -68,14 +68,14 @@ static cl::alias
 Disassembled("d", cl::desc("Alias for --disassemble"),
              cl::aliasopt(Disassemble));
 
-static cl::opt<bool>
-Relocations("r", cl::desc("Display the relocation entries in the file"));
+cl::opt<bool>
+llvm::Relocations("r", cl::desc("Display the relocation entries in the file"));
 
-static cl::opt<bool>
-SectionContents("s", cl::desc("Display the content of each section"));
+cl::opt<bool>
+llvm::SectionContents("s", cl::desc("Display the content of each section"));
 
-static cl::opt<bool>
-SymbolTable("t", cl::desc("Display the symbol table"));
+cl::opt<bool>
+llvm::SymbolTable("t", cl::desc("Display the symbol table"));
 
 cl::opt<bool>
 llvm::ExportsTrie("exports-trie", cl::desc("Display mach-o exported symbols"));
@@ -111,9 +111,9 @@ cl::opt<std::string>
 llvm::ArchName("arch-name", cl::desc("Target arch to disassemble for, "
                                 "see -version for available targets"));
 
-static cl::opt<bool>
-SectionHeaders("section-headers", cl::desc("Display summaries of the headers "
-                                           "for each section."));
+cl::opt<bool>
+llvm::SectionHeaders("section-headers", cl::desc("Display summaries of the "
+                                                 "headers for each section."));
 static cl::alias
 SectionHeadersShort("headers", cl::desc("Alias for --section-headers"),
                     cl::aliasopt(SectionHeaders));
@@ -132,8 +132,8 @@ llvm::NoShowRawInsn("no-show-raw-insn", cl::desc("When disassembling "
                                                  "instructions, do not print "
                                                  "the instruction bytes."));
 
-static cl::opt<bool>
-UnwindInfo("unwind-info", cl::desc("Display unwind information"));
+cl::opt<bool>
+llvm::UnwindInfo("unwind-info", cl::desc("Display unwind information"));
 
 static cl::alias
 UnwindInfoShort("u", cl::desc("Alias for --unwind-info"),
@@ -453,7 +453,7 @@ static void DisassembleObject(const ObjectFile *Obj, bool InlineRelocs) {
   }
 }
 
-static void PrintRelocations(const ObjectFile *Obj) {
+void llvm::PrintRelocations(const ObjectFile *Obj) {
   StringRef Fmt = Obj->getBytesInAddress() > 4 ? "%016" PRIx64 :
                                                  "%08" PRIx64;
   // Regular objdump doesn't print relocations in non-relocatable object
@@ -490,7 +490,7 @@ static void PrintRelocations(const ObjectFile *Obj) {
   }
 }
 
-static void PrintSectionHeaders(const ObjectFile *Obj) {
+void llvm::PrintSectionHeaders(const ObjectFile *Obj) {
   outs() << "Sections:\n"
             "Idx Name          Size      Address          Type\n";
   unsigned i = 0;
@@ -511,7 +511,7 @@ static void PrintSectionHeaders(const ObjectFile *Obj) {
   }
 }
 
-static void PrintSectionContents(const ObjectFile *Obj) {
+void llvm::PrintSectionContents(const ObjectFile *Obj) {
   std::error_code EC;
   for (const SectionRef &Section : Obj->sections()) {
     StringRef Name;
@@ -614,7 +614,7 @@ static void PrintCOFFSymbolTable(const COFFObjectFile *coff) {
   }
 }
 
-static void PrintSymbolTable(const ObjectFile *o) {
+void llvm::PrintSymbolTable(const ObjectFile *o) {
   outs() << "SYMBOL TABLE:\n";
 
   if (const COFFObjectFile *coff = dyn_cast<const COFFObjectFile>(o)) {

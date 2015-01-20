@@ -318,20 +318,16 @@ static void ProcessMachO(StringRef Filename, MachOObjectFile *MachOOF,
 
   if (Disassemble)
     DisassembleMachO(Filename, MachOOF);
-  // TODO: These should/could be printed in Darwin's otool(1) or nm(1) style
-  //       for -macho. Or just used a new option that maps to the otool(1)
-  //       option like -r, -l, etc.  Or just the normal llvm-objdump option
-  //       but now for this slice so that the -arch options can be used.
-  // if (Relocations)
-  //   PrintRelocations(MachOOF);
-  // if (SectionHeaders)
-  //   PrintSectionHeaders(MachOOF);
-  // if (SectionContents)
-  //   PrintSectionContents(MachOOF);
-  // if (SymbolTable)
-  //   PrintSymbolTable(MachOOF);
-  // if (UnwindInfo)
-  //   PrintUnwindInfo(MachOOF);
+  if (Relocations)
+    PrintRelocations(MachOOF);
+  if (SectionHeaders)
+    PrintSectionHeaders(MachOOF);
+  if (SectionContents)
+    PrintSectionContents(MachOOF);
+  if (SymbolTable)
+    PrintSymbolTable(MachOOF);
+  if (UnwindInfo)
+    printMachOUnwindInfo(MachOOF);
   if (PrivateHeaders)
     printMachOFileHeader(MachOOF);
   if (ExportsTrie)
