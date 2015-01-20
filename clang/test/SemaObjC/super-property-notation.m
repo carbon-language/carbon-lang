@@ -50,3 +50,9 @@ __attribute__((objc_root_class)) @interface ClassBase
   [super setFoo:foo]; // works with no warning
 }
 @end
+
+@implementation IFaceNotFound (Foo) // expected-error {{cannot find interface declaration for 'IFaceNotFound'}}
+-(int) foo {
+  return super.foo; // expected-error {{expected identifier or '('}}
+}
+@end
