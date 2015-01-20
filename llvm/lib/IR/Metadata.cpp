@@ -620,26 +620,31 @@ static T *uniquifyImpl(T *N, DenseSet<T *, InfoT> &Store) {
   return N;
 }
 
-MDNode *MDNode::uniquify() {
-  // Recalculate hash, if necessary.
-  switch (getMetadataID()) {
-  default:
-    break;
-  case MDTupleKind:
-    cast<MDTuple>(this)->recalculateHash();
-    break;
-  case GenericDwarfNodeKind:
-    cast<GenericDwarfNode>(this)->recalculateHash();
-    break;
-  }
+template <class NodeTy> struct MDNode::HasCachedHash {
+  typedef char Yes[1];
+  typedef char No[2];
+  template <class U, U Val> struct SFINAE {};
 
+  template <class U>
+  static Yes &check(SFINAE<void (U::*)(unsigned), &U::setHash> *);
+  template <class U> static No &check(...);
+
+  static const bool value = sizeof(check<NodeTy>(nullptr)) == sizeof(Yes);
+};
+
+MDNode *MDNode::uniquify() {
   // Try to insert into uniquing store.
   switch (getMetadataID()) {
   default:
     llvm_unreachable("Invalid subclass of MDNode");
 #define HANDLE_MDNODE_LEAF(CLASS)                                              \
-  case CLASS##Kind:                                                            \
-    return uniquifyImpl(cast<CLASS>(this), getContext().pImpl->CLASS##s);
+  case CLASS##Kind: {                                                          \
+    CLASS *SubclassThis = cast<CLASS>(this);                                   \
+    std::integral_constant<bool, HasCachedHash<CLASS>::value>                  \
+        ShouldRecalculateHash;                                                 \
+    dispatchRecalculateHash(SubclassThis, ShouldRecalculateHash);              \
+    return uniquifyImpl(SubclassThis, getContext().pImpl->CLASS##s);           \
+  }
 #include "llvm/IR/Metadata.def"
   }
 }
@@ -774,10 +779,20 @@ void MDNode::deleteTemporary(MDNode *N) {
 void MDNode::storeDistinctInContext() {
   assert(isResolved() && "Expected resolved nodes");
   Storage = Distinct;
-  if (auto *T = dyn_cast<MDTuple>(this))
-    T->setHash(0);
-  else if (auto *G = dyn_cast<GenericDwarfNode>(this))
-    G->setHash(0);
+
+  // Reset the hash.
+  switch (getMetadataID()) {
+  default:
+    llvm_unreachable("Invalid subclass of MDNode");
+#define HANDLE_MDNODE_LEAF(CLASS)                                              \
+  case CLASS##Kind: {                                                          \
+    std::integral_constant<bool, HasCachedHash<CLASS>::value> ShouldResetHash; \
+    dispatchResetHash(cast<CLASS>(this), ShouldResetHash);                     \
+    break;                                                                     \
+  }
+#include "llvm/IR/Metadata.def"
+  }
+
   getContext().pImpl->DistinctMDNodes.insert(this);
 }
 

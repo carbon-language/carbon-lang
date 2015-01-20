@@ -825,6 +825,20 @@ private:
   MDNode *uniquify();
   void eraseFromStore();
 
+  template <class NodeTy> struct HasCachedHash;
+  template <class NodeTy>
+  static void dispatchRecalculateHash(NodeTy *N, std::true_type) {
+    N->recalculateHash();
+  }
+  template <class NodeTy>
+  static void dispatchRecalculateHash(NodeTy *N, std::false_type) {}
+  template <class NodeTy>
+  static void dispatchResetHash(NodeTy *N, std::true_type) {
+    N->setHash(0);
+  }
+  template <class NodeTy>
+  static void dispatchResetHash(NodeTy *N, std::false_type) {}
+
 public:
   typedef const MDOperand *op_iterator;
   typedef iterator_range<op_iterator> op_range;
