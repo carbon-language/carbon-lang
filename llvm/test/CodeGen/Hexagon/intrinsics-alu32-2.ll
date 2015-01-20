@@ -13,8 +13,7 @@
 define void @test1(i32 %a, i32 %b) #0 {
 entry:
   %0 = tail call i32 @llvm.hexagon.A2.add(i32 %a, i32 %b)
-  %conv = sext i32 %0 to i64
-  store i64 %conv, i64* @c, align 8
+  store i32 %0, i32* @d, align 4
   ret void
 }
 
@@ -23,8 +22,7 @@ entry:
 define void @test2(i32 %a, i32 %b) #0 {
 entry:
   %0 = tail call i32 @llvm.hexagon.A2.sub(i32 %a, i32 %b)
-  %conv = sext i32 %0 to i64
-  store i64 %conv, i64* @c, align 8
+  store i32 %0, i32* @d, align 4
   ret void
 }
 
@@ -33,8 +31,7 @@ entry:
 define void @test3(i32 %a, i32 %b) #0 {
 entry:
   %0 = tail call i32 @llvm.hexagon.A2.and(i32 %a, i32 %b)
-  %conv = sext i32 %0 to i64
-  store i64 %conv, i64* @c, align 8
+  store i32 %0, i32* @d, align 4
   ret void
 }
 
@@ -43,8 +40,7 @@ entry:
 define void @test4(i32 %a, i32 %b) #0 {
 entry:
   %0 = tail call i32 @llvm.hexagon.A2.or(i32 %a, i32 %b)
-  %conv = sext i32 %0 to i64
-  store i64 %conv, i64* @c, align 8
+  store i32 %0, i32* @d, align 4
   ret void
 }
 
@@ -53,8 +49,7 @@ entry:
 define void @test5(i32 %a, i32 %b) #0 {
 entry:
   %0 = tail call i32 @llvm.hexagon.A2.xor(i32 %a, i32 %b)
-  %conv = sext i32 %0 to i64
-  store i64 %conv, i64* @c, align 8
+  store i32 %0, i32* @d, align 4
   ret void
 }
 
@@ -72,8 +67,7 @@ entry:
 define void @test7(i32 %a) #0 {
 entry:
   %0 = tail call i32 @llvm.hexagon.A2.addi(i32 %a, i32 -31849)
-  %conv = sext i32 %0 to i64
-  store i64 %conv, i64* @c, align 8
+  store i32 %0, i32* @d, align 4
   ret void
 }
 
@@ -82,8 +76,7 @@ entry:
 define void @test8(i32 %a) #0 {
 entry:
   %0 = tail call i32 @llvm.hexagon.A2.andir(i32 %a, i32 -512)
-  %conv = sext i32 %0 to i64
-  store i64 %conv, i64* @c, align 8
+  store i32 %0, i32* @d, align 4
   ret void
 }
 
@@ -92,8 +85,7 @@ entry:
 define void @test9(i32 %a) #0 {
 entry:
   %0 = tail call i32 @llvm.hexagon.A2.orir(i32 %a, i32 511)
-  %conv = sext i32 %0 to i64
-  store i64 %conv, i64* @c, align 8
+  store i32 %0, i32* @d, align 4
   ret void
 }
 
@@ -102,8 +94,7 @@ entry:
 define void @test10(i32 %a) #0 {
 entry:
   %0 = tail call i32 @llvm.hexagon.A2.subri(i32 508, i32 %a)
-  %conv = sext i32 %0 to i64
-  store i64 %conv, i64* @c, align 8
+  store i32 %0, i32* @d, align 4
   ret void
 }
 
