@@ -8043,9 +8043,7 @@ CallingConv ASTContext::getDefaultCallingConvention(bool IsVariadic,
   if (IsCXXMethod)
     return ABI->getDefaultMethodCallConv(IsVariadic);
 
-  if (LangOpts.MRTD && !IsVariadic) return CC_X86StdCall;
-
-  return Target->getDefaultCallingConv(TargetInfo::CCMT_Unknown);
+  return (LangOpts.MRTD && !IsVariadic) ? CC_X86StdCall : CC_C;
 }
 
 bool ASTContext::isNearlyEmpty(const CXXRecordDecl *RD) const {
