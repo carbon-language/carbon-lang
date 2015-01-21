@@ -3902,8 +3902,6 @@ def warn_missing_variable_declarations : Warning<
 def err_static_data_member_reinitialization :
   Error<"static data member %0 already has an initializer">;
 def err_redefinition : Error<"redefinition of %0">;
-def err_alias_after_tentative :
-  Error<"alias definition of %0 after tentative definition">;
 def err_alias_is_definition :
   Error<"definition %0 cannot also be an alias">;
 def err_definition_of_implicitly_declared_member : Error<

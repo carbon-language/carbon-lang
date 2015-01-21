@@ -28,3 +28,7 @@ static int var2 __attribute((alias("v2"))) = 2; // expected-error {{definition '
 
 extern int var3 __attribute__((alias("C"))); // expected-note{{previous definition is here}}
 int var3 = 3; // expected-error{{redefinition of 'var3'}}
+
+int v4;
+int var4;
+int var4 __attribute((alias("v4"))); // expected-error {{definition 'var4' cannot also be an alias}}
