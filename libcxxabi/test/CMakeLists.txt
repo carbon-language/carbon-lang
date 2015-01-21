@@ -6,6 +6,7 @@ macro(pythonize_bool var)
   endif()
 endmacro()
 
+pythonize_bool(LIBCXXABI_BUILD_32_BITS)
 pythonize_bool(LIBCXXABI_ENABLE_SHARED)
 pythonize_bool(LIBCXXABI_ENABLE_THREADS)
 pythonize_bool(LIBCXXABI_USE_LLVM_UNWINDER)
