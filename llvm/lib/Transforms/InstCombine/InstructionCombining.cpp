@@ -2597,9 +2597,6 @@ Instruction *InstCombiner::visitLandingPadInst(LandingPadInst &LI) {
   return nullptr;
 }
 
-
-
-
 /// TryToSinkInstruction - Try to move the specified instruction from its
 /// current block into the beginning of DestBlock, which can only happen if it's
 /// safe to move the instruction past all of the instructions between it and the
@@ -2632,164 +2629,7 @@ static bool TryToSinkInstruction(Instruction *I, BasicBlock *DestBlock) {
   return true;
 }
 
-
-/// AddReachableCodeToWorklist - Walk the function in depth-first order, adding
-/// all reachable code to the worklist.
-///
-/// This has a couple of tricks to make the code faster and more powerful.  In
-/// particular, we constant fold and DCE instructions as we go, to avoid adding
-/// them to the worklist (this significantly speeds up instcombine on code where
-/// many instructions are dead or constant).  Additionally, if we find a branch
-/// whose condition is a known constant, we only visit the reachable successors.
-///
-static bool AddReachableCodeToWorklist(BasicBlock *BB,
-                                       SmallPtrSetImpl<BasicBlock*> &Visited,
-                                       InstCombiner &IC,
-                                       const DataLayout *DL,
-                                       const TargetLibraryInfo *TLI) {
-  bool MadeIRChange = false;
-  SmallVector<BasicBlock*, 256> Worklist;
-  Worklist.push_back(BB);
-
-  SmallVector<Instruction*, 128> InstrsForInstCombineWorklist;
-  DenseMap<ConstantExpr*, Constant*> FoldedConstants;
-
-  do {
-    BB = Worklist.pop_back_val();
-
-    // We have now visited this block!  If we've already been here, ignore it.
-    if (!Visited.insert(BB).second)
-      continue;
-
-    for (BasicBlock::iterator BBI = BB->begin(), E = BB->end(); BBI != E; ) {
-      Instruction *Inst = BBI++;
-
-      // DCE instruction if trivially dead.
-      if (isInstructionTriviallyDead(Inst, TLI)) {
-        ++NumDeadInst;
-        DEBUG(dbgs() << "IC: DCE: " << *Inst << '\n');
-        Inst->eraseFromParent();
-        continue;
-      }
-
-      // ConstantProp instruction if trivially constant.
-      if (!Inst->use_empty() && isa<Constant>(Inst->getOperand(0)))
-        if (Constant *C = ConstantFoldInstruction(Inst, DL, TLI)) {
-          DEBUG(dbgs() << "IC: ConstFold to: " << *C << " from: "
-                       << *Inst << '\n');
-          Inst->replaceAllUsesWith(C);
-          ++NumConstProp;
-          Inst->eraseFromParent();
-          continue;
-        }
-
-      if (DL) {
-        // See if we can constant fold its operands.
-        for (User::op_iterator i = Inst->op_begin(), e = Inst->op_end();
-             i != e; ++i) {
-          ConstantExpr *CE = dyn_cast<ConstantExpr>(i);
-          if (CE == nullptr) continue;
-
-          Constant*& FoldRes = FoldedConstants[CE];
-          if (!FoldRes)
-            FoldRes = ConstantFoldConstantExpression(CE, DL, TLI);
-          if (!FoldRes)
-            FoldRes = CE;
-
-          if (FoldRes != CE) {
-            *i = FoldRes;
-            MadeIRChange = true;
-          }
-        }
-      }
-
-      InstrsForInstCombineWorklist.push_back(Inst);
-    }
-
-    // Recursively visit successors.  If this is a branch or switch on a
-    // constant, only visit the reachable successor.
-    TerminatorInst *TI = BB->getTerminator();
-    if (BranchInst *BI = dyn_cast<BranchInst>(TI)) {
-      if (BI->isConditional() && isa<ConstantInt>(BI->getCondition())) {
-        bool CondVal = cast<ConstantInt>(BI->getCondition())->getZExtValue();
-        BasicBlock *ReachableBB = BI->getSuccessor(!CondVal);
-        Worklist.push_back(ReachableBB);
-        continue;
-      }
-    } else if (SwitchInst *SI = dyn_cast<SwitchInst>(TI)) {
-      if (ConstantInt *Cond = dyn_cast<ConstantInt>(SI->getCondition())) {
-        // See if this is an explicit destination.
-        for (SwitchInst::CaseIt i = SI->case_begin(), e = SI->case_end();
-             i != e; ++i)
-          if (i.getCaseValue() == Cond) {
-            BasicBlock *ReachableBB = i.getCaseSuccessor();
-            Worklist.push_back(ReachableBB);
-            continue;
-          }
-
-        // Otherwise it is the default destination.
-        Worklist.push_back(SI->getDefaultDest());
-        continue;
-      }
-    }
-
-    for (unsigned i = 0, e = TI->getNumSuccessors(); i != e; ++i)
-      Worklist.push_back(TI->getSuccessor(i));
-  } while (!Worklist.empty());
-
-  // Once we've found all of the instructions to add to instcombine's worklist,
-  // add them in reverse order.  This way instcombine will visit from the top
-  // of the function down.  This jives well with the way that it adds all uses
-  // of instructions to the worklist after doing a transformation, thus avoiding
-  // some N^2 behavior in pathological cases.
-  IC.Worklist.AddInitialGroup(&InstrsForInstCombineWorklist[0],
-                              InstrsForInstCombineWorklist.size());
-
-  return MadeIRChange;
-}
-
-bool InstCombiner::DoOneIteration(Function &F, unsigned Iteration) {
-  MadeIRChange = false;
-
-  DEBUG(dbgs() << "\n\nINSTCOMBINE ITERATION #" << Iteration << " on "
-               << F.getName() << "\n");
-
-  {
-    // Do a depth-first traversal of the function, populate the worklist with
-    // the reachable instructions.  Ignore blocks that are not reachable.  Keep
-    // track of which blocks we visit.
-    SmallPtrSet<BasicBlock*, 64> Visited;
-    MadeIRChange |= AddReachableCodeToWorklist(F.begin(), Visited, *this, DL,
-                                               TLI);
-
-    // Do a quick scan over the function.  If we find any blocks that are
-    // unreachable, remove any instructions inside of them.  This prevents
-    // the instcombine code from having to deal with some bad special cases.
-    for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB) {
-      if (Visited.count(BB)) continue;
-
-      // Delete the instructions backwards, as it has a reduced likelihood of
-      // having to update as many def-use and use-def chains.
-      Instruction *EndInst = BB->getTerminator(); // Last not to be deleted.
-      while (EndInst != BB->begin()) {
-        // Delete the next to last instruction.
-        BasicBlock::iterator I = EndInst;
-        Instruction *Inst = --I;
-        if (!Inst->use_empty())
-          Inst->replaceAllUsesWith(UndefValue::get(Inst->getType()));
-        if (isa<LandingPadInst>(Inst)) {
-          EndInst = Inst;
-          continue;
-        }
-        if (!isa<DbgInfoIntrinsic>(Inst)) {
-          ++NumDeadInst;
-          MadeIRChange = true;
-        }
-        Inst->eraseFromParent();
-      }
-    }
-  }
-
+bool InstCombiner::run() {
   while (!Worklist.isEmpty()) {
     Instruction *I = Worklist.RemoveOne();
     if (I == nullptr) continue;  // skip null values.
@@ -2919,43 +2759,167 @@ bool InstCombiner::DoOneIteration(Function &F, unsigned Iteration) {
   return MadeIRChange;
 }
 
-// FIXME: Passing all of the analyses here in the run method is ugly. We should
-// separate out the worklist from the combiner so that we can construct
-// a combiner once per function while re-using the storage of an external
-// worklist.
-bool InstCombiner::run(Function &F, AssumptionCache *AC, const DataLayout *DL,
-                       TargetLibraryInfo *TLI, DominatorTree *DT,
-                       LoopInfo *LI) {
-  // Set up our analysis pointers.
-  this->AC = AC;
-  this->DL = DL;
-  this->TLI = TLI;
-  this->DT = DT;
-  this->LI = LI;
+/// AddReachableCodeToWorklist - Walk the function in depth-first order, adding
+/// all reachable code to the worklist.
+///
+/// This has a couple of tricks to make the code faster and more powerful.  In
+/// particular, we constant fold and DCE instructions as we go, to avoid adding
+/// them to the worklist (this significantly speeds up instcombine on code where
+/// many instructions are dead or constant).  Additionally, if we find a branch
+/// whose condition is a known constant, we only visit the reachable successors.
+///
+static bool AddReachableCodeToWorklist(BasicBlock *BB,
+                                       SmallPtrSetImpl<BasicBlock*> &Visited,
+                                       InstCombineWorklist &ICWorklist,
+                                       const DataLayout *DL,
+                                       const TargetLibraryInfo *TLI) {
+  bool MadeIRChange = false;
+  SmallVector<BasicBlock*, 256> Worklist;
+  Worklist.push_back(BB);
 
-  // Minimizing size?
-  MinimizeSize = F.getAttributes().hasAttribute(AttributeSet::FunctionIndex,
-                                                Attribute::MinSize);
+  SmallVector<Instruction*, 128> InstrsForInstCombineWorklist;
+  DenseMap<ConstantExpr*, Constant*> FoldedConstants;
 
-  /// Builder - This is an IRBuilder that automatically inserts new
-  /// instructions into the worklist when they are created.
-  IRBuilder<true, TargetFolder, InstCombineIRInserter> TheBuilder(
-      F.getContext(), TargetFolder(DL), InstCombineIRInserter(Worklist, AC));
-  Builder = &TheBuilder;
+  do {
+    BB = Worklist.pop_back_val();
 
-  bool EverMadeChange = false;
+    // We have now visited this block!  If we've already been here, ignore it.
+    if (!Visited.insert(BB).second)
+      continue;
 
-  // Lower dbg.declare intrinsics otherwise their value may be clobbered
-  // by instcombiner.
-  EverMadeChange = LowerDbgDeclare(F);
+    for (BasicBlock::iterator BBI = BB->begin(), E = BB->end(); BBI != E; ) {
+      Instruction *Inst = BBI++;
 
-  // Iterate while there is work to do.
-  unsigned Iteration = 0;
-  while (DoOneIteration(F, Iteration++))
-    EverMadeChange = true;
+      // DCE instruction if trivially dead.
+      if (isInstructionTriviallyDead(Inst, TLI)) {
+        ++NumDeadInst;
+        DEBUG(dbgs() << "IC: DCE: " << *Inst << '\n');
+        Inst->eraseFromParent();
+        continue;
+      }
 
-  Builder = nullptr;
-  return EverMadeChange;
+      // ConstantProp instruction if trivially constant.
+      if (!Inst->use_empty() && isa<Constant>(Inst->getOperand(0)))
+        if (Constant *C = ConstantFoldInstruction(Inst, DL, TLI)) {
+          DEBUG(dbgs() << "IC: ConstFold to: " << *C << " from: "
+                       << *Inst << '\n');
+          Inst->replaceAllUsesWith(C);
+          ++NumConstProp;
+          Inst->eraseFromParent();
+          continue;
+        }
+
+      if (DL) {
+        // See if we can constant fold its operands.
+        for (User::op_iterator i = Inst->op_begin(), e = Inst->op_end();
+             i != e; ++i) {
+          ConstantExpr *CE = dyn_cast<ConstantExpr>(i);
+          if (CE == nullptr) continue;
+
+          Constant*& FoldRes = FoldedConstants[CE];
+          if (!FoldRes)
+            FoldRes = ConstantFoldConstantExpression(CE, DL, TLI);
+          if (!FoldRes)
+            FoldRes = CE;
+
+          if (FoldRes != CE) {
+            *i = FoldRes;
+            MadeIRChange = true;
+          }
+        }
+      }
+
+      InstrsForInstCombineWorklist.push_back(Inst);
+    }
+
+    // Recursively visit successors.  If this is a branch or switch on a
+    // constant, only visit the reachable successor.
+    TerminatorInst *TI = BB->getTerminator();
+    if (BranchInst *BI = dyn_cast<BranchInst>(TI)) {
+      if (BI->isConditional() && isa<ConstantInt>(BI->getCondition())) {
+        bool CondVal = cast<ConstantInt>(BI->getCondition())->getZExtValue();
+        BasicBlock *ReachableBB = BI->getSuccessor(!CondVal);
+        Worklist.push_back(ReachableBB);
+        continue;
+      }
+    } else if (SwitchInst *SI = dyn_cast<SwitchInst>(TI)) {
+      if (ConstantInt *Cond = dyn_cast<ConstantInt>(SI->getCondition())) {
+        // See if this is an explicit destination.
+        for (SwitchInst::CaseIt i = SI->case_begin(), e = SI->case_end();
+             i != e; ++i)
+          if (i.getCaseValue() == Cond) {
+            BasicBlock *ReachableBB = i.getCaseSuccessor();
+            Worklist.push_back(ReachableBB);
+            continue;
+          }
+
+        // Otherwise it is the default destination.
+        Worklist.push_back(SI->getDefaultDest());
+        continue;
+      }
+    }
+
+    for (unsigned i = 0, e = TI->getNumSuccessors(); i != e; ++i)
+      Worklist.push_back(TI->getSuccessor(i));
+  } while (!Worklist.empty());
+
+  // Once we've found all of the instructions to add to instcombine's worklist,
+  // add them in reverse order.  This way instcombine will visit from the top
+  // of the function down.  This jives well with the way that it adds all uses
+  // of instructions to the worklist after doing a transformation, thus avoiding
+  // some N^2 behavior in pathological cases.
+  ICWorklist.AddInitialGroup(&InstrsForInstCombineWorklist[0],
+                             InstrsForInstCombineWorklist.size());
+
+  return MadeIRChange;
+}
+
+/// \brief Populate the IC worklist from a function, and prune any dead basic
+/// blocks discovered in the process.
+///
+/// This also does basic constant propagation and other forward fixing to make
+/// the combiner itself run much faster.
+static bool prepareICWorklistFromFunction(Function &F, const DataLayout *DL,
+                                          TargetLibraryInfo *TLI,
+                                          InstCombineWorklist &ICWorklist) {
+  bool MadeIRChange = false;
+
+  // Do a depth-first traversal of the function, populate the worklist with
+  // the reachable instructions.  Ignore blocks that are not reachable.  Keep
+  // track of which blocks we visit.
+  SmallPtrSet<BasicBlock *, 64> Visited;
+  MadeIRChange |=
+      AddReachableCodeToWorklist(F.begin(), Visited, ICWorklist, DL, TLI);
+
+  // Do a quick scan over the function.  If we find any blocks that are
+  // unreachable, remove any instructions inside of them.  This prevents
+  // the instcombine code from having to deal with some bad special cases.
+  for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB) {
+    if (Visited.count(BB))
+      continue;
+
+    // Delete the instructions backwards, as it has a reduced likelihood of
+    // having to update as many def-use and use-def chains.
+    Instruction *EndInst = BB->getTerminator(); // Last not to be deleted.
+    while (EndInst != BB->begin()) {
+      // Delete the next to last instruction.
+      BasicBlock::iterator I = EndInst;
+      Instruction *Inst = --I;
+      if (!Inst->use_empty())
+        Inst->replaceAllUsesWith(UndefValue::get(Inst->getType()));
+      if (isa<LandingPadInst>(Inst)) {
+        EndInst = Inst;
+        continue;
+      }
+      if (!isa<DbgInfoIntrinsic>(Inst)) {
+        ++NumDeadInst;
+        MadeIRChange = true;
+      }
+      Inst->eraseFromParent();
+    }
+  }
+
+  return MadeIRChange;
 }
 
 namespace {
@@ -2964,7 +2928,7 @@ namespace {
 /// This is a basic whole-function wrapper around the instcombine utility. It
 /// will try to combine all instructions in the function.
 class InstructionCombiningPass : public FunctionPass {
-  InstCombiner IC;
+  InstCombineWorklist Worklist;
 
 public:
   static char ID; // Pass identification, replacement for typeid
@@ -2990,15 +2954,50 @@ bool InstructionCombiningPass::runOnFunction(Function &F) {
   if (skipOptnoneFunction(F))
     return false;
 
+  // Lower dbg.declare intrinsics otherwise their value may be clobbered
+  // by instcombiner.
+  bool DbgDeclaresChanged = LowerDbgDeclare(F);
+
+  // Required analyses.
   auto &AC = getAnalysis<AssumptionCacheTracker>().getAssumptionCache(F);
-  auto *DLP = getAnalysisIfAvailable<DataLayoutPass>();
-  auto *DL = DLP ? &DLP->getDataLayout() : nullptr;
   auto &TLI = getAnalysis<TargetLibraryInfoWrapperPass>().getTLI();
   auto &DT = getAnalysis<DominatorTreeWrapperPass>().getDomTree();
+
+  // Optional analyses.
+  auto *DLP = getAnalysisIfAvailable<DataLayoutPass>();
+  auto *DL = DLP ? &DLP->getDataLayout() : nullptr;
   auto *LIWP = getAnalysisIfAvailable<LoopInfoWrapperPass>();
   auto *LI = LIWP ? &LIWP->getLoopInfo() : nullptr;
 
-  return IC.run(F, &AC, DL, &TLI, &DT, LI);
+  // Minimizing size?
+  bool MinimizeSize = F.getAttributes().hasAttribute(
+      AttributeSet::FunctionIndex, Attribute::MinSize);
+
+  /// Builder - This is an IRBuilder that automatically inserts new
+  /// instructions into the worklist when they are created.
+  IRBuilder<true, TargetFolder, InstCombineIRInserter> Builder(
+      F.getContext(), TargetFolder(DL), InstCombineIRInserter(Worklist, &AC));
+
+  // Iterate while there is work to do.
+  int Iteration = 0;
+  for (;;) {
+    ++Iteration;
+    DEBUG(dbgs() << "\n\nINSTCOMBINE ITERATION #" << Iteration << " on "
+                 << F.getName() << "\n");
+
+    bool Changed = false;
+    if (prepareICWorklistFromFunction(F, DL, &TLI, Worklist))
+      Changed = true;
+
+    InstCombiner IC(Worklist, &Builder, MinimizeSize, &AC, &TLI, &DT, DL, LI);
+    if (IC.run())
+      Changed = true;
+
+    if (!Changed)
+      break;
+  }
+
+  return DbgDeclaresChanged || Iteration > 1;
 }
 
 char InstructionCombiningPass::ID = 0;

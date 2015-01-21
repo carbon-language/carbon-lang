@@ -104,32 +104,44 @@ public:
 /// of the LLVM pass pipeline.
 class LLVM_LIBRARY_VISIBILITY InstCombiner
     : public InstVisitor<InstCombiner, Instruction *> {
-  AssumptionCache *AC;
-  const DataLayout *DL;
-  TargetLibraryInfo *TLI;
-  DominatorTree *DT;
-  LoopInfo *LI;
-  bool MadeIRChange;
-  bool MinimizeSize;
-
+  // FIXME: These members shouldn't be public.
 public:
   /// \brief A worklist of the instructions that need to be simplified.
-  InstCombineWorklist Worklist;
+  InstCombineWorklist &Worklist;
 
   /// \brief An IRBuilder that automatically inserts new instructions into the
   /// worklist.
   typedef IRBuilder<true, TargetFolder, InstCombineIRInserter> BuilderTy;
   BuilderTy *Builder;
 
-  InstCombiner() : DL(nullptr), DT(nullptr), LI(nullptr), Builder(nullptr) {
-    MinimizeSize = false;
-  }
+private:
+  // Mode in which we are running the combiner.
+  const bool MinimizeSize;
+
+  // Required analyses.
+  // FIXME: These can never be null and should be references.
+  AssumptionCache *AC;
+  TargetLibraryInfo *TLI;
+  DominatorTree *DT;
+
+  // Optional analyses. When non-null, these can both be used to do better
+  // combining and will be updated to reflect any changes.
+  const DataLayout *DL;
+  LoopInfo *LI;
+
+  bool MadeIRChange;
 
 public:
-  bool run(Function &F, AssumptionCache *AC, const DataLayout *DL,
-           TargetLibraryInfo *TLI, DominatorTree *DT, LoopInfo *LI);
+  InstCombiner(InstCombineWorklist &Worklist, BuilderTy *Builder,
+               bool MinimizeSize, AssumptionCache *AC, TargetLibraryInfo *TLI,
+               DominatorTree *DT, const DataLayout *DL, LoopInfo *LI)
+      : Worklist(Worklist), Builder(Builder), MinimizeSize(MinimizeSize),
+        AC(AC), TLI(TLI), DT(DT), DL(DL), LI(LI), MadeIRChange(false) {}
 
-  bool DoOneIteration(Function &F, unsigned ItNum);
+  /// \brief Run the combiner over the entire worklist until it is empty.
+  ///
+  /// \returns true if the IR is changed.
+  bool run();
 
   AssumptionCache *getAssumptionCache() const { return AC; }
 
