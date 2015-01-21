@@ -254,7 +254,7 @@ bool Resolver::undefinesAdded(int begin, int end) {
   return false;
 }
 
-File *Resolver::getFile(int &index, int &groupLevel) {
+File *Resolver::getFile(int &index, bool &inGroup) {
   std::vector<std::unique_ptr<Node>> &inputs = _context.getNodes();
   if ((size_t)index >= inputs.size())
     return nullptr;
@@ -265,12 +265,12 @@ File *Resolver::getFile(int &index, int &groupLevel) {
     int size = group->getSize();
     if (undefinesAdded(index - size, index)) {
       index -= size;
-      ++groupLevel;
-      return getFile(index, groupLevel);
+      inGroup = true;
+      return getFile(index, inGroup);
     }
     ++index;
-    --groupLevel;
-    return getFile(index, groupLevel);
+    inGroup = false;
+    return getFile(index, inGroup);
   }
   return cast<FileNode>(inputs[index++].get())->getFile();
 }
@@ -290,10 +290,10 @@ void Resolver::makePreloadArchiveMap() {
 bool Resolver::resolveUndefines() {
   ScopedTask task(getDefaultDomain(), "resolveUndefines");
   int index = 0;
-  int groupLevel = 0;
+  bool inGroup = false;
   for (;;) {
     bool undefAdded = false;
-    File *file = getFile(index, groupLevel);
+    File *file = getFile(index, inGroup);
     if (!file)
       return true;
     if (std::error_code ec = file->parse()) {
@@ -304,7 +304,7 @@ bool Resolver::resolveUndefines() {
     file->beforeLink();
     switch (file->kind()) {
     case File::kindObject:
-      if (groupLevel > 0)
+      if (inGroup)
         break;
       assert(!file->hasOrdinal());
       file->setOrdinal(_context.getNextOrdinalAndIncrement());
