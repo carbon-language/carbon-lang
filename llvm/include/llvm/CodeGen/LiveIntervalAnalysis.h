@@ -398,6 +398,10 @@ namespace llvm {
     /// of its subregisters.
     void removePhysRegDefAt(unsigned Reg, SlotIndex Pos);
 
+    /// Remove value number and related live segments of @p LI and its subranges
+    /// that start at position @p Pos.
+    void removeVRegDefAt(LiveInterval &LI, SlotIndex Pos);
+
   private:
     /// Compute live intervals for all virtual registers.
     void computeVirtRegs();

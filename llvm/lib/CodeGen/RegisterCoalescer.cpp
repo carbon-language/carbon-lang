@@ -802,7 +802,6 @@ bool RegisterCoalescer::removeCopyByCommutingDef(const CoalescerPair &CP,
         VNInfo *BSubValNo = NewRange->getNextValue(CopyIdx, Allocator);
         addSegmentsWithValNo(*NewRange, BSubValNo, SA, ASubValNo);
       }
-      SA.removeValNo(ASubValNo);
     }
   }
 
@@ -810,17 +809,8 @@ bool RegisterCoalescer::removeCopyByCommutingDef(const CoalescerPair &CP,
   addSegmentsWithValNo(IntB, BValNo, IntA, AValNo);
   DEBUG(dbgs() << "\t\textended: " << IntB << '\n');
 
-  IntA.removeValNo(AValNo);
-  // Remove valuenos in subranges (the A+B have subranges case has already been
-  // handled above)
-  if (!IntB.hasSubRanges()) {
-    SlotIndex AIdx = CopyIdx.getRegSlot(true);
-    for (LiveInterval::SubRange &SA : IntA.subranges()) {
-      VNInfo *ASubValNo = SA.getVNInfoAt(AIdx);
-      assert(ASubValNo != nullptr);
-      SA.removeValNo(ASubValNo);
-    }
-  }
+  LIS->removeVRegDefAt(IntA, AValNo->def);
+
   DEBUG(dbgs() << "\t\ttrimmed:  " << IntA << '\n');
   ++numCommutes;
   return true;
@@ -1013,13 +1003,6 @@ bool RegisterCoalescer::reMaterializeTrivialDef(CoalescerPair &CP,
   return true;
 }
 
-static void removeUndefValue(LiveRange &LR, SlotIndex At)
-{
-  VNInfo *VNInfo = LR.getVNInfoAt(At);
-  assert(VNInfo != nullptr && SlotIndex::isSameInstr(VNInfo->def, At));
-  LR.removeValNo(VNInfo);
-}
-
 bool RegisterCoalescer::eliminateUndefCopy(MachineInstr *CopyMI) {
   // ProcessImpicitDefs may leave some copies of <undef> values, it only removes
   // local variables. When we have a copy like:
@@ -1053,22 +1036,25 @@ bool RegisterCoalescer::eliminateUndefCopy(MachineInstr *CopyMI) {
 
   // Remove any DstReg segments starting at the instruction.
   LiveInterval &DstLI = LIS->getInterval(DstReg);
-  unsigned DstMask = TRI->getSubRegIndexLaneMask(DstSubIdx);
   SlotIndex RegIndex = Idx.getRegSlot();
-  for (LiveInterval::SubRange &SR : DstLI.subranges()) {
-    if ((SR.LaneMask & DstMask) == 0)
-      continue;
-    removeUndefValue(SR, RegIndex);
-
-    DstLI.removeEmptySubRanges();
-  }
   // Remove value or merge with previous one in case of a subregister def.
   if (VNInfo *PrevVNI = DstLI.getVNInfoAt(Idx)) {
-    VNInfo *VNInfo = DstLI.getVNInfoAt(RegIndex);
-    DstLI.MergeValueNumberInto(VNInfo, PrevVNI);
-  } else {
-    removeUndefValue(DstLI, RegIndex);
-  }
+    VNInfo *VNI = DstLI.getVNInfoAt(RegIndex);
+    DstLI.MergeValueNumberInto(VNI, PrevVNI);
+
+    // The affected subregister segments can be removed.
+    unsigned DstMask = TRI->getSubRegIndexLaneMask(DstSubIdx);
+    for (LiveInterval::SubRange &SR : DstLI.subranges()) {
+      if ((SR.LaneMask & DstMask) == 0)
+        continue;
+
+      VNInfo *SVNI = SR.getVNInfoAt(RegIndex);
+      assert(SVNI != nullptr && SlotIndex::isSameInstr(SVNI->def, RegIndex));
+      SR.removeValNo(SVNI);
+    }
+    DstLI.removeEmptySubRanges();
+  } else
+    LIS->removeVRegDefAt(DstLI, RegIndex);
 
   // Mark uses as undef.
   for (MachineOperand &MO : MRI->reg_nodbg_operands(DstReg)) {

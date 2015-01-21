@@ -273,21 +273,11 @@ void LiveRangeEdit::eliminateDeadDef(MachineInstr *MI, ToShrinkSet &ToShrink) {
 
     // Remove defined value.
     if (MOI->isDef()) {
-      if (VNInfo *VNI = LI.getVNInfoAt(Idx)) {
-        if (TheDelegate)
-          TheDelegate->LRE_WillShrinkVirtReg(LI.reg);
-        LI.removeValNo(VNI);
-        if (LI.empty()) {
-          RegsToErase.push_back(Reg);
-        } else {
-          // Also remove the value in subranges.
-          for (LiveInterval::SubRange &S : LI.subranges()) {
-            if (VNInfo *SVNI = S.getVNInfoAt(Idx))
-              S.removeValNo(SVNI);
-          }
-          LI.removeEmptySubRanges();
-        }
-      }
+      if (TheDelegate && LI.getVNInfoAt(Idx) != nullptr)
+        TheDelegate->LRE_WillShrinkVirtReg(LI.reg);
+      LIS.removeVRegDefAt(LI, Idx);
+      if (LI.empty())
+        RegsToErase.push_back(Reg);
     }
   }
 

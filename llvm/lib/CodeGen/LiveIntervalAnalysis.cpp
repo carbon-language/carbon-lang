@@ -1375,3 +1375,17 @@ void LiveIntervals::removePhysRegDefAt(unsigned Reg, SlotIndex Pos) {
         LR->removeValNo(VNI);
   }
 }
+
+void LiveIntervals::removeVRegDefAt(LiveInterval &LI, SlotIndex Pos) {
+  VNInfo *VNI = LI.getVNInfoAt(Pos);
+  if (VNI == nullptr)
+    return;
+  LI.removeValNo(VNI);
+
+  // Also remove the value in subranges.
+  for (LiveInterval::SubRange &S : LI.subranges()) {
+    if (VNInfo *SVNI = S.getVNInfoAt(Pos))
+      S.removeValNo(SVNI);
+  }
+  LI.removeEmptySubRanges();
+}
