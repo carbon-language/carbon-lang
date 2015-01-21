@@ -254,7 +254,7 @@ bool Resolver::undefinesAdded(int begin, int end) {
   return false;
 }
 
-File *Resolver::getFile(int &index, bool &inGroup) {
+File *Resolver::getFile(int &index) {
   std::vector<std::unique_ptr<Node>> &inputs = _context.getNodes();
   if ((size_t)index >= inputs.size())
     return nullptr;
@@ -265,12 +265,10 @@ File *Resolver::getFile(int &index, bool &inGroup) {
     int size = group->getSize();
     if (undefinesAdded(index - size, index)) {
       index -= size;
-      inGroup = true;
-      return getFile(index, inGroup);
+      return getFile(index);
     }
     ++index;
-    inGroup = false;
-    return getFile(index, inGroup);
+    return getFile(index);
   }
   return cast<FileNode>(inputs[index++].get())->getFile();
 }
@@ -290,10 +288,10 @@ void Resolver::makePreloadArchiveMap() {
 bool Resolver::resolveUndefines() {
   ScopedTask task(getDefaultDomain(), "resolveUndefines");
   int index = 0;
-  bool inGroup = false;
+  std::set<File *> seen;
   for (;;) {
     bool undefAdded = false;
-    File *file = getFile(index, inGroup);
+    File *file = getFile(index);
     if (!file)
       return true;
     if (std::error_code ec = file->parse()) {
@@ -304,8 +302,12 @@ bool Resolver::resolveUndefines() {
     file->beforeLink();
     switch (file->kind()) {
     case File::kindObject:
-      if (inGroup)
+      // The same file may be visited more than once if the file is
+      // in --start-group and --end-group. Only library files should
+      // be processed more than once.
+      if (seen.count(file))
         break;
+      seen.insert(file);
       assert(!file->hasOrdinal());
       file->setOrdinal(_context.getNextOrdinalAndIncrement());
       undefAdded = handleFile(*file);
