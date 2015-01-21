@@ -1,11 +1,8 @@
 // RUN: %clang_tsan -O1 %s -o %t && %run %t 2>&1 | FileCheck %s
-#include <pthread.h>
-#include <stdio.h>
-#include <stdlib.h>
+#include "test.h"
 #include <signal.h>
 #include <sys/types.h>
 #include <sys/time.h>
-#include <unistd.h>
 #include <errno.h>
 
 volatile int X;
@@ -18,7 +15,7 @@ static void handler(int sig) {
 
 static void* thr(void *p) {
   for (int i = 0; i != 1000; i++)
-    usleep(1000);
+    usleep(1000);  // process signals
   return 0;
 }
 

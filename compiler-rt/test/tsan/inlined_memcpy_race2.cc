@@ -1,24 +1,23 @@
 // RUN: %clangxx_tsan -O1 %s -o %t && %deflake %run %t | FileCheck %s
-#include <pthread.h>
-#include <stddef.h>
-#include <stdio.h>
+#include "test.h"
 #include <string.h>
-#include <unistd.h>
 
 int y[4], z[4];
 
 void *MemMoveThread(void *a) {
   memmove((int*)a, z, 16);
+  barrier_wait(&barrier);
   return NULL;
 }
 
 void *MemSetThread(void *a) {
-  sleep(1);
+  barrier_wait(&barrier);
   memset((int*)a, 0, 16);
   return NULL;
 }
 
 int main() {
+  barrier_init(&barrier, 2);
   pthread_t t[2];
   // Race on y between memmove and memset
   pthread_create(&t[0], NULL, MemMoveThread, y);

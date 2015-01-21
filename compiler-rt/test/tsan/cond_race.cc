@@ -3,10 +3,7 @@
 // CHECK: ThreadSanitizer: data race
 // CHECK: pthread_cond_signal
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <pthread.h>
-#include <unistd.h>
+#include "test.h"
 
 struct Ctx {
   pthread_mutex_t m;
@@ -20,10 +17,12 @@ void *thr(void *p) {
   c->done = true;
   pthread_mutex_unlock(&c->m);
   pthread_cond_signal(&c->c);
+  barrier_wait(&barrier);
   return 0;
 }
 
 int main() {
+  barrier_init(&barrier, 2);
   Ctx *c = new Ctx();
   pthread_mutex_init(&c->m, 0);
   pthread_cond_init(&c->c, 0);
@@ -33,8 +32,8 @@ int main() {
   while (!c->done)
     pthread_cond_wait(&c->c, &c->m);
   pthread_mutex_unlock(&c->m);
-  // w/o this sleep, it can be reported as use-after-free
-  sleep(1);
+  // otherwise it can be reported as use-after-free
+  barrier_wait(&barrier);
   delete c;
   pthread_join(th, 0);
 }

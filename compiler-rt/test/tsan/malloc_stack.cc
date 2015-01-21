@@ -1,20 +1,21 @@
 // RUN: %clang_tsan -O1 %s -o %t && %deflake %run %t | FileCheck %s
-#include <pthread.h>
-#include <unistd.h>
+#include "test.h"
 
 _Atomic(int*) p;
 
 void *thr(void *a) {
-  sleep(1);
+  barrier_wait(&barrier);
   int *pp = __c11_atomic_load(&p, __ATOMIC_RELAXED);
   *pp = 42;
   return 0;
 }
 
 int main() {
+  barrier_init(&barrier, 2);
   pthread_t th;
   pthread_create(&th, 0, thr, p);
   __c11_atomic_store(&p, new int, __ATOMIC_RELAXED);
+  barrier_wait(&barrier);
   pthread_join(th, 0);
 }
 

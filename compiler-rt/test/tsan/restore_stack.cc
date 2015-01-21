@@ -1,7 +1,5 @@
 // RUN: %clangxx_tsan -O1 %s -o %t && not %run %t 2>&1 | FileCheck %s
-#include <pthread.h>
-#include <stdio.h>
-#include <unistd.h>
+#include "test.h"
 
 int Global;
 volatile int x;
@@ -17,18 +15,21 @@ void *Thread(void *a) {
   __atomic_store_n(&x, 1, __ATOMIC_RELEASE);
   foo();
   data[0]++;
+  if (a != 0)
+    barrier_wait(&barrier);
   return 0;
 }
 
 int main() {
+  barrier_init(&barrier, 2);
   for (int i = 0; i < 50; i++) {
     pthread_t t;
     pthread_create(&t, 0, Thread, 0);
     pthread_join(t, 0);
   }
   pthread_t t;
-  pthread_create(&t, 0, Thread, 0);
-  sleep(5);
+  pthread_create(&t, 0, Thread, (void*)1);
+  barrier_wait(&barrier);
   for (int i = 0; i < kSize; i++)
     data[i]++;
   pthread_join(t, 0);

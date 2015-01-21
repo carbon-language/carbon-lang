@@ -3,19 +3,13 @@
 // Test case for recursive signal handlers, adopted from:
 // https://code.google.com/p/thread-sanitizer/issues/detail?id=71
 
-#include <pthread.h>
+#include "test.h"
 #include <semaphore.h>
 #include <signal.h>
-#include <unistd.h>
 #include <errno.h>
-#include <stdlib.h>
-#include <stdio.h>
-
-#include "process_sleep.h"
 
 static const int kSigSuspend = SIGUSR1;
 static const int kSigRestart = SIGUSR2;
-static sigset_t g_suspend_handler_mask;
 
 static sem_t g_thread_suspend_ack_sem;
 
@@ -27,7 +21,7 @@ static void SaveRegistersInStack() {
   // Mono walks thread stacks to detect unreferenced objects.
   // If last object reference is kept in register the object will be collected
   // This is why threads can't be suspended with something like pthread_suspend
-};
+}
 
 static void fail(const char *what) {
   fprintf(stderr, "FAILED: %s (errno=%d)\n", what, errno);
@@ -37,15 +31,19 @@ static void fail(const char *what) {
 static void SuspendHandler(int sig) {
   int old_errno = errno;
   SaveRegistersInStack();
+
+  // Enable kSigRestart handling, tsan disables signals around signal handlers.
+  sigset_t sigset;
+  sigemptyset(&sigset);
+  pthread_sigmask(SIG_SETMASK, &sigset, 0);
+
   // Acknowledge that thread is saved and suspended
   if (sem_post(&g_thread_suspend_ack_sem) != 0)
     fail("sem_post failed");
 
-  do {
-    g_busy_thread_received_restart = false;
-    if (sigsuspend(&g_suspend_handler_mask) != -1 || errno != EINTR)
-      fail("sigsuspend failed");
-  } while (!g_busy_thread_received_restart);
+  // Wait for wakeup signal.
+  while (!g_busy_thread_received_restart)
+    usleep(100);  // wait for kSigRestart signal
 
   // Acknowledge that thread restarted
   if (sem_post(&g_thread_suspend_ack_sem) != 0)
@@ -83,21 +81,15 @@ static void StartWorld(pthread_t thread) {
 static void CollectGarbage(pthread_t thread) {
   StopWorld(thread);
   // Walk stacks
-  process_sleep(1);
   StartWorld(thread);
 }
 
 static void Init() {
-  if (sigfillset(&g_suspend_handler_mask) != 0)
-    fail("sigfillset failed");
-  if (sigdelset(&g_suspend_handler_mask, kSigRestart) != 0)
-    fail("sigdelset failed");
   if (sem_init(&g_thread_suspend_ack_sem, 0, 0) != 0)
     fail("sem_init failed");
 
   struct sigaction act = {};
   act.sa_flags = SA_RESTART;
-  sigfillset(&act.sa_mask);
   act.sa_handler = &SuspendHandler;
   if (sigaction(kSigSuspend, &act, NULL) != 0)
     fail("sigaction failed");

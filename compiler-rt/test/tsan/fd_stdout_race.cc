@@ -1,7 +1,5 @@
 // RUN: %clangxx_tsan -O1 %s -o %t && %deflake %run %t | FileCheck %s
-#include <pthread.h>
-#include <stdio.h>
-#include <unistd.h>
+#include "test.h"
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -9,7 +7,7 @@
 int X;
 
 void *Thread1(void *x) {
-  sleep(1);
+  barrier_wait(&barrier);
   int f = open("/dev/random", O_RDONLY);
   char buf;
   read(f, &buf, 1);
@@ -21,10 +19,12 @@ void *Thread1(void *x) {
 void *Thread2(void *x) {
   X = 43;
   write(STDOUT_FILENO, "a", 1);
+  barrier_wait(&barrier);
   return NULL;
 }
 
 int main() {
+  barrier_init(&barrier, 2);
   pthread_t t[2];
   pthread_create(&t[0], NULL, Thread1, NULL);
   pthread_create(&t[1], NULL, Thread2, NULL);

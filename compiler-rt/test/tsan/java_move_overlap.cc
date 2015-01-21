@@ -13,7 +13,7 @@ jptr lockaddr1_new;
 jptr lockaddr2_new;
 
 void *Thread(void *p) {
-  sleep(1);
+  barrier_wait(&barrier);
   __tsan_java_mutex_lock(lockaddr1_new);
   *(char*)varaddr1_new = 43;
   __tsan_java_mutex_unlock(lockaddr1_new);
@@ -24,6 +24,7 @@ void *Thread(void *p) {
 }
 
 int main(int argc, char **argv) {
+  barrier_init(&barrier, 2);
   int const kHeapSize = 1024 * 1024;
   void *jheap = malloc(kHeapSize);
   jheap = (char*)jheap + 8;
@@ -62,6 +63,7 @@ int main(int argc, char **argv) {
   __tsan_java_mutex_unlock(lockaddr2_old);
 
   __tsan_java_move(varaddr1_old, varaddr1_new, kBlockSize);
+  barrier_wait(&barrier);
   pthread_join(th, 0);
   __tsan_java_free(varaddr1_new, kBlockSize);
   printf("DONE\n");

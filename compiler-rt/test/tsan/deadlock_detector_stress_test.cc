@@ -7,12 +7,9 @@
 // RUN: TSAN_OPTIONS=detect_deadlocks=1 %deflake %run %t | FileCheck %s --check-prefix=CHECK --check-prefix=CHECK-RD
 // RUN: %clangxx_tsan %s -o %t -DLockType=PthreadRecursiveMutex
 // RUN: TSAN_OPTIONS=detect_deadlocks=1 %deflake %run %t | FileCheck %s --check-prefix=CHECK --check-prefix=CHECK-REC
-#include <pthread.h>
+#include "test.h"
 #undef NDEBUG
 #include <assert.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <unistd.h>
 #include <new>
 
 #ifndef LockType
@@ -224,7 +221,7 @@ class LockTest {
     fprintf(stderr, "Starting Test5\n");
     // CHECK: Starting Test5
     Init(5);
-    RunThreads(&LockTest::Lock_0_1, &LockTest::Lock_1_0);
+    RunThreads(&LockTest::Lock_0_1<true>, &LockTest::Lock_1_0<true>);
     // CHECK: WARNING: ThreadSanitizer: lock-order-inversion
     // CHECK: Cycle in lock order graph: [[M1:M[0-9]+]] ({{.*}}) => [[M2:M[0-9]+]] ({{.*}}) => [[M1]]
     // CHECK: Mutex [[M2]] acquired here while holding mutex [[M1]] in thread [[T1:T[0-9]+]]
@@ -503,8 +500,21 @@ class LockTest {
 
  private:
   void Lock2(size_t l1, size_t l2) { L(l1); L(l2); U(l2); U(l1); }
-  void Lock_0_1() { Lock2(0, 1); }
-  void Lock_1_0() { sleep(1); Lock2(1, 0); }
+
+  template<bool wait = false>
+  void Lock_0_1() {
+    Lock2(0, 1);
+    if (wait)
+      barrier_wait(&barrier);
+  }
+
+  template<bool wait = false>
+  void Lock_1_0() {
+    if (wait)
+      barrier_wait(&barrier);
+    Lock2(1, 0);
+  }
+
   void Lock1_Loop(size_t i, size_t n_iter) {
     for (size_t it = 0; it < n_iter; it++) {
       // if ((it & (it - 1)) == 0) fprintf(stderr, "%zd", i);
@@ -569,6 +579,7 @@ class LockTest {
 };
 
 int main(int argc, char **argv) {
+  barrier_init(&barrier, 2);
   if (argc > 1)
     test_number = atoi(argv[1]);
   if (argc > 2)

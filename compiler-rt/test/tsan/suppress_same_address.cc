@@ -1,11 +1,10 @@
 // RUN: %clangxx_tsan -O1 %s -o %t && %deflake %run %t | FileCheck %s
-#include <pthread.h>
-#include <unistd.h>
+#include "test.h"
 
 volatile int X;
 
 void *Thread1(void *x) {
-  sleep(1);
+  barrier_wait(&barrier);
   X = 42;
   X = 66;
   X = 78;
@@ -16,10 +15,12 @@ void *Thread2(void *x) {
   X = 11;
   X = 99;
   X = 73;
+  barrier_wait(&barrier);
   return 0;
 }
 
 int main() {
+  barrier_init(&barrier, 2);
   pthread_t t;
   pthread_create(&t, 0, Thread1, 0);
   Thread2(0);

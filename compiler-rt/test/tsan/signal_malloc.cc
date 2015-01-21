@@ -1,9 +1,7 @@
 // RUN: %clang_tsan -O1 %s -o %t && %deflake %run %t | FileCheck %s
-#include <stdio.h>
-#include <stdlib.h>
+#include "test.h"
 #include <signal.h>
 #include <sys/types.h>
-#include <unistd.h>
 
 static void handler(int, siginfo_t*, void*) {
   // CHECK: WARNING: ThreadSanitizer: signal-unsafe call inside of a signal
@@ -20,7 +18,7 @@ int main() {
   act.sa_sigaction = &handler;
   sigaction(SIGPROF, &act, 0);
   kill(getpid(), SIGPROF);
-  sleep(1);
+  sleep(1);  // let the signal handler run
   return 0;
 }
 

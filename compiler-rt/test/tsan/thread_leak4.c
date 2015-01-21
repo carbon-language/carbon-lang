@@ -1,18 +1,18 @@
 // RUN: %clang_tsan -O1 %s -o %t && %run %t 2>&1 | FileCheck %s
-#include <pthread.h>
-#include <unistd.h>
-#include <stdio.h>
+#include "test.h"
 
 void *Thread(void *x) {
-  sleep(10);
+  sleep(100);  // leave the thread "running"
   return 0;
 }
 
 int main() {
   pthread_t t;
   pthread_create(&t, 0, Thread, 0);
-  printf("OK\n");
+  printf("DONE\n");
   return 0;
 }
 
+// CHECK: DONE
 // CHECK-NOT: WARNING: ThreadSanitizer: thread leak
+

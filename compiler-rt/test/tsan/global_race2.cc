@@ -1,24 +1,23 @@
 // RUN: %clangxx_tsan -O1 %s -o %t && %deflake %run %t | FileCheck %s
-#include <pthread.h>
-#include <stdio.h>
-#include <stddef.h>
-#include <unistd.h>
+#include "test.h"
 
 int x;
 
 void *Thread(void *a) {
-  sleep(1);
+  barrier_wait(&barrier);
   x = 1;
   return 0;
 }
 
 int main() {
+  barrier_init(&barrier, 2);
   // On FreeBSD, the %p conversion specifier works as 0x%x and thus does not
   // match to the format used in the diagnotic message.
   fprintf(stderr, "addr2=0x%012lx\n", (unsigned long) &x);
   pthread_t t;
   pthread_create(&t, 0, Thread, 0);
   x = 0;
+  barrier_wait(&barrier);
   pthread_join(t, 0);
 }
 

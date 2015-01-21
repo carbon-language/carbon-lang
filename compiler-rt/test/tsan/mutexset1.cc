@@ -1,13 +1,11 @@
 // RUN: %clangxx_tsan -O1 %s -o %t && %deflake %run %t | FileCheck %s
-#include <pthread.h>
-#include <stdio.h>
-#include <unistd.h>
+#include "test.h"
 
 int Global;
 pthread_mutex_t mtx;
 
 void *Thread1(void *x) {
-  sleep(1);
+  barrier_wait(&barrier);
   pthread_mutex_lock(&mtx);
   Global++;
   pthread_mutex_unlock(&mtx);
@@ -16,10 +14,12 @@ void *Thread1(void *x) {
 
 void *Thread2(void *x) {
   Global--;
+  barrier_wait(&barrier);
   return NULL;
 }
 
 int main() {
+  barrier_init(&barrier, 2);
   // CHECK: WARNING: ThreadSanitizer: data race
   // CHECK:   Write of size 4 at {{.*}} by thread T1
   // CHECK:                         (mutexes: write [[M1:M[0-9]+]]):

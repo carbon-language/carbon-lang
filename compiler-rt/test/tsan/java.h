@@ -1,7 +1,4 @@
-#include <pthread.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <unistd.h>
+#include "test.h"
 
 extern "C" {
 typedef unsigned long jptr;  // NOLINT

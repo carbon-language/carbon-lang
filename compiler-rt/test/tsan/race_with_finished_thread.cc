@@ -1,9 +1,5 @@
 // RUN: %clangxx_tsan -O1 %s -o %t && %deflake %run %t | FileCheck %s
-#include <pthread.h>
-#include <stddef.h>
-#include <stdio.h>
-#include <string.h>
-#include <unistd.h>
+#include "test.h"
 
 // Ensure that we can restore a stack of a finished thread.
 
@@ -15,16 +11,19 @@ void __attribute__((noinline)) foobar(int *p) {
 
 void *Thread1(void *x) {
   foobar(&g_data);
+  barrier_wait(&barrier);
   return NULL;
 }
 
 void *Thread2(void *x) {
-  sleep(1);
+  barrier_wait(&barrier);
+  sleep(1); // let the thread finish and exit
   g_data = 43;
   return NULL;
 }
 
 int main() {
+  barrier_init(&barrier, 2);
   pthread_t t[2];
   pthread_create(&t[0], NULL, Thread1, NULL);
   pthread_create(&t[1], NULL, Thread2, NULL);

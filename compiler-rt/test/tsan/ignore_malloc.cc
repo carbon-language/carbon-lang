@@ -1,8 +1,5 @@
 // RUN: %clang_tsan -O1 %s -o %t && %run %t 2>&1 | FileCheck %s
-#include <pthread.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <unistd.h>
+#include "test.h"
 
 extern "C" {
 void AnnotateIgnoreReadsBegin(const char *f, int l);
@@ -16,7 +13,7 @@ int *g;
 void *Thread(void *a) {
   int *p = 0;
   while ((p = __atomic_load_n(&g, __ATOMIC_RELAXED)) == 0)
-    usleep(100);
+    usleep(100);  // spin-wait
   *p = 42;
   return 0;
 }

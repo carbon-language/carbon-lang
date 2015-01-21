@@ -1,19 +1,19 @@
 // RUN: %clangxx_tsan -O1 %s -o %t && %run %t 2>&1 | FileCheck %s
 #include "java.h"
-#include <unistd.h>
 
 jptr varaddr;
 jptr lockaddr;
 
 void *Thread(void *p) {
   while (__atomic_load_n((int*)lockaddr, __ATOMIC_RELAXED) == 0)
-    usleep(1000);
+    usleep(1000);  // spin-wait
   __tsan_java_acquire(lockaddr);
   *(int*)varaddr = 42;
   return 0;
 }
 
 int main() {
+  barrier_init(&barrier, 2);
   int const kHeapSize = 1024 * 1024;
   jptr jheap = (jptr)malloc(kHeapSize + 8) + 8;
   __tsan_java_init(jheap, kHeapSize);

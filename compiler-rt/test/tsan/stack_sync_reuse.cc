@@ -1,8 +1,5 @@
 // RUN: %clang_tsan -O1 %s -o %t && %run %t 2>&1 | FileCheck %s
-#include <pthread.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
+#include "test.h"
 
 // Test case https://code.google.com/p/thread-sanitizer/issues/detail?id=87
 // Tsan sees false HB edge on address pointed to by syncp variable.
@@ -26,7 +23,7 @@ long sink;
 
 void *Thread(void *x) {
   while (__atomic_load_n(&syncp, __ATOMIC_ACQUIRE) == 0)
-    usleep(1000);
+    usleep(1000);  // spin wait
   global = 42;
   __atomic_store_n(syncp, 1, __ATOMIC_RELEASE);
   __atomic_store_n(&syncp, 0, __ATOMIC_RELAXED);
@@ -39,7 +36,7 @@ void __attribute__((noinline)) foobar() {
   __atomic_store_n(&s, 0, __ATOMIC_RELAXED);
   __atomic_store_n(&syncp, &s, __ATOMIC_RELEASE);
   while (__atomic_load_n(&syncp, __ATOMIC_RELAXED) != 0)
-    usleep(1000);
+    usleep(1000);  // spin wait
 }
 
 void __attribute__((noinline)) barfoo() {

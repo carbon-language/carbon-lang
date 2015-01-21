@@ -1,7 +1,5 @@
 // RUN: %clangxx_tsan -O1 %s -o %t && %deflake %run %t | FileCheck %s
-#include <pthread.h>
-#include <unistd.h>
-#include <stdio.h>
+#include "test.h"
 
 const int kTestCount = 4;
 typedef long long T;
@@ -36,7 +34,8 @@ void *Thread(void *p) {
   for (int i = 0; i < kTestCount; i++) {
     Test(i, &atomics[i], false);
   }
-  sleep(4);
+  barrier_wait(&barrier);
+  barrier_wait(&barrier);
   for (int i = 0; i < kTestCount; i++) {
     fprintf(stderr, "Test %d reverse\n", i);
     Test(i, &atomics[kTestCount + i], false);
@@ -45,9 +44,10 @@ void *Thread(void *p) {
 }
 
 int main() {
+  barrier_init(&barrier, 2);
   pthread_t t;
   pthread_create(&t, 0, Thread, 0);
-  sleep(1);
+  barrier_wait(&barrier);
   for (int i = 0; i < kTestCount; i++) {
     fprintf(stderr, "Test %d\n", i);
     Test(i, &atomics[i], true);
@@ -55,6 +55,7 @@ int main() {
   for (int i = 0; i < kTestCount; i++) {
     Test(i, &atomics[kTestCount + i], true);
   }
+  barrier_wait(&barrier);
   pthread_join(t, 0);
 }
 

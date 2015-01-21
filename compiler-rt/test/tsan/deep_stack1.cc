@@ -1,8 +1,6 @@
 // RUN: %clangxx_tsan -O1 %s -o %t -DORDER1 && %deflake %run %t | FileCheck %s
 // RUN: %clangxx_tsan -O1 %s -o %t -DORDER2 && %deflake %run %t | FileCheck %s
-#include <pthread.h>
-#include <stdio.h>
-#include <unistd.h>
+#include "test.h"
 
 volatile int X;
 volatile int N;
@@ -17,13 +15,17 @@ static void foo() {
 
 void *Thread(void *p) {
 #ifdef ORDER1
-  sleep(1);
+  barrier_wait(&barrier);
 #endif
   F();
+#ifdef ORDER2
+  barrier_wait(&barrier);
+#endif
   return 0;
 }
 
 int main() {
+  barrier_init(&barrier, 2);
   N = 50000;
   F = foo;
   pthread_t t;
@@ -32,9 +34,13 @@ int main() {
   pthread_attr_setstacksize(&a, N * 256 + (1 << 20));
   pthread_create(&t, &a, Thread, 0);
 #ifdef ORDER2
-  sleep(1);
+  barrier_wait(&barrier);
 #endif
   X = 43;
+#ifdef ORDER1
+  barrier_wait(&barrier);
+#endif
+
   pthread_join(t, 0);
 }
 

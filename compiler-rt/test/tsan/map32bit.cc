@@ -1,9 +1,6 @@
 // RUN: %clangxx_tsan -O1 %s -o %t && %deflake %run %t 2>&1 | FileCheck %s
-#include <pthread.h>
-#include <stdio.h>
-#include <stddef.h>
+#include "test.h"
 #include <stdint.h>
-#include <unistd.h>
 #include <errno.h>
 #include <sys/mman.h>
 
@@ -12,10 +9,12 @@
 
 void *Thread(void *ptr) {
   *(int*)ptr = 42;
+  barrier_wait(&barrier);
   return 0;
 }
 
 int main() {
+  barrier_init(&barrier, 2);
   void *ptr = mmap(0, 128 << 10, PROT_READ|PROT_WRITE,
       MAP_32BIT|MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
   fprintf(stderr, "ptr=%p\n", ptr);
@@ -29,7 +28,7 @@ int main() {
   }
   pthread_t t;
   pthread_create(&t, 0, Thread, ptr);
-  sleep(1);
+  barrier_wait(&barrier);
   *(int*)ptr = 42;
   pthread_join(t, 0);
   munmap(ptr, 128 << 10);

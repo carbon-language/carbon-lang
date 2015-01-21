@@ -1,6 +1,5 @@
 // RUN: %clangxx_tsan -O1 %s -o %t && %run %t 2>&1 | FileCheck %s
 #include "java.h"
-#include <unistd.h>
 
 jptr varaddr;
 jptr lockaddr;
@@ -14,7 +13,8 @@ void *Thread(void *p) {
     printf("FAILED 0 rec=%d\n", rec);
     exit(1);
   }
-  sleep(2);
+  barrier_wait(&barrier);
+  barrier_wait(&barrier);
   __tsan_java_mutex_lock_rec(lockaddr, rec);
   if (*(int*)varaddr != 43) {
     printf("FAILED 3 var=%d\n", *(int*)varaddr);
@@ -26,6 +26,7 @@ void *Thread(void *p) {
 }
 
 int main() {
+  barrier_init(&barrier, 2);
   int const kHeapSize = 1024 * 1024;
   jptr jheap = (jptr)malloc(kHeapSize + 8) + 8;
   __tsan_java_init(jheap, kHeapSize);
@@ -36,7 +37,7 @@ int main() {
   lockaddr = jheap + 8;
   pthread_t th;
   pthread_create(&th, 0, Thread, 0);
-  sleep(1);
+  barrier_wait(&barrier);
   __tsan_java_mutex_lock(lockaddr);
   if (*(int*)varaddr != 42) {
     printf("FAILED 1 var=%d\n", *(int*)varaddr);
@@ -44,6 +45,7 @@ int main() {
   }
   *(int*)varaddr = 43;
   __tsan_java_mutex_unlock(lockaddr);
+  barrier_wait(&barrier);
   pthread_join(th, 0);
   __tsan_java_free(jheap, kBlockSize);
   printf("DONE\n");

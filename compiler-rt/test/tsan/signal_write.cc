@@ -16,7 +16,7 @@ int main() {
   act.sa_sigaction = &handler;
   sigaction(SIGPROF, &act, 0);
   kill(getpid(), SIGPROF);
-  sleep(1);
+  sleep(1);  // let the signal handler run, can't use barrier in sig handler
   fprintf(stderr, "DONE\n");
   return 0;
 }

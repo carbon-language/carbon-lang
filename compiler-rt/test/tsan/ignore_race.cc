@@ -1,7 +1,5 @@
 // RUN: %clang_tsan -O1 %s -o %t && %run %t 2>&1 | FileCheck %s
-#include <pthread.h>
-#include <stdio.h>
-#include <unistd.h>
+#include "test.h"
 
 int Global;
 
@@ -16,13 +14,15 @@ void *Thread(void *x) {
   Global = 42;
   AnnotateIgnoreReadsEnd(__FILE__, __LINE__);
   AnnotateIgnoreWritesEnd(__FILE__, __LINE__);
+  barrier_wait(&barrier);
   return 0;
 }
 
 int main() {
+  barrier_init(&barrier, 2);
   pthread_t t;
   pthread_create(&t, 0, Thread, 0);
-  sleep(1);
+  barrier_wait(&barrier);
   Global = 43;
   pthread_join(t, 0);
   printf("OK\n");

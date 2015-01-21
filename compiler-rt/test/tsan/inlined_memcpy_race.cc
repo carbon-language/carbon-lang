@@ -1,24 +1,23 @@
 // RUN: %clangxx_tsan -O1 %s -o %t && %deflake %run %t | FileCheck %s
-#include <pthread.h>
-#include <stddef.h>
-#include <stdio.h>
+#include "test.h"
 #include <string.h>
-#include <unistd.h>
 
 int x[4], z[4];
 
 void *MemCpyThread(void *a) {
   memcpy((int*)a, z, 16);
+  barrier_wait(&barrier);
   return NULL;
 }
 
 void *MemSetThread(void *a) {
-  sleep(1);
+  barrier_wait(&barrier);
   memset((int*)a, 0, 16);
   return NULL;
 }
 
 int main() {
+  barrier_init(&barrier, 2);
   pthread_t t[2];
   // Race on x between memcpy and memset
   pthread_create(&t[0], NULL, MemCpyThread, x);

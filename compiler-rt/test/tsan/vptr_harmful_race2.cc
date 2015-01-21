@@ -1,8 +1,6 @@
 // RUN: %clangxx_tsan -O1 %s -o %t && %deflake %run %t | FileCheck %s
-#include <pthread.h>
+#include "test.h"
 #include <semaphore.h>
-#include <stdio.h>
-#include <unistd.h>
 
 struct A {
   A() {
@@ -29,18 +27,20 @@ struct B : A {
 static A *obj = new B;
 
 void *Thread1(void *x) {
-  sleep(1);
   obj->F();
+  barrier_wait(&barrier);
   obj->Done();
   return NULL;
 }
 
 void *Thread2(void *x) {
+  barrier_wait(&barrier);
   delete obj;
   return NULL;
 }
 
 int main() {
+  barrier_init(&barrier, 2);
   pthread_t t[2];
   pthread_create(&t[0], NULL, Thread1, NULL);
   pthread_create(&t[1], NULL, Thread2, NULL);

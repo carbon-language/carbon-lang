@@ -1,19 +1,21 @@
 // RUN: %clangxx_tsan -O1 %s -o %t && %run %t 2>&1 | FileCheck %s -check-prefix=CHECK-DIE
 // RUN: %clangxx_tsan -O1 %s -o %t && TSAN_OPTIONS="die_after_fork=0" %run %t 2>&1 | FileCheck %s -check-prefix=CHECK-NODIE
-#include <stdlib.h>
-#include <stdio.h>
+#include "test.h"
 #include <errno.h>
-#include <pthread.h>
-#include <unistd.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 
 static void *sleeper(void *p) {
-  sleep(10);
+  sleep(10);  // not intended to exit during test
+  return 0;
+}
+
+static void *nop(void *p) {
   return 0;
 }
 
 int main() {
+  barrier_init(&barrier, 2);
   pthread_t th;
   pthread_create(&th, 0, sleeper, 0);
   switch (fork()) {
@@ -23,7 +25,7 @@ int main() {
   case 0:  // child
     {
       pthread_t th2;
-      pthread_create(&th2, 0, sleeper, 0);
+      pthread_create(&th2, 0, nop, 0);
       exit(0);
       break;
     }

@@ -1,7 +1,5 @@
 // RUN: %clangxx_tsan -O1 %s -o %t && %deflake %run %t | FileCheck %s
-#include <pthread.h>
-#include <stdio.h>
-#include <unistd.h>
+#include "test.h"
 
 struct A {
   virtual void F() {
@@ -17,16 +15,18 @@ struct B : A {
 };
 
 void *Thread(void *x) {
-  sleep(1);
+  barrier_wait(&barrier);
   ((A*)x)->F();
   return 0;
 }
 
 int main() {
+  barrier_init(&barrier, 2);
   A *obj = new B;
   pthread_t t;
   pthread_create(&t, 0, Thread, obj);
   delete obj;
+  barrier_wait(&barrier);
   pthread_join(t, 0);
 }
 
