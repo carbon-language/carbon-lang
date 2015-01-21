@@ -256,15 +256,8 @@ void LiveRangeEdit::eliminateDeadDef(MachineInstr *MI, ToShrinkSet &ToShrink) {
       // Check if MI reads any unreserved physregs.
       if (Reg && MOI->readsReg() && !MRI.isReserved(Reg))
         ReadsPhysRegs = true;
-      else if (MOI->isDef()) {
-        for (MCRegUnitIterator Units(Reg, MRI.getTargetRegisterInfo());
-             Units.isValid(); ++Units) {
-          if (LiveRange *LR = LIS.getCachedRegUnit(*Units)) {
-            if (VNInfo *VNI = LR->getVNInfoAt(Idx))
-              LR->removeValNo(VNI);
-          }
-        }
-      }
+      else if (MOI->isDef())
+        LIS.removePhysRegDefAt(Reg, Idx);
       continue;
     }
     LiveInterval &LI = LIS.getInterval(Reg);

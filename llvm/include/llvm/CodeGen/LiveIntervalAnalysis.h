@@ -393,6 +393,8 @@ namespace llvm {
       return RegUnitRanges[Unit];
     }
 
+    void removePhysRegDefAt(unsigned Reg, SlotIndex Pos);
+
   private:
     /// Compute live intervals for all virtual registers.
     void computeVirtRegs();

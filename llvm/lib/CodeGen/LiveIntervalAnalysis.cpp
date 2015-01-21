@@ -1367,3 +1367,11 @@ LiveIntervals::repairIntervalsInRange(MachineBasicBlock *MBB,
     repairOldRegInRange(Begin, End, endIdx, LI, Reg);
   }
 }
+
+void LiveIntervals::removePhysRegDefAt(unsigned Reg, SlotIndex Pos) {
+  for (MCRegUnitIterator Units(Reg, TRI); Units.isValid(); ++Units) {
+    if (LiveRange *LR = getCachedRegUnit(*Units))
+      if (VNInfo *VNI = LR->getVNInfoAt(Pos))
+        LR->removeValNo(VNI);
+  }
+}

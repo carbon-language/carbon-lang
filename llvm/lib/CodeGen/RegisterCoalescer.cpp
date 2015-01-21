@@ -1463,17 +1463,13 @@ bool RegisterCoalescer::joinReservedPhysReg(CoalescerPair &CP) {
 
     // We're going to remove the copy which defines a physical reserved
     // register, so remove its valno, etc.
+    DEBUG(dbgs() << "\t\tRemoving phys reg def of " << DstReg << " at "
+          << CopyRegIdx << "\n");
+
+    LIS->removePhysRegDefAt(DstReg, CopyRegIdx);
+    // Create a new dead def at the new def location.
     for (MCRegUnitIterator UI(DstReg, TRI); UI.isValid(); ++UI) {
       LiveRange &LR = LIS->getRegUnit(*UI);
-      VNInfo *OrigRegVNI = LR.getVNInfoAt(CopyRegIdx);
-      if (!OrigRegVNI)
-        continue;
-
-      DEBUG(dbgs() << "\t\tRemoving: " << CopyRegIdx << " from " << LR << "\n");
-      LR.removeSegment(CopyRegIdx, CopyRegIdx.getDeadSlot());
-      LR.removeValNo(OrigRegVNI);
-
-      // Create a new dead def at the new def location.
       LR.createDeadDef(DestRegIdx, LIS->getVNInfoAllocator());
     }
   }
