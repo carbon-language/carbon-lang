@@ -270,15 +270,7 @@ static void PrintVersion() {
 int main(int argc, const char **argv) {
   llvm::sys::PrintStackTraceOnErrorSignal();
 
-  // Hide unrelated options.
-  StringMap<cl::Option*> Options;
-  cl::getRegisteredOptions(Options);
-  for (StringMap<cl::Option *>::iterator I = Options.begin(), E = Options.end();
-       I != E; ++I) {
-    if (I->second->Category != &ClangFormatCategory && I->first() != "help" &&
-        I->first() != "version")
-      I->second->setHiddenFlag(cl::ReallyHidden);
-  }
+  cl::HideUnrelatedOptions(ClangFormatCategory);
 
   cl::SetVersionPrinter(PrintVersion);
   cl::ParseCommandLineOptions(
