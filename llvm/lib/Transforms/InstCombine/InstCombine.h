@@ -22,7 +22,6 @@
 #include "llvm/IR/Operator.h"
 #include "llvm/IR/PatternMatch.h"
 #include "llvm/Pass.h"
-#include "llvm/Transforms/Utils/SimplifyLibCalls.h"
 
 #define DEBUG_TYPE "instcombine"
 
@@ -111,7 +110,6 @@ class LLVM_LIBRARY_VISIBILITY InstCombiner
   DominatorTree *DT;
   LoopInfo *LI;
   bool MadeIRChange;
-  LibCallSimplifier *Simplifier;
   bool MinimizeSize;
 
 public:

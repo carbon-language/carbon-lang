@@ -2943,12 +2943,6 @@ bool InstCombiner::run(Function &F, AssumptionCache *AC, const DataLayout *DL,
       F.getContext(), TargetFolder(DL), InstCombineIRInserter(Worklist, AC));
   Builder = &TheBuilder;
 
-  auto InstCombineRAUW = [this](Instruction *From, Value *With) {
-    ReplaceInstUsesWith(*From, With);
-  };
-  LibCallSimplifier TheSimplifier(DL, TLI, InstCombineRAUW);
-  Simplifier = &TheSimplifier;
-
   bool EverMadeChange = false;
 
   // Lower dbg.declare intrinsics otherwise their value may be clobbered

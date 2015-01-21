@@ -21,6 +21,7 @@
 #include "llvm/IR/Statepoint.h"
 #include "llvm/Transforms/Utils/BuildLibCalls.h"
 #include "llvm/Transforms/Utils/Local.h"
+#include "llvm/Transforms/Utils/SimplifyLibCalls.h"
 using namespace llvm;
 using namespace PatternMatch;
 
@@ -1184,7 +1185,11 @@ static bool isSafeToEliminateVarargsCast(const CallSite CS,
 Instruction *InstCombiner::tryOptimizeCall(CallInst *CI, const DataLayout *DL) {
   if (!CI->getCalledFunction()) return nullptr;
 
-  if (Value *With = Simplifier->optimizeCall(CI)) {
+  auto InstCombineRAUW = [this](Instruction *From, Value *With) {
+    ReplaceInstUsesWith(*From, With);
+  };
+  LibCallSimplifier Simplifier(DL, TLI, InstCombineRAUW);
+  if (Value *With = Simplifier.optimizeCall(CI)) {
     ++NumSimplified;
     return CI->use_empty() ? CI : ReplaceInstUsesWith(*CI, With);
   }
