@@ -79,6 +79,20 @@ void DecodeMOVSHDUPMask(MVT VT, SmallVectorImpl<int> &ShuffleMask) {
   }
 }
 
+void DecodeMOVDDUPMask(MVT VT, SmallVectorImpl<int> &ShuffleMask) {
+  unsigned VectorSizeInBits = VT.getSizeInBits();
+  unsigned ScalarSizeInBits = VT.getScalarSizeInBits();
+  unsigned NumElts = VT.getVectorNumElements();
+  unsigned NumLanes = VectorSizeInBits / 128;
+  unsigned NumLaneElts = NumElts / NumLanes;
+  unsigned NumLaneSubElts = 64 / ScalarSizeInBits;
+
+  for (unsigned l = 0; l < NumElts; l += NumLaneElts)
+    for (unsigned i = 0; i < NumLaneElts; i += NumLaneSubElts)
+      for (unsigned s = 0; s != NumLaneSubElts; s++)
+        ShuffleMask.push_back(l + s);
+}
+
 void DecodePSLLDQMask(MVT VT, unsigned Imm, SmallVectorImpl<int> &ShuffleMask) {
   unsigned VectorSizeInBits = VT.getSizeInBits();
   unsigned NumElts = VectorSizeInBits / 8;

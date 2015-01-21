@@ -203,6 +203,24 @@ bool llvm::EmitAnyX86InstComments(const MCInst *MI, raw_ostream &OS,
     DecodeMOVSHDUPMask(MVT::v4f32, ShuffleMask);
     break;
 
+  case X86::VMOVDDUPYrr:
+    Src1Name = getRegName(MI->getOperand(1).getReg());
+    // FALL THROUGH.
+  case X86::VMOVDDUPYrm:
+    DestName = getRegName(MI->getOperand(0).getReg());
+    DecodeMOVDDUPMask(MVT::v4f64, ShuffleMask);
+    break;
+
+  case X86::MOVDDUPrr:
+  case X86::VMOVDDUPrr:
+    Src1Name = getRegName(MI->getOperand(1).getReg());
+    // FALL THROUGH.
+  case X86::MOVDDUPrm:
+  case X86::VMOVDDUPrm:
+    DestName = getRegName(MI->getOperand(0).getReg());
+    DecodeMOVDDUPMask(MVT::v2f64, ShuffleMask);
+    break;
+
   case X86::PSLLDQri:
   case X86::VPSLLDQri:
     Src1Name = getRegName(MI->getOperand(1).getReg());

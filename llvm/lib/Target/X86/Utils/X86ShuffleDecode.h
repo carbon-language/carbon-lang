@@ -40,6 +40,8 @@ void DecodeMOVSLDUPMask(MVT VT, SmallVectorImpl<int> &ShuffleMask);
 
 void DecodeMOVSHDUPMask(MVT VT, SmallVectorImpl<int> &ShuffleMask);
 
+void DecodeMOVDDUPMask(MVT VT, SmallVectorImpl<int> &ShuffleMask);
+
 void DecodePSLLDQMask(MVT VT, unsigned Imm, SmallVectorImpl<int> &ShuffleMask);
 
 void DecodePSRLDQMask(MVT VT, unsigned Imm, SmallVectorImpl<int> &ShuffleMask);
