@@ -41,6 +41,10 @@ typedef __UINTPTR_TYPE__ uintptr_t;
 typedef __SIZE_TYPE__ size_t;
 typedef __PTRDIFF_TYPE__ ptrdiff_t;
 typedef unsigned short unichar;
+extern "C"
+{
+    int printf(const char * __restrict, ...);
+}
 )";
 
 
