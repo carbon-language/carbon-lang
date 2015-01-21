@@ -53,6 +53,10 @@
 # CHECK-EL: nop                     # encoding: [0x00,0x00,0x00,0x00]
 # CHECK-EL: bnez16 $6, 20           # encoding: [0x0a,0xaf]
 # CHECK-EL: nop                     # encoding: [0x00,0x00,0x00,0x00]
+# CHECK-EL: b16 132                 # encoding: [0x42,0xcc]
+# CHECK-EL: nop
+# CHECK-EL: b16 132                 # encoding: [0x42,0xcc]
+# CHECK-EL: nop
 # CHECK-EL: break16 8               # encoding: [0x88,0x46]
 # CHECK-EL: sdbbp16 14              # encoding: [0xce,0x46]
 #------------------------------------------------------------------------------
@@ -102,6 +106,10 @@
 # CHECK-EB: nop                     # encoding: [0x00,0x00,0x00,0x00]
 # CHECK-EB: bnez16 $6, 20           # encoding: [0xaf,0x0a]
 # CHECK-EB: nop                     # encoding: [0x00,0x00,0x00,0x00]
+# CHECK-EB: b16 132                 # encoding: [0xcc,0x42]
+# CHECK-EB: nop
+# CHECK-EB: b16 132                 # encoding: [0xcc,0x42]
+# CHECK-EB: nop
 # CHECK-EB: break16 8               # encoding: [0x46,0x88]
 # CHECK-EB: sdbbp16 14              # encoding: [0x46,0xce]
 
@@ -145,5 +153,7 @@
     jr16    $9
     beqz16 $6, 20
     bnez16 $6, 20
+    b   132
+    b16 132
     break16 8
     sdbbp16 14

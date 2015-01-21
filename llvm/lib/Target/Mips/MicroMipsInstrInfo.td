@@ -135,10 +135,18 @@ def brtarget7_mm : Operand<OtherVT> {
   let ParserMatchClass = MipsJumpTargetAsmOperand;
 }
 
+def brtarget10_mm : Operand<OtherVT> {
+  let EncoderMethod = "getBranchTargetOpValueMMPC10";
+  let OperandType   = "OPERAND_PCREL";
+  let DecoderMethod = "DecodeBranchTarget10MM";
+  let ParserMatchClass = MipsJumpTargetAsmOperand;
+}
+
 def brtarget_mm : Operand<OtherVT> {
   let EncoderMethod = "getBranchTargetOpValueMM";
   let OperandType   = "OPERAND_PCREL";
   let DecoderMethod = "DecodeBranchTargetMM";
+  let ParserMatchClass = MipsJumpTargetAsmOperand;
 }
 
 def simm23_lsl2 : Operand<i32> {
@@ -490,6 +498,18 @@ class LoadMultMM16<string opstr,
   let mayLoad = 1;
 }
 
+class UncondBranchMM16<string opstr> :
+  MicroMipsInst16<(outs), (ins brtarget10_mm:$offset),
+                  !strconcat(opstr, "\t$offset"),
+                  [], IIBranch, FrmI> {
+  let isBranch = 1;
+  let isTerminator = 1;
+  let isBarrier = 1;
+  let hasDelaySlot = 1;
+  let Predicates = [RelocPIC, InMicroMips];
+  let Defs = [AT];
+}
+
 def ADDU16_MM : ArithRMM16<"addu16", GPRMM16Opnd, 1, II_ADDU, add>,
                 ARITH_FM_MM16<0>;
 def SUBU16_MM : ArithRMM16<"subu16", GPRMM16Opnd, 0, II_SUBU, sub>,
@@ -541,6 +561,7 @@ def BEQZ16_MM : CBranchZeroMM<"beqz16", brtarget7_mm, GPRMM16Opnd>,
                 BEQNEZ_FM_MM16<0x23>;
 def BNEZ16_MM : CBranchZeroMM<"bnez16", brtarget7_mm, GPRMM16Opnd>,
                 BEQNEZ_FM_MM16<0x2b>;
+def B16_MM : UncondBranchMM16<"b16">, B16_FM;
 def BREAK16_MM : BrkSdbbp16MM<"break16">, BRKSDBBP16_FM_MM<0x28>;
 def SDBBP16_MM : BrkSdbbp16MM<"sdbbp16">, BRKSDBBP16_FM_MM<0x2C>;
 
@@ -829,6 +850,12 @@ def : MipsPat<(srl GPR32:$src, immZExt5:$imm),
 //===----------------------------------------------------------------------===//
 // MicroMips instruction aliases
 //===----------------------------------------------------------------------===//
+
+class UncondBranchMMPseudo<string opstr> :
+  MipsAsmPseudoInst<(outs), (ins brtarget_mm:$offset),
+                    !strconcat(opstr, "\t$offset")>;
+
+  def B_MM_Pseudo : UncondBranchMMPseudo<"b">;
 
   def : MipsInstAlias<"wait", (WAIT_MM 0x0), 1>;
   def : MipsInstAlias<"nop", (SLL_MM ZERO, ZERO, 0), 1>;

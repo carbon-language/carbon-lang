@@ -4,7 +4,7 @@
 
 .text
   b foo
-  .space 65536 - 8, 1   # -8 = size of b instr plus size of automatically inserted nop
+  .space 65536 - 6, 1   # -6 = size of b instr plus size of automatically inserted nop
   nop                   # This instr makes the branch too long to fit into a 17-bit offset
 foo:
   add $0,$0,$0
