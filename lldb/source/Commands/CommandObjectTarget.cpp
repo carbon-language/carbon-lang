@@ -160,7 +160,6 @@ public:
                              NULL),
         m_option_group (interpreter),
         m_arch_option (),
-        m_platform_options(true), // Do include the "--platform" option in the platform settings by passing true
         m_core_file (LLDB_OPT_SET_1, false, "core", 'c', 0, eArgTypeFilename, "Fullpath to a core file to use for this target."),
         m_platform_path (LLDB_OPT_SET_1, false, "platform-path", 'P', 0, eArgTypePath, "Path to the remote file to use for this target."),
         m_symbol_file (LLDB_OPT_SET_1, false, "symfile", 's', 0, eArgTypeFilename, "Fullpath to a stand alone debug symbols file for when debug symbols are not in the executable."),
@@ -181,7 +180,6 @@ public:
         m_arguments.push_back (arg);
 
         m_option_group.Append (&m_arch_option, LLDB_OPT_SET_ALL, LLDB_OPT_SET_1);
-        m_option_group.Append (&m_platform_options, LLDB_OPT_SET_ALL, LLDB_OPT_SET_1);
         m_option_group.Append (&m_core_file, LLDB_OPT_SET_ALL, LLDB_OPT_SET_1);
         m_option_group.Append (&m_platform_path, LLDB_OPT_SET_ALL, LLDB_OPT_SET_1);
         m_option_group.Append (&m_symbol_file, LLDB_OPT_SET_ALL, LLDB_OPT_SET_1);
@@ -336,13 +334,13 @@ protected:
 
             TargetSP target_sp;
             const char *arch_cstr = m_arch_option.GetArchitectureName();
+            ArchSpec arch_spec(arch_cstr);
             const bool get_dependent_files = m_add_dependents.GetOptionValue().GetCurrentValue();
             Error error (debugger.GetTargetList().CreateTarget (debugger,
-//                                                                remote_file ? remote_file : file_spec,
                                                                 file_path,
-                                                                arch_cstr,
+                                                                arch_spec,
                                                                 get_dependent_files,
-                                                                &m_platform_options,
+                                                                platform_sp,
                                                                 target_sp));
 
             if (target_sp)
@@ -436,7 +434,6 @@ protected:
 private:
     OptionGroupOptions m_option_group;
     OptionGroupArchitecture m_arch_option;
-    OptionGroupPlatform m_platform_options;
     OptionGroupFile m_core_file;
     OptionGroupFile m_platform_path;
     OptionGroupFile m_symbol_file;

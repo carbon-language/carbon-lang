@@ -126,7 +126,11 @@ TargetList::CreateTargetInternal (Debugger &debugger,
     bool prefer_platform_arch = false;
     
     CommandInterpreter &interpreter = debugger.GetCommandInterpreter();
-    if (platform_options && platform_options->PlatformWasSpecified ())
+
+    // let's see if there is already an existing plaform before we go creating another...
+    platform_sp = debugger.GetPlatformList().GetSelectedPlatform();
+
+    if (!platform_sp && platform_options && platform_options->PlatformWasSpecified ())
     {
         const bool select_platform = true;
         platform_sp = platform_options->CreatePlatformWithOptions (interpreter,

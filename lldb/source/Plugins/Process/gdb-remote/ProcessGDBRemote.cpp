@@ -973,9 +973,12 @@ ProcessGDBRemote::ConnectToDebugserver (const char *connect_url)
 {
     Error error;
     // Only connect if we have a valid connect URL
+    Log *log(ProcessGDBRemoteLog::GetLogIfAllCategoriesSet(GDBR_LOG_PROCESS));
     
     if (connect_url && connect_url[0])
     {
+        if (log)
+            log->Printf("ProcessGDBRemote::%s Connecting to %s", __FUNCTION__, connect_url);
         std::unique_ptr<ConnectionFileDescriptor> conn_ap(new ConnectionFileDescriptor());
         if (conn_ap.get())
         {

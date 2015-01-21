@@ -212,6 +212,7 @@ public:
 protected:
     GDBRemoteCommunicationClient m_gdb_client;
     std::string m_platform_description; // After we connect we can get a more complete description of what we are connected to
+    std::string m_platform_hostname;
 
 private:
     DISALLOW_COPY_AND_ASSIGN (PlatformRemoteGDBServer);

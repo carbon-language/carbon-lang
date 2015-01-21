@@ -2850,7 +2850,11 @@ GDBRemoteCommunicationClient::LaunchGDBserverAndGetPort (lldb::pid_t &pid, const
     const char *packet = stream.GetData();
     int packet_len = stream.GetSize();
 
-    if (SendPacketAndWaitForResponse(packet, packet_len, response, false) == PacketResult::Success)
+    // give the process a few seconds to startup
+    const uint32_t old_packet_timeout = SetPacketTimeout (10);
+    auto result = SendPacketAndWaitForResponse(packet, packet_len, response, false);
+    SetPacketTimeout (old_packet_timeout);
+    if (result == PacketResult::Success)
     {
         std::string name;
         std::string value;

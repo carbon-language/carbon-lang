@@ -428,7 +428,7 @@ ConnectToRemote (GDBRemoteCommunicationServer &gdb_server, bool reverse_connect,
             // Ensure we connected.
             if (s_listen_connection_up)
             {
-                printf ("Connection established.\n");
+                printf ("Connection established '%s'\n", s_listen_connection_up->GetURI().c_str());
                 gdb_server.SetConnection (s_listen_connection_up.release());
             }
             else
@@ -639,6 +639,15 @@ main (int argc, char *argv[])
         if (log_args.GetArgumentCount() == 0)
             log_args.AppendArgument("default");
         ProcessGDBRemoteLog::EnableLog (log_stream_sp, 0,log_args.GetConstArgumentVector(), log_stream_sp.get());
+    }
+    Log *log(lldb_private::GetLogIfAnyCategoriesSet (GDBR_LOG_VERBOSE));
+    if (log)
+    {
+        log->Printf ("lldb-gdbserver launch");
+        for (int i = 0; i < argc; i++)
+        {
+            log->Printf ("argv[%i] = '%s'", i, argv[i]);
+        }
     }
 
     // Skip any options we consumed with getopt_long_only.

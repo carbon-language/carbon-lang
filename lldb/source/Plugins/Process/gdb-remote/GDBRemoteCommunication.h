@@ -282,9 +282,8 @@ protected:
     ListenThread (lldb::thread_arg_t arg);
 
 private:
-  lldb_private::HostThread m_listen_thread;
+    lldb_private::HostThread m_listen_thread;
     std::string m_listen_url;
-    
 
     //------------------------------------------------------------------
     // For GDBRemoteCommunication only

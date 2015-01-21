@@ -249,6 +249,8 @@ protected:
                 PlatformSP platform_sp (m_platform_options.CreatePlatformWithOptions (m_interpreter, ArchSpec(), select, error, platform_arch));
                 if (platform_sp)
                 {
+                    m_interpreter.GetDebugger().GetPlatformList().SetSelectedPlatform(platform_sp);
+
                     platform_sp->GetStatus (result.GetOutputStream());
                     result.SetStatus (eReturnStatusSuccessFinishResult);
                 }
