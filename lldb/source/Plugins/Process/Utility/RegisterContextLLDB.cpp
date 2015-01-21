@@ -811,7 +811,7 @@ RegisterContextLLDB::GetFullUnwindPlanForFrame ()
     if (m_frame_type == eTrapHandlerFrame && process)
     {
         m_fast_unwind_plan_sp.reset();
-        unwind_plan_sp = func_unwinders_sp->GetUnwindPlanAtCallSite (process->GetTarget(), m_current_offset_backed_up_one);
+        unwind_plan_sp = func_unwinders_sp->GetEHFrameUnwindPlan (process->GetTarget(), m_current_offset_backed_up_one);
         if (unwind_plan_sp && unwind_plan_sp->PlanValidAtAddress (m_current_pc) && unwind_plan_sp->GetSourcedFromCompiler() == eLazyBoolYes)
         {
             return unwind_plan_sp;
@@ -826,7 +826,10 @@ RegisterContextLLDB::GetFullUnwindPlanForFrame ()
     // But there is not.
     if (process && process->GetDynamicLoader() && process->GetDynamicLoader()->AlwaysRelyOnEHUnwindInfo (m_sym_ctx))
     {
-        unwind_plan_sp = func_unwinders_sp->GetUnwindPlanAtCallSite (process->GetTarget(), m_current_offset_backed_up_one);
+        // We must specifically call the GetEHFrameUnwindPlan() method here -- normally we would
+        // call GetUnwindPlanAtCallSite() -- because CallSite may return an unwind plan sourced from
+        // either eh_frame (that's what we intend) or compact unwind (this won't work)
+        unwind_plan_sp = func_unwinders_sp->GetEHFrameUnwindPlan (process->GetTarget(), m_current_offset_backed_up_one);
         if (unwind_plan_sp && unwind_plan_sp->PlanValidAtAddress (m_current_pc))
         {
             UnwindLogMsgVerbose ("frame uses %s for full UnwindPlan because the DynamicLoader suggested we prefer it",
