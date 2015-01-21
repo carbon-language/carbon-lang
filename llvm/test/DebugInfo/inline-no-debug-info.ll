@@ -21,10 +21,11 @@
 
 ; Debug location of the code in caller() and of the inlined code that did not
 ; have any debug location before.
-; CHECK-DAG: [[A]] = !MDLocation(line: 4, scope: !{{[01-9]+}})
+; CHECK-DAG: [[A]] = !MDLocation(line: 4, scope: !{{[0-9]+}})
 
 ; Debug location of the inlined code.
-; CHECK-DAG: [[B]] = !MDLocation(line: 2, scope: !{{[01-9]+}}, inlinedAt: [[A]])
+; CHECK-DAG: [[B]] = !MDLocation(line: 2, scope: !{{[0-9]+}}, inlinedAt: [[A_INL:![0-9]*]])
+; CHECK-DAG: [[A_INL]] = distinct !MDLocation(line: 4, scope: !{{[0-9]+}})
 
 
 target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"

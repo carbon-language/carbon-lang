@@ -6,7 +6,7 @@
 ; CHECK-NEXT: to label {{.*}} unwind label {{.*}}, !dbg [[INL_LOC:!.*]]
 ; CHECK: [[EMPTY:.*]] = !{}
 ; CHECK: [[INL_LOC]] = !MDLocation(line: 1, scope: [[EMPTY]], inlinedAt: [[INL_AT:.*]])
-; CHECK: [[INL_AT]] = !MDLocation(line: 2, scope: [[EMPTY]])
+; CHECK: [[INL_AT]] = distinct !MDLocation(line: 2, scope: [[EMPTY]])
 
 declare void @test()
 declare i32 @__gxx_personality_v0(...)

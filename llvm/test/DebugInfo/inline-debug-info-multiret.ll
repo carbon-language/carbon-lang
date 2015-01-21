@@ -10,7 +10,7 @@
 ; CHECK: br label %invoke.cont, !dbg ![[MD]]
 ; The branch instruction has the source location of line 9 and its inlined location
 ; has the source location of line 14.
-; CHECK: ![[INL:[0-9]+]] = !MDLocation(line: 14, scope: {{.*}})
+; CHECK: ![[INL:[0-9]+]] = distinct !MDLocation(line: 14, scope: {{.*}})
 ; CHECK: ![[MD]] = !MDLocation(line: 9, scope: {{.*}}, inlinedAt: ![[INL]])
 
 ; ModuleID = 'test.cpp'

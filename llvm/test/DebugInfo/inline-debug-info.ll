@@ -28,11 +28,11 @@
 ; CHECK: _Z4testi.exit:
 ; Make sure the branch instruction created during inlining has a debug location,
 ; so the range of the inlined function is correct.
-; CHECK: br label %invoke.cont, !dbg ![[MD:[0-9]+]]
+; CHECK: br label %invoke.cont, !dbg [[MD:![0-9]+]]
 ; The branch instruction has the source location of line 9 and its inlined location
 ; has the source location of line 14.
-; CHECK: ![[INL:[0-9]+]] = !MDLocation(line: 14, scope: {{.*}})
-; CHECK: ![[MD]] = !MDLocation(line: 9, scope: {{.*}}, inlinedAt: ![[INL]])
+; CHECK: [[INL:![0-9]*]] = distinct !MDLocation(line: 14, scope: {{.*}})
+; CHECK: [[MD]] = !MDLocation(line: 9, scope: {{.*}}, inlinedAt: [[INL]])
 
 ; ModuleID = 'test.cpp'
 target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-s0:64:64-f80:128:128-n8:16:32:64-S128"
