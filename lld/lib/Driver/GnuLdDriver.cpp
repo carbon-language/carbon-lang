@@ -192,6 +192,10 @@ getArchType(const llvm::Triple &triple, StringRef value) {
     if (value == "aarch64linux")
       return llvm::Triple::aarch64;
     return llvm::None;
+  case llvm::Triple::arm:
+    if (value == "armelf_linux_eabi")
+      return llvm::Triple::arm;
+    return llvm::None;
   default:
     return llvm::None;
   }
