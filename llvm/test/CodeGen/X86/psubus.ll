@@ -26,13 +26,13 @@ for.end:                                          ; preds = %vector.body
   ret void
 
 ; SSE2: @test1
-; SSE2: psubusw LCPI0_0(%rip), %xmm0
+; SSE2: psubusw %xmm0, %xmm1
 
 ; AVX1: @test1
-; AVX1: vpsubusw LCPI0_0(%rip), %xmm0, %xmm0
+; AVX1: vpsubusw %xmm0, %xmm1, %xmm1
 
 ; AVX2: @test1
-; AVX2: vpsubusw LCPI0_0(%rip), %xmm0, %xmm0
+; AVX2: vpsubusw %xmm0, %xmm1, %xmm1
 }
 
 define void @test2(i16* nocapture %head) nounwind {
@@ -56,13 +56,13 @@ for.end:                                          ; preds = %vector.body
   ret void
 
 ; SSE2: @test2
-; SSE2: psubusw LCPI1_0(%rip), %xmm0
+; SSE2: psubusw %xmm0, %xmm1
 
 ; AVX1: @test2
-; AVX1: vpsubusw LCPI1_0(%rip), %xmm0, %xmm0
+; AVX1: vpsubusw %xmm0, %xmm1, %xmm1
 
 ; AVX2: @test2
-; AVX2: vpsubusw LCPI1_0(%rip), %xmm0, %xmm0
+; AVX2: vpsubusw %xmm0, %xmm1, %xmm1
 }
 
 define void @test3(i16* nocapture %head, i16 zeroext %w) nounwind {
@@ -118,13 +118,13 @@ for.end:                                          ; preds = %vector.body
   ret void
 
 ; SSE2: @test4
-; SSE2: psubusb LCPI3_0(%rip), %xmm0
+; SSE2: psubusb %xmm0, %xmm1
 
 ; AVX1: @test4
-; AVX1: vpsubusb LCPI3_0(%rip), %xmm0, %xmm0
+; AVX1: vpsubusb %xmm0, %xmm1, %xmm1
 
 ; AVX2: @test4
-; AVX2: vpsubusb LCPI3_0(%rip), %xmm0, %xmm0
+; AVX2: vpsubusb %xmm0, %xmm1, %xmm1
 }
 
 define void @test5(i8* nocapture %head) nounwind {
@@ -148,13 +148,13 @@ for.end:                                          ; preds = %vector.body
   ret void
 
 ; SSE2: @test5
-; SSE2: psubusb LCPI4_0(%rip), %xmm0
+; SSE2: psubusb %xmm0, %xmm1
 
 ; AVX1: @test5
-; AVX1: vpsubusb LCPI4_0(%rip), %xmm0, %xmm0
+; AVX1: vpsubusb %xmm0, %xmm1, %xmm1
 
 ; AVX2: @test5
-; AVX2: vpsubusb LCPI4_0(%rip), %xmm0, %xmm0
+; AVX2: vpsubusb %xmm0, %xmm1, %xmm1
 }
 
 define void @test6(i8* nocapture %head, i8 zeroext %w) nounwind {
