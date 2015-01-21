@@ -141,6 +141,11 @@ def brtarget_mm : Operand<OtherVT> {
   let DecoderMethod = "DecodeBranchTargetMM";
 }
 
+def simm23_lsl2 : Operand<i32> {
+  let EncoderMethod = "getSimm23Lsl2Encoding";
+  let DecoderMethod = "DecodeSimm23Lsl2";
+}
+
 class CompactBranchMM<string opstr, DAGOperand opnd, PatFrag cond_op,
                       RegisterOperand RO> :
   InstSE<(outs), (ins RO:$rs, opnd:$offset),
@@ -422,6 +427,10 @@ class LoadWordIndexedScaledMM<string opstr, RegisterOperand RO,
   InstSE<(outs RO:$rd), (ins PtrRC:$base, PtrRC:$index),
          !strconcat(opstr, "\t$rd, ${index}(${base})"), [], Itin, FrmFI>;
 
+class AddImmUPC<string opstr, RegisterOperand RO> :
+  InstSE<(outs RO:$rs), (ins simm23_lsl2:$imm),
+         !strconcat(opstr, "\t$rs, $imm"), [], NoItinerary, FrmR>;
+
 /// A list of registers used by load/store multiple instructions.
 def RegListAsmOperand : AsmOperandClass {
   let Name = "RegList";
@@ -590,6 +599,9 @@ let DecoderNamespace = "MicroMips", Predicates = [InMicroMips] in {
                  MULT_FM_MM<0x2ac>;
   def UDIV_MM  : MMRel, Div<"divu", II_DIVU, GPR32Opnd, [HI0, LO0]>,
                  MULT_FM_MM<0x2ec>;
+
+  /// Arithmetic Instructions with PC and Immediate
+  def ADDIUPC_MM : AddImmUPC<"addiupc", GPRMM16Opnd>, ADDIUPC_FM_MM;
 
   /// Shift Instructions
   def SLL_MM   : MMRel, shift_rotate_imm<"sll", uimm5, GPR32Opnd, II_SLL>,

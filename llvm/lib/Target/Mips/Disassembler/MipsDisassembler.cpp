@@ -370,6 +370,9 @@ static DecodeStatus DecodeANDI16Imm(MCInst &Inst, unsigned Insn,
 static DecodeStatus DecodeUImm5lsl2(MCInst &Inst, unsigned Insn,
                                    uint64_t Address, const void *Decoder);
 
+static DecodeStatus DecodeSimm23Lsl2(MCInst &Inst, unsigned Insn,
+                                     uint64_t Address, const void *Decoder);
+
 /// INSVE_[BHWD] have an implicit operand that the generated decoder doesn't
 /// handle.
 template <typename InsnType>
@@ -1754,5 +1757,11 @@ static DecodeStatus DecodeRegListOperand16(MCInst &Inst, unsigned Insn,
 
   Inst.addOperand(MCOperand::CreateReg(Mips::RA));
 
+  return MCDisassembler::Success;
+}
+
+static DecodeStatus DecodeSimm23Lsl2(MCInst &Inst, unsigned Insn,
+                                     uint64_t Address, const void *Decoder) {
+  Inst.addOperand(MCOperand::CreateImm(SignExtend32<23>(Insn) << 2));
   return MCDisassembler::Success;
 }

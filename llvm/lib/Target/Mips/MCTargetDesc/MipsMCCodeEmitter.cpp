@@ -905,4 +905,16 @@ MipsMCCodeEmitter::getRegisterPairOpValue(const MCInst &MI, unsigned OpNo,
   return getMachineOpValue(MI, MI.getOperand(OpNo), Fixups, STI);
 }
 
+unsigned
+MipsMCCodeEmitter::getSimm23Lsl2Encoding(const MCInst &MI, unsigned OpNo,
+                                         SmallVectorImpl<MCFixup> &Fixups,
+                                         const MCSubtargetInfo &STI) const {
+  const MCOperand &MO = MI.getOperand(OpNo);
+  assert(MO.isImm() && "getSimm23Lsl2Encoding expects only an immediate");
+  // The immediate is encoded as 'immediate >> 2'.
+  unsigned Res = static_cast<unsigned>(MO.getImm());
+  assert((Res & 3) == 0);
+  return Res >> 2;
+}
+
 #include "MipsGenMCCodeEmitter.inc"

@@ -898,3 +898,14 @@ class BARRIER_FM_MM<bits<5> op> : MMArch {
   let Inst{10-6}  = 0x0;
   let Inst{5-0}   = 0x0;
 }
+
+class ADDIUPC_FM_MM {
+  bits<3> rs;
+  bits<23> imm;
+
+  bits<32> Inst;
+
+  let Inst{31-26} = 0x1e;
+  let Inst{25-23} = rs;
+  let Inst{22-0} = imm;
+}
