@@ -2348,11 +2348,11 @@ multiclass sse12_cmp_scalar<RegisterClass RC, X86MemOperand x86memop,
   // Accept explicit immediate argument form instead of comparison code.
   let isAsmParserOnly = 1, hasSideEffects = 0 in {
     def rr_alt : SIi8<0xC2, MRMSrcReg, (outs RC:$dst),
-                      (ins RC:$src1, RC:$src2, i8imm:$cc), asm_alt, [],
+                      (ins RC:$src1, RC:$src2, u8imm:$cc), asm_alt, [],
                       IIC_SSE_ALU_F32S_RR>, Sched<[itins.Sched]>;
     let mayLoad = 1 in
     def rm_alt : SIi8<0xC2, MRMSrcMem, (outs RC:$dst),
-                      (ins RC:$src1, x86memop:$src2, i8imm:$cc), asm_alt, [],
+                      (ins RC:$src1, x86memop:$src2, u8imm:$cc), asm_alt, [],
                       IIC_SSE_ALU_F32S_RM>,
                       Sched<[itins.Sched.Folded, ReadAfterLd]>;
   }
@@ -2502,11 +2502,11 @@ multiclass sse12_cmp_packed<RegisterClass RC, X86MemOperand x86memop,
   // Accept explicit immediate argument form instead of comparison code.
   let isAsmParserOnly = 1, hasSideEffects = 0 in {
     def rri_alt : PIi8<0xC2, MRMSrcReg,
-               (outs RC:$dst), (ins RC:$src1, RC:$src2, i8imm:$cc),
+               (outs RC:$dst), (ins RC:$src1, RC:$src2, u8imm:$cc),
                asm_alt, [], itins.rr, d>, Sched<[WriteFAdd]>;
     let mayLoad = 1 in
     def rmi_alt : PIi8<0xC2, MRMSrcMem,
-               (outs RC:$dst), (ins RC:$src1, x86memop:$src2, i8imm:$cc),
+               (outs RC:$dst), (ins RC:$src1, x86memop:$src2, u8imm:$cc),
                asm_alt, [], itins.rm, d>,
                Sched<[WriteFAddLd, ReadAfterLd]>;
   }

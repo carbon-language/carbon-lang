@@ -34,6 +34,11 @@ inline bool isImmSExti64i32Value(uint64_t Value) {
           (0xFFFFFFFF80000000ULL <= Value && Value <= 0xFFFFFFFFFFFFFFFFULL));
 }
 
+inline bool isImmUnsignedi8Value(uint64_t Value) {
+  return ((                                  Value <= 0x00000000000000FFULL)||
+          (0xFFFFFFFFFFFFFF80ULL <= Value && Value <= 0xFFFFFFFFFFFFFFFFULL));
+}
+
 } // End of namespace llvm
 
 #endif
