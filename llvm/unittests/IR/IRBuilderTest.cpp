@@ -294,9 +294,7 @@ TEST_F(IRBuilderTest, DIBuilder) {
   auto File = DIB.createFile("F.CBL", "/");
   auto CU = DIB.createCompileUnit(dwarf::DW_LANG_Cobol74, "F.CBL", "/",
                                   "llvm-cobol74", true, "", 0);
-  auto Type =
-    DIB.createSubroutineType(File,
-                             DIB.getOrCreateTypeArray(ArrayRef<Metadata*>()));
+  auto Type = DIB.createSubroutineType(File, DIB.getOrCreateTypeArray(None));
   auto SP = DIB.createFunction(CU, "foo", "", File, 1, Type,
                                false, true, 1, 0, true, F);
   EXPECT_TRUE(SP.Verify());
