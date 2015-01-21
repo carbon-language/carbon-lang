@@ -1,4 +1,4 @@
-; RUN: llc -march=amdgcn -mcpu=SI < %s
+; RUN: llc -march=amdgcn -mcpu=SI < %s | FileCheck -check-prefix=SI -check-prefix=FUNC %s
 ; RUN: llc -march=r600 -mcpu=redwood < %s
 
 define void @srem_i32(i32 addrspace(1)* %out, i32 addrspace(1)* %in) {
@@ -13,6 +13,19 @@ define void @srem_i32(i32 addrspace(1)* %out, i32 addrspace(1)* %in) {
 define void @srem_i32_4(i32 addrspace(1)* %out, i32 addrspace(1)* %in) {
   %num = load i32 addrspace(1) * %in
   %result = srem i32 %num, 4
+  store i32 %result, i32 addrspace(1)* %out
+  ret void
+}
+
+; FUNC-LABEL: {{^}}srem_i32_7:
+; SI: v_mov_b32_e32 [[MAGIC:v[0-9]+]], 0x92492493
+; SI: v_mul_hi_i32 {{v[0-9]+}}, [[MAGIC]],
+; SI: v_mul_lo_i32
+; SI: v_sub_i32
+; SI: s_endpgm
+define void @srem_i32_7(i32 addrspace(1)* %out, i32 addrspace(1)* %in) {
+  %num = load i32 addrspace(1) * %in
+  %result = srem i32 %num, 7
   store i32 %result, i32 addrspace(1)* %out
   ret void
 }

@@ -17,6 +17,21 @@ define void @test_urem_i32(i32 addrspace(1)* %out, i32 addrspace(1)* %in) {
   ret void
 }
 
+; FUNC-LABEL: {{^}}test_urem_i32_7:
+; SI: v_mov_b32_e32 [[MAGIC:v[0-9]+]], 0x24924925
+; SI: v_mul_hi_u32 {{v[0-9]+}}, [[MAGIC]]
+; SI: v_subrev_i32
+; SI: v_mul_lo_i32
+; SI: v_sub_i32
+; SI: buffer_store_dword
+; SI: s_endpgm
+define void @test_urem_i32_7(i32 addrspace(1)* %out, i32 addrspace(1)* %in) {
+  %num = load i32 addrspace(1) * %in
+  %result = urem i32 %num, 7
+  store i32 %result, i32 addrspace(1)* %out
+  ret void
+}
+
 ; FUNC-LABEL: {{^}}test_urem_v2i32:
 ; SI: s_endpgm
 ; EG: CF_END
