@@ -106,7 +106,7 @@ getStringSplit(StringRef Text, unsigned UsedColumns, unsigned ColumnLimit,
           Text.substr(0, Advance), UsedColumns + Chars, TabWidth, Encoding);
     }
 
-    if (Chars > MaxSplit || Text.size() == Advance)
+    if (Chars > MaxSplit || Text.size() <= Advance)
       break;
 
     if (IsBlank(Text[0]))
