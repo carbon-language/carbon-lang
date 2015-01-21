@@ -393,6 +393,9 @@ namespace llvm {
       return RegUnitRanges[Unit];
     }
 
+    /// Remove value numbers and related live segments starting at position
+    /// @p Pos that are part of any liverange of physical register @p Reg or one
+    /// of its subregisters.
     void removePhysRegDefAt(unsigned Reg, SlotIndex Pos);
 
   private:
