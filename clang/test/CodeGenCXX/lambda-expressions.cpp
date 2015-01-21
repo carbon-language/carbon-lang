@@ -99,7 +99,7 @@ int *PR22071_fun() {
   return [&] { return &y; }();
 }
 
-// CHECK: define internal void @"_ZZ1hvEN3$_98__invokeEv"(%struct.A* noalias sret %agg.result) {{.*}} {
+// CHECK-LABEL: define internal void @"_ZZ1hvEN3$_98__invokeEv"(%struct.A* noalias sret %agg.result) {{.*}} {
 // CHECK-NOT: =
 // CHECK: call void @"_ZZ1hvENK3$_9clEv"(%struct.A* sret %agg.result,
 // CHECK-NEXT: ret void
