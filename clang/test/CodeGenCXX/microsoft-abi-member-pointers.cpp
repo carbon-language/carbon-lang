@@ -618,7 +618,7 @@ void (C::*getmp())() {
 // CHECK: store { i8*, i32 } { i8* bitcast (void (%"struct.Test4::C"*, ...)* @"\01??_9C@Test4@@$BA@AE" to i8*), i32 4 }, { i8*, i32 }* %{{.*}}
 //
 
-// CHECK-LABEL: define linkonce_odr x86_thiscallcc void @"\01??_9C@Test4@@$BA@AE"(%"struct.Test4::C"* %this, ...)
+// CHECK-LABEL: define linkonce_odr x86_thiscallcc void @"\01??_9C@Test4@@$BA@AE"(%"struct.Test4::C"* %this, ...) {{.*}} comdat
 // CHECK-NOT:  getelementptr
 // CHECK:  load void (%"struct.Test4::C"*, ...)*** %{{.*}}
 // CHECK:  getelementptr inbounds void (%"struct.Test4::C"*, ...)** %{{.*}}, i64 0
