@@ -320,24 +320,12 @@ static void translateImmediate(MCInst &mcInst, uint64_t immediate,
   // By default sign-extend all X86 immediates based on their encoding.
   else if (type == TYPE_IMM8 || type == TYPE_IMM16 || type == TYPE_IMM32 ||
            type == TYPE_IMM64 || type == TYPE_IMMv) {
-    uint32_t Opcode = mcInst.getOpcode();
     switch (operand.encoding) {
     default:
       break;
     case ENCODING_IB:
-      // Special case those X86 instructions that use the imm8 as a set of
-      // bits, bit count, etc. and are not sign-extend.
-      if (Opcode != X86::BLENDPSrri && Opcode != X86::BLENDPDrri &&
-          Opcode != X86::PBLENDWrri && Opcode != X86::MPSADBWrri &&
-          Opcode != X86::DPPSrri && Opcode != X86::DPPDrri &&
-          Opcode != X86::INSERTPSrr && Opcode != X86::VBLENDPSYrri &&
-          Opcode != X86::VBLENDPSYrmi && Opcode != X86::VBLENDPDYrri &&
-          Opcode != X86::VBLENDPDYrmi && Opcode != X86::VPBLENDWrri &&
-          Opcode != X86::VMPSADBWrri && Opcode != X86::VDPPSYrri &&
-          Opcode != X86::VDPPSYrmi && Opcode != X86::VDPPDrri &&
-          Opcode != X86::VINSERTPSrr)
-        if(immediate & 0x80)
-          immediate |= ~(0xffull);
+      if(immediate & 0x80)
+        immediate |= ~(0xffull);
       break;
     case ENCODING_IW:
       if(immediate & 0x8000)
