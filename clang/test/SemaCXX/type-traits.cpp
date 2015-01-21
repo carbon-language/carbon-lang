@@ -1857,6 +1857,9 @@ void trivial_checks()
   { int arr[T(__is_trivially_copyable(HasNonPOD))]; }
   { int arr[T(__is_trivially_copyable(DerivesHasCons))]; }
   { int arr[T(__is_trivially_copyable(DerivesHasRef))]; }
+  { int arr[T(__is_trivially_copyable(NonTrivialDefault))]; }
+  { int arr[T(__is_trivially_copyable(NonTrivialDefault[]))]; }
+  { int arr[T(__is_trivially_copyable(NonTrivialDefault[3]))]; }
 
   { int arr[F(__is_trivially_copyable(HasCopyAssign))]; }
   { int arr[F(__is_trivially_copyable(HasMoveAssign))]; }

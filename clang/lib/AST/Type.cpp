@@ -1089,7 +1089,7 @@ bool QualType::isTrivialType(ASTContext &Context) const {
 
 bool QualType::isTriviallyCopyableType(ASTContext &Context) const {
   if ((*this)->isArrayType())
-    return Context.getBaseElementType(*this).isTrivialType(Context);
+    return Context.getBaseElementType(*this).isTriviallyCopyableType(Context);
 
   if (Context.getLangOpts().ObjCAutoRefCount) {
     switch (getObjCLifetime()) {
