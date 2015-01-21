@@ -20,6 +20,7 @@
 #include "msan_chained_origin_depot.h"
 #include "msan_origin.h"
 #include "msan_thread.h"
+#include "msan_poisoning.h"
 #include "sanitizer_common/sanitizer_platform_limits_posix.h"
 #include "sanitizer_common/sanitizer_allocator.h"
 #include "sanitizer_common/sanitizer_allocator_interface.h"
@@ -290,7 +291,7 @@ INTERCEPTOR(char *, strcpy, char *dest, const char *src) {  // NOLINT
   GET_STORE_STACK_TRACE;
   SIZE_T n = REAL(strlen)(src);
   char *res = REAL(strcpy)(dest, src);  // NOLINT
-  CopyPoison(dest, src, n + 1, &stack);
+  CopyShadowAndOrigin(dest, src, n + 1, &stack);
   return res;
 }
 
@@ -301,7 +302,7 @@ INTERCEPTOR(char *, strncpy, char *dest, const char *src, SIZE_T n) {  // NOLINT
   if (copy_size < n)
     copy_size++;  // trailing \0
   char *res = REAL(strncpy)(dest, src, n);  // NOLINT
-  CopyPoison(dest, src, copy_size, &stack);
+  CopyShadowAndOrigin(dest, src, copy_size, &stack);
   __msan_unpoison(dest + copy_size, n - copy_size);
   return res;
 }
@@ -311,7 +312,7 @@ INTERCEPTOR(char *, stpcpy, char *dest, const char *src) {  // NOLINT
   GET_STORE_STACK_TRACE;
   SIZE_T n = REAL(strlen)(src);
   char *res = REAL(stpcpy)(dest, src);  // NOLINT
-  CopyPoison(dest, src, n + 1, &stack);
+  CopyShadowAndOrigin(dest, src, n + 1, &stack);
   return res;
 }
 
@@ -322,7 +323,7 @@ INTERCEPTOR(char *, strdup, char *src) {
   InterceptorScope interceptor_scope;
   SIZE_T n = REAL(strlen)(src);
   char *res = REAL(strdup)(src);
-  CopyPoison(res, src, n + 1, &stack);
+  CopyShadowAndOrigin(res, src, n + 1, &stack);
   return res;
 }
 
@@ -332,7 +333,7 @@ INTERCEPTOR(char *, __strdup, char *src) {
   GET_STORE_STACK_TRACE;
   SIZE_T n = REAL(strlen)(src);
   char *res = REAL(__strdup)(src);
-  CopyPoison(res, src, n + 1, &stack);
+  CopyShadowAndOrigin(res, src, n + 1, &stack);
   return res;
 }
 #define MSAN_MAYBE_INTERCEPT___STRDUP INTERCEPT_FUNCTION(__strdup)
@@ -347,7 +348,7 @@ INTERCEPTOR(char *, strndup, char *src, SIZE_T n) {
   InterceptorScope interceptor_scope;
   SIZE_T copy_size = REAL(strnlen)(src, n);
   char *res = REAL(strndup)(src, n);
-  CopyPoison(res, src, copy_size, &stack);
+  CopyShadowAndOrigin(res, src, copy_size, &stack);
   __msan_unpoison(res + copy_size, 1); // \0
   return res;
 }
@@ -358,7 +359,7 @@ INTERCEPTOR(char *, __strndup, char *src, SIZE_T n) {
   GET_STORE_STACK_TRACE;
   SIZE_T copy_size = REAL(strnlen)(src, n);
   char *res = REAL(__strndup)(src, n);
-  CopyPoison(res, src, copy_size, &stack);
+  CopyShadowAndOrigin(res, src, copy_size, &stack);
   __msan_unpoison(res + copy_size, 1); // \0
   return res;
 }
@@ -381,7 +382,7 @@ INTERCEPTOR(char *, strcat, char *dest, const char *src) {  // NOLINT
   SIZE_T src_size = REAL(strlen)(src);
   SIZE_T dest_size = REAL(strlen)(dest);
   char *res = REAL(strcat)(dest, src);  // NOLINT
-  CopyPoison(dest + dest_size, src, src_size + 1, &stack);
+  CopyShadowAndOrigin(dest + dest_size, src, src_size + 1, &stack);
   return res;
 }
 
@@ -391,7 +392,7 @@ INTERCEPTOR(char *, strncat, char *dest, const char *src, SIZE_T n) {  // NOLINT
   SIZE_T dest_size = REAL(strlen)(dest);
   SIZE_T copy_size = REAL(strnlen)(src, n);
   char *res = REAL(strncat)(dest, src, n);  // NOLINT
-  CopyPoison(dest + dest_size, src, copy_size, &stack);
+  CopyShadowAndOrigin(dest + dest_size, src, copy_size, &stack);
   __msan_unpoison(dest + dest_size + copy_size, 1); // \0
   return res;
 }
@@ -580,7 +581,8 @@ INTERCEPTOR(wchar_t *, wcscpy, wchar_t *dest, const wchar_t *src) {
   ENSURE_MSAN_INITED();
   GET_STORE_STACK_TRACE;
   wchar_t *res = REAL(wcscpy)(dest, src);
-  CopyPoison(dest, src, sizeof(wchar_t) * (REAL(wcslen)(src) + 1), &stack);
+  CopyShadowAndOrigin(dest, src, sizeof(wchar_t) * (REAL(wcslen)(src) + 1),
+                      &stack);
   return res;
 }
 
@@ -589,7 +591,7 @@ INTERCEPTOR(wchar_t *, wmemcpy, wchar_t *dest, const wchar_t *src, SIZE_T n) {
   ENSURE_MSAN_INITED();
   GET_STORE_STACK_TRACE;
   wchar_t *res = REAL(wmemcpy)(dest, src, n);
-  CopyPoison(dest, src, n * sizeof(wchar_t), &stack);
+  CopyShadowAndOrigin(dest, src, n * sizeof(wchar_t), &stack);
   return res;
 }
 
@@ -597,7 +599,7 @@ INTERCEPTOR(wchar_t *, wmempcpy, wchar_t *dest, const wchar_t *src, SIZE_T n) {
   ENSURE_MSAN_INITED();
   GET_STORE_STACK_TRACE;
   wchar_t *res = REAL(wmempcpy)(dest, src, n);
-  CopyPoison(dest, src, n * sizeof(wchar_t), &stack);
+  CopyShadowAndOrigin(dest, src, n * sizeof(wchar_t), &stack);
   return res;
 }
 
@@ -613,7 +615,7 @@ INTERCEPTOR(wchar_t *, wmemmove, wchar_t *dest, const wchar_t *src, SIZE_T n) {
   ENSURE_MSAN_INITED();
   GET_STORE_STACK_TRACE;
   wchar_t *res = REAL(wmemmove)(dest, src, n);
-  MovePoison(dest, src, n * sizeof(wchar_t), &stack);
+  MoveShadowAndOrigin(dest, src, n * sizeof(wchar_t), &stack);
   return res;
 }
 
@@ -1393,53 +1395,26 @@ int OnExit() {
 #define COMMON_SYSCALL_POST_WRITE_RANGE(p, s) __msan_unpoison(p, s)
 #include "sanitizer_common/sanitizer_common_syscalls.inc"
 
-static void PoisonShadow(uptr ptr, uptr size, u8 value) {
-  uptr PageSize = GetPageSizeCached();
-  uptr shadow_beg = MEM_TO_SHADOW(ptr);
-  uptr shadow_end = MEM_TO_SHADOW(ptr + size);
-  if (value ||
-      shadow_end - shadow_beg < common_flags()->clear_shadow_mmap_threshold) {
-    REAL(memset)((void*)shadow_beg, value, shadow_end - shadow_beg);
-  } else {
-    uptr page_beg = RoundUpTo(shadow_beg, PageSize);
-    uptr page_end = RoundDownTo(shadow_end, PageSize);
-
-    if (page_beg >= page_end) {
-      REAL(memset)((void *)shadow_beg, 0, shadow_end - shadow_beg);
-    } else {
-      if (page_beg != shadow_beg) {
-        REAL(memset)((void *)shadow_beg, 0, page_beg - shadow_beg);
-      }
-      if (page_end != shadow_end) {
-        REAL(memset)((void *)page_end, 0, shadow_end - page_end);
-      }
-      MmapFixedNoReserve(page_beg, page_end - page_beg);
-    }
-  }
-}
-
 // These interface functions reside here so that they can use
 // REAL(memset), etc.
 void __msan_unpoison(const void *a, uptr size) {
   if (!MEM_IS_APP(a)) return;
-  PoisonShadow((uptr)a, size, 0);
+  SetShadow(a, size, 0);
 }
 
 void __msan_poison(const void *a, uptr size) {
   if (!MEM_IS_APP(a)) return;
-  PoisonShadow((uptr)a, size,
-               __msan::flags()->poison_heap_with_zeroes ? 0 : -1);
+  SetShadow(a, size, __msan::flags()->poison_heap_with_zeroes ? 0 : -1);
 }
 
 void __msan_poison_stack(void *a, uptr size) {
   if (!MEM_IS_APP(a)) return;
-  PoisonShadow((uptr)a, size,
-               __msan::flags()->poison_stack_with_zeroes ? 0 : -1);
+  SetShadow(a, size, __msan::flags()->poison_stack_with_zeroes ? 0 : -1);
 }
 
 void __msan_clear_and_unpoison(void *a, uptr size) {
   REAL(memset)(a, 0, size);
-  PoisonShadow((uptr)a, size, 0);
+  SetShadow(a, size, 0);
 }
 
 void *__msan_memcpy(void *dest, const void *src, SIZE_T n) {
@@ -1448,7 +1423,7 @@ void *__msan_memcpy(void *dest, const void *src, SIZE_T n) {
   ENSURE_MSAN_INITED();
   GET_STORE_STACK_TRACE;
   void *res = REAL(memcpy)(dest, src, n);
-  CopyPoison(dest, src, n, &stack);
+  CopyShadowAndOrigin(dest, src, n, &stack);
   return res;
 }
 
@@ -1467,7 +1442,7 @@ void *__msan_memmove(void *dest, const void *src, SIZE_T n) {
   ENSURE_MSAN_INITED();
   GET_STORE_STACK_TRACE;
   void *res = REAL(memmove)(dest, src, n);
-  MovePoison(dest, src, n, &stack);
+  MoveShadowAndOrigin(dest, src, n, &stack);
   return res;
 }
 
@@ -1477,96 +1452,6 @@ void __msan_unpoison_string(const char* s) {
 }
 
 namespace __msan {
-
-u32 GetOriginIfPoisoned(uptr addr, uptr size) {
-  unsigned char *s = (unsigned char *)MEM_TO_SHADOW(addr);
-  for (uptr i = 0; i < size; ++i)
-    if (s[i])
-      return *(u32 *)SHADOW_TO_ORIGIN(((uptr)s + i) & ~3UL);
-  return 0;
-}
-
-void SetOriginIfPoisoned(uptr addr, uptr src_shadow, uptr size,
-                         u32 src_origin) {
-  uptr dst_s = MEM_TO_SHADOW(addr);
-  uptr src_s = src_shadow;
-  uptr src_s_end = src_s + size;
-
-  for (; src_s < src_s_end; ++dst_s, ++src_s)
-    if (*(u8 *)src_s) *(u32 *)SHADOW_TO_ORIGIN(dst_s &~3UL) = src_origin;
-}
-
-void CopyOrigin(void *dst, const void *src, uptr size, StackTrace *stack) {
-  if (!__msan_get_track_origins()) return;
-  if (!MEM_IS_APP(dst) || !MEM_IS_APP(src)) return;
-
-  uptr d = (uptr)dst;
-  uptr beg = d & ~3UL;
-  // Copy left unaligned origin if that memory is poisoned.
-  if (beg < d) {
-    u32 o = GetOriginIfPoisoned((uptr)src, d - beg);
-    if (o) {
-      if (__msan_get_track_origins() > 1) o = ChainOrigin(o, stack);
-      *(u32 *)MEM_TO_ORIGIN(beg) = o;
-    }
-    beg += 4;
-  }
-
-  uptr end = (d + size) & ~3UL;
-  // If both ends fall into the same 4-byte slot, we are done.
-  if (end < beg) return;
-
-  // Copy right unaligned origin if that memory is poisoned.
-  if (end < d + size) {
-    u32 o = GetOriginIfPoisoned((uptr)src + (end - d), (d + size) - end);
-    if (o) {
-      if (__msan_get_track_origins() > 1) o = ChainOrigin(o, stack);
-      *(u32 *)MEM_TO_ORIGIN(end) = o;
-    }
-  }
-
-  if (beg < end) {
-    // Align src up.
-    uptr s = ((uptr)src + 3) & ~3UL;
-    // FIXME: factor out to msan_copy_origin_aligned
-    if (__msan_get_track_origins() > 1) {
-      u32 *src = (u32 *)MEM_TO_ORIGIN(s);
-      u32 *src_s = (u32 *)MEM_TO_SHADOW(s);
-      u32 *src_end = (u32 *)MEM_TO_ORIGIN(s + (end - beg));
-      u32 *dst = (u32 *)MEM_TO_ORIGIN(beg);
-      u32 src_o = 0;
-      u32 dst_o = 0;
-      for (; src < src_end; ++src, ++src_s, ++dst) {
-        if (!*src_s) continue;
-        if (*src != src_o) {
-          src_o = *src;
-          dst_o = ChainOrigin(src_o, stack);
-        }
-        *dst = dst_o;
-      }
-    } else {
-      REAL(memcpy)((void *)MEM_TO_ORIGIN(beg), (void *)MEM_TO_ORIGIN(s),
-                  end - beg);
-    }
-  }
-}
-
-void MovePoison(void *dst, const void *src, uptr size, StackTrace *stack) {
-  if (!MEM_IS_APP(dst)) return;
-  if (!MEM_IS_APP(src)) return;
-  if (src == dst) return;
-  REAL(memmove)((void *)MEM_TO_SHADOW((uptr)dst),
-                (void *)MEM_TO_SHADOW((uptr)src), size);
-  CopyOrigin(dst, src, size, stack);
-}
-
-void CopyPoison(void *dst, const void *src, uptr size, StackTrace *stack) {
-  if (!MEM_IS_APP(dst)) return;
-  if (!MEM_IS_APP(src)) return;
-  REAL(memcpy)((void *)MEM_TO_SHADOW((uptr)dst),
-              (void *)MEM_TO_SHADOW((uptr)src), size);
-  CopyOrigin(dst, src, size, stack);
-}
 
 void InitializeInterceptors() {
   static int inited = 0;

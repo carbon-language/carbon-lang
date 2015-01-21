@@ -38,7 +38,9 @@ extern "C" {
      contents). */
   void __msan_unpoison_string(const volatile char *a);
 
-  /* Make memory region fully uninitialized (without changing its contents). */
+  /* Make memory region fully uninitialized (without changing its contents).
+     This is a legacy interface that does not update origin information. Use
+     __msan_allocated_memory() instead. */
   void __msan_poison(const volatile void *a, size_t size);
 
   /* Make memory region partially uninitialized (without changing its contents).
