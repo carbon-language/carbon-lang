@@ -1095,7 +1095,8 @@ void CodeGenModule::EmitDeferred() {
     }
 
     // Stop if we're out of both deferred v-tables and deferred declarations.
-    if (DeferredDeclsToEmit.empty()) break;
+    if (DeferredDeclsToEmit.empty())
+      break;
 
     DeferredGlobal &G = DeferredDeclsToEmit.back();
     GlobalDecl D = G.GD;
@@ -1105,7 +1106,6 @@ void CodeGenModule::EmitDeferred() {
     assert(!GV || GV == GetGlobalValue(getMangledName(D)));
     if (!GV)
       GV = GetGlobalValue(getMangledName(D));
-
 
     // Check to see if we've already emitted this.  This is necessary
     // for a couple of reasons: first, decls can end up in the
