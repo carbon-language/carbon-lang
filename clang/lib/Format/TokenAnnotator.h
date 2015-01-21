@@ -59,11 +59,8 @@ public:
       I->Tok->Previous = Current;
       Current = Current->Next;
       Current->Children.clear();
-      for (SmallVectorImpl<UnwrappedLine>::const_iterator
-               I = Node.Children.begin(),
-               E = Node.Children.end();
-           I != E; ++I) {
-        Children.push_back(new AnnotatedLine(*I));
+      for (const auto& Child : Node.Children) {
+        Children.push_back(new AnnotatedLine(Child));
         Current->Children.push_back(Children.back());
       }
     }
@@ -74,6 +71,11 @@ public:
   ~AnnotatedLine() {
     for (unsigned i = 0, e = Children.size(); i != e; ++i) {
       delete Children[i];
+    }
+    FormatToken *Current = First;
+    while (Current) {
+      Current->Children.clear();
+      Current = Current->Next;
     }
   }
 

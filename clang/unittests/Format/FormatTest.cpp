@@ -2610,6 +2610,8 @@ TEST_F(FormatTest, MacroDefinitionsWithIncompleteCode) {
                getLLVMStyleWithColumns(28));
   verifyFormat("#d, = };");
   verifyFormat("#if \"a");
+
+  verifyNoCrash("#if a\na(\n#else\n#endif\n{a");
 }
 
 TEST_F(FormatTest, MacrosWithoutTrailingSemicolon) {
