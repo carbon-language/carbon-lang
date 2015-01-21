@@ -102,6 +102,7 @@ public:
 
     size_t DoReadMemory(lldb::addr_t vm_addr, void *buf, size_t size, lldb_private::Error &error) override;
     size_t DoWriteMemory(lldb::addr_t vm_addr, const void *buf, size_t size, lldb_private::Error &error) override;
+    lldb_private::Error GetMemoryRegionInfo(lldb::addr_t vm_addr, lldb_private::MemoryRegionInfo &info) override;
 
     // IDebugDelegate overrides.
     void OnExitProcess(uint32_t exit_code) override;

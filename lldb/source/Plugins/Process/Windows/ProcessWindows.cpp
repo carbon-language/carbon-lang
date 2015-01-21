@@ -434,6 +434,44 @@ ProcessWindows::DoWriteMemory(lldb::addr_t vm_addr, const void *buf, size_t size
     return bytes_written;
 }
 
+Error
+ProcessWindows::GetMemoryRegionInfo(lldb::addr_t vm_addr, MemoryRegionInfo &info)
+{
+    Error error;
+    llvm::sys::ScopedLock lock(m_mutex);
+
+    if (!m_session_data)
+    {
+        error.SetErrorString("ProcessWindows::GetMemoryRegionInfo called with no debugging session.");
+        return error;
+    }
+
+    HostProcess process = m_session_data->m_debugger->GetProcess();
+    lldb::process_t handle = process.GetNativeProcess().GetSystemHandle();
+    if (handle == nullptr || handle == LLDB_INVALID_PROCESS)
+    {
+        error.SetErrorString("ProcessWindows::GetMemoryRegionInfo called with an invalid target process.");
+        return error;
+    }
+
+    void *addr = reinterpret_cast<void *>(vm_addr);
+    MEMORY_BASIC_INFORMATION mem_info = {0};
+    SIZE_T result = ::VirtualQueryEx(handle, addr, &mem_info, sizeof(mem_info));
+    if (result == 0)
+    {
+        error.SetError(::GetLastError(), eErrorTypeWin32);
+        return error;
+    }
+
+    bool readable = !(mem_info.Protect & PAGE_NOACCESS);
+    bool executable = mem_info.Protect & (PAGE_EXECUTE | PAGE_EXECUTE_READ | PAGE_EXECUTE_READWRITE | PAGE_EXECUTE_WRITECOPY);
+    bool writable = mem_info.Protect & (PAGE_EXECUTE_READWRITE | PAGE_EXECUTE_WRITECOPY | PAGE_READWRITE | PAGE_WRITECOPY);
+    info.SetReadable(readable ? MemoryRegionInfo::eYes : MemoryRegionInfo::eNo);
+    info.SetExecutable(executable ? MemoryRegionInfo::eYes : MemoryRegionInfo::eNo);
+    info.SetWritable(writable ? MemoryRegionInfo::eYes : MemoryRegionInfo::eNo);
+    return error;
+}
+
 lldb::addr_t
 ProcessWindows::GetImageInfoAddress()
 {
