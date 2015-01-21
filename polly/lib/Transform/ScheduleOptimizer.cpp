@@ -135,8 +135,7 @@ private:
   ///	  for (j = t_j; j < t_j + 64; j++)        |   Known that M % 64 = 0
   ///	    S(i,j)
   ///
-  static isl_basic_map *getTileMap(isl_ctx *ctx, int scheduleDimensions,
-                                   isl_space *SpaceModel);
+  static isl_basic_map *getTileMap(isl_ctx *ctx, int scheduleDimensions);
 
   /// @brief Get the schedule for this band.
   ///
@@ -229,8 +228,7 @@ void IslScheduleOptimizer::extendScattering(Scop &S, unsigned NewDimensions) {
 }
 
 isl_basic_map *IslScheduleOptimizer::getTileMap(isl_ctx *ctx,
-                                                int scheduleDimensions,
-                                                isl_space *SpaceModel) {
+                                                int scheduleDimensions) {
   // We construct
   //
   // tileMap := [p0] -> {[s0, s1] -> [t0, t1, p0, p1, a0, a1]:
@@ -312,7 +310,7 @@ isl_union_map *IslScheduleOptimizer::getScheduleForBand(isl_band *Band,
   ctx = isl_union_map_get_ctx(PartialSchedule);
   Space = isl_union_map_get_space(PartialSchedule);
 
-  TileMap = getTileMap(ctx, *Dimensions, Space);
+  TileMap = getTileMap(ctx, *Dimensions);
   TileUMap = isl_union_map_from_map(isl_map_from_basic_map(TileMap));
   TileUMap = isl_union_map_align_params(TileUMap, Space);
   *Dimensions = 2 * *Dimensions;
