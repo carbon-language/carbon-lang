@@ -20,13 +20,11 @@ int main() {
   return 0;
 }
 
-// CHECK-NOINSERT: Parsed ASAN_OPTIONS: verbosity=1
 // CHECK-NOINSERT: exec()-ing the program with
 // CHECK-NOINSERT: DYLD_INSERT_LIBRARIES
 // CHECK-NOINSERT: to enable ASan wrappers.
 // CHECK-NOINSERT: Passed
 
-// CHECK: Parsed ASAN_OPTIONS: verbosity=1
 // CHECK-NOT: exec()-ing the program with
 // CHECK-NOT: DYLD_INSERT_LIBRARIES
 // CHECK-NOT: to enable ASan wrappers.
