@@ -120,6 +120,7 @@ using namespace llvm;
 
 #define DEBUG_TYPE "msan"
 
+static const unsigned kOriginSize = 4;
 static const unsigned kMinOriginAlignment = 4;
 static const unsigned kShadowTLSAlignment = 8;
 
@@ -602,21 +603,60 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
     return IRB.CreateCall(MS.MsanChainOriginFn, V);
   }
 
+  Value *originToIntptr(IRBuilder<> &IRB, Value *Origin) {
+    unsigned IntptrSize = MS.DL->getTypeStoreSize(MS.IntptrTy);
+    if (IntptrSize == kOriginSize) return Origin;
+    assert(IntptrSize == kOriginSize * 2);
+    Origin = IRB.CreateIntCast(Origin, MS.IntptrTy, /* isSigned */ false);
+    return IRB.CreateOr(Origin, IRB.CreateShl(Origin, kOriginSize * 8));
+  }
+
+  /// \brief Fill memory range with the given origin value.
+  void paintOrigin(IRBuilder<> &IRB, Value *Origin, Value *OriginPtr,
+                   unsigned Size, unsigned Alignment) {
+    unsigned IntptrAlignment = MS.DL->getABITypeAlignment(MS.IntptrTy);
+    unsigned IntptrSize = MS.DL->getTypeStoreSize(MS.IntptrTy);
+    assert(IntptrAlignment >= kMinOriginAlignment);
+    assert(IntptrSize >= kOriginSize);
+
+    unsigned Ofs = 0;
+    unsigned CurrentAlignment = Alignment;
+    if (Alignment >= IntptrAlignment && IntptrSize > kOriginSize) {
+      Value *IntptrOrigin = originToIntptr(IRB, Origin);
+      Value *IntptrOriginPtr =
+          IRB.CreatePointerCast(OriginPtr, PointerType::get(MS.IntptrTy, 0));
+      for (unsigned i = 0; i < Size / IntptrSize; ++i) {
+        Value *Ptr =
+            i ? IRB.CreateConstGEP1_32(IntptrOriginPtr, i) : IntptrOriginPtr;
+        IRB.CreateAlignedStore(IntptrOrigin, Ptr, CurrentAlignment);
+        Ofs += IntptrSize / kOriginSize;
+        CurrentAlignment = IntptrAlignment;
+      }
+    }
+
+    for (unsigned i = Ofs; i < (Size + kOriginSize - 1) / kOriginSize; ++i) {
+      Value *GEP = i ? IRB.CreateConstGEP1_32(OriginPtr, i) : OriginPtr;
+      IRB.CreateAlignedStore(Origin, GEP, CurrentAlignment);
+      CurrentAlignment = kMinOriginAlignment;
+    }
+  }
+
   void storeOrigin(IRBuilder<> &IRB, Value *Addr, Value *Shadow, Value *Origin,
                    unsigned Alignment, bool AsCall) {
     unsigned OriginAlignment = std::max(kMinOriginAlignment, Alignment);
+    unsigned StoreSize = MS.DL->getTypeStoreSize(Shadow->getType());
     if (isa<StructType>(Shadow->getType())) {
-      IRB.CreateAlignedStore(updateOrigin(Origin, IRB),
-                             getOriginPtr(Addr, IRB, Alignment),
-                             OriginAlignment);
+      paintOrigin(IRB, updateOrigin(Origin, IRB),
+                  getOriginPtr(Addr, IRB, Alignment), StoreSize,
+                  OriginAlignment);
     } else {
       Value *ConvertedShadow = convertToShadowTyNoVec(Shadow, IRB);
       Constant *ConstantShadow = dyn_cast_or_null<Constant>(ConvertedShadow);
       if (ConstantShadow) {
         if (ClCheckConstantShadow && !ConstantShadow->isZeroValue())
-          IRB.CreateAlignedStore(updateOrigin(Origin, IRB),
-                                 getOriginPtr(Addr, IRB, Alignment),
-                                 OriginAlignment);
+          paintOrigin(IRB, updateOrigin(Origin, IRB),
+                      getOriginPtr(Addr, IRB, Alignment), StoreSize,
+                      OriginAlignment);
         return;
       }
 
@@ -636,9 +676,9 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
         Instruction *CheckTerm = SplitBlockAndInsertIfThen(
             Cmp, IRB.GetInsertPoint(), false, MS.OriginStoreWeights);
         IRBuilder<> IRBNew(CheckTerm);
-        IRBNew.CreateAlignedStore(updateOrigin(Origin, IRBNew),
-                                  getOriginPtr(Addr, IRBNew, Alignment),
-                                  OriginAlignment);
+        paintOrigin(IRBNew, updateOrigin(Origin, IRBNew),
+                    getOriginPtr(Addr, IRBNew, Alignment), StoreSize,
+                    OriginAlignment);
       }
     }
   }
