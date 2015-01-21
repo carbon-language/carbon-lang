@@ -169,7 +169,7 @@ function(filter_available_targets out_var)
   set(${out_var} ${archs} PARENT_SCOPE)
 endfunction()
 
-# Arhcitectures supported by compiler-rt libraries.
+# Architectures supported by compiler-rt libraries.
 filter_available_targets(SANITIZER_COMMON_SUPPORTED_ARCH
   x86_64 i386 i686 powerpc64 powerpc64le arm aarch64 mips mips64 mipsel mips64el)
 filter_available_targets(ASAN_SUPPORTED_ARCH
