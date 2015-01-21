@@ -2919,25 +2919,6 @@ bool InstCombiner::DoOneIteration(Function &F, unsigned Iteration) {
   return MadeIRChange;
 }
 
-namespace {
-class InstCombinerLibCallSimplifier final : public LibCallSimplifier {
-  InstCombiner *IC;
-public:
-  InstCombinerLibCallSimplifier(const DataLayout *DL,
-                                const TargetLibraryInfo *TLI,
-                                InstCombiner *IC)
-    : LibCallSimplifier(DL, TLI) {
-    this->IC = IC;
-  }
-
-  /// replaceAllUsesWith - override so that instruction replacement
-  /// can be defined in terms of the instruction combiner framework.
-  void replaceAllUsesWith(Instruction *I, Value *With) const override {
-    IC->ReplaceInstUsesWith(*I, With);
-  }
-};
-}
-
 // FIXME: Passing all of the analyses here in the run method is ugly. We should
 // separate out the worklist from the combiner so that we can construct
 // a combiner once per function while re-using the storage of an external
@@ -2962,7 +2943,10 @@ bool InstCombiner::run(Function &F, AssumptionCache *AC, const DataLayout *DL,
       F.getContext(), TargetFolder(DL), InstCombineIRInserter(Worklist, AC));
   Builder = &TheBuilder;
 
-  InstCombinerLibCallSimplifier TheSimplifier(DL, TLI, this);
+  auto InstCombineRAUW = [this](Instruction *From, Value *With) {
+    ReplaceInstUsesWith(*From, With);
+  };
+  LibCallSimplifier TheSimplifier(DL, TLI, InstCombineRAUW);
   Simplifier = &TheSimplifier;
 
   bool EverMadeChange = false;

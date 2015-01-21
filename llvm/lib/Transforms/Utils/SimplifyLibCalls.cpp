@@ -2084,15 +2084,19 @@ Value *LibCallSimplifier::optimizeCall(CallInst *CI) {
   return nullptr;
 }
 
-LibCallSimplifier::LibCallSimplifier(const DataLayout *DL,
-                                     const TargetLibraryInfo *TLI) :
-                                     FortifiedSimplifier(DL, TLI),
-                                     DL(DL),
-                                     TLI(TLI),
-                                     UnsafeFPShrink(false) {
+LibCallSimplifier::LibCallSimplifier(
+    const DataLayout *DL, const TargetLibraryInfo *TLI,
+    function_ref<void(Instruction *, Value *)> Replacer)
+    : FortifiedSimplifier(DL, TLI), DL(DL), TLI(TLI), UnsafeFPShrink(false),
+      Replacer(Replacer) {}
+
+void LibCallSimplifier::replaceAllUsesWith(Instruction *I, Value *With) {
+  // Indirect through the replacer used in this instance.
+  Replacer(I, With);
 }
 
-void LibCallSimplifier::replaceAllUsesWith(Instruction *I, Value *With) const {
+/*static*/ void LibCallSimplifier::replaceAllUsesWithDefault(Instruction *I,
+                                                             Value *With) {
   I->replaceAllUsesWith(With);
   I->eraseFromParent();
 }
