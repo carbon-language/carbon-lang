@@ -6120,7 +6120,7 @@ defm WQ : SS41I_pmovx_rm<0x24, "wq", i32mem, i64mem>;
 defm BQ : SS41I_pmovx_rm<0x22, "bq", i16mem, i32mem>;
 
 // AVX2 Patterns
-multiclass SS41I_pmovx_avx2_patterns<string OpcPrefix, SDNode ExtOp> {
+multiclass SS41I_pmovx_avx2_patterns<string OpcPrefix, string ExtTy, SDNode ExtOp> {
   // Register-Register patterns
   def : Pat<(v16i16 (ExtOp (v16i8 VR128:$src))),
             (!cast<I>(OpcPrefix#BWYrr) VR128:$src)>;
@@ -6153,6 +6153,22 @@ multiclass SS41I_pmovx_avx2_patterns<string OpcPrefix, SDNode ExtOp> {
 
   def : Pat<(v4i64 (ExtOp (v8i32 VR256:$src))),
             (!cast<I>(OpcPrefix#DQYrr) (EXTRACT_SUBREG VR256:$src, sub_xmm))>;
+
+  // Simple Register-Memory patterns
+  def : Pat<(v16i16 (!cast<PatFrag>(ExtTy#"extloadvi8") addr:$src)),
+            (!cast<I>(OpcPrefix#BWYrm) addr:$src)>;
+  def : Pat<(v8i32 (!cast<PatFrag>(ExtTy#"extloadvi8") addr:$src)),
+            (!cast<I>(OpcPrefix#BDYrm) addr:$src)>;
+  def : Pat<(v4i64 (!cast<PatFrag>(ExtTy#"extloadvi8") addr:$src)),
+            (!cast<I>(OpcPrefix#BQYrm) addr:$src)>;
+
+  def : Pat<(v8i32 (!cast<PatFrag>(ExtTy#"extloadvi16") addr:$src)),
+            (!cast<I>(OpcPrefix#WDYrm) addr:$src)>;
+  def : Pat<(v4i64 (!cast<PatFrag>(ExtTy#"extloadvi16") addr:$src)),
+            (!cast<I>(OpcPrefix#WQYrm) addr:$src)>;
+
+  def : Pat<(v4i64 (!cast<PatFrag>(ExtTy#"extloadvi32") addr:$src)),
+            (!cast<I>(OpcPrefix#DQYrm) addr:$src)>;
 
   // AVX2 Register-Memory patterns
   def : Pat<(v16i16 (ExtOp (bc_v16i8 (loadv2i64 addr:$src)))),
@@ -6211,13 +6227,13 @@ multiclass SS41I_pmovx_avx2_patterns<string OpcPrefix, SDNode ExtOp> {
 }
 
 let Predicates = [HasAVX2] in {
-  defm : SS41I_pmovx_avx2_patterns<"VPMOVSX", X86vsext>;
-  defm : SS41I_pmovx_avx2_patterns<"VPMOVZX", X86vzext>;
+  defm : SS41I_pmovx_avx2_patterns<"VPMOVSX", "s", X86vsext>;
+  defm : SS41I_pmovx_avx2_patterns<"VPMOVZX", "z", X86vzext>;
 }
 
 // SSE4.1/AVX patterns.
-multiclass SS41I_pmovx_patterns<string OpcPrefix, SDNode ExtOp,
-                                PatFrag ExtLoad16> {
+multiclass SS41I_pmovx_patterns<string OpcPrefix, string ExtTy,
+                                SDNode ExtOp, PatFrag ExtLoad16> {
   def : Pat<(v8i16 (ExtOp (v16i8 VR128:$src))),
             (!cast<I>(OpcPrefix#BWrr) VR128:$src)>;
   def : Pat<(v4i32 (ExtOp (v16i8 VR128:$src))),
@@ -6232,6 +6248,21 @@ multiclass SS41I_pmovx_patterns<string OpcPrefix, SDNode ExtOp,
 
   def : Pat<(v2i64 (ExtOp (v4i32 VR128:$src))),
             (!cast<I>(OpcPrefix#DQrr) VR128:$src)>;
+
+  def : Pat<(v8i16 (!cast<PatFrag>(ExtTy#"extloadvi8") addr:$src)),
+            (!cast<I>(OpcPrefix#BWrm) addr:$src)>;
+  def : Pat<(v4i32 (!cast<PatFrag>(ExtTy#"extloadvi8") addr:$src)),
+            (!cast<I>(OpcPrefix#BDrm) addr:$src)>;
+  def : Pat<(v2i64 (!cast<PatFrag>(ExtTy#"extloadvi8") addr:$src)),
+            (!cast<I>(OpcPrefix#BQrm) addr:$src)>;
+
+  def : Pat<(v4i32 (!cast<PatFrag>(ExtTy#"extloadvi16") addr:$src)),
+            (!cast<I>(OpcPrefix#WDrm) addr:$src)>;
+  def : Pat<(v2i64 (!cast<PatFrag>(ExtTy#"extloadvi16") addr:$src)),
+            (!cast<I>(OpcPrefix#WQrm) addr:$src)>;
+
+  def : Pat<(v2i64 (!cast<PatFrag>(ExtTy#"extloadvi32") addr:$src)),
+            (!cast<I>(OpcPrefix#DQrm) addr:$src)>;
 
   def : Pat<(v8i16 (ExtOp (bc_v16i8 (v2i64 (scalar_to_vector (loadi64 addr:$src)))))),
             (!cast<I>(OpcPrefix#BWrm) addr:$src)>;
@@ -6295,13 +6326,13 @@ multiclass SS41I_pmovx_patterns<string OpcPrefix, SDNode ExtOp,
 }
 
 let Predicates = [HasAVX] in {
-  defm : SS41I_pmovx_patterns<"VPMOVSX", X86vsext, extloadi32i16>;
-  defm : SS41I_pmovx_patterns<"VPMOVZX", X86vzext, loadi16_anyext>;
+  defm : SS41I_pmovx_patterns<"VPMOVSX", "s", X86vsext, extloadi32i16>;
+  defm : SS41I_pmovx_patterns<"VPMOVZX", "z", X86vzext, loadi16_anyext>;
 }
 
 let Predicates = [UseSSE41] in {
-  defm : SS41I_pmovx_patterns<"PMOVSX", X86vsext, extloadi32i16>;
-  defm : SS41I_pmovx_patterns<"PMOVZX", X86vzext, loadi16_anyext>;
+  defm : SS41I_pmovx_patterns<"PMOVSX", "s", X86vsext, extloadi32i16>;
+  defm : SS41I_pmovx_patterns<"PMOVZX", "z", X86vzext, loadi16_anyext>;
 }
 
 //===----------------------------------------------------------------------===//

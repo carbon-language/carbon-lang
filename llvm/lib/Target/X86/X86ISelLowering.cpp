@@ -1136,6 +1136,21 @@ void X86TargetLowering::resetOperationActions() {
       setLoadExtAction(ISD::SEXTLOAD, VT, MVT::v2i32, Custom);
     }
 
+    // SSE41 also has vector sign/zero extending loads, PMOV[SZ]X
+    setLoadExtAction(ISD::SEXTLOAD, MVT::v8i16, MVT::v8i8,  Legal);
+    setLoadExtAction(ISD::SEXTLOAD, MVT::v4i32, MVT::v4i8,  Legal);
+    setLoadExtAction(ISD::SEXTLOAD, MVT::v2i64, MVT::v2i8,  Legal);
+    setLoadExtAction(ISD::SEXTLOAD, MVT::v4i32, MVT::v4i16, Legal);
+    setLoadExtAction(ISD::SEXTLOAD, MVT::v2i64, MVT::v2i16, Legal);
+    setLoadExtAction(ISD::SEXTLOAD, MVT::v2i64, MVT::v2i32, Legal);
+
+    setLoadExtAction(ISD::ZEXTLOAD, MVT::v8i16, MVT::v8i8,  Legal);
+    setLoadExtAction(ISD::ZEXTLOAD, MVT::v4i32, MVT::v4i8,  Legal);
+    setLoadExtAction(ISD::ZEXTLOAD, MVT::v2i64, MVT::v2i8,  Legal);
+    setLoadExtAction(ISD::ZEXTLOAD, MVT::v4i32, MVT::v4i16, Legal);
+    setLoadExtAction(ISD::ZEXTLOAD, MVT::v2i64, MVT::v2i16, Legal);
+    setLoadExtAction(ISD::ZEXTLOAD, MVT::v2i64, MVT::v2i32, Legal);
+
     // i8 and i16 vectors are custom because the source register and source
     // source memory operand types are not the same width.  f32 vectors are
     // custom since the immediate controlling the insert encodes additional
@@ -1315,6 +1330,21 @@ void X86TargetLowering::resetOperationActions() {
 
       // Custom CTPOP always performs better on natively supported v8i32
       setOperationAction(ISD::CTPOP,             MVT::v8i32, Custom);
+
+      // AVX2 also has wider vector sign/zero extending loads, VPMOV[SZ]X
+      setLoadExtAction(ISD::SEXTLOAD, MVT::v16i16, MVT::v16i8, Legal);
+      setLoadExtAction(ISD::SEXTLOAD, MVT::v8i32,  MVT::v8i8,  Legal);
+      setLoadExtAction(ISD::SEXTLOAD, MVT::v4i64,  MVT::v4i8,  Legal);
+      setLoadExtAction(ISD::SEXTLOAD, MVT::v8i32,  MVT::v8i16, Legal);
+      setLoadExtAction(ISD::SEXTLOAD, MVT::v4i64,  MVT::v4i16, Legal);
+      setLoadExtAction(ISD::SEXTLOAD, MVT::v4i64,  MVT::v4i32, Legal);
+
+      setLoadExtAction(ISD::ZEXTLOAD, MVT::v16i16, MVT::v16i8, Legal);
+      setLoadExtAction(ISD::ZEXTLOAD, MVT::v8i32,  MVT::v8i8,  Legal);
+      setLoadExtAction(ISD::ZEXTLOAD, MVT::v4i64,  MVT::v4i8,  Legal);
+      setLoadExtAction(ISD::ZEXTLOAD, MVT::v8i32,  MVT::v8i16, Legal);
+      setLoadExtAction(ISD::ZEXTLOAD, MVT::v4i64,  MVT::v4i16, Legal);
+      setLoadExtAction(ISD::ZEXTLOAD, MVT::v4i64,  MVT::v4i32, Legal);
     } else {
       setOperationAction(ISD::ADD,             MVT::v4i64, Custom);
       setOperationAction(ISD::ADD,             MVT::v8i32, Custom);

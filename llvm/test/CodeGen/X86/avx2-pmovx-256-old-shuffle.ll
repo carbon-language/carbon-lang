@@ -15,8 +15,6 @@ define void @test_avx2_pmovx_256(<8 x i8>* %tmp64, <8 x float>* %tmp75) {
 ; CHECK-LABEL: test_avx2_pmovx_256
 ; We really don't care about the generated code.
 ; CHECK: vpmovzxbd
-; CHECK: vpbroadcastd
-; CHECK: vpand
 ; CHECK: vcvtdq2ps
 ; CHECK: vmovups
 ; CHECK: vzeroupper

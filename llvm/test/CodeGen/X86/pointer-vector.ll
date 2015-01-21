@@ -81,8 +81,7 @@ define <4 x i32*> @INT2PTR1(<4 x i8>* %p) nounwind {
 entry:
   %G = load <4 x i8>* %p
 ;CHECK: movl
-;CHECK: pmovzxbd
-;CHECK: pand
+;CHECK: pmovzxbd (%
   %K = inttoptr <4 x i8> %G to <4 x i32*>
 ;CHECK: ret
   ret <4 x i32*> %K
