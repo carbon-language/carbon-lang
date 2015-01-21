@@ -371,7 +371,7 @@ ifeq "$(OS)" "Darwin"
 	$(LD) $(LDFLAGS) $(DYLIB_OBJECTS) -install_name "@executable_path/$(DYLIB_FILENAME)" -dynamiclib -o "$(DYLIB_FILENAME)"
 ifneq "$(MAKE_DSYM)" "NO"
 ifneq "$(DS)" ""
-	$(DS) $(DSFLAGS) "$(DYLIB_FILENAME)"
+	"$(DS)" $(DSFLAGS) "$(DYLIB_FILENAME)"
 endif
 endif
 else
