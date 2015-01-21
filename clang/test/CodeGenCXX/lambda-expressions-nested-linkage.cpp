@@ -30,8 +30,8 @@ L<int> l;
 }
 
 // CHECK-LABEL: define linkonce_odr i32 @_ZN15inline_function3fooEv
-// CHECK: define linkonce_odr void @_ZZN15inline_function3fooEvENKUliE_clEi
-// CHECK: define linkonce_odr signext i8 @_ZZZN15inline_function3fooEvENKUliE_clEiENKUlcE_clEc
+// CHECK-LABEL: define linkonce_odr void @_ZZN15inline_function3fooEvENKUliE_clEi
+// CHECK-LABEL: define linkonce_odr signext i8 @_ZZZN15inline_function3fooEvENKUliE_clEiENKUlcE_clEc
 namespace inline_function {
 inline int foo() {
   auto L = [](int a) {
@@ -43,8 +43,8 @@ inline int foo() {
 }
 int use = foo();
 }
-// CHECK: define linkonce_odr void @_ZNK32lambdas_in_NSDMIs_template_class1LIiEUliE_clEi(%class.anon
-// CHECK: define linkonce_odr i32 @_ZZNK32lambdas_in_NSDMIs_template_class1LIiEUliE_clEiENKUliE_clEi(%class.anon
+// CHECK-LABEL: define linkonce_odr void @_ZNK32lambdas_in_NSDMIs_template_class1LIiEUliE_clEi(%class.anon
+// CHECK-LABEL: define linkonce_odr i32 @_ZZNK32lambdas_in_NSDMIs_template_class1LIiEUliE_clEiENKUliE_clEi(%class.anon
 
-// CHECK: define linkonce_odr void @_ZNK12non_template1L1tMUliE_clEi(%class.anon
-// CHECK: define linkonce_odr i32 @_ZZNK12non_template1L1tMUliE_clEiENKUliE_clEi(%class.anon
+// CHECK-LABEL: define linkonce_odr void @_ZNK12non_template1L1tMUliE_clEi(%class.anon
+// CHECK-LABEL: define linkonce_odr i32 @_ZZNK12non_template1L1tMUliE_clEiENKUliE_clEi(%class.anon
