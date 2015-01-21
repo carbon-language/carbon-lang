@@ -927,8 +927,12 @@ struct __tuple_less
     _LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR_AFTER_CXX11
     bool operator()(const _Tp& __x, const _Up& __y)
     {
-        return __tuple_less<_Ip-1>()(__x, __y) ||
-             (!__tuple_less<_Ip-1>()(__y, __x) && _VSTD::get<_Ip-1>(__x) < _VSTD::get<_Ip-1>(__y));
+        const size_t __idx = tuple_size<_Tp>::value - _Ip;
+        if (_VSTD::get<__idx>(__x) < _VSTD::get<__idx>(__y))
+            return true;
+        if (_VSTD::get<__idx>(__y) < _VSTD::get<__idx>(__x))
+            return false;
+        return __tuple_less<_Ip-1>()(__x, __y);
     }
 };
 
