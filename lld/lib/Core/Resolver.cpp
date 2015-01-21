@@ -276,8 +276,8 @@ File *Resolver::getFile(int &index) {
 // Make a map of Symbol -> ArchiveFile.
 void Resolver::makePreloadArchiveMap() {
   std::vector<std::unique_ptr<Node>> &nodes = _context.getNodes();
-  for (auto it = nodes.rbegin(), e = nodes.rend(); it != e; ++it)
-    if (auto *fnode = dyn_cast<FileNode>(it->get()))
+  for (int i = nodes.size() - 1; i >= 0; --i)
+    if (auto *fnode = dyn_cast<FileNode>(nodes[i].get()))
       if (auto *archive = dyn_cast<ArchiveLibraryFile>(fnode->getFile()))
         for (StringRef sym : archive->getDefinedSymbols())
           _archiveMap[sym] = archive;
