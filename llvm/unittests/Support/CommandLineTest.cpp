@@ -230,5 +230,16 @@ TEST(CommandLineTest, AliasRequired) {
   testAliasRequired(array_lengthof(opts2), opts2);
 }
 
+TEST(CommandLineTest, HideUnrelatedOptions) {
+  cl::opt<int> TestOption1("test-option-1");
+  cl::opt<int> TestOption2("test-option-2", cl::cat(TestCategory));
+
+  cl::HideUnrelatedOptions(TestCategory);
+
+  ASSERT_EQ(cl::ReallyHidden, TestOption1.getOptionHiddenFlag())
+      << "Failed to hide extra option.";
+  ASSERT_EQ(cl::NotHidden, TestOption2.getOptionHiddenFlag())
+      << "Hid extra option that should be visable.";
+}
 
 }  // anonymous namespace

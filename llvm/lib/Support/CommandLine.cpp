@@ -1826,10 +1826,20 @@ void cl::AddExtraVersionPrinter(void (*func)()) {
 void cl::getRegisteredOptions(StringMap<Option *> &Map) {
   // Get all the options.
   SmallVector<Option *, 4> PositionalOpts; // NOT USED
-  SmallVector<Option *, 4> SinkOpts; // NOT USED
+  SmallVector<Option *, 4> SinkOpts;       // NOT USED
   assert(Map.size() == 0 && "StringMap must be empty");
   GetOptionInfo(PositionalOpts, SinkOpts, Map);
   return;
+}
+
+void cl::HideUnrelatedOptions(cl::OptionCategory &Category) {
+  StringMap<cl::Option *> Options;
+  cl::getRegisteredOptions(Options);
+  for (auto &I : Options) {
+    if (I.second->Category != &Category && I.first() != "help" &&
+        I.first() != "version")
+      I.second->setHiddenFlag(cl::ReallyHidden);
+  }
 }
 
 void LLVMParseCommandLineOptions(int argc, const char *const *argv,
