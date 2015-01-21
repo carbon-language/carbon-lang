@@ -18,6 +18,7 @@
 #include "msan_allocator.h"
 #include "msan_origin.h"
 #include "msan_thread.h"
+#include "msan_poisoning.h"
 
 namespace __msan {
 
@@ -168,15 +169,21 @@ void *MsanReallocate(StackTrace *stack, void *old_p, uptr new_size,
   if (new_size <= actually_allocated_size) {
     // We are not reallocating here.
     meta->requested_size = new_size;
-    if (new_size > old_size)
-      __msan_poison((char*)old_p + old_size, new_size - old_size);
+    if (new_size > old_size) {
+      if (zeroise) {
+        __msan_clear_and_unpoison((char *)old_p + old_size,
+                                  new_size - old_size);
+      } else if (flags()->poison_in_malloc) {
+        PoisonMemory((char *)old_p + old_size, new_size - old_size, stack);
+      }
+    }
     return old_p;
   }
   uptr memcpy_size = Min(new_size, old_size);
   void *new_p = MsanAllocate(stack, new_size, alignment, zeroise);
   // Printf("realloc: old_size %zd new_size %zd\n", old_size, new_size);
   if (new_p) {
-    __msan_memcpy(new_p, old_p, memcpy_size);
+    CopyMemory(new_p, old_p, memcpy_size, stack);
     MsanDeallocate(stack, old_p);
   }
   return new_p;
