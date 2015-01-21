@@ -12,7 +12,7 @@ entry:
 ; CHECK-LABEL: rsqrtss:
 ; CHECK: rsqrtss %xmm0, %xmm0
 ; CHECK-NEXT: cvtss2sd %xmm0
-; CHECK-NEXT: shufps
+; CHECK-NEXT: movshdup
 ; CHECK-NEXT: cvtss2sd %xmm0
 ; CHECK-NEXT: movap
 ; CHECK-NEXT: jmp
@@ -33,7 +33,7 @@ entry:
 ; CHECK-LABEL: rcpss:
 ; CHECK: rcpss %xmm0, %xmm0
 ; CHECK-NEXT: cvtss2sd %xmm0
-; CHECK-NEXT: shufps
+; CHECK-NEXT: movshdup
 ; CHECK-NEXT: cvtss2sd %xmm0
 ; CHECK-NEXT: movap
 ; CHECK-NEXT: jmp
@@ -53,7 +53,7 @@ entry:
 ; CHECK-LABEL: sqrtss:
 ; CHECK: sqrtss %xmm0, %xmm0
 ; CHECK-NEXT: cvtss2sd %xmm0
-; CHECK-NEXT: shufps
+; CHECK-NEXT: movshdup
 ; CHECK-NEXT: cvtss2sd %xmm0
 ; CHECK-NEXT: movap
 ; CHECK-NEXT: jmp

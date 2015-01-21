@@ -1333,7 +1333,7 @@ let Predicates = [HasAVX] in {
             (VMOVHPSrm VR128:$src1, addr:$src2)>;
 
   // VMOVHPD patterns
-  
+
   // FIXME: Instead of X86Unpckl, there should be a X86Movlhpd here, the problem
   // is during lowering, where it's not possible to recognize the load fold
   // cause it has two uses through a bitcast. One use disappears at isel time
@@ -2741,24 +2741,6 @@ let Predicates = [HasAVX1Only] in {
             (VUNPCKHPDYrm VR256:$src1, addr:$src2)>;
   def : Pat<(v4i64 (X86Unpckh VR256:$src1, VR256:$src2)),
             (VUNPCKHPDYrr VR256:$src1, VR256:$src2)>;
-}
-
-let Predicates = [HasAVX] in {
-  // FIXME: Instead of X86Movddup, there should be a X86Unpckl here, the
-  // problem is during lowering, where it's not possible to recognize the load
-  // fold cause it has two uses through a bitcast. One use disappears at isel
-  // time and the fold opportunity reappears.
-  def : Pat<(v2f64 (X86Movddup VR128:$src)),
-            (VUNPCKLPDrr VR128:$src, VR128:$src)>;
-}
-
-let Predicates = [UseSSE2] in {
-  // FIXME: Instead of X86Movddup, there should be a X86Unpckl here, the
-  // problem is during lowering, where it's not possible to recognize the load
-  // fold cause it has two uses through a bitcast. One use disappears at isel
-  // time and the fold opportunity reappears.
-  def : Pat<(v2f64 (X86Movddup VR128:$src)),
-            (UNPCKLPDrr VR128:$src, VR128:$src)>;
 }
 
 //===----------------------------------------------------------------------===//
@@ -5388,10 +5370,10 @@ let Predicates = [UseSSE3] in {
 //===---------------------------------------------------------------------===//
 
 multiclass sse3_replicate_dfp<string OpcodeStr> {
-let hasSideEffects = 0 in
 def rr  : S3DI<0x12, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
                     !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"),
-                    [], IIC_SSE_MOV_LH>, Sched<[WriteFShuffle]>;
+                    [(set VR128:$dst, (v2f64 (X86Movddup VR128:$src)))],
+                    IIC_SSE_MOV_LH>, Sched<[WriteFShuffle]>;
 def rm  : S3DI<0x12, MRMSrcMem, (outs VR128:$dst), (ins f64mem:$src),
                     !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"),
                     [(set VR128:$dst,
@@ -8161,21 +8143,21 @@ let Predicates = [HasAVX, HasFastMem32] in {
               (loadv2f64 (add addr:$src, (iPTR 16))),
               (iPTR 2)),
             (VMOVUPDYrm addr:$src)>;
-            
+
   def : Pat<(insert_subvector
               (v32i8 (insert_subvector
                 undef, (bc_v16i8 (loadv2i64 addr:$src)), (iPTR 0))),
               (bc_v16i8 (loadv2i64 (add addr:$src, (iPTR 16)))),
               (iPTR 16)),
             (VMOVDQUYrm addr:$src)>;
-            
+
   def : Pat<(insert_subvector
               (v16i16 (insert_subvector
                 undef, (bc_v8i16 (loadv2i64 addr:$src)), (iPTR 0))),
               (bc_v8i16 (loadv2i64 (add addr:$src, (iPTR 16)))),
               (iPTR 8)),
             (VMOVDQUYrm addr:$src)>;
-            
+
   def : Pat<(insert_subvector
               (v8i32 (insert_subvector
                 undef, (bc_v4i32 (loadv2i64 addr:$src)), (iPTR 0))),

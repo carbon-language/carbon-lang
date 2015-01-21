@@ -118,7 +118,7 @@ define <8 x i8> @foo3_8(<8 x float> %src) {
 ; CHECK-WIDE-NEXT:    vcvttss2si %xmm1, %ecx
 ; CHECK-WIDE-NEXT:    movzbl %cl, %ecx
 ; CHECK-WIDE-NEXT:    orl %eax, %ecx
-; CHECK-WIDE-NEXT:    vpermilps {{.*#+}} xmm1 = xmm0[1,1,2,3]
+; CHECK-WIDE-NEXT:    vmovshdup {{.*#+}} xmm1 = xmm0[1,1,3,3]
 ; CHECK-WIDE-NEXT:    vcvttss2si %xmm1, %eax
 ; CHECK-WIDE-NEXT:    shll $8, %eax
 ; CHECK-WIDE-NEXT:    vcvttss2si %xmm0, %edx
@@ -127,7 +127,7 @@ define <8 x i8> @foo3_8(<8 x float> %src) {
 ; CHECK-WIDE-NEXT:    vpinsrw $0, %edx, %xmm0, %xmm1
 ; CHECK-WIDE-NEXT:    vpinsrw $1, %ecx, %xmm1, %xmm1
 ; CHECK-WIDE-NEXT:    vextractf128 $1, %ymm0, %xmm0
-; CHECK-WIDE-NEXT:    vpermilps {{.*#+}} xmm2 = xmm0[1,1,2,3]
+; CHECK-WIDE-NEXT:    vmovshdup {{.*#+}} xmm2 = xmm0[1,1,3,3]
 ; CHECK-WIDE-NEXT:    vcvttss2si %xmm2, %eax
 ; CHECK-WIDE-NEXT:    shll $8, %eax
 ; CHECK-WIDE-NEXT:    vcvttss2si %xmm0, %ecx
@@ -163,7 +163,7 @@ define <4 x i8> @foo3_4(<4 x float> %src) {
 ; CHECK-WIDE-NEXT:    vcvttss2si %xmm1, %ecx
 ; CHECK-WIDE-NEXT:    movzbl %cl, %ecx
 ; CHECK-WIDE-NEXT:    orl %eax, %ecx
-; CHECK-WIDE-NEXT:    vpermilps {{.*#+}} xmm1 = xmm0[1,1,2,3]
+; CHECK-WIDE-NEXT:    vmovshdup {{.*#+}} xmm1 = xmm0[1,1,3,3]
 ; CHECK-WIDE-NEXT:    vcvttss2si %xmm1, %eax
 ; CHECK-WIDE-NEXT:    shll $8, %eax
 ; CHECK-WIDE-NEXT:    vcvttss2si %xmm0, %edx

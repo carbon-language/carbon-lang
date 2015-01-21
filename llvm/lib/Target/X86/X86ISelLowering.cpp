@@ -5531,11 +5531,16 @@ static bool getTargetShuffleMask(SDNode *N, MVT VT,
     break;
   case X86ISD::MOVSLDUP:
     DecodeMOVSLDUPMask(VT, Mask);
+    IsUnary = true;
     break;
   case X86ISD::MOVSHDUP:
     DecodeMOVSHDUPMask(VT, Mask);
+    IsUnary = true;
     break;
   case X86ISD::MOVDDUP:
+    DecodeMOVDDUPMask(VT, Mask);
+    IsUnary = true;
+    break;
   case X86ISD::MOVLHPD:
   case X86ISD::MOVLPD:
   case X86ISD::MOVLPS:
@@ -8284,6 +8289,11 @@ static SDValue lowerV2F64VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
   assert(Mask.size() == 2 && "Unexpected mask size for v2 shuffle!");
 
   if (isSingleInputShuffleMask(Mask)) {
+    // Use low duplicate instructions for masks that match their pattern.
+    if (Subtarget->hasSSE3())
+      if (isShuffleEquivalent(Mask, 0, 0))
+        return DAG.getNode(X86ISD::MOVDDUP, DL, MVT::v2f64, V1);
+
     // Straight shuffle of a single input vector. Simulate this by using the
     // single input as both of the "inputs" to this instruction..
     unsigned SHUFPDMask = (Mask[0] == 1) | ((Mask[1] == 1) << 1);
@@ -8540,6 +8550,14 @@ static SDValue lowerV4F32VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
     if (SDValue Broadcast = lowerVectorShuffleAsBroadcast(MVT::v4f32, DL, V1,
                                                           Mask, Subtarget, DAG))
       return Broadcast;
+
+    // Use even/odd duplicate instructions for masks that match their pattern.
+    if (Subtarget->hasSSE3()) {
+      if (isShuffleEquivalent(Mask, 0, 0, 2, 2))
+        return DAG.getNode(X86ISD::MOVSLDUP, DL, MVT::v4f32, V1);
+      if (isShuffleEquivalent(Mask, 1, 1, 3, 3))
+        return DAG.getNode(X86ISD::MOVSHDUP, DL, MVT::v4f32, V1);
+    }
 
     if (Subtarget->hasAVX()) {
       // If we have AVX, we can use VPERMILPS which will allow folding a load
@@ -10266,6 +10284,10 @@ static SDValue lowerV4F64VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
                                                           Mask, Subtarget, DAG))
       return Broadcast;
 
+    // Use low duplicate instructions for masks that match their pattern.
+    if (isShuffleEquivalent(Mask, 0, 0, 2, 2))
+      return DAG.getNode(X86ISD::MOVDDUP, DL, MVT::v4f64, V1);
+
     if (!is128BitLaneCrossingShuffleMask(MVT::v4f64, Mask)) {
       // Non-half-crossing single input shuffles can be lowerid with an
       // interleaved permutation.
@@ -10449,6 +10471,13 @@ static SDValue lowerV8F32VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
   if (is128BitLaneRepeatedShuffleMask(MVT::v8f32, Mask, RepeatedMask)) {
     assert(RepeatedMask.size() == 4 &&
            "Repeated masks must be half the mask width!");
+
+    // Use even/odd duplicate instructions for masks that match their pattern.
+    if (isShuffleEquivalent(Mask, 0, 0, 2, 2, 4, 4, 6, 6))
+      return DAG.getNode(X86ISD::MOVSLDUP, DL, MVT::v8f32, V1);
+    if (isShuffleEquivalent(Mask, 1, 1, 3, 3, 5, 5, 7, 7))
+      return DAG.getNode(X86ISD::MOVSHDUP, DL, MVT::v8f32, V1);
+
     if (isSingleInputShuffleMask(Mask))
       return DAG.getNode(X86ISD::VPERMILPI, DL, MVT::v8f32, V1,
                          getV4X86ShuffleImm8ForMask(RepeatedMask, DAG));
@@ -22838,7 +22867,8 @@ static SDValue XFormVExtractWithShuffleIntoLoad(SDNode *N, SelectionDAG &DAG,
                                          : InVec.getOperand(1);
 
   // If inputs to shuffle are the same for both ops, then allow 2 uses
-  unsigned AllowedUses = InVec.getOperand(0) == InVec.getOperand(1) ? 2 : 1;
+  unsigned AllowedUses = InVec.getNumOperands() > 1 &&
+                         InVec.getOperand(0) == InVec.getOperand(1) ? 2 : 1;
 
   if (LdNode.getOpcode() == ISD::BITCAST) {
     // Don't duplicate a load with other uses.
