@@ -2223,7 +2223,11 @@ static void checkNewAttributesAfterDef(Sema &S, Decl *New, const Decl *Old) {
         S.CheckForFunctionRedefinition(FD, cast<FunctionDecl>(Def));
       else {
         VarDecl *VD = cast<VarDecl>(New);
-        S.Diag(VD->getLocation(), diag::err_redefinition) << VD->getDeclName();
+        unsigned Diag = cast<VarDecl>(Def)->isThisDeclarationADefinition() ==
+                                VarDecl::TentativeDefinition
+                            ? diag::err_alias_after_tentative
+                            : diag::err_redefinition;
+        S.Diag(VD->getLocation(), Diag) << VD->getDeclName();
         S.Diag(Def->getLocation(), diag::note_previous_definition);
         VD->setInvalidDecl();
       }
