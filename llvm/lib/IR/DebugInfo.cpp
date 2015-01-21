@@ -148,17 +148,18 @@ uint64_t DIExpression::getElement(unsigned Idx) const {
 }
 
 bool DIExpression::isVariablePiece() const {
-  return getNumElements() && getElement(0) == dwarf::DW_OP_piece;
+  unsigned N = getNumElements();
+  return N >=3 && getElement(N-3) == dwarf::DW_OP_piece;
 }
 
 uint64_t DIExpression::getPieceOffset() const {
-  assert(isVariablePiece());
-  return getElement(1);
+  assert(isVariablePiece() && "not a piece");
+  return getElement(getNumElements()-2);
 }
 
 uint64_t DIExpression::getPieceSize() const {
-  assert(isVariablePiece());
-  return getElement(2);
+  assert(isVariablePiece() && "not a piece");
+  return getElement(getNumElements()-1);
 }
 
 //===----------------------------------------------------------------------===//
@@ -593,6 +594,24 @@ bool DIExpression::Verify() const {
   if (!DbgNode)
     return true;
 
+  unsigned N = getNumElements();
+  for (unsigned I = 0; I < N; ++I)
+    switch (getElement(I)) {
+    case DW_OP_piece:
+      // DW_OP_piece has to be the last element in the expression and take two
+      // arguments.
+      if (getElement(I) == DW_OP_piece && !isVariablePiece())
+        return false;
+      I += 2;
+      break;
+    case DW_OP_plus:
+      // Takes one argument.
+      if (I+1 == N)
+        return false;
+      I += 1;
+      break;
+    default: break;
+  }
   return isExpression() && DbgNode->getNumOperands() == 1;
 }
 

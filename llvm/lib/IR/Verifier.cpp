@@ -2841,12 +2841,20 @@ void DebugInfoVerifier::processCallInst(DebugInfoFinder &Finder,
   if (Function *F = CI.getCalledFunction())
     if (Intrinsic::ID ID = (Intrinsic::ID)F->getIntrinsicID())
       switch (ID) {
-      case Intrinsic::dbg_declare:
-        Finder.processDeclare(*M, cast<DbgDeclareInst>(&CI));
+      case Intrinsic::dbg_declare: {
+        auto *DDI = cast<DbgDeclareInst>(&CI);
+        Finder.processDeclare(*M, DDI);
+        if (auto E = DDI->getExpression())
+          Assert1(DIExpression(E).Verify(), "DIExpression does not Verify!", E);
         break;
-      case Intrinsic::dbg_value:
-        Finder.processValue(*M, cast<DbgValueInst>(&CI));
+      }
+      case Intrinsic::dbg_value: {
+        auto *DVI = cast<DbgValueInst>(&CI);
+        Finder.processValue(*M, DVI);
+        if (auto E = DVI->getExpression())
+          Assert1(DIExpression(E).Verify(), "DIExpression does not Verify!", E);
         break;
+      }
       default:
         break;
       }

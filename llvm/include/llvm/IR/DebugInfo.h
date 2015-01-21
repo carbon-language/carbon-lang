@@ -1036,6 +1036,9 @@ public:
   /// \brief Process DILocation.
   void processLocation(const Module &M, DILocation Loc);
 
+  /// \brief Process DIExpression.
+  void processExpression(DIExpression Expr);
+
   /// \brief Clear all lists.
   void reset();
 
