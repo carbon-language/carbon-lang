@@ -24,9 +24,9 @@ namespace lldb_private {
 class OptionValueRegex : public OptionValue
 {
 public:
-    OptionValueRegex (const char *value = NULL, uint32_t regex_flags = 0) :
+    OptionValueRegex (const char *value = NULL) :
         OptionValue(),
-        m_regex (value, regex_flags)
+        m_regex (value)
     {
     }
 
@@ -75,10 +75,10 @@ public:
     }
     
     void
-    SetCurrentValue (const char *value, uint32_t regex_flags)
+    SetCurrentValue (const char *value)
     {
         if (value && value[0])
-            m_regex.Compile (value, regex_flags);
+            m_regex.Compile (value);
         else
             m_regex.Clear();
     }

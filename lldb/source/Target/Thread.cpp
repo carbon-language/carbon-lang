@@ -66,8 +66,8 @@ g_properties[] =
     { "step-in-avoid-nodebug", OptionValue::eTypeBoolean, true, true, NULL, NULL, "If true, step-in will not stop in functions with no debug information." },
     { "step-out-avoid-nodebug", OptionValue::eTypeBoolean, true, false, NULL, NULL, "If true, when step-in/step-out/step-over leave the current frame, they will continue to step out till they come to a function with "
                                                                                     "debug information.  Passing a frame argument to step-out will override this option." },
-    { "step-avoid-regexp",  OptionValue::eTypeRegex  , true , REG_EXTENDED, "^std::", NULL, "A regular expression defining functions step-in won't stop in." },
-    { "step-avoid-libraries",  OptionValue::eTypeFileSpecList  , true , REG_EXTENDED, NULL, NULL, "A list of libraries that source stepping won't stop in." },
+    { "step-avoid-regexp",  OptionValue::eTypeRegex  , true , 0, "^std::", NULL, "A regular expression defining functions step-in won't stop in." },
+    { "step-avoid-libraries",  OptionValue::eTypeFileSpecList  , true , 0, NULL, NULL, "A list of libraries that source stepping won't stop in." },
     { "trace-thread",       OptionValue::eTypeBoolean, false, false, NULL, NULL, "If true, this thread will single-step and log execution." },
     {  NULL               , OptionValue::eTypeInvalid, false, 0    , NULL, NULL, NULL  }
 };

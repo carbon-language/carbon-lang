@@ -7,9 +7,22 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include <string.h>
 #include "lldb/Core/RegularExpression.h"
 #include "llvm/ADT/StringRef.h"
-#include <string.h>
+#include "lldb/Core/Error.h"
+
+
+//----------------------------------------------------------------------
+// Enable enhanced mode if it is available. This allows for things like
+// \d for digit, \s for space, and many more, but it isn't available
+// everywhere.
+//----------------------------------------------------------------------
+#if defined(REG_ENHANCED)
+#define DEFAULT_COMPILE_FLAGS (REG_ENHANCED|REG_EXTENDED)
+#else
+#define DEFAULT_COMPILE_FLAGS (REG_EXTENDED)
+#endif
 
 using namespace lldb_private;
 
@@ -19,24 +32,9 @@ using namespace lldb_private;
 RegularExpression::RegularExpression() :
     m_re(),
     m_comp_err (1),
-    m_preg(),
-    m_compile_flags(REG_EXTENDED)
+    m_preg()
 {
     memset(&m_preg,0,sizeof(m_preg));
-}
-
-//----------------------------------------------------------------------
-// Constructor that compiles "re" using "flags" and stores the
-// resulting compiled regular expression into this object.
-//----------------------------------------------------------------------
-RegularExpression::RegularExpression(const char* re, int flags) :
-    m_re(),
-    m_comp_err (1),
-    m_preg(),
-    m_compile_flags(flags)
-{
-    memset(&m_preg,0,sizeof(m_preg));
-    Compile(re);
 }
 
 //----------------------------------------------------------------------
@@ -46,8 +44,7 @@ RegularExpression::RegularExpression(const char* re, int flags) :
 RegularExpression::RegularExpression(const char* re) :
     m_re(),
     m_comp_err (1),
-    m_preg(),
-    m_compile_flags(REG_EXTENDED)
+    m_preg()
 {
     memset(&m_preg,0,sizeof(m_preg));
     Compile(re);
@@ -56,16 +53,14 @@ RegularExpression::RegularExpression(const char* re) :
 RegularExpression::RegularExpression(const RegularExpression &rhs)
 {
     memset(&m_preg,0,sizeof(m_preg));
-    Compile(rhs.GetText(), rhs.GetCompileFlags());
+    Compile(rhs.GetText());
 }
 
 const RegularExpression &
 RegularExpression::operator= (const RegularExpression &rhs)
 {
     if (&rhs != this)
-    {
-        Compile (rhs.GetText(), rhs.GetCompileFlags());
-    }
+        Compile (rhs.GetText());
     return *this;
 }
 //----------------------------------------------------------------------
@@ -94,19 +89,12 @@ RegularExpression::~RegularExpression()
 bool
 RegularExpression::Compile(const char* re)
 {
-    return Compile (re, m_compile_flags);
-}
-
-bool
-RegularExpression::Compile(const char* re, int flags)
-{
     Free();
-    m_compile_flags = flags;
     
     if (re && re[0])
     {
         m_re = re;
-        m_comp_err = ::regcomp (&m_preg, re, flags);
+        m_comp_err = ::regcomp (&m_preg, re, DEFAULT_COMPILE_FLAGS);
     }
     else
     {
@@ -126,7 +114,7 @@ RegularExpression::Compile(const char* re, int flags)
 // will be executed using the "execute_flags".
 //---------------------------------------------------------------------
 bool
-RegularExpression::Execute(const char* s, Match *match, int execute_flags) const
+RegularExpression::Execute (const char* s, Match *match) const
 {
     int err = 1;
     if (s != NULL && m_comp_err == 0)
@@ -137,7 +125,7 @@ RegularExpression::Execute(const char* s, Match *match, int execute_flags) const
                              s,
                              match->GetSize(),
                              match->GetData(),
-                             execute_flags);
+                             0);
         }
         else
         {
@@ -145,7 +133,7 @@ RegularExpression::Execute(const char* s, Match *match, int execute_flags) const
                              s,
                              0,
                              NULL,
-                             execute_flags);
+                             0);
         }
     }
     

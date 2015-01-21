@@ -129,7 +129,7 @@ Property::Property (const PropertyDefinition &definition) :
             // "definition.default_uint_value" is used to the regular expression flags
             // "definition.default_cstr_value" the default regular expression value
             // value.
-            m_value_sp.reset (new OptionValueRegex(definition.default_cstr_value, definition.default_uint_value));
+            m_value_sp.reset (new OptionValueRegex(definition.default_cstr_value));
             break;
             
         case OptionValue::eTypeSInt64:

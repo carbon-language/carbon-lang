@@ -371,7 +371,7 @@ public:
                 }
             }
 
-            static RegularExpression s_regex("[ \t]*([^ ^\t]+)[ \t]*([^ ^\t].*)?", REG_EXTENDED);
+            static RegularExpression s_regex("[ \t]*([^ ^\t]+)[ \t]*([^ ^\t].*)?");
 
             RegularExpression::Match matches(3);
 
