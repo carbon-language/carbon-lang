@@ -1,5 +1,5 @@
-; RUN: opt < %s -loop-unroll -S | FileCheck %s
-; RUN: opt < %s -loop-unroll -loop-unroll -S | FileCheck %s
+; RUN: opt < %s -loop-unroll -pragma-unroll-threshold=1024 -S | FileCheck %s
+; RUN: opt < %s -loop-unroll -loop-unroll -pragma-unroll-threshold=1024 -S | FileCheck %s
 ;
 ; Run loop unrolling twice to verify that loop unrolling metadata is properly
 ; removed and further unrolling is disabled after the pass is run once.
