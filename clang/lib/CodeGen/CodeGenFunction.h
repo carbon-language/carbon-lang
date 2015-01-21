@@ -2716,7 +2716,7 @@ public:
                     CallExpr::const_arg_iterator ArgBeg,
                     CallExpr::const_arg_iterator ArgEnd,
                     const FunctionDecl *CalleeDecl = nullptr,
-                    unsigned ParamsToSkip = 0, bool ForceColumnInfo = false) {
+                    unsigned ParamsToSkip = 0) {
     SmallVector<QualType, 16> ArgTypes;
     CallExpr::const_arg_iterator Arg = ArgBeg;
 
@@ -2749,15 +2749,14 @@ public:
     for (; Arg != ArgEnd; ++Arg)
       ArgTypes.push_back(getVarArgType(*Arg));
 
-    EmitCallArgs(Args, ArgTypes, ArgBeg, ArgEnd, CalleeDecl, ParamsToSkip,
-                 ForceColumnInfo);
+    EmitCallArgs(Args, ArgTypes, ArgBeg, ArgEnd, CalleeDecl, ParamsToSkip);
   }
 
   void EmitCallArgs(CallArgList &Args, ArrayRef<QualType> ArgTypes,
                     CallExpr::const_arg_iterator ArgBeg,
                     CallExpr::const_arg_iterator ArgEnd,
                     const FunctionDecl *CalleeDecl = nullptr,
-                    unsigned ParamsToSkip = 0, bool ForceColumnInfo = false);
+                    unsigned ParamsToSkip = 0);
 
 private:
   QualType getVarArgType(const Expr *Arg);

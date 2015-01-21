@@ -2680,8 +2680,7 @@ void CodeGenFunction::EmitCallArgs(CallArgList &Args,
                                    CallExpr::const_arg_iterator ArgBeg,
                                    CallExpr::const_arg_iterator ArgEnd,
                                    const FunctionDecl *CalleeDecl,
-                                   unsigned ParamsToSkip,
-                                   bool ForceColumnInfo) {
+                                   unsigned ParamsToSkip) {
   // We *have* to evaluate arguments from right to left in the MS C++ ABI,
   // because arguments are destroyed left to right in the callee.
   if (CGM.getTarget().getCXXABI().areArgsDestroyedLeftToRightInCallee()) {
