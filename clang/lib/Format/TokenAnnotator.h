@@ -75,6 +75,7 @@ public:
     FormatToken *Current = First;
     while (Current) {
       Current->Children.clear();
+      Current->Role.reset();
       Current = Current->Next;
     }
   }
