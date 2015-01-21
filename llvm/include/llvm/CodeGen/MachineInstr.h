@@ -1048,6 +1048,11 @@ public:
   bool addRegisterDead(unsigned Reg, const TargetRegisterInfo *RegInfo,
                        bool AddIfNotFound = false);
 
+  /// Mark all subregister defs of register @p Reg with the undef flag.
+  /// This function is used when we determined to have a subregister def in an
+  /// otherwise undefined super register.
+  void addRegisterDefReadUndef(unsigned Reg);
+
   /// addRegisterDefined - We have determined MI defines a register. Make sure
   /// there is an operand defining Reg.
   void addRegisterDefined(unsigned Reg,
