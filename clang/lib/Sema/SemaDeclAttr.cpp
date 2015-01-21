@@ -2953,12 +2953,15 @@ void Sema::AddAlignedAttr(SourceRange AttrRange, Decl *D, TypeSourceInfo *TS,
 void Sema::CheckAlignasUnderalignment(Decl *D) {
   assert(D->hasAttrs() && "no attributes on decl");
 
-  QualType Ty;
-  if (ValueDecl *VD = dyn_cast<ValueDecl>(D))
-    Ty = VD->getType();
-  else
-    Ty = Context.getTagDeclType(cast<TagDecl>(D));
-  if (Ty->isDependentType() || Ty->isIncompleteType())
+  QualType UnderlyingTy, DiagTy;
+  if (ValueDecl *VD = dyn_cast<ValueDecl>(D)) {
+    UnderlyingTy = DiagTy = VD->getType();
+  } else {
+    UnderlyingTy = DiagTy = Context.getTagDeclType(cast<TagDecl>(D));
+    if (EnumDecl *ED = dyn_cast<EnumDecl>(D))
+      UnderlyingTy = ED->getIntegerType();
+  }
+  if (DiagTy->isDependentType() || DiagTy->isIncompleteType())
     return;
 
   // C++11 [dcl.align]p5, C11 6.7.5/4:
@@ -2977,10 +2980,10 @@ void Sema::CheckAlignasUnderalignment(Decl *D) {
 
   if (AlignasAttr && Align) {
     CharUnits RequestedAlign = Context.toCharUnitsFromBits(Align);
-    CharUnits NaturalAlign = Context.getTypeAlignInChars(Ty);
+    CharUnits NaturalAlign = Context.getTypeAlignInChars(UnderlyingTy);
     if (NaturalAlign > RequestedAlign)
       Diag(AlignasAttr->getLocation(), diag::err_alignas_underaligned)
-        << Ty << (unsigned)NaturalAlign.getQuantity();
+        << DiagTy << (unsigned)NaturalAlign.getQuantity();
   }
 }
 

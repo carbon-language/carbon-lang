@@ -15,6 +15,12 @@ enum alignas(1) E1 {}; // expected-error {{requested alignment is less than mini
 enum alignas(1) E2 : char {}; // ok
 enum alignas(4) E3 { e3 = 0 }; // ok
 enum alignas(4) E4 { e4 = 1ull << 33 }; // expected-error {{requested alignment is less than minimum alignment of 8 for type 'E4'}}
+enum alignas(8) E5 {};
+static_assert(alignof(E5) == 8, "");
+
+typedef __attribute__((aligned(16))) int IntAlign16;
+enum E6 : IntAlign16 {};
+static_assert(alignof(E6) == 4, "");
 
 struct S1 {
   alignas(8) int n;
