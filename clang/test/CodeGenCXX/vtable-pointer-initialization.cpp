@@ -45,6 +45,9 @@ void f() { B b; }
 // CHECK: call void @_ZN1BC2Ev(
 
 // CHECK-LABEL: define linkonce_odr void @_ZN1BD1Ev(%struct.B* %this) unnamed_addr
+// CHECK: call void @_ZN1BD2Ev(%struct.B* %this1)
+
+// CHECK-LABEL: define linkonce_odr void @_ZN1BD2Ev(%struct.B* %this) unnamed_addr
 // CHECK: store i32 (...)** bitcast (i8** getelementptr inbounds ([3 x i8*]* @_ZTV1B, i64 0, i64 2) to i32 (...)**)
 // CHECK: call void @_ZN5FieldD1Ev(
 // CHECK: call void @_ZN4BaseD2Ev(
