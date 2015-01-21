@@ -53,7 +53,7 @@ afunc()
 
 	if (ls *.cpp > /dev/null 2>&1)
 	then
-		for FILE in $(ls *.cpp); do
+		for FILE in $(ls *.pass.cpp); do
 			if $CC $OPTIONS $HEADER_INCLUDE $SOURCE_LIB $FILE $LIBS -o ./$TEST_EXE
 			then
 				if ./$TEST_EXE
