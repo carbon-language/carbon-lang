@@ -1923,6 +1923,9 @@ void MicrosoftCXXABI::EmitGuardedInit(CodeGenFunction &CGF, const VarDecl &D,
                                  GV->getLinkage(), Zero, GuardName.str());
     GI->Guard->setVisibility(GV->getVisibility());
     GI->Guard->setDLLStorageClass(GV->getDLLStorageClass());
+    if (GI->Guard->isWeakForLinker())
+      GI->Guard->setComdat(
+          CGM.getModule().getOrInsertComdat(GI->Guard->getName()));
   } else {
     assert(GI->Guard->getLinkage() == GV->getLinkage() &&
            "static local from the same function had different linkage");

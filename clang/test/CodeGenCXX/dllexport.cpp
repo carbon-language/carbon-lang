@@ -82,8 +82,8 @@ int __declspec(dllexport) nonInlineStaticLocalsFunc() {
   return x++;
 };
 
-// MSC-DAG: @"\01?x@?1??inlineStaticLocalsFunc@@YAHXZ@4HA" = weak_odr dllexport global i32 0
-// MSC-DAG: @"\01??_B?1??inlineStaticLocalsFunc@@YAHXZ@51" = weak_odr dllexport global i32 0
+// MSC-DAG: @"\01?x@?1??inlineStaticLocalsFunc@@YAHXZ@4HA" = weak_odr dllexport global i32 0, comdat
+// MSC-DAG: @"\01??_B?1??inlineStaticLocalsFunc@@YAHXZ@51" = weak_odr dllexport global i32 0, comdat
 // Note: MinGW doesn't seem to export the static local here.
 inline int __declspec(dllexport) inlineStaticLocalsFunc() {
   static int x = f();
