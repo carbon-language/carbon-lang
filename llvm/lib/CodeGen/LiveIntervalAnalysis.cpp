@@ -609,15 +609,6 @@ void LiveIntervals::pruneValue(LiveRange &LR, SlotIndex Kill,
   }
 }
 
-void LiveIntervals::pruneValue(LiveInterval &LI, SlotIndex Kill,
-                               SmallVectorImpl<SlotIndex> *EndPoints) {
-  pruneValue((LiveRange&)LI, Kill, EndPoints);
-
-  for (LiveInterval::SubRange &SR : LI.subranges()) {
-    pruneValue(SR, Kill, nullptr);
-  }
-}
-
 //===----------------------------------------------------------------------===//
 // Register allocator hooks.
 //

@@ -181,12 +181,6 @@ namespace llvm {
     void pruneValue(LiveRange &LR, SlotIndex Kill,
                     SmallVectorImpl<SlotIndex> *EndPoints);
 
-    /// Subregister aware variant of pruneValue(LiveRange &LR, SlotIndex Kill,
-    /// SmallVectorImpl<SlotIndex> &EndPoints). Prunes the value in the main
-    /// range and all sub ranges.
-    void pruneValue(LiveInterval &LI, SlotIndex Kill,
-                    SmallVectorImpl<SlotIndex> *EndPoints);
-
     SlotIndexes *getSlotIndexes() const {
       return Indexes;
     }
