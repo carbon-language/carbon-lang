@@ -169,7 +169,7 @@ namespace __sanitizer {
     unsigned __seq;
     u64 __unused1;
     u64 __unused2;
-#elif defined(__mips__)
+#elif defined(__mips__) || defined(__aarch64__)
     unsigned int mode;
     unsigned short __seq;
     unsigned short __pad1;
