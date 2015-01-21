@@ -875,6 +875,9 @@ public:
     virtual lldb::LanguageType
     GetPreferredDisplayLanguage ();
     
+    void
+    SetPreferredDisplayLanguage (lldb::LanguageType);
+    
     lldb::TypeSummaryImplSP
     GetSummaryFormat()
     {
@@ -1105,6 +1108,8 @@ protected:
     AddressType                 m_address_type_of_ptr_or_ref_children;
     
     llvm::SmallVector<uint8_t, 16> m_value_checksum;
+    
+    lldb::LanguageType m_preferred_display_language;
     
     bool                m_value_is_valid:1,
                         m_value_did_change:1,

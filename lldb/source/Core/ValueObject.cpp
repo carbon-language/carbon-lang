@@ -99,6 +99,7 @@ ValueObject::ValueObject (ValueObject &parent) :
     m_user_id_of_forced_summary(),
     m_address_type_of_ptr_or_ref_children(eAddressTypeInvalid),
     m_value_checksum(),
+    m_preferred_display_language(lldb::eLanguageTypeUnknown),
     m_value_is_valid (false),
     m_value_did_change (false),
     m_children_count_valid (false),
@@ -149,6 +150,7 @@ ValueObject::ValueObject (ExecutionContextScope *exe_scope,
     m_user_id_of_forced_summary(),
     m_address_type_of_ptr_or_ref_children(child_ptr_or_ref_addr_type),
     m_value_checksum(),
+    m_preferred_display_language(lldb::eLanguageTypeUnknown),
     m_value_is_valid (false),
     m_value_did_change (false),
     m_children_count_valid (false),
@@ -4181,24 +4183,33 @@ ValueObject::GetFormat () const
 lldb::LanguageType
 ValueObject::GetPreferredDisplayLanguage ()
 {
-    lldb::LanguageType type = lldb::eLanguageTypeUnknown;
-    if (GetRoot())
+    lldb::LanguageType type = m_preferred_display_language;
+    if (m_preferred_display_language == lldb::eLanguageTypeUnknown)
     {
-        if (GetRoot() == this)
+        if (GetRoot())
         {
-            if (StackFrameSP frame_sp = GetFrameSP())
+            if (GetRoot() == this)
             {
-                const SymbolContext& sc(frame_sp->GetSymbolContext(eSymbolContextCompUnit));
-                if (CompileUnit* cu = sc.comp_unit)
-                    type = cu->GetLanguage();
+                if (StackFrameSP frame_sp = GetFrameSP())
+                {
+                    const SymbolContext& sc(frame_sp->GetSymbolContext(eSymbolContextCompUnit));
+                    if (CompileUnit* cu = sc.comp_unit)
+                        type = cu->GetLanguage();
+                }
+            }
+            else
+            {
+                type = GetRoot()->GetPreferredDisplayLanguage();
             }
         }
-        else
-        {
-            type = GetRoot()->GetPreferredDisplayLanguage();
-        }
     }
-    return type;
+    return (m_preferred_display_language = type); // only compute it once
+}
+
+void
+ValueObject::SetPreferredDisplayLanguage (lldb::LanguageType lt)
+{
+    m_preferred_display_language = lt;
 }
 
 bool
