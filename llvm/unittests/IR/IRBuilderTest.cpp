@@ -10,6 +10,7 @@
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/BasicBlock.h"
 #include "llvm/IR/DataLayout.h"
+#include "llvm/IR/DIBuilder.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/IntrinsicInst.h"
 #include "llvm/IR/LLVMContext.h"
@@ -285,6 +286,22 @@ TEST_F(IRBuilderTest, RAIIHelpersTest) {
 
   EXPECT_EQ(BB->end(), Builder.GetInsertPoint());
   EXPECT_EQ(BB, Builder.GetInsertBlock());
+}
+
+TEST_F(IRBuilderTest, DIBuilder) {
+  IRBuilder<> Builder(BB);
+  DIBuilder DIB(*M);
+  auto File = DIB.createFile("F.CBL", "/");
+  auto CU = DIB.createCompileUnit(dwarf::DW_LANG_Cobol74, "F.CBL", "/",
+                                  "llvm-cobol74", true, "", 0);
+  auto Type = DIB.createSubroutineType(File, DIB.getOrCreateTypeArray({}));
+  auto SP = DIB.createFunction(CU, "foo", "", File, 1, Type,
+                               false, true, 1, 0, true, F);
+  EXPECT_TRUE(SP.Verify());
+  AllocaInst *I = Builder.CreateAlloca(Builder.getInt8Ty());
+  auto BadScope = DIB.createLexicalBlockFile(DIDescriptor(), File, 0);
+  I->setDebugLoc(DebugLoc::get(2, 0, BadScope));
+  EXPECT_FALSE(SP.Verify());
 }
 
 

@@ -536,7 +536,8 @@ bool DISubprogram::Verify() const {
           Scope = D.isLexicalBlockFile()
                       ? D.getScope()
                       : DebugLoc::getFromDILexicalBlock(Scope).getScope();
-          assert(Scope && "lexical block file has no scope");
+          if (!Scope)
+            return false;
         }
         if (!DISubprogram(Scope).describes(F))
           return false;
