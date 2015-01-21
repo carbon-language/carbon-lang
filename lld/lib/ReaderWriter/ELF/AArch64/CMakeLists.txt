@@ -1,12 +1,9 @@
-set(LLVM_LINK_COMPONENTS support)
-
-add_lld_library(lldAArch64ELFTarget
+add_llvm_library(lldAArch64ELFTarget
   AArch64LinkingContext.cpp
   AArch64TargetHandler.cpp
   AArch64RelocationHandler.cpp
   AArch64RelocationPass.cpp
-  )
-
-target_link_libraries(lldAArch64ELFTarget ${cmake_2_8_12_INTERFACE}
-  lldCore
+  LINK_LIBS
+    lldCore
+    LLVMSupport
   )

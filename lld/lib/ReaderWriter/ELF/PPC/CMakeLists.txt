@@ -1,10 +1,7 @@
-set(LLVM_LINK_COMPONENTS support)
-
-add_lld_library(lldPPCELFTarget
+add_llvm_library(lldPPCELFTarget
   PPCLinkingContext.cpp
   PPCTargetHandler.cpp
-  )
-
-target_link_libraries(lldPPCELFTarget ${cmake_2_8_12_INTERFACE}
-  lldCore
+  LINK_LIBS
+    lldCore
+    LLVMSupport
   )

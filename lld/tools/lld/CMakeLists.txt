@@ -1,4 +1,4 @@
-add_lld_executable(lld
+add_llvm_executable(lld
   lld.cpp
   )
 

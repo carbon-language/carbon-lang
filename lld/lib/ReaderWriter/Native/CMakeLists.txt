@@ -1,10 +1,7 @@
-set(LLVM_LINK_COMPONENTS support)
-
-add_lld_library(lldNative
+add_llvm_library(lldNative
   ReaderNative.cpp
   WriterNative.cpp
-  )
-
-target_link_libraries(lldNative ${cmake_2_8_12_INTERFACE}
-  lldReaderWriter
+  LINK_LIBS
+    lldReaderWriter
+    LLVMSupport
   )

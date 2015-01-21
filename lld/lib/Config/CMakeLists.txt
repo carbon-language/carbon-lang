@@ -1,5 +1,5 @@
-set(LLVM_LINK_COMPONENTS support)
-
-add_lld_library(lldConfig
+add_llvm_library(lldConfig
   Version.cpp
+  LINK_LIBS
+    LLVMSupport
   )

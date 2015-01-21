@@ -1,9 +1,6 @@
-set(LLVM_LINK_COMPONENTS support)
-
-add_lld_library(lldYAML
+add_llvm_library(lldYAML
   ReaderWriterYAML.cpp
-  )
-
-target_link_libraries(lldYAML ${cmake_2_8_12_INTERFACE}
-  lldReaderWriter
+  LINK_LIBS
+    lldReaderWriter
+    LLVMSupport
   )

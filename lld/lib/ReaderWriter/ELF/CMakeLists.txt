@@ -1,20 +1,18 @@
-add_lld_library(lldELF
+add_llvm_library(lldELF
   ArrayOrderPass.cpp
   ELFLinkingContext.cpp
   Reader.cpp
   Writer.cpp
-  )
-
-target_link_libraries(lldELF ${cmake_2_8_12_INTERFACE}
-  lldHexagonELFTarget
-  lldMipsELFTarget
-  lldPPCELFTarget
-  lldPasses
-  lldReaderWriter
-  lldX86ELFTarget
-  lldX86_64ELFTarget
-  lldAArch64ELFTarget
-  lldARMELFTarget
+  LINK_LIBS
+    lldHexagonELFTarget
+    lldMipsELFTarget
+    lldPPCELFTarget
+    lldPasses
+    lldReaderWriter
+    lldX86ELFTarget
+    lldX86_64ELFTarget
+    lldAArch64ELFTarget
+    lldARMELFTarget
   )
 
 include_directories(.)
