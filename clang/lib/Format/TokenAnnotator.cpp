@@ -683,6 +683,7 @@ private:
                                TT_TrailingReturnArrow))
       CurrentToken->Type = TT_Unknown;
     CurrentToken->Role.reset();
+    CurrentToken->MatchingParen = nullptr;
     CurrentToken->FakeLParens.clear();
     CurrentToken->FakeRParens = 0;
   }

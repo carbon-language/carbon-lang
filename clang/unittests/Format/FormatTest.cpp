@@ -2612,6 +2612,7 @@ TEST_F(FormatTest, MacroDefinitionsWithIncompleteCode) {
   verifyFormat("#if \"a");
 
   verifyNoCrash("#if a\na(\n#else\n#endif\n{a");
+  verifyNoCrash("a={0,1\n#if a\n#else\n;\n#endif\n}");
 }
 
 TEST_F(FormatTest, MacrosWithoutTrailingSemicolon) {
