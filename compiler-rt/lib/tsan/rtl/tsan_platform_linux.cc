@@ -215,10 +215,9 @@ void InitializeShadowMemory() {
   // Frequently a thread uses only a small part of stack and similarly
   // a program uses a small part of large mmap. On some programs
   // we see 20% memory usage reduction without huge pages for this range.
-#ifdef MADV_NOHUGEPAGE
-  madvise((void*)MemToShadow(0x7f0000000000ULL),
-      0x10000000000ULL * kShadowMultiplier, MADV_NOHUGEPAGE);
-#endif
+  // FIXME: don't use constants here.
+  NoHugePagesInRegion(MemToShadow(0x7f0000000000ULL),
+                      0x10000000000ULL * kShadowMultiplier);
   DPrintf("memory shadow: %zx-%zx (%zuGB)\n",
       kShadowBeg, kShadowEnd,
       (kShadowEnd - kShadowBeg) >> 30);

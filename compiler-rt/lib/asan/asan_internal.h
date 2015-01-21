@@ -108,6 +108,8 @@ void AppendToErrorMessageBuffer(const char *buffer);
 
 void *AsanDlSymNext(const char *sym);
 
+void ReserveShadowMemoryRange(uptr beg, uptr end);
+
 // Platform-specific options.
 #if SANITIZER_MAC
 bool PlatformHasDifferentMemcpyAndMemmove();

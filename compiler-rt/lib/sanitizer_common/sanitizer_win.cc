@@ -132,6 +132,10 @@ void FlushUnneededShadowMemory(uptr addr, uptr size) {
   // FIXME: add madvice-analog when we move to 64-bits.
 }
 
+void NoHugePagesInRegion(uptr addr, uptr size) {
+  // FIXME: probably similar to FlushUnneededShadowMemory.
+}
+
 bool MemoryRangeIsAvailable(uptr range_start, uptr range_end) {
   MEMORY_BASIC_INFORMATION mbi;
   CHECK(VirtualQuery((void *)range_start, &mbi, sizeof(mbi)));

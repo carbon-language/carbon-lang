@@ -86,7 +86,8 @@ void ShowStatsAndAbort() {
 
 // ---------------------- mmap -------------------- {{{1
 // Reserve memory range [beg, end].
-static void ReserveShadowMemoryRange(uptr beg, uptr end) {
+// We need to use inclusive range because end+1 may not be representable.
+void ReserveShadowMemoryRange(uptr beg, uptr end) {
   CHECK_EQ((beg % GetPageSizeCached()), 0);
   CHECK_EQ(((end + 1) % GetPageSizeCached()), 0);
   uptr size = end - beg + 1;
@@ -97,6 +98,8 @@ static void ReserveShadowMemoryRange(uptr beg, uptr end) {
            "Perhaps you're using ulimit -v\n", size);
     Abort();
   }
+  if (common_flags()->no_huge_pages_for_shadow)
+    NoHugePagesInRegion(beg, size);
 }
 
 // --------------- LowLevelAllocateCallbac ---------- {{{1
