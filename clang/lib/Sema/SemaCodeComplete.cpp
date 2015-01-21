@@ -3819,7 +3819,73 @@ static bool anyNullArguments(ArrayRef<Expr *> Args) {
   return false;
 }
 
-void Sema::CodeCompleteCall(Scope *S, Expr *FnIn, ArrayRef<Expr *> Args) {
+typedef CodeCompleteConsumer::OverloadCandidate ResultCandidate;
+
+void mergeCandidatesWithResults(Sema &SemaRef,
+                                SmallVectorImpl<ResultCandidate> &Results,
+                                OverloadCandidateSet &CandidateSet,
+                                SourceLocation Loc) {
+  if (!CandidateSet.empty()) {
+    // Sort the overload candidate set by placing the best overloads first.
+    std::stable_sort(
+        CandidateSet.begin(), CandidateSet.end(),
+        [&](const OverloadCandidate &X, const OverloadCandidate &Y) {
+          return isBetterOverloadCandidate(SemaRef, X, Y, Loc);
+        });
+
+    // Add the remaining viable overload candidates as code-completion results.
+    for (auto &Candidate : CandidateSet)
+      if (Candidate.Viable)
+        Results.push_back(ResultCandidate(Candidate.Function));
+  }
+}
+
+/// \brief Get the type of the Nth parameter from a given set of overload
+/// candidates.
+QualType getParamType(Sema &SemaRef, ArrayRef<ResultCandidate> Candidates,
+                      unsigned N) {
+
+  // Given the overloads 'Candidates' for a function call matching all arguments
+  // up to N, return the type of the Nth parameter if it is the same for all
+  // overload candidates.
+  QualType ParamType;
+  for (auto &Candidate : Candidates) {
+    if (auto FType = Candidate.getFunctionType())
+      if (auto Proto = dyn_cast<FunctionProtoType>(FType))
+        if (N < Proto->getNumParams()) {
+          if (ParamType.isNull())
+            ParamType = Proto->getParamType(N);
+          else if (!SemaRef.Context.hasSameUnqualifiedType(
+                        ParamType.getNonReferenceType(),
+                        Proto->getParamType(N).getNonReferenceType()))
+            // Otherwise return a default-constructed QualType.
+            return QualType();
+        }
+  }
+
+  return ParamType;
+}
+
+void CodeCompleteOverloadResults(Sema &SemaRef, Scope *S,
+                                 MutableArrayRef<ResultCandidate> Candidates,
+                                 unsigned CurrentArg,
+                                 bool CompleteExpressionWithCurrentArg = true) {
+  QualType ParamType;
+  if (CompleteExpressionWithCurrentArg)
+    ParamType = getParamType(SemaRef, Candidates, CurrentArg);
+
+  if (ParamType.isNull())
+    SemaRef.CodeCompleteOrdinaryName(S, Sema::PCC_Expression);
+  else
+    SemaRef.CodeCompleteExpression(S, ParamType);
+
+  if (!Candidates.empty())
+    SemaRef.CodeCompleter->ProcessOverloadCandidates(SemaRef, CurrentArg,
+                                                     Candidates.data(),
+                                                     Candidates.size());
+}
+
+void Sema::CodeCompleteCall(Scope *S, Expr *Fn, ArrayRef<Expr *> Args) {
   if (!CodeCompleter)
     return;
 
@@ -3828,7 +3894,8 @@ void Sema::CodeCompleteCall(Scope *S, Expr *FnIn, ArrayRef<Expr *> Args) {
   // results. We may want to revisit this strategy in the future,
   // e.g., by merging the two kinds of results.
 
-  Expr *Fn = (Expr *)FnIn;
+  // FIXME: Provide support for highlighting optional parameters.
+  // FIXME: Provide support for variadic template functions.
 
   // Ignore type-dependent call expressions entirely.
   if (!Fn || Fn->isTypeDependent() || anyNullArguments(Args) ||
@@ -3841,92 +3908,99 @@ void Sema::CodeCompleteCall(Scope *S, Expr *FnIn, ArrayRef<Expr *> Args) {
   SourceLocation Loc = Fn->getExprLoc();
   OverloadCandidateSet CandidateSet(Loc, OverloadCandidateSet::CSK_Normal);
 
-  // FIXME: What if we're calling something that isn't a function declaration?
-  // FIXME: What if we're calling a pseudo-destructor?
-  // FIXME: What if we're calling a member function?
-  
-  typedef CodeCompleteConsumer::OverloadCandidate ResultCandidate;
   SmallVector<ResultCandidate, 8> Results;
 
   Expr *NakedFn = Fn->IgnoreParenCasts();
-  if (UnresolvedLookupExpr *ULE = dyn_cast<UnresolvedLookupExpr>(NakedFn))
+  if (auto ULE = dyn_cast<UnresolvedLookupExpr>(NakedFn))
     AddOverloadedCallCandidates(ULE, Args, CandidateSet,
-                                /*PartialOverloading=*/ true);
-  else if (DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(NakedFn)) {
-    FunctionDecl *FDecl = dyn_cast<FunctionDecl>(DRE->getDecl());
-    if (FDecl) {
-      if (!getLangOpts().CPlusPlus || 
-          !FDecl->getType()->getAs<FunctionProtoType>())
-        Results.push_back(ResultCandidate(FDecl));
-      else
-        // FIXME: access?
-        AddOverloadCandidate(FDecl, DeclAccessPair::make(FDecl, AS_none), Args,
-                             CandidateSet, false, /*PartialOverloading*/true);
+                                /*PartialOverloading=*/true);
+  else if (auto UME = dyn_cast<UnresolvedMemberExpr>(NakedFn)) {
+    TemplateArgumentListInfo TemplateArgsBuffer, *TemplateArgs = nullptr;
+    if (UME->hasExplicitTemplateArgs()) {
+      UME->copyTemplateArgumentsInto(TemplateArgsBuffer);
+      TemplateArgs = &TemplateArgsBuffer;
     }
-  }
-  
-  QualType ParamType;
-  
-  if (!CandidateSet.empty()) {
-    // Sort the overload candidate set by placing the best overloads first.
-    std::stable_sort(
-        CandidateSet.begin(), CandidateSet.end(),
-        [&](const OverloadCandidate &X, const OverloadCandidate &Y) {
-          return isBetterOverloadCandidate(*this, X, Y, Loc);
-        });
-
-    // Add the remaining viable overload candidates as code-completion reslults.
-    for (OverloadCandidateSet::iterator Cand = CandidateSet.begin(),
-                                     CandEnd = CandidateSet.end();
-         Cand != CandEnd; ++Cand) {
-      if (Cand->Viable)
-        Results.push_back(ResultCandidate(Cand->Function));
-    }
-
-    // From the viable candidates, try to determine the type of this parameter.
-    for (unsigned I = 0, N = Results.size(); I != N; ++I) {
-      if (const FunctionType *FType = Results[I].getFunctionType())
-        if (const FunctionProtoType *Proto = dyn_cast<FunctionProtoType>(FType))
-          if (Args.size() < Proto->getNumParams()) {
-            if (ParamType.isNull())
-              ParamType = Proto->getParamType(Args.size());
-            else if (!Context.hasSameUnqualifiedType(
-                          ParamType.getNonReferenceType(),
-                          Proto->getParamType(Args.size())
-                              .getNonReferenceType())) {
-              ParamType = QualType();
-              break;
-            }
-          }
-    }
+    SmallVector<Expr *, 12> ArgExprs(1, UME->getBase());
+    ArgExprs.append(Args.begin(), Args.end());
+    UnresolvedSet<8> Decls;
+    Decls.append(UME->decls_begin(), UME->decls_end());
+    AddFunctionCandidates(Decls, ArgExprs, CandidateSet, TemplateArgs,
+                          /*SuppressUsedConversions=*/false,
+                          /*PartialOverloading=*/true);
+  } else if (auto DC = NakedFn->getType()->getCanonicalTypeInternal()
+                       ->getAsCXXRecordDecl()) {
+    // If it's a CXXRecordDecl, it may overload the function call operator,
+    // so we check if it does and add them as candidates.
+    DeclarationName OpName = Context.DeclarationNames
+                             .getCXXOperatorName(OO_Call);
+    LookupResult R(*this, OpName, Loc, LookupOrdinaryName);
+    LookupQualifiedName(R, DC);
+    R.suppressDiagnostics();
+    SmallVector<Expr *, 12> ArgExprs(1, NakedFn);
+    ArgExprs.append(Args.begin(), Args.end());
+    AddFunctionCandidates(R.asUnresolvedSet(), ArgExprs, CandidateSet,
+                          /*ExplicitArgs=*/nullptr,
+                          /*SuppressUsedConversions=*/false,
+                          /*PartialOverloading=*/true);
   } else {
-    // Try to determine the parameter type from the type of the expression
-    // being called.
-    QualType FunctionType = Fn->getType();
-    if (const PointerType *Ptr = FunctionType->getAs<PointerType>())
-      FunctionType = Ptr->getPointeeType();
-    else if (const BlockPointerType *BlockPtr
-                                    = FunctionType->getAs<BlockPointerType>())
-      FunctionType = BlockPtr->getPointeeType();
-    else if (const MemberPointerType *MemPtr
-                                    = FunctionType->getAs<MemberPointerType>())
-      FunctionType = MemPtr->getPointeeType();
-    
-    if (const FunctionProtoType *Proto
-                                  = FunctionType->getAs<FunctionProtoType>()) {
-      if (Args.size() < Proto->getNumParams())
-        ParamType = Proto->getParamType(Args.size());
+    // Lastly we check, as a possibly resolved expression, whether it can be
+    // converted to a function.
+    FunctionDecl *FD = nullptr;
+    if (auto MCE = dyn_cast<MemberExpr>(NakedFn))
+      FD = dyn_cast<FunctionDecl>(MCE->getMemberDecl());
+    else if (auto DRE = dyn_cast<DeclRefExpr>(NakedFn))
+      FD = dyn_cast<FunctionDecl>(DRE->getDecl());
+    if (FD) {
+      if (!getLangOpts().CPlusPlus || 
+          !FD->getType()->getAs<FunctionProtoType>())
+        Results.push_back(ResultCandidate(FD));
+      else
+        AddOverloadCandidate(FD, DeclAccessPair::make(FD, FD->getAccess()),
+                             Args, CandidateSet,
+                             /*SuppressUsedConversions=*/false,
+                             /*PartialOverloading=*/true);
     }
   }
 
-  if (ParamType.isNull())
-    CodeCompleteOrdinaryName(S, PCC_Expression);
-  else
-    CodeCompleteExpression(S, ParamType);
-  
-  if (!Results.empty())
-    CodeCompleter->ProcessOverloadCandidates(*this, Args.size(), Results.data(),
-                                             Results.size());
+  mergeCandidatesWithResults(*this, Results, CandidateSet, Loc);
+  CodeCompleteOverloadResults(*this, S, Results, Args.size(),
+                              !CandidateSet.empty());
+}
+
+void Sema::CodeCompleteConstructor(Scope *S, QualType Type, SourceLocation Loc,
+                                   ArrayRef<Expr *> Args) {
+  if (!CodeCompleter)
+    return;
+
+  // A complete type is needed to lookup for constructors.
+  if (RequireCompleteType(Loc, Type, 0))
+    return;
+
+  // FIXME: Provide support for member initializers.
+  // FIXME: Provide support for variadic template constructors.
+  // FIXME: Provide support for highlighting optional parameters.
+
+  OverloadCandidateSet CandidateSet(Loc, OverloadCandidateSet::CSK_Normal);
+
+  for (auto C : LookupConstructors(Type->getAsCXXRecordDecl())) {
+    if (auto FD = dyn_cast<FunctionDecl>(C)) {
+      AddOverloadCandidate(FD, DeclAccessPair::make(FD, C->getAccess()),
+                           Args, CandidateSet,
+                           /*SuppressUsedConversions=*/false,
+                           /*PartialOverloading=*/true);
+    } else if (auto FTD = dyn_cast<FunctionTemplateDecl>(C)) {
+      AddTemplateOverloadCandidate(FTD,
+                                   DeclAccessPair::make(FTD, C->getAccess()),
+                                   /*ExplicitTemplateArgs=*/nullptr,
+                                   Args, CandidateSet,
+                                   /*SuppressUsedConversions=*/false,
+                                   /*PartialOverloading=*/true);
+    }
+  }
+
+  SmallVector<ResultCandidate, 8> Results;
+  mergeCandidatesWithResults(*this, Results, CandidateSet, Loc);
+  CodeCompleteOverloadResults(*this, S, Results, Args.size());
 }
 
 void Sema::CodeCompleteInitializer(Scope *S, Decl *D) {

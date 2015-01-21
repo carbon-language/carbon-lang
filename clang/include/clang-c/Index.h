@@ -2276,7 +2276,12 @@ enum CXCursorKind {
    */
   CXCursor_ModuleImportDecl              = 600,
   CXCursor_FirstExtraDecl                = CXCursor_ModuleImportDecl,
-  CXCursor_LastExtraDecl                 = CXCursor_ModuleImportDecl
+  CXCursor_LastExtraDecl                 = CXCursor_ModuleImportDecl,
+
+  /**
+   * \brief A code completion overload candidate.
+   */
+  CXCursor_OverloadCandidate             = 700
 };
 
 /**

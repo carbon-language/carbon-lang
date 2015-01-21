@@ -1454,8 +1454,9 @@ Parser::ParsePostfixExpressionSuffix(ExprResult LHS) {
 
       if (OpKind == tok::l_paren || !LHS.isInvalid()) {
         if (Tok.isNot(tok::r_paren)) {
-          if (ParseExpressionList(ArgExprs, CommaLocs, &Sema::CodeCompleteCall,
-                                  LHS.get())) {
+          if (ParseExpressionList(ArgExprs, CommaLocs, [&] {
+                Actions.CodeCompleteCall(getCurScope(), LHS.get(), ArgExprs);
+             })) {
             (void)Actions.CorrectDelayedTyposInExpr(LHS);
             LHS = ExprError();
           }
@@ -2506,17 +2507,14 @@ ExprResult Parser::ParseFoldExpression(ExprResult LHS,
 /// [C++0x]   assignment-expression
 /// [C++0x]   braced-init-list
 /// \endverbatim
-bool Parser::ParseExpressionList(SmallVectorImpl<Expr*> &Exprs,
+bool Parser::ParseExpressionList(SmallVectorImpl<Expr *> &Exprs,
                                  SmallVectorImpl<SourceLocation> &CommaLocs,
-                                 void (Sema::*Completer)(Scope *S,
-                                                         Expr *Data,
-                                                         ArrayRef<Expr *> Args),
-                                 Expr *Data) {
+                                 std::function<void()> Completer) {
   bool SawError = false;
   while (1) {
     if (Tok.is(tok::code_completion)) {
       if (Completer)
-        (Actions.*Completer)(getCurScope(), Data, Exprs);
+        Completer();
       else
         Actions.CodeCompleteOrdinaryName(getCurScope(), Sema::PCC_Expression);
       cutOffParsing();

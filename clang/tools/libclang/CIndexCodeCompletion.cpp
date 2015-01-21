@@ -622,7 +622,7 @@ namespace {
                                                 getCodeCompletionTUInfo());
         
         CXCompletionResult R;
-        R.CursorKind = CXCursor_NotImplemented;
+        R.CursorKind = CXCursor_OverloadCandidate;
         R.CompletionString = StoredCompletion;
         StoredResults.push_back(R);
       }
