@@ -11,7 +11,7 @@
 #define LLD_READER_WRITER_ELF_WRITER_H
 
 #include "lld/Core/File.h"
-#include "lld/ReaderWriter/Writer.h"
+#include "lld/Core/Writer.h"
 
 namespace lld {
 namespace elf {

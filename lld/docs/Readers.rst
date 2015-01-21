@@ -10,8 +10,8 @@ The purpose of a "Reader" is to take an object file in a particular format
 and create an `lld::File`:cpp:class: (which is a graph of Atoms)
 representing the object file.  A Reader inherits from
 `lld::Reader`:cpp:class: which lives in
-:file:`include/lld/ReaderWriter/Reader.h` and
-:file:`lib/ReaderWriter/Reader.cpp`.
+:file:`include/lld/Core/Reader.h` and
+:file:`lib/Core/Reader.cpp`.
 
 The Reader infrastructure for an object format ``Foo`` requires the
 following pieces in order to fit into lld:

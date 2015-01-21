@@ -7,9 +7,9 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "lld/Core/Reader.h"
 #include "lld/Driver/Driver.h"
 #include "lld/ReaderWriter/CoreLinkingContext.h"
-#include "lld/ReaderWriter/Reader.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/Triple.h"

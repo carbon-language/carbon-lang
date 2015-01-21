@@ -1,4 +1,4 @@
-//===- lib/ReaderWriter/Reader.cpp ----------------------------------------===//
+//===- lib/Core/Reader.cpp ------------------------------------------------===//
 //
 //                             The LLVM Linker
 //
@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "lld/Core/File.h"
-#include "lld/ReaderWriter/Reader.h"
+#include "lld/Core/Reader.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/Errc.h"
 #include "llvm/Support/FileUtilities.h"

@@ -11,8 +11,8 @@
 #define LLD_READER_WRITER_PECOFF_LINKING_CONTEXT_H
 
 #include "lld/Core/LinkingContext.h"
-#include "lld/ReaderWriter/Reader.h"
-#include "lld/ReaderWriter/Writer.h"
+#include "lld/Core/Reader.h"
+#include "lld/Core/Writer.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/COFF.h"

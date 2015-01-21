@@ -3,6 +3,8 @@ add_llvm_library(lldPasses
   RoundTripNativePass.cpp
   RoundTripYAMLPass.cpp
   LINK_LIBS
-    lldReaderWriter
+    lldCore
+    lldNative
+    lldYAML
     LLVMSupport
   )

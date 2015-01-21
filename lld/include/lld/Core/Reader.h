@@ -1,4 +1,4 @@
-//===- lld/ReaderWriter/Reader.h - Abstract File Format Reading Interface -===//
+//===- lld/Core/Reader.h - Abstract File Format Reading Interface ---------===//
 //
 //                             The LLVM Linker
 //
@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLD_READER_WRITER_READER_H
-#define LLD_READER_WRITER_READER_H
+#ifndef LLD_CORE_READER_H
+#define LLD_CORE_READER_H
 
 #include "lld/Core/LLVM.h"
 #include "lld/Core/Reference.h"

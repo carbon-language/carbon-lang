@@ -7,10 +7,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "lld/ReaderWriter/Writer.h"
 #include "ExecutableAtoms.hpp"
 #include "MachONormalizedFile.h"
 #include "lld/Core/File.h"
+#include "lld/Core/Writer.h"
 #include "lld/ReaderWriter/MachOLinkingContext.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"

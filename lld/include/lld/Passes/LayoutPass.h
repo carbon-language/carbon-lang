@@ -12,7 +12,7 @@
 
 #include "lld/Core/File.h"
 #include "lld/Core/Pass.h"
-#include "lld/ReaderWriter/Reader.h"
+#include "lld/Core/Reader.h"
 #include "llvm/ADT/DenseMap.h"
 #include <map>
 #include <string>

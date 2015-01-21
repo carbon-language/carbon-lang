@@ -11,8 +11,8 @@
 #define LLD_READER_WRITER_CORE_LINKER_CONTEXT_H
 
 #include "lld/Core/LinkingContext.h"
-#include "lld/ReaderWriter/Reader.h"
-#include "lld/ReaderWriter/Writer.h"
+#include "lld/Core/Reader.h"
+#include "lld/Core/Writer.h"
 #include "llvm/Support/ErrorHandling.h"
 
 namespace lld {

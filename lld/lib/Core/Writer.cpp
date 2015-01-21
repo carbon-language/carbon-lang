@@ -1,4 +1,4 @@
-//===- lib/ReaderWriter/Writer.cpp ----------------------------------------===//
+//===- lib/Core/Writer.cpp ------------------------------------------------===//
 //
 //                             The LLVM Linker
 //
@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "lld/Core/File.h"
-#include "lld/ReaderWriter/Writer.h"
+#include "lld/Core/Writer.h"
 
 namespace lld {
 Writer::Writer() {

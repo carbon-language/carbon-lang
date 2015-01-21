@@ -16,7 +16,7 @@
 #include "lld/Core/Parallel.h"
 #include "lld/Core/Reference.h"
 #include "lld/Core/range.h"
-#include "lld/ReaderWriter/Reader.h"
+#include "lld/Core/Reader.h"
 #include "llvm/Support/ErrorOr.h"
 #include "llvm/Support/raw_ostream.h"
 #include <string>

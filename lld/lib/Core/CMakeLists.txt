@@ -3,8 +3,10 @@ add_llvm_library(lldCore
   Error.cpp
   File.cpp
   LinkingContext.cpp
+  Reader.cpp
   Resolver.cpp
   SymbolTable.cpp
+  Writer.cpp
   LINK_LIBS
     LLVMSupport
   )

@@ -12,11 +12,10 @@ add_llvm_library(lldReaderWriter
   CoreLinkingContext.cpp
   FileArchive.cpp
   LinkerScript.cpp
-  Reader.cpp
-  Writer.cpp
-  FileArchive.cpp
   LINK_LIBS
     lldCore
+    lldPasses
+    lldYAML
     LLVMObject
     LLVMSupport
   )

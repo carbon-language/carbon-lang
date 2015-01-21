@@ -16,7 +16,7 @@
 #include "lld/Core/Parallel.h"
 #include "lld/Core/SharedLibraryFile.h"
 #include "lld/ReaderWriter/ELFLinkingContext.h"
-#include "lld/ReaderWriter/Writer.h"
+#include "lld/Core/Writer.h"
 #include "llvm/ADT/StringSet.h"
 #include "llvm/Support/Path.h"
 

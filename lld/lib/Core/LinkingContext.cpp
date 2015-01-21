@@ -11,7 +11,7 @@
 #include "lld/Core/LinkingContext.h"
 #include "lld/Core/Resolver.h"
 #include "lld/Core/Simple.h"
-#include "lld/ReaderWriter/Writer.h"
+#include "lld/Core/Writer.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/Support/Process.h"
 
