@@ -3,8 +3,7 @@ set(LLVM_NO_RTTI 1)
 file(GLOB SWIG_INPUTS Python/interface/*.i)
 
 if (CMAKE_SYSTEM_NAME MATCHES "Windows")
-    STRING(REGEX REPLACE "[.]lib" ".dll" PYTHON_DLL ${PYTHON_LIBRARY})
-    message("Copying ${PYTHON_DLL} to ${CMAKE_BINARY_DIR}/bin")
+    STRING(REGEX REPLACE ".lib" ".dll" PYTHON_DLL ${PYTHON_LIBRARY})
     file(COPY ${PYTHON_DLL} DESTINATION ${CMAKE_BINARY_DIR}/bin)
 endif ()
 
