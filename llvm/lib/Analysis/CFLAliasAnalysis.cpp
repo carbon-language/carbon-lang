@@ -774,7 +774,7 @@ static Optional<StratifiedAttr> valueToAttrIndex(Value *Val) {
 }
 
 static StratifiedAttr argNumberToAttrIndex(unsigned ArgNum) {
-  if (ArgNum > AttrMaxNumArgs)
+  if (ArgNum >= AttrMaxNumArgs)
     return AttrAllIndex;
   return ArgNum + AttrFirstArgIndex;
 }
