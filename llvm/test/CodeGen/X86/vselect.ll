@@ -53,10 +53,9 @@ define <4 x float> @test5(<4 x float> %a, <4 x float> %b) {
 define <8 x i16> @test6(<8 x i16> %a, <8 x i16> %b) {
 ; CHECK-LABEL: test6:
 ; CHECK:       # BB#0:
-; CHECK-NEXT:    movaps {{.*#+}} xmm1 = [0,65535,0,65535,0,65535,0,65535]
-; CHECK-NEXT:    andps %xmm0, %xmm1
-; CHECK-NEXT:    andps {{.*}}(%rip), %xmm0
-; CHECK-NEXT:    orps %xmm1, %xmm0
+; CHECK-NEXT:    movaps {{.*#+}} xmm1 = [65535,0,65535,0,65535,0,65535,0]
+; CHECK-NEXT:    orps {{.*}}(%rip), %xmm1
+; CHECK-NEXT:    andps %xmm1, %xmm0
 ; CHECK-NEXT:    retq
   %1 = select <8 x i1> <i1 true, i1 false, i1 true, i1 false, i1 true, i1 false, i1 true, i1 false>, <8 x i16> %a, <8 x i16> %a
   ret <8 x i16> %1

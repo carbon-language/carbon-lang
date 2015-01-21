@@ -3527,6 +3527,17 @@ SDValue DAGCombiner::visitOR(SDNode *N) {
     }
   }
 
+  // (or (and X, M), (and X, N)) -> (and X, (or M, N))
+  if (N0.getOpcode() == ISD::AND &&
+      N1.getOpcode() == ISD::AND &&
+      N0.getOperand(0) == N1.getOperand(0) &&
+      // Don't increase # computations.
+      (N0.getNode()->hasOneUse() || N1.getNode()->hasOneUse())) {
+    SDValue X = DAG.getNode(ISD::OR, SDLoc(N0), VT,
+                            N0.getOperand(1), N1.getOperand(1));
+    return DAG.getNode(ISD::AND, SDLoc(N), VT, N0.getOperand(0), X);
+  }
+
   // See if this is some rotate idiom.
   if (SDNode *Rot = MatchRotate(N0, N1, SDLoc(N)))
     return SDValue(Rot, 0);
