@@ -19,6 +19,7 @@ typedef struct _GUID GUID;
 struct __declspec(uuid("12345678-1234-1234-1234-1234567890aB")) S1 { } s1;
 struct __declspec(uuid("87654321-4321-4321-4321-ba0987654321")) S2 { };
 struct __declspec(uuid("{12345678-1234-1234-1234-1234567890ac}")) Curly;
+struct __declspec(uuid("{12345678-1234-1234-1234-1234567890ac}")) Curly;
 
 #ifdef DEFINE_GUID
 // Make sure we can properly generate code when the UUID has curly braces on it.
@@ -33,7 +34,7 @@ GUID g = __uuidof(S1);
 #endif
 
 // First global use of __uuidof(S1) forces the creation of the global.
-// CHECK: @_GUID_12345678_1234_1234_1234_1234567890ab = linkonce_odr constant { i32, i16, i16, [8 x i8] } { i32 305419896, i16 4660, i16 4660, [8 x i8] c"\124\124Vx\90\AB" }
+// CHECK: @_GUID_12345678_1234_1234_1234_1234567890ab = linkonce_odr constant { i32, i16, i16, [8 x i8] } { i32 305419896, i16 4660, i16 4660, [8 x i8] c"\124\124Vx\90\AB" }, comdat
 // CHECK: @gr = constant %struct._GUID* bitcast ({ i32, i16, i16, [8 x i8] }* @_GUID_12345678_1234_1234_1234_1234567890ab to %struct._GUID*), align 4
 const GUID& gr = __uuidof(S1);
 
@@ -49,7 +50,7 @@ const GUID& zeroiid = __uuidof(0);
 
 // __uuidof(S2) hasn't been used globally yet, so it's emitted when it's used
 // in a function and is emitted at the end of the globals section.
-// CHECK: @_GUID_87654321_4321_4321_4321_ba0987654321 = linkonce_odr constant { i32, i16, i16, [8 x i8] } { i32 -2023406815, i16 17185, i16 17185, [8 x i8] c"C!\BA\09\87eC!" }
+// CHECK: @_GUID_87654321_4321_4321_4321_ba0987654321 = linkonce_odr constant { i32, i16, i16, [8 x i8] } { i32 -2023406815, i16 17185, i16 17185, [8 x i8] c"C!\BA\09\87eC!" }, comdat
 
 // The static initializer for thing.
 // CHECK-DEFINE-GUID: call void @llvm.memcpy.p0i8.p0i8.i32(i8* bitcast (%struct._GUID* @thing to i8*), i8* bitcast ({ i32, i16, i16, [8 x i8] }* @_GUID_12345678_1234_1234_1234_1234567890ac to i8*), i32 16, i32 4, i1 false)
