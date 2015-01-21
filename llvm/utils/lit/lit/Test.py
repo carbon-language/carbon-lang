@@ -91,7 +91,8 @@ class JSONMetricValue(MetricValue):
         self.value = value
 
     def format(self):
-        return str(self.value)
+        e = JSONEncoder(indent=2, sort_keys=True)
+        return e.encode(self.value)
 
     def todata(self):
         return self.value
