@@ -127,8 +127,10 @@ AMDGPUTargetLowering::AMDGPUTargetLowering(TargetMachine &TM) :
   setOperationAction(ISD::FABS,   MVT::f32, Legal);
   setOperationAction(ISD::FFLOOR, MVT::f32, Legal);
   setOperationAction(ISD::FRINT,  MVT::f32, Legal);
-  setOperationAction(ISD::FROUND, MVT::f32, Legal);
   setOperationAction(ISD::FTRUNC, MVT::f32, Legal);
+
+  setOperationAction(ISD::FROUND, MVT::f32, Custom);
+  setOperationAction(ISD::FROUND, MVT::f64, Custom);
 
   setOperationAction(ISD::FREM, MVT::f32, Custom);
   setOperationAction(ISD::FREM, MVT::f64, Custom);
@@ -610,6 +612,7 @@ SDValue AMDGPUTargetLowering::LowerOperation(SDValue Op,
   case ISD::FTRUNC: return LowerFTRUNC(Op, DAG);
   case ISD::FRINT: return LowerFRINT(Op, DAG);
   case ISD::FNEARBYINT: return LowerFNEARBYINT(Op, DAG);
+  case ISD::FROUND: return LowerFROUND(Op, DAG);
   case ISD::FFLOOR: return LowerFFLOOR(Op, DAG);
   case ISD::SINT_TO_FP: return LowerSINT_TO_FP(Op, DAG);
   case ISD::UINT_TO_FP: return LowerUINT_TO_FP(Op, DAG);
@@ -1917,6 +1920,20 @@ SDValue AMDGPUTargetLowering::LowerFCEIL(SDValue Op, SelectionDAG &DAG) const {
   return DAG.getNode(ISD::FADD, SL, MVT::f64, Trunc, Add);
 }
 
+static SDValue extractF64Exponent(SDValue Hi, SDLoc SL, SelectionDAG &DAG) {
+  const unsigned FractBits = 52;
+  const unsigned ExpBits = 11;
+
+  SDValue ExpPart = DAG.getNode(AMDGPUISD::BFE_U32, SL, MVT::i32,
+                                Hi,
+                                DAG.getConstant(FractBits - 32, MVT::i32),
+                                DAG.getConstant(ExpBits, MVT::i32));
+  SDValue Exp = DAG.getNode(ISD::SUB, SL, MVT::i32, ExpPart,
+                            DAG.getConstant(1023, MVT::i32));
+
+  return Exp;
+}
+
 SDValue AMDGPUTargetLowering::LowerFTRUNC(SDValue Op, SelectionDAG &DAG) const {
   SDLoc SL(Op);
   SDValue Src = Op.getOperand(0);
@@ -1932,16 +1949,9 @@ SDValue AMDGPUTargetLowering::LowerFTRUNC(SDValue Op, SelectionDAG &DAG) const {
   // exponent.
   SDValue Hi = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, SL, MVT::i32, VecSrc, One);
 
-  const unsigned FractBits = 52;
-  const unsigned ExpBits = 11;
+  SDValue Exp = extractF64Exponent(Hi, SL, DAG);
 
-  // Extract the exponent.
-  SDValue ExpPart = DAG.getNode(AMDGPUISD::BFE_U32, SL, MVT::i32,
-                                Hi,
-                                DAG.getConstant(FractBits - 32, MVT::i32),
-                                DAG.getConstant(ExpBits, MVT::i32));
-  SDValue Exp = DAG.getNode(ISD::SUB, SL, MVT::i32, ExpPart,
-                            DAG.getConstant(1023, MVT::i32));
+  const unsigned FractBits = 52;
 
   // Extract the sign bit.
   const SDValue SignBitMask = DAG.getConstant(UINT32_C(1) << 31, MVT::i32);
@@ -2002,6 +2012,99 @@ SDValue AMDGPUTargetLowering::LowerFNEARBYINT(SDValue Op, SelectionDAG &DAG) con
   // exceptions. Those aren't really meaningful for us, and OpenCL only has
   // rint, so just treat them as equivalent.
   return DAG.getNode(ISD::FRINT, SDLoc(Op), Op.getValueType(), Op.getOperand(0));
+}
+
+// XXX - May require not supporting f32 denormals?
+SDValue AMDGPUTargetLowering::LowerFROUND32(SDValue Op, SelectionDAG &DAG) const {
+  SDLoc SL(Op);
+  SDValue X = Op.getOperand(0);
+
+  SDValue T = DAG.getNode(ISD::FTRUNC, SL, MVT::f32, X);
+
+  SDValue Diff = DAG.getNode(ISD::FSUB, SL, MVT::f32, X, T);
+
+  SDValue AbsDiff = DAG.getNode(ISD::FABS, SL, MVT::f32, Diff);
+
+  const SDValue Zero = DAG.getConstantFP(0.0, MVT::f32);
+  const SDValue One = DAG.getConstantFP(1.0, MVT::f32);
+  const SDValue Half = DAG.getConstantFP(0.5, MVT::f32);
+
+  SDValue SignOne = DAG.getNode(ISD::FCOPYSIGN, SL, MVT::f32, One, X);
+
+  EVT SetCCVT = getSetCCResultType(*DAG.getContext(), MVT::f32);
+
+  SDValue Cmp = DAG.getSetCC(SL, SetCCVT, AbsDiff, Half, ISD::SETOGE);
+
+  SDValue Sel = DAG.getNode(ISD::SELECT, SL, MVT::f32, Cmp, SignOne, Zero);
+
+  return DAG.getNode(ISD::FADD, SL, MVT::f32, T, Sel);
+}
+
+SDValue AMDGPUTargetLowering::LowerFROUND64(SDValue Op, SelectionDAG &DAG) const {
+  SDLoc SL(Op);
+  SDValue X = Op.getOperand(0);
+
+  SDValue L = DAG.getNode(ISD::BITCAST, SL, MVT::i64, X);
+
+  const SDValue Zero = DAG.getConstant(0, MVT::i32);
+  const SDValue One = DAG.getConstant(1, MVT::i32);
+  const SDValue NegOne = DAG.getConstant(-1, MVT::i32);
+  const SDValue FiftyOne = DAG.getConstant(51, MVT::i32);
+  EVT SetCCVT = getSetCCResultType(*DAG.getContext(), MVT::i32);
+
+
+  SDValue BC = DAG.getNode(ISD::BITCAST, SL, MVT::v2i32, X);
+
+  SDValue Hi = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, SL, MVT::i32, BC, One);
+
+  SDValue Exp = extractF64Exponent(Hi, SL, DAG);
+
+  const SDValue Mask = DAG.getConstant(INT64_C(0x000fffffffffffff), MVT::i64);
+
+  SDValue M = DAG.getNode(ISD::SRA, SL, MVT::i64, Mask, Exp);
+  SDValue D = DAG.getNode(ISD::SRA, SL, MVT::i64,
+                          DAG.getConstant(INT64_C(0x0008000000000000), MVT::i64),
+                          Exp);
+
+  SDValue Tmp0 = DAG.getNode(ISD::AND, SL, MVT::i64, L, M);
+  SDValue Tmp1 = DAG.getSetCC(SL, SetCCVT,
+                              DAG.getConstant(0, MVT::i64), Tmp0,
+                              ISD::SETNE);
+
+  SDValue Tmp2 = DAG.getNode(ISD::SELECT, SL, MVT::i64, Tmp1,
+                             D, DAG.getConstant(0, MVT::i64));
+  SDValue K = DAG.getNode(ISD::ADD, SL, MVT::i64, L, Tmp2);
+
+  K = DAG.getNode(ISD::AND, SL, MVT::i64, K, DAG.getNOT(SL, M, MVT::i64));
+  K = DAG.getNode(ISD::BITCAST, SL, MVT::f64, K);
+
+  SDValue ExpLt0 = DAG.getSetCC(SL, SetCCVT, Exp, Zero, ISD::SETLT);
+  SDValue ExpGt51 = DAG.getSetCC(SL, SetCCVT, Exp, FiftyOne, ISD::SETGT);
+  SDValue ExpEqNegOne = DAG.getSetCC(SL, SetCCVT, NegOne, Exp, ISD::SETEQ);
+
+  SDValue Mag = DAG.getNode(ISD::SELECT, SL, MVT::f64,
+                            ExpEqNegOne,
+                            DAG.getConstantFP(1.0, MVT::f64),
+                            DAG.getConstantFP(0.0, MVT::f64));
+
+  SDValue S = DAG.getNode(ISD::FCOPYSIGN, SL, MVT::f64, Mag, X);
+
+  K = DAG.getNode(ISD::SELECT, SL, MVT::f64, ExpLt0, S, K);
+  K = DAG.getNode(ISD::SELECT, SL, MVT::f64, ExpGt51, X, K);
+
+  return K;
+}
+
+SDValue AMDGPUTargetLowering::LowerFROUND(SDValue Op, SelectionDAG &DAG) const {
+  EVT VT = Op.getValueType();
+
+  if (VT == MVT::f32)
+    return LowerFROUND32(Op, DAG);
+
+  if (VT == MVT::f64)
+    return LowerFROUND64(Op, DAG);
+
+  llvm_unreachable("unhandled type");
 }
 
 SDValue AMDGPUTargetLowering::LowerFFLOOR(SDValue Op, SelectionDAG &DAG) const {

@@ -1142,16 +1142,6 @@ class TGSI_LIT_Z_Common <InstR600 mul_lit, InstR600 log_clamped, InstR600 exp_ie
   (exp_ieee (mul_lit (log_clamped (MAX $src_y, (f32 ZERO))), $src_w, $src_x))
 >;
 
-// FROUND pattern
-class FROUNDPat<Instruction CNDGE, Instruction CNDGT> : Pat <
-  (AMDGPUround f32:$x),
-  (CNDGE $x,
-  (CNDGE (ADD (FNEG_R600 (f32 HALF)), (FRACT $x)), (CEIL $x), (FLOOR $x)),
-  (CNDGT (ADD (FNEG_R600 (f32 HALF)), (FRACT $x)), (CEIL $x), (FLOOR $x))
-  )
->;
-
-
 //===----------------------------------------------------------------------===//
 // R600 / R700 Instructions
 //===----------------------------------------------------------------------===//
@@ -1194,8 +1184,6 @@ let Predicates = [isR600] in {
 
   def : Pat<(fsqrt f32:$src), (MUL $src, (RECIPSQRT_CLAMPED_r600 $src))>;
   defm : RsqPat<RECIPSQRT_IEEE_r600, f32>;
-
-  def : FROUNDPat <CNDGE_r600, CNDGT_r600>;
 
   def R600_ExportSwz : ExportSwzInst {
     let Word1{20-17} = 0; // BURST_COUNT
