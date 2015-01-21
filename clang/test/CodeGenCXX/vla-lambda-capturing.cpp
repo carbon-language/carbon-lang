@@ -80,7 +80,7 @@ int main() {
   return 0;
 }
 
-// CHECK: void [[F_INT]]([[INTPTR_T]]
+// CHECK: define linkonce_odr void [[F_INT]]([[INTPTR_T]]
 // CHECK: [[SIZE:%.+]] = add
 // CHECK: call i{{.+}}* @llvm.stacksave()
 // CHECK: [[BUFFER_ADDR:%.+]] = alloca [[INTPTR_T]], [[INTPTR_T]] [[SIZE]]
@@ -160,7 +160,7 @@ int main() {
 // CHECK: mul {{.*}} i{{[0-9]+}} {{[0-9]+}}, [[MUL]]
 // CHECK: ret void
 
-// CHECK: void [[F_INT_LAMBDA]]([[CAP_TYPE2]]*
+// CHECK: define linkonce_odr void [[F_INT_LAMBDA]]([[CAP_TYPE2]]*
 // CHECK: [[THIS:%.+]] = load [[CAP_TYPE2]]**
 // CHECK: [[SIZE_REF:%.+]] = getelementptr inbounds [[CAP_TYPE2]]* [[THIS]], i{{.+}} 0, i{{.+}} 0
 // CHECK: [[SIZE:%.+]] = load [[INTPTR_T]]* [[SIZE_REF]]
