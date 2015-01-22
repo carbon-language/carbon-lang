@@ -185,6 +185,9 @@ void Scope::dumpImpl(raw_ostream &OS) const {
     } else if (Flags & SEHTryScope) {
       OS << "SEHTryScope";
       Flags &= ~SEHTryScope;
+    } else if (Flags & SEHExceptScope) {
+      OS << "SEHExceptScope";
+      Flags &= ~SEHExceptScope;
     } else if (Flags & OpenMPDirectiveScope) {
       OS << "OpenMPDirectiveScope";
       Flags &= ~OpenMPDirectiveScope;

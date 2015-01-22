@@ -949,18 +949,6 @@ def warn_pragma_expected_enable_disable : Warning<
 def warn_pragma_unknown_extension : Warning<
   "unknown OpenCL extension %0 - ignoring">, InGroup<IgnoredPragmas>;
 
-def err_seh_expected_handler : Error<
-  "expected '__except' or '__finally' block">;
-
-def err_seh___except_block : Error<
-  "%0 only allowed in __except block">;
-
-def err_seh___except_filter : Error<
-  "%0 only allowed in __except filter expression">;
-
-def err_seh___finally_block : Error<
-  "%0 only allowed in __finally block">;
-
 // OpenMP support.
 def warn_pragma_omp_ignored : Warning<
   "unexpected '#pragma omp ...' in program">, InGroup<SourceUsesOpenMP>, DefaultIgnore;

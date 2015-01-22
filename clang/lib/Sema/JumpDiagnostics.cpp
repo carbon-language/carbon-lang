@@ -338,6 +338,10 @@ void JumpScopeChecker::BuildScopeInformation(Stmt *S, unsigned &origParentScope)
     return;
   }
 
+  case Stmt::SEHTryStmtClass:
+    // FIXME: Implement jump diagnostics for bad SEH jumps.
+    break;
+
   default:
     break;
   }

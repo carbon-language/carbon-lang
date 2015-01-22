@@ -202,6 +202,28 @@ static bool SemaBuiltinCallWithStaticChain(Sema &S, CallExpr *BuiltinCall) {
   return false;
 }
 
+static bool SemaBuiltinSEHScopeCheck(Sema &SemaRef, CallExpr *TheCall,
+                                     Scope::ScopeFlags NeededScopeFlags,
+                                     unsigned DiagID) {
+  // Scopes aren't available during instantiation. Fortunately, builtin
+  // functions cannot be template args so they cannot be formed through template
+  // instantiation. Therefore checking once during the parse is sufficient.
+  if (!SemaRef.ActiveTemplateInstantiations.empty())
+    return false;
+
+  Scope *S = SemaRef.getCurScope();
+  while (S && !S->isSEHExceptScope())
+    S = S->getParent();
+  if (!S || !(S->getFlags() & NeededScopeFlags)) {
+    auto *DRE = cast<DeclRefExpr>(TheCall->getCallee()->IgnoreParenCasts());
+    SemaRef.Diag(TheCall->getExprLoc(), DiagID)
+        << DRE->getDecl()->getIdentifier();
+    return true;
+  }
+
+  return false;
+}
+
 ExprResult
 Sema::CheckBuiltinFunctionCall(FunctionDecl *FDecl, unsigned BuiltinID,
                                CallExpr *TheCall) {
@@ -461,6 +483,22 @@ Sema::CheckBuiltinFunctionCall(FunctionDecl *FDecl, unsigned BuiltinID,
     if (SemaBuiltinCallWithStaticChain(*this, TheCall))
       return ExprError();
     break;
+
+  case Builtin::BI__exception_code:
+  case Builtin::BI_exception_code: {
+    if (SemaBuiltinSEHScopeCheck(*this, TheCall, Scope::SEHExceptScope,
+                                 diag::err_seh___except_block))
+      return ExprError();
+    break;
+  }
+  case Builtin::BI__exception_info:
+  case Builtin::BI_exception_info: {
+    if (SemaBuiltinSEHScopeCheck(*this, TheCall, Scope::SEHFilterScope,
+                                 diag::err_seh___except_filter))
+      return ExprError();
+    break;
+  }
+
   }
 
   // Since the target specific builtins for each arch overlap, only check those

@@ -43,7 +43,7 @@ CodeGenFunction::CodeGenFunction(CodeGenModule &cgm, bool suppressNewContext)
       BlockInfo(nullptr), BlockPointer(nullptr),
       LambdaThisCaptureField(nullptr), NormalCleanupDest(nullptr),
       NextCleanupDestIndex(1), FirstBlockInfo(nullptr), EHResumeBlock(nullptr),
-      ExceptionSlot(nullptr), EHSelectorSlot(nullptr),
+      ExceptionSlot(nullptr), EHSelectorSlot(nullptr), SEHPointersDecl(nullptr),
       DebugInfo(CGM.getModuleDebugInfo()), DisableDebugInfo(false),
       DidCallStackSave(false), IndirectBranch(nullptr), PGO(cgm),
       SwitchInsn(nullptr), SwitchWeights(nullptr), CaseRangeBlock(nullptr),
