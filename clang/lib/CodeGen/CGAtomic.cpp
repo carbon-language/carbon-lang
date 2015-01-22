@@ -13,7 +13,6 @@
 
 #include "CodeGenFunction.h"
 #include "CGCall.h"
-#include "CGRecordLayout.h"
 #include "CodeGenModule.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/CodeGen/CGFunctionInfo.h"
@@ -37,69 +36,34 @@ namespace {
     CharUnits LValueAlign;
     TypeEvaluationKind EvaluationKind;
     bool UseLibcall;
-    LValue LVal;
-    CGBitFieldInfo BFI;
   public:
-    AtomicInfo(CodeGenFunction &CGF, LValue &lvalue)
-        : CGF(CGF), AtomicSizeInBits(0), ValueSizeInBits(0), UseLibcall(true) {
-      assert(!lvalue.isGlobalReg());
+    AtomicInfo(CodeGenFunction &CGF, LValue &lvalue) : CGF(CGF) {
+      assert(lvalue.isSimple());
+
+      AtomicTy = lvalue.getType();
+      ValueTy = AtomicTy->castAs<AtomicType>()->getValueType();
+      EvaluationKind = CGF.getEvaluationKind(ValueTy);
+
       ASTContext &C = CGF.getContext();
-      if (lvalue.isSimple()) {
-        AtomicTy = lvalue.getType();
-        if (auto *ATy = AtomicTy->getAs<AtomicType>())
-          ValueTy = ATy->getValueType();
-        else
-          ValueTy = AtomicTy;
-        EvaluationKind = CGF.getEvaluationKind(ValueTy);
 
-        uint64_t ValueAlignInBits;
-        uint64_t AtomicAlignInBits;
-        TypeInfo ValueTI = C.getTypeInfo(ValueTy);
-        ValueSizeInBits = ValueTI.Width;
-        ValueAlignInBits = ValueTI.Align;
+      uint64_t ValueAlignInBits;
+      uint64_t AtomicAlignInBits;
+      TypeInfo ValueTI = C.getTypeInfo(ValueTy);
+      ValueSizeInBits = ValueTI.Width;
+      ValueAlignInBits = ValueTI.Align;
 
-        TypeInfo AtomicTI = C.getTypeInfo(AtomicTy);
-        AtomicSizeInBits = AtomicTI.Width;
-        AtomicAlignInBits = AtomicTI.Align;
+      TypeInfo AtomicTI = C.getTypeInfo(AtomicTy);
+      AtomicSizeInBits = AtomicTI.Width;
+      AtomicAlignInBits = AtomicTI.Align;
 
-        assert(ValueSizeInBits <= AtomicSizeInBits);
-        assert(ValueAlignInBits <= AtomicAlignInBits);
+      assert(ValueSizeInBits <= AtomicSizeInBits);
+      assert(ValueAlignInBits <= AtomicAlignInBits);
 
-        AtomicAlign = C.toCharUnitsFromBits(AtomicAlignInBits);
-        ValueAlign = C.toCharUnitsFromBits(ValueAlignInBits);
-        if (lvalue.getAlignment().isZero())
-          lvalue.setAlignment(AtomicAlign);
+      AtomicAlign = C.toCharUnitsFromBits(AtomicAlignInBits);
+      ValueAlign = C.toCharUnitsFromBits(ValueAlignInBits);
+      if (lvalue.getAlignment().isZero())
+        lvalue.setAlignment(AtomicAlign);
 
-        LVal = lvalue;
-      } else if (lvalue.isBitField()) {
-        auto &OrigBFI = lvalue.getBitFieldInfo();
-        auto Offset = OrigBFI.Offset % C.toBits(lvalue.getAlignment());
-        AtomicSizeInBits = C.toBits(
-            C.toCharUnitsFromBits(Offset + OrigBFI.Size + C.getCharWidth() - 1)
-                .RoundUpToAlignment(lvalue.getAlignment()));
-        auto VoidPtrAddr = CGF.EmitCastToVoidPtr(lvalue.getBitFieldAddr());
-        auto OffsetInChars =
-            (C.toCharUnitsFromBits(OrigBFI.Offset) / lvalue.getAlignment()) *
-            lvalue.getAlignment();
-        VoidPtrAddr = CGF.Builder.CreateConstGEP1_64(
-            VoidPtrAddr, OffsetInChars.getQuantity());
-        auto Addr = CGF.Builder.CreatePointerBitCastOrAddrSpaceCast(
-            VoidPtrAddr,
-            CGF.Builder.getIntNTy(AtomicSizeInBits)->getPointerTo(),
-            "atomic_bitfield_base");
-        BFI = OrigBFI;
-        BFI.Offset = Offset;
-        BFI.StorageSize = AtomicSizeInBits;
-        LVal = LValue::MakeBitfield(Addr, BFI, lvalue.getType(),
-                                    lvalue.getAlignment());
-      } else if (lvalue.isVectorElt()) {
-        AtomicSizeInBits = C.getTypeSize(lvalue.getType());
-        LVal = lvalue;
-      } else {
-        assert(lvalue.isExtVectorElt());
-        AtomicSizeInBits = C.getTypeSize(lvalue.getType());
-        LVal = lvalue;
-      }
       UseLibcall = !C.getTargetInfo().hasBuiltinAtomic(
           AtomicSizeInBits, C.toBits(lvalue.getAlignment()));
     }
@@ -112,7 +76,6 @@ namespace {
     uint64_t getValueSizeInBits() const { return ValueSizeInBits; }
     TypeEvaluationKind getEvaluationKind() const { return EvaluationKind; }
     bool shouldUseLibcall() const { return UseLibcall; }
-    const LValue &getAtomicLValue() const { return LVal; }
 
     /// Is the atomic size larger than the underlying value type?
     ///
@@ -124,7 +87,7 @@ namespace {
       return (ValueSizeInBits != AtomicSizeInBits);
     }
 
-    bool emitMemSetZeroIfNecessary() const;
+    bool emitMemSetZeroIfNecessary(LValue dest) const;
 
     llvm::Value *getAtomicSizeValue() const {
       CharUnits size = CGF.getContext().toCharUnitsFromBits(AtomicSizeInBits);
@@ -147,17 +110,16 @@ namespace {
                              SourceLocation Loc) const;
 
     /// Copy an atomic r-value into atomic-layout memory.
-    void emitCopyIntoMemory(RValue rvalue) const;
+    void emitCopyIntoMemory(RValue rvalue, LValue lvalue) const;
 
     /// Project an l-value down to the value field.
-    LValue projectValue() const {
-      assert(LVal.isSimple());
-      llvm::Value *addr = LVal.getAddress();
+    LValue projectValue(LValue lvalue) const {
+      llvm::Value *addr = lvalue.getAddress();
       if (hasPadding())
         addr = CGF.Builder.CreateStructGEP(addr, 0);
 
-      return LValue::MakeAddr(addr, getValueType(), LVal.getAlignment(),
-                              CGF.getContext(), LVal.getTBAAInfo());
+      return LValue::MakeAddr(addr, getValueType(), lvalue.getAlignment(),
+                              CGF.getContext(), lvalue.getTBAAInfo());
     }
 
     /// Materialize an atomic r-value in atomic-layout memory.
@@ -210,15 +172,14 @@ bool AtomicInfo::requiresMemSetZero(llvm::Type *type) const {
   llvm_unreachable("bad evaluation kind");
 }
 
-bool AtomicInfo::emitMemSetZeroIfNecessary() const {
-  assert(LVal.isSimple());
-  llvm::Value *addr = LVal.getAddress();
+bool AtomicInfo::emitMemSetZeroIfNecessary(LValue dest) const {
+  llvm::Value *addr = dest.getAddress();
   if (!requiresMemSetZero(addr->getType()->getPointerElementType()))
     return false;
 
   CGF.Builder.CreateMemSet(addr, llvm::ConstantInt::get(CGF.Int8Ty, 0),
                            AtomicSizeInBits / 8,
-                           LVal.getAlignment().getQuantity());
+                           dest.getAlignment().getQuantity());
   return true;
 }
 
@@ -941,34 +902,21 @@ llvm::Value *AtomicInfo::emitCastToAtomicIntPointer(llvm::Value *addr) const {
 RValue AtomicInfo::convertTempToRValue(llvm::Value *addr,
                                        AggValueSlot resultSlot,
                                        SourceLocation loc) const {
-  if (LVal.isSimple()) {
-    if (EvaluationKind == TEK_Aggregate)
-      return resultSlot.asRValue();
+  if (EvaluationKind == TEK_Aggregate)
+    return resultSlot.asRValue();
 
-    // Drill into the padding structure if we have one.
-    if (hasPadding())
-      addr = CGF.Builder.CreateStructGEP(addr, 0);
+  // Drill into the padding structure if we have one.
+  if (hasPadding())
+    addr = CGF.Builder.CreateStructGEP(addr, 0);
 
-    // Otherwise, just convert the temporary to an r-value using the
-    // normal conversion routine.
-    return CGF.convertTempToRValue(addr, getValueType(), loc);
-  } else if (LVal.isBitField())
-    return CGF.EmitLoadOfBitfieldLValue(LValue::MakeBitfield(
-        addr, LVal.getBitFieldInfo(), LVal.getType(), LVal.getAlignment()));
-  else if (LVal.isVectorElt())
-    return CGF.EmitLoadOfLValue(LValue::MakeVectorElt(addr, LVal.getVectorIdx(),
-                                                      LVal.getType(),
-                                                      LVal.getAlignment()),
-                                loc);
-  assert(LVal.isExtVectorElt());
-  return CGF.EmitLoadOfExtVectorElementLValue(LValue::MakeExtVectorElt(
-      addr, LVal.getExtVectorElts(), LVal.getType(), LVal.getAlignment()));
+  // Otherwise, just convert the temporary to an r-value using the
+  // normal conversion routine.
+  return CGF.convertTempToRValue(addr, getValueType(), loc);
 }
 
 RValue AtomicInfo::convertIntToValue(llvm::Value *IntVal,
                                      AggValueSlot ResultSlot,
                                      SourceLocation Loc) const {
-  assert(LVal.isSimple());
   // Try not to in some easy cases.
   assert(IntVal->getType()->isIntegerTy() && "Expected integer value");
   if (getEvaluationKind() == TEK_Scalar && !hasPadding()) {
@@ -1010,43 +958,25 @@ RValue AtomicInfo::convertIntToValue(llvm::Value *IntVal,
 RValue CodeGenFunction::EmitAtomicLoad(LValue src, SourceLocation loc,
                                        AggValueSlot resultSlot) {
   AtomicInfo atomics(*this, src);
-  LValue LVal = atomics.getAtomicLValue();
-  llvm::Value *SrcAddr = nullptr;
-  llvm::AllocaInst *NonSimpleTempAlloca = nullptr;
-  if (LVal.isSimple())
-    SrcAddr = LVal.getAddress();
-  else {
-    if (LVal.isBitField())
-      SrcAddr = LVal.getBitFieldAddr();
-    else if (LVal.isVectorElt())
-      SrcAddr = LVal.getVectorAddr();
-    else {
-      assert(LVal.isExtVectorElt());
-      SrcAddr = LVal.getExtVectorAddr();
-    }
-    NonSimpleTempAlloca = CreateTempAlloca(
-        SrcAddr->getType()->getPointerElementType(), "atomic-load-temp");
-    NonSimpleTempAlloca->setAlignment(getContext().toBits(src.getAlignment()));
-  }
 
   // Check whether we should use a library call.
   if (atomics.shouldUseLibcall()) {
     llvm::Value *tempAddr;
-    if (LVal.isSimple()) {
-      if (!resultSlot.isIgnored()) {
-        assert(atomics.getEvaluationKind() == TEK_Aggregate);
-        tempAddr = resultSlot.getAddr();
-      } else
-        tempAddr = CreateMemTemp(atomics.getAtomicType(), "atomic-load-temp");
-    } else
-      tempAddr = NonSimpleTempAlloca;
+    if (!resultSlot.isIgnored()) {
+      assert(atomics.getEvaluationKind() == TEK_Aggregate);
+      tempAddr = resultSlot.getAddr();
+    } else {
+      tempAddr = CreateMemTemp(atomics.getAtomicType(), "atomic-load-temp");
+    }
 
     // void __atomic_load(size_t size, void *mem, void *return, int order);
     CallArgList args;
     args.add(RValue::get(atomics.getAtomicSizeValue()),
              getContext().getSizeType());
-    args.add(RValue::get(EmitCastToVoidPtr(SrcAddr)), getContext().VoidPtrTy);
-    args.add(RValue::get(EmitCastToVoidPtr(tempAddr)), getContext().VoidPtrTy);
+    args.add(RValue::get(EmitCastToVoidPtr(src.getAddress())),
+             getContext().VoidPtrTy);
+    args.add(RValue::get(EmitCastToVoidPtr(tempAddr)),
+             getContext().VoidPtrTy);
     args.add(RValue::get(llvm::ConstantInt::get(
                  IntTy, AtomicExpr::AO_ABI_memory_order_seq_cst)),
              getContext().IntTy);
@@ -1057,7 +987,7 @@ RValue CodeGenFunction::EmitAtomicLoad(LValue src, SourceLocation loc,
   }
 
   // Okay, we're doing this natively.
-  llvm::Value *addr = atomics.emitCastToAtomicIntPointer(SrcAddr);
+  llvm::Value *addr = atomics.emitCastToAtomicIntPointer(src.getAddress());
   llvm::LoadInst *load = Builder.CreateLoad(addr, "atomic-load");
   load->setAtomic(llvm::SequentiallyConsistent);
 
@@ -1073,46 +1003,40 @@ RValue CodeGenFunction::EmitAtomicLoad(LValue src, SourceLocation loc,
     return RValue::getAggregate(nullptr, false);
 
   // Okay, turn that back into the original value type.
-  if (src.isSimple())
-    return atomics.convertIntToValue(load, resultSlot, loc);
-
-  auto *IntAddr = atomics.emitCastToAtomicIntPointer(NonSimpleTempAlloca);
-  Builder.CreateAlignedStore(load, IntAddr, src.getAlignment().getQuantity());
-  return atomics.convertTempToRValue(NonSimpleTempAlloca, resultSlot, loc);
+  return atomics.convertIntToValue(load, resultSlot, loc);
 }
 
 
 
 /// Copy an r-value into memory as part of storing to an atomic type.
 /// This needs to create a bit-pattern suitable for atomic operations.
-void AtomicInfo::emitCopyIntoMemory(RValue rvalue) const {
-  assert(LVal.isSimple());
+void AtomicInfo::emitCopyIntoMemory(RValue rvalue, LValue dest) const {
   // If we have an r-value, the rvalue should be of the atomic type,
   // which means that the caller is responsible for having zeroed
   // any padding.  Just do an aggregate copy of that type.
   if (rvalue.isAggregate()) {
-    CGF.EmitAggregateCopy(LVal.getAddress(),
+    CGF.EmitAggregateCopy(dest.getAddress(),
                           rvalue.getAggregateAddr(),
                           getAtomicType(),
                           (rvalue.isVolatileQualified()
-                           || LVal.isVolatileQualified()),
-                          LVal.getAlignment());
+                           || dest.isVolatileQualified()),
+                          dest.getAlignment());
     return;
   }
 
   // Okay, otherwise we're copying stuff.
 
   // Zero out the buffer if necessary.
-  emitMemSetZeroIfNecessary();
+  emitMemSetZeroIfNecessary(dest);
 
   // Drill past the padding if present.
-  LValue TempLVal = projectValue();
+  dest = projectValue(dest);
 
   // Okay, store the rvalue in.
   if (rvalue.isScalar()) {
-    CGF.EmitStoreOfScalar(rvalue.getScalarVal(), TempLVal, /*init*/ true);
+    CGF.EmitStoreOfScalar(rvalue.getScalarVal(), dest, /*init*/ true);
   } else {
-    CGF.EmitStoreOfComplex(rvalue.getComplexVal(), TempLVal, /*init*/ true);
+    CGF.EmitStoreOfComplex(rvalue.getComplexVal(), dest, /*init*/ true);
   }
 }
 
@@ -1127,10 +1051,8 @@ llvm::Value *AtomicInfo::materializeRValue(RValue rvalue) const {
 
   // Otherwise, make a temporary and materialize into it.
   llvm::Value *temp = CGF.CreateMemTemp(getAtomicType(), "atomic-store-temp");
-  LValue tempLV =
-      CGF.MakeAddrLValue(temp, getAtomicType(), getAtomicAlignment());
-  AtomicInfo Atomics(CGF, tempLV);
-  Atomics.emitCopyIntoMemory(rvalue);
+  LValue tempLV = CGF.MakeAddrLValue(temp, getAtomicType(), getAtomicAlignment());
+  emitCopyIntoMemory(rvalue, tempLV);
   return temp;
 }
 
@@ -1176,7 +1098,7 @@ void CodeGenFunction::EmitAtomicStore(RValue rvalue, LValue dest, bool isInit) {
 
   // If this is an initialization, just put the value there normally.
   if (isInit) {
-    atomics.emitCopyIntoMemory(rvalue);
+    atomics.emitCopyIntoMemory(rvalue, dest);
     return;
   }
 
@@ -1292,13 +1214,13 @@ void CodeGenFunction::EmitAtomicInit(Expr *init, LValue dest) {
   switch (atomics.getEvaluationKind()) {
   case TEK_Scalar: {
     llvm::Value *value = EmitScalarExpr(init);
-    atomics.emitCopyIntoMemory(RValue::get(value));
+    atomics.emitCopyIntoMemory(RValue::get(value), dest);
     return;
   }
 
   case TEK_Complex: {
     ComplexPairTy value = EmitComplexExpr(init);
-    atomics.emitCopyIntoMemory(RValue::getComplex(value));
+    atomics.emitCopyIntoMemory(RValue::getComplex(value), dest);
     return;
   }
 
@@ -1307,8 +1229,8 @@ void CodeGenFunction::EmitAtomicInit(Expr *init, LValue dest) {
     // of atomic type.
     bool Zeroed = false;
     if (!init->getType()->isAtomicType()) {
-      Zeroed = atomics.emitMemSetZeroIfNecessary();
-      dest = atomics.projectValue();
+      Zeroed = atomics.emitMemSetZeroIfNecessary(dest);
+      dest = atomics.projectValue(dest);
     }
 
     // Evaluate the expression directly into the destination.
