@@ -145,7 +145,7 @@ const MCSymbolRefExpr *Win64Exception::createImageRel32(const MCSymbol *Value) {
 ///     struct Entry {
 ///       imagerel32 LabelStart;
 ///       imagerel32 LabelEnd;
-///       imagerel32 FilterOrFinally;  // Zero means catch-all.
+///       imagerel32 FilterOrFinally;  // One means catch-all.
 ///       imagerel32 LabelLPad;        // Zero means __finally.
 ///     } Entries[NumEntries];
 ///   };
@@ -241,7 +241,7 @@ void Win64Exception::emitCSpecificHandlerTable() {
         if (TI) // Emit the filter function pointer.
           Asm->OutStreamer.EmitValue(createImageRel32(Asm->getSymbol(TI)), 4);
         else  // Otherwise, this is a "catch i8* null", or catch all.
-          Asm->OutStreamer.EmitIntValue(0, 4);
+          Asm->OutStreamer.EmitIntValue(1, 4);
       }
       Asm->OutStreamer.EmitValue(createImageRel32(ClauseLabel), 4);
     }
