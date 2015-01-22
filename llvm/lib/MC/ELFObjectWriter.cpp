@@ -1033,16 +1033,43 @@ ELFObjectWriter::computeSymbolTable(MCAssembler &Asm, const MCAsmLayout &Layout,
       assert(MSD.SectionIndex && "Invalid section index!");
     }
 
-    // The @@@ in symbol version is replaced with @ in undefined symbols and
-    // @@ in defined ones.
+    // The @@@ in symbol version is replaced with @ in undefined symbols and @@
+    // in defined ones.
+    //
+    // FIXME: All name handling should be done before we get to the writer,
+    // including dealing with GNU-style version suffixes.  Fixing this isn’t
+    // trivial.
+    //
+    // We thus have to be careful to not perform the symbol version replacement
+    // blindly:
+    //
+    // The ELF format is used on Windows by the MCJIT engine.  Thus, on
+    // Windows, the ELFObjectWriter can encounter symbols mangled using the MS
+    // Visual Studio C++ name mangling scheme. Symbols mangled using the MSVC
+    // C++ name mangling can legally have "@@@" as a sub-string. In that case,
+    // the EFLObjectWriter should not interpret the "@@@" sub-string as
+    // specifying GNU-style symbol versioning. The ELFObjectWriter therefore
+    // checks for the MSVC C++ name mangling prefix which is either "?", "@?",
+    // "__imp_?" or "__imp_@?".
+    //
+    // It would have been interesting to perform the MS mangling prefix check
+    // only when the target triple is of the form *-pc-windows-elf. But, it
+    // seems that this information is not easily accessible from the
+    // ELFObjectWriter.
     StringRef Name = Symbol.getName();
-    SmallString<32> Buf;
-    size_t Pos = Name.find("@@@");
-    if (Pos != StringRef::npos) {
-      Buf += Name.substr(0, Pos);
-      unsigned Skip = MSD.SectionIndex == ELF::SHN_UNDEF ? 2 : 1;
-      Buf += Name.substr(Pos + Skip);
-      Name = Buf;
+    if (!Name.startswith("?") && !Name.startswith("@?") &&
+        !Name.startswith("__imp_?") && !Name.startswith("__imp_@?")) {
+      // This symbol isn't following the MSVC C++ name mangling convention. We
+      // can thus safely interpret the @@@ in symbol names as specifying symbol
+      // versioning.
+      SmallString<32> Buf;
+      size_t Pos = Name.find("@@@");
+      if (Pos != StringRef::npos) {
+        Buf += Name.substr(0, Pos);
+        unsigned Skip = MSD.SectionIndex == ELF::SHN_UNDEF ? 2 : 1;
+        Buf += Name.substr(Pos + Skip);
+        Name = Buf;
+      }
     }
 
     // Sections have their own string table
