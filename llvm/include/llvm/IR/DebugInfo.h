@@ -190,13 +190,17 @@ public:
                          DIHeaderFieldIterator());
   }
 
-  StringRef getHeaderField(unsigned Index) const {
+  DIHeaderFieldIterator getHeaderIterator(unsigned Index) const {
     // Since callers expect an empty string for out-of-range accesses, we can't
     // use std::advance() here.
     for (DIHeaderFieldIterator I(getHeader()), E; I != E; ++I, --Index)
       if (!Index)
-        return *I;
+        return I;
     return StringRef();
+  }
+
+  StringRef getHeaderField(unsigned Index) const {
+    return *getHeaderIterator(Index);
   }
 
   template <class T> T getHeaderFieldAs(unsigned Index) const {
