@@ -904,7 +904,7 @@ public:
       case dwarf::DW_OP_plus:  std::advance(I, 2); break;
       case dwarf::DW_OP_deref: std::advance(I, 1); break;
       default:
-        assert("unsupported operand");
+        llvm_unreachable("unsupported operand");
       }
     }
   };
