@@ -489,8 +489,9 @@ class LoopConstrainer {
   // Compute a safe set of limits for the main loop to run in -- effectively the
   // intersection of `Range' and the iteration space of the original loop.
   // Return the header count (1 + the latch taken count) in `HeaderCount'.
+  // Return None if unable to compute the set of subranges.
   //
-  SubRanges calculateSubRanges(Value *&HeaderCount) const;
+  Optional<SubRanges> calculateSubRanges(Value *&HeaderCount) const;
 
   // Clone `OriginalLoop' and return the result in CLResult.  The IR after
   // running `cloneLoop' is well formed except for the PHI nodes in CLResult --
@@ -660,8 +661,14 @@ bool LoopConstrainer::recognizeLoop(LoopStructure &LoopStructureOut,
     return false;
   }
 
+  // IndVarSimplify will sometimes leave behind (in SCEV's cache) backedge-taken
+  // counts that are narrower than the canonical induction variable.  These
+  // values are still accurate, and we could probably use them after sign/zero
+  // extension; but for now we just bail out of the transformation to keep
+  // things simple.
   const SCEV *CIVComparedToSCEV = SE.getSCEV(CIVComparedTo);
-  if (isa<SCEVCouldNotCompute>(CIVComparedToSCEV)) {
+  if (isa<SCEVCouldNotCompute>(CIVComparedToSCEV) ||
+      CIVComparedToSCEV->getType() != LatchCount->getType()) {
     FailureReason = "could not relate CIV to latch expression";
     return false;
   }
@@ -699,9 +706,14 @@ bool LoopConstrainer::recognizeLoop(LoopStructure &LoopStructureOut,
   return true;
 }
 
-LoopConstrainer::SubRanges
+Optional<LoopConstrainer::SubRanges>
 LoopConstrainer::calculateSubRanges(Value *&HeaderCountOut) const {
   IntegerType *Ty = cast<IntegerType>(LatchTakenCount->getType());
+
+  assert(Range.first->getType() == Range.second->getType() &&
+         "ill-typed range!");
+  if (Range.first->getType() != Ty)
+    return None;
 
   SCEVExpander Expander(SE, "irce");
   Instruction *InsertPt = OriginalPreheader->getTerminator();
@@ -999,7 +1011,12 @@ bool LoopConstrainer::run() {
   OriginalPreheader = Preheader;
   MainLoopPreheader = Preheader;
 
-  SubRanges SR = calculateSubRanges(OriginalHeaderCount);
+  Optional<SubRanges> MaybeSR = calculateSubRanges(OriginalHeaderCount);
+  if (!MaybeSR.hasValue()) {
+    DEBUG(dbgs() << "irce: could not compute subranges\n");
+    return false;
+  }
+  SubRanges SR = MaybeSR.getValue();
 
   // It would have been better to make `PreLoop' and `PostLoop'
   // `Optional<ClonedLoop>'s, but `ValueToValueMapTy' does not have a copy
@@ -1113,12 +1130,19 @@ InductiveRangeCheck::computeSafeIterationSpace(ScalarEvolution &SE,
   return std::make_pair(Begin, End);
 }
 
-static InductiveRangeCheck::Range
+static Optional<InductiveRangeCheck::Range>
 IntersectRange(const Optional<InductiveRangeCheck::Range> &R1,
                const InductiveRangeCheck::Range &R2, IRBuilder<> &B) {
+  assert(R2.first->getType() == R2.second->getType() && "ill-typed range!");
+
   if (!R1.hasValue())
     return R2;
   auto &R1Value = R1.getValue();
+
+  // TODO: we could widen the smaller range and have this work; but for now we
+  // bail out to keep things simple.
+  if (R1Value.first->getType() != R2.first->getType())
+    return None;
 
   Value *NewMin = ConstructSMaxOf(R1Value.first, R2.first, B);
   Value *NewMax = ConstructSMinOf(R1Value.second, R2.second, B);
@@ -1167,8 +1191,12 @@ bool InductiveRangeCheckElimination::runOnLoop(Loop *L, LPPassManager &LPM) {
   for (InductiveRangeCheck *IRC : RangeChecks) {
     auto Result = IRC->computeSafeIterationSpace(SE, B);
     if (Result.hasValue()) {
-      SafeIterRange = IntersectRange(SafeIterRange, Result.getValue(), B);
-      RangeChecksToEliminate.push_back(IRC);
+      auto MaybeSafeIterRange =
+        IntersectRange(SafeIterRange, Result.getValue(), B);
+      if (MaybeSafeIterRange.hasValue()) {
+        RangeChecksToEliminate.push_back(IRC);
+        SafeIterRange = MaybeSafeIterRange.getValue();
+      }
     }
   }
 
