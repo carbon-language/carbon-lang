@@ -99,6 +99,16 @@ public:
     return Header.slice(Current.end() - Header.begin() + 1, StringRef::npos);
   }
 
+  /// \brief Get the current field as a number.
+  ///
+  /// Convert the current field into a number.  Return \c 0 on error.
+  template <class T> T getNumber() const {
+    T Int;
+    if (getCurrent().getAsInteger(0, Int))
+      return 0;
+    return Int;
+  }
+
 private:
   void increment() {
     assert(Current.data() != nullptr && "Cannot increment past the end");
@@ -204,10 +214,7 @@ public:
   }
 
   template <class T> T getHeaderFieldAs(unsigned Index) const {
-    T Int;
-    if (getHeaderField(Index).getAsInteger(0, Int))
-      return 0;
-    return Int;
+    return getHeaderIterator(Index).getNumber<T>();
   }
 
   uint16_t getTag() const { return getHeaderFieldAs<uint16_t>(0); }
@@ -883,12 +890,7 @@ public:
   DIExpressionIterator() {}
   DIExpressionIterator(const DIExpression Expr)
     : I(Expr.getHeader()) { ++I; }
-  uint64_t operator*() const {
-    uint64_t UInt;
-    if (I->getAsInteger(0, UInt))
-      return 0;
-    return UInt;
-  }
+  uint64_t operator*() const { return I.getNumber<uint64_t>(); }
   DIExpressionIterator &operator++() {
     increment();
     return *this;
