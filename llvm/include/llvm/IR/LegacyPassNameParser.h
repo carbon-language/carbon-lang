@@ -41,14 +41,12 @@ namespace llvm {
 //
 class PassNameParser : public PassRegistrationListener,
                        public cl::parser<const PassInfo*> {
-  cl::Option *Opt;
 public:
-  PassNameParser();
+  PassNameParser(cl::Option &O);
   virtual ~PassNameParser();
 
-  void initialize(cl::Option &O) {
-    Opt = &O;
-    cl::parser<const PassInfo*>::initialize(O);
+  void initialize() {
+    cl::parser<const PassInfo*>::initialize();
 
     // Add all of the passes to the map that got initialized before 'this' did.
     enumeratePasses();
@@ -69,7 +67,7 @@ public:
   // Implement the PassRegistrationListener callbacks used to populate our map
   //
   void passRegistered(const PassInfo *P) override {
-    if (ignorablePass(P) || !Opt) return;
+    if (ignorablePass(P)) return;
     if (findOption(P->getPassArgument()) != getNumOptions()) {
       errs() << "Two passes with the same argument (-"
            << P->getPassArgument() << ") attempted to be registered!\n";

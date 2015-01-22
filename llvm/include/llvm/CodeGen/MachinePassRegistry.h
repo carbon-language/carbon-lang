@@ -122,11 +122,12 @@ template<class RegistryClass>
 class RegisterPassParser : public MachinePassRegistryListener,
                    public cl::parser<typename RegistryClass::FunctionPassCtor> {
 public:
-  RegisterPassParser() {}
+  RegisterPassParser(cl::Option &O)
+      : cl::parser<typename RegistryClass::FunctionPassCtor>(O) {}
   ~RegisterPassParser() { RegistryClass::setListener(nullptr); }
 
-  void initialize(cl::Option &O) {
-    cl::parser<typename RegistryClass::FunctionPassCtor>::initialize(O);
+  void initialize() {
+    cl::parser<typename RegistryClass::FunctionPassCtor>::initialize();
 
     // Add existing passes to option.
     for (RegistryClass *Node = RegistryClass::getList();

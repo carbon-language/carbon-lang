@@ -531,6 +531,8 @@ protected:
   };
 
 public:
+  generic_parser_base(Option &O) : Owner(O) {}
+
   virtual ~generic_parser_base() {} // Base class should have virtual-dtor
 
   // getNumOptions - Virtual function implemented by generic subclass to
@@ -569,18 +571,13 @@ public:
     printGenericOptionDiff(O, V, Default, GlobalWidth);
   }
 
-  void initialize(Option &O) {
-    // All of the modifiers for the option have been processed by now, so the
-    // argstr field should be stable, copy it down now.
-    //
-    hasArgStr = O.hasArgStr();
-  }
+  void initialize() {}
 
   void getExtraOptionNames(SmallVectorImpl<const char *> &OptionNames) {
     // If there has been no argstr specified, that means that we need to add an
     // argument for every possible option.  This ensures that our options are
     // vectored to us.
-    if (!hasArgStr)
+    if (!Owner.hasArgStr())
       for (unsigned i = 0, e = getNumOptions(); i != e; ++i)
         OptionNames.push_back(getOption(i));
   }
@@ -597,7 +594,7 @@ public:
     //
     // If this is the case, we cannot allow a value.
     //
-    if (hasArgStr)
+    if (Owner.hasArgStr())
       return ValueRequired;
     else
       return ValueDisallowed;
@@ -609,7 +606,7 @@ public:
   unsigned findOption(const char *Name);
 
 protected:
-  bool hasArgStr;
+  Option &Owner;
 };
 
 // Default parser implementation - This implementation depends on having a
@@ -629,6 +626,7 @@ protected:
   SmallVector<OptionInfo, 8> Values;
 
 public:
+  parser(Option &O) : generic_parser_base(O) {}
   typedef DataType parser_data_type;
 
   // Implement virtual functions needed by generic_parser_base
@@ -646,7 +644,7 @@ public:
   // parse - Return true on error.
   bool parse(Option &O, StringRef ArgName, StringRef Arg, DataType &V) {
     StringRef ArgVal;
-    if (hasArgStr)
+    if (Owner.hasArgStr())
       ArgVal = Arg;
     else
       ArgVal = ArgName;
@@ -684,6 +682,8 @@ public:
 //
 class basic_parser_impl { // non-template implementation of basic_parser<t>
 public:
+  basic_parser_impl(Option &O) {}
+
   virtual ~basic_parser_impl() {}
 
   enum ValueExpected getValueExpectedFlagDefault() const {
@@ -692,7 +692,7 @@ public:
 
   void getExtraOptionNames(SmallVectorImpl<const char *> &) {}
 
-  void initialize(Option &) {}
+  void initialize() {}
 
   // Return the width of the option tag for printing...
   size_t getOptionWidth(const Option &O) const;
@@ -722,6 +722,7 @@ protected:
 //
 template <class DataType> class basic_parser : public basic_parser_impl {
 public:
+  basic_parser(Option &O) : basic_parser_impl(O) {}
   typedef DataType parser_data_type;
   typedef OptionValue<DataType> OptVal;
 };
@@ -730,13 +731,13 @@ public:
 // parser<bool>
 //
 template <> class parser<bool> : public basic_parser<bool> {
-  const char *ArgStr;
-
 public:
+  parser(Option &O) : basic_parser(O) {}
+
   // parse - Return true on error.
   bool parse(Option &O, StringRef ArgName, StringRef Arg, bool &Val);
 
-  template <class Opt> void initialize(Opt &O) { ArgStr = O.ArgStr; }
+  void initialize() {}
 
   enum ValueExpected getValueExpectedFlagDefault() const {
     return ValueOptional;
@@ -758,6 +759,8 @@ EXTERN_TEMPLATE_INSTANTIATION(class basic_parser<bool>);
 // parser<boolOrDefault>
 template <> class parser<boolOrDefault> : public basic_parser<boolOrDefault> {
 public:
+  parser(Option &O) : basic_parser(O) {}
+
   // parse - Return true on error.
   bool parse(Option &O, StringRef ArgName, StringRef Arg, boolOrDefault &Val);
 
@@ -782,6 +785,8 @@ EXTERN_TEMPLATE_INSTANTIATION(class basic_parser<boolOrDefault>);
 //
 template <> class parser<int> : public basic_parser<int> {
 public:
+  parser(Option &O) : basic_parser(O) {}
+
   // parse - Return true on error.
   bool parse(Option &O, StringRef ArgName, StringRef Arg, int &Val);
 
@@ -802,6 +807,8 @@ EXTERN_TEMPLATE_INSTANTIATION(class basic_parser<int>);
 //
 template <> class parser<unsigned> : public basic_parser<unsigned> {
 public:
+  parser(Option &O) : basic_parser(O) {}
+
   // parse - Return true on error.
   bool parse(Option &O, StringRef ArgName, StringRef Arg, unsigned &Val);
 
@@ -823,6 +830,8 @@ EXTERN_TEMPLATE_INSTANTIATION(class basic_parser<unsigned>);
 template <>
 class parser<unsigned long long> : public basic_parser<unsigned long long> {
 public:
+  parser(Option &O) : basic_parser(O) {}
+
   // parse - Return true on error.
   bool parse(Option &O, StringRef ArgName, StringRef Arg,
              unsigned long long &Val);
@@ -844,6 +853,8 @@ EXTERN_TEMPLATE_INSTANTIATION(class basic_parser<unsigned long long>);
 //
 template <> class parser<double> : public basic_parser<double> {
 public:
+  parser(Option &O) : basic_parser(O) {}
+
   // parse - Return true on error.
   bool parse(Option &O, StringRef ArgName, StringRef Arg, double &Val);
 
@@ -864,6 +875,8 @@ EXTERN_TEMPLATE_INSTANTIATION(class basic_parser<double>);
 //
 template <> class parser<float> : public basic_parser<float> {
 public:
+  parser(Option &O) : basic_parser(O) {}
+
   // parse - Return true on error.
   bool parse(Option &O, StringRef ArgName, StringRef Arg, float &Val);
 
@@ -884,6 +897,8 @@ EXTERN_TEMPLATE_INSTANTIATION(class basic_parser<float>);
 //
 template <> class parser<std::string> : public basic_parser<std::string> {
 public:
+  parser(Option &O) : basic_parser(O) {}
+
   // parse - Return true on error.
   bool parse(Option &, StringRef, StringRef Arg, std::string &Value) {
     Value = Arg.str();
@@ -907,6 +922,8 @@ EXTERN_TEMPLATE_INSTANTIATION(class basic_parser<std::string>);
 //
 template <> class parser<char> : public basic_parser<char> {
 public:
+  parser(Option &O) : basic_parser(O) {}
+
   // parse - Return true on error.
   bool parse(Option &, StringRef, StringRef Arg, char &Value) {
     Value = Arg[0];
@@ -1166,7 +1183,7 @@ class opt : public Option,
 
   void done() {
     addArgument();
-    Parser.initialize(*this);
+    Parser.initialize();
   }
 
   // Command line options should not be copyable
@@ -1187,7 +1204,7 @@ public:
   // One option...
   template <class M0t>
   explicit opt(const M0t &M0)
-      : Option(Optional, NotHidden) {
+      : Option(Optional, NotHidden), Parser(*this) {
     apply(M0, this);
     done();
   }
@@ -1195,7 +1212,7 @@ public:
   // Two options...
   template <class M0t, class M1t>
   opt(const M0t &M0, const M1t &M1)
-      : Option(Optional, NotHidden) {
+      : Option(Optional, NotHidden), Parser(*this) {
     apply(M0, this);
     apply(M1, this);
     done();
@@ -1204,7 +1221,7 @@ public:
   // Three options...
   template <class M0t, class M1t, class M2t>
   opt(const M0t &M0, const M1t &M1, const M2t &M2)
-      : Option(Optional, NotHidden) {
+      : Option(Optional, NotHidden), Parser(*this) {
     apply(M0, this);
     apply(M1, this);
     apply(M2, this);
@@ -1213,7 +1230,7 @@ public:
   // Four options...
   template <class M0t, class M1t, class M2t, class M3t>
   opt(const M0t &M0, const M1t &M1, const M2t &M2, const M3t &M3)
-      : Option(Optional, NotHidden) {
+      : Option(Optional, NotHidden), Parser(*this) {
     apply(M0, this);
     apply(M1, this);
     apply(M2, this);
@@ -1223,7 +1240,7 @@ public:
   // Five options...
   template <class M0t, class M1t, class M2t, class M3t, class M4t>
   opt(const M0t &M0, const M1t &M1, const M2t &M2, const M3t &M3, const M4t &M4)
-      : Option(Optional, NotHidden) {
+      : Option(Optional, NotHidden), Parser(*this) {
     apply(M0, this);
     apply(M1, this);
     apply(M2, this);
@@ -1235,7 +1252,7 @@ public:
   template <class M0t, class M1t, class M2t, class M3t, class M4t, class M5t>
   opt(const M0t &M0, const M1t &M1, const M2t &M2, const M3t &M3, const M4t &M4,
       const M5t &M5)
-      : Option(Optional, NotHidden) {
+      : Option(Optional, NotHidden), Parser(*this) {
     apply(M0, this);
     apply(M1, this);
     apply(M2, this);
@@ -1249,7 +1266,7 @@ public:
             class M6t>
   opt(const M0t &M0, const M1t &M1, const M2t &M2, const M3t &M3, const M4t &M4,
       const M5t &M5, const M6t &M6)
-      : Option(Optional, NotHidden) {
+      : Option(Optional, NotHidden), Parser(*this) {
     apply(M0, this);
     apply(M1, this);
     apply(M2, this);
@@ -1264,7 +1281,7 @@ public:
             class M6t, class M7t>
   opt(const M0t &M0, const M1t &M1, const M2t &M2, const M3t &M3, const M4t &M4,
       const M5t &M5, const M6t &M6, const M7t &M7)
-      : Option(Optional, NotHidden) {
+      : Option(Optional, NotHidden), Parser(*this) {
     apply(M0, this);
     apply(M1, this);
     apply(M2, this);
@@ -1365,7 +1382,7 @@ class list : public Option, public list_storage<DataType, Storage> {
 
   void done() {
     addArgument();
-    Parser.initialize(*this);
+    Parser.initialize();
   }
 
   // Command line options should not be copyable
@@ -1385,14 +1402,14 @@ public:
   // One option...
   template <class M0t>
   explicit list(const M0t &M0)
-      : Option(ZeroOrMore, NotHidden) {
+      : Option(ZeroOrMore, NotHidden), Parser(*this) {
     apply(M0, this);
     done();
   }
   // Two options...
   template <class M0t, class M1t>
   list(const M0t &M0, const M1t &M1)
-      : Option(ZeroOrMore, NotHidden) {
+      : Option(ZeroOrMore, NotHidden), Parser(*this) {
     apply(M0, this);
     apply(M1, this);
     done();
@@ -1400,7 +1417,7 @@ public:
   // Three options...
   template <class M0t, class M1t, class M2t>
   list(const M0t &M0, const M1t &M1, const M2t &M2)
-      : Option(ZeroOrMore, NotHidden) {
+      : Option(ZeroOrMore, NotHidden), Parser(*this) {
     apply(M0, this);
     apply(M1, this);
     apply(M2, this);
@@ -1409,7 +1426,7 @@ public:
   // Four options...
   template <class M0t, class M1t, class M2t, class M3t>
   list(const M0t &M0, const M1t &M1, const M2t &M2, const M3t &M3)
-      : Option(ZeroOrMore, NotHidden) {
+      : Option(ZeroOrMore, NotHidden), Parser(*this) {
     apply(M0, this);
     apply(M1, this);
     apply(M2, this);
@@ -1420,7 +1437,7 @@ public:
   template <class M0t, class M1t, class M2t, class M3t, class M4t>
   list(const M0t &M0, const M1t &M1, const M2t &M2, const M3t &M3,
        const M4t &M4)
-      : Option(ZeroOrMore, NotHidden) {
+      : Option(ZeroOrMore, NotHidden), Parser(*this) {
     apply(M0, this);
     apply(M1, this);
     apply(M2, this);
@@ -1432,7 +1449,7 @@ public:
   template <class M0t, class M1t, class M2t, class M3t, class M4t, class M5t>
   list(const M0t &M0, const M1t &M1, const M2t &M2, const M3t &M3,
        const M4t &M4, const M5t &M5)
-      : Option(ZeroOrMore, NotHidden) {
+      : Option(ZeroOrMore, NotHidden), Parser(*this) {
     apply(M0, this);
     apply(M1, this);
     apply(M2, this);
@@ -1446,7 +1463,7 @@ public:
             class M6t>
   list(const M0t &M0, const M1t &M1, const M2t &M2, const M3t &M3,
        const M4t &M4, const M5t &M5, const M6t &M6)
-      : Option(ZeroOrMore, NotHidden) {
+      : Option(ZeroOrMore, NotHidden), Parser(*this) {
     apply(M0, this);
     apply(M1, this);
     apply(M2, this);
@@ -1461,7 +1478,7 @@ public:
             class M6t, class M7t>
   list(const M0t &M0, const M1t &M1, const M2t &M2, const M3t &M3,
        const M4t &M4, const M5t &M5, const M6t &M6, const M7t &M7)
-      : Option(ZeroOrMore, NotHidden) {
+      : Option(ZeroOrMore, NotHidden), Parser(*this) {
     apply(M0, this);
     apply(M1, this);
     apply(M2, this);
@@ -1589,7 +1606,7 @@ class bits : public Option, public bits_storage<DataType, Storage> {
 
   void done() {
     addArgument();
-    Parser.initialize(*this);
+    Parser.initialize();
   }
 
   // Command line options should not be copyable
@@ -1607,14 +1624,14 @@ public:
   // One option...
   template <class M0t>
   explicit bits(const M0t &M0)
-      : Option(ZeroOrMore, NotHidden) {
+      : Option(ZeroOrMore, NotHidden), Parser(*this) {
     apply(M0, this);
     done();
   }
   // Two options...
   template <class M0t, class M1t>
   bits(const M0t &M0, const M1t &M1)
-      : Option(ZeroOrMore, NotHidden) {
+      : Option(ZeroOrMore, NotHidden), Parser(*this) {
     apply(M0, this);
     apply(M1, this);
     done();
@@ -1622,7 +1639,7 @@ public:
   // Three options...
   template <class M0t, class M1t, class M2t>
   bits(const M0t &M0, const M1t &M1, const M2t &M2)
-      : Option(ZeroOrMore, NotHidden) {
+      : Option(ZeroOrMore, NotHidden), Parser(*this) {
     apply(M0, this);
     apply(M1, this);
     apply(M2, this);
@@ -1631,7 +1648,7 @@ public:
   // Four options...
   template <class M0t, class M1t, class M2t, class M3t>
   bits(const M0t &M0, const M1t &M1, const M2t &M2, const M3t &M3)
-      : Option(ZeroOrMore, NotHidden) {
+      : Option(ZeroOrMore, NotHidden), Parser(*this) {
     apply(M0, this);
     apply(M1, this);
     apply(M2, this);
@@ -1642,7 +1659,7 @@ public:
   template <class M0t, class M1t, class M2t, class M3t, class M4t>
   bits(const M0t &M0, const M1t &M1, const M2t &M2, const M3t &M3,
        const M4t &M4)
-      : Option(ZeroOrMore, NotHidden) {
+      : Option(ZeroOrMore, NotHidden), Parser(*this) {
     apply(M0, this);
     apply(M1, this);
     apply(M2, this);
@@ -1654,7 +1671,7 @@ public:
   template <class M0t, class M1t, class M2t, class M3t, class M4t, class M5t>
   bits(const M0t &M0, const M1t &M1, const M2t &M2, const M3t &M3,
        const M4t &M4, const M5t &M5)
-      : Option(ZeroOrMore, NotHidden) {
+      : Option(ZeroOrMore, NotHidden), Parser(*this) {
     apply(M0, this);
     apply(M1, this);
     apply(M2, this);
@@ -1668,7 +1685,7 @@ public:
             class M6t>
   bits(const M0t &M0, const M1t &M1, const M2t &M2, const M3t &M3,
        const M4t &M4, const M5t &M5, const M6t &M6)
-      : Option(ZeroOrMore, NotHidden) {
+      : Option(ZeroOrMore, NotHidden), Parser(*this) {
     apply(M0, this);
     apply(M1, this);
     apply(M2, this);
@@ -1683,7 +1700,7 @@ public:
             class M6t, class M7t>
   bits(const M0t &M0, const M1t &M1, const M2t &M2, const M3t &M3,
        const M4t &M4, const M5t &M5, const M6t &M6, const M7t &M7)
-      : Option(ZeroOrMore, NotHidden) {
+      : Option(ZeroOrMore, NotHidden), Parser(*this) {
     apply(M0, this);
     apply(M1, this);
     apply(M2, this);
