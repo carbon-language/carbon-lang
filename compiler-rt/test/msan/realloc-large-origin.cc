@@ -21,10 +21,10 @@ int main(int argc, char **argv) {
 // CHECK:   {{#0 0x.* in main .*realloc-large-origin.cc:}}[[@LINE-3]]
 
 // CHECK:  Uninitialized value was stored to memory at
-// CHECK:   {{#0 0x.* in realloc}}
+// CHECK:   {{#0 0x.* in .*realloc}}
 // CHECK:   {{#1 0x.* in main .*realloc-large-origin.cc:}}[[@LINE-10]]
 
 // CHECK:   Uninitialized value was created by a heap allocation
-// CHECK:   {{#0 0x.* in malloc}}
+// CHECK:   {{#0 0x.* in .*malloc}}
 // CHECK:   {{#1 0x.* in main .*realloc-large-origin.cc:}}[[@LINE-15]]
 }
