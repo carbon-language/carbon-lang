@@ -1286,7 +1286,7 @@ raw_ostream &operator<<(raw_ostream &OS, FieldSeparator &FS) {
 }
 } // end namespace
 
-static void writeGenericDwarfNode(raw_ostream &, const GenericDwarfNode *,
+static void writeGenericDebugNode(raw_ostream &, const GenericDebugNode *,
                                   TypePrinting *, SlotTracker *,
                                   const Module *) {
   llvm_unreachable("Unimplemented write");

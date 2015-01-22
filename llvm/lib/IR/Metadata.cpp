@@ -541,8 +541,8 @@ void MDTuple::recalculateHash() {
   setHash(MDTupleInfo::KeyTy::calculateHash(this));
 }
 
-void GenericDwarfNode::recalculateHash() {
-  setHash(GenericDwarfNodeInfo::KeyTy::calculateHash(this));
+void GenericDebugNode::recalculateHash() {
+  setHash(GenericDebugNodeInfo::KeyTy::calculateHash(this));
 }
 
 void MDNode::dropAllReferences() {
@@ -759,7 +759,7 @@ MDLocation *MDLocation::getImpl(LLVMContext &Context, unsigned Line,
                    Storage, Context.pImpl->MDLocations);
 }
 
-GenericDwarfNode *GenericDwarfNode::getImpl(LLVMContext &Context, unsigned Tag,
+GenericDebugNode *GenericDebugNode::getImpl(LLVMContext &Context, unsigned Tag,
                                             MDString *Header,
                                             ArrayRef<Metadata *> DwarfOps,
                                             StorageType Storage,
@@ -770,8 +770,8 @@ GenericDwarfNode *GenericDwarfNode::getImpl(LLVMContext &Context, unsigned Tag,
 
   unsigned Hash = 0;
   if (Storage == Uniqued) {
-    GenericDwarfNodeInfo::KeyTy Key(Tag, Header, DwarfOps);
-    if (auto *N = getUniqued(Context.pImpl->GenericDwarfNodes, Key))
+    GenericDebugNodeInfo::KeyTy Key(Tag, Header, DwarfOps);
+    if (auto *N = getUniqued(Context.pImpl->GenericDebugNodes, Key))
       return N;
     if (!ShouldCreate)
       return nullptr;
@@ -781,9 +781,9 @@ GenericDwarfNode *GenericDwarfNode::getImpl(LLVMContext &Context, unsigned Tag,
   }
 
   Metadata *PreOps[] = {Header};
-  return storeImpl(new (DwarfOps.size() + 1) GenericDwarfNode(
+  return storeImpl(new (DwarfOps.size() + 1) GenericDebugNode(
                        Context, Storage, Hash, Tag, PreOps, DwarfOps),
-                   Storage, Context.pImpl->GenericDwarfNodes);
+                   Storage, Context.pImpl->GenericDebugNodes);
 }
 
 void MDNode::deleteTemporary(MDNode *N) {

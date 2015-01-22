@@ -572,13 +572,13 @@ TEST_F(MDLocationTest, getTemporary) {
   EXPECT_FALSE(L->isResolved());
 }
 
-typedef MetadataTest GenericDwarfNodeTest;
+typedef MetadataTest GenericDebugNodeTest;
 
-TEST_F(GenericDwarfNodeTest, get) {
+TEST_F(GenericDebugNodeTest, get) {
   auto *Header = MDString::get(Context, "header");
   auto *Empty = MDNode::get(Context, None);
   Metadata *Ops1[] = {Empty};
-  auto *N = GenericDwarfNode::get(Context, 15, Header, Ops1);
+  auto *N = GenericDebugNode::get(Context, 15, Header, Ops1);
   EXPECT_EQ(15u, N->getTag());
   EXPECT_EQ(2u, N->getNumOperands());
   EXPECT_EQ(Header, N->getHeader());
@@ -588,7 +588,7 @@ TEST_F(GenericDwarfNodeTest, get) {
   EXPECT_EQ(Empty, N->getOperand(1));
   ASSERT_TRUE(N->isUniqued());
 
-  EXPECT_EQ(N, GenericDwarfNode::get(Context, 15, Header, Ops1));
+  EXPECT_EQ(N, GenericDebugNode::get(Context, 15, Header, Ops1));
 
   N->replaceOperandWith(1, nullptr);
   EXPECT_EQ(15u, N->getTag());
@@ -597,21 +597,21 @@ TEST_F(GenericDwarfNodeTest, get) {
   ASSERT_TRUE(N->isUniqued());
 
   Metadata *Ops2[] = {nullptr};
-  EXPECT_EQ(N, GenericDwarfNode::get(Context, 15, Header, Ops2));
+  EXPECT_EQ(N, GenericDebugNode::get(Context, 15, Header, Ops2));
 
   N->replaceDwarfOperandWith(0, Empty);
   EXPECT_EQ(15u, N->getTag());
   EXPECT_EQ(Header, N->getHeader());
   EXPECT_EQ(Empty, N->getDwarfOperand(0));
   ASSERT_TRUE(N->isUniqued());
-  EXPECT_EQ(N, GenericDwarfNode::get(Context, 15, Header, Ops1));
+  EXPECT_EQ(N, GenericDebugNode::get(Context, 15, Header, Ops1));
 }
 
-TEST_F(GenericDwarfNodeTest, getEmptyHeader) {
+TEST_F(GenericDebugNodeTest, getEmptyHeader) {
   // Canonicalize !"" to null.
   auto *Header = MDString::get(Context, "");
   EXPECT_NE(nullptr, Header);
-  auto *N = GenericDwarfNode::get(Context, 15, Header, None);
+  auto *N = GenericDebugNode::get(Context, 15, Header, None);
   EXPECT_EQ(nullptr, N->getHeader());
 }
 

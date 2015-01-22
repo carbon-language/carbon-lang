@@ -284,44 +284,44 @@ struct MDLocationInfo {
   }
 };
 
-/// \brief DenseMapInfo for GenericDwarfNode.
-struct GenericDwarfNodeInfo {
+/// \brief DenseMapInfo for GenericDebugNode.
+struct GenericDebugNodeInfo {
   struct KeyTy : MDNodeOpsKey {
     unsigned Tag;
     MDString *Header;
     KeyTy(unsigned Tag, MDString *Header, ArrayRef<Metadata *> DwarfOps)
         : MDNodeOpsKey(DwarfOps), Tag(Tag), Header(Header) {}
-    KeyTy(GenericDwarfNode *N)
+    KeyTy(GenericDebugNode *N)
         : MDNodeOpsKey(N, 1), Tag(N->getTag()), Header(N->getHeader()) {}
 
-    bool operator==(const GenericDwarfNode *RHS) const {
+    bool operator==(const GenericDebugNode *RHS) const {
       if (RHS == getEmptyKey() || RHS == getTombstoneKey())
         return false;
       return Tag == RHS->getTag() && Header == RHS->getHeader() &&
              compareOps(RHS, 1);
     }
 
-    static unsigned calculateHash(GenericDwarfNode *N) {
+    static unsigned calculateHash(GenericDebugNode *N) {
       return MDNodeOpsKey::calculateHash(N, 1);
     }
   };
-  static inline GenericDwarfNode *getEmptyKey() {
-    return DenseMapInfo<GenericDwarfNode *>::getEmptyKey();
+  static inline GenericDebugNode *getEmptyKey() {
+    return DenseMapInfo<GenericDebugNode *>::getEmptyKey();
   }
-  static inline GenericDwarfNode *getTombstoneKey() {
-    return DenseMapInfo<GenericDwarfNode *>::getTombstoneKey();
+  static inline GenericDebugNode *getTombstoneKey() {
+    return DenseMapInfo<GenericDebugNode *>::getTombstoneKey();
   }
   static unsigned getHashValue(const KeyTy &Key) {
     return hash_combine(Key.getHash(), Key.Tag, Key.Header);
   }
-  static unsigned getHashValue(const GenericDwarfNode *U) {
+  static unsigned getHashValue(const GenericDebugNode *U) {
     return hash_combine(U->getHash(), U->getTag(), U->getHeader());
   }
-  static bool isEqual(const KeyTy &LHS, const GenericDwarfNode *RHS) {
+  static bool isEqual(const KeyTy &LHS, const GenericDebugNode *RHS) {
     return LHS == RHS;
   }
-  static bool isEqual(const GenericDwarfNode *LHS,
-                      const GenericDwarfNode *RHS) {
+  static bool isEqual(const GenericDebugNode *LHS,
+                      const GenericDebugNode *RHS) {
     return LHS == RHS;
   }
 };
@@ -358,7 +358,7 @@ public:
 
   DenseSet<MDTuple *, MDTupleInfo> MDTuples;
   DenseSet<MDLocation *, MDLocationInfo> MDLocations;
-  DenseSet<GenericDwarfNode *, GenericDwarfNodeInfo> GenericDwarfNodes;
+  DenseSet<GenericDebugNode *, GenericDebugNodeInfo> GenericDebugNodes;
 
   // MDNodes may be uniqued or not uniqued.  When they're not uniqued, they
   // aren't in the MDNodeSet, but they're still shared between objects, so no

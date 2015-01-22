@@ -791,7 +791,7 @@ static void WriteMDLocation(const MDLocation *N, const ValueEnumerator &VE,
   Record.clear();
 }
 
-static void WriteGenericDwarfNode(const GenericDwarfNode *,
+static void WriteGenericDebugNode(const GenericDebugNode *,
                                   const ValueEnumerator &, BitstreamWriter &,
                                   SmallVectorImpl<uint64_t> &, unsigned) {
   llvm_unreachable("unimplemented");
@@ -843,7 +843,7 @@ static void WriteModuleMetadata(const Module *M,
   }
 
   unsigned MDTupleAbbrev = 0;
-  unsigned GenericDwarfNodeAbbrev = 0;
+  unsigned GenericDebugNodeAbbrev = 0;
   SmallVector<uint64_t, 64> Record;
   for (const Metadata *MD : MDs) {
     if (const MDNode *N = dyn_cast<MDNode>(MD)) {
