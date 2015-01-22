@@ -397,7 +397,7 @@ template <> DITypeRef DIDescriptor::getFieldAs<DITypeRef>(unsigned Elt) const;
 /// \brief Specialize DIRef constructor for DITypeRef.
 template <> DIRef<DIType>::DIRef(const Metadata *V);
 
-/// \briefThis is a wrapper for a type.
+/// \brief This is a wrapper for a type.
 ///
 /// FIXME: Types should be factored much better so that CV qualifiers and
 /// others do not require a huge and empty descriptor full of zeros.
