@@ -434,3 +434,62 @@ define void @loadStoreBaseIndexOffsetSextNoSex(i8* %a, i8* %b, i8* %c, i32 %n) {
 ; <label>:14
   ret void
 }
+
+; PR21711 ( http://llvm.org/bugs/show_bug.cgi?id=21711 )
+define void @merge_vec_element_store(<8 x float> %v, float* %ptr) {
+  %vecext0 = extractelement <8 x float> %v, i32 0
+  %vecext1 = extractelement <8 x float> %v, i32 1
+  %vecext2 = extractelement <8 x float> %v, i32 2
+  %vecext3 = extractelement <8 x float> %v, i32 3
+  %vecext4 = extractelement <8 x float> %v, i32 4
+  %vecext5 = extractelement <8 x float> %v, i32 5
+  %vecext6 = extractelement <8 x float> %v, i32 6
+  %vecext7 = extractelement <8 x float> %v, i32 7
+  %arrayidx1 = getelementptr inbounds float* %ptr, i64 1
+  %arrayidx2 = getelementptr inbounds float* %ptr, i64 2
+  %arrayidx3 = getelementptr inbounds float* %ptr, i64 3
+  %arrayidx4 = getelementptr inbounds float* %ptr, i64 4
+  %arrayidx5 = getelementptr inbounds float* %ptr, i64 5
+  %arrayidx6 = getelementptr inbounds float* %ptr, i64 6
+  %arrayidx7 = getelementptr inbounds float* %ptr, i64 7
+  store float %vecext0, float* %ptr, align 4
+  store float %vecext1, float* %arrayidx1, align 4
+  store float %vecext2, float* %arrayidx2, align 4
+  store float %vecext3, float* %arrayidx3, align 4
+  store float %vecext4, float* %arrayidx4, align 4
+  store float %vecext5, float* %arrayidx5, align 4
+  store float %vecext6, float* %arrayidx6, align 4
+  store float %vecext7, float* %arrayidx7, align 4
+  ret void
+
+; CHECK-LABEL: merge_vec_element_store
+; CHECK: vmovups
+; CHECK-NEXT: vzeroupper
+; CHECK-NEXT: retq
+}
+
+; This is a minimized test based on real code that was failing.
+; We could merge stores (and loads) like this...
+
+define void @merge_vec_element_and_scalar_load([6 x i64]* %array) {
+  %idx0 = getelementptr inbounds [6 x i64]* %array, i64 0, i64 0
+  %idx1 = getelementptr inbounds [6 x i64]* %array, i64 0, i64 1
+  %idx4 = getelementptr inbounds [6 x i64]* %array, i64 0, i64 4
+  %idx5 = getelementptr inbounds [6 x i64]* %array, i64 0, i64 5
+
+  %a0 = load i64* %idx0, align 8
+  store i64 %a0, i64* %idx4, align 8
+
+  %b = bitcast i64* %idx1 to <2 x i64>*
+  %v = load <2 x i64>* %b, align 8
+  %a1 = extractelement <2 x i64> %v, i32 0
+  store i64 %a1, i64* %idx5, align 8
+  ret void
+
+; CHECK-LABEL: merge_vec_element_and_scalar_load
+; CHECK:      movq	(%rdi), %rax
+; CHECK-NEXT: movq	%rax, 32(%rdi)
+; CHECK-NEXT: movq	8(%rdi), %rax
+; CHECK-NEXT: movq	%rax, 40(%rdi)
+; CHECK-NEXT: retq
+}
