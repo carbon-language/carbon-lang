@@ -99,9 +99,9 @@ public:
     GetSDKDirectory (lldb_private::Target &target) override;
     
     void
-    AddClangModuleCompilationOptions (std::vector<std::string> &options) override
+    AddClangModuleCompilationOptions (lldb_private::Target *target, std::vector<std::string> &options) override
     {
-        return PlatformDarwin::AddClangModuleCompilationOptionsForSDKType(options, PlatformDarwin::SDKType::MacOSX);
+        return PlatformDarwin::AddClangModuleCompilationOptionsForSDKType(target, options, PlatformDarwin::SDKType::MacOSX);
     }
 
 private:

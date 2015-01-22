@@ -1419,7 +1419,7 @@ PlatformDarwin::GetSDKDirectoryForModules (SDKType sdk_type)
 }
 
 void
-PlatformDarwin::AddClangModuleCompilationOptionsForSDKType (std::vector<std::string> &options, SDKType sdk_type)
+PlatformDarwin::AddClangModuleCompilationOptionsForSDKType (Target *target, std::vector<std::string> &options, SDKType sdk_type)
 {
     const std::vector<std::string> apple_arguments =
     {
@@ -1435,28 +1435,67 @@ PlatformDarwin::AddClangModuleCompilationOptionsForSDKType (std::vector<std::str
                    apple_arguments.end());
     
     StreamString minimum_version_option;
-    unsigned int major = 0, minor = 0, micro = 0;
-    GetOSVersion(major, minor, micro);
-    if (micro == UINT32_MAX)
-        micro = 0; // FIXME who actually likes this behavior?
-    
+    uint32_t versions[3] = { 0, 0, 0 };
+    bool use_current_os_version = false;
     switch (sdk_type)
     {
-    case SDKType::iPhoneOS:
-        minimum_version_option.PutCString("-mios-version-min=");
-        minimum_version_option.PutCString(clang::VersionTuple(major, minor, micro).getAsString().c_str());
-        break;
-    case SDKType::iPhoneSimulator:
-        minimum_version_option.PutCString("-mios-simulator-version-min=");
-        minimum_version_option.PutCString(clang::VersionTuple(major, minor, micro).getAsString().c_str());
-        break;
-    case SDKType::MacOSX:
-        minimum_version_option.PutCString("-mmacosx-version-min=");
-        minimum_version_option.PutCString(clang::VersionTuple(major, minor, micro).getAsString().c_str());
+        case SDKType::iPhoneOS:
+#if defined (__arm__) || defined (__arm64__) || defined (__aarch64__)
+            use_current_os_version = true;
+#else
+            use_current_os_version = false;
+#endif
+            break;
+
+        case SDKType::iPhoneSimulator:
+            use_current_os_version = false;
+            break;
+
+        case SDKType::MacOSX:
+#if defined (__i386__) || defined (__x86_64__)
+            use_current_os_version = true;
+#else
+            use_current_os_version = false;
+#endif
+            break;
     }
-    
-    options.push_back(minimum_version_option.GetString());
-    
+
+    if (use_current_os_version)
+        GetOSVersion(versions[0], versions[1], versions[2]);
+    else if (target)
+    {
+        // Our OS doesn't match our executable so we need to get the min OS version from the object file
+        ModuleSP exe_module_sp = target->GetExecutableModule();
+        if (exe_module_sp)
+        {
+            ObjectFile *object_file = exe_module_sp->GetObjectFile();
+            if (object_file)
+                object_file->GetMinimumOSVersion(versions, 3);
+        }
+    }
+    // Only add the version-min options if we got a version from somewhere
+    if (versions[0])
+    {
+        if (versions[2] == UINT32_MAX)
+            versions[2] = 0; // FIXME who actually likes this behavior?
+        
+        switch (sdk_type)
+        {
+        case SDKType::iPhoneOS:
+            minimum_version_option.PutCString("-mios-version-min=");
+            minimum_version_option.PutCString(clang::VersionTuple(versions[0], versions[1], versions[2]).getAsString().c_str());
+            break;
+        case SDKType::iPhoneSimulator:
+            minimum_version_option.PutCString("-mios-simulator-version-min=");
+            minimum_version_option.PutCString(clang::VersionTuple(versions[0], versions[1], versions[2]).getAsString().c_str());
+            break;
+        case SDKType::MacOSX:
+            minimum_version_option.PutCString("-mmacosx-version-min=");
+            minimum_version_option.PutCString(clang::VersionTuple(versions[0], versions[1], versions[2]).getAsString().c_str());
+        }
+        options.push_back(minimum_version_option.GetString());
+    }
+
     FileSpec sysroot_spec = GetSDKDirectoryForModules(sdk_type);
     
     if (sysroot_spec.IsDirectory())

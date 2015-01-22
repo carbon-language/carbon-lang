@@ -569,7 +569,7 @@ namespace lldb_private {
         
         // Appends the platform-specific options required to find the modules for the current platform.
         virtual void
-        AddClangModuleCompilationOptions (std::vector<std::string> &options);
+        AddClangModuleCompilationOptions (Target *target, std::vector<std::string> &options);
 
         ConstString
         GetWorkingDirectory ();

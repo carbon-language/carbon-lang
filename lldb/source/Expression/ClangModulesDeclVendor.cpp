@@ -289,7 +289,7 @@ ClangModulesDeclVendor::Create(Target &target)
         "-Werror=non-modular-include-in-framework-module"
     };
     
-    target.GetPlatform()->AddClangModuleCompilationOptions(compiler_invocation_arguments);
+    target.GetPlatform()->AddClangModuleCompilationOptions(&target, compiler_invocation_arguments);
 
     compiler_invocation_arguments.push_back(ModuleImportBufferName);
 

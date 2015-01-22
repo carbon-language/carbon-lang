@@ -130,7 +130,7 @@ protected:
     GetSDKDirectoryForModules (PlatformDarwin::SDKType sdk_type);
 
     void
-    AddClangModuleCompilationOptionsForSDKType (std::vector<std::string> &options, SDKType sdk_type);
+    AddClangModuleCompilationOptionsForSDKType (lldb_private::Target *target, std::vector<std::string> &options, SDKType sdk_type);
 
     std::string                 m_developer_directory;
 

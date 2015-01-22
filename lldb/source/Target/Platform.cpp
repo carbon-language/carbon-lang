@@ -463,7 +463,7 @@ Platform::GetOSKernelDescription (std::string &s)
 }
 
 void
-Platform::AddClangModuleCompilationOptions (std::vector<std::string> &options)
+Platform::AddClangModuleCompilationOptions (Target *target, std::vector<std::string> &options)
 {
     std::vector<std::string> default_compilation_options =
     {

@@ -99,9 +99,9 @@ public:
                                      lldb_private::ArchSpec &arch) override;
     
     void
-    AddClangModuleCompilationOptions (std::vector<std::string> &options) override
+    AddClangModuleCompilationOptions (lldb_private::Target *target, std::vector<std::string> &options) override
     {
-        return PlatformDarwin::AddClangModuleCompilationOptionsForSDKType(options, PlatformDarwin::SDKType::iPhoneSimulator);
+        return PlatformDarwin::AddClangModuleCompilationOptionsForSDKType(target, options, PlatformDarwin::SDKType::iPhoneSimulator);
     }
 
 protected:
