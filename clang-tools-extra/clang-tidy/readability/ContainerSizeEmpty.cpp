@@ -94,9 +94,9 @@ void ContainerSizeEmptyCheck::check(const MatchFinder::MatchResult &Result) {
   const auto *BinaryOp = Result.Nodes.getNodeAs<BinaryOperator>("SizeBinaryOp");
   const auto *E = Result.Nodes.getNodeAs<Expr>("STLObject");
   FixItHint Hint;
-  std::string ReplacementText =
-      Lexer::getSourceText(CharSourceRange::getTokenRange(E->getSourceRange()),
-                           *Result.SourceManager, LangOptions());
+  std::string ReplacementText = Lexer::getSourceText(
+      CharSourceRange::getTokenRange(E->getSourceRange()),
+      *Result.SourceManager, Result.Context->getLangOpts());
   if (E->getType()->isPointerType())
     ReplacementText += "->empty()";
   else
