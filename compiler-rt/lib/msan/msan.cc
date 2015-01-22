@@ -273,6 +273,7 @@ u32 ChainOrigin(u32 id, StackTrace *stack) {
     return id;
 
   Origin o = Origin::FromRawId(id);
+  stack->tag = StackTrace::TAG_UNKNOWN;
   Origin chained = Origin::CreateChainedOrigin(o, stack);
   return chained.raw_id();
 }

@@ -96,7 +96,7 @@ uptr Unwind_GetIP(struct _Unwind_Context *ctx) {
 
 struct UnwindTraceArg {
   BufferedStackTrace *stack;
-  uptr max_depth;
+  u32 max_depth;
 };
 
 _Unwind_Reason_Code Unwind_Trace(struct _Unwind_Context *ctx, void *param) {
@@ -108,7 +108,7 @@ _Unwind_Reason_Code Unwind_Trace(struct _Unwind_Context *ctx, void *param) {
   return UNWIND_CONTINUE;
 }
 
-void BufferedStackTrace::SlowUnwindStack(uptr pc, uptr max_depth) {
+void BufferedStackTrace::SlowUnwindStack(uptr pc, u32 max_depth) {
   CHECK_GE(max_depth, 2);
   size = 0;
   UnwindTraceArg arg = {this, Min(max_depth + 1, kStackTraceMax)};
@@ -128,7 +128,7 @@ void BufferedStackTrace::SlowUnwindStack(uptr pc, uptr max_depth) {
 }
 
 void BufferedStackTrace::SlowUnwindStackWithContext(uptr pc, void *context,
-                                                    uptr max_depth) {
+                                                    u32 max_depth) {
   CHECK_GE(max_depth, 2);
   if (!unwind_backtrace_signal_arch) {
     SlowUnwindStack(pc, max_depth);

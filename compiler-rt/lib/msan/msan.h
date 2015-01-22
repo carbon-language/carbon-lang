@@ -167,6 +167,8 @@ void UnpoisonThreadLocalState();
 // the previous origin id.
 u32 ChainOrigin(u32 id, StackTrace *stack);
 
+const int STACK_TRACE_TAG_POISON = StackTrace::TAG_CUSTOM + 1;
+
 #define GET_MALLOC_STACK_TRACE                                                 \
   BufferedStackTrace stack;                                                    \
   if (__msan_get_track_origins() && msan_inited)                               \

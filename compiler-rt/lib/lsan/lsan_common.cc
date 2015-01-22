@@ -366,7 +366,7 @@ static void CollectLeaksCb(uptr chunk, void *arg) {
   LsanMetadata m(chunk);
   if (!m.allocated()) return;
   if (m.tag() == kDirectlyLeaked || m.tag() == kIndirectlyLeaked) {
-    uptr resolution = flags()->resolution;
+    u32 resolution = flags()->resolution;
     u32 stack_trace_id = 0;
     if (resolution > 0) {
       StackTrace stack = StackDepotGet(m.stack_trace_id());

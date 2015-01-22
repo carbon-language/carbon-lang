@@ -17,7 +17,7 @@ int main() {
   __msan_allocated_memory(&y, sizeof(y));
   float z = b ? x : y;
   if (z > 0) printf(".\n");
-  // CHECK: Uninitialized value was created by a heap allocation
+  // CHECK: Memory was marked as uninitialized
   // CHECK: {{#0 0x.* in .*__msan_allocated_memory}}
   // CHECK: {{#1 0x.* in main .*select_float_origin.cc:}}[[@LINE-6]]
   return 0;

@@ -113,6 +113,7 @@ static void *MsanAllocate(StackTrace *stack, uptr size, uptr alignment,
   } else if (flags()->poison_in_malloc) {
     __msan_poison(allocated, size);
     if (__msan_get_track_origins()) {
+      stack->tag = StackTrace::TAG_ALLOC;
       Origin o = Origin::CreateHeapOrigin(stack);
       __msan_set_origin(allocated, size, o.raw_id());
     }
@@ -133,6 +134,7 @@ void MsanDeallocate(StackTrace *stack, void *p) {
   if (flags()->poison_in_free) {
     __msan_poison(p, size);
     if (__msan_get_track_origins()) {
+      stack->tag = StackTrace::TAG_DEALLOC;
       Origin o = Origin::CreateHeapOrigin(stack);
       __msan_set_origin(p, size, o.raw_id());
     }
@@ -174,6 +176,7 @@ void *MsanReallocate(StackTrace *stack, void *old_p, uptr new_size,
         __msan_clear_and_unpoison((char *)old_p + old_size,
                                   new_size - old_size);
       } else if (flags()->poison_in_malloc) {
+        stack->tag = StackTrace::TAG_ALLOC;
         PoisonMemory((char *)old_p + old_size, new_size - old_size, stack);
       }
     }

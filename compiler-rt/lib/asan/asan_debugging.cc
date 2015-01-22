@@ -81,8 +81,8 @@ void AsanLocateAddress(uptr addr, AddressDescription *descr) {
   GetInfoForHeapAddress(addr, descr);
 }
 
-uptr AsanGetStack(uptr addr, uptr *trace, uptr size, u32 *thread_id,
-                  bool alloc_stack) {
+static uptr AsanGetStack(uptr addr, uptr *trace, u32 size, u32 *thread_id,
+                         bool alloc_stack) {
   AsanChunkView chunk = FindHeapChunkByAddress(addr);
   if (!chunk.IsValid()) return 0;
 

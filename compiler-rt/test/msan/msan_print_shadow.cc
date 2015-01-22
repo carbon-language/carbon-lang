@@ -99,7 +99,7 @@ int main(void) {
 // CHECK-ORIGINS:     #1 {{.*}} in main{{.*}}msan_print_shadow.cc:14
 
 // CHECK-ORIGINS: Origin B (origin_id {{.*}}):
-// CHECK-ORIGINS:   Uninitialized value was created by a heap allocation
+// CHECK-ORIGINS:   Memory was marked as uninitialized
 // CHECK-ORIGINS:     #0 {{.*}} in __msan_allocated_memory
 // CHECK-ORIGINS:     #1 {{.*}} in main{{.*}}msan_print_shadow.cc:18
 
@@ -110,13 +110,13 @@ int main(void) {
 // CHECK-ORIGINS:     #0 {{.*}} in main{{.*}}msan_print_shadow.cc:12
 
 // CHECK-ORIGINS: Origin D (origin_id {{.*}}):
-// CHECK-ORIGINS:   Uninitialized value was created by a heap allocation
+// CHECK-ORIGINS:   Memory was marked as uninitialized
 // CHECK-ORIGINS:     #0 {{.*}} in __msan_allocated_memory
 // CHECK-ORIGINS:     #1 {{.*}} in main{{.*}}msan_print_shadow.cc:20
 
 // ...
 
 // CHECK-ORIGINS: Origin Z (origin_id {{.*}}):
-// CHECK-ORIGINS:   Uninitialized value was created by a heap allocation
+// CHECK-ORIGINS:   Memory was marked as uninitialized
 // CHECK-ORIGINS:     #0 {{.*}} in __msan_allocated_memory
 // CHECK-ORIGINS:     #1 {{.*}} in main{{.*}}msan_print_shadow.cc:42

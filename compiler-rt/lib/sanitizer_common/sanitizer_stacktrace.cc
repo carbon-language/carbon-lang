@@ -68,7 +68,7 @@ static inline uhwptr *GetCanonicFrame(uptr bp,
 }
 
 void BufferedStackTrace::FastUnwindStack(uptr pc, uptr bp, uptr stack_top,
-                                         uptr stack_bottom, uptr max_depth) {
+                                         uptr stack_bottom, u32 max_depth) {
   CHECK_GE(max_depth, 2);
   trace_buffer[0] = pc;
   size = 1;

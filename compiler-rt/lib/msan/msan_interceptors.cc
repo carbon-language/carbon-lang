@@ -984,13 +984,11 @@ INTERCEPTOR(void *, malloc, SIZE_T size) {
   return MsanReallocate(&stack, 0, size, sizeof(u64), false);
 }
 
-void __msan_allocated_memory(const void* data, uptr size) {
+void __msan_allocated_memory(const void *data, uptr size) {
   GET_MALLOC_STACK_TRACE;
-  if (flags()->poison_in_malloc)
-    __msan_poison(data, size);
-  if (__msan_get_track_origins()) {
-    Origin o = Origin::CreateHeapOrigin(&stack);
-    __msan_set_origin(data, size, o.raw_id());
+  if (flags()->poison_in_malloc) {
+    stack.tag = STACK_TRACE_TAG_POISON;
+    PoisonMemory(data, size, &stack);
   }
 }
 

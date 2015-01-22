@@ -27,7 +27,7 @@ int main(int argc, char **argv) {
   // CHECK: WARNING: MemorySanitizer: use-of-uninitialized-value
   // CHECK: {{#0 0x.* in main .*use-after-free.cc:}}[[@LINE-3]]
 
-  // CHECK-ORIGINS: Uninitialized value was created by a heap allocation
+  // CHECK-ORIGINS: Uninitialized value was created by a heap deallocation
   // CHECK-ORIGINS: {{#0 0x.* in .*free}}
   // CHECK-ORIGINS: {{#1 0x.* in main .*use-after-free.cc:}}[[@LINE-9]]
   return 0;
