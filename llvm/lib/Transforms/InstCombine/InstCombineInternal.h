@@ -1,4 +1,4 @@
-//===- InstCombine.h - Main InstCombine pass definition ---------*- C++ -*-===//
+//===- InstCombineInternal.h - InstCombine pass internals -------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -6,9 +6,14 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
+/// \file
+///
+/// This file provides internal interfaces used to implement the InstCombine.
+///
+//===----------------------------------------------------------------------===//
 
-#ifndef LLVM_LIB_TRANSFORMS_INSTCOMBINE_INSTCOMBINE_H
-#define LLVM_LIB_TRANSFORMS_INSTCOMBINE_INSTCOMBINE_H
+#ifndef LLVM_LIB_TRANSFORMS_INSTCOMBINE_INSTCOMBINEINTERNAL_H
+#define LLVM_LIB_TRANSFORMS_INSTCOMBINE_INSTCOMBINEINTERNAL_H
 
 #include "InstCombineWorklist.h"
 #include "llvm/Analysis/AssumptionCache.h"
