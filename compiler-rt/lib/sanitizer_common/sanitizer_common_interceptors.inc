@@ -2592,6 +2592,19 @@ INTERCEPTOR(int, sched_getaffinity, int pid, SIZE_T cpusetsize, void *mask) {
 #define INIT_SCHED_GETAFFINITY
 #endif
 
+#if SANITIZER_INTERCEPT_SCHED_GETPARAM
+INTERCEPTOR(int, sched_getparam, int pid, void *param) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, sched_getparam, pid, param);
+  int res = REAL(sched_getparam)(pid, param);
+  if (!res) COMMON_INTERCEPTOR_WRITE_RANGE(ctx, param, struct_sched_param_sz);
+  return res;
+}
+#define INIT_SCHED_GETPARAM COMMON_INTERCEPT_FUNCTION(sched_getparam);
+#else
+#define INIT_SCHED_GETPARAM
+#endif
+
 #if SANITIZER_INTERCEPT_STRERROR
 INTERCEPTOR(char *, strerror, int errnum) {
   void *ctx;
@@ -4851,6 +4864,7 @@ static void InitializeCommonInterceptors() {
   INIT_CANONICALIZE_FILE_NAME;
   INIT_CONFSTR;
   INIT_SCHED_GETAFFINITY;
+  INIT_SCHED_GETPARAM;
   INIT_STRERROR;
   INIT_STRERROR_R;
   INIT_XPG_STRERROR_R;
