@@ -386,6 +386,8 @@ static void AsanInitInternal() {
   } else {
     Report("Shadow memory range interleaves with an existing memory mapping. "
            "ASan cannot proceed correctly. ABORTING.\n");
+    Report("ASan shadow was supposed to be located in the [%p-%p] range.\n",
+           shadow_start, kHighShadowEnd);
     DumpProcessMap();
     Die();
   }
