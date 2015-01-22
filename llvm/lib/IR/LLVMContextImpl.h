@@ -288,8 +288,8 @@ struct MDLocationInfo {
 struct GenericDebugNodeInfo {
   struct KeyTy : MDNodeOpsKey {
     unsigned Tag;
-    MDString *Header;
-    KeyTy(unsigned Tag, MDString *Header, ArrayRef<Metadata *> DwarfOps)
+    StringRef Header;
+    KeyTy(unsigned Tag, StringRef Header, ArrayRef<Metadata *> DwarfOps)
         : MDNodeOpsKey(DwarfOps), Tag(Tag), Header(Header) {}
     KeyTy(GenericDebugNode *N)
         : MDNodeOpsKey(N, 1), Tag(N->getTag()), Header(N->getHeader()) {}

@@ -760,14 +760,10 @@ MDLocation *MDLocation::getImpl(LLVMContext &Context, unsigned Line,
 }
 
 GenericDebugNode *GenericDebugNode::getImpl(LLVMContext &Context, unsigned Tag,
-                                            MDString *Header,
+                                            StringRef Header,
                                             ArrayRef<Metadata *> DwarfOps,
                                             StorageType Storage,
                                             bool ShouldCreate) {
-  // Canonicalize empty string to a nullptr.
-  if (Header && Header->getString().empty())
-    Header = nullptr;
-
   unsigned Hash = 0;
   if (Storage == Uniqued) {
     GenericDebugNodeInfo::KeyTy Key(Tag, Header, DwarfOps);
@@ -780,7 +776,9 @@ GenericDebugNode *GenericDebugNode::getImpl(LLVMContext &Context, unsigned Tag,
     assert(ShouldCreate && "Expected non-uniqued nodes to always be created");
   }
 
-  Metadata *PreOps[] = {Header};
+  // Use a nullptr for empty headers.
+  Metadata *PreOps[] = {Header.empty() ? nullptr
+                                       : MDString::get(Context, Header)};
   return storeImpl(new (DwarfOps.size() + 1) GenericDebugNode(
                        Context, Storage, Hash, Tag, PreOps, DwarfOps),
                    Storage, Context.pImpl->GenericDebugNodes);

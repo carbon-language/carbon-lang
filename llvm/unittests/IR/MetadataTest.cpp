@@ -575,14 +575,14 @@ TEST_F(MDLocationTest, getTemporary) {
 typedef MetadataTest GenericDebugNodeTest;
 
 TEST_F(GenericDebugNodeTest, get) {
-  auto *Header = MDString::get(Context, "header");
+  StringRef Header = "header";
   auto *Empty = MDNode::get(Context, None);
   Metadata *Ops1[] = {Empty};
   auto *N = GenericDebugNode::get(Context, 15, Header, Ops1);
   EXPECT_EQ(15u, N->getTag());
   EXPECT_EQ(2u, N->getNumOperands());
   EXPECT_EQ(Header, N->getHeader());
-  EXPECT_EQ(Header, N->getOperand(0));
+  EXPECT_EQ(MDString::get(Context, Header), N->getOperand(0));
   EXPECT_EQ(1u, N->getNumDwarfOperands());
   EXPECT_EQ(Empty, N->getDwarfOperand(0));
   EXPECT_EQ(Empty, N->getOperand(1));
@@ -609,10 +609,9 @@ TEST_F(GenericDebugNodeTest, get) {
 
 TEST_F(GenericDebugNodeTest, getEmptyHeader) {
   // Canonicalize !"" to null.
-  auto *Header = MDString::get(Context, "");
-  EXPECT_NE(nullptr, Header);
-  auto *N = GenericDebugNode::get(Context, 15, Header, None);
-  EXPECT_EQ(nullptr, N->getHeader());
+  auto *N = GenericDebugNode::get(Context, 15, StringRef(), None);
+  EXPECT_EQ(StringRef(), N->getHeader());
+  EXPECT_EQ(nullptr, N->getOperand(0));
 }
 
 typedef MetadataTest MetadataAsValueTest;

@@ -1073,7 +1073,7 @@ class GenericDebugNode : public DebugNode {
   void recalculateHash();
 
   static GenericDebugNode *getImpl(LLVMContext &Context, unsigned Tag,
-                                   MDString *Header,
+                                   StringRef Header,
                                    ArrayRef<Metadata *> DwarfOps,
                                    StorageType Storage,
                                    bool ShouldCreate = true);
@@ -1087,25 +1087,24 @@ class GenericDebugNode : public DebugNode {
 public:
   unsigned getHash() const { return SubclassData32; }
 
-  static GenericDebugNode *get(LLVMContext &Context,
-                               unsigned Tag,
-                               MDString *Header,
+  static GenericDebugNode *get(LLVMContext &Context, unsigned Tag,
+                               StringRef Header,
                                ArrayRef<Metadata *> DwarfOps) {
     return getImpl(Context, Tag, Header, DwarfOps, Uniqued);
   }
   static GenericDebugNode *getIfExists(LLVMContext &Context, unsigned Tag,
-                                       MDString *Header,
+                                       StringRef Header,
                                        ArrayRef<Metadata *> DwarfOps) {
     return getImpl(Context, Tag, Header, DwarfOps, Uniqued,
                    /* ShouldCreate */ false);
   }
   static GenericDebugNode *getDistinct(LLVMContext &Context, unsigned Tag,
-                                       MDString *Header,
+                                       StringRef Header,
                                        ArrayRef<Metadata *> DwarfOps) {
     return getImpl(Context, Tag, Header, DwarfOps, Distinct);
   }
   static TempGenericDebugNode getTemporary(LLVMContext &Context, unsigned Tag,
-                                           MDString *Header,
+                                           StringRef Header,
                                            ArrayRef<Metadata *> DwarfOps) {
     return TempGenericDebugNode(
         getImpl(Context, Tag, Header, DwarfOps, Temporary));
@@ -1115,7 +1114,11 @@ public:
   TempGenericDebugNode clone() const { return cloneImpl(); }
 
   unsigned getTag() const { return SubclassData16; }
-  MDString *getHeader() const { return cast_or_null<MDString>(getOperand(0)); }
+  StringRef getHeader() const {
+    if (auto *S = cast_or_null<MDString>(getOperand(0)))
+      return S->getString();
+    return StringRef();
+  }
 
   op_iterator dwarf_op_begin() const { return op_begin() + 1; }
   op_iterator dwarf_op_end() const { return op_end(); }
