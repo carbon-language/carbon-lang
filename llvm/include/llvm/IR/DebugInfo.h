@@ -850,7 +850,13 @@ public:
   void printExtendedName(raw_ostream &OS) const;
 };
 
-/// \brief A complex location expression.
+/// \brief A complex location expression in postfix notation.
+///
+/// This is (almost) a DWARF expression that modifies the location of a
+/// variable or (or the location of a single piece of a variable).
+///
+/// FIXME: Instead of DW_OP_plus taking an argument, this should use DW_OP_const
+/// and have DW_OP_plus consume the topmost elements on the stack.
 class DIExpression : public DIDescriptor {
   friend class DIDescriptor;
   void printInternal(raw_ostream &OS) const;
