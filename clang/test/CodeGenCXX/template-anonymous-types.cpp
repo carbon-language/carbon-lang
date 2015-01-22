@@ -24,14 +24,13 @@ void test() {
   // CHECK-LABEL: define linkonce_odr i32 @_Z1fIN1SUt0_EEiT_(i32 %t)
   (void)f(S::BAR);
 
-  // Now check for the class template instantiations. Annoyingly, they are in
-  // reverse order.
+  // Now check for the class template instantiations.
   //
   // BAR's instantiation of X:
-  // CHECK-LABEL: define linkonce_odr i32 @_ZN1XIN1SUt0_EE1fEv(%struct.X* %this)
-  // CHECK-LABEL: define linkonce_odr void @_ZN1XIN1SUt0_EEC2ES1_(%struct.X* %this, i32 %t) unnamed_addr
+  // CHECK-LABEL: define linkonce_odr i32 @_ZN1XIN1SUt_EE1fEv(%struct.X* %this)
+  // CHECK-LABEL: define linkonce_odr void @_ZN1XIN1SUt_EEC2ES1_(%struct.X* %this, i32 %t) unnamed_addr
   //
   // FOO's instantiation of X:
-  // CHECK-LABEL: define linkonce_odr i32 @_ZN1XIN1SUt_EE1fEv(%struct.X.0* %this)
-  // CHECK-LABEL: define linkonce_odr void @_ZN1XIN1SUt_EEC2ES1_(%struct.X.0* %this, i32 %t) unnamed_addr
+  // CHECK-LABEL: define linkonce_odr i32 @_ZN1XIN1SUt0_EE1fEv(%struct.X.0* %this)
+  // CHECK-LABEL: define linkonce_odr void @_ZN1XIN1SUt0_EEC2ES1_(%struct.X.0* %this, i32 %t) unnamed_addr
 }

@@ -1,7 +1,7 @@
 // RUN: %clang_cc1 %s -emit-llvm -triple %itanium_abi_triple -o - | FileCheck %s
 
-// CHECK: @_ZTVZ3foovEN1C1DE =
 // CHECK: @_ZTVZN1A3fooEiE1B =
+// CHECK: @_ZTVZ3foovEN1C1DE =
 // CHECK: define {{.*}} @_ZZZ3foovEN1C3barEvEN1E3bazEv(
 
 // Itanium C++ ABI examples.

@@ -22,11 +22,6 @@ int main() {
 //  CHECK: call {{.*}} @_ZN14basic_iostreamIcED2Ev
 //  CHECK: call {{.*}} @_ZN9basic_iosD2Ev
 
-// basic_iostream's base dtor calls its non-virtual base dtor.
-//  CHECK: define linkonce_odr {{.*}} @_ZN14basic_iostreamIcED2Ev(%struct.basic_iostream* {{.*}}%this, i8** %vtt) unnamed_addr
-//  CHECK: call {{.*}} @_ZN13basic_istreamIcED2Ev
-//  CHECK: }
-
 // basic_istream's complete dtor calls the base dtor,
 // then its virtual base's base dtor.
 //  CHECK: define linkonce_odr {{.*}} @_ZN13basic_istreamIcED1Ev(%struct.basic_istream* {{.*}}%this) unnamed_addr
@@ -48,4 +43,9 @@ int main() {
 // basic_istream's base dtor is a no-op.
 //  CHECK: define linkonce_odr {{.*}} @_ZN13basic_istreamIcED2Ev(%struct.basic_istream* {{.*}}%this, i8** %vtt) unnamed_addr
 //  CHECK-NOT: call
+//  CHECK: }
+
+// basic_iostream's base dtor calls its non-virtual base dtor.
+//  CHECK: define linkonce_odr {{.*}} @_ZN14basic_iostreamIcED2Ev(%struct.basic_iostream* {{.*}}%this, i8** %vtt) unnamed_addr
+//  CHECK: call {{.*}} @_ZN13basic_istreamIcED2Ev
 //  CHECK: }

@@ -66,16 +66,16 @@ void test() {
   // CHECK-NEXT: ret void
   X9();
 
+  // CHECK: define linkonce_odr void @_ZN2X8C2Ev(%struct.X8* %this) unnamed_addr
+  // CHECK:      call void @_ZN2X6C2Ev({{.*}}) [[NUW]]
+  // CHECK-NEXT: ret void
+
   // CHECK: define linkonce_odr void @_ZN2X9C2Ev(%struct.X9* %this) unnamed_addr
   // CHECK:      call void @_ZN2X6C2Ev({{.*}}) [[NUW]]
   //   FIXME: and here:
   // CHECK-NEXT: bitcast
   // CHECK-NEXT: call void @_ZN2X7C2Ev({{.*}})
   // CHECK: ret void
-
-  // CHECK: define linkonce_odr void @_ZN2X8C2Ev(%struct.X8* %this) unnamed_addr
-  // CHECK:      call void @_ZN2X6C2Ev({{.*}}) [[NUW]]
-  // CHECK-NEXT: ret void
 }
 
 // CHECK: attributes [[NUW]] = { nounwind{{.*}} }

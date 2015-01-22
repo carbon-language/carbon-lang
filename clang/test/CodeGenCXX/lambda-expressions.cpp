@@ -99,14 +99,7 @@ int *PR22071_fun() {
   return [&] { return &y; }();
 }
 
-// CHECK-LABEL: define internal void @"_ZZ1hvEN3$_98__invokeEv"(%struct.A* noalias sret %agg.result) {{.*}} {
-// CHECK-NOT: =
-// CHECK: call void @"_ZZ1hvENK3$_9clEv"(%struct.A* sret %agg.result,
-// CHECK-NEXT: ret void
-struct A { ~A(); };
-void h() {
-  A (*h)() = [] { return A(); };
-}
+// CHECK-LABEL: define internal void @"_ZZ1e1ES_bEN3$_4D2Ev"
 
 // CHECK-LABEL: define internal i32 @"_ZZ1fvEN3$_58__invokeEii"
 // CHECK: store i32
@@ -116,7 +109,14 @@ void h() {
 // CHECK-NEXT: call i32 @"_ZZ1fvENK3$_5clEii"
 // CHECK-NEXT: ret i32
 
-// CHECK-LABEL: define internal void @"_ZZ1e1ES_bEN3$_4D2Ev"
+// CHECK-LABEL: define internal void @"_ZZ1hvEN3$_98__invokeEv"(%struct.A* noalias sret %agg.result) {{.*}} {
+// CHECK-NOT: =
+// CHECK: call void @"_ZZ1hvENK3$_9clEv"(%struct.A* sret %agg.result,
+// CHECK-NEXT: ret void
+struct A { ~A(); };
+void h() {
+  A (*h)() = [] { return A(); };
+}
 
 // <rdar://problem/12778708>
 struct XXX {};

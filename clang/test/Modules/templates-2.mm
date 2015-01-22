@@ -23,14 +23,14 @@ void testEmitDefaultedSpecialMembers() {
 // CHECK-LABEL: define {{.*}} @_ZN27EmitDefaultedSpecialMembers11SmallStringILj256EED1Ev(
 // CHECK: call {{.*}} @_ZN27EmitDefaultedSpecialMembers11SmallStringILj256EED2Ev(
 
-// CHECK-LABEL: define linkonce_odr void @_ZN27EmitDefaultedSpecialMembers11SmallStringILj256EED2Ev(
-// CHECK: call void @_ZN27EmitDefaultedSpecialMembers11SmallVectorIcLj256EED2Ev(
-// CHECK-LABEL: define linkonce_odr void @_ZN27EmitDefaultedSpecialMembers11SmallVectorIcLj256EED2Ev(
-// CHECK: call void @_ZN27EmitDefaultedSpecialMembers15SmallVectorImplIcED2Ev(
-// CHECK-LABEL: define linkonce_odr void @_ZN27EmitDefaultedSpecialMembers15SmallVectorImplIcED2Ev(
-
 // CHECK-LABEL: define linkonce_odr void @_ZN27EmitDefaultedSpecialMembers11SmallStringILj256EEC2Ev(
 // CHECK: call void @_ZN27EmitDefaultedSpecialMembers11SmallVectorIcLj256EEC2Ev(
 // CHECK-LABEL: define linkonce_odr void @_ZN27EmitDefaultedSpecialMembers11SmallVectorIcLj256EEC2Ev(
 // CHECK: call void @_ZN27EmitDefaultedSpecialMembers15SmallVectorImplIcEC2Ev(
 // CHECK-LABEL: define linkonce_odr void @_ZN27EmitDefaultedSpecialMembers15SmallVectorImplIcEC2Ev(
+
+// CHECK-LABEL: define linkonce_odr void @_ZN27EmitDefaultedSpecialMembers11SmallStringILj256EED2Ev(
+// CHECK: call void @_ZN27EmitDefaultedSpecialMembers11SmallVectorIcLj256EED2Ev(
+// CHECK-LABEL: define linkonce_odr void @_ZN27EmitDefaultedSpecialMembers11SmallVectorIcLj256EED2Ev(
+// CHECK: call void @_ZN27EmitDefaultedSpecialMembers15SmallVectorImplIcED2Ev(
+// CHECK-LABEL: define linkonce_odr void @_ZN27EmitDefaultedSpecialMembers15SmallVectorImplIcED2Ev(

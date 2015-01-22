@@ -6,10 +6,10 @@
 // CHECK: define {{.*}} @_ZZ2L1vEN1S2L2Ev(
 // CHECK: define {{.*}} @_ZZ2L1vEN1S2L2E_0v(
 // CHECK: define {{.*}} @_ZZ1FvEN1S1T1S1T1GEv(
-// CHECK: define {{.*}} @_ZZZ2L1vEN1S2L2E_0vEN1S3L3cEv(
-// CHECK: define {{.*}} @_ZZZ2L1vEN1S2L2E_0vEN1S3L3dE_0v(
 // CHECK: define {{.*}} @_ZZZ2L1vEN1S2L2EvEN1S3L3aEv(
 // CHECK: define {{.*}} @_ZZZ2L1vEN1S2L2EvEN1S3L3bE_0v(
+// CHECK: define {{.*}} @_ZZZ2L1vEN1S2L2E_0vEN1S3L3cEv(
+// CHECK: define {{.*}} @_ZZZ2L1vEN1S2L2E_0vEN1S3L3dE_0v(
 
 void L1() {
   {

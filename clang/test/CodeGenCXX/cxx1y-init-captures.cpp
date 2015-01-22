@@ -35,6 +35,7 @@ void g() {
 // CHECK: load i32*
 // CHECK: getelementptr inbounds {{.*}}, i32 0, i32 1
 // CHECK: load i32*
+
 // CHECK: add nsw i32
 
 int h(int a) {
@@ -74,6 +75,9 @@ int h(int a) {
     //
     // CHECK: call i32 @"_ZZZ1hiENK3$_2clEvENKUlvE_clEv"({{.*}}* %[[INNER]])
     return [=, &c] {
+      // CHECK-LABEL: define internal void @"_ZZ1fvEN3$_0D2Ev"(
+      // CHECK: call void @_ZN1SD1Ev(
+
       // CHECK-LABEL: define internal i32 @"_ZZZ1hiENK3$_2clEvENKUlvE_clEv"(
       // CHECK: %[[INNER_ADDR:.*]] = alloca
       // CHECK: store {{.*}}, {{.*}}** %[[INNER_ADDR]],
@@ -97,6 +101,3 @@ int h(int a) {
 // Ensure we can emit code for init-captures in global lambdas too.
 auto global_lambda = [a = 0] () mutable { return ++a; };
 int get_incremented() { return global_lambda(); }
-
-// CHECK-LABEL: define internal void @"_ZZ1fvEN3$_0D2Ev"(
-// CHECK: call void @_ZN1SD1Ev(

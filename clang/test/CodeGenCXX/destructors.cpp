@@ -185,6 +185,11 @@ namespace test3 {
     new D; // Force emission of D's vtable
   }
 
+  // CHECK4-LABEL: define internal void @_ZN5test312_GLOBAL__N_11CD2Ev(%"struct.test3::(anonymous namespace)::C"* %this) unnamed_addr
+  // CHECK4: invoke void @_ZN5test31BD2Ev(
+  // CHECK4: call void @_ZN5test31AD2Ev(
+  // CHECK4: ret void
+
   // CHECK4-LABEL: define internal void @_ZN5test312_GLOBAL__N_11DD0Ev(%"struct.test3::(anonymous namespace)::D"* %this) unnamed_addr
   // CHECK4: invoke void {{.*}} @_ZN5test312_GLOBAL__N_11CD2Ev
   // CHECK4: call void @_ZdlPv({{.*}}) [[NUW:#[0-9]+]]
@@ -204,15 +209,6 @@ namespace test3 {
   // CHECK4: call void @_ZN5test312_GLOBAL__N_11DD0Ev(
   // CHECK4: ret void
 
-  // CHECK4-LABEL: declare void @_ZN5test31BD2Ev(
-  // CHECK4-LABEL: declare void @_ZN5test31AD2Ev(
-
-  // CHECK4-LABEL: define internal void @_ZN5test312_GLOBAL__N_11CD2Ev(%"struct.test3::(anonymous namespace)::C"* %this) unnamed_addr
-  // CHECK4: invoke void @_ZN5test31BD2Ev(
-  // CHECK4: call void @_ZN5test31AD2Ev(
-  // CHECK4: ret void
-
-
   // CHECK4-LABEL: define internal void @_ZN5test312_GLOBAL__N_11CD0Ev(%"struct.test3::(anonymous namespace)::C"* %this) unnamed_addr
   // CHECK4: invoke void @_ZN5test312_GLOBAL__N_11CD2Ev(
   // CHECK4: call void @_ZdlPv({{.*}}) [[NUW]]
@@ -231,6 +227,9 @@ namespace test3 {
   // CHECK4: getelementptr inbounds i8* {{.*}}, i64 -8
   // CHECK4: call void @_ZN5test312_GLOBAL__N_11CD0Ev(
   // CHECK4: ret void
+
+  // CHECK4-LABEL: declare void @_ZN5test31BD2Ev(
+  // CHECK4-LABEL: declare void @_ZN5test31AD2Ev(
 
   // CHECK4: attributes [[NUW]] = {{[{].*}} nounwind {{.*[}]}}
 }

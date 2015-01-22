@@ -74,12 +74,11 @@ void test3() {
   T result = t1 + t2;
 }
 
-// S::~S()
-// CHECK: define linkonce_odr void @_ZN1SD2Ev{{.*}} unnamed_addr
-
 // S::S()
 // CHECK: define linkonce_odr void @_ZN1SC2Ev{{.*}} unnamed_addr
 
 // S::v()
 // CHECK: define linkonce_odr void @_ZN1S1vEv{{.*}}unnamed_addr
 
+// S::~S()
+// CHECK: define linkonce_odr void @_ZN1SD2Ev{{.*}} unnamed_addr

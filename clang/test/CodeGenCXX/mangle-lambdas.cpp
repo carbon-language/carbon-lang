@@ -1,9 +1,9 @@
-// RUN: %clang_cc1 -std=c++11 -triple x86_64-apple-macosx10.7.0 -emit-llvm -o - %s | FileCheck %s
+// RUN: %clang_cc1 -std=c++11 -triple x86_64-apple-macosx10.7.0 -emit-llvm -o - %s -w | FileCheck %s
 
-// CHECK: @_ZZNK7PR12917IJiiEE1nMUlvE_clEvE1n = linkonce_odr global i32 0
-// CHECK: @_ZZZN7PR12917IJicdEEC1EicdEd_NKUlvE_clEvE1n = linkonce_odr global i32 0
-// CHECK: @_ZZZN7PR12917IJicdEEC1EicdEd0_NKUlvE_clEvE1n = linkonce_odr global i32 0
 // CHECK: @_ZZZN7PR12917IJicdEEC1EicdEd1_NKUlvE_clEvE1n = linkonce_odr global i32 0
+// CHECK: @_ZZZN7PR12917IJicdEEC1EicdEd0_NKUlvE_clEvE1n = linkonce_odr global i32 0
+// CHECK: @_ZZZN7PR12917IJicdEEC1EicdEd_NKUlvE_clEvE1n = linkonce_odr global i32 0
+// CHECK: @_ZZNK7PR12917IJiiEE1nMUlvE_clEvE1n = linkonce_odr global i32 0
 
 // CHECK-LABEL: define linkonce_odr void @_Z11inline_funci
 inline void inline_func(int n) {
@@ -192,7 +192,39 @@ namespace PR12123 {
   };
   void B::h() { f(); }
 }
+
 // CHECK-LABEL: define linkonce_odr dereferenceable({{[0-9]+}}) %"struct.PR12123::A"* @_ZZN7PR121231B1fERKSt9type_infoEd_NKUlvE_clEv
+
+// Check linkage of the various lambdas.
+// CHECK-LABEL: define linkonce_odr i32 @_ZZ11inline_funciENKUlvE_clEv
+// CHECK: ret i32 1
+// CHECK-LABEL: define linkonce_odr i32 @_ZZ11inline_funciENKUlvE0_clEv
+// CHECK: ret i32
+// CHECK-LABEL: define linkonce_odr double @_ZZ11inline_funciENKUlvE1_clEv
+// CHECK: ret double
+// CHECK-LABEL: define linkonce_odr i32 @_ZZ11inline_funciENKUliE_clEi
+// CHECK: ret i32
+// CHECK-LABEL: define linkonce_odr i32 @_ZZ11inline_funciENKUlvE2_clEv
+// CHECK: ret i32 17
+
+// CHECK-LABEL: define linkonce_odr void @_ZN7MembersC2Ev
+// CHECK: call i32 @_ZNK7Members1xMUlvE_clEv
+// CHECK-NEXT: call i32 @_ZNK7Members1xMUlvE0_clE
+// CHECK-NEXT: add nsw i32
+// CHECK: call i32 @_ZNK7Members1yMUlvE_clEv
+// CHECK: ret void
+
+
+// Check the linkage of the lambdas used in test_Members.
+// CHECK-LABEL: define linkonce_odr i32 @_ZNK7Members1xMUlvE_clEv
+// CHECK: ret i32 1
+// CHECK-LABEL: define linkonce_odr i32 @_ZNK7Members1xMUlvE0_clEv
+// CHECK: ret i32 2
+// CHECK-LABEL: define linkonce_odr i32 @_ZNK7Members1yMUlvE_clEv
+// CHECK: ret i32 3
+
+// CHECK-LABEL: define linkonce_odr void @_Z1fIZZNK23TestNestedInstantiationclEvENKUlvE_clEvEUlvE_EvT_
+
 
 namespace PR12808 {
   template <typename> struct B {
@@ -209,7 +241,6 @@ namespace PR12808 {
   // CHECK-LABEL: define linkonce_odr i32 @_ZZZN7PR128081bIiEEviENKUlvE_clEvENKUlvE_clEv
 }
 
-// CHECK-LABEL: define linkonce_odr void @_Z1fIZZNK23TestNestedInstantiationclEvENKUlvE_clEvEUlvE_EvT_
 
 struct Members {
   int x = [] { return 1; }() + [] { return 2; }();
@@ -217,13 +248,7 @@ struct Members {
 };
 
 void test_Members() {
-  // CHECK-LABEL: define linkonce_odr void @_ZN7MembersC2Ev
-  // CHECK: call i32 @_ZNK7Members1xMUlvE_clEv
-  // CHECK-NEXT: call i32 @_ZNK7Members1xMUlvE0_clE
-  // CHECK-NEXT: add nsw i32
-  // CHECK: call i32 @_ZNK7Members1yMUlvE_clEv
   Members members;
-  // CHECK: ret void
 }
 
 template<typename P> void f(P) { }
@@ -239,23 +264,3 @@ struct TestNestedInstantiation {
 void test_NestedInstantiation() {
   TestNestedInstantiation()();
 }
-
-// Check the linkage of the lambdas used in test_Members.
-// CHECK-LABEL: define linkonce_odr i32 @_ZNK7Members1xMUlvE_clEv
-// CHECK: ret i32 1
-// CHECK-LABEL: define linkonce_odr i32 @_ZNK7Members1xMUlvE0_clEv
-// CHECK: ret i32 2
-// CHECK-LABEL: define linkonce_odr i32 @_ZNK7Members1yMUlvE_clEv
-// CHECK: ret i32 3
-
-// Check linkage of the various lambdas.
-// CHECK-LABEL: define linkonce_odr i32 @_ZZ11inline_funciENKUlvE_clEv
-// CHECK: ret i32 1
-// CHECK-LABEL: define linkonce_odr i32 @_ZZ11inline_funciENKUlvE0_clEv
-// CHECK: ret i32
-// CHECK-LABEL: define linkonce_odr double @_ZZ11inline_funciENKUlvE1_clEv
-// CHECK: ret double
-// CHECK-LABEL: define linkonce_odr i32 @_ZZ11inline_funciENKUliE_clEi
-// CHECK: ret i32
-// CHECK-LABEL: define linkonce_odr i32 @_ZZ11inline_funciENKUlvE2_clEv
-// CHECK: ret i32 17

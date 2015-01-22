@@ -43,6 +43,18 @@ union B {
 B b1;
 B b2(0);
 
+// CHECK: define {{.*}}@"[[CONSTRUCT_GLOBAL]]C2Ev"
+// CHECK-NOT: }
+// CHECK: call {{.*}}@_Z6make_a
+
+// CHECK: define {{.*}}@"[[CONSTRUCT_LOCAL]]C2Ev"
+// CHECK-NOT: }
+// CHECK: store i32 81
+
+// CHECK-LABEL: define {{.*}} @_ZN1BC2Ev(
+// CHECK: call void @_ZN1AC1Ev(
+// CHECK: store i32 123,
+// CHECK: }
 
 // CHECK-LABEL: define {{.*}} @_ZN1BC2Ei(
 // CHECK-NOT: call void @_ZN1AC1Ev(
@@ -51,17 +63,3 @@ B b2(0);
 // CHECK-NOT: call void @_ZN1AC1Ev(
 // CHECK-NOT: store i32 123,
 // CHECK: }
-
-// CHECK-LABEL: define {{.*}} @_ZN1BC2Ev(
-// CHECK: call void @_ZN1AC1Ev(
-// CHECK: store i32 123,
-// CHECK: }
-
-
-// CHECK: define {{.*}}@"[[CONSTRUCT_LOCAL]]C2Ev"
-// CHECK-NOT: }
-// CHECK: store i32 81
-
-// CHECK: define {{.*}}@"[[CONSTRUCT_GLOBAL]]C2Ev"
-// CHECK-NOT: }
-// CHECK: call {{.*}}@_Z6make_a

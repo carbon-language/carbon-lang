@@ -43,8 +43,8 @@ void test4() {
 // CHECK: call void @_ZN8tderivedIiEC1Ev
 // CHECK: call void @_ZN8tderivedIiED1Ev
 
-// CHECK-LABEL: define linkonce_odr void @_ZN8tderivedIiED2Ev
+// CHECK-LABEL: define linkonce_odr void @_ZN7derivedD2Ev
 // CHECK: call void @objc_storeStrong(i8** {{.*}}, i8* null)
 
-// CHECK-LABEL: define linkonce_odr void @_ZN7derivedD2Ev
+// CHECK-LABEL: define linkonce_odr void @_ZN8tderivedIiED2Ev
 // CHECK: call void @objc_storeStrong(i8** {{.*}}, i8* null)

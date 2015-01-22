@@ -5,7 +5,6 @@
 
 @import cxx_irgen_top;
 
-// CHECK-DAG: call {{[a-z]*[ ]?i32}} @_ZN8CtorInitIiE1fEv(
 CtorInit<int> x;
 
 @import cxx_irgen_left;
@@ -34,23 +33,25 @@ int b = h();
 
 // CHECK-DAG: define linkonce_odr {{signext i32|i32}} @_Z3minIiET_S0_S0_(i32
 int c = min(1, 2);
-
-// CHECK-LABEL: define {{.*}} @_ZN20OperatorDeleteLookup1AD0Ev(
-// CHECK: call void @_ZN20OperatorDeleteLookup1AdlEPv(
+// CHECK: define available_externally {{signext i32|i32}} @_ZN1SIiE1fEv({{.*}} #[[ALWAYS_INLINE]] align
 
 namespace ImplicitSpecialMembers {
-  // CHECK-LABEL: define {{.*}} @_ZN22ImplicitSpecialMembers1DC2EOS0_(
-  // CHECK: call {{.*}} @_ZN22ImplicitSpecialMembers1AC1ERKS0_(
-  // CHECK-LABEL: define {{.*}} @_ZN22ImplicitSpecialMembers1DC2ERKS0_(
-  // CHECK: call {{.*}} @_ZN22ImplicitSpecialMembers1AC1ERKS0_(
-  // CHECK-LABEL: define {{.*}} @_ZN22ImplicitSpecialMembers1CC2EOS0_(
-  // CHECK: call {{.*}} @_ZN22ImplicitSpecialMembers1AC1ERKS0_(
-  // CHECK-LABEL: define {{.*}} @_ZN22ImplicitSpecialMembers1CC2ERKS0_(
+  // CHECK-LABEL: define {{.*}} @_ZN22ImplicitSpecialMembers1BC2ERKS0_(
   // CHECK: call {{.*}} @_ZN22ImplicitSpecialMembers1AC1ERKS0_(
   // CHECK-LABEL: define {{.*}} @_ZN22ImplicitSpecialMembers1BC2EOS0_(
   // CHECK: call {{.*}} @_ZN22ImplicitSpecialMembers1AC1ERKS0_(
-  // CHECK-LABEL: define {{.*}} @_ZN22ImplicitSpecialMembers1BC2ERKS0_(
+  // CHECK-LABEL: define {{.*}} @_ZN22ImplicitSpecialMembers1CC2ERKS0_(
   // CHECK: call {{.*}} @_ZN22ImplicitSpecialMembers1AC1ERKS0_(
+  // CHECK-LABEL: define {{.*}} @_ZN22ImplicitSpecialMembers1CC2EOS0_(
+  // CHECK: call {{.*}} @_ZN22ImplicitSpecialMembers1AC1ERKS0_(
+  // CHECK-LABEL: define {{.*}} @_ZN22ImplicitSpecialMembers1DC2ERKS0_(
+  // CHECK: call {{.*}} @_ZN22ImplicitSpecialMembers1AC1ERKS0_(
+  // CHECK-LABEL: define {{.*}} @_ZN22ImplicitSpecialMembers1DC2EOS0_(
+  // CHECK: call {{.*}} @_ZN22ImplicitSpecialMembers1AC1ERKS0_(
+  // CHECK-LABEL: define {{.*}} @_ZN20OperatorDeleteLookup1AD0Ev(
+  // CHECK: call void @_ZN20OperatorDeleteLookup1AdlEPv(
+
+  // CHECK-DAG: call {{[a-z]*[ ]?i32}} @_ZN8CtorInitIiE1fEv(
 
   extern B b1;
   B b2(b1);
@@ -71,6 +72,5 @@ namespace OperatorDeleteLookup {
   void g() { f(); }
 }
 
-// CHECK: define available_externally {{signext i32|i32}} @_ZN1SIiE1fEv({{.*}} #[[ALWAYS_INLINE]] align
 
 // CHECK: attributes #[[ALWAYS_INLINE]] = {{.*}} alwaysinline

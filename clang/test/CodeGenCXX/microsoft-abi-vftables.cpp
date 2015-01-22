@@ -37,6 +37,6 @@ struct W {
 } w;
 }
 // RTTI-DAG: [[VTABLE_W:@.*]] = private unnamed_addr constant [2 x i8*] [i8* bitcast ({{.*}} @"\01??_R4W@?A@@6B@" to i8*), i8* bitcast ({{.*}} @"\01??_GW@?A@@UAEPAXI@Z" to i8*)], comdat($"\01??_7W@?A@@6B@")
-// RTTI-DAG: @"\01??_7W@?A@@6B@" = internal unnamed_addr alias getelementptr inbounds ([2 x i8*]* @1, i32 0, i32 1)
+// RTTI-DAG: @"\01??_7W@?A@@6B@" = internal unnamed_addr alias getelementptr inbounds ([2 x i8*]* @2, i32 0, i32 1)
 
 // NO-RTTI-DAG: @"\01??_7W@?A@@6B@" = internal unnamed_addr constant [1 x i8*] [i8* bitcast ({{.*}} @"\01??_GW@?A@@UAEPAXI@Z" to i8*)]

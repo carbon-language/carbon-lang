@@ -1,7 +1,7 @@
 // RUN: %clang_cc1 -fms-extensions -fno-rtti -emit-llvm %s -o - -triple=i386-pc-win32 | FileCheck %s
 
-// CHECK: @"\01??_7D@C@?1??foo@@YAXXZ@6B@" =
 // CHECK: @"\01??_7B@?1??foo@A@@QAEXH@Z@6B@" =
+// CHECK: @"\01??_7D@C@?1??foo@@YAXXZ@6B@" =
 // CHECK: define {{.*}} @"\01?baz@E@?3??bar@C@?1??foo@@YAXXZ@QAEXXZ@QAEXXZ"(
 
 // Microsoft Visual C++ ABI examples.

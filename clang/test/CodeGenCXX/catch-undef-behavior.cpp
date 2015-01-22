@@ -446,11 +446,11 @@ namespace CopyValueRepresentation {
   // CHECK-NOT: call {{.*}} @__ubsan_handle_load_invalid_value
   // CHECK-LABEL: define {{.*}} @_ZN23CopyValueRepresentation2S4aSEOS0_
   // CHECK-NOT: call {{.*}} @__ubsan_handle_load_invalid_value
-  // CHECK-LABEL: define {{.*}} @_ZN23CopyValueRepresentation2S5C2ERKS0_
+  // CHECK-LABEL: define {{.*}} @_ZN23CopyValueRepresentation2S1C2ERKS0_
   // CHECK-NOT: call {{.*}} __ubsan_handle_load_invalid_value
   // CHECK-LABEL: define {{.*}} @_ZN23CopyValueRepresentation2S2C2ERKS0_
   // CHECK: __ubsan_handle_load_invalid_value
-  // CHECK-LABEL: define {{.*}} @_ZN23CopyValueRepresentation2S1C2ERKS0_
+  // CHECK-LABEL: define {{.*}} @_ZN23CopyValueRepresentation2S5C2ERKS0_
   // CHECK-NOT: call {{.*}} __ubsan_handle_load_invalid_value
 
   struct CustomCopy { CustomCopy(); CustomCopy(const CustomCopy&); };

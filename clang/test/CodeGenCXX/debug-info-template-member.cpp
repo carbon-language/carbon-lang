@@ -42,8 +42,8 @@ inline int add3(int x) {
 // didn't appear in the class's member list (C_MEM). This prevents the functions
 // from being added to type units, while still appearing in the type
 // declaration/reference in the compile unit.
-// CHECK: !"_ZTS7MyClass", {{.*}} ; [ DW_TAG_subprogram ] [line 4] [add<2>]
 // CHECK: !"_ZTS7MyClass", {{.*}} ; [ DW_TAG_subprogram ] [line 0] [MyClass]
+// CHECK: !"_ZTS7MyClass", {{.*}} ; [ DW_TAG_subprogram ] [line 4] [add<2>]
 
 template<typename T>
 struct outer {

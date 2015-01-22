@@ -21,8 +21,8 @@ D d(123);
 // CHECK-LABEL: define linkonce_odr void @_ZN1DC1IiEET_(
 // CHECK: call void @_ZN1DC2IiEET_(
 
-// CHECK-LABEL: define linkonce_odr void @_ZN1DC2IiEET_(
-// CHECK: call void @_ZN1CC2IiEET_(
-
 // CHECK-LABEL: define linkonce_odr void @_ZN1BC2Ei(
 // CHECK: call void @_ZN1AC2Ei(
+
+// CHECK-LABEL: define linkonce_odr void @_ZN1DC2IiEET_(
+// CHECK: call void @_ZN1CC2IiEET_(

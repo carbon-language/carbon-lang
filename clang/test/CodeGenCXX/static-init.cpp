@@ -5,10 +5,10 @@
 // CHECK: @base_req_uchar = global [4 x i8] c"bar\00", align 1
 
 // CHECK: @_ZZN5test31BC1EvE1u = internal global { i8, [3 x i8] } { i8 97, [3 x i8] undef }, align 4
-// CHECK: @_ZZN5test1L6getvarEiE3var = internal constant [4 x i32] [i32 1, i32 0, i32 2, i32 4], align 16
 
 // CHECK: @_ZZ2h2vE1i = linkonce_odr global i32 0, comdat, align
 // CHECK: @_ZGVZ2h2vE1i = linkonce_odr global i64 0, comdat{{$}}
+// CHECK: @_ZZN5test1L6getvarEiE3var = internal constant [4 x i32] [i32 1, i32 0, i32 2, i32 4], align 16
 
 struct A {
   A();

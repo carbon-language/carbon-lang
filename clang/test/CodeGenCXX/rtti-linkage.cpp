@@ -33,12 +33,12 @@
 // CHECK-WITH-HIDDEN: @_ZTIPK2T4 = linkonce_odr hidden constant 
 // CHECK-WITH-HIDDEN: @_ZTSZ2t5vE1A = internal constant
 // CHECK-WITH-HIDDEN: @_ZTIZ2t5vE1A = internal constant
+// CHECK-WITH-HIDDEN: @_ZTSZ2t6vE1A = linkonce_odr hidden constant
+// CHECK-WITH-HIDDEN: @_ZTIZ2t6vE1A = linkonce_odr hidden constant
 // CHECK-WITH-HIDDEN: @_ZTSPZ2t7vE1A = linkonce_odr hidden constant
 // CHECK-WITH-HIDDEN: @_ZTSZ2t7vE1A = linkonce_odr hidden constant
 // CHECK-WITH-HIDDEN: @_ZTIZ2t7vE1A = linkonce_odr hidden constant
 // CHECK-WITH-HIDDEN: @_ZTIPZ2t7vE1A = linkonce_odr hidden constant
-// CHECK-WITH-HIDDEN: @_ZTSZ2t6vE1A = linkonce_odr hidden constant
-// CHECK-WITH-HIDDEN: @_ZTIZ2t6vE1A = linkonce_odr hidden constant
 
 // CHECK: _ZTSN12_GLOBAL__N_11DE = internal constant
 // CHECK: _ZTIN12_GLOBAL__N_11DE = internal constant
@@ -64,12 +64,12 @@
 // CHECK: _ZTS1B = constant
 // CHECK: _ZTI1B = constant
 // CHECK: _ZTS1F = linkonce_odr constant
+// CHECK: _ZTSZ2t6vE1A = linkonce_odr constant
+// CHECK: _ZTIZ2t6vE1A = linkonce_odr constant
 // CHECK: _ZTSPZ2t7vE1A = linkonce_odr constant
 // CHECK: _ZTSZ2t7vE1A = linkonce_odr constant
 // CHECK: _ZTIZ2t7vE1A = linkonce_odr constant
 // CHECK: _ZTIPZ2t7vE1A = linkonce_odr constant
-// CHECK: _ZTSZ2t6vE1A = linkonce_odr constant
-// CHECK: _ZTIZ2t6vE1A = linkonce_odr constant
 
 // CHECK: _ZTIN12_GLOBAL__N_11DE to
 

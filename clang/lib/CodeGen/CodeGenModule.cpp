@@ -1084,24 +1084,28 @@ void CodeGenModule::EmitDeferred() {
   // previously unused static decl may become used during the generation of code
   // for a static function, iterate until no changes are made.
 
-  while (true) {
-    if (!DeferredVTables.empty()) {
-      EmitDeferredVTables();
+  if (!DeferredVTables.empty()) {
+    EmitDeferredVTables();
 
-      // Emitting a v-table doesn't directly cause more v-tables to
-      // become deferred, although it can cause functions to be
-      // emitted that then need those v-tables.
-      assert(DeferredVTables.empty());
-    }
+    // Emitting a v-table doesn't directly cause more v-tables to
+    // become deferred, although it can cause functions to be
+    // emitted that then need those v-tables.
+    assert(DeferredVTables.empty());
+  }
 
-    // Stop if we're out of both deferred v-tables and deferred declarations.
-    if (DeferredDeclsToEmit.empty())
-      break;
+  // Stop if we're out of both deferred v-tables and deferred declarations.
+  if (DeferredDeclsToEmit.empty())
+    return;
 
-    DeferredGlobal &G = DeferredDeclsToEmit.back();
+  // Grab the list of decls to emit. If EmitGlobalDefinition schedules more
+  // work, it will not interfere with this.
+  std::vector<DeferredGlobal> CurDeclsToEmit;
+  CurDeclsToEmit.swap(DeferredDeclsToEmit);
+
+  for (DeferredGlobal &G : CurDeclsToEmit) {
     GlobalDecl D = G.GD;
     llvm::GlobalValue *GV = G.GV;
-    DeferredDeclsToEmit.pop_back();
+    G.GV = nullptr;
 
     assert(!GV || GV == GetGlobalValue(getMangledName(D)));
     if (!GV)
@@ -1118,6 +1122,14 @@ void CodeGenModule::EmitDeferred() {
 
     // Otherwise, emit the definition and move on to the next one.
     EmitGlobalDefinition(D, GV);
+
+    // If we found out that we need to emit more decls, do that recursively.
+    // This has the advantage that the decls are emitted in a DFS and related
+    // ones are close together, which is convenient for testing.
+    if (!DeferredVTables.empty() || !DeferredDeclsToEmit.empty()) {
+      EmitDeferred();
+      assert(DeferredVTables.empty() && DeferredDeclsToEmit.empty());
+    }
   }
 }
 

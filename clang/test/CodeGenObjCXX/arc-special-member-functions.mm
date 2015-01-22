@@ -104,27 +104,27 @@ void test_ObjCBlockMember_copy_assign(ObjCBlockMember m1, ObjCBlockMember m2) {
 // CHECK-NEXT: call void @objc_release(i8* [[T7]])
 // CHECK-NEXT: ret
 
-// Implicitly-generated copy constructor for ObjCBlockMember
-// CHECK-LABEL: define linkonce_odr void @_ZN15ObjCBlockMemberC2ERKS_
-// CHECK: call i8* @objc_retainBlock
-// CHECK: ret
-
-// Implicitly-generated destructor for ObjCBlockMember
-// CHECK-LABEL: define linkonce_odr void @_ZN15ObjCBlockMemberD2Ev
-// CHECK: call void @objc_storeStrong(i8*
-// CHECK: ret
-
-// Implicitly-generated default constructor for ObjCBlockMember
-// CHECK-LABEL: define linkonce_odr void @_ZN15ObjCBlockMemberC2Ev
-// CHECK: store {{.*}} null,
+// Implicitly-generated default constructor for ObjCMember
+// CHECK-LABEL: define linkonce_odr void @_ZN10ObjCMemberC2Ev
+// CHECK-NOT: objc_release
+// CHECK: store i8* null
 // CHECK-NEXT: ret void
 
-// Implicitly-generated copy constructor for ObjCArrayMember
-// CHECK-LABEL: define linkonce_odr void @_ZN15ObjCArrayMemberC2ERKS_
-// CHECK: br i1
+// Implicitly-generated destructor for ObjCMember
+// CHECK-LABEL: define linkonce_odr void @_ZN10ObjCMemberD2Ev
+// CHECK: call void @objc_storeStrong
+// CHECK: ret void
+
+// Implicitly-generated copy constructor for ObjCMember
+// CHECK-LABEL: define linkonce_odr void @_ZN10ObjCMemberC2ERKS_
+// CHECK-NOT: objc_release
 // CHECK: call i8* @objc_retain
 // CHECK-NEXT: store i8*
-// CHECK-NEXT: br label
+// CHECK-NEXT: ret void
+
+// Implicitly-generated default constructor for ObjCArrayMember
+// CHECK-LABEL: define linkonce_odr void @_ZN15ObjCArrayMemberC2Ev
+// CHECK: call void @llvm.memset.p0i8.i64
 // CHECK: ret
 
 // Implicitly-generated destructor for ObjCArrayMember
@@ -136,29 +136,29 @@ void test_ObjCBlockMember_copy_assign(ObjCBlockMember m1, ObjCBlockMember m2) {
 // CHECK-NEXT: [[CUR]] = getelementptr inbounds i8** [[PAST]], i64 -1
 // CHECK-NEXT: call void @objc_storeStrong(i8** [[CUR]], i8* null)
 // CHECK-NEXT: [[T1:%.*]] = icmp eq i8** [[CUR]], [[BEGIN]]
-// CHECK-NEXT: br i1 [[T1]], 
+// CHECK-NEXT: br i1 [[T1]],
 // CHECK:      ret void
 
-// Implicitly-generated default constructor for ObjCArrayMember
-// CHECK-LABEL: define linkonce_odr void @_ZN15ObjCArrayMemberC2Ev
-// CHECK: call void @llvm.memset.p0i8.i64
-// CHECK: ret
-
-// Implicitly-generated copy constructor for ObjCMember
-// CHECK-LABEL: define linkonce_odr void @_ZN10ObjCMemberC2ERKS_
-// CHECK-NOT: objc_release
+// Implicitly-generated copy constructor for ObjCArrayMember
+// CHECK-LABEL: define linkonce_odr void @_ZN15ObjCArrayMemberC2ERKS_
+// CHECK: br i1
 // CHECK: call i8* @objc_retain
 // CHECK-NEXT: store i8*
+// CHECK-NEXT: br label
+// CHECK: ret
+
+// Implicitly-generated default constructor for ObjCBlockMember
+// CHECK-LABEL: define linkonce_odr void @_ZN15ObjCBlockMemberC2Ev
+// CHECK: store {{.*}} null,
 // CHECK-NEXT: ret void
 
-// Implicitly-generated destructor for ObjCMember
-// CHECK-LABEL: define linkonce_odr void @_ZN10ObjCMemberD2Ev
-// CHECK: call void @objc_storeStrong
-// CHECK: ret void
+// Implicitly-generated destructor for ObjCBlockMember
+// CHECK-LABEL: define linkonce_odr void @_ZN15ObjCBlockMemberD2Ev
+// CHECK: call void @objc_storeStrong(i8*
+// CHECK: ret
 
-// Implicitly-generated default constructor for ObjCMember
-// CHECK-LABEL: define linkonce_odr void @_ZN10ObjCMemberC2Ev
-// CHECK-NOT: objc_release
-// CHECK: store i8* null
-// CHECK-NEXT: ret void
+// Implicitly-generated copy constructor for ObjCBlockMember
+// CHECK-LABEL: define linkonce_odr void @_ZN15ObjCBlockMemberC2ERKS_
+// CHECK: call i8* @objc_retainBlock
+// CHECK: ret
 

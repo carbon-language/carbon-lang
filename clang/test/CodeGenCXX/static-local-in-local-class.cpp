@@ -1,11 +1,11 @@
 // RUN: %clang_cc1 -triple x86_64-linux -fblocks -emit-llvm -o - %s -std=c++1y | FileCheck %s
 
-// CHECK: @"_ZZNK3$_2clEvE1x" = internal global i32 42
-// CHECK: @_ZZ18static_local_labelPvE1q = linkonce_odr global i8* blockaddress(@_Z18static_local_labelPv, %{{.*}})
-// CHECK: @_ZZZL20block_deduced_returnvEUb_E1n = internal global i32 42
-// CHECK: @_ZZL14deduced_returnvE1n = internal global i32 42
 // CHECK: @"_ZZZNK17pr18020_constexpr3$_1clEvENKUlvE_clEvE2l2" =
 // CHECK: internal global i32* @"_ZZNK17pr18020_constexpr3$_1clEvE2l1"
+// CHECK: @_ZZL14deduced_returnvE1n = internal global i32 42
+// CHECK: @_ZZZL20block_deduced_returnvEUb_E1n = internal global i32 42
+// CHECK: @_ZZ18static_local_labelPvE1q = linkonce_odr global i8* blockaddress(@_Z18static_local_labelPv, %{{.*}})
+// CHECK: @"_ZZNK3$_2clEvE1x" = internal global i32 42
 
 namespace pr6769 {
 struct X {
