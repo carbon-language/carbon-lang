@@ -1406,27 +1406,23 @@ void DIVariable::printInternal(raw_ostream &OS) const {
 }
 
 void DIExpression::printInternal(raw_ostream &OS) const {
-  for (unsigned I = 0; I < getNumElements(); ++I) {
-    uint64_t OpCode = getElement(I);
+  for (auto E = end(), I = begin(); I != E; ++I) {
+    uint64_t OpCode = *I;
     OS << " [" << OperationEncodingString(OpCode);
     switch (OpCode) {
     case DW_OP_plus: {
-      OS << " " << getElement(++I);
+      OS << " " << I.getArg(1);
       break;
     }
     case DW_OP_piece: {
-      unsigned Offset = getElement(++I);
-      unsigned Size = getElement(++I);
-      OS << " offset=" << Offset << ", size=" << Size;
+      OS << " offset=" << I.getArg(1) << ", size=" << I.getArg(2);
       break;
     }
     case DW_OP_deref:
       // No arguments.
       break;
     default:
-      // Else bail out early. This may be a line table entry.
-      OS << "Unknown]";
-      return;
+      llvm_unreachable("unhandled operation");
     }
     OS << "]";
   }
