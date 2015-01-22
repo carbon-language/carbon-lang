@@ -910,7 +910,7 @@ public:
   uint64_t getArg(unsigned N) const {
     auto In = I;
     std::advance(In, N);
-    return *DIExpressionIterator(In);
+    return In.getNumber<uint64_t>();
   }
 
   const DIHeaderFieldIterator& getBase() const { return I; }
