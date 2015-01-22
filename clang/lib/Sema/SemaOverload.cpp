@@ -4254,16 +4254,6 @@ TryReferenceInit(Sema &S, Expr *Init, QualType DeclType,
   //     -- Otherwise, the reference shall be an lvalue reference to a
   //        non-volatile const type (i.e., cv1 shall be const), or the reference
   //        shall be an rvalue reference.
-  //
-  // We actually handle one oddity of C++ [over.ics.ref] at this
-  // point, which is that, due to p2 (which short-circuits reference
-  // binding by only attempting a simple conversion for non-direct
-  // bindings) and p3's strange wording, we allow a const volatile
-  // reference to bind to an rvalue. Hence the check for the presence
-  // of "const" rather than checking for "const" being the only
-  // qualifier.
-  // This is also the point where rvalue references and lvalue inits no longer
-  // go together.
   if (!isRValRef && (!T1.isConstQualified() || T1.isVolatileQualified()))
     return ICS;
 
