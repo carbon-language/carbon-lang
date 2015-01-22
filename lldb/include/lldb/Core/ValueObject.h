@@ -527,8 +527,13 @@ public:
     virtual lldb::ModuleSP
     GetModule();
     
-    virtual ValueObject*
+    ValueObject*
     GetRoot ();
+    
+    // Given a ValueObject, loop over itself and its parent, and its parent's parent, ..
+    // until either the given callback returns false, or you end up at a null pointer
+    ValueObject*
+    FollowParentChain (std::function<bool(ValueObject*)>);
     
     virtual bool
     GetDeclaration (Declaration &decl);
