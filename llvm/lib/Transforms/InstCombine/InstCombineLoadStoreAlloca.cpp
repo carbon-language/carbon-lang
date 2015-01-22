@@ -417,6 +417,35 @@ static Instruction *combineLoadToOperationType(InstCombiner &IC, LoadInst &LI) {
   if (LI.use_empty())
     return nullptr;
 
+  Type *Ty = LI.getType();
+
+  // Try to canonicalize loads which are only ever stored to operate over
+  // integers instead of any other type. We only do this when the loaded type
+  // is sized and has a size exactly the same as its store size and the store
+  // size is a legal integer type.
+  const DataLayout *DL = IC.getDataLayout();
+  if (!Ty->isIntegerTy() && Ty->isSized() && DL &&
+      DL->isLegalInteger(DL->getTypeStoreSizeInBits(Ty)) &&
+      DL->getTypeStoreSizeInBits(Ty) == DL->getTypeSizeInBits(Ty)) {
+    if (std::all_of(LI.user_begin(), LI.user_end(), [&LI](User *U) {
+          auto *SI = dyn_cast<StoreInst>(U);
+          return SI && SI->getPointerOperand() != &LI;
+        })) {
+      LoadInst *NewLoad = combineLoadToNewType(
+          IC, LI,
+          Type::getIntNTy(LI.getContext(), DL->getTypeStoreSizeInBits(Ty)));
+      // Replace all the stores with stores of the newly loaded value.
+      for (auto UI = LI.user_begin(), UE = LI.user_end(); UI != UE;) {
+        auto *SI = cast<StoreInst>(*UI++);
+        IC.Builder->SetInsertPoint(SI);
+        combineStoreToNewValue(IC, *SI, NewLoad);
+        IC.EraseInstFromFunction(*SI);
+      }
+      assert(LI.use_empty() && "Failed to remove all users of the load!");
+      // Return the old load so the combiner can delete it safely.
+      return &LI;
+    }
+  }
 
   // Fold away bit casts of the loaded value by loading the desired type.
   if (LI.hasOneUse())

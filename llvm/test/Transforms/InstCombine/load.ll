@@ -2,7 +2,7 @@
 
 ; This test makes sure that these instructions are properly eliminated.
 
-target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
+target datalayout = "e-m:e-p:64:64:64-i64:64-f80:128-n8:16:32:64-S128"
 
 @X = constant i32 42		; <i32*> [#uses=2]
 @X2 = constant i32 47		; <i32*> [#uses=1]
@@ -149,4 +149,54 @@ define i8 @test15(i8 %x, i32 %y) {
   store i32 %y, i32* @test15_global
   %r = load i8* %g.i8
   ret i8 %r
+}
+
+define void @test16(i8* %x, i8* %a, i8* %b, i8* %c) {
+; Check that we canonicalize loads which are only stored to use integer types
+; when there is a valid integer type.
+; CHECK-LABEL: @test16(
+; CHECK: %[[L1:.*]] = load i32*
+; CHECK-NOT: load
+; CHECK: store i32 %[[L1]], i32*
+; CHECK: store i32 %[[L1]], i32*
+; CHECK-NOT: store
+; CHECK: %[[L1:.*]] = load i32*
+; CHECK-NOT: load
+; CHECK: store i32 %[[L1]], i32*
+; CHECK: store i32 %[[L1]], i32*
+; CHECK-NOT: store
+; CHECK: ret
+
+entry:
+  %x.cast = bitcast i8* %x to float*
+  %a.cast = bitcast i8* %a to float*
+  %b.cast = bitcast i8* %b to float*
+  %c.cast = bitcast i8* %c to i32*
+
+  %x1 = load float* %x.cast
+  store float %x1, float* %a.cast
+  store float %x1, float* %b.cast
+
+  %x2 = load float* %x.cast
+  store float %x2, float* %b.cast
+  %x2.cast = bitcast float %x2 to i32
+  store i32 %x2.cast, i32* %c.cast
+
+  ret void
+}
+
+define void @test17(i8** %x, i8 %y) {
+; Check that in cases similar to @test16 we don't try to rewrite a load when
+; its only use is a store but it is used as the pointer to that store rather
+; than the value.
+;
+; CHECK-LABEL: @test17(
+; CHECK: %[[L:.*]] = load i8**
+; CHECK: store i8 %y, i8* %[[L]]
+
+entry:
+  %x.load = load i8** %x
+  store i8 %y, i8* %x.load
+
+  ret void
 }
