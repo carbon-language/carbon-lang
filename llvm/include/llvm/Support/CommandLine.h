@@ -1169,6 +1169,10 @@ class opt : public Option,
     Parser.initialize(*this);
   }
 
+  // Command line options should not be copyable
+  opt(const opt &) LLVM_DELETED_FUNCTION;
+  opt &operator=(const opt &) LLVM_DELETED_FUNCTION;
+
 public:
   // setInitialValue - Used by the cl::init modifier...
   void setInitialValue(const DataType &V) { this->setValue(V, true); }
@@ -1179,10 +1183,6 @@ public:
     this->setValue(Val);
     return this->getValue();
   }
-
-  // Command line options should not be copyable
-  opt(const opt &) LLVM_DELETED_FUNCTION;
-  opt &operator=(const opt &) LLVM_DELETED_FUNCTION;
 
   // One option...
   template <class M0t>
@@ -1368,6 +1368,10 @@ class list : public Option, public list_storage<DataType, Storage> {
     Parser.initialize(*this);
   }
 
+  // Command line options should not be copyable
+  list(const list &) LLVM_DELETED_FUNCTION;
+  list &operator=(const list &) LLVM_DELETED_FUNCTION;
+
 public:
   ParserClass &getParser() { return Parser; }
 
@@ -1377,10 +1381,6 @@ public:
   }
 
   void setNumAdditionalVals(unsigned n) { Option::setNumAdditionalVals(n); }
-
-  // Command line options should not be copyable
-  list(const list &) LLVM_DELETED_FUNCTION;
-  list &operator=(const list &) LLVM_DELETED_FUNCTION;
 
   // One option...
   template <class M0t>
@@ -1592,6 +1592,10 @@ class bits : public Option, public bits_storage<DataType, Storage> {
     Parser.initialize(*this);
   }
 
+  // Command line options should not be copyable
+  bits(const bits &) LLVM_DELETED_FUNCTION;
+  bits &operator=(const bits &) LLVM_DELETED_FUNCTION;
+
 public:
   ParserClass &getParser() { return Parser; }
 
@@ -1599,10 +1603,6 @@ public:
     assert(optnum < this->size() && "Invalid option index");
     return Positions[optnum];
   }
-
-  // Command line options should not be copyable
-  bits(const bits &) LLVM_DELETED_FUNCTION;
-  bits &operator=(const bits &) LLVM_DELETED_FUNCTION;
 
   // One option...
   template <class M0t>
@@ -1730,16 +1730,16 @@ class alias : public Option {
     addArgument();
   }
 
+  // Command line options should not be copyable
+  alias(const alias &) LLVM_DELETED_FUNCTION;
+  alias &operator=(const alias &) LLVM_DELETED_FUNCTION;
+
 public:
   void setAliasFor(Option &O) {
     if (AliasFor)
       error("cl::alias must only have one cl::aliasopt(...) specified!");
     AliasFor = &O;
   }
-
-  // Command line options should not be copyable
-  alias(const alias &) LLVM_DELETED_FUNCTION;
-  alias &operator=(const alias &) LLVM_DELETED_FUNCTION;
 
   // One option...
   template <class M0t>
