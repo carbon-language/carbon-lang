@@ -200,13 +200,16 @@ public:
                          DIHeaderFieldIterator());
   }
 
+  DIHeaderFieldIterator header_begin() const { return getHeader(); }
+  DIHeaderFieldIterator header_end() const { return StringRef(); }
+
   DIHeaderFieldIterator getHeaderIterator(unsigned Index) const {
     // Since callers expect an empty string for out-of-range accesses, we can't
     // use std::advance() here.
-    for (DIHeaderFieldIterator I(getHeader()), E; I != E; ++I, --Index)
+    for (auto I = header_begin(), E = header_end(); I != E; ++I, --Index)
       if (!Index)
         return I;
-    return StringRef();
+    return header_end();
   }
 
   StringRef getHeaderField(unsigned Index) const {
@@ -888,8 +891,7 @@ class DIExpressionIterator
   DIExpressionIterator(DIHeaderFieldIterator I) : I(I) {}
 public:
   DIExpressionIterator() {}
-  DIExpressionIterator(const DIExpression Expr)
-    : I(Expr.getHeader()) { ++I; }
+  DIExpressionIterator(const DIExpression &Expr) : I(++Expr.header_begin()) {}
   uint64_t operator*() const { return I.getNumber<uint64_t>(); }
   DIExpressionIterator &operator++() {
     increment();
