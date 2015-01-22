@@ -1839,6 +1839,18 @@ void CodeGenFunction::EnterSEHTryStmt(const SEHTryStmt &S) {
   SEHExceptStmt *Except = S.getExceptHandler();
   assert(Except);
   EHCatchScope *CatchScope = EHStack.pushCatch(1);
+
+  // If the filter is known to evaluate to 1, then we can use the clause "catch
+  // i8* null".
+  llvm::Constant *C =
+      CGM.EmitConstantExpr(Except->getFilterExpr(), getContext().IntTy, this);
+  if (C && C->isOneValue()) {
+    CatchScope->setCatchAllHandler(0, createBasicBlock("__except"));
+    return;
+  }
+
+  // In general, we have to emit an outlined filter function. Use the function
+  // in place of the RTTI typeinfo global that C++ EH uses.
   CodeGenFunction FilterCGF(CGM, /*suppressNewContext=*/true);
   llvm::Function *FilterFunc =
       FilterCGF.GenerateSEHFilterFunction(*this, *Except);

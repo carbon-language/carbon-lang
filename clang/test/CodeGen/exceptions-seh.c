@@ -26,13 +26,11 @@ int safe_div(int numerator, int denominator, int *res) {
 //
 // CHECK: [[lpad]]
 // CHECK: landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__C_specific_handler to i8*)
-// CHECK: %[[sel:[^ ]*]] = load i32*
-// CHECK: %[[filt_id:[^ ]*]] = call i32 @llvm.eh.typeid.for(i8* bitcast (i32 (i8*, i8*)* @"\01?filt$0@0@safe_div@@" to i8*))
-// CHECK: %[[matches:[^ ]*]] = icmp eq i32 %[[sel]], %[[filt_id]]
-// CHECK: br i1 %[[matches]], label %[[except_bb:[^ ]*]], label %{{.*}}
-//
-// CHECK: [[except_bb]]
-// CHECK: store i32 -42, i32* %[[success:[^ ]*]]
+// CHECK-NEXT: catch i8* null
+// CHECK-NOT: br i1
+// CHECK: br label %[[except:[^ ]*]]
+// CHECK: [[except]]
+// CHECK-NEXT: store i32 -42, i32* %[[success:[^ ]*]]
 //
 // CHECK: %[[res:[^ ]*]] = load i32* %[[success]]
 // CHECK: ret i32 %[[res]]
