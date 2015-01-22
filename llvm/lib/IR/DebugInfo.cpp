@@ -162,12 +162,12 @@ uint64_t DIExpression::getPieceSize() const {
   return getElement(getNumElements()-1);
 }
 
-DIExpressionIterator DIExpression::begin() const {
-  return DIExpressionIterator(*this);
+DIExpression::iterator DIExpression::begin() const {
+ return DIExpression::iterator(*this);
 }
 
-DIExpressionIterator DIExpression::end() const {
-  return DIExpressionIterator();
+DIExpression::iterator DIExpression::end() const {
+ return DIExpression::iterator();
 }
 
 //===----------------------------------------------------------------------===//

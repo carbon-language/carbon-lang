@@ -850,8 +850,6 @@ public:
   void printExtendedName(raw_ostream &OS) const;
 };
 
-class DIExpressionIterator;
-
 /// \brief A complex location expression.
 class DIExpression : public DIDescriptor {
   friend class DIDescriptor;
@@ -881,56 +879,55 @@ public:
   /// \brief Return the size of this piece in bytes.
   uint64_t getPieceSize() const;
 
-  DIExpressionIterator begin() const;
-  DIExpressionIterator end() const;
-};
-
-/// \brief An iterator for DIExpression elments.
-class DIExpressionIterator
-    : public std::iterator<std::forward_iterator_tag, StringRef, unsigned,
-                           const uint64_t *, uint64_t> {
-  DIHeaderFieldIterator I;
-  DIExpressionIterator(DIHeaderFieldIterator I) : I(I) {}
-public:
-  DIExpressionIterator() {}
-  DIExpressionIterator(const DIExpression &Expr) : I(++Expr.header_begin()) {}
-  uint64_t operator*() const { return I.getNumber<uint64_t>(); }
-  DIExpressionIterator &operator++() {
-    increment();
-    return *this;
-  }
-  DIExpressionIterator operator++(int) {
-    DIExpressionIterator X(*this);
-    increment();
-    return X;
-  }
-  bool operator==(const DIExpressionIterator &X) const {
-    return I == X.I;
-  }
-  bool operator!=(const DIExpressionIterator &X) const {
-    return !(*this == X);
-  }
-
-  uint64_t getArg(unsigned N) const {
-    auto In = I;
-    std::advance(In, N);
-    return In.getNumber<uint64_t>();
-  }
-
-  const DIHeaderFieldIterator& getBase() const { return I; }
-
-private:
-  void increment() {
-    switch (**this) {
-    case dwarf::DW_OP_piece: std::advance(I, 3); break;
-    case dwarf::DW_OP_plus:  std::advance(I, 2); break;
-    case dwarf::DW_OP_deref: std::advance(I, 1); break;
-    default:
-      assert("unsupported operand");
+  /// \brief An iterator for DIExpression elements.
+  class iterator
+      : public std::iterator<std::forward_iterator_tag, StringRef, unsigned,
+                             const uint64_t *, uint64_t> {
+    DIHeaderFieldIterator I;
+    iterator(DIHeaderFieldIterator I) : I(I) {}
+  public:
+    iterator() {}
+    iterator(const DIExpression &Expr) : I(++Expr.header_begin()) {}
+    uint64_t operator*() const { return I.getNumber<uint64_t>(); }
+    iterator &operator++() {
+      increment();
+      return *this;
     }
-  }
-};
+    iterator operator++(int) {
+      iterator X(*this);
+      increment();
+      return X;
+    }
+    bool operator==(const iterator &X) const {
+      return I == X.I;
+    }
+    bool operator!=(const iterator &X) const {
+      return !(*this == X);
+    }
+   
+    uint64_t getArg(unsigned N) const {
+      auto In = I;
+      std::advance(In, N);
+      return In.getNumber<uint64_t>();
+    }
+   
+    const DIHeaderFieldIterator& getBase() const { return I; }
+   
+  private:
+    void increment() {
+      switch (**this) {
+      case dwarf::DW_OP_piece: std::advance(I, 3); break;
+      case dwarf::DW_OP_plus:  std::advance(I, 2); break;
+      case dwarf::DW_OP_deref: std::advance(I, 1); break;
+      default:
+        assert("unsupported operand");
+      }
+    }
+  };
 
+  iterator begin() const;
+  iterator end() const;
+};
 
 /// \brief This object holds location information.
 ///

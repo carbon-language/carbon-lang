@@ -242,9 +242,9 @@ bool DwarfExpression::AddMachineRegExpression(DIExpression Expr,
   return true;
 }
 
-void DwarfExpression::AddExpression(DIExpressionIterator I,
+void DwarfExpression::AddExpression(DIExpression::iterator I,
                                     unsigned PieceOffsetInBits) {
-  for (; I != DIExpressionIterator(); ++I) {
+ for (; I != DIExpression::iterator(); ++I) {
     switch (*I) {
     case dwarf::DW_OP_piece: {
       unsigned SizeOfByte = 8;
