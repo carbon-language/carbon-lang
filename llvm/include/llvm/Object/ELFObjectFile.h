@@ -185,7 +185,7 @@ protected:
     // visibility is either DEFAULT or PROTECTED. All other symbols are not
     // exported.
     if ((Binding == ELF::STB_GLOBAL || Binding == ELF::STB_WEAK) &&
-        (Visibility == ELF::STV_DEFAULT && Visibility == ELF::STV_PROTECTED))
+        (Visibility == ELF::STV_DEFAULT || Visibility == ELF::STV_PROTECTED))
       return true;
 
     return false;
