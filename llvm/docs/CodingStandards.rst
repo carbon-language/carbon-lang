@@ -251,7 +251,8 @@ The next section in the file is a concise note that defines the license that the
 file is released under.  This makes it perfectly clear what terms the source
 code can be distributed under and should not be modified in any way.
 
-The main body is a ``doxygen`` comment describing the purpose of the file.  It
+The main body is a ``doxygen`` comment (identified by the ``///`` comment
+marker instead of the usual ``//``) describing the purpose of the file.  It
 should have a ``\brief`` command that describes the file in one or two
 sentences.  Any additional information should be separated by a blank line.  If
 an algorithm is being implemented or something tricky is going on, a reference
@@ -281,7 +282,8 @@ happens: does the method return null?  Abort?  Format your hard disk?
 Comment Formatting
 ^^^^^^^^^^^^^^^^^^
 
-In general, prefer C++ style (``//``) comments.  They take less space, require
+In general, prefer C++ style comments (``//`` for normal comments, ``///`` for
+``doxygen`` documentation comments).  They take less space, require
 less typing, don't have nesting problems, etc.  There are a few cases when it is
 useful to use C style (``/* */``) comments however:
 
