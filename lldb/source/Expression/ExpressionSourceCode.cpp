@@ -51,7 +51,7 @@ extern "C"
 bool ExpressionSourceCode::GetText (std::string &text, lldb::LanguageType wrapping_language, bool const_object, bool static_method, ExecutionContext &exe_ctx) const
 {
     const char *target_specific_defines = "typedef signed char BOOL;\n";
-    static ConstString g_platform_ios_simulator ("PlatformiOSSimulator");
+    static ConstString g_platform_ios_simulator ("ios-simulator");
     
     if (Target *target = exe_ctx.GetTargetPtr())
     {
