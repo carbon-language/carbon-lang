@@ -66,7 +66,7 @@ class DIHeaderFieldIterator
 
 public:
   DIHeaderFieldIterator() {}
-  DIHeaderFieldIterator(StringRef Header)
+  explicit DIHeaderFieldIterator(StringRef Header)
       : Header(Header), Current(Header.slice(0, Header.find('\0'))) {}
   StringRef operator*() const { return Current; }
   const StringRef * operator->() const { return &Current; }
@@ -200,8 +200,10 @@ public:
                          DIHeaderFieldIterator());
   }
 
-  DIHeaderFieldIterator header_begin() const { return getHeader(); }
-  DIHeaderFieldIterator header_end() const { return StringRef(); }
+  DIHeaderFieldIterator header_begin() const {
+    return DIHeaderFieldIterator(getHeader());
+  }
+  DIHeaderFieldIterator header_end() const { return DIHeaderFieldIterator(); }
 
   DIHeaderFieldIterator getHeaderIterator(unsigned Index) const {
     // Since callers expect an empty string for out-of-range accesses, we can't
