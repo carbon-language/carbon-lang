@@ -3896,7 +3896,6 @@ void Sema::CodeCompleteCall(Scope *S, Expr *Fn, ArrayRef<Expr *> Args) {
 
   // FIXME: Provide support for highlighting optional parameters.
   // FIXME: Provide support for variadic template functions.
-  // FIXME: Provide support for pointers and references to functions.
 
   // Ignore type-dependent call expressions entirely.
   if (!Fn || Fn->isTypeDependent() || anyNullArguments(Args) ||
@@ -3928,30 +3927,13 @@ void Sema::CodeCompleteCall(Scope *S, Expr *Fn, ArrayRef<Expr *> Args) {
     AddFunctionCandidates(Decls, ArgExprs, CandidateSet, TemplateArgs,
                           /*SuppressUsedConversions=*/false,
                           /*PartialOverloading=*/true);
-  } else if (auto DC = NakedFn->getType()->getCanonicalTypeInternal()
-                       ->getAsCXXRecordDecl()) {
-    // If it's a CXXRecordDecl, it may overload the function call operator,
-    // so we check if it does and add them as candidates.
-    DeclarationName OpName = Context.DeclarationNames
-                             .getCXXOperatorName(OO_Call);
-    LookupResult R(*this, OpName, Loc, LookupOrdinaryName);
-    LookupQualifiedName(R, DC);
-    R.suppressDiagnostics();
-    SmallVector<Expr *, 12> ArgExprs(1, NakedFn);
-    ArgExprs.append(Args.begin(), Args.end());
-    AddFunctionCandidates(R.asUnresolvedSet(), ArgExprs, CandidateSet,
-                          /*ExplicitArgs=*/nullptr,
-                          /*SuppressUsedConversions=*/false,
-                          /*PartialOverloading=*/true);
   } else {
-    // Lastly we check, as a possibly resolved expression, whether it can be
-    // converted to a function.
     FunctionDecl *FD = nullptr;
     if (auto MCE = dyn_cast<MemberExpr>(NakedFn))
       FD = dyn_cast<FunctionDecl>(MCE->getMemberDecl());
     else if (auto DRE = dyn_cast<DeclRefExpr>(NakedFn))
       FD = dyn_cast<FunctionDecl>(DRE->getDecl());
-    if (FD) {
+    if (FD) { // We check whether it's a resolved function declaration.
       if (!getLangOpts().CPlusPlus || 
           !FD->getType()->getAs<FunctionProtoType>())
         Results.push_back(ResultCandidate(FD));
@@ -3960,6 +3942,34 @@ void Sema::CodeCompleteCall(Scope *S, Expr *Fn, ArrayRef<Expr *> Args) {
                              Args, CandidateSet,
                              /*SuppressUsedConversions=*/false,
                              /*PartialOverloading=*/true);
+
+    } else if (auto DC = NakedFn->getType()->getAsCXXRecordDecl()) {
+      // If expression's type is CXXRecordDecl, it may overload the function
+      // call operator, so we check if it does and add them as candidates.
+      DeclarationName OpName = Context.DeclarationNames
+                               .getCXXOperatorName(OO_Call);
+      LookupResult R(*this, OpName, Loc, LookupOrdinaryName);
+      LookupQualifiedName(R, DC);
+      R.suppressDiagnostics();
+      SmallVector<Expr *, 12> ArgExprs(1, NakedFn);
+      ArgExprs.append(Args.begin(), Args.end());
+      AddFunctionCandidates(R.asUnresolvedSet(), ArgExprs, CandidateSet,
+                            /*ExplicitArgs=*/nullptr,
+                            /*SuppressUsedConversions=*/false,
+                            /*PartialOverloading=*/true);
+    } else {
+      // Lastly we check whether expression's type is function pointer or
+      // function.
+      QualType T = NakedFn->getType();
+      if (!T->getPointeeType().isNull())
+        T = T->getPointeeType();
+
+      if (auto FP = T->getAs<FunctionProtoType>()) {
+        if (!TooManyArguments(FP->getNumParams(), Args.size(),
+                             /*PartialOverloading=*/true))
+          Results.push_back(ResultCandidate(FP));
+      } else if (auto FT = T->getAs<FunctionType>())
+        Results.push_back(ResultCandidate(FT));
     }
   }
 
