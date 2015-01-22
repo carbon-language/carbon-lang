@@ -344,6 +344,53 @@ static LoadInst *combineLoadToNewType(InstCombiner &IC, LoadInst &LI, Type *NewT
   return NewLoad;
 }
 
+/// \brief Combine a store to a new type.
+///
+/// Returns the newly created store instruction.
+static StoreInst *combineStoreToNewValue(InstCombiner &IC, StoreInst &SI, Value *V) {
+  Value *Ptr = SI.getPointerOperand();
+  unsigned AS = SI.getPointerAddressSpace();
+  SmallVector<std::pair<unsigned, MDNode *>, 8> MD;
+  SI.getAllMetadata(MD);
+
+  StoreInst *NewStore = IC.Builder->CreateAlignedStore(
+      V, IC.Builder->CreateBitCast(Ptr, V->getType()->getPointerTo(AS)),
+      SI.getAlignment());
+  for (const auto &MDPair : MD) {
+    unsigned ID = MDPair.first;
+    MDNode *N = MDPair.second;
+    // Note, essentially every kind of metadata should be preserved here! This
+    // routine is supposed to clone a store instruction changing *only its
+    // type*. The only metadata it makes sense to drop is metadata which is
+    // invalidated when the pointer type changes. This should essentially
+    // never be the case in LLVM, but we explicitly switch over only known
+    // metadata to be conservatively correct. If you are adding metadata to
+    // LLVM which pertains to stores, you almost certainly want to add it
+    // here.
+    switch (ID) {
+    case LLVMContext::MD_dbg:
+    case LLVMContext::MD_tbaa:
+    case LLVMContext::MD_prof:
+    case LLVMContext::MD_fpmath:
+    case LLVMContext::MD_tbaa_struct:
+    case LLVMContext::MD_alias_scope:
+    case LLVMContext::MD_noalias:
+    case LLVMContext::MD_nontemporal:
+    case LLVMContext::MD_mem_parallel_loop_access:
+    case LLVMContext::MD_nonnull:
+      // All of these directly apply.
+      NewStore->setMetadata(ID, N);
+      break;
+
+    case LLVMContext::MD_invariant_load:
+    case LLVMContext::MD_range:
+      break;
+    }
+  }
+
+  return NewStore;
+}
+
 /// \brief Combine loads to match the type of value their uses after looking
 /// through intervening bitcasts.
 ///
@@ -487,53 +534,6 @@ Instruction *InstCombiner::visitLoadInst(LoadInst &LI) {
     }
   }
   return nullptr;
-}
-
-/// \brief Combine a store to a new type.
-///
-/// Returns the newly created store instruction.
-static StoreInst *combineStoreToNewValue(InstCombiner &IC, StoreInst &SI, Value *V) {
-  Value *Ptr = SI.getPointerOperand();
-  unsigned AS = SI.getPointerAddressSpace();
-  SmallVector<std::pair<unsigned, MDNode *>, 8> MD;
-  SI.getAllMetadata(MD);
-
-  StoreInst *NewStore = IC.Builder->CreateAlignedStore(
-      V, IC.Builder->CreateBitCast(Ptr, V->getType()->getPointerTo(AS)),
-      SI.getAlignment());
-  for (const auto &MDPair : MD) {
-    unsigned ID = MDPair.first;
-    MDNode *N = MDPair.second;
-    // Note, essentially every kind of metadata should be preserved here! This
-    // routine is supposed to clone a store instruction changing *only its
-    // type*. The only metadata it makes sense to drop is metadata which is
-    // invalidated when the pointer type changes. This should essentially
-    // never be the case in LLVM, but we explicitly switch over only known
-    // metadata to be conservatively correct. If you are adding metadata to
-    // LLVM which pertains to stores, you almost certainly want to add it
-    // here.
-    switch (ID) {
-    case LLVMContext::MD_dbg:
-    case LLVMContext::MD_tbaa:
-    case LLVMContext::MD_prof:
-    case LLVMContext::MD_fpmath:
-    case LLVMContext::MD_tbaa_struct:
-    case LLVMContext::MD_alias_scope:
-    case LLVMContext::MD_noalias:
-    case LLVMContext::MD_nontemporal:
-    case LLVMContext::MD_mem_parallel_loop_access:
-    case LLVMContext::MD_nonnull:
-      // All of these directly apply.
-      NewStore->setMetadata(ID, N);
-      break;
-
-    case LLVMContext::MD_invariant_load:
-    case LLVMContext::MD_range:
-      break;
-    }
-  }
-
-  return NewStore;
 }
 
 /// \brief Combine stores to match the type of value being stored.
