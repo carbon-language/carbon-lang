@@ -146,7 +146,7 @@ void
 Error::Clear ()
 {
     m_code = 0;
-    m_type = eErrorTypeGeneric;
+    m_type = eErrorTypeInvalid;
     m_string.clear();
 }
 
