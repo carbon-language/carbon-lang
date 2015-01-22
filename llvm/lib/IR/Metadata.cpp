@@ -788,6 +788,7 @@ GenericDwarfNode *GenericDwarfNode::getImpl(LLVMContext &Context, unsigned Tag,
 
 void MDNode::deleteTemporary(MDNode *N) {
   assert(N->isTemporary() && "Expected temporary node");
+  N->replaceAllUsesWith(nullptr);
   N->deleteAsSubclass();
 }
 

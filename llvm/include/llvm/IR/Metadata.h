@@ -727,7 +727,8 @@ public:
 
   /// \brief Deallocate a node created by getTemporary.
   ///
-  /// The node must not have any users.
+  /// Calls \c replaceAllUsesWith(nullptr) before deleting, so any remaining
+  /// references will be reset.
   static void deleteTemporary(MDNode *N);
 
   LLVMContext &getContext() const { return Context.getContext(); }

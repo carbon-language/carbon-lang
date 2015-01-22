@@ -517,6 +517,17 @@ TEST_F(MDNodeTest, replaceWithDistinct) {
   }
 }
 
+TEST_F(MDNodeTest, deleteTemporaryWithTrackingRef) {
+  TrackingMDRef Ref;
+  EXPECT_EQ(nullptr, Ref.get());
+  {
+    auto Temp = MDTuple::getTemporary(Context, None);
+    Ref.reset(Temp.get());
+    EXPECT_EQ(Temp.get(), Ref.get());
+  }
+  EXPECT_EQ(nullptr, Ref.get());
+}
+
 typedef MetadataTest MDLocationTest;
 
 TEST_F(MDLocationTest, Overflow) {
