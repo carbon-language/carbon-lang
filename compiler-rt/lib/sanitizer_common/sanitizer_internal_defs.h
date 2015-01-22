@@ -325,4 +325,11 @@ extern "C" void* _ReturnAddress(void);
     } while (internal_iserror(res, &rverrno) && rverrno == EINTR); \
   }
 
+// Forces the compiler to generate a frame pointer in the function.
+#define ENABLE_FRAME_POINTER                                       \
+  do {                                                             \
+    volatile uptr enable_fp;                                       \
+    enable_fp = GET_CURRENT_FRAME();                               \
+  } while (0)
+
 #endif  // SANITIZER_DEFS_H
