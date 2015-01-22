@@ -381,7 +381,7 @@ class Configuration(object):
 
     def configure_extra_library_flags(self):
         enable_threads = self.get_lit_bool('enable_threads', True)
-        llvm_unwinder = self.get_lit_conf('llvm_unwinder', False)
+        llvm_unwinder = self.get_lit_bool('llvm_unwinder', False)
         if sys.platform == 'darwin':
             self.cxx.link_flags += ['-lSystem']
         elif sys.platform.startswith('linux'):
