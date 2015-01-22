@@ -34,7 +34,7 @@ class LibcxxVectorDataFormatterTestCase(TestBase):
         """Test that that file and class static variables display correctly."""
         self.runCmd("file a.out", CURRENT_EXECUTABLE_SET)
 
-        lldbutil.run_break_set_by_source_regexp (self, regexp="break here")
+        bkpt = self.target().FindBreakpointByID(lldbutil.run_break_set_by_source_regexp (self, "break here"))
 
         self.runCmd("run", RUN_SUCCEEDED)
 
@@ -59,7 +59,7 @@ class LibcxxVectorDataFormatterTestCase(TestBase):
         self.expect("frame variable numbers",
             substrs = ['numbers = size=0'])
 
-        self.runCmd("continue")
+        lldbutil.continue_to_breakpoint(self.process(), bkpt)
         
         # first value added
         self.expect("frame variable numbers",
@@ -68,7 +68,7 @@ class LibcxxVectorDataFormatterTestCase(TestBase):
                                '}'])
 
         # add some more data
-        self.runCmd("continue");
+        lldbutil.continue_to_breakpoint(self.process(), bkpt)
     
         self.expect("frame variable numbers",
                     substrs = ['numbers = size=4',
@@ -100,7 +100,7 @@ class LibcxxVectorDataFormatterTestCase(TestBase):
         self.runCmd("type summary delete int_vect")
 
         # add some more data
-        self.runCmd("continue");
+        lldbutil.continue_to_breakpoint(self.process(), bkpt)
 
         self.expect("frame variable numbers",
                     substrs = ['numbers = size=7',
@@ -135,12 +135,12 @@ class LibcxxVectorDataFormatterTestCase(TestBase):
                     substrs = ['1234']);
 
         # clear out the vector and see that we do the right thing once again
-        self.runCmd("continue")
+        lldbutil.continue_to_breakpoint(self.process(), bkpt)
 
         self.expect("frame variable numbers",
             substrs = ['numbers = size=0'])
 
-        self.runCmd("continue")
+        lldbutil.continue_to_breakpoint(self.process(), bkpt)
 
         # first value added
         self.expect("frame variable numbers",
@@ -173,7 +173,7 @@ class LibcxxVectorDataFormatterTestCase(TestBase):
                                'is',
                                'smart'])
 
-        self.runCmd("continue")
+        lldbutil.continue_to_breakpoint(self.process(), bkpt)
 
         self.expect("frame variable strings",
                     substrs = ['vector has 4 items'])
@@ -184,7 +184,7 @@ class LibcxxVectorDataFormatterTestCase(TestBase):
         self.expect("frame variable strings[1]",
                     substrs = ['is']);
 
-        self.runCmd("continue")
+        lldbutil.continue_to_breakpoint(self.process(), bkpt)
 
         self.expect("frame variable strings",
             substrs = ['vector has 0 items'])

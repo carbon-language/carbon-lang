@@ -34,7 +34,7 @@ class LibcxxSetDataFormatterTestCase(TestBase):
         """Test that that file and class static variables display correctly."""
         self.runCmd("file a.out", CURRENT_EXECUTABLE_SET)
 
-        lldbutil.run_break_set_by_source_regexp (self, "Set break point at this line.")
+        bkpt = self.target().FindBreakpointByID(lldbutil.run_break_set_by_source_regexp (self, "Set break point at this line."))
 
         self.runCmd("run", RUN_SUCCEEDED)
 
@@ -58,24 +58,24 @@ class LibcxxSetDataFormatterTestCase(TestBase):
         self.expect('image list', substrs = self.getLibcPlusPlusLibs())
 
         self.expect("frame variable ii",substrs = ["size=0","{}"])
-        self.runCmd("continue")
+        lldbutil.continue_to_breakpoint(self.process(), bkpt)
         self.expect("frame variable ii",substrs = ["size=6","[0] = 0","[1] = 1", "[2] = 2", "[3] = 3", "[4] = 4", "[5] = 5"])
-        self.runCmd("continue")
+        lldbutil.continue_to_breakpoint(self.process(), bkpt)
         self.expect("frame variable ii",substrs = ["size=7","[2] = 2", "[3] = 3", "[6] = 6"])
         self.expect("frame variable ii[2]",substrs = [" = 2"])
         self.expect("p ii",substrs = ["size=7","[2] = 2", "[3] = 3", "[6] = 6"])
-        self.runCmd("continue")
+        lldbutil.continue_to_breakpoint(self.process(), bkpt)
         self.expect("frame variable ii",substrs = ["size=0","{}"])
-        self.runCmd("continue")
+        lldbutil.continue_to_breakpoint(self.process(), bkpt)
         self.expect("frame variable ii",substrs = ["size=0","{}"])
         self.expect("frame variable ss",substrs = ["size=0","{}"])
-        self.runCmd("continue")
+        lldbutil.continue_to_breakpoint(self.process(), bkpt)
         self.expect("frame variable ss",substrs = ["size=2",'[0] = "a"','[1] = "a very long string is right here"'])
-        self.runCmd("continue")
+        lldbutil.continue_to_breakpoint(self.process(), bkpt)
         self.expect("frame variable ss",substrs = ["size=4",'[2] = "b"','[3] = "c"','[0] = "a"','[1] = "a very long string is right here"'])
         self.expect("p ss",substrs = ["size=4",'[2] = "b"','[3] = "c"','[0] = "a"','[1] = "a very long string is right here"'])
         self.expect("frame variable ss[2]",substrs = [' = "b"'])
-        self.runCmd("continue")
+        lldbutil.continue_to_breakpoint(self.process(), bkpt)
         self.expect("frame variable ss",substrs = ["size=3",'[0] = "a"','[1] = "a very long string is right here"','[2] = "c"'])
 
 if __name__ == '__main__':
