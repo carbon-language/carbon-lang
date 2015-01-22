@@ -732,8 +732,6 @@ CodeGenPGO::emitEmptyCounterMapping(const Decl *D, StringRef FuncName,
                                     llvm::GlobalValue::LinkageTypes Linkage) {
   if (SkipCoverageMapping)
     return;
-  setFuncName(FuncName, Linkage);
-
   // Don't map the functions inside the system headers
   auto Loc = D->getBody()->getLocStart();
   if (CGM.getContext().getSourceManager().isInSystemHeader(Loc))
@@ -750,6 +748,7 @@ CodeGenPGO::emitEmptyCounterMapping(const Decl *D, StringRef FuncName,
   if (CoverageMapping.empty())
     return;
 
+  setFuncName(FuncName, Linkage);
   CGM.getCoverageMapping()->addFunctionMappingRecord(
       FuncNameVar, FuncName, FunctionHash, CoverageMapping);
 }
