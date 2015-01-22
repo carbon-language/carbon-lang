@@ -68,7 +68,7 @@ Module::Module() {}
 // Destructor.
 Module::~Module() {
   // Free submodules.
-  while (SubModules.size()) {
+  while (!SubModules.empty()) {
     Module *last = SubModules.back();
     SubModules.pop_back();
     delete last;

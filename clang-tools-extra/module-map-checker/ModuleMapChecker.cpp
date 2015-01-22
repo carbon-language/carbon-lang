@@ -261,7 +261,7 @@ std::error_code ModuleMapChecker::doChecks() {
   findUnaccountedForHeaders();
 
   // Check for warnings.
-  if (UnaccountedForHeaders.size())
+  if (!UnaccountedForHeaders.empty())
     returnValue = std::error_code(1, std::generic_category());
 
   // Dump module map if requested.
