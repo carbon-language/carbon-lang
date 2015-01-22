@@ -79,6 +79,11 @@ static const unsigned RecursionMaxDepth = 12;
 // it has no negative effect on the llvm benchmarks.
 static const unsigned AliasedCheckLimit = 10;
 
+// Another limit for the alias checks: The maximum distance between load/store
+// instructions where alias checks are done.
+// This limit is useful for very large basic blocks.
+static const int MaxMemDepDistance = 160;
+
 /// \returns the parent basic block if all of the instructions in \p VL
 /// are in the same block or null otherwise.
 static BasicBlock *getSameBlock(ArrayRef<Value *> VL) {
@@ -2868,33 +2873,56 @@ void BoUpSLP::BlockScheduling::calculateDependencies(ScheduleData *SD,
           AliasAnalysis::Location SrcLoc = getLocation(SrcInst, SLP->AA);
           bool SrcMayWrite = BundleMember->Inst->mayWriteToMemory();
           unsigned numAliased = 0;
+          unsigned DistToSrc = 1;
 
           while (DepDest) {
             assert(isInSchedulingRegion(DepDest));
-            if (SrcMayWrite || DepDest->Inst->mayWriteToMemory()) {
 
-              // Limit the number of alias checks, becaus SLP->isAliased() is
-              // the expensive part in the following loop.
-              if (numAliased >= AliasedCheckLimit
-                  || SLP->isAliased(SrcLoc, SrcInst, DepDest->Inst)) {
+            // We have two limits to reduce the complexity:
+            // 1) AliasedCheckLimit: It's a small limit to reduce calls to
+            //    SLP->isAliased (which is the expensive part in this loop).
+            // 2) MaxMemDepDistance: It's for very large blocks and it aborts
+            //    the whole loop (even if the loop is fast, it's quadratic).
+            //    It's important for the loop break condition (see below) to
+            //    check this limit even between two read-only instructions.
+            if (DistToSrc >= MaxMemDepDistance ||
+                    ((SrcMayWrite || DepDest->Inst->mayWriteToMemory()) &&
+                     (numAliased >= AliasedCheckLimit ||
+                      SLP->isAliased(SrcLoc, SrcInst, DepDest->Inst)))) {
 
-                // We increment the counter only if the locations are aliased
-                // (instead of counting all alias checks). This gives a better
-                // balance between reduced runtime accurate dependencies.
-                numAliased++;
+              // We increment the counter only if the locations are aliased
+              // (instead of counting all alias checks). This gives a better
+              // balance between reduced runtime and accurate dependencies.
+              numAliased++;
 
-                DepDest->MemoryDependencies.push_back(BundleMember);
-                BundleMember->Dependencies++;
-                ScheduleData *DestBundle = DepDest->FirstInBundle;
-                if (!DestBundle->IsScheduled) {
-                  BundleMember->incrementUnscheduledDeps(1);
-                }
-                if (!DestBundle->hasValidDependencies()) {
-                  WorkList.push_back(DestBundle);
-                }
+              DepDest->MemoryDependencies.push_back(BundleMember);
+              BundleMember->Dependencies++;
+              ScheduleData *DestBundle = DepDest->FirstInBundle;
+              if (!DestBundle->IsScheduled) {
+                BundleMember->incrementUnscheduledDeps(1);
+              }
+              if (!DestBundle->hasValidDependencies()) {
+                WorkList.push_back(DestBundle);
               }
             }
             DepDest = DepDest->NextLoadStore;
+
+            // Example, explaining the loop break condition: Let's assume our
+            // starting instruction is i0 and MaxMemDepDistance = 3.
+            //
+            //                      +--------v--v--v
+            //             i0,i1,i2,i3,i4,i5,i6,i7,i8
+            //             +--------^--^--^
+            //
+            // MaxMemDepDistance let us stop alias-checking at i3 and we add
+            // dependencies from i0 to i3,i4,.. (even if they are not aliased).
+            // Previously we already added dependencies from i3 to i6,i7,i8
+            // (because of MaxMemDepDistance). As we added a dependency from
+            // i0 to i3, we have transitive dependencies from i0 to i6,i7,i8
+            // and we can abort this loop at i6.
+            if (DistToSrc >= 2 * MaxMemDepDistance)
+                break;
+            DistToSrc++;
           }
         }
       }
