@@ -93,11 +93,10 @@ public:
   /// \return false if no DWARF register exists for MachineReg.
   bool AddMachineRegExpression(DIExpression Expr, unsigned MachineReg,
                                unsigned PieceOffsetInBits = 0);
-  /// Emit a the operations in a DIExpression, starting from element I.
+  /// Emit a the operations remaining the DIExpressionIterator I.
   /// \param PieceOffsetInBits If this is one piece out of a fragmented
   /// location, this is the offset of the piece inside the entire variable.
-  void AddExpression(DIExpression Expr, unsigned PieceOffsetInBits = 0,
-                     unsigned I = 0);
+  void AddExpression(DIExpressionIterator I, unsigned PieceOffsetInBits = 0);
 };
 
 /// DwarfExpression implementation for .debug_loc entries.
