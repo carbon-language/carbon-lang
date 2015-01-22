@@ -82,7 +82,7 @@ static const unsigned AliasedCheckLimit = 10;
 // Another limit for the alias checks: The maximum distance between load/store
 // instructions where alias checks are done.
 // This limit is useful for very large basic blocks.
-static const int MaxMemDepDistance = 160;
+static const unsigned MaxMemDepDistance = 160;
 
 /// \returns the parent basic block if all of the instructions in \p VL
 /// are in the same block or null otherwise.
