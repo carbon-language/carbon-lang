@@ -1665,8 +1665,8 @@ void AMDGPUTargetLowering::LowerUDIVREM64(SDValue Op,
   SDValue DIV_Part = DAG.getNode(ISD::UDIV, DL, HalfVT, LHS_Hi, RHS_Lo);
   SDValue REM_Part = DAG.getNode(ISD::UREM, DL, HalfVT, LHS_Hi, RHS_Lo);
 
-  SDValue REM_Hi = zero;
   SDValue REM_Lo = DAG.getSelectCC(DL, RHS_Hi, zero, REM_Part, LHS_Hi, ISD::SETEQ);
+  SDValue REM = DAG.getNode(ISD::BUILD_PAIR, DL, VT, REM_Lo, zero);
 
   SDValue DIV_Hi = DAG.getSelectCC(DL, RHS_Hi, zero, DIV_Part, zero, ISD::SETEQ);
   SDValue DIV_Lo = zero;
@@ -1674,8 +1674,10 @@ void AMDGPUTargetLowering::LowerUDIVREM64(SDValue Op,
   const unsigned halfBitWidth = HalfVT.getSizeInBits();
 
   for (unsigned i = 0; i < halfBitWidth; ++i) {
-    SDValue POS = DAG.getConstant(halfBitWidth - i - 1, HalfVT);
-    // Get Value of high bit
+    const unsigned bitPos = halfBitWidth - i - 1;
+    SDValue POS = DAG.getConstant(bitPos, HalfVT);
+    // Get value of high bit
+    // TODO: Remove the BFE part when the optimization is fixed
     SDValue HBit;
     if (halfBitWidth == 32 && Subtarget->hasBFE()) {
       HBit = DAG.getNode(AMDGPUISD::BFE_U32, DL, HalfVT, LHS_Lo, POS, one);
@@ -1683,33 +1685,23 @@ void AMDGPUTargetLowering::LowerUDIVREM64(SDValue Op,
       HBit = DAG.getNode(ISD::SRL, DL, HalfVT, LHS_Lo, POS);
       HBit = DAG.getNode(ISD::AND, DL, HalfVT, HBit, one);
     }
+    HBit = DAG.getNode(ISD::ZERO_EXTEND, DL, VT, HBit);
 
-    SDValue Carry = DAG.getNode(ISD::SRL, DL, HalfVT, REM_Lo,
-      DAG.getConstant(halfBitWidth - 1, HalfVT));
-    REM_Hi = DAG.getNode(ISD::SHL, DL, HalfVT, REM_Hi, one);
-    REM_Hi = DAG.getNode(ISD::OR, DL, HalfVT, REM_Hi, Carry);
+    // Shift
+    REM = DAG.getNode(ISD::SHL, DL, VT, REM, DAG.getConstant(1, VT));
+    // Add LHS high bit
+    REM = DAG.getNode(ISD::OR, DL, VT, REM, HBit);
 
-    REM_Lo = DAG.getNode(ISD::SHL, DL, HalfVT, REM_Lo, one);
-    REM_Lo = DAG.getNode(ISD::OR, DL, HalfVT, REM_Lo, HBit);
-
-
-    SDValue REM = DAG.getNode(ISD::BUILD_PAIR, DL, VT, REM_Lo, REM_Hi);
-
-    SDValue BIT = DAG.getConstant(1 << (halfBitWidth - i - 1), HalfVT);
+    SDValue BIT = DAG.getConstant(1 << bitPos, HalfVT);
     SDValue realBIT = DAG.getSelectCC(DL, REM, RHS, BIT, zero, ISD::SETUGE);
 
     DIV_Lo = DAG.getNode(ISD::OR, DL, HalfVT, DIV_Lo, realBIT);
 
     // Update REM
-
     SDValue REM_sub = DAG.getNode(ISD::SUB, DL, VT, REM, RHS);
-
     REM = DAG.getSelectCC(DL, REM, RHS, REM_sub, REM, ISD::SETUGE);
-    REM_Lo = DAG.getNode(ISD::EXTRACT_ELEMENT, DL, HalfVT, REM, zero);
-    REM_Hi = DAG.getNode(ISD::EXTRACT_ELEMENT, DL, HalfVT, REM, one);
   }
 
-  SDValue REM = DAG.getNode(ISD::BUILD_PAIR, DL, VT, REM_Lo, REM_Hi);
   SDValue DIV = DAG.getNode(ISD::BUILD_PAIR, DL, VT, DIV_Lo, DIV_Hi);
   Results.push_back(DIV);
   Results.push_back(REM);
