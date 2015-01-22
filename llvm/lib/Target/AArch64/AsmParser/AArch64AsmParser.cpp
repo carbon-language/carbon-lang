@@ -210,9 +210,9 @@ private:
   struct SysRegOp {
     const char *Data;
     unsigned Length;
-    uint64_t FeatureBits; // We need to pass through information about which
-                          // core we are compiling for so that the SysReg
-                          // Mappers can appropriately conditionalize.
+    uint32_t MRSReg;
+    uint32_t MSRReg;
+    uint32_t PStateField;
   };
 
   struct SysCRImmOp {
@@ -372,11 +372,6 @@ public:
   StringRef getSysReg() const {
     assert(Kind == k_SysReg && "Invalid access!");
     return StringRef(SysReg.Data, SysReg.Length);
-  }
-
-  uint64_t getSysRegFeatureBits() const {
-    assert(Kind == k_SysReg && "Invalid access!");
-    return SysReg.FeatureBits;
   }
 
   unsigned getSysCR() const {
@@ -855,28 +850,17 @@ public:
   bool isMRSSystemRegister() const {
     if (!isSysReg()) return false;
 
-    bool IsKnownRegister;
-    auto Mapper = AArch64SysReg::MRSMapper(getSysRegFeatureBits());
-    Mapper.fromString(getSysReg(), IsKnownRegister);
-
-    return IsKnownRegister;
+    return SysReg.MRSReg != -1U;
   }
   bool isMSRSystemRegister() const {
     if (!isSysReg()) return false;
 
-    bool IsKnownRegister;
-    auto Mapper = AArch64SysReg::MSRMapper(getSysRegFeatureBits());
-    Mapper.fromString(getSysReg(), IsKnownRegister);
-
-    return IsKnownRegister;
+    return SysReg.MSRReg != -1U;
   }
   bool isSystemPStateField() const {
     if (!isSysReg()) return false;
 
-    bool IsKnownRegister;
-    AArch64PState::PStateMapper().fromString(getSysReg(), IsKnownRegister);
-
-    return IsKnownRegister;
+    return SysReg.PStateField != -1U;
   }
   bool isReg() const override { return Kind == k_Register && !Reg.isVector; }
   bool isVectorReg() const { return Kind == k_Register && Reg.isVector; }
@@ -1454,31 +1438,19 @@ public:
   void addMRSSystemRegisterOperands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
 
-    bool Valid;
-    auto Mapper = AArch64SysReg::MRSMapper(getSysRegFeatureBits());
-    uint32_t Bits = Mapper.fromString(getSysReg(), Valid);
-
-    Inst.addOperand(MCOperand::CreateImm(Bits));
+    Inst.addOperand(MCOperand::CreateImm(SysReg.MRSReg));
   }
 
   void addMSRSystemRegisterOperands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
 
-    bool Valid;
-    auto Mapper = AArch64SysReg::MSRMapper(getSysRegFeatureBits());
-    uint32_t Bits = Mapper.fromString(getSysReg(), Valid);
-
-    Inst.addOperand(MCOperand::CreateImm(Bits));
+    Inst.addOperand(MCOperand::CreateImm(SysReg.MSRReg));
   }
 
   void addSystemPStateFieldOperands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
 
-    bool Valid;
-    uint32_t Bits =
-        AArch64PState::PStateMapper().fromString(getSysReg(), Valid);
-
-    Inst.addOperand(MCOperand::CreateImm(Bits));
+    Inst.addOperand(MCOperand::CreateImm(SysReg.PStateField));
   }
 
   void addSysCROperands(MCInst &Inst, unsigned N) const {
@@ -1645,12 +1617,17 @@ public:
     return Op;
   }
 
-  static std::unique_ptr<AArch64Operand>
-  CreateSysReg(StringRef Str, SMLoc S, uint64_t FeatureBits, MCContext &Ctx) {
+  static std::unique_ptr<AArch64Operand> CreateSysReg(StringRef Str, SMLoc S,
+                                                      uint32_t MRSReg,
+                                                      uint32_t MSRReg,
+                                                      uint32_t PStateField,
+                                                      MCContext &Ctx) {
     auto Op = make_unique<AArch64Operand>(k_SysReg, Ctx);
     Op->SysReg.Data = Str.data();
     Op->SysReg.Length = Str.size();
-    Op->SysReg.FeatureBits = FeatureBits;
+    Op->SysReg.MRSReg = MRSReg;
+    Op->SysReg.MSRReg = MSRReg;
+    Op->SysReg.PStateField = PStateField;
     Op->StartLoc = S;
     Op->EndLoc = S;
     return Op;
@@ -2643,8 +2620,24 @@ AArch64AsmParser::tryParseSysReg(OperandVector &Operands) {
   if (Tok.isNot(AsmToken::Identifier))
     return MatchOperand_NoMatch;
 
-  Operands.push_back(AArch64Operand::CreateSysReg(Tok.getString(), getLoc(),
-                     STI.getFeatureBits(), getContext()));
+  bool IsKnown;
+  auto MRSMapper = AArch64SysReg::MRSMapper(STI.getFeatureBits());
+  uint32_t MRSReg = MRSMapper.fromString(Tok.getString(), IsKnown);
+  assert(IsKnown == (MRSReg != -1U) &&
+         "register should be -1 if and only if it's unknown");
+
+  auto MSRMapper = AArch64SysReg::MSRMapper(STI.getFeatureBits());
+  uint32_t MSRReg = MSRMapper.fromString(Tok.getString(), IsKnown);
+  assert(IsKnown == (MSRReg != -1U) &&
+         "register should be -1 if and only if it's unknown");
+
+  uint32_t PStateField =
+      AArch64PState::PStateMapper().fromString(Tok.getString(), IsKnown);
+  assert(IsKnown == (PStateField != -1U) &&
+         "register should be -1 if and only if it's unknown");
+
+  Operands.push_back(AArch64Operand::CreateSysReg(
+      Tok.getString(), getLoc(), MRSReg, MSRReg, PStateField, getContext()));
   Parser.Lex(); // Eat identifier
 
   return MatchOperand_Success;
