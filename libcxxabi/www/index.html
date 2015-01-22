@@ -90,9 +90,12 @@
 
   <p>To do a standalone build:</p>
   <ul>
+  <li>
+    Check out the <a href="http://libcxx.llvm.org">libcxx source</a> tree.
+  </li>
   <li><code>cd libcxxabi</code></li>
   <li><code>mkdir build &amp;&amp; cd build</code></li>
-  <li><code>cmake -DLIBCXXABI_LIBCXX_INCLUDES=path/to/libcxx/include .. # on
+  <li><code>cmake -DLIBCXXABI_LIBCXX_PATH=path/to/libcxx .. # on
     linux you may need -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++</code></li>
   <li><code>make</code></li>
   </ul>

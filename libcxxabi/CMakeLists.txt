@@ -97,6 +97,7 @@ if (CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
 
   set(LIBCXXABI_BUILT_STANDALONE 1)
 else()
+  set(LLVM_MAIN_SRC_DIR "${CMAKE_SOURCE_DIR}" CACHE PATH "Path to LLVM source tree")
   set(LLVM_LIT "${CMAKE_SOURCE_DIR}/utils/lit/lit.py")
   set(LIBCXXABI_LIBDIR_SUFFIX ${LLVM_LIBDIR_SUFFIX})
 endif()
@@ -126,13 +127,31 @@ find_path(
   LIBCXXABI_LIBCXX_INCLUDES
   vector
   PATHS ${LIBCXXABI_LIBCXX_INCLUDES}
+        ${LIBCXXABI_LIBCXX_PATH}/include
         ${CMAKE_BINARY_DIR}/${LIBCXXABI_LIBCXX_INCLUDES}
         ${LLVM_MAIN_SRC_DIR}/projects/libcxx/include
         ${LLVM_INCLUDE_DIR}/c++/v1
   )
 
-set(LIBCXXABI_LIBCXX_INCLUDES "${LIBCXXABI_LIBCXX_INCLUDES}" CACHE STRING
+set(LIBCXXABI_LIBCXX_INCLUDES "${LIBCXXABI_LIBCXX_INCLUDES}" CACHE PATH
     "Specify path to libc++ includes." FORCE)
+
+find_path(
+  LIBCXXABI_LIBCXX_PATH
+  test/libcxx/__init__.py
+  PATHS ${LIBCXXABI_LIBCXX_PATH}
+        ${LIBCXXABI_LIBCXX_INCLUDES}/../
+        ${LLVM_MAIN_SRC_DIR}/projects/libcxx/
+  NO_DEFAULT_PATH
+  )
+
+if (LIBCXXABI_LIBCXX_PATH STREQUAL "LIBCXXABI_LIBCXX_PATH-NOTFOUND")
+  message(WARNING "LIBCXXABI_LIBCXX_PATH was not specified and couldn't be infered.")
+  set(LIBCXXABI_LIBCXX_PATH "")
+endif()
+
+set(LIBCXXABI_LIBCXX_PATH "${LIBCXXABI_LIBCXX_PATH}" CACHE PATH
+    "Specify path to libc++ source." FORCE)
 
 #===============================================================================
 # Configure System
