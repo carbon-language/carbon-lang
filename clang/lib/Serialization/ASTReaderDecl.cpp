@@ -3523,13 +3523,25 @@ void ASTDeclReader::UpdateDecl(Decl *D, ModuleFile &ModuleFile,
   while (Idx < Record.size()) {
     switch ((DeclUpdateKind)Record[Idx++]) {
     case UPD_CXX_ADDED_IMPLICIT_MEMBER: {
+      auto *RD = cast<CXXRecordDecl>(D);
       // FIXME: If we also have an update record for instantiating the
       // definition of D, we need that to happen before we get here.
       Decl *MD = Reader.ReadDecl(ModuleFile, Record, Idx);
       assert(MD && "couldn't read decl from update record");
       // FIXME: We should call addHiddenDecl instead, to add the member
       // to its DeclContext.
-      cast<CXXRecordDecl>(D)->addedMember(MD);
+      RD->addedMember(MD);
+
+      // If we've added a new special member to a class definition that is not
+      // the canonical definition, then we need special member lookups in the
+      // canonical definition to also look into our class.
+      auto *DD = RD->DefinitionData.getNotUpdated();
+      if (DD && DD->Definition != RD) {
+        auto &Merged = Reader.MergedLookups[DD->Definition];
+        // FIXME: Avoid the linear-time scan here.
+        if (std::find(Merged.begin(), Merged.end(), RD) == Merged.end())
+          Merged.push_back(RD);
+      }
       break;
     }
 
