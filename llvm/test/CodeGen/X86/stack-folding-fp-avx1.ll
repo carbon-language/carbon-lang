@@ -1085,20 +1085,27 @@ define <4 x float> @stack_fold_minss_int(<4 x float> %a0, <4 x float> %a1) {
 }
 declare <4 x float> @llvm.x86.sse.min.ss(<4 x float>, <4 x float>) nounwind readnone
 
-; TODO stack_fold_movd (load / store)
-; TODO stack_fold_movq (load / store)
+define <2 x double> @stack_fold_movddup(<2 x double> %a0) {
+  ;CHECK-LABEL: stack_fold_movddup
+  ;CHECK:   vmovddup {{-?[0-9]*}}(%rsp), {{%xmm[0-9][0-9]*}} {{.*#+}} 16-byte Folded Reload
+  %1 = tail call <2 x i64> asm sideeffect "nop", "=x,~{xmm1},~{xmm2},~{xmm3},~{xmm4},~{xmm5},~{xmm6},~{xmm7},~{xmm8},~{xmm9},~{xmm10},~{xmm11},~{xmm12},~{xmm13},~{xmm14},~{xmm15},~{flags}"()
+  %2 = shufflevector <2 x double> %a0, <2 x double> undef, <2 x i32> <i32 0, i32 0>
+  ret <2 x double> %2
+}
 
-; TODO stack_fold_movddup
-; TODO stack_fold_movddup_ymm
+define <4 x double> @stack_fold_movddup_ymm(<4 x double> %a0) {
+  ;CHECK-LABEL: stack_fold_movddup_ymm
+  ;CHECK:   vmovddup {{-?[0-9]*}}(%rsp), {{%ymm[0-9][0-9]*}} {{.*#+}} 32-byte Folded Reload
+  %1 = tail call <2 x i64> asm sideeffect "nop", "=x,~{xmm1},~{xmm2},~{xmm3},~{xmm4},~{xmm5},~{xmm6},~{xmm7},~{xmm8},~{xmm9},~{xmm10},~{xmm11},~{xmm12},~{xmm13},~{xmm14},~{xmm15},~{flags}"()
+  %2 = shufflevector <4 x double> %a0, <4 x double> undef, <4 x i32> <i32 0, i32 0, i32 2, i32 2>
+  ret <4 x double> %2
+}
 
 ; TODO stack_fold_movhpd (load / store)
 ; TODO stack_fold_movhps (load / store)
 
 ; TODO stack_fold_movlpd (load / store)
 ; TODO stack_fold_movlps (load / store)
-
-; TODO stack_fold_movsd (load / store)
-; TODO stack_fold_movss (load / store)
 
 define <4 x float> @stack_fold_movshdup(<4 x float> %a0) {
   ;CHECK-LABEL: stack_fold_movshdup
@@ -1108,7 +1115,13 @@ define <4 x float> @stack_fold_movshdup(<4 x float> %a0) {
   ret <4 x float> %2
 }
 
-; TODO stack_fold_movshdup_ymm
+define <8 x float> @stack_fold_movshdup_ymm(<8 x float> %a0) {
+  ;CHECK-LABEL: stack_fold_movshdup_ymm
+  ;CHECK:   vmovshdup {{-?[0-9]*}}(%rsp), {{%ymm[0-9][0-9]*}} {{.*#+}} 32-byte Folded Reload
+  %1 = tail call <2 x i64> asm sideeffect "nop", "=x,~{xmm1},~{xmm2},~{xmm3},~{xmm4},~{xmm5},~{xmm6},~{xmm7},~{xmm8},~{xmm9},~{xmm10},~{xmm11},~{xmm12},~{xmm13},~{xmm14},~{xmm15},~{flags}"()
+  %2 = shufflevector <8 x float> %a0, <8 x float> undef, <8 x i32> <i32 1, i32 1, i32 3, i32 3, i32 5, i32 5, i32 7, i32 7>
+  ret <8 x float> %2
+}
 
 define <4 x float> @stack_fold_movsldup(<4 x float> %a0) {
   ;CHECK-LABEL: stack_fold_movsldup
@@ -1118,7 +1131,13 @@ define <4 x float> @stack_fold_movsldup(<4 x float> %a0) {
   ret <4 x float> %2
 }
 
-; TODO stack_fold_movshdup_ymm
+define <8 x float> @stack_fold_movsldup_ymm(<8 x float> %a0) {
+  ;CHECK-LABEL: stack_fold_movsldup_ymm
+  ;CHECK:   vmovsldup {{-?[0-9]*}}(%rsp), {{%ymm[0-9][0-9]*}} {{.*#+}} 32-byte Folded Reload
+  %1 = tail call <2 x i64> asm sideeffect "nop", "=x,~{xmm1},~{xmm2},~{xmm3},~{xmm4},~{xmm5},~{xmm6},~{xmm7},~{xmm8},~{xmm9},~{xmm10},~{xmm11},~{xmm12},~{xmm13},~{xmm14},~{xmm15},~{flags}"()
+  %2 = shufflevector <8 x float> %a0, <8 x float> undef, <8 x i32> <i32 0, i32 0, i32 2, i32 2, i32 4, i32 4, i32 6, i32 6>
+  ret <8 x float> %2
+}
 
 define <2 x double> @stack_fold_mulpd(<2 x double> %a0, <2 x double> %a1) {
   ;CHECK-LABEL: stack_fold_mulpd
