@@ -97,8 +97,7 @@ LLVMContextImpl::~LLVMContextImpl() {
     delete I;
 #include "llvm/IR/Metadata.def"
 
-  // Free the constants.  This is important to do here to ensure that they are
-  // freed before the LeakDetector is torn down.
+  // Free the constants.
   std::for_each(ExprConstants.map_begin(), ExprConstants.map_end(),
                 DropFirst());
   std::for_each(ArrayConstants.map_begin(), ArrayConstants.map_end(),

@@ -17,7 +17,6 @@
 
 #include "AttributeImpl.h"
 #include "ConstantsContext.h"
-#include "LeaksContext.h"
 #include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/APInt.h"
 #include "llvm/ADT/ArrayRef.h"
@@ -392,9 +391,6 @@ public:
 
   ConstantInt *TheTrueVal;
   ConstantInt *TheFalseVal;
-  
-  LeakDetectorImpl<Value> LLVMObjects;
-  LeakDetectorImpl<Metadata> LLVMMDObjects;
 
   // Basic type instances.
   Type VoidTy, LabelTy, HalfTy, FloatTy, DoubleTy, MetadataTy;
