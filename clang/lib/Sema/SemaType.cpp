@@ -2716,7 +2716,7 @@ static TypeSourceInfo *GetFullTypeForDeclarator(TypeProcessingState &state,
         // and not, for instance, a pointer to a function.
         if (D.getDeclSpec().containsPlaceholderType() &&
             !FTI.hasTrailingReturnType() && chunkIndex == 0 &&
-            !S.getLangOpts().CPlusPlus14) {
+            !S.getLangOpts().CPlusPlus14 && !S.getLangOpts().MSVCCompat) {
           S.Diag(D.getDeclSpec().getTypeSpecTypeLoc(),
                  D.getDeclSpec().getTypeSpecType() == DeclSpec::TST_auto
                      ? diag::err_auto_missing_trailing_return
