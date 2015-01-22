@@ -2344,6 +2344,21 @@ void SelectionDAG::computeKnownBits(SDValue Op, APInt &KnownZero,
     KnownZero = APInt::getHighBitsSet(BitWidth, Leaders);
     break;
   }
+  case ISD::EXTRACT_ELEMENT: {
+    computeKnownBits(Op.getOperand(0), KnownZero, KnownOne, Depth+1);
+    const unsigned Index =
+      cast<ConstantSDNode>(Op.getOperand(1))->getZExtValue();
+    const unsigned BitWidth = Op.getValueType().getSizeInBits();
+
+    // Remove low part of known bits mask
+    KnownZero = KnownZero.getHiBits(KnownZero.getBitWidth() - Index * BitWidth);
+    KnownOne = KnownOne.getHiBits(KnownOne.getBitWidth() - Index * BitWidth);
+
+    // Remove high part of known bit mask
+    KnownZero = KnownZero.trunc(BitWidth);
+    KnownOne = KnownOne.trunc(BitWidth);
+    break;
+  }
   case ISD::FrameIndex:
   case ISD::TargetFrameIndex:
     if (unsigned Align = InferPtrAlignment(Op)) {
@@ -2543,6 +2558,21 @@ unsigned SelectionDAG::ComputeNumSignBits(SDValue Op, unsigned Depth) const{
     // FIXME: it's tricky to do anything useful for this, but it is an important
     // case for targets like X86.
     break;
+  case ISD::EXTRACT_ELEMENT: {
+    const int KnownSign = ComputeNumSignBits(Op.getOperand(0), Depth+1);
+    const int BitWidth = Op.getValueType().getSizeInBits();
+    const int Items =
+      Op.getOperand(0).getValueType().getSizeInBits() / BitWidth;
+
+    // Get reverse index (starting from 1), Op1 value indexes elements from
+    // little end. Sign starts at big end.
+    const int rIndex = Items - 1 -
+      cast<ConstantSDNode>(Op.getOperand(1))->getZExtValue();
+
+    // If the sign portion ends in our element the substraction gives correct
+    // result. Otherwise it gives either negative or > bitwidth result
+    return std::max(std::min(KnownSign - rIndex * BitWidth, BitWidth), 0);
+  }
   }
 
   // If we are looking at the loaded value of the SDNode.
