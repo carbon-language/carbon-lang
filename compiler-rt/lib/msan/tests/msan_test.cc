@@ -568,7 +568,7 @@ TEST(MemorySanitizer, strerror) {
 TEST(MemorySanitizer, strerror_r) {
   errno = 0;
   char buf[1000];
-  char *res = strerror_r(EINVAL, buf, sizeof(buf));
+  char *res = (char*) (size_t) strerror_r(EINVAL, buf, sizeof(buf));
   ASSERT_EQ(0, errno);
   if (!res) res = buf; // POSIX version success.
   EXPECT_NOT_POISONED(strlen(res));
