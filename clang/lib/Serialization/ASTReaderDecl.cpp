@@ -2554,15 +2554,21 @@ static DeclContext *getPrimaryContextForMerging(DeclContext *DC) {
 }
 
 ASTDeclReader::FindExistingResult::~FindExistingResult() {
+  // Record that we had a typedef name for linkage whether or not we merge
+  // with that declaration.
+  if (TypedefNameForLinkage) {
+    DeclContext *DC = New->getDeclContext()->getRedeclContext();
+    Reader.ImportedTypedefNamesForLinkage.insert(
+        std::make_pair(std::make_pair(DC, TypedefNameForLinkage), New));
+    return;
+  }
+
   if (!AddResult || Existing)
     return;
 
   DeclarationName Name = New->getDeclName();
   DeclContext *DC = New->getDeclContext()->getRedeclContext();
-  if (TypedefNameForLinkage) {
-    Reader.ImportedTypedefNamesForLinkage.insert(
-        std::make_pair(std::make_pair(DC, TypedefNameForLinkage), New));
-  } else if (!Name) {
+  if (!Name) {
     assert(needsAnonymousDeclarationNumber(New));
     setAnonymousDeclForMerging(Reader, New->getLexicalDeclContext(),
                                AnonymousDeclNumber, New);
