@@ -1,6 +1,7 @@
 import locale
 import os
 import platform
+import pkgutil
 import re
 import shlex
 import sys
@@ -10,6 +11,34 @@ import lit.util  # pylint: disable=import-error,no-name-in-module
 
 from libcxx.test.format import LibcxxTestFormat
 from libcxx.compiler import CXXCompiler
+
+
+def loadSiteConfig(lit_config, config, param_name, env_name):
+    # We haven't loaded the site specific configuration (the user is
+    # probably trying to run on a test file directly, and either the site
+    # configuration hasn't been created by the build system, or we are in an
+    # out-of-tree build situation).
+    site_cfg = lit_config.params.get(param_name,
+                                     os.environ.get(env_name))
+    if not site_cfg:
+        lit_config.warning('No site specific configuration file found!'
+                           ' Running the tests in the default configuration.')
+    elif not os.path.isfile(site_cfg):
+        lit_config.fatal(
+            "Specified site configuration file does not exist: '%s'" %
+            site_cfg)
+    else:
+        lit_config.note('using site specific configuration at %s' % site_cfg)
+        ld_fn = lit_config.load_config
+
+        # Null out the load_config function so that lit.site.cfg doesn't
+        # recursively load a config even if it tries.
+        # TODO: This is one hell of a hack. Fix it.
+        def prevent_reload_fn(*args, **kwargs):
+            pass
+        lit_config.load_config = prevent_reload_fn
+        ld_fn(config, site_cfg)
+        lit_config.load_config = ld_fn
 
 
 class Configuration(object):
@@ -26,6 +55,7 @@ class Configuration(object):
         self.use_system_cxx_lib = False
         self.use_clang_verify = False
         self.long_tests = None
+        self.execute_external = False
 
         if platform.system() not in ('Darwin', 'FreeBSD', 'Linux'):
             self.lit_config.fatal("unrecognized system")
@@ -57,18 +87,21 @@ class Configuration(object):
         self.configure_cxx_library_root()
         self.configure_use_system_cxx_lib()
         self.configure_use_clang_verify()
+        self.configure_execute_external()
         self.configure_ccache()
         self.configure_env()
         self.configure_compile_flags()
         self.configure_link_flags()
         self.configure_sanitizer()
+        self.configure_substitutions()
         self.configure_features()
 
     def print_config_info(self):
         # Print the final compile and link flags.
         self.lit_config.note('Using compiler: %s' % self.cxx.path)
         self.lit_config.note('Using flags: %s' % self.cxx.flags)
-        self.lit_config.note('Using compile flags: %s' % self.cxx.compile_flags)
+        self.lit_config.note('Using compile flags: %s'
+                             % self.cxx.compile_flags)
         self.lit_config.note('Using link flags: %s' % self.cxx.link_flags)
         # Print as list to prevent "set([...])" from being printed.
         self.lit_config.note('Using available_features: %s' %
@@ -79,6 +112,7 @@ class Configuration(object):
         return LibcxxTestFormat(
             self.cxx,
             self.use_clang_verify,
+            self.execute_external,
             exec_env=self.env)
 
     def configure_cxx(self):
@@ -105,7 +139,6 @@ class Configuration(object):
             self.config.available_features.add(cxx_type)
             self.config.available_features.add('%s-%s.%s' % (
                 cxx_type, maj_v, min_v))
-
 
     def configure_src_root(self):
         self.libcxx_src_root = self.get_lit_conf(
@@ -139,6 +172,22 @@ class Configuration(object):
             self.use_clang_verify = False
             self.lit_config.note(
                 "inferred use_clang_verify as: %r" % self.use_clang_verify)
+
+    def configure_execute_external(self):
+        # Choose between lit's internal shell pipeline runner and a real shell.
+        # If LIT_USE_INTERNAL_SHELL is in the environment, we use that as the
+        # default value. Otherwise we default to internal on Windows and
+        # external elsewhere, as bash on Windows is usually very slow.
+        use_lit_shell_default = os.environ.get('LIT_USE_INTERNAL_SHELL')
+        if use_lit_shell_default is not None:
+            use_lit_shell_default = use_lit_shell_default != '0'
+        else:
+            use_lit_shell_default = sys.platform == 'win32'
+        # Check for the command line parameter using the default value if it is
+        # not present.
+        use_lit_shell = self.get_lit_bool('use_lit_shell',
+                                          use_lit_shell_default)
+        self.execute_external = not use_lit_shell
 
     def configure_ccache(self):
         use_ccache = self.get_lit_bool('use_ccache', False)
@@ -233,12 +282,12 @@ class Configuration(object):
             self.config.available_features.add('long_tests')
 
     def configure_compile_flags(self):
-      no_default_flags = self.get_lit_bool('no_default_flags', False)
-      if not no_default_flags:
-        self.configure_default_compile_flags()
-      # Configure extra flags
-      compile_flags_str = self.get_lit_conf('compile_flags', '')
-      self.cxx.compile_flags += shlex.split(compile_flags_str)
+        no_default_flags = self.get_lit_bool('no_default_flags', False)
+        if not no_default_flags:
+            self.configure_default_compile_flags()
+        # Configure extra flags
+        compile_flags_str = self.get_lit_conf('compile_flags', '')
+        self.cxx.compile_flags += shlex.split(compile_flags_str)
 
     def configure_default_compile_flags(self):
         # Try and get the std version from the command line. Fall back to
@@ -283,9 +332,10 @@ class Configuration(object):
             self.cxx.flags += ['-target', self.config.target_triple]
 
     def configure_compile_flags_header_includes(self):
-        self.cxx.compile_flags += ['-I' + self.libcxx_src_root + '/test/support']
-        libcxx_headers = self.get_lit_conf('libcxx_headers',
-                                           self.libcxx_src_root + '/include')
+        self.cxx.compile_flags += [
+            '-I' + os.path.join(self.libcxx_src_root, 'test/support')]
+        libcxx_headers = self.get_lit_conf(
+            'libcxx_headers', os.path.join(self.libcxx_src_root, 'include'))
         if not os.path.isdir(libcxx_headers):
             self.lit_config.fatal("libcxx_headers='%s' is not a directory."
                                   % libcxx_headers)
@@ -316,16 +366,16 @@ class Configuration(object):
     def configure_link_flags(self):
         no_default_flags = self.get_lit_bool('no_default_flags', False)
         if not no_default_flags:
-          self.cxx.link_flags += ['-nodefaultlibs']
+            self.cxx.link_flags += ['-nodefaultlibs']
 
-          # Configure library path
-          self.configure_link_flags_cxx_library_path()
-          self.configure_link_flags_abi_library_path()
+            # Configure library path
+            self.configure_link_flags_cxx_library_path()
+            self.configure_link_flags_abi_library_path()
 
-          # Configure libraries
-          self.configure_link_flags_cxx_library()
-          self.configure_link_flags_abi_library()
-          self.configure_extra_library_flags()
+            # Configure libraries
+            self.configure_link_flags_cxx_library()
+            self.configure_link_flags_abi_library()
+            self.configure_extra_library_flags()
 
         link_flags_str = self.get_lit_conf('link_flags', '')
         self.cxx.link_flags += shlex.split(link_flags_str)
@@ -425,7 +475,8 @@ class Configuration(object):
             elif san == 'Memory' or san == 'MemoryWithOrigins':
                 self.cxx.flags += ['-fsanitize=memory']
                 if san == 'MemoryWithOrigins':
-                    self.cxx.compile_flags += ['-fsanitize-memory-track-origins']
+                    self.cxx.compile_flags += [
+                        '-fsanitize-memory-track-origins']
                 if llvm_symbolizer is not None:
                     self.env['MSAN_SYMBOLIZER_PATH'] = llvm_symbolizer
                 self.config.available_features.add('msan')
@@ -441,6 +492,45 @@ class Configuration(object):
             else:
                 self.lit_config.fatal('unsupported value for '
                                       'use_sanitizer: {0}'.format(san))
+
+    def configure_substitutions(self):
+        sub = self.config.substitutions
+        # Configure compiler substitions
+        sub.append(('%cxx', self.cxx.path))
+        # Configure flags substitutions
+        flags_str = ' '.join(self.cxx.flags)
+        compile_flags_str = ' '.join(self.cxx.compile_flags)
+        link_flags_str = ' '.join(self.cxx.link_flags)
+        all_flags = '%s %s %s' % (flags_str, compile_flags_str, link_flags_str)
+        sub.append(('%flags', flags_str))
+        sub.append(('%compile_flags', compile_flags_str))
+        sub.append(('%link_flags', link_flags_str))
+        sub.append(('%all_flags', all_flags))
+        # Add compile and link shortcuts
+        compile_str = (self.cxx.path + ' -o %t.o %s -c ' + flags_str
+                       + compile_flags_str)
+        link_str = (self.cxx.path + ' -o %t.exe %t.o ' + flags_str
+                    + link_flags_str)
+        assert type(link_str) is str
+        build_str = self.cxx.path + ' -o %t.exe %s ' + all_flags
+        sub.append(('%compile', compile_str))
+        sub.append(('%link', link_str))
+        sub.append(('%build', build_str))
+        # Configure exec prefix substitutions.
+        exec_env_str = 'env ' if len(self.env) != 0 else ''
+        for k, v in self.env.items():
+            exec_env_str += ' %s=%s' % (k, v)
+        # Configure run env substitution.
+        exec_str = ''
+        if self.lit_config.useValgrind:
+            exec_str = ' '.join(self.lit_config.valgrindArgs) + exec_env_str
+        sub.append(('%exec', exec_str))
+        # Configure run shortcut
+        sub.append(('%run', exec_str + ' %t.exe'))
+        # Configure not program substitions
+        not_py = os.path.join(self.libcxx_src_root, 'utils', 'not', 'not.py')
+        not_str = '%s %s' % (sys.executable, not_py)
+        sub.append(('not', not_str))
 
     def configure_triple(self):
         # Get or infer the target triple.

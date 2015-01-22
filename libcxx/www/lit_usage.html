@@ -132,6 +132,16 @@ Note: This does not use the installed headers.
 </p>
 
 <p>
+<h3 class="lit-option">use_lit_shell=&lt;bool&gt;</h3>
+<blockquote class="lit-option-desc">
+Enable or disable the use of LIT's internal shell in ShTests. If the enviroment
+variable <code>LIT_USE_INTERNAL_SHELL</code> is present then that is used as the
+default value. Otherwise the default value is <code>True</code> on Windows and
+<code>False</code> on every other platform.
+</blockquote>
+</p>
+
+<p>
 <h3 class="lit-option">no_default_flags=&lt;bool&gt;</h3>
 <blockquote class="lit-option-desc">
 <b>Default: </b><code>False</code></br>

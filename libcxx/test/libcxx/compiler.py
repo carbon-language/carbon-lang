@@ -1,13 +1,15 @@
-
+import os
 import lit.util
+import libcxx.util
 
 
 class CXXCompiler(object):
-    def __init__(self, path, flags=[], compile_flags=[], link_flags=[], use_ccache=False):
+    def __init__(self, path, flags=None, compile_flags=None, link_flags=None,
+                 use_ccache=False):
         self.path = path
-        self.flags = list(flags)
-        self.compile_flags = list(compile_flags)
-        self.link_flags = list(link_flags)
+        self.flags = list(flags or [])
+        self.compile_flags = list(compile_flags or [])
+        self.link_flags = list(link_flags or [])
         self.use_ccache = use_ccache
         self.type = None
         self.version = None
@@ -36,66 +38,85 @@ class CXXCompiler(object):
         self.type = compiler_type
         self.version = (major_ver, minor_ver, patchlevel)
 
-    def _basicCmd(self, infiles, out, is_link=False):
+    def _basicCmd(self, source_files, out, is_link=False):
         cmd = []
         if self.use_ccache and not is_link:
             cmd += ['ccache']
         cmd += [self.path]
         if out is not None:
             cmd += ['-o', out]
-        if isinstance(infiles, list):
-            cmd += infiles
-        elif isinstance(infiles, str):
-            cmd += [infiles]
+        if isinstance(source_files, list):
+            cmd += source_files
+        elif isinstance(source_files, str):
+            cmd += [source_files]
         else:
-            raise TypeError('infiles must be a string or list')
+            raise TypeError('source_files must be a string or list')
         return cmd
 
-    def preprocessCmd(self, infiles, out=None, flags=[]):
-        cmd = self._basicCmd(infiles, out) + ['-x', 'c++', '-E']
+    def preprocessCmd(self, source_files, out=None, flags=[]):
+        cmd = self._basicCmd(source_files, out) + ['-x', 'c++', '-E']
         cmd += self.flags + self.compile_flags + flags
         return cmd
 
-    def compileCmd(self, infiles, out=None, flags=[]):
-        cmd = self._basicCmd(infiles, out) + ['-x', 'c++', '-c']
+    def compileCmd(self, source_files, out=None, flags=[]):
+        cmd = self._basicCmd(source_files, out) + ['-x', 'c++', '-c']
         cmd += self.flags + self.compile_flags + flags
         return cmd
 
-    def linkCmd(self, infiles, out=None, flags=[]):
-        cmd = self._basicCmd(infiles, out, is_link=True)
+    def linkCmd(self, source_files, out=None, flags=[]):
+        cmd = self._basicCmd(source_files, out, is_link=True)
         cmd += self.flags + self.link_flags + flags
         return cmd
 
-    def compileLinkCmd(self, infiles, out=None, flags=[]):
-        cmd = self._basicCmd(infiles, out, is_link=True) + ['-x', 'c++']
+    def compileLinkCmd(self, source_files, out=None, flags=[]):
+        cmd = self._basicCmd(source_files, out, is_link=True) + ['-x', 'c++']
         cmd += self.flags + self.compile_flags + self.link_flags + flags
         return cmd
 
-    def preprocess(self, infiles, out=None, flags=[], env=None, cwd=None):
-        cmd = self.preprocessCmd(infiles, out, flags)
+    def preprocess(self, source_files, out=None, flags=[], env=None, cwd=None):
+        cmd = self.preprocessCmd(source_files, out, flags)
         out, err, rc = lit.util.executeCommand(cmd, env=env, cwd=cwd)
         return cmd, out, err, rc
 
-    def compile(self, infiles, out=None, flags=[], env=None, cwd=None):
-        cmd = self.compileCmd(infiles, out, flags)
+    def compile(self, source_files, out=None, flags=[], env=None, cwd=None):
+        cmd = self.compileCmd(source_files, out, flags)
         out, err, rc = lit.util.executeCommand(cmd, env=env, cwd=cwd)
         return cmd, out, err, rc
 
-    def link(self, infiles, out=None, flags=[], env=None, cwd=None):
-        cmd = self.linkCmd(infiles, out, flags)
+    def link(self, source_files, out=None, flags=[], env=None, cwd=None):
+        cmd = self.linkCmd(source_files, out, flags)
         out, err, rc = lit.util.executeCommand(cmd, env=env, cwd=cwd)
         return cmd, out, err, rc
 
-    def compileLink(self, infiles, out=None, flags=[], env=None, cwd=None):
-        cmd = self.compileLinkCmd(infiles, out, flags)
+    def compileLink(self, source_files, out=None, flags=[], env=None,
+                    cwd=None):
+        cmd = self.compileLinkCmd(source_files, out, flags)
         out, err, rc = lit.util.executeCommand(cmd, env=env, cwd=cwd)
         return cmd, out, err, rc
 
-    def dumpMacros(self, infiles=None, flags=[], env=None, cwd=None):
-        if infiles is None:
-            infiles = '/dev/null'
+    def compileLinkTwoSteps(self, source_file, out=None, object_file=None,
+                            flags=[], env=None, cwd=None):
+        if not isinstance(source_file, str):
+            raise TypeError('This function only accepts a single input file')
+        if object_file is None:
+            # Create, use and delete a temporary object file if none is given.
+            with_fn = lambda: libcxx.util.guardedTempFilename(suffix='.o')
+        else:
+            # Otherwise wrap the filename in a context manager function.
+            with_fn = lambda: libcxx.util.nullContext(object_file)
+        with with_fn() as object_file:
+            cmd, output, err, rc = self.compile(source_file, object_file,
+                                                flags=flags, env=env, cwd=cwd)
+            if rc != 0:
+                return cmd, output, err, rc
+            return self.link(object_file, out=out, flags=flags, env=env,
+                             cwd=cwd)
+
+    def dumpMacros(self, source_files=None, flags=[], env=None, cwd=None):
+        if source_files is None:
+            source_files = os.devnull
         flags = ['-dM'] + flags
-        cmd, out, err, rc = self.preprocess(infiles, flags=flags, env=env,
+        cmd, out, err, rc = self.preprocess(source_files, flags=flags, env=env,
                                             cwd=cwd)
         if rc != 0:
             return None

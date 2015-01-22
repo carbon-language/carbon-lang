@@ -1,12 +1,15 @@
 import errno
 import os
-import tempfile
 import time
 
-import lit.formats  # pylint: disable=import-error
+import lit.Test        # pylint: disable=import-error
+import lit.TestRunner  # pylint: disable=import-error
+import lit.util        # pylint: disable=import-error
+
+import libcxx.util
 
 
-class LibcxxTestFormat(lit.formats.FileBasedTest):
+class LibcxxTestFormat(object):
     """
     Custom test format handler for use with the test format use by libc++.
 
@@ -14,12 +17,30 @@ class LibcxxTestFormat(lit.formats.FileBasedTest):
       FOO.pass.cpp - Executable test which should compile, run, and exit with
                      code 0.
       FOO.fail.cpp - Negative test case which is expected to fail compilation.
+      FOO.sh.cpp   - A test that uses LIT's ShTest format.
     """
 
-    def __init__(self, cxx, use_verify_for_fail, exec_env):
+    def __init__(self, cxx, use_verify_for_fail, execute_external, exec_env):
         self.cxx = cxx
         self.use_verify_for_fail = use_verify_for_fail
+        self.execute_external = execute_external
         self.exec_env = dict(exec_env)
+
+    # TODO: Move this into lit's FileBasedTest
+    def getTestsInDirectory(self, testSuite, path_in_suite,
+                            litConfig, localConfig):
+        source_path = testSuite.getSourcePath(path_in_suite)
+        for filename in os.listdir(source_path):
+            # Ignore dot files and excluded tests.
+            if filename.startswith('.') or filename in localConfig.excludes:
+                continue
+
+            filepath = os.path.join(source_path, filename)
+            if not os.path.isdir(filepath):
+                if any([filename.endswith(ext)
+                        for ext in localConfig.suffixes]):
+                    yield lit.Test.Test(testSuite, path_in_suite + (filename,),
+                                        localConfig)
 
     def execute(self, test, lit_config):
         while True:
@@ -31,154 +52,94 @@ class LibcxxTestFormat(lit.formats.FileBasedTest):
                 time.sleep(0.1)
 
     def _execute(self, test, lit_config):
-        # Extract test metadata from the test file.
-        requires = []
-        unsupported = []
-        use_verify = False
-        with open(test.getSourcePath()) as f:
-            for ln in f:
-                if 'XFAIL:' in ln:
-                    items = ln[ln.index('XFAIL:') + 6:].split(',')
-                    test.xfails.extend([s.strip() for s in items])
-                elif 'REQUIRES:' in ln:
-                    items = ln[ln.index('REQUIRES:') + 9:].split(',')
-                    requires.extend([s.strip() for s in items])
-                elif 'UNSUPPORTED:' in ln:
-                    items = ln[ln.index('UNSUPPORTED:') + 12:].split(',')
-                    unsupported.extend([s.strip() for s in items])
-                elif 'USE_VERIFY' in ln and self.use_verify_for_fail:
-                    use_verify = True
-                elif not ln.strip().startswith("//") and ln.strip():
-                    # Stop at the first non-empty line that is not a C++
-                    # comment.
-                    break
+        name = test.path_in_suite[-1]
+        is_sh_test = name.endswith('.sh.cpp')
+        is_pass_test = name.endswith('.pass.cpp')
+        is_fail_test = name.endswith('.fail.cpp')
 
-        # Check that we have the required features.
-        #
-        # FIXME: For now, this is cribbed from lit.TestRunner, to avoid
-        # introducing a dependency there. What we more ideally would like to do
-        # is lift the "requires" handling to be a core lit framework feature.
-        missing_required_features = [
-            f for f in requires
-            if f not in test.config.available_features
-        ]
-        if missing_required_features:
-            return (lit.Test.UNSUPPORTED,
-                    "Test requires the following features: %s" % (
-                        ', '.join(missing_required_features),))
+        res = lit.TestRunner.parseIntegratedTestScript(
+            test, require_script=is_sh_test)
+        # Check if a result for the test was returned. If so return that
+        # result.
+        if isinstance(res, lit.Test.Result):
+            return res
+        if lit_config.noExecute:
+            return lit.Test.Result(lit.Test.PASS)
+        # res is not an instance of lit.test.Result. Expand res into its parts.
+        script, tmpBase, execDir = res
+        # Check that we don't have run lines on tests that don't support them.
+        if not is_sh_test and len(script) != 0:
+            lit_config.fatal('Unsupported RUN line found in test %s' % name)
 
-        unsupported_features = [f for f in unsupported
-                                if f in test.config.available_features]
-        if unsupported_features:
-            return (lit.Test.UNSUPPORTED,
-                    "Test is unsupported with the following features: %s" % (
-                        ', '.join(unsupported_features),))
-
-        # Evaluate the test.
-        return self._evaluate_test(test, use_verify, lit_config)
-
-    def _make_report(self, cmd, out, err, rc):  # pylint: disable=no-self-use
-        report = "Command: %s\n" % cmd
-        report += "Exit Code: %d\n" % rc
-        if out:
-            report += "Standard Output:\n--\n%s--\n" % out
-        if err:
-            report += "Standard Error:\n--\n%s--\n" % err
-        report += '\n'
-        return cmd, report, rc
-
-    def _compile(self, output_path, source_path, use_verify=False):
-        extra_flags = []
-        if use_verify:
-            extra_flags += ['-Xclang', '-verify']
-        return self.cxx.compile(source_path, out=output_path, flags=extra_flags)
-
-    def _link(self, exec_path, object_path):
-        return self.cxx.link(object_path, out=exec_path)
-
-    def _compile_and_link(self, exec_path, source_path):
-        object_file = tempfile.NamedTemporaryFile(suffix=".o", delete=False)
-        object_path = object_file.name
-        object_file.close()
-        try:
-            cmd, out, err, rc = self.cxx.compile(source_path, out=object_path)
-            if rc != 0:
-                return cmd, out, err, rc
-            return self.cxx.link(object_path, out=exec_path)
-        finally:
-            try:
-                os.remove(object_path)
-            except OSError:
-                pass
-
-    def _build(self, exec_path, source_path, compile_only=False,
-               use_verify=False):
-        if compile_only:
-            cmd, out, err, rc = self._compile(exec_path, source_path,
-                                              use_verify)
+        # Dispatch the test based on its suffix.
+        if is_sh_test:
+            return lit.TestRunner._runShTest(test, lit_config,
+                                             self.execute_external, script,
+                                             tmpBase, execDir)
+        elif is_fail_test:
+            return self._evaluate_fail_test(test)
+        elif is_pass_test:
+            return self._evaluate_pass_test(test, tmpBase, execDir, lit_config)
         else:
-            assert not use_verify
-            cmd, out, err, rc = self._compile_and_link(exec_path, source_path)
-        return self._make_report(cmd, out, err, rc)
+            # No other test type is supported
+            assert False
 
     def _clean(self, exec_path):  # pylint: disable=no-self-use
-        try:
-            os.remove(exec_path)
-        except OSError:
-            pass
+        libcxx.util.cleanFile(exec_path)
 
-    def _run(self, exec_path, lit_config, in_dir=None):
-        cmd = []
-        if self.exec_env:
-            cmd.append('env')
-            cmd.extend('%s=%s' % (name, value)
-                       for name, value in self.exec_env.items())
-        cmd.append(exec_path)
-        if lit_config.useValgrind:
-            cmd = lit_config.valgrindArgs + cmd
-        out, err, rc = lit.util.executeCommand(cmd, cwd=in_dir)
-        return self._make_report(cmd, out, err, rc)
-
-    def _evaluate_test(self, test, use_verify, lit_config):
-        name = test.path_in_suite[-1]
+    def _evaluate_pass_test(self, test, tmpBase, execDir, lit_config):
         source_path = test.getSourcePath()
-        source_dir = os.path.dirname(source_path)
+        exec_path = tmpBase + '.exe'
+        object_path = tmpBase + '.o'
+        # Create the output directory if it does not already exist.
+        lit.util.mkdir_p(os.path.dirname(tmpBase))
+        try:
+            # Compile the test
+            cmd, out, err, rc = self.cxx.compileLinkTwoSteps(
+                source_path, out=exec_path, object_file=object_path,
+                cwd=execDir)
+            compile_cmd = cmd
+            if rc != 0:
+                report = libcxx.util.makeReport(cmd, out, err, rc)
+                report += "Compilation failed unexpectedly!"
+                return lit.Test.FAIL, report
+            # Run the test
+            cmd = []
+            if self.exec_env:
+                cmd += ['env']
+                cmd += ['%s=%s' % (k, v) for k, v in self.exec_env.items()]
+            if lit_config.useValgrind:
+                cmd = lit_config.valgrindArgs + cmd
+            cmd += [exec_path]
+            out, err, rc = lit.util.executeCommand(
+                cmd, cwd=os.path.dirname(source_path))
+            if rc != 0:
+                report = libcxx.util.makeReport(cmd, out, err, rc)
+                report = "Compiled With: %s\n%s" % (compile_cmd, report)
+                report += "Compiled test failed unexpectedly!"
+                return lit.Test.FAIL, report
+            return lit.Test.PASS, ''
+        finally:
+            # Note that cleanup of exec_file happens in `_clean()`. If you
+            # override this, cleanup is your reponsibility.
+            libcxx.util.cleanFile(object_path)
+            self._clean(exec_path)
 
-        # Check what kind of test this is.
-        assert name.endswith('.pass.cpp') or name.endswith('.fail.cpp')
-        expected_compile_fail = name.endswith('.fail.cpp')
-
-        # If this is a compile (failure) test, build it and check for failure.
-        if expected_compile_fail:
-            cmd, report, rc = self._build('/dev/null', source_path,
-                                          compile_only=True,
-                                          use_verify=use_verify)
-            expected_rc = 0 if use_verify else 1
-            if rc == expected_rc:
-                return lit.Test.PASS, ""
-            else:
-                return (lit.Test.FAIL,
-                        report + 'Expected compilation to fail!\n')
+    def _evaluate_fail_test(self, test):
+        source_path = test.getSourcePath()
+        # TODO: Move the checking of USE_VERIFY into
+        # lit.TestRunner.parseIntegratedTestScript by adding support for custom
+        # tags.
+        with open(source_path, 'r') as f:
+            contents = f.read()
+        use_verify = 'USE_VERIFY' in contents and self.use_verify_for_fail
+        extra_flags = ['-Xclang', '-verify'] if use_verify else []
+        cmd, out, err, rc = self.cxx.compile(source_path, out=os.devnull,
+                                             flags=extra_flags)
+        expected_rc = 0 if use_verify else 1
+        if rc == expected_rc:
+            return lit.Test.PASS, ''
         else:
-            exec_file = tempfile.NamedTemporaryFile(suffix="exe", delete=False)
-            exec_path = exec_file.name
-            exec_file.close()
-
-            try:
-                cmd, report, rc = self._build(exec_path, source_path)
-                compile_cmd = cmd
-                if rc != 0:
-                    report += "Compilation failed unexpectedly!"
-                    return lit.Test.FAIL, report
-
-                cmd, report, rc = self._run(exec_path, lit_config,
-                                            source_dir)
-                if rc != 0:
-                    report = "Compiled With: %s\n%s" % (compile_cmd, report)
-                    report += "Compiled test failed unexpectedly!"
-                    return lit.Test.FAIL, report
-            finally:
-                # Note that cleanup of exec_file happens in `_clean()`. If you
-                # override this, cleanup is your reponsibility.
-                self._clean(exec_path)
-        return lit.Test.PASS, ""
+            report = libcxx.util.makeReport(cmd, out, err, rc)
+            return (lit.Test.FAIL,
+                    report + 'Expected compilation to fail!\n')
