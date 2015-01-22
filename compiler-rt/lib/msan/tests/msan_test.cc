@@ -60,6 +60,7 @@
 # include <netinet/ether.h>
 #else
 # include <netinet/in.h>
+# include <sys/uio.h>
 #endif
 
 #if defined(__i386__) || defined(__x86_64__)
@@ -623,7 +624,7 @@ TEST(MemorySanitizer, readv) {
   ASSERT_GT(fd, 0);
   int sz = readv(fd, iov, 2);
   ASSERT_GE(sz, 0);
-  ASSERT_LT(sz, 5 + 2000);
+  ASSERT_LE(sz, 5 + 2000);
   ASSERT_GT((size_t)sz, iov[0].iov_len);
   EXPECT_POISONED(buf[0]);
   EXPECT_NOT_POISONED(buf[1]);
@@ -647,7 +648,7 @@ TEST(MemorySanitizer, preadv) {
   ASSERT_GT(fd, 0);
   int sz = preadv(fd, iov, 2, 3);
   ASSERT_GE(sz, 0);
-  ASSERT_LT(sz, 5 + 2000);
+  ASSERT_LE(sz, 5 + 2000);
   ASSERT_GT((size_t)sz, iov[0].iov_len);
   EXPECT_POISONED(buf[0]);
   EXPECT_NOT_POISONED(buf[1]);
