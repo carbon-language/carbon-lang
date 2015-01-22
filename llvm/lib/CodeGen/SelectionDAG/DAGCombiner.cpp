@@ -11490,7 +11490,7 @@ SDValue DAGCombiner::visitVECTOR_SHUFFLE(SDNode *N) {
   }
 
   // If it is a splat, check if the argument vector is another splat or a
-  // build_vector.
+  // build_vector with all scalar elements the same.
   if (SVN->isSplat() && SVN->getSplatIndex() < (int)NumElts) {
     SDNode *V = N0.getNode();
 
@@ -11527,24 +11527,6 @@ SDValue DAGCombiner::visitVECTOR_SHUFFLE(SDNode *N) {
       // Splat of <x, x, x, x>, return <x, x, x, x>
       if (AllSame)
         return N0;
-
-      // If the splatted element is a constant, just build the vector out of
-      // constants directly.
-      const SDValue &Splatted = V->getOperand(SVN->getSplatIndex());
-      if (isa<ConstantSDNode>(Splatted) || isa<ConstantFPSDNode>(Splatted)) {
-        SmallVector<SDValue, 8> Ops;
-        for (unsigned i = 0; i != NumElts; ++i) {
-          Ops.push_back(Splatted);
-        }
-        SDValue &NewBV = DAG.getNode(ISD::BUILD_VECTOR, SDLoc(N),
-          V->getValueType(0), Ops);
-
-        // We may have jumped through bitcasts, so the type of the
-        // BUILD_VECTOR may not match the type of the shuffle.
-        if (V->getValueType(0) != VT)
-           NewBV = DAG.getNode(ISD::BITCAST, SDLoc(N), VT, NewBV);
-        return NewBV;
-      }
     }
   }
 
