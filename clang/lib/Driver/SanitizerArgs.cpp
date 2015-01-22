@@ -120,9 +120,11 @@ static unsigned getToolchainUnsupportedKinds(const ToolChain &TC) {
   bool IsLinux = TC.getTriple().getOS() == llvm::Triple::Linux;
   bool IsX86 = TC.getTriple().getArch() == llvm::Triple::x86;
   bool IsX86_64 = TC.getTriple().getArch() == llvm::Triple::x86_64;
+  bool IsMIPS64 = TC.getTriple().getArch() == llvm::Triple::mips64 ||
+                  TC.getTriple().getArch() == llvm::Triple::mips64el;
 
   unsigned Unsupported = 0;
-  if (!(IsLinux && IsX86_64)) {
+  if (!(IsLinux && (IsX86_64 || IsMIPS64))) {
     Unsupported |= Memory | DataFlow;
   }
   if (!((IsLinux || IsFreeBSD) && IsX86_64)) {
