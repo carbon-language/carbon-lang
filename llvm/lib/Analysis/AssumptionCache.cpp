@@ -18,6 +18,7 @@
 #include "llvm/IR/Function.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/IntrinsicInst.h"
+#include "llvm/IR/PassManager.h"
 #include "llvm/IR/PatternMatch.h"
 #include "llvm/Support/Debug.h"
 using namespace llvm;
@@ -71,6 +72,20 @@ void AssumptionCache::registerAssumption(CallInst *CI) {
            "Cache contains multiple copies of a call!");
   }
 #endif
+}
+
+char AssumptionAnalysis::PassID;
+
+PreservedAnalyses AssumptionPrinterPass::run(Function &F,
+                                             AnalysisManager<Function> *AM) {
+  AssumptionCache &AC = AM->getResult<AssumptionAnalysis>(F);
+
+  OS << "Cached assumptions for function: " << F.getName() << "\n";
+  for (auto &VH : AC.assumptions())
+    if (VH)
+      OS << "  " << *cast<CallInst>(VH)->getArgOperand(0) << "\n";
+
+  return PreservedAnalyses::all();
 }
 
 void AssumptionCacheTracker::FunctionCallbackVH::deleted() {
