@@ -82,8 +82,8 @@ define void @shuf5(<8 x i8>* %p) nounwind {
 ; CHECK-LABEL: shuf5:
 ; CHECK:       # BB#0:
 ; CHECK-NEXT:    movl {{[0-9]+}}(%esp), %eax
-; CHECK-NEXT:    movdqa {{.*#+}} xmm0 = <4,33,u,u,u,u,u,u>
-; CHECK-NEXT:    pshufb {{.*#+}} xmm0 = xmm0[2,2,4,6,8,10,12,14,u,u,u,u,u,u,u,u]
+; CHECK-NEXT:    movdqa {{.*#+}} xmm0 = [33,33,33,33,33,33,33,33]
+; CHECK-NEXT:    pshufb {{.*#+}} xmm0 = xmm0[0,2,4,6,8,10,12,14,u,u,u,u,u,u,u,u]
 ; CHECK-NEXT:    movlpd %xmm0, (%eax)
 ; CHECK-NEXT:    retl
   %v = shufflevector <2 x i8> <i8 4, i8 33>, <2 x i8> undef, <8 x i32> <i32 1, i32 1, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
