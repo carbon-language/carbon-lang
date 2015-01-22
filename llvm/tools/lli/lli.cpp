@@ -556,7 +556,7 @@ int main(int argc, char **argv, char * const *envp) {
   // If the user specifically requested an argv[0] to pass into the program,
   // do it now.
   if (!FakeArgv0.empty()) {
-    InputFile = FakeArgv0;
+    InputFile = static_cast<std::string>(FakeArgv0);
   } else {
     // Otherwise, if there is a .bc suffix on the executable strip it off, it
     // might confuse the program.

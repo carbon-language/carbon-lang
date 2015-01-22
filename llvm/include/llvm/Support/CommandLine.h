@@ -1180,6 +1180,10 @@ public:
     return this->getValue();
   }
 
+  // Command line options should not be copyable
+  opt(const opt &) LLVM_DELETED_FUNCTION;
+  opt &operator=(const opt &) LLVM_DELETED_FUNCTION;
+
   // One option...
   template <class M0t>
   explicit opt(const M0t &M0)
@@ -1373,6 +1377,10 @@ public:
   }
 
   void setNumAdditionalVals(unsigned n) { Option::setNumAdditionalVals(n); }
+
+  // Command line options should not be copyable
+  list(const list &) LLVM_DELETED_FUNCTION;
+  list &operator=(const list &) LLVM_DELETED_FUNCTION;
 
   // One option...
   template <class M0t>
@@ -1592,6 +1600,10 @@ public:
     return Positions[optnum];
   }
 
+  // Command line options should not be copyable
+  bits(const bits &) LLVM_DELETED_FUNCTION;
+  bits &operator=(const bits &) LLVM_DELETED_FUNCTION;
+
   // One option...
   template <class M0t>
   explicit bits(const M0t &M0)
@@ -1724,6 +1736,10 @@ public:
       error("cl::alias must only have one cl::aliasopt(...) specified!");
     AliasFor = &O;
   }
+
+  // Command line options should not be copyable
+  alias(const alias &) LLVM_DELETED_FUNCTION;
+  alias &operator=(const alias &) LLVM_DELETED_FUNCTION;
 
   // One option...
   template <class M0t>

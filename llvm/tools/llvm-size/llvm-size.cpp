@@ -709,7 +709,7 @@ int main(int argc, char **argv) {
 
   ToolName = argv[0];
   if (OutputFormatShort.getNumOccurrences())
-    OutputFormat = OutputFormatShort;
+    OutputFormat = static_cast<OutputFormatTy>(OutputFormatShort);
   if (RadixShort.getNumOccurrences())
     Radix = RadixShort;
 
