@@ -1661,6 +1661,20 @@ void AMDGPUTargetLowering::LowerUDIVREM64(SDValue Op,
   SDValue RHS_Lo = DAG.getNode(ISD::EXTRACT_ELEMENT, DL, HalfVT, RHS, zero);
   SDValue RHS_Hi = DAG.getNode(ISD::EXTRACT_ELEMENT, DL, HalfVT, RHS, one);
 
+  if (VT == MVT::i64 &&
+    DAG.MaskedValueIsZero(RHS, APInt::getHighBitsSet(64, 32)) &&
+    DAG.MaskedValueIsZero(LHS, APInt::getHighBitsSet(64, 32))) {
+
+    SDValue Res = DAG.getNode(ISD::UDIVREM, DL, DAG.getVTList(HalfVT, HalfVT),
+                              LHS_Lo, RHS_Lo);
+
+    SDValue DIV = DAG.getNode(ISD::BUILD_PAIR, DL, VT, Res.getValue(0), zero);
+    SDValue REM = DAG.getNode(ISD::BUILD_PAIR, DL, VT, Res.getValue(1), zero);
+    Results.push_back(DIV);
+    Results.push_back(REM);
+    return;
+  }
+
   // Get Speculative values
   SDValue DIV_Part = DAG.getNode(ISD::UDIV, DL, HalfVT, LHS_Hi, RHS_Lo);
   SDValue REM_Part = DAG.getNode(ISD::UREM, DL, HalfVT, LHS_Hi, RHS_Lo);
@@ -1722,8 +1736,8 @@ SDValue AMDGPUTargetLowering::LowerUDIVREM(SDValue Op,
   SDValue Den = Op.getOperand(1);
 
   if (VT == MVT::i32) {
-    if (DAG.MaskedValueIsZero(Op.getOperand(0), APInt(32, 0xff << 24)) &&
-        DAG.MaskedValueIsZero(Op.getOperand(1), APInt(32, 0xff << 24))) {
+    if (DAG.MaskedValueIsZero(Num, APInt::getHighBitsSet(32, 8)) &&
+        DAG.MaskedValueIsZero(Den, APInt::getHighBitsSet(32, 8))) {
       // TODO: We technically could do this for i64, but shouldn't that just be
       // handled by something generally reducing 64-bit division on 32-bit
       // values to 32-bit?
@@ -1835,18 +1849,30 @@ SDValue AMDGPUTargetLowering::LowerSDIVREM(SDValue Op,
   SDValue LHS = Op.getOperand(0);
   SDValue RHS = Op.getOperand(1);
 
-  if (VT == MVT::i32) {
-    if (DAG.ComputeNumSignBits(Op.getOperand(0)) > 8 &&
-        DAG.ComputeNumSignBits(Op.getOperand(1)) > 8) {
-      // TODO: We technically could do this for i64, but shouldn't that just be
-      // handled by something generally reducing 64-bit division on 32-bit
-      // values to 32-bit?
-      return LowerDIVREM24(Op, DAG, true);
-    }
-  }
-
   SDValue Zero = DAG.getConstant(0, VT);
   SDValue NegOne = DAG.getConstant(-1, VT);
+
+  if (VT == MVT::i32 &&
+      DAG.ComputeNumSignBits(LHS) > 8 &&
+      DAG.ComputeNumSignBits(RHS) > 8) {
+    return LowerDIVREM24(Op, DAG, true);
+  }
+  if (VT == MVT::i64 &&
+      DAG.ComputeNumSignBits(LHS) > 32 &&
+      DAG.ComputeNumSignBits(RHS) > 32) {
+    EVT HalfVT = VT.getHalfSizedIntegerVT(*DAG.getContext());
+
+    //HiLo split
+    SDValue LHS_Lo = DAG.getNode(ISD::EXTRACT_ELEMENT, DL, HalfVT, LHS, Zero);
+    SDValue RHS_Lo = DAG.getNode(ISD::EXTRACT_ELEMENT, DL, HalfVT, RHS, Zero);
+    SDValue DIVREM = DAG.getNode(ISD::SDIVREM, DL, DAG.getVTList(HalfVT, HalfVT),
+                                 LHS_Lo, RHS_Lo);
+    SDValue Res[2] = {
+      DAG.getNode(ISD::SIGN_EXTEND, DL, VT, DIVREM.getValue(0)),
+      DAG.getNode(ISD::SIGN_EXTEND, DL, VT, DIVREM.getValue(1))
+    };
+    return DAG.getMergeValues(Res, DL);
+  }
 
   SDValue LHSign = DAG.getSelectCC(DL, LHS, Zero, NegOne, Zero, ISD::SETLT);
   SDValue RHSign = DAG.getSelectCC(DL, RHS, Zero, NegOne, Zero, ISD::SETLT);
