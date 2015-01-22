@@ -44,6 +44,8 @@
 
 #if SANITIZER_FREEBSD
 #define pthread_setname_np pthread_set_name_np
+#define inet_aton __inet_aton
+#define inet_pton __inet_pton
 #endif
 
 #ifndef COMMON_INTERCEPTOR_INITIALIZE_RANGE
