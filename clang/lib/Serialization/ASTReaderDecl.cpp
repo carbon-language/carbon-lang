@@ -1457,9 +1457,13 @@ void ASTDeclReader::ReadCXXRecordDefinition(CXXRecordDecl *D) {
 
   ReadCXXDefinitionData(*DD, Record, Idx);
 
-  // If we're reading an update record, we might already have a definition for
-  // this record. If so, just merge into it.
-  if (D->DefinitionData.getNotUpdated()) {
+  // We might already have a definition for this record. This can happen either
+  // because we're reading an update record, or because we've already done some
+  // merging. Either way, just merge into it.
+  if (auto *CanonDD = D->DefinitionData.getNotUpdated()) {
+    if (CanonDD->Definition != DD->Definition)
+      Reader.MergedDeclContexts.insert(
+          std::make_pair(DD->Definition, CanonDD->Definition));
     MergeDefinitionData(D, *DD);
     return;
   }
