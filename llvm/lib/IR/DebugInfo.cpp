@@ -162,6 +162,14 @@ uint64_t DIExpression::getPieceSize() const {
   return getElement(getNumElements()-1);
 }
 
+DIExpressionIterator DIExpression::begin() const {
+  return DIExpressionIterator(*this);
+}
+
+DIExpressionIterator DIExpression::end() const {
+  return DIExpressionIterator();
+}
+
 //===----------------------------------------------------------------------===//
 // Predicates
 //===----------------------------------------------------------------------===//
@@ -595,25 +603,25 @@ bool DIExpression::Verify() const {
   if (!DbgNode)
     return true;
 
-  unsigned N = getNumElements();
-  for (unsigned I = 0; I < N; ++I)
-    switch (getElement(I)) {
+  if (!(isExpression() && DbgNode->getNumOperands() == 1))
+    return false;
+
+  for (auto E = end(), I = begin(); I != E; ++I)
+    switch (*I) {
     case DW_OP_piece:
-      // DW_OP_piece has to be the last element in the expression and take two
-      // arguments.
-      if (getElement(I) == DW_OP_piece && !isVariablePiece())
-        return false;
-      I += 2;
-      break;
+      // Must be the last element of the expression.
+      return std::distance(I.getBase(), DIHeaderFieldIterator()) == 3;
     case DW_OP_plus:
-      // Takes one argument.
-      if (I+1 == N)
+      if (std::distance(I.getBase(), DIHeaderFieldIterator()) < 2)
         return false;
-      I += 1;
       break;
-    default: break;
-  }
-  return isExpression() && DbgNode->getNumOperands() == 1;
+    case DW_OP_deref:
+      break;
+    default:
+      // Other operators are not yet supported by the backend.
+      return false;
+    }
+  return true;
 }
 
 bool DILocation::Verify() const {
