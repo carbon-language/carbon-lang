@@ -9497,7 +9497,7 @@ SDValue DAGCombiner::ReduceLoadOpStoreWidth(SDNode *N) {
     unsigned MSB = BitWidth - Imm.countLeadingZeros() - 1;
     unsigned NewBW = NextPowerOf2(MSB - ShAmt);
     EVT NewVT = EVT::getIntegerVT(*DAG.getContext(), NewBW);
-    // The narowwing should be profitable, the load/store operation should be
+    // The narrowwing should be profitable, the load/store operation should be
     // legal (or custom) and the store size should be equal to the NewVT width.
     while (NewBW < BitWidth &&
            (NewVT.getStoreSizeInBits() != NewBW ||
