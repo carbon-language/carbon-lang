@@ -26,4 +26,8 @@ eh.resume:
 
 ; CHECK-LABEL: main:
 ; CHECK: .seh_handlerdata
-; CHECK: .long
+; CHECK-NEXT: .long 1
+; CHECK-NEXT: .Ltmp{{[0-9]+}}@IMGREL
+; CHECK-NEXT: .Ltmp{{[0-9]+}}@IMGREL+1
+; CHECK-NEXT: 1
+; CHECK-NEXT: .Ltmp{{[0-9]+}}@IMGREL
