@@ -8740,8 +8740,8 @@ public:
 
   /// \brief To be used for checking whether the arguments being passed to
   /// function exceeds the number of parameters expected for it.
-  bool TooManyArguments(size_t NumParams, size_t NumArgs,
-                        bool PartialOverloading = false) const {
+  static bool TooManyArguments(size_t NumParams, size_t NumArgs,
+                               bool PartialOverloading = false) {
     // We check whether we're just after a comma in code-completion.
     if (NumArgs > 0 && PartialOverloading)
       return NumArgs + 1 > NumParams; // If so, we view as an extra argument.
