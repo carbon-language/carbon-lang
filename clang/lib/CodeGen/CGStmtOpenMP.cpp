@@ -500,6 +500,89 @@ void CodeGenFunction::EmitOMPSimdDirective(const OMPSimdDirective &S) {
     DI->EmitLexicalBlockEnd(Builder, S.getSourceRange().getEnd());
 }
 
+void CodeGenFunction::EmitOMPForOuterLoop(OpenMPScheduleClauseKind ScheduleKind,
+                                          const OMPLoopDirective &S,
+                                          OMPPrivateScope &LoopScope,
+                                          llvm::Value *LB, llvm::Value *UB,
+                                          llvm::Value *ST, llvm::Value *IL,
+                                          llvm::Value *Chunk) {
+  auto &RT = CGM.getOpenMPRuntime();
+  assert(!RT.isStaticNonchunked(ScheduleKind, /* Chunked */ Chunk != nullptr) &&
+         "static non-chunked schedule does not need outer loop");
+  if (RT.isDynamic(ScheduleKind)) {
+    ErrorUnsupported(&S, "OpenMP loop with dynamic schedule");
+    return;
+  }
+
+  // Emit outer loop.
+  //
+  // OpenMP [2.7.1, Loop Construct, Description, table 2-1]
+  // When schedule(static, chunk_size) is specified, iterations are divided into
+  // chunks of size chunk_size, and the chunks are assigned to the threads in
+  // the team in a round-robin fashion in the order of the thread number.
+  //
+  // while(UB = min(UB, GlobalUB), idx = LB, idx < UB) {
+  //   while (idx <= UB) { BODY; ++idx; } // inner loop
+  //   LB = LB + ST;
+  //   UB = UB + ST;
+  // }
+  //
+  const Expr *IVExpr = S.getIterationVariable();
+  const unsigned IVSize = getContext().getTypeSize(IVExpr->getType());
+  const bool IVSigned = IVExpr->getType()->hasSignedIntegerRepresentation();
+
+  RT.EmitOMPForInit(*this, S.getLocStart(), ScheduleKind, IVSize, IVSigned, IL,
+                    LB, UB, ST, Chunk);
+  auto LoopExit = getJumpDestInCurrentScope("omp.dispatch.end");
+
+  // Start the loop with a block that tests the condition.
+  auto CondBlock = createBasicBlock("omp.dispatch.cond");
+  EmitBlock(CondBlock);
+  LoopStack.push(CondBlock);
+
+  llvm::Value *BoolCondVal = nullptr;
+  // UB = min(UB, GlobalUB)
+  EmitIgnoredExpr(S.getEnsureUpperBound());
+  // IV = LB
+  EmitIgnoredExpr(S.getInit());
+  // IV < UB
+  BoolCondVal = EvaluateExprAsBool(S.getCond(false));
+
+  // If there are any cleanups between here and the loop-exit scope,
+  // create a block to stage a loop exit along.
+  auto ExitBlock = LoopExit.getBlock();
+  if (LoopScope.requiresCleanups())
+    ExitBlock = createBasicBlock("omp.dispatch.cleanup");
+
+  auto LoopBody = createBasicBlock("omp.dispatch.body");
+  Builder.CreateCondBr(BoolCondVal, LoopBody, ExitBlock);
+  if (ExitBlock != LoopExit.getBlock()) {
+    EmitBlock(ExitBlock);
+    EmitBranchThroughCleanup(LoopExit);
+  }
+  EmitBlock(LoopBody);
+
+  // Create a block for the increment.
+  auto Continue = getJumpDestInCurrentScope("omp.dispatch.inc");
+  BreakContinueStack.push_back(BreakContinue(LoopExit, Continue));
+
+  EmitOMPInnerLoop(S, LoopScope);
+
+  EmitBlock(Continue.getBlock());
+  BreakContinueStack.pop_back();
+  // Emit "LB = LB + Stride", "UB = UB + Stride".
+  EmitIgnoredExpr(S.getNextLowerBound());
+  EmitIgnoredExpr(S.getNextUpperBound());
+
+  EmitBranch(CondBlock);
+  LoopStack.pop();
+  // Emit the fall-through block.
+  EmitBlock(LoopExit.getBlock());
+
+  // Tell the runtime we are done.
+  RT.EmitOMPForFinish(*this, S.getLocStart(), ScheduleKind);
+}
+
 /// \brief Emit a helper variable and return corresponding lvalue.
 static LValue EmitOMPHelperVar(CodeGenFunction &CGF,
                                const DeclRefExpr *Helper) {
@@ -581,8 +664,13 @@ void CodeGenFunction::EmitOMPWorksharingLoop(const OMPLoopDirective &S) {
         EmitOMPInnerLoop(S, LoopScope);
         // Tell the runtime we are done.
         RT.EmitOMPForFinish(*this, S.getLocStart(), ScheduleKind);
-      } else
-        ErrorUnsupported(&S, "OpenMP loop with requested schedule");
+      } else {
+        // Emit the outer loop, which requests its work chunk [LB..UB] from
+        // runtime and runs the inner loop to process it.
+        EmitOMPForOuterLoop(ScheduleKind, S, LoopScope, LB.getAddress(),
+                            UB.getAddress(), ST.getAddress(), IL.getAddress(),
+                            Chunk);
+      }
     }
     // We're now done with the loop, so jump to the continuation block.
     EmitBranch(ContBlock);

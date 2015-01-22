@@ -848,6 +848,12 @@ bool CGOpenMPRuntime::isStaticNonchunked(OpenMPScheduleClauseKind ScheduleKind,
   return Schedule == OMP_sch_static;
 }
 
+bool CGOpenMPRuntime::isDynamic(OpenMPScheduleClauseKind ScheduleKind) const {
+  auto Schedule = getRuntimeSchedule(ScheduleKind, /* Chunked */ false);
+  assert(Schedule != OMP_sch_static_chunked && "cannot be chunked here");
+  return Schedule != OMP_sch_static;
+}
+
 void CGOpenMPRuntime::EmitOMPForInit(CodeGenFunction &CGF, SourceLocation Loc,
                                      OpenMPScheduleClauseKind ScheduleKind,
                                      unsigned IVSize, bool IVSigned,

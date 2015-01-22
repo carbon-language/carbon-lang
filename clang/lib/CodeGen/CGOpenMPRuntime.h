@@ -320,6 +320,12 @@ public:
   virtual bool isStaticNonchunked(OpenMPScheduleClauseKind ScheduleKind,
                                   bool Chunked) const;
 
+  /// \brief Check if the specified \a ScheduleKind is dynamic.
+  /// This kind of worksharing directive is emitted without outer loop.
+  /// \param ScheduleKind Schedule Kind specified in the 'schedule' clause.
+  ///
+  virtual bool isDynamic(OpenMPScheduleClauseKind ScheduleKind) const;
+
   /// \brief Call the appropriate runtime routine to initialize it before start
   /// of loop.
   ///
