@@ -1422,6 +1422,11 @@ class Base(unittest2.TestCase):
         if not module.buildDwarf(self, architecture, compiler, dictionary, clean):
             raise Exception("Don't know how to build binary with dwarf")
 
+    def signBinary(self, binary_path):
+        if sys.platform.startswith("darwin"):
+            codesign_cmd = "codesign --force --sign lldb_codesign %s" % (binary_path)
+            call(codesign_cmd, shell=True)
+
     def findBuiltClang(self):
         """Tries to find and use Clang from the build directory as the compiler (instead of the system compiler)."""
         paths_to_try = [

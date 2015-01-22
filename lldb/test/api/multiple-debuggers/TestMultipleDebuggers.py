@@ -26,6 +26,7 @@ class TestMultipleSimultaneousDebuggers(TestBase):
         self.driver_exe = os.path.join(os.getcwd(), "multi-process-driver")
         self.buildDriver('multi-process-driver.cpp', self.driver_exe)
         self.addTearDownHook(lambda: os.remove(self.driver_exe))
+        self.signBinary(self.driver_exe)
 
         self.inferior_exe = os.path.join(os.getcwd(), "testprog")
         self.buildDriver('testprog.cpp', self.inferior_exe)

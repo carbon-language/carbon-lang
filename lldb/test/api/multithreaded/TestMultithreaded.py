@@ -66,7 +66,9 @@ class SBBreakpointCallbackCase(TestBase):
         self.buildDriver(sources, test_name)
         self.addTearDownHook(lambda: os.remove(test_name))
 
-        exe = [os.path.join(os.getcwd(), test_name), self.inferior]
+        test_exe = os.path.join(os.getcwd(), test_name)
+        self.signBinary(test_exe)
+        exe = [test_exe, self.inferior]
 
         env = {self.dylibPath : self.getLLDBLibraryEnvVal()}
         if self.TraceOn():
