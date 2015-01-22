@@ -893,7 +893,8 @@ int main(int argc, char **argv) {
       && !LazyBind
       && !WeakBind
       && !(UniversalHeaders && MachOOpt)
-      && !(ArchiveHeaders && MachOOpt)) {
+      && !(ArchiveHeaders && MachOOpt)
+      && !(IndirectSymbols && MachOOpt)) {
     cl::PrintHelpMessage();
     return 2;
   }

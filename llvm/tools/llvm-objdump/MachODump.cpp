@@ -75,6 +75,11 @@ cl::opt<bool>
                          cl::desc("Print archive headers for Mach-O archives "
                                   "(requires -macho)"));
 
+cl::opt<bool>
+    llvm::IndirectSymbols("indirect-symbols",
+                          cl::desc("Print indirect symbol table for Mach-O "
+                                   "objects (requires -macho)"));
+
 static cl::list<std::string>
     ArchFlags("arch", cl::desc("architecture(s) from a Mach-O file to dump"),
               cl::ZeroOrMore);
@@ -260,6 +265,130 @@ static void getSectionsAndSymbols(const MachO::mach_header Header,
   }
 }
 
+static void PrintIndirectSymbolTable(MachOObjectFile *O, bool verbose,
+                                     uint32_t n, uint32_t count,
+                                     uint32_t stride, uint64_t addr) {
+  MachO::dysymtab_command Dysymtab = O->getDysymtabLoadCommand();
+  uint32_t nindirectsyms = Dysymtab.nindirectsyms;
+  if (n > nindirectsyms)
+    outs() << " (entries start past the end of the indirect symbol "
+              "table) (reserved1 field greater than the table size)";
+  else if (n + count > nindirectsyms)
+    outs() << " (entries extends past the end of the indirect symbol "
+              "table)";
+  outs() << "\n";
+  uint32_t cputype = O->getHeader().cputype;
+  if (cputype & MachO::CPU_ARCH_ABI64)
+    outs() << "address            index";
+  else
+    outs() << "address    index";
+  if (verbose)
+    outs() << " name\n";
+  else
+    outs() << "\n";
+  for (uint32_t j = 0; j < count && n + j < nindirectsyms; j++) {
+    if (cputype & MachO::CPU_ARCH_ABI64)
+      outs() << format("0x%016" PRIx64, addr + j * stride) << " ";
+    else
+      outs() << format("0x%08" PRIx32, addr + j * stride) << " ";
+    MachO::dysymtab_command Dysymtab = O->getDysymtabLoadCommand();
+    uint32_t indirect_symbol = O->getIndirectSymbolTableEntry(Dysymtab, n + j);
+    if (indirect_symbol == MachO::INDIRECT_SYMBOL_LOCAL) {
+      outs() << "LOCAL\n";
+      continue;
+    }
+    if (indirect_symbol ==
+        (MachO::INDIRECT_SYMBOL_LOCAL | MachO::INDIRECT_SYMBOL_ABS)) {
+      outs() << "LOCAL ABSOLUTE\n";
+      continue;
+    }
+    if (indirect_symbol == MachO::INDIRECT_SYMBOL_ABS) {
+      outs() << "ABSOLUTE\n";
+      continue;
+    }
+    outs() << format("%5u ", indirect_symbol);
+    MachO::symtab_command Symtab = O->getSymtabLoadCommand();
+    if (indirect_symbol < Symtab.nsyms) {
+      symbol_iterator Sym = O->getSymbolByIndex(indirect_symbol);
+      SymbolRef Symbol = *Sym;
+      StringRef SymName;
+      Symbol.getName(SymName);
+      outs() << SymName;
+    } else {
+      outs() << "?";
+    }
+    outs() << "\n";
+  }
+}
+
+static void PrintIndirectSymbols(MachOObjectFile *O, bool verbose) {
+  uint32_t LoadCommandCount = O->getHeader().ncmds;
+  MachOObjectFile::LoadCommandInfo Load = O->getFirstLoadCommandInfo();
+  for (unsigned I = 0;; ++I) {
+    if (Load.C.cmd == MachO::LC_SEGMENT_64) {
+      MachO::segment_command_64 Seg = O->getSegment64LoadCommand(Load);
+      for (unsigned J = 0; J < Seg.nsects; ++J) {
+        MachO::section_64 Sec = O->getSection64(Load, J);
+        uint32_t section_type = Sec.flags & MachO::SECTION_TYPE;
+        if (section_type == MachO::S_NON_LAZY_SYMBOL_POINTERS ||
+            section_type == MachO::S_LAZY_SYMBOL_POINTERS ||
+            section_type == MachO::S_LAZY_DYLIB_SYMBOL_POINTERS ||
+            section_type == MachO::S_THREAD_LOCAL_VARIABLE_POINTERS ||
+            section_type == MachO::S_SYMBOL_STUBS) {
+          uint32_t stride;
+          if (section_type == MachO::S_SYMBOL_STUBS)
+            stride = Sec.reserved2;
+          else
+            stride = 8;
+          if (stride == 0) {
+            outs() << "Can't print indirect symbols for (" << Sec.segname << ","
+                   << Sec.sectname << ") "
+                   << "(size of stubs in reserved2 field is zero)\n";
+            continue;
+          }
+          uint32_t count = Sec.size / stride;
+          outs() << "Indirect symbols for (" << Sec.segname << ","
+                 << Sec.sectname << ") " << count << " entries";
+          uint32_t n = Sec.reserved1;
+          PrintIndirectSymbolTable(O, verbose, n, count, stride, Sec.addr);
+        }
+      }
+    } else if (Load.C.cmd == MachO::LC_SEGMENT) {
+      MachO::segment_command Seg = O->getSegmentLoadCommand(Load);
+      for (unsigned J = 0; J < Seg.nsects; ++J) {
+        MachO::section Sec = O->getSection(Load, J);
+        uint32_t section_type = Sec.flags & MachO::SECTION_TYPE;
+        if (section_type == MachO::S_NON_LAZY_SYMBOL_POINTERS ||
+            section_type == MachO::S_LAZY_SYMBOL_POINTERS ||
+            section_type == MachO::S_LAZY_DYLIB_SYMBOL_POINTERS ||
+            section_type == MachO::S_THREAD_LOCAL_VARIABLE_POINTERS ||
+            section_type == MachO::S_SYMBOL_STUBS) {
+          uint32_t stride;
+          if (section_type == MachO::S_SYMBOL_STUBS)
+            stride = Sec.reserved2;
+          else
+            stride = 4;
+          if (stride == 0) {
+            outs() << "Can't print indirect symbols for (" << Sec.segname << ","
+                   << Sec.sectname << ") "
+                   << "(size of stubs in reserved2 field is zero)\n";
+            continue;
+          }
+          uint32_t count = Sec.size / stride;
+          outs() << "Indirect symbols for (" << Sec.segname << ","
+                 << Sec.sectname << ") " << count << " entries";
+          uint32_t n = Sec.reserved1;
+          PrintIndirectSymbolTable(O, verbose, n, count, stride, Sec.addr);
+        }
+      }
+    }
+    if (I == LoadCommandCount - 1)
+      break;
+    else
+      Load = O->getNextLoadCommandInfo(Load);
+  }
+}
+
 // checkMachOAndArchFlags() checks to see if the ObjectFile is a Mach-O file
 // and if it is and there is a list of architecture flags is specified then
 // check to make sure this Mach-O file is one of those architectures or all
@@ -305,9 +434,9 @@ static void ProcessMachO(StringRef Filename, MachOObjectFile *MachOOF,
                          StringRef ArchitectureName = StringRef()) {
   // If we are doing some processing here on the Mach-O file print the header
   // info.  And don't print it otherwise like in the case of printing the
-  // UniversalHeaders.
+  // UniversalHeaders or ArchiveHeaders.
   if (Disassemble || PrivateHeaders || ExportsTrie || Rebase || Bind ||
-      LazyBind || WeakBind) {
+      LazyBind || WeakBind || IndirectSymbols) {
     outs() << Filename;
     if (!ArchiveMemberName.empty())
       outs() << '(' << ArchiveMemberName << ')';
@@ -318,6 +447,8 @@ static void ProcessMachO(StringRef Filename, MachOObjectFile *MachOOF,
 
   if (Disassemble)
     DisassembleMachO(Filename, MachOOF);
+  if (IndirectSymbols)
+    PrintIndirectSymbols(MachOOF, true);
   if (Relocations)
     PrintRelocations(MachOOF);
   if (SectionHeaders)

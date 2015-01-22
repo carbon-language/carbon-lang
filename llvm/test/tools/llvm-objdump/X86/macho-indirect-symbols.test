@@ -1,0 +1,12 @@
+RUN: llvm-objdump -macho -indirect-symbols %p/Inputs/hello.exe.macho-x86_64 | FileCheck %s
+
+CHECK: Indirect symbols for (__TEXT,__stubs) 1 entries
+CHECK: address            index name
+CHECK: 0x0000000100000f6c     2 _printf
+CHECK: Indirect symbols for (__DATA,__nl_symbol_ptr) 2 entries
+CHECK: address            index name
+CHECK: 0x0000000100001000     3 dyld_stub_binder
+CHECK: 0x0000000100001008 ABSOLUTE
+CHECK: Indirect symbols for (__DATA,__la_symbol_ptr) 1 entries
+CHECK: address            index name
+CHECK: 0x0000000100001010     2 _printf
