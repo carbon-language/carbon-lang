@@ -277,6 +277,21 @@ public:
     }
 
     //------------------------------------------------------------------
+    /// Merges fields from another ArchSpec into this ArchSpec.
+    ///
+    /// This will use the supplied ArchSpec to fill in any fields of
+    /// the triple in this ArchSpec which were unspecified.  This can
+    /// be used to refine a generic ArchSpec with a more specific one.
+    /// For example, if this ArchSpec's triple is something like
+    /// i386-unknown-unknown-unknown, and we have a triple which is
+    /// x64-pc-windows-msvc, then merging that triple into this one
+    /// will result in the triple i386-pc-windows-msvc.
+    ///
+    //------------------------------------------------------------------
+    void
+    MergeFrom(const ArchSpec &other);
+
+    //------------------------------------------------------------------
     /// Sets this ArchSpec according to the given architecture name.
     ///
     /// The architecture name can be one of the generic system default

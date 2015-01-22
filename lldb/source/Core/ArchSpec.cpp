@@ -765,6 +765,19 @@ ArchSpec::SetTriple (const char *triple_cstr, Platform *platform)
     return IsValid();
 }
 
+void
+ArchSpec::MergeFrom(const ArchSpec &other)
+{
+    if (GetTriple().getVendor() == llvm::Triple::UnknownVendor && !TripleVendorWasSpecified())
+        GetTriple().setVendor(other.GetTriple().getVendor());
+    if (GetTriple().getOS() == llvm::Triple::UnknownOS && !TripleOSWasSpecified())
+        GetTriple().setOS(other.GetTriple().getOS());
+    if (GetTriple().getArch() == llvm::Triple::UnknownArch)
+        GetTriple().setArch(other.GetTriple().getArch());
+    if (GetTriple().getEnvironment() == llvm::Triple::UnknownEnvironment)
+        GetTriple().setEnvironment(other.GetTriple().getEnvironment());
+}
+
 bool
 ArchSpec::SetArchitecture (ArchitectureType arch_type, uint32_t cpu, uint32_t sub)
 {

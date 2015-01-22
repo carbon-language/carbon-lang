@@ -1304,10 +1304,14 @@ Module::GetObjectFile()
                                                    data_offset);
             if (m_objfile_sp)
             {
-                // Once we get the object file, update our module with the object file's 
+                // Once we get the object file, update our module with the object file's
                 // architecture since it might differ in vendor/os if some parts were
-                // unknown.
-                m_objfile_sp->GetArchitecture (m_arch);
+                // unknown.  But since the matching arch might already be more specific
+                // than the generic COFF architecture, only merge in those values that
+                // overwrite unspecified unknown values.
+                ArchSpec new_arch;
+                m_objfile_sp->GetArchitecture(new_arch);
+                m_arch.MergeFrom(new_arch);
             }
             else
             {
