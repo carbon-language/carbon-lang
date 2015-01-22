@@ -53,7 +53,7 @@ EEVT::TypeSet::TypeSet(MVT::SimpleValueType VT, TreePattern &TP) {
     EnforceVector(TP);
   else {
     assert((VT < MVT::LAST_VALUETYPE || VT == MVT::iPTR ||
-            VT == MVT::iPTRAny) && "Not a concrete type!");
+            VT == MVT::iPTRAny || VT == MVT::Any) && "Not a concrete type!");
     TypeVec.push_back(VT);
   }
 }

@@ -21,7 +21,7 @@ define i1 @test_i1_return() gc "statepoint-example" {
 ; CHECK: retq
 entry:
   %safepoint_token = tail call i32 (i1 ()*, i32, i32, ...)* @llvm.experimental.gc.statepoint.p0f_i1f(i1 ()* @return_i1, i32 0, i32 0, i32 0)
-  %call1 = call zeroext i1 @llvm.experimental.gc.result.int.i1(i32 %safepoint_token)
+  %call1 = call zeroext i1 @llvm.experimental.gc.result.i1(i32 %safepoint_token)
   ret i1 %call1
 }
 
@@ -33,7 +33,7 @@ define i32 @test_i32_return() gc "statepoint-example" {
 ; CHECK: retq
 entry:
   %safepoint_token = tail call i32 (i32 ()*, i32, i32, ...)* @llvm.experimental.gc.statepoint.p0f_i32f(i32 ()* @return_i32, i32 0, i32 0, i32 0)
-  %call1 = call zeroext i32 @llvm.experimental.gc.result.int.i32(i32 %safepoint_token)
+  %call1 = call zeroext i32 @llvm.experimental.gc.result.i32(i32 %safepoint_token)
   ret i32 %call1
 }
 
@@ -45,7 +45,7 @@ define i32* @test_i32ptr_return() gc "statepoint-example" {
 ; CHECK: retq
 entry:
   %safepoint_token = tail call i32 (i32* ()*, i32, i32, ...)* @llvm.experimental.gc.statepoint.p0f_p0i32f(i32* ()* @return_i32ptr, i32 0, i32 0, i32 0)
-  %call1 = call i32* @llvm.experimental.gc.result.ptr.p0i32(i32 %safepoint_token)
+  %call1 = call i32* @llvm.experimental.gc.result.p0i32(i32 %safepoint_token)
   ret i32* %call1
 }
 
@@ -57,7 +57,7 @@ define float @test_float_return() gc "statepoint-example" {
 ; CHECK: retq
 entry:
   %safepoint_token = tail call i32 (float ()*, i32, i32, ...)* @llvm.experimental.gc.statepoint.p0f_f32f(float ()* @return_float, i32 0, i32 0, i32 0)
-  %call1 = call float @llvm.experimental.gc.result.float.f32(i32 %safepoint_token)
+  %call1 = call float @llvm.experimental.gc.result.f32(i32 %safepoint_token)
   ret float %call1
 }
 
@@ -72,7 +72,7 @@ define i1 @test_relocate(i32 addrspace(1)* %a) gc "statepoint-example" {
 entry:
   %safepoint_token = tail call i32 (i1 ()*, i32, i32, ...)* @llvm.experimental.gc.statepoint.p0f_i1f(i1 ()* @return_i1, i32 0, i32 0, i32 0, i32 addrspace(1)* %a)
   %call1 = call i32 addrspace(1)* @llvm.experimental.gc.relocate.p1i32(i32 %safepoint_token, i32 4, i32 4)
-  %call2 = call zeroext i1 @llvm.experimental.gc.result.int.i1(i32 %safepoint_token)
+  %call2 = call zeroext i1 @llvm.experimental.gc.result.i1(i32 %safepoint_token)
   ret i1 %call2
 }
 
@@ -88,16 +88,16 @@ entry:
 }
 
 declare i32 @llvm.experimental.gc.statepoint.p0f_i1f(i1 ()*, i32, i32, ...)
-declare i1 @llvm.experimental.gc.result.int.i1(i32)
+declare i1 @llvm.experimental.gc.result.i1(i32)
 
 declare i32 @llvm.experimental.gc.statepoint.p0f_i32f(i32 ()*, i32, i32, ...)
-declare i32 @llvm.experimental.gc.result.int.i32(i32)
+declare i32 @llvm.experimental.gc.result.i32(i32)
 
 declare i32 @llvm.experimental.gc.statepoint.p0f_p0i32f(i32* ()*, i32, i32, ...)
-declare i32* @llvm.experimental.gc.result.ptr.p0i32(i32)
+declare i32* @llvm.experimental.gc.result.p0i32(i32)
 
 declare i32 @llvm.experimental.gc.statepoint.p0f_f32f(float ()*, i32, i32, ...)
-declare float @llvm.experimental.gc.result.float.f32(i32)
+declare float @llvm.experimental.gc.result.f32(i32)
 
 declare i32 @llvm.experimental.gc.statepoint.p0f_isVoidi32varargf(void (i32, ...)*, i32, i32, ...)
 

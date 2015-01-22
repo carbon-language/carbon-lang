@@ -2391,6 +2391,7 @@ bool Verifier::VerifyIntrinsicType(Type *Ty,
     ArgTys.push_back(Ty);
 
     switch (D.getArgumentKind()) {
+    case IITDescriptor::AK_Any:        return false; // Success
     case IITDescriptor::AK_AnyInteger: return !Ty->isIntOrIntVectorTy();
     case IITDescriptor::AK_AnyFloat:   return !Ty->isFPOrFPVectorTy();
     case IITDescriptor::AK_AnyVector:  return !isa<VectorType>(Ty);
@@ -2721,7 +2722,8 @@ void Verifier::visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI) {
   }
   case Intrinsic::experimental_gc_result_int:
   case Intrinsic::experimental_gc_result_float:
-  case Intrinsic::experimental_gc_result_ptr: {
+  case Intrinsic::experimental_gc_result_ptr:
+  case Intrinsic::experimental_gc_result: {
     // Are we tied to a statepoint properly?
     CallSite StatepointCS(CI.getArgOperand(0));
     const Function *StatepointFn =

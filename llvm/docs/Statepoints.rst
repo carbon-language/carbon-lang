@@ -236,13 +236,7 @@ Syntax:
 ::
 
       declare type*
-        @gc.result_ptr(i32 %statepoint_token)
-
-      declare fX
-        @gc.result_float(i32 %statepoint_token)
-
-      declare iX
-        @gc.result_int(i32 %statepoint_token)
+        @gc.result(i32 %statepoint_token)
 
 Overview:
 """""""""

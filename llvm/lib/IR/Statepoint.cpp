@@ -54,7 +54,8 @@ bool llvm::isGCResult(const Instruction *inst) {
     if (Function *F = call->getCalledFunction()) {
       return (F->getIntrinsicID() == Intrinsic::experimental_gc_result_int ||
               F->getIntrinsicID() == Intrinsic::experimental_gc_result_float ||
-              F->getIntrinsicID() == Intrinsic::experimental_gc_result_ptr);
+              F->getIntrinsicID() == Intrinsic::experimental_gc_result_ptr ||
+              F->getIntrinsicID() == Intrinsic::experimental_gc_result);
     }
   }
   return false;

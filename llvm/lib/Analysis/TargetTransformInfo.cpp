@@ -416,6 +416,7 @@ struct NoTTI final : ImmutablePass, TargetTransformInfo {
     case Intrinsic::experimental_gc_result_int:
     case Intrinsic::experimental_gc_result_float:
     case Intrinsic::experimental_gc_result_ptr:
+    case Intrinsic::experimental_gc_result:
     case Intrinsic::experimental_gc_relocate:
       // These intrinsics don't actually represent code after lowering.
       return TCC_Free;

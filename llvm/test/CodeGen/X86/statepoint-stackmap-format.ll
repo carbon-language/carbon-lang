@@ -22,7 +22,7 @@ entry:
   %metadata1 = alloca i32 addrspace(1)*, i32 2, align 8
   store i32 addrspace(1)* null, i32 addrspace(1)** %metadata1
   %safepoint_token = tail call i32 (i1 ()*, i32, i32, ...)* @llvm.experimental.gc.statepoint.p0f_i1f(i1 ()* @return_i1, i32 0, i32 0, i32 2, i32 addrspace(1)* %ptr, i32 addrspace(1)* null, i32 addrspace(1)* %ptr, i32 addrspace(1)* null)
-  %call1 = call zeroext i1 @llvm.experimental.gc.result.int.i1(i32 %safepoint_token)
+  %call1 = call zeroext i1 @llvm.experimental.gc.result.i1(i32 %safepoint_token)
   %a = call i32 addrspace(1)* @llvm.experimental.gc.relocate.p1i32(i32 %safepoint_token, i32 6, i32 6)
   %b = call i32 addrspace(1)* @llvm.experimental.gc.relocate.p1i32(i32 %safepoint_token, i32 7, i32 7)
 ; 
@@ -30,7 +30,7 @@ entry:
 }
 
 declare i32 @llvm.experimental.gc.statepoint.p0f_i1f(i1 ()*, i32, i32, ...)
-declare i1 @llvm.experimental.gc.result.int.i1(i32)
+declare i1 @llvm.experimental.gc.result.i1(i32)
 declare i32 addrspace(1)* @llvm.experimental.gc.relocate.p1i32(i32, i32, i32) #3
 
 
