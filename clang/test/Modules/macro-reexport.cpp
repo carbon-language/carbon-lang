@@ -1,12 +1,12 @@
 // RUN: rm -rf %t
-// RUN: %clang_cc1 -fsyntax-only -DC1 -I. %s -fmodules-cache-path=%t -verify
-// RUN: %clang_cc1 -fsyntax-only -DC1 -I. -fmodules %s -fmodules-cache-path=%t -verify
-// RUN: %clang_cc1 -fsyntax-only -DD1 -I. %s -fmodules-cache-path=%t -verify
-// RUN: %clang_cc1 -fsyntax-only -DD1 -I. -fmodules %s -fmodules-cache-path=%t -verify
-// RUN: %clang_cc1 -fsyntax-only -DD2 -I. %s -fmodules-cache-path=%t -verify
-// RUN: %clang_cc1 -fsyntax-only -DD2 -I. -fmodules %s -fmodules-cache-path=%t -verify
-// RUN: %clang_cc1 -fsyntax-only -DF1 -I. %s -fmodules-cache-path=%t -verify
-// RUN: %clang_cc1 -fsyntax-only -DF1 -I. -fmodules %s -fmodules-cache-path=%t -verify
+// RUN: %clang_cc1 -fsyntax-only -DC1 -I%S/Inputs/macro-reexport %s -fmodules-cache-path=%t -verify
+// RUN: %clang_cc1 -fsyntax-only -DC1 -I%S/Inputs/macro-reexport -fmodules %s -fmodules-cache-path=%t -verify
+// RUN: %clang_cc1 -fsyntax-only -DD1 -I%S/Inputs/macro-reexport %s -fmodules-cache-path=%t -verify
+// RUN: %clang_cc1 -fsyntax-only -DD1 -I%S/Inputs/macro-reexport -fmodules %s -fmodules-cache-path=%t -verify
+// RUN: %clang_cc1 -fsyntax-only -DD2 -I%S/Inputs/macro-reexport %s -fmodules-cache-path=%t -verify
+// RUN: %clang_cc1 -fsyntax-only -DD2 -I%S/Inputs/macro-reexport -fmodules %s -fmodules-cache-path=%t -verify
+// RUN: %clang_cc1 -fsyntax-only -DF1 -I%S/Inputs/macro-reexport %s -fmodules-cache-path=%t -verify
+// RUN: %clang_cc1 -fsyntax-only -DF1 -I%S/Inputs/macro-reexport -fmodules %s -fmodules-cache-path=%t -verify
 
 #if defined(F1)
 #include "f1.h"
