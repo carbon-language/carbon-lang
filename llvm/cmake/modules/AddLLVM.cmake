@@ -696,7 +696,6 @@ function(configure_lit_site_cfg input output)
     set(ENABLE_ASSERTIONS "0")
   endif()
 
-  set(HOST_OS ${CMAKE_SYSTEM_NAME})
   set(HOST_ARCH ${CMAKE_SYSTEM_PROCESSOR})
 
   set(HOST_CC "${CMAKE_C_COMPILER} ${CMAKE_C_COMPILER_ARG1}")
