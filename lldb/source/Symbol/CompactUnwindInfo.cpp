@@ -1055,11 +1055,9 @@ CompactUnwindInfo::CreateUnwindPlan_i386 (Target &target, FunctionInfo &function
             if (mode == UNWIND_X86_MODE_STACK_IND && function_info.valid_range_offset_start != 0)
             {
                 uint32_t stack_adjust = EXTRACT_BITS (function_info.encoding, UNWIND_X86_FRAMELESS_STACK_ADJUST);
-printf("JSMDEBUG got stack_adjust %d from encoding 0x%x\n", stack_adjust, function_info.encoding);
 
                 // offset into the function instructions; 0 == beginning of first instruction
                 uint32_t offset_to_subl_insn = EXTRACT_BITS (function_info.encoding, UNWIND_X86_FRAMELESS_STACK_SIZE);
-printf("JSMDEBUG got offset to sub instruction %d\n", offset_to_subl_insn);
 
                 SectionList *sl = m_objfile.GetSectionList ();
                 if (sl)
