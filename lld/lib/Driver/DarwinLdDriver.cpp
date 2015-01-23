@@ -77,8 +77,7 @@ loadFile(MachOLinkingContext &ctx, StringRef path,
   if (ctx.logInputFiles())
     diag << path << "\n";
 
-  ErrorOr<std::unique_ptr<MemoryBuffer>> mbOrErr =
-    DarwinLdDriver::getMemoryBuffer(ctx, path);
+  ErrorOr<std::unique_ptr<MemoryBuffer>> mbOrErr = ctx.getMemoryBuffer(path);
   if (std::error_code ec = mbOrErr.getError())
     return makeErrorFile(path, ec);
   std::vector<std::unique_ptr<File>> files;
@@ -263,25 +262,6 @@ static bool parseNumberBase16(StringRef numStr, uint64_t &baseAddress) {
 }
 
 namespace lld {
-
-ErrorOr<std::unique_ptr<MemoryBuffer>>
-DarwinLdDriver::getMemoryBuffer(MachOLinkingContext &ctx, StringRef path) {
-  ctx.addInputFileDependency(path);
-
-  ErrorOr<std::unique_ptr<MemoryBuffer>> mbOrErr =
-    MemoryBuffer::getFileOrSTDIN(path);
-  if (std::error_code ec = mbOrErr.getError())
-    return ec;
-  std::unique_ptr<MemoryBuffer> mb = std::move(mbOrErr.get());
-
-  // If buffer contains a fat file, find required arch in fat buffer
-  // and switch buffer to point to just that required slice.
-  uint32_t offset;
-  uint32_t size;
-  if (ctx.sliceFromFatFile(*mb, offset, size))
-    return MemoryBuffer::getFileSlice(path, size, offset);
-  return std::move(mb);
-}
 
 bool DarwinLdDriver::linkMachO(int argc, const char *argv[],
                                raw_ostream &diagnostics) {

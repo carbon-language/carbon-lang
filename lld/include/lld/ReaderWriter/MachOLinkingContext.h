@@ -253,6 +253,10 @@ public:
   /// Used to keep track of direct and indirect dylibs.
   void registerDylib(mach_o::MachODylibFile *dylib, bool upward) const;
 
+  // Reads a file from disk to memory. Returns only a needed chunk
+  // if a fat binary.
+  ErrorOr<std::unique_ptr<MemoryBuffer>> getMemoryBuffer(StringRef path);
+
   /// Used to find indirect dylibs. Instantiates a MachODylibFile if one
   /// has not already been made for the requested dylib.  Uses -L and -F
   /// search paths to allow indirect dylibs to be overridden.

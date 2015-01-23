@@ -101,11 +101,6 @@ public:
   static bool parse(int argc, const char *argv[], MachOLinkingContext &info,
                     raw_ostream &diagnostics = llvm::errs());
 
-  // Reads a file from disk to memory. Returns only a needed chunk
-  // if a fat binary.
-  static ErrorOr<std::unique_ptr<MemoryBuffer>>
-  getMemoryBuffer(MachOLinkingContext &ctx, StringRef path);
-
 private:
   DarwinLdDriver() LLVM_DELETED_FUNCTION;
 };

@@ -605,9 +605,27 @@ Writer &MachOLinkingContext::writer() const {
   return *_writer;
 }
 
-MachODylibFile* MachOLinkingContext::loadIndirectDylib(StringRef path) {
+ErrorOr<std::unique_ptr<MemoryBuffer>>
+MachOLinkingContext::getMemoryBuffer(StringRef path) {
+  addInputFileDependency(path);
+
   ErrorOr<std::unique_ptr<MemoryBuffer>> mbOrErr =
-    DarwinLdDriver::getMemoryBuffer(*this, path);
+    MemoryBuffer::getFileOrSTDIN(path);
+  if (std::error_code ec = mbOrErr.getError())
+    return ec;
+  std::unique_ptr<MemoryBuffer> mb = std::move(mbOrErr.get());
+
+  // If buffer contains a fat file, find required arch in fat buffer
+  // and switch buffer to point to just that required slice.
+  uint32_t offset;
+  uint32_t size;
+  if (sliceFromFatFile(*mb, offset, size))
+    return MemoryBuffer::getFileSlice(path, size, offset);
+  return std::move(mb);
+}
+
+MachODylibFile* MachOLinkingContext::loadIndirectDylib(StringRef path) {
+  ErrorOr<std::unique_ptr<MemoryBuffer>> mbOrErr = getMemoryBuffer(path);
   if (mbOrErr.getError())
     return nullptr;
 
