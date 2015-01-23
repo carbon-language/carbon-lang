@@ -245,6 +245,10 @@ namespace {
         (Msg->getReceiverKind() != ObjCMessageExpr::Instance &&
          Msg->getReceiverKind() != ObjCMessageExpr::SuperInstance))
       return false;
+    if (const Expr *Receiver = Msg->getInstanceReceiver())
+      if (Receiver->getType()->isObjCBuiltinType())
+        return false;
+      
     const ObjCMethodDecl *Method = Msg->getMethodDecl();
     if (!Method)
       return false;
