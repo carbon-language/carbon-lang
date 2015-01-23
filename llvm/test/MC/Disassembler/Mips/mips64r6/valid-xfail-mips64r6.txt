@@ -1,7 +1,7 @@
 # Instructions that should be valid but currently fail for known reasons (e.g.
 # they aren't implemented yet).
 #
-# RUN: not llvm-mc %s -disassemble -triple=mips-unknown-linux -mcpu=mips64r6 | not FileCheck %s
+# RUN: llvm-mc %s -disassemble -triple=mips-unknown-linux -mcpu=mips64r6 | FileCheck %s
 # XFAIL: *
 0x20 0x40 0x00 0x01 # CHECK: bovc $0, $2, 4
 0x20 0x82 0x00 0x01 # CHECK: bovc $2, $4, 4
