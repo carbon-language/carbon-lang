@@ -3966,9 +3966,11 @@ void Sema::CodeCompleteCall(Scope *S, Expr *Fn, ArrayRef<Expr *> Args) {
 
       if (auto FP = T->getAs<FunctionProtoType>()) {
         if (!TooManyArguments(FP->getNumParams(), Args.size(),
-                             /*PartialOverloading=*/true))
+                             /*PartialOverloading=*/true) ||
+            FP->isVariadic())
           Results.push_back(ResultCandidate(FP));
       } else if (auto FT = T->getAs<FunctionType>())
+        // No prototype and declaration, it may be a K & R style function.
         Results.push_back(ResultCandidate(FT));
     }
   }
