@@ -6899,7 +6899,7 @@
 					__TEXT,
 					__info_plist,
 					"$(PROJECT_DIR)/tools/driver/lldb-Info.plist",
-					"-Wl,-rpath,@loader_path/../../Library/PrivateFrameworks/",
+					"-Wl,-rpath,@loader_path/../../Library/PrivateFrameworks",
 					"-Wl,-rpath,@loader_path/../../../SharedFrameworks",
 					"-Wl,-rpath,@loader_path/../../System/Library/PrivateFrameworks",
 					"-Wl,-rpath,@loader_path/../../Library/PrivateFrameworks",
@@ -7723,7 +7723,7 @@
 					__TEXT,
 					__info_plist,
 					"$(PROJECT_DIR)/tools/driver/lldb-Info.plist",
-					"-Wl,-rpath,@loader_path/",
+					"-Wl,-rpath,@loader_path",
 				);
 				PRODUCT_NAME = lldb;
 				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/include $(SRCROOT)/source";
@@ -7751,7 +7751,7 @@
 					__TEXT,
 					__info_plist,
 					"$(PROJECT_DIR)/tools/driver/lldb-Info.plist",
-					"-Wl,-rpath,@loader_path/",
+					"-Wl,-rpath,@loader_path",
 				);
 				PRODUCT_NAME = lldb;
 				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/include $(SRCROOT)/source";
@@ -7883,7 +7883,7 @@
 					__TEXT,
 					__info_plist,
 					"$(PROJECT_DIR)/tools/driver/lldb-Info.plist",
-					"-Wl,-rpath,@loader_path/",
+					"-Wl,-rpath,@loader_path",
 				);
 				PRODUCT_NAME = lldb;
 				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/include $(SRCROOT)/source";
