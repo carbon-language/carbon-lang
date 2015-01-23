@@ -1028,8 +1028,12 @@ FORMAT_INTERCEPTOR_IMPL(__isoc99_snprintf, __isoc99_vsnprintf, str, size,
 
 #if SANITIZER_INTERCEPT_IOCTL
 #include "sanitizer_common_interceptors_ioctl.inc"
-INTERCEPTOR(int, ioctl, int d, unsigned request, void *arg) {
+INTERCEPTOR(int, ioctl, int d, unsigned long request, ...) {
   void *ctx;
+  va_list ap;
+  va_start(ap, request);
+  void *arg = va_arg(ap, void *);
+  va_end(ap);
   COMMON_INTERCEPTOR_ENTER(ctx, ioctl, d, request, arg);
 
   CHECK(ioctl_initialized);
@@ -1037,6 +1041,10 @@ INTERCEPTOR(int, ioctl, int d, unsigned request, void *arg) {
   // Note: TSan does not use common flags, and they are zero-initialized.
   // This effectively disables ioctl handling in TSan.
   if (!common_flags()->handle_ioctl) return REAL(ioctl)(d, request, arg);
+
+  // Although request is unsigned long, the rest of the interceptor uses it
+  // as just "unsigned" to save space, because we know that all values fit in
+  // "unsigned" - they are compile-time constants.
 
   const ioctl_desc *desc = ioctl_lookup(request);
   ioctl_desc decoded_desc;
