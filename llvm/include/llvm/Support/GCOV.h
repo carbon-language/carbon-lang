@@ -406,7 +406,8 @@ public:
   }
   void setRunCount(uint32_t Runs) { RunCount = Runs; }
   void setProgramCount(uint32_t Programs) { ProgramCount = Programs; }
-  void print(StringRef MainFilename, StringRef GCNOFile, StringRef GCDAFile);
+  void print(raw_ostream &OS, StringRef MainFilename, StringRef GCNOFile,
+             StringRef GCDAFile);
 
 private:
   std::string getCoveragePath(StringRef Filename, StringRef MainFilename);
@@ -419,9 +420,9 @@ private:
   void printUncondBranchInfo(raw_ostream &OS, uint32_t &EdgeNo,
                              uint64_t Count) const;
 
-  void printCoverage(const GCOVCoverage &Coverage) const;
-  void printFuncCoverage() const;
-  void printFileCoverage() const;
+  void printCoverage(raw_ostream &OS, const GCOVCoverage &Coverage) const;
+  void printFuncCoverage(raw_ostream &OS) const;
+  void printFileCoverage(raw_ostream &OS) const;
 
   const GCOVOptions &Options;
   StringMap<LineData> LineInfo;

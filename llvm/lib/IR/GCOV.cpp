@@ -562,21 +562,21 @@ FileInfo::openCoveragePath(StringRef CoveragePath) {
 }
 
 /// print -  Print source files with collected line count information.
-void FileInfo::print(StringRef MainFilename, StringRef GCNOFile,
-                     StringRef GCDAFile) {
+void FileInfo::print(raw_ostream &InfoOS, StringRef MainFilename,
+                     StringRef GCNOFile, StringRef GCDAFile) {
   for (const auto &LI : LineInfo) {
     StringRef Filename = LI.first();
     auto AllLines = LineConsumer(Filename);
 
     std::string CoveragePath = getCoveragePath(Filename, MainFilename);
-    std::unique_ptr<raw_ostream> S = openCoveragePath(CoveragePath);
-    raw_ostream &OS = *S;
+    std::unique_ptr<raw_ostream> CovStream = openCoveragePath(CoveragePath);
+    raw_ostream &CovOS = *CovStream;
 
-    OS << "        -:    0:Source:" << Filename << "\n";
-    OS << "        -:    0:Graph:" << GCNOFile << "\n";
-    OS << "        -:    0:Data:" << GCDAFile << "\n";
-    OS << "        -:    0:Runs:" << RunCount << "\n";
-    OS << "        -:    0:Programs:" << ProgramCount << "\n";
+    CovOS << "        -:    0:Source:" << Filename << "\n";
+    CovOS << "        -:    0:Graph:" << GCNOFile << "\n";
+    CovOS << "        -:    0:Data:" << GCDAFile << "\n";
+    CovOS << "        -:    0:Runs:" << RunCount << "\n";
+    CovOS << "        -:    0:Programs:" << ProgramCount << "\n";
 
     const LineData &Line = LI.second;
     GCOVCoverage FileCoverage(Filename);
@@ -585,14 +585,14 @@ void FileInfo::print(StringRef MainFilename, StringRef GCNOFile,
       if (Options.BranchInfo) {
         FunctionLines::const_iterator FuncsIt = Line.Functions.find(LineIndex);
         if (FuncsIt != Line.Functions.end())
-          printFunctionSummary(OS, FuncsIt->second);
+          printFunctionSummary(CovOS, FuncsIt->second);
       }
 
       BlockLines::const_iterator BlocksIt = Line.Blocks.find(LineIndex);
       if (BlocksIt == Line.Blocks.end()) {
         // No basic blocks are on this line. Not an executable line of code.
-        OS << "        -:";
-        AllLines.printNext(OS, LineIndex + 1);
+        CovOS << "        -:";
+        AllLines.printNext(CovOS, LineIndex + 1);
       } else {
         const BlockVector &Blocks = BlocksIt->second;
 
@@ -645,14 +645,14 @@ void FileInfo::print(StringRef MainFilename, StringRef GCNOFile,
         }
 
         if (LineCount == 0)
-          OS << "    #####:";
+          CovOS << "    #####:";
         else {
-          OS << format("%9" PRIu64 ":", LineCount);
+          CovOS << format("%9" PRIu64 ":", LineCount);
           ++FileCoverage.LinesExec;
         }
         ++FileCoverage.LogicalLines;
 
-        AllLines.printNext(OS, LineIndex + 1);
+        AllLines.printNext(CovOS, LineIndex + 1);
 
         uint32_t BlockNo = 0;
         uint32_t EdgeNo = 0;
@@ -661,13 +661,14 @@ void FileInfo::print(StringRef MainFilename, StringRef GCNOFile,
           if (Block->getLastLine() != LineIndex + 1)
             continue;
           if (Options.AllBlocks)
-            printBlockInfo(OS, *Block, LineIndex, BlockNo);
+            printBlockInfo(CovOS, *Block, LineIndex, BlockNo);
           if (Options.BranchInfo) {
             size_t NumEdges = Block->getNumDstEdges();
             if (NumEdges > 1)
-              printBranchInfo(OS, *Block, FileCoverage, EdgeNo);
+              printBranchInfo(CovOS, *Block, FileCoverage, EdgeNo);
             else if (Options.UncondBranch && NumEdges == 1)
-              printUncondBranchInfo(OS, EdgeNo, (*Block->dst_begin())->Count);
+              printUncondBranchInfo(CovOS, EdgeNo,
+                                    (*Block->dst_begin())->Count);
           }
         }
       }
@@ -677,8 +678,8 @@ void FileInfo::print(StringRef MainFilename, StringRef GCNOFile,
 
   // FIXME: There is no way to detect calls given current instrumentation.
   if (Options.FuncCoverage)
-    printFuncCoverage();
-  printFileCoverage();
+    printFuncCoverage(InfoOS);
+  printFileCoverage(InfoOS);
   return;
 }
 
@@ -748,44 +749,45 @@ void FileInfo::printUncondBranchInfo(raw_ostream &OS, uint32_t &EdgeNo,
 
 // printCoverage - Print generic coverage info used by both printFuncCoverage
 // and printFileCoverage.
-void FileInfo::printCoverage(const GCOVCoverage &Coverage) const {
-  outs() << format("Lines executed:%.2f%% of %u\n",
-                   double(Coverage.LinesExec) * 100 / Coverage.LogicalLines,
-                   Coverage.LogicalLines);
+void FileInfo::printCoverage(raw_ostream &OS,
+                             const GCOVCoverage &Coverage) const {
+  OS << format("Lines executed:%.2f%% of %u\n",
+               double(Coverage.LinesExec) * 100 / Coverage.LogicalLines,
+               Coverage.LogicalLines);
   if (Options.BranchInfo) {
     if (Coverage.Branches) {
-      outs() << format("Branches executed:%.2f%% of %u\n",
-                       double(Coverage.BranchesExec) * 100 / Coverage.Branches,
-                       Coverage.Branches);
-      outs() << format("Taken at least once:%.2f%% of %u\n",
-                       double(Coverage.BranchesTaken) * 100 / Coverage.Branches,
-                       Coverage.Branches);
+      OS << format("Branches executed:%.2f%% of %u\n",
+                   double(Coverage.BranchesExec) * 100 / Coverage.Branches,
+                   Coverage.Branches);
+      OS << format("Taken at least once:%.2f%% of %u\n",
+                   double(Coverage.BranchesTaken) * 100 / Coverage.Branches,
+                   Coverage.Branches);
     } else {
-      outs() << "No branches\n";
+      OS << "No branches\n";
     }
-    outs() << "No calls\n"; // to be consistent with gcov
+    OS << "No calls\n"; // to be consistent with gcov
   }
 }
 
 // printFuncCoverage - Print per-function coverage info.
-void FileInfo::printFuncCoverage() const {
+void FileInfo::printFuncCoverage(raw_ostream &OS) const {
   for (const auto &FC : FuncCoverages) {
     const GCOVCoverage &Coverage = FC.second;
-    outs() << "Function '" << Coverage.Name << "'\n";
-    printCoverage(Coverage);
-    outs() << "\n";
+    OS << "Function '" << Coverage.Name << "'\n";
+    printCoverage(OS, Coverage);
+    OS << "\n";
   }
 }
 
 // printFileCoverage - Print per-file coverage info.
-void FileInfo::printFileCoverage() const {
+void FileInfo::printFileCoverage(raw_ostream &OS) const {
   for (const auto &FC : FileCoverages) {
     const std::string &Filename = FC.first;
     const GCOVCoverage &Coverage = FC.second;
-    outs() << "File '" << Coverage.Name << "'\n";
-    printCoverage(Coverage);
+    OS << "File '" << Coverage.Name << "'\n";
+    printCoverage(OS, Coverage);
     if (!Options.NoOutput)
-      outs() << Coverage.Name << ":creating '" << Filename << "'\n";
-    outs() << "\n";
+      OS << Coverage.Name << ":creating '" << Filename << "'\n";
+    OS << "\n";
   }
 }
