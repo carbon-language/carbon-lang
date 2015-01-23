@@ -10,10 +10,7 @@
 #ifndef LLD_READER_WRITER_ELF_ARM_ARM_LINKING_CONTEXT_H
 #define LLD_READER_WRITER_ELF_ARM_ARM_LINKING_CONTEXT_H
 
-#include "ARMTargetHandler.h"
-
 #include "lld/ReaderWriter/ELFLinkingContext.h"
-
 #include "llvm/Object/ELF.h"
 #include "llvm/Support/ELF.h"
 
@@ -22,9 +19,7 @@ namespace elf {
 
 class ARMLinkingContext final : public ELFLinkingContext {
 public:
-  ARMLinkingContext(llvm::Triple triple)
-      : ELFLinkingContext(triple, std::unique_ptr<TargetHandlerBase>(
-                                      new ARMTargetHandler(*this))) {}
+  ARMLinkingContext(llvm::Triple);
 
   void addPasses(PassManager &) override;
 

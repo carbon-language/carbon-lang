@@ -4,15 +4,10 @@ add_llvm_library(lldELF
   Reader.cpp
   Writer.cpp
   LINK_LIBS
-    lldHexagonELFTarget
-    lldMipsELFTarget
-    lldPPCELFTarget
+    lldCore
     lldPasses
-    lldReaderWriter
-    lldX86ELFTarget
-    lldX86_64ELFTarget
-    lldAArch64ELFTarget
-    lldARMELFTarget
+    lldYAML
+    LLVMSupport
   )
 
 include_directories(.)

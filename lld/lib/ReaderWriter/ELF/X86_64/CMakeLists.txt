@@ -5,5 +5,7 @@ add_llvm_library(lldX86_64ELFTarget
   X86_64RelocationPass.cpp
   LINK_LIBS
     lldCore
+    lldELF
+    LLVMObject
     LLVMSupport
   )

@@ -4,5 +4,7 @@ add_llvm_library(lldX86ELFTarget
   X86RelocationHandler.cpp
   LINK_LIBS
     lldCore
+    lldELF
+    LLVMObject
     LLVMSupport
   )

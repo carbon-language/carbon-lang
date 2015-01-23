@@ -4,5 +4,7 @@ add_llvm_library(lldHexagonELFTarget
   HexagonTargetHandler.cpp
   LINK_LIBS
     lldCore
+    lldELF
+    LLVMObject
     LLVMSupport
   )

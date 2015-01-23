@@ -11,6 +11,7 @@
 
 #include "ExecutableWriter.h"
 #include "ARMLinkingContext.h"
+#include "ARMTargetHandler.h"
 
 namespace lld {
 namespace elf {

@@ -10,6 +10,7 @@
 #define AARCH64_DYNAMIC_LIBRARY_WRITER_H
 
 #include "AArch64LinkingContext.h"
+#include "AArch64TargetHandler.h"
 #include "DynamicLibraryWriter.h"
 
 namespace lld {

@@ -8,9 +8,14 @@
 //===----------------------------------------------------------------------===//
 
 #include "PPCLinkingContext.h"
+#include "PPCTargetHandler.h"
 #include "lld/Core/LLVM.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/Support/ErrorOr.h"
 
 using namespace lld;
+
+elf::PPCLinkingContext::PPCLinkingContext(llvm::Triple triple)
+    : ELFLinkingContext(triple, std::unique_ptr<TargetHandlerBase>(
+                        new PPCTargetHandler(*this))) {}
 
