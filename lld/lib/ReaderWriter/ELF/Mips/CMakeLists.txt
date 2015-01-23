@@ -7,7 +7,5 @@ add_llvm_library(lldMipsELFTarget
   MipsTargetHandler.cpp
   LINK_LIBS
     lldCore
-    lldELF
-    LLVMObject
     LLVMSupport
   )

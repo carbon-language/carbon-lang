@@ -1,4 +1,4 @@
-//===- lib/ReaderWriter/ELF/PPC/PPCLinkingContext.cpp ---------------------===//
+//===- lib/ReaderWriter/ELF/Hexagon/HexagonTarget.h -----------------------===//
 //
 //                             The LLVM Linker
 //
@@ -7,10 +7,4 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "PPCLinkingContext.h"
-#include "lld/Core/LLVM.h"
-#include "llvm/ADT/StringSwitch.h"
-#include "llvm/Support/ErrorOr.h"
-
-using namespace lld;
-
+#include "HexagonLinkingContext.h"

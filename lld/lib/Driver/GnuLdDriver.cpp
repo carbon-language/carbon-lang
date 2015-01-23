@@ -15,7 +15,6 @@
 
 #include "lld/Driver/Driver.h"
 #include "lld/ReaderWriter/ELFLinkingContext.h"
-#include "lld/ReaderWriter/ELFTargets.h"
 #include "lld/ReaderWriter/LinkerScript.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/Optional.h"
@@ -315,35 +314,6 @@ void GnuLdDriver::addPlatformSearchDirs(ELFLinkingContext &ctx,
   ctx.addSearchPath("=/usr/lib");
 }
 
-std::unique_ptr<ELFLinkingContext>
-createELFLinkingContext(llvm::Triple triple) {
-  switch (triple.getArch()) {
-  case llvm::Triple::x86:
-    return std::unique_ptr<ELFLinkingContext>(
-        new lld::elf::X86LinkingContext(triple));
-  case llvm::Triple::x86_64:
-    return std::unique_ptr<ELFLinkingContext>(
-        new lld::elf::X86_64LinkingContext(triple));
-  case llvm::Triple::hexagon:
-    return std::unique_ptr<ELFLinkingContext>(
-        new lld::elf::HexagonLinkingContext(triple));
-  case llvm::Triple::mipsel:
-    return std::unique_ptr<ELFLinkingContext>(
-        new lld::elf::MipsLinkingContext(triple));
-  case llvm::Triple::ppc:
-    return std::unique_ptr<ELFLinkingContext>(
-        new lld::elf::PPCLinkingContext(triple));
-  case llvm::Triple::aarch64:
-    return std::unique_ptr<ELFLinkingContext>(
-        new lld::elf::AArch64LinkingContext(triple));
-  case llvm::Triple::arm:
-    return std::unique_ptr<ELFLinkingContext>(
-        new lld::elf::ARMLinkingContext(triple));
-  default:
-    return nullptr;
-  }
-}
-
 bool GnuLdDriver::parse(int argc, const char *argv[],
                         std::unique_ptr<ELFLinkingContext> &context,
                         raw_ostream &diagnostics) {
@@ -379,7 +349,7 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
   if (!applyEmulation(triple, *parsedArgs, diagnostics))
     return false;
 
-  std::unique_ptr<ELFLinkingContext> ctx(createELFLinkingContext(triple));
+  std::unique_ptr<ELFLinkingContext> ctx(ELFLinkingContext::create(triple));
 
   if (!ctx) {
     diagnostics << "unknown target triple\n";

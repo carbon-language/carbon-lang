@@ -3,7 +3,5 @@ add_llvm_library(lldPPCELFTarget
   PPCTargetHandler.cpp
   LINK_LIBS
     lldCore
-    lldELF
-    LLVMObject
     LLVMSupport
   )

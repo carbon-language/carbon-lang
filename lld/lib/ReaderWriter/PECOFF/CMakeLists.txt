@@ -10,8 +10,7 @@ add_llvm_library(lldPECOFF
   WriterImportLibrary.cpp
   WriterPECOFF.cpp
   LINK_LIBS
-    lldCore
-    lldPasses
+    lldReaderWriter
     LLVMObject
     LLVMSupport
   )

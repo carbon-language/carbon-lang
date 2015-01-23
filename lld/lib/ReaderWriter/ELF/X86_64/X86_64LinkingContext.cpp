@@ -8,14 +8,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "X86_64LinkingContext.h"
-#include "X86_64TargetHandler.h"
 #include "X86_64RelocationPass.h"
 
 using namespace lld;
-
-elf::X86_64LinkingContext::X86_64LinkingContext(llvm::Triple triple)
-    : ELFLinkingContext(triple, std::unique_ptr<TargetHandlerBase>(
-                        new X86_64TargetHandler(*this))) {}
 
 void elf::X86_64LinkingContext::addPasses(PassManager &pm) {
   auto pass = createX86_64RelocationPass(*this);

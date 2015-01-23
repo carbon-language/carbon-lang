@@ -16,10 +16,8 @@ add_llvm_library(lldMachO
   StubsPass.cpp
   WriterMachO.cpp
   LINK_LIBS
-    lldCore
+    lldReaderWriter
     lldPasses
-    lldYAML
-    LLVMObject
     LLVMSupport
   )
 

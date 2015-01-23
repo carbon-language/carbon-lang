@@ -9,6 +9,6 @@
 
 LLD_LEVEL := ../../..
 LIBRARYNAME := lldMachO
-USEDLIBS = lldCore.a
+USEDLIBS = lldReaderWriter.a lldCore.a
 
 include $(LLD_LEVEL)/Makefile

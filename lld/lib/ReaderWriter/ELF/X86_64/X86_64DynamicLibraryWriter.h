@@ -11,7 +11,6 @@
 
 #include "DynamicLibraryWriter.h"
 #include "X86_64LinkingContext.h"
-#include "X86_64TargetHandler.h"
 
 namespace lld {
 namespace elf {

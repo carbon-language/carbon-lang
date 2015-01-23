@@ -9,14 +9,9 @@
 
 #include "ARMLinkingContext.h"
 #include "ARMRelocationPass.h"
-#include "ARMTargetHandler.h"
 
 using namespace lld;
 using namespace lld::elf;
-
-elf::ARMLinkingContext::ARMLinkingContext(llvm::Triple triple)
-    : ELFLinkingContext(triple, std::unique_ptr<TargetHandlerBase>(
-                        new ARMTargetHandler(*this))) {}
 
 void elf::ARMLinkingContext::addPasses(PassManager &pm) {
   auto pass = createARMRelocationPass(*this);

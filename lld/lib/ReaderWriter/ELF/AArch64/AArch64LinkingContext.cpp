@@ -9,13 +9,8 @@
 
 #include "AArch64LinkingContext.h"
 #include "AArch64RelocationPass.h"
-#include "AArch64TargetHandler.h"
 
 using namespace lld;
-
-elf::AArch64LinkingContext::AArch64LinkingContext(llvm::Triple triple)
-    : ELFLinkingContext(triple, std::unique_ptr<TargetHandlerBase>(
-                        new AArch64TargetHandler(*this))) {}
 
 void elf::AArch64LinkingContext::addPasses(PassManager &pm) {
   auto pass = createAArch64RelocationPass(*this);
