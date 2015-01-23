@@ -1,4 +1,4 @@
-# Tests that lld doesnot create separate segment if the input sections are part
+# Tests that lld does not create separate segment if the input sections are part
 # of the same output section
 
 # Build executable

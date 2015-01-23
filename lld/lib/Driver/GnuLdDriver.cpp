@@ -565,7 +565,7 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
         // Parse -z max-page-size option.
         // The default page size is considered the minimum page size the user
         // can set, check the user input if its atleast the minimum page size
-        // and doesnot exceed the maximum page size allowed for the target.
+        // and does not exceed the maximum page size allowed for the target.
         uint64_t maxPageSize = 0;
 
         // Error if the page size user set is less than the maximum page size
