@@ -8058,17 +8058,20 @@ static SDValue AddCombineTo64bitMLAL(SDNode *AddcNode,
   else
     IsLeftOperandMUL = true;
   if (MULOp == SDValue())
-     return SDValue();
+    return SDValue();
 
   // Figure out the right opcode.
   unsigned Opc = MULOp->getOpcode();
   unsigned FinalOpc = (Opc == ISD::SMUL_LOHI) ? ARMISD::SMLAL : ARMISD::UMLAL;
 
   // Figure out the high and low input values to the MLAL node.
-  SDValue* HiMul = &MULOp;
   SDValue* HiAdd = nullptr;
   SDValue* LoMul = nullptr;
   SDValue* LowAdd = nullptr;
+
+  // Ensure that ADDE is from high result of ISD::SMUL_LOHI.
+  if ((AddeOp0 != MULOp.getValue(1)) && (AddeOp1 != MULOp.getValue(1)))
+    return SDValue();
 
   if (IsLeftOperandMUL)
     HiAdd = &AddeOp1;
@@ -8076,19 +8079,19 @@ static SDValue AddCombineTo64bitMLAL(SDNode *AddcNode,
     HiAdd = &AddeOp0;
 
 
-  if (AddcOp0->getOpcode() == Opc) {
+  // Ensure that LoMul and LowAdd are taken from correct ISD::SMUL_LOHI node
+  // whose low result is fed to the ADDC we are checking.
+
+  if (AddcOp0 == MULOp.getValue(0)) {
     LoMul = &AddcOp0;
     LowAdd = &AddcOp1;
   }
-  if (AddcOp1->getOpcode() == Opc) {
+  if (AddcOp1 == MULOp.getValue(0)) {
     LoMul = &AddcOp1;
     LowAdd = &AddcOp0;
   }
 
   if (!LoMul)
-    return SDValue();
-
-  if (LoMul->getNode() != HiMul->getNode())
     return SDValue();
 
   // Create the merged node.
