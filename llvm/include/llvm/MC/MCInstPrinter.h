@@ -95,7 +95,9 @@ public:
   void setPrintImmHex(HexStyle::Style Value) { PrintHexStyle = Value; }
 
   /// Utility function to print immediates in decimal or hex.
-  format_object1<int64_t> formatImm(const int64_t Value) const { return PrintImmHex ? formatHex(Value) : formatDec(Value); }
+  format_object1<int64_t> formatImm(const int64_t Value) const {
+    return PrintImmHex ? formatHex(Value) : formatDec(Value);
+  }
 
   /// Utility functions to print decimal/hexadecimal values.
   format_object1<int64_t> formatDec(const int64_t Value) const;
