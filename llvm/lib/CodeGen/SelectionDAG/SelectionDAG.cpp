@@ -3620,7 +3620,7 @@ SDValue SelectionDAG::getNode(unsigned Opcode, SDLoc DL, EVT VT,
       const APFloat &V3 = N3CFP->getValueAPF();
       APFloat::opStatus s =
         V1.fusedMultiplyAdd(V2, V3, APFloat::rmNearestTiesToEven);
-      if (s != APFloat::opInvalidOp)
+      if (!TLI->hasFloatingPointExceptions() || s != APFloat::opInvalidOp)
         return getConstantFP(V1, VT);
     }
     break;
