@@ -25,6 +25,7 @@
 #include "llvm/ExecutionEngine/JITEventListener.h"
 #include "llvm/ExecutionEngine/MCJIT.h"
 #include "llvm/ExecutionEngine/ObjectCache.h"
+#include "llvm/ExecutionEngine/OrcMCJITReplacement.h"
 #include "llvm/ExecutionEngine/SectionMemoryManager.h"
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/Module.h"
@@ -73,6 +74,13 @@ namespace {
   cl::opt<bool> ForceInterpreter("force-interpreter",
                                  cl::desc("Force interpretation: disable JIT"),
                                  cl::init(false));
+
+  cl::opt<bool> UseOrcMCJITReplacement("use-orcmcjit",
+                                       cl::desc("Use the experimental "
+                                                "OrcMCJITReplacement as a "
+                                                "drop-in replacement for "
+                                                "MCJIT."),
+                                       cl::init(false));
 
   // The MCJIT supports building for a target address space separate from
   // the JIT compilation process. Use a forked process and a copying
@@ -421,6 +429,7 @@ int main(int argc, char **argv, char * const *envp) {
   builder.setEngineKind(ForceInterpreter
                         ? EngineKind::Interpreter
                         : EngineKind::JIT);
+  builder.setUseOrcMCJITReplacement(UseOrcMCJITReplacement);
 
   // If we are supposed to override the target triple, do so now.
   if (!TargetTriple.empty())

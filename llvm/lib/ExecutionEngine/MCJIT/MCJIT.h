@@ -10,12 +10,12 @@
 #ifndef LLVM_LIB_EXECUTIONENGINE_MCJIT_MCJIT_H
 #define LLVM_LIB_EXECUTIONENGINE_MCJIT_MCJIT_H
 
-#include "ObjectBuffer.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ExecutionEngine/ExecutionEngine.h"
 #include "llvm/ExecutionEngine/ObjectCache.h"
+#include "llvm/ExecutionEngine/ObjectMemoryBuffer.h"
 #include "llvm/ExecutionEngine/RuntimeDyld.h"
 #include "llvm/IR/Module.h"
 

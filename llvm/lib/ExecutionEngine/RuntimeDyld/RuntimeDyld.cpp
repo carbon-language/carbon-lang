@@ -449,11 +449,9 @@ void RuntimeDyldImpl::emitCommonSymbols(const ObjectFile &Obj,
     StringRef Name;
     Check(Sym.getName(Name));
 
-    assert((GlobalSymbolTable.find(Name) == GlobalSymbolTable.end()) &&
-           "Common symbol in global symbol table.");
-
     // Skip common symbols already elsewhere.
-    if (GlobalSymbolTable.count(Name)) {
+    if (GlobalSymbolTable.count(Name) ||
+        MemMgr->getSymbolAddressInLogicalDylib(Name)) {
       DEBUG(dbgs() << "\tSkipping already emitted common symbol '" << Name
                    << "'\n");
       continue;

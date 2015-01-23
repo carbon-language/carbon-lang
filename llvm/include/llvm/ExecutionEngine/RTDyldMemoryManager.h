@@ -89,6 +89,27 @@ public:
     return getSymbolAddressInProcess(Name);
   }
 
+  /// This method returns the address of the specified symbol if it exists
+  /// within the logical dynamic library represented by this
+  /// RTDyldMemoryManager. Unlike getSymbolAddress, queries through this
+  /// interface should return addresses for hidden symbols.
+  ///
+  /// This is of particular importance for the Orc JIT APIs, which support lazy
+  /// compilation by breaking up modules: Each of those broken out modules
+  /// must be able to resolve hidden symbols provided by the others. Clients
+  /// writing memory managers for MCJIT can usually ignore this method.
+  ///
+  /// This method will be queried by RuntimeDyld when checking for previous
+  /// definitions of common symbols. It will *not* be queried by default when
+  /// resolving external symbols (this minimises the link-time overhead for
+  /// MCJIT clients who don't care about Orc features). If you are writing a
+  /// RTDyldMemoryManager for Orc and want "external" symbol resolution to
+  /// search the logical dylib, you should override your getSymbolAddress
+  /// method call this method directly.
+  virtual uint64_t getSymbolAddressInLogicalDylib(const std::string &Name) {
+    return 0;
+  }
+
   /// This method returns the address of the specified function. As such it is
   /// only useful for resolving library symbols, not code generated symbols.
   ///

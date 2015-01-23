@@ -10,6 +10,7 @@ set(LLVM_LINK_COMPONENTS
   MC
   MCJIT
   Object
+  OrcJIT
   SelectionDAG
   Support
   native

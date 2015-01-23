@@ -1,4 +1,4 @@
-;===- ./lib/ExecutionEngine/LLVMBuild.txt ----------------------*- Conf -*--===;
+;===- ./lib/ExecutionEngine/MCJIT/LLVMBuild.txt ----------------*- Conf -*--===;
 ;
 ;                     The LLVM Compiler Infrastructure
 ;
@@ -15,11 +15,8 @@
 ;
 ;===------------------------------------------------------------------------===;
 
-[common]
-subdirectories = Interpreter MCJIT RuntimeDyld IntelJITEvents OProfileJIT Orc
-
 [component_0]
 type = Library
-name = ExecutionEngine
-parent = Libraries
-required_libraries = Core MC Object Support
+name = OrcJIT
+parent = ExecutionEngine
+required_libraries = Core ExecutionEngine Object RuntimeDyld Support Target
