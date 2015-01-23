@@ -1507,14 +1507,14 @@ ValueObject::GetValueAsSigned (int64_t fail_value, bool *success)
         {
             if (success)
                 *success = true;
-                return scalar.SLongLong(fail_value);
+            return scalar.SLongLong(fail_value);
         }
         // fallthrough, otherwise...
     }
     
     if (success)
         *success = false;
-        return fail_value;
+    return fail_value;
 }
 
 // if any more "special cases" are added to ValueObject::DumpPrintableRepresentation() please keep
