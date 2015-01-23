@@ -1028,7 +1028,7 @@ static void dump(llvm::raw_ostream &OS, const CoverageMappingRecord &Function) {
     OS << "File " << R.FileID << ", " << R.LineStart << ":"
            << R.ColumnStart << " -> " << R.LineEnd << ":" << R.ColumnEnd
            << " = ";
-    Ctx.dump(R.Count);
+    Ctx.dump(R.Count, OS);
     OS << " (HasCodeBefore = " << R.HasCodeBefore;
     if (R.Kind == CounterMappingRegion::ExpansionRegion)
       OS << ", Expanded file = " << R.ExpandedFileID;
