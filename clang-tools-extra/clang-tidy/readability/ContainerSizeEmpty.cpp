@@ -68,8 +68,7 @@ void ContainerSizeEmptyCheck::registerMatchers(MatchFinder *Finder) {
               anyOf(has(integerLiteral(equals(0))),
                     allOf(anyOf(hasOperatorName("<"), hasOperatorName(">="),
                                 hasOperatorName(">"), hasOperatorName("<=")),
-                          anyOf(hasRHS(integerLiteral(equals(1))),
-                                hasLHS(integerLiteral(equals(1)))))))
+                          hasEitherOperand(integerLiteral(equals(1))))))
               .bind("SizeBinaryOp")),
       hasParent(implicitCastExpr(
           hasImplicitDestinationType(isBoolType()),
