@@ -430,7 +430,6 @@ public:
                            unsigned PieceOffset = 0) const;
 
   /// EmitDwarfRegOp - Emit a dwarf register operation.
-  /// \param Indirect   whether this is a register-indirect address
   virtual void EmitDwarfRegOp(ByteStreamer &BS,
                               const MachineLocation &MLoc) const;
 
