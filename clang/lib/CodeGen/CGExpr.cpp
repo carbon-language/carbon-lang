@@ -3059,12 +3059,6 @@ RValue CodeGenFunction::EmitRValueForField(LValue LV,
 
 RValue CodeGenFunction::EmitCallExpr(const CallExpr *E,
                                      ReturnValueSlot ReturnValue) {
-  // Force column info to be generated so we can differentiate
-  // multiple call sites on the same line in the debug info.
-  // FIXME: This is insufficient. Two calls coming from the same macro
-  // expansion will still get the same line/column and break debug info. It's
-  // possible that LLVM can be fixed to not rely on this uniqueness, at which
-  // point this workaround can be removed.
   ApplyDebugLocation DL(*this, E->getLocStart());
 
   // Builtins never have block type.
