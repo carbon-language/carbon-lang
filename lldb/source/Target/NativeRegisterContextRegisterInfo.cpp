@@ -28,6 +28,12 @@ NativeRegisterContextRegisterInfo::GetRegisterCount () const
     return m_register_info_interface_up->GetRegisterCount ();
 }
 
+uint32_t
+NativeRegisterContextRegisterInfo::GetUserRegisterCount () const
+{
+    return m_register_info_interface_up->GetUserRegisterCount ();
+}
+
 const RegisterInfo *
 NativeRegisterContextRegisterInfo::GetRegisterInfoAtIndex (uint32_t reg_index) const
 {

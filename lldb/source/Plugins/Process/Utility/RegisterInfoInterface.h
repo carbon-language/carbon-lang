@@ -32,8 +32,19 @@ namespace lldb_private
         virtual const lldb_private::RegisterInfo *
         GetRegisterInfo () const = 0;
 
+        // Returns the number of registers including the user registers and the
+        // lldb internal registers also
         virtual uint32_t
         GetRegisterCount () const = 0;
+
+        // Returns the number of the user registers (excluding the registers
+        // kept for lldb internal use only). Subclasses should override it if
+        // they belongs to an architecture with lldb internal registers.
+        virtual uint32_t
+        GetUserRegisterCount () const
+        {
+            return GetRegisterCount();
+        }
 
         const lldb_private::ArchSpec&
         GetTargetArchitecture() const

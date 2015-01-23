@@ -145,10 +145,26 @@ GetRegisterInfoCount (const ArchSpec &target_arch)
     }
 }
 
+static uint32_t
+GetUserRegisterInfoCount (const ArchSpec &target_arch)
+{
+    switch (target_arch.GetMachine())
+    {
+        case llvm::Triple::x86:
+            return static_cast<uint32_t> (k_num_user_registers_i386);
+        case llvm::Triple::x86_64:
+            return static_cast<uint32_t> (k_num_user_registers_x86_64);
+        default:
+            assert(false && "Unhandled target architecture.");
+            return 0;
+    }
+}
+
 RegisterContextLinux_x86_64::RegisterContextLinux_x86_64(const ArchSpec &target_arch) :
     lldb_private::RegisterInfoInterface(target_arch),
     m_register_info_p (GetRegisterInfoPtr (target_arch)),
-    m_register_info_count (GetRegisterInfoCount (target_arch))
+    m_register_info_count (GetRegisterInfoCount (target_arch)),
+    m_user_register_count (GetUserRegisterInfoCount (target_arch))
 {
 }
 
@@ -168,4 +184,10 @@ uint32_t
 RegisterContextLinux_x86_64::GetRegisterCount () const
 {
     return m_register_info_count;
+}
+
+uint32_t
+RegisterContextLinux_x86_64::GetUserRegisterCount () const
+{
+    return m_user_register_count;
 }

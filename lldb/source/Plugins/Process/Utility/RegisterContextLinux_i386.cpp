@@ -125,3 +125,8 @@ RegisterContextLinux_i386::GetRegisterCount () const
     return static_cast<uint32_t> (sizeof (g_register_infos_i386) / sizeof (g_register_infos_i386 [0]));
 }
 
+uint32_t
+RegisterContextLinux_i386::GetUserRegisterCount () const
+{
+    return static_cast<uint32_t> (k_num_user_registers_i386);
+}

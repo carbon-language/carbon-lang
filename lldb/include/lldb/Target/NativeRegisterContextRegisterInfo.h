@@ -31,6 +31,9 @@ namespace lldb_private
         uint32_t
         GetRegisterCount () const override;
 
+        uint32_t
+        GetUserRegisterCount () const override;
+
         const RegisterInfo *
         GetRegisterInfoAtIndex (uint32_t reg_index) const override;
 

@@ -118,7 +118,8 @@ namespace lldb_private
         k_num_registers_i386,
         k_num_gpr_registers_i386 = k_last_gpr_i386 - k_first_gpr_i386 + 1,
         k_num_fpr_registers_i386 = k_last_fpr_i386 - k_first_fpr_i386 + 1,
-        k_num_avx_registers_i386 = k_last_avx_i386 - k_first_avx_i386 + 1
+        k_num_avx_registers_i386 = k_last_avx_i386 - k_first_avx_i386 + 1,
+        k_num_user_registers_i386 = k_num_gpr_registers_i386 + k_num_fpr_registers_i386 + k_num_avx_registers_i386,
     };
 
     //---------------------------------------------------------------------------
@@ -285,7 +286,8 @@ namespace lldb_private
         k_num_registers_x86_64,
         k_num_gpr_registers_x86_64 = k_last_gpr_x86_64 - k_first_gpr_x86_64 + 1,
         k_num_fpr_registers_x86_64 = k_last_fpr_x86_64 - k_first_fpr_x86_64 + 1,
-        k_num_avx_registers_x86_64 = k_last_avx_x86_64 - k_first_avx_x86_64 + 1
+        k_num_avx_registers_x86_64 = k_last_avx_x86_64 - k_first_avx_x86_64 + 1,
+        k_num_user_registers_x86_64 = k_num_gpr_registers_x86_64 + k_num_fpr_registers_x86_64 + k_num_avx_registers_x86_64,
     };
 
 }
