@@ -21,7 +21,7 @@ namespace llvm {
 
 void MCELF::SetBinding(MCSymbolData &SD, unsigned Binding) {
   assert(Binding == ELF::STB_LOCAL || Binding == ELF::STB_GLOBAL ||
-         Binding == ELF::STB_WEAK);
+         Binding == ELF::STB_WEAK || Binding == ELF::STB_GNU_UNIQUE);
   uint32_t OtherFlags = SD.getFlags() & ~(0xf << ELF_STB_Shift);
   SD.setFlags(OtherFlags | (Binding << ELF_STB_Shift));
 }
@@ -29,7 +29,7 @@ void MCELF::SetBinding(MCSymbolData &SD, unsigned Binding) {
 unsigned MCELF::GetBinding(const MCSymbolData &SD) {
   uint32_t Binding = (SD.getFlags() & (0xf << ELF_STB_Shift)) >> ELF_STB_Shift;
   assert(Binding == ELF::STB_LOCAL || Binding == ELF::STB_GLOBAL ||
-         Binding == ELF::STB_WEAK);
+         Binding == ELF::STB_WEAK || Binding == ELF::STB_GNU_UNIQUE);
   return Binding;
 }
 

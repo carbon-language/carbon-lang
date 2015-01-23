@@ -9,8 +9,8 @@ foo:
         .type bar,@object
 bar:
 
-// Test that gnu_unique_object is accepted.
         .type zed,@gnu_unique_object
+zed:
 
 obj:
         .global obj
@@ -310,3 +310,13 @@ alias12:
 // CHECK-NEXT:     Other: 0
 // CHECK-NEXT:     Section: .text (0x1)
 // CHECK-NEXT:   }
+// CHECK-NEXT:   Symbol {
+// CHECK-NEXT:     Name: zed (32)
+// CHECK-NEXT:     Value: 0x0
+// CHECK-NEXT:     Size: 0
+// CHECK-NEXT:     Binding: Unique (0xA)
+// CHECK-NEXT:     Type: Object (0x1)
+// CHECK-NEXT:     Other: 0
+// CHECK-NEXT:     Section: .text (0x1)
+// CHECK-NEXT:   }
+// CHECK-NEXT: ]
