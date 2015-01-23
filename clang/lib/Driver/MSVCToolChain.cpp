@@ -22,6 +22,8 @@
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Process.h"
 
+#include <cstdio>
+
 // Include the necessary headers to interface with the Windows registry and
 // environment.
 #if defined(LLVM_ON_WIN32)
@@ -212,7 +214,7 @@ bool MSVCToolChain::getWindowsSDKDir(std::string &path, int &major,
       "SOFTWARE\\Microsoft\\Microsoft SDKs\\Windows\\$VERSION",
       "InstallationFolder", path, &sdkVersion);
   if (!sdkVersion.empty())
-    ::sscanf(sdkVersion.c_str(), "v%d.%d", &major, &minor);
+    std::sscanf(sdkVersion.c_str(), "v%d.%d", &major, &minor);
   return hasSDKDir && !path.empty();
 }
 
