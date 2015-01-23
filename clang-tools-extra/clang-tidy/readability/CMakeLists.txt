@@ -8,6 +8,7 @@ add_clang_library(clangTidyReadabilityModule
   NamespaceCommentCheck.cpp
   ReadabilityTidyModule.cpp
   RedundantSmartptrGet.cpp
+  ShrinkToFitCheck.cpp
 
   LINK_LIBS
   clangAST

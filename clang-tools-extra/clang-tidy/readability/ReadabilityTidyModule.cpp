@@ -15,6 +15,7 @@
 #include "ElseAfterReturnCheck.h"
 #include "FunctionSize.h"
 #include "RedundantSmartptrGet.h"
+#include "ShrinkToFitCheck.h"
 
 namespace clang {
 namespace tidy {
@@ -33,6 +34,8 @@ public:
         "readability-function-size");
     CheckFactories.registerCheck<RedundantSmartptrGet>(
         "readability-redundant-smartptr-get");
+    CheckFactories.registerCheck<ShrinkToFitCheck>(
+        "readability-shrink-to-fit");
   }
 };
 
