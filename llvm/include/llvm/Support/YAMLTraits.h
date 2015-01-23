@@ -476,9 +476,10 @@ public:
   template <typename FBT, typename T>
   void enumFallback(T &Val) {
     if ( matchEnumFallback() ) {
-      FBT Res = Val;
+      // FIXME: Force integral conversion to allow strong typedefs to convert.
+      FBT Res = (uint64_t)Val;
       yamlize(*this, Res, true);
-      Val = Res;
+      Val = (uint64_t)Res;
     }
   }
 
