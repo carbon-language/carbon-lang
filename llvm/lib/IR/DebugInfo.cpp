@@ -170,6 +170,11 @@ DIExpression::iterator DIExpression::end() const {
  return DIExpression::iterator();
 }
 
+const DIExpression::Operand &DIExpression::Operand::getNext() const {
+  iterator it(I);
+  return *(++it);
+}
+
 //===----------------------------------------------------------------------===//
 // Predicates
 //===----------------------------------------------------------------------===//
@@ -606,13 +611,13 @@ bool DIExpression::Verify() const {
   if (!(isExpression() && DbgNode->getNumOperands() == 1))
     return false;
 
-  for (auto E = end(), I = begin(); I != E; ++I)
-    switch (*I) {
+  for (auto Op : *this)
+    switch (Op) {
     case DW_OP_piece:
       // Must be the last element of the expression.
-      return std::distance(I.getBase(), DIHeaderFieldIterator()) == 3;
+      return std::distance(Op.getBase(), DIHeaderFieldIterator()) == 3;
     case DW_OP_plus:
-      if (std::distance(I.getBase(), DIHeaderFieldIterator()) < 2)
+      if (std::distance(Op.getBase(), DIHeaderFieldIterator()) < 2)
         return false;
       break;
     case DW_OP_deref:

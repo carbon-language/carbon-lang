@@ -59,7 +59,7 @@ class DIObjCProperty;
 typedef DenseMap<const MDString *, MDNode *> DITypeIdentifierMap;
 
 class DIHeaderFieldIterator
-    : public std::iterator<std::forward_iterator_tag, StringRef, std::ptrdiff_t,
+    : public std::iterator<std::input_iterator_tag, StringRef, std::ptrdiff_t,
                            const StringRef *, StringRef> {
   StringRef Header;
   StringRef Current;
@@ -867,17 +867,40 @@ public:
   /// \brief Return the size of this piece in bytes.
   uint64_t getPieceSize() const;
 
-  class Operand;
+  class iterator;
+  /// \brief A lightweight wrapper around an element of a DIExpression.
+  class Operand {
+    friend class iterator;
+    DIHeaderFieldIterator I;
+    Operand() {}
+    Operand(DIHeaderFieldIterator I) : I(I) {}
+  public:
+    /// \brief Operands such as DW_OP_piece have explicit (non-stack) arguments.
+    /// Argument 0 is the operand itself.
+    uint64_t getArg(unsigned N) const {
+      DIHeaderFieldIterator In = I;
+      std::advance(In, N);
+      return In.getNumber<uint64_t>();
+    }
+    operator uint64_t () const { return I.getNumber<uint64_t>(); }
+    /// \brief Returns underlying DIHeaderFieldIterator.
+    const DIHeaderFieldIterator &getBase() const { return I; }
+    /// \brief Returns the next operand.
+    const Operand &getNext() const;
+  };
 
   /// \brief An iterator for DIExpression elements.
-  class iterator : public std::iterator<std::forward_iterator_tag, StringRef,
-                                        unsigned, const uint64_t *, uint64_t> {
+  class iterator : public std::iterator<std::input_iterator_tag, StringRef,
+                                        unsigned, const Operand*, Operand> {
+    friend class Operand;
     DIHeaderFieldIterator I;
+    Operand Tmp;
     iterator(DIHeaderFieldIterator I) : I(I) {}
   public:
     iterator() {}
     iterator(const DIExpression &Expr) : I(++Expr.header_begin()) {}
-    Operand operator*() const { return Operand(I); }
+    const Operand &operator*() { return Tmp = Operand(I); }
+    const Operand *operator->() { return &(Tmp = Operand(I)); }
     iterator &operator++() {
       increment();
       return *this;
@@ -890,7 +913,6 @@ public:
     bool operator==(const iterator &X) const { return I == X.I; }
     bool operator!=(const iterator &X) const { return !(*this == X); }
 
-    const DIHeaderFieldIterator &getBase() const { return I; }
   private:
     void increment() {
       switch (**this) {
@@ -905,22 +927,6 @@ public:
 
   iterator begin() const;
   iterator end() const;
-
-  /// \brief A lightweight wrapper around an element of a DIExpression.
-  class Operand {
-    DIHeaderFieldIterator I;
-  public:
-    Operand(DIHeaderFieldIterator I) : I(I) {}
-    /// \brief Operands such as DW_OP_piece have explicit (non-stack) arguments.
-    /// Argument 0 is the operand itself.
-    uint64_t getArg(unsigned N) const {
-      DIHeaderFieldIterator In = I;
-      std::advance(In, N);
-      return In.getNumber<uint64_t>();
-    }
-
-    operator uint64_t () const { return I.getNumber<uint64_t>(); }
-  };
 };
 
 /// \brief This object holds location information.
