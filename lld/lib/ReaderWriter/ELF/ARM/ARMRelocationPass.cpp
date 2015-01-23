@@ -122,7 +122,7 @@ public:
       : ARMRelocationPass(ctx) {}
 };
 
-} // end anon namespace
+} // end of anon namespace
 
 std::unique_ptr<Pass>
 lld::elf::createARMRelocationPass(const ARMLinkingContext &ctx) {
