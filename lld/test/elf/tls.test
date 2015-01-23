@@ -1,3 +1,5 @@
+# REQUIRES: X86
+#
 # This tests verifies that TLS variables have correct offsets
 RUN: lld -flavor gnu -target x86_64-linux %p/Inputs/tls.x86-64 -static  \
 RUN: --output-filetype=yaml --noinhibit-exec | FileCheck %s -check-prefix=YAML

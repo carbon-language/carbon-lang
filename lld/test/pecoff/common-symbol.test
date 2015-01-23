@@ -1,3 +1,5 @@
+# REQUIRES: X86
+#
 # RUN: yaml2obj %p/Inputs/common-symbol.obj.yaml > %t.obj
 #
 # RUN: lld -flavor link /machine:x64 /out:%t.exe /subsystem:console /force \

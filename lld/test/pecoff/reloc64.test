@@ -1,3 +1,5 @@
+# REQUIRES: X86
+#
 # RUN: yaml2obj %p/Inputs/reloc64.obj.yaml > %t.obj
 
 # RUN: lld -flavor link /out:%t.exe /subsystem:console /machine:x64 \

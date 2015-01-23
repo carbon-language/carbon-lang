@@ -1,3 +1,5 @@
+# REQUIRES: ARM
+#
 # RUN: yaml2obj -format coff -o %t.obj %p/Inputs/armnt-branch24t.obj.yaml
 # RUN: llvm-objdump -d %t.obj | FileCheck %s -check-prefix BEFORE
 # RUN: lld -flavor link /entry:function /subsystem:console /out:%t.exe %t.obj

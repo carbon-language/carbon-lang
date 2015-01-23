@@ -1,3 +1,5 @@
+# REQUIRES: X86
+#
 # RUN: yaml2obj %p/Inputs/alternatename1.obj.yaml > %t1.obj
 # RUN: yaml2obj %p/Inputs/alternatename2.obj.yaml > %t2.obj
 # RUN: yaml2obj %p/Inputs/alternatename3.obj.yaml > %t3.obj

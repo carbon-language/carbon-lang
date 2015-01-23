@@ -1,3 +1,5 @@
+# REQUIRES: X86
+#
 # RUN: lld -flavor darwin -arch x86_64 -macosx_version_min 10.8 %s -o %t  \
 # RUN:   %p/Inputs/libSystem.yaml
 # RUN: llvm-objdump -lazy-bind %t | FileCheck %s

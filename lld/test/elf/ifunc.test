@@ -1,3 +1,5 @@
+# REQUIRES: X86
+
 # This test checks that IRELATIVE relocations are created for symbols that
 # need relocation even for static links.
 RUN: lld -flavor gnu -target x86_64-linux --output-filetype=yaml -r \
