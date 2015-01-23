@@ -122,7 +122,8 @@ public:
       : TM(std::move(TM)), MM(std::move(MM)),
         Mang(this->TM->getSubtargetImpl()->getDataLayout()),
         NotifyObjectLoaded(*this), NotifyFinalized(*this),
-        ObjectLayer(NotifyObjectLoaded, NotifyFinalized),
+        ObjectLayer(ObjectLayerT::CreateRTDyldMMFtor(), NotifyObjectLoaded,
+                    NotifyFinalized),
         CompileLayer(ObjectLayer, SimpleCompiler(*this->TM)),
         LazyEmitLayer(CompileLayer) {
     setDataLayout(this->TM->getSubtargetImpl()->getDataLayout());

@@ -94,59 +94,24 @@ public:
 template <typename NotifyLoadedFtor = DoNothingOnNotifyLoaded>
 class ObjectLinkingLayer : public ObjectLinkingLayerBase {
 public:
+
   /// @brief LoadedObjectInfo list. Contains a list of owning pointers to
   ///        RuntimeDyld::LoadedObjectInfo instances.
   typedef std::vector<std::unique_ptr<RuntimeDyld::LoadedObjectInfo>>
       LoadedObjInfoList;
 
-  /// @brief Default construct an ObjectLinkingLayer.
-  ObjectLinkingLayer() {}
+  /// @brief Functor to create RTDyldMemoryManager instances.
+  typedef std::function<std::unique_ptr<RTDyldMemoryManager>()> CreateRTDyldMMFtor;
 
-  /// @brief Construct an ObjectLinkingLayer with the given NotifyLoaded
-  ///        functor.
-  ObjectLinkingLayer(NotifyLoadedFtor NotifyLoaded)
-      : NotifyLoaded(std::move(NotifyLoaded)) {}
-
-  /// @brief Construct an ObjectLinkingLayer with the given NotifyFinalized
-  ///        functor.
-  ObjectLinkingLayer(std::function<void(ObjSetHandleT)> NotifyFinalized)
-      : NotifyFinalized(std::move(NotifyFinalized)) {}
-
-  /// @brief Construct an ObjectLinkingLayer with the given CreateMemoryManager
-  ///        functor.
-  ObjectLinkingLayer(
-      std::function<std::unique_ptr<RTDyldMemoryManager>()> CreateMemoryManager)
-      : CreateMemoryManager(std::move(CreateMemoryManager)) {}
-
-  /// @brief Construct an ObjectLinkingLayer with the given NotifyLoaded and
-  ///        NotifyFinalized functors.
-  ObjectLinkingLayer(NotifyLoadedFtor NotifyLoaded,
-                     std::function<void(ObjSetHandleT)> NotifyFinalized)
-      : NotifyLoaded(std::move(NotifyLoaded)),
-        NotifyFinalized(std::move(NotifyFinalized)) {}
-
-  /// @brief Construct an ObjectLinkingLayer with the given NotifyLoaded and
-  ///        CreateMemoryManager functors.
-  ObjectLinkingLayer(
-      NotifyLoadedFtor NotifyLoaded,
-      std::function<std::unique_ptr<RTDyldMemoryManager>()> CreateMemoryManager)
-      : NotifyLoaded(std::move(NotifyLoaded)),
-        CreateMemoryManager(std::move(CreateMemoryManager)) {}
-
-  /// @brief Construct an ObjectLinkingLayer with the given NotifyFinalized and
-  ///        CreateMemoryManager functors.
-  ObjectLinkingLayer(
-      std::function<void(ObjSetHandleT)> NotifyFinalized,
-      std::function<std::unique_ptr<RTDyldMemoryManager>()> CreateMemoryManager)
-      : NotifyFinalized(std::move(NotifyFinalized)),
-        CreateMemoryManager(std::move(CreateMemoryManager)) {}
+  /// @brief Functor for receiving finalization notifications.
+  typedef std::function<void(ObjSetHandleT)> NotifyFinalizedFtor;
 
   /// @brief Construct an ObjectLinkingLayer with the given NotifyLoaded,
   ///        NotifyFinalized and CreateMemoryManager functors.
   ObjectLinkingLayer(
+      CreateRTDyldMMFtor CreateMemoryManager,
       NotifyLoadedFtor NotifyLoaded,
-      std::function<void(ObjSetHandleT)> NotifyFinalized,
-      std::function<std::unique_ptr<RTDyldMemoryManager>()> CreateMemoryManager)
+      NotifyFinalizedFtor NotifyFinalized)
       : NotifyLoaded(std::move(NotifyLoaded)),
         NotifyFinalized(std::move(NotifyFinalized)),
         CreateMemoryManager(std::move(CreateMemoryManager)) {}
@@ -245,8 +210,8 @@ public:
 private:
   LinkedObjectSetListT LinkedObjSetList;
   NotifyLoadedFtor NotifyLoaded;
-  std::function<void(ObjSetHandleT)> NotifyFinalized;
-  std::function<std::unique_ptr<RTDyldMemoryManager>()> CreateMemoryManager;
+  NotifyFinalizedFtor NotifyFinalized;
+  CreateRTDyldMMFtor CreateMemoryManager;
 };
 
 } // end namespace llvm
