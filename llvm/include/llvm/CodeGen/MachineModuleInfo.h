@@ -46,6 +46,13 @@
 
 namespace llvm {
 
+/// Different personality functions used by a function.
+enum class EHPersonality {
+  None,     /// No exception handling
+  Itanium,  /// An Itanium C++ EH personality like __gxx_personality_seh0
+  Win64SEH, /// x86_64 SEH, uses __C_specific_handler
+};
+
 //===----------------------------------------------------------------------===//
 // Forward declarations.
 class Constant;
@@ -168,6 +175,10 @@ class MachineModuleInfo : public ImmutablePass {
   /// address. See comments in lib/Target/X86/X86FrameLowering.cpp for more
   /// details.
   bool UsesMorestackAddr;
+
+  EHPersonality PersonalityTypeCache;
+
+  EHPersonality getPersonalityTypeSlow();
 
 public:
   static char ID; // Pass identification, replacement for typeid
@@ -412,6 +423,13 @@ public:
   /// getPersonality - Return a personality function if available.  The presence
   /// of one is required to emit exception handling info.
   const Function *getPersonality() const;
+
+  /// Classify the personality function amongst known EH styles.
+  EHPersonality getPersonalityType() {
+    if (PersonalityTypeCache != EHPersonality::None)
+      return PersonalityTypeCache;
+    return getPersonalityTypeSlow();
+  }
 
   /// setVariableDbgInfo - Collect information used to emit debugging
   /// information of a variable.

@@ -51,7 +51,8 @@ void DwarfCFIException::endModule() {
   if (moveTypeModule == AsmPrinter::CFI_M_Debug)
     Asm->OutStreamer.EmitCFISections(false, true);
 
-  if (!Asm->MAI->usesItaniumLSDAForExceptions())
+  // SjLj uses this pass and it doesn't need this info.
+  if (!Asm->MAI->usesCFIForEH())
     return;
 
   const TargetLoweringObjectFile &TLOF = Asm->getObjFileLowering();

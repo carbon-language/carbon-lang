@@ -276,6 +276,7 @@ bool MachineModuleInfo::doInitialization(Module &M) {
   DbgInfoAvailable = UsesVAFloatArgument = UsesMorestackAddr = false;
   // Always emit some info, by default "no personality" info.
   Personalities.push_back(nullptr);
+  PersonalityTypeCache = EHPersonality::None;
   AddrLabelSymbols = nullptr;
   TheModule = nullptr;
 
@@ -554,7 +555,21 @@ try_next:;
 
 /// getPersonality - Return the personality function for the current function.
 const Function *MachineModuleInfo::getPersonality() const {
-  return !LandingPads.empty() ? LandingPads[0].Personality : nullptr;
+  for (const LandingPadInfo &LPI : LandingPads)
+    if (LPI.Personality)
+      return LPI.Personality;
+  return nullptr;
+}
+
+EHPersonality MachineModuleInfo::getPersonalityTypeSlow() {
+  const Function *Per = getPersonality();
+  if (!Per)
+    PersonalityTypeCache = EHPersonality::None;
+  else if (Per->getName() == "__C_specific_handler")
+    PersonalityTypeCache = EHPersonality::Win64SEH;
+  else // Assume everything else is Itanium.
+    PersonalityTypeCache = EHPersonality::Itanium;
+  return PersonalityTypeCache;
 }
 
 /// getPersonalityIndex - Return unique index for current personality

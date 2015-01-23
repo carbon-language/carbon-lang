@@ -924,8 +924,13 @@ void SelectionDAGISel::PrepareEHLandingPad() {
   BuildMI(*MBB, FuncInfo->InsertPt, SDB->getCurDebugLoc(), II)
     .addSym(Label);
 
-  if (TM.getMCAsmInfo()->getExceptionHandlingType() ==
-      ExceptionHandling::MSVC) {
+  // If this is an MSVC-style personality function, we need to split the landing
+  // pad into several BBs.
+  const BasicBlock *LLVMBB = MBB->getBasicBlock();
+  const LandingPadInst *LPadInst = LLVMBB->getLandingPadInst();
+  MF->getMMI().addPersonality(
+      MBB, cast<Function>(LPadInst->getPersonalityFn()->stripPointerCasts()));
+  if (MF->getMMI().getPersonalityType() == EHPersonality::Win64SEH) {
     // Make virtual registers and a series of labels that fill in values for the
     // clauses.
     auto &RI = MF->getRegInfo();
@@ -937,8 +942,6 @@ void SelectionDAGISel::PrepareEHLandingPad() {
 
     // Emit separate machine basic blocks with separate labels for each clause
     // before the main landing pad block.
-    const BasicBlock *LLVMBB = MBB->getBasicBlock();
-    const LandingPadInst *LPadInst = LLVMBB->getLandingPadInst();
     MachineInstrBuilder SelectorPHI = BuildMI(
         *MBB, MBB->begin(), SDB->getCurDebugLoc(), TII->get(TargetOpcode::PHI),
         FuncInfo->ExceptionSelectorVirtReg);
