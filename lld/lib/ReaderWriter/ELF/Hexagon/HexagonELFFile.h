@@ -123,7 +123,7 @@ public:
         new HexagonELFFile<ELFT>(std::move(mb), atomizeStrings));
   }
 
-  virtual bool isCommonSymbol(const Elf_Sym *symbol) const {
+  bool isCommonSymbol(const Elf_Sym *symbol) const override {
     switch (symbol->st_shndx) {
     // Common symbols
     case llvm::ELF::SHN_HEXAGON_SCOMMON:
@@ -139,20 +139,20 @@ public:
   }
 
   /// Process the Defined symbol and create an atom for it.
-  virtual ErrorOr<ELFDefinedAtom<ELFT> *>
+  ErrorOr<ELFDefinedAtom<ELFT> *>
   handleDefinedSymbol(StringRef symName, StringRef sectionName,
                       const Elf_Sym *sym, const Elf_Shdr *sectionHdr,
                       ArrayRef<uint8_t> contentData,
                       unsigned int referenceStart, unsigned int referenceEnd,
-                      std::vector<ELFReference<ELFT> *> &referenceList) {
+                      std::vector<ELFReference<ELFT> *> &referenceList) override {
     return new (this->_readerStorage) HexagonELFDefinedAtom<ELFT>(
         *this, symName, sectionName, sym, sectionHdr, contentData,
         referenceStart, referenceEnd, referenceList);
   }
 
   /// Process the Common symbol and create an atom for it.
-  virtual ErrorOr<ELFCommonAtom<ELFT> *>
-  handleCommonSymbol(StringRef symName, const Elf_Sym *sym) {
+  ErrorOr<ELFCommonAtom<ELFT> *>
+  handleCommonSymbol(StringRef symName, const Elf_Sym *sym) override {
     return new (this->_readerStorage)
         HexagonELFCommonAtom<ELFT>(*this, symName, sym);
   }
