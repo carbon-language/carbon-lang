@@ -584,7 +584,8 @@ static bool isUnsignedDIType(DwarfDebug *DD, DIType Ty) {
         T == dwarf::DW_TAG_ptr_to_member_type ||
         T == dwarf::DW_TAG_reference_type ||
         T == dwarf::DW_TAG_rvalue_reference_type ||
-        T == dwarf::DW_TAG_structure_type)
+        T == dwarf::DW_TAG_structure_type ||
+        T == dwarf::DW_TAG_union_type)
       return true;
     assert(T == dwarf::DW_TAG_typedef || T == dwarf::DW_TAG_const_type ||
            T == dwarf::DW_TAG_volatile_type ||
