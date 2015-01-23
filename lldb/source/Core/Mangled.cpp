@@ -5352,6 +5352,21 @@ Mangled::MemorySize () const
     return m_mangled.MemorySize() + m_demangled.MemorySize();
 }
 
+lldb::LanguageType
+Mangled::GetLanguage ()
+{
+    ConstString mangled = GetMangledName();
+    if (mangled)
+    {
+        if (GetDemangledName())
+        {
+            if (cstring_is_mangled(mangled.GetCString()))
+                return lldb::eLanguageTypeC_plus_plus;
+        }
+    }
+    return  lldb::eLanguageTypeUnknown;
+}
+
 //----------------------------------------------------------------------
 // Dump OBJ to the supplied stream S.
 //----------------------------------------------------------------------
