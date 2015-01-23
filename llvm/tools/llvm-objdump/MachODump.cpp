@@ -749,7 +749,7 @@ static void printArchiveChild(Archive::Child &C, bool verbose,
   unsigned GID = C.getGID();
   outs() << format("%-3d ", GID);
   uint64_t Size = C.getRawSize();
-  outs() << format("%5d ", Size);
+  outs() << format("%5" PRId64, Size) << " ";
 
   StringRef RawLastModified = C.getRawLastModified();
   if (verbose) {
