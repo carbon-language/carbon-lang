@@ -173,14 +173,16 @@ CFLAGS.asan_osx_dynamic := \
 	-isysroot $(OSX_SDK) \
 	-fno-builtin \
 	-gline-tables-only \
-	-DMAC_INTERPOSE_FUNCTIONS=1
+	-DMAC_INTERPOSE_FUNCTIONS=1 \
+	-DASAN_DYNAMIC=1
 
 CFLAGS.asan_iossim_dynamic := \
 	$(CFLAGS) -mios-simulator-version-min=7.0 \
         -isysroot $(IOSSIM_SDK) \
         -fno-builtin \
 	-gline-tables-only \
-	-DMAC_INTERPOSE_FUNCTIONS=1
+	-DMAC_INTERPOSE_FUNCTIONS=1 \
+	-DASAN_DYNAMIC=1
 
 CFLAGS.ubsan_osx := $(CFLAGS) -mmacosx-version-min=10.6 \
 	-isysroot $(OSX_SDK) \
