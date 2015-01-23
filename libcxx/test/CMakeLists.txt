@@ -10,6 +10,12 @@ include(FindPythonInterp)
 if(PYTHONINTERP_FOUND)
   if(LIBCXX_BUILT_STANDALONE)
     set(LIT_EXECUTABLE "" CACHE FILEPATH "Path to LLVM's lit.py.")
+    # Make sure we can use the console pool for recent cmake and ninja > 1.5
+    if(CMAKE_VERSION VERSION_LESS 3.1.20141117)
+      set(cmake_3_2_USES_TERMINAL)
+    else()
+      set(cmake_3_2_USES_TERMINAL USES_TERMINAL)
+    endif()
   else()
     set(LIT_EXECUTABLE "${CMAKE_SOURCE_DIR}/utils/lit/lit.py")
   endif()
@@ -46,7 +52,8 @@ if(PYTHONINTERP_FOUND)
             ${LIT_ARGS}
             ${CMAKE_CURRENT_BINARY_DIR}
     DEPENDS cxx
-    COMMENT "Running libcxx tests")
+    COMMENT "Running libcxx tests"
+    ${cmake_3_2_USES_TERMINAL})
 else()
   message(WARNING "Could not find Python, no check target will be available!")
 endif()
