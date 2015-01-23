@@ -23,7 +23,7 @@
    ;; Unnamed variable slots
    '("%[-]?[0-9]+" . font-lock-variable-name-face)
    ;; Types
-   `(,(regexp-opt '("void" "i[0-9]+" "float" "double" "type" "label" "opaque") 'words) . font-lock-type-face)
+   `(,(regexp-opt '("void" "i1" "i8" "i16" "i32" "i64" "i128" "float" "double" "type" "label" "opaque") 'words) . font-lock-type-face)
    ;; Integer literals
    '("\\b[-]?[0-9]+\\b" . font-lock-preprocessor-face)
    ;; Floating point constants
@@ -83,7 +83,7 @@
               ;; word constituents (`w')
               ;;[?<  "w"]
               ;;[?>  "w"]
-              [?\%  "w"]
+              [?%  "w"]
               ;;[?_  "w  "]
               ;; comments
               [?\;  "< "]
@@ -93,16 +93,9 @@
               ;; symbol constituents (`_')
               ;; punctuation (`.')
               ;; open paren (`(')
-              [?\( "("]
-              [?\[ "("]
-              [?\{ "("]
               ;; close paren (`)')
-              [?\) ")"]
-              [?\] ")"]
-              [?\} ")"]
               ;; string quote ('"')
-              [?\" "\""]
-              ))))
+              [?\" "\""]))))
 
 ;; --------------------- Abbrev table -----------------------------
 
