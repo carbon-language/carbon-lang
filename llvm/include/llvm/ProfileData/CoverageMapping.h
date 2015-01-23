@@ -19,6 +19,7 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/Hashing.h"
 #include "llvm/ADT/iterator.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorOr.h"
 #include "llvm/Support/raw_ostream.h"
 #include <system_error>
@@ -217,7 +218,7 @@ public:
       : Expressions(Expressions), CounterValues(CounterValues) {}
 
   void dump(const Counter &C, llvm::raw_ostream &OS) const;
-  void dump(const Counter &C) const { dump(C, llvm::outs()); }
+  void dump(const Counter &C) const { dump(C, dbgs()); }
 
   /// \brief Return the number of times that a region of code associated with
   /// this counter was executed.
