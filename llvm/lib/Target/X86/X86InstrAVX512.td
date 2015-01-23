@@ -5083,14 +5083,17 @@ multiclass avx512_conflict<bits<8> opc, string OpcodeStr,
                         RegisterClass RC, RegisterClass KRC,
                         X86MemOperand x86memop,
                         X86MemOperand x86scalar_mop, string BrdcstStr> {
+  let hasSideEffects = 0 in {
   def rr : AVX5128I<opc, MRMSrcReg, (outs RC:$dst),
        (ins RC:$src),
        !strconcat(OpcodeStr, "\t{$src, ${dst} |${dst}, $src}"),
        []>, EVEX;
+  let mayLoad = 1 in
   def rm : AVX5128I<opc, MRMSrcMem, (outs RC:$dst),
        (ins x86memop:$src),
        !strconcat(OpcodeStr, "\t{$src, ${dst}|${dst}, $src}"),
        []>, EVEX;
+  let mayLoad = 1 in
   def rmb : AVX5128I<opc, MRMSrcMem, (outs RC:$dst),
        (ins x86scalar_mop:$src),
        !strconcat(OpcodeStr, "\t{${src}", BrdcstStr,
@@ -5101,11 +5104,13 @@ multiclass avx512_conflict<bits<8> opc, string OpcodeStr,
        !strconcat(OpcodeStr,
                   "\t{$src, ${dst} {${mask}} {z}|${dst} {${mask}} {z}, $src}"),
        []>, EVEX, EVEX_KZ;
+  let mayLoad = 1 in
   def rmkz : AVX5128I<opc, MRMSrcMem, (outs RC:$dst),
        (ins KRC:$mask, x86memop:$src),
        !strconcat(OpcodeStr,
                   "\t{$src, ${dst} {${mask}} {z}|${dst} {${mask}} {z}, $src}"),
        []>, EVEX, EVEX_KZ;
+  let mayLoad = 1 in
   def rmbkz : AVX5128I<opc, MRMSrcMem, (outs RC:$dst),
        (ins KRC:$mask, x86scalar_mop:$src),
        !strconcat(OpcodeStr, "\t{${src}", BrdcstStr,
@@ -5119,17 +5124,20 @@ multiclass avx512_conflict<bits<8> opc, string OpcodeStr,
        !strconcat(OpcodeStr,
                   "\t{$src2, ${dst} {${mask}}|${dst} {${mask}}, $src2}"),
        []>, EVEX, EVEX_K;
+  let mayLoad = 1 in
   def rmk : AVX5128I<opc, MRMSrcMem, (outs RC:$dst),
        (ins RC:$src1, KRC:$mask, x86memop:$src2),
        !strconcat(OpcodeStr,
                   "\t{$src2, ${dst} {${mask}}|${dst} {${mask}}, $src2}"),
        []>, EVEX, EVEX_K;
+  let mayLoad = 1 in
   def rmbk : AVX5128I<opc, MRMSrcMem, (outs RC:$dst),
        (ins RC:$src1, KRC:$mask, x86scalar_mop:$src2),
        !strconcat(OpcodeStr, "\t{${src2}", BrdcstStr,
                   ", ${dst} {${mask}}|${dst} {${mask}}, ${src2}", BrdcstStr, "}"),
        []>, EVEX, EVEX_K, EVEX_B;
-   }
+  }
+  }
 }
 
 let Predicates = [HasCDI] in {
