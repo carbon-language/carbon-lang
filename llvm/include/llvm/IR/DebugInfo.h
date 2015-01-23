@@ -867,16 +867,17 @@ public:
   /// \brief Return the size of this piece in bytes.
   uint64_t getPieceSize() const;
 
+  class Operand;
+
   /// \brief An iterator for DIExpression elements.
   class iterator : public std::iterator<std::forward_iterator_tag, StringRef,
                                         unsigned, const uint64_t *, uint64_t> {
     DIHeaderFieldIterator I;
     iterator(DIHeaderFieldIterator I) : I(I) {}
-
   public:
     iterator() {}
     iterator(const DIExpression &Expr) : I(++Expr.header_begin()) {}
-    uint64_t operator*() const { return I.getNumber<uint64_t>(); }
+    Operand operator*() const { return Operand(I); }
     iterator &operator++() {
       increment();
       return *this;
@@ -889,14 +890,7 @@ public:
     bool operator==(const iterator &X) const { return I == X.I; }
     bool operator!=(const iterator &X) const { return !(*this == X); }
 
-    uint64_t getArg(unsigned N) const {
-      auto In = I;
-      std::advance(In, N);
-      return In.getNumber<uint64_t>();
-    }
-
     const DIHeaderFieldIterator &getBase() const { return I; }
-
   private:
     void increment() {
       switch (**this) {
@@ -911,6 +905,22 @@ public:
 
   iterator begin() const;
   iterator end() const;
+
+  /// \brief A lightweight wrapper around an element of a DIExpression.
+  class Operand {
+    DIHeaderFieldIterator I;
+  public:
+    Operand(DIHeaderFieldIterator I) : I(I) {}
+    /// \brief Operands such as DW_OP_piece have explicit (non-stack) arguments.
+    /// Argument 0 is the operand itself.
+    uint64_t getArg(unsigned N) const {
+      DIHeaderFieldIterator In = I;
+      std::advance(In, N);
+      return In.getNumber<uint64_t>();
+    }
+
+    operator uint64_t () const { return I.getNumber<uint64_t>(); }
+  };
 };
 
 /// \brief This object holds location information.

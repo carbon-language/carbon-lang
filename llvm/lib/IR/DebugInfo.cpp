@@ -1406,16 +1406,15 @@ void DIVariable::printInternal(raw_ostream &OS) const {
 }
 
 void DIExpression::printInternal(raw_ostream &OS) const {
-  for (auto E = end(), I = begin(); I != E; ++I) {
-    uint64_t OpCode = *I;
-    OS << " [" << OperationEncodingString(OpCode);
-    switch (OpCode) {
+  for (auto Op : *this) {
+    OS << " [" << OperationEncodingString(Op);
+    switch (Op) {
     case DW_OP_plus: {
-      OS << " " << I.getArg(1);
+      OS << " " << Op.getArg(1);
       break;
     }
     case DW_OP_piece: {
-      OS << " offset=" << I.getArg(1) << ", size=" << I.getArg(2);
+      OS << " offset=" << Op.getArg(1) << ", size=" << Op.getArg(2);
       break;
     }
     case DW_OP_deref:
