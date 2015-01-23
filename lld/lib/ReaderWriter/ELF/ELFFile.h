@@ -616,7 +616,7 @@ template <class ELFT> std::error_code ELFFile<ELFT>::createAtoms() {
     const Elf_Shdr *section = i.first;
 
     // Check if need to create atoms for this section?
-    if ((ignoreCreateAtomsForSection(section)))
+    if (ignoreCreateAtomsForSection(section))
       continue;
 
     std::vector<Elf_Sym_Iter> &symbols = i.second;
