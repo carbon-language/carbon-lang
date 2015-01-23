@@ -447,6 +447,7 @@ public:
 
   virtual void beginEnumScalar() = 0;
   virtual bool matchEnumScalar(const char*, bool) = 0;
+  virtual bool matchEnumFallback() = 0;
   virtual void endEnumScalar() = 0;
 
   virtual bool beginBitSetScalar(bool &) = 0;
@@ -469,6 +470,15 @@ public:
   void enumCase(T &Val, const char* Str, const uint32_t ConstVal) {
     if ( matchEnumScalar(Str, outputting() && Val == static_cast<T>(ConstVal)) ) {
       Val = ConstVal;
+    }
+  }
+
+  template <typename FBT, typename T>
+  void enumFallback(T &Val) {
+    if ( matchEnumFallback() ) {
+      FBT Res = Val;
+      yamlize(*this, Res, true);
+      Val = Res;
     }
   }
 
@@ -899,6 +909,7 @@ private:
   void endFlowSequence() override;
   void beginEnumScalar() override;
   bool matchEnumScalar(const char*, bool) override;
+  bool matchEnumFallback() override;
   void endEnumScalar() override;
   bool beginBitSetScalar(bool &) override;
   bool bitSetMatch(const char *, bool ) override;
@@ -1026,6 +1037,7 @@ public:
   void endFlowSequence() override;
   void beginEnumScalar() override;
   bool matchEnumScalar(const char*, bool) override;
+  bool matchEnumFallback() override;
   void endEnumScalar() override;
   bool beginBitSetScalar(bool &) override;
   bool bitSetMatch(const char *, bool ) override;

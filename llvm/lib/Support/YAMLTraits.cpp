@@ -233,6 +233,13 @@ bool Input::matchEnumScalar(const char *Str, bool) {
   return false;
 }
 
+bool Input::matchEnumFallback() {
+  if (ScalarMatchFound)
+    return false;
+  ScalarMatchFound = true;
+  return true;
+}
+
 void Input::endEnumScalar() {
   if (!ScalarMatchFound) {
     setError(CurrentNode, "unknown enumerated scalar");
@@ -506,6 +513,13 @@ bool Output::matchEnumScalar(const char *Str, bool Match) {
     EnumerationMatchFound = true;
   }
   return false;
+}
+
+bool Output::matchEnumFallback() {
+  if (EnumerationMatchFound)
+    return false;
+  EnumerationMatchFound = true;
+  return true;
 }
 
 void Output::endEnumScalar() {
