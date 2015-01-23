@@ -77,8 +77,11 @@ bool Driver::link(LinkingContext &context, raw_ostream &diagnostics) {
   if (context.getNodes().empty())
     return false;
 
-  for (std::unique_ptr<Node> &ie : context.getNodes())
-    if (FileNode *node = dyn_cast<FileNode>(ie.get()))
+  // File::parse may add items to the node list which may invalidate
+  // existing iterators. Avoid using iterator to access elements.
+  std::vector<std::unique_ptr<Node>> &nodes = context.getNodes();
+  for (size_t i = 0; i < nodes.size(); ++i)
+    if (FileNode *node = dyn_cast<FileNode>(nodes[i].get()))
       context.getTaskGroup().spawn([node] { node->getFile()->parse(); });
 
   std::vector<std::unique_ptr<File>> internalFiles;
