@@ -642,7 +642,15 @@ void llvm::PrintSymbolTable(const ObjectFile *o) {
     bool Global = Flags & SymbolRef::SF_Global;
     bool Weak = Flags & SymbolRef::SF_Weak;
     bool Absolute = Flags & SymbolRef::SF_Absolute;
+    bool Common = Flags & SymbolRef::SF_Common;
 
+    if (Common) {
+      uint32_t Alignment;
+      if (error(Symbol.getAlignment(Alignment)))
+        Alignment = 0;
+      Address = Size;
+      Size = Alignment;
+    }
     if (Address == UnknownAddressOrSize)
       Address = 0;
     if (Size == UnknownAddressOrSize)
@@ -672,6 +680,8 @@ void llvm::PrintSymbolTable(const ObjectFile *o) {
            << ' ';
     if (Absolute) {
       outs() << "*ABS*";
+    } else if (Common) {
+      outs() << "*COM*";
     } else if (Section == o->section_end()) {
       outs() << "*UND*";
     } else {
