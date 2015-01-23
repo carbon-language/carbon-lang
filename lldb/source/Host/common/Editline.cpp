@@ -24,6 +24,20 @@
 using namespace lldb_private;
 using namespace lldb_private::line_editor;
 
+// Workaround for what looks like an OS X-specific issue, but other platforms
+// may benefit from something similar if issues arise.  The libedit library
+// doesn't explicitly initialize the curses termcap library, which it gets away
+// with until TERM is set to VT100 where it stumbles over an implementation
+// assumption that may not exist on other platforms.  The setupterm() function
+// would normally require headers that don't work gracefully in this context, so
+// the function declaraction has been hoisted here.
+#if defined(__APPLE__)
+extern "C" {
+    int setupterm(char *term, int fildes, int *errret);
+}
+#define USE_SETUPTERM_WORKAROUND
+#endif
+
 // Editline uses careful cursor management to achieve the illusion of editing a multi-line block of text
 // with a single line editor.  Preserving this illusion requires fairly careful management of cursor
 // state.  Read and understand the relationship between DisplayInput(), MoveCursor(), SetCurrentLine(),
@@ -1313,6 +1327,10 @@ Editline::GetLine (std::string &line, bool &interrupted)
     m_editor_getting_char = false;
     m_revert_cursor_index = -1;
 
+#ifdef USE_SETUPTERM_WORKAROUND
+    setupterm((char *)0, fileno(m_output_file), (int *)0);
+#endif
+
     int count;
     auto input = el_wgets (m_editline, &count);
 
@@ -1359,6 +1377,9 @@ Editline::GetLines (int first_line_number, StringList &lines, bool &interrupted)
     m_revert_cursor_index = -1;
     while (m_editor_status == EditorStatus::Editing)
     {
+#ifdef USE_SETUPTERM_WORKAROUND
+        setupterm((char *)0, fileno(m_output_file), (int *)0);
+#endif
         int count;
         m_current_line_rows = -1;
         el_wpush (m_editline, EditLineConstString("\x1b[^")); // Revert to the existing line content
