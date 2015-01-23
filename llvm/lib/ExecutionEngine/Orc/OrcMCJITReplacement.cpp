@@ -16,8 +16,9 @@ static struct RegisterJIT {
   RegisterJIT() { llvm::OrcMCJITReplacement::Register(); }
 } JITRegistrator;
 
-extern "C" void LLVMLinkInOrcMCJITReplacement() {}
 }
+
+extern "C" void LLVMLinkInOrcMCJITReplacement() {}
 
 namespace llvm {
 
