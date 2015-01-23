@@ -30,7 +30,7 @@ typedef MCDisassembler::DecodeStatus DecodeStatus;
 
 namespace {
 
-/// A disasembler class for Mips.
+/// A disassembler class for Mips.
 class MipsDisassemblerBase : public MCDisassembler {
 public:
   MipsDisassemblerBase(const MCSubtargetInfo &STI, MCContext &Ctx,
@@ -49,7 +49,7 @@ protected:
   bool IsBigEndian;
 };
 
-/// A disasembler class for Mips32.
+/// A disassembler class for Mips32.
 class MipsDisassembler : public MipsDisassemblerBase {
   bool IsMicroMips;
 public:
@@ -77,7 +77,7 @@ public:
                               raw_ostream &CStream) const override;
 };
 
-/// A disasembler class for Mips64.
+/// A disassembler class for Mips64.
 class Mips64Disassembler : public MipsDisassemblerBase {
 public:
   Mips64Disassembler(const MCSubtargetInfo &STI, MCContext &Ctx,
