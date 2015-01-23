@@ -309,6 +309,10 @@ namespace {
       BegLoc = PP.getLocForEndOfToken(BegLoc);
       SourceLocation EndLoc = RHS->getLocStart();
       EndLoc = EndLoc.getLocWithOffset(-1);
+      const char *colon = PP.getSourceManager().getCharacterData(EndLoc);
+      // Add a space after '=' if there is no space between RHS and '='
+      if (colon && colon[0] == ':')
+        PropertyDotString += " ";
       SourceRange Range(BegLoc, EndLoc);
       commit.replace(Range, PropertyDotString);
       // remove '[' ']'

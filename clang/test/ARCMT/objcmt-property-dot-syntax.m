@@ -90,3 +90,24 @@ id testRdar19038838(Rdar19038838 *obj) {
 }
 @end
 
+// rdar://19140114
+int NSOnState;
+int ArrNSOnState[4];
+@interface rdar19140114 : NSObject
+{
+  rdar19140114* menuItem;
+}
+@property int state;
+@end
+
+@implementation rdar19140114
+- (void) Meth {
+  [menuItem setState:NSOnState];
+  [menuItem setState :NSOnState];
+  [menuItem setState     :ArrNSOnState[NSOnState]];
+  [menuItem setState : NSOnState];
+  [menuItem setState:    NSOnState];
+  [menuItem setState: NSOnState];
+  [menuItem setState     :    NSOnState];
+}
+@end
