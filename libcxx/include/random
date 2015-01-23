@@ -1634,9 +1634,10 @@ class piecewise_linear_distribution
 
 #include <__config>
 #include <cstddef>
+#include <cstdint>
+#include <cmath>
 #include <type_traits>
 #include <initializer_list>
-#include <cstdint>
 #include <limits>
 #include <algorithm>
 #include <numeric>
@@ -1644,7 +1645,6 @@ class piecewise_linear_distribution
 #include <string>
 #include <istream>
 #include <ostream>
-#include <cmath>
 
 #include <__undef_min_max>
 

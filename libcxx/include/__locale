@@ -30,6 +30,7 @@
 #  include <support/android/locale_bionic.h>
 # endif
 #elif defined(__sun__)
+# include <xlocale.h>
 # include <support/solaris/xlocale.h>
 #elif defined(_NEWLIB_VERSION)
 # include <support/newlib/xlocale.h>

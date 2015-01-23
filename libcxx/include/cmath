@@ -654,7 +654,7 @@ using ::double_t;
 
 // abs
 
-#if !defined(_AIX)
+#if !defined(_AIX) && !defined(__sun__)
 inline _LIBCPP_INLINE_VISIBILITY
 float
 abs(float __lcpp_x) _NOEXCEPT {return fabsf(__lcpp_x);}
