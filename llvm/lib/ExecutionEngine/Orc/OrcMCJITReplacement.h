@@ -129,7 +129,7 @@ public:
     setDataLayout(this->TM->getSubtargetImpl()->getDataLayout());
   }
 
-  void addModule(std::unique_ptr<Module> M) {
+  void addModule(std::unique_ptr<Module> M) override {
 
     // If this module doesn't have a DataLayout attached then attach the
     // default.
@@ -258,7 +258,7 @@ private:
                     const ObjListT &Objects,
                     const LoadedObjInfoListT &Infos) const {
       M.UnfinalizedSections[H] = std::move(M.SectionsAllocatedSinceLastLoad);
-      M.SectionsAllocatedSinceLastLoad = {};
+      M.SectionsAllocatedSinceLastLoad = SectionAddrSet{};
       assert(Objects.size() == Infos.size() &&
              "Incorrect number of Infos for Objects.");
       for (unsigned I = 0; I < Objects.size(); ++I)

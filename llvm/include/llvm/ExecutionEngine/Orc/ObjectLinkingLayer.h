@@ -32,10 +32,16 @@ protected:
   /// had been provided by this instance. Higher level layers are responsible
   /// for taking any action required to handle the missing symbols.
   class LinkedObjectSet {
+    LinkedObjectSet(const LinkedObjectSet&) LLVM_DELETED_FUNCTION;
+    void operator=(const LinkedObjectSet&) LLVM_DELETED_FUNCTION;
   public:
     LinkedObjectSet(std::unique_ptr<RTDyldMemoryManager> MM)
         : MM(std::move(MM)), RTDyld(llvm::make_unique<RuntimeDyld>(&*this->MM)),
           State(Raw) {}
+
+    // MSVC 2012 cannot infer a move constructor, so write it out longhand.
+    LinkedObjectSet(LinkedObjectSet &&O)
+        : MM(std::move(O.MM)), RTDyld(std::move(O.RTDyld)), State(O.State) {}
 
     std::unique_ptr<RuntimeDyld::LoadedObjectInfo>
     addObject(const object::ObjectFile &Obj) {
@@ -74,7 +80,7 @@ protected:
 
 public:
   /// @brief Handle to a set of loaded objects.
-  typedef typename LinkedObjectSetListT::iterator ObjSetHandleT;
+  typedef LinkedObjectSetListT::iterator ObjSetHandleT;
 };
 
 /// @brief Default (no-op) action to perform when loading objects.
