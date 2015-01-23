@@ -1,0 +1,8 @@
+// RUN: cp %s %t-duplicate.modulemap
+// RUN: not %clang_cc1 -fmodules -fmodules-cache-path=%t -fmodule-map-file=%s -fmodule-map-file=%t-duplicate.modulemap -fsyntax-only -x c++ /dev/null 2>&1 | FileCheck --check-prefix=CHECK-DUPLICATE %s
+
+// PR22299: Ensure we can produce diagnostics for duplicate modules from -fmodule-map-file=.
+//
+// CHECK-DUPLICATE: duplicate.modulemap:[[@LINE+2]]:8: error: redefinition of module 'foo'
+// CHECK-DUPLICATE: diagnostics.modulemap:[[@LINE+1]]:8: note: previously defined here
+module foo {}
