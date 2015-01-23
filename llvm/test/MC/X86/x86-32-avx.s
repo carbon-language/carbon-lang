@@ -3352,7 +3352,7 @@
 // CHECK: vinsertps $129, %xmm3, %xmm2, %xmm1
           vinsertps $0x81, %xmm3, %xmm2, %xmm1
 
-// CHECK: vcmpps $-128, %xmm2, %xmm1, %xmm0
+// CHECK: vcmpps $128, %xmm2, %xmm1, %xmm0
 // CHECK: encoding: [0xc5,0xf0,0xc2,0xc2,0x80]
 vcmpps $-128, %xmm2, %xmm1, %xmm0
 

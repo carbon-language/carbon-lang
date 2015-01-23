@@ -849,13 +849,13 @@ define <4 x float> @insertps_from_vector_load_offset_2(<4 x float> %a, <4 x floa
 ; X32-NEXT:    movl {{[0-9]+}}(%esp), %eax
 ; X32-NEXT:    movl {{[0-9]+}}(%esp), %ecx
 ; X32-NEXT:    shll $4, %ecx
-; X32-NEXT:    insertps $-64, 12(%eax,%ecx), %xmm0
+; X32-NEXT:    insertps $192, 12(%eax,%ecx), %xmm0
 ; X32-NEXT:    retl
 ;
 ; X64-LABEL: insertps_from_vector_load_offset_2:
 ; X64:       ## BB#0:
 ; X64-NEXT:    shlq $4, %rsi
-; X64-NEXT:    insertps $-64, 12(%rdi,%rsi), %xmm0
+; X64-NEXT:    insertps $192, 12(%rdi,%rsi), %xmm0
 ; X64-NEXT:    retq
   %1 = getelementptr inbounds <4 x float>* %pb, i64 %index
   %2 = load <4 x float>* %1, align 16
@@ -986,12 +986,12 @@ define <4 x float> @pr20087(<4 x float> %a, <4 x float> *%ptr) {
 ; X32-LABEL: pr20087:
 ; X32:       ## BB#0:
 ; X32-NEXT:    movl {{[0-9]+}}(%esp), %eax
-; X32-NEXT:    insertps $-78, 8(%eax), %xmm0
+; X32-NEXT:    insertps $178, 8(%eax), %xmm0
 ; X32-NEXT:    retl
 ;
 ; X64-LABEL: pr20087:
 ; X64:       ## BB#0:
-; X64-NEXT:    insertps $-78, 8(%rdi), %xmm0
+; X64-NEXT:    insertps $178, 8(%rdi), %xmm0
 ; X64-NEXT:    retq
   %load = load <4 x float> *%ptr
   %ret = shufflevector <4 x float> %load, <4 x float> %a, <4 x i32> <i32 4, i32 undef, i32 6, i32 2>
@@ -1004,14 +1004,14 @@ define void @insertps_pr20411(i32* noalias nocapture %RET) #1 {
 ; X32:       ## BB#0:
 ; X32-NEXT:    movl {{[0-9]+}}(%esp), %eax
 ; X32-NEXT:    movaps {{.*#+}} xmm0 = [3,3,3,3]
-; X32-NEXT:    insertps $-36, LCPI49_1+12, %xmm0
+; X32-NEXT:    insertps $220, LCPI49_1+12, %xmm0
 ; X32-NEXT:    movups %xmm0, (%eax)
 ; X32-NEXT:    retl
 ;
 ; X64-LABEL: insertps_pr20411:
 ; X64:       ## BB#0:
 ; X64-NEXT:    movaps {{.*#+}} xmm0 = [3,3,3,3]
-; X64-NEXT:    insertps $-36, LCPI49_1+{{.*}}(%rip), %xmm0
+; X64-NEXT:    insertps $220, LCPI49_1+{{.*}}(%rip), %xmm0
 ; X64-NEXT:    movups %xmm0, (%rdi)
 ; X64-NEXT:    retq
   %gather_load = shufflevector <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7>, <8 x i32> undef, <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7>

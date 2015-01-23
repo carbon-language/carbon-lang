@@ -313,20 +313,20 @@ define <4 x i64> @load_zext_4i32_to_4i64(<4 x i32> *%ptr) {
 ; SSE2-LABEL: load_zext_4i32_to_4i64:
 ; SSE2:          # BB#0: # %entry
 ; SSE2-NEXT:   movdqa        (%rdi), %xmm1
-; SSE2-NEXT:   pshufd        $-44, %xmm1, %xmm0      # xmm0 = xmm1[0,1,1,3]
+; SSE2-NEXT:   pshufd        $212, %xmm1, %xmm0      # xmm0 = xmm1[0,1,1,3]
 ; SSE2-NEXT:   movdqa        {{.*#+}} xmm2 = [4294967295,4294967295]
 ; SSE2-NEXT:   pand  %xmm2, %xmm0
-; SSE2-NEXT:   pshufd        $-6, %xmm1, %xmm1       # xmm1 = xmm1[2,2,3,3]
+; SSE2-NEXT:   pshufd        $250, %xmm1, %xmm1       # xmm1 = xmm1[2,2,3,3]
 ; SSE2-NEXT:   pand  %xmm2, %xmm1
 ; SSE2-NEXT:   retq
 
 ; SSSE3-LABEL: load_zext_4i32_to_4i64:
 ; SSSE3:        # BB#0: # %entry
 ; SSSE3-NEXT:   movdqa        (%rdi), %xmm1
-; SSSE3-NEXT:   pshufd        $-44, %xmm1, %xmm0      # xmm0 = xmm1[0,1,1,3]
+; SSSE3-NEXT:   pshufd        $212, %xmm1, %xmm0      # xmm0 = xmm1[0,1,1,3]
 ; SSSE3-NEXT:   movdqa        {{.*#+}} xmm2 = [4294967295,4294967295]
 ; SSSE3-NEXT:   pand  %xmm2, %xmm0
-; SSSE3-NEXT:   pshufd        $-6, %xmm1, %xmm1       # xmm1 = xmm1[2,2,3,3]
+; SSSE3-NEXT:   pshufd        $250, %xmm1, %xmm1       # xmm1 = xmm1[2,2,3,3]
 ; SSSE3-NEXT:   pand  %xmm2, %xmm1
 ; SSSE3-NEXT:   retq
 
@@ -336,7 +336,7 @@ define <4 x i64> @load_zext_4i32_to_4i64(<4 x i32> *%ptr) {
 ; SSE41-NEXT: 	pmovzxdq	%xmm1, %xmm0
 ; SSE41-NEXT: 	movdqa	{{.*#+}} xmm2 = [4294967295,4294967295]
 ; SSE41-NEXT: 	pand	%xmm2, %xmm0
-; SSE41-NEXT: 	pshufd	$-6, %xmm1, %xmm1       # xmm1 = xmm1[2,2,3,3]
+; SSE41-NEXT: 	pshufd	$250, %xmm1, %xmm1       # xmm1 = xmm1[2,2,3,3]
 ; SSE41-NEXT: 	pand	%xmm2, %xmm1
 ; SSE41-NEXT: 	retq
 

@@ -45,7 +45,7 @@ define <4 x i32> @test4(<4 x i32> %A, <4 x i32> %B) nounwind {
 define <2 x i64> @test5(<2 x i64> %A, <2 x i64> %B) nounwind {
 ; CHECK-LABEL: test5:
 ; CHECK: pcmpeqd
-; CHECK: pshufd $-79
+; CHECK: pshufd $177
 ; CHECK: pand
 ; CHECK: ret
 	%C = icmp eq <2 x i64> %A, %B
@@ -56,7 +56,7 @@ define <2 x i64> @test5(<2 x i64> %A, <2 x i64> %B) nounwind {
 define <2 x i64> @test6(<2 x i64> %A, <2 x i64> %B) nounwind {
 ; CHECK-LABEL: test6:
 ; CHECK: pcmpeqd
-; CHECK: pshufd $-79
+; CHECK: pshufd $177
 ; CHECK: pand
 ; CHECK: pcmpeqd
 ; CHECK: pxor
@@ -77,11 +77,11 @@ define <2 x i64> @test7(<2 x i64> %A, <2 x i64> %B) nounwind {
 ; CHECK: pxor [[CONSTREG]]
 ; CHECK: pxor [[CONSTREG]]
 ; CHECK: pcmpgtd %xmm1
-; CHECK: pshufd $-96
+; CHECK: pshufd $160
 ; CHECK: pcmpeqd
-; CHECK: pshufd $-11
+; CHECK: pshufd $245
 ; CHECK: pand
-; CHECK: pshufd $-11
+; CHECK: pshufd $245
 ; CHECK: por
 ; CHECK: ret
 	%C = icmp sgt <2 x i64> %A, %B
@@ -94,11 +94,11 @@ define <2 x i64> @test8(<2 x i64> %A, <2 x i64> %B) nounwind {
 ; CHECK: pxor
 ; CHECK: pxor
 ; CHECK: pcmpgtd %xmm0
-; CHECK: pshufd $-96
+; CHECK: pshufd $160
 ; CHECK: pcmpeqd
-; CHECK: pshufd $-11
+; CHECK: pshufd $245
 ; CHECK: pand
-; CHECK: pshufd $-11
+; CHECK: pshufd $245
 ; CHECK: por
 ; CHECK: ret
 	%C = icmp slt <2 x i64> %A, %B
@@ -111,11 +111,11 @@ define <2 x i64> @test9(<2 x i64> %A, <2 x i64> %B) nounwind {
 ; CHECK: pxor
 ; CHECK: pxor
 ; CHECK: pcmpgtd %xmm0
-; CHECK: pshufd $-96
+; CHECK: pshufd $160
 ; CHECK: pcmpeqd
-; CHECK: pshufd $-11
+; CHECK: pshufd $245
 ; CHECK: pand
-; CHECK: pshufd $-11
+; CHECK: pshufd $245
 ; CHECK: por
 ; CHECK: pcmpeqd
 ; CHECK: pxor
@@ -130,11 +130,11 @@ define <2 x i64> @test10(<2 x i64> %A, <2 x i64> %B) nounwind {
 ; CHECK: pxor
 ; CHECK: pxor
 ; CHECK: pcmpgtd %xmm1
-; CHECK: pshufd $-96
+; CHECK: pshufd $160
 ; CHECK: pcmpeqd
-; CHECK: pshufd $-11
+; CHECK: pshufd $245
 ; CHECK: pand
-; CHECK: pshufd $-11
+; CHECK: pshufd $245
 ; CHECK: por
 ; CHECK: pcmpeqd
 ; CHECK: pxor
@@ -155,11 +155,11 @@ define <2 x i64> @test11(<2 x i64> %A, <2 x i64> %B) nounwind {
 ; CHECK: pxor [[CONSTREG]]
 ; CHECK: pxor [[CONSTREG]]
 ; CHECK: pcmpgtd %xmm1
-; CHECK: pshufd $-96
+; CHECK: pshufd $160
 ; CHECK: pcmpeqd
-; CHECK: pshufd $-11
+; CHECK: pshufd $245
 ; CHECK: pand
-; CHECK: pshufd $-11
+; CHECK: pshufd $245
 ; CHECK: por
 ; CHECK: ret
 	%C = icmp ugt <2 x i64> %A, %B
@@ -172,11 +172,11 @@ define <2 x i64> @test12(<2 x i64> %A, <2 x i64> %B) nounwind {
 ; CHECK: pxor
 ; CHECK: pxor
 ; CHECK: pcmpgtd %xmm0
-; CHECK: pshufd $-96
+; CHECK: pshufd $160
 ; CHECK: pcmpeqd
-; CHECK: pshufd $-11
+; CHECK: pshufd $245
 ; CHECK: pand
-; CHECK: pshufd $-11
+; CHECK: pshufd $245
 ; CHECK: por
 ; CHECK: ret
 	%C = icmp ult <2 x i64> %A, %B
@@ -189,11 +189,11 @@ define <2 x i64> @test13(<2 x i64> %A, <2 x i64> %B) nounwind {
 ; CHECK: pxor
 ; CHECK: pxor
 ; CHECK: pcmpgtd %xmm0
-; CHECK: pshufd $-96
+; CHECK: pshufd $160
 ; CHECK: pcmpeqd
-; CHECK: pshufd $-11
+; CHECK: pshufd $245
 ; CHECK: pand
-; CHECK: pshufd $-11
+; CHECK: pshufd $245
 ; CHECK: por
 ; CHECK: pcmpeqd
 ; CHECK: pxor
@@ -208,11 +208,11 @@ define <2 x i64> @test14(<2 x i64> %A, <2 x i64> %B) nounwind {
 ; CHECK: pxor
 ; CHECK: pxor
 ; CHECK: pcmpgtd %xmm1
-; CHECK: pshufd $-96
+; CHECK: pshufd $160
 ; CHECK: pcmpeqd
-; CHECK: pshufd $-11
+; CHECK: pshufd $245
 ; CHECK: pand
-; CHECK: pshufd $-11
+; CHECK: pshufd $245
 ; CHECK: por
 ; CHECK: pcmpeqd
 ; CHECK: pxor

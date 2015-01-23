@@ -643,6 +643,7 @@ def i64i8imm   : Operand<i64> {
 
 // Unsigned 8-bit immediate used by SSE/AVX instructions.
 def u8imm : Operand<i8> {
+  let PrintMethod = "printU8Imm";
   let ParserMatchClass = ImmUnsignedi8AsmOperand;
   let OperandType = "OPERAND_IMMEDIATE";
 }

@@ -902,7 +902,7 @@ define <2 x double> @stack_fold_shufpd(<2 x double> %a0, <2 x double> %a1) {
 
 define <4 x float> @stack_fold_shufps(<4 x float> %a0, <4 x float> %a1) {
   ;CHECK-LABEL: stack_fold_shufps
-  ;CHECK:       shufps $-56, {{-?[0-9]*}}(%rsp), {{%xmm[0-9][0-9]*}} {{.*#+}} 16-byte Folded Reload
+  ;CHECK:       shufps $200, {{-?[0-9]*}}(%rsp), {{%xmm[0-9][0-9]*}} {{.*#+}} 16-byte Folded Reload
   %1 = tail call <2 x i64> asm sideeffect "nop", "=x,~{xmm2},~{xmm3},~{xmm4},~{xmm5},~{xmm6},~{xmm7},~{xmm8},~{xmm9},~{xmm10},~{xmm11},~{xmm12},~{xmm13},~{xmm14},~{xmm15},~{flags}"()
   %2 = shufflevector <4 x float> %a0, <4 x float> %a1, <4 x i32> <i32 0, i32 2, i32 4, i32 7>
   ret <4 x float> %2

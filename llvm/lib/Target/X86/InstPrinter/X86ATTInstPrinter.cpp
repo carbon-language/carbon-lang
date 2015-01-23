@@ -282,3 +282,10 @@ void X86ATTInstPrinter::printMemOffset(const MCInst *MI, unsigned Op,
 
   O << markup(">");
 }
+
+void X86ATTInstPrinter::printU8Imm(const MCInst *MI, unsigned Op,
+                                   raw_ostream &O) {
+  O << markup("<imm:")
+    << '$' << formatImm(MI->getOperand(Op).getImm() & 0xff)
+    << markup(">");
+}
