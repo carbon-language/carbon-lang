@@ -1,0 +1,10 @@
+# RUN: yaml2obj -format=elf %s | llvm-readobj -file-headers - | FileCheck %s
+
+!ELF
+FileHeader: !FileHeader
+  Class: ELFCLASS64
+  Data: ELFDATA2LSB
+  Type: 42
+  Machine: EM_X86_64
+
+# CHECK: Type: 0x2A

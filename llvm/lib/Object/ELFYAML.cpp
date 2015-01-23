@@ -30,6 +30,7 @@ ScalarEnumerationTraits<ELFYAML::ELF_ET>::enumeration(IO &IO,
   ECase(ET_DYN)
   ECase(ET_CORE)
 #undef ECase
+  IO.enumFallback<Hex16>(Value);
 }
 
 void
