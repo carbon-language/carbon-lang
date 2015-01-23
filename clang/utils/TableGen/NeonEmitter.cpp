@@ -1393,7 +1393,7 @@ void Intrinsic::emitBody(StringRef CallPrefix) {
     }
   }
 
-  assert(Lines.size() && "Empty def?");
+  assert(!Lines.empty() && "Empty def?");
   if (!RetVar.getType().isVoid())
     Lines.back().insert(0, RetVar.getName() + " = ");
 

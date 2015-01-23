@@ -2366,7 +2366,7 @@ llvm::Function *CGObjCGNU::ModuleInitFunction() {
   std::vector<llvm::Constant*> Elements;
   llvm::Constant *Statics = NULLPtr;
   // Generate statics list:
-  if (ConstantStrings.size()) {
+  if (!ConstantStrings.empty()) {
     llvm::ArrayType *StaticsArrayTy = llvm::ArrayType::get(PtrToInt8Ty,
         ConstantStrings.size() + 1);
     ConstantStrings.push_back(NULLPtr);

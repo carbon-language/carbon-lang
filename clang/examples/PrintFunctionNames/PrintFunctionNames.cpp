@@ -55,7 +55,7 @@ protected:
         return false;
       }
     }
-    if (args.size() && args[0] == "help")
+    if (!args.empty() && args[0] == "help")
       PrintHelp(llvm::errs());
 
     return true;

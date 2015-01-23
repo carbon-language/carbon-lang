@@ -1207,7 +1207,7 @@ writePrettyPrintFunction(Record &R,
 static unsigned
 getSpellingListIndex(const std::vector<FlattenedSpelling> &SpellingList,
                      const FlattenedSpelling &Spelling) {
-  assert(SpellingList.size() && "Spelling list is empty!");
+  assert(!SpellingList.empty() && "Spelling list is empty!");
 
   for (unsigned Index = 0; Index < SpellingList.size(); ++Index) {
     const FlattenedSpelling &S = SpellingList[Index];
@@ -1231,7 +1231,7 @@ static void writeAttrAccessorDefinition(const Record &R, raw_ostream &OS) {
     std::vector<FlattenedSpelling> Spellings = 
       GetFlattenedSpellings(*Accessor);
     std::vector<FlattenedSpelling> SpellingList = GetFlattenedSpellings(R);
-    assert(SpellingList.size() &&
+    assert(!SpellingList.empty() &&
            "Attribute with empty spelling list can't have accessors!");
 
     OS << "  bool " << Name << "() const { return SpellingListIndex == ";
