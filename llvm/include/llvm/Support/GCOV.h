@@ -19,6 +19,7 @@
 #include "llvm/ADT/MapVector.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringMap.h"
+#include "llvm/ADT/iterator.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/raw_ostream.h"
 
@@ -255,8 +256,8 @@ struct GCOVEdge {
 /// GCOVFunction - Collects function information.
 class GCOVFunction {
 public:
-  typedef SmallVectorImpl<std::unique_ptr<GCOVBlock>>::const_iterator
-      BlockIterator;
+  typedef pointee_iterator<SmallVectorImpl<
+      std::unique_ptr<GCOVBlock>>::const_iterator> BlockIterator;
 
   GCOVFunction(GCOVFile &P) : Parent(P), Ident(0), LineNumber(0) {}
   bool readGCNO(GCOVBuffer &Buffer, GCOV::GCOVVersion Version);
@@ -269,6 +270,9 @@ public:
 
   BlockIterator block_begin() const { return Blocks.begin(); }
   BlockIterator block_end() const { return Blocks.end(); }
+  iterator_range<BlockIterator> blocks() const {
+    return make_range(block_begin(), block_end());
+  }
 
   void dump() const;
   void collectLineCounts(FileInfo &FI);
@@ -329,8 +333,15 @@ public:
 
   EdgeIterator src_begin() const { return SrcEdges.begin(); }
   EdgeIterator src_end() const { return SrcEdges.end(); }
+  iterator_range<EdgeIterator> srcs() const {
+    return make_range(src_begin(), src_end());
+  }
+
   EdgeIterator dst_begin() const { return DstEdges.begin(); }
   EdgeIterator dst_end() const { return DstEdges.end(); }
+  iterator_range<EdgeIterator> dsts() const {
+    return make_range(dst_begin(), dst_end());
+  }
 
   void dump() const;
   void collectLineCounts(FileInfo &FI);
