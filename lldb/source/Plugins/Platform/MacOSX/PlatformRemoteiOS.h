@@ -122,7 +122,7 @@ protected:
     uint32_t m_connected_module_sdk_idx;
 
     bool
-    UpdateSDKDirectoryInfosInNeeded();
+    UpdateSDKDirectoryInfosIfNeeded();
 
     const char *
     GetDeviceSupportDirectory();
