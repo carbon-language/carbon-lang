@@ -194,10 +194,6 @@ protected:
                                            const Elf_Sym *symbol,
                                            const Elf_Shdr *shdr);
 
-  /// \brief Return true if the symbol is corresponding to an architecture
-  /// specific section. We will let the TargetHandler handle such atoms.
-  bool isTargetSpecificAtom(const Elf_Shdr *shdr, const Elf_Sym *sym);
-
   /// \brief Do we want to ignore the section. Ignored sections are
   /// not processed to create atoms
   bool isIgnoredSection(const Elf_Shdr *section);
@@ -220,11 +216,6 @@ protected:
   uint64_t symbolContentSize(const Elf_Shdr *section,
                              const Elf_Sym *symbol,
                              const Elf_Sym *nextSymbol);
-
-  /// Determines if the reader needs to create atoms for the section.
-  bool ignoreCreateAtomsForSection(const Elf_Shdr *shdr) {
-    return false;
-  }
 
   void createEdge(ELFDefinedAtom<ELFT> *from, ELFDefinedAtom<ELFT> *to,
                   uint32_t edgeKind);
@@ -612,11 +603,6 @@ std::error_code ELFFile<ELFT>::createSymbolsFromAtomizableSections() {
 template <class ELFT> std::error_code ELFFile<ELFT>::createAtoms() {
   for (auto &i : _sectionSymbols) {
     const Elf_Shdr *section = i.first;
-
-    // Check if need to create atoms for this section?
-    if (ignoreCreateAtomsForSection(section))
-      continue;
-
     std::vector<Elf_Sym_Iter> &symbols = i.second;
 
     // Sort symbols by position.
@@ -852,14 +838,6 @@ template <class ELFT> void ELFFile<ELFT>::updateReferences() {
       updateReferenceForMergeStringAccess(ri, symbol, shdr);
     }
   }
-}
-
-template <class ELFT>
-bool ELFFile<ELFT>::isTargetSpecificAtom(const Elf_Shdr *shdr,
-                                         const Elf_Sym *sym) {
-  return ((shdr && (shdr->sh_flags & llvm::ELF::SHF_MASKPROC)) ||
-          (sym->st_shndx >= llvm::ELF::SHN_LOPROC &&
-           sym->st_shndx <= llvm::ELF::SHN_HIPROC));
 }
 
 template <class ELFT>
