@@ -153,17 +153,14 @@ LLVM_ATTRIBUTE_USED void CompileTest() {
   V.resize(42);
 }
 
-// Test fixture class
-template <typename VectorT>
-class SmallVectorTest : public testing::Test {
+class SmallVectorTestBase : public testing::Test {
 protected:
-  VectorT theVector;
-  VectorT otherVector;
 
   void SetUp() {
     Constructable::reset();
   }
 
+  template <typename VectorT>
   void assertEmpty(VectorT & v) {
     // Size tests
     EXPECT_EQ(0u, v.size());
@@ -173,7 +170,8 @@ protected:
     EXPECT_TRUE(v.begin() == v.end());
   }
 
-  // Assert that theVector contains the specified values, in order.
+  // Assert that v contains the specified values, in order.
+  template <typename VectorT>
   void assertValuesInOrder(VectorT & v, size_t size, ...) {
     EXPECT_EQ(size, v.size());
 
@@ -188,12 +186,22 @@ protected:
   }
 
   // Generate a sequence of values to initialize the vector.
+  template <typename VectorT>
   void makeSequence(VectorT & v, int start, int end) {
     for (int i = start; i <= end; ++i) {
       v.push_back(Constructable(i));
     }
   }
 };
+
+// Test fixture class
+template <typename VectorT>
+class SmallVectorTest : public SmallVectorTestBase {
+protected:
+  VectorT theVector;
+  VectorT otherVector;
+};
+
 
 typedef ::testing::Types<SmallVector<Constructable, 0>,
                          SmallVector<Constructable, 1>,
@@ -662,6 +670,67 @@ TYPED_TEST(SmallVectorTest, DirectVectorTest) {
 TYPED_TEST(SmallVectorTest, IteratorTest) {
   std::list<int> L;
   this->theVector.insert(this->theVector.end(), L.begin(), L.end());
+}
+
+template <typename InvalidType> class DualSmallVectorsTest;
+
+template <typename VectorT1, typename VectorT2>
+class DualSmallVectorsTest<std::pair<VectorT1, VectorT2>> : public SmallVectorTestBase {
+protected:
+  VectorT1 theVector;
+  VectorT2 otherVector;
+
+  template <typename T, unsigned N>
+  static unsigned NumBuiltinElts(const SmallVector<T, N>&) { return N; }
+};
+
+typedef ::testing::Types<
+    // Small mode -> Small mode.
+    std::pair<SmallVector<Constructable, 4>, SmallVector<Constructable, 4>>,
+    // Small mode -> Big mode.
+    std::pair<SmallVector<Constructable, 4>, SmallVector<Constructable, 2>>,
+    // Big mode -> Small mode.
+    std::pair<SmallVector<Constructable, 2>, SmallVector<Constructable, 4>>,
+    // Big mode -> Big mode.
+    std::pair<SmallVector<Constructable, 2>, SmallVector<Constructable, 2>>
+  > DualSmallVectorTestTypes;
+
+TYPED_TEST_CASE(DualSmallVectorsTest, DualSmallVectorTestTypes);
+
+TYPED_TEST(DualSmallVectorsTest, MoveAssignment) {
+  SCOPED_TRACE("MoveAssignTest-DualVectorTypes");
+
+  // Set up our vector with four elements.
+  for (unsigned I = 0; I < 4; ++I)
+    this->otherVector.push_back(Constructable(I));
+
+  const Constructable *OrigDataPtr = this->otherVector.data();
+
+  // Move-assign from the other vector.
+  this->theVector =
+    std::move(static_cast<SmallVectorImpl<Constructable>&>(this->otherVector));
+
+  // Make sure we have the right result.
+  this->assertValuesInOrder(this->theVector, 4u, 0, 1, 2, 3);
+
+  // Make sure the # of constructor/destructor calls line up. There
+  // are two live objects after clearing the other vector.
+  this->otherVector.clear();
+  EXPECT_EQ(Constructable::getNumConstructorCalls()-4,
+            Constructable::getNumDestructorCalls());
+
+  // If the source vector (otherVector) was in small-mode, assert that we just
+  // moved the data pointer over.
+  EXPECT_TRUE(this->NumBuiltinElts(this->otherVector) == 4 ||
+              this->theVector.data() == OrigDataPtr);
+
+  // There shouldn't be any live objects any more.
+  this->theVector.clear();
+  EXPECT_EQ(Constructable::getNumConstructorCalls(),
+            Constructable::getNumDestructorCalls());
+
+  // We shouldn't have copied anything in this whole process.
+  EXPECT_EQ(Constructable::getNumCopyConstructorCalls(), 0);
 }
 
 struct notassignable {
