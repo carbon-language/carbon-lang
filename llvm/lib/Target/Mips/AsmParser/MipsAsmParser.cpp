@@ -1734,9 +1734,8 @@ MipsAsmParser::expandLoadAddressSym(MCInst &Inst, SMLoc IDLoc,
   }
 }
 
-bool MipsAsmParser::
-expandUncondBranchMMPseudo(MCInst &Inst, SMLoc IDLoc,
-                           SmallVectorImpl<MCInst> &Instructions) {
+bool MipsAsmParser::expandUncondBranchMMPseudo(
+    MCInst &Inst, SMLoc IDLoc, SmallVectorImpl<MCInst> &Instructions) {
   assert(getInstDesc(Inst.getOpcode()).getNumOperands() == 1 &&
          "unexpected number of operands");
 
