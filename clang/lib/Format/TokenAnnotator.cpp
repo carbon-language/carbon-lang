@@ -747,22 +747,23 @@ private:
 
   void modifyContext(const FormatToken &Current) {
     if (Current.getPrecedence() == prec::Assignment &&
-        !Line.First->isOneOf(tok::kw_template, tok::kw_using,
-                             TT_UnaryOperator) &&
+        !Line.First->isOneOf(tok::kw_template, tok::kw_using) &&
         (!Current.Previous || Current.Previous->isNot(tok::kw_operator))) {
       Contexts.back().IsExpression = true;
-      for (FormatToken *Previous = Current.Previous;
-           Previous && !Previous->isOneOf(tok::comma, tok::semi);
-           Previous = Previous->Previous) {
-        if (Previous->isOneOf(tok::r_square, tok::r_paren)) {
-          Previous = Previous->MatchingParen;
-          if (!Previous)
-            break;
+      if (!Line.First->is(TT_UnaryOperator)) {
+        for (FormatToken *Previous = Current.Previous;
+             Previous && !Previous->isOneOf(tok::comma, tok::semi);
+             Previous = Previous->Previous) {
+          if (Previous->isOneOf(tok::r_square, tok::r_paren)) {
+            Previous = Previous->MatchingParen;
+            if (!Previous)
+              break;
+          }
+          if (Previous->isOneOf(TT_BinaryOperator, TT_UnaryOperator) &&
+              Previous->isOneOf(tok::star, tok::amp) && Previous->Previous &&
+              Previous->Previous->isNot(tok::equal))
+            Previous->Type = TT_PointerOrReference;
         }
-        if (Previous->isOneOf(TT_BinaryOperator, TT_UnaryOperator) &&
-            Previous->isOneOf(tok::star, tok::amp) && Previous->Previous &&
-            Previous->Previous->isNot(tok::equal))
-          Previous->Type = TT_PointerOrReference;
       }
     } else if (Current.isOneOf(tok::kw_return, tok::kw_throw)) {
       Contexts.back().IsExpression = true;

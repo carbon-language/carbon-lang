@@ -5220,6 +5220,7 @@ TEST_F(FormatTest, UnderstandsUsesOfStarAndAmp) {
       "    aaaaaaaaaaaaaaaaaaaaaaaaaaaa, *aaaaaaaaaaaaaaaaaaaaaaaaaaaaa);");
 
   verifyGoogleFormat("**outparam = 1;");
+  verifyGoogleFormat("*outparam = a * b;");
   verifyGoogleFormat("int main(int argc, char** argv) {}");
   verifyGoogleFormat("A<int*> a;");
   verifyGoogleFormat("A<int**> a;");
