@@ -495,7 +495,14 @@ print_encoding_x86_64 (struct baton baton, uint8_t *function_start, uint32_t enc
                 printf ("large stack ");
             }
             
-            printf ("frameless function: stack size %d, register count %d ", stack_size * 8, register_count);
+            if (mode == UNWIND_X86_64_MODE_STACK_IND)
+            {
+                printf ("frameless function: stack size %d, register count %d ", stack_size * 8, register_count);
+            }
+            else
+            {
+                printf ("frameless function: stack size %d, register count %d ", stack_size, register_count);
+            }
 
             if (register_count == 0)
             {
@@ -591,7 +598,14 @@ print_encoding_x86_64 (struct baton baton, uint8_t *function_start, uint32_t enc
                 }
 
 
-                printf (" CFA is rsp+%d ", stack_size * 8);
+                if (mode == UNWIND_X86_64_MODE_STACK_IND)
+                {
+                    printf (" CFA is rsp+%d ", stack_size);
+                }
+                else
+                {
+                    printf (" CFA is rsp+%d ", stack_size * 8);
+                }
 
                 uint32_t saved_registers_offset = 1;
                 printf (" rip=[CFA-%d]", saved_registers_offset * 8);
@@ -605,24 +619,29 @@ print_encoding_x86_64 (struct baton baton, uint8_t *function_start, uint32_t enc
                             break;
                         case UNWIND_X86_64_REG_RBX:
                             printf (" rbx=[CFA-%d]", saved_registers_offset * 8);
+                            saved_registers_offset++;
                             break;
                         case UNWIND_X86_64_REG_R12:
                             printf (" r12=[CFA-%d]", saved_registers_offset * 8);
+                            saved_registers_offset++;
                             break;
                         case UNWIND_X86_64_REG_R13:
                             printf (" r13=[CFA-%d]", saved_registers_offset * 8);
+                            saved_registers_offset++;
                             break;
                         case UNWIND_X86_64_REG_R14:
                             printf (" r14=[CFA-%d]", saved_registers_offset * 8);
+                            saved_registers_offset++;
                             break;
                         case UNWIND_X86_64_REG_R15:
                             printf (" r15=[CFA-%d]", saved_registers_offset * 8);
+                            saved_registers_offset++;
                             break;
                         case UNWIND_X86_64_REG_RBP:
                             printf (" rbp=[CFA-%d]", saved_registers_offset * 8);
+                            saved_registers_offset++;
                             break;
                     }
-                    saved_registers_offset++;
                 }
 
             }
@@ -712,7 +731,14 @@ print_encoding_i386 (struct baton baton, uint8_t *function_start, uint32_t encod
                 printf ("large stack ");
             }
             
-            printf ("frameless function: stack size %d, register count %d ", stack_size * 4, register_count);
+            if (mode == UNWIND_X86_MODE_STACK_IND)
+            {
+                printf ("frameless function: stack size %d, register count %d ", stack_size, register_count);
+            }
+            else
+            {
+                printf ("frameless function: stack size %d, register count %d ", stack_size * 4, register_count);
+            }
 
             if (register_count == 0)
             {
@@ -808,7 +834,14 @@ print_encoding_i386 (struct baton baton, uint8_t *function_start, uint32_t encod
                 }
 
 
-                printf (" CFA is esp+%d ", stack_size * 4);
+                if (mode == UNWIND_X86_MODE_STACK_IND)
+                {
+                    printf (" CFA is esp+%d ", stack_size);
+                }
+                else
+                {
+                    printf (" CFA is esp+%d ", stack_size * 4);
+                }
 
                 uint32_t saved_registers_offset = 1;
                 printf (" eip=[CFA-%d]", saved_registers_offset * 4);
@@ -822,24 +855,29 @@ print_encoding_i386 (struct baton baton, uint8_t *function_start, uint32_t encod
                             break;
                         case UNWIND_X86_REG_EBX:
                             printf (" ebx=[CFA-%d]", saved_registers_offset * 4);
+                            saved_registers_offset++;
                             break;
                         case UNWIND_X86_REG_ECX:
                             printf (" ecx=[CFA-%d]", saved_registers_offset * 4);
+                            saved_registers_offset++;
                             break;
                         case UNWIND_X86_REG_EDX:
                             printf (" edx=[CFA-%d]", saved_registers_offset * 4);
+                            saved_registers_offset++;
                             break;
                         case UNWIND_X86_REG_EDI:
                             printf (" edi=[CFA-%d]", saved_registers_offset * 4);
+                            saved_registers_offset++;
                             break;
                         case UNWIND_X86_REG_ESI:
                             printf (" esi=[CFA-%d]", saved_registers_offset * 4);
+                            saved_registers_offset++;
                             break;
                         case UNWIND_X86_REG_EBP:
                             printf (" ebp=[CFA-%d]", saved_registers_offset * 4);
+                            saved_registers_offset++;
                             break;
                     }
-                    saved_registers_offset++;
                 }
 
             }

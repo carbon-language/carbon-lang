@@ -809,8 +809,16 @@ CompactUnwindInfo::CreateUnwindPlan_x86_64 (Target &target, FunctionInfo &functi
                 }
             }
 
+            if (mode == UNWIND_X86_64_MODE_STACK_IND)
+            {
+                row->SetCFAOffset (stack_size);
+            }
+            else
+            {
+                row->SetCFAOffset (stack_size * wordsize);
+            }
+
             row->SetCFARegister (x86_64_eh_regnum::rsp);
-            row->SetCFAOffset (stack_size * wordsize);
             row->SetOffset (0);
             row->SetRegisterLocationToAtCFAPlusOffset (x86_64_eh_regnum::rip, wordsize * -1, true);
             row->SetRegisterLocationToIsCFAPlusOffset (x86_64_eh_regnum::rsp, 0, true);
@@ -919,10 +927,10 @@ CompactUnwindInfo::CreateUnwindPlan_x86_64 (Target &target, FunctionInfo &functi
                         case UNWIND_X86_64_REG_R14:
                         case UNWIND_X86_64_REG_R15:
                         case UNWIND_X86_64_REG_RBP:
-                             row->SetRegisterLocationToAtCFAPlusOffset (translate_to_eh_frame_regnum_x86_64 (registers[i]), wordsize * -saved_registers_offset, true);
+                            row->SetRegisterLocationToAtCFAPlusOffset (translate_to_eh_frame_regnum_x86_64 (registers[i]), wordsize * -saved_registers_offset, true);
+                            saved_registers_offset++;
                         break;
                     }
-                    saved_registers_offset++;
                 }
             }
             unwind_plan.AppendRow (row);
@@ -1047,9 +1055,11 @@ CompactUnwindInfo::CreateUnwindPlan_i386 (Target &target, FunctionInfo &function
             if (mode == UNWIND_X86_MODE_STACK_IND && function_info.valid_range_offset_start != 0)
             {
                 uint32_t stack_adjust = EXTRACT_BITS (function_info.encoding, UNWIND_X86_FRAMELESS_STACK_ADJUST);
+printf("JSMDEBUG got stack_adjust %d from encoding 0x%x\n", stack_adjust, function_info.encoding);
 
                 // offset into the function instructions; 0 == beginning of first instruction
                 uint32_t offset_to_subl_insn = EXTRACT_BITS (function_info.encoding, UNWIND_X86_FRAMELESS_STACK_SIZE);
+printf("JSMDEBUG got offset to sub instruction %d\n", offset_to_subl_insn);
 
                 SectionList *sl = m_objfile.GetSectionList ();
                 if (sl)
@@ -1084,7 +1094,16 @@ CompactUnwindInfo::CreateUnwindPlan_i386 (Target &target, FunctionInfo &function
             }
 
             row->SetCFARegister (i386_eh_regnum::esp);
-            row->SetCFAOffset (stack_size * wordsize);
+
+            if (mode == UNWIND_X86_MODE_STACK_IND)
+            {
+                row->SetCFAOffset (stack_size);
+            }
+            else
+            {
+                row->SetCFAOffset (stack_size * wordsize);
+            }
+
             row->SetOffset (0);
             row->SetRegisterLocationToAtCFAPlusOffset (i386_eh_regnum::eip, wordsize * -1, true);
             row->SetRegisterLocationToIsCFAPlusOffset (i386_eh_regnum::esp, 0, true);
@@ -1193,10 +1212,10 @@ CompactUnwindInfo::CreateUnwindPlan_i386 (Target &target, FunctionInfo &function
                         case UNWIND_X86_REG_EDI:
                         case UNWIND_X86_REG_ESI:
                         case UNWIND_X86_REG_EBP:
-                             row->SetRegisterLocationToAtCFAPlusOffset (translate_to_eh_frame_regnum_i386 (registers[i]), wordsize * -saved_registers_offset, true);
+                            row->SetRegisterLocationToAtCFAPlusOffset (translate_to_eh_frame_regnum_i386 (registers[i]), wordsize * -saved_registers_offset, true);
+                            saved_registers_offset++;
                         break;
                     }
-                    saved_registers_offset++;
                 }
             }
 
