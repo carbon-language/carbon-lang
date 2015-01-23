@@ -1,0 +1,8 @@
+RUN: llvm-objdump -m -data-in-code %p/Inputs/data-in-code.macho-arm | FileCheck %s
+
+CHECK: Data in code table (4 entries)
+CHECK: offset     length kind
+CHECK: 0x00000000      4 DATA
+CHECK: 0x00000004      4 JUMP_TABLE32
+CHECK: 0x00000008      2 JUMP_TABLE16
+CHECK: 0x0000000a      1 JUMP_TABLE8

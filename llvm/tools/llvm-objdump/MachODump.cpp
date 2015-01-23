@@ -80,6 +80,11 @@ cl::opt<bool>
                           cl::desc("Print indirect symbol table for Mach-O "
                                    "objects (requires -macho)"));
 
+cl::opt<bool>
+    llvm::DataInCode("data-in-code",
+                     cl::desc("Print the data in code table for Mach-O objects "
+                              "(requires -macho)"));
+
 static cl::list<std::string>
     ArchFlags("arch", cl::desc("architecture(s) from a Mach-O file to dump"),
               cl::ZeroOrMore);
@@ -389,6 +394,48 @@ static void PrintIndirectSymbols(MachOObjectFile *O, bool verbose) {
   }
 }
 
+static void PrintDataInCodeTable(MachOObjectFile *O, bool verbose) {
+  MachO::linkedit_data_command DIC = O->getDataInCodeLoadCommand();
+  uint32_t nentries = DIC.datasize / sizeof(struct MachO::data_in_code_entry);
+  outs() << "Data in code table (" << nentries << " entries)\n";
+  outs() << "offset     length kind\n";
+  for (dice_iterator DI = O->begin_dices(), DE = O->end_dices(); DI != DE;
+       ++DI) {
+    uint32_t Offset;
+    DI->getOffset(Offset);
+    outs() << format("0x%08" PRIx32, Offset) << " ";
+    uint16_t Length;
+    DI->getLength(Length);
+    outs() << format("%6u", Length) << " ";
+    uint16_t Kind;
+    DI->getKind(Kind);
+    if (verbose) {
+      switch (Kind) {
+      case MachO::DICE_KIND_DATA:
+        outs() << "DATA";
+        break;
+      case MachO::DICE_KIND_JUMP_TABLE8:
+        outs() << "JUMP_TABLE8";
+        break;
+      case MachO::DICE_KIND_JUMP_TABLE16:
+        outs() << "JUMP_TABLE16";
+        break;
+      case MachO::DICE_KIND_JUMP_TABLE32:
+        outs() << "JUMP_TABLE32";
+        break;
+      case MachO::DICE_KIND_ABS_JUMP_TABLE32:
+        outs() << "ABS_JUMP_TABLE32";
+        break;
+      default:
+        outs() << format("0x%04" PRIx32, Kind);
+        break;
+      }
+    } else
+      outs() << format("0x%04" PRIx32, Kind);
+    outs() << "\n";
+  }
+}
+
 // checkMachOAndArchFlags() checks to see if the ObjectFile is a Mach-O file
 // and if it is and there is a list of architecture flags is specified then
 // check to make sure this Mach-O file is one of those architectures or all
@@ -436,7 +483,7 @@ static void ProcessMachO(StringRef Filename, MachOObjectFile *MachOOF,
   // info.  And don't print it otherwise like in the case of printing the
   // UniversalHeaders or ArchiveHeaders.
   if (Disassemble || PrivateHeaders || ExportsTrie || Rebase || Bind ||
-      LazyBind || WeakBind || IndirectSymbols) {
+      LazyBind || WeakBind || IndirectSymbols || DataInCode) {
     outs() << Filename;
     if (!ArchiveMemberName.empty())
       outs() << '(' << ArchiveMemberName << ')';
@@ -449,6 +496,8 @@ static void ProcessMachO(StringRef Filename, MachOObjectFile *MachOOF,
     DisassembleMachO(Filename, MachOOF);
   if (IndirectSymbols)
     PrintIndirectSymbols(MachOOF, true);
+  if (DataInCode)
+    PrintDataInCodeTable(MachOOF, true);
   if (Relocations)
     PrintRelocations(MachOOF);
   if (SectionHeaders)
