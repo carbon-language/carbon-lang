@@ -25,6 +25,21 @@
 // CHECK-NO-INFS-NO-FAST-MATH: "-cc1"
 // CHECK-NO-INFS-NO-FAST-MATH-NOT: "-menable-no-infs"
 //
+// RUN: %clang -### -fno-signed-zeros -c %s 2>&1 \
+// RUN:   | FileCheck --check-prefix=CHECK-NO-SIGNED-ZEROS %s
+// CHECK-NO-SIGNED-ZEROS: "-cc1"
+// CHECK-NO-SIGNED-ZEROS: "-fno-signed-zeros"
+//
+// RUN: %clang -### -fno-fast-math -fno-signed-zeros -c %s 2>&1 \
+// RUN:   | FileCheck --check-prefix=CHECK-NO-FAST-MATH-NO-SIGNED-ZEROS %s
+// CHECK-NO-FAST-MATH-NO-SIGNED-ZEROS: "-cc1"
+// CHECK-NO-FAST-MATH-NO-SIGNED-ZEROS: "-fno-signed-zeros"
+//
+// RUN: %clang -### -fno-signed-zeros -fno-fast-math -c %s 2>&1 \
+// RUN:   | FileCheck --check-prefix=CHECK-NO-SIGNED-ZEROS-NO-FAST-MATH %s
+// CHECK-NO-SIGNED-ZEROS-NO-FAST-MATH: "-cc1"
+// CHECK-NO-SIGNED-ZEROS-NO-FAST-MATH-NOT: "-fno-signed-zeros"
+//
 // RUN: %clang -### -fno-honor-nans -c %s 2>&1 \
 // RUN:   | FileCheck --check-prefix=CHECK-NO-NANS %s
 // CHECK-NO-NANS: "-cc1"
