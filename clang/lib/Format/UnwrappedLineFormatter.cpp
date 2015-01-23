@@ -309,6 +309,15 @@ private:
   ContinuationIndenter *Indenter;
 };
 
+
+static void markFinalized(FormatToken *Tok) {
+  for (; Tok; Tok = Tok->Next) {
+    Tok->Finalized = true;
+    for (AnnotatedLine *Child : Tok->Children)
+      markFinalized(Child->First);
+  }
+}
+
 } // namespace
 
 unsigned
@@ -442,11 +451,8 @@ UnwrappedLineFormatter::format(const SmallVectorImpl<AnnotatedLine *> &Lines,
         }
       }
     }
-    if (!DryRun) {
-      for (FormatToken *Tok = TheLine.First; Tok; Tok = Tok->Next) {
-        Tok->Finalized = true;
-      }
-    }
+    if (!DryRun)
+      markFinalized(TheLine.First);
     PreviousLine = *I;
   }
   PenaltyCache[CacheKey] = Penalty;
