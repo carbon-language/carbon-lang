@@ -146,6 +146,10 @@ N: Michael Spencer
 E: bigcheesegs@gmail.com
 D: Windows parts of Support, Object, ar, nm, objdump, ranlib, size
 
+N: Alexei Starovoitov
+E: alexei.starovoitov@gmail.com
+D: BPF backend
+
 N: Tom Stellard
 E: thomas.stellard@amd.com
 E: mesa-dev@lists.freedesktop.org
