@@ -63,8 +63,12 @@ public:
 
   unsigned getExpressionID() const { return ID; }
 
-  bool operator==(const Counter &Other) const {
-    return Kind == Other.Kind && ID == Other.ID;
+  friend bool operator==(const Counter &LHS, const Counter &RHS) {
+    return LHS.Kind == RHS.Kind && LHS.ID == RHS.ID;
+  }
+
+  friend bool operator!=(const Counter &LHS, const Counter &RHS) {
+    return !(LHS == RHS);
   }
 
   friend bool operator<(const Counter &LHS, const Counter &RHS) {
