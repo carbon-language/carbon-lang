@@ -15,7 +15,7 @@ being a semi-interesting (but probably still useless) toy. :)
 
 It is interesting to see how far we've come, and how little code it has
 taken. We built the entire lexer, parser, AST, code generator, and an
-interactive run-loop (with a JIT!) by-hand in under 700 lines of
+interactive run-loop (with a JIT!) by-hand in under 1000 lines of
 (non-comment/non-blank) code.
 
 Our little language supports a couple of interesting features: it

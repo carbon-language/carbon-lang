@@ -80,7 +80,7 @@ in the various pieces. The structure of the tutorial is:
    collection support, exceptions, debugging, support for "spaghetti
    stacks", and a bunch of other tips and tricks.
 
-By the end of the tutorial, we'll have written a bit less than 700 lines
+By the end of the tutorial, we'll have written a bit less than 1000 lines
 of non-comment, non-blank, lines of code. With this small amount of
 code, we'll have built up a very reasonable compiler for a non-trivial
 language including a hand-written lexer, parser, AST, as well as code
