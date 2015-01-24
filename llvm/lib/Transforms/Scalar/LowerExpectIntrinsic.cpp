@@ -40,6 +40,12 @@ UnlikelyBranchWeight("unlikely-branch-weight", cl::Hidden, cl::init(4),
                    cl::desc("Weight of the branch unlikely to be taken (default = 4)"));
 
 namespace {
+/// \brief Legacy pass for lowering expect intrinsics out of the IR.
+///
+/// When this pass is run over a function it uses expect intrinsics which feed
+/// branches and switches to provide branch weight metadata for those
+/// terminators. It then removes the expect intrinsics from the IR so the rest
+/// of the optimizer can ignore them.
 class LowerExpectIntrinsic : public FunctionPass {
 
   bool HandleSwitchExpect(SwitchInst *SI);
