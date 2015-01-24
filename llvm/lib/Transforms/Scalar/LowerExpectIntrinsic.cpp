@@ -144,6 +144,8 @@ static bool handleBranchExpect(BranchInst &BI) {
 }
 
 bool LowerExpectIntrinsic::runOnFunction(Function &F) {
+  bool Changed = false;
+
   for (BasicBlock &BB : F) {
     // Create "block_weights" metadata.
     if (BranchInst *BI = dyn_cast<BranchInst>(BB.getTerminator())) {
@@ -165,11 +167,12 @@ bool LowerExpectIntrinsic::runOnFunction(Function &F) {
         Value *Exp = CI->getArgOperand(0);
         CI->replaceAllUsesWith(Exp);
         CI->eraseFromParent();
+        Changed = true;
       }
     }
   }
 
-  return false;
+  return Changed;
 }
 
 char LowerExpectIntrinsic::ID = 0;
