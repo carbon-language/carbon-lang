@@ -47,11 +47,6 @@ namespace {
 /// terminators. It then removes the expect intrinsics from the IR so the rest
 /// of the optimizer can ignore them.
 class LowerExpectIntrinsic : public FunctionPass {
-
-  bool HandleSwitchExpect(SwitchInst *SI);
-
-  bool HandleIfExpect(BranchInst *BI);
-
 public:
   static char ID;
   LowerExpectIntrinsic() : FunctionPass(ID) {
@@ -62,8 +57,8 @@ public:
 };
 }
 
-bool LowerExpectIntrinsic::HandleSwitchExpect(SwitchInst *SI) {
-  CallInst *CI = dyn_cast<CallInst>(SI->getCondition());
+static bool handleSwitchExpect(SwitchInst &SI) {
+  CallInst *CI = dyn_cast<CallInst>(SI.getCondition());
   if (!CI)
     return false;
 
@@ -76,25 +71,25 @@ bool LowerExpectIntrinsic::HandleSwitchExpect(SwitchInst *SI) {
   if (!ExpectedValue)
     return false;
 
-  SwitchInst::CaseIt Case = SI->findCaseValue(ExpectedValue);
-  unsigned n = SI->getNumCases(); // +1 for default case.
+  SwitchInst::CaseIt Case = SI.findCaseValue(ExpectedValue);
+  unsigned n = SI.getNumCases(); // +1 for default case.
   std::vector<uint32_t> Weights(n + 1);
 
   Weights[0] =
-      Case == SI->case_default() ? LikelyBranchWeight : UnlikelyBranchWeight;
+      Case == SI.case_default() ? LikelyBranchWeight : UnlikelyBranchWeight;
   for (unsigned i = 0; i != n; ++i)
     Weights[i + 1] =
         i == Case.getCaseIndex() ? LikelyBranchWeight : UnlikelyBranchWeight;
 
-  SI->setMetadata(LLVMContext::MD_prof,
-                  MDBuilder(CI->getContext()).createBranchWeights(Weights));
+  SI.setMetadata(LLVMContext::MD_prof,
+                 MDBuilder(CI->getContext()).createBranchWeights(Weights));
 
-  SI->setCondition(ArgValue);
+  SI.setCondition(ArgValue);
   return true;
 }
 
-bool LowerExpectIntrinsic::HandleIfExpect(BranchInst *BI) {
-  if (BI->isUnconditional())
+static bool handleBranchExpect(BranchInst &BI) {
+  if (BI.isUnconditional())
     return false;
 
   // Handle non-optimized IR code like:
@@ -108,9 +103,9 @@ bool LowerExpectIntrinsic::HandleIfExpect(BranchInst *BI) {
 
   CallInst *CI;
 
-  ICmpInst *CmpI = dyn_cast<ICmpInst>(BI->getCondition());
+  ICmpInst *CmpI = dyn_cast<ICmpInst>(BI.getCondition());
   if (!CmpI) {
-    CI = dyn_cast<CallInst>(BI->getCondition());
+    CI = dyn_cast<CallInst>(BI.getCondition());
   } else {
     if (CmpI->getPredicate() != CmpInst::ICMP_NE)
       return false;
@@ -139,12 +134,12 @@ bool LowerExpectIntrinsic::HandleIfExpect(BranchInst *BI) {
   else
     Node = MDB.createBranchWeights(UnlikelyBranchWeight, LikelyBranchWeight);
 
-  BI->setMetadata(LLVMContext::MD_prof, Node);
+  BI.setMetadata(LLVMContext::MD_prof, Node);
 
   if (CmpI)
     CmpI->setOperand(0, ArgValue);
   else
-    BI->setCondition(ArgValue);
+    BI.setCondition(ArgValue);
   return true;
 }
 
@@ -154,10 +149,10 @@ bool LowerExpectIntrinsic::runOnFunction(Function &F) {
 
     // Create "block_weights" metadata.
     if (BranchInst *BI = dyn_cast<BranchInst>(BB->getTerminator())) {
-      if (HandleIfExpect(BI))
+      if (handleBranchExpect(*BI))
         IfHandled++;
     } else if (SwitchInst *SI = dyn_cast<SwitchInst>(BB->getTerminator())) {
-      if (HandleSwitchExpect(SI))
+      if (handleSwitchExpect(*SI))
         IfHandled++;
     }
 
