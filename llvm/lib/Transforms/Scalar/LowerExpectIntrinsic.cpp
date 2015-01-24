@@ -143,20 +143,18 @@ static bool handleBranchExpect(BranchInst &BI) {
 }
 
 bool LowerExpectIntrinsic::runOnFunction(Function &F) {
-  for (Function::iterator I = F.begin(), E = F.end(); I != E;) {
-    BasicBlock *BB = I++;
-
+  for (BasicBlock &BB : F) {
     // Create "block_weights" metadata.
-    if (BranchInst *BI = dyn_cast<BranchInst>(BB->getTerminator())) {
+    if (BranchInst *BI = dyn_cast<BranchInst>(BB.getTerminator())) {
       if (handleBranchExpect(*BI))
         IfHandled++;
-    } else if (SwitchInst *SI = dyn_cast<SwitchInst>(BB->getTerminator())) {
+    } else if (SwitchInst *SI = dyn_cast<SwitchInst>(BB.getTerminator())) {
       if (handleSwitchExpect(*SI))
         IfHandled++;
     }
 
     // remove llvm.expect intrinsics.
-    for (BasicBlock::iterator BI = BB->begin(), BE = BB->end(); BI != BE;) {
+    for (BasicBlock::iterator BI = BB.begin(), BE = BB.end(); BI != BE;) {
       CallInst *CI = dyn_cast<CallInst>(BI++);
       if (!CI)
         continue;
