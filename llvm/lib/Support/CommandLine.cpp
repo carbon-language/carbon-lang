@@ -655,6 +655,13 @@ void cl::TokenizeWindowsCommandLine(StringRef Src, StringSaver &Saver,
     NewArgv.push_back(nullptr);
 }
 
+// It is called byte order marker but the UTF-8 BOM is actually not affected
+// by the host system's endianness.
+static bool hasUTF8ByteOrderMark(ArrayRef<char> S) {
+  return (S.size() >= 3 &&
+          S[0] == '\xef' && S[1] == '\xbb' && S[2] == '\xbf');
+}
+
 static bool ExpandResponseFile(const char *FName, StringSaver &Saver,
                                TokenizerCallback Tokenizer,
                                SmallVectorImpl<const char *> &NewArgv,
@@ -674,6 +681,11 @@ static bool ExpandResponseFile(const char *FName, StringSaver &Saver,
       return false;
     Str = StringRef(UTF8Buf);
   }
+  // If we see UTF-8 BOM sequence at the beginning of a file, we shall remove
+  // these bytes before parsing.
+  // Reference: http://en.wikipedia.org/wiki/UTF-8#Byte_order_mark
+  else if (hasUTF8ByteOrderMark(BufRef))
+    Str = StringRef(BufRef.data() + 3, BufRef.size() - 3);
 
   // Tokenize the contents into NewArgv.
   Tokenizer(Str, Saver, NewArgv, MarkEOLs);

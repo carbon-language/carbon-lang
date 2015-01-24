@@ -6,6 +6,11 @@
 ; RUN: llvm-as @%t.list2 -o %t.bc
 ; RUN: llvm-nm %t.bc 2>&1 | FileCheck %s
 
+; When the response file begins with UTF8 BOM sequence, we shall remove them.
+; Neither command below should return a "Could not open input file" error.
+; RUN: llvm-as @%S/Inputs/utf8-response > /dev/null
+; RUN: llvm-as @%S/Inputs/utf8-bom-response > /dev/null
+
 ; CHECK: T foobar
 
 define void @foobar() {
