@@ -315,7 +315,8 @@ public:
   }
 
   void fillCurWord() {
-    assert(Size == 0 || NextChar < (unsigned)Size);
+    if (Size != 0 && NextChar >= (unsigned)Size)
+      report_fatal_error("Unexpected end of file");
 
     // Read the next word from the stream.
     uint8_t Array[sizeof(word_t)] = {0};
@@ -490,11 +491,11 @@ private:
   //===--------------------------------------------------------------------===//
 
 public:
-
   /// Return the abbreviation for the specified AbbrevId.
   const BitCodeAbbrev *getAbbrev(unsigned AbbrevID) {
-    unsigned AbbrevNo = AbbrevID-bitc::FIRST_APPLICATION_ABBREV;
-    assert(AbbrevNo < CurAbbrevs.size() && "Invalid abbrev #!");
+    unsigned AbbrevNo = AbbrevID - bitc::FIRST_APPLICATION_ABBREV;
+    if (AbbrevNo >= CurAbbrevs.size())
+      report_fatal_error("Invalid abbrev number");
     return CurAbbrevs[AbbrevNo].get();
   }
 

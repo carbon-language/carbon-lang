@@ -1,1 +1,13 @@
-RUN: not llvm-dis -disable-output %p/Inputs/invalid-pr20485.bc
+RUN: not llvm-dis -disable-output %p/Inputs/invalid-pr20485.bc 2>&1 | \
+RUN:   FileCheck --check-prefix=INVALID-ENCODING %s
+RUN: not llvm-dis -disable-output %p/Inputs/invalid-abbrev.bc 2>&1 | \
+RUN:   FileCheck --check-prefix=BAD-ABBREV %s
+RUN: not llvm-dis -disable-output %p/Inputs/invalid-unexpected-eof.bc 2>&1 | \
+RUN:   FileCheck --check-prefix=UNEXPECTED-EOF %s
+RUN: not llvm-dis -disable-output %p/Inputs/invalid-bad-abbrev-number.bc 2>&1 | \
+RUN:   FileCheck --check-prefix=BAD-ABBREV-NUMBER %s
+
+INVALID-ENCODING: Invalid encoding
+BAD-ABBREV: Abbreviation starts with an Array or a Blob
+UNEXPECTED-EOF: Unexpected end of file
+BAD-ABBREV-NUMBER: Invalid abbrev number
