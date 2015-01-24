@@ -20,19 +20,17 @@ namespace elf {
   public: \
     static std::unique_ptr<ELFLinkingContext> create(llvm::Triple); \
   };
-#include "llvm/Config/Targets.def"
 
-// X86 => X86,X86_64
-class X86_64LinkingContext final : public ELFLinkingContext {
-public:
-  static std::unique_ptr<ELFLinkingContext> create(llvm::Triple); \
-};
+// FIXME: #include "llvm/Config/Targets.def"
+LLVM_TARGET(AArch64)
+LLVM_TARGET(ARM)
+LLVM_TARGET(Hexagon)
+LLVM_TARGET(Mips)
+LLVM_TARGET(PPC)
+LLVM_TARGET(X86)
+LLVM_TARGET(X86_64)
 
-// PowerPC => PPC
-class PPCLinkingContext final : public ELFLinkingContext {
-public:
-  static std::unique_ptr<ELFLinkingContext> create(llvm::Triple); \
-};
+#undef LLVM_TARGET
 
 } // end namespace elf
 } // end namespace lld

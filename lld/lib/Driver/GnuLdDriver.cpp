@@ -331,6 +331,7 @@ createELFLinkingContext(llvm::Triple triple) {
   LLVM_TARGET(X86_64)
   return nullptr;
 }
+#undef LLVM_TARGET
 
 bool GnuLdDriver::parse(int argc, const char *argv[],
                         std::unique_ptr<ELFLinkingContext> &context,
