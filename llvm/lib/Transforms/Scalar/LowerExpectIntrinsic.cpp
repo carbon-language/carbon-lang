@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Transforms/Scalar.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/IR/BasicBlock.h"
 #include "llvm/IR/Constants.h"
@@ -24,7 +25,6 @@
 #include "llvm/Pass.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
-#include <vector>
 
 using namespace llvm;
 
@@ -73,13 +73,12 @@ static bool handleSwitchExpect(SwitchInst &SI) {
 
   SwitchInst::CaseIt Case = SI.findCaseValue(ExpectedValue);
   unsigned n = SI.getNumCases(); // +1 for default case.
-  std::vector<uint32_t> Weights(n + 1);
+  SmallVector<uint32_t, 16> Weights(n + 1, UnlikelyBranchWeight);
 
-  Weights[0] =
-      Case == SI.case_default() ? LikelyBranchWeight : UnlikelyBranchWeight;
-  for (unsigned i = 0; i != n; ++i)
-    Weights[i + 1] =
-        i == Case.getCaseIndex() ? LikelyBranchWeight : UnlikelyBranchWeight;
+  if (Case == SI.case_default())
+    Weights[0] = LikelyBranchWeight;
+  else
+    Weights[Case.getCaseIndex() + 1] = LikelyBranchWeight;
 
   SI.setMetadata(LLVMContext::MD_prof,
                  MDBuilder(CI->getContext()).createBranchWeights(Weights));
