@@ -16,6 +16,9 @@
 #define LLVM_EXECUTIONENGINE_ORC_COMPILEONDEMANDLAYER_H
 
 #include "IndirectionUtils.h"
+#include "LookasideRTDyldMM.h"
+#include "llvm/ADT/STLExtras.h"
+#include <list>
 
 namespace llvm {
 
