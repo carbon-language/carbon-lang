@@ -22,6 +22,7 @@ config.enable_shared = @ENABLE_SHARED@
 config.enable_assertions = @ENABLE_ASSERTIONS@
 config.targets_to_build = "@TARGETS_TO_BUILD@"
 config.llvm_bindings = "@LLVM_BINDINGS@".split(' ')
+config.host_os = "@HOST_OS@"
 config.host_arch = "@HOST_ARCH@"
 config.host_cc = "@HOST_CC@"
 config.host_cxx = "@HOST_CXX@"
