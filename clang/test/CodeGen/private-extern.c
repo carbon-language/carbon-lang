@@ -1,6 +1,7 @@
-// RUN: %clang_cc1 -emit-llvm -o %t %s
-// RUN: grep '@g0 = external hidden constant i32' %t
-// RUN: grep '@g1 = hidden constant i32 1' %t
+// RUN: %clang_cc1 -emit-llvm -o - %s | FileCheck %s
+
+// CHECK-DAG: @g0 = external hidden constant i32
+// CHECK-DAG: @g1 = hidden constant i32 1
 
 __private_extern__ const int g0;
 __private_extern__ const int g1 = 1;

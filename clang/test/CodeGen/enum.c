@@ -1,5 +1,7 @@
-// RUN: %clang_cc1 -triple i386-unknown-unknown %s -O3 -emit-llvm -o - | grep 'ret i32 6'
-// RUN: %clang_cc1 -triple i386-unknown-unknown -x c++ %s -O3 -emit-llvm -o - | grep 'ret i32 7'
+// RUN: %clang_cc1 -triple i386-unknown-unknown %s -O3 -emit-llvm -o - | FileCheck -check-prefix=CHECK-C %s
+// RUN: %clang_cc1 -triple i386-unknown-unknown -x c++ %s -O3 -emit-llvm -o - | FileCheck -check-prefix=CHECK-CXX %s
+// CHECK-C: ret i32 6
+// CHECK-CXX: ret i32 7
 
 // This test case illustrates a peculiarity of the promotion of
 // enumeration types in C and C++. In particular, the enumeration type
@@ -19,4 +21,3 @@ int main (void)
 
   return r;
 }
-

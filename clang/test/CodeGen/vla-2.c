@@ -1,4 +1,5 @@
-// RUN: %clang_cc1 -std=gnu99 %s -emit-llvm -o - | grep ".*alloca.*align 16"
+// RUN: %clang_cc1 -std=gnu99 %s -emit-llvm -o - | FileCheck %s
+// CHECK: alloca {{.*}}, align 16
 
 extern void bar(int[]);
 
