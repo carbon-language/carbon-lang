@@ -1538,13 +1538,15 @@ SDValue SelectionDAG::getVectorShuffle(EVT VT, SDLoc dl, SDValue N1,
       if (Splat && Splat.getOpcode() == ISD::UNDEF)
         return getUNDEF(VT);
 
+      bool SameNumElts =
+          V.getValueType().getVectorNumElements() == VT.getVectorNumElements();
+
       // We only have a splat which can skip shuffles if there is a splatted
       // value and no undef lanes rearranged by the shuffle.
       if (Splat && UndefElements.none()) {
         // Splat of <x, x, ..., x>, return <x, x, ..., x>, provided that the
         // number of elements match or the value splatted is a zero constant.
-        if (V.getValueType().getVectorNumElements() ==
-            VT.getVectorNumElements())
+        if (SameNumElts)
           return N1;
         if (auto *C = dyn_cast<ConstantSDNode>(Splat))
           if (C->isNullValue())
@@ -1553,15 +1555,15 @@ SDValue SelectionDAG::getVectorShuffle(EVT VT, SDLoc dl, SDValue N1,
 
       // If the shuffle itself creates a constant splat, build the vector
       // directly.
-      if (AllSame) {
+      if (AllSame && SameNumElts) {
          const SDValue &Splatted = BV->getOperand(MaskVec[0]);
          if (isa<ConstantSDNode>(Splatted) || isa<ConstantFPSDNode>(Splatted)) {
            SmallVector<SDValue, 8> Ops;
-           for (unsigned i = 0; i != NElts; ++i) {
+           for (unsigned i = 0; i != NElts; ++i)
              Ops.push_back(Splatted);
-           }
-           SDValue NewBV = getNode(ISD::BUILD_VECTOR, dl,
-             BV->getValueType(0), Ops);
+
+           SDValue NewBV =
+               getNode(ISD::BUILD_VECTOR, dl, BV->getValueType(0), Ops);
 
            // We may have jumped through bitcasts, so the type of the
            // BUILD_VECTOR may not match the type of the shuffle.
