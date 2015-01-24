@@ -886,7 +886,7 @@ public:
     /// \brief Returns underlying DIHeaderFieldIterator.
     const DIHeaderFieldIterator &getBase() const { return I; }
     /// \brief Returns the next operand.
-    const Operand &getNext() const;
+    Operand getNext() const;
   };
 
   /// \brief An iterator for DIExpression elements.

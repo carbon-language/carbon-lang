@@ -170,7 +170,7 @@ DIExpression::iterator DIExpression::end() const {
  return DIExpression::iterator();
 }
 
-const DIExpression::Operand &DIExpression::Operand::getNext() const {
+DIExpression::Operand DIExpression::Operand::getNext() const {
   iterator it(I);
   return *(++it);
 }
