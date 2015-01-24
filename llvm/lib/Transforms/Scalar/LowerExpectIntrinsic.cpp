@@ -40,23 +40,21 @@ UnlikelyBranchWeight("unlikely-branch-weight", cl::Hidden, cl::init(4),
                    cl::desc("Weight of the branch unlikely to be taken (default = 4)"));
 
 namespace {
+class LowerExpectIntrinsic : public FunctionPass {
 
-  class LowerExpectIntrinsic : public FunctionPass {
+  bool HandleSwitchExpect(SwitchInst *SI);
 
-    bool HandleSwitchExpect(SwitchInst *SI);
+  bool HandleIfExpect(BranchInst *BI);
 
-    bool HandleIfExpect(BranchInst *BI);
+public:
+  static char ID;
+  LowerExpectIntrinsic() : FunctionPass(ID) {
+    initializeLowerExpectIntrinsicPass(*PassRegistry::getPassRegistry());
+  }
 
-  public:
-    static char ID;
-    LowerExpectIntrinsic() : FunctionPass(ID) {
-      initializeLowerExpectIntrinsicPass(*PassRegistry::getPassRegistry());
-    }
-
-    bool runOnFunction(Function &F) override;
-  };
+  bool runOnFunction(Function &F) override;
+};
 }
-
 
 bool LowerExpectIntrinsic::HandleSwitchExpect(SwitchInst *SI) {
   CallInst *CI = dyn_cast<CallInst>(SI->getCondition());
@@ -76,11 +74,11 @@ bool LowerExpectIntrinsic::HandleSwitchExpect(SwitchInst *SI) {
   unsigned n = SI->getNumCases(); // +1 for default case.
   std::vector<uint32_t> Weights(n + 1);
 
-  Weights[0] = Case == SI->case_default() ? LikelyBranchWeight
-                                          : UnlikelyBranchWeight;
+  Weights[0] =
+      Case == SI->case_default() ? LikelyBranchWeight : UnlikelyBranchWeight;
   for (unsigned i = 0; i != n; ++i)
-    Weights[i + 1] = i == Case.getCaseIndex() ? LikelyBranchWeight
-                                              : UnlikelyBranchWeight;
+    Weights[i + 1] =
+        i == Case.getCaseIndex() ? LikelyBranchWeight : UnlikelyBranchWeight;
 
   SI->setMetadata(LLVMContext::MD_prof,
                   MDBuilder(CI->getContext()).createBranchWeights(Weights));
@@ -88,7 +86,6 @@ bool LowerExpectIntrinsic::HandleSwitchExpect(SwitchInst *SI) {
   SI->setCondition(ArgValue);
   return true;
 }
-
 
 bool LowerExpectIntrinsic::HandleIfExpect(BranchInst *BI) {
   if (BI->isUnconditional())
@@ -145,7 +142,6 @@ bool LowerExpectIntrinsic::HandleIfExpect(BranchInst *BI) {
   return true;
 }
 
-
 bool LowerExpectIntrinsic::runOnFunction(Function &F) {
   for (Function::iterator I = F.begin(), E = F.end(); I != E;) {
     BasicBlock *BB = I++;
@@ -160,8 +156,7 @@ bool LowerExpectIntrinsic::runOnFunction(Function &F) {
     }
 
     // remove llvm.expect intrinsics.
-    for (BasicBlock::iterator BI = BB->begin(), BE = BB->end();
-         BI != BE; ) {
+    for (BasicBlock::iterator BI = BB->begin(), BE = BB->end(); BI != BE;) {
       CallInst *CI = dyn_cast<CallInst>(BI++);
       if (!CI)
         continue;
@@ -178,10 +173,9 @@ bool LowerExpectIntrinsic::runOnFunction(Function &F) {
   return false;
 }
 
-
 char LowerExpectIntrinsic::ID = 0;
-INITIALIZE_PASS(LowerExpectIntrinsic, "lower-expect", "Lower 'expect' "
-                "Intrinsics", false, false)
+INITIALIZE_PASS(LowerExpectIntrinsic, "lower-expect",
+                "Lower 'expect' Intrinsics", false, false)
 
 FunctionPass *llvm::createLowerExpectIntrinsicPass() {
   return new LowerExpectIntrinsic();
