@@ -247,10 +247,8 @@ protected:
   /// Determines if the target wants to create an atom for a section that has no
   /// symbol references.
   bool handleSectionWithNoSymbols(const Elf_Shdr *shdr,
-                                  std::vector<Elf_Sym_Iter> &symbols) const {
-    if (shdr && shdr->sh_type == llvm::ELF::SHT_PROGBITS && symbols.empty())
-      return true;
-    return false;
+                                  std::vector<Elf_Sym_Iter> &syms) const {
+    return shdr && (shdr->sh_type == llvm::ELF::SHT_PROGBITS) && syms.empty();
   }
 
   /// Process the Undefined symbol and create an atom for it.
