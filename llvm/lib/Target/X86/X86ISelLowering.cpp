@@ -24813,7 +24813,7 @@ static SDValue PerformLOADCombine(SDNode *N, SelectionDAG &DAG,
       return SDValue();
     SDValue SrcVal = Chain.getOperand(1);
 
-    // On 32bit systems, we can't save 64bit integers, use f64 instead.
+    // On 32bit systems, we can't store 64bit integers, use f64 instead.
     bool Usef64 = TLI.isTypeLegal(MVT::f64) && !Subtarget->is64Bit();
     if (Usef64)
       SrcVal = DAG.getNode(ISD::BITCAST, dl, MVT::f64, SrcVal);
