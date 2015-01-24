@@ -55,6 +55,7 @@ module LLVM_ExecutionEngine {
   exclude header "ExecutionEngine/JIT.h"
   exclude header "ExecutionEngine/MCJIT.h"
   exclude header "ExecutionEngine/Interpreter.h"
+  exclude header "ExecutionEngine/OrcMCJITReplacement.h"
 }
 
 module LLVM_IR {
