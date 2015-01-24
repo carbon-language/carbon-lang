@@ -26,6 +26,7 @@
 #include "llvm/IR/Verifier.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Transforms/InstCombine/InstCombine.h"
+#include "llvm/Transforms/Scalar/LowerExpectIntrinsic.h"
 
 using namespace llvm;
 

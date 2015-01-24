@@ -11,7 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Transforms/Scalar.h"
+#include "llvm/Transforms/Scalar/LowerExpectIntrinsic.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/IR/BasicBlock.h"
@@ -25,6 +25,7 @@
 #include "llvm/Pass.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Transforms/Scalar.h"
 
 using namespace llvm;
 
@@ -39,24 +40,6 @@ LikelyBranchWeight("likely-branch-weight", cl::Hidden, cl::init(64),
 static cl::opt<uint32_t>
 UnlikelyBranchWeight("unlikely-branch-weight", cl::Hidden, cl::init(4),
                    cl::desc("Weight of the branch unlikely to be taken (default = 4)"));
-
-namespace {
-/// \brief Legacy pass for lowering expect intrinsics out of the IR.
-///
-/// When this pass is run over a function it uses expect intrinsics which feed
-/// branches and switches to provide branch weight metadata for those
-/// terminators. It then removes the expect intrinsics from the IR so the rest
-/// of the optimizer can ignore them.
-class LowerExpectIntrinsic : public FunctionPass {
-public:
-  static char ID;
-  LowerExpectIntrinsic() : FunctionPass(ID) {
-    initializeLowerExpectIntrinsicPass(*PassRegistry::getPassRegistry());
-  }
-
-  bool runOnFunction(Function &F) override;
-};
-}
 
 static bool handleSwitchExpect(SwitchInst &SI) {
   CallInst *CI = dyn_cast<CallInst>(SI.getCondition());
@@ -143,7 +126,7 @@ static bool handleBranchExpect(BranchInst &BI) {
   return true;
 }
 
-bool LowerExpectIntrinsic::runOnFunction(Function &F) {
+static bool lowerExpectIntrinsic(Function &F) {
   bool Changed = false;
 
   for (BasicBlock &BB : F) {
@@ -173,6 +156,31 @@ bool LowerExpectIntrinsic::runOnFunction(Function &F) {
   }
 
   return Changed;
+}
+
+PreservedAnalyses LowerExpectIntrinsicPass::run(Function &F) {
+  if (lowerExpectIntrinsic(F))
+    return PreservedAnalyses::none();
+
+  return PreservedAnalyses::all();
+}
+
+namespace {
+/// \brief Legacy pass for lowering expect intrinsics out of the IR.
+///
+/// When this pass is run over a function it uses expect intrinsics which feed
+/// branches and switches to provide branch weight metadata for those
+/// terminators. It then removes the expect intrinsics from the IR so the rest
+/// of the optimizer can ignore them.
+class LowerExpectIntrinsic : public FunctionPass {
+public:
+  static char ID;
+  LowerExpectIntrinsic() : FunctionPass(ID) {
+    initializeLowerExpectIntrinsicPass(*PassRegistry::getPassRegistry());
+  }
+
+  bool runOnFunction(Function &F) override { return lowerExpectIntrinsic(F); }
+};
 }
 
 char LowerExpectIntrinsic::ID = 0;
