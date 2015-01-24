@@ -1,5 +1,5 @@
-# REQUIRES: X86
-#
+# REQUIRES: x86
+
 # Verify that lld can handle multiple input files.
 #
 # RUN: yaml2obj %p/Inputs/main.obj.yaml > %t1.obj

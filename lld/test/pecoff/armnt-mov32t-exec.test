@@ -1,5 +1,5 @@
-# REQUIRES: ARM
-#
+# REQUIRES: arm
+
 # RUN: yaml2obj -format coff -o %t.obj %p/Inputs/armnt-mov32t-exec.obj.yaml
 # RUN: llvm-objdump -d %t.obj | FileCheck %s -check-prefix BEFORE
 # RUN: lld -flavor link /out:%t.exe /subsystem:console /entry:get_function %t.obj

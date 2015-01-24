@@ -1,4 +1,4 @@
-# REQUIRES: X86
+# REQUIRES: x86
 
 # This test checks that IRELATIVE relocations are created for symbols that
 # need relocation even for static links.
