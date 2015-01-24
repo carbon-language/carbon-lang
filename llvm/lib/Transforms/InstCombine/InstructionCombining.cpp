@@ -33,7 +33,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Transforms/Scalar.h"
+#include "llvm/Transforms/InstCombine/InstCombine.h"
 #include "InstCombineInternal.h"
 #include "llvm-c/Initialization.h"
 #include "llvm/ADT/SmallPtrSet.h"
@@ -45,6 +45,7 @@
 #include "llvm/Analysis/InstructionSimplify.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/MemoryBuiltins.h"
+#include "llvm/Analysis/TargetLibraryInfo.h"
 #include "llvm/Analysis/ValueTracking.h"
 #include "llvm/IR/CFG.h"
 #include "llvm/IR/DataLayout.h"
@@ -55,7 +56,7 @@
 #include "llvm/IR/ValueHandle.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
-#include "llvm/Analysis/TargetLibraryInfo.h"
+#include "llvm/Transforms/Scalar.h"
 #include "llvm/Transforms/Utils/Local.h"
 #include <algorithm>
 #include <climits>
@@ -2922,6 +2923,66 @@ static bool prepareICWorklistFromFunction(Function &F, const DataLayout *DL,
   return MadeIRChange;
 }
 
+static bool combineInstructionsOverFunction(
+    Function &F, InstCombineWorklist &Worklist, AssumptionCache &AC,
+    TargetLibraryInfo &TLI, DominatorTree &DT, const DataLayout *DL = nullptr,
+    LoopInfo *LI = nullptr) {
+  // Minimizing size?
+  bool MinimizeSize = F.getAttributes().hasAttribute(
+      AttributeSet::FunctionIndex, Attribute::MinSize);
+
+  /// Builder - This is an IRBuilder that automatically inserts new
+  /// instructions into the worklist when they are created.
+  IRBuilder<true, TargetFolder, InstCombineIRInserter> Builder(
+      F.getContext(), TargetFolder(DL), InstCombineIRInserter(Worklist, &AC));
+
+  // Lower dbg.declare intrinsics otherwise their value may be clobbered
+  // by instcombiner.
+  bool DbgDeclaresChanged = LowerDbgDeclare(F);
+
+  // Iterate while there is work to do.
+  int Iteration = 0;
+  for (;;) {
+    ++Iteration;
+    DEBUG(dbgs() << "\n\nINSTCOMBINE ITERATION #" << Iteration << " on "
+                 << F.getName() << "\n");
+
+    bool Changed = false;
+    if (prepareICWorklistFromFunction(F, DL, &TLI, Worklist))
+      Changed = true;
+
+    InstCombiner IC(Worklist, &Builder, MinimizeSize, &AC, &TLI, &DT, DL, LI);
+    if (IC.run())
+      Changed = true;
+
+    if (!Changed)
+      break;
+  }
+
+  return DbgDeclaresChanged || Iteration > 1;
+}
+
+PreservedAnalyses InstCombinePass::run(Function &F,
+                                       AnalysisManager<Function> *AM) {
+  auto *DL = F.getParent()->getDataLayout();
+
+  auto &AC = AM->getResult<AssumptionAnalysis>(F);
+  auto &DT = AM->getResult<DominatorTreeAnalysis>(F);
+  auto &TLI = AM->getResult<TargetLibraryAnalysis>(F);
+
+  auto *LI = AM->getCachedResult<LoopAnalysis>(F);
+
+  if (!combineInstructionsOverFunction(F, Worklist, AC, TLI, DT, DL, LI))
+    // No changes, all analyses are preserved.
+    return PreservedAnalyses::all();
+
+  // Mark all the analyses that instcombine updates as preserved.
+  // FIXME: Need a way to preserve CFG analyses here!
+  PreservedAnalyses PA;
+  PA.preserve<DominatorTreeAnalysis>();
+  return PA;
+}
+
 namespace {
 /// \brief The legacy pass manager's instcombine pass.
 ///
@@ -2954,10 +3015,6 @@ bool InstructionCombiningPass::runOnFunction(Function &F) {
   if (skipOptnoneFunction(F))
     return false;
 
-  // Lower dbg.declare intrinsics otherwise their value may be clobbered
-  // by instcombiner.
-  bool DbgDeclaresChanged = LowerDbgDeclare(F);
-
   // Required analyses.
   auto &AC = getAnalysis<AssumptionCacheTracker>().getAssumptionCache(F);
   auto &TLI = getAnalysis<TargetLibraryInfoWrapperPass>().getTLI();
@@ -2969,35 +3026,7 @@ bool InstructionCombiningPass::runOnFunction(Function &F) {
   auto *LIWP = getAnalysisIfAvailable<LoopInfoWrapperPass>();
   auto *LI = LIWP ? &LIWP->getLoopInfo() : nullptr;
 
-  // Minimizing size?
-  bool MinimizeSize = F.getAttributes().hasAttribute(
-      AttributeSet::FunctionIndex, Attribute::MinSize);
-
-  /// Builder - This is an IRBuilder that automatically inserts new
-  /// instructions into the worklist when they are created.
-  IRBuilder<true, TargetFolder, InstCombineIRInserter> Builder(
-      F.getContext(), TargetFolder(DL), InstCombineIRInserter(Worklist, &AC));
-
-  // Iterate while there is work to do.
-  int Iteration = 0;
-  for (;;) {
-    ++Iteration;
-    DEBUG(dbgs() << "\n\nINSTCOMBINE ITERATION #" << Iteration << " on "
-                 << F.getName() << "\n");
-
-    bool Changed = false;
-    if (prepareICWorklistFromFunction(F, DL, &TLI, Worklist))
-      Changed = true;
-
-    InstCombiner IC(Worklist, &Builder, MinimizeSize, &AC, &TLI, &DT, DL, LI);
-    if (IC.run())
-      Changed = true;
-
-    if (!Changed)
-      break;
-  }
-
-  return DbgDeclaresChanged || Iteration > 1;
+  return combineInstructionsOverFunction(F, Worklist, AC, TLI, DT, DL, LI);
 }
 
 char InstructionCombiningPass::ID = 0;

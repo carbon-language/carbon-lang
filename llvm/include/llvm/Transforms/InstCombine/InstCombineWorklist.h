@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_LIB_TRANSFORMS_INSTCOMBINE_INSTCOMBINEWORKLIST_H
-#define LLVM_LIB_TRANSFORMS_INSTCOMBINE_INSTCOMBINEWORKLIST_H
+#ifndef LLVM_TRANSFORMS_INSTCOMBINE_INSTCOMBINEWORKLIST_H
+#define LLVM_TRANSFORMS_INSTCOMBINE_INSTCOMBINEWORKLIST_H
 
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallVector.h"
@@ -31,6 +31,15 @@ class LLVM_LIBRARY_VISIBILITY InstCombineWorklist {
   InstCombineWorklist(const InstCombineWorklist&) LLVM_DELETED_FUNCTION;
 public:
   InstCombineWorklist() {}
+
+  InstCombineWorklist(InstCombineWorklist &&Arg)
+      : Worklist(std::move(Arg.Worklist)),
+        WorklistMap(std::move(Arg.WorklistMap)) {}
+  InstCombineWorklist &operator=(InstCombineWorklist &&RHS) {
+    Worklist = std::move(RHS.Worklist);
+    WorklistMap = std::move(RHS.WorklistMap);
+    return *this;
+  }
 
   bool isEmpty() const { return Worklist.empty(); }
 

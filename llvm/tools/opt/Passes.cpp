@@ -25,6 +25,7 @@
 #include "llvm/IR/PassManager.h"
 #include "llvm/IR/Verifier.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Transforms/InstCombine/InstCombine.h"
 
 using namespace llvm;
 
