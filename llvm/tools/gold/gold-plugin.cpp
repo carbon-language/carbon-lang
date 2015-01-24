@@ -699,7 +699,7 @@ getModuleForFile(LLVMContext &Context, claimed_file &F, raw_fd_ostream *ApiFile,
 static void runLTOPasses(Module &M, TargetMachine &TM) {
   PassManager passes;
   PassManagerBuilder PMB;
-  PMB.LibraryInfo = new TargetLibraryInfo(Triple(TM.getTargetTriple()));
+  PMB.LibraryInfo = new TargetLibraryInfoImpl(Triple(TM.getTargetTriple()));
   PMB.Inliner = createFunctionInliningPass();
   PMB.VerifyInput = true;
   PMB.VerifyOutput = true;
