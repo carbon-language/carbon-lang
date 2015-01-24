@@ -49,8 +49,7 @@ static unsigned getHash(const void *V) {
 //===----------------------------------------------------------------------===//
 
 namespace {
-/// SimpleValue - Instances of this struct represent available values in the
-/// scoped hash table.
+/// \brief Struct representing the available values in the scoped hash table.
 struct SimpleValue {
   Instruction *Inst;
 
@@ -196,8 +195,8 @@ bool DenseMapInfo<SimpleValue>::isEqual(SimpleValue LHS, SimpleValue RHS) {
 //===----------------------------------------------------------------------===//
 
 namespace {
-/// CallValue - Instances of this struct represent available call values in
-/// the scoped hash table.
+/// \brief Struct representing the available call values in the scoped hash
+/// table.
 struct CallValue {
   Instruction *Inst;
 
@@ -263,12 +262,13 @@ bool DenseMapInfo<CallValue>::isEqual(CallValue LHS, CallValue RHS) {
 
 namespace {
 
-/// EarlyCSE - This pass does a simple depth-first walk over the dominator
-/// tree, eliminating trivially redundant instructions and using instsimplify
-/// to canonicalize things as it goes.  It is intended to be fast and catch
-/// obvious cases so that instcombine and other passes are more effective.  It
-/// is expected that a later pass of GVN will catch the interesting/hard
-/// cases.
+/// \brief A simple and fast domtree-based CSE pass.
+///
+/// This pass does a simple depth-first walk over the dominator tree,
+/// eliminating trivially redundant instructions and using instsimplify to
+/// canonicalize things as it goes. It is intended to be fast and catch obvious
+/// cases so that instcombine and other passes are more effective. It is
+/// expected that a later pass of GVN will catch the interesting/hard cases.
 class EarlyCSE : public FunctionPass {
 public:
   const DataLayout *DL;
@@ -280,20 +280,22 @@ public:
   typedef ScopedHashTable<SimpleValue, Value *, DenseMapInfo<SimpleValue>,
                           AllocatorTy> ScopedHTType;
 
-  /// AvailableValues - This scoped hash table contains the current values of
-  /// all of our simple scalar expressions.  As we walk down the domtree, we
-  /// look to see if instructions are in this: if so, we replace them with what
-  /// we find, otherwise we insert them so that dominated values can succeed in
-  /// their lookup.
+  /// \brief A scoped hash table of the current values of all of our simple
+  /// scalar expressions.
+  ///
+  /// As we walk down the domtree, we look to see if instructions are in this:
+  /// if so, we replace them with what we find, otherwise we insert them so
+  /// that dominated values can succeed in their lookup.
   ScopedHTType *AvailableValues;
 
-  /// AvailableLoads - This scoped hash table contains the current values
-  /// of loads.  This allows us to get efficient access to dominating loads when
-  /// we have a fully redundant load.  In addition to the most recent load, we
-  /// keep track of a generation count of the read, which is compared against
-  /// the current generation count.  The current generation count is
-  /// incremented after every possibly writing memory operation, which ensures
-  /// that we only CSE loads with other loads that have no intervening store.
+  /// \brief A scoped hash table of the current values of loads.
+  ///
+  /// This allows us to get efficient access to dominating loads when we have
+  /// a fully redundant load.  In addition to the most recent load, we keep
+  /// track of a generation count of the read, which is compared against the
+  /// current generation count.  The current generation count is incremented
+  /// after every possibly writing memory operation, which ensures that we only
+  /// CSE loads with other loads that have no intervening store.
   typedef RecyclingAllocator<
       BumpPtrAllocator,
       ScopedHashTableVal<Value *, std::pair<Value *, unsigned>>>
@@ -302,12 +304,14 @@ public:
                           DenseMapInfo<Value *>, LoadMapAllocator> LoadHTType;
   LoadHTType *AvailableLoads;
 
-  /// AvailableCalls - This scoped hash table contains the current values
-  /// of read-only call values.  It uses the same generation count as loads.
+  /// \brief A scoped hash table of the current values of read-only call
+  /// values.
+  ///
+  /// It uses the same generation count as loads.
   typedef ScopedHashTable<CallValue, std::pair<Value *, unsigned>> CallHTType;
   CallHTType *AvailableCalls;
 
-  /// CurrentGeneration - This is the current generation of the memory value.
+  /// \brief This is the current generation of the memory value.
   unsigned CurrentGeneration;
 
   static char ID;
@@ -318,9 +322,9 @@ public:
   bool runOnFunction(Function &F) override;
 
 private:
-  // NodeScope - almost a POD, but needs to call the constructors for the
-  // scoped hash tables so that a new scope gets pushed on. These are RAII so
-  // that the scope gets popped when the NodeScope is destroyed.
+  // Almost a POD, but needs to call the constructors for the scoped hash
+  // tables so that a new scope gets pushed on. These are RAII so that the
+  // scope gets popped when the NodeScope is destroyed.
   class NodeScope {
   public:
     NodeScope(ScopedHTType *availableValues, LoadHTType *availableLoads,
@@ -337,10 +341,10 @@ private:
     CallHTType::ScopeTy CallScope;
   };
 
-  // StackNode - contains all the needed information to create a stack for
-  // doing a depth first tranversal of the tree. This includes scopes for
-  // values, loads, and calls as well as the generation. There is a child
-  // iterator so that the children do not need to be store spearately.
+  // Contains all the needed information to create a stack for doing a depth
+  // first tranversal of the tree. This includes scopes for values, loads, and
+  // calls as well as the generation. There is a child iterator so that the
+  // children do not need to be store spearately.
   class StackNode {
   public:
     StackNode(ScopedHTType *availableValues, LoadHTType *availableLoads,
@@ -381,7 +385,6 @@ private:
 
   bool processNode(DomTreeNode *Node);
 
-  // This transformation requires dominator postdominator info
   void getAnalysisUsage(AnalysisUsage &AU) const override {
     AU.addRequired<AssumptionCacheTracker>();
     AU.addRequired<DominatorTreeWrapperPass>();
@@ -393,7 +396,6 @@ private:
 
 char EarlyCSE::ID = 0;
 
-// createEarlyCSEPass - The public interface to this file.
 FunctionPass *llvm::createEarlyCSEPass() { return new EarlyCSE(); }
 
 INITIALIZE_PASS_BEGIN(EarlyCSE, "early-cse", "Early CSE", false, false)
