@@ -856,5 +856,5 @@ Here is the code:
 .. literalinclude:: ../../examples/Kaleidoscope/Chapter7/toy.cpp
    :language: c++
 
-`Next: Conclusion and other useful LLVM tidbits <LangImpl8.html>`_
+`Next: Extending the Language: Debug Information <LangImpl8.html>`_
 

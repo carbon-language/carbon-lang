@@ -14,9 +14,10 @@ grown our little Kaleidoscope language from being a useless toy, to
 being a semi-interesting (but probably still useless) toy. :)
 
 It is interesting to see how far we've come, and how little code it has
-taken. We built the entire lexer, parser, AST, code generator, and an
-interactive run-loop (with a JIT!) by-hand in under 1000 lines of
-(non-comment/non-blank) code.
+taken. We built the entire lexer, parser, AST, code generator, an
+interactive run-loop (with a JIT!), and emitted debug information in
+standalone executables - all in under 1000 lines of (non-comment/non-blank)
+code.
 
 Our little language supports a couple of interesting features: it
 supports user defined binary and unary operators, it uses JIT
@@ -68,12 +69,6 @@ For example, try adding:
    collection, note that LLVM fully supports `Accurate Garbage
    Collection <../GarbageCollection.html>`_ including algorithms that
    move objects and need to scan/update the stack.
--  **debugger support** - LLVM supports generation of `DWARF Debug
-   info <../SourceLevelDebugging.html>`_ which is understood by common
-   debuggers like GDB. Adding support for debug info is fairly
-   straightforward. The best way to understand it is to compile some
-   C/C++ code with "``clang -g -O0``" and taking a look at what it
-   produces.
 -  **exception handling support** - LLVM supports generation of `zero
    cost exceptions <../ExceptionHandling.html>`_ which interoperate with
    code compiled in other languages. You could also generate code by
