@@ -24,7 +24,7 @@
 
 namespace llvm {
 
-class InstCombinePass {
+class LLVM_LIBRARY_VISIBILITY InstCombinePass {
   InstCombineWorklist Worklist;
 
 public:
