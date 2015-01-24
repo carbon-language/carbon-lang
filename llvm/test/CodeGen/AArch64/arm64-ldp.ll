@@ -12,6 +12,18 @@ define i32 @ldp_int(i32* %p) nounwind {
   ret i32 %add
 }
 
+; CHECK: ldp_sext_int
+; CHECK: ldpsw
+define i64 @ldp_sext_int(i32* %p) nounwind {
+  %tmp = load i32* %p, align 4
+  %add.ptr = getelementptr inbounds i32* %p, i64 1
+  %tmp1 = load i32* %add.ptr, align 4
+  %sexttmp = sext i32 %tmp to i64
+  %sexttmp1 = sext i32 %tmp1 to i64
+  %add = add nsw i64 %sexttmp1, %sexttmp
+  ret i64 %add
+}
+
 ; CHECK: ldp_long
 ; CHECK: ldp
 define i64 @ldp_long(i64* %p) nounwind {
@@ -54,6 +66,21 @@ define i32 @ldur_int(i32* %a) nounwind {
   %tmp2 = load i32* %p2, align 2
   %tmp3 = add i32 %tmp1, %tmp2
   ret i32 %tmp3
+}
+
+define i64 @ldur_sext_int(i32* %a) nounwind {
+; LDUR_CHK: ldur_sext_int
+; LDUR_CHK: ldpsw     [[DST1:x[0-9]+]], [[DST2:x[0-9]+]], [x0, #-8]
+; LDUR_CHK-NEXT: add     x{{[0-9]+}}, [[DST2]], [[DST1]]
+; LDUR_CHK-NEXT: ret
+  %p1 = getelementptr inbounds i32* %a, i32 -1
+  %tmp1 = load i32* %p1, align 2
+  %p2 = getelementptr inbounds i32* %a, i32 -2
+  %tmp2 = load i32* %p2, align 2
+  %sexttmp1 = sext i32 %tmp1 to i64
+  %sexttmp2 = sext i32 %tmp2 to i64
+  %tmp3 = add i64 %sexttmp1, %sexttmp2
+  ret i64 %tmp3
 }
 
 define i64 @ldur_long(i64* %a) nounwind ssp {
@@ -110,6 +137,22 @@ define i64 @pairUpBarelyIn(i64* %a) nounwind ssp {
   ret i64 %tmp3
 }
 
+define i64 @pairUpBarelyInSext(i32* %a) nounwind ssp {
+; LDUR_CHK: pairUpBarelyInSext
+; LDUR_CHK-NOT: ldur
+; LDUR_CHK: ldpsw     [[DST1:x[0-9]+]], [[DST2:x[0-9]+]], [x0, #-256]
+; LDUR_CHK-NEXT: add     x{{[0-9]+}}, [[DST2]], [[DST1]]
+; LDUR_CHK-NEXT: ret
+  %p1 = getelementptr inbounds i32* %a, i64 -63
+  %tmp1 = load i32* %p1, align 2
+  %p2 = getelementptr inbounds i32* %a, i64 -64
+  %tmp2 = load i32* %p2, align 2
+  %sexttmp1 = sext i32 %tmp1 to i64
+  %sexttmp2 = sext i32 %tmp2 to i64
+  %tmp3 = add i64 %sexttmp1, %sexttmp2
+  ret i64 %tmp3
+}
+
 define i64 @pairUpBarelyOut(i64* %a) nounwind ssp {
 ; LDUR_CHK: pairUpBarelyOut
 ; LDUR_CHK-NOT: ldp
@@ -122,6 +165,23 @@ define i64 @pairUpBarelyOut(i64* %a) nounwind ssp {
   %p2 = getelementptr inbounds i64* %a, i64 -33
   %tmp2 = load i64* %p2, align 2
   %tmp3 = add i64 %tmp1, %tmp2
+  ret i64 %tmp3
+}
+
+define i64 @pairUpBarelyOutSext(i32* %a) nounwind ssp {
+; LDUR_CHK: pairUpBarelyOutSext
+; LDUR_CHK-NOT: ldp
+; Don't be fragile about which loads or manipulations of the base register
+; are used---just check that there isn't an ldp before the add
+; LDUR_CHK: add
+; LDUR_CHK-NEXT: ret
+  %p1 = getelementptr inbounds i32* %a, i64 -64
+  %tmp1 = load i32* %p1, align 2
+  %p2 = getelementptr inbounds i32* %a, i64 -65
+  %tmp2 = load i32* %p2, align 2
+  %sexttmp1 = sext i32 %tmp1 to i64
+  %sexttmp2 = sext i32 %tmp2 to i64
+  %tmp3 = add i64 %sexttmp1, %sexttmp2
   ret i64 %tmp3
 }
 
@@ -146,4 +206,29 @@ define i64 @pairUpNotAligned(i64* %a) nounwind ssp {
 
   %tmp3 = add i64 %tmp1, %tmp2
   ret i64 %tmp3
+}
+
+define i64 @pairUpNotAlignedSext(i32* %a) nounwind ssp {
+; LDUR_CHK: pairUpNotAlignedSext
+; LDUR_CHK-NOT: ldp
+; LDUR_CHK: ldursw
+; LDUR_CHK-NEXT: ldursw
+; LDUR_CHK-NEXT: add
+; LDUR_CHK-NEXT: ret
+  %p1 = getelementptr inbounds i32* %a, i64 -18
+  %bp1 = bitcast i32* %p1 to i8*
+  %bp1p1 = getelementptr inbounds i8* %bp1, i64 1
+  %dp1 = bitcast i8* %bp1p1 to i32*
+  %tmp1 = load i32* %dp1, align 1
+
+  %p2 = getelementptr inbounds i32* %a, i64 -17
+  %bp2 = bitcast i32* %p2 to i8*
+  %bp2p1 = getelementptr inbounds i8* %bp2, i64 1
+  %dp2 = bitcast i8* %bp2p1 to i32*
+  %tmp2 = load i32* %dp2, align 1
+
+  %sexttmp1 = sext i32 %tmp1 to i64
+  %sexttmp2 = sext i32 %tmp2 to i64
+  %tmp3 = add i64 %sexttmp1, %sexttmp2
+ ret i64 %tmp3
 }
