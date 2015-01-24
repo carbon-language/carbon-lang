@@ -435,6 +435,10 @@ private:
   llvm::SmallVector<std::pair<serialization::GlobalDeclID, Decl*>, 16>
       PendingUpdateRecords;
 
+  /// \brief The DefinitionData pointers that we faked up for class definitions
+  /// that we needed but hadn't loaded yet.
+  llvm::SmallPtrSet<void*, 4> PendingFakeDefinitionData;
+
   struct ReplacedDeclInfo {
     ModuleFile *Mod;
     uint64_t Offset;
