@@ -1,7 +1,4 @@
 // RUN: %clang_cc1 -triple x86_64-apple-darwin -emit-llvm < %s | FileCheck %s
-// RUN: %clang_cc1 -triple x86_64-apple-darwin -emit-llvm < %s | grep 'load.*addrspace(2).. @A'
-// RUN: %clang_cc1 -triple x86_64-apple-darwin -emit-llvm < %s | grep 'load.*addrspace(2).. @B'
-
 
 // CHECK: @foo = common addrspace(1) global
 int foo __attribute__((address_space(1)));
