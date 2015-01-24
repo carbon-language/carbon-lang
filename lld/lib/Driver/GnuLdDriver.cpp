@@ -15,6 +15,7 @@
 
 #include "lld/Driver/Driver.h"
 #include "lld/ReaderWriter/ELFLinkingContext.h"
+#include "lld/ReaderWriter/ELFTargets.h"
 #include "lld/ReaderWriter/LinkerScript.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/Optional.h"
@@ -314,6 +315,23 @@ void GnuLdDriver::addPlatformSearchDirs(ELFLinkingContext &ctx,
   ctx.addSearchPath("=/usr/lib");
 }
 
+#define LLVM_TARGET(targetName) \
+  if ((p = elf::targetName##LinkingContext::create(triple))) return p;
+
+std::unique_ptr<ELFLinkingContext>
+createELFLinkingContext(llvm::Triple triple) {
+  std::unique_ptr<ELFLinkingContext> p;
+  // FIXME: #include "llvm/Config/Targets.def"
+  LLVM_TARGET(AArch64)
+  LLVM_TARGET(ARM)
+  LLVM_TARGET(Hexagon)
+  LLVM_TARGET(Mips)
+  LLVM_TARGET(PPC)
+  LLVM_TARGET(X86)
+  LLVM_TARGET(X86_64)
+  return nullptr;
+}
+
 bool GnuLdDriver::parse(int argc, const char *argv[],
                         std::unique_ptr<ELFLinkingContext> &context,
                         raw_ostream &diagnostics) {
@@ -349,7 +367,7 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
   if (!applyEmulation(triple, *parsedArgs, diagnostics))
     return false;
 
-  std::unique_ptr<ELFLinkingContext> ctx(ELFLinkingContext::create(triple));
+  std::unique_ptr<ELFLinkingContext> ctx(createELFLinkingContext(triple));
 
   if (!ctx) {
     diagnostics << "unknown target triple\n";

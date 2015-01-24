@@ -10,7 +10,6 @@
 #ifndef LLD_READER_WRITER_ELF_X86_TARGETINFO_H
 #define LLD_READER_WRITER_ELF_X86_TARGETINFO_H
 
-#include "X86TargetHandler.h"
 #include "lld/ReaderWriter/ELFLinkingContext.h"
 #include "llvm/Object/ELF.h"
 #include "llvm/Support/ELF.h"
@@ -19,9 +18,8 @@ namespace lld {
 namespace elf {
 class X86LinkingContext final : public ELFLinkingContext {
 public:
-  X86LinkingContext(llvm::Triple triple)
-      : ELFLinkingContext(triple, std::unique_ptr<TargetHandlerBase>(
-                                      new X86TargetHandler(*this))) {}
+  static std::unique_ptr<ELFLinkingContext> create(llvm::Triple);
+  X86LinkingContext(llvm::Triple);
 
   /// \brief X86 has only two relative relocation
   /// a) for supporting IFUNC relocs - R_386_IRELATIVE

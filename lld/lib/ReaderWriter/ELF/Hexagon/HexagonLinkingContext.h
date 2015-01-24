@@ -21,6 +21,7 @@ typedef llvm::object::ELFType<llvm::support::little, 2, false> HexagonELFType;
 
 class HexagonLinkingContext final : public ELFLinkingContext {
 public:
+  static std::unique_ptr<ELFLinkingContext> create(llvm::Triple);
   HexagonLinkingContext(llvm::Triple triple);
 
   void addPasses(PassManager &) override;

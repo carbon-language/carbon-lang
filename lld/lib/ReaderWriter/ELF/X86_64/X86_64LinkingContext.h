@@ -10,7 +10,6 @@
 #ifndef LLD_READER_WRITER_ELF_X86_64_X86_64_LINKING_CONTEXT_H
 #define LLD_READER_WRITER_ELF_X86_64_X86_64_LINKING_CONTEXT_H
 
-#include "X86_64TargetHandler.h"
 #include "lld/ReaderWriter/ELFLinkingContext.h"
 #include "llvm/Object/ELF.h"
 #include "llvm/Support/ELF.h"
@@ -27,9 +26,8 @@ enum {
 
 class X86_64LinkingContext final : public ELFLinkingContext {
 public:
-  X86_64LinkingContext(llvm::Triple triple)
-      : ELFLinkingContext(triple, std::unique_ptr<TargetHandlerBase>(
-                                      new X86_64TargetHandler(*this))) {}
+  static std::unique_ptr<ELFLinkingContext> create(llvm::Triple);
+  X86_64LinkingContext(llvm::Triple);
 
   void addPasses(PassManager &) override;
 

@@ -8,9 +8,21 @@
 //===----------------------------------------------------------------------===//
 
 #include "X86LinkingContext.h"
+#include "X86TargetHandler.h"
 #include "lld/Core/LLVM.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/Support/ErrorOr.h"
 
 using namespace lld;
 
+std::unique_ptr<ELFLinkingContext>
+elf::X86LinkingContext::create(llvm::Triple triple) {
+  if (triple.getArch() == llvm::Triple::x86)
+    return std::unique_ptr<ELFLinkingContext>(
+             new elf::X86LinkingContext(triple));
+  return nullptr;
+}
+
+elf::X86LinkingContext::X86LinkingContext(llvm::Triple triple)
+    : ELFLinkingContext(triple, std::unique_ptr<TargetHandlerBase>(
+                        new X86TargetHandler(*this))) {}

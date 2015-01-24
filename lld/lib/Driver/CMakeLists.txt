@@ -24,6 +24,13 @@ add_llvm_library(lldDriver
     lldMachO
     lldPECOFF
     lldELF
+    lldAArch64ELFTarget
+    lldARMELFTarget
+    lldHexagonELFTarget
+    lldMipsELFTarget
+    lldPPCELFTarget
+    lldX86ELFTarget
+    lldX86_64ELFTarget
     lldCore
     lldNative
     lldReaderWriter

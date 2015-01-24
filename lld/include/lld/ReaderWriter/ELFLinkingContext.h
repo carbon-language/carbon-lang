@@ -116,8 +116,6 @@ public:
     return true;
   }
 
-  static std::unique_ptr<ELFLinkingContext> create(llvm::Triple);
-
   /// \brief Use Elf_Rela format to output relocation tables.
   virtual bool isRelaOutputFormat() const { return true; }
 

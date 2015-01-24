@@ -39,6 +39,7 @@ template <class ELFType> class MipsTargetLayout;
 
 class MipsLinkingContext final : public ELFLinkingContext {
 public:
+  static std::unique_ptr<ELFLinkingContext> create(llvm::Triple);
   MipsLinkingContext(llvm::Triple triple);
 
   uint32_t getMergedELFFlags() const;

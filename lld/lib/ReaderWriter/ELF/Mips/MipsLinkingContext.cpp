@@ -16,6 +16,14 @@
 using namespace lld;
 using namespace lld::elf;
 
+std::unique_ptr<ELFLinkingContext>
+MipsLinkingContext::create(llvm::Triple triple) {
+  if (triple.getArch() == llvm::Triple::mipsel)
+    return std::unique_ptr<ELFLinkingContext>(
+             new MipsLinkingContext(triple));
+  return nullptr;
+}
+
 MipsLinkingContext::MipsLinkingContext(llvm::Triple triple)
     : ELFLinkingContext(triple, std::unique_ptr<TargetHandlerBase>(
                                     new MipsTargetHandler(*this))) {}

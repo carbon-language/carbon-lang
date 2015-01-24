@@ -11,8 +11,8 @@
 #include "ArrayOrderPass.h"
 #include "ELFFile.h"
 #include "TargetHandler.h"
-#include "Targets.h"
 #include "lld/Core/Instrumentation.h"
+#include "lld/Core/SharedLibraryFile.h"
 #include "lld/Passes/LayoutPass.h"
 #include "lld/Passes/RoundTripYAMLPass.h"
 #include "llvm/ADT/Triple.h"
@@ -56,7 +56,7 @@ public:
 
 ELFLinkingContext::ELFLinkingContext(
     llvm::Triple triple, std::unique_ptr<TargetHandlerBase> targetHandler)
-    : _outputELFType(elf::ET_EXEC), _triple(triple),
+    : _outputELFType(llvm::ELF::ET_EXEC), _triple(triple),
       _targetHandler(std::move(targetHandler)), _baseAddress(0),
       _isStaticExecutable(false), _noInhibitExec(false), _exportDynamic(false),
       _mergeCommonStrings(false), _runLayoutPass(true),
@@ -93,7 +93,7 @@ uint16_t ELFLinkingContext::getOutputMachine() const {
 }
 
 StringRef ELFLinkingContext::entrySymbolName() const {
-  if (_outputELFType == elf::ET_EXEC && _entrySymbolName.empty())
+  if (_outputELFType == llvm::ELF::ET_EXEC && _entrySymbolName.empty())
     return "_start";
   return _entrySymbolName;
 }
@@ -128,35 +128,6 @@ bool ELFLinkingContext::isRelativeReloc(const Reference &) const {
 }
 
 Writer &ELFLinkingContext::writer() const { return *_writer; }
-
-std::unique_ptr<ELFLinkingContext>
-ELFLinkingContext::create(llvm::Triple triple) {
-  switch (triple.getArch()) {
-  case llvm::Triple::x86:
-    return std::unique_ptr<ELFLinkingContext>(
-        new lld::elf::X86LinkingContext(triple));
-  case llvm::Triple::x86_64:
-    return std::unique_ptr<ELFLinkingContext>(
-        new lld::elf::X86_64LinkingContext(triple));
-  case llvm::Triple::hexagon:
-    return std::unique_ptr<ELFLinkingContext>(
-        new lld::elf::HexagonLinkingContext(triple));
-  case llvm::Triple::mipsel:
-    return std::unique_ptr<ELFLinkingContext>(
-        new lld::elf::MipsLinkingContext(triple));
-  case llvm::Triple::ppc:
-    return std::unique_ptr<ELFLinkingContext>(
-        new lld::elf::PPCLinkingContext(triple));
-  case llvm::Triple::aarch64:
-    return std::unique_ptr<ELFLinkingContext>(
-        new lld::elf::AArch64LinkingContext(triple));
-  case llvm::Triple::arm:
-    return std::unique_ptr<ELFLinkingContext>(
-        new lld::elf::ARMLinkingContext(triple));
-  default:
-    return nullptr;
-  }
-}
 
 static void buildSearchPath(SmallString<128> &path, StringRef dir,
                             StringRef sysRoot) {

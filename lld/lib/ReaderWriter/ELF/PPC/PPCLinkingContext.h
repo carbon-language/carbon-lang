@@ -10,7 +10,6 @@
 #ifndef LLD_READER_WRITER_ELF_PPC_PPC_LINKING_CONTEXT_H
 #define LLD_READER_WRITER_ELF_PPC_PPC_LINKING_CONTEXT_H
 
-#include "PPCTargetHandler.h"
 #include "lld/ReaderWriter/ELFLinkingContext.h"
 #include "llvm/Object/ELF.h"
 #include "llvm/Support/ELF.h"
@@ -20,9 +19,8 @@ namespace elf {
 
 class PPCLinkingContext final : public ELFLinkingContext {
 public:
-  PPCLinkingContext(llvm::Triple triple)
-      : ELFLinkingContext(triple, std::unique_ptr<TargetHandlerBase>(
-                                      new PPCTargetHandler(*this))) {}
+  static std::unique_ptr<ELFLinkingContext> create(llvm::Triple);
+  PPCLinkingContext(llvm::Triple triple);
 
   /// \brief PPC has no relative relocations defined
   bool isRelativeReloc(const Reference &) const override { return false; }
