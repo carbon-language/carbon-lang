@@ -49,40 +49,40 @@ static unsigned getHash(const void *V) {
 //===----------------------------------------------------------------------===//
 
 namespace {
-  /// SimpleValue - Instances of this struct represent available values in the
-  /// scoped hash table.
-  struct SimpleValue {
-    Instruction *Inst;
+/// SimpleValue - Instances of this struct represent available values in the
+/// scoped hash table.
+struct SimpleValue {
+  Instruction *Inst;
 
-    SimpleValue(Instruction *I) : Inst(I) {
-      assert((isSentinel() || canHandle(I)) && "Inst can't be handled!");
-    }
+  SimpleValue(Instruction *I) : Inst(I) {
+    assert((isSentinel() || canHandle(I)) && "Inst can't be handled!");
+  }
 
-    bool isSentinel() const {
-      return Inst == DenseMapInfo<Instruction*>::getEmptyKey() ||
-             Inst == DenseMapInfo<Instruction*>::getTombstoneKey();
-    }
+  bool isSentinel() const {
+    return Inst == DenseMapInfo<Instruction *>::getEmptyKey() ||
+           Inst == DenseMapInfo<Instruction *>::getTombstoneKey();
+  }
 
-    static bool canHandle(Instruction *Inst) {
-      // This can only handle non-void readnone functions.
-      if (CallInst *CI = dyn_cast<CallInst>(Inst))
-        return CI->doesNotAccessMemory() && !CI->getType()->isVoidTy();
-      return isa<CastInst>(Inst) || isa<BinaryOperator>(Inst) ||
-             isa<GetElementPtrInst>(Inst) || isa<CmpInst>(Inst) ||
-             isa<SelectInst>(Inst) || isa<ExtractElementInst>(Inst) ||
-             isa<InsertElementInst>(Inst) || isa<ShuffleVectorInst>(Inst) ||
-             isa<ExtractValueInst>(Inst) || isa<InsertValueInst>(Inst);
-    }
-  };
+  static bool canHandle(Instruction *Inst) {
+    // This can only handle non-void readnone functions.
+    if (CallInst *CI = dyn_cast<CallInst>(Inst))
+      return CI->doesNotAccessMemory() && !CI->getType()->isVoidTy();
+    return isa<CastInst>(Inst) || isa<BinaryOperator>(Inst) ||
+           isa<GetElementPtrInst>(Inst) || isa<CmpInst>(Inst) ||
+           isa<SelectInst>(Inst) || isa<ExtractElementInst>(Inst) ||
+           isa<InsertElementInst>(Inst) || isa<ShuffleVectorInst>(Inst) ||
+           isa<ExtractValueInst>(Inst) || isa<InsertValueInst>(Inst);
+  }
+};
 }
 
 namespace llvm {
-template<> struct DenseMapInfo<SimpleValue> {
+template <> struct DenseMapInfo<SimpleValue> {
   static inline SimpleValue getEmptyKey() {
-    return DenseMapInfo<Instruction*>::getEmptyKey();
+    return DenseMapInfo<Instruction *>::getEmptyKey();
   }
   static inline SimpleValue getTombstoneKey() {
-    return DenseMapInfo<Instruction*>::getTombstoneKey();
+    return DenseMapInfo<Instruction *>::getTombstoneKey();
   }
   static unsigned getHashValue(SimpleValue Val);
   static bool isEqual(SimpleValue LHS, SimpleValue RHS);
@@ -92,7 +92,7 @@ template<> struct DenseMapInfo<SimpleValue> {
 unsigned DenseMapInfo<SimpleValue>::getHashValue(SimpleValue Val) {
   Instruction *Inst = Val.Inst;
   // Hash in all of the operands as pointers.
-  if (BinaryOperator* BinOp = dyn_cast<BinaryOperator>(Inst)) {
+  if (BinaryOperator *BinOp = dyn_cast<BinaryOperator>(Inst)) {
     Value *LHS = BinOp->getOperand(0);
     Value *RHS = BinOp->getOperand(1);
     if (BinOp->isCommutative() && BinOp->getOperand(0) > BinOp->getOperand(1))
@@ -101,8 +101,9 @@ unsigned DenseMapInfo<SimpleValue>::getHashValue(SimpleValue Val) {
     if (isa<OverflowingBinaryOperator>(BinOp)) {
       // Hash the overflow behavior
       unsigned Overflow =
-        BinOp->hasNoSignedWrap()   * OverflowingBinaryOperator::NoSignedWrap |
-        BinOp->hasNoUnsignedWrap() * OverflowingBinaryOperator::NoUnsignedWrap;
+          BinOp->hasNoSignedWrap() * OverflowingBinaryOperator::NoSignedWrap |
+          BinOp->hasNoUnsignedWrap() *
+              OverflowingBinaryOperator::NoUnsignedWrap;
       return hash_combine(BinOp->getOpcode(), Overflow, LHS, RHS);
     }
 
@@ -135,12 +136,13 @@ unsigned DenseMapInfo<SimpleValue>::getHashValue(SimpleValue Val) {
   assert((isa<CallInst>(Inst) || isa<BinaryOperator>(Inst) ||
           isa<GetElementPtrInst>(Inst) || isa<SelectInst>(Inst) ||
           isa<ExtractElementInst>(Inst) || isa<InsertElementInst>(Inst) ||
-          isa<ShuffleVectorInst>(Inst)) && "Invalid/unknown instruction");
+          isa<ShuffleVectorInst>(Inst)) &&
+         "Invalid/unknown instruction");
 
   // Mix in the opcode.
-  return hash_combine(Inst->getOpcode(),
-                      hash_combine_range(Inst->value_op_begin(),
-                                         Inst->value_op_end()));
+  return hash_combine(
+      Inst->getOpcode(),
+      hash_combine_range(Inst->value_op_begin(), Inst->value_op_end()));
 }
 
 bool DenseMapInfo<SimpleValue>::isEqual(SimpleValue LHS, SimpleValue RHS) {
@@ -149,22 +151,24 @@ bool DenseMapInfo<SimpleValue>::isEqual(SimpleValue LHS, SimpleValue RHS) {
   if (LHS.isSentinel() || RHS.isSentinel())
     return LHSI == RHSI;
 
-  if (LHSI->getOpcode() != RHSI->getOpcode()) return false;
-  if (LHSI->isIdenticalTo(RHSI)) return true;
+  if (LHSI->getOpcode() != RHSI->getOpcode())
+    return false;
+  if (LHSI->isIdenticalTo(RHSI))
+    return true;
 
   // If we're not strictly identical, we still might be a commutable instruction
   if (BinaryOperator *LHSBinOp = dyn_cast<BinaryOperator>(LHSI)) {
     if (!LHSBinOp->isCommutative())
       return false;
 
-    assert(isa<BinaryOperator>(RHSI)
-           && "same opcode, but different instruction type?");
+    assert(isa<BinaryOperator>(RHSI) &&
+           "same opcode, but different instruction type?");
     BinaryOperator *RHSBinOp = cast<BinaryOperator>(RHSI);
 
     // Check overflow attributes
     if (isa<OverflowingBinaryOperator>(LHSBinOp)) {
-      assert(isa<OverflowingBinaryOperator>(RHSBinOp)
-             && "same opcode, but different operator type?");
+      assert(isa<OverflowingBinaryOperator>(RHSBinOp) &&
+             "same opcode, but different operator type?");
       if (LHSBinOp->hasNoUnsignedWrap() != RHSBinOp->hasNoUnsignedWrap() ||
           LHSBinOp->hasNoSignedWrap() != RHSBinOp->hasNoSignedWrap())
         return false;
@@ -172,16 +176,16 @@ bool DenseMapInfo<SimpleValue>::isEqual(SimpleValue LHS, SimpleValue RHS) {
 
     // Commuted equality
     return LHSBinOp->getOperand(0) == RHSBinOp->getOperand(1) &&
-      LHSBinOp->getOperand(1) == RHSBinOp->getOperand(0);
+           LHSBinOp->getOperand(1) == RHSBinOp->getOperand(0);
   }
   if (CmpInst *LHSCmp = dyn_cast<CmpInst>(LHSI)) {
-    assert(isa<CmpInst>(RHSI)
-           && "same opcode, but different instruction type?");
+    assert(isa<CmpInst>(RHSI) &&
+           "same opcode, but different instruction type?");
     CmpInst *RHSCmp = cast<CmpInst>(RHSI);
     // Commuted equality
     return LHSCmp->getOperand(0) == RHSCmp->getOperand(1) &&
-      LHSCmp->getOperand(1) == RHSCmp->getOperand(0) &&
-      LHSCmp->getSwappedPredicate() == RHSCmp->getPredicate();
+           LHSCmp->getOperand(1) == RHSCmp->getOperand(0) &&
+           LHSCmp->getSwappedPredicate() == RHSCmp->getPredicate();
   }
 
   return false;
@@ -192,45 +196,46 @@ bool DenseMapInfo<SimpleValue>::isEqual(SimpleValue LHS, SimpleValue RHS) {
 //===----------------------------------------------------------------------===//
 
 namespace {
-  /// CallValue - Instances of this struct represent available call values in
-  /// the scoped hash table.
-  struct CallValue {
-    Instruction *Inst;
+/// CallValue - Instances of this struct represent available call values in
+/// the scoped hash table.
+struct CallValue {
+  Instruction *Inst;
 
-    CallValue(Instruction *I) : Inst(I) {
-      assert((isSentinel() || canHandle(I)) && "Inst can't be handled!");
-    }
+  CallValue(Instruction *I) : Inst(I) {
+    assert((isSentinel() || canHandle(I)) && "Inst can't be handled!");
+  }
 
-    bool isSentinel() const {
-      return Inst == DenseMapInfo<Instruction*>::getEmptyKey() ||
-             Inst == DenseMapInfo<Instruction*>::getTombstoneKey();
-    }
+  bool isSentinel() const {
+    return Inst == DenseMapInfo<Instruction *>::getEmptyKey() ||
+           Inst == DenseMapInfo<Instruction *>::getTombstoneKey();
+  }
 
-    static bool canHandle(Instruction *Inst) {
-      // Don't value number anything that returns void.
-      if (Inst->getType()->isVoidTy())
-        return false;
+  static bool canHandle(Instruction *Inst) {
+    // Don't value number anything that returns void.
+    if (Inst->getType()->isVoidTy())
+      return false;
 
-      CallInst *CI = dyn_cast<CallInst>(Inst);
-      if (!CI || !CI->onlyReadsMemory())
-        return false;
-      return true;
-    }
-  };
+    CallInst *CI = dyn_cast<CallInst>(Inst);
+    if (!CI || !CI->onlyReadsMemory())
+      return false;
+    return true;
+  }
+};
 }
 
 namespace llvm {
-  template<> struct DenseMapInfo<CallValue> {
-    static inline CallValue getEmptyKey() {
-      return DenseMapInfo<Instruction*>::getEmptyKey();
-    }
-    static inline CallValue getTombstoneKey() {
-      return DenseMapInfo<Instruction*>::getTombstoneKey();
-    }
-    static unsigned getHashValue(CallValue Val);
-    static bool isEqual(CallValue LHS, CallValue RHS);
-  };
+template <> struct DenseMapInfo<CallValue> {
+  static inline CallValue getEmptyKey() {
+    return DenseMapInfo<Instruction *>::getEmptyKey();
+  }
+  static inline CallValue getTombstoneKey() {
+    return DenseMapInfo<Instruction *>::getTombstoneKey();
+  }
+  static unsigned getHashValue(CallValue Val);
+  static bool isEqual(CallValue LHS, CallValue RHS);
+};
 }
+
 unsigned DenseMapInfo<CallValue>::getHashValue(CallValue Val) {
   Instruction *Inst = Val.Inst;
   // Hash in all of the operands as pointers.
@@ -252,7 +257,6 @@ bool DenseMapInfo<CallValue>::isEqual(CallValue LHS, CallValue RHS) {
   return LHSI->isIdenticalTo(RHSI);
 }
 
-
 //===----------------------------------------------------------------------===//
 // EarlyCSE pass.
 //===----------------------------------------------------------------------===//
@@ -271,9 +275,9 @@ public:
   const TargetLibraryInfo *TLI;
   DominatorTree *DT;
   AssumptionCache *AC;
-  typedef RecyclingAllocator<BumpPtrAllocator,
-                      ScopedHashTableVal<SimpleValue, Value*> > AllocatorTy;
-  typedef ScopedHashTable<SimpleValue, Value*, DenseMapInfo<SimpleValue>,
+  typedef RecyclingAllocator<
+      BumpPtrAllocator, ScopedHashTableVal<SimpleValue, Value *>> AllocatorTy;
+  typedef ScopedHashTable<SimpleValue, Value *, DenseMapInfo<SimpleValue>,
                           AllocatorTy> ScopedHTType;
 
   /// AvailableValues - This scoped hash table contains the current values of
@@ -290,15 +294,17 @@ public:
   /// the current generation count.  The current generation count is
   /// incremented after every possibly writing memory operation, which ensures
   /// that we only CSE loads with other loads that have no intervening store.
-  typedef RecyclingAllocator<BumpPtrAllocator,
-    ScopedHashTableVal<Value*, std::pair<Value*, unsigned> > > LoadMapAllocator;
-  typedef ScopedHashTable<Value*, std::pair<Value*, unsigned>,
-                          DenseMapInfo<Value*>, LoadMapAllocator> LoadHTType;
+  typedef RecyclingAllocator<
+      BumpPtrAllocator,
+      ScopedHashTableVal<Value *, std::pair<Value *, unsigned>>>
+      LoadMapAllocator;
+  typedef ScopedHashTable<Value *, std::pair<Value *, unsigned>,
+                          DenseMapInfo<Value *>, LoadMapAllocator> LoadHTType;
   LoadHTType *AvailableLoads;
 
   /// AvailableCalls - This scoped hash table contains the current values
   /// of read-only call values.  It uses the same generation count as loads.
-  typedef ScopedHashTable<CallValue, std::pair<Value*, unsigned> > CallHTType;
+  typedef ScopedHashTable<CallValue, std::pair<Value *, unsigned>> CallHTType;
   CallHTType *AvailableCalls;
 
   /// CurrentGeneration - This is the current generation of the memory value.
@@ -312,22 +318,19 @@ public:
   bool runOnFunction(Function &F) override;
 
 private:
-
   // NodeScope - almost a POD, but needs to call the constructors for the
   // scoped hash tables so that a new scope gets pushed on. These are RAII so
   // that the scope gets popped when the NodeScope is destroyed.
   class NodeScope {
-   public:
-    NodeScope(ScopedHTType *availableValues,
-              LoadHTType *availableLoads,
-              CallHTType *availableCalls) :
-        Scope(*availableValues),
-        LoadScope(*availableLoads),
-        CallScope(*availableCalls) {}
+  public:
+    NodeScope(ScopedHTType *availableValues, LoadHTType *availableLoads,
+              CallHTType *availableCalls)
+        : Scope(*availableValues), LoadScope(*availableLoads),
+          CallScope(*availableCalls) {}
 
-   private:
-    NodeScope(const NodeScope&) LLVM_DELETED_FUNCTION;
-    void operator=(const NodeScope&) LLVM_DELETED_FUNCTION;
+  private:
+    NodeScope(const NodeScope &) LLVM_DELETED_FUNCTION;
+    void operator=(const NodeScope &) LLVM_DELETED_FUNCTION;
 
     ScopedHTType::ScopeTy Scope;
     LoadHTType::ScopeTy LoadScope;
@@ -339,16 +342,13 @@ private:
   // values, loads, and calls as well as the generation. There is a child
   // iterator so that the children do not need to be store spearately.
   class StackNode {
-   public:
-    StackNode(ScopedHTType *availableValues,
-              LoadHTType *availableLoads,
-              CallHTType *availableCalls,
-              unsigned cg, DomTreeNode *n,
-              DomTreeNode::iterator child, DomTreeNode::iterator end) :
-        CurrentGeneration(cg), ChildGeneration(cg), Node(n),
-        ChildIter(child), EndIter(end),
-        Scopes(availableValues, availableLoads, availableCalls),
-        Processed(false) {}
+  public:
+    StackNode(ScopedHTType *availableValues, LoadHTType *availableLoads,
+              CallHTType *availableCalls, unsigned cg, DomTreeNode *n,
+              DomTreeNode::iterator child, DomTreeNode::iterator end)
+        : CurrentGeneration(cg), ChildGeneration(cg), Node(n), ChildIter(child),
+          EndIter(end), Scopes(availableValues, availableLoads, availableCalls),
+          Processed(false) {}
 
     // Accessors.
     unsigned currentGeneration() { return CurrentGeneration; }
@@ -365,9 +365,9 @@ private:
     bool isProcessed() { return Processed; }
     void process() { Processed = true; }
 
-   private:
-    StackNode(const StackNode&) LLVM_DELETED_FUNCTION;
-    void operator=(const StackNode&) LLVM_DELETED_FUNCTION;
+  private:
+    StackNode(const StackNode &) LLVM_DELETED_FUNCTION;
+    void operator=(const StackNode &) LLVM_DELETED_FUNCTION;
 
     // Members.
     unsigned CurrentGeneration;
@@ -394,9 +394,7 @@ private:
 char EarlyCSE::ID = 0;
 
 // createEarlyCSEPass - The public interface to this file.
-FunctionPass *llvm::createEarlyCSEPass() {
-  return new EarlyCSE();
-}
+FunctionPass *llvm::createEarlyCSEPass() { return new EarlyCSE(); }
 
 INITIALIZE_PASS_BEGIN(EarlyCSE, "early-cse", "Early CSE", false, false)
 INITIALIZE_PASS_DEPENDENCY(AssumptionCacheTracker)
@@ -426,7 +424,7 @@ bool EarlyCSE::processNode(DomTreeNode *Node) {
 
   // See if any instructions in the block can be eliminated.  If so, do it.  If
   // not, add them to AvailableValues.
-  for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ) {
+  for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E;) {
     Instruction *Inst = I++;
 
     // Dead instructions should just be removed.
@@ -485,12 +483,13 @@ bool EarlyCSE::processNode(DomTreeNode *Node) {
 
       // If we have an available version of this load, and if it is the right
       // generation, replace this instruction.
-      std::pair<Value*, unsigned> InVal =
-        AvailableLoads->lookup(Inst->getOperand(0));
+      std::pair<Value *, unsigned> InVal =
+          AvailableLoads->lookup(Inst->getOperand(0));
       if (InVal.first != nullptr && InVal.second == CurrentGeneration) {
-        DEBUG(dbgs() << "EarlyCSE CSE LOAD: " << *Inst << "  to: "
-              << *InVal.first << '\n');
-        if (!Inst->use_empty()) Inst->replaceAllUsesWith(InVal.first);
+        DEBUG(dbgs() << "EarlyCSE CSE LOAD: " << *Inst
+                     << "  to: " << *InVal.first << '\n');
+        if (!Inst->use_empty())
+          Inst->replaceAllUsesWith(InVal.first);
         Inst->eraseFromParent();
         Changed = true;
         ++NumCSELoad;
@@ -498,8 +497,8 @@ bool EarlyCSE::processNode(DomTreeNode *Node) {
       }
 
       // Otherwise, remember that we have this instruction.
-      AvailableLoads->insert(Inst->getOperand(0),
-                          std::pair<Value*, unsigned>(Inst, CurrentGeneration));
+      AvailableLoads->insert(Inst->getOperand(0), std::pair<Value *, unsigned>(
+                                                      Inst, CurrentGeneration));
       LastStore = nullptr;
       continue;
     }
@@ -512,11 +511,12 @@ bool EarlyCSE::processNode(DomTreeNode *Node) {
     if (CallValue::canHandle(Inst)) {
       // If we have an available version of this call, and if it is the right
       // generation, replace this instruction.
-      std::pair<Value*, unsigned> InVal = AvailableCalls->lookup(Inst);
+      std::pair<Value *, unsigned> InVal = AvailableCalls->lookup(Inst);
       if (InVal.first != nullptr && InVal.second == CurrentGeneration) {
-        DEBUG(dbgs() << "EarlyCSE CSE CALL: " << *Inst << "  to: "
-                     << *InVal.first << '\n');
-        if (!Inst->use_empty()) Inst->replaceAllUsesWith(InVal.first);
+        DEBUG(dbgs() << "EarlyCSE CSE CALL: " << *Inst
+                     << "  to: " << *InVal.first << '\n');
+        if (!Inst->use_empty())
+          Inst->replaceAllUsesWith(InVal.first);
         Inst->eraseFromParent();
         Changed = true;
         ++NumCSECall;
@@ -524,8 +524,8 @@ bool EarlyCSE::processNode(DomTreeNode *Node) {
       }
 
       // Otherwise, remember that we have this instruction.
-      AvailableCalls->insert(Inst,
-                         std::pair<Value*, unsigned>(Inst, CurrentGeneration));
+      AvailableCalls->insert(
+          Inst, std::pair<Value *, unsigned>(Inst, CurrentGeneration));
       continue;
     }
 
@@ -540,8 +540,8 @@ bool EarlyCSE::processNode(DomTreeNode *Node) {
         // location with no intervening loads.  Delete the earlier store.
         if (LastStore &&
             LastStore->getPointerOperand() == SI->getPointerOperand()) {
-          DEBUG(dbgs() << "EarlyCSE DEAD STORE: " << *LastStore << "  due to: "
-                       << *Inst << '\n');
+          DEBUG(dbgs() << "EarlyCSE DEAD STORE: " << *LastStore
+                       << "  due to: " << *Inst << '\n');
           LastStore->eraseFromParent();
           Changed = true;
           ++NumDSE;
@@ -555,7 +555,8 @@ bool EarlyCSE::processNode(DomTreeNode *Node) {
         // to non-volatile loads, so we don't have to check for volatility of
         // the store.
         AvailableLoads->insert(SI->getPointerOperand(),
-         std::pair<Value*, unsigned>(SI->getValueOperand(), CurrentGeneration));
+                               std::pair<Value *, unsigned>(
+                                   SI->getValueOperand(), CurrentGeneration));
 
         // Remember that this was the last store we saw for DSE.
         if (SI->isSimple())
@@ -567,14 +568,14 @@ bool EarlyCSE::processNode(DomTreeNode *Node) {
   return Changed;
 }
 
-
 bool EarlyCSE::runOnFunction(Function &F) {
   if (skipOptnoneFunction(F))
     return false;
 
-  // Note, deque is being used here because there is significant performance gains
-  // over vector when the container becomes very large due to the specific access
-  // patterns. For more information see the mailing list discussion on this:
+  // Note, deque is being used here because there is significant performance
+  // gains over vector when the container becomes very large due to the
+  // specific access patterns. For more information see the mailing list
+  // discussion on this:
   // http://lists.cs.uiuc.edu/pipermail/llvm-commits/Week-of-Mon-20120116/135228.html
   std::deque<StackNode *> nodesToProcess;
 
@@ -596,11 +597,9 @@ bool EarlyCSE::runOnFunction(Function &F) {
   bool Changed = false;
 
   // Process the root node.
-  nodesToProcess.push_back(
-      new StackNode(AvailableValues, AvailableLoads, AvailableCalls,
-                    CurrentGeneration, DT->getRootNode(),
-                    DT->getRootNode()->begin(),
-                    DT->getRootNode()->end()));
+  nodesToProcess.push_back(new StackNode(
+      AvailableValues, AvailableLoads, AvailableCalls, CurrentGeneration,
+      DT->getRootNode(), DT->getRootNode()->begin(), DT->getRootNode()->end()));
 
   // Save the current generation.
   unsigned LiveOutGeneration = CurrentGeneration;
@@ -624,11 +623,9 @@ bool EarlyCSE::runOnFunction(Function &F) {
       // Push the next child onto the stack.
       DomTreeNode *child = NodeToProcess->nextChild();
       nodesToProcess.push_back(
-          new StackNode(AvailableValues,
-                        AvailableLoads,
-                        AvailableCalls,
-                        NodeToProcess->childGeneration(), child,
-                        child->begin(), child->end()));
+          new StackNode(AvailableValues, AvailableLoads, AvailableCalls,
+                        NodeToProcess->childGeneration(), child, child->begin(),
+                        child->end()));
     } else {
       // It has been processed, and there are no more children to process,
       // so delete it and pop it off the stack.
