@@ -21,7 +21,6 @@ add_llvm_library(LLVMTransformUtils
   LoopSimplify.cpp
   LoopUnroll.cpp
   LoopUnrollRuntime.cpp
-  LowerExpectIntrinsic.cpp
   LowerInvoke.cpp
   LowerSwitch.cpp
   Mem2Reg.cpp
