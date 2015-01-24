@@ -195,3 +195,126 @@ namespace dr1460 { // dr1460: 3.5
   }
 #endif
 }
+
+#if __cplusplus >= 201103L
+namespace std {
+  typedef decltype(sizeof(int)) size_t;
+  
+  // libc++'s implementation
+  template <class _E>
+  class initializer_list
+  {
+    const _E* __begin_;
+    size_t    __size_;
+    
+    initializer_list(const _E* __b, size_t __s)
+    : __begin_(__b),
+    __size_(__s)
+    {}
+    
+  public:
+    typedef _E        value_type;
+    typedef const _E& reference;
+    typedef const _E& const_reference;
+    typedef size_t    size_type;
+    
+    typedef const _E* iterator;
+    typedef const _E* const_iterator;
+    
+    initializer_list() : __begin_(nullptr), __size_(0) {}
+    
+    size_t    size()  const {return __size_;}
+    const _E* begin() const {return __begin_;}
+    const _E* end()   const {return __begin_ + __size_;}
+  };
+} // std
+
+namespace dr1467 {
+  // List-initialization of aggregate from same-type object
+  
+  namespace basic0 {
+    
+    struct S {
+      int i = 42;
+    };
+    
+    S a;
+    S b(a);
+    S c{a};
+    
+    struct SS : public S { } x;
+    S y(x);
+    S z{x};
+    
+  } // basic0
+  
+  namespace basic1 {
+    
+    struct S {
+      int i{42};
+    };
+    
+    S a;
+    S b(a);
+    S c{a};
+    
+    struct SS : public S { } x;
+    S y(x);
+    S z{x};
+    
+  } // basic1
+  
+  namespace basic2 {
+    
+    struct S {
+      int i = {42};
+    };
+    
+    S a;
+    S b(a);
+    S c{a};
+    
+    struct SS : public S { } x;
+    S y(x);
+    S z{x};
+    
+  } // basic2
+  
+  namespace dr_example {
+    struct OK {
+      OK() = default;
+      OK(const OK&) = default;
+      OK(int) { }
+    };
+    
+    OK ok;
+    OK ok2{ok};
+    
+    
+    struct X {
+      X() = default;
+      X(const X&) = default;
+    };
+    
+    X x;
+    X x2{x};
+#if __cplusplus == 201103L
+    // expected-error@-2 {{excess elements in struct initializer}}
+#endif
+
+    // TODO: Only Items 1 and 2 from DR1467 are covered for now.
+    // Implement remaining items, and expand here as necessary.
+
+  } // dr_example
+
+} // dr1467
+
+
+namespace dr1490 {
+  // List-initialization from a string literal
+  
+  char s[4]{"abc"};                   // Ok
+  std::initializer_list<char>{"abc"}; // expected-error {{expected unqualified-id}}}
+  
+} // dr1490
+#endif

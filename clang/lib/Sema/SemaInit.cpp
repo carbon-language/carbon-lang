@@ -3222,9 +3222,16 @@ static void TryConstructorInitialization(Sema &S,
   OverloadCandidateSet::iterator Best;
   bool AsInitializerList = false;
 
+  // C++14 DR 1467 [over.match.list]p1:
+  //   When objects of non-aggregate type T are list-initialized, such that
+  //   8.5.4 [dcl.init.list] specifies that overload resolution is performed
+  //   according to the rules in this section, overload resolution selects
+  //   the constructor in two phases:
+  //
   // C++11 [over.match.list]p1:
   //   When objects of non-aggregate type T are list-initialized, overload
   //   resolution selects the constructor in two phases:
+  //
   //   - Initially, the candidate functions are the initializer-list
   //     constructors of the class T and the argument list consists of the
   //     initializer list as a single argument.
@@ -3425,48 +3432,102 @@ static void TryListInitialization(Sema &S,
     TryReferenceListInitialization(S, Entity, Kind, InitList, Sequence);
     return;
   }
-  if (DestType->isRecordType()) {
-    if (S.RequireCompleteType(InitList->getLocStart(), DestType, 0)) {
-      Sequence.setIncompleteTypeFailure(DestType);
-      return;
-    }
 
-    // C++11 [dcl.init.list]p3:
-    //   - If T is an aggregate, aggregate initialization is performed.
-    if (!DestType->isAggregateType()) {
-      if (S.getLangOpts().CPlusPlus11) {
-        //   - Otherwise, if the initializer list has no elements and T is a
-        //     class type with a default constructor, the object is
-        //     value-initialized.
-        if (InitList->getNumInits() == 0) {
-          CXXRecordDecl *RD = DestType->getAsCXXRecordDecl();
-          if (RD->hasDefaultConstructor()) {
-            TryValueInitialization(S, Entity, Kind, Sequence, InitList);
-            return;
-          }
-        }
+  if (DestType->isRecordType() &&
+      S.RequireCompleteType(InitList->getLocStart(), DestType, 0)) {
+    Sequence.setIncompleteTypeFailure(DestType);
+    return;
+  }
 
-        //   - Otherwise, if T is a specialization of std::initializer_list<E>,
-        //     an initializer_list object constructed [...]
-        if (TryInitializerListConstruction(S, InitList, DestType, Sequence))
-          return;
-
-        //   - Otherwise, if T is a class type, constructors are considered.
+  // C++14 DR1467 [dcl.init.list]p3:
+  // - If T is a class type and the initializer list has a single element of
+  //   type cv U, where U is T or a class derived from T, the object is
+  //   initialized from that element (by copy-initialization for
+  //   copy-list-initialization, or by direct-initialization for
+  //   direct-list-initialization).
+  // - Otherwise, if T is a character array and the initializer list has a
+  //   single element that is an appropriately-typed string literal
+  //   (8.5.2 [dcl.init.string]), initialization is performed as described
+  //   in that section.
+  // - Otherwise, If T is an aggregate, [...] (continue below).
+  if (S.getLangOpts().CPlusPlus14 && InitList->getNumInits() == 1) {
+    if (DestType->isRecordType()) {
+      QualType InitType = InitList->getInit(0)->getType();
+      if (S.Context.hasSameUnqualifiedType(InitType, DestType) ||
+          S.IsDerivedFrom(InitType, DestType)) {
         Expr *InitListAsExpr = InitList;
         TryConstructorInitialization(S, Entity, Kind, InitListAsExpr, DestType,
                                      Sequence, /*InitListSyntax*/true);
-      } else
-        Sequence.SetFailed(
-            InitializationSequence::FK_InitListBadDestinationType);
-      return;
+        return;
+      }
+    }
+    if (const ArrayType *DestAT = S.Context.getAsArrayType(DestType)) {
+      Expr *SubInit[1] = {InitList->getInit(0)};
+      if (!isa<VariableArrayType>(DestAT) &&
+          IsStringInit(SubInit[0], DestAT, S.Context) == SIF_None) {
+        InitializationKind SubKind =
+            Kind.getKind() == InitializationKind::IK_DirectList
+                ? InitializationKind::CreateDirect(Kind.getLocation(),
+                                                   InitList->getLBraceLoc(),
+                                                   InitList->getRBraceLoc())
+                : Kind;
+        Sequence.InitializeFrom(S, Entity, SubKind, SubInit,
+                                /*TopLevelOfInitList*/ true);
+
+        // TryStringLiteralInitialization() (in InitializeFrom()) will fail if
+        // the element is not an appropriately-typed string literal, in which
+        // case we should proceed as in C++11 (below).
+        if (Sequence) {
+          Sequence.RewrapReferenceInitList(Entity.getType(), InitList);
+          return;
+        }
+      }
     }
   }
+
+  // C++11 [dcl.init.list]p3:
+  //   - If T is an aggregate, aggregate initialization is performed.
+  if (DestType->isRecordType() && !DestType->isAggregateType()) {
+    if (S.getLangOpts().CPlusPlus11) {
+      //   - Otherwise, if the initializer list has no elements and T is a
+      //     class type with a default constructor, the object is
+      //     value-initialized.
+      if (InitList->getNumInits() == 0) {
+        CXXRecordDecl *RD = DestType->getAsCXXRecordDecl();
+        if (RD->hasDefaultConstructor()) {
+          TryValueInitialization(S, Entity, Kind, Sequence, InitList);
+          return;
+        }
+      }
+
+      //   - Otherwise, if T is a specialization of std::initializer_list<E>,
+      //     an initializer_list object constructed [...]
+      if (TryInitializerListConstruction(S, InitList, DestType, Sequence))
+        return;
+
+      //   - Otherwise, if T is a class type, constructors are considered.
+      Expr *InitListAsExpr = InitList;
+      TryConstructorInitialization(S, Entity, Kind, InitListAsExpr, DestType,
+                                   Sequence, /*InitListSyntax*/ true);
+    } else
+      Sequence.SetFailed(InitializationSequence::FK_InitListBadDestinationType);
+    return;
+  }
+
   if (S.getLangOpts().CPlusPlus && !DestType->isAggregateType() &&
       InitList->getNumInits() == 1 &&
       InitList->getInit(0)->getType()->isRecordType()) {
     //   - Otherwise, if the initializer list has a single element of type E
     //     [...references are handled above...], the object or reference is
     //     initialized from that element; if a narrowing conversion is required
+    //     to convert the element to T, the program is ill-formed.
+    //
+    // C++14 DR1467:
+    //   - Otherwise, if the initializer list has a single element of type E
+    //     [...references are handled above...], the object or reference is
+    //     initialized from that element (by copy-initialization for
+    //     copy-list-initialization, or by direct-initialization for
+    //     direct-list-initialization); if a narrowing conversion is required
     //     to convert the element to T, the program is ill-formed.
     //
     // Per core-24034, this is direct-initialization if we were performing
@@ -4408,8 +4469,7 @@ static void checkIndirectCopyRestoreSource(Sema &S, Expr *src) {
 
 /// \brief Determine whether we have compatible array types for the
 /// purposes of GNU by-copy array initialization.
-static bool hasCompatibleArrayTypes(ASTContext &Context,
-                                    const ArrayType *Dest, 
+static bool hasCompatibleArrayTypes(ASTContext &Context, const ArrayType *Dest,
                                     const ArrayType *Source) {
   // If the source and destination array types are equivalent, we're
   // done.
@@ -4668,7 +4728,7 @@ void InitializationSequence::InitializeFrom(Sema &S,
     return;
   }
 
-  // Determine whether we should consider writeback conversions for 
+  // Determine whether we should consider writeback conversions for
   // Objective-C ARC.
   bool allowObjCWritebackConversion = S.getLangOpts().ObjCAutoRefCount &&
          Entity.isParameterKind();
