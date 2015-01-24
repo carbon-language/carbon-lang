@@ -296,12 +296,12 @@ static int compileModule(char **argv, LLVMContext &Context) {
   PassManager PM;
 
   // Add an appropriate TargetLibraryInfo pass for the module's triple.
-  TargetLibraryInfo TLI(Triple(M->getTargetTriple()));
+  TargetLibraryInfoImpl TLII(Triple(M->getTargetTriple()));
 
   // The -disable-simplify-libcalls flag actually disables all builtin optzns.
   if (DisableSimplifyLibCalls)
-    TLI.disableAllFunctions();
-  PM.add(new TargetLibraryInfoWrapperPass(TLI));
+    TLII.disableAllFunctions();
+  PM.add(new TargetLibraryInfoWrapperPass(TLII));
 
   // Add the target data from the target machine, if it exists, or the module.
   if (const DataLayout *DL = Target->getSubtargetImpl()->getDataLayout())

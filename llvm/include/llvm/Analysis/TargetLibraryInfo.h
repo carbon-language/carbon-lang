@@ -13,7 +13,7 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/Optional.h"
 #include "llvm/ADT/Triple.h"
-#include "llvm/IR/Module.h"
+#include "llvm/IR/Function.h"
 #include "llvm/IR/Module.h"
 #include "llvm/Pass.h"
 
@@ -696,12 +696,15 @@ class PreservedAnalyses;
     };
   }
 
-/// \brief Provides information about what library functions are available for
-/// the current target.
+/// \brief Implementation of the target library information.
 ///
-/// This both allows optimizations to handle them specially and frontends to
-/// disable such optimizations through -fno-builtin etc.
-class TargetLibraryInfo {
+/// This class constructs tables that hold the target library information and
+/// make it available. However, it is somewhat expensive to compute and only
+/// depends on the triple. So users typicaly interact with the \c
+/// TargetLibraryInfo wrapper below.
+class TargetLibraryInfoImpl {
+  friend class TargetLibraryInfo;
+
   unsigned char AvailableArray[(LibFunc::NumLibFuncs+3)/4];
   llvm::DenseMap<unsigned, std::string> CustomNames;
   static const char* StandardNames[LibFunc::NumLibFuncs];
@@ -720,14 +723,14 @@ class TargetLibraryInfo {
   }
 
 public:
-  TargetLibraryInfo();
-  explicit TargetLibraryInfo(const Triple &T);
+  TargetLibraryInfoImpl();
+  explicit TargetLibraryInfoImpl(const Triple &T);
 
   // Provide value semantics.
-  TargetLibraryInfo(const TargetLibraryInfo &TLI);
-  TargetLibraryInfo(TargetLibraryInfo &&TLI);
-  TargetLibraryInfo &operator=(const TargetLibraryInfo &TLI);
-  TargetLibraryInfo &operator=(TargetLibraryInfo &&TLI);
+  TargetLibraryInfoImpl(const TargetLibraryInfoImpl &TLI);
+  TargetLibraryInfoImpl(TargetLibraryInfoImpl &&TLI);
+  TargetLibraryInfoImpl &operator=(const TargetLibraryInfoImpl &TLI);
+  TargetLibraryInfoImpl &operator=(TargetLibraryInfoImpl &&TLI);
 
   /// \brief Searches for a particular function name.
   ///
@@ -735,15 +738,77 @@ public:
   /// corresponding value.
   bool getLibFunc(StringRef funcName, LibFunc::Func &F) const;
 
+  /// \brief Forces a function to be marked as unavailable.
+  void setUnavailable(LibFunc::Func F) {
+    setState(F, Unavailable);
+  }
+
+  /// \brief Forces a function to be marked as available.
+  void setAvailable(LibFunc::Func F) {
+    setState(F, StandardName);
+  }
+
+  /// \brief Forces a function to be marked as available and provide an
+  /// alternate name that must be used.
+  void setAvailableWithName(LibFunc::Func F, StringRef Name) {
+    if (StandardNames[F] != Name) {
+      setState(F, CustomName);
+      CustomNames[F] = Name;
+      assert(CustomNames.find(F) != CustomNames.end());
+    } else {
+      setState(F, StandardName);
+    }
+  }
+
+  /// \brief Disables all builtins.
+  ///
+  /// This can be used for options like -fno-builtin.
+  void disableAllFunctions();
+};
+
+/// \brief Provides information about what library functions are available for
+/// the current target.
+///
+/// This both allows optimizations to handle them specially and frontends to
+/// disable such optimizations through -fno-builtin etc.
+class TargetLibraryInfo {
+  friend class TargetLibraryAnalysis;
+  friend class TargetLibraryInfoWrapperPass;
+
+  const TargetLibraryInfoImpl *Impl;
+
+public:
+  explicit TargetLibraryInfo(const TargetLibraryInfoImpl &Impl) : Impl(&Impl) {}
+
+  // Provide value semantics.
+  TargetLibraryInfo(const TargetLibraryInfo &TLI) : Impl(TLI.Impl) {}
+  TargetLibraryInfo(TargetLibraryInfo &&TLI) : Impl(TLI.Impl) {}
+  TargetLibraryInfo &operator=(const TargetLibraryInfo &TLI) {
+    Impl = TLI.Impl;
+    return *this;
+  }
+  TargetLibraryInfo &operator=(TargetLibraryInfo &&TLI) {
+    Impl = TLI.Impl;
+    return *this;
+  }
+
+  /// \brief Searches for a particular function name.
+  ///
+  /// If it is one of the known library functions, return true and set F to the
+  /// corresponding value.
+  bool getLibFunc(StringRef funcName, LibFunc::Func &F) const {
+    return Impl->getLibFunc(funcName, F);
+  }
+
   /// \brief Tests wether a library function is available.
   bool has(LibFunc::Func F) const {
-    return getState(F) != Unavailable;
+    return Impl->getState(F) != TargetLibraryInfoImpl::Unavailable;
   }
 
   /// \brief Tests if the function is both available and a candidate for
   /// optimized code generation.
   bool hasOptimizedCodeGen(LibFunc::Func F) const {
-    if (getState(F) == Unavailable)
+    if (Impl->getState(F) == TargetLibraryInfoImpl::Unavailable)
       return false;
     switch (F) {
     default: break;
@@ -773,41 +838,14 @@ public:
   }
 
   StringRef getName(LibFunc::Func F) const {
-    AvailabilityState State = getState(F);
-    if (State == Unavailable)
+    auto State = Impl->getState(F);
+    if (State == TargetLibraryInfoImpl::Unavailable)
       return StringRef();
-    if (State == StandardName)
-      return StandardNames[F];
-    assert(State == CustomName);
-    return CustomNames.find(F)->second;
+    if (State == TargetLibraryInfoImpl::StandardName)
+      return Impl->StandardNames[F];
+    assert(State == TargetLibraryInfoImpl::CustomName);
+    return Impl->CustomNames.find(F)->second;
   }
-
-  /// \brief Forces a function to be marked as unavailable.
-  void setUnavailable(LibFunc::Func F) {
-    setState(F, Unavailable);
-  }
-
-  /// \brief Forces a function to be marked as available.
-  void setAvailable(LibFunc::Func F) {
-    setState(F, StandardName);
-  }
-
-  /// \brief Forces a function to be marked as available and provide an
-  /// alternate name that must be used.
-  void setAvailableWithName(LibFunc::Func F, StringRef Name) {
-    if (StandardNames[F] != Name) {
-      setState(F, CustomName);
-      CustomNames[F] = Name;
-      assert(CustomNames.find(F) != CustomNames.end());
-    } else {
-      setState(F, StandardName);
-    }
-  }
-
-  /// \brief Disables all builtins.
-  ///
-  /// This can be used for options like -fno-builtin.
-  void disableAllFunctions();
 
   /// \brief Handle invalidation from the pass manager.
   ///
@@ -837,29 +875,20 @@ public:
   ///
   /// This will directly copy the preset info into the result without
   /// consulting the module's triple.
-  TargetLibraryAnalysis(TargetLibraryInfo PresetInfo)
-      : PresetInfo(std::move(PresetInfo)) {}
+  TargetLibraryAnalysis(TargetLibraryInfoImpl PresetInfoImpl)
+      : PresetInfoImpl(std::move(PresetInfoImpl)) {}
 
-  // Value semantics. We spell out the constructors for MSVC.
-  TargetLibraryAnalysis(const TargetLibraryAnalysis &Arg)
-      : PresetInfo(Arg.PresetInfo) {}
+  // Move semantics. We spell out the constructors for MSVC.
   TargetLibraryAnalysis(TargetLibraryAnalysis &&Arg)
-      : PresetInfo(std::move(Arg.PresetInfo)) {}
-  TargetLibraryAnalysis &operator=(const TargetLibraryAnalysis &RHS) {
-    PresetInfo = RHS.PresetInfo;
-    return *this;
-  }
+      : PresetInfoImpl(std::move(Arg.PresetInfoImpl)), Impls(std::move(Arg.Impls)) {}
   TargetLibraryAnalysis &operator=(TargetLibraryAnalysis &&RHS) {
-    PresetInfo = std::move(RHS.PresetInfo);
+    PresetInfoImpl = std::move(RHS.PresetInfoImpl);
+    Impls = std::move(RHS.Impls);
     return *this;
   }
 
-  TargetLibraryInfo run(Module &M) {
-    if (PresetInfo)
-      return *PresetInfo;
-
-    return TargetLibraryInfo(Triple(M.getTargetTriple()));
-  }
+  TargetLibraryInfo run(Module &M);
+  TargetLibraryInfo run(Function &F);
 
   /// \brief Provide access to a name for this pass for debugging purposes.
   static StringRef name() { return "TargetLibraryAnalysis"; }
@@ -867,10 +896,15 @@ public:
 private:
   static char PassID;
 
-  Optional<TargetLibraryInfo> PresetInfo;
+  Optional<TargetLibraryInfoImpl> PresetInfoImpl;
+
+  StringMap<std::unique_ptr<TargetLibraryInfoImpl>> Impls;
+
+  TargetLibraryInfoImpl &lookupInfoImpl(Triple T);
 };
 
 class TargetLibraryInfoWrapperPass : public ImmutablePass {
+  TargetLibraryInfoImpl TLIImpl;
   TargetLibraryInfo TLI;
 
   virtual void anchor();
@@ -879,7 +913,7 @@ public:
   static char ID;
   TargetLibraryInfoWrapperPass();
   explicit TargetLibraryInfoWrapperPass(const Triple &T);
-  explicit TargetLibraryInfoWrapperPass(const TargetLibraryInfo &TLI);
+  explicit TargetLibraryInfoWrapperPass(const TargetLibraryInfoImpl &TLI);
 
   TargetLibraryInfo &getTLI() { return TLI; }
   const TargetLibraryInfo &getTLI() const { return TLI; }

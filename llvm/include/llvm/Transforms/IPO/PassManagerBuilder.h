@@ -19,7 +19,7 @@
 
 namespace llvm {
 class Pass;
-class TargetLibraryInfo;
+class TargetLibraryInfoImpl;
 class TargetMachine;
 
 // The old pass manager infrastructure is hidden in a legacy namespace now.
@@ -105,7 +105,7 @@ public:
   /// LibraryInfo - Specifies information about the runtime library for the
   /// optimizer.  If this is non-null, it is added to both the function and
   /// per-module pass pipeline.
-  TargetLibraryInfo *LibraryInfo;
+  TargetLibraryInfoImpl *LibraryInfo;
 
   /// Inliner - Specifies the inliner to use.  If this is non-null, it is
   /// added to the per-module passes.

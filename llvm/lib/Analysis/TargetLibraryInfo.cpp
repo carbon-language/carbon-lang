@@ -15,7 +15,7 @@
 #include "llvm/ADT/Triple.h"
 using namespace llvm;
 
-const char* TargetLibraryInfo::StandardNames[LibFunc::NumLibFuncs] =
+const char* TargetLibraryInfoImpl::StandardNames[LibFunc::NumLibFuncs] =
   {
     "_IO_getc",
     "_IO_putc",
@@ -370,13 +370,13 @@ static bool hasSinCosPiStret(const Triple &T) {
 /// initialize - Initialize the set of available library functions based on the
 /// specified target triple.  This should be carefully written so that a missing
 /// target triple gets a sane set of defaults.
-static void initialize(TargetLibraryInfo &TLI, const Triple &T,
+static void initialize(TargetLibraryInfoImpl &TLI, const Triple &T,
                        const char **StandardNames) {
 #ifndef NDEBUG
   // Verify that the StandardNames array is in alphabetical order.
   for (unsigned F = 1; F < LibFunc::NumLibFuncs; ++F) {
     if (strcmp(StandardNames[F-1], StandardNames[F]) >= 0)
-      llvm_unreachable("TargetLibraryInfo function names must be sorted");
+      llvm_unreachable("TargetLibraryInfoImpl function names must be sorted");
   }
 #endif // !NDEBUG
 
@@ -676,38 +676,38 @@ static void initialize(TargetLibraryInfo &TLI, const Triple &T,
   }
 }
 
-TargetLibraryInfo::TargetLibraryInfo() {
+TargetLibraryInfoImpl::TargetLibraryInfoImpl() {
   // Default to everything being available.
   memset(AvailableArray, -1, sizeof(AvailableArray));
 
   initialize(*this, Triple(), StandardNames);
 }
 
-TargetLibraryInfo::TargetLibraryInfo(const Triple &T) {
+TargetLibraryInfoImpl::TargetLibraryInfoImpl(const Triple &T) {
   // Default to everything being available.
   memset(AvailableArray, -1, sizeof(AvailableArray));
 
   initialize(*this, T, StandardNames);
 }
 
-TargetLibraryInfo::TargetLibraryInfo(const TargetLibraryInfo &TLI)
+TargetLibraryInfoImpl::TargetLibraryInfoImpl(const TargetLibraryInfoImpl &TLI)
     : CustomNames(TLI.CustomNames) {
   memcpy(AvailableArray, TLI.AvailableArray, sizeof(AvailableArray));
 }
 
-TargetLibraryInfo::TargetLibraryInfo(TargetLibraryInfo &&TLI)
+TargetLibraryInfoImpl::TargetLibraryInfoImpl(TargetLibraryInfoImpl &&TLI)
     : CustomNames(std::move(TLI.CustomNames)) {
   std::move(std::begin(TLI.AvailableArray), std::end(TLI.AvailableArray),
             AvailableArray);
 }
 
-TargetLibraryInfo &TargetLibraryInfo::operator=(const TargetLibraryInfo &TLI) {
+TargetLibraryInfoImpl &TargetLibraryInfoImpl::operator=(const TargetLibraryInfoImpl &TLI) {
   CustomNames = TLI.CustomNames;
   memcpy(AvailableArray, TLI.AvailableArray, sizeof(AvailableArray));
   return *this;
 }
 
-TargetLibraryInfo &TargetLibraryInfo::operator=(TargetLibraryInfo &&TLI) {
+TargetLibraryInfoImpl &TargetLibraryInfoImpl::operator=(TargetLibraryInfoImpl &&TLI) {
   CustomNames = std::move(TLI.CustomNames);
   std::move(std::begin(TLI.AvailableArray), std::end(TLI.AvailableArray),
             AvailableArray);
@@ -733,7 +733,7 @@ struct StringComparator {
 };
 }
 
-bool TargetLibraryInfo::getLibFunc(StringRef funcName,
+bool TargetLibraryInfoImpl::getLibFunc(StringRef funcName,
                                    LibFunc::Func &F) const {
   const char **Start = &StandardNames[0];
   const char **End = &StandardNames[LibFunc::NumLibFuncs];
@@ -755,23 +755,48 @@ bool TargetLibraryInfo::getLibFunc(StringRef funcName,
   return false;
 }
 
-void TargetLibraryInfo::disableAllFunctions() {
+void TargetLibraryInfoImpl::disableAllFunctions() {
   memset(AvailableArray, 0, sizeof(AvailableArray));
 }
 
+TargetLibraryInfo TargetLibraryAnalysis::run(Module &M) {
+  if (PresetInfoImpl)
+    return TargetLibraryInfo(*PresetInfoImpl);
+
+  return TargetLibraryInfo(lookupInfoImpl(Triple(M.getTargetTriple())));
+}
+
+TargetLibraryInfo TargetLibraryAnalysis::run(Function &F) {
+  if (PresetInfoImpl)
+    return TargetLibraryInfo(*PresetInfoImpl);
+
+  return TargetLibraryInfo(
+      lookupInfoImpl(Triple(F.getParent()->getTargetTriple())));
+}
+
+TargetLibraryInfoImpl &TargetLibraryAnalysis::lookupInfoImpl(Triple T) {
+  std::unique_ptr<TargetLibraryInfoImpl> &Impl =
+      Impls[T.normalize()];
+  if (!Impl)
+    Impl.reset(new TargetLibraryInfoImpl(T));
+
+  return *Impl;
+}
+
+
 TargetLibraryInfoWrapperPass::TargetLibraryInfoWrapperPass()
-    : ImmutablePass(ID), TLI() {
+    : ImmutablePass(ID), TLIImpl(), TLI(TLIImpl) {
   initializeTargetLibraryInfoWrapperPassPass(*PassRegistry::getPassRegistry());
 }
 
 TargetLibraryInfoWrapperPass::TargetLibraryInfoWrapperPass(const Triple &T)
-    : ImmutablePass(ID), TLI(T) {
+    : ImmutablePass(ID), TLIImpl(T), TLI(TLIImpl) {
   initializeTargetLibraryInfoWrapperPassPass(*PassRegistry::getPassRegistry());
 }
 
 TargetLibraryInfoWrapperPass::TargetLibraryInfoWrapperPass(
-    const TargetLibraryInfo &TLI)
-    : ImmutablePass(ID), TLI(TLI) {
+    const TargetLibraryInfoImpl &TLIImpl)
+    : ImmutablePass(ID), TLIImpl(TLIImpl), TLI(this->TLIImpl) {
   initializeTargetLibraryInfoWrapperPassPass(*PassRegistry::getPassRegistry());
 }
 

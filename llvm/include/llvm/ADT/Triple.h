@@ -210,6 +210,9 @@ public:
   /// common case in which otherwise valid components are in the wrong order.
   static std::string normalize(StringRef Str);
 
+  /// \brief Return the normalized form of this triple's string.
+  std::string normalize() const { return normalize(Data); }
+
   /// @}
   /// @name Typed Component Access
   /// @{

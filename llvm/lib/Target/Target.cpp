@@ -24,12 +24,12 @@
 
 using namespace llvm;
 
-inline TargetLibraryInfo *unwrap(LLVMTargetLibraryInfoRef P) {
-  return reinterpret_cast<TargetLibraryInfo*>(P);
+inline TargetLibraryInfoImpl *unwrap(LLVMTargetLibraryInfoRef P) {
+  return reinterpret_cast<TargetLibraryInfoImpl*>(P);
 }
 
-inline LLVMTargetLibraryInfoRef wrap(const TargetLibraryInfo *P) {
-  TargetLibraryInfo *X = const_cast<TargetLibraryInfo*>(P);
+inline LLVMTargetLibraryInfoRef wrap(const TargetLibraryInfoImpl *P) {
+  TargetLibraryInfoImpl *X = const_cast<TargetLibraryInfoImpl*>(P);
   return reinterpret_cast<LLVMTargetLibraryInfoRef>(X);
 }
 
