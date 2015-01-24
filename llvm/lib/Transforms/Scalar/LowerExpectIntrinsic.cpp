@@ -30,7 +30,8 @@ using namespace llvm;
 
 #define DEBUG_TYPE "lower-expect-intrinsic"
 
-STATISTIC(IfHandled, "Number of 'expect' intrinsic instructions handled");
+STATISTIC(ExpectIntrinsicsHandled,
+          "Number of 'expect' intrinsic instructions handled");
 
 static cl::opt<uint32_t>
 LikelyBranchWeight("likely-branch-weight", cl::Hidden, cl::init(64),
@@ -147,10 +148,10 @@ bool LowerExpectIntrinsic::runOnFunction(Function &F) {
     // Create "block_weights" metadata.
     if (BranchInst *BI = dyn_cast<BranchInst>(BB.getTerminator())) {
       if (handleBranchExpect(*BI))
-        IfHandled++;
+        ExpectIntrinsicsHandled++;
     } else if (SwitchInst *SI = dyn_cast<SwitchInst>(BB.getTerminator())) {
       if (handleSwitchExpect(*SI))
-        IfHandled++;
+        ExpectIntrinsicsHandled++;
     }
 
     // remove llvm.expect intrinsics.
