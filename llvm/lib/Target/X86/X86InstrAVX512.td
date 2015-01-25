@@ -1198,36 +1198,40 @@ def : Pat<(v8i32 (vselect (v8i1 VK8WM:$mask), (v8i32 VR256X:$src1),
 
 // avx512_cmp_scalar - AVX512 CMPSS and CMPSD
 multiclass avx512_cmp_scalar<RegisterClass RC, X86MemOperand x86memop,
-                            Operand CC, SDNode OpNode, ValueType VT,
-                            PatFrag ld_frag, string asm, string asm_alt> {
+                            SDNode OpNode, ValueType VT,
+                            PatFrag ld_frag, string Suffix> {
   def rr : AVX512Ii8<0xC2, MRMSrcReg,
-                (outs VK1:$dst), (ins RC:$src1, RC:$src2, CC:$cc), asm,
+                (outs VK1:$dst), (ins RC:$src1, RC:$src2, AVXCC:$cc),
+                !strconcat("vcmp${cc}", Suffix,
+                           "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
                 [(set VK1:$dst, (OpNode (VT RC:$src1), RC:$src2, imm:$cc))],
                 IIC_SSE_ALU_F32S_RR>, EVEX_4V;
   def rm : AVX512Ii8<0xC2, MRMSrcMem,
-                (outs VK1:$dst), (ins RC:$src1, x86memop:$src2, CC:$cc), asm,
+                (outs VK1:$dst), (ins RC:$src1, x86memop:$src2, AVXCC:$cc),
+                !strconcat("vcmp${cc}", Suffix,
+                           "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
                 [(set VK1:$dst, (OpNode (VT RC:$src1),
                 (ld_frag addr:$src2), imm:$cc))], IIC_SSE_ALU_F32P_RM>, EVEX_4V;
   let isAsmParserOnly = 1, hasSideEffects = 0 in {
     def rri_alt : AVX512Ii8<0xC2, MRMSrcReg,
                (outs VK1:$dst), (ins RC:$src1, RC:$src2, u8imm:$cc),
-               asm_alt, [], IIC_SSE_ALU_F32S_RR>, EVEX_4V;
+               !strconcat("vcmp", Suffix,
+                          "\t{$cc, $src2, $src1, $dst|$dst, $src1, $src2, $cc}"),
+               [], IIC_SSE_ALU_F32S_RR>, EVEX_4V;
     let mayLoad = 1 in
     def rmi_alt : AVX512Ii8<0xC2, MRMSrcMem,
                (outs VK1:$dst), (ins RC:$src1, x86memop:$src2, u8imm:$cc),
-               asm_alt, [], IIC_SSE_ALU_F32P_RM>, EVEX_4V;
+               !strconcat("vcmp", Suffix,
+                          "\t{$cc, $src2, $src1, $dst|$dst, $src1, $src2, $cc}"),
+               [], IIC_SSE_ALU_F32P_RM>, EVEX_4V;
   }
 }
 
 let Predicates = [HasAVX512] in {
-defm VCMPSSZ : avx512_cmp_scalar<FR32X, f32mem, AVXCC, X86cmpms, f32, loadf32,
-                 "vcmp${cc}ss\t{$src2, $src1, $dst|$dst, $src1, $src2}",
-                 "vcmpss\t{$cc, $src2, $src1, $dst|$dst, $src1, $src2, $cc}">,
-                 XS;
-defm VCMPSDZ : avx512_cmp_scalar<FR64X, f64mem, AVXCC, X86cmpms, f64, loadf64,
-                 "vcmp${cc}sd\t{$src2, $src1, $dst|$dst, $src1, $src2}",
-                 "vcmpsd\t{$cc, $src2, $src1, $dst|$dst, $src1, $src2, $cc}">,
-                 XD, VEX_W;
+defm VCMPSSZ : avx512_cmp_scalar<FR32X, f32mem, X86cmpms, f32, loadf32, "ss">,
+                                 XS;
+defm VCMPSDZ : avx512_cmp_scalar<FR64X, f64mem, X86cmpms, f64, loadf64, "sd">,
+                                 XD, VEX_W;
 }
 
 multiclass avx512_icmp_packed<bits<8> opc, string OpcodeStr, SDNode OpNode,
