@@ -256,8 +256,7 @@ std::error_code MipsTargetRelocationHandler::applyRelocation(
               false);
     break;
   case R_MICROMIPS_LO16:
-    relocLo16(ins, relocVAddress, targetVAddress, ref.addend(), isGpDisp,
-              true);
+    relocLo16(ins, relocVAddress, targetVAddress, ref.addend(), isGpDisp, true);
     break;
   case R_MIPS_GOT16:
   case R_MIPS_CALL16:
