@@ -242,6 +242,34 @@ def : Processor<"7450", G4PlusItineraries, [Directive7400, FeatureAltivec,
                                             FeatureFRES, FeatureFRSQRTE]>;
 def : Processor<"g4+", G4PlusItineraries, [Directive7400, FeatureAltivec,
                                            FeatureFRES, FeatureFRSQRTE]>;
+
+/*  Since new processors generally contain a superset of features of those that
+    came before them, the idea is to make implementations of new processors
+    less error prone and easier to read.
+    Namely:
+        list<SubtargetFeature> Power8FeatureList = ...
+        list<SubtargetFeature> FutureProcessorSpecificFeatureList =
+            [ features that Power8 does not support ]
+        list<SubtargetFeature> FutureProcessorFeatureList =
+            !listconcat(Power8FeatureList, FutureProcessorSpecificFeatureList)
+
+    Makes it explicit and obvious what is new in FutureProcesor vs. Power8 as
+    well as providing a single point of definition if the feature set will be
+    used elsewhere.
+    
+*/
+def ProcessorFeatures {
+    list<SubtargetFeature> Power8FeatureList =
+        [DirectivePwr8, FeatureAltivec, FeatureVSX, FeatureP8Vector,
+        FeatureMFOCRF, FeatureFCPSGN, FeatureFSqrt, FeatureFRE,
+        FeatureFRES, FeatureFRSQRTE, FeatureFRSQRTES,
+        FeatureRecipPrec, FeatureSTFIWX, FeatureLFIWAX,
+        FeatureFPRND, FeatureFPCVT, FeatureISEL,
+        FeaturePOPCNTD, FeatureCMPB, FeatureLDBRX,
+        Feature64Bit /*, Feature64BitRegs */, FeatureICBT,
+        DeprecatedMFTB, DeprecatedDST];
+}
+
 def : ProcessorModel<"970", G5Model,
                   [Directive970, FeatureAltivec,
                    FeatureMFOCRF, FeatureFSqrt,
@@ -320,26 +348,14 @@ def : ProcessorModel<"pwr7", P7Model,
                    FeaturePOPCNTD, FeatureCMPB, FeatureLDBRX,
                    Feature64Bit /*, Feature64BitRegs */,
                    DeprecatedMFTB, DeprecatedDST]>;
-def : ProcessorModel<"pwr8", P8Model,
-                  [DirectivePwr8, FeatureAltivec, FeatureVSX, FeatureP8Vector,
-                   FeatureMFOCRF, FeatureFCPSGN, FeatureFSqrt, FeatureFRE,
-                   FeatureFRES, FeatureFRSQRTE, FeatureFRSQRTES,
-                   FeatureRecipPrec, FeatureSTFIWX, FeatureLFIWAX,
-                   FeatureFPRND, FeatureFPCVT, FeatureISEL,
-                   FeaturePOPCNTD, FeatureCMPB, FeatureLDBRX,
-                   Feature64Bit /*, Feature64BitRegs */, FeatureICBT,
-                   DeprecatedMFTB, DeprecatedDST]>;
+def : ProcessorModel<"pwr8", P8Model, ProcessorFeatures.Power8FeatureList>;
 def : Processor<"ppc", G3Itineraries, [Directive32]>;
 def : ProcessorModel<"ppc64", G5Model,
                   [Directive64, FeatureAltivec,
                    FeatureMFOCRF, FeatureFSqrt, FeatureFRES,
                    FeatureFRSQRTE, FeatureSTFIWX,
                    Feature64Bit /*, Feature64BitRegs */]>;
-def : ProcessorModel<"ppc64le", G5Model,
-                  [Directive64, FeatureAltivec,
-                   FeatureMFOCRF, FeatureFSqrt, FeatureFRES,
-                   FeatureFRSQRTE, FeatureSTFIWX,
-                   Feature64Bit /*, Feature64BitRegs */]>;
+def : ProcessorModel<"ppc64le", P8Model, ProcessorFeatures.Power8FeatureList>;
 
 //===----------------------------------------------------------------------===//
 // Calling Conventions

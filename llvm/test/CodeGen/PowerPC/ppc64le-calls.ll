@@ -1,4 +1,8 @@
 ; RUN: llc -march=ppc64le -mcpu=pwr8 < %s | FileCheck %s
+; RUN: llc -march=ppc64le < %s | FileCheck %s
+
+; The second run of the test case is to ensure the behaviour is the same
+; without specifying -mcpu=pwr8 as that is now the baseline for ppc64le.
 
 target datalayout = "e-m:e-i64:64-n32:64"
 target triple = "powerpc64le-unknown-linux-gnu"
