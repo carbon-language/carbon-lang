@@ -14,6 +14,8 @@
 
 #include "llvm/IR/GCStrategy.h"
 
+template class llvm::Registry<llvm::GCStrategy>;
+
 using namespace llvm;
 
 GCStrategy::GCStrategy()

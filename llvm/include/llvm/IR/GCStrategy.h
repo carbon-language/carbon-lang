@@ -188,6 +188,9 @@ public:
 /// register your GCMetadataPrinter subclass with the
 /// GCMetadataPrinterRegistery as well.
 typedef Registry<GCStrategy> GCRegistry;
+
+/// GCStrategy is instantiated in GCStrategy.cpp.
+extern template class Registry<GCStrategy>;
 }
 
 #endif
