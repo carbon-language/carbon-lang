@@ -1624,7 +1624,8 @@ multiclass avx512_mask_mov<bits<8> opc_kk, bits<8> opc_km, bits<8> opc_mk,
                [(set KRC:$dst, (vvt (bitconvert (ivt (load addr:$src)))))]>;
     let mayStore = 1 in
     def mk : I<opc_mk, MRMDestMem, (outs), (ins x86memop:$dst, KRC:$src),
-               !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"), []>;
+               !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"),
+               [(store KRC:$src, addr:$dst)]>;
   }
 }
 
@@ -1951,13 +1952,26 @@ multiclass avx512_mask_testop<bits<8> opc, string OpcodeStr, RegisterClass KRC,
 multiclass avx512_mask_testop_w<bits<8> opc, string OpcodeStr, SDNode OpNode> {
   defm W : avx512_mask_testop<opc, !strconcat(OpcodeStr, "w"), VK16, OpNode>,
                             VEX, PS;
+  let Predicates = [HasDQI] in
+  defm B : avx512_mask_testop<opc, !strconcat(OpcodeStr, "b"), VK8, OpNode>,
+                            VEX, PD;
+  let Predicates = [HasBWI] in {
+  defm Q : avx512_mask_testop<opc, !strconcat(OpcodeStr, "q"), VK64, OpNode>,
+                            VEX, PS, VEX_W;
+  defm D : avx512_mask_testop<opc, !strconcat(OpcodeStr, "d"), VK32, OpNode>,
+                            VEX, PD, VEX_W;
+  }
 }
 
 defm KORTEST : avx512_mask_testop_w<0x98, "kortest", X86kortest>;
 
 def : Pat<(X86cmp VK1:$src1, (i1 0)),
           (KORTESTWrr (COPY_TO_REGCLASS VK1:$src1, VK16),
-           (COPY_TO_REGCLASS VK1:$src1, VK16))>;
+           (COPY_TO_REGCLASS VK1:$src1, VK16))>, Requires<[HasAVX512, NoDQI]>;
+
+def : Pat<(X86cmp VK1:$src1, (i1 0)),
+          (KORTESTBrr (COPY_TO_REGCLASS VK1:$src1, VK8),
+           (COPY_TO_REGCLASS VK1:$src1, VK8))>, Requires<[HasDQI]>;
 
 // Mask shift
 multiclass avx512_mask_shiftop<bits<8> opc, string OpcodeStr, RegisterClass KRC,
@@ -1972,7 +1986,17 @@ multiclass avx512_mask_shiftop<bits<8> opc, string OpcodeStr, RegisterClass KRC,
 multiclass avx512_mask_shiftop_w<bits<8> opc1, bits<8> opc2, string OpcodeStr,
                                SDNode OpNode> {
   defm W : avx512_mask_shiftop<opc1, !strconcat(OpcodeStr, "w"), VK16, OpNode>,
-                             VEX, TAPD, VEX_W;
+                               VEX, TAPD, VEX_W;
+  let Predicates = [HasDQI] in
+  defm B : avx512_mask_shiftop<opc1, !strconcat(OpcodeStr, "b"), VK8, OpNode>,
+                               VEX, TAPD;
+  let Predicates = [HasBWI] in {
+  defm Q : avx512_mask_shiftop<opc2, !strconcat(OpcodeStr, "q"), VK64, OpNode>,
+                               VEX, TAPD, VEX_W;
+  let Predicates = [HasDQI] in
+  defm D : avx512_mask_shiftop<opc2, !strconcat(OpcodeStr, "d"), VK32, OpNode>,
+                               VEX, TAPD;
+  }  
 }
 
 defm KSHIFTL : avx512_mask_shiftop_w<0x32, 0x33, "kshiftl", X86vshli>;
@@ -2023,10 +2047,14 @@ let Predicates = [HasVLX] in {
 }
 
 def : Pat<(v8i1 (X86vshli VK8:$src, (i8 imm:$imm))),
-          (v8i1 (COPY_TO_REGCLASS (KSHIFTLWri (COPY_TO_REGCLASS VK8:$src, VK16), (I8Imm $imm)), VK8))>;
+          (v8i1 (COPY_TO_REGCLASS
+                 (KSHIFTLWri (COPY_TO_REGCLASS VK8:$src, VK16),
+                  (I8Imm $imm)), VK8))>, Requires<[HasAVX512, NoDQI]>;
 
 def : Pat<(v8i1 (X86vsrli VK8:$src, (i8 imm:$imm))),
-          (v8i1 (COPY_TO_REGCLASS (KSHIFTRWri (COPY_TO_REGCLASS VK8:$src, VK16), (I8Imm $imm)), VK8))>;
+          (v8i1 (COPY_TO_REGCLASS
+                 (KSHIFTRWri (COPY_TO_REGCLASS VK8:$src, VK16),
+                  (I8Imm $imm)), VK8))>, Requires<[HasAVX512, NoDQI]>;
 //===----------------------------------------------------------------------===//
 // AVX-512 - Aligned and unaligned load and store
 //
@@ -5204,7 +5232,14 @@ def : Pat<(store (i1  1), addr:$dst), (MOV8mi addr:$dst, (i8 1))>;
 def : Pat<(store (i1  0), addr:$dst), (MOV8mi addr:$dst, (i8 0))>;
 
 def : Pat<(store VK1:$src, addr:$dst),
-          (KMOVWmk addr:$dst, (COPY_TO_REGCLASS VK1:$src, VK16))>;
+          (MOV8mr addr:$dst,
+           (EXTRACT_SUBREG (KMOVWrk (COPY_TO_REGCLASS VK1:$src, VK16)),
+            sub_8bit))>, Requires<[HasAVX512, NoDQI]>;
+
+def : Pat<(store VK8:$src, addr:$dst),
+          (MOV8mr addr:$dst,
+           (EXTRACT_SUBREG (KMOVWrk (COPY_TO_REGCLASS VK8:$src, VK16)),
+            sub_8bit))>, Requires<[HasAVX512, NoDQI]>;
 
 def truncstorei1 : PatFrag<(ops node:$val, node:$ptr),
                            (truncstore node:$val, node:$ptr), [{

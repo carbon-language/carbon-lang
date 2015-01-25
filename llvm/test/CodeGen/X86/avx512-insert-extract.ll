@@ -106,7 +106,8 @@ define i32 @test10(<16 x i32> %x, i32 %ind) nounwind {
 ;CHECK: vpcmpltud
 ;CHECK: kshiftlw $11
 ;CHECK: kshiftrw $15
-;CHECK: kortestw
+;KNL: kortestw
+;SKX: kortestb
 ;CHECK: je
 ;CHECK: ret
 ;CHECK: ret
@@ -125,7 +126,8 @@ define <16 x i32> @test11(<16 x i32>%a, <16 x i32>%b) {
 ;CHECK: vpcmpgtq
 ;CHECK: kshiftlw $15
 ;CHECK: kshiftrw $15
-;CHECK: kortestw
+;KNL: kortestw
+;SKX: kortestb
 ;CHECK: ret
 
 define i64 @test12(<16 x i64>%a, <16 x i64>%b, i64 %a1, i64 %b1) {
@@ -150,9 +152,12 @@ define i16 @test13(i32 %a, i32 %b) {
 
 ;CHECK-LABEL: test14
 ;CHECK: vpcmpgtq
-;CHECK: kshiftlw $11
-;CHECK: kshiftrw $15
-;CHECK: kortestw
+;KNL: kshiftlw $11
+;KNL: kshiftrw $15
+;KNL: kortestw
+;SKX: kshiftlb $3
+;SKX: kshiftrb $7
+;SKX: kortestb
 ;CHECK: ret
 
 define i64 @test14(<8 x i64>%a, <8 x i64>%b, i64 %a1, i64 %b1) {
@@ -188,9 +193,11 @@ define i16 @test16(i1 *%addr, i16 %a) {
 }
 
 ;CHECK-LABEL: test17
-;CHECK: kshiftlw
-;CHECK: kshiftrw
+;KNL: kshiftlw
+;KNL: kshiftrw
 ;KNL: korw
+;SKX: kshiftlb
+;SKX: kshiftrb
 ;SKX: korb
 ;CHECK: ret
 define i8 @test17(i1 *%addr, i8 %a) {
