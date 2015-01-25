@@ -17,7 +17,7 @@ namespace elf {
 
 class MipsELFFlagsMerger {
 public:
-  MipsELFFlagsMerger();
+  MipsELFFlagsMerger(bool is64Bits);
 
   uint32_t getMergedELFFlags() const;
 
@@ -25,6 +25,7 @@ public:
   std::error_code merge(uint8_t newClass, uint32_t newFlags);
 
 private:
+  const bool _is64Bit;
   std::mutex _mutex;
   uint32_t _flags;
 };

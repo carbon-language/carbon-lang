@@ -80,6 +80,7 @@ uint16_t ELFLinkingContext::getOutputMachine() const {
   case llvm::Triple::hexagon:
     return llvm::ELF::EM_HEXAGON;
   case llvm::Triple::mipsel:
+  case llvm::Triple::mips64el:
     return llvm::ELF::EM_MIPS;
   case llvm::Triple::ppc:
     return llvm::ELF::EM_PPC;

@@ -7,43 +7,19 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "ELFFile.h"
-#include "MipsDynamicLibraryWriter.h"
-#include "MipsExecutableWriter.h"
-#include "MipsLinkingContext.h"
 #include "MipsTargetHandler.h"
 
 using namespace lld;
 using namespace elf;
 
-MipsTargetHandler::MipsTargetHandler(MipsLinkingContext &ctx)
-    : _ctx(ctx), _runtimeFile(new MipsRuntimeFile<Mips32ElELFType>(ctx)),
-      _targetLayout(new MipsTargetLayout<Mips32ElELFType>(ctx)),
-      _relocationHandler(new MipsTargetRelocationHandler(*_targetLayout)) {}
-
-std::unique_ptr<Writer> MipsTargetHandler::getWriter() {
-  switch (_ctx.getOutputELFType()) {
-  case llvm::ELF::ET_EXEC:
-    return std::unique_ptr<Writer>(
-        new MipsExecutableWriter<Mips32ElELFType>(_ctx, *_targetLayout));
-  case llvm::ELF::ET_DYN:
-    return std::unique_ptr<Writer>(
-        new MipsDynamicLibraryWriter<Mips32ElELFType>(_ctx, *_targetLayout));
-  case llvm::ELF::ET_REL:
-    llvm_unreachable("TODO: support -r mode");
-  default:
-    llvm_unreachable("unsupported output type");
-  }
-}
-
-void MipsTargetHandler::registerRelocationNames(Registry &registry) {
+void MipsRelocationStringTable::registerTable(Registry &registry) {
   registry.addKindTable(Reference::KindNamespace::ELF,
                         Reference::KindArch::Mips, kindStrings);
 }
 
 #define ELF_RELOC(name, value) LLD_KIND_STRING_ENTRY(name),
 
-const Registry::KindStrings MipsTargetHandler::kindStrings[] = {
+const Registry::KindStrings MipsRelocationStringTable::kindStrings[] = {
 #include "llvm/Support/ELFRelocs/Mips.def"
   LLD_KIND_STRING_ENTRY(LLD_R_MIPS_GLOBAL_GOT),
   LLD_KIND_STRING_ENTRY(LLD_R_MIPS_32_HI16),

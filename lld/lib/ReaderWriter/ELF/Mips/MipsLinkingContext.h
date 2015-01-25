@@ -33,9 +33,8 @@ enum {
   LLD_R_MICROMIPS_GLOBAL_26_S1 = 1030,
 };
 
-typedef llvm::object::ELFType<llvm::support::little, 2, false> Mips32ElELFType;
-
-template <class ELFType> class MipsTargetLayout;
+typedef llvm::object::ELFType<llvm::support::little, 2, false> Mips32ELType;
+typedef llvm::object::ELFType<llvm::support::little, 2, true> Mips64ELType;
 
 class MipsLinkingContext final : public ELFLinkingContext {
 public:

@@ -188,17 +188,38 @@ static uint32_t microShuffle(uint32_t ins) {
   return ((ins & 0xffff) << 16) | ((ins & 0xffff0000) >> 16);
 }
 
-std::error_code MipsTargetRelocationHandler::applyRelocation(
+namespace {
+
+template <class ELFT> class RelocationHandler : public TargetRelocationHandler {
+public:
+  RelocationHandler(MipsLinkingContext &ctx) : _ctx(ctx) {}
+
+  std::error_code applyRelocation(ELFWriter &writer,
+                                  llvm::FileOutputBuffer &buf,
+                                  const lld::AtomLayout &atom,
+                                  const Reference &ref) const override;
+
+private:
+  MipsLinkingContext &_ctx;
+
+  MipsTargetLayout<ELFT> &getTargetLayout() const {
+    return static_cast<MipsTargetLayout<ELFT> &>(
+        _ctx.getTargetHandler<ELFT>().getTargetLayout());
+  }
+};
+
+template <class ELFT>
+std::error_code RelocationHandler<ELFT>::applyRelocation(
     ELFWriter &writer, llvm::FileOutputBuffer &buf, const lld::AtomLayout &atom,
     const Reference &ref) const {
   if (ref.kindNamespace() != lld::Reference::KindNamespace::ELF)
     return std::error_code();
   assert(ref.kindArch() == Reference::KindArch::Mips);
 
-  AtomLayout *gpAtom = _mipsTargetLayout.getGP();
+  AtomLayout *gpAtom = getTargetLayout().getGP();
   uint64_t gpAddr = gpAtom ? gpAtom->_virtualAddr : 0;
 
-  AtomLayout *gpDispAtom = _mipsTargetLayout.getGPDisp();
+  AtomLayout *gpDispAtom = getTargetLayout().getGPDisp();
   bool isGpDisp = gpDispAtom && ref.target() == gpDispAtom->_atom;
 
   uint8_t *atomContent = buf.getBufferStart() + atom._fileOffset;
@@ -348,4 +369,20 @@ std::error_code MipsTargetRelocationHandler::applyRelocation(
 
   endian::write<uint32_t, little, 2>(location, ins);
   return std::error_code();
+}
+
+} // end anon namespace
+
+template <>
+std::unique_ptr<TargetRelocationHandler>
+lld::elf::createMipsRelocationHandler<Mips32ELType>(MipsLinkingContext &ctx) {
+  return std::unique_ptr<TargetRelocationHandler>(
+      new RelocationHandler<Mips32ELType>(ctx));
+}
+
+template <>
+std::unique_ptr<TargetRelocationHandler>
+lld::elf::createMipsRelocationHandler<Mips64ELType>(MipsLinkingContext &ctx) {
+  return std::unique_ptr<TargetRelocationHandler>(
+      new RelocationHandler<Mips64ELType>(ctx));
 }
