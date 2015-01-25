@@ -11,9 +11,10 @@
 # RUN: llvm-readobj -relocations %t-o.o | \
 # RUN:   FileCheck -check-prefix=OBJ-REL %s
 # RUN: lld -flavor gnu -target mipsel -e glob -o %t.exe %t-o.o %t.so
-# RUN: llvm-objdump -section-headers -s %t.exe | \
-# RUN:   FileCheck -check-prefix=EXE %s
 # RUN: llvm-readobj -relocations %t.exe | FileCheck -check-prefix=EXE-REL %s
+# RUN: llvm-objdump -section-headers %t.exe | FileCheck -check-prefix=EXE %s
+# RUN: llvm-objdump -s -d -mattr=micromips %t.exe | \
+# RUN:   FileCheck -check-prefix=DIS %s
 
 # Object file has three R_MICROMIPS_26_S1 relocations
 # OBJ-REL: Relocations [
@@ -31,38 +32,31 @@
 # EXE-REL-NEXT:   }
 # EXE-REL-NEXT: ]
 
-# FIXME (simon): Check the disassembler output when llvm-objdump starts
-#                to support microMIPS instruction encoding.
-# DIS: Disassembly of section .plt:
-# DIS: .plt:
-# T1@micromipsplt
-# DIS-NEXT:   400178:   7900 07a4   addiu   v0,$pc,7824
-# DIS-NEXT:   40017c:   ff22 0000   lw      t9,0(v0)
-# DIS-NEXT:   400180:   4599        jr      t9
-# DIS-NEXT:   400182:   0f02        move    t8,v0
-
-# DIS: Disassembly of section .text:
-# DIS: glob:
-# DIS-NEXT:   400184:   f809 0320   sw      zero,800(t1)
-# DIS-NEXT:   400188:   0000 0000   nop
-# DIS-NEXT:   40018c:   0012 0661   0x120661
-# DIS-NEXT:   400182:   0f02        move    t8,v0
-#
-# DIS: loc:
-# DIS-NEXT:   400194:   0020 0cc2   cop2    0x40198
-# DIS-NEXT:   400198:   0000 0000   nop
-# DIS-NEXT:   40019c:   0020 0cbc   mult    $ac0,zero,at
-# DIS-NEXT:   4001a0:   0000 0000   nop
-
 # EXE: Sections:
 # EXE: Idx Name          Size      Address          Type
 # EXE:   6 .plt          00000024 0000000000400160 TEXT DATA
 # EXE:  10 .got.plt      0000000c 0000000000402000 DATA
 
-# EXE: Contents of section .plt:
-# EXE-NEXT:  400160 8079a807 23ff0000 35052525 0233feff  .y..#...5.%%.3..
-# EXE-NEXT:  400170 ff0df945 830f000c 0079a407 22ff0000  ...E.....y.."...
-# EXE-NEXT:  400180 9945020f                             .E..
+# DIS:      Disassembly of section .plt:
+# DIS-NEXT: .plt:
+# DIS-NEXT:   400160:  80 79 a8 07   addiupc $3, 7840
+# DIS-NEXT:   400164:  23 ff 00 00   lw      $25, 0($3)
+# DIS-NEXT:   400168:  35 05         subu16  $2, $2, $3
+# DIS-NEXT:   40016a:  25 25         srl16   $2, $2, 2
+# DIS-NEXT:   40016c:  02 33 fe ff   addiu   $24, $2, -2
+# DIS-NEXT:   400170:  ff 0d         move    $15, $ra
+# DIS-NEXT:   400172:  f9 45         jalrs16 $25
+# DIS-NEXT:   400174:  83 0f         move    $gp, $3
+# DIS-NEXT:   400176:  00 0c         nop
+
+# DIS-NEXT:   400178:  00 79 a4 07   addiupc $2, 7824
+# DIS-NEXT:   40017c:  22 ff 00 00   lw      $25, 0($2)
+# DIS-NEXT:   400180:  99 45         jr16    $25
+# DIS-NEXT:   400182:  02 0f         move    $24, $2
+
+# DIS:      Contents of section .text:
+# DIS-NEXT:  400184 09f82003 00000000 12006106 00000000  .. .......a.....
+# DIS-NEXT:  400194 2000c20c 00000000 2000bc0c 00000000   ....... .......
 
 # so.o
 ---

@@ -3,32 +3,24 @@
 # Check reading addendum for R_MICROMIPS_26_S1 relocation.
 # RUN: yaml2obj -format=elf %s > %t-obj
 # RUN: lld -flavor gnu -target mipsel -o %t-exe %t-obj
-# RUN: llvm-objdump -t -s %t-exe | FileCheck %s
+# RUN: llvm-objdump -d -mattr=micromips %t-exe | FileCheck -check-prefix=DIS %s
+# RUN: llvm-objdump -t %t-exe | FileCheck %s
 
-# FIXME (simon): Check the disassembler output when llvm-objdump starts
-#                to support microMIPS instruction encoding.
 # DIS: Disassembly of section .text:
-# DIS-NEXT: __start:
+# DIS-NEXT: loc0:
 # DIS-NEXT:   400110:  00 00 00 00   nop
-# DIS-NEXT:   400114:  44 70 10 0c  jal  4309264
-#   0x107044 << 2 = 0x41C110 = _start  + (0x7000 << 2)
-# DIS-NEXT:   400118:  00 00 00 00  nop
-#
-# DIS: loc:
-# DIS-NEXT:   40011c:  47 70 10 0c  jal  4309276
-#   0x107047 << 2 = 0x41C11C = loc  + (0x7000 << 2)
-# DIS-NEXT:   400120:  00 00 00 00  nop
-# DIS-NEXT:   400124:  43 00 10 0c  jal  4194572
-#   0x100043 << 2 = 0x40010C = _start - 4
-# DIS-NEXT:   400128:  00 00 00 00  nop
-# DIS-NEXT:   40012c:  46 00 10 0c  jal  4194584
-#   0x100046 << 2 = 0x400118 = loc - 4
-# DIS-NEXT:   400130:  00 00 00 00  nop
 
-# CHECK: Contents of section .text:
-# CHECK-NEXT:  400110 00000000 20f48ee0 00000000 20f49ae0  .... ....... ...
-# CHECK-NEXT:  400120 00000000 20f48900 00000000 20f49100  .... ....... ...
-# CHECK-NEXT:  400130 00000000                             ....
+# DIS:      __start:
+# DIS-NEXT:   400114:  20 f4 8e e0   jal     4309276
+# DIS-NEXT:   400118:  00 00 00 00   nop
+# DIS-NEXT:   40011c:  20 f4 9a e0   jal     4309300
+# DIS-NEXT:   400120:  00 00 00 00   nop
+
+# DIS:      loc1:
+# DIS-NEXT:   400124:  20 f4 89 00   jal     4194578
+# DIS-NEXT:   400128:  00 00 00 00   nop
+# DIS-NEXT:   40012c:  20 f4 91 00   jal     4194594
+# DIS-NEXT:   400130:  00 00 00 00   nop
 
 # CHECK: SYMBOL TABLE:
 # CHECK: 00400124 l  F .text  00000010 loc1

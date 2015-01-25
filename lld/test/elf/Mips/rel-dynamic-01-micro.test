@@ -13,16 +13,30 @@
 # RUN: lld -flavor gnu -target mipsel -shared -o %t.so %t-so.o
 # RUN: yaml2obj -format=elf -docnum 2 %s > %t-o.o
 # RUN: lld -flavor gnu -target mipsel -e T0 -o %t.exe %t-o.o %t.so
-# RUN: llvm-objdump -s %t.exe | FileCheck -check-prefix=DIS %s
+# RUN: llvm-objdump -d -mattr=micromips %t.exe | FileCheck -check-prefix=DIS %s
 # RUN: llvm-readobj -dt -r %t.exe | FileCheck -check-prefix=PLT-SYM %s
 
-# FIXME (simon): Check the disassembler output when llvm-objdump starts
-#                to support microMIPS instruction encoding.
+# DIS:      Disassembly of section .plt:
+# DIS-NEXT: .plt:
+# DIS-NEXT:   4001b0:  80 79 94 07   addiupc $3, 7760
+# DIS-NEXT:   4001b4:  23 ff 00 00   lw      $25, 0($3)
+# DIS-NEXT:   4001b8:  35 05         subu16  $2, $2, $3
+# DIS-NEXT:   4001ba:  25 25         srl16   $2, $2, 2
+# DIS-NEXT:   4001bc:  02 33 fe ff   addiu   $24, $2, -2
+# DIS-NEXT:   4001c0:  ff 0d         move    $15, $ra
+# DIS-NEXT:   4001c2:  f9 45         jalrs16 $25
+# DIS-NEXT:   4001c4:  83 0f         move    $gp, $3
+# DIS-NEXT:   4001c6:  00 0c         nop
 
-# DIS: Contents of section .plt:
-# DIS-NEXT:  4001b0 80799407 23ff0000 35052525 0233feff  .y..#...5.%%.3..
-# DIS-NEXT:  4001c0 ff0df945 830f000c 00799007 22ff0000  ...E.....y.."...
-# DIS-NEXT:  4001d0 9945020f 00798e07 22ff0000 9945020f  .E...y.."....E..
+# DIS-NEXT:   4001c8:  00 79 90 07   addiupc $2, 7744
+# DIS-NEXT:   4001cc:  22 ff 00 00   lw      $25, 0($2)
+# DIS-NEXT:   4001d0:  99 45         jr16    $25
+# DIS-NEXT:   4001d2:  02 0f         move    $24, $2
+
+# DIS-NEXT:   4001d4:  00 79 8e 07   addiupc $2, 7736
+# DIS-NEXT:   4001d8:  22 ff 00 00   lw      $25, 0($2)
+# DIS-NEXT:   4001dc:  99 45         jr16    $25
+# DIS-NEXT:   4001de:  02 0f         move    $24, $2
 
 # PLT-SYM:      Relocations [
 # PLT-SYM-NEXT:   Section (5) .rel.dyn {
