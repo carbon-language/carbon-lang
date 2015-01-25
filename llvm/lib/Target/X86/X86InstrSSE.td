@@ -6337,7 +6337,7 @@ multiclass SS41I_extract8<bits<8> opc, string OpcodeStr> {
                  !strconcat(OpcodeStr,
                             "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
                  [(store (i8 (trunc (assertzext (X86pextrb (v16i8 VR128:$src1),
-						 imm:$src2)))), addr:$dst)]>;
+                                                 imm:$src2)))), addr:$dst)]>;
 }
 
 let Predicates = [HasAVX] in
