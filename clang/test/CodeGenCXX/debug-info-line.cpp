@@ -10,11 +10,11 @@ extern "C" __complex float *complex_sink();
 
 // CHECK-LABEL: define
 void f1() {
-#line 100
-  * // The store for the assignment should be attributed to the start of the
-      // assignment expression here, regardless of the location of subexpressions.
-      sink() = src();
+  *sink()
   // CHECK: store {{.*}}, !dbg [[DBG_F1:!.*]]
+#line 100
+      = //
+      src();
 }
 
 struct foo {
@@ -38,16 +38,20 @@ foo::foo()
 
 // CHECK-LABEL: define {{.*}}f2{{.*}}
 void f2() {
+  // CHECK: store float {{.*}} !dbg [[DBG_F2:!.*]]
+  *complex_sink()
 #line 300
-  * // CHECK: store float {{.*}} !dbg [[DBG_F2:!.*]]
-      complex_sink() = complex_src();
+      = //
+      complex_src();
 }
 
 // CHECK-LABEL: define
 void f3() {
+  // CHECK: store float {{.*}} !dbg [[DBG_F3:!.*]]
+  *complex_sink()
 #line 400
-  * // CHECK: store float {{.*}} !dbg [[DBG_F3:!.*]]
-      complex_sink() += complex_src();
+      += //
+      complex_src();
 }
 
 // CHECK-LABEL: define

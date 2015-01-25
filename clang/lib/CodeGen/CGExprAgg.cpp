@@ -99,7 +99,7 @@ public:
   //===--------------------------------------------------------------------===//
 
   void Visit(Expr *E) {
-    ApplyDebugLocation DL(CGF, E->getLocStart());
+    ApplyDebugLocation DL(CGF, E);
     StmtVisitor<AggExprEmitter>::Visit(E);
   }
 

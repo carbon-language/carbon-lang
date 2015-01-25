@@ -95,7 +95,7 @@ public:
   //===--------------------------------------------------------------------===//
 
   ComplexPairTy Visit(Expr *E) {
-    ApplyDebugLocation DL(CGF, E->getLocStart());
+    ApplyDebugLocation DL(CGF, E);
     return StmtVisitor<ComplexExprEmitter, ComplexPairTy>::Visit(E);
   }
 

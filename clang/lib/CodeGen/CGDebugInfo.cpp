@@ -65,6 +65,10 @@ ArtificialLocation::ArtificialLocation(CodeGenFunction &CGF)
 ApplyDebugLocation::ApplyDebugLocation(CodeGenFunction &CGF,
                                        SourceLocation TemporaryLocation)
     : CGF(CGF) {
+  init(TemporaryLocation);
+}
+
+void ApplyDebugLocation::init(SourceLocation TemporaryLocation) {
   if (auto *DI = CGF.getDebugInfo()) {
     OriginalLocation = CGF.Builder.getCurrentDebugLocation();
     if (TemporaryLocation.isInvalid())
@@ -72,6 +76,11 @@ ApplyDebugLocation::ApplyDebugLocation(CodeGenFunction &CGF,
     else
       DI->EmitLocation(CGF.Builder, TemporaryLocation);
   }
+}
+
+ApplyDebugLocation::ApplyDebugLocation(CodeGenFunction &CGF, const Expr *E)
+    : CGF(CGF) {
+  init(E->getExprLoc());
 }
 
 ApplyDebugLocation::ApplyDebugLocation(CodeGenFunction &CGF, llvm::DebugLoc Loc)
