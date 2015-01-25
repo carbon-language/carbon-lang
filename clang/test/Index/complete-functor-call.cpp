@@ -9,6 +9,8 @@ struct S {
   template<class T> const S<T> *operator()(const S<T> &s) const { return &s; }
 };
 
+void foo(S<void *> &s) { s(42); }
+
 int main() {
   S<void *> s;
   s(42);
@@ -21,7 +23,7 @@ int main() {
   s(0, 42, 42,);
 }
 
-// RUN: c-index-test -code-completion-at=%s:14:5 %s | FileCheck -check-prefix=CHECK-CC1 %s
+// RUN: c-index-test -code-completion-at=%s:16:5 %s | FileCheck -check-prefix=CHECK-CC1 %s
 // CHECK-CC1: OverloadCandidate:{ResultType void}{Text operator()}{LeftParen (}{CurrentParameter int}{RightParen )} (1)
 // CHECK-CC1: OverloadCandidate:{ResultType void}{Text operator()}{LeftParen (}{CurrentParameter T}{RightParen )} (1)
 // CHECK-CC1: OverloadCandidate:{ResultType void}{Text operator()}{LeftParen (}{CurrentParameter void *}{Comma , }{Text T}{Comma , }{Text T}{RightParen )} (1)
@@ -35,7 +37,7 @@ int main() {
 // CHECK-CC1-NEXT: Nested name specifier
 // CHECK-CC1-NEXT: Objective-C interface
 
-// RUN: c-index-test -code-completion-at=%s:15:5 %s | FileCheck -check-prefix=CHECK-CC2 %s
+// RUN: c-index-test -code-completion-at=%s:17:5 %s | FileCheck -check-prefix=CHECK-CC2 %s
 // CHECK-CC2: OverloadCandidate:{ResultType void}{Text operator()}{LeftParen (}{CurrentParameter int}{RightParen )} (1)
 // CHECK-CC2: OverloadCandidate:{ResultType void}{Text operator()}{LeftParen (}{CurrentParameter T}{RightParen )} (1)
 // CHECK-CC2: OverloadCandidate:{ResultType void}{Text operator()}{LeftParen (}{CurrentParameter void *}{Comma , }{Text T}{Comma , }{Text T}{RightParen )} (1)
@@ -49,7 +51,7 @@ int main() {
 // CHECK-CC2-NEXT: Nested name specifier
 // CHECK-CC2-NEXT: Objective-C interface
 
-// RUN: c-index-test -code-completion-at=%s:16:5 %s | FileCheck -check-prefix=CHECK-CC3 %s
+// RUN: c-index-test -code-completion-at=%s:18:5 %s | FileCheck -check-prefix=CHECK-CC3 %s
 // CHECK-CC3: OverloadCandidate:{ResultType void}{Text operator()}{LeftParen (}{CurrentParameter int}{RightParen )} (1)
 // CHECK-CC3: OverloadCandidate:{ResultType void}{Text operator()}{LeftParen (}{CurrentParameter T}{RightParen )} (1)
 // CHECK-CC3: OverloadCandidate:{ResultType void}{Text operator()}{LeftParen (}{CurrentParameter void *}{Comma , }{Text T}{Comma , }{Text T}{RightParen )} (1)
@@ -63,7 +65,7 @@ int main() {
 // CHECK-CC3-NEXT: Nested name specifier
 // CHECK-CC3-NEXT: Objective-C interface
 
-// RUN: c-index-test -code-completion-at=%s:16:7 %s | FileCheck -check-prefix=CHECK-CC4 %s
+// RUN: c-index-test -code-completion-at=%s:18:7 %s | FileCheck -check-prefix=CHECK-CC4 %s
 // CHECK-CC4: OverloadCandidate:{ResultType void}{Text operator()}{LeftParen (}{Text void *}{Comma , }{CurrentParameter T}{Comma , }{Text T}{RightParen )} (1)
 // CHECK-CC4: Completion contexts:
 // CHECK-CC4-NEXT: Any type
@@ -75,7 +77,7 @@ int main() {
 // CHECK-CC4-NEXT: Nested name specifier
 // CHECK-CC4-NEXT: Objective-C interface
 
-// RUN: c-index-test -code-completion-at=%s:16:10 %s | FileCheck -check-prefix=CHECK-CC5 %s
+// RUN: c-index-test -code-completion-at=%s:18:10 %s | FileCheck -check-prefix=CHECK-CC5 %s
 // CHECK-CC5: OverloadCandidate:{ResultType void}{Text operator()}{LeftParen (}{Text void *}{Comma , }{Text S<void *>}{Comma , }{CurrentParameter S<void *>}{RightParen )} (1)
 // CHECK-CC5: Completion contexts:
 // CHECK-CC5-NEXT: Any type
@@ -87,7 +89,7 @@ int main() {
 // CHECK-CC5-NEXT: Nested name specifier
 // CHECK-CC5-NEXT: Objective-C interface
 
-// RUN: c-index-test -code-completion-at=%s:17:17 %s | FileCheck -check-prefix=CHECK-CC6 %s
+// RUN: c-index-test -code-completion-at=%s:19:17 %s | FileCheck -check-prefix=CHECK-CC6 %s
 // CHECK-CC6: OverloadCandidate:{ResultType void}{Text operator()}{LeftParen (}{CurrentParameter int}{RightParen )} (1)
 // CHECK-CC6: OverloadCandidate:{ResultType void}{Text operator()}{LeftParen (}{CurrentParameter T}{RightParen )} (1)
 // CHECK-CC6: OverloadCandidate:{ResultType void}{Text operator()}{LeftParen (}{CurrentParameter void *}{Comma , }{Text T}{Comma , }{Text T}{RightParen )} (1)
@@ -102,7 +104,7 @@ int main() {
 // CHECK-CC6-NEXT: Nested name specifier
 // CHECK-CC6-NEXT: Objective-C interface
 
-// RUN: c-index-test -code-completion-at=%s:17:28 %s | FileCheck -check-prefix=CHECK-CC7 %s
+// RUN: c-index-test -code-completion-at=%s:19:28 %s | FileCheck -check-prefix=CHECK-CC7 %s
 // CHECK-CC7: OverloadCandidate:{ResultType void}{Text operator()}{LeftParen (}{CurrentParameter int}{RightParen )} (1)
 // CHECK-CC7: OverloadCandidate:{ResultType void}{Text operator()}{LeftParen (}{CurrentParameter T}{RightParen )} (1)
 // CHECK-CC7: OverloadCandidate:{ResultType void}{Text operator()}{LeftParen (}{CurrentParameter int}{Comma , }{Text T}{Comma , }{Text T}{RightParen )} (1)
@@ -117,7 +119,7 @@ int main() {
 // CHECK-CC7-NEXT: Nested name specifier
 // CHECK-CC7-NEXT: Objective-C interface
 
-// RUN: c-index-test -code-completion-at=%s:17:31 %s | FileCheck -check-prefix=CHECK-CC8 %s
+// RUN: c-index-test -code-completion-at=%s:19:31 %s | FileCheck -check-prefix=CHECK-CC8 %s
 // CHECK-CC8: OverloadCandidate:{ResultType void}{Text operator()}{LeftParen (}{Text int}{Comma , }{CurrentParameter T}{Comma , }{Text T}{RightParen )} (1)
 // CHECK-CC8: Completion contexts:
 // CHECK-CC8-NEXT: Any type
@@ -129,7 +131,7 @@ int main() {
 // CHECK-CC8-NEXT: Nested name specifier
 // CHECK-CC8-NEXT: Objective-C interface
 
-// RUN: c-index-test -code-completion-at=%s:17:35 %s | FileCheck -check-prefix=CHECK-CC9 %s
+// RUN: c-index-test -code-completion-at=%s:19:35 %s | FileCheck -check-prefix=CHECK-CC9 %s
 // CHECK-CC9: OverloadCandidate:{ResultType void}{Text operator()}{LeftParen (}{Text int}{Comma , }{Text int}{Comma , }{CurrentParameter int}{RightParen )} (1)
 // CHECK-CC9: Completion contexts:
 // CHECK-CC9-NEXT: Any type
@@ -141,7 +143,7 @@ int main() {
 // CHECK-CC9-NEXT: Nested name specifier
 // CHECK-CC9-NEXT: Objective-C interface
 
-// RUN: c-index-test -code-completion-at=%s:19:8 %s | FileCheck -check-prefix=CHECK-CC10 %s
+// RUN: c-index-test -code-completion-at=%s:21:8 %s | FileCheck -check-prefix=CHECK-CC10 %s
 // CHECK-CC10: Completion contexts:
 // CHECK-CC10-NEXT: Any type
 // CHECK-CC10-NEXT: Any value
@@ -152,7 +154,7 @@ int main() {
 // CHECK-CC10-NEXT: Nested name specifier
 // CHECK-CC10-NEXT: Objective-C interface
 
-// RUN: c-index-test -code-completion-at=%s:20:7 %s | FileCheck -check-prefix=CHECK-CC11 %s
+// RUN: c-index-test -code-completion-at=%s:22:7 %s | FileCheck -check-prefix=CHECK-CC11 %s
 // CHECK-CC11: Completion contexts:
 // CHECK-CC11-NEXT: Any type
 // CHECK-CC11-NEXT: Any value
@@ -163,7 +165,7 @@ int main() {
 // CHECK-CC11-NEXT: Nested name specifier
 // CHECK-CC11-NEXT: Objective-C interface
 
-// RUN: c-index-test -code-completion-at=%s:21:15 %s | FileCheck -check-prefix=CHECK-CC12 %s
+// RUN: c-index-test -code-completion-at=%s:23:15 %s | FileCheck -check-prefix=CHECK-CC12 %s
 // CHECK-CC12: Completion contexts:
 // CHECK-CC12-NEXT: Any type
 // CHECK-CC12-NEXT: Any value
@@ -173,3 +175,17 @@ int main() {
 // CHECK-CC12-NEXT: Class name
 // CHECK-CC12-NEXT: Nested name specifier
 // CHECK-CC12-NEXT: Objective-C interface
+
+// RUN: c-index-test -code-completion-at=%s:12:28 %s | FileCheck -check-prefix=CHECK-CC13 %s
+// CHECK-CC13: OverloadCandidate:{ResultType void}{Text operator()}{LeftParen (}{CurrentParameter int}{RightParen )} (1)
+// CHECK-CC13: OverloadCandidate:{ResultType void}{Text operator()}{LeftParen (}{CurrentParameter T}{RightParen )} (1)
+// CHECK-CC13: OverloadCandidate:{ResultType void}{Text operator()}{LeftParen (}{CurrentParameter void *}{Comma , }{Text T}{Comma , }{Text T}{RightParen )} (1)
+// CHECK-CC13: Completion contexts:
+// CHECK-CC13-NEXT: Any type
+// CHECK-CC13-NEXT: Any value
+// CHECK-CC13-NEXT: Enum tag
+// CHECK-CC13-NEXT: Union tag
+// CHECK-CC13-NEXT: Struct tag
+// CHECK-CC13-NEXT: Class name
+// CHECK-CC13-NEXT: Nested name specifier
+// CHECK-CC13-NEXT: Objective-C interface
