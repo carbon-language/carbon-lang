@@ -125,7 +125,7 @@ let Constraints = "$src1 = $dst" in {
                                     (bitconvert (load_mmx addr:$src2))))],
                   itins.rm>, Sched<[WriteVecShiftLd, ReadAfterLd]>;
     def ri : MMXIi8<opc2, ImmForm, (outs VR64:$dst),
-                                   (ins VR64:$src1, i32i8imm:$src2),
+                                   (ins VR64:$src1, i32u8imm:$src2),
                     !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
            [(set VR64:$dst, (IntId2 VR64:$src1, imm:$src2))], itins.ri>,
            Sched<[WriteVecShift]>;
@@ -559,7 +559,7 @@ let Constraints = "$src1 = $dst" in {
 
 // Extract / Insert
 def MMX_PEXTRWirri: MMXIi8<0xC5, MRMSrcReg,
-                       (outs GR32orGR64:$dst), (ins VR64:$src1, i32i8imm:$src2),
+                       (outs GR32orGR64:$dst), (ins VR64:$src1, i32u8imm:$src2),
                        "pextrw\t{$src2, $src1, $dst|$dst, $src1, $src2}",
                        [(set GR32orGR64:$dst, (int_x86_mmx_pextr_w VR64:$src1,
                                                imm:$src2))],
@@ -567,7 +567,7 @@ def MMX_PEXTRWirri: MMXIi8<0xC5, MRMSrcReg,
 let Constraints = "$src1 = $dst" in {
   def MMX_PINSRWirri : MMXIi8<0xC4, MRMSrcReg,
                       (outs VR64:$dst),
-                      (ins VR64:$src1, GR32orGR64:$src2, i32i8imm:$src3),
+                      (ins VR64:$src1, GR32orGR64:$src2, i32u8imm:$src3),
                       "pinsrw\t{$src3, $src2, $dst|$dst, $src2, $src3}",
                       [(set VR64:$dst, (int_x86_mmx_pinsr_w VR64:$src1,
                                         GR32orGR64:$src2, imm:$src3))],
@@ -575,7 +575,7 @@ let Constraints = "$src1 = $dst" in {
 
   def MMX_PINSRWirmi : MMXIi8<0xC4, MRMSrcMem,
                      (outs VR64:$dst),
-                     (ins VR64:$src1, i16mem:$src2, i32i8imm:$src3),
+                     (ins VR64:$src1, i16mem:$src2, i32u8imm:$src3),
                      "pinsrw\t{$src3, $src2, $dst|$dst, $src2, $src3}",
                      [(set VR64:$dst, (int_x86_mmx_pinsr_w VR64:$src1,
                                          (i32 (anyext (loadi16 addr:$src2))),

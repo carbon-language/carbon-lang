@@ -4323,13 +4323,13 @@ defm VPSRAD : PDI_binop_rmi<0xE2, 0x72, MRM4r, "vpsrad", X86vsra, X86vsrai,
 let ExeDomain = SSEPackedInt, SchedRW = [WriteVecShift] in {
   // 128-bit logical shifts.
   def VPSLLDQri : PDIi8<0x73, MRM7r,
-                    (outs VR128:$dst), (ins VR128:$src1, i32i8imm:$src2),
+                    (outs VR128:$dst), (ins VR128:$src1, i32u8imm:$src2),
                     "vpslldq\t{$src2, $src1, $dst|$dst, $src1, $src2}",
                     [(set VR128:$dst,
                       (int_x86_sse2_psll_dq_bs VR128:$src1, imm:$src2))]>,
                     VEX_4V;
   def VPSRLDQri : PDIi8<0x73, MRM3r,
-                    (outs VR128:$dst), (ins VR128:$src1, i32i8imm:$src2),
+                    (outs VR128:$dst), (ins VR128:$src1, i32u8imm:$src2),
                     "vpsrldq\t{$src2, $src1, $dst|$dst, $src1, $src2}",
                     [(set VR128:$dst,
                       (int_x86_sse2_psrl_dq_bs VR128:$src1, imm:$src2))]>,
@@ -4369,13 +4369,13 @@ defm VPSRADY : PDI_binop_rmi<0xE2, 0x72, MRM4r, "vpsrad", X86vsra, X86vsrai,
 let ExeDomain = SSEPackedInt, SchedRW = [WriteVecShift] in {
   // 256-bit logical shifts.
   def VPSLLDQYri : PDIi8<0x73, MRM7r,
-                    (outs VR256:$dst), (ins VR256:$src1, i32i8imm:$src2),
+                    (outs VR256:$dst), (ins VR256:$src1, i32u8imm:$src2),
                     "vpslldq\t{$src2, $src1, $dst|$dst, $src1, $src2}",
                     [(set VR256:$dst,
                       (int_x86_avx2_psll_dq_bs VR256:$src1, imm:$src2))]>,
                     VEX_4V, VEX_L;
   def VPSRLDQYri : PDIi8<0x73, MRM3r,
-                    (outs VR256:$dst), (ins VR256:$src1, i32i8imm:$src2),
+                    (outs VR256:$dst), (ins VR256:$src1, i32u8imm:$src2),
                     "vpsrldq\t{$src2, $src1, $dst|$dst, $src1, $src2}",
                     [(set VR256:$dst,
                       (int_x86_avx2_psrl_dq_bs VR256:$src1, imm:$src2))]>,
@@ -4415,13 +4415,13 @@ defm PSRAD : PDI_binop_rmi<0xE2, 0x72, MRM4r, "psrad", X86vsra, X86vsrai,
 let ExeDomain = SSEPackedInt, SchedRW = [WriteVecShift] in {
   // 128-bit logical shifts.
   def PSLLDQri : PDIi8<0x73, MRM7r,
-                       (outs VR128:$dst), (ins VR128:$src1, i32i8imm:$src2),
+                       (outs VR128:$dst), (ins VR128:$src1, i32u8imm:$src2),
                        "pslldq\t{$src2, $dst|$dst, $src2}",
                        [(set VR128:$dst,
                          (int_x86_sse2_psll_dq_bs VR128:$src1, imm:$src2))],
                          IIC_SSE_INTSHDQ_P_RI>;
   def PSRLDQri : PDIi8<0x73, MRM3r,
-                       (outs VR128:$dst), (ins VR128:$src1, i32i8imm:$src2),
+                       (outs VR128:$dst), (ins VR128:$src1, i32u8imm:$src2),
                        "psrldq\t{$src2, $dst|$dst, $src2}",
                        [(set VR128:$dst,
                          (int_x86_sse2_psrl_dq_bs VR128:$src1, imm:$src2))],
@@ -4805,7 +4805,7 @@ let ExeDomain = SSEPackedInt in {
 multiclass sse2_pinsrw<bit Is2Addr = 1> {
   def rri : Ii8<0xC4, MRMSrcReg,
        (outs VR128:$dst), (ins VR128:$src1,
-        GR32orGR64:$src2, i32i8imm:$src3),
+        GR32orGR64:$src2, u8imm:$src3),
        !if(Is2Addr,
            "pinsrw\t{$src3, $src2, $dst|$dst, $src2, $src3}",
            "vpinsrw\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}"),
@@ -4814,7 +4814,7 @@ multiclass sse2_pinsrw<bit Is2Addr = 1> {
        IIC_SSE_PINSRW>, Sched<[WriteShuffle]>;
   def rmi : Ii8<0xC4, MRMSrcMem,
                        (outs VR128:$dst), (ins VR128:$src1,
-                        i16mem:$src2, i32i8imm:$src3),
+                        i16mem:$src2, u8imm:$src3),
        !if(Is2Addr,
            "pinsrw\t{$src3, $src2, $dst|$dst, $src2, $src3}",
            "vpinsrw\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}"),
@@ -6607,7 +6607,7 @@ let ExeDomain = SSEPackedSingle in {
   // Intrinsic operation, reg.
   // Vector intrinsic operation, reg
   def PSr : SS4AIi8<opcps, MRMSrcReg,
-                    (outs RC:$dst), (ins RC:$src1, i32i8imm:$src2),
+                    (outs RC:$dst), (ins RC:$src1, i32u8imm:$src2),
                     !strconcat(OpcodeStr,
                     "ps\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
                     [(set RC:$dst, (V4F32Int RC:$src1, imm:$src2))],
@@ -6615,7 +6615,7 @@ let ExeDomain = SSEPackedSingle in {
 
   // Vector intrinsic operation, mem
   def PSm : SS4AIi8<opcps, MRMSrcMem,
-                    (outs RC:$dst), (ins x86memop:$src1, i32i8imm:$src2),
+                    (outs RC:$dst), (ins x86memop:$src1, i32u8imm:$src2),
                     !strconcat(OpcodeStr,
                     "ps\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
                     [(set RC:$dst,
@@ -6626,7 +6626,7 @@ let ExeDomain = SSEPackedSingle in {
 let ExeDomain = SSEPackedDouble in {
   // Vector intrinsic operation, reg
   def PDr : SS4AIi8<opcpd, MRMSrcReg,
-                    (outs RC:$dst), (ins RC:$src1, i32i8imm:$src2),
+                    (outs RC:$dst), (ins RC:$src1, i32u8imm:$src2),
                     !strconcat(OpcodeStr,
                     "pd\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
                     [(set RC:$dst, (V2F64Int RC:$src1, imm:$src2))],
@@ -6634,7 +6634,7 @@ let ExeDomain = SSEPackedDouble in {
 
   // Vector intrinsic operation, mem
   def PDm : SS4AIi8<opcpd, MRMSrcMem,
-                    (outs RC:$dst), (ins x86memop:$src1, i32i8imm:$src2),
+                    (outs RC:$dst), (ins x86memop:$src1, i32u8imm:$src2),
                     !strconcat(OpcodeStr,
                     "pd\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
                     [(set RC:$dst,
@@ -6651,7 +6651,7 @@ let ExeDomain = GenericDomain in {
   // Operation, reg.
   let hasSideEffects = 0 in
   def SSr : SS4AIi8<opcss, MRMSrcReg,
-      (outs FR32:$dst), (ins FR32:$src1, FR32:$src2, i32i8imm:$src3),
+      (outs FR32:$dst), (ins FR32:$src1, FR32:$src2, i32u8imm:$src3),
       !if(Is2Addr,
           !strconcat(OpcodeStr,
               "ss\t{$src3, $src2, $dst|$dst, $src2, $src3}"),
@@ -6662,7 +6662,7 @@ let ExeDomain = GenericDomain in {
   // Intrinsic operation, reg.
   let isCodeGenOnly = 1 in
   def SSr_Int : SS4AIi8<opcss, MRMSrcReg,
-        (outs VR128:$dst), (ins VR128:$src1, VR128:$src2, i32i8imm:$src3),
+        (outs VR128:$dst), (ins VR128:$src1, VR128:$src2, i32u8imm:$src3),
         !if(Is2Addr,
             !strconcat(OpcodeStr,
                 "ss\t{$src3, $src2, $dst|$dst, $src2, $src3}"),
@@ -6673,7 +6673,7 @@ let ExeDomain = GenericDomain in {
 
   // Intrinsic operation, mem.
   def SSm : SS4AIi8<opcss, MRMSrcMem,
-        (outs VR128:$dst), (ins VR128:$src1, ssmem:$src2, i32i8imm:$src3),
+        (outs VR128:$dst), (ins VR128:$src1, ssmem:$src2, i32u8imm:$src3),
         !if(Is2Addr,
             !strconcat(OpcodeStr,
                 "ss\t{$src3, $src2, $dst|$dst, $src2, $src3}"),
@@ -6686,7 +6686,7 @@ let ExeDomain = GenericDomain in {
   // Operation, reg.
   let hasSideEffects = 0 in
   def SDr : SS4AIi8<opcsd, MRMSrcReg,
-        (outs FR64:$dst), (ins FR64:$src1, FR64:$src2, i32i8imm:$src3),
+        (outs FR64:$dst), (ins FR64:$src1, FR64:$src2, i32u8imm:$src3),
         !if(Is2Addr,
             !strconcat(OpcodeStr,
                 "sd\t{$src3, $src2, $dst|$dst, $src2, $src3}"),
@@ -6697,7 +6697,7 @@ let ExeDomain = GenericDomain in {
   // Intrinsic operation, reg.
   let isCodeGenOnly = 1 in
   def SDr_Int : SS4AIi8<opcsd, MRMSrcReg,
-        (outs VR128:$dst), (ins VR128:$src1, VR128:$src2, i32i8imm:$src3),
+        (outs VR128:$dst), (ins VR128:$src1, VR128:$src2, i32u8imm:$src3),
         !if(Is2Addr,
             !strconcat(OpcodeStr,
                 "sd\t{$src3, $src2, $dst|$dst, $src2, $src3}"),
@@ -6708,7 +6708,7 @@ let ExeDomain = GenericDomain in {
 
   // Intrinsic operation, mem.
   def SDm : SS4AIi8<opcsd, MRMSrcMem,
-        (outs VR128:$dst), (ins VR128:$src1, sdmem:$src2, i32i8imm:$src3),
+        (outs VR128:$dst), (ins VR128:$src1, sdmem:$src2, i32u8imm:$src3),
         !if(Is2Addr,
             !strconcat(OpcodeStr,
                 "sd\t{$src3, $src2, $dst|$dst, $src2, $src3}"),
@@ -8482,14 +8482,14 @@ multiclass f16c_ph2ps<RegisterClass RC, X86MemOperand x86memop, Intrinsic Int> {
 
 multiclass f16c_ps2ph<RegisterClass RC, X86MemOperand x86memop, Intrinsic Int> {
   def rr : Ii8<0x1D, MRMDestReg, (outs VR128:$dst),
-               (ins RC:$src1, i32i8imm:$src2),
+               (ins RC:$src1, i32u8imm:$src2),
                "vcvtps2ph\t{$src2, $src1, $dst|$dst, $src1, $src2}",
                [(set VR128:$dst, (Int RC:$src1, imm:$src2))]>,
                TAPD, VEX, Sched<[WriteCvtF2F]>;
   let hasSideEffects = 0, mayStore = 1,
       SchedRW = [WriteCvtF2FLd, WriteRMW] in
   def mr : Ii8<0x1D, MRMDestMem, (outs),
-               (ins x86memop:$dst, RC:$src1, i32i8imm:$src2),
+               (ins x86memop:$dst, RC:$src1, i32u8imm:$src2),
                "vcvtps2ph\t{$src2, $src1, $dst|$dst, $src1, $src2}", []>,
                TAPD, VEX;
 }

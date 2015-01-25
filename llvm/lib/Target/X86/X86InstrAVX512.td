@@ -4155,12 +4155,12 @@ multiclass avx512_cvtph2ps<RegisterClass destRC, RegisterClass srcRC,
 multiclass avx512_cvtps2ph<RegisterClass destRC, RegisterClass srcRC,
                              X86MemOperand x86memop> {
   def rr : AVX512AIi8<0x1D, MRMDestReg, (outs destRC:$dst),
-               (ins srcRC:$src1, i32i8imm:$src2),
+               (ins srcRC:$src1, i32u8imm:$src2),
                "vcvtps2ph\t{$src2, $src1, $dst|$dst, $src1, $src2}",
                []>, EVEX;
   let hasSideEffects = 0, mayStore = 1 in
   def mr : AVX512AIi8<0x1D, MRMDestMem, (outs),
-               (ins x86memop:$dst, srcRC:$src1, i32i8imm:$src2),
+               (ins x86memop:$dst, srcRC:$src1, i32u8imm:$src2),
                "vcvtps2ph\t{$src2, $src1, $dst|$dst, $src1, $src2}", []>, EVEX;
 }
 
@@ -4558,14 +4558,14 @@ let ExeDomain = d in {
   // Intrinsic operation, reg.
   // Vector intrinsic operation, reg
   def r : AVX512AIi8<opc, MRMSrcReg,
-                    (outs RC:$dst), (ins RC:$src1, i32i8imm:$src2),
+                    (outs RC:$dst), (ins RC:$src1, i32u8imm:$src2),
                     !strconcat(OpcodeStr,
                     "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
                     []>, EVEX;
 
   // Vector intrinsic operation, mem
   def m : AVX512AIi8<opc, MRMSrcMem,
-                    (outs RC:$dst), (ins x86memop:$src1, i32i8imm:$src2),
+                    (outs RC:$dst), (ins x86memop:$src1, i32u8imm:$src2),
                     !strconcat(OpcodeStr,
                     "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
                     []>, EVEX;
@@ -4596,13 +4596,13 @@ multiclass avx512_rndscale_scalar<bits<8> opc, string OpcodeStr,
                      Operand x86memop, RegisterClass RC, Domain d> {
 let ExeDomain = d in {
   def r : AVX512AIi8<opc, MRMSrcReg,
-                    (outs RC:$dst), (ins RC:$src1, RC:$src2, i32i8imm:$src3),
+                    (outs RC:$dst), (ins RC:$src1, RC:$src2, i32u8imm:$src3),
                     !strconcat(OpcodeStr,
                     "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
                     []>, EVEX_4V;
 
   def m : AVX512AIi8<opc, MRMSrcMem,
-                    (outs RC:$dst), (ins RC:$src1, x86memop:$src2,  i32i8imm:$src3),
+                    (outs RC:$dst), (ins RC:$src1, x86memop:$src2,  i32u8imm:$src3),
                     !strconcat(OpcodeStr,
                     "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
                     []>, EVEX_4V;

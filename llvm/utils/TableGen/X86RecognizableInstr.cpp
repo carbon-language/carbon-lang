@@ -933,6 +933,7 @@ OperandType RecognizableInstr::typeFromString(const std::string &s,
   TYPE("i8mem",               TYPE_M8)
   TYPE("i8imm",               TYPE_IMM8)
   TYPE("u8imm",               TYPE_UIMM8)
+  TYPE("i32u8imm",            TYPE_UIMM8)
   TYPE("GR8",                 TYPE_R8)
   TYPE("VR128",               TYPE_XMM128)
   TYPE("VR128X",              TYPE_XMM128)
@@ -1044,6 +1045,7 @@ RecognizableInstr::immediateEncodingFromString(const std::string &s,
   ENCODING("i64i8imm",        ENCODING_IB)
   ENCODING("i8imm",           ENCODING_IB)
   ENCODING("u8imm",           ENCODING_IB)
+  ENCODING("i32u8imm",        ENCODING_IB)
   // This is not a typo.  Instructions like BLENDVPD put
   // register IDs in 8-bit immediates nowadays.
   ENCODING("FR32",            ENCODING_IB)
@@ -1213,6 +1215,7 @@ RecognizableInstr::relocationEncodingFromString(const std::string &s,
   ENCODING("i64i8imm",        ENCODING_IB)
   ENCODING("i8imm",           ENCODING_IB)
   ENCODING("u8imm",           ENCODING_IB)
+  ENCODING("i32u8imm",        ENCODING_IB)
   ENCODING("i64i32imm_pcrel", ENCODING_ID)
   ENCODING("i16imm_pcrel",    ENCODING_IW)
   ENCODING("i32imm_pcrel",    ENCODING_ID)

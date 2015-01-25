@@ -648,6 +648,14 @@ def u8imm : Operand<i8> {
   let OperandType = "OPERAND_IMMEDIATE";
 }
 
+// 32-bit immediate but only 8-bits are significant and they are unsigned.
+// Used by some SSE/AVX instructions that use intrinsics.
+def i32u8imm : Operand<i32> {
+  let PrintMethod = "printU8Imm";
+  let ParserMatchClass = ImmUnsignedi8AsmOperand;
+  let OperandType = "OPERAND_IMMEDIATE";
+}
+
 // 64-bits but only 32 bits are significant, and those bits are treated as being
 // pc relative.
 def i64i32imm_pcrel : Operand<i64> {
