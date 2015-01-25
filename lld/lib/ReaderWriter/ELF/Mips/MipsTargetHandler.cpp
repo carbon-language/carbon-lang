@@ -16,8 +16,6 @@
 using namespace lld;
 using namespace elf;
 
-typedef llvm::object::ELFType<llvm::support::little, 2, false> Mips32ElELFType;
-
 MipsTargetHandler::MipsTargetHandler(MipsLinkingContext &ctx)
     : _ctx(ctx), _runtimeFile(new MipsRuntimeFile<Mips32ElELFType>(ctx)),
       _targetLayout(new MipsTargetLayout<Mips32ElELFType>(ctx)),

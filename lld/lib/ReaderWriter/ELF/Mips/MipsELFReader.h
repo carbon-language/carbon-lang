@@ -17,8 +17,6 @@
 namespace lld {
 namespace elf {
 
-typedef llvm::object::ELFType<llvm::support::little, 2, false> Mips32ElELFType;
-
 struct MipsELFFileCreateTraits {
   typedef llvm::ErrorOr<std::unique_ptr<lld::File>> result_type;
 
