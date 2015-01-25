@@ -86,6 +86,8 @@ public:
   /// of the right bracket.
   SourceLocation getOperatorLoc() const { return getRParenLoc(); }
 
+  SourceLocation getExprLoc() const LLVM_READONLY { return getOperatorLoc(); }
+
   SourceLocation getLocStart() const LLVM_READONLY { return Range.getBegin(); }
   SourceLocation getLocEnd() const LLVM_READONLY { return Range.getEnd(); }
   SourceRange getSourceRange() const { return Range; }

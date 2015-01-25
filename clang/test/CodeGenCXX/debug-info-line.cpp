@@ -74,9 +74,11 @@ agg agg_src();
 // CHECK-LABEL: define
 void f6() {
   agg x;
+  // CHECK: call void @llvm.memcpy{{.*}} !dbg [[DBG_F6:!.*]]
+  x
 #line 700
-  x // CHECK: call void @llvm.memcpy{{.*}} !dbg [[DBG_F6:!.*]]
-      = agg_src();
+      = //
+      agg_src();
 }
 
 // CHECK-LABEL: define
