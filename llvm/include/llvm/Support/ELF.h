@@ -796,6 +796,14 @@ enum {
   STN_UNDEF = 0
 };
 
+// Special relocation symbols used in the MIPS64 ELF relocation entries
+enum {
+  RSS_UNDEF = 0, // None
+  RSS_GP = 1,    // Value of gp
+  RSS_GP0 = 2,   // Value of gp used to create object being relocated
+  RSS_LOC = 3    // Address of location being relocated
+};
+
 // Relocation entry, without explicit addend.
 struct Elf32_Rel {
   Elf32_Addr r_offset; // Location (file byte offset, or program virtual addr)

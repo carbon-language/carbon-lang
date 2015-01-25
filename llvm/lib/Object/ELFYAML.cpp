@@ -415,6 +415,16 @@ void ScalarBitSetTraits<ELFYAML::ELF_STO>::bitset(IO &IO,
 #undef BCaseMask
 }
 
+void ScalarEnumerationTraits<ELFYAML::ELF_RSS>::enumeration(
+    IO &IO, ELFYAML::ELF_RSS &Value) {
+#define ECase(X) IO.enumCase(Value, #X, ELF::X);
+  ECase(RSS_UNDEF)
+  ECase(RSS_GP)
+  ECase(RSS_GP0)
+  ECase(RSS_LOC)
+#undef ECase
+}
+
 void ScalarEnumerationTraits<ELFYAML::ELF_REL>::enumeration(
     IO &IO, ELFYAML::ELF_REL &Value) {
   const auto *Object = static_cast<ELFYAML::Object *>(IO.getContext());
@@ -540,11 +550,48 @@ StringRef MappingTraits<std::unique_ptr<ELFYAML::Section>>::validate(
   return "Section size must be greater or equal to the content size";
 }
 
+namespace {
+struct NormalizedMips64RelType {
+  NormalizedMips64RelType(IO &)
+      : Type(ELFYAML::ELF_REL(ELF::R_MIPS_NONE)),
+        Type2(ELFYAML::ELF_REL(ELF::R_MIPS_NONE)),
+        Type3(ELFYAML::ELF_REL(ELF::R_MIPS_NONE)),
+        SpecSym(ELFYAML::ELF_REL(ELF::RSS_UNDEF)) {}
+  NormalizedMips64RelType(IO &, ELFYAML::ELF_REL Original)
+      : Type(Original & 0xFF), Type2(Original >> 8 & 0xFF),
+        Type3(Original >> 16 & 0xFF), SpecSym(Original >> 24 & 0xFF) {}
+
+  ELFYAML::ELF_REL denormalize(IO &) {
+    ELFYAML::ELF_REL Res = Type | Type2 << 8 | Type3 << 16 | SpecSym << 24;
+    return Res;
+  }
+
+  ELFYAML::ELF_REL Type;
+  ELFYAML::ELF_REL Type2;
+  ELFYAML::ELF_REL Type3;
+  ELFYAML::ELF_RSS SpecSym;
+};
+}
+
 void MappingTraits<ELFYAML::Relocation>::mapping(IO &IO,
                                                  ELFYAML::Relocation &Rel) {
+  const auto *Object = static_cast<ELFYAML::Object *>(IO.getContext());
+  assert(Object && "The IO context is not initialized");
+
   IO.mapRequired("Offset", Rel.Offset);
   IO.mapRequired("Symbol", Rel.Symbol);
-  IO.mapRequired("Type", Rel.Type);
+
+  if (Object->Header.Machine == ELFYAML::ELF_EM(ELF::EM_MIPS) &&
+      Object->Header.Class == ELFYAML::ELF_ELFCLASS(ELF::ELFCLASS64)) {
+    MappingNormalization<NormalizedMips64RelType, ELFYAML::ELF_REL> Key(
+        IO, Rel.Type);
+    IO.mapRequired("Type", Key->Type);
+    IO.mapOptional("Type2", Key->Type2, ELFYAML::ELF_REL(ELF::R_MIPS_NONE));
+    IO.mapOptional("Type3", Key->Type3, ELFYAML::ELF_REL(ELF::R_MIPS_NONE));
+    IO.mapOptional("SpecSym", Key->SpecSym, ELFYAML::ELF_RSS(ELF::RSS_UNDEF));
+  } else
+    IO.mapRequired("Type", Rel.Type);
+
   IO.mapOptional("Addend", Rel.Addend);
 }
 

@@ -41,6 +41,7 @@ LLVM_YAML_STRONG_TYPEDEF(uint8_t, ELF_ELFOSABI)
 LLVM_YAML_STRONG_TYPEDEF(uint64_t, ELF_EF)
 LLVM_YAML_STRONG_TYPEDEF(uint32_t, ELF_SHT)
 LLVM_YAML_STRONG_TYPEDEF(uint32_t, ELF_REL)
+LLVM_YAML_STRONG_TYPEDEF(uint8_t, ELF_RSS)
 // Just use 64, since it can hold 32-bit values too.
 LLVM_YAML_STRONG_TYPEDEF(uint64_t, ELF_SHF)
 LLVM_YAML_STRONG_TYPEDEF(uint8_t, ELF_STT)
@@ -183,6 +184,11 @@ struct ScalarBitSetTraits<ELFYAML::ELF_STO> {
 template <>
 struct ScalarEnumerationTraits<ELFYAML::ELF_REL> {
   static void enumeration(IO &IO, ELFYAML::ELF_REL &Value);
+};
+
+template <>
+struct ScalarEnumerationTraits<ELFYAML::ELF_RSS> {
+  static void enumeration(IO &IO, ELFYAML::ELF_RSS &Value);
 };
 
 template <>
