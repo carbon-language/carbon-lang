@@ -92,12 +92,12 @@ public:
 
   std::unique_ptr<Reader> getObjReader(bool atomizeStrings) override {
     return std::unique_ptr<Reader>(
-        new MipsELFObjectReader(_ctx, atomizeStrings));
+        new MipsELFObjectReader<Mips32ElELFType>(_ctx, atomizeStrings));
   }
 
   std::unique_ptr<Reader> getDSOReader(bool useShlibUndefines) override {
     return std::unique_ptr<Reader>(
-        new MipsELFDSOReader(_ctx, useShlibUndefines));
+        new MipsELFDSOReader<Mips32ElELFType>(_ctx, useShlibUndefines));
   }
 
   const MipsTargetRelocationHandler &getRelocationHandler() const override {
