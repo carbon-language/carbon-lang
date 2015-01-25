@@ -47,7 +47,7 @@ protected:
 
 private:
   MipsELFWriter<ELFT> _writeHelper;
-  MipsTargetLayout<Mips32ElELFType> &_mipsTargetLayout;
+  MipsTargetLayout<ELFT> &_mipsTargetLayout;
 };
 
 template <class ELFT>
