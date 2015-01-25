@@ -6734,7 +6734,9 @@ let Predicates = [HasAVX] in {
   defm VROUND  : sse41_fp_binop_rm<0x0A, 0x0B, "vround",
                                   int_x86_sse41_round_ss,
                                   int_x86_sse41_round_sd, 0>, VEX_4V, VEX_LIG;
+}
 
+let Predicates = [UseAVX] in {
   def : Pat<(ffloor FR32:$src),
             (VROUNDSSr (f32 (IMPLICIT_DEF)), FR32:$src, (i32 0x1))>;
   def : Pat<(f64 (ffloor FR64:$src)),
@@ -6755,7 +6757,9 @@ let Predicates = [HasAVX] in {
             (VROUNDSSr (f32 (IMPLICIT_DEF)), FR32:$src, (i32 0x3))>;
   def : Pat<(f64 (ftrunc FR64:$src)),
             (VROUNDSDr (f64 (IMPLICIT_DEF)), FR64:$src, (i32 0x3))>;
+}
 
+let Predicates = [HasAVX] in {
   def : Pat<(v4f32 (ffloor VR128:$src)),
             (VROUNDPSr VR128:$src, (i32 0x1))>;
   def : Pat<(v4f32 (fnearbyint VR128:$src)),

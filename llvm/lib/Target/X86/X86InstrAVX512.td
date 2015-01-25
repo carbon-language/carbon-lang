@@ -4619,26 +4619,28 @@ defm VRNDSCALESS : avx512_rndscale_scalar<0x0A, "vrndscaless", ssmem, FR32X,
 defm VRNDSCALESD : avx512_rndscale_scalar<0x0B, "vrndscalesd", sdmem, FR64X,
                                 SSEPackedDouble>, EVEX_CD8<64, CD8VT1>;
 
-def : Pat<(ffloor FR32X:$src),
-          (VRNDSCALESSr (f32 (IMPLICIT_DEF)), FR32X:$src, (i32 0x1))>;
-def : Pat<(f64 (ffloor FR64X:$src)),
-          (VRNDSCALESDr (f64 (IMPLICIT_DEF)), FR64X:$src, (i32 0x1))>;
-def : Pat<(f32 (fnearbyint FR32X:$src)),
-          (VRNDSCALESSr (f32 (IMPLICIT_DEF)), FR32X:$src, (i32 0xC))>;
-def : Pat<(f64 (fnearbyint FR64X:$src)),
-          (VRNDSCALESDr (f64 (IMPLICIT_DEF)), FR64X:$src, (i32 0xC))>;
-def : Pat<(f32 (fceil FR32X:$src)),
-          (VRNDSCALESSr (f32 (IMPLICIT_DEF)), FR32X:$src, (i32 0x2))>;
-def : Pat<(f64 (fceil FR64X:$src)),
-          (VRNDSCALESDr (f64 (IMPLICIT_DEF)), FR64X:$src, (i32 0x2))>;
-def : Pat<(f32 (frint FR32X:$src)),
-          (VRNDSCALESSr (f32 (IMPLICIT_DEF)), FR32X:$src, (i32 0x4))>;
-def : Pat<(f64 (frint FR64X:$src)),
-          (VRNDSCALESDr (f64 (IMPLICIT_DEF)), FR64X:$src, (i32 0x4))>;
-def : Pat<(f32 (ftrunc FR32X:$src)),
-          (VRNDSCALESSr (f32 (IMPLICIT_DEF)), FR32X:$src, (i32 0x3))>;
-def : Pat<(f64 (ftrunc FR64X:$src)),
-          (VRNDSCALESDr (f64 (IMPLICIT_DEF)), FR64X:$src, (i32 0x3))>;
+let Predicates = [HasAVX512] in {
+  def : Pat<(ffloor FR32X:$src),
+            (VRNDSCALESSr (f32 (IMPLICIT_DEF)), FR32X:$src, (i32 0x1))>;
+  def : Pat<(f64 (ffloor FR64X:$src)),
+            (VRNDSCALESDr (f64 (IMPLICIT_DEF)), FR64X:$src, (i32 0x1))>;
+  def : Pat<(f32 (fnearbyint FR32X:$src)),
+            (VRNDSCALESSr (f32 (IMPLICIT_DEF)), FR32X:$src, (i32 0xC))>;
+  def : Pat<(f64 (fnearbyint FR64X:$src)),
+            (VRNDSCALESDr (f64 (IMPLICIT_DEF)), FR64X:$src, (i32 0xC))>;
+  def : Pat<(f32 (fceil FR32X:$src)),
+            (VRNDSCALESSr (f32 (IMPLICIT_DEF)), FR32X:$src, (i32 0x2))>;
+  def : Pat<(f64 (fceil FR64X:$src)),
+            (VRNDSCALESDr (f64 (IMPLICIT_DEF)), FR64X:$src, (i32 0x2))>;
+  def : Pat<(f32 (frint FR32X:$src)),
+            (VRNDSCALESSr (f32 (IMPLICIT_DEF)), FR32X:$src, (i32 0x4))>;
+  def : Pat<(f64 (frint FR64X:$src)),
+            (VRNDSCALESDr (f64 (IMPLICIT_DEF)), FR64X:$src, (i32 0x4))>;
+  def : Pat<(f32 (ftrunc FR32X:$src)),
+            (VRNDSCALESSr (f32 (IMPLICIT_DEF)), FR32X:$src, (i32 0x3))>;
+  def : Pat<(f64 (ftrunc FR64X:$src)),
+            (VRNDSCALESDr (f64 (IMPLICIT_DEF)), FR64X:$src, (i32 0x3))>;
+}
 
 def : Pat<(v16f32 (ffloor VR512:$src)),
           (VRNDSCALEPSZr VR512:$src, (i32 0x1))>;
