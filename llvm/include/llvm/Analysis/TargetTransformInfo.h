@@ -397,6 +397,11 @@ public:
                                    unsigned Alignment,
                                    unsigned AddressSpace) const;
 
+  /// \return The cost of masked Load and Store instructions.
+  virtual unsigned getMaskedMemoryOpCost(unsigned Opcode, Type *Src,
+                                         unsigned Alignment,
+                                         unsigned AddressSpace) const;
+
   /// \brief Calculate the cost of performing a vector reduction.
   ///
   /// This is the cost of reducing the vector value of type \p Ty to a scalar

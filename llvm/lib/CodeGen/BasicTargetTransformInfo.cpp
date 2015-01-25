@@ -582,6 +582,10 @@ unsigned BasicTTI::getIntrinsicInstrCost(Intrinsic::ID IID, Type *RetTy,
   case Intrinsic::lifetime_start:
   case Intrinsic::lifetime_end:
     return 0;
+  case Intrinsic::masked_store:
+    return TopTTI->getMaskedMemoryOpCost(Instruction::Store, Tys[0], 0, 0);
+  case Intrinsic::masked_load:
+    return TopTTI->getMaskedMemoryOpCost(Instruction::Load, RetTy, 0, 0);
   }
 
   const TargetLoweringBase *TLI = getTLI();

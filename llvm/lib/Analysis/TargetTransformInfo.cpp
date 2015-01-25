@@ -221,6 +221,13 @@ unsigned TargetTransformInfo::getMemoryOpCost(unsigned Opcode, Type *Src,
   return PrevTTI->getMemoryOpCost(Opcode, Src, Alignment, AddressSpace);
 }
 
+unsigned 
+TargetTransformInfo::getMaskedMemoryOpCost(unsigned Opcode, Type *Src,
+                                              unsigned Alignment,
+                                              unsigned AddressSpace) const {
+  return PrevTTI->getMaskedMemoryOpCost(Opcode, Src, Alignment, AddressSpace);
+}
+
 unsigned
 TargetTransformInfo::getIntrinsicInstrCost(Intrinsic::ID ID,
                                            Type *RetTy,
@@ -619,6 +626,11 @@ struct NoTTI final : ImmutablePass, TargetTransformInfo {
   }
 
   unsigned getMemoryOpCost(unsigned Opcode, Type *Src, unsigned Alignment,
+                           unsigned AddressSpace) const override {
+    return 1;
+  }
+
+  unsigned getMaskedMemoryOpCost(unsigned Opcode, Type *Src, unsigned Alignment,
                            unsigned AddressSpace) const override {
     return 1;
   }

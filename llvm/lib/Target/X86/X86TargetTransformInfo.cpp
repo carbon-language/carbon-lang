@@ -96,6 +96,9 @@ public:
                               unsigned Index) const override;
   unsigned getMemoryOpCost(unsigned Opcode, Type *Src, unsigned Alignment,
                            unsigned AddressSpace) const override;
+  unsigned getMaskedMemoryOpCost(unsigned Opcode, Type *Src,
+                                 unsigned Alignment,
+                                 unsigned AddressSpace) const override;
 
   unsigned getAddressComputationCost(Type *PtrTy,
                                      bool IsComplex) const override;
@@ -915,6 +918,60 @@ unsigned X86TTI::getMemoryOpCost(unsigned Opcode, Type *Src, unsigned Alignment,
     Cost*=2;
 
   return Cost;
+}
+
+unsigned X86TTI::getMaskedMemoryOpCost(unsigned Opcode, Type *SrcTy,
+                                       unsigned Alignment,
+                                       unsigned AddressSpace) const {
+  VectorType *SrcVTy = dyn_cast<VectorType>(SrcTy);
+  if (!SrcVTy)
+    // To calculate scalar take the regular cost, without mask
+    return getMemoryOpCost(Opcode, SrcTy, Alignment, AddressSpace);
+
+  unsigned NumElem = SrcVTy->getVectorNumElements();
+  VectorType *MaskTy =
+    VectorType::get(Type::getInt8Ty(getGlobalContext()), NumElem);
+  if ((Opcode == Instruction::Load && !isLegalMaskedLoad(SrcVTy, 1)) ||
+      (Opcode == Instruction::Store && !isLegalMaskedStore(SrcVTy, 1)) ||
+      !isPowerOf2_32(NumElem)) {
+    // Scalarization
+    unsigned MaskSplitCost = getScalarizationOverhead(MaskTy, false, true);
+    unsigned ScalarCompareCost =
+      getCmpSelInstrCost(Instruction::ICmp,
+                         Type::getInt8Ty(getGlobalContext()), NULL);
+    unsigned BranchCost = getCFInstrCost(Instruction::Br);
+    unsigned MaskCmpCost = NumElem * (BranchCost + ScalarCompareCost);
+
+    unsigned ValueSplitCost =
+      getScalarizationOverhead(SrcVTy, Opcode == Instruction::Load,
+                               Opcode == Instruction::Store);
+    unsigned MemopCost = NumElem *
+      TargetTransformInfo::getMemoryOpCost(Opcode, SrcVTy->getScalarType(),
+                                           Alignment, AddressSpace);
+    return MemopCost + ValueSplitCost + MaskSplitCost + MaskCmpCost;
+  }
+
+  // Legalize the type.
+  std::pair<unsigned, MVT> LT = TLI->getTypeLegalizationCost(SrcVTy);
+  unsigned Cost = 0;
+  if (LT.second != TLI->getValueType(SrcVTy).getSimpleVT() &&
+      LT.second.getVectorNumElements() == NumElem)
+    // Promotion requires expand/truncate for data and a shuffle for mask.
+    Cost += getShuffleCost(TargetTransformInfo::SK_Alternate, SrcVTy, 0, 0) +
+      getShuffleCost(TargetTransformInfo::SK_Alternate, MaskTy, 0, 0);
+  
+  else if (LT.second.getVectorNumElements() > NumElem) {
+    VectorType *NewMaskTy = VectorType::get(MaskTy->getVectorElementType(),
+                                            LT.second.getVectorNumElements());
+    // Expanding requires fill mask with zeroes
+    Cost += getShuffleCost(TargetTransformInfo::SK_InsertSubvector,
+                           NewMaskTy, 0, MaskTy);
+  }
+  if (!ST->hasAVX512())
+    return Cost + LT.first*4; // Each maskmov costs 4
+
+  // AVX-512 masked load/store is cheapper
+  return Cost+LT.first;
 }
 
 unsigned X86TTI::getAddressComputationCost(Type *Ty, bool IsComplex) const {
