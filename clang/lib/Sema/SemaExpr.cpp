@@ -11568,7 +11568,8 @@ void Sema::MarkFunctionReferenced(SourceLocation Loc, FunctionDecl *Func,
   // We (incorrectly) mark overload resolution as an unevaluated context, so we
   // can just check that here. Skip the rest of this function if we've already
   // marked the function as used.
-  if (Func->isUsed(false) || !IsPotentiallyEvaluatedContext(*this)) {
+  if (Func->isUsed(/*CheckUsedAttr=*/false) ||
+      !IsPotentiallyEvaluatedContext(*this)) {
     // C++11 [temp.inst]p3:
     //   Unless a function template specialization has been explicitly
     //   instantiated or explicitly specialized, the function template
