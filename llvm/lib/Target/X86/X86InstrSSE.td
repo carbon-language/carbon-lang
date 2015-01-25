@@ -4827,13 +4827,13 @@ multiclass sse2_pinsrw<bit Is2Addr = 1> {
 // Extract
 let Predicates = [HasAVX] in
 def VPEXTRWri : Ii8<0xC5, MRMSrcReg,
-                    (outs GR32orGR64:$dst), (ins VR128:$src1, i32i8imm:$src2),
+                    (outs GR32orGR64:$dst), (ins VR128:$src1, u8imm:$src2),
                     "vpextrw\t{$src2, $src1, $dst|$dst, $src1, $src2}",
                     [(set GR32orGR64:$dst, (X86pextrw (v8i16 VR128:$src1),
                                             imm:$src2))]>, PD, VEX,
                 Sched<[WriteShuffle]>;
 def PEXTRWri : PDIi8<0xC5, MRMSrcReg,
-                    (outs GR32orGR64:$dst), (ins VR128:$src1, i32i8imm:$src2),
+                    (outs GR32orGR64:$dst), (ins VR128:$src1, u8imm:$src2),
                     "pextrw\t{$src2, $src1, $dst|$dst, $src1, $src2}",
                     [(set GR32orGR64:$dst, (X86pextrw (v8i16 VR128:$src1),
                                             imm:$src2))], IIC_SSE_PEXTRW>,
@@ -6324,7 +6324,7 @@ let Predicates = [UseSSE41] in {
 /// SS41I_binop_ext8 - SSE 4.1 extract 8 bits to 32 bit reg or 8 bit mem
 multiclass SS41I_extract8<bits<8> opc, string OpcodeStr> {
   def rr : SS4AIi8<opc, MRMDestReg, (outs GR32orGR64:$dst),
-                 (ins VR128:$src1, i32i8imm:$src2),
+                 (ins VR128:$src1, u8imm:$src2),
                  !strconcat(OpcodeStr,
                             "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
                  [(set GR32orGR64:$dst, (X86pextrb (v16i8 VR128:$src1),
@@ -6333,7 +6333,7 @@ multiclass SS41I_extract8<bits<8> opc, string OpcodeStr> {
   let hasSideEffects = 0, mayStore = 1,
       SchedRW = [WriteShuffleLd, WriteRMW] in
   def mr : SS4AIi8<opc, MRMDestMem, (outs),
-                 (ins i8mem:$dst, VR128:$src1, i32i8imm:$src2),
+                 (ins i8mem:$dst, VR128:$src1, u8imm:$src2),
                  !strconcat(OpcodeStr,
                             "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
                  [(store (i8 (trunc (assertzext (X86pextrb (v16i8 VR128:$src1),
@@ -6350,7 +6350,7 @@ defm PEXTRB      : SS41I_extract8<0x14, "pextrb">;
 multiclass SS41I_extract16<bits<8> opc, string OpcodeStr> {
   let isCodeGenOnly = 1, ForceDisassemble = 1, hasSideEffects = 0 in
   def rr_REV : SS4AIi8<opc, MRMDestReg, (outs GR32orGR64:$dst),
-                   (ins VR128:$src1, i32i8imm:$src2),
+                   (ins VR128:$src1, u8imm:$src2),
                    !strconcat(OpcodeStr,
                    "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
                    []>, Sched<[WriteShuffle]>;
@@ -6358,7 +6358,7 @@ multiclass SS41I_extract16<bits<8> opc, string OpcodeStr> {
   let hasSideEffects = 0, mayStore = 1,
       SchedRW = [WriteShuffleLd, WriteRMW] in
   def mr : SS4AIi8<opc, MRMDestMem, (outs),
-                 (ins i16mem:$dst, VR128:$src1, i32i8imm:$src2),
+                 (ins i16mem:$dst, VR128:$src1, u8imm:$src2),
                  !strconcat(OpcodeStr,
                   "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
                  [(store (i16 (trunc (assertzext (X86pextrw (v8i16 VR128:$src1),
@@ -6374,7 +6374,7 @@ defm PEXTRW      : SS41I_extract16<0x15, "pextrw">;
 /// SS41I_extract32 - SSE 4.1 extract 32 bits to int reg or memory destination
 multiclass SS41I_extract32<bits<8> opc, string OpcodeStr> {
   def rr : SS4AIi8<opc, MRMDestReg, (outs GR32:$dst),
-                 (ins VR128:$src1, i32i8imm:$src2),
+                 (ins VR128:$src1, u8imm:$src2),
                  !strconcat(OpcodeStr,
                   "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
                  [(set GR32:$dst,
@@ -6382,7 +6382,7 @@ multiclass SS41I_extract32<bits<8> opc, string OpcodeStr> {
                   Sched<[WriteShuffle]>;
   let SchedRW = [WriteShuffleLd, WriteRMW] in
   def mr : SS4AIi8<opc, MRMDestMem, (outs),
-                 (ins i32mem:$dst, VR128:$src1, i32i8imm:$src2),
+                 (ins i32mem:$dst, VR128:$src1, u8imm:$src2),
                  !strconcat(OpcodeStr,
                   "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
                  [(store (extractelt (v4i32 VR128:$src1), imm:$src2),
@@ -6397,7 +6397,7 @@ defm PEXTRD      : SS41I_extract32<0x16, "pextrd">;
 /// SS41I_extract32 - SSE 4.1 extract 32 bits to int reg or memory destination
 multiclass SS41I_extract64<bits<8> opc, string OpcodeStr> {
   def rr : SS4AIi8<opc, MRMDestReg, (outs GR64:$dst),
-                 (ins VR128:$src1, i32i8imm:$src2),
+                 (ins VR128:$src1, u8imm:$src2),
                  !strconcat(OpcodeStr,
                   "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
                  [(set GR64:$dst,
@@ -6405,7 +6405,7 @@ multiclass SS41I_extract64<bits<8> opc, string OpcodeStr> {
                   Sched<[WriteShuffle]>, REX_W;
   let SchedRW = [WriteShuffleLd, WriteRMW] in
   def mr : SS4AIi8<opc, MRMDestMem, (outs),
-                 (ins i64mem:$dst, VR128:$src1, i32i8imm:$src2),
+                 (ins i64mem:$dst, VR128:$src1, u8imm:$src2),
                  !strconcat(OpcodeStr,
                   "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
                  [(store (extractelt (v2i64 VR128:$src1), imm:$src2),
@@ -6422,7 +6422,7 @@ defm PEXTRQ      : SS41I_extract64<0x16, "pextrq">;
 multiclass SS41I_extractf32<bits<8> opc, string OpcodeStr,
                             OpndItins itins = DEFAULT_ITINS> {
   def rr : SS4AIi8<opc, MRMDestReg, (outs GR32orGR64:$dst),
-                 (ins VR128:$src1, i32i8imm:$src2),
+                 (ins VR128:$src1, u8imm:$src2),
                  !strconcat(OpcodeStr,
                   "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
                  [(set GR32orGR64:$dst,
@@ -6430,7 +6430,7 @@ multiclass SS41I_extractf32<bits<8> opc, string OpcodeStr,
                     itins.rr>, Sched<[WriteFBlend]>;
   let SchedRW = [WriteFBlendLd, WriteRMW] in
   def mr : SS4AIi8<opc, MRMDestMem, (outs),
-                 (ins f32mem:$dst, VR128:$src1, i32i8imm:$src2),
+                 (ins f32mem:$dst, VR128:$src1, u8imm:$src2),
                  !strconcat(OpcodeStr,
                   "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
                  [(store (extractelt (bc_v4i32 (v4f32 VR128:$src1)), imm:$src2),
@@ -6461,7 +6461,7 @@ def : Pat<(store (f32 (bitconvert (extractelt (bc_v4i32 (v4f32 VR128:$src1)),
 
 multiclass SS41I_insert8<bits<8> opc, string asm, bit Is2Addr = 1> {
   def rr : SS4AIi8<opc, MRMSrcReg, (outs VR128:$dst),
-      (ins VR128:$src1, GR32orGR64:$src2, i32i8imm:$src3),
+      (ins VR128:$src1, GR32orGR64:$src2, u8imm:$src3),
       !if(Is2Addr,
         !strconcat(asm, "\t{$src3, $src2, $dst|$dst, $src2, $src3}"),
         !strconcat(asm,
@@ -6470,7 +6470,7 @@ multiclass SS41I_insert8<bits<8> opc, string asm, bit Is2Addr = 1> {
         (X86pinsrb VR128:$src1, GR32orGR64:$src2, imm:$src3))]>,
       Sched<[WriteShuffle]>;
   def rm : SS4AIi8<opc, MRMSrcMem, (outs VR128:$dst),
-      (ins VR128:$src1, i8mem:$src2, i32i8imm:$src3),
+      (ins VR128:$src1, i8mem:$src2, u8imm:$src3),
       !if(Is2Addr,
         !strconcat(asm, "\t{$src3, $src2, $dst|$dst, $src2, $src3}"),
         !strconcat(asm,
@@ -6487,7 +6487,7 @@ let Constraints = "$src1 = $dst" in
 
 multiclass SS41I_insert32<bits<8> opc, string asm, bit Is2Addr = 1> {
   def rr : SS4AIi8<opc, MRMSrcReg, (outs VR128:$dst),
-      (ins VR128:$src1, GR32:$src2, i32i8imm:$src3),
+      (ins VR128:$src1, GR32:$src2, u8imm:$src3),
       !if(Is2Addr,
         !strconcat(asm, "\t{$src3, $src2, $dst|$dst, $src2, $src3}"),
         !strconcat(asm,
@@ -6496,7 +6496,7 @@ multiclass SS41I_insert32<bits<8> opc, string asm, bit Is2Addr = 1> {
         (v4i32 (insertelt VR128:$src1, GR32:$src2, imm:$src3)))]>,
       Sched<[WriteShuffle]>;
   def rm : SS4AIi8<opc, MRMSrcMem, (outs VR128:$dst),
-      (ins VR128:$src1, i32mem:$src2, i32i8imm:$src3),
+      (ins VR128:$src1, i32mem:$src2, u8imm:$src3),
       !if(Is2Addr,
         !strconcat(asm, "\t{$src3, $src2, $dst|$dst, $src2, $src3}"),
         !strconcat(asm,
@@ -6513,7 +6513,7 @@ let Constraints = "$src1 = $dst" in
 
 multiclass SS41I_insert64<bits<8> opc, string asm, bit Is2Addr = 1> {
   def rr : SS4AIi8<opc, MRMSrcReg, (outs VR128:$dst),
-      (ins VR128:$src1, GR64:$src2, i32i8imm:$src3),
+      (ins VR128:$src1, GR64:$src2, u8imm:$src3),
       !if(Is2Addr,
         !strconcat(asm, "\t{$src3, $src2, $dst|$dst, $src2, $src3}"),
         !strconcat(asm,
@@ -6522,7 +6522,7 @@ multiclass SS41I_insert64<bits<8> opc, string asm, bit Is2Addr = 1> {
         (v2i64 (insertelt VR128:$src1, GR64:$src2, imm:$src3)))]>,
       Sched<[WriteShuffle]>;
   def rm : SS4AIi8<opc, MRMSrcMem, (outs VR128:$dst),
-      (ins VR128:$src1, i64mem:$src2, i32i8imm:$src3),
+      (ins VR128:$src1, i64mem:$src2, u8imm:$src3),
       !if(Is2Addr,
         !strconcat(asm, "\t{$src3, $src2, $dst|$dst, $src2, $src3}"),
         !strconcat(asm,

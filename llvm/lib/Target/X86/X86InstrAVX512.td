@@ -596,13 +596,13 @@ def : Pat<(insert_subvector undef, (v8f32 VR256X:$src), (iPTR 0)),
 
 // vextractps - extract 32 bits from XMM
 def VEXTRACTPSzrr : AVX512AIi8<0x17, MRMDestReg, (outs GR32:$dst),
-      (ins VR128X:$src1, i32i8imm:$src2),
+      (ins VR128X:$src1, u8imm:$src2),
       "vextractps\t{$src2, $src1, $dst|$dst, $src1, $src2}",
       [(set GR32:$dst, (extractelt (bc_v4i32 (v4f32 VR128X:$src1)), imm:$src2))]>,
       EVEX;
 
 def VEXTRACTPSzmr : AVX512AIi8<0x17, MRMDestMem, (outs),
-      (ins f32mem:$dst, VR128X:$src1, i32i8imm:$src2),
+      (ins f32mem:$dst, VR128X:$src1, u8imm:$src2),
       "vextractps\t{$src2, $src1, $dst|$dst, $src1, $src2}",
       [(store (extractelt (bc_v4i32 (v4f32 VR128X:$src1)), imm:$src2),
                           addr:$dst)]>, EVEX, EVEX_CD8<32, CD8VT1>;
