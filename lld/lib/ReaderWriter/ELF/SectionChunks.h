@@ -1039,7 +1039,7 @@ private:
     uint32_t index =
         _symbolTable ? _symbolTable->getSymbolTableIndex(ref.target())
                      : (uint32_t)STN_UNDEF;
-    r.setSymbolAndType(index, ref.kindValue());
+    r.setSymbolAndType(index, ref.kindValue(), false);
     r.r_offset = writer->addressOfAtom(&atom) + ref.offsetInAtom();
     r.r_addend = 0;
     // The addend is used only by relative relocations
@@ -1057,7 +1057,7 @@ private:
     uint32_t index =
         _symbolTable ? _symbolTable->getSymbolTableIndex(ref.target())
                      : (uint32_t)STN_UNDEF;
-    r.setSymbolAndType(index, ref.kindValue());
+    r.setSymbolAndType(index, ref.kindValue(), false);
     r.r_offset = writer->addressOfAtom(&atom) + ref.offsetInAtom();
     DEBUG_WITH_TYPE("ELFRelocationTable",
                     llvm::dbgs() << ref.kindValue() << " relocation at "
