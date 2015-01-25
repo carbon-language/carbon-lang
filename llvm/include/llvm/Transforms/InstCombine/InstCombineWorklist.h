@@ -23,7 +23,7 @@ namespace llvm {
 
 /// InstCombineWorklist - This is the worklist management logic for
 /// InstCombine.
-class LLVM_LIBRARY_VISIBILITY InstCombineWorklist {
+class InstCombineWorklist {
   SmallVector<Instruction*, 256> Worklist;
   DenseMap<Instruction*, unsigned> WorklistMap;
 
