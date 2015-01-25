@@ -1,4 +1,4 @@
-; RUN: opt %loadPolly -basicaa -polly-codegen-isl -polly-codegen-scev -S < %s | FileCheck %s
+; RUN: opt %loadPolly -basicaa -polly-codegen-isl -S < %s | FileCheck %s
 ;
 ; Verify that we remove the lifetime markers from the optimized SCoP.
 ;
