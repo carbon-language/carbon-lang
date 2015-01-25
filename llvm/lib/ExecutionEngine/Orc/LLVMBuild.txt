@@ -19,4 +19,4 @@
 type = Library
 name = OrcJIT
 parent = ExecutionEngine
-required_libraries = Core ExecutionEngine Object RuntimeDyld Support Target TransformUtils
+required_libraries = Core ExecutionEngine Object RuntimeDyld Support TransformUtils
