@@ -108,7 +108,8 @@ private:
     if (!Obj)
       return object::OwningBinary<object::ObjectFile>();
 
-    return {std::move(*Obj), std::move(ObjBuffer)};
+    return object::OwningBinary<object::ObjectFile>(std::move(*Obj),
+                                                    std::move(ObjBuffer));
   }
 
   BaseLayerT &BaseLayer;
