@@ -10,5 +10,5 @@ void FUNC(Base* p) {
   p->Base::abc();
 }
 
-// CHECK: getelementptr inbounds (void (%struct.Base*)** bitcast ([3 x i8*]* @_ZTV4Base to void (%struct.Base*)**), i64 2)
+// CHECK: getelementptr inbounds (void (%struct.Base*)** bitcast ([4 x i8*]* @_ZTV4Base to void (%struct.Base*)**), i64 2)
 // CHECK-NOT: call void @_ZNK4Base3abcEv
