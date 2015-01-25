@@ -101,12 +101,12 @@ private:
   tryToLoadFromObjectCache(const Module &M) {
     std::unique_ptr<MemoryBuffer> ObjBuffer = ObjCache->getObject(&M);
     if (!ObjBuffer)
-      return {nullptr, nullptr};
+      return object::OwningBinary<object::ObjectFile>();
 
     ErrorOr<std::unique_ptr<object::ObjectFile>> Obj =
         object::ObjectFile::createObjectFile(ObjBuffer->getMemBufferRef());
     if (!Obj)
-      return {nullptr, nullptr};
+      return object::OwningBinary<object::ObjectFile>();
 
     return {std::move(*Obj), std::move(ObjBuffer)};
   }
