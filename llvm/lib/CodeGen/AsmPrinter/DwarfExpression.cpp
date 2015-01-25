@@ -92,6 +92,9 @@ bool DwarfExpression::AddMachineRegPiece(unsigned MachineReg,
                                          unsigned PieceSizeInBits,
                                          unsigned PieceOffsetInBits) {
   const TargetRegisterInfo *TRI = getTRI();
+  if (!TRI->isPhysicalRegister(MachineReg))
+    return false;
+
   int Reg = TRI->getDwarfRegNum(MachineReg, false);
 
   // If this is a valid register number, emit it.

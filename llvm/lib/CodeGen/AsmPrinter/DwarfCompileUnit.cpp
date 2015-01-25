@@ -768,15 +768,18 @@ void DwarfCompileUnit::addComplexAddress(const DbgVariable &DV, DIE &Die,
   DIELoc *Loc = new (DIEValueAllocator) DIELoc();
   DIEDwarfExpression DwarfExpr(*Asm, *this, *Loc);
   DIExpression Expr = DV.getExpression();
+  bool ValidReg;
   if (Location.getOffset()) {
-    if (DwarfExpr.AddMachineRegIndirect(Location.getReg(),
-                                        Location.getOffset()))
+    ValidReg = DwarfExpr.AddMachineRegIndirect(Location.getReg(),
+                                               Location.getOffset());
+    if (ValidReg)
       DwarfExpr.AddExpression(Expr);
   } else
-    DwarfExpr.AddMachineRegExpression(Expr, Location.getReg());
+    ValidReg = DwarfExpr.AddMachineRegExpression(Expr, Location.getReg());
 
   // Now attach the location information to the DIE.
-  addBlock(Die, Attribute, Loc);
+  if (ValidReg)
+    addBlock(Die, Attribute, Loc);
 }
 
 /// Add a Dwarf loclistptr attribute data and value.
