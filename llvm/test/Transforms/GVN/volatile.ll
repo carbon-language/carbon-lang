@@ -73,3 +73,85 @@ entry:
   ret i32 %add
 }
 
+; Does cross block redundancy elimination work with volatiles?
+define i32 @test6(i32* noalias nocapture %p, i32* noalias nocapture %q) {
+; CHECK-LABEL: test6
+; CHECK:      %y1 = load i32* %p
+; CHECK-LABEL: header
+; CHECK:      %x = load volatile i32* %q
+; CHECK-NEXT: %add = sub i32 %y1, %x
+entry:
+  %y1 = load i32* %p
+  call void @use(i32 %y1)
+  br label %header
+header:
+  %x = load volatile i32* %q
+  %y = load i32* %p
+  %add = sub i32 %y, %x
+  %cnd = icmp eq i32 %add, 0
+  br i1 %cnd, label %exit, label %header
+exit:
+  ret i32 %add
+}
+
+; Does cross block PRE work with volatiles?
+define i32 @test7(i1 %c, i32* noalias nocapture %p, i32* noalias nocapture %q) {
+; CHECK-LABEL: test7
+; CHECK-LABEL: entry.header_crit_edge:
+; CHECK:       %y.pre = load i32* %p
+; CHECK-LABEL: skip:
+; CHECK:       %y1 = load i32* %p
+; CHECK-LABEL: header:
+; CHECK:      %y = phi i32
+; CHECK-NEXT: %x = load volatile i32* %q
+; CHECK-NEXT: %add = sub i32 %y, %x
+entry:
+  br i1 %c, label %header, label %skip
+skip:
+  %y1 = load i32* %p
+  call void @use(i32 %y1)
+  br label %header
+header:
+  %x = load volatile i32* %q
+  %y = load i32* %p
+  %add = sub i32 %y, %x
+  %cnd = icmp eq i32 %add, 0
+  br i1 %cnd, label %exit, label %header
+exit:
+  ret i32 %add
+}
+
+; Another volatile PRE case - two paths through a loop
+; load in preheader, one path read only, one not
+define i32 @test8(i1 %b, i1 %c, i32* noalias %p, i32* noalias %q) {
+; CHECK-LABEL: test8
+; CHECK-LABEL: entry
+; CHECK:       %y1 = load i32* %p
+; CHECK-LABEL: header:
+; CHECK:      %y = phi i32
+; CHECK-NEXT: %x = load volatile i32* %q
+; CHECK-NOT:  load
+; CHECK-LABEL: skip.header_crit_edge:
+; CHECK:       %y.pre = load i32* %p
+entry:
+  %y1 = load i32* %p
+  call void @use(i32 %y1)
+  br label %header
+header:
+  %x = load volatile i32* %q
+  %y = load i32* %p
+  call void @use(i32 %y)
+  br i1 %b, label %skip, label %header
+skip:
+  ; escaping the arguments is explicitly required since we marked 
+  ; them noalias
+  call void @clobber(i32* %p, i32* %q)
+  br i1 %c, label %header, label %exit
+exit:
+  %add = sub i32 %y, %x
+  ret i32 %add
+}
+
+declare void @use(i32) readonly
+declare void @clobber(i32* %p, i32* %q)
+
