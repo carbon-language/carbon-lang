@@ -33,10 +33,9 @@ struct SubTempl : public Templ<T> {
 
 void f(SubTempl<int>* t) {
   // Qualified calls go through the (qualified) vtable in apple-kext mode.
-  // Since t's this pointer points to SubTempl's vtable, this call needs
-  // to load Templ<int>'s vtable, so that needs to be defined in this TU,
-  // which in turn means that Templ<int>::g needs to be instantiated in this TU,
-  // for it's referenced by the vtable.
+  // Since t's this pointer points to SubTempl's vtable, the call needs
+  // to load Templ<int>'s vtable.  Hence, Templ<int>::g needs to be
+  // instantiated in this TU, for it's referenced by the vtable.
   // (This happens only in apple-kext mode; elsewhere virtual calls can always
   // use the vtable pointer off this instead of having to load the vtable
   // symbol.)
