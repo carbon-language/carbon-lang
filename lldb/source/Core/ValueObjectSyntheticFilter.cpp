@@ -298,3 +298,9 @@ ValueObjectSynthetic::CanProvideValue ()
         return true;
     return m_parent->CanProvideValue();
 }
+
+bool
+ValueObjectSynthetic::SetValueFromCString (const char *value_str, Error& error)
+{
+    return m_parent->SetValueFromCString(value_str, error);
+}

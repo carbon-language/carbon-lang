@@ -140,6 +140,9 @@ public:
         return (UpdateValueIfNeeded(), m_provides_value == eLazyBoolYes);
     }
     
+    virtual bool
+    SetValueFromCString (const char *value_str, Error& error);
+    
 protected:
     virtual bool
     UpdateValue ();
