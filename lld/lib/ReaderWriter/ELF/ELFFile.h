@@ -605,8 +605,9 @@ template <class ELFT> std::error_code ELFFile<ELFT>::createAtoms() {
 
     // Sort symbols by position.
     std::stable_sort(symbols.begin(), symbols.end(),
-                     [](Elf_Sym_Iter A,
-                        Elf_Sym_Iter B) { return A->st_value < B->st_value; });
+                     [](Elf_Sym_Iter a, Elf_Sym_Iter b) {
+                       return a->st_value < b->st_value;
+                     });
 
     ErrorOr<StringRef> sectionName = this->getSectionName(section);
     if (std::error_code ec = sectionName.getError())
