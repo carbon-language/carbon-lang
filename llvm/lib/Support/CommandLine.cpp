@@ -1861,6 +1861,20 @@ void cl::HideUnrelatedOptions(cl::OptionCategory &Category) {
   }
 }
 
+void cl::HideUnrelatedOptions(
+    SmallVectorImpl<cl::OptionCategory *> &Categories) {
+  auto CategoriesBegin = Categories.begin();
+  auto CategoriesEnd = Categories.end();
+  StringMap<cl::Option *> Options;
+  cl::getRegisteredOptions(Options);
+  for (auto &I : Options) {
+    if (std::find(CategoriesBegin, CategoriesEnd, I.second->Category) ==
+            CategoriesEnd &&
+        I.second->Category != &GenericCategory)
+      I.second->setHiddenFlag(cl::ReallyHidden);
+  }
+}
+
 void LLVMParseCommandLineOptions(int argc, const char *const *argv,
                                  const char *Overview) {
   llvm::cl::ParseCommandLineOptions(argc, argv, Overview);

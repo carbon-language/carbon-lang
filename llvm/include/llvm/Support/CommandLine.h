@@ -1931,6 +1931,15 @@ bool ExpandResponseFiles(StringSaver &Saver, TokenizerCallback Tokenizer,
 /// option category to display in the -help output.
 void HideUnrelatedOptions(cl::OptionCategory &Category);
 
+/// \brief Mark all options not part of the categories as cl::ReallyHidden.
+///
+/// \param Categories the categories of options to keep displaying.
+///
+/// Some tools (like clang-format) like to be able to hide all options that are
+/// not specific to the tool. This function allows a tool to specify a single
+/// option category to display in the -help output.
+void HideUnrelatedOptions(SmallVectorImpl<cl::OptionCategory *> &Categories);
+
 } // End namespace cl
 
 } // End namespace llvm
