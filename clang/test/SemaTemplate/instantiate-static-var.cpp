@@ -114,3 +114,15 @@ namespace PR6449 {
   template class X1<char>;
 
 }
+
+typedef char MyString[100];
+template <typename T>
+struct StaticVarWithTypedefString {
+  static MyString str;
+};
+template <typename T>
+MyString StaticVarWithTypedefString<T>::str = "";
+
+void testStaticVarWithTypedefString() {
+  (void)StaticVarWithTypedefString<int>::str;
+}

@@ -149,9 +149,9 @@ static void updateStringLiteralType(Expr *E, QualType Ty) {
 static void CheckStringInit(Expr *Str, QualType &DeclT, const ArrayType *AT,
                             Sema &S) {
   // Get the length of the string as parsed.
-  uint64_t StrLength =
-    cast<ConstantArrayType>(Str->getType())->getSize().getZExtValue();
-
+  auto *ConstantArrayTy =
+      cast<ConstantArrayType>(Str->getType()->getUnqualifiedDesugaredType());
+  uint64_t StrLength = ConstantArrayTy->getSize().getZExtValue();
 
   if (const IncompleteArrayType *IAT = dyn_cast<IncompleteArrayType>(AT)) {
     // C99 6.7.8p14. We have an array of character type with unknown size
