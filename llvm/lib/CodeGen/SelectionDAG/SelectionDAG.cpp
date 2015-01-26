@@ -4738,10 +4738,10 @@ SelectionDAG::getLoad(ISD::MemIndexedMode AM, ISD::LoadExtType ExtType,
     assert(VT.isInteger() == MemVT.isInteger() &&
            "Cannot convert from FP to Int or Int -> FP!");
     assert(VT.isVector() == MemVT.isVector() &&
-           "Cannot use trunc store to convert to or from a vector!");
+           "Cannot use an ext load to convert to or from a vector!");
     assert((!VT.isVector() ||
             VT.getVectorNumElements() == MemVT.getVectorNumElements()) &&
-           "Cannot use trunc store to change the number of vector elements!");
+           "Cannot use an ext load to change the number of vector elements!");
   }
 
   bool Indexed = AM != ISD::UNINDEXED;
