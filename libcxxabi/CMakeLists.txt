@@ -4,6 +4,10 @@
 
 cmake_minimum_required(VERSION 2.8.8)
 
+if(POLICY CMP0042)
+  cmake_policy(SET CMP0042 NEW) # Set MACOSX_RPATH=YES by default
+endif()
+
 if (CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
   project(libcxxabi)
 
