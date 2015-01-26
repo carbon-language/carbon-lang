@@ -410,9 +410,12 @@ raw_ostream &raw_ostream::operator<<(const FormattedString &FS) {
 raw_ostream &raw_ostream::operator<<(const FormattedNumber &FN) {
   if (FN.Hex) {
     unsigned Nibbles = (64 - countLeadingZeros(FN.HexValue)+3)/4;
-    unsigned Width = (FN.Width > Nibbles+2) ? FN.Width : Nibbles+2;
-        
+    unsigned PrefixChars = FN.HexPrefix ? 2 : 0;
+    unsigned Width = std::max(FN.Width, Nibbles + PrefixChars);
+
     char NumberBuffer[20] = "0x0000000000000000";
+    if (!FN.HexPrefix)
+      NumberBuffer[1] = '0';
     char *EndPtr = NumberBuffer+Width;
     char *CurPtr = EndPtr;
     const char A = FN.Upper ? 'A' : 'a';

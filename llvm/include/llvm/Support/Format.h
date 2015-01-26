@@ -259,21 +259,38 @@ class FormattedNumber {
   unsigned Width;
   bool Hex;
   bool Upper;
+  bool HexPrefix;
   friend class raw_ostream;
 public:
-    FormattedNumber(uint64_t HV, int64_t DV, unsigned W, bool H, bool U)
-      : HexValue(HV), DecValue(DV), Width(W), Hex(H), Upper(U) { }
+  FormattedNumber(uint64_t HV, int64_t DV, unsigned W, bool H, bool U,
+                  bool Prefix)
+      : HexValue(HV), DecValue(DV), Width(W), Hex(H), Upper(U),
+        HexPrefix(Prefix) {}
 };
 
 /// format_hex - Output \p N as a fixed width hexadecimal. If number will not
 /// fit in width, full number is still printed.  Examples:
-///   OS << format_hex(255, 4)        => 0xff
-///   OS << format_hex(255, 4, true)  => 0xFF
-///   OS << format_hex(255, 6)        => 0x00ff
-///   OS << format_hex(255, 2)        => 0xff
-inline FormattedNumber format_hex(uint64_t N, unsigned Width, bool Upper=false) {
+///   OS << format_hex(255, 4)              => 0xff
+///   OS << format_hex(255, 4, true)        => 0xFF
+///   OS << format_hex(255, 6)              => 0x00ff
+///   OS << format_hex(255, 2)              => 0xff
+inline FormattedNumber format_hex(uint64_t N, unsigned Width,
+                                  bool Upper = false) {
   assert(Width <= 18 && "hex width must be <= 18");
-  return FormattedNumber(N, 0, Width, true, Upper);
+  return FormattedNumber(N, 0, Width, true, Upper, true);
+}
+
+/// format_hex_no_prefix - Output \p N as a fixed width hexadecimal. Does not
+/// prepend '0x' to the outputted string.  If number will not fit in width,
+/// full number is still printed.  Examples:
+///   OS << format_hex_no_prefix(255, 4)              => ff
+///   OS << format_hex_no_prefix(255, 4, true)        => FF
+///   OS << format_hex_no_prefix(255, 6)              => 00ff
+///   OS << format_hex_no_prefix(255, 2)              => ff
+inline FormattedNumber format_hex_no_prefix(uint64_t N, unsigned Width,
+                                            bool Upper = false) {
+  assert(Width <= 18 && "hex width must be <= 18");
+  return FormattedNumber(N, 0, Width, true, Upper, false);
 }
 
 /// format_decimal - Output \p N as a right justified, fixed-width decimal. If 
@@ -283,7 +300,7 @@ inline FormattedNumber format_hex(uint64_t N, unsigned Width, bool Upper=false) 
 ///   OS << format_decimal(-1, 3)    => " -1"
 ///   OS << format_decimal(12345, 3) => "12345"
 inline FormattedNumber format_decimal(int64_t N, unsigned Width) {
-  return FormattedNumber(0, N, Width, false, false);
+  return FormattedNumber(0, N, Width, false, false, false);
 }
 
 

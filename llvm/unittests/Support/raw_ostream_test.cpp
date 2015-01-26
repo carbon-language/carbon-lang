@@ -162,6 +162,8 @@ TEST(raw_ostreamTest, FormatHex) {
   EXPECT_EQ("0x1",        printToString(format_hex(1, 3), 3));
   EXPECT_EQ("0x12",       printToString(format_hex(0x12, 3), 4));
   EXPECT_EQ("0x123",      printToString(format_hex(0x123, 3), 5));
+  EXPECT_EQ("FF",         printToString(format_hex_no_prefix(0xFF, 2, true), 4));
+  EXPECT_EQ("ABCD",       printToString(format_hex_no_prefix(0xABCD, 2, true), 4));
   EXPECT_EQ("0xffffffffffffffff",     
                           printToString(format_hex(UINT64_MAX, 18), 18));
   EXPECT_EQ("0x8000000000000000",     
