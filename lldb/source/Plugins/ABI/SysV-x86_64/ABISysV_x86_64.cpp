@@ -1142,6 +1142,7 @@ ABISysV_x86_64::RegisterIsVolatile (const RegisterInfo *reg_info)
 // (this doc is also commonly referred to as the x86-64/AMD64 psABI)
 // Edited by Michael Matz, Jan Hubicka, Andreas Jaeger, and Mark Mitchell
 // current version is 0.99.6 released 2012-07-02 at http://refspecs.linuxfoundation.org/elf/x86-64-abi-0.99.pdf
+// It's being revised & updated at https://github.com/hjl-tools/x86-psABI/
 
 bool
 ABISysV_x86_64::RegisterIsCalleeSaved (const RegisterInfo *reg_info)
