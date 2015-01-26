@@ -782,6 +782,8 @@ TEST(MemorySanitizer, poll) {
   close(pipefd[1]);
 }
 
+// There is no ppoll() on FreeBSD.
+#if !defined (__FreeBSD__)
 TEST(MemorySanitizer, ppoll) {
   int* pipefd = new int[2];
   int res = pipe(pipefd);
@@ -806,6 +808,7 @@ TEST(MemorySanitizer, ppoll) {
   close(pipefd[0]);
   close(pipefd[1]);
 }
+#endif
 
 TEST(MemorySanitizer, poll_positive) {
   int* pipefd = new int[2];
