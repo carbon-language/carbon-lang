@@ -298,8 +298,11 @@ public:
   }
 
   void visitSelectInst(SelectInst &Inst) {
-    auto *Condition = Inst.getCondition();
-    Output.push_back(Edge(&Inst, Condition, EdgeType::Assign, AttrNone));
+    // Condition is not processed here (The actual statement producing
+    // the condition result is processed elsewhere). For select, the
+    // condition is evaluated, but not loaded, stored, or assigned
+    // simply as a result of being the condition of a select.
+
     auto *TrueVal = Inst.getTrueValue();
     Output.push_back(Edge(&Inst, TrueVal, EdgeType::Assign, AttrNone));
     auto *FalseVal = Inst.getFalseValue();
@@ -771,7 +774,10 @@ static Optional<StratifiedAttr> valueToAttrIndex(Value *Val) {
     return AttrGlobalIndex;
 
   if (auto *Arg = dyn_cast<Argument>(Val))
-    if (!Arg->hasNoAliasAttr())
+    // Only pointer arguments should have the argument attribute,
+    // because things can't escape through scalars without us seeing a
+    // cast, and thus, interaction with them doesn't matter.
+    if (!Arg->hasNoAliasAttr() && Arg->getType()->isPointerTy())
       return argNumberToAttrIndex(Arg->getArgNo());
   return NoneType();
 }
@@ -994,10 +1000,6 @@ CFLAliasAnalysis::query(const AliasAnalysis::Location &LocA,
 
   auto SetA = *MaybeA;
   auto SetB = *MaybeB;
-
-  if (SetA.Index == SetB.Index)
-    return AliasAnalysis::PartialAlias;
-
   auto AttrsA = Sets.getLink(SetA.Index).Attrs;
   auto AttrsB = Sets.getLink(SetB.Index).Attrs;
   // Stratified set attributes are used as markets to signify whether a member
@@ -1010,6 +1012,17 @@ CFLAliasAnalysis::query(const AliasAnalysis::Location &LocA,
   // the sets has no values that could legally be altered by changing the value 
   // of an argument or global, then we don't have to be as conservative.
   if (AttrsA.any() && AttrsB.any())
+    return AliasAnalysis::MayAlias;
+
+  // We currently unify things even if the accesses to them may not be in
+  // bounds, so we can't return partial alias here because we don't
+  // know whether the pointer is really within the object or not.
+  // IE Given an out of bounds GEP and an alloca'd pointer, we may
+  // unify the two. We can't return partial alias for this case.
+  // Since we do not currently track enough information to
+  // differentiate
+
+  if (SetA.Index == SetB.Index)
     return AliasAnalysis::MayAlias;
 
   return AliasAnalysis::NoAlias;
