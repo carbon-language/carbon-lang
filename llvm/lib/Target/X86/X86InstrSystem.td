@@ -38,9 +38,6 @@ def INT3 : I<0xcc, RawFrm, (outs), (ins), "int3",
               [(int_x86_int (i8 3))], IIC_INT3>;
 } // SchedRW
 
-def : Pat<(debugtrap),
-          (INT3)>;
-
 // The long form of "int $3" turns into int3 as a size optimization.
 // FIXME: This doesn't work because InstAlias can't match immediate constants.
 //def : InstAlias<"int\t$3", (INT3)>;
@@ -71,6 +68,10 @@ def IRET64 : RI<0xcf, RawFrm, (outs), (ins), "iretq", [], IIC_IRET>,
              Requires<[In64BitMode]>;
 } // SchedRW
 
+def : Pat<(debugtrap),
+          (INT3)>, Requires<[NotPS4]>;
+def : Pat<(debugtrap),
+          (INT (i8 0x41))>, Requires<[IsPS4]>;
 
 //===----------------------------------------------------------------------===//
 //  Input/Output Instructions.
