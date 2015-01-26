@@ -177,15 +177,7 @@ interceptors for the most common libc functions. They make it possible
 to run MemorySanitizer-instrumented programs linked with
 uninstrumented libc. For example, the authors were able to bootstrap
 MemorySanitizer-instrumented Clang compiler by linking it with
-self-built instrumented libcxx (as a replacement for libstdc++).
-
-In the case when rebuilding all program dependencies with
-MemorySanitizer is problematic, an experimental MSanDR tool can be
-used. It is a DynamoRio-based tool that uses dynamic instrumentation
-to avoid false positives due to uninstrumented code. The tool simply
-marks memory from instrumented libraries as fully initialized. See
-`http://code.google.com/p/memory-sanitizer/wiki/Running#Running_with_the_dynamic_tool`
-for more information.
+self-built instrumented libc++ (as a replacement for libstdc++).
 
 Supported Platforms
 ===================
