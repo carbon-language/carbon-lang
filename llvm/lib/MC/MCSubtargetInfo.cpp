@@ -35,7 +35,7 @@ MCSubtargetInfo::InitCPUSchedModel(StringRef CPU) {
 }
 
 void
-MCSubtargetInfo::InitMCSubtargetInfo(StringRef TT, StringRef CPU, StringRef FS,
+MCSubtargetInfo::InitMCSubtargetInfo(StringRef TT, StringRef C, StringRef FS,
                                      ArrayRef<SubtargetFeatureKV> PF,
                                      ArrayRef<SubtargetFeatureKV> PD,
                                      const SubtargetInfoKV *ProcSched,
@@ -46,6 +46,7 @@ MCSubtargetInfo::InitMCSubtargetInfo(StringRef TT, StringRef CPU, StringRef FS,
                                      const unsigned *OC,
                                      const unsigned *FP) {
   TargetTriple = TT;
+  CPU = C;
   ProcFeatures = PF;
   ProcDesc = PD;
   ProcSchedModels = ProcSched;
