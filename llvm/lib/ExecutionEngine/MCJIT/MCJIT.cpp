@@ -77,7 +77,7 @@ MCJIT::MCJIT(std::unique_ptr<Module> M, std::unique_ptr<TargetMachine> tm,
   Modules.clear();
 
   OwnedModules.addModule(std::move(First));
-  setDataLayout(TM->getSubtargetImpl()->getDataLayout());
+  setDataLayout(TM->getDataLayout());
   RegisterJITEventListener(JITEventListener::createGDBRegistrationListener());
 }
 
@@ -139,7 +139,7 @@ std::unique_ptr<MemoryBuffer> MCJIT::emitObject(Module *M) {
 
   PassManager PM;
 
-  M->setDataLayout(TM->getSubtargetImpl()->getDataLayout());
+  M->setDataLayout(TM->getDataLayout());
   PM.add(new DataLayoutPass());
 
   // The RuntimeDyld will take ownership of this shortly
@@ -257,7 +257,7 @@ void MCJIT::finalizeModule(Module *M) {
 }
 
 uint64_t MCJIT::getExistingSymbolAddress(const std::string &Name) {
-  Mangler Mang(TM->getSubtargetImpl()->getDataLayout());
+  Mangler Mang(TM->getDataLayout());
   SmallString<128> FullName;
   Mang.getNameWithPrefix(FullName, Name);
   return Dyld.getSymbolLoadAddress(FullName);
@@ -357,7 +357,7 @@ uint64_t MCJIT::getFunctionAddress(const std::string &Name) {
 void *MCJIT::getPointerToFunction(Function *F) {
   MutexGuard locked(lock);
 
-  Mangler Mang(TM->getSubtargetImpl()->getDataLayout());
+  Mangler Mang(TM->getDataLayout());
   SmallString<128> Name;
   TM->getNameWithPrefix(Name, F, Mang);
 

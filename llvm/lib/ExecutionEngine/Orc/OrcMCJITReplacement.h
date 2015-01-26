@@ -119,14 +119,13 @@ public:
 
   OrcMCJITReplacement(std::unique_ptr<RTDyldMemoryManager> MM,
                       std::unique_ptr<TargetMachine> TM)
-      : TM(std::move(TM)), MM(std::move(MM)),
-        Mang(this->TM->getSubtargetImpl()->getDataLayout()),
+      : TM(std::move(TM)), MM(std::move(MM)), Mang(this->TM->getDataLayout()),
         NotifyObjectLoaded(*this), NotifyFinalized(*this),
         ObjectLayer(ObjectLayerT::CreateRTDyldMMFtor(), NotifyObjectLoaded,
                     NotifyFinalized),
         CompileLayer(ObjectLayer, SimpleCompiler(*this->TM)),
         LazyEmitLayer(CompileLayer) {
-    setDataLayout(this->TM->getSubtargetImpl()->getDataLayout());
+    setDataLayout(this->TM->getDataLayout());
   }
 
   void addModule(std::unique_ptr<Module> M) override {

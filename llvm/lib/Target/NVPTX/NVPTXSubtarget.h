@@ -41,7 +41,6 @@ class NVPTXSubtarget : public NVPTXGenSubtargetInfo {
   // SM version x.y is represented as 10*x+y, e.g. 3.1 == 31
   unsigned int SmVersion;
 
-  const DataLayout DL; // Calculates type size & alignment
   NVPTXInstrInfo InstrInfo;
   NVPTXTargetLowering TLInfo;
   TargetSelectionDAGInfo TSInfo;
@@ -61,7 +60,6 @@ public:
     return &FrameLowering;
   }
   const NVPTXInstrInfo *getInstrInfo() const override { return &InstrInfo; }
-  const DataLayout *getDataLayout() const override { return &DL; }
   const NVPTXRegisterInfo *getRegisterInfo() const override {
     return &InstrInfo.getRegisterInfo();
   }

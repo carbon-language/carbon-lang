@@ -64,36 +64,6 @@ GPOpt("mgpopt", cl::Hidden,
 
 void MipsSubtarget::anchor() { }
 
-static std::string computeDataLayout(const MipsSubtarget &ST) {
-  std::string Ret = "";
-
-  // There are both little and big endian mips.
-  if (ST.isLittle())
-    Ret += "e";
-  else
-    Ret += "E";
-
-  Ret += "-m:m";
-
-  // Pointers are 32 bit on some ABIs.
-  if (!ST.isABI_N64())
-    Ret += "-p:32:32";
-
-  // 8 and 16 bit integers only need no have natural alignment, but try to
-  // align them to 32 bits. 64 bit integers have natural alignment.
-  Ret += "-i8:8:32-i16:16:32-i64:64";
-
-  // 32 bit registers are always available and the stack is at least 64 bit
-  // aligned. On N64 64 bit registers are also available and the stack is
-  // 128 bit aligned.
-  if (ST.isABI_N64() || ST.isABI_N32())
-    Ret += "-n32:64-S128";
-  else
-    Ret += "-n32-S64";
-
-  return Ret;
-}
-
 MipsSubtarget::MipsSubtarget(const std::string &TT, const std::string &CPU,
                              const std::string &FS, bool little,
                              const MipsTargetMachine &TM)
@@ -105,9 +75,9 @@ MipsSubtarget::MipsSubtarget(const std::string &TT, const std::string &CPU,
       HasMips5_32r2(false), InMips16Mode(false),
       InMips16HardFloat(Mips16HardFloat), InMicroMipsMode(false), HasDSP(false),
       HasDSPR2(false), AllowMixed16_32(Mixed16_32 | Mips_Os16), Os16(Mips_Os16),
-      HasMSA(false), TM(TM), TargetTriple(TT),
-      DL(computeDataLayout(initializeSubtargetDependencies(CPU, FS, TM))),
-      TSInfo(DL), InstrInfo(MipsInstrInfo::create(*this)),
+      HasMSA(false), TM(TM), TargetTriple(TT), TSInfo(*TM.getDataLayout()),
+      InstrInfo(
+          MipsInstrInfo::create(initializeSubtargetDependencies(CPU, FS, TM))),
       FrameLowering(MipsFrameLowering::create(*this)),
       TLInfo(MipsTargetLowering::create(TM, *this)) {
 

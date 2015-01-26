@@ -109,8 +109,7 @@ IsGlobalInSmallSectionImpl(const GlobalValue *GV,
     return false;
 
   Type *Ty = GV->getType()->getElementType();
-  return IsInSmallSection(
-      TM.getSubtargetImpl()->getDataLayout()->getTypeAllocSize(Ty));
+  return IsInSmallSection(TM.getDataLayout()->getTypeAllocSize(Ty));
 }
 
 const MCSection *MipsTargetObjectFile::
@@ -132,10 +131,9 @@ SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
 /// Return true if this constant should be placed into small data section.
 bool MipsTargetObjectFile::
 IsConstantInSmallSection(const Constant *CN, const TargetMachine &TM) const {
-  return (TM.getSubtarget<MipsSubtarget>().useSmallSection() &&
-          LocalSData &&
-          IsInSmallSection(TM.getSubtargetImpl()->getDataLayout()
-                           ->getTypeAllocSize(CN->getType())));
+  return (
+      TM.getSubtarget<MipsSubtarget>().useSmallSection() && LocalSData &&
+      IsInSmallSection(TM.getDataLayout()->getTypeAllocSize(CN->getType())));
 }
 
 const MCSection *MipsTargetObjectFile::

@@ -47,6 +47,46 @@ static std::unique_ptr<TargetLoweringObjectFile> createTLOF(const Triple &TT) {
   llvm_unreachable("unknown subtarget type");
 }
 
+static std::string computeDataLayout(const Triple &TT) {
+  // X86 is little endian
+  std::string Ret = "e";
+
+  Ret += DataLayout::getManglingComponent(TT);
+  // X86 and x32 have 32 bit pointers.
+  if ((TT.isArch64Bit() &&
+       (TT.getEnvironment() == Triple::GNUX32 || TT.isOSNaCl())) ||
+      !TT.isArch64Bit())
+    Ret += "-p:32:32";
+
+  // Some ABIs align 64 bit integers and doubles to 64 bits, others to 32.
+  if (TT.isArch64Bit() || TT.isOSWindows() || TT.isOSNaCl())
+    Ret += "-i64:64";
+  else
+    Ret += "-f64:32:64";
+
+  // Some ABIs align long double to 128 bits, others to 32.
+  if (TT.isOSNaCl())
+    ; // No f80
+  else if (TT.isArch64Bit() || TT.isOSDarwin())
+    Ret += "-f80:128";
+  else
+    Ret += "-f80:32";
+
+  // The registers can hold 8, 16, 32 or, in x86-64, 64 bits.
+  if (TT.isArch64Bit())
+    Ret += "-n8:16:32:64";
+  else
+    Ret += "-n8:16:32";
+
+  // The stack is aligned to 32 bits on some ABIs and 128 bits on others.
+  if (!TT.isArch64Bit() && TT.isOSWindows())
+    Ret += "-S32";
+  else
+    Ret += "-S128";
+
+  return Ret;
+}
+
 /// X86TargetMachine ctor - Create an X86 target.
 ///
 X86TargetMachine::X86TargetMachine(const Target &T, StringRef TT, StringRef CPU,
@@ -55,6 +95,7 @@ X86TargetMachine::X86TargetMachine(const Target &T, StringRef TT, StringRef CPU,
                                    CodeGenOpt::Level OL)
     : LLVMTargetMachine(T, TT, CPU, FS, Options, RM, CM, OL),
       TLOF(createTLOF(Triple(getTargetTriple()))),
+      DL(computeDataLayout(Triple(TT))),
       Subtarget(TT, CPU, FS, *this, Options.StackAlignmentOverride) {
   // default to hard float ABI
   if (Options.FloatABIType == FloatABI::Default)

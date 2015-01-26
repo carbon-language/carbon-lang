@@ -16,7 +16,7 @@ class CCIfAlign<string Align, CCAction A> :
   CCIf<!strconcat("ArgFlags.getOrigAlign() == ", Align), A>;
 /// CCIfBigEndian - Match only if we're in big endian mode.
 class CCIfBigEndian<CCAction A> :
-  CCIf<"State.getMachineFunction().getSubtarget().getDataLayout()->isBigEndian()", A>;
+  CCIf<"State.getMachineFunction().getTarget().getDataLayout()->isBigEndian()", A>;
 
 //===----------------------------------------------------------------------===//
 // ARM AAPCS64 Calling Convention

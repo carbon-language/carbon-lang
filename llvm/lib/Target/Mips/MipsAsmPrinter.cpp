@@ -561,7 +561,7 @@ bool MipsAsmPrinter::PrintAsmMemoryOperand(const MachineInstr *MI,
 
 void MipsAsmPrinter::printOperand(const MachineInstr *MI, int opNum,
                                   raw_ostream &O) {
-  const DataLayout *DL = TM.getSubtargetImpl()->getDataLayout();
+  const DataLayout *DL = TM.getDataLayout();
   const MachineOperand &MO = MI->getOperand(opNum);
   bool closeP = false;
 

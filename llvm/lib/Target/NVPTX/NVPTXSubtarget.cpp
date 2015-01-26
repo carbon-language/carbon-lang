@@ -25,17 +25,6 @@ using namespace llvm;
 // Pin the vtable to this file.
 void NVPTXSubtarget::anchor() {}
 
-static std::string computeDataLayout(bool is64Bit) {
-  std::string Ret = "e";
-
-  if (!is64Bit)
-    Ret += "-p:32:32";
-
-  Ret += "-i64:64-v16:16-v32:32-n16:32:64";
-
-  return Ret;
-}
-
 NVPTXSubtarget &NVPTXSubtarget::initializeSubtargetDependencies(StringRef CPU,
                                                                 StringRef FS) {
     // Provide the default CPU if we don't have one.
@@ -57,9 +46,8 @@ NVPTXSubtarget::NVPTXSubtarget(const std::string &TT, const std::string &CPU,
                                const std::string &FS, const TargetMachine &TM,
                                bool is64Bit)
     : NVPTXGenSubtargetInfo(TT, CPU, FS), Is64Bit(is64Bit), PTXVersion(0),
-      SmVersion(20), DL(computeDataLayout(is64Bit)),
-      InstrInfo(initializeSubtargetDependencies(CPU, FS)),
-      TLInfo((const NVPTXTargetMachine &)TM), TSInfo(&DL),
+      SmVersion(20), InstrInfo(initializeSubtargetDependencies(CPU, FS)),
+      TLInfo((const NVPTXTargetMachine &)TM), TSInfo(TM.getDataLayout()),
       FrameLowering(*this) {
 
   Triple T(TT);

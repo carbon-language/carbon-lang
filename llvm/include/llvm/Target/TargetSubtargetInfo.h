@@ -71,7 +71,6 @@ public:
   virtual const TargetSelectionDAGInfo *getSelectionDAGInfo() const {
     return nullptr;
   }
-  virtual const DataLayout *getDataLayout() const { return nullptr; }
 
   /// getRegisterInfo - If register information is available, return it.  If
   /// not, return null.  This is kept separate from RegInfo until RegInfo has

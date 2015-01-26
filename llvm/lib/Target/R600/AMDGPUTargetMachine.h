@@ -39,6 +39,11 @@ public:
                       StringRef CPU, TargetOptions Options, Reloc::Model RM,
                       CodeModel::Model CM, CodeGenOpt::Level OL);
   ~AMDGPUTargetMachine();
+  // FIXME: This is currently broken, the DataLayout needs to move to
+  // the target machine.
+  const DataLayout *getDataLayout() const override {
+    return getSubtargetImpl()->getDataLayout();
+  }
   const AMDGPUSubtarget *getSubtargetImpl() const override {
     return &Subtarget;
   }

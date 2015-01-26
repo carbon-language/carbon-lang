@@ -38,7 +38,7 @@ static MachineModuleInfoMachO &getMachOMMI(AsmPrinter &AP) {
 static MCSymbol *GetSymbolFromOperand(const MachineOperand &MO, AsmPrinter &AP){
   const TargetMachine &TM = AP.TM;
   Mangler *Mang = AP.Mang;
-  const DataLayout *DL = TM.getSubtargetImpl()->getDataLayout();
+  const DataLayout *DL = TM.getDataLayout();
   MCContext &Ctx = AP.OutContext;
   bool isDarwin = Triple(TM.getTargetTriple()).isOSDarwin();
 

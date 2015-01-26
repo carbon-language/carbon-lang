@@ -84,8 +84,7 @@ StackMaps::parseOperand(MachineInstr::const_mop_iterator MOI,
     switch (MOI->getImm()) {
     default: llvm_unreachable("Unrecognized operand type.");
     case StackMaps::DirectMemRefOp: {
-      unsigned Size =
-          AP.TM.getSubtargetImpl()->getDataLayout()->getPointerSizeInBits();
+      unsigned Size = AP.TM.getDataLayout()->getPointerSizeInBits();
       assert((Size % 8) == 0 && "Need pointer size in bytes.");
       Size /= 8;
       unsigned Reg = (++MOI)->getReg();

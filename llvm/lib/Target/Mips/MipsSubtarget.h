@@ -137,7 +137,6 @@ class MipsSubtarget : public MipsGenSubtargetInfo {
 
   Triple TargetTriple;
 
-  const DataLayout DL; // Calculates type size & alignment
   const MipsSelectionDAGInfo TSInfo;
   std::unique_ptr<const MipsInstrInfo> InstrInfo;
   std::unique_ptr<const MipsFrameLowering> FrameLowering;
@@ -267,7 +266,6 @@ public:
   const MipsSelectionDAGInfo *getSelectionDAGInfo() const override {
     return &TSInfo;
   }
-  const DataLayout *getDataLayout() const override { return &DL; }
   const MipsInstrInfo *getInstrInfo() const override { return InstrInfo.get(); }
   const TargetFrameLowering *getFrameLowering() const override {
     return FrameLowering.get();

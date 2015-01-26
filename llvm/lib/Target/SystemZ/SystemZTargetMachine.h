@@ -24,6 +24,7 @@ class TargetFrameLowering;
 
 class SystemZTargetMachine : public LLVMTargetMachine {
   std::unique_ptr<TargetLoweringObjectFile> TLOF;
+  const DataLayout DL;
   SystemZSubtarget        Subtarget;
 
 public:
@@ -34,6 +35,7 @@ public:
   ~SystemZTargetMachine() override;
 
   // Override TargetMachine.
+  const DataLayout *getDataLayout() const override { return &DL; }
   const SystemZSubtarget *getSubtargetImpl() const override {
     return &Subtarget;
   }

@@ -44,13 +44,8 @@ SystemZSubtarget::SystemZSubtarget(const std::string &TT,
     : SystemZGenSubtargetInfo(TT, CPU, FS), HasDistinctOps(false),
       HasLoadStoreOnCond(false), HasHighWord(false), HasFPExtension(false),
       HasFastSerialization(false), HasInterlockedAccess1(false),
-      TargetTriple(TT),
-      // Make sure that global data has at least 16 bits of alignment by
-      // default, so that we can refer to it using LARL.  We don't have any
-      // special requirements for stack variables though.
-      DL("E-m:e-i1:8:16-i8:8:16-i64:64-f128:64-a:8:16-n32:64"),
-      InstrInfo(initializeSubtargetDependencies(CPU, FS)), TLInfo(TM),
-      TSInfo(DL), FrameLowering() {}
+      TargetTriple(TT), InstrInfo(initializeSubtargetDependencies(CPU, FS)),
+      TLInfo(TM), TSInfo(*TM.getDataLayout()), FrameLowering() {}
 
 // Return true if GV binds locally under reloc model RM.
 static bool bindsLocally(const GlobalValue *GV, Reloc::Model RM) {

@@ -30,20 +30,6 @@ using namespace llvm;
 #define GET_SUBTARGETINFO_CTOR
 #include "AMDGPUGenSubtargetInfo.inc"
 
-static std::string computeDataLayout(const AMDGPUSubtarget &ST) {
-  std::string Ret = "e-p:32:32";
-
-  if (ST.is64bit()) {
-    // 32-bit private, local, and region pointers. 64-bit global and constant.
-    Ret += "-p1:64:64-p2:64:64-p3:32:32-p4:64:64-p5:32:32-p24:64:64";
-  }
-
-  Ret += "-i64:64-v16:16-v24:32-v32:32-v48:64-v96:128-v192:256-v256:256"
-         "-v512:512-v1024:1024-v2048:2048-n32:64";
-
-  return Ret;
-}
-
 AMDGPUSubtarget &
 AMDGPUSubtarget::initializeSubtargetDependencies(StringRef GPU, StringRef FS) {
   // Determine default and user-specified characteristics
@@ -68,6 +54,20 @@ AMDGPUSubtarget::initializeSubtargetDependencies(StringRef GPU, StringRef FS) {
     FP64Denormals = false;
   }
   return *this;
+}
+
+static std::string computeDataLayout(const AMDGPUSubtarget &ST) {
+  std::string Ret = "e-p:32:32";
+
+  if (ST.is64bit()) {
+    // 32-bit private, local, and region pointers. 64-bit global and constant.
+    Ret += "-p1:64:64-p2:64:64-p3:32:32-p4:64:64-p5:32:32-p24:64:64";
+  }
+
+  Ret += "-i64:64-v16:16-v24:32-v32:32-v48:64-v96:128-v192:256-v256:256"
+         "-v512:512-v1024:1024-v2048:2048-n32:64";
+
+  return Ret;
 }
 
 AMDGPUSubtarget::AMDGPUSubtarget(StringRef TT, StringRef GPU, StringRef FS,

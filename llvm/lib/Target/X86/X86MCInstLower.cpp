@@ -124,7 +124,7 @@ MachineModuleInfoMachO &X86MCInstLower::getMachOMMI() const {
 /// operand to an MCSymbol.
 MCSymbol *X86MCInstLower::
 GetSymbolFromOperand(const MachineOperand &MO) const {
-  const DataLayout *DL = TM.getSubtargetImpl()->getDataLayout();
+  const DataLayout *DL = TM.getDataLayout();
   assert((MO.isGlobal() || MO.isSymbol() || MO.isMBB()) && "Isn't a symbol reference");
 
   SmallString<128> Name;

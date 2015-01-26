@@ -27,6 +27,5 @@ void XCoreSubtarget::anchor() { }
 
 XCoreSubtarget::XCoreSubtarget(const std::string &TT, const std::string &CPU,
                                const std::string &FS, const TargetMachine &TM)
-    : XCoreGenSubtargetInfo(TT, CPU, FS),
-      DL("e-m:e-p:32:32-i1:8:32-i8:8:32-i16:16:32-i64:32-f64:32-a:0:32-n32"),
-      InstrInfo(), FrameLowering(*this), TLInfo(TM), TSInfo(DL) {}
+    : XCoreGenSubtargetInfo(TT, CPU, FS), InstrInfo(), FrameLowering(*this),
+      TLInfo(TM), TSInfo(*TM.getDataLayout()) {}

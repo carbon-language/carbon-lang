@@ -14,6 +14,7 @@
 #include "PPCSubtarget.h"
 #include "PPC.h"
 #include "PPCRegisterInfo.h"
+#include "PPCTargetMachine.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineScheduler.h"
 #include "llvm/IR/Attributes.h"
@@ -36,40 +37,6 @@ using namespace llvm;
 static cl::opt<bool> UseSubRegLiveness("ppc-track-subreg-liveness",
 cl::desc("Enable subregister liveness tracking for PPC"), cl::Hidden);
 
-/// Return the datalayout string of a subtarget.
-static std::string getDataLayoutString(const Triple &T) {
-  bool is64Bit = T.getArch() == Triple::ppc64 || T.getArch() == Triple::ppc64le;
-  std::string Ret;
-
-  // Most PPC* platforms are big endian, PPC64LE is little endian.
-  if (T.getArch() == Triple::ppc64le)
-    Ret = "e";
-  else
-    Ret = "E";
-
-  Ret += DataLayout::getManglingComponent(T);
-
-  // PPC32 has 32 bit pointers. The PS3 (OS Lv2) is a PPC64 machine with 32 bit
-  // pointers.
-  if (!is64Bit || T.getOS() == Triple::Lv2)
-    Ret += "-p:32:32";
-
-  // Note, the alignment values for f64 and i64 on ppc64 in Darwin
-  // documentation are wrong; these are correct (i.e. "what gcc does").
-  if (is64Bit || !T.isOSDarwin())
-    Ret += "-i64:64";
-  else
-    Ret += "-f64:32:64";
-
-  // PPC64 has 32 and 64 bit registers, PPC32 has only 32 bit ones.
-  if (is64Bit)
-    Ret += "-n32:64";
-  else
-    Ret += "-n32";
-
-  return Ret;
-}
-
 PPCSubtarget &PPCSubtarget::initializeSubtargetDependencies(StringRef CPU,
                                                             StringRef FS) {
   initializeEnvironment();
@@ -80,12 +47,11 @@ PPCSubtarget &PPCSubtarget::initializeSubtargetDependencies(StringRef CPU,
 PPCSubtarget::PPCSubtarget(const std::string &TT, const std::string &CPU,
                            const std::string &FS, const PPCTargetMachine &TM)
     : PPCGenSubtargetInfo(TT, CPU, FS), TargetTriple(TT),
-      DL(getDataLayoutString(TargetTriple)),
       IsPPC64(TargetTriple.getArch() == Triple::ppc64 ||
               TargetTriple.getArch() == Triple::ppc64le),
       TargetABI(PPC_ABI_UNKNOWN),
       FrameLowering(initializeSubtargetDependencies(CPU, FS)), InstrInfo(*this),
-      TLInfo(TM), TSInfo(&DL) {}
+      TLInfo(TM), TSInfo(TM.getDataLayout()) {}
 
 void PPCSubtarget::initializeEnvironment() {
   StackAlignment = 16;

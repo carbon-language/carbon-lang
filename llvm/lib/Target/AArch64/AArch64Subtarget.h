@@ -48,13 +48,14 @@ protected:
   // HasZeroCycleZeroing - Has zero-cycle zeroing instructions.
   bool HasZeroCycleZeroing;
 
+  bool IsLittle;
+
   /// CPUString - String name of used CPU.
   std::string CPUString;
 
   /// TargetTriple - What processor and OS we're targeting.
   Triple TargetTriple;
 
-  const DataLayout DL;
   AArch64FrameLowering FrameLowering;
   AArch64InstrInfo InstrInfo;
   AArch64SelectionDAGInfo TSInfo;
@@ -82,7 +83,6 @@ public:
     return &TLInfo;
   }
   const AArch64InstrInfo *getInstrInfo() const override { return &InstrInfo; }
-  const DataLayout *getDataLayout() const override { return &DL; }
   const AArch64RegisterInfo *getRegisterInfo() const override {
     return &getInstrInfo()->getRegisterInfo();
   }
@@ -100,7 +100,7 @@ public:
   bool hasCrypto() const { return HasCrypto; }
   bool hasCRC() const { return HasCRC; }
 
-  bool isLittleEndian() const { return DL.isLittleEndian(); }
+  bool isLittleEndian() const { return IsLittle; }
 
   bool isTargetDarwin() const { return TargetTriple.isOSDarwin(); }
   bool isTargetIOS() const { return TargetTriple.isiOS(); }

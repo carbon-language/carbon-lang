@@ -37,7 +37,6 @@ class SparcSubtarget : public SparcGenSubtargetInfo {
   bool Is64Bit;
   bool HasHardQuad;
   bool UsePopc;
-  const DataLayout DL;       // Calculates type size & alignment
   SparcInstrInfo InstrInfo;
   SparcTargetLowering TLInfo;
   SparcSelectionDAGInfo TSInfo;
@@ -60,7 +59,6 @@ public:
   const SparcSelectionDAGInfo *getSelectionDAGInfo() const override {
     return &TSInfo;
   }
-  const DataLayout *getDataLayout() const override { return &DL; }
 
   bool isV9() const { return IsV9; }
   bool isVIS() const { return IsVIS; }

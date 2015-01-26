@@ -48,8 +48,7 @@ void llvm::linkErlangGCPrinter() {}
 void ErlangGCPrinter::finishAssembly(Module &M, GCModuleInfo &Info,
                                      AsmPrinter &AP) {
   MCStreamer &OS = AP.OutStreamer;
-  unsigned IntPtrSize =
-      AP.TM.getSubtargetImpl()->getDataLayout()->getPointerSize();
+  unsigned IntPtrSize = AP.TM.getDataLayout()->getPointerSize();
 
   // Put this in a custom .note section.
   AP.OutStreamer.SwitchSection(

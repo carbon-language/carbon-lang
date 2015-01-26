@@ -46,6 +46,36 @@ extern "C" void LLVMInitializeMipsTarget() {
   RegisterTargetMachine<MipselTargetMachine> B(TheMips64elTarget);
 }
 
+static std::string computeDataLayout(bool isLittle, MipsABIInfo &ABI) {
+  std::string Ret = "";
+
+  // There are both little and big endian mips.
+  if (isLittle)
+    Ret += "e";
+  else
+    Ret += "E";
+
+  Ret += "-m:m";
+
+  // Pointers are 32 bit on some ABIs.
+  if (!ABI.IsN64())
+    Ret += "-p:32:32";
+
+  // 8 and 16 bit integers only need no have natural alignment, but try to
+  // align them to 32 bits. 64 bit integers have natural alignment.
+  Ret += "-i8:8:32-i16:16:32-i64:64";
+
+  // 32 bit registers are always available and the stack is at least 64 bit
+  // aligned. On N64 64 bit registers are also available and the stack is
+  // 128 bit aligned.
+  if (ABI.IsN64() || ABI.IsN32())
+    Ret += "-n32:64-S128";
+  else
+    Ret += "-n32-S64";
+
+  return Ret;
+}
+
 // On function prologue, the stack is created by decrementing
 // its pointer. Once decremented, all references are done with positive
 // offset from the stack/frame pointer, using StackGrowsUp enables
@@ -59,7 +89,8 @@ MipsTargetMachine::MipsTargetMachine(const Target &T, StringRef TT,
     : LLVMTargetMachine(T, TT, CPU, FS, Options, RM, CM, OL),
       isLittle(isLittle), TLOF(make_unique<MipsTargetObjectFile>()),
       ABI(MipsABIInfo::computeTargetABI(Triple(TT), CPU, Options.MCOptions)),
-      Subtarget(nullptr), DefaultSubtarget(TT, CPU, FS, isLittle, *this),
+      DL(computeDataLayout(isLittle, ABI)), Subtarget(nullptr),
+      DefaultSubtarget(TT, CPU, FS, isLittle, *this),
       NoMips16Subtarget(TT, CPU, FS.empty() ? "-mips16" : FS.str() + ",-mips16",
                         isLittle, *this),
       Mips16Subtarget(TT, CPU, FS.empty() ? "+mips16" : FS.str() + ",+mips16",

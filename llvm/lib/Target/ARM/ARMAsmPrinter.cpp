@@ -83,8 +83,7 @@ void ARMAsmPrinter::EmitFunctionEntryLabel() {
 }
 
 void ARMAsmPrinter::EmitXXStructor(const Constant *CV) {
-  uint64_t Size =
-      TM.getSubtargetImpl()->getDataLayout()->getTypeAllocSize(CV->getType());
+  uint64_t Size = TM.getDataLayout()->getTypeAllocSize(CV->getType());
   assert(Size && "C++ constructor pointer had zero size!");
 
   const GlobalValue *GV = dyn_cast<GlobalValue>(CV->stripPointerCasts());
@@ -207,7 +206,7 @@ void ARMAsmPrinter::printOperand(const MachineInstr *MI, int OpNum,
 
 MCSymbol *ARMAsmPrinter::
 GetARMJTIPICJumpTableLabel2(unsigned uid, unsigned uid2) const {
-  const DataLayout *DL = TM.getSubtargetImpl()->getDataLayout();
+  const DataLayout *DL = TM.getDataLayout();
   SmallString<60> Name;
   raw_svector_ostream(Name) << DL->getPrivateGlobalPrefix() << "JTI"
     << getFunctionNumber() << '_' << uid << '_' << uid2;
@@ -216,7 +215,7 @@ GetARMJTIPICJumpTableLabel2(unsigned uid, unsigned uid2) const {
 
 
 MCSymbol *ARMAsmPrinter::GetARMSJLJEHLabel() const {
-  const DataLayout *DL = TM.getSubtargetImpl()->getDataLayout();
+  const DataLayout *DL = TM.getDataLayout();
   SmallString<60> Name;
   raw_svector_ostream(Name) << DL->getPrivateGlobalPrefix() << "SJLJEH"
     << getFunctionNumber();
@@ -586,7 +585,7 @@ void ARMAsmPrinter::EmitEndOfAsmFile(Module &M) {
     MachineModuleInfoELF::SymbolListTy Stubs = MMIELF.GetGVStubList();
     if (!Stubs.empty()) {
       OutStreamer.SwitchSection(TLOFELF.getDataRelSection());
-      const DataLayout *TD = TM.getSubtargetImpl()->getDataLayout();
+      const DataLayout *TD = TM.getDataLayout();
 
       for (auto &stub: Stubs) {
         OutStreamer.EmitLabel(stub.first);
@@ -924,9 +923,8 @@ MCSymbol *ARMAsmPrinter::GetARMGVSymbol(const GlobalValue *GV,
 
 void ARMAsmPrinter::
 EmitMachineConstantPoolValue(MachineConstantPoolValue *MCPV) {
-  const DataLayout *DL = TM.getSubtargetImpl()->getDataLayout();
-  int Size =
-      TM.getSubtargetImpl()->getDataLayout()->getTypeAllocSize(MCPV->getType());
+  const DataLayout *DL = TM.getDataLayout();
+  int Size = TM.getDataLayout()->getTypeAllocSize(MCPV->getType());
 
   ARMConstantPoolValue *ACPV = static_cast<ARMConstantPoolValue*>(MCPV);
 
@@ -1242,7 +1240,7 @@ void ARMAsmPrinter::EmitUnwindingInstruction(const MachineInstr *MI) {
 #include "ARMGenMCPseudoLowering.inc"
 
 void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
-  const DataLayout *DL = TM.getSubtargetImpl()->getDataLayout();
+  const DataLayout *DL = TM.getDataLayout();
 
   // If we just ended a constant pool, mark it as such.
   if (InConstantPool && MI->getOpcode() != ARM::CONSTPOOL_ENTRY) {

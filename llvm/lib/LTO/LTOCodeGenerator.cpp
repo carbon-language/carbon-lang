@@ -406,7 +406,7 @@ void LTOCodeGenerator::applyScopeRestrictions() {
   passes.add(createDebugInfoVerifierPass());
 
   // mark which symbols can not be internalized
-  Mangler Mangler(TargetMach->getSubtargetImpl()->getDataLayout());
+  Mangler Mangler(TargetMach->getDataLayout());
   std::vector<const char*> MustPreserveList;
   SmallPtrSet<GlobalValue*, 8> AsmUsed;
   std::vector<StringRef> Libcalls;
@@ -476,7 +476,7 @@ bool LTOCodeGenerator::generateObjectFile(raw_ostream &out,
   PassManager passes;
 
   // Add an appropriate DataLayout instance for this module...
-  mergedModule->setDataLayout(TargetMach->getSubtargetImpl()->getDataLayout());
+  mergedModule->setDataLayout(TargetMach->getDataLayout());
 
   Triple TargetTriple(TargetMach->getTargetTriple());
   PassManagerBuilder PMB;

@@ -877,7 +877,7 @@ static bool isConstantOrUndef(int Op, int Val) {
 /// For the latter, the input operands are swapped (see PPCInstrAltivec.td).
 bool PPC::isVPKUHUMShuffleMask(ShuffleVectorSDNode *N, unsigned ShuffleKind,
                                SelectionDAG &DAG) {
-  bool IsLE = DAG.getSubtarget().getDataLayout()->isLittleEndian();
+  bool IsLE = DAG.getTarget().getDataLayout()->isLittleEndian();
   if (ShuffleKind == 0) {
     if (IsLE)
       return false;
@@ -908,7 +908,7 @@ bool PPC::isVPKUHUMShuffleMask(ShuffleVectorSDNode *N, unsigned ShuffleKind,
 /// For the latter, the input operands are swapped (see PPCInstrAltivec.td).
 bool PPC::isVPKUWUMShuffleMask(ShuffleVectorSDNode *N, unsigned ShuffleKind,
                                SelectionDAG &DAG) {
-  bool IsLE = DAG.getSubtarget().getDataLayout()->isLittleEndian();
+  bool IsLE = DAG.getTarget().getDataLayout()->isLittleEndian();
   if (ShuffleKind == 0) {
     if (IsLE)
       return false;
@@ -963,7 +963,7 @@ static bool isVMerge(ShuffleVectorSDNode *N, unsigned UnitSize,
 /// the input operands are swapped (see PPCInstrAltivec.td).
 bool PPC::isVMRGLShuffleMask(ShuffleVectorSDNode *N, unsigned UnitSize,
                              unsigned ShuffleKind, SelectionDAG &DAG) {
-  if (DAG.getSubtarget().getDataLayout()->isLittleEndian()) {
+  if (DAG.getTarget().getDataLayout()->isLittleEndian()) {
     if (ShuffleKind == 1) // unary
       return isVMerge(N, UnitSize, 0, 0);
     else if (ShuffleKind == 2) // swapped
@@ -988,7 +988,7 @@ bool PPC::isVMRGLShuffleMask(ShuffleVectorSDNode *N, unsigned UnitSize,
 /// the input operands are swapped (see PPCInstrAltivec.td).
 bool PPC::isVMRGHShuffleMask(ShuffleVectorSDNode *N, unsigned UnitSize,
                              unsigned ShuffleKind, SelectionDAG &DAG) {
-  if (DAG.getSubtarget().getDataLayout()->isLittleEndian()) {
+  if (DAG.getTarget().getDataLayout()->isLittleEndian()) {
     if (ShuffleKind == 1) // unary
       return isVMerge(N, UnitSize, 8, 8);
     else if (ShuffleKind == 2) // swapped
@@ -1032,8 +1032,7 @@ int PPC::isVSLDOIShuffleMask(SDNode *N, unsigned ShuffleKind,
   if (ShiftAmt < i) return -1;
 
   ShiftAmt -= i;
-  bool isLE = DAG.getTarget().getSubtargetImpl()->getDataLayout()->
-    isLittleEndian();
+  bool isLE = DAG.getTarget().getDataLayout()->isLittleEndian();
 
   if ((ShuffleKind == 0 && !isLE) || (ShuffleKind == 2 && isLE)) {
     // Check the rest of the elements to see if they are consecutive.
@@ -1106,7 +1105,7 @@ unsigned PPC::getVSPLTImmediate(SDNode *N, unsigned EltSize,
                                 SelectionDAG &DAG) {
   ShuffleVectorSDNode *SVOp = cast<ShuffleVectorSDNode>(N);
   assert(isSplatShuffleMask(SVOp, EltSize));
-  if (DAG.getSubtarget().getDataLayout()->isLittleEndian())
+  if (DAG.getTarget().getDataLayout()->isLittleEndian())
     return (16 / EltSize) - 1 - (SVOp->getMaskElt(0) / EltSize);
   else
     return SVOp->getMaskElt(0) / EltSize;

@@ -3189,8 +3189,8 @@ unsigned X86FastISel::X86MaterializeFP(const ConstantFP *CFP, MVT VT) {
                                       TII.get(Opc), ResultReg);
     addDirectMem(MIB, AddrReg);
     MachineMemOperand *MMO = FuncInfo.MF->getMachineMemOperand(
-      MachinePointerInfo::getConstantPool(), MachineMemOperand::MOLoad,
-      TM.getSubtargetImpl()->getDataLayout()->getPointerSize(), Align);
+        MachinePointerInfo::getConstantPool(), MachineMemOperand::MOLoad,
+        TM.getDataLayout()->getPointerSize(), Align);
     MIB->addMemOperand(*FuncInfo.MF, MMO);
     return ResultReg;
   }

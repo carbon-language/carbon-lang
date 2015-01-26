@@ -558,8 +558,7 @@ MCSymbol *X86AsmPrinter::GetCPISymbol(unsigned CPID) const {
     const MachineConstantPoolEntry &CPE =
         MF->getConstantPool()->getConstants()[CPID];
     if (!CPE.isMachineConstantPoolEntry()) {
-      SectionKind Kind =
-          CPE.getSectionKind(TM.getSubtargetImpl()->getDataLayout());
+      SectionKind Kind = CPE.getSectionKind(TM.getDataLayout());
       const Constant *C = CPE.Val.ConstVal;
       if (const MCSectionCOFF *S = dyn_cast<MCSectionCOFF>(
             getObjFileLowering().getSectionForConstant(Kind, C))) {
@@ -729,7 +728,7 @@ void X86AsmPrinter::EmitEndOfAsmFile(Module &M) {
     MachineModuleInfoELF::SymbolListTy Stubs = MMIELF.GetGVStubList();
     if (!Stubs.empty()) {
       OutStreamer.SwitchSection(TLOFELF.getDataRelSection());
-      const DataLayout *TD = TM.getSubtargetImpl()->getDataLayout();
+      const DataLayout *TD = TM.getDataLayout();
 
       for (const auto &Stub : Stubs) {
         OutStreamer.EmitLabel(Stub.first);

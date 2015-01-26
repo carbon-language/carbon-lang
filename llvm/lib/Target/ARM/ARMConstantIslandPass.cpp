@@ -532,7 +532,7 @@ ARMConstantIslands::doInitialPlacement(std::vector<MachineInstr*> &CPEMIs) {
   // identity mapping of CPI's to CPE's.
   const std::vector<MachineConstantPoolEntry> &CPs = MCP->getConstants();
 
-  const DataLayout &TD = *MF->getSubtarget().getDataLayout();
+  const DataLayout &TD = *MF->getTarget().getDataLayout();
   for (unsigned i = 0, e = CPs.size(); i != e; ++i) {
     unsigned Size = TD.getTypeAllocSize(CPs[i].getType());
     assert(Size >= 4 && "Too small constant pool entry");

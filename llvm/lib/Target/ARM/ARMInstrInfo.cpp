@@ -156,9 +156,8 @@ namespace {
       ARMConstantPoolValue *CPV = ARMConstantPoolSymbol::Create(
           *Context, "_GLOBAL_OFFSET_TABLE_", ARMPCLabelIndex, PCAdj);
 
-      unsigned Align =
-          TM->getSubtargetImpl()->getDataLayout()->getPrefTypeAlignment(
-              Type::getInt32PtrTy(*Context));
+      unsigned Align = TM->getDataLayout()->getPrefTypeAlignment(
+          Type::getInt32PtrTy(*Context));
       unsigned Idx = MF.getConstantPool()->getConstantPoolIndex(CPV, Align);
 
       MachineBasicBlock &FirstMBB = MF.front();

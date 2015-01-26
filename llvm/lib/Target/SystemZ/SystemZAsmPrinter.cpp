@@ -185,8 +185,7 @@ EmitMachineConstantPoolValue(MachineConstantPoolValue *MCPV) {
     MCSymbolRefExpr::Create(getSymbol(ZCPV->getGlobalValue()),
                             getModifierVariantKind(ZCPV->getModifier()),
                             OutContext);
-  uint64_t Size =
-      TM.getSubtargetImpl()->getDataLayout()->getTypeAllocSize(ZCPV->getType());
+  uint64_t Size = TM.getDataLayout()->getTypeAllocSize(ZCPV->getType());
 
   OutStreamer.EmitValue(Expr, Size);
 }
@@ -230,7 +229,7 @@ void SystemZAsmPrinter::EmitEndOfAsmFile(Module &M) {
     MachineModuleInfoELF::SymbolListTy Stubs = MMIELF.GetGVStubList();
     if (!Stubs.empty()) {
       OutStreamer.SwitchSection(TLOFELF.getDataRelSection());
-      const DataLayout *TD = TM.getSubtargetImpl()->getDataLayout();
+      const DataLayout *TD = TM.getDataLayout();
 
       for (unsigned i = 0, e = Stubs.size(); i != e; ++i) {
         OutStreamer.EmitLabel(Stubs[i].first);

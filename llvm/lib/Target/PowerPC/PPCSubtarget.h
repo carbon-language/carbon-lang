@@ -68,9 +68,6 @@ protected:
   /// TargetTriple - What processor and OS we're targeting.
   Triple TargetTriple;
 
-  // Calculates type size & alignment
-  const DataLayout DL;
-
   /// stackAlignment - The minimum alignment known to hold of the stack frame on
   /// entry to the function and which must be maintained by every function.
   unsigned StackAlignment;
@@ -156,7 +153,6 @@ public:
   const PPCFrameLowering *getFrameLowering() const override {
     return &FrameLowering;
   }
-  const DataLayout *getDataLayout() const override { return &DL; }
   const PPCInstrInfo *getInstrInfo() const override { return &InstrInfo; }
   const PPCTargetLowering *getTargetLowering() const override {
     return &TLInfo;

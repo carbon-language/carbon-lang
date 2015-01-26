@@ -31,7 +31,6 @@ class StringRef;
 
 class XCoreSubtarget : public XCoreGenSubtargetInfo {
   virtual void anchor();
-  const DataLayout DL;       // Calculates type size & alignment
   XCoreInstrInfo InstrInfo;
   XCoreFrameLowering FrameLowering;
   XCoreTargetLowering TLInfo;
@@ -61,7 +60,6 @@ public:
   const TargetRegisterInfo *getRegisterInfo() const override {
     return &InstrInfo.getRegisterInfo();
   }
-  const DataLayout *getDataLayout() const override { return &DL; }
 };
 } // End llvm namespace
 

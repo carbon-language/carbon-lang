@@ -346,7 +346,7 @@ MCOperand NVPTXAsmPrinter::GetSymbolRef(const MCSymbol *Symbol) {
 }
 
 void NVPTXAsmPrinter::printReturnValStr(const Function *F, raw_ostream &O) {
-  const DataLayout *TD = TM.getSubtargetImpl()->getDataLayout();
+  const DataLayout *TD = TM.getDataLayout();
   const TargetLowering *TLI = TM.getSubtargetImpl()->getTargetLowering();
 
   Type *Ty = F->getReturnType();
@@ -791,7 +791,7 @@ bool NVPTXAsmPrinter::doInitialization(Module &M) {
   const_cast<TargetLoweringObjectFile &>(getObjFileLowering())
       .Initialize(OutContext, TM);
 
-  Mang = new Mangler(TM.getSubtargetImpl()->getDataLayout());
+  Mang = new Mangler(TM.getDataLayout());
 
   // Emit header before any dwarf directives are emitted below.
   emitHeader(M, OS1);
@@ -992,7 +992,7 @@ void NVPTXAsmPrinter::printModuleLevelGV(const GlobalVariable *GVar,
       GVar->getName().startswith("nvvm."))
     return;
 
-  const DataLayout *TD = TM.getSubtargetImpl()->getDataLayout();
+  const DataLayout *TD = TM.getDataLayout();
 
   // GlobalVariables are always constant pointers themselves.
   const PointerType *PTy = GVar->getType();
@@ -1295,7 +1295,7 @@ NVPTXAsmPrinter::getPTXFundamentalTypeStr(const Type *Ty, bool useB4PTR) const {
 void NVPTXAsmPrinter::emitPTXGlobalVariable(const GlobalVariable *GVar,
                                             raw_ostream &O) {
 
-  const DataLayout *TD = TM.getSubtargetImpl()->getDataLayout();
+  const DataLayout *TD = TM.getDataLayout();
 
   // GlobalVariables are always constant pointers themselves.
   const PointerType *PTy = GVar->getType();
@@ -1405,7 +1405,7 @@ void NVPTXAsmPrinter::printParamName(int paramIndex, raw_ostream &O) {
 }
 
 void NVPTXAsmPrinter::emitFunctionParamList(const Function *F, raw_ostream &O) {
-  const DataLayout *TD = TM.getSubtargetImpl()->getDataLayout();
+  const DataLayout *TD = TM.getDataLayout();
   const AttributeSet &PAL = F->getAttributes();
   const TargetLowering *TLI = TM.getSubtargetImpl()->getTargetLowering();
   Function::const_arg_iterator I, E;
@@ -1738,7 +1738,7 @@ void NVPTXAsmPrinter::printScalarConstant(const Constant *CPV, raw_ostream &O) {
 void NVPTXAsmPrinter::bufferLEByte(const Constant *CPV, int Bytes,
                                    AggBuffer *aggBuffer) {
 
-  const DataLayout *TD = TM.getSubtargetImpl()->getDataLayout();
+  const DataLayout *TD = TM.getDataLayout();
 
   if (isa<UndefValue>(CPV) || CPV->isNullValue()) {
     int s = TD->getTypeAllocSize(CPV->getType());
@@ -1862,7 +1862,7 @@ void NVPTXAsmPrinter::bufferLEByte(const Constant *CPV, int Bytes,
 
 void NVPTXAsmPrinter::bufferAggregateConstant(const Constant *CPV,
                                               AggBuffer *aggBuffer) {
-  const DataLayout *TD = TM.getSubtargetImpl()->getDataLayout();
+  const DataLayout *TD = TM.getDataLayout();
   int Bytes;
 
   // Old constants

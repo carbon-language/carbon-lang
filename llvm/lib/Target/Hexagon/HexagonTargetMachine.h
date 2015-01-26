@@ -24,6 +24,7 @@ class Module;
 
 class HexagonTargetMachine : public LLVMTargetMachine {
   std::unique_ptr<TargetLoweringObjectFile> TLOF;
+  const DataLayout DL; // Calculates type size & alignment.
   HexagonSubtarget Subtarget;
 
 public:
@@ -32,7 +33,7 @@ public:
                        Reloc::Model RM, CodeModel::Model CM,
                        CodeGenOpt::Level OL);
   ~HexagonTargetMachine() override;
-
+  const DataLayout *getDataLayout() const override { return &DL; }
   const HexagonSubtarget *getSubtargetImpl() const override {
     return &Subtarget;
   }

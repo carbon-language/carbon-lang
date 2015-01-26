@@ -508,7 +508,7 @@ void AsmPrinter::EmitInlineAsm(const MachineInstr *MI) const {
 /// for their own strange codes.
 void AsmPrinter::PrintSpecial(const MachineInstr *MI, raw_ostream &OS,
                               const char *Code) const {
-  const DataLayout *DL = TM.getSubtargetImpl()->getDataLayout();
+  const DataLayout *DL = TM.getDataLayout();
   if (!strcmp(Code, "private")) {
     OS << DL->getPrivateGlobalPrefix();
   } else if (!strcmp(Code, "comment")) {

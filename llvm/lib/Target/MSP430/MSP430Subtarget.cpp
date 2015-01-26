@@ -32,8 +32,6 @@ MSP430Subtarget &MSP430Subtarget::initializeSubtargetDependencies(StringRef CPU,
 
 MSP430Subtarget::MSP430Subtarget(const std::string &TT, const std::string &CPU,
                                  const std::string &FS, const TargetMachine &TM)
-    : MSP430GenSubtargetInfo(TT, CPU, FS),
-      // FIXME: Check DataLayout string.
-      DL("e-m:e-p:16:16-i32:16:32-a:16-n8:16"), FrameLowering(),
+    : MSP430GenSubtargetInfo(TT, CPU, FS), FrameLowering(),
       InstrInfo(initializeSubtargetDependencies(CPU, FS)), TLInfo(TM),
-      TSInfo(DL) {}
+      TSInfo(*TM.getDataLayout()) {}

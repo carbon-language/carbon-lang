@@ -117,6 +117,12 @@ public:
     return *static_cast<const STC*>(getSubtargetImpl());
   }
 
+  /// getDataLayout - This method returns a pointer to the DataLayout for
+  /// the target. It should be unchanging for every subtarget.
+  virtual const DataLayout *getDataLayout() const {
+    return nullptr;
+  }
+
   /// \brief Reset the target options based on the function's attributes.
   // FIXME: Remove TargetOptions that affect per-function code generation
   // from TargetMachine.

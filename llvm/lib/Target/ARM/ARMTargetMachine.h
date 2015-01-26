@@ -30,6 +30,7 @@ public:
   } TargetABI;
 
 protected:
+  const DataLayout DL;
   std::unique_ptr<TargetLoweringObjectFile> TLOF;
   ARMSubtarget        Subtarget;
   bool isLittle;
@@ -46,6 +47,7 @@ public:
 
   const ARMSubtarget *getSubtargetImpl() const override { return &Subtarget; }
   const ARMSubtarget *getSubtargetImpl(const Function &F) const override;
+  const DataLayout *getDataLayout() const override { return &DL; }
 
   /// \brief Register ARM analysis passes with a pass manager.
   void addAnalysisPasses(PassManagerBase &PM) override;

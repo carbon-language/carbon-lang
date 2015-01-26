@@ -25,6 +25,7 @@ namespace llvm {
 ///
 class MSP430TargetMachine : public LLVMTargetMachine {
   std::unique_ptr<TargetLoweringObjectFile> TLOF;
+  const DataLayout DL; // Calculates type size & alignment
   MSP430Subtarget        Subtarget;
 
 public:
@@ -34,6 +35,7 @@ public:
                       CodeGenOpt::Level OL);
   ~MSP430TargetMachine() override;
 
+  const DataLayout *getDataLayout() const override { return &DL; }
   const MSP430Subtarget *getSubtargetImpl() const override {
     return &Subtarget;
   }

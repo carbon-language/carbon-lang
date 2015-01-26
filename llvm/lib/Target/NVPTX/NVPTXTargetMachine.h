@@ -26,6 +26,7 @@ namespace llvm {
 ///
 class NVPTXTargetMachine : public LLVMTargetMachine {
   std::unique_ptr<TargetLoweringObjectFile> TLOF;
+  const DataLayout DL; // Calculates type size & alignment
   NVPTXSubtarget Subtarget;
 
   // Hold Strings that can be free'd all together with NVPTXTargetMachine
@@ -37,7 +38,7 @@ public:
                      CodeModel::Model CM, CodeGenOpt::Level OP, bool is64bit);
 
   ~NVPTXTargetMachine() override;
-
+  const DataLayout *getDataLayout() const override { return &DL; }
   const NVPTXSubtarget *getSubtargetImpl() const override { return &Subtarget; }
 
   ManagedStringPool *getManagedStrPool() const {

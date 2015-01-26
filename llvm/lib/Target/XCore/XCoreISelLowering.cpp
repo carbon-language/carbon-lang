@@ -1924,7 +1924,7 @@ XCoreTargetLowering::isLegalAddressingMode(const AddrMode &AM,
   if (Ty->getTypeID() == Type::VoidTyID)
     return AM.Scale == 0 && isImmUs(AM.BaseOffs) && isImmUs4(AM.BaseOffs);
 
-  const DataLayout *TD = TM.getSubtargetImpl()->getDataLayout();
+  const DataLayout *TD = TM.getDataLayout();
   unsigned Size = TD->getTypeAllocSize(Ty);
   if (AM.BaseGV) {
     return Size >= 4 && !AM.HasBaseReg && AM.Scale == 0 &&

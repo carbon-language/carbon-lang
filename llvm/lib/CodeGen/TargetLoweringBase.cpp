@@ -696,7 +696,7 @@ static void InitCmpLibcallCCs(ISD::CondCode *CCs) {
 
 /// NOTE: The TargetMachine owns TLOF.
 TargetLoweringBase::TargetLoweringBase(const TargetMachine &tm)
-    : TM(tm), DL(TM.getSubtargetImpl()->getDataLayout()) {
+    : TM(tm), DL(TM.getDataLayout()) {
   initActions();
 
   // Perform these initializations only once.
@@ -997,8 +997,7 @@ TargetLoweringBase::emitPatchPoint(MachineInstr *MI,
     }
     MachineMemOperand *MMO = MF.getMachineMemOperand(
         MachinePointerInfo::getFixedStack(FI), Flags,
-        TM.getSubtargetImpl()->getDataLayout()->getPointerSize(),
-        MFI.getObjectAlignment(FI));
+        TM.getDataLayout()->getPointerSize(), MFI.getObjectAlignment(FI));
     MIB->addMemOperand(MF, MMO);
 
     // Replace the instruction and update the operand index.
