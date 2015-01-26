@@ -855,6 +855,7 @@ bool WinLinkDriver::linkPECOFF(int argc, const char **argv, raw_ostream &diag) {
     return true;
 
   PECOFFLinkingContext ctx;
+  ctx.setParseDirectives(parseDirectives);
   ctx.registry().addSupportCOFFObjects(ctx);
   ctx.registry().addSupportCOFFImportLibraries(ctx);
   ctx.registry().addSupportArchives(ctx.logInputFiles());

@@ -47,7 +47,8 @@ public:
         _manifestUAC(true), _manifestLevel("'asInvoker'"),
         _manifestUiAccess("'false'"), _isDll(false), _highEntropyVA(true),
         _requireSEH(false), _noSEH(false), _implib(""), _debug(false),
-        _pdbFilePath(""), _dosStub(llvm::makeArrayRef(DEFAULT_DOS_STUB)) {
+        _pdbFilePath(""), _dosStub(llvm::makeArrayRef(DEFAULT_DOS_STUB)),
+        _parseDirectives(nullptr) {
     setDeadStripping(true);
   }
 
@@ -81,6 +82,9 @@ public:
     bool isData;
     bool isPrivate;
   };
+
+  typedef bool (*ParseDirectives)(int, const char **, PECOFFLinkingContext &,
+                                  raw_ostream &, std::set<StringRef> *);
 
   /// \brief Casting support
   static inline bool classof(const LinkingContext *info) { return true; }
@@ -326,6 +330,14 @@ public:
 
   std::recursive_mutex &getMutex() { return _mutex; }
 
+  void setParseDirectives(ParseDirectives parseDirectives) {
+    _parseDirectives = parseDirectives;
+  }
+
+  ParseDirectives getParseDirectives() {
+    return _parseDirectives;
+  }
+
 protected:
   /// Method to create a internal file for the entry symbol
   std::unique_ptr<File> createEntrySymbolFile() const override;
@@ -440,6 +452,8 @@ private:
 
   std::set<std::string> _definedSyms;
   std::set<Node *> _seen;
+
+  ParseDirectives _parseDirectives;
 };
 
 } // end namespace lld

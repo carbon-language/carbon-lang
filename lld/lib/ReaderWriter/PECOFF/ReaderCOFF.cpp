@@ -910,9 +910,10 @@ FileCOFF::parseDirectiveSection(StringRef directives,
   const char **argv = &tokens[0];
   std::string errorMessage;
   llvm::raw_string_ostream stream(errorMessage);
-  bool parseFailed = !WinLinkDriver::parse(argc, argv, _ctx, stream,
-                                           /*isDirective*/ true,
-                                           undefinedSymbols);
+  PECOFFLinkingContext::ParseDirectives parseDirectives =
+    _ctx.getParseDirectives();
+  bool parseFailed = !parseDirectives(argc, argv, _ctx, stream,
+                                      undefinedSymbols);
   stream.flush();
   // Print error message if error.
   if (parseFailed) {

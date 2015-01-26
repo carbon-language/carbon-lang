@@ -120,6 +120,14 @@ public:
                     bool isDirective = false,
                     std::set<StringRef> *undefinedSymbols = nullptr);
 
+  // Same as parse(), but restricted to the context of directives.
+  static bool parseDirectives(int argc, const char *argv[],
+                    PECOFFLinkingContext &info,
+                    raw_ostream &diagnostics = llvm::errs(),
+                    std::set<StringRef> *undefinedSymbols = nullptr) {
+    return parse(argc, argv, info, diagnostics, true, undefinedSymbols);
+  }
+
 private:
   WinLinkDriver() LLVM_DELETED_FUNCTION;
 };

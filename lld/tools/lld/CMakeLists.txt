@@ -4,6 +4,7 @@ add_llvm_executable(lld
 
 target_link_libraries(lld
   lldDriver
+  LLVMSupport
   )
 
 install(TARGETS lld
