@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef MIPSABIINFO_H
-#define MIPSABIINFO_H
+#ifndef LLVM_LIB_TARGET_MIPS_MCTARGETDESC_MIPSABIINFO_H
+#define LLVM_LIB_TARGET_MIPS_MCTARGETDESC_MIPSABIINFO_H
 
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/IR/CallingConv.h"
