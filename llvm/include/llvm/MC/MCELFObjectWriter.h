@@ -41,6 +41,7 @@ protected:
 public:
   static uint8_t getOSABI(Triple::OSType OSType) {
     switch (OSType) {
+      case Triple::PS4:
       case Triple::FreeBSD:
         return ELF::ELFOSABI_FREEBSD;
       case Triple::Linux:
