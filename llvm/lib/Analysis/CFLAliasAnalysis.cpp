@@ -227,10 +227,13 @@ public:
     // Comparisons between global variables and other constants should be
     // handled by BasicAA.
     if (isa<Constant>(LocA.Ptr) && isa<Constant>(LocB.Ptr)) {
-      return MayAlias;
+      return AliasAnalysis::alias(LocA, LocB);
     }
+    AliasResult QueryResult = query(LocA, LocB);
+    if (QueryResult == MayAlias)
+      return AliasAnalysis::alias(LocA, LocB);
 
-    return query(LocA, LocB);
+    return QueryResult;
   }
 
   void initializePass() override { InitializeAliasAnalysis(this); }
