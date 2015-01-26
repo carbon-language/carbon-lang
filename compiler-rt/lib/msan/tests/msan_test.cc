@@ -61,6 +61,8 @@
 #else
 # include <netinet/in.h>
 # include <sys/uio.h>
+# include <sys/mount.h>
+# define f_namelen f_namemax  // FreeBSD names this statfs field so.
 #endif
 
 #if defined(__i386__) || defined(__x86_64__)
