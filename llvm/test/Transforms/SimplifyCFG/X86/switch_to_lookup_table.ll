@@ -781,6 +781,35 @@ return:
 ; CHECK: getelementptr inbounds [9 x i32]* @switch.table6, i32 0, i32 %switch.tableidx
 }
 
+define i32 @unreachable_default(i32 %x)  {
+entry:
+  switch i32 %x, label %default [
+    i32 0, label %bb0
+    i32 1, label %bb1
+    i32 2, label %bb2
+    i32 3, label %bb3
+  ]
+
+bb0: br label %return
+bb1: br label %return
+bb2: br label %return
+bb3: br label %return
+default: unreachable
+
+return:
+  %retval = phi i32 [ 42, %bb0 ], [ 52, %bb1 ], [ 1, %bb2 ], [ 2, %bb3 ]
+  ret i32 %retval
+
+; CHECK-LABEL: @unreachable_default(
+; CHECK: entry:
+; CHECK-NEXT: %switch.tableidx = sub i32 %x, 0
+; CHECK-NOT: icmp
+; CHECK-NOT: br 1i
+; CHECK-NEXT: %switch.gep = getelementptr inbounds [4 x i32]* @switch.table7, i32 0, i32 %switch.tableidx
+; CHECK-NEXT: %switch.load = load i32* %switch.gep
+; CHECK-NEXT: ret i32 %switch.load
+}
+
 ; Don't create a table with illegal type
 define i96 @illegaltype(i32 %c) {
 entry:
