@@ -924,7 +924,7 @@ getNonLocalPointerDependency(Instruction *QueryInst,
   // a block with multiple different pointers.  This can happen during PHI
   // translation.
   DenseMap<BasicBlock*, Value*> Visited;
-  if (!getNonLocalPointerDepFromBB(Address, Loc, isLoad, FromBB,
+  if (!getNonLocalPointerDepFromBB(QueryInst, Address, Loc, isLoad, FromBB,
                                    Result, Visited, true))
     return;
   Result.clear();
@@ -938,7 +938,8 @@ getNonLocalPointerDependency(Instruction *QueryInst,
 /// lookup (which may use dirty cache info if available).  If we do a lookup,
 /// add the result to the cache.
 MemDepResult MemoryDependenceAnalysis::
-GetNonLocalInfoForBlock(const AliasAnalysis::Location &Loc,
+GetNonLocalInfoForBlock(Instruction *QueryInst,
+                        const AliasAnalysis::Location &Loc,
                         bool isLoad, BasicBlock *BB,
                         NonLocalDepInfo *Cache, unsigned NumSortedEntries) {
 
@@ -979,7 +980,8 @@ GetNonLocalInfoForBlock(const AliasAnalysis::Location &Loc,
   }
 
   // Scan the block for the dependency.
-  MemDepResult Dep = getPointerDependencyFrom(Loc, isLoad, ScanPos, BB);
+  MemDepResult Dep = getPointerDependencyFrom(Loc, isLoad, ScanPos, BB,
+                                              QueryInst);
 
   // If we had a dirty entry for the block, update it.  Otherwise, just add
   // a new entry.
@@ -1052,7 +1054,8 @@ SortNonLocalDepInfoCache(MemoryDependenceAnalysis::NonLocalDepInfo &Cache,
 /// not compute dependence information for some reason.  This should be treated
 /// as a clobber dependence on the first instruction in the predecessor block.
 bool MemoryDependenceAnalysis::
-getNonLocalPointerDepFromBB(const PHITransAddr &Pointer,
+getNonLocalPointerDepFromBB(Instruction *QueryInst,
+                            const PHITransAddr &Pointer,
                             const AliasAnalysis::Location &Loc,
                             bool isLoad, BasicBlock *StartBB,
                             SmallVectorImpl<NonLocalDepResult> &Result,
@@ -1091,7 +1094,7 @@ getNonLocalPointerDepFromBB(const PHITransAddr &Pointer,
     } else if (CacheInfo->Size > Loc.Size) {
       // This query's Size is less than the cached one. Conservatively restart
       // the query using the greater size.
-      return getNonLocalPointerDepFromBB(Pointer,
+      return getNonLocalPointerDepFromBB(QueryInst, Pointer,
                                          Loc.getWithNewSize(CacheInfo->Size),
                                          isLoad, StartBB, Result, Visited,
                                          SkipFirstBlock);
@@ -1111,7 +1114,8 @@ getNonLocalPointerDepFromBB(const PHITransAddr &Pointer,
         CacheInfo->NonLocalDeps.clear();
       }
       if (Loc.AATags)
-        return getNonLocalPointerDepFromBB(Pointer, Loc.getWithoutAATags(),
+        return getNonLocalPointerDepFromBB(QueryInst,
+                                           Pointer, Loc.getWithoutAATags(),
                                            isLoad, StartBB, Result, Visited,
                                            SkipFirstBlock);
     }
@@ -1214,7 +1218,8 @@ getNonLocalPointerDepFromBB(const PHITransAddr &Pointer,
       // Get the dependency info for Pointer in BB.  If we have cached
       // information, we will use it, otherwise we compute it.
       DEBUG(AssertSorted(*Cache, NumSortedEntries));
-      MemDepResult Dep = GetNonLocalInfoForBlock(Loc, isLoad, BB, Cache,
+      MemDepResult Dep = GetNonLocalInfoForBlock(QueryInst,
+                                                 Loc, isLoad, BB, Cache,
                                                  NumSortedEntries);
 
       // If we got a Def or Clobber, add this to the list of results.
@@ -1348,7 +1353,7 @@ getNonLocalPointerDepFromBB(const PHITransAddr &Pointer,
       // result conflicted with the Visited list; we have to conservatively
       // assume it is unknown, but this also does not block PRE of the load.
       if (!CanTranslate ||
-          getNonLocalPointerDepFromBB(PredPointer,
+          getNonLocalPointerDepFromBB(QueryInst, PredPointer,
                                       Loc.getWithNewPtr(PredPtrVal),
                                       isLoad, Pred,
                                       Result, Visited)) {

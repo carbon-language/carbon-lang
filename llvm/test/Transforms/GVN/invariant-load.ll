@@ -27,5 +27,43 @@ entry:
   ret i32 %add
 }
 
+; With the invariant.load metadata, what would otherwise
+; be a case for PRE becomes a full redundancy.
+define i32 @test3(i1 %cnd, i32* %p, i32* %q) {
+; CHECK-LABEL: test3
+; CHECK-NOT: load
+entry:
+  %v1 = load i32* %p
+  br i1 %cnd, label %bb1, label %bb2
+
+bb1:
+  store i32 5, i32* %q
+  br label %bb2
+
+bb2:
+  %v2 = load i32* %p, !invariant.load !0
+  %res = sub i32 %v1, %v2
+  ret i32 %res
+}
+
+; This test is here to document a case which doesn't optimize
+; as well as it could.  
+define i32 @test4(i1 %cnd, i32* %p, i32* %q) {
+; CHECK-LABEL: test4
+; %v2 is redundant, but GVN currently doesn't catch that
+entry:
+  %v1 = load i32* %p, !invariant.load !0
+  br i1 %cnd, label %bb1, label %bb2
+
+bb1:
+  store i32 5, i32* %q
+  br label %bb2
+
+bb2:
+  %v2 = load i32* %p
+  %res = sub i32 %v1, %v2
+  ret i32 %res
+}
+
 !0 = !{ }
 

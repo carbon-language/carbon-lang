@@ -428,13 +428,15 @@ namespace llvm {
     MemDepResult getCallSiteDependencyFrom(CallSite C, bool isReadOnlyCall,
                                            BasicBlock::iterator ScanIt,
                                            BasicBlock *BB);
-    bool getNonLocalPointerDepFromBB(const PHITransAddr &Pointer,
+    bool getNonLocalPointerDepFromBB(Instruction *QueryInst,
+                                     const PHITransAddr &Pointer,
                                      const AliasAnalysis::Location &Loc,
                                      bool isLoad, BasicBlock *BB,
                                      SmallVectorImpl<NonLocalDepResult> &Result,
                                      DenseMap<BasicBlock*, Value*> &Visited,
                                      bool SkipFirstBlock = false);
-    MemDepResult GetNonLocalInfoForBlock(const AliasAnalysis::Location &Loc,
+    MemDepResult GetNonLocalInfoForBlock(Instruction *QueryInst,
+                                         const AliasAnalysis::Location &Loc,
                                          bool isLoad, BasicBlock *BB,
                                          NonLocalDepInfo *Cache,
                                          unsigned NumSortedEntries);
