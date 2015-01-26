@@ -7,6 +7,10 @@
 project(libcxx CXX C)
 cmake_minimum_required(VERSION 2.8)
 
+if(POLICY CMP0042)
+  cmake_policy(SET CMP0042 NEW) # Set MACOSX_RPATH=YES by default
+endif()
+
 set(PACKAGE_NAME libcxx)
 set(PACKAGE_VERSION trunk-svn)
 set(PACKAGE_STRING "${PACKAGE_NAME} ${PACKAGE_VERSION}")
