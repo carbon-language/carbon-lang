@@ -251,6 +251,14 @@ bool hasUTF16ByteOrderMark(ArrayRef<char> SrcBytes);
  */
 bool convertUTF16ToUTF8String(ArrayRef<char> SrcBytes, std::string &Out);
 
+/**
+ * Converts a UTF-8 string into a UTF-16 string with native endianness.
+ *
+ * \returns true on success
+ */
+bool convertUTF8ToUTF16String(StringRef SrcUTF8,
+                              SmallVectorImpl<UTF16> &DstUTF16);
+
 } /* end namespace llvm */
 
 #endif

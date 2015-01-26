@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Support/ConvertUTF.h"
+#include "llvm/Support/Format.h"
 #include "gtest/gtest.h"
 #include <string>
 #include <utility>
@@ -35,6 +36,19 @@ TEST(ConvertUTFTest, ConvertUTF16BigEndianToUTF8String) {
   EXPECT_TRUE(Success);
   std::string Expected("\xe0\xb2\xa0_\xe0\xb2\xa0");
   EXPECT_EQ(Expected, Result);
+}
+
+TEST(ConvertUTFTest, ConvertUTF8ToUTF16String) {
+  // Src is the look of disapproval.
+  static const char Src[] = "\xe0\xb2\xa0_\xe0\xb2\xa0";
+  StringRef Ref(Src, sizeof(Src) - 1);
+  SmallVector<UTF16, 5> Result;
+  bool Success = convertUTF8ToUTF16String(Ref, Result);
+  EXPECT_TRUE(Success);
+  static const UTF16 Expected[] = {0x0CA0, 0x005f, 0x0CA0, 0};
+  ASSERT_EQ(3, Result.size());
+  for (int I = 0, E = 3; I != E; ++I)
+    EXPECT_EQ(Expected[I], Result[I]);
 }
 
 TEST(ConvertUTFTest, OddLengthInput) {

@@ -127,5 +127,36 @@ bool convertUTF16ToUTF8String(ArrayRef<char> SrcBytes, std::string &Out) {
   return true;
 }
 
+bool convertUTF8ToUTF16String(StringRef SrcUTF8,
+                              SmallVectorImpl<UTF16> &DstUTF16) {
+  assert(DstUTF16.empty());
+
+  // Avoid OOB by returning early on empty input.
+  if (SrcUTF8.empty())
+    return true;
+
+  const UTF8 *Src = reinterpret_cast<const UTF8 *>(SrcUTF8.begin());
+  const UTF8 *SrcEnd = reinterpret_cast<const UTF8 *>(SrcUTF8.end());
+
+  // Allocate the same number of UTF-16 code units as UTF-8 code units. Encoding
+  // as UTF-16 should always require the same amount or less code units than the
+  // UTF-8 encoding.
+  DstUTF16.resize(SrcUTF8.size());
+  UTF16 *Dst = &DstUTF16[0];
+  UTF16 *DstEnd = Dst + DstUTF16.size();
+
+  ConversionResult CR =
+      ConvertUTF8toUTF16(&Src, SrcEnd, &Dst, DstEnd, strictConversion);
+  assert(CR != targetExhausted);
+
+  if (CR != conversionOK) {
+    DstUTF16.clear();
+    return false;
+  }
+
+  DstUTF16.resize(Dst - &DstUTF16[0]);
+  return true;
+}
+
 } // end namespace llvm
 
