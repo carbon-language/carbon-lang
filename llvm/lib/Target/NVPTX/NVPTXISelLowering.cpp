@@ -259,6 +259,9 @@ NVPTXTargetLowering::NVPTXTargetLowering(const NVPTXTargetMachine &TM)
   setOperationAction(ISD::CTPOP, MVT::i32, Legal);
   setOperationAction(ISD::CTPOP, MVT::i64, Legal);
 
+  // PTX does not directly support SELP of i1, so promote to i32 first
+  setOperationAction(ISD::SELECT, MVT::i1, Custom);
+
   // We have some custom DAG combine patterns for these nodes
   setTargetDAGCombine(ISD::ADD);
   setTargetDAGCombine(ISD::AND);
@@ -1803,9 +1806,27 @@ NVPTXTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   case ISD::SRA_PARTS:
   case ISD::SRL_PARTS:
     return LowerShiftRightParts(Op, DAG);
+  case ISD::SELECT:
+    return LowerSelect(Op, DAG);
   default:
     llvm_unreachable("Custom lowering not defined for operation");
   }
+}
+
+SDValue NVPTXTargetLowering::LowerSelect(SDValue Op, SelectionDAG &DAG) const {
+  SDValue Op0 = Op->getOperand(0);
+  SDValue Op1 = Op->getOperand(1);
+  SDValue Op2 = Op->getOperand(2);
+  SDLoc DL(Op.getNode());
+
+  assert(Op.getValueType() == MVT::i1 && "Custom lowering enabled only for i1");
+
+  Op1 = DAG.getNode(ISD::ANY_EXTEND, DL, MVT::i32, Op1);
+  Op2 = DAG.getNode(ISD::ANY_EXTEND, DL, MVT::i32, Op2);
+  SDValue Select = DAG.getNode(ISD::SELECT, DL, MVT::i32, Op0, Op1, Op2);
+  SDValue Trunc = DAG.getNode(ISD::TRUNCATE, DL, MVT::i1, Select);
+
+  return Trunc;
 }
 
 SDValue NVPTXTargetLowering::LowerLOAD(SDValue Op, SelectionDAG &DAG) const {

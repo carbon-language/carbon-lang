@@ -1356,11 +1356,6 @@ defm SELP_u64 : SELP<"u64", Int64Regs, i64imm>;
 defm SELP_f32 : SELP_PATTERN<"f32", Float32Regs, f32imm, fpimm>;
 defm SELP_f64 : SELP_PATTERN<"f64", Float64Regs, f64imm, fpimm>;
 
-// Special select for predicate operands
-def : Pat<(i1 (select Int1Regs:$p, Int1Regs:$a, Int1Regs:$b)),
-              (ORb1rr (ANDb1rr Int1Regs:$p, Int1Regs:$a),
-              (ANDb1rr (NOT1 Int1Regs:$p), Int1Regs:$b))>;
-
 //
 // Funnnel shift in clamp mode
 //
