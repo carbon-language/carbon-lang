@@ -18,6 +18,7 @@
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/AssumptionCache.h"
 #include "llvm/Analysis/InstructionSimplify.h"
+#include "llvm/Analysis/TargetTransformInfo.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/Dominators.h"
 #include "llvm/IR/Instructions.h"
@@ -273,6 +274,7 @@ class EarlyCSE : public FunctionPass {
 public:
   const DataLayout *DL;
   const TargetLibraryInfo *TLI;
+  const TargetTransformInfo *TTI;
   DominatorTree *DT;
   AssumptionCache *AC;
   typedef RecyclingAllocator<
@@ -383,13 +385,82 @@ private:
     bool Processed;
   };
 
+  /// \brief Wrapper class to handle memory instructions, including loads,
+  /// stores and intrinsic loads and stores defined by the target.
+  class ParseMemoryInst {
+  public:
+    ParseMemoryInst(Instruction *Inst, const TargetTransformInfo *TTI)
+        : Load(false), Store(false), Vol(false), MayReadFromMemory(false),
+          MayWriteToMemory(false), MatchingId(-1), Ptr(nullptr) {
+      MayReadFromMemory = Inst->mayReadFromMemory();
+      MayWriteToMemory = Inst->mayWriteToMemory();
+      if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(Inst)) {
+        MemIntrinsicInfo Info;
+        if (!TTI->getTgtMemIntrinsic(II, Info))
+          return;
+        if (Info.NumMemRefs == 1) {
+          Store = Info.WriteMem;
+          Load = Info.ReadMem;
+          MatchingId = Info.MatchingId;
+          MayReadFromMemory = Info.ReadMem;
+          MayWriteToMemory = Info.WriteMem;
+          Vol = Info.Vol;
+          Ptr = Info.PtrVal;
+        }
+      } else if (LoadInst *LI = dyn_cast<LoadInst>(Inst)) {
+        Load = true;
+        Vol = !LI->isSimple();
+        Ptr = LI->getPointerOperand();
+      } else if (StoreInst *SI = dyn_cast<StoreInst>(Inst)) {
+        Store = true;
+        Vol = !SI->isSimple();
+        Ptr = SI->getPointerOperand();
+      }
+    }
+    bool isLoad() { return Load; }
+    bool isStore() { return Store; }
+    bool isVolatile() { return Vol; }
+    bool isMatchingMemLoc(const ParseMemoryInst &Inst) {
+      return Ptr == Inst.Ptr && MatchingId == Inst.MatchingId;
+    }
+    bool isValid() { return Ptr != nullptr; }
+    int getMatchingId() { return MatchingId; }
+    Value *getPtr() { return Ptr; }
+    bool mayReadFromMemory() { return MayReadFromMemory; }
+    bool mayWriteToMemory() { return MayWriteToMemory; }
+
+  private:
+    bool Load;
+    bool Store;
+    bool Vol;
+    bool MayReadFromMemory;
+    bool MayWriteToMemory;
+    // For regular (non-intrinsic) loads/stores, this is set to -1. For
+    // intrinsic loads/stores, the id is retrieved from the corresponding
+    // field in the MemIntrinsicInfo structure.  That field contains
+    // non-negative values only.
+    int MatchingId;
+    Value *Ptr;
+  };
+
   bool processNode(DomTreeNode *Node);
 
   void getAnalysisUsage(AnalysisUsage &AU) const override {
     AU.addRequired<AssumptionCacheTracker>();
     AU.addRequired<DominatorTreeWrapperPass>();
     AU.addRequired<TargetLibraryInfoWrapperPass>();
+    AU.addRequired<TargetTransformInfo>();
     AU.setPreservesCFG();
+  }
+
+  Value *getOrCreateResult(Value *Inst, Type *ExpectedType) const {
+    if (LoadInst *LI = dyn_cast<LoadInst>(Inst))
+      return LI;
+    else if (StoreInst *SI = dyn_cast<StoreInst>(Inst))
+      return SI->getValueOperand();
+    assert(isa<IntrinsicInst>(Inst) && "Instruction not supported");
+    return TTI->getOrCreateResultFromMemIntrinsic(cast<IntrinsicInst>(Inst),
+                                                  ExpectedType);
   }
 };
 }
@@ -420,7 +491,7 @@ bool EarlyCSE::processNode(DomTreeNode *Node) {
   /// as long as there in no instruction that reads memory.  If we see a store
   /// to the same location, we delete the dead store.  This zaps trivial dead
   /// stores which can occur in bitfield code among other things.
-  StoreInst *LastStore = nullptr;
+  Instruction *LastStore = nullptr;
 
   bool Changed = false;
 
@@ -475,10 +546,11 @@ bool EarlyCSE::processNode(DomTreeNode *Node) {
       continue;
     }
 
+    ParseMemoryInst MemInst(Inst, TTI);
     // If this is a non-volatile load, process it.
-    if (LoadInst *LI = dyn_cast<LoadInst>(Inst)) {
+    if (MemInst.isValid() && MemInst.isLoad()) {
       // Ignore volatile loads.
-      if (!LI->isSimple()) {
+      if (MemInst.isVolatile()) {
         LastStore = nullptr;
         continue;
       }
@@ -486,27 +558,35 @@ bool EarlyCSE::processNode(DomTreeNode *Node) {
       // If we have an available version of this load, and if it is the right
       // generation, replace this instruction.
       std::pair<Value *, unsigned> InVal =
-          AvailableLoads->lookup(Inst->getOperand(0));
+          AvailableLoads->lookup(MemInst.getPtr());
       if (InVal.first != nullptr && InVal.second == CurrentGeneration) {
-        DEBUG(dbgs() << "EarlyCSE CSE LOAD: " << *Inst
-                     << "  to: " << *InVal.first << '\n');
-        if (!Inst->use_empty())
-          Inst->replaceAllUsesWith(InVal.first);
-        Inst->eraseFromParent();
-        Changed = true;
-        ++NumCSELoad;
-        continue;
+        Value *Op = getOrCreateResult(InVal.first, Inst->getType());
+        if (Op != nullptr) {
+          DEBUG(dbgs() << "EarlyCSE CSE LOAD: " << *Inst
+                       << "  to: " << *InVal.first << '\n');
+          if (!Inst->use_empty())
+            Inst->replaceAllUsesWith(Op);
+          Inst->eraseFromParent();
+          Changed = true;
+          ++NumCSELoad;
+          continue;
+        }
       }
 
       // Otherwise, remember that we have this instruction.
-      AvailableLoads->insert(Inst->getOperand(0), std::pair<Value *, unsigned>(
-                                                      Inst, CurrentGeneration));
+      AvailableLoads->insert(MemInst.getPtr(), std::pair<Value *, unsigned>(
+                                                   Inst, CurrentGeneration));
       LastStore = nullptr;
       continue;
     }
 
     // If this instruction may read from memory, forget LastStore.
-    if (Inst->mayReadFromMemory())
+    // Load/store intrinsics will indicate both a read and a write to
+    // memory.  The target may override this (e.g. so that a store intrinsic
+    // does not read  from memory, and thus will be treated the same as a
+    // regular store for commoning purposes).
+    if (Inst->mayReadFromMemory() &&
+        !(MemInst.isValid() && !MemInst.mayReadFromMemory()))
       LastStore = nullptr;
 
     // If this is a read-only call, process it.
@@ -537,17 +617,19 @@ bool EarlyCSE::processNode(DomTreeNode *Node) {
     if (Inst->mayWriteToMemory()) {
       ++CurrentGeneration;
 
-      if (StoreInst *SI = dyn_cast<StoreInst>(Inst)) {
+      if (MemInst.isValid() && MemInst.isStore()) {
         // We do a trivial form of DSE if there are two stores to the same
         // location with no intervening loads.  Delete the earlier store.
-        if (LastStore &&
-            LastStore->getPointerOperand() == SI->getPointerOperand()) {
-          DEBUG(dbgs() << "EarlyCSE DEAD STORE: " << *LastStore
-                       << "  due to: " << *Inst << '\n');
-          LastStore->eraseFromParent();
-          Changed = true;
-          ++NumDSE;
-          LastStore = nullptr;
+        if (LastStore) {
+          ParseMemoryInst LastStoreMemInst(LastStore, TTI);
+          if (LastStoreMemInst.isMatchingMemLoc(MemInst)) {
+            DEBUG(dbgs() << "EarlyCSE DEAD STORE: " << *LastStore
+                         << "  due to: " << *Inst << '\n');
+            LastStore->eraseFromParent();
+            Changed = true;
+            ++NumDSE;
+            LastStore = nullptr;
+          }
           // fallthrough - we can exploit information about this store
         }
 
@@ -556,13 +638,12 @@ bool EarlyCSE::processNode(DomTreeNode *Node) {
         // version of the pointer.  It is safe to forward from volatile stores
         // to non-volatile loads, so we don't have to check for volatility of
         // the store.
-        AvailableLoads->insert(SI->getPointerOperand(),
-                               std::pair<Value *, unsigned>(
-                                   SI->getValueOperand(), CurrentGeneration));
+        AvailableLoads->insert(MemInst.getPtr(), std::pair<Value *, unsigned>(
+                                                     Inst, CurrentGeneration));
 
         // Remember that this was the last store we saw for DSE.
-        if (SI->isSimple())
-          LastStore = SI;
+        if (!MemInst.isVolatile())
+          LastStore = Inst;
       }
     }
   }
@@ -584,6 +665,7 @@ bool EarlyCSE::runOnFunction(Function &F) {
   DataLayoutPass *DLP = getAnalysisIfAvailable<DataLayoutPass>();
   DL = DLP ? &DLP->getDataLayout() : nullptr;
   TLI = &getAnalysis<TargetLibraryInfoWrapperPass>().getTLI();
+  TTI = &getAnalysis<TargetTransformInfo>();
   DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
   AC = &getAnalysis<AssumptionCacheTracker>().getAssumptionCache(F);
 

@@ -254,6 +254,16 @@ unsigned TargetTransformInfo::getCostOfKeepingLiveOverCall(ArrayRef<Type*> Tys)
   return PrevTTI->getCostOfKeepingLiveOverCall(Tys);
 }
 
+Value *TargetTransformInfo::getOrCreateResultFromMemIntrinsic(
+    IntrinsicInst *Inst, Type *ExpectedType) const {
+  return PrevTTI->getOrCreateResultFromMemIntrinsic(Inst, ExpectedType);
+}
+
+bool TargetTransformInfo::getTgtMemIntrinsic(IntrinsicInst *Inst,
+                                             MemIntrinsicInfo &Info) const {
+  return PrevTTI->getTgtMemIntrinsic(Inst, Info);
+}
+
 namespace {
 
 struct NoTTI final : ImmutablePass, TargetTransformInfo {
@@ -656,6 +666,15 @@ struct NoTTI final : ImmutablePass, TargetTransformInfo {
     return 0;
   }
 
+  bool getTgtMemIntrinsic(IntrinsicInst *Inst,
+                          MemIntrinsicInfo &Info) const override {
+    return false;
+  }
+
+  Value *getOrCreateResultFromMemIntrinsic(IntrinsicInst *Inst,
+                                           Type *ExpectedType) const override {
+    return nullptr;
+  }
 };
 
 } // end anonymous namespace

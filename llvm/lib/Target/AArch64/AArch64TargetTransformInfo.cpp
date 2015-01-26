@@ -44,6 +44,12 @@ class AArch64TTI final : public ImmutablePass, public TargetTransformInfo {
   /// are set if the result needs to be inserted and/or extracted from vectors.
   unsigned getScalarizationOverhead(Type *Ty, bool Insert, bool Extract) const;
 
+  enum MemIntrinsicType {
+    VECTOR_LDST_TWO_ELEMENTS,
+    VECTOR_LDST_THREE_ELEMENTS,
+    VECTOR_LDST_FOUR_ELEMENTS
+  };
+
 public:
   AArch64TTI() : ImmutablePass(ID), TM(nullptr), ST(nullptr), TLI(nullptr) {
     llvm_unreachable("This pass cannot be directly constructed");
@@ -131,6 +137,11 @@ public:
   void getUnrollingPreferences(const Function *F, Loop *L,
                                UnrollingPreferences &UP) const override;
 
+  Value *getOrCreateResultFromMemIntrinsic(IntrinsicInst *Inst,
+                                           Type *ExpectedType) const override;
+
+  bool getTgtMemIntrinsic(IntrinsicInst *Inst,
+                          MemIntrinsicInfo &Info) const override;
 
   /// @}
 };
@@ -553,4 +564,84 @@ void AArch64TTI::getUnrollingPreferences(const Function *F, Loop *L,
                                          UnrollingPreferences &UP) const {
   // Disable partial & runtime unrolling on -Os.
   UP.PartialOptSizeThreshold = 0;
+}
+
+Value *AArch64TTI::getOrCreateResultFromMemIntrinsic(IntrinsicInst *Inst,
+                                                     Type *ExpectedType) const {
+  switch (Inst->getIntrinsicID()) {
+  default:
+    return nullptr;
+  case Intrinsic::aarch64_neon_st2:
+  case Intrinsic::aarch64_neon_st3:
+  case Intrinsic::aarch64_neon_st4: {
+    // Create a struct type
+    StructType *ST = dyn_cast<StructType>(ExpectedType);
+    if (!ST)
+      return nullptr;
+    unsigned NumElts = Inst->getNumArgOperands() - 1;
+    if (ST->getNumElements() != NumElts)
+      return nullptr;
+    for (unsigned i = 0, e = NumElts; i != e; ++i) {
+      if (Inst->getArgOperand(i)->getType() != ST->getElementType(i))
+        return nullptr;
+    }
+    Value *Res = UndefValue::get(ExpectedType);
+    IRBuilder<> Builder(Inst);
+    for (unsigned i = 0, e = NumElts; i != e; ++i) {
+      Value *L = Inst->getArgOperand(i);
+      Res = Builder.CreateInsertValue(Res, L, i);
+    }
+    return Res;
+  }
+  case Intrinsic::aarch64_neon_ld2:
+  case Intrinsic::aarch64_neon_ld3:
+  case Intrinsic::aarch64_neon_ld4:
+    if (Inst->getType() == ExpectedType)
+      return Inst;
+    return nullptr;
+  }
+}
+
+bool AArch64TTI::getTgtMemIntrinsic(IntrinsicInst *Inst,
+                                    MemIntrinsicInfo &Info) const {
+  switch (Inst->getIntrinsicID()) {
+  default:
+    break;
+  case Intrinsic::aarch64_neon_ld2:
+  case Intrinsic::aarch64_neon_ld3:
+  case Intrinsic::aarch64_neon_ld4:
+    Info.ReadMem = true;
+    Info.WriteMem = false;
+    Info.Vol = false;
+    Info.NumMemRefs = 1;
+    Info.PtrVal = Inst->getArgOperand(0);
+    break;
+  case Intrinsic::aarch64_neon_st2:
+  case Intrinsic::aarch64_neon_st3:
+  case Intrinsic::aarch64_neon_st4:
+    Info.ReadMem = false;
+    Info.WriteMem = true;
+    Info.Vol = false;
+    Info.NumMemRefs = 1;
+    Info.PtrVal = Inst->getArgOperand(Inst->getNumArgOperands() - 1);
+    break;
+  }
+
+  switch (Inst->getIntrinsicID()) {
+  default:
+    return false;
+  case Intrinsic::aarch64_neon_ld2:
+  case Intrinsic::aarch64_neon_st2:
+    Info.MatchingId = VECTOR_LDST_TWO_ELEMENTS;
+    break;
+  case Intrinsic::aarch64_neon_ld3:
+  case Intrinsic::aarch64_neon_st3:
+    Info.MatchingId = VECTOR_LDST_THREE_ELEMENTS;
+    break;
+  case Intrinsic::aarch64_neon_ld4:
+  case Intrinsic::aarch64_neon_st4:
+    Info.MatchingId = VECTOR_LDST_FOUR_ELEMENTS;
+    break;
+  }
+  return true;
 }

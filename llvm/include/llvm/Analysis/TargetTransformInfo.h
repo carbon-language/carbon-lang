@@ -23,6 +23,7 @@
 #define LLVM_ANALYSIS_TARGETTRANSFORMINFO_H
 
 #include "llvm/IR/Intrinsics.h"
+#include "llvm/IR/IntrinsicInst.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/DataTypes.h"
 
@@ -34,6 +35,20 @@ class Loop;
 class Type;
 class User;
 class Value;
+
+/// \brief Information about a load/store intrinsic defined by the target.
+struct MemIntrinsicInfo {
+  MemIntrinsicInfo()
+      : ReadMem(false), WriteMem(false), Vol(false), MatchingId(0),
+        NumMemRefs(0), PtrVal(nullptr) {}
+  bool ReadMem;
+  bool WriteMem;
+  bool Vol;
+  // Same Id is set by the target for corresponding load/store intrinsics.
+  unsigned short MatchingId;
+  int NumMemRefs;
+  Value *PtrVal;
+};
 
 /// TargetTransformInfo - This pass provides access to the codegen
 /// interfaces that are needed for IR-level transformations.
@@ -442,6 +457,20 @@ public:
   /// Some types may require the use of register classes that do not have
   /// any callee-saved registers, so would require a spill and fill.
   virtual unsigned getCostOfKeepingLiveOverCall(ArrayRef<Type*> Tys) const;
+
+  /// \returns True if the intrinsic is a supported memory intrinsic.  Info
+  /// will contain additional information - whether the intrinsic may write
+  /// or read to memory, volatility and the pointer.  Info is undefined
+  /// if false is returned.
+  virtual bool getTgtMemIntrinsic(IntrinsicInst *Inst,
+                                  MemIntrinsicInfo &Info) const;
+
+  /// \returns A value which is the result of the given memory intrinsic.  New
+  /// instructions may be created to extract the result from the given intrinsic
+  /// memory operation.  Returns nullptr if the target cannot create a result
+  /// from the given intrinsic.
+  virtual Value *getOrCreateResultFromMemIntrinsic(IntrinsicInst *Inst,
+                                                   Type *ExpectedType) const;
 
   /// @}
 
