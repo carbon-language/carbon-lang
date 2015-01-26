@@ -369,6 +369,8 @@ AC_CACHE_CHECK([type of operating system we're going to target],
     llvm_cv_target_os_type="NativeClient" ;;
   *-unknown-eabi*)
     llvm_cv_target_os_type="Freestanding" ;;
+  *-*-ps4)
+    llvm_cv_target_os_type="PS4" ;;
   *)
     llvm_cv_target_os_type="Unknown" ;;
 esac])
