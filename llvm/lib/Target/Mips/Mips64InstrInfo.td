@@ -423,16 +423,6 @@ def VMULU : ArithLogicR<"vmulu", GPR64Opnd, 0, II_DMUL>,
 //  Arbitrary patterns that map to one or more instructions
 //===----------------------------------------------------------------------===//
 
-// Add/sub with carry
-def : MipsPat<(subc GPR64:$lhs, GPR64:$rhs),
-              (DSUBu GPR64:$lhs, GPR64:$rhs)>, ISA_MIPS3;
-let AdditionalPredicates = [NotDSP] in {
-  def : MipsPat<(addc GPR64:$lhs, GPR64:$rhs),
-                (DADDu GPR64:$lhs, GPR64:$rhs)>, ISA_MIPS3;
-  def : MipsPat<(addc  GPR64:$src, immSExt16:$imm),
-                (DADDiu GPR64:$src, imm:$imm)>, ISA_MIPS3;
-}
-
 // extended loads
 def : MipsPat<(i64 (extloadi1  addr:$src)), (LB64 addr:$src)>;
 def : MipsPat<(i64 (extloadi8  addr:$src)), (LB64 addr:$src)>;

@@ -240,27 +240,9 @@ SDNode *MipsSEDAGToDAGISel::selectAddESubE(unsigned MOp, SDValue InFlag,
   SDValue LHS = Node->getOperand(0), RHS = Node->getOperand(1);
   EVT VT = LHS.getValueType();
 
-  unsigned SltOp = Mips::SLTu;
-  unsigned AddOp = Mips::ADDu;
-  if (VT == MVT::i64) {
-    SltOp = Mips::SLTu64;
-    AddOp = Mips::DADDu;
-  }
-
-  SDValue Carry = SDValue(CurDAG->getMachineNode(SltOp, DL, VT, Ops), 0);
-  if (SltOp == Mips::SLTu64) {
-    // On 64-bit targets, sltu produces an i64 but our backend currently says
-    // that SLTu64 produces an i32. We need to fix this in the long run but for
-    // now, just make the DAG type-correct by asserting the upper bits are zero.
-    Carry = SDValue(CurDAG->getMachineNode(
-                        Mips::SUBREG_TO_REG, DL, VT,
-                        CurDAG->getTargetConstant(0, VT), Carry,
-                        CurDAG->getTargetConstant(Mips::sub_32, MVT::i32)),
-                    0);
-  }
-
-  SDNode *AddCarry = CurDAG->getMachineNode(AddOp, DL, VT, Carry, RHS);
-
+  SDNode *Carry = CurDAG->getMachineNode(Mips::SLTu, DL, VT, Ops);
+  SDNode *AddCarry = CurDAG->getMachineNode(Mips::ADDu, DL, VT,
+                                            SDValue(Carry, 0), RHS);
   return CurDAG->SelectNodeTo(Node, MOp, VT, MVT::Glue, LHS,
                               SDValue(AddCarry, 0));
 }
@@ -659,9 +641,7 @@ std::pair<bool, SDNode*> MipsSEDAGToDAGISel::selectNode(SDNode *Node) {
 
   case ISD::SUBE: {
     SDValue InFlag = Node->getOperand(2);
-    unsigned SubOp =
-        Node->getValueType(0) == MVT::i64 ? Mips::DSUBu : Mips::SUBu;
-    Result = selectAddESubE(SubOp, InFlag, InFlag.getOperand(0), DL, Node);
+    Result = selectAddESubE(Mips::SUBu, InFlag, InFlag.getOperand(0), DL, Node);
     return std::make_pair(true, Result);
   }
 
@@ -669,9 +649,7 @@ std::pair<bool, SDNode*> MipsSEDAGToDAGISel::selectNode(SDNode *Node) {
     if (Subtarget->hasDSP()) // Select DSP instructions, ADDSC and ADDWC.
       break;
     SDValue InFlag = Node->getOperand(2);
-    unsigned AddOp =
-        Node->getValueType(0) == MVT::i64 ? Mips::DADDu : Mips::ADDu;
-    Result = selectAddESubE(AddOp, InFlag, InFlag.getValue(0), DL, Node);
+    Result = selectAddESubE(Mips::ADDu, InFlag, InFlag.getValue(0), DL, Node);
     return std::make_pair(true, Result);
   }
 
