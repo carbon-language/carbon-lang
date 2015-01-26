@@ -68,7 +68,7 @@ public:
     this->makeHeader();
 
     std::error_code ec;
-    llvm::raw_fd_ostream out(outPath.data(), ec, llvm::sys::fs::F_None);
+    llvm::raw_fd_ostream out(outPath, ec, llvm::sys::fs::F_None);
     if (ec)
       return ec;
 

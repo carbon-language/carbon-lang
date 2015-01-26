@@ -1266,7 +1266,7 @@ public:
   std::error_code writeFile(const lld::File &file, StringRef outPath) override {
     // Create stream to path.
     std::error_code ec;
-    llvm::raw_fd_ostream out(outPath.data(), ec, llvm::sys::fs::F_Text);
+    llvm::raw_fd_ostream out(outPath, ec, llvm::sys::fs::F_Text);
     if (ec)
       return ec;
 
