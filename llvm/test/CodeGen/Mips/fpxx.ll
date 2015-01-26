@@ -10,11 +10,11 @@
 ; RUN: llc -march=mips64 -mcpu=mips64 < %s | FileCheck %s -check-prefix=ALL -check-prefix=64-NOFPXX
 ; RUN: not llc -march=mips64 -mcpu=mips64 -mattr=fpxx < %s 2>&1 | FileCheck %s -check-prefix=64-FPXX
 
-; RUN-TODO: llc -march=mips64 -mcpu=mips4 -mattr=-n64,+o32 < %s | FileCheck %s -check-prefix=ALL -check-prefix=4-O32-NOFPXX
-; RUN-TODO: llc -march=mips64 -mcpu=mips4 -mattr=-n64,+o32 -mattr=fpxx < %s | FileCheck %s -check-prefix=ALL -check-prefix=4-O32-FPXX
+; RUN-TODO: llc -march=mips64 -mcpu=mips4 -target-abi o32 < %s | FileCheck %s -check-prefix=ALL -check-prefix=4-O32-NOFPXX
+; RUN-TODO: llc -march=mips64 -mcpu=mips4 -target-abi o32 -mattr=fpxx < %s | FileCheck %s -check-prefix=ALL -check-prefix=4-O32-FPXX
 
-; RUN-TODO: llc -march=mips64 -mcpu=mips64 -mattr=-n64,+o32 < %s | FileCheck %s -check-prefix=ALL -check-prefix=64-O32-NOFPXX
-; RUN-TODO: llc -march=mips64 -mcpu=mips64 -mattr=-n64,+o32 -mattr=fpxx < %s | FileCheck %s -check-prefix=ALL -check-prefix=64-O32-FPXX
+; RUN-TODO: llc -march=mips64 -mcpu=mips64 -target-abi o32 < %s | FileCheck %s -check-prefix=ALL -check-prefix=64-O32-NOFPXX
+; RUN-TODO: llc -march=mips64 -mcpu=mips64 -target-abi o32 -mattr=fpxx < %s | FileCheck %s -check-prefix=ALL -check-prefix=64-O32-FPXX
 
 declare double @dbl();
 

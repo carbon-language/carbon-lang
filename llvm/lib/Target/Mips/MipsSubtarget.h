@@ -45,9 +45,6 @@ class MipsSubtarget : public MipsGenSubtargetInfo {
   // Mips architecture version
   MipsArchEnum MipsArchVersion;
 
-  // Selected ABI
-  MipsABIInfo ABI;
-
   // IsLittle - The target is Little Endian
   bool IsLittle;
 
@@ -153,12 +150,12 @@ public:
   CodeGenOpt::Level getOptLevelToEnablePostRAScheduler() const override;
 
   /// Only O32 and EABI supported right now.
-  bool isABI_EABI() const { return ABI.IsEABI(); }
-  bool isABI_N64() const { return ABI.IsN64(); }
-  bool isABI_N32() const { return ABI.IsN32(); }
-  bool isABI_O32() const { return ABI.IsO32(); }
+  bool isABI_EABI() const;
+  bool isABI_N64() const;
+  bool isABI_N32() const;
+  bool isABI_O32() const;
+  const MipsABIInfo &getABI() const;
   bool isABI_FPXX() const { return isABI_O32() && IsFPXX; }
-  const MipsABIInfo &getABI() const { return ABI; }
 
   /// This constructor initializes the data members to match that
   /// of the specified triple.

@@ -62,18 +62,6 @@ static cl::opt<bool>
 GPOpt("mgpopt", cl::Hidden,
       cl::desc("MIPS: Enable gp-relative addressing of small data items"));
 
-/// Select the Mips CPU for the given triple and cpu name.
-/// FIXME: Merge with the copy in MipsMCTargetDesc.cpp
-static StringRef selectMipsCPU(Triple TT, StringRef CPU) {
-  if (CPU.empty() || CPU == "generic") {
-    if (TT.getArch() == Triple::mips || TT.getArch() == Triple::mipsel)
-      CPU = "mips32";
-    else
-      CPU = "mips64";
-  }
-  return CPU;
-}
-
 void MipsSubtarget::anchor() { }
 
 static std::string computeDataLayout(const MipsSubtarget &ST) {
@@ -110,11 +98,11 @@ MipsSubtarget::MipsSubtarget(const std::string &TT, const std::string &CPU,
                              const std::string &FS, bool little,
                              const MipsTargetMachine &TM)
     : MipsGenSubtargetInfo(TT, CPU, FS), MipsArchVersion(MipsDefault),
-      ABI(MipsABIInfo::Unknown()), IsLittle(little), IsSingleFloat(false),
-      IsFPXX(false), NoABICalls(false), IsFP64bit(false), UseOddSPReg(true),
-      IsNaN2008bit(false), IsGP64bit(false), HasVFPU(false), HasCnMips(false),
-      HasMips3_32(false), HasMips3_32r2(false), HasMips4_32(false),
-      HasMips4_32r2(false), HasMips5_32r2(false), InMips16Mode(false),
+      IsLittle(little), IsSingleFloat(false), IsFPXX(false), NoABICalls(false),
+      IsFP64bit(false), UseOddSPReg(true), IsNaN2008bit(false),
+      IsGP64bit(false), HasVFPU(false), HasCnMips(false), HasMips3_32(false),
+      HasMips3_32r2(false), HasMips4_32(false), HasMips4_32r2(false),
+      HasMips5_32r2(false), InMips16Mode(false),
       InMips16HardFloat(Mips16HardFloat), InMicroMipsMode(false), HasDSP(false),
       HasDSPR2(false), AllowMixed16_32(Mixed16_32 | Mips_Os16), Os16(Mips_Os16),
       HasMSA(false), TM(TM), TargetTriple(TT),
@@ -134,13 +122,6 @@ MipsSubtarget::MipsSubtarget(const std::string &TT, const std::string &CPU,
     report_fatal_error("Code generation for MIPS-I is not implemented", false);
   if (MipsArchVersion == Mips5)
     report_fatal_error("Code generation for MIPS-V is not implemented", false);
-
-  // Assert exactly one ABI was chosen.
-  assert(ABI.IsKnown());
-  assert((((getFeatureBits() & Mips::FeatureO32) != 0) +
-          ((getFeatureBits() & Mips::FeatureEABI) != 0) +
-          ((getFeatureBits() & Mips::FeatureN32) != 0) +
-          ((getFeatureBits() & Mips::FeatureN64) != 0)) == 1);
 
   // Check if Architecture and ABI are compatible.
   assert(((!isGP64bit() && (isABI_O32() || isABI_EABI())) ||
@@ -192,6 +173,18 @@ CodeGenOpt::Level MipsSubtarget::getOptLevelToEnablePostRAScheduler() const {
   return CodeGenOpt::Aggressive;
 }
 
+/// Select the Mips CPU for the given triple and cpu name.
+/// FIXME: Merge with the copy in MipsMCTargetDesc.cpp
+static StringRef selectMipsCPU(Triple TT, StringRef CPU) {
+  if (CPU.empty() || CPU == "generic") {
+    if (TT.getArch() == Triple::mips || TT.getArch() == Triple::mipsel)
+      CPU = "mips32";
+    else
+      CPU = "mips64";
+  }
+  return CPU;
+}
+
 MipsSubtarget &
 MipsSubtarget::initializeSubtargetDependencies(StringRef CPU, StringRef FS,
                                                const TargetMachine &TM) {
@@ -220,3 +213,9 @@ bool MipsSubtarget::useConstantIslands() {
 Reloc::Model MipsSubtarget::getRelocationModel() const {
   return TM.getRelocationModel();
 }
+
+bool MipsSubtarget::isABI_EABI() const { return getABI().IsEABI(); }
+bool MipsSubtarget::isABI_N64() const { return getABI().IsN64(); }
+bool MipsSubtarget::isABI_N32() const { return getABI().IsN32(); }
+bool MipsSubtarget::isABI_O32() const { return getABI().IsO32(); }
+const MipsABIInfo &MipsSubtarget::getABI() const { return TM.getABI(); }

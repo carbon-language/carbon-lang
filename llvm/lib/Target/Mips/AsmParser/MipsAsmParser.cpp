@@ -7,6 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "MCTargetDesc/MipsABIInfo.h"
 #include "MCTargetDesc/MipsMCExpr.h"
 #include "MCTargetDesc/MipsMCTargetDesc.h"
 #include "MipsRegisterInfo.h"
@@ -95,6 +96,7 @@ class MipsAsmParser : public MCTargetAsmParser {
   }
 
   MCSubtargetInfo &STI;
+  MipsABIInfo ABI;
   SmallVector<std::unique_ptr<MipsAssemblerOptions>, 2> AssemblerOptions;
   MCSymbol *CurrentFn; // Pointer to the function being parsed. It may be a
                        // nullptr, which indicates that no function is currently
@@ -315,7 +317,9 @@ public:
 
   MipsAsmParser(MCSubtargetInfo &sti, MCAsmParser &parser,
                 const MCInstrInfo &MII, const MCTargetOptions &Options)
-      : MCTargetAsmParser(), STI(sti) {
+      : MCTargetAsmParser(), STI(sti),
+        ABI(MipsABIInfo::computeTargetABI(Triple(sti.getTargetTriple()),
+                                          sti.getCPU(), Options)) {
     MCAsmParserExtension::Initialize(parser);
 
     // Initialize the set of available features.
@@ -331,12 +335,6 @@ public:
 
     getTargetStreamer().updateABIInfo(*this);
 
-    // Assert exactly one ABI was chosen.
-    assert((((STI.getFeatureBits() & Mips::FeatureO32) != 0) +
-            ((STI.getFeatureBits() & Mips::FeatureEABI) != 0) +
-            ((STI.getFeatureBits() & Mips::FeatureN32) != 0) +
-            ((STI.getFeatureBits() & Mips::FeatureN64) != 0)) == 1);
-
     if (!isABI_O32() && !useOddSPReg() != 0)
       report_fatal_error("-mno-odd-spreg requires the O32 ABI");
 
@@ -348,9 +346,10 @@ public:
 
   bool isGP64bit() const { return STI.getFeatureBits() & Mips::FeatureGP64Bit; }
   bool isFP64bit() const { return STI.getFeatureBits() & Mips::FeatureFP64Bit; }
-  bool isABI_N32() const { return STI.getFeatureBits() & Mips::FeatureN32; }
-  bool isABI_N64() const { return STI.getFeatureBits() & Mips::FeatureN64; }
-  bool isABI_O32() const { return STI.getFeatureBits() & Mips::FeatureO32; }
+  const MipsABIInfo &getABI() const { return ABI; }
+  bool isABI_N32() const { return ABI.IsN32(); }
+  bool isABI_N64() const { return ABI.IsN64(); }
+  bool isABI_O32() const { return ABI.IsO32(); }
   bool isABI_FPXX() const { return STI.getFeatureBits() & Mips::FeatureFPXX; }
 
   bool useOddSPReg() const {

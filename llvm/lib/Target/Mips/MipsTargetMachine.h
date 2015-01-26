@@ -19,6 +19,7 @@
 #include "llvm/CodeGen/SelectionDAGISel.h"
 #include "llvm/Target/TargetFrameLowering.h"
 #include "llvm/Target/TargetMachine.h"
+#include "MCTargetDesc/MipsABIInfo.h"
 
 namespace llvm {
 class formatted_raw_ostream;
@@ -27,6 +28,8 @@ class MipsRegisterInfo;
 class MipsTargetMachine : public LLVMTargetMachine {
   bool isLittle;
   std::unique_ptr<TargetLoweringObjectFile> TLOF;
+  // Selected ABI
+  MipsABIInfo ABI;
   MipsSubtarget *Subtarget;
   MipsSubtarget DefaultSubtarget;
   MipsSubtarget NoMips16Subtarget;
@@ -61,6 +64,7 @@ public:
   }
 
   bool isLittleEndian() const { return isLittle; }
+  const MipsABIInfo &getABI() const { return ABI; }
 };
 
 /// MipsebTargetMachine - Mips32/64 big endian target machine.

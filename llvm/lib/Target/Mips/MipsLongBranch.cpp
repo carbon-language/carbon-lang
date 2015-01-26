@@ -63,11 +63,16 @@ namespace {
   public:
     static char ID;
     MipsLongBranch(TargetMachine &tm)
-      : MachineFunctionPass(ID), TM(tm),
-        IsPIC(TM.getRelocationModel() == Reloc::PIC_),
-        ABI(TM.getSubtarget<MipsSubtarget>().getABI()),
-        LongBranchSeqSize(!IsPIC ? 2 : (ABI.IsN64() ? 10 :
-            (!TM.getSubtarget<MipsSubtarget>().isTargetNaCl() ? 9 : 10))) {}
+        : MachineFunctionPass(ID), TM(tm),
+          IsPIC(TM.getRelocationModel() == Reloc::PIC_),
+          ABI(static_cast<const MipsTargetMachine &>(TM).getABI()),
+          LongBranchSeqSize(
+              !IsPIC ? 2
+                     : (ABI.IsN64()
+                            ? 10
+                            : (!TM.getSubtarget<MipsSubtarget>().isTargetNaCl()
+                                   ? 9
+                                   : 10))) {}
 
     const char *getPassName() const override {
       return "Mips Long Branch";

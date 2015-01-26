@@ -2524,7 +2524,8 @@ MipsTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
 
   // Allocate the reserved argument area. It seems strange to do this from the
   // caller side but removing it breaks the frame size calculation.
-  const MipsABIInfo &ABI = Subtarget.getABI();
+  const MipsABIInfo &ABI =
+      static_cast<const MipsTargetMachine &>(MF.getTarget()).getABI();
   CCInfo.AllocateStack(ABI.GetCalleeAllocdArgSizeInBytes(CallConv), 1);
 
   CCInfo.AnalyzeCallOperands(Outs, CC_Mips, CLI.getArgs(), Callee.getNode());
@@ -2888,7 +2889,8 @@ MipsTargetLowering::LowerFormalArguments(SDValue Chain,
   SmallVector<CCValAssign, 16> ArgLocs;
   MipsCCState CCInfo(CallConv, IsVarArg, DAG.getMachineFunction(), ArgLocs,
                      *DAG.getContext());
-  const MipsABIInfo &ABI = Subtarget.getABI();
+  const MipsABIInfo &ABI =
+      static_cast<const MipsTargetMachine &>(MF.getTarget()).getABI();
   CCInfo.AllocateStack(ABI.GetCalleeAllocdArgSizeInBytes(CallConv), 1);
   Function::const_arg_iterator FuncArg =
     DAG.getMachineFunction().getFunction()->arg_begin();
@@ -3539,7 +3541,8 @@ void MipsTargetLowering::copyByValRegs(
   unsigned RegAreaSize = NumRegs * GPRSizeInBytes;
   unsigned FrameObjSize = std::max(Flags.getByValSize(), RegAreaSize);
   int FrameObjOffset;
-  const MipsABIInfo &ABI = Subtarget.getABI();
+  const MipsABIInfo &ABI =
+      static_cast<const MipsTargetMachine &>(MF.getTarget()).getABI();
   ArrayRef<MCPhysReg> ByValArgRegs = ABI.GetByValArgRegs();
 
   if (RegAreaSize)
@@ -3591,7 +3594,10 @@ void MipsTargetLowering::passByValArg(
   unsigned NumRegs = LastReg - FirstReg;
 
   if (NumRegs) {
-    const ArrayRef<MCPhysReg> ArgRegs = Subtarget.getABI().GetByValArgRegs();
+    const ArrayRef<MCPhysReg> ArgRegs =
+        static_cast<const MipsTargetMachine &>(DAG.getTarget())
+            .getABI()
+            .GetByValArgRegs();
     bool LeftoverBytes = (NumRegs * RegSizeInBytes > ByValSizeInBytes);
     unsigned I = 0;
 
@@ -3674,7 +3680,10 @@ void MipsTargetLowering::writeVarArgRegs(std::vector<SDValue> &OutChains,
                                          SDValue Chain, SDLoc DL,
                                          SelectionDAG &DAG,
                                          CCState &State) const {
-  const ArrayRef<MCPhysReg> ArgRegs = Subtarget.getABI().GetVarArgRegs();
+  const ArrayRef<MCPhysReg> ArgRegs =
+      static_cast<const MipsTargetMachine &>(DAG.getTarget())
+          .getABI()
+          .GetVarArgRegs();
   unsigned Idx = State.getFirstUnallocated(ArgRegs.data(), ArgRegs.size());
   unsigned RegSizeInBytes = Subtarget.getGPRSizeInBytes();
   MVT RegTy = MVT::getIntegerVT(RegSizeInBytes * 8);
@@ -3690,7 +3699,8 @@ void MipsTargetLowering::writeVarArgRegs(std::vector<SDValue> &OutChains,
     VaArgOffset =
         RoundUpToAlignment(State.getNextStackOffset(), RegSizeInBytes);
   else {
-    const MipsABIInfo &ABI = Subtarget.getABI();
+    const MipsABIInfo &ABI =
+        static_cast<const MipsTargetMachine &>(MF.getTarget()).getABI();
     VaArgOffset =
         (int)ABI.GetCalleeAllocdArgSizeInBytes(State.getCallingConv()) -
         (int)(RegSizeInBytes * (ArgRegs.size() - Idx));
@@ -3733,7 +3743,10 @@ void MipsTargetLowering::HandleByVal(CCState *State, unsigned &Size,
 
   if (State->getCallingConv() != CallingConv::Fast) {
     unsigned RegSizeInBytes = Subtarget.getGPRSizeInBytes();
-    const ArrayRef<MCPhysReg> IntArgRegs = Subtarget.getABI().GetByValArgRegs();
+    const ArrayRef<MCPhysReg> IntArgRegs =
+        static_cast<const MipsTargetMachine &>(MF.getTarget())
+            .getABI()
+            .GetByValArgRegs();
     // FIXME: The O32 case actually describes no shadow registers.
     const MCPhysReg *ShadowRegs =
         Subtarget.isABI_O32() ? IntArgRegs.data() : Mips64DPRegs;

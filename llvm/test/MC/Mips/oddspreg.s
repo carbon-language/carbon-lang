@@ -5,10 +5,10 @@
 # RUN:   llvm-readobj -sections -section-data -section-relocations - | \
 # RUN:     FileCheck %s -check-prefix=CHECK-OBJ-ALL -check-prefix=CHECK-OBJ-O32
 #
-# RUN: llvm-mc %s -arch=mips64 -mcpu=mips64 -mattr=-n64,+n32 | \
+# RUN: llvm-mc %s -arch=mips64 -mcpu=mips64 -target-abi n32 | \
 # RUN:   FileCheck %s -check-prefix=CHECK-ASM
 #
-# RUN: llvm-mc %s -arch=mips64 -mcpu=mips64 -mattr=-n64,+n32 -filetype=obj -o - | \
+# RUN: llvm-mc %s -arch=mips64 -mcpu=mips64 -target-abi n32 -filetype=obj -o - | \
 # RUN:   llvm-readobj -sections -section-data -section-relocations - | \
 # RUN:     FileCheck %s -check-prefix=CHECK-OBJ-ALL -check-prefix=CHECK-OBJ-N32
 
@@ -25,7 +25,7 @@
 # RUN:   llvm-readobj -sections -section-data -section-relocations - | \
 # RUN:     FileCheck %s -check-prefix=CHECK-OBJ-ALL -check-prefix=CHECK-OBJ-O32
 #
-# RUN: llvm-mc /dev/null -arch=mips64 -mcpu=mips64 -mattr=-n64,+n32 -filetype=obj -o - | \
+# RUN: llvm-mc /dev/null -arch=mips64 -mcpu=mips64 -target-abi n32 -filetype=obj -o - | \
 # RUN:   llvm-readobj -sections -section-data -section-relocations - | \
 # RUN:     FileCheck %s -check-prefix=CHECK-OBJ-ALL -check-prefix=CHECK-OBJ-N32
 

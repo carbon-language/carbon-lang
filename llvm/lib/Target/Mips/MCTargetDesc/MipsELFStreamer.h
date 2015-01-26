@@ -37,7 +37,7 @@ public:
                   MCCodeEmitter *Emitter, const MCSubtargetInfo &STI)
       : MCELFStreamer(Context, MAB, OS, Emitter) {
 
-    RegInfoRecord = new MipsRegInfoRecord(this, Context, STI);
+    RegInfoRecord = new MipsRegInfoRecord(this, Context);
     MipsOptionRecords.push_back(
         std::unique_ptr<MipsRegInfoRecord>(RegInfoRecord));
   }

@@ -11,6 +11,7 @@
 #define LLVM_LIB_TARGET_MIPS_MIPSTARGETSTREAMER_H
 
 #include "MCTargetDesc/MipsABIFlagsSection.h"
+#include "MCTargetDesc/MipsABIInfo.h"
 #include "llvm/MC/MCELFStreamer.h"
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCStreamer.h"
@@ -95,12 +96,18 @@ public:
   // structure values.
   template <class PredicateLibrary>
   void updateABIInfo(const PredicateLibrary &P) {
+    ABI = &P.getABI();
     ABIFlagsSection.setAllFromPredicates(P);
   }
 
   MipsABIFlagsSection &getABIFlagsSection() { return ABIFlagsSection; }
+  const MipsABIInfo &getABI() const {
+    assert(ABI && "ABI hasn't been set!");
+    return *ABI;
+  }
 
 protected:
+  const MipsABIInfo *ABI;
   MipsABIFlagsSection ABIFlagsSection;
 
   bool GPRInfoSet;
@@ -224,11 +231,6 @@ public:
   // ABI Flags
   void emitDirectiveModuleOddSPReg(bool Enabled, bool IsO32ABI) override;
   void emitMipsAbiFlags() override;
-
-protected:
-  bool isO32() const { return STI.getFeatureBits() & Mips::FeatureO32; }
-  bool isN32() const { return STI.getFeatureBits() & Mips::FeatureN32; }
-  bool isN64() const { return STI.getFeatureBits() & Mips::FeatureN64; }
 };
 }
 #endif

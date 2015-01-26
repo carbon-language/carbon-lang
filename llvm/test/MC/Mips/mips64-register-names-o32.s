@@ -1,5 +1,5 @@
 # RUN: llvm-mc %s -triple=mips64-unknown-freebsd -show-encoding \
-# RUN:     -mattr=-n64,+o32 | FileCheck %s
+# RUN:     -target-abi o32 | FileCheck %s
 
 # Check that the register names are mapped to their correct numbers for o32
 # Second byte of daddiu with $zero at rt contains the number of the source

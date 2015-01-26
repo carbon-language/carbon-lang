@@ -19,36 +19,36 @@
 
 ; ### N32 ABI ###
 ; RUN: llc -filetype=asm -mtriple mips64-unknown-linux -mcpu=mips64 \
-; RUN: -relocation-model=static -mattr=-n64,+n32 %s -o - | \
+; RUN: -relocation-model=static -target-abi n32 %s -o - | \
 ; RUN:   FileCheck -check-prefix=CHECK-STATIC-N32 -check-prefix=CHECK-STATIC-N32-NLEGACY %s
 
 ; RUN: llc -filetype=asm -mtriple mips64-unknown-linux -mcpu=mips64 \
-; RUN: -relocation-model=pic -mattr=-n64,+n32 %s -o - | \
+; RUN: -relocation-model=pic -target-abi n32 %s -o - | \
 ; RUN:   FileCheck -check-prefix=CHECK-PIC-N32 -check-prefix=CHECK-PIC-N32-NLEGACY %s
 
 ; RUN: llc -filetype=asm -mtriple mips64-unknown-linux -mcpu=mips64 \
-; RUN: -relocation-model=static -mattr=-n64,+n32,+nan2008 %s -o - | \
+; RUN: -relocation-model=static -target-abi n32 -mattr=+nan2008 %s -o - | \
 ; RUN:   FileCheck -check-prefix=CHECK-STATIC-N32 -check-prefix=CHECK-STATIC-N32-N2008 %s
 
 ; RUN: llc -filetype=asm -mtriple mips64-unknown-linux -mcpu=mips64 \
-; RUN: -relocation-model=pic -mattr=-n64,+n32,+nan2008 %s -o - | \
+; RUN: -relocation-model=pic -target-abi n32 -mattr=+nan2008 %s -o - | \
 ; RUN:   FileCheck -check-prefix=CHECK-PIC-N32 -check-prefix=CHECK-PIC-N32-N2008 %s
 
 ; ### N64 ABI ###
 ; RUN: llc -filetype=asm -mtriple mips64-unknown-linux -mcpu=mips64 \
-; RUN: -relocation-model=static -mattr=+n64 %s -o - | \
+; RUN: -relocation-model=static -target-abi n64 %s -o - | \
 ; RUN:   FileCheck -check-prefix=CHECK-STATIC-N64 -check-prefix=CHECK-STATIC-N64-NLEGACY %s
 
 ; RUN: llc -filetype=asm -mtriple mips64-unknown-linux -mcpu=mips64 \
-; RUN: -relocation-model=pic -mattr=+n64 %s -o - | \
+; RUN: -relocation-model=pic -target-abi n64 %s -o - | \
 ; RUN:   FileCheck -check-prefix=CHECK-PIC-N64 -check-prefix=CHECK-PIC-N64-NLEGACY %s
 
 ; RUN: llc -filetype=asm -mtriple mips64-unknown-linux -mcpu=mips64 \
-; RUN: -relocation-model=static -mattr=+n64,+nan2008 %s -o - | \
+; RUN: -relocation-model=static -target-abi n64 -mattr=+nan2008 %s -o - | \
 ; RUN:   FileCheck -check-prefix=CHECK-STATIC-N64 -check-prefix=CHECK-STATIC-N64-N2008 %s
 
 ; RUN: llc -filetype=asm -mtriple mips64-unknown-linux -mcpu=mips64 \
-; RUN: -relocation-model=pic -mattr=+n64,+nan2008 %s -o - | \
+; RUN: -relocation-model=pic -target-abi n64 -mattr=+nan2008 %s -o - | \
 ; RUN:   FileCheck -check-prefix=CHECK-PIC-N64 -check-prefix=CHECK-PIC-N64-N2008 %s
 
 ; CHECK-STATIC-O32: .abicalls

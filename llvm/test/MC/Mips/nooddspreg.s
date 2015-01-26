@@ -5,7 +5,7 @@
 # RUN:   llvm-readobj -sections -section-data -section-relocations - | \
 # RUN:     FileCheck %s -check-prefix=CHECK-OBJ
 
-# RUN: not llvm-mc %s -arch=mips -mcpu=mips64 -mattr=-n64,n32 2> %t1
+# RUN: not llvm-mc %s -arch=mips -mcpu=mips64 -target-abi n32 2> %t1
 # RUN: FileCheck %s -check-prefix=INVALID < %t1
 #
 # RUN: not llvm-mc %s -arch=mips -mcpu=mips64 2> %t2

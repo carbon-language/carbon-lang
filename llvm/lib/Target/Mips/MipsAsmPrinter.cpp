@@ -19,6 +19,7 @@
 #include "MipsAsmPrinter.h"
 #include "MipsInstrInfo.h"
 #include "MipsMCInstLower.h"
+#include "MipsTargetMachine.h"
 #include "MipsTargetStreamer.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringExtras.h"
@@ -319,7 +320,7 @@ void MipsAsmPrinter::emitFrameDirective() {
 
 /// Emit Set directives.
 const char *MipsAsmPrinter::getCurrentABIString() const {
-  switch (Subtarget->getABI().GetEnumValue()) {
+  switch (static_cast<MipsTargetMachine &>(TM).getABI().GetEnumValue()) {
   case MipsABIInfo::ABI::O32:  return "abi32";
   case MipsABIInfo::ABI::N32:  return "abiN32";
   case MipsABIInfo::ABI::N64:  return "abi64";

@@ -1,14 +1,14 @@
 ; RUN: llc -march=mips -relocation-model=static < %s | FileCheck --check-prefix=ALL --check-prefix=SYM32 --check-prefix=O32 --check-prefix=O32BE %s
 ; RUN: llc -march=mipsel -relocation-model=static < %s | FileCheck --check-prefix=ALL --check-prefix=SYM32 --check-prefix=O32 --check-prefix=O32LE %s
 
-; RUN-TODO: llc -march=mips64 -relocation-model=static -mattr=-n64,+o32 < %s | FileCheck --check-prefix=ALL --check-prefix=SYM32 --check-prefix=O32 %s
-; RUN-TODO: llc -march=mips64el -relocation-model=static -mattr=-n64,+o32 < %s | FileCheck --check-prefix=ALL --check-prefix=SYM32 --check-prefix=O32 %s
+; RUN-TODO: llc -march=mips64 -relocation-model=static -target-abi o32 < %s | FileCheck --check-prefix=ALL --check-prefix=SYM32 --check-prefix=O32 %s
+; RUN-TODO: llc -march=mips64el -relocation-model=static -target-abi o32 < %s | FileCheck --check-prefix=ALL --check-prefix=SYM32 --check-prefix=O32 %s
 
-; RUN: llc -march=mips64 -relocation-model=static -mattr=-n64,+n32 < %s | FileCheck --check-prefix=ALL --check-prefix=SYM32 --check-prefix=NEW %s
-; RUN: llc -march=mips64el -relocation-model=static -mattr=-n64,+n32 < %s | FileCheck --check-prefix=ALL --check-prefix=SYM32 --check-prefix=NEW %s
+; RUN: llc -march=mips64 -relocation-model=static -target-abi n32 < %s | FileCheck --check-prefix=ALL --check-prefix=SYM32 --check-prefix=NEW %s
+; RUN: llc -march=mips64el -relocation-model=static -target-abi n32 < %s | FileCheck --check-prefix=ALL --check-prefix=SYM32 --check-prefix=NEW %s
 
-; RUN: llc -march=mips64 -relocation-model=static -mattr=-n64,+n64 < %s | FileCheck --check-prefix=ALL --check-prefix=SYM64 --check-prefix=NEW %s
-; RUN: llc -march=mips64el -relocation-model=static -mattr=-n64,+n64 < %s | FileCheck --check-prefix=ALL --check-prefix=SYM64 --check-prefix=NEW %s
+; RUN: llc -march=mips64 -relocation-model=static -target-abi n64 < %s | FileCheck --check-prefix=ALL --check-prefix=SYM64 --check-prefix=NEW %s
+; RUN: llc -march=mips64el -relocation-model=static -target-abi n64 < %s | FileCheck --check-prefix=ALL --check-prefix=SYM64 --check-prefix=NEW %s
 
 ; Test the floating point arguments for all ABI's and byte orders as specified
 ; by section 5 of MD00305 (MIPS ABIs Described).

@@ -3,7 +3,7 @@
 # RUN: FileCheck -check-prefix=WARNING %s < %t0
 #
 # RUN: llvm-mc %s -triple=mips64-unknown-freebsd -show-encoding \
-# RUN:     -mattr=-n64,+n32 2>%t1 | FileCheck %s
+# RUN:     -target-abi n32 2>%t1 | FileCheck %s
 # RUN: FileCheck -check-prefix=WARNING %s < %t1
 #
 # Check that the register names are mapped to their correct numbers for n32/n64

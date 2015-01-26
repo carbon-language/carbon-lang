@@ -11,10 +11,14 @@
 #define LLVM_LIB_TARGET_MIPS_MCTARGETDESC_MIPSABIINFO_H
 
 #include "llvm/ADT/ArrayRef.h"
+#include "llvm/ADT/Triple.h"
 #include "llvm/IR/CallingConv.h"
 #include "llvm/MC/MCRegisterInfo.h"
 
 namespace llvm {
+
+class MCTargetOptions;
+class StringRef;
 
 class MipsABIInfo {
 public:
@@ -31,6 +35,8 @@ public:
   static MipsABIInfo N32() { return MipsABIInfo(ABI::N32); }
   static MipsABIInfo N64() { return MipsABIInfo(ABI::N64); }
   static MipsABIInfo EABI() { return MipsABIInfo(ABI::EABI); }
+  static MipsABIInfo computeTargetABI(Triple TT, StringRef CPU,
+                                      const MCTargetOptions &Options);
 
   bool IsKnown() const { return ThisABI != ABI::Unknown; }
   bool IsO32() const { return ThisABI == ABI::O32; }

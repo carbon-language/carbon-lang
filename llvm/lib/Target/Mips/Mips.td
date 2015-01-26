@@ -69,14 +69,6 @@ def FeatureNaN2008     : SubtargetFeature<"nan2008", "IsNaN2008bit", "true",
                                 "IEEE 754-2008 NaN encoding.">;
 def FeatureSingleFloat : SubtargetFeature<"single-float", "IsSingleFloat",
                                 "true", "Only supports single precision float">;
-def FeatureO32         : SubtargetFeature<"o32", "ABI", "MipsABIInfo::O32()",
-                                "Enable o32 ABI">;
-def FeatureN32         : SubtargetFeature<"n32", "ABI", "MipsABIInfo::N32()",
-                                "Enable n32 ABI">;
-def FeatureN64         : SubtargetFeature<"n64", "ABI", "MipsABIInfo::N64()",
-                                "Enable n64 ABI">;
-def FeatureEABI        : SubtargetFeature<"eabi", "ABI", "MipsABIInfo::EABI()",
-                                "Enable eabi ABI">;
 def FeatureNoOddSPReg  : SubtargetFeature<"nooddspreg", "UseOddSPReg", "false",
                               "Disable odd numbered single-precision "
                               "registers">;
@@ -162,20 +154,20 @@ def FeatureCnMips     : SubtargetFeature<"cnmips", "HasCnMips",
 class Proc<string Name, list<SubtargetFeature> Features>
  : Processor<Name, MipsGenericItineraries, Features>;
 
-def : Proc<"mips1", [FeatureMips1, FeatureO32]>;
-def : Proc<"mips2", [FeatureMips2, FeatureO32]>;
-def : Proc<"mips32", [FeatureMips32, FeatureO32]>;
-def : Proc<"mips32r2", [FeatureMips32r2, FeatureO32]>;
-def : Proc<"mips32r6", [FeatureMips32r6, FeatureO32]>;
+def : Proc<"mips1", [FeatureMips1]>;
+def : Proc<"mips2", [FeatureMips2]>;
+def : Proc<"mips32", [FeatureMips32]>;
+def : Proc<"mips32r2", [FeatureMips32r2]>;
+def : Proc<"mips32r6", [FeatureMips32r6]>;
 
-def : Proc<"mips3", [FeatureMips3, FeatureN64]>;
-def : Proc<"mips4", [FeatureMips4, FeatureN64]>;
-def : Proc<"mips5", [FeatureMips5, FeatureN64]>;
-def : Proc<"mips64", [FeatureMips64, FeatureN64]>;
-def : Proc<"mips64r2", [FeatureMips64r2, FeatureN64]>;
-def : Proc<"mips64r6", [FeatureMips64r6, FeatureN64]>;
-def : Proc<"mips16", [FeatureMips16, FeatureO32]>;
-def : Proc<"octeon", [FeatureMips64r2, FeatureN64, FeatureCnMips]>;
+def : Proc<"mips3", [FeatureMips3]>;
+def : Proc<"mips4", [FeatureMips4]>;
+def : Proc<"mips5", [FeatureMips5]>;
+def : Proc<"mips64", [FeatureMips64]>;
+def : Proc<"mips64r2", [FeatureMips64r2]>;
+def : Proc<"mips64r6", [FeatureMips64r6]>;
+def : Proc<"mips16", [FeatureMips16]>;
+def : Proc<"octeon", [FeatureMips64r2, FeatureCnMips]>;
 
 def MipsAsmParser : AsmParser {
   let ShouldEmitMatchRegisterName = 0;

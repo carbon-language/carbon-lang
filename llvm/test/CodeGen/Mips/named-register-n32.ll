@@ -1,4 +1,4 @@
-; RUN: llc -march=mips64 -relocation-model=static -mattr=+noabicalls,-n64,+n32 < %s | FileCheck %s
+; RUN: llc -march=mips64 -relocation-model=static -mattr=+noabicalls -target-abi n32 < %s | FileCheck %s
 
 define i32* @get_gp() {
 entry:
