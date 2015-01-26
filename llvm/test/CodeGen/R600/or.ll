@@ -1,14 +1,13 @@
-;RUN: llc < %s -march=r600 -mcpu=redwood | FileCheck --check-prefix=EG %s
-;RUN: llc < %s -march=amdgcn -mcpu=verde -verify-machineinstrs | FileCheck --check-prefix=SI %s
+; RUN: llc -march=amdgcn -mcpu=verde -verify-machineinstrs < %s | FileCheck -check-prefix=SI -check-prefix=FUNC %s
+; RUN: llc -march=r600 -mcpu=redwood < %s | FileCheck -check-prefix=EG -check-prefix=FUNC %s
 
-; EG-LABEL: {{^}}or_v2i32:
+
+; FUNC-LABEL: {{^}}or_v2i32:
 ; EG: OR_INT {{\*? *}}T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
 ; EG: OR_INT {{\*? *}}T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
 
-; SI-LABEL: {{^}}or_v2i32:
 ; SI: v_or_b32_e32 v{{[0-9]+, v[0-9]+, v[0-9]+}}
 ; SI: v_or_b32_e32 v{{[0-9]+, v[0-9]+, v[0-9]+}}
-
 define void @or_v2i32(<2 x i32> addrspace(1)* %out, <2 x i32> addrspace(1)* %in) {
   %b_ptr = getelementptr <2 x i32> addrspace(1)* %in, i32 1
   %a = load <2 x i32> addrspace(1) * %in
@@ -18,18 +17,16 @@ define void @or_v2i32(<2 x i32> addrspace(1)* %out, <2 x i32> addrspace(1)* %in)
   ret void
 }
 
-; EG-LABEL: {{^}}or_v4i32:
+; FUNC-LABEL: {{^}}or_v4i32:
 ; EG: OR_INT {{\*? *}}T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
 ; EG: OR_INT {{\*? *}}T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
 ; EG: OR_INT {{\*? *}}T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
 ; EG: OR_INT {{\*? *}}T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
 
-; SI-LABEL: {{^}}or_v4i32:
 ; SI: v_or_b32_e32 v{{[0-9]+, v[0-9]+, v[0-9]+}}
 ; SI: v_or_b32_e32 v{{[0-9]+, v[0-9]+, v[0-9]+}}
 ; SI: v_or_b32_e32 v{{[0-9]+, v[0-9]+, v[0-9]+}}
 ; SI: v_or_b32_e32 v{{[0-9]+, v[0-9]+, v[0-9]+}}
-
 define void @or_v4i32(<4 x i32> addrspace(1)* %out, <4 x i32> addrspace(1)* %in) {
   %b_ptr = getelementptr <4 x i32> addrspace(1)* %in, i32 1
   %a = load <4 x i32> addrspace(1) * %in
@@ -39,7 +36,7 @@ define void @or_v4i32(<4 x i32> addrspace(1)* %out, <4 x i32> addrspace(1)* %in)
   ret void
 }
 
-; SI-LABEL: {{^}}scalar_or_i32:
+; FUNC-LABEL: {{^}}scalar_or_i32:
 ; SI: s_or_b32
 define void @scalar_or_i32(i32 addrspace(1)* %out, i32 %a, i32 %b) {
   %or = or i32 %a, %b
@@ -47,7 +44,7 @@ define void @scalar_or_i32(i32 addrspace(1)* %out, i32 %a, i32 %b) {
   ret void
 }
 
-; SI-LABEL: {{^}}vector_or_i32:
+; FUNC-LABEL: {{^}}vector_or_i32:
 ; SI: v_or_b32_e32 v{{[0-9]}}
 define void @vector_or_i32(i32 addrspace(1)* %out, i32 addrspace(1)* %a, i32 %b) {
   %loada = load i32 addrspace(1)* %a
@@ -56,7 +53,7 @@ define void @vector_or_i32(i32 addrspace(1)* %out, i32 addrspace(1)* %a, i32 %b)
   ret void
 }
 
-; SI-LABEL: {{^}}scalar_or_literal_i32:
+; FUNC-LABEL: {{^}}scalar_or_literal_i32:
 ; SI: s_or_b32 s{{[0-9]+}}, s{{[0-9]+}}, 0x1869f
 define void @scalar_or_literal_i32(i32 addrspace(1)* %out, i32 %a) {
   %or = or i32 %a, 99999
@@ -64,7 +61,7 @@ define void @scalar_or_literal_i32(i32 addrspace(1)* %out, i32 %a) {
   ret void
 }
 
-; SI-LABEL: {{^}}vector_or_literal_i32:
+; FUNC-LABEL: {{^}}vector_or_literal_i32:
 ; SI: v_or_b32_e32 v{{[0-9]+}}, 0xffff, v{{[0-9]+}}
 define void @vector_or_literal_i32(i32 addrspace(1)* %out, i32 addrspace(1)* %a, i32 addrspace(1)* %b) {
   %loada = load i32 addrspace(1)* %a, align 4
@@ -73,7 +70,7 @@ define void @vector_or_literal_i32(i32 addrspace(1)* %out, i32 addrspace(1)* %a,
   ret void
 }
 
-; SI-LABEL: {{^}}vector_or_inline_immediate_i32:
+; FUNC-LABEL: {{^}}vector_or_inline_immediate_i32:
 ; SI: v_or_b32_e32 v{{[0-9]+}}, 4, v{{[0-9]+}}
 define void @vector_or_inline_immediate_i32(i32 addrspace(1)* %out, i32 addrspace(1)* %a, i32 addrspace(1)* %b) {
   %loada = load i32 addrspace(1)* %a, align 4
@@ -82,10 +79,10 @@ define void @vector_or_inline_immediate_i32(i32 addrspace(1)* %out, i32 addrspac
   ret void
 }
 
-; EG-LABEL: {{^}}scalar_or_i64:
+; FUNC-LABEL: {{^}}scalar_or_i64:
 ; EG-DAG: OR_INT * T{{[0-9]\.[XYZW]}}, KC0[2].W, KC0[3].Y
 ; EG-DAG: OR_INT * T{{[0-9]\.[XYZW]}}, KC0[3].X, KC0[3].Z
-; SI-LABEL: {{^}}scalar_or_i64:
+
 ; SI: s_or_b64
 define void @scalar_or_i64(i64 addrspace(1)* %out, i64 %a, i64 %b) {
   %or = or i64 %a, %b
@@ -93,7 +90,7 @@ define void @scalar_or_i64(i64 addrspace(1)* %out, i64 %a, i64 %b) {
   ret void
 }
 
-; SI-LABEL: {{^}}vector_or_i64:
+; FUNC-LABEL: {{^}}vector_or_i64:
 ; SI: v_or_b32_e32 v{{[0-9]}}
 ; SI: v_or_b32_e32 v{{[0-9]}}
 define void @vector_or_i64(i64 addrspace(1)* %out, i64 addrspace(1)* %a, i64 addrspace(1)* %b) {
@@ -104,7 +101,7 @@ define void @vector_or_i64(i64 addrspace(1)* %out, i64 addrspace(1)* %a, i64 add
   ret void
 }
 
-; SI-LABEL: {{^}}scalar_vector_or_i64:
+; FUNC-LABEL: {{^}}scalar_vector_or_i64:
 ; SI: v_or_b32_e32 v{{[0-9]}}
 ; SI: v_or_b32_e32 v{{[0-9]}}
 define void @scalar_vector_or_i64(i64 addrspace(1)* %out, i64 addrspace(1)* %a, i64 %b) {
@@ -114,7 +111,7 @@ define void @scalar_vector_or_i64(i64 addrspace(1)* %out, i64 addrspace(1)* %a, 
   ret void
 }
 
-; SI-LABEL: {{^}}vector_or_i64_loadimm:
+; FUNC-LABEL: {{^}}vector_or_i64_loadimm:
 ; SI-DAG: s_mov_b32 [[LO_S_IMM:s[0-9]+]], 0xdf77987f
 ; SI-DAG: s_movk_i32 [[HI_S_IMM:s[0-9]+]], 0x146f
 ; SI-DAG: buffer_load_dwordx2 v{{\[}}[[LO_VREG:[0-9]+]]:[[HI_VREG:[0-9]+]]{{\]}},
@@ -129,7 +126,7 @@ define void @vector_or_i64_loadimm(i64 addrspace(1)* %out, i64 addrspace(1)* %a,
 }
 
 ; FIXME: The or 0 should really be removed.
-; SI-LABEL: {{^}}vector_or_i64_imm:
+; FUNC-LABEL: {{^}}vector_or_i64_imm:
 ; SI: buffer_load_dwordx2 v{{\[}}[[LO_VREG:[0-9]+]]:[[HI_VREG:[0-9]+]]{{\]}},
 ; SI: v_or_b32_e32 {{v[0-9]+}}, 8, v[[LO_VREG]]
 ; SI: v_or_b32_e32 {{v[0-9]+}}, 0, {{.*}}
@@ -141,7 +138,7 @@ define void @vector_or_i64_imm(i64 addrspace(1)* %out, i64 addrspace(1)* %a, i64
   ret void
 }
 
-; SI-LABEL: {{^}}trunc_i64_or_to_i32:
+; FUNC-LABEL: {{^}}trunc_i64_or_to_i32:
 ; SI: s_load_dword s[[SREG0:[0-9]+]]
 ; SI: s_load_dword s[[SREG1:[0-9]+]]
 ; SI: s_or_b32 s[[SRESULT:[0-9]+]], s[[SREG1]], s[[SREG0]]
@@ -154,18 +151,27 @@ define void @trunc_i64_or_to_i32(i32 addrspace(1)* %out, i64 %a, i64 %b) {
   ret void
 }
 
-; EG-CHECK: {{^}}or_i1:
-; EG-CHECK: OR_INT {{\** *}}T{{[0-9]+\.[XYZW], PV\.[XYZW], PS}}
+; FUNC-LABEL: {{^}}or_i1:
+; EG: OR_INT {{\** *}}T{{[0-9]+\.[XYZW], PV\.[XYZW], PS}}
 
-; SI-CHECK: {{^}}or_i1:
-; SI-CHECK: s_or_b64 s[{{[0-9]+:[0-9]+}}], s[{{[0-9]+:[0-9]+}}], s[{{[0-9]+:[0-9]+}}]
+; SI: s_or_b64 s[{{[0-9]+:[0-9]+}}], s[{{[0-9]+:[0-9]+}}], s[{{[0-9]+:[0-9]+}}]
 define void @or_i1(float addrspace(1)* %out, float addrspace(1)* %in0, float addrspace(1)* %in1) {
-  %a = load float addrspace(1) * %in0
-  %b = load float addrspace(1) * %in1
+  %a = load float addrspace(1)* %in0
+  %b = load float addrspace(1)* %in1
   %acmp = fcmp oge float %a, 0.000000e+00
   %bcmp = fcmp oge float %b, 0.000000e+00
   %or = or i1 %acmp, %bcmp
   %result = select i1 %or, float %a, float %b
   store float %result, float addrspace(1)* %out
+  ret void
+}
+
+; FUNC-LABEL: {{^}}s_or_i1:
+; SI: s_or_b64 s[{{[0-9]+:[0-9]+}}], s[{{[0-9]+:[0-9]+}}], vcc
+define void @s_or_i1(i1 addrspace(1)* %out, i32 %a, i32 %b, i32 %c, i32 %d) {
+  %cmp0 = icmp eq i32 %a, %b
+  %cmp1 = icmp eq i32 %c, %d
+  %or = or i1 %cmp0, %cmp1
+  store i1 %or, i1 addrspace(1)* %out
   ret void
 }
