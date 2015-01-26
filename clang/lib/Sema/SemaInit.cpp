@@ -150,7 +150,7 @@ static void CheckStringInit(Expr *Str, QualType &DeclT, const ArrayType *AT,
                             Sema &S) {
   // Get the length of the string as parsed.
   auto *ConstantArrayTy =
-      cast<ConstantArrayType>(Str->getType()->getUnqualifiedDesugaredType());
+      cast<ConstantArrayType>(Str->getType()->getAsArrayTypeUnsafe());
   uint64_t StrLength = ConstantArrayTy->getSize().getZExtValue();
 
   if (const IncompleteArrayType *IAT = dyn_cast<IncompleteArrayType>(AT)) {
