@@ -279,6 +279,14 @@ void sys::DontRemoveFileOnSignal(StringRef Filename) {
 /// PrintStackTraceOnErrorSignal - When an error signal (such as SIBABRT or
 /// SIGSEGV) is delivered to the process, print a stack trace and then exit.
 void sys::PrintStackTraceOnErrorSignal() {
+  // Don't pop up any dialog boxes.
+  // We're already handling writing a "something went wrong" message.
+  _set_abort_behavior(0, _WRITE_ABORT_MSG);
+  // Disable Dr. Watson.
+  _set_abort_behavior(0, _CALL_REPORTFAULT);
+  // Disable standard error dialog box.
+  SetErrorMode(SEM_FAILCRITICALERRORS | SEM_NOGPFAULTERRORBOX);
+
   RegisterHandler();
   LeaveCriticalSection(&CriticalSection);
 }
