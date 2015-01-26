@@ -247,4 +247,28 @@ TEST(CommandLineTest, HideUnrelatedOptions) {
       << "Hid default option that should be visable.";
 }
 
+cl::OptionCategory TestCategory2("Test Options set 2", "Description");
+
+TEST(CommandLineTest, HideUnrelatedOptionsMulti) {
+  cl::opt<int> TestOption1("test-option-1");
+  cl::opt<int> TestOption2("test-option-2", cl::cat(TestCategory));
+  cl::opt<int> TestOption3("test-option-3", cl::cat(TestCategory2));
+
+  cl::OptionCategory *VisibleCategories[] = {&TestCategory, &TestCategory2};
+
+  cl::HideUnrelatedOptions(makeArrayRef(VisibleCategories));
+
+  ASSERT_EQ(cl::ReallyHidden, TestOption1.getOptionHiddenFlag())
+      << "Failed to hide extra option.";
+  ASSERT_EQ(cl::NotHidden, TestOption2.getOptionHiddenFlag())
+      << "Hid extra option that should be visable.";
+  ASSERT_EQ(cl::NotHidden, TestOption3.getOptionHiddenFlag())
+      << "Hid extra option that should be visable.";
+
+  StringMap<cl::Option *> Map;
+  cl::getRegisteredOptions(Map);
+  ASSERT_EQ(cl::NotHidden, Map["help"]->getOptionHiddenFlag())
+      << "Hid default option that should be visable.";
+}
+
 }  // anonymous namespace
