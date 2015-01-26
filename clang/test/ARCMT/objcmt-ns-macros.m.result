@@ -291,11 +291,11 @@ typedef NS_ENUM(NSUInteger, NSSelectionDirection) {
 // standard window buttons
 
 // rdar://18262255
-typedef enum : NSUInteger {
+typedef NS_ENUM(NSUInteger, Thing) {
    ThingOne,
    ThingTwo,
    ThingThree,
-} Thing;
+};
 
 // rdar://18498539
 typedef NS_ENUM(unsigned int, NumericEnum) {
@@ -341,4 +341,20 @@ typedef NS_ENUM(uint32_t, UI32TableViewCellStyle) {
 typedef NS_ENUM(uint8_t, UI8Type)
 {
         UIU8one = 1
+};
+
+// rdar://19352510
+typedef NS_ENUM(NSInteger, MyEnum) {zero};
+
+typedef NS_ENUM(NSUInteger, MyEnumNSUInteger) {two};
+
+typedef NS_ENUM(int, MyEnumint) {three, four};
+
+typedef NS_ENUM(unsigned long, MyEnumlonglong) {five};
+
+typedef NS_ENUM(unsigned long long, MyEnumunsignedlonglong) {
+  ll1,
+  ll2= 0xff,
+  ll3,
+  ll4
 };
