@@ -240,6 +240,11 @@ TEST(CommandLineTest, HideUnrelatedOptions) {
       << "Failed to hide extra option.";
   ASSERT_EQ(cl::NotHidden, TestOption2.getOptionHiddenFlag())
       << "Hid extra option that should be visable.";
+
+  StringMap<cl::Option*> Map;
+  cl::getRegisteredOptions(Map);
+  ASSERT_EQ(cl::NotHidden, Map["help"]->getOptionHiddenFlag())
+      << "Hid default option that should be visable.";
 }
 
 }  // anonymous namespace
