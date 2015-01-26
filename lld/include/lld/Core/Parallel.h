@@ -221,8 +221,8 @@ void parallel_quick_sort(RandomAccessIterator start, RandomAccessIterator end,
   auto pivot = medianOf3(start, end, comp);
   // Move pivot to end.
   std::swap(*(end - 1), *pivot);
-  pivot = std::partition(start, end - 1, [end](decltype(*start) v) {
-    return v < *(end - 1);
+  pivot = std::partition(start, end - 1, [&comp, end](decltype(*start) v) {
+    return comp(v, *(end - 1));
   });
   // Move pivot to middle of partition.
   std::swap(*pivot, *(end - 1));

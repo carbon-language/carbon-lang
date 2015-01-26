@@ -9,6 +9,7 @@
 
 #include "lld/Passes/LayoutPass.h"
 #include "lld/Core/Instrumentation.h"
+#include "lld/Core/Parallel.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/Debug.h"
 #include <algorithm>
@@ -534,7 +535,7 @@ void LayoutPass::perform(std::unique_ptr<MutableFile> &mergedFile) {
   });
 
   std::vector<LayoutPass::SortKey> vec = decorate(atomRange);
-  std::sort(vec.begin(), vec.end(),
+  parallel_sort(vec.begin(), vec.end(),
       [&](const LayoutPass::SortKey &l, const LayoutPass::SortKey &r) -> bool {
         return compareAtoms(l, r, _customSorter);
       });
