@@ -58,6 +58,9 @@ typedef std::vector<ValueMapT> VectorValueMapT;
 bool canSynthesize(const llvm::Instruction *I, const llvm::LoopInfo *LI,
                    llvm::ScalarEvolution *SE, const llvm::Region *R);
 
+/// @brief Return true iff @p V is an intrisic we ignore during code generation.
+bool isIgnoredIntrinsic(const llvm::Value *V);
+
 /// @brief Generate a new basic block for a polyhedral statement.
 ///
 /// The only public function exposed is generate().

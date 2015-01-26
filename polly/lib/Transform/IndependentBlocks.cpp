@@ -130,7 +130,6 @@ struct IndependentBlocks : public FunctionPass {
 
   // Split the exit block to hold load instructions.
   bool splitExitBlock(Region *R);
-  bool isIgnoredIntrinsic(Instruction *Inst);
   bool onlyUsedInRegion(Instruction *Inst, const Region *R);
   bool translateScalarToArray(BasicBlock *BB, const Region *R);
   bool translateScalarToArray(Instruction *Inst, const Region *R);
@@ -141,30 +140,6 @@ struct IndependentBlocks : public FunctionPass {
   void verifyScop(const Region *R) const;
   void getAnalysisUsage(AnalysisUsage &AU) const;
 };
-}
-
-bool IndependentBlocks::isIgnoredIntrinsic(Instruction *Inst) {
-  if (auto *IT = dyn_cast<IntrinsicInst>(Inst)) {
-    switch (IT->getIntrinsicID()) {
-    // Lifetime markers are supported/ignored.
-    case llvm::Intrinsic::lifetime_start:
-    case llvm::Intrinsic::lifetime_end:
-    // Invariant markers are supported/ignored.
-    case llvm::Intrinsic::invariant_start:
-    case llvm::Intrinsic::invariant_end:
-    // Some misc annotations are supported/ignored.
-    case llvm::Intrinsic::var_annotation:
-    case llvm::Intrinsic::ptr_annotation:
-    case llvm::Intrinsic::annotation:
-    case llvm::Intrinsic::donothing:
-    case llvm::Intrinsic::assume:
-    case llvm::Intrinsic::expect:
-      return true;
-    default:
-      break;
-    }
-  }
-  return false;
 }
 
 bool IndependentBlocks::isSafeToMove(Instruction *Inst) {
@@ -477,6 +452,8 @@ bool IndependentBlocks::isIndependentBlock(const Region *R,
   for (Instruction &Inst : *BB) {
     if (canSynthesize(&Inst, LI, SE, R))
       continue;
+    if (isIgnoredIntrinsic(&Inst))
+      continue;
 
     // A value inside the Scop is referenced outside.
     for (User *U : Inst.users()) {
@@ -493,6 +470,8 @@ bool IndependentBlocks::isIndependentBlock(const Region *R,
       continue;
 
     for (Value *Op : Inst.operands()) {
+      if (isIgnoredIntrinsic(Op))
+        continue;
       if (isEscapeOperand(Op, BB, R)) {
         DEBUG(dbgs() << "Instruction in function '";
               BB->getParent()->printAsOperand(dbgs(), false);

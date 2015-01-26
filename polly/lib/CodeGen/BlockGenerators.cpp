@@ -52,6 +52,30 @@ bool polly::canSynthesize(const Instruction *I, const llvm::LoopInfo *LI,
   return false;
 }
 
+bool polly::isIgnoredIntrinsic(const Value *V) {
+  if (auto *IT = dyn_cast<IntrinsicInst>(V)) {
+    switch (IT->getIntrinsicID()) {
+    // Lifetime markers are supported/ignored.
+    case llvm::Intrinsic::lifetime_start:
+    case llvm::Intrinsic::lifetime_end:
+    // Invariant markers are supported/ignored.
+    case llvm::Intrinsic::invariant_start:
+    case llvm::Intrinsic::invariant_end:
+    // Some misc annotations are supported/ignored.
+    case llvm::Intrinsic::var_annotation:
+    case llvm::Intrinsic::ptr_annotation:
+    case llvm::Intrinsic::annotation:
+    case llvm::Intrinsic::donothing:
+    case llvm::Intrinsic::assume:
+    case llvm::Intrinsic::expect:
+      return true;
+    default:
+      break;
+    }
+  }
+  return false;
+}
+
 BlockGenerator::BlockGenerator(PollyIRBuilder &B, ScopStmt &Stmt, Pass *P,
                                LoopInfo &LI, ScalarEvolution &SE,
                                isl_ast_build *Build,
