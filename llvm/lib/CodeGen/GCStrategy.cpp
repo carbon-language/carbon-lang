@@ -12,9 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/IR/GCStrategy.h"
-
-template class llvm::Registry<llvm::GCStrategy>;
+#include "llvm/CodeGen/GCStrategy.h"
 
 using namespace llvm;
 

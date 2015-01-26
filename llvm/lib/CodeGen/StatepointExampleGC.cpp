@@ -16,7 +16,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/IR/GCStrategy.h"
+#include "llvm/CodeGen/GCStrategy.h"
 #include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/Value.h"
 

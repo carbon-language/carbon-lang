@@ -15,7 +15,6 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/IR/Attributes.h"
 #include "llvm/IR/DiagnosticInfo.h"
-#include "llvm/IR/GCStrategy.h"
 #include "llvm/IR/Module.h"
 #include <algorithm>
 using namespace llvm;
@@ -238,26 +237,4 @@ void InsertValueConstantExpr::anchor() { }
 void GetElementPtrConstantExpr::anchor() { }
 
 void CompareConstantExpr::anchor() { }
-
-GCStrategy *LLVMContextImpl::getGCStrategy(const StringRef Name) {
-  // TODO: Arguably, just doing a linear search would be faster for small N
-  auto NMI = GCStrategyMap.find(Name);
-  if (NMI != GCStrategyMap.end())
-    return NMI->getValue();
-  
-  for (auto& Entry : GCRegistry::entries()) {
-    if (Name == Entry.getName()) {
-      std::unique_ptr<GCStrategy> S = Entry.instantiate();
-      S->Name = Name;
-      GCStrategyMap[Name] = S.get();
-      GCStrategyList.push_back(std::move(S));
-      return GCStrategyList.back().get();
-    }
-  }
-
-  // No GCStrategy found for that name, error reporting is the job of our
-  // callers. 
-  return nullptr;
-}
-
 

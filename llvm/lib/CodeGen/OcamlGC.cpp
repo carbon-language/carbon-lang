@@ -15,7 +15,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/CodeGen/GCs.h"
-#include "llvm/IR/GCStrategy.h"
+#include "llvm/CodeGen/GCStrategy.h"
 
 using namespace llvm;
 

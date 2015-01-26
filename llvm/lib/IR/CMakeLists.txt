@@ -17,7 +17,6 @@ add_llvm_library(LLVMCore
   Dominators.cpp
   Function.cpp
   GCOV.cpp
-  GCStrategy.cpp
   GVMaterializer.cpp
   Globals.cpp
   IRBuilder.cpp

@@ -23,6 +23,7 @@ add_llvm_library(LLVMCodeGen
   GCMetadata.cpp
   GCMetadataPrinter.cpp
   GCRootLowering.cpp
+  GCStrategy.cpp
   GlobalMerge.cpp
   IfConversion.cpp
   InlineSpiller.cpp

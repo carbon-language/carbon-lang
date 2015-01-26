@@ -14,8 +14,8 @@
 #include "llvm/CodeGen/GCMetadata.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/Passes.h"
+#include "llvm/CodeGen/GCStrategy.h"
 #include "llvm/IR/Function.h"
-#include "llvm/IR/GCStrategy.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/Debug.h"
@@ -66,15 +66,7 @@ GCFunctionInfo &GCModuleInfo::getFunctionInfo(const Function &F) {
   if (I != FInfoMap.end())
     return *I->second;
 
-  GCStrategy *S = F.getGCStrategy();
-  if (!S) {
-    std::string error = std::string("unsupported GC: ") + F.getGC();
-    report_fatal_error(error);
-  }
-  // Save the fact this strategy is associated with this module.  Note that
-  // these are non-owning references, the GCStrategy remains owned by the
-  // Context.
-  StrategyList.push_back(S);
+  GCStrategy *S = getGCStrategy(F.getGC());
   Functions.push_back(make_unique<GCFunctionInfo>(F, *S));
   GCFunctionInfo *GFI = Functions.back().get();
   FInfoMap[&F] = GFI;
@@ -84,7 +76,7 @@ GCFunctionInfo &GCModuleInfo::getFunctionInfo(const Function &F) {
 void GCModuleInfo::clear() {
   Functions.clear();
   FInfoMap.clear();
-  StrategyList.clear();
+  GCStrategyList.clear();
 }
 
 // -----------------------------------------------------------------------------
@@ -158,4 +150,24 @@ bool Printer::doFinalization(Module &M) {
   assert(GMI && "Printer didn't require GCModuleInfo?!");
   GMI->clear();
   return false;
+}
+
+
+GCStrategy *GCModuleInfo::getGCStrategy(const StringRef Name) {
+  // TODO: Arguably, just doing a linear search would be faster for small N
+  auto NMI = GCStrategyMap.find(Name);
+  if (NMI != GCStrategyMap.end())
+    return NMI->getValue();
+  
+  for (auto& Entry : GCRegistry::entries()) {
+    if (Name == Entry.getName()) {
+      std::unique_ptr<GCStrategy> S = Entry.instantiate();
+      S->Name = Name;
+      GCStrategyMap[Name] = S.get();
+      GCStrategyList.push_back(std::move(S));
+      return GCStrategyList.back().get();
+    }
+  }
+
+  report_fatal_error(std::string("unsupported GC: ") + Name);
 }

@@ -457,17 +457,6 @@ public:
   int getOrAddScopeRecordIdxEntry(MDNode *N, int ExistingIdx);
   int getOrAddScopeInlinedAtIdxEntry(MDNode *Scope, MDNode *IA,int ExistingIdx);
 
-  /// An owning list of all GCStrategies which have been created
-  SmallVector<std::unique_ptr<GCStrategy>, 1> GCStrategyList;
-  /// A helper map to speedup lookups into the above list
-  StringMap<GCStrategy*> GCStrategyMap;
-
-  /// Lookup the GCStrategy object associated with the given gc name.  If one
-  /// can't be found, returns nullptr.  The lifetime of the returned objects
-  /// is dictated by the lifetime of the associated context.  No caller should
-  /// attempt to delete the returned objects.
-  GCStrategy *getGCStrategy(const StringRef Name);
-  
   LLVMContextImpl(LLVMContext &C);
   ~LLVMContextImpl();
 

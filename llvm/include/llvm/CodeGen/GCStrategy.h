@@ -1,4 +1,4 @@
-//===-- llvm/IR/GCStrategy.h - Garbage collection ----------*- C++ -*-===//
+//===-- llvm/CodeGen/GCStrategy.h - Garbage collection ----------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -78,7 +78,7 @@ enum PointKind {
 class GCStrategy {
 private:
   std::string Name;
-  friend class LLVMContextImpl;
+  friend class GCModuleInfo;
 
 protected:
   bool UseStatepoints; /// Uses gc.statepoints as opposed to gc.roots,
@@ -188,9 +188,6 @@ public:
 /// register your GCMetadataPrinter subclass with the
 /// GCMetadataPrinterRegistery as well.
 typedef Registry<GCStrategy> GCRegistry;
-
-/// GCStrategy is instantiated in GCStrategy.cpp.
-extern template class Registry<GCStrategy>;
 }
 
 #endif

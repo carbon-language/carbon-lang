@@ -386,12 +386,6 @@ void Function::clearGC() {
   }
 }
 
-GCStrategy *Function::getGCStrategy() const {
-  // Lookup the GCStrategy (which is owned by the Context), given the name of
-  // the GC in question.
-  return getContext().pImpl->getGCStrategy(getGC());
-}
-
 /// copyAttributesFrom - copy all additional attributes (those not needed to
 /// create a Function) from the Function Src to this one.
 void Function::copyAttributesFrom(const GlobalValue *Src) {

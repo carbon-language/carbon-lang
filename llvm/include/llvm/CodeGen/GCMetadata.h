@@ -34,9 +34,10 @@
 #define LLVM_CODEGEN_GCMETADATA_H
 
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringMap.h"
+#include "llvm/CodeGen/GCStrategy.h"
 #include "llvm/IR/DebugLoc.h"
-#include "llvm/IR/GCStrategy.h"
 #include "llvm/Pass.h"
 #include <memory>
 
@@ -151,11 +152,17 @@ public:
 /// Records both the function level information used by GCRoots and a
 /// cache of the 'active' gc strategy objects for the current Module.
 class GCModuleInfo : public ImmutablePass {
-  /// A list of GCStrategies which are active in this Module.  These are
-  /// not owning pointers.
-  std::vector<GCStrategy *> StrategyList;
+  /// An owning list of all GCStrategies which have been created
+  SmallVector<std::unique_ptr<GCStrategy>, 1> GCStrategyList;
+  /// A helper map to speedup lookups into the above list
+  StringMap<GCStrategy*> GCStrategyMap;
 
 public:
+  /// Lookup the GCStrategy object associated with the given gc name.
+  /// Objects are owned internally; No caller should attempt to delete the
+  /// returned objects. 
+  GCStrategy *getGCStrategy(const StringRef Name);
+  
   /// List of per function info objects.  In theory, Each of these
   /// may be associated with a different GC.
   typedef std::vector<std::unique_ptr<GCFunctionInfo>> FuncInfoVec;
@@ -173,7 +180,7 @@ private:
   finfo_map_type FInfoMap;
 
 public:
-  typedef std::vector<GCStrategy *>::const_iterator iterator;
+  typedef SmallVector<std::unique_ptr<GCStrategy>,1>::const_iterator iterator;
 
   static char ID;
 
@@ -186,8 +193,8 @@ public:
 
   /// begin/end - Iterators for used strategies.
   ///
-  iterator begin() const { return StrategyList.begin(); }
-  iterator end() const { return StrategyList.end(); }
+  iterator begin() const { return GCStrategyList.begin(); }
+  iterator end() const { return GCStrategyList.end(); }
 
   /// get - Look up function metadata.  This is currently assumed
   /// have the side effect of initializing the associated GCStrategy.  That
