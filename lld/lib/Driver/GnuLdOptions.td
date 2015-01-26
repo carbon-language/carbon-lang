@@ -199,7 +199,7 @@ def no_allow_shlib_undefs : Flag<["--"], "no-allow-shlib-undefined">,
      HelpText<"Do not allow undefined symbols from dynamic"
               " library when creating executables">,
      Group<grp_resolveropt>;
-def allow_shlib_undefs : Flag<["--"], "allow-shlib-undefined">,
+def allow_shlib_undefs : Flag<["-", "--"], "allow-shlib-undefined">,
      HelpText<"Allow undefined symbols from dynamic"
              " library when creating executables">,
      Group<grp_resolveropt>;
