@@ -343,7 +343,6 @@ namespace VirtualMembers {
     constexpr E() : B(3), c{'b','y','e'} {}
     char c[3];
   };
-
   // CHECK: @_ZN14VirtualMembers1eE = global { i8**, double, i32, i8**, double, [5 x i8], i16, i8**, double, [5 x i8], [3 x i8] } { i8** getelementptr inbounds ([11 x i8*]* @_ZTVN14VirtualMembers1EE, i64 0, i64 2), double 1.000000e+00, i32 64, i8** getelementptr inbounds ([11 x i8*]* @_ZTVN14VirtualMembers1EE, i64 0, i64 5), double 2.000000e+00, [5 x i8] c"hello", i16 5, i8** getelementptr inbounds ([11 x i8*]* @_ZTVN14VirtualMembers1EE, i64 0, i64 9), double 3.000000e+00, [5 x i8] c"world", [3 x i8] c"bye" }
   E e;
 
@@ -352,6 +351,16 @@ namespace VirtualMembers {
   };
   // CHECK: @_ZN14VirtualMembersL13sGlobalMemoryE = internal global { i8** } { i8** getelementptr inbounds ([3 x i8*]* @_ZTVN14VirtualMembers12nsMemoryImplE, i64 0, i64 2) }
   static nsMemoryImpl sGlobalMemory;
+
+  template<class T>
+  struct TemplateClass {
+    constexpr TemplateClass() : t{42} {}
+    virtual void templateMethod() {}
+
+    T t;
+  };
+  // CHECK: @_ZN14VirtualMembers1tE = global { i8**, i32 } { i8** getelementptr inbounds ([3 x i8*]* @_ZTVN14VirtualMembers13TemplateClassIiEE, i64 0, i64 2), i32 42 }
+  TemplateClass<int> t;
 }
 
 namespace PR13273 {
@@ -586,3 +595,7 @@ namespace ClassTemplateWithHiddenStaticDataMember {
   const int &S<T>::a = 5;
   const int &use = S<void>::a;
 }
+
+// VirtualMembers::TemplateClass::templateMethod() must be defined in this TU,
+// not just declared.
+// CHECK: define linkonce_odr void @_ZN14VirtualMembers13TemplateClassIiE14templateMethodEv(%"struct.VirtualMembers::TemplateClass"* %this)
