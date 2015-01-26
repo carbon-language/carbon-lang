@@ -1072,7 +1072,7 @@ class Base(unittest2.TestCase):
                 self.child.sendline('settings set interpreter.prompt-on-quit false')
                 self.child.sendline('quit')
                 self.child.expect(pexpect.EOF)
-            except (ValueError, pexpect.ExceptionPexpect):
+            except (ValueError, OSError, pexpect.ExceptionPexpect):
                 # child is already terminated
                 pass
             finally:
