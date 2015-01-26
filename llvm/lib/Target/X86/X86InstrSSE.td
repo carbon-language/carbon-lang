@@ -7941,6 +7941,7 @@ def AESKEYGENASSIST128rm : AESAI<0xDF, MRMSrcMem, (outs VR128:$dst),
 //===----------------------------------------------------------------------===//
 
 // AVX carry-less Multiplication instructions
+let isCommutable = 1 in
 def VPCLMULQDQrr : AVXPCLMULIi8<0x44, MRMSrcReg, (outs VR128:$dst),
            (ins VR128:$src1, VR128:$src2, u8imm:$src3),
            "vpclmulqdq\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}",
@@ -7957,6 +7958,7 @@ def VPCLMULQDQrm : AVXPCLMULIi8<0x44, MRMSrcMem, (outs VR128:$dst),
 
 // Carry-less Multiplication instructions
 let Constraints = "$src1 = $dst" in {
+let isCommutable = 1 in
 def PCLMULQDQrr : PCLMULIi8<0x44, MRMSrcReg, (outs VR128:$dst),
            (ins VR128:$src1, VR128:$src2, u8imm:$src3),
            "pclmulqdq\t{$src3, $src2, $dst|$dst, $src2, $src3}",

@@ -2686,6 +2686,21 @@ X86InstrInfo::commuteInstruction(MachineInstr *MI, bool NewMI) const {
     MI->getOperand(3).setImm(Mask ^ Imm);
     return TargetInstrInfo::commuteInstruction(MI, NewMI);
   }
+  case X86::PCLMULQDQrr:
+  case X86::VPCLMULQDQrr:{
+    // SRC1 64bits = Imm[0] ? SRC1[127:64] : SRC1[63:0]
+    // SRC2 64bits = Imm[4] ? SRC2[127:64] : SRC2[63:0]
+    unsigned Imm = MI->getOperand(3).getImm();
+    unsigned Src1Hi = Imm & 0x01;
+    unsigned Src2Hi = Imm & 0x10;
+    if (NewMI) {
+      MachineFunction &MF = *MI->getParent()->getParent();
+      MI = MF.CloneMachineInstr(MI);
+      NewMI = false;
+    }
+    MI->getOperand(3).setImm((Src1Hi << 4) | (Src2Hi >> 4));
+    return TargetInstrInfo::commuteInstruction(MI, NewMI);
+  }
   case X86::CMOVB16rr:  case X86::CMOVB32rr:  case X86::CMOVB64rr:
   case X86::CMOVAE16rr: case X86::CMOVAE32rr: case X86::CMOVAE64rr:
   case X86::CMOVE16rr:  case X86::CMOVE32rr:  case X86::CMOVE64rr:
