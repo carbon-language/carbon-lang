@@ -89,4 +89,11 @@ namespace test3 {
     virtual ~B() {}
     static void operator delete(void*);
   };
+
+  void f() {
+#ifdef MSABI
+    // expected-note@+2 {{implicit default constructor for 'test3::B' first required here}}
+#endif
+    B use_vtable;
+  }
 }

@@ -41,7 +41,7 @@ struct X1 : X0 {
 
 inline void X1::f() { }
 
-void use_X1(X1 *x1) { x1->f(); }
+void use_X1() { X1 x1; }
 
 // FIXME: The checks are extremely difficult to get right when the globals
 // aren't alphabetized

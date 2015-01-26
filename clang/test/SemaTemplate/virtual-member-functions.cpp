@@ -110,12 +110,12 @@ namespace PR7114 {
 namespace DynamicCast {
   struct Y {};
   template<typename T> struct X : virtual Y {
-    virtual void foo() { T x; } // expected-error {{variable has incomplete type 'void'}}
+    virtual void foo() { T x; }
   };
   template<typename T> struct X2 : virtual Y {
     virtual void foo() { T x; }
   };
-  Y* f(X<void>* x) { return dynamic_cast<Y*>(x); } // expected-note {{in instantiation of member function 'DynamicCast::X<void>::foo' requested here}}
+  Y* f(X<void>* x) { return dynamic_cast<Y*>(x); }
   Y* f2(X<void>* x) { return dynamic_cast<Y*>(x); }
 }
 

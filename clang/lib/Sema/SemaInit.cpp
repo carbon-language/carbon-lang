@@ -5880,15 +5880,6 @@ InitializationSequence::Perform(Sema &S,
                                          &BasePath, IgnoreBaseAccess))
         return ExprError();
 
-      if (S.BasePathInvolvesVirtualBase(BasePath)) {
-        QualType T = SourceType;
-        if (const PointerType *Pointer = T->getAs<PointerType>())
-          T = Pointer->getPointeeType();
-        if (const RecordType *RecordTy = T->getAs<RecordType>())
-          S.MarkVTableUsed(CurInit.get()->getLocStart(),
-                           cast<CXXRecordDecl>(RecordTy->getDecl()));
-      }
-
       ExprValueKind VK =
           Step->Kind == SK_CastDerivedToBaseLValue ?
               VK_LValue :

@@ -665,12 +665,6 @@ void CastOperation::CheckDynamicCast() {
     }
 
     Kind = CK_DerivedToBase;
-
-    // If we are casting to or through a virtual base class, we need a
-    // vtable.
-    if (Self.BasePathInvolvesVirtualBase(BasePath))
-      Self.MarkVTableUsed(OpRange.getBegin(), 
-                          cast<CXXRecordDecl>(SrcRecord->getDecl()));
     return;
   }
 
@@ -682,8 +676,6 @@ void CastOperation::CheckDynamicCast() {
       << SrcPointee.getUnqualifiedType() << SrcExpr.get()->getSourceRange();
     SrcExpr = ExprError();
   }
-  Self.MarkVTableUsed(OpRange.getBegin(), 
-                      cast<CXXRecordDecl>(SrcRecord->getDecl()));
 
   // dynamic_cast is not available with -fno-rtti.
   // As an exception, dynamic_cast to void* is available because it doesn't

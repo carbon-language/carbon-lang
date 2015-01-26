@@ -5182,8 +5182,6 @@ public:
   // FIXME: I don't like this name.
   void BuildBasePathArray(const CXXBasePaths &Paths, CXXCastPath &BasePath);
 
-  bool BasePathInvolvesVirtualBase(const CXXCastPath &BasePath);
-
   bool CheckDerivedToBaseConversion(QualType Derived, QualType Base,
                                     SourceLocation Loc, SourceRange Range,
                                     CXXCastPath *BasePath = nullptr,

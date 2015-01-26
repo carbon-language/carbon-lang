@@ -23,8 +23,9 @@ struct VC : A, B {
   virtual ~VC(); // expected-error {{member 'operator delete' found in multiple base classes of different types}}
 };
 
-void f(VC vc) {
+void f() {
   // This marks VC's vtable used.
+  VC vc;
 }
 
 }

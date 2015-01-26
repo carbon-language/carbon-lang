@@ -20,15 +20,14 @@ void f() {
     virtual void f() { }
   };
 
-  A *a;
-  a->f();
+  A a;
 }
 
 // Use the vtables
-void uses(A &a, B<int> &b, C &c) {
-  a.f();
-  b.f();
-  c.f();
+void uses_abc() {
+  A a;
+  B<int> b;
+  C c;
 }
 
 // <rdar://problem/9979458>
@@ -52,10 +51,9 @@ public:
 
 Parent::~Parent() {}
 
-void uses(Parent &p, Derived &d, VeryDerived &vd) {
-  p.getFoo();
-  d.getFoo();
-  vd.getFoo();
+void uses_derived() {
+  Derived d;
+  VeryDerived vd;
 }
 
 template<typename T> struct TemplVirt {
@@ -72,8 +70,8 @@ template<> struct TemplVirt<long> { // expected-warning{{'TemplVirt<long>' has n
   virtual void f() {}
 };
 
-void uses(TemplVirt<float>& f, TemplVirt<bool>& b, TemplVirt<long>& l) {
-  f.f();
-  b.f();
-  l.f();
+void uses_templ() {
+  TemplVirt<float> f;
+  TemplVirt<bool> b;
+  TemplVirt<long> l;
 }
