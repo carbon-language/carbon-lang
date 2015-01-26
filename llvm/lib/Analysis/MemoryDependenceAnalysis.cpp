@@ -362,6 +362,17 @@ getLoadLoadClobberFullWidthSize(const Value *MemLocBase, int64_t MemLocOffs,
   }
 }
 
+static bool isVolatile(Instruction *Inst) {
+  if (LoadInst *LI = dyn_cast<LoadInst>(Inst))
+    return LI->isVolatile();
+  else if (StoreInst *SI = dyn_cast<StoreInst>(Inst))
+    return SI->isVolatile();
+  else if (AtomicCmpXchgInst *AI = dyn_cast<AtomicCmpXchgInst>(Inst))
+    return AI->isVolatile();
+  return false;
+}
+
+
 /// getPointerDependencyFrom - Return the instruction on which a memory
 /// location depends.  If isLoad is true, this routine ignores may-aliases with
 /// read-only operations.  If isLoad is false, this routine ignores may-aliases
@@ -448,12 +459,26 @@ getPointerDependencyFrom(const AliasAnalysis::Location &MemLoc, bool isLoad,
     // does not alias with when this atomic load indicates that another thread may
     // be accessing the location.
     if (LoadInst *LI = dyn_cast<LoadInst>(Inst)) {
+
+      // While volatile access cannot be eliminated, they do not have to clobber
+      // non-aliasing locations, as normal accesses, for example, can be safely
+      // reordered with volatile accesses.
+      if (LI->isVolatile()) {
+        if (!QueryInst)
+          // Original QueryInst *may* be volatile
+          return MemDepResult::getClobber(LI);
+        if (isVolatile(QueryInst))
+          // Ordering required if QueryInst is itself volatile
+          return MemDepResult::getClobber(LI);
+        // Otherwise, volatile doesn't imply any special ordering
+      }
+      
       // Atomic loads have complications involved.
       // A Monotonic (or higher) load is OK if the query inst is itself not atomic.
       // An Acquire (or higher) load sets the HasSeenAcquire flag, so that any
       //   release store will know to return getClobber.
       // FIXME: This is overly conservative.
-      if (!LI->isUnordered()) {
+      if (LI->isAtomic() && LI->getOrdering() > Unordered) {
         if (!QueryInst)
           return MemDepResult::getClobber(LI);
         if (auto *QueryLI = dyn_cast<LoadInst>(QueryInst)) {
@@ -469,13 +494,6 @@ getPointerDependencyFrom(const AliasAnalysis::Location &MemLoc, bool isLoad,
         if (isAtLeastAcquire(LI->getOrdering()))
           HasSeenAcquire = true;
       }
-
-      // FIXME: this is overly conservative.
-      // While volatile access cannot be eliminated, they do not have to clobber
-      // non-aliasing locations, as normal accesses can for example be reordered
-      // with volatile accesses.
-      if (LI->isVolatile())
-        return MemDepResult::getClobber(LI);
 
       AliasAnalysis::Location LoadLoc = AA->getLocation(LI);
 
@@ -890,14 +908,7 @@ getNonLocalPointerDependency(Instruction *QueryInst,
   // Doing so would require piping through the QueryInst all the way through.
   // TODO: volatiles can't be elided, but they can be reordered with other
   // non-volatile accesses.
-  auto isVolatile = [](Instruction *Inst) {
-    if (LoadInst *LI = dyn_cast<LoadInst>(Inst)) {
-      return LI->isVolatile();
-    } else if (StoreInst *SI = dyn_cast<StoreInst>(Inst)) {
-      return SI->isVolatile();
-    }
-    return false;
-  };
+
   // We currently give up on any instruction which is ordered, but we do handle
   // atomic instructions which are unordered.
   // TODO: Handle ordered instructions
