@@ -27,6 +27,8 @@
 
 #include "min_allocator.h"
 
+struct A { std::list<A> v; }; // incomplete type support
+
 int main()
 {
     static_assert((std::is_same<std::list<int>::value_type, int>::value), "");

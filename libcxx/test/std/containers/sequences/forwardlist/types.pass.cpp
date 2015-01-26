@@ -30,6 +30,8 @@
 
 #include "min_allocator.h"
 
+struct A { std::forward_list<A> v; }; // incomplete type support
+
 int main()
 {
     {

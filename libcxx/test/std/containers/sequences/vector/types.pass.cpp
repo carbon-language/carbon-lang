@@ -37,6 +37,8 @@
 #include "../../Copyable.h"
 #include "min_allocator.h"
 
+struct A { std::vector<A> v; }; // incomplete type support
+
 template <class T, class Allocator>
 void
 test()
