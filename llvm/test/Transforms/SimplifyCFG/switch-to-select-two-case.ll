@@ -35,38 +35,3 @@ return:
   %retval.0 = phi i32 [ 4, %sw.epilog ], [ 2, %sw.bb1 ], [ 10, %sw.bb ]
   ret i32 %retval.0
 }
-
-; int foo1_without_default(int a) {
-;   switch(a) {
-;     case 10:
-;       return 10;
-;     case 20:
-;       return 2;
-;   }
-;   __builtin_unreachable();
-; }
-
-define i32 @foo1_without_default(i32 %a) {
-; CHECK-LABEL: @foo1_without_default
-; CHECK: %switch.selectcmp = icmp eq i32 %a, 10
-; CHECK-NEXT: %switch.select = select i1 %switch.selectcmp, i32 10, i32 2
-; CHECK-NOT: %switch.selectcmp1
-entry:
-  switch i32 %a, label %sw.epilog [
-    i32 10, label %sw.bb
-    i32 20, label %sw.bb1
-  ]
-
-sw.bb:
-  br label %return
-
-sw.bb1:
-  br label %return
-
-sw.epilog:
-  unreachable
-
-return:
-  %retval.0 = phi i32 [ 2, %sw.bb1 ], [ 10, %sw.bb ]
-  ret i32 %retval.0
-}
