@@ -543,7 +543,7 @@ public:
   void mapOptional(const char* Key, T& Val, const T& Default) {
     this->processKeyWithDefault(Key, Val, Default, false);
   }
-  
+
 private:
   template <typename T>
   void processKeyWithDefault(const char *Key, Optional<T> &Val,
@@ -717,7 +717,7 @@ struct ScalarTraits<StringRef> {
   static StringRef input(StringRef, void*, StringRef &);
   static bool mustQuote(StringRef S) { return needsQuotes(S); }
 };
- 
+
 template<>
 struct ScalarTraits<std::string> {
   static void output(const std::string &, void*, llvm::raw_ostream &);
