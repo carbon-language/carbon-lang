@@ -27,5 +27,5 @@ void BPFSubtarget::anchor() {}
 
 BPFSubtarget::BPFSubtarget(const std::string &TT, const std::string &CPU,
                            const std::string &FS, const TargetMachine &TM)
-    : BPFGenSubtargetInfo(TT, CPU, FS), DL("e-m:e-p:64:64-i64:64-n32:64-S128"),
-      InstrInfo(), FrameLowering(*this), TLInfo(TM), TSInfo(&DL) {}
+    : BPFGenSubtargetInfo(TT, CPU, FS), InstrInfo(), FrameLowering(*this),
+      TLInfo(TM), TSInfo(TM.getDataLayout()) {}

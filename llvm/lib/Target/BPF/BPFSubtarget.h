@@ -30,7 +30,6 @@ class StringRef;
 
 class BPFSubtarget : public BPFGenSubtargetInfo {
   virtual void anchor();
-  const DataLayout DL; // Calculates type size & alignment
   BPFInstrInfo InstrInfo;
   BPFFrameLowering FrameLowering;
   BPFTargetLowering TLInfo;
@@ -59,7 +58,6 @@ public:
   const TargetRegisterInfo *getRegisterInfo() const override {
     return &InstrInfo.getRegisterInfo();
   }
-  const DataLayout *getDataLayout() const override { return &DL; }
 };
 } // End llvm namespace
 
