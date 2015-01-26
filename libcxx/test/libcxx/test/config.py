@@ -343,16 +343,14 @@ class Configuration(object):
 
     def configure_compile_flags_exceptions(self):
         enable_exceptions = self.get_lit_bool('enable_exceptions', True)
-        if enable_exceptions:
-            self.config.available_features.add('exceptions')
-        else:
+        if not enable_exceptions:
+            self.config.available_features.add('libcpp-no-exceptions')
             self.cxx.compile_flags += ['-fno-exceptions']
 
     def configure_compile_flags_rtti(self):
         enable_rtti = self.get_lit_bool('enable_rtti', True)
-        if enable_rtti:
-            self.config.available_features.add('rtti')
-        else:
+        if not enable_rtti:
+            self.config.available_features.add('libcpp-no-rtti')
             self.cxx.compile_flags += ['-fno-rtti', '-D_LIBCPP_NO_RTTI']
 
     def configure_compile_flags_no_threads(self):
