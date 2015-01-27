@@ -52,10 +52,6 @@ private:
   // reference type
   void buildFollowOnTable(MutableFile::DefinedAtomRange &range);
 
-  // Build the followOn atoms chain as specified by the kindInGroup
-  // reference type
-  void buildInGroupTable(MutableFile::DefinedAtomRange &range);
-
   // Build a map of Atoms to ordinals for sorting the atoms
   void buildOrdinalOverrideMap(MutableFile::DefinedAtomRange &range);
 

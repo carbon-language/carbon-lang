@@ -400,74 +400,6 @@ void LayoutPass::buildFollowOnTable(MutableFile::DefinedAtomRange &range) {
   }
 }
 
-/// This pass builds the followon tables using InGroup relationships
-/// The algorithm follows a very simple approach
-/// a) If the rootAtom is not part of any root, create a new root with the
-///    as the head
-/// b) If the current Atom root is not found, then make the current atoms root
-///    point to the rootAtom
-/// c) If the root of the current Atom is itself a root of some other tree
-///    make all the atoms in the chain point to the ingroup reference
-/// d) Check to see if the current atom is part of the chain from the rootAtom
-///    if not add the atom to the chain, so that the current atom is part of the
-///    the chain where the rootAtom is in
-void LayoutPass::buildInGroupTable(MutableFile::DefinedAtomRange &range) {
-  ScopedTask task(getDefaultDomain(), "LayoutPass::buildInGroupTable");
-  // This table would convert precededby references to follow on
-  // references so that we have only one table
-  for (const DefinedAtom *ai : range) {
-    for (const Reference *r : *ai) {
-      if (r->kindNamespace() != lld::Reference::KindNamespace::all ||
-          r->kindValue() != lld::Reference::kindInGroup)
-        continue;
-      const DefinedAtom *rootAtom = dyn_cast<DefinedAtom>(r->target());
-      // If the root atom is not part of any root
-      // create a new root
-      if (_followOnRoots.count(rootAtom) == 0) {
-        _followOnRoots[rootAtom] = rootAtom;
-      }
-      // If the current Atom has not been seen yet and there is no root
-      // that has been set, set the root of the atom to the targetAtom
-      // as the targetAtom points to the ingroup root
-      auto iter = _followOnRoots.find(ai);
-      if (iter == _followOnRoots.end()) {
-        _followOnRoots[ai] = rootAtom;
-      } else if (iter->second == ai) {
-        if (iter->second != rootAtom)
-          setChainRoot(iter->second, rootAtom);
-      } else {
-        // TODO : Flag an error that the root of the tree
-        // is different, Here is an example
-        // Say there are atoms
-        // chain 1 : a->b->c
-        // chain 2 : d->e->f
-        // and e,f have their ingroup reference as a
-        // this could happen only if the root of e,f that is d
-        // has root as 'a'
-        continue;
-      }
-
-      // Check if the current atom is part of the chain
-      bool isAtomInChain = false;
-      const DefinedAtom *lastAtom = rootAtom;
-      for (;;) {
-        AtomToAtomT::iterator followOnAtomsIter =
-            _followOnNexts.find(lastAtom);
-        if (followOnAtomsIter != _followOnNexts.end()) {
-          lastAtom = followOnAtomsIter->second;
-          if (lastAtom != ai)
-            continue;
-          isAtomInChain = true;
-        }
-        break;
-      }
-
-      if (!isAtomInChain)
-        _followOnNexts[lastAtom] = ai;
-    }
-  }
-}
-
 /// Build an ordinal override map by traversing the followon chain, and
 /// assigning ordinals to each atom, if the atoms have their ordinals
 /// already assigned skip the atom and move to the next. This is the
@@ -519,9 +451,6 @@ void LayoutPass::perform(std::unique_ptr<MutableFile> &mergedFile) {
 
   // Build follow on tables
   buildFollowOnTable(atomRange);
-
-  // Build Ingroup reference table
-  buildInGroupTable(atomRange);
 
   // Check the structure of followon graph if running in debug mode.
   DEBUG(checkFollowonChain(atomRange));

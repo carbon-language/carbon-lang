@@ -11,7 +11,7 @@
 # RUN:   | FileCheck -check-prefix RAW %s
 
 # Local GOT entries:
-# YAML:       - ref-name:        L002
+# YAML:       - ref-name:        L001
 # YAML-NEXT:    type:            got
 # YAML-NEXT:    content:         [ 00, 00, 00, 00 ]
 # YAML-NEXT:    alignment:       2^2
@@ -22,7 +22,7 @@
 # YAML-NEXT:      - kind:            LLD_R_MIPS_32_HI16
 # YAML-NEXT:        offset:          0
 # YAML-NEXT:        target:          data_1
-# YAML-NEXT:  - ref-name:        L003
+# YAML-NEXT:  - ref-name:        L002
 # YAML-NEXT:    type:            got
 # YAML-NEXT:    content:         [ 00, 00, 00, 00 ]
 # YAML-NEXT:    alignment:       2^2
@@ -33,7 +33,7 @@
 # YAML-NEXT:      - kind:            LLD_R_MIPS_32_HI16
 # YAML-NEXT:        offset:          0
 # YAML-NEXT:        target:          data_2
-# YAML-NEXT:  - ref-name:        L004
+# YAML-NEXT:  - ref-name:        L003
 # YAML-NEXT:    type:            got
 # YAML-NEXT:    content:         [ 00, 00, 00, 00 ]
 # YAML-NEXT:    alignment:       2^2
@@ -46,7 +46,7 @@
 # YAML-NEXT:        target:          data_h
 
 # Global GOT entries:
-# YAML-NEXT:  - ref-name:        L005
+# YAML-NEXT:  - ref-name:        L004
 # YAML-NEXT:    type:            got
 # YAML-NEXT:    content:         [ 00, 00, 00, 00 ]
 # YAML-NEXT:    alignment:       2^2
@@ -60,7 +60,7 @@
 # YAML-NEXT:      - kind:            R_MIPS_32
 # YAML-NEXT:        offset:          0
 # YAML-NEXT:        target:          bar
-# YAML-NEXT:  - ref-name:        L006
+# YAML-NEXT:  - ref-name:        L005
 # YAML-NEXT:    type:            got
 # YAML-NEXT:    content:         [ 00, 00, 00, 00 ]
 # YAML-NEXT:    alignment:       2^2
@@ -83,25 +83,25 @@
 # YAML:        references:
 # YAML-NEXT:     - kind:         R_MICROMIPS_GOT16
 # YAML-NEXT:       offset:       0
-# YAML-NEXT:       target:       L002
+# YAML-NEXT:       target:       L001
 # YAML-NEXT:     - kind:         R_MICROMIPS_LO16
 # YAML-NEXT:       offset:       4
 # YAML-NEXT:       target:       data_1
 # YAML-NEXT:     - kind:         R_MICROMIPS_GOT16
 # YAML-NEXT:       offset:       8
-# YAML-NEXT:       target:       L003
+# YAML-NEXT:       target:       L002
 # YAML-NEXT:     - kind:         R_MICROMIPS_LO16
 # YAML-NEXT:       offset:       12
 # YAML-NEXT:       target:       data_2
 # YAML-NEXT:     - kind:         R_MICROMIPS_GOT16
 # YAML-NEXT:       offset:       16
-# YAML-NEXT:       target:       L004
+# YAML-NEXT:       target:       L003
 # YAML-NEXT:     - kind:         R_MICROMIPS_CALL16
 # YAML-NEXT:       offset:       20
-# YAML-NEXT:       target:       L005
+# YAML-NEXT:       target:       L004
 # YAML-NEXT:     - kind:         R_MICROMIPS_CALL16
 # YAML-NEXT:       offset:       24
-# YAML-NEXT:       target:       L006
+# YAML-NEXT:       target:       L005
 
 # RAW: Disassembly of section .text:
 # RAW: main:

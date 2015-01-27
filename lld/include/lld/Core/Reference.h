@@ -82,16 +82,15 @@ public:
 
   /// KindValues used with KindNamespace::all and KindArch::all.
   enum {
-    kindInGroup = 1,
     // kindLayoutAfter is treated as a bidirected edge by the dead-stripping
     // pass.
-    kindLayoutAfter = 2,
+    kindLayoutAfter = 1,
     // kindLayoutBefore is currently used only by PECOFF port, and will
     // be removed soon. To enforce layout, use kindLayoutAfter instead.
-    kindLayoutBefore = 3,
+    kindLayoutBefore,
     // kindGroupChild is treated as a bidirected edge too.
-    kindGroupChild = 4,
-    kindAssociate = 5,
+    kindGroupChild,
+    kindAssociate,
   };
 
   // A value to be added to the value of a target

@@ -118,7 +118,7 @@
 # CHECK-GOT:       - kind:            LLD_R_MIPS_GLOBAL_GOT
 # CHECK-GOT:         offset:          0
 # CHECK-GOT:         target:          ext1
-# CHECK-GOT:   - ref-name:        L009
+# CHECK-GOT:   - ref-name:        L008
 # CHECK-GOT:     type:            got
 # CHECK-GOT:     content:         [ 00, 00, 00, 00 ]
 # CHECK-GOT:     alignment:       2^2
