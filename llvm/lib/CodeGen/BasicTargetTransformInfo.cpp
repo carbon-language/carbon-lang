@@ -225,7 +225,7 @@ void BasicTTI::getUnrollingPreferences(const Function *F, Loop *L,
   // until someone finds a case where it matters in practice.
 
   unsigned MaxOps;
-  const TargetSubtargetInfo *ST = &TM->getSubtarget<TargetSubtargetInfo>(F);
+  const TargetSubtargetInfo *ST = TM->getSubtargetImpl(F);
   if (PartialUnrollingThreshold.getNumOccurrences() > 0)
     MaxOps = PartialUnrollingThreshold;
   else if (ST->getSchedModel().LoopMicroOpBufferSize > 0)

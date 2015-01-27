@@ -249,7 +249,7 @@ TargetPassConfig::TargetPassConfig(TargetMachine *tm, PassManagerBase &pm)
   substitutePass(&PostRAMachineLICMID, &MachineLICMID);
 
   // Temporarily disable experimental passes.
-  const TargetSubtargetInfo &ST = TM->getSubtarget<TargetSubtargetInfo>();
+  const TargetSubtargetInfo &ST = *TM->getSubtargetImpl();
   if (!ST.useMachineScheduler())
     disablePass(&MachineSchedulerID);
 }
