@@ -248,8 +248,9 @@ MachOObjectFile::MachOObjectFile(MemoryBufferRef Object, bool IsLittleEndian,
                                  bool Is64bits, std::error_code &EC)
     : ObjectFile(getMachOType(IsLittleEndian, Is64bits), Object),
       SymtabLoadCmd(nullptr), DysymtabLoadCmd(nullptr),
-      DataInCodeLoadCmd(nullptr), DyldInfoLoadCmd(nullptr),
-      UuidLoadCmd(nullptr), HasPageZeroSegment(false) {
+      DataInCodeLoadCmd(nullptr), LinkOptHintsLoadCmd(nullptr),
+      DyldInfoLoadCmd(nullptr), UuidLoadCmd(nullptr),
+      HasPageZeroSegment(false) {
   uint32_t LoadCommandCount = this->getHeader().ncmds;
   if (LoadCommandCount == 0)
     return;
@@ -280,6 +281,13 @@ MachOObjectFile::MachOObjectFile(MemoryBufferRef Object, bool IsLittleEndian,
         return;
       }
       DataInCodeLoadCmd = Load.Ptr;
+    } else if (Load.C.cmd == MachO::LC_LINKER_OPTIMIZATION_HINT) {
+      // Multiple linker optimization hint tables
+      if (LinkOptHintsLoadCmd) {
+        EC = object_error::parse_failed;
+        return;
+      }
+      LinkOptHintsLoadCmd = Load.Ptr;
     } else if (Load.C.cmd == MachO::LC_DYLD_INFO || 
                Load.C.cmd == MachO::LC_DYLD_INFO_ONLY) {
       // Multiple dyldinfo load commands
@@ -2491,6 +2499,21 @@ MachOObjectFile::getDataInCodeLoadCommand() const {
   // If there is no DataInCodeLoadCmd return a load command with zero'ed fields.
   MachO::linkedit_data_command Cmd;
   Cmd.cmd = MachO::LC_DATA_IN_CODE;
+  Cmd.cmdsize = sizeof(MachO::linkedit_data_command);
+  Cmd.dataoff = 0;
+  Cmd.datasize = 0;
+  return Cmd;
+}
+
+MachO::linkedit_data_command
+MachOObjectFile::getLinkOptHintsLoadCommand() const {
+  if (LinkOptHintsLoadCmd)
+    return getStruct<MachO::linkedit_data_command>(this, LinkOptHintsLoadCmd);
+
+  // If there is no LinkOptHintsLoadCmd return a load command with zero'ed
+  // fields.
+  MachO::linkedit_data_command Cmd;
+  Cmd.cmd = MachO::LC_LINKER_OPTIMIZATION_HINT;
   Cmd.cmdsize = sizeof(MachO::linkedit_data_command);
   Cmd.dataoff = 0;
   Cmd.datasize = 0;
