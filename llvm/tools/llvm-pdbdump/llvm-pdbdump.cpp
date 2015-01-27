@@ -13,19 +13,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define NTDDI_VERSION NTDDI_VISTA
-#define _WIN32_WINNT _WIN32_WINNT_VISTA
-#define WINVER _WIN32_WINNT_VISTA
-#ifndef NOMINMAX
-#define NOMINMAX
-#endif
-
-#include <atlbase.h>
-#include <windows.h>
-#include <dia2.h>
-
 #include "llvm/ADT/ArrayRef.h"
-#include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ConvertUTF.h"
@@ -36,7 +24,10 @@
 #include "llvm/Support/PrettyStackTrace.h"
 #include "llvm/Support/Signals.h"
 
+#include "llvm-pdbdump.h"
 #include "COMExtras.h"
+#include "DIAExtras.h"
+#include "DIASymbol.h"
 
 using namespace llvm;
 using namespace llvm::sys::windows;
@@ -54,21 +45,56 @@ cl::opt<bool> StreamData("stream-data",
                          cl::desc("Dumps stream record data as bytes"));
 cl::alias StreamDataShort("S", cl::desc("Alias for --stream-data"),
                           cl::aliasopt(StreamData));
+
+cl::opt<bool> Tables("tables",
+                     cl::desc("Display summary information for all of the "
+                              "debug tables in the input file"));
+cl::alias TablesShort("t", cl::desc("Alias for --tables"),
+                      cl::aliasopt(Tables));
 }
 
-namespace {
-bool BSTRToUTF8(BSTR String16, std::string &String8) {
-  UINT ByteLength = ::SysStringByteLen(String16);
-  char *Bytes = reinterpret_cast<char *>(String16);
-  String8.clear();
-  return llvm::convertUTF16ToUTF8String(ArrayRef<char>(Bytes, ByteLength),
-                                        String8);
-}
+static void dumpBasicFileInfo(StringRef Path, IDiaSession *Session) {
+  CComPtr<IDiaSymbol> GlobalScope;
+  HRESULT hr = Session->get_globalScope(&GlobalScope);
+  DIASymbol GlobalScopeSymbol(GlobalScope);
+  if (S_OK == hr)
+    GlobalScopeSymbol.getSymbolsFileName().dump("File", 0);
+  else
+    outs() << "File: " << Path << "\n";
+  HANDLE FileHandle = ::CreateFile(
+      Path.data(), GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr,
+      OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
+  LARGE_INTEGER FileSize;
+  if (INVALID_HANDLE_VALUE != FileHandle) {
+    outs().indent(2);
+    if (::GetFileSizeEx(FileHandle, &FileSize))
+      outs() << "Size: " << FileSize.QuadPart << " bytes\n";
+    else
+      outs() << "Size: (Unable to obtain file size)\n";
+    FILETIME ModifiedTime;
+    outs().indent(2);
+    if (::GetFileTime(FileHandle, nullptr, nullptr, &ModifiedTime)) {
+      ULARGE_INTEGER TimeInteger;
+      TimeInteger.LowPart = ModifiedTime.dwLowDateTime;
+      TimeInteger.HighPart = ModifiedTime.dwHighDateTime;
+      llvm::sys::TimeValue Time;
+      Time.fromWin32Time(TimeInteger.QuadPart);
+      outs() << "Timestamp: " << Time.str() << "\n";
+    } else {
+      outs() << "Timestamp: (Unable to obtain time stamp)\n";
+    }
+    ::CloseHandle(FileHandle);
+  }
+
+  if (S_OK == hr)
+    GlobalScopeSymbol.fullDump(2);
+  outs() << "\n";
+  outs().flush();
 }
 
-static void dumpDataStreams(IDiaSession *session) {
+static void dumpDataStreams(IDiaSession *Session) {
   CComPtr<IDiaEnumDebugStreams> DebugStreams = nullptr;
-  if (FAILED(session->getEnumDebugStreams(&DebugStreams)))
+  if (FAILED(Session->getEnumDebugStreams(&DebugStreams)))
     return;
 
   LONG Count = 0;
@@ -104,6 +130,34 @@ static void dumpDataStreams(IDiaSession *session) {
       }
     }
   }
+  outs() << "\n";
+  outs().flush();
+}
+
+static void dumpDebugTables(IDiaSession *Session) {
+  CComPtr<IDiaEnumTables> EnumTables = nullptr;
+  if (SUCCEEDED(Session->getEnumTables(&EnumTables))) {
+    LONG Count = 0;
+    if (FAILED(EnumTables->get_Count(&Count)))
+      return;
+
+    outs() << "Debug Tables [count=" << Count << "]\n";
+
+    std::string Name8;
+    for (auto Table : make_com_enumerator(EnumTables)) {
+      BSTR Name16;
+      if (FAILED(Table->get_name(&Name16)))
+        continue;
+      if (BSTRToUTF8(Name16, Name8))
+        outs() << "  " << Name8;
+      ::SysFreeString(Name16);
+      if (SUCCEEDED(Table->get_Count(&Count))) {
+        outs() << " [" << Count << " items]\n";
+      } else
+        outs() << "\n";
+    }
+  }
+  outs() << "\n";
   outs().flush();
 }
 
@@ -122,8 +176,14 @@ static void dumpInput(StringRef Path) {
   CComPtr<IDiaSession> session;
   if (FAILED(source->openSession(&session)))
     return;
+
+  dumpBasicFileInfo(Path, session);
   if (opts::Streams || opts::StreamData) {
     dumpDataStreams(session);
+  }
+
+  if (opts::Tables) {
+    dumpDebugTables(session);
   }
 }
 

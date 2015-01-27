@@ -12,6 +12,7 @@
 
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/Support/ConvertUTF.h"
 
 #include <tuple>
 
@@ -277,6 +278,14 @@ template <class EnumeratorType>
 com_data_record_enumerator<EnumeratorType>
 make_com_data_record_enumerator(CComPtr<EnumeratorType> Enumerator) {
   return com_data_record_enumerator<EnumeratorType>(Enumerator);
+}
+
+inline bool BSTRToUTF8(BSTR String16, std::string &String8) {
+  UINT ByteLength = ::SysStringByteLen(String16);
+  char *Bytes = reinterpret_cast<char *>(String16);
+  String8.clear();
+  return llvm::convertUTF16ToUTF8String(ArrayRef<char>(Bytes, ByteLength),
+                                        String8);
 }
 
 } // namespace windows

@@ -21,6 +21,8 @@ if (IS_DIRECTORY ${MSVC_DIA_SDK_DIR})
 
   add_llvm_tool(llvm-pdbdump
     llvm-pdbdump.cpp
+    DIAExtras.cpp
+    DIASymbol.cpp
     )
   target_link_libraries(llvm-pdbdump diaguids)
 endif()
