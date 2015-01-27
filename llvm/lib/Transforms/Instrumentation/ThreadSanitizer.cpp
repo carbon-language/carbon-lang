@@ -99,6 +99,8 @@ struct ThreadSanitizer : public FunctionPass {
   static const size_t kNumberOfAccessSizes = 5;
   Function *TsanRead[kNumberOfAccessSizes];
   Function *TsanWrite[kNumberOfAccessSizes];
+  Function *TsanUnalignedRead[kNumberOfAccessSizes];
+  Function *TsanUnalignedWrite[kNumberOfAccessSizes];
   Function *TsanAtomicLoad[kNumberOfAccessSizes];
   Function *TsanAtomicStore[kNumberOfAccessSizes];
   Function *TsanAtomicRMW[AtomicRMWInst::LAST_BINOP + 1][kNumberOfAccessSizes];
@@ -149,6 +151,16 @@ void ThreadSanitizer::initializeCallbacks(Module &M) {
     SmallString<32> WriteName("__tsan_write" + itostr(ByteSize));
     TsanWrite[i] = checkInterfaceFunction(M.getOrInsertFunction(
         WriteName, IRB.getVoidTy(), IRB.getInt8PtrTy(), nullptr));
+
+    SmallString<64> UnalignedReadName("__tsan_unaligned_read" +
+        itostr(ByteSize));
+    TsanUnalignedRead[i] = checkInterfaceFunction(M.getOrInsertFunction(
+        UnalignedReadName, IRB.getVoidTy(), IRB.getInt8PtrTy(), nullptr));
+
+    SmallString<64> UnalignedWriteName("__tsan_unaligned_write" +
+        itostr(ByteSize));
+    TsanUnalignedWrite[i] = checkInterfaceFunction(M.getOrInsertFunction(
+        UnalignedWriteName, IRB.getVoidTy(), IRB.getInt8PtrTy(), nullptr));
 
     Type *Ty = Type::getIntNTy(M.getContext(), BitSize);
     Type *PtrTy = Ty->getPointerTo();
@@ -412,7 +424,16 @@ bool ThreadSanitizer::instrumentLoadOrStore(Instruction *I) {
     NumInstrumentedVtableReads++;
     return true;
   }
-  Value *OnAccessFunc = IsWrite ? TsanWrite[Idx] : TsanRead[Idx];
+  const unsigned Alignment = IsWrite
+      ? cast<StoreInst>(I)->getAlignment()
+      : cast<LoadInst>(I)->getAlignment();
+  Type *OrigTy = cast<PointerType>(Addr->getType())->getElementType();
+  const uint32_t TypeSize = DL->getTypeStoreSizeInBits(OrigTy);
+  Value *OnAccessFunc = nullptr;
+  if (Alignment == 0 || Alignment >= 8 || (Alignment % (TypeSize / 8)) == 0)
+    OnAccessFunc = IsWrite ? TsanWrite[Idx] : TsanRead[Idx];
+  else
+    OnAccessFunc = IsWrite ? TsanUnalignedWrite[Idx] : TsanUnalignedRead[Idx];
   IRB.CreateCall(OnAccessFunc, IRB.CreatePointerCast(Addr, IRB.getInt8PtrTy()));
   if (IsWrite) NumInstrumentedWrites++;
   else         NumInstrumentedReads++;
