@@ -1,7 +1,5 @@
 /*
  * kmp_alloc.c -- private/shared dyanmic memory allocation and management
- * $Revision: 43450 $
- * $Date: 2014-09-09 10:07:22 -0500 (Tue, 09 Sep 2014) $
  */
 
 

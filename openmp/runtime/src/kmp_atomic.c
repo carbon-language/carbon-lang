@@ -1,7 +1,5 @@
 /*
  * kmp_atomic.c -- ATOMIC implementation routines
- * $Revision: 43421 $
- * $Date: 2014-08-28 08:56:10 -0500 (Thu, 28 Aug 2014) $
  */
 
 

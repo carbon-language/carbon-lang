@@ -1,7 +1,5 @@
 /*
  * kmp_lock.cpp -- lock-related functions
- * $Revision: 43389 $
- * $Date: 2014-08-11 10:54:01 -0500 (Mon, 11 Aug 2014) $
  */
 
 

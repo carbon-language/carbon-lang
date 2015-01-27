@@ -1,7 +1,5 @@
 /*
  * kmp_taskdeps.cpp
- * $Revision: 42539 $
- * $Date: 2013-07-17 11:20:01 -0500 (Wed, 17 Jul 2013) $
  */
 
 

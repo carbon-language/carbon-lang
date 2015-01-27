@@ -1,8 +1,6 @@
 /*
  * kmp_omp.h -- OpenMP definition for kmp_omp_struct_info_t.
  *              This is for information about runtime library structures.
- * $Revision: 42951 $
- * $Date: 2014-01-21 14:41:41 -0600 (Tue, 21 Jan 2014) $
  */
 
 

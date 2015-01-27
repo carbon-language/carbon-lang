@@ -1,7 +1,5 @@
 /*
  * kmp_ftn_os.h -- KPTS Fortran defines header file.
- * $Revision: 43354 $
- * $Date: 2014-07-22 17:15:02 -0500 (Tue, 22 Jul 2014) $
  */
 
 

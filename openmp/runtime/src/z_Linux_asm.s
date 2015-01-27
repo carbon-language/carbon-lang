@@ -1,7 +1,5 @@
 //  z_Linux_asm.s:  - microtasking routines specifically
 //                    written for Intel platforms running Linux* OS
-// $Revision: 43473 $
-// $Date: 2014-09-26 15:02:57 -0500 (Fri, 26 Sep 2014) $
 
 //
 ////===----------------------------------------------------------------------===//

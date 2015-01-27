@@ -1,7 +1,5 @@
 /*
  * kmp_version.h -- version number for this release
- * $Revision: 42982 $
- * $Date: 2014-02-12 10:11:02 -0600 (Wed, 12 Feb 2014) $
  */
 
 

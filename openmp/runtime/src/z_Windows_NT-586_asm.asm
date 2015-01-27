@@ -1,7 +1,5 @@
 ;  z_Windows_NT-586_asm.asm:  - microtasking routines specifically
 ;    written for IA-32 architecture and Intel(R) 64 running Windows* OS
-;  $Revision: 43373 $
-;  $Date: 2014-08-07 09:17:32 -0500 (Thu, 07 Aug 2014) $
 
 ;
 ;//===----------------------------------------------------------------------===//

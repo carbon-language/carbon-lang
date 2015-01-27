@@ -1,7 +1,5 @@
 /*
  * kmp_wait_release.cpp -- Wait/Release implementation
- * $Revision: 43417 $
- * $Date: 2014-08-26 14:06:38 -0500 (Tue, 26 Aug 2014) $
  */
 
 

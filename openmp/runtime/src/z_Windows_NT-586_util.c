@@ -1,7 +1,5 @@
 /*
  * z_Windows_NT-586_util.c -- platform specific routines.
- * $Revision: 42951 $
- * $Date: 2014-01-21 14:41:41 -0600 (Tue, 21 Jan 2014) $
  */
 
 

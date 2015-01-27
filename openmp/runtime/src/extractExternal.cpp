@@ -1,7 +1,5 @@
 /*
  * extractExternal.cpp
- * $Revision: 43084 $
- * $Date: 2014-04-15 09:15:14 -0500 (Tue, 15 Apr 2014) $
  */
 
 

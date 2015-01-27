@@ -1,7 +1,5 @@
 /*
  * kmp_ftn_entry.h -- Fortran entry linkage support for OpenMP.
- * $Revision: 43435 $
- * $Date: 2014-09-04 15:16:08 -0500 (Thu, 04 Sep 2014) $
  */
 
 

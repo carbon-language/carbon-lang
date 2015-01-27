@@ -1,8 +1,6 @@
 #if USE_ITT_BUILD
 /*
  * kmp_itt.c -- ITT Notify interface.
- * $Revision: 43457 $
- * $Date: 2014-09-17 03:57:22 -0500 (Wed, 17 Sep 2014) $
  */
 
 

@@ -1,7 +1,5 @@
 /*
  * kmp_atomic.h - ATOMIC header file
- * $Revision: 43191 $
- * $Date: 2014-05-27 07:44:11 -0500 (Tue, 27 May 2014) $
  */
 
 
