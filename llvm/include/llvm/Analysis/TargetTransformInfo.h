@@ -101,9 +101,9 @@ public:
   /// skipped by renaming the registers in the CPU, but they still are encoded
   /// and thus wouldn't be considered 'free' here.
   enum TargetCostConstants {
-    TCC_Free = 0,       ///< Expected to fold away in lowering.
-    TCC_Basic = 1,      ///< The cost of a typical 'add' instruction.
-    TCC_Expensive = 4   ///< The cost of a 'div' instruction on x86.
+    TCC_Free = 0,     ///< Expected to fold away in lowering.
+    TCC_Basic = 1,    ///< The cost of a typical 'add' instruction.
+    TCC_Expensive = 4 ///< The cost of a 'div' instruction on x86.
   };
 
   /// \brief Estimate the cost of a specific operation when lowered.
@@ -218,8 +218,8 @@ public:
     /// for partial/runtime unrolling (set to UINT_MAX to disable).
     unsigned PartialThreshold;
     /// The cost threshold for the unrolled loop when optimizing for size, like
-    /// OptSizeThreshold, but used for partial/runtime unrolling (set to UINT_MAX
-    /// to disable).
+    /// OptSizeThreshold, but used for partial/runtime unrolling (set to
+    /// UINT_MAX to disable).
     unsigned PartialOptSizeThreshold;
     /// A forced unrolling factor (the number of concatenated bodies of the
     /// original loop in the unrolled loop body). When set to 0, the unrolling
@@ -233,11 +233,11 @@ public:
     unsigned MaxCount;
     /// Allow partial unrolling (unrolling of loops to expand the size of the
     /// loop body, not only to eliminate small constant-trip-count loops).
-    bool     Partial;
+    bool Partial;
     /// Allow runtime unrolling (unrolling of loops to expand the size of the
-    /// loop body even when the number of loop iterations is not known at compile
-    /// time).
-    bool     Runtime;
+    /// loop body even when the number of loop iterations is not known at
+    /// compile time).
+    bool Runtime;
   };
 
   /// \brief Get target-customized preferences for the generic loop unrolling
@@ -259,11 +259,7 @@ public:
   /// support is considered as "Fast" if it can outperform, or is on a par
   /// with, SW implementation when the population is sparse; otherwise, it is
   /// considered as "Slow".
-  enum PopcntSupportKind {
-    PSK_Software,
-    PSK_SlowHardware,
-    PSK_FastHardware
-  };
+  enum PopcntSupportKind { PSK_Software, PSK_SlowHardware, PSK_FastHardware };
 
   /// \brief Return true if the specified immediate is legal add immediate, that
   /// is the target has add instructions which can add a register with the
@@ -290,7 +286,7 @@ public:
   /// AVX-512 architecture will also allow masks for non-consecutive memory
   /// accesses.
   virtual bool isLegalMaskedStore(Type *DataType, int Consecutive) const;
-  virtual bool isLegalMaskedLoad (Type *DataType, int Consecutive) const;
+  virtual bool isLegalMaskedLoad(Type *DataType, int Consecutive) const;
 
   /// \brief Return the cost of the scaling factor used in the addressing
   /// mode represented by AM for this target, for a load/store
@@ -353,10 +349,10 @@ public:
 
   /// \brief Additional information about an operand's possible values.
   enum OperandValueKind {
-    OK_AnyValue,                 // Operand can have any value.
-    OK_UniformValue,             // Operand is uniform (splat of a value).
-    OK_UniformConstantValue,     // Operand is uniform constant.
-    OK_NonUniformConstantValue   // Operand is a non uniform constant value.
+    OK_AnyValue,               // Operand can have any value.
+    OK_UniformValue,           // Operand is uniform (splat of a value).
+    OK_UniformConstantValue,   // Operand is uniform constant.
+    OK_NonUniformConstantValue // Operand is a non uniform constant value.
   };
 
   /// \brief Additional properties of an operand's values.
@@ -456,7 +452,7 @@ public:
   ///
   /// Some types may require the use of register classes that do not have
   /// any callee-saved registers, so would require a spill and fill.
-  virtual unsigned getCostOfKeepingLiveOverCall(ArrayRef<Type*> Tys) const;
+  virtual unsigned getCostOfKeepingLiveOverCall(ArrayRef<Type *> Tys) const;
 
   /// \returns True if the intrinsic is a supported memory intrinsic.  Info
   /// will contain additional information - whether the intrinsic may write
