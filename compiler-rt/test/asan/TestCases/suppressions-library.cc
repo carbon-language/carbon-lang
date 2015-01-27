@@ -1,10 +1,10 @@
-// RUN: %clangxx_asan -O0 -DSHARED_LIB %s -fPIC -shared -o %t-so.so
-// RUN: %clangxx_asan -O0 %s %t-so.so -o %t
+// RUN: %clangxx_asan -O0 -DSHARED_LIB %s -fPIC -shared -o %t-so.so -install_name @rpath/suppressions-library.cc.tmp-so.so
+// RUN: %clangxx_asan -O0 %s %t-so.so -o %t -rpath @executable_path
 
 // Check that without suppressions, we catch the issue.
 // RUN: not %run %t 2>&1 | FileCheck --check-prefix=CHECK-CRASH %s
 
-// RUN: echo "interceptor_via_lib:%t-so.so" > %t.supp
+// RUN: echo "interceptor_via_lib:suppressions-library.cc.tmp-so.so" > %t.supp
 // RUN: ASAN_OPTIONS="suppressions='%t.supp'" %run %t 2>&1 | FileCheck --check-prefix=CHECK-IGNORE %s
 
 // XFAIL: android

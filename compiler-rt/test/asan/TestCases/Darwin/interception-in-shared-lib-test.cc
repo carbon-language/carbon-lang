@@ -3,11 +3,11 @@
 // ../Linux/interception-in-shared-lib-test.cc.
 
 // RUN: %clangxx_asan -O0 %s -DSHARED_LIB \
-// RUN:     -shared -o %T/libinterception-in-shared-lib-test.so \
-// RUN:     -fPIC
+// RUN:     -shared -o %t-so.so \
+// RUN:     -fPIC -install_name @rpath/interception-in-shared-lib-test.cc.tmp-so.so
 // TODO(glider): figure out how to set rpath in a more portable way and unite
 // this test with ../Linux/interception-in-shared-lib-test.cc.
-// RUN: %clangxx_asan -O0 %s -o %t -Wl,-rpath,@executable-path -L%T -linterception-in-shared-lib-test && \
+// RUN: %clangxx_asan -O0 %s -o %t -Wl,-rpath,@executable_path %t-so.so && \
 // RUN:     not %run %t 2>&1 | FileCheck %s
 
 #include <stdio.h>
