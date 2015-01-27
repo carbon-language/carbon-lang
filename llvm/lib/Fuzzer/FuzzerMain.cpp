@@ -18,7 +18,10 @@
 
 // ASAN options:
 //   * don't dump the coverage to disk.
-extern "C" const char* __asan_default_options() { return "coverage_pcs=0"; }
+//   * enable coverage by default.
+extern "C" const char *__asan_default_options() {
+  return "coverage_pcs=0:coverage=1";
+}
 
 // Program arguments.
 struct FlagDescription {
