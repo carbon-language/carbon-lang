@@ -1098,11 +1098,11 @@ TryUserDefinedConversion(Sema &S, Expr *From, QualType ToType,
   // Attempt user-defined conversion.
   OverloadCandidateSet Conversions(From->getExprLoc(),
                                    OverloadCandidateSet::CSK_Normal);
-  OverloadingResult UserDefResult
-    = IsUserDefinedConversion(S, From, ToType, ICS.UserDefined, Conversions,
-                              AllowExplicit, AllowObjCConversionOnExplicit);
-
-  if (UserDefResult == OR_Success) {
+  switch (IsUserDefinedConversion(S, From, ToType, ICS.UserDefined,
+                                  Conversions, AllowExplicit,
+                                  AllowObjCConversionOnExplicit)) {
+  case OR_Success:
+  case OR_Deleted:
     ICS.setUserDefined();
     ICS.UserDefined.Before.setAsIdentityConversion();
     // C++ [over.ics.user]p4:
@@ -1131,16 +1131,24 @@ TryUserDefinedConversion(Sema &S, Expr *From, QualType ToType,
           ICS.Standard.Second = ICK_Derived_To_Base;
       }
     }
-  } else if (UserDefResult == OR_Ambiguous && !SuppressUserConversions) {
-    ICS.setAmbiguous();
-    ICS.Ambiguous.setFromType(From->getType());
-    ICS.Ambiguous.setToType(ToType);
-    for (OverloadCandidateSet::iterator Cand = Conversions.begin();
-         Cand != Conversions.end(); ++Cand)
-      if (Cand->Viable)
-        ICS.Ambiguous.addConversion(Cand->Function);
-  } else {
+    break;
+
+  case OR_Ambiguous:
+    if (!SuppressUserConversions) {
+      ICS.setAmbiguous();
+      ICS.Ambiguous.setFromType(From->getType());
+      ICS.Ambiguous.setToType(ToType);
+      for (OverloadCandidateSet::iterator Cand = Conversions.begin();
+           Cand != Conversions.end(); ++Cand)
+        if (Cand->Viable)
+          ICS.Ambiguous.addConversion(Cand->Function);
+      break;
+    }
+
+    // Fall through.
+  case OR_No_Viable_Function:
     ICS.setBad(BadConversionSequence::no_conversion, From, ToType);
+    break;
   }
 
   return ICS;
@@ -3129,8 +3137,10 @@ IsUserDefinedConversion(Sema &S, Expr *From, QualType ToType,
   bool HadMultipleCandidates = (CandidateSet.size() > 1);
 
   OverloadCandidateSet::iterator Best;
-  switch (CandidateSet.BestViableFunction(S, From->getLocStart(), Best, true)) {
+  switch (auto Result = CandidateSet.BestViableFunction(S, From->getLocStart(),
+                                                        Best, true)) {
   case OR_Success:
+  case OR_Deleted:
     // Record the standard conversion we used and the conversion function.
     if (CXXConstructorDecl *Constructor
           = dyn_cast<CXXConstructorDecl>(Best->Function)) {
@@ -3158,7 +3168,7 @@ IsUserDefinedConversion(Sema &S, Expr *From, QualType ToType,
       User.After.setAsIdentityConversion();
       User.After.setFromType(ThisType->getAs<PointerType>()->getPointeeType());
       User.After.setAllToTypes(ToType);
-      return OR_Success;
+      return Result;
     }
     if (CXXConversionDecl *Conversion
                  = dyn_cast<CXXConversionDecl>(Best->Function)) {
@@ -3184,15 +3194,12 @@ IsUserDefinedConversion(Sema &S, Expr *From, QualType ToType,
       //   user-defined conversion sequence (see 13.3.3 and
       //   13.3.3.1).
       User.After = Best->FinalConversion;
-      return OR_Success;
+      return Result;
     }
     llvm_unreachable("Not a constructor or conversion function?");
 
   case OR_No_Viable_Function:
     return OR_No_Viable_Function;
-  case OR_Deleted:
-    // No conversion here! We're done.
-    return OR_Deleted;
 
   case OR_Ambiguous:
     return OR_Ambiguous;
