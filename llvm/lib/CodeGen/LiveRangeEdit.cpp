@@ -399,7 +399,7 @@ LiveRangeEdit::calculateRegClassAndHint(MachineFunction &MF,
   VirtRegAuxInfo VRAI(MF, LIS, Loops, MBFI);
   for (unsigned I = 0, Size = size(); I < Size; ++I) {
     LiveInterval &LI = LIS.getInterval(get(I));
-    if (MRI.recomputeRegClass(LI.reg, MF.getTarget()))
+    if (MRI.recomputeRegClass(LI.reg))
       DEBUG({
         const TargetRegisterInfo *TRI = MF.getSubtarget().getRegisterInfo();
         dbgs() << "Inflated " << PrintReg(LI.reg) << " to "
