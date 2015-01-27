@@ -373,16 +373,22 @@ std::error_code RelocationHandler<ELFT>::applyRelocation(
 
 } // end anon namespace
 
+namespace lld {
+namespace elf {
+
 template <>
 std::unique_ptr<TargetRelocationHandler>
-lld::elf::createMipsRelocationHandler<Mips32ELType>(MipsLinkingContext &ctx) {
+createMipsRelocationHandler<Mips32ELType>(MipsLinkingContext &ctx) {
   return std::unique_ptr<TargetRelocationHandler>(
       new RelocationHandler<Mips32ELType>(ctx));
 }
 
 template <>
 std::unique_ptr<TargetRelocationHandler>
-lld::elf::createMipsRelocationHandler<Mips64ELType>(MipsLinkingContext &ctx) {
+createMipsRelocationHandler<Mips64ELType>(MipsLinkingContext &ctx) {
   return std::unique_ptr<TargetRelocationHandler>(
       new RelocationHandler<Mips64ELType>(ctx));
 }
+
+} // elf
+} // lld
