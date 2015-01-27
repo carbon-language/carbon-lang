@@ -1,4 +1,4 @@
-//===- llvm/Analysis/TargetTransformInfo.h ----------------------*- C++ -*-===//
+//===- TargetTransformInfo.h ------------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -6,17 +6,17 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-//
-// This pass exposes codegen information to IR-level passes. Every
-// transformation that uses codegen information is broken into three parts:
-// 1. The IR-level analysis pass.
-// 2. The IR-level transformation interface which provides the needed
-//    information.
-// 3. Codegen-level implementation which uses target-specific hooks.
-//
-// This file defines #2, which is the interface that IR-level transformations
-// use for querying the codegen.
-//
+/// \file
+/// This pass exposes codegen information to IR-level passes. Every
+/// transformation that uses codegen information is broken into three parts:
+/// 1. The IR-level analysis pass.
+/// 2. The IR-level transformation interface which provides the needed
+///    information.
+/// 3. Codegen-level implementation which uses target-specific hooks.
+///
+/// This file defines #2, which is the interface that IR-level transformations
+/// use for querying the codegen.
+///
 //===----------------------------------------------------------------------===//
 
 #ifndef LLVM_ANALYSIS_TARGETTRANSFORMINFO_H
