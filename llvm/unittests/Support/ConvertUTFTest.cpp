@@ -46,7 +46,7 @@ TEST(ConvertUTFTest, ConvertUTF8ToUTF16String) {
   bool Success = convertUTF8ToUTF16String(Ref, Result);
   EXPECT_TRUE(Success);
   static const UTF16 Expected[] = {0x0CA0, 0x005f, 0x0CA0, 0};
-  ASSERT_EQ(3, Result.size());
+  ASSERT_EQ(3u, Result.size());
   for (int I = 0, E = 3; I != E; ++I)
     EXPECT_EQ(Expected[I], Result[I]);
 }
