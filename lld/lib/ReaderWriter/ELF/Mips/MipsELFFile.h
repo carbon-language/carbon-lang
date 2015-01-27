@@ -94,7 +94,7 @@ public:
   }
 
   /// \brief gp register value stored in the .reginfo section.
-  int64_t getGP0() const { return *_gp0; }
+  int64_t getGP0() const { return _gp0 ? *_gp0 : 0; }
 
   /// \brief .tdata section address plus fixed offset.
   uint64_t getTPOffset() const { return *_tpOff; }
@@ -204,6 +204,7 @@ private:
       return readAddend(ap, 0x3ffffff, false) << 2;
     case llvm::ELF::R_MIPS_HI16:
     case llvm::ELF::R_MIPS_LO16:
+    case llvm::ELF::R_MIPS_GPREL16:
     case llvm::ELF::R_MIPS_GOT16:
     case llvm::ELF::R_MIPS_TLS_DTPREL_HI16:
     case llvm::ELF::R_MIPS_TLS_DTPREL_LO16:

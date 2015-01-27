@@ -338,7 +338,6 @@ private:
   void handlePlain(const MipsELFDefinedAtom<ELFT> &atom, Reference &ref);
   void handle26(const MipsELFDefinedAtom<ELFT> &atom, Reference &ref);
   void handleGOT(Reference &ref);
-  void handleGPRel(const MipsELFDefinedAtom<ELFT> &atom, Reference &ref);
 
   const GOTAtom *getLocalGOTEntry(const Reference &ref);
   const GOTAtom *getGlobalGOTEntry(const Atom *a);
@@ -486,8 +485,12 @@ void RelocationPass<ELFT>::handleReference(const MipsELFDefinedAtom<ELFT> &atom,
   case R_MICROMIPS_CALL16:
     handleGOT(ref);
     break;
+  case R_MIPS_GPREL16:
+    if (isLocal(ref.target()))
+      ref.setAddend(ref.addend() + atom.file().getGP0());
+    break;
   case R_MIPS_GPREL32:
-    handleGPRel(atom, ref);
+    ref.setAddend(ref.addend() + atom.file().getGP0());
     break;
   case R_MIPS_TLS_DTPREL_HI16:
   case R_MIPS_TLS_DTPREL_LO16:
@@ -524,6 +527,7 @@ static bool isConstrainSym(const MipsELFDefinedAtom<ELFT> &atom, Reference &ref)
   case R_MIPS_NONE:
   case R_MIPS_JALR:
   case R_MICROMIPS_JALR:
+  case R_MIPS_GPREL16:
   case R_MIPS_GPREL32:
     return false;
   default:
@@ -722,13 +726,6 @@ template <typename ELFT> void RelocationPass<ELFT>::handleGOT(Reference &ref) {
     ref.setTarget(getLocalGOTEntry(ref));
   else
     ref.setTarget(getGlobalGOTEntry(ref.target()));
-}
-
-template <typename ELFT>
-void RelocationPass<ELFT>::handleGPRel(const MipsELFDefinedAtom<ELFT> &atom,
-                                       Reference &ref) {
-  assert(ref.kindValue() == R_MIPS_GPREL32);
-  ref.setAddend(ref.addend() + atom.file().getGP0());
 }
 
 template <typename ELFT>

@@ -84,6 +84,15 @@ static void relocGOT(uint32_t &ins, uint64_t S, uint64_t GP) {
   applyReloc(ins, G, 0xffff);
 }
 
+/// \brief R_MIPS_GPREL16
+/// local: sign-extend(A) + S + GP0 - GP
+/// external: sign-extend(A) + S - GP
+static void relocGPRel16(uint32_t &ins, uint64_t S, int64_t A, uint64_t GP) {
+  // We added GP0 to addendum for a local symbol during a Relocation pass.
+  int32_t result = signExtend<16>(A) + S - GP;
+  applyReloc(ins, result, 0xffff);
+}
+
 /// \brief R_MIPS_GPREL32
 /// local: rel32 A + S + GP0 - GP (truncate)
 static void relocGPRel32(uint32_t &ins, uint64_t P, uint64_t S, int64_t A,
@@ -320,6 +329,9 @@ std::error_code RelocationHandler<ELFT>::applyRelocation(
   case R_MICROMIPS_TLS_DTPREL_LO16:
   case R_MICROMIPS_TLS_TPREL_LO16:
     relocLo16(ins, 0, targetVAddress, ref.addend(), false, true);
+    break;
+  case R_MIPS_GPREL16:
+    relocGPRel16(ins, targetVAddress, ref.addend(), gpAddr);
     break;
   case R_MIPS_GPREL32:
     relocGPRel32(ins, relocVAddress, targetVAddress, ref.addend(), gpAddr);
