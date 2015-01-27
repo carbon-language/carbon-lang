@@ -231,8 +231,8 @@ TEST(CommandLineTest, AliasRequired) {
 }
 
 TEST(CommandLineTest, HideUnrelatedOptions) {
-  cl::opt<int> TestOption1("test-option-1");
-  cl::opt<int> TestOption2("test-option-2", cl::cat(TestCategory));
+  StackOption<int> TestOption1("hide-option-1");
+  StackOption<int> TestOption2("hide-option-2", cl::cat(TestCategory));
 
   cl::HideUnrelatedOptions(TestCategory);
 
@@ -241,7 +241,32 @@ TEST(CommandLineTest, HideUnrelatedOptions) {
   ASSERT_EQ(cl::NotHidden, TestOption2.getOptionHiddenFlag())
       << "Hid extra option that should be visable.";
 
-  StringMap<cl::Option*> Map;
+  StringMap<cl::Option *> Map;
+  cl::getRegisteredOptions(Map);
+  ASSERT_EQ(cl::NotHidden, Map["help"]->getOptionHiddenFlag())
+      << "Hid default option that should be visable.";
+}
+
+cl::OptionCategory TestCategory2("Test Options set 2", "Description");
+
+TEST(CommandLineTest, HideUnrelatedOptionsMulti) {
+  StackOption<int> TestOption1("multi-hide-option-1");
+  StackOption<int> TestOption2("multi-hide-option-2", cl::cat(TestCategory));
+  StackOption<int> TestOption3("multi-hide-option-3", cl::cat(TestCategory2));
+
+  const cl::OptionCategory *VisibleCategories[] = {&TestCategory,
+                                                   &TestCategory2};
+
+  cl::HideUnrelatedOptions(makeArrayRef(VisibleCategories));
+
+  ASSERT_EQ(cl::ReallyHidden, TestOption1.getOptionHiddenFlag())
+      << "Failed to hide extra option.";
+  ASSERT_EQ(cl::NotHidden, TestOption2.getOptionHiddenFlag())
+      << "Hid extra option that should be visable.";
+  ASSERT_EQ(cl::NotHidden, TestOption3.getOptionHiddenFlag())
+      << "Hid extra option that should be visable.";
+
+  StringMap<cl::Option *> Map;
   cl::getRegisteredOptions(Map);
   ASSERT_EQ(cl::NotHidden, Map["help"]->getOptionHiddenFlag())
       << "Hid default option that should be visable.";

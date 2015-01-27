@@ -20,6 +20,7 @@
 #ifndef LLVM_SUPPORT_COMMANDLINE_H
 #define LLVM_SUPPORT_COMMANDLINE_H
 
+#include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/Twine.h"
@@ -1938,7 +1939,7 @@ void HideUnrelatedOptions(cl::OptionCategory &Category);
 /// Some tools (like clang-format) like to be able to hide all options that are
 /// not specific to the tool. This function allows a tool to specify a single
 /// option category to display in the -help output.
-void HideUnrelatedOptions(SmallVectorImpl<cl::OptionCategory *> &Categories);
+void HideUnrelatedOptions(ArrayRef<const cl::OptionCategory *> Categories);
 
 } // End namespace cl
 
