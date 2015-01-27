@@ -1134,16 +1134,14 @@ TryUserDefinedConversion(Sema &S, Expr *From, QualType ToType,
     break;
 
   case OR_Ambiguous:
-    if (!SuppressUserConversions) {
-      ICS.setAmbiguous();
-      ICS.Ambiguous.setFromType(From->getType());
-      ICS.Ambiguous.setToType(ToType);
-      for (OverloadCandidateSet::iterator Cand = Conversions.begin();
-           Cand != Conversions.end(); ++Cand)
-        if (Cand->Viable)
-          ICS.Ambiguous.addConversion(Cand->Function);
-      break;
-    }
+    ICS.setAmbiguous();
+    ICS.Ambiguous.setFromType(From->getType());
+    ICS.Ambiguous.setToType(ToType);
+    for (OverloadCandidateSet::iterator Cand = Conversions.begin();
+         Cand != Conversions.end(); ++Cand)
+      if (Cand->Viable)
+        ICS.Ambiguous.addConversion(Cand->Function);
+    break;
 
     // Fall through.
   case OR_No_Viable_Function:
@@ -4479,7 +4477,9 @@ TryListConversion(Sema &S, InitListExpr *From, QualType ToType,
                                      InOverloadResolution,
                                      AllowObjCWritebackConversion);
     }
-    if (S.Context.getAsArrayType(ToType)) {
+    // FIXME: Check the other conditions here: array of character type,
+    // initializer is a string literal.
+    if (ToType->isArrayType()) {
       InitializedEntity Entity =
         InitializedEntity::InitializeParameter(S.Context, ToType,
                                                /*Consumed=*/false);
@@ -4506,6 +4506,8 @@ TryListConversion(Sema &S, InitListExpr *From, QualType ToType,
   //   default-constructible, and if all the elements of the initializer list
   //   can be implicitly converted to X, the implicit conversion sequence is
   //   the worst conversion necessary to convert an element of the list to X.
+  //
+  // FIXME: We're missing a lot of these checks.
   bool toStdInitializerList = false;
   QualType X;
   if (ToType->isArrayType())
@@ -4664,7 +4666,7 @@ TryListConversion(Sema &S, InitListExpr *From, QualType ToType,
     //      initializer list, the implicit conversion sequence is the one
     //      required to convert the element to the parameter type.
     unsigned NumInits = From->getNumInits();
-    if (NumInits == 1 && !dyn_cast<InitListExpr>(From->getInit(0)))
+    if (NumInits == 1 && !isa<InitListExpr>(From->getInit(0)))
       Result = TryCopyInitialization(S, From->getInit(0), ToType,
                                      SuppressUserConversions,
                                      InOverloadResolution,
