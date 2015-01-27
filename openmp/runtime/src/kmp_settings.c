@@ -5244,8 +5244,7 @@ __kmp_env_initialize( char const * string ) {
 
         KMP_DEBUG_ASSERT( __kmp_affinity_type != affinity_default);
 # if OMP_40_ENABLED
-        KMP_DEBUG_ASSERT( __kmp_nested_proc_bind.bind_types[0]
-          != proc_bind_default );
+        KMP_DEBUG_ASSERT( __kmp_nested_proc_bind.bind_types[0] != proc_bind_default );
 # endif
     }
 
