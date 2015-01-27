@@ -3336,7 +3336,26 @@ CompareImplicitConversionSequences(Sema &S,
   // Two implicit conversion sequences of the same form are
   // indistinguishable conversion sequences unless one of the
   // following rules apply: (C++ 13.3.3.2p3):
+  
+  // List-initialization sequence L1 is a better conversion sequence than
+  // list-initialization sequence L2 if:
+  // - L1 converts to std::initializer_list<X> for some X and L2 does not, or,
+  //   if not that,
+  // - L1 converts to type “array of N1 T”, L2 converts to type “array of N2 T”,
+  //   and N1 is smaller than N2.,
+  // even if one of the other rules in this paragraph would otherwise apply.
+  if (!ICS1.isBad()) {
+    if (ICS1.isStdInitializerListElement() &&
+        !ICS2.isStdInitializerListElement())
+      return ImplicitConversionSequence::Better;
+    if (!ICS1.isStdInitializerListElement() &&
+        ICS2.isStdInitializerListElement())
+      return ImplicitConversionSequence::Worse;
+  }
+
   if (ICS1.isStandard())
+    // Standard conversion sequence S1 is a better conversion sequence than
+    // standard conversion sequence S2 if [...]
     Result = CompareStandardConversionSequences(S,
                                                 ICS1.Standard, ICS2.Standard);
   else if (ICS1.isUserDefined()) {
@@ -3355,19 +3374,6 @@ CompareImplicitConversionSequences(Sema &S,
       Result = compareConversionFunctions(S, 
                                           ICS1.UserDefined.ConversionFunction,
                                           ICS2.UserDefined.ConversionFunction);
-  }
-
-  // List-initialization sequence L1 is a better conversion sequence than
-  // list-initialization sequence L2 if L1 converts to std::initializer_list<X>
-  // for some X and L2 does not.
-  if (Result == ImplicitConversionSequence::Indistinguishable &&
-      !ICS1.isBad()) {
-    if (ICS1.isStdInitializerListElement() &&
-        !ICS2.isStdInitializerListElement())
-      return ImplicitConversionSequence::Better;
-    if (!ICS1.isStdInitializerListElement() &&
-        ICS2.isStdInitializerListElement())
-      return ImplicitConversionSequence::Worse;
   }
 
   return Result;
@@ -4453,11 +4459,53 @@ TryListConversion(Sema &S, InitListExpr *From, QualType ToType,
   if (S.RequireCompleteType(From->getLocStart(), ToType, 0))
     return Result;
 
+  // Per DR1467:
+  //   If the parameter type is a class X and the initializer list has a single
+  //   element of type cv U, where U is X or a class derived from X, the
+  //   implicit conversion sequence is the one required to convert the element
+  //   to the parameter type.
+  //
+  //   Otherwise, if the parameter type is a character array [... ]
+  //   and the initializer list has a single element that is an
+  //   appropriately-typed string literal (8.5.2 [dcl.init.string]), the
+  //   implicit conversion sequence is the identity conversion.
+  if (From->getNumInits() == 1) {
+    if (ToType->isRecordType()) {
+      QualType InitType = From->getInit(0)->getType();
+      if (S.Context.hasSameUnqualifiedType(InitType, ToType) ||
+          S.IsDerivedFrom(InitType, ToType))
+        return TryCopyInitialization(S, From->getInit(0), ToType,
+                                     SuppressUserConversions,
+                                     InOverloadResolution,
+                                     AllowObjCWritebackConversion);
+    }
+    if (S.Context.getAsArrayType(ToType)) {
+      InitializedEntity Entity =
+        InitializedEntity::InitializeParameter(S.Context, ToType,
+                                               /*Consumed=*/false);
+      if (S.CanPerformCopyInitialization(Entity, From)) {
+        Result.setStandard();
+        Result.Standard.setAsIdentityConversion();
+        Result.Standard.setFromType(ToType);
+        Result.Standard.setAllToTypes(ToType);
+        return Result;
+      }
+    }
+  }
+
+  // C++14 [over.ics.list]p2: Otherwise, if the parameter type [...] (below).
   // C++11 [over.ics.list]p2:
   //   If the parameter type is std::initializer_list<X> or "array of X" and
   //   all the elements can be implicitly converted to X, the implicit
   //   conversion sequence is the worst conversion necessary to convert an
   //   element of the list to X.
+  //
+  // C++14 [over.ics.list]p3:
+  //   Otherwise, if the parameter type is “array of N X”, if the initializer
+  //   list has exactly N elements or if it has fewer than N elements and X is
+  //   default-constructible, and if all the elements of the initializer list
+  //   can be implicitly converted to X, the implicit conversion sequence is
+  //   the worst conversion necessary to convert an element of the list to X.
   bool toStdInitializerList = false;
   QualType X;
   if (ToType->isArrayType())
@@ -4496,6 +4544,7 @@ TryListConversion(Sema &S, InitListExpr *From, QualType ToType,
     return Result;
   }
 
+  // C++14 [over.ics.list]p4:
   // C++11 [over.ics.list]p3:
   //   Otherwise, if the parameter is a non-aggregate class X and overload
   //   resolution chooses a single best constructor [...] the implicit
@@ -4511,6 +4560,7 @@ TryListConversion(Sema &S, InitListExpr *From, QualType ToType,
                                     /*AllowObjCConversionOnExplicit=*/false);
   }
 
+  // C++14 [over.ics.list]p5:
   // C++11 [over.ics.list]p4:
   //   Otherwise, if the parameter has an aggregate type which can be
   //   initialized from the initializer list [...] the implicit conversion
@@ -4537,6 +4587,7 @@ TryListConversion(Sema &S, InitListExpr *From, QualType ToType,
     return Result;
   }
 
+  // C++14 [over.ics.list]p6:
   // C++11 [over.ics.list]p5:
   //   Otherwise, if the parameter is a reference, see 13.3.3.1.4.
   if (ToType->isReferenceType()) {
@@ -4605,14 +4656,15 @@ TryListConversion(Sema &S, InitListExpr *From, QualType ToType,
     return Result;
   }
 
+  // C++14 [over.ics.list]p7:
   // C++11 [over.ics.list]p6:
   //   Otherwise, if the parameter type is not a class:
   if (!ToType->isRecordType()) {
-    //    - if the initializer list has one element, the implicit conversion
-    //      sequence is the one required to convert the element to the
-    //      parameter type.
+    //    - if the initializer list has one element that is not itself an
+    //      initializer list, the implicit conversion sequence is the one
+    //      required to convert the element to the parameter type.
     unsigned NumInits = From->getNumInits();
-    if (NumInits == 1)
+    if (NumInits == 1 && !dyn_cast<InitListExpr>(From->getInit(0)))
       Result = TryCopyInitialization(S, From->getInit(0), ToType,
                                      SuppressUserConversions,
                                      InOverloadResolution,
@@ -4628,6 +4680,7 @@ TryListConversion(Sema &S, InitListExpr *From, QualType ToType,
     return Result;
   }
 
+  // C++14 [over.ics.list]p8:
   // C++11 [over.ics.list]p7:
   //   In all cases other than those enumerated above, no conversion is possible
   return Result;

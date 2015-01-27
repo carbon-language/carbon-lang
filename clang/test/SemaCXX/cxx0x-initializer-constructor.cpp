@@ -214,7 +214,9 @@ namespace PR12092 {
 
 namespace PR12117 {
   struct A { A(int); }; 
-  struct B { B(A); } b{{0}};
+  struct B { B(A); } b{{0}};   // expected-error {{call to constructor of 'struct B' is ambiguous}} \
+                                // expected-note 2{{candidate is the implicit}} \
+                                // expected-note {{candidate constructor}}
   struct C { C(int); } c{0};
 }
 

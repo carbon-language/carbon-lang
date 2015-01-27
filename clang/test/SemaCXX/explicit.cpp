@@ -56,7 +56,7 @@ namespace Conversion {
   void testExplicit()
   {
     // Taken from 12.3.2p2
-    class X { X(); }; // expected-note+ {{candidate constructor}}
+    class X { X(); };
     class Y { }; // expected-note+ {{candidate constructor (the implicit}}
 
     struct Z {
@@ -89,14 +89,10 @@ namespace Conversion {
     const Y& y11{z}; // expected-error {{excess elements}} expected-note {{in initialization of temporary of type 'const Y'}}
     const int& y12{z};
 
-    // X is not an aggregate, so constructors are considered.
-    // However, by 13.3.3.1/4, only standard conversion sequences and
-    // ellipsis conversion sequences are considered here, so this is not
-    // allowed.
-    // FIXME: It's not really clear that this is a sensible restriction for this
-    // case. g++ allows this, EDG does not.
-    const X x1{z}; // expected-error {{no matching constructor}}
-    const X& x2{z}; // expected-error {{no matching constructor}}
+    // X is not an aggregate, so constructors are considered,
+    // per 13.3.3.1/4 & DR1467.
+    const X x1{z};
+    const X& x2{z};
   }
   
   void testBool() {

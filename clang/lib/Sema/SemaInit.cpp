@@ -3110,7 +3110,7 @@ ResolveConstructorOverload(Sema &S, SourceLocation DeclLoc,
                            ArrayRef<NamedDecl *> Ctors,
                            OverloadCandidateSet::iterator &Best,
                            bool CopyInitializing, bool AllowExplicit,
-                           bool OnlyListConstructors, bool InitListSyntax) {
+                           bool OnlyListConstructors) {
   CandidateSet.clear();
 
   for (ArrayRef<NamedDecl *>::iterator
@@ -3129,20 +3129,13 @@ ResolveConstructorOverload(Sema &S, SourceLocation DeclLoc,
       Constructor = cast<CXXConstructorDecl>(D);
 
       // C++11 [over.best.ics]p4:
-      //   However, when considering the argument of a constructor or
-      //   user-defined conversion function that is a candidate:
-      //    -- by 13.3.1.3 when invoked for the copying/moving of a temporary
-      //       in the second step of a class copy-initialization,
-      //    -- by 13.3.1.7 when passing the initializer list as a single
-      //       argument or when the initializer list has exactly one elementand
-      //       a conversion to some class X or reference to (possibly
-      //       cv-qualified) X is considered for the first parameter of a
-      //       constructor of X, or
-      //    -- by 13.3.1.4, 13.3.1.5, or 13.3.1.6 in all cases,
-      //   only standard conversion sequences and ellipsis conversion sequences
-      //   are considered.
-      if ((CopyInitializing || (InitListSyntax && Args.size() == 1)) &&
-          Constructor->isCopyOrMoveConstructor())
+      //   ... and the constructor or user-defined conversion function is a
+      //   candidate by
+      //   — 13.3.1.3, when the argument is the temporary in the second step
+      //     of a class copy-initialization, or
+      //   — 13.3.1.4, 13.3.1.5, or 13.3.1.6 (in all cases),
+      //   user-defined conversion sequences are not considered.
+      if (CopyInitializing && Constructor->isCopyOrMoveConstructor())
         SuppressUserConversions = true;
     }
 
@@ -3222,15 +3215,11 @@ static void TryConstructorInitialization(Sema &S,
   OverloadCandidateSet::iterator Best;
   bool AsInitializerList = false;
 
-  // C++14 DR 1467 [over.match.list]p1:
+  // C++11 [over.match.list]p1, per DR1467:
   //   When objects of non-aggregate type T are list-initialized, such that
   //   8.5.4 [dcl.init.list] specifies that overload resolution is performed
   //   according to the rules in this section, overload resolution selects
   //   the constructor in two phases:
-  //
-  // C++11 [over.match.list]p1:
-  //   When objects of non-aggregate type T are list-initialized, overload
-  //   resolution selects the constructor in two phases:
   //
   //   - Initially, the candidate functions are the initializer-list
   //     constructors of the class T and the argument list consists of the
@@ -3245,8 +3234,7 @@ static void TryConstructorInitialization(Sema &S,
       Result = ResolveConstructorOverload(S, Kind.getLocation(), Args,
                                           CandidateSet, Ctors, Best,
                                           CopyInitialization, AllowExplicit,
-                                          /*OnlyListConstructor=*/true,
-                                          InitListSyntax);
+                                          /*OnlyListConstructor=*/true);
 
     // Time to unwrap the init list.
     Args = MultiExprArg(ILE->getInits(), ILE->getNumInits());
@@ -3262,8 +3250,7 @@ static void TryConstructorInitialization(Sema &S,
     Result = ResolveConstructorOverload(S, Kind.getLocation(), Args,
                                         CandidateSet, Ctors, Best,
                                         CopyInitialization, AllowExplicit,
-                                        /*OnlyListConstructors=*/false,
-                                        InitListSyntax);
+                                        /*OnlyListConstructors=*/false);
   }
   if (Result) {
     Sequence.SetOverloadFailure(InitListSyntax ?
@@ -3439,7 +3426,7 @@ static void TryListInitialization(Sema &S,
     return;
   }
 
-  // C++14 DR1467 [dcl.init.list]p3:
+  // C++11 [dcl.init.list]p3, per DR1467:
   // - If T is a class type and the initializer list has a single element of
   //   type cv U, where U is T or a class derived from T, the object is
   //   initialized from that element (by copy-initialization for
@@ -3449,8 +3436,8 @@ static void TryListInitialization(Sema &S,
   //   single element that is an appropriately-typed string literal
   //   (8.5.2 [dcl.init.string]), initialization is performed as described
   //   in that section.
-  // - Otherwise, If T is an aggregate, [...] (continue below).
-  if (S.getLangOpts().CPlusPlus14 && InitList->getNumInits() == 1) {
+  // - Otherwise, if T is an aggregate, [...] (continue below).
+  if (S.getLangOpts().CPlusPlus11 && InitList->getNumInits() == 1) {
     if (DestType->isRecordType()) {
       QualType InitType = InitList->getInit(0)->getType();
       if (S.Context.hasSameUnqualifiedType(InitType, DestType) ||
@@ -3517,12 +3504,6 @@ static void TryListInitialization(Sema &S,
   if (S.getLangOpts().CPlusPlus && !DestType->isAggregateType() &&
       InitList->getNumInits() == 1 &&
       InitList->getInit(0)->getType()->isRecordType()) {
-    //   - Otherwise, if the initializer list has a single element of type E
-    //     [...references are handled above...], the object or reference is
-    //     initialized from that element; if a narrowing conversion is required
-    //     to convert the element to T, the program is ill-formed.
-    //
-    // C++14 DR1467:
     //   - Otherwise, if the initializer list has a single element of type E
     //     [...references are handled above...], the object or reference is
     //     initialized from that element (by copy-initialization for

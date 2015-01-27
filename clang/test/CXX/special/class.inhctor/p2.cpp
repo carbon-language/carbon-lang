@@ -96,7 +96,7 @@ struct TemplateCtors {
   template<typename T = int> TemplateCtors(int, int = 0, int = 0); // expected-note {{inherited from here}}
 };
 
-struct UsingTemplateCtors : TemplateCtors {
+struct UsingTemplateCtors : TemplateCtors {  // expected-note 2{{candidate is the implicit}}
   using TemplateCtors::TemplateCtors; // expected-note 4{{here}} expected-note {{candidate}}
 
   constexpr UsingTemplateCtors(X<0>, X<0>) {}
