@@ -5,6 +5,10 @@
 # include <cassert>
 # include <new>
 
+#ifndef __has_feature
+#  define __has_feature(x)
+#endif
+
 #if  __has_feature(address_sanitizer) \
   || __has_feature(memory_sanitizer)
 #define DISABLE_NEW_COUNT
