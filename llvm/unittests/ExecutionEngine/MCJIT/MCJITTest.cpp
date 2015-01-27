@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/ExecutionEngine/MCJIT.h"
+#include "llvm/Support/DynamicLibrary.h"
 #include "MCJITTestBase.h"
 #include "gtest/gtest.h"
 
@@ -198,5 +199,46 @@ TEST_F(MCJITTest, multiple_decl_lookups) {
   EXPECT_TRUE(A != 0) << "Failed lookup - test not correctly configured.";
   EXPECT_EQ(A, B) << "Repeat calls to getPointerToFunction fail.";
 }
+
+// Test weak symbol linking when the weak symbol is present in a shared
+// library
+TEST_F(MCJITTest, weak_symbol_present) {
+  SKIP_UNSUPPORTED_PLATFORM;
+
+  int FakeWeakSymbol;
+  llvm::sys::DynamicLibrary::AddSymbol("FakeWeakSymbol", &FakeWeakSymbol);
+  createJITFromAssembly(
+  "$FakeWeakSymbol = comdat any\n"
+  "@FakeWeakSymbol = linkonce_odr global i32 42, comdat, align 4\n"
+  "define i32 @weak_test(i32* %arg) {\n"
+  "    %r = icmp eq i32* %arg, @FakeWeakSymbol\n"
+  "    %ret = zext i1 %r to i32\n"
+  "    ret i32 %ret\n"
+  "  }");
+
+  uint64_t Addr = TheJIT->getFunctionAddress("weak_test");;
+  EXPECT_TRUE(Addr != 0);
+  int32_t(*FuncPtr)(int32_t *) = (int32_t(*)(int32_t *))Addr;
+  EXPECT_EQ(FuncPtr(&FakeWeakSymbol),1);
+  EXPECT_TRUE(TheJIT->getGlobalValueAddress("FakeWeakSymbol") == 0);
+}
+
+// Test weak symbol linking when the weak symbol is not present in a
+// shared library
+TEST_F(MCJITTest, weak_symbol_absent) {
+  SKIP_UNSUPPORTED_PLATFORM;
+
+  SMDiagnostic Error;
+  createJITFromAssembly(
+  "  $FakeWeakSymbol2 = comdat any\n"
+  "  @FakeWeakSymbol2 = linkonce_odr global i32 42, comdat, align 4\n"
+  "  define i32* @get_weak() {\n"
+  "    ret i32* @FakeWeakSymbol2\n"
+  "  }\n");
+  void*(*FuncPtr)() =
+    (void*(*)(void))TheJIT->getFunctionAddress("get_weak");
+  EXPECT_EQ(FuncPtr(),(void*)TheJIT->getGlobalValueAddress("FakeWeakSymbol2"));
+}
+
 
 }
