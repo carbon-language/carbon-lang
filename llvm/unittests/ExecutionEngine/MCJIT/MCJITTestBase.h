@@ -344,6 +344,7 @@ protected:
   void createJITFromAssembly(const char *Test) {
     SMDiagnostic Error;
     M = parseAssemblyString(Test, Error, Context);
+    M->setTargetTriple(Triple::normalize(BuilderTriple));
 
     std::string errMsg;
     raw_string_ostream os(errMsg);
