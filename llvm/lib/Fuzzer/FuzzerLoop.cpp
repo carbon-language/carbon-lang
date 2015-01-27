@@ -1,0 +1,161 @@
+//===- FuzzerLoop.cpp - Fuzzer's main loop --------------------------------===//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+// Fuzzer's main loop.
+//===----------------------------------------------------------------------===//
+
+#include "FuzzerInternal.h"
+#include <sanitizer/asan_interface.h>
+#include <algorithm>
+#include <string>
+#include <iostream>
+#include <stdlib.h>
+
+// This function should be defined by the user.
+extern "C" void TestOneInput(const uint8_t *Data, size_t Size);
+
+namespace fuzzer {
+
+// static
+Unit Fuzzer::CurrentUnit;
+system_clock::time_point Fuzzer::UnitStartTime;
+
+void Fuzzer::SetDeathCallback() {
+  __sanitizer_set_death_callback(DeathCallback);
+}
+
+void Fuzzer::DeathCallback() {
+  std::cerr << "DEATH: " <<  std::endl;
+  Print(CurrentUnit, "\n");
+  PrintASCII(CurrentUnit, "\n");
+  WriteToCrash(CurrentUnit, "crash-");
+}
+
+void Fuzzer::AlarmCallback() {
+  size_t Seconds =
+      duration_cast<seconds>(system_clock::now() - UnitStartTime).count();
+  std::cerr << "ALARM: working on the last Unit for " << Seconds << " seconds"
+            << std::endl;
+  if (Seconds > 60) {
+    Print(CurrentUnit, "\n");
+    PrintASCII(CurrentUnit, "\n");
+    WriteToCrash(CurrentUnit, "timeout-");
+  }
+  abort();
+}
+
+void Fuzzer::ShuffleAndMinimize() {
+  if (Options.Verbosity)
+    std::cerr << "Shuffle: " << Corpus.size() << "\n";
+  std::vector<Unit> NewCorpus;
+  random_shuffle(Corpus.begin(), Corpus.end());
+  size_t MaxCov = 0;
+  Unit &U = CurrentUnit;
+  for (const auto &C : Corpus) {
+    for (size_t First = 0; First < 1; First++) {
+      U.clear();
+      size_t Last = std::min(First + Options.MaxLen, C.size());
+      U.insert(U.begin(), C.begin() + First, C.begin() + Last);
+      size_t NewCoverage = RunOne(U);
+      if (NewCoverage) {
+        MaxCov = NewCoverage;
+        NewCorpus.push_back(U);
+        if (Options.Verbosity >= 2)
+          std::cerr << "NEW0: " << NewCoverage << "\n";
+      }
+    }
+  }
+  Corpus = NewCorpus;
+  if (Options.Verbosity)
+    std::cerr << "Shuffle done: " << Corpus.size() << " IC: " << MaxCov << "\n";
+}
+
+size_t Fuzzer::RunOne(const Unit &U) {
+  UnitStartTime = system_clock::now();
+  TotalNumberOfRuns++;
+  size_t OldCoverage = __sanitizer_get_total_unique_coverage();
+  TestOneInput(U.data(), U.size());
+  size_t NewCoverage = __sanitizer_get_total_unique_coverage();
+  if (!(TotalNumberOfRuns & (TotalNumberOfRuns - 1)) && Options.Verbosity) {
+    size_t Seconds =
+        duration_cast<seconds>(system_clock::now() - ProcessStartTime).count();
+    std::cerr
+        << "#" << TotalNumberOfRuns
+        << "\tcov: " << NewCoverage
+        << "\texec/s: " << (Seconds ? TotalNumberOfRuns / Seconds : 0) << "\n";
+  }
+  if (NewCoverage > OldCoverage)
+    return NewCoverage;
+  return 0;
+}
+
+void Fuzzer::WriteToOutputCorpus(const Unit &U) {
+  if (Options.OutputCorpus.empty()) return;
+  std::string Path = Options.OutputCorpus + "/" + Hash(U);
+  WriteToFile(U, Path);
+  if (Options.Verbosity >= 2)
+    std::cerr << "Written to " << Path << std::endl;
+}
+
+void Fuzzer::WriteToCrash(const Unit &U, const char *Prefix) {
+  std::string Path = Prefix + Hash(U);
+  WriteToFile(U, Path);
+  std::cerr << "CRASHED; file written to " << Path << std::endl;
+}
+
+size_t Fuzzer::MutateAndTestOne(Unit *U) {
+  size_t NewUnits = 0;
+  for (size_t i = 0; i < Options.MutateDepth; i++) {
+    Mutate(U, Options.MaxLen);
+    if (U->empty()) continue;
+    size_t NewCoverage = RunOne(*U);
+    if (NewCoverage) {
+      Corpus.push_back(*U);
+      NewUnits++;
+      if (Options.Verbosity) {
+        std::cerr << "#" << TotalNumberOfRuns
+                  << "\tNEW: " << NewCoverage
+                  << " L: " << U->size()
+                  << "\t";
+        if (U->size() < 30) {
+          PrintASCII(*U);
+          std::cerr << "\t";
+          Print(*U);
+        }
+        std::cerr << "\n";
+      }
+      WriteToOutputCorpus(*U);
+      if (Options.ExitOnFirst)
+        exit(0);
+    }
+  }
+  return NewUnits;
+}
+
+size_t Fuzzer::Loop(size_t NumIterations) {
+  size_t NewUnits = 0;
+  for (size_t i = 1; i <= NumIterations; i++) {
+    if (Options.DoCrossOver) {
+      for (size_t J1 = 0; J1 < Corpus.size(); J1++) {
+        for (size_t J2 = 0; J2 < Corpus.size(); J2++) {
+          CurrentUnit.clear();
+          CrossOver(Corpus[J1], Corpus[J2], &CurrentUnit, Options.MaxLen);
+          NewUnits += MutateAndTestOne(&CurrentUnit);
+        }
+      }
+    } else {  // No CrossOver
+      for (size_t J = 0; J < Corpus.size(); J++) {
+        CurrentUnit = Corpus[J];
+        NewUnits += MutateAndTestOne(&CurrentUnit);
+      }
+    }
+  }
+  return NewUnits;
+}
+
+}  // namespace fuzzer

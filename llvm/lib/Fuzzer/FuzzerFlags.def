@@ -1,0 +1,24 @@
+//===- FuzzerFlags.def - Run-time flags -------------------------*- C++ -* ===//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+// Flags. FUZZER_FLAG macro should be defined at the point of inclusion.
+// We are not using any flag parsing library for better portability and
+// independence.
+//===----------------------------------------------------------------------===//
+FUZZER_FLAG(int, verbosity, 1, "Verbosity level.")
+FUZZER_FLAG(int, seed, 0, "Random seed. If 0, seed is generated.")
+FUZZER_FLAG(int, iterations, -1,
+            "Number of iterations of the fuzzer (-1 for infinite runs).")
+FUZZER_FLAG(int, max_len, 64, "Maximal length of the test input.")
+FUZZER_FLAG(int, cross_over, 1, "If 1, cross over inputs.")
+FUZZER_FLAG(int, mutate_depth, 10,
+            "Apply this number of consecutive mutations to each input.")
+FUZZER_FLAG(int, exit_on_first, 0,
+            "If 1, exit after the first new interesting input is found.")
+FUZZER_FLAG(int, timeout, -1, "Timeout in seconds (if positive).")
+FUZZER_FLAG(int, help, 0, "Print help.")
