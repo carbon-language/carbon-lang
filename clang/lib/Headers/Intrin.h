@@ -289,6 +289,7 @@ void _WriteBarrier(void);
 unsigned __int32 xbegin(void);
 void _xend(void);
 static __inline__
+#define _XCR_XFEATURE_ENABLED_MASK 0
 unsigned __int64 __cdecl _xgetbv(unsigned int);
 void __cdecl _xrstor(void const *, unsigned __int64);
 void __cdecl _xsave(void *, unsigned __int64);
