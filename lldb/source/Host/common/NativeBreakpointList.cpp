@@ -1,4 +1,4 @@
-//===-- NativeBreakpointList.h ----------------------------------*- C++ -*-===//
+//===-- NativeBreakpointList.cpp --------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
