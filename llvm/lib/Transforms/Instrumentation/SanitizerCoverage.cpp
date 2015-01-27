@@ -59,7 +59,7 @@ static const char *const kSanCovIndirCallName = "__sanitizer_cov_indir_call16";
 static const char *const kSanCovTraceEnter = "__sanitizer_cov_trace_func_enter";
 static const char *const kSanCovTraceBB = "__sanitizer_cov_trace_basic_block";
 static const char *const kSanCovModuleCtorName = "sancov.module_ctor";
-static const uint64_t    kSanCtorAndDtorPriority = 1;
+static const uint64_t    kSanCtorAndDtorPriority = 2;
 
 static cl::opt<int> ClCoverageLevel("sanitizer-coverage-level",
        cl::desc("Sanitizer Coverage. 0: none, 1: entry block, 2: all blocks, "
