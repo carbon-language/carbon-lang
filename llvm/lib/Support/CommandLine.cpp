@@ -1861,7 +1861,8 @@ void cl::HideUnrelatedOptions(cl::OptionCategory &Category) {
   }
 }
 
-void cl::HideUnrelatedOptions(ArrayRef<const cl::OptionCategory *> Categories) {
+void cl::HideUnrelatedOptions(
+    SmallVectorImpl<cl::OptionCategory *> &Categories) {
   auto CategoriesBegin = Categories.begin();
   auto CategoriesEnd = Categories.end();
   StringMap<cl::Option *> Options;
