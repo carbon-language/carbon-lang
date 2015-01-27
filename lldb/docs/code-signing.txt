@@ -3,7 +3,7 @@ builds  are set to code sign using a code signing certificate named
 "lldb_codesign". 
 
 If you have re-installed a new OS, please delete all old lldb_codesign items
-from your keychain. There will be 3: a code signing certification and a public
+from your keychain. There will be a code signing certification and a public
 and private key. Reboot after deleting them. You will also need to delete and
 build folders that contained old signed items. The darwin kernel will cache 
 code signing using the executable's file system node, so you will need to
