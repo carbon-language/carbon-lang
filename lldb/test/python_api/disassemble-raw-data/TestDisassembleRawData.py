@@ -26,7 +26,7 @@ class DisassembleRawDataTestCase(TestBase):
 
         raw_bytes = bytearray([0x48, 0x89, 0xe5])
 
-        insts = target.GetInstructions(lldb.SBAddress(), raw_bytes)
+        insts = target.GetInstructions(lldb.SBAddress(0, target), raw_bytes)
 
         inst = insts.GetInstructionAtIndex(0)
 
