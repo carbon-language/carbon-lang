@@ -349,7 +349,8 @@ define i32 @ctlz_select(i32 %Value) nounwind {
   ret i32 %s
 
 ; CHECK-LABEL: @ctlz_select(
-; CHECK: select i1 %tobool, i32 %ctlz, i32 32
+; CHECK-NEXT: call i32 @llvm.ctlz.i32(i32 %Value, i1 false)
+; CHECK-NEXT: ret i32
 }
 
 define i32 @cttz_select(i32 %Value) nounwind {
@@ -359,5 +360,6 @@ define i32 @cttz_select(i32 %Value) nounwind {
   ret i32 %s
 
 ; CHECK-LABEL: @cttz_select(
-; CHECK: select i1 %tobool, i32 %cttz, i32 32
+; CHECK-NEXT: call i32 @llvm.cttz.i32(i32 %Value, i1 false)
+; CHECK-NEXT: ret i32
 }

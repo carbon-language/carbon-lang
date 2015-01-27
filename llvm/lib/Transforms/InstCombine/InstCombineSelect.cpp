@@ -437,6 +437,66 @@ static Value *foldSelectICmpAndOr(const SelectInst &SI, Value *TrueVal,
   return Builder->CreateOr(V, Y);
 }
 
+/// Attempt to fold a cttz/ctlz followed by a icmp plus select into a single
+/// call to cttz/ctlz with flag 'is_zero_undef' cleared.
+///
+/// For example, we can fold the following code sequence:
+/// \code
+///   %0 = tail call i32 @llvm.cttz.i32(i32 %x, i1 true)
+///   %1 = icmp ne i32 %x, 0
+///   %2 = select i1 %1, i32 %0, i32 32
+/// \code
+/// 
+/// into:
+///   %0 = tail call i32 @llvm.cttz.i32(i32 %x, i1 false)
+static Value *foldSelectCttzCtlz(ICmpInst *ICI, Value *TrueVal, Value *FalseVal,
+                                  InstCombiner::BuilderTy *Builder) {
+  ICmpInst::Predicate Pred = ICI->getPredicate();
+  Value *CmpLHS = ICI->getOperand(0);
+  Value *CmpRHS = ICI->getOperand(1);
+
+  // Check if the condition value compares a value for equality against zero.
+  if (!ICI->isEquality() || !match(CmpRHS, m_Zero()))
+    return nullptr;
+
+  Value *Count = FalseVal;
+  Value *ValueOnZero = TrueVal;
+  if (Pred == ICmpInst::ICMP_NE)
+    std::swap(Count, ValueOnZero);
+
+  // Skip zero extend/truncate.
+  Value *V = nullptr;
+  if (match(Count, m_ZExt(m_Value(V))) ||
+      match(Count, m_Trunc(m_Value(V))))
+    Count = V;
+
+  // Check if the value propagated on zero is a constant number equal to the
+  // sizeof in bits of 'Count'.
+  unsigned SizeOfInBits = Count->getType()->getScalarSizeInBits();
+  if (!match(ValueOnZero, m_SpecificInt(SizeOfInBits)))
+    return nullptr;
+
+  // Check that 'Count' is a call to intrinsic cttz/ctlz. Also check that the
+  // input to the cttz/ctlz is used as LHS for the compare instruction.
+  if (match(Count, m_Intrinsic<Intrinsic::cttz>(m_Specific(CmpLHS))) ||
+      match(Count, m_Intrinsic<Intrinsic::ctlz>(m_Specific(CmpLHS)))) {
+    IntrinsicInst *II = cast<IntrinsicInst>(Count);
+    IRBuilder<> Builder(II);
+    if (cast<ConstantInt>(II->getArgOperand(1))->isOne()) {
+      // Explicitly clear the 'undef_on_zero' flag.
+      IntrinsicInst *NewI = cast<IntrinsicInst>(II->clone());
+      Type *Ty = NewI->getArgOperand(1)->getType();
+      NewI->setArgOperand(1, Constant::getNullValue(Ty));
+      Builder.Insert(NewI);
+      Count = NewI;
+    }
+
+    return Builder.CreateZExtOrTrunc(Count, ValueOnZero->getType());
+  }
+
+  return nullptr;
+}
+
 /// visitSelectInstWithICmp - Visit a SelectInst that has an
 /// ICmpInst as its first operand.
 ///
@@ -663,6 +723,9 @@ Instruction *InstCombiner::visitSelectInstWithICmp(SelectInst &SI,
   }
 
   if (Value *V = foldSelectICmpAndOr(SI, TrueVal, FalseVal, Builder))
+    return ReplaceInstUsesWith(SI, V);
+
+  if (Value *V = foldSelectCttzCtlz(ICI, TrueVal, FalseVal, Builder))
     return ReplaceInstUsesWith(SI, V);
 
   return Changed ? &SI : nullptr;
