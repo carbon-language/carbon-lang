@@ -125,7 +125,7 @@ MachineCombiner::getDepth(SmallVectorImpl<MachineInstr *> &InsInstrs,
   SmallVector<unsigned, 16> InstrDepth;
   assert(TSchedModel.hasInstrSchedModel() && "Missing machine model\n");
 
-  // Foreach instruction in in the new sequence compute the depth based on the
+  // For each instruction in the new sequence compute the depth based on the
   // operands. Use the trace information when possible. For new operands which
   // are tracked in the InstrIdxForVirtReg map depth is looked up in InstrDepth
   for (auto *InstrPtr : InsInstrs) { // for each Use
@@ -215,8 +215,8 @@ unsigned MachineCombiner::getLatency(MachineInstr *Root, MachineInstr *NewRoot,
 /// lengthen the critical path. The DAGCombine code sequence ends in MI
 /// (Machine Instruction) Root. The new code sequence ends in MI NewRoot. A
 /// necessary condition for the new sequence to replace the old sequence is that
-/// is cannot lengthen the critical path. This is decided by the formula
-/// (NewRootDepth + NewRootLatency) <=  (RootDepth + RootLatency + RootSlack)).
+/// it cannot lengthen the critical path. This is decided by the formula
+/// (NewRootDepth + NewRootLatency) <= (RootDepth + RootLatency + RootSlack)).
 /// The slack is the number of cycles Root can be delayed before the critical
 /// patch becomes longer.
 bool MachineCombiner::preservesCriticalPathLen(
@@ -300,7 +300,7 @@ bool MachineCombiner::preservesResourceLen(
 }
 
 /// \returns true when new instruction sequence should be generated
-/// independent if it lenghtens critical path or not
+/// independent if it lengthens critical path or not
 bool MachineCombiner::doSubstitute(unsigned NewSize, unsigned OldSize) {
   if (OptSize && (NewSize < OldSize))
     return true;
