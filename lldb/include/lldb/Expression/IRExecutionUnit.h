@@ -207,6 +207,9 @@ private:
     DisassembleFunction (Stream &stream,
                          lldb::ProcessSP &process_sp);
 
+    void
+    ReportSymbolLookupError(const ConstString &name);
+
     class MemoryManager : public llvm::SectionMemoryManager
     {
     public:
@@ -282,10 +285,10 @@ private:
         //------------------------------------------------------------------
         /// Passthrough interface stub
         //------------------------------------------------------------------
+        virtual uint64_t getSymbolAddress(const std::string &Name);
+
         virtual void *getPointerToNamedFunction(const std::string &Name,
-                                                bool AbortOnFailure = true) {
-            return m_default_mm_ap->getPointerToNamedFunction(Name, AbortOnFailure);
-        }
+                                                bool AbortOnFailure = true);
     private:
         std::unique_ptr<SectionMemoryManager>    m_default_mm_ap;    ///< The memory allocator to use in actually creating space.  All calls are passed through to it.
         IRExecutionUnit                    &m_parent;           ///< The execution unit this is a proxy for.
@@ -390,6 +393,7 @@ private:
     std::vector<std::string>                m_cpu_features;
     llvm::SmallVector<JittedFunction, 1>    m_jitted_functions;     ///< A vector of all functions that have been JITted into machine code
     const ConstString                       m_name;
+    std::vector<ConstString>                m_failed_lookups;
     
     std::atomic<bool>                       m_did_jit;
 

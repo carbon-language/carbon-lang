@@ -239,6 +239,12 @@ static void ReportInlineAsmError(const llvm::SMDiagnostic &diagnostic, void *Con
 }
 
 void
+IRExecutionUnit::ReportSymbolLookupError(const ConstString &name)
+{
+    m_failed_lookups.push_back(name);
+}
+
+void
 IRExecutionUnit::GetRunnableInfo(Error &error,
                                  lldb::addr_t &func_addr,
                                  lldb::addr_t &func_end)
@@ -368,6 +374,33 @@ IRExecutionUnit::GetRunnableInfo(Error &error,
     CommitAllocations(process_sp);
     ReportAllocations(*m_execution_engine_ap);
     WriteData(process_sp);
+
+    if (m_failed_lookups.size())
+    {
+        StreamString ss;
+        
+        ss.PutCString("Couldn't lookup symbols:\n");
+        
+        bool emitNewLine = false;
+        
+        for (const ConstString &failed_lookup : m_failed_lookups)
+        {
+            if (emitNewLine)
+                ss.PutCString("\n");
+            emitNewLine = true;
+            ss.PutCString("  ");
+            ss.PutCString(Mangled(failed_lookup).GetDemangledName().AsCString());
+        }
+        
+        m_failed_lookups.clear();
+        
+        error.SetErrorString(ss.GetData());
+        
+        return;
+    }
+    
+    m_function_load_addr = LLDB_INVALID_ADDRESS;
+    m_function_end_load_addr = LLDB_INVALID_ADDRESS;
 
     for (JittedFunction &jitted_function : m_jitted_functions)
     {
@@ -602,6 +635,114 @@ IRExecutionUnit::MemoryManager::allocateDataSection(uintptr_t Size,
     }
 
     return return_value;
+}
+
+uint64_t
+IRExecutionUnit::MemoryManager::getSymbolAddress(const std::string &Name)
+{
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
+    
+    SymbolContextList sc_list;
+    
+    ExecutionContextScope *exe_scope = m_parent.GetBestExecutionContextScope();
+    
+    lldb::TargetSP target_sp = exe_scope->CalculateTarget();
+    
+    const char *name = Name.c_str();
+    
+    ConstString bare_name_cs(name);
+    ConstString name_cs;
+    
+    if (name[0] == '_')
+        name_cs = ConstString(name + 1);
+    
+    if (!target_sp)
+    {
+        if (log)
+            log->Printf("IRExecutionUnit::getSymbolAddress(Name=\"%s\") = <no target>",
+                        Name.c_str());
+        
+        m_parent.ReportSymbolLookupError(name_cs);
+        
+        return 0xbad0bad0;
+    }
+    
+    uint32_t num_matches = 0;
+    lldb::ProcessSP process_sp = exe_scope->CalculateProcess();
+    
+    if (!name_cs.IsEmpty())
+    {
+        target_sp->GetImages().FindSymbolsWithNameAndType(name_cs, lldb::eSymbolTypeAny, sc_list);
+        num_matches = sc_list.GetSize();
+    }
+    
+    if (!num_matches)
+    {
+        target_sp->GetImages().FindSymbolsWithNameAndType(bare_name_cs, lldb::eSymbolTypeAny, sc_list);
+        num_matches = sc_list.GetSize();
+    }
+        
+    lldb::addr_t symbol_load_addr = LLDB_INVALID_ADDRESS;
+    
+    for (uint32_t i=0; i<num_matches && (symbol_load_addr == 0 || symbol_load_addr == LLDB_INVALID_ADDRESS); i++)
+    {
+        SymbolContext sym_ctx;
+        sc_list.GetContextAtIndex(i, sym_ctx);
+        
+        if (sym_ctx.symbol->GetType() == lldb::eSymbolTypeUndefined)
+            continue;
+        
+        const Address *sym_address = &sym_ctx.symbol->GetAddress();
+        
+        if (!sym_address || !sym_address->IsValid())
+            continue;
+
+        symbol_load_addr = sym_ctx.symbol->ResolveCallableAddress(*target_sp);
+        
+        if (symbol_load_addr == LLDB_INVALID_ADDRESS)
+        {
+            symbol_load_addr = sym_ctx.symbol->GetAddress().GetLoadAddress(target_sp.get());
+        }
+    }
+    
+    if (symbol_load_addr == LLDB_INVALID_ADDRESS && process_sp && name_cs)
+    {
+        // Try the Objective-C language runtime.
+        
+        ObjCLanguageRuntime *runtime = process_sp->GetObjCLanguageRuntime();
+        
+        if (runtime)
+            symbol_load_addr = runtime->LookupRuntimeSymbol(name_cs);
+    }
+    
+    if (symbol_load_addr == LLDB_INVALID_ADDRESS)
+    {
+        if (log)
+            log->Printf("IRExecutionUnit::getSymbolAddress(Name=\"%s\") = <not found>",
+                        name);
+        
+        m_parent.ReportSymbolLookupError(bare_name_cs);
+        
+        return 0xbad0bad0;
+    }
+    
+    if (log)
+        log->Printf("IRExecutionUnit::getSymbolAddress(Name=\"%s\") = %" PRIx64,
+                    name,
+                    symbol_load_addr);
+    
+    if (symbol_load_addr == 0)
+        return 0xbad00add;
+    
+    return symbol_load_addr;
+}
+
+void *
+IRExecutionUnit::MemoryManager::getPointerToNamedFunction(const std::string &Name,
+                                                          bool AbortOnFailure) {
+    assert (sizeof(void *) == 8);
+    
+    return (void*)getSymbolAddress(Name);
 }
 
 lldb::addr_t
