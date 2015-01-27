@@ -254,7 +254,8 @@ TEST(CommandLineTest, HideUnrelatedOptionsMulti) {
   cl::opt<int> TestOption2("test-option-2", cl::cat(TestCategory));
   cl::opt<int> TestOption3("test-option-3", cl::cat(TestCategory2));
 
-  cl::OptionCategory *VisibleCategories[] = {&TestCategory, &TestCategory2};
+  const cl::OptionCategory *VisibleCategories[] = {&TestCategory,
+                                                   &TestCategory2};
 
   cl::HideUnrelatedOptions(makeArrayRef(VisibleCategories));
 

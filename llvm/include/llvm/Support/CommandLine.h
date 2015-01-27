@@ -1939,7 +1939,7 @@ void HideUnrelatedOptions(cl::OptionCategory &Category);
 /// Some tools (like clang-format) like to be able to hide all options that are
 /// not specific to the tool. This function allows a tool to specify a single
 /// option category to display in the -help output.
-void HideUnrelatedOptions(ArrayRef<cl::OptionCategory *> Categories);
+void HideUnrelatedOptions(ArrayRef<const cl::OptionCategory *> Categories);
 
 } // End namespace cl
 
