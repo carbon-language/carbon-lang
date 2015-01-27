@@ -78,7 +78,8 @@ define void @add3i16(%i16vec3* nocapture sret %ret, %i16vec3* %ap, %i16vec3* %bp
 ; CHECK-NEXT:    paddd    %[[R0]], %[[R1]]
 ; CHECK-NEXT:    pextrw   $4, %[[R1]], 4(%{{.*}})
 ; CHECK-NEXT:    pshufb   {{.*}}, %[[R1]]
-; CHECK-NEXT:    movd     %[[R1]], (%{{.*}})
+; CHECK-NEXT:    pmovzxdq %[[R1]], %[[R0]]
+; CHECK-NEXT:    movd     %[[R0]], (%{{.*}})
 	%a = load %i16vec3* %ap, align 16
 	%b = load %i16vec3* %bp, align 16
 	%x = add %i16vec3 %a, %b

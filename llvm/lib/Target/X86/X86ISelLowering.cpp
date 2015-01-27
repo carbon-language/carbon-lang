@@ -24761,8 +24761,6 @@ static SDValue PerformLOADCombine(SDNode *N, SelectionDAG &DAG,
   LoadSDNode *Ld = cast<LoadSDNode>(N);
   EVT RegVT = Ld->getValueType(0);
   EVT MemVT = Ld->getMemoryVT();
-  SDValue Ptr   = Ld->getBasePtr();
-  SDValue Chain = Ld->getChain();
   SDLoc dl(Ld);
   const TargetLowering &TLI = DAG.getTargetLoweringInfo();
 
@@ -24799,33 +24797,6 @@ static SDValue PerformLOADCombine(SDNode *N, SelectionDAG &DAG,
     NewVec = Insert128BitVector(NewVec, Load1, 0, DAG, dl);
     NewVec = Insert128BitVector(NewVec, Load2, NumElems/2, DAG, dl);
     return DCI.CombineTo(N, NewVec, TF, true);
-  }
-
-  // Conversion from x86mmx/i64 to v2i64 types is often done via stack
-  // store/load. Under certain conditions we can bypass the memory access and
-  // combine this load to use a scalar_to_vector instead. This leads to
-  // a reduction in the stack use, redundant emission of shuffles and create
-  // isel matching candidates for movq2dq instructions.
-  if (RegVT == MVT::v2i64 && Subtarget->hasSSE2() && Ext == ISD::EXTLOAD &&
-      !Ld->isVolatile() && ISD::isNON_TRUNCStore(Chain.getNode())) {
-
-    // If this load is directly stored, get the original source value.
-    StoreSDNode *PrevST = cast<StoreSDNode>(Chain);
-    EVT SrcTy = PrevST->getValue().getValueType();
-    if (PrevST->getBasePtr() != Ptr ||
-        !(SrcTy == MVT::i64 || SrcTy == MVT::x86mmx))
-      return SDValue();
-    SDValue SrcVal = Chain.getOperand(1);
-
-    // On 32bit systems, we can't store 64bit integers, use f64 instead.
-    bool Usef64 = TLI.isTypeLegal(MVT::f64) && !Subtarget->is64Bit();
-    if (Usef64)
-      SrcVal = DAG.getNode(ISD::BITCAST, dl, MVT::f64, SrcVal);
-    SrcVal = DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, Usef64 ? MVT::v2f64 : RegVT,
-                              SrcVal);
-
-    return DCI.CombineTo(N, Usef64 ?
-        DAG.getNode(ISD::BITCAST, dl, RegVT, SrcVal) : SrcVal, Chain);
   }
 
   return SDValue();

@@ -68,13 +68,12 @@ define i64 @test4(i64 %A) {
   %2 = bitcast <2 x i32> %add to i64
   ret i64 %2
 }
-; FIXME: At the moment we still produce the sequence paddd+pshufd.
+; FIXME: At the moment we still produce the sequence pshufd+paddd+pshufd.
 ; Ideally, we should fold that sequence into a single paddd. This is fixed with
 ; the widening legalization.
 ;
 ; CHECK-LABEL: test4
-; CHECK: movd
-; CHECK-NOT: pshufd
+; CHECK: pshufd
 ; CHECK-NEXT: paddd
 ; CHECK-NEXT: pshufd
 ; CHECK: ret
