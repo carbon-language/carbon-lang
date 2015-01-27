@@ -2535,6 +2535,9 @@ __kmp_stg_parse_gomp_cpu_affinity( char const * name, char const * value, void *
         // Warning already emitted
         //
         __kmp_affinity_type = affinity_none;
+# if OMP_40_ENABLED
+        __kmp_nested_proc_bind.bind_types[0] = proc_bind_false;
+# endif
     }
 } // __kmp_stg_parse_gomp_cpu_affinity
 
