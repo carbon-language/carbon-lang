@@ -39,15 +39,12 @@ int main() {
   return GlobalPtr[10];
 }
 
-// Fast unwind: can not unwind through qsort.
-// FIXME: this test does not properly work with slow unwind yet.
-
+// Fast unwind may not unwind through qsort.
 // CHECK-FAST: ERROR: AddressSanitizer: heap-buffer-overflow
 // CHECK-FAST: is located 0 bytes to the right
 // CHECK-FAST: #0{{.*}}operator new
 // CHECK-FAST-NEXT: #1{{.*}}QsortCallback
-// CHECK-FAST-NOT: MyQsort
-//
+
 // CHECK-SLOW: ERROR: AddressSanitizer: heap-buffer-overflow
 // CHECK-SLOW: is located 0 bytes to the right
 // CHECK-SLOW: #0{{.*}}operator new
