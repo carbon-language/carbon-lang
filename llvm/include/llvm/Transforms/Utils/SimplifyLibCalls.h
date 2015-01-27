@@ -16,6 +16,7 @@
 #define LLVM_TRANSFORMS_UTILS_SIMPLIFYLIBCALLS_H
 
 #include "llvm/ADT/StringRef.h"
+#include "llvm/Analysis/TargetLibraryInfo.h"
 #include "llvm/IR/IRBuilder.h"
 
 namespace llvm {
@@ -53,8 +54,10 @@ private:
   Value *optimizeMemCpyChk(CallInst *CI, IRBuilder<> &B);
   Value *optimizeMemMoveChk(CallInst *CI, IRBuilder<> &B);
   Value *optimizeMemSetChk(CallInst *CI, IRBuilder<> &B);
-  Value *optimizeStrCpyChk(CallInst *CI, IRBuilder<> &B);
-  Value *optimizeStrNCpyChk(CallInst *CI, IRBuilder<> &B);
+
+  // Str/Stp cpy are similar enough to be handled in the same functions.
+  Value *optimizeStrpCpyChk(CallInst *CI, IRBuilder<> &B, LibFunc::Func Func);
+  Value *optimizeStrpNCpyChk(CallInst *CI, IRBuilder<> &B, LibFunc::Func Func);
 
   /// \brief Checks whether the call \p CI to a fortified libcall is foldable
   /// to the non-fortified version.
