@@ -102,7 +102,7 @@ std::error_code ARMTargetRelocationHandler::applyRelocation(
     relocR_ARM_CALL(location, relocVAddress, targetVAddress, addend);
     break;
   default:
-    make_unhandled_reloc_error();
+    return make_unhandled_reloc_error();
   }
 
   return std::error_code();
