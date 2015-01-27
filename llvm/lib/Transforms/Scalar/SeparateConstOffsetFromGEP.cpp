@@ -910,7 +910,7 @@ bool SeparateConstOffsetFromGEP::splitGEP(GetElementPtrInst *GEP) {
   if (LowerGEP) {
     // As currently BasicAA does not analyze ptrtoint/inttoptr, do not lower to
     // arithmetic operations if the target uses alias analysis in codegen.
-    if (TM && TM->getSubtarget<TargetSubtargetInfo>().useAA())
+    if (TM && TM->getSubtargetImpl(*GEP->getParent()->getParent())->useAA())
       lowerToSingleIndexGEPs(GEP, AccumulativeByteOffset);
     else
       lowerToArithmetics(GEP, AccumulativeByteOffset);
