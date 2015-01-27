@@ -282,9 +282,7 @@ bool PostRAScheduler::runOnMachineFunction(MachineFunction &Fn) {
   } else {
     // Check that post-RA scheduling is enabled for this target.
     // This may upgrade the AntiDepMode.
-    const TargetSubtargetInfo &ST =
-        Fn.getTarget().getSubtarget<TargetSubtargetInfo>();
-    if (!enablePostRAScheduler(ST, PassConfig->getOptLevel(),
+    if (!enablePostRAScheduler(Fn.getSubtarget(), PassConfig->getOptLevel(),
                                AntiDepMode, CriticalPathRCs))
       return false;
   }

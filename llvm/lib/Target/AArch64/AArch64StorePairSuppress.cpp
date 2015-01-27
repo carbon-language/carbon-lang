@@ -121,8 +121,7 @@ bool AArch64StorePairSuppress::runOnMachineFunction(MachineFunction &mf) {
       static_cast<const AArch64InstrInfo *>(MF->getSubtarget().getInstrInfo());
   TRI = MF->getSubtarget().getRegisterInfo();
   MRI = &MF->getRegInfo();
-  const TargetSubtargetInfo &ST =
-      MF->getTarget().getSubtarget<TargetSubtargetInfo>();
+  const TargetSubtargetInfo &ST = MF->getSubtarget();
   SchedModel.init(ST.getSchedModel(), &ST, TII);
 
   Traces = &getAnalysis<MachineTraceMetrics>();

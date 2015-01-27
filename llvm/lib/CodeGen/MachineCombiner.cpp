@@ -406,8 +406,7 @@ bool MachineCombiner::combineInstructions(MachineBasicBlock *MBB) {
 }
 
 bool MachineCombiner::runOnMachineFunction(MachineFunction &MF) {
-  const TargetSubtargetInfo &STI =
-      MF.getTarget().getSubtarget<TargetSubtargetInfo>();
+  const TargetSubtargetInfo &STI = MF.getSubtarget();
   TII = STI.getInstrInfo();
   TRI = STI.getRegisterInfo();
   SchedModel = STI.getSchedModel();
