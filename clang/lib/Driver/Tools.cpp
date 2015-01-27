@@ -2306,12 +2306,10 @@ static bool shouldUseFramePointerForTarget(const ArgList &Args,
   case llvm::Triple::systemz:
   case llvm::Triple::x86:
   case llvm::Triple::x86_64:
-    if (Triple.isOSLinux()) {
+    if (Triple.isOSLinux())
       if (Arg *A = Args.getLastArg(options::OPT_O_Group))
         if (!A->getOption().matches(options::OPT_O0))
           return false;
-    } else if (Triple.isPS4CPU())
-      return false;
     return true;
   case llvm::Triple::xcore:
     return false;
@@ -2334,6 +2332,9 @@ static bool shouldUseLeafFramePointer(const ArgList &Args,
   if (Arg *A = Args.getLastArg(options::OPT_mno_omit_leaf_frame_pointer,
                                options::OPT_momit_leaf_frame_pointer))
     return A->getOption().matches(options::OPT_mno_omit_leaf_frame_pointer);
+
+  if (Triple.isPS4CPU())
+    return false;
 
   return shouldUseFramePointerForTarget(Args, Triple);
 }
