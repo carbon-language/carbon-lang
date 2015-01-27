@@ -88,7 +88,7 @@ bool StackProtector::runOnFunction(Function &Fn) {
   DominatorTreeWrapperPass *DTWP =
       getAnalysisIfAvailable<DominatorTreeWrapperPass>();
   DT = DTWP ? &DTWP->getDomTree() : nullptr;
-  TLI = TM->getSubtargetImpl()->getTargetLowering();
+  TLI = TM->getSubtargetImpl(Fn)->getTargetLowering();
 
   Attribute Attr = Fn.getAttributes().getAttribute(
       AttributeSet::FunctionIndex, "stack-protector-buffer-size");

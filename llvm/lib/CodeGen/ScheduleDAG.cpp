@@ -36,8 +36,8 @@ static cl::opt<bool> StressSchedOpt(
 void SchedulingPriorityQueue::anchor() { }
 
 ScheduleDAG::ScheduleDAG(MachineFunction &mf)
-    : TM(mf.getTarget()), TII(TM.getSubtargetImpl()->getInstrInfo()),
-      TRI(TM.getSubtargetImpl()->getRegisterInfo()), MF(mf),
+    : TM(mf.getTarget()), TII(mf.getSubtarget().getInstrInfo()),
+      TRI(mf.getSubtarget().getRegisterInfo()), MF(mf),
       MRI(mf.getRegInfo()), EntrySU(), ExitSU() {
 #ifndef NDEBUG
   StressSched = StressSchedOpt;

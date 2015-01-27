@@ -600,8 +600,7 @@ MachineFrameInfo::getPristineRegs(const MachineBasicBlock *MBB) const {
   assert(MBB && "MBB must be valid");
   const MachineFunction *MF = MBB->getParent();
   assert(MF && "MBB must be part of a MachineFunction");
-  const TargetMachine &TM = MF->getTarget();
-  const TargetRegisterInfo *TRI = TM.getSubtargetImpl()->getRegisterInfo();
+  const TargetRegisterInfo *TRI = MF->getSubtarget().getRegisterInfo();
   BitVector BV(TRI->getNumRegs());
 
   // Before CSI is calculated, no registers are considered pristine. They can be
