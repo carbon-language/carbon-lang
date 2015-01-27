@@ -444,7 +444,7 @@ class Configuration(object):
             else:
                 self.cxx.link_flags += ['-lgcc_s']
         elif sys.platform.startswith('freebsd'):
-            self.cxx.link_flags += ['-lc', '-lm', '-pthread', '-lgcc_s']
+            self.cxx.link_flags += ['-lc', '-lm', '-lpthread', '-lgcc_s']
         else:
             self.lit_config.fatal("unrecognized system: %r" % sys.platform)
 
