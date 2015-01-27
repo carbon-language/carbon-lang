@@ -37,13 +37,13 @@ template <class ELFT> class ELFReference : public Reference {
   typedef llvm::object::Elf_Rel_Impl<ELFT, true> Elf_Rela;
 public:
   ELFReference(const Elf_Rela *rela, uint64_t off, Reference::KindArch arch,
-               uint16_t relocType, uint32_t idx)
+               Reference::KindValue relocType, uint32_t idx)
       : Reference(Reference::KindNamespace::ELF, arch, relocType),
         _target(nullptr), _targetSymbolIndex(idx), _offsetInAtom(off),
         _addend(rela->r_addend) {}
 
   ELFReference(const Elf_Rel *rel, uint64_t off, Reference::KindArch arch,
-               uint16_t relocType, uint32_t idx)
+               Reference::KindValue relocType, uint32_t idx)
       : Reference(Reference::KindNamespace::ELF, arch, relocType),
         _target(nullptr), _targetSymbolIndex(idx), _offsetInAtom(off),
         _addend(0) {}
@@ -661,40 +661,40 @@ class SimpleELFDefinedAtom : public SimpleDefinedAtom {
 public:
   SimpleELFDefinedAtom(const File &f) : SimpleDefinedAtom(f) {}
 
-  void addReferenceELF(Reference::KindArch arch, uint16_t kindValue,
+  void addReferenceELF(Reference::KindArch arch, Reference::KindValue kindValue,
                        uint64_t off, const Atom *target,
                        Reference::Addend addend) {
     this->addReference(Reference::KindNamespace::ELF, arch, kindValue, off,
                        target, addend);
   }
 
-  void addReferenceELF_Hexagon(uint16_t relocType, uint64_t off, const Atom *t,
-                               Reference::Addend a) {
+  void addReferenceELF_Hexagon(Reference::KindValue relocType, uint64_t off,
+                               const Atom *t, Reference::Addend a) {
     this->addReferenceELF(Reference::KindArch::Hexagon, relocType, off, t, a);
   }
 
-  void addReferenceELF_x86_64(uint16_t relocType, uint64_t off, const Atom *t,
-                              Reference::Addend a) {
+  void addReferenceELF_x86_64(Reference::KindValue relocType, uint64_t off,
+                              const Atom *t, Reference::Addend a) {
     this->addReferenceELF(Reference::KindArch::x86_64, relocType, off, t, a);
   }
 
-  void addReferenceELF_PowerPC(uint16_t relocType, uint64_t off, const Atom *t,
-                               Reference::Addend a) {
+  void addReferenceELF_PowerPC(Reference::KindValue relocType, uint64_t off,
+                               const Atom *t, Reference::Addend a) {
     this->addReferenceELF(Reference::KindArch::PowerPC, relocType, off, t, a);
   }
 
-  void addReferenceELF_Mips(uint16_t relocType, uint64_t off, const Atom *t,
-                            Reference::Addend a) {
+  void addReferenceELF_Mips(Reference::KindValue relocType, uint64_t off,
+                            const Atom *t, Reference::Addend a) {
     this->addReferenceELF(Reference::KindArch::Mips, relocType, off, t, a);
   }
 
-  void addReferenceELF_AArch64(uint16_t relocType, uint64_t off, const Atom *t,
-                               Reference::Addend a) {
+  void addReferenceELF_AArch64(Reference::KindValue relocType, uint64_t off,
+                               const Atom *t, Reference::Addend a) {
     this->addReferenceELF(Reference::KindArch::AArch64, relocType, off, t, a);
   }
 
-  void addReferenceELF_ARM(uint16_t relocType, uint64_t off, const Atom *t,
-                               Reference::Addend a) {
+  void addReferenceELF_ARM(Reference::KindValue relocType, uint64_t off,
+                           const Atom *t, Reference::Addend a) {
     this->addReferenceELF(Reference::KindArch::ARM, relocType, off, t, a);
   }
 };

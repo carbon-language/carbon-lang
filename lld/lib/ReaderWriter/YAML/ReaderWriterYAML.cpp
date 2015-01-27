@@ -276,7 +276,7 @@ LLVM_YAML_STRONG_TYPEDEF(bool, ShlibCanBeNull)
 struct RefKind {
   Reference::KindNamespace  ns;
   Reference::KindArch       arch;
-  uint16_t                  value;
+  Reference::KindValue      value;
 };
 
 } // namespace anon
