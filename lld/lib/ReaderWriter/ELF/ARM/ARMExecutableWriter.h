@@ -12,6 +12,7 @@
 #include "ExecutableWriter.h"
 #include "ARMLinkingContext.h"
 #include "ARMTargetHandler.h"
+#include "ARMSymbolTable.h"
 
 namespace lld {
 namespace elf {
@@ -35,6 +36,9 @@ protected:
     ExecutableWriter<ELFT>::addDefaultAtoms();
   }
 
+  /// \brief Create symbol table.
+  LLD_UNIQUE_BUMP_PTR(SymbolTable<ELFT>) createSymbolTable() override;
+
 private:
   ARMLinkingContext &_context;
   ARMTargetLayout<ELFT> &_armLayout;
@@ -51,6 +55,13 @@ bool ARMExecutableWriter<ELFT>::createImplicitFiles(
     std::vector<std::unique_ptr<File>> &result) {
   ExecutableWriter<ELFT>::createImplicitFiles(result);
   return true;
+}
+
+template <class ELFT>
+LLD_UNIQUE_BUMP_PTR(SymbolTable<ELFT>)
+    ARMExecutableWriter<ELFT>::createSymbolTable() {
+  return LLD_UNIQUE_BUMP_PTR(SymbolTable<ELFT>)(
+      new (this->_alloc) ARMSymbolTable<ELFT>(this->_context));
 }
 
 } // namespace elf

@@ -394,6 +394,7 @@ template <> struct ScalarEnumerationTraits<lld::DefinedAtom::CodeModel> {
     io.enumCase(value, "mips-micro", lld::DefinedAtom::codeMipsMicro);
     io.enumCase(value, "mips-micro-pic", lld::DefinedAtom::codeMipsMicroPIC);
     io.enumCase(value, "mips-16", lld::DefinedAtom::codeMips16);
+    io.enumCase(value, "arm-thumb", lld::DefinedAtom::codeARMThumb);
   }
 };
 

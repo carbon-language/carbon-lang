@@ -201,6 +201,7 @@ public:
     codeMipsMicro,    // microMIPS instruction encoding
     codeMipsMicroPIC, // microMIPS instruction encoding + PIC
     codeMips16,       // MIPS-16 instruction encoding
+    codeARMThumb,     // ARM Thumb instruction set
   };
 
   struct Alignment {

@@ -279,6 +279,12 @@ protected:
            symbol->st_shndx == llvm::ELF::SHN_COMMON;
   }
 
+  /// Returns correct st_value for the symbol depending on the architecture.
+  /// For most architectures it's just a regular st_value with no changes.
+  virtual uint64_t getSymbolValue(const Elf_Sym *symbol) const {
+    return symbol->st_value;
+  }
+
   /// Process the common symbol and create an atom for it.
   virtual ErrorOr<ELFCommonAtom<ELFT> *>
   handleCommonSymbol(StringRef symName, const Elf_Sym *sym) {
@@ -573,7 +579,7 @@ std::error_code ELFFile<ELFT>::createSymbolsFromAtomizableSections() {
 
     if (isAbsoluteSymbol(&*SymI)) {
       ErrorOr<ELFAbsoluteAtom<ELFT> *> absAtom =
-          handleAbsoluteSymbol(*symbolName, &*SymI, SymI->st_value);
+          handleAbsoluteSymbol(*symbolName, &*SymI, (int64_t)getSymbolValue(&*SymI));
       _absoluteAtoms._atoms.push_back(*absAtom);
       _symbolToAtomMapping.insert(std::make_pair(&*SymI, *absAtom));
     } else if (isUndefinedSymbol(&*SymI)) {
@@ -605,8 +611,8 @@ template <class ELFT> std::error_code ELFFile<ELFT>::createAtoms() {
 
     // Sort symbols by position.
     std::stable_sort(symbols.begin(), symbols.end(),
-                     [](Elf_Sym_Iter a, Elf_Sym_Iter b) {
-                       return a->st_value < b->st_value;
+                     [this](Elf_Sym_Iter a, Elf_Sym_Iter b) {
+                       return getSymbolValue(&*a) < getSymbolValue(&*b);
                      });
 
     ErrorOr<StringRef> sectionName = this->getSectionName(section);
@@ -658,7 +664,7 @@ template <class ELFT> std::error_code ELFFile<ELFT>::createAtoms() {
       }
 
       ArrayRef<uint8_t> symbolData((const uint8_t *)sectionContents->data() +
-                                       symbol->st_value,
+                                       getSymbolValue(&*symbol),
                                    contentSize);
 
       // If the linker finds that a section has global atoms that are in a
@@ -766,12 +772,13 @@ void ELFFile<ELFT>::createRelocationReferences(const Elf_Sym &symbol,
                                                ArrayRef<uint8_t> content,
                                                range<Elf_Rela_Iter> rels) {
   bool isMips64EL = _objFile->isMips64EL();
+  const auto symValue = getSymbolValue(&symbol);
   for (const auto &rel : rels) {
-    if (rel.r_offset < symbol.st_value ||
-        symbol.st_value + content.size() <= rel.r_offset)
+    if (rel.r_offset < symValue ||
+        symValue + content.size() <= rel.r_offset)
       continue;
     _references.push_back(new (_readerStorage) ELFReference<ELFT>(
-        &rel, rel.r_offset - symbol.st_value, kindArch(),
+        &rel, rel.r_offset - symValue, kindArch(),
         rel.getType(isMips64EL), rel.getSymbol(isMips64EL)));
   }
 }
@@ -782,14 +789,15 @@ void ELFFile<ELFT>::createRelocationReferences(const Elf_Sym &symbol,
                                                ArrayRef<uint8_t> secContent,
                                                range<Elf_Rel_Iter> rels) {
   bool isMips64EL = _objFile->isMips64EL();
+  const auto symValue = getSymbolValue(&symbol);
   for (const auto &rel : rels) {
-    if (rel.r_offset < symbol.st_value ||
-        symbol.st_value + symContent.size() <= rel.r_offset)
+    if (rel.r_offset < symValue ||
+        symValue + symContent.size() <= rel.r_offset)
       continue;
     _references.push_back(new (_readerStorage) ELFReference<ELFT>(
-        &rel, rel.r_offset - symbol.st_value, kindArch(),
+        &rel, rel.r_offset - symValue, kindArch(),
         rel.getType(isMips64EL), rel.getSymbol(isMips64EL)));
-    int32_t addend = *(symContent.data() + rel.r_offset - symbol.st_value);
+    int32_t addend = *(symContent.data() + rel.r_offset - symValue);
     _references.back()->setAddend(addend);
   }
 }
@@ -816,7 +824,7 @@ void ELFFile<ELFT>::updateReferenceForMergeStringAccess(ELFReference<ELFT> *ref,
   // _symbolToAtomMapping, so we cannot find it by calling findAtom(). We
   // instead call findMergeAtom().
   if (symbol->getType() != llvm::ELF::STT_SECTION)
-    addend = symbol->st_value + addend;
+    addend = getSymbolValue(symbol) + addend;
   ELFMergeAtom<ELFT> *mergedAtom = findMergeAtom(shdr, addend);
   ref->setOffset(addend - mergedAtom->offset());
   ref->setAddend(0);
@@ -890,9 +898,10 @@ template <class ELFT>
 uint64_t ELFFile<ELFT>::symbolContentSize(const Elf_Shdr *section,
                                           const Elf_Sym *symbol,
                                           const Elf_Sym *nextSymbol) {
+  const auto symValue = getSymbolValue(symbol);
   // if this is the last symbol, take up the remaining data.
-  return nextSymbol ? nextSymbol->st_value - symbol->st_value
-                    : section->sh_size - symbol->st_value;
+  return nextSymbol ? getSymbolValue(nextSymbol) - symValue
+                    : section->sh_size - symValue;
 }
 
 template <class ELFT>

@@ -281,17 +281,20 @@ public:
   }
 
   Alignment alignment() const override {
+    // Obtain proper value of st_value field.
+    const auto symValue = getSymbolValue(_symbol);
+
     // Unallocated common symbols specify their alignment constraints in
     // st_value.
     if ((_symbol->getType() == llvm::ELF::STT_COMMON) ||
         _symbol->st_shndx == llvm::ELF::SHN_COMMON) {
-      return Alignment(llvm::Log2_64(_symbol->st_value));
+      return Alignment(llvm::Log2_64(symValue));
     } else if (_section->sh_addralign == 0) {
       // sh_addralign of 0 means no alignment
-      return Alignment(0, _symbol->st_value);
+      return Alignment(0, symValue);
     }
     return Alignment(llvm::Log2_64(_section->sh_addralign),
-                     _symbol->st_value % _section->sh_addralign);
+                     symValue % _section->sh_addralign);
   }
 
   // Do we have a choice for ELF?  All symbols live in explicit sections.
@@ -414,6 +417,13 @@ public:
   }
 
   virtual void setOrdinal(uint64_t ord) { _ordinal = ord; }
+
+protected:
+  /// Returns correct st_value for the symbol depending on the architecture.
+  /// For most architectures it's just a regular st_value with no changes.
+  virtual uint64_t getSymbolValue(const Elf_Sym *symbol) const {
+    return symbol->st_value;
+  }
 
 protected:
   const ELFFile<ELFT> &_owningFile;
