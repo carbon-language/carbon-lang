@@ -229,20 +229,17 @@ static bool shouldSpeculateInstrs(BasicBlock::iterator Begin,
     case Instruction::Shl:
     case Instruction::LShr:
     case Instruction::AShr: {
-      Value *IVOpnd = nullptr;
-      if (isa<ConstantInt>(I->getOperand(0)))
-        IVOpnd = I->getOperand(1);
-
-      if (isa<ConstantInt>(I->getOperand(1))) {
-        if (IVOpnd)
-          return false;
-
-        IVOpnd = I->getOperand(0);
-      }
+      Value *IVOpnd = !isa<Constant>(I->getOperand(0))
+                          ? I->getOperand(0)
+                          : !isa<Constant>(I->getOperand(1))
+                                ? I->getOperand(1)
+                                : nullptr;
+      if (!IVOpnd)
+        return false;
 
       // If increment operand is used outside of the loop, this speculation
       // could cause extra live range interference.
-      if (MultiExitLoop && IVOpnd) {
+      if (MultiExitLoop) {
         for (User *UseI : IVOpnd->users()) {
           auto *UserInst = cast<Instruction>(UseI);
           if (!L->contains(UserInst))
