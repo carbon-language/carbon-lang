@@ -1444,6 +1444,10 @@ static const char *getX86TargetCPU(const ArgList &Args,
     return Is64Bit ? "core2" : "yonah";
   }
 
+  // Set up default CPU name for PS4 compilers.
+  if (Triple.isPS4CPU())
+    return "btver2";
+
   // On Android use targets compatible with gcc
   if (Triple.getEnvironment() == llvm::Triple::Android)
     return Is64Bit ? "x86-64" : "i686";
@@ -1970,7 +1974,8 @@ static void addExceptionArgs(const ArgList &Args, types::ID InputType,
   }
 
   if (types::isCXX(InputType)) {
-    bool CXXExceptionsEnabled = Triple.getArch() != llvm::Triple::xcore;
+    bool CXXExceptionsEnabled =
+        Triple.getArch() != llvm::Triple::xcore && !Triple.isPS4CPU();
     if (Arg *A = Args.getLastArg(options::OPT_fcxx_exceptions,
                                  options::OPT_fno_cxx_exceptions,
                                  options::OPT_fexceptions,
@@ -2301,10 +2306,12 @@ static bool shouldUseFramePointerForTarget(const ArgList &Args,
   case llvm::Triple::systemz:
   case llvm::Triple::x86:
   case llvm::Triple::x86_64:
-    if (Triple.isOSLinux())
+    if (Triple.isOSLinux()) {
       if (Arg *A = Args.getLastArg(options::OPT_O_Group))
         if (!A->getOption().matches(options::OPT_O0))
           return false;
+    } else if (Triple.isPS4CPU())
+      return false;
     return true;
   case llvm::Triple::xcore:
     return false;
