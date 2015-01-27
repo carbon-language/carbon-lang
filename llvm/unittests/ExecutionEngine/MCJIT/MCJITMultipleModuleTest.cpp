@@ -392,4 +392,23 @@ TEST_F(MCJITMultipleModuleTest, cross_module_dependency_case3) {
   ptr = TheJIT->getFunctionAddress(FB2->getName().str());
   checkAccumulate(ptr);
 }
+
+// Test that FindFunctionNamed finds the definition of
+// a function in the correct module. We check two functions
+// in two different modules, to make sure that for at least
+// one of them MCJIT had to ignore the extern declaration.
+TEST_F(MCJITMultipleModuleTest, FindFunctionNamed_test) {
+  SKIP_UNSUPPORTED_PLATFORM;
+
+  std::unique_ptr<Module> A, B;
+  Function *FA, *FB1, *FB2;
+  createCrossModuleRecursiveCase(A, FA, B, FB1, FB2);
+
+  createJIT(std::move(A));
+  TheJIT->addModule(std::move(B));
+
+  EXPECT_EQ(FA, TheJIT->FindFunctionNamed(FA->getName().data()));
+  EXPECT_EQ(FB1, TheJIT->FindFunctionNamed(FB1->getName().data()));
+}
+
 }

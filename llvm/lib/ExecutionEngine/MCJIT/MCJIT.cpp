@@ -408,7 +408,8 @@ Function *MCJIT::FindFunctionNamedInModulePtrSet(const char *FnName,
                                                  ModulePtrSet::iterator I,
                                                  ModulePtrSet::iterator E) {
   for (; I != E; ++I) {
-    if (Function *F = (*I)->getFunction(FnName))
+    Function *F = (*I)->getFunction(FnName);
+    if (F && !F->isDeclaration())
       return F;
   }
   return nullptr;

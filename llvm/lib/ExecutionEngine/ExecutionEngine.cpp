@@ -142,7 +142,8 @@ bool ExecutionEngine::removeModule(Module *M) {
 
 Function *ExecutionEngine::FindFunctionNamed(const char *FnName) {
   for (unsigned i = 0, e = Modules.size(); i != e; ++i) {
-    if (Function *F = Modules[i]->getFunction(FnName))
+    Function *F = Modules[i]->getFunction(FnName);
+    if (F && !F->isDeclaration())
       return F;
   }
   return nullptr;
