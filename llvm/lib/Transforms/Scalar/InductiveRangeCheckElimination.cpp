@@ -43,6 +43,7 @@
 
 #include "llvm/ADT/Optional.h"
 
+#include "llvm/Analysis/BranchProbabilityInfo.h"
 #include "llvm/Analysis/InstructionSimplify.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/LoopPass.h"
@@ -169,7 +170,8 @@ public:
   /// Create an inductive range check out of BI if possible, else return
   /// nullptr.
   static InductiveRangeCheck *create(AllocatorTy &Alloc, BranchInst *BI,
-                                     Loop *L, ScalarEvolution &SE);
+                                     Loop *L, ScalarEvolution &SE,
+                                     BranchProbabilityInfo &BPI);
 };
 
 class InductiveRangeCheckElimination : public LoopPass {
@@ -187,6 +189,7 @@ public:
     AU.addRequiredID(LoopSimplifyID);
     AU.addRequiredID(LCSSAID);
     AU.addRequired<ScalarEvolution>();
+    AU.addRequired<BranchProbabilityInfo>();
   }
 
   bool runOnLoop(Loop *L, LPPassManager &LPM) override;
@@ -354,11 +357,18 @@ static bool SplitRangeCheckCondition(Loop *L, ScalarEvolution &SE,
   return true;
 }
 
+
 InductiveRangeCheck *
 InductiveRangeCheck::create(InductiveRangeCheck::AllocatorTy &A, BranchInst *BI,
-                            Loop *L, ScalarEvolution &SE) {
+                            Loop *L, ScalarEvolution &SE,
+                            BranchProbabilityInfo &BPI) {
 
   if (BI->isUnconditional() || BI->getParent() == L->getLoopLatch())
+    return nullptr;
+
+  BranchProbability LikelyTaken(15, 16);
+
+  if (BPI.getEdgeProbability(BI->getParent(), (unsigned) 0) < LikelyTaken)
     return nullptr;
 
   Value *Length = nullptr;
@@ -1175,11 +1185,12 @@ bool InductiveRangeCheckElimination::runOnLoop(Loop *L, LPPassManager &LPM) {
   InductiveRangeCheck::AllocatorTy IRCAlloc;
   SmallVector<InductiveRangeCheck *, 16> RangeChecks;
   ScalarEvolution &SE = getAnalysis<ScalarEvolution>();
+  BranchProbabilityInfo &BPI = getAnalysis<BranchProbabilityInfo>();
 
   for (auto BBI : L->getBlocks())
     if (BranchInst *TBI = dyn_cast<BranchInst>(BBI->getTerminator()))
       if (InductiveRangeCheck *IRC =
-              InductiveRangeCheck::create(IRCAlloc, TBI, L, SE))
+          InductiveRangeCheck::create(IRCAlloc, TBI, L, SE, BPI))
         RangeChecks.push_back(IRC);
 
   if (RangeChecks.empty())

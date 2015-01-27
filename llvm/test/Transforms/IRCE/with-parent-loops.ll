@@ -16,7 +16,7 @@ loop:                                             ; preds = %in.bounds, %entry
   %idx = phi i32 [ 0, %entry ], [ %idx.next, %in.bounds ]
   %idx.next = add i32 %idx, 1
   %abc = icmp slt i32 %idx, %len
-  br i1 %abc, label %in.bounds, label %out.of.bounds
+  br i1 %abc, label %in.bounds, label %out.of.bounds, !prof !1
 
 in.bounds:                                        ; preds = %loop
   %addr = getelementptr i32* %arr, i32 %idx
@@ -50,7 +50,7 @@ loop.i:                                           ; preds = %in.bounds.i, %loop
   %idx.i = phi i32 [ 0, %loop ], [ %idx.next.i, %in.bounds.i ]
   %idx.next.i = add i32 %idx.i, 1
   %abc.i = icmp slt i32 %idx.i, %len.i
-  br i1 %abc.i, label %in.bounds.i, label %out.of.bounds.i
+  br i1 %abc.i, label %in.bounds.i, label %out.of.bounds.i, !prof !1
 
 in.bounds.i:                                      ; preds = %loop.i
   %addr.i = getelementptr i32* %arr, i32 %idx.i
@@ -96,7 +96,7 @@ loop.i.i:                                         ; preds = %in.bounds.i.i, %loo
   %idx.i.i = phi i32 [ 0, %loop.i ], [ %idx.next.i.i, %in.bounds.i.i ]
   %idx.next.i.i = add i32 %idx.i.i, 1
   %abc.i.i = icmp slt i32 %idx.i.i, %len.i.i
-  br i1 %abc.i.i, label %in.bounds.i.i, label %out.of.bounds.i.i
+  br i1 %abc.i.i, label %in.bounds.i.i, label %out.of.bounds.i.i, !prof !1
 
 in.bounds.i.i:                                    ; preds = %loop.i.i
   %addr.i.i = getelementptr i32* %arr, i32 %idx.i.i
@@ -140,7 +140,7 @@ loop.i:                                           ; preds = %in.bounds.i, %loop
   %idx.i = phi i32 [ 0, %loop ], [ %idx.next.i, %in.bounds.i ]
   %idx.next.i = add i32 %idx.i, 1
   %abc.i = icmp slt i32 %idx.i, %len.i
-  br i1 %abc.i, label %in.bounds.i, label %out.of.bounds.i
+  br i1 %abc.i, label %in.bounds.i, label %out.of.bounds.i, !prof !1
 
 in.bounds.i:                                      ; preds = %loop.i
   %addr.i = getelementptr i32* %arr, i32 %idx.i
@@ -163,7 +163,7 @@ loop.i6:                                          ; preds = %in.bounds.i9, %inne
   %idx.i3 = phi i32 [ 0, %inner_loop.exit ], [ %idx.next.i4, %in.bounds.i9 ]
   %idx.next.i4 = add i32 %idx.i3, 1
   %abc.i5 = icmp slt i32 %idx.i3, %len.i1
-  br i1 %abc.i5, label %in.bounds.i9, label %out.of.bounds.i10
+  br i1 %abc.i5, label %in.bounds.i9, label %out.of.bounds.i10, !prof !1
 
 in.bounds.i9:                                     ; preds = %loop.i6
   %addr.i7 = getelementptr i32* %arr, i32 %idx.i3
@@ -210,7 +210,7 @@ loop.i.i:                                         ; preds = %in.bounds.i.i, %loo
   %idx.i.i = phi i32 [ 0, %loop.i ], [ %idx.next.i.i, %in.bounds.i.i ]
   %idx.next.i.i = add i32 %idx.i.i, 1
   %abc.i.i = icmp slt i32 %idx.i.i, %len.i.i
-  br i1 %abc.i.i, label %in.bounds.i.i, label %out.of.bounds.i.i
+  br i1 %abc.i.i, label %in.bounds.i.i, label %out.of.bounds.i.i, !prof !1
 
 in.bounds.i.i:                                    ; preds = %loop.i.i
   %addr.i.i = getelementptr i32* %arr, i32 %idx.i.i
@@ -242,7 +242,7 @@ loop.i.i10:                                       ; preds = %in.bounds.i.i13, %l
   %idx.i.i7 = phi i32 [ 0, %loop.i6 ], [ %idx.next.i.i8, %in.bounds.i.i13 ]
   %idx.next.i.i8 = add i32 %idx.i.i7, 1
   %abc.i.i9 = icmp slt i32 %idx.i.i7, %len.i.i4
-  br i1 %abc.i.i9, label %in.bounds.i.i13, label %out.of.bounds.i.i14
+  br i1 %abc.i.i9, label %in.bounds.i.i13, label %out.of.bounds.i.i14, !prof !1
 
 in.bounds.i.i13:                                  ; preds = %loop.i.i10
   %addr.i.i11 = getelementptr i32* %arr, i32 %idx.i.i7
@@ -286,7 +286,7 @@ loop.i:                                           ; preds = %in.bounds.i, %loop
   %idx.i = phi i32 [ 0, %loop ], [ %idx.next.i, %in.bounds.i ]
   %idx.next.i = add i32 %idx.i, 1
   %abc.i = icmp slt i32 %idx.i, %len.i
-  br i1 %abc.i, label %in.bounds.i, label %out.of.bounds.i
+  br i1 %abc.i, label %in.bounds.i, label %out.of.bounds.i, !prof !1
 
 in.bounds.i:                                      ; preds = %loop.i
   %addr.i = getelementptr i32* %arr, i32 %idx.i
@@ -315,7 +315,7 @@ loop.i.i:                                         ; preds = %in.bounds.i.i, %loo
   %idx.i.i = phi i32 [ 0, %loop.i4 ], [ %idx.next.i.i, %in.bounds.i.i ]
   %idx.next.i.i = add i32 %idx.i.i, 1
   %abc.i.i = icmp slt i32 %idx.i.i, %len.i.i
-  br i1 %abc.i.i, label %in.bounds.i.i, label %out.of.bounds.i.i
+  br i1 %abc.i.i, label %in.bounds.i.i, label %out.of.bounds.i.i, !prof !1
 
 in.bounds.i.i:                                    ; preds = %loop.i.i
   %addr.i.i = getelementptr i32* %arr, i32 %idx.i.i
@@ -342,3 +342,4 @@ exit:                                             ; preds = %with_parent.exit
 attributes #0 = { alwaysinline }
 
 !0 = !{i32 0, i32 2147483647}
+!1 = !{!"branch_weights", i32 64, i32 4}

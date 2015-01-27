@@ -13,7 +13,7 @@ define void @single_access_with_preloop(i32 *%arr, i32 *%a_len_ptr, i32 %n, i32 
   %abc.high = icmp slt i32 %array.idx, %len
   %abc.low = icmp sge i32 %array.idx, 0
   %abc = and i1 %abc.low, %abc.high
-  br i1 %abc, label %in.bounds, label %out.of.bounds
+  br i1 %abc, label %in.bounds, label %out.of.bounds, !prof !1
 
  in.bounds:
   %addr = getelementptr i32* %arr, i32 %array.idx
@@ -57,3 +57,4 @@ define void @single_access_with_preloop(i32 *%arr, i32 *%a_len_ptr, i32 %n, i32 
 ; CHECK: br i1 %next.postloop, label %loop.postloop, label %exit.loopexit
 
 !0 = !{i32 0, i32 2147483647}
+!1 = !{!"branch_weights", i32 64, i32 4}
