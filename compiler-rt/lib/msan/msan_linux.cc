@@ -64,41 +64,45 @@ static bool ProtectMemoryRange(uptr beg, uptr size) {
   return true;
 }
 
+static void CheckMemoryLayoutSanity() {
+  uptr prev_end = 0;
+  for (unsigned i = 0; i < kMemoryLayoutSize; ++i) {
+    uptr start = kMemoryLayout[i].start;
+    uptr end = kMemoryLayout[i].end;
+    MappingDesc::Type type = kMemoryLayout[i].type;
+    CHECK_LT(start, end);
+    CHECK_EQ(prev_end, start);
+    CHECK(addr_is_type(start, type));
+    CHECK(addr_is_type((start + end) / 2, type));
+    CHECK(addr_is_type(end - 1, type));
+    if (type == MappingDesc::APP) {
+      uptr addr = start;
+      CHECK(MEM_IS_SHADOW(MEM_TO_SHADOW(addr)));
+      CHECK(MEM_IS_ORIGIN(MEM_TO_ORIGIN(addr)));
+      CHECK_EQ(MEM_TO_ORIGIN(addr), SHADOW_TO_ORIGIN(MEM_TO_SHADOW(addr)));
+
+      addr = (start + end) / 2;
+      CHECK(MEM_IS_SHADOW(MEM_TO_SHADOW(addr)));
+      CHECK(MEM_IS_ORIGIN(MEM_TO_ORIGIN(addr)));
+      CHECK_EQ(MEM_TO_ORIGIN(addr), SHADOW_TO_ORIGIN(MEM_TO_SHADOW(addr)));
+
+      addr = end - 1;
+      CHECK(MEM_IS_SHADOW(MEM_TO_SHADOW(addr)));
+      CHECK(MEM_IS_ORIGIN(MEM_TO_ORIGIN(addr)));
+      CHECK_EQ(MEM_TO_ORIGIN(addr), SHADOW_TO_ORIGIN(MEM_TO_SHADOW(addr)));
+    }
+    prev_end = end;
+  }
+}
+
 bool InitShadow(bool map_shadow, bool init_origins) {
   // Let user know mapping parameters first.
   VPrintf(1, "__msan_init %p\n", &__msan_init);
-  ReportMapRange("Low Memory ", kLowMemBeg, kLowMemSize);
-  ReportMapRange("Bad1       ", kBad1Beg, kBad1Size);
-  ReportMapRange("Shadow     ", kShadowBeg, kShadowSize);
-  ReportMapRange("Bad2       ", kBad2Beg, kBad2Size);
-  ReportMapRange("Origins    ", kOriginsBeg, kOriginsSize);
-  ReportMapRange("Bad3       ", kBad3Beg, kBad3Size);
-  ReportMapRange("High Memory", kHighMemBeg, kHighMemSize);
+  for (unsigned i = 0; i < kMemoryLayoutSize; ++i)
+    VPrintf(1, "%s: %zx - %zx\n", kMemoryLayout[i].name, kMemoryLayout[i].start,
+            kMemoryLayout[i].end - 1);
 
-  // Check mapping sanity (the invariant).
-  CHECK_EQ(kLowMemBeg, 0);
-  CHECK_EQ(kBad1Beg, kLowMemBeg + kLowMemSize);
-  CHECK_EQ(kShadowBeg, kBad1Beg + kBad1Size);
-  CHECK_GT(kShadowSize, 0);
-  CHECK_GE(kShadowSize, kLowMemSize + kHighMemSize);
-  CHECK_EQ(kBad2Beg, kShadowBeg + kShadowSize);
-  CHECK_EQ(kOriginsBeg, kBad2Beg + kBad2Size);
-  CHECK_EQ(kOriginsSize, kShadowSize);
-  CHECK_EQ(kBad3Beg, kOriginsBeg + kOriginsSize);
-  CHECK_EQ(kHighMemBeg, kBad3Beg + kBad3Size);
-  CHECK_GT(kHighMemSize, 0);
-  CHECK_GE(kHighMemBeg + kHighMemSize, kHighMemBeg);  // Tests for no overflow.
-
-  if (kLowMemSize > 0) {
-    CHECK(MEM_IS_SHADOW(MEM_TO_SHADOW(kLowMemBeg)));
-    CHECK(MEM_IS_SHADOW(MEM_TO_SHADOW(kLowMemBeg + kLowMemSize - 1)));
-    CHECK(MEM_IS_ORIGIN(MEM_TO_ORIGIN(kLowMemBeg)));
-    CHECK(MEM_IS_ORIGIN(MEM_TO_ORIGIN(kLowMemBeg + kLowMemSize - 1)));
-  }
-  CHECK(MEM_IS_SHADOW(MEM_TO_SHADOW(kHighMemBeg)));
-  CHECK(MEM_IS_SHADOW(MEM_TO_SHADOW(kHighMemBeg + kHighMemSize - 1)));
-  CHECK(MEM_IS_ORIGIN(MEM_TO_ORIGIN(kHighMemBeg)));
-  CHECK(MEM_IS_ORIGIN(MEM_TO_ORIGIN(kHighMemBeg + kHighMemSize - 1)));
+  CheckMemoryLayoutSanity();
 
   if (!MEM_IS_APP(&__msan_init)) {
     Printf("FATAL: Code %p is out of application range. Non-PIE build?\n",
@@ -106,29 +110,21 @@ bool InitShadow(bool map_shadow, bool init_origins) {
     return false;
   }
 
-  if (!CheckMemoryRangeAvailability(kShadowBeg, kShadowSize) ||
-      (init_origins &&
-        !CheckMemoryRangeAvailability(kOriginsBeg, kOriginsSize)) ||
-      !CheckMemoryRangeAvailability(kBad1Beg, kBad1Size) ||
-      !CheckMemoryRangeAvailability(kBad2Beg, kBad2Size) ||
-      !CheckMemoryRangeAvailability(kBad3Beg, kBad3Size)) {
-    return false;
+  for (unsigned i = 0; i < kMemoryLayoutSize; ++i) {
+    uptr start = kMemoryLayout[i].start;
+    uptr end = kMemoryLayout[i].end;
+    uptr size= end - start;
+    MappingDesc::Type type = kMemoryLayout[i].type;
+    if ((map_shadow && type == MappingDesc::SHADOW) ||
+        (init_origins && type == MappingDesc::ORIGIN)) {
+      if (!CheckMemoryRangeAvailability(start, size)) return false;
+      if ((uptr)MmapFixedNoReserve(start, size) != start) return false;
+    } else if (type == MappingDesc::INVALID) {
+      if (!CheckMemoryRangeAvailability(start, size)) return false;
+      if (!ProtectMemoryRange(start, size)) return false;
+    }
   }
 
-  if (!ProtectMemoryRange(kBad1Beg, kBad1Size) ||
-      !ProtectMemoryRange(kBad2Beg, kBad2Size) ||
-      !ProtectMemoryRange(kBad3Beg, kBad3Size)) {
-    return false;
-  }
-
-  if (map_shadow) {
-    void *shadow = MmapFixedNoReserve(kShadowBeg, kShadowSize);
-    if (shadow != (void*)kShadowBeg) return false;
-  }
-  if (init_origins) {
-    void *origins = MmapFixedNoReserve(kOriginsBeg, kOriginsSize);
-    if (origins != (void*)kOriginsBeg) return false;
-  }
   return true;
 }
 

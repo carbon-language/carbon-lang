@@ -25,90 +25,90 @@
 # define MSAN_REPLACE_OPERATORS_NEW_AND_DELETE 1
 #endif
 
-/*
-C/C++ on FreeBSD
-0000 0000 0000 - 00ff ffff ffff: Low memory: main binary, MAP_32BIT mappings and modules
-0100 0000 0000 - 0fff ffff ffff: Bad1
-1000 0000 0000 - 30ff ffff ffff: Shadow
-3100 0000 0000 - 37ff ffff ffff: Bad2
-3800 0000 0000 - 58ff ffff ffff: Origins
-5900 0000 0000 - 5fff ffff ffff: Bad3
-6000 0000 0000 - 7fff ffff ffff: High memory: heap, modules and main thread stack
+struct MappingDesc {
+  uptr start;
+  uptr end;
+  enum Type {
+    INVALID, APP, SHADOW, ORIGIN
+  } type;
+  const char *name;
+};
 
-C/C++ on Linux/PIE
-0000 0000 0000 - 1fff ffff ffff: Bad1
-2000 0000 0000 - 3fff ffff ffff: Shadow
-4000 0000 0000 - 5fff ffff ffff: Origins
-6000 0000 0000 - 7fff ffff ffff: Main memory
-
-C/C++ on Mips
-0000 0000 0000 - 009f ffff ffff: Bad1
-00a0 0000 0000 - 00bf ffff ffff: Shadow
-00c0 0000 0000 - 00df ffff ffff: Origins
-00e0 0000 0000 - 00ff ffff ffff: Main memory
-*/
 
 #if SANITIZER_LINUX && defined(__mips64)
-const uptr kLowMemBeg   = 0;
-const uptr kLowMemSize  = 0;
-const uptr kHighMemBeg  = 0x00e000000000;
-const uptr kHighMemSize = 0x002000000000;
-const uptr kShadowBeg   = 0x00a000000000;
-const uptr kShadowSize  = 0x002000000000;
-const uptr kOriginsBeg  = 0x00c000000000;
-# define MEM_TO_SHADOW(mem) (((uptr)(mem)) & ~0x4000000000ULL)
+
+// Everything is above 0x00e000000000.
+const MappingDesc kMemoryLayout[] = {
+    {0x000000000000ULL, 0x00a000000000ULL, MappingDesc::INVALID, "invalid"},
+    {0x00a000000000ULL, 0x00c000000000ULL, MappingDesc::SHADOW, "shadow"},
+    {0x00c000000000ULL, 0x00e000000000ULL, MappingDesc::ORIGIN, "origin"},
+    {0x00e000000000ULL, 0x010000000000ULL, MappingDesc::APP, "app"}};
+
+#define MEM_TO_SHADOW(mem) (((uptr)(mem)) & ~0x4000000000ULL)
+#define SHADOW_TO_ORIGIN(shadow) (((uptr)(shadow)) + 0x002000000000)
+
 #elif SANITIZER_FREEBSD && SANITIZER_WORDSIZE == 64
-const uptr kLowMemBeg   = 0x000000000000;
-const uptr kLowMemSize  = 0x010000000000;
-const uptr kHighMemBeg  = 0x600000000000;
-const uptr kHighMemSize = 0x200000000000;
-const uptr kShadowBeg   = 0x100000000000;
-const uptr kShadowSize  = 0x210000000000;
-const uptr kOriginsBeg  = 0x380000000000;
+
+// Low memory: main binary, MAP_32BIT mappings and modules
+// High memory: heap, modules and main thread stack
+const MappingDesc kMemoryLayout[] = {
+    {0x000000000000ULL, 0x010000000000ULL, MappingDesc::APP, "low memory"},
+    {0x010000000000ULL, 0x100000000000ULL, MappingDesc::INVALID, "invalid"},
+    {0x100000000000ULL, 0x310000000000ULL, MappingDesc::SHADOW, "shadow"},
+    {0x310000000000ULL, 0x380000000000ULL, MappingDesc::INVALID, "invalid"},
+    {0x380000000000ULL, 0x590000000000ULL, MappingDesc::ORIGIN, "origin"},
+    {0x590000000000ULL, 0x600000000000ULL, MappingDesc::INVALID, "invalid"},
+    {0x600000000000ULL, 0x800000000000ULL, MappingDesc::APP, "high memory"}};
+
 // Maps low and high app ranges to contiguous space with zero base:
 //   Low:  0000 0000 0000 - 00ff ffff ffff  ->  2000 0000 0000 - 20ff ffff ffff
 //   High: 6000 0000 0000 - 7fff ffff ffff  ->  0000 0000 0000 - 1fff ffff ffff
-# define LINEARIZE_MEM(mem) \
-    (((uptr)(mem) & ~0xc00000000000ULL) ^ 0x200000000000ULL)
-# define MEM_TO_SHADOW(mem) (LINEARIZE_MEM((mem)) + 0x100000000000ULL)
+#define LINEARIZE_MEM(mem) \
+  (((uptr)(mem) & ~0xc00000000000ULL) ^ 0x200000000000ULL)
+#define MEM_TO_SHADOW(mem) (LINEARIZE_MEM((mem)) + 0x100000000000ULL)
+#define SHADOW_TO_ORIGIN(shadow) (((uptr)(shadow)) + 0x280000000000)
+
 #elif SANITIZER_LINUX && SANITIZER_WORDSIZE == 64
-const uptr kLowMemBeg   = 0;
-const uptr kLowMemSize  = 0;
-const uptr kHighMemBeg  = 0x600000000000;
-const uptr kHighMemSize = 0x200000000000;
-const uptr kShadowBeg   = 0x200000000000;
-const uptr kShadowSize  = 0x200000000000;
-const uptr kOriginsBeg  = 0x400000000000;
-# define MEM_TO_SHADOW(mem) (((uptr)(mem)) & ~0x400000000000ULL)
+
+// Requries PIE binary and ASLR enabled.
+// Main thread stack and DSOs at 0x7f0000000000 (sometimes 0x7e0000000000).
+// Heap at 0x600000000000.
+const MappingDesc kMemoryLayout[] = {
+    {0x000000000000ULL, 0x200000000000ULL, MappingDesc::INVALID, "invalid"},
+    {0x200000000000ULL, 0x400000000000ULL, MappingDesc::SHADOW, "shadow"},
+    {0x400000000000ULL, 0x600000000000ULL, MappingDesc::ORIGIN, "origin"},
+    {0x600000000000ULL, 0x800000000000ULL, MappingDesc::APP, "app"}};
+
+#define MEM_TO_SHADOW(mem) (((uptr)(mem)) & ~0x400000000000ULL)
+#define SHADOW_TO_ORIGIN(mem) (((uptr)(mem)) + 0x200000000000ULL)
+
 #else
 #error "Unsupported platform"
 #endif
 
-const uptr kBad1Beg  = kLowMemBeg + kLowMemSize;
-const uptr kBad1Size = kShadowBeg - kBad1Beg;
-
-const uptr kBad2Beg  = kShadowBeg + kShadowSize;
-const uptr kBad2Size = kOriginsBeg - kBad2Beg;
-
-const uptr kOriginsSize = kShadowSize;
-
-const uptr kBad3Beg  = kOriginsBeg + kOriginsSize;
-const uptr kBad3Size = kHighMemBeg - kBad3Beg;
-
-#define SHADOW_TO_ORIGIN(shadow) \
-  (((uptr)(shadow)) + (kOriginsBeg - kShadowBeg))
+const uptr kMemoryLayoutSize = sizeof(kMemoryLayout) / sizeof(kMemoryLayout[0]);
 
 #define MEM_TO_ORIGIN(mem) (SHADOW_TO_ORIGIN(MEM_TO_SHADOW((mem))))
 
-#define MEM_IS_APP(mem) \
-  ((kLowMemSize > 0 && (uptr)(mem) < kLowMemSize) || \
-    (uptr)(mem) >= kHighMemBeg)
+#ifndef __clang__
+__attribute__((optimize("unroll-loops")))
+#endif
+inline bool addr_is_type(uptr addr, MappingDesc::Type mapping_type) {
+// It is critical for performance that this loop is unrolled (because then it is
+// simplified into just a few constant comparisons).
+#ifdef __clang__
+#pragma unroll
+#endif
+  for (unsigned i = 0; i < kMemoryLayoutSize; ++i)
+    if (kMemoryLayout[i].type == mapping_type &&
+        addr >= kMemoryLayout[i].start && addr < kMemoryLayout[i].end)
+      return true;
+  return false;
+}
 
-#define MEM_IS_SHADOW(mem) \
-  ((uptr)(mem) >= kShadowBeg && (uptr)(mem) < kShadowBeg + kShadowSize)
-
-#define MEM_IS_ORIGIN(mem) \
-  ((uptr)(mem) >= kOriginsBeg && (uptr)(mem) < kOriginsBeg + kOriginsSize)
+#define MEM_IS_APP(mem) addr_is_type((uptr)(mem), MappingDesc::APP)
+#define MEM_IS_SHADOW(mem) addr_is_type((uptr)(mem), MappingDesc::SHADOW)
+#define MEM_IS_ORIGIN(mem) addr_is_type((uptr)(mem), MappingDesc::ORIGIN)
 
 // These constants must be kept in sync with the ones in MemorySanitizer.cc.
 const int kMsanParamTlsSize = 800;
