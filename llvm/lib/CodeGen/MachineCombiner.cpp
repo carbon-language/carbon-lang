@@ -45,7 +45,7 @@ class MachineCombiner : public MachineFunctionPass {
 
   TargetSchedModel TSchedModel;
 
-  /// OptSize - True if optimizing for code size.
+  /// True if optimizing for code size.
   bool OptSize;
 
 public:
@@ -109,7 +109,7 @@ MachineInstr *MachineCombiner::getOperandDef(const MachineOperand &MO) {
   return DefInstr;
 }
 
-/// getDepth - Computes depth of instructions in vector \InsInstr.
+/// Computes depth of instructions in vector \InsInstr.
 ///
 /// \param InsInstrs is a vector of machine instructions
 /// \param InstrIdxForVirtReg is a dense map of virtual register to index
@@ -169,8 +169,7 @@ MachineCombiner::getDepth(SmallVectorImpl<MachineInstr *> &InsInstrs,
   return InstrDepth[NewRootIdx];
 }
 
-/// getLatency - Computes instruction latency as max of latency of defined
-/// operands
+/// Computes instruction latency as max of latency of defined operands.
 ///
 /// \param Root is a machine instruction that could be replaced by NewRoot.
 /// It is used to compute a more accurate latency information for NewRoot in
@@ -211,7 +210,7 @@ unsigned MachineCombiner::getLatency(MachineInstr *Root, MachineInstr *NewRoot,
   return NewRootLatency;
 }
 
-/// preservesCriticalPathlen - True when the new instruction sequence does not
+/// True when the new instruction sequence does not
 /// lengthen the critical path. The DAGCombine code sequence ends in MI
 /// (Machine Instruction) Root. The new code sequence ends in MI NewRoot. A
 /// necessary condition for the new sequence to replace the old sequence is that
@@ -264,8 +263,7 @@ void MachineCombiner::instr2instrSC(
     InstrsSC.push_back(SC);
   }
 }
-/// preservesResourceLen - True when the new instructions do not increase
-/// resource length
+/// True when the new instructions do not increase resource length
 bool MachineCombiner::preservesResourceLen(
     MachineBasicBlock *MBB, MachineTraceMetrics::Trace BlockTrace,
     SmallVectorImpl<MachineInstr *> &InsInstrs,
@@ -309,7 +307,7 @@ bool MachineCombiner::doSubstitute(unsigned NewSize, unsigned OldSize) {
   return false;
 }
 
-/// combineInstructions - substitute a slow code sequence with a faster one by
+/// Substitute a slow code sequence with a faster one by
 /// evaluating instruction combining pattern.
 /// The prototype of such a pattern is MUl + ADD -> MADD. Performs instruction
 /// combining based on machine trace metrics. Only combine a sequence of
