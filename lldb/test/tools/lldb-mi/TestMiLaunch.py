@@ -2,188 +2,71 @@
 Test various ways the lldb-mi driver can launch a program.
 """
 
-import os
-import unittest2
-import lldb
+import lldbmi_testcase
 from lldbtest import *
+import unittest2
 
-class MiLaunchTestCase(TestBase):
-
-    mydir = TestBase.compute_mydir(__file__)
-    myexe = "a.out"
-
-    @classmethod
-    def classCleanup(cls):
-        """Cleanup the test byproducts."""
-        try:
-            os.remove("child_send.txt")
-            os.remove("child_read.txt")
-            os.remove(cls.myexe)
-        except:
-            pass
+class MiLaunchTestCase(lldbmi_testcase.MiTestCaseBase):
 
     @lldbmi_test
     @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
     def test_lldbmi_exe(self):
         """Test that 'lldb-mi --interpreter' works for -file-exec-and-symbols exe."""
-        import pexpect
-        self.buildDefault()
 
-        # So that the child gets torn down after the test.
-        self.child = pexpect.spawn('%s --interpreter' % (self.lldbMiExec))
-        child = self.child
-        child.setecho(True)
-        # Turn on logging for input/output to/from the child.
-        with open('child_send.txt', 'w') as f_send:
-            with open('child_read.txt', 'w') as f_read:
-                child.logfile_send = f_send
-                child.logfile_read = f_read
+        self.spawnLldbMi(args = None)
 
-                #use no path
-                child.sendline("-file-exec-and-symbols " + self.myexe)
-                child.expect("\^done")
+        #use no path
+        self.runCmd("-file-exec-and-symbols %s" % self.myexe)
+        self.expect("\^done")
 
-                child.sendline("-exec-run")
-                child.expect("\^running")
-                child.expect("\*stopped,reason=\"exited-normally\"")
-
-        # Now that the necessary logging is done, restore logfile to None to
-        # stop further logging.
-        child.logfile_send = None
-        child.logfile_read = None
-        
-        with open('child_send.txt', 'r') as fs:
-            if self.TraceOn():
-                print "\n\nContents of child_send.txt:"
-                print fs.read()
-        with open('child_read.txt', 'r') as fr:
-            from_child = fr.read()
-            if self.TraceOn():
-                print "\n\nContents of child_read.txt:"
-                print from_child
+        self.runCmd("-exec-run")
+        self.expect("\^running")
+        self.expect("\*stopped,reason=\"exited-normally\"")
 
     @lldbmi_test
     @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
     def test_lldbmi_abspathexe(self):
         """Test that 'lldb-mi --interpreter' works for -file-exec-and-symbols fullpath/exe."""
-        import pexpect
-        self.buildDefault()
 
-        # So that the child gets torn down after the test.
-        self.child = pexpect.spawn('%s --interpreter' % (self.lldbMiExec))
-        child = self.child
-        child.setecho(True)
-        # Turn on logging for input/output to/from the child.
-        with open('child_send.txt', 'w') as f_send:
-            with open('child_read.txt', 'w') as f_read:
-                child.logfile_send = f_send
-                child.logfile_read = f_read
+        self.spawnLldbMi(args = None)
 
-                #use full path
-                exe = os.path.join(os.getcwd(), "a.out")
-                child.sendline("-file-exec-and-symbols " + exe)
-                child.expect("\^done")
+        #use full path
+        import os
+        exe = os.path.join(os.getcwd(), self.myexe)
+        self.runCmd("-file-exec-and-symbols %s" % exe)
+        self.expect("\^done")
 
-                child.sendline("-exec-run")
-                child.expect("\^running")
-                child.expect("\*stopped,reason=\"exited-normally\"")
-
-        # Now that the necessary logging is done, restore logfile to None to
-        # stop further logging.
-        child.logfile_send = None
-        child.logfile_read = None
-        
-        with open('child_send.txt', 'r') as fs:
-            if self.TraceOn():
-                print "\n\nContents of child_send.txt:"
-                print fs.read()
-        with open('child_read.txt', 'r') as fr:
-            from_child = fr.read()
-            if self.TraceOn():
-                print "\n\nContents of child_read.txt:"
-                print from_child
+        self.runCmd("-exec-run")
+        self.expect("\^running")
+        self.expect("\*stopped,reason=\"exited-normally\"")
 
     @lldbmi_test
     @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
     def test_lldbmi_relpathexe(self):
         """Test that 'lldb-mi --interpreter' works for -file-exec-and-symbols relpath/exe."""
-        import pexpect
-        self.buildDefault()
 
-        # So that the child gets torn down after the test.
-        self.child = pexpect.spawn('%s --interpreter' % (self.lldbMiExec))
-        child = self.child
-        child.setecho(True)
-        # Turn on logging for input/output to/from the child.
-        with open('child_send.txt', 'w') as f_send:
-            with open('child_read.txt', 'w') as f_read:
-                child.logfile_send = f_send
-                child.logfile_read = f_read
+        self.spawnLldbMi(args = None)
 
-                #use relative path
-                exe = "../../" + self.mydir + "/" + self.myexe
-                child.sendline("-file-exec-and-symbols " + exe)
-                child.expect("\^done")
+        #use relative path
+        exe = "../../" + self.mydir + "/" + self.myexe
+        self.runCmd("-file-exec-and-symbols %s" % exe)
+        self.expect("\^done")
 
-                child.sendline("-exec-run")
-                child.expect("\^running")
-                child.expect("\*stopped,reason=\"exited-normally\"")
-
-        # Now that the necessary logging is done, restore logfile to None to
-        # stop further logging.
-        child.logfile_send = None
-        child.logfile_read = None
-        
-        with open('child_send.txt', 'r') as fs:
-            if self.TraceOn():
-                print "\n\nContents of child_send.txt:"
-                print fs.read()
-        with open('child_read.txt', 'r') as fr:
-            from_child = fr.read()
-            if self.TraceOn():
-                print "\n\nContents of child_read.txt:"
-                print from_child
+        self.runCmd("-exec-run")
+        self.expect("\^running")
+        self.expect("\*stopped,reason=\"exited-normally\"")
 
     @lldbmi_test
     @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
     def test_lldbmi_badpathexe(self):
         """Test that 'lldb-mi --interpreter' works for -file-exec-and-symbols badpath/exe."""
-        import pexpect
-        self.buildDefault()
 
-        # So that the child gets torn down after the test.
-        self.child = pexpect.spawn('%s --interpreter' % (self.lldbMiExec))
-        child = self.child
-        child.setecho(True)
-        # Turn on logging for input/output to/from the child.
-        with open('child_send.txt', 'w') as f_send:
-            with open('child_read.txt', 'w') as f_read:
-                child.logfile_send = f_send
-                child.logfile_read = f_read
+        self.spawnLldbMi(args = None)
 
-                #use non-existant path
-                exe = "badpath/" + self.myexe
-                child.sendline("-file-exec-and-symbols " + exe)
-                child.expect("\^error")
-
-        # Now that the necessary logging is done, restore logfile to None to
-        # stop further logging.
-        child.logfile_send = None
-        child.logfile_read = None
-        
-        with open('child_send.txt', 'r') as fs:
-            if self.TraceOn():
-                print "\n\nContents of child_send.txt:"
-                print fs.read()
-        with open('child_read.txt', 'r') as fr:
-            from_child = fr.read()
-            if self.TraceOn():
-                print "\n\nContents of child_read.txt:"
-                print from_child
-
+        #use non-existant path
+        exe = "badpath/" + self.myexe
+        self.runCmd("-file-exec-and-symbols %s" % exe)
+        self.expect("\^error")
 
 if __name__ == '__main__':
-    import atexit
-    lldb.SBDebugger.Initialize()
-    atexit.register(lambda: lldb.SBDebugger.Terminate())
     unittest2.main()
