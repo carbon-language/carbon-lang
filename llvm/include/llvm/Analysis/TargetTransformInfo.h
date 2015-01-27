@@ -50,8 +50,8 @@ struct MemIntrinsicInfo {
   Value *PtrVal;
 };
 
-/// TargetTransformInfo - This pass provides access to the codegen
-/// interfaces that are needed for IR-level transformations.
+/// \brief This pass provides access to the codegen interfaces that are needed
+/// for IR-level transformations.
 class TargetTransformInfo {
 protected:
   /// \brief The TTI instance one level down the stack.
