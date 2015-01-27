@@ -687,7 +687,6 @@ template <class ELFT> std::error_code ELFFile<ELFT>::createAtoms() {
         sym->setBinding(llvm::ELF::STB_GLOBAL);
         anonAtom = createDefinedAtomAndAssignRelocations(
             "", *sectionName, sym, section, symbolData, *sectionContents);
-        anonAtom->setOrdinal(++_ordinal);
         symbolData = ArrayRef<uint8_t>();
 
         // If this is the last atom, let's not create a followon reference.
@@ -728,8 +727,10 @@ template <class ELFT> std::error_code ELFFile<ELFT>::createAtoms() {
 
       _definedAtoms._atoms.push_back(newAtom);
       _symbolToAtomMapping.insert(std::make_pair(&*symbol, newAtom));
-      if (anonAtom)
+      if (anonAtom) {
+        anonAtom->setOrdinal(++_ordinal);
         _definedAtoms._atoms.push_back(anonAtom);
+      }
     }
   }
 
