@@ -103,13 +103,14 @@ ScriptInterpreterPython::Locker::DoAcquireLock()
     m_GILState = PyGILState_Ensure();
     if (log)
         log->Printf("Ensured PyGILState. Previous state = %slocked\n", m_GILState == PyGILState_UNLOCKED ? "un" : "");
-    
+
     // we need to save the thread state when we first start the command
     // because we might decide to interrupt it while some action is taking
     // place outside of Python (e.g. printing to screen, waiting for the network, ...)
     // in that case, _PyThreadState_Current will be NULL - and we would be unable
     // to set the asynchronous exception - not a desirable situation
     m_python_interpreter->SetThreadState (_PyThreadState_Current);
+    m_python_interpreter->IncrementLockCount();
     return true;
 }
 
@@ -128,6 +129,7 @@ ScriptInterpreterPython::Locker::DoFreeLock()
     if (log)
         log->Printf("Releasing PyGILState. Returning to state = %slocked\n", m_GILState == PyGILState_UNLOCKED ? "un" : "");
     PyGILState_Release(m_GILState);
+    m_python_interpreter->DecrementLockCount();
     return true;
 }
 
@@ -166,6 +168,7 @@ ScriptInterpreterPython::ScriptInterpreterPython (CommandInterpreter &interprete
     m_session_is_active (false),
     m_pty_slave_is_open (false),
     m_valid_session (true),
+    m_lock_count (0),
     m_command_thread_state (nullptr)
 {
 
@@ -817,24 +820,7 @@ public:
     virtual bool
     Interrupt ()
     {
-        Log *log (lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_SCRIPT));
-
-        PyThreadState* state = _PyThreadState_Current;
-        if (!state)
-            state = m_python->GetThreadState();
-        if (state)
-        {
-            long tid = state->thread_id;
-            _PyThreadState_Current = state;
-            int num_threads = PyThreadState_SetAsyncExc(tid, PyExc_KeyboardInterrupt);
-            if (log)
-                log->Printf("ScriptInterpreterPython::NonInteractiveInputReaderCallback, eInputReaderInterrupt, tid = %ld, num_threads = %d, state = %p",
-                            tid, num_threads, static_cast<void *>(state));
-        }
-        else if (log)
-            log->Printf("ScriptInterpreterPython::NonInteractiveInputReaderCallback, eInputReaderInterrupt, state = NULL");
-
-        return false;
+        return m_python->Interrupt();
     }
     
     virtual void
@@ -869,6 +855,31 @@ ScriptInterpreterPython::ExecuteInterpreterLoop ()
     }
 }
 
+bool
+ScriptInterpreterPython::Interrupt()
+{
+    Log *log (lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_SCRIPT));
+
+    if (IsExecutingPython())
+    {
+        PyThreadState* state = _PyThreadState_Current;
+        if (!state)
+            state = GetThreadState();
+        if (state)
+        {
+            long tid = state->thread_id;
+            _PyThreadState_Current = state;
+            int num_threads = PyThreadState_SetAsyncExc(tid, PyExc_KeyboardInterrupt);
+            if (log)
+                log->Printf("ScriptInterpreterPython::Interrupt() sending PyExc_KeyboardInterrupt (tid = %li, num_threads = %i)...", tid, num_threads);
+            return true;
+        }
+    }
+    if (log)
+        log->Printf("ScriptInterpreterPython::Interrupt() python code not running, can't interrupt");
+    return false;
+
+}
 bool
 ScriptInterpreterPython::ExecuteOneLineWithReturn (const char *in_string,
                                                    ScriptInterpreter::ScriptReturnType return_type,

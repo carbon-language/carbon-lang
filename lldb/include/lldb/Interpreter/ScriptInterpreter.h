@@ -240,7 +240,13 @@ public:
         bool m_set_lldb_globals;
         bool m_maskout_errors;
     };
-    
+
+    virtual bool
+    Interrupt()
+    {
+        return false;
+    }
+
     virtual bool
     ExecuteOneLine (const char *command,
                     CommandReturnObject *result,

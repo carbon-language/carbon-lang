@@ -3229,6 +3229,13 @@ CommandInterpreter::IOHandlerInterrupt (IOHandler &io_handler)
             return true; // Don't do any updating when we are running
         }
     }
+
+    ScriptInterpreter *script_interpreter = GetScriptInterpreter (false);
+    if (script_interpreter)
+    {
+        if (script_interpreter->Interrupt())
+            return true;
+    }
     return false;
 }
 

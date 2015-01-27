@@ -41,6 +41,9 @@ public:
     ~ScriptInterpreterPython ();
 
     bool
+    Interrupt() override;
+
+    bool
     ExecuteOneLine (const char *command,
                     CommandReturnObject *result,
                     const ExecuteScriptOptions &options = ExecuteScriptOptions());
@@ -448,6 +451,26 @@ public:
 	};
 protected:
 
+    uint32_t
+    IsExecutingPython () const
+    {
+        return m_lock_count > 0;
+    }
+
+    uint32_t
+    IncrementLockCount()
+    {
+        return ++m_lock_count;
+    }
+
+    uint32_t
+    DecrementLockCount()
+    {
+        if (m_lock_count > 0)
+            --m_lock_count;
+        return m_lock_count;
+    }
+
     enum ActiveIOHandler {
         eIOHandlerNone,
         eIOHandlerBreakpoint,
@@ -480,6 +503,7 @@ protected:
     bool m_session_is_active;
     bool m_pty_slave_is_open;
     bool m_valid_session;
+    uint32_t m_lock_count;
     PyThreadState *m_command_thread_state;
 };
 } // namespace lldb_private
