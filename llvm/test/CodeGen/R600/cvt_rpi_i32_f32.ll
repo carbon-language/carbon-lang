@@ -1,4 +1,5 @@
 ; RUN: llc -march=amdgcn -mcpu=SI < %s | FileCheck -check-prefix=SI -check-prefix=FUNC %s
+; RUN: llc -march=amdgcn -mcpu=tonga < %s | FileCheck -check-prefix=SI -check-prefix=FUNC %s
 
 declare float @llvm.fabs.f32(float) #1
 declare float @llvm.floor.f32(float) #1
