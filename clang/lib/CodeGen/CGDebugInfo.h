@@ -43,7 +43,7 @@ namespace CodeGen {
   class CodeGenFunction;
   class CGBlockInfo;
 
-/// CGDebugInfo - This class gathers all debug information during compilation
+/// \brief This class gathers all debug information during compilation
 /// and is responsible for emitting to llvm globals or pass directly to
 /// the backend.
 class CGDebugInfo {
@@ -64,7 +64,7 @@ class CGDebugInfo {
   llvm::DIType OCLEventDITy;
   llvm::DIType BlockLiteralGeneric;
 
-  /// TypeCache - Cache of previously constructed Types.
+  /// \brief Cache of previously constructed Types.
   llvm::DenseMap<const void *, llvm::TrackingMDRef> TypeCache;
 
   struct ObjCInterfaceCacheEntry {
@@ -76,14 +76,14 @@ class CGDebugInfo {
         : Type(Type), Decl(Decl), Unit(Unit) {}
   };
 
-  /// ObjCInterfaceCache - Cache of previously constructed interfaces
+  /// \brief Cache of previously constructed interfaces
   /// which may change.
   llvm::SmallVector<ObjCInterfaceCacheEntry, 32> ObjCInterfaceCache;
 
-  /// RetainedTypes - list of interfaces we want to keep even if orphaned.
+  /// \brief list of interfaces we want to keep even if orphaned.
   std::vector<void *> RetainedTypes;
 
-  /// ReplaceMap - Cache of forward declared types to RAUW at the end of
+  /// \brief Cache of forward declared types to RAUW at the end of
   /// compilation.
   std::vector<std::pair<const TagType *, llvm::TrackingMDRef>> ReplaceMap;
 
@@ -100,7 +100,7 @@ class CGDebugInfo {
   // the end of a function.
   std::vector<unsigned> FnBeginRegionCount;
 
-  /// DebugInfoNames - This is a storage for names that are
+  /// \brief This is a storage for names that are
   /// constructed on demand. For example, C++ destructors, C++ operators etc..
   llvm::BumpPtrAllocator DebugInfoNames;
   StringRef CWDName;
@@ -218,15 +218,15 @@ public:
 
   void finalize();
 
-  /// setLocation - Update the current source location. If \arg loc is
+  /// \brief Update the current source location. If \arg loc is
   /// invalid it is ignored.
   void setLocation(SourceLocation Loc);
 
-  /// EmitLocation - Emit metadata to indicate a change in line/column
+  /// \brief Emit metadata to indicate a change in line/column
   /// information in the source file.
   void EmitLocation(CGBuilderTy &Builder, SourceLocation Loc);
 
-  /// EmitFunctionStart - Emit a call to llvm.dbg.function.start to indicate
+  /// \brief Emit a call to llvm.dbg.function.start to indicate
   /// start of a new function.
   /// \param Loc       The location of the function header.
   /// \param ScopeLoc  The location of the function body.
@@ -235,23 +235,23 @@ public:
                          QualType FnType, llvm::Function *Fn,
                          CGBuilderTy &Builder);
 
-  /// EmitFunctionEnd - Constructs the debug code for exiting a function.
+  /// \brief Constructs the debug code for exiting a function.
   void EmitFunctionEnd(CGBuilderTy &Builder);
 
-  /// EmitLexicalBlockStart - Emit metadata to indicate the beginning of a
+  /// \brief Emit metadata to indicate the beginning of a
   /// new lexical block and push the block onto the stack.
   void EmitLexicalBlockStart(CGBuilderTy &Builder, SourceLocation Loc);
 
-  /// EmitLexicalBlockEnd - Emit metadata to indicate the end of a new lexical
+  /// \brief Emit metadata to indicate the end of a new lexical
   /// block and pop the current block.
   void EmitLexicalBlockEnd(CGBuilderTy &Builder, SourceLocation Loc);
 
-  /// EmitDeclareOfAutoVariable - Emit call to llvm.dbg.declare for an automatic
+  /// \brief Emit call to llvm.dbg.declare for an automatic
   /// variable declaration.
   void EmitDeclareOfAutoVariable(const VarDecl *Decl, llvm::Value *AI,
                                  CGBuilderTy &Builder);
 
-  /// EmitDeclareOfBlockDeclRefVariable - Emit call to llvm.dbg.declare for an
+  /// \brief Emit call to llvm.dbg.declare for an
   /// imported variable declaration in a block.
   void EmitDeclareOfBlockDeclRefVariable(const VarDecl *variable,
                                          llvm::Value *storage,
@@ -259,12 +259,12 @@ public:
                                          const CGBlockInfo &blockInfo,
                                          llvm::Instruction *InsertPoint = 0);
 
-  /// EmitDeclareOfArgVariable - Emit call to llvm.dbg.declare for an argument
+  /// \brief Emit call to llvm.dbg.declare for an argument
   /// variable declaration.
   void EmitDeclareOfArgVariable(const VarDecl *Decl, llvm::Value *AI,
                                 unsigned ArgNo, CGBuilderTy &Builder);
 
-  /// EmitDeclareOfBlockLiteralArgVariable - Emit call to
+  /// \brief Emit call to
   /// llvm.dbg.declare for the block-literal argument to a block
   /// invocation function.
   void EmitDeclareOfBlockLiteralArgVariable(const CGBlockInfo &block,
@@ -272,28 +272,28 @@ public:
                                             llvm::Value *LocalAddr,
                                             CGBuilderTy &Builder);
 
-  /// EmitGlobalVariable - Emit information about a global variable.
+  /// \brief Emit information about a global variable.
   void EmitGlobalVariable(llvm::GlobalVariable *GV, const VarDecl *Decl);
 
-  /// EmitGlobalVariable - Emit global variable's debug info.
+  /// \brief Emit global variable's debug info.
   void EmitGlobalVariable(const ValueDecl *VD, llvm::Constant *Init);
 
-  /// \brief - Emit C++ using directive.
+  /// \brief Emit C++ using directive.
   void EmitUsingDirective(const UsingDirectiveDecl &UD);
 
-  /// EmitExplicitCastType - Emit the type explicitly casted to.
+  /// \brief Emit the type explicitly casted to.
   void EmitExplicitCastType(QualType Ty);
 
-  /// \brief - Emit C++ using declaration.
+  /// \brief Emit C++ using declaration.
   void EmitUsingDecl(const UsingDecl &UD);
 
-  /// \brief - Emit C++ namespace alias.
+  /// \brief Emit C++ namespace alias.
   llvm::DIImportedEntity EmitNamespaceAlias(const NamespaceAliasDecl &NA);
 
-  /// getOrCreateRecordType - Emit record type's standalone debug info.
+  /// \brief Emit record type's standalone debug info.
   llvm::DIType getOrCreateRecordType(QualType Ty, SourceLocation L);
 
-  /// getOrCreateInterfaceType - Emit an objective c interface type standalone
+  /// \brief Emit an objective c interface type standalone
   /// debug info.
   llvm::DIType getOrCreateInterfaceType(QualType Ty,
                                         SourceLocation Loc);
@@ -306,7 +306,7 @@ public:
   void completeTemplateDefinition(const ClassTemplateSpecializationDecl &SD);
 
 private:
-  /// EmitDeclare - Emit call to llvm.dbg.declare for a variable declaration.
+  /// \brief Emit call to llvm.dbg.declare for a variable declaration.
   /// Tag accepts custom types DW_TAG_arg_variable and DW_TAG_auto_variable,
   /// otherwise would be of type llvm::dwarf::Tag.
   void EmitDeclare(const VarDecl *decl, llvm::dwarf::LLVMConstants Tag,
@@ -317,7 +317,7 @@ private:
   llvm::DIType EmitTypeForVarWithBlocksAttr(const VarDecl *VD,
                                             uint64_t *OffSet);
 
-  /// getContextDescriptor - Get context info for the decl.
+  /// \brief Get context info for the decl.
   llvm::DIScope getContextDescriptor(const Decl *Decl);
 
   llvm::DIScope getCurrentContextDescriptor(const Decl *Decl);
@@ -326,38 +326,38 @@ private:
   llvm::DICompositeType getOrCreateRecordFwdDecl(const RecordType *,
                                                  llvm::DIDescriptor);
 
-  /// createContextChain - Create a set of decls for the context chain.
+  /// \brief Create a set of decls for the context chain.
   llvm::DIDescriptor createContextChain(const Decl *Decl);
 
-  /// getCurrentDirname - Return current directory name.
+  /// \brief Return current directory name.
   StringRef getCurrentDirname();
 
-  /// CreateCompileUnit - Create new compile unit.
+  /// \brief Create new compile unit.
   void CreateCompileUnit();
 
-  /// getOrCreateFile - Get the file debug info descriptor for the input
+  /// \brief Get the file debug info descriptor for the input
   /// location.
   llvm::DIFile getOrCreateFile(SourceLocation Loc);
 
-  /// getOrCreateMainFile - Get the file info for main compile unit.
+  /// \brief Get the file info for main compile unit.
   llvm::DIFile getOrCreateMainFile();
 
-  /// getOrCreateType - Get the type from the cache or create a new type if
+  /// \brief Get the type from the cache or create a new type if
   /// necessary.
   llvm::DIType getOrCreateType(QualType Ty, llvm::DIFile Fg);
 
-  /// getOrCreateLimitedType - Get the type from the cache or create a new
+  /// \brief Get the type from the cache or create a new
   /// partial type if necessary.
   llvm::DIType getOrCreateLimitedType(const RecordType *Ty, llvm::DIFile F);
 
-  /// CreateTypeNode - Create type metadata for a source language type.
+  /// \brief Create type metadata for a source language type.
   llvm::DIType CreateTypeNode(QualType Ty, llvm::DIFile Fg);
 
-  /// getObjCInterfaceDecl - return the underlying ObjCInterfaceDecl
+  /// \brief return the underlying ObjCInterfaceDecl
   /// if Ty is an ObjCInterface or a pointer to one.
   ObjCInterfaceDecl* getObjCInterfaceDecl(QualType Ty);
 
-  /// CreateMemberType - Create new member and increase Offset by FType's size.
+  /// \brief Create new member and increase Offset by FType's size.
   llvm::DIType CreateMemberType(llvm::DIFile Unit, QualType FType,
                                 StringRef Name, uint64_t *Offset);
 
@@ -365,7 +365,7 @@ private:
   /// declaration.
   llvm::DIDescriptor getDeclarationOrDefinition(const Decl *D);
 
-  /// getFunctionDeclaration - Return debug info descriptor to describe method
+  /// \brief Return debug info descriptor to describe method
   /// declaration for the given method definition.
   llvm::DISubprogram getFunctionDeclaration(const Decl *D);
 
@@ -389,30 +389,30 @@ private:
                          StringRef LinkageName, llvm::GlobalVariable *Var,
                          llvm::DIDescriptor DContext);
 
-  /// getFunctionName - Get function name for the given FunctionDecl. If the
+  /// \brief Get function name for the given FunctionDecl. If the
   /// name is constructed on demand (e.g. C++ destructor) then the name
   /// is stored on the side.
   StringRef getFunctionName(const FunctionDecl *FD);
 
-  /// getObjCMethodName - Returns the unmangled name of an Objective-C method.
+  /// \brief Returns the unmangled name of an Objective-C method.
   /// This is the display name for the debugging info.
   StringRef getObjCMethodName(const ObjCMethodDecl *FD);
 
-  /// getSelectorName - Return selector name. This is used for debugging
+  /// \brief Return selector name. This is used for debugging
   /// info.
   StringRef getSelectorName(Selector S);
 
-  /// getClassName - Get class name including template argument list.
+  /// \brief Get class name including template argument list.
   StringRef getClassName(const RecordDecl *RD);
 
-  /// getVTableName - Get vtable name for the given Class.
+  /// \brief Get vtable name for the given Class.
   StringRef getVTableName(const CXXRecordDecl *Decl);
 
-  /// getLineNumber - Get line number for the location. If location is invalid
+  /// \brief Get line number for the location. If location is invalid
   /// then use current location.
   unsigned getLineNumber(SourceLocation Loc);
 
-  /// getColumnNumber - Get column number for the location. If location is
+  /// \brief Get column number for the location. If location is
   /// invalid then use current location.
   /// \param Force  Assume DebugColumnInfo option is true.
   unsigned getColumnNumber(SourceLocation Loc, bool Force=false);
@@ -432,7 +432,7 @@ private:
                            StringRef &Name, StringRef &LinkageName,
                            llvm::DIDescriptor &VDContext);
 
-  /// internString - Allocate a copy of \p A using the DebugInfoNames allocator
+  /// \brief Allocate a copy of \p A using the DebugInfoNames allocator
   /// and return a reference to it. If multiple arguments are given the strings
   /// are concatenated.
   StringRef internString(StringRef A, StringRef B = StringRef()) {
@@ -459,7 +459,7 @@ public:
   ~ApplyDebugLocation();
 };
 
-/// ArtificialLocation - An RAII object that temporarily switches to
+/// \brief An RAII object that temporarily switches to
 /// an artificial debug location that has a valid scope, but no line
 /// information. This is useful when emitting compiler-generated
 /// helper functions that have no source location associated with
