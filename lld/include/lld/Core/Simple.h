@@ -190,7 +190,9 @@ public:
 
   Scope scope() const override { return DefinedAtom::scopeLinkageUnit; }
 
-  Interposable interposable() const override { return DefinedAtom::interposeNo; }
+  Interposable interposable() const override {
+    return DefinedAtom::interposeNo;
+  }
 
   Merge merge() const override { return DefinedAtom::mergeNo; }
 
@@ -233,7 +235,8 @@ public:
                     Reference::KindValue kindValue, uint64_t off,
                     const Atom *target, Reference::Addend a) {
     assert(target && "trying to create reference to nothing");
-    auto node = new (_file.allocator()) SimpleReference(ns, arch, kindValue, off, target, a);
+    auto node = new (_file.allocator())
+        SimpleReference(ns, arch, kindValue, off, target, a);
     _references.push_back(node);
   }
 
@@ -267,9 +270,9 @@ public:
 private:
   typedef llvm::ilist<SimpleReference> RefList;
 
-  const File                   &_file;
-  uint64_t                      _ordinal;
-  mutable RefList               _references;
+  const File &_file;
+  uint64_t _ordinal;
+  mutable RefList _references;
 };
 
 class SimpleUndefinedAtom : public UndefinedAtom {
