@@ -7761,7 +7761,6 @@
 // PS4:#define __unix__ 1
 // PS4:#define __x86_64 1
 // PS4:#define __x86_64__ 1
-// end SCE_PRIVATE
 //
 // RUN: %clang_cc1 -E -dM -ffreestanding -triple=sparc64-none-none < /dev/null | FileCheck -check-prefix SPARCV9 %s
 // SPARCV9:#define __INT64_TYPE__ long int
