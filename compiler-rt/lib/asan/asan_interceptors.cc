@@ -142,10 +142,10 @@ DECLARE_REAL_AND_INTERCEPTOR(void, free, void *)
 #define COMMON_INTERCEPTOR_READ_RANGE(ctx, ptr, size) \
   ASAN_READ_RANGE(ctx, ptr, size)
 #define COMMON_INTERCEPTOR_ENTER(ctx, func, ...)                               \
+  ASAN_INTERCEPTOR_ENTER(ctx, func);                                           \
   do {                                                                         \
     if (asan_init_is_running)                                                  \
       return REAL(func)(__VA_ARGS__);                                          \
-    ASAN_INTERCEPTOR_ENTER(ctx, func);                                         \
     if (SANITIZER_MAC && UNLIKELY(!asan_inited))                               \
       return REAL(func)(__VA_ARGS__);                                          \
     ENSURE_ASAN_INITED();                                                      \
