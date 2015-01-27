@@ -41,12 +41,15 @@ SANITIZER_INTERFACE_ATTRIBUTE void __tsan_write4(void *addr);
 SANITIZER_INTERFACE_ATTRIBUTE void __tsan_write8(void *addr);
 SANITIZER_INTERFACE_ATTRIBUTE void __tsan_write16(void *addr);
 
-SANITIZER_INTERFACE_ATTRIBUTE u16 __tsan_unaligned_read2(const uu16 *addr);
-SANITIZER_INTERFACE_ATTRIBUTE u32 __tsan_unaligned_read4(const uu32 *addr);
-SANITIZER_INTERFACE_ATTRIBUTE u64 __tsan_unaligned_read8(const uu64 *addr);
-SANITIZER_INTERFACE_ATTRIBUTE void __tsan_unaligned_write2(uu16 *addr, u16 v);
-SANITIZER_INTERFACE_ATTRIBUTE void __tsan_unaligned_write4(uu32 *addr, u32 v);
-SANITIZER_INTERFACE_ATTRIBUTE void __tsan_unaligned_write8(uu64 *addr, u64 v);
+SANITIZER_INTERFACE_ATTRIBUTE void __tsan_unaligned_read2(const void *addr);
+SANITIZER_INTERFACE_ATTRIBUTE void __tsan_unaligned_read4(const void *addr);
+SANITIZER_INTERFACE_ATTRIBUTE void __tsan_unaligned_read8(const void *addr);
+SANITIZER_INTERFACE_ATTRIBUTE void __tsan_unaligned_read16(const void *addr);
+
+SANITIZER_INTERFACE_ATTRIBUTE void __tsan_unaligned_write2(void *addr);
+SANITIZER_INTERFACE_ATTRIBUTE void __tsan_unaligned_write4(void *addr);
+SANITIZER_INTERFACE_ATTRIBUTE void __tsan_unaligned_write8(void *addr);
+SANITIZER_INTERFACE_ATTRIBUTE void __tsan_unaligned_write16(void *addr);
 
 SANITIZER_INTERFACE_ATTRIBUTE void __tsan_vptr_read(void **vptr_p);
 SANITIZER_INTERFACE_ATTRIBUTE

@@ -7,20 +7,20 @@
 uint64_t objs[8*3*3*2][3];
 
 extern "C" {
-uint16_t __tsan_unaligned_read2(void *addr);
-uint32_t __tsan_unaligned_read4(void *addr);
-uint64_t __tsan_unaligned_read8(void *addr);
-void __tsan_unaligned_write2(void *addr, uint16_t v);
-void __tsan_unaligned_write4(void *addr, uint32_t v);
-void __tsan_unaligned_write8(void *addr, uint64_t v);
+void __tsan_unaligned_read2(void *addr);
+void __tsan_unaligned_read4(void *addr);
+void __tsan_unaligned_read8(void *addr);
+void __tsan_unaligned_write2(void *addr);
+void __tsan_unaligned_write4(void *addr);
+void __tsan_unaligned_write8(void *addr);
 }
 
 static void access(char *p, int sz, int rw) {
   if (rw) {
     switch (sz) {
-    case 0: __tsan_unaligned_write2(p, 0); break;
-    case 1: __tsan_unaligned_write4(p, 0); break;
-    case 2: __tsan_unaligned_write8(p, 0); break;
+    case 0: __tsan_unaligned_write2(p); break;
+    case 1: __tsan_unaligned_write4(p); break;
+    case 2: __tsan_unaligned_write8(p); break;
     default: exit(1);
     }
   } else {
