@@ -485,7 +485,10 @@ __kmp_affinity_get_fullMask() { return fullMask; }
 
 
 static int nCoresPerPkg, nPackages;
-int __kmp_nThreadsPerCore;
+static int __kmp_nThreadsPerCore;
+#ifndef KMP_DFLT_NTH_CORES
+static int __kmp_ncores;
+#endif
 
 //
 // __kmp_affinity_uniform_topology() doesn't work when called from
@@ -556,14 +559,13 @@ __kmp_affinity_create_flat_map(AddrUnsPair **address2os,
 
     //
     // Even if __kmp_affinity_type == affinity_none, this routine might still
-    // called to set __kmp_ht_enabled, & __kmp_ncores, as well as
+    // called to set __kmp_ncores, as well as
     // __kmp_nThreadsPerCore, nCoresPerPkg, & nPackages.
     //
     if (! KMP_AFFINITY_CAPABLE()) {
         KMP_ASSERT(__kmp_affinity_type == affinity_none);
         __kmp_ncores = nPackages = __kmp_xproc;
         __kmp_nThreadsPerCore = nCoresPerPkg = 1;
-        __kmp_ht_enabled = FALSE;
         if (__kmp_affinity_verbose) {
             KMP_INFORM(AffFlatTopology, "KMP_AFFINITY");
             KMP_INFORM(AvailableOSProc, "KMP_AFFINITY", __kmp_avail_proc);
@@ -576,13 +578,12 @@ __kmp_affinity_create_flat_map(AddrUnsPair **address2os,
 
     //
     // When affinity is off, this routine will still be called to set
-    // __kmp_ht_enabled, & __kmp_ncores, as well as __kmp_nThreadsPerCore,
+    // __kmp_ncores, as well as __kmp_nThreadsPerCore,
     // nCoresPerPkg, & nPackages.  Make sure all these vars are set
     //  correctly, and return now if affinity is not enabled.
     //
     __kmp_ncores = nPackages = __kmp_avail_proc;
     __kmp_nThreadsPerCore = nCoresPerPkg = 1;
-    __kmp_ht_enabled = FALSE;
     if (__kmp_affinity_verbose) {
         char buf[KMP_AFFIN_MASK_PRINT_LEN];
         __kmp_affinity_print_mask(buf, KMP_AFFIN_MASK_PRINT_LEN, fullMask);
@@ -878,7 +879,6 @@ __kmp_affinity_create_apicid_map(AddrUnsPair **address2os,
         __kmp_ncores = __kmp_xproc;
         nPackages = (__kmp_xproc + nCoresPerPkg - 1) / nCoresPerPkg;
         __kmp_nThreadsPerCore = 1;
-        __kmp_ht_enabled = FALSE;
         if (__kmp_affinity_verbose) {
             KMP_INFORM(AffNotCapableUseLocCpuid, "KMP_AFFINITY");
             KMP_INFORM(AvailableOSProc, "KMP_AFFINITY", __kmp_avail_proc);
@@ -1045,7 +1045,6 @@ __kmp_affinity_create_apicid_map(AddrUnsPair **address2os,
     if (nApics == 1) {
         __kmp_ncores = nPackages = 1;
         __kmp_nThreadsPerCore = nCoresPerPkg = 1;
-        __kmp_ht_enabled = FALSE;
         if (__kmp_affinity_verbose) {
             char buf[KMP_AFFIN_MASK_PRINT_LEN];
             __kmp_affinity_print_mask(buf, KMP_AFFIN_MASK_PRINT_LEN, oldMask);
@@ -1182,11 +1181,10 @@ __kmp_affinity_create_apicid_map(AddrUnsPair **address2os,
 
     //
     // When affinity is off, this routine will still be called to set
-    // __kmp_ht_enabled, & __kmp_ncores, as well as __kmp_nThreadsPerCore,
+    // __kmp_ncores, as well as __kmp_nThreadsPerCore,
     // nCoresPerPkg, & nPackages.  Make sure all these vars are set
     // correctly, and return now if affinity is not enabled.
     //
-    __kmp_ht_enabled = (__kmp_nThreadsPerCore > 1);
     __kmp_ncores = nCores;
     if (__kmp_affinity_verbose) {
         char buf[KMP_AFFIN_MASK_PRINT_LEN];
@@ -1417,7 +1415,6 @@ __kmp_affinity_create_x2apicid_map(AddrUnsPair **address2os,
 
         __kmp_ncores = __kmp_xproc / __kmp_nThreadsPerCore;
         nPackages = (__kmp_xproc + nCoresPerPkg - 1) / nCoresPerPkg;
-        __kmp_ht_enabled = (__kmp_nThreadsPerCore > 1);
         if (__kmp_affinity_verbose) {
             KMP_INFORM(AffNotCapableUseLocCpuidL11, "KMP_AFFINITY");
             KMP_INFORM(AvailableOSProc, "KMP_AFFINITY", __kmp_avail_proc);
@@ -1517,7 +1514,6 @@ __kmp_affinity_create_x2apicid_map(AddrUnsPair **address2os,
     if (nApics == 1) {
         __kmp_ncores = nPackages = 1;
         __kmp_nThreadsPerCore = nCoresPerPkg = 1;
-        __kmp_ht_enabled = FALSE;
         if (__kmp_affinity_verbose) {
             char buf[KMP_AFFIN_MASK_PRINT_LEN];
             __kmp_affinity_print_mask(buf, KMP_AFFIN_MASK_PRINT_LEN, oldMask);
@@ -1625,7 +1621,7 @@ __kmp_affinity_create_x2apicid_map(AddrUnsPair **address2os,
 
     //
     // When affinity is off, this routine will still be called to set
-    // __kmp_ht_enabled, & __kmp_ncores, as well as __kmp_nThreadsPerCore,
+    // __kmp_ncores, as well as __kmp_nThreadsPerCore,
     // nCoresPerPkg, & nPackages.  Make sure all these vars are set
     // correctly, and return if affinity is not enabled.
     //
@@ -1635,8 +1631,6 @@ __kmp_affinity_create_x2apicid_map(AddrUnsPair **address2os,
     else {
         __kmp_nThreadsPerCore = 1;
     }
-    __kmp_ht_enabled = (__kmp_nThreadsPerCore > 1);
-
     nPackages = totals[pkgLevel];
 
     if (coreLevel >= 0) {
@@ -2134,7 +2128,6 @@ __kmp_affinity_create_cpuinfo_map(AddrUnsPair **address2os, int *line,
     if (num_avail == 1) {
         __kmp_ncores = 1;
         __kmp_nThreadsPerCore = nCoresPerPkg = nPackages = 1;
-        __kmp_ht_enabled = FALSE;
         if (__kmp_affinity_verbose) {
             if (! KMP_AFFINITY_CAPABLE()) {
                 KMP_INFORM(AffNotCapableUseCpuinfo, "KMP_AFFINITY");
@@ -2375,11 +2368,10 @@ __kmp_affinity_create_cpuinfo_map(AddrUnsPair **address2os, int *line,
 
     //
     // When affinity is off, this routine will still be called to set
-    // __kmp_ht_enabled, & __kmp_ncores, as well as __kmp_nThreadsPerCore,
+    // __kmp_ncores, as well as __kmp_nThreadsPerCore,
     // nCoresPerPkg, & nPackages.  Make sure all these vars are set
     // correctly, and return now if affinity is not enabled.
     //
-    __kmp_ht_enabled = (maxCt[threadIdIndex] > 1); // threads per core > 1
     __kmp_ncores = totals[coreIdIndex];
 
     if (__kmp_affinity_verbose) {

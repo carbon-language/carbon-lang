@@ -2579,11 +2579,9 @@ extern int        __kmp_bt_intervals;   /* number of monitor timestamp intervals
 #ifdef KMP_ADJUST_BLOCKTIME
 extern int        __kmp_zero_bt;        /* whether blocktime has been forced to zero */
 #endif /* KMP_ADJUST_BLOCKTIME */
-extern int        __kmp_ht_capable;     /* whether CPUs support Intel(R) Hyper-Threading Technology */
-extern int        __kmp_ht_enabled;     /* whether Intel(R) Hyper-Threading Technology is enabled in OS */
+#ifdef KMP_DFLT_NTH_CORES
 extern int        __kmp_ncores;         /* Number of physical procs in HT machine */
-extern int        __kmp_ht_log_per_phy; /* Maximum possible number of logical processors per package */
-extern int        __kmp_nThreadsPerCore;/* Number of hyperthreads per core in HT machine. */
+#endif
 extern int        __kmp_abort_delay;    /* Number of millisecs to delay on abort for VTune */
 
 extern int        __kmp_need_register_atfork_specified;

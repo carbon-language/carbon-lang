@@ -146,10 +146,9 @@ int          __kmp_bt_intervals = KMP_INTERVALS_FROM_BLOCKTIME( KMP_DEFAULT_BLOC
 #ifdef KMP_ADJUST_BLOCKTIME
 int               __kmp_zero_bt = FALSE;
 #endif /* KMP_ADJUST_BLOCKTIME */
-int            __kmp_ht_capable = FALSE;
-int            __kmp_ht_enabled = FALSE;
-int        __kmp_ht_log_per_phy = 1;
+#ifdef KMP_DFLT_NTH_CORES
 int                __kmp_ncores = 0;
+#endif
 int                 __kmp_chunk = 0;
 int           __kmp_abort_delay = 0;
 #if KMP_OS_LINUX && defined(KMP_TDATA_GTID)
