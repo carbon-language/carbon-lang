@@ -217,7 +217,7 @@ int __kmp_clock_function_param;
 
 #if KMP_AFFINITY_SUPPORTED
 
-# if KMP_OS_WINDOWS && KMP_ARCH_X86_64
+# if KMP_GROUP_AFFINITY
 
 int __kmp_num_proc_groups = 1;
 
@@ -226,7 +226,7 @@ kmp_GetActiveProcessorGroupCount_t __kmp_GetActiveProcessorGroupCount = NULL;
 kmp_GetThreadGroupAffinity_t __kmp_GetThreadGroupAffinity = NULL;
 kmp_SetThreadGroupAffinity_t __kmp_SetThreadGroupAffinity = NULL;
 
-# endif /* KMP_OS_WINDOWS && KMP_ARCH_X86_64 */
+# endif /* KMP_GROUP_AFFINITY */
 
 size_t   __kmp_affin_mask_size = 0;
 enum affinity_type __kmp_affinity_type = affinity_default;

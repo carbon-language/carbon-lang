@@ -259,11 +259,11 @@ FTN_GET_AFFINITY_MAX_PROC( void )
             return 0;
         }
 
-    #if KMP_OS_WINDOWS && KMP_ARCH_X86_64
+    #if KMP_GROUP_AFFINITY
         if ( __kmp_num_proc_groups <= 1 ) {
             return (int)KMP_CPU_SETSIZE;
         }
-    #endif /* KMP_OS_WINDOWS && KMP_ARCH_X86_64 */
+    #endif /* KMP_GROUP_AFFINITY */
         return __kmp_xproc;
     #endif
 }

@@ -2192,11 +2192,11 @@ __kmp_parse_affinity_env( char const * name, char const * value,
             } else if (__kmp_match_str("node", buf, (const char **)&next)) {
                 set_gran( affinity_gran_node, -1 );
                 buf = next;
-# if KMP_OS_WINDOWS && KMP_ARCH_X86_64
+# if KMP_GROUP_AFFINITY
             } else if (__kmp_match_str("group", buf, (const char **)&next)) {
                 set_gran( affinity_gran_group, -1 );
                 buf = next;
-# endif /* KMP_OS_WINDOWS && KMP_ARCH_X86_64 */
+# endif /* KMP_GROUP AFFINITY */
             } else if ((*buf >= '0') && (*buf <= '9')) {
                 int n;
                 next = buf;
@@ -2430,11 +2430,11 @@ __kmp_stg_print_affinity( kmp_str_buf_t * buffer, char const * name, void * data
             case affinity_gran_node:
                 __kmp_str_buf_print( buffer, "%s", "granularity=node,");
                 break;
-# if KMP_OS_WINDOWS && KMP_ARCH_X86_64
+# if KMP_GROUP_AFFINITY
             case affinity_gran_group:
                 __kmp_str_buf_print( buffer, "%s", "granularity=group,");
                 break;
-# endif /* KMP_OS_WINDOWS && KMP_ARCH_X86_64 */
+# endif /* KMP_GROUP_AFFINITY */
         }
         if ( __kmp_affinity_dups ) {
             __kmp_str_buf_print( buffer, "%s,", "duplicates");
@@ -3103,11 +3103,11 @@ __kmp_stg_parse_topology_method( char const * name, char const * value,
       || __kmp_str_match( "cpuinfo", 5, value )) {
         __kmp_affinity_top_method = affinity_top_method_cpuinfo;
     }
-# if KMP_OS_WINDOWS && KMP_ARCH_X86_64
+# if KMP_GROUP_AFFINITY
     else if ( __kmp_str_match( "group", 1, value ) ) {
         __kmp_affinity_top_method = affinity_top_method_group;
     }
-# endif /* KMP_OS_WINDOWS && KMP_ARCH_X86_64 */
+# endif /* KMP_GROUP_AFFINITY */
     else if ( __kmp_str_match( "flat", 1, value ) ) {
         __kmp_affinity_top_method = affinity_top_method_flat;
     }
@@ -3145,11 +3145,11 @@ __kmp_stg_print_topology_method( kmp_str_buf_t * buffer, char const * name,
         value = "cpuinfo";
         break;
 
-#  if KMP_OS_WINDOWS && KMP_ARCH_X86_64
+#  if KMP_GROUP_AFFINITY
         case affinity_top_method_group:
         value = "group";
         break;
-#  endif /* KMP_OS_WINDOWS && KMP_ARCH_X86_64 */
+#  endif /* KMP_GROUP_AFFINITY */
 
         case affinity_top_method_flat:
         value = "flat";
@@ -5106,7 +5106,7 @@ __kmp_env_initialize( char const * string ) {
 
         if ( KMP_AFFINITY_CAPABLE() ) {
 
-# if KMP_OS_WINDOWS && KMP_ARCH_X86_64
+# if KMP_GROUP_AFFINITY
 
             //
             // Handle the Win 64 group affinity stuff if there are multiple
@@ -5180,16 +5180,16 @@ __kmp_env_initialize( char const * string ) {
             }
             else
 
-# endif /* KMP_OS_WINDOWS && KMP_ARCH_X86_64 */
+# endif /* KMP_GROUP_AFFINITY */
 
             {
                 if ( __kmp_affinity_respect_mask == affinity_respect_mask_default ) {
-# if KMP_OS_WINDOWS && KMP_ARCH_X86_64
+# if KMP_GROUP_AFFINITY
                     if ( __kmp_num_proc_groups > 1 ) {
                         __kmp_affinity_respect_mask = FALSE;
                     }
                     else
-# endif /* KMP_OS_WINDOWS && KMP_ARCH_X86_64 */
+# endif /* KMP_GROUP_AFFINITY */
                     {
                         __kmp_affinity_respect_mask = TRUE;
                     }

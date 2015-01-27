@@ -85,7 +85,7 @@ __kmp_affinity_entire_machine_mask(kmp_affin_mask_t *mask)
 {
     KMP_CPU_ZERO(mask);
 
-# if KMP_OS_WINDOWS && KMP_ARCH_X86_64
+# if KMP_GROUP_AFFINITY
 
     if (__kmp_num_proc_groups > 1) {
         int group;
@@ -100,7 +100,7 @@ __kmp_affinity_entire_machine_mask(kmp_affin_mask_t *mask)
     }
     else
 
-# endif /* KMP_OS_WINDOWS && KMP_ARCH_X86_64 */
+# endif /* KMP_GROUP_AFFINITY */
 
     {
         int proc;
@@ -641,7 +641,7 @@ __kmp_affinity_create_flat_map(AddrUnsPair **address2os,
 }
 
 
-# if KMP_OS_WINDOWS && KMP_ARCH_X86_64
+# if KMP_GROUP_AFFINITY
 
 //
 // If multiple Windows* OS processor groups exist, we can create a 2-level
@@ -723,7 +723,7 @@ __kmp_affinity_create_proc_group_map(AddrUnsPair **address2os,
     return 2;
 }
 
-# endif /* KMP_OS_WINDOWS && KMP_ARCH_X86_64 */
+# endif /* KMP_GROUP_AFFINITY */
 
 
 # if KMP_ARCH_X86 || KMP_ARCH_X86_64
@@ -3541,7 +3541,7 @@ __kmp_aux_affinity_initialize(void)
 
 # endif /* KMP_OS_LINUX */
 
-# if KMP_OS_WINDOWS && KMP_ARCH_X86_64
+# if KMP_GROUP_AFFINITY
 
         if ((depth < 0) && (__kmp_num_proc_groups > 1)) {
             if (__kmp_affinity_verbose) {
@@ -3552,7 +3552,7 @@ __kmp_aux_affinity_initialize(void)
             KMP_ASSERT(depth != 0);
         }
 
-# endif /* KMP_OS_WINDOWS && KMP_ARCH_X86_64 */
+# endif /* KMP_GROUP_AFFINITY */
 
         if (depth < 0) {
             if (__kmp_affinity_verbose && (msg_id != kmp_i18n_null)) {
@@ -3678,7 +3678,7 @@ __kmp_aux_affinity_initialize(void)
         }
     }
 
-# if KMP_OS_WINDOWS && KMP_ARCH_X86_64
+# if KMP_GROUP_AFFINITY
 
     else if (__kmp_affinity_top_method == affinity_top_method_group) {
         if (__kmp_affinity_verbose) {
@@ -3693,7 +3693,7 @@ __kmp_aux_affinity_initialize(void)
         }
     }
 
-# endif /* KMP_OS_WINDOWS && KMP_ARCH_X86_64 */
+# endif /* KMP_GROUP_AFFINITY */
 
     else if (__kmp_affinity_top_method == affinity_top_method_flat) {
         if (__kmp_affinity_verbose) {
@@ -4019,7 +4019,7 @@ __kmp_affinity_set_init_mask(int gtid, int isa_root)
     {
         if ((__kmp_affinity_type == affinity_none) || (__kmp_affinity_type == affinity_balanced)
           ) {
-# if KMP_OS_WINDOWS && KMP_ARCH_X86_64
+# if KMP_GROUP_AFFINITY
             if (__kmp_num_proc_groups > 1) {
                 return;
             }
@@ -4038,7 +4038,7 @@ __kmp_affinity_set_init_mask(int gtid, int isa_root)
     else {
         if ((! isa_root)
           || (__kmp_nested_proc_bind.bind_types[0] == proc_bind_false)) {
-#  if KMP_OS_WINDOWS && KMP_ARCH_X86_64
+#  if KMP_GROUP_AFFINITY
             if (__kmp_num_proc_groups > 1) {
                 return;
             }
@@ -4206,11 +4206,11 @@ __kmp_aux_set_affinity(void **mask)
                 KMP_FATAL(AffinityInvalidMask, "kmp_set_affinity");
             }
 
-# if KMP_OS_WINDOWS && KMP_ARCH_X86_64
+# if KMP_GROUP_AFFINITY
             if (__kmp_get_proc_group((kmp_affin_mask_t *)(*mask)) < 0) {
                 KMP_FATAL(AffinityInvalidMask, "kmp_set_affinity");
             }
-# endif /* KMP_OS_WINDOWS && KMP_ARCH_X86_64 */
+# endif /* KMP_GROUP_AFFINITY */
 
         }
     }

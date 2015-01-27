@@ -134,9 +134,9 @@ HMODULE ntdll = NULL;
 
 /* End of NtQuerySystemInformation()-related code */
 
-#if KMP_ARCH_X86_64
+#if KMP_GROUP_AFFINITY
 static HMODULE kernel32 = NULL;
-#endif /* KMP_ARCH_X86_64 */
+#endif /* KMP_GROUP_AFFINITY */
 
 /* ----------------------------------------------------------------------------------- */
 /* ----------------------------------------------------------------------------------- */
@@ -547,7 +547,7 @@ __kmp_gtid_get_specific()
 /* ------------------------------------------------------------------------ */
 /* ------------------------------------------------------------------------ */
 
-#if KMP_ARCH_X86_64
+#if KMP_GROUP_AFFINITY
 
 //
 // Only 1 DWORD in the mask should have any procs set.
@@ -570,13 +570,13 @@ __kmp_get_proc_group( kmp_affin_mask_t const *mask )
     return group;
 }
 
-#endif /* KMP_ARCH_X86_64 */
+#endif /* KMP_GROUP_AFFINITY */
 
 int
 __kmp_set_system_affinity( kmp_affin_mask_t const *mask, int abort_on_error )
 {
 
-#if KMP_ARCH_X86_64
+#if KMP_GROUP_AFFINITY
 
     if (__kmp_num_proc_groups > 1) {
         //
@@ -615,7 +615,7 @@ __kmp_set_system_affinity( kmp_affin_mask_t const *mask, int abort_on_error )
     }
     else
 
-#endif /* KMP_ARCH_X86_64 */
+#endif /* KMP_GROUP_AFFINITY */
 
     {
         if (!SetThreadAffinityMask( GetCurrentThread(), *mask )) {
@@ -638,7 +638,7 @@ int
 __kmp_get_system_affinity( kmp_affin_mask_t *mask, int abort_on_error )
 {
 
-#if KMP_ARCH_X86_64
+#if KMP_GROUP_AFFINITY
 
     if (__kmp_num_proc_groups > 1) {
         KMP_CPU_ZERO(mask);
@@ -667,7 +667,7 @@ __kmp_get_system_affinity( kmp_affin_mask_t *mask, int abort_on_error )
     }
     else
 
-#endif /* KMP_ARCH_X86_64 */
+#endif /* KMP_GROUP_AFFINITY */
 
     {
         kmp_affin_mask_t newMask, sysMask, retval;
@@ -718,7 +718,7 @@ void
 __kmp_affinity_bind_thread( int proc )
 {
 
-#if KMP_ARCH_X86_64
+#if KMP_GROUP_AFFINITY
 
     if (__kmp_num_proc_groups > 1) {
         //
@@ -747,7 +747,7 @@ __kmp_affinity_bind_thread( int proc )
     }
     else
 
-#endif /* KMP_ARCH_X86_64 */
+#endif /* KMP_GROUP_AFFINITY */
 
     {
         kmp_affin_mask_t mask;
@@ -764,7 +764,7 @@ __kmp_affinity_determine_capable( const char *env_var )
     // All versions of Windows* OS (since Win '95) support SetThreadAffinityMask().
     //
 
-#if KMP_ARCH_X86_64
+#if KMP_GROUP_AFFINITY
     __kmp_affin_mask_size = __kmp_num_proc_groups * sizeof(kmp_affin_mask_t);
 #else
     __kmp_affin_mask_size = sizeof(kmp_affin_mask_t);
@@ -920,7 +920,7 @@ __kmp_runtime_initialize( void )
     }
     KMP_DEBUG_ASSERT( NtQuerySystemInformation != NULL );
 
-#if KMP_ARCH_X86_64
+#if KMP_GROUP_AFFINITY
     //
     // Load kernel32.dll.
     // Same caveat - must use full system path name.
@@ -985,7 +985,7 @@ __kmp_runtime_initialize( void )
 #else
     GetSystemInfo( & info );
     __kmp_xproc = info.dwNumberOfProcessors;
-#endif // KMP_ARCH_X86_64
+#endif /* KMP_GROUP_AFFINITY */
 
     //
     // If the OS said there were 0 procs, take a guess and use a value of 2.

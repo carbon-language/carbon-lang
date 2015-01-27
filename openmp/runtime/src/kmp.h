@@ -547,7 +547,7 @@ typedef unsigned char kmp_affin_mask_t;
 // Intel(R) 64 it is 8 bytes times the number of processor groups.
 //
 
-#  if KMP_ARCH_X86_64
+#  if KMP_GROUP_AFFINITY
 
 // GROUP_AFFINITY is already defined for _MSC_VER>=1600 (VS2010 and later).
 #   if _MSC_VER < 1600
@@ -644,7 +644,7 @@ typedef DWORD kmp_affin_mask_t; /* for compatibility with older winbase.h */
 #   define KMP_CPU_COMPLEMENT(mask) (*(mask) = ~*(mask))
 #   define KMP_CPU_UNION(dest, src) (*(dest) |= *(src))
 
-#  endif /* KMP_ARCH_X86 */
+#  endif /* KMP_GROUP_AFFINITY */
 
 # endif /* KMP_OS_WINDOWS */
 
@@ -690,13 +690,13 @@ enum affinity_gran {
     affinity_gran_core,
     affinity_gran_package,
     affinity_gran_node,
-#if KMP_OS_WINDOWS && KMP_ARCH_X86_64
+#if KMP_GROUP_AFFINITY
     //
     // The "group" granularity isn't necesssarily coarser than all of the
     // other levels, but we put it last in the enum.
     //
     affinity_gran_group,
-#endif /* KMP_OS_WINDOWS && KMP_ARCH_X86_64 */
+#endif /* KMP_GROUP_AFFINITY */
     affinity_gran_default
 };
 
@@ -707,9 +707,9 @@ enum affinity_top_method {
     affinity_top_method_x2apicid,
 #endif /* KMP_ARCH_X86 || KMP_ARCH_X86_64 */
     affinity_top_method_cpuinfo, // KMP_CPUINFO_FILE is usable on Windows* OS, too
-#if KMP_OS_WINDOWS && KMP_ARCH_X86_64
+#if KMP_GROUP_AFFINITY
     affinity_top_method_group,
-#endif /* KMP_OS_WINDOWS && KMP_ARCH_X86_64 */
+#endif /* KMP_GROUP_AFFINITY */
     affinity_top_method_flat,
     affinity_top_method_default
 };
