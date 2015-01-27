@@ -258,11 +258,10 @@ bool DenseMapInfo<CallValue>::isEqual(CallValue LHS, CallValue RHS) {
 }
 
 //===----------------------------------------------------------------------===//
-// EarlyCSE pass.
+// EarlyCSE implementation
 //===----------------------------------------------------------------------===//
 
 namespace {
-
 /// \brief A simple and fast domtree-based CSE pass.
 ///
 /// This pass does a simple depth-first walk over the dominator tree,
@@ -270,13 +269,14 @@ namespace {
 /// canonicalize things as it goes. It is intended to be fast and catch obvious
 /// cases so that instcombine and other passes are more effective. It is
 /// expected that a later pass of GVN will catch the interesting/hard cases.
-class EarlyCSE : public FunctionPass {
+class EarlyCSE {
 public:
+  Function &F;
   const DataLayout *DL;
-  const TargetLibraryInfo *TLI;
-  const TargetTransformInfo *TTI;
-  DominatorTree *DT;
-  AssumptionCache *AC;
+  const TargetLibraryInfo &TLI;
+  const TargetTransformInfo &TTI;
+  DominatorTree &DT;
+  AssumptionCache &AC;
   typedef RecyclingAllocator<
       BumpPtrAllocator, ScopedHashTableVal<SimpleValue, Value *>> AllocatorTy;
   typedef ScopedHashTable<SimpleValue, Value *, DenseMapInfo<SimpleValue>,
@@ -288,7 +288,7 @@ public:
   /// As we walk down the domtree, we look to see if instructions are in this:
   /// if so, we replace them with what we find, otherwise we insert them so
   /// that dominated values can succeed in their lookup.
-  ScopedHTType *AvailableValues;
+  ScopedHTType AvailableValues;
 
   /// \brief A scoped hash table of the current values of loads.
   ///
@@ -304,24 +304,26 @@ public:
       LoadMapAllocator;
   typedef ScopedHashTable<Value *, std::pair<Value *, unsigned>,
                           DenseMapInfo<Value *>, LoadMapAllocator> LoadHTType;
-  LoadHTType *AvailableLoads;
+  LoadHTType AvailableLoads;
 
   /// \brief A scoped hash table of the current values of read-only call
   /// values.
   ///
   /// It uses the same generation count as loads.
   typedef ScopedHashTable<CallValue, std::pair<Value *, unsigned>> CallHTType;
-  CallHTType *AvailableCalls;
+  CallHTType AvailableCalls;
 
   /// \brief This is the current generation of the memory value.
   unsigned CurrentGeneration;
 
-  static char ID;
-  explicit EarlyCSE() : FunctionPass(ID) {
-    initializeEarlyCSEPass(*PassRegistry::getPassRegistry());
+  /// \brief Set up the EarlyCSE runner for a particular function.
+  EarlyCSE(Function &F, const DataLayout *DL, const TargetLibraryInfo &TLI,
+           const TargetTransformInfo &TTI, DominatorTree &DT,
+           AssumptionCache &AC)
+      : F(F), DL(DL), TLI(TLI), TTI(TTI), DT(DT), AC(AC), CurrentGeneration(0) {
   }
 
-  bool runOnFunction(Function &F) override;
+  bool run();
 
 private:
   // Almost a POD, but needs to call the constructors for the scoped hash
@@ -329,10 +331,10 @@ private:
   // scope gets popped when the NodeScope is destroyed.
   class NodeScope {
   public:
-    NodeScope(ScopedHTType *availableValues, LoadHTType *availableLoads,
-              CallHTType *availableCalls)
-        : Scope(*availableValues), LoadScope(*availableLoads),
-          CallScope(*availableCalls) {}
+    NodeScope(ScopedHTType &AvailableValues, LoadHTType &AvailableLoads,
+              CallHTType &AvailableCalls)
+        : Scope(AvailableValues), LoadScope(AvailableLoads),
+          CallScope(AvailableCalls) {}
 
   private:
     NodeScope(const NodeScope &) LLVM_DELETED_FUNCTION;
@@ -349,11 +351,11 @@ private:
   // children do not need to be store spearately.
   class StackNode {
   public:
-    StackNode(ScopedHTType *availableValues, LoadHTType *availableLoads,
-              CallHTType *availableCalls, unsigned cg, DomTreeNode *n,
+    StackNode(ScopedHTType &AvailableValues, LoadHTType &AvailableLoads,
+              CallHTType &AvailableCalls, unsigned cg, DomTreeNode *n,
               DomTreeNode::iterator child, DomTreeNode::iterator end)
         : CurrentGeneration(cg), ChildGeneration(cg), Node(n), ChildIter(child),
-          EndIter(end), Scopes(availableValues, availableLoads, availableCalls),
+          EndIter(end), Scopes(AvailableValues, AvailableLoads, AvailableCalls),
           Processed(false) {}
 
     // Accessors.
@@ -389,14 +391,14 @@ private:
   /// stores and intrinsic loads and stores defined by the target.
   class ParseMemoryInst {
   public:
-    ParseMemoryInst(Instruction *Inst, const TargetTransformInfo *TTI)
+    ParseMemoryInst(Instruction *Inst, const TargetTransformInfo &TTI)
         : Load(false), Store(false), Vol(false), MayReadFromMemory(false),
           MayWriteToMemory(false), MatchingId(-1), Ptr(nullptr) {
       MayReadFromMemory = Inst->mayReadFromMemory();
       MayWriteToMemory = Inst->mayWriteToMemory();
       if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(Inst)) {
         MemIntrinsicInfo Info;
-        if (!TTI->getTgtMemIntrinsic(II, Info))
+        if (!TTI.getTgtMemIntrinsic(II, Info))
           return;
         if (Info.NumMemRefs == 1) {
           Store = Info.WriteMem;
@@ -445,35 +447,17 @@ private:
 
   bool processNode(DomTreeNode *Node);
 
-  void getAnalysisUsage(AnalysisUsage &AU) const override {
-    AU.addRequired<AssumptionCacheTracker>();
-    AU.addRequired<DominatorTreeWrapperPass>();
-    AU.addRequired<TargetLibraryInfoWrapperPass>();
-    AU.addRequired<TargetTransformInfo>();
-    AU.setPreservesCFG();
-  }
-
   Value *getOrCreateResult(Value *Inst, Type *ExpectedType) const {
     if (LoadInst *LI = dyn_cast<LoadInst>(Inst))
       return LI;
     else if (StoreInst *SI = dyn_cast<StoreInst>(Inst))
       return SI->getValueOperand();
     assert(isa<IntrinsicInst>(Inst) && "Instruction not supported");
-    return TTI->getOrCreateResultFromMemIntrinsic(cast<IntrinsicInst>(Inst),
-                                                  ExpectedType);
+    return TTI.getOrCreateResultFromMemIntrinsic(cast<IntrinsicInst>(Inst),
+                                                 ExpectedType);
   }
 };
 }
-
-char EarlyCSE::ID = 0;
-
-FunctionPass *llvm::createEarlyCSEPass() { return new EarlyCSE(); }
-
-INITIALIZE_PASS_BEGIN(EarlyCSE, "early-cse", "Early CSE", false, false)
-INITIALIZE_PASS_DEPENDENCY(AssumptionCacheTracker)
-INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass)
-INITIALIZE_PASS_DEPENDENCY(TargetLibraryInfoWrapperPass)
-INITIALIZE_PASS_END(EarlyCSE, "early-cse", "Early CSE", false, false)
 
 bool EarlyCSE::processNode(DomTreeNode *Node) {
   BasicBlock *BB = Node->getBlock();
@@ -501,7 +485,7 @@ bool EarlyCSE::processNode(DomTreeNode *Node) {
     Instruction *Inst = I++;
 
     // Dead instructions should just be removed.
-    if (isInstructionTriviallyDead(Inst, TLI)) {
+    if (isInstructionTriviallyDead(Inst, &TLI)) {
       DEBUG(dbgs() << "EarlyCSE DCE: " << *Inst << '\n');
       Inst->eraseFromParent();
       Changed = true;
@@ -520,7 +504,7 @@ bool EarlyCSE::processNode(DomTreeNode *Node) {
 
     // If the instruction can be simplified (e.g. X+0 = X) then replace it with
     // its simpler value.
-    if (Value *V = SimplifyInstruction(Inst, DL, TLI, DT, AC)) {
+    if (Value *V = SimplifyInstruction(Inst, DL, &TLI, &DT, &AC)) {
       DEBUG(dbgs() << "EarlyCSE Simplify: " << *Inst << "  to: " << *V << '\n');
       Inst->replaceAllUsesWith(V);
       Inst->eraseFromParent();
@@ -532,7 +516,7 @@ bool EarlyCSE::processNode(DomTreeNode *Node) {
     // If this is a simple instruction that we can value number, process it.
     if (SimpleValue::canHandle(Inst)) {
       // See if the instruction has an available value.  If so, use it.
-      if (Value *V = AvailableValues->lookup(Inst)) {
+      if (Value *V = AvailableValues.lookup(Inst)) {
         DEBUG(dbgs() << "EarlyCSE CSE: " << *Inst << "  to: " << *V << '\n');
         Inst->replaceAllUsesWith(V);
         Inst->eraseFromParent();
@@ -542,7 +526,7 @@ bool EarlyCSE::processNode(DomTreeNode *Node) {
       }
 
       // Otherwise, just remember that this value is available.
-      AvailableValues->insert(Inst, Inst);
+      AvailableValues.insert(Inst, Inst);
       continue;
     }
 
@@ -558,7 +542,7 @@ bool EarlyCSE::processNode(DomTreeNode *Node) {
       // If we have an available version of this load, and if it is the right
       // generation, replace this instruction.
       std::pair<Value *, unsigned> InVal =
-          AvailableLoads->lookup(MemInst.getPtr());
+          AvailableLoads.lookup(MemInst.getPtr());
       if (InVal.first != nullptr && InVal.second == CurrentGeneration) {
         Value *Op = getOrCreateResult(InVal.first, Inst->getType());
         if (Op != nullptr) {
@@ -574,8 +558,8 @@ bool EarlyCSE::processNode(DomTreeNode *Node) {
       }
 
       // Otherwise, remember that we have this instruction.
-      AvailableLoads->insert(MemInst.getPtr(), std::pair<Value *, unsigned>(
-                                                   Inst, CurrentGeneration));
+      AvailableLoads.insert(MemInst.getPtr(), std::pair<Value *, unsigned>(
+                                                  Inst, CurrentGeneration));
       LastStore = nullptr;
       continue;
     }
@@ -593,7 +577,7 @@ bool EarlyCSE::processNode(DomTreeNode *Node) {
     if (CallValue::canHandle(Inst)) {
       // If we have an available version of this call, and if it is the right
       // generation, replace this instruction.
-      std::pair<Value *, unsigned> InVal = AvailableCalls->lookup(Inst);
+      std::pair<Value *, unsigned> InVal = AvailableCalls.lookup(Inst);
       if (InVal.first != nullptr && InVal.second == CurrentGeneration) {
         DEBUG(dbgs() << "EarlyCSE CSE CALL: " << *Inst
                      << "  to: " << *InVal.first << '\n');
@@ -606,7 +590,7 @@ bool EarlyCSE::processNode(DomTreeNode *Node) {
       }
 
       // Otherwise, remember that we have this instruction.
-      AvailableCalls->insert(
+      AvailableCalls.insert(
           Inst, std::pair<Value *, unsigned>(Inst, CurrentGeneration));
       continue;
     }
@@ -638,8 +622,8 @@ bool EarlyCSE::processNode(DomTreeNode *Node) {
         // version of the pointer.  It is safe to forward from volatile stores
         // to non-volatile loads, so we don't have to check for volatility of
         // the store.
-        AvailableLoads->insert(MemInst.getPtr(), std::pair<Value *, unsigned>(
-                                                     Inst, CurrentGeneration));
+        AvailableLoads.insert(MemInst.getPtr(), std::pair<Value *, unsigned>(
+                                                    Inst, CurrentGeneration));
 
         // Remember that this was the last store we saw for DSE.
         if (!MemInst.isVolatile())
@@ -651,10 +635,7 @@ bool EarlyCSE::processNode(DomTreeNode *Node) {
   return Changed;
 }
 
-bool EarlyCSE::runOnFunction(Function &F) {
-  if (skipOptnoneFunction(F))
-    return false;
-
+bool EarlyCSE::run() {
   // Note, deque is being used here because there is significant performance
   // gains over vector when the container becomes very large due to the
   // specific access patterns. For more information see the mailing list
@@ -662,28 +643,12 @@ bool EarlyCSE::runOnFunction(Function &F) {
   // http://lists.cs.uiuc.edu/pipermail/llvm-commits/Week-of-Mon-20120116/135228.html
   std::deque<StackNode *> nodesToProcess;
 
-  DataLayoutPass *DLP = getAnalysisIfAvailable<DataLayoutPass>();
-  DL = DLP ? &DLP->getDataLayout() : nullptr;
-  TLI = &getAnalysis<TargetLibraryInfoWrapperPass>().getTLI();
-  TTI = &getAnalysis<TargetTransformInfo>();
-  DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
-  AC = &getAnalysis<AssumptionCacheTracker>().getAssumptionCache(F);
-
-  // Tables that the pass uses when walking the domtree.
-  ScopedHTType AVTable;
-  AvailableValues = &AVTable;
-  LoadHTType LoadTable;
-  AvailableLoads = &LoadTable;
-  CallHTType CallTable;
-  AvailableCalls = &CallTable;
-
-  CurrentGeneration = 0;
   bool Changed = false;
 
   // Process the root node.
   nodesToProcess.push_back(new StackNode(
       AvailableValues, AvailableLoads, AvailableCalls, CurrentGeneration,
-      DT->getRootNode(), DT->getRootNode()->begin(), DT->getRootNode()->end()));
+      DT.getRootNode(), DT.getRootNode()->begin(), DT.getRootNode()->end()));
 
   // Save the current generation.
   unsigned LiveOutGeneration = CurrentGeneration;
@@ -723,3 +688,57 @@ bool EarlyCSE::runOnFunction(Function &F) {
 
   return Changed;
 }
+
+namespace {
+/// \brief A simple and fast domtree-based CSE pass.
+///
+/// This pass does a simple depth-first walk over the dominator tree,
+/// eliminating trivially redundant instructions and using instsimplify to
+/// canonicalize things as it goes. It is intended to be fast and catch obvious
+/// cases so that instcombine and other passes are more effective. It is
+/// expected that a later pass of GVN will catch the interesting/hard cases.
+class EarlyCSELegacyPass : public FunctionPass {
+public:
+  static char ID;
+
+  EarlyCSELegacyPass() : FunctionPass(ID) {
+    initializeEarlyCSELegacyPassPass(*PassRegistry::getPassRegistry());
+  }
+
+  bool runOnFunction(Function &F) override {
+    if (skipOptnoneFunction(F))
+      return false;
+
+    DataLayoutPass *DLP = getAnalysisIfAvailable<DataLayoutPass>();
+    auto *DL = DLP ? &DLP->getDataLayout() : nullptr;
+    auto &TLI = getAnalysis<TargetLibraryInfoWrapperPass>().getTLI();
+    auto &TTI = getAnalysis<TargetTransformInfo>();
+    auto &DT = getAnalysis<DominatorTreeWrapperPass>().getDomTree();
+    auto &AC = getAnalysis<AssumptionCacheTracker>().getAssumptionCache(F);
+
+    EarlyCSE CSE(F, DL, TLI, TTI, DT, AC);
+
+    return CSE.run();
+  }
+
+  void getAnalysisUsage(AnalysisUsage &AU) const override {
+    AU.addRequired<AssumptionCacheTracker>();
+    AU.addRequired<DominatorTreeWrapperPass>();
+    AU.addRequired<TargetLibraryInfoWrapperPass>();
+    AU.addRequired<TargetTransformInfo>();
+    AU.setPreservesCFG();
+  }
+};
+}
+
+char EarlyCSELegacyPass::ID = 0;
+
+FunctionPass *llvm::createEarlyCSEPass() { return new EarlyCSELegacyPass(); }
+
+INITIALIZE_PASS_BEGIN(EarlyCSELegacyPass, "early-cse", "Early CSE", false,
+                      false)
+INITIALIZE_AG_DEPENDENCY(TargetTransformInfo)
+INITIALIZE_PASS_DEPENDENCY(AssumptionCacheTracker)
+INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass)
+INITIALIZE_PASS_DEPENDENCY(TargetLibraryInfoWrapperPass)
+INITIALIZE_PASS_END(EarlyCSELegacyPass, "early-cse", "Early CSE", false, false)
