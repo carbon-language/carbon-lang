@@ -5,12 +5,16 @@
 # CHECK: baddu $2, $2, $3             # encoding: [0x70,0x43,0x10,0x28]
 # CHECK: bbit0 $19, 22, foo           # encoding: [0xca,0x76,A,A]
 # CHECK: bbit032 $fp, 11, foo         # encoding: [0xdb,0xcb,A,A]
+# CHECK: bbit032 $8, 10, foo          # encoding: [0xd9,0x0a,A,A]
 # CHECK: bbit1 $3, 31, foo            # encoding: [0xe8,0x7f,A,A]
 # CHECK: bbit132 $24, 10, foo         # encoding: [0xfb,0x0a,A,A]
+# CHECK: bbit132 $14, 14, foo         # encoding: [0xf9,0xce,A,A]
 # CHECK: cins  $25, $10, 22, 2        # encoding: [0x71,0x59,0x15,0xb2]
 # CHECK: cins  $9, $9, 17, 29         # encoding: [0x71,0x29,0xec,0x72]
 # CHECK: cins32 $15, $2, 18, 8        # encoding: [0x70,0x4f,0x44,0xb3]
 # CHECK: cins32 $22, $22, 9, 22       # encoding: [0x72,0xd6,0xb2,0x73]
+# CHECK: cins32 $24, $ra, 0, 31       # encoding: [0x73,0xf8,0xf8,0x33]
+# CHECK: cins32 $15, $15, 5, 5        # encoding: [0x71,0xef,0x29,0x73]
 # CHECK: dmul  $9, $6, $7             # encoding: [0x70,0xc7,0x48,0x03]
 # CHECK: dmul  $19, $24, $25          # encoding: [0x73,0x19,0x98,0x03]
 # CHECK: dmul  $9, $9, $6             # encoding: [0x71,0x26,0x48,0x03]
@@ -22,6 +26,8 @@
 # CHECK: exts  $15, $15, 17, 6        # encoding: [0x71,0xef,0x34,0x7a]
 # CHECK: exts32 $4, $13, 10, 8        # encoding: [0x71,0xa4,0x42,0xbb]
 # CHECK: exts32 $15, $15, 11, 20      # encoding: [0x71,0xef,0xa2,0xfb]
+# CHECK: exts32 $7, $4, 22, 9         # encoding: [0x70,0x87,0x4d,0xbb]
+# CHECK: exts32 $25, $25, 5, 25       # encoding: [0x73,0x39,0xc9,0x7b]
 # CHECK: mtm0  $15                    # encoding: [0x71,0xe0,0x00,0x08]
 # CHECK: mtm1  $16                    # encoding: [0x72,0x00,0x00,0x0c]
 # CHECK: mtm2  $17                    # encoding: [0x72,0x20,0x00,0x0d]
@@ -56,12 +62,16 @@ foo:
   baddu $2, $3
   bbit0 $19, 22, foo
   bbit032 $30, 11, foo
+  bbit0 $8, 42, foo
   bbit1 $3, 31, foo
   bbit132 $24, 10, foo
+  bbit1 $14, 46, foo
   cins  $25, $10, 22, 2
   cins  $9, 17, 29
   cins32 $15, $2, 18, 8
   cins32 $22, 9, 22
+  cins  $24, $31, 32, 31
+  cins  $15, 37, 5
   dmul  $9, $6, $7
   dmul  $19, $24, $25
   dmul  $9, $6
@@ -73,6 +83,8 @@ foo:
   exts  $15, 17, 6
   exts32 $4, $13, 10, 8
   exts32 $15, 11, 20
+  exts  $7, $4, 54, 9
+  exts  $25, 37, 25
   mtm0  $15
   mtm1  $16
   mtm2  $17
