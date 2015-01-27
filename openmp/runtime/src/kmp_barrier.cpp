@@ -734,7 +734,11 @@ __kmp_hierarchical_barrier_gather(enum barrier_type bt, kmp_info_t *this_thr,
     register kmp_info_t **other_threads = team->t.t_threads;
     register kmp_uint64 new_state;
 
-    if (this_thr->th.th_team->t.t_level == 1) thr_bar->use_oncore_barrier = 1;
+    int level = team->t.t_level;
+    if (other_threads[0]->th.th_teams_microtask)    // are we inside the teams construct?
+        if (this_thr->th.th_teams_size.nteams > 1)
+            ++level; // level was not increased in teams construct for team_of_masters
+    if (level == 1) thr_bar->use_oncore_barrier = 1;
     else thr_bar->use_oncore_barrier = 0; // Do not use oncore barrier when nested
 
     KA_TRACE(20, ("__kmp_hierarchical_barrier_gather: T#%d(%d:%d) enter for barrier type %d\n",
@@ -834,9 +838,6 @@ __kmp_hierarchical_barrier_gather(enum barrier_type bt, kmp_info_t *this_thr,
         KA_TRACE(20, ("__kmp_hierarchical_barrier_gather: T#%d(%d:%d) set team %d arrived(%p) = %u\n",
                       gtid, team->t.t_id, tid, team->t.t_id, &team->t.t_bar[bt].b_arrived, team->t.t_bar[bt].b_arrived));
     }
-    // If nested, but outer level is top-level, resume use of oncore optimization
-    if (this_thr->th.th_team->t.t_level <=2) thr_bar->use_oncore_barrier = 1;
-    else thr_bar->use_oncore_barrier = 0;
     // Is the team access below unsafe or just technically invalid?
     KA_TRACE(20, ("__kmp_hierarchical_barrier_gather: T#%d(%d:%d) exit for barrier type %d\n",
                   gtid, team->t.t_id, tid, bt));
@@ -899,8 +900,15 @@ __kmp_hierarchical_barrier_release(enum barrier_type bt, kmp_info_t *this_thr, i
         KMP_MB();  // Flush all pending memory write invalidates.
     }
 
-    if (this_thr->th.th_team->t.t_level <= 1) thr_bar->use_oncore_barrier = 1;
-    else thr_bar->use_oncore_barrier = 0;
+    int level = team->t.t_level;
+    if (team->t.t_threads[0]->th.th_teams_microtask ) {    // are we inside the teams construct?
+        if (team->t.t_pkfn != (microtask_t)__kmp_teams_master && this_thr->th.th_teams_level == level)
+            ++level; // level was not increased in teams construct for team_of_workers
+        if( this_thr->th.th_teams_size.nteams > 1 )
+            ++level; // level was not increased in teams construct for team_of_masters
+    }
+    if (level == 1) thr_bar->use_oncore_barrier = 1;
+    else thr_bar->use_oncore_barrier = 0; // Do not use oncore barrier when nested
     nproc = this_thr->th.th_team_nproc;
 
     // If the team size has increased, we still communicate with old leaves via oncore barrier.

@@ -2046,7 +2046,12 @@ __kmp_join_call(ident_t *loc, int gtid
             int old_num = master_th->th.th_team_nproc;
             int new_num = master_th->th.th_teams_size.nth;
             kmp_info_t **other_threads = team->t.t_threads;
+            kmp_task_team_t * task_team = master_th->th.th_task_team;
             team->t.t_nproc = new_num;
+            if ( task_team ) { // task team might have lesser value of counters
+                task_team->tt.tt_ref_ct = new_num - 1;
+                task_team->tt.tt_unfinished_threads = new_num;
+            }
             for ( i = 0; i < old_num; ++i ) {
                 other_threads[i]->th.th_team_nproc = new_num;
             }
