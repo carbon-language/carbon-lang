@@ -68,9 +68,9 @@ FunctionPass *llvm::createAtomicExpandPass(const TargetMachine *TM) {
 }
 
 bool AtomicExpand::runOnFunction(Function &F) {
-  if (!TM || !TM->getSubtargetImpl()->enableAtomicExpand())
+  if (!TM || !TM->getSubtargetImpl(F)->enableAtomicExpand())
     return false;
-  TLI = TM->getSubtargetImpl()->getTargetLowering();
+  TLI = TM->getSubtargetImpl(F)->getTargetLowering();
 
   SmallVector<Instruction *, 1> AtomicInsts;
 

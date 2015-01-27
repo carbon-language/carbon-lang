@@ -124,7 +124,7 @@ bool DwarfEHPrepare::InsertUnwindResumeCalls(Function &Fn) {
     return false;
 
   // Find the rewind function if we didn't already.
-  const TargetLowering *TLI = TM->getSubtargetImpl()->getTargetLowering();
+  const TargetLowering *TLI = TM->getSubtargetImpl(Fn)->getTargetLowering();
   if (!RewindFunction) {
     LLVMContext &Ctx = Resumes[0]->getContext();
     FunctionType *FTy = FunctionType::get(Type::getVoidTy(Ctx),
