@@ -20,7 +20,6 @@
 #include "llvm/ExecutionEngine/Orc/LazyEmittingLayer.h"
 #include "llvm/ExecutionEngine/Orc/ObjectLinkingLayer.h"
 #include "llvm/Object/Archive.h"
-#include "llvm/Target/TargetSubtargetInfo.h"
 
 namespace llvm {
 
