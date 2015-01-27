@@ -136,9 +136,9 @@ endmacro()
 
 # We should only build MSan unit tests if we can build instrumented libcxx.
 if(COMPILER_RT_CAN_EXECUTE_TESTS AND COMPILER_RT_HAS_LIBCXX_SOURCES)
-  if(CAN_TARGET_x86_64)
-    add_msan_tests_for_arch(x86_64 "")
-    add_msan_tests_for_arch(x86_64 "-with-call"
+  foreach(arch ${MSAN_SUPPORTED_ARCH})
+    add_msan_tests_for_arch(${arch} "")
+    add_msan_tests_for_arch(${arch} "-with-call"
                             -mllvm -msan-instrumentation-with-call-threshold=0)
-  endif()
+  endforeach()
 endif()
