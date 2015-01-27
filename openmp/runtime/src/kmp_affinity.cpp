@@ -787,33 +787,27 @@ static int
 __kmp_affinity_create_apicid_map(AddrUnsPair **address2os,
   kmp_i18n_id_t *const msg_id)
 {
+    kmp_cpuid buf;
     int rc;
     *address2os = NULL;
     *msg_id = kmp_i18n_null;
 
-#  if KMP_MIC
-    {
-        // The code below will use cpuid(4).
-        // Check if cpuid(4) is supported.
-        // FIXME? - this really doesn't need to be specific to MIC.
-        kmp_cpuid buf;
+    //
+    // Check if cpuid leaf 4 is supported.
+    //
         __kmp_x86_cpuid(0, 0, &buf);
         if (buf.eax < 4) {
             *msg_id = kmp_i18n_str_NoLeaf4Support;
             return -1;
         }
-    }
-#  endif // KMP_MIC
 
     //
-    // Even if __kmp_affinity_type == affinity_none, this routine is still
-    // called to set __kmp_ht_enabled, & __kmp_ncores, as well as
-    // __kmp_nThreadsPerCore, nCoresPerPkg, & nPackages.
-    //
     // The algorithm used starts by setting the affinity to each available
-    // thread and retreiving info from the cpuid instruction, so if we are not
-    // capable of calling __kmp_affinity_get_map()/__kmp_affinity_get_map(),
-    // then we need to do something else.
+    // thread and retrieving info from the cpuid instruction, so if we are
+    // not capable of calling __kmp_get_system_affinity() and
+    // _kmp_get_system_affinity(), then we need to do something else - use
+    // the defaults that we calculated from issuing cpuid without binding
+    // to each proc.
     //
     if (! KMP_AFFINITY_CAPABLE()) {
         //
@@ -830,7 +824,6 @@ __kmp_affinity_create_apicid_map(AddrUnsPair **address2os,
         // but is disabled, this value will be 2 on a single core chip.
         // Usually, it will be 2 if HT is enabled and 1 if HT is disabled.
         //
-        kmp_cpuid buf;
         __kmp_x86_cpuid(1, 0, &buf);
         int maxThreadsPerPkg = (buf.ebx >> 16) & 0xff;
         if (maxThreadsPerPkg == 0) {
@@ -959,7 +952,6 @@ __kmp_affinity_create_apicid_map(AddrUnsPair **address2os,
         //
         // The apic id and max threads per pkg come from cpuid(1).
         //
-        kmp_cpuid buf;
         __kmp_x86_cpuid(1, 0, &buf);
         if (! (buf.edx >> 9) & 1) {
             __kmp_set_system_affinity(oldMask, TRUE);
@@ -1400,10 +1392,11 @@ __kmp_affinity_create_x2apicid_map(AddrUnsPair **address2os,
 
     //
     // The algorithm used starts by setting the affinity to each available
-    // thread and retrieving info from the cpuid instruction, so if we are not
-    // capable of calling __kmp_affinity_get_map()/__kmp_affinity_get_map(),
-    // then we need to do something else - use the defaults that we calculated
-    // from issuing cpuid without binding to each proc.
+    // thread and retrieving info from the cpuid instruction, so if we are
+    // not capable of calling __kmp_get_system_affinity() and
+    // _kmp_get_system_affinity(), then we need to do something else - use
+    // the defaults that we calculated from issuing cpuid without binding
+    // to each proc.
     //
     if (! KMP_AFFINITY_CAPABLE())
     {
