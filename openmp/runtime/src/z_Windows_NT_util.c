@@ -937,6 +937,7 @@ __kmp_runtime_initialize( void )
         // Load kernel32.dll using full path.
         //
         kernel32 = GetModuleHandle( path.str );
+        KA_TRACE( 10, ("__kmp_runtime_initialize: kernel32.dll = %s\n", path.str ) );
 
         //
         // Load the function pointers to kernel32.dll routines
@@ -947,6 +948,12 @@ __kmp_runtime_initialize( void )
             __kmp_GetActiveProcessorGroupCount = (kmp_GetActiveProcessorGroupCount_t) GetProcAddress( kernel32, "GetActiveProcessorGroupCount" );
             __kmp_GetThreadGroupAffinity = (kmp_GetThreadGroupAffinity_t) GetProcAddress( kernel32, "GetThreadGroupAffinity" );
             __kmp_SetThreadGroupAffinity = (kmp_SetThreadGroupAffinity_t) GetProcAddress( kernel32, "SetThreadGroupAffinity" );
+
+            KA_TRACE( 10, ("__kmp_runtime_initialize: __kmp_GetActiveProcessorCount = %p\n", __kmp_GetActiveProcessorCount ) );
+            KA_TRACE( 10, ("__kmp_runtime_initialize: __kmp_GetActiveProcessorGroupCount = %p\n", __kmp_GetActiveProcessorGroupCount ) );
+            KA_TRACE( 10, ("__kmp_runtime_initialize:__kmp_GetThreadGroupAffinity = %p\n", __kmp_GetThreadGroupAffinity ) );
+            KA_TRACE( 10, ("__kmp_runtime_initialize: __kmp_SetThreadGroupAffinity = %p\n", __kmp_SetThreadGroupAffinity ) );
+            KA_TRACE( 10, ("__kmp_runtime_initialize: sizeof(kmp_affin_mask_t) = %d\n", sizeof(kmp_affin_mask_t) ) );
 
             //
             // See if group affinity is supported on this system.
@@ -973,8 +980,11 @@ __kmp_runtime_initialize( void )
                 for ( i = 0; i < __kmp_num_proc_groups; i++ ) {
                     DWORD size = __kmp_GetActiveProcessorCount( i );
                     __kmp_xproc += size;
-                    KA_TRACE( 20, ("__kmp_runtime_initialize: proc group %d size = %d\n", i, size ) );
+                    KA_TRACE( 10, ("__kmp_runtime_initialize: proc group %d size = %d\n", i, size ) );
                 }
+                }
+            else {
+                KA_TRACE( 10, ("__kmp_runtime_initialize: %d processor groups detected\n", __kmp_num_proc_groups ) );
             }
         }
     }
