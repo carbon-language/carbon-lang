@@ -1141,7 +1141,7 @@ TypeImpl::GetPointerType () const
     {
         if (m_dynamic_type.IsValid())
         {
-            return TypeImpl(m_static_type, m_dynamic_type.GetPointerType());
+            return TypeImpl(m_static_type.GetPointerType(), m_dynamic_type.GetPointerType());
         }
         return TypeImpl(m_static_type.GetPointerType());
     }
@@ -1156,7 +1156,7 @@ TypeImpl::GetPointeeType () const
     {
         if (m_dynamic_type.IsValid())
         {
-            return TypeImpl(m_static_type, m_dynamic_type.GetPointeeType());
+            return TypeImpl(m_static_type.GetPointeeType(), m_dynamic_type.GetPointeeType());
         }
         return TypeImpl(m_static_type.GetPointeeType());
     }
@@ -1171,7 +1171,7 @@ TypeImpl::GetReferenceType () const
     {
         if (m_dynamic_type.IsValid())
         {
-            return TypeImpl(m_static_type, m_dynamic_type.GetLValueReferenceType());
+            return TypeImpl(m_static_type.GetReferenceType(), m_dynamic_type.GetLValueReferenceType());
         }
         return TypeImpl(m_static_type.GetReferenceType());
     }
@@ -1186,7 +1186,7 @@ TypeImpl::GetTypedefedType () const
     {
         if (m_dynamic_type.IsValid())
         {
-            return TypeImpl(m_static_type, m_dynamic_type.GetTypedefedType());
+            return TypeImpl(m_static_type.GetTypedefedType(), m_dynamic_type.GetTypedefedType());
         }
         return TypeImpl(m_static_type.GetTypedefedType());
     }
@@ -1201,7 +1201,7 @@ TypeImpl::GetDereferencedType () const
     {
         if (m_dynamic_type.IsValid())
         {
-            return TypeImpl(m_static_type, m_dynamic_type.GetNonReferenceType());
+            return TypeImpl(m_static_type.GetDereferencedType(), m_dynamic_type.GetNonReferenceType());
         }
         return TypeImpl(m_static_type.GetDereferencedType());
     }
@@ -1216,7 +1216,7 @@ TypeImpl::GetUnqualifiedType() const
     {
         if (m_dynamic_type.IsValid())
         {
-            return TypeImpl(m_static_type, m_dynamic_type.GetFullyUnqualifiedType());
+            return TypeImpl(m_static_type.GetUnqualifiedType(), m_dynamic_type.GetFullyUnqualifiedType());
         }
         return TypeImpl(m_static_type.GetUnqualifiedType());
     }
@@ -1231,7 +1231,7 @@ TypeImpl::GetCanonicalType() const
     {
         if (m_dynamic_type.IsValid())
         {
-            return TypeImpl(m_static_type, m_dynamic_type.GetCanonicalType());
+            return TypeImpl(m_static_type.GetCanonicalType(), m_dynamic_type.GetCanonicalType());
         }
         return TypeImpl(m_static_type.GetCanonicalType());
     }
