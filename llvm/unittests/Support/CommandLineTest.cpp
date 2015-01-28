@@ -70,14 +70,14 @@ public:
 
 
 cl::OptionCategory TestCategory("Test Options", "Description");
-cl::opt<int> TestOption("test-option", cl::desc("old description"));
 TEST(CommandLineTest, ModifyExisitingOption) {
+  StackOption<int> TestOption("test-option", cl::desc("old description"));
+
   const char Description[] = "New description";
   const char ArgString[] = "new-test-option";
   const char ValueString[] = "Integer";
 
-  StringMap<cl::Option*> Map;
-  cl::getRegisteredOptions(Map);
+  StringMap<cl::Option *> &Map = cl::getRegisteredOptions();
 
   ASSERT_TRUE(Map.count("test-option") == 1) <<
     "Could not find option in map.";
@@ -241,8 +241,7 @@ TEST(CommandLineTest, HideUnrelatedOptions) {
   ASSERT_EQ(cl::NotHidden, TestOption2.getOptionHiddenFlag())
       << "Hid extra option that should be visable.";
 
-  StringMap<cl::Option *> Map;
-  cl::getRegisteredOptions(Map);
+  StringMap<cl::Option *> &Map = cl::getRegisteredOptions();
   ASSERT_EQ(cl::NotHidden, Map["help"]->getOptionHiddenFlag())
       << "Hid default option that should be visable.";
 }
@@ -266,8 +265,7 @@ TEST(CommandLineTest, HideUnrelatedOptionsMulti) {
   ASSERT_EQ(cl::NotHidden, TestOption3.getOptionHiddenFlag())
       << "Hid extra option that should be visable.";
 
-  StringMap<cl::Option *> Map;
-  cl::getRegisteredOptions(Map);
+  StringMap<cl::Option *> &Map = cl::getRegisteredOptions();
   ASSERT_EQ(cl::NotHidden, Map["help"]->getOptionHiddenFlag())
       << "Hid default option that should be visable.";
 }
