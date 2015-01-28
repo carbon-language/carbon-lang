@@ -11,11 +11,9 @@ import argparse
 import bisect
 import getopt
 import os
-import pty
 import re
 import subprocess
 import sys
-import termios
 
 symbolizers = {}
 DEBUG = False
@@ -171,6 +169,9 @@ class UnbufferedLineConverter(object):
   output.  Uses pty to trick the child into providing unbuffered output.
   """
   def __init__(self, args, close_stderr=False):
+    # Local imports so that the script can start on Windows.
+    import pty
+    import termios
     pid, fd = pty.fork()
     if pid == 0:
       # We're the child. Transfer control to command.
@@ -341,17 +342,23 @@ class BreakpadSymbolizer(Symbolizer):
 
 class SymbolizationLoop(object):
   def __init__(self, binary_name_filter=None, dsym_hint_producer=None):
-    # Used by clients who may want to supply a different binary name.
-    # E.g. in Chrome several binaries may share a single .dSYM.
-    self.binary_name_filter = binary_name_filter
-    self.dsym_hint_producer = dsym_hint_producer
-    self.system = os.uname()[0]
-    if self.system not in ['Linux', 'Darwin', 'FreeBSD']:
-      raise Exception('Unknown system')
-    self.llvm_symbolizers = {}
-    self.last_llvm_symbolizer = None
-    self.dsym_hints = set([])
-    self.frame_no = 0
+    if sys.platform == 'win32':
+      # ASan on Windows uses dbghelp.dll to symbolize in-process, which works
+      # even in sandboxed processes.  Nothing needs to be done here.
+      self.process_line = self.process_line_echo
+    else:
+      # Used by clients who may want to supply a different binary name.
+      # E.g. in Chrome several binaries may share a single .dSYM.
+      self.binary_name_filter = binary_name_filter
+      self.dsym_hint_producer = dsym_hint_producer
+      self.system = os.uname()[0]
+      if self.system not in ['Linux', 'Darwin', 'FreeBSD']:
+        raise Exception('Unknown system')
+      self.llvm_symbolizers = {}
+      self.last_llvm_symbolizer = None
+      self.dsym_hints = set([])
+      self.frame_no = 0
+      self.process_line = self.process_line_posix
 
   def symbolize_address(self, addr, binary, offset):
     # On non-Darwin (i.e. on platforms without .dSYM debug info) always use
@@ -405,14 +412,14 @@ class SymbolizationLoop(object):
 
   def process_logfile(self):
     self.frame_no = 0
-    while True:
-      line = logfile.readline()
-      if not line:
-        break
+    for line in logfile:
       processed = self.process_line(line)
       print '\n'.join(processed)
 
-  def process_line(self, line):
+  def process_line_echo(self, line):
+    return [line.rstrip()]
+
+  def process_line_posix(self, line):
     self.current_line = line.rstrip()
     #0 0x7f6e35cf2e45  (/blah/foo.so+0x11fe45)
     stack_trace_line_format = (
