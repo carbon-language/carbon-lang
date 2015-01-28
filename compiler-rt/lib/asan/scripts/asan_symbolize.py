@@ -444,20 +444,23 @@ class SymbolizationLoop(object):
 
 
 if __name__ == '__main__':
-  parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter,
-  description='ASan symbolization script',
-  epilog='''Example of use:
-  asan_symbolize.py -c "$HOME/opt/cross/bin/arm-linux-gnueabi-" -s "$HOME/SymbolFiles" < asan.log''')
+  parser = argparse.ArgumentParser(
+      formatter_class=argparse.RawDescriptionHelpFormatter,
+      description='ASan symbolization script',
+      epilog='Example of use:\n'
+             'asan_symbolize.py -c "$HOME/opt/cross/bin/arm-linux-gnueabi-" '
+             '-s "$HOME/SymbolFiles" < asan.log')
   parser.add_argument('path_to_cut', nargs='*',
-    help='pattern to be cut from the result file path ')
+                      help='pattern to be cut from the result file path ')
   parser.add_argument('-d','--demangle', action='store_true',
-    help='demangle function names')
+                      help='demangle function names')
   parser.add_argument('-s', metavar='SYSROOT',
-    help='set path to sysroot for sanitized binaries')
+                      help='set path to sysroot for sanitized binaries')
   parser.add_argument('-c', metavar='CROSS_COMPILE',
-    help='set prefix for binutils')
-  parser.add_argument('-l','--logfile', default=sys.stdin, type=argparse.FileType('r'),
-    help='set log file name to parse, default is stdin')
+                      help='set prefix for binutils')
+  parser.add_argument('-l','--logfile', default=sys.stdin,
+                      type=argparse.FileType('r'),
+                      help='set log file name to parse, default is stdin')
   args = parser.parse_args()
   if args.path_to_cut:
     fix_filename_patterns = args.path_to_cut
