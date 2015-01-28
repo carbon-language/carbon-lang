@@ -51,6 +51,37 @@ cl::opt<bool> Tables("tables",
                               "debug tables in the input file"));
 cl::alias TablesShort("t", cl::desc("Alias for --tables"),
                       cl::aliasopt(Tables));
+
+cl::opt<bool> SourceFiles("source-files",
+                          cl::desc("Display a list of the source files "
+                                   "contained in the PDB"));
+cl::alias SourceFilesShort("f", cl::desc("Alias for --source-files"),
+                           cl::aliasopt(SourceFiles));
+
+cl::opt<bool> Compilands("compilands",
+                         cl::desc("Display a list of compilands (e.g. object "
+                                  "files) and their source file composition"));
+cl::alias CompilandsShort("c", cl::desc("Alias for --compilands"),
+                          cl::aliasopt(Compilands));
+}
+
+template <typename TableType>
+static HRESULT GetDiaTable(IDiaSession *Session, TableType **Table) {
+  CComPtr<IDiaEnumTables> EnumTables = nullptr;
+  HRESULT Error = S_OK;
+  if (FAILED(Error = Session->getEnumTables(&EnumTables)))
+    return Error;
+
+  for (auto CurTable : make_com_enumerator(EnumTables)) {
+    TableType *ResultTable = nullptr;
+    if (FAILED(CurTable->QueryInterface(
+            __uuidof(TableType), reinterpret_cast<void **>(&ResultTable))))
+      continue;
+
+    *Table = ResultTable;
+    return S_OK;
+  }
+  return E_FAIL;
 }
 
 static void dumpBasicFileInfo(StringRef Path, IDiaSession *Session) {
@@ -161,6 +192,94 @@ static void dumpDebugTables(IDiaSession *Session) {
   outs().flush();
 }
 
+static void dumpSourceFiles(IDiaSession *Session) {
+  CComPtr<IDiaEnumSourceFiles> EnumSourceFileList;
+  if (FAILED(GetDiaTable(Session, &EnumSourceFileList)))
+    return;
+
+  LONG SourceFileCount = 0;
+  EnumSourceFileList->get_Count(&SourceFileCount);
+
+  outs() << "Dumping source files [" << SourceFileCount << " files]\n";
+  for (auto SourceFile : make_com_enumerator(EnumSourceFileList)) {
+    CComBSTR SourceFileName;
+    if (S_OK != SourceFile->get_fileName(&SourceFileName))
+      continue;
+    outs().indent(2);
+    std::string SourceFileName8;
+    BSTRToUTF8(SourceFileName, SourceFileName8);
+    outs() << SourceFileName8 << "\n";
+  }
+  outs() << "\n";
+  outs().flush();
+}
+
+static void dumpCompilands(IDiaSession *Session) {
+  CComPtr<IDiaEnumSourceFiles> EnumSourceFileList;
+  if (FAILED(GetDiaTable(Session, &EnumSourceFileList)))
+    return;
+
+  LONG SourceFileCount = 0;
+  EnumSourceFileList->get_Count(&SourceFileCount);
+
+  CComPtr<IDiaSymbol> GlobalScope;
+  HRESULT hr = Session->get_globalScope(&GlobalScope);
+  DIASymbol GlobalScopeSymbol(GlobalScope);
+  if (S_OK != hr)
+    return;
+
+  CComPtr<IDiaEnumSymbols> EnumCompilands;
+  if (S_OK !=
+      GlobalScope->findChildren(SymTagCompiland, nullptr, nsNone,
+                                &EnumCompilands))
+    return;
+
+  LONG CompilandCount = 0;
+  EnumCompilands->get_Count(&CompilandCount);
+  outs() << "Dumping compilands [" << CompilandCount
+         << " compilands containing " << SourceFileCount << " source files]\n";
+
+  for (auto Compiland : make_com_enumerator(EnumCompilands)) {
+    DIASymbol CompilandSymbol(Compiland);
+    outs().indent(2);
+    outs() << CompilandSymbol.getName().value() << "\n";
+
+    CComPtr<IDiaEnumSourceFiles> EnumFiles;
+    if (S_OK != Session->findFile(Compiland, nullptr, nsNone, &EnumFiles))
+      continue;
+
+    for (auto SourceFile : make_com_enumerator(EnumFiles)) {
+      DWORD ChecksumType = 0;
+      DWORD ChecksumSize = 0;
+      std::vector<uint8_t> Checksum;
+      outs().indent(4);
+      SourceFile->get_checksumType(&ChecksumType);
+      if (S_OK == SourceFile->get_checksum(0, &ChecksumSize, nullptr)) {
+        Checksum.resize(ChecksumSize);
+        if (S_OK ==
+            SourceFile->get_checksum(ChecksumSize, &ChecksumSize,
+                                     &Checksum[0])) {
+          outs() << "[" << ((ChecksumType == HashMD5) ? "MD5  " : "SHA-1")
+                 << ": ";
+          for (auto byte : Checksum)
+            outs() << format_hex_no_prefix(byte, 2, true);
+          outs() << "] ";
+        }
+      }
+      CComBSTR SourceFileName;
+      if (S_OK != SourceFile->get_fileName(&SourceFileName))
+        continue;
+
+      std::string SourceFileName8;
+      BSTRToUTF8(SourceFileName, SourceFileName8);
+      outs() << SourceFileName8 << "\n";
+    }
+  }
+
+  outs() << "\n";
+  outs().flush();
+}
+
 static void dumpInput(StringRef Path) {
   SmallVector<UTF16, 128> Path16String;
   llvm::convertUTF8ToUTF16String(Path, Path16String);
@@ -173,17 +292,25 @@ static void dumpInput(StringRef Path) {
     return;
   if (FAILED(source->loadDataFromPdb(Path16)))
     return;
-  CComPtr<IDiaSession> session;
-  if (FAILED(source->openSession(&session)))
+  CComPtr<IDiaSession> Session;
+  if (FAILED(source->openSession(&Session)))
     return;
 
-  dumpBasicFileInfo(Path, session);
+  dumpBasicFileInfo(Path, Session);
   if (opts::Streams || opts::StreamData) {
-    dumpDataStreams(session);
+    dumpDataStreams(Session);
   }
 
   if (opts::Tables) {
-    dumpDebugTables(session);
+    dumpDebugTables(Session);
+  }
+
+  if (opts::SourceFiles) {
+    dumpSourceFiles(Session);
+  }
+
+  if (opts::Compilands) {
+    dumpCompilands(Session);
   }
 }
 

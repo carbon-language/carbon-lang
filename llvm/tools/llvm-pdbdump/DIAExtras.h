@@ -102,6 +102,8 @@ enum MachineTypeEnum {
   MachineTypeCEE = IMAGE_FILE_MACHINE_CEE,
 };
 
+enum HashAlgorithm { HashNone = 0, HashMD5 = 1, HashSHA1 = 2 };
+
 // SymTagEnum has the unfortunate property that it is not only the name of
 // the enum, but also the name of one of the values of the enum.  So that we
 // don't have to always type "enum SymTagEnum", we typedef this to a different
@@ -122,6 +124,8 @@ raw_ostream &operator<<(raw_ostream &Stream,
 raw_ostream &operator<<(raw_ostream &Stream, CV_CPU_TYPE_e CpuType);
 raw_ostream &operator<<(raw_ostream &Stream,
                         llvm::sys::windows::MachineTypeEnum CpuType);
+raw_ostream &operator<<(raw_ostream &Stream,
+                        llvm::sys::windows::HashAlgorithm Algorithm);
 }
 
 #endif

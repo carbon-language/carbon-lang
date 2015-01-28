@@ -174,3 +174,16 @@ raw_ostream &llvm::operator<<(raw_ostream &Stream,
   outs() << " {" << llvm::format_hex((DWORD)MachineType, 2, true) << "}";
   return Stream;
 }
+
+raw_ostream &llvm::operator<<(raw_ostream &Stream, HashAlgorithm Algorithm) {
+  switch (Algorithm) {
+    PRINT_ENUM_VALUE_CASE(HashNone, "None")
+    PRINT_ENUM_VALUE_CASE(HashMD5, "MD5")
+    PRINT_ENUM_VALUE_CASE(HashSHA1, "SHA-1")
+  default:
+    outs() << "(Unknown)";
+    break;
+  }
+  outs() << " {" << (DWORD)Algorithm << "}";
+  return Stream;
+}
