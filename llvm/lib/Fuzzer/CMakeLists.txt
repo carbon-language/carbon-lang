@@ -7,3 +7,7 @@ add_library(LLVMFuzzer STATIC
   FuzzerMutate.cpp
   FuzzerUtil.cpp
   )
+
+if( LLVM_INCLUDE_TESTS )
+  add_subdirectory(test)
+endif()

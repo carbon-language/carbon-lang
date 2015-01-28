@@ -41,12 +41,12 @@ void Fuzzer::AlarmCallback() {
       duration_cast<seconds>(system_clock::now() - UnitStartTime).count();
   std::cerr << "ALARM: working on the last Unit for " << Seconds << " seconds"
             << std::endl;
-  if (Seconds > 60) {
+  if (Seconds >= 3) {
     Print(CurrentUnit, "\n");
     PrintASCII(CurrentUnit, "\n");
     WriteToCrash(CurrentUnit, "timeout-");
   }
-  abort();
+  exit(1);
 }
 
 void Fuzzer::ShuffleAndMinimize() {

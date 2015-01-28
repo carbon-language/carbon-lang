@@ -1,0 +1,13 @@
+RUN: ./LLVMFuzzer-SimpleTest 2>&1 | FileCheck %s --check-prefix=SimpleTest
+SimpleTest: Found the target, exiting
+
+RUN: not ./LLVMFuzzer-InfiniteTest -timeout=2 2>&1 | FileCheck %s --check-prefix=InfiniteTest
+InfiniteTest: ALARM: working on the last Unit for
+InfiniteTest-NOT: CRASHED; file written to timeout
+
+RUN: not ./LLVMFuzzer-TimeoutTest -timeout=5 2>&1 | FileCheck %s --check-prefix=TimeoutTest
+TimeoutTest: ALARM: working on the last Unit for
+TimeoutTest: CRASHED; file written to timeout
+
+RUN: not ./LLVMFuzzer-NullDerefTest 2>&1 | FileCheck %s --check-prefix=NullDerefTest
+NullDerefTest: CRASHED; file written to crash-
