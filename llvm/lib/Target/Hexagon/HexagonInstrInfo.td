@@ -3289,6 +3289,7 @@ let Defs = [USR_OVF], isCodeGenOnly = 0 in {
   def A2_satub : T_S2op_1_ii <"satub", 0b11, 0b110>;
   def A2_sath  : T_S2op_1_ii <"sath", 0b11, 0b100>;
   def A2_satuh : T_S2op_1_ii <"satuh", 0b11, 0b101>;
+  def A2_roundsat : T_S2op_1_id <"round", 0b11, 0b001, 0b1>;
 }
 
 let Itinerary = S_2op_tc_2_SLOT23, isCodeGenOnly = 0 in {

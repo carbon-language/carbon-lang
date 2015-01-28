@@ -97,6 +97,10 @@ class T_PII_pat <InstHexagon MI, Intrinsic IntID>
   : Pat <(IntID I64:$Rs, imm:$It, imm:$Iu),
          (MI DoubleRegs:$Rs, imm:$It, imm:$Iu)>;
 
+class T_PPP_pat <InstHexagon MI, Intrinsic IntID>
+  : Pat <(IntID I64:$Rs, I64:$Rt, I64:$Ru),
+         (MI DoubleRegs:$Rs, DoubleRegs:$Rt, DoubleRegs:$Ru)>;
+
 class T_PPR_pat <InstHexagon MI, Intrinsic IntID>
   : Pat <(IntID I64:$Rs, I64:$Rt, I32:$Ru),
          (MI DoubleRegs:$Rs, DoubleRegs:$Rt, I32:$Ru)>;
