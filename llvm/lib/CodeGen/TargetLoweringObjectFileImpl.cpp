@@ -276,9 +276,7 @@ SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
 
   if (Kind.isText()) return TextSection;
 
-  if (Kind.isMergeable1ByteCString() ||
-      Kind.isMergeable2ByteCString() ||
-      Kind.isMergeable4ByteCString()) {
+  if (Kind.isMergeableCString()) {
 
     // We also need alignment here.
     // FIXME: this is getting the alignment of the character, not the
