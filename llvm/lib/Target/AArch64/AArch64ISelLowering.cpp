@@ -7850,7 +7850,7 @@ static SDValue performSTORECombine(SDNode *N,
     return SDValue();
 
   // Cyclone has bad performance on unaligned 16B stores when crossing line and
-  // page boundries. We want to split such stores.
+  // page boundaries. We want to split such stores.
   if (!Subtarget->isCyclone())
     return SDValue();
 
