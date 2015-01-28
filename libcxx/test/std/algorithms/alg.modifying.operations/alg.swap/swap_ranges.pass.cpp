@@ -155,5 +155,5 @@ int main()
 
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
-	test2();
+    test2();
 }

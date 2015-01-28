@@ -37,7 +37,7 @@ class Empty
 
 class NoDefaultConstructor
 {
-	NoDefaultConstructor(int) {}
+    NoDefaultConstructor(int) {}
 };
 
 class NotEmpty

@@ -30,24 +30,24 @@ int main()
     int ib[] = {0, 1, 2, 3, 0, 1, 2, 3};
     const unsigned sb = sizeof(ib)/sizeof(ib[0]);
 
-	typedef input_iterator<const int*> II;
-	typedef random_access_iterator<const int*>  RAI;
+    typedef input_iterator<const int*> II;
+    typedef random_access_iterator<const int*>  RAI;
 
     assert(std::mismatch(II(ia), II(ia + sa), II(ib))
-    		== (std::pair<II, II>(II(ia+3), II(ib+3))));
+            == (std::pair<II, II>(II(ia+3), II(ib+3))));
 
     assert(std::mismatch(RAI(ia), RAI(ia + sa), RAI(ib))
-    		== (std::pair<RAI, RAI>(RAI(ia+3), RAI(ib+3))));
+            == (std::pair<RAI, RAI>(RAI(ia+3), RAI(ib+3))));
 
 #ifdef HAS_FOUR_ITERATOR_VERSION
     assert(std::mismatch(II(ia), II(ia + sa), II(ib), II(ib+sb))
-    		== (std::pair<II, II>(II(ia+3), II(ib+3))));
+            == (std::pair<II, II>(II(ia+3), II(ib+3))));
 
     assert(std::mismatch(RAI(ia), RAI(ia + sa), RAI(ib), RAI(ib+sb))
-    		== (std::pair<RAI, RAI>(RAI(ia+3), RAI(ib+3))));
+            == (std::pair<RAI, RAI>(RAI(ia+3), RAI(ib+3))));
 
 
     assert(std::mismatch(II(ia), II(ia + sa), II(ib), II(ib+2))
-    		== (std::pair<II, II>(II(ia+2), II(ib+2))));
+            == (std::pair<II, II>(II(ia+2), II(ib+2))));
 #endif
 }
