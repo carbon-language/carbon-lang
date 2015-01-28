@@ -305,21 +305,7 @@ int main(int argc, const char **argv) {
 
   TransformManager.registerTransforms();
 
-  // Hide all options we don't define ourselves. Move pre-defined 'help',
-  // 'help-list', and 'version' to our general category.
-  llvm::StringMap<cl::Option*> &Options = cl::getRegisteredOptions();
-  const cl::OptionCategory **CategoryEnd =
-      VisibleCategories + llvm::array_lengthof(VisibleCategories);
-  for (llvm::StringMap<cl::Option *>::iterator I = Options.begin(),
-                                               E = Options.end();
-       I != E; ++I) {
-    if (I->first() == "help" || I->first() == "version" ||
-        I->first() == "help-list")
-      I->second->setCategory(GeneralCategory);
-    else if (std::find(VisibleCategories, CategoryEnd, I->second->Category) ==
-             CategoryEnd)
-      I->second->setHiddenFlag(cl::ReallyHidden);
-  }
+  cl::HideUnrelatedOptions(llvm::makeArrayRef(VisibleCategories));
   cl::SetVersionPrinter(&printVersion);
 
   // Parse options and generate compilations.

@@ -31,20 +31,18 @@ using namespace clang::replace;
 static cl::opt<std::string> Directory(cl::Positional, cl::Required,
                                       cl::desc("<Search Root Directory>"));
 
+static cl::OptionCategory ReplacementCategory("Replacement Options");
 static cl::OptionCategory FormattingCategory("Formatting Options");
+
+const cl::OptionCategory *VisibleCategories[] = {&ReplacementCategory,
+                                                 &FormattingCategory};
 
 static cl::opt<bool> RemoveTUReplacementFiles(
     "remove-change-desc-files",
     cl::desc("Remove the change description files regardless of successful\n"
              "merging/replacing."),
-    cl::init(false));
+    cl::init(false), cl::cat(ReplacementCategory));
 
-// Update this list of options to show in -help as new options are added.
-// Should add even those options marked as 'Hidden'. Any option not listed
-// here will get marked 'ReallyHidden' so they don't appear in any -help text.
-const char *OptionsToShow[] = { "help",                     "version",
-                                "remove-change-desc-files", "format",
-                                "style-config",             "style" };
 
 static cl::opt<bool> DoFormat(
     "format",
@@ -196,13 +194,7 @@ bool applyFormatting(const std::vector<tooling::Replacement> &Replacements,
 }
 
 int main(int argc, char **argv) {
-  // Only include our options in -help output.
-  StringMap<cl::Option*> &OptMap = cl::getRegisteredOptions();
-  const char **EndOpts = std::end(OptionsToShow);
-  for (const auto &Opt : OptMap) {
-    if (std::find(OptionsToShow, EndOpts, Opt.getKey()) == EndOpts)
-      Opt.getValue()->setHiddenFlag(cl::ReallyHidden);
-  }
+  cl::HideUnrelatedOptions(makeArrayRef(VisibleCategories));
 
   cl::SetVersionPrinter(&printVersion);
   cl::ParseCommandLineOptions(argc, argv);
