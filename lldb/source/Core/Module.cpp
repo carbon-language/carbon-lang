@@ -1736,7 +1736,7 @@ Module::PrepareForFunctionNameLookup (const ConstString &name,
                 if (CPPLanguageRuntime::ExtractContextAndIdentifier (name_cstr, context, basename))
                     lookup_name_type_mask |= (eFunctionNameTypeMethod | eFunctionNameTypeBase);
                 else
-                    lookup_name_type_mask = eFunctionNameTypeFull;
+                    lookup_name_type_mask |= eFunctionNameTypeFull;
             }
             else
             {
