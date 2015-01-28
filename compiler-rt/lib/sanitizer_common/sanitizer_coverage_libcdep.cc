@@ -83,6 +83,7 @@ class CoverageData {
 
   void InitializeGuardArray(s32 *guards);
   void InitializeGuards(s32 *guards, uptr n);
+  void ReinitializeGuards();
 
   uptr *data();
   uptr size();
@@ -211,6 +212,13 @@ void CoverageData::Disable() {
   }
 }
 
+void CoverageData::ReinitializeGuards() {
+  // Assuming single thread.
+  atomic_store(&pc_array_index, 0, memory_order_relaxed);
+  for (uptr i = 0; i < guard_array_vec.size(); i++)
+    InitializeGuardArray(guard_array_vec[i]);
+}
+
 void CoverageData::ReInit() {
   Disable();
   if (coverage_enabled) {
@@ -228,8 +236,7 @@ void CoverageData::ReInit() {
   // Re-initialize the guards.
   // We are single-threaded now, no need to grab any lock.
   CHECK_EQ(atomic_load(&pc_array_index, memory_order_relaxed), 0);
-  for (uptr i = 0; i < guard_array_vec.size(); i++)
-    InitializeGuardArray(guard_array_vec[i]);
+  ReinitializeGuards();
 }
 
 void CoverageData::BeforeFork() {
@@ -688,5 +695,17 @@ void __sanitizer_cov_trace_func_enter(s32 *id) {
 SANITIZER_INTERFACE_ATTRIBUTE
 void __sanitizer_cov_trace_basic_block(s32 *id) {
   coverage_data.TraceBasicBlock(id);
+}
+SANITIZER_INTERFACE_ATTRIBUTE
+void __sanitizer_reset_coverage() {
+  coverage_data.ReinitializeGuards();
+  internal_bzero_aligned16(
+      coverage_data.data(),
+      RoundUpTo(coverage_data.size() * sizeof(coverage_data.data()[0]), 16));
+}
+SANITIZER_INTERFACE_ATTRIBUTE
+uptr __sanitizer_get_coverage_guards(uptr **data) {
+  *data = coverage_data.data();
+  return coverage_data.size();
 }
 }  // extern "C"
