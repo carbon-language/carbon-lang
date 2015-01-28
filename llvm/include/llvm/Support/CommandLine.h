@@ -73,6 +73,18 @@ void AddExtraVersionPrinter(void (*func)());
 // (Currently not perfect, but best-effort.)
 void PrintOptionValues();
 
+// Forward declaration - AddLiteralOption needs to be up here to make gcc happy.
+class Option;
+
+/// \brief Adds a new option for parsing and provides the option it refers to.
+///
+/// \param O pointer to the option
+/// \param Name the string name for the option to handle during parsing
+///
+/// Literal options are used by some parsers to register special option values.
+/// This is how the PassNameParser registers pass names for opt.
+void AddLiteralOption(Option &O, const char *Name);
+
 //===----------------------------------------------------------------------===//
 // Flags permitted to be passed to command line arguments
 //
@@ -1936,15 +1948,6 @@ void HideUnrelatedOptions(cl::OptionCategory &Category);
 /// not specific to the tool. This function allows a tool to specify a single
 /// option category to display in the -help output.
 void HideUnrelatedOptions(ArrayRef<const cl::OptionCategory *> Categories);
-
-/// \brief Adds a new option for parsing and provides the option it refers to.
-///
-/// \param O pointer to the option
-/// \param Name the string name for the option to handle during parsing
-///
-/// Literal options are used by some parsers to register special option values.
-/// This is how the PassNameParser registers pass names for opt.
-void AddLiteralOption(Option &O, const char *Name);
 
 } // End namespace cl
 
