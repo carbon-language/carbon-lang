@@ -20,6 +20,7 @@
 #include "../../../test_compare.h"
 #include "test_allocator.h"
 #include "min_allocator.h"
+#include "Counter.h"
 
 int main()
 {
@@ -140,6 +141,53 @@ int main()
         assert(m3.get_allocator() == A(5));
         assert(m3.key_comp() == C(5));
         assert(m1.empty());
+    }
+    {
+        typedef Counter<int> T;
+        typedef std::pair<int, T> V;
+        typedef std::pair<const int, T> VC;
+        typedef test_allocator<VC> A;
+        typedef std::less<int> C;
+        typedef std::multimap<const int, T, C, A> M;
+        typedef V* I;
+        Counter_base::gConstructed = 0;
+        {
+            V a1[] =
+            {
+                V(1, 1),
+                V(1, 2),
+                V(1, 3),
+                V(2, 1),
+                V(2, 2),
+                V(2, 3),
+                V(3, 1),
+                V(3, 2),
+                V(3, 3)
+            };
+            const size_t num = sizeof(a1)/sizeof(a1[0]);
+            assert(Counter_base::gConstructed == num);
+
+            M m1(I(a1), I(a1+num), C(), A());
+            assert(Counter_base::gConstructed == 2*num);
+        
+            M m2(m1);
+            assert(m2 == m1);
+            assert(Counter_base::gConstructed == 3*num);
+
+            M m3(std::move(m1), A());
+            assert(m3 == m2);
+            assert(m1.empty());
+            assert(Counter_base::gConstructed == 3*num);
+
+            {
+            M m4(std::move(m2), A(5));
+            assert(Counter_base::gConstructed == 3*num);
+            assert(m4 == m3);
+            assert(m2.empty());
+            }
+            assert(Counter_base::gConstructed == 2*num);
+        }
+        assert(Counter_base::gConstructed == 0);            
     }
 #if __cplusplus >= 201103L
     {

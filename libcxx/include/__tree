@@ -522,9 +522,9 @@ public:
     bool __value_constructed;
 
     _LIBCPP_INLINE_VISIBILITY
-    explicit __tree_node_destructor(allocator_type& __na) _NOEXCEPT
+    explicit __tree_node_destructor(allocator_type& __na, bool __val = false) _NOEXCEPT
         : __na_(__na),
-          __value_constructed(false)
+          __value_constructed(__val)
         {}
 
     _LIBCPP_INLINE_VISIBILITY
@@ -2291,7 +2291,7 @@ __tree<_Tp, _Compare, _Allocator>::remove(const_iterator __p) _NOEXCEPT
     --size();
     __tree_remove(__end_node()->__left_,
                   static_cast<__node_base_pointer>(__np));
-    return __node_holder(__np, _Dp(__node_alloc()));
+    return __node_holder(__np, _Dp(__node_alloc(), true));
 }
 
 template <class _Tp, class _Compare, class _Allocator>
