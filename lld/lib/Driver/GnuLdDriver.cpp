@@ -329,7 +329,6 @@ createELFLinkingContext(llvm::Triple triple) {
   LLVM_TARGET(ARM)
   LLVM_TARGET(Hexagon)
   LLVM_TARGET(Mips)
-  LLVM_TARGET(PPC)
   LLVM_TARGET(X86)
   LLVM_TARGET(X86_64)
   return nullptr;

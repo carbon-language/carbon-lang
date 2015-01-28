@@ -1,4 +1,4 @@
-##===- lld/lib/ReaderWriter/ELF/PPC/Makefile ----------*- Makefile -*-===##
+##===- lld/lib/ReaderWriter/ELF/Mips/Makefile ----------*- Makefile -*-===##
 #
 #                     The LLVM Compiler Infrastructure
 #

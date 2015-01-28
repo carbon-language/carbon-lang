@@ -14,6 +14,6 @@ USEDLIBS = lldPasses.a
 CPP.Flags += -I$(PROJ_SRC_DIR)/$(LLD_LEVEL)/lib/ReaderWriter/ELF
 
 # these link against this lib
-PARALLEL_DIRS := Hexagon PPC X86 X86_64 Mips AArch64 ARM
+PARALLEL_DIRS := Hexagon X86 X86_64 Mips AArch64 ARM
 
 include $(LLD_LEVEL)/Makefile

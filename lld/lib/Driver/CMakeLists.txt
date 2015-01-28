@@ -28,7 +28,6 @@ add_llvm_library(lldDriver
     lldARMELFTarget
     lldHexagonELFTarget
     lldMipsELFTarget
-    lldPPCELFTarget
     lldX86ELFTarget
     lldX86_64ELFTarget
     lldCore

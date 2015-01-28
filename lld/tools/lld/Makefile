@@ -22,7 +22,7 @@ LINK_COMPONENTS := $(TARGETS_TO_BUILD)
 USEDLIBS = lldDriver.a lldConfig.a \
            lldELF.a lldMachO.a lldPasses.a lldPECOFF.a lldYAML.a \
            lldReaderWriter.a lldCore.a lldNative.a \
-           lldHexagonELFTarget.a lldPPCELFTarget.a lldMipsELFTarget.a \
+           lldHexagonELFTarget.a lldMipsELFTarget.a \
            lldX86ELFTarget.a lldX86_64ELFTarget.a lldAArch64ELFTarget.a \
            lldARMELFTarget.a \
            LLVMOption.a
