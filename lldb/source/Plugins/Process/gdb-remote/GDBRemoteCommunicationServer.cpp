@@ -1921,6 +1921,9 @@ GDBRemoteCommunicationServer::Handle_qLaunchGDBServer (StringExtractorGDBRemote 
         if (log)
             log->Printf("Launching debugserver with: %s:%u...\n", hostname.c_str(), port);
 
+        // Do not run in a new session so that it can not linger after the
+        // platform closes.
+        debugserver_launch_info.SetLaunchInSeparateProcessGroup(false);
         debugserver_launch_info.SetMonitorProcessCallback(ReapDebugserverProcess, this, false);
 
         std::string platform_scheme;
