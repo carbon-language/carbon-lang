@@ -7937,11 +7937,11 @@ static SDValue lowerVectorShuffleAsZeroOrAnyExtend(
       if (Mask[i] == -1)
         continue; // Valid anywhere but doesn't tell us anything.
       if (i % Scale != 0) {
-        // Each of the extend elements needs to be zeroable.
+        // Each of the extended elements need to be zeroable.
         if (!Zeroable[i])
           return SDValue();
 
-        // We no lorger are in the anyext case.
+        // We no longer are in the anyext case.
         AnyExt = false;
         continue;
       }
@@ -7955,7 +7955,7 @@ static SDValue lowerVectorShuffleAsZeroOrAnyExtend(
         return SDValue(); // Flip-flopping inputs.
 
       if (Mask[i] % NumElements != i / Scale)
-        return SDValue(); // Non-consecutive strided elemenst.
+        return SDValue(); // Non-consecutive strided elements.
     }
 
     // If we fail to find an input, we have a zero-shuffle which should always
@@ -7977,7 +7977,7 @@ static SDValue lowerVectorShuffleAsZeroOrAnyExtend(
   // many elements.
   for (; NumExtElements < NumElements; NumExtElements *= 2) {
     assert(NumElements % NumExtElements == 0 &&
-           "The input vector size must be divisble by the extended size.");
+           "The input vector size must be divisible by the extended size.");
     if (SDValue V = Lower(NumElements / NumExtElements))
       return V;
   }
