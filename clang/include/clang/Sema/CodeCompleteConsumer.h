@@ -885,7 +885,8 @@ public:
     CodeCompletionString *CreateSignatureString(unsigned CurrentArg,
                                                 Sema &S,
                                       CodeCompletionAllocator &Allocator,
-                                      CodeCompletionTUInfo &CCTUInfo) const;
+                                      CodeCompletionTUInfo &CCTUInfo,
+                                      bool IncludeBriefComments) const;
   };
 
   CodeCompleteConsumer(const CodeCompleteOptions &CodeCompleteOpts,

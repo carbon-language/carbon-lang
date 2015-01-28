@@ -483,6 +483,31 @@ PrintingCodeCompleteConsumer::ProcessCodeCompleteResults(Sema &SemaRef,
   }
 }
 
+// This function is used solely to preserve the former presentation of overloads
+// by "clang -cc1 -code-completion-at", since CodeCompletionString::getAsString
+// needs to be improved for printing the newer and more detailed overload
+// chunks.
+static std::string getOverloadAsString(const CodeCompletionString &CCS) {
+  std::string Result;
+  llvm::raw_string_ostream OS(Result);
+
+  for (auto &C : CCS) {
+    switch (C.Kind) {
+    case CodeCompletionString::CK_Informative:
+    case CodeCompletionString::CK_ResultType:
+      OS << "[#" << C.Text << "#]";
+      break;
+
+    case CodeCompletionString::CK_CurrentParameter:
+      OS << "<#" << C.Text << "#>";
+      break;
+
+    default: OS << C.Text; break;
+    }
+  }
+  return OS.str();
+}
+
 void 
 PrintingCodeCompleteConsumer::ProcessOverloadCandidates(Sema &SemaRef,
                                                         unsigned CurrentArg,
@@ -491,8 +516,9 @@ PrintingCodeCompleteConsumer::ProcessOverloadCandidates(Sema &SemaRef,
   for (unsigned I = 0; I != NumCandidates; ++I) {
     if (CodeCompletionString *CCS
           = Candidates[I].CreateSignatureString(CurrentArg, SemaRef,
-                                                getAllocator(), CCTUInfo)) {
-      OS << "OVERLOAD: " << CCS->getAsString() << "\n";
+                                                getAllocator(), CCTUInfo,
+                                                includeBriefComments())) {
+      OS << "OVERLOAD: " << getOverloadAsString(*CCS) << "\n";
     }
   }
 }

@@ -58,9 +58,9 @@ Z::operator int() const {
 // CHECK-MEMBER-NEXT: Container is complete
 // CHECK-MEMBER-NEXT: Container USR: c:@S@Z
 
-// CHECK-OVERLOAD: OverloadCandidate:{ResultType int &}{Text overloaded}{LeftParen (}{Text Z z}{Comma , }{CurrentParameter int second}{RightParen )}
-// CHECK-OVERLOAD: OverloadCandidate:{ResultType float &}{Text overloaded}{LeftParen (}{Text int i}{Comma , }{CurrentParameter long second}{RightParen )}
-// CHECK-OVERLOAD: OverloadCandidate:{ResultType double &}{Text overloaded}{LeftParen (}{Text float f}{Comma , }{CurrentParameter int second}{RightParen )}
+// CHECK-OVERLOAD: OverloadCandidate:{ResultType int &}{Text overloaded}{LeftParen (}{Placeholder Z z}{Comma , }{CurrentParameter int second}{RightParen )}
+// CHECK-OVERLOAD: OverloadCandidate:{ResultType float &}{Text overloaded}{LeftParen (}{Placeholder int i}{Comma , }{CurrentParameter long second}{RightParen )}
+// CHECK-OVERLOAD: OverloadCandidate:{ResultType double &}{Text overloaded}{LeftParen (}{Placeholder float f}{Comma , }{CurrentParameter int second}{RightParen )}
 // CHECK-OVERLOAD: Completion contexts:
 // CHECK-OVERLOAD-NEXT: Any type
 // CHECK-OVERLOAD-NEXT: Any value

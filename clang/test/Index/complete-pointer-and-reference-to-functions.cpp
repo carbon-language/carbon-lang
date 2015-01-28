@@ -14,7 +14,7 @@ int main() {
 }
 
 // RUN: c-index-test -code-completion-at=%s:10:11 %s | FileCheck -check-prefix=CHECK-CC1 %s
-// CHECK-CC1: OverloadCandidate:{Text void}{LeftParen (}{CurrentParameter int}{RightParen )} (1)
+// CHECK-CC1: OverloadCandidate:{ResultType void}{LeftParen (}{CurrentParameter int}{RightParen )} (1)
 // CHECK-CC1: Completion contexts:
 // CHECK-CC1-NEXT: Any type
 // CHECK-CC1-NEXT: Any value
@@ -26,7 +26,7 @@ int main() {
 // CHECK-CC1-NEXT: Objective-C interface
 
 // RUN: c-index-test -code-completion-at=%s:11:11 %s | FileCheck -check-prefix=CHECK-CC2 %s
-// CHECK-CC2: OverloadCandidate:{Text void}{LeftParen (}{CurrentParameter int}{RightParen )} (1)
+// CHECK-CC2: OverloadCandidate:{ResultType void}{LeftParen (}{CurrentParameter int}{RightParen )} (1)
 // CHECK-CC2: Completion contexts:
 // CHECK-CC2-NEXT: Any type
 // CHECK-CC2-NEXT: Any value
@@ -38,7 +38,7 @@ int main() {
 // CHECK-CC2-NEXT: Objective-C interface
 
 // RUN: c-index-test -code-completion-at=%s:12:18 %s | FileCheck -check-prefix=CHECK-CC3 %s
-// CHECK-CC3: OverloadCandidate:{Text void}{LeftParen (}{Text int}{Comma , }{CurrentParameter ...}{RightParen )} (1)
+// CHECK-CC3: OverloadCandidate:{ResultType void}{LeftParen (}{Placeholder int}{Optional {Comma , }{CurrentParameter ...}}{RightParen )} (1)
 // CHECK-CC3: Completion contexts:
 // CHECK-CC3-NEXT: Any type
 // CHECK-CC3-NEXT: Any value
@@ -50,7 +50,7 @@ int main() {
 // CHECK-CC3-NEXT: Objective-C interface
 
 // RUN: c-index-test -code-completion-at=%s:13:18 %s | FileCheck -check-prefix=CHECK-CC4 %s
-// CHECK-CC4: OverloadCandidate:{Text void}{LeftParen (}{Text int}{Comma , }{CurrentParameter ...}{RightParen )} (1)
+// CHECK-CC4: OverloadCandidate:{ResultType void}{LeftParen (}{Placeholder int}{Optional {Comma , }{CurrentParameter ...}}{RightParen )} (1)
 // CHECK-CC4: Completion contexts:
 // CHECK-CC4-NEXT: Any type
 // CHECK-CC4-NEXT: Any value

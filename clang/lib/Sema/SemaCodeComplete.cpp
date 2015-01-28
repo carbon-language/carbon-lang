@@ -2815,73 +2815,116 @@ CodeCompletionResult::CreateCodeCompletionString(ASTContext &Ctx,
   return Result.TakeString();
 }
 
+/// \brief Add function overload parameter chunks to the given code completion
+/// string.
+static void AddOverloadParameterChunks(ASTContext &Context,
+                                       const PrintingPolicy &Policy,
+                                       const FunctionDecl *Function,
+                                       const FunctionProtoType *Prototype,
+                                       CodeCompletionBuilder &Result,
+                                       unsigned CurrentArg,
+                                       unsigned Start = 0,
+                                       bool InOptional = false) {
+  bool FirstParameter = true;
+  unsigned NumParams = Function ? Function->getNumParams()
+                                : Prototype->getNumParams();
+
+  for (unsigned P = Start; P != NumParams; ++P) {
+    if (Function && Function->getParamDecl(P)->hasDefaultArg() && !InOptional) {
+      // When we see an optional default argument, put that argument and
+      // the remaining default arguments into a new, optional string.
+      CodeCompletionBuilder Opt(Result.getAllocator(),
+                                Result.getCodeCompletionTUInfo());
+      if (!FirstParameter)
+        Opt.AddChunk(CodeCompletionString::CK_Comma);
+      // Optional sections are nested.
+      AddOverloadParameterChunks(Context, Policy, Function, Prototype, Opt,
+                                 CurrentArg, P, /*InOptional=*/true);
+      Result.AddOptionalChunk(Opt.TakeString());
+      return;
+    }
+
+    if (FirstParameter)
+      FirstParameter = false;
+    else
+      Result.AddChunk(CodeCompletionString::CK_Comma);
+
+    InOptional = false;
+
+    // Format the placeholder string.
+    std::string Placeholder;
+    if (Function)
+      Placeholder = FormatFunctionParameter(Context, Policy,
+                                            Function->getParamDecl(P));
+    else
+      Placeholder = Prototype->getParamType(P).getAsString(Policy);
+
+    if (P == CurrentArg)
+      Result.AddCurrentParameterChunk(
+        Result.getAllocator().CopyString(Placeholder));
+    else
+      Result.AddPlaceholderChunk(Result.getAllocator().CopyString(Placeholder));
+  }
+
+  if (Prototype && Prototype->isVariadic()) {
+    CodeCompletionBuilder Opt(Result.getAllocator(),
+                              Result.getCodeCompletionTUInfo());
+    if (!FirstParameter)
+      Opt.AddChunk(CodeCompletionString::CK_Comma);
+
+    if (CurrentArg < NumParams)
+      Opt.AddPlaceholderChunk("...");
+    else
+      Opt.AddCurrentParameterChunk("...");
+
+    Result.AddOptionalChunk(Opt.TakeString());
+  }
+}
+
 CodeCompletionString *
 CodeCompleteConsumer::OverloadCandidate::CreateSignatureString(
-                                                          unsigned CurrentArg,
-                                                               Sema &S,
-                                     CodeCompletionAllocator &Allocator,
-                                     CodeCompletionTUInfo &CCTUInfo) const {
+                                             unsigned CurrentArg, Sema &S,
+                                             CodeCompletionAllocator &Allocator,
+                                             CodeCompletionTUInfo &CCTUInfo,
+                                             bool IncludeBriefComments) const {
   PrintingPolicy Policy = getCompletionPrintingPolicy(S);
 
   // FIXME: Set priority, availability appropriately.
   CodeCompletionBuilder Result(Allocator,CCTUInfo, 1, CXAvailability_Available);
   FunctionDecl *FDecl = getFunction();
-  AddResultTypeChunk(S.Context, Policy, FDecl, Result);
-  const FunctionProtoType *Proto 
+  const FunctionProtoType *Proto
     = dyn_cast<FunctionProtoType>(getFunctionType());
   if (!FDecl && !Proto) {
     // Function without a prototype. Just give the return type and a 
     // highlighted ellipsis.
     const FunctionType *FT = getFunctionType();
-    Result.AddTextChunk(GetCompletionTypeString(FT->getReturnType(), S.Context,
-                                                Policy, Result.getAllocator()));
+    Result.AddResultTypeChunk(Result.getAllocator().CopyString(
+      FT->getReturnType().getAsString(Policy)));
     Result.AddChunk(CodeCompletionString::CK_LeftParen);
     Result.AddChunk(CodeCompletionString::CK_CurrentParameter, "...");
     Result.AddChunk(CodeCompletionString::CK_RightParen);
     return Result.TakeString();
   }
-  
-  if (FDecl)
+
+  if (FDecl) {
+    if (IncludeBriefComments && CurrentArg < FDecl->getNumParams())
+      if (auto RC = S.getASTContext().getRawCommentForAnyRedecl(
+          FDecl->getParamDecl(CurrentArg)))
+        Result.addBriefComment(RC->getBriefText(S.getASTContext()));
+    AddResultTypeChunk(S.Context, Policy, FDecl, Result);
     Result.AddTextChunk(
-                    Result.getAllocator().CopyString(FDecl->getNameAsString()));
-  else
-    Result.AddTextChunk(Result.getAllocator().CopyString(
+      Result.getAllocator().CopyString(FDecl->getNameAsString()));
+  } else {
+    Result.AddResultTypeChunk(
+      Result.getAllocator().CopyString(
         Proto->getReturnType().getAsString(Policy)));
+  }
 
   Result.AddChunk(CodeCompletionString::CK_LeftParen);
-  unsigned NumParams = FDecl ? FDecl->getNumParams() : Proto->getNumParams();
-  for (unsigned I = 0; I != NumParams; ++I) {
-    if (I)
-      Result.AddChunk(CodeCompletionString::CK_Comma);
-    
-    std::string ArgString;
-    QualType ArgType;
-    
-    if (FDecl) {
-      ArgString = FDecl->getParamDecl(I)->getNameAsString();
-      ArgType = FDecl->getParamDecl(I)->getOriginalType();
-    } else {
-      ArgType = Proto->getParamType(I);
-    }
-    
-    ArgType.getAsStringInternal(ArgString, Policy);
-    
-    if (I == CurrentArg)
-      Result.AddChunk(CodeCompletionString::CK_CurrentParameter,
-                      Result.getAllocator().CopyString(ArgString));
-    else
-      Result.AddTextChunk(Result.getAllocator().CopyString(ArgString));
-  }
-  
-  if (Proto && Proto->isVariadic()) {
-    Result.AddChunk(CodeCompletionString::CK_Comma);
-    if (CurrentArg < NumParams)
-      Result.AddTextChunk("...");
-    else
-      Result.AddChunk(CodeCompletionString::CK_CurrentParameter, "...");
-  }
+  AddOverloadParameterChunks(S.getASTContext(), Policy, FDecl, Proto, Result,
+                             CurrentArg);
   Result.AddChunk(CodeCompletionString::CK_RightParen);
-  
+
   return Result.TakeString();
 }
 
@@ -3894,7 +3937,6 @@ void Sema::CodeCompleteCall(Scope *S, Expr *Fn, ArrayRef<Expr *> Args) {
   // results. We may want to revisit this strategy in the future,
   // e.g., by merging the two kinds of results.
 
-  // FIXME: Provide support for highlighting optional parameters.
   // FIXME: Provide support for variadic template functions.
 
   // Ignore type-dependent call expressions entirely.
@@ -3934,7 +3976,7 @@ void Sema::CodeCompleteCall(Scope *S, Expr *Fn, ArrayRef<Expr *> Args) {
     else if (auto DRE = dyn_cast<DeclRefExpr>(NakedFn))
       FD = dyn_cast<FunctionDecl>(DRE->getDecl());
     if (FD) { // We check whether it's a resolved function declaration.
-      if (!getLangOpts().CPlusPlus || 
+      if (!getLangOpts().CPlusPlus ||
           !FD->getType()->getAs<FunctionProtoType>())
         Results.push_back(ResultCandidate(FD));
       else
@@ -3994,7 +4036,6 @@ void Sema::CodeCompleteConstructor(Scope *S, QualType Type, SourceLocation Loc,
 
   // FIXME: Provide support for member initializers.
   // FIXME: Provide support for variadic template constructors.
-  // FIXME: Provide support for highlighting optional parameters.
 
   OverloadCandidateSet CandidateSet(Loc, OverloadCandidateSet::CSK_Normal);
 
