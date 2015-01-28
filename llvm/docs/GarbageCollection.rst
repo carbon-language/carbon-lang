@@ -721,8 +721,9 @@ this feature should be used by all GC plugins.  It is enabled by default.
 Custom lowering of intrinsics: ``CustomRoots``, ``CustomReadBarriers``, and ``CustomWriteBarriers``
 ---------------------------------------------------------------------------------------------------
 
-For GCs which use barriers or unusual treatment of stack roots, these flags
-allow the collector to perform arbitrary transformations of the LLVM IR:
+For GCs which use barriers or unusual treatment of stack roots, these 
+flags allow the collector to perform arbitrary transformations of the
+LLVM IR:
 
 .. code-block:: c++
 
@@ -733,70 +734,18 @@ allow the collector to perform arbitrary transformations of the LLVM IR:
       CustomReadBarriers = true;
       CustomWriteBarriers = true;
     }
-
-    virtual bool initializeCustomLowering(Module &M);
-    virtual bool performCustomLowering(Function &F);
   };
 
-If any of these flags are set, then LLVM suppresses its default lowering for the
-corresponding intrinsics and instead calls ``performCustomLowering``.
+If any of these flags are set, LLVM suppresses its default lowering for
+the corresponding intrinsics.  Instead, you must provide a custom Pass
+which lowers the intrinsics as desired.  If you have opted in to custom
+lowering of a particular intrinsic your pass **must** eliminate all 
+instances of the corresponding intrinsic in functions which opt in to
+your GC.  The best example of such a pass is the ShadowStackGC and it's 
+ShadowStackGCLowering pass.  
 
-LLVM's default action for each intrinsic is as follows:
-
-* ``llvm.gcroot``: Leave it alone.  The code generator must see it or the stack
-  map will not be computed.
-
-* ``llvm.gcread``: Substitute a ``load`` instruction.
-
-* ``llvm.gcwrite``: Substitute a ``store`` instruction.
-
-If ``CustomReadBarriers`` or ``CustomWriteBarriers`` are specified, then
-``performCustomLowering`` **must** eliminate the corresponding barriers.
-
-``performCustomLowering`` must comply with the same restrictions as
-:ref:`FunctionPass::runOnFunction <writing-an-llvm-pass-runOnFunction>`
-Likewise, ``initializeCustomLowering`` has the same semantics as
-:ref:`Pass::doInitialization(Module&)
-<writing-an-llvm-pass-doInitialization-mod>`
-
-The following can be used as a template:
-
-.. code-block:: c++
-
-  #include "llvm/IR/Module.h"
-  #include "llvm/IR/IntrinsicInst.h"
-
-  bool MyGC::initializeCustomLowering(Module &M) {
-    return false;
-  }
-
-  bool MyGC::performCustomLowering(Function &F) {
-    bool MadeChange = false;
-
-    for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB)
-      for (BasicBlock::iterator II = BB->begin(), E = BB->end(); II != E; )
-        if (IntrinsicInst *CI = dyn_cast<IntrinsicInst>(II++))
-          if (Function *F = CI->getCalledFunction())
-            switch (F->getIntrinsicID()) {
-            case Intrinsic::gcwrite:
-              // Handle llvm.gcwrite.
-              CI->eraseFromParent();
-              MadeChange = true;
-              break;
-            case Intrinsic::gcread:
-              // Handle llvm.gcread.
-              CI->eraseFromParent();
-              MadeChange = true;
-              break;
-            case Intrinsic::gcroot:
-              // Handle llvm.gcroot.
-              CI->eraseFromParent();
-              MadeChange = true;
-              break;
-            }
-
-    return MadeChange;
-  }
+There is currently no way to register such a custom lowering pass 
+without building a custom copy of LLVM.
 
 .. _safe-points:
 

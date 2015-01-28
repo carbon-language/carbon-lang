@@ -101,13 +101,13 @@ public:
   const std::string &getName() const { return Name; }
 
   /// By default, write barriers are replaced with simple store
-  /// instructions. If true, then performCustomLowering must instead lower
-  /// them.
+  /// instructions. If true, you must provide a custom pass to lower 
+  /// calls to @llvm.gcwrite.
   bool customWriteBarrier() const { return CustomWriteBarriers; }
 
   /// By default, read barriers are replaced with simple load
-  /// instructions. If true, then performCustomLowering must instead lower
-  /// them.
+  /// instructions. If true, you must provide a custom pass to lower 
+  /// calls to @llvm.gcread.
   bool customReadBarrier() const { return CustomReadBarriers; }
 
   /// Returns true if this strategy is expecting the use of gc.statepoints,
@@ -143,7 +143,8 @@ public:
   }
 
   /// By default, roots are left for the code generator so it can generate a
-  /// stack map. If true, then performCustomLowering must delete them.
+  /// stack map. If true, you must provide a custom pass to lower 
+  /// calls to @llvm.gcroot.
   bool customRoots() const { return CustomRoots; }
 
   /// If set, gcroot intrinsics should initialize their allocas to null
@@ -158,23 +159,6 @@ public:
   bool usesMetadata() const { return UsesMetadata; }
 
   ///@}
-
-  /// initializeCustomLowering/performCustomLowering - If any of the actions
-  /// are set to custom, performCustomLowering must be overriden to transform
-  /// the corresponding actions to LLVM IR. initializeCustomLowering is
-  /// optional to override. These are the only GCStrategy methods through
-  /// which the LLVM IR can be modified.  These methods apply mostly to
-  /// gc.root based implementations, but can be overriden to provide custom
-  /// barrier lowerings with gc.statepoint as well.
-  ///@{
-  virtual bool initializeCustomLowering(Module &F) {
-    // No changes made
-    return false;
-  }
-  virtual bool performCustomLowering(Function &F) {
-    llvm_unreachable("GCStrategy subclass specified a configuration which"
-                     "requires a custom lowering without providing one");
-  }
 };
 
 /// Subclasses of GCStrategy are made available for use during compilation by

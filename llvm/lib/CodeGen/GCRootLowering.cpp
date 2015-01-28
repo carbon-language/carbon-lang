@@ -111,30 +111,15 @@ static bool NeedsDefaultLoweringPass(const GCStrategy &C) {
          C.initializeRoots();
 }
 
-static bool NeedsCustomLoweringPass(const GCStrategy &C) {
-  // Custom lowering is only necessary if enabled for some action.
-  return C.customWriteBarrier() || C.customReadBarrier() || C.customRoots();
-}
-
 /// doInitialization - If this module uses the GC intrinsics, find them now.
 bool LowerIntrinsics::doInitialization(Module &M) {
-  // FIXME: This is rather antisocial in the context of a JIT since it performs
-  //        work against the entire module. But this cannot be done at
-  //        runFunction time (initializeCustomLowering likely needs to change
-  //        the module).
   GCModuleInfo *MI = getAnalysisIfAvailable<GCModuleInfo>();
   assert(MI && "LowerIntrinsics didn't require GCModuleInfo!?");
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
     if (!I->isDeclaration() && I->hasGC())
       MI->getFunctionInfo(*I); // Instantiate the GC strategy.
 
-  bool MadeChange = false;
-  for (GCModuleInfo::iterator I = MI->begin(), E = MI->end(); I != E; ++I)
-    if (NeedsCustomLoweringPass(**I))
-      if ((*I)->initializeCustomLowering(M))
-        MadeChange = true;
-
-  return MadeChange;
+  return false;
 }
 
 /// CouldBecomeSafePoint - Predicate to conservatively determine whether the
@@ -210,17 +195,6 @@ bool LowerIntrinsics::runOnFunction(Function &F) {
 
   if (NeedsDefaultLoweringPass(S))
     MadeChange |= PerformDefaultLowering(F, S);
-
-  bool UseCustomLoweringPass = NeedsCustomLoweringPass(S);
-  if (UseCustomLoweringPass)
-    MadeChange |= S.performCustomLowering(F);
-
-  // Custom lowering may modify the CFG, so dominators must be recomputed.
-  if (UseCustomLoweringPass) {
-    if (DominatorTreeWrapperPass *DTWP =
-            getAnalysisIfAvailable<DominatorTreeWrapperPass>())
-      DTWP->getDomTree().recalculate(F);
-  }
 
   return MadeChange;
 }

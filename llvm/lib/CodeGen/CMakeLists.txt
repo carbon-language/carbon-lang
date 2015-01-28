@@ -96,6 +96,7 @@ add_llvm_library(LLVMCodeGen
   ScheduleDAGPrinter.cpp
   ScoreboardHazardRecognizer.cpp
   ShadowStackGC.cpp
+  ShadowStackGCLowering.cpp
   SjLjEHPrepare.cpp
   SlotIndexes.cpp
   SpillPlacement.cpp

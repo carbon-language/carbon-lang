@@ -419,7 +419,10 @@ void TargetPassConfig::addIRPasses() {
       addPass(createPrintFunctionPass(dbgs(), "\n\n*** Code after LSR ***\n"));
   }
 
+  // Run GC lowering passes for builtin collectors
+  // TODO: add a pass insertion point here
   addPass(createGCLoweringPass());
+  addPass(createShadowStackGCLoweringPass());
 
   // Make sure that no unreachable blocks are instruction selected.
   addPass(createUnreachableBlockEliminationPass());

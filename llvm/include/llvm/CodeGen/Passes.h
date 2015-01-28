@@ -517,10 +517,14 @@ namespace llvm {
   /// information.
   extern char &MachineBlockPlacementStatsID;
 
-  /// GCLowering Pass - Performs target-independent LLVM IR transformations for
-  /// highly portable strategies.
-  ///
+  /// GCLowering Pass - Used by gc.root to perform its default lowering
+  /// operations.
   FunctionPass *createGCLoweringPass();
+
+  /// ShadowStackGCLowering - Implements the custom lowering mechanism
+  /// used by the shadow stack GC.  Only runs on functions which opt in to
+  /// the shadow stack collector.
+  FunctionPass *createShadowStackGCLoweringPass();
 
   /// GCMachineCodeAnalysis - Target-independent pass to mark safe points
   /// in machine code. Must be added very late during code generation, just
