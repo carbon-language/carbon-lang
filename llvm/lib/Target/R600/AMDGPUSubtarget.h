@@ -76,7 +76,8 @@ private:
 
 public:
   AMDGPUSubtarget(StringRef TT, StringRef CPU, StringRef FS, TargetMachine &TM);
-  AMDGPUSubtarget &initializeSubtargetDependencies(StringRef GPU, StringRef FS);
+  AMDGPUSubtarget &initializeSubtargetDependencies(StringRef TT, StringRef GPU,
+                                                   StringRef FS);
 
   // FIXME: This routine needs to go away. See comments in
   // AMDGPUTargetMachine.h.

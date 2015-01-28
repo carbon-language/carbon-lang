@@ -31,7 +31,7 @@ using namespace llvm;
 #include "AMDGPUGenSubtargetInfo.inc"
 
 AMDGPUSubtarget &
-AMDGPUSubtarget::initializeSubtargetDependencies(StringRef GPU, StringRef FS) {
+AMDGPUSubtarget::initializeSubtargetDependencies(StringRef TT, StringRef GPU, StringRef FS) {
   // Determine default and user-specified characteristics
   // On SI+, we want FP64 denormals to be on by default. FP32 denormals can be
   // enabled, but some instructions do not respect them and they run at the
@@ -43,6 +43,9 @@ AMDGPUSubtarget::initializeSubtargetDependencies(StringRef GPU, StringRef FS) {
 
   SmallString<256> FullFS("+promote-alloca,+fp64-denormals,");
   FullFS += FS;
+
+  if (GPU == "" && Triple(TT).getArch() == Triple::amdgcn)
+    GPU = "SI";
 
   ParseSubtargetFeatures(GPU, FullFS);
 
@@ -80,7 +83,7 @@ AMDGPUSubtarget::AMDGPUSubtarget(StringRef TT, StringRef GPU, StringRef FS,
       EnablePromoteAlloca(false), EnableIfCvt(true),
       EnableLoadStoreOpt(false), WavefrontSize(0), CFALUBug(false), LocalMemorySize(0),
       EnableVGPRSpilling(false),
-      DL(computeDataLayout(initializeSubtargetDependencies(GPU, FS))),
+      DL(computeDataLayout(initializeSubtargetDependencies(TT, GPU, FS))),
       FrameLowering(TargetFrameLowering::StackGrowsUp,
                     64 * 16, // Maximum stack alignment (long16)
                     0),
