@@ -147,3 +147,38 @@ OptionGroupPlatform::SetOptionValue (CommandInterpreter &interpreter,
     }
     return error;
 }
+
+bool
+OptionGroupPlatform::PlatformMatches(const lldb::PlatformSP &platform_sp) const
+{
+    if (platform_sp)
+    {
+        if (!m_platform_name.empty())
+        {
+            if (platform_sp->GetName() != ConstString(m_platform_name.c_str()))
+                return false;
+        }
+
+        if (m_sdk_build && m_sdk_build != platform_sp->GetSDKBuild())
+            return false;
+
+        if (m_sdk_sysroot && m_sdk_sysroot != platform_sp->GetSDKRootDirectory())
+            return false;
+
+        if (m_os_version_major != UINT32_MAX)
+        {
+            uint32_t major, minor, update;
+            if (platform_sp->GetOSVersion (major, minor, update))
+            {
+                if (m_os_version_major != major)
+                    return false;
+                if (m_os_version_minor != minor)
+                    return false;
+                if (m_os_version_update != update)
+                    return false;
+            }
+        }
+        return true;
+    }
+    return false;
+}

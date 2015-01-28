@@ -102,8 +102,10 @@ public:
     SetSDKBuild (const ConstString &sdk_build)
     {
         m_sdk_build = sdk_build;
-    }    
-    
+    }
+
+    bool
+    PlatformMatches(const lldb::PlatformSP &platform_sp) const;
 
 protected:
     std::string m_platform_name;

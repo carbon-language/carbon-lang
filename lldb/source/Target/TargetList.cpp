@@ -130,16 +130,20 @@ TargetList::CreateTargetInternal (Debugger &debugger,
     // let's see if there is already an existing plaform before we go creating another...
     platform_sp = debugger.GetPlatformList().GetSelectedPlatform();
 
-    if (!platform_sp && platform_options && platform_options->PlatformWasSpecified ())
+    if (platform_options && platform_options->PlatformWasSpecified ())
     {
-        const bool select_platform = true;
-        platform_sp = platform_options->CreatePlatformWithOptions (interpreter,
-                                                                   arch,
-                                                                   select_platform,
-                                                                   error,
-                                                                   platform_arch);
-        if (!platform_sp)
-            return error;
+        // Create a new platform if it doesn't match the selected platform
+        if (!platform_options->PlatformMatches(platform_sp))
+        {
+            const bool select_platform = true;
+            platform_sp = platform_options->CreatePlatformWithOptions (interpreter,
+                                                                       arch,
+                                                                       select_platform,
+                                                                       error,
+                                                                       platform_arch);
+            if (!platform_sp)
+                return error;
+        }
     }
     
     if (user_exe_path && user_exe_path[0])
