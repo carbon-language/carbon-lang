@@ -1,4 +1,4 @@
-; RUN: llc -march=r600 -mcpu=SI < %s | FileCheck -check-prefix=SI -check-prefix=FUNC %s
+; RUN: llc -march=amdgcn -mcpu=SI < %s | FileCheck -check-prefix=SI -check-prefix=FUNC %s
 ; Make sure we don't try to form FMAX_LEGACY nodes with f64
 
 declare i32 @llvm.r600.read.tidig.x() #1

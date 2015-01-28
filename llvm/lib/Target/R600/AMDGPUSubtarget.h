@@ -22,7 +22,6 @@
 #include "R600ISelLowering.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringRef.h"
-#include "llvm/IR/DataLayout.h"
 #include "llvm/Target/TargetSubtargetInfo.h"
 
 #define GET_SUBTARGETINFO_HEADER
@@ -67,7 +66,6 @@ private:
   int LocalMemorySize;
   bool EnableVGPRSpilling;
 
-  DataLayout DL;
   AMDGPUFrameLowering FrameLowering;
   std::unique_ptr<AMDGPUTargetLowering> TLInfo;
   std::unique_ptr<AMDGPUInstrInfo> InstrInfo;
@@ -78,10 +76,6 @@ public:
   AMDGPUSubtarget(StringRef TT, StringRef CPU, StringRef FS, TargetMachine &TM);
   AMDGPUSubtarget &initializeSubtargetDependencies(StringRef TT, StringRef GPU,
                                                    StringRef FS);
-
-  // FIXME: This routine needs to go away. See comments in
-  // AMDGPUTargetMachine.h.
-  const DataLayout *getDataLayout() const { return &DL; }
 
   const AMDGPUFrameLowering *getFrameLowering() const override {
     return &FrameLowering;

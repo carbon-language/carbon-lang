@@ -59,20 +59,6 @@ AMDGPUSubtarget::initializeSubtargetDependencies(StringRef TT, StringRef GPU, St
   return *this;
 }
 
-static std::string computeDataLayout(const AMDGPUSubtarget &ST) {
-  std::string Ret = "e-p:32:32";
-
-  if (ST.is64bit()) {
-    // 32-bit private, local, and region pointers. 64-bit global and constant.
-    Ret += "-p1:64:64-p2:64:64-p3:32:32-p4:64:64-p5:32:32-p24:64:64";
-  }
-
-  Ret += "-i64:64-v16:16-v24:32-v32:32-v48:64-v96:128-v192:256-v256:256"
-         "-v512:512-v1024:1024-v2048:2048-n32:64";
-
-  return Ret;
-}
-
 AMDGPUSubtarget::AMDGPUSubtarget(StringRef TT, StringRef GPU, StringRef FS,
                                  TargetMachine &TM)
     : AMDGPUGenSubtargetInfo(TT, GPU, FS), DevName(GPU), Is64bit(false),
@@ -83,12 +69,14 @@ AMDGPUSubtarget::AMDGPUSubtarget(StringRef TT, StringRef GPU, StringRef FS,
       EnablePromoteAlloca(false), EnableIfCvt(true),
       EnableLoadStoreOpt(false), WavefrontSize(0), CFALUBug(false), LocalMemorySize(0),
       EnableVGPRSpilling(false),
-      DL(computeDataLayout(initializeSubtargetDependencies(TT, GPU, FS))),
       FrameLowering(TargetFrameLowering::StackGrowsUp,
                     64 * 16, // Maximum stack alignment (long16)
                     0),
       InstrItins(getInstrItineraryForCPU(GPU)),
       TargetTriple(TT) {
+
+  initializeSubtargetDependencies(TT, GPU, FS);
+
   if (getGeneration() <= AMDGPUSubtarget::NORTHERN_ISLANDS) {
     InstrInfo.reset(new R600InstrInfo(*this));
     TLInfo.reset(new R600TargetLowering(TM));

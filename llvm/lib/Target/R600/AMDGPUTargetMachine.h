@@ -29,6 +29,9 @@ namespace llvm {
 //===----------------------------------------------------------------------===//
 
 class AMDGPUTargetMachine : public LLVMTargetMachine {
+private:
+  const DataLayout DL;
+
 protected:
   TargetLoweringObjectFile *TLOF;
   AMDGPUSubtarget Subtarget;
@@ -42,7 +45,7 @@ public:
   // FIXME: This is currently broken, the DataLayout needs to move to
   // the target machine.
   const DataLayout *getDataLayout() const override {
-    return getSubtargetImpl()->getDataLayout();
+    return &DL;
   }
   const AMDGPUSubtarget *getSubtargetImpl() const override {
     return &Subtarget;

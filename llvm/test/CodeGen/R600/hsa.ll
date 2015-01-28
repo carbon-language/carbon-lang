@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=r600--amdhsa -mcpu=kaveri | FileCheck --check-prefix=HSA %s
+; RUN: llc < %s -mtriple=amdgcn--amdhsa -mcpu=kaveri | FileCheck --check-prefix=HSA %s
 
 ; HSA: {{^}}simple:
 ; HSA: .section        .hsa.version

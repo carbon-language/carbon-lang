@@ -1,5 +1,5 @@
-; RUN: llc -march=r600 -mcpu=SI -verify-machineinstrs -mattr=+load-store-opt -enable-misched < %s | FileCheck  --check-prefix=CHECK %s
-; RUN: llc -march=r600 -mcpu=bonaire -verify-machineinstrs -mattr=+load-store-opt -enable-misched < %s | FileCheck  --check-prefix=CHECK %s
+; RUN: llc -march=amdgcn -mcpu=SI -verify-machineinstrs -mattr=+load-store-opt -enable-misched < %s | FileCheck  --check-prefix=CHECK %s
+; RUN: llc -march=amdgcn -mcpu=bonaire -verify-machineinstrs -mattr=+load-store-opt -enable-misched < %s | FileCheck  --check-prefix=CHECK %s
 
 ; This test is for a bug in the machine scheduler where stores without
 ; an underlying object would be moved across the barrier.  In this

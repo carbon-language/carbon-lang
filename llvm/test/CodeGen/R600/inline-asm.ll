@@ -1,5 +1,5 @@
-; RUN: llc < %s -march=r600 -mcpu=SI -verify-machineinstrs | FileCheck %s
-; RUN: llc < %s -march=r600 -mcpu=tonga -verify-machineinstrs | FileCheck %s
+; RUN: llc < %s -march=amdgcn -mcpu=SI -verify-machineinstrs | FileCheck %s
+; RUN: llc < %s -march=amdgcn -mcpu=tonga -verify-machineinstrs | FileCheck %s
 
 ; CHECK: {{^}}inline_asm:
 ; CHECK: s_endpgm
