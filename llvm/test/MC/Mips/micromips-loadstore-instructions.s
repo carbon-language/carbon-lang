@@ -34,6 +34,14 @@
 # CHECK-EL: swm32  $16, $17, $18, $19, 8($4)  # encoding: [0x84,0x20,0x08,0xd0]
 # CHECK-EL: lwm16  $16, $17, $ra, 8($sp)      # encoding: [0x12,0x45]
 # CHECK-EL: swm16  $16, $17, $ra, 8($sp)      # encoding: [0x52,0x45]
+# CHECK-EL: lwm16  $16, $17, $ra, 8($sp)      # encoding: [0x12,0x45]
+# CHECK-EL: lwm32  $16, $17, $ra, 64($sp)     # encoding: [0x5d,0x22,0x40,0x50]
+# CHECK-EL: lwm32  $16, $17, $ra, 8($4)       # encoding: [0x44,0x22,0x08,0x50]
+# CHECK-EL: lwm32  $16, $17, 8($sp)           # encoding: [0x5d,0x20,0x08,0x50]
+# CHECK-EL: swm16  $16, $17, $ra, 8($sp)      # encoding: [0x52,0x45]
+# CHECK-EL: swm32  $16, $17, $ra, 64($sp)     # encoding: [0x5d,0x22,0x40,0xd0]
+# CHECK-EL: swm32  $16, $17, $ra, 8($4)       # encoding: [0x44,0x22,0x08,0xd0]
+# CHECK-EL: swm32  $16, $17, 8($sp)           # encoding: [0x5d,0x20,0x08,0xd0]
 # CHECK-EL: swp    $16, 8($4)                 # encoding: [0x04,0x22,0x08,0x90]
 # CHECK-EL: lwp    $16, 8($4)                 # encoding: [0x04,0x22,0x08,0x10]
 #------------------------------------------------------------------------------
@@ -64,6 +72,14 @@
 # CHECK-EB: swm32  $16, $17, $18, $19, 8($4) # encoding: [0x20,0x84,0xd0,0x08]
 # CHECK-EB: lwm16  $16, $17, $ra, 8($sp)     # encoding: [0x45,0x12]
 # CHECK-EB: swm16  $16, $17, $ra, 8($sp)     # encoding: [0x45,0x52]
+# CHECK-EB: lwm16  $16, $17, $ra, 8($sp)     # encoding: [0x45,0x12]
+# CHECK-EB: lwm32  $16, $17, $ra, 64($sp)    # encoding: [0x22,0x5d,0x50,0x40]
+# CHECK-EB: lwm32  $16, $17, $ra, 8($4)      # encoding: [0x22,0x44,0x50,0x08]
+# CHECK-EB: lwm32  $16, $17, 8($sp)          # encoding: [0x20,0x5d,0x50,0x08]
+# CHECK-EB: swm16  $16, $17, $ra, 8($sp)     # encoding: [0x45,0x52]
+# CHECK-EB: swm32  $16, $17, $ra, 64($sp)    # encoding: [0x22,0x5d,0xd0,0x40]
+# CHECK-EB: swm32  $16, $17, $ra, 8($4)      # encoding: [0x22,0x44,0xd0,0x08]
+# CHECK-EB: swm32  $16, $17, 8($sp)          # encoding: [0x20,0x5d,0xd0,0x08]
 # CHECK-EB: swp    $16, 8($4)                # encoding: [0x22,0x04,0x90,0x08]
 # CHECK-EB: lwp    $16, 8($4)                # encoding: [0x22,0x04,0x10,0x08]
      lb     $5, 8($4)
@@ -91,5 +107,13 @@
      swm32  $16 - $19, 8($4)
      lwm16  $16, $17, $ra, 8($sp)
      swm16  $16, $17, $ra, 8($sp)
+     lwm    $16, $17, $ra, 8($sp)
+     lwm    $16, $17, $ra, 64($sp)
+     lwm    $16, $17, $ra, 8($4)
+     lwm    $16, $17, 8($sp)
+     swm    $16, $17, $ra, 8($sp)
+     swm    $16, $17, $ra, 64($sp)
+     swm    $16, $17, $ra, 8($4)
+     swm    $16, $17, 8($sp)
      swp    $16, 8($4)
      lwp    $16, 8($4)

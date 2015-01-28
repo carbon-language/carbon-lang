@@ -697,6 +697,19 @@ let DecoderNamespace = "MicroMips", Predicates = [InMicroMips] in {
   def SWP_MM  : StorePairMM<"swp">, LWM_FM_MM<0x9>;
   def LWP_MM  : LoadPairMM<"lwp">, LWM_FM_MM<0x1>;
 
+  /// Load and Store multiple pseudo Instructions
+  class LoadWordMultMM<string instr_asm > :
+    MipsAsmPseudoInst<(outs reglist:$rt), (ins mem_mm_12:$addr),
+                      !strconcat(instr_asm, "\t$rt, $addr")> ;
+
+  class StoreWordMultMM<string instr_asm > :
+    MipsAsmPseudoInst<(outs), (ins reglist:$rt, mem_mm_12:$addr),
+                      !strconcat(instr_asm, "\t$rt, $addr")> ;
+
+
+  def SWM_MM  : StoreWordMultMM<"swm">;
+  def LWM_MM  : LoadWordMultMM<"lwm">;
+
   /// Move Conditional
   def MOVZ_I_MM : MMRel, CMov_I_I_FT<"movz", GPR32Opnd, GPR32Opnd,
                   NoItinerary>, ADD_FM_MM<0, 0x58>;
