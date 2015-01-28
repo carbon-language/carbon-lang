@@ -556,6 +556,11 @@ def i8immZExt5 : ImmLeaf<i8, [{
   return Imm >= 0 && Imm < 32;
 }]>;
 
+def AVX512ICC : Operand<i8> {
+  let PrintMethod = "printSSEAVXCC";
+  let OperandType = "OPERAND_IMMEDIATE";
+}
+
 class ImmSExtAsmOperandClass : AsmOperandClass {
   let SuperClasses = [ImmAsmOperand];
   let RenderMethod = "addImmOperands";
