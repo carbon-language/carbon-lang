@@ -307,8 +307,7 @@ int main(int argc, const char **argv) {
 
   // Hide all options we don't define ourselves. Move pre-defined 'help',
   // 'help-list', and 'version' to our general category.
-  llvm::StringMap<cl::Option*> Options;
-  cl::getRegisteredOptions(Options);
+  llvm::StringMap<cl::Option*> &Options = cl::getRegisteredOptions();
   const cl::OptionCategory **CategoryEnd =
       VisibleCategories + llvm::array_lengthof(VisibleCategories);
   for (llvm::StringMap<cl::Option *>::iterator I = Options.begin(),
