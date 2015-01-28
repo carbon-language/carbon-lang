@@ -2084,13 +2084,13 @@ ClangASTType::GetBitSize (ExecutionContext *exe_ctx) const
                 else
                 {
                     static bool g_printed = false;
-                    StreamString s;
-                    s.Printf("warning: trying to determine the size of type ");
-                    DumpTypeDescription(&s);
-                    s.Printf("\n without a valid ExecutionContext. this is not reliable. please file a bug against LLDB.\nbacktrace:\n");
-                    Host::Backtrace(s, 10);
                     if (!g_printed)
                     {
+                        StreamString s;
+                        s.Printf("warning: trying to determine the size of type ");
+                        DumpTypeDescription(&s);
+                        s.Printf("\n without a valid ExecutionContext. this is not reliable. please file a bug against LLDB.\nbacktrace:\n");
+                        Host::Backtrace(s, 10);
                         printf("%s\n", s.GetData());
                         g_printed = true;
                     }
