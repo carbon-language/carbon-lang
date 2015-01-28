@@ -4272,11 +4272,13 @@ SDValue SelectionDAG::getMemcpy(SDValue Chain, SDLoc dl, SDValue Dst,
 
   // Then check to see if we should lower the memcpy with target-specific
   // code. If the target chooses to do this, this is the next best.
-  SDValue Result =
-      TSI->EmitTargetCodeForMemcpy(*this, dl, Chain, Dst, Src, Size, Align,
-                                   isVol, AlwaysInline, DstPtrInfo, SrcPtrInfo);
-  if (Result.getNode())
-    return Result;
+  if (TSI) {
+    SDValue Result = TSI->EmitTargetCodeForMemcpy(
+        *this, dl, Chain, Dst, Src, Size, Align, isVol, AlwaysInline,
+        DstPtrInfo, SrcPtrInfo);
+    if (Result.getNode())
+      return Result;
+  }
 
   // If we really need inline code and the target declined to provide it,
   // use a (potentially long) sequence of loads and stores.
@@ -4338,10 +4340,12 @@ SDValue SelectionDAG::getMemmove(SDValue Chain, SDLoc dl, SDValue Dst,
 
   // Then check to see if we should lower the memmove with target-specific
   // code. If the target chooses to do this, this is the next best.
-  SDValue Result = TSI->EmitTargetCodeForMemmove(
-      *this, dl, Chain, Dst, Src, Size, Align, isVol, DstPtrInfo, SrcPtrInfo);
-  if (Result.getNode())
-    return Result;
+  if (TSI) {
+    SDValue Result = TSI->EmitTargetCodeForMemmove(
+        *this, dl, Chain, Dst, Src, Size, Align, isVol, DstPtrInfo, SrcPtrInfo);
+    if (Result.getNode())
+      return Result;
+  }
 
   // FIXME: If the memmove is volatile, lowering it to plain libc memmove may
   // not be safe.  See memcpy above for more details.
@@ -4390,10 +4394,12 @@ SDValue SelectionDAG::getMemset(SDValue Chain, SDLoc dl, SDValue Dst,
 
   // Then check to see if we should lower the memset with target-specific
   // code. If the target chooses to do this, this is the next best.
-  SDValue Result = TSI->EmitTargetCodeForMemset(*this, dl, Chain, Dst, Src,
-                                                Size, Align, isVol, DstPtrInfo);
-  if (Result.getNode())
-    return Result;
+  if (TSI) {
+    SDValue Result = TSI->EmitTargetCodeForMemset(
+        *this, dl, Chain, Dst, Src, Size, Align, isVol, DstPtrInfo);
+    if (Result.getNode())
+      return Result;
+  }
 
   // Emit a library call.
   Type *IntPtrTy = TLI->getDataLayout()->getIntPtrType(*getContext());
