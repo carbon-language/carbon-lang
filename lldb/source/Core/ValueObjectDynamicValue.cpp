@@ -127,7 +127,7 @@ ValueObjectDynamicValue::GetByteSize()
 {
     const bool success = UpdateValueIfNeeded(false);
     if (success && m_dynamic_type_info.HasType())
-        return m_value.GetValueByteSize(NULL);
+        return m_value.GetValueByteSize(nullptr);
     else
         return m_parent->GetByteSize();
 }

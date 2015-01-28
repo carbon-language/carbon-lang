@@ -105,12 +105,14 @@ ValueObjectVariable::CalculateNumChildren()
 uint64_t
 ValueObjectVariable::GetByteSize()
 {
+    ExecutionContext exe_ctx(GetExecutionContextRef());
+    
     ClangASTType type(GetClangType());
     
     if (!type.IsValid())
         return 0;
     
-    return type.GetByteSize(nullptr);
+    return type.GetByteSize(&exe_ctx);
 }
 
 lldb::ValueType
