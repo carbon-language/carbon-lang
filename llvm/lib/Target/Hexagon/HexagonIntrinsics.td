@@ -33,6 +33,10 @@ class T_IR_pat <InstHexagon MI, Intrinsic IntID, PatFrag ImmPred = PatLeaf<(i32 
   : Pat<(IntID ImmPred:$Is, I32:$Rt),
         (MI ImmPred:$Is, I32:$Rt)>;
 
+class T_PI_pat <InstHexagon MI, Intrinsic IntID>
+  : Pat<(IntID I64:$Rs, imm:$It),
+        (MI DoubleRegs:$Rs, imm:$It)>;
+
 class T_RR_pat <InstHexagon MI, Intrinsic IntID>
   : Pat <(IntID I32:$Rs, I32:$Rt),
          (MI I32:$Rs, I32:$Rt)>;
@@ -57,13 +61,29 @@ class T_RRI_pat <InstHexagon MI, Intrinsic IntID>
   : Pat <(IntID I32:$Rs, I32:$Rt, imm:$Iu),
          (MI I32:$Rs, I32:$Rt, imm:$Iu)>;
 
+class T_IRI_pat <InstHexagon MI, Intrinsic IntID>
+  : Pat <(IntID imm:$It, I32:$Rs, imm:$Iu),
+         (MI imm:$It, I32:$Rs, imm:$Iu)>;
+
 class T_RRR_pat <InstHexagon MI, Intrinsic IntID>
   : Pat <(IntID I32:$Rs, I32:$Rt, I32:$Ru),
          (MI I32:$Rs, I32:$Rt, I32:$Ru)>;
 
+class T_PPI_pat <InstHexagon MI, Intrinsic IntID>
+  : Pat <(IntID I64:$Rs, I64:$Rt, imm:$Iu),
+         (MI DoubleRegs:$Rs, DoubleRegs:$Rt, imm:$Iu)>;
+
+class T_PPR_pat <InstHexagon MI, Intrinsic IntID>
+  : Pat <(IntID I64:$Rs, I64:$Rt, I32:$Ru),
+         (MI DoubleRegs:$Rs, DoubleRegs:$Rt, I32:$Ru)>;
+
 class T_PRR_pat <InstHexagon MI, Intrinsic IntID>
   : Pat <(IntID I64:$Rs, I32:$Rt, I32:$Ru),
          (MI DoubleRegs:$Rs, I32:$Rt, I32:$Ru)>;
+
+class T_PR_pat <InstHexagon MI, Intrinsic IntID>
+  : Pat <(IntID I64:$Rs, I32:$Rt),
+         (MI DoubleRegs:$Rs, I32:$Rt)>;
 
 //===----------------------------------------------------------------------===//
 // MPYS / Multipy signed/unsigned halfwords
@@ -310,6 +330,143 @@ def : T_RR_pat<A2_min,  int_hexagon_A2_min>;
 def : T_RR_pat<A2_maxu, int_hexagon_A2_maxu>;
 def : T_RR_pat<A2_minu, int_hexagon_A2_minu>;
 
+// Shift and accumulate
+def : T_RRI_pat <S2_asr_i_r_nac,  int_hexagon_S2_asr_i_r_nac>;
+def : T_RRI_pat <S2_lsr_i_r_nac,  int_hexagon_S2_lsr_i_r_nac>;
+def : T_RRI_pat <S2_asl_i_r_nac,  int_hexagon_S2_asl_i_r_nac>;
+def : T_RRI_pat <S2_asr_i_r_acc,  int_hexagon_S2_asr_i_r_acc>;
+def : T_RRI_pat <S2_lsr_i_r_acc,  int_hexagon_S2_lsr_i_r_acc>;
+def : T_RRI_pat <S2_asl_i_r_acc,  int_hexagon_S2_asl_i_r_acc>;
+
+def : T_RRI_pat <S2_asr_i_r_and,  int_hexagon_S2_asr_i_r_and>;
+def : T_RRI_pat <S2_lsr_i_r_and,  int_hexagon_S2_lsr_i_r_and>;
+def : T_RRI_pat <S2_asl_i_r_and,  int_hexagon_S2_asl_i_r_and>;
+def : T_RRI_pat <S2_asr_i_r_or,   int_hexagon_S2_asr_i_r_or>;
+def : T_RRI_pat <S2_lsr_i_r_or,   int_hexagon_S2_lsr_i_r_or>;
+def : T_RRI_pat <S2_asl_i_r_or,   int_hexagon_S2_asl_i_r_or>;
+def : T_RRI_pat <S2_lsr_i_r_xacc, int_hexagon_S2_lsr_i_r_xacc>;
+def : T_RRI_pat <S2_asl_i_r_xacc, int_hexagon_S2_asl_i_r_xacc>;
+
+def : T_PPI_pat <S2_asr_i_p_nac,  int_hexagon_S2_asr_i_p_nac>;
+def : T_PPI_pat <S2_lsr_i_p_nac,  int_hexagon_S2_lsr_i_p_nac>;
+def : T_PPI_pat <S2_asl_i_p_nac,  int_hexagon_S2_asl_i_p_nac>;
+def : T_PPI_pat <S2_asr_i_p_acc,  int_hexagon_S2_asr_i_p_acc>;
+def : T_PPI_pat <S2_lsr_i_p_acc,  int_hexagon_S2_lsr_i_p_acc>;
+def : T_PPI_pat <S2_asl_i_p_acc,  int_hexagon_S2_asl_i_p_acc>;
+
+def : T_PPI_pat <S2_asr_i_p_and,  int_hexagon_S2_asr_i_p_and>;
+def : T_PPI_pat <S2_lsr_i_p_and,  int_hexagon_S2_lsr_i_p_and>;
+def : T_PPI_pat <S2_asl_i_p_and,  int_hexagon_S2_asl_i_p_and>;
+def : T_PPI_pat <S2_asr_i_p_or,   int_hexagon_S2_asr_i_p_or>;
+def : T_PPI_pat <S2_lsr_i_p_or,   int_hexagon_S2_lsr_i_p_or>;
+def : T_PPI_pat <S2_asl_i_p_or,   int_hexagon_S2_asl_i_p_or>;
+def : T_PPI_pat <S2_lsr_i_p_xacc, int_hexagon_S2_lsr_i_p_xacc>;
+def : T_PPI_pat <S2_asl_i_p_xacc, int_hexagon_S2_asl_i_p_xacc>;
+
+def : T_RRR_pat <S2_asr_r_r_nac,  int_hexagon_S2_asr_r_r_nac>;
+def : T_RRR_pat <S2_lsr_r_r_nac,  int_hexagon_S2_lsr_r_r_nac>;
+def : T_RRR_pat <S2_asl_r_r_nac,  int_hexagon_S2_asl_r_r_nac>;
+def : T_RRR_pat <S2_lsl_r_r_nac,  int_hexagon_S2_lsl_r_r_nac>;
+def : T_RRR_pat <S2_asr_r_r_acc,  int_hexagon_S2_asr_r_r_acc>;
+def : T_RRR_pat <S2_lsr_r_r_acc,  int_hexagon_S2_lsr_r_r_acc>;
+def : T_RRR_pat <S2_asl_r_r_acc,  int_hexagon_S2_asl_r_r_acc>;
+def : T_RRR_pat <S2_lsl_r_r_acc,  int_hexagon_S2_lsl_r_r_acc>;
+
+def : T_RRR_pat <S2_asr_r_r_and,  int_hexagon_S2_asr_r_r_and>;
+def : T_RRR_pat <S2_lsr_r_r_and,  int_hexagon_S2_lsr_r_r_and>;
+def : T_RRR_pat <S2_asl_r_r_and,  int_hexagon_S2_asl_r_r_and>;
+def : T_RRR_pat <S2_lsl_r_r_and,  int_hexagon_S2_lsl_r_r_and>;
+def : T_RRR_pat <S2_asr_r_r_or,   int_hexagon_S2_asr_r_r_or>;
+def : T_RRR_pat <S2_lsr_r_r_or,   int_hexagon_S2_lsr_r_r_or>;
+def : T_RRR_pat <S2_asl_r_r_or,   int_hexagon_S2_asl_r_r_or>;
+def : T_RRR_pat <S2_lsl_r_r_or,   int_hexagon_S2_lsl_r_r_or>;
+
+def : T_PPR_pat <S2_asr_r_p_nac,  int_hexagon_S2_asr_r_p_nac>;
+def : T_PPR_pat <S2_lsr_r_p_nac,  int_hexagon_S2_lsr_r_p_nac>;
+def : T_PPR_pat <S2_asl_r_p_nac,  int_hexagon_S2_asl_r_p_nac>;
+def : T_PPR_pat <S2_lsl_r_p_nac,  int_hexagon_S2_lsl_r_p_nac>;
+def : T_PPR_pat <S2_asr_r_p_acc,  int_hexagon_S2_asr_r_p_acc>;
+def : T_PPR_pat <S2_lsr_r_p_acc,  int_hexagon_S2_lsr_r_p_acc>;
+def : T_PPR_pat <S2_asl_r_p_acc,  int_hexagon_S2_asl_r_p_acc>;
+def : T_PPR_pat <S2_lsl_r_p_acc,  int_hexagon_S2_lsl_r_p_acc>;
+
+def : T_PPR_pat <S2_asr_r_p_and,  int_hexagon_S2_asr_r_p_and>;
+def : T_PPR_pat <S2_lsr_r_p_and,  int_hexagon_S2_lsr_r_p_and>;
+def : T_PPR_pat <S2_asl_r_p_and,  int_hexagon_S2_asl_r_p_and>;
+def : T_PPR_pat <S2_lsl_r_p_and,  int_hexagon_S2_lsl_r_p_and>;
+def : T_PPR_pat <S2_asr_r_p_or,   int_hexagon_S2_asr_r_p_or>;
+def : T_PPR_pat <S2_lsr_r_p_or,   int_hexagon_S2_lsr_r_p_or>;
+def : T_PPR_pat <S2_asl_r_p_or,   int_hexagon_S2_asl_r_p_or>;
+def : T_PPR_pat <S2_lsl_r_p_or,   int_hexagon_S2_lsl_r_p_or>;
+
+def : T_RRI_pat <S2_asr_i_r_nac,  int_hexagon_S2_asr_i_r_nac>;
+def : T_RRI_pat <S2_lsr_i_r_nac,  int_hexagon_S2_lsr_i_r_nac>;
+def : T_RRI_pat <S2_asl_i_r_nac,  int_hexagon_S2_asl_i_r_nac>;
+def : T_RRI_pat <S2_asr_i_r_acc,  int_hexagon_S2_asr_i_r_acc>;
+def : T_RRI_pat <S2_lsr_i_r_acc,  int_hexagon_S2_lsr_i_r_acc>;
+def : T_RRI_pat <S2_asl_i_r_acc,  int_hexagon_S2_asl_i_r_acc>;
+
+def : T_RRI_pat <S2_asr_i_r_and,  int_hexagon_S2_asr_i_r_and>;
+def : T_RRI_pat <S2_lsr_i_r_and,  int_hexagon_S2_lsr_i_r_and>;
+def : T_RRI_pat <S2_asl_i_r_and,  int_hexagon_S2_asl_i_r_and>;
+def : T_RRI_pat <S2_asr_i_r_or,   int_hexagon_S2_asr_i_r_or>;
+def : T_RRI_pat <S2_lsr_i_r_or,   int_hexagon_S2_lsr_i_r_or>;
+def : T_RRI_pat <S2_asl_i_r_or,   int_hexagon_S2_asl_i_r_or>;
+def : T_RRI_pat <S2_lsr_i_r_xacc, int_hexagon_S2_lsr_i_r_xacc>;
+def : T_RRI_pat <S2_asl_i_r_xacc, int_hexagon_S2_asl_i_r_xacc>;
+
+def : T_PPI_pat <S2_asr_i_p_nac,  int_hexagon_S2_asr_i_p_nac>;
+def : T_PPI_pat <S2_lsr_i_p_nac,  int_hexagon_S2_lsr_i_p_nac>;
+def : T_PPI_pat <S2_asl_i_p_nac,  int_hexagon_S2_asl_i_p_nac>;
+def : T_PPI_pat <S2_asr_i_p_acc,  int_hexagon_S2_asr_i_p_acc>;
+def : T_PPI_pat <S2_lsr_i_p_acc,  int_hexagon_S2_lsr_i_p_acc>;
+def : T_PPI_pat <S2_asl_i_p_acc,  int_hexagon_S2_asl_i_p_acc>;
+
+def : T_PPI_pat <S2_asr_i_p_and,  int_hexagon_S2_asr_i_p_and>;
+def : T_PPI_pat <S2_lsr_i_p_and,  int_hexagon_S2_lsr_i_p_and>;
+def : T_PPI_pat <S2_asl_i_p_and,  int_hexagon_S2_asl_i_p_and>;
+def : T_PPI_pat <S2_asr_i_p_or,   int_hexagon_S2_asr_i_p_or>;
+def : T_PPI_pat <S2_lsr_i_p_or,   int_hexagon_S2_lsr_i_p_or>;
+def : T_PPI_pat <S2_asl_i_p_or,   int_hexagon_S2_asl_i_p_or>;
+def : T_PPI_pat <S2_lsr_i_p_xacc, int_hexagon_S2_lsr_i_p_xacc>;
+def : T_PPI_pat <S2_asl_i_p_xacc, int_hexagon_S2_asl_i_p_xacc>;
+
+def : T_RRR_pat <S2_asr_r_r_nac,  int_hexagon_S2_asr_r_r_nac>;
+def : T_RRR_pat <S2_lsr_r_r_nac,  int_hexagon_S2_lsr_r_r_nac>;
+def : T_RRR_pat <S2_asl_r_r_nac,  int_hexagon_S2_asl_r_r_nac>;
+def : T_RRR_pat <S2_lsl_r_r_nac,  int_hexagon_S2_lsl_r_r_nac>;
+def : T_RRR_pat <S2_asr_r_r_acc,  int_hexagon_S2_asr_r_r_acc>;
+def : T_RRR_pat <S2_lsr_r_r_acc,  int_hexagon_S2_lsr_r_r_acc>;
+def : T_RRR_pat <S2_asl_r_r_acc,  int_hexagon_S2_asl_r_r_acc>;
+def : T_RRR_pat <S2_lsl_r_r_acc,  int_hexagon_S2_lsl_r_r_acc>;
+
+def : T_RRR_pat <S2_asr_r_r_and,  int_hexagon_S2_asr_r_r_and>;
+def : T_RRR_pat <S2_lsr_r_r_and,  int_hexagon_S2_lsr_r_r_and>;
+def : T_RRR_pat <S2_asl_r_r_and,  int_hexagon_S2_asl_r_r_and>;
+def : T_RRR_pat <S2_lsl_r_r_and,  int_hexagon_S2_lsl_r_r_and>;
+def : T_RRR_pat <S2_asr_r_r_or,   int_hexagon_S2_asr_r_r_or>;
+def : T_RRR_pat <S2_lsr_r_r_or,   int_hexagon_S2_lsr_r_r_or>;
+def : T_RRR_pat <S2_asl_r_r_or,   int_hexagon_S2_asl_r_r_or>;
+def : T_RRR_pat <S2_lsl_r_r_or,   int_hexagon_S2_lsl_r_r_or>;
+
+def : T_PPR_pat <S2_asr_r_p_nac,  int_hexagon_S2_asr_r_p_nac>;
+def : T_PPR_pat <S2_lsr_r_p_nac,  int_hexagon_S2_lsr_r_p_nac>;
+def : T_PPR_pat <S2_asl_r_p_nac,  int_hexagon_S2_asl_r_p_nac>;
+def : T_PPR_pat <S2_lsl_r_p_nac,  int_hexagon_S2_lsl_r_p_nac>;
+def : T_PPR_pat <S2_asr_r_p_acc,  int_hexagon_S2_asr_r_p_acc>;
+def : T_PPR_pat <S2_lsr_r_p_acc,  int_hexagon_S2_lsr_r_p_acc>;
+def : T_PPR_pat <S2_asl_r_p_acc,  int_hexagon_S2_asl_r_p_acc>;
+def : T_PPR_pat <S2_lsl_r_p_acc,  int_hexagon_S2_lsl_r_p_acc>;
+
+def : T_PPR_pat <S2_asr_r_p_and,  int_hexagon_S2_asr_r_p_and>;
+def : T_PPR_pat <S2_lsr_r_p_and,  int_hexagon_S2_lsr_r_p_and>;
+def : T_PPR_pat <S2_asl_r_p_and,  int_hexagon_S2_asl_r_p_and>;
+def : T_PPR_pat <S2_lsl_r_p_and,  int_hexagon_S2_lsl_r_p_and>;
+def : T_PPR_pat <S2_asr_r_p_or,   int_hexagon_S2_asr_r_p_or>;
+def : T_PPR_pat <S2_lsr_r_p_or,   int_hexagon_S2_lsr_r_p_or>;
+def : T_PPR_pat <S2_asl_r_p_or,   int_hexagon_S2_asl_r_p_or>;
+def : T_PPR_pat <S2_lsl_r_p_or,   int_hexagon_S2_lsl_r_p_or>;
+
 /********************************************************************
 *            ALU32/ALU                                              *
 *********************************************************************/
@@ -408,6 +565,40 @@ def : T_RRI_pat <M2_naccii, int_hexagon_M2_naccii>;
 
 // XOR and XOR with destination
 def : T_RRR_pat <M2_xor_xacc, int_hexagon_M2_xor_xacc>;
+
+// Shift by immediate and add
+def : T_RRI_pat<S2_addasl_rrri, int_hexagon_S2_addasl_rrri>;
+
+/********************************************************************
+*            STYPE/SHIFT                                            *
+*********************************************************************/
+
+def : T_PI_pat <S2_asr_i_p, int_hexagon_S2_asr_i_p>;
+def : T_PI_pat <S2_lsr_i_p, int_hexagon_S2_lsr_i_p>;
+def : T_PI_pat <S2_asl_i_p, int_hexagon_S2_asl_i_p>;
+
+def : T_PR_pat <S2_asr_r_p, int_hexagon_S2_asr_r_p>;
+def : T_PR_pat <S2_lsr_r_p, int_hexagon_S2_lsr_r_p>;
+def : T_PR_pat <S2_asl_r_p, int_hexagon_S2_asl_r_p>;
+def : T_PR_pat <S2_lsl_r_p, int_hexagon_S2_lsl_r_p>;
+
+def : T_RR_pat <S2_asr_r_r, int_hexagon_S2_asr_r_r>;
+def : T_RR_pat <S2_lsr_r_r, int_hexagon_S2_lsr_r_r>;
+def : T_RR_pat <S2_asl_r_r, int_hexagon_S2_asl_r_r>;
+def : T_RR_pat <S2_lsl_r_r, int_hexagon_S2_lsl_r_r>;
+
+def : T_RR_pat <S2_asr_r_r_sat, int_hexagon_S2_asr_r_r_sat>;
+def : T_RR_pat <S2_asl_r_r_sat, int_hexagon_S2_asl_r_r_sat>;
+
+def : T_RI_pat <S2_asr_i_r,     int_hexagon_S2_asr_i_r>;
+def : T_RI_pat <S2_lsr_i_r,     int_hexagon_S2_lsr_i_r>;
+def : T_RI_pat <S2_asl_i_r,     int_hexagon_S2_asl_i_r>;
+def : T_RI_pat <S2_asr_i_r_rnd, int_hexagon_S2_asr_i_r_rnd>;
+def : T_RI_pat <S2_asr_i_r_rnd_goodsyntax,
+                int_hexagon_S2_asr_i_r_rnd_goodsyntax>;
+
+// Shift left by immediate with saturation.
+def : T_RI_pat <S2_asl_i_r_sat, int_hexagon_S2_asl_i_r_sat>;
 
 //
 // ALU 32 types.
@@ -3143,200 +3334,6 @@ def HEXAGON_C2_tfrrp:
 // STYPE / PRED / Viterbi pack even and odd predicate bits.
 def HEXAGON_C2_vitpack:
   si_SInst_qiqi                   <"vitpack",int_hexagon_C2_vitpack>;
-
-
-/********************************************************************
-*            STYPE/SHIFT                                            *
-*********************************************************************/
-
-// STYPE / SHIFT / Shift by immediate.
-def HEXAGON_S2_asl_i_r:
-  si_SInst_siu5                   <"asl",     int_hexagon_S2_asl_i_r>;
-def HEXAGON_S2_asr_i_r:
-  si_SInst_siu5                   <"asr",     int_hexagon_S2_asr_i_r>;
-def HEXAGON_S2_lsr_i_r:
-  si_SInst_siu5                   <"lsr",     int_hexagon_S2_lsr_i_r>;
-def HEXAGON_S2_asl_i_p:
-  di_SInst_diu6                   <"asl",     int_hexagon_S2_asl_i_p>;
-def HEXAGON_S2_asr_i_p:
-  di_SInst_diu6                   <"asr",     int_hexagon_S2_asr_i_p>;
-def HEXAGON_S2_lsr_i_p:
-  di_SInst_diu6                   <"lsr",     int_hexagon_S2_lsr_i_p>;
-
-// STYPE / SHIFT / Shift by immediate and accumulate.
-def HEXAGON_S2_asl_i_r_acc:
-  si_SInst_sisiu5_acc             <"asl",     int_hexagon_S2_asl_i_r_acc>;
-def HEXAGON_S2_asr_i_r_acc:
-  si_SInst_sisiu5_acc             <"asr",     int_hexagon_S2_asr_i_r_acc>;
-def HEXAGON_S2_lsr_i_r_acc:
-  si_SInst_sisiu5_acc             <"lsr",     int_hexagon_S2_lsr_i_r_acc>;
-def HEXAGON_S2_asl_i_r_nac:
-  si_SInst_sisiu5_nac             <"asl",     int_hexagon_S2_asl_i_r_nac>;
-def HEXAGON_S2_asr_i_r_nac:
-  si_SInst_sisiu5_nac             <"asr",     int_hexagon_S2_asr_i_r_nac>;
-def HEXAGON_S2_lsr_i_r_nac:
-  si_SInst_sisiu5_nac             <"lsr",     int_hexagon_S2_lsr_i_r_nac>;
-def HEXAGON_S2_asl_i_p_acc:
-  di_SInst_didiu6_acc             <"asl",     int_hexagon_S2_asl_i_p_acc>;
-def HEXAGON_S2_asr_i_p_acc:
-  di_SInst_didiu6_acc             <"asr",     int_hexagon_S2_asr_i_p_acc>;
-def HEXAGON_S2_lsr_i_p_acc:
-  di_SInst_didiu6_acc             <"lsr",     int_hexagon_S2_lsr_i_p_acc>;
-def HEXAGON_S2_asl_i_p_nac:
-  di_SInst_didiu6_nac             <"asl",     int_hexagon_S2_asl_i_p_nac>;
-def HEXAGON_S2_asr_i_p_nac:
-  di_SInst_didiu6_nac             <"asr",     int_hexagon_S2_asr_i_p_nac>;
-def HEXAGON_S2_lsr_i_p_nac:
-  di_SInst_didiu6_nac             <"lsr",     int_hexagon_S2_lsr_i_p_nac>;
-
-// STYPE / SHIFT / Shift by immediate and add.
-def HEXAGON_S2_addasl_rrri:
-  si_SInst_sisiu3                 <"addasl",  int_hexagon_S2_addasl_rrri>;
-
-// STYPE / SHIFT / Shift by immediate and logical.
-def HEXAGON_S2_asl_i_r_and:
-  si_SInst_sisiu5_and             <"asl",     int_hexagon_S2_asl_i_r_and>;
-def HEXAGON_S2_asr_i_r_and:
-  si_SInst_sisiu5_and             <"asr",     int_hexagon_S2_asr_i_r_and>;
-def HEXAGON_S2_lsr_i_r_and:
-  si_SInst_sisiu5_and             <"lsr",     int_hexagon_S2_lsr_i_r_and>;
-
-def HEXAGON_S2_asl_i_r_xacc:
-  si_SInst_sisiu5_xor             <"asl",     int_hexagon_S2_asl_i_r_xacc>;
-def HEXAGON_S2_lsr_i_r_xacc:
-  si_SInst_sisiu5_xor             <"lsr",     int_hexagon_S2_lsr_i_r_xacc>;
-
-def HEXAGON_S2_asl_i_r_or:
-  si_SInst_sisiu5_or              <"asl",     int_hexagon_S2_asl_i_r_or>;
-def HEXAGON_S2_asr_i_r_or:
-  si_SInst_sisiu5_or              <"asr",     int_hexagon_S2_asr_i_r_or>;
-def HEXAGON_S2_lsr_i_r_or:
-  si_SInst_sisiu5_or              <"lsr",     int_hexagon_S2_lsr_i_r_or>;
-
-def HEXAGON_S2_asl_i_p_and:
-  di_SInst_didiu6_and             <"asl",     int_hexagon_S2_asl_i_p_and>;
-def HEXAGON_S2_asr_i_p_and:
-  di_SInst_didiu6_and             <"asr",     int_hexagon_S2_asr_i_p_and>;
-def HEXAGON_S2_lsr_i_p_and:
-  di_SInst_didiu6_and             <"lsr",     int_hexagon_S2_lsr_i_p_and>;
-
-def HEXAGON_S2_asl_i_p_xacc:
-  di_SInst_didiu6_xor             <"asl",     int_hexagon_S2_asl_i_p_xacc>;
-def HEXAGON_S2_lsr_i_p_xacc:
-  di_SInst_didiu6_xor             <"lsr",     int_hexagon_S2_lsr_i_p_xacc>;
-
-def HEXAGON_S2_asl_i_p_or:
-  di_SInst_didiu6_or              <"asl",     int_hexagon_S2_asl_i_p_or>;
-def HEXAGON_S2_asr_i_p_or:
-  di_SInst_didiu6_or              <"asr",     int_hexagon_S2_asr_i_p_or>;
-def HEXAGON_S2_lsr_i_p_or:
-  di_SInst_didiu6_or              <"lsr",     int_hexagon_S2_lsr_i_p_or>;
-
-// STYPE / SHIFT / Shift right by immediate with rounding.
-def HEXAGON_S2_asr_i_r_rnd:
-  si_SInst_siu5_rnd               <"asr",     int_hexagon_S2_asr_i_r_rnd>;
-def HEXAGON_S2_asr_i_r_rnd_goodsyntax:
-  si_SInst_siu5              <"asrrnd",  int_hexagon_S2_asr_i_r_rnd_goodsyntax>;
-
-// STYPE / SHIFT / Shift left by immediate with saturation.
-def HEXAGON_S2_asl_i_r_sat:
-  si_SInst_sisi_sat               <"asl",     int_hexagon_S2_asl_i_r_sat>;
-
-// STYPE / SHIFT / Shift by register.
-def HEXAGON_S2_asl_r_r:
-  si_SInst_sisi                   <"asl",     int_hexagon_S2_asl_r_r>;
-def HEXAGON_S2_asr_r_r:
-  si_SInst_sisi                   <"asr",     int_hexagon_S2_asr_r_r>;
-def HEXAGON_S2_lsl_r_r:
-  si_SInst_sisi                   <"lsl",     int_hexagon_S2_lsl_r_r>;
-def HEXAGON_S2_lsr_r_r:
-  si_SInst_sisi                   <"lsr",     int_hexagon_S2_lsr_r_r>;
-def HEXAGON_S2_asl_r_p:
-  di_SInst_disi                   <"asl",     int_hexagon_S2_asl_r_p>;
-def HEXAGON_S2_asr_r_p:
-  di_SInst_disi                   <"asr",     int_hexagon_S2_asr_r_p>;
-def HEXAGON_S2_lsl_r_p:
-  di_SInst_disi                   <"lsl",     int_hexagon_S2_lsl_r_p>;
-def HEXAGON_S2_lsr_r_p:
-  di_SInst_disi                   <"lsr",     int_hexagon_S2_lsr_r_p>;
-
-// STYPE / SHIFT / Shift by register and accumulate.
-def HEXAGON_S2_asl_r_r_acc:
-  si_SInst_sisisi_acc             <"asl",     int_hexagon_S2_asl_r_r_acc>;
-def HEXAGON_S2_asr_r_r_acc:
-  si_SInst_sisisi_acc             <"asr",     int_hexagon_S2_asr_r_r_acc>;
-def HEXAGON_S2_lsl_r_r_acc:
-  si_SInst_sisisi_acc             <"lsl",     int_hexagon_S2_lsl_r_r_acc>;
-def HEXAGON_S2_lsr_r_r_acc:
-  si_SInst_sisisi_acc             <"lsr",     int_hexagon_S2_lsr_r_r_acc>;
-def HEXAGON_S2_asl_r_p_acc:
-  di_SInst_didisi_acc             <"asl",     int_hexagon_S2_asl_r_p_acc>;
-def HEXAGON_S2_asr_r_p_acc:
-  di_SInst_didisi_acc             <"asr",     int_hexagon_S2_asr_r_p_acc>;
-def HEXAGON_S2_lsl_r_p_acc:
-  di_SInst_didisi_acc             <"lsl",     int_hexagon_S2_lsl_r_p_acc>;
-def HEXAGON_S2_lsr_r_p_acc:
-  di_SInst_didisi_acc             <"lsr",     int_hexagon_S2_lsr_r_p_acc>;
-
-def HEXAGON_S2_asl_r_r_nac:
-  si_SInst_sisisi_nac             <"asl",     int_hexagon_S2_asl_r_r_nac>;
-def HEXAGON_S2_asr_r_r_nac:
-  si_SInst_sisisi_nac             <"asr",     int_hexagon_S2_asr_r_r_nac>;
-def HEXAGON_S2_lsl_r_r_nac:
-  si_SInst_sisisi_nac             <"lsl",     int_hexagon_S2_lsl_r_r_nac>;
-def HEXAGON_S2_lsr_r_r_nac:
-  si_SInst_sisisi_nac             <"lsr",     int_hexagon_S2_lsr_r_r_nac>;
-def HEXAGON_S2_asl_r_p_nac:
-  di_SInst_didisi_nac             <"asl",     int_hexagon_S2_asl_r_p_nac>;
-def HEXAGON_S2_asr_r_p_nac:
-  di_SInst_didisi_nac             <"asr",     int_hexagon_S2_asr_r_p_nac>;
-def HEXAGON_S2_lsl_r_p_nac:
-  di_SInst_didisi_nac             <"lsl",     int_hexagon_S2_lsl_r_p_nac>;
-def HEXAGON_S2_lsr_r_p_nac:
-  di_SInst_didisi_nac             <"lsr",     int_hexagon_S2_lsr_r_p_nac>;
-
-// STYPE / SHIFT / Shift by register and logical.
-def HEXAGON_S2_asl_r_r_and:
-  si_SInst_sisisi_and             <"asl",     int_hexagon_S2_asl_r_r_and>;
-def HEXAGON_S2_asr_r_r_and:
-  si_SInst_sisisi_and             <"asr",     int_hexagon_S2_asr_r_r_and>;
-def HEXAGON_S2_lsl_r_r_and:
-  si_SInst_sisisi_and             <"lsl",     int_hexagon_S2_lsl_r_r_and>;
-def HEXAGON_S2_lsr_r_r_and:
-  si_SInst_sisisi_and             <"lsr",     int_hexagon_S2_lsr_r_r_and>;
-
-def HEXAGON_S2_asl_r_r_or:
-  si_SInst_sisisi_or              <"asl",     int_hexagon_S2_asl_r_r_or>;
-def HEXAGON_S2_asr_r_r_or:
-  si_SInst_sisisi_or              <"asr",     int_hexagon_S2_asr_r_r_or>;
-def HEXAGON_S2_lsl_r_r_or:
-  si_SInst_sisisi_or              <"lsl",     int_hexagon_S2_lsl_r_r_or>;
-def HEXAGON_S2_lsr_r_r_or:
-  si_SInst_sisisi_or              <"lsr",     int_hexagon_S2_lsr_r_r_or>;
-
-def HEXAGON_S2_asl_r_p_and:
-  di_SInst_didisi_and             <"asl",     int_hexagon_S2_asl_r_p_and>;
-def HEXAGON_S2_asr_r_p_and:
-  di_SInst_didisi_and             <"asr",     int_hexagon_S2_asr_r_p_and>;
-def HEXAGON_S2_lsl_r_p_and:
-  di_SInst_didisi_and             <"lsl",     int_hexagon_S2_lsl_r_p_and>;
-def HEXAGON_S2_lsr_r_p_and:
-  di_SInst_didisi_and             <"lsr",     int_hexagon_S2_lsr_r_p_and>;
-
-def HEXAGON_S2_asl_r_p_or:
-  di_SInst_didisi_or              <"asl",     int_hexagon_S2_asl_r_p_or>;
-def HEXAGON_S2_asr_r_p_or:
-  di_SInst_didisi_or              <"asr",     int_hexagon_S2_asr_r_p_or>;
-def HEXAGON_S2_lsl_r_p_or:
-  di_SInst_didisi_or              <"lsl",     int_hexagon_S2_lsl_r_p_or>;
-def HEXAGON_S2_lsr_r_p_or:
-  di_SInst_didisi_or              <"lsr",     int_hexagon_S2_lsr_r_p_or>;
-
-// STYPE / SHIFT / Shift by register with saturation.
-def HEXAGON_S2_asl_r_r_sat:
-  si_SInst_sisi_sat               <"asl",     int_hexagon_S2_asl_r_r_sat>;
-def HEXAGON_S2_asr_r_r_sat:
-  si_SInst_sisi_sat               <"asr",     int_hexagon_S2_asr_r_r_sat>;
 
 // STYPE / SHIFT / Table Index.
 def Hexagon_S2_tableidxb_goodsyntax:

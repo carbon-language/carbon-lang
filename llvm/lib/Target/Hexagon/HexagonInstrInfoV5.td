@@ -25,6 +25,10 @@ def S2_asr_i_p_rnd : S_2OpInstImm<"asr", 0b110, 0b111, u6Imm,
   let Inst{13-8} = src2;
 }
 
+def S2_asr_i_p_rnd_goodsyntax
+  : MInst<(outs DoubleRegs:$dst), (ins DoubleRegs:$src1, u6Imm:$src2),
+    "$dst = asrrnd($src1, #$src2)">;
+
 let isCodeGenOnly = 0 in
 def C4_fastcorner9 : T_LOGICAL_2OP<"fastcorner9", 0b000, 0, 0>,
   Requires<[HasV5T]> {

@@ -1,3 +1,16 @@
+//===- HexagonIntrinsicsV5.td - V4 Instruction intrinsics --*- tablegen -*-===//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+
+def : T_PI_pat <S2_asr_i_p_rnd, int_hexagon_S2_asr_i_p_rnd>;
+def : T_PI_pat <S2_asr_i_p_rnd_goodsyntax,
+                int_hexagon_S2_asr_i_p_rnd_goodsyntax>;
+
 class sf_SInst_sf<string opc, Intrinsic IntID>
   : SInst<(outs IntRegs:$dst), (ins IntRegs:$src1),
              !strconcat("$dst = ", !strconcat(opc , "($src1)")),

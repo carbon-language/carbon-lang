@@ -3358,6 +3358,11 @@ def S2_asl_i_r_sat : T_S2op_2_ii <"asl", 0b010, 0b010, 1>;
 let isCodeGenOnly = 0 in
 def S2_asr_i_r_rnd : T_S2op_2_ii <"asr", 0b010, 0b000, 0, 1>;
 
+def S2_asr_i_r_rnd_goodsyntax
+  : SInst <(outs IntRegs:$dst), (ins  IntRegs:$src, u5Imm:$u5),
+  "$dst = asrrnd($src, #$u5)",
+  [], "", S_2op_tc_1_SLOT23>;
+
 def: Pat<(i32 (sra (i32 (add (i32 (sra I32:$src1, u5ImmPred:$src2)),
                              (i32 1))),
                    (i32 1))),

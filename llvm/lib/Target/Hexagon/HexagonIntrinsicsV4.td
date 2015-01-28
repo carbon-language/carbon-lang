@@ -12,6 +12,18 @@
 // 80-V9418-12 Rev. A
 // June 15, 2010
 
+// Shift an immediate left by register amount
+def : T_IR_pat<S4_lsli, int_hexagon_S4_lsli>;
+
+// Shift and add/sub/and/or
+def : T_IRI_pat <S4_andi_asl_ri, int_hexagon_S4_andi_asl_ri>;
+def : T_IRI_pat <S4_ori_asl_ri,  int_hexagon_S4_ori_asl_ri>;
+def : T_IRI_pat <S4_addi_asl_ri, int_hexagon_S4_addi_asl_ri>;
+def : T_IRI_pat <S4_subi_asl_ri, int_hexagon_S4_subi_asl_ri>;
+def : T_IRI_pat <S4_andi_lsr_ri, int_hexagon_S4_andi_lsr_ri>;
+def : T_IRI_pat <S4_ori_lsr_ri,  int_hexagon_S4_ori_lsr_ri>;
+def : T_IRI_pat <S4_addi_lsr_ri, int_hexagon_S4_addi_lsr_ri>;
+def : T_IRI_pat <S4_subi_lsr_ri, int_hexagon_S4_subi_lsr_ri>;
 
 //
 // ALU 32 types.
