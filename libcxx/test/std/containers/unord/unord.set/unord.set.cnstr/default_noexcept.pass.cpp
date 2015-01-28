@@ -20,7 +20,7 @@
 #include <unordered_set>
 #include <cassert>
 
-#include "../../../MoveOnly.h"
+#include "MoveOnly.h"
 #include "test_allocator.h"
 #include "../../../test_hash.h"
 

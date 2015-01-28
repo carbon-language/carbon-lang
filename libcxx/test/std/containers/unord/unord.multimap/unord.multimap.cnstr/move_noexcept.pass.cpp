@@ -18,7 +18,7 @@
 #include <unordered_map>
 #include <cassert>
 
-#include "../../../MoveOnly.h"
+#include "MoveOnly.h"
 #include "test_allocator.h"
 
 template <class T>

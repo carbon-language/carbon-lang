@@ -14,7 +14,7 @@
 #include <queue>
 #include <cassert>
 
-#include "../../../MoveOnly.h"
+#include "MoveOnly.h"
 
 int main()
 {

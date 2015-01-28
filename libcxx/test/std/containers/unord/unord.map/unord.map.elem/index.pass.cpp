@@ -19,7 +19,7 @@
 #include <string>
 #include <cassert>
 
-#include "../../../MoveOnly.h"
+#include "MoveOnly.h"
 #include "min_allocator.h"
 
 int main()

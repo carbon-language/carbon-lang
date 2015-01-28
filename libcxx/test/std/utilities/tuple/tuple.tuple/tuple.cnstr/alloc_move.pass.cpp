@@ -17,7 +17,7 @@
 #include <tuple>
 #include <cassert>
 
-#include "../MoveOnly.h"
+#include "MoveOnly.h"
 #include "allocators.h"
 #include "../alloc_first.h"
 #include "../alloc_last.h"

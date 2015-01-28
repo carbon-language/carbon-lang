@@ -18,7 +18,7 @@
 #include <cassert>
 #include <type_traits>
 
-#include "../MoveOnly.h"
+#include "MoveOnly.h"
 
 #if _LIBCPP_STD_VER > 11
 

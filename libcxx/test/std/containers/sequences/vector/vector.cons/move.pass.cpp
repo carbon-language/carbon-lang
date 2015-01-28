@@ -13,7 +13,7 @@
 
 #include <vector>
 #include <cassert>
-#include "../../../MoveOnly.h"
+#include "MoveOnly.h"
 #include "test_allocator.h"
 #include "min_allocator.h"
 #include "asan_testing.h"
