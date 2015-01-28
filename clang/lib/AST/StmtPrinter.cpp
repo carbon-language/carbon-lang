@@ -1679,9 +1679,13 @@ void StmtPrinter::VisitCXXDefaultInitExpr(CXXDefaultInitExpr *Node) {
 
 void StmtPrinter::VisitCXXFunctionalCastExpr(CXXFunctionalCastExpr *Node) {
   Node->getType().print(OS, Policy);
-  OS << "(";
+  // If there are no parens, this is list-initialization, and the braces are
+  // part of the syntax of the inner construct.
+  if (Node->getLParenLoc().isValid())
+    OS << "(";
   PrintExpr(Node->getSubExpr());
-  OS << ")";
+  if (Node->getLParenLoc().isValid())
+    OS << ")";
 }
 
 void StmtPrinter::VisitCXXBindTemporaryExpr(CXXBindTemporaryExpr *Node) {
@@ -1690,7 +1694,10 @@ void StmtPrinter::VisitCXXBindTemporaryExpr(CXXBindTemporaryExpr *Node) {
 
 void StmtPrinter::VisitCXXTemporaryObjectExpr(CXXTemporaryObjectExpr *Node) {
   Node->getType().print(OS, Policy);
-  OS << "(";
+  if (Node->isListInitialization())
+    OS << "{";
+  else
+    OS << "(";
   for (CXXTemporaryObjectExpr::arg_iterator Arg = Node->arg_begin(),
                                          ArgEnd = Node->arg_end();
        Arg != ArgEnd; ++Arg) {
@@ -1700,7 +1707,10 @@ void StmtPrinter::VisitCXXTemporaryObjectExpr(CXXTemporaryObjectExpr *Node) {
       OS << ", ";
     PrintExpr(*Arg);
   }
-  OS << ")";
+  if (Node->isListInitialization())
+    OS << "}";
+  else
+    OS << ")";
 }
 
 void StmtPrinter::VisitLambdaExpr(LambdaExpr *Node) {

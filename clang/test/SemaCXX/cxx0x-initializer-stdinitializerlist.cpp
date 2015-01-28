@@ -259,3 +259,18 @@ namespace ListInitInstantiate {
   template<typename T> void g() { int k = f({0}); }
   template void g<int>();
 }
+
+namespace TemporaryInitListSourceRange_PR22367 {
+  struct A {
+    constexpr A() {}
+    A(std::initializer_list<int>); // expected-note {{here}}
+  };
+  constexpr int f(A) { return 0; }
+  constexpr int k = f( // expected-error {{must be initialized by a constant expression}}
+      // The point of this test is to check that the caret points to
+      // 'std::initializer_list', not to '{0}'.
+      std::initializer_list // expected-note {{constructor}}
+      <int>
+      {0}
+      );
+}

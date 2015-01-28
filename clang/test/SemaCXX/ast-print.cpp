@@ -213,3 +213,9 @@ namespace {
 // CHECK: struct {{\[\[gnu::visibility\(\"hidden\"\)\]\]}} S;
 struct [[gnu::visibility("hidden")]] S;
 }
+
+// CHECK: struct CXXFunctionalCastExprPrint fce = CXXFunctionalCastExprPrint{ };
+struct CXXFunctionalCastExprPrint {} fce = CXXFunctionalCastExprPrint{};
+
+// CHECK: struct CXXTemporaryObjectExprPrint toe = CXXTemporaryObjectExprPrint{};
+struct CXXTemporaryObjectExprPrint { CXXTemporaryObjectExprPrint(); } toe = CXXTemporaryObjectExprPrint{};
