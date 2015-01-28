@@ -39,11 +39,11 @@ using namespace llvm;
 // Clang, GCC, and all compatible compilers tend to use __thread. But we need
 // to work aronud a bug in the combination of Clang's compilation of
 // local-dynamic TLS and the ppc64 linker relocations which we do by forcing to
-// general-dynamic.
+// global-dynamic (called in most documents "general dynamic").
 // FIXME: Make this conditional on the Clang version once this is fixed in
 // top-of-tree.
 #if defined(__clang__) && defined(__powerpc64__)
-#define LLVM_THREAD_LOCAL __thread __attribute__((tls_model("general-dynamic")))
+#define LLVM_THREAD_LOCAL __thread __attribute__((tls_model("global-dynamic")))
 #else
 #define LLVM_THREAD_LOCAL __thread
 #endif
