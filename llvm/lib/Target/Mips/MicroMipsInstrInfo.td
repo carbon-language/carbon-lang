@@ -3,6 +3,7 @@ def addrimm12 : ComplexPattern<iPTR, 2, "selectIntAddrMM", [frameindex]>;
 def simm4 : Operand<i32> {
   let DecoderMethod = "DecodeSimm4";
 }
+def simm7 : Operand<i32>;
 def li_simm7 : Operand<i32> {
   let DecoderMethod = "DecodeLiSimm7";
 }
@@ -94,6 +95,13 @@ def mem_mm_sp_imm5_lsl2 : Operand<i32> {
   let OperandType = "OPERAND_MEMORY";
   let ParserMatchClass = MicroMipsMemSPAsmOperand;
   let EncoderMethod = "getMemEncodingMMSPImm5Lsl2";
+}
+
+def mem_mm_gp_imm7_lsl2 : Operand<i32> {
+  let PrintMethod = "printMemOperand";
+  let MIOperandInfo = (ops GPRMM16:$base, simm7:$offset);
+  let OperandType = "OPERAND_MEMORY";
+  let EncoderMethod = "getMemEncodingMMGPImm7Lsl2";
 }
 
 def mem_mm_12 : Operand<i32> {
@@ -305,6 +313,15 @@ class StoreSPMM16<string opstr, DAGOperand RO, InstrItinClass Itin,
                   !strconcat(opstr, "\t$rt, $offset"), [], Itin, FrmI> {
   let DecoderMethod = "DecodeMemMMSPImm5Lsl2";
   let mayStore = 1;
+}
+
+class LoadGPMM16<string opstr, DAGOperand RO, InstrItinClass Itin,
+                 Operand MemOpnd> :
+  MicroMipsInst16<(outs RO:$rt), (ins MemOpnd:$offset),
+                  !strconcat(opstr, "\t$rt, $offset"), [], Itin, FrmI> {
+  let DecoderMethod = "DecodeMemMMGPImm7Lsl2";
+  let canFoldAsLoad = 1;
+  let mayLoad = 1;
 }
 
 class AddImmUR2<string opstr, RegisterOperand RO> :
@@ -539,6 +556,8 @@ def SH16_MM : StoreMM16<"sh16", GPRMM16OpndZero, GPRMM16Opnd, truncstorei16,
                         LOAD_STORE_FM_MM16<0x2a>;
 def SW16_MM : StoreMM16<"sw16", GPRMM16OpndZero, GPRMM16Opnd, store, II_SW,
                         mem_mm_4_lsl2>, LOAD_STORE_FM_MM16<0x3a>;
+def LWGP_MM : LoadGPMM16<"lw", GPRMM16Opnd, II_LW, mem_mm_gp_imm7_lsl2>,
+                         LOAD_GP_FM_MM16<0x19>;
 def LWSP_MM : LoadSPMM16<"lw", GPR32Opnd, II_LW, mem_mm_sp_imm5_lsl2>,
               LOAD_STORE_SP_FM_MM16<0x12>;
 def SWSP_MM : StoreSPMM16<"sw", GPR32Opnd, II_SW, mem_mm_sp_imm5_lsl2>,

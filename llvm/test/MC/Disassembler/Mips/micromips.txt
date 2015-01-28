@@ -486,3 +486,6 @@
 
 # CHECK: b16 132
 0xcc 0x42
+
+# CHECK: lw $3, 32($gp)
+0x65 0x88

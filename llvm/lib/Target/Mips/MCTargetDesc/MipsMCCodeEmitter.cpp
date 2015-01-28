@@ -736,6 +736,21 @@ getMemEncodingMMSPImm5Lsl2(const MCInst &MI, unsigned OpNo,
 }
 
 unsigned MipsMCCodeEmitter::
+getMemEncodingMMGPImm7Lsl2(const MCInst &MI, unsigned OpNo,
+                           SmallVectorImpl<MCFixup> &Fixups,
+                           const MCSubtargetInfo &STI) const {
+  // Register is encoded in bits 9-7, offset is encoded in bits 6-0.
+  assert(MI.getOperand(OpNo).isReg() &&
+         MI.getOperand(OpNo).getReg() == Mips::GP &&
+         "Unexpected base register!");
+
+  unsigned OffBits = getMachineOpValue(MI, MI.getOperand(OpNo+1),
+                                       Fixups, STI) >> 2;
+
+  return OffBits & 0x7F;
+}
+
+unsigned MipsMCCodeEmitter::
 getMemEncodingMMImm12(const MCInst &MI, unsigned OpNo,
                       SmallVectorImpl<MCFixup> &Fixups,
                       const MCSubtargetInfo &STI) const {

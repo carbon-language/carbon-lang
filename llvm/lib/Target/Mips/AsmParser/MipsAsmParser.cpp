@@ -1361,8 +1361,38 @@ bool MipsAsmParser::processInstruction(MCInst &Inst, SMLoc IDLoc,
     } // for
   }   // if load/store
 
-  // TODO: Handle this with the AsmOperandClass.PredicateMethod.
   if (inMicroMipsMode()) {
+    if (MCID.mayLoad()) {
+      // Try to create 16-bit GP relative load instruction.
+      for (unsigned i = 0; i < MCID.getNumOperands(); i++) {
+        const MCOperandInfo &OpInfo = MCID.OpInfo[i];
+        if ((OpInfo.OperandType == MCOI::OPERAND_MEMORY) ||
+            (OpInfo.OperandType == MCOI::OPERAND_UNKNOWN)) {
+          MCOperand &Op = Inst.getOperand(i);
+          if (Op.isImm()) {
+            int MemOffset = Op.getImm();
+            MCOperand &DstReg = Inst.getOperand(0);
+            MCOperand &BaseReg = Inst.getOperand(1);
+            if (isIntN(9, MemOffset) && (MemOffset % 4 == 0) &&
+                getContext().getRegisterInfo()->getRegClass(
+                  Mips::GPRMM16RegClassID).contains(DstReg.getReg()) &&
+                BaseReg.getReg() == Mips::GP) {
+              MCInst TmpInst;
+              TmpInst.setLoc(IDLoc);
+              TmpInst.setOpcode(Mips::LWGP_MM);
+              TmpInst.addOperand(MCOperand::CreateReg(DstReg.getReg()));
+              TmpInst.addOperand(MCOperand::CreateReg(Mips::GP));
+              TmpInst.addOperand(MCOperand::CreateImm(MemOffset));
+              Instructions.push_back(TmpInst);
+              return false;
+            }
+          }
+        }
+      } // for
+    }   // if load
+
+    // TODO: Handle this with the AsmOperandClass.PredicateMethod.
+
     MCOperand Opnd;
     int Imm;
 

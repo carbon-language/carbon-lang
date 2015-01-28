@@ -26,6 +26,7 @@
 # CHECK-EL: sh16    $4, 8($17)      # encoding: [0x14,0xaa]
 # CHECK-EL: sw16    $4, 4($17)      # encoding: [0x11,0xea]
 # CHECK-EL: sw16    $zero, 4($17)   # encoding: [0x11,0xe8]
+# CHECK-EL: lw      $3, 32($gp)     # encoding: [0x88,0x65]
 # CHECK-EL: lw      $3, 32($sp)     # encoding: [0x68,0x48]
 # CHECK-EL: sw      $4, 124($sp)    # encoding: [0x9f,0xc8]
 # CHECK-EL: li16    $3, -1          # encoding: [0xff,0xed]
@@ -79,6 +80,7 @@
 # CHECK-EB: sh16    $4, 8($17)      # encoding: [0xaa,0x14]
 # CHECK-EB: sw16    $4, 4($17)      # encoding: [0xea,0x11]
 # CHECK-EB: sw16    $zero, 4($17)   # encoding: [0xe8,0x11]
+# CHECK-EB: lw      $3, 32($gp)     # encoding: [0x65,0x88]
 # CHECK-EB: lw      $3, 32($sp)     # encoding: [0x48,0x68]
 # CHECK-EB: sw      $4, 124($sp)    # encoding: [0xc8,0x9f]
 # CHECK-EB: li16    $3, -1          # encoding: [0xed,0xff]
@@ -130,6 +132,7 @@
     sh16    $4, 8($17)
     sw16    $4, 4($17)
     sw16    $0, 4($17)
+    lw      $3, 32($gp)
     lw      $3, 32($sp)
     sw      $4, 124($sp)
     li16    $3, -1

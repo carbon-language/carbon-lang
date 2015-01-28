@@ -131,6 +131,17 @@ class LOAD_STORE_SP_FM_MM16<bits<6> op> {
   let Inst{4-0}   = offset;
 }
 
+class LOAD_GP_FM_MM16<bits<6> op> {
+  bits<3> rt;
+  bits<7> offset;
+
+  bits<16> Inst;
+
+  let Inst{15-10} = op;
+  let Inst{9-7} = rt;
+  let Inst{6-0} = offset;
+}
+
 class ADDIUS5_FM_MM16 {
   bits<5> rd;
   bits<4> imm;
