@@ -1,0 +1,54 @@
+RUN: llvm-dsymutil -v -oso-prepend-path=%p %p/Inputs/basic.macho.x86_64 | FileCheck %s
+RUN: llvm-dsymutil -v -oso-prepend-path=%p %p/Inputs/basic-lto.macho.x86_64 | FileCheck %s --check-prefix=CHECK-LTO
+RUN: llvm-dsymutil -v -oso-prepend-path=%p %p/Inputs/basic-archive.macho.x86_64 | FileCheck %s --check-prefix=CHECK-ARCHIVE
+
+This test check the basic Dwarf linking process through the debug dumps.
+
+CHECK: DEBUG MAP OBJECT: {{.*}}basic1.macho.x86_64.o
+CHECK: Input compilation unit:
+CHECK-NEXT: TAG_compile_unit
+CHECK-NOT: TAG
+CHECK: AT_name {{.*}}basic1.c
+CHECK: DEBUG MAP OBJECT: {{.*}}basic2.macho.x86_64.o
+CHECK: Input compilation unit:
+CHECK-NEXT: TAG_compile_unit
+CHECK-NOT: TAG
+CHECK: AT_name {{.*}}basic2.c
+CHECK: DEBUG MAP OBJECT: {{.*}}basic3.macho.x86_64.o
+CHECK: Input compilation unit:
+CHECK-NEXT: TAG_compile_unit
+CHECK-NOT: TAG
+CHECK: AT_name {{.*}}basic3.c
+
+
+CHECK-LTO: DEBUG MAP OBJECT: {{.*}}basic-lto.macho.x86_64.o
+CHECK-LTO: Input compilation unit:
+CHECK-LTO-NEXT: TAG_compile_unit
+CHECK-LTO-NOT: TAG
+CHECK-LTO: AT_name {{.*}}basic1.c
+CHECK-LTO: Input compilation unit:
+CHECK-LTO-NEXT: TAG_compile_unit
+CHECK-LTO-NOT: TAG
+CHECK-LTO: AT_name {{.*}}basic2.c
+CHECK-LTO: Input compilation unit:
+CHECK-LTO-NEXT: TAG_compile_unit
+CHECK-LTO-NOT: TAG
+CHECK-LTO: AT_name {{.*}}basic3.c
+
+
+CHECK-ARCHIVE: DEBUG MAP OBJECT: {{.*}}basic1.macho.x86_64.o
+CHECK-ARCHIVE: Input compilation unit:
+CHECK-ARCHIVE-NEXT: TAG_compile_unit
+CHECK-ARCHIVE-NOT: TAG
+CHECK-ARCHIVE: AT_name {{.*}}basic1.c
+CHECK-ARCHIVE: DEBUG MAP OBJECT: {{.*}}libbasic.a(basic2.macho.x86_64.o)
+CHECK-ARCHIVE: Input compilation unit:
+CHECK-ARCHIVE-NEXT: TAG_compile_unit
+CHECK-ARCHIVE-NOT: TAG
+CHECK-ARCHIVE: AT_name {{.*}}basic2.c
+CHECK-ARCHIVE: DEBUG MAP OBJECT: {{.*}}libbasic.a(basic3.macho.x86_64.o)
+CHECK-ARCHIVE: Input compilation unit:
+CHECK-ARCHIVE-NEXT: TAG_compile_unit
+CHECK-ARCHIVE-NOT: TAG
+CHECK-ARCHIVE: AT_name {{.*}}basic3.c
+

@@ -19,4 +19,4 @@
 type = Tool
 name = llvm-dsymutil
 parent = Tools
-required_libraries = Object Support
+required_libraries = DebugInfo Object Support
