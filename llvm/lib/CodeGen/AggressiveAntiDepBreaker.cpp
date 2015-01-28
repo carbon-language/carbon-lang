@@ -296,6 +296,16 @@ void AggressiveAntiDepBreaker::HandleLastUse(unsigned Reg, unsigned KillIdx,
   std::multimap<unsigned, AggressiveAntiDepState::RegisterReference>&
     RegRefs = State->GetRegRefs();
 
+  // FIXME: We must leave subregisters of live super registers as live, so that
+  // we don't clear out the register tracking information for subregisters of
+  // super registers we're still tracking (and with which we're unioning
+  // subregister definitions).
+  for (MCRegAliasIterator AI(Reg, TRI, true); AI.isValid(); ++AI)
+    if (TRI->isSuperRegister(Reg, *AI) && State->IsLive(*AI)) {
+      DEBUG(if (!header && footer) dbgs() << footer);
+      return;
+    }
+
   if (!State->IsLive(Reg)) {
     KillIndices[Reg] = KillIdx;
     DefIndices[Reg] = ~0u;
