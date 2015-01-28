@@ -213,6 +213,43 @@ void f17(int *x) {
       x[1];
 }
 
+// CHECK-LABEL: define
+void f18(int a, int b) {
+// CHECK: icmp {{.*}}, !dbg [[DBG_F18_1:![0-9]*]]
+// CHECK: br {{.*}}, !dbg [[DBG_F18_2:![0-9]*]]
+#line 2000
+  if (a  //
+      && //
+      b)
+    ;
+}
+
+// CHECK-LABEL: define
+void f19(int a, int b) {
+// CHECK: icmp {{.*}}, !dbg [[DBG_F19_1:![0-9]*]]
+// CHECK: br {{.*}}, !dbg [[DBG_F19_2:![0-9]*]]
+#line 2100
+  if (a  //
+      || //
+      b)
+    ;
+}
+
+// CHECK-LABEL: define
+void f20(int a, int b, int c) {
+// CHECK: icmp {{.*}}, !dbg [[DBG_F20_1:![0-9]*]]
+// FIXME: Conditional operator's exprloc should be the '?' not the start of the
+// expression, then this would go in the right place. (but adding getExprLoc to
+// the ConditionalOperator breaks the ARC migration tool - need to investigate
+// further).
+// CHECK: br {{.*}}, !dbg [[DBG_F20_1]]
+#line 2200
+  if (a  //
+      ? //
+      b : c)
+    ;
+}
+
 // CHECK: [[DBG_F1]] = !MDLocation(line: 100,
 // CHECK: [[DBG_FOO_VALUE]] = !MDLocation(line: 200,
 // CHECK: [[DBG_FOO_REF]] = !MDLocation(line: 202,
@@ -236,3 +273,8 @@ void f17(int *x) {
 // CHECK: [[DBG_F15]] = !MDLocation(line: 1700,
 // CHECK: [[DBG_F16]] = !MDLocation(line: 1800,
 // CHECK: [[DBG_F17]] = !MDLocation(line: 1900,
+// CHECK: [[DBG_F18_1]] = !MDLocation(line: 2000,
+// CHECK: [[DBG_F18_2]] = !MDLocation(line: 2001,
+// CHECK: [[DBG_F19_1]] = !MDLocation(line: 2100,
+// CHECK: [[DBG_F19_2]] = !MDLocation(line: 2101,
+// CHECK: [[DBG_F20_1]] = !MDLocation(line: 2200,

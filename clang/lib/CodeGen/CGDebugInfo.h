@@ -443,6 +443,8 @@ private:
   }
 };
 
+/// A scoped helper to set the current debug location to the specified location
+/// or preferred location of the specified Expr.
 class ApplyDebugLocation {
 private:
   void init(SourceLocation TemporaryLocation);
