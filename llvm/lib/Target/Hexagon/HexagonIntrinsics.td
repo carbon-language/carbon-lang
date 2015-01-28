@@ -113,6 +113,36 @@ class T_PR_pat <InstHexagon MI, Intrinsic IntID>
   : Pat <(IntID I64:$Rs, I32:$Rt),
          (MI DoubleRegs:$Rs, I32:$Rt)>;
 
+class T_D_pat <InstHexagon MI, Intrinsic IntID>
+  : Pat<(IntID (F64:$Rs)),
+        (MI (F64:$Rs))>;
+
+class T_DI_pat <InstHexagon MI, Intrinsic IntID,
+                PatLeaf ImmPred = PatLeaf<(i32 imm)>>
+  : Pat<(IntID F64:$Rs, ImmPred:$It),
+        (MI F64:$Rs, ImmPred:$It)>;
+
+class T_F_pat <InstHexagon MI, Intrinsic IntID>
+  : Pat<(IntID F32:$Rs),
+        (MI F32:$Rs)>;
+
+class T_FI_pat <InstHexagon MI, Intrinsic IntID,
+                 PatLeaf ImmPred = PatLeaf<(i32 imm)>>
+  : Pat<(IntID F32:$Rs, ImmPred:$It),
+        (MI F32:$Rs, ImmPred:$It)>;
+
+class T_FF_pat <InstHexagon MI, Intrinsic IntID>
+  : Pat<(IntID F32:$Rs, F32:$Rt),
+        (MI F32:$Rs, F32:$Rt)>;
+
+class T_FFF_pat <InstHexagon MI, Intrinsic IntID>
+  : Pat<(IntID F32:$Rs, F32:$Rt, F32:$Ru),
+        (MI F32:$Rs, F32:$Rt, F32:$Ru)>;
+
+class T_FFFQ_pat <InstHexagon MI, Intrinsic IntID>
+  : Pat <(IntID F32:$Rs, F32:$Rt, F32:$Ru, (i32 PredRegs:$Rx)),
+         (MI F32:$Rs, F32:$Rt, F32:$Ru, PredRegs:$Rx)>;
+
 //===----------------------------------------------------------------------===//
 // MPYS / Multipy signed/unsigned halfwords
 //Rd=mpy[u](Rs.[H|L],Rt.[H|L])[:<<1][:rnd][:sat]

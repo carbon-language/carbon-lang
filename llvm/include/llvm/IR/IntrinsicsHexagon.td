@@ -499,12 +499,12 @@ class Hexagon_qi_sfsf_Intrinsic<string GCCIntSuffix>
                           [llvm_i1_ty], [llvm_float_ty, llvm_float_ty],
                           [IntrNoMem]>;
 //
-// Hexagon_qi_sfsi_Intrinsic<string GCCIntSuffix>
+// Hexagon_si_sfsi_Intrinsic<string GCCIntSuffix>
 //
-class Hexagon_qi_sfsi_Intrinsic<string GCCIntSuffix>
+class Hexagon_si_sfsi_Intrinsic<string GCCIntSuffix>
   : Hexagon_Intrinsic<GCCIntSuffix,
-                          [llvm_i1_ty], [llvm_float_ty, llvm_i32_ty],
-                          [IntrNoMem]>;
+                          [llvm_i32_ty], [llvm_float_ty, llvm_i32_ty],
+                          [IntrNoMem, Throws]>;
 //
 // Hexagon_qi_sfqi_Intrinsic<string GCCIntSuffix>
 //
@@ -580,12 +580,12 @@ class Hexagon_qi_dfdf_Intrinsic<string GCCIntSuffix>
                           [llvm_i1_ty], [llvm_double_ty, llvm_double_ty],
                           [IntrNoMem]>;
 //
-// Hexagon_qi_dfsi_Intrinsic<string GCCIntSuffix>
+// Hexagon_si_dfsi_Intrinsic<string GCCIntSuffix>
 //
-class Hexagon_qi_dfsi_Intrinsic<string GCCIntSuffix>
+class Hexagon_si_dfsi_Intrinsic<string GCCIntSuffix>
   : Hexagon_Intrinsic<GCCIntSuffix,
-                          [llvm_i1_ty], [llvm_double_ty, llvm_i32_ty],
-                          [IntrNoMem]>;
+                          [llvm_i32_ty], [llvm_double_ty, llvm_i32_ty],
+                          [IntrNoMem, Throws]>;
 //
 //
 // Hexagon_df_dfdfdf_Intrinsic<string GCCIntSuffix>
@@ -3639,7 +3639,7 @@ Hexagon_sf_sfsf_Intrinsic<"HEXAGON_F2_sfmin">;
 // BUILTIN_INFO(HEXAGON.F2_sfclass,QI_ftype_SFSI,2)
 //
 def int_hexagon_F2_sfclass :
-Hexagon_qi_sfsi_Intrinsic<"HEXAGON_F2_sfclass">;
+Hexagon_si_sfsi_Intrinsic<"HEXAGON_F2_sfclass">;
 //
 // BUILTIN_INFO(HEXAGON.F2_sfimm_p,SF_ftype_SI,1)
 //
@@ -3666,56 +3666,6 @@ Hexagon_sf_sfsf_Intrinsic<"HEXAGON_F2_sffixupd">;
 def int_hexagon_F2_sffixupr :
 Hexagon_sf_sf_Intrinsic<"HEXAGON_F2_sffixupr">;
 //
-// BUILTIN_INFO(HEXAGON.F2_dfadd,DF_ftype_DFDF,2)
-//
-def int_hexagon_F2_dfadd :
-Hexagon_df_dfdf_Intrinsic<"HEXAGON_F2_dfadd">;
-//
-// BUILTIN_INFO(HEXAGON.F2_dfsub,DF_ftype_DFDF,2)
-//
-def int_hexagon_F2_dfsub :
-Hexagon_df_dfdf_Intrinsic<"HEXAGON_F2_dfsub">;
-//
-// BUILTIN_INFO(HEXAGON.F2_dfmpy,DF_ftype_DFDF,2)
-//
-def int_hexagon_F2_dfmpy :
-Hexagon_df_dfdf_Intrinsic<"HEXAGON_F2_dfmpy">;
-//
-// BUILTIN_INFO(HEXAGON.F2_dffma,DF_ftype_DFDFDF,3)
-//
-def int_hexagon_F2_dffma :
-Hexagon_df_dfdfdf_Intrinsic<"HEXAGON_F2_dffma">;
-//
-// BUILTIN_INFO(HEXAGON.F2_dffms,DF_ftype_DFDFDF,3)
-//
-def int_hexagon_F2_dffms :
-Hexagon_df_dfdfdf_Intrinsic<"HEXAGON_F2_dffms">;
-//
-// BUILTIN_INFO(HEXAGON.F2_dffma_lib,DF_ftype_DFDFDF,3)
-//
-def int_hexagon_F2_dffma_lib :
-Hexagon_df_dfdfdf_Intrinsic<"HEXAGON_F2_dffma_lib">;
-//
-// BUILTIN_INFO(HEXAGON.F2_dffms_lib,DF_ftype_DFDFDF,3)
-//
-def int_hexagon_F2_dffms_lib :
-Hexagon_df_dfdfdf_Intrinsic<"HEXAGON_F2_dffms_lib">;
-//
-// BUILTIN_INFO(HEXAGON.F2_dffma_sc,DF_ftype_DFDFDFQI,4)
-//
-def int_hexagon_F2_dffma_sc :
-Hexagon_df_dfdfdfqi_Intrinsic<"HEXAGON_F2_dffma_sc">;
-//
-// BUILTIN_INFO(HEXAGON.F2_dfmax,DF_ftype_DFDF,2)
-//
-def int_hexagon_F2_dfmax :
-Hexagon_df_dfdf_Intrinsic<"HEXAGON_F2_dfmax">;
-//
-// BUILTIN_INFO(HEXAGON.F2_dfmin,DF_ftype_DFDF,2)
-//
-def int_hexagon_F2_dfmin :
-Hexagon_df_dfdf_Intrinsic<"HEXAGON_F2_dfmin">;
-//
 // BUILTIN_INFO(HEXAGON.F2_dfcmpeq,QI_ftype_DFDF,2)
 //
 def int_hexagon_F2_dfcmpeq :
@@ -3739,7 +3689,7 @@ Hexagon_qi_dfdf_Intrinsic<"HEXAGON_F2_dfcmpuo">;
 // BUILTIN_INFO(HEXAGON.F2_dfclass,QI_ftype_DFSI,2)
 //
 def int_hexagon_F2_dfclass :
-Hexagon_qi_dfsi_Intrinsic<"HEXAGON_F2_dfclass">;
+Hexagon_si_dfsi_Intrinsic<"HEXAGON_F2_dfclass">;
 //
 // BUILTIN_INFO(HEXAGON.F2_dfimm_p,DF_ftype_SI,1)
 //
@@ -3750,21 +3700,6 @@ Hexagon_df_si_Intrinsic<"HEXAGON_F2_dfimm_p">;
 //
 def int_hexagon_F2_dfimm_n :
 Hexagon_df_si_Intrinsic<"HEXAGON_F2_dfimm_n">;
-//
-// BUILTIN_INFO(HEXAGON.F2_dffixupn,DF_ftype_DFDF,2)
-//
-def int_hexagon_F2_dffixupn :
-Hexagon_df_dfdf_Intrinsic<"HEXAGON_F2_dffixupn">;
-//
-// BUILTIN_INFO(HEXAGON.F2_dffixupd,DF_ftype_DFDF,2)
-//
-def int_hexagon_F2_dffixupd :
-Hexagon_df_dfdf_Intrinsic<"HEXAGON_F2_dffixupd">;
-//
-// BUILTIN_INFO(HEXAGON.F2_dffixupr,DF_ftype_DF,1)
-//
-def int_hexagon_F2_dffixupr :
-Hexagon_df_df_Intrinsic<"HEXAGON_F2_dffixupr">;
 //
 // BUILTIN_INFO(HEXAGON.F2_conv_sf2df,DF_ftype_SF,1)
 //
