@@ -376,10 +376,8 @@ bool AArch64AdvSIMDScalar::runOnMachineFunction(MachineFunction &mf) {
   bool Changed = false;
   DEBUG(dbgs() << "***** AArch64AdvSIMDScalar *****\n");
 
-  const TargetMachine &TM = mf.getTarget();
   MRI = &mf.getRegInfo();
-  TII = static_cast<const AArch64InstrInfo *>(
-      TM.getSubtargetImpl()->getInstrInfo());
+  TII = static_cast<const AArch64InstrInfo *>(mf.getSubtarget().getInstrInfo());
 
   // Just check things on a one-block-at-a-time basis.
   for (MachineFunction::iterator I = mf.begin(), E = mf.end(); I != E; ++I)

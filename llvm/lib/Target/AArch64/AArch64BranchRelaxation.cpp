@@ -476,9 +476,7 @@ bool AArch64BranchRelaxation::runOnMachineFunction(MachineFunction &mf) {
 
   DEBUG(dbgs() << "***** AArch64BranchRelaxation *****\n");
 
-  TII = (const AArch64InstrInfo *)MF->getTarget()
-            .getSubtargetImpl()
-            ->getInstrInfo();
+  TII = (const AArch64InstrInfo *)MF->getSubtarget().getInstrInfo();
 
   // Renumber all of the machine basic blocks in the function, guaranteeing that
   // the numbers agree with the position of the block in the function.

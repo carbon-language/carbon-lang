@@ -945,10 +945,8 @@ bool AArch64LoadStoreOpt::optimizeBlock(MachineBasicBlock &MBB) {
 }
 
 bool AArch64LoadStoreOpt::runOnMachineFunction(MachineFunction &Fn) {
-  const TargetMachine &TM = Fn.getTarget();
-  TII = static_cast<const AArch64InstrInfo *>(
-      TM.getSubtargetImpl()->getInstrInfo());
-  TRI = TM.getSubtargetImpl()->getRegisterInfo();
+  TII = static_cast<const AArch64InstrInfo *>(Fn.getSubtarget().getInstrInfo());
+  TRI = Fn.getSubtarget().getRegisterInfo();
 
   bool Modified = false;
   for (auto &MBB : Fn)

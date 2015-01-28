@@ -878,9 +878,8 @@ AArch64TargetLowering::EmitF128CSEL(MachineInstr *MI,
   // EndBB:
   //     Dest = PHI [IfTrue, TrueBB], [IfFalse, OrigBB]
 
-  const TargetInstrInfo *TII =
-      getTargetMachine().getSubtargetImpl()->getInstrInfo();
   MachineFunction *MF = MBB->getParent();
+  const TargetInstrInfo *TII = MF->getSubtarget().getInstrInfo();
   const BasicBlock *LLVM_BB = MBB->getBasicBlock();
   DebugLoc DL = MI->getDebugLoc();
   MachineFunction::iterator It = MBB;
@@ -2797,19 +2796,17 @@ AArch64TargetLowering::LowerCall(CallLoweringInfo &CLI,
 
   // Add a register mask operand representing the call-preserved registers.
   const uint32_t *Mask;
-  const TargetRegisterInfo *TRI =
-      getTargetMachine().getSubtargetImpl()->getRegisterInfo();
-  const AArch64RegisterInfo *ARI =
-      static_cast<const AArch64RegisterInfo *>(TRI);
+  const AArch64RegisterInfo *TRI = static_cast<const AArch64RegisterInfo *>(
+      MF.getSubtarget().getRegisterInfo());
   if (IsThisReturn) {
     // For 'this' returns, use the X0-preserving mask if applicable
-    Mask = ARI->getThisReturnPreservedMask(CallConv);
+    Mask = TRI->getThisReturnPreservedMask(CallConv);
     if (!Mask) {
       IsThisReturn = false;
-      Mask = ARI->getCallPreservedMask(CallConv);
+      Mask = TRI->getCallPreservedMask(CallConv);
     }
   } else
-    Mask = ARI->getCallPreservedMask(CallConv);
+    Mask = TRI->getCallPreservedMask(CallConv);
 
   assert(Mask && "Missing call preserved mask for calling convention");
   Ops.push_back(DAG.getRegisterMask(Mask));
@@ -3029,11 +3026,9 @@ AArch64TargetLowering::LowerDarwinGlobalTLSAddress(SDValue Op,
   // TLS calls preserve all registers except those that absolutely must be
   // trashed: X0 (it takes an argument), LR (it's a call) and NZCV (let's not be
   // silly).
-  const TargetRegisterInfo *TRI =
-      getTargetMachine().getSubtargetImpl()->getRegisterInfo();
-  const AArch64RegisterInfo *ARI =
-      static_cast<const AArch64RegisterInfo *>(TRI);
-  const uint32_t *Mask = ARI->getTLSCallPreservedMask();
+  const uint32_t *Mask =
+      static_cast<const AArch64RegisterInfo *>(
+          DAG.getSubtarget().getRegisterInfo())->getTLSCallPreservedMask();
 
   // Finally, we can make the call. This is just a degenerate version of a
   // normal AArch64 call node: x0 takes the address of the descriptor, and
@@ -3080,11 +3075,9 @@ SDValue AArch64TargetLowering::LowerELFTLSDescCall(SDValue SymAddr,
   // TLS calls preserve all registers except those that absolutely must be
   // trashed: X0 (it takes an argument), LR (it's a call) and NZCV (let's not be
   // silly).
-  const TargetRegisterInfo *TRI =
-      getTargetMachine().getSubtargetImpl()->getRegisterInfo();
-  const AArch64RegisterInfo *ARI =
-      static_cast<const AArch64RegisterInfo *>(TRI);
-  const uint32_t *Mask = ARI->getTLSCallPreservedMask();
+  const uint32_t *Mask =
+      static_cast<const AArch64RegisterInfo *>(
+          DAG.getSubtarget().getRegisterInfo())->getTLSCallPreservedMask();
 
   // The function takes only one argument: the address of the descriptor itself
   // in X0.

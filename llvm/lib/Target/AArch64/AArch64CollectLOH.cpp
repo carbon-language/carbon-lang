@@ -285,9 +285,7 @@ static void initReachingDef(MachineFunction &MF,
                             BlockToSetOfInstrsPerColor &ReachableUses,
                             const MapRegToId &RegToId,
                             const MachineInstr *DummyOp, bool ADRPMode) {
-  const TargetMachine &TM = MF.getTarget();
-  const TargetRegisterInfo *TRI = TM.getSubtargetImpl()->getRegisterInfo();
-
+  const TargetRegisterInfo *TRI = MF.getSubtarget().getRegisterInfo();
   unsigned NbReg = RegToId.size();
 
   for (MachineBasicBlock &MBB : MF) {
@@ -1026,8 +1024,7 @@ static void collectInvolvedReg(MachineFunction &MF, MapRegToId &RegToId,
 }
 
 bool AArch64CollectLOH::runOnMachineFunction(MachineFunction &MF) {
-  const TargetMachine &TM = MF.getTarget();
-  const TargetRegisterInfo *TRI = TM.getSubtargetImpl()->getRegisterInfo();
+  const TargetRegisterInfo *TRI = MF.getSubtarget().getRegisterInfo();
   const MachineDominatorTree *MDT = &getAnalysis<MachineDominatorTree>();
 
   MapRegToId RegToId;
@@ -1043,8 +1040,8 @@ bool AArch64CollectLOH::runOnMachineFunction(MachineFunction &MF) {
 
   MachineInstr *DummyOp = nullptr;
   if (BasicBlockScopeOnly) {
-    const AArch64InstrInfo *TII = static_cast<const AArch64InstrInfo *>(
-        TM.getSubtargetImpl()->getInstrInfo());
+    const AArch64InstrInfo *TII =
+        static_cast<const AArch64InstrInfo *>(MF.getSubtarget().getInstrInfo());
     // For local analysis, create a dummy operation to record uses that are not
     // local.
     DummyOp = MF.CreateMachineInstr(TII->get(AArch64::COPY), DebugLoc());

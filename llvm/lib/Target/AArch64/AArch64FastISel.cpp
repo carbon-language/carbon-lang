@@ -3325,7 +3325,7 @@ bool AArch64FastISel::fastLowerIntrinsicCall(const IntrinsicInst *II) {
 
     const AArch64RegisterInfo *RegInfo =
         static_cast<const AArch64RegisterInfo *>(
-            TM.getSubtargetImpl()->getRegisterInfo());
+            FuncInfo.MF->getSubtarget().getRegisterInfo());
     unsigned FramePtr = RegInfo->getFrameRegister(*(FuncInfo.MF));
     unsigned SrcReg = MRI.createVirtualRegister(&AArch64::GPR64RegClass);
     BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc,

@@ -707,9 +707,8 @@ static bool UpdateOperandRegClass(MachineInstr *Instr) {
   assert(MBB && "Can't get MachineBasicBlock here");
   MachineFunction *MF = MBB->getParent();
   assert(MF && "Can't get MachineFunction here");
-  const TargetMachine *TM = &MF->getTarget();
-  const TargetInstrInfo *TII = TM->getSubtargetImpl()->getInstrInfo();
-  const TargetRegisterInfo *TRI = TM->getSubtargetImpl()->getRegisterInfo();
+  const TargetInstrInfo *TII = MF->getSubtarget().getInstrInfo();
+  const TargetRegisterInfo *TRI = MF->getSubtarget().getRegisterInfo();
   MachineRegisterInfo *MRI = &MF->getRegInfo();
 
   for (unsigned OpIdx = 0, EndIdx = Instr->getNumOperands(); OpIdx < EndIdx;
