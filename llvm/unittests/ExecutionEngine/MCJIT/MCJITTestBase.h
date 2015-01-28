@@ -18,7 +18,6 @@
 #define LLVM_UNITTESTS_EXECUTIONENGINE_MCJIT_MCJITTESTBASE_H
 
 #include "MCJITTestAPICommon.h"
-#include "llvm/AsmParser/Parser.h"
 #include "llvm/Config/config.h"
 #include "llvm/ExecutionEngine/ExecutionEngine.h"
 #include "llvm/ExecutionEngine/SectionMemoryManager.h"
@@ -28,8 +27,6 @@
 #include "llvm/IR/Module.h"
 #include "llvm/IR/TypeBuilder.h"
 #include "llvm/Support/CodeGen.h"
-#include "llvm/Support/SourceMgr.h"
-#include "llvm/Support/raw_ostream.h"
 
 namespace llvm {
 
@@ -339,22 +336,6 @@ protected:
                  .create());
     // At this point, we cannot modify the module any more.
     assert(TheJIT.get() != NULL && "error creating MCJIT with EngineBuilder");
-  }
-
-  void createJITFromAssembly(const char *Test) {
-    SMDiagnostic Error;
-    M = parseAssemblyString(Test, Error, Context);
-    M->setTargetTriple(Triple::normalize(BuilderTriple));
-
-    std::string errMsg;
-    raw_string_ostream os(errMsg);
-    Error.print("", os);
-
-    // A failure here means that the test itself is buggy.
-    if (!M)
-      report_fatal_error(os.str().c_str());
-
-    createJIT(std::move(M));
   }
 
   CodeGenOpt::Level OptLevel;

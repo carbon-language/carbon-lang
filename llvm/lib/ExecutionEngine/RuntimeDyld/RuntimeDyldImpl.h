@@ -203,9 +203,6 @@ protected:
   // A global symbol table for symbols from all loaded modules.
   RTDyldSymbolTable GlobalSymbolTable;
 
-  // Like the global symbol table but for weak symbols
-  RTDyldSymbolTable WeakSymbolTable;
-
   // Keep a map of common symbols to their info pairs
   typedef std::vector<SymbolRef> CommonSymbolList;
 
