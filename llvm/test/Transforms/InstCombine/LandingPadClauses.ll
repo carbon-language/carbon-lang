@@ -7,6 +7,7 @@
 declare i32 @generic_personality(i32, i64, i8*, i8*)
 declare i32 @__gxx_personality_v0(i32, i64, i8*, i8*)
 declare i32 @__objc_personality_v0(i32, i64, i8*, i8*)
+declare i32 @__C_specific_handler(...)
 
 declare void @bar()
 
@@ -224,6 +225,57 @@ lpad.c:
 
 lpad.d:
   %d = landingpad { i8*, i32 } personality i32 (i32, i64, i8*, i8*)* @__objc_personality_v0
+          cleanup
+          catch i32* null
+  unreachable
+; CHECK: %d = landingpad
+; CHECK-NEXT: null
+; CHECK-NEXT: unreachable
+}
+
+define void @foo_seh() {
+; CHECK-LABEL: @foo_seh(
+  invoke void @bar()
+    to label %cont.a unwind label %lpad.a
+cont.a:
+  invoke void @bar()
+    to label %cont.b unwind label %lpad.b
+cont.b:
+  invoke void @bar()
+    to label %cont.c unwind label %lpad.c
+cont.c:
+  invoke void @bar()
+    to label %cont.d unwind label %lpad.d
+cont.d:
+  ret void
+
+lpad.a:
+  %a = landingpad { i8*, i32 } personality i32 (...)* @__C_specific_handler
+          catch i32* null
+          catch i32* @T1
+  unreachable
+; CHECK: %a = landingpad
+; CHECK-NEXT: null
+; CHECK-NEXT: unreachable
+
+lpad.b:
+  %b = landingpad { i8*, i32 } personality i32 (...)* @__C_specific_handler
+          filter [1 x i32*] zeroinitializer
+  unreachable
+; CHECK: %b = landingpad
+; CHECK-NEXT: cleanup
+; CHECK-NEXT: unreachable
+
+lpad.c:
+  %c = landingpad { i8*, i32 } personality i32 (...)* @__C_specific_handler
+          filter [2 x i32*] [i32* @T1, i32* null]
+  unreachable
+; CHECK: %c = landingpad
+; CHECK-NEXT: cleanup
+; CHECK-NEXT: unreachable
+
+lpad.d:
+  %d = landingpad { i8*, i32 } personality i32 (...)* @__C_specific_handler
           cleanup
           catch i32* null
   unreachable

@@ -43,6 +43,7 @@
 #include "llvm/Analysis/CFG.h"
 #include "llvm/Analysis/ConstantFolding.h"
 #include "llvm/Analysis/InstructionSimplify.h"
+#include "llvm/Analysis/LibCallSemantics.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/MemoryBuiltins.h"
 #include "llvm/Analysis/TargetLibraryInfo.h"
@@ -2259,41 +2260,26 @@ Instruction *InstCombiner::visitExtractValueInst(ExtractValueInst &EV) {
   return nullptr;
 }
 
-enum Personality_Type {
-  Unknown_Personality,
-  GNU_Ada_Personality,
-  GNU_CXX_Personality,
-  GNU_ObjC_Personality
-};
-
-/// RecognizePersonality - See if the given exception handling personality
-/// function is one that we understand.  If so, return a description of it;
-/// otherwise return Unknown_Personality.
-static Personality_Type RecognizePersonality(Value *Pers) {
-  Function *F = dyn_cast<Function>(Pers->stripPointerCasts());
-  if (!F)
-    return Unknown_Personality;
-  return StringSwitch<Personality_Type>(F->getName())
-    .Case("__gnat_eh_personality", GNU_Ada_Personality)
-    .Case("__gxx_personality_v0",  GNU_CXX_Personality)
-    .Case("__objc_personality_v0", GNU_ObjC_Personality)
-    .Default(Unknown_Personality);
-}
-
 /// isCatchAll - Return 'true' if the given typeinfo will match anything.
-static bool isCatchAll(Personality_Type Personality, Constant *TypeInfo) {
+static bool isCatchAll(EHPersonality Personality, Constant *TypeInfo) {
   switch (Personality) {
-  case Unknown_Personality:
+  case EHPersonality::GNU_C:
+    // The GCC C EH personality only exists to support cleanups, so it's not
+    // clear what the semantics of catch clauses are.
     return false;
-  case GNU_Ada_Personality:
+  case EHPersonality::Unknown:
+    return false;
+  case EHPersonality::GNU_Ada:
     // While __gnat_all_others_value will match any Ada exception, it doesn't
     // match foreign exceptions (or didn't, before gcc-4.7).
     return false;
-  case GNU_CXX_Personality:
-  case GNU_ObjC_Personality:
+  case EHPersonality::GNU_CXX:
+  case EHPersonality::GNU_ObjC:
+  case EHPersonality::MSVC_Win64SEH:
+  case EHPersonality::MSVC_CXX:
     return TypeInfo->isNullValue();
   }
-  llvm_unreachable("Unknown personality!");
+  llvm_unreachable("invalid enum");
 }
 
 static bool shorter_filter(const Value *LHS, const Value *RHS) {
@@ -2307,7 +2293,7 @@ Instruction *InstCombiner::visitLandingPadInst(LandingPadInst &LI) {
   // The logic here should be correct for any real-world personality function.
   // However if that turns out not to be true, the offending logic can always
   // be conditioned on the personality function, like the catch-all logic is.
-  Personality_Type Personality = RecognizePersonality(LI.getPersonalityFn());
+  EHPersonality Personality = ClassifyEHPersonality(LI.getPersonalityFn());
 
   // Simplify the list of clauses, eg by removing repeated catch clauses
   // (these are often created by inlining).

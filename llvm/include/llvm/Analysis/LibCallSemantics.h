@@ -162,6 +162,21 @@ namespace llvm {
     virtual const LibCallFunctionInfo *getFunctionInfoArray() const = 0;
   };
 
+  enum class EHPersonality {
+    Unknown,
+    GNU_Ada,
+    GNU_C,
+    GNU_CXX,
+    GNU_ObjC,
+    MSVC_Win64SEH,
+    MSVC_CXX,
+  };
+
+  /// ClassifyEHPersonality - See if the given exception handling personality
+  /// function is one that we understand.  If so, return a description of it;
+  /// otherwise return Unknown_Personality.
+  EHPersonality ClassifyEHPersonality(Value *Pers);
+
 } // end namespace llvm
 
 #endif
