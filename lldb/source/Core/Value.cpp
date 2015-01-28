@@ -277,7 +277,7 @@ Value::GetValueByteSize (Error *error_ptr)
         {
             const ClangASTType &ast_type = GetClangType();
             if (ast_type.IsValid())
-                byte_size = ast_type.GetByteSize();
+                byte_size = ast_type.GetByteSize(nullptr);
         }
         break;
     }
@@ -434,7 +434,7 @@ Value::GetValueAsData (ExecutionContext *exe_ctx,
                 lldb::Encoding type_encoding = ast_type.GetEncoding(type_encoding_count);
                 
                 if (type_encoding == eEncodingUint || type_encoding == eEncodingSint)
-                    limit_byte_size = ast_type.GetByteSize();
+                    limit_byte_size = ast_type.GetByteSize(nullptr);
             }
             
             if (m_value.GetData (data, limit_byte_size))

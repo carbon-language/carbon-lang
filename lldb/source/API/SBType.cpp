@@ -143,7 +143,7 @@ SBType::GetByteSize()
     if (!IsValid())
         return 0;
     
-    return m_opaque_sp->GetClangASTType(false).GetByteSize();
+    return m_opaque_sp->GetClangASTType(false).GetByteSize(nullptr);
     
 }
 

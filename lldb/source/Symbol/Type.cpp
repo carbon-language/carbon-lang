@@ -336,7 +336,7 @@ Type::GetByteSize()
                 if (encoding_type)
                     m_byte_size = encoding_type->GetByteSize();
                 if (m_byte_size == 0)
-                    m_byte_size = GetClangLayoutType().GetByteSize();
+                    m_byte_size = GetClangLayoutType().GetByteSize(nullptr);
             }
             break;
 

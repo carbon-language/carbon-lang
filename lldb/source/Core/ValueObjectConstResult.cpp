@@ -257,7 +257,7 @@ uint64_t
 ValueObjectConstResult::GetByteSize()
 {
     if (m_byte_size == 0)
-        m_byte_size = GetClangType().GetByteSize();
+        m_byte_size = GetClangType().GetByteSize(nullptr);
     return m_byte_size;
 }
 

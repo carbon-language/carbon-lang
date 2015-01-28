@@ -552,7 +552,7 @@ ABIMacOSX_i386::GetArgumentValues (Thread &thread,
             if (clang_type.IsIntegerType (is_signed))
             {
                 ReadIntegerArgument(value->GetScalar(),
-                                    clang_type.GetBitSize(),
+                                    clang_type.GetBitSize(nullptr),
                                     is_signed,
                                     thread.GetProcess().get(), 
                                     current_stack_argument);
@@ -560,7 +560,7 @@ ABIMacOSX_i386::GetArgumentValues (Thread &thread,
             else if (clang_type.IsPointerType())
             {
                 ReadIntegerArgument(value->GetScalar(),
-                                    clang_type.GetBitSize(),
+                                    clang_type.GetBitSize(nullptr),
                                     false,
                                     thread.GetProcess().get(),
                                     current_stack_argument);
@@ -672,7 +672,7 @@ ABIMacOSX_i386::GetReturnValueObjectImpl (Thread &thread,
             
     if (clang_type.IsIntegerType (is_signed))
     {
-        size_t bit_width = clang_type.GetBitSize();
+        size_t bit_width = clang_type.GetBitSize(nullptr);
         
         unsigned eax_id = reg_ctx->GetRegisterInfoByName("eax", 0)->kinds[eRegisterKindLLDB];
         unsigned edx_id = reg_ctx->GetRegisterInfoByName("edx", 0)->kinds[eRegisterKindLLDB];

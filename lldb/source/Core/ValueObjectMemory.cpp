@@ -169,7 +169,7 @@ ValueObjectMemory::GetByteSize()
 {
     if (m_type_sp)
         return m_type_sp->GetByteSize();
-    return m_clang_type.GetByteSize ();
+    return m_clang_type.GetByteSize (nullptr);
 }
 
 lldb::ValueType

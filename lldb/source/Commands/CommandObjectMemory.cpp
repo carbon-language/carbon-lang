@@ -567,7 +567,7 @@ protected:
                 --pointer_count;
             }
 
-            m_format_options.GetByteSizeValue() = clang_ast_type.GetByteSize();
+            m_format_options.GetByteSizeValue() = clang_ast_type.GetByteSize(nullptr);
             
             if (m_format_options.GetByteSizeValue() == 0)
             {
@@ -690,7 +690,7 @@ protected:
             if (m_format_options.GetFormatValue().OptionWasSet() == false)
                 m_format_options.GetFormatValue().SetCurrentValue(eFormatDefault);
 
-            bytes_read = clang_ast_type.GetByteSize() * m_format_options.GetCountValue().GetCurrentValue();
+            bytes_read = clang_ast_type.GetByteSize(nullptr) * m_format_options.GetCountValue().GetCurrentValue();
         }
         else if (m_format_options.GetFormatValue().GetCurrentValue() != eFormatCString)
         {
@@ -1114,7 +1114,7 @@ protected:
           if (process->GetTarget().EvaluateExpression(m_memory_options.m_expr.GetStringValue(), frame, result_sp) && result_sp.get())
           {
               uint64_t value = result_sp->GetValueAsUnsigned(0);
-              switch (result_sp->GetClangType().GetByteSize())
+              switch (result_sp->GetClangType().GetByteSize(nullptr))
               {
                   case 1: {
                       uint8_t byte = (uint8_t)value;

@@ -971,7 +971,7 @@ ValueObject::GetPointeeData (DataExtractor& data,
     if (item_count == 0)
         return 0;
     
-    const uint64_t item_type_size = pointee_or_element_clang_type.GetByteSize();
+    const uint64_t item_type_size = pointee_or_element_clang_type.GetByteSize(nullptr);
     const uint64_t bytes = item_count * item_type_size;
     const uint64_t offset = item_idx * item_type_size;
     
@@ -1047,7 +1047,7 @@ ValueObject::GetPointeeData (DataExtractor& data,
                 break;
             case eAddressTypeHost:
                 {
-                    const uint64_t max_bytes = GetClangType().GetByteSize();
+                    const uint64_t max_bytes = GetClangType().GetByteSize(nullptr);
                     if (max_bytes > offset)
                     {
                         size_t bytes_read = std::min<uint64_t>(max_bytes - offset, bytes);
@@ -2225,7 +2225,7 @@ ValueObject::GetSyntheticChildAtOffset(uint32_t offset, const ClangASTType& type
     ValueObjectChild *synthetic_child = new ValueObjectChild(*this,
                                                              type,
                                                              name_const_str,
-                                                             type.GetByteSize(),
+                                                             type.GetByteSize(nullptr),
                                                              offset,
                                                              0,
                                                              0,
@@ -2266,7 +2266,7 @@ ValueObject::GetSyntheticBase (uint32_t offset, const ClangASTType& type, bool c
     ValueObjectChild *synthetic_child = new ValueObjectChild(*this,
                                                              type,
                                                              name_const_str,
-                                                             type.GetByteSize(),
+                                                             type.GetByteSize(nullptr),
                                                              offset,
                                                              0,
                                                              0,

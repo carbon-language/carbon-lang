@@ -322,11 +322,11 @@ ABIMacOSX_arm64::GetArgumentValues (Thread &thread, ValueList &values) const
             size_t bit_width = 0;
             if (value_type.IsIntegerType (is_signed))
             {
-                bit_width = value_type.GetBitSize();
+                bit_width = value_type.GetBitSize(nullptr);
             }
             else if (value_type.IsPointerOrReferenceType ())
             {
-                bit_width = value_type.GetBitSize();
+                bit_width = value_type.GetBitSize(nullptr);
             }
             else
             {
@@ -709,7 +709,7 @@ LoadValueFromConsecutiveGPRRegisters (ExecutionContext &exe_ctx,
                                       uint32_t &NSRN,       // NSRN (see ABI documentation)
                                       DataExtractor &data)
 {
-    const size_t byte_size = value_type.GetByteSize();
+    const size_t byte_size = value_type.GetByteSize(nullptr);
     
     if (byte_size == 0)
         return false;
@@ -728,7 +728,7 @@ LoadValueFromConsecutiveGPRRegisters (ExecutionContext &exe_ctx,
         {
             if (!base_type)
                 return false;
-            const size_t base_byte_size = base_type.GetByteSize();
+            const size_t base_byte_size = base_type.GetByteSize(nullptr);
             printf ("ClangASTContext::IsHomogeneousAggregate() => base_byte_size = %" PRIu64 "\n", (uint64_t) base_byte_size);
             uint32_t data_offset = 0;
 
@@ -871,7 +871,7 @@ ABIMacOSX_arm64::GetReturnValueObjectImpl (Thread &thread, ClangASTType &return_
     if (!reg_ctx)
         return return_valobj_sp;
     
-    const size_t byte_size = return_clang_type.GetByteSize();
+    const size_t byte_size = return_clang_type.GetByteSize(nullptr);
 
     const uint32_t type_flags = return_clang_type.GetTypeInfo (NULL);
     if (type_flags & eTypeIsScalar ||

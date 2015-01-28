@@ -6984,7 +6984,7 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
 
                         clang_type = pointee_clang_type.CreateMemberPointerType(class_clang_type);
 
-                        byte_size = clang_type.GetByteSize();
+                        byte_size = clang_type.GetByteSize(nullptr);
 
                         type_sp.reset( new Type (MakeUserID(die->GetOffset()), 
                                                  this, 

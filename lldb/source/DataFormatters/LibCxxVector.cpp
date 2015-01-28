@@ -115,7 +115,7 @@ lldb_private::formatters::LibcxxStdVectorSyntheticFrontEnd::Update()
     if (!data_type_finder_sp)
         return false;
     m_element_type = data_type_finder_sp->GetClangType().GetPointeeType();
-    m_element_size = m_element_type.GetByteSize();
+    m_element_size = m_element_type.GetByteSize(nullptr);
     
     if (m_element_size > 0)
     {

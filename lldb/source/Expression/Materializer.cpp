@@ -49,7 +49,7 @@ Materializer::AddStructMember (Entity &entity)
 void
 Materializer::Entity::SetSizeAndAlignmentFromType (ClangASTType &type)
 {
-    m_size = type.GetByteSize();
+    m_size = type.GetByteSize(nullptr);
     
     uint32_t bit_alignment = type.GetTypeBitAlign();
     
@@ -780,7 +780,7 @@ public:
             
             const lldb::addr_t load_addr = process_address + m_offset;
 
-            size_t byte_size = m_type.GetByteSize();
+            size_t byte_size = m_type.GetByteSize(nullptr);
             size_t bit_align = m_type.GetTypeBitAlign();
             size_t byte_align = (bit_align + 7) / 8;
             

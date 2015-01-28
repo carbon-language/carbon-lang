@@ -110,7 +110,7 @@ ValueObjectVariable::GetByteSize()
     if (!type.IsValid())
         return 0;
     
-    return type.GetByteSize();
+    return type.GetByteSize(nullptr);
 }
 
 lldb::ValueType

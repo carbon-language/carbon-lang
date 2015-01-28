@@ -590,7 +590,7 @@ IRForTarget::CreateResultVariable (llvm::Function &llvm_function)
                                                      &result_decl->getASTContext());
     }
 
-    if (m_result_type.GetBitSize() == 0)
+    if (m_result_type.GetBitSize(nullptr) == 0)
     {
         lldb_private::StreamString type_desc_stream;
         m_result_type.DumpTypeDescription(&type_desc_stream);
@@ -617,7 +617,7 @@ IRForTarget::CreateResultVariable (llvm::Function &llvm_function)
     if (log)
         log->Printf("Creating a new result global: \"%s\" with size 0x%" PRIx64,
                     m_result_name.GetCString(),
-                    m_result_type.GetByteSize());
+                    m_result_type.GetByteSize(nullptr));
 
     // Construct a new result global and set up its metadata
 
@@ -1518,7 +1518,7 @@ IRForTarget::MaybeHandleVariable (Value *llvm_value_ptr)
             value_type = global_variable->getType();
         }
 
-        const uint64_t value_size = clang_type.GetByteSize();
+        const uint64_t value_size = clang_type.GetByteSize(nullptr);
         lldb::offset_t value_alignment = (clang_type.GetTypeBitAlign() + 7ull) / 8ull;
 
         if (log)

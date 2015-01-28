@@ -139,7 +139,7 @@ lldb_private::formatters::LibcxxVectorBoolSyntheticFrontEnd::GetChildAtIndex (si
             return ValueObjectSP();
     }
     bool bit_set = ((byte & mask) != 0);
-    DataBufferSP buffer_sp(new DataBufferHeap(m_bool_type.GetByteSize(),0));
+    DataBufferSP buffer_sp(new DataBufferHeap(m_bool_type.GetByteSize(nullptr),0));
     if (bit_set && buffer_sp && buffer_sp->GetBytes())
         *(buffer_sp->GetBytes()) = 1; // regardless of endianness, anything non-zero is true
     StreamString name; name.Printf("[%" PRIu64 "]", (uint64_t)idx);
