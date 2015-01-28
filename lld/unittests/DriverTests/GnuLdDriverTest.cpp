@@ -147,6 +147,19 @@ TEST_F(GnuLdParserTest, DefsymMisssingValue) {
   EXPECT_FALSE(parse("ld", "a.o", "--defsym=sym=", nullptr));
 }
 
+// --as-needed
+
+TEST_F(GnuLdParserTest, AsNeeded) {
+  EXPECT_TRUE(parse("ld", "a.o", "--as-needed", "b.o", "c.o",
+                    "--no-as-needed", "d.o", nullptr));
+  std::vector<std::unique_ptr<Node>> &nodes = _context->getNodes();
+  EXPECT_EQ((size_t)4, nodes.size());
+  EXPECT_FALSE(cast<FileNode>(nodes[0].get())->asNeeded());
+  EXPECT_TRUE(cast<FileNode>(nodes[1].get())->asNeeded());
+  EXPECT_TRUE(cast<FileNode>(nodes[2].get())->asNeeded());
+  EXPECT_FALSE(cast<FileNode>(nodes[3].get())->asNeeded());
+}
+
 // Linker script
 
 TEST_F(GnuLdParserTest, LinkerScriptGroup) {
