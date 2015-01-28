@@ -13197,27 +13197,28 @@ static SDValue LowerEXTRACT_SUBVECTOR(SDValue Op, const X86Subtarget *Subtarget,
 // the upper bits of a vector.
 static SDValue LowerINSERT_SUBVECTOR(SDValue Op, const X86Subtarget *Subtarget,
                                      SelectionDAG &DAG) {
-  if (Subtarget->hasFp256()) {
-    SDLoc dl(Op);
-    SDValue Vec = Op.getOperand(0);
-    SDValue SubVec = Op.getOperand(1);
-    SDValue Idx = Op.getOperand(2);
-
-    if ((Op.getSimpleValueType().is256BitVector() ||
-         Op.getSimpleValueType().is512BitVector()) &&
-        SubVec.getSimpleValueType().is128BitVector() &&
-        isa<ConstantSDNode>(Idx)) {
-      unsigned IdxVal = cast<ConstantSDNode>(Idx)->getZExtValue();
-      return Insert128BitVector(Vec, SubVec, IdxVal, DAG, dl);
-    }
-
-    if (Op.getSimpleValueType().is512BitVector() &&
-        SubVec.getSimpleValueType().is256BitVector() &&
-        isa<ConstantSDNode>(Idx)) {
-      unsigned IdxVal = cast<ConstantSDNode>(Idx)->getZExtValue();
-      return Insert256BitVector(Vec, SubVec, IdxVal, DAG, dl);
-    }
+  if (!Subtarget->hasAVX())
+    return SDValue();
+  
+  SDLoc dl(Op);
+  SDValue Vec = Op.getOperand(0);
+  SDValue SubVec = Op.getOperand(1);
+  SDValue Idx = Op.getOperand(2);
+  MVT OpVT = Op.getSimpleValueType();
+  MVT SubVecVT = SubVec.getSimpleValueType();
+    
+  if ((OpVT.is256BitVector() || OpVT.is512BitVector()) &&
+      SubVecVT.is128BitVector() && isa<ConstantSDNode>(Idx)) {
+    unsigned IdxVal = cast<ConstantSDNode>(Idx)->getZExtValue();
+    return Insert128BitVector(Vec, SubVec, IdxVal, DAG, dl);
   }
+
+  if (OpVT.is512BitVector() &&
+      SubVecVT.is256BitVector() && isa<ConstantSDNode>(Idx)) {
+    unsigned IdxVal = cast<ConstantSDNode>(Idx)->getZExtValue();
+    return Insert256BitVector(Vec, SubVec, IdxVal, DAG, dl);
+  }
+
   return SDValue();
 }
 
