@@ -76,6 +76,12 @@ public:
                     std::unique_ptr<ELFLinkingContext> &context,
                     raw_ostream &diagnostics = llvm::errs());
 
+  /// Parses a given memory buffer as a linker script and evaluate that.
+  /// Public function for testing.
+  static std::error_code evalLinkerScript(ELFLinkingContext &ctx,
+                                          std::unique_ptr<MemoryBuffer> mb,
+                                          raw_ostream &diag);
+
 private:
   static llvm::Triple getDefaultTarget(const char *progName);
   static bool applyEmulation(llvm::Triple &triple,

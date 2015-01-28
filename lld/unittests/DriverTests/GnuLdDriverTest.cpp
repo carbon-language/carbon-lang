@@ -14,6 +14,7 @@
 
 #include "DriverTest.h"
 #include "lld/ReaderWriter/ELFLinkingContext.h"
+#include "llvm/Support/MemoryBuffer.h"
 
 using namespace llvm;
 using namespace lld;
@@ -144,4 +145,22 @@ TEST_F(GnuLdParserTest, DefsymMisssingSymbol) {
 
 TEST_F(GnuLdParserTest, DefsymMisssingValue) {
   EXPECT_FALSE(parse("ld", "a.o", "--defsym=sym=", nullptr));
+}
+
+// Linker script
+
+TEST_F(GnuLdParserTest, LinkerScriptGroup) {
+  parse("ld", "a.o", nullptr);
+  std::unique_ptr<MemoryBuffer> mb = MemoryBuffer::getMemBuffer(
+    "GROUP(/x /y)", "foo.so");
+  std::string s;
+  raw_string_ostream out(s);
+  std::error_code ec = GnuLdDriver::evalLinkerScript(
+    *_context, std::move(mb), out);
+  EXPECT_FALSE(ec);
+  std::vector<std::unique_ptr<Node>> &nodes = _context->getNodes();
+  EXPECT_EQ((size_t)4, nodes.size());
+  EXPECT_EQ("/x", cast<FileNode>(nodes[1].get())->getFile()->path());
+  EXPECT_EQ("/y", cast<FileNode>(nodes[2].get())->getFile()->path());
+  EXPECT_EQ(2, cast<GroupEnd>(nodes[3].get())->getSize());
 }

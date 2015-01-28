@@ -249,9 +249,12 @@ evaluateLinkerScriptGroup(ELFLinkingContext &ctx, StringRef path,
   for (const script::Path &path : group->getPaths()) {
     ErrorOr<StringRef> pathOrErr = path._isDashlPrefix
       ? ctx.searchLibrary(path._path) : ctx.searchFile(path._path, sysroot);
-    if (std::error_code ec = pathOrErr.getError())
-      return make_dynamic_error_code(
-        Twine("Unable to find file ") + path._path + ": " + ec.message());
+    if (std::error_code ec = pathOrErr.getError()) {
+      auto file = llvm::make_unique<ErrorFile>(path._path, ec);
+      ctx.getNodes().push_back(llvm::make_unique<FileNode>(std::move(file)));
+      ++numfiles;
+      continue;
+    }
 
     std::vector<std::unique_ptr<File>> files
       = loadFile(ctx, pathOrErr.get(), false);
@@ -266,20 +269,17 @@ evaluateLinkerScriptGroup(ELFLinkingContext &ctx, StringRef path,
   return std::error_code();
 }
 
-static std::error_code
-evaluateLinkerScript(ELFLinkingContext &ctx, StringRef path,
-                     raw_ostream &diag) {
+std::error_code
+GnuLdDriver::evalLinkerScript(ELFLinkingContext &ctx,
+                              std::unique_ptr<MemoryBuffer> mb,
+                              raw_ostream &diag) {
   // Read the script file from disk and parse.
-  ErrorOr<std::unique_ptr<MemoryBuffer>> mb =
-      MemoryBuffer::getFileOrSTDIN(path);
-  if (std::error_code ec = mb.getError())
-    return ec;
-  auto lexer = llvm::make_unique<script::Lexer>(std::move(mb.get()));
+  StringRef path = mb->getBufferIdentifier();
+  auto lexer = llvm::make_unique<script::Lexer>(std::move(mb));
   auto parser = llvm::make_unique<script::Parser>(*lexer);
   script::LinkerScript *script = parser->parse();
   if (!script)
     return LinkerScriptReaderError::parse_error;
-
   // Evaluate script commands.
   // Currently we only recognize GROUP() command.
   for (const script::Command *c : script->_commands)
@@ -623,7 +623,15 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
       if (isScript) {
         if (ctx->logInputFiles())
           diagnostics << path << "\n";
-        std::error_code ec = evaluateLinkerScript(*ctx, realpath, diagnostics);
+        ErrorOr<std::unique_ptr<MemoryBuffer>> mb =
+          MemoryBuffer::getFileOrSTDIN(path);
+        if (std::error_code ec = mb.getError()) {
+          diagnostics << "Cannot open " << path << ": "
+                      << ec.message() << "\n";
+          return false;
+        }
+        std::error_code ec = evalLinkerScript(*ctx, std::move(mb.get()),
+                                              diagnostics);
         if (ec) {
           diagnostics << path << ": Error parsing linker script: "
                       << ec.message() << "\n";
