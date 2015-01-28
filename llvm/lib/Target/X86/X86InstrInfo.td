@@ -539,7 +539,7 @@ def offset64_64 : X86MemOffsOperand<i64imm, "printMemOffs64",
                                     X86MemOffs64_64AsmOperand>;
 
 def SSECC : Operand<i8> {
-  let PrintMethod = "printSSECC";
+  let PrintMethod = "printSSEAVXCC";
   let OperandType = "OPERAND_IMMEDIATE";
 }
 
@@ -548,7 +548,7 @@ def i8immZExt3 : ImmLeaf<i8, [{
 }]>;
 
 def AVXCC : Operand<i8> {
-  let PrintMethod = "printAVXCC";
+  let PrintMethod = "printSSEAVXCC";
   let OperandType = "OPERAND_IMMEDIATE";
 }
 
