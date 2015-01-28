@@ -21,6 +21,10 @@ class T_R_pat <InstHexagon MI, Intrinsic IntID>
   : Pat <(IntID I32:$Rs),
          (MI I32:$Rs)>;
 
+class T_P_pat <InstHexagon MI, Intrinsic IntID>
+  : Pat <(IntID I64:$Rs),
+         (MI DoubleRegs:$Rs)>;
+
 class T_II_pat <InstHexagon MI, Intrinsic IntID, PatFrag Imm1, PatFrag Imm2>
   : Pat<(IntID Imm1:$Is, Imm2:$It),
         (MI Imm1:$Is, Imm2:$It)>;
@@ -36,6 +40,10 @@ class T_IR_pat <InstHexagon MI, Intrinsic IntID, PatFrag ImmPred = PatLeaf<(i32 
 class T_PI_pat <InstHexagon MI, Intrinsic IntID>
   : Pat<(IntID I64:$Rs, imm:$It),
         (MI DoubleRegs:$Rs, imm:$It)>;
+
+class T_RP_pat <InstHexagon MI, Intrinsic IntID>
+  : Pat<(IntID I32:$Rs, I64:$Rt),
+        (MI I32:$Rs, DoubleRegs:$Rt)>;
 
 class T_RR_pat <InstHexagon MI, Intrinsic IntID>
   : Pat <(IntID I32:$Rs, I32:$Rt),
@@ -61,6 +69,10 @@ class T_RRI_pat <InstHexagon MI, Intrinsic IntID>
   : Pat <(IntID I32:$Rs, I32:$Rt, imm:$Iu),
          (MI I32:$Rs, I32:$Rt, imm:$Iu)>;
 
+class T_RII_pat <InstHexagon MI, Intrinsic IntID>
+  : Pat <(IntID I32:$Rs, imm:$It, imm:$Iu),
+         (MI I32:$Rs, imm:$It, imm:$Iu)>;
+
 class T_IRI_pat <InstHexagon MI, Intrinsic IntID>
   : Pat <(IntID imm:$It, I32:$Rs, imm:$Iu),
          (MI imm:$It, I32:$Rs, imm:$Iu)>;
@@ -72,6 +84,10 @@ class T_RRR_pat <InstHexagon MI, Intrinsic IntID>
 class T_PPI_pat <InstHexagon MI, Intrinsic IntID>
   : Pat <(IntID I64:$Rs, I64:$Rt, imm:$Iu),
          (MI DoubleRegs:$Rs, DoubleRegs:$Rt, imm:$Iu)>;
+
+class T_PII_pat <InstHexagon MI, Intrinsic IntID>
+  : Pat <(IntID I64:$Rs, imm:$It, imm:$Iu),
+         (MI DoubleRegs:$Rs, imm:$It, imm:$Iu)>;
 
 class T_PPR_pat <InstHexagon MI, Intrinsic IntID>
   : Pat <(IntID I64:$Rs, I64:$Rt, I32:$Ru),
@@ -549,6 +565,17 @@ def: T_PP_pat<A2_xorp,     int_hexagon_A2_xorp>;
 def: T_PP_pat<S2_parityp,  int_hexagon_S2_parityp>;
 def: T_RR_pat<S2_packhl,   int_hexagon_S2_packhl>;
 
+// MPY - Multiply and use full result
+// Rdd = mpy[u](Rs, Rt)
+def : T_RR_pat <M2_dpmpyss_s0, int_hexagon_M2_dpmpyss_s0>;
+def : T_RR_pat <M2_dpmpyuu_s0, int_hexagon_M2_dpmpyuu_s0>;
+
+// Rxx[+-]= mpy[u](Rs,Rt)
+def : T_PRR_pat <M2_dpmpyss_acc_s0, int_hexagon_M2_dpmpyss_acc_s0>;
+def : T_PRR_pat <M2_dpmpyss_nac_s0, int_hexagon_M2_dpmpyss_nac_s0>;
+def : T_PRR_pat <M2_dpmpyuu_acc_s0, int_hexagon_M2_dpmpyuu_acc_s0>;
+def : T_PRR_pat <M2_dpmpyuu_nac_s0, int_hexagon_M2_dpmpyuu_nac_s0>;
+
 // Multiply 32x32 and use lower result
 def : T_RRI_pat <M2_macsip, int_hexagon_M2_macsip>;
 def : T_RRI_pat <M2_macsin, int_hexagon_M2_macsin>;
@@ -566,8 +593,97 @@ def : T_RRI_pat <M2_naccii, int_hexagon_M2_naccii>;
 // XOR and XOR with destination
 def : T_RRR_pat <M2_xor_xacc, int_hexagon_M2_xor_xacc>;
 
+class MType_R32_pat <Intrinsic IntID, InstHexagon OutputInst> :
+      Pat <(IntID IntRegs:$src1, IntRegs:$src2),
+           (OutputInst IntRegs:$src1, IntRegs:$src2)>;
+
+// Multiply and use lower result
+def : MType_R32_pat <int_hexagon_M2_mpyi, M2_mpyi>;
+def : T_RI_pat<M2_mpysmi, int_hexagon_M2_mpysmi>;
+
+// Assembler mapped from Rd32=mpyui(Rs32,Rt32) to Rd32=mpyi(Rs32,Rt32)
+def : MType_R32_pat <int_hexagon_M2_mpyui, M2_mpyi>;
+
+// Multiply and use upper result
+def : MType_R32_pat <int_hexagon_M2_mpy_up, M2_mpy_up>;
+def : MType_R32_pat <int_hexagon_M2_mpyu_up, M2_mpyu_up>;
+def : MType_R32_pat <int_hexagon_M2_hmmpyh_rs1, M2_hmmpyh_rs1>;
+def : MType_R32_pat <int_hexagon_M2_hmmpyl_rs1, M2_hmmpyl_rs1>;
+def : MType_R32_pat <int_hexagon_M2_dpmpyss_rnd_s0, M2_dpmpyss_rnd_s0>;
+
+/********************************************************************
+*            STYPE/ALU                                              *
+*********************************************************************/
+def : T_P_pat <A2_absp, int_hexagon_A2_absp>;
+def : T_P_pat <A2_negp, int_hexagon_A2_negp>;
+def : T_P_pat <A2_notp, int_hexagon_A2_notp>;
+
+/********************************************************************
+*            STYPE/BIT                                              *
+*********************************************************************/
+
+// Count leading/trailing
+def: T_R_pat<S2_cl0,     int_hexagon_S2_cl0>;
+def: T_P_pat<S2_cl0p,    int_hexagon_S2_cl0p>;
+def: T_R_pat<S2_cl1,     int_hexagon_S2_cl1>;
+def: T_P_pat<S2_cl1p,    int_hexagon_S2_cl1p>;
+def: T_R_pat<S2_clb,     int_hexagon_S2_clb>;
+def: T_P_pat<S2_clbp,    int_hexagon_S2_clbp>;
+def: T_R_pat<S2_clbnorm, int_hexagon_S2_clbnorm>;
+def: T_R_pat<S2_ct0,     int_hexagon_S2_ct0>;
+def: T_R_pat<S2_ct1,     int_hexagon_S2_ct1>;
+
+// Compare bit mask
+def: T_RR_pat<C2_bitsclr,  int_hexagon_C2_bitsclr>;
+def: T_RI_pat<C2_bitsclri, int_hexagon_C2_bitsclri>;
+def: T_RR_pat<C2_bitsset,  int_hexagon_C2_bitsset>;
+
 // Shift by immediate and add
 def : T_RRI_pat<S2_addasl_rrri, int_hexagon_S2_addasl_rrri>;
+
+// Extract bitfield
+def : T_PII_pat<S2_extractup,    int_hexagon_S2_extractup>;
+def : T_RII_pat<S2_extractu,     int_hexagon_S2_extractu>;
+def : T_RP_pat <S2_extractu_rp,  int_hexagon_S2_extractu_rp>;
+def : T_PP_pat <S2_extractup_rp, int_hexagon_S2_extractup_rp>;
+
+// Insert bitfield
+def : Pat <(int_hexagon_S2_insert_rp IntRegs:$src1, IntRegs:$src2,
+                                     DoubleRegs:$src3),
+           (S2_insert_rp IntRegs:$src1, IntRegs:$src2, DoubleRegs:$src3)>;
+
+def : Pat<(i64 (int_hexagon_S2_insertp_rp (I64:$src1),
+                 (I64:$src2), (I64:$src3))),
+          (i64 (S2_insertp_rp (I64:$src1), (I64:$src2),
+                              (I64:$src3)))>;
+
+def : Pat<(int_hexagon_S2_insert IntRegs:$src1, IntRegs:$src2,
+                                 u5ImmPred:$src3, u5ImmPred:$src4),
+          (S2_insert IntRegs:$src1, IntRegs:$src2,
+                     u5ImmPred:$src3, u5ImmPred:$src4)>;
+
+def : Pat<(i64 (int_hexagon_S2_insertp (I64:$src1),
+                 (I64:$src2), u6ImmPred:$src3, u6ImmPred:$src4)),
+          (i64 (S2_insertp (I64:$src1), (I64:$src2),
+                           u6ImmPred:$src3, u6ImmPred:$src4))>;
+
+
+// Innterleave/deinterleave
+def : T_P_pat <S2_interleave, int_hexagon_S2_interleave>;
+def : T_P_pat <S2_deinterleave, int_hexagon_S2_deinterleave>;
+
+// Set/Clear/Toggle Bit
+def: T_RI_pat<S2_setbit_i,    int_hexagon_S2_setbit_i>;
+def: T_RI_pat<S2_clrbit_i,    int_hexagon_S2_clrbit_i>;
+def: T_RI_pat<S2_togglebit_i, int_hexagon_S2_togglebit_i>;
+
+def: T_RR_pat<S2_setbit_r,    int_hexagon_S2_setbit_r>;
+def: T_RR_pat<S2_clrbit_r,    int_hexagon_S2_clrbit_r>;
+def: T_RR_pat<S2_togglebit_r, int_hexagon_S2_togglebit_r>;
+
+// Test Bit
+def: T_RI_pat<S2_tstbit_i,    int_hexagon_S2_tstbit_i>;
+def: T_RR_pat<S2_tstbit_r,    int_hexagon_S2_tstbit_r>;
 
 /********************************************************************
 *            STYPE/SHIFT                                            *
@@ -2908,8 +3024,6 @@ def Hexagon_M2_mpysmi:
   si_MInst_sis9                   <"mpyi",     int_hexagon_M2_mpysmi>;
 def HEXAGON_M2_mpyi:
   si_MInst_sisi                   <"mpyi",     int_hexagon_M2_mpyi>;
-def HEXAGON_M2_mpyui:
-  si_MInst_sisi                   <"mpyui",    int_hexagon_M2_mpyui>;
 def HEXAGON_M2_macsip:
   si_MInst_sisiu8_acc             <"mpyi",     int_hexagon_M2_macsip>;
 def HEXAGON_M2_maci:
@@ -2988,32 +3102,6 @@ def HEXAGON_M2_mmacuhs_rs0:
   di_MInst_dididi_acc_rnd_sat     <"vmpywouh", int_hexagon_M2_mmacuhs_rs0>;
 def HEXAGON_M2_mmacuhs_s0:
   di_MInst_dididi_acc_sat         <"vmpywouh", int_hexagon_M2_mmacuhs_s0>;
-
-// MTYPE / MPYH / Multiply and use upper result.
-def HEXAGON_M2_hmmpyh_rs1:
-  si_MInst_sisi_h_s1_rnd_sat      <"mpy",      int_hexagon_M2_hmmpyh_rs1>;
-def HEXAGON_M2_hmmpyl_rs1:
-  si_MInst_sisi_l_s1_rnd_sat      <"mpy",      int_hexagon_M2_hmmpyl_rs1>;
-def HEXAGON_M2_mpy_up:
-  si_MInst_sisi                   <"mpy",      int_hexagon_M2_mpy_up>;
-def HEXAGON_M2_dpmpyss_rnd_s0:
-  si_MInst_sisi_rnd               <"mpy",      int_hexagon_M2_dpmpyss_rnd_s0>;
-def HEXAGON_M2_mpyu_up:
-  si_MInst_sisi                   <"mpyu",     int_hexagon_M2_mpyu_up>;
-
-// MTYPE / MPYH / Multiply and use full result.
-def HEXAGON_M2_dpmpyuu_s0:
-  di_MInst_sisi                   <"mpyu",     int_hexagon_M2_dpmpyuu_s0>;
-def HEXAGON_M2_dpmpyuu_acc_s0:
-  di_MInst_disisi_acc             <"mpyu",     int_hexagon_M2_dpmpyuu_acc_s0>;
-def HEXAGON_M2_dpmpyuu_nac_s0:
-  di_MInst_disisi_nac             <"mpyu",     int_hexagon_M2_dpmpyuu_nac_s0>;
-def HEXAGON_M2_dpmpyss_s0:
-  di_MInst_sisi                   <"mpy",      int_hexagon_M2_dpmpyss_s0>;
-def HEXAGON_M2_dpmpyss_acc_s0:
-  di_MInst_disisi_acc             <"mpy",      int_hexagon_M2_dpmpyss_acc_s0>;
-def HEXAGON_M2_dpmpyss_nac_s0:
-  di_MInst_disisi_nac             <"mpy",      int_hexagon_M2_dpmpyss_nac_s0>;
 
 /********************************************************************
 *            MTYPE/VB                                               *
@@ -3096,14 +3184,8 @@ def HEXAGON_M2_vrmac_s0:
 // STYPE / ALU / Absolute value.
 def HEXAGON_A2_abs:
   si_SInst_si                     <"abs",     int_hexagon_A2_abs>;
-def HEXAGON_A2_absp:
-  di_SInst_di                     <"abs",     int_hexagon_A2_absp>;
 def HEXAGON_A2_abssat:
   si_SInst_si_sat                 <"abs",     int_hexagon_A2_abssat>;
-
-// STYPE / ALU / Logical Not.
-def HEXAGON_A2_notp:
-  di_SInst_di                     <"not",     int_hexagon_A2_notp>;
 
 // STYPE / ALU / Sign extend word to doubleword.
 def HEXAGON_A2_sxtw:

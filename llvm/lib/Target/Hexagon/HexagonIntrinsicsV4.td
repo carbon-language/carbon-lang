@@ -12,6 +12,20 @@
 // 80-V9418-12 Rev. A
 // June 15, 2010
 
+def : T_P_pat <S2_brevp, int_hexagon_S2_brevp>;
+
+def: T_P_pat  <S2_ct0p,      int_hexagon_S2_ct0p>;
+def: T_P_pat  <S2_ct1p,      int_hexagon_S2_ct1p>;
+def: T_RR_pat<C4_nbitsset,  int_hexagon_C4_nbitsset>;
+def: T_RR_pat<C4_nbitsclr,  int_hexagon_C4_nbitsclr>;
+def: T_RI_pat<C4_nbitsclri, int_hexagon_C4_nbitsclri>;
+
+// Extract bitfield
+def : T_PP_pat  <S4_extractp_rp, int_hexagon_S4_extractp_rp>;
+def : T_RP_pat  <S4_extract_rp, int_hexagon_S4_extract_rp>;
+def : T_PII_pat <S4_extractp, int_hexagon_S4_extractp>;
+def : T_RII_pat <S4_extract, int_hexagon_S4_extract>;
+
 // Shift an immediate left by register amount
 def : T_IR_pat<S4_lsli, int_hexagon_S4_lsli>;
 
@@ -24,6 +38,19 @@ def : T_IRI_pat <S4_andi_lsr_ri, int_hexagon_S4_andi_lsr_ri>;
 def : T_IRI_pat <S4_ori_lsr_ri,  int_hexagon_S4_ori_lsr_ri>;
 def : T_IRI_pat <S4_addi_lsr_ri, int_hexagon_S4_addi_lsr_ri>;
 def : T_IRI_pat <S4_subi_lsr_ri, int_hexagon_S4_subi_lsr_ri>;
+
+// Split bitfield
+def : T_RI_pat <A4_bitspliti, int_hexagon_A4_bitspliti>;
+def : T_RR_pat <A4_bitsplit, int_hexagon_A4_bitsplit>;
+
+def: T_RR_pat<S4_parity,   int_hexagon_S4_parity>;
+
+def: T_RI_pat<S4_ntstbit_i,  int_hexagon_S4_ntstbit_i>;
+def: T_RR_pat<S4_ntstbit_r,  int_hexagon_S4_ntstbit_r>;
+
+def: T_RI_pat<S4_clbaddi,  int_hexagon_S4_clbaddi>;
+def: T_PI_pat<S4_clbpaddi, int_hexagon_S4_clbpaddi>;
+def: T_P_pat <S4_clbpnorm, int_hexagon_S4_clbpnorm>;
 
 //
 // ALU 32 types.
