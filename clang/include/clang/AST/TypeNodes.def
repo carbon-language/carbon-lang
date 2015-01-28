@@ -11,7 +11,7 @@
 //  enumerated by providing its name (e.g., "Builtin" or "Enum") and
 //  base class (e.g., "Type" or "TagType"). Depending on where in the
 //  abstract syntax tree the type will show up, the enumeration uses
-//  one of four different macros:
+//  one of five different macros:
 //
 //    TYPE(Class, Base) - A type that can show up anywhere in the AST,
 //    and might be dependent, canonical, or non-canonical. All clients
