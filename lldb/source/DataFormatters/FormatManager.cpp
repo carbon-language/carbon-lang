@@ -251,6 +251,8 @@ FormatManager::GetPossibleMatches (ValueObject& valobj,
             do
             {
                 lldb::ProcessSP process_sp = valobj.GetProcessSP();
+                if (!process_sp)
+                    break;
                 ObjCLanguageRuntime* runtime = process_sp->GetObjCLanguageRuntime();
                 if (runtime == nullptr)
                     break;
