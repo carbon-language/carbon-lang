@@ -1,5 +1,5 @@
 // RUN: %clang_cc1 -fsyntax-only -std=c++11 -verify %s
-template<typename T> struct X;
+template<typename T> struct X; // expected-note {{'X' is incomplete}}
 template<int I> struct Y;
 
 X<X<int>> *x1;
