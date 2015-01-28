@@ -139,15 +139,8 @@ BasicBlock *llvm::InsertPreheaderForLoop(Loop *L, Pass *PP) {
 
   // Split out the loop pre-header.
   BasicBlock *PreheaderBB;
-  if (!Header->isLandingPad()) {
-    PreheaderBB = SplitBlockPredecessors(Header, OutsideBlocks, ".preheader",
-                                         AA, DT, LI, PreserveLCSSA);
-  } else {
-    SmallVector<BasicBlock*, 2> NewBBs;
-    SplitLandingPadPredecessors(Header, OutsideBlocks, ".preheader",
-                                ".split-lp", NewBBs, AA, DT, LI, PreserveLCSSA);
-    PreheaderBB = NewBBs[0];
-  }
+  PreheaderBB = SplitBlockPredecessors(Header, OutsideBlocks, ".preheader",
+                                       AA, DT, LI, PreserveLCSSA);
 
   PreheaderBB->getTerminator()->setDebugLoc(
                                       Header->getFirstNonPHI()->getDebugLoc());
@@ -184,15 +177,8 @@ static BasicBlock *rewriteLoopExitBlock(Loop *L, BasicBlock *Exit,
 
   bool PreserveLCSSA = PP->mustPreserveAnalysisID(LCSSAID);
 
-  if (Exit->isLandingPad()) {
-    SmallVector<BasicBlock*, 2> NewBBs;
-    SplitLandingPadPredecessors(Exit, LoopBlocks, ".loopexit", ".nonloopexit",
-                                NewBBs, AA, DT, LI, PreserveLCSSA);
-    NewExitBB = NewBBs[0];
-  } else {
-    NewExitBB = SplitBlockPredecessors(Exit, LoopBlocks, ".loopexit", AA, DT,
-                                       LI, PreserveLCSSA);
-  }
+  NewExitBB = SplitBlockPredecessors(Exit, LoopBlocks, ".loopexit", AA, DT,
+                                     LI, PreserveLCSSA);
 
   DEBUG(dbgs() << "LoopSimplify: Creating dedicated exit block "
                << NewExitBB->getName() << "\n");

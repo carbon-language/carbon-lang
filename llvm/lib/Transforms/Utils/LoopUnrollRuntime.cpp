@@ -119,15 +119,8 @@ static void ConnectProlog(Loop *L, Value *TripCount, unsigned Count,
   assert(Exit && "Loop must have a single exit block only");
   // Split the exit to maintain loop canonicalization guarantees
   SmallVector<BasicBlock*, 4> Preds(pred_begin(Exit), pred_end(Exit));
-  if (!Exit->isLandingPad()) {
-    SplitBlockPredecessors(Exit, Preds, ".unr-lcssa", AA, DT, LI,
-                           P->mustPreserveAnalysisID(LCSSAID));
-  } else {
-    SmallVector<BasicBlock*, 2> NewBBs;
-    SplitLandingPadPredecessors(Exit, Preds, ".unr1-lcssa", ".unr2-lcssa",
-                                NewBBs, AA, DT, LI,
-                                P->mustPreserveAnalysisID(LCSSAID));
-  }
+  SplitBlockPredecessors(Exit, Preds, ".unr-lcssa", AA, DT, LI,
+                         P->mustPreserveAnalysisID(LCSSAID));
   // Add the branch to the exit block (around the unrolled loop)
   BranchInst::Create(Exit, NewPH, BrLoopExit, InsertPt);
   InsertPt->eraseFromParent();

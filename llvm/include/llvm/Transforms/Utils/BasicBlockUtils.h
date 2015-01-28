@@ -202,11 +202,15 @@ BasicBlock *SplitEdge(BasicBlock *From, BasicBlock *To,
 BasicBlock *SplitBlock(BasicBlock *Old, Instruction *SplitPt,
                        DominatorTree *DT = nullptr, LoopInfo *LI = nullptr);
 
-/// SplitBlockPredecessors - This method transforms BB by introducing a new
-/// basic block into the function, and moving some of the predecessors of BB to
-/// be predecessors of the new block.  The new predecessors are indicated by the
-/// Preds array, which has NumPreds elements in it.  The new block is given a
-/// suffix of 'Suffix'.  This function returns the new block.
+/// SplitBlockPredecessors - This method introduces at least one new basic block
+/// into the function and moves some of the predecessors of BB to be
+/// predecessors of the new block. The new predecessors are indicated by the
+/// Preds array. The new block is given a suffix of 'Suffix'. Returns new basic
+/// block to which predecessors from Preds are now pointing.
+///
+/// If BB is a landingpad block then additional basicblock might be introduced.
+/// It will have Suffix+".split_lp". See SplitLandingPadPredecessors for more
+/// details on this case.
 ///
 /// This currently updates the LLVM IR, AliasAnalysis, DominatorTree,
 /// DominanceFrontier, LoopInfo, and LCCSA but no other analyses.
