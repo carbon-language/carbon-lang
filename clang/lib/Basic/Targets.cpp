@@ -1597,8 +1597,15 @@ class R600TargetInfo : public TargetInfo {
 
 public:
   R600TargetInfo(const llvm::Triple &Triple)
-      : TargetInfo(Triple), GPU(GK_R600) {
-    DescriptionString = DescriptionStringR600;
+      : TargetInfo(Triple) {
+
+    if (Triple.getArch() == llvm::Triple::amdgcn) {
+      DescriptionString = DescriptionStringSI;
+      GPU = GK_SOUTHERN_ISLANDS;
+    } else {
+      DescriptionString = DescriptionStringR600;
+      GPU = GK_R600;
+    }
     AddrSpaceMap = &R600AddrSpaceMap;
     UseAddrSpaceMapMangling = true;
   }
