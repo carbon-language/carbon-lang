@@ -255,6 +255,61 @@ def : T_PRR_pat <M2_mpyud_nac_hl_s1, int_hexagon_M2_mpyud_nac_hl_s1>;
 def : T_PRR_pat <M2_mpyud_nac_lh_s1, int_hexagon_M2_mpyud_nac_lh_s1>;
 def : T_PRR_pat <M2_mpyud_nac_ll_s1, int_hexagon_M2_mpyud_nac_ll_s1>;
 
+
+//===----------------------------------------------------------------------===//
+// Add/Subtract halfword
+// Rd=add(Rt.L,Rs.[HL])[:sat]
+// Rd=sub(Rt.L,Rs.[HL])[:sat]
+// Rd=add(Rt.[LH],Rs.[HL])[:sat][:<16]
+// Rd=sub(Rt.[LH],Rs.[HL])[:sat][:<16]
+//===----------------------------------------------------------------------===//
+
+//Rd=add(Rt.L,Rs.[LH])
+def : T_RR_pat <A2_addh_l16_ll,     int_hexagon_A2_addh_l16_ll>;
+def : T_RR_pat <A2_addh_l16_hl,     int_hexagon_A2_addh_l16_hl>;
+
+//Rd=add(Rt.L,Rs.[LH]):sat
+def : T_RR_pat <A2_addh_l16_sat_ll, int_hexagon_A2_addh_l16_sat_ll>;
+def : T_RR_pat <A2_addh_l16_sat_hl, int_hexagon_A2_addh_l16_sat_hl>;
+
+//Rd=sub(Rt.L,Rs.[LH])
+def : T_RR_pat <A2_subh_l16_ll,     int_hexagon_A2_subh_l16_ll>;
+def : T_RR_pat <A2_subh_l16_hl,     int_hexagon_A2_subh_l16_hl>;
+
+//Rd=sub(Rt.L,Rs.[LH]):sat
+def : T_RR_pat <A2_subh_l16_sat_ll, int_hexagon_A2_subh_l16_sat_ll>;
+def : T_RR_pat <A2_subh_l16_sat_hl, int_hexagon_A2_subh_l16_sat_hl>;
+
+//Rd=add(Rt.[LH],Rs.[LH]):<<16
+def : T_RR_pat <A2_addh_h16_ll,     int_hexagon_A2_addh_h16_ll>;
+def : T_RR_pat <A2_addh_h16_lh,     int_hexagon_A2_addh_h16_lh>;
+def : T_RR_pat <A2_addh_h16_hl,     int_hexagon_A2_addh_h16_hl>;
+def : T_RR_pat <A2_addh_h16_hh,     int_hexagon_A2_addh_h16_hh>;
+
+//Rd=sub(Rt.[LH],Rs.[LH]):<<16
+def : T_RR_pat <A2_subh_h16_ll,     int_hexagon_A2_subh_h16_ll>;
+def : T_RR_pat <A2_subh_h16_lh,     int_hexagon_A2_subh_h16_lh>;
+def : T_RR_pat <A2_subh_h16_hl,     int_hexagon_A2_subh_h16_hl>;
+def : T_RR_pat <A2_subh_h16_hh,     int_hexagon_A2_subh_h16_hh>;
+
+//Rd=add(Rt.[LH],Rs.[LH]):sat:<<16
+def : T_RR_pat <A2_addh_h16_sat_ll, int_hexagon_A2_addh_h16_sat_ll>;
+def : T_RR_pat <A2_addh_h16_sat_lh, int_hexagon_A2_addh_h16_sat_lh>;
+def : T_RR_pat <A2_addh_h16_sat_hl, int_hexagon_A2_addh_h16_sat_hl>;
+def : T_RR_pat <A2_addh_h16_sat_hh, int_hexagon_A2_addh_h16_sat_hh>;
+
+//Rd=sub(Rt.[LH],Rs.[LH]):sat:<<16
+def : T_RR_pat <A2_subh_h16_sat_ll, int_hexagon_A2_subh_h16_sat_ll>;
+def : T_RR_pat <A2_subh_h16_sat_lh, int_hexagon_A2_subh_h16_sat_lh>;
+def : T_RR_pat <A2_subh_h16_sat_hl, int_hexagon_A2_subh_h16_sat_hl>;
+def : T_RR_pat <A2_subh_h16_sat_hh, int_hexagon_A2_subh_h16_sat_hh>;
+
+// ALU64 / ALU / min max
+def : T_RR_pat<A2_max,  int_hexagon_A2_max>;
+def : T_RR_pat<A2_min,  int_hexagon_A2_min>;
+def : T_RR_pat<A2_maxu, int_hexagon_A2_maxu>;
+def : T_RR_pat<A2_minu, int_hexagon_A2_minu>;
+
 /********************************************************************
 *            ALU32/ALU                                              *
 *********************************************************************/
@@ -2300,37 +2355,6 @@ def HEXAGON_A2_addp:
 def HEXAGON_A2_addsat:
   si_ALU64_sisi_sat               <"add",      int_hexagon_A2_addsat>;
 
-// ALU64 / ALU / Add halfword.
-// Even though the definition says hl, it should be lh -
-//so DON'T change the class " si_ALU64_sisi_l16_lh " it inherits.
-def HEXAGON_A2_addh_l16_hl:
-  si_ALU64_sisi_l16_lh            <"add",      int_hexagon_A2_addh_l16_hl>;
-def HEXAGON_A2_addh_l16_ll:
-  si_ALU64_sisi_l16_ll            <"add",      int_hexagon_A2_addh_l16_ll>;
-
-def HEXAGON_A2_addh_l16_sat_hl:
-  si_ALU64_sisi_l16_sat_lh        <"add",      int_hexagon_A2_addh_l16_sat_hl>;
-def HEXAGON_A2_addh_l16_sat_ll:
-  si_ALU64_sisi_l16_sat_ll        <"add",      int_hexagon_A2_addh_l16_sat_ll>;
-
-def HEXAGON_A2_addh_h16_hh:
-  si_ALU64_sisi_h16_hh            <"add",      int_hexagon_A2_addh_h16_hh>;
-def HEXAGON_A2_addh_h16_hl:
-  si_ALU64_sisi_h16_hl            <"add",      int_hexagon_A2_addh_h16_hl>;
-def HEXAGON_A2_addh_h16_lh:
-  si_ALU64_sisi_h16_lh            <"add",      int_hexagon_A2_addh_h16_lh>;
-def HEXAGON_A2_addh_h16_ll:
-  si_ALU64_sisi_h16_ll            <"add",      int_hexagon_A2_addh_h16_ll>;
-
-def HEXAGON_A2_addh_h16_sat_hh:
-  si_ALU64_sisi_h16_sat_hh        <"add",      int_hexagon_A2_addh_h16_sat_hh>;
-def HEXAGON_A2_addh_h16_sat_hl:
-  si_ALU64_sisi_h16_sat_hl        <"add",      int_hexagon_A2_addh_h16_sat_hl>;
-def HEXAGON_A2_addh_h16_sat_lh:
-  si_ALU64_sisi_h16_sat_lh        <"add",      int_hexagon_A2_addh_h16_sat_lh>;
-def HEXAGON_A2_addh_h16_sat_ll:
-  si_ALU64_sisi_h16_sat_ll        <"add",      int_hexagon_A2_addh_h16_sat_ll>;
-
 // ALU64 / ALU / Compare.
 def HEXAGON_C2_cmpeqp:
   qi_ALU64_didi                   <"cmp.eq",   int_hexagon_C2_cmpeqp>;
@@ -2347,54 +2371,11 @@ def HEXAGON_A2_orp:
 def HEXAGON_A2_xorp:
   di_ALU64_didi                   <"xor",      int_hexagon_A2_xorp>;
 
-// ALU64 / ALU / Maximum.
-def HEXAGON_A2_max:
-  si_ALU64_sisi                   <"max",      int_hexagon_A2_max>;
-def HEXAGON_A2_maxu:
-  si_ALU64_sisi                   <"maxu",     int_hexagon_A2_maxu>;
-
-// ALU64 / ALU / Minimum.
-def HEXAGON_A2_min:
-  si_ALU64_sisi                   <"min",      int_hexagon_A2_min>;
-def HEXAGON_A2_minu:
-  si_ALU64_sisi                   <"minu",     int_hexagon_A2_minu>;
-
 // ALU64 / ALU / Subtract.
 def HEXAGON_A2_subp:
   di_ALU64_didi                   <"sub",      int_hexagon_A2_subp>;
 def HEXAGON_A2_subsat:
   si_ALU64_sisi_sat               <"sub",      int_hexagon_A2_subsat>;
-
-// ALU64 / ALU / Subtract halfword.
-// Even though the definition says hl, it should be lh -
-//so DON'T change the class " si_ALU64_sisi_l16_lh " it inherits.
-def HEXAGON_A2_subh_l16_hl:
-  si_ALU64_sisi_l16_lh            <"sub",      int_hexagon_A2_subh_l16_hl>;
-def HEXAGON_A2_subh_l16_ll:
-  si_ALU64_sisi_l16_ll            <"sub",      int_hexagon_A2_subh_l16_ll>;
-
-def HEXAGON_A2_subh_l16_sat_hl:
-  si_ALU64_sisi_l16_sat_lh        <"sub",      int_hexagon_A2_subh_l16_sat_hl>;
-def HEXAGON_A2_subh_l16_sat_ll:
-  si_ALU64_sisi_l16_sat_ll        <"sub",      int_hexagon_A2_subh_l16_sat_ll>;
-
-def HEXAGON_A2_subh_h16_hh:
-  si_ALU64_sisi_h16_hh            <"sub",      int_hexagon_A2_subh_h16_hh>;
-def HEXAGON_A2_subh_h16_hl:
-  si_ALU64_sisi_h16_hl            <"sub",      int_hexagon_A2_subh_h16_hl>;
-def HEXAGON_A2_subh_h16_lh:
-  si_ALU64_sisi_h16_lh            <"sub",      int_hexagon_A2_subh_h16_lh>;
-def HEXAGON_A2_subh_h16_ll:
-  si_ALU64_sisi_h16_ll            <"sub",      int_hexagon_A2_subh_h16_ll>;
-
-def HEXAGON_A2_subh_h16_sat_hh:
-  si_ALU64_sisi_h16_sat_hh        <"sub",      int_hexagon_A2_subh_h16_sat_hh>;
-def HEXAGON_A2_subh_h16_sat_hl:
-  si_ALU64_sisi_h16_sat_hl        <"sub",      int_hexagon_A2_subh_h16_sat_hl>;
-def HEXAGON_A2_subh_h16_sat_lh:
-  si_ALU64_sisi_h16_sat_lh        <"sub",      int_hexagon_A2_subh_h16_sat_lh>;
-def HEXAGON_A2_subh_h16_sat_ll:
-  si_ALU64_sisi_h16_sat_ll        <"sub",      int_hexagon_A2_subh_h16_sat_ll>;
 
 // ALU64 / ALU / Transfer register.
 def HEXAGON_A2_tfrp:
