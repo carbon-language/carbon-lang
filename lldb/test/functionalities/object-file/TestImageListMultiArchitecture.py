@@ -22,13 +22,13 @@ class TestImageListMultiArchitecture(TestBase):
     def test_image_list_shows_multiple_architectures(self):
         """Test that image list properly shows the correct architecture for a set of different architecture object files."""
         images = {
-            "hello-freebsd-10.0-x86_64-clang-3.3": re.compile(r"x86_64-(unknown)?-freebsd10.0 x86_64"),
-            "hello-freebsd-10.0-x86_64-gcc-4.7.3": re.compile(r"x86_64-(unknown)?-freebsd10.0 x86_64"),
-            "hello-netbsd-6.1-x86_64-gcc-4.5.3": re.compile(r"x86_64-(unknown)?-netbsd x86_64"),
-            "hello-ubuntu-14.04-x86_64-gcc-4.8.2": re.compile(r"x86_64-(unknown)?-linux x86_64"),
-            "hello-ubuntu-14.04-x86_64-clang-3.5pre": re.compile(r"x86_64-(unknown)?-linux x86_64"),
-            "hello-unknown-kalimba_arch4-kcc-36": re.compile(r"kalimba4-csr-unknown kalimba"),
-            "hello-unknown-kalimba_arch5-kcc-39": re.compile(r"kalimba5-csr-unknown kalimba"),
+            "hello-freebsd-10.0-x86_64-clang-3.3": re.compile(r"x86_64-(unknown)?-freebsd10.0(-unknown)? x86_64"),
+            "hello-freebsd-10.0-x86_64-gcc-4.7.3": re.compile(r"x86_64-(unknown)?-freebsd10.0(-unknown)? x86_64"),
+            "hello-netbsd-6.1-x86_64-gcc-4.5.3": re.compile(r"x86_64-(unknown)?-netbsd(-unknown)? x86_64"),
+            "hello-ubuntu-14.04-x86_64-gcc-4.8.2": re.compile(r"x86_64-(unknown)?-linux(-unknown)? x86_64"),
+            "hello-ubuntu-14.04-x86_64-clang-3.5pre": re.compile(r"x86_64-(unknown)?-linux(-unknown)? x86_64"),
+            "hello-unknown-kalimba_arch4-kcc-36": re.compile(r"kalimba4-csr-unknown(-unknown)? kalimba"),
+            "hello-unknown-kalimba_arch5-kcc-39": re.compile(r"kalimba5-csr-unknown(-unknown)? kalimba"),
         }
 
         for image_name in images:

@@ -98,12 +98,12 @@ TargetList::CreateTarget (Debugger &debugger,
 
 Error
 TargetList::CreateTargetInternal (Debugger &debugger,
-                          const char *user_exe_path,
-                          const char *triple_cstr,
-                          bool get_dependent_files,
-                          const OptionGroupPlatform *platform_options,
-                          TargetSP &target_sp,
-                          bool is_dummy_target)
+                                  const char *user_exe_path,
+                                  const char *triple_cstr,
+                                  bool get_dependent_files,
+                                  const OptionGroupPlatform *platform_options,
+                                  TargetSP &target_sp,
+                                  bool is_dummy_target)
 {
     Error error;
     PlatformSP platform_sp;
@@ -369,12 +369,12 @@ TargetList::CreateDummyTarget (Debugger &debugger,
 
 Error
 TargetList::CreateTargetInternal (Debugger &debugger,
-                      const char *user_exe_path,
-                      const ArchSpec& specified_arch,
-                      bool get_dependent_files,
-                      lldb::PlatformSP &platform_sp,
-                      lldb::TargetSP &target_sp,
-                      bool is_dummy_target)
+                                  const char *user_exe_path,
+                                  const ArchSpec& specified_arch,
+                                  bool get_dependent_files,
+                                  lldb::PlatformSP &platform_sp,
+                                  lldb::TargetSP &target_sp,
+                                  bool is_dummy_target)
 {
 
     Timer scoped_timer (__PRETTY_FUNCTION__,

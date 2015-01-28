@@ -281,70 +281,83 @@ protected:
             bool must_set_platform_path = false;
 
             Debugger &debugger = m_interpreter.GetDebugger();
-            PlatformSP platform_sp(debugger.GetPlatformList().GetSelectedPlatform ());
-
-            if (remote_file)
-            {
-                // I have a remote file.. two possible cases
-                if (file_spec && file_spec.Exists())
-                {
-                    // if the remote file does not exist, push it there
-                    if (!platform_sp->GetFileExists (remote_file))
-                    {
-                        Error err = platform_sp->PutFile(file_spec, remote_file);
-                        if (err.Fail())
-                        {
-                            result.AppendError(err.AsCString());
-                            result.SetStatus (eReturnStatusFailed);
-                            return false;
-                        }
-                    }
-                }
-                else
-                {
-                    // there is no local file and we need one
-                    // in order to make the remote ---> local transfer we need a platform
-                    // TODO: if the user has passed in a --platform argument, use it to fetch the right platform
-                    if (!platform_sp)
-                    {
-                        result.AppendError("unable to perform remote debugging without a platform");
-                        result.SetStatus (eReturnStatusFailed);
-                        return false;
-                    }
-                    if (file_path)
-                    {
-                        // copy the remote file to the local file
-                        Error err = platform_sp->GetFile(remote_file, file_spec);
-                        if (err.Fail())
-                        {
-                            result.AppendError(err.AsCString());
-                            result.SetStatus (eReturnStatusFailed);
-                            return false;
-                        }
-                    }
-                    else
-                    {
-                        // make up a local file
-                        result.AppendError("remote --> local transfer without local path is not implemented yet");
-                        result.SetStatus (eReturnStatusFailed);
-                        return false;
-                    }
-                }
-            }
 
             TargetSP target_sp;
             const char *arch_cstr = m_arch_option.GetArchitectureName();
-            ArchSpec arch_spec(arch_cstr);
             const bool get_dependent_files = m_add_dependents.GetOptionValue().GetCurrentValue();
             Error error (debugger.GetTargetList().CreateTarget (debugger,
                                                                 file_path,
-                                                                arch_spec,
+                                                                arch_cstr,
                                                                 get_dependent_files,
-                                                                platform_sp,
+                                                                NULL,
                                                                 target_sp));
 
             if (target_sp)
             {
+                // Only get the platform after we create the target because we might have
+                // switched platforms depending on what the arguments were to CreateTarget()
+                // we can't rely on the selected platform.
+
+                PlatformSP platform_sp = target_sp->GetPlatform();
+
+                if (remote_file)
+                {
+                    if (platform_sp)
+                    {
+                        // I have a remote file.. two possible cases
+                        if (file_spec && file_spec.Exists())
+                        {
+                            // if the remote file does not exist, push it there
+                            if (!platform_sp->GetFileExists (remote_file))
+                            {
+                                Error err = platform_sp->PutFile(file_spec, remote_file);
+                                if (err.Fail())
+                                {
+                                    result.AppendError(err.AsCString());
+                                    result.SetStatus (eReturnStatusFailed);
+                                    return false;
+                                }
+                            }
+                        }
+                        else
+                        {
+                            // there is no local file and we need one
+                            // in order to make the remote ---> local transfer we need a platform
+                            // TODO: if the user has passed in a --platform argument, use it to fetch the right platform
+                            if (!platform_sp)
+                            {
+                                result.AppendError("unable to perform remote debugging without a platform");
+                                result.SetStatus (eReturnStatusFailed);
+                                return false;
+                            }
+                            if (file_path)
+                            {
+                                // copy the remote file to the local file
+                                Error err = platform_sp->GetFile(remote_file, file_spec);
+                                if (err.Fail())
+                                {
+                                    result.AppendError(err.AsCString());
+                                    result.SetStatus (eReturnStatusFailed);
+                                    return false;
+                                }
+                            }
+                            else
+                            {
+                                // make up a local file
+                                result.AppendError("remote --> local transfer without local path is not implemented yet");
+                                result.SetStatus (eReturnStatusFailed);
+                                return false;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        result.AppendError("no platform found for target");
+                        result.SetStatus (eReturnStatusFailed);
+                        return false;
+                    }
+                }
+
                 if (symfile || remote_file)
                 {
                     ModuleSP module_sp (target_sp->GetExecutableModule());
