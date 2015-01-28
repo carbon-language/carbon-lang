@@ -38,13 +38,15 @@ class CXXCompiler(object):
         self.type = compiler_type
         self.version = (major_ver, minor_ver, patchlevel)
 
-    def _basicCmd(self, source_files, out, is_link=False):
+    def _basicCmd(self, source_files, out, is_link=False, input_is_cxx=False):
         cmd = []
         if self.use_ccache and not is_link:
             cmd += ['ccache']
         cmd += [self.path]
         if out is not None:
             cmd += ['-o', out]
+        if input_is_cxx:
+            cmd += ['-x', 'c++']
         if isinstance(source_files, list):
             cmd += source_files
         elif isinstance(source_files, str):
@@ -54,12 +56,12 @@ class CXXCompiler(object):
         return cmd
 
     def preprocessCmd(self, source_files, out=None, flags=[]):
-        cmd = self._basicCmd(source_files, out) + ['-x', 'c++', '-E']
+        cmd = self._basicCmd(source_files, out, input_is_cxx=True) + ['-E']
         cmd += self.flags + self.compile_flags + flags
         return cmd
 
     def compileCmd(self, source_files, out=None, flags=[]):
-        cmd = self._basicCmd(source_files, out) + ['-x', 'c++', '-c']
+        cmd = self._basicCmd(source_files, out, input_is_cxx=True) + ['-c']
         cmd += self.flags + self.compile_flags + flags
         return cmd
 
@@ -69,7 +71,7 @@ class CXXCompiler(object):
         return cmd
 
     def compileLinkCmd(self, source_files, out=None, flags=[]):
-        cmd = self._basicCmd(source_files, out, is_link=True) + ['-x', 'c++']
+        cmd = self._basicCmd(source_files, out, is_link=True)
         cmd += self.flags + self.compile_flags + self.link_flags + flags
         return cmd
 
