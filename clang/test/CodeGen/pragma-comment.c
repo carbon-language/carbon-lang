@@ -1,6 +1,7 @@
 // RUN: %clang_cc1 %s -triple i686-pc-win32 -fms-extensions -emit-llvm -o - | FileCheck %s
 // RUN: %clang_cc1 %s -triple x86_64-pc-win32 -fms-extensions -emit-llvm -o - | FileCheck %s
 // RUN: %clang_cc1 %s -triple i686-pc-linux -fms-extensions -emit-llvm -o - | FileCheck -check-prefix LINUX %s
+// RUN: %clang_cc1 %s -triple x86_64-scei-ps4 -fms-extensions -emit-llvm -o - | FileCheck -check-prefix PS4 %s
 
 #pragma comment(lib, "msvcrt.lib")
 #pragma comment(lib, "kernel32")
@@ -21,3 +22,8 @@
 // LINUX: !{!"-lkernel32"}
 // LINUX: !{!"-lUSER32.LIB"}
 // LINUX: !{!" /bar=2"}
+
+// PS4: !{!"\01msvcrt.lib"}
+// PS4: !{!"\01kernel32"}
+// PS4: !{!"\01USER32.LIB"}
+// PS4: !{!" /bar=2"}

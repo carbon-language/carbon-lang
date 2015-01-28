@@ -219,6 +219,9 @@ void Parser::initializePragmaHandlers() {
     PP.AddPragmaHandler(MSCodeSeg.get());
     MSSection.reset(new PragmaMSPragma("section"));
     PP.AddPragmaHandler(MSSection.get());
+  } else if (getTargetInfo().getTriple().isPS4()) {
+    MSCommentHandler.reset(new PragmaCommentHandler(Actions));
+    PP.AddPragmaHandler(MSCommentHandler.get());
   }
 
   OptimizeHandler.reset(new PragmaOptimizeHandler(Actions));
@@ -282,6 +285,9 @@ void Parser::resetPragmaHandlers() {
     MSCodeSeg.reset();
     PP.RemovePragmaHandler(MSSection.get());
     MSSection.reset();
+  } else if (getTargetInfo().getTriple().isPS4()) {
+    PP.RemovePragmaHandler(MSCommentHandler.get());
+    MSCommentHandler.reset();
   }
 
   PP.RemovePragmaHandler("STDC", FPContractHandler.get());
