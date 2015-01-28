@@ -210,6 +210,9 @@ public:
     IsArrayType ();
     
     bool
+    IsVectorType ();
+    
+    bool
     IsTypedefType ();
     
     lldb::SBType
@@ -235,6 +238,9 @@ public:
     
     lldb::SBType
     GetArrayElementType ();
+    
+    lldb::SBType
+    GetVectorElementType ();
 
     lldb::BasicType
     GetBasicType();

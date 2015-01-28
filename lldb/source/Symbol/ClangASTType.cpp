@@ -290,6 +290,37 @@ ClangASTType::IsArrayType (ClangASTType *element_type_ptr,
 }
 
 bool
+ClangASTType::IsVectorType (ClangASTType *element_type,
+                            uint64_t *size) const
+{
+    if (IsValid())
+    {
+        clang::QualType qual_type (GetCanonicalQualType());
+        
+        const clang::Type::TypeClass type_class = qual_type->getTypeClass();
+        switch (type_class)
+        {
+            case clang::Type::Vector:
+            {
+                const clang::VectorType *vector_type = qual_type->getAs<clang::VectorType>();
+                if (vector_type)
+                {
+                    if (size)
+                        *size = vector_type->getNumElements();
+                    if (element_type)
+                        *element_type = ClangASTType(m_ast, vector_type->getElementType().getAsOpaquePtr());
+                }
+                return true;
+            }
+                break;
+            default:
+                break;
+        }
+    }
+    return false;
+}
+
+bool
 ClangASTType::IsRuntimeGeneratedType () const
 {
     if (!IsValid())

@@ -97,6 +97,10 @@ public:
                  bool *is_incomplete) const;
 
     bool
+    IsVectorType (ClangASTType *element_type,
+                  uint64_t *size) const;
+    
+    bool
     IsArrayOfScalarType () const;
 
     bool
