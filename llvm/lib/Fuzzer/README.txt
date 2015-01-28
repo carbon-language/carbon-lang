@@ -45,7 +45,15 @@ to be fixed later.
 
 Examples of usage in LLVM:
   * clang-format-fuzzer. The inputs are random pieces of C++-like text.
-  * TODO: add more
+  * Build (make sure to use fresh clang as the host compiler):
+    cmake -GNinja  -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ \
+    -DLLVM_USE_SANITIZER=Address -DLLVM_USE_SANITIZE_COVERAGE=YES \
+    /path/to/llvm -DCMAKE_BUILD_TYPE=Release
+    ninja clang-format-fuzzer
+  * Optionally build other kinds of binaries (asan+Debug, msan, ubsan, etc)
+  * TODO: commit the pre-fuzzed corpus to svn (?).
+  * Run:
+      clang-format-fuzzer CORPUS_DIR
 
 Toy example (see SimpleTest.cpp):
 a simple function that does something interesting if it receives bytes "Hi!".
