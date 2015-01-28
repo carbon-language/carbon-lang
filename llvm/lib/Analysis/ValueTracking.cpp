@@ -2044,6 +2044,59 @@ bool llvm::CannotBeNegativeZero(const Value *V, unsigned Depth) {
   return false;
 }
 
+bool llvm::CannotBeOrderedLessThanZero(const Value *V, unsigned Depth) {
+  if (const ConstantFP *CFP = dyn_cast<ConstantFP>(V))
+    return !CFP->getValueAPF().isNegative() || CFP->getValueAPF().isZero();
+
+  if (Depth == 6)
+    return false;  // Limit search depth.
+
+  const Operator *I = dyn_cast<Operator>(V);
+  if (!I) return false;
+
+  switch (I->getOpcode()) {
+  default: break;
+  case Instruction::FMul:
+    // x*x is always non-negative or a NaN.
+    if (I->getOperand(0) == I->getOperand(1)) 
+      return true;
+    // Fall through
+  case Instruction::FAdd:
+  case Instruction::FDiv:
+  case Instruction::FRem:
+    return CannotBeOrderedLessThanZero(I->getOperand(0), Depth+1) &&
+           CannotBeOrderedLessThanZero(I->getOperand(1), Depth+1);
+  case Instruction::FPExt:
+  case Instruction::FPTrunc:
+    // Widening/narrowing never change sign.
+    return CannotBeOrderedLessThanZero(I->getOperand(0), Depth+1);
+  case Instruction::Call: 
+    if (const IntrinsicInst *II = dyn_cast<IntrinsicInst>(I)) 
+      switch (II->getIntrinsicID()) {
+      default: break;
+      case Intrinsic::exp:
+      case Intrinsic::exp2:
+      case Intrinsic::fabs:
+      case Intrinsic::sqrt:
+        return true;
+      case Intrinsic::powi: 
+        if (ConstantInt *CI = dyn_cast<ConstantInt>(I->getOperand(1))) {
+          // powi(x,n) is non-negative if n is even.
+          if (CI->getBitWidth() <= 64 && CI->getSExtValue() % 2u == 0)
+            return true;
+        }
+        return CannotBeOrderedLessThanZero(I->getOperand(0), Depth+1);
+      case Intrinsic::fma:
+      case Intrinsic::fmuladd:
+        // x*x+y is non-negative if y is non-negative.
+        return I->getOperand(0) == I->getOperand(1) && 
+               CannotBeOrderedLessThanZero(I->getOperand(2), Depth+1);
+      }
+    break;
+  }
+  return false; 
+}
+
 /// If the specified value can be set by repeating the same byte in memory,
 /// return the i8 value that it is represented with.  This is
 /// true for all i8 values obviously, but is also true for i32 0, i32 -1,

@@ -116,6 +116,11 @@ namespace llvm {
   ///
   bool CannotBeNegativeZero(const Value *V, unsigned Depth = 0);
 
+  /// CannotBeOrderedLessThanZero - Return true if we can prove that the 
+  /// specified FP value is either a NaN or never less than 0.0.
+  ///
+  bool CannotBeOrderedLessThanZero(const Value *V, unsigned Depth = 0);
+
   /// isBytewiseValue - If the specified value can be set by repeating the same
   /// byte in memory, return the i8 value that it is represented with.  This is
   /// true for all i8 values obviously, but is also true for i32 0, i32 -1,

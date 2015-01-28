@@ -3087,6 +3087,20 @@ static Value *SimplifyFCmpInst(unsigned Predicate, Value *LHS, Value *RHS,
           }
         }
       }
+      if (CFP->getValueAPF().isZero()) {
+        switch (Pred) {
+        case FCmpInst::FCMP_UGE:
+          if (CannotBeOrderedLessThanZero(LHS)) 
+            return ConstantInt::getTrue(CFP->getContext());
+          break;
+        case FCmpInst::FCMP_OLT:
+          if (CannotBeOrderedLessThanZero(LHS)) 
+            return ConstantInt::getFalse(CFP->getContext());
+          break;
+        default:
+          break;
+        }
+     }
     }
   }
 
