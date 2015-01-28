@@ -199,129 +199,110 @@ namespace dr1460 { // dr1460: 3.5
 #if __cplusplus >= 201103L
 namespace std {
   typedef decltype(sizeof(int)) size_t;
-  
+
   // libc++'s implementation
   template <class _E>
   class initializer_list
   {
     const _E* __begin_;
     size_t    __size_;
-    
+
     initializer_list(const _E* __b, size_t __s)
-    : __begin_(__b),
-    __size_(__s)
-    {}
-    
+    : __begin_(__b), __size_(__s) {}
+
   public:
     typedef _E        value_type;
     typedef const _E& reference;
     typedef const _E& const_reference;
     typedef size_t    size_type;
-    
+
     typedef const _E* iterator;
     typedef const _E* const_iterator;
-    
+
     initializer_list() : __begin_(nullptr), __size_(0) {}
-    
+
     size_t    size()  const {return __size_;}
     const _E* begin() const {return __begin_;}
     const _E* end()   const {return __begin_ + __size_;}
   };
-
-  template < class _T1, class _T2 > struct pair { _T2 second; };
-
-  template<typename T> struct basic_string {
-    basic_string(const T* x) {}
-    ~basic_string() {};
-  };
-  typedef basic_string<char> string;
-
 } // std
 
-namespace dr1467 {  // dr1467: yes c++11
+namespace dr1467 {  // dr1467: 3.7 c++11
   // List-initialization of aggregate from same-type object
-  
+
   namespace basic0 {
-    
     struct S {
       int i = 42;
     };
-    
+
     S a;
     S b(a);
     S c{a};
-    
+
     struct SS : public S { } x;
     S y(x);
     S z{x};
-    
   } // basic0
-  
+
   namespace basic1 {
-    
     struct S {
       int i{42};
     };
-    
+
     S a;
     S b(a);
     S c{a};
-    
+
     struct SS : public S { } x;
     S y(x);
     S z{x};
-    
   } // basic1
-  
+
   namespace basic2 {
-    
     struct S {
       int i = {42};
     };
-    
+
     S a;
     S b(a);
     S c{a};
-    
+
     struct SS : public S { } x;
     S y(x);
     S z{x};
-    
   } // basic2
-  
+
   namespace dr_example {
     struct OK {
       OK() = default;
       OK(const OK&) = default;
       OK(int) { }
     };
-    
+
     OK ok;
     OK ok2{ok};
-    
-    
+
     struct X {
       X() = default;
       X(const X&) = default;
     };
-    
+
     X x;
     X x2{x};
   } // dr_example
-  
+
   namespace nonaggregate {
-    
     struct NonAggregate {
       NonAggregate() {}
     };
-    
+
     struct WantsIt {
       WantsIt(NonAggregate);
     };
-    
+
     void f(NonAggregate);
     void f(WantsIt);
-    
+
     void test1() {
       NonAggregate n;
       f({n});
@@ -332,113 +313,13 @@ namespace dr1467 {  // dr1467: yes c++11
       NonAggregate y{x};
       NonAggregate z{{x}};
     }
-
   } // nonaggregate
-
 } // dr1467
 
-
-namespace dr1490 {  // dr1490: yes c++11
+namespace dr1490 {  // dr1490: 3.7 c++11
   // List-initialization from a string literal
 
   char s[4]{"abc"};                   // Ok
   std::initializer_list<char>{"abc"}; // expected-error {{expected unqualified-id}}}
-
-} // dr1490
-
-namespace dr1589 {   // dr1589: yes c++11
-  // Ambiguous ranking of list-initialization sequences
-
-  void f0(long, int=0);                 // Would makes selection of #0 ambiguous
-  void f0(long);                        // #0
-  void f0(std::initializer_list<int>);  // #00
-  void g0() { f0({1L}); }               // chooses #00
-  
-  void f1(int, int=0);                    // Would make selection of #1 ambiguous
-  void f1(int);                           // #1
-  void f1(std::initializer_list<long>);   // #2
-  void g1() { f1({42}); }                 // chooses #2
-
-  void f2(std::pair<const char*, const char*>, int = 0); // Would makes selection of #3 ambiguous
-  void f2(std::pair<const char*, const char*>); // #3
-  void f2(std::initializer_list<std::string>);  // #4
-  void g2() { f2({"foo","bar"}); }              // chooses #4
-  
-  namespace with_error {
-    
-    void f0(long);                        // #0    expected-note {{candidate function}}
-    void f0(std::initializer_list<int>);  // #00   expected-note {{candidate function}}
-    void f0(std::initializer_list<int>, int = 0);  // Makes selection of #00 ambiguous \
-                                                 // expected-note {{candidate function}}
-    void g0() { f0({1L}); }                 // chooses #00    expected-error{{call to 'f0' is ambiguous}}
-    
-    void f1(int);                           // #1   expected-note {{candidate function}}
-    void f1(std::initializer_list<long>);   // #2   expected-note {{candidate function}}
-    void f1(std::initializer_list<long>, int = 0);   // Makes selection of #00 ambiguous \
-                                                   // expected-note {{candidate function}}
-    void g1() { f1({42}); }                 // chooses #2   expected-error{{call to 'f1' is ambiguous}}
-
-    void f2(std::pair<const char*, const char*>); // #3   TODO: expected- note {{candidate function}}
-    void f2(std::initializer_list<std::string>);  // #4   expected-note {{candidate function}}
-    void f2(std::initializer_list<std::string>, int = 0);   // Makes selection of #00 ambiguous \
-                                                          // expected-note {{candidate function}}
-    void g2() { f2({"foo","bar"}); }        // chooses #4   expected-error{{call to 'f2' is ambiguous}}
-
-  }
-
-} // dr1589
-
-
-namespace dr1631 {  // dr1589: yes c++11
-  // Incorrect overload resolution for single-element initializer-list
-
-  struct A { int a[1]; };
-  struct B { B(int); };
-  void f(B, int);
-  void f(B, int, int = 0);
-  void f(int, A);
-
-  void test() {
-    f({0}, {{1}});
-  }
-
-  namespace with_error {
-    void f(B, int);           // TODO: expected- note {{candidate function}}
-    void f(int, A);           // expected-note {{candidate function}}
-    void f(int, A, int = 0);  // expected-note {{candidate function}}
-
-    void test() {
-      f({0}, {{1}});        // expected-error{{call to 'f' is ambiguous}}
-    }
-  }
-
-} // dr1631
-
-namespace dr1756 {  // dr1490: yes c++11
-  // Direct-list-initialization of a non-class object
-  
-  int a{0};
-  
-  struct X { operator int(); } x;
-  int b{x};
-}
-
-namespace dr1758 {  // dr1758: yes c++11
-  // Explicit conversion in copy/move list initialization
-
-  struct X { X(); };
-  struct Y { explicit operator X(); } y;
-  X x{y};
-
-  struct A {
-    A() {}
-    A(const A &) {}
-  };
-  struct B {
-    operator A() { return A(); }
-  } b;
-  A a{b};
-
-} // dr1758
-
+} // dr190
 #endif
