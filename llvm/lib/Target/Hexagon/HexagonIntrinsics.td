@@ -77,6 +77,14 @@ class T_IRI_pat <InstHexagon MI, Intrinsic IntID>
   : Pat <(IntID imm:$It, I32:$Rs, imm:$Iu),
          (MI imm:$It, I32:$Rs, imm:$Iu)>;
 
+class T_IRR_pat <InstHexagon MI, Intrinsic IntID>
+  : Pat <(IntID imm:$Is, I32:$Rs, I32:$Rt),
+         (MI imm:$Is, I32:$Rs, I32:$Rt)>;
+
+class T_RIR_pat <InstHexagon MI, Intrinsic IntID>
+  : Pat <(IntID I32:$Rs, imm:$Is, I32:$Rt),
+         (MI I32:$Rs, imm:$Is, I32:$Rt)>;
+
 class T_RRR_pat <InstHexagon MI, Intrinsic IntID>
   : Pat <(IntID I32:$Rs, I32:$Rt, I32:$Ru),
          (MI I32:$Rs, I32:$Rt, I32:$Ru)>;

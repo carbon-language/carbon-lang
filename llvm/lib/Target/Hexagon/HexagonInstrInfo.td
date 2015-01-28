@@ -2273,6 +2273,7 @@ def M2_hmmpyl_rs1 : T_MType_rr2 <"mpy", 0b111, 0b100, 1, 1, ".l">;
 // V4 Instructions
 let isCodeGenOnly = 0 in {
 def M2_mpysu_up : T_MType_rr1 <"mpysu", 0b011, 0b001, 0>;
+def M2_mpy_up_s1 : T_MType_rr1 <"mpy", 0b101, 0b010, 0>;
 def M2_mpy_up_s1_sat : T_MType_rr1 <"mpy", 0b111, 0b000, 1>;
 
 def M2_hmmpyh_s1 : T_MType_rr2 <"mpy", 0b101, 0b000, 1, 0, ".h">;

@@ -12,6 +12,28 @@
 // 80-V9418-12 Rev. A
 // June 15, 2010
 
+// Polynomial multiply words
+// Rdd=pmpyw(Rs,Rt)
+def : T_RR_pat <M4_pmpyw, int_hexagon_M4_pmpyw>;
+// Rxx^=pmpyw(Rs,Rt)
+def : T_PRR_pat <M4_pmpyw_acc, int_hexagon_M4_pmpyw_acc>;
+
+//Rxx^=asr(Rss,Rt)
+def : T_PPR_pat <S2_asr_r_p_xor, int_hexagon_S2_asr_r_p_xor>;
+//Rxx^=asl(Rss,Rt)
+def : T_PPR_pat <S2_asl_r_p_xor, int_hexagon_S2_asl_r_p_xor>;
+//Rxx^=lsr(Rss,Rt)
+def : T_PPR_pat <S2_lsr_r_p_xor, int_hexagon_S2_lsr_r_p_xor>;
+//Rxx^=lsl(Rss,Rt)
+def : T_PPR_pat <S2_lsl_r_p_xor, int_hexagon_S2_lsl_r_p_xor>;
+
+// Multiply and use upper result
+def : MType_R32_pat <int_hexagon_M2_mpysu_up, M2_mpysu_up>;
+def : MType_R32_pat <int_hexagon_M2_mpy_up_s1, M2_mpy_up_s1>;
+def : MType_R32_pat <int_hexagon_M2_hmmpyh_s1, M2_hmmpyh_s1>;
+def : MType_R32_pat <int_hexagon_M2_hmmpyl_s1, M2_hmmpyl_s1>;
+def : MType_R32_pat <int_hexagon_M2_mpy_up_s1_sat, M2_mpy_up_s1_sat>;
+
 def : T_P_pat <S2_brevp, int_hexagon_S2_brevp>;
 
 def: T_P_pat  <S2_ct0p,      int_hexagon_S2_ct0p>;
@@ -19,6 +41,18 @@ def: T_P_pat  <S2_ct1p,      int_hexagon_S2_ct1p>;
 def: T_RR_pat<C4_nbitsset,  int_hexagon_C4_nbitsset>;
 def: T_RR_pat<C4_nbitsclr,  int_hexagon_C4_nbitsclr>;
 def: T_RI_pat<C4_nbitsclri, int_hexagon_C4_nbitsclri>;
+
+def : Pat <(int_hexagon_M4_mpyrr_addr IntRegs:$src1, IntRegs:$src2,
+                                      IntRegs:$src3),
+           (M4_mpyrr_addr IntRegs:$src1, IntRegs:$src2, IntRegs:$src3)>;
+
+def : T_IRR_pat <M4_mpyrr_addi, int_hexagon_M4_mpyrr_addi>;
+def : T_IRI_pat <M4_mpyri_addi, int_hexagon_M4_mpyri_addi>;
+def : T_RIR_pat <M4_mpyri_addr_u2, int_hexagon_M4_mpyri_addr_u2>;
+def : T_RRI_pat <M4_mpyri_addr, int_hexagon_M4_mpyri_addr>;
+// Multiply 32x32 and use upper result
+def : T_RRR_pat <M4_mac_up_s1_sat, int_hexagon_M4_mac_up_s1_sat>;
+def : T_RRR_pat <M4_nac_up_s1_sat, int_hexagon_M4_nac_up_s1_sat>;
 
 // Extract bitfield
 def : T_PP_pat  <S4_extractp_rp, int_hexagon_S4_extractp_rp>;

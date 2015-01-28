@@ -2123,10 +2123,6 @@ def : Pat <(add (mul (i32 IntRegs:$src2), (i32 IntRegs:$src3)),
            (i32 (M4_mpyrr_addi tglobaladdr:$src1, IntRegs:$src2,
                                IntRegs:$src3))>;
 
-// Polynomial multiply words
-// Rdd=pmpyw(Rs,Rt)
-// Rxx^=pmpyw(Rs,Rt)
-
 // Vector reduce multiply word by signed half (32x16)
 // Rdd=vrmpyweh(Rss,Rtt)[:<<1]
 // Rdd=vrmpywoh(Rss,Rtt)[:<<1]
@@ -2151,6 +2147,15 @@ def : Pat <(add (mul (i32 IntRegs:$src2), (i32 IntRegs:$src3)),
 // Vector polynomial multiply halfwords
 // Rdd=vpmpyh(Rs,Rt)
 // Rxx^=vpmpyh(Rs,Rt)
+
+// Polynomial multiply words
+// Rdd=pmpyw(Rs,Rt)
+let isCodeGenOnly = 0 in
+def M4_pmpyw : T_XTYPE_mpy64 < "pmpyw", 0b010, 0b111, 0, 0, 0>;
+
+// Rxx^=pmpyw(Rs,Rt)
+let isCodeGenOnly = 0 in
+def M4_pmpyw_acc  : T_XTYPE_mpy64_acc < "pmpyw", "^", 0b001, 0b111, 0, 0, 0>;
 
 //===----------------------------------------------------------------------===//
 // XTYPE/MPY -
