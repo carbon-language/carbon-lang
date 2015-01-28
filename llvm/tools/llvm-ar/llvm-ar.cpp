@@ -92,7 +92,6 @@ static cl::extrahelp MoreHelp(
   "  [a] - put file(s) after [relpos]\n"
   "  [b] - put file(s) before [relpos] (same as [i])\n"
   "  [i] - put file(s) before [relpos] (same as [b])\n"
-  "  [N] - use instance [count] of name\n"
   "  [o] - preserve original dates\n"
   "  [s] - create an archive index (cf. ranlib)\n"
   "  [S] - do not build a symbol table\n"
