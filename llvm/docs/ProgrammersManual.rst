@@ -2546,9 +2546,9 @@ generate significantly more efficient code. We have also found that a large
 amount of our usage of type hierarchies fits better with tag-based pattern
 matching rather than dynamic dispatch across a common interface. Within LLVM we
 have built custom helpers to facilitate this design. See this document's
-section on `isa and dyn_cast <isa>`_ and our `detailed document
-<http://llvm.org/docs/HowToSetUpLLVMStyleRTTI.html>`_ which describes how you
-can implement this pattern for use with the LLVM helpers.
+section on :ref:`isa and dyn_cast <isa>` and our :doc:`detailed document
+<HowToSetUpLLVMStyleRTTI>` which describes how you can implement this
+pattern for use with the LLVM helpers.
 
 .. _coreclasses:
 
