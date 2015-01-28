@@ -38,12 +38,12 @@ cl::list<std::string> InputFilenames(cl::Positional,
                                      cl::OneOrMore);
 
 cl::opt<bool> Streams("streams", cl::desc("Display data stream information"));
-cl::alias StreamsShort("s", cl::desc("Alias for --streams"),
+cl::alias StreamsShort("x", cl::desc("Alias for --streams"),
                        cl::aliasopt(Streams));
 
 cl::opt<bool> StreamData("stream-data",
                          cl::desc("Dumps stream record data as bytes"));
-cl::alias StreamDataShort("S", cl::desc("Alias for --stream-data"),
+cl::alias StreamDataShort("X", cl::desc("Alias for --stream-data"),
                           cl::aliasopt(StreamData));
 
 cl::opt<bool> Tables("tables",
@@ -63,10 +63,19 @@ cl::opt<bool> Compilands("compilands",
                                   "files) and their source file composition"));
 cl::alias CompilandsShort("c", cl::desc("Alias for --compilands"),
                           cl::aliasopt(Compilands));
+
+cl::opt<bool> Symbols("symbols", cl::desc("Display symbols"));
+cl::alias SymbolsShort("s", cl::desc("Alias for --symbols"),
+                       cl::aliasopt(Symbols));
+
+cl::opt<bool> SymbolDetails("symbol-details",
+                            cl::desc("Display symbol details"));
+cl::alias SymbolDetailsShort("S", cl::desc("Alias for --symbol-details"),
+                             cl::aliasopt(SymbolDetails));
 }
 
 template <typename TableType>
-static HRESULT GetDiaTable(IDiaSession *Session, TableType **Table) {
+static HRESULT getDIATable(IDiaSession *Session, TableType **Table) {
   CComPtr<IDiaEnumTables> EnumTables = nullptr;
   HRESULT Error = S_OK;
   if (FAILED(Error = Session->getEnumTables(&EnumTables)))
@@ -194,7 +203,7 @@ static void dumpDebugTables(IDiaSession *Session) {
 
 static void dumpSourceFiles(IDiaSession *Session) {
   CComPtr<IDiaEnumSourceFiles> EnumSourceFileList;
-  if (FAILED(GetDiaTable(Session, &EnumSourceFileList)))
+  if (FAILED(getDIATable(Session, &EnumSourceFileList)))
     return;
 
   LONG SourceFileCount = 0;
@@ -216,7 +225,7 @@ static void dumpSourceFiles(IDiaSession *Session) {
 
 static void dumpCompilands(IDiaSession *Session) {
   CComPtr<IDiaEnumSourceFiles> EnumSourceFileList;
-  if (FAILED(GetDiaTable(Session, &EnumSourceFileList)))
+  if (FAILED(getDIATable(Session, &EnumSourceFileList)))
     return;
 
   LONG SourceFileCount = 0;
@@ -280,6 +289,32 @@ static void dumpCompilands(IDiaSession *Session) {
   outs().flush();
 }
 
+static void dumpSymbols(IDiaSession *Session) {
+  CComPtr<IDiaEnumSymbols> EnumSymbols;
+  if (FAILED(getDIATable(Session, &EnumSymbols)))
+    return;
+
+  LONG SymbolCount = 0;
+  EnumSymbols->get_Count(&SymbolCount);
+
+  outs() << "Dumping symbols [" << SymbolCount << " symbols]\n";
+  int UnnamedSymbolCount = 0;
+  for (auto Symbol : make_com_enumerator(EnumSymbols)) {
+    DIASymbol SymbolSymbol(Symbol);
+    DIAResult<DIAString> SymbolName = SymbolSymbol.getName();
+    if (!SymbolName.hasValue() || SymbolName.value().empty()) {
+      ++UnnamedSymbolCount;
+      outs() << "  (Unnamed symbol)\n";
+    } else {
+      outs() << "  " << SymbolSymbol.getName().value() << "\n";
+    }
+    if (opts::SymbolDetails)
+      SymbolSymbol.fullDump(4);
+  }
+  outs() << "(Found " << UnnamedSymbolCount << " unnamed symbols)\n";
+  outs().flush();
+}
+
 static void dumpInput(StringRef Path) {
   SmallVector<UTF16, 128> Path16String;
   llvm::convertUTF8ToUTF16String(Path, Path16String);
@@ -311,6 +346,10 @@ static void dumpInput(StringRef Path) {
 
   if (opts::Compilands) {
     dumpCompilands(Session);
+  }
+
+  if (opts::Symbols || opts::SymbolDetails) {
+    dumpSymbols(Session);
   }
 }
 
