@@ -32,12 +32,25 @@ using namespace llvm;
 // thread-local variable. Some day, we should be able to use a limited subset
 // of C++11's thread_local, but compilers aren't up for it today.
 // FIXME: This should be moved to a Compiler.h abstraction.
-#ifdef _MSC_VER // MSVC supports this with a __declspec.
-static __declspec(thread) const PrettyStackTraceEntry
-    *PrettyStackTraceHead = nullptr;
-#else // Clang, GCC, and all compatible compilers tend to use __thread.
-static __thread const PrettyStackTraceEntry *PrettyStackTraceHead = nullptr;
+#ifdef _MSC_VER
+// MSVC supports this with a __declspec.
+#define LLVM_THREAD_LOCAL __declspec(thread)
+#else
+// Clang, GCC, and all compatible compilers tend to use __thread. But we need
+// to work aronud a bug in the combination of Clang's compilation of
+// local-dynamic TLS and the ppc64 linker relocations which we do by forcing to
+// general-dynamic.
+// FIXME: Make this conditional on the Clang version once this is fixed in
+// top-of-tree.
+#if defined(__clang__) && defined(__powerpc64__)
+#define LLVM_THREAD_LOCAL __thread __attribute__((tls_model("general-dynamic")))
+#else
+#define LLVM_THREAD_LOCAL __thread
 #endif
+#endif
+
+static LLVM_THREAD_LOCAL const PrettyStackTraceEntry *PrettyStackTraceHead =
+    nullptr;
 
 static unsigned PrintStack(const PrettyStackTraceEntry *Entry, raw_ostream &OS){
   unsigned NextID = 0;
