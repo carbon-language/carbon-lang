@@ -686,11 +686,6 @@ public:
       this->DescriptionString = "e-p:32:32-i64:64";
     }
   }
-  typename Target::CallingConvCheckResult checkCallingConvention(
-      CallingConv CC) const override {
-    return CC == CC_PnaclCall ? Target::CCCR_OK :
-        Target::checkCallingConvention(CC);
-  }
 };
 } // end anonymous namespace.
 

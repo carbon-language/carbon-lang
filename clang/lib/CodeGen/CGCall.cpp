@@ -135,9 +135,6 @@ static CallingConv getCallingConventionForDecl(const Decl *D, bool IsWindows) {
   if (PcsAttr *PCS = D->getAttr<PcsAttr>())
     return (PCS->getPCS() == PcsAttr::AAPCS ? CC_AAPCS : CC_AAPCS_VFP);
 
-  if (D->hasAttr<PnaclCallAttr>())
-    return CC_PnaclCall;
-
   if (D->hasAttr<IntelOclBiccAttr>())
     return CC_IntelOclBicc;
 

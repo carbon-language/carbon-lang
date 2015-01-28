@@ -3472,7 +3472,6 @@ public:
     attr_thiscall,
     attr_pascal,
     attr_vectorcall,
-    attr_pnaclcall,
     attr_inteloclbicc,
     attr_ms_abi,
     attr_sysv_abi,

@@ -3331,11 +3331,6 @@ static void handleCallConvAttr(Sema &S, Decl *D, const AttributeList &Attr) {
                        Attr.getAttributeSpellingListIndex()));
     return;
   }
-  case AttributeList::AT_PnaclCall:
-    D->addAttr(::new (S.Context)
-               PnaclCallAttr(Attr.getRange(), S.Context,
-                             Attr.getAttributeSpellingListIndex()));
-    return;
   case AttributeList::AT_IntelOclBicc:
     D->addAttr(::new (S.Context)
                IntelOclBiccAttr(Attr.getRange(), S.Context,
@@ -3392,7 +3387,6 @@ bool Sema::CheckCallingConvAttr(const AttributeList &attr, CallingConv &CC,
     Diag(attr.getLoc(), diag::err_invalid_pcs);
     return true;
   }
-  case AttributeList::AT_PnaclCall: CC = CC_PnaclCall; break;
   case AttributeList::AT_IntelOclBicc: CC = CC_IntelOclBicc; break;
   default: llvm_unreachable("unexpected attribute kind");
   }
@@ -4668,7 +4662,6 @@ static void ProcessDeclAttribute(Sema &S, Scope *scope, Decl *D,
   case AttributeList::AT_MSABI:
   case AttributeList::AT_SysVABI:
   case AttributeList::AT_Pcs:
-  case AttributeList::AT_PnaclCall:
   case AttributeList::AT_IntelOclBicc:
     handleCallConvAttr(S, D, Attr);
     break;

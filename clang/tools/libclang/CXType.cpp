@@ -525,7 +525,6 @@ CXCallingConv clang_getFunctionTypeCallingConv(CXType X) {
       TCALLINGCONV(X86_64SysV);
       TCALLINGCONV(AAPCS);
       TCALLINGCONV(AAPCS_VFP);
-      TCALLINGCONV(PnaclCall);
       TCALLINGCONV(IntelOclBicc);
     case CC_SpirFunction: return CXCallingConv_Unexposed;
     case CC_SpirKernel: return CXCallingConv_Unexposed;
