@@ -106,13 +106,14 @@ static void ReportControlFlow(raw_ostream &o,
     // by forcing to use only the beginning of the range.  This simplifies the layout
     // logic for clients.
     Indent(o, indent) << "<key>start</key>\n";
-    SourceLocation StartEdge = I->getStart().asRange().getBegin();
-    EmitRange(o, SM, LangOpts, CharSourceRange::getTokenRange(StartEdge), FM,
+    SourceRange StartEdge(
+        SM.getExpansionLoc(I->getStart().asRange().getBegin()));
+    EmitRange(o, SM, Lexer::getAsCharRange(StartEdge, SM, LangOpts), FM,
               indent + 1);
 
     Indent(o, indent) << "<key>end</key>\n";
-    SourceLocation EndEdge = I->getEnd().asRange().getBegin();
-    EmitRange(o, SM, LangOpts, CharSourceRange::getTokenRange(EndEdge), FM,
+    SourceRange EndEdge(SM.getExpansionLoc(I->getEnd().asRange().getBegin()));
+    EmitRange(o, SM, Lexer::getAsCharRange(EndEdge, SM, LangOpts), FM,
               indent + 1);
 
     --indent;
@@ -154,7 +155,7 @@ static void ReportEvent(raw_ostream &o, const PathDiagnosticPiece& P,
   FullSourceLoc L = P.getLocation().asLocation();
 
   Indent(o, indent) << "<key>location</key>\n";
-  EmitLocation(o, SM, LangOpts, L, FM, indent);
+  EmitLocation(o, SM, L, FM, indent);
 
   // Output the ranges (if any).
   ArrayRef<SourceRange> Ranges = P.getRanges();
@@ -163,11 +164,10 @@ static void ReportEvent(raw_ostream &o, const PathDiagnosticPiece& P,
     Indent(o, indent) << "<key>ranges</key>\n";
     Indent(o, indent) << "<array>\n";
     ++indent;
-    for (ArrayRef<SourceRange>::iterator I = Ranges.begin(), E = Ranges.end();
-         I != E; ++I) {
-      EmitRange(o, SM, LangOpts, CharSourceRange::getTokenRange(*I), FM,
-                indent + 1);
-    }
+    for (auto &R : Ranges)
+      EmitRange(o, SM,
+                Lexer::getAsCharRange(SM.getExpansionRange(R), SM, LangOpts),
+                FM, indent + 1);
     --indent;
     Indent(o, indent) << "</array>\n";
   }
@@ -453,7 +453,7 @@ void PlistDiagnostics::FlushDiagnosticsImpl(
 
     // Output the location of the bug.
     o << "  <key>location</key>\n";
-    EmitLocation(o, *SM, LangOpts, D->getLocation().asLocation(), FM, 2);
+    EmitLocation(o, *SM, D->getLocation().asLocation(), FM, 2);
 
     // Output the diagnostic to the sub-diagnostic client, if any.
     if (!filesMade->empty()) {

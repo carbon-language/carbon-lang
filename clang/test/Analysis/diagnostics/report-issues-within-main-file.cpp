@@ -542,7 +542,7 @@ void callInMacroArg() {
 // CHECK-NEXT:         </dict>
 // CHECK-NEXT:         <dict>
 // CHECK-NEXT:          <key>line</key><integer>69</integer>
-// CHECK-NEXT:          <key>col</key><integer>18</integer>
+// CHECK-NEXT:          <key>col</key><integer>51</integer>
 // CHECK-NEXT:          <key>file</key><integer>0</integer>
 // CHECK-NEXT:         </dict>
 // CHECK-NEXT:        </array>

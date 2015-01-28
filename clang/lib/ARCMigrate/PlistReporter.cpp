@@ -100,16 +100,18 @@ void arcmt::writeARCDiagsToPlist(const std::string &outPath,
 
     // Output the location of the bug.
     o << "  <key>location</key>\n";
-    EmitLocation(o, SM, LangOpts, D.getLocation(), FM, 2);
+    EmitLocation(o, SM, D.getLocation(), FM, 2);
 
     // Output the ranges (if any).
-    StoredDiagnostic::range_iterator RI = D.range_begin(), RE = D.range_end();
-
-    if (RI != RE) {
+    if (!D.getRanges().empty()) {
       o << "   <key>ranges</key>\n";
       o << "   <array>\n";
-      for (; RI != RE; ++RI)
-        EmitRange(o, SM, LangOpts, *RI, FM, 4);
+      for (auto &R : D.getRanges()) {
+        CharSourceRange ExpansionRange(SM.getExpansionRange(R.getAsRange()),
+                                       R.isTokenRange());
+        EmitRange(o, SM, Lexer::getAsCharRange(ExpansionRange, SM, LangOpts),
+                  FM, 4);
+      }
       o << "   </array>\n";
     }
 

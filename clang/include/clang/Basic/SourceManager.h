@@ -1057,10 +1057,16 @@ public:
   getImmediateExpansionRange(SourceLocation Loc) const;
 
   /// \brief Given a SourceLocation object, return the range of
-  /// tokens covered by the expansion the ultimate file.
+  /// tokens covered by the expansion in the ultimate file.
   std::pair<SourceLocation,SourceLocation>
   getExpansionRange(SourceLocation Loc) const;
 
+  /// \brief Given a SourceRange object, return the range of
+  /// tokens covered by the expansion in the ultimate file.
+  SourceRange getExpansionRange(SourceRange Range) const {
+    return SourceRange(getExpansionRange(Range.getBegin()).first,
+                       getExpansionRange(Range.getEnd()).second);
+  }
 
   /// \brief Given a SourceLocation object, return the spelling
   /// location referenced by the ID.

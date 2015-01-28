@@ -323,6 +323,26 @@ public:
                                             const SourceManager &SM,
                                             const LangOptions &LangOpts);
 
+  /// \brief Given a token range, produce a corresponding CharSourceRange that
+  /// is not a token range. This allows the source range to be used by
+  /// components that don't have access to the lexer and thus can't find the
+  /// end of the range for themselves.
+  static CharSourceRange getAsCharRange(SourceRange Range,
+                                        const SourceManager &SM,
+                                        const LangOptions &LangOpts) {
+    SourceLocation End = getLocForEndOfToken(Range.getEnd(), 0, SM, LangOpts);
+    return End.isInvalid() ? CharSourceRange()
+                           : CharSourceRange::getCharRange(
+                                 Range.getBegin(), End.getLocWithOffset(-1));
+  }
+  static CharSourceRange getAsCharRange(CharSourceRange Range,
+                                        const SourceManager &SM,
+                                        const LangOptions &LangOpts) {
+    return Range.isTokenRange()
+               ? getAsCharRange(Range.getAsRange(), SM, LangOpts)
+               : Range;
+  }
+
   /// \brief Returns true if the given MacroID location points at the first
   /// token of the macro expansion.
   ///

@@ -2,8 +2,7 @@ module Clang_Analysis {
   requires cplusplus
   umbrella "Analysis"
 
-  // This file is intended for repeated textual inclusion.
-  exclude header "Analysis/Analyses/ThreadSafetyOps.def"
+  textual header "Analysis/Analyses/ThreadSafetyOps.def"
 
   module * { export * }
 }
@@ -12,10 +11,9 @@ module Clang_AST {
   requires cplusplus
   umbrella "AST"
 
-  // These files are intended for repeated textual inclusion.
-  exclude header "AST/BuiltinTypes.def"
-  exclude header "AST/TypeLocNodes.def"
-  exclude header "AST/TypeNodes.def"
+  textual header "AST/BuiltinTypes.def"
+  textual header "AST/TypeLocNodes.def"
+  textual header "AST/TypeNodes.def"
 
   module * { export * }
 }
@@ -26,33 +24,26 @@ module Clang_Basic {
   requires cplusplus
   umbrella "Basic"
 
-  // These files are intended for repeated textual inclusion.
-  exclude header "Basic/BuiltinsAArch64.def"
-  exclude header "Basic/BuiltinsARM64.def"
-  exclude header "Basic/BuiltinsARM.def"
-  exclude header "Basic/Builtins.def"
-  exclude header "Basic/BuiltinsHexagon.def"
-  exclude header "Basic/BuiltinsMips.def"
-  exclude header "Basic/BuiltinsNEON.def"
-  exclude header "Basic/BuiltinsNVPTX.def"
-  exclude header "Basic/BuiltinsPPC.def"
-  exclude header "Basic/BuiltinsR600.def"
-  exclude header "Basic/BuiltinsX86.def"
-  exclude header "Basic/BuiltinsXCore.def"
-  exclude header "Basic/BuiltinsLe64.def"
-  exclude header "Basic/DiagnosticOptions.def"
-  exclude header "Basic/LangOptions.def"
-  exclude header "Basic/OpenCLExtensions.def"
-  exclude header "Basic/OpenMPKinds.def"
-  exclude header "Basic/OperatorKinds.def"
-  exclude header "Basic/Sanitizers.def"
-  exclude header "Basic/TokenKinds.def"
-
-  // This file includes a header from Lex.
-  exclude header "Basic/PlistSupport.h"
-
-  // FIXME: This is logically a part of Basic, but has been put in the wrong place.
-  header "StaticAnalyzer/Core/AnalyzerOptions.h"
+  textual header "Basic/BuiltinsAArch64.def"
+  textual header "Basic/BuiltinsARM64.def"
+  textual header "Basic/BuiltinsARM.def"
+  textual header "Basic/Builtins.def"
+  textual header "Basic/BuiltinsHexagon.def"
+  textual header "Basic/BuiltinsMips.def"
+  textual header "Basic/BuiltinsNEON.def"
+  textual header "Basic/BuiltinsNVPTX.def"
+  textual header "Basic/BuiltinsPPC.def"
+  textual header "Basic/BuiltinsR600.def"
+  textual header "Basic/BuiltinsX86.def"
+  textual header "Basic/BuiltinsXCore.def"
+  textual header "Basic/BuiltinsLe64.def"
+  textual header "Basic/DiagnosticOptions.def"
+  textual header "Basic/LangOptions.def"
+  textual header "Basic/OpenCLExtensions.def"
+  textual header "Basic/OpenMPKinds.def"
+  textual header "Basic/OperatorKinds.def"
+  textual header "Basic/Sanitizers.def"
+  textual header "Basic/TokenKinds.def"
 
   module * { export * }
 }
@@ -82,8 +73,7 @@ module Clang_Driver {
   requires cplusplus
   umbrella "Driver"
 
-  // This file is intended for repeated textual inclusion.
-  exclude header "Driver/Types.def"
+  textual header "Driver/Types.def"
 
   module * { export * }
 }
@@ -95,9 +85,8 @@ module Clang_Frontend {
   requires cplusplus
   umbrella "Frontend"
 
-  // These files are intended for repeated textual inclusion.
-  exclude header "Frontend/CodeGenOptions.def"
-  exclude header "Frontend/LangStandards.def"
+  textual header "Frontend/CodeGenOptions.def"
+  textual header "Frontend/LangStandards.def"
 
   module * { export * }
 }
@@ -114,8 +103,7 @@ module Clang_StaticAnalyzer {
   requires cplusplus
   umbrella "StaticAnalyzer"
 
-  // This file is intended for repeated textual inclusion.
-  exclude header "StaticAnalyzer/Core/Analyses.def"
+  textual header "StaticAnalyzer/Core/Analyses.def"
 
   module * { export * }
 }

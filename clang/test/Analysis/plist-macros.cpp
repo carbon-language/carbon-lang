@@ -903,7 +903,7 @@ void test2(int *p) {
 // CHECK-NEXT:         </dict>
 // CHECK-NEXT:         <dict>
 // CHECK-NEXT:          <key>line</key><integer>45</integer>
-// CHECK-NEXT:          <key>col</key><integer>18</integer>
+// CHECK-NEXT:          <key>col</key><integer>21</integer>
 // CHECK-NEXT:          <key>file</key><integer>0</integer>
 // CHECK-NEXT:         </dict>
 // CHECK-NEXT:        </array>
@@ -1395,7 +1395,7 @@ void test2(int *p) {
 // CHECK-NEXT:         </dict>
 // CHECK-NEXT:         <dict>
 // CHECK-NEXT:          <key>line</key><integer>82</integer>
-// CHECK-NEXT:          <key>col</key><integer>9</integer>
+// CHECK-NEXT:          <key>col</key><integer>12</integer>
 // CHECK-NEXT:          <key>file</key><integer>0</integer>
 // CHECK-NEXT:         </dict>
 // CHECK-NEXT:        </array>
@@ -1424,7 +1424,7 @@ void test2(int *p) {
 // CHECK-NEXT:         </dict>
 // CHECK-NEXT:         <dict>
 // CHECK-NEXT:          <key>line</key><integer>82</integer>
-// CHECK-NEXT:          <key>col</key><integer>9</integer>
+// CHECK-NEXT:          <key>col</key><integer>12</integer>
 // CHECK-NEXT:          <key>file</key><integer>0</integer>
 // CHECK-NEXT:         </dict>
 // CHECK-NEXT:        </array>
