@@ -1061,12 +1061,12 @@ def : Pat<(X86tcret (load addr:$dst), imm:$off),
           Requires<[Not64BitMode, IsNotPIC]>;
 
 def : Pat<(X86tcret (i32 tglobaladdr:$dst), imm:$off),
-          (TCRETURNdi texternalsym:$dst, imm:$off)>,
-          Requires<[Not64BitMode]>;
+          (TCRETURNdi tglobaladdr:$dst, imm:$off)>,
+          Requires<[NotLP64]>;
 
 def : Pat<(X86tcret (i32 texternalsym:$dst), imm:$off),
           (TCRETURNdi texternalsym:$dst, imm:$off)>,
-          Requires<[Not64BitMode]>;
+          Requires<[NotLP64]>;
 
 def : Pat<(X86tcret ptr_rc_tailcall:$dst, imm:$off),
           (TCRETURNri64 ptr_rc_tailcall:$dst, imm:$off)>,
@@ -1076,11 +1076,11 @@ def : Pat<(X86tcret ptr_rc_tailcall:$dst, imm:$off),
 // There wouldn't be enough scratch registers for base+index.
 def : Pat<(X86tcret_6regs (load addr:$dst), imm:$off),
           (TCRETURNmi64 addr:$dst, imm:$off)>,
-          Requires<[In64BitMode]>;
+          Requires<[IsLP64]>;
 
 def : Pat<(X86tcret (i64 tglobaladdr:$dst), imm:$off),
           (TCRETURNdi64 tglobaladdr:$dst, imm:$off)>,
-          Requires<[In64BitMode]>;
+          Requires<[IsLP64]>;
 
 def : Pat<(X86tcret (i64 texternalsym:$dst), imm:$off),
           (TCRETURNdi64 texternalsym:$dst, imm:$off)>,

@@ -1,5 +1,6 @@
 ; RUN: llc < %s -mtriple=i686-linux   -mcpu=core2 -mattr=+sse2 -asm-verbose=false | FileCheck %s -check-prefix=32
 ; RUN: llc < %s -mtriple=x86_64-linux -mcpu=core2 -mattr=+sse2 -asm-verbose=false | FileCheck %s -check-prefix=64
+; RUN: llc < %s -mtriple=x86_64-linux-gnux32 -mcpu=core2 -mattr=+sse2 -asm-verbose=false | FileCheck %s -check-prefix=X32ABI
 
 define void @t1(i32 %x) nounwind ssp {
 entry:
@@ -8,6 +9,9 @@ entry:
 
 ; 64-LABEL: t1:
 ; 64: jmp {{_?}}foo
+
+; X32ABI-LABEL: t1:
+; X32ABI: jmp {{_?}}foo
   tail call void @foo() nounwind
   ret void
 }
@@ -21,6 +25,9 @@ entry:
 
 ; 64-LABEL: t2:
 ; 64: jmp {{_?}}foo2
+
+; X32ABI-LABEL: t2:
+; X32ABI: jmp {{_?}}foo2
   %0 = tail call i32 @foo2() nounwind
   ret void
 }
@@ -34,6 +41,9 @@ entry:
 
 ; 64-LABEL: t3:
 ; 64: jmp {{_?}}foo3
+
+; X32ABI-LABEL: t3:
+; X32ABI: jmp {{_?}}foo3
   %0 = tail call i32 @foo3() nounwind
   ret void
 }
@@ -49,6 +59,10 @@ entry:
 ; 64-LABEL: t4:
 ; 64-NOT: call
 ; 64: jmpq *
+
+; X32ABI-LABEL: t4:
+; X32ABI-NOT: call
+; X32ABI: jmpq *
   tail call void %x(i32 0) nounwind
   ret void
 }
@@ -62,6 +76,13 @@ entry:
 ; 64-LABEL: t5:
 ; 64-NOT: call
 ; 64: jmpq *%rdi
+
+; X32ABI-LABEL: t5:
+; X32ABI-NOT: call
+; FIXME: This isn't needed since x32 psABI specifies that callers must
+;        zero-extend pointers passed in registers.
+; X32ABI: movl %edi, %eax
+; X32ABI: jmpq *%rax
   tail call void %x() nounwind
   ret void
 }
@@ -75,6 +96,10 @@ entry:
 ; 64-LABEL: t6:
 ; 64: jmp {{_?}}t6
 ; 64: jmp {{_?}}bar
+
+; X32ABI-LABEL: t6:
+; X32ABI: jmp {{_?}}t6
+; X32ABI: jmp {{_?}}bar
   %0 = icmp slt i32 %x, 10
   br i1 %0, label %bb, label %bb1
 
@@ -97,6 +122,9 @@ entry:
 
 ; 64-LABEL: t7:
 ; 64: jmp {{_?}}bar2
+
+; X32ABI-LABEL: t7:
+; X32ABI: jmp {{_?}}bar2
   %0 = tail call i32 @bar2(i32 %a, i32 %b, i32 %c) nounwind
   ret i32 %0
 }
@@ -110,6 +138,9 @@ entry:
 
 ; 64-LABEL: t8:
 ; 64: jmp {{_?}}bar3
+
+; X32ABI-LABEL: t8:
+; X32ABI: jmp {{_?}}bar3
   %0 = tail call signext i16 @bar3() nounwind      ; <i16> [#uses=1]
   ret i16 %0
 }
@@ -123,6 +154,9 @@ entry:
 
 ; 64-LABEL: t9:
 ; 64: jmpq *
+
+; X32ABI-LABEL: t9:
+; X32ABI: jmpq *
   %0 = bitcast i32 (i32)* %x to i16 (i32)*
   %1 = tail call signext i16 %0(i32 0) nounwind
   ret i16 %1
@@ -135,6 +169,9 @@ entry:
 
 ; 64-LABEL: t10:
 ; 64: callq
+
+; X32ABI-LABEL: t10:
+; X32ABI: callq
   %0 = tail call i32 @foo4() noreturn nounwind
   unreachable
 }
@@ -156,6 +193,11 @@ define i32 @t11(i32 %x, i32 %y, i32 %z.0, i32 %z.1, i32 %z.2) nounwind ssp {
 ; 64-NOT: subq ${{[0-9]+}}, %esp
 ; 64-NOT: addq ${{[0-9]+}}, %esp
 ; 64: jmp {{_?}}foo5
+
+; X32ABI-LABEL: t11:
+; X32ABI-NOT: subl ${{[0-9]+}}, %esp
+; X32ABI-NOT: addl ${{[0-9]+}}, %esp
+; X32ABI: jmp {{_?}}foo5
 entry:
   %0 = icmp eq i32 %x, 0
   br i1 %0, label %bb6, label %bb
@@ -182,6 +224,11 @@ define i32 @t12(i32 %x, i32 %y, %struct.t* byval align 4 %z) nounwind ssp {
 ; 64-NOT: subq ${{[0-9]+}}, %esp
 ; 64-NOT: addq ${{[0-9]+}}, %esp
 ; 64: jmp {{_?}}foo6
+
+; X32ABI-LABEL: t12:
+; X32ABI-NOT: subl ${{[0-9]+}}, %esp
+; X32ABI-NOT: addl ${{[0-9]+}}, %esp
+; X32ABI: jmp {{_?}}foo6
 entry:
   %0 = icmp eq i32 %x, 0
   br i1 %0, label %bb2, label %bb
@@ -210,6 +257,11 @@ define %struct.ns* @t13(%struct.cp* %yy) nounwind ssp {
 ; 64-NOT: jmp
 ; 64: callq
 ; 64: ret
+
+; X32ABI-LABEL: t13:
+; X32ABI-NOT: jmp
+; X32ABI: callq
+; X32ABI: ret
 entry:
   %0 = tail call fastcc %struct.ns* @foo7(%struct.cp* byval align 4 %yy, i8 signext 0) nounwind
   ret %struct.ns* %0
@@ -230,6 +282,11 @@ entry:
 ; 64: movq 32(%rdi)
 ; 64-NOT: movq 16(%rdi)
 ; 64: jmpq *16({{%rdi|%rax}})
+
+; X32ABI-LABEL: t14:
+; X32ABI: movl 20(%edi), %edi
+; X32ABI-NEXT: movl 12(%edi), %eax
+; X32ABI-NEXT: jmpq *%rax
   %0 = getelementptr inbounds %struct.__block_literal_2* %.block_descriptor, i64 0, i32 5 ; <void ()**> [#uses=1]
   %1 = load void ()** %0, align 8                 ; <void ()*> [#uses=2]
   %2 = bitcast void ()* %1 to %struct.__block_literal_1* ; <%struct.__block_literal_1*> [#uses=1]
@@ -252,6 +309,10 @@ define void @t15(%struct.foo* noalias sret %agg.result) nounwind  {
 ; 64-LABEL: t15:
 ; 64: callq {{_?}}f
 ; 64: retq
+
+; X32ABI-LABEL: t15:
+; X32ABI: callq {{_?}}f
+; X32ABI: retq
   tail call fastcc void @f(%struct.foo* noalias sret %agg.result) nounwind
   ret void
 }
@@ -266,6 +327,9 @@ entry:
 
 ; 64-LABEL: t16:
 ; 64: jmp {{_?}}bar4
+
+; X32ABI-LABEL: t16:
+; X32ABI: jmp {{_?}}bar4
   %0 = tail call double @bar4() nounwind
   ret void
 }
@@ -281,6 +345,10 @@ entry:
 ; 64-LABEL: t17:
 ; 64: xorl %eax, %eax
 ; 64: jmp {{_?}}bar5
+
+; X32ABI-LABEL: t17:
+; X32ABI: xorl %eax, %eax
+; X32ABI: jmp {{_?}}bar5
   tail call void (...)* @bar5() nounwind
   ret void
 }
@@ -297,6 +365,10 @@ entry:
 ; 64-LABEL: t18:
 ; 64: xorl %eax, %eax
 ; 64: jmp {{_?}}bar6
+
+; X32ABI-LABEL: t18:
+; X32ABI: xorl %eax, %eax
+; X32ABI: jmp {{_?}}bar6
   %0 = tail call double (...)* @bar6() nounwind
   ret void
 }
@@ -308,6 +380,10 @@ entry:
 ; CHECK-LABEL: t19:
 ; CHECK: andl $-32
 ; CHECK: calll {{_?}}foo
+
+; X32ABI-LABEL: t19:
+; X32ABI: andl $-32
+; X32ABI: callq {{_?}}foo
   tail call void @foo() nounwind
   ret void
 }
@@ -324,6 +400,9 @@ entry:
 
 ; 64-LABEL: t20:
 ; 64: jmp {{_?}}foo20
+
+; X32ABI-LABEL: t20:
+; X32ABI: jmp {{_?}}foo20
   %0 = tail call fastcc double @foo20(double %x) nounwind
   ret double %0
 }

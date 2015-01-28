@@ -3356,7 +3356,8 @@ bool MatchingStackOffset(SDValue Arg, unsigned Offset, ISD::ArgFlagsTy Flags,
         return false;
     } else {
       unsigned Opcode = Def->getOpcode();
-      if ((Opcode == X86::LEA32r || Opcode == X86::LEA64r) &&
+      if ((Opcode == X86::LEA32r || Opcode == X86::LEA64r ||
+           Opcode == X86::LEA64_32r) &&
           Def->getOperand(1).isFI()) {
         FI = Def->getOperand(1).getIndex();
         Bytes = Flags.getByValSize();
