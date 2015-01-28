@@ -40,14 +40,14 @@ RTTI for this class hierarchy:
      double SideLength;
    public:
      Square(double S) : SideLength(S) {}
-     double computeArea() /* override */;
+     double computeArea() override;
    };
 
    class Circle : public Shape {
      double Radius;
    public:
      Circle(double R) : Radius(R) {}
-     double computeArea() /* override */;
+     double computeArea() override;
    };
 
 The most basic working setup for LLVM-style RTTI requires the following
@@ -135,7 +135,7 @@ steps:
        public:
       -  Square(double S) : SideLength(S) {}
       +  Square(double S) : Shape(SK_Square), SideLength(S) {}
-         double computeArea() /* override */;
+         double computeArea() override;
        };
 
        class Circle : public Shape {
@@ -143,7 +143,7 @@ steps:
        public:
       -  Circle(double R) : Radius(R) {}
       +  Circle(double R) : Shape(SK_Circle), Radius(R) {}
-         double computeArea() /* override */;
+         double computeArea() override;
        };
 
 #. Finally, you need to inform LLVM's RTTI templates how to dynamically
@@ -175,7 +175,7 @@ steps:
          double SideLength;
        public:
          Square(double S) : Shape(SK_Square), SideLength(S) {}
-         double computeArea() /* override */;
+         double computeArea() override;
       +
       +  static bool classof(const Shape *S) {
       +    return S->getKind() == SK_Square;
@@ -186,7 +186,7 @@ steps:
          double Radius;
        public:
          Circle(double R) : Shape(SK_Circle), Radius(R) {}
-         double computeArea() /* override */;
+         double computeArea() override;
       +
       +  static bool classof(const Shape *S) {
       +    return S->getKind() == SK_Circle;
