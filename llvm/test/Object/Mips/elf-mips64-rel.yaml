@@ -79,17 +79,21 @@ Sections:
       - Offset:      0x20
         Symbol:      .rodata
         Type:        R_MIPS_GOT_PAGE
+        Addend:      0
       - Offset:      0x24
         Symbol:      .rodata
         Type:        R_MIPS_GOT_OFST
+        Addend:      0
       - Offset:      0x28
         Symbol:      printf
         Type:        R_MIPS_CALL16
+        Addend:      0
       - Offset:      0x30
         Symbol:      printf
         Type:        R_MIPS_GPREL16
         Type2:       R_MIPS_LO16
         SpecSym:     RSS_GP0
+        Addend:      0
   - Name:            .rodata
     Type:            SHT_PROGBITS
     Flags:           [ SHF_ALLOC ]
