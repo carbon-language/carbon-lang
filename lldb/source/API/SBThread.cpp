@@ -1491,7 +1491,8 @@ SBThread::GetDescription (SBStream &description) const
     ExecutionContext exe_ctx (m_opaque_sp.get());
     if (exe_ctx.HasThreadScope())
     {
-        strm.Printf("SBThread: tid = 0x%4.4" PRIx64, exe_ctx.GetThreadPtr()->GetID());
+        exe_ctx.GetThreadPtr()->DumpUsingSettingsFormat(strm, LLDB_INVALID_THREAD_ID);
+        //strm.Printf("SBThread: tid = 0x%4.4" PRIx64, exe_ctx.GetThreadPtr()->GetID());
     }
     else
         strm.PutCString ("No value");
