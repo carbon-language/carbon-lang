@@ -638,6 +638,9 @@ def: T_RR_pat<C2_bitsclr,  int_hexagon_C2_bitsclr>;
 def: T_RI_pat<C2_bitsclri, int_hexagon_C2_bitsclri>;
 def: T_RR_pat<C2_bitsset,  int_hexagon_C2_bitsset>;
 
+// Linear feedback-shift Iteration.
+def : T_PP_pat <S2_lfsp, int_hexagon_S2_lfsp>;
+
 // Shift by immediate and add
 def : T_RRI_pat<S2_addasl_rrri, int_hexagon_S2_addasl_rrri>;
 
@@ -706,6 +709,22 @@ def : T_RR_pat <S2_lsl_r_r, int_hexagon_S2_lsl_r_r>;
 def : T_RR_pat <S2_asr_r_r_sat, int_hexagon_S2_asr_r_r_sat>;
 def : T_RR_pat <S2_asl_r_r_sat, int_hexagon_S2_asl_r_r_sat>;
 
+def : T_R_pat <A2_sxtw,     int_hexagon_A2_sxtw>;
+
+def : T_R_pat <S2_brev,        int_hexagon_S2_brev>;
+
+def : T_R_pat <A2_abs,    int_hexagon_A2_abs>;
+def : T_R_pat <A2_abssat, int_hexagon_A2_abssat>;
+def : T_R_pat <A2_negsat, int_hexagon_A2_negsat>;
+
+def : T_R_pat <A2_swiz,   int_hexagon_A2_swiz>;
+
+def : T_P_pat <A2_sat,    int_hexagon_A2_sat>;
+def : T_R_pat <A2_sath,   int_hexagon_A2_sath>;
+def : T_R_pat <A2_satuh,  int_hexagon_A2_satuh>;
+def : T_R_pat <A2_satub,  int_hexagon_A2_satub>;
+def : T_R_pat <A2_satb,   int_hexagon_A2_satb>;
+
 def : T_RI_pat <S2_asr_i_r,     int_hexagon_S2_asr_i_r>;
 def : T_RI_pat <S2_lsr_i_r,     int_hexagon_S2_lsr_i_r>;
 def : T_RI_pat <S2_asl_i_r,     int_hexagon_S2_asl_i_r>;
@@ -715,6 +734,33 @@ def : T_RI_pat <S2_asr_i_r_rnd_goodsyntax,
 
 // Shift left by immediate with saturation.
 def : T_RI_pat <S2_asl_i_r_sat, int_hexagon_S2_asl_i_r_sat>;
+
+//===----------------------------------------------------------------------===//
+// Template 'def pat' to map tableidx[bhwd] intrinsics to :raw instructions.
+//===----------------------------------------------------------------------===//
+class S2op_tableidx_pat <Intrinsic IntID, InstHexagon OutputInst,
+                         SDNodeXForm XformImm>
+  : Pat <(IntID IntRegs:$src1, IntRegs:$src2, u4ImmPred:$src3, u5ImmPred:$src4),
+         (OutputInst IntRegs:$src1, IntRegs:$src2, u4ImmPred:$src3,
+                     (XformImm u5ImmPred:$src4))>;
+
+
+// Table Index : Extract and insert bits.
+// Map to the real hardware instructions after subtracting appropriate
+// values from the 4th input operand. Please note that subtraction is not
+// needed for int_hexagon_S2_tableidxb_goodsyntax.
+
+def : Pat <(int_hexagon_S2_tableidxb_goodsyntax IntRegs:$src1, IntRegs:$src2,
+                                              u4ImmPred:$src3, u5ImmPred:$src4),
+           (S2_tableidxb IntRegs:$src1, IntRegs:$src2,
+                         u4ImmPred:$src3, u5ImmPred:$src4)>;
+
+def : S2op_tableidx_pat <int_hexagon_S2_tableidxh_goodsyntax, S2_tableidxh,
+                         DEC_CONST_SIGNED>;
+def : S2op_tableidx_pat <int_hexagon_S2_tableidxw_goodsyntax, S2_tableidxw,
+                         DEC2_CONST_SIGNED>;
+def : S2op_tableidx_pat <int_hexagon_S2_tableidxd_goodsyntax, S2_tableidxd,
+                         DEC3_CONST_SIGNED>;
 
 //
 // ALU 32 types.
@@ -2561,41 +2607,9 @@ class di_LDInstPI_diu4<string opc, Intrinsic IntID>
 *            ALU32/PERM                                             *
 *********************************************************************/
 
-// ALU32 / PERM / Combine.
-def HEXAGON_A2_combinew:
-  di_ALU32_sisi                   <"combine",  int_hexagon_A2_combinew>;
-def HEXAGON_A2_combine_hh:
-  si_MInst_sisi_hh                <"combine",  int_hexagon_A2_combine_hh>;
-def HEXAGON_A2_combine_lh:
-  si_MInst_sisi_lh                <"combine",  int_hexagon_A2_combine_lh>;
-def HEXAGON_A2_combine_hl:
-  si_MInst_sisi_hl                <"combine",  int_hexagon_A2_combine_hl>;
-def HEXAGON_A2_combine_ll:
-  si_MInst_sisi_ll                <"combine",  int_hexagon_A2_combine_ll>;
-def HEXAGON_A2_combineii:
-  di_MInst_s8s8                   <"combine",  int_hexagon_A2_combineii>;
-
 // ALU32 / PERM / Mux.
 def HEXAGON_C2_mux:
   si_ALU32_qisisi                 <"mux",      int_hexagon_C2_mux>;
-
-// ALU32 / PERM / Shift halfword.
-def HEXAGON_A2_aslh:
-  si_ALU32_si                     <"aslh",     int_hexagon_A2_aslh>;
-def HEXAGON_A2_asrh:
-  si_ALU32_si                     <"asrh",     int_hexagon_A2_asrh>;
-def SI_to_SXTHI_asrh:
-  si_ALU32_si                     <"asrh",     int_hexagon_SI_to_SXTHI_asrh>;
-
-// ALU32 / PERM / Sign/zero extend.
-def HEXAGON_A2_sxth:
-  si_ALU32_si                     <"sxth",     int_hexagon_A2_sxth>;
-def HEXAGON_A2_sxtb:
-  si_ALU32_si                     <"sxtb",     int_hexagon_A2_sxtb>;
-def HEXAGON_A2_zxth:
-  si_ALU32_si                     <"zxth",     int_hexagon_A2_zxth>;
-def HEXAGON_A2_zxtb:
-  si_ALU32_si                     <"zxtb",     int_hexagon_A2_zxtb>;
 
 /********************************************************************
 *            ALU32/PRED                                             *
@@ -2656,12 +2670,6 @@ def HEXAGON_A2_svsubuhs:
 *            ALU64/ALU                                              *
 *********************************************************************/
 
-// ALU64 / ALU / Add.
-def HEXAGON_A2_addp:
-  di_ALU64_didi                   <"add",      int_hexagon_A2_addp>;
-def HEXAGON_A2_addsat:
-  si_ALU64_sisi_sat               <"add",      int_hexagon_A2_addsat>;
-
 // ALU64 / ALU / Compare.
 def HEXAGON_C2_cmpeqp:
   qi_ALU64_didi                   <"cmp.eq",   int_hexagon_C2_cmpeqp>;
@@ -2670,39 +2678,9 @@ def HEXAGON_C2_cmpgtp:
 def HEXAGON_C2_cmpgtup:
   qi_ALU64_didi                   <"cmp.gtu",  int_hexagon_C2_cmpgtup>;
 
-// ALU64 / ALU / Logical operations.
-def HEXAGON_A2_andp:
-  di_ALU64_didi                   <"and",      int_hexagon_A2_andp>;
-def HEXAGON_A2_orp:
-  di_ALU64_didi                   <"or",       int_hexagon_A2_orp>;
-def HEXAGON_A2_xorp:
-  di_ALU64_didi                   <"xor",      int_hexagon_A2_xorp>;
-
-// ALU64 / ALU / Subtract.
-def HEXAGON_A2_subp:
-  di_ALU64_didi                   <"sub",      int_hexagon_A2_subp>;
-def HEXAGON_A2_subsat:
-  si_ALU64_sisi_sat               <"sub",      int_hexagon_A2_subsat>;
-
 // ALU64 / ALU / Transfer register.
 def HEXAGON_A2_tfrp:
   di_ALU64_di                     <"",         int_hexagon_A2_tfrp>;
-
-/********************************************************************
-*            ALU64/BIT                                              *
-*********************************************************************/
-
-// ALU64 / BIT / Masked parity.
-def HEXAGON_S2_parityp:
-  si_ALU64_didi                   <"parity",   int_hexagon_S2_parityp>;
-
-/********************************************************************
-*            ALU64/PERM                                             *
-*********************************************************************/
-
-// ALU64 / PERM / Vector pack high and low halfwords.
-def HEXAGON_S2_packhl:
-  di_ALU64_sisi                   <"packhl",   int_hexagon_S2_packhl>;
 
 /********************************************************************
 *            ALU64/VB                                               *
@@ -2891,29 +2869,11 @@ def HEXAGON_C2_xor:
 *            MTYPE/ALU                                              *
 *********************************************************************/
 
-// MTYPE / ALU / Add and accumulate.
-def HEXAGON_M2_acci:
-  si_MInst_sisisi_acc             <"add",      int_hexagon_M2_acci>;
-def HEXAGON_M2_accii:
-  si_MInst_sisis8_acc             <"add",      int_hexagon_M2_accii>;
-def HEXAGON_M2_nacci:
-  si_MInst_sisisi_nac             <"add",      int_hexagon_M2_nacci>;
-def HEXAGON_M2_naccii:
-  si_MInst_sisis8_nac             <"add",      int_hexagon_M2_naccii>;
-
-// MTYPE / ALU / Subtract and accumulate.
-def HEXAGON_M2_subacc:
-  si_MInst_sisisi_acc             <"sub",      int_hexagon_M2_subacc>;
-
 // MTYPE / ALU / Vector absolute difference.
 def HEXAGON_M2_vabsdiffh:
   di_MInst_didi                   <"vabsdiffh",int_hexagon_M2_vabsdiffh>;
 def HEXAGON_M2_vabsdiffw:
   di_MInst_didi                   <"vabsdiffw",int_hexagon_M2_vabsdiffw>;
-
-// MTYPE / ALU / XOR and xor with destination.
-def HEXAGON_M2_xor_xacc:
-  si_MInst_sisisi_xacc            <"xor",      int_hexagon_M2_xor_xacc>;
 
 
 /********************************************************************
@@ -3013,23 +2973,6 @@ def HEXAGON_M2_vrcmacr_s0c:
 /********************************************************************
 *            MTYPE/MPYH                                             *
 *********************************************************************/
-
-// MTYPE / MPYH / Multiply and use lower result.
-//def HEXAGON_M2_mpysmi:
-//FIXME: Hexagon_M2_mpysmi should really by of the type si_MInst_sim9,
-// not si_MInst_sis9 - but for now, we will use s9.
-// def Hexagon_M2_mpysmi:
-//  si_MInst_sim9                   <"mpyi",     int_hexagon_M2_mpysmi>;
-def Hexagon_M2_mpysmi:
-  si_MInst_sis9                   <"mpyi",     int_hexagon_M2_mpysmi>;
-def HEXAGON_M2_mpyi:
-  si_MInst_sisi                   <"mpyi",     int_hexagon_M2_mpyi>;
-def HEXAGON_M2_macsip:
-  si_MInst_sisiu8_acc             <"mpyi",     int_hexagon_M2_macsip>;
-def HEXAGON_M2_maci:
-  si_MInst_sisisi_acc             <"mpyi",     int_hexagon_M2_maci>;
-def HEXAGON_M2_macsin:
-  si_MInst_sisiu8_nac             <"mpyi",     int_hexagon_M2_macsin>;
 
 // MTYPE / MPYH / Multiply word by half (32x16).
 //Rdd[+]=vmpywoh(Rss,Rtt)[:<<1][:rnd][:sat]
@@ -3176,112 +3119,6 @@ def HEXAGON_M2_vrmpy_s0:
 def HEXAGON_M2_vrmac_s0:
   di_MInst_dididi_acc             <"vrmpyh",  int_hexagon_M2_vrmac_s0>;
 
-
-/********************************************************************
-*            STYPE/ALU                                              *
-*********************************************************************/
-
-// STYPE / ALU / Absolute value.
-def HEXAGON_A2_abs:
-  si_SInst_si                     <"abs",     int_hexagon_A2_abs>;
-def HEXAGON_A2_abssat:
-  si_SInst_si_sat                 <"abs",     int_hexagon_A2_abssat>;
-
-// STYPE / ALU / Sign extend word to doubleword.
-def HEXAGON_A2_sxtw:
-  di_SInst_si                     <"sxtw",     int_hexagon_A2_sxtw>;
-
-
-/********************************************************************
-*            STYPE/BIT                                              *
-*********************************************************************/
-
-// STYPE / BIT / Count leading.
-def HEXAGON_S2_cl0:
-  si_SInst_si                     <"cl0",     int_hexagon_S2_cl0>;
-def HEXAGON_S2_cl0p:
-  si_SInst_di                     <"cl0",     int_hexagon_S2_cl0p>;
-def HEXAGON_S2_cl1:
-  si_SInst_si                     <"cl1",     int_hexagon_S2_cl1>;
-def HEXAGON_S2_cl1p:
-  si_SInst_di                     <"cl1",     int_hexagon_S2_cl1p>;
-def HEXAGON_S2_clb:
-  si_SInst_si                     <"clb",     int_hexagon_S2_clb>;
-def HEXAGON_S2_clbp:
-  si_SInst_di                     <"clb",     int_hexagon_S2_clbp>;
-def HEXAGON_S2_clbnorm:
-  si_SInst_si                     <"normamt", int_hexagon_S2_clbnorm>;
-
-// STYPE / BIT / Count trailing.
-def HEXAGON_S2_ct0:
-  si_SInst_si                     <"ct0",     int_hexagon_S2_ct0>;
-def HEXAGON_S2_ct1:
-  si_SInst_si                     <"ct1",     int_hexagon_S2_ct1>;
-
-// STYPE / BIT / Compare bit mask.
-def Hexagon_C2_bitsclr:
-  qi_SInst_sisi                   <"bitsclr", int_hexagon_C2_bitsclr>;
-def Hexagon_C2_bitsclri:
-  qi_SInst_siu6                   <"bitsclr", int_hexagon_C2_bitsclri>;
-def Hexagon_C2_bitsset:
-  qi_SInst_sisi                   <"bitsset", int_hexagon_C2_bitsset>;
-
-// STYPE / BIT / Extract unsigned.
-// Rd[d][32/64]=extractu(Rs[s],Rt[t],[imm])
-def HEXAGON_S2_extractu:
-  si_SInst_siu5u5                 <"extractu",int_hexagon_S2_extractu>;
-def HEXAGON_S2_extractu_rp:
-  si_SInst_sidi                   <"extractu",int_hexagon_S2_extractu_rp>;
-def HEXAGON_S2_extractup:
-  di_SInst_diu6u6                 <"extractu",int_hexagon_S2_extractup>;
-def HEXAGON_S2_extractup_rp:
-  di_SInst_didi                   <"extractu",int_hexagon_S2_extractup_rp>;
-
-// STYPE / BIT / Insert bitfield.
-def Hexagon_S2_insert:
-  si_SInst_sisiu5u5               <"insert",  int_hexagon_S2_insert>;
-def Hexagon_S2_insert_rp:
-  si_SInst_sisidi                 <"insert",  int_hexagon_S2_insert_rp>;
-def Hexagon_S2_insertp:
-  di_SInst_didiu6u6               <"insert",  int_hexagon_S2_insertp>;
-def Hexagon_S2_insertp_rp:
-  di_SInst_dididi                 <"insert",  int_hexagon_S2_insertp_rp>;
-
-// STYPE / BIT / Innterleave/deinterleave.
-def Hexagon_S2_interleave:
-  di_SInst_di                     <"interleave", int_hexagon_S2_interleave>;
-def Hexagon_S2_deinterleave:
-  di_SInst_di                     <"deinterleave", int_hexagon_S2_deinterleave>;
-
-// STYPE / BIT / Linear feedback-shift Iteration.
-def Hexagon_S2_lfsp:
-  di_SInst_didi                   <"lfs",     int_hexagon_S2_lfsp>;
-
-// STYPE / BIT / Bit reverse.
-def Hexagon_S2_brev:
-  si_SInst_si                     <"brev",    int_hexagon_S2_brev>;
-
-// STYPE / BIT / Set/Clear/Toggle Bit.
-def HEXAGON_S2_setbit_i:
-  si_SInst_siu5                   <"setbit",  int_hexagon_S2_setbit_i>;
-def HEXAGON_S2_togglebit_i:
-  si_SInst_siu5                   <"togglebit", int_hexagon_S2_togglebit_i>;
-def HEXAGON_S2_clrbit_i:
-  si_SInst_siu5                   <"clrbit",  int_hexagon_S2_clrbit_i>;
-def HEXAGON_S2_setbit_r:
-  si_SInst_sisi                   <"setbit",  int_hexagon_S2_setbit_r>;
-def HEXAGON_S2_togglebit_r:
-  si_SInst_sisi                   <"togglebit", int_hexagon_S2_togglebit_r>;
-def HEXAGON_S2_clrbit_r:
-  si_SInst_sisi                   <"clrbit",  int_hexagon_S2_clrbit_r>;
-
-// STYPE / BIT / Test Bit.
-def HEXAGON_S2_tstbit_i:
-  qi_SInst_siu5                   <"tstbit",  int_hexagon_S2_tstbit_i>;
-def HEXAGON_S2_tstbit_r:
-  qi_SInst_sisi                   <"tstbit",  int_hexagon_S2_tstbit_r>;
-
-
 /********************************************************************
 *            STYPE/COMPLEX                                          *
 *********************************************************************/
@@ -3298,22 +3135,6 @@ def HEXAGON_S2_vcrotate:
 /********************************************************************
 *            STYPE/PERM                                             *
 *********************************************************************/
-
-// STYPE / PERM / Saturate.
-def HEXAGON_A2_sat:
-  si_SInst_di                     <"sat",     int_hexagon_A2_sat>;
-def HEXAGON_A2_satb:
-  si_SInst_si                     <"satb",    int_hexagon_A2_satb>;
-def HEXAGON_A2_sath:
-  si_SInst_si                     <"sath",    int_hexagon_A2_sath>;
-def HEXAGON_A2_satub:
-  si_SInst_si                     <"satub",   int_hexagon_A2_satub>;
-def HEXAGON_A2_satuh:
-  si_SInst_si                     <"satuh",   int_hexagon_A2_satuh>;
-
-// STYPE / PERM / Swizzle bytes.
-def HEXAGON_A2_swiz:
-  si_SInst_si                     <"swiz",    int_hexagon_A2_swiz>;
 
 // STYPE / PERM / Vector align.
 // Need custom lowering
@@ -3416,16 +3237,6 @@ def HEXAGON_C2_tfrrp:
 // STYPE / PRED / Viterbi pack even and odd predicate bits.
 def HEXAGON_C2_vitpack:
   si_SInst_qiqi                   <"vitpack",int_hexagon_C2_vitpack>;
-
-// STYPE / SHIFT / Table Index.
-def Hexagon_S2_tableidxb_goodsyntax:
-  si_MInst_sisiu4u5          <"tableidxb",int_hexagon_S2_tableidxb_goodsyntax>;
-def Hexagon_S2_tableidxd_goodsyntax:
-  si_MInst_sisiu4u5          <"tableidxd",int_hexagon_S2_tableidxd_goodsyntax>;
-def Hexagon_S2_tableidxh_goodsyntax:
-  si_MInst_sisiu4u5          <"tableidxh",int_hexagon_S2_tableidxh_goodsyntax>;
-def Hexagon_S2_tableidxw_goodsyntax:
-  si_MInst_sisiu4u5          <"tableidxw",int_hexagon_S2_tableidxw_goodsyntax>;
 
 
 /********************************************************************

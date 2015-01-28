@@ -14,8 +14,8 @@
 def : Pat <(mul DoubleRegs:$src1, DoubleRegs:$src2),
       (i64
        (A2_combinew
-        (HEXAGON_M2_maci
-         (HEXAGON_M2_maci
+        (M2_maci
+         (M2_maci
           (i32
            (EXTRACT_SUBREG
             (i64

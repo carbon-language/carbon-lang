@@ -343,6 +343,12 @@ def u5ImmPred  : PatLeaf<(i32 imm), [{
   return isUInt<5>(v);
 }]>;
 
+def u4ImmPred  : PatLeaf<(i32 imm), [{
+  // u4ImmPred predicate - True if the immediate fits in a 4-bit unsigned
+  // field.
+  int64_t v = (int64_t)N->getSExtValue();
+  return isUInt<4>(v);
+}]>;
 
 def u3ImmPred  : PatLeaf<(i32 imm), [{
   // u3ImmPred predicate - True if the immediate fits in a 3-bit unsigned

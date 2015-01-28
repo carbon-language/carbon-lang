@@ -312,18 +312,18 @@ define i32 @S2_tableidxh_goodsyntax(i32 %a, i32 %b) {
   %z = call i32 @llvm.hexagon.S2.tableidxh.goodsyntax(i32 %a, i32 %b, i32 0, i32 0)
   ret i32 %z
 }
-; CHECK: r0 = tableidxh(r1, #0, #0)
+; CHECK: r0 = tableidxh(r1, #0, #-1)
 
 declare i32 @llvm.hexagon.S2.tableidxw.goodsyntax(i32, i32, i32, i32)
 define i32 @S2_tableidxw_goodsyntax(i32 %a, i32 %b) {
   %z = call i32 @llvm.hexagon.S2.tableidxw.goodsyntax(i32 %a, i32 %b, i32 0, i32 0)
   ret i32 %z
 }
-; CHECK: r0 = tableidxw(r1, #0, #0)
+; CHECK: r0 = tableidxw(r1, #0, #-2)
 
 declare i32 @llvm.hexagon.S2.tableidxd.goodsyntax(i32, i32, i32, i32)
 define i32 @S2_tableidxd_goodsyntax(i32 %a, i32 %b) {
   %z = call i32 @llvm.hexagon.S2.tableidxd.goodsyntax(i32 %a, i32 %b, i32 0, i32 0)
   ret i32 %z
 }
-; CHECK: r0 = tableidxd(r1, #0, #0)
+; CHECK: r0 = tableidxd(r1, #0, #-3)
