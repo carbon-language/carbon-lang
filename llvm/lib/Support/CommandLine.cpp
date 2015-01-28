@@ -87,7 +87,7 @@ class CommandLineParser {
 public:
   // Globals for name and overview of program.  Program name is not a string to
   // avoid static ctor/dtor issues.
-  char ProgramName[80] = "<premain>";
+  std::string ProgramName;
   const char *ProgramOverview = nullptr;
 
   // This collects additional help to be printed.
@@ -837,10 +837,7 @@ void CommandLineParser::ParseCommandLineOptions(int argc,
   argc = static_cast<int>(newArgv.size());
 
   // Copy the program name into ProgName, making sure not to overflow it.
-  StringRef ProgName = sys::path::filename(argv[0]);
-  size_t Len = std::min(ProgName.size(), size_t(79));
-  memcpy(ProgramName, ProgName.data(), Len);
-  ProgramName[Len] = '\0';
+  ProgramName = sys::path::filename(argv[0]);
 
   ProgramOverview = Overview;
   bool ErrorParsing = false;
