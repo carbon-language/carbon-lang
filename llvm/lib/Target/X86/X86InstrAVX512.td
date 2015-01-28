@@ -3582,6 +3582,24 @@ multiclass avx512_fma3p_rm<bits<8> opc, string OpcodeStr, X86VectorVTInfo _,
  }
 } // Constraints = "$src1 = $dst"
 
+let Constraints = "$src1 = $dst" in {
+// Omitting the parameter OpNode (= null_frag) disables ISel pattern matching.
+multiclass avx512_fma3_round_rrb<bits<8> opc, string OpcodeStr, X86VectorVTInfo _,
+                           SDPatternOperator OpNode> {
+   defm rb: AVX512_maskable_3src<opc, MRMSrcReg, _, (outs _.RC:$dst),
+          (ins _.RC:$src2, _.RC:$src3, AVX512RC:$rc),
+          OpcodeStr, "$rc, $src3, $src2", "$src2, $src3, $rc",
+          (_.VT ( OpNode _.RC:$src1, _.RC:$src2, _.RC:$src3, (i32 imm:$rc)))>,
+          AVX512FMA3Base, EVEX_B, EVEX_RC;
+ }
+} // Constraints = "$src1 = $dst"
+
+multiclass avx512_fma3_round_forms<bits<8> opc213, string OpcodeStr,
+                              X86VectorVTInfo VTI, SDPatternOperator OpNode> {
+  defm v213r : avx512_fma3_round_rrb<opc213, !strconcat(OpcodeStr, "213", VTI.Suffix),
+                              VTI, OpNode>, EVEX_CD8<VTI.EltSize, CD8VF>;
+}
+
 multiclass avx512_fma3p_forms<bits<8> opc213, bits<8> opc231,
                               string OpcodeStr, X86VectorVTInfo VTI,
                               SDPatternOperator OpNode> {
@@ -3594,10 +3612,13 @@ multiclass avx512_fma3p_forms<bits<8> opc213, bits<8> opc231,
 
 multiclass avx512_fma3p<bits<8> opc213, bits<8> opc231,
                               string OpcodeStr,
-                              SDPatternOperator OpNode> {
+                              SDPatternOperator OpNode,
+                              SDPatternOperator OpNodeRnd> {
 let ExeDomain = SSEPackedSingle in {
     defm NAME##PSZ      : avx512_fma3p_forms<opc213, opc231, OpcodeStr,
-                                             v16f32_info, OpNode>, EVEX_V512;
+                                             v16f32_info, OpNode>,
+                          avx512_fma3_round_forms<opc213, OpcodeStr,
+                                             v16f32_info, OpNodeRnd>, EVEX_V512;
     defm NAME##PSZ256   : avx512_fma3p_forms<opc213, opc231, OpcodeStr,
                                              v8f32x_info, OpNode>, EVEX_V256;
     defm NAME##PSZ128   : avx512_fma3p_forms<opc213, opc231, OpcodeStr,
@@ -3605,7 +3626,9 @@ let ExeDomain = SSEPackedSingle in {
   }
 let ExeDomain = SSEPackedDouble in {
     defm  NAME##PDZ     : avx512_fma3p_forms<opc213, opc231, OpcodeStr,
-                                             v8f64_info, OpNode>, EVEX_V512, VEX_W;
+                                             v8f64_info, OpNode>,
+                          avx512_fma3_round_forms<opc213, OpcodeStr,
+                                             v8f64_info, OpNodeRnd>, EVEX_V512, VEX_W;
     defm  NAME##PDZ256  : avx512_fma3p_forms<opc213, opc231, OpcodeStr,
                                              v4f64x_info, OpNode>, EVEX_V256, VEX_W;
     defm  NAME##PDZ128  : avx512_fma3p_forms<opc213, opc231, OpcodeStr,
@@ -3613,12 +3636,12 @@ let ExeDomain = SSEPackedDouble in {
   }
 }
 
-defm VFMADD    : avx512_fma3p<0xA8, 0xB8, "vfmadd", X86Fmadd>;
-defm VFMSUB    : avx512_fma3p<0xAA, 0xBA, "vfmsub", X86Fmsub>;
-defm VFMADDSUB : avx512_fma3p<0xA6, 0xB6, "vfmaddsub", X86Fmaddsub>;
-defm VFMSUBADD : avx512_fma3p<0xA7, 0xB7, "vfmsubadd", X86Fmsubadd>;
-defm VFNMADD   : avx512_fma3p<0xAC, 0xBC, "vfnmadd", X86Fnmadd>;
-defm VFNMSUB   : avx512_fma3p<0xAE, 0xBE, "vfnmsub", X86Fnmsub>;
+defm VFMADD    : avx512_fma3p<0xA8, 0xB8, "vfmadd", X86Fmadd, X86FmaddRnd>;
+defm VFMSUB    : avx512_fma3p<0xAA, 0xBA, "vfmsub", X86Fmsub, X86FmsubRnd>;
+defm VFMADDSUB : avx512_fma3p<0xA6, 0xB6, "vfmaddsub", X86Fmaddsub, X86FmaddsubRnd>;
+defm VFMSUBADD : avx512_fma3p<0xA7, 0xB7, "vfmsubadd", X86Fmsubadd, X86FmsubaddRnd>;
+defm VFNMADD   : avx512_fma3p<0xAC, 0xBC, "vfnmadd", X86Fnmadd, X86FnmaddRnd>;
+defm VFNMSUB   : avx512_fma3p<0xAE, 0xBE, "vfnmsub", X86Fnmsub, X86FnmsubRnd>;
 
 let Constraints = "$src1 = $dst" in {
 multiclass avx512_fma3p_m132<bits<8> opc, string OpcodeStr, SDNode OpNode,

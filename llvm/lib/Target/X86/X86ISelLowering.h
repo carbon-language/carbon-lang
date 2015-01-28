@@ -378,6 +378,13 @@ namespace llvm {
       FNMSUB,
       FMADDSUB,
       FMSUBADD,
+      // FMA with rounding mode
+      FMADD_RND,
+      FNMADD_RND,
+      FMSUB_RND,
+      FNMSUB_RND,
+      FMADDSUB_RND,
+      FMSUBADD_RND,     
 
       // Compress and expand
       COMPRESS,
