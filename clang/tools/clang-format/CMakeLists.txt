@@ -4,12 +4,18 @@ add_clang_executable(clang-format
   ClangFormat.cpp
   )
 
-target_link_libraries(clang-format
+set(CLANG_FORMAT_LIB_DEPS
   clangBasic
   clangFormat
   clangRewrite
   clangToolingCore
   )
+
+target_link_libraries(clang-format
+  ${CLANG_FORMAT_LIB_DEPS}
+  )
+
+add_subdirectory(fuzzer)
 
 install(TARGETS clang-format RUNTIME DESTINATION bin)
 install(PROGRAMS clang-format-bbedit.applescript DESTINATION share/clang)
