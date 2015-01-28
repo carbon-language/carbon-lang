@@ -213,6 +213,26 @@ public:
   /// getUnitSection - Return the DWARFUnitSection containing this unit.
   const DWARFUnitSectionBase &getUnitSection() const { return UnitSection; }
 
+  /// \brief Returns the number of DIEs in the unit. Parses the unit
+  /// if necessary.
+  unsigned getNumDIEs() {
+    extractDIEsIfNeeded(false);
+    return DieArray.size();
+  }
+
+  /// \brief Return the index of a DIE inside the unit's DIE vector.
+  ///
+  /// It is illegal to call this method with a DIE that hasn't be
+  /// created by this unit. In other word, it's illegal to call this
+  /// method on a DIE that isn't accessible by following
+  /// children/sibling links starting from this unit's
+  /// getCompileUnitDIE().
+  uint32_t getDIEIndex(const DWARFDebugInfoEntryMinimal *DIE) {
+    assert(!DieArray.empty() && DIE >= &DieArray[0] &&
+           DIE < &DieArray[0] + DieArray.size());
+    return DIE - &DieArray[0];
+  }
+
 private:
   /// Size in bytes of the .debug_info data associated with this compile unit.
   size_t getDebugInfoSize() const { return Length + 4 - getHeaderSize(); }
