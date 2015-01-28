@@ -17,11 +17,13 @@
 #include <cassert>
 
 void
-test()
+test(std::regex_constants::syntax_option_type syntax)
 {
     std::match_results<const char*> m;
     const char s[] = "abcdefghijk";
-    assert(std::regex_search(s, m, std::regex("cd((e)fg)hi")));
+    assert(std::regex_search(s, m, std::regex("cd((e)fg)hi|(z)", syntax)));
+
+    assert(m.size() == 4);
 
     assert(m[0].first == s+2);
     assert(m[0].second == s+9);
@@ -46,5 +48,6 @@ test()
 
 int main()
 {
-    test();
+    test(std::regex_constants::ECMAScript);
+    test(std::regex_constants::extended);
 }

@@ -5601,12 +5601,17 @@ basic_regex<_CharT, _Traits>::__match_at_start_ecma(
     __node* __st = __start_.get();
     if (__st)
     {
+        sub_match<const _CharT*> __unmatched;
+        __unmatched.first   = __last;
+        __unmatched.second  = __last;
+        __unmatched.matched = false;
+
         __states.push_back(__state());
         __states.back().__do_ = 0;
         __states.back().__first_ = __first;
         __states.back().__current_ = __first;
         __states.back().__last_ = __last;
-        __states.back().__sub_matches_.resize(mark_count());
+        __states.back().__sub_matches_.resize(mark_count(), __unmatched);
         __states.back().__loop_data_.resize(__loop_count());
         __states.back().__node_ = __st;
         __states.back().__flags_ = __flags;
@@ -5746,12 +5751,17 @@ basic_regex<_CharT, _Traits>::__match_at_start_posix_subs(
     __node* __st = __start_.get();
     if (__st)
     {
+        sub_match<const _CharT*> __unmatched;
+        __unmatched.first   = __last;
+        __unmatched.second  = __last;
+        __unmatched.matched = false;
+
         __states.push_back(__state());
         __states.back().__do_ = 0;
         __states.back().__first_ = __first;
         __states.back().__current_ = __first;
         __states.back().__last_ = __last;
-        __states.back().__sub_matches_.resize(mark_count());
+        __states.back().__sub_matches_.resize(mark_count(), __unmatched);
         __states.back().__loop_data_.resize(__loop_count());
         __states.back().__node_ = __st;
         __states.back().__flags_ = __flags;
