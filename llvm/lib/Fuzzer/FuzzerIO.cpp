@@ -13,7 +13,7 @@
 #include <dirent.h>
 namespace fuzzer {
 
-std::vector<std::string> ListFilesInDir(const std::string &Dir) {
+static std::vector<std::string> ListFilesInDir(const std::string &Dir) {
   std::vector<std::string> V;
   DIR *D = opendir(Dir.c_str());
   if (!D) return V;
@@ -38,7 +38,12 @@ void WriteToFile(const Unit &U, const std::string &Path) {
 
 void ReadDirToVectorOfUnits(const char *Path, std::vector<Unit> *V) {
   for (auto &X : ListFilesInDir(Path))
-    V->push_back(FileToVector(std::string(Path) + "/" + X));
+    V->push_back(FileToVector(DirPlusFile(Path, X)));
+}
+
+std::string DirPlusFile(const std::string &DirPath,
+                        const std::string &FileName) {
+  return DirPath + "/" + FileName;
 }
 
 }  // namespace fuzzer

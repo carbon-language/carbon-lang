@@ -139,6 +139,8 @@ int main(int argc, char **argv) {
   if (F.CorpusSize() == 0)
     F.AddToCorpus(Unit());  // Can't fuzz empty corpus, so add an empty input.
   F.ShuffleAndMinimize();
+  if (Flags.save_minimized_corpus)
+    F.SaveCorpus();
   F.Loop(Flags.iterations < 0 ? INT_MAX : Flags.iterations);
   if (Flags.verbosity)
     std::cerr << "Done\n";

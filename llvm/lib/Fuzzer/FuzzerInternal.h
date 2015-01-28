@@ -20,9 +20,11 @@ typedef std::vector<uint8_t> Unit;
 using namespace std::chrono;
 
 Unit ReadFile(const char *Path);
-std::vector<std::string> ListFilesInDir(const std::string &Dir);
 void ReadDirToVectorOfUnits(const char *Path, std::vector<Unit> *V);
 void WriteToFile(const Unit &U, const std::string &Path);
+// Returns "Dir/FileName" or equivalent for the current OS.
+std::string DirPlusFile(const std::string &DirPath,
+                        const std::string &FileName);
 
 void Mutate(Unit *U, size_t MaxLen);
 
@@ -53,6 +55,8 @@ class Fuzzer {
   void ReadDir(const std::string &Path) {
     ReadDirToVectorOfUnits(Path.c_str(), &Corpus);
   }
+  // Save the current corpus to OutputCorpus.
+  void SaveCorpus();
 
   static void AlarmCallback();
 

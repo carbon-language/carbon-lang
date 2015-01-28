@@ -22,3 +22,6 @@ FUZZER_FLAG(int, exit_on_first, 0,
             "If 1, exit after the first new interesting input is found.")
 FUZZER_FLAG(int, timeout, -1, "Timeout in seconds (if positive).")
 FUZZER_FLAG(int, help, 0, "Print help.")
+FUZZER_FLAG(
+    int, save_minimized_corpus, 0,
+    "If 1, the minimized corpus is saved into the first input directory")
