@@ -2033,7 +2033,7 @@ Thread::DumpUsingSettingsFormat (Stream &strm, uint32_t frame_idx)
 
     StackFrameSP frame_sp;
     SymbolContext frame_sc;
-    if (frame_idx != LLDB_INVALID_INDEX32)
+    if (frame_idx != LLDB_INVALID_FRAME_ID)
     {
         frame_sp = GetStackFrameAtIndex (frame_idx);
         if (frame_sp)
