@@ -163,16 +163,15 @@ static bool parseZOption(StringRef opt, uint64_t &val) {
   return true;
 }
 
-bool GnuLdDriver::linkELF(int argc, const char *argv[],
-                          raw_ostream &diagnostics) {
+bool GnuLdDriver::linkELF(int argc, const char *argv[], raw_ostream &diag) {
   BumpPtrAllocator alloc;
   std::tie(argc, argv) = maybeExpandResponseFiles(argc, argv, alloc);
   std::unique_ptr<ELFLinkingContext> options;
-  if (!parse(argc, argv, options, diagnostics))
+  if (!parse(argc, argv, options, diag))
     return false;
   if (!options)
     return true;
-  return link(*options, diagnostics);
+  return link(*options, diag);
 }
 
 static llvm::Optional<llvm::Triple::ArchType>
@@ -291,15 +290,14 @@ GnuLdDriver::evalLinkerScript(ELFLinkingContext &ctx,
 
 bool GnuLdDriver::applyEmulation(llvm::Triple &triple,
                                  llvm::opt::InputArgList &args,
-                                 raw_ostream &diagnostics) {
+                                 raw_ostream &diag) {
   llvm::opt::Arg *arg = args.getLastArg(OPT_m);
   if (!arg)
     return true;
   llvm::Optional<llvm::Triple::ArchType> arch =
       getArchType(triple, arg->getValue());
   if (!arch) {
-    diagnostics << "error: unsupported emulation '" << arg->getValue()
-                << "'.\n";
+    diag << "error: unsupported emulation '" << arg->getValue() << "'.\n";
     return false;
   }
   triple.setArch(*arch);
@@ -337,7 +335,7 @@ createELFLinkingContext(llvm::Triple triple) {
 
 bool GnuLdDriver::parse(int argc, const char *argv[],
                         std::unique_ptr<ELFLinkingContext> &context,
-                        raw_ostream &diagnostics) {
+                        raw_ostream &diag) {
   // Parse command line options using GnuLdOptions.td
   std::unique_ptr<llvm::opt::InputArgList> parsedArgs;
   GnuLdOptTable table;
@@ -347,9 +345,9 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
   parsedArgs.reset(
       table.ParseArgs(&argv[1], &argv[argc], missingIndex, missingCount));
   if (missingCount) {
-    diagnostics << "error: missing arg value for '"
-                << parsedArgs->getArgString(missingIndex) << "' expected "
-                << missingCount << " argument(s).\n";
+    diag << "error: missing arg value for '"
+         << parsedArgs->getArgString(missingIndex) << "' expected "
+         << missingCount << " argument(s).\n";
     return false;
   }
 
@@ -367,13 +365,13 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
     baseTriple = getDefaultTarget(argv[0]);
   llvm::Triple triple(baseTriple);
 
-  if (!applyEmulation(triple, *parsedArgs, diagnostics))
+  if (!applyEmulation(triple, *parsedArgs, diag))
     return false;
 
   std::unique_ptr<ELFLinkingContext> ctx(createELFLinkingContext(triple));
 
   if (!ctx) {
-    diagnostics << "unknown target triple\n";
+    diag << "unknown target triple\n";
     return false;
   }
 
@@ -387,8 +385,8 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
 
   // Ignore unknown arguments.
   for (auto unknownArg : parsedArgs->filtered(OPT_UNKNOWN))
-    diagnostics << "warning: ignoring unknown argument: "
-                << unknownArg->getValue() << "\n";
+    diag << "warning: ignoring unknown argument: "
+         << unknownArg->getValue() << "\n";
 
   // Set sys root path.
   if (llvm::opt::Arg *sysRootPath = parsedArgs->getLastArg(OPT_sysroot))
@@ -556,7 +554,7 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
       } else if (parseDefsymAsAlias(inputArg->getValue(), sym, target)) {
         ctx->addAlias(sym, target);
       } else {
-        diagnostics << "invalid --defsym: " << inputArg->getValue() << "\n";
+        diag << "invalid --defsym: " << inputArg->getValue() << "\n";
         return false;
       }
       break;
@@ -568,7 +566,7 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
 
     case OPT_end_group: {
       if (groupStack.empty()) {
-        diagnostics << "stray --end-group\n";
+        diag << "stray --end-group\n";
         return false;
       }
       int startGroupPos = groupStack.top();
@@ -595,13 +593,12 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
         if ((!parseZOption(extOpt, maxPageSize)) ||
             (maxPageSize < ctx->getPageSize()) ||
             (maxPageSize % ctx->getPageSize())) {
-          diagnostics << "invalid option: " << extOpt << "\n";
+          diag << "invalid option: " << extOpt << "\n";
           return false;
         }
         ctx->setMaxPageSize(maxPageSize);
       } else
-        diagnostics << "warning: ignoring unknown argument for -z: " << extOpt
-                    << "\n";
+        diag << "warning: ignoring unknown argument for -z: " << extOpt << "\n";
       break;
     }
 
@@ -621,22 +618,20 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
       StringRef realpath = pathOrErr.get();
 
       bool isScript =
-          (!path.endswith(".objtxt") && isLinkerScript(realpath, diagnostics));
+          (!path.endswith(".objtxt") && isLinkerScript(realpath, diag));
       if (isScript) {
         if (ctx->logInputFiles())
-          diagnostics << path << "\n";
+          diag << path << "\n";
         ErrorOr<std::unique_ptr<MemoryBuffer>> mb =
           MemoryBuffer::getFileOrSTDIN(path);
         if (std::error_code ec = mb.getError()) {
-          diagnostics << "Cannot open " << path << ": "
-                      << ec.message() << "\n";
+          diag << "Cannot open " << path << ": " << ec.message() << "\n";
           return false;
         }
-        std::error_code ec = evalLinkerScript(*ctx, std::move(mb.get()),
-                                              diagnostics);
+        std::error_code ec = evalLinkerScript(*ctx, std::move(mb.get()), diag);
         if (ec) {
-          diagnostics << path << ": Error parsing linker script: "
-                      << ec.message() << "\n";
+          diag << path << ": Error parsing linker script: "
+               << ec.message() << "\n";
           return false;
         }
         break;
@@ -645,7 +640,7 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
           = loadFile(*ctx, realpath, wholeArchive);
       for (std::unique_ptr<File> &file : files) {
         if (ctx->logInputFiles())
-          diagnostics << file->path() << "\n";
+          diag << file->path() << "\n";
         auto node = llvm::make_unique<FileNode>(std::move(file));
         node->setAsNeeded(asNeeded);
         ctx->getNodes().push_back(std::move(node));
@@ -686,8 +681,7 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
       uint64_t baseAddress = 0;
       StringRef inputValue = inputArg->getValue();
       if ((inputValue.getAsInteger(0, baseAddress)) || !baseAddress) {
-        diagnostics << "invalid value for image base " << inputValue
-                    << "\n";
+        diag << "invalid value for image base " << inputValue << "\n";
         return false;
       }
       ctx->setBaseAddress(baseAddress);
@@ -700,7 +694,7 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
   }   // end for
 
   if (ctx->getNodes().empty()) {
-    diagnostics << "No input files\n";
+    diag << "No input files\n";
     return false;
   }
 
@@ -721,7 +715,7 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
   }
 
   // Validate the combination of options used.
-  if (!ctx->validate(diagnostics))
+  if (!ctx->validate(diag))
     return false;
 
   context.swap(ctx);
