@@ -46,123 +46,123 @@ public:
     bool
     ExecuteOneLine (const char *command,
                     CommandReturnObject *result,
-                    const ExecuteScriptOptions &options = ExecuteScriptOptions());
+                    const ExecuteScriptOptions &options = ExecuteScriptOptions()) override;
 
     void
-    ExecuteInterpreterLoop ();
+    ExecuteInterpreterLoop () override;
 
     bool
     ExecuteOneLineWithReturn (const char *in_string, 
                               ScriptInterpreter::ScriptReturnType return_type,
                               void *ret_value,
-                              const ExecuteScriptOptions &options = ExecuteScriptOptions());
+                              const ExecuteScriptOptions &options = ExecuteScriptOptions()) override;
 
     lldb_private::Error
     ExecuteMultipleLines (const char *in_string,
-                          const ExecuteScriptOptions &options = ExecuteScriptOptions());
+                          const ExecuteScriptOptions &options = ExecuteScriptOptions()) override;
 
     Error
-    ExportFunctionDefinitionToInterpreter (StringList &function_def);
+    ExportFunctionDefinitionToInterpreter (StringList &function_def) override;
 
     bool
-    GenerateTypeScriptFunction (StringList &input, std::string& output, void* name_token = NULL);
+    GenerateTypeScriptFunction (StringList &input, std::string& output, void* name_token = NULL) override;
     
     bool
-    GenerateTypeSynthClass (StringList &input, std::string& output, void* name_token = NULL);
+    GenerateTypeSynthClass (StringList &input, std::string& output, void* name_token = NULL) override;
     
     bool
-    GenerateTypeSynthClass (const char* oneliner, std::string& output, void* name_token = NULL);
+    GenerateTypeSynthClass (const char* oneliner, std::string& output, void* name_token = NULL) override;
     
     // use this if the function code is just a one-liner script
     bool
-    GenerateTypeScriptFunction (const char* oneliner, std::string& output, void* name_token = NULL);
+    GenerateTypeScriptFunction (const char* oneliner, std::string& output, void* name_token = NULL) override;
     
-    virtual bool
-    GenerateScriptAliasFunction (StringList &input, std::string& output);
+    bool
+    GenerateScriptAliasFunction (StringList &input, std::string& output) override;
     
     lldb::ScriptInterpreterObjectSP
     CreateSyntheticScriptedProvider (const char *class_name,
-                                     lldb::ValueObjectSP valobj);
+                                     lldb::ValueObjectSP valobj) override;
 
     lldb::ScriptInterpreterObjectSP
-    virtual CreateScriptedThreadPlan (const char *class_name,
-                                      lldb::ThreadPlanSP thread_plan);
+    CreateScriptedThreadPlan (const char *class_name,
+                              lldb::ThreadPlanSP thread_plan) override;
 
-    virtual bool
+    bool
     ScriptedThreadPlanExplainsStop (lldb::ScriptInterpreterObjectSP implementor_sp,
                                     Event *event,
-                                    bool &script_error);
-    virtual bool
+                                    bool &script_error) override;
+    bool
     ScriptedThreadPlanShouldStop (lldb::ScriptInterpreterObjectSP implementor_sp,
                                   Event *event,
-                                  bool &script_error);
-    virtual lldb::StateType
+                                  bool &script_error) override;
+    lldb::StateType
     ScriptedThreadPlanGetRunState (lldb::ScriptInterpreterObjectSP implementor_sp,
-                                   bool &script_error);
+                                   bool &script_error) override;
     
-    virtual lldb::ScriptInterpreterObjectSP
+    lldb::ScriptInterpreterObjectSP
     OSPlugin_CreatePluginObject (const char *class_name,
-                                 lldb::ProcessSP process_sp);
+                                 lldb::ProcessSP process_sp) override;
     
-    virtual lldb::ScriptInterpreterObjectSP
-    OSPlugin_RegisterInfo (lldb::ScriptInterpreterObjectSP os_plugin_object_sp);
+    lldb::ScriptInterpreterObjectSP
+    OSPlugin_RegisterInfo (lldb::ScriptInterpreterObjectSP os_plugin_object_sp) override;
     
-    virtual lldb::ScriptInterpreterObjectSP
-    OSPlugin_ThreadsInfo (lldb::ScriptInterpreterObjectSP os_plugin_object_sp);
+    lldb::ScriptInterpreterObjectSP
+    OSPlugin_ThreadsInfo (lldb::ScriptInterpreterObjectSP os_plugin_object_sp) override;
     
-    virtual lldb::ScriptInterpreterObjectSP
+    lldb::ScriptInterpreterObjectSP
     OSPlugin_RegisterContextData (lldb::ScriptInterpreterObjectSP os_plugin_object_sp,
-                                  lldb::tid_t thread_id);
+                                  lldb::tid_t thread_id) override;
     
-    virtual lldb::ScriptInterpreterObjectSP
+    lldb::ScriptInterpreterObjectSP
     OSPlugin_CreateThread (lldb::ScriptInterpreterObjectSP os_plugin_object_sp,
                            lldb::tid_t tid,
-                           lldb::addr_t context);
+                           lldb::addr_t context) override;
     
-    virtual lldb::ScriptInterpreterObjectSP
+    lldb::ScriptInterpreterObjectSP
     LoadPluginModule (const FileSpec& file_spec,
-                      lldb_private::Error& error);
+                      lldb_private::Error& error) override;
     
-    virtual lldb::ScriptInterpreterObjectSP
+    lldb::ScriptInterpreterObjectSP
     GetDynamicSettings (lldb::ScriptInterpreterObjectSP plugin_module_sp,
                         Target* target,
                         const char* setting_name,
-                        lldb_private::Error& error);
+                        lldb_private::Error& error) override;
     
-    virtual size_t
-    CalculateNumChildren (const lldb::ScriptInterpreterObjectSP& implementor);
+    size_t
+    CalculateNumChildren (const lldb::ScriptInterpreterObjectSP& implementor) override;
     
-    virtual lldb::ValueObjectSP
-    GetChildAtIndex (const lldb::ScriptInterpreterObjectSP& implementor, uint32_t idx);
+    lldb::ValueObjectSP
+    GetChildAtIndex (const lldb::ScriptInterpreterObjectSP& implementor, uint32_t idx) override;
     
-    virtual int
-    GetIndexOfChildWithName (const lldb::ScriptInterpreterObjectSP& implementor, const char* child_name);
+    int
+    GetIndexOfChildWithName (const lldb::ScriptInterpreterObjectSP& implementor, const char* child_name) override;
     
-    virtual bool
-    UpdateSynthProviderInstance (const lldb::ScriptInterpreterObjectSP& implementor);
+    bool
+    UpdateSynthProviderInstance (const lldb::ScriptInterpreterObjectSP& implementor) override;
     
-    virtual bool
-    MightHaveChildrenSynthProviderInstance (const lldb::ScriptInterpreterObjectSP& implementor);
+    bool
+    MightHaveChildrenSynthProviderInstance (const lldb::ScriptInterpreterObjectSP& implementor) override;
     
-    virtual lldb::ValueObjectSP
-    GetSyntheticValue (const lldb::ScriptInterpreterObjectSP& implementor);
+    lldb::ValueObjectSP
+    GetSyntheticValue (const lldb::ScriptInterpreterObjectSP& implementor) override;
     
-    virtual bool
+    bool
     RunScriptBasedCommand(const char* impl_function,
                           const char* args,
                           ScriptedCommandSynchronicity synchronicity,
                           lldb_private::CommandReturnObject& cmd_retobj,
                           Error& error,
-                          const lldb_private::ExecutionContext& exe_ctx);
+                          const lldb_private::ExecutionContext& exe_ctx) override;
     
     Error
-    GenerateFunction(const char *signature, const StringList &input);
+    GenerateFunction(const char *signature, const StringList &input) override;
     
     Error
-    GenerateBreakpointCommandCallbackData (StringList &input, std::string& output);
+    GenerateBreakpointCommandCallbackData (StringList &input, std::string& output) override;
 
     bool
-    GenerateWatchpointCommandCallbackData (StringList &input, std::string& output);
+    GenerateWatchpointCommandCallbackData (StringList &input, std::string& output) override;
 
 //    static size_t
 //    GenerateBreakpointOptionsCommandCallback (void *baton, 
@@ -189,21 +189,21 @@ public:
                                 StoppointCallbackContext *context, 
                                 lldb::user_id_t watch_id);
     
-    virtual bool
+    bool
     GetScriptedSummary (const char *function_name,
                         lldb::ValueObjectSP valobj,
                         lldb::ScriptInterpreterObjectSP& callee_wrapper_sp,
                         const TypeSummaryOptions& options,
-                        std::string& retval);
+                        std::string& retval) override;
     
-    virtual void
-    Clear ();
+    void
+    Clear () override;
 
-    virtual bool
-    GetDocumentationForItem (const char* item, std::string& dest);
+    bool
+    GetDocumentationForItem (const char* item, std::string& dest) override;
     
-    virtual bool
-    CheckObjectExists (const char* name)
+    bool
+    CheckObjectExists (const char* name) override
     {
         if (!name || !name[0])
             return false;
@@ -211,76 +211,76 @@ public:
         return GetDocumentationForItem (name,temp);
     }
     
-    virtual bool
+    bool
     RunScriptFormatKeyword (const char* impl_function,
                             Process* process,
                             std::string& output,
-                            Error& error);
+                            Error& error) override;
 
-    virtual bool
+    bool
     RunScriptFormatKeyword (const char* impl_function,
                             Thread* thread,
                             std::string& output,
-                            Error& error);
+                            Error& error) override;
     
-    virtual bool
+    bool
     RunScriptFormatKeyword (const char* impl_function,
                             Target* target,
                             std::string& output,
-                            Error& error);
+                            Error& error) override;
     
-    virtual bool
+    bool
     RunScriptFormatKeyword (const char* impl_function,
                             StackFrame* frame,
                             std::string& output,
-                            Error& error);
+                            Error& error) override;
     
-    virtual bool
+    bool
     RunScriptFormatKeyword (const char* impl_function,
                             ValueObject* value,
                             std::string& output,
-                            Error& error);
+                            Error& error) override;
     
-    virtual bool
+    bool
     LoadScriptingModule (const char* filename,
                          bool can_reload,
                          bool init_session,
                          lldb_private::Error& error,
-                         lldb::ScriptInterpreterObjectSP* module_sp = nullptr);
+                         lldb::ScriptInterpreterObjectSP* module_sp = nullptr) override;
     
-    virtual lldb::ScriptInterpreterObjectSP
-    MakeScriptObject (void* object);
+    lldb::ScriptInterpreterObjectSP
+    MakeScriptObject (void* object) override;
     
-    virtual std::unique_ptr<ScriptInterpreterLocker>
-    AcquireInterpreterLock ();
+    std::unique_ptr<ScriptInterpreterLocker>
+    AcquireInterpreterLock () override;
     
     void
     CollectDataForBreakpointCommandCallback (std::vector<BreakpointOptions *> &bp_options_vec,
-                                             CommandReturnObject &result);
+                                             CommandReturnObject &result) override;
 
     void 
     CollectDataForWatchpointCommandCallback (WatchpointOptions *wp_options,
-                                             CommandReturnObject &result);
+                                             CommandReturnObject &result) override;
 
     /// Set the callback body text into the callback for the breakpoint.
     Error
     SetBreakpointCommandCallback (BreakpointOptions *bp_options,
-                                  const char *callback_body);
+                                  const char *callback_body) override;
 
     void 
     SetBreakpointCommandCallbackFunction (BreakpointOptions *bp_options,
-                                          const char *function_name);
+                                          const char *function_name) override;
 
     /// Set a one-liner as the callback for the watchpoint.
     void 
     SetWatchpointCommandCallback (WatchpointOptions *wp_options,
-                                  const char *oneliner);
+                                  const char *oneliner) override;
 
     StringList
     ReadCommandInputFromUser (FILE *in_file);
     
     virtual void
-    ResetOutputFileHandle (FILE *new_fh);
+    ResetOutputFileHandle (FILE *new_fh) override;
     
     static void
     InitializePrivate ();
@@ -334,11 +334,11 @@ public:
     //----------------------------------------------------------------------
     // IOHandlerDelegate
     //----------------------------------------------------------------------
-    virtual void
-    IOHandlerActivated (IOHandler &io_handler);
+    void
+    IOHandlerActivated (IOHandler &io_handler) override;
 
-    virtual void
-    IOHandlerInputComplete (IOHandler &io_handler, std::string &data);
+    void
+    IOHandlerInputComplete (IOHandler &io_handler, std::string &data) override;
 
 protected:
 
