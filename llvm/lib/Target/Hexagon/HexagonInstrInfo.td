@@ -91,9 +91,11 @@ class T_CMP <string mnemonic, bits<2> MajOp, bit isNot, Operand ImmOp>
     let Inst{1-0}   = dst;
   }
 
+let isCodeGenOnly = 0 in {
 def C2_cmpeqi   : T_CMP <"cmp.eq",  0b00, 0, s10Ext>;
 def C2_cmpgti   : T_CMP <"cmp.gt",  0b01, 0, s10Ext>;
 def C2_cmpgtui  : T_CMP <"cmp.gtu", 0b10, 0, u9Ext>;
+}
 
 class T_CMP_pat <InstHexagon MI, PatFrag OpNode, PatLeaf ImmPred>
   : Pat<(i1 (OpNode (i32 IntRegs:$src1), ImmPred:$src2)),

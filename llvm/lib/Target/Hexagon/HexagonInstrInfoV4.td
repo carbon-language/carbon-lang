@@ -2663,45 +2663,30 @@ let Predicates = [HasV4T, UseMEMOP] in {
 // incorrect code for negative numbers.
 // Pd=cmpb.eq(Rs,#u8)
 
-let isCompare = 1, isExtendable = 1, opExtendable = 2, hasSideEffects = 0,
-    validSubTargets = HasV4SubT in
-class CMP_NOT_REG_IMM<string OpName, bits<2> op, Operand ImmOp,
-                      list<dag> Pattern>
-  : ALU32Inst <(outs PredRegs:$dst), (ins IntRegs:$src1, ImmOp:$src2),
-    "$dst = !cmp."#OpName#"($src1, #$src2)",
-    Pattern,
-    "", ALU32_2op_tc_2early_SLOT0123> {
-    bits<2> dst;
-    bits<5> src1;
-    bits<10> src2;
-
-    let IClass = 0b0111;
-    let Inst{27-24} = 0b0101;
-    let Inst{23-22} = op;
-    let Inst{20-16} = src1;
-    let Inst{21} = !if (!eq(OpName, "gtu"), 0b0, src2{9});
-    let Inst{13-5} = src2{8-0};
-    let Inst{4-2} = 0b100;
-    let Inst{1-0} = dst;
+// p=!cmp.eq(r1,#s10)
+let isCodeGenOnly = 0 in {
+def C4_cmpneqi  : T_CMP <"cmp.eq",  0b00, 1, s10Ext>;
+def C4_cmpltei  : T_CMP <"cmp.gt",  0b01, 1, s10Ext>;
+def C4_cmplteui : T_CMP <"cmp.gtu", 0b10, 1, u9Ext>;
 }
 
-let opExtentBits = 10, isExtentSigned = 1 in {
-def C4_cmpneqi : CMP_NOT_REG_IMM <"eq", 0b00, s10Ext, [(set (i1 PredRegs:$dst),
-                 (setne (i32 IntRegs:$src1), s10ExtPred:$src2))]>;
+def : T_CMP_pat <C4_cmpneqi,  setne,  s10ExtPred>;
+def : T_CMP_pat <C4_cmpltei,  setle,  s10ExtPred>;
+def : T_CMP_pat <C4_cmplteui, setule, u9ImmPred>;
 
-def C4_cmpltei : CMP_NOT_REG_IMM <"gt", 0b01, s10Ext, [(set (i1 PredRegs:$dst),
-                 (not (setgt (i32 IntRegs:$src1), s10ExtPred:$src2)))]>;
+// rs <= rt -> !(rs > rt).
+/*
+def: Pat<(i1 (setle (i32 IntRegs:$src1), s10ExtPred:$src2)),
+         (C2_not (C2_cmpgti IntRegs:$src1, s10ExtPred:$src2))>;
+//         (C4_cmpltei IntRegs:$src1, s10ExtPred:$src2)>;
+*/
+// Map cmplt(Rs, Imm) -> !cmpgt(Rs, Imm-1).
+def: Pat<(i1 (setlt (i32 IntRegs:$src1), s8ExtPred:$src2)),
+         (C4_cmpltei IntRegs:$src1, (DEC_CONST_SIGNED s8ExtPred:$src2))>;
 
-}
-let opExtentBits = 9 in
-def C4_cmplteui : CMP_NOT_REG_IMM <"gtu", 0b10, u9Ext, [(set (i1 PredRegs:$dst),
-                  (not (setugt (i32 IntRegs:$src1), u9ExtPred:$src2)))]>;
-
-def : Pat <(brcond (i1 (setne (and (i32 IntRegs:$src1), 255), u8ImmPred:$src2)),
-                       bb:$offset),
-      (J2_jumpf (A4_cmpbeqi (i32 IntRegs:$src1), u8ImmPred:$src2),
-                bb:$offset)>,
-      Requires<[HasV4T]>;
+// rs != rt -> !(rs == rt).
+def: Pat<(i1 (setne (i32 IntRegs:$src1), s10ExtPred:$src2)),
+         (C4_cmpneqi IntRegs:$src1, s10ExtPred:$src2)>;
 
 // SDNode for converting immediate C to C-1.
 def DEC_CONST_BYTE : SDNodeXForm<imm, [{
