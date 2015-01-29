@@ -61,7 +61,10 @@ add_llvm_tool_subdirectory(yaml2obj)
 
 add_llvm_tool_subdirectory(llvm-go)
 
-if(MSVC)
+if(MSVC AND NOT(MSVC_VERSION LESS 1800))
+  # Certain aspects of llvm-pdbdump require language support only present in
+  # MSVC 2013 and higher.  Since this is strictly a utility, and since we hope
+  # to drop support for MSVC 2012 soon, don't build this for MSVC < 2013.
   add_llvm_tool_subdirectory(llvm-pdbdump)
 endif()
 
