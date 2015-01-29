@@ -162,9 +162,10 @@ public:
         TII(*Subtarget->getInstrInfo()), TLI(*Subtarget->getTargetLowering()) {
     MFI = funcInfo.MF->getInfo<MipsFunctionInfo>();
     Context = &funcInfo.Fn->getContext();
-    TargetSupported = ((TM.getRelocationModel() == Reloc::PIC_) &&
-                       ((Subtarget->hasMips32r2() || Subtarget->hasMips32()) &&
-                        (Subtarget->isABI_O32())));
+    TargetSupported =
+        ((TM.getRelocationModel() == Reloc::PIC_) &&
+         ((Subtarget->hasMips32r2() || Subtarget->hasMips32()) &&
+          (static_cast<const MipsTargetMachine &>(TM).getABI().IsO32())));
     UnsupportedFPMode = Subtarget->isFP64bit();
   }
 

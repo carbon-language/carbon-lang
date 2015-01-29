@@ -134,13 +134,13 @@ void MipsSEDAGToDAGISel::initGlobalBaseReg(MachineFunction &MF) {
   DebugLoc DL = I != MBB.end() ? I->getDebugLoc() : DebugLoc();
   unsigned V0, V1, GlobalBaseReg = MipsFI->getGlobalBaseReg();
   const TargetRegisterClass *RC;
-
-  RC = (Subtarget->isABI_N64()) ? &Mips::GPR64RegClass : &Mips::GPR32RegClass;
+  const MipsABIInfo &ABI = static_cast<const MipsTargetMachine &>(TM).getABI();
+  RC = (ABI.IsN64()) ? &Mips::GPR64RegClass : &Mips::GPR32RegClass;
 
   V0 = RegInfo.createVirtualRegister(RC);
   V1 = RegInfo.createVirtualRegister(RC);
 
-  if (Subtarget->isABI_N64()) {
+  if (ABI.IsN64()) {
     MF.getRegInfo().addLiveIn(Mips::T9_64);
     MBB.addLiveIn(Mips::T9_64);
 
@@ -172,7 +172,7 @@ void MipsSEDAGToDAGISel::initGlobalBaseReg(MachineFunction &MF) {
   MF.getRegInfo().addLiveIn(Mips::T9);
   MBB.addLiveIn(Mips::T9);
 
-  if (Subtarget->isABI_N32()) {
+  if (ABI.IsN32()) {
     // lui $v0, %hi(%neg(%gp_rel(fname)))
     // addu $v1, $v0, $t9
     // addiu $globalbasereg, $v1, %lo(%neg(%gp_rel(fname)))
@@ -185,7 +185,7 @@ void MipsSEDAGToDAGISel::initGlobalBaseReg(MachineFunction &MF) {
     return;
   }
 
-  assert(Subtarget->isABI_O32());
+  assert(ABI.IsO32());
 
   // For O32 ABI, the following instruction sequence is emitted to initialize
   // the global base register:
