@@ -10,6 +10,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "FuzzerInternal.h"
+#include <algorithm>
 
 namespace fuzzer {
 
