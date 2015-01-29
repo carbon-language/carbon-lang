@@ -39,6 +39,9 @@ namespace sys {
   /// @brief Print a stack trace if a fatal signal occurs.
   void PrintStackTraceOnErrorSignal();
 
+  /// Disable all system dialog boxes that appear when the process crashes.
+  void DisableSystemDialogsOnCrash();
+
   /// \brief Print the stack trace using the given \c FILE object.
   void PrintStackTrace(FILE *);
 

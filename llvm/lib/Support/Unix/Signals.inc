@@ -480,6 +480,8 @@ static void PrintStackTraceSignalHandler(void *) {
   PrintStackTrace(stderr);
 }
 
+void llvm::sys::DisableSystemDialogsOnCrash() {}
+
 /// PrintStackTraceOnErrorSignal - When an error signal (such as SIGABRT or
 /// SIGSEGV) is delivered to the process, print a stack trace and then exit.
 void llvm::sys::PrintStackTraceOnErrorSignal() {
