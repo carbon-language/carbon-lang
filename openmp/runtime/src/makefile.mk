@@ -1532,10 +1532,11 @@ endif
 # --------------------------------------------------------------------------------------------------
 # Fortran files.
 # --------------------------------------------------------------------------------------------------
-    omp_lib_f = omp_lib.f90
-omp_lib.mod omp_lib_kinds.mod : $(omp_lib_f) .rebuild
+omp_lib_f = omp_lib.f90
+omp_lib_kinds.mod : $(omp_lib_f) .rebuild
 	$(target)
 	$(fort) $(fort-flags) $<
+omp_lib.mod : omp_lib_kinds.mod
 
 omp_lib.h  : ev-flags += -D KMP_INT_PTR_KIND="int_ptr_kind()"
 iomp_lib.h : ev-flags += -D KMP_INT_PTR_KIND=$(if $(filter 32,$(arch)),4,8)
