@@ -6055,7 +6055,7 @@ LowerAsSplatVectorLoad(SDValue SrcOp, MVT VT, SDLoc dl, SelectionDAG &DAG) {
 /// FIXME: we'd also like to handle the case where the last elements are zero
 /// rather than undef via VZEXT_LOAD, but we do not detect that case today.
 /// There's even a handy isZeroNode for that purpose.
-static SDValue EltsFromConsecutiveLoads(EVT VT, SmallVectorImpl<SDValue> &Elts,
+static SDValue EltsFromConsecutiveLoads(EVT VT, ArrayRef<SDValue> Elts,
                                         SDLoc &DL, SelectionDAG &DAG,
                                         bool isAfterLegalize) {
   EVT EltVT = VT.getVectorElementType();
