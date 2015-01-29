@@ -7,10 +7,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "MipsMachineFunction.h"
 #include "MCTargetDesc/MipsBaseInfo.h"
+#include "MipsMachineFunction.h"
 #include "MipsInstrInfo.h"
 #include "MipsSubtarget.h"
+#include "MipsTargetMachine.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/IR/Function.h"
@@ -78,12 +79,14 @@ unsigned MipsFunctionInfo::getGlobalBaseReg() {
   if (GlobalBaseReg)
     return GlobalBaseReg;
 
-  const MipsSubtarget &ST = MF.getTarget().getSubtarget<MipsSubtarget>();
-
   const TargetRegisterClass *RC =
-    ST.inMips16Mode() ? &Mips::CPU16RegsRegClass
-                      : ST.isABI_N64() ? &Mips::GPR64RegClass
-                                       : &Mips::GPR32RegClass;
+      static_cast<const MipsSubtarget &>(MF.getSubtarget()).inMips16Mode()
+          ? &Mips::CPU16RegsRegClass
+          : static_cast<const MipsTargetMachine &>(MF.getTarget())
+                    .getABI()
+                    .IsN64()
+                ? &Mips::GPR64RegClass
+                : &Mips::GPR32RegClass;
   return GlobalBaseReg = MF.getRegInfo().createVirtualRegister(RC);
 }
 
@@ -101,9 +104,10 @@ unsigned MipsFunctionInfo::getMips16SPAliasReg() {
 
 void MipsFunctionInfo::createEhDataRegsFI() {
   for (int I = 0; I < 4; ++I) {
-    const MipsSubtarget &ST = MF.getTarget().getSubtarget<MipsSubtarget>();
-    const TargetRegisterClass *RC = ST.isABI_N64() ?
-        &Mips::GPR64RegClass : &Mips::GPR32RegClass;
+    const TargetRegisterClass *RC =
+        static_cast<const MipsTargetMachine &>(MF.getTarget()).getABI().IsN64()
+            ? &Mips::GPR64RegClass
+            : &Mips::GPR32RegClass;
 
     EhDataRegFI[I] = MF.getFrameInfo()->CreateStackObject(RC->getSize(),
         RC->getAlignment(), false);

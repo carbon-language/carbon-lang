@@ -47,7 +47,7 @@ using namespace llvm;
 //===----------------------------------------------------------------------===//
 
 bool MipsDAGToDAGISel::runOnMachineFunction(MachineFunction &MF) {
-  Subtarget = &TM.getSubtarget<MipsSubtarget>();
+  Subtarget = &static_cast<const MipsSubtarget &>(MF.getSubtarget());
   bool Ret = SelectionDAGISel::runOnMachineFunction(MF);
 
   processFunctionAfterISel(MF);
@@ -229,13 +229,4 @@ SelectInlineAsmMemoryOperand(const SDValue &Op, char ConstraintCode,
   assert(ConstraintCode == 'm' && "unexpected asm memory constraint");
   OutOps.push_back(Op);
   return false;
-}
-
-/// createMipsISelDag - This pass converts a legalized DAG into a
-/// MIPS-specific DAG, ready for instruction scheduling.
-FunctionPass *llvm::createMipsISelDag(MipsTargetMachine &TM) {
-  if (TM.getSubtargetImpl()->inMips16Mode())
-    return llvm::createMips16ISelDag(TM);
-
-  return llvm::createMipsSEISelDag(TM);
 }

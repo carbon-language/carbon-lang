@@ -100,7 +100,7 @@ bool MipsFrameLowering::hasFP(const MachineFunction &MF) const {
 
 uint64_t MipsFrameLowering::estimateStackSize(const MachineFunction &MF) const {
   const MachineFrameInfo *MFI = MF.getFrameInfo();
-  const TargetRegisterInfo &TRI = *MF.getSubtarget().getRegisterInfo();
+  const TargetRegisterInfo &TRI = *STI.getRegisterInfo();
 
   int64_t Offset = 0;
 

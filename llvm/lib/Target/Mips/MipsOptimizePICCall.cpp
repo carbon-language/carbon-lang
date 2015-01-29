@@ -174,7 +174,7 @@ void MBBInfo::postVisit() {
 
 // OptimizePICCall methods.
 bool OptimizePICCall::runOnMachineFunction(MachineFunction &F) {
-  if (F.getTarget().getSubtarget<MipsSubtarget>().inMips16Mode())
+  if (static_cast<const MipsSubtarget &>(F.getSubtarget()).inMips16Mode())
     return false;
 
   // Do a pre-order traversal of the dominator tree.

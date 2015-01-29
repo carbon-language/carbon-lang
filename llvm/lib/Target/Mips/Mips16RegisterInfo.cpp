@@ -65,7 +65,7 @@ bool Mips16RegisterInfo::saveScavengerRegister
    const TargetRegisterClass *RC,
    unsigned Reg) const {
   DebugLoc DL;
-  const TargetInstrInfo &TII = *MBB.getParent()->getSubtarget().getInstrInfo();
+  const TargetInstrInfo &TII = *Subtarget.getInstrInfo();
   TII.copyPhysReg(MBB, I, DL, Mips::T0, Reg, true);
   TII.copyPhysReg(MBB, UseMI, DL, Reg, Mips::T0, true);
   return true;
@@ -106,7 +106,7 @@ void Mips16RegisterInfo::eliminateFI(MachineBasicBlock::iterator II,
   if (FrameIndex >= MinCSFI && FrameIndex <= MaxCSFI)
     FrameReg = Mips::SP;
   else {
-    const TargetFrameLowering *TFI = MF.getSubtarget().getFrameLowering();
+    const TargetFrameLowering *TFI = Subtarget.getFrameLowering();
     if (TFI->hasFP(MF)) {
       FrameReg = Mips::S0;
     }
@@ -140,8 +140,7 @@ void Mips16RegisterInfo::eliminateFI(MachineBasicBlock::iterator II,
     DebugLoc DL = II->getDebugLoc();
     unsigned NewImm;
     const Mips16InstrInfo &TII =
-        *static_cast<const Mips16InstrInfo *>(
-            MBB.getParent()->getSubtarget().getInstrInfo());
+        *static_cast<const Mips16InstrInfo *>(Subtarget.getInstrInfo());
     FrameReg = TII.loadImmediate(FrameReg, Offset, MBB, II, DL, NewImm);
     Offset = SignExtend64<16>(NewImm);
     IsKill = true;

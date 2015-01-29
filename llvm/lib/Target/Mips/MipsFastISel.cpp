@@ -60,9 +60,9 @@ class MipsFastISel final : public FastISel {
   /// Subtarget - Keep a pointer to the MipsSubtarget around so that we can
   /// make the right decision when generating code for different targets.
   const TargetMachine &TM;
+  const MipsSubtarget *Subtarget;
   const TargetInstrInfo &TII;
   const TargetLowering &TLI;
-  const MipsSubtarget *Subtarget;
   MipsFunctionInfo *MFI;
 
   // Convenience variables to avoid some queries.
@@ -157,9 +157,9 @@ public:
   explicit MipsFastISel(FunctionLoweringInfo &funcInfo,
                         const TargetLibraryInfo *libInfo)
       : FastISel(funcInfo, libInfo), TM(funcInfo.MF->getTarget()),
-        TII(*TM.getSubtargetImpl()->getInstrInfo()),
-        TLI(*TM.getSubtargetImpl()->getTargetLowering()),
-        Subtarget(&TM.getSubtarget<MipsSubtarget>()) {
+        Subtarget(
+            &static_cast<const MipsSubtarget &>(funcInfo.MF->getSubtarget())),
+        TII(*Subtarget->getInstrInfo()), TLI(*Subtarget->getTargetLowering()) {
     MFI = funcInfo.MF->getInfo<MipsFunctionInfo>();
     Context = &funcInfo.Fn->getContext();
     TargetSupported = ((TM.getRelocationModel() == Reloc::PIC_) &&
