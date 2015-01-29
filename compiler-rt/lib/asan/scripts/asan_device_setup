@@ -87,6 +87,7 @@ if [[ x$device != x ]]; then
 fi
 
 echo '>> Remounting /system rw'
+$ADB wait-for-device
 $ADB root
 $ADB wait-for-device
 $ADB remount
