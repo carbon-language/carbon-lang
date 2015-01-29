@@ -42,6 +42,7 @@ static bool compareByPosition(const DefinedAtom *lhs, const DefinedAtom *rhs) {
   const File *rhsFile = &rhs->file();
   if (lhsFile->ordinal() != rhsFile->ordinal())
     return lhsFile->ordinal() < rhsFile->ordinal();
+  assert(lhs->ordinal() != rhs->ordinal());
   return lhs->ordinal() < rhs->ordinal();
 }
 
