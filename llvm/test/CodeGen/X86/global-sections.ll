@@ -121,7 +121,7 @@ define void @F1() {
 ; LINUX: G7:
 ; LINUX:        .asciz  "abcdefghi"
 
-; LINUX-SECTIONS: .section        .rodata.G7,"aMS",@progbits,1
+; LINUX-SECTIONS: .section        .rodata.str1.1,"aMS",@progbits,1
 ; LINUX-SECTIONS:       .globl G7
 
 ; WIN32-SECTIONS: .section        .rdata,"rd",one_only,_G7
@@ -182,7 +182,7 @@ define void @F1() {
 @G14 = private unnamed_addr constant [4 x i8] c"foo\00", align 1
 
 ; LINUX-SECTIONS:        .type   .LG14,@object           # @G14
-; LINUX-SECTIONS:        .section        .rodata..LG14,"aMS",@progbits,1
+; LINUX-SECTIONS:        .section        .rodata.str1.1,"aMS",@progbits,1
 ; LINUX-SECTIONS: .LG14:
 ; LINUX-SECTIONS:        .asciz  "foo"
 ; LINUX-SECTIONS:        .size   .LG14, 4
@@ -206,7 +206,7 @@ define void @F1() {
 ; DARWIN64: .section       __TEXT,__const
 ; DARWIN64: _G15:
 
-; LINUX-SECTIONS: .section      .rodata.G15,"aM",@progbits,8
+; LINUX-SECTIONS: .section      .rodata.cst8,"aM",@progbits,8
 ; LINUX-SECTIONS: G15:
 
 ; WIN32-SECTIONS: .section      .rdata,"rd",one_only,_G15

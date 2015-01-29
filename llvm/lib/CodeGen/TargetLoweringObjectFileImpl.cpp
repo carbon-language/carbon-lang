@@ -246,24 +246,25 @@ static StringRef getSectionPrefixForGlobal(SectionKind Kind) {
 const MCSection *TargetLoweringObjectFileELF::
 SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
                        Mangler &Mang, const TargetMachine &TM) const {
+  unsigned Flags = getELFSectionFlags(Kind);
+
   // If we have -ffunction-section or -fdata-section then we should emit the
   // global value to a uniqued section specifically for it.
-  bool EmitUniquedSection;
-  if (Kind.isText())
-    EmitUniquedSection = TM.getFunctionSections();
-  else
-    EmitUniquedSection = TM.getDataSections();
+  bool EmitUniquedSection = false;
+  if (!(Flags & ELF::SHF_MERGE) && !Kind.isCommon()) {
+    if (Kind.isText())
+      EmitUniquedSection = TM.getFunctionSections();
+    else
+      EmitUniquedSection = TM.getDataSections();
+  }
 
-  // If this global is linkonce/weak and the target handles this by emitting it
-  // into a 'uniqued' section name, create and return the section now.
-  if ((EmitUniquedSection && !Kind.isCommon()) || GV->hasComdat()) {
+  if (EmitUniquedSection || GV->hasComdat()) {
     StringRef Prefix = getSectionPrefixForGlobal(Kind);
 
     SmallString<128> Name(Prefix);
     TM.getNameWithPrefix(Name, GV, Mang, true);
 
     StringRef Group = "";
-    unsigned Flags = getELFSectionFlags(Kind);
     if (const Comdat *C = getELFComdat(GV)) {
       Flags |= ELF::SHF_GROUP;
       Group = C->getName();
