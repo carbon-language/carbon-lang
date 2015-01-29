@@ -38,6 +38,16 @@ ThreadLauncher::LaunchThread(llvm::StringRef name, lldb::thread_func_t thread_fu
         error.SetError(::GetLastError(), eErrorTypeWin32);
 #else
 
+
+    // ASAN instrumentation adds a lot of bookkeeping overhead on stack frames.
+#if __has_feature(address_sanitizer)
+    const size_t eight_megabytes = 8 * 1024 * 1024;
+    if (min_stack_byte_size < eight_megabytes)
+    {
+        min_stack_byte_size += eight_megabytes;
+    }
+#endif
+
     pthread_attr_t *thread_attr_ptr = NULL;
     pthread_attr_t thread_attr;
     bool destroy_attr = false;
