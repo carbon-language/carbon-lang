@@ -278,18 +278,6 @@ let isCall = 1, Uses = [RSP], SchedRW = [WriteJump] in {
                        "lcall{q}\t{*}$dst", [], IIC_CALL_FAR_MEM>;
 }
 
-let isCall = 1, isCodeGenOnly = 1 in
-  // __chkstk(MSVC):     clobber R10, R11 and EFLAGS
-  // ___chkstk_ms(Mingw64): clobber R10, R11 and EFLAGS
-  // ___chkstk(Mingw64): clobber R10, R11, RAX and EFLAGS, and update RSP.
-  let Defs = [RAX, R10, R11, RSP, EFLAGS],
-      Uses = [RSP] in {
-    def W64ALLOCA : Ii32PCRel<0xE8, RawFrm,
-                      (outs), (ins i64i32imm_pcrel:$dst),
-                      "call{q}\t$dst", [], IIC_CALL_RI>,
-                    Requires<[IsWin64]>, Sched<[WriteJump]>;
-  }
-
 let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1,
     isCodeGenOnly = 1, Uses = [RSP], usesCustomInserter = 1,
     SchedRW = [WriteJump] in {

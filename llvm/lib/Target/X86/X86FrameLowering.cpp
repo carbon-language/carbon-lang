@@ -415,7 +415,7 @@ void X86FrameLowering::getStackProbeFunction(const MachineFunction &MF,
   if (STI.is64Bit())
     CallOp = MF.getTarget().getCodeModel() == CodeModel::Large
                  ? X86::CALL64r
-                 : X86::W64ALLOCA;
+                 : X86::CALL64pcrel32;
   else
     CallOp = X86::CALLpcrel32;
 

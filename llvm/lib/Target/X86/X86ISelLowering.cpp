@@ -21070,7 +21070,7 @@ X86TargetLowering::EmitLoweredWinAlloca(MachineInstr *MI,
       // ___chkstk(Mingw64):
       // Clobbers R10, R11, RAX and EFLAGS.
       // Updates RSP.
-      BuildMI(*BB, MI, DL, TII->get(X86::W64ALLOCA))
+      BuildMI(*BB, MI, DL, TII->get(X86::CALL64pcrel32))
         .addExternalSymbol("___chkstk")
         .addReg(X86::RAX, RegState::Implicit)
         .addReg(X86::RSP, RegState::Implicit)
@@ -21080,7 +21080,7 @@ X86TargetLowering::EmitLoweredWinAlloca(MachineInstr *MI,
     } else {
       // __chkstk(MSVCRT): does not update stack pointer.
       // Clobbers R10, R11 and EFLAGS.
-      BuildMI(*BB, MI, DL, TII->get(X86::W64ALLOCA))
+      BuildMI(*BB, MI, DL, TII->get(X86::CALL64pcrel32))
         .addExternalSymbol("__chkstk")
         .addReg(X86::RAX, RegState::Implicit)
         .addReg(X86::EFLAGS, RegState::Define | RegState::Implicit);
