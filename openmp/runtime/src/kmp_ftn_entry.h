@@ -258,7 +258,7 @@ FTN_GET_AFFINITY_MAX_PROC( void )
         }
 
     #if KMP_GROUP_AFFINITY
-        if ( __kmp_num_proc_groups <= 1 ) {
+        if ( __kmp_num_proc_groups > 1 ) {
             return (int)KMP_CPU_SETSIZE;
         }
     #endif /* KMP_GROUP_AFFINITY */
