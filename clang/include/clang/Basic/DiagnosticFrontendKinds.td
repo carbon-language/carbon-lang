@@ -35,6 +35,10 @@ def err_fe_backend_plugin: Error<"%0">, BackendInfo;
 def remark_fe_backend_plugin: Remark<"%0">, BackendInfo, InGroup<RemarkBackendPlugin>;
 def note_fe_backend_plugin: Note<"%0">, BackendInfo;
 
+def warn_fe_override_module : Warning<
+    "overriding the module target triple with %0">, 
+    InGroup<DiagGroup<"override-module">>;
+
 def remark_fe_backend_optimization_remark : Remark<"%0">, BackendInfo,
     InGroup<BackendOptimizationRemark>;
 def remark_fe_backend_optimization_remark_missed : Remark<"%0">, BackendInfo,

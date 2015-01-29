@@ -709,11 +709,9 @@ void CodeGenAction::ExecuteAction() {
     }
     const TargetOptions &TargetOpts = CI.getTargetOpts();
     if (TheModule->getTargetTriple() != TargetOpts.Triple) {
-      unsigned DiagID = CI.getDiagnostics().getCustomDiagID(
-          DiagnosticsEngine::Warning,
-          "overriding the module target triple with %0");
-
-      CI.getDiagnostics().Report(SourceLocation(), DiagID) << TargetOpts.Triple;
+      CI.getDiagnostics().Report(SourceLocation(),
+                                 diag::warn_fe_override_module)
+          << TargetOpts.Triple;
       TheModule->setTargetTriple(TargetOpts.Triple);
     }
 
