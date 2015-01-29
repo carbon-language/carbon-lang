@@ -79,7 +79,7 @@ bool WinEHPrepare::runOnFunction(Function &Fn) {
   if (!isMSVCPersonality(Pers))
     return DwarfPrepare->runOnFunction(Fn);
 
-  // FIXME: Cleanups are unimplemented. Replace them with calls to @llvm.trap.
+  // FIXME: Cleanups are unimplemented. Replace them with unreachable.
   if (Resumes.empty())
     return false;
 
