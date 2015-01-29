@@ -4,8 +4,6 @@
 #include <cstddef>
 #include <iostream>
 
-static volatile int Sink;
-
 extern "C" void TestOneInput(const uint8_t *Data, size_t Size) {
   int bits = 0;
   if (Size > 0 && Data[0] == 'F') bits |= 1;
