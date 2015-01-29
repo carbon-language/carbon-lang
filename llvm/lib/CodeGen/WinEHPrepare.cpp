@@ -27,13 +27,12 @@ using namespace llvm;
 
 namespace {
 class WinEHPrepare : public FunctionPass {
-  const TargetMachine *TM;
   FunctionPass *DwarfPrepare;
 
 public:
   static char ID; // Pass identification, replacement for typeid.
   WinEHPrepare(const TargetMachine *TM = nullptr)
-      : FunctionPass(ID), TM(TM), DwarfPrepare(createDwarfEHPass(TM)) {
+      : FunctionPass(ID), DwarfPrepare(createDwarfEHPass(TM)) {
     initializeDominatorTreeWrapperPassPass(*PassRegistry::getPassRegistry());
   }
 
