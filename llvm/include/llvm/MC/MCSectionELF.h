@@ -92,10 +92,6 @@ public:
   static bool classof(const MCSection *S) {
     return S->getVariant() == SV_ELF;
   }
-
-  // Return the entry size for sections with fixed-width data.
-  static unsigned DetermineEntrySize(SectionKind Kind);
-
 };
 
 } // end namespace llvm

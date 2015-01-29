@@ -953,9 +953,8 @@ void PPCLinuxAsmPrinter::EmitStartOfAsmFile(Module &M) {
   if (M.getPICLevel() == PICLevel::Small)
     return AsmPrinter::EmitStartOfAsmFile(M);
 
-  OutStreamer.SwitchSection(OutContext.getELFSection(".got2",
-         ELF::SHT_PROGBITS, ELF::SHF_WRITE | ELF::SHF_ALLOC,
-         SectionKind::getReadOnly()));
+  OutStreamer.SwitchSection(OutContext.getELFSection(
+      ".got2", ELF::SHT_PROGBITS, ELF::SHF_WRITE | ELF::SHF_ALLOC));
 
   MCSymbol *TOCSym = OutContext.GetOrCreateSymbol(Twine(".LTOC"));
   MCSymbol *CurrentPos = OutContext.CreateTempSymbol();
@@ -1007,9 +1006,8 @@ void PPCLinuxAsmPrinter::EmitFunctionEntryLabel() {
 
   // Emit an official procedure descriptor.
   MCSectionSubPair Current = OutStreamer.getCurrentSection();
-  const MCSectionELF *Section = OutStreamer.getContext().getELFSection(".opd",
-      ELF::SHT_PROGBITS, ELF::SHF_WRITE | ELF::SHF_ALLOC,
-      SectionKind::getReadOnly());
+  const MCSectionELF *Section = OutStreamer.getContext().getELFSection(
+      ".opd", ELF::SHT_PROGBITS, ELF::SHF_WRITE | ELF::SHF_ALLOC);
   OutStreamer.SwitchSection(Section);
   OutStreamer.EmitLabel(CurrentFnSym);
   OutStreamer.EmitValueToAlignment(8);
@@ -1047,13 +1045,11 @@ bool PPCLinuxAsmPrinter::doFinalization(Module &M) {
     const MCSectionELF *Section;
     
     if (isPPC64)
-      Section = OutStreamer.getContext().getELFSection(".toc",
-        ELF::SHT_PROGBITS, ELF::SHF_WRITE | ELF::SHF_ALLOC,
-        SectionKind::getReadOnly());
-	else
-      Section = OutStreamer.getContext().getELFSection(".got2",
-        ELF::SHT_PROGBITS, ELF::SHF_WRITE | ELF::SHF_ALLOC,
-        SectionKind::getReadOnly());
+      Section = OutStreamer.getContext().getELFSection(
+          ".toc", ELF::SHT_PROGBITS, ELF::SHF_WRITE | ELF::SHF_ALLOC);
+        else
+          Section = OutStreamer.getContext().getELFSection(
+              ".got2", ELF::SHT_PROGBITS, ELF::SHF_WRITE | ELF::SHF_ALLOC);
     OutStreamer.SwitchSection(Section);
 
     for (MapVector<MCSymbol*, MCSymbol*>::iterator I = TOC.begin(),

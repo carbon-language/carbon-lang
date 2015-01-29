@@ -958,11 +958,8 @@ void ARMTargetELFStreamer::finishAttributeSection() {
   if (AttributeSection) {
     Streamer.SwitchSection(AttributeSection);
   } else {
-    AttributeSection =
-      Streamer.getContext().getELFSection(".ARM.attributes",
-                                          ELF::SHT_ARM_ATTRIBUTES,
-                                          0,
-                                          SectionKind::getMetadata());
+    AttributeSection = Streamer.getContext().getELFSection(
+        ".ARM.attributes", ELF::SHT_ARM_ATTRIBUTES, 0);
     Streamer.SwitchSection(AttributeSection);
 
     // Format version
@@ -1069,11 +1066,11 @@ inline void ARMELFStreamer::SwitchToEHSection(const char *Prefix,
   // Get .ARM.extab or .ARM.exidx section
   const MCSectionELF *EHSection = nullptr;
   if (const MCSymbol *Group = FnSection.getGroup()) {
-    EHSection = getContext().getELFSection(
-      EHSecName, Type, Flags | ELF::SHF_GROUP, Kind,
-      FnSection.getEntrySize(), Group->getName());
+    EHSection =
+        getContext().getELFSection(EHSecName, Type, Flags | ELF::SHF_GROUP,
+                                   FnSection.getEntrySize(), Group->getName());
   } else {
-    EHSection = getContext().getELFSection(EHSecName, Type, Flags, Kind);
+    EHSection = getContext().getELFSection(EHSecName, Type, Flags);
   }
   assert(EHSection && "Failed to get the required EH section");
 

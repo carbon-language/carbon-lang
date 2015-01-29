@@ -704,8 +704,8 @@ void MipsAsmPrinter::EmitStartOfAsmFile(Module &M) {
 
   // Tell the assembler which ABI we are using
   std::string SectionName = std::string(".mdebug.") + getCurrentABIString();
-  OutStreamer.SwitchSection(OutContext.getELFSection(
-      SectionName, ELF::SHT_PROGBITS, 0, SectionKind::getDataRel()));
+  OutStreamer.SwitchSection(
+      OutContext.getELFSection(SectionName, ELF::SHT_PROGBITS, 0));
 
   // NaN: At the moment we only support:
   // 1. .nan legacy (default)
@@ -717,13 +717,11 @@ void MipsAsmPrinter::EmitStartOfAsmFile(Module &M) {
 
   if (Subtarget->isABI_EABI()) {
     if (Subtarget->isGP32bit())
-      OutStreamer.SwitchSection(
-          OutContext.getELFSection(".gcc_compiled_long32", ELF::SHT_PROGBITS, 0,
-                                   SectionKind::getDataRel()));
+      OutStreamer.SwitchSection(OutContext.getELFSection(".gcc_compiled_long32",
+                                                         ELF::SHT_PROGBITS, 0));
     else
-      OutStreamer.SwitchSection(
-          OutContext.getELFSection(".gcc_compiled_long64", ELF::SHT_PROGBITS, 0,
-                                   SectionKind::getDataRel()));
+      OutStreamer.SwitchSection(OutContext.getELFSection(".gcc_compiled_long64",
+                                                         ELF::SHT_PROGBITS, 0));
   }
 
   getTargetStreamer().updateABIInfo(*Subtarget);
@@ -945,7 +943,7 @@ void MipsAsmPrinter::EmitFPCallStub(
   //
   const MCSectionELF *M = OutContext.getELFSection(
       ".mips16.call.fp." + std::string(Symbol), ELF::SHT_PROGBITS,
-      ELF::SHF_ALLOC | ELF::SHF_EXECINSTR, SectionKind::getText());
+      ELF::SHF_ALLOC | ELF::SHF_EXECINSTR);
   OutStreamer.SwitchSection(M, nullptr);
   //
   // .align 2

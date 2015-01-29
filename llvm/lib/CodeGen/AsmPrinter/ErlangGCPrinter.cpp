@@ -52,8 +52,8 @@ void ErlangGCPrinter::finishAssembly(Module &M, GCModuleInfo &Info,
 
   // Put this in a custom .note section.
   AP.OutStreamer.SwitchSection(
-      AP.getObjFileLowering().getContext().getELFSection(
-          ".note.gc", ELF::SHT_PROGBITS, 0, SectionKind::getDataRel()));
+      AP.getObjFileLowering().getContext().getELFSection(".note.gc",
+                                                         ELF::SHT_PROGBITS, 0));
 
   // For each function...
   for (GCModuleInfo::FuncInfoVec::iterator FI = Info.funcinfo_begin(),

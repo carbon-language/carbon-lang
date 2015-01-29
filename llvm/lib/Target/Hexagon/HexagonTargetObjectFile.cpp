@@ -33,14 +33,10 @@ void HexagonTargetObjectFile::Initialize(MCContext &Ctx,
   TargetLoweringObjectFileELF::Initialize(Ctx, TM);
   InitializeELF(TM.Options.UseInitArray);
 
-  SmallDataSection =
-    getContext().getELFSection(".sdata", ELF::SHT_PROGBITS,
-                               ELF::SHF_WRITE | ELF::SHF_ALLOC,
-                               SectionKind::getDataRel());
-  SmallBSSSection =
-    getContext().getELFSection(".sbss", ELF::SHT_NOBITS,
-                               ELF::SHF_WRITE | ELF::SHF_ALLOC,
-                               SectionKind::getBSS());
+  SmallDataSection = getContext().getELFSection(
+      ".sdata", ELF::SHT_PROGBITS, ELF::SHF_WRITE | ELF::SHF_ALLOC);
+  SmallBSSSection = getContext().getELFSection(".sbss", ELF::SHT_NOBITS,
+                                               ELF::SHF_WRITE | ELF::SHF_ALLOC);
 }
 
 // sdata/sbss support taken largely from the MIPS Backend.

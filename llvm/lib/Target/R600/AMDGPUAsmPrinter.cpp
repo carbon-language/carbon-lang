@@ -110,9 +110,8 @@ bool AMDGPUAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   EmitFunctionHeader();
 
   MCContext &Context = getObjFileLowering().getContext();
-  const MCSectionELF *ConfigSection = Context.getELFSection(".AMDGPU.config",
-                                              ELF::SHT_PROGBITS, 0,
-                                              SectionKind::getReadOnly());
+  const MCSectionELF *ConfigSection =
+      Context.getELFSection(".AMDGPU.config", ELF::SHT_PROGBITS, 0);
   OutStreamer.SwitchSection(ConfigSection);
 
   const AMDGPUSubtarget &STM = TM.getSubtarget<AMDGPUSubtarget>();
@@ -136,10 +135,8 @@ bool AMDGPUAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   EmitFunctionBody();
 
   if (isVerbose()) {
-    const MCSectionELF *CommentSection
-      = Context.getELFSection(".AMDGPU.csdata",
-                              ELF::SHT_PROGBITS, 0,
-                              SectionKind::getReadOnly());
+    const MCSectionELF *CommentSection =
+        Context.getELFSection(".AMDGPU.csdata", ELF::SHT_PROGBITS, 0);
     OutStreamer.SwitchSection(CommentSection);
 
     if (STM.getGeneration() >= AMDGPUSubtarget::SOUTHERN_ISLANDS) {
@@ -165,9 +162,8 @@ bool AMDGPUAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 
   if (STM.dumpCode() && DisasmEnabled) {
 
-    OutStreamer.SwitchSection(Context.getELFSection(".AMDGPU.disasm",
-                                                ELF::SHT_NOTE, 0,
-                                                SectionKind::getReadOnly()));
+    OutStreamer.SwitchSection(
+        Context.getELFSection(".AMDGPU.disasm", ELF::SHT_NOTE, 0));
 
     for (size_t i = 0; i < DisasmLines.size(); ++i) {
       std::string Comment(DisasmLineMaxLen - DisasmLines[i].size(), ' ');
@@ -510,8 +506,8 @@ void AMDGPUAsmPrinter::EmitAmdKernelCodeT(const MachineFunction &MF,
 
   header.wavefront_size = STM.getWavefrontSize();
 
-  const MCSectionELF *VersionSection = OutContext.getELFSection(".hsa.version",
-      ELF::SHT_PROGBITS, 0, SectionKind::getReadOnly());
+  const MCSectionELF *VersionSection =
+      OutContext.getELFSection(".hsa.version", ELF::SHT_PROGBITS, 0);
   OutStreamer.SwitchSection(VersionSection);
   OutStreamer.EmitBytes(Twine("HSA Code Unit:" +
                         Twine(header.hsail_version_major) + "." +

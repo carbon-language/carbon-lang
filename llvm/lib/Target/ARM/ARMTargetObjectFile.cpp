@@ -36,10 +36,7 @@ void ARMElfTargetObjectFile::Initialize(MCContext &Ctx,
   }
 
   AttributesSection =
-    getContext().getELFSection(".ARM.attributes",
-                               ELF::SHT_ARM_ATTRIBUTES,
-                               0,
-                               SectionKind::getMetadata());
+      getContext().getELFSection(".ARM.attributes", ELF::SHT_ARM_ATTRIBUTES, 0);
 }
 
 const MCExpr *ARMElfTargetObjectFile::getTTypeGlobalReference(

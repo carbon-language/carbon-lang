@@ -325,8 +325,7 @@ void SymbolTableWriter::createSymtabShndx() {
 
   MCContext &Ctx = Asm.getContext();
   const MCSectionELF *SymtabShndxSection =
-      Ctx.getELFSection(".symtab_shndxr", ELF::SHT_SYMTAB_SHNDX, 0,
-                        SectionKind::getReadOnly(), 4, "");
+      Ctx.getELFSection(".symtab_shndxr", ELF::SHT_SYMTAB_SHNDX, 0, 4, "");
   MCSectionData *SymtabShndxSD =
       &Asm.getOrCreateSectionData(*SymtabShndxSection);
   SymtabShndxSD->setAlignment(4);
@@ -1151,7 +1150,6 @@ void ELFObjectWriter::CreateRelocationSections(MCAssembler &Asm,
     const MCSectionELF *RelaSection =
       Ctx.getELFSection(RelaSectionName, hasRelocationAddend() ?
                         ELF::SHT_RELA : ELF::SHT_REL, Flags,
-                        SectionKind::getReadOnly(),
                         EntrySize, Group);
     RelMap[&Section] = RelaSection;
     Asm.getOrCreateSectionData(*RelaSection);
@@ -1410,21 +1408,18 @@ void ELFObjectWriter::CreateMetadataSections(MCAssembler &Asm,
 
   // We construct .shstrtab, .symtab and .strtab in this order to match gnu as.
   const MCSectionELF *ShstrtabSection =
-    Ctx.getELFSection(".shstrtab", ELF::SHT_STRTAB, 0,
-                      SectionKind::getReadOnly());
+      Ctx.getELFSection(".shstrtab", ELF::SHT_STRTAB, 0);
   MCSectionData &ShstrtabSD = Asm.getOrCreateSectionData(*ShstrtabSection);
   ShstrtabSD.setAlignment(1);
 
   const MCSectionELF *SymtabSection =
     Ctx.getELFSection(".symtab", ELF::SHT_SYMTAB, 0,
-                      SectionKind::getReadOnly(),
                       EntrySize, "");
   MCSectionData &SymtabSD = Asm.getOrCreateSectionData(*SymtabSection);
   SymtabSD.setAlignment(is64Bit() ? 8 : 4);
 
   const MCSectionELF *StrtabSection;
-  StrtabSection = Ctx.getELFSection(".strtab", ELF::SHT_STRTAB, 0,
-                                    SectionKind::getReadOnly());
+  StrtabSection = Ctx.getELFSection(".strtab", ELF::SHT_STRTAB, 0);
   MCSectionData &StrtabSD = Asm.getOrCreateSectionData(*StrtabSection);
   StrtabSD.setAlignment(1);
 
@@ -1521,9 +1516,8 @@ void ELFObjectWriter::WriteSection(MCAssembler &Asm,
   case ELF::SHT_RELA: {
     const MCSectionELF *SymtabSection;
     const MCSectionELF *InfoSection;
-    SymtabSection = Asm.getContext().getELFSection(".symtab", ELF::SHT_SYMTAB,
-                                                   0,
-                                                   SectionKind::getReadOnly());
+    SymtabSection =
+        Asm.getContext().getELFSection(".symtab", ELF::SHT_SYMTAB, 0);
     sh_link = SectionIndexMap.lookup(SymtabSection);
     assert(sh_link && ".symtab not found");
 
@@ -1534,8 +1528,7 @@ void ELFObjectWriter::WriteSection(MCAssembler &Asm,
         Section.getGroup() ? Section.getGroup()->getName() : "";
 
     InfoSection = Asm.getContext().getELFSection(SectionName, ELF::SHT_PROGBITS,
-                                                 0, SectionKind::getReadOnly(),
-                                                 0, GroupName);
+                                                 0, 0, GroupName);
     sh_info = SectionIndexMap.lookup(InfoSection);
     break;
   }
@@ -1579,18 +1572,14 @@ void ELFObjectWriter::WriteSection(MCAssembler &Asm,
       Section.getType() == ELF::SHT_ARM_EXIDX) {
     StringRef SecName(Section.getSectionName());
     if (SecName == ".ARM.exidx") {
-      sh_link = SectionIndexMap.lookup(
-        Asm.getContext().getELFSection(".text",
-                                       ELF::SHT_PROGBITS,
-                                       ELF::SHF_EXECINSTR | ELF::SHF_ALLOC,
-                                       SectionKind::getText()));
+      sh_link = SectionIndexMap.lookup(Asm.getContext().getELFSection(
+          ".text", ELF::SHT_PROGBITS, ELF::SHF_EXECINSTR | ELF::SHF_ALLOC));
     } else if (SecName.startswith(".ARM.exidx")) {
       StringRef GroupName =
           Section.getGroup() ? Section.getGroup()->getName() : "";
       sh_link = SectionIndexMap.lookup(Asm.getContext().getELFSection(
           SecName.substr(sizeof(".ARM.exidx") - 1), ELF::SHT_PROGBITS,
-          ELF::SHF_EXECINSTR | ELF::SHF_ALLOC, SectionKind::getText(), 0,
-          GroupName));
+          ELF::SHF_EXECINSTR | ELF::SHF_ALLOC, 0, GroupName));
     }
   }
 

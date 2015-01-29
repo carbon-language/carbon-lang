@@ -22,8 +22,7 @@ void MCAsmInfoELF::anchor() { }
 
 const MCSection *
 MCAsmInfoELF::getNonexecutableStackSection(MCContext &Ctx) const {
-  return Ctx.getELFSection(".note.GNU-stack", ELF::SHT_PROGBITS,
-                           0, SectionKind::getMetadata());
+  return Ctx.getELFSection(".note.GNU-stack", ELF::SHT_PROGBITS, 0);
 }
 
 MCAsmInfoELF::MCAsmInfoELF() {

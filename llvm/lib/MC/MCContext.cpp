@@ -252,10 +252,9 @@ getMachOSection(StringRef Segment, StringRef Section,
                                             Reserved2, Kind);
 }
 
-const MCSectionELF *MCContext::
-getELFSection(StringRef Section, unsigned Type, unsigned Flags,
-              SectionKind Kind) {
-  return getELFSection(Section, Type, Flags, Kind, 0, "");
+const MCSectionELF *MCContext::getELFSection(StringRef Section, unsigned Type,
+                                             unsigned Flags) {
+  return getELFSection(Section, Type, Flags, 0, "");
 }
 
 void MCContext::renameELFSection(const MCSectionELF *Section, StringRef Name) {
@@ -271,25 +270,27 @@ void MCContext::renameELFSection(const MCSectionELF *Section, StringRef Name) {
   const_cast<MCSectionELF*>(Section)->setSectionName(CachedName);
 }
 
-const MCSectionELF *MCContext::
-getELFSection(StringRef Section, unsigned Type, unsigned Flags,
-              SectionKind Kind, unsigned EntrySize, StringRef Group) {
+const MCSectionELF *MCContext::getELFSection(StringRef Section, unsigned Type,
+                                             unsigned Flags, unsigned EntrySize,
+                                             StringRef Group) {
   // Do the lookup, if we have a hit, return it.
   auto IterBool = ELFUniquingMap.insert(
       std::make_pair(SectionGroupPair(Section, Group), nullptr));
   auto &Entry = *IterBool.first;
   if (!IterBool.second) return Entry.second;
 
-  // Possibly refine the entry size first.
-  if (!EntrySize) {
-    EntrySize = MCSectionELF::DetermineEntrySize(Kind);
-  }
-
   MCSymbol *GroupSym = nullptr;
   if (!Group.empty())
     GroupSym = GetOrCreateSymbol(Group);
 
   StringRef CachedName = Entry.first.first;
+
+  SectionKind Kind;
+  if (Flags & ELF::SHF_EXECINSTR)
+    Kind = SectionKind::getText();
+  else
+    Kind = SectionKind::getReadOnly();
+
   MCSectionELF *Result = new (*this)
       MCSectionELF(CachedName, Type, Flags, Kind, EntrySize, GroupSym);
   Entry.second = Result;

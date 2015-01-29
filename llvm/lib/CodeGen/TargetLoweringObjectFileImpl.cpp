@@ -71,7 +71,6 @@ void TargetLoweringObjectFileELF::emitPersonalityValue(MCStreamer &Streamer,
   const MCSection *Sec = getContext().getELFSection(NameData,
                                                     ELF::SHT_PROGBITS,
                                                     Flags,
-                                                    SectionKind::getDataRel(),
                                                     0, Label->getName());
   unsigned Size = TM.getDataLayout()->getPointerSize();
   Streamer.SwitchSection(Sec);
@@ -219,7 +218,7 @@ const MCSection *TargetLoweringObjectFileELF::getExplicitSectionGlobal(
   }
   return getContext().getELFSection(SectionName,
                                     getELFSectionType(SectionName, Kind), Flags,
-                                    Kind, /*EntrySize=*/0, Group);
+                                    /*EntrySize=*/0, Group);
 }
 
 /// getSectionPrefixForGlobal - Return the section prefix name used by options
@@ -268,9 +267,8 @@ SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
       Group = C->getName();
     }
 
-    return getContext().getELFSection(Name.str(),
-                                      getELFSectionType(Name.str(), Kind),
-                                      Flags, Kind, 0, Group);
+    return getContext().getELFSection(
+        Name.str(), getELFSectionType(Name.str(), Kind), Flags, 0, Group);
   }
 
   if (Kind.isText()) return TextSection;
@@ -283,21 +281,19 @@ SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
     unsigned Align =
         TM.getDataLayout()->getPreferredAlignment(cast<GlobalVariable>(GV));
 
-    const char *SizeSpec = ".rodata.str1.";
+    unsigned EntrySize = 1;
     if (Kind.isMergeable2ByteCString())
-      SizeSpec = ".rodata.str2.";
+      EntrySize = 2;
     else if (Kind.isMergeable4ByteCString())
-      SizeSpec = ".rodata.str4.";
+      EntrySize = 4;
     else
       assert(Kind.isMergeable1ByteCString() && "unknown string width");
 
-
+    std::string SizeSpec = ".rodata.str" + utostr(EntrySize) + ".";
     std::string Name = SizeSpec + utostr(Align);
-    return getContext().getELFSection(Name, ELF::SHT_PROGBITS,
-                                      ELF::SHF_ALLOC |
-                                      ELF::SHF_MERGE |
-                                      ELF::SHF_STRINGS,
-                                      Kind);
+    return getContext().getELFSection(
+        Name, ELF::SHT_PROGBITS,
+        ELF::SHF_ALLOC | ELF::SHF_MERGE | ELF::SHF_STRINGS, EntrySize, "");
   }
 
   if (Kind.isMergeableConst()) {
@@ -357,7 +353,6 @@ static const MCSectionELF *getStaticStructorSection(MCContext &Ctx,
   std::string Name;
   unsigned Type;
   unsigned Flags = ELF::SHF_ALLOC | ELF::SHF_WRITE;
-  SectionKind Kind = SectionKind::getDataRel();
   StringRef COMDAT = KeySym ? KeySym->getName() : "";
 
   if (KeySym)
@@ -389,7 +384,7 @@ static const MCSectionELF *getStaticStructorSection(MCContext &Ctx,
     Type = ELF::SHT_PROGBITS;
   }
 
-  return Ctx.getELFSection(Name, Type, Flags, Kind, 0, COMDAT);
+  return Ctx.getELFSection(Name, Type, Flags, 0, COMDAT);
 }
 
 const MCSection *TargetLoweringObjectFileELF::getStaticCtorSection(
@@ -410,16 +405,10 @@ TargetLoweringObjectFileELF::InitializeELF(bool UseInitArray_) {
   if (!UseInitArray)
     return;
 
-  StaticCtorSection =
-    getContext().getELFSection(".init_array", ELF::SHT_INIT_ARRAY,
-                               ELF::SHF_WRITE |
-                               ELF::SHF_ALLOC,
-                               SectionKind::getDataRel());
-  StaticDtorSection =
-    getContext().getELFSection(".fini_array", ELF::SHT_FINI_ARRAY,
-                               ELF::SHF_WRITE |
-                               ELF::SHF_ALLOC,
-                               SectionKind::getDataRel());
+  StaticCtorSection = getContext().getELFSection(
+      ".init_array", ELF::SHT_INIT_ARRAY, ELF::SHF_WRITE | ELF::SHF_ALLOC);
+  StaticDtorSection = getContext().getELFSection(
+      ".fini_array", ELF::SHT_FINI_ARRAY, ELF::SHF_WRITE | ELF::SHF_ALLOC);
 }
 
 //===----------------------------------------------------------------------===//
