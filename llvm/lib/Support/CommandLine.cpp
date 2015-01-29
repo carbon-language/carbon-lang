@@ -88,7 +88,7 @@ public:
   // Globals for name and overview of program.  Program name is not a string to
   // avoid static ctor/dtor issues.
   std::string ProgramName;
-  const char *ProgramOverview = nullptr;
+  const char *ProgramOverview;
 
   // This collects additional help to be printed.
   std::vector<const char *> MoreHelp;
@@ -97,7 +97,9 @@ public:
   SmallVector<Option *, 4> SinkOpts;
   StringMap<Option *> OptionsMap;
 
-  Option *ConsumeAfterOpt = nullptr; // The ConsumeAfter option if it exists.
+  Option *ConsumeAfterOpt; // The ConsumeAfter option if it exists.
+
+  CommandLineParser() : ProgramOverview(nullptr), ConsumeAfterOpt(nullptr) {}
 
   void ParseCommandLineOptions(int argc, const char *const *argv,
                                const char *Overview);
