@@ -55,7 +55,6 @@ class SectionKind {
         /// MergeableConst - These are sections for merging fixed-length
         /// constants together.  For example, this can be used to unique
         /// constant pool entries etc.
-        MergeableConst,
 
             /// MergeableConst4 - This is a section used by 4-byte constants,
             /// for example, floats.
@@ -151,8 +150,8 @@ public:
   bool isMergeable4ByteCString() const { return K == Mergeable4ByteCString; }
 
   bool isMergeableConst() const {
-    return K == MergeableConst || K == MergeableConst4 ||
-           K == MergeableConst8 || K == MergeableConst16;
+    return K == MergeableConst4 || K == MergeableConst8 ||
+           K == MergeableConst16;
   }
   bool isMergeableConst4() const { return K == MergeableConst4; }
   bool isMergeableConst8() const { return K == MergeableConst8; }
@@ -216,7 +215,6 @@ public:
   static SectionKind getMergeable4ByteCString() {
     return get(Mergeable4ByteCString);
   }
-  static SectionKind getMergeableConst() { return get(MergeableConst); }
   static SectionKind getMergeableConst4() { return get(MergeableConst4); }
   static SectionKind getMergeableConst8() { return get(MergeableConst8); }
   static SectionKind getMergeableConst16() { return get(MergeableConst16); }

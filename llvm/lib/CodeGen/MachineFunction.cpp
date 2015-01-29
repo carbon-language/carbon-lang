@@ -860,7 +860,7 @@ MachineConstantPoolEntry::getSectionKind(const DataLayout *DL) const {
       Kind = SectionKind::getMergeableConst16();
       break;
     default:
-      Kind = SectionKind::getMergeableConst();
+      Kind = SectionKind::getReadOnly();
       break;
     }
   }
