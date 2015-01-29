@@ -160,6 +160,12 @@ def warn_missing_sysroot : Warning<"no such sysroot directory: '%0'">,
   InGroup<DiagGroup<"missing-sysroot">>;
 def warn_debug_compression_unavailable : Warning<"cannot compress debug sections (zlib not installed)">,
   InGroup<DiagGroup<"debug-compression-unavailable">>;
+def warn_drv_enabling_rtti_with_exceptions : Warning<
+  "implicitly enabling rtti for exception handling">,
+  InGroup<DiagGroup<"rtti-for-exceptions">>;
+def warn_drv_disabling_vptr_no_rtti_default : Warning<
+  "implicitly disabling vptr sanitizer because rtti wasn't enabled">,
+  InGroup<DiagGroup<"auto-disable-vptr-sanitizer">>;
 
 def note_drv_command_failed_diag_msg : Note<
   "diagnostic msg: %0">;
