@@ -1,5 +1,3 @@
-; REQUIRES: object-emission
-
 ; RUN: llc -mtriple=x86_64-linux -O0 -filetype=asm < %s | FileCheck %s
 
 ; From source:
