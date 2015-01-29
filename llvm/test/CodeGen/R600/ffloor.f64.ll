@@ -12,19 +12,19 @@ declare <16 x double> @llvm.floor.v16f64(<16 x double>) nounwind readnone
 ; CI: v_floor_f64_e32
 
 ; SI: s_bfe_u32 [[SEXP:s[0-9]+]], {{s[0-9]+}}, 0xb0014
+; SI: s_and_b32 s{{[0-9]+}}, s{{[0-9]+}}, 0x80000000
 ; SI: s_add_i32 s{{[0-9]+}}, [[SEXP]], 0xfffffc01
 ; SI: s_lshr_b64
 ; SI: s_not_b64
 ; SI: s_and_b64
-; SI-DAG: s_and_b32 s{{[0-9]+}}, s{{[0-9]+}}, 0x80000000
-; SI-DAG: cmp_lt_i32
+; SI: cmp_lt_i32
 ; SI: cndmask_b32
 ; SI: cndmask_b32
 ; SI: cmp_gt_i32
 ; SI: cndmask_b32
 ; SI: cndmask_b32
-; SI: v_cmp_lg_f64
 ; SI: v_cmp_lt_f64
+; SI: v_cmp_lg_f64
 ; SI: s_and_b64
 ; SI: v_cndmask_b32
 ; SI: v_cndmask_b32

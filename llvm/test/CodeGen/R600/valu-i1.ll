@@ -81,7 +81,6 @@ exit:
 ; SI: buffer_store_dword
 ; SI: v_cmp_eq_i32_e32 vcc,
 ; SI: s_or_b64 [[OR_SREG:s\[[0-9]+:[0-9]+\]]]
-; SI: v_add_i32_e32 {{v[0-9]+}}, 1, {{v[0-9]+}}
 ; SI: s_andn2_b64 exec, exec, [[OR_SREG]]
 ; SI: s_cbranch_execnz BB2_3
 
@@ -124,8 +123,8 @@ exit:
 
 ; Clear exec bits for workitems that load -1s
 ; SI: BB3_3:
-; SI: buffer_load_dword [[A:v[0-9]+]]
 ; SI: buffer_load_dword [[B:v[0-9]+]]
+; SI: buffer_load_dword [[A:v[0-9]+]]
 ; SI-DAG: v_cmp_ne_i32_e64 [[NEG1_CHECK_0:s\[[0-9]+:[0-9]+\]]], [[A]], -1
 ; SI-DAG: v_cmp_ne_i32_e64 [[NEG1_CHECK_1:s\[[0-9]+:[0-9]+\]]], [[B]], -1
 ; SI: s_and_b64 [[ORNEG1:s\[[0-9]+:[0-9]+\]]], [[NEG1_CHECK_1]], [[NEG1_CHECK_0]]

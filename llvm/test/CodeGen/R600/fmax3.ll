@@ -4,9 +4,9 @@
 declare float @llvm.maxnum.f32(float, float) nounwind readnone
 
 ; SI-LABEL: {{^}}test_fmax3_olt_0:
-; SI: buffer_load_dword [[REGA:v[0-9]+]]
-; SI: buffer_load_dword [[REGB:v[0-9]+]]
 ; SI: buffer_load_dword [[REGC:v[0-9]+]]
+; SI: buffer_load_dword [[REGB:v[0-9]+]]
+; SI: buffer_load_dword [[REGA:v[0-9]+]]
 ; SI: v_max3_f32 [[RESULT:v[0-9]+]], [[REGC]], [[REGB]], [[REGA]]
 ; SI: buffer_store_dword [[RESULT]],
 ; SI: s_endpgm
@@ -22,8 +22,8 @@ define void @test_fmax3_olt_0(float addrspace(1)* %out, float addrspace(1)* %apt
 
 ; Commute operand of second fmax
 ; SI-LABEL: {{^}}test_fmax3_olt_1:
-; SI: buffer_load_dword [[REGA:v[0-9]+]]
 ; SI: buffer_load_dword [[REGB:v[0-9]+]]
+; SI: buffer_load_dword [[REGA:v[0-9]+]]
 ; SI: buffer_load_dword [[REGC:v[0-9]+]]
 ; SI: v_max3_f32 [[RESULT:v[0-9]+]], [[REGC]], [[REGB]], [[REGA]]
 ; SI: buffer_store_dword [[RESULT]],

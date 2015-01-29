@@ -34,6 +34,8 @@ define void @trunc_load_shl_i64(i32 addrspace(1)* %out, i64 %a) {
 ; SI: s_lshl_b64 s{{\[}}[[LO_SHL:[0-9]+]]:{{[0-9]+\]}}, s{{\[}}[[LO_SREG]]:{{[0-9]+\]}}, 2
 ; SI: s_add_u32 s[[LO_SREG2:[0-9]+]], s[[LO_SHL]],
 ; SI: s_addc_u32
+; SI: v_mov_b32_e32
+; SI: v_mov_b32_e32
 ; SI: v_mov_b32_e32 v[[LO_VREG:[0-9]+]], s[[LO_SREG2]]
 ; SI: buffer_store_dword v[[LO_VREG]],
 define void @trunc_shl_i64(i64 addrspace(1)* %out2, i32 addrspace(1)* %out, i64 %a) {

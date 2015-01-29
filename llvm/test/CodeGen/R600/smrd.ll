@@ -37,10 +37,12 @@ entry:
 
 ; SMRD load with a 64-bit offset
 ; CHECK-LABEL: {{^}}smrd3:
-; CHECK-DAG: s_mov_b32 s[[SHI:[0-9]+]], 4
-; CHECK-DAG: s_mov_b32 s[[SLO:[0-9]+]], 0 ;
-; FIXME: We don't need to copy these values to VGPRs
-; CHECK-DAG: v_mov_b32_e32 v[[VLO:[0-9]+]], s[[SLO]]
+; FIXME: There are too many copies here because we don't fold immediates
+;        through REG_SEQUENCE
+; CHECK: s_mov_b32 s[[SLO:[0-9]+]], 0 ;
+; CHECK: s_mov_b32 s[[SHI:[0-9]+]], 4
+; CHECK: s_mov_b32 s[[SSLO:[0-9]+]], s[[SLO]]
+; CHECK-DAG: v_mov_b32_e32 v[[VLO:[0-9]+]], s[[SSLO]]
 ; CHECK-DAG: v_mov_b32_e32 v[[VHI:[0-9]+]], s[[SHI]]
 ; FIXME: We should be able to use s_load_dword here
 ; CHECK: buffer_load_dword v{{[0-9]+}}, v{{\[}}[[VLO]]:[[VHI]]{{\]}}, s[{{[0-9]+:[0-9]+}}], 0 addr64

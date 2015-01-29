@@ -21,9 +21,9 @@ define void @round_f64(double addrspace(1)* %out, double %x) #0 {
 ; SI: v_cmp_eq_i32
 
 ; SI: s_mov_b32 [[BFIMASK:s[0-9]+]], 0x7fffffff
+; SI: v_cmp_lt_i32_e64
 ; SI: v_bfi_b32 [[COPYSIGN:v[0-9]+]], [[BFIMASK]]
 
-; SI: v_cmp_lt_i32_e64
 ; SI: v_cmp_gt_i32_e64
 
 

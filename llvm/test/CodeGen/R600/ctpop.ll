@@ -37,10 +37,10 @@ define void @v_ctpop_i32(i32 addrspace(1)* noalias %out, i32 addrspace(1)* noali
 }
 
 ; FUNC-LABEL: {{^}}v_ctpop_add_chain_i32:
-; SI: buffer_load_dword [[VAL0:v[0-9]+]],
 ; SI: buffer_load_dword [[VAL1:v[0-9]+]],
+; SI: buffer_load_dword [[VAL0:v[0-9]+]],
 ; SI: v_bcnt_u32_b32_e64 [[MIDRESULT:v[0-9]+]], [[VAL1]], 0
-; SI-NEXT: v_bcnt_u32_b32_e32 [[RESULT:v[0-9]+]], [[VAL0]], [[MIDRESULT]]
+; SI: v_bcnt_u32_b32_e32 [[RESULT:v[0-9]+]], [[VAL0]], [[MIDRESULT]]
 ; SI: buffer_store_dword [[RESULT]],
 ; SI: s_endpgm
 

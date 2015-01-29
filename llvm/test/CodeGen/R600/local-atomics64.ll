@@ -29,9 +29,9 @@ define void @lds_atomic_add_ret_i64(i64 addrspace(1)* %out, i64 addrspace(3)* %p
 }
 
 ; FUNC-LABEL: {{^}}lds_atomic_add_ret_i64_offset:
+; SI: v_mov_b32_e32 v[[LOVDATA:[0-9]+]], 9
+; SI: v_mov_b32_e32 v[[HIVDATA:[0-9]+]], 0
 ; SI: s_load_dword [[PTR:s[0-9]+]], s{{\[[0-9]+:[0-9]+\]}}, 0xb
-; SI-DAG: v_mov_b32_e32 v[[LOVDATA:[0-9]+]], 9
-; SI-DAG: v_mov_b32_e32 v[[HIVDATA:[0-9]+]], 0
 ; SI-DAG: v_mov_b32_e32 [[VPTR:v[0-9]+]], [[PTR]]
 ; SI: ds_add_rtn_u64 [[RESULT:v\[[0-9]+:[0-9]+\]]], [[VPTR]], v{{\[}}[[LOVDATA]]:[[HIVDATA]]{{\]}} offset:32 [M0]
 ; SI: buffer_store_dwordx2 [[RESULT]],
@@ -274,9 +274,9 @@ define void @lds_atomic_add_noret_i64(i64 addrspace(3)* %ptr) nounwind {
 
 ; FUNC-LABEL: {{^}}lds_atomic_add_noret_i64_offset:
 ; SI: s_load_dword [[PTR:s[0-9]+]], s{{\[[0-9]+:[0-9]+\]}}, 0x9
-; SI: v_mov_b32_e32 [[VPTR:v[0-9]+]], [[PTR]]
 ; SI: v_mov_b32_e32 v[[LOVDATA:[0-9]+]], 9
 ; SI: v_mov_b32_e32 v[[HIVDATA:[0-9]+]], 0
+; SI: v_mov_b32_e32 [[VPTR:v[0-9]+]], [[PTR]]
 ; SI: ds_add_u64 [[VPTR]], v{{\[}}[[LOVDATA]]:[[HIVDATA]]{{\]}} offset:32 [M0]
 ; SI: s_endpgm
 define void @lds_atomic_add_noret_i64_offset(i64 addrspace(3)* %ptr) nounwind {

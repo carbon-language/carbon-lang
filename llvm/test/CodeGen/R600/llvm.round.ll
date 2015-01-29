@@ -3,11 +3,11 @@
 
 ; FUNC-LABEL: {{^}}round_f32:
 ; SI-DAG: s_load_dword [[SX:s[0-9]+]]
-; SI-DAG: v_mov_b32_e32 [[VX:v[0-9]+]], [[SX]]
 ; SI-DAG: s_mov_b32 [[K:s[0-9]+]], 0x7fffffff
-; SI: v_bfi_b32 [[COPYSIGN:v[0-9]+]], [[K]], 1.0, [[VX]]
 ; SI: v_trunc_f32_e32 [[TRUNC:v[0-9]+]], [[SX]]
 ; SI: v_sub_f32_e32 [[SUB:v[0-9]+]], [[SX]], [[TRUNC]]
+; SI: v_mov_b32_e32 [[VX:v[0-9]+]], [[SX]]
+; SI: v_bfi_b32 [[COPYSIGN:v[0-9]+]], [[K]], 1.0, [[VX]]
 ; SI: v_cmp_ge_f32_e64 [[CMP:s\[[0-9]+:[0-9]+\]]], |[[SUB]]|, 0.5
 ; SI: v_cndmask_b32_e64 [[SEL:v[0-9]+]], 0, [[VX]], [[CMP]]
 ; SI: v_add_f32_e32 [[RESULT:v[0-9]+]], [[SEL]], [[TRUNC]]
