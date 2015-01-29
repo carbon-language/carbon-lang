@@ -158,6 +158,10 @@ expand-vars = $(perl) $(tools_dir)expand-vars.pl --strict $(ev-flags) $< $@
             endif
         endif
 
+ifneq "$(pdb_file)" ""
+$(pdb_file) : $(lib_file)
+endif
+
 %.dbg : %$(dll) .rebuild
 	$(target)
         ifeq "$(arch)" "mic"

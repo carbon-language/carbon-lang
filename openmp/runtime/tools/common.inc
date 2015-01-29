@@ -101,6 +101,9 @@ See the Tools tab at http://software.intel.com/mic-developer)
     endif
 endif
 
+# number of parallel build jobs
+jobs?=1
+
 export BUILD_COMPILER := $(compiler)
 
 

@@ -65,6 +65,10 @@ compiler:    Which compiler to use for the build.  Defaults to "icc"
 
 mode:        Library mode: default is "release".  Also supports "debug".
 
+jobs:        The number of parallel jobs for the underlying call to make.
+         This value is sent as the parameter to the -j flag for make.
+         This value defaults to "1", but can be set to any positive integer.
+
 To use any of the options above, simple add <option_name>=<value>.  For 
 example, if you want to build with gcc instead of icc, type:
 
