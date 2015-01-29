@@ -636,6 +636,17 @@ MachineBasicBlock * SITargetLowering::EmitInstrWithCustomInserter(
   return BB;
 }
 
+bool SITargetLowering::enableAggressiveFMAFusion(EVT VT) const {
+  // This currently forces unfolding various combinations of fsub into fma with
+  // free fneg'd operands. As long as we have fast FMA (controlled by
+  // isFMAFasterThanFMulAndFAdd), we should perform these.
+
+  // When fma is quarter rate, for f64 where add / sub are at best half rate,
+  // most of these combines appear to be cycle neutral but save on instruction
+  // count / code size.
+  return true;
+}
+
 EVT SITargetLowering::getSetCCResultType(LLVMContext &Ctx, EVT VT) const {
   if (!VT.isVector()) {
     return MVT::i1;
@@ -647,6 +658,21 @@ MVT SITargetLowering::getScalarShiftAmountTy(EVT VT) const {
   return MVT::i32;
 }
 
+// Answering this is somewhat tricky and depends on the specific device which
+// have different rates for fma or all f64 operations.
+//
+// v_fma_f64 and v_mul_f64 always take the same number of cycles as each other
+// regardless of which device (although the number of cycles differs between
+// devices), so it is always profitable for f64.
+//
+// v_fma_f32 takes 4 or 16 cycles depending on the device, so it is profitable
+// only on full rate devices. Normally, we should prefer selecting v_mad_f32
+// which we can always do even without fused FP ops since it returns the same
+// result as the separate operations and since it is always full
+// rate. Therefore, we lie and report that it is not faster for f32. v_mad_f32
+// however does not support denormals, so we do report fma as faster if we have
+// a fast fma device and require denormals.
+//
 bool SITargetLowering::isFMAFasterThanFMulAndFAdd(EVT VT) const {
   VT = VT.getScalarType();
 
@@ -655,7 +681,10 @@ bool SITargetLowering::isFMAFasterThanFMulAndFAdd(EVT VT) const {
 
   switch (VT.getSimpleVT().SimpleTy) {
   case MVT::f32:
-    return Subtarget->hasFastFMAF32();
+    // This is as fast on some subtargets. However, we always have full rate f32
+    // mad available which returns the same result as the separate operations
+    // which we should prefer over fma.
+    return false;
   case MVT::f64:
     return true;
   default:

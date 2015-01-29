@@ -95,6 +95,7 @@ public:
 
   MachineBasicBlock * EmitInstrWithCustomInserter(MachineInstr * MI,
                                       MachineBasicBlock * BB) const override;
+  bool enableAggressiveFMAFusion(EVT VT) const override;
   EVT getSetCCResultType(LLVMContext &Context, EVT VT) const override;
   MVT getScalarShiftAmountTy(EVT VT) const override;
   bool isFMAFasterThanFMulAndFAdd(EVT VT) const override;
