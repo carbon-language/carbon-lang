@@ -845,8 +845,8 @@ private:
   FormatToken *getNextToken() {
     if (GreaterStashed) {
       // Create a synthesized second '>' token.
-      // FIXME: Increment Column and set OriginalColumn.
       Token Greater = FormatTok->Tok;
+      unsigned OriginalColumn = FormatTok->OriginalColumn;
       FormatTok = new (Allocator.Allocate()) FormatToken;
       FormatTok->Tok = Greater;
       SourceLocation GreaterLocation =
@@ -855,6 +855,7 @@ private:
           SourceRange(GreaterLocation, GreaterLocation);
       FormatTok->TokenText = ">";
       FormatTok->ColumnWidth = 1;
+      FormatTok->OriginalColumn = OriginalColumn;
       GreaterStashed = false;
       return FormatTok;
     }
