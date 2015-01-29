@@ -104,6 +104,9 @@ COMMON_FLAG(uptr, soft_rss_limit_mb, 0,
             " until the RSS goes below the soft limit."
             " This limit does not affect memory allocations other than"
             " malloc/new.")
+COMMON_FLAG(bool, can_use_proc_maps_statm, true,
+            "If false, do not attempt to read /proc/maps/statm."
+            " Mostly useful for testing sanitizers.")
 COMMON_FLAG(
     bool, coverage, false,
     "If set, coverage information will be dumped at program shutdown (if the "

@@ -422,6 +422,45 @@ void PrepareForSandboxing(__sanitizer_sandbox_arguments *args) {
 #endif
 }
 
+// getrusage does not give us the current RSS, only the max RSS.
+// Still, this is better than nothing if /proc/self/statm is not available
+// for some reason, e.g. due to a sandbox.
+static uptr GetRSSFromGetrusage() {
+  struct rusage usage;
+  if (getrusage(RUSAGE_SELF, &usage))  // Failed, probably due to a sandbox.
+    return 0;
+  return usage.ru_maxrss << 10;  // ru_maxrss is in Kb.
+}
+
+uptr GetRSS() {
+  if (!common_flags()->can_use_proc_maps_statm)
+    return GetRSSFromGetrusage();
+  uptr fd = OpenFile("/proc/self/statm", false);
+  if ((sptr)fd < 0)
+    return GetRSSFromGetrusage();
+  char buf[64];
+  uptr len = internal_read(fd, buf, sizeof(buf) - 1);
+  internal_close(fd);
+  if ((sptr)len <= 0)
+    return 0;
+  buf[len] = 0;
+  // The format of the file is:
+  // 1084 89 69 11 0 79 0
+  // We need the second number which is RSS in pages.
+  char *pos = buf;
+  // Skip the first number.
+  while (*pos >= '0' && *pos <= '9')
+    pos++;
+  // Skip whitespaces.
+  while (!(*pos >= '0' && *pos <= '9') && *pos != 0)
+    pos++;
+  // Read the number.
+  uptr rss = 0;
+  while (*pos >= '0' && *pos <= '9')
+    rss = rss * 10 + *pos++ - '0';
+  return rss * GetPageSizeCached();
+}
+
 }  // namespace __sanitizer
 
 #endif  // SANITIZER_FREEBSD || SANITIZER_LINUX
