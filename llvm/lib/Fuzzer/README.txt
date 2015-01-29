@@ -41,7 +41,7 @@ The code resides in the LLVM repository and is (or will be) used by various
 parts of LLVM, but the Fuzzer itself does not (and should not) depend on any
 part of LLVM and can be used for other projects. Ideally, the Fuzzer's code
 should not have any external dependencies. Right now it uses STL, which may need
-to be fixed later.
+to be fixed later. See also F.A.Q. below.
 
 Examples of usage in LLVM:
   * clang-format-fuzzer. The inputs are random pieces of C++-like text.
@@ -62,3 +62,45 @@ a simple function that does something interesting if it receives bytes "Hi!".
      Fuzzer*.cpp test/SimpleTest.cpp
   # Run the fuzzer with no corpus (assuming on empty input)
   % ./a.out
+
+===============================================================================
+F.A.Q.
+
+Q. Why Fuzzer does not use any of the LLVM support?
+A. There are two reasons.
+First, we want this library to be used outside of the LLVM w/o users having to
+build the rest of LLVM. This may sound unconvincing for many LLVM folks,
+but in practice the need for building the whole LLVM frightens many potential
+users -- and we want more users to use this code.
+Second, there is a subtle technical reason not to rely on the rest of LLVM, or
+any other large body of code (maybe not even STL). When coverage instrumentation
+is enabled, it will also instrument the LLVM support code which will blow up the
+coverage set of the process (since the fuzzer is in-process). In other words, by
+using more external dependencies we will slow down the fuzzer while the main
+reason for it to exist is extreme speed.
+
+Q. What about Windows then? The Fuzzer contains code that does not build on
+Windows.
+A. The sanitizer coverage support does not work on Windows either as of 01/2015.
+Once it's there, we'll need to re-implement OS-specific parts (I/O, signals).
+
+Q. When this Fuzzer is not a good solution for a problem?
+A.
+  * If the test inputs are validated by the target library and the validator
+    asserts/crashes on invalid inputs, the in-process fuzzer is not applicable
+    (we could use fork() w/o exec, but it comes with extra overhead).
+  * Bugs in the target library may accumulate w/o being detected. E.g. a memory
+    corruption that goes undetected at first and then leads to a crash while
+    testing another input. This is why it is highly recommended to run this
+    in-process fuzzer with all sanitizers to detect most bugs on the spot.
+  * It is harder to protect the in-process fuzzer from excessive memory
+    consumption and infinite loops in the target library (still possible).
+  * The target library should not have significant global state that is not
+    reset between the runs.
+  * Many interesting target libs are not designed in a way that supports
+    the in-process fuzzer interface (e.g. require a file path instead of a
+    byte array).
+  * If a single test run takes a considerable fraction of a second (or
+    more) the speed benefit from the in-process fuzzer is negligible.
+  * If the target library runs persistent threads (that outlive
+    execution of one test) the fuzzing results will be unreliable.
