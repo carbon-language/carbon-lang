@@ -33,7 +33,7 @@ WWINMAIN: _wWinMainCRTStartup
 # RUN:   /alternatename:_mainCRTStartup=_bar -- %t.obj
 # RUN: llvm-readobj -file-headers %t.exe | FileCheck -check-prefix=MAINADDR %s
 
-MAINADDR: AddressOfEntryPoint: 0x1004
+MAINADDR: AddressOfEntryPoint: 0x100C
 
 # RUN: lld -flavor link /out:%t.exe /subsystem:console /entry:baz -- %t.obj
 # RUN: llvm-readobj -file-headers %t.exe | FileCheck -check-prefix=MANGLE %s

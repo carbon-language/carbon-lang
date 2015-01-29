@@ -1,4 +1,4 @@
-//===- lib/ReaderWriter/PECOFF/GroupedSectionsPass.h ----------------------===//
+//===- lib/ReaderWriter/PECOFF/OrderPass.h -------------------------------===//
 //
 //                             The LLVM Linker
 //
@@ -26,30 +26,46 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#ifndef LLD_READER_WRITER_PE_COFF_GROUPED_SECTIONS_PASS_H
-#define LLD_READER_WRITER_PE_COFF_GROUPED_SECTIONS_PASS_H
+#ifndef LLD_READER_WRITER_PE_COFF_ORDER_PASS_H
+#define LLD_READER_WRITER_PE_COFF_ORDER_PASS_H
 
 #include "Atoms.h"
+#include "lld/Core/Parallel.h"
 #include "lld/Core/Pass.h"
 #include <algorithm>
 
 namespace lld {
 namespace pecoff {
 
-static bool compare(const DefinedAtom *left, const DefinedAtom *right) {
-  if (left->sectionChoice() == DefinedAtom::sectionCustomRequired &&
-      right->sectionChoice() == DefinedAtom::sectionCustomRequired) {
-    return left->customSectionName().compare(right->customSectionName()) < 0;
-  }
-  return left->sectionChoice() == DefinedAtom::sectionCustomRequired &&
-         right->sectionChoice() != DefinedAtom::sectionCustomRequired;
+static bool compareByPosition(const DefinedAtom *lhs, const DefinedAtom *rhs) {
+  const File *lhsFile = &lhs->file();
+  const File *rhsFile = &rhs->file();
+  if (lhsFile->ordinal() != rhsFile->ordinal())
+    return lhsFile->ordinal() < rhsFile->ordinal();
+  return lhs->ordinal() < rhs->ordinal();
 }
 
-class GroupedSectionsPass : public lld::Pass {
+static bool compare(const DefinedAtom *lhs, const DefinedAtom *rhs) {
+  bool lhsCustom = (lhs->sectionChoice() == DefinedAtom::sectionCustomRequired);
+  bool rhsCustom = (rhs->sectionChoice() == DefinedAtom::sectionCustomRequired);
+  if (lhsCustom && rhsCustom) {
+    int cmp = lhs->customSectionName().compare(rhs->customSectionName());
+    if (cmp != 0)
+      return cmp < 0;
+    return compareByPosition(lhs, rhs);
+  }
+  if (lhsCustom && !rhsCustom)
+    return true;
+  if (!lhsCustom && rhsCustom)
+    return false;
+  return compareByPosition(lhs, rhs);
+}
+
+class OrderPass : public lld::Pass {
 public:
   void perform(std::unique_ptr<MutableFile> &file) override {
-    auto definedAtoms = file->definedAtoms();
-    std::stable_sort(definedAtoms.begin(), definedAtoms.end(), compare);
+    MutableFile::DefinedAtomRange defined = file->definedAtoms();
+    parallel_sort(defined.begin(), defined.end(), compare);
   }
 };
 
