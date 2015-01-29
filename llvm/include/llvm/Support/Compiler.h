@@ -399,7 +399,7 @@
 // FIXME: Make this conditional on the Clang version once this is fixed in
 // top-of-tree.
 #define LLVM_THREAD_LOCAL __thread __attribute__((tls_model("global-dynamic")))
-#elif
+#else
 #define LLVM_THREAD_LOCAL __thread
 #endif
 #else // !LLVM_ENABLE_THREADS
