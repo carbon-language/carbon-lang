@@ -391,16 +391,9 @@
 #elif defined(_MSC_VER)
 // MSVC supports this with a __declspec.
 #define LLVM_THREAD_LOCAL __declspec(thread)
-#elif defined(__clang__) && defined(__powerpc64__)
-// Clang, GCC, and all compatible compilers tend to use __thread. But we need
-// to work aronud a bug in the combination of Clang's compilation of
-// global-dynamic and local-dynamic TLS and the ppc64 linker relocations which
-// we do by forcing initial-exec. While that mode isn't strictly sufficient for
-// all possible DSO use cases, it will usually work with glibc.
-// FIXME: Make this conditional on the Clang version once this is fixed in
-// top-of-tree.
-#define LLVM_THREAD_LOCAL __thread __attribute__((tls_model("initial-exec")))
 #else
+// Clang, GCC, and other compatible compilers used __thread prior to C++11 and
+// we only need the restricted functionality that provides.
 #define LLVM_THREAD_LOCAL __thread
 #endif
 #else // !LLVM_ENABLE_THREADS
