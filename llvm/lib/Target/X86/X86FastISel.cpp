@@ -80,7 +80,7 @@ public:
 #include "X86GenFastISel.inc"
 
 private:
-  bool X86FastEmitCompare(const Value *LHS, const Value *RHS, EVT VT);
+  bool X86FastEmitCompare(const Value *LHS, const Value *RHS, EVT VT, DebugLoc DL);
 
   bool X86FastEmitLoad(EVT VT, const X86AddressMode &AM, MachineMemOperand *MMO,
                        unsigned &ResultReg);
@@ -1109,7 +1109,7 @@ static unsigned X86ChooseCmpImmediateOpcode(EVT VT, const ConstantInt *RHSC) {
 }
 
 bool X86FastISel::X86FastEmitCompare(const Value *Op0, const Value *Op1,
-                                     EVT VT) {
+                                     EVT VT, DebugLoc CurDbgLoc) {
   unsigned Op0Reg = getRegForValue(Op0);
   if (Op0Reg == 0) return false;
 
@@ -1122,7 +1122,7 @@ bool X86FastISel::X86FastEmitCompare(const Value *Op0, const Value *Op1,
   // CMPri, otherwise use CMPrr.
   if (const ConstantInt *Op1C = dyn_cast<ConstantInt>(Op1)) {
     if (unsigned CompareImmOpc = X86ChooseCmpImmediateOpcode(VT, Op1C)) {
-      BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(CompareImmOpc))
+      BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, CurDbgLoc, TII.get(CompareImmOpc))
         .addReg(Op0Reg)
         .addImm(Op1C->getSExtValue());
       return true;
@@ -1134,7 +1134,7 @@ bool X86FastISel::X86FastEmitCompare(const Value *Op0, const Value *Op1,
 
   unsigned Op1Reg = getRegForValue(Op1);
   if (Op1Reg == 0) return false;
-  BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(CompareOpc))
+  BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, CurDbgLoc, TII.get(CompareOpc))
     .addReg(Op0Reg)
     .addReg(Op1Reg);
 
@@ -1202,7 +1202,7 @@ bool X86FastISel::X86SelectCmp(const Instruction *I) {
 
   ResultReg = createResultReg(&X86::GR8RegClass);
   if (SETFOpc) {
-    if (!X86FastEmitCompare(LHS, RHS, VT))
+    if (!X86FastEmitCompare(LHS, RHS, VT, I->getDebugLoc()))
       return false;
 
     unsigned FlagReg1 = createResultReg(&X86::GR8RegClass);
@@ -1227,7 +1227,7 @@ bool X86FastISel::X86SelectCmp(const Instruction *I) {
     std::swap(LHS, RHS);
 
   // Emit a compare of LHS/RHS.
-  if (!X86FastEmitCompare(LHS, RHS, VT))
+  if (!X86FastEmitCompare(LHS, RHS, VT, I->getDebugLoc()))
     return false;
 
   BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(Opc), ResultReg);
@@ -1353,7 +1353,7 @@ bool X86FastISel::X86SelectBranch(const Instruction *I) {
         std::swap(CmpLHS, CmpRHS);
 
       // Emit a compare of the LHS and RHS, setting the flags.
-      if (!X86FastEmitCompare(CmpLHS, CmpRHS, VT))
+      if (!X86FastEmitCompare(CmpLHS, CmpRHS, VT, CI->getDebugLoc()))
         return false;
 
       BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(BranchOpc))
@@ -1740,7 +1740,7 @@ bool X86FastISel::X86FastEmitCMoveSelect(MVT RetVT, const Instruction *I) {
 
     EVT CmpVT = TLI.getValueType(CmpLHS->getType());
     // Emit a compare of the LHS and RHS, setting the flags.
-    if (!X86FastEmitCompare(CmpLHS, CmpRHS, CmpVT))
+    if (!X86FastEmitCompare(CmpLHS, CmpRHS, CmpVT, CI->getDebugLoc()))
       return false;
 
     if (SETFOpc) {
@@ -1924,7 +1924,7 @@ bool X86FastISel::X86FastEmitPseudoSelect(MVT RetVT, const Instruction *I) {
       std::swap(CmpLHS, CmpRHS);
 
     EVT CmpVT = TLI.getValueType(CmpLHS->getType());
-    if (!X86FastEmitCompare(CmpLHS, CmpRHS, CmpVT))
+    if (!X86FastEmitCompare(CmpLHS, CmpRHS, CmpVT, CI->getDebugLoc()))
       return false;
   } else {
     unsigned CondReg = getRegForValue(Cond);
