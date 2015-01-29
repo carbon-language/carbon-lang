@@ -59,7 +59,7 @@ int Blob::*member_pointer;
 // CHECK: NonTypeTemplateParameter=U:8:32 (Definition) [type=unsigned int] [typekind=UInt] [isPOD=1]
 // CHECK: TemplateTemplateParameter=W:8:60 (Definition) [type=] [typekind=Invalid] [isPOD=0]
 // CHECK: Namespace=inner:14:11 (Definition) [type=] [typekind=Invalid] [isPOD=0]
-// CHECK: StructDecl=Bar:16:8 (Definition) [type=outer::inner::Bar] [typekind=Record] [isPOD=0] [nbFields=1]
+// CHECK: StructDecl=Bar:16:8 (Definition) [type=outer::inner::Bar] [typekind=Record] [isPOD=0] [nbFields=3]
 // CHECK: CXXConstructor=Bar:17:3 (Definition) [type=void (outer::Foo<bool> *){{.*}}] [typekind=FunctionProto] [canonicaltype=void (outer::Foo<bool> *){{.*}}] [canonicaltypekind=FunctionProto] [resulttype=void] [resulttypekind=Void] [args= [outer::Foo<bool> *] [Pointer]] [isPOD=0]
 // CHECK: ParmDecl=foo:17:25 (Definition) [type=outer::Foo<bool> *] [typekind=Pointer] [canonicaltype=outer::Foo<bool> *] [canonicaltypekind=Pointer] [isPOD=1] [pointeetype=outer::Foo<bool>] [pointeekind=Unexposed]
 // CHECK: NamespaceRef=outer:1:11 [type=] [typekind=Invalid] [isPOD=0]
