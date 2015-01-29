@@ -30,6 +30,7 @@ llvm_add_go_executable(llgo llvm.org/llgo/cmd/gllgo ALL DEPENDS
   irgen/slice.go
   irgen/ssa.go
   irgen/strings.go
+  irgen/switches.go
   irgen/targets.go
   irgen/typemap.go
   irgen/types.go

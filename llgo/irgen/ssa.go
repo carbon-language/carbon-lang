@@ -357,12 +357,7 @@ func (u *unit) defineFunction(f *ssa.Function) {
 	prologueBlock := llvm.InsertBasicBlock(fr.blocks[0], "prologue")
 	fr.builder.SetInsertPointAtEnd(prologueBlock)
 
-	// Map parameter positions to indices. We use this
-	// when processing locals to map back to parameters
-	// when generating debug metadata.
-	paramPos := make(map[token.Pos]int)
 	for i, param := range f.Params {
-		paramPos[param.Pos()] = i
 		llparam := fti.argInfos[i].decode(llvm.GlobalContext(), fr.builder, fr.builder)
 		if isMethod && i == 0 {
 			if _, ok := param.Type().Underlying().(*types.Pointer); !ok {
@@ -401,13 +396,6 @@ func (u *unit) defineFunction(f *ssa.Function) {
 		bcalloca := fr.builder.CreateBitCast(alloca, llvm.PointerType(llvm.Int8Type(), 0), "")
 		value := newValue(bcalloca, local.Type())
 		fr.env[local] = value
-		if fr.GenerateDebug {
-			paramIndex, ok := paramPos[local.Pos()]
-			if !ok {
-				paramIndex = -1
-			}
-			fr.debug.Declare(fr.builder, local, alloca, paramIndex)
-		}
 	}
 
 	// If the function contains any defers, we must first create
