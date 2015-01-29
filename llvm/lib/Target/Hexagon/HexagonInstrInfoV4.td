@@ -1569,7 +1569,7 @@ def J4_hintjumpr: JRInst <
 // PC-relative add
 let hasNewValue = 1, isExtendable = 1, opExtendable = 1,
     isExtentSigned = 0, opExtentBits = 6, hasSideEffects = 0,
-    Uses = [PC], validSubTargets = HasV4SubT in
+    Uses = [PC], validSubTargets = HasV4SubT, isCodeGenOnly = 0 in
 def C4_addipc : CRInst <(outs IntRegs:$Rd), (ins u6Ext:$u6),
   "$Rd = add(pc, #$u6)", [], "", CR_tc_2_SLOT3 > {
     bits<5> Rd;

@@ -4058,6 +4058,38 @@ defm J2_ploop2s : SPLOOP_ri<"2", 0b10>;
 defm J2_ploop3s : SPLOOP_ri<"3", 0b11>;
 }
 
+
+// if (Rs[!>=<]=#0) jump:[t/nt]
+let Defs = [PC], isPredicated = 1, isBranch = 1, hasSideEffects = 0,
+    hasSideEffects = 0 in
+class J2_jump_0_Base<string compare, bit isTak, bits<2> op>
+  : CRInst <(outs), (ins IntRegs:$Rs, brtarget:$r13_2),
+  "if ($Rs"#compare#"#0) jump"#!if(isTak, ":t", ":nt")#" $r13_2" > {
+    bits<5> Rs;
+    bits<15> r13_2;
+
+    let IClass = 0b0110;
+
+    let Inst{27-24} = 0b0001;
+    let Inst{23-22} = op;
+    let Inst{12} = isTak;
+    let Inst{21} = r13_2{14};
+    let Inst{20-16} = Rs;
+    let Inst{11-1} = r13_2{12-2};
+    let Inst{13} = r13_2{13};
+  }
+
+multiclass J2_jump_compare_0<string compare, bits<2> op> {
+  def NAME    : J2_jump_0_Base<compare, 0, op>;
+  def NAME#pt : J2_jump_0_Base<compare, 1, op>;
+}
+let isCodeGenOnly = 0 in {
+defm J2_jumprz    : J2_jump_compare_0<"!=", 0b00>;
+defm J2_jumprgtez : J2_jump_compare_0<">=", 0b01>;
+defm J2_jumprnz   : J2_jump_compare_0<"==", 0b10>;
+defm J2_jumprltez : J2_jump_compare_0<"<=", 0b11>;
+}
+
 // Transfer to/from Control/GPR Guest/GPR
 let hasSideEffects = 0 in
 class TFR_CR_RS_base<RegisterClass CTRC, RegisterClass RC, bit isDouble>

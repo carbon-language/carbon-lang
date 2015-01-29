@@ -1,4 +1,4 @@
-# RUN: llvm-mc --triple hexagon -disassemble < %s | FileCheck %s
+# RUN: llvm-mc -triple hexagon -disassemble < %s | FileCheck %s
 # Hexagon Programmer's Reference Manual 11.1.3 ALU32/PRED
 
 # Conditional add
