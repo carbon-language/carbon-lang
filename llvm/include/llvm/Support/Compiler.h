@@ -373,4 +373,39 @@
 #define LLVM_DUMP_METHOD LLVM_ATTRIBUTE_NOINLINE
 #endif
 
+/// \macro LLVM_THREAD_LOCAL
+/// \brief A thread-local storage specifier which can be used with globals,
+/// extern globals, and static globals.
+///
+/// This is essentially an extremely restricted analog to C++11's thread_local
+/// support, and uses that when available. However, it falls back on
+/// platform-specific or vendor-provided extensions when necessary. These
+/// extensions don't support many of the C++11 thread_local's features. You
+/// should only use this for PODs that you can statically initialize to
+/// some constant value. In almost all circumstances this is most appropriate
+/// for use with a pointer, integer, or small aggregation of pointers and
+/// integers.
+#if LLVM_ENABLE_THREADS
+#if __has_feature(cxx_thread_local)
+#define LLVM_THREAD_LOCAL thread_local
+#elif defined(_MSC_VER)
+// MSVC supports this with a __declspec.
+#define LLVM_THREAD_LOCAL __declspec(thread)
+#elif defined(__clang__) && defined(__powerpc64__)
+// Clang, GCC, and all compatible compilers tend to use __thread. But we need
+// to work aronud a bug in the combination of Clang's compilation of
+// local-dynamic TLS and the ppc64 linker relocations which we do by forcing to
+// global-dynamic (called in most documents "general dynamic").
+// FIXME: Make this conditional on the Clang version once this is fixed in
+// top-of-tree.
+#define LLVM_THREAD_LOCAL __thread __attribute__((tls_model("global-dynamic")))
+#elif
+#define LLVM_THREAD_LOCAL __thread
+#endif
+#else // !LLVM_ENABLE_THREADS
+// If threading is disabled entirely, this compiles to nothing and you get
+// a normal global variable.
+#define LLVM_THREAD_LOCAL
+#endif
+
 #endif
