@@ -1,5 +1,3 @@
-; RUN: llc -mtriple=x86_64-linux -O0 -filetype=asm < %s | FileCheck %s
-
 ; From source:
 ; int f(int a, int b) {
 ;   return a   //
@@ -11,7 +9,7 @@
 
 ; CHECK: .loc{{ +}}1{{ +}}2
 ; CHECK-NOT: .loc{{ }}
-; CHECK: cmpl
+; CHECK: cmp
 
 ; Function Attrs: nounwind uwtable
 define i32 @_Z1fii(i32 %a, i32 %b) #0 {
