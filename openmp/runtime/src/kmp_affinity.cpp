@@ -4361,7 +4361,7 @@ __kmp_aux_get_affinity_mask_proc(int proc, void **mask)
 
     if (__kmp_env_consistency_check) {
         if ((mask == NULL) || (*mask == NULL)) {
-            KMP_FATAL(AffinityInvalidMask, "kmp_set_affinity_mask_proc");
+            KMP_FATAL(AffinityInvalidMask, "kmp_get_affinity_mask_proc");
         }
     }
 
