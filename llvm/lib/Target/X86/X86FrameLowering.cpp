@@ -82,6 +82,14 @@ static unsigned getADDriOpcode(unsigned IsLP64, int64_t Imm) {
   }
 }
 
+static unsigned getSUBrrOpcode(unsigned isLP64) {
+  return isLP64 ? X86::SUB64rr : X86::SUB32rr;
+}
+
+static unsigned getADDrrOpcode(unsigned isLP64) {
+  return isLP64 ? X86::ADD64rr : X86::ADD32rr;
+}
+
 static unsigned getANDriOpcode(bool IsLP64, int64_t Imm) {
   if (IsLP64) {
     if (isInt<8>(Imm))
@@ -165,6 +173,18 @@ static unsigned findDeadCallerSavedReg(MachineBasicBlock &MBB,
   return 0;
 }
 
+static bool isEAXLiveIn(MachineFunction &MF) {
+  for (MachineRegisterInfo::livein_iterator II = MF.getRegInfo().livein_begin(),
+       EE = MF.getRegInfo().livein_end(); II != EE; ++II) {
+    unsigned Reg = II->first;
+
+    if (Reg == X86::RAX || Reg == X86::EAX || Reg == X86::AX ||
+        Reg == X86::AH || Reg == X86::AL)
+      return true;
+  }
+
+  return false;
+}
 
 /// emitSPUpdate - Emit a series of instructions to increment / decrement the
 /// stack pointer by a constant value.
@@ -187,6 +207,32 @@ void emitSPUpdate(MachineBasicBlock &MBB, MachineBasicBlock::iterator &MBBI,
   DebugLoc DL = MBB.findDebugLoc(MBBI);
 
   while (Offset) {
+    if (Offset > Chunk) {
+      // Rather than emit a long series of instructions for large offsets,
+      // load the offset into a register and do one sub/add
+      unsigned Reg = 0;
+
+      if (isSub && !isEAXLiveIn(*MBB.getParent()))
+        Reg = (unsigned)(Is64BitTarget ? X86::RAX : X86::EAX);
+      else
+        Reg = findDeadCallerSavedReg(MBB, MBBI, TRI, Is64BitTarget);
+
+      if (Reg) {
+        Opc = Is64BitTarget ? X86::MOV64ri : X86::MOV32ri;
+        BuildMI(MBB, MBBI, DL, TII.get(Opc), Reg)
+          .addImm(Offset);
+        Opc = isSub
+          ? getSUBrrOpcode(Is64BitTarget)
+          : getADDrrOpcode(Is64BitTarget);
+        MachineInstr *MI = BuildMI(MBB, MBBI, DL, TII.get(Opc), StackPtr)
+          .addReg(StackPtr)
+          .addReg(Reg);
+        MI->getOperand(3).setIsDead(); // The EFLAGS implicit def is dead.
+        Offset = 0;
+        continue;
+      }
+    }
+
     uint64_t ThisVal = (Offset > Chunk) ? Chunk : Offset;
     if (ThisVal == (Is64BitTarget ? 8 : 4)) {
       // Use push / pop instead.
@@ -314,19 +360,6 @@ static int mergeSPUpdates(MachineBasicBlock &MBB,
   }
 
   return Offset;
-}
-
-static bool isEAXLiveIn(MachineFunction &MF) {
-  for (MachineRegisterInfo::livein_iterator II = MF.getRegInfo().livein_begin(),
-       EE = MF.getRegInfo().livein_end(); II != EE; ++II) {
-    unsigned Reg = II->first;
-
-    if (Reg == X86::EAX || Reg == X86::AX ||
-        Reg == X86::AH || Reg == X86::AL)
-      return true;
-  }
-
-  return false;
 }
 
 void
