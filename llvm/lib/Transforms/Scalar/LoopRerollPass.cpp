@@ -311,26 +311,72 @@ protected:
       DenseSet<int> Reds;
     };
 
+    // The set of all DAG roots, and state tracking of all roots
+    // for a particular induction variable.
+    struct DAGRootTracker {
+      DAGRootTracker(LoopReroll *Parent, Loop *L, Instruction *IV,
+                     ScalarEvolution *SE, AliasAnalysis *AA,
+                     TargetLibraryInfo *TLI, const DataLayout *DL)
+        : Parent(Parent), L(L), SE(SE), AA(AA), TLI(TLI),
+          DL(DL), IV(IV) {
+      }
+
+      /// Stage 1: Find all the DAG roots for the induction variable.
+      bool findRoots();
+      /// Stage 2: Validate if the found roots are valid.
+      bool validate(ReductionTracker &Reductions);
+      /// Stage 3: Assuming validate() returned true, perform the
+      /// replacement.
+      /// @param IterCount The maximum iteration count of L.
+      void replace(const SCEV *IterCount);
+
+    protected:
+      bool findScaleFromMul();
+      bool collectAllRoots();
+
+      void collectInLoopUserSet(const SmallInstructionVector &Roots,
+                                const SmallInstructionSet &Exclude,
+                                const SmallInstructionSet &Final,
+                                DenseSet<Instruction *> &Users);
+      void collectInLoopUserSet(Instruction *Root,
+                                const SmallInstructionSet &Exclude,
+                                const SmallInstructionSet &Final,
+                                DenseSet<Instruction *> &Users);
+
+      LoopReroll *Parent;
+
+      // Members of Parent, replicated here for brevity.
+      Loop *L;
+      ScalarEvolution *SE;
+      AliasAnalysis *AA;
+      TargetLibraryInfo *TLI;
+      const DataLayout *DL;
+
+      // The loop induction variable.
+      Instruction *IV;
+      // Loop step amount.
+      uint64_t Inc;
+      // Loop reroll count; if Inc == 1, this records the scaling applied
+      // to the indvar: a[i*2+0] = ...; a[i*2+1] = ... ;
+      // If Inc is not 1, Scale = Inc.
+      uint64_t Scale;
+      // If Scale != Inc, then RealIV is IV after its multiplication.
+      Instruction *RealIV;
+      // The roots themselves.
+      SmallInstructionVector Roots;
+      // All increment instructions for IV.
+      SmallInstructionVector LoopIncs;
+      // All instructions transitively used by any root.
+      DenseSet<Instruction *> AllRootUses;
+      // All instructions transitively used by the base.
+      DenseSet<Instruction *> BaseUseSet;
+      // All instructions transitively used by the increments.
+      DenseSet<Instruction *> LoopIncUseSet;
+    };
+
     void collectPossibleIVs(Loop *L, SmallInstructionVector &PossibleIVs);
     void collectPossibleReductions(Loop *L,
            ReductionTracker &Reductions);
-    void collectInLoopUserSet(Loop *L,
-           const SmallInstructionVector &Roots,
-           const SmallInstructionSet &Exclude,
-           const SmallInstructionSet &Final,
-           DenseSet<Instruction *> &Users);
-    void collectInLoopUserSet(Loop *L,
-           Instruction * Root,
-           const SmallInstructionSet &Exclude,
-           const SmallInstructionSet &Final,
-           DenseSet<Instruction *> &Users);
-    bool findScaleFromMul(Instruction *RealIV, uint64_t &Scale,
-                          Instruction *&IV,
-                          SmallInstructionVector &LoopIncs);
-    bool collectAllRoots(Loop *L, uint64_t Inc, uint64_t Scale, Instruction *IV,
-                         SmallVector<SmallInstructionVector, 32> &Roots,
-                         SmallInstructionSet &AllRoots,
-                         SmallInstructionVector &LoopIncs);
     bool reroll(Instruction *IV, Loop *L, BasicBlock *Header, const SCEV *IterCount,
                 ReductionTracker &Reductions);
   };
@@ -467,7 +513,7 @@ void LoopReroll::collectPossibleReductions(Loop *L,
 //   if they are users, but their users are not added. This is used, for
 //   example, to prevent a reduction update from forcing all later reduction
 //   updates into the use set.
-void LoopReroll::collectInLoopUserSet(Loop *L,
+void LoopReroll::DAGRootTracker::collectInLoopUserSet(
   Instruction *Root, const SmallInstructionSet &Exclude,
   const SmallInstructionSet &Final,
   DenseSet<Instruction *> &Users) {
@@ -504,14 +550,14 @@ void LoopReroll::collectInLoopUserSet(Loop *L,
 
 // Collect all of the users of all of the provided root instructions (combined
 // into a single set).
-void LoopReroll::collectInLoopUserSet(Loop *L,
+void LoopReroll::DAGRootTracker::collectInLoopUserSet(
   const SmallInstructionVector &Roots,
   const SmallInstructionSet &Exclude,
   const SmallInstructionSet &Final,
   DenseSet<Instruction *> &Users) {
   for (SmallInstructionVector::const_iterator I = Roots.begin(),
        IE = Roots.end(); I != IE; ++I)
-    collectInLoopUserSet(L, *I, Exclude, Final, Users);
+    collectInLoopUserSet(*I, Exclude, Final, Users);
 }
 
 static bool isSimpleLoadStore(Instruction *I) {
@@ -522,6 +568,31 @@ static bool isSimpleLoadStore(Instruction *I) {
   if (MemIntrinsic *MI = dyn_cast<MemIntrinsic>(I))
     return !MI->isVolatile();
   return false;
+}
+
+bool LoopReroll::DAGRootTracker::findRoots() {
+
+  const SCEVAddRecExpr *RealIVSCEV = cast<SCEVAddRecExpr>(SE->getSCEV(IV));
+  Inc = cast<SCEVConstant>(RealIVSCEV->getOperand(1))->
+    getValue()->getZExtValue();
+
+  // The effective induction variable, IV, is normally also the real induction
+  // variable. When we're dealing with a loop like:
+  //   for (int i = 0; i < 500; ++i)
+  //     x[3*i] = ...;
+  //     x[3*i+1] = ...;
+  //     x[3*i+2] = ...;
+  // then the real IV is still i, but the effective IV is (3*i).
+  Scale = Inc;
+  RealIV = IV;
+  if (Inc == 1 && !findScaleFromMul())
+    return false;
+
+  // The set of increment instructions for each increment value.
+  if (!collectAllRoots())
+    return false;
+
+  return true;
 }
 
 // Recognize loops that are setup like this:
@@ -541,9 +612,8 @@ static bool isSimpleLoadStore(Instruction *I) {
 // br %cmp, header, exit
 //
 // and, if found, set IV = %scaled.iv, and add %iv.next to LoopIncs.
-bool LoopReroll::findScaleFromMul(Instruction *RealIV, uint64_t &Scale,
-                                  Instruction *&IV,
-                                  SmallInstructionVector &LoopIncs) {
+bool LoopReroll::DAGRootTracker::findScaleFromMul() {
+
   // This is a special case: here we're looking for all uses (except for
   // the increment) to be multiplied by a common factor. The increment must
   // be by one. This is to capture loops like:
@@ -596,6 +666,10 @@ bool LoopReroll::findScaleFromMul(Instruction *RealIV, uint64_t &Scale,
     return false;
 
   DEBUG(dbgs() << "LRR: Found possible scaling " << *User1 << "\n");
+
+  assert(Scale <= MaxInc && "Scale is too large");
+  assert(Scale > 1 && "Scale must be at least 2");
+
   return true;
 }
 
@@ -605,11 +679,9 @@ bool LoopReroll::findScaleFromMul(Instruction *RealIV, uint64_t &Scale,
 // rerollable loop, each of these increments is the root of an instruction
 // graph isomorphic to the others. Also, we collect the final induction
 // increment (the increment equal to the Scale), and its users in LoopIncs.
-bool LoopReroll::collectAllRoots(Loop *L, uint64_t Inc, uint64_t Scale,
-                                 Instruction *IV,
-                                 SmallVector<SmallInstructionVector, 32> &Roots,
-                                 SmallInstructionSet &AllRoots,
-                                 SmallInstructionVector &LoopIncs) {
+bool LoopReroll::DAGRootTracker::collectAllRoots() {
+  Roots.resize(Scale-1);
+  
   for (User *U : IV->users()) {
     Instruction *UI = cast<Instruction>(U);
     if (!SE->isSCEVable(UI->getType()))
@@ -625,27 +697,344 @@ bool LoopReroll::collectAllRoots(Loop *L, uint64_t Inc, uint64_t Scale,
           SE->getSCEV(UI), SE->getSCEV(IV)))) {
       uint64_t Idx = Diff->getValue()->getValue().getZExtValue();
       if (Idx > 0 && Idx < Scale) {
-        Roots[Idx-1].push_back(UI);
-        AllRoots.insert(UI);
+        if (Roots[Idx-1])
+          // No duplicates allowed.
+          return false;
+        Roots[Idx-1] = UI;
       } else if (Idx == Scale && Inc > 1) {
         LoopIncs.push_back(UI);
       }
     }
   }
 
-  if (Roots[0].empty())
-    return false;
-  bool AllSame = true;
-  for (unsigned i = 1; i < Scale-1; ++i)
-    if (Roots[i].size() != Roots[0].size()) {
-      AllSame = false;
+  for (unsigned i = 0; i < Scale-1; ++i) {
+    if (!Roots[i])
+      return false;
+  }
+
+  return true;
+}
+
+bool LoopReroll::DAGRootTracker::validate(ReductionTracker &Reductions) {
+  BasicBlock *Header = L->getHeader();
+
+  // We now need to check for equivalence of the use graph of each root with
+  // that of the primary induction variable (excluding the roots). Our goal
+  // here is not to solve the full graph isomorphism problem, but rather to
+  // catch common cases without a lot of work. As a result, we will assume
+  // that the relative order of the instructions in each unrolled iteration
+  // is the same (although we will not make an assumption about how the
+  // different iterations are intermixed). Note that while the order must be
+  // the same, the instructions may not be in the same basic block.
+  SmallInstructionSet Exclude;
+  Exclude.insert(Roots.begin(), Roots.end());
+  Exclude.insert(LoopIncs.begin(), LoopIncs.end());
+
+  // An array of just the possible reductions for this scale factor. When we
+  // collect the set of all users of some root instructions, these reduction
+  // instructions are treated as 'final' (their uses are not considered).
+  // This is important because we don't want the root use set to search down
+  // the reduction chain.
+  SmallInstructionSet PossibleRedSet;
+  SmallInstructionSet PossibleRedLastSet;
+  SmallInstructionSet PossibleRedPHISet;
+  Reductions.restrictToScale(Scale, PossibleRedSet,
+                             PossibleRedPHISet, PossibleRedLastSet);
+                                          
+
+  collectInLoopUserSet(IV, Exclude, PossibleRedSet, BaseUseSet);
+
+  std::vector<DenseSet<Instruction *> > RootUseSets(Scale-1);
+
+  bool MatchFailed = false;
+  for (unsigned i = 0; i < Scale-1 && !MatchFailed; ++i) {
+    DenseSet<Instruction *> &RootUseSet = RootUseSets[i];
+    collectInLoopUserSet(Roots[i], SmallInstructionSet(),
+                         PossibleRedSet, RootUseSet);
+
+    DEBUG(dbgs() << "LRR: base use set size: " << BaseUseSet.size() <<
+                    " vs. iteration increment " << (i+1) <<
+                    " use set size: " << RootUseSet.size() << "\n");
+
+    if (BaseUseSet.size() != RootUseSet.size()) {
+      MatchFailed = true;
       break;
     }
 
-  if (!AllSame)
+    // In addition to regular aliasing information, we need to look for
+    // instructions from later (future) iterations that have side effects
+    // preventing us from reordering them past other instructions with side
+    // effects.
+    bool FutureSideEffects = false;
+    AliasSetTracker AST(*AA);
+
+    // The map between instructions in f(%iv.(i+1)) and f(%iv).
+    DenseMap<Value *, Value *> BaseMap;
+
+    assert(L->getNumBlocks() == 1 && "Cannot handle multi-block loops");
+    for (BasicBlock::iterator J1 = Header->begin(), J2 = Header->begin(),
+         JE = Header->end(); J1 != JE && !MatchFailed; ++J1) {
+      if (cast<Instruction>(J1) == RealIV)
+        continue;
+      if (cast<Instruction>(J1) == IV)
+        continue;
+      if (!BaseUseSet.count(J1))
+        continue;
+      if (PossibleRedPHISet.count(J1)) // Skip reduction PHIs.
+        continue;
+
+      while (J2 != JE && (!RootUseSet.count(J2) || Roots[i] ==  J2)) {
+        // As we iterate through the instructions, instructions that don't
+        // belong to previous iterations (or the base case), must belong to
+        // future iterations. We want to track the alias set of writes from
+        // previous iterations.
+        if (!isa<PHINode>(J2) && !BaseUseSet.count(J2) &&
+            !AllRootUses.count(J2)) {
+          if (J2->mayWriteToMemory())
+            AST.add(J2);
+
+          // Note: This is specifically guarded by a check on isa<PHINode>,
+          // which while a valid (somewhat arbitrary) micro-optimization, is
+          // needed because otherwise isSafeToSpeculativelyExecute returns
+          // false on PHI nodes.
+          if (!isSimpleLoadStore(J2) && !isSafeToSpeculativelyExecute(J2, DL))
+            FutureSideEffects = true;
+        }
+
+        ++J2;
+      }
+
+      if (!J1->isSameOperationAs(J2)) {
+        DEBUG(dbgs() << "LRR: iteration root match failed at " << *J1 <<
+                        " vs. " << *J2 << "\n");
+        MatchFailed = true;
+        break;
+      }
+
+      // Make sure that this instruction, which is in the use set of this
+      // root instruction, does not also belong to the base set or the set of
+      // some previous root instruction.
+      if (BaseUseSet.count(J2) || AllRootUses.count(J2)) {
+        DEBUG(dbgs() << "LRR: iteration root match failed at " << *J1 <<
+                        " vs. " << *J2 << " (prev. case overlap)\n");
+        MatchFailed = true;
+        break;
+      }
+
+      // Make sure that we don't alias with any instruction in the alias set
+      // tracker. If we do, then we depend on a future iteration, and we
+      // can't reroll.
+      if (J2->mayReadFromMemory()) {
+        for (AliasSetTracker::iterator K = AST.begin(), KE = AST.end();
+             K != KE && !MatchFailed; ++K) {
+          if (K->aliasesUnknownInst(J2, *AA)) {
+            DEBUG(dbgs() << "LRR: iteration root match failed at " << *J1 <<
+                            " vs. " << *J2 << " (depends on future store)\n");
+            MatchFailed = true;
+            break;
+          }
+        }
+      }
+
+      // If we've past an instruction from a future iteration that may have
+      // side effects, and this instruction might also, then we can't reorder
+      // them, and this matching fails. As an exception, we allow the alias
+      // set tracker to handle regular (simple) load/store dependencies.
+      if (FutureSideEffects &&
+            ((!isSimpleLoadStore(J1) &&
+              !isSafeToSpeculativelyExecute(J1, DL)) ||
+             (!isSimpleLoadStore(J2) &&
+              !isSafeToSpeculativelyExecute(J2, DL)))) {
+        DEBUG(dbgs() << "LRR: iteration root match failed at " << *J1 <<
+                        " vs. " << *J2 <<
+                        " (side effects prevent reordering)\n");
+        MatchFailed = true;
+        break;
+      }
+
+      // For instructions that are part of a reduction, if the operation is
+      // associative, then don't bother matching the operands (because we
+      // already know that the instructions are isomorphic, and the order
+      // within the iteration does not matter). For non-associative reductions,
+      // we do need to match the operands, because we need to reject
+      // out-of-order instructions within an iteration!
+      // For example (assume floating-point addition), we need to reject this:
+      //   x += a[i]; x += b[i];
+      //   x += a[i+1]; x += b[i+1];
+      //   x += b[i+2]; x += a[i+2];
+      bool InReduction = Reductions.isPairInSame(J1, J2);
+
+      if (!(InReduction && J1->isAssociative())) {
+        bool Swapped = false, SomeOpMatched = false;
+        for (unsigned j = 0; j < J1->getNumOperands() && !MatchFailed; ++j) {
+          Value *Op2 = J2->getOperand(j);
+
+          // If this is part of a reduction (and the operation is not
+          // associatve), then we match all operands, but not those that are
+          // part of the reduction.
+          if (InReduction)
+            if (Instruction *Op2I = dyn_cast<Instruction>(Op2))
+              if (Reductions.isPairInSame(J2, Op2I))
+                continue;
+
+          DenseMap<Value *, Value *>::iterator BMI = BaseMap.find(Op2);
+          if (BMI != BaseMap.end())
+            Op2 = BMI->second;
+          else if (Roots[i] == (Instruction*) Op2)
+            Op2 = IV;
+
+          if (J1->getOperand(Swapped ? unsigned(!j) : j) != Op2) {
+            // If we've not already decided to swap the matched operands, and
+            // we've not already matched our first operand (note that we could
+            // have skipped matching the first operand because it is part of a
+            // reduction above), and the instruction is commutative, then try
+            // the swapped match.
+            if (!Swapped && J1->isCommutative() && !SomeOpMatched &&
+                J1->getOperand(!j) == Op2) {
+              Swapped = true;
+            } else {
+              DEBUG(dbgs() << "LRR: iteration root match failed at " << *J1 <<
+                              " vs. " << *J2 << " (operand " << j << ")\n");
+              MatchFailed = true;
+              break;
+            }
+          }
+
+          SomeOpMatched = true;
+        }
+      }
+
+      if ((!PossibleRedLastSet.count(J1) && hasUsesOutsideLoop(J1, L)) ||
+          (!PossibleRedLastSet.count(J2) && hasUsesOutsideLoop(J2, L))) {
+        DEBUG(dbgs() << "LRR: iteration root match failed at " << *J1 <<
+                        " vs. " << *J2 << " (uses outside loop)\n");
+        MatchFailed = true;
+        break;
+      }
+
+      if (!MatchFailed)
+        BaseMap.insert(std::pair<Value *, Value *>(J2, J1));
+
+      AllRootUses.insert(J2);
+      Reductions.recordPair(J1, J2, i+1);
+
+      ++J2;
+    }
+  }
+
+  if (MatchFailed)
     return false;
 
+  DEBUG(dbgs() << "LRR: Matched all iteration increments for " <<
+                  *RealIV << "\n");
+
+  collectInLoopUserSet(LoopIncs, SmallInstructionSet(),
+                       SmallInstructionSet(), LoopIncUseSet);
+  DEBUG(dbgs() << "LRR: Loop increment set size: " <<
+                  LoopIncUseSet.size() << "\n");
+
+  // Make sure that all instructions in the loop have been included in some
+  // use set.
+  for (BasicBlock::iterator J = Header->begin(), JE = Header->end();
+       J != JE; ++J) {
+    if (isa<DbgInfoIntrinsic>(J))
+      continue;
+    if (cast<Instruction>(J) == RealIV)
+      continue;
+    if (cast<Instruction>(J) == IV)
+      continue;
+    if (BaseUseSet.count(J) || AllRootUses.count(J) ||
+        (LoopIncUseSet.count(J) && (J->isTerminator() ||
+                                    isSafeToSpeculativelyExecute(J, DL))))
+      continue;
+
+    if (std::find(Roots.begin(), Roots.end(), J) != Roots.end())
+      continue;
+
+    if (Reductions.isSelectedPHI(J))
+      continue;
+
+    DEBUG(dbgs() << "LRR: aborting reroll based on " << *RealIV <<
+                    " unprocessed instruction found: " << *J << "\n");
+    MatchFailed = true;
+    break;
+  }
+
+  if (MatchFailed)
+    return false;
+
+  DEBUG(dbgs() << "LRR: all instructions processed from " <<
+                  *RealIV << "\n");
   return true;
+}
+
+void LoopReroll::DAGRootTracker::replace(const SCEV *IterCount) {
+  BasicBlock *Header = L->getHeader();
+  // Remove instructions associated with non-base iterations.
+  for (BasicBlock::reverse_iterator J = Header->rbegin();
+       J != Header->rend();) {
+    if (AllRootUses.count(&*J)) {
+      Instruction *D = &*J;
+      DEBUG(dbgs() << "LRR: removing: " << *D << "\n");
+      D->eraseFromParent();
+      continue;
+    }
+
+    ++J;
+  }
+
+  // Insert the new induction variable.
+  const SCEVAddRecExpr *RealIVSCEV = cast<SCEVAddRecExpr>(SE->getSCEV(RealIV));
+  const SCEV *Start = RealIVSCEV->getStart();
+  if (Inc == 1)
+    Start = SE->getMulExpr(Start,
+                           SE->getConstant(Start->getType(), Scale));
+  const SCEVAddRecExpr *H =
+    cast<SCEVAddRecExpr>(SE->getAddRecExpr(Start,
+                           SE->getConstant(RealIVSCEV->getType(), 1),
+                           L, SCEV::FlagAnyWrap));
+  { // Limit the lifetime of SCEVExpander.
+    SCEVExpander Expander(*SE, "reroll");
+    Value *NewIV = Expander.expandCodeFor(H, IV->getType(), Header->begin());
+
+    for (DenseSet<Instruction *>::iterator J = BaseUseSet.begin(),
+         JE = BaseUseSet.end(); J != JE; ++J)
+      (*J)->replaceUsesOfWith(IV, NewIV);
+
+    if (BranchInst *BI = dyn_cast<BranchInst>(Header->getTerminator())) {
+      if (LoopIncUseSet.count(BI)) {
+        const SCEV *ICSCEV = RealIVSCEV->evaluateAtIteration(IterCount, *SE);
+        if (Inc == 1)
+          ICSCEV =
+            SE->getMulExpr(ICSCEV, SE->getConstant(ICSCEV->getType(), Scale));
+        // Iteration count SCEV minus 1
+        const SCEV *ICMinus1SCEV =
+          SE->getMinusSCEV(ICSCEV, SE->getConstant(ICSCEV->getType(), 1));
+
+        Value *ICMinus1; // Iteration count minus 1
+        if (isa<SCEVConstant>(ICMinus1SCEV)) {
+          ICMinus1 = Expander.expandCodeFor(ICMinus1SCEV, NewIV->getType(), BI);
+        } else {
+          BasicBlock *Preheader = L->getLoopPreheader();
+          if (!Preheader)
+            Preheader = InsertPreheaderForLoop(L, Parent);
+
+          ICMinus1 = Expander.expandCodeFor(ICMinus1SCEV, NewIV->getType(),
+                                            Preheader->getTerminator());
+        }
+
+        Value *Cond =
+            new ICmpInst(BI, CmpInst::ICMP_EQ, NewIV, ICMinus1, "exitcond");
+        BI->setCondition(Cond);
+
+        if (BI->getSuccessor(1) != Header)
+          BI->swapSuccessors();
+      }
+    }
+  }
+
+  SimplifyInstructionsInBlock(Header, DL, TLI);
+  DeleteDeadPHIs(Header, TLI);
 }
 
 // Validate the selected reductions. All iterations must have an isomorphic
@@ -767,359 +1156,23 @@ void LoopReroll::ReductionTracker::replaceSelected() {
 bool LoopReroll::reroll(Instruction *IV, Loop *L, BasicBlock *Header,
                         const SCEV *IterCount,
                         ReductionTracker &Reductions) {
-  const SCEVAddRecExpr *RealIVSCEV = cast<SCEVAddRecExpr>(SE->getSCEV(IV));
-  uint64_t Inc = cast<SCEVConstant>(RealIVSCEV->getOperand(1))->
-                   getValue()->getZExtValue();
-  // The collection of loop increment instructions.
-  SmallInstructionVector LoopIncs;
-  uint64_t Scale = Inc;
+  DAGRootTracker DAGRoots(this, L, IV, SE, AA, TLI, DL);
 
-  // The effective induction variable, IV, is normally also the real induction
-  // variable. When we're dealing with a loop like:
-  //   for (int i = 0; i < 500; ++i)
-  //     x[3*i] = ...;
-  //     x[3*i+1] = ...;
-  //     x[3*i+2] = ...;
-  // then the real IV is still i, but the effective IV is (3*i).
-  Instruction *RealIV = IV;
-  if (Inc == 1 && !findScaleFromMul(RealIV, Scale, IV, LoopIncs))
+  if (!DAGRoots.findRoots())
     return false;
-
-  assert(Scale <= MaxInc && "Scale is too large");
-  assert(Scale > 1 && "Scale must be at least 2");
-
-  // The set of increment instructions for each increment value.
-  SmallVector<SmallInstructionVector, 32> Roots(Scale-1);
-  SmallInstructionSet AllRoots;
-  if (!collectAllRoots(L, Inc, Scale, IV, Roots, AllRoots, LoopIncs))
-    return false;
-
   DEBUG(dbgs() << "LRR: Found all root induction increments for: " <<
-                  *RealIV << "\n");
-
-  // An array of just the possible reductions for this scale factor. When we
-  // collect the set of all users of some root instructions, these reduction
-  // instructions are treated as 'final' (their uses are not considered).
-  // This is important because we don't want the root use set to search down
-  // the reduction chain.
-  SmallInstructionSet PossibleRedSet;
-  SmallInstructionSet PossibleRedLastSet, PossibleRedPHISet;
-  Reductions.restrictToScale(Scale, PossibleRedSet, PossibleRedPHISet,
-                             PossibleRedLastSet);
-
-  // We now need to check for equivalence of the use graph of each root with
-  // that of the primary induction variable (excluding the roots). Our goal
-  // here is not to solve the full graph isomorphism problem, but rather to
-  // catch common cases without a lot of work. As a result, we will assume
-  // that the relative order of the instructions in each unrolled iteration
-  // is the same (although we will not make an assumption about how the
-  // different iterations are intermixed). Note that while the order must be
-  // the same, the instructions may not be in the same basic block.
-  SmallInstructionSet Exclude(AllRoots);
-  Exclude.insert(LoopIncs.begin(), LoopIncs.end());
-
-  DenseSet<Instruction *> BaseUseSet;
-  collectInLoopUserSet(L, IV, Exclude, PossibleRedSet, BaseUseSet);
-
-  DenseSet<Instruction *> AllRootUses;
-  std::vector<DenseSet<Instruction *> > RootUseSets(Scale-1);
-
-  bool MatchFailed = false;
-  for (unsigned i = 0; i < Scale-1 && !MatchFailed; ++i) {
-    DenseSet<Instruction *> &RootUseSet = RootUseSets[i];
-    collectInLoopUserSet(L, Roots[i], SmallInstructionSet(),
-                         PossibleRedSet, RootUseSet);
-
-    DEBUG(dbgs() << "LRR: base use set size: " << BaseUseSet.size() <<
-                    " vs. iteration increment " << (i+1) <<
-                    " use set size: " << RootUseSet.size() << "\n");
-
-    if (BaseUseSet.size() != RootUseSet.size()) {
-      MatchFailed = true;
-      break;
-    }
-
-    // In addition to regular aliasing information, we need to look for
-    // instructions from later (future) iterations that have side effects
-    // preventing us from reordering them past other instructions with side
-    // effects.
-    bool FutureSideEffects = false;
-    AliasSetTracker AST(*AA);
-
-    // The map between instructions in f(%iv.(i+1)) and f(%iv).
-    DenseMap<Value *, Value *> BaseMap;
-
-    assert(L->getNumBlocks() == 1 && "Cannot handle multi-block loops");
-    for (BasicBlock::iterator J1 = Header->begin(), J2 = Header->begin(),
-         JE = Header->end(); J1 != JE && !MatchFailed; ++J1) {
-      if (cast<Instruction>(J1) == RealIV)
-        continue;
-      if (cast<Instruction>(J1) == IV)
-        continue;
-      if (!BaseUseSet.count(J1))
-        continue;
-      if (PossibleRedPHISet.count(J1)) // Skip reduction PHIs.
-        continue;
-
-      while (J2 != JE && (!RootUseSet.count(J2) ||
-             std::find(Roots[i].begin(), Roots[i].end(), J2) !=
-               Roots[i].end())) {
-        // As we iterate through the instructions, instructions that don't
-        // belong to previous iterations (or the base case), must belong to
-        // future iterations. We want to track the alias set of writes from
-        // previous iterations.
-        if (!isa<PHINode>(J2) && !BaseUseSet.count(J2) &&
-            !AllRootUses.count(J2)) {
-          if (J2->mayWriteToMemory())
-            AST.add(J2);
-
-          // Note: This is specifically guarded by a check on isa<PHINode>,
-          // which while a valid (somewhat arbitrary) micro-optimization, is
-          // needed because otherwise isSafeToSpeculativelyExecute returns
-          // false on PHI nodes.
-          if (!isSimpleLoadStore(J2) && !isSafeToSpeculativelyExecute(J2, DL))
-            FutureSideEffects = true;
-        }
-
-        ++J2;
-      }
-
-      if (!J1->isSameOperationAs(J2)) {
-        DEBUG(dbgs() << "LRR: iteration root match failed at " << *J1 <<
-                        " vs. " << *J2 << "\n");
-        MatchFailed = true;
-        break;
-      }
-
-      // Make sure that this instruction, which is in the use set of this
-      // root instruction, does not also belong to the base set or the set of
-      // some previous root instruction.
-      if (BaseUseSet.count(J2) || AllRootUses.count(J2)) {
-        DEBUG(dbgs() << "LRR: iteration root match failed at " << *J1 <<
-                        " vs. " << *J2 << " (prev. case overlap)\n");
-        MatchFailed = true;
-        break;
-      }
-
-      // Make sure that we don't alias with any instruction in the alias set
-      // tracker. If we do, then we depend on a future iteration, and we
-      // can't reroll.
-      if (J2->mayReadFromMemory()) {
-        for (AliasSetTracker::iterator K = AST.begin(), KE = AST.end();
-             K != KE && !MatchFailed; ++K) {
-          if (K->aliasesUnknownInst(J2, *AA)) {
-            DEBUG(dbgs() << "LRR: iteration root match failed at " << *J1 <<
-                            " vs. " << *J2 << " (depends on future store)\n");
-            MatchFailed = true;
-            break;
-          }
-        }
-      }
-
-      // If we've past an instruction from a future iteration that may have
-      // side effects, and this instruction might also, then we can't reorder
-      // them, and this matching fails. As an exception, we allow the alias
-      // set tracker to handle regular (simple) load/store dependencies.
-      if (FutureSideEffects &&
-            ((!isSimpleLoadStore(J1) &&
-              !isSafeToSpeculativelyExecute(J1, DL)) ||
-             (!isSimpleLoadStore(J2) &&
-              !isSafeToSpeculativelyExecute(J2, DL)))) {
-        DEBUG(dbgs() << "LRR: iteration root match failed at " << *J1 <<
-                        " vs. " << *J2 <<
-                        " (side effects prevent reordering)\n");
-        MatchFailed = true;
-        break;
-      }
-
-      // For instructions that are part of a reduction, if the operation is
-      // associative, then don't bother matching the operands (because we
-      // already know that the instructions are isomorphic, and the order
-      // within the iteration does not matter). For non-associative reductions,
-      // we do need to match the operands, because we need to reject
-      // out-of-order instructions within an iteration!
-      // For example (assume floating-point addition), we need to reject this:
-      //   x += a[i]; x += b[i];
-      //   x += a[i+1]; x += b[i+1];
-      //   x += b[i+2]; x += a[i+2];
-      bool InReduction = Reductions.isPairInSame(J1, J2);
-
-      if (!(InReduction && J1->isAssociative())) {
-        bool Swapped = false, SomeOpMatched = false;
-        for (unsigned j = 0; j < J1->getNumOperands() && !MatchFailed; ++j) {
-          Value *Op2 = J2->getOperand(j);
-
-          // If this is part of a reduction (and the operation is not
-          // associatve), then we match all operands, but not those that are
-          // part of the reduction.
-          if (InReduction)
-            if (Instruction *Op2I = dyn_cast<Instruction>(Op2))
-              if (Reductions.isPairInSame(J2, Op2I))
-                continue;
-
-          DenseMap<Value *, Value *>::iterator BMI = BaseMap.find(Op2);
-          if (BMI != BaseMap.end())
-            Op2 = BMI->second;
-          else if (std::find(Roots[i].begin(), Roots[i].end(),
-                             (Instruction*) Op2) != Roots[i].end())
-            Op2 = IV;
-
-          if (J1->getOperand(Swapped ? unsigned(!j) : j) != Op2) {
-            // If we've not already decided to swap the matched operands, and
-            // we've not already matched our first operand (note that we could
-            // have skipped matching the first operand because it is part of a
-            // reduction above), and the instruction is commutative, then try
-            // the swapped match.
-            if (!Swapped && J1->isCommutative() && !SomeOpMatched &&
-                J1->getOperand(!j) == Op2) {
-              Swapped = true;
-            } else {
-              DEBUG(dbgs() << "LRR: iteration root match failed at " << *J1 <<
-                              " vs. " << *J2 << " (operand " << j << ")\n");
-              MatchFailed = true;
-              break;
-            }
-          }
-
-          SomeOpMatched = true;
-        }
-      }
-
-      if ((!PossibleRedLastSet.count(J1) && hasUsesOutsideLoop(J1, L)) ||
-          (!PossibleRedLastSet.count(J2) && hasUsesOutsideLoop(J2, L))) {
-        DEBUG(dbgs() << "LRR: iteration root match failed at " << *J1 <<
-                        " vs. " << *J2 << " (uses outside loop)\n");
-        MatchFailed = true;
-        break;
-      }
-
-      if (!MatchFailed)
-        BaseMap.insert(std::pair<Value *, Value *>(J2, J1));
-
-      AllRootUses.insert(J2);
-      Reductions.recordPair(J1, J2, i+1);
-
-      ++J2;
-    }
-  }
-
-  if (MatchFailed)
+                  *IV << "\n");
+  
+  if (!DAGRoots.validate(Reductions))
     return false;
-
-  DEBUG(dbgs() << "LRR: Matched all iteration increments for " <<
-                  *RealIV << "\n");
-
-  DenseSet<Instruction *> LoopIncUseSet;
-  collectInLoopUserSet(L, LoopIncs, SmallInstructionSet(),
-                       SmallInstructionSet(), LoopIncUseSet);
-  DEBUG(dbgs() << "LRR: Loop increment set size: " <<
-                  LoopIncUseSet.size() << "\n");
-
-  // Make sure that all instructions in the loop have been included in some
-  // use set.
-  for (BasicBlock::iterator J = Header->begin(), JE = Header->end();
-       J != JE; ++J) {
-    if (isa<DbgInfoIntrinsic>(J))
-      continue;
-    if (cast<Instruction>(J) == RealIV)
-      continue;
-    if (cast<Instruction>(J) == IV)
-      continue;
-    if (BaseUseSet.count(J) || AllRootUses.count(J) ||
-        (LoopIncUseSet.count(J) && (J->isTerminator() ||
-                                    isSafeToSpeculativelyExecute(J, DL))))
-      continue;
-
-    if (AllRoots.count(J))
-      continue;
-
-    if (Reductions.isSelectedPHI(J))
-      continue;
-
-    DEBUG(dbgs() << "LRR: aborting reroll based on " << *RealIV <<
-                    " unprocessed instruction found: " << *J << "\n");
-    MatchFailed = true;
-    break;
-  }
-
-  if (MatchFailed)
-    return false;
-
-  DEBUG(dbgs() << "LRR: all instructions processed from " <<
-                  *RealIV << "\n");
-
   if (!Reductions.validateSelected())
     return false;
-
   // At this point, we've validated the rerolling, and we're committed to
   // making changes!
 
   Reductions.replaceSelected();
+  DAGRoots.replace(IterCount);
 
-  // Remove instructions associated with non-base iterations.
-  for (BasicBlock::reverse_iterator J = Header->rbegin();
-       J != Header->rend();) {
-    if (AllRootUses.count(&*J)) {
-      Instruction *D = &*J;
-      DEBUG(dbgs() << "LRR: removing: " << *D << "\n");
-      D->eraseFromParent();
-      continue;
-    }
-
-    ++J;
-  }
-
-  // Insert the new induction variable.
-  const SCEV *Start = RealIVSCEV->getStart();
-  if (Inc == 1)
-    Start = SE->getMulExpr(Start,
-                           SE->getConstant(Start->getType(), Scale));
-  const SCEVAddRecExpr *H =
-    cast<SCEVAddRecExpr>(SE->getAddRecExpr(Start,
-                           SE->getConstant(RealIVSCEV->getType(), 1),
-                           L, SCEV::FlagAnyWrap));
-  { // Limit the lifetime of SCEVExpander.
-    SCEVExpander Expander(*SE, "reroll");
-    Value *NewIV = Expander.expandCodeFor(H, IV->getType(), Header->begin());
-
-    for (DenseSet<Instruction *>::iterator J = BaseUseSet.begin(),
-         JE = BaseUseSet.end(); J != JE; ++J)
-      (*J)->replaceUsesOfWith(IV, NewIV);
-
-    if (BranchInst *BI = dyn_cast<BranchInst>(Header->getTerminator())) {
-      if (LoopIncUseSet.count(BI)) {
-        const SCEV *ICSCEV = RealIVSCEV->evaluateAtIteration(IterCount, *SE);
-        if (Inc == 1)
-          ICSCEV =
-            SE->getMulExpr(ICSCEV, SE->getConstant(ICSCEV->getType(), Scale));
-        // Iteration count SCEV minus 1
-        const SCEV *ICMinus1SCEV =
-          SE->getMinusSCEV(ICSCEV, SE->getConstant(ICSCEV->getType(), 1));
-
-        Value *ICMinus1; // Iteration count minus 1
-        if (isa<SCEVConstant>(ICMinus1SCEV)) {
-          ICMinus1 = Expander.expandCodeFor(ICMinus1SCEV, NewIV->getType(), BI);
-        } else {
-          BasicBlock *Preheader = L->getLoopPreheader();
-          if (!Preheader)
-            Preheader = InsertPreheaderForLoop(L, this);
-
-          ICMinus1 = Expander.expandCodeFor(ICMinus1SCEV, NewIV->getType(),
-                                            Preheader->getTerminator());
-        }
-
-        Value *Cond =
-            new ICmpInst(BI, CmpInst::ICMP_EQ, NewIV, ICMinus1, "exitcond");
-        BI->setCondition(Cond);
-
-        if (BI->getSuccessor(1) != Header)
-          BI->swapSuccessors();
-      }
-    }
-  }
-
-  SimplifyInstructionsInBlock(Header, DL, TLI);
-  DeleteDeadPHIs(Header, TLI);
   ++NumRerolledLoops;
   return true;
 }
