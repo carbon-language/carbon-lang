@@ -3864,10 +3864,10 @@ static bool anyNullArguments(ArrayRef<Expr *> Args) {
 
 typedef CodeCompleteConsumer::OverloadCandidate ResultCandidate;
 
-void mergeCandidatesWithResults(Sema &SemaRef,
-                                SmallVectorImpl<ResultCandidate> &Results,
-                                OverloadCandidateSet &CandidateSet,
-                                SourceLocation Loc) {
+static void mergeCandidatesWithResults(Sema &SemaRef,
+                                      SmallVectorImpl<ResultCandidate> &Results,
+                                       OverloadCandidateSet &CandidateSet,
+                                       SourceLocation Loc) {
   if (!CandidateSet.empty()) {
     // Sort the overload candidate set by placing the best overloads first.
     std::stable_sort(
@@ -3885,8 +3885,9 @@ void mergeCandidatesWithResults(Sema &SemaRef,
 
 /// \brief Get the type of the Nth parameter from a given set of overload
 /// candidates.
-QualType getParamType(Sema &SemaRef, ArrayRef<ResultCandidate> Candidates,
-                      unsigned N) {
+static QualType getParamType(Sema &SemaRef,
+                             ArrayRef<ResultCandidate> Candidates,
+                             unsigned N) {
 
   // Given the overloads 'Candidates' for a function call matching all arguments
   // up to N, return the type of the Nth parameter if it is the same for all
@@ -3909,9 +3910,9 @@ QualType getParamType(Sema &SemaRef, ArrayRef<ResultCandidate> Candidates,
   return ParamType;
 }
 
-void CodeCompleteOverloadResults(Sema &SemaRef, Scope *S,
-                                 MutableArrayRef<ResultCandidate> Candidates,
-                                 unsigned CurrentArg,
+static void CodeCompleteOverloadResults(Sema &SemaRef, Scope *S,
+                                    MutableArrayRef<ResultCandidate> Candidates,
+                                        unsigned CurrentArg,
                                  bool CompleteExpressionWithCurrentArg = true) {
   QualType ParamType;
   if (CompleteExpressionWithCurrentArg)
