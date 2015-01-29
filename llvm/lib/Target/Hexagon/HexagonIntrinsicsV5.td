@@ -17,6 +17,9 @@ def : T_FF_pat<F2_sffixupn, int_hexagon_F2_sffixupn>;
 def : T_FF_pat<F2_sffixupd, int_hexagon_F2_sffixupd>;
 def : T_F_pat <F2_sffixupr, int_hexagon_F2_sffixupr>;
 
+def: qi_CRInst_qiqi_pat<C4_fastcorner9,     int_hexagon_C4_fastcorner9>;
+def: qi_CRInst_qiqi_pat<C4_fastcorner9_not, int_hexagon_C4_fastcorner9_not>;
+
 def : T_P_pat <S5_popcountp, int_hexagon_S5_popcountp>;
 def : T_PI_pat <S5_asrhub_sat, int_hexagon_S5_asrhub_sat>;
 
@@ -104,10 +107,6 @@ class di_MInst_diu4_rnd<string opc, Intrinsic IntID>
           !strconcat("$dst = ", !strconcat(opc , "($src1, #$src2):rnd")),
           [(set DoubleRegs:$dst, (IntID DoubleRegs:$src1, imm:$src2))]>;
 
-def HEXAGON_C4_fastcorner9:
-    qi_SInst_qiqi       <"fastcorner9", int_hexagon_C4_fastcorner9>;
-def HEXAGON_C4_fastcorner9_not:
-    qi_SInst_qiqi <"!fastcorner9", int_hexagon_C4_fastcorner9_not>;
 def HEXAGON_M5_vrmpybuu:
     di_MInst_didi <"vrmpybu", int_hexagon_M5_vrmpybuu>;
 def HEXAGON_M5_vrmacbuu:
@@ -132,11 +131,3 @@ def HEXAGON_A5_vaddhubs:
     si_SInst_didi_sat <"vaddhub", int_hexagon_A5_vaddhubs>;
 def HEXAGON_S5_vasrhrnd_goodsyntax:
     di_MInst_diu4_rnd <"vasrh", int_hexagon_S5_vasrhrnd_goodsyntax>;
-def HEXAGON_F2_sfcmpeq:
-    qi_SInst_sfsf <"sfcmp.eq", int_hexagon_F2_sfcmpeq>;
-def HEXAGON_F2_sfcmpgt:
-    qi_SInst_sfsf <"sfcmp.gt", int_hexagon_F2_sfcmpgt>;
-def HEXAGON_F2_sfcmpge:
-    qi_SInst_sfsf <"sfcmp.ge", int_hexagon_F2_sfcmpge>;
-def HEXAGON_F2_sfcmpuo:
-    qi_SInst_sfsf <"sfcmp.uo", int_hexagon_F2_sfcmpuo>;

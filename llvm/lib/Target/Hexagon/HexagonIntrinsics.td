@@ -597,6 +597,38 @@ def : T_R_pat<A2_zxth, int_hexagon_A2_zxth>;
 def : T_R_pat<A2_zxtb, int_hexagon_A2_zxtb>;
 
 /********************************************************************
+*            ALU32/PRED                                             *
+*********************************************************************/
+// Compare
+def : T_RR_pat<C2_cmpeq,  int_hexagon_C2_cmpeq>;
+def : T_RR_pat<C2_cmpgt,  int_hexagon_C2_cmpgt>;
+def : T_RR_pat<C2_cmpgtu, int_hexagon_C2_cmpgtu>;
+
+def : T_RI_pat<C2_cmpeqi, int_hexagon_C2_cmpeqi, s10ExtPred>;
+def : T_RI_pat<C2_cmpgti, int_hexagon_C2_cmpgti, s10ExtPred>;
+def : T_RI_pat<C2_cmpgtui, int_hexagon_C2_cmpgtui, u9ExtPred>;
+
+def : Pat <(i32 (int_hexagon_C2_cmpgei (I32:$src1), s8ExtPred:$src2)),
+      (i32 (C2_cmpgti (I32:$src1),
+                      (DEC_CONST_SIGNED s8ExtPred:$src2)))>;
+
+def : Pat <(i32 (int_hexagon_C2_cmpgeui (I32:$src1), u8ExtPred:$src2)),
+      (i32 (C2_cmpgtui (I32:$src1),
+                       (DEC_CONST_UNSIGNED u8ExtPred:$src2)))>;
+
+// The instruction, Pd=cmp.geu(Rs, #u8) -> Pd=cmp.eq(Rs,Rs) when #u8 == 0.
+def : Pat <(i32 (int_hexagon_C2_cmpgeui (I32:$src1), 0)),
+      (i32 (C2_cmpeq (I32:$src1), (I32:$src1)))>;
+
+def : Pat <(i32 (int_hexagon_C2_cmplt (I32:$src1),
+                                      (I32:$src2))),
+      (i32 (C2_cmpgt (I32:$src2), (I32:$src1)))>;
+
+def : Pat <(i32 (int_hexagon_C2_cmpltu (I32:$src1),
+                                       (I32:$src2))),
+      (i32 (C2_cmpgtu (I32:$src2), (I32:$src1)))>;
+
+/********************************************************************
 *            ALU64/ALU                                              *
 *********************************************************************/
 def: T_RR_pat<A2_addsat,   int_hexagon_A2_addsat>;
@@ -607,6 +639,10 @@ def: T_PP_pat<A2_subp,     int_hexagon_A2_subp>;
 def: T_PP_pat<A2_andp,     int_hexagon_A2_andp>;
 def: T_PP_pat<A2_orp,      int_hexagon_A2_orp>;
 def: T_PP_pat<A2_xorp,     int_hexagon_A2_xorp>;
+
+def: T_PP_pat<C2_cmpeqp,   int_hexagon_C2_cmpeqp>;
+def: T_PP_pat<C2_cmpgtp,   int_hexagon_C2_cmpgtp>;
+def: T_PP_pat<C2_cmpgtup,  int_hexagon_C2_cmpgtup>;
 
 def: T_PP_pat<S2_parityp,  int_hexagon_S2_parityp>;
 def: T_RR_pat<S2_packhl,   int_hexagon_S2_packhl>;
@@ -621,6 +657,27 @@ def : T_PRR_pat <M2_dpmpyss_acc_s0, int_hexagon_M2_dpmpyss_acc_s0>;
 def : T_PRR_pat <M2_dpmpyss_nac_s0, int_hexagon_M2_dpmpyss_nac_s0>;
 def : T_PRR_pat <M2_dpmpyuu_acc_s0, int_hexagon_M2_dpmpyuu_acc_s0>;
 def : T_PRR_pat <M2_dpmpyuu_nac_s0, int_hexagon_M2_dpmpyuu_nac_s0>;
+
+/********************************************************************
+*            CR                                                     *
+*********************************************************************/
+class qi_CRInst_qi_pat<InstHexagon Inst, Intrinsic IntID> :
+  Pat<(i32 (IntID IntRegs:$Rs)),
+      (i32 (C2_tfrpr (Inst (C2_tfrrp IntRegs:$Rs))))>;
+
+class qi_CRInst_qiqi_pat<InstHexagon Inst, Intrinsic IntID> :
+  Pat<(i32 (IntID IntRegs:$Rs, IntRegs:$Rt)),
+      (i32 (C2_tfrpr (Inst (C2_tfrrp IntRegs:$Rs), (C2_tfrrp IntRegs:$Rt))))>;
+
+def: qi_CRInst_qi_pat<C2_not,     int_hexagon_C2_not>;
+def: qi_CRInst_qi_pat<C2_all8,    int_hexagon_C2_all8>;
+def: qi_CRInst_qi_pat<C2_any8,    int_hexagon_C2_any8>;
+
+def: qi_CRInst_qiqi_pat<C2_and,   int_hexagon_C2_and>;
+def: qi_CRInst_qiqi_pat<C2_andn,  int_hexagon_C2_andn>;
+def: qi_CRInst_qiqi_pat<C2_or,    int_hexagon_C2_or>;
+def: qi_CRInst_qiqi_pat<C2_orn,   int_hexagon_C2_orn>;
+def: qi_CRInst_qiqi_pat<C2_xor,   int_hexagon_C2_xor>;
 
 // Multiply 32x32 and use lower result
 def : T_RRI_pat <M2_macsip, int_hexagon_M2_macsip>;
@@ -1331,40 +1388,6 @@ class di_LDInstPI_diu4<string opc, Intrinsic IntID>
            "$src1 = $dst">;
 
 /********************************************************************
-*            ALU32/PERM                                             *
-*********************************************************************/
-
-// ALU32 / PERM / Mux.
-def HEXAGON_C2_mux:
-  si_ALU32_qisisi                 <"mux",      int_hexagon_C2_mux>;
-
-/********************************************************************
-*            ALU32/PRED                                             *
-*********************************************************************/
-
-// ALU32 / PRED / Compare.
-def HEXAGON_C2_cmpeq:
-  qi_ALU32_sisi                   <"cmp.eq",   int_hexagon_C2_cmpeq>;
-def HEXAGON_C2_cmpeqi:
-  qi_ALU32_sis10                  <"cmp.eq",   int_hexagon_C2_cmpeqi>;
-def HEXAGON_C2_cmpgei:
-  qi_ALU32_sis8                   <"cmp.ge",   int_hexagon_C2_cmpgei>;
-def HEXAGON_C2_cmpgeui:
-  qi_ALU32_siu8                   <"cmp.geu",  int_hexagon_C2_cmpgeui>;
-def HEXAGON_C2_cmpgt:
-  qi_ALU32_sisi                   <"cmp.gt",   int_hexagon_C2_cmpgt>;
-def HEXAGON_C2_cmpgti:
-  qi_ALU32_sis10                  <"cmp.gt",   int_hexagon_C2_cmpgti>;
-def HEXAGON_C2_cmpgtu:
-  qi_ALU32_sisi                   <"cmp.gtu",  int_hexagon_C2_cmpgtu>;
-def HEXAGON_C2_cmpgtui:
-  qi_ALU32_siu9                   <"cmp.gtu",  int_hexagon_C2_cmpgtui>;
-def HEXAGON_C2_cmplt:
-  qi_ALU32_sisi                   <"cmp.lt",   int_hexagon_C2_cmplt>;
-def HEXAGON_C2_cmpltu:
-  qi_ALU32_sisi                   <"cmp.ltu",  int_hexagon_C2_cmpltu>;
-
-/********************************************************************
 *            ALU32/VH                                               *
 *********************************************************************/
 
@@ -1392,18 +1415,6 @@ def HEXAGON_A2_svsubhs:
   si_ALU32_sisi_sat               <"vsubh",    int_hexagon_A2_svsubhs>;
 def HEXAGON_A2_svsubuhs:
   si_ALU32_sisi_sat               <"vsubuh",   int_hexagon_A2_svsubuhs>;
-
-/********************************************************************
-*            ALU64/ALU                                              *
-*********************************************************************/
-
-// ALU64 / ALU / Compare.
-def HEXAGON_C2_cmpeqp:
-  qi_ALU64_didi                   <"cmp.eq",   int_hexagon_C2_cmpeqp>;
-def HEXAGON_C2_cmpgtp:
-  qi_ALU64_didi                   <"cmp.gt",   int_hexagon_C2_cmpgtp>;
-def HEXAGON_C2_cmpgtup:
-  qi_ALU64_didi                   <"cmp.gtu",  int_hexagon_C2_cmpgtup>;
 
 // ALU64 / ALU / Transfer register.
 def HEXAGON_A2_tfrp:
@@ -1563,34 +1574,6 @@ def HEXAGON_A2_vsubw:
   di_ALU64_didi                   <"vsubw",    int_hexagon_A2_vsubw>;
 def HEXAGON_A2_vsubws:
   di_ALU64_didi_sat               <"vsubw",    int_hexagon_A2_vsubws>;
-
-
-/********************************************************************
-*            CR                                                     *
-*********************************************************************/
-
-// CR / Logical reductions on predicates.
-def HEXAGON_C2_all8:
-  qi_SInst_qi                     <"all8",     int_hexagon_C2_all8>;
-def HEXAGON_C2_any8:
-  qi_SInst_qi                     <"any8",     int_hexagon_C2_any8>;
-
-// CR / Logical operations on predicates.
-def HEXAGON_C2_pxfer_map:
-  qi_SInst_qi_pxfer               <"",         int_hexagon_C2_pxfer_map>;
-def HEXAGON_C2_and:
-  qi_SInst_qiqi                   <"and",      int_hexagon_C2_and>;
-def HEXAGON_C2_andn:
-  qi_SInst_qiqi_neg               <"and",      int_hexagon_C2_andn>;
-def HEXAGON_C2_not:
-  qi_SInst_qi                     <"not",      int_hexagon_C2_not>;
-def HEXAGON_C2_or:
-  qi_SInst_qiqi                   <"or",       int_hexagon_C2_or>;
-def HEXAGON_C2_orn:
-  qi_SInst_qiqi_neg               <"or",       int_hexagon_C2_orn>;
-def HEXAGON_C2_xor:
-  qi_SInst_qiqi                   <"xor",      int_hexagon_C2_xor>;
-
 
 /********************************************************************
 *            MTYPE/ALU                                              *

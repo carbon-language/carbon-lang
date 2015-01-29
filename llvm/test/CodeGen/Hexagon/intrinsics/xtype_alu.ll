@@ -543,3 +543,11 @@ define i32 @A2_subh_h16_sat_hh(i32 %a, i32 %b) {
   ret i32 %z
 }
 ; CHECK: r0 = sub(r0.h, r1.h):sat:<<16
+
+; Sign extend word to doubleword
+declare i64 @llvm.hexagon.A2.sxtw(i32)
+define i64 @A2_sxtw(i32 %a) {
+  %z = call i64 @llvm.hexagon.A2.sxtw(i32 %a)
+  ret i64 %z
+}
+; CHECK:  = sxtw(r0)
