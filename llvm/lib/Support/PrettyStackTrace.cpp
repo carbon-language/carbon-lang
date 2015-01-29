@@ -30,7 +30,7 @@ using namespace llvm;
 // If backtrace support is not enabled, compile out support for pretty stack
 // traces.  This has the secondary effect of not requiring thread local storage
 // when backtrace support is disabled.
-#if ENABLE_BACKTRACE
+#if defined(HAVE_BACKTRACE) && defined(ENABLE_BACKTRACES)
 
 // We need a thread local pointer to manage the stack of our stack trace
 // objects, but we *really* cannot tolerate destructors running and do not want
@@ -108,11 +108,11 @@ static void CrashHandler(void *) {
 #endif
 }
 
-// ENABLE_BACKTRACE
+// defined(HAVE_BACKTRACE) && defined(ENABLE_BACKTRACES)
 #endif
 
 PrettyStackTraceEntry::PrettyStackTraceEntry() {
-#if ENABLE_BACKTRACE
+#if defined(HAVE_BACKTRACE) && defined(ENABLE_BACKTRACES)
   // Link ourselves.
   NextEntry = PrettyStackTraceHead;
   PrettyStackTraceHead = this;
@@ -120,7 +120,7 @@ PrettyStackTraceEntry::PrettyStackTraceEntry() {
 }
 
 PrettyStackTraceEntry::~PrettyStackTraceEntry() {
-#if ENABLE_BACKTRACE
+#if defined(HAVE_BACKTRACE) && defined(ENABLE_BACKTRACES)
   assert(PrettyStackTraceHead == this &&
          "Pretty stack trace entry destruction is out of order");
   PrettyStackTraceHead = getNextEntry();
@@ -139,7 +139,7 @@ void PrettyStackTraceProgram::print(raw_ostream &OS) const {
   OS << '\n';
 }
 
-#if ENABLE_BACKTRACE
+#if defined(HAVE_BACKTRACE) && defined(ENABLE_BACKTRACES)
 static bool RegisterCrashPrinter() {
   sys::AddSignalHandler(CrashHandler, nullptr);
   return false;
@@ -147,7 +147,7 @@ static bool RegisterCrashPrinter() {
 #endif
 
 void llvm::EnablePrettyStackTrace() {
-#if ENABLE_BACKTRACE
+#if defined(HAVE_BACKTRACE) && defined(ENABLE_BACKTRACES)
   // The first time this is called, we register the crash printer.
   static bool HandlerRegistered = RegisterCrashPrinter();
   (void)HandlerRegistered;
