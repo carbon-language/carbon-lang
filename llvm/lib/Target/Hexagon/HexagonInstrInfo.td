@@ -183,10 +183,27 @@ class T_ALU32_3op_sfx<string mnemonic, string suffix, bits<3> MajOp,
   let AsmString = "$Rd = "#mnemonic#"($Rs, $Rt)"#suffix;
 }
 
+let isCodeGenOnly = 0 in {
+def A2_svaddh   : T_ALU32_3op<"vaddh",   0b110, 0b000, 0, 1>;
+def A2_svsubh   : T_ALU32_3op<"vsubh",   0b110, 0b100, 1, 0>;
+}
+
 let Defs = [USR_OVF], Itinerary = ALU32_3op_tc_2_SLOT0123, 
     isCodeGenOnly = 0 in {
+  def A2_svaddhs  : T_ALU32_3op_sfx<"vaddh",  ":sat", 0b110, 0b001, 0, 1>;
   def A2_addsat   : T_ALU32_3op_sfx<"add",    ":sat", 0b110, 0b010, 0, 1>;
+  def A2_svadduhs : T_ALU32_3op_sfx<"vadduh", ":sat", 0b110, 0b011, 0, 1>;
+  def A2_svsubhs  : T_ALU32_3op_sfx<"vsubh",  ":sat", 0b110, 0b101, 1, 0>;
   def A2_subsat   : T_ALU32_3op_sfx<"sub",    ":sat", 0b110, 0b110, 1, 0>;
+  def A2_svsubuhs : T_ALU32_3op_sfx<"vsubuh", ":sat", 0b110, 0b111, 1, 0>;
+}
+
+let Itinerary = ALU32_3op_tc_2_SLOT0123, isCodeGenOnly = 0 in
+def A2_svavghs  : T_ALU32_3op_sfx<"vavgh",  ":rnd", 0b111, 0b001, 0, 1>;
+
+let isCodeGenOnly = 0 in {
+def A2_svavgh   : T_ALU32_3op<"vavgh",   0b111, 0b000, 0, 1>;
+def A2_svnavgh  : T_ALU32_3op<"vnavgh",  0b111, 0b011, 1, 0>;
 }
 
 multiclass T_ALU32_3op_p<string mnemonic, bits<3> MajOp, bits<3> MinOp,
@@ -333,7 +350,7 @@ def A2_combineii: ALU32Inst <(outs DoubleRegs:$Rdd), (ins s8Ext:$s8, s8Imm:$S8),
 //===----------------------------------------------------------------------===//
 // Template class for predicated ADD of a reg and an Immediate value.
 //===----------------------------------------------------------------------===//
-let hasNewValue = 1 in
+let hasNewValue = 1, hasSideEffects = 0 in
 class T_Addri_Pred <bit PredNot, bit PredNew>
   : ALU32_ri <(outs IntRegs:$Rd),
               (ins PredRegs:$Pu, IntRegs:$Rs, s8Ext:$s8),
@@ -359,7 +376,7 @@ class T_Addri_Pred <bit PredNot, bit PredNew>
 //===----------------------------------------------------------------------===//
 // A2_addi: Add a signed immediate to a register.
 //===----------------------------------------------------------------------===//
-let hasNewValue = 1 in
+let hasNewValue = 1, hasSideEffects = 0 in
 class T_Addri <Operand immOp, list<dag> pattern = [] >
   : ALU32_ri <(outs IntRegs:$Rd),
               (ins IntRegs:$Rs, immOp:$s16),
@@ -828,6 +845,163 @@ def: Pat<(shl I32:$src1, (i32 16)),   (A2_aslh I32:$src1)>;
 def: Pat<(sra I32:$src1, (i32 16)),   (A2_asrh I32:$src1)>;
 def: Pat<(sext_inreg I32:$src1, i8),  (A2_sxtb I32:$src1)>;
 def: Pat<(sext_inreg I32:$src1, i16), (A2_sxth I32:$src1)>;
+
+//===----------------------------------------------------------------------===//
+// Template class for vector add and avg
+//===----------------------------------------------------------------------===//
+
+class T_VectALU_64 <string opc, bits<3> majOp, bits<3> minOp,
+                   bit isSat, bit isRnd, bit isCrnd, bit SwapOps >
+  : ALU64_rr < (outs DoubleRegs:$Rdd),
+                (ins DoubleRegs:$Rss, DoubleRegs:$Rtt),
+  "$Rdd = "#opc#"($Rss, $Rtt)"#!if(isRnd, ":rnd", "")
+                             #!if(isCrnd,":crnd","")
+                             #!if(isSat, ":sat", ""),
+  [], "", ALU64_tc_2_SLOT23 > {
+    bits<5> Rdd;
+    bits<5> Rss;
+    bits<5> Rtt;
+
+    let IClass = 0b1101;
+
+    let Inst{27-24} = 0b0011;
+    let Inst{23-21} = majOp;
+    let Inst{20-16} = !if (SwapOps, Rtt, Rss);
+    let Inst{12-8} = !if (SwapOps, Rss, Rtt);
+    let Inst{7-5} = minOp;
+    let Inst{4-0} = Rdd;
+  }
+
+// ALU64 - Vector add
+// Rdd=vadd[u][bhw](Rss,Rtt)
+let Itinerary = ALU64_tc_1_SLOT23 in {
+  def A2_vaddub  : T_VectALU_64 < "vaddub", 0b000, 0b000, 0, 0, 0, 0>;
+  def A2_vaddh   : T_VectALU_64 < "vaddh",  0b000, 0b010, 0, 0, 0, 0>;
+  def A2_vaddw   : T_VectALU_64 < "vaddw",  0b000, 0b101, 0, 0, 0, 0>;
+}
+
+// Rdd=vadd[u][bhw](Rss,Rtt):sat
+let Defs = [USR_OVF] in {
+  def A2_vaddubs : T_VectALU_64 < "vaddub", 0b000, 0b001, 1, 0, 0, 0>;
+  def A2_vaddhs  : T_VectALU_64 < "vaddh",  0b000, 0b011, 1, 0, 0, 0>;
+  def A2_vadduhs : T_VectALU_64 < "vadduh", 0b000, 0b100, 1, 0, 0, 0>;
+  def A2_vaddws  : T_VectALU_64 < "vaddw",  0b000, 0b110, 1, 0, 0, 0>;
+}
+
+// ALU64 - Vector average
+// Rdd=vavg[u][bhw](Rss,Rtt)
+let Itinerary = ALU64_tc_1_SLOT23 in {
+  def A2_vavgub : T_VectALU_64 < "vavgub", 0b010, 0b000, 0, 0, 0, 0>;
+  def A2_vavgh  : T_VectALU_64 < "vavgh",  0b010, 0b010, 0, 0, 0, 0>;
+  def A2_vavguh : T_VectALU_64 < "vavguh", 0b010, 0b101, 0, 0, 0, 0>;
+  def A2_vavgw  : T_VectALU_64 < "vavgw",  0b011, 0b000, 0, 0, 0, 0>;
+  def A2_vavguw : T_VectALU_64 < "vavguw", 0b011, 0b011, 0, 0, 0, 0>;
+}
+
+// Rdd=vavg[u][bhw](Rss,Rtt)[:rnd|:crnd]
+def A2_vavgubr : T_VectALU_64 < "vavgub", 0b010, 0b001, 0, 1, 0, 0>;
+def A2_vavghr  : T_VectALU_64 < "vavgh",  0b010, 0b011, 0, 1, 0, 0>;
+def A2_vavghcr : T_VectALU_64 < "vavgh",  0b010, 0b100, 0, 0, 1, 0>;
+def A2_vavguhr : T_VectALU_64 < "vavguh", 0b010, 0b110, 0, 1, 0, 0>;
+
+def A2_vavgwr  : T_VectALU_64 < "vavgw",  0b011, 0b001, 0, 1, 0, 0>;
+def A2_vavgwcr : T_VectALU_64 < "vavgw",  0b011, 0b010, 0, 0, 1, 0>;
+def A2_vavguwr : T_VectALU_64 < "vavguw", 0b011, 0b100, 0, 1, 0, 0>;
+
+// Rdd=vnavg[bh](Rss,Rtt)
+let Itinerary = ALU64_tc_1_SLOT23 in {
+  def A2_vnavgh   : T_VectALU_64 < "vnavgh", 0b100, 0b000, 0, 0, 0, 1>;
+  def A2_vnavgw   : T_VectALU_64 < "vnavgw", 0b100, 0b011, 0, 0, 0, 1>;
+}
+
+// Rdd=vnavg[bh](Rss,Rtt)[:rnd|:crnd]:sat
+let Defs = [USR_OVF] in {
+  def A2_vnavghr  : T_VectALU_64 < "vnavgh", 0b100, 0b001, 1, 1, 0, 1>;
+  def A2_vnavghcr : T_VectALU_64 < "vnavgh", 0b100, 0b010, 1, 0, 1, 1>;
+  def A2_vnavgwr  : T_VectALU_64 < "vnavgw", 0b100, 0b100, 1, 1, 0, 1>;
+  def A2_vnavgwcr : T_VectALU_64 < "vnavgw", 0b100, 0b110, 1, 0, 1, 1>;
+}
+
+// Rdd=vsub[u][bh](Rss,Rtt)
+let Itinerary = ALU64_tc_1_SLOT23 in {
+  def A2_vsubub  : T_VectALU_64 < "vsubub", 0b001, 0b000, 0, 0, 0, 1>;
+  def A2_vsubh   : T_VectALU_64 < "vsubh",  0b001, 0b010, 0, 0, 0, 1>;
+  def A2_vsubw   : T_VectALU_64 < "vsubw",  0b001, 0b101, 0, 0, 0, 1>;
+}
+
+// Rdd=vsub[u][bh](Rss,Rtt):sat
+let Defs = [USR_OVF] in {
+  def A2_vsububs : T_VectALU_64 < "vsubub", 0b001, 0b001, 1, 0, 0, 1>;
+  def A2_vsubhs  : T_VectALU_64 < "vsubh",  0b001, 0b011, 1, 0, 0, 1>;
+  def A2_vsubuhs : T_VectALU_64 < "vsubuh", 0b001, 0b100, 1, 0, 0, 1>;
+  def A2_vsubws  : T_VectALU_64 < "vsubw",  0b001, 0b110, 1, 0, 0, 1>;
+}
+
+// Rdd=vmax[u][bhw](Rss,Rtt)
+def A2_vmaxb  : T_VectALU_64 < "vmaxb",  0b110, 0b110, 0, 0, 0, 1>;
+def A2_vmaxub : T_VectALU_64 < "vmaxub", 0b110, 0b000, 0, 0, 0, 1>;
+def A2_vmaxh  : T_VectALU_64 < "vmaxh",  0b110, 0b001, 0, 0, 0, 1>;
+def A2_vmaxuh : T_VectALU_64 < "vmaxuh", 0b110, 0b010, 0, 0, 0, 1>;
+def A2_vmaxw  : T_VectALU_64 < "vmaxw",  0b110, 0b011, 0, 0, 0, 1>;
+def A2_vmaxuw : T_VectALU_64 < "vmaxuw", 0b101, 0b101, 0, 0, 0, 1>;
+
+// Rdd=vmin[u][bhw](Rss,Rtt)
+def A2_vminb  : T_VectALU_64 < "vminb",  0b110, 0b111, 0, 0, 0, 1>;
+def A2_vminub : T_VectALU_64 < "vminub", 0b101, 0b000, 0, 0, 0, 1>;
+def A2_vminh  : T_VectALU_64 < "vminh",  0b101, 0b001, 0, 0, 0, 1>;
+def A2_vminuh : T_VectALU_64 < "vminuh", 0b101, 0b010, 0, 0, 0, 1>;
+def A2_vminw  : T_VectALU_64 < "vminw",  0b101, 0b011, 0, 0, 0, 1>;
+def A2_vminuw : T_VectALU_64 < "vminuw", 0b101, 0b100, 0, 0, 0, 1>;
+
+//===----------------------------------------------------------------------===//
+// Template class for vector compare
+//===----------------------------------------------------------------------===//
+let hasSideEffects = 0 in
+class T_vcmp <string Str, bits<4> minOp>
+  : ALU64_rr <(outs PredRegs:$Pd),
+              (ins DoubleRegs:$Rss, DoubleRegs:$Rtt),
+  "$Pd = "#Str#"($Rss, $Rtt)", [],
+  "", ALU64_tc_2early_SLOT23> {
+    bits<2> Pd;
+    bits<5> Rss;
+    bits<5> Rtt;
+
+    let IClass = 0b1101;
+
+    let Inst{27-23} = 0b00100;
+    let Inst{13} = minOp{3};
+    let Inst{7-5} = minOp{2-0};
+    let Inst{1-0} = Pd;
+    let Inst{20-16} = Rss;
+    let Inst{12-8} = Rtt;
+  }
+
+class T_vcmp_pat<InstHexagon MI, PatFrag Op, ValueType T>
+  : Pat<(i1 (Op (T DoubleRegs:$Rss), (T DoubleRegs:$Rtt))),
+        (i1 (MI DoubleRegs:$Rss, DoubleRegs:$Rtt))>;
+
+// Vector compare bytes
+def A2_vcmpbeq  : T_vcmp <"vcmpb.eq",  0b0110>;
+def A2_vcmpbgtu : T_vcmp <"vcmpb.gtu", 0b0111>;
+
+// Vector compare halfwords
+def A2_vcmpheq  : T_vcmp <"vcmph.eq",  0b0011>;
+def A2_vcmphgt  : T_vcmp <"vcmph.gt",  0b0100>;
+def A2_vcmphgtu : T_vcmp <"vcmph.gtu", 0b0101>;
+
+// Vector compare words
+def A2_vcmpweq  : T_vcmp <"vcmpw.eq",  0b0000>;
+def A2_vcmpwgt  : T_vcmp <"vcmpw.gt",  0b0001>;
+def A2_vcmpwgtu : T_vcmp <"vcmpw.gtu", 0b0010>;
+
+def: T_vcmp_pat<A2_vcmpbeq,  seteq,  v8i8>;
+def: T_vcmp_pat<A2_vcmpbgtu, setugt, v8i8>;
+def: T_vcmp_pat<A2_vcmpheq,  seteq,  v4i16>;
+def: T_vcmp_pat<A2_vcmphgt,  setgt,  v4i16>;
+def: T_vcmp_pat<A2_vcmphgtu, setugt, v4i16>;
+def: T_vcmp_pat<A2_vcmpweq,  seteq,  v2i32>;
+def: T_vcmp_pat<A2_vcmpwgt,  setgt,  v2i32>;
+def: T_vcmp_pat<A2_vcmpwgtu, setugt, v2i32>;
 
 //===----------------------------------------------------------------------===//
 // ALU32/PERM -

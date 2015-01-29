@@ -169,7 +169,7 @@ def IntRegs : RegisterClass<"Hexagon", [i32,f32], 32,
                                  R10, R11, R29, R30, R31)> {
 }
 
-def DoubleRegs : RegisterClass<"Hexagon", [i64,f64], 64,
+def DoubleRegs : RegisterClass<"Hexagon", [i64, f64, v8i8, v4i16, v2i32], 64,
                                (add (sequence "D%u", 0, 4),
                                     (sequence "D%u", 6, 13), D5, D14, D15)>;
 
