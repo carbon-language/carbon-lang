@@ -4,7 +4,7 @@
 ;    void f(int a[], int N, float *P, float *Q) {
 ;      int i;
 ;      for (i = 0; i < N; ++i)
-;        if ((P + 1) != Q)
+;        if (P != Q)
 ;          a[i] = i;
 ;    }
 ;
