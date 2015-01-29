@@ -71,7 +71,7 @@ typedef enum memory_order {
 
 /* 7.17.4 Fences */
 
-// These should be provided by the libc implementation.
+/* These should be provided by the libc implementation. */
 void atomic_thread_fence(memory_order);
 void atomic_signal_fence(memory_order);
 
@@ -164,7 +164,7 @@ typedef struct atomic_flag { atomic_bool _Value; } atomic_flag;
 
 #define ATOMIC_FLAG_INIT { 0 }
 
-// These should be provided by the libc implementation.
+/* These should be provided by the libc implementation. */
 #ifdef __cplusplus
 bool atomic_flag_test_and_set(volatile atomic_flag *);
 bool atomic_flag_test_and_set_explicit(volatile atomic_flag *, memory_order);
