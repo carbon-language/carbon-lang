@@ -12,10 +12,10 @@
 // CHECK-NOT: "-fexceptions"
 // CHECK: "-fno-common"
 // CHECK: xcc" "-o"
-// CHECK-EXCEP-NOT: "-fexceptions"
+// CHECK-NOT: "-fexceptions"
 // CHECK: "-c" "-v" "-g" "-fverbose-asm" "A1Arg" "A2Arg"
 // CHECK: xcc" "-o"
-// CHECK-EXCEP-NOT: "-fexceptions"
+// CHECK-NOT: "-fexceptions"
 // CHECK: "-v"
 // CHECK: "L1Arg" "L2Arg"
 
