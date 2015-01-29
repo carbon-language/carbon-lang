@@ -42,13 +42,12 @@ void ArrayOrderPass::perform(std::unique_ptr<MutableFile> &f) {
     // according to their number. Sections without optional
     // numer suffix should go last.
 
-    uint32_t leftPriority = std::numeric_limits<uint32_t>::max();
-    if (!leftNum.empty())
-      leftNum.getAsInteger(10, leftPriority);
-
-    uint32_t rightPriority = std::numeric_limits<uint32_t>::max();
-    if (!rightNum.empty())
-      rightNum.getAsInteger(10, rightPriority);
+    uint32_t leftPriority;
+    uint32_t rightPriority;
+    if (leftNum.getAsInteger(10, leftPriority))
+      leftPriority = std::numeric_limits<uint32_t>::max();
+    if (rightNum.getAsInteger(10, rightPriority))
+      rightPriority = std::numeric_limits<uint32_t>::max();
 
     return leftPriority < rightPriority;
   });
