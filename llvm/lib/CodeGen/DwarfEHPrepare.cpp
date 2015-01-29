@@ -14,18 +14,12 @@
 
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/ADT/Statistic.h"
-#include "llvm/IR/CallSite.h"
-#include "llvm/IR/Dominators.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/Instructions.h"
-#include "llvm/IR/IntrinsicInst.h"
 #include "llvm/IR/Module.h"
-#include "llvm/MC/MCAsmInfo.h"
 #include "llvm/Pass.h"
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/Target/TargetSubtargetInfo.h"
-#include "llvm/Transforms/Utils/BasicBlockUtils.h"
-#include "llvm/Transforms/Utils/SSAUpdater.h"
 using namespace llvm;
 
 #define DEBUG_TYPE "dwarfehprepare"
@@ -45,9 +39,7 @@ namespace {
   public:
     static char ID; // Pass identification, replacement for typeid.
     DwarfEHPrepare(const TargetMachine *TM)
-        : FunctionPass(ID), TM(TM), RewindFunction(nullptr) {
-      initializeDominatorTreeWrapperPassPass(*PassRegistry::getPassRegistry());
-    }
+        : FunctionPass(ID), TM(TM), RewindFunction(nullptr) {}
 
     bool runOnFunction(Function &Fn) override;
 
@@ -55,8 +47,6 @@ namespace {
       RewindFunction = nullptr;
       return false;
     }
-
-    void getAnalysisUsage(AnalysisUsage &AU) const override { }
 
     const char *getPassName() const override {
       return "Exception handling preparation";
@@ -99,11 +89,11 @@ Value *DwarfEHPrepare::GetExceptionObject(ResumeInst *RI) {
   RI->eraseFromParent();
 
   if (EraseIVIs) {
-    if (SelIVI->getNumUses() == 0)
+    if (SelIVI->use_empty())
       SelIVI->eraseFromParent();
-    if (ExcIVI->getNumUses() == 0)
+    if (ExcIVI->use_empty())
       ExcIVI->eraseFromParent();
-    if (SelLoad && SelLoad->getNumUses() == 0)
+    if (SelLoad && SelLoad->use_empty())
       SelLoad->eraseFromParent();
   }
 
@@ -114,9 +104,8 @@ Value *DwarfEHPrepare::GetExceptionObject(ResumeInst *RI) {
 /// into calls to the appropriate _Unwind_Resume function.
 bool DwarfEHPrepare::InsertUnwindResumeCalls(Function &Fn) {
   SmallVector<ResumeInst*, 16> Resumes;
-  for (Function::iterator I = Fn.begin(), E = Fn.end(); I != E; ++I) {
-    TerminatorInst *TI = I->getTerminator();
-    if (ResumeInst *RI = dyn_cast<ResumeInst>(TI))
+  for (BasicBlock &BB : Fn) {
+    if (auto *RI = dyn_cast<ResumeInst>(BB.getTerminator()))
       Resumes.push_back(RI);
   }
 
@@ -125,8 +114,8 @@ bool DwarfEHPrepare::InsertUnwindResumeCalls(Function &Fn) {
 
   // Find the rewind function if we didn't already.
   const TargetLowering *TLI = TM->getSubtargetImpl(Fn)->getTargetLowering();
+  LLVMContext &Ctx = Fn.getContext();
   if (!RewindFunction) {
-    LLVMContext &Ctx = Resumes[0]->getContext();
     FunctionType *FTy = FunctionType::get(Type::getVoidTy(Ctx),
                                           Type::getInt8PtrTy(Ctx), false);
     const char *RewindName = TLI->getLibcallName(RTLIB::UNWIND_RESUME);
@@ -134,7 +123,6 @@ bool DwarfEHPrepare::InsertUnwindResumeCalls(Function &Fn) {
   }
 
   // Create the basic block where the _Unwind_Resume call will live.
-  LLVMContext &Ctx = Fn.getContext();
   unsigned ResumesSize = Resumes.size();
 
   if (ResumesSize == 1) {
@@ -159,9 +147,7 @@ bool DwarfEHPrepare::InsertUnwindResumeCalls(Function &Fn) {
 
   // Extract the exception object from the ResumeInst and add it to the PHI node
   // that feeds the _Unwind_Resume call.
-  for (SmallVectorImpl<ResumeInst*>::iterator
-         I = Resumes.begin(), E = Resumes.end(); I != E; ++I) {
-    ResumeInst *RI = *I;
+  for (ResumeInst *RI : Resumes) {
     BasicBlock *Parent = RI->getParent();
     BranchInst::Create(UnwindBB, Parent);
 

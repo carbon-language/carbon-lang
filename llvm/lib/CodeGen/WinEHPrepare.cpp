@@ -17,10 +17,9 @@
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/Analysis/LibCallSemantics.h"
 #include "llvm/IR/Function.h"
+#include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/Instructions.h"
-#include "llvm/IR/Intrinsics.h"
 #include "llvm/Pass.h"
-#include "llvm/Target/TargetLowering.h"
 using namespace llvm;
 
 #define DEBUG_TYPE "winehprepare"
@@ -32,9 +31,7 @@ class WinEHPrepare : public FunctionPass {
 public:
   static char ID; // Pass identification, replacement for typeid.
   WinEHPrepare(const TargetMachine *TM = nullptr)
-      : FunctionPass(ID), DwarfPrepare(createDwarfEHPass(TM)) {
-    initializeDominatorTreeWrapperPassPass(*PassRegistry::getPassRegistry());
-  }
+      : FunctionPass(ID), DwarfPrepare(createDwarfEHPass(TM)) {}
 
   bool runOnFunction(Function &Fn) override;
 
