@@ -20,7 +20,7 @@ namespace llvm {
 
 template <typename F> struct function_traits;
 
-#if 0 && LLVM_HAS_VARIADIC_TEMPLATES
+#if LLVM_HAS_VARIADIC_TEMPLATES
 template <typename R, typename... Args>
 struct function_traits<R (*)(Args...)> : public function_traits<R(Args...)> {};
 
@@ -37,14 +37,12 @@ struct function_traits<R (__stdcall C::*)(Args...)> {
 // exclusively.
 template <typename C, typename R, typename A1, typename A2, typename A3>
 struct function_traits<R (__stdcall C::*)(A1, A2, A3)> {
-  //using args_tuple = std::tuple<A1, A2, A3>;
   typedef std::tuple<A1, A2, A3> args_tuple;
 };
 
 template <typename C, typename R, typename A1, typename A2, typename A3,
           typename A4, typename A5>
 struct function_traits<R (__stdcall C::*)(A1, A2, A3, A4, A5)> {
-  //using args_tuple = std::tuple<A1, A2, A3, A4, A5>;
   typedef std::tuple<A1, A2, A3, A4, A5> args_tuple;
 };
 #endif
