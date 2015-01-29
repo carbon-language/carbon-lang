@@ -394,11 +394,12 @@
 #elif defined(__clang__) && defined(__powerpc64__)
 // Clang, GCC, and all compatible compilers tend to use __thread. But we need
 // to work aronud a bug in the combination of Clang's compilation of
-// local-dynamic TLS and the ppc64 linker relocations which we do by forcing to
-// global-dynamic (called in most documents "general dynamic").
+// global-dynamic and local-dynamic TLS and the ppc64 linker relocations which
+// we do by forcing initial-exec. While that mode isn't strictly sufficient for
+// all possible DSO use cases, it will usually work with glibc.
 // FIXME: Make this conditional on the Clang version once this is fixed in
 // top-of-tree.
-#define LLVM_THREAD_LOCAL __thread __attribute__((tls_model("global-dynamic")))
+#define LLVM_THREAD_LOCAL __thread __attribute__((tls_model("initial-exec")))
 #else
 #define LLVM_THREAD_LOCAL __thread
 #endif
