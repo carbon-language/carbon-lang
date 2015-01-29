@@ -1,6 +1,9 @@
 // RUN: not --crash %clang_cc1 -analyze -analyzer-checker=debug.ExprInspection %s 2>&1 | FileCheck %s
 // REQUIRES: crash-recovery
 
+// FIXME: CHECKs might be incompatible to win32.
+// REQUIRES: shell
+
 void clang_analyzer_crash(void);
 
 void inlined() {
