@@ -962,7 +962,6 @@ unsigned clang_Type_visitFields(CXType PT,
     case CXVisit_Break:
       return true;
     case CXVisit_Continue:
-    default:
       break;
     }
   }
