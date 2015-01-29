@@ -3327,9 +3327,6 @@ __kmp_affinity_process_placelist(kmp_affin_mask_t **out_masks,
 #undef ADD_MASK
 #undef ADD_MASK_OSID
 
-
-# if KMP_MIC
-
 static void
 __kmp_apply_thread_places(AddrUnsPair **pAddr, int depth)
 {
@@ -3350,7 +3347,7 @@ __kmp_apply_thread_places(AddrUnsPair **pAddr, int depth)
     if ( __kmp_place_num_threads_per_core == 0 ) {
         __kmp_place_num_threads_per_core = __kmp_nThreadsPerCore;  // use all HW contexts
     }
-    if ( __kmp_place_core_offset + __kmp_place_num_cores > nCoresPerPkg ) {
+    if ( __kmp_place_core_offset + __kmp_place_num_cores > (unsigned int)nCoresPerPkg ) {
         KMP_WARNING( AffThrPlaceManyCores );
         return;
     }
@@ -3360,11 +3357,11 @@ __kmp_apply_thread_places(AddrUnsPair **pAddr, int depth)
     int i, j, k, n_old = 0, n_new = 0;
     for ( i = 0; i < nPackages; ++i ) {
         for ( j = 0; j < nCoresPerPkg; ++j ) {
-            if ( j < __kmp_place_core_offset || j >= __kmp_place_core_offset + __kmp_place_num_cores ) {
+            if ( (unsigned int)j < __kmp_place_core_offset || (unsigned int)j >= __kmp_place_core_offset + __kmp_place_num_cores ) {
                 n_old += __kmp_nThreadsPerCore;   // skip not-requested core
             } else {
                 for ( k = 0; k < __kmp_nThreadsPerCore; ++k ) {
-                    if ( k < __kmp_place_num_threads_per_core ) {
+                    if ( (unsigned int)k < __kmp_place_num_threads_per_core ) {
                         newAddr[n_new] = (*pAddr)[n_old];   // copy requested core' data to new location
                         n_new++;
                     }
@@ -3381,8 +3378,6 @@ __kmp_apply_thread_places(AddrUnsPair **pAddr, int depth)
     __kmp_free( *pAddr );
     *pAddr = newAddr;      // replace old topology with new one
 }
-
-# endif /* KMP_MIC */
 
 
 static AddrUnsPair *address2os = NULL;
@@ -3705,9 +3700,7 @@ __kmp_aux_affinity_initialize(void)
         return;
     }
 
-# if KMP_MIC
     __kmp_apply_thread_places(&address2os, depth);
-# endif
 
     //
     // Create the table of masks, indexed by thread Id.

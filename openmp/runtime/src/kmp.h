@@ -782,11 +782,9 @@ typedef enum kmp_cancel_kind_t {
 } kmp_cancel_kind_t;
 #endif // OMP_40_ENABLED
 
-#if KMP_MIC
 extern unsigned int __kmp_place_num_cores;
 extern unsigned int __kmp_place_num_threads_per_core;
 extern unsigned int __kmp_place_core_offset;
-#endif
 
 /* ------------------------------------------------------------------------ */
 /* ------------------------------------------------------------------------ */
@@ -2578,7 +2576,7 @@ extern int        __kmp_bt_intervals;   /* number of monitor timestamp intervals
 extern int        __kmp_zero_bt;        /* whether blocktime has been forced to zero */
 #endif /* KMP_ADJUST_BLOCKTIME */
 #ifdef KMP_DFLT_NTH_CORES
-extern int        __kmp_ncores;         /* Number of physical procs in HT machine */
+extern int        __kmp_ncores;         /* Total number of cores for threads placement */
 #endif
 extern int        __kmp_abort_delay;    /* Number of millisecs to delay on abort for VTune */
 

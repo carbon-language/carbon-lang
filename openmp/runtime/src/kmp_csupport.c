@@ -2157,14 +2157,12 @@ __kmpc_get_parent_taskid() {
 
 void __kmpc_place_threads(int nC, int nT, int nO)
 {
-#if KMP_MIC
     if ( ! __kmp_init_serial ) {
         __kmp_serial_initialize();
     }
     __kmp_place_num_cores = nC;
     __kmp_place_num_threads_per_core = nT;
     __kmp_place_core_offset = nO;
-#endif
 }
 
 // end of file //

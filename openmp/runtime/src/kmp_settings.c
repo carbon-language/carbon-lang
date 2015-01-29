@@ -4205,7 +4205,6 @@ __kmp_stg_print_speculative_statsfile( kmp_str_buf_t * buffer, char const * name
 
 #endif // KMP_USE_ADAPTIVE_LOCKS
 
-#if KMP_MIC
 // -------------------------------------------------------------------------------------------------
 // KMP_PLACE_THREADS
 // -------------------------------------------------------------------------------------------------
@@ -4343,7 +4342,6 @@ __kmp_stg_print_place_threads( kmp_str_buf_t * buffer, char const * name, void *
 */
     }
 }
-#endif
 
 #if USE_ITT_BUILD
 // -------------------------------------------------------------------------------------------------
@@ -4561,9 +4559,7 @@ static kmp_setting_t __kmp_stg_table[] = {
     { "KMP_SPECULATIVE_STATSFILE",         __kmp_stg_parse_speculative_statsfile,__kmp_stg_print_speculative_statsfile,  NULL, 0, 0 },
 #endif
 #endif // KMP_USE_ADAPTIVE_LOCKS
-#if KMP_MIC
     { "KMP_PLACE_THREADS",                 __kmp_stg_parse_place_threads,      __kmp_stg_print_place_threads,      NULL, 0, 0 },
-#endif
 #if USE_ITT_BUILD
     { "KMP_FORKJOIN_FRAMES",               __kmp_stg_parse_forkjoin_frames,    __kmp_stg_print_forkjoin_frames,    NULL, 0, 0 },
     { "KMP_FORKJOIN_FRAMES_MODE",          __kmp_stg_parse_forkjoin_frames_mode,__kmp_stg_print_forkjoin_frames_mode,  NULL, 0, 0 },
