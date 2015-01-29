@@ -28,9 +28,7 @@ namespace lltok {
     lbrace, rbrace,    // {  }
     less, greater,     // <  >
     lparen, rparen,    // (  )
-    backslash,         // \    (not /)
     exclaim,           // !
-    hash,              // #
 
     kw_x,
     kw_true,    kw_false,
