@@ -14,7 +14,7 @@ extern "C" void TestOneInput(const uint8_t *Data, size_t Size) {
   if (Size > 5 && Data[5] == 'R') bits |= 32;
   if (bits == 63) {
     std::cerr <<  "BINGO!\n";
-    abort();
+    exit(1);
   }
 }
 

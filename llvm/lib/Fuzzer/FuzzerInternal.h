@@ -14,6 +14,7 @@
 #include <cstdlib>
 #include <string>
 #include <vector>
+#include <unordered_set>
 
 namespace fuzzer {
 typedef std::vector<uint8_t> Unit;
@@ -43,6 +44,7 @@ class Fuzzer {
     bool DoCrossOver = true;
     bool MutateDepth = 10;
     bool ExitOnFirst = false;
+    bool UseFullCoverageSet  = false;
     std::string OutputCorpus;
   };
   Fuzzer(FuzzingOptions Options) : Options(Options) {
@@ -63,6 +65,8 @@ class Fuzzer {
  private:
   size_t MutateAndTestOne(Unit *U);
   size_t RunOne(const Unit &U);
+  size_t RunOneMaximizeTotalCoverage(const Unit &U);
+  size_t RunOneMaximizeFullCoverageSet(const Unit &U);
   void WriteToOutputCorpus(const Unit &U);
   static void WriteToCrash(const Unit &U, const char *Prefix);
 
@@ -73,6 +77,7 @@ class Fuzzer {
   size_t TotalNumberOfRuns = 0;
 
   std::vector<Unit> Corpus;
+  std::unordered_set<uintptr_t> FullCoverageSets;
   FuzzingOptions Options;
   system_clock::time_point ProcessStartTime = system_clock::now();
   static system_clock::time_point UnitStartTime;

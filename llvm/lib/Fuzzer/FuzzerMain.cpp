@@ -117,6 +117,7 @@ int main(int argc, char **argv) {
   Options.DoCrossOver = Flags.cross_over;
   Options.MutateDepth = Flags.mutate_depth;
   Options.ExitOnFirst = Flags.exit_on_first;
+  Options.UseFullCoverageSet = Flags.use_full_coverage_set;
   if (!inputs.empty())
     Options.OutputCorpus = inputs[0];
   Fuzzer F(Options);

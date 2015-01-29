@@ -76,6 +76,35 @@ void Fuzzer::ShuffleAndMinimize() {
 size_t Fuzzer::RunOne(const Unit &U) {
   UnitStartTime = system_clock::now();
   TotalNumberOfRuns++;
+  if (Options.UseFullCoverageSet)
+    return RunOneMaximizeFullCoverageSet(U);
+  return RunOneMaximizeTotalCoverage(U);
+}
+
+static uintptr_t HashOfArrayOfPCs(uintptr_t *PCs, uintptr_t NumPCs) {
+  uintptr_t Res = 0;
+  for (uintptr_t i = 0; i < NumPCs; i++) {
+    Res = (Res + PCs[i]) * 7;
+  }
+  return Res;
+}
+
+// Fuly reset the current coverage state, run a single unit,
+// compute a hash function from the full coverage set,
+// return non-zero if the hash value is new.
+// This produces tons of new units and as is it's only suitable for small tests,
+// e.g. test/FullCoverageSetTest.cpp. FIXME: make it scale.
+size_t Fuzzer::RunOneMaximizeFullCoverageSet(const Unit &U) {
+  __sanitizer_reset_coverage();
+  TestOneInput(U.data(), U.size());
+  uintptr_t *PCs;
+  uintptr_t NumPCs =__sanitizer_get_coverage_guards(&PCs);
+  if (FullCoverageSets.insert(HashOfArrayOfPCs(PCs, NumPCs)).second)
+    return FullCoverageSets.size();
+  return 0;
+}
+
+size_t Fuzzer::RunOneMaximizeTotalCoverage(const Unit &U) {
   size_t OldCoverage = __sanitizer_get_total_unique_coverage();
   TestOneInput(U.data(), U.size());
   size_t NewCoverage = __sanitizer_get_total_unique_coverage();
