@@ -307,7 +307,6 @@ protected:
   bool _noInhibitExec;
   bool _exportDynamic;
   bool _mergeCommonStrings;
-  bool _runLayoutPass;
   bool _useShlibUndefines;
   bool _dynamicLinkerArg;
   bool _noAllowDynamicLibraries;

@@ -59,15 +59,14 @@ ELFLinkingContext::ELFLinkingContext(
     : _outputELFType(llvm::ELF::ET_EXEC), _triple(triple),
       _targetHandler(std::move(targetHandler)), _baseAddress(0),
       _isStaticExecutable(false), _noInhibitExec(false), _exportDynamic(false),
-      _mergeCommonStrings(false), _runLayoutPass(true),
-      _useShlibUndefines(true), _dynamicLinkerArg(false),
-      _noAllowDynamicLibraries(false), _mergeRODataToTextSegment(true),
-      _demangle(true), _alignSegments(true), _outputMagic(OutputMagic::DEFAULT),
-      _initFunction("_init"), _finiFunction("_fini"), _sysrootPath("") {}
+      _mergeCommonStrings(false), _useShlibUndefines(true),
+      _dynamicLinkerArg(false), _noAllowDynamicLibraries(false),
+      _mergeRODataToTextSegment(true), _demangle(true), _alignSegments(true),
+      _outputMagic(OutputMagic::DEFAULT), _initFunction("_init"),
+      _finiFunction("_fini"), _sysrootPath("") {}
 
 void ELFLinkingContext::addPasses(PassManager &pm) {
-  if (_runLayoutPass)
-    pm.add(std::unique_ptr<Pass>(new LayoutPass(registry())));
+  pm.add(std::unique_ptr<Pass>(new LayoutPass(registry())));
   pm.add(std::unique_ptr<Pass>(new elf::ArrayOrderPass()));
 }
 
