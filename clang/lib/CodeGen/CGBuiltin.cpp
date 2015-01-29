@@ -21,6 +21,7 @@
 #include "clang/Basic/TargetInfo.h"
 #include "clang/CodeGen/CGFunctionInfo.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/IR/CallSite.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/InlineAsm.h"
 #include "llvm/IR/Intrinsics.h"
@@ -1662,6 +1663,57 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
   case Builtin::BI__exception_info:
   case Builtin::BI_exception_info:
     return RValue::get(EmitSEHExceptionInfo());
+  case Builtin::BI_setjmpex: {
+    if (getTarget().getTriple().isOSMSVCRT()) {
+      llvm::Type *ArgTypes[] = {Int8PtrTy, Int8PtrTy};
+      llvm::AttributeSet ReturnsTwiceAttr =
+          AttributeSet::get(getLLVMContext(), llvm::AttributeSet::FunctionIndex,
+                            llvm::Attribute::ReturnsTwice);
+      llvm::Constant *SetJmpEx = CGM.CreateRuntimeFunction(
+          llvm::FunctionType::get(IntTy, ArgTypes, /*isVarArg=*/false),
+          "_setjmpex", ReturnsTwiceAttr);
+      llvm::Value *Buf =
+          Builder.CreateBitCast(EmitScalarExpr(E->getArg(0)), Int8PtrTy);
+      llvm::Value *FrameAddr =
+          Builder.CreateCall(CGM.getIntrinsic(Intrinsic::frameaddress),
+                             ConstantInt::get(Int32Ty, 0));
+      llvm::Value *Args[] = {Buf, FrameAddr};
+      llvm::CallSite CS = EmitRuntimeCallOrInvoke(SetJmpEx, Args);
+      CS.setAttributes(ReturnsTwiceAttr);
+      return RValue::get(CS.getInstruction());
+    }
+  }
+  case Builtin::BI_setjmp: {
+    if (getTarget().getTriple().isOSMSVCRT()) {
+      llvm::AttributeSet ReturnsTwiceAttr =
+          AttributeSet::get(getLLVMContext(), llvm::AttributeSet::FunctionIndex,
+                            llvm::Attribute::ReturnsTwice);
+      llvm::Value *Buf =
+          Builder.CreateBitCast(EmitScalarExpr(E->getArg(0)), Int8PtrTy);
+      llvm::CallSite CS;
+      if (getTarget().getTriple().getArch() == llvm::Triple::x86) {
+        llvm::Type *ArgTypes[] = {Int8PtrTy, IntTy};
+        llvm::Constant *SetJmp3 = CGM.CreateRuntimeFunction(
+            llvm::FunctionType::get(IntTy, ArgTypes, /*isVarArg=*/true),
+            "_setjmp3", ReturnsTwiceAttr);
+        llvm::Value *Count = ConstantInt::get(IntTy, 0);
+        llvm::Value *Args[] = {Buf, Count};
+        CS = EmitRuntimeCallOrInvoke(SetJmp3, Args);
+      } else {
+        llvm::Type *ArgTypes[] = {Int8PtrTy, Int8PtrTy};
+        llvm::Constant *SetJmp = CGM.CreateRuntimeFunction(
+            llvm::FunctionType::get(IntTy, ArgTypes, /*isVarArg=*/false),
+            "_setjmp", ReturnsTwiceAttr);
+        llvm::Value *FrameAddr =
+            Builder.CreateCall(CGM.getIntrinsic(Intrinsic::frameaddress),
+                               ConstantInt::get(Int32Ty, 0));
+        llvm::Value *Args[] = {Buf, FrameAddr};
+        CS = EmitRuntimeCallOrInvoke(SetJmp, Args);
+      }
+      CS.setAttributes(ReturnsTwiceAttr);
+      return RValue::get(CS.getInstruction());
+    }
+  }
   }
 
   // If this is an alias for a lib function (e.g. __builtin_sin), emit
