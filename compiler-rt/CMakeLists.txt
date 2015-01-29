@@ -271,12 +271,27 @@ append_list_if(COMPILER_RT_HAS_WD4391_FLAG /wd4391 SANITIZER_COMMON_CFLAGS)
 append_list_if(COMPILER_RT_HAS_WD4722_FLAG /wd4722 SANITIZER_COMMON_CFLAGS)
 append_list_if(COMPILER_RT_HAS_WD4800_FLAG /wd4800 SANITIZER_COMMON_CFLAGS)
 if(APPLE)
-  # Obtain the iOS Simulator SDK path from xcodebuild.
-  execute_process(
-    COMMAND xcodebuild -version -sdk iphonesimulator Path
-    OUTPUT_VARIABLE IOSSIM_SDK_DIR
-    OUTPUT_STRIP_TRAILING_WHITESPACE
-  )
+  macro(find_darwin_sdk_dir var sdk_name)
+    # Let's first try the internal SDK, otherwise use the public SDK.
+    execute_process(
+      COMMAND xcodebuild -version -sdk ${sdk_name}.internal Path
+      OUTPUT_VARIABLE ${var}
+      OUTPUT_STRIP_TRAILING_WHITESPACE
+      ERROR_FILE /dev/null
+    )
+    if(${var} STREQUAL "")
+      execute_process(
+        COMMAND xcodebuild -version -sdk ${sdk_name} Path
+        OUTPUT_VARIABLE ${var}
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+        ERROR_FILE /dev/null
+      )
+    endif()
+  endmacro()
+
+  find_darwin_sdk_dir(OSX_SDK_DIR macosx)
+  find_darwin_sdk_dir(IOSSIM_SDK_DIR iphonesimulator)
+
   string(REGEX MATCH "-mmacosx-version-min="
          MACOSX_VERSION_MIN_FLAG "${CMAKE_CXX_FLAGS}")
   set(SANITIZER_COMMON_SUPPORTED_DARWIN_OS osx)
@@ -286,10 +301,12 @@ if(APPLE)
 
   set(SANITIZER_MIN_OSX_VERSION 10.7)
   set(CMAKE_OSX_DEPLOYMENT_TARGET "") # We're setting the flag manually below.
-  set(DARWIN_osx_CFLAGS -mmacosx-version-min=${SANITIZER_MIN_OSX_VERSION})
+  set(DARWIN_osx_CFLAGS -mmacosx-version-min=${SANITIZER_MIN_OSX_VERSION}
+    -isysroot ${OSX_SDK_DIR} -stdlib=libc++)
   set(DARWIN_iossim_CFLAGS
     -mios-simulator-version-min=7.0 -isysroot ${IOSSIM_SDK_DIR})
-  set(DARWIN_osx_LINKFLAGS)
+  set(DARWIN_osx_LINKFLAGS -mmacosx-version-min=${SANITIZER_MIN_OSX_VERSION}
+    -isysroot ${OSX_SDK_DIR} -stdlib=libc++)
   set(DARWIN_iossim_LINKFLAGS
     -Wl,-ios_simulator_version_min,7.0.0
     -mios-simulator-version-min=7.0

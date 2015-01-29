@@ -44,10 +44,14 @@ XCRun = \
     result=`xcrun -find $(1) 2> /dev/null`; \
     if [ "$$?" != "0" ]; then result=$(1); fi; \
     echo $$result)
+# Prefer building with the internal SDKs.
 XCRunSdkPath = \
   $(shell \
-    result=`xcrun --sdk $(1) --show-sdk-path 2> /dev/null`; \
-    if [ "$$?" != "0" ]; then result=""; fi; \
+    result=`xcrun --sdk $(1).internal --show-sdk-path 2> /dev/null`; \
+    if [ "$$?" != "0" ]; then \
+      result=`xcrun --sdk $(1) --show-sdk-path 2> /dev/null`; \
+      if [ "$$?" != "0" ]; then result=""; fi; \
+    fi; \
     echo $$result)
 ###
 
@@ -170,6 +174,7 @@ CFLAGS.10.4		:= $(CFLAGS) $(OSX_DEPLOYMENT_ARGS)
 
 CFLAGS.asan_osx_dynamic := \
 	$(CFLAGS) -mmacosx-version-min=10.7 \
+	-stdlib=libc++ \
 	-isysroot $(OSX_SDK) \
 	-fno-builtin \
 	-gline-tables-only \
@@ -219,7 +224,9 @@ CFLAGS.profile_ios.arm64  := $(CFLAGS) $(IOS6_DEPLOYMENT_ARGS)
 
 # Configure the asan_osx_dynamic library to be built shared.
 SHARED_LIBRARY.asan_osx_dynamic := 1
-LDFLAGS.asan_osx_dynamic := -lstdc++ -undefined dynamic_lookup -install_name @rpath/libclang_rt.asan_osx_dynamic.dylib
+LDFLAGS.asan_osx_dynamic := -lc++ -undefined dynamic_lookup -install_name @rpath/libclang_rt.asan_osx_dynamic.dylib \
+  -mmacosx-version-min=10.7 \
+  -isysroot $(OSX_SDK)
 
 # Configure the asan_iossim_dynamic library to be built shared.
 SHARED_LIBRARY.asan_iossim_dynamic := 1
