@@ -12,9 +12,7 @@
 #include "FuzzerInternal.h"
 #include <sanitizer/asan_interface.h>
 #include <algorithm>
-#include <string>
 #include <iostream>
-#include <stdlib.h>
 
 // This function should be defined by the user.
 extern "C" void TestOneInput(const uint8_t *Data, size_t Size);
