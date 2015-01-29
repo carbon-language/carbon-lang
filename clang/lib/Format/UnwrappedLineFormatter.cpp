@@ -409,7 +409,7 @@ UnwrappedLineFormatter::format(const SmallVectorImpl<AnnotatedLine *> &Lines,
           TheLine.Type == LT_ImportStatement) {
         LineState State = Indenter->getInitialState(Indent, &TheLine, DryRun);
         while (State.NextToken) {
-          formatChildren(State, /*Newline=*/false, /*DryRun=*/false, Penalty);
+          formatChildren(State, /*Newline=*/false, DryRun, Penalty);
           Indenter->addTokenToState(State, /*Newline=*/false, DryRun);
         }
       } else if (Style.ColumnLimit == 0) {
@@ -657,8 +657,8 @@ void UnwrappedLineFormatter::addNextStateToQueue(unsigned Penalty,
 
 bool UnwrappedLineFormatter::formatChildren(LineState &State, bool NewLine,
                                             bool DryRun, unsigned &Penalty) {
-  FormatToken &Previous = *State.NextToken->Previous;
   const FormatToken *LBrace = State.NextToken->getPreviousNonComment();
+  FormatToken &Previous = *State.NextToken->Previous;
   if (!LBrace || LBrace->isNot(tok::l_brace) || LBrace->BlockKind != BK_Block ||
       Previous.Children.size() == 0)
     // The previous token does not open a block. Nothing to do. We don't

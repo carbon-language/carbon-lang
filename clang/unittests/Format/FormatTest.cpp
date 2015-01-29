@@ -3081,6 +3081,8 @@ TEST_F(FormatTest, LayoutNestedBlocks) {
                "  if (aaaaaaaaaaaaaaaaaaaaaaaa) return;\n"
                "}, a);",
                Style);
+
+  verifyNoCrash("^{v^{a}}");
 }
 
 TEST_F(FormatTest, IndividualStatementsOfNestedBlocks) {
