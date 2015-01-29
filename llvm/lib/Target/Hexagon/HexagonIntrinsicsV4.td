@@ -42,6 +42,21 @@ def: T_RR_pat<C4_nbitsset,  int_hexagon_C4_nbitsset>;
 def: T_RR_pat<C4_nbitsclr,  int_hexagon_C4_nbitsclr>;
 def: T_RI_pat<C4_nbitsclri, int_hexagon_C4_nbitsclri>;
 
+def : T_RR_pat<A4_cmpbeq,   int_hexagon_A4_cmpbeq>;
+def : T_RR_pat<A4_cmpbgt,   int_hexagon_A4_cmpbgt>;
+def : T_RR_pat<A4_cmpbgtu,  int_hexagon_A4_cmpbgtu>;
+def : T_RR_pat<A4_cmpheq,   int_hexagon_A4_cmpheq>;
+def : T_RR_pat<A4_cmphgt,   int_hexagon_A4_cmphgt>;
+def : T_RR_pat<A4_cmphgtu,  int_hexagon_A4_cmphgtu>;
+
+def : T_RI_pat<A4_cmpbeqi,  int_hexagon_A4_cmpbeqi>;
+def : T_RI_pat<A4_cmpbgti,  int_hexagon_A4_cmpbgti>;
+def : T_RI_pat<A4_cmpbgtui, int_hexagon_A4_cmpbgtui>;
+
+def : T_RI_pat<A4_cmpheqi,  int_hexagon_A4_cmpheqi>;
+def : T_RI_pat<A4_cmphgti,  int_hexagon_A4_cmphgti>;
+def : T_RI_pat<A4_cmphgtui, int_hexagon_A4_cmphgtui>;
+
 def : T_RP_pat <A4_boundscheck, int_hexagon_A4_boundscheck>;
 
 def : T_PR_pat<A4_tlbmatch, int_hexagon_A4_tlbmatch>;

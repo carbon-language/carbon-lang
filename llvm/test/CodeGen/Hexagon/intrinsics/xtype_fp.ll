@@ -24,6 +24,63 @@ define i32 @F2_dfclass(double %a) {
 }
 ; CHECK: p0 = dfclass(r1:0, #0)
 
+; Compare floating-point value
+declare i32 @llvm.hexagon.F2.sfcmpge(float, float)
+define i32 @F2_sfcmpge(float %a, float %b) {
+  %z = call i32 @llvm.hexagon.F2.sfcmpge(float %a, float %b)
+  ret i32 %z
+}
+; CHECK: p0 = sfcmp.ge(r0, r1)
+
+declare i32 @llvm.hexagon.F2.sfcmpuo(float, float)
+define i32 @F2_sfcmpuo(float %a, float %b) {
+  %z = call i32 @llvm.hexagon.F2.sfcmpuo(float %a, float %b)
+  ret i32 %z
+}
+; CHECK: p0 = sfcmp.uo(r0, r1)
+
+declare i32 @llvm.hexagon.F2.sfcmpeq(float, float)
+define i32 @F2_sfcmpeq(float %a, float %b) {
+  %z = call i32 @llvm.hexagon.F2.sfcmpeq(float %a, float %b)
+  ret i32 %z
+}
+; CHECK: p0 = sfcmp.eq(r0, r1)
+
+declare i32 @llvm.hexagon.F2.sfcmpgt(float, float)
+define i32 @F2_sfcmpgt(float %a, float %b) {
+  %z = call i32 @llvm.hexagon.F2.sfcmpgt(float %a, float %b)
+  ret i32 %z
+}
+; CHECK: p0 = sfcmp.gt(r0, r1)
+
+declare i32 @llvm.hexagon.F2.dfcmpge(double, double)
+define i32 @F2_dfcmpge(double %a, double %b) {
+  %z = call i32 @llvm.hexagon.F2.dfcmpge(double %a, double %b)
+  ret i32 %z
+}
+; CHECK: p0 = dfcmp.ge(r1:0, r3:2)
+
+declare i32 @llvm.hexagon.F2.dfcmpuo(double, double)
+define i32 @F2_dfcmpuo(double %a, double %b) {
+  %z = call i32 @llvm.hexagon.F2.dfcmpuo(double %a, double %b)
+  ret i32 %z
+}
+; CHECK: p0 = dfcmp.uo(r1:0, r3:2)
+
+declare i32 @llvm.hexagon.F2.dfcmpeq(double, double)
+define i32 @F2_dfcmpeq(double %a, double %b) {
+  %z = call i32 @llvm.hexagon.F2.dfcmpeq(double %a, double %b)
+  ret i32 %z
+}
+; CHECK: p0 = dfcmp.eq(r1:0, r3:2)
+
+declare i32 @llvm.hexagon.F2.dfcmpgt(double, double)
+define i32 @F2_dfcmpgt(double %a, double %b) {
+  %z = call i32 @llvm.hexagon.F2.dfcmpgt(double %a, double %b)
+  ret i32 %z
+}
+; CHECK: p0 = dfcmp.gt(r1:0, r3:2)
+
 ; Convert floating-point value to other format
 declare double @llvm.hexagon.F2.conv.sf2df(float)
 define double @F2_conv_sf2df(float %a) {

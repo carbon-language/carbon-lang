@@ -135,6 +135,10 @@ class T_FF_pat <InstHexagon MI, Intrinsic IntID>
   : Pat<(IntID F32:$Rs, F32:$Rt),
         (MI F32:$Rs, F32:$Rt)>;
 
+class T_DD_pat <InstHexagon MI, Intrinsic IntID>
+  : Pat<(IntID F64:$Rs, F64:$Rt),
+        (MI F64:$Rs, F64:$Rt)>;
+
 class T_FFF_pat <InstHexagon MI, Intrinsic IntID>
   : Pat<(IntID F32:$Rs, F32:$Rt, F32:$Ru),
         (MI F32:$Rs, F32:$Rt, F32:$Ru)>;

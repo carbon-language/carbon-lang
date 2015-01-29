@@ -33,6 +33,17 @@ def : T_FFF_pat <F2_sffma_lib, int_hexagon_F2_sffma_lib>;
 def : T_FFF_pat <F2_sffms_lib, int_hexagon_F2_sffms_lib>;
 def : T_FFFQ_pat <F2_sffma_sc, int_hexagon_F2_sffma_sc>;
 
+// Compare floating-point value
+def : T_FF_pat <F2_sfcmpge, int_hexagon_F2_sfcmpge>;
+def : T_FF_pat <F2_sfcmpuo, int_hexagon_F2_sfcmpuo>;
+def : T_FF_pat <F2_sfcmpeq, int_hexagon_F2_sfcmpeq>;
+def : T_FF_pat <F2_sfcmpgt, int_hexagon_F2_sfcmpgt>;
+
+def : T_DD_pat <F2_dfcmpeq, int_hexagon_F2_dfcmpeq>;
+def : T_DD_pat <F2_dfcmpgt, int_hexagon_F2_dfcmpgt>;
+def : T_DD_pat <F2_dfcmpge, int_hexagon_F2_dfcmpge>;
+def : T_DD_pat <F2_dfcmpuo, int_hexagon_F2_dfcmpuo>;
+
 // Create floating-point value
 def : T_I_pat <F2_sfimm_p, int_hexagon_F2_sfimm_p>;
 def : T_I_pat <F2_sfimm_n, int_hexagon_F2_sfimm_n>;
