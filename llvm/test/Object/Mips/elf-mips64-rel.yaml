@@ -29,21 +29,17 @@
 # YAML-NEXT:   - Offset:      0x0000000000000020
 # YAML-NEXT:     Symbol:      .rodata
 # YAML-NEXT:     Type:        R_MIPS_GOT_PAGE
-# YAML-NEXT:     Addend:      0
 # YAML-NEXT:   - Offset:      0x0000000000000024
 # YAML-NEXT:     Symbol:      .rodata
 # YAML-NEXT:     Type:        R_MIPS_GOT_OFST
-# YAML-NEXT:     Addend:      0
 # YAML-NEXT:   - Offset:      0x0000000000000028
 # YAML-NEXT:     Symbol:      printf
 # YAML-NEXT:     Type:        R_MIPS_CALL16
-# YAML-NEXT:     Addend:      0
 # YAML-NEXT:   - Offset:      0x0000000000000030
 # YAML-NEXT:     Symbol:      printf
 # YAML-NEXT:     Type:        R_MIPS_GPREL16
 # YAML-NEXT:     Type2:       R_MIPS_LO16
 # YAML-NEXT:     SpecSym:     RSS_GP0
-# YAML-NEXT:     Addend:      0
 
 ---
 FileHeader:

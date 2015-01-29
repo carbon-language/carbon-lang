@@ -10,11 +10,9 @@
 # CHECK-NEXT:      - Offset:          0x0000000000000000
 # CHECK-NEXT:        Symbol:          main
 # CHECK-NEXT:        Type:            R_AARCH64_ABS64
-# CHECK-NEXT:        Addend:          0
 # CHECK-NEXT:      - Offset:          0x0000000000000008
 # CHECK-NEXT:        Symbol:          main
 # CHECK-NEXT:        Type:            R_AARCH64_TLSGD_ADR_PREL21
-# CHECK-NEXT:        Addend:          0
 
 FileHeader:
   Class:           ELFCLASS64

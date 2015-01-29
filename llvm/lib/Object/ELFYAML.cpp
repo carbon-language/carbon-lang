@@ -592,7 +592,7 @@ void MappingTraits<ELFYAML::Relocation>::mapping(IO &IO,
   } else
     IO.mapRequired("Type", Rel.Type);
 
-  IO.mapOptional("Addend", Rel.Addend);
+  IO.mapOptional("Addend", Rel.Addend, (int64_t)0);
 }
 
 void MappingTraits<ELFYAML::Object>::mapping(IO &IO, ELFYAML::Object &Object) {
