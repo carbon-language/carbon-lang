@@ -65,12 +65,12 @@ struct Test2 {
       int foo;
     };
     struct {
-//CHECK64: FieldDecl=bar:[[@LINE+1]]:11 (Definition) [type=int] [typekind=Int] [sizeof=4] [alignof=4] [offsetof=32]
+//CHECK64: FieldDecl=bar:[[@LINE+1]]:11 (Definition) [type=int] [typekind=Int] [sizeof=4] [alignof=4] [offsetof=32/0]
       int bar;
     };
     struct {
         struct {
-//CHECK64: FieldDecl=foobar:[[@LINE+1]]:15 (Definition) [type=int] [typekind=Int] [sizeof=4] [alignof=4] [offsetof=64]
+//CHECK64: FieldDecl=foobar:[[@LINE+1]]:15 (Definition) [type=int] [typekind=Int] [sizeof=4] [alignof=4] [offsetof=64/0]
           int foobar;
         };
     };
@@ -160,6 +160,7 @@ struct s4a {
       struct {
         struct {
           struct {
+//CHECK64: FieldDecl=s4_e1:[[@LINE+1]]:17 (Definition) [type=int] [typekind=Int] [sizeof=4] [alignof=4] [offsetof=-1/0]
             int s4_e1;
           };
         };
