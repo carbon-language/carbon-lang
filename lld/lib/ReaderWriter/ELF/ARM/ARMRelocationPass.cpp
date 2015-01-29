@@ -51,8 +51,6 @@ template <class Derived> class ARMRelocationPass : public Pass {
     if (ref.kindNamespace() != Reference::KindNamespace::ELF)
       return;
     assert(ref.kindArch() == Reference::KindArch::ARM);
-    switch (ref.kindValue()) {
-    }
   }
 
 protected:
