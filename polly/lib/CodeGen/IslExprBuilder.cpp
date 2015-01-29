@@ -175,9 +175,33 @@ Value *IslExprBuilder::createOpBin(__isl_take isl_ast_expr *Expr) {
 
   LHS = create(isl_ast_expr_get_op_arg(Expr, 0));
   RHS = create(isl_ast_expr_get_op_arg(Expr, 1));
+  Type *LHSType = LHS->getType();
+  Type *RHSType = RHS->getType();
 
-  MaxType = LHS->getType();
-  MaxType = getWidestType(MaxType, RHS->getType());
+  // Handle <pointer> +/- <integer> and <integer> +/- <pointer>
+  if (LHSType->isPointerTy() || RHSType->isPointerTy()) {
+    isl_ast_expr_free(Expr);
+
+    assert((LHSType->isIntegerTy() || RHSType->isIntegerTy()) &&
+           "Arithmetic operations might only performed on one but not two "
+           "pointer types.");
+
+    if (LHSType->isIntegerTy())
+      std::swap(LHS, RHS);
+
+    switch (OpType) {
+    default:
+      llvm_unreachable(
+          "Only additive binary operations are allowed on pointer types.");
+    case isl_ast_op_sub:
+      RHS = Builder.CreateNeg(RHS);
+    // Fall through
+    case isl_ast_op_add:
+      return Builder.CreateGEP(LHS, RHS);
+    }
+  }
+
+  MaxType = getWidestType(LHSType, RHSType);
 
   // Take the result into account when calculating the widest type.
   //
