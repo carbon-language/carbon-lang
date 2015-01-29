@@ -835,6 +835,7 @@
 ; CORTEX-M7-DOUBLE-NOT: .eabi_attribute 27
 ; CORTEX-M7:  .eabi_attribute 36, 1
 ; CORTEX-M7:  .eabi_attribute 38, 1
+; CORTEX-M7-NOT:  .eabi_attribute 44
 ; CORTEX-M7:  .eabi_attribute 14, 0
 
 ; CORTEX-M7-NOFPU-FAST-NOT:   .eabi_attribute 19
