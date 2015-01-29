@@ -87,8 +87,6 @@ bool WinEHPrepare::runOnFunction(Function &Fn) {
   if (Resumes.empty())
     return false;
 
-  Function *Trap =
-      Intrinsic::getDeclaration(Fn.getParent(), Intrinsic::trap, None);
   for (ResumeInst *Resume : Resumes) {
     IRBuilder<>(Resume).CreateUnreachable();
     Resume->eraseFromParent();
