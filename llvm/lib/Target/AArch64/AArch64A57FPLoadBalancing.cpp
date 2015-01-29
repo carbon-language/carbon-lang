@@ -96,6 +96,10 @@ static bool isMla(MachineInstr *MI) {
   }
 }
 
+namespace llvm {
+static void initializeAArch64A57FPLoadBalancingPass(PassRegistry &);
+}
+
 //===----------------------------------------------------------------------===//
 
 namespace {
@@ -116,7 +120,9 @@ class AArch64A57FPLoadBalancing : public MachineFunctionPass {
 
 public:
   static char ID;
-  explicit AArch64A57FPLoadBalancing() : MachineFunctionPass(ID) {}
+  explicit AArch64A57FPLoadBalancing() : MachineFunctionPass(ID) {
+    initializeAArch64A57FPLoadBalancingPass(*PassRegistry::getPassRegistry());
+  }
 
   bool runOnMachineFunction(MachineFunction &F) override;
 
@@ -143,8 +149,16 @@ private:
   Color getColor(unsigned Register);
   Chain *getAndEraseNext(Color PreferredColor, std::vector<Chain*> &L);
 };
+}
+
 char AArch64A57FPLoadBalancing::ID = 0;
 
+INITIALIZE_PASS_BEGIN(AArch64A57FPLoadBalancing, DEBUG_TYPE,
+                      "AArch64 A57 FP Load-Balancing", false, false)
+INITIALIZE_PASS_END(AArch64A57FPLoadBalancing, DEBUG_TYPE,
+                    "AArch64 A57 FP Load-Balancing", false, false)
+
+namespace {
 /// A Chain is a sequence of instructions that are linked together by 
 /// an accumulation operand. For example:
 ///
