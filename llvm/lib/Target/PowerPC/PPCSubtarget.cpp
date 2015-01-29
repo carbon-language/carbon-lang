@@ -95,8 +95,13 @@ void PPCSubtarget::initializeEnvironment() {
 void PPCSubtarget::initSubtargetFeatures(StringRef CPU, StringRef FS) {
   // Determine default and user specified characteristics
   std::string CPUName = CPU;
-  if (CPUName.empty())
-    CPUName = "generic";
+  if (CPUName.empty()) {
+    // If cross-compiling with -march=ppc64le without -mcpu
+    if (TargetTriple.getArch() == Triple::ppc64le)
+      CPUName = "ppc64le";
+    else
+      CPUName = "generic";
+  }
 #if (defined(__APPLE__) || defined(__linux__)) && \
     (defined(__ppc__) || defined(__powerpc__))
   if (CPUName == "generic")
