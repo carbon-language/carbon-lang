@@ -5037,7 +5037,13 @@ __kmp_env_initialize( char const * string ) {
         }
         __kmp_nested_proc_bind.size = 1;
         __kmp_nested_proc_bind.used = 1;
+# if KMP_AFFINITY_SUPPORTED
         __kmp_nested_proc_bind.bind_types[0] = proc_bind_default;
+# else
+        // default proc bind is false if affinity not supported
+        __kmp_nested_proc_bind.bind_types[0] = proc_bind_false;
+# endif
+
     }
 #endif /* OMP_40_ENABLED */
 
