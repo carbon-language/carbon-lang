@@ -450,8 +450,10 @@ void TargetPassConfig::addPassesToHandleExceptions() {
     // FALLTHROUGH
   case ExceptionHandling::DwarfCFI:
   case ExceptionHandling::ARM:
-  case ExceptionHandling::WinEH:
     addPass(createDwarfEHPass(TM));
+    break;
+  case ExceptionHandling::WinEH:
+    addPass(createWinEHPass(TM));
     break;
   case ExceptionHandling::None:
     addPass(createLowerInvokePass());

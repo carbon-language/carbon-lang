@@ -289,6 +289,7 @@ void initializeStackMapLivenessPass(PassRegistry&);
 void initializeMachineCombinerPass(PassRegistry &);
 void initializeLoadCombinePass(PassRegistry&);
 void initializeRewriteSymbolsPass(PassRegistry&);
+void initializeWinEHPreparePass(PassRegistry&);
 }
 
 #endif

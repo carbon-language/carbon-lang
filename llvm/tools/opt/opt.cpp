@@ -322,6 +322,7 @@ int main(int argc, char **argv) {
   initializeCodeGenPreparePass(Registry);
   initializeAtomicExpandPass(Registry);
   initializeRewriteSymbolsPass(Registry);
+  initializeWinEHPreparePass(Registry);
 
 #ifdef LINK_POLLY_INTO_TOOLS
   polly::initializePollyPasses(Registry);

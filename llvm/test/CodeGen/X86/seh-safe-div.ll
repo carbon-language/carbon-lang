@@ -96,8 +96,9 @@ __try.cont:
 ; CHECK: movl $-2, [[rloc]]
 ; CHECK: jmp .LBB0_7
 
-; FIXME: EH preparation should not call _Unwind_Resume.
-; CHECK: callq _Unwind_Resume
+; FIXME: EH preparation should eliminate the 'resume' instr and we should not do
+; the previous 'cmp;jeq'.
+; CHECK-NOT: _Unwind_Resume
 ; CHECK: ud2
 
 ; CHECK: .seh_handlerdata

@@ -573,6 +573,10 @@ namespace llvm {
   /// adapted to code generation.  Required if using dwarf exception handling.
   FunctionPass *createDwarfEHPass(const TargetMachine *TM);
 
+  /// createWinEHPass - Prepares personality functions used by MSVC on Windows,
+  /// in addition to the Itanium LSDA based personalities.
+  FunctionPass *createWinEHPass(const TargetMachine *TM);
+
   /// createSjLjEHPreparePass - This pass adapts exception handling code to use
   /// the GCC-style builtin setjmp/longjmp (sjlj) to handling EH control flow.
   ///
