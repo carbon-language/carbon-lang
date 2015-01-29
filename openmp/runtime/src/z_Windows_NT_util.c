@@ -835,6 +835,21 @@ __kmp_runtime_initialize( void )
         return;
     };
 
+#if GUIDEDLL_EXPORTS
+    /* Pin dynamic library for the lifetime of application */
+    {
+        // First, turn off error message boxes
+        UINT err_mode = SetErrorMode (SEM_FAILCRITICALERRORS);
+        HMODULE h;
+        BOOL ret = GetModuleHandleEx( GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS
+                                     |GET_MODULE_HANDLE_EX_FLAG_PIN,
+                                     (LPCTSTR)&__kmp_serial_initialize, &h);
+        KMP_DEBUG_ASSERT2(h && ret, "OpenMP RTL cannot find itself loaded");
+        SetErrorMode (err_mode);   // Restore error mode
+        KA_TRACE( 10, ("__kmp_runtime_initialize: dynamic library pinned\n") );
+    }
+#endif
+
     InitializeCriticalSection( & __kmp_win32_section );
 #if USE_ITT_BUILD
     __kmp_itt_system_object_created( & __kmp_win32_section, "Critical Section" );
