@@ -842,13 +842,13 @@ MachineConstantPoolEntry::getSectionKind(const DataLayout *DL) const {
   switch (getRelocationInfo()) {
   default:
     llvm_unreachable("Unknown section kind");
-  case 2:
+  case Constant::GlobalRelocations:
     Kind = SectionKind::getReadOnlyWithRel();
     break;
-  case 1:
+  case Constant::LocalRelocation:
     Kind = SectionKind::getReadOnlyWithRelLocal();
     break;
-  case 0:
+  case Constant::NoRelocation:
     switch (DL->getTypeAllocSize(getType())) {
     case 4:
       Kind = SectionKind::getMergeableConst4();
