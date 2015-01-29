@@ -242,3 +242,12 @@
 !
 ! Clang understands this one and orders it weirdly.
 ! CHECK: "-fsyntax-only"
+!
+! PR22234: Ensure that -fsyntax-only doesn't complain about output types and
+!          passes along correctly.
+! RUN: %clang -no-canonical-prefixes -target i386-linux -fsyntax-only -### %s -o %t 2>&1 | \
+! grep for error message and command-line
+! RUN: grep -e error: -e -fsyntax-only | FileCheck %s --check-prefix=CHECK-PR22234
+!
+! CHECK-PR22234-NOT: clang: error: invalid output type
+! CHECK-PR22234: "-fsyntax-only"

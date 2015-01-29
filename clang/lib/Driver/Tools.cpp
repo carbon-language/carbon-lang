@@ -5116,16 +5116,21 @@ void gcc::Compile::RenderExtraToolArgs(const JobAction &JA,
                                        ArgStringList &CmdArgs) const {
   const Driver &D = getToolChain().getDriver();
 
+  switch (JA.getType()) {
   // If -flto, etc. are present then make sure not to force assembly output.
-  if (JA.getType() == types::TY_LLVM_IR || JA.getType() == types::TY_LTO_IR ||
-      JA.getType() == types::TY_LLVM_BC || JA.getType() == types::TY_LTO_BC)
+  case types::TY_LLVM_IR:
+  case types::TY_LTO_IR:
+  case types::TY_LLVM_BC:
+  case types::TY_LTO_BC:
     CmdArgs.push_back("-c");
-  else {
-    if (JA.getType() != types::TY_PP_Asm)
-      D.Diag(diag::err_drv_invalid_gcc_output_type)
-        << getTypeName(JA.getType());
-
+    break;
+  case types::TY_PP_Asm:
     CmdArgs.push_back("-S");
+  case types::TY_Nothing:
+    CmdArgs.push_back("-fsyntax-only");
+    break;
+  default:
+    D.Diag(diag::err_drv_invalid_gcc_output_type) << getTypeName(JA.getType());
   }
 }
 
