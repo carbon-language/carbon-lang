@@ -1345,11 +1345,9 @@ bool ARMExpandPseudo::ExpandMBB(MachineBasicBlock &MBB) {
 }
 
 bool ARMExpandPseudo::runOnMachineFunction(MachineFunction &MF) {
-  const TargetMachine &TM = MF.getTarget();
-  TII = static_cast<const ARMBaseInstrInfo *>(
-      TM.getSubtargetImpl()->getInstrInfo());
-  TRI = TM.getSubtargetImpl()->getRegisterInfo();
-  STI = &TM.getSubtarget<ARMSubtarget>();
+  STI = &static_cast<const ARMSubtarget &>(MF.getSubtarget());
+  TII = STI->getInstrInfo();
+  TRI = STI->getRegisterInfo();
   AFI = MF.getInfo<ARMFunctionInfo>();
 
   bool Modified = false;

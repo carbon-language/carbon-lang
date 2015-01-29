@@ -383,11 +383,9 @@ bool ARMConstantIslands::runOnMachineFunction(MachineFunction &mf) {
                << MCP->getConstants().size() << " CP entries, aligned to "
                << MCP->getConstantPoolAlignment() << " bytes *****\n");
 
-  TII = (const ARMBaseInstrInfo *)MF->getTarget()
-            .getSubtargetImpl()
-            ->getInstrInfo();
+  STI = &static_cast<const ARMSubtarget &>(MF->getSubtarget());
+  TII = STI->getInstrInfo();
   AFI = MF->getInfo<ARMFunctionInfo>();
-  STI = &MF->getTarget().getSubtarget<ARMSubtarget>();
 
   isThumb = AFI->isThumbFunction();
   isThumb1 = AFI->isThumb1OnlyFunction();

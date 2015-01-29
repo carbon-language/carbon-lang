@@ -165,9 +165,10 @@ namespace {
       DebugLoc DL = FirstMBB.findDebugLoc(MBBI);
       unsigned TempReg =
           MF.getRegInfo().createVirtualRegister(&ARM::rGPRRegClass);
-      unsigned Opc = TM->getSubtarget<ARMSubtarget>().isThumb2() ?
-                     ARM::t2LDRpci : ARM::LDRcp;
-      const TargetInstrInfo &TII = *TM->getSubtargetImpl()->getInstrInfo();
+      const ARMSubtarget &STI =
+          static_cast<const ARMSubtarget &>(MF.getSubtarget());
+      unsigned Opc = STI.isThumb2() ? ARM::t2LDRpci : ARM::LDRcp;
+      const TargetInstrInfo &TII = *STI.getInstrInfo();
       MachineInstrBuilder MIB = BuildMI(FirstMBB, MBBI, DL,
                                         TII.get(Opc), TempReg)
                                 .addConstantPoolIndex(Idx);
@@ -177,8 +178,7 @@ namespace {
 
       // Fix the GOT address by adding pc.
       unsigned GlobalBaseReg = AFI->getGlobalBaseReg();
-      Opc = TM->getSubtarget<ARMSubtarget>().isThumb2() ? ARM::tPICADD
-                                                        : ARM::PICADD;
+      Opc = STI.isThumb2() ? ARM::tPICADD : ARM::PICADD;
       MIB = BuildMI(FirstMBB, MBBI, DL, TII.get(Opc), GlobalBaseReg)
                 .addReg(TempReg)
                 .addImm(ARMPCLabelIndex);

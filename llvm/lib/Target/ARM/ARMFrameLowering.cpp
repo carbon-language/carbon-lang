@@ -225,7 +225,8 @@ static void emitAligningInstructions(MachineFunction &MF, ARMFunctionInfo *AFI,
                                      DebugLoc DL, const unsigned Reg,
                                      const unsigned Alignment,
                                      const bool MustBeSingleInstruction) {
-  const ARMSubtarget &AST = MF.getTarget().getSubtarget<ARMSubtarget>();
+  const ARMSubtarget &AST =
+      static_cast<const ARMSubtarget &>(MF.getSubtarget());
   const bool CanUseBFC = AST.hasV6T2Ops() || AST.hasV7Ops();
   const unsigned AlignMask = Alignment - 1;
   const unsigned NrBitsToZero = countTrailingZeros(Alignment);
@@ -282,15 +283,12 @@ void ARMFrameLowering::emitPrologue(MachineFunction &MF) const {
   MCContext &Context = MMI.getContext();
   const TargetMachine &TM = MF.getTarget();
   const MCRegisterInfo *MRI = Context.getRegisterInfo();
-  const ARMBaseRegisterInfo *RegInfo = static_cast<const ARMBaseRegisterInfo *>(
-      TM.getSubtargetImpl()->getRegisterInfo());
-  const ARMBaseInstrInfo &TII = *static_cast<const ARMBaseInstrInfo *>(
-                                    TM.getSubtargetImpl()->getInstrInfo());
+  const ARMBaseRegisterInfo *RegInfo = STI.getRegisterInfo();
+  const ARMBaseInstrInfo &TII = *STI.getInstrInfo();
   assert(!AFI->isThumb1OnlyFunction() &&
          "This emitPrologue does not support Thumb1!");
   bool isARM = !AFI->isThumbFunction();
-  unsigned Align =
-      TM.getSubtargetImpl()->getFrameLowering()->getStackAlignment();
+  unsigned Align = STI.getFrameLowering()->getStackAlignment();
   unsigned ArgRegsSaveSize = AFI->getArgRegsSaveSize(Align);
   unsigned NumBytes = MFI->getStackSize();
   const std::vector<CalleeSavedInfo> &CSI = MFI->getCalleeSavedInfo();
@@ -740,10 +738,7 @@ void ARMFrameLowering::emitEpilogue(MachineFunction &MF,
          "This emitEpilogue does not support Thumb1!");
   bool isARM = !AFI->isThumbFunction();
 
-  unsigned Align = MF.getTarget()
-                       .getSubtargetImpl()
-                       ->getFrameLowering()
-                       ->getStackAlignment();
+  unsigned Align = STI.getFrameLowering()->getStackAlignment();
   unsigned ArgRegsSaveSize = AFI->getArgRegsSaveSize(Align);
   int NumBytes = (int)MFI->getStackSize();
   unsigned FramePtr = RegInfo->getFrameRegister(MF);
@@ -1473,20 +1468,16 @@ static void checkNumAlignedDPRCS2Regs(MachineFunction &MF) {
     return;
 
   // We are planning to use NEON instructions vst1 / vld1.
-  if (!MF.getTarget().getSubtarget<ARMSubtarget>().hasNEON())
+  if (!static_cast<const ARMSubtarget &>(MF.getSubtarget()).hasNEON())
     return;
 
   // Don't bother if the default stack alignment is sufficiently high.
-  if (MF.getTarget()
-          .getSubtargetImpl()
-          ->getFrameLowering()
-          ->getStackAlignment() >= 8)
+  if (MF.getSubtarget().getFrameLowering()->getStackAlignment() >= 8)
     return;
 
   // Aligned spills require stack realignment.
-  const ARMBaseRegisterInfo *RegInfo = static_cast<const ARMBaseRegisterInfo *>(
-      MF.getSubtarget().getRegisterInfo());
-  if (!RegInfo->canRealignStack(MF))
+  if (!static_cast<const ARMBaseRegisterInfo *>(
+           MF.getSubtarget().getRegisterInfo())->canRealignStack(MF))
     return;
 
   // We always spill contiguous d-registers starting from d8. Count how many

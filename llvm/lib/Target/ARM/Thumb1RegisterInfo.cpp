@@ -71,7 +71,7 @@ Thumb1RegisterInfo::emitLoadConstPool(MachineBasicBlock &MBB,
              "Thumb1 does not have ldr to high register");
 
   MachineFunction &MF = *MBB.getParent();
-  const TargetInstrInfo &TII = *MF.getSubtarget().getInstrInfo();
+  const TargetInstrInfo &TII = *STI.getInstrInfo();
   MachineConstantPool *ConstantPool = MF.getConstantPool();
   const Constant *C = ConstantInt::get(
           Type::getInt32Ty(MBB.getParent()->getFunction()->getContext()), Val);
@@ -388,12 +388,7 @@ rewriteFrameIndex(MachineBasicBlock::iterator II, unsigned FrameRegIdx,
 
 void Thumb1RegisterInfo::resolveFrameIndex(MachineInstr &MI, unsigned BaseReg,
                                            int64_t Offset) const {
-  const ARMBaseInstrInfo &TII =
-      *static_cast<const ARMBaseInstrInfo *>(MI.getParent()
-                                                 ->getParent()
-                                                 ->getTarget()
-                                                 .getSubtargetImpl()
-                                                 ->getInstrInfo());
+  const ARMBaseInstrInfo &TII = *STI.getInstrInfo();
   int Off = Offset; // ARM doesn't need the general 64-bit offsets
   unsigned i = 0;
 
@@ -419,7 +414,7 @@ Thumb1RegisterInfo::saveScavengerRegister(MachineBasicBlock &MBB,
   // off the frame pointer (if, for example, there are alloca() calls in
   // the function, the offset will be negative. Use R12 instead since that's
   // a call clobbered register that we know won't be used in Thumb1 mode.
-  const TargetInstrInfo &TII = *MBB.getParent()->getSubtarget().getInstrInfo();
+  const TargetInstrInfo &TII = *STI.getInstrInfo();
   DebugLoc DL;
   AddDefaultPred(BuildMI(MBB, I, DL, TII.get(ARM::tMOVr))
     .addReg(ARM::R12, RegState::Define)
@@ -465,8 +460,7 @@ Thumb1RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   MachineInstr &MI = *II;
   MachineBasicBlock &MBB = *MI.getParent();
   MachineFunction &MF = *MBB.getParent();
-  const ARMBaseInstrInfo &TII =
-      *static_cast<const ARMBaseInstrInfo *>(MF.getSubtarget().getInstrInfo());
+  const ARMBaseInstrInfo &TII = *STI.getInstrInfo();
   ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
   DebugLoc dl = MI.getDebugLoc();
   MachineInstrBuilder MIB(*MBB.getParent(), &MI);
@@ -477,8 +471,7 @@ Thumb1RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
                MF.getFrameInfo()->getStackSize() + SPAdj;
 
   if (MF.getFrameInfo()->hasVarSizedObjects()) {
-    assert(SPAdj == 0 && MF.getSubtarget().getFrameLowering()->hasFP(MF) &&
-           "Unexpected");
+    assert(SPAdj == 0 && STI.getFrameLowering()->hasFP(MF) && "Unexpected");
     // There are alloca()'s in this function, must reference off the frame
     // pointer or base pointer instead.
     if (!hasBasePointer(MF)) {
@@ -494,10 +487,7 @@ Thumb1RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   // when !hasReservedCallFrame().
 #ifndef NDEBUG
   if (RS && FrameReg == ARM::SP && RS->isScavengingFrameIndex(FrameIndex)){
-    assert(MF.getTarget()
-               .getSubtargetImpl()
-               ->getFrameLowering()
-               ->hasReservedCallFrame(MF) &&
+    assert(STI.getFrameLowering()->hasReservedCallFrame(MF) &&
            "Cannot use SP to access the emergency spill slot in "
            "functions without a reserved call frame");
     assert(!MF.getFrameInfo()->hasVarSizedObjects() &&

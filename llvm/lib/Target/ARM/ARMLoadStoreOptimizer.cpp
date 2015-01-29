@@ -567,11 +567,9 @@ ARMLoadStoreOpt::MergeOps(MachineBasicBlock &MBB,
       //   MOV  NewBase, Base
       //   ADDS NewBase, #imm8.
       if (Base != NewBase && Offset >= 8) {
-        const ARMSubtarget &Subtarget = MBB.getParent()->getTarget()
-                       .getSubtarget<ARMSubtarget>();
         // Need to insert a MOV to the new base first.
         if (isARMLowRegister(NewBase) && isARMLowRegister(Base) &&
-            !Subtarget.hasV6Ops()) {
+            !STI->hasV6Ops()) {
           // thumbv4t doesn't have lo->lo copies, and we can't predicate tMOVSr
           if (Pred != ARMCC::AL)
             return false;
@@ -1798,12 +1796,11 @@ bool ARMLoadStoreOpt::MergeReturnIntoLDM(MachineBasicBlock &MBB) {
 }
 
 bool ARMLoadStoreOpt::runOnMachineFunction(MachineFunction &Fn) {
-  const TargetMachine &TM = Fn.getTarget();
-  TL = TM.getSubtargetImpl()->getTargetLowering();
+  STI = &static_cast<const ARMSubtarget &>(Fn.getSubtarget());
+  TL = STI->getTargetLowering();
   AFI = Fn.getInfo<ARMFunctionInfo>();
-  TII = TM.getSubtargetImpl()->getInstrInfo();
-  TRI = TM.getSubtargetImpl()->getRegisterInfo();
-  STI = &TM.getSubtarget<ARMSubtarget>();
+  TII = STI->getInstrInfo();
+  TRI = STI->getRegisterInfo();
   RS = new RegScavenger();
   isThumb2 = AFI->isThumb2Function();
   isThumb1 = AFI->isThumbFunction() && !isThumb2;
@@ -1813,7 +1810,7 @@ bool ARMLoadStoreOpt::runOnMachineFunction(MachineFunction &Fn) {
        ++MFI) {
     MachineBasicBlock &MBB = *MFI;
     Modified |= LoadStoreMultipleOpti(MBB);
-    if (TM.getSubtarget<ARMSubtarget>().hasV5TOps())
+    if (STI->hasV5TOps())
       Modified |= MergeReturnIntoLDM(MBB);
   }
 
@@ -1862,9 +1859,9 @@ namespace {
 
 bool ARMPreAllocLoadStoreOpt::runOnMachineFunction(MachineFunction &Fn) {
   TD = Fn.getTarget().getDataLayout();
-  TII = Fn.getSubtarget().getInstrInfo();
-  TRI = Fn.getSubtarget().getRegisterInfo();
   STI = &static_cast<const ARMSubtarget &>(Fn.getSubtarget());
+  TII = STI->getInstrInfo();
+  TRI = STI->getRegisterInfo();
   MRI = &Fn.getRegInfo();
   MF  = &Fn;
 
