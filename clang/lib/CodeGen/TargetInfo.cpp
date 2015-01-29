@@ -3090,21 +3090,6 @@ llvm::Value *WinX86_64ABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
   return AddrTyped;
 }
 
-namespace {
-
-class NaClX86_64TargetCodeGenInfo : public TargetCodeGenInfo  {
-  bool HasAVX;
- public:
-   NaClX86_64TargetCodeGenInfo(CodeGen::CodeGenTypes &CGT, bool HasAVX)
-       : TargetCodeGenInfo(new X86_64ABIInfo(CGT, HasAVX)), HasAVX(HasAVX) {
-   }
-   unsigned getOpenMPSimdDefaultAlignment(QualType) const override {
-     return HasAVX ? 32 : 16;
-   }
-};
-
-}
-
 // PowerPC-32
 namespace {
 /// PPC32_SVR4_ABIInfo - The 32-bit PowerPC ELF (SVR4) ABI information.
@@ -5068,14 +5053,6 @@ llvm::Value *ARMABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
   llvm::Value *AddrTyped = Builder.CreateBitCast(Addr, PTy);
 
   return AddrTyped;
-}
-
-namespace {
-class NaClARMTargetCodeGenInfo : public TargetCodeGenInfo  {
- public:
-  NaClARMTargetCodeGenInfo(CodeGen::CodeGenTypes &CGT, ARMABIInfo::ABIKind Kind)
-      : TargetCodeGenInfo(new ARMABIInfo(CGT, Kind)) {}
-};
 }
 
 //===----------------------------------------------------------------------===//
@@ -7106,14 +7083,7 @@ const TargetCodeGenInfo &CodeGenModule::getTargetCodeGenInfo() {
                 Triple.getEnvironment() == llvm::Triple::GNUEABIHF))
         Kind = ARMABIInfo::AAPCS_VFP;
 
-      switch (Triple.getOS()) {
-        case llvm::Triple::NaCl:
-          return *(TheTargetCodeGenInfo =
-                   new NaClARMTargetCodeGenInfo(Types, Kind));
-        default:
-          return *(TheTargetCodeGenInfo =
-                   new ARMTargetCodeGenInfo(Types, Kind));
-      }
+      return *(TheTargetCodeGenInfo = new ARMTargetCodeGenInfo(Types, Kind));
     }
 
   case llvm::Triple::ppc:
@@ -7179,9 +7149,6 @@ const TargetCodeGenInfo &CodeGenModule::getTargetCodeGenInfo() {
     case llvm::Triple::Win32:
       return *(TheTargetCodeGenInfo =
                    new WinX86_64TargetCodeGenInfo(Types, HasAVX));
-    case llvm::Triple::NaCl:
-      return *(TheTargetCodeGenInfo =
-                   new NaClX86_64TargetCodeGenInfo(Types, HasAVX));
     case llvm::Triple::PS4:
       return *(TheTargetCodeGenInfo = new PS4TargetCodeGenInfo(Types, HasAVX));
     default:
