@@ -655,7 +655,7 @@ bool SITargetLowering::isFMAFasterThanFMulAndFAdd(EVT VT) const {
 
   switch (VT.getSimpleVT().SimpleTy) {
   case MVT::f32:
-    return false; /* There is V_MAD_F32 for f32 */
+    return Subtarget->hasFastFMAF32();
   case MVT::f64:
     return true;
   default:

@@ -48,6 +48,12 @@ def FeatureFP64Denormals : SubtargetFeature<"fp64-denormals",
         "Enable double precision denormal handling",
         [FeatureFP64]>;
 
+def FeatureFastFMAF32 : SubtargetFeature<"fast-fmaf",
+        "FastFMAF32",
+        "true",
+        "Assuming f32 fma is at least as fast as mul + add",
+        []>;
+
 // Some instructions do not support denormals despite this flag. Using
 // fp32 denormals also causes instructions to run at the double
 // precision rate for the device.
