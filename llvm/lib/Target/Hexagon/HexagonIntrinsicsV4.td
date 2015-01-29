@@ -131,11 +131,37 @@ def: T_IR_pat<A4_combineir, int_hexagon_A4_combineir, s8ExtPred>;
 *            ALU32/PRED                                             *
 *********************************************************************/
 
+// Compare
+def : T_RI_pat<C4_cmpneqi, int_hexagon_C4_cmpneqi, s10ExtPred>;
+def : T_RI_pat<C4_cmpltei, int_hexagon_C4_cmpltei, s10ExtPred>;
+def : T_RI_pat<C4_cmplteui, int_hexagon_C4_cmplteui, u9ExtPred>;
+
 def: T_RR_pat<A4_rcmpeq,  int_hexagon_A4_rcmpeq>;
 def: T_RR_pat<A4_rcmpneq, int_hexagon_A4_rcmpneq>;
 
 def: T_RI_pat<A4_rcmpeqi,  int_hexagon_A4_rcmpeqi>;
 def: T_RI_pat<A4_rcmpneqi, int_hexagon_A4_rcmpneqi>;
+
+/********************************************************************
+*            CR                                                     *
+*********************************************************************/
+
+// CR / Logical Operations On Predicates.
+
+class qi_CRInst_qiqiqi_pat<Intrinsic IntID, InstHexagon Inst> :
+  Pat<(i32 (IntID IntRegs:$Rs, IntRegs:$Rt, IntRegs:$Ru)),
+      (i32 (C2_tfrpr (Inst (C2_tfrrp IntRegs:$Rs),
+                           (C2_tfrrp IntRegs:$Rt),
+                           (C2_tfrrp IntRegs:$Ru))))>;
+
+def: qi_CRInst_qiqiqi_pat<int_hexagon_C4_and_and,   C4_and_and>;
+def: qi_CRInst_qiqiqi_pat<int_hexagon_C4_and_andn,  C4_and_andn>;
+def: qi_CRInst_qiqiqi_pat<int_hexagon_C4_and_or,    C4_and_or>;
+def: qi_CRInst_qiqiqi_pat<int_hexagon_C4_and_orn,   C4_and_orn>;
+def: qi_CRInst_qiqiqi_pat<int_hexagon_C4_or_and,    C4_or_and>;
+def: qi_CRInst_qiqiqi_pat<int_hexagon_C4_or_andn,   C4_or_andn>;
+def: qi_CRInst_qiqiqi_pat<int_hexagon_C4_or_or,     C4_or_or>;
+def: qi_CRInst_qiqiqi_pat<int_hexagon_C4_or_orn,    C4_or_orn>;
 
 /********************************************************************
 *            XTYPE/ALU                                              *
