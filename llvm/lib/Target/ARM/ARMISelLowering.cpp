@@ -156,11 +156,11 @@ void ARMTargetLowering::addQRTypeForNEON(MVT VT) {
   addTypeForNEON(VT, MVT::v2f64, MVT::v4i32);
 }
 
-ARMTargetLowering::ARMTargetLowering(const TargetMachine &TM)
-    : TargetLowering(TM) {
-  Subtarget = &TM.getSubtarget<ARMSubtarget>();
-  RegInfo = TM.getSubtargetImpl()->getRegisterInfo();
-  Itins = TM.getSubtargetImpl()->getInstrItineraryData();
+ARMTargetLowering::ARMTargetLowering(const TargetMachine &TM,
+                                     const ARMSubtarget &STI)
+    : TargetLowering(TM), Subtarget(&STI) {
+  RegInfo = Subtarget->getRegisterInfo();
+  Itins = Subtarget->getInstrItineraryData();
 
   setBooleanVectorContents(ZeroOrNegativeOneBooleanContent);
 
@@ -1194,8 +1194,7 @@ Sched::Preference ARMTargetLowering::getSchedulingPreference(SDNode *N) const {
 
   // Load are scheduled for latency even if there instruction itinerary
   // is not available.
-  const TargetInstrInfo *TII =
-      getTargetMachine().getSubtargetImpl()->getInstrInfo();
+  const TargetInstrInfo *TII = Subtarget->getInstrInfo();
   const MCInstrDesc &MCID = TII->get(N->getMachineOpcode());
 
   if (MCID.getNumDefs() == 0)
@@ -1819,9 +1818,7 @@ ARMTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
   // Add a register mask operand representing the call-preserved registers.
   if (!isTailCall) {
     const uint32_t *Mask;
-    const TargetRegisterInfo *TRI =
-        getTargetMachine().getSubtargetImpl()->getRegisterInfo();
-    const ARMBaseRegisterInfo *ARI = static_cast<const ARMBaseRegisterInfo*>(TRI);
+    const ARMBaseRegisterInfo *ARI = Subtarget->getRegisterInfo();
     if (isThisReturn) {
       // For 'this' returns, use the R0-preserving mask if applicable
       Mask = ARI->getThisReturnPreservedMask(CallConv);
@@ -2090,8 +2087,7 @@ ARMTargetLowering::IsEligibleForTailCallOptimization(SDValue Callee,
       // the caller's fixed stack objects.
       MachineFrameInfo *MFI = MF.getFrameInfo();
       const MachineRegisterInfo *MRI = &MF.getRegInfo();
-      const TargetInstrInfo *TII =
-          getTargetMachine().getSubtargetImpl()->getInstrInfo();
+      const TargetInstrInfo *TII = Subtarget->getInstrInfo();
       for (unsigned i = 0, realArgIdx = 0, e = ArgLocs.size();
            i != e;
            ++i, ++realArgIdx) {
@@ -2849,10 +2845,7 @@ ARMTargetLowering::computeRegArea(CCState &CCInfo, MachineFunction &MF,
     NumGPRs = (firstUnalloced <= 3) ? (4 - firstUnalloced) : 0;
   }
 
-  unsigned Align = MF.getTarget()
-                       .getSubtargetImpl()
-                       ->getFrameLowering()
-                       ->getStackAlignment();
+  unsigned Align = Subtarget->getFrameLowering()->getStackAlignment();
   ArgRegsSize = NumGPRs * 4;
 
   // If parameter is split between stack and GPRs...
@@ -3601,8 +3594,8 @@ SDValue ARMTargetLowering::LowerSELECT_CC(SDValue Op, SelectionDAG &DAG) const {
     // inverting the compare condition, swapping 'less' and 'greater') and
     // sometimes need to swap the operands to the VSEL (which inverts the
     // condition in the sense of firing whenever the previous condition didn't)
-    if (getSubtarget()->hasFPARMv8() && (TrueVal.getValueType() == MVT::f32 ||
-                                      TrueVal.getValueType() == MVT::f64)) {
+    if (Subtarget->hasFPARMv8() && (TrueVal.getValueType() == MVT::f32 ||
+                                    TrueVal.getValueType() == MVT::f64)) {
       ARMCC::CondCodes CondCode = IntCCToARMCC(CC);
       if (CondCode == ARMCC::LT || CondCode == ARMCC::LE ||
           CondCode == ARMCC::VC || CondCode == ARMCC::NE) {
@@ -3621,8 +3614,8 @@ SDValue ARMTargetLowering::LowerSELECT_CC(SDValue Op, SelectionDAG &DAG) const {
   FPCCToARMCC(CC, CondCode, CondCode2);
 
   // Try to generate VSEL on ARMv8.
-  if (getSubtarget()->hasFPARMv8() && (TrueVal.getValueType() == MVT::f32 ||
-                                    TrueVal.getValueType() == MVT::f64)) {
+  if (Subtarget->hasFPARMv8() && (TrueVal.getValueType() == MVT::f32 ||
+                                  TrueVal.getValueType() == MVT::f64)) {
     // We can select VMAXNM/VMINNM from a compare followed by a select with the
     // same operands, as follows:
     //   c = fcmp [ogt, olt, ugt, ult] a, b
@@ -6502,8 +6495,7 @@ void ARMTargetLowering::ReplaceNodeResults(SDNode *N,
 void ARMTargetLowering::
 SetupEntryBlockForSjLj(MachineInstr *MI, MachineBasicBlock *MBB,
                        MachineBasicBlock *DispatchBB, int FI) const {
-  const TargetInstrInfo *TII =
-      getTargetMachine().getSubtargetImpl()->getInstrInfo();
+  const TargetInstrInfo *TII = Subtarget->getInstrInfo();
   DebugLoc dl = MI->getDebugLoc();
   MachineFunction *MF = MBB->getParent();
   MachineRegisterInfo *MRI = &MF->getRegInfo();
@@ -6617,8 +6609,7 @@ SetupEntryBlockForSjLj(MachineInstr *MI, MachineBasicBlock *MBB,
 
 MachineBasicBlock *ARMTargetLowering::
 EmitSjLjDispatchBlock(MachineInstr *MI, MachineBasicBlock *MBB) const {
-  const TargetInstrInfo *TII =
-      getTargetMachine().getSubtargetImpl()->getInstrInfo();
+  const TargetInstrInfo *TII = Subtarget->getInstrInfo();
   DebugLoc dl = MI->getDebugLoc();
   MachineFunction *MF = MBB->getParent();
   MachineRegisterInfo *MRI = &MF->getRegInfo();
@@ -7132,8 +7123,7 @@ ARMTargetLowering::EmitStructByval(MachineInstr *MI,
   // This pseudo instruction has 3 operands: dst, src, size
   // We expand it to a loop if size > Subtarget->getMaxInlineSizeThreshold().
   // Otherwise, we will generate unrolled scalar copies.
-  const TargetInstrInfo *TII =
-      getTargetMachine().getSubtargetImpl()->getInstrInfo();
+  const TargetInstrInfo *TII = Subtarget->getInstrInfo();
   const BasicBlock *LLVM_BB = BB->getBasicBlock();
   MachineFunction::iterator It = BB;
   ++It;
@@ -7364,7 +7354,7 @@ MachineBasicBlock *
 ARMTargetLowering::EmitLowered__chkstk(MachineInstr *MI,
                                        MachineBasicBlock *MBB) const {
   const TargetMachine &TM = getTargetMachine();
-  const TargetInstrInfo &TII = *TM.getSubtargetImpl()->getInstrInfo();
+  const TargetInstrInfo &TII = *Subtarget->getInstrInfo();
   DebugLoc DL = MI->getDebugLoc();
 
   assert(Subtarget->isTargetWindows() &&
@@ -7429,8 +7419,7 @@ ARMTargetLowering::EmitLowered__chkstk(MachineInstr *MI,
 MachineBasicBlock *
 ARMTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
                                                MachineBasicBlock *BB) const {
-  const TargetInstrInfo *TII =
-      getTargetMachine().getSubtargetImpl()->getInstrInfo();
+  const TargetInstrInfo *TII = Subtarget->getInstrInfo();
   DebugLoc dl = MI->getDebugLoc();
   bool isThumb2 = Subtarget->isThumb2();
   switch (MI->getOpcode()) {
@@ -7693,8 +7682,7 @@ void ARMTargetLowering::AdjustInstrPostInstrSelection(MachineInstr *MI,
   // Rename pseudo opcodes.
   unsigned NewOpc = convertAddSubFlagsOpcode(MI->getOpcode());
   if (NewOpc) {
-    const ARMBaseInstrInfo *TII = static_cast<const ARMBaseInstrInfo *>(
-        getTargetMachine().getSubtargetImpl()->getInstrInfo());
+    const ARMBaseInstrInfo *TII = Subtarget->getInstrInfo();
     MCID = &TII->get(NewOpc);
 
     assert(MCID->getNumOperands() == MI->getDesc().getNumOperands() + 1 &&

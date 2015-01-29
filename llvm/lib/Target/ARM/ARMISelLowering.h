@@ -232,7 +232,8 @@ namespace llvm {
 
   class ARMTargetLowering : public TargetLowering {
   public:
-    explicit ARMTargetLowering(const TargetMachine &TM);
+    explicit ARMTargetLowering(const TargetMachine &TM,
+                               const ARMSubtarget &STI);
 
     unsigned getJumpTableEncoding() const override;
 

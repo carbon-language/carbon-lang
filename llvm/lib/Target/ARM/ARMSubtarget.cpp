@@ -121,7 +121,7 @@ ARMSubtarget::ARMSubtarget(const std::string &TT, const std::string &CPU,
                     : !isThumb()
                           ? (ARMBaseInstrInfo *)new ARMInstrInfo(*this)
                           : (ARMBaseInstrInfo *)new Thumb2InstrInfo(*this)),
-      TLInfo(TM) {}
+      TLInfo(TM, *this) {}
 
 void ARMSubtarget::initializeEnvironment() {
   HasV4TOps = false;
