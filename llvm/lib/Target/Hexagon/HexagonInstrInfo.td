@@ -2506,6 +2506,50 @@ def M2_vcmpy_s1_sat_r: T_M2_vmpy <"vcmpyr", 0b101, 0b110, 1, 0, 1>;
 def M2_vcmpy_s0_sat_r: T_M2_vmpy <"vcmpyr", 0b001, 0b110, 0, 0, 1>;
 }
 
+// Vector dual multiply: Rdd=vdmpy(Rss,Rtt)[:<<1]:sat
+let isCodeGenOnly = 0 in {
+def M2_vdmpys_s1: T_M2_vmpy <"vdmpy", 0b100, 0b100, 1, 0, 1>;
+def M2_vdmpys_s0: T_M2_vmpy <"vdmpy", 0b000, 0b100, 0, 0, 1>;
+}
+
+// Vector multiply even halfwords: Rdd=vmpyeh(Rss,Rtt)[:<<1]:sat
+let isCodeGenOnly = 0 in {
+def M2_vmpy2es_s1: T_M2_vmpy <"vmpyeh", 0b100, 0b110, 1, 0, 1>;
+def M2_vmpy2es_s0: T_M2_vmpy <"vmpyeh", 0b000, 0b110, 0, 0, 1>;
+}
+
+//Rdd=vmpywoh(Rss,Rtt)[:<<1][:rnd]:sat
+let isCodeGenOnly = 0 in {
+def M2_mmpyh_s0:  T_M2_vmpy <"vmpywoh", 0b000, 0b111, 0, 0, 1>;
+def M2_mmpyh_s1:  T_M2_vmpy <"vmpywoh", 0b100, 0b111, 1, 0, 1>;
+def M2_mmpyh_rs0: T_M2_vmpy <"vmpywoh", 0b001, 0b111, 0, 1, 1>;
+def M2_mmpyh_rs1: T_M2_vmpy <"vmpywoh", 0b101, 0b111, 1, 1, 1>;
+}
+
+//Rdd=vmpyweh(Rss,Rtt)[:<<1][:rnd]:sat
+let isCodeGenOnly = 0 in {
+def M2_mmpyl_s0:  T_M2_vmpy <"vmpyweh", 0b000, 0b101, 0, 0, 1>;
+def M2_mmpyl_s1:  T_M2_vmpy <"vmpyweh", 0b100, 0b101, 1, 0, 1>;
+def M2_mmpyl_rs0: T_M2_vmpy <"vmpyweh", 0b001, 0b101, 0, 1, 1>;
+def M2_mmpyl_rs1: T_M2_vmpy <"vmpyweh", 0b101, 0b101, 1, 1, 1>;
+}
+
+//Rdd=vmpywouh(Rss,Rtt)[:<<1][:rnd]:sat
+let isCodeGenOnly = 0 in {
+def M2_mmpyuh_s0:  T_M2_vmpy <"vmpywouh", 0b010, 0b111, 0, 0, 1>;
+def M2_mmpyuh_s1:  T_M2_vmpy <"vmpywouh", 0b110, 0b111, 1, 0, 1>;
+def M2_mmpyuh_rs0: T_M2_vmpy <"vmpywouh", 0b011, 0b111, 0, 1, 1>;
+def M2_mmpyuh_rs1: T_M2_vmpy <"vmpywouh", 0b111, 0b111, 1, 1, 1>;
+}
+
+//Rdd=vmpyweuh(Rss,Rtt)[:<<1][:rnd]:sat
+let isCodeGenOnly = 0 in {
+def M2_mmpyul_s0:  T_M2_vmpy <"vmpyweuh", 0b010, 0b101, 0, 0, 1>;
+def M2_mmpyul_s1:  T_M2_vmpy <"vmpyweuh", 0b110, 0b101, 1, 0, 1>;
+def M2_mmpyul_rs0: T_M2_vmpy <"vmpyweuh", 0b011, 0b101, 0, 1, 1>;
+def M2_mmpyul_rs1: T_M2_vmpy <"vmpyweuh", 0b111, 0b101, 1, 1, 1>;
+}
+
 let hasNewValue = 1, opNewValue = 0 in
 class T_MType_mpy <string mnemonic, bits<4> RegTyBits, RegisterClass RC,
                    bits<3> MajOp, bits<3> MinOp, bit isSat = 0, bit isRnd = 0,
@@ -2547,8 +2591,11 @@ class T_MType_rr2 <string mnemonic, bits<3> MajOp, bits<3> MinOp,
                    bit isSat = 0, bit isRnd = 0, string op2str = "" >
   : T_MType_mpy<mnemonic, 0b1101, IntRegs, MajOp, MinOp, isSat, isRnd, op2str>;
 
-let isCodeGenOnly = 0 in
+let isCodeGenOnly = 0 in {
 def M2_vradduh    : T_MType_dd <"vradduh", 0b000, 0b001, 0, 0>;
+def M2_vdmpyrs_s0 : T_MType_dd <"vdmpy",   0b000, 0b000, 1, 1>;
+def M2_vdmpyrs_s1 : T_MType_dd <"vdmpy",   0b100, 0b000, 1, 1>;
+}
 
 let CextOpcode = "mpyi", InputType = "reg", isCodeGenOnly = 0 in
 def M2_mpyi    : T_MType_rr1 <"mpyi", 0b000, 0b000>, ImmRegRel;
@@ -2560,6 +2607,11 @@ def M2_mpyu_up : T_MType_rr1 <"mpyu", 0b010, 0b001>;
 
 let isCodeGenOnly = 0 in
 def M2_dpmpyss_rnd_s0 : T_MType_rr1 <"mpy", 0b001, 0b001, 0, 1>;
+
+let isCodeGenOnly = 0 in {
+def M2_vmpy2s_s0pack : T_MType_rr1 <"vmpyh", 0b001, 0b111, 1, 1>;
+def M2_vmpy2s_s1pack : T_MType_rr1 <"vmpyh", 0b101, 0b111, 1, 1>;
+}
 
 let isCodeGenOnly = 0 in {
 def M2_hmmpyh_rs1 : T_MType_rr2 <"mpy", 0b101, 0b100, 1, 1, ".h">;
@@ -2823,6 +2875,12 @@ def M2_vrcmpyr_s0c: T_XTYPE_Vect <"vrcmpyr", 0b011, 0b001, 1>;
 def M2_vrcmacr_s0:  T_XTYPE_Vect_acc <"vrcmpyr", 0b000, 0b001, 0>;
 def M2_vrcmacr_s0c: T_XTYPE_Vect_acc <"vrcmpyr", 0b011, 0b001, 1>;
 }
+// Vector reduce halfwords:
+// Rdd[+]=vrmpyh(Rss,Rtt)
+let isCodeGenOnly = 0 in {
+def M2_vrmpy_s0: T_XTYPE_Vect <"vrmpyh", 0b000, 0b010, 0>;
+def M2_vrmac_s0: T_XTYPE_Vect_acc <"vrmpyh", 0b000, 0b010, 0>;
+}
 
 //===----------------------------------------------------------------------===//
 // Template Class -- Vector Multipy with accumulation.
@@ -2849,6 +2907,58 @@ class T_M2_vmpy_acc_sat < string opc, bits<3> MajOp, bits<3> MinOp,
     let Inst{20-16} = Rss;
     let Inst{12-8} = Rtt;
   }
+
+class T_M2_vmpy_acc < string opc, bits<3> MajOp, bits<3> MinOp,
+                      bit hasShift, bit isRnd >
+  : MInst <(outs DoubleRegs:$Rxx),
+           (ins DoubleRegs:$dst2, DoubleRegs:$Rss, DoubleRegs:$Rtt),
+  "$Rxx += "#opc#"($Rss, $Rtt)"#!if(hasShift,":<<1","")
+                               #!if(isRnd,":rnd",""),
+  [], "$dst2 = $Rxx",M_tc_3x_SLOT23 > {
+    bits<5> Rxx;
+    bits<5> Rss;
+    bits<5> Rtt;
+
+    let IClass = 0b1110;
+
+    let Inst{27-24} = 0b1010;
+    let Inst{23-21} = MajOp;
+    let Inst{7-5} = MinOp;
+    let Inst{4-0} = Rxx;
+    let Inst{20-16} = Rss;
+    let Inst{12-8} = Rtt;
+  }
+
+// Vector multiply word by signed half with accumulation
+// Rxx+=vmpyw[eo]h(Rss,Rtt)[:<<1][:rnd]:sat
+let isCodeGenOnly = 0 in {
+def M2_mmacls_s1:  T_M2_vmpy_acc_sat <"vmpyweh", 0b100, 0b101, 1, 0>;
+def M2_mmacls_s0:  T_M2_vmpy_acc_sat <"vmpyweh", 0b000, 0b101, 0, 0>;
+def M2_mmacls_rs1: T_M2_vmpy_acc_sat <"vmpyweh", 0b101, 0b101, 1, 1>;
+def M2_mmacls_rs0: T_M2_vmpy_acc_sat <"vmpyweh", 0b001, 0b101, 0, 1>;
+}
+
+let isCodeGenOnly = 0 in {
+def M2_mmachs_s1:  T_M2_vmpy_acc_sat <"vmpywoh", 0b100, 0b111, 1, 0>;
+def M2_mmachs_s0:  T_M2_vmpy_acc_sat <"vmpywoh", 0b000, 0b111, 0, 0>;
+def M2_mmachs_rs1: T_M2_vmpy_acc_sat <"vmpywoh", 0b101, 0b111, 1, 1>;
+def M2_mmachs_rs0: T_M2_vmpy_acc_sat <"vmpywoh", 0b001, 0b111, 0, 1>;
+}
+
+// Vector multiply even halfwords with accumulation
+// Rxx+=vmpyeh(Rss,Rtt)[:<<1][:sat]
+let isCodeGenOnly = 0 in {
+def M2_vmac2es:    T_M2_vmpy_acc     <"vmpyeh", 0b001, 0b010, 0, 0>;
+def M2_vmac2es_s1: T_M2_vmpy_acc_sat <"vmpyeh", 0b100, 0b110, 1, 0>;
+def M2_vmac2es_s0: T_M2_vmpy_acc_sat <"vmpyeh", 0b000, 0b110, 0, 0>;
+}
+
+// Vector dual multiply with accumulation
+// Rxx+=vdmpy(Rss,Rtt)[:sat]
+let isCodeGenOnly = 0 in {
+def M2_vdmacs_s1: T_M2_vmpy_acc_sat <"vdmpy", 0b100, 0b100, 1, 0>;
+def M2_vdmacs_s0: T_M2_vmpy_acc_sat <"vdmpy", 0b000, 0b100, 0, 0>;
+}
 
 // Vector complex multiply real or imaginary with accumulation
 // Rxx+=vcmpy[ir](Rss,Rtt):sat
@@ -3026,6 +3136,21 @@ def M2_cmacsc_s0 : T_XTYPE_mpy64_acc < "cmpy", "+", 0b010, 0b110, 1, 0, 1>;
 def M2_cnacsc_s0 : T_XTYPE_mpy64_acc < "cmpy", "-", 0b010, 0b111, 1, 0, 1>;
 def M2_cmacsc_s1 : T_XTYPE_mpy64_acc < "cmpy", "+", 0b110, 0b110, 1, 1, 1>;
 def M2_cnacsc_s1 : T_XTYPE_mpy64_acc < "cmpy", "-", 0b110, 0b111, 1, 1, 1>;
+}
+// Vector multiply halfwords
+// Rdd=vmpyh(Rs,Rt)[:<<]:sat
+//let Defs = [USR_OVF] in {
+let isCodeGenOnly = 0 in {
+  def M2_vmpy2s_s1 : T_XTYPE_mpy64 < "vmpyh", 0b100, 0b101, 1, 1, 0>;
+  def M2_vmpy2s_s0 : T_XTYPE_mpy64 < "vmpyh", 0b000, 0b101, 1, 0, 0>;
+ }
+//}
+
+// Rxx+=vmpyh(Rs,Rt)[:<<1][:sat]
+let isCodeGenOnly = 0 in {
+def M2_vmac2     : T_XTYPE_mpy64_acc < "vmpyh", "+", 0b001, 0b001, 0, 0, 0>;
+def M2_vmac2s_s1 : T_XTYPE_mpy64_acc < "vmpyh", "+", 0b100, 0b101, 1, 1, 0>;
+def M2_vmac2s_s0 : T_XTYPE_mpy64_acc < "vmpyh", "+", 0b000, 0b101, 1, 0, 0>;
 }
 
 def: Pat<(i64 (mul (i64 (anyext (i32 IntRegs:$src1))),

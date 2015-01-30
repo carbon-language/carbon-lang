@@ -2238,29 +2238,50 @@ def : Pat <(add (mul (i32 IntRegs:$src2), (i32 IntRegs:$src3)),
                                IntRegs:$src3))>;
 
 // Vector reduce multiply word by signed half (32x16)
-// Rdd=vrmpyweh(Rss,Rtt)[:<<1]
-// Rdd=vrmpywoh(Rss,Rtt)[:<<1]
-// Rxx+=vrmpyweh(Rss,Rtt)[:<<1]
-// Rxx+=vrmpywoh(Rss,Rtt)[:<<1]
+//Rdd=vrmpyweh(Rss,Rtt)[:<<1]
+let isCodeGenOnly = 0 in {
+def M4_vrmpyeh_s0 : T_M2_vmpy<"vrmpyweh", 0b010, 0b100, 0, 0, 0>;
+def M4_vrmpyeh_s1 : T_M2_vmpy<"vrmpyweh", 0b110, 0b100, 1, 0, 0>;
+}
 
-// Multiply and use upper result
-// Rd=mpy(Rs,Rt.H):<<1:sat
-// Rd=mpy(Rs,Rt.L):<<1:sat
-// Rd=mpy(Rs,Rt):<<1
-// Rd=mpy(Rs,Rt):<<1:sat
-// Rd=mpysu(Rs,Rt)
-// Rx+=mpy(Rs,Rt):<<1:sat
-// Rx-=mpy(Rs,Rt):<<1:sat
+//Rdd=vrmpywoh(Rss,Rtt)[:<<1]
+let isCodeGenOnly = 0 in {
+def M4_vrmpyoh_s0 : T_M2_vmpy<"vrmpywoh", 0b001, 0b010, 0, 0, 0>;
+def M4_vrmpyoh_s1 : T_M2_vmpy<"vrmpywoh", 0b101, 0b010, 1, 0, 0>;
+}
+//Rdd+=vrmpyweh(Rss,Rtt)[:<<1]
+let isCodeGenOnly = 0 in {
+def M4_vrmpyeh_acc_s0: T_M2_vmpy_acc<"vrmpyweh", 0b001, 0b110, 0, 0>;
+def M4_vrmpyeh_acc_s1: T_M2_vmpy_acc<"vrmpyweh", 0b101, 0b110, 1, 0>;
+}
 
-// Vector multiply bytes
-// Rdd=vmpybsu(Rs,Rt)
-// Rdd=vmpybu(Rs,Rt)
-// Rxx+=vmpybsu(Rs,Rt)
-// Rxx+=vmpybu(Rs,Rt)
+//Rdd=vrmpywoh(Rss,Rtt)[:<<1]
+let isCodeGenOnly = 0 in {
+def M4_vrmpyoh_acc_s0: T_M2_vmpy_acc<"vrmpywoh", 0b011, 0b110, 0, 0>;
+def M4_vrmpyoh_acc_s1: T_M2_vmpy_acc<"vrmpywoh", 0b111, 0b110, 1, 0>;
+}
+
+// Vector multiply halfwords, signed by unsigned
+// Rdd=vmpyhsu(Rs,Rt)[:<<]:sat
+let isCodeGenOnly = 0 in {
+def M2_vmpy2su_s0 : T_XTYPE_mpy64 < "vmpyhsu", 0b000, 0b111, 1, 0, 0>;
+def M2_vmpy2su_s1 : T_XTYPE_mpy64 < "vmpyhsu", 0b100, 0b111, 1, 1, 0>;
+}
+
+// Rxx+=vmpyhsu(Rs,Rt)[:<<1]:sat
+let isCodeGenOnly = 0 in {
+def M2_vmac2su_s0 : T_XTYPE_mpy64_acc < "vmpyhsu", "+", 0b011, 0b101, 1, 0, 0>;
+def M2_vmac2su_s1 : T_XTYPE_mpy64_acc < "vmpyhsu", "+", 0b111, 0b101, 1, 1, 0>;
+}
 
 // Vector polynomial multiply halfwords
 // Rdd=vpmpyh(Rs,Rt)
+let isCodeGenOnly = 0 in
+def M4_vpmpyh : T_XTYPE_mpy64 < "vpmpyh", 0b110, 0b111, 0, 0, 0>;
+
 // Rxx^=vpmpyh(Rs,Rt)
+let isCodeGenOnly = 0 in
+def M4_vpmpyh_acc : T_XTYPE_mpy64_acc < "vpmpyh", "^", 0b101, 0b111, 0, 0, 0>;
 
 // Polynomial multiply words
 // Rdd=pmpyw(Rs,Rt)

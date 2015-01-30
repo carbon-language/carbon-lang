@@ -15,9 +15,29 @@
 // XTYPE/MPY
 //===----------------------------------------------------------------------===//
 
+  //Rdd[+]=vrmpybsu(Rss,Rtt)
+let Predicates = [HasV5T], isCodeGenOnly = 0 in {
+  def M5_vrmpybsu: T_XTYPE_Vect<"vrmpybsu", 0b110, 0b001, 0>;
+  def M5_vrmacbsu: T_XTYPE_Vect_acc<"vrmpybsu", 0b110, 0b001, 0>;
+
+  //Rdd[+]=vrmpybu(Rss,Rtt)
+  def M5_vrmpybuu: T_XTYPE_Vect<"vrmpybu", 0b100, 0b001, 0>;
+  def M5_vrmacbuu: T_XTYPE_Vect_acc<"vrmpybu", 0b100, 0b001, 0>;
+
+  def M5_vdmpybsu: T_M2_vmpy<"vdmpybsu", 0b101, 0b001, 0, 0, 1>;
+  def M5_vdmacbsu: T_M2_vmpy_acc_sat <"vdmpybsu", 0b001, 0b001, 0, 0>;
+}
+
 // Vector multiply bytes
 // Rdd=vmpyb[s]u(Rs,Rt)
 let Predicates = [HasV5T], isCodeGenOnly = 0 in {
+  def M5_vmpybsu: T_XTYPE_mpy64 <"vmpybsu", 0b010, 0b001, 0, 0, 0>;
+  def M5_vmpybuu: T_XTYPE_mpy64 <"vmpybu",  0b100, 0b001, 0, 0, 0>;
+
+  // Rxx+=vmpyb[s]u(Rs,Rt)
+  def M5_vmacbsu: T_XTYPE_mpy64_acc <"vmpybsu", "+", 0b110, 0b001, 0, 0, 0>;
+  def M5_vmacbuu: T_XTYPE_mpy64_acc <"vmpybu", "+", 0b100, 0b001, 0, 0, 0>;
+
   // Rd=vaddhub(Rss,Rtt):sat
   let hasNewValue = 1, opNewValue = 0 in
     def A5_vaddhubs: T_S3op_1 <"vaddhub", IntRegs, 0b01, 0b001, 0, 1>;
@@ -764,6 +784,28 @@ def S5_asrhub_sat : T_ASRHUB <1>;
 def S5_asrhub_rnd_sat_goodsyntax
   : SInst <(outs IntRegs:$Rd), (ins DoubleRegs:$Rss, u4Imm:$u4),
   "$Rd = vasrhub($Rss, #$u4):rnd:sat">, Requires<[HasV5T]>;
+
+// Floating point reciprocal square root approximation
+let Uses = [USR], isPredicateLate = 1, isFP = 1,
+    hasSideEffects = 0, hasNewValue = 1, opNewValue = 0,
+    validSubTargets = HasV5SubT, isCodeGenOnly = 0 in
+def F2_sfinvsqrta: SInst <
+  (outs IntRegs:$Rd, PredRegs:$Pe),
+  (ins IntRegs:$Rs),
+  "$Rd, $Pe = sfinvsqrta($Rs)" > ,
+  Requires<[HasV5T]> {
+    bits<5> Rd;
+    bits<2> Pe;
+    bits<5> Rs;
+
+    let IClass = 0b1000;
+
+    let Inst{27-21} = 0b1011111;
+    let Inst{20-16} = Rs;
+    let Inst{7} = 0b0;
+    let Inst{6-5} = Pe;
+    let Inst{4-0} = Rd;
+  }
 
 // Complex multiply 32x16
 let Defs = [USR_OVF], Itinerary = S_3op_tc_3x_SLOT23, isCodeGenOnly = 0 in {
