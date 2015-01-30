@@ -274,10 +274,11 @@ bool LowerDbgDeclare(Function &F);
 /// an alloca, if any.
 DbgDeclareInst *FindAllocaDbgDeclare(Value *V);
 
-/// replaceDbgDeclareForAlloca - Replaces llvm.dbg.declare instruction when
-/// alloca is replaced with a new value.
+/// \brief Replaces llvm.dbg.declare instruction when an alloca is replaced with
+/// a new value.  If Deref is true, tan additional DW_OP_deref is prepended to
+/// the expression.
 bool replaceDbgDeclareForAlloca(AllocaInst *AI, Value *NewAllocaAddress,
-                                DIBuilder &Builder);
+                                DIBuilder &Builder, bool Deref);
 
 /// \brief Remove all blocks that can not be reached from the function's entry.
 ///

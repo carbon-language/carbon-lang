@@ -30,6 +30,7 @@
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/DebugInfo.h"
 #include "llvm/IR/DerivedTypes.h"
+#include "llvm/IR/DIBuilder.h"
 #include "llvm/IR/Dominators.h"
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/Instructions.h"
@@ -1112,13 +1113,10 @@ bool llvm::InlineFunction(CallSite CS, InlineFunctionInfo &IFI,
                                                    AI, I);
     }
     // Move any dbg.declares describing the allocas into the entry basic block.
+    DIBuilder DIB(*Caller->getParent());
     for (auto &I : IFI.StaticAllocas)
       if (auto AI = dyn_cast<AllocaInst>(I))
-        if (auto *DDI = FindAllocaDbgDeclare(AI))
-          if (DDI->getParent() != Caller->begin())
-            Caller->getEntryBlock().getInstList()
-              .splice(AI->getNextNode(), FirstNewBlock->getInstList(),
-                      DDI, DDI->getNextNode());
+        replaceDbgDeclareForAlloca(AI, AI, DIB, /*Deref=*/false);
   }
 
   bool InlinedMustTailCalls = false;

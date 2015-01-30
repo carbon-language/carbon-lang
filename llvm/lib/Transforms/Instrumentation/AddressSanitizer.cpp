@@ -1739,7 +1739,7 @@ void FunctionStackPoisoner::poisonStack() {
     Value *NewAllocaPtr = IRB.CreateIntToPtr(
         IRB.CreateAdd(LocalStackBase, ConstantInt::get(IntptrTy, Desc.Offset)),
         AI->getType());
-    replaceDbgDeclareForAlloca(AI, NewAllocaPtr, DIB);
+    replaceDbgDeclareForAlloca(AI, NewAllocaPtr, DIB, /*Deref=*/true);
     AI->replaceAllUsesWith(NewAllocaPtr);
   }
 

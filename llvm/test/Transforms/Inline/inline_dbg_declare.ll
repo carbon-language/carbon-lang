@@ -92,6 +92,6 @@ attributes #1 = { nounwind readnone }
 !22 = !MDLocation(line: 8, column: 14, scope: !9)
 !23 = !MDLocation(line: 9, column: 1, scope: !9)
 
-; CHECK: [[m23]] = !{!"0x101\00x\0016777217\000", !4, !5, !8, [[CALL_SITE:![0-9]*]]} ; [ DW_TAG_arg_variable ] [x] [line 1]
-; CHECK: [[CALL_SITE]] = distinct !MDLocation(line: 8, column: 14, scope: !9)
+; CHECK: [[CALL_SITE:![0-9]+]] = distinct !MDLocation(line: 8, column: 14, scope: !9)
+; CHECK: [[m23]] = !{!"0x101\00x\0016777217\000", !4, !5, !8, [[CALL_SITE]]} ; [ DW_TAG_arg_variable ] [x] [line 1]
 ; CHECK: [[m24]] = !MDLocation(line: 1, column: 17, scope: !4, inlinedAt: [[CALL_SITE]])

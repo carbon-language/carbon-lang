@@ -40,7 +40,7 @@ entry:
 ; CHECK: define void @_Z3fn5v()
 ; CHECK-NEXT: entry:
 ; CHECK-NEXT:   %agg.tmp.sroa.3.i = alloca [20 x i8], align 4
-; CHECK-NEXT:   tail call void @llvm.dbg.declare(metadata [20 x i8]* %agg.tmp.sroa.3.i,
+; CHECK-NEXT:   call void @llvm.dbg.declare(metadata [20 x i8]* %agg.tmp.sroa.3.i,
   %agg.tmp.sroa.3 = alloca [20 x i8], align 4
   tail call void @llvm.dbg.declare(metadata [20 x i8]* %agg.tmp.sroa.3, metadata !46, metadata !48), !dbg !49
   %agg.tmp.sroa.0.0.copyload = load i32* getelementptr inbounds (%struct.A* @b, i64 0, i32 0), align 8, !dbg !50

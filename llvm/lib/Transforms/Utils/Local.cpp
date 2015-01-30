@@ -1106,10 +1106,11 @@ DbgDeclareInst *llvm::FindAllocaDbgDeclare(Value *V) {
 }
 
 bool llvm::replaceDbgDeclareForAlloca(AllocaInst *AI, Value *NewAllocaAddress,
-                                      DIBuilder &Builder) {
+                                      DIBuilder &Builder, bool Deref) {
   DbgDeclareInst *DDI = FindAllocaDbgDeclare(AI);
   if (!DDI)
     return false;
+  DebugLoc Loc = DDI->getDebugLoc();
   DIVariable DIVar(DDI->getVariable());
   DIExpression DIExpr(DDI->getExpression());
   assert((!DIVar || DIVar.isVariable()) &&
@@ -1117,21 +1118,24 @@ bool llvm::replaceDbgDeclareForAlloca(AllocaInst *AI, Value *NewAllocaAddress,
   if (!DIVar)
     return false;
 
-  // Create a copy of the original DIDescriptor for user variable, prepending
-  // "deref" operation to a list of address elements, as new llvm.dbg.declare
-  // will take a value storing address of the memory for variable, not
-  // alloca itself.
-  SmallVector<int64_t, 4> NewDIExpr;
-  NewDIExpr.push_back(dwarf::DW_OP_deref);
-  if (DIExpr)
-    for (unsigned i = 0, n = DIExpr.getNumElements(); i < n; ++i)
-      NewDIExpr.push_back(DIExpr.getElement(i));
+  if (Deref) {
+    // Create a copy of the original DIDescriptor for user variable, prepending
+    // "deref" operation to a list of address elements, as new llvm.dbg.declare
+    // will take a value storing address of the memory for variable, not
+    // alloca itself.
+    SmallVector<int64_t, 4> NewDIExpr;
+    NewDIExpr.push_back(dwarf::DW_OP_deref);
+    if (DIExpr)
+      for (unsigned i = 0, n = DIExpr.getNumElements(); i < n; ++i)
+        NewDIExpr.push_back(DIExpr.getElement(i));
+    DIExpr = Builder.createExpression(NewDIExpr);
+  }
 
   // Insert llvm.dbg.declare in the same basic block as the original alloca,
   // and remove old llvm.dbg.declare.
   BasicBlock *BB = AI->getParent();
-  Builder.insertDeclare(NewAllocaAddress, DIVar,
-                        Builder.createExpression(NewDIExpr), BB);
+  Builder.insertDeclare(NewAllocaAddress, DIVar, DIExpr, BB)
+    ->setDebugLoc(Loc);
   DDI->eraseFromParent();
   return true;
 }
