@@ -196,10 +196,6 @@ public:
     return getTM<PPCTargetMachine>();
   }
 
-  const PPCSubtarget &getPPCSubtarget() const {
-    return *getPPCTargetMachine().getSubtargetImpl();
-  }
-
   void addIRPasses() override;
   bool addPreISel() override;
   bool addILPOpts() override;
