@@ -228,7 +228,7 @@ void parallel_quick_sort(RandomAccessIterator start, RandomAccessIterator end,
   std::swap(*pivot, *(end - 1));
 
   // Recurse.
-  tg.spawn([=, &tg] {
+  tg.spawn([=, &comp, &tg] {
     parallel_quick_sort(start, pivot, comp, tg, depth - 1);
   });
   parallel_quick_sort(pivot + 1, end, comp, tg, depth - 1);
