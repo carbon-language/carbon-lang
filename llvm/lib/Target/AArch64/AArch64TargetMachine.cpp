@@ -253,7 +253,7 @@ bool AArch64PassConfig::addInstSelector() {
 
   // For ELF, cleanup any local-dynamic TLS accesses (i.e. combine as many
   // references to _TLS_MODULE_BASE_ as possible.
-  if (TM->getSubtarget<AArch64Subtarget>().isTargetELF() &&
+  if (Triple(TM->getTargetTriple()).isOSBinFormatELF() &&
       getOptLevel() != CodeGenOpt::None)
     addPass(createAArch64CleanupLocalDynamicTLSPass());
 
@@ -311,6 +311,6 @@ void AArch64PassConfig::addPreEmitPass() {
   // range of their destination.
   addPass(createAArch64BranchRelaxation());
   if (TM->getOptLevel() != CodeGenOpt::None && EnableCollectLOH &&
-      TM->getSubtarget<AArch64Subtarget>().isTargetMachO())
+      Triple(TM->getTargetTriple()).isOSBinFormatMachO())
     addPass(createAArch64CollectLOHPass());
 }
