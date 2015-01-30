@@ -4820,10 +4820,10 @@ void Clang::AddClangCLArgs(const ArgList &Args, ArgStringList &CmdArgs) const {
   const Driver &D = getToolChain().getDriver();
   EHFlags EH = parseClangCLEHFlags(D, Args);
   // FIXME: Do something with NoExceptC.
-  if (EH.Synch || EH.Asynch) {
-    CmdArgs.push_back("-fexceptions");
+  if (EH.Synch || EH.Asynch)
     CmdArgs.push_back("-fcxx-exceptions");
-  }
+  // Always add -fexceptions to allow SEH __try.
+  CmdArgs.push_back("-fexceptions");
 
   // /EP should expand to -E -P.
   if (Args.hasArg(options::OPT__SLASH_EP)) {
