@@ -159,6 +159,21 @@ namespace DtorErrors {
   ~D::D() throw(X) {} // expected-error {{'~' in destructor name should be after nested name specifier}}
 
   ~Undeclared::Undeclared() {} // expected-error {{use of undeclared identifier 'Undeclared'}} expected-error {{'~' in destructor name should be after nested name specifier}}
+
+  struct S {
+    // For another struct's destructor, emit the same diagnostic like for
+    // A::~A() in addition to the "~ in the wrong place" one.
+    ~A::A() {} // expected-error {{'~' in destructor name should be after nested name specifier}} expected-error {{non-friend class member '~A' cannot have a qualified name}}
+    A::~A() {} // expected-error {{non-friend class member '~A' cannot have a qualified name}}
+
+    // An inline destructor with a redundant class name should also get the
+    // same diagnostic as S::~S.
+    ~S::S() {} // expected-error {{'~' in destructor name should be after nested name specifier}} expected-error {{extra qualification on member '~S'}}
+
+    // This just shouldn't crash.
+    int I; // expected-note {{declared here}}
+    ~I::I() {} // expected-error {{'I' is not a class, namespace, or enumeration}} expected-error {{'~' in destructor name should be after nested name specifier}}
+  };
 }
 
 namespace BadFriend {
