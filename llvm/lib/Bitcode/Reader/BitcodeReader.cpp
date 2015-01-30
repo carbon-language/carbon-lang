@@ -1095,8 +1095,10 @@ std::error_code BitcodeReader::ParseTypeTableBody() {
 
     if (NumRecords >= TypeList.size())
       return Error("Invalid TYPE table");
+    if (TypeList[NumRecords])
+      return Error(
+          "Invalid TYPE table: Only named structs can be forward referenced");
     assert(ResultTy && "Didn't read a type?");
-    assert(!TypeList[NumRecords] && "Already read type?");
     TypeList[NumRecords++] = ResultTy;
   }
 }
