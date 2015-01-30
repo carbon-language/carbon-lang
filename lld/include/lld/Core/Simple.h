@@ -80,14 +80,14 @@ protected:
 class SimpleFileWrapper : public SimpleFile {
 public:
   SimpleFileWrapper(const File &file) : SimpleFile(file.path()) {
-    for (auto definedAtom : file.defined())
-      _definedAtoms._atoms.push_back(std::move(definedAtom));
-    for (auto undefAtom : file.undefined())
-      _undefinedAtoms._atoms.push_back(std::move(undefAtom));
-    for (auto shlibAtom : file.sharedLibrary())
-      _sharedLibraryAtoms._atoms.push_back(std::move(shlibAtom));
-    for (auto absAtom : file.absolute())
-      _absoluteAtoms._atoms.push_back(std::move(absAtom));
+    for (const DefinedAtom *atom : file.defined())
+      _definedAtoms._atoms.push_back(atom);
+    for (const UndefinedAtom *atom : file.undefined())
+      _undefinedAtoms._atoms.push_back(atom);
+    for (const SharedLibraryAtom *atom : file.sharedLibrary())
+      _sharedLibraryAtoms._atoms.push_back(atom);
+    for (const AbsoluteAtom *atom : file.absolute())
+      _absoluteAtoms._atoms.push_back(atom);
   }
 };
 
