@@ -1119,13 +1119,6 @@ useful when diffing the effect of an optimization because deleting an unnamed
 instruction can change all other instruction numbering, making the diff very
 noisy.
 
-``-preverify``: Preliminary module verification
------------------------------------------------
-
-Ensures that the module is in the form required by the :ref:`Module Verifier
-<passes-verify>` pass.  Running the verifier runs this pass automatically, so
-there should be no need to use it directly.
-
 .. _passes-verify:
 
 ``-verify``: Module Verifier
