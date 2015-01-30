@@ -217,6 +217,9 @@ int main(int argc, char **argv) {
   for (unsigned i = 0; i < KeptDSOSyms.size(); ++i)
     CodeGen.addMustPreserveSymbol(KeptDSOSyms[i].c_str());
 
+  // Set cpu and attrs strings for the default target/subtarget.
+  CodeGen.setCpu(MCPU.c_str());
+
   std::string attrs;
   for (unsigned i = 0; i < MAttrs.size(); ++i) {
     if (i > 0)
