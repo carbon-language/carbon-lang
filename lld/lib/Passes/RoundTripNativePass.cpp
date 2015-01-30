@@ -28,7 +28,7 @@ void RoundTripNativePass::perform(std::unique_ptr<MutableFile> &mergedFile) {
   StringRef outFile = llvm::sys::path::filename(_context.outputPath());
   if (llvm::sys::fs::createTemporaryFile(outFile, "native", tmpNativeFile))
     return;
-  llvm::dbgs() << "RoundTripNativePass: " << tmpNativeFile << "\n";
+  DEBUG(llvm::dbgs() << "RoundTripNativePass: " << tmpNativeFile << "\n");
 
   // The file that is written would be kept around if there is a problem
   // writing to the file or when reading atoms back from the file.

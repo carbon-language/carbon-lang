@@ -28,7 +28,7 @@ void RoundTripYAMLPass::perform(std::unique_ptr<MutableFile> &mergedFile) {
   StringRef outFile = llvm::sys::path::filename(_context.outputPath());
   if (llvm::sys::fs::createTemporaryFile(outFile, "yaml", tmpYAMLFile))
     return;
-  llvm::dbgs() << "RoundTripYAMLPass: " << tmpYAMLFile << "\n";
+  DEBUG(llvm::dbgs() << "RoundTripYAMLPass: " << tmpYAMLFile << "\n");
 
   // The file that is written would be kept around if there is a problem
   // writing to the file or when reading atoms back from the file.
