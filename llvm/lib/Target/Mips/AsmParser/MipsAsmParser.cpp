@@ -165,6 +165,9 @@ class MipsAsmParser : public MCTargetAsmParser {
   bool expandInstruction(MCInst &Inst, SMLoc IDLoc,
                          SmallVectorImpl<MCInst> &Instructions);
 
+  bool expandJalWithRegs(MCInst &Inst, SMLoc IDLoc,
+                         SmallVectorImpl<MCInst> &Instructions);
+
   bool expandLoadImm(MCInst &Inst, SMLoc IDLoc,
                      SmallVectorImpl<MCInst> &Instructions);
 
@@ -1538,6 +1541,8 @@ bool MipsAsmParser::needsExpansion(MCInst &Inst) {
   case Mips::B_MM_Pseudo:
   case Mips::LWM_MM:
   case Mips::SWM_MM:
+  case Mips::JalOneReg:
+  case Mips::JalTwoReg:
     return true;
   default:
     return false;
@@ -1565,6 +1570,9 @@ bool MipsAsmParser::expandInstruction(MCInst &Inst, SMLoc IDLoc,
   case Mips::SWM_MM:
   case Mips::LWM_MM:
     return expandLoadStoreMultiple(Inst, IDLoc, Instructions);
+  case Mips::JalOneReg:
+  case Mips::JalTwoReg:
+    return expandJalWithRegs(Inst, IDLoc, Instructions);
   }
 }
 
@@ -1597,6 +1605,48 @@ void createShiftOr(int64_t Value, unsigned RegNo, SMLoc IDLoc,
       MCOperand::CreateImm(((Value & (0xffffLL << Shift)) >> Shift)), RegNo,
       IDLoc, Instructions);
 }
+}
+
+bool MipsAsmParser::expandJalWithRegs(MCInst &Inst, SMLoc IDLoc,
+                                      SmallVectorImpl<MCInst> &Instructions) {
+  // Create a JALR instruction which is going to replace the pseudo-JAL.
+  MCInst JalrInst;
+  JalrInst.setLoc(IDLoc);
+  const MCOperand FirstRegOp = Inst.getOperand(0);
+  const unsigned Opcode = Inst.getOpcode();
+
+  if (Opcode == Mips::JalOneReg) {
+    // jal $rs => jalr $rs
+    if (inMicroMipsMode()) {
+      JalrInst.setOpcode(Mips::JALR16_MM);
+      JalrInst.addOperand(FirstRegOp);
+    } else {
+      JalrInst.setOpcode(Mips::JALR);
+      JalrInst.addOperand(MCOperand::CreateReg(Mips::RA));
+      JalrInst.addOperand(FirstRegOp);
+    }
+  } else if (Opcode == Mips::JalTwoReg) {
+    // jal $rd, $rs => jalr $rd, $rs
+    JalrInst.setOpcode(inMicroMipsMode() ? Mips::JALR_MM : Mips::JALR);
+    JalrInst.addOperand(FirstRegOp);
+    const MCOperand SecondRegOp = Inst.getOperand(1);
+    JalrInst.addOperand(SecondRegOp);
+  }
+  Instructions.push_back(JalrInst);
+
+  // If .set reorder is active, emit a NOP after it.
+  if (AssemblerOptions.back()->isReorder()) {
+    // This is a 32-bit NOP because these 2 pseudo-instructions
+    // do not have a short delay slot.
+    MCInst NopInst;
+    NopInst.setOpcode(Mips::SLL);
+    NopInst.addOperand(MCOperand::CreateReg(Mips::ZERO));
+    NopInst.addOperand(MCOperand::CreateReg(Mips::ZERO));
+    NopInst.addOperand(MCOperand::CreateImm(0));
+    Instructions.push_back(NopInst);
+  }
+
+  return false;
 }
 
 bool MipsAsmParser::expandLoadImm(MCInst &Inst, SMLoc IDLoc,

@@ -23,6 +23,10 @@
 # CHECK-EL: nop               # encoding: [0x00,0x0c]
 # CHECK-EL: jalrs $ra, $6     # encoding: [0xe6,0x03,0x3c,0x4f]
 # CHECK-EL: nop               # encoding: [0x00,0x0c]
+# CHECK-EL: jalr $25          # encoding: [0xd9,0x45]
+# CHECK-EL: nop               # encoding: [0x00,0x00,0x00,0x00]
+# CHECK-EL: jalr $4, $25      # encoding: [0x99,0x00,0x3c,0x0f]
+# CHECK-EL: nop               # encoding: [0x00,0x00,0x00,0x00]
 #------------------------------------------------------------------------------
 # Big endian
 #------------------------------------------------------------------------------
@@ -40,6 +44,10 @@
 # CHECK-EB: nop               # encoding: [0x0c,0x00]
 # CHECK-EB: jalrs $ra, $6     # encoding: [0x03,0xe6,0x4f,0x3c]
 # CHECK-EB: nop               # encoding: [0x0c,0x00]
+# CHECK-EB: jalr $25          # encoding: [0x45,0xd9]
+# CHECK-EB: nop               # encoding: [0x00,0x00,0x00,0x00]
+# CHECK-EB: jalr $4, $25      # encoding: [0x00,0x99,0x0f,0x3c]
+# CHECK-EB: nop               # encoding: [0x00,0x00,0x00,0x00]
 
      j 1328
      jal 1328
@@ -48,3 +56,5 @@
      j $7
      jals 1328
      jalrs $ra, $6
+     jal $25
+     jal $4, $25
