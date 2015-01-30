@@ -388,9 +388,8 @@ define void @example12() nounwind uwtable ssp {
   ret void
 }
 
-; Can't vectorize because of reductions.
 ;CHECK-LABEL: @example13(
-;CHECK-NOT: <4 x i32>
+;CHECK: <4 x i32>
 ;CHECK: ret void
 define void @example13(i32** nocapture %A, i32** nocapture %B, i32* nocapture %out) nounwind uwtable ssp {
   br label %.preheader
