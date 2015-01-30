@@ -744,7 +744,6 @@ public:
         return B.CreateGEP(StartValue, Index);
 
       case IK_NoInduction:
-      default:
         return nullptr;
       }
     }
