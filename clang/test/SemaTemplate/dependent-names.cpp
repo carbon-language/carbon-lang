@@ -414,3 +414,8 @@ namespace PR19936 {
   template<typename T> decltype(*T()) f() {} // expected-error {{redefinition}}
   template<typename T> decltype(T() * T()) g() {} // expected-error {{redefinition}}
 }
+
+template <typename> struct CT2 {
+  template <class U> struct X;
+};
+template <typename T> int CT2<int>::X<>; // expected-error {{template parameter list matching the non-templated nested type 'CT2<int>' should be empty}}
