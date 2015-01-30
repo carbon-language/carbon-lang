@@ -42,7 +42,10 @@
 #define  _RESTRICT_KYWD
 #endif
 #include <spawn.h>
-#if !defined(__APPLE__)
+#if defined(__APPLE__)
+#include <TargetConditionals.h>
+#endif
+#if !defined(__APPLE__) || defined(TARGET_OS_IPHONE)
   extern char **environ;
 #else
 #include <crt_externs.h> // _NSGetEnviron
@@ -217,7 +220,7 @@ static bool Execute(ProcessInfo &PI, StringRef Program, const char **args,
     }
 
     if (!envp)
-#if !defined(__APPLE__)
+#if !defined(__APPLE__) || defined(TARGET_OS_IPHONE)
       envp = const_cast<const char **>(environ);
 #else
       // environ is missing in dylibs.
