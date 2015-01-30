@@ -1,7 +1,8 @@
-; RUN: opt %loadPolly -polly-codegen-isl < %s
+; RUN: opt %loadPolly -S -polly-detect-scops-in-functions-without-loops -polly-detect-scops-in-regions-without-loops -polly-codegen-isl < %s | FileCheck %s
+
+; CHECK: polly.start
 
 target datalayout = "e-p:32:32:32-i64:64:64-i32:32:32-i16:16:16-i1:32:32-f64:64:64-f32:32:32-a0:0-n32"
-target triple = "hexagon-unknown-linux-gnu"
 
 define void @fixup_gotos(i32* %A, i32* %data) nounwind {
 entry:

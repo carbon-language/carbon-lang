@@ -329,13 +329,6 @@ public:
   ValidatorResult visitUnknown(const SCEVUnknown *Expr) {
     Value *V = Expr->getValue();
 
-    // We currently only support integer types. It may be useful to support
-    // pointer types, e.g. to support code like:
-    //
-    //   if (A)
-    //     A[i] = 1;
-    //
-    // See test/CodeGen/20120316-InvalidCast.ll
     if (!(Expr->getType()->isIntegerTy() || Expr->getType()->isPointerTy())) {
       DEBUG(dbgs() << "INVALID: UnknownExpr is not an integer or pointer type");
       return ValidatorResult(SCEVType::INVALID);
