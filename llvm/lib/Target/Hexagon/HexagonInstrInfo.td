@@ -3995,6 +3995,10 @@ class T_S2op_shift <string mnemonic, bits<3> MajOp, bits<3> MinOp, SDNode OpNd>
     [(set (i32 IntRegs:$dst), (OpNd (i32 IntRegs:$src),
                                     (u5ImmPred:$u5)))]>;
 
+// Vector arithmetic shift right by immediate with truncate and pack
+let isCodeGenOnly = 0 in
+def S2_asr_i_svw_trun : T_S2op_2_id <"vasrw", 0b110, 0b010>;
+
 // Arithmetic/logical shift right/left by immediate
 let Itinerary = S_2op_tc_1_SLOT23, isCodeGenOnly = 0 in {
   def S2_asr_i_r : T_S2op_shift <"asr", 0b000, 0b000, sra>;
@@ -5759,6 +5763,9 @@ class T_S3op_8 <string opc, bits<3> MinOp, bit isSat, bit isRnd, bit hasShift, b
     let Inst{4-0}   = Rd;
   }
 
+let isCodeGenOnly = 0 in
+def S2_asr_r_svw_trun : T_S3op_8<"vasrw", 0b010, 0, 0, 0>;
+
 let Defs = [USR_OVF], Itinerary = S_3op_tc_2_SLOT23, isCodeGenOnly = 0 in
 def S2_vcrotate : T_S3op_shiftVect < "vcrotate", 0b11, 0b00>;
 
@@ -5987,3 +5994,9 @@ include "HexagonInstrInfoV5.td"
 //===----------------------------------------------------------------------===//
 // V5 Instructions -
 //===----------------------------------------------------------------------===//
+
+//===----------------------------------------------------------------------===//
+// ALU32/64/Vector +
+//===----------------------------------------------------------------------===///
+
+include "HexagonInstrInfoVector.td"

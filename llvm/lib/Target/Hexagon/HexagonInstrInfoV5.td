@@ -779,11 +779,34 @@ class T_ASRHUB<bit isSat>
     let Inst{5} = isSat;
     let Inst{4-0} = Rd;
   }
+let isCodeGenOnly = 0 in {
+def S5_asrhub_rnd_sat : T_ASRHUB <0>;
 def S5_asrhub_sat : T_ASRHUB <1>;
+}
 
 def S5_asrhub_rnd_sat_goodsyntax
   : SInst <(outs IntRegs:$Rd), (ins DoubleRegs:$Rss, u4Imm:$u4),
   "$Rd = vasrhub($Rss, #$u4):rnd:sat">, Requires<[HasV5T]>;
+
+// S5_vasrhrnd: Vector arithmetic shift right by immediate with round.
+let hasSideEffects = 0, isCodeGenOnly = 0 in
+def S5_vasrhrnd : SInst <(outs DoubleRegs:$Rdd),
+                         (ins DoubleRegs:$Rss, u4Imm:$u4),
+  "$Rdd = vasrh($Rss, #$u4):raw">,
+  Requires<[HasV5T]> {
+    bits<5> Rdd;
+    bits<5> Rss;
+    bits<4> u4;
+
+    let IClass = 0b1000;
+
+    let Inst{27-21} = 0b0000001;
+    let Inst{20-16} = Rss;
+    let Inst{13-12} = 0b00;
+    let Inst{11-8}  = u4;
+    let Inst{7-5}   = 0b000;
+    let Inst{4-0}   = Rdd;
+  }
 
 // Floating point reciprocal square root approximation
 let Uses = [USR], isPredicateLate = 1, isFP = 1,
