@@ -991,18 +991,24 @@ class T_vcmp_pat<InstHexagon MI, PatFrag Op, ValueType T>
         (i1 (MI DoubleRegs:$Rss, DoubleRegs:$Rtt))>;
 
 // Vector compare bytes
+let isCodeGenOnly = 0 in {
 def A2_vcmpbeq  : T_vcmp <"vcmpb.eq",  0b0110>;
 def A2_vcmpbgtu : T_vcmp <"vcmpb.gtu", 0b0111>;
+}
 
 // Vector compare halfwords
+let isCodeGenOnly = 0 in {
 def A2_vcmpheq  : T_vcmp <"vcmph.eq",  0b0011>;
 def A2_vcmphgt  : T_vcmp <"vcmph.gt",  0b0100>;
 def A2_vcmphgtu : T_vcmp <"vcmph.gtu", 0b0101>;
+}
 
 // Vector compare words
+let isCodeGenOnly = 0 in {
 def A2_vcmpweq  : T_vcmp <"vcmpw.eq",  0b0000>;
 def A2_vcmpwgt  : T_vcmp <"vcmpw.gt",  0b0001>;
 def A2_vcmpwgtu : T_vcmp <"vcmpw.gtu", 0b0010>;
+}
 
 def: T_vcmp_pat<A2_vcmpbeq,  seteq,  v8i8>;
 def: T_vcmp_pat<A2_vcmpbgtu, setugt, v8i8>;

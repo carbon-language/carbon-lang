@@ -2298,6 +2298,65 @@ def M4_pmpyw_acc  : T_XTYPE_mpy64_acc < "pmpyw", "^", 0b001, 0b111, 0, 0, 0>;
 
 
 //===----------------------------------------------------------------------===//
+// ALU64/Vector compare
+//===----------------------------------------------------------------------===//
+//===----------------------------------------------------------------------===//
+// Template class for vector compare
+//===----------------------------------------------------------------------===//
+
+let hasSideEffects = 0 in
+class T_vcmpImm <string Str, bits<2> cmpOp, bits<2> minOp, Operand ImmOprnd>
+  : ALU64_rr <(outs PredRegs:$Pd),
+              (ins DoubleRegs:$Rss, ImmOprnd:$Imm),
+  "$Pd = "#Str#"($Rss, #$Imm)",
+  [], "", ALU64_tc_2early_SLOT23> {
+    bits<2> Pd;
+    bits<5> Rss;
+    bits<32> Imm;
+    bits<8> ImmBits;
+    let ImmBits{6-0} = Imm{6-0};
+    let ImmBits{7} = !if (!eq(cmpOp,0b10), 0b0, Imm{7}); // 0 for vcmp[bhw].gtu
+
+    let IClass = 0b1101;
+
+    let Inst{27-24} = 0b1100;
+    let Inst{22-21} = cmpOp;
+    let Inst{20-16} = Rss;
+    let Inst{12-5} = ImmBits;
+    let Inst{4-3} = minOp;
+    let Inst{1-0} = Pd;
+  }
+
+// Vector compare bytes
+let isCodeGenOnly = 0 in
+def A4_vcmpbgt   : T_vcmp <"vcmpb.gt", 0b1010>;
+def: T_vcmp_pat<A4_vcmpbgt, setgt, v8i8>;
+
+let AsmString = "$Pd = any8(vcmpb.eq($Rss, $Rtt))" in
+let isCodeGenOnly = 0 in
+def A4_vcmpbeq_any : T_vcmp <"any8(vcmpb.gt", 0b1000>;
+
+let isCodeGenOnly = 0 in {
+def A4_vcmpbeqi  : T_vcmpImm <"vcmpb.eq",  0b00, 0b00, u8Imm>;
+def A4_vcmpbgti  : T_vcmpImm <"vcmpb.gt",  0b01, 0b00, s8Imm>;
+def A4_vcmpbgtui : T_vcmpImm <"vcmpb.gtu", 0b10, 0b00, u7Imm>;
+}
+
+// Vector compare halfwords
+let isCodeGenOnly = 0 in {
+def A4_vcmpheqi  : T_vcmpImm <"vcmph.eq",  0b00, 0b01, s8Imm>;
+def A4_vcmphgti  : T_vcmpImm <"vcmph.gt",  0b01, 0b01, s8Imm>;
+def A4_vcmphgtui : T_vcmpImm <"vcmph.gtu", 0b10, 0b01, u7Imm>;
+}
+
+// Vector compare words
+let isCodeGenOnly = 0 in {
+def A4_vcmpweqi  : T_vcmpImm <"vcmpw.eq",  0b00, 0b10, s8Imm>;
+def A4_vcmpwgti  : T_vcmpImm <"vcmpw.gt",  0b01, 0b10, s8Imm>;
+def A4_vcmpwgtui : T_vcmpImm <"vcmpw.gtu", 0b10, 0b10, u7Imm>;
+}
+
+//===----------------------------------------------------------------------===//
 // XTYPE/SHIFT +
 //===----------------------------------------------------------------------===//
 // Shift by immediate and accumulate/logical.
