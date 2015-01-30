@@ -57,7 +57,7 @@ namespace clang {
 /// These can be in 3 states:
 ///   1) Not present, identified by isEmpty()
 ///   2) Present, identified by isNotEmpty()
-///      2.a) Valid, idenified by isValid()
+///      2.a) Valid, identified by isValid()
 ///      2.b) Invalid, identified by isInvalid().
 ///
 /// isSet() is deprecated because it mostly corresponded to "valid" but was
