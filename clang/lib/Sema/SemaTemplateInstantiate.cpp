@@ -207,6 +207,12 @@ void Sema::InstantiatingTemplate::Initialize(
     sema::TemplateDeductionInfo *DeductionInfo) {
   SavedInNonInstantiationSFINAEContext =
       SemaRef.InNonInstantiationSFINAEContext;
+  // Don't allow further instantiation if a fatal error has occcured.  Any
+  // diagnostics we might have raised will not be visible.
+  if (SemaRef.Diags.hasFatalErrorOccurred()) {
+    Invalid = true;
+    return;
+  }
   Invalid = CheckInstantiationDepth(PointOfInstantiation, InstantiationRange);
   if (!Invalid) {
     ActiveTemplateInstantiation Inst;
