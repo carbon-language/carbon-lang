@@ -21,6 +21,7 @@ class SigtrampUnwind(TestBase):
         self.setTearDownCleanup()
         self.sigtramp_unwind_tests()
 
+    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @dwarf_test
     def test_with_dwarf (self):
         """Test that we can backtrace correctly with _sigtramp on the stack"""
