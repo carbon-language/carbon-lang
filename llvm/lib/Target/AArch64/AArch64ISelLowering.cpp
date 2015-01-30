@@ -3451,18 +3451,12 @@ SDValue AArch64TargetLowering::LowerCTPOP(SDValue Op, SelectionDAG &DAG) const {
   SDValue Val = Op.getOperand(0);
   SDLoc DL(Op);
   EVT VT = Op.getValueType();
-  SDValue ZeroVec = DAG.getUNDEF(MVT::v8i8);
 
-  SDValue VecVal;
-  if (VT == MVT::i32) {
-    VecVal = DAG.getNode(ISD::BITCAST, DL, MVT::f32, Val);
-    VecVal = DAG.getTargetInsertSubreg(AArch64::ssub, DL, MVT::v8i8, ZeroVec,
-                                       VecVal);
-  } else {
-    VecVal = DAG.getNode(ISD::BITCAST, DL, MVT::v8i8, Val);
-  }
+  if (VT == MVT::i32)
+    Val = DAG.getNode(ISD::ZERO_EXTEND, DL, MVT::i64, Val);
+  Val = DAG.getNode(ISD::BITCAST, DL, MVT::v8i8, Val);
 
-  SDValue CtPop = DAG.getNode(ISD::CTPOP, DL, MVT::v8i8, VecVal);
+  SDValue CtPop = DAG.getNode(ISD::CTPOP, DL, MVT::v8i8, Val);
   SDValue UaddLV = DAG.getNode(
       ISD::INTRINSIC_WO_CHAIN, DL, MVT::i32,
       DAG.getConstant(Intrinsic::aarch64_neon_uaddlv, MVT::i32), CtPop);

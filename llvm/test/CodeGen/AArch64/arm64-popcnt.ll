@@ -4,7 +4,8 @@
 define i32 @cnt32_advsimd(i32 %x) nounwind readnone {
   %cnt = tail call i32 @llvm.ctpop.i32(i32 %x)
   ret i32 %cnt
-; CHECK: fmov	s0, w0
+; CHECK: ubfx	x{{[0-9]+}}
+; CHECK: fmov	d0, x{{[0-9]+}}
 ; CHECK: cnt.8b	v0, v0
 ; CHECK: uaddlv.8b	h0, v0
 ; CHECK: fmov w0, s0
@@ -15,7 +16,24 @@ define i32 @cnt32_advsimd(i32 %x) nounwind readnone {
 ; CHECK-NONEON: and w{{[0-9]+}}, w{{[0-9]+}}, #0x33333333
 ; CHECK-NONEON: and w{{[0-9]+}}, w{{[0-9]+}}, #0xf0f0f0f
 ; CHECK-NONEON: mul
+}
 
+define i32 @cnt32_advsimd_2(<2 x i32> %x) {
+  %1 = extractelement <2 x i32> %x, i64 0
+  %2 = tail call i32 @llvm.ctpop.i32(i32 %1)
+  ret i32 %2
+; CHECK: fmov	w0, s0
+; CHECK: fmov	d0, x0
+; CHECK: cnt.8b	v0, v0
+; CHECK: uaddlv.8b	h0, v0
+; CHECK: fmov w0, s0
+; CHECK: ret
+; CHECK-NONEON-LABEL: cnt32_advsimd_2
+; CHECK-NONEON-NOT: 8b
+; CHECK-NONEON: and w{{[0-9]+}}, w{{[0-9]+}}, #0x55555555
+; CHECK-NONEON: and w{{[0-9]+}}, w{{[0-9]+}}, #0x33333333
+; CHECK-NONEON: and w{{[0-9]+}}, w{{[0-9]+}}, #0xf0f0f0f
+; CHECK-NONEON: mul
 }
 
 define i64 @cnt64_advsimd(i64 %x) nounwind readnone {
