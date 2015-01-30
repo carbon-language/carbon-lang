@@ -211,8 +211,8 @@ TEST(Clock, Growth) {
   }
 }
 
-const int kThreads = 4;
-const int kClocks = 4;
+const uptr kThreads = 4;
+const uptr kClocks = 4;
 
 // SimpleSyncClock and SimpleThreadClock implement the same thing as
 // SyncClock and ThreadClock, but in a very simple way.
