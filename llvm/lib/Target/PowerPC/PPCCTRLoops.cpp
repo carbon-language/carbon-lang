@@ -230,7 +230,8 @@ bool PPCCTRLoops::mightUseCTR(const Triple &TT, BasicBlock *BB) {
 
       if (!TM)
         return true;
-      const TargetLowering *TLI = TM->getSubtargetImpl()->getTargetLowering();
+      const TargetLowering *TLI =
+          TM->getSubtargetImpl(*BB->getParent())->getTargetLowering();
 
       if (Function *F = CI->getCalledFunction()) {
         // Most intrinsics don't become function calls, but some might.

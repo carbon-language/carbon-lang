@@ -85,18 +85,19 @@ typedef struct Address {
 class PPCFastISel final : public FastISel {
 
   const TargetMachine &TM;
+  const PPCSubtarget *PPCSubTarget;
   const TargetInstrInfo &TII;
   const TargetLowering &TLI;
-  const PPCSubtarget *PPCSubTarget;
   LLVMContext *Context;
 
   public:
     explicit PPCFastISel(FunctionLoweringInfo &FuncInfo,
                          const TargetLibraryInfo *LibInfo)
         : FastISel(FuncInfo, LibInfo), TM(FuncInfo.MF->getTarget()),
-          TII(*TM.getSubtargetImpl()->getInstrInfo()),
-          TLI(*TM.getSubtargetImpl()->getTargetLowering()),
-          PPCSubTarget(&TM.getSubtarget<PPCSubtarget>()),
+          PPCSubTarget(
+              &static_cast<const PPCSubtarget &>(FuncInfo.MF->getSubtarget())),
+          TII(*PPCSubTarget->getInstrInfo()),
+          TLI(*PPCSubTarget->getTargetLowering()),
           Context(&FuncInfo.Fn->getContext()) {}
 
   // Backend specific FastISel code.
@@ -2298,13 +2299,11 @@ namespace llvm {
   // Create the fast instruction selector for PowerPC64 ELF.
   FastISel *PPC::createFastISel(FunctionLoweringInfo &FuncInfo,
                                 const TargetLibraryInfo *LibInfo) {
-    const TargetMachine &TM = FuncInfo.MF->getTarget();
-
     // Only available on 64-bit ELF for now.
-    const PPCSubtarget *Subtarget = &TM.getSubtarget<PPCSubtarget>();
-    if (Subtarget->isPPC64() && Subtarget->isSVR4ABI())
+    const PPCSubtarget &Subtarget =
+        static_cast<const PPCSubtarget &>(FuncInfo.MF->getSubtarget());
+    if (Subtarget.isPPC64() && Subtarget.isSVR4ABI())
       return new PPCFastISel(FuncInfo, LibInfo);
-
     return nullptr;
   }
 }
