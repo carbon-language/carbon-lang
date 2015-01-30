@@ -20,13 +20,15 @@
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/Pass.h"
+#include <memory>
+
 using namespace llvm;
 
 #define DEBUG_TYPE "winehprepare"
 
 namespace {
 class WinEHPrepare : public FunctionPass {
-  FunctionPass *DwarfPrepare;
+  std::unique_ptr<FunctionPass> DwarfPrepare;
 
 public:
   static char ID; // Pass identification, replacement for typeid.
