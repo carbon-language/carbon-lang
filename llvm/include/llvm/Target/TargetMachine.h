@@ -40,8 +40,6 @@ class TargetPassConfig;
 class TargetRegisterInfo;
 class TargetSelectionDAGInfo;
 class TargetSubtargetInfo;
-class ScalarTargetTransformInfo;
-class VectorTargetTransformInfo;
 class formatted_raw_ostream;
 class raw_ostream;
 class TargetLoweringObjectFile;
