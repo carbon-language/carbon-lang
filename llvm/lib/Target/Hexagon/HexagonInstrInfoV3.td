@@ -254,3 +254,8 @@ let isCodeGenOnly = 0 in {
 def M2_vrcmpys_s1rp_h : T_MType_vrcmpy <"vrcmpys", 0b101, 0b110, 1>;
 def M2_vrcmpys_s1rp_l : T_MType_vrcmpy <"vrcmpys", 0b101, 0b111, 0>;
 }
+
+// S2_cabacdecbin: Cabac decode bin.
+let Defs = [P0], isPredicateLate = 1, Itinerary = S_3op_tc_1_SLOT23,
+    isCodeGenOnly = 0 in
+def S2_cabacdecbin : T_S3op_64 < "decbin", 0b11, 0b110, 0>;

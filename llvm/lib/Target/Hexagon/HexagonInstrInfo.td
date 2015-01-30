@@ -3866,11 +3866,41 @@ let hasNewValue = 1 in
 class T_S2op_1_ii <string mnemonic, bits<2> MajOp, bits<3> MinOp, bit isSat = 0>
   : T_S2op_1 <mnemonic, 0b1100, IntRegs, IntRegs, MajOp, MinOp, isSat>;
 
+// Vector sign/zero extend
+let isReMaterializable = 1, isAsCheapAsAMove = 1, isCodeGenOnly = 0 in {
+  def S2_vsxtbh : T_S2op_1_di <"vsxtbh", 0b00, 0b000>;
+  def S2_vsxthw : T_S2op_1_di <"vsxthw", 0b00, 0b100>;
+  def S2_vzxtbh : T_S2op_1_di <"vzxtbh", 0b00, 0b010>;
+  def S2_vzxthw : T_S2op_1_di <"vzxthw", 0b00, 0b110>;
+}
+
+// Vector splat bytes/halfwords
+let isReMaterializable = 1, isAsCheapAsAMove = 1, isCodeGenOnly = 0 in {
+  def S2_vsplatrb : T_S2op_1_ii <"vsplatb", 0b01, 0b111>;
+  def S2_vsplatrh : T_S2op_1_di <"vsplath", 0b01, 0b010>;
+}
+
 // Sign extend word to doubleword
 let isCodeGenOnly = 0 in
 def A2_sxtw   : T_S2op_1_di <"sxtw", 0b01, 0b000>;
 
 def: Pat <(i64 (sext I32:$src)), (A2_sxtw I32:$src)>;
+
+// Vector saturate and pack
+let Defs = [USR_OVF], isCodeGenOnly = 0 in {
+  def S2_svsathb  : T_S2op_1_ii <"vsathb", 0b10, 0b000>;
+  def S2_svsathub : T_S2op_1_ii <"vsathub", 0b10, 0b010>;
+  def S2_vsathb   : T_S2op_1_id <"vsathb", 0b00, 0b110>;
+  def S2_vsathub  : T_S2op_1_id <"vsathub", 0b00, 0b000>;
+  def S2_vsatwh   : T_S2op_1_id <"vsatwh", 0b00, 0b010>;
+  def S2_vsatwuh  : T_S2op_1_id <"vsatwuh", 0b00, 0b100>;
+}
+
+// Vector truncate
+let isCodeGenOnly = 0 in {
+def S2_vtrunohb : T_S2op_1_id <"vtrunohb", 0b10, 0b000>;
+def S2_vtrunehb : T_S2op_1_id <"vtrunehb", 0b10, 0b010>;
+}
 
 // Swizzle the bytes of a word
 let isCodeGenOnly = 0 in
@@ -3887,6 +3917,12 @@ let Defs = [USR_OVF], isCodeGenOnly = 0 in {
 }
 
 let Itinerary = S_2op_tc_2_SLOT23, isCodeGenOnly = 0 in {
+  // Vector round and pack
+  def S2_vrndpackwh   : T_S2op_1_id <"vrndwh", 0b10, 0b100>;
+
+  let Defs = [USR_OVF] in
+  def S2_vrndpackwhs  : T_S2op_1_id <"vrndwh", 0b10, 0b110, 1>;
+
   // Bit reverse
   def S2_brev : T_S2op_1_ii <"brev", 0b01, 0b110>;
 
@@ -4006,6 +4042,14 @@ def S2_deinterleave : T_S2op_3 <"deinterleave", 0b11, 0b100>;
 // Vector Complex conjugate
 let isCodeGenOnly = 0 in
 def A2_vconj : T_S2op_3 <"vconj", 0b10, 0b111, 1>;
+
+// Vector saturate without pack
+let isCodeGenOnly = 0 in {
+def S2_vsathb_nopack  : T_S2op_3 <"vsathb",  0b00, 0b111>;
+def S2_vsathub_nopack : T_S2op_3 <"vsathub", 0b00, 0b100>;
+def S2_vsatwh_nopack  : T_S2op_3 <"vsatwh",  0b00, 0b110>;
+def S2_vsatwuh_nopack : T_S2op_3 <"vsatwuh", 0b00, 0b101>;
+}
 
 // Vector absolute value halfwords with and without saturation
 // Rdd64=vabsh(Rss64)[:sat]
@@ -5573,6 +5617,16 @@ class T_S3op_64 <string mnemonic, bits<2> MajOp, bits<3> MinOp, bit SwapOps,
   : T_S3op_1 <mnemonic, DoubleRegs, MajOp, MinOp, SwapOps,
               isSat, isRnd, hasShift>;
 
+let Itinerary = S_3op_tc_1_SLOT23, isCodeGenOnly = 0 in {
+  def S2_shuffeb : T_S3op_64 < "shuffeb", 0b00, 0b010, 0>;
+  def S2_shuffeh : T_S3op_64 < "shuffeh", 0b00, 0b110, 0>;
+  def S2_shuffob : T_S3op_64 < "shuffob", 0b00, 0b100, 1>;
+  def S2_shuffoh : T_S3op_64 < "shuffoh", 0b10, 0b000, 1>;
+
+  def S2_vtrunewh : T_S3op_64 < "vtrunewh", 0b10, 0b010, 0>;
+  def S2_vtrunowh : T_S3op_64 < "vtrunowh", 0b10, 0b100, 0>;
+}
+
 let isCodeGenOnly = 0 in
 def S2_lfsp : T_S3op_64 < "lfs", 0b10, 0b110, 0>;
 
@@ -5701,6 +5755,32 @@ class T_S3op_8 <string opc, bits<3> MinOp, bit isSat, bit isRnd, bit hasShift, b
 
 let Defs = [USR_OVF], Itinerary = S_3op_tc_2_SLOT23, isCodeGenOnly = 0 in
 def S2_vcrotate : T_S3op_shiftVect < "vcrotate", 0b11, 0b00>;
+
+let hasSideEffects = 0 in
+class T_S3op_7 <string mnemonic, bit MajOp >
+  : SInst <(outs DoubleRegs:$Rdd),
+           (ins DoubleRegs:$Rss, DoubleRegs:$Rtt, u3Imm:$u3),
+  "$Rdd = "#mnemonic#"($Rss, $Rtt, #$u3)" ,
+  [], "", S_3op_tc_1_SLOT23 > {
+    bits<5> Rdd;
+    bits<5> Rss;
+    bits<5> Rtt;
+    bits<3> u3;
+
+    let IClass = 0b1100;
+
+    let Inst{27-24} = 0b0000;
+    let Inst{23}    = MajOp;
+    let Inst{20-16} = !if(MajOp, Rss, Rtt);
+    let Inst{12-8}  =  !if(MajOp, Rtt, Rss);
+    let Inst{7-5}   = u3;
+    let Inst{4-0}   = Rdd;
+  }
+
+let isCodeGenOnly = 0 in {
+def S2_valignib  : T_S3op_7 < "valignb", 0>;
+def S2_vspliceib : T_S3op_7 < "vspliceb", 1>;
+}
 
 //===----------------------------------------------------------------------===//
 // Template class for 'insert bitfield' instructions
