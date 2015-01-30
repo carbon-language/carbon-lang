@@ -1899,7 +1899,8 @@ void CodeGenFunction::ExitSEHTryStmt(const SEHTryStmt &S) {
   // Emit the __except body.
   EmitStmt(Except->getBlock());
 
-  Builder.CreateBr(ContBB);
+  if (HaveInsertPoint())
+    Builder.CreateBr(ContBB);
 
   EmitBlock(ContBB);
 }
