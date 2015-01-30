@@ -1111,6 +1111,14 @@ bool llvm::InlineFunction(CallSite CS, InlineFunctionInfo &IFI,
                                                    FirstNewBlock->getInstList(),
                                                    AI, I);
     }
+    // Move any dbg.declares describing the allocas into the entry basic block.
+    for (auto &I : IFI.StaticAllocas)
+      if (auto AI = dyn_cast<AllocaInst>(I))
+        if (auto *DDI = FindAllocaDbgDeclare(AI))
+          if (DDI->getParent() != Caller->begin())
+            Caller->getEntryBlock().getInstList()
+              .splice(AI->getNextNode(), FirstNewBlock->getInstList(),
+                      DDI, DDI->getNextNode());
   }
 
   bool InlinedMustTailCalls = false;
