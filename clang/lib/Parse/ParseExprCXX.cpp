@@ -2516,7 +2516,8 @@ bool Parser::ParseUnqualifiedId(CXXScopeSpec &SS, bool EnteringContext,
       }
       if (ParseOptionalCXXScopeSpecifier(SS, ObjectType, EnteringContext))
         return true;
-      if (Tok.isNot(tok::identifier) || NextToken().is(tok::coloncolon)) {
+      if (Tok.isNot(tok::identifier) || NextToken().is(tok::coloncolon) ||
+          SS.isInvalid()) {
         Diag(TildeLoc, diag::err_destructor_tilde_scope);
         return true;
       }
