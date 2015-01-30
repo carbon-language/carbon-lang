@@ -217,10 +217,6 @@ uptr GetPageSize() {
   return sysconf(_SC_PAGESIZE);
 }
 
-BlockingMutex::BlockingMutex(LinkerInitialized) {
-  // We assume that OS_SPINLOCK_INIT is zero
-}
-
 BlockingMutex::BlockingMutex() {
   internal_memset(this, 0, sizeof(*this));
 }
