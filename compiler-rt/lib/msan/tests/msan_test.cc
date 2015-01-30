@@ -21,6 +21,19 @@
 #include "sanitizer/allocator_interface.h"
 #include "sanitizer/msan_interface.h"
 
+#if defined(__FreeBSD__)
+# define _KERNEL  // To declare 'shminfo' structure.
+# include <sys/shm.h>
+# undef _KERNEL
+extern "C" {
+// <sys/shm.h> doesn't declare these functions in _KERNEL mode.
+void *shmat(int, const void *, int);
+int shmget(key_t, size_t, int);
+int shmctl(int, int, struct shmid_ds *);
+int shmdt(const void *);
+}
+#endif
+
 #include <inttypes.h>
 #include <stdlib.h>
 #include <stdarg.h>
@@ -1165,6 +1178,8 @@ TEST(MemorySanitizer, shmctl) {
   ASSERT_GT(res, -1);
   EXPECT_NOT_POISONED(ds);
 
+  // FreeBSD does not support shmctl(IPC_INFO) and shmctl(SHM_INFO).
+#if !defined(__FreeBSD__)
   struct shminfo si;
   res = shmctl(id, IPC_INFO, (struct shmid_ds *)&si);
   ASSERT_GT(res, -1);
@@ -1174,6 +1189,7 @@ TEST(MemorySanitizer, shmctl) {
   res = shmctl(id, SHM_INFO, (struct shmid_ds *)&s_i);
   ASSERT_GT(res, -1);
   EXPECT_NOT_POISONED(s_i);
+#endif
 
   res = shmctl(id, IPC_RMID, 0);
   ASSERT_GT(res, -1);
