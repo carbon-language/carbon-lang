@@ -5696,14 +5696,6 @@ public:
   }
   const std::string& getCPU() const { return CPU; }
   void getDefaultFeatures(llvm::StringMap<bool> &Features) const override {
-    // The backend enables certain ABI's by default according to the
-    // architecture.
-    // Disable both possible defaults so that we don't end up with multiple
-    // ABI's selected and trigger an assertion.
-    Features["o32"] = false;
-    Features["n64"] = false;
-
-    Features[ABI] = true;
     if (CPU == "octeon")
       Features["mips64r2"] = Features["cnmips"] = true;
     else

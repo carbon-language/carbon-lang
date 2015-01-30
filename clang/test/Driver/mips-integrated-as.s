@@ -5,24 +5,19 @@
 // RUN: %clang -target mips-linux-gnu -### -fintegrated-as -c %s -mabi=o32 2>&1 | \
 // RUN:   FileCheck -check-prefix=ABI-O32 %s
 // ABI-O32: -cc1as
-// ABI-O32: "-target-feature" "-n64"
-// ABI-O32: "-target-feature" "+o32"
+// ABI-O32: "-target-abi" "o32"
 
 // RUN: %clang -target mips-linux-gnu -### -fintegrated-as -c %s -mabi=eabi 2>&1 | \
 // RUN:   FileCheck -check-prefix=ABI-EABI32 %s
 // ABI-EABI32: -cc1as
-// ABI-EABI32: "-target-feature" "-o32"
-// ABI-EABI32: "-target-feature" "-n64"
-// ABI-EABI32: "-target-feature" "+eabi"
+// ABI-EABI32: "-target-abi" "eabi"
 
 // RUN: %clang -target mips-linux-gnu -### -fintegrated-as -c %s -mips64 -mabi=n32 2>&1 | \
 // RUN:   FileCheck -check-prefix=ABI-N32 %s
 // RUN: %clang -target mips64-linux-gnu -### -fintegrated-as -c %s -mabi=n32 2>&1 | \
 // RUN:   FileCheck -check-prefix=ABI-N32 %s
 // ABI-N32: -cc1as
-// ABI-N32: "-target-feature" "-o32"
-// ABI-N32: "-target-feature" "-n64"
-// ABI-N32: "-target-feature" "+n32"
+// ABI-N32: "-target-abi" "n32"
 
 // FIXME: We should also test '-target mips-linux-gnu -mips64' defaults to the
 //        default 64-bit ABI (N64 but GCC uses N32). It currently selects O32
@@ -39,8 +34,7 @@
 // RUN: %clang -target mips64-linux-gnu -### -fintegrated-as -c %s -mips64 -mabi=n64 2>&1 | \
 // RUN:   FileCheck -check-prefix=ABI-N64 %s
 // ABI-N64: -cc1as
-// ABI-N64: "-target-feature" "-o32"
-// ABI-N64: "-target-feature" "+n64"
+// ABI-N64: "-target-abi" "n64"
 
 // RUN: %clang -target mips-linux-gnu -### -fintegrated-as -c %s -msoft-float 2>&1 | \
 // RUN:   FileCheck -check-prefix=SOFTFLOAT %s

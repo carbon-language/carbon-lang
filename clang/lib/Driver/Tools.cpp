@@ -1095,17 +1095,6 @@ static void getMIPSTargetFeatures(const Driver &D, const llvm::Triple &Triple,
   mips::getMipsCPUAndABI(Args, Triple, CPUName, ABIName);
   ABIName = getGnuCompatibleMipsABIName(ABIName);
 
-  // Always override the backend's default ABI.
-  std::string ABIFeature = llvm::StringSwitch<StringRef>(ABIName)
-                               .Case("32", "+o32")
-                               .Case("n32", "+n32")
-                               .Case("64", "+n64")
-                               .Case("eabi", "+eabi")
-                               .Default(("+" + ABIName).str());
-  Features.push_back("-o32");
-  Features.push_back("-n64");
-  Features.push_back(Args.MakeArgString(ABIFeature));
-
   AddTargetFeature(Args, Features, options::OPT_mno_abicalls,
                    options::OPT_mabicalls, "noabicalls");
 
@@ -4874,6 +4863,17 @@ visualstudio::Compile *Clang::getCLFallback() const {
   return CLFallback.get();
 }
 
+void ClangAs::AddMIPSTargetArgs(const ArgList &Args,
+                                ArgStringList &CmdArgs) const {
+  StringRef CPUName;
+  StringRef ABIName;
+  const llvm::Triple &Triple = getToolChain().getTriple();
+  mips::getMipsCPUAndABI(Args, Triple, CPUName, ABIName);
+
+  CmdArgs.push_back("-target-abi");
+  CmdArgs.push_back(ABIName.data());
+}
+
 void ClangAs::ConstructJob(Compilation &C, const JobAction &JA,
                            const InputInfo &Output,
                            const InputInfoList &Inputs,
@@ -4980,6 +4980,19 @@ void ClangAs::ConstructJob(Compilation &C, const JobAction &JA,
   }
 
   // FIXME: Add -static support, once we have it.
+
+  // Add target specific flags.
+  switch(getToolChain().getArch()) {
+  default:
+    break;
+
+  case llvm::Triple::mips:
+  case llvm::Triple::mipsel:
+  case llvm::Triple::mips64:
+  case llvm::Triple::mips64el:
+    AddMIPSTargetArgs(Args, CmdArgs);
+    break;
+  }
 
   // Consume all the warning flags. Usually this would be handled more
   // gracefully by -cc1 (warning about unknown warning flags, etc) but -cc1as
