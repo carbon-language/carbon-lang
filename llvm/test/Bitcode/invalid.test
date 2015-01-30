@@ -6,8 +6,14 @@ RUN: not llvm-dis -disable-output %p/Inputs/invalid-unexpected-eof.bc 2>&1 | \
 RUN:   FileCheck --check-prefix=UNEXPECTED-EOF %s
 RUN: not llvm-dis -disable-output %p/Inputs/invalid-bad-abbrev-number.bc 2>&1 | \
 RUN:   FileCheck --check-prefix=BAD-ABBREV-NUMBER %s
+RUN: not llvm-dis -disable-output %p/Inputs/invalid-type-table-forward-ref.bc 2>&1 | \
+RUN:   FileCheck --check-prefix=BAD-TYPE-TABLE-FORWARD-REF %s
+RUN: not llvm-dis -disable-output %p/Inputs/invalid-bitwidth.bc 2>&1 | \
+RUN:   FileCheck --check-prefix=BAD-BITWIDTH %s
 
 INVALID-ENCODING: Invalid encoding
 BAD-ABBREV: Abbreviation starts with an Array or a Blob
 UNEXPECTED-EOF: Unexpected end of file
 BAD-ABBREV-NUMBER: Invalid abbrev number
+BAD-TYPE-TABLE-FORWARD-REF: Invalid TYPE table: Only named structs can be forward referenced
+BAD-BITWIDTH: Bitwidth for integer type out of range

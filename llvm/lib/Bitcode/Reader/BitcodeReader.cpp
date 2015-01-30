@@ -950,12 +950,17 @@ std::error_code BitcodeReader::ParseTypeTableBody() {
     case bitc::TYPE_CODE_X86_MMX:   // X86_MMX
       ResultTy = Type::getX86_MMXTy(Context);
       break;
-    case bitc::TYPE_CODE_INTEGER:   // INTEGER: [width]
+    case bitc::TYPE_CODE_INTEGER: { // INTEGER: [width]
       if (Record.size() < 1)
         return Error("Invalid record");
 
-      ResultTy = IntegerType::get(Context, Record[0]);
+      uint64_t NumBits = Record[0];
+      if (NumBits < IntegerType::MIN_INT_BITS ||
+          NumBits > IntegerType::MAX_INT_BITS)
+        return Error("Bitwidth for integer type out of range");
+      ResultTy = IntegerType::get(Context, NumBits);
       break;
+    }
     case bitc::TYPE_CODE_POINTER: { // POINTER: [pointee type] or
                                     //          [pointee type, address space]
       if (Record.size() < 1)
