@@ -1,5 +1,7 @@
-# RUN: llvm-mc --triple hexagon -disassemble < %s | FileCheck %s
+# RUN: llvm-mc -triple=hexagon -disassemble < %s | FileCheck %s
+# Hexagon Programmer's Reference Manual 11.8 ST
 
+# Store doubleword
 0x9e 0xf5 0xd1 0x3b
 # CHECK: memd(r17 + r21<<#3) = r31:30
 0x28 0xd4 0xc0 0x48
@@ -16,6 +18,8 @@
 # CHECK: memd(r17++m1) = r21:20
 0x00 0xf4 0xd1 0xaf
 # CHECK: memd(r17 ++ m1:brev) = r21:20
+
+# Store doubleword conditionally
 0xfe 0xf5 0xd1 0x34
 # CHECK: if (p3) memd(r17+r21<<#3) = r31:30
 0xfe 0xf5 0xd1 0x35
@@ -47,6 +51,7 @@
 # CHECK: p3 = r5
 # CHECK-NEXT: if (!p3.new) memd(r17++#40) = r21:20
 
+# Store byte
 0x9f 0xf5 0x11 0x3b
 # CHECK: memb(r17 + r21<<#3) = r31
 0x9f 0xca 0x11 0x3c
@@ -65,6 +70,8 @@
 # CHECK: memb(r17++m1) = r21
 0x00 0xf5 0x11 0xaf
 # CHECK: memb(r17 ++ m1:brev) = r21
+
+# Store byte conditionally
 0xff 0xf5 0x11 0x34
 # CHECK: if (p3) memb(r17+r21<<#3) = r31
 0xff 0xf5 0x11 0x35
@@ -106,6 +113,7 @@
 # CHECK: p3 = r5
 # CHECK-NEXT: if (!p3.new) memb(r17++#5) = r21
 
+# Store halfword
 0x9f 0xf5 0x51 0x3b
 # CHECK: memh(r17 + r21<<#3) = r31
 0x9f 0xf5 0x71 0x3b
@@ -140,6 +148,8 @@
 # CHECK: memh(r17 ++ m1:brev) = r21
 0x00 0xf5 0x71 0xaf
 # CHECK: memh(r17 ++ m1:brev) = r21.h
+
+# Store halfword conditionally
 0xff 0xf5 0x51 0x34
 # CHECK: if (p3) memh(r17+r21<<#3) = r31
 0xff 0xf5 0x71 0x34
@@ -211,6 +221,7 @@
 # CHECK: p3 = r5
 # CHECK-NEXT: if (!p3.new) memh(r17++#10) = r21.h
 
+# Store word
 0x9f 0xf5 0x91 0x3b
 # CHECK: memw(r17 + r21<<#3) = r31
 0x9f 0xca 0x51 0x3c
@@ -229,6 +240,8 @@
 # CHECK: memw(r17++m1) = r21
 0x00 0xf5 0x91 0xaf
 # CHECK: memw(r17 ++ m1:brev) = r21
+
+# Store word conditionally
 0xff 0xf5 0x91 0x34
 # CHECK: if (p3) memw(r17+r21<<#3) = r31
 0xff 0xf5 0x91 0x35
@@ -270,5 +283,6 @@
 # CHECK: p3 = r5
 # CHECK-NEXT: if (p3.new) memw(r17++#20) = r21
 
+# Allocate stack frame
 0x1f 0xc0 0x9d 0xa0
 # CHECK: allocframe(#248)

@@ -876,14 +876,14 @@ class T_VectALU_64 <string opc, bits<3> majOp, bits<3> minOp,
 
 // ALU64 - Vector add
 // Rdd=vadd[u][bhw](Rss,Rtt)
-let Itinerary = ALU64_tc_1_SLOT23 in {
+let Itinerary = ALU64_tc_1_SLOT23, isCodeGenOnly = 0 in {
   def A2_vaddub  : T_VectALU_64 < "vaddub", 0b000, 0b000, 0, 0, 0, 0>;
   def A2_vaddh   : T_VectALU_64 < "vaddh",  0b000, 0b010, 0, 0, 0, 0>;
   def A2_vaddw   : T_VectALU_64 < "vaddw",  0b000, 0b101, 0, 0, 0, 0>;
 }
 
 // Rdd=vadd[u][bhw](Rss,Rtt):sat
-let Defs = [USR_OVF] in {
+let Defs = [USR_OVF], isCodeGenOnly = 0 in {
   def A2_vaddubs : T_VectALU_64 < "vaddub", 0b000, 0b001, 1, 0, 0, 0>;
   def A2_vaddhs  : T_VectALU_64 < "vaddh",  0b000, 0b011, 1, 0, 0, 0>;
   def A2_vadduhs : T_VectALU_64 < "vadduh", 0b000, 0b100, 1, 0, 0, 0>;
@@ -892,7 +892,7 @@ let Defs = [USR_OVF] in {
 
 // ALU64 - Vector average
 // Rdd=vavg[u][bhw](Rss,Rtt)
-let Itinerary = ALU64_tc_1_SLOT23 in {
+let Itinerary = ALU64_tc_1_SLOT23, isCodeGenOnly = 0 in {
   def A2_vavgub : T_VectALU_64 < "vavgub", 0b010, 0b000, 0, 0, 0, 0>;
   def A2_vavgh  : T_VectALU_64 < "vavgh",  0b010, 0b010, 0, 0, 0, 0>;
   def A2_vavguh : T_VectALU_64 < "vavguh", 0b010, 0b101, 0, 0, 0, 0>;
@@ -901,23 +901,27 @@ let Itinerary = ALU64_tc_1_SLOT23 in {
 }
 
 // Rdd=vavg[u][bhw](Rss,Rtt)[:rnd|:crnd]
+let isCodeGenOnly = 0 in {
 def A2_vavgubr : T_VectALU_64 < "vavgub", 0b010, 0b001, 0, 1, 0, 0>;
 def A2_vavghr  : T_VectALU_64 < "vavgh",  0b010, 0b011, 0, 1, 0, 0>;
 def A2_vavghcr : T_VectALU_64 < "vavgh",  0b010, 0b100, 0, 0, 1, 0>;
 def A2_vavguhr : T_VectALU_64 < "vavguh", 0b010, 0b110, 0, 1, 0, 0>;
+}
 
+let isCodeGenOnly = 0 in {
 def A2_vavgwr  : T_VectALU_64 < "vavgw",  0b011, 0b001, 0, 1, 0, 0>;
 def A2_vavgwcr : T_VectALU_64 < "vavgw",  0b011, 0b010, 0, 0, 1, 0>;
 def A2_vavguwr : T_VectALU_64 < "vavguw", 0b011, 0b100, 0, 1, 0, 0>;
+}
 
 // Rdd=vnavg[bh](Rss,Rtt)
-let Itinerary = ALU64_tc_1_SLOT23 in {
+let Itinerary = ALU64_tc_1_SLOT23, isCodeGenOnly = 0 in {
   def A2_vnavgh   : T_VectALU_64 < "vnavgh", 0b100, 0b000, 0, 0, 0, 1>;
   def A2_vnavgw   : T_VectALU_64 < "vnavgw", 0b100, 0b011, 0, 0, 0, 1>;
 }
 
 // Rdd=vnavg[bh](Rss,Rtt)[:rnd|:crnd]:sat
-let Defs = [USR_OVF] in {
+let Defs = [USR_OVF], isCodeGenOnly = 0 in {
   def A2_vnavghr  : T_VectALU_64 < "vnavgh", 0b100, 0b001, 1, 1, 0, 1>;
   def A2_vnavghcr : T_VectALU_64 < "vnavgh", 0b100, 0b010, 1, 0, 1, 1>;
   def A2_vnavgwr  : T_VectALU_64 < "vnavgw", 0b100, 0b100, 1, 1, 0, 1>;
@@ -925,14 +929,14 @@ let Defs = [USR_OVF] in {
 }
 
 // Rdd=vsub[u][bh](Rss,Rtt)
-let Itinerary = ALU64_tc_1_SLOT23 in {
+let Itinerary = ALU64_tc_1_SLOT23, isCodeGenOnly = 0 in {
   def A2_vsubub  : T_VectALU_64 < "vsubub", 0b001, 0b000, 0, 0, 0, 1>;
   def A2_vsubh   : T_VectALU_64 < "vsubh",  0b001, 0b010, 0, 0, 0, 1>;
   def A2_vsubw   : T_VectALU_64 < "vsubw",  0b001, 0b101, 0, 0, 0, 1>;
 }
 
 // Rdd=vsub[u][bh](Rss,Rtt):sat
-let Defs = [USR_OVF] in {
+let Defs = [USR_OVF], isCodeGenOnly = 0 in {
   def A2_vsububs : T_VectALU_64 < "vsubub", 0b001, 0b001, 1, 0, 0, 1>;
   def A2_vsubhs  : T_VectALU_64 < "vsubh",  0b001, 0b011, 1, 0, 0, 1>;
   def A2_vsubuhs : T_VectALU_64 < "vsubuh", 0b001, 0b100, 1, 0, 0, 1>;
@@ -940,20 +944,24 @@ let Defs = [USR_OVF] in {
 }
 
 // Rdd=vmax[u][bhw](Rss,Rtt)
+let isCodeGenOnly = 0 in {
 def A2_vmaxb  : T_VectALU_64 < "vmaxb",  0b110, 0b110, 0, 0, 0, 1>;
 def A2_vmaxub : T_VectALU_64 < "vmaxub", 0b110, 0b000, 0, 0, 0, 1>;
 def A2_vmaxh  : T_VectALU_64 < "vmaxh",  0b110, 0b001, 0, 0, 0, 1>;
 def A2_vmaxuh : T_VectALU_64 < "vmaxuh", 0b110, 0b010, 0, 0, 0, 1>;
 def A2_vmaxw  : T_VectALU_64 < "vmaxw",  0b110, 0b011, 0, 0, 0, 1>;
 def A2_vmaxuw : T_VectALU_64 < "vmaxuw", 0b101, 0b101, 0, 0, 0, 1>;
+}
 
 // Rdd=vmin[u][bhw](Rss,Rtt)
+let isCodeGenOnly = 0 in {
 def A2_vminb  : T_VectALU_64 < "vminb",  0b110, 0b111, 0, 0, 0, 1>;
 def A2_vminub : T_VectALU_64 < "vminub", 0b101, 0b000, 0, 0, 0, 1>;
 def A2_vminh  : T_VectALU_64 < "vminh",  0b101, 0b001, 0, 0, 0, 1>;
 def A2_vminuh : T_VectALU_64 < "vminuh", 0b101, 0b010, 0, 0, 0, 1>;
 def A2_vminw  : T_VectALU_64 < "vminw",  0b101, 0b011, 0, 0, 0, 1>;
 def A2_vminuw : T_VectALU_64 < "vminuw", 0b101, 0b100, 0, 0, 0, 1>;
+}
 
 //===----------------------------------------------------------------------===//
 // Template class for vector compare
@@ -2099,6 +2107,31 @@ let hasNewValue = 1, accessSize = WordAccess, opNewValue = 0, isCodeGenOnly = 0 
   def L2_loadw_locked : T_load_locked <"memw_locked", IntRegs>;
 let accessSize = DoubleWordAccess, isCodeGenOnly = 0 in
   def L4_loadd_locked : T_load_locked <"memd_locked", DoubleRegs>;
+
+// S[24]_store[wd]_locked: Store word/double conditionally.
+let isSoloAX = 1, isPredicateLate = 1 in
+class T_store_locked <string mnemonic, RegisterClass RC>
+  : ST0Inst <(outs PredRegs:$Pd), (ins IntRegs:$Rs, RC:$Rt),
+    mnemonic#"($Rs, $Pd) = $Rt"> {
+    bits<2> Pd;
+    bits<5> Rs;
+    bits<5> Rt;
+
+    let IClass = 0b1010;
+    let Inst{27-23} = 0b00001;
+    let Inst{22} = !if (!eq(mnemonic, "memw_locked"), 0b0, 0b1);
+    let Inst{21} = 0b1;
+    let Inst{20-16} = Rs;
+    let Inst{12-8} = Rt;
+    let Inst{1-0} = Pd;
+}
+
+let accessSize = WordAccess, isCodeGenOnly = 0 in
+def S2_storew_locked : T_store_locked <"memw_locked", IntRegs>;
+
+let accessSize = DoubleWordAccess, isCodeGenOnly = 0 in
+def S4_stored_locked : T_store_locked <"memd_locked", DoubleRegs>;
+
 //===----------------------------------------------------------------------===//
 // Bit-reversed loads with auto-increment register
 //===----------------------------------------------------------------------===//
@@ -2474,6 +2507,9 @@ class T_MType_rr2 <string mnemonic, bits<3> MajOp, bits<3> MinOp,
                    bit isSat = 0, bit isRnd = 0, string op2str = "" >
   : T_MType_mpy<mnemonic, 0b1101, IntRegs, MajOp, MinOp, isSat, isRnd, op2str>;
 
+let isCodeGenOnly = 0 in
+def M2_vradduh    : T_MType_dd <"vradduh", 0b000, 0b001, 0, 0>;
+
 let CextOpcode = "mpyi", InputType = "reg", isCodeGenOnly = 0 in
 def M2_mpyi    : T_MType_rr1 <"mpyi", 0b000, 0b000>, ImmRegRel;
 
@@ -2492,6 +2528,7 @@ def M2_hmmpyl_rs1 : T_MType_rr2 <"mpy", 0b111, 0b100, 1, 1, ".l">;
 
 // V4 Instructions
 let isCodeGenOnly = 0 in {
+def M2_vraddh : T_MType_dd <"vraddh", 0b001, 0b111, 0>;
 def M2_mpysu_up : T_MType_rr1 <"mpysu", 0b011, 0b001, 0>;
 def M2_mpy_up_s1 : T_MType_rr1 <"mpy", 0b101, 0b010, 0>;
 def M2_mpy_up_s1_sat : T_MType_rr1 <"mpy", 0b111, 0b000, 1>;
@@ -2649,6 +2686,81 @@ def : T_MType_acc_pat1 <M2_macsin, mul, sub, u8ExtPred>;
 
 def : T_MType_acc_pat1 <M2_naccii, add, sub, s8_16ExtPred>;
 def : T_MType_acc_pat2 <M2_nacci, add, sub>;
+
+//===----------------------------------------------------------------------===//
+// Template Class -- XType Vector Instructions
+//===----------------------------------------------------------------------===//
+class T_XTYPE_Vect < string opc, bits<3> MajOp, bits<3> MinOp, bit isConj >
+  : MInst <(outs DoubleRegs:$Rdd), (ins DoubleRegs:$Rss, DoubleRegs:$Rtt),
+  "$Rdd = "#opc#"($Rss, $Rtt"#!if(isConj,"*)",")"),
+  [] > {
+    bits<5> Rdd;
+    bits<5> Rss;
+    bits<5> Rtt;
+
+    let IClass = 0b1110;
+
+    let Inst{27-24} = 0b1000;
+    let Inst{23-21} = MajOp;
+    let Inst{7-5} = MinOp;
+    let Inst{4-0} = Rdd;
+    let Inst{20-16} = Rss;
+    let Inst{12-8} = Rtt;
+  }
+
+class T_XTYPE_Vect_acc < string opc, bits<3> MajOp, bits<3> MinOp, bit isConj >
+  : MInst <(outs DoubleRegs:$Rdd),
+           (ins DoubleRegs:$dst2, DoubleRegs:$Rss, DoubleRegs:$Rtt),
+  "$Rdd += "#opc#"($Rss, $Rtt"#!if(isConj,"*)",")"),
+  [], "$dst2 = $Rdd",M_tc_3x_SLOT23 > {
+    bits<5> Rdd;
+    bits<5> Rss;
+    bits<5> Rtt;
+
+    let IClass = 0b1110;
+
+    let Inst{27-24} = 0b1010;
+    let Inst{23-21} = MajOp;
+    let Inst{7-5} = MinOp;
+    let Inst{4-0} = Rdd;
+    let Inst{20-16} = Rss;
+    let Inst{12-8} = Rtt;
+  }
+
+class T_XTYPE_Vect_diff < bits<3> MajOp, string opc >
+  : MInst <(outs DoubleRegs:$Rdd), (ins DoubleRegs:$Rtt, DoubleRegs:$Rss),
+  "$Rdd = "#opc#"($Rtt, $Rss)",
+  [], "",M_tc_2_SLOT23 > {
+    bits<5> Rdd;
+    bits<5> Rss;
+    bits<5> Rtt;
+
+    let IClass = 0b1110;
+
+    let Inst{27-24} = 0b1000;
+    let Inst{23-21} = MajOp;
+    let Inst{7-5} = 0b000;
+    let Inst{4-0} = Rdd;
+    let Inst{20-16} = Rss;
+    let Inst{12-8} = Rtt;
+  }
+
+// Vector reduce add unsigned bytes: Rdd32=vrmpybu(Rss32,Rtt32)
+let isCodeGenOnly = 0 in {
+def A2_vraddub: T_XTYPE_Vect <"vraddub", 0b010, 0b001, 0>;
+def A2_vraddub_acc: T_XTYPE_Vect_acc <"vraddub", 0b010, 0b001, 0>;
+}
+
+// Vector sum of absolute differences unsigned bytes: Rdd=vrsadub(Rss,Rtt)
+let isCodeGenOnly = 0 in {
+def A2_vrsadub: T_XTYPE_Vect <"vrsadub", 0b010, 0b010, 0>;
+def A2_vrsadub_acc: T_XTYPE_Vect_acc <"vrsadub", 0b010, 0b010, 0>;
+}
+
+// Vector absolute difference: Rdd=vabsdiffh(Rtt,Rss)
+let isCodeGenOnly = 0 in
+def M2_vabsdiffh: T_XTYPE_Vect_diff<0b011, "vabsdiffh">;
+
 //===----------------------------------------------------------------------===//
 // Template Class -- Multiply signed/unsigned halfwords with and without
 // saturation and rounding
@@ -3627,6 +3739,19 @@ def A2_notp : T_S2op_3 <"not", 0b10, 0b100>;
 let isCodeGenOnly = 0 in {
 def S2_interleave   : T_S2op_3 <"interleave",   0b11, 0b101>;
 def S2_deinterleave : T_S2op_3 <"deinterleave", 0b11, 0b100>;
+}
+
+// Vector absolute value halfwords with and without saturation
+// Rdd64=vabsh(Rss64)[:sat]
+let isCodeGenOnly = 0 in {
+def A2_vabsh    : T_S2op_3 <"vabsh", 0b01, 0b100>;
+def A2_vabshsat : T_S2op_3 <"vabsh", 0b01, 0b101, 1>;
+}
+
+// Vector absolute value words with and without saturation
+let isCodeGenOnly = 0 in {
+def A2_vabsw    : T_S2op_3 <"vabsw", 0b01, 0b110>;
+def A2_vabswsat : T_S2op_3 <"vabsw", 0b01, 0b111, 1>;
 }
 
 //===----------------------------------------------------------------------===//

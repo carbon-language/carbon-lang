@@ -1,5 +1,7 @@
-# RUN: llvm-mc --triple hexagon -disassemble < %s | FileCheck %s
+# RUN: llvm-mc -triple=hexagon -disassemble < %s | FileCheck %s
+# Hexagon Programmer's Reference Manual 11.6 MEMOP
 
+# Operation on memory byte
 0x95 0xd9 0x11 0x3e
 # CHECK: memb(r17+#51) += r21
 0xb5 0xd9 0x11 0x3e
@@ -16,6 +18,8 @@
 # CHECK: memb(r17+#51) = clrbit(#21)
 0xf5 0xd9 0x11 0x3f
 # CHECK: memb(r17+#51) = setbit(#21)
+
+# Operation on memory halfword
 0x95 0xd9 0x31 0x3e
 # CHECK: memh(r17+#102) += r21
 0xb5 0xd9 0x31 0x3e
@@ -32,6 +36,8 @@
 # CHECK: memh(r17+#102) = clrbit(#21)
 0xf5 0xd9 0x31 0x3f
 # CHECK: memh(r17+#102) = setbit(#21)
+
+# Operation on memory word
 0x95 0xd9 0x51 0x3e
 # CHECK: memw(r17+#204) += r21
 0xb5 0xd9 0x51 0x3e

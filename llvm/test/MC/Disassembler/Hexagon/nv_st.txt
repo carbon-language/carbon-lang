@@ -1,5 +1,7 @@
-# RUN: llvm-mc --triple hexagon -disassemble < %s | FileCheck %s
+# RUN: llvm-mc -triple=hexagon -disassemble < %s | FileCheck %s
+# Hexagon Programmer's Reference Manual 11.7.2 NV/ST
 
+# Store new-value byte
 0x1f 0x40 0x7f 0x70 0x82 0xf5 0xb1 0x3b
 # CHECK: r31 = r31
 # CHECK-NEXT: memb(r17 + r21<<#3) = r2.new
@@ -21,6 +23,8 @@
 0x1f 0x40 0x7f 0x70 0x00 0xe2 0xb1 0xaf
 # CHECK: r31 = r31
 # CHECK-NEXT: memb(r17 ++ m1:brev) = r2.new
+
+# Store new-value byte conditionally
 0x1f 0x40 0x7f 0x70 0xe2 0xf5 0xb1 0x34
 # CHECK: r31 = r31
 # CHECK-NEXT: if (p3) memb(r17+r21<<#3) = r2.new
@@ -64,6 +68,7 @@
 # CHECK-NEXT: r31 = r31
 # CHECK-NEXT: if (!p3.new) memb(r17++#5) = r2.new
 
+# Store new-value halfword
 0x1f 0x40 0x7f 0x70 0x8a 0xf5 0xb1 0x3b
 # CHECK: r31 = r31
 # CHECK-NEXT: memh(r17 + r21<<#3) = r2.new
@@ -85,6 +90,8 @@
 0x1f 0x40 0x7f 0x70 0x00 0xea 0xb1 0xaf
 # CHECK: r31 = r31
 # CHECK-NEXT: memh(r17 ++ m1:brev) = r2.new
+
+# Store new-value halfword conditionally
 0x1f 0x40 0x7f 0x70 0xea 0xf5 0xb1 0x34
 # CHECK: r31 = r31
 # CHECK-NEXT: if (p3) memh(r17+r21<<#3) = r2.new
@@ -128,6 +135,7 @@
 # CHECK-NEXT: r31 = r31
 # CHECK-NEXT: if (!p3.new) memh(r17++#10) = r2.new
 
+# Store new-value word
 0x1f 0x40 0x7f 0x70 0x92 0xf5 0xb1 0x3b
 # CHECK: r31 = r31
 # CHECK-NEXT: memw(r17 + r21<<#3) = r2.new
@@ -149,6 +157,8 @@
 0x1f 0x40 0x7f 0x70 0x00 0xf2 0xb1 0xaf
 # CHECK: r31 = r31
 # CHECK-NEXT: memw(r17 ++ m1:brev) = r2.new
+
+# Store new-value word conditionally
 0x1f 0x40 0x7f 0x70 0xf2 0xf5 0xb1 0x34
 # CHECK: r31 = r31
 # CHECK-NEXT: if (p3) memw(r17+r21<<#3) = r2.new

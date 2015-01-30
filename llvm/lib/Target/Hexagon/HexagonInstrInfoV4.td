@@ -1768,7 +1768,29 @@ def M4_xor_xacc
     let Inst{12-8}  = Rtt;
     let Inst{4-0}   = Rxx;
   }
-  
+
+
+// Vector reduce conditional negate halfwords
+let hasSideEffects = 0, isCodeGenOnly = 0 in
+def S2_vrcnegh
+  : SInst <(outs DoubleRegs:$Rxx),
+           (ins DoubleRegs:$dst2, DoubleRegs:$Rss, IntRegs:$Rt),
+  "$Rxx += vrcnegh($Rss, $Rt)", [],
+  "$dst2 = $Rxx", S_3op_tc_3x_SLOT23> {
+    bits<5> Rxx;
+    bits<5> Rss;
+    bits<5> Rt;
+
+    let IClass = 0b1100;
+
+    let Inst{27-21} = 0b1011001;
+    let Inst{20-16} = Rss;
+    let Inst{13}    = 0b1;
+    let Inst{12-8}  = Rt;
+    let Inst{7-5}   = 0b111;
+    let Inst{4-0}   = Rxx;
+  }
+
 // Split bitfield
 let isCodeGenOnly = 0 in
 def A4_bitspliti : T_S2op_2_di <"bitsplit", 0b110, 0b100>;
@@ -2246,6 +2268,10 @@ defm S4_ori  : T_ShiftOperate<"or",  or,  0b01, ALU64_tc_1_SLOT23>;
 let isCodeGenOnly = 0 in
 defm S4_subi : T_ShiftOperate<"sub", sub, 0b11, ALU64_tc_1_SLOT23>;
 
+// Vector conditional negate
+// Rdd=vcnegh(Rss,Rt)
+let Defs = [USR_OVF], Itinerary = S_3op_tc_2_SLOT23, isCodeGenOnly = 0 in
+def S2_vcnegh   : T_S3op_shiftVect < "vcnegh",   0b11, 0b01>;
 
 // Rd=[cround|round](Rs,Rt)
 let hasNewValue = 1, Itinerary = S_3op_tc_2_SLOT23, isCodeGenOnly = 0 in {
@@ -2283,6 +2309,52 @@ class T_S3op_carry <string mnemonic, bits<3> MajOp>
 let isCodeGenOnly = 0 in {
 def A4_addp_c : T_S3op_carry < "add", 0b110 >;
 def A4_subp_c : T_S3op_carry < "sub", 0b111 >;
+}
+
+let Itinerary = S_3op_tc_3_SLOT23, hasSideEffects = 0 in
+class T_S3op_6 <string mnemonic, bits<3> MinOp, bit isUnsigned>
+  : SInst <(outs DoubleRegs:$Rxx),
+           (ins DoubleRegs:$dst2, DoubleRegs:$Rss, IntRegs:$Ru),
+  "$Rxx = "#mnemonic#"($Rss, $Ru)" ,
+  [] , "$dst2 = $Rxx"> {
+    bits<5> Rxx;
+    bits<5> Rss;
+    bits<5> Ru;
+
+    let IClass = 0b1100;
+
+    let Inst{27-21} = 0b1011001;
+    let Inst{20-16} = Rss;
+    let Inst{13}    = isUnsigned;
+    let Inst{12-8}  = Rxx;
+    let Inst{7-5}   = MinOp;
+    let Inst{4-0}   = Ru;
+  }
+
+// Vector reduce maximum halfwords
+// Rxx=vrmax[u]h(Rss,Ru)
+let isCodeGenOnly = 0 in {
+def A4_vrmaxh  : T_S3op_6 < "vrmaxh",  0b001, 0>;
+def A4_vrmaxuh : T_S3op_6 < "vrmaxuh", 0b001, 1>;
+}
+// Vector reduce maximum words
+// Rxx=vrmax[u]w(Rss,Ru)
+let isCodeGenOnly = 0 in {
+def A4_vrmaxw  : T_S3op_6 < "vrmaxw",  0b010, 0>;
+def A4_vrmaxuw : T_S3op_6 < "vrmaxuw", 0b010, 1>;
+}
+// Vector reduce minimum halfwords
+// Rxx=vrmin[u]h(Rss,Ru)
+let isCodeGenOnly = 0 in {
+def A4_vrminh  : T_S3op_6 < "vrminh",  0b101, 0>;
+def A4_vrminuh : T_S3op_6 < "vrminuh", 0b101, 1>;
+}
+
+// Vector reduce minimum words
+// Rxx=vrmin[u]w(Rss,Ru)
+let isCodeGenOnly = 0 in {
+def A4_vrminw  : T_S3op_6 < "vrminw",  0b110, 0>;
+def A4_vrminuw : T_S3op_6 < "vrminuw", 0b110, 1>;
 }
 
 // Shift an immediate left by register amount.

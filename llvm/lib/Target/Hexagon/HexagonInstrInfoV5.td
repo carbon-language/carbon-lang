@@ -15,6 +15,14 @@
 // XTYPE/MPY
 //===----------------------------------------------------------------------===//
 
+// Vector multiply bytes
+// Rdd=vmpyb[s]u(Rs,Rt)
+let Predicates = [HasV5T], isCodeGenOnly = 0 in {
+  // Rd=vaddhub(Rss,Rtt):sat
+  let hasNewValue = 1, opNewValue = 0 in
+    def A5_vaddhubs: T_S3op_1 <"vaddhub", IntRegs, 0b01, 0b001, 0, 1>;
+}
+
 let isCodeGenOnly = 0 in
 def S2_asr_i_p_rnd : S_2OpInstImm<"asr", 0b110, 0b111, u6Imm,
       [(set I64:$dst,

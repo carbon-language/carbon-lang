@@ -1,5 +1,7 @@
-# RUN: llvm-mc --triple hexagon -disassemble < %s | FileCheck %s
+# RUN: llvm-mc -triple=hexagon -disassemble < %s | FileCheck %s
+# Hexagon Programmer's Reference Manual 11.7.1 NV/J
 
+# Jump to address conditioned on new register value
 0x11 0x40 0x71 0x70 0x92 0xd5 0x02 0x20
 # CHECK: r17 = r17
 # CHECK-NEXT: if (cmp.eq(r2.new, r21)) jump:nt
