@@ -1040,8 +1040,7 @@ bool AArch64CollectLOH::runOnMachineFunction(MachineFunction &MF) {
 
   MachineInstr *DummyOp = nullptr;
   if (BasicBlockScopeOnly) {
-    const AArch64InstrInfo *TII =
-        static_cast<const AArch64InstrInfo *>(MF.getSubtarget().getInstrInfo());
+    const TargetInstrInfo *TII = MF.getSubtarget().getInstrInfo();
     // For local analysis, create a dummy operation to record uses that are not
     // local.
     DummyOp = MF.CreateMachineInstr(TII->get(AArch64::COPY), DebugLoc());

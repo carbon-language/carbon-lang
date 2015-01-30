@@ -113,7 +113,6 @@ static const char *ColorNames[2] = { "Even", "Odd" };
 class Chain;
 
 class AArch64A57FPLoadBalancing : public MachineFunctionPass {
-  const AArch64InstrInfo *TII;
   MachineRegisterInfo *MRI;
   const TargetRegisterInfo *TRI;
   RegisterClassInfo RCI;
@@ -311,10 +310,8 @@ bool AArch64A57FPLoadBalancing::runOnMachineFunction(MachineFunction &F) {
   bool Changed = false;
   DEBUG(dbgs() << "***** AArch64A57FPLoadBalancing *****\n");
 
-  const TargetMachine &TM = F.getTarget();
   MRI = &F.getRegInfo();
   TRI = F.getRegInfo().getTargetRegisterInfo();
-  TII = TM.getSubtarget<AArch64Subtarget>().getInstrInfo();
   RCI.runOnMachineFunction(F);
 
   for (auto &MBB : F) {

@@ -58,7 +58,7 @@ public:
         FnAttrs.hasAttribute(AttributeSet::FunctionIndex,
                              Attribute::OptimizeForSize) ||
         FnAttrs.hasAttribute(AttributeSet::FunctionIndex, Attribute::MinSize);
-    Subtarget = &TM.getSubtarget<AArch64Subtarget>();
+    Subtarget = &static_cast<const AArch64Subtarget &>(MF.getSubtarget());
     return SelectionDAGISel::runOnMachineFunction(MF);
   }
 

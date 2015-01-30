@@ -245,9 +245,10 @@ public:
   unsigned fastMaterializeFloatZero(const ConstantFP* CF) override;
 
   explicit AArch64FastISel(FunctionLoweringInfo &FuncInfo,
-                         const TargetLibraryInfo *LibInfo)
+                           const TargetLibraryInfo *LibInfo)
       : FastISel(FuncInfo, LibInfo, /*SkipTargetIndependentISel=*/true) {
-    Subtarget = &TM.getSubtarget<AArch64Subtarget>();
+    Subtarget =
+        &static_cast<const AArch64Subtarget &>(FuncInfo.MF->getSubtarget());
     Context = &FuncInfo.Fn->getContext();
   }
 
@@ -3324,8 +3325,7 @@ bool AArch64FastISel::fastLowerIntrinsicCall(const IntrinsicInst *II) {
     MFI->setFrameAddressIsTaken(true);
 
     const AArch64RegisterInfo *RegInfo =
-        static_cast<const AArch64RegisterInfo *>(
-            FuncInfo.MF->getSubtarget().getRegisterInfo());
+        static_cast<const AArch64RegisterInfo *>(Subtarget->getRegisterInfo());
     unsigned FramePtr = RegInfo->getFrameRegister(*(FuncInfo.MF));
     unsigned SrcReg = MRI.createVirtualRegister(&AArch64::GPR64RegClass);
     BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc,
