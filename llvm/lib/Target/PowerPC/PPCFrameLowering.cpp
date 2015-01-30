@@ -1519,8 +1519,7 @@ restoreCRs(bool isPPC64, bool is31,
            const std::vector<CalleeSavedInfo> &CSI, unsigned CSIIndex) {
 
   MachineFunction *MF = MBB.getParent();
-  const PPCInstrInfo &TII =
-      *static_cast<const PPCInstrInfo *>(MF->getSubtarget().getInstrInfo());
+  const PPCInstrInfo &TII = *MF->getSubtarget<PPCSubtarget>().getInstrInfo();
   DebugLoc DL;
   unsigned RestoreOp, MoveReg;
 

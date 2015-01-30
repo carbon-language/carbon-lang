@@ -85,11 +85,11 @@ PPCInstrInfo::CreateTargetHazardRecognizer(const TargetSubtargetInfo *STI,
 
 /// CreateTargetPostRAHazardRecognizer - Return the postRA hazard recognizer
 /// to use for this target when scheduling the DAG.
-ScheduleHazardRecognizer *PPCInstrInfo::CreateTargetPostRAHazardRecognizer(
-  const InstrItineraryData *II,
-  const ScheduleDAG *DAG) const {
+ScheduleHazardRecognizer *
+PPCInstrInfo::CreateTargetPostRAHazardRecognizer(const InstrItineraryData *II,
+                                                 const ScheduleDAG *DAG) const {
   unsigned Directive =
-      DAG->TM.getSubtarget<PPCSubtarget>().getDarwinDirective();
+      DAG->MF.getSubtarget<PPCSubtarget>().getDarwinDirective();
 
   if (Directive == PPC::DIR_PWR7 || Directive == PPC::DIR_PWR8)
     return new PPCDispatchGroupSBHazardRecognizer(II, DAG);
@@ -1622,8 +1622,6 @@ namespace {
     }
 
     LiveIntervals *LIS;
-
-    const PPCTargetMachine *TM;
     const PPCInstrInfo *TII;
 
 protected:
@@ -1851,15 +1849,15 @@ protected:
 
 public:
     bool runOnMachineFunction(MachineFunction &MF) override {
-      TM = static_cast<const PPCTargetMachine *>(&MF.getTarget());
       // If we don't have VSX then go ahead and return without doing
       // anything.
-      if (!TM->getSubtargetImpl()->hasVSX())
+      const PPCSubtarget &STI = MF.getSubtarget<PPCSubtarget>();
+      if (!STI.hasVSX())
         return false;
 
       LIS = &getAnalysis<LiveIntervals>();
 
-      TII = TM->getSubtargetImpl()->getInstrInfo();
+      TII = STI.getInstrInfo();
 
       bool Changed = false;
 
@@ -1915,8 +1913,7 @@ namespace {
       initializePPCVSXCopyPass(*PassRegistry::getPassRegistry());
     }
 
-    const PPCTargetMachine *TM;
-    const PPCInstrInfo *TII;
+    const TargetInstrInfo *TII;
 
     bool IsRegInClass(unsigned Reg, const TargetRegisterClass *RC,
                       MachineRegisterInfo &MRI) {
@@ -2008,11 +2005,11 @@ protected:
 
 public:
     bool runOnMachineFunction(MachineFunction &MF) override {
-      TM = static_cast<const PPCTargetMachine *>(&MF.getTarget());
       // If we don't have VSX on the subtarget, don't do anything.
-      if (!TM->getSubtargetImpl()->hasVSX())
+      const PPCSubtarget &STI = MF.getSubtarget<PPCSubtarget>();
+      if (!STI.hasVSX())
         return false;
-      TII = TM->getSubtargetImpl()->getInstrInfo();
+      TII = STI.getInstrInfo();
 
       bool Changed = false;
 
@@ -2055,8 +2052,7 @@ namespace {
       initializePPCVSXCopyCleanupPass(*PassRegistry::getPassRegistry());
     }
 
-    const PPCTargetMachine *TM;
-    const PPCInstrInfo *TII;
+    const TargetInstrInfo *TII;
 
 protected:
     bool processBlock(MachineBasicBlock &MBB) {
@@ -2085,11 +2081,11 @@ protected:
 
 public:
     bool runOnMachineFunction(MachineFunction &MF) override {
-      TM = static_cast<const PPCTargetMachine *>(&MF.getTarget());
       // If we don't have VSX don't bother doing anything here.
-      if (!TM->getSubtargetImpl()->hasVSX())
+      const PPCSubtarget &STI = MF.getSubtarget<PPCSubtarget>();
+      if (!STI.hasVSX())
         return false;
-      TII = TM->getSubtargetImpl()->getInstrInfo();
+      TII = STI.getInstrInfo();
 
       bool Changed = false;
 
@@ -2134,8 +2130,7 @@ namespace {
       initializePPCEarlyReturnPass(*PassRegistry::getPassRegistry());
     }
 
-    const PPCTargetMachine *TM;
-    const PPCInstrInfo *TII;
+    const TargetInstrInfo *TII;
 
 protected:
     bool processBlock(MachineBasicBlock &ReturnMBB) {
@@ -2246,8 +2241,7 @@ protected:
 
 public:
     bool runOnMachineFunction(MachineFunction &MF) override {
-      TM = static_cast<const PPCTargetMachine *>(&MF.getTarget());
-      TII = TM->getSubtargetImpl()->getInstrInfo();
+      TII = MF.getSubtarget().getInstrInfo();
 
       bool Changed = false;
 

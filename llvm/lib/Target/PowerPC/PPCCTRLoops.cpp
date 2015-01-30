@@ -401,7 +401,8 @@ bool PPCCTRLoops::mightUseCTR(const Triple &TT, BasicBlock *BB) {
     } else if (SwitchInst *SI = dyn_cast<SwitchInst>(J)) {
       if (!TM)
         return true;
-      const TargetLowering *TLI = TM->getSubtargetImpl()->getTargetLowering();
+      const TargetLowering *TLI =
+          TM->getSubtargetImpl(*BB->getParent())->getTargetLowering();
 
       if (SI->getNumCases() + 1 >= (unsigned)TLI->getMinimumJumpTableEntries())
         return true;

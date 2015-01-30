@@ -94,8 +94,7 @@ class PPCFastISel final : public FastISel {
     explicit PPCFastISel(FunctionLoweringInfo &FuncInfo,
                          const TargetLibraryInfo *LibInfo)
         : FastISel(FuncInfo, LibInfo), TM(FuncInfo.MF->getTarget()),
-          PPCSubTarget(
-              &static_cast<const PPCSubtarget &>(FuncInfo.MF->getSubtarget())),
+          PPCSubTarget(&FuncInfo.MF->getSubtarget<PPCSubtarget>()),
           TII(*PPCSubTarget->getInstrInfo()),
           TLI(*PPCSubTarget->getTargetLowering()),
           Context(&FuncInfo.Fn->getContext()) {}
@@ -2300,8 +2299,7 @@ namespace llvm {
   FastISel *PPC::createFastISel(FunctionLoweringInfo &FuncInfo,
                                 const TargetLibraryInfo *LibInfo) {
     // Only available on 64-bit ELF for now.
-    const PPCSubtarget &Subtarget =
-        static_cast<const PPCSubtarget &>(FuncInfo.MF->getSubtarget());
+    const PPCSubtarget &Subtarget = FuncInfo.MF->getSubtarget<PPCSubtarget>();
     if (Subtarget.isPPC64() && Subtarget.isSVR4ABI())
       return new PPCFastISel(FuncInfo, LibInfo);
     return nullptr;

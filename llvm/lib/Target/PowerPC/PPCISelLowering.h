@@ -372,7 +372,8 @@ namespace llvm {
     const PPCSubtarget &Subtarget;
 
   public:
-    explicit PPCTargetLowering(const PPCTargetMachine &TM);
+    explicit PPCTargetLowering(const PPCTargetMachine &TM,
+                               const PPCSubtarget &STI);
 
     /// getTargetNodeName() - This method returns the name of a target specific
     /// DAG node.
