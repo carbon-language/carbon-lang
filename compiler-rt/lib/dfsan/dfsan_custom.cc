@@ -314,11 +314,12 @@ static void unpoison(const void *ptr, uptr size) {
 SANITIZER_INTERFACE_ATTRIBUTE void *
 __dfsw_dlopen(const char *filename, int flag, dfsan_label filename_label,
               dfsan_label flag_label, dfsan_label *ret_label) {
-  link_map *map = (link_map *)dlopen(filename, flag);
+  void *handle = dlopen(filename, flag);
+  link_map *map = GET_LINK_MAP_BY_DLOPEN_HANDLE(handle);
   if (map)
     ForEachMappedRegion(map, unpoison);
   *ret_label = 0;
-  return (void *)map;
+  return handle;
 }
 
 struct pthread_create_info {
