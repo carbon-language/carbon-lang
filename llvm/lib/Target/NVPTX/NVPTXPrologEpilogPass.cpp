@@ -48,9 +48,9 @@ MachineFunctionPass *llvm::createNVPTXPrologEpilogPass() {
 char NVPTXPrologEpilogPass::ID = 0;
 
 bool NVPTXPrologEpilogPass::runOnMachineFunction(MachineFunction &MF) {
-  const TargetMachine &TM = MF.getTarget();
-  const TargetFrameLowering &TFI = *TM.getSubtargetImpl()->getFrameLowering();
-  const TargetRegisterInfo &TRI = *TM.getSubtargetImpl()->getRegisterInfo();
+  const TargetSubtargetInfo &STI = MF.getSubtarget();
+  const TargetFrameLowering &TFI = *STI.getFrameLowering();
+  const TargetRegisterInfo &TRI = *STI.getRegisterInfo();
   bool Modified = false;
 
   calculateFrameObjectOffsets(MF);
