@@ -12,6 +12,10 @@ N: Saleem Abdulrasool
 E: compnerd@compnerd.org
 D: Minor patches and Linux fixes.
 
+N: Dan Albert
+E: danalbert@google.com
+D: Android support and test runner improvements.
+
 N: Dimitry Andric
 E: dimitry@andric.com
 D: Visibility fixes, minor FreeBSD portability patches.
