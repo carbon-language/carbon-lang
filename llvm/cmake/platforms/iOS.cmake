@@ -18,8 +18,17 @@ IF(NOT DEFINED ENV{SDKROOT})
  MESSAGE(FATAL_ERROR "SDKROOT env var must be set: " $ENV{SDKROOT})
 ENDIF()
 
+IF(EXISTS $ENV{SDKROOT})
+  SET(SDKROOT $ENV{SDKROOT})
+ELSE()
+  execute_process(COMMAND xcodebuild -version -sdk $ENV{SDKROOT} Path
+   OUTPUT_VARIABLE SDKROOT
+   ERROR_QUIET
+   OUTPUT_STRIP_TRAILING_WHITESPACE)
+ENDIF()
+
 IF(NOT CMAKE_C_COMPILER)
-  execute_process(COMMAND xcrun -sdk iphoneos -find clang
+  execute_process(COMMAND xcrun -sdk $ENV{SDKROOT} -find clang
    OUTPUT_VARIABLE CMAKE_C_COMPILER
    ERROR_QUIET
    OUTPUT_STRIP_TRAILING_WHITESPACE)
@@ -27,21 +36,30 @@ IF(NOT CMAKE_C_COMPILER)
 ENDIF()
 
 IF(NOT CMAKE_CXX_COMPILER)
-  execute_process(COMMAND xcrun -sdk iphoneos -find clang++
+  execute_process(COMMAND xcrun -sdk $ENV{SDKROOT} -find clang++
    OUTPUT_VARIABLE CMAKE_CXX_COMPILER
    ERROR_QUIET
    OUTPUT_STRIP_TRAILING_WHITESPACE)
   message(STATUS "Using c compiler ${CMAKE_CXX_COMPILER}")
 ENDIF()
 
+IF(NOT CMAKE_AR)
+  execute_process(COMMAND xcrun -sdk $ENV{SDKROOT} -find ar
+   OUTPUT_VARIABLE CMAKE_AR_val
+   ERROR_QUIET
+   OUTPUT_STRIP_TRAILING_WHITESPACE)
+  SET(CMAKE_AR ${CMAKE_AR_val} CACHE FILEPATH "Archiver")
+  message(STATUS "Using ar ${CMAKE_AR}")
+ENDIF()
+
 IF (NOT DEFINED IOS_MIN_TARGET)
-execute_process(COMMAND xcodebuild -sdk iphoneos -version SDKVersion
+execute_process(COMMAND xcodebuild -sdk $ENV{SDKROOT} -version SDKVersion
    OUTPUT_VARIABLE IOS_MIN_TARGET
    ERROR_QUIET
    OUTPUT_STRIP_TRAILING_WHITESPACE)
 ENDIF()
 
-SET(IOS_COMMON_FLAGS "-isysroot $ENV{SDKROOT} -mios-version-min=${IOS_MIN_TARGET}")
+SET(IOS_COMMON_FLAGS "-mios-version-min=${IOS_MIN_TARGET}")
 SET(CMAKE_C_FLAGS "${IOS_COMMON_FLAGS}" CACHE STRING "toolchain_cflags" FORCE)
 SET(CMAKE_CXX_FLAGS "${IOS_COMMON_FLAGS}" CACHE STRING "toolchain_cxxflags" FORCE)
 SET(CMAKE_LINK_FLAGS "${IOS_COMMON_FLAGS}" CACHE STRING "toolchain_linkflags" FORCE)
