@@ -746,6 +746,7 @@ public:
       case IK_NoInduction:
         return nullptr;
       }
+      llvm_unreachable("invalid enum");
     }
 
     /// Start value.
