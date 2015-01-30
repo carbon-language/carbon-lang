@@ -64,7 +64,7 @@ STATISTIC(NumCopiesInserted, "Number of cross-class copies inserted");
 namespace {
 class AArch64AdvSIMDScalar : public MachineFunctionPass {
   MachineRegisterInfo *MRI;
-  const AArch64InstrInfo *TII;
+  const TargetInstrInfo *TII;
 
 private:
   // isProfitableToTransform - Predicate function to determine whether an
@@ -268,7 +268,7 @@ AArch64AdvSIMDScalar::isProfitableToTransform(const MachineInstr *MI) const {
   return TransformAll;
 }
 
-static MachineInstr *insertCopy(const AArch64InstrInfo *TII, MachineInstr *MI,
+static MachineInstr *insertCopy(const TargetInstrInfo *TII, MachineInstr *MI,
                                 unsigned Dst, unsigned Src, bool IsKill) {
   MachineInstrBuilder MIB =
       BuildMI(*MI->getParent(), MI, MI->getDebugLoc(), TII->get(AArch64::COPY),
@@ -377,7 +377,7 @@ bool AArch64AdvSIMDScalar::runOnMachineFunction(MachineFunction &mf) {
   DEBUG(dbgs() << "***** AArch64AdvSIMDScalar *****\n");
 
   MRI = &mf.getRegInfo();
-  TII = static_cast<const AArch64InstrInfo *>(mf.getSubtarget().getInstrInfo());
+  TII = mf.getSubtarget().getInstrInfo();
 
   // Just check things on a one-block-at-a-time basis.
   for (MachineFunction::iterator I = mf.begin(), E = mf.end(); I != E; ++I)
