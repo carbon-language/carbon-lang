@@ -17,6 +17,7 @@
 #include "llvm/ADT/IntEqClasses.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/SparseBitVector.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/Debug.h"
@@ -211,12 +212,24 @@ static bool hasRegUnit(CodeGenRegister::RegUnitList &RegUnits, unsigned Unit) {
 // Return true if the RegUnits changed.
 bool CodeGenRegister::inheritRegUnits(CodeGenRegBank &RegBank) {
   unsigned OldNumUnits = RegUnits.size();
+
+  SparseBitVector<> NewUnits;
+  for (unsigned RU : RegUnits)
+    NewUnits.set(RU);
+
   for (SubRegMap::const_iterator I = SubRegs.begin(), E = SubRegs.end();
        I != E; ++I) {
     CodeGenRegister *SR = I->second;
     // Merge the subregister's units into this register's RegUnits.
-    mergeRegUnits(RegUnits, SR->RegUnits);
+    for (unsigned RU : SR->RegUnits)
+      NewUnits.set(RU);
   }
+
+  RegUnits.clear();
+  RegUnits.reserve(NewUnits.count());
+  for (unsigned RU : NewUnits)
+    RegUnits.push_back(RU);
+
   return OldNumUnits != RegUnits.size();
 }
 
