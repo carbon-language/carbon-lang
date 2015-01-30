@@ -1114,9 +1114,8 @@ bool llvm::InlineFunction(CallSite CS, InlineFunctionInfo &IFI,
     }
     // Move any dbg.declares describing the allocas into the entry basic block.
     DIBuilder DIB(*Caller->getParent());
-    for (auto &I : IFI.StaticAllocas)
-      if (auto AI = dyn_cast<AllocaInst>(I))
-        replaceDbgDeclareForAlloca(AI, AI, DIB, /*Deref=*/false);
+    for (auto &AI : IFI.StaticAllocas)
+      replaceDbgDeclareForAlloca(AI, AI, DIB, /*Deref=*/false);
   }
 
   bool InlinedMustTailCalls = false;
