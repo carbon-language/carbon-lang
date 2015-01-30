@@ -124,7 +124,7 @@
 
    <p>libc++ is a 100% complete C++11 implementation on Apple's OS X. </p>
    <p>LLVM and Clang can self host in C++ and C++11 mode with libc++ on Linux.</p>
-   <p>libc++ is also a 100% complete C++14 implementation. A list of new features and changes for 
+   <p>libc++ is also a 100% complete C++14 implementation. A list of new features and changes for
       C++14 can be found <a href="cxx1y_status.html">here</a>.</p>
    <p>A list of features and changes for the next C++ standard, known here as
       "C++1z" (probably to be C++17) can be found <a href="cxx1z_status.html">here</a>.</p>
@@ -137,7 +137,7 @@
    </p>
 
    <!--======================================================================-->
-   <h2 id="dir-structure">Build Bots</h2>
+   <h2 id="buildbots">Build Bots</h2>
    <!--======================================================================-->
    <p>The latest libc++ build results can be found at the following locations.</p>
    <ul>
@@ -318,18 +318,18 @@
   <h2>Bug reports and patches</h2>
   <!--=====================================================================-->
 
-<p>
-If you think you've found a bug in libc++, please report it using 
-the <a href="http://llvm.org/bugs">LLVM Bugzilla</a>. If you're not sure, you
-can post a message to the <a href="http://lists.cs.uiuc.edu/mailman/listinfo/cfe-dev">cfe-dev</a> 
-mailing list or on IRC. Please include "libc++" in your subject.
-</p>
+  <p>
+  If you think you've found a bug in libc++, please report it using
+  the <a href="http://llvm.org/bugs">LLVM Bugzilla</a>. If you're not sure, you
+  can post a message to the <a href="http://lists.cs.uiuc.edu/mailman/listinfo/cfe-dev">cfe-dev</a> 
+  mailing list or on IRC. Please include "libc++" in your subject.
+  </p>
 
-<p>
-If you want to contribute a patch to libc++, the best place for that is the
-<a href="http://lists.cs.uiuc.edu/mailman/listinfo/cfe-commits">cfe-commits</a> 
-mailing list. Please include "libc++" and "PATCH" in your subject.
-</p>
+  <p>
+  If you want to contribute a patch to libc++, the best place for that is
+  <a href="http://llvm.org/docs/Phabricator.html">Phabricator</a>. Please
+  include [libc++] in the subject and add cfe-commits as a subscriber.
+  </p>
 
   <!--=====================================================================-->
   <h2 id="libsupcxx">Build on Linux using CMake and libsupc++.</h2>
@@ -338,13 +338,13 @@ mailing list. Please include "libc++" and "PATCH" in your subject.
   <p>
      You will need libstdc++ in order to provide libsupc++.
   </p>
-  
+
   <p>
      Figure out where the libsupc++ headers are on your system. On Ubuntu this
      is <code>/usr/include/c++/&lt;version&gt;</code> and
      <code>/usr/include/c++/&lt;version&gt;/&lt;target-triple&gt;</code>
   </p>
-  
+
   <p>
      You can also figure this out by running
      <pre>
@@ -367,7 +367,7 @@ End of search list.
       Note the first two entries happen to be what we are looking for. This
       may not be correct on other platforms.
   </p>
-  
+
   <p>
      We can now run CMake:
      <ul>
@@ -402,7 +402,7 @@ End of search list.
      on your build machine and your copy of the libcxxrt shared library must
      be placed where your linker will find it.
   </p>
- 
+
   <p>
      We can now run CMake:
      <ul>
