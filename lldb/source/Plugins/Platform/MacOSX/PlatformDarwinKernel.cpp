@@ -744,7 +744,7 @@ PlatformDarwinKernel::GetKernelsInDirectory (void *baton,
     {
         ConstString filename = file_spec.GetFilename();
         if (strncmp (filename.GetCString(), "kernel", 6) == 0
-            || strncmp (filename.GetCString(), "mach.", 5) == 0)
+            || strncmp (filename.GetCString(), "mach", 4) == 0)
         {
             // This is m_kernel_binaries but we're in a class method here
             ((std::vector<lldb_private::FileSpec> *)baton)->push_back(file_spec);
