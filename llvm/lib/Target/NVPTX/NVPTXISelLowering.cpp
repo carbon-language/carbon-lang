@@ -106,9 +106,9 @@ static void ComputePTXValueVTs(const TargetLowering &TLI, Type *Ty,
 }
 
 // NVPTXTargetLowering Constructor.
-NVPTXTargetLowering::NVPTXTargetLowering(const NVPTXTargetMachine &TM)
-    : TargetLowering(TM), nvTM(&TM),
-      nvptxSubtarget(TM.getSubtarget<NVPTXSubtarget>()) {
+NVPTXTargetLowering::NVPTXTargetLowering(const NVPTXTargetMachine &TM,
+                                         const NVPTXSubtarget &STI)
+    : TargetLowering(TM), nvTM(&TM), STI(STI) {
 
   // always lower memset, memcpy, and memmove intrinsics to load/store
   // instructions, rather
@@ -167,14 +167,14 @@ NVPTXTargetLowering::NVPTXTargetLowering(const NVPTXTargetMachine &TM)
   setOperationAction(ISD::SRA_PARTS, MVT::i64  , Custom);
   setOperationAction(ISD::SRL_PARTS, MVT::i64  , Custom);
 
-  if (nvptxSubtarget.hasROT64()) {
+  if (STI.hasROT64()) {
     setOperationAction(ISD::ROTL, MVT::i64, Legal);
     setOperationAction(ISD::ROTR, MVT::i64, Legal);
   } else {
     setOperationAction(ISD::ROTL, MVT::i64, Expand);
     setOperationAction(ISD::ROTR, MVT::i64, Expand);
   }
-  if (nvptxSubtarget.hasROT32()) {
+  if (STI.hasROT32()) {
     setOperationAction(ISD::ROTL, MVT::i32, Legal);
     setOperationAction(ISD::ROTR, MVT::i32, Legal);
   } else {
@@ -879,7 +879,7 @@ NVPTXTargetLowering::getPrototype(Type *retTy, const ArgListTy &Args,
                                   unsigned retAlignment,
                                   const ImmutableCallSite *CS) const {
 
-  bool isABI = (nvptxSubtarget.getSmVersion() >= 20);
+  bool isABI = (STI.getSmVersion() >= 20);
   assert(isABI && "Non-ABI compilation is not supported");
   if (!isABI)
     return "";
@@ -1044,7 +1044,7 @@ SDValue NVPTXTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
   Type *retTy = CLI.RetTy;
   ImmutableCallSite *CS = CLI.CS;
 
-  bool isABI = (nvptxSubtarget.getSmVersion() >= 20);
+  bool isABI = (STI.getSmVersion() >= 20);
   assert(isABI && "Non-ABI compilation is not supported");
   if (!isABI)
     return Chain;
@@ -1455,8 +1455,8 @@ SDValue NVPTXTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
       EVT ObjectVT = getValueType(retTy);
       unsigned NumElts = ObjectVT.getVectorNumElements();
       EVT EltVT = ObjectVT.getVectorElementType();
-      assert(nvTM->getSubtargetImpl()->getTargetLowering()->getNumRegisters(
-                 F->getContext(), ObjectVT) == NumElts &&
+      assert(STI.getTargetLowering()->getNumRegisters(F->getContext(),
+                                                      ObjectVT) == NumElts &&
              "Vector was not scalarized");
       unsigned sz = EltVT.getSizeInBits();
       bool needTruncate = sz < 8 ? true : false;
@@ -1678,7 +1678,7 @@ SDValue NVPTXTargetLowering::LowerShiftRightParts(SDValue Op,
   SDValue ShAmt  = Op.getOperand(2);
   unsigned Opc = (Op.getOpcode() == ISD::SRA_PARTS) ? ISD::SRA : ISD::SRL;
 
-  if (VTBits == 32 && nvptxSubtarget.getSmVersion() >= 35) {
+  if (VTBits == 32 && STI.getSmVersion() >= 35) {
 
     // For 32bit and sm35, we can use the funnel shift 'shf' instruction.
     // {dHi, dLo} = {aHi, aLo} >> Amt
@@ -1738,7 +1738,7 @@ SDValue NVPTXTargetLowering::LowerShiftLeftParts(SDValue Op,
   SDValue ShOpHi = Op.getOperand(1);
   SDValue ShAmt  = Op.getOperand(2);
 
-  if (VTBits == 32 && nvptxSubtarget.getSmVersion() >= 35) {
+  if (VTBits == 32 && STI.getSmVersion() >= 35) {
 
     // For 32bit and sm35, we can use the funnel shift 'shf' instruction.
     // {dHi, dLo} = {aHi, aLo} << Amt
@@ -2050,13 +2050,13 @@ SDValue NVPTXTargetLowering::LowerFormalArguments(
 
   const Function *F = MF.getFunction();
   const AttributeSet &PAL = F->getAttributes();
-  const TargetLowering *TLI = DAG.getSubtarget().getTargetLowering();
+  const TargetLowering *TLI = STI.getTargetLowering();
 
   SDValue Root = DAG.getRoot();
   std::vector<SDValue> OutChains;
 
   bool isKernel = llvm::isKernelFunction(*F);
-  bool isABI = (nvptxSubtarget.getSmVersion() >= 20);
+  bool isABI = (STI.getSmVersion() >= 20);
   assert(isABI && "Non-ABI compilation is not supported");
   if (!isABI)
     return Chain;
@@ -2354,7 +2354,7 @@ NVPTXTargetLowering::LowerReturn(SDValue Chain, CallingConv::ID CallConv,
   Type *RetTy = F->getReturnType();
   const DataLayout *TD = getDataLayout();
 
-  bool isABI = (nvptxSubtarget.getSmVersion() >= 20);
+  bool isABI = (STI.getSmVersion() >= 20);
   assert(isABI && "Non-ABI compilation is not supported");
   if (!isABI)
     return Chain;
@@ -4217,7 +4217,7 @@ SDValue NVPTXTargetLowering::PerformDAGCombine(SDNode *N,
     default: break;
     case ISD::ADD:
     case ISD::FADD:
-      return PerformADDCombine(N, DCI, nvptxSubtarget, OptLevel);
+      return PerformADDCombine(N, DCI, STI, OptLevel);
     case ISD::MUL:
       return PerformMULCombine(N, DCI, OptLevel);
     case ISD::SHL:
