@@ -623,7 +623,7 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
         if (ctx->logInputFiles())
           diag << path << "\n";
         ErrorOr<std::unique_ptr<MemoryBuffer>> mb =
-          MemoryBuffer::getFileOrSTDIN(path);
+          MemoryBuffer::getFileOrSTDIN(realpath);
         if (std::error_code ec = mb.getError()) {
           diag << "Cannot open " << path << ": " << ec.message() << "\n";
           return false;
