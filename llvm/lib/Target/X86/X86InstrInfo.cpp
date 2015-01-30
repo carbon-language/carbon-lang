@@ -353,6 +353,7 @@ X86InstrInfo::X86InstrInfo(X86Subtarget &STI)
     { X86::SETSr,       X86::SETSm,         TB_FOLDED_STORE },
     { X86::TAILJMPr,    X86::TAILJMPm,      TB_FOLDED_LOAD },
     { X86::TAILJMPr64,  X86::TAILJMPm64,    TB_FOLDED_LOAD },
+    { X86::TAILJMPr64_REX, X86::TAILJMPm64_REX, TB_FOLDED_LOAD },
     { X86::TEST16ri,    X86::TEST16mi,      TB_FOLDED_LOAD },
     { X86::TEST32ri,    X86::TEST32mi,      TB_FOLDED_LOAD },
     { X86::TEST64ri32,  X86::TEST64mi32,    TB_FOLDED_LOAD },

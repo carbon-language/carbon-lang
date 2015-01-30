@@ -509,6 +509,7 @@ ReSimplify:
   // inputs modeled as normal uses instead of implicit uses.  As such, truncate
   // off all but the first operand (the callee).  FIXME: Change isel.
   case X86::TAILJMPr64:
+  case X86::TAILJMPr64_REX:
   case X86::CALL64r:
   case X86::CALL64pcrel32: {
     unsigned Opcode = OutMI.getOpcode();
@@ -1010,8 +1011,14 @@ void X86AsmPrinter::EmitInstruction(const MachineInstr *MI) {
     break;
   }
   case X86::TAILJMPr:
+  case X86::TAILJMPm:
   case X86::TAILJMPd:
+  case X86::TAILJMPr64:
+  case X86::TAILJMPm64:
   case X86::TAILJMPd64:
+  case X86::TAILJMPr64_REX:
+  case X86::TAILJMPm64_REX:
+  case X86::TAILJMPd64_REX:
     // Lower these as normal, but add some comments.
     OutStreamer.AddComment("TAILCALL");
     break;

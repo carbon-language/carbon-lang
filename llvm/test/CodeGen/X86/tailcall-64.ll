@@ -182,7 +182,7 @@ define { i64, i64 } @crash(i8* %this) {
 ; Check that we can fold an indexed load into a tail call instruction.
 ; CHECK: fold_indexed_load
 ; CHECK: leaq (%rsi,%rsi,4), %[[RAX:r..]]
-; CHECK: jmpq *16(%{{r..}},%[[RAX]],8)  # TAILCALL
+; CHECK: jmpq *16(%{{r..}},%[[RAX]],8)  ## TAILCALL
 %struct.funcs = type { i32 (i8*, i32*, i32)*, i32 (i8*)*, i32 (i8*)*, i32 (i8*, i32)*, i32 }
 @func_table = external global [0 x %struct.funcs]
 define void @fold_indexed_load(i8* %mbstr, i64 %idxprom) nounwind uwtable ssp {
@@ -207,7 +207,7 @@ entry:
 ; }
 ;
 ; CHECK-LABEL: rdar12282281
-; CHECK: jmpq *%r11 # TAILCALL
+; CHECK: jmpq *%r11 ## TAILCALL
 @funcs = external constant [0 x i32 (i8*, ...)*]
 
 define i32 @rdar12282281(i32 %n) nounwind uwtable ssp {

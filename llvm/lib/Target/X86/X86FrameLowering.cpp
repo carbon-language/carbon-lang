@@ -1123,10 +1123,12 @@ void X86FrameLowering::emitEpilogue(MachineFunction &MF,
     }
 
     // Jump to label or value in register.
+    bool IsWin64 = STI.isTargetWin64();
     if (RetOpcode == X86::TCRETURNdi || RetOpcode == X86::TCRETURNdi64) {
-      MachineInstrBuilder MIB =
-        BuildMI(MBB, MBBI, DL, TII.get((RetOpcode == X86::TCRETURNdi)
-                                       ? X86::TAILJMPd : X86::TAILJMPd64));
+      unsigned Op = (RetOpcode == X86::TCRETURNdi)
+                        ? X86::TAILJMPd
+                        : (IsWin64 ? X86::TAILJMPd64_REX : X86::TAILJMPd64);
+      MachineInstrBuilder MIB = BuildMI(MBB, MBBI, DL, TII.get(Op));
       if (JumpTarget.isGlobal())
         MIB.addGlobalAddress(JumpTarget.getGlobal(), JumpTarget.getOffset(),
                              JumpTarget.getTargetFlags());
@@ -1136,14 +1138,16 @@ void X86FrameLowering::emitEpilogue(MachineFunction &MF,
                               JumpTarget.getTargetFlags());
       }
     } else if (RetOpcode == X86::TCRETURNmi || RetOpcode == X86::TCRETURNmi64) {
-      MachineInstrBuilder MIB =
-        BuildMI(MBB, MBBI, DL, TII.get((RetOpcode == X86::TCRETURNmi)
-                                       ? X86::TAILJMPm : X86::TAILJMPm64));
+      unsigned Op = (RetOpcode == X86::TCRETURNmi)
+                        ? X86::TAILJMPm
+                        : (IsWin64 ? X86::TAILJMPm64_REX : X86::TAILJMPm64);
+      MachineInstrBuilder MIB = BuildMI(MBB, MBBI, DL, TII.get(Op));
       for (unsigned i = 0; i != 5; ++i)
         MIB.addOperand(MBBI->getOperand(i));
     } else if (RetOpcode == X86::TCRETURNri64) {
-      BuildMI(MBB, MBBI, DL, TII.get(X86::TAILJMPr64)).
-        addReg(JumpTarget.getReg(), RegState::Kill);
+      BuildMI(MBB, MBBI, DL,
+              TII.get(IsWin64 ? X86::TAILJMPr64_REX : X86::TAILJMPr64))
+          .addReg(JumpTarget.getReg(), RegState::Kill);
     } else {
       BuildMI(MBB, MBBI, DL, TII.get(X86::TAILJMPr)).
         addReg(JumpTarget.getReg(), RegState::Kill);
