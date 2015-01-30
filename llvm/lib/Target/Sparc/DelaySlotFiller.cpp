@@ -45,10 +45,7 @@ namespace {
     const SparcSubtarget *Subtarget;
 
     static char ID;
-    Filler(TargetMachine &tm)
-      : MachineFunctionPass(ID), TM(tm),
-        Subtarget(&TM.getSubtarget<SparcSubtarget>()) {
-    }
+    Filler(TargetMachine &tm) : MachineFunctionPass(ID), TM(tm) {}
 
     const char *getPassName() const override {
       return "SPARC Delay Slot Filler";
@@ -57,6 +54,7 @@ namespace {
     bool runOnMachineBasicBlock(MachineBasicBlock &MBB);
     bool runOnMachineFunction(MachineFunction &F) override {
       bool Changed = false;
+      Subtarget = &F.getSubtarget<SparcSubtarget>();
 
       // This pass invalidates liveness information when it reorders
       // instructions to fill delay slot.
@@ -109,8 +107,8 @@ FunctionPass *llvm::createSparcDelaySlotFillerPass(TargetMachine &tm) {
 ///
 bool Filler::runOnMachineBasicBlock(MachineBasicBlock &MBB) {
   bool Changed = false;
-
-  const TargetInstrInfo *TII = TM.getSubtargetImpl()->getInstrInfo();
+  Subtarget = &MBB.getParent()->getSubtarget<SparcSubtarget>();
+  const TargetInstrInfo *TII = Subtarget->getInstrInfo();
 
   for (MachineBasicBlock::iterator I = MBB.begin(); I != MBB.end(); ) {
     MachineBasicBlock::iterator MI = I;
@@ -187,7 +185,7 @@ Filler::findDelayInstr(MachineBasicBlock &MBB,
     if (J->getOpcode() == SP::RESTORErr
         || J->getOpcode() == SP::RESTOREri) {
       // change retl to ret.
-      slot->setDesc(TM.getSubtargetImpl()->getInstrInfo()->get(SP::RET));
+      slot->setDesc(Subtarget->getInstrInfo()->get(SP::RET));
       return J;
     }
   }
@@ -329,8 +327,7 @@ void Filler::insertDefsUses(MachineBasicBlock::iterator MI,
 bool Filler::IsRegInSet(SmallSet<unsigned, 32>& RegSet, unsigned Reg)
 {
   // Check Reg and all aliased Registers.
-  for (MCRegAliasIterator AI(Reg, TM.getSubtargetImpl()->getRegisterInfo(),
-                             true);
+  for (MCRegAliasIterator AI(Reg, Subtarget->getRegisterInfo(), true);
        AI.isValid(); ++AI)
     if (RegSet.count(*AI))
       return true;
@@ -483,7 +480,7 @@ bool Filler::tryCombineRestoreWithPrevInst(MachineBasicBlock &MBB,
   if (PrevInst->isBundledWithSucc())
     return false;
 
-  const TargetInstrInfo *TII = TM.getSubtargetImpl()->getInstrInfo();
+  const TargetInstrInfo *TII = Subtarget->getInstrInfo();
 
   switch (PrevInst->getOpcode()) {
   default: break;

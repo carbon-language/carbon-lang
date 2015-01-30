@@ -278,7 +278,7 @@ void SparcAsmPrinter::EmitInstruction(const MachineInstr *MI)
 }
 
 void SparcAsmPrinter::EmitFunctionBodyStart() {
-  if (!TM.getSubtarget<SparcSubtarget>().is64Bit())
+  if (!MF->getSubtarget<SparcSubtarget>().is64Bit())
     return;
 
   const MachineRegisterInfo &MRI = MF->getRegInfo();
