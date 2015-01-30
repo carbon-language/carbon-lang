@@ -79,8 +79,7 @@ protected:
 
 class SimpleFileWrapper : public SimpleFile {
 public:
-  SimpleFileWrapper(const LinkingContext &context, const File &file)
-      : SimpleFile(file.path()) {
+  SimpleFileWrapper(const File &file) : SimpleFile(file.path()) {
     for (auto definedAtom : file.defined())
       _definedAtoms._atoms.push_back(std::move(definedAtom));
     for (auto undefAtom : file.undefined())
