@@ -368,10 +368,13 @@ static void findUsedValues(GlobalVariable *LLVMUsed,
       UsedValues.insert(GV);
 }
 
+// Collect names of runtime library functions. User-defined functions with the
+// same names are added to llvm.compiler.used to prevent them from being
+// deleted by optimizations.
 static void accumulateAndSortLibcalls(std::vector<StringRef> &Libcalls,
                                       const TargetLibraryInfo& TLI,
-                                      const TargetLowering *Lowering)
-{
+                                      const Module &Mod,
+                                      const TargetMachine &TM) {
   // TargetLibraryInfo has info on C runtime library calls on the current
   // target.
   for (unsigned I = 0, E = static_cast<unsigned>(LibFunc::NumLibFuncs);
@@ -381,14 +384,21 @@ static void accumulateAndSortLibcalls(std::vector<StringRef> &Libcalls,
       Libcalls.push_back(TLI.getName(F));
   }
 
-  // TargetLowering has info on library calls that CodeGen expects to be
-  // available, both from the C runtime and compiler-rt.
-  if (Lowering)
-    for (unsigned I = 0, E = static_cast<unsigned>(RTLIB::UNKNOWN_LIBCALL);
-         I != E; ++I)
-      if (const char *Name
-          = Lowering->getLibcallName(static_cast<RTLIB::Libcall>(I)))
-        Libcalls.push_back(Name);
+  SmallPtrSet<const TargetLowering *, 1> TLSet;
+
+  for (const Function &F : Mod) {
+    const TargetLowering *Lowering =
+        TM.getSubtargetImpl(F)->getTargetLowering();
+
+    if (Lowering && TLSet.insert(Lowering).second)
+      // TargetLowering has info on library calls that CodeGen expects to be
+      // available, both from the C runtime and compiler-rt.
+      for (unsigned I = 0, E = static_cast<unsigned>(RTLIB::UNKNOWN_LIBCALL);
+           I != E; ++I)
+        if (const char *Name =
+                Lowering->getLibcallName(static_cast<RTLIB::Libcall>(I)))
+          Libcalls.push_back(Name);
+  }
 
   array_pod_sort(Libcalls.begin(), Libcalls.end());
   Libcalls.erase(std::unique(Libcalls.begin(), Libcalls.end()),
@@ -412,8 +422,8 @@ void LTOCodeGenerator::applyScopeRestrictions() {
   std::vector<StringRef> Libcalls;
   TargetLibraryInfoImpl TLII(Triple(TargetMach->getTargetTriple()));
   TargetLibraryInfo TLI(TLII);
-  accumulateAndSortLibcalls(
-      Libcalls, TLI, TargetMach->getSubtargetImpl()->getTargetLowering());
+
+  accumulateAndSortLibcalls(Libcalls, TLI, *mergedModule, *TargetMach);
 
   for (Module::iterator f = mergedModule->begin(),
          e = mergedModule->end(); f != e; ++f)
