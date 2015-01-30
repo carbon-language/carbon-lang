@@ -169,7 +169,7 @@ class ARMFastISel final : public FastISel {
     bool isTypeLegal(Type *Ty, MVT &VT);
     bool isLoadTypeLegal(Type *Ty, MVT &VT);
     bool ARMEmitCmp(const Value *Src1Value, const Value *Src2Value,
-                    bool isZExt, DebugLoc CurDL);
+                    bool isZExt);
     bool ARMEmitLoad(MVT VT, unsigned &ResultReg, Address &Addr,
                      unsigned Alignment = 0, bool isZExt = true,
                      bool allocReg = true);
@@ -1273,7 +1273,7 @@ bool ARMFastISel::SelectBranch(const Instruction *I) {
       if (ARMPred == ARMCC::AL) return false;
 
       // Emit the compare.
-      if (!ARMEmitCmp(CI->getOperand(0), CI->getOperand(1), CI->isUnsigned(), CI->getDebugLoc()))
+      if (!ARMEmitCmp(CI->getOperand(0), CI->getOperand(1), CI->isUnsigned()))
         return false;
 
       unsigned BrOpc = isThumb2 ? ARM::t2Bcc : ARM::Bcc;
@@ -1363,7 +1363,7 @@ bool ARMFastISel::SelectIndirectBr(const Instruction *I) {
 }
 
 bool ARMFastISel::ARMEmitCmp(const Value *Src1Value, const Value *Src2Value,
-                             bool isZExt, DebugLoc CurDL) {
+                             bool isZExt) {
   Type *Ty = Src1Value->getType();
   EVT SrcEVT = TLI.getValueType(Ty, true);
   if (!SrcEVT.isSimple()) return false;
@@ -1458,11 +1458,11 @@ bool ARMFastISel::ARMEmitCmp(const Value *Src1Value, const Value *Src2Value,
   SrcReg1 = constrainOperandRegClass(II, SrcReg1, 0);
   if (!UseImm) {
     SrcReg2 = constrainOperandRegClass(II, SrcReg2, 1);
-    AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, CurDL, II)
+    AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, II)
                     .addReg(SrcReg1).addReg(SrcReg2));
   } else {
     MachineInstrBuilder MIB;
-    MIB = BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, CurDL, II)
+    MIB = BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, II)
       .addReg(SrcReg1);
 
     // Only add immediate for icmp as the immediate for fcmp is an implicit 0.0.
@@ -1474,7 +1474,7 @@ bool ARMFastISel::ARMEmitCmp(const Value *Src1Value, const Value *Src2Value,
   // For floating point we need to move the result to a comparison register
   // that we can then use for branches.
   if (Ty->isFloatTy() || Ty->isDoubleTy())
-    AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, CurDL,
+    AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc,
                             TII.get(ARM::FMSTAT)));
   return true;
 }
@@ -1489,7 +1489,7 @@ bool ARMFastISel::SelectCmp(const Instruction *I) {
   if (ARMPred == ARMCC::AL) return false;
 
   // Emit the compare.
-  if (!ARMEmitCmp(CI->getOperand(0), CI->getOperand(1), CI->isUnsigned(), CI->getDebugLoc()))
+  if (!ARMEmitCmp(CI->getOperand(0), CI->getOperand(1), CI->isUnsigned()))
     return false;
 
   // Now set a register based on the comparison. Explicitly set the predicates
