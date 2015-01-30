@@ -81,8 +81,6 @@ uint16_t ELFLinkingContext::getOutputMachine() const {
   case llvm::Triple::mipsel:
   case llvm::Triple::mips64el:
     return llvm::ELF::EM_MIPS;
-  case llvm::Triple::ppc:
-    return llvm::ELF::EM_PPC;
   case llvm::Triple::aarch64:
     return llvm::ELF::EM_AARCH64;
   case llvm::Triple::arm:

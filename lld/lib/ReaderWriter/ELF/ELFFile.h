@@ -453,8 +453,6 @@ template <class ELFT> Reference::KindArch ELFFile<ELFT>::kindArch() {
     return Reference::KindArch::x86;
   case llvm::ELF::EM_ARM:
     return Reference::KindArch::ARM;
-  case llvm::ELF::EM_PPC:
-    return Reference::KindArch::PowerPC;
   case llvm::ELF::EM_HEXAGON:
     return Reference::KindArch::Hexagon;
   case llvm::ELF::EM_MIPS:

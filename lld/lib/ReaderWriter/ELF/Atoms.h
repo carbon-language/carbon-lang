@@ -678,11 +678,6 @@ public:
     this->addReferenceELF(Reference::KindArch::x86_64, relocType, off, t, a);
   }
 
-  void addReferenceELF_PowerPC(Reference::KindValue relocType, uint64_t off,
-                               const Atom *t, Reference::Addend a) {
-    this->addReferenceELF(Reference::KindArch::PowerPC, relocType, off, t, a);
-  }
-
   void addReferenceELF_Mips(Reference::KindValue relocType, uint64_t off,
                             const Atom *t, Reference::Addend a) {
     this->addReferenceELF(Reference::KindArch::Mips, relocType, off, t, a);
