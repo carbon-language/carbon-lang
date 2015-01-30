@@ -176,6 +176,13 @@ public:
   const TargetSubtargetInfo &getSubtarget() const { return *STI; }
   void setSubtarget(const TargetSubtargetInfo *ST) { STI = ST; }
 
+  /// getSubtarget - This method returns a pointer to the specified type of
+  /// TargetSubtargetInfo.  In debug builds, it verifies that the object being
+  /// returned is of the correct type.
+  template<typename STC> const STC &getSubtarget() const {
+    return *static_cast<const STC *>(STI);
+  }
+
   /// getRegInfo - Return information about the registers currently in use.
   ///
   MachineRegisterInfo &getRegInfo() { return *RegInfo; }
