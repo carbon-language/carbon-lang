@@ -10,7 +10,7 @@
 #ifndef LLVM_LIB_DEBUGINFO_DWARFSECTION_H
 #define LLVM_LIB_DEBUGINFO_DWARFSECTION_H
 
-#include "llvm/DebugInfo/DWARFRelocMap.h"
+#include "llvm/DebugInfo/DWARF/DWARFRelocMap.h"
 
 namespace llvm {
 

@@ -11,8 +11,8 @@
 #include "BinaryHolder.h"
 #include "DebugMap.h"
 #include "dsymutil.h"
-#include "llvm/DebugInfo/DWARFContext.h"
-#include "llvm/DebugInfo/DWARFDebugInfoEntry.h"
+#include "llvm/DebugInfo/DWARF/DWARFContext.h"
+#include "llvm/DebugInfo/DWARF/DWARFDebugInfoEntry.h"
 #include <string>
 
 namespace llvm {

@@ -17,7 +17,7 @@
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/Config/config.h"
-#include "llvm/DebugInfo/DIContext.h"
+#include "llvm/DebugInfo/DWARF/DIContext.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCDisassembler.h"

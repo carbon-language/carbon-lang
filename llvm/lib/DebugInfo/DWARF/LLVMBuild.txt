@@ -1,4 +1,4 @@
-;===- ./lib/ExecutionEngine/JITProfileAmplifier/LLVMBuild.txt --*- Conf -*--===;
+;===- ./lib/DebugInfo/DWARF/LLVMBuild.txt ----------------------*- Conf -*--===;
 ;
 ;                     The LLVM Compiler Infrastructure
 ;
@@ -15,10 +15,8 @@
 ;
 ;===------------------------------------------------------------------------===;
 
-[common]
-
 [component_0]
-type = OptionalLibrary
-name = IntelJITEvents
-parent = ExecutionEngine
-required_libraries = Core DebugInfoDWARF Support
+type = Library
+name = DebugInfoDWARF
+parent = DebugInfo
+required_libraries = Object Support

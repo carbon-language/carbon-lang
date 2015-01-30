@@ -8,8 +8,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/ADT/SmallVector.h"
-#include "llvm/DebugInfo/DWARFFormValue.h"
-#include "llvm/DebugInfo/DWARFRelocMap.h"
+#include "llvm/DebugInfo/DWARF/DWARFFormValue.h"
+#include "llvm/DebugInfo/DWARF/DWARFRelocMap.h"
 #include <cstdint>
 
 namespace llvm {

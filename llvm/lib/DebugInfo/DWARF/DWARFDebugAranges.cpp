@@ -7,10 +7,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/DebugInfo/DWARFDebugAranges.h"
-#include "llvm/DebugInfo/DWARFCompileUnit.h"
-#include "llvm/DebugInfo/DWARFContext.h"
-#include "llvm/DebugInfo/DWARFDebugArangeSet.h"
+#include "llvm/DebugInfo/DWARF/DWARFDebugAranges.h"
+#include "llvm/DebugInfo/DWARF/DWARFCompileUnit.h"
+#include "llvm/DebugInfo/DWARF/DWARFContext.h"
+#include "llvm/DebugInfo/DWARF/DWARFDebugArangeSet.h"
 #include "llvm/Support/Format.h"
 #include "llvm/Support/raw_ostream.h"
 #include <algorithm>

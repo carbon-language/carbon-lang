@@ -6,9 +6,10 @@
 # License. See LICENSE.TXT for details.
 #
 ##===----------------------------------------------------------------------===##
-
 LEVEL = ../..
-LIBRARYNAME = LLVMDebugInfo
-BUILD_ARCHIVE := 1
+
+include $(LEVEL)/Makefile.config
+
+PARALLEL_DIRS := DWARF
 
 include $(LEVEL)/Makefile.common

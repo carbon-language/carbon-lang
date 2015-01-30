@@ -8,11 +8,11 @@
 //===----------------------------------------------------------------------===//
 
 #include "SyntaxHighlighting.h"
-#include "llvm/DebugInfo/DWARFCompileUnit.h"
-#include "llvm/DebugInfo/DWARFContext.h"
-#include "llvm/DebugInfo/DWARFDebugAbbrev.h"
-#include "llvm/DebugInfo/DWARFDebugInfoEntry.h"
-#include "llvm/DebugInfo/DWARFFormValue.h"
+#include "llvm/DebugInfo/DWARF/DWARFCompileUnit.h"
+#include "llvm/DebugInfo/DWARF/DWARFContext.h"
+#include "llvm/DebugInfo/DWARF/DWARFDebugAbbrev.h"
+#include "llvm/DebugInfo/DWARF/DWARFDebugInfoEntry.h"
+#include "llvm/DebugInfo/DWARF/DWARFFormValue.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/Dwarf.h"

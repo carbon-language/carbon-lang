@@ -1,0 +1,19 @@
+add_llvm_library(LLVMDebugInfoDWARF
+  DIContext.cpp
+  DWARFAbbreviationDeclaration.cpp
+  DWARFAcceleratorTable.cpp
+  DWARFCompileUnit.cpp
+  DWARFContext.cpp
+  DWARFDebugAbbrev.cpp
+  DWARFDebugArangeSet.cpp
+  DWARFDebugAranges.cpp
+  DWARFDebugFrame.cpp
+  DWARFDebugInfoEntry.cpp
+  DWARFDebugLine.cpp
+  DWARFDebugLoc.cpp
+  DWARFDebugRangeList.cpp
+  DWARFFormValue.cpp
+  DWARFTypeUnit.cpp
+  DWARFUnit.cpp
+  SyntaxHighlighting.cpp
+  )

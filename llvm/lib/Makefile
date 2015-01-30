@@ -10,8 +10,8 @@ LEVEL = ..
 
 include $(LEVEL)/Makefile.config
 
-PARALLEL_DIRS := IR AsmParser Bitcode Analysis Transforms CodeGen Target \
-                 ExecutionEngine Linker LTO MC Object Option DebugInfo   \
+PARALLEL_DIRS := IR AsmParser Bitcode Analysis Transforms CodeGen Target      \
+                 ExecutionEngine Linker LTO MC Object Option DebugInfo        \
                  IRReader LineEditor ProfileData
 
 include $(LEVEL)/Makefile.common

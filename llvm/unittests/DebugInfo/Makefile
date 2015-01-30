@@ -9,7 +9,7 @@
 
 LEVEL = ../..
 TESTNAME = DebugInfo
-LINK_COMPONENTS := debuginfo object support
+LINK_COMPONENTS := DebugInfoDWARF object support
 
 include $(LEVEL)/Makefile.config
 

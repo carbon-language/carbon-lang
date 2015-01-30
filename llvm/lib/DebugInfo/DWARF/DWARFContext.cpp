@@ -7,11 +7,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/DebugInfo/DWARFContext.h"
+#include "llvm/DebugInfo/DWARF/DWARFContext.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringSwitch.h"
-#include "llvm/DebugInfo/DWARFAcceleratorTable.h"
-#include "llvm/DebugInfo/DWARFDebugArangeSet.h"
+#include "llvm/DebugInfo/DWARF/DWARFAcceleratorTable.h"
+#include "llvm/DebugInfo/DWARF/DWARFDebugArangeSet.h"
 #include "llvm/Support/Compression.h"
 #include "llvm/Support/Dwarf.h"
 #include "llvm/Support/Format.h"

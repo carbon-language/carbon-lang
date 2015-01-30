@@ -17,7 +17,7 @@
 #include "IntelJITEventsWrapper.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/CodeGen/MachineFunction.h"
-#include "llvm/DebugInfo/DIContext.h"
+#include "llvm/DebugInfo/DWARF/DIContext.h"
 #include "llvm/ExecutionEngine/JITEventListener.h"
 #include "llvm/IR/DebugInfo.h"
 #include "llvm/IR/Function.h"

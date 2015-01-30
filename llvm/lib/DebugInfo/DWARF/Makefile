@@ -1,4 +1,4 @@
-##===- tools/llvm-dwarfdump/Makefile -----------------------*- Makefile -*-===##
+##===- lib/DebugInfo/DWARF/Makefile ------------------------*- Makefile -*-===##
 #
 #                     The LLVM Compiler Infrastructure
 #
@@ -7,11 +7,8 @@
 #
 ##===----------------------------------------------------------------------===##
 
-LEVEL := ../..
-TOOLNAME := llvm-dwarfdump
-LINK_COMPONENTS := DebugInfoDWARF Object
-
-# This tool has no plugins, optimize startup time.
-TOOL_NO_EXPORTS := 1
+LEVEL = ../../..
+LIBRARYNAME = LLVMDebugInfoDWARF
+BUILD_ARCHIVE := 1
 
 include $(LEVEL)/Makefile.common

@@ -12,7 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/ADT/StringMap.h"
-#include "llvm/DebugInfo/DIContext.h"
+#include "llvm/DebugInfo/DWARF/DIContext.h"
 #include "llvm/ExecutionEngine/RuntimeDyld.h"
 #include "llvm/ExecutionEngine/RuntimeDyldChecker.h"
 #include "llvm/MC/MCAsmInfo.h"

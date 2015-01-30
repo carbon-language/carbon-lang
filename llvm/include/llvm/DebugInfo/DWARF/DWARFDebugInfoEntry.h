@@ -11,9 +11,9 @@
 #define LLVM_LIB_DEBUGINFO_DWARFDEBUGINFOENTRY_H
 
 #include "llvm/ADT/SmallVector.h"
-#include "llvm/DebugInfo/DIContext.h"
-#include "llvm/DebugInfo/DWARFAbbreviationDeclaration.h"
-#include "llvm/DebugInfo/DWARFDebugRangeList.h"
+#include "llvm/DebugInfo/DWARF/DIContext.h"
+#include "llvm/DebugInfo/DWARF/DWARFAbbreviationDeclaration.h"
+#include "llvm/DebugInfo/DWARF/DWARFDebugRangeList.h"
 #include "llvm/Support/DataTypes.h"
 
 namespace llvm {

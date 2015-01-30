@@ -15,8 +15,10 @@
 ;
 ;===------------------------------------------------------------------------===;
 
+[common]
+subdirectories = DWARF
+
 [component_0]
-type = Library
+type = Group
 name = DebugInfo
-parent = Libraries
-required_libraries = Object Support
+parent = $ROOT

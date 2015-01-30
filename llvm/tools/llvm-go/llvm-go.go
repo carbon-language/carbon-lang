@@ -46,7 +46,7 @@ var components = []string{
 	"bitwriter",
 	"codegen",
 	"core",
-	"debuginfo",
+	"debuginfodwarf",
 	"executionengine",
 	"instrumentation",
 	"interpreter",

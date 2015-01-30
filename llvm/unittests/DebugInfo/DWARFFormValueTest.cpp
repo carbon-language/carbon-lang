@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/DebugInfo/DWARFFormValue.h"
+#include "llvm/DebugInfo/DWARF/DWARFFormValue.h"
 #include "llvm/Support/Dwarf.h"
 #include "gtest/gtest.h"
 using namespace llvm;

@@ -7,9 +7,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/DebugInfo/DWARFUnit.h"
-#include "llvm/DebugInfo/DWARFContext.h"
-#include "llvm/DebugInfo/DWARFFormValue.h"
+#include "llvm/DebugInfo/DWARF/DWARFUnit.h"
+#include "llvm/DebugInfo/DWARF/DWARFContext.h"
+#include "llvm/DebugInfo/DWARF/DWARFFormValue.h"
 #include "llvm/Support/Dwarf.h"
 #include "llvm/Support/Path.h"
 #include <cstdio>
