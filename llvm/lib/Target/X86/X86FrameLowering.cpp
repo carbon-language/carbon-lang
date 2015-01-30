@@ -416,8 +416,6 @@ void X86FrameLowering::emitStackProbeCall(MachineFunction &MF,
   const X86Subtarget &STI = MF.getTarget().getSubtarget<X86Subtarget>();
   bool Is64Bit = STI.is64Bit();
   bool IsLargeCodeModel = MF.getTarget().getCodeModel() == CodeModel::Large;
-  const X86RegisterInfo *RegInfo =
-      static_cast<const X86RegisterInfo *>(MF.getSubtarget().getRegisterInfo());
 
   unsigned CallOp;
   if (Is64Bit)
