@@ -144,19 +144,19 @@ namespace {
       ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
       if (AFI->getGlobalBaseReg() == 0)
         return false;
-
-      const ARMTargetMachine *TM =
-        static_cast<const ARMTargetMachine *>(&MF.getTarget());
-      if (TM->getRelocationModel() != Reloc::PIC_)
+      const ARMSubtarget &STI =
+          static_cast<const ARMSubtarget &>(MF.getSubtarget());
+      const TargetMachine &TM = MF.getTarget();
+      if (TM.getRelocationModel() != Reloc::PIC_)
         return false;
 
       LLVMContext *Context = &MF.getFunction()->getContext();
       unsigned ARMPCLabelIndex = AFI->createPICLabelUId();
-      unsigned PCAdj = TM->getSubtarget<ARMSubtarget>().isThumb() ? 4 : 8;
+      unsigned PCAdj = STI.isThumb() ? 4 : 8;
       ARMConstantPoolValue *CPV = ARMConstantPoolSymbol::Create(
           *Context, "_GLOBAL_OFFSET_TABLE_", ARMPCLabelIndex, PCAdj);
 
-      unsigned Align = TM->getDataLayout()->getPrefTypeAlignment(
+      unsigned Align = TM.getDataLayout()->getPrefTypeAlignment(
           Type::getInt32PtrTy(*Context));
       unsigned Idx = MF.getConstantPool()->getConstantPoolIndex(CPV, Align);
 
@@ -165,8 +165,6 @@ namespace {
       DebugLoc DL = FirstMBB.findDebugLoc(MBBI);
       unsigned TempReg =
           MF.getRegInfo().createVirtualRegister(&ARM::rGPRRegClass);
-      const ARMSubtarget &STI =
-          static_cast<const ARMSubtarget &>(MF.getSubtarget());
       unsigned Opc = STI.isThumb2() ? ARM::t2LDRpci : ARM::LDRcp;
       const TargetInstrInfo &TII = *STI.getInstrInfo();
       MachineInstrBuilder MIB = BuildMI(FirstMBB, MBBI, DL,
@@ -184,7 +182,6 @@ namespace {
                 .addImm(ARMPCLabelIndex);
       if (Opc == ARM::PICADD)
         AddDefaultPred(MIB);
-
 
       return true;
     }
