@@ -25,19 +25,36 @@ foreach(Test ${Tests})
   set(TestBinaries ${TestBinaries} LLVMFuzzer-${Test})
 endforeach()
 
-set_target_properties(${TestBinaries}
-  PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-  )
-
-set(EXCLUDE_FROM_ALL TRUE)
-add_lit_testsuite(check-fuzzer "Running Fuzzer tests"
-    ${CMAKE_CURRENT_BINARY_DIR}
-    DEPENDS ${TestBinaries}
-    )
-set(EXCLUDE_FROM_ALL FALSE)
-
 configure_lit_site_cfg(
   ${CMAKE_CURRENT_SOURCE_DIR}/lit.site.cfg.in
   ${CMAKE_CURRENT_BINARY_DIR}/lit.site.cfg
   )
 
+configure_lit_site_cfg(
+  ${CMAKE_CURRENT_SOURCE_DIR}/unit/lit.site.cfg.in
+  ${CMAKE_CURRENT_BINARY_DIR}/unit/lit.site.cfg
+  )
+
+include_directories(..)
+include_directories(${LLVM_MAIN_SRC_DIR}/utils/unittest/googletest/include)
+
+add_executable(LLVMFuzzer-Unittest
+  FuzzerUnittest.cpp
+  $<TARGET_OBJECTS:LLVMFuzzerNoMain>
+  )
+
+target_link_libraries(LLVMFuzzer-Unittest
+  gtest
+  gtest_main
+  )
+
+set(TestBinaries ${TestBinaries} LLVMFuzzer-Unittest)
+
+set_target_properties(${TestBinaries}
+  PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+  )
+
+add_lit_testsuite(check-fuzzer "Running Fuzzer tests"
+    ${CMAKE_CURRENT_BINARY_DIR}
+    DEPENDS ${TestBinaries}
+    )
