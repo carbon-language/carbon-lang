@@ -529,8 +529,7 @@ SDNode *NVPTXDAGToDAGISel::SelectIntrinsicChain(SDNode *N) {
   }
 }
 
-static unsigned int getCodeAddrSpace(MemSDNode *N,
-                                     const NVPTXSubtarget *Subtarget) {
+static unsigned int getCodeAddrSpace(MemSDNode *N) {
   const Value *Src = N->getMemOperand()->getValue();
 
   if (!Src)
@@ -642,7 +641,7 @@ SDNode *NVPTXDAGToDAGISel::SelectLoad(SDNode *N) {
     return nullptr;
 
   // Address Space Setting
-  unsigned int codeAddrSpace = getCodeAddrSpace(LD, Subtarget);
+  unsigned int codeAddrSpace = getCodeAddrSpace(LD);
 
   // Volatile Setting
   // - .volatile is only availalble for .global and .shared
@@ -878,7 +877,7 @@ SDNode *NVPTXDAGToDAGISel::SelectLoadVector(SDNode *N) {
     return nullptr;
 
   // Address Space Setting
-  unsigned int CodeAddrSpace = getCodeAddrSpace(MemSD, Subtarget);
+  unsigned int CodeAddrSpace = getCodeAddrSpace(MemSD);
 
   // Volatile Setting
   // - .volatile is only availalble for .global and .shared
@@ -2017,7 +2016,7 @@ SDNode *NVPTXDAGToDAGISel::SelectStore(SDNode *N) {
     return nullptr;
 
   // Address Space Setting
-  unsigned int codeAddrSpace = getCodeAddrSpace(ST, Subtarget);
+  unsigned int codeAddrSpace = getCodeAddrSpace(ST);
 
   // Volatile Setting
   // - .volatile is only availalble for .global and .shared
@@ -2245,7 +2244,7 @@ SDNode *NVPTXDAGToDAGISel::SelectStoreVector(SDNode *N) {
   EVT StoreVT = MemSD->getMemoryVT();
 
   // Address Space Setting
-  unsigned CodeAddrSpace = getCodeAddrSpace(MemSD, Subtarget);
+  unsigned CodeAddrSpace = getCodeAddrSpace(MemSD);
 
   if (CodeAddrSpace == NVPTX::PTXLdStInstCode::CONSTANT) {
     report_fatal_error("Cannot store to pointer that points to constant "
