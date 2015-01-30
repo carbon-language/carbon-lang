@@ -130,8 +130,12 @@ class ArrayTypesTestCase(TestBase):
 
         # Sanity check the print representation of thread.
         thr = str(thread)
+        if sys.platform.startswith("darwin"):
+            tidstr = "tid = 0x%4.4x" % thread.GetThreadID()
+        else:
+            tidstr = "tid = %u" % thread.GetThreadID()
         self.expect(thr, "Thread looks good with stop reason = breakpoint", exe=False,
-            substrs = ["tid = 0x%4.4x" % thread.GetThreadID()])
+            substrs = [tidstr])
 
         # The breakpoint should have a hit count of 1.
         self.assertTrue(breakpoint.GetHitCount() == 1, BREAKPOINT_HIT_ONCE)
