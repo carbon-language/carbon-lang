@@ -26,16 +26,16 @@ def SendMsgImm : Operand<i32> {
   let PrintMethod = "printSendMsg";
 }
 
-def isGCN : Predicate<"Subtarget.getGeneration() "
+def isGCN : Predicate<"Subtarget->getGeneration() "
                       ">= AMDGPUSubtarget::SOUTHERN_ISLANDS">;
 def isSICI : Predicate<
-  "Subtarget.getGeneration() == AMDGPUSubtarget::SOUTHERN_ISLANDS ||"
-  "Subtarget.getGeneration() == AMDGPUSubtarget::SEA_ISLANDS"
+  "Subtarget->getGeneration() == AMDGPUSubtarget::SOUTHERN_ISLANDS ||"
+  "Subtarget->getGeneration() == AMDGPUSubtarget::SEA_ISLANDS"
 >;
-def isCI : Predicate<"Subtarget.getGeneration() "
+def isCI : Predicate<"Subtarget->getGeneration() "
                       ">= AMDGPUSubtarget::SEA_ISLANDS">;
 def isVI : Predicate <
-  "Subtarget.getGeneration() >= AMDGPUSubtarget::VOLCANIC_ISLANDS"
+  "Subtarget->getGeneration() >= AMDGPUSubtarget::VOLCANIC_ISLANDS"
 >;
 
 def HasFlatAddressSpace : Predicate<"Subtarget.hasFlatAddressSpace()">;

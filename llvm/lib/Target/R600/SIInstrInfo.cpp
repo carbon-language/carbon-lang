@@ -28,8 +28,7 @@
 using namespace llvm;
 
 SIInstrInfo::SIInstrInfo(const AMDGPUSubtarget &st)
-  : AMDGPUInstrInfo(st),
-    RI(st) { }
+    : AMDGPUInstrInfo(st), RI(st) {}
 
 //===----------------------------------------------------------------------===//
 // TargetInstrInfo callbacks
@@ -539,7 +538,7 @@ unsigned SIInstrInfo::calculateLDSSpillAddress(MachineBasicBlock &MBB,
                                                unsigned Size) const {
   MachineFunction *MF = MBB.getParent();
   SIMachineFunctionInfo *MFI = MF->getInfo<SIMachineFunctionInfo>();
-  const AMDGPUSubtarget &ST = MF->getTarget().getSubtarget<AMDGPUSubtarget>();
+  const AMDGPUSubtarget &ST = MF->getSubtarget<AMDGPUSubtarget>();
   const SIRegisterInfo *TRI =
       static_cast<const SIRegisterInfo*>(ST.getRegisterInfo());
   DebugLoc DL = MBB.findDebugLoc(MI);

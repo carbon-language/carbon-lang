@@ -26,17 +26,16 @@ using namespace llvm;
 void R600SchedStrategy::initialize(ScheduleDAGMI *dag) {
   assert(dag->hasVRegLiveness() && "R600SchedStrategy needs vreg liveness");
   DAG = static_cast<ScheduleDAGMILive*>(dag);
+  const AMDGPUSubtarget &ST = DAG->TM.getSubtarget<AMDGPUSubtarget>();
   TII = static_cast<const R600InstrInfo*>(DAG->TII);
   TRI = static_cast<const R600RegisterInfo*>(DAG->TRI);
-  VLIW5 = !DAG->MF.getTarget().getSubtarget<AMDGPUSubtarget>().hasCaymanISA();
+  VLIW5 = !ST.hasCaymanISA();
   MRI = &DAG->MRI;
   CurInstKind = IDOther;
   CurEmitted = 0;
   OccupedSlotsMask = 31;
   InstKindLimit[IDAlu] = TII->getMaxAlusPerClause();
   InstKindLimit[IDOther] = 32;
-
-  const AMDGPUSubtarget &ST = DAG->TM.getSubtarget<AMDGPUSubtarget>();
   InstKindLimit[IDFetch] = ST.getTexVTXClauseSize();
   AluInstCount = 0;
   FetchInstCount = 0;

@@ -39,11 +39,11 @@ namespace {
 class AMDGPUDAGToDAGISel : public SelectionDAGISel {
   // Subtarget - Keep a pointer to the AMDGPU Subtarget around so that we can
   // make the right decision when generating code for different targets.
-  const AMDGPUSubtarget &Subtarget;
+  const AMDGPUSubtarget *Subtarget;
 public:
   AMDGPUDAGToDAGISel(TargetMachine &TM);
   virtual ~AMDGPUDAGToDAGISel();
-
+  bool runOnMachineFunction(MachineFunction &MF) override;
   SDNode *Select(SDNode *N) override;
   const char *getPassName() const override;
   void PostprocessISelDAG() override;
@@ -132,7 +132,11 @@ FunctionPass *llvm::createAMDGPUISelDag(TargetMachine &TM) {
 }
 
 AMDGPUDAGToDAGISel::AMDGPUDAGToDAGISel(TargetMachine &TM)
-  : SelectionDAGISel(TM), Subtarget(TM.getSubtarget<AMDGPUSubtarget>()) {
+    : SelectionDAGISel(TM) {}
+
+bool AMDGPUDAGToDAGISel::runOnMachineFunction(MachineFunction &MF) {
+  Subtarget = &static_cast<const AMDGPUSubtarget &>(MF.getSubtarget());
+  return SelectionDAGISel::runOnMachineFunction(MF);
 }
 
 AMDGPUDAGToDAGISel::~AMDGPUDAGToDAGISel() {
@@ -156,7 +160,7 @@ const TargetRegisterClass *AMDGPUDAGToDAGISel::getOperandRegClass(SDNode *N,
   switch (N->getMachineOpcode()) {
   default: {
     const MCInstrDesc &Desc =
-        TM.getSubtargetImpl()->getInstrInfo()->get(N->getMachineOpcode());
+        Subtarget->getInstrInfo()->get(N->getMachineOpcode());
     unsigned OpIdx = Desc.getNumDefs() + OpNo;
     if (OpIdx >= Desc.getNumOperands())
       return nullptr;
@@ -164,17 +168,17 @@ const TargetRegisterClass *AMDGPUDAGToDAGISel::getOperandRegClass(SDNode *N,
     if (RegClass == -1)
       return nullptr;
 
-    return TM.getSubtargetImpl()->getRegisterInfo()->getRegClass(RegClass);
+    return Subtarget->getRegisterInfo()->getRegClass(RegClass);
   }
   case AMDGPU::REG_SEQUENCE: {
     unsigned RCID = cast<ConstantSDNode>(N->getOperand(0))->getZExtValue();
     const TargetRegisterClass *SuperRC =
-        TM.getSubtargetImpl()->getRegisterInfo()->getRegClass(RCID);
+        Subtarget->getRegisterInfo()->getRegClass(RCID);
 
     SDValue SubRegOp = N->getOperand(OpNo + 1);
     unsigned SubRegIdx = cast<ConstantSDNode>(SubRegOp)->getZExtValue();
-    return TM.getSubtargetImpl()->getRegisterInfo()->getSubClassWithSubReg(
-        SuperRC, SubRegIdx);
+    return Subtarget->getRegisterInfo()->getSubClassWithSubReg(SuperRC,
+                                                              SubRegIdx);
   }
   }
 }
@@ -244,7 +248,6 @@ SDNode *AMDGPUDAGToDAGISel::Select(SDNode *N) {
     return nullptr;   // Already selected.
   }
 
-  const AMDGPUSubtarget &ST = TM.getSubtarget<AMDGPUSubtarget>();
   switch (Opc) {
   default: break;
   // We are selecting i64 ADD here instead of custom lower it during
@@ -253,7 +256,7 @@ SDNode *AMDGPUDAGToDAGISel::Select(SDNode *N) {
   case ISD::ADD:
   case ISD::SUB: {
     if (N->getValueType(0) != MVT::i64 ||
-        ST.getGeneration() < AMDGPUSubtarget::SOUTHERN_ISLANDS)
+        Subtarget->getGeneration() < AMDGPUSubtarget::SOUTHERN_ISLANDS)
       break;
 
     return SelectADD_SUB_I64(N);
@@ -262,15 +265,12 @@ SDNode *AMDGPUDAGToDAGISel::Select(SDNode *N) {
   case AMDGPUISD::BUILD_VERTICAL_VECTOR:
   case ISD::BUILD_VECTOR: {
     unsigned RegClassID;
-    const AMDGPURegisterInfo *TRI = static_cast<const AMDGPURegisterInfo *>(
-        TM.getSubtargetImpl()->getRegisterInfo());
-    const SIRegisterInfo *SIRI = static_cast<const SIRegisterInfo *>(
-        TM.getSubtargetImpl()->getRegisterInfo());
+    const AMDGPURegisterInfo *TRI = Subtarget->getRegisterInfo();
     EVT VT = N->getValueType(0);
     unsigned NumVectorElts = VT.getVectorNumElements();
     EVT EltVT = VT.getVectorElementType();
     assert(EltVT.bitsEq(MVT::i32));
-    if (ST.getGeneration() >= AMDGPUSubtarget::SOUTHERN_ISLANDS) {
+    if (Subtarget->getGeneration() >= AMDGPUSubtarget::SOUTHERN_ISLANDS) {
       bool UseVReg = true;
       for (SDNode::use_iterator U = N->use_begin(), E = SDNode::use_end();
                                                     U != E; ++U) {
@@ -281,7 +281,7 @@ SDNode *AMDGPUDAGToDAGISel::Select(SDNode *N) {
         if (!RC) {
           continue;
         }
-        if (SIRI->isSGPRClass(RC)) {
+        if (static_cast<const SIRegisterInfo *>(TRI)->isSGPRClass(RC)) {
           UseVReg = false;
         }
       }
@@ -368,7 +368,7 @@ SDNode *AMDGPUDAGToDAGISel::Select(SDNode *N) {
   }
   case ISD::BUILD_PAIR: {
     SDValue RC, SubReg0, SubReg1;
-    if (ST.getGeneration() <= AMDGPUSubtarget::NORTHERN_ISLANDS) {
+    if (Subtarget->getGeneration() <= AMDGPUSubtarget::NORTHERN_ISLANDS) {
       break;
     }
     if (N->getValueType(0) == MVT::i128) {
@@ -390,8 +390,7 @@ SDNode *AMDGPUDAGToDAGISel::Select(SDNode *N) {
 
   case ISD::Constant:
   case ISD::ConstantFP: {
-    const AMDGPUSubtarget &ST = TM.getSubtarget<AMDGPUSubtarget>();
-    if (ST.getGeneration() < AMDGPUSubtarget::SOUTHERN_ISLANDS ||
+    if (Subtarget->getGeneration() < AMDGPUSubtarget::SOUTHERN_ISLANDS ||
         N->getValueType(0).getSizeInBits() != 64 || isInlineImmediate(N))
       break;
 
@@ -440,7 +439,7 @@ SDNode *AMDGPUDAGToDAGISel::Select(SDNode *N) {
   }
 
   case AMDGPUISD::REGISTER_LOAD: {
-    if (ST.getGeneration() <= AMDGPUSubtarget::NORTHERN_ISLANDS)
+    if (Subtarget->getGeneration() <= AMDGPUSubtarget::NORTHERN_ISLANDS)
       break;
     SDValue Addr, Offset;
 
@@ -456,7 +455,7 @@ SDNode *AMDGPUDAGToDAGISel::Select(SDNode *N) {
                                   Ops);
   }
   case AMDGPUISD::REGISTER_STORE: {
-    if (ST.getGeneration() <= AMDGPUSubtarget::NORTHERN_ISLANDS)
+    if (Subtarget->getGeneration() <= AMDGPUSubtarget::NORTHERN_ISLANDS)
       break;
     SDValue Addr, Offset;
     SelectADDRIndirect(N->getOperand(2), Addr, Offset);
@@ -474,7 +473,7 @@ SDNode *AMDGPUDAGToDAGISel::Select(SDNode *N) {
 
   case AMDGPUISD::BFE_I32:
   case AMDGPUISD::BFE_U32: {
-    if (ST.getGeneration() < AMDGPUSubtarget::SOUTHERN_ISLANDS)
+    if (Subtarget->getGeneration() < AMDGPUSubtarget::SOUTHERN_ISLANDS)
       break;
 
     // There is a scalar version available, but unlike the vector version which
@@ -579,13 +578,11 @@ bool AMDGPUDAGToDAGISel::isConstantLoad(const LoadSDNode *N, int CbId) const {
 }
 
 bool AMDGPUDAGToDAGISel::isGlobalLoad(const LoadSDNode *N) const {
-  if (N->getAddressSpace() == AMDGPUAS::CONSTANT_ADDRESS) {
-    const AMDGPUSubtarget &ST = TM.getSubtarget<AMDGPUSubtarget>();
-    if (ST.getGeneration() < AMDGPUSubtarget::SOUTHERN_ISLANDS ||
-        N->getMemoryVT().bitsLT(MVT::i32)) {
+  if (N->getAddressSpace() == AMDGPUAS::CONSTANT_ADDRESS)
+    if (Subtarget->getGeneration() < AMDGPUSubtarget::SOUTHERN_ISLANDS ||
+        N->getMemoryVT().bitsLT(MVT::i32))
       return true;
-    }
-  }
+
   return checkType(N->getMemOperand()->getValue(), AMDGPUAS::GLOBAL_ADDRESS);
 }
 
@@ -788,12 +785,11 @@ SDNode *AMDGPUDAGToDAGISel::SelectDIV_SCALE(SDNode *N) {
 
 bool AMDGPUDAGToDAGISel::isDSOffsetLegal(const SDValue &Base, unsigned Offset,
                                          unsigned OffsetBits) const {
-  const AMDGPUSubtarget &ST = TM.getSubtarget<AMDGPUSubtarget>();
   if ((OffsetBits == 16 && !isUInt<16>(Offset)) ||
       (OffsetBits == 8 && !isUInt<8>(Offset)))
     return false;
 
-  if (ST.getGeneration() >= AMDGPUSubtarget::SEA_ISLANDS)
+  if (Subtarget->getGeneration() >= AMDGPUSubtarget::SEA_ISLANDS)
     return true;
 
   // On Southern Islands instruction with a negative base value and an offset
@@ -979,7 +975,7 @@ bool AMDGPUDAGToDAGISel::SelectMUBUFScratch(SDValue Addr, SDValue &Rsrc,
   SDLoc DL(Addr);
   MachineFunction &MF = CurDAG->getMachineFunction();
   const SIRegisterInfo *TRI =
-      static_cast<const SIRegisterInfo *>(MF.getSubtarget().getRegisterInfo());
+      static_cast<const SIRegisterInfo *>(Subtarget->getRegisterInfo());
   MachineRegisterInfo &MRI = MF.getRegInfo();
   const SITargetLowering& Lowering =
     *static_cast<const SITargetLowering*>(getTargetLowering());
@@ -1033,7 +1029,7 @@ bool AMDGPUDAGToDAGISel::SelectMUBUFOffset(SDValue Addr, SDValue &SRsrc,
                                            SDValue &TFE) const {
   SDValue Ptr, VAddr, Offen, Idxen, Addr64;
   const SIInstrInfo *TII =
-    static_cast<const SIInstrInfo *>(Subtarget.getInstrInfo());
+    static_cast<const SIInstrInfo *>(Subtarget->getInstrInfo());
 
   SelectMUBUF(Addr, Ptr, VAddr, SOffset, Offset, Offen, Idxen, Addr64,
               GLC, SLC, TFE);
@@ -1067,7 +1063,7 @@ SDNode *AMDGPUDAGToDAGISel::SelectAddrSpaceCast(SDNode *N) {
   AddrSpaceCastSDNode *ASC = cast<AddrSpaceCastSDNode>(N);
   SDLoc DL(N);
 
-  assert(Subtarget.hasFlatAddressSpace() &&
+  assert(Subtarget->hasFlatAddressSpace() &&
          "addrspacecast only supported with flat address space!");
 
   assert((ASC->getSrcAddressSpace() != AMDGPUAS::CONSTANT_ADDRESS &&

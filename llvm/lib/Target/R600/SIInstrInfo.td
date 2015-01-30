@@ -211,12 +211,11 @@ class InlineFPImm <ValueType vt> : PatLeaf <(vt fpimm), [{
 }]>;
 
 class SGPRImm <dag frag> : PatLeaf<frag, [{
-  if (TM.getSubtarget<AMDGPUSubtarget>().getGeneration() <
-      AMDGPUSubtarget::SOUTHERN_ISLANDS) {
+  if (Subtarget->getGeneration() < AMDGPUSubtarget::SOUTHERN_ISLANDS) {
     return false;
   }
   const SIRegisterInfo *SIRI =
-                       static_cast<const SIRegisterInfo*>(TM.getSubtargetImpl()->getRegisterInfo());
+      static_cast<const SIRegisterInfo *>(Subtarget->getRegisterInfo());
   for (SDNode::use_iterator U = N->use_begin(), E = SDNode::use_end();
                                                 U != E; ++U) {
     if (SIRI->isSGPRClass(getOperandRegClass(*U, U.getOperandNo()))) {

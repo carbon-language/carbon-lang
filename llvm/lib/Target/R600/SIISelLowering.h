@@ -63,7 +63,7 @@ class SITargetLowering : public AMDGPUTargetLowering {
   SDValue performSetCCCombine(SDNode *N, DAGCombinerInfo &DCI) const;
 
 public:
-  SITargetLowering(TargetMachine &tm);
+  SITargetLowering(TargetMachine &tm, const AMDGPUSubtarget &STI);
 
   bool isShuffleMaskLegal(const SmallVectorImpl<int> &/*Mask*/,
                           EVT /*VT*/) const override;

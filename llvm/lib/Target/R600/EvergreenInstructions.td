@@ -14,14 +14,14 @@
 //===----------------------------------------------------------------------===//
 
 def isEG : Predicate<
-  "Subtarget.getGeneration() >= AMDGPUSubtarget::EVERGREEN && "
-  "Subtarget.getGeneration() < AMDGPUSubtarget::SOUTHERN_ISLANDS && "
-  "!Subtarget.hasCaymanISA()"
+  "Subtarget->getGeneration() >= AMDGPUSubtarget::EVERGREEN && "
+  "Subtarget->getGeneration() < AMDGPUSubtarget::SOUTHERN_ISLANDS && "
+  "!Subtarget->hasCaymanISA()"
 >;
 
 def isEGorCayman : Predicate<
-  "Subtarget.getGeneration() == AMDGPUSubtarget::EVERGREEN ||"
-  "Subtarget.getGeneration() ==AMDGPUSubtarget::NORTHERN_ISLANDS"
+  "Subtarget->getGeneration() == AMDGPUSubtarget::EVERGREEN ||"
+  "Subtarget->getGeneration() ==AMDGPUSubtarget::NORTHERN_ISLANDS"
 >;
 
 //===----------------------------------------------------------------------===//

@@ -110,7 +110,7 @@ protected:
                               const SmallVectorImpl<ISD::InputArg> &Ins) const;
 
 public:
-  AMDGPUTargetLowering(TargetMachine &TM);
+  AMDGPUTargetLowering(TargetMachine &TM, const AMDGPUSubtarget &STI);
 
   bool isFAbsFree(EVT VT) const override;
   bool isFNegFree(EVT VT) const override;

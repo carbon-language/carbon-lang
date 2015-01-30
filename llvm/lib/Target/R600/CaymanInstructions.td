@@ -12,7 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-def isCayman : Predicate<"Subtarget.hasCaymanISA()">;
+def isCayman : Predicate<"Subtarget->hasCaymanISA()">;
 
 //===----------------------------------------------------------------------===//
 // Cayman Instructions

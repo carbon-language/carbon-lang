@@ -81,10 +81,10 @@ AMDGPUSubtarget::AMDGPUSubtarget(StringRef TT, StringRef GPU, StringRef FS,
 
   if (getGeneration() <= AMDGPUSubtarget::NORTHERN_ISLANDS) {
     InstrInfo.reset(new R600InstrInfo(*this));
-    TLInfo.reset(new R600TargetLowering(TM));
+    TLInfo.reset(new R600TargetLowering(TM, *this));
   } else {
     InstrInfo.reset(new SIInstrInfo(*this));
-    TLInfo.reset(new SITargetLowering(TM));
+    TLInfo.reset(new SITargetLowering(TM, *this));
   }
 }
 

@@ -55,7 +55,6 @@ namespace {
 
 class SILoadStoreOptimizer : public MachineFunctionPass {
 private:
-  const TargetMachine *TM;
   const SIInstrInfo *TII;
   const SIRegisterInfo *TRI;
   MachineRegisterInfo *MRI;
@@ -86,20 +85,11 @@ private:
 public:
   static char ID;
 
-  SILoadStoreOptimizer() :
-    MachineFunctionPass(ID),
-    TM(nullptr),
-    TII(nullptr),
-    TRI(nullptr),
-    MRI(nullptr),
-    LIS(nullptr) {
+  SILoadStoreOptimizer()
+      : MachineFunctionPass(ID), TII(nullptr), TRI(nullptr), MRI(nullptr),
+        LIS(nullptr) {}
 
-  }
-
-  SILoadStoreOptimizer(const TargetMachine &TM_) :
-    MachineFunctionPass(ID),
-    TM(&TM_),
-    TII(static_cast<const SIInstrInfo*>(TM->getSubtargetImpl()->getInstrInfo())) {
+  SILoadStoreOptimizer(const TargetMachine &TM_) : MachineFunctionPass(ID) {
     initializeSILoadStoreOptimizerPass(*PassRegistry::getPassRegistry());
   }
 
@@ -414,9 +404,9 @@ bool SILoadStoreOptimizer::optimizeBlock(MachineBasicBlock &MBB) {
 }
 
 bool SILoadStoreOptimizer::runOnMachineFunction(MachineFunction &MF) {
-  const TargetSubtargetInfo *STM = MF.getTarget().getSubtargetImpl();
-  TRI = static_cast<const SIRegisterInfo*>(STM->getRegisterInfo());
-  TII = static_cast<const SIInstrInfo*>(STM->getInstrInfo());
+  const TargetSubtargetInfo &STM = MF.getSubtarget();
+  TRI = static_cast<const SIRegisterInfo *>(STM.getRegisterInfo());
+  TII = static_cast<const SIInstrInfo *>(STM.getInstrInfo());
   MRI = &MF.getRegInfo();
 
   LIS = &getAnalysis<LiveIntervals>();

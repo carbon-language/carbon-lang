@@ -23,7 +23,7 @@ class R600InstrInfo;
 
 class R600TargetLowering : public AMDGPUTargetLowering {
 public:
-  R600TargetLowering(TargetMachine &TM);
+  R600TargetLowering(TargetMachine &TM, const AMDGPUSubtarget &STI);
   MachineBasicBlock * EmitInstrWithCustomInserter(MachineInstr *MI,
       MachineBasicBlock * BB) const override;
   SDValue LowerOperation(SDValue Op, SelectionDAG &DAG) const override;

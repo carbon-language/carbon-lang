@@ -39,14 +39,14 @@ struct CFStack {
     FIRST_NON_WQM_PUSH_W_FULL_ENTRY = 3
   };
 
-  const AMDGPUSubtarget &ST;
+  const AMDGPUSubtarget *ST;
   std::vector<StackItem> BranchStack;
   std::vector<StackItem> LoopStack;
   unsigned MaxStackSize;
   unsigned CurrentEntries;
   unsigned CurrentSubEntries;
 
-  CFStack(const AMDGPUSubtarget &st, unsigned ShaderType) : ST(st),
+  CFStack(const AMDGPUSubtarget *st, unsigned ShaderType) : ST(st),
       // We need to reserve a stack entry for CALL_FS in vertex shaders.
       MaxStackSize(ShaderType == ShaderType::VERTEX ? 1 : 0),
       CurrentEntries(0), CurrentSubEntries(0) { }
@@ -76,11 +76,11 @@ bool CFStack::branchStackContains(CFStack::StackItem Item) {
 }
 
 bool CFStack::requiresWorkAroundForInst(unsigned Opcode) {
-  if (Opcode == AMDGPU::CF_ALU_PUSH_BEFORE && ST.hasCaymanISA() &&
+  if (Opcode == AMDGPU::CF_ALU_PUSH_BEFORE && ST->hasCaymanISA() &&
       getLoopDepth() > 1)
     return true;
 
-  if (!ST.hasCFAluBug())
+  if (!ST->hasCFAluBug())
     return false;
 
   switch(Opcode) {
@@ -91,7 +91,7 @@ bool CFStack::requiresWorkAroundForInst(unsigned Opcode) {
   case AMDGPU::CF_ALU_CONTINUE:
     if (CurrentSubEntries == 0)
       return false;
-    if (ST.getWavefrontSize() == 64) {
+    if (ST->getWavefrontSize() == 64) {
       // We are being conservative here.  We only require this work-around if
       // CurrentSubEntries > 3 &&
       // (CurrentSubEntries % 4 == 3 || CurrentSubEntries % 4 == 0)
@@ -102,7 +102,7 @@ bool CFStack::requiresWorkAroundForInst(unsigned Opcode) {
       // resources without any problems.
       return CurrentSubEntries > 3;
     } else {
-      assert(ST.getWavefrontSize() == 32);
+      assert(ST->getWavefrontSize() == 32);
       // We are being conservative here.  We only require the work-around if
       // CurrentSubEntries > 7 &&
       // (CurrentSubEntries % 8 == 7 || CurrentSubEntries % 8 == 0)
@@ -118,8 +118,8 @@ unsigned CFStack::getSubEntrySize(CFStack::StackItem Item) {
   default:
     return 0;
   case CFStack::FIRST_NON_WQM_PUSH:
-  assert(!ST.hasCaymanISA());
-  if (ST.getGeneration() <= AMDGPUSubtarget::R700) {
+  assert(!ST->hasCaymanISA());
+  if (ST->getGeneration() <= AMDGPUSubtarget::R700) {
     // +1 For the push operation.
     // +2 Extra space required.
     return 3;
@@ -132,7 +132,7 @@ unsigned CFStack::getSubEntrySize(CFStack::StackItem Item) {
     return 2;
   }
   case CFStack::FIRST_NON_WQM_PUSH_W_FULL_ENTRY:
-    assert(ST.getGeneration() >= AMDGPUSubtarget::EVERGREEN);
+    assert(ST->getGeneration() >= AMDGPUSubtarget::EVERGREEN);
     // +1 For the push operation.
     // +1 Extra space required.
     return 2;
@@ -153,13 +153,14 @@ void CFStack::pushBranch(unsigned Opcode, bool isWQM) {
   case AMDGPU::CF_PUSH_EG:
   case AMDGPU::CF_ALU_PUSH_BEFORE:
     if (!isWQM) {
-      if (!ST.hasCaymanISA() && !branchStackContains(CFStack::FIRST_NON_WQM_PUSH))
+      if (!ST->hasCaymanISA() &&
+          !branchStackContains(CFStack::FIRST_NON_WQM_PUSH))
         Item = CFStack::FIRST_NON_WQM_PUSH;  // May not be required on Evergreen/NI
                                              // See comment in
                                              // CFStack::getSubEntrySize()
       else if (CurrentEntries > 0 &&
-               ST.getGeneration() > AMDGPUSubtarget::EVERGREEN &&
-               !ST.hasCaymanISA() &&
+               ST->getGeneration() > AMDGPUSubtarget::EVERGREEN &&
+               !ST->hasCaymanISA() &&
                !branchStackContains(CFStack::FIRST_NON_WQM_PUSH_W_FULL_ENTRY))
         Item = CFStack::FIRST_NON_WQM_PUSH_W_FULL_ENTRY;
       else
@@ -219,7 +220,7 @@ private:
   const R600InstrInfo *TII;
   const R600RegisterInfo *TRI;
   unsigned MaxFetchInst;
-  const AMDGPUSubtarget &ST;
+  const AMDGPUSubtarget *ST;
 
   bool IsTrivialInst(MachineInstr *MI) const {
     switch (MI->getOpcode()) {
@@ -233,7 +234,7 @@ private:
 
   const MCInstrDesc &getHWInstrDesc(ControlFlowInstruction CFI) const {
     unsigned Opcode = 0;
-    bool isEg = (ST.getGeneration() >= AMDGPUSubtarget::EVERGREEN);
+    bool isEg = (ST->getGeneration() >= AMDGPUSubtarget::EVERGREEN);
     switch (CFI) {
     case CF_TC:
       Opcode = isEg ? AMDGPU::CF_TC_EG : AMDGPU::CF_TC_R600;
@@ -266,7 +267,7 @@ private:
       Opcode = isEg ? AMDGPU::POP_EG : AMDGPU::POP_R600;
       break;
     case CF_END:
-      if (ST.hasCaymanISA()) {
+      if (ST->hasCaymanISA()) {
         Opcode = AMDGPU::CF_END_CM;
         break;
       }
@@ -467,17 +468,14 @@ private:
   }
 
 public:
-  R600ControlFlowFinalizer(TargetMachine &tm) : MachineFunctionPass(ID),
-    TII (nullptr), TRI(nullptr),
-    ST(tm.getSubtarget<AMDGPUSubtarget>()) {
-      const AMDGPUSubtarget &ST = tm.getSubtarget<AMDGPUSubtarget>();
-      MaxFetchInst = ST.getTexVTXClauseSize();
-  }
+  R600ControlFlowFinalizer(TargetMachine &tm)
+      : MachineFunctionPass(ID), TII(nullptr), TRI(nullptr), ST(nullptr) {}
 
   bool runOnMachineFunction(MachineFunction &MF) override {
-    TII = static_cast<const R600InstrInfo *>(MF.getSubtarget().getInstrInfo());
-    TRI = static_cast<const R600RegisterInfo *>(
-        MF.getSubtarget().getRegisterInfo());
+    ST = &MF.getSubtarget<AMDGPUSubtarget>();
+    MaxFetchInst = ST->getTexVTXClauseSize();
+    TII = static_cast<const R600InstrInfo *>(ST->getInstrInfo());
+    TRI = static_cast<const R600RegisterInfo *>(ST->getRegisterInfo());
     R600MachineFunctionInfo *MFI = MF.getInfo<R600MachineFunctionInfo>();
 
     CFStack CFStack(ST, MFI->getShaderType());

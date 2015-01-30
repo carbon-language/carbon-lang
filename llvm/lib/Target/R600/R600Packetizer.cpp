@@ -153,7 +153,7 @@ public:
         TII(static_cast<const R600InstrInfo *>(
             MF.getSubtarget().getInstrInfo())),
         TRI(TII->getRegisterInfo()) {
-    VLIW5 = !MF.getTarget().getSubtarget<AMDGPUSubtarget>().hasCaymanISA();
+    VLIW5 = !MF.getSubtarget<AMDGPUSubtarget>().hasCaymanISA();
   }
 
   // initPacketizerState - initialize some internal flags.
