@@ -488,6 +488,9 @@ bool LTOCodeGenerator::generateObjectFile(raw_ostream &out,
   // Add an appropriate DataLayout instance for this module...
   mergedModule->setDataLayout(TargetMach->getDataLayout());
 
+  passes.add(new DataLayoutPass());
+  TargetMach->addAnalysisPasses(passes);
+
   Triple TargetTriple(TargetMach->getTargetTriple());
   PassManagerBuilder PMB;
   PMB.DisableGVNLoadPRE = DisableGVNLoadPRE;
@@ -501,7 +504,7 @@ bool LTOCodeGenerator::generateObjectFile(raw_ostream &out,
   PMB.VerifyInput = true;
   PMB.VerifyOutput = true;
 
-  PMB.populateLTOPassManager(passes, TargetMach);
+  PMB.populateLTOPassManager(passes);
 
   PassManager codeGenPasses;
 
