@@ -2469,6 +2469,43 @@ def M2_mpyud_nac_lh_s1: T_M2_mpyd_acc <0b01, 1, 1, 1>;
 def M2_mpyud_nac_ll_s1: T_M2_mpyd_acc <0b00, 1, 1, 1>;
 }
 
+//===----------------------------------------------------------------------===//
+// Template Class -- Vector Multipy
+// Used for complex multiply real or imaginary, dual multiply and even halfwords
+//===----------------------------------------------------------------------===//
+class T_M2_vmpy < string opc, bits<3> MajOp, bits<3> MinOp, bit hasShift,
+                  bit isRnd, bit isSat >
+  : MInst <(outs DoubleRegs:$Rdd), (ins DoubleRegs:$Rss, DoubleRegs:$Rtt),
+  "$Rdd = "#opc#"($Rss, $Rtt)"#!if(hasShift,":<<1","")
+                              #!if(isRnd,":rnd","")
+                              #!if(isSat,":sat",""),
+  [] > {
+    bits<5> Rdd;
+    bits<5> Rss;
+    bits<5> Rtt;
+
+    let IClass = 0b1110;
+
+    let Inst{27-24} = 0b1000;
+    let Inst{23-21} = MajOp;
+    let Inst{7-5} = MinOp;
+    let Inst{4-0} = Rdd;
+    let Inst{20-16} = Rss;
+    let Inst{12-8} = Rtt;
+  }
+
+// Vector complex multiply imaginary: Rdd=vcmpyi(Rss,Rtt)[:<<1]:sat
+let Defs = [USR_OVF], isCodeGenOnly = 0 in {
+def M2_vcmpy_s1_sat_i: T_M2_vmpy <"vcmpyi", 0b110, 0b110, 1, 0, 1>;
+def M2_vcmpy_s0_sat_i: T_M2_vmpy <"vcmpyi", 0b010, 0b110, 0, 0, 1>;
+}
+
+// Vector complex multiply real: Rdd=vcmpyr(Rss,Rtt)[:<<1]:sat
+let isCodeGenOnly = 0 in {
+def M2_vcmpy_s1_sat_r: T_M2_vmpy <"vcmpyr", 0b101, 0b110, 1, 0, 1>;
+def M2_vcmpy_s0_sat_r: T_M2_vmpy <"vcmpyr", 0b001, 0b110, 0, 0, 1>;
+}
+
 let hasNewValue = 1, opNewValue = 0 in
 class T_MType_mpy <string mnemonic, bits<4> RegTyBits, RegisterClass RC,
                    bits<3> MajOp, bits<3> MinOp, bit isSat = 0, bit isRnd = 0,
@@ -2494,6 +2531,9 @@ class T_MType_mpy <string mnemonic, bits<4> RegTyBits, RegisterClass RC,
     let Inst{7-5}   = MinOp;
     let Inst{4-0}   = dst;
   }
+
+class T_MType_vrcmpy <string mnemonic, bits<3> MajOp, bits<3> MinOp, bit isHi>
+  : T_MType_mpy <mnemonic, 0b1001, DoubleRegs, MajOp, MinOp, 1, 1, "", 1, isHi>;
 
 class T_MType_dd  <string mnemonic, bits<3> MajOp, bits<3> MinOp,
                    bit isSat = 0, bit isRnd = 0 >
@@ -2524,6 +2564,13 @@ def M2_dpmpyss_rnd_s0 : T_MType_rr1 <"mpy", 0b001, 0b001, 0, 1>;
 let isCodeGenOnly = 0 in {
 def M2_hmmpyh_rs1 : T_MType_rr2 <"mpy", 0b101, 0b100, 1, 1, ".h">;
 def M2_hmmpyl_rs1 : T_MType_rr2 <"mpy", 0b111, 0b100, 1, 1, ".l">;
+}
+
+let isCodeGenOnly = 0 in {
+def M2_cmpyrs_s0  : T_MType_rr2 <"cmpy", 0b001, 0b110, 1, 1>;
+def M2_cmpyrs_s1  : T_MType_rr2 <"cmpy", 0b101, 0b110, 1, 1>;
+def M2_cmpyrsc_s0 : T_MType_rr2 <"cmpy", 0b011, 0b110, 1, 1, "*">;
+def M2_cmpyrsc_s1 : T_MType_rr2 <"cmpy", 0b111, 0b110, 1, 1, "*">;
 }
 
 // V4 Instructions
@@ -2761,6 +2808,55 @@ def A2_vrsadub_acc: T_XTYPE_Vect_acc <"vrsadub", 0b010, 0b010, 0>;
 let isCodeGenOnly = 0 in
 def M2_vabsdiffh: T_XTYPE_Vect_diff<0b011, "vabsdiffh">;
 
+// Vector reduce complex multiply real or imaginary:
+// Rdd[+]=vrcmpy[ir](Rss,Rtt[*])
+let isCodeGenOnly = 0 in {
+def M2_vrcmpyi_s0:  T_XTYPE_Vect <"vrcmpyi", 0b000, 0b000, 0>;
+def M2_vrcmpyi_s0c: T_XTYPE_Vect <"vrcmpyi", 0b010, 0b000, 1>;
+def M2_vrcmaci_s0:  T_XTYPE_Vect_acc <"vrcmpyi", 0b000, 0b000, 0>;
+def M2_vrcmaci_s0c: T_XTYPE_Vect_acc <"vrcmpyi", 0b010, 0b000, 1>;
+}
+
+let isCodeGenOnly = 0 in {
+def M2_vrcmpyr_s0:  T_XTYPE_Vect <"vrcmpyr", 0b000, 0b001, 0>;
+def M2_vrcmpyr_s0c: T_XTYPE_Vect <"vrcmpyr", 0b011, 0b001, 1>;
+def M2_vrcmacr_s0:  T_XTYPE_Vect_acc <"vrcmpyr", 0b000, 0b001, 0>;
+def M2_vrcmacr_s0c: T_XTYPE_Vect_acc <"vrcmpyr", 0b011, 0b001, 1>;
+}
+
+//===----------------------------------------------------------------------===//
+// Template Class -- Vector Multipy with accumulation.
+// Used for complex multiply real or imaginary, dual multiply and even halfwords
+//===----------------------------------------------------------------------===//
+let Defs = [USR_OVF] in
+class T_M2_vmpy_acc_sat < string opc, bits<3> MajOp, bits<3> MinOp,
+                          bit hasShift, bit isRnd >
+  : MInst <(outs DoubleRegs:$Rxx),
+           (ins DoubleRegs:$dst2, DoubleRegs:$Rss, DoubleRegs:$Rtt),
+  "$Rxx += "#opc#"($Rss, $Rtt)"#!if(hasShift,":<<1","")
+                               #!if(isRnd,":rnd","")#":sat",
+  [], "$dst2 = $Rxx",M_tc_3x_SLOT23 > {
+    bits<5> Rxx;
+    bits<5> Rss;
+    bits<5> Rtt;
+
+    let IClass = 0b1110;
+
+    let Inst{27-24} = 0b1010;
+    let Inst{23-21} = MajOp;
+    let Inst{7-5} = MinOp;
+    let Inst{4-0} = Rxx;
+    let Inst{20-16} = Rss;
+    let Inst{12-8} = Rtt;
+  }
+
+// Vector complex multiply real or imaginary with accumulation
+// Rxx+=vcmpy[ir](Rss,Rtt):sat
+let isCodeGenOnly = 0 in {
+def M2_vcmac_s0_sat_r: T_M2_vmpy_acc_sat <"vcmpyr", 0b001, 0b100, 0, 0>;
+def M2_vcmac_s0_sat_i: T_M2_vmpy_acc_sat <"vcmpyi", 0b010, 0b100, 0, 0>;
+}
+
 //===----------------------------------------------------------------------===//
 // Template Class -- Multiply signed/unsigned halfwords with and without
 // saturation and rounding
@@ -2889,6 +2985,47 @@ def M2_dpmpyss_acc_s0 : T_XTYPE_mpy64_acc < "mpy",  "+", 0b000, 0b000, 0, 0, 0>;
 def M2_dpmpyss_nac_s0 : T_XTYPE_mpy64_acc < "mpy",  "-", 0b001, 0b000, 0, 0, 0>;
 def M2_dpmpyuu_acc_s0 : T_XTYPE_mpy64_acc < "mpyu", "+", 0b010, 0b000, 0, 0, 0>;
 def M2_dpmpyuu_nac_s0 : T_XTYPE_mpy64_acc < "mpyu", "-", 0b011, 0b000, 0, 0, 0>;
+}
+// Complex multiply real or imaginary
+// Rxx=cmpy[ir](Rs,Rt)
+let isCodeGenOnly = 0 in {
+def M2_cmpyi_s0 : T_XTYPE_mpy64 < "cmpyi", 0b000, 0b001, 0, 0, 0>;
+def M2_cmpyr_s0 : T_XTYPE_mpy64 < "cmpyr", 0b000, 0b010, 0, 0, 0>;
+}
+
+// Rxx+=cmpy[ir](Rs,Rt)
+let isCodeGenOnly = 0 in {
+def M2_cmaci_s0 : T_XTYPE_mpy64_acc < "cmpyi", "+", 0b000, 0b001, 0, 0, 0>;
+def M2_cmacr_s0 : T_XTYPE_mpy64_acc < "cmpyr", "+", 0b000, 0b010, 0, 0, 0>;
+}
+
+// Complex multiply
+// Rdd=cmpy(Rs,Rt)[:<<]:sat
+let isCodeGenOnly = 0 in {
+def M2_cmpys_s0 : T_XTYPE_mpy64 < "cmpy", 0b000, 0b110, 1, 0, 0>;
+def M2_cmpys_s1 : T_XTYPE_mpy64 < "cmpy", 0b100, 0b110, 1, 1, 0>;
+}
+
+// Rdd=cmpy(Rs,Rt*)[:<<]:sat
+let isCodeGenOnly = 0 in {
+def M2_cmpysc_s0 : T_XTYPE_mpy64 < "cmpy", 0b010, 0b110, 1, 0, 1>;
+def M2_cmpysc_s1 : T_XTYPE_mpy64 < "cmpy", 0b110, 0b110, 1, 1, 1>;
+}
+
+// Rxx[-+]=cmpy(Rs,Rt)[:<<1]:sat
+let isCodeGenOnly = 0 in {
+def M2_cmacs_s0  : T_XTYPE_mpy64_acc < "cmpy", "+", 0b000, 0b110, 1, 0, 0>;
+def M2_cnacs_s0  : T_XTYPE_mpy64_acc < "cmpy", "-", 0b000, 0b111, 1, 0, 0>;
+def M2_cmacs_s1  : T_XTYPE_mpy64_acc < "cmpy", "+", 0b100, 0b110, 1, 1, 0>;
+def M2_cnacs_s1  : T_XTYPE_mpy64_acc < "cmpy", "-", 0b100, 0b111, 1, 1, 0>;
+}
+
+// Rxx[-+]=cmpy(Rs,Rt*)[:<<1]:sat
+let isCodeGenOnly = 0 in {
+def M2_cmacsc_s0 : T_XTYPE_mpy64_acc < "cmpy", "+", 0b010, 0b110, 1, 0, 1>;
+def M2_cnacsc_s0 : T_XTYPE_mpy64_acc < "cmpy", "-", 0b010, 0b111, 1, 0, 1>;
+def M2_cmacsc_s1 : T_XTYPE_mpy64_acc < "cmpy", "+", 0b110, 0b110, 1, 1, 1>;
+def M2_cnacsc_s1 : T_XTYPE_mpy64_acc < "cmpy", "-", 0b110, 0b111, 1, 1, 1>;
 }
 
 def: Pat<(i64 (mul (i64 (anyext (i32 IntRegs:$src1))),
@@ -3740,6 +3877,10 @@ let isCodeGenOnly = 0 in {
 def S2_interleave   : T_S2op_3 <"interleave",   0b11, 0b101>;
 def S2_deinterleave : T_S2op_3 <"deinterleave", 0b11, 0b100>;
 }
+
+// Vector Complex conjugate
+let isCodeGenOnly = 0 in
+def A2_vconj : T_S2op_3 <"vconj", 0b10, 0b111, 1>;
 
 // Vector absolute value halfwords with and without saturation
 // Rdd64=vabsh(Rss64)[:sat]
@@ -5410,6 +5551,31 @@ let Defs = [USR_OVF], isCodeGenOnly = 0 in {
   def S2_asr_r_r_sat : T_S3op_shift32_Sat<"asr", 0b00>;
   def S2_asl_r_r_sat : T_S3op_shift32_Sat<"asl", 0b10>;
 }
+
+let hasNewValue = 1, hasSideEffects = 0 in
+class T_S3op_8 <string opc, bits<3> MinOp, bit isSat, bit isRnd, bit hasShift, bit hasSplat = 0>
+  : SInst < (outs IntRegs:$Rd),
+            (ins DoubleRegs:$Rss, IntRegs:$Rt),
+  "$Rd = "#opc#"($Rss, $Rt"#!if(hasSplat, "*", "")#")"
+                           #!if(hasShift, ":<<1", "")
+                           #!if(isRnd, ":rnd", "")
+                           #!if(isSat, ":sat", ""),
+  [], "", S_3op_tc_1_SLOT23 > {
+    bits<5> Rd;
+    bits<5> Rss;
+    bits<5> Rt;
+
+    let IClass = 0b1100;
+
+    let Inst{27-24} = 0b0101;
+    let Inst{20-16} = Rss;
+    let Inst{12-8}  = Rt;
+    let Inst{7-5}   = MinOp;
+    let Inst{4-0}   = Rd;
+  }
+
+let Defs = [USR_OVF], Itinerary = S_3op_tc_2_SLOT23, isCodeGenOnly = 0 in
+def S2_vcrotate : T_S3op_shiftVect < "vcrotate", 0b11, 0b00>;
 
 //===----------------------------------------------------------------------===//
 // Template class for 'insert bitfield' instructions

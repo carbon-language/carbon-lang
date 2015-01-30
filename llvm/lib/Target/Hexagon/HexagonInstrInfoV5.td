@@ -765,6 +765,12 @@ def S5_asrhub_rnd_sat_goodsyntax
   : SInst <(outs IntRegs:$Rd), (ins DoubleRegs:$Rss, u4Imm:$u4),
   "$Rd = vasrhub($Rss, #$u4):rnd:sat">, Requires<[HasV5T]>;
 
+// Complex multiply 32x16
+let Defs = [USR_OVF], Itinerary = S_3op_tc_3x_SLOT23, isCodeGenOnly = 0 in {
+  def M4_cmpyi_whc : T_S3op_8<"cmpyiwh", 0b101, 1, 1, 1, 1>;
+  def M4_cmpyr_whc : T_S3op_8<"cmpyrwh", 0b111, 1, 1, 1, 1>;
+}
+
 // Classify floating-point value
 let isFP = 1, isCodeGenOnly = 0 in
  def F2_sfclass : T_TEST_BIT_IMM<"sfclass", 0b111>;

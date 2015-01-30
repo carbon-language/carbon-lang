@@ -195,3 +195,62 @@ def : Pat<(callv3nr tglobaladdr:$dst),
       (CALLv3nr tglobaladdr:$dst)>, Requires<[HasV3T]>;
 def : Pat<(callv3nr texternalsym:$dst),
       (CALLv3nr texternalsym:$dst)>, Requires<[HasV3T]>;
+
+//===----------------------------------------------------------------------===//
+// :raw form of vrcmpys:hi/lo insns
+//===----------------------------------------------------------------------===//
+// Vector reduce complex multiply by scalar.
+let Defs = [USR_OVF], hasSideEffects = 0 in
+class T_vrcmpRaw<string HiLo, bits<3>MajOp>:
+  MInst<(outs DoubleRegs:$Rdd),
+         (ins DoubleRegs:$Rss, DoubleRegs:$Rtt),
+         "$Rdd = vrcmpys($Rss, $Rtt):<<1:sat:raw:"#HiLo, []> {
+    bits<5> Rdd;
+    bits<5> Rss;
+    bits<5> Rtt;
+
+    let IClass = 0b1110;
+
+    let Inst{27-24} = 0b1000;
+    let Inst{23-21} = MajOp;
+    let Inst{20-16} = Rss;
+    let Inst{12-8}  = Rtt;
+    let Inst{7-5}   = 0b100;
+    let Inst{4-0}   = Rdd;
+}
+
+let isCodeGenOnly = 0 in {
+def M2_vrcmpys_s1_h: T_vrcmpRaw<"hi", 0b101>;
+def M2_vrcmpys_s1_l: T_vrcmpRaw<"lo", 0b111>;
+}
+
+// Vector reduce complex multiply by scalar with accumulation.
+let Defs = [USR_OVF], hasSideEffects = 0 in
+class T_vrcmpys_acc<string HiLo, bits<3>MajOp>:
+  MInst <(outs DoubleRegs:$Rxx),
+         (ins DoubleRegs:$_src_, DoubleRegs:$Rss, DoubleRegs:$Rtt),
+  "$Rxx += vrcmpys($Rss, $Rtt):<<1:sat:raw:"#HiLo, [],
+  "$Rxx = $_src_"> {
+    bits<5> Rxx;
+    bits<5> Rss;
+    bits<5> Rtt;
+
+    let IClass = 0b1110;
+
+    let Inst{27-24} = 0b1010;
+    let Inst{23-21} = MajOp;
+    let Inst{20-16} = Rss;
+    let Inst{12-8}  = Rtt;
+    let Inst{7-5}   = 0b100;
+    let Inst{4-0}   = Rxx;
+  }
+
+let isCodeGenOnly = 0 in {
+def M2_vrcmpys_acc_s1_h: T_vrcmpys_acc<"hi", 0b101>;
+def M2_vrcmpys_acc_s1_l: T_vrcmpys_acc<"lo", 0b111>;
+}
+
+let isCodeGenOnly = 0 in {
+def M2_vrcmpys_s1rp_h : T_MType_vrcmpy <"vrcmpys", 0b101, 0b110, 1>;
+def M2_vrcmpys_s1rp_l : T_MType_vrcmpy <"vrcmpys", 0b101, 0b111, 0>;
+}

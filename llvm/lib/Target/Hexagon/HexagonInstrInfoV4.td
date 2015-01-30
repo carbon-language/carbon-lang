@@ -1741,6 +1741,19 @@ let hasNewValue = 1, isCodeGenOnly = 0 in {
   def S4_extract    : T_S2op_extract <"extract",  0b1101, IntRegs, u5Imm>;
 }
 
+// Complex add/sub halfwords/words
+let Defs = [USR_OVF], isCodeGenOnly = 0 in {
+  def S4_vxaddsubh : T_S3op_64 < "vxaddsubh", 0b01, 0b100, 0, 1>;
+  def S4_vxaddsubw : T_S3op_64 < "vxaddsubw", 0b01, 0b000, 0, 1>;
+  def S4_vxsubaddh : T_S3op_64 < "vxsubaddh", 0b01, 0b110, 0, 1>;
+  def S4_vxsubaddw : T_S3op_64 < "vxsubaddw", 0b01, 0b010, 0, 1>;
+}
+
+let Defs = [USR_OVF], isCodeGenOnly = 0 in {
+  def S4_vxaddsubhr : T_S3op_64 < "vxaddsubh", 0b11, 0b000, 0, 1, 1, 1>;
+  def S4_vxsubaddhr : T_S3op_64 < "vxsubaddh", 0b11, 0b010, 0, 1, 1, 1>;
+}
+
 let Itinerary = M_tc_3x_SLOT23, Defs = [USR_OVF], isCodeGenOnly = 0 in {
   def M4_mac_up_s1_sat: T_MType_acc_rr<"+= mpy", 0b011, 0b000, 0, [], 0, 1, 1>;
   def M4_nac_up_s1_sat: T_MType_acc_rr<"-= mpy", 0b011, 0b001, 0, [], 0, 1, 1>;
@@ -1766,6 +1779,53 @@ def M4_xor_xacc
     let Inst{27-23} = 0b10101;
     let Inst{20-16} = Rss;
     let Inst{12-8}  = Rtt;
+    let Inst{4-0}   = Rxx;
+  }
+
+// Rotate and reduce bytes
+// Rdd=vrcrotate(Rss,Rt,#u2)
+let hasSideEffects = 0, isCodeGenOnly = 0 in
+def S4_vrcrotate
+  : SInst <(outs DoubleRegs:$Rdd),
+           (ins DoubleRegs:$Rss, IntRegs:$Rt, u2Imm:$u2),
+  "$Rdd = vrcrotate($Rss, $Rt, #$u2)",
+  [], "", S_3op_tc_3x_SLOT23> {
+    bits<5> Rdd;
+    bits<5> Rss;
+    bits<5> Rt;
+    bits<2> u2;
+
+    let IClass = 0b1100;
+
+    let Inst{27-22} = 0b001111;
+    let Inst{20-16} = Rss;
+    let Inst{13}    = u2{1};
+    let Inst{12-8}  = Rt;
+    let Inst{7-6}   = 0b11;
+    let Inst{5}     = u2{0};
+    let Inst{4-0}   = Rdd;
+  }
+
+// Rotate and reduce bytes with accumulation
+// Rxx+=vrcrotate(Rss,Rt,#u2)
+let hasSideEffects = 0, isCodeGenOnly = 0 in
+def S4_vrcrotate_acc
+  : SInst <(outs DoubleRegs:$Rxx),
+           (ins DoubleRegs:$dst2, DoubleRegs:$Rss, IntRegs:$Rt, u2Imm:$u2),
+  "$Rxx += vrcrotate($Rss, $Rt, #$u2)", [],
+  "$dst2 = $Rxx", S_3op_tc_3x_SLOT23> {
+    bits<5> Rxx;
+    bits<5> Rss;
+    bits<5> Rt;
+    bits<2> u2;
+
+    let IClass = 0b1100;
+
+    let Inst{27-21} = 0b1011101;
+    let Inst{20-16} = Rss;
+    let Inst{13}    = u2{1};
+    let Inst{12-8}  = Rt;
+    let Inst{5}     = u2{0};
     let Inst{4-0}   = Rxx;
   }
 
@@ -2283,6 +2343,12 @@ let hasNewValue = 1, Itinerary = S_3op_tc_2_SLOT23, isCodeGenOnly = 0 in {
 let hasNewValue = 1, Defs = [USR_OVF], Itinerary = S_3op_tc_2_SLOT23,
     isCodeGenOnly = 0 in
 def A4_round_rr_sat : T_S3op_3 < "round", IntRegs, 0b11, 0b11, 1>;
+
+// Rd=[cmpyiwh|cmpyrwh](Rss,Rt):<<1:rnd:sat
+let Defs = [USR_OVF], Itinerary = S_3op_tc_3x_SLOT23, isCodeGenOnly = 0 in {
+  def M4_cmpyi_wh     : T_S3op_8<"cmpyiwh", 0b100, 1, 1, 1>;
+  def M4_cmpyr_wh     : T_S3op_8<"cmpyrwh", 0b110, 1, 1, 1>;
+}
 
 // Rdd=[add|sub](Rss,Rtt,Px):carry
 let isPredicateLate = 1, hasSideEffects = 0 in
