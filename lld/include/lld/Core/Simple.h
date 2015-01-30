@@ -25,6 +25,18 @@
 
 namespace lld {
 
+// Copy all atoms from src to dst. Atom ownership is not transferred.
+inline void copyAtoms(MutableFile *dst, File *src) {
+  for (const DefinedAtom *atom : src->defined())
+    dst->addAtom(*atom);
+  for (const UndefinedAtom *atom : src->undefined())
+    dst->addAtom(*atom);
+  for (const SharedLibraryAtom *atom : src->sharedLibrary())
+    dst->addAtom(*atom);
+  for (const AbsoluteAtom *atom : src->absolute())
+    dst->addAtom(*atom);
+}
+
 class SimpleFile : public MutableFile {
 public:
   SimpleFile(StringRef path) : MutableFile(path) {}
@@ -75,20 +87,6 @@ protected:
   atom_collection_vector<UndefinedAtom>      _undefinedAtoms;
   atom_collection_vector<SharedLibraryAtom>  _sharedLibraryAtoms;
   atom_collection_vector<AbsoluteAtom>       _absoluteAtoms;
-};
-
-class SimpleFileWrapper : public SimpleFile {
-public:
-  SimpleFileWrapper(const File &file) : SimpleFile(file.path()) {
-    for (const DefinedAtom *atom : file.defined())
-      _definedAtoms._atoms.push_back(atom);
-    for (const UndefinedAtom *atom : file.undefined())
-      _undefinedAtoms._atoms.push_back(atom);
-    for (const SharedLibraryAtom *atom : file.sharedLibrary())
-      _sharedLibraryAtoms._atoms.push_back(atom);
-    for (const AbsoluteAtom *atom : file.absolute())
-      _absoluteAtoms._atoms.push_back(atom);
-  }
 };
 
 class SimpleReference : public Reference {

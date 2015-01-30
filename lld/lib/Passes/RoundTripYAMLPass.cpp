@@ -49,6 +49,7 @@ void RoundTripYAMLPass::perform(std::unique_ptr<MutableFile> &mergedFile) {
   File *objFile = _yamlFile[0].get();
   if (objFile->parse())
     llvm_unreachable("native reader parse error");
-  mergedFile.reset(new SimpleFileWrapper(*objFile));
+  mergedFile.reset(new SimpleFile(objFile->path()));
+  copyAtoms(mergedFile.get(), objFile);
   llvm::sys::fs::remove(tmpYAMLFile.str());
 }
