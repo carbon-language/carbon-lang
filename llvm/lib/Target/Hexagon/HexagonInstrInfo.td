@@ -1741,6 +1741,16 @@ defm loadri: LD_Idxd <"memw", "LDriw", IntRegs, s11_2Ext, u6_2Ext, 0b1100>;
 let accessSize = DoubleWordAccess, opExtentAlign = 3, isCodeGenOnly = 0 in
 defm loadrd: LD_Idxd <"memd", "LDrid", DoubleRegs, s11_3Ext, u6_3Ext, 0b1110>;
 
+let accessSize = HalfWordAccess, opExtentAlign = 1, isCodeGenOnly = 0 in {
+  def L2_loadbsw2_io:   T_load_io<"membh",  IntRegs, 0b0001, s11_1Ext>;
+  def L2_loadbzw2_io:   T_load_io<"memubh", IntRegs, 0b0011, s11_1Ext>;
+}
+
+let accessSize = WordAccess, opExtentAlign = 2, isCodeGenOnly = 0 in {
+  def L2_loadbzw4_io: T_load_io<"memubh", DoubleRegs, 0b0101, s11_2Ext>;
+  def L2_loadbsw4_io: T_load_io<"membh",  DoubleRegs, 0b0111, s11_2Ext>;
+}
+
 // Patterns to select load-indexed (i.e. load from base+offset).
 multiclass Loadx_pat<PatFrag Load, ValueType VT, PatLeaf ImmPred,
                      InstHexagon MI> {
@@ -1895,6 +1905,18 @@ defm loadri : LD_PostInc <"memw", "LDriw", IntRegs, s4_2Imm, 0b1100>;
 let accessSize = DoubleWordAccess, opExtentAlign = 3, isCodeGenOnly = 0 in
 defm loadrd : LD_PostInc <"memd", "LDrid", DoubleRegs, s4_3Imm, 0b1110>;
 
+// Rd=memb[u]h(Rx++#s4:1)
+// Rdd=memb[u]h(Rx++#s4:2)
+let accessSize = HalfWordAccess, opExtentAlign = 1, isCodeGenOnly = 0 in {
+  def L2_loadbsw2_pi   : T_load_pi <"membh", IntRegs, s4_1Imm, 0b0001>;
+  def L2_loadbzw2_pi   : T_load_pi <"memubh", IntRegs, s4_1Imm, 0b0011>;
+}
+let accessSize = WordAccess, opExtentAlign = 2, hasNewValue = 0,
+    isCodeGenOnly = 0 in {
+  def L2_loadbsw4_pi   : T_load_pi <"membh", DoubleRegs, s4_2Imm, 0b0111>;
+  def L2_loadbzw4_pi   : T_load_pi <"memubh", DoubleRegs, s4_2Imm, 0b0101>;
+}
+
 //===----------------------------------------------------------------------===//
 // Template class for post increment loads with register offset.
 //===----------------------------------------------------------------------===//
@@ -1927,10 +1949,14 @@ let hasNewValue = 1, isCodeGenOnly = 0 in {
   def L2_loadrh_pr  : T_load_pr <"memh",  IntRegs, 0b1010, HalfWordAccess>;
   def L2_loadruh_pr : T_load_pr <"memuh", IntRegs, 0b1011, HalfWordAccess>;
   def L2_loadri_pr  : T_load_pr <"memw",  IntRegs, 0b1100, WordAccess>;
+
+  def L2_loadbzw2_pr : T_load_pr <"memubh", IntRegs, 0b0011, HalfWordAccess>;
 }
 
-let isCodeGenOnly = 0 in
+let isCodeGenOnly = 0 in {
 def L2_loadrd_pr   : T_load_pr <"memd", DoubleRegs, 0b1110, DoubleWordAccess>;
+def L2_loadbzw4_pr : T_load_pr <"memubh", DoubleRegs, 0b0101, WordAccess>;
+}
 
 // Load predicate.
 let isExtendable = 1, opExtendable = 2, isExtentSigned = 1, opExtentBits = 13,
@@ -1982,10 +2008,16 @@ let accessSize = ByteAccess, isCodeGenOnly = 0 in {
 let accessSize = HalfWordAccess, isCodeGenOnly = 0 in {
   def L2_loadrh_pcr   : T_load_pcr <"memh",   IntRegs, 0b1010>;
   def L2_loadruh_pcr  : T_load_pcr <"memuh",  IntRegs, 0b1011>;
+  def L2_loadbsw2_pcr : T_load_pcr <"membh",  IntRegs, 0b0001>;
+  def L2_loadbzw2_pcr : T_load_pcr <"memubh", IntRegs, 0b0011>;
 }
 
 let accessSize = WordAccess, isCodeGenOnly = 0 in {
   def  L2_loadri_pcr  : T_load_pcr <"memw", IntRegs, 0b1100>;
+  let hasNewValue = 0 in {
+    def L2_loadbzw4_pcr : T_load_pcr <"memubh", DoubleRegs, 0b0101>;
+    def L2_loadbsw4_pcr : T_load_pcr <"membh",  DoubleRegs, 0b0111>;
+  }
 }
 
 let accessSize = DoubleWordAccess, isCodeGenOnly = 0 in
@@ -2033,11 +2065,18 @@ let accessSize = ByteAccess, isCodeGenOnly = 0 in {
 let accessSize = HalfWordAccess, isCodeGenOnly = 0 in {
   def L2_loadrh_pci   : T_load_pci <"memh",   IntRegs, s4_1Imm, 0b1010>;
   def L2_loadruh_pci  : T_load_pci <"memuh",  IntRegs, s4_1Imm, 0b1011>;
+  def L2_loadbzw2_pci : T_load_pci <"memubh", IntRegs, s4_1Imm, 0b0011>;
+  def L2_loadbsw2_pci : T_load_pci <"membh",  IntRegs, s4_1Imm, 0b0001>;
 }
 
 // Word variants of circ load
 let accessSize = WordAccess, isCodeGenOnly = 0 in
 def L2_loadri_pci   : T_load_pci <"memw",   IntRegs,    s4_2Imm, 0b1100>;
+
+let accessSize = WordAccess, hasNewValue = 0, isCodeGenOnly = 0 in {
+  def L2_loadbzw4_pci : T_load_pci <"memubh", DoubleRegs, s4_2Imm, 0b0101>;
+  def L2_loadbsw4_pci : T_load_pci <"membh",  DoubleRegs, s4_2Imm, 0b0111>;
+}
 
 let accessSize = DoubleWordAccess, hasNewValue = 0, isCodeGenOnly = 0 in
 def L2_loadrd_pci : T_load_pci <"memd", DoubleRegs, s4_3Imm, 0b1110>;
@@ -2094,11 +2133,16 @@ let hasNewValue =1, opNewValue = 0, isCodeGenOnly = 0 in {
   def L2_loadrub_pbr  : T_load_pbr <"memub", IntRegs, ByteAccess, 0b1001>;
   def L2_loadrh_pbr   : T_load_pbr <"memh",  IntRegs, HalfWordAccess, 0b1010>;
   def L2_loadruh_pbr  : T_load_pbr <"memuh", IntRegs, HalfWordAccess, 0b1011>;
+  def L2_loadbsw2_pbr : T_load_pbr <"membh", IntRegs, HalfWordAccess, 0b0001>;
+  def L2_loadbzw2_pbr : T_load_pbr <"memubh", IntRegs, HalfWordAccess, 0b0011>;
   def L2_loadri_pbr : T_load_pbr <"memw", IntRegs, WordAccess, 0b1100>;
 }
 
-let isCodeGenOnly = 0 in
+let isCodeGenOnly = 0 in {
+def L2_loadbzw4_pbr : T_load_pbr <"memubh", DoubleRegs, WordAccess, 0b0101>;
+def L2_loadbsw4_pbr : T_load_pbr <"membh",  DoubleRegs, WordAccess, 0b0111>;
 def L2_loadrd_pbr : T_load_pbr <"memd", DoubleRegs, DoubleWordAccess, 0b1110>;
+}
 
 //===----------------------------------------------------------------------===//
 // LD -

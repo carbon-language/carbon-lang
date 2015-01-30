@@ -335,21 +335,43 @@ def A4_combineii: ALU32Inst<(outs DoubleRegs:$Rdd), (ins s8Imm:$s8, u6Ext:$U6),
 //===----------------------------------------------------------------------===//
 // Template class for load instructions with Absolute set addressing mode.
 //===----------------------------------------------------------------------===//
-let isExtended = 1, opExtendable = 2, hasSideEffects = 0,
-validSubTargets = HasV4SubT, addrMode = AbsoluteSet in
-class T_LD_abs_set<string mnemonic, RegisterClass RC>:
-            LDInst2<(outs RC:$dst1, IntRegs:$dst2),
-            (ins u0AlwaysExt:$addr),
-            "$dst1 = "#mnemonic#"($dst2=##$addr)",
-            []>,
-            Requires<[HasV4T]>;
+let isExtended = 1, opExtendable = 2, opExtentBits = 6, addrMode = AbsoluteSet,
+    hasSideEffects = 0 in
+class T_LD_abs_set<string mnemonic, RegisterClass RC, bits<4>MajOp>:
+            LDInst<(outs RC:$dst1, IntRegs:$dst2),
+            (ins u6Ext:$addr),
+            "$dst1 = "#mnemonic#"($dst2 = #$addr)",
+            []> {
+  bits<7> name;
+  bits<5> dst1;
+  bits<5> dst2;
+  bits<6> addr;
 
-def LDrid_abs_set_V4  : T_LD_abs_set <"memd", DoubleRegs>;
-def LDrib_abs_set_V4  : T_LD_abs_set <"memb", IntRegs>;
-def LDriub_abs_set_V4 : T_LD_abs_set <"memub", IntRegs>;
-def LDrih_abs_set_V4  : T_LD_abs_set <"memh", IntRegs>;
-def LDriw_abs_set_V4  : T_LD_abs_set <"memw", IntRegs>;
-def LDriuh_abs_set_V4 : T_LD_abs_set <"memuh", IntRegs>;
+  let IClass = 0b1001;
+  let Inst{27-25} = 0b101;
+  let Inst{24-21} = MajOp;
+  let Inst{13-12} = 0b01;
+  let Inst{4-0}   = dst1;
+  let Inst{20-16} = dst2;
+  let Inst{11-8}  = addr{5-2};
+  let Inst{6-5}   = addr{1-0};
+}
+
+let accessSize = ByteAccess, hasNewValue = 1, isCodeGenOnly = 0 in {
+  def L4_loadrb_ap   : T_LD_abs_set <"memb",   IntRegs, 0b1000>;
+  def L4_loadrub_ap  : T_LD_abs_set <"memub",  IntRegs, 0b1001>;
+}
+
+let accessSize = HalfWordAccess, hasNewValue = 1, isCodeGenOnly = 0 in {
+  def L4_loadrh_ap  : T_LD_abs_set <"memh",  IntRegs, 0b1010>;
+  def L4_loadruh_ap : T_LD_abs_set <"memuh", IntRegs, 0b1011>;
+}
+
+let accessSize = WordAccess, hasNewValue = 1, isCodeGenOnly = 0 in
+  def L4_loadri_ap : T_LD_abs_set <"memw", IntRegs, 0b1100>;
+
+let accessSize = DoubleWordAccess, isCodeGenOnly = 0 in
+def L4_loadrd_ap : T_LD_abs_set <"memd", DoubleRegs, 0b1110>;
 
 //===----------------------------------------------------------------------===//
 // Template classes for the non-predicated load instructions with
@@ -1198,6 +1220,16 @@ let addrMode = BaseImmOffset, InputType = "imm", isCodeGenOnly = 0 in {
   defm storeri: ST_Idxd_nv<"memw", "STriw", IntRegs, s11_2Ext,
                            u6_2Ext, 0b10>, AddrModeRel;
 }
+
+//===----------------------------------------------------------------------===//
+// Post increment loads with register offset.
+//===----------------------------------------------------------------------===//
+
+let hasNewValue = 1, isCodeGenOnly = 0 in
+def L2_loadbsw2_pr : T_load_pr <"membh", IntRegs, 0b0001, HalfWordAccess>;
+
+let isCodeGenOnly = 0 in
+def L2_loadbsw4_pr : T_load_pr <"membh", DoubleRegs, 0b0111, WordAccess>;
 
 //===----------------------------------------------------------------------===//
 // Template class for non-predicated post increment .new stores

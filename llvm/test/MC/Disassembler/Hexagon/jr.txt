@@ -1,11 +1,19 @@
 # RUN: llvm-mc -triple hexagon -disassemble < %s | FileCheck %s
+# Hexagon Programmer's Reference Manual 11.3 JR
 
+# Call subroutine from register
 0x00 0xc0 0xb5 0x50
 # CHECK: callr r21
 0x00 0xc1 0x15 0x51
 # CHECK: if (p1) callr r21
 0x00 0xc3 0x35 0x51
 # CHECK: if (!p3) callr r21
+
+# Hint an indirect jump address
+0x00 0xc0 0xb5 0x52
+# CHECK: hintjr(r21)
+
+# Jump to address from register
 0x00 0xc0 0x95 0x52
 # CHECK: jumpr r21
 0x00 0xc1 0x55 0x53
