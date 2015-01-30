@@ -3968,8 +3968,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     // explicitly passed, error out. Otherwise enable rtti and emit a
     // warning.
     if (Triple.isPS4CPU()) {
-      if (Arg *A = Args.getLastArg(options::OPT_fcxx_exceptions,
-                                   options::OPT_fexceptions)) {
+      if (Arg *A = Args.getLastArg(options::OPT_fcxx_exceptions)) {
         if (NoRTTIArg)
           D.Diag(diag::err_drv_argument_not_allowed_with)
               << NoRTTIArg->getAsString(Args) << A->getAsString(Args);
