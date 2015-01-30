@@ -6,6 +6,7 @@ void f0(int i, int j = 2, int k);
 void f0(int i, int j, int k);
 void f0(int i = 1, // expected-note{{previous definition}}
         int j, int k);
+void f0(int i, int j, int k);   // want 2 decls before next default arg
 void f0(int i, int j, int k);
 
 namespace N0 {
