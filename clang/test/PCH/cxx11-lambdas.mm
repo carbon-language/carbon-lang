@@ -52,6 +52,6 @@ int add(int x, int y) {
 // CHECK-PRINT: lambda = [&] (int z)
 
 // CHECK-PRINT: init_capture
-// CHECK-PRINT: [&, x( t )]
+// CHECK-PRINT: [&, x(t)]
 
 #endif
