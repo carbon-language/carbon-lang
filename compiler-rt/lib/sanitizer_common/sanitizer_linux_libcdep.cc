@@ -120,17 +120,6 @@ void GetThreadStackTopAndBottom(bool at_initialization, uptr *stack_top,
   *stack_bottom = (uptr)stackaddr;
 }
 
-bool SetEnv(const char *name, const char *value) {
-  void *f = dlsym(RTLD_NEXT, "setenv");
-  if (f == 0)
-    return false;
-  typedef int(*setenv_ft)(const char *name, const char *value, int overwrite);
-  setenv_ft setenv_f;
-  CHECK_EQ(sizeof(setenv_f), sizeof(f));
-  internal_memcpy(&setenv_f, &f, sizeof(f));
-  return setenv_f(name, value, 1) == 0;
-}
-
 bool SanitizerSetThreadName(const char *name) {
 #ifdef PR_SET_NAME
   return 0 == prctl(PR_SET_NAME, (unsigned long)name, 0, 0, 0);  // NOLINT
