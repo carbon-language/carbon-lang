@@ -9229,6 +9229,7 @@ static const struct {
 /// parseDirectiveFPU
 ///  ::= .fpu str
 bool ARMAsmParser::parseDirectiveFPU(SMLoc L) {
+  SMLoc FPUNameLoc = getTok().getLoc();
   StringRef FPU = getParser().parseStringToEndOfStatement().trim();
 
   unsigned ID = StringSwitch<unsigned>(FPU)
@@ -9237,7 +9238,7 @@ bool ARMAsmParser::parseDirectiveFPU(SMLoc L) {
     .Default(ARM::INVALID_FPU);
 
   if (ID == ARM::INVALID_FPU) {
-    Error(L, "Unknown FPU name");
+    Error(FPUNameLoc, "Unknown FPU name");
     return false;
   }
 
