@@ -79,6 +79,7 @@ check_symbol_exists(FE_INEXACT "fenv.h" HAVE_DECL_FE_INEXACT)
 
 check_include_file(mach/mach.h HAVE_MACH_MACH_H)
 check_include_file(mach-o/dyld.h HAVE_MACH_O_DYLD_H)
+check_include_file(histedit.h HAVE_HISTEDIT_H)
 
 # size_t must be defined before including cxxabi.h on FreeBSD 10.0.
 check_cxx_source_compiles("
@@ -110,7 +111,9 @@ if( NOT PURE_WINDOWS )
   else()
     set(HAVE_LIBZ 0)
   endif()
-  check_library_exists(edit el_init "" HAVE_LIBEDIT)
+  if (HAVE_HISTEDIT_H)
+    check_library_exists(edit el_init "" HAVE_LIBEDIT)
+  endif()
   if(LLVM_ENABLE_TERMINFO)
     set(HAVE_TERMINFO 0)
     foreach(library tinfo terminfo curses ncurses ncursesw)
