@@ -18,7 +18,7 @@ LINK_COMPONENTS := mcjit interpreter nativecodegen bitreader asmparser irreader 
 # Events interface library.  If not, this tool will do nothing useful, but it
 # will build correctly.
 ifeq ($(USE_INTEL_JITEVENTS), 1)
-  LINK_COMPONENTS += debuginfo inteljitevents
+  LINK_COMPONENTS += debuginfodwarf inteljitevents
 endif
 
 # This tool has no plugins, optimize startup time.

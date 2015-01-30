@@ -19,7 +19,7 @@ LINK_COMPONENTS := mcjit orcjit instrumentation interpreter nativecodegen bitrea
 # If Intel JIT Events support is confiured, link against the LLVM Intel JIT
 # Events interface library
 ifeq ($(USE_INTEL_JITEVENTS), 1)
-  LINK_COMPONENTS += debuginfo inteljitevents object
+  LINK_COMPONENTS += debuginfodwarf inteljitevents object
 endif
 
 # If oprofile support is confiured, link against the LLVM oprofile interface
