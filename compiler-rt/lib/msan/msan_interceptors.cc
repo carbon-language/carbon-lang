@@ -952,7 +952,7 @@ INTERCEPTOR(SSIZE_T, recvfrom, int fd, void *buf, SIZE_T len, int flags,
     __msan_unpoison(buf, res);
     if (srcaddr) {
       SIZE_T sz = *addrlen;
-      __msan_unpoison(srcaddr, (sz < srcaddr_sz) ? sz : srcaddr_sz);
+      __msan_unpoison(srcaddr, Min(sz, srcaddr_sz));
     }
   }
   return res;
