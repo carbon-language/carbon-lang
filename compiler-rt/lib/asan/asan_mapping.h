@@ -59,12 +59,19 @@
 // || `[0x20000000, 0x23ffffff]` || LowShadow  ||
 // || `[0x00000000, 0x1fffffff]` || LowMem     ||
 //
-// Default Linux/MIPS mapping:
+// Default Linux/MIPS32 mapping:
 // || `[0x2aaa0000, 0xffffffff]` || HighMem    ||
 // || `[0x0fff4000, 0x2aa9ffff]` || HighShadow ||
 // || `[0x0bff4000, 0x0fff3fff]` || ShadowGap  ||
 // || `[0x0aaa0000, 0x0bff3fff]` || LowShadow  ||
 // || `[0x00000000, 0x0aa9ffff]` || LowMem     ||
+//
+// Default Linux/MIPS64 mapping:
+// || `[0x4000000000, 0xffffffffff]` || HighMem    ||
+// || `[0x2800000000, 0x3fffffffff]` || HighShadow ||
+// || `[0x2400000000, 0x27ffffffff]` || ShadowGap  ||
+// || `[0x2000000000, 0x23ffffffff]` || LowShadow  ||
+// || `[0x0000000000, 0x1fffffffff]` || LowMem     ||
 //
 // Shadow mapping on FreeBSD/x86-64 with SHADOW_OFFSET == 0x400000000000:
 // || `[0x500000000000, 0x7fffffffffff]` || HighMem    ||
@@ -96,7 +103,7 @@ static const u64 kDefaultShadowOffset64 = 1ULL << 44;
 static const u64 kDefaultShort64bitShadowOffset = 0x7FFF8000;  // < 2G.
 static const u64 kAArch64_ShadowOffset64 = 1ULL << 36;
 static const u64 kMIPS32_ShadowOffset32 = 0x0aaa0000;
-static const u64 kMIPS64_ShadowOffset64 = 1ULL << 36;
+static const u64 kMIPS64_ShadowOffset64 = 1ULL << 37;
 static const u64 kPPC64_ShadowOffset64 = 1ULL << 41;
 static const u64 kFreeBSD_ShadowOffset32 = 1ULL << 30;  // 0x40000000
 static const u64 kFreeBSD_ShadowOffset64 = 1ULL << 46;  // 0x400000000000
