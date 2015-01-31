@@ -202,33 +202,12 @@ static SDValue Concat256BitVectors(SDValue V1, SDValue V2, EVT VT,
   return Insert256BitVector(V, V2, NumElems/2, DAG, dl);
 }
 
-// FIXME: This should stop caching the target machine as soon as
-// we can remove resetOperationActions et al.
 X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM)
     : TargetLowering(TM) {
   Subtarget = &TM.getSubtarget<X86Subtarget>();
   X86ScalarSSEf64 = Subtarget->hasSSE2();
   X86ScalarSSEf32 = Subtarget->hasSSE1();
   TD = getDataLayout();
-
-  resetOperationActions();
-}
-
-void X86TargetLowering::resetOperationActions() {
-  const TargetMachine &TM = getTargetMachine();
-  static bool FirstTimeThrough = true;
-
-  // If none of the target options have changed, then we don't need to reset the
-  // operation actions.
-  if (!FirstTimeThrough && TO == TM.Options) return;
-
-  if (!FirstTimeThrough) {
-    // Reinitialize the actions.
-    initActions();
-    FirstTimeThrough = false;
-  }
-
-  TO = TM.Options;
 
   // Set up the TargetLowering object.
   static const MVT IntVTs[] = { MVT::i8, MVT::i16, MVT::i32, MVT::i64 };

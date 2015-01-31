@@ -834,9 +834,6 @@ namespace llvm {
 
     bool isNoopAddrSpaceCast(unsigned SrcAS, unsigned DestAS) const override;
 
-    /// \brief Reset the operation actions based on target options.
-    void resetOperationActions() override;
-
     bool useLoadStackGuardNode() const override;
     /// \brief Customize the preferred legalization strategy for certain types.
     LegalizeTypeAction getPreferredVectorAction(EVT VT) const override;
@@ -850,10 +847,6 @@ namespace llvm {
     /// make the right decision when generating code for different targets.
     const X86Subtarget *Subtarget;
     const DataLayout *TD;
-
-    /// Used to store the TargetOptions so that we don't waste time resetting
-    /// the operation actions unless we have to.
-    TargetOptions TO;
 
     /// Select between SSE or x87 floating point ops.
     /// When SSE is available, use it for f32 operations.
