@@ -12,12 +12,12 @@
 //===----------------------------------------------------------------------===//
 
 class SystemZFeature<string extname, string intname, string desc>
-  : Predicate<"Subtarget.has"##intname##"()">,
+  : Predicate<"Subtarget->has"##intname##"()">,
     AssemblerPredicate<"Feature"##intname, extname>,
     SubtargetFeature<extname, "Has"##intname, "true", desc>;
 
 class SystemZMissingFeature<string intname>
-  : Predicate<"!Subtarget.has"##intname##"()">;
+  : Predicate<"!Subtarget->has"##intname##"()">;
 
 def FeatureDistinctOps : SystemZFeature<
   "distinct-ops", "DistinctOps",

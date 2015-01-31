@@ -45,7 +45,7 @@ SystemZSubtarget::SystemZSubtarget(const std::string &TT,
       HasLoadStoreOnCond(false), HasHighWord(false), HasFPExtension(false),
       HasFastSerialization(false), HasInterlockedAccess1(false),
       TargetTriple(TT), InstrInfo(initializeSubtargetDependencies(CPU, FS)),
-      TLInfo(TM), TSInfo(*TM.getDataLayout()), FrameLowering() {}
+      TLInfo(TM, *this), TSInfo(*TM.getDataLayout()), FrameLowering() {}
 
 // Return true if GV binds locally under reloc model RM.
 static bool bindsLocally(const GlobalValue *GV, Reloc::Model RM) {
