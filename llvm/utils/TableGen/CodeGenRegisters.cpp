@@ -17,7 +17,6 @@
 #include "llvm/ADT/IntEqClasses.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallVector.h"
-#include "llvm/ADT/SparseBitVector.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/Debug.h"
@@ -109,7 +108,6 @@ CodeGenRegister::CodeGenRegister(Record *R, unsigned Enum)
     EnumValue(Enum),
     CostPerUse(R->getValueAsInt("CostPerUse")),
     CoveredBySubRegs(R->getValueAsBit("CoveredBySubRegs")),
-    NumNativeRegUnits(0),
     SubRegsComplete(false),
     SuperRegsComplete(false),
     TopoSig(~0u)
@@ -155,7 +153,7 @@ namespace {
 // Iterate over all register units in a set of registers.
 class RegUnitIterator {
   CodeGenRegister::Set::const_iterator RegI, RegE;
-  CodeGenRegister::RegUnitList::const_iterator UnitI, UnitE;
+  CodeGenRegister::RegUnitList::iterator UnitI, UnitE;
 
 public:
   RegUnitIterator(const CodeGenRegister::Set &Regs):
@@ -193,44 +191,23 @@ protected:
 };
 } // namespace
 
-// Merge two RegUnitLists maintaining the order and removing duplicates.
-// Overwrites MergedRU in the process.
-static void mergeRegUnits(CodeGenRegister::RegUnitList &MergedRU,
-                          const CodeGenRegister::RegUnitList &RRU) {
-  CodeGenRegister::RegUnitList LRU = MergedRU;
-  MergedRU.clear();
-  std::set_union(LRU.begin(), LRU.end(), RRU.begin(), RRU.end(),
-                 std::back_inserter(MergedRU));
-}
-
 // Return true of this unit appears in RegUnits.
 static bool hasRegUnit(CodeGenRegister::RegUnitList &RegUnits, unsigned Unit) {
-  return std::count(RegUnits.begin(), RegUnits.end(), Unit);
+  return RegUnits.test(Unit);
 }
 
 // Inherit register units from subregisters.
 // Return true if the RegUnits changed.
 bool CodeGenRegister::inheritRegUnits(CodeGenRegBank &RegBank) {
-  unsigned OldNumUnits = RegUnits.size();
-
-  SparseBitVector<> NewUnits;
-  for (unsigned RU : RegUnits)
-    NewUnits.set(RU);
-
+  bool changed = false;
   for (SubRegMap::const_iterator I = SubRegs.begin(), E = SubRegs.end();
        I != E; ++I) {
     CodeGenRegister *SR = I->second;
     // Merge the subregister's units into this register's RegUnits.
-    for (unsigned RU : SR->RegUnits)
-      NewUnits.set(RU);
+    changed |= (RegUnits |= SR->RegUnits);
   }
 
-  RegUnits.clear();
-  RegUnits.reserve(NewUnits.count());
-  for (unsigned RU : NewUnits)
-    RegUnits.push_back(RU);
-
-  return OldNumUnits != RegUnits.size();
+  return changed;
 }
 
 const CodeGenRegister::SubRegMap &
@@ -376,14 +353,8 @@ CodeGenRegister::computeSubRegs(CodeGenRegBank &RegBank) {
   // sub-registers, the other registers won't contribute any more units.
   for (unsigned i = 0, e = ExplicitSubRegs.size(); i != e; ++i) {
     CodeGenRegister *SR = ExplicitSubRegs[i];
-    // Explicit sub-registers are usually disjoint, so this is a good way of
-    // computing the union. We may pick up a few duplicates that will be
-    // eliminated below.
-    unsigned N = RegUnits.size();
-    RegUnits.append(SR->RegUnits.begin(), SR->RegUnits.end());
-    std::inplace_merge(RegUnits.begin(), RegUnits.begin() + N, RegUnits.end());
+    RegUnits |= SR->RegUnits;
   }
-  RegUnits.erase(std::unique(RegUnits.begin(), RegUnits.end()), RegUnits.end());
 
   // Absent any ad hoc aliasing, we create one register unit per leaf register.
   // These units correspond to the maximal cliques in the register overlap
@@ -402,19 +373,19 @@ CodeGenRegister::computeSubRegs(CodeGenRegBank &RegBank) {
     // Create a RegUnit representing this alias edge, and add it to both
     // registers.
     unsigned Unit = RegBank.newRegUnit(this, AR);
-    RegUnits.push_back(Unit);
-    AR->RegUnits.push_back(Unit);
+    RegUnits.set(Unit);
+    AR->RegUnits.set(Unit);
   }
 
   // Finally, create units for leaf registers without ad hoc aliases. Note that
   // a leaf register with ad hoc aliases doesn't get its own unit - it isn't
   // necessary. This means the aliasing leaf registers can share a single unit.
   if (RegUnits.empty())
-    RegUnits.push_back(RegBank.newRegUnit(this));
+    RegUnits.set(RegBank.newRegUnit(this));
 
   // We have now computed the native register units. More may be adopted later
   // for balancing purposes.
-  NumNativeRegUnits = RegUnits.size();
+  NativeRegUnits = RegUnits;
 
   return SubRegs;
 }
@@ -548,7 +519,7 @@ CodeGenRegister::addSubRegsPreOrder(SetVector<const CodeGenRegister*> &OSet,
 // Get the sum of this register's unit weights.
 unsigned CodeGenRegister::getWeight(const CodeGenRegBank &RegBank) const {
   unsigned Weight = 0;
-  for (RegUnitList::const_iterator I = RegUnits.begin(), E = RegUnits.end();
+  for (RegUnitList::iterator I = RegUnits.begin(), E = RegUnits.end();
        I != E; ++I) {
     Weight += RegBank.getRegUnit(*I).Weight;
   }
@@ -1424,9 +1395,10 @@ static void computeUberWeights(std::vector<UberRegSet> &UberSets,
     // Find singular determinants.
     for (CodeGenRegister::Set::iterator RegI = I->Regs.begin(),
            RegE = I->Regs.end(); RegI != RegE; ++RegI) {
-      if ((*RegI)->getRegUnits().size() == 1
-          && (*RegI)->getWeight(RegBank) == I->Weight)
-        mergeRegUnits(I->SingularDeterminants, (*RegI)->getRegUnits());
+      if ((*RegI)->getRegUnits().count() == 1
+          && (*RegI)->getWeight(RegBank) == I->Weight) {
+        I->SingularDeterminants |= (*RegI)->getRegUnits();
+      }
     }
   }
 }
@@ -1444,13 +1416,14 @@ static void computeUberWeights(std::vector<UberRegSet> &UberSets,
 static bool normalizeWeight(CodeGenRegister *Reg,
                             std::vector<UberRegSet> &UberSets,
                             std::vector<UberRegSet*> &RegSets,
-                            std::set<unsigned> &NormalRegs,
+                            SparseBitVector<> &NormalRegs,
                             CodeGenRegister::RegUnitList &NormalUnits,
                             CodeGenRegBank &RegBank) {
-  bool Changed = false;
-  if (!NormalRegs.insert(Reg->EnumValue).second)
-    return Changed;
+  if (NormalRegs.test(Reg->EnumValue))
+    return false;
+  NormalRegs.set(Reg->EnumValue);
 
+  bool Changed = false;
   const CodeGenRegister::SubRegMap &SRM = Reg->getSubRegs();
   for (CodeGenRegister::SubRegMap::const_iterator SRI = SRM.begin(),
          SRE = SRM.end(); SRI != SRE; ++SRI) {
@@ -1474,8 +1447,8 @@ static bool normalizeWeight(CodeGenRegister *Reg,
     // A register unit's weight can be adjusted only if it is the singular unit
     // for this register, has not been used to normalize a subregister's set,
     // and has not already been used to singularly determine this UberRegSet.
-    unsigned AdjustUnit = Reg->getRegUnits().front();
-    if (Reg->getRegUnits().size() != 1
+    unsigned AdjustUnit = *Reg->getRegUnits().begin();
+    if (Reg->getRegUnits().count() != 1
         || hasRegUnit(NormalUnits, AdjustUnit)
         || hasRegUnit(UberSet->SingularDeterminants, AdjustUnit)) {
       // We don't have an adjustable unit, so adopt a new one.
@@ -1493,7 +1466,7 @@ static bool normalizeWeight(CodeGenRegister *Reg,
   }
 
   // Mark these units normalized so superregisters can't change their weights.
-  mergeRegUnits(NormalUnits, Reg->getRegUnits());
+  NormalUnits |= Reg->getRegUnits();
 
   return Changed;
 }
@@ -1518,7 +1491,7 @@ void CodeGenRegBank::computeRegUnitWeights() {
     Changed = false;
     for (auto &Reg : Registers) {
       CodeGenRegister::RegUnitList NormalUnits;
-      std::set<unsigned> NormalRegs;
+      SparseBitVector<> NormalRegs;
       Changed |= normalizeWeight(&Reg, UberSets, RegSets, NormalRegs,
                                  NormalUnits, *this);
     }
@@ -1781,7 +1754,7 @@ void CodeGenRegBank::computeRegUnitLaneMasks() {
   for (auto &Register : Registers) {
     // Create an initial lane mask for all register units.
     const auto &RegUnits = Register.getRegUnits();
-    CodeGenRegister::RegUnitLaneMaskList RegUnitLaneMasks(RegUnits.size(), 0);
+    CodeGenRegister::RegUnitLaneMaskList RegUnitLaneMasks(RegUnits.count(), 0);
     // Iterate through SubRegisters.
     typedef CodeGenRegister::SubRegMap SubRegMap;
     const SubRegMap &SubRegs = Register.getSubRegs();
@@ -1798,12 +1771,14 @@ void CodeGenRegBank::computeRegUnitLaneMasks() {
       // Distribute LaneMask to Register Units touched.
       for (const auto &SUI : SubRegister->getRegUnits()) {
         bool Found = false;
-        for (size_t u = 0, ue = RegUnits.size(); u < ue; ++u) {
-          if (SUI == RegUnits[u]) {
+        unsigned u = 0;
+        for (unsigned RU : RegUnits) {
+          if (SUI == RU) {
             RegUnitLaneMasks[u] |= LaneMask;
             assert(!Found);
             Found = true;
           }
+          ++u;
         }
         assert(Found);
       }

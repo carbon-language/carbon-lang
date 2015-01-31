@@ -19,6 +19,7 @@
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SetVector.h"
+#include "llvm/ADT/SparseBitVector.h"
 #include "llvm/CodeGen/MachineValueType.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/TableGen/Record.h"
@@ -197,23 +198,23 @@ namespace llvm {
     }
 
     // List of register units in ascending order.
-    typedef SmallVector<unsigned, 16> RegUnitList;
+    typedef SparseBitVector<> RegUnitList;
     typedef SmallVector<unsigned, 16> RegUnitLaneMaskList;
 
     // How many entries in RegUnitList are native?
-    unsigned NumNativeRegUnits;
+    RegUnitList NativeRegUnits;
 
     // Get the list of register units.
     // This is only valid after computeSubRegs() completes.
     const RegUnitList &getRegUnits() const { return RegUnits; }
 
     ArrayRef<unsigned> getRegUnitLaneMasks() const {
-      return makeArrayRef(RegUnitLaneMasks).slice(0, NumNativeRegUnits);
+      return makeArrayRef(RegUnitLaneMasks).slice(0, NativeRegUnits.count());
     }
 
     // Get the native register units. This is a prefix of getRegUnits().
-    ArrayRef<unsigned> getNativeRegUnits() const {
-      return makeArrayRef(RegUnits).slice(0, NumNativeRegUnits);
+    RegUnitList getNativeRegUnits() const {
+      return NativeRegUnits;
     }
 
     void setRegUnitLaneMasks(const RegUnitLaneMaskList &LaneMasks) {
@@ -225,8 +226,8 @@ namespace llvm {
     bool inheritRegUnits(CodeGenRegBank &RegBank);
 
     // Adopt a register unit for pressure tracking.
-    // A unit is adopted iff its unit number is >= NumNativeRegUnits.
-    void adoptRegUnit(unsigned RUID) { RegUnits.push_back(RUID); }
+    // A unit is adopted iff its unit number is >= NativeRegUnits.count().
+    void adoptRegUnit(unsigned RUID) { RegUnits.set(RUID); }
 
     // Get the sum of this register's register unit weights.
     unsigned getWeight(const CodeGenRegBank &RegBank) const;

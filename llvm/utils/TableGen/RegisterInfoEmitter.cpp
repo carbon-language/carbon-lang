@@ -573,11 +573,11 @@ typedef SmallVector<unsigned, 4> MaskVec;
 // Differentially encode a sequence of numbers into V. The starting value and
 // terminating 0 are not added to V, so it will have the same size as List.
 static
-DiffVec &diffEncode(DiffVec &V, unsigned InitVal, ArrayRef<unsigned> List) {
+DiffVec &diffEncode(DiffVec &V, unsigned InitVal, SparseBitVector<> List) {
   assert(V.empty() && "Clear DiffVec before diffEncode.");
   uint16_t Val = uint16_t(InitVal);
-  for (unsigned i = 0; i != List.size(); ++i) {
-    uint16_t Cur = List[i];
+
+  for (uint16_t Cur : List) {
     V.push_back(Cur - Val);
     Val = Cur;
   }
@@ -856,13 +856,13 @@ RegisterInfoEmitter::runMCDesc(raw_ostream &OS, CodeGenTarget &Target,
     //
     // Check the neighboring registers for arithmetic progressions.
     unsigned ScaleA = ~0u, ScaleB = ~0u;
-    ArrayRef<unsigned> RUs = Reg.getNativeRegUnits();
+    SparseBitVector<> RUs = Reg.getNativeRegUnits();
     if (I != Regs.begin() &&
-        std::prev(I)->getNativeRegUnits().size() == RUs.size())
-      ScaleB = RUs.front() - std::prev(I)->getNativeRegUnits().front();
+        std::prev(I)->getNativeRegUnits().count() == RUs.count())
+      ScaleB = *RUs.begin() - *std::prev(I)->getNativeRegUnits().begin();
     if (std::next(I) != Regs.end() &&
-        std::next(I)->getNativeRegUnits().size() == RUs.size())
-      ScaleA = std::next(I)->getNativeRegUnits().front() - RUs.front();
+        std::next(I)->getNativeRegUnits().count() == RUs.count())
+      ScaleA = *std::next(I)->getNativeRegUnits().begin() - *RUs.begin();
     unsigned Scale = std::min(ScaleB, ScaleA);
     // Default the scale to 0 if it can't be encoded in 4 bits.
     if (Scale >= 16)
