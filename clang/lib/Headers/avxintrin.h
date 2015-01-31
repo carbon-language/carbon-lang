@@ -444,21 +444,21 @@ _mm256_blendv_ps(__m256 __a, __m256 __b, __m256 __c)
   (__m128i)__builtin_ia32_vextractf128_si256((__v8si)__A, (O)); })
 
 static __inline int __attribute__((__always_inline__, __nodebug__))
-_mm256_extract_epi32(__m256i __a, int const __imm)
+_mm256_extract_epi32(__m256i __a, const int __imm)
 {
   __v8si __b = (__v8si)__a;
   return __b[__imm & 7];
 }
 
 static __inline int __attribute__((__always_inline__, __nodebug__))
-_mm256_extract_epi16(__m256i __a, int const __imm)
+_mm256_extract_epi16(__m256i __a, const int __imm)
 {
   __v16hi __b = (__v16hi)__a;
   return __b[__imm & 15];
 }
 
 static __inline int __attribute__((__always_inline__, __nodebug__))
-_mm256_extract_epi8(__m256i __a, int const __imm)
+_mm256_extract_epi8(__m256i __a, const int __imm)
 {
   __v32qi __b = (__v32qi)__a;
   return __b[__imm & 31];
