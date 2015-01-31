@@ -241,8 +241,16 @@ namespace llvm {
       }
     };
 
+    struct Equal {
+      bool operator()(const CodeGenRegister *A,
+                      const CodeGenRegister *B) const {
+        assert(A && B);
+        return A->EnumValue == B->EnumValue;
+      }
+    };
+
     // Canonically ordered set.
-    typedef std::set<const CodeGenRegister*, Less> Set;
+    typedef std::vector<const CodeGenRegister*> Vec;
 
   private:
     bool SubRegsComplete;
@@ -268,7 +276,7 @@ namespace llvm {
 
 
   class CodeGenRegisterClass {
-    CodeGenRegister::Set Members;
+    CodeGenRegister::Vec Members;
     // Allocation orders. Order[0] always contains all registers in Members.
     std::vector<SmallVector<Record*, 16> > Orders;
     // Bit mask of sub-classes including this, indexed by their EnumValue.
@@ -389,7 +397,7 @@ namespace llvm {
 
     // Get the set of registers.  This set contains the same registers as
     // getOrder(0).
-    const CodeGenRegister::Set &getMembers() const { return Members; }
+    const CodeGenRegister::Vec &getMembers() const { return Members; }
 
     // Get a bit vector of TopoSigs present in this register class.
     const BitVector &getTopoSigs() const { return TopoSigs; }
@@ -403,11 +411,11 @@ namespace llvm {
     // sub-classes.  Note the ordering provided by this key is not the same as
     // the topological order used for the EnumValues.
     struct Key {
-      const CodeGenRegister::Set *Members;
+      const CodeGenRegister::Vec *Members;
       unsigned SpillSize;
       unsigned SpillAlignment;
 
-      Key(const CodeGenRegister::Set *M, unsigned S = 0, unsigned A = 0)
+      Key(const CodeGenRegister::Vec *M, unsigned S = 0, unsigned A = 0)
         : Members(M), SpillSize(S), SpillAlignment(A) {}
 
       Key(const CodeGenRegisterClass &RC)
@@ -525,7 +533,7 @@ namespace llvm {
 
     // Create a synthetic sub-class if it is missing.
     CodeGenRegisterClass *getOrCreateSubClass(const CodeGenRegisterClass *RC,
-                                              const CodeGenRegister::Set *Membs,
+                                              const CodeGenRegister::Vec *Membs,
                                               StringRef Name);
 
     // Infer missing register classes.

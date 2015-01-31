@@ -180,7 +180,7 @@ EmitRegUnitPressure(raw_ostream &OS, const CodeGenRegBank &RegBank,
      << "getRegClassWeight(const TargetRegisterClass *RC) const {\n"
      << "  static const RegClassWeight RCWeightTable[] = {\n";
   for (const auto &RC : RegBank.getRegClasses()) {
-    const CodeGenRegister::Set &Regs = RC.getMembers();
+    const CodeGenRegister::Vec &Regs = RC.getMembers();
     if (Regs.empty())
       OS << "    {0, 0";
     else {
