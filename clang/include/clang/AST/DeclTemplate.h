@@ -788,9 +788,6 @@ protected:
 
   friend class FunctionDecl;
 
-  /// \brief Load any lazily-loaded specializations from the external source.
-  void LoadLazySpecializations() const;
-
   /// \brief Retrieve the set of function template specializations of this
   /// function template.
   llvm::FoldingSetVector<FunctionTemplateSpecializationInfo> &
@@ -804,6 +801,9 @@ protected:
                          void *InsertPos);
 
 public:
+  /// \brief Load any lazily-loaded specializations from the external source.
+  void LoadLazySpecializations() const;
+
   /// Get the underlying function declaration of the template.
   FunctionDecl *getTemplatedDecl() const {
     return static_cast<FunctionDecl*>(TemplatedDecl);
@@ -1827,9 +1827,6 @@ protected:
     uint32_t *LazySpecializations;
   };
 
-  /// \brief Load any lazily-loaded specializations from the external source.
-  void LoadLazySpecializations() const;
-
   /// \brief Retrieve the set of specializations of this class template.
   llvm::FoldingSetVector<ClassTemplateSpecializationDecl> &
   getSpecializations() const;
@@ -1851,6 +1848,9 @@ protected:
   }
 
 public:
+  /// \brief Load any lazily-loaded specializations from the external source.
+  void LoadLazySpecializations() const;
+
   /// \brief Get the underlying class declarations of the template.
   CXXRecordDecl *getTemplatedDecl() const {
     return static_cast<CXXRecordDecl *>(TemplatedDecl);
@@ -2662,9 +2662,6 @@ protected:
     uint32_t *LazySpecializations;
   };
 
-  /// \brief Load any lazily-loaded specializations from the external source.
-  void LoadLazySpecializations() const;
-
   /// \brief Retrieve the set of specializations of this variable template.
   llvm::FoldingSetVector<VarTemplateSpecializationDecl> &
   getSpecializations() const;
@@ -2686,6 +2683,9 @@ protected:
   }
 
 public:
+  /// \brief Load any lazily-loaded specializations from the external source.
+  void LoadLazySpecializations() const;
+
   /// \brief Get the underlying variable declarations of the template.
   VarDecl *getTemplatedDecl() const {
     return static_cast<VarDecl *>(TemplatedDecl);
