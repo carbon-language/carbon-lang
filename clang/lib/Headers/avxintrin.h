@@ -257,8 +257,7 @@ _mm_permutevar_ps(__m128 __a, __m128i __c)
 static __inline __m256 __attribute__((__always_inline__, __nodebug__))
 _mm256_permutevar_ps(__m256 __a, __m256i __c)
 {
-  return (__m256)__builtin_ia32_vpermilvarps256((__v8sf)__a,
-						  (__v8si)__c);
+  return (__m256)__builtin_ia32_vpermilvarps256((__v8sf)__a, (__v8si)__c);
 }
 
 #define _mm_permute_pd(A, C) __extension__ ({ \
@@ -935,23 +934,23 @@ _mm256_set_pd(double __a, double __b, double __c, double __d)
 
 static __inline __m256 __attribute__((__always_inline__, __nodebug__))
 _mm256_set_ps(float __a, float __b, float __c, float __d,
-	            float __e, float __f, float __g, float __h)
+              float __e, float __f, float __g, float __h)
 {
   return (__m256){ __h, __g, __f, __e, __d, __c, __b, __a };
 }
 
 static __inline __m256i __attribute__((__always_inline__, __nodebug__))
 _mm256_set_epi32(int __i0, int __i1, int __i2, int __i3,
-		             int __i4, int __i5, int __i6, int __i7)
+                 int __i4, int __i5, int __i6, int __i7)
 {
   return (__m256i)(__v8si){ __i7, __i6, __i5, __i4, __i3, __i2, __i1, __i0 };
 }
 
 static __inline __m256i __attribute__((__always_inline__, __nodebug__))
 _mm256_set_epi16(short __w15, short __w14, short __w13, short __w12,
-		             short __w11, short __w10, short __w09, short __w08,
-		             short __w07, short __w06, short __w05, short __w04,
-		             short __w03, short __w02, short __w01, short __w00)
+                 short __w11, short __w10, short __w09, short __w08,
+                 short __w07, short __w06, short __w05, short __w04,
+                 short __w03, short __w02, short __w01, short __w00)
 {
   return (__m256i)(__v16hi){ __w00, __w01, __w02, __w03, __w04, __w05, __w06,
     __w07, __w08, __w09, __w10, __w11, __w12, __w13, __w14, __w15 };
@@ -959,13 +958,13 @@ _mm256_set_epi16(short __w15, short __w14, short __w13, short __w12,
 
 static __inline __m256i __attribute__((__always_inline__, __nodebug__))
 _mm256_set_epi8(char __b31, char __b30, char __b29, char __b28,
-		            char __b27, char __b26, char __b25, char __b24,
-		            char __b23, char __b22, char __b21, char __b20,
-		            char __b19, char __b18, char __b17, char __b16,
-		            char __b15, char __b14, char __b13, char __b12,
-		            char __b11, char __b10, char __b09, char __b08,
-		            char __b07, char __b06, char __b05, char __b04,
-		            char __b03, char __b02, char __b01, char __b00)
+                char __b27, char __b26, char __b25, char __b24,
+                char __b23, char __b22, char __b21, char __b20,
+                char __b19, char __b18, char __b17, char __b16,
+                char __b15, char __b14, char __b13, char __b12,
+                char __b11, char __b10, char __b09, char __b08,
+                char __b07, char __b06, char __b05, char __b04,
+                char __b03, char __b02, char __b01, char __b00)
 {
   return (__m256i)(__v32qi){
     __b00, __b01, __b02, __b03, __b04, __b05, __b06, __b07,
@@ -990,23 +989,23 @@ _mm256_setr_pd(double __a, double __b, double __c, double __d)
 
 static __inline __m256 __attribute__((__always_inline__, __nodebug__))
 _mm256_setr_ps(float __a, float __b, float __c, float __d,
-		           float __e, float __f, float __g, float __h)
+               float __e, float __f, float __g, float __h)
 {
   return (__m256){ __a, __b, __c, __d, __e, __f, __g, __h };
 }
 
 static __inline __m256i __attribute__((__always_inline__, __nodebug__))
 _mm256_setr_epi32(int __i0, int __i1, int __i2, int __i3,
-		              int __i4, int __i5, int __i6, int __i7)
+                  int __i4, int __i5, int __i6, int __i7)
 {
   return (__m256i)(__v8si){ __i0, __i1, __i2, __i3, __i4, __i5, __i6, __i7 };
 }
 
 static __inline __m256i __attribute__((__always_inline__, __nodebug__))
 _mm256_setr_epi16(short __w15, short __w14, short __w13, short __w12,
-		   short __w11, short __w10, short __w09, short __w08,
-		   short __w07, short __w06, short __w05, short __w04,
-		   short __w03, short __w02, short __w01, short __w00)
+       short __w11, short __w10, short __w09, short __w08,
+       short __w07, short __w06, short __w05, short __w04,
+       short __w03, short __w02, short __w01, short __w00)
 {
   return (__m256i)(__v16hi){ __w15, __w14, __w13, __w12, __w11, __w10, __w09,
     __w08, __w07, __w06, __w05, __w04, __w03, __w02, __w01, __w00 };
@@ -1014,19 +1013,19 @@ _mm256_setr_epi16(short __w15, short __w14, short __w13, short __w12,
 
 static __inline __m256i __attribute__((__always_inline__, __nodebug__))
 _mm256_setr_epi8(char __b31, char __b30, char __b29, char __b28,
-		             char __b27, char __b26, char __b25, char __b24,
-		             char __b23, char __b22, char __b21, char __b20,
-		             char __b19, char __b18, char __b17, char __b16,
-		             char __b15, char __b14, char __b13, char __b12,
-		             char __b11, char __b10, char __b09, char __b08,
-		             char __b07, char __b06, char __b05, char __b04,
-		             char __b03, char __b02, char __b01, char __b00)
+                 char __b27, char __b26, char __b25, char __b24,
+                 char __b23, char __b22, char __b21, char __b20,
+                 char __b19, char __b18, char __b17, char __b16,
+                 char __b15, char __b14, char __b13, char __b12,
+                 char __b11, char __b10, char __b09, char __b08,
+                 char __b07, char __b06, char __b05, char __b04,
+                 char __b03, char __b02, char __b01, char __b00)
 {
   return (__m256i)(__v32qi){
     __b31, __b30, __b29, __b28, __b27, __b26, __b25, __b24,
-		__b23, __b22, __b21, __b20, __b19, __b18, __b17, __b16,
-		__b15, __b14, __b13, __b12, __b11, __b10, __b09, __b08,
-		__b07, __b06, __b05, __b04, __b03, __b02, __b01, __b00 };
+    __b23, __b22, __b21, __b20, __b19, __b18, __b17, __b16,
+    __b15, __b14, __b13, __b12, __b11, __b10, __b09, __b08,
+    __b07, __b06, __b05, __b04, __b03, __b02, __b01, __b00 };
 }
 
 static __inline __m256i __attribute__((__always_inline__, __nodebug__))
