@@ -2810,20 +2810,6 @@ X86InstrInfo::commuteInstruction(MachineInstr *MI, bool NewMI) const {
 bool X86InstrInfo::findCommutedOpIndices(MachineInstr *MI, unsigned &SrcOpIdx1,
                                          unsigned &SrcOpIdx2) const {
   switch (MI->getOpcode()) {
-    case X86::BLENDPDrri:
-    case X86::BLENDPSrri:
-    case X86::PBLENDWrri:
-    case X86::VBLENDPDrri:
-    case X86::VBLENDPSrri:
-    case X86::VBLENDPDYrri:
-    case X86::VBLENDPSYrri:
-    case X86::VPBLENDDrri:
-    case X86::VPBLENDDYrri:
-    case X86::VPBLENDWrri:
-    case X86::VPBLENDWYrri:
-      SrcOpIdx1 = 1;
-      SrcOpIdx2 = 2;
-      return true;
     case X86::CMPPDrri:
     case X86::CMPPSrri:
     case X86::VCMPPDrri:
