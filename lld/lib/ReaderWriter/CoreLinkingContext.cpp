@@ -145,18 +145,6 @@ private:
   uint32_t _ordinal;
 };
 
-class TestingPassFile : public SimpleFile {
-public:
-  TestingPassFile(const LinkingContext &ctx) : SimpleFile("Testing pass") {}
-
-  void addAtom(const Atom &atom) override {
-    if (const DefinedAtom *defAtom = dyn_cast<DefinedAtom>(&atom))
-      _definedAtoms._atoms.push_back(defAtom);
-    else
-      llvm_unreachable("atom has unknown definition kind");
-  }
-};
-
 } // anonymous namespace
 
 CoreLinkingContext::CoreLinkingContext() {}
