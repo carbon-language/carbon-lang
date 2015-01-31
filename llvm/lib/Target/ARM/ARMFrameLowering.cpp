@@ -164,9 +164,13 @@ static int sizeOfSPAdjustment(const MachineInstr *MI) {
 static bool WindowsRequiresStackProbe(const MachineFunction &MF,
                                       size_t StackSizeInBytes) {
   const MachineFrameInfo *MFI = MF.getFrameInfo();
-  if (MFI->getStackProtectorIndex() > 0)
-    return StackSizeInBytes >= 4080;
-  return StackSizeInBytes >= 4096;
+  const Function *F = MF.getFunction();
+  unsigned StackProbeSize = (MFI->getStackProtectorIndex() > 0) ? 4080 : 4096;
+  if (F->hasFnAttribute("stack-probe-size"))
+    F->getFnAttribute("stack-probe-size")
+        .getValueAsString()
+        .getAsInteger(0, StackProbeSize);
+  return StackSizeInBytes >= StackProbeSize;
 }
 
 namespace {
