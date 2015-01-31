@@ -44,7 +44,7 @@ public:
                     CodeModel::Model CM, CodeGenOpt::Level OL, bool isLittle);
   ~MipsTargetMachine() override;
 
-  void addAnalysisPasses(PassManagerBase &PM) override;
+  TargetTransformInfo getTTI() override;
 
   const DataLayout *getDataLayout() const override { return &DL; }
   const MipsSubtarget *getSubtargetImpl() const override {

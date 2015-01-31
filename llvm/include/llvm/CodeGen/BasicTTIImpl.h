@@ -621,6 +621,30 @@ public:
 
   /// @}
 };
+
+/// \brief Concrete BasicTTIImpl that can be used if no further customization
+/// is needed.
+class BasicTTIImpl : public BasicTTIImplBase<BasicTTIImpl> {
+  typedef BasicTTIImplBase<BasicTTIImpl> BaseT;
+
+public:
+  explicit BasicTTIImpl(const TargetMachine *TM = nullptr);
+
+  // Provide value semantics. MSVC requires that we spell all of these out.
+  BasicTTIImpl(const BasicTTIImpl &Arg)
+      : BaseT(static_cast<const BaseT &>(Arg)) {}
+  BasicTTIImpl(BasicTTIImpl &&Arg)
+      : BaseT(std::move(static_cast<BaseT &>(Arg))) {}
+  BasicTTIImpl &operator=(const BasicTTIImpl &RHS) {
+    BaseT::operator=(static_cast<const BaseT &>(RHS));
+    return *this;
+  }
+  BasicTTIImpl &operator=(BasicTTIImpl &&RHS) {
+    BaseT::operator=(std::move(static_cast<BaseT &>(RHS)));
+    return *this;
+  }
+};
+
 }
 
 #endif

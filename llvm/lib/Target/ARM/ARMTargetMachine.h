@@ -50,7 +50,7 @@ public:
   const DataLayout *getDataLayout() const override { return &DL; }
 
   /// \brief Register ARM analysis passes with a pass manager.
-  void addAnalysisPasses(PassManagerBase &PM) override;
+  TargetTransformInfo getTTI() override;
 
   // Pass Pipeline Configuration
   TargetPassConfig *createPassConfig(PassManagerBase &PM) override;

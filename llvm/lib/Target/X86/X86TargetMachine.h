@@ -39,8 +39,7 @@ public:
   const X86Subtarget *getSubtargetImpl() const override { return &Subtarget; }
   const X86Subtarget *getSubtargetImpl(const Function &F) const override;
 
-  /// \brief Register X86 analysis passes with a pass manager.
-  void addAnalysisPasses(PassManagerBase &PM) override;
+  TargetTransformInfo getTTI() override;
 
   // Set up the pass pipeline.
   TargetPassConfig *createPassConfig(PassManagerBase &PM) override;

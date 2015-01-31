@@ -45,8 +45,8 @@ public:
   // Pass Pipeline Configuration
   TargetPassConfig *createPassConfig(PassManagerBase &PM) override;
 
-  /// \brief Register PPC analysis passes with a pass manager.
-  void addAnalysisPasses(PassManagerBase &PM) override;
+  TargetTransformInfo getTTI() override;
+
   TargetLoweringObjectFile *getObjFileLowering() const override {
     return TLOF.get();
   }

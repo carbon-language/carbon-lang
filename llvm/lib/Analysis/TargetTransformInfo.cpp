@@ -21,6 +21,20 @@ using namespace llvm;
 
 #define DEBUG_TYPE "tti"
 
+namespace {
+/// \brief No-op implementation of the TTI interface using the utility base
+/// classes.
+///
+/// This is used when no target specific information is available.
+struct NoTTIImpl : TargetTransformInfoImplCRTPBase<NoTTIImpl> {
+  explicit NoTTIImpl(const DataLayout *DL)
+      : TargetTransformInfoImplCRTPBase<NoTTIImpl>(DL) {}
+};
+}
+
+TargetTransformInfo::TargetTransformInfo(const DataLayout *DL)
+    : TTIImpl(new Model<NoTTIImpl>(NoTTIImpl(DL))) {}
+
 TargetTransformInfo::~TargetTransformInfo() {}
 
 TargetTransformInfo::TargetTransformInfo(TargetTransformInfo &&Arg)
@@ -241,17 +255,6 @@ Value *TargetTransformInfo::getOrCreateResultFromMemIntrinsic(
 
 TargetTransformInfo::Concept::~Concept() {}
 
-namespace {
-/// \brief No-op implementation of the TTI interface using the utility base
-/// classes.
-///
-/// This is used when no target specific information is available.
-struct NoTTIImpl : TargetTransformInfoImplCRTPBase<NoTTIImpl> {
-  explicit NoTTIImpl(const DataLayout *DL)
-      : TargetTransformInfoImplCRTPBase<NoTTIImpl>(DL) {}
-};
-}
-
 // Register the basic pass.
 INITIALIZE_PASS(TargetTransformInfoWrapperPass, "tti",
                 "Target Transform Information", false, true)
@@ -272,6 +275,7 @@ TargetTransformInfoWrapperPass::TargetTransformInfoWrapperPass(
       *PassRegistry::getPassRegistry());
 }
 
-ImmutablePass *llvm::createNoTargetTransformInfoPass(const DataLayout *DL) {
-  return new TargetTransformInfoWrapperPass(NoTTIImpl(DL));
+ImmutablePass *
+llvm::createTargetTransformInfoWrapperPass(TargetTransformInfo TTI) {
+  return new TargetTransformInfoWrapperPass(std::move(TTI));
 }

@@ -14,6 +14,7 @@
 #include "X86TargetMachine.h"
 #include "X86.h"
 #include "X86TargetObjectFile.h"
+#include "X86TargetTransformInfo.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/IR/Function.h"
 #include "llvm/PassManager.h"
@@ -161,11 +162,11 @@ UseVZeroUpper("x86-use-vzeroupper", cl::Hidden,
   cl::init(true));
 
 //===----------------------------------------------------------------------===//
-// X86 Analysis Pass Setup
+// X86 TTI query.
 //===----------------------------------------------------------------------===//
 
-void X86TargetMachine::addAnalysisPasses(PassManagerBase &PM) {
-  PM.add(createX86TargetTransformInfoPass(this));
+TargetTransformInfo X86TargetMachine::getTTI() {
+  return TargetTransformInfo(X86TTIImpl(this));
 }
 
 

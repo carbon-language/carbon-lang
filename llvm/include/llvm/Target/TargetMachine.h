@@ -40,6 +40,7 @@ class TargetPassConfig;
 class TargetRegisterInfo;
 class TargetSelectionDAGInfo;
 class TargetSubtargetInfo;
+class TargetTransformInfo;
 class formatted_raw_ostream;
 class raw_ostream;
 class TargetLoweringObjectFile;
@@ -186,8 +187,12 @@ public:
   /// sections.
   void setFunctionSections(bool);
 
-  /// \brief Register analysis passes for this target with a pass manager.
-  virtual void addAnalysisPasses(PassManagerBase &);
+  /// \brief Get a TTI implementation for the target.
+  ///
+  /// Targets should override this method to provide target-accurate
+  /// information to the mid-level optimizer. If left with the baseline only
+  /// a very conservative set of heuristics will be used.
+  virtual TargetTransformInfo getTTI();
 
   /// CodeGenFileType - These enums are meant to be passed into
   /// addPassesToEmitFile to indicate what type of file to emit, and returned by
@@ -240,10 +245,12 @@ protected: // Can only create subclasses.
 
   void initAsmInfo();
 public:
-  /// \brief Register analysis passes for this target with a pass manager.
+  /// \brief Get a TTI implementation for the target.
   ///
-  /// This registers target independent analysis passes.
-  void addAnalysisPasses(PassManagerBase &PM) override;
+  /// This uses the common code generator to produce a TTI implementation.
+  /// Targets may override it to provide more customized TTI implementation
+  /// instead.
+  TargetTransformInfo getTTI() override;
 
   /// createPassConfig - Create a pass configuration object to be used by
   /// addPassToEmitX methods for generating a pipeline of CodeGen passes.

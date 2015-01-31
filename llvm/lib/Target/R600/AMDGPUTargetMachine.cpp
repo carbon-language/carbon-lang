@@ -15,6 +15,7 @@
 
 #include "AMDGPUTargetMachine.h"
 #include "AMDGPU.h"
+#include "AMDGPUTargetTransformInfo.h"
 #include "R600ISelLowering.h"
 #include "R600InstrInfo.h"
 #include "R600MachineScheduler.h"
@@ -116,11 +117,11 @@ TargetPassConfig *AMDGPUTargetMachine::createPassConfig(PassManagerBase &PM) {
 }
 
 //===----------------------------------------------------------------------===//
-// AMDGPU Analysis Pass Setup
+// AMDGPU Pass Setup
 //===----------------------------------------------------------------------===//
 
-void AMDGPUTargetMachine::addAnalysisPasses(PassManagerBase &PM) {
-  PM.add(createAMDGPUTargetTransformInfoPass(this));
+TargetTransformInfo AMDGPUTargetMachine::getTTI() {
+  return TargetTransformInfo(AMDGPUTTIImpl(this));
 }
 
 void AMDGPUPassConfig::addIRPasses() {

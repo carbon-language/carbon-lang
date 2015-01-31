@@ -56,8 +56,7 @@ public:
     return TLOF.get();
   }
 
-  /// \brief Register NVPTX analysis passes with a pass manager.
-  void addAnalysisPasses(PassManagerBase &PM) override;
+  TargetTransformInfo getTTI() override;
 
 }; // NVPTXTargetMachine.
 

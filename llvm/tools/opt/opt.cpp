@@ -427,21 +427,16 @@ int main(int argc, char **argv) {
   std::unique_ptr<TargetMachine> TM(Machine);
 
   // Add internal analysis passes from the target machine.
-  if (TM)
-    TM->addAnalysisPasses(Passes);
-  else
-    Passes.add(createNoTargetTransformInfoPass(DL));
+  Passes.add(createTargetTransformInfoWrapperPass(
+      TM ? TM->getTTI() : TargetTransformInfo(DL)));
 
   std::unique_ptr<FunctionPassManager> FPasses;
   if (OptLevelO1 || OptLevelO2 || OptLevelOs || OptLevelOz || OptLevelO3) {
     FPasses.reset(new FunctionPassManager(M.get()));
     if (DL)
       FPasses->add(new DataLayoutPass());
-    if (TM)
-      TM->addAnalysisPasses(*FPasses);
-    else
-      FPasses->add(createNoTargetTransformInfoPass(DL));
-
+    FPasses->add(createTargetTransformInfoWrapperPass(
+        TM ? TM->getTTI() : TargetTransformInfo(DL)));
   }
 
   if (PrintBreakpoints) {

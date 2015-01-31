@@ -16,6 +16,7 @@
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Analysis/Passes.h"
 #include "llvm/Analysis/TargetLibraryInfo.h"
+#include "llvm/Analysis/TargetTransformInfo.h"
 #include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/CodeGen/RuntimeLibcalls.h"
 #include "llvm/Config/config.h"
@@ -489,7 +490,7 @@ bool LTOCodeGenerator::generateObjectFile(raw_ostream &out,
   mergedModule->setDataLayout(TargetMach->getDataLayout());
 
   passes.add(new DataLayoutPass());
-  TargetMach->addAnalysisPasses(passes);
+  passes.add(createTargetTransformInfoWrapperPass(TargetMach->getTTI()));
 
   Triple TargetTriple(TargetMach->getTargetTriple());
   PassManagerBuilder PMB;

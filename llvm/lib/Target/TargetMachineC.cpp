@@ -14,6 +14,7 @@
 #include "llvm-c/TargetMachine.h"
 #include "llvm-c/Core.h"
 #include "llvm-c/Target.h"
+#include "llvm/Analysis/TargetTransformInfo.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/Module.h"
 #include "llvm/PassManager.h"
@@ -255,5 +256,5 @@ char *LLVMGetDefaultTargetTriple(void) {
 }
 
 void LLVMAddAnalysisPasses(LLVMTargetMachineRef T, LLVMPassManagerRef PM) {
-  unwrap(T)->addAnalysisPasses(*unwrap(PM));
+  unwrap(PM)->add(createTargetTransformInfoWrapperPass(unwrap(T)->getTTI()));
 }

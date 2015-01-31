@@ -24,45 +24,13 @@
 #include <utility>
 using namespace llvm;
 
+#define DEBUG_TYPE "basictti"
+
+// This flag is used by the template base class for BasicTTIImpl, and here to
+// provide a definition.
 cl::opt<unsigned>
     llvm::PartialUnrollingThreshold("partial-unrolling-threshold", cl::init(0),
                                     cl::desc("Threshold for partial unrolling"),
                                     cl::Hidden);
 
-#define DEBUG_TYPE "basictti"
-
-namespace {
-class BasicTTIImpl : public BasicTTIImplBase<BasicTTIImpl> {
-  typedef BasicTTIImplBase<BasicTTIImpl> BaseT;
-
-public:
-  explicit BasicTTIImpl(const TargetMachine *TM = nullptr) : BaseT(TM) {}
-
-  // Provide value semantics. MSVC requires that we spell all of these out.
-  BasicTTIImpl(const BasicTTIImpl &Arg)
-      : BaseT(static_cast<const BaseT &>(Arg)) {}
-  BasicTTIImpl(BasicTTIImpl &&Arg)
-      : BaseT(std::move(static_cast<BaseT &>(Arg))) {}
-  BasicTTIImpl &operator=(const BasicTTIImpl &RHS) {
-    BaseT::operator=(static_cast<const BaseT &>(RHS));
-    return *this;
-  }
-  BasicTTIImpl &operator=(BasicTTIImpl &&RHS) {
-    BaseT::operator=(std::move(static_cast<BaseT &>(RHS)));
-    return *this;
-  }
-};
-}
-
-ImmutablePass *
-llvm::createBasicTargetTransformInfoPass(const TargetMachine *TM) {
-  return new TargetTransformInfoWrapperPass(BasicTTIImpl(TM));
-}
-
-
-//===----------------------------------------------------------------------===//
-//
-// Calls used by the vectorizers.
-//
-//===----------------------------------------------------------------------===//
-
+BasicTTIImpl::BasicTTIImpl(const TargetMachine *TM) : BaseT(TM) {}

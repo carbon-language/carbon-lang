@@ -172,8 +172,8 @@ void TargetMachine::setDataSections(bool V) {
   Options.DataSections = V;
 }
 
-void TargetMachine::addAnalysisPasses(PassManagerBase &PM) {
-  PM.add(createNoTargetTransformInfoPass(getDataLayout()));
+TargetTransformInfo TargetMachine::getTTI() {
+  return TargetTransformInfo(getDataLayout());
 }
 
 static bool canUsePrivateLabel(const MCAsmInfo &AsmInfo,

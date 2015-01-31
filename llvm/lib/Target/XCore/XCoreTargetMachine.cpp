@@ -12,6 +12,7 @@
 
 #include "XCoreTargetMachine.h"
 #include "XCoreTargetObjectFile.h"
+#include "XCoreTargetTransformInfo.h"
 #include "XCore.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/IR/Module.h"
@@ -82,6 +83,6 @@ extern "C" void LLVMInitializeXCoreTarget() {
   RegisterTargetMachine<XCoreTargetMachine> X(TheXCoreTarget);
 }
 
-void XCoreTargetMachine::addAnalysisPasses(PassManagerBase &PM) {
-  PM.add(createXCoreTargetTransformInfoPass(this));
+TargetTransformInfo XCoreTargetMachine::getTTI() {
+  return TargetTransformInfo(XCoreTTIImpl(this));
 }

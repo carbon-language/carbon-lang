@@ -17,6 +17,7 @@
 #include "NVPTXAllocaHoisting.h"
 #include "NVPTXLowerAggrCopies.h"
 #include "NVPTXTargetObjectFile.h"
+#include "NVPTXTargetTransformInfo.h"
 #include "llvm/Analysis/Passes.h"
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/CodeGen/MachineFunctionAnalysis.h"
@@ -136,8 +137,8 @@ TargetPassConfig *NVPTXTargetMachine::createPassConfig(PassManagerBase &PM) {
   return PassConfig;
 }
 
-void NVPTXTargetMachine::addAnalysisPasses(PassManagerBase &PM) {
-  PM.add(createNVPTXTargetTransformInfoPass(this));
+TargetTransformInfo NVPTXTargetMachine::getTTI() {
+  return TargetTransformInfo(NVPTXTTIImpl(this));
 }
 
 void NVPTXPassConfig::addIRPasses() {

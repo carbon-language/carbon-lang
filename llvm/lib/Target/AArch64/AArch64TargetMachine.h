@@ -46,7 +46,7 @@ public:
   TargetPassConfig *createPassConfig(PassManagerBase &PM) override;
 
   /// \brief Register AArch64 analysis passes with a pass manager.
-  void addAnalysisPasses(PassManagerBase &PM) override;
+  TargetTransformInfo getTTI() override;
 
   TargetLoweringObjectFile* getObjFileLowering() const override {
     return TLOF.get();

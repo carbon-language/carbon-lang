@@ -13,6 +13,7 @@
 #include "AArch64.h"
 #include "AArch64TargetMachine.h"
 #include "AArch64TargetObjectFile.h"
+#include "AArch64TargetTransformInfo.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/CodeGen/RegAllocRegistry.h"
 #include "llvm/IR/Function.h"
@@ -195,8 +196,8 @@ public:
 };
 } // namespace
 
-void AArch64TargetMachine::addAnalysisPasses(PassManagerBase &PM) {
-  PM.add(createAArch64TargetTransformInfoPass(this));
+TargetTransformInfo AArch64TargetMachine::getTTI() {
+  return TargetTransformInfo(AArch64TTIImpl(this));
 }
 
 TargetPassConfig *AArch64TargetMachine::createPassConfig(PassManagerBase &PM) {

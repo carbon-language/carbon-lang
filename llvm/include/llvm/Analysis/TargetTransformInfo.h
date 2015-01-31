@@ -61,6 +61,13 @@ public:
   /// implementaion that encodes appropriate costs for their target.
   template <typename T> TargetTransformInfo(T Impl);
 
+  /// \brief Construct a baseline TTI object using a minimal implementation of
+  /// the \c Concept API below.
+  ///
+  /// The TTI implementation will reflect the information in the DataLayout
+  /// provided if non-null.
+  explicit TargetTransformInfo(const DataLayout *DL);
+
   // Provide move semantics.
   TargetTransformInfo(TargetTransformInfo &&Arg);
   TargetTransformInfo &operator=(TargetTransformInfo &&RHS);
@@ -723,12 +730,11 @@ public:
   const TargetTransformInfo &getTTI() const { return TTI; }
 };
 
-/// \brief Create the base case instance of a pass in the TTI analysis group.
+/// \brief Create an analysis pass wrapper around a TTI object.
 ///
-/// This class provides the base case for the stack of TTI analyzes. It doesn't
-/// delegate to anything and uses the STTI and VTTI objects passed in to
-/// satisfy the queries.
-ImmutablePass *createNoTargetTransformInfoPass(const DataLayout *DL);
+/// This analysis pass just holds the TTI instance and makes it available to
+/// clients.
+ImmutablePass *createTargetTransformInfoWrapperPass(TargetTransformInfo TTI);
 
 } // End llvm namespace
 

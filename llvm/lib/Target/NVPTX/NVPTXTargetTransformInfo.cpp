@@ -1,4 +1,4 @@
-//===-- NVPTXTargetTransformInfo.cpp - NVPTX specific TTI pass ---------===//
+//===-- NVPTXTargetTransformInfo.cpp - NVPTX specific TTI -----------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -6,16 +6,8 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-//
-// \file
-// This file implements a TargetTransformInfo analysis pass specific to the
-// NVPTX target machine. It uses the target's detailed information to provide
-// more precise answers to certain TTI queries, while letting the target
-// independent and default TTI implementations handle the rest.
-//
-//===----------------------------------------------------------------------===//
 
-#include "NVPTXTargetMachine.h"
+#include "NVPTXTargetTransformInfo.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/TargetTransformInfo.h"
 #include "llvm/Analysis/ValueTracking.h"
@@ -26,52 +18,6 @@
 using namespace llvm;
 
 #define DEBUG_TYPE "NVPTXtti"
-
-namespace {
-
-class NVPTXTTIImpl : public BasicTTIImplBase<NVPTXTTIImpl> {
-  typedef BasicTTIImplBase<NVPTXTTIImpl> BaseT;
-  typedef TargetTransformInfo TTI;
-
-  const NVPTXTargetLowering *TLI;
-
-public:
-  explicit NVPTXTTIImpl(const NVPTXTargetMachine *TM = nullptr)
-      : BaseT(TM),
-        TLI(TM ? TM->getSubtargetImpl()->getTargetLowering() : nullptr) {}
-
-  // Provide value semantics. MSVC requires that we spell all of these out.
-  NVPTXTTIImpl(const NVPTXTTIImpl &Arg)
-      : BaseT(static_cast<const BaseT &>(Arg)), TLI(Arg.TLI) {}
-  NVPTXTTIImpl(NVPTXTTIImpl &&Arg)
-      : BaseT(std::move(static_cast<BaseT &>(Arg))), TLI(std::move(Arg.TLI)) {}
-  NVPTXTTIImpl &operator=(const NVPTXTTIImpl &RHS) {
-    BaseT::operator=(static_cast<const BaseT &>(RHS));
-    TLI = RHS.TLI;
-    return *this;
-  }
-  NVPTXTTIImpl &operator=(NVPTXTTIImpl &&RHS) {
-    BaseT::operator=(std::move(static_cast<BaseT &>(RHS)));
-    TLI = std::move(RHS.TLI);
-    return *this;
-  }
-
-  bool hasBranchDivergence() { return true; }
-
-  unsigned getArithmeticInstrCost(
-      unsigned Opcode, Type *Ty,
-      TTI::OperandValueKind Opd1Info = TTI::OK_AnyValue,
-      TTI::OperandValueKind Opd2Info = TTI::OK_AnyValue,
-      TTI::OperandValueProperties Opd1PropInfo = TTI::OP_None,
-      TTI::OperandValueProperties Opd2PropInfo = TTI::OP_None);
-};
-
-} // end anonymous namespace
-
-ImmutablePass *
-llvm::createNVPTXTargetTransformInfoPass(const NVPTXTargetMachine *TM) {
-  return new TargetTransformInfoWrapperPass(NVPTXTTIImpl(TM));
-}
 
 unsigned NVPTXTTIImpl::getArithmeticInstrCost(
     unsigned Opcode, Type *Ty, TTI::OperandValueKind Opd1Info,
