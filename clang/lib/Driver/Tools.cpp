@@ -3949,6 +3949,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   if (!Args.hasFlag(options::OPT_frtti, options::OPT_fno_rtti,
                     !Triple.isPS4CPU()) ||
       KernelOrKext) {
+    bool IsCXX = types::isCXX(InputType);
     bool RTTIEnabled = false;
     Arg *NoRTTIArg = Args.getLastArg(
         options::OPT_mkernel, options::OPT_fapple_kext, options::OPT_fno_rtti);
@@ -3956,11 +3957,18 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     // PS4 requires rtti when exceptions are enabled. If -fno-rtti was
     // explicitly passed, error out. Otherwise enable rtti and emit a
     // warning.
-    if (Triple.isPS4CPU()) {
-      if (Arg *A = Args.getLastArg(options::OPT_fcxx_exceptions)) {
+    Arg *Exceptions = Args.getLastArg(
+        options::OPT_fcxx_exceptions, options::OPT_fno_cxx_exceptions,
+        options::OPT_fexceptions, options::OPT_fno_exceptions);
+    if (Triple.isPS4CPU() && Exceptions) {
+      bool CXXExceptions =
+          (IsCXX &&
+           Exceptions->getOption().matches(options::OPT_fexceptions)) ||
+          Exceptions->getOption().matches(options::OPT_fcxx_exceptions);
+      if (CXXExceptions) {
         if (NoRTTIArg)
           D.Diag(diag::err_drv_argument_not_allowed_with)
-              << NoRTTIArg->getAsString(Args) << A->getAsString(Args);
+              << NoRTTIArg->getAsString(Args) << Exceptions->getAsString(Args);
         else {
           RTTIEnabled = true;
           D.Diag(diag::warn_drv_enabling_rtti_with_exceptions);
