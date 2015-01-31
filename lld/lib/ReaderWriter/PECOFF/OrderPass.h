@@ -37,15 +37,6 @@
 namespace lld {
 namespace pecoff {
 
-static bool compareByPosition(const DefinedAtom *lhs, const DefinedAtom *rhs) {
-  const File *lhsFile = &lhs->file();
-  const File *rhsFile = &rhs->file();
-  if (lhsFile->ordinal() != rhsFile->ordinal())
-    return lhsFile->ordinal() < rhsFile->ordinal();
-  assert(lhs->ordinal() != rhs->ordinal());
-  return lhs->ordinal() < rhs->ordinal();
-}
-
 static bool compare(const DefinedAtom *lhs, const DefinedAtom *rhs) {
   bool lhsCustom = (lhs->sectionChoice() == DefinedAtom::sectionCustomRequired);
   bool rhsCustom = (rhs->sectionChoice() == DefinedAtom::sectionCustomRequired);
@@ -53,13 +44,13 @@ static bool compare(const DefinedAtom *lhs, const DefinedAtom *rhs) {
     int cmp = lhs->customSectionName().compare(rhs->customSectionName());
     if (cmp != 0)
       return cmp < 0;
-    return compareByPosition(lhs, rhs);
+    return DefinedAtom::compareByPosition(lhs, rhs);
   }
   if (lhsCustom && !rhsCustom)
     return true;
   if (!lhsCustom && rhsCustom)
     return false;
-  return compareByPosition(lhs, rhs);
+  return DefinedAtom::compareByPosition(lhs, rhs);
 }
 
 class OrderPass : public lld::Pass {

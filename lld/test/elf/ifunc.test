@@ -21,12 +21,6 @@ RUN: | FileCheck %s --check-prefix=SHARED
 
 PLT: defined-atoms:
 
-// Make sure there's a got entry with a IRELATIVE relocation.
-PLT: type: got
-PLT: references:
-PLT:  kind: R_X86_64_IRELATIVE
-PLT:  target: hey
-
 PLT: name:  plt
 PLT: scope: global
 PLT: references:
@@ -46,6 +40,12 @@ PLT: name:
 PLT: type: stub
 PLT: references
 PLT:   kind: R_X86_64_PC32
+
+// Make sure there's a got entry with a IRELATIVE relocation.
+PLT: type: got
+PLT: references:
+PLT:  kind: R_X86_64_IRELATIVE
+PLT:  target: hey
 
 CHECK: name: hey
 CHECK: scope: global

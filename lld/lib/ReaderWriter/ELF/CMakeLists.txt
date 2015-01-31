@@ -1,5 +1,4 @@
 add_llvm_library(lldELF
-  ArrayOrderPass.cpp
   ELFLinkingContext.cpp
   Reader.cpp
   Writer.cpp

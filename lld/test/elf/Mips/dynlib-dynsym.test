@@ -74,6 +74,17 @@
 # CHECK-GOT:     section-choice:  custom-required
 # CHECK-GOT:     section-name:    .got
 # CHECK-GOT:     permissions:     rw-
+# CHECK-GOT:   - ref-name:        L000
+# CHECK-GOT:     type:            got
+# CHECK-GOT:     content:         [ 00, 00, 00, 00 ]
+# CHECK-GOT:     alignment:       2^2
+# CHECK-GOT:     section-choice:  custom-required
+# CHECK-GOT:     section-name:    .got
+# CHECK-GOT:     permissions:     rw-
+# CHECK-GOT:     references:
+# CHECK-GOT:       - kind:            LLD_R_MIPS_32_HI16
+# CHECK-GOT:         offset:          0
+# CHECK-GOT:         target:          L007
 # CHECK-GOT:   - ref-name:        L002
 # CHECK-GOT:     type:            got
 # CHECK-GOT:     content:         [ 00, 00, 00, 00 ]
@@ -84,19 +95,8 @@
 # CHECK-GOT:     references:
 # CHECK-GOT:       - kind:            LLD_R_MIPS_32_HI16
 # CHECK-GOT:         offset:          0
-# CHECK-GOT:         target:          L003
+# CHECK-GOT:         target:          L008
 # CHECK-GOT:   - ref-name:        L004
-# CHECK-GOT:     type:            got
-# CHECK-GOT:     content:         [ 00, 00, 00, 00 ]
-# CHECK-GOT:     alignment:       2^2
-# CHECK-GOT:     section-choice:  custom-required
-# CHECK-GOT:     section-name:    .got
-# CHECK-GOT:     permissions:     rw-
-# CHECK-GOT:     references:
-# CHECK-GOT:       - kind:            LLD_R_MIPS_32_HI16
-# CHECK-GOT:         offset:          0
-# CHECK-GOT:         target:          L005
-# CHECK-GOT:   - ref-name:        L006
 # CHECK-GOT:     type:            got
 # CHECK-GOT:     content:         [ 00, 00, 00, 00 ]
 # CHECK-GOT:     alignment:       2^2
@@ -107,7 +107,7 @@
 # CHECK-GOT:       - kind:            LLD_R_MIPS_GLOBAL_GOT
 # CHECK-GOT:         offset:          0
 # CHECK-GOT:         target:          foo
-# CHECK-GOT:   - ref-name:        L007
+# CHECK-GOT:   - ref-name:        L005
 # CHECK-GOT:     type:            got
 # CHECK-GOT:     content:         [ 00, 00, 00, 00 ]
 # CHECK-GOT:     alignment:       2^2
@@ -118,7 +118,7 @@
 # CHECK-GOT:       - kind:            LLD_R_MIPS_GLOBAL_GOT
 # CHECK-GOT:         offset:          0
 # CHECK-GOT:         target:          ext1
-# CHECK-GOT:   - ref-name:        L008
+# CHECK-GOT:   - ref-name:        L006
 # CHECK-GOT:     type:            got
 # CHECK-GOT:     content:         [ 00, 00, 00, 00 ]
 # CHECK-GOT:     alignment:       2^2

@@ -8,12 +8,11 @@
 //===----------------------------------------------------------------------===//
 
 #include "lld/ReaderWriter/ELFLinkingContext.h"
-#include "ArrayOrderPass.h"
 #include "ELFFile.h"
+#include "OrderPass.h"
 #include "TargetHandler.h"
 #include "lld/Core/Instrumentation.h"
 #include "lld/Core/SharedLibraryFile.h"
-#include "lld/Passes/LayoutPass.h"
 #include "lld/Passes/RoundTripYAMLPass.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/Config/config.h"
@@ -66,8 +65,7 @@ ELFLinkingContext::ELFLinkingContext(
       _finiFunction("_fini"), _sysrootPath("") {}
 
 void ELFLinkingContext::addPasses(PassManager &pm) {
-  pm.add(std::unique_ptr<Pass>(new LayoutPass(registry())));
-  pm.add(std::unique_ptr<Pass>(new elf::ArrayOrderPass()));
+  pm.add(std::unique_ptr<Pass>(new elf::OrderPass()));
 }
 
 uint16_t ELFLinkingContext::getOutputMachine() const {

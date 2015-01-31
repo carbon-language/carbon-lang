@@ -15,8 +15,8 @@
 #
 # PLT-SYM:      Relocations [
 # PLT-SYM-NEXT:   Section (4) .rel.dyn {
-# PLT-SYM-NEXT:     0x2000 R_MIPS_REL32 T1 0x0
 # PLT-SYM-NEXT:     0x140 R_MIPS_REL32 T1 0x0
+# PLT-SYM-NEXT:     0x2000 R_MIPS_REL32 T1 0x0
 # PLT-SYM-NEXT:   }
 # PLT-SYM-NEXT: ]
 #

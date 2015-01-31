@@ -1,8 +1,0 @@
-# This testcase tests the behaviour of the layoutpass so that the atoms that
-# appear by their override take preference before proceeding to default behaviour
-RUN: lld -flavor gnu -target x86_64 %p/Inputs/rwint.o \
-RUN:     %p/Inputs/constint.o --output-filetype=yaml -o %t --noinhibit-exec
-RUN: FileCheck %s -check-prefix=CHECKORDER < %t
-
-CHECKORDER:  - name:            b
-CHECKORDER:  - name:            a

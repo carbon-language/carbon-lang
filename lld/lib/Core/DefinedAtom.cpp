@@ -9,10 +9,9 @@
 
 #include "llvm/Support/ErrorHandling.h"
 #include "lld/Core/DefinedAtom.h"
-
+#include "lld/Core/File.h"
 
 namespace lld {
-
 
 DefinedAtom::ContentPermissions DefinedAtom::permissions() const {
   // By default base permissions on content type.
@@ -82,6 +81,14 @@ DefinedAtom::ContentPermissions DefinedAtom::permissions(ContentType type) {
   llvm_unreachable("unknown content type");
 }
 
+bool DefinedAtom::compareByPosition(const DefinedAtom *lhs,
+                                    const DefinedAtom *rhs) {
+  const File *lhsFile = &lhs->file();
+  const File *rhsFile = &rhs->file();
+  if (lhsFile->ordinal() != rhsFile->ordinal())
+    return lhsFile->ordinal() < rhsFile->ordinal();
+  assert(lhs->ordinal() != rhs->ordinal());
+  return lhs->ordinal() < rhs->ordinal();
+}
 
 } // namespace
-

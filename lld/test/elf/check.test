@@ -8,28 +8,28 @@ RUN:    %p/Inputs/object-test.elf-hexagon -o %t1
 RUN: FileCheck %s -check-prefix ELF-hexagon < %t1
 
 ELF-i386: defined-atoms:
-ELF-i386:   - name:            global_variable
-ELF-i386:   - name:            uninitialized_static_variable
 ELF-i386:   - name:            global_func
 ELF-i386:   - name:            static_func
 ELF-i386:   - name:            weak_func
 ELF-i386:   - name:            hidden_func
 ELF-i386:   - name:            no_dead_strip
 ELF-i386:   - name:            no_special_section_func
+ELF-i386:   - name:            global_variable
+ELF-i386:   - name:            uninitialized_static_variable
 ELF-i386:   - name:            special_section_func
 ELF-i386: undefined-atoms:
 ELF-i386:   - name:            puts
 ELF-i386: absolute-atoms:
 ELF-i386:   - name:            sample.c
 
-ELF-hexagon:   - name:            global_variable
-ELF-hexagon:   - name:            uninitialized_static_variable
 ELF-hexagon:   - name:            global_func
 ELF-hexagon:   - name:            static_func
 ELF-hexagon:   - name:            weak_func
 ELF-hexagon:   - name:            hidden_func
 ELF-hexagon:   - name:            no_dead_strip
 ELF-hexagon:   - name:            no_special_section_func
+ELF-hexagon:   - name:            global_variable
+ELF-hexagon:   - name:            uninitialized_static_variable
 ELF-hexagon:   - name:            special_section_func
 ELF-hexagon: undefined-atoms:
 ELF-hexagon:   - name:            puts
