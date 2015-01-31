@@ -245,12 +245,18 @@ unsigned ContinuationIndenter::addTokenToState(LineState &State, bool Newline,
        (Current.Previous->Tok.getIdentifierInfo() == nullptr ||
         Current.Previous->Tok.getIdentifierInfo()->getPPKeywordID() ==
             tok::pp_not_keyword))) {
-    // FIXME: Is this correct?
-    int WhitespaceLength = SourceMgr.getSpellingColumnNumber(
-                               State.NextToken->WhitespaceRange.getEnd()) -
-                           SourceMgr.getSpellingColumnNumber(
-                               State.NextToken->WhitespaceRange.getBegin());
-    State.Column += WhitespaceLength;
+    unsigned EndColumn =
+        SourceMgr.getSpellingColumnNumber(Current.WhitespaceRange.getEnd());
+    if (Current.LastNewlineOffset != 0) {
+      // If there is a newline within this token, the final column will solely
+      // determined by the current end column.
+      State.Column = EndColumn;
+    } else {
+      unsigned StartColumn =
+          SourceMgr.getSpellingColumnNumber(Current.WhitespaceRange.getBegin());
+      assert(EndColumn >= StartColumn);
+      State.Column += EndColumn - StartColumn;
+    }
     moveStateToNextToken(State, DryRun, /*Newline=*/false);
     return 0;
   }
