@@ -176,7 +176,7 @@ namespace {
       AU.addPreserved<DominatorTreeWrapperPass>();
       AU.addRequired<DominatorTreeWrapperPass>();
       AU.addRequired<TargetLibraryInfoWrapperPass>();
-      AU.addRequired<TargetTransformInfo>();
+      AU.addRequired<TargetTransformInfoWrapperPass>();
     }
 
     const DataLayout *getDataLayout() {
@@ -204,7 +204,8 @@ namespace {
     }
 
     const TargetTransformInfo *getTargetTransformInfo() {
-      return TTI ? TTI : (TTI = &getAnalysis<TargetTransformInfo>());
+      return TTI ? TTI : (TTI = &getAnalysis<TargetTransformInfoWrapperPass>()
+                                     .getTTI());
     }
 
     Loop *getLoop() const { return CurLoop; }
@@ -225,7 +226,7 @@ INITIALIZE_PASS_DEPENDENCY(LCSSA)
 INITIALIZE_PASS_DEPENDENCY(ScalarEvolution)
 INITIALIZE_PASS_DEPENDENCY(TargetLibraryInfoWrapperPass)
 INITIALIZE_AG_DEPENDENCY(AliasAnalysis)
-INITIALIZE_AG_DEPENDENCY(TargetTransformInfo)
+INITIALIZE_PASS_DEPENDENCY(TargetTransformInfoWrapperPass)
 INITIALIZE_PASS_END(LoopIdiomRecognize, "loop-idiom", "Recognize loop idioms",
                     false, false)
 

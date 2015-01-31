@@ -19,6 +19,7 @@
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/TargetTransformInfo.h"
 #include "llvm/Analysis/ValueTracking.h"
+#include "llvm/CodeGen/BasicTTIImpl.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Target/CostTable.h"
 #include "llvm/Target/TargetLowering.h"
@@ -26,69 +27,56 @@ using namespace llvm;
 
 #define DEBUG_TYPE "NVPTXtti"
 
-// Declare the pass initialization routine locally as target-specific passes
-// don't have a target-wide initialization entry point, and so we rely on the
-// pass constructor initialization.
-namespace llvm {
-void initializeNVPTXTTIPass(PassRegistry &);
-}
-
 namespace {
 
-class NVPTXTTI final : public ImmutablePass, public TargetTransformInfo {
+class NVPTXTTIImpl : public BasicTTIImplBase<NVPTXTTIImpl> {
+  typedef BasicTTIImplBase<NVPTXTTIImpl> BaseT;
+  typedef TargetTransformInfo TTI;
+
   const NVPTXTargetLowering *TLI;
+
 public:
-  NVPTXTTI() : ImmutablePass(ID), TLI(nullptr) {
-    llvm_unreachable("This pass cannot be directly constructed");
+  explicit NVPTXTTIImpl(const NVPTXTargetMachine *TM = nullptr)
+      : BaseT(TM),
+        TLI(TM ? TM->getSubtargetImpl()->getTargetLowering() : nullptr) {}
+
+  // Provide value semantics. MSVC requires that we spell all of these out.
+  NVPTXTTIImpl(const NVPTXTTIImpl &Arg)
+      : BaseT(static_cast<const BaseT &>(Arg)), TLI(Arg.TLI) {}
+  NVPTXTTIImpl(NVPTXTTIImpl &&Arg)
+      : BaseT(std::move(static_cast<BaseT &>(Arg))), TLI(std::move(Arg.TLI)) {}
+  NVPTXTTIImpl &operator=(const NVPTXTTIImpl &RHS) {
+    BaseT::operator=(static_cast<const BaseT &>(RHS));
+    TLI = RHS.TLI;
+    return *this;
+  }
+  NVPTXTTIImpl &operator=(NVPTXTTIImpl &&RHS) {
+    BaseT::operator=(std::move(static_cast<BaseT &>(RHS)));
+    TLI = std::move(RHS.TLI);
+    return *this;
   }
 
-  NVPTXTTI(const NVPTXTargetMachine *TM)
-      : ImmutablePass(ID), TLI(TM->getSubtargetImpl()->getTargetLowering()) {
-    initializeNVPTXTTIPass(*PassRegistry::getPassRegistry());
-  }
-
-  void initializePass() override { pushTTIStack(this); }
-
-  void getAnalysisUsage(AnalysisUsage &AU) const override {
-    TargetTransformInfo::getAnalysisUsage(AU);
-  }
-
-  /// Pass identification.
-  static char ID;
-
-  /// Provide necessary pointer adjustments for the two base classes.
-  void *getAdjustedAnalysisPointer(const void *ID) override {
-    if (ID == &TargetTransformInfo::ID)
-      return (TargetTransformInfo *)this;
-    return this;
-  }
-
-  bool hasBranchDivergence() const override;
+  bool hasBranchDivergence() { return true; }
 
   unsigned getArithmeticInstrCost(
-      unsigned Opcode, Type *Ty, OperandValueKind Opd1Info = OK_AnyValue,
-      OperandValueKind Opd2Info = OK_AnyValue,
-      OperandValueProperties Opd1PropInfo = OP_None,
-      OperandValueProperties Opd2PropInfo = OP_None) const override;
+      unsigned Opcode, Type *Ty,
+      TTI::OperandValueKind Opd1Info = TTI::OK_AnyValue,
+      TTI::OperandValueKind Opd2Info = TTI::OK_AnyValue,
+      TTI::OperandValueProperties Opd1PropInfo = TTI::OP_None,
+      TTI::OperandValueProperties Opd2PropInfo = TTI::OP_None);
 };
 
 } // end anonymous namespace
 
-INITIALIZE_AG_PASS(NVPTXTTI, TargetTransformInfo, "NVPTXtti",
-                   "NVPTX Target Transform Info", true, true, false)
-char NVPTXTTI::ID = 0;
-
 ImmutablePass *
 llvm::createNVPTXTargetTransformInfoPass(const NVPTXTargetMachine *TM) {
-  return new NVPTXTTI(TM);
+  return new TargetTransformInfoWrapperPass(NVPTXTTIImpl(TM));
 }
 
-bool NVPTXTTI::hasBranchDivergence() const { return true; }
-
-unsigned NVPTXTTI::getArithmeticInstrCost(
-    unsigned Opcode, Type *Ty, OperandValueKind Opd1Info,
-    OperandValueKind Opd2Info, OperandValueProperties Opd1PropInfo,
-    OperandValueProperties Opd2PropInfo) const {
+unsigned NVPTXTTIImpl::getArithmeticInstrCost(
+    unsigned Opcode, Type *Ty, TTI::OperandValueKind Opd1Info,
+    TTI::OperandValueKind Opd2Info, TTI::OperandValueProperties Opd1PropInfo,
+    TTI::OperandValueProperties Opd2PropInfo) {
   // Legalize the type.
   std::pair<unsigned, MVT> LT = TLI->getTypeLegalizationCost(Ty);
 
@@ -96,8 +84,8 @@ unsigned NVPTXTTI::getArithmeticInstrCost(
 
   switch (ISD) {
   default:
-    return TargetTransformInfo::getArithmeticInstrCost(
-        Opcode, Ty, Opd1Info, Opd2Info, Opd1PropInfo, Opd2PropInfo);
+    return BaseT::getArithmeticInstrCost(Opcode, Ty, Opd1Info, Opd2Info,
+                                         Opd1PropInfo, Opd2PropInfo);
   case ISD::ADD:
   case ISD::MUL:
   case ISD::XOR:
@@ -109,7 +97,7 @@ unsigned NVPTXTTI::getArithmeticInstrCost(
     if (LT.second.SimpleTy == MVT::i64)
       return 2 * LT.first;
     // Delegate other cases to the basic TTI.
-    return TargetTransformInfo::getArithmeticInstrCost(
-        Opcode, Ty, Opd1Info, Opd2Info, Opd1PropInfo, Opd2PropInfo);
+    return BaseT::getArithmeticInstrCost(Opcode, Ty, Opd1Info, Opd2Info,
+                                         Opd1PropInfo, Opd2PropInfo);
   }
 }

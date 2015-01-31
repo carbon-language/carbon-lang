@@ -208,7 +208,9 @@ namespace {
       SE = &P->getAnalysis<ScalarEvolution>();
       DataLayoutPass *DLP = P->getAnalysisIfAvailable<DataLayoutPass>();
       DL = DLP ? &DLP->getDataLayout() : nullptr;
-      TTI = IgnoreTargetInfo ? nullptr : &P->getAnalysis<TargetTransformInfo>();
+      TTI = IgnoreTargetInfo
+                ? nullptr
+                : &P->getAnalysis<TargetTransformInfoWrapperPass>().getTTI();
     }
 
     typedef std::pair<Value *, Value *> ValuePair;
@@ -442,7 +444,9 @@ namespace {
       SE = &getAnalysis<ScalarEvolution>();
       DataLayoutPass *DLP = getAnalysisIfAvailable<DataLayoutPass>();
       DL = DLP ? &DLP->getDataLayout() : nullptr;
-      TTI = IgnoreTargetInfo ? nullptr : &getAnalysis<TargetTransformInfo>();
+      TTI = IgnoreTargetInfo
+                ? nullptr
+                : &getAnalysis<TargetTransformInfoWrapperPass>().getTTI();
 
       return vectorizeBB(BB);
     }
@@ -452,7 +456,7 @@ namespace {
       AU.addRequired<AliasAnalysis>();
       AU.addRequired<DominatorTreeWrapperPass>();
       AU.addRequired<ScalarEvolution>();
-      AU.addRequired<TargetTransformInfo>();
+      AU.addRequired<TargetTransformInfoWrapperPass>();
       AU.addPreserved<AliasAnalysis>();
       AU.addPreserved<DominatorTreeWrapperPass>();
       AU.addPreserved<ScalarEvolution>();
@@ -3192,7 +3196,7 @@ char BBVectorize::ID = 0;
 static const char bb_vectorize_name[] = "Basic-Block Vectorization";
 INITIALIZE_PASS_BEGIN(BBVectorize, BBV_NAME, bb_vectorize_name, false, false)
 INITIALIZE_AG_DEPENDENCY(AliasAnalysis)
-INITIALIZE_AG_DEPENDENCY(TargetTransformInfo)
+INITIALIZE_PASS_DEPENDENCY(TargetTransformInfoWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(ScalarEvolution)
 INITIALIZE_PASS_END(BBVectorize, BBV_NAME, bb_vectorize_name, false, false)

@@ -18,6 +18,7 @@
 #include "AArch64TargetMachine.h"
 #include "MCTargetDesc/AArch64AddressingModes.h"
 #include "llvm/Analysis/TargetTransformInfo.h"
+#include "llvm/CodeGen/BasicTTIImpl.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Target/CostTable.h"
 #include "llvm/Target/TargetLowering.h"
@@ -26,23 +27,18 @@ using namespace llvm;
 
 #define DEBUG_TYPE "aarch64tti"
 
-// Declare the pass initialization routine locally as target-specific passes
-// don't have a target-wide initialization entry point, and so we rely on the
-// pass constructor initialization.
-namespace llvm {
-void initializeAArch64TTIPass(PassRegistry &);
-}
-
 namespace {
 
-class AArch64TTI final : public ImmutablePass, public TargetTransformInfo {
-  const AArch64TargetMachine *TM;
+class AArch64TTIImpl : public BasicTTIImplBase<AArch64TTIImpl> {
+  typedef BasicTTIImplBase<AArch64TTIImpl> BaseT;
+  typedef TargetTransformInfo TTI;
+
   const AArch64Subtarget *ST;
   const AArch64TargetLowering *TLI;
 
   /// Estimate the overhead of scalarizing an instruction. Insert and Extract
   /// are set if the result needs to be inserted and/or extracted from vectors.
-  unsigned getScalarizationOverhead(Type *Ty, bool Insert, bool Extract) const;
+  unsigned getScalarizationOverhead(Type *Ty, bool Insert, bool Extract);
 
   enum MemIntrinsicType {
     VECTOR_LDST_TWO_ELEMENTS,
@@ -51,48 +47,47 @@ class AArch64TTI final : public ImmutablePass, public TargetTransformInfo {
   };
 
 public:
-  AArch64TTI() : ImmutablePass(ID), TM(nullptr), ST(nullptr), TLI(nullptr) {
-    llvm_unreachable("This pass cannot be directly constructed");
+  explicit AArch64TTIImpl(const AArch64TargetMachine *TM = nullptr)
+      : BaseT(TM), ST(TM ? TM->getSubtargetImpl() : nullptr),
+        TLI(ST ? ST->getTargetLowering() : nullptr) {}
+
+  // Provide value semantics. MSVC requires that we spell all of these out.
+  AArch64TTIImpl(const AArch64TTIImpl &Arg)
+      : BaseT(static_cast<const BaseT &>(Arg)), ST(Arg.ST), TLI(Arg.TLI) {}
+  AArch64TTIImpl(AArch64TTIImpl &&Arg)
+      : BaseT(std::move(static_cast<BaseT &>(Arg))), ST(std::move(Arg.ST)),
+        TLI(std::move(Arg.TLI)) {}
+  AArch64TTIImpl &operator=(const AArch64TTIImpl &RHS) {
+    BaseT::operator=(static_cast<const BaseT &>(RHS));
+    ST = RHS.ST;
+    TLI = RHS.TLI;
+    return *this;
   }
-
-  AArch64TTI(const AArch64TargetMachine *TM)
-      : ImmutablePass(ID), TM(TM), ST(TM->getSubtargetImpl()),
-        TLI(TM->getSubtargetImpl()->getTargetLowering()) {
-    initializeAArch64TTIPass(*PassRegistry::getPassRegistry());
-  }
-
-  void initializePass() override { pushTTIStack(this); }
-
-  void getAnalysisUsage(AnalysisUsage &AU) const override {
-    TargetTransformInfo::getAnalysisUsage(AU);
-  }
-
-  /// Pass identification.
-  static char ID;
-
-  /// Provide necessary pointer adjustments for the two base classes.
-  void *getAdjustedAnalysisPointer(const void *ID) override {
-    if (ID == &TargetTransformInfo::ID)
-      return (TargetTransformInfo *)this;
-    return this;
+  AArch64TTIImpl &operator=(AArch64TTIImpl &&RHS) {
+    BaseT::operator=(std::move(static_cast<BaseT &>(RHS)));
+    ST = std::move(RHS.ST);
+    TLI = std::move(RHS.TLI);
+    return *this;
   }
 
   /// \name Scalar TTI Implementations
   /// @{
-  unsigned getIntImmCost(int64_t Val) const;
-  unsigned getIntImmCost(const APInt &Imm, Type *Ty) const override;
+
+  using BaseT::getIntImmCost;
+  unsigned getIntImmCost(int64_t Val);
+  unsigned getIntImmCost(const APInt &Imm, Type *Ty);
   unsigned getIntImmCost(unsigned Opcode, unsigned Idx, const APInt &Imm,
-                         Type *Ty) const override;
+                         Type *Ty);
   unsigned getIntImmCost(Intrinsic::ID IID, unsigned Idx, const APInt &Imm,
-                         Type *Ty) const override;
-  PopcntSupportKind getPopcntSupport(unsigned TyWidth) const override;
+                         Type *Ty);
+  TTI::PopcntSupportKind getPopcntSupport(unsigned TyWidth);
 
   /// @}
 
   /// \name Vector TTI Implementations
   /// @{
 
-  unsigned getNumberOfRegisters(bool Vector) const override {
+  unsigned getNumberOfRegisters(bool Vector) {
     if (Vector) {
       if (ST->hasNEON())
         return 32;
@@ -101,7 +96,7 @@ public:
     return 31;
   }
 
-  unsigned getRegisterBitWidth(bool Vector) const override {
+  unsigned getRegisterBitWidth(bool Vector) {
     if (Vector) {
       if (ST->hasNEON())
         return 128;
@@ -110,57 +105,50 @@ public:
     return 64;
   }
 
-  unsigned getMaxInterleaveFactor() const override;
+  unsigned getMaxInterleaveFactor();
 
-  unsigned getCastInstrCost(unsigned Opcode, Type *Dst, Type *Src) const
-      override;
+  unsigned getCastInstrCost(unsigned Opcode, Type *Dst, Type *Src);
 
-  unsigned getVectorInstrCost(unsigned Opcode, Type *Val, unsigned Index) const
-      override;
+  unsigned getVectorInstrCost(unsigned Opcode, Type *Val, unsigned Index);
 
   unsigned getArithmeticInstrCost(
-      unsigned Opcode, Type *Ty, OperandValueKind Opd1Info = OK_AnyValue,
-      OperandValueKind Opd2Info = OK_AnyValue,
-      OperandValueProperties Opd1PropInfo = OP_None,
-      OperandValueProperties Opd2PropInfo = OP_None) const override;
+      unsigned Opcode, Type *Ty,
+      TTI::OperandValueKind Opd1Info = TTI::OK_AnyValue,
+      TTI::OperandValueKind Opd2Info = TTI::OK_AnyValue,
+      TTI::OperandValueProperties Opd1PropInfo = TTI::OP_None,
+      TTI::OperandValueProperties Opd2PropInfo = TTI::OP_None);
 
-  unsigned getAddressComputationCost(Type *Ty, bool IsComplex) const override;
+  unsigned getAddressComputationCost(Type *Ty, bool IsComplex);
 
-  unsigned getCmpSelInstrCost(unsigned Opcode, Type *ValTy, Type *CondTy) const
-      override;
+  unsigned getCmpSelInstrCost(unsigned Opcode, Type *ValTy, Type *CondTy);
 
   unsigned getMemoryOpCost(unsigned Opcode, Type *Src, unsigned Alignment,
-                           unsigned AddressSpace) const override;
+                           unsigned AddressSpace);
 
-  unsigned getCostOfKeepingLiveOverCall(ArrayRef<Type*> Tys) const override;
+  unsigned getCostOfKeepingLiveOverCall(ArrayRef<Type *> Tys);
 
   void getUnrollingPreferences(const Function *F, Loop *L,
-                               UnrollingPreferences &UP) const override;
+                               TTI::UnrollingPreferences &UP);
 
   Value *getOrCreateResultFromMemIntrinsic(IntrinsicInst *Inst,
-                                           Type *ExpectedType) const override;
+                                           Type *ExpectedType);
 
-  bool getTgtMemIntrinsic(IntrinsicInst *Inst,
-                          MemIntrinsicInfo &Info) const override;
+  bool getTgtMemIntrinsic(IntrinsicInst *Inst, MemIntrinsicInfo &Info);
 
   /// @}
 };
 
 } // end anonymous namespace
 
-INITIALIZE_AG_PASS(AArch64TTI, TargetTransformInfo, "aarch64tti",
-                   "AArch64 Target Transform Info", true, true, false)
-char AArch64TTI::ID = 0;
-
 ImmutablePass *
 llvm::createAArch64TargetTransformInfoPass(const AArch64TargetMachine *TM) {
-  return new AArch64TTI(TM);
+  return new TargetTransformInfoWrapperPass(AArch64TTIImpl(TM));
 }
 
 /// \brief Calculate the cost of materializing a 64-bit value. This helper
 /// method might only calculate a fraction of a larger immediate. Therefore it
 /// is valid to return a cost of ZERO.
-unsigned AArch64TTI::getIntImmCost(int64_t Val) const {
+unsigned AArch64TTIImpl::getIntImmCost(int64_t Val) {
   // Check if the immediate can be encoded within an instruction.
   if (Val == 0 || AArch64_AM::isLogicalImmediate(Val, 64))
     return 0;
@@ -174,7 +162,7 @@ unsigned AArch64TTI::getIntImmCost(int64_t Val) const {
 }
 
 /// \brief Calculate the cost of materializing the given constant.
-unsigned AArch64TTI::getIntImmCost(const APInt &Imm, Type *Ty) const {
+unsigned AArch64TTIImpl::getIntImmCost(const APInt &Imm, Type *Ty) {
   assert(Ty->isIntegerTy());
 
   unsigned BitSize = Ty->getPrimitiveSizeInBits();
@@ -198,25 +186,25 @@ unsigned AArch64TTI::getIntImmCost(const APInt &Imm, Type *Ty) const {
   return std::max(1U, Cost);
 }
 
-unsigned AArch64TTI::getIntImmCost(unsigned Opcode, unsigned Idx,
-                                 const APInt &Imm, Type *Ty) const {
+unsigned AArch64TTIImpl::getIntImmCost(unsigned Opcode, unsigned Idx,
+                                       const APInt &Imm, Type *Ty) {
   assert(Ty->isIntegerTy());
 
   unsigned BitSize = Ty->getPrimitiveSizeInBits();
   // There is no cost model for constants with a bit size of 0. Return TCC_Free
   // here, so that constant hoisting will ignore this constant.
   if (BitSize == 0)
-    return TCC_Free;
+    return TTI::TCC_Free;
 
   unsigned ImmIdx = ~0U;
   switch (Opcode) {
   default:
-    return TCC_Free;
+    return TTI::TCC_Free;
   case Instruction::GetElementPtr:
     // Always hoist the base address of a GetElementPtr.
     if (Idx == 0)
-      return 2 * TCC_Basic;
-    return TCC_Free;
+      return 2 * TTI::TCC_Basic;
+    return TTI::TCC_Free;
   case Instruction::Store:
     ImmIdx = 0;
     break;
@@ -238,7 +226,7 @@ unsigned AArch64TTI::getIntImmCost(unsigned Opcode, unsigned Idx,
   case Instruction::LShr:
   case Instruction::AShr:
     if (Idx == 1)
-      return TCC_Free;
+      return TTI::TCC_Free;
     break;
   case Instruction::Trunc:
   case Instruction::ZExt:
@@ -256,26 +244,27 @@ unsigned AArch64TTI::getIntImmCost(unsigned Opcode, unsigned Idx,
 
   if (Idx == ImmIdx) {
     unsigned NumConstants = (BitSize + 63) / 64;
-    unsigned Cost = AArch64TTI::getIntImmCost(Imm, Ty);
-    return (Cost <= NumConstants * TCC_Basic)
-      ? static_cast<unsigned>(TCC_Free) : Cost;
+    unsigned Cost = AArch64TTIImpl::getIntImmCost(Imm, Ty);
+    return (Cost <= NumConstants * TTI::TCC_Basic)
+               ? static_cast<unsigned>(TTI::TCC_Free)
+               : Cost;
   }
-  return AArch64TTI::getIntImmCost(Imm, Ty);
+  return AArch64TTIImpl::getIntImmCost(Imm, Ty);
 }
 
-unsigned AArch64TTI::getIntImmCost(Intrinsic::ID IID, unsigned Idx,
-                                 const APInt &Imm, Type *Ty) const {
+unsigned AArch64TTIImpl::getIntImmCost(Intrinsic::ID IID, unsigned Idx,
+                                       const APInt &Imm, Type *Ty) {
   assert(Ty->isIntegerTy());
 
   unsigned BitSize = Ty->getPrimitiveSizeInBits();
   // There is no cost model for constants with a bit size of 0. Return TCC_Free
   // here, so that constant hoisting will ignore this constant.
   if (BitSize == 0)
-    return TCC_Free;
+    return TTI::TCC_Free;
 
   switch (IID) {
   default:
-    return TCC_Free;
+    return TTI::TCC_Free;
   case Intrinsic::sadd_with_overflow:
   case Intrinsic::uadd_with_overflow:
   case Intrinsic::ssub_with_overflow:
@@ -284,35 +273,36 @@ unsigned AArch64TTI::getIntImmCost(Intrinsic::ID IID, unsigned Idx,
   case Intrinsic::umul_with_overflow:
     if (Idx == 1) {
       unsigned NumConstants = (BitSize + 63) / 64;
-      unsigned Cost = AArch64TTI::getIntImmCost(Imm, Ty);
-      return (Cost <= NumConstants * TCC_Basic)
-        ? static_cast<unsigned>(TCC_Free) : Cost;
+      unsigned Cost = AArch64TTIImpl::getIntImmCost(Imm, Ty);
+      return (Cost <= NumConstants * TTI::TCC_Basic)
+                 ? static_cast<unsigned>(TTI::TCC_Free)
+                 : Cost;
     }
     break;
   case Intrinsic::experimental_stackmap:
     if ((Idx < 2) || (Imm.getBitWidth() <= 64 && isInt<64>(Imm.getSExtValue())))
-      return TCC_Free;
+      return TTI::TCC_Free;
     break;
   case Intrinsic::experimental_patchpoint_void:
   case Intrinsic::experimental_patchpoint_i64:
     if ((Idx < 4) || (Imm.getBitWidth() <= 64 && isInt<64>(Imm.getSExtValue())))
-      return TCC_Free;
+      return TTI::TCC_Free;
     break;
   }
-  return AArch64TTI::getIntImmCost(Imm, Ty);
+  return AArch64TTIImpl::getIntImmCost(Imm, Ty);
 }
 
-AArch64TTI::PopcntSupportKind
-AArch64TTI::getPopcntSupport(unsigned TyWidth) const {
+TargetTransformInfo::PopcntSupportKind
+AArch64TTIImpl::getPopcntSupport(unsigned TyWidth) {
   assert(isPowerOf2_32(TyWidth) && "Ty width must be power of 2");
   if (TyWidth == 32 || TyWidth == 64)
-    return PSK_FastHardware;
+    return TTI::PSK_FastHardware;
   // TODO: AArch64TargetLowering::LowerCTPOP() supports 128bit popcount.
-  return PSK_Software;
+  return TTI::PSK_Software;
 }
 
-unsigned AArch64TTI::getCastInstrCost(unsigned Opcode, Type *Dst,
-                                    Type *Src) const {
+unsigned AArch64TTIImpl::getCastInstrCost(unsigned Opcode, Type *Dst,
+                                          Type *Src) {
   int ISD = TLI->InstructionOpcodeToISD(Opcode);
   assert(ISD && "Invalid opcode");
 
@@ -320,7 +310,7 @@ unsigned AArch64TTI::getCastInstrCost(unsigned Opcode, Type *Dst,
   EVT DstTy = TLI->getValueType(Dst);
 
   if (!SrcTy.isSimple() || !DstTy.isSimple())
-    return TargetTransformInfo::getCastInstrCost(Opcode, Dst, Src);
+    return BaseT::getCastInstrCost(Opcode, Dst, Src);
 
   static const TypeConversionCostTblEntry<MVT> ConversionTbl[] = {
     // LowerVectorINT_TO_FP:
@@ -391,11 +381,11 @@ unsigned AArch64TTI::getCastInstrCost(unsigned Opcode, Type *Dst,
   if (Idx != -1)
     return ConversionTbl[Idx].Cost;
 
-  return TargetTransformInfo::getCastInstrCost(Opcode, Dst, Src);
+  return BaseT::getCastInstrCost(Opcode, Dst, Src);
 }
 
-unsigned AArch64TTI::getVectorInstrCost(unsigned Opcode, Type *Val,
-                                      unsigned Index) const {
+unsigned AArch64TTIImpl::getVectorInstrCost(unsigned Opcode, Type *Val,
+                                            unsigned Index) {
   assert(Val->isVectorTy() && "This must be a vector type");
 
   if (Index != -1U) {
@@ -419,10 +409,10 @@ unsigned AArch64TTI::getVectorInstrCost(unsigned Opcode, Type *Val,
   return 2;
 }
 
-unsigned AArch64TTI::getArithmeticInstrCost(
-    unsigned Opcode, Type *Ty, OperandValueKind Opd1Info,
-    OperandValueKind Opd2Info, OperandValueProperties Opd1PropInfo,
-    OperandValueProperties Opd2PropInfo) const {
+unsigned AArch64TTIImpl::getArithmeticInstrCost(
+    unsigned Opcode, Type *Ty, TTI::OperandValueKind Opd1Info,
+    TTI::OperandValueKind Opd2Info, TTI::OperandValueProperties Opd1PropInfo,
+    TTI::OperandValueProperties Opd2PropInfo) {
   // Legalize the type.
   std::pair<unsigned, MVT> LT = TLI->getTypeLegalizationCost(Ty);
 
@@ -453,8 +443,8 @@ unsigned AArch64TTI::getArithmeticInstrCost(
 
   switch (ISD) {
   default:
-    return TargetTransformInfo::getArithmeticInstrCost(
-        Opcode, Ty, Opd1Info, Opd2Info, Opd1PropInfo, Opd2PropInfo);
+    return BaseT::getArithmeticInstrCost(Opcode, Ty, Opd1Info, Opd2Info,
+                                         Opd1PropInfo, Opd2PropInfo);
   case ISD::ADD:
   case ISD::MUL:
   case ISD::XOR:
@@ -466,7 +456,7 @@ unsigned AArch64TTI::getArithmeticInstrCost(
   }
 }
 
-unsigned AArch64TTI::getAddressComputationCost(Type *Ty, bool IsComplex) const {
+unsigned AArch64TTIImpl::getAddressComputationCost(Type *Ty, bool IsComplex) {
   // Address computations in vectorized code with non-consecutive addresses will
   // likely result in more instructions compared to scalar code where the
   // computation can more often be merged into the index mode. The resulting
@@ -481,8 +471,8 @@ unsigned AArch64TTI::getAddressComputationCost(Type *Ty, bool IsComplex) const {
   return 1;
 }
 
-unsigned AArch64TTI::getCmpSelInstrCost(unsigned Opcode, Type *ValTy,
-                                      Type *CondTy) const {
+unsigned AArch64TTIImpl::getCmpSelInstrCost(unsigned Opcode, Type *ValTy,
+                                            Type *CondTy) {
 
   int ISD = TLI->InstructionOpcodeToISD(Opcode);
   // We don't lower vector selects well that are wider than the register width.
@@ -509,12 +499,12 @@ unsigned AArch64TTI::getCmpSelInstrCost(unsigned Opcode, Type *ValTy,
         return VectorSelectTbl[Idx].Cost;
     }
   }
-  return TargetTransformInfo::getCmpSelInstrCost(Opcode, ValTy, CondTy);
+  return BaseT::getCmpSelInstrCost(Opcode, ValTy, CondTy);
 }
 
-unsigned AArch64TTI::getMemoryOpCost(unsigned Opcode, Type *Src,
-                                   unsigned Alignment,
-                                   unsigned AddressSpace) const {
+unsigned AArch64TTIImpl::getMemoryOpCost(unsigned Opcode, Type *Src,
+                                         unsigned Alignment,
+                                         unsigned AddressSpace) {
   std::pair<unsigned, MVT> LT = TLI->getTypeLegalizationCost(Src);
 
   if (Opcode == Instruction::Store && Src->isVectorTy() && Alignment != 16 &&
@@ -542,7 +532,7 @@ unsigned AArch64TTI::getMemoryOpCost(unsigned Opcode, Type *Src,
   return LT.first;
 }
 
-unsigned AArch64TTI::getCostOfKeepingLiveOverCall(ArrayRef<Type*> Tys) const {
+unsigned AArch64TTIImpl::getCostOfKeepingLiveOverCall(ArrayRef<Type *> Tys) {
   unsigned Cost = 0;
   for (auto *I : Tys) {
     if (!I->isVectorTy())
@@ -554,20 +544,20 @@ unsigned AArch64TTI::getCostOfKeepingLiveOverCall(ArrayRef<Type*> Tys) const {
   return Cost;
 }
 
-unsigned AArch64TTI::getMaxInterleaveFactor() const {
+unsigned AArch64TTIImpl::getMaxInterleaveFactor() {
   if (ST->isCortexA57())
     return 4;
   return 2;
 }
 
-void AArch64TTI::getUnrollingPreferences(const Function *F, Loop *L,
-                                         UnrollingPreferences &UP) const {
+void AArch64TTIImpl::getUnrollingPreferences(const Function *F, Loop *L,
+                                             TTI::UnrollingPreferences &UP) {
   // Disable partial & runtime unrolling on -Os.
   UP.PartialOptSizeThreshold = 0;
 }
 
-Value *AArch64TTI::getOrCreateResultFromMemIntrinsic(IntrinsicInst *Inst,
-                                                     Type *ExpectedType) const {
+Value *AArch64TTIImpl::getOrCreateResultFromMemIntrinsic(IntrinsicInst *Inst,
+                                                         Type *ExpectedType) {
   switch (Inst->getIntrinsicID()) {
   default:
     return nullptr;
@@ -602,8 +592,8 @@ Value *AArch64TTI::getOrCreateResultFromMemIntrinsic(IntrinsicInst *Inst,
   }
 }
 
-bool AArch64TTI::getTgtMemIntrinsic(IntrinsicInst *Inst,
-                                    MemIntrinsicInfo &Info) const {
+bool AArch64TTIImpl::getTgtMemIntrinsic(IntrinsicInst *Inst,
+                                        MemIntrinsicInfo &Info) {
   switch (Inst->getIntrinsicID()) {
   default:
     break;

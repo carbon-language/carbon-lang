@@ -83,9 +83,5 @@ extern "C" void LLVMInitializeXCoreTarget() {
 }
 
 void XCoreTargetMachine::addAnalysisPasses(PassManagerBase &PM) {
-  // Add first the target-independent BasicTTI pass, then our XCore pass. This
-  // allows the XCore pass to delegate to the target independent layer when
-  // appropriate.
-  PM.add(createBasicTargetTransformInfoPass(this));
   PM.add(createXCoreTargetTransformInfoPass(this));
 }

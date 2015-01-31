@@ -120,10 +120,6 @@ TargetPassConfig *AMDGPUTargetMachine::createPassConfig(PassManagerBase &PM) {
 //===----------------------------------------------------------------------===//
 
 void AMDGPUTargetMachine::addAnalysisPasses(PassManagerBase &PM) {
-  // Add first the target-independent BasicTTI pass, then our AMDGPU pass. This
-  // allows the AMDGPU pass to delegate to the target independent layer when
-  // appropriate.
-  PM.add(createBasicTargetTransformInfoPass(this));
   PM.add(createAMDGPUTargetTransformInfoPass(this));
 }
 

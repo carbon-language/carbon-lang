@@ -126,7 +126,7 @@ namespace {
 char TailCallElim::ID = 0;
 INITIALIZE_PASS_BEGIN(TailCallElim, "tailcallelim",
                       "Tail Call Elimination", false, false)
-INITIALIZE_AG_DEPENDENCY(TargetTransformInfo)
+INITIALIZE_PASS_DEPENDENCY(TargetTransformInfoWrapperPass)
 INITIALIZE_PASS_END(TailCallElim, "tailcallelim",
                     "Tail Call Elimination", false, false)
 
@@ -136,7 +136,7 @@ FunctionPass *llvm::createTailCallEliminationPass() {
 }
 
 void TailCallElim::getAnalysisUsage(AnalysisUsage &AU) const {
-  AU.addRequired<TargetTransformInfo>();
+  AU.addRequired<TargetTransformInfoWrapperPass>();
 }
 
 /// \brief Scan the specified function for alloca instructions.
@@ -386,7 +386,7 @@ bool TailCallElim::runTRE(Function &F) {
   // right, so don't even try to convert it...
   if (F.getFunctionType()->isVarArg()) return false;
 
-  TTI = &getAnalysis<TargetTransformInfo>();
+  TTI = &getAnalysis<TargetTransformInfoWrapperPass>().getTTI();
   BasicBlock *OldEntry = nullptr;
   bool TailCallsAreMarkedTail = false;
   SmallVector<PHINode*, 8> ArgumentPHIs;

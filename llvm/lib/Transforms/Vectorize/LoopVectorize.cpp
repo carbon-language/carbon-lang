@@ -1330,7 +1330,7 @@ struct LoopVectorize : public FunctionPass {
     DataLayoutPass *DLP = getAnalysisIfAvailable<DataLayoutPass>();
     DL = DLP ? &DLP->getDataLayout() : nullptr;
     LI = &getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
-    TTI = &getAnalysis<TargetTransformInfo>();
+    TTI = &getAnalysis<TargetTransformInfoWrapperPass>().getTTI();
     DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
     BFI = &getAnalysis<BlockFrequencyInfo>();
     auto *TLIP = getAnalysisIfAvailable<TargetLibraryInfoWrapperPass>();
@@ -1550,7 +1550,7 @@ struct LoopVectorize : public FunctionPass {
     AU.addRequired<DominatorTreeWrapperPass>();
     AU.addRequired<LoopInfoWrapperPass>();
     AU.addRequired<ScalarEvolution>();
-    AU.addRequired<TargetTransformInfo>();
+    AU.addRequired<TargetTransformInfoWrapperPass>();
     AU.addRequired<AliasAnalysis>();
     AU.addPreserved<LoopInfoWrapperPass>();
     AU.addPreserved<DominatorTreeWrapperPass>();
@@ -6152,7 +6152,7 @@ Type* LoopVectorizationCostModel::ToVectorTy(Type *Scalar, unsigned VF) {
 char LoopVectorize::ID = 0;
 static const char lv_name[] = "Loop Vectorization";
 INITIALIZE_PASS_BEGIN(LoopVectorize, LV_NAME, lv_name, false, false)
-INITIALIZE_AG_DEPENDENCY(TargetTransformInfo)
+INITIALIZE_PASS_DEPENDENCY(TargetTransformInfoWrapperPass)
 INITIALIZE_AG_DEPENDENCY(AliasAnalysis)
 INITIALIZE_PASS_DEPENDENCY(AssumptionCacheTracker)
 INITIALIZE_PASS_DEPENDENCY(BlockFrequencyInfo)

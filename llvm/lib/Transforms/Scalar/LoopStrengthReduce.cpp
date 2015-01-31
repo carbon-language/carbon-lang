@@ -4866,8 +4866,8 @@ LSRInstance::LSRInstance(Loop *L, Pass *P)
     : IU(P->getAnalysis<IVUsers>()), SE(P->getAnalysis<ScalarEvolution>()),
       DT(P->getAnalysis<DominatorTreeWrapperPass>().getDomTree()),
       LI(P->getAnalysis<LoopInfoWrapperPass>().getLoopInfo()),
-      TTI(P->getAnalysis<TargetTransformInfo>()), L(L), Changed(false),
-      IVIncInsertPos(nullptr) {
+      TTI(P->getAnalysis<TargetTransformInfoWrapperPass>().getTTI()), L(L),
+      Changed(false), IVIncInsertPos(nullptr) {
   // If LoopSimplify form is not available, stay out of trouble.
   if (!L->isLoopSimplifyForm())
     return;
@@ -5043,7 +5043,7 @@ private:
 char LoopStrengthReduce::ID = 0;
 INITIALIZE_PASS_BEGIN(LoopStrengthReduce, "loop-reduce",
                 "Loop Strength Reduction", false, false)
-INITIALIZE_AG_DEPENDENCY(TargetTransformInfo)
+INITIALIZE_PASS_DEPENDENCY(TargetTransformInfoWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(ScalarEvolution)
 INITIALIZE_PASS_DEPENDENCY(IVUsers)
@@ -5078,7 +5078,7 @@ void LoopStrengthReduce::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addRequiredID(LoopSimplifyID);
   AU.addRequired<IVUsers>();
   AU.addPreserved<IVUsers>();
-  AU.addRequired<TargetTransformInfo>();
+  AU.addRequired<TargetTransformInfoWrapperPass>();
 }
 
 bool LoopStrengthReduce::runOnLoop(Loop *L, LPPassManager & /*LPM*/) {
@@ -5100,7 +5100,7 @@ bool LoopStrengthReduce::runOnLoop(Loop *L, LPPassManager & /*LPM*/) {
 #endif
     unsigned numFolded = Rewriter.replaceCongruentIVs(
         L, &getAnalysis<DominatorTreeWrapperPass>().getDomTree(), DeadInsts,
-        &getAnalysis<TargetTransformInfo>());
+        &getAnalysis<TargetTransformInfoWrapperPass>().getTTI());
     if (numFolded) {
       Changed = true;
       DeleteTriviallyDeadInstructions(DeadInsts);

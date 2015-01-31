@@ -53,34 +53,21 @@ struct MemIntrinsicInfo {
 /// \brief This pass provides access to the codegen interfaces that are needed
 /// for IR-level transformations.
 class TargetTransformInfo {
-protected:
-  /// \brief The TTI instance one level down the stack.
-  ///
-  /// This is used to implement the default behavior all of the methods which
-  /// is to delegate up through the stack of TTIs until one can answer the
-  /// query.
-  TargetTransformInfo *PrevTTI;
-
-  /// \brief The top of the stack of TTI analyses available.
-  ///
-  /// This is a convenience routine maintained as TTI analyses become available
-  /// that complements the PrevTTI delegation chain. When one part of an
-  /// analysis pass wants to query another part of the analysis pass it can use
-  /// this to start back at the top of the stack.
-  TargetTransformInfo *TopTTI;
-
-  /// All pass subclasses must in their initializePass routine call
-  /// pushTTIStack with themselves to update the pointers tracking the previous
-  /// TTI instance in the analysis group's stack, and the top of the analysis
-  /// group's stack.
-  void pushTTIStack(Pass *P);
-
-  /// All pass subclasses must call TargetTransformInfo::getAnalysisUsage.
-  virtual void getAnalysisUsage(AnalysisUsage &AU) const;
-
 public:
-  /// This class is intended to be subclassed by real implementations.
-  virtual ~TargetTransformInfo() = 0;
+  /// \brief Construct a TTI object using a type implementing the \c Concept
+  /// API below.
+  ///
+  /// This is used by targets to construct a TTI wrapping their target-specific
+  /// implementaion that encodes appropriate costs for their target.
+  template <typename T> TargetTransformInfo(T Impl);
+
+  // Provide move semantics.
+  TargetTransformInfo(TargetTransformInfo &&Arg);
+  TargetTransformInfo &operator=(TargetTransformInfo &&RHS);
+
+  // We need to define the destructor out-of-line to define our sub-classes
+  // out-of-line.
+  ~TargetTransformInfo();
 
   /// \name Generic Target Information
   /// @{
@@ -120,16 +107,15 @@ public:
   ///
   /// The returned cost is defined in terms of \c TargetCostConstants, see its
   /// comments for a detailed explanation of the cost values.
-  virtual unsigned getOperationCost(unsigned Opcode, Type *Ty,
-                                    Type *OpTy = nullptr) const;
+  unsigned getOperationCost(unsigned Opcode, Type *Ty,
+                            Type *OpTy = nullptr) const;
 
   /// \brief Estimate the cost of a GEP operation when lowered.
   ///
   /// The contract for this function is the same as \c getOperationCost except
   /// that it supports an interface that provides extra information specific to
   /// the GEP operation.
-  virtual unsigned getGEPCost(const Value *Ptr,
-                              ArrayRef<const Value *> Operands) const;
+  unsigned getGEPCost(const Value *Ptr, ArrayRef<const Value *> Operands) const;
 
   /// \brief Estimate the cost of a function call when lowered.
   ///
@@ -140,31 +126,31 @@ public:
   /// This is the most basic query for estimating call cost: it only knows the
   /// function type and (potentially) the number of arguments at the call site.
   /// The latter is only interesting for varargs function types.
-  virtual unsigned getCallCost(FunctionType *FTy, int NumArgs = -1) const;
+  unsigned getCallCost(FunctionType *FTy, int NumArgs = -1) const;
 
   /// \brief Estimate the cost of calling a specific function when lowered.
   ///
   /// This overload adds the ability to reason about the particular function
   /// being called in the event it is a library call with special lowering.
-  virtual unsigned getCallCost(const Function *F, int NumArgs = -1) const;
+  unsigned getCallCost(const Function *F, int NumArgs = -1) const;
 
   /// \brief Estimate the cost of calling a specific function when lowered.
   ///
   /// This overload allows specifying a set of candidate argument values.
-  virtual unsigned getCallCost(const Function *F,
-                               ArrayRef<const Value *> Arguments) const;
+  unsigned getCallCost(const Function *F,
+                       ArrayRef<const Value *> Arguments) const;
 
   /// \brief Estimate the cost of an intrinsic when lowered.
   ///
   /// Mirrors the \c getCallCost method but uses an intrinsic identifier.
-  virtual unsigned getIntrinsicCost(Intrinsic::ID IID, Type *RetTy,
-                                    ArrayRef<Type *> ParamTys) const;
+  unsigned getIntrinsicCost(Intrinsic::ID IID, Type *RetTy,
+                            ArrayRef<Type *> ParamTys) const;
 
   /// \brief Estimate the cost of an intrinsic when lowered.
   ///
   /// Mirrors the \c getCallCost method but uses an intrinsic identifier.
-  virtual unsigned getIntrinsicCost(Intrinsic::ID IID, Type *RetTy,
-                                    ArrayRef<const Value *> Arguments) const;
+  unsigned getIntrinsicCost(Intrinsic::ID IID, Type *RetTy,
+                            ArrayRef<const Value *> Arguments) const;
 
   /// \brief Estimate the cost of a given IR user when lowered.
   ///
@@ -181,13 +167,13 @@ public:
   ///
   /// The returned cost is defined in terms of \c TargetCostConstants, see its
   /// comments for a detailed explanation of the cost values.
-  virtual unsigned getUserCost(const User *U) const;
+  unsigned getUserCost(const User *U) const;
 
   /// \brief hasBranchDivergence - Return true if branch divergence exists.
   /// Branch divergence has a significantly negative impact on GPU performance
   /// when threads in the same wavefront take different paths due to conditional
   /// branches.
-  virtual bool hasBranchDivergence() const;
+  bool hasBranchDivergence() const;
 
   /// \brief Test whether calls to a function lower to actual program function
   /// calls.
@@ -201,7 +187,7 @@ public:
   /// and execution-speed costs. This would allow modelling the core of this
   /// query more accurately as a call is a single small instruction, but
   /// incurs significant execution cost.
-  virtual bool isLoweredToCall(const Function *F) const;
+  bool isLoweredToCall(const Function *F) const;
 
   /// Parameters that control the generic loop unrolling transformation.
   struct UnrollingPreferences {
@@ -243,8 +229,8 @@ public:
   /// \brief Get target-customized preferences for the generic loop unrolling
   /// transformation. The caller will initialize UP with the current
   /// target-independent defaults.
-  virtual void getUnrollingPreferences(const Function *F, Loop *L,
-                                       UnrollingPreferences &UP) const;
+  void getUnrollingPreferences(const Function *F, Loop *L,
+                               UnrollingPreferences &UP) const;
 
   /// @}
 
@@ -264,29 +250,28 @@ public:
   /// \brief Return true if the specified immediate is legal add immediate, that
   /// is the target has add instructions which can add a register with the
   /// immediate without having to materialize the immediate into a register.
-  virtual bool isLegalAddImmediate(int64_t Imm) const;
+  bool isLegalAddImmediate(int64_t Imm) const;
 
   /// \brief Return true if the specified immediate is legal icmp immediate,
   /// that is the target has icmp instructions which can compare a register
   /// against the immediate without having to materialize the immediate into a
   /// register.
-  virtual bool isLegalICmpImmediate(int64_t Imm) const;
+  bool isLegalICmpImmediate(int64_t Imm) const;
 
   /// \brief Return true if the addressing mode represented by AM is legal for
   /// this target, for a load/store of the specified type.
   /// The type may be VoidTy, in which case only return true if the addressing
   /// mode is legal for a load/store of any legal type.
   /// TODO: Handle pre/postinc as well.
-  virtual bool isLegalAddressingMode(Type *Ty, GlobalValue *BaseGV,
-                                     int64_t BaseOffset, bool HasBaseReg,
-                                     int64_t Scale) const;
+  bool isLegalAddressingMode(Type *Ty, GlobalValue *BaseGV, int64_t BaseOffset,
+                             bool HasBaseReg, int64_t Scale) const;
 
   /// \brief Return true if the target works with masked instruction
   /// AVX2 allows masks for consecutive load and store for i32 and i64 elements.
   /// AVX-512 architecture will also allow masks for non-consecutive memory
   /// accesses.
-  virtual bool isLegalMaskedStore(Type *DataType, int Consecutive) const;
-  virtual bool isLegalMaskedLoad(Type *DataType, int Consecutive) const;
+  bool isLegalMaskedStore(Type *DataType, int Consecutive) const;
+  bool isLegalMaskedLoad(Type *DataType, int Consecutive) const;
 
   /// \brief Return the cost of the scaling factor used in the addressing
   /// mode represented by AM for this target, for a load/store
@@ -294,45 +279,44 @@ public:
   /// If the AM is supported, the return value must be >= 0.
   /// If the AM is not supported, it returns a negative value.
   /// TODO: Handle pre/postinc as well.
-  virtual int getScalingFactorCost(Type *Ty, GlobalValue *BaseGV,
-                                   int64_t BaseOffset, bool HasBaseReg,
-                                   int64_t Scale) const;
+  int getScalingFactorCost(Type *Ty, GlobalValue *BaseGV, int64_t BaseOffset,
+                           bool HasBaseReg, int64_t Scale) const;
 
   /// \brief Return true if it's free to truncate a value of type Ty1 to type
   /// Ty2. e.g. On x86 it's free to truncate a i32 value in register EAX to i16
   /// by referencing its sub-register AX.
-  virtual bool isTruncateFree(Type *Ty1, Type *Ty2) const;
+  bool isTruncateFree(Type *Ty1, Type *Ty2) const;
 
   /// \brief Return true if this type is legal.
-  virtual bool isTypeLegal(Type *Ty) const;
+  bool isTypeLegal(Type *Ty) const;
 
   /// \brief Returns the target's jmp_buf alignment in bytes.
-  virtual unsigned getJumpBufAlignment() const;
+  unsigned getJumpBufAlignment() const;
 
   /// \brief Returns the target's jmp_buf size in bytes.
-  virtual unsigned getJumpBufSize() const;
+  unsigned getJumpBufSize() const;
 
   /// \brief Return true if switches should be turned into lookup tables for the
   /// target.
-  virtual bool shouldBuildLookupTables() const;
+  bool shouldBuildLookupTables() const;
 
   /// \brief Return hardware support for population count.
-  virtual PopcntSupportKind getPopcntSupport(unsigned IntTyWidthInBit) const;
+  PopcntSupportKind getPopcntSupport(unsigned IntTyWidthInBit) const;
 
   /// \brief Return true if the hardware has a fast square-root instruction.
-  virtual bool haveFastSqrt(Type *Ty) const;
+  bool haveFastSqrt(Type *Ty) const;
 
   /// \brief Return the expected cost of materializing for the given integer
   /// immediate of the specified type.
-  virtual unsigned getIntImmCost(const APInt &Imm, Type *Ty) const;
+  unsigned getIntImmCost(const APInt &Imm, Type *Ty) const;
 
   /// \brief Return the expected cost of materialization for the given integer
   /// immediate of the specified type for a given instruction. The cost can be
   /// zero if the immediate can be folded into the specified instruction.
-  virtual unsigned getIntImmCost(unsigned Opc, unsigned Idx, const APInt &Imm,
-                                 Type *Ty) const;
-  virtual unsigned getIntImmCost(Intrinsic::ID IID, unsigned Idx,
-                                 const APInt &Imm, Type *Ty) const;
+  unsigned getIntImmCost(unsigned Opc, unsigned Idx, const APInt &Imm,
+                         Type *Ty) const;
+  unsigned getIntImmCost(Intrinsic::ID IID, unsigned Idx, const APInt &Imm,
+                         Type *Ty) const;
   /// @}
 
   /// \name Vector Target Information
@@ -361,18 +345,18 @@ public:
   /// \return The number of scalar or vector registers that the target has.
   /// If 'Vectors' is true, it returns the number of vector registers. If it is
   /// set to false, it returns the number of scalar registers.
-  virtual unsigned getNumberOfRegisters(bool Vector) const;
+  unsigned getNumberOfRegisters(bool Vector) const;
 
   /// \return The width of the largest scalar or vector register type.
-  virtual unsigned getRegisterBitWidth(bool Vector) const;
+  unsigned getRegisterBitWidth(bool Vector) const;
 
   /// \return The maximum interleave factor that any transform should try to
   /// perform for this target. This number depends on the level of parallelism
   /// and the number of execution units in the CPU.
-  virtual unsigned getMaxInterleaveFactor() const;
+  unsigned getMaxInterleaveFactor() const;
 
   /// \return The expected cost of arithmetic ops, such as mul, xor, fsub, etc.
-  virtual unsigned
+  unsigned
   getArithmeticInstrCost(unsigned Opcode, Type *Ty,
                          OperandValueKind Opd1Info = OK_AnyValue,
                          OperandValueKind Opd2Info = OK_AnyValue,
@@ -382,36 +366,33 @@ public:
   /// \return The cost of a shuffle instruction of kind Kind and of type Tp.
   /// The index and subtype parameters are used by the subvector insertion and
   /// extraction shuffle kinds.
-  virtual unsigned getShuffleCost(ShuffleKind Kind, Type *Tp, int Index = 0,
-                                  Type *SubTp = nullptr) const;
+  unsigned getShuffleCost(ShuffleKind Kind, Type *Tp, int Index = 0,
+                          Type *SubTp = nullptr) const;
 
   /// \return The expected cost of cast instructions, such as bitcast, trunc,
   /// zext, etc.
-  virtual unsigned getCastInstrCost(unsigned Opcode, Type *Dst,
-                                    Type *Src) const;
+  unsigned getCastInstrCost(unsigned Opcode, Type *Dst, Type *Src) const;
 
   /// \return The expected cost of control-flow related instructions such as
   /// Phi, Ret, Br.
-  virtual unsigned getCFInstrCost(unsigned Opcode) const;
+  unsigned getCFInstrCost(unsigned Opcode) const;
 
   /// \returns The expected cost of compare and select instructions.
-  virtual unsigned getCmpSelInstrCost(unsigned Opcode, Type *ValTy,
-                                      Type *CondTy = nullptr) const;
+  unsigned getCmpSelInstrCost(unsigned Opcode, Type *ValTy,
+                              Type *CondTy = nullptr) const;
 
   /// \return The expected cost of vector Insert and Extract.
   /// Use -1 to indicate that there is no information on the index value.
-  virtual unsigned getVectorInstrCost(unsigned Opcode, Type *Val,
-                                      unsigned Index = -1) const;
+  unsigned getVectorInstrCost(unsigned Opcode, Type *Val,
+                              unsigned Index = -1) const;
 
   /// \return The cost of Load and Store instructions.
-  virtual unsigned getMemoryOpCost(unsigned Opcode, Type *Src,
-                                   unsigned Alignment,
-                                   unsigned AddressSpace) const;
+  unsigned getMemoryOpCost(unsigned Opcode, Type *Src, unsigned Alignment,
+                           unsigned AddressSpace) const;
 
   /// \return The cost of masked Load and Store instructions.
-  virtual unsigned getMaskedMemoryOpCost(unsigned Opcode, Type *Src,
-                                         unsigned Alignment,
-                                         unsigned AddressSpace) const;
+  unsigned getMaskedMemoryOpCost(unsigned Opcode, Type *Src, unsigned Alignment,
+                                 unsigned AddressSpace) const;
 
   /// \brief Calculate the cost of performing a vector reduction.
   ///
@@ -426,16 +407,16 @@ public:
   /// Split:
   ///  (v0, v1, v2, v3)
   ///  ((v0+v2), (v1+v3), undef, undef)
-  virtual unsigned getReductionCost(unsigned Opcode, Type *Ty,
-                                    bool IsPairwiseForm) const;
+  unsigned getReductionCost(unsigned Opcode, Type *Ty,
+                            bool IsPairwiseForm) const;
 
   /// \returns The cost of Intrinsic instructions.
-  virtual unsigned getIntrinsicInstrCost(Intrinsic::ID ID, Type *RetTy,
-                                         ArrayRef<Type *> Tys) const;
+  unsigned getIntrinsicInstrCost(Intrinsic::ID ID, Type *RetTy,
+                                 ArrayRef<Type *> Tys) const;
 
   /// \returns The number of pieces into which the provided type must be
   /// split during legalization. Zero is returned when the answer is unknown.
-  virtual unsigned getNumberOfParts(Type *Tp) const;
+  unsigned getNumberOfParts(Type *Tp) const;
 
   /// \returns The cost of the address computation. For most targets this can be
   /// merged into the instruction indexing mode. Some targets might want to
@@ -444,34 +425,302 @@ public:
   /// The 'IsComplex' parameter is a hint that the address computation is likely
   /// to involve multiple instructions and as such unlikely to be merged into
   /// the address indexing mode.
-  virtual unsigned getAddressComputationCost(Type *Ty,
-                                             bool IsComplex = false) const;
+  unsigned getAddressComputationCost(Type *Ty, bool IsComplex = false) const;
 
   /// \returns The cost, if any, of keeping values of the given types alive
   /// over a callsite.
   ///
   /// Some types may require the use of register classes that do not have
   /// any callee-saved registers, so would require a spill and fill.
-  virtual unsigned getCostOfKeepingLiveOverCall(ArrayRef<Type *> Tys) const;
+  unsigned getCostOfKeepingLiveOverCall(ArrayRef<Type *> Tys) const;
 
   /// \returns True if the intrinsic is a supported memory intrinsic.  Info
   /// will contain additional information - whether the intrinsic may write
   /// or read to memory, volatility and the pointer.  Info is undefined
   /// if false is returned.
-  virtual bool getTgtMemIntrinsic(IntrinsicInst *Inst,
-                                  MemIntrinsicInfo &Info) const;
+  bool getTgtMemIntrinsic(IntrinsicInst *Inst, MemIntrinsicInfo &Info) const;
 
   /// \returns A value which is the result of the given memory intrinsic.  New
   /// instructions may be created to extract the result from the given intrinsic
   /// memory operation.  Returns nullptr if the target cannot create a result
   /// from the given intrinsic.
-  virtual Value *getOrCreateResultFromMemIntrinsic(IntrinsicInst *Inst,
-                                                   Type *ExpectedType) const;
+  Value *getOrCreateResultFromMemIntrinsic(IntrinsicInst *Inst,
+                                           Type *ExpectedType) const;
 
   /// @}
 
-  /// Analysis group identification.
+private:
+  /// \brief The abstract base class used to type erase specific TTI
+  /// implementations.
+  class Concept;
+
+  /// \brief The template model for the base class which wraps a concrete
+  /// implementation in a type erased interface.
+  template <typename T> class Model;
+
+  std::unique_ptr<Concept> TTIImpl;
+};
+
+class TargetTransformInfo::Concept {
+public:
+  virtual ~Concept() = 0;
+
+  virtual unsigned getOperationCost(unsigned Opcode, Type *Ty, Type *OpTy) = 0;
+  virtual unsigned getGEPCost(const Value *Ptr,
+                              ArrayRef<const Value *> Operands) = 0;
+  virtual unsigned getCallCost(FunctionType *FTy, int NumArgs) = 0;
+  virtual unsigned getCallCost(const Function *F, int NumArgs) = 0;
+  virtual unsigned getCallCost(const Function *F,
+                               ArrayRef<const Value *> Arguments) = 0;
+  virtual unsigned getIntrinsicCost(Intrinsic::ID IID, Type *RetTy,
+                                    ArrayRef<Type *> ParamTys) = 0;
+  virtual unsigned getIntrinsicCost(Intrinsic::ID IID, Type *RetTy,
+                                    ArrayRef<const Value *> Arguments) = 0;
+  virtual unsigned getUserCost(const User *U) = 0;
+  virtual bool hasBranchDivergence() = 0;
+  virtual bool isLoweredToCall(const Function *F) = 0;
+  virtual void getUnrollingPreferences(const Function *F, Loop *L,
+                                       UnrollingPreferences &UP) = 0;
+  virtual bool isLegalAddImmediate(int64_t Imm) = 0;
+  virtual bool isLegalICmpImmediate(int64_t Imm) = 0;
+  virtual bool isLegalAddressingMode(Type *Ty, GlobalValue *BaseGV,
+                                     int64_t BaseOffset, bool HasBaseReg,
+                                     int64_t Scale) = 0;
+  virtual bool isLegalMaskedStore(Type *DataType, int Consecutive) = 0;
+  virtual bool isLegalMaskedLoad(Type *DataType, int Consecutive) = 0;
+  virtual int getScalingFactorCost(Type *Ty, GlobalValue *BaseGV,
+                                   int64_t BaseOffset, bool HasBaseReg,
+                                   int64_t Scale) = 0;
+  virtual bool isTruncateFree(Type *Ty1, Type *Ty2) = 0;
+  virtual bool isTypeLegal(Type *Ty) = 0;
+  virtual unsigned getJumpBufAlignment() = 0;
+  virtual unsigned getJumpBufSize() = 0;
+  virtual bool shouldBuildLookupTables() = 0;
+  virtual PopcntSupportKind getPopcntSupport(unsigned IntTyWidthInBit) = 0;
+  virtual bool haveFastSqrt(Type *Ty) = 0;
+  virtual unsigned getIntImmCost(const APInt &Imm, Type *Ty) = 0;
+  virtual unsigned getIntImmCost(unsigned Opc, unsigned Idx, const APInt &Imm,
+                                 Type *Ty) = 0;
+  virtual unsigned getIntImmCost(Intrinsic::ID IID, unsigned Idx,
+                                 const APInt &Imm, Type *Ty) = 0;
+  virtual unsigned getNumberOfRegisters(bool Vector) = 0;
+  virtual unsigned getRegisterBitWidth(bool Vector) = 0;
+  virtual unsigned getMaxInterleaveFactor() = 0;
+  virtual unsigned
+  getArithmeticInstrCost(unsigned Opcode, Type *Ty, OperandValueKind Opd1Info,
+                         OperandValueKind Opd2Info,
+                         OperandValueProperties Opd1PropInfo,
+                         OperandValueProperties Opd2PropInfo) = 0;
+  virtual unsigned getShuffleCost(ShuffleKind Kind, Type *Tp, int Index,
+                                  Type *SubTp) = 0;
+  virtual unsigned getCastInstrCost(unsigned Opcode, Type *Dst, Type *Src) = 0;
+  virtual unsigned getCFInstrCost(unsigned Opcode) = 0;
+  virtual unsigned getCmpSelInstrCost(unsigned Opcode, Type *ValTy,
+                                      Type *CondTy) = 0;
+  virtual unsigned getVectorInstrCost(unsigned Opcode, Type *Val,
+                                      unsigned Index) = 0;
+  virtual unsigned getMemoryOpCost(unsigned Opcode, Type *Src,
+                                   unsigned Alignment,
+                                   unsigned AddressSpace) = 0;
+  virtual unsigned getMaskedMemoryOpCost(unsigned Opcode, Type *Src,
+                                         unsigned Alignment,
+                                         unsigned AddressSpace) = 0;
+  virtual unsigned getReductionCost(unsigned Opcode, Type *Ty,
+                                    bool IsPairwiseForm) = 0;
+  virtual unsigned getIntrinsicInstrCost(Intrinsic::ID ID, Type *RetTy,
+                                         ArrayRef<Type *> Tys) = 0;
+  virtual unsigned getNumberOfParts(Type *Tp) = 0;
+  virtual unsigned getAddressComputationCost(Type *Ty, bool IsComplex) = 0;
+  virtual unsigned getCostOfKeepingLiveOverCall(ArrayRef<Type *> Tys) = 0;
+  virtual bool getTgtMemIntrinsic(IntrinsicInst *Inst,
+                                  MemIntrinsicInfo &Info) = 0;
+  virtual Value *getOrCreateResultFromMemIntrinsic(IntrinsicInst *Inst,
+                                                   Type *ExpectedType) = 0;
+};
+
+template <typename T>
+class TargetTransformInfo::Model final : public TargetTransformInfo::Concept {
+  T Impl;
+
+public:
+  Model(T Impl) : Impl(std::move(Impl)) {}
+  ~Model() override {}
+
+  unsigned getOperationCost(unsigned Opcode, Type *Ty, Type *OpTy) override {
+    return Impl.getOperationCost(Opcode, Ty, OpTy);
+  }
+  unsigned getGEPCost(const Value *Ptr,
+                      ArrayRef<const Value *> Operands) override {
+    return Impl.getGEPCost(Ptr, Operands);
+  }
+  unsigned getCallCost(FunctionType *FTy, int NumArgs) override {
+    return Impl.getCallCost(FTy, NumArgs);
+  }
+  unsigned getCallCost(const Function *F, int NumArgs) override {
+    return Impl.getCallCost(F, NumArgs);
+  }
+  unsigned getCallCost(const Function *F,
+                       ArrayRef<const Value *> Arguments) override {
+    return Impl.getCallCost(F, Arguments);
+  }
+  unsigned getIntrinsicCost(Intrinsic::ID IID, Type *RetTy,
+                            ArrayRef<Type *> ParamTys) override {
+    return Impl.getIntrinsicCost(IID, RetTy, ParamTys);
+  }
+  unsigned getIntrinsicCost(Intrinsic::ID IID, Type *RetTy,
+                            ArrayRef<const Value *> Arguments) override {
+    return Impl.getIntrinsicCost(IID, RetTy, Arguments);
+  }
+  unsigned getUserCost(const User *U) override { return Impl.getUserCost(U); }
+  bool hasBranchDivergence() override { return Impl.hasBranchDivergence(); }
+  bool isLoweredToCall(const Function *F) override {
+    return Impl.isLoweredToCall(F);
+  }
+  void getUnrollingPreferences(const Function *F, Loop *L,
+                               UnrollingPreferences &UP) override {
+    return Impl.getUnrollingPreferences(F, L, UP);
+  }
+  bool isLegalAddImmediate(int64_t Imm) override {
+    return Impl.isLegalAddImmediate(Imm);
+  }
+  bool isLegalICmpImmediate(int64_t Imm) override {
+    return Impl.isLegalICmpImmediate(Imm);
+  }
+  bool isLegalAddressingMode(Type *Ty, GlobalValue *BaseGV, int64_t BaseOffset,
+                             bool HasBaseReg, int64_t Scale) override {
+    return Impl.isLegalAddressingMode(Ty, BaseGV, BaseOffset, HasBaseReg,
+                                      Scale);
+  }
+  bool isLegalMaskedStore(Type *DataType, int Consecutive) override {
+    return Impl.isLegalMaskedStore(DataType, Consecutive);
+  }
+  bool isLegalMaskedLoad(Type *DataType, int Consecutive) override {
+    return Impl.isLegalMaskedLoad(DataType, Consecutive);
+  }
+  int getScalingFactorCost(Type *Ty, GlobalValue *BaseGV, int64_t BaseOffset,
+                           bool HasBaseReg, int64_t Scale) override {
+    return Impl.getScalingFactorCost(Ty, BaseGV, BaseOffset, HasBaseReg, Scale);
+  }
+  bool isTruncateFree(Type *Ty1, Type *Ty2) override {
+    return Impl.isTruncateFree(Ty1, Ty2);
+  }
+  bool isTypeLegal(Type *Ty) override { return Impl.isTypeLegal(Ty); }
+  unsigned getJumpBufAlignment() override { return Impl.getJumpBufAlignment(); }
+  unsigned getJumpBufSize() override { return Impl.getJumpBufSize(); }
+  bool shouldBuildLookupTables() override {
+    return Impl.shouldBuildLookupTables();
+  }
+  PopcntSupportKind getPopcntSupport(unsigned IntTyWidthInBit) override {
+    return Impl.getPopcntSupport(IntTyWidthInBit);
+  }
+  bool haveFastSqrt(Type *Ty) override { return Impl.haveFastSqrt(Ty); }
+  unsigned getIntImmCost(const APInt &Imm, Type *Ty) override {
+    return Impl.getIntImmCost(Imm, Ty);
+  }
+  unsigned getIntImmCost(unsigned Opc, unsigned Idx, const APInt &Imm,
+                         Type *Ty) override {
+    return Impl.getIntImmCost(Opc, Idx, Imm, Ty);
+  }
+  unsigned getIntImmCost(Intrinsic::ID IID, unsigned Idx, const APInt &Imm,
+                         Type *Ty) override {
+    return Impl.getIntImmCost(IID, Idx, Imm, Ty);
+  }
+  unsigned getNumberOfRegisters(bool Vector) override {
+    return Impl.getNumberOfRegisters(Vector);
+  }
+  unsigned getRegisterBitWidth(bool Vector) override {
+    return Impl.getRegisterBitWidth(Vector);
+  }
+  unsigned getMaxInterleaveFactor() override {
+    return Impl.getMaxInterleaveFactor();
+  }
+  unsigned
+  getArithmeticInstrCost(unsigned Opcode, Type *Ty, OperandValueKind Opd1Info,
+                         OperandValueKind Opd2Info,
+                         OperandValueProperties Opd1PropInfo,
+                         OperandValueProperties Opd2PropInfo) override {
+    return Impl.getArithmeticInstrCost(Opcode, Ty, Opd1Info, Opd2Info,
+                                       Opd1PropInfo, Opd2PropInfo);
+  }
+  unsigned getShuffleCost(ShuffleKind Kind, Type *Tp, int Index,
+                          Type *SubTp) override {
+    return Impl.getShuffleCost(Kind, Tp, Index, SubTp);
+  }
+  unsigned getCastInstrCost(unsigned Opcode, Type *Dst, Type *Src) override {
+    return Impl.getCastInstrCost(Opcode, Dst, Src);
+  }
+  unsigned getCFInstrCost(unsigned Opcode) override {
+    return Impl.getCFInstrCost(Opcode);
+  }
+  unsigned getCmpSelInstrCost(unsigned Opcode, Type *ValTy,
+                              Type *CondTy) override {
+    return Impl.getCmpSelInstrCost(Opcode, ValTy, CondTy);
+  }
+  unsigned getVectorInstrCost(unsigned Opcode, Type *Val,
+                              unsigned Index) override {
+    return Impl.getVectorInstrCost(Opcode, Val, Index);
+  }
+  unsigned getMemoryOpCost(unsigned Opcode, Type *Src, unsigned Alignment,
+                           unsigned AddressSpace) override {
+    return Impl.getMemoryOpCost(Opcode, Src, Alignment, AddressSpace);
+  }
+  unsigned getMaskedMemoryOpCost(unsigned Opcode, Type *Src, unsigned Alignment,
+                                 unsigned AddressSpace) override {
+    return Impl.getMaskedMemoryOpCost(Opcode, Src, Alignment, AddressSpace);
+  }
+  unsigned getReductionCost(unsigned Opcode, Type *Ty,
+                            bool IsPairwiseForm) override {
+    return Impl.getReductionCost(Opcode, Ty, IsPairwiseForm);
+  }
+  unsigned getIntrinsicInstrCost(Intrinsic::ID ID, Type *RetTy,
+                                 ArrayRef<Type *> Tys) override {
+    return Impl.getIntrinsicInstrCost(ID, RetTy, Tys);
+  }
+  unsigned getNumberOfParts(Type *Tp) override {
+    return Impl.getNumberOfParts(Tp);
+  }
+  unsigned getAddressComputationCost(Type *Ty, bool IsComplex) override {
+    return Impl.getAddressComputationCost(Ty, IsComplex);
+  }
+  unsigned getCostOfKeepingLiveOverCall(ArrayRef<Type *> Tys) override {
+    return Impl.getCostOfKeepingLiveOverCall(Tys);
+  }
+  bool getTgtMemIntrinsic(IntrinsicInst *Inst,
+                          MemIntrinsicInfo &Info) override {
+    return Impl.getTgtMemIntrinsic(Inst, Info);
+  }
+  Value *getOrCreateResultFromMemIntrinsic(IntrinsicInst *Inst,
+                                           Type *ExpectedType) override {
+    return Impl.getOrCreateResultFromMemIntrinsic(Inst, ExpectedType);
+  }
+};
+
+template <typename T>
+TargetTransformInfo::TargetTransformInfo(T Impl)
+    : TTIImpl(new Model<T>(Impl)) {}
+
+/// \brief Wrapper pass for TargetTransformInfo.
+///
+/// This pass can be constructed from a TTI object which it stores internally
+/// and is queried by passes.
+class TargetTransformInfoWrapperPass : public ImmutablePass {
+  TargetTransformInfo TTI;
+
+  virtual void anchor();
+
+public:
   static char ID;
+
+  /// \brief We must provide a default constructor for the pass but it should
+  /// never be used.
+  ///
+  /// Use the constructor below or call one of the creation routines.
+  TargetTransformInfoWrapperPass();
+
+  explicit TargetTransformInfoWrapperPass(TargetTransformInfo TTI);
+
+  TargetTransformInfo &getTTI() { return TTI; }
+  const TargetTransformInfo &getTTI() const { return TTI; }
 };
 
 /// \brief Create the base case instance of a pass in the TTI analysis group.
@@ -479,7 +728,7 @@ public:
 /// This class provides the base case for the stack of TTI analyzes. It doesn't
 /// delegate to anything and uses the STTI and VTTI objects passed in to
 /// satisfy the queries.
-ImmutablePass *createNoTargetTransformInfoPass();
+ImmutablePass *createNoTargetTransformInfoPass(const DataLayout *DL);
 
 } // End llvm namespace
 

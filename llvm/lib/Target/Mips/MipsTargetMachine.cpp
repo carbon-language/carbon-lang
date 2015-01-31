@@ -245,7 +245,7 @@ void MipsTargetMachine::addAnalysisPasses(PassManagerBase &PM) {
     // pass needs to become a function pass instead of
     // being an immutable pass and then this method as it exists now
     // would be unnecessary.
-    PM.add(createNoTargetTransformInfoPass());
+    PM.add(createNoTargetTransformInfoPass(getDataLayout()));
   } else
     LLVMTargetMachine::addAnalysisPasses(PM);
   DEBUG(errs() << "Target Transform Info Pass Added\n");

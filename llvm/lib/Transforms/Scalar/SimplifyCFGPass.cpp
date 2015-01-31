@@ -59,7 +59,7 @@ struct CFGSimplifyPass : public FunctionPass {
 
   void getAnalysisUsage(AnalysisUsage &AU) const override {
     AU.addRequired<AssumptionCacheTracker>();
-    AU.addRequired<TargetTransformInfo>();
+    AU.addRequired<TargetTransformInfoWrapperPass>();
   }
 };
 }
@@ -67,7 +67,7 @@ struct CFGSimplifyPass : public FunctionPass {
 char CFGSimplifyPass::ID = 0;
 INITIALIZE_PASS_BEGIN(CFGSimplifyPass, "simplifycfg", "Simplify the CFG", false,
                       false)
-INITIALIZE_AG_DEPENDENCY(TargetTransformInfo)
+INITIALIZE_PASS_DEPENDENCY(TargetTransformInfoWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(AssumptionCacheTracker)
 INITIALIZE_PASS_END(CFGSimplifyPass, "simplifycfg", "Simplify the CFG", false,
                     false)
@@ -185,7 +185,8 @@ bool CFGSimplifyPass::runOnFunction(Function &F) {
 
   AssumptionCache *AC =
       &getAnalysis<AssumptionCacheTracker>().getAssumptionCache(F);
-  const TargetTransformInfo &TTI = getAnalysis<TargetTransformInfo>();
+  const TargetTransformInfo &TTI =
+      getAnalysis<TargetTransformInfoWrapperPass>().getTTI();
   DataLayoutPass *DLP = getAnalysisIfAvailable<DataLayoutPass>();
   const DataLayout *DL = DLP ? &DLP->getDataLayout() : nullptr;
   bool EverChanged = removeUnreachableBlocks(F);

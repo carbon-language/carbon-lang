@@ -36,6 +36,7 @@ inline LLVMTargetLibraryInfoRef wrap(const TargetLibraryInfoImpl *P) {
 void llvm::initializeTarget(PassRegistry &Registry) {
   initializeDataLayoutPassPass(Registry);
   initializeTargetLibraryInfoWrapperPassPass(Registry);
+  initializeTargetTransformInfoWrapperPassPass(Registry);
 }
 
 void LLVMInitializeTarget(LLVMPassRegistryRef R) {

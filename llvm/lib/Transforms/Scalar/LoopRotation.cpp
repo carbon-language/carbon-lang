@@ -63,7 +63,7 @@ namespace {
       AU.addRequiredID(LCSSAID);
       AU.addPreservedID(LCSSAID);
       AU.addPreserved<ScalarEvolution>();
-      AU.addRequired<TargetTransformInfo>();
+      AU.addRequired<TargetTransformInfoWrapperPass>();
     }
 
     bool runOnLoop(Loop *L, LPPassManager &LPM) override;
@@ -81,7 +81,7 @@ namespace {
 
 char LoopRotate::ID = 0;
 INITIALIZE_PASS_BEGIN(LoopRotate, "loop-rotate", "Rotate Loops", false, false)
-INITIALIZE_AG_DEPENDENCY(TargetTransformInfo)
+INITIALIZE_PASS_DEPENDENCY(TargetTransformInfoWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(AssumptionCacheTracker)
 INITIALIZE_PASS_DEPENDENCY(LoopInfoWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(LoopSimplify)
@@ -102,7 +102,7 @@ bool LoopRotate::runOnLoop(Loop *L, LPPassManager &LPM) {
   MDNode *LoopMD = L->getLoopID();
 
   LI = &getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
-  TTI = &getAnalysis<TargetTransformInfo>();
+  TTI = &getAnalysis<TargetTransformInfoWrapperPass>().getTTI();
   AC = &getAnalysis<AssumptionCacheTracker>().getAssumptionCache(
       *L->getHeader()->getParent());
   auto *DTWP = getAnalysisIfAvailable<DominatorTreeWrapperPass>();

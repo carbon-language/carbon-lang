@@ -21,6 +21,7 @@
 #include "llvm/Analysis/LoopPass.h"
 #include "llvm/Analysis/RegionPass.h"
 #include "llvm/Analysis/TargetLibraryInfo.h"
+#include "llvm/Analysis/TargetTransformInfo.h"
 #include "llvm/Bitcode/BitcodeWriterPass.h"
 #include "llvm/CodeGen/CommandFlags.h"
 #include "llvm/IR/DataLayout.h"
@@ -428,6 +429,8 @@ int main(int argc, char **argv) {
   // Add internal analysis passes from the target machine.
   if (TM)
     TM->addAnalysisPasses(Passes);
+  else
+    Passes.add(createNoTargetTransformInfoPass(DL));
 
   std::unique_ptr<FunctionPassManager> FPasses;
   if (OptLevelO1 || OptLevelO2 || OptLevelOs || OptLevelOz || OptLevelO3) {
@@ -436,6 +439,8 @@ int main(int argc, char **argv) {
       FPasses->add(new DataLayoutPass());
     if (TM)
       TM->addAnalysisPasses(*FPasses);
+    else
+      FPasses->add(createNoTargetTransformInfoPass(DL));
 
   }
 

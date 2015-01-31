@@ -21,7 +21,6 @@ using namespace llvm;
 /// initializeCodeGen - Initialize all passes linked into the CodeGen library.
 void llvm::initializeCodeGen(PassRegistry &Registry) {
   initializeAtomicExpandPass(Registry);
-  initializeBasicTTIPass(Registry);
   initializeBranchFolderPassPass(Registry);
   initializeCodeGenPreparePass(Registry);
   initializeDeadMachineInstructionElimPass(Registry);

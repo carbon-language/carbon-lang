@@ -21,7 +21,7 @@ using namespace llvm;
 #define DEBUG_TYPE "function-tti"
 static const char ftti_name[] = "Function TargetTransformInfo";
 INITIALIZE_PASS_BEGIN(FunctionTargetTransformInfo, "function_tti", ftti_name, false, true)
-INITIALIZE_AG_DEPENDENCY(TargetTransformInfo)
+INITIALIZE_PASS_DEPENDENCY(TargetTransformInfoWrapperPass)
 INITIALIZE_PASS_END(FunctionTargetTransformInfo, "function_tti", ftti_name, false, true)
 char FunctionTargetTransformInfo::ID = 0;
 
@@ -38,13 +38,13 @@ FunctionTargetTransformInfo::FunctionTargetTransformInfo()
 
 void FunctionTargetTransformInfo::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.setPreservesAll();
-  AU.addRequired<TargetTransformInfo>();
+  AU.addRequired<TargetTransformInfoWrapperPass>();
 }
 
 void FunctionTargetTransformInfo::releaseMemory() {}
 
 bool FunctionTargetTransformInfo::runOnFunction(Function &F) {
   Fn = &F;
-  TTI = &getAnalysis<TargetTransformInfo>();
+  TTI = &getAnalysis<TargetTransformInfoWrapperPass>().getTTI();
   return false;
 }

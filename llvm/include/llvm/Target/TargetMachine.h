@@ -187,7 +187,7 @@ public:
   void setFunctionSections(bool);
 
   /// \brief Register analysis passes for this target with a pass manager.
-  virtual void addAnalysisPasses(PassManagerBase &) {}
+  virtual void addAnalysisPasses(PassManagerBase &);
 
   /// CodeGenFileType - These enums are meant to be passed into
   /// addPassesToEmitFile to indicate what type of file to emit, and returned by

@@ -15,7 +15,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "XCore.h"
+#include "XCoreTargetMachine.h"
 #include "llvm/Analysis/TargetTransformInfo.h"
+#include "llvm/CodeGen/BasicTTIImpl.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Target/CostTable.h"
 #include "llvm/Target/TargetLowering.h"
@@ -23,43 +25,30 @@ using namespace llvm;
 
 #define DEBUG_TYPE "xcoretti"
 
-// Declare the pass initialization routine locally as target-specific passes
-// don't have a target-wide initialization entry point, and so we rely on the
-// pass constructor initialization.
-namespace llvm {
-void initializeXCoreTTIPass(PassRegistry &);
-}
-
 namespace {
 
-class XCoreTTI final : public ImmutablePass, public TargetTransformInfo {
+class XCoreTTIImpl : public BasicTTIImplBase<XCoreTTIImpl> {
+  typedef BasicTTIImplBase<XCoreTTIImpl> BaseT;
+  typedef TargetTransformInfo TTI;
+
 public:
-  XCoreTTI() : ImmutablePass(ID) {
-    llvm_unreachable("This pass cannot be directly constructed");
+  explicit XCoreTTIImpl(const XCoreTargetMachine *TM = nullptr) : BaseT(TM) {}
+
+  // Provide value semantics. MSVC requires that we spell all of these out.
+  XCoreTTIImpl(const XCoreTTIImpl &Arg)
+      : BaseT(static_cast<const BaseT &>(Arg)) {}
+  XCoreTTIImpl(XCoreTTIImpl &&Arg)
+      : BaseT(std::move(static_cast<BaseT &>(Arg))) {}
+  XCoreTTIImpl &operator=(const XCoreTTIImpl &RHS) {
+    BaseT::operator=(static_cast<const BaseT &>(RHS));
+    return *this;
+  }
+  XCoreTTIImpl &operator=(XCoreTTIImpl &&RHS) {
+    BaseT::operator=(std::move(static_cast<BaseT &>(RHS)));
+    return *this;
   }
 
-  XCoreTTI(const XCoreTargetMachine *TM)
-      : ImmutablePass(ID) {
-    initializeXCoreTTIPass(*PassRegistry::getPassRegistry());
-  }
-
-  void initializePass() override {
-    pushTTIStack(this);
-  }
-
-  void getAnalysisUsage(AnalysisUsage &AU) const override {
-    TargetTransformInfo::getAnalysisUsage(AU);
-  }
-
-  static char ID;
-
-  void *getAdjustedAnalysisPointer(const void *ID) override {
-    if (ID == &TargetTransformInfo::ID)
-      return (TargetTransformInfo*)this;
-    return this;
-  }
-
-  unsigned getNumberOfRegisters(bool Vector) const override {
+  unsigned getNumberOfRegisters(bool Vector) {
     if (Vector) {
        return 0;
     }
@@ -69,12 +58,7 @@ public:
 
 } // end anonymous namespace
 
-INITIALIZE_AG_PASS(XCoreTTI, TargetTransformInfo, "xcoretti",
-                   "XCore Target Transform Info", true, true, false)
-char XCoreTTI::ID = 0;
-
-
 ImmutablePass *
 llvm::createXCoreTargetTransformInfoPass(const XCoreTargetMachine *TM) {
-  return new XCoreTTI(TM);
+  return new TargetTransformInfoWrapperPass(XCoreTTIImpl(TM));
 }

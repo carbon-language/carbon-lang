@@ -196,10 +196,6 @@ public:
 } // namespace
 
 void AArch64TargetMachine::addAnalysisPasses(PassManagerBase &PM) {
-  // Add first the target-independent BasicTTI pass, then our AArch64 pass. This
-  // allows the AArch64 pass to delegate to the target independent layer when
-  // appropriate.
-  PM.add(createBasicTargetTransformInfoPass(this));
   PM.add(createAArch64TargetTransformInfoPass(this));
 }
 

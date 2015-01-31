@@ -165,10 +165,6 @@ UseVZeroUpper("x86-use-vzeroupper", cl::Hidden,
 //===----------------------------------------------------------------------===//
 
 void X86TargetMachine::addAnalysisPasses(PassManagerBase &PM) {
-  // Add first the target-independent BasicTTI pass, then our X86 pass. This
-  // allows the X86 pass to delegate to the target independent layer when
-  // appropriate.
-  PM.add(createBasicTargetTransformInfoPass(this));
   PM.add(createX86TargetTransformInfoPass(this));
 }
 

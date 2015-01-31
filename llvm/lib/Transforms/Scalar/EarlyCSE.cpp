@@ -712,7 +712,7 @@ public:
     DataLayoutPass *DLP = getAnalysisIfAvailable<DataLayoutPass>();
     auto *DL = DLP ? &DLP->getDataLayout() : nullptr;
     auto &TLI = getAnalysis<TargetLibraryInfoWrapperPass>().getTLI();
-    auto &TTI = getAnalysis<TargetTransformInfo>();
+    auto &TTI = getAnalysis<TargetTransformInfoWrapperPass>().getTTI();
     auto &DT = getAnalysis<DominatorTreeWrapperPass>().getDomTree();
     auto &AC = getAnalysis<AssumptionCacheTracker>().getAssumptionCache(F);
 
@@ -725,7 +725,7 @@ public:
     AU.addRequired<AssumptionCacheTracker>();
     AU.addRequired<DominatorTreeWrapperPass>();
     AU.addRequired<TargetLibraryInfoWrapperPass>();
-    AU.addRequired<TargetTransformInfo>();
+    AU.addRequired<TargetTransformInfoWrapperPass>();
     AU.setPreservesCFG();
   }
 };
@@ -737,7 +737,7 @@ FunctionPass *llvm::createEarlyCSEPass() { return new EarlyCSELegacyPass(); }
 
 INITIALIZE_PASS_BEGIN(EarlyCSELegacyPass, "early-cse", "Early CSE", false,
                       false)
-INITIALIZE_AG_DEPENDENCY(TargetTransformInfo)
+INITIALIZE_PASS_DEPENDENCY(TargetTransformInfoWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(AssumptionCacheTracker)
 INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(TargetLibraryInfoWrapperPass)
