@@ -15,6 +15,8 @@
 #include <cstring>
 #include <unistd.h>
 #include <iostream>
+#include <thread>
+#include <atomic>
 
 // ASAN options:
 //   * don't dump the coverage to disk.
@@ -102,6 +104,35 @@ static void ParseFlags(int argc, char **argv) {
   }
 }
 
+static void WorkerThread(const std::string &Cmd, std::atomic<int> *Counter,
+                         int NumJobs) {
+  while (true) {
+    int C = (*Counter)++;
+    if (C >= NumJobs) return;
+    std::string ToRun = Cmd + " > fuzz-" + std::to_string(C) + ".log 2>&1\n";
+    if (Flags.verbosity)
+      std::cerr << ToRun;
+    system(ToRun.c_str());
+  }
+}
+
+static int RunInMultipleProcesses(int argc, char **argv, int NumWorkers,
+                                  int NumJobs) {
+  std::atomic<int> Counter(0);
+  std::string Cmd;
+  for (int i = 0; i < argc; i++) {
+    if (FlagValue(argv[i], "jobs") || FlagValue(argv[i], "workers")) continue;
+    Cmd += argv[i];
+    Cmd += " ";
+  }
+  std::vector<std::thread> V;
+  for (int i = 0; i < NumWorkers; i++)
+    V.push_back(std::thread(WorkerThread, Cmd, &Counter, NumJobs));
+  for (auto &T : V)
+    T.join();
+  return 0;
+}
+
 int main(int argc, char **argv) {
   using namespace fuzzer;
 
@@ -111,6 +142,10 @@ int main(int argc, char **argv) {
     PrintHelp();
     return 0;
   }
+
+  if (Flags.workers > 0 && Flags.jobs > 0)
+    return RunInMultipleProcesses(argc, argv, Flags.workers, Flags.jobs);
+
   Fuzzer::FuzzingOptions Options;
   Options.Verbosity = Flags.verbosity;
   Options.MaxLen = Flags.max_len;

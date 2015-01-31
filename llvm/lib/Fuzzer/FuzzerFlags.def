@@ -29,3 +29,8 @@ FUZZER_FLAG(int, use_full_coverage_set, 0,
             "Maximize the number of different full"
             " coverage sets as opposed to maximizing the total coverage."
             " This is potentially MUCH slower, but may discover more paths.")
+FUZZER_FLAG(int, jobs, 0, "Number of jobs to run. If jobs >= 1 we spawn"
+                          " this number of jobs in separate worker processes"
+                          " with stdout/stderr redirected to fuzz-JOB.log.")
+FUZZER_FLAG(int, workers, 0,
+            "Number of simultaneous worker processes to run the jobs.")
