@@ -1190,7 +1190,11 @@ void CodeGenFunction::EmitBranchOnBoolExpr(const Expr *Cond,
                                                   CurrentCount - TrueCount);
 
   // Emit the code with the fully general case.
-  llvm::Value *CondV = EvaluateExprAsBool(Cond);
+  llvm::Value *CondV;
+  {
+    ApplyDebugLocation DL(*this, Cond);
+    CondV = EvaluateExprAsBool(Cond);
+  }
   Builder.CreateCondBr(CondV, TrueBlock, FalseBlock, Weights);
 }
 
