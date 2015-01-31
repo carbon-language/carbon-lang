@@ -82,7 +82,7 @@ public:
     return make_range(_definedAtoms._atoms);
   }
 
-protected:
+private:
   atom_collection_vector<DefinedAtom>        _definedAtoms;
   atom_collection_vector<UndefinedAtom>      _undefinedAtoms;
   atom_collection_vector<SharedLibraryAtom>  _sharedLibraryAtoms;
