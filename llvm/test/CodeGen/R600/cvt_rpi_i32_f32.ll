@@ -1,11 +1,13 @@
-; RUN: llc -march=amdgcn -mcpu=SI < %s | FileCheck -check-prefix=SI -check-prefix=FUNC %s
-; RUN: llc -march=amdgcn -mcpu=tonga < %s | FileCheck -check-prefix=SI -check-prefix=FUNC %s
+; RUN: llc -march=amdgcn -mcpu=SI -verify-machineinstrs < %s | FileCheck -check-prefix=SI-SAFE -check-prefix=SI -check-prefix=FUNC %s
+; RUN: llc -march=amdgcn -mcpu=SI -enable-no-nans-fp-math -verify-machineinstrs < %s | FileCheck -check-prefix=SI-NONAN -check-prefix=SI -check-prefix=FUNC %s
+; RUN: llc -march=amdgcn -mcpu=tonga < %s | FileCheck -check-prefix=SI-SAFE -check-prefix=SI -check-prefix=FUNC %s
 
 declare float @llvm.fabs.f32(float) #1
 declare float @llvm.floor.f32(float) #1
 
 ; FUNC-LABEL: {{^}}cvt_rpi_i32_f32:
-; SI: v_cvt_rpi_i32_f32_e32 v{{[0-9]+}}, s{{[0-9]+}}
+; SI-SAFE-NOT: v_cvt_rpi_i32_f32
+; SI-NONAN: v_cvt_rpi_i32_f32_e32 v{{[0-9]+}}, s{{[0-9]+}}
 ; SI: s_endpgm
 define void @cvt_rpi_i32_f32(i32 addrspace(1)* %out, float %x) #0 {
   %fadd = fadd float %x, 0.5
@@ -16,7 +18,8 @@ define void @cvt_rpi_i32_f32(i32 addrspace(1)* %out, float %x) #0 {
 }
 
 ; FUNC-LABEL: {{^}}cvt_rpi_i32_f32_fabs:
-; SI: v_cvt_rpi_i32_f32_e64 v{{[0-9]+}}, |s{{[0-9]+}}|{{$}}
+; SI-SAFE-NOT: v_cvt_rpi_i32_f32
+; SI-NONAN: v_cvt_rpi_i32_f32_e64 v{{[0-9]+}}, |s{{[0-9]+}}|{{$}}
 ; SI: s_endpgm
 define void @cvt_rpi_i32_f32_fabs(i32 addrspace(1)* %out, float %x) #0 {
   %x.fabs = call float @llvm.fabs.f32(float %x) #1
@@ -29,9 +32,10 @@ define void @cvt_rpi_i32_f32_fabs(i32 addrspace(1)* %out, float %x) #0 {
 
 ; FIXME: This doesn't work because it forms fsub 0.5, x
 ; FUNC-LABEL: {{^}}cvt_rpi_i32_f32_fneg:
-; XSI: v_cvt_rpi_i32_f32_e64 v{{[0-9]+}}, -s{{[0-9]+}}
+; XSI-NONAN: v_cvt_rpi_i32_f32_e64 v{{[0-9]+}}, -s{{[0-9]+}}
 ; SI: v_sub_f32_e64 [[TMP:v[0-9]+]], 0.5, s{{[0-9]+}}
-; SI: v_cvt_flr_i32_f32_e32 {{v[0-9]+}}, [[TMP]]
+; SI-SAFE-NOT: v_cvt_flr_i32_f32
+; SI-NONAN: v_cvt_flr_i32_f32_e32 {{v[0-9]+}}, [[TMP]]
 ; SI: s_endpgm
 define void @cvt_rpi_i32_f32_fneg(i32 addrspace(1)* %out, float %x) #0 {
   %x.fneg = fsub float -0.000000e+00, %x
@@ -44,10 +48,12 @@ define void @cvt_rpi_i32_f32_fneg(i32 addrspace(1)* %out, float %x) #0 {
 
 ; FIXME: This doesn't work for same reason as above
 ; FUNC-LABEL: {{^}}cvt_rpi_i32_f32_fabs_fneg:
-; XSI: v_cvt_rpi_i32_f32_e64 v{{[0-9]+}}, -|s{{[0-9]+}}|
+; SI-SAFE-NOT: v_cvt_rpi_i32_f32
+; XSI-NONAN: v_cvt_rpi_i32_f32_e64 v{{[0-9]+}}, -|s{{[0-9]+}}|
 
 ; SI: v_sub_f32_e64 [[TMP:v[0-9]+]], 0.5, |s{{[0-9]+}}|
-; SI: v_cvt_flr_i32_f32_e32 {{v[0-9]+}}, [[TMP]]
+; SI-SAFE-NOT: v_cvt_flr_i32_f32
+; SI-NONAN: v_cvt_flr_i32_f32_e32 {{v[0-9]+}}, [[TMP]]
 ; SI: s_endpgm
 define void @cvt_rpi_i32_f32_fabs_fneg(i32 addrspace(1)* %out, float %x) #0 {
   %x.fabs = call float @llvm.fabs.f32(float %x) #1
