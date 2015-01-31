@@ -90,6 +90,16 @@ void DecodeVPERMMask(unsigned Imm, SmallVectorImpl<int> &ShuffleMask);
 /// \brief Decode a VPERMILP variable mask from an IR-level vector constant.
 void DecodeVPERMILPMask(const Constant *C, SmallVectorImpl<int> &ShuffleMask);
 
+/// \brief Decode a zero extension instruction as a shuffle mask.
+void DecodeZeroExtendMask(MVT SrcVT, MVT DstVT,
+                          SmallVectorImpl<int> &ShuffleMask);
+
+/// \brief Decode a move lower and zero upper instruction as a shuffle mask.
+void DecodeZeroMoveLowMask(MVT VT, SmallVectorImpl<int> &ShuffleMask);
+
+/// \brief Decode a scalar float move instruction as a shuffle mask.
+void DecodeScalarMoveMask(MVT VT, bool IsLoad,
+                          SmallVectorImpl<int> &ShuffleMask);
 } // llvm namespace
 
 #endif

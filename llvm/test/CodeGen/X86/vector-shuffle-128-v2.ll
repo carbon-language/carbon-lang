@@ -211,19 +211,19 @@ define <2 x double> @shuffle_v2f64_33(<2 x double> %a, <2 x double> %b) {
 define <2 x double> @shuffle_v2f64_03(<2 x double> %a, <2 x double> %b) {
 ; SSE2-LABEL: shuffle_v2f64_03:
 ; SSE2:       # BB#0:
-; SSE2-NEXT:    movsd %xmm0, %xmm1
+; SSE2-NEXT:    movsd {{.*#+}} xmm1 = xmm0[0],xmm1[1]
 ; SSE2-NEXT:    movaps %xmm1, %xmm0
 ; SSE2-NEXT:    retq
 ;
 ; SSE3-LABEL: shuffle_v2f64_03:
 ; SSE3:       # BB#0:
-; SSE3-NEXT:    movsd %xmm0, %xmm1
+; SSE3-NEXT:    movsd {{.*#+}} xmm1 = xmm0[0],xmm1[1]
 ; SSE3-NEXT:    movaps %xmm1, %xmm0
 ; SSE3-NEXT:    retq
 ;
 ; SSSE3-LABEL: shuffle_v2f64_03:
 ; SSSE3:       # BB#0:
-; SSSE3-NEXT:    movsd %xmm0, %xmm1
+; SSSE3-NEXT:    movsd {{.*#+}} xmm1 = xmm0[0],xmm1[1]
 ; SSSE3-NEXT:    movaps %xmm1, %xmm0
 ; SSSE3-NEXT:    retq
 ;
@@ -242,17 +242,17 @@ define <2 x double> @shuffle_v2f64_03(<2 x double> %a, <2 x double> %b) {
 define <2 x double> @shuffle_v2f64_21(<2 x double> %a, <2 x double> %b) {
 ; SSE2-LABEL: shuffle_v2f64_21:
 ; SSE2:       # BB#0:
-; SSE2-NEXT:    movsd %xmm1, %xmm0
+; SSE2-NEXT:    movsd {{.*#+}} xmm0 = xmm1[0],xmm0[1]
 ; SSE2-NEXT:    retq
 ;
 ; SSE3-LABEL: shuffle_v2f64_21:
 ; SSE3:       # BB#0:
-; SSE3-NEXT:    movsd %xmm1, %xmm0
+; SSE3-NEXT:    movsd {{.*#+}} xmm0 = xmm1[0],xmm0[1]
 ; SSE3-NEXT:    retq
 ;
 ; SSSE3-LABEL: shuffle_v2f64_21:
 ; SSSE3:       # BB#0:
-; SSSE3-NEXT:    movsd %xmm1, %xmm0
+; SSSE3-NEXT:    movsd {{.*#+}} xmm0 = xmm1[0],xmm0[1]
 ; SSSE3-NEXT:    retq
 ;
 ; SSE41-LABEL: shuffle_v2f64_21:
@@ -299,19 +299,19 @@ define <2 x i64> @shuffle_v2i64_02_copy(<2 x i64> %nonce, <2 x i64> %a, <2 x i64
 define <2 x i64> @shuffle_v2i64_03(<2 x i64> %a, <2 x i64> %b) {
 ; SSE2-LABEL: shuffle_v2i64_03:
 ; SSE2:       # BB#0:
-; SSE2-NEXT:    movsd %xmm0, %xmm1
+; SSE2-NEXT:    movsd {{.*#+}} xmm1 = xmm0[0],xmm1[1]
 ; SSE2-NEXT:    movaps %xmm1, %xmm0
 ; SSE2-NEXT:    retq
 ;
 ; SSE3-LABEL: shuffle_v2i64_03:
 ; SSE3:       # BB#0:
-; SSE3-NEXT:    movsd %xmm0, %xmm1
+; SSE3-NEXT:    movsd {{.*#+}} xmm1 = xmm0[0],xmm1[1]
 ; SSE3-NEXT:    movaps %xmm1, %xmm0
 ; SSE3-NEXT:    retq
 ;
 ; SSSE3-LABEL: shuffle_v2i64_03:
 ; SSSE3:       # BB#0:
-; SSSE3-NEXT:    movsd %xmm0, %xmm1
+; SSSE3-NEXT:    movsd {{.*#+}} xmm1 = xmm0[0],xmm1[1]
 ; SSSE3-NEXT:    movaps %xmm1, %xmm0
 ; SSSE3-NEXT:    retq
 ;
@@ -335,19 +335,19 @@ define <2 x i64> @shuffle_v2i64_03(<2 x i64> %a, <2 x i64> %b) {
 define <2 x i64> @shuffle_v2i64_03_copy(<2 x i64> %nonce, <2 x i64> %a, <2 x i64> %b) {
 ; SSE2-LABEL: shuffle_v2i64_03_copy:
 ; SSE2:       # BB#0:
-; SSE2-NEXT:    movsd %xmm1, %xmm2
+; SSE2-NEXT:    movsd {{.*#+}} xmm2 = xmm1[0],xmm2[1]
 ; SSE2-NEXT:    movaps %xmm2, %xmm0
 ; SSE2-NEXT:    retq
 ;
 ; SSE3-LABEL: shuffle_v2i64_03_copy:
 ; SSE3:       # BB#0:
-; SSE3-NEXT:    movsd %xmm1, %xmm2
+; SSE3-NEXT:    movsd {{.*#+}} xmm2 = xmm1[0],xmm2[1]
 ; SSE3-NEXT:    movaps %xmm2, %xmm0
 ; SSE3-NEXT:    retq
 ;
 ; SSSE3-LABEL: shuffle_v2i64_03_copy:
 ; SSSE3:       # BB#0:
-; SSSE3-NEXT:    movsd %xmm1, %xmm2
+; SSSE3-NEXT:    movsd {{.*#+}} xmm2 = xmm1[0],xmm2[1]
 ; SSSE3-NEXT:    movaps %xmm2, %xmm0
 ; SSSE3-NEXT:    retq
 ;
@@ -489,17 +489,17 @@ define <2 x i64> @shuffle_v2i64_20_copy(<2 x i64> %nonce, <2 x i64> %a, <2 x i64
 define <2 x i64> @shuffle_v2i64_21(<2 x i64> %a, <2 x i64> %b) {
 ; SSE2-LABEL: shuffle_v2i64_21:
 ; SSE2:       # BB#0:
-; SSE2-NEXT:    movsd %xmm1, %xmm0
+; SSE2-NEXT:    movsd {{.*#+}} xmm0 = xmm1[0],xmm0[1]
 ; SSE2-NEXT:    retq
 ;
 ; SSE3-LABEL: shuffle_v2i64_21:
 ; SSE3:       # BB#0:
-; SSE3-NEXT:    movsd %xmm1, %xmm0
+; SSE3-NEXT:    movsd {{.*#+}} xmm0 = xmm1[0],xmm0[1]
 ; SSE3-NEXT:    retq
 ;
 ; SSSE3-LABEL: shuffle_v2i64_21:
 ; SSSE3:       # BB#0:
-; SSSE3-NEXT:    movsd %xmm1, %xmm0
+; SSSE3-NEXT:    movsd {{.*#+}} xmm0 = xmm1[0],xmm0[1]
 ; SSSE3-NEXT:    retq
 ;
 ; SSE41-LABEL: shuffle_v2i64_21:
@@ -522,19 +522,19 @@ define <2 x i64> @shuffle_v2i64_21(<2 x i64> %a, <2 x i64> %b) {
 define <2 x i64> @shuffle_v2i64_21_copy(<2 x i64> %nonce, <2 x i64> %a, <2 x i64> %b) {
 ; SSE2-LABEL: shuffle_v2i64_21_copy:
 ; SSE2:       # BB#0:
-; SSE2-NEXT:    movsd %xmm2, %xmm1
+; SSE2-NEXT:    movsd {{.*#+}} xmm1 = xmm2[0],xmm1[1]
 ; SSE2-NEXT:    movaps %xmm1, %xmm0
 ; SSE2-NEXT:    retq
 ;
 ; SSE3-LABEL: shuffle_v2i64_21_copy:
 ; SSE3:       # BB#0:
-; SSE3-NEXT:    movsd %xmm2, %xmm1
+; SSE3-NEXT:    movsd {{.*#+}} xmm1 = xmm2[0],xmm1[1]
 ; SSE3-NEXT:    movaps %xmm1, %xmm0
 ; SSE3-NEXT:    retq
 ;
 ; SSSE3-LABEL: shuffle_v2i64_21_copy:
 ; SSSE3:       # BB#0:
-; SSSE3-NEXT:    movsd %xmm2, %xmm1
+; SSSE3-NEXT:    movsd {{.*#+}} xmm1 = xmm2[0],xmm1[1]
 ; SSSE3-NEXT:    movaps %xmm1, %xmm0
 ; SSSE3-NEXT:    retq
 ;
@@ -650,12 +650,12 @@ define <2 x i64> @shuffle_v2i64_31_copy(<2 x i64> %nonce, <2 x i64> %a, <2 x i64
 define <2 x i64> @shuffle_v2i64_0z(<2 x i64> %a) {
 ; SSE-LABEL: shuffle_v2i64_0z:
 ; SSE:       # BB#0:
-; SSE-NEXT:    movq %xmm0, %xmm0
+; SSE-NEXT:    movq {{.*#+}} xmm0 = xmm0[0],zero
 ; SSE-NEXT:    retq
 ;
 ; AVX-LABEL: shuffle_v2i64_0z:
 ; AVX:       # BB#0:
-; AVX-NEXT:    vmovq %xmm0, %xmm0
+; AVX-NEXT:    vmovq {{.*#+}} xmm0 = xmm0[0],zero
 ; AVX-NEXT:    retq
   %shuffle = shufflevector <2 x i64> %a, <2 x i64> zeroinitializer, <2 x i32> <i32 0, i32 3>
   ret <2 x i64> %shuffle
@@ -693,19 +693,19 @@ define <2 x i64> @shuffle_v2i64_z1(<2 x i64> %a) {
 ; SSE2-LABEL: shuffle_v2i64_z1:
 ; SSE2:       # BB#0:
 ; SSE2-NEXT:    xorps %xmm1, %xmm1
-; SSE2-NEXT:    movsd %xmm1, %xmm0
+; SSE2-NEXT:    movsd {{.*#+}} xmm0 = xmm1[0],xmm0[1]
 ; SSE2-NEXT:    retq
 ;
 ; SSE3-LABEL: shuffle_v2i64_z1:
 ; SSE3:       # BB#0:
 ; SSE3-NEXT:    xorps %xmm1, %xmm1
-; SSE3-NEXT:    movsd %xmm1, %xmm0
+; SSE3-NEXT:    movsd {{.*#+}} xmm0 = xmm1[0],xmm0[1]
 ; SSE3-NEXT:    retq
 ;
 ; SSSE3-LABEL: shuffle_v2i64_z1:
 ; SSSE3:       # BB#0:
 ; SSSE3-NEXT:    xorps %xmm1, %xmm1
-; SSSE3-NEXT:    movsd %xmm1, %xmm0
+; SSSE3-NEXT:    movsd {{.*#+}} xmm0 = xmm1[0],xmm0[1]
 ; SSSE3-NEXT:    retq
 ;
 ; SSE41-LABEL: shuffle_v2i64_z1:
@@ -732,12 +732,12 @@ define <2 x i64> @shuffle_v2i64_z1(<2 x i64> %a) {
 define <2 x double> @shuffle_v2f64_0z(<2 x double> %a) {
 ; SSE-LABEL: shuffle_v2f64_0z:
 ; SSE:       # BB#0:
-; SSE-NEXT:    movq %xmm0, %xmm0
+; SSE-NEXT:    movq {{.*#+}} xmm0 = xmm0[0],zero
 ; SSE-NEXT:    retq
 ;
 ; AVX-LABEL: shuffle_v2f64_0z:
 ; AVX:       # BB#0:
-; AVX-NEXT:    vmovq %xmm0, %xmm0
+; AVX-NEXT:    vmovq {{.*#+}} xmm0 = xmm0[0],zero
 ; AVX-NEXT:    retq
   %shuffle = shufflevector <2 x double> %a, <2 x double> zeroinitializer, <2 x i32> <i32 0, i32 3>
   ret <2 x double> %shuffle
@@ -780,19 +780,19 @@ define <2 x double> @shuffle_v2f64_z1(<2 x double> %a) {
 ; SSE2-LABEL: shuffle_v2f64_z1:
 ; SSE2:       # BB#0:
 ; SSE2-NEXT:    xorps %xmm1, %xmm1
-; SSE2-NEXT:    movsd %xmm1, %xmm0
+; SSE2-NEXT:    movsd {{.*#+}} xmm0 = xmm1[0],xmm0[1]
 ; SSE2-NEXT:    retq
 ;
 ; SSE3-LABEL: shuffle_v2f64_z1:
 ; SSE3:       # BB#0:
 ; SSE3-NEXT:    xorps %xmm1, %xmm1
-; SSE3-NEXT:    movsd %xmm1, %xmm0
+; SSE3-NEXT:    movsd {{.*#+}} xmm0 = xmm1[0],xmm0[1]
 ; SSE3-NEXT:    retq
 ;
 ; SSSE3-LABEL: shuffle_v2f64_z1:
 ; SSSE3:       # BB#0:
 ; SSSE3-NEXT:    xorps %xmm1, %xmm1
-; SSSE3-NEXT:    movsd %xmm1, %xmm0
+; SSSE3-NEXT:    movsd {{.*#+}} xmm0 = xmm1[0],xmm0[1]
 ; SSSE3-NEXT:    retq
 ;
 ; SSE41-LABEL: shuffle_v2f64_z1:
@@ -828,12 +828,12 @@ define <2 x i64> @insert_reg_and_zero_v2i64(i64 %a) {
 define <2 x i64> @insert_mem_and_zero_v2i64(i64* %ptr) {
 ; SSE-LABEL: insert_mem_and_zero_v2i64:
 ; SSE:       # BB#0:
-; SSE-NEXT:    movq (%rdi), %xmm0
+; SSE-NEXT:    movq {{.*#+}} xmm0 = mem[0],zero
 ; SSE-NEXT:    retq
 ;
 ; AVX-LABEL: insert_mem_and_zero_v2i64:
 ; AVX:       # BB#0:
-; AVX-NEXT:    vmovq (%rdi), %xmm0
+; AVX-NEXT:    vmovq {{.*#+}} xmm0 = mem[0],zero
 ; AVX-NEXT:    retq
   %a = load i64* %ptr
   %v = insertelement <2 x i64> undef, i64 %a, i32 0
@@ -844,12 +844,12 @@ define <2 x i64> @insert_mem_and_zero_v2i64(i64* %ptr) {
 define <2 x double> @insert_reg_and_zero_v2f64(double %a) {
 ; SSE-LABEL: insert_reg_and_zero_v2f64:
 ; SSE:       # BB#0:
-; SSE-NEXT:    movq %xmm0, %xmm0
+; SSE-NEXT:    movq {{.*#+}} xmm0 = xmm0[0],zero
 ; SSE-NEXT:    retq
 ;
 ; AVX-LABEL: insert_reg_and_zero_v2f64:
 ; AVX:       # BB#0:
-; AVX-NEXT:    vmovq %xmm0, %xmm0
+; AVX-NEXT:    vmovq {{.*#+}} xmm0 = xmm0[0],zero
 ; AVX-NEXT:    retq
   %v = insertelement <2 x double> undef, double %a, i32 0
   %shuffle = shufflevector <2 x double> %v, <2 x double> zeroinitializer, <2 x i32> <i32 0, i32 3>
@@ -859,12 +859,12 @@ define <2 x double> @insert_reg_and_zero_v2f64(double %a) {
 define <2 x double> @insert_mem_and_zero_v2f64(double* %ptr) {
 ; SSE-LABEL: insert_mem_and_zero_v2f64:
 ; SSE:       # BB#0:
-; SSE-NEXT:    movsd (%rdi), %xmm0
+; SSE-NEXT:    movsd {{.*#+}} xmm0 = mem[0],zero
 ; SSE-NEXT:    retq
 ;
 ; AVX-LABEL: insert_mem_and_zero_v2f64:
 ; AVX:       # BB#0:
-; AVX-NEXT:    vmovsd (%rdi), %xmm0
+; AVX-NEXT:    vmovsd {{.*#+}} xmm0 = mem[0],zero
 ; AVX-NEXT:    retq
   %a = load double* %ptr
   %v = insertelement <2 x double> undef, double %a, i32 0
@@ -876,19 +876,19 @@ define <2 x i64> @insert_reg_lo_v2i64(i64 %a, <2 x i64> %b) {
 ; SSE2-LABEL: insert_reg_lo_v2i64:
 ; SSE2:       # BB#0:
 ; SSE2-NEXT:    movd %rdi, %xmm1
-; SSE2-NEXT:    movsd %xmm1, %xmm0
+; SSE2-NEXT:    movsd {{.*#+}} xmm0 = xmm1[0],xmm0[1]
 ; SSE2-NEXT:    retq
 ;
 ; SSE3-LABEL: insert_reg_lo_v2i64:
 ; SSE3:       # BB#0:
 ; SSE3-NEXT:    movd %rdi, %xmm1
-; SSE3-NEXT:    movsd %xmm1, %xmm0
+; SSE3-NEXT:    movsd {{.*#+}} xmm0 = xmm1[0],xmm0[1]
 ; SSE3-NEXT:    retq
 ;
 ; SSSE3-LABEL: insert_reg_lo_v2i64:
 ; SSSE3:       # BB#0:
 ; SSSE3-NEXT:    movd %rdi, %xmm1
-; SSSE3-NEXT:    movsd %xmm1, %xmm0
+; SSSE3-NEXT:    movsd {{.*#+}} xmm0 = xmm1[0],xmm0[1]
 ; SSSE3-NEXT:    retq
 ;
 ; SSE41-LABEL: insert_reg_lo_v2i64:
@@ -931,19 +931,19 @@ define <2 x i64> @insert_mem_lo_v2i64(i64* %ptr, <2 x i64> %b) {
 ;
 ; SSE41-LABEL: insert_mem_lo_v2i64:
 ; SSE41:       # BB#0:
-; SSE41-NEXT:    movq (%rdi), %xmm1
+; SSE41-NEXT:    movq {{.*#+}} xmm1 = mem[0],zero
 ; SSE41-NEXT:    pblendw {{.*#+}} xmm0 = xmm1[0,1,2,3],xmm0[4,5,6,7]
 ; SSE41-NEXT:    retq
 ;
 ; AVX1-LABEL: insert_mem_lo_v2i64:
 ; AVX1:       # BB#0:
-; AVX1-NEXT:    vmovq (%rdi), %xmm1
+; AVX1-NEXT:    vmovq {{.*#+}} xmm1 = mem[0],zero
 ; AVX1-NEXT:    vpblendw {{.*#+}} xmm0 = xmm1[0,1,2,3],xmm0[4,5,6,7]
 ; AVX1-NEXT:    retq
 ;
 ; AVX2-LABEL: insert_mem_lo_v2i64:
 ; AVX2:       # BB#0:
-; AVX2-NEXT:    vmovq (%rdi), %xmm1
+; AVX2-NEXT:    vmovq {{.*#+}} xmm1 = mem[0],zero
 ; AVX2-NEXT:    vpblendd {{.*#+}} xmm0 = xmm1[0,1],xmm0[2,3]
 ; AVX2-NEXT:    retq
   %a = load i64* %ptr
@@ -972,13 +972,13 @@ define <2 x i64> @insert_reg_hi_v2i64(i64 %a, <2 x i64> %b) {
 define <2 x i64> @insert_mem_hi_v2i64(i64* %ptr, <2 x i64> %b) {
 ; SSE-LABEL: insert_mem_hi_v2i64:
 ; SSE:       # BB#0:
-; SSE-NEXT:    movq (%rdi), %xmm1
+; SSE-NEXT:    movq {{.*#+}} xmm1 = mem[0],zero
 ; SSE-NEXT:    punpcklqdq {{.*#+}} xmm0 = xmm0[0],xmm1[0]
 ; SSE-NEXT:    retq
 ;
 ; AVX-LABEL: insert_mem_hi_v2i64:
 ; AVX:       # BB#0:
-; AVX-NEXT:    vmovq (%rdi), %xmm1
+; AVX-NEXT:    vmovq {{.*#+}} xmm1 = mem[0],zero
 ; AVX-NEXT:    vpunpcklqdq {{.*#+}} xmm0 = xmm0[0],xmm1[0]
 ; AVX-NEXT:    retq
   %a = load i64* %ptr
@@ -990,13 +990,13 @@ define <2 x i64> @insert_mem_hi_v2i64(i64* %ptr, <2 x i64> %b) {
 define <2 x double> @insert_reg_lo_v2f64(double %a, <2 x double> %b) {
 ; SSE-LABEL: insert_reg_lo_v2f64:
 ; SSE:       # BB#0:
-; SSE-NEXT:    movsd %xmm0, %xmm1
+; SSE-NEXT:    movsd {{.*#+}} xmm1 = xmm0[0],xmm1[1]
 ; SSE-NEXT:    movaps %xmm1, %xmm0
 ; SSE-NEXT:    retq
 ;
 ; AVX-LABEL: insert_reg_lo_v2f64:
 ; AVX:       # BB#0:
-; AVX-NEXT:    vmovsd %xmm0, %xmm1, %xmm0
+; AVX-NEXT:    vmovsd {{.*#+}} xmm0 = xmm0[0],xmm1[1]
 ; AVX-NEXT:    retq
   %v = insertelement <2 x double> undef, double %a, i32 0
   %shuffle = shufflevector <2 x double> %v, <2 x double> %b, <2 x i32> <i32 0, i32 3>
@@ -1085,7 +1085,7 @@ define <2 x double> @insert_dup_reg_v2f64(double %a) {
 define <2 x double> @insert_dup_mem_v2f64(double* %ptr) {
 ; SSE2-LABEL: insert_dup_mem_v2f64:
 ; SSE2:       # BB#0:
-; SSE2-NEXT:    movsd (%rdi), %xmm0
+; SSE2-NEXT:    movsd {{.*#+}} xmm0 = mem[0],zero
 ; SSE2-NEXT:    movlhps {{.*#+}} xmm0 = xmm0[0,0]
 ; SSE2-NEXT:    retq
 ;

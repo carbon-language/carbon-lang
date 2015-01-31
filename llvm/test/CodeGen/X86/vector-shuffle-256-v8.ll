@@ -1853,7 +1853,7 @@ define <8 x float> @splat_v8f32(<4 x float> %r) {
 define <8x float> @concat_v2f32_1(<2 x float>* %tmp64, <2 x float>* %tmp65) {
 ; ALL-LABEL: concat_v2f32_1:
 ; ALL:       # BB#0: # %entry
-; ALL-NEXT:    vmovq (%rdi), %xmm0
+; ALL-NEXT:    vmovq {{.*#+}} xmm0 = mem[0],zero
 ; ALL-NEXT:    vmovhpd (%rsi), %xmm0, %xmm0
 ; ALL-NEXT:    retq
 entry:
@@ -1868,7 +1868,7 @@ entry:
 define <8x float> @concat_v2f32_2(<2 x float>* %tmp64, <2 x float>* %tmp65) {
 ; ALL-LABEL: concat_v2f32_2:
 ; ALL:       # BB#0: # %entry
-; ALL-NEXT:    vmovq (%rdi), %xmm0
+; ALL-NEXT:    vmovq {{.*#+}} xmm0 = mem[0],zero
 ; ALL-NEXT:    vmovhpd (%rsi), %xmm0, %xmm0
 ; ALL-NEXT:    retq
 entry:
@@ -1881,7 +1881,7 @@ entry:
 define <8x float> @concat_v2f32_3(<2 x float>* %tmp64, <2 x float>* %tmp65) {
 ; ALL-LABEL: concat_v2f32_3:
 ; ALL:       # BB#0: # %entry
-; ALL-NEXT:    vmovq (%rdi), %xmm0
+; ALL-NEXT:    vmovq {{.*#+}} xmm0 = mem[0],zero
 ; ALL-NEXT:    vmovhpd (%rsi), %xmm0, %xmm0
 ; ALL-NEXT:    retq
 entry:

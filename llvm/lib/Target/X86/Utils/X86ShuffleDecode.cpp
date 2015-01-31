@@ -399,4 +399,36 @@ void DecodeVPERMILPMask(const Constant *C, SmallVectorImpl<int> &ShuffleMask) {
   }
 }
 
+void DecodeZeroExtendMask(MVT SrcVT, MVT DstVT, SmallVectorImpl<int> &Mask) {
+  unsigned NumSrcElts = SrcVT.getVectorNumElements();
+  unsigned NumDstElts = DstVT.getVectorNumElements();
+  unsigned SrcScalarBits = SrcVT.getScalarSizeInBits();
+  unsigned DstScalarBits = DstVT.getScalarSizeInBits();
+  unsigned Scale = DstScalarBits / SrcScalarBits;
+  assert(SrcScalarBits < DstScalarBits &&
+         "Expected zero extension mask to increase scalar size");
+  assert(NumSrcElts >= NumDstElts && "Too many zero extension lanes");
+
+  for (unsigned i = 0; i != NumDstElts; i++) {
+    Mask.push_back(i);
+    for (unsigned j = 1; j != Scale; j++)
+      Mask.push_back(SM_SentinelZero);
+  }
+}
+
+void DecodeZeroMoveLowMask(MVT VT, SmallVectorImpl<int> &ShuffleMask) {
+  unsigned NumElts = VT.getVectorNumElements();
+  ShuffleMask.push_back(0);
+  for (unsigned i = 1; i < NumElts; i++)
+    ShuffleMask.push_back(SM_SentinelZero);
+}
+
+void DecodeScalarMoveMask(MVT VT, bool IsLoad, SmallVectorImpl<int> &Mask) {
+  // First element comes from the first element of second source.
+  // Remaining elements: Load zero extends / Move copies from first source.
+  unsigned NumElts = VT.getVectorNumElements();
+  Mask.push_back(NumElts);
+  for (unsigned i = 1; i < NumElts; i++)
+    Mask.push_back(IsLoad ? SM_SentinelZero : i);
+}
 } // llvm namespace
