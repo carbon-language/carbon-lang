@@ -429,6 +429,6 @@ void DecodeScalarMoveMask(MVT VT, bool IsLoad, SmallVectorImpl<int> &Mask) {
   unsigned NumElts = VT.getVectorNumElements();
   Mask.push_back(NumElts);
   for (unsigned i = 1; i < NumElts; i++)
-    Mask.push_back(IsLoad ? SM_SentinelZero : i);
+    Mask.push_back(IsLoad ? static_cast<int>(SM_SentinelZero) : i);
 }
 } // llvm namespace
