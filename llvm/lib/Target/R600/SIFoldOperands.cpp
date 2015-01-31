@@ -180,7 +180,7 @@ bool SIFoldOperands::runOnMachineFunction(MachineFunction &MF) {
       if (!FoldingImm && !OpToFold.isReg())
         continue;
 
-      // Folding immediates with more than one use will increase program side.
+      // Folding immediates with more than one use will increase program size.
       // FIXME: This will also reduce register usage, which may be better
       // in some cases.  A better heuristic is needed.
       if (FoldingImm && !TII->isInlineConstant(OpToFold) &&
