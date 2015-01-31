@@ -7,7 +7,7 @@
 
 __m128i test_sha1rnds4(__m128i a, __m128i b) {
   // CHECK: call <4 x i32> @llvm.x86.sha1rnds4
-  return _mm_sha1rnds4_epu32(a, b, 8);
+  return _mm_sha1rnds4_epu32(a, b, 3);
 }
 __m128i test_sha1nexte(__m128i a, __m128i b) {
   // CHECK: call <4 x i32> @llvm.x86.sha1nexte

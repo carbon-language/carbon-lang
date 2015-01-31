@@ -403,16 +403,16 @@ void f0() {
   tmp_V4f = __builtin_ia32_vpermilvarps(tmp_V4f, tmp_V4i);
   tmp_V4d = __builtin_ia32_vpermilvarpd256(tmp_V4d, tmp_V4LLi);
   tmp_V8f = __builtin_ia32_vpermilvarps256(tmp_V8f, tmp_V8i);
-  tmp_V4d = __builtin_ia32_blendpd256(tmp_V4d, tmp_V4d, 0x7);
+  tmp_V4d = __builtin_ia32_blendpd256(tmp_V4d, tmp_V4d, 0x1);
   tmp_V8f = __builtin_ia32_blendps256(tmp_V8f, tmp_V8f, 0x7);
   tmp_V4d = __builtin_ia32_blendvpd256(tmp_V4d, tmp_V4d, tmp_V4d);
   tmp_V8f = __builtin_ia32_blendvps256(tmp_V8f, tmp_V8f, tmp_V8f);
   tmp_V8f = __builtin_ia32_dpps256(tmp_V8f, tmp_V8f, 0x7);
   tmp_V4d = __builtin_ia32_cmppd256(tmp_V4d, tmp_V4d, 0);
   tmp_V8f = __builtin_ia32_cmpps256(tmp_V8f, tmp_V8f, 0);
-  tmp_V2d = __builtin_ia32_vextractf128_pd256(tmp_V4d, 0x7);
-  tmp_V4f = __builtin_ia32_vextractf128_ps256(tmp_V8f, 0x7);
-  tmp_V4i = __builtin_ia32_vextractf128_si256(tmp_V8i, 0x7);
+  tmp_V2d = __builtin_ia32_vextractf128_pd256(tmp_V4d, 0x1);
+  tmp_V4f = __builtin_ia32_vextractf128_ps256(tmp_V8f, 0x1);
+  tmp_V4i = __builtin_ia32_vextractf128_si256(tmp_V8i, 0x1);
   tmp_V4d = __builtin_ia32_cvtdq2pd256(tmp_V4i);
   tmp_V8f = __builtin_ia32_cvtdq2ps256(tmp_V8i);
   tmp_V4f = __builtin_ia32_cvtpd2ps256(tmp_V4d);
@@ -424,9 +424,9 @@ void f0() {
   tmp_V4d = __builtin_ia32_vperm2f128_pd256(tmp_V4d, tmp_V4d, 0x7);
   tmp_V8f = __builtin_ia32_vperm2f128_ps256(tmp_V8f, tmp_V8f, 0x7);
   tmp_V8i = __builtin_ia32_vperm2f128_si256(tmp_V8i, tmp_V8i, 0x7);
-  tmp_V4d = __builtin_ia32_vinsertf128_pd256(tmp_V4d, tmp_V2d, 0x7);
-  tmp_V8f = __builtin_ia32_vinsertf128_ps256(tmp_V8f, tmp_V4f, 0x7);
-  tmp_V8i = __builtin_ia32_vinsertf128_si256(tmp_V8i, tmp_V4i, 0x7);
+  tmp_V4d = __builtin_ia32_vinsertf128_pd256(tmp_V4d, tmp_V2d, 0x1);
+  tmp_V8f = __builtin_ia32_vinsertf128_ps256(tmp_V8f, tmp_V4f, 0x1);
+  tmp_V8i = __builtin_ia32_vinsertf128_si256(tmp_V8i, tmp_V4i, 0x1);
   tmp_V4d = __builtin_ia32_sqrtpd256(tmp_V4d);
   tmp_V8f = __builtin_ia32_sqrtps256(tmp_V8f);
   tmp_V8f = __builtin_ia32_rsqrtps256(tmp_V8f);
@@ -497,7 +497,7 @@ void f0() {
   tmp_V2f = __builtin_ia32_pswapdsf(tmp_V2f);
   tmp_V2i = __builtin_ia32_pswapdsi(tmp_V2i);
 
-  tmp_V4i = __builtin_ia32_sha1rnds4(tmp_V4i, tmp_V4i, imm_i);
+  tmp_V4i = __builtin_ia32_sha1rnds4(tmp_V4i, tmp_V4i, imm_i_0_4);
   tmp_V4i = __builtin_ia32_sha1nexte(tmp_V4i, tmp_V4i);
   tmp_V4i = __builtin_ia32_sha1msg1(tmp_V4i, tmp_V4i);
   tmp_V4i = __builtin_ia32_sha1msg2(tmp_V4i, tmp_V4i);
