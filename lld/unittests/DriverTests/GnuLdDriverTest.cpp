@@ -177,3 +177,17 @@ TEST_F(GnuLdParserTest, LinkerScriptGroup) {
   EXPECT_EQ("/y", cast<FileNode>(nodes[2].get())->getFile()->path());
   EXPECT_EQ(2, cast<GroupEnd>(nodes[3].get())->getSize());
 }
+
+TEST_F(GnuLdParserTest, LinkerScriptSearchDir) {
+  parse("ld", "a.o", nullptr);
+  std::unique_ptr<MemoryBuffer> mb = MemoryBuffer::getMemBuffer(
+    "SEARCH_DIR(\"/foo/bar\")", "foo.so");
+  std::string s;
+  raw_string_ostream out(s);
+  std::error_code ec = GnuLdDriver::evalLinkerScript(
+    *_context, std::move(mb), out);
+  EXPECT_FALSE(ec);
+  std::vector<StringRef> searchPaths = _context->getSearchPaths();
+  EXPECT_EQ((size_t)2, searchPaths.size());
+  EXPECT_EQ("/foo/bar", searchPaths[1]);
+}

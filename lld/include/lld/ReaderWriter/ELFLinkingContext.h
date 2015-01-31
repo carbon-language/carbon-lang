@@ -268,6 +268,9 @@ public:
     return true;
   }
 
+  // Retrieve search path list.
+  StringRefVector getSearchPaths() { return _inputSearchPaths; };
+
   // By default, the linker would merge sections that are read only with
   // segments that have read and execute permissions. When the user specifies a
   // flag --rosegment, a separate segment needs to be created.
