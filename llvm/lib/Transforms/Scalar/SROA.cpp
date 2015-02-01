@@ -4174,14 +4174,23 @@ bool SROA::splitAlloca(AllocaInst &AI, AllocaSlices &AS) {
     for (auto Piece : Pieces) {
       // Create a piece expression describing the new partition or reuse AI's
       // expression if there is only one partition.
-      if (IsSplit)
-        Expr = DIB.createPieceExpression(Piece.Offset, Piece.Size);
+      DIExpression PieceExpr = Expr;
+      if (IsSplit || Expr.isVariablePiece()) {
+        // If this alloca is already a scalar replacement of a larger aggregate,
+        // Piece.Offset describes the offset inside the scalar.
+        unsigned Offset = Expr.isVariablePiece() ? Expr.getPieceOffset() : 0;
+        assert((Offset == 0 ||
+                Offset+Piece.Offset+Piece.Size <=
+                Expr.getPieceOffset()+Expr.getPieceSize()) &&
+                "inner piece is not inside original alloca");
+        PieceExpr = DIB.createPieceExpression(Offset+Piece.Offset, Piece.Size);
+      }
 
       // Remove any existing dbg.declare intrinsic describing the same alloca.
       if (DbgDeclareInst *OldDDI = FindAllocaDbgDeclare(Piece.Alloca))
         OldDDI->eraseFromParent();
 
-      Instruction *NewDDI = DIB.insertDeclare(Piece.Alloca, Var, Expr, &AI);
+      auto *NewDDI = DIB.insertDeclare(Piece.Alloca, Var, PieceExpr, &AI);
       NewDDI->setDebugLoc(DbgDecl->getDebugLoc());
     }
   }
