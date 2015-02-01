@@ -64,10 +64,6 @@ Pass *createAMDGPUStructurizeCFGPass();
 FunctionPass *createAMDGPUISelDag(TargetMachine &tm);
 ModulePass *createAMDGPUAlwaysInlinePass();
 
-/// \brief Creates an AMDGPU-specific Target Transformation Info pass.
-ImmutablePass *
-createAMDGPUTargetTransformInfoPass(const AMDGPUTargetMachine *TM);
-
 void initializeSIFixSGPRLiveRangesPass(PassRegistry&);
 extern char &SIFixSGPRLiveRangesID;
 

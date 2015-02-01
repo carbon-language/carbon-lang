@@ -59,7 +59,6 @@ inline static const char *NVPTXCondCodeToString(NVPTXCC::CondCodes CC) {
   llvm_unreachable("Unknown condition code");
 }
 
-ImmutablePass *createNVPTXTargetTransformInfoPass(const NVPTXTargetMachine *TM);
 FunctionPass *createNVPTXISelDag(NVPTXTargetMachine &TM,
                                  llvm::CodeGenOpt::Level OptLevel);
 ModulePass *createNVPTXAssignValidGlobalNamesPass();
