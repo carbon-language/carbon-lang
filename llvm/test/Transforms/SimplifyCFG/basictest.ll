@@ -1,6 +1,7 @@
 ; Test CFG simplify removal of branch instructions.
 ;
 ; RUN: opt < %s -simplifycfg -S | FileCheck %s
+; RUN: opt < %s -passes=simplify-cfg -S | FileCheck %s
 
 define void @test1() {
         br label %1

@@ -21,7 +21,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Transforms/Scalar.h"
+#include "llvm/Transforms/Scalar/SimplifyCFG.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
@@ -37,6 +37,7 @@
 #include "llvm/Pass.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Transforms/Utils/Local.h"
+#include "llvm/Transforms/Scalar.h"
 using namespace llvm;
 
 #define DEBUG_TYPE "simplifycfg"
@@ -46,36 +47,6 @@ UserBonusInstThreshold("bonus-inst-threshold", cl::Hidden, cl::init(1),
    cl::desc("Control the number of bonus instructions (default = 1)"));
 
 STATISTIC(NumSimpl, "Number of blocks simplified");
-
-namespace {
-struct CFGSimplifyPass : public FunctionPass {
-  static char ID; // Pass identification, replacement for typeid
-  unsigned BonusInstThreshold;
-  CFGSimplifyPass(int T = -1) : FunctionPass(ID) {
-    BonusInstThreshold = (T == -1) ? UserBonusInstThreshold : unsigned(T);
-    initializeCFGSimplifyPassPass(*PassRegistry::getPassRegistry());
-  }
-  bool runOnFunction(Function &F) override;
-
-  void getAnalysisUsage(AnalysisUsage &AU) const override {
-    AU.addRequired<AssumptionCacheTracker>();
-    AU.addRequired<TargetTransformInfoWrapperPass>();
-  }
-};
-}
-
-char CFGSimplifyPass::ID = 0;
-INITIALIZE_PASS_BEGIN(CFGSimplifyPass, "simplifycfg", "Simplify the CFG", false,
-                      false)
-INITIALIZE_PASS_DEPENDENCY(TargetTransformInfoWrapperPass)
-INITIALIZE_PASS_DEPENDENCY(AssumptionCacheTracker)
-INITIALIZE_PASS_END(CFGSimplifyPass, "simplifycfg", "Simplify the CFG", false,
-                    false)
-
-// Public interface to the CFGSimplification pass
-FunctionPass *llvm::createCFGSimplificationPass(int Threshold) {
-  return new CFGSimplifyPass(Threshold);
-}
 
 /// mergeEmptyReturnBlocks - If we have more than one empty (other than phi
 /// node) return blocks, merge them together to promote recursive block merging.
@@ -176,19 +147,9 @@ static bool iterativelySimplifyCFG(Function &F, const TargetTransformInfo &TTI,
   return Changed;
 }
 
-// It is possible that we may require multiple passes over the code to fully
-// simplify the CFG.
-//
-bool CFGSimplifyPass::runOnFunction(Function &F) {
-  if (skipOptnoneFunction(F))
-    return false;
-
-  AssumptionCache *AC =
-      &getAnalysis<AssumptionCacheTracker>().getAssumptionCache(F);
-  const TargetTransformInfo &TTI =
-      getAnalysis<TargetTransformInfoWrapperPass>().getTTI();
-  DataLayoutPass *DLP = getAnalysisIfAvailable<DataLayoutPass>();
-  const DataLayout *DL = DLP ? &DLP->getDataLayout() : nullptr;
+static bool simplifyFunctionCFG(Function &F, const TargetTransformInfo &TTI,
+                                const DataLayout *DL, AssumptionCache *AC,
+                                int BonusInstThreshold) {
   bool EverChanged = removeUnreachableBlocks(F);
   EverChanged |= mergeEmptyReturnBlocks(F);
   EverChanged |= iterativelySimplifyCFG(F, TTI, DL, AC, BonusInstThreshold);
@@ -211,3 +172,63 @@ bool CFGSimplifyPass::runOnFunction(Function &F) {
 
   return true;
 }
+
+SimplifyCFGPass::SimplifyCFGPass()
+    : BonusInstThreshold(UserBonusInstThreshold) {}
+
+SimplifyCFGPass::SimplifyCFGPass(int BonusInstThreshold)
+    : BonusInstThreshold(BonusInstThreshold) {}
+
+PreservedAnalyses SimplifyCFGPass::run(Function &F,
+                                       AnalysisManager<Function> *AM) {
+  auto *DL = F.getParent()->getDataLayout();
+  auto &TTI = AM->getResult<TargetIRAnalysis>(F);
+  auto &AC = AM->getResult<AssumptionAnalysis>(F);
+
+  if (!simplifyFunctionCFG(F, TTI, DL, &AC, BonusInstThreshold))
+    return PreservedAnalyses::none();
+
+  return PreservedAnalyses::all();
+}
+
+namespace {
+struct CFGSimplifyPass : public FunctionPass {
+  static char ID; // Pass identification, replacement for typeid
+  unsigned BonusInstThreshold;
+  CFGSimplifyPass(int T = -1) : FunctionPass(ID) {
+    BonusInstThreshold = (T == -1) ? UserBonusInstThreshold : unsigned(T);
+    initializeCFGSimplifyPassPass(*PassRegistry::getPassRegistry());
+  }
+  bool runOnFunction(Function &F) override {
+    if (skipOptnoneFunction(F))
+      return false;
+
+    AssumptionCache *AC =
+        &getAnalysis<AssumptionCacheTracker>().getAssumptionCache(F);
+    const TargetTransformInfo &TTI =
+        getAnalysis<TargetTransformInfoWrapperPass>().getTTI();
+    DataLayoutPass *DLP = getAnalysisIfAvailable<DataLayoutPass>();
+    const DataLayout *DL = DLP ? &DLP->getDataLayout() : nullptr;
+    return simplifyFunctionCFG(F, TTI, DL, AC, BonusInstThreshold);
+  }
+
+  void getAnalysisUsage(AnalysisUsage &AU) const override {
+    AU.addRequired<AssumptionCacheTracker>();
+    AU.addRequired<TargetTransformInfoWrapperPass>();
+  }
+};
+}
+
+char CFGSimplifyPass::ID = 0;
+INITIALIZE_PASS_BEGIN(CFGSimplifyPass, "simplifycfg", "Simplify the CFG", false,
+                      false)
+INITIALIZE_PASS_DEPENDENCY(TargetTransformInfoWrapperPass)
+INITIALIZE_PASS_DEPENDENCY(AssumptionCacheTracker)
+INITIALIZE_PASS_END(CFGSimplifyPass, "simplifycfg", "Simplify the CFG", false,
+                    false)
+
+// Public interface to the CFGSimplification pass
+FunctionPass *llvm::createCFGSimplificationPass(int Threshold) {
+  return new CFGSimplifyPass(Threshold);
+}
+
