@@ -42,10 +42,6 @@ STATISTIC(NumCSELoad,  "Number of load instructions CSE'd");
 STATISTIC(NumCSECall,  "Number of call instructions CSE'd");
 STATISTIC(NumDSE,      "Number of trivial dead stores removed");
 
-static unsigned getHash(const void *V) {
-  return DenseMapInfo<const void*>::getHashValue(V);
-}
-
 //===----------------------------------------------------------------------===//
 // SimpleValue
 //===----------------------------------------------------------------------===//
@@ -239,16 +235,10 @@ template <> struct DenseMapInfo<CallValue> {
 
 unsigned DenseMapInfo<CallValue>::getHashValue(CallValue Val) {
   Instruction *Inst = Val.Inst;
-  // Hash in all of the operands as pointers.
-  unsigned Res = 0;
-  for (unsigned i = 0, e = Inst->getNumOperands(); i != e; ++i) {
-    assert(!Inst->getOperand(i)->getType()->isMetadataTy() &&
-           "Cannot value number calls with metadata operands");
-    Res ^= getHash(Inst->getOperand(i)) << (i & 0xF);
-  }
-
-  // Mix in the opcode.
-  return (Res << 1) ^ Inst->getOpcode();
+  // Hash all of the operands as pointers and mix in the opcode.
+  return hash_combine(
+      Inst->getOpcode(),
+      hash_combine_range(Inst->value_op_begin(), Inst->value_op_end()));
 }
 
 bool DenseMapInfo<CallValue>::isEqual(CallValue LHS, CallValue RHS) {
