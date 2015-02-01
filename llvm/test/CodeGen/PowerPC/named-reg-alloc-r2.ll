@@ -1,11 +1,11 @@
-; RUN: not llc < %s -mtriple=powerpc-apple-darwin 2>&1 | FileCheck %s --check-prefix=CHECK-DARWIN
+; RUN: not llc < %s -mtriple=powerpc-apple-darwin 2>&1 | FileCheck %s --check-prefix=CHECK-NOTPPC32
 ; RUN: llc < %s -mtriple=powerpc-unknown-linux-gnu 2>&1 | FileCheck %s
-; RUN: llc < %s -mtriple=powerpc64-unknown-linux-gnu 2>&1 | FileCheck %s
+; RUN: not llc < %s -mtriple=powerpc64-unknown-linux-gnu 2>&1 | FileCheck %s --check-prefix=CHECK-NOTPPC32
 
 define i32 @get_reg() nounwind {
 entry:
 ; FIXME: Include an allocatable-specific error message
-; CHECK-DARWIN: Invalid register name global variable
+; CHECK-NOTPPC32: Invalid register name global variable
         %reg = call i32 @llvm.read_register.i32(metadata !0)
   ret i32 %reg
 

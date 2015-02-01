@@ -115,9 +115,14 @@ PPCRegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
                                   CSR_Darwin32_Altivec_SaveList :
                                   CSR_Darwin32_SaveList);
 
+  // On PPC64, we might need to save r2 (but only if it is not reserved).
+  bool SaveR2 = MF->getRegInfo().isAllocatable(PPC::X2);
+
   return Subtarget.isPPC64() ? (Subtarget.hasAltivec() ?
-                                CSR_SVR464_Altivec_SaveList :
-                                CSR_SVR464_SaveList) :
+                                (SaveR2 ? CSR_SVR464_R2_Altivec_SaveList :
+                                          CSR_SVR464_Altivec_SaveList) :
+                                (SaveR2 ? CSR_SVR464_R2_SaveList :
+                                          CSR_SVR464_SaveList)) :
                                (Subtarget.hasAltivec() ?
                                 CSR_SVR432_Altivec_SaveList :
                                 CSR_SVR432_SaveList);
@@ -216,7 +221,16 @@ BitVector PPCRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
 
     // The 64-bit SVR4 ABI reserves r2 for the TOC pointer.
     if (Subtarget.isSVR4ABI()) {
-      Reserved.set(PPC::X2);
+      // We only reserve r2 if we need to use the TOC pointer. If we have no
+      // explicit uses of the TOC pointer (meaning we're a leaf function with
+      // no constant-pool loads, etc.) and we have no potential uses inside an
+      // inline asm block, then we can treat r2 has an ordinary callee-saved
+      // register.
+      const PPCFunctionInfo *FuncInfo = MF.getInfo<PPCFunctionInfo>();
+      if (FuncInfo->usesTOCBasePtr() || MF.hasInlineAsm())
+        Reserved.set(PPC::X2);
+      else
+        Reserved.reset(PPC::R2);
     }
   }
 

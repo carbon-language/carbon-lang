@@ -219,17 +219,50 @@ def RM: PPCReg<"**ROUNDING MODE**">;
 // then nonvolatiles in reverse order since stmw/lmw save from rN to r31
 def GPRC : RegisterClass<"PPC", [i32], 32, (add (sequence "R%u", 2, 12),
                                                 (sequence "R%u", 30, 13),
-                                                R31, R0, R1, FP, BP)>;
+                                                R31, R0, R1, FP, BP)> {
+  // On non-Darwin PPC64 systems, R2 can be allocated, but must be restored, so
+  // put it at the end of the list.
+  let AltOrders = [(add (sub GPRC, R2), R2)];
+  let AltOrderSelect = [{
+    const PPCSubtarget &S = MF.getTarget().getSubtarget<PPCSubtarget>();
+    return S.isPPC64() && S.isSVR4ABI();
+  }];
+}
 
 def G8RC : RegisterClass<"PPC", [i64], 64, (add (sequence "X%u", 2, 12),
                                                 (sequence "X%u", 30, 14),
-                                                X31, X13, X0, X1, FP8, BP8)>;
+                                                X31, X13, X0, X1, FP8, BP8)> {
+  // On non-Darwin PPC64 systems, R2 can be allocated, but must be restored, so
+  // put it at the end of the list.
+  let AltOrders = [(add (sub G8RC, X2), X2)];
+  let AltOrderSelect = [{
+    const PPCSubtarget &S = MF.getTarget().getSubtarget<PPCSubtarget>();
+    return S.isPPC64() && S.isSVR4ABI();
+  }];
+}
 
 // For some instructions r0 is special (representing the value 0 instead of
 // the value in the r0 register), and we use these register subclasses to
 // prevent r0 from being allocated for use by those instructions.
-def GPRC_NOR0 : RegisterClass<"PPC", [i32], 32, (add (sub GPRC, R0), ZERO)>;
-def G8RC_NOX0 : RegisterClass<"PPC", [i64], 64, (add (sub G8RC, X0), ZERO8)>;
+def GPRC_NOR0 : RegisterClass<"PPC", [i32], 32, (add (sub GPRC, R0), ZERO)> {
+  // On non-Darwin PPC64 systems, R2 can be allocated, but must be restored, so
+  // put it at the end of the list.
+  let AltOrders = [(add (sub GPRC_NOR0, R2), R2)];
+  let AltOrderSelect = [{
+    const PPCSubtarget &S = MF.getTarget().getSubtarget<PPCSubtarget>();
+    return S.isPPC64() && S.isSVR4ABI();
+  }];
+}
+
+def G8RC_NOX0 : RegisterClass<"PPC", [i64], 64, (add (sub G8RC, X0), ZERO8)> {
+  // On non-Darwin PPC64 systems, R2 can be allocated, but must be restored, so
+  // put it at the end of the list.
+  let AltOrders = [(add (sub G8RC_NOX0, X2), X2)];
+  let AltOrderSelect = [{
+    const PPCSubtarget &S = MF.getTarget().getSubtarget<PPCSubtarget>();
+    return S.isPPC64() && S.isSVR4ABI();
+  }];
+}
 
 // Allocate volatiles first, then non-volatiles in reverse order. With the SVR4
 // ABI the size of the Floating-point register save area is determined by the

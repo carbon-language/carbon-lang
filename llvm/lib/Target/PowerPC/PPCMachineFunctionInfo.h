@@ -62,6 +62,9 @@ class PPCFunctionInfo : public MachineFunctionInfo {
   /// entry, even though LR may otherwise apparently not be used.
   bool LRStoreRequired;
 
+  /// This function makes use of the PPC64 ELF TOC base pointer (register r2).
+  bool UsesTOCBasePtr;
+
   /// MinReservedArea - This is the frame size that is at least reserved in a
   /// potential caller (parameter+linkage area).
   unsigned MinReservedArea;
@@ -112,6 +115,7 @@ public:
       SpillsCR(false),
       SpillsVRSAVE(false),
       LRStoreRequired(false),
+      UsesTOCBasePtr(false),
       MinReservedArea(0),
       TailCallSPDelta(0),
       HasFastCall(false),
@@ -163,6 +167,9 @@ public:
 
   void setLRStoreRequired() { LRStoreRequired = true; }
   bool isLRStoreRequired() const { return LRStoreRequired; }
+
+  void setUsesTOCBasePtr()    { UsesTOCBasePtr = true; }
+  bool usesTOCBasePtr() const { return UsesTOCBasePtr; }
 
   void setHasFastCall() { HasFastCall = true; }
   bool hasFastCall() const { return HasFastCall;}
