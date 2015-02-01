@@ -59,7 +59,7 @@ static inline bool isTriviallyVectorizable(Intrinsic::ID ID) {
   }
 }
 
-static bool hasVectorInstrinsicScalarOpd(Intrinsic::ID ID,
+static inline bool hasVectorInstrinsicScalarOpd(Intrinsic::ID ID,
                                          unsigned ScalarOpdIdx) {
   switch (ID) {
     case Intrinsic::ctlz:
