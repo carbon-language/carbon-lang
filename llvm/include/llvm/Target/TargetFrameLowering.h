@@ -193,6 +193,11 @@ public:
     return hasReservedCallFrame(MF) || hasFP(MF);
   }
 
+  // needsFrameIndexResolution - Do we need to perform FI resolution for
+  // this function. Normally, this is required only when the function
+  // has any stack objects. However, targets may want to override this.
+  virtual bool needsFrameIndexResolution(const MachineFunction &MF) const;
+
   /// getFrameIndexOffset - Returns the displacement from the frame register to
   /// the stack frame of the specified index.
   virtual int getFrameIndexOffset(const MachineFunction &MF, int FI) const;

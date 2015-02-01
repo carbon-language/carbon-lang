@@ -192,6 +192,7 @@ public:
   void addIRPasses() override;
   bool addInstSelector() override;
   bool addILPOpts() override;
+  void addPreRegAlloc() override;
   void addPostRegAlloc() override;
   void addPreEmitPass() override;
 };
@@ -223,6 +224,10 @@ bool X86PassConfig::addInstSelector() {
 bool X86PassConfig::addILPOpts() {
   addPass(&EarlyIfConverterID);
   return true;
+}
+
+void X86PassConfig::addPreRegAlloc() {
+  addPass(createX86CallFrameOptimization());
 }
 
 void X86PassConfig::addPostRegAlloc() {

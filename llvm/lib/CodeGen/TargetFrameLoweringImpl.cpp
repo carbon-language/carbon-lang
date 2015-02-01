@@ -42,3 +42,8 @@ int TargetFrameLowering::getFrameIndexReference(const MachineFunction &MF,
   FrameReg = RI->getFrameRegister(MF);
   return getFrameIndexOffset(MF, FI);
 }
+
+bool TargetFrameLowering::needsFrameIndexResolution(
+    const MachineFunction &MF) const {
+  return MF.getFrameInfo()->hasStackObjects();
+}

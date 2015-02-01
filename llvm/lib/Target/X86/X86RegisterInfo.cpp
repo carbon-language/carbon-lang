@@ -468,8 +468,6 @@ void
 X86RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
                                      int SPAdj, unsigned FIOperandNum,
                                      RegScavenger *RS) const {
-  assert(SPAdj == 0 && "Unexpected");
-
   MachineInstr &MI = *II;
   MachineFunction &MF = *MI.getParent()->getParent();
   const TargetFrameLowering *TFI = MF.getSubtarget().getFrameLowering();
@@ -505,6 +503,9 @@ X86RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
     FIOffset = MFI->getObjectOffset(FrameIndex) - TFI->getOffsetOfLocalArea();
   } else
     FIOffset = TFI->getFrameIndexOffset(MF, FrameIndex);
+
+  if (BasePtr == StackPtr)
+    FIOffset += SPAdj;
 
   // The frame index format for stackmaps and patchpoints is different from the
   // X86 format. It only has a FI and an offset.
