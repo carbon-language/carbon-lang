@@ -34,6 +34,7 @@ add_llvm_library(LLVMAnalysis
   LibCallSemantics.cpp
   Lint.cpp
   Loads.cpp
+  LoopAccessAnalysis.cpp
   LoopInfo.cpp
   LoopPass.cpp
   MemDepPrinter.cpp
