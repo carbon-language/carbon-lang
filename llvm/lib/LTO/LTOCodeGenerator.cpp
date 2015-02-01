@@ -490,7 +490,8 @@ bool LTOCodeGenerator::generateObjectFile(raw_ostream &out,
   mergedModule->setDataLayout(TargetMach->getDataLayout());
 
   passes.add(new DataLayoutPass());
-  passes.add(createTargetTransformInfoWrapperPass(TargetMach->getTTI()));
+  passes.add(
+      createTargetTransformInfoWrapperPass(TargetMach->getTargetIRAnalysis()));
 
   Triple TargetTriple(TargetMach->getTargetTriple());
   PassManagerBuilder PMB;

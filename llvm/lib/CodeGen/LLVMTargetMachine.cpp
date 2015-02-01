@@ -90,7 +90,7 @@ static MCContext *addPassesToGenerateCode(LLVMTargetMachine *TM,
                                           AnalysisID StopAfter) {
 
   // Add internal analysis passes from the target machine.
-  PM.add(createTargetTransformInfoWrapperPass(TM->getTTI()));
+  PM.add(createTargetTransformInfoWrapperPass(TM->getTargetIRAnalysis()));
 
   // Targets may override createPassConfig to provide a target-specific
   // subclass.

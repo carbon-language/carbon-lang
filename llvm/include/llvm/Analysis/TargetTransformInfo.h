@@ -22,6 +22,7 @@
 #ifndef LLVM_ANALYSIS_TARGETTRANSFORMINFO_H
 #define LLVM_ANALYSIS_TARGETTRANSFORMINFO_H
 
+#include "llvm/ADT/Optional.h"
 #include "llvm/IR/Intrinsics.h"
 #include "llvm/IR/IntrinsicInst.h"
 #include "llvm/Pass.h"
@@ -791,7 +792,8 @@ private:
 /// This pass can be constructed from a TTI object which it stores internally
 /// and is queried by passes.
 class TargetTransformInfoWrapperPass : public ImmutablePass {
-  TargetTransformInfo TTI;
+  TargetIRAnalysis TIRA;
+  Optional<TargetTransformInfo> TTI;
 
   virtual void anchor();
 
@@ -804,16 +806,16 @@ public:
   /// Use the constructor below or call one of the creation routines.
   TargetTransformInfoWrapperPass();
 
-  explicit TargetTransformInfoWrapperPass(TargetTransformInfo TTI);
+  explicit TargetTransformInfoWrapperPass(TargetIRAnalysis TIRA);
 
-  TargetTransformInfo &getTTI(Function &F) { return TTI; }
+  TargetTransformInfo &getTTI(Function &F);
 };
 
 /// \brief Create an analysis pass wrapper around a TTI object.
 ///
 /// This analysis pass just holds the TTI instance and makes it available to
 /// clients.
-ImmutablePass *createTargetTransformInfoWrapperPass(TargetTransformInfo TTI);
+ImmutablePass *createTargetTransformInfoWrapperPass(TargetIRAnalysis TIRA);
 
 } // End llvm namespace
 

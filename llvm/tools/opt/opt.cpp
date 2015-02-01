@@ -427,8 +427,8 @@ int main(int argc, char **argv) {
     Passes.add(new DataLayoutPass());
 
   // Add internal analysis passes from the target machine.
-  Passes.add(createTargetTransformInfoWrapperPass(
-      TM ? TM->getTTI() : TargetTransformInfo(DL)));
+  Passes.add(createTargetTransformInfoWrapperPass(TM ? TM->getTargetIRAnalysis()
+                                                     : TargetIRAnalysis()));
 
   std::unique_ptr<FunctionPassManager> FPasses;
   if (OptLevelO1 || OptLevelO2 || OptLevelOs || OptLevelOz || OptLevelO3) {
@@ -436,7 +436,7 @@ int main(int argc, char **argv) {
     if (DL)
       FPasses->add(new DataLayoutPass());
     FPasses->add(createTargetTransformInfoWrapperPass(
-        TM ? TM->getTTI() : TargetTransformInfo(DL)));
+        TM ? TM->getTargetIRAnalysis() : TargetIRAnalysis()));
   }
 
   if (PrintBreakpoints) {

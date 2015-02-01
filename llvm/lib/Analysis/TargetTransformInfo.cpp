@@ -280,19 +280,24 @@ char TargetTransformInfoWrapperPass::ID = 0;
 void TargetTransformInfoWrapperPass::anchor() {}
 
 TargetTransformInfoWrapperPass::TargetTransformInfoWrapperPass()
-    : ImmutablePass(ID), TTI(NoTTIImpl(/*DataLayout*/ nullptr)) {
+    : ImmutablePass(ID) {
   initializeTargetTransformInfoWrapperPassPass(
       *PassRegistry::getPassRegistry());
 }
 
 TargetTransformInfoWrapperPass::TargetTransformInfoWrapperPass(
-    TargetTransformInfo TTI)
-    : ImmutablePass(ID), TTI(std::move(TTI)) {
+    TargetIRAnalysis TIRA)
+    : ImmutablePass(ID), TIRA(std::move(TIRA)) {
   initializeTargetTransformInfoWrapperPassPass(
       *PassRegistry::getPassRegistry());
 }
 
+TargetTransformInfo &TargetTransformInfoWrapperPass::getTTI(Function &F) {
+  TTI = TIRA.run(F);
+  return *TTI;
+}
+
 ImmutablePass *
-llvm::createTargetTransformInfoWrapperPass(TargetTransformInfo TTI) {
-  return new TargetTransformInfoWrapperPass(std::move(TTI));
+llvm::createTargetTransformInfoWrapperPass(TargetIRAnalysis TIRA) {
+  return new TargetTransformInfoWrapperPass(std::move(TIRA));
 }
