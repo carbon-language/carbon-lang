@@ -314,6 +314,7 @@ class SeparateConstOffsetFromGEP : public FunctionPass {
   void getAnalysisUsage(AnalysisUsage &AU) const override {
     AU.addRequired<DataLayoutPass>();
     AU.addRequired<TargetTransformInfoWrapperPass>();
+    AU.setPreservesCFG();
   }
 
   bool doInitialization(Module &M) override {
