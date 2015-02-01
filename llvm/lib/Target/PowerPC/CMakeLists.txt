@@ -30,6 +30,7 @@ add_llvm_target(PowerPCCodeGen
   PPCTargetObjectFile.cpp
   PPCTargetTransformInfo.cpp
   PPCSelectionDAGInfo.cpp
+  PPCVSXFMAMutate.cpp
   )
 
 add_subdirectory(AsmParser)
