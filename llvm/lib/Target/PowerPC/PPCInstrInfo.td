@@ -2377,7 +2377,7 @@ let PPC970_Unit = 1 in {  // FXU Operations.
   let isSelect = 1 in
   def ISEL  : AForm_4<31, 15,
                      (outs gprc:$rT), (ins gprc_nor0:$rA, gprc:$rB, crbitrc:$cond),
-                     "isel $rT, $rA, $rB, $cond", IIC_IntGeneral,
+                     "isel $rT, $rA, $rB, $cond", IIC_IntISEL,
                      []>;
 }
 

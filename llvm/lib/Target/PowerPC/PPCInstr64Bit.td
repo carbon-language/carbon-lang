@@ -686,7 +686,7 @@ defm RLWIMI8 : MForm_2r<20, (outs g8rc:$rA),
 let isSelect = 1 in
 def ISEL8   : AForm_4<31, 15,
                      (outs g8rc:$rT), (ins g8rc_nox0:$rA, g8rc:$rB, crbitrc:$cond),
-                     "isel $rT, $rA, $rB, $cond", IIC_IntGeneral,
+                     "isel $rT, $rA, $rB, $cond", IIC_IntISEL,
                      []>;
 }  // Interpretation64Bit
 }  // hasSideEffects = 0

@@ -54,6 +54,12 @@ def PPCE500mcItineraries : ProcessorItineraries<
                                  [4, 1, 1], // Latency = 1
                                  [E500_GPR_Bypass,
                                   E500_GPR_Bypass, E500_GPR_Bypass]>,
+  InstrItinData<IIC_IntISEL,     [InstrStage<1, [E500_DIS0, E500_DIS1], 0>,
+                                  InstrStage<1, [E500_SFX0, E500_SFX1]>],
+                                 [4, 1, 1, 1], // Latency = 1
+                                 [E500_GPR_Bypass,
+                                  E500_GPR_Bypass, E500_GPR_Bypass,
+                                  E500_CR_Bypass]>,
   InstrItinData<IIC_IntCompare,  [InstrStage<1, [E500_DIS0, E500_DIS1], 0>,
                                   InstrStage<1, [E500_SFX0, E500_SFX1]>],
                                  [5, 1, 1], // Latency = 1 or 2

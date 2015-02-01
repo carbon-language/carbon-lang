@@ -29,6 +29,8 @@ def PPCA2Itineraries : ProcessorItineraries<
                                  [1, 0, 0]>,
   InstrItinData<IIC_IntGeneral,  [InstrStage<1, [A2_XU]>],
                                  [2, 0, 0]>,
+  InstrItinData<IIC_IntISEL,     [InstrStage<1, [A2_XU]>],
+                                 [2, 0, 0, 0]>,
   InstrItinData<IIC_IntCompare,  [InstrStage<1, [A2_XU]>],
                                  [2, 0, 0]>,
   InstrItinData<IIC_IntDivW,     [InstrStage<1, [A2_XU]>],

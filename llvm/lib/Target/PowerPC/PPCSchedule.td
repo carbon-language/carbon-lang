@@ -13,6 +13,7 @@
 def IIC_IntSimple    : InstrItinClass;
 def IIC_IntGeneral   : InstrItinClass;
 def IIC_IntCompare   : InstrItinClass;
+def IIC_IntISEL      : InstrItinClass;
 def IIC_IntDivD      : InstrItinClass;
 def IIC_IntDivW      : InstrItinClass;
 def IIC_IntMFFS      : InstrItinClass;
@@ -217,6 +218,7 @@ include "PPCScheduleE5500.td"
 //    fsub       IIC_FPAddSub
 //    fsubs      IIC_FPGeneral
 //    icbi       IIC_LdStICBI
+//    isel       IIC_IntISEL
 //    isync      IIC_SprISYNC
 //    lbz        IIC_LdStLoad
 //    lbzu       IIC_LdStLoadUpd
