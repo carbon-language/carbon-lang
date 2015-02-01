@@ -998,6 +998,9 @@ bool SeparateConstOffsetFromGEP::splitGEP(GetElementPtrInst *GEP) {
 }
 
 bool SeparateConstOffsetFromGEP::runOnFunction(Function &F) {
+  if (skipOptnoneFunction(F))
+    return false;
+
   if (DisableSeparateConstOffsetFromGEP)
     return false;
 
