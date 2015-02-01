@@ -289,6 +289,8 @@ GnuLdDriver::evalLinkerScript(ELFLinkingContext &ctx,
         return ec;
     if (auto *searchDir = dyn_cast<script::SearchDir>(c))
       ctx.addSearchPath(searchDir->getSearchPath());
+    if (auto *entry = dyn_cast<script::Entry>(c))
+      ctx.setEntrySymbolName(entry->getEntryName());
   }
   return std::error_code();
 }

@@ -191,3 +191,16 @@ TEST_F(GnuLdParserTest, LinkerScriptSearchDir) {
   EXPECT_EQ((size_t)2, searchPaths.size());
   EXPECT_EQ("/foo/bar", searchPaths[1]);
 }
+
+TEST_F(GnuLdParserTest, LinkerScriptEntry) {
+  parse("ld", "a.o", nullptr);
+  std::unique_ptr<MemoryBuffer> mb = MemoryBuffer::getMemBuffer(
+    "ENTRY(blah)", "foo.so");
+  std::string s;
+  raw_string_ostream out(s);
+  std::error_code ec = GnuLdDriver::evalLinkerScript(
+    *_context, std::move(mb), out);
+  EXPECT_FALSE(ec);
+  StringRef entrySymbol = _context->entrySymbolName();
+  EXPECT_EQ("blah", entrySymbol);
+}
