@@ -363,6 +363,8 @@ Layout::SectionOrder DefaultLayout<ELFT>::getSectionOrder(
         .StartsWith(".init_array", ORDER_INIT_ARRAY)
         .StartsWith(".fini_array", ORDER_FINI_ARRAY)
         .StartsWith(".dynamic", ORDER_DYNAMIC)
+        .StartsWith(".ctors", ORDER_CTORS)
+        .StartsWith(".dtors", ORDER_DTORS)
         .Default(ORDER_DATA);
 
   case DefinedAtom::typeZeroFill:

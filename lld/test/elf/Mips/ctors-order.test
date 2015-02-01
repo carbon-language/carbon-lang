@@ -51,7 +51,7 @@
 # CHECK-NEXT:     section-name:    .ctors
 
 # RAW:      Contents of section .ctors:
-# RAW-NEXT: 2000 ffffffff 11111111 22222222 00000000
+# RAW-NEXT: 1000 ffffffff 11111111 22222222 00000000
 # crtbeginS.o
 ---
 FileHeader:
