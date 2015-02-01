@@ -34,6 +34,7 @@ class Target;
 class DataLayout;
 class TargetLibraryInfo;
 class TargetFrameLowering;
+class TargetIRAnalysis;
 class TargetIntrinsicInfo;
 class TargetLowering;
 class TargetPassConfig;
@@ -186,6 +187,12 @@ public:
   /// setFunctionSections - Set if the functions are emit into separate
   /// sections.
   void setFunctionSections(bool);
+
+  /// \brief Get a \c TargetIRAnalysis appropriate for the target.
+  ///
+  /// This is used to construct the new pass manager's target IR analysis pass,
+  /// set up appropriately for this target machine.
+  virtual TargetIRAnalysis getTargetIRAnalysis();
 
   /// \brief Get a TTI implementation for the target.
   ///

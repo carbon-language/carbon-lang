@@ -14,6 +14,7 @@
 #include "llvm/IR/Instruction.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/IntrinsicInst.h"
+#include "llvm/IR/Module.h"
 #include "llvm/IR/Operator.h"
 #include "llvm/Support/ErrorHandling.h"
 
@@ -254,6 +255,22 @@ Value *TargetTransformInfo::getOrCreateResultFromMemIntrinsic(
 }
 
 TargetTransformInfo::Concept::~Concept() {}
+
+TargetIRAnalysis::TargetIRAnalysis() : TTICallback(&getDefaultTTI) {}
+
+TargetIRAnalysis::TargetIRAnalysis(
+    std::function<Result(Function &)> TTICallback)
+    : TTICallback(TTICallback) {}
+
+TargetIRAnalysis::Result TargetIRAnalysis::run(Function &F) {
+  return TTICallback(F);
+}
+
+char TargetIRAnalysis::PassID;
+
+TargetIRAnalysis::Result TargetIRAnalysis::getDefaultTTI(Function &F) {
+  return Result(F.getParent()->getDataLayout());
+}
 
 // Register the basic pass.
 INITIALIZE_PASS(TargetTransformInfoWrapperPass, "tti",

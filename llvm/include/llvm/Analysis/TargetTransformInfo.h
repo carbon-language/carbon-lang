@@ -32,6 +32,7 @@ namespace llvm {
 class Function;
 class GlobalValue;
 class Loop;
+class PreservedAnalyses;
 class Type;
 class User;
 class Value;
@@ -75,6 +76,17 @@ public:
   // We need to define the destructor out-of-line to define our sub-classes
   // out-of-line.
   ~TargetTransformInfo();
+
+  /// \brief Handle the invalidation of this information.
+  ///
+  /// When used as a result of \c TargetIRAnalysis this method will be called
+  /// when the function this was computed for changes. When it returns false,
+  /// the information is preserved across those changes.
+  bool invalidate(Function &, const PreservedAnalyses &) {
+    // FIXME: We should probably in some way ensure that the subtarget
+    // information for a function hasn't changed.
+    return false;
+  }
 
   /// \name Generic Target Information
   /// @{
@@ -705,6 +717,74 @@ public:
 template <typename T>
 TargetTransformInfo::TargetTransformInfo(T Impl)
     : TTIImpl(new Model<T>(Impl)) {}
+
+/// \brief Analysis pass providing the \c TargetTransformInfo.
+///
+/// The core idea of the TargetIRAnalysis is to expose an interface through
+/// which LLVM targets can analyze and provide information about the middle
+/// end's target-independent IR. This supports use cases such as target-aware
+/// cost modeling of IR constructs.
+///
+/// This is a function analysis because much of the cost modeling for targets
+/// is done in a subtarget specific way and LLVM supports compiling different
+/// functions targeting different subtargets in order to support runtime
+/// dispatch according to the observed subtarget.
+class TargetIRAnalysis {
+public:
+  typedef TargetTransformInfo Result;
+
+  /// \brief Opaque, unique identifier for this analysis pass.
+  static void *ID() { return (void *)&PassID; }
+
+  /// \brief Provide access to a name for this pass for debugging purposes.
+  static StringRef name() { return "TargetIRAnalysis"; }
+
+  /// \brief Default construct a target IR analysis.
+  ///
+  /// This will use the module's datalayout to construct a baseline
+  /// conservative TTI result.
+  TargetIRAnalysis();
+
+  /// \brief Construct an IR analysis pass around a target-provide callback.
+  ///
+  /// The callback will be called with a particular function for which the TTI
+  /// is needed and must return a TTI object for that function.
+  TargetIRAnalysis(std::function<Result(Function &)> TTICallback);
+
+  // Value semantics. We spell out the constructors for MSVC.
+  TargetIRAnalysis(const TargetIRAnalysis &Arg)
+      : TTICallback(Arg.TTICallback) {}
+  TargetIRAnalysis(TargetIRAnalysis &&Arg)
+      : TTICallback(std::move(Arg.TTICallback)) {}
+  TargetIRAnalysis &operator=(const TargetIRAnalysis &RHS) {
+    TTICallback = RHS.TTICallback;
+    return *this;
+  }
+  TargetIRAnalysis &operator=(TargetIRAnalysis &&RHS) {
+    TTICallback = std::move(RHS.TTICallback);
+    return *this;
+  }
+
+  Result run(Function &F);
+
+private:
+  static char PassID;
+
+  /// \brief The callback used to produce a result.
+  ///
+  /// We use a completely opaque callback so that targets can provide whatever
+  /// mechanism they desire for constructing the TTI for a given function.
+  ///
+  /// FIXME: Should we really use std::function? It's relatively inefficient.
+  /// It might be possible to arrange for even stateful callbacks to outlive
+  /// the analysis and thus use a function_ref which would be lighter weight.
+  /// This may also be less error prone as the callback is likely to reference
+  /// the external TargetMachine, and that reference needs to never dangle.
+  std::function<Result(Function &)> TTICallback;
+
+  /// \brief Helper function used as the callback in the default constructor.
+  static Result getDefaultTTI(Function &F);
+};
 
 /// \brief Wrapper pass for TargetTransformInfo.
 ///

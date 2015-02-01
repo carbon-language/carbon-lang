@@ -27,6 +27,7 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/ToolOutputFile.h"
+#include "llvm/Target/TargetMachine.h"
 
 using namespace llvm;
 using namespace opt_tool;
@@ -36,9 +37,10 @@ static cl::opt<bool>
             cl::desc("Print pass management debugging information"));
 
 bool llvm::runPassPipeline(StringRef Arg0, LLVMContext &Context, Module &M,
-                           tool_output_file *Out, StringRef PassPipeline,
-                           OutputKind OK, VerifierKind VK) {
-  Passes P;
+                           TargetMachine *TM, tool_output_file *Out,
+                           StringRef PassPipeline, OutputKind OK,
+                           VerifierKind VK) {
+  Passes P(TM);
 
   FunctionAnalysisManager FAM(DebugPM);
   CGSCCAnalysisManager CGAM(DebugPM);

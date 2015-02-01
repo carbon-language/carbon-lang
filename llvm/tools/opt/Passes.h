@@ -21,6 +21,7 @@
 #include "llvm/IR/PassManager.h"
 
 namespace llvm {
+class TargetMachine;
 
 /// \brief This class provides access to all of LLVM's passes.
 ///
@@ -29,7 +30,11 @@ namespace llvm {
 /// of the built-in passes, and those may reference these members during
 /// construction.
 class Passes {
+  TargetMachine *TM;
+
 public:
+  explicit Passes(TargetMachine *TM = nullptr) : TM(TM) {}
+
   /// \brief Registers all available module analysis passes.
   ///
   /// This is an interface that can be used to populate a \c

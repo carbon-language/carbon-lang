@@ -55,6 +55,8 @@ FUNCTION_ANALYSIS("domtree", DominatorTreeAnalysis())
 FUNCTION_ANALYSIS("loops", LoopAnalysis())
 FUNCTION_ANALYSIS("no-op-function", NoOpFunctionAnalysis())
 FUNCTION_ANALYSIS("targetlibinfo", TargetLibraryAnalysis())
+FUNCTION_ANALYSIS("targetir",
+                  TM ? TM->getTargetIRAnalysis() : TargetIRAnalysis())
 #undef FUNCTION_ANALYSIS
 
 #ifndef FUNCTION_PASS
