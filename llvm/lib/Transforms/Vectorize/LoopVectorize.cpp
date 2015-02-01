@@ -628,10 +628,6 @@ struct RuntimePointerCheck {
 /// induction variable and the different reduction variables.
 class LoopVectorizationLegality {
 public:
-  unsigned NumLoads;
-  unsigned NumStores;
-  unsigned NumPredStores;
-
   LoopVectorizationLegality(Loop *L, ScalarEvolution *SE, const DataLayout *DL,
                             DominatorTree *DT, TargetLibraryInfo *TLI,
                             AliasAnalysis *AA, Function *F,
@@ -854,6 +850,15 @@ public:
   bool isMaskRequired(const Instruction* I) {
     return (MaskedOp.count(I) != 0);
   }
+  unsigned getNumStores() const {
+    return NumStores;
+  }
+  unsigned getNumLoads() const {
+    return NumLoads;
+  }
+  unsigned getNumPredStores() const {
+    return NumPredStores;
+  }
 private:
   /// Check if a single basic block loop is vectorizable.
   /// At this point we know that this is a loop with a constant trip count
@@ -907,6 +912,10 @@ private:
   void emitAnalysis(VectorizationReport &Message) {
     VectorizationReport::emitAnalysis(Message, TheFunction, TheLoop);
   }
+
+  unsigned NumLoads;
+  unsigned NumStores;
+  unsigned NumPredStores;
 
   /// The loop that we evaluate.
   Loop *TheLoop;
@@ -5449,7 +5458,7 @@ LoopVectorizationCostModel::selectVectorizationFactor(bool OptForSize) {
     return Factor;
   }
 
-  if (!EnableCondStoresVectorization && Legal->NumPredStores) {
+  if (!EnableCondStoresVectorization && Legal->getNumPredStores()) {
     emitAnalysis(VectorizationReport() <<
                  "store that is conditionally executed prevents vectorization");
     DEBUG(dbgs() << "LV: No vectorization. There are conditional stores.\n");
@@ -5719,8 +5728,10 @@ LoopVectorizationCostModel::selectUnrollFactor(bool OptForSize,
 
     // Unroll until store/load ports (estimated by max unroll factor) are
     // saturated.
-    unsigned StoresUF = UF / (Legal->NumStores ? Legal->NumStores : 1);
-    unsigned LoadsUF = UF /  (Legal->NumLoads ? Legal->NumLoads : 1);
+    unsigned NumStores = Legal->getNumStores();
+    unsigned NumLoads = Legal->getNumLoads();
+    unsigned StoresUF = UF / (NumStores ? NumStores : 1);
+    unsigned LoadsUF = UF /  (NumLoads ? NumLoads : 1);
 
     // If we have a scalar reduction (vector reductions are already dealt with
     // by this point), we can increase the critical path length if the loop
