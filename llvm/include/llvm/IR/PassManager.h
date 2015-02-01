@@ -783,6 +783,9 @@ public:
 
     PreservedAnalyses PA = PreservedAnalyses::all();
     for (Function &F : M) {
+      if (F.isDeclaration())
+        continue;
+
       PreservedAnalyses PassPA = Pass.run(F, FAM);
 
       // We know that the function pass couldn't have invalidated any other
