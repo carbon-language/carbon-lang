@@ -85,6 +85,10 @@ bool DefinedAtom::compareByPosition(const DefinedAtom *lhs,
                                     const DefinedAtom *rhs) {
   const File *lhsFile = &lhs->file();
   const File *rhsFile = &rhs->file();
+
+  if (lhs == rhs)
+    return false; 
+
   if (lhsFile->ordinal() != rhsFile->ordinal())
     return lhsFile->ordinal() < rhsFile->ordinal();
   assert(lhs->ordinal() != rhs->ordinal());
