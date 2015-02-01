@@ -552,23 +552,20 @@ protected:
 
   template <typename EntryType, typename SETraits = SpecEntryTraits<EntryType>,
             typename DeclType = typename SETraits::DeclType>
-  class SpecIterator
-      : public llvm::iterator_adaptor_base<
+  struct SpecIterator
+      : llvm::iterator_adaptor_base<
             SpecIterator<EntryType, SETraits, DeclType>,
             typename llvm::FoldingSetVector<EntryType>::iterator,
             typename std::iterator_traits<typename llvm::FoldingSetVector<
                 EntryType>::iterator>::iterator_category,
             DeclType *, ptrdiff_t, DeclType *, DeclType *> {
-    typedef typename SpecIterator::iterator_adaptor_base BaseT;
-
-  public:
     SpecIterator() {}
     explicit SpecIterator(
         typename llvm::FoldingSetVector<EntryType>::iterator SetIter)
-        : BaseT(std::move(SetIter)) {}
+        : SpecIterator::iterator_adaptor_base(std::move(SetIter)) {}
 
     DeclType *operator*() const {
-      return SETraits::getMostRecentDecl(&*BaseT::I);
+      return SETraits::getMostRecentDecl(&*this->I);
     }
     DeclType *operator->() const { return **this; }
   };

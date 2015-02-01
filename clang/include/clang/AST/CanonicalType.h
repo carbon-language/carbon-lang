@@ -382,20 +382,18 @@ namespace clang {
 /// \brief Iterator adaptor that turns an iterator over canonical QualTypes
 /// into an iterator over CanQualTypes.
 template <typename InputIterator>
-class CanTypeIterator
-    : public llvm::iterator_adaptor_base<
+struct CanTypeIterator
+    : llvm::iterator_adaptor_base<
           CanTypeIterator<InputIterator>, InputIterator,
           typename std::iterator_traits<InputIterator>::iterator_category,
           CanQualType,
           typename std::iterator_traits<InputIterator>::difference_type,
           CanProxy<Type>, CanQualType> {
-  typedef typename CanTypeIterator::iterator_adaptor_base BaseT;
-
-public:
   CanTypeIterator() {}
-  explicit CanTypeIterator(InputIterator Iter) : BaseT(std::move(Iter)) {}
+  explicit CanTypeIterator(InputIterator Iter)
+      : CanTypeIterator::iterator_adaptor_base(std::move(Iter)) {}
 
-  CanQualType operator*() const { return CanQualType::CreateUnsafe(*BaseT::I); }
+  CanQualType operator*() const { return CanQualType::CreateUnsafe(*this->I); }
   CanProxy<Type> operator->() const;
 };
 
