@@ -18,6 +18,7 @@
 
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
+#include "llvm/ADT/iterator.h"
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/DataTypes.h"
 
@@ -532,46 +533,6 @@ public:
 };
 
 //===----------------------------------------------------------------------===//
-/// FoldingSetVectorIterator - This implements an iterator for
-/// FoldingSetVector. It is only necessary because FoldingSetIterator provides
-/// a value_type of T, while the vector in FoldingSetVector exposes
-/// a value_type of T*. Fortunately, FoldingSetIterator doesn't expose very
-/// much besides operator* and operator->, so we just wrap the inner vector
-/// iterator and perform the extra dereference.
-template <class T, class VectorIteratorT>
-class FoldingSetVectorIterator {
-  // Provide a typedef to workaround the lack of correct injected class name
-  // support in older GCCs.
-  typedef FoldingSetVectorIterator<T, VectorIteratorT> SelfT;
-
-  VectorIteratorT Iterator;
-
-public:
-  FoldingSetVectorIterator(VectorIteratorT I) : Iterator(I) {}
-
-  bool operator==(const SelfT &RHS) const {
-    return Iterator == RHS.Iterator;
-  }
-  bool operator!=(const SelfT &RHS) const {
-    return Iterator != RHS.Iterator;
-  }
-
-  T &operator*() const { return **Iterator; }
-
-  T *operator->() const { return *Iterator; }
-
-  inline SelfT &operator++() {
-    ++Iterator;
-    return *this;
-  }
-  SelfT operator++(int) {
-    SelfT tmp = *this;
-    ++*this;
-    return tmp;
-  }
-};
-
-//===----------------------------------------------------------------------===//
 /// FoldingSetVector - This template class combines a FoldingSet and a vector
 /// to provide the interface of FoldingSet but with deterministic iteration
 /// order based on the insertion order. T must be a subclass of FoldingSetNode
@@ -586,12 +547,11 @@ public:
       : Set(Log2InitSize) {
   }
 
-  typedef FoldingSetVectorIterator<T, typename VectorT::iterator> iterator;
+  typedef pointee_iterator<typename VectorT::iterator> iterator;
   iterator begin() { return Vector.begin(); }
   iterator end()   { return Vector.end(); }
 
-  typedef FoldingSetVectorIterator<const T, typename VectorT::const_iterator>
-    const_iterator;
+  typedef pointee_iterator<typename VectorT::const_iterator> const_iterator;
   const_iterator begin() const { return Vector.begin(); }
   const_iterator end()   const { return Vector.end(); }
 
