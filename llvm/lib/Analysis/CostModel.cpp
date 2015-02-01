@@ -84,7 +84,7 @@ bool
 CostModelAnalysis::runOnFunction(Function &F) {
  this->F = &F;
  auto *TTIWP = getAnalysisIfAvailable<TargetTransformInfoWrapperPass>();
- TTI = TTIWP ? &TTIWP->getTTI() : nullptr;
+ TTI = TTIWP ? &TTIWP->getTTI(F) : nullptr;
 
  return false;
 }

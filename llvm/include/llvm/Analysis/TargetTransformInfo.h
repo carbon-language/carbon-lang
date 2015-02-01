@@ -806,8 +806,7 @@ public:
 
   explicit TargetTransformInfoWrapperPass(TargetTransformInfo TTI);
 
-  TargetTransformInfo &getTTI() { return TTI; }
-  const TargetTransformInfo &getTTI() const { return TTI; }
+  TargetTransformInfo &getTTI(Function &F) { return TTI; }
 };
 
 /// \brief Create an analysis pass wrapper around a TTI object.

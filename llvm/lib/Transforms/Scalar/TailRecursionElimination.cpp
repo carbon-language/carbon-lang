@@ -386,7 +386,7 @@ bool TailCallElim::runTRE(Function &F) {
   // right, so don't even try to convert it...
   if (F.getFunctionType()->isVarArg()) return false;
 
-  TTI = &getAnalysis<TargetTransformInfoWrapperPass>().getTTI();
+  TTI = &getAnalysis<TargetTransformInfoWrapperPass>().getTTI(F);
   BasicBlock *OldEntry = nullptr;
   bool TailCallsAreMarkedTail = false;
   SmallVector<PHINode*, 8> ArgumentPHIs;

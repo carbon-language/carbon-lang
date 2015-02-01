@@ -138,7 +138,7 @@ private:
   /// \brief Initialize the pass.
   void setup(Function &Fn) {
     DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
-    TTI = &getAnalysis<TargetTransformInfoWrapperPass>().getTTI();
+    TTI = &getAnalysis<TargetTransformInfoWrapperPass>().getTTI(Fn);
     Entry = &Fn.getEntryBlock();
   }
 

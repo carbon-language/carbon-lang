@@ -346,14 +346,15 @@ bool LoopUnroll::runOnLoop(Loop *L, LPPassManager &LPM) {
   if (skipOptnoneFunction(L))
     return false;
 
+  Function &F = *L->getHeader()->getParent();
+
   LoopInfo *LI = &getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
   ScalarEvolution *SE = &getAnalysis<ScalarEvolution>();
   const TargetTransformInfo &TTI =
-      getAnalysis<TargetTransformInfoWrapperPass>().getTTI();
+      getAnalysis<TargetTransformInfoWrapperPass>().getTTI(F);
   const FunctionTargetTransformInfo &FTTI =
       getAnalysis<FunctionTargetTransformInfo>();
-  auto &AC = getAnalysis<AssumptionCacheTracker>().getAssumptionCache(
-      *L->getHeader()->getParent());
+  auto &AC = getAnalysis<AssumptionCacheTracker>().getAssumptionCache(F);
 
   BasicBlock *Header = L->getHeader();
   DEBUG(dbgs() << "Loop Unroll: F[" << Header->getParent()->getName()

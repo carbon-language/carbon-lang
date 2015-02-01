@@ -734,7 +734,7 @@ public:
     DataLayoutPass *DLP = getAnalysisIfAvailable<DataLayoutPass>();
     auto *DL = DLP ? &DLP->getDataLayout() : nullptr;
     auto &TLI = getAnalysis<TargetLibraryInfoWrapperPass>().getTLI();
-    auto &TTI = getAnalysis<TargetTransformInfoWrapperPass>().getTTI();
+    auto &TTI = getAnalysis<TargetTransformInfoWrapperPass>().getTTI(F);
     auto &DT = getAnalysis<DominatorTreeWrapperPass>().getDomTree();
     auto &AC = getAnalysis<AssumptionCacheTracker>().getAssumptionCache(F);
 

@@ -204,8 +204,9 @@ namespace {
     }
 
     const TargetTransformInfo *getTargetTransformInfo() {
-      return TTI ? TTI : (TTI = &getAnalysis<TargetTransformInfoWrapperPass>()
-                                     .getTTI());
+      return TTI ? TTI
+                 : (TTI = &getAnalysis<TargetTransformInfoWrapperPass>().getTTI(
+                        *CurLoop->getHeader()->getParent()));
     }
 
     Loop *getLoop() const { return CurLoop; }

@@ -206,7 +206,7 @@ struct CFGSimplifyPass : public FunctionPass {
     AssumptionCache *AC =
         &getAnalysis<AssumptionCacheTracker>().getAssumptionCache(F);
     const TargetTransformInfo &TTI =
-        getAnalysis<TargetTransformInfoWrapperPass>().getTTI();
+        getAnalysis<TargetTransformInfoWrapperPass>().getTTI(F);
     DataLayoutPass *DLP = getAnalysisIfAvailable<DataLayoutPass>();
     const DataLayout *DL = DLP ? &DLP->getDataLayout() : nullptr;
     return simplifyFunctionCFG(F, TTI, DL, AC, BonusInstThreshold);

@@ -45,6 +45,6 @@ void FunctionTargetTransformInfo::releaseMemory() {}
 
 bool FunctionTargetTransformInfo::runOnFunction(Function &F) {
   Fn = &F;
-  TTI = &getAnalysis<TargetTransformInfoWrapperPass>().getTTI();
+  TTI = &getAnalysis<TargetTransformInfoWrapperPass>().getTTI(F);
   return false;
 }

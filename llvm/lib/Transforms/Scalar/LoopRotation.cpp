@@ -101,10 +101,11 @@ bool LoopRotate::runOnLoop(Loop *L, LPPassManager &LPM) {
   // Save the loop metadata.
   MDNode *LoopMD = L->getLoopID();
 
+  Function &F = *L->getHeader()->getParent();
+
   LI = &getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
-  TTI = &getAnalysis<TargetTransformInfoWrapperPass>().getTTI();
-  AC = &getAnalysis<AssumptionCacheTracker>().getAssumptionCache(
-      *L->getHeader()->getParent());
+  TTI = &getAnalysis<TargetTransformInfoWrapperPass>().getTTI(F);
+  AC = &getAnalysis<AssumptionCacheTracker>().getAssumptionCache(F);
   auto *DTWP = getAnalysisIfAvailable<DominatorTreeWrapperPass>();
   DT = DTWP ? &DTWP->getDomTree() : nullptr;
 

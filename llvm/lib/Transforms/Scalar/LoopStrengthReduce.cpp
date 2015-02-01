@@ -4866,8 +4866,9 @@ LSRInstance::LSRInstance(Loop *L, Pass *P)
     : IU(P->getAnalysis<IVUsers>()), SE(P->getAnalysis<ScalarEvolution>()),
       DT(P->getAnalysis<DominatorTreeWrapperPass>().getDomTree()),
       LI(P->getAnalysis<LoopInfoWrapperPass>().getLoopInfo()),
-      TTI(P->getAnalysis<TargetTransformInfoWrapperPass>().getTTI()), L(L),
-      Changed(false), IVIncInsertPos(nullptr) {
+      TTI(P->getAnalysis<TargetTransformInfoWrapperPass>().getTTI(
+          *L->getHeader()->getParent())),
+      L(L), Changed(false), IVIncInsertPos(nullptr) {
   // If LoopSimplify form is not available, stay out of trouble.
   if (!L->isLoopSimplifyForm())
     return;
@@ -5100,7 +5101,8 @@ bool LoopStrengthReduce::runOnLoop(Loop *L, LPPassManager & /*LPM*/) {
 #endif
     unsigned numFolded = Rewriter.replaceCongruentIVs(
         L, &getAnalysis<DominatorTreeWrapperPass>().getDomTree(), DeadInsts,
-        &getAnalysis<TargetTransformInfoWrapperPass>().getTTI());
+        &getAnalysis<TargetTransformInfoWrapperPass>().getTTI(
+            *L->getHeader()->getParent()));
     if (numFolded) {
       Changed = true;
       DeleteTriviallyDeadInstructions(DeadInsts);

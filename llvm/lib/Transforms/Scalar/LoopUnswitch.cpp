@@ -433,7 +433,8 @@ bool LoopUnswitch::processCurrentLoop() {
   // Probably we reach the quota of branches for this loop. If so
   // stop unswitching.
   if (!BranchesInfo.countLoop(
-          currentLoop, getAnalysis<TargetTransformInfoWrapperPass>().getTTI(),
+          currentLoop, getAnalysis<TargetTransformInfoWrapperPass>().getTTI(
+                           *currentLoop->getHeader()->getParent()),
           AC))
     return false;
 

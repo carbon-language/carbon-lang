@@ -63,7 +63,7 @@ bool PartiallyInlineLibCalls::runOnFunction(Function &F) {
   TargetLibraryInfo *TLI =
       &getAnalysis<TargetLibraryInfoWrapperPass>().getTLI();
   const TargetTransformInfo *TTI =
-      &getAnalysis<TargetTransformInfoWrapperPass>().getTTI();
+      &getAnalysis<TargetTransformInfoWrapperPass>().getTTI(F);
   for (Function::iterator BB = F.begin(), BE = F.end(); BB != BE;) {
     CurrBB = BB++;
 

@@ -213,7 +213,7 @@ bool CodeGenPrepare::runOnFunction(Function &F) {
   if (TM)
     TLI = TM->getSubtargetImpl(F)->getTargetLowering();
   TLInfo = &getAnalysis<TargetLibraryInfoWrapperPass>().getTLI();
-  TTI = &getAnalysis<TargetTransformInfoWrapperPass>().getTTI();
+  TTI = &getAnalysis<TargetTransformInfoWrapperPass>().getTTI(F);
   DominatorTreeWrapperPass *DTWP =
       getAnalysisIfAvailable<DominatorTreeWrapperPass>();
   DT = DTWP ? &DTWP->getDomTree() : nullptr;

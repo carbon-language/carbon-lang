@@ -1330,7 +1330,7 @@ struct LoopVectorize : public FunctionPass {
     DataLayoutPass *DLP = getAnalysisIfAvailable<DataLayoutPass>();
     DL = DLP ? &DLP->getDataLayout() : nullptr;
     LI = &getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
-    TTI = &getAnalysis<TargetTransformInfoWrapperPass>().getTTI();
+    TTI = &getAnalysis<TargetTransformInfoWrapperPass>().getTTI(F);
     DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
     BFI = &getAnalysis<BlockFrequencyInfo>();
     auto *TLIP = getAnalysisIfAvailable<TargetLibraryInfoWrapperPass>();

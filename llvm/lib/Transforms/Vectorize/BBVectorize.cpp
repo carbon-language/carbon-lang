@@ -201,7 +201,7 @@ namespace {
       initializeBBVectorizePass(*PassRegistry::getPassRegistry());
     }
 
-    BBVectorize(Pass *P, const VectorizeConfig &C)
+    BBVectorize(Pass *P, Function &F, const VectorizeConfig &C)
       : BasicBlockPass(ID), Config(C) {
       AA = &P->getAnalysis<AliasAnalysis>();
       DT = &P->getAnalysis<DominatorTreeWrapperPass>().getDomTree();
@@ -210,7 +210,7 @@ namespace {
       DL = DLP ? &DLP->getDataLayout() : nullptr;
       TTI = IgnoreTargetInfo
                 ? nullptr
-                : &P->getAnalysis<TargetTransformInfoWrapperPass>().getTTI();
+                : &P->getAnalysis<TargetTransformInfoWrapperPass>().getTTI(F);
     }
 
     typedef std::pair<Value *, Value *> ValuePair;
@@ -446,7 +446,8 @@ namespace {
       DL = DLP ? &DLP->getDataLayout() : nullptr;
       TTI = IgnoreTargetInfo
                 ? nullptr
-                : &getAnalysis<TargetTransformInfoWrapperPass>().getTTI();
+                : &getAnalysis<TargetTransformInfoWrapperPass>().getTTI(
+                      *BB.getParent());
 
       return vectorizeBB(BB);
     }
@@ -3207,7 +3208,7 @@ BasicBlockPass *llvm::createBBVectorizePass(const VectorizeConfig &C) {
 
 bool
 llvm::vectorizeBasicBlock(Pass *P, BasicBlock &BB, const VectorizeConfig &C) {
-  BBVectorize BBVectorizer(P, C);
+  BBVectorize BBVectorizer(P, *BB.getParent(), C);
   return BBVectorizer.vectorizeBB(BB);
 }
 

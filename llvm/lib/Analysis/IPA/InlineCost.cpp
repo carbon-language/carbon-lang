@@ -1251,7 +1251,7 @@ void InlineCostAnalysis::getAnalysisUsage(AnalysisUsage &AU) const {
 }
 
 bool InlineCostAnalysis::runOnSCC(CallGraphSCC &SCC) {
-  TTI = &getAnalysis<TargetTransformInfoWrapperPass>().getTTI();
+  TTIWP = &getAnalysis<TargetTransformInfoWrapperPass>();
   ACT = &getAnalysis<AssumptionCacheTracker>();
   return false;
 }
@@ -1309,7 +1309,7 @@ InlineCost InlineCostAnalysis::getInlineCost(CallSite CS, Function *Callee,
   DEBUG(llvm::dbgs() << "      Analyzing call of " << Callee->getName()
         << "...\n");
 
-  CallAnalyzer CA(Callee->getDataLayout(), *TTI,
+  CallAnalyzer CA(Callee->getDataLayout(), TTIWP->getTTI(*Callee),
                   ACT->getAssumptionCache(*Callee), *Callee, Threshold);
   bool ShouldInline = CA.analyzeCall(CS);
 
