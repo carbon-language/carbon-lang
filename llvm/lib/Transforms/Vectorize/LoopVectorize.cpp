@@ -575,43 +575,6 @@ static void propagateMetadata(SmallVectorImpl<Value *> &To, const Instruction *F
 }
 
 namespace {
-/// This struct holds information about the memory runtime legality
-/// check that a group of pointers do not overlap.
-struct RuntimePointerCheck {
-  RuntimePointerCheck() : Need(false) {}
-
-  /// Reset the state of the pointer runtime information.
-  void reset() {
-    Need = false;
-    Pointers.clear();
-    Starts.clear();
-    Ends.clear();
-    IsWritePtr.clear();
-    DependencySetId.clear();
-    AliasSetId.clear();
-  }
-
-  /// Insert a pointer and calculate the start and end SCEVs.
-  void insert(ScalarEvolution *SE, Loop *Lp, Value *Ptr, bool WritePtr,
-              unsigned DepSetId, unsigned ASId, ValueToValueMap &Strides);
-
-  /// This flag indicates if we need to add the runtime check.
-  bool Need;
-  /// Holds the pointers that we need to check.
-  SmallVector<TrackingVH<Value>, 2> Pointers;
-  /// Holds the pointer value at the beginning of the loop.
-  SmallVector<const SCEV*, 2> Starts;
-  /// Holds the pointer value at the end of the loop.
-  SmallVector<const SCEV*, 2> Ends;
-  /// Holds the information if this pointer is used for writing to memory.
-  SmallVector<bool, 2> IsWritePtr;
-  /// Holds the id of the set of pointers that could be dependent because of a
-  /// shared underlying object.
-  SmallVector<unsigned, 2> DependencySetId;
-  /// Holds the id of the disjoint alias set to which this pointer belongs.
-  SmallVector<unsigned, 2> AliasSetId;
-};
-
 /// \brief Drive the analysis of memory accesses in the loop
 ///
 /// This class is responsible for analyzing the memory accesses of a loop.  It
@@ -650,6 +613,43 @@ public:
         VectorizationFactor(VectorizationFactor),
         VectorizationInterleave(VectorizationInterleave),
         RuntimeMemoryCheckThreshold(RuntimeMemoryCheckThreshold) {}
+  };
+
+  /// This struct holds information about the memory runtime legality check that
+  /// a group of pointers do not overlap.
+  struct RuntimePointerCheck {
+    RuntimePointerCheck() : Need(false) {}
+
+    /// Reset the state of the pointer runtime information.
+    void reset() {
+      Need = false;
+      Pointers.clear();
+      Starts.clear();
+      Ends.clear();
+      IsWritePtr.clear();
+      DependencySetId.clear();
+      AliasSetId.clear();
+    }
+
+    /// Insert a pointer and calculate the start and end SCEVs.
+    void insert(ScalarEvolution *SE, Loop *Lp, Value *Ptr, bool WritePtr,
+                unsigned DepSetId, unsigned ASId, ValueToValueMap &Strides);
+
+    /// This flag indicates if we need to add the runtime check.
+    bool Need;
+    /// Holds the pointers that we need to check.
+    SmallVector<TrackingVH<Value>, 2> Pointers;
+    /// Holds the pointer value at the beginning of the loop.
+    SmallVector<const SCEV*, 2> Starts;
+    /// Holds the pointer value at the end of the loop.
+    SmallVector<const SCEV*, 2> Ends;
+    /// Holds the information if this pointer is used for writing to memory.
+    SmallVector<bool, 2> IsWritePtr;
+    /// Holds the id of the set of pointers that could be dependent because of a
+    /// shared underlying object.
+    SmallVector<unsigned, 2> DependencySetId;
+    /// Holds the id of the disjoint alias set to which this pointer belongs.
+    SmallVector<unsigned, 2> AliasSetId;
   };
 
   LoopAccessAnalysis(Function *F, Loop *L, ScalarEvolution *SE,
@@ -911,7 +911,7 @@ public:
   bool isUniformAfterVectorization(Instruction* I) { return Uniforms.count(I); }
 
   /// Returns the information that we collected about runtime memory check.
-  RuntimePointerCheck *getRuntimePointerCheck() {
+  LoopAccessAnalysis::RuntimePointerCheck *getRuntimePointerCheck() {
     return LAA.getRuntimePointerCheck();
   }
 
@@ -1712,9 +1712,12 @@ static const SCEV *replaceSymbolicStrideSCEV(ScalarEvolution *SE,
   return SE->getSCEV(Ptr);
 }
 
-void RuntimePointerCheck::insert(ScalarEvolution *SE, Loop *Lp, Value *Ptr,
-                                 bool WritePtr, unsigned DepSetId,
-                                 unsigned ASId, ValueToValueMap &Strides) {
+void LoopAccessAnalysis::RuntimePointerCheck::insert(ScalarEvolution *SE,
+                                                     Loop *Lp, Value *Ptr,
+                                                     bool WritePtr,
+                                                     unsigned DepSetId,
+                                                     unsigned ASId,
+                                                     ValueToValueMap &Strides) {
   // Get the stride replaced scev.
   const SCEV *Sc = replaceSymbolicStrideSCEV(SE, Strides, Ptr);
   const SCEVAddRecExpr *AR = dyn_cast<SCEVAddRecExpr>(Sc);
@@ -2240,7 +2243,8 @@ InnerLoopVectorizer::addStrideCheck(Instruction *Loc) {
 
 std::pair<Instruction *, Instruction *>
 InnerLoopVectorizer::addRuntimeCheck(Instruction *Loc) {
-  RuntimePointerCheck *PtrRtCheck = Legal->getRuntimePointerCheck();
+  LoopAccessAnalysis::RuntimePointerCheck *PtrRtCheck =
+    Legal->getRuntimePointerCheck();
 
   Instruction *tnullptr = nullptr;
   if (!PtrRtCheck->Need)
@@ -4185,7 +4189,8 @@ public:
 
   /// \brief Check whether we can check the pointers at runtime for
   /// non-intersection.
-  bool canCheckPtrAtRT(RuntimePointerCheck &RtCheck, unsigned &NumComparisons,
+  bool canCheckPtrAtRT(LoopAccessAnalysis::RuntimePointerCheck &RtCheck,
+                       unsigned &NumComparisons,
                        ScalarEvolution *SE, Loop *TheLoop,
                        ValueToValueMap &Strides,
                        bool ShouldCheckStride = false);
@@ -4252,7 +4257,7 @@ static int isStridedPtr(ScalarEvolution *SE, const DataLayout *DL, Value *Ptr,
                         const Loop *Lp, ValueToValueMap &StridesMap);
 
 bool AccessAnalysis::canCheckPtrAtRT(
-    RuntimePointerCheck &RtCheck,
+    LoopAccessAnalysis::RuntimePointerCheck &RtCheck,
     unsigned &NumComparisons, ScalarEvolution *SE, Loop *TheLoop,
     ValueToValueMap &StridesMap, bool ShouldCheckStride) {
   // Find pointers with computable bounds. We are going to use this information
