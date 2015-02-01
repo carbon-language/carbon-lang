@@ -90,19 +90,19 @@ char NoOpFunctionAnalysis::PassID;
 
 } // End anonymous namespace.
 
-void llvm::registerModuleAnalyses(ModuleAnalysisManager &MAM) {
+void Passes::registerModuleAnalyses(ModuleAnalysisManager &MAM) {
 #define MODULE_ANALYSIS(NAME, CREATE_PASS) \
   MAM.registerPass(CREATE_PASS);
 #include "PassRegistry.def"
 }
 
-void llvm::registerCGSCCAnalyses(CGSCCAnalysisManager &CGAM) {
+void Passes::registerCGSCCAnalyses(CGSCCAnalysisManager &CGAM) {
 #define CGSCC_ANALYSIS(NAME, CREATE_PASS) \
   CGAM.registerPass(CREATE_PASS);
 #include "PassRegistry.def"
 }
 
-void llvm::registerFunctionAnalyses(FunctionAnalysisManager &FAM) {
+void Passes::registerFunctionAnalyses(FunctionAnalysisManager &FAM) {
 #define FUNCTION_ANALYSIS(NAME, CREATE_PASS) \
   FAM.registerPass(CREATE_PASS);
 #include "PassRegistry.def"
@@ -140,7 +140,7 @@ static bool isFunctionPassName(StringRef Name) {
   return false;
 }
 
-static bool parseModulePassName(ModulePassManager &MPM, StringRef Name) {
+bool Passes::parseModulePassName(ModulePassManager &MPM, StringRef Name) {
 #define MODULE_PASS(NAME, CREATE_PASS)                                         \
   if (Name == NAME) {                                                          \
     MPM.addPass(CREATE_PASS);                                                  \
@@ -160,7 +160,7 @@ static bool parseModulePassName(ModulePassManager &MPM, StringRef Name) {
   return false;
 }
 
-static bool parseCGSCCPassName(CGSCCPassManager &CGPM, StringRef Name) {
+bool Passes::parseCGSCCPassName(CGSCCPassManager &CGPM, StringRef Name) {
 #define CGSCC_PASS(NAME, CREATE_PASS)                                          \
   if (Name == NAME) {                                                          \
     CGPM.addPass(CREATE_PASS);                                                 \
@@ -180,7 +180,7 @@ static bool parseCGSCCPassName(CGSCCPassManager &CGPM, StringRef Name) {
   return false;
 }
 
-static bool parseFunctionPassName(FunctionPassManager &FPM, StringRef Name) {
+bool Passes::parseFunctionPassName(FunctionPassManager &FPM, StringRef Name) {
 #define FUNCTION_PASS(NAME, CREATE_PASS)                                       \
   if (Name == NAME) {                                                          \
     FPM.addPass(CREATE_PASS);                                                  \
@@ -200,9 +200,9 @@ static bool parseFunctionPassName(FunctionPassManager &FPM, StringRef Name) {
   return false;
 }
 
-static bool parseFunctionPassPipeline(FunctionPassManager &FPM,
-                                      StringRef &PipelineText,
-                                      bool VerifyEachPass, bool DebugLogging) {
+bool Passes::parseFunctionPassPipeline(FunctionPassManager &FPM,
+                                       StringRef &PipelineText,
+                                       bool VerifyEachPass, bool DebugLogging) {
   for (;;) {
     // Parse nested pass managers by recursing.
     if (PipelineText.startswith("function(")) {
@@ -238,9 +238,9 @@ static bool parseFunctionPassPipeline(FunctionPassManager &FPM,
   }
 }
 
-static bool parseCGSCCPassPipeline(CGSCCPassManager &CGPM,
-                                   StringRef &PipelineText, bool VerifyEachPass,
-                                   bool DebugLogging) {
+bool Passes::parseCGSCCPassPipeline(CGSCCPassManager &CGPM,
+                                    StringRef &PipelineText,
+                                    bool VerifyEachPass, bool DebugLogging) {
   for (;;) {
     // Parse nested pass managers by recursing.
     if (PipelineText.startswith("cgscc(")) {
@@ -289,9 +289,9 @@ static bool parseCGSCCPassPipeline(CGSCCPassManager &CGPM,
   }
 }
 
-static bool parseModulePassPipeline(ModulePassManager &MPM,
-                                    StringRef &PipelineText,
-                                    bool VerifyEachPass, bool DebugLogging) {
+bool Passes::parseModulePassPipeline(ModulePassManager &MPM,
+                                     StringRef &PipelineText,
+                                     bool VerifyEachPass, bool DebugLogging) {
   for (;;) {
     // Parse nested pass managers by recursing.
     if (PipelineText.startswith("module(")) {
@@ -359,8 +359,8 @@ static bool parseModulePassPipeline(ModulePassManager &MPM,
 // Primary pass pipeline description parsing routine.
 // FIXME: Should this routine accept a TargetMachine or require the caller to
 // pre-populate the analysis managers with target-specific stuff?
-bool llvm::parsePassPipeline(ModulePassManager &MPM, StringRef PipelineText,
-                             bool VerifyEachPass, bool DebugLogging) {
+bool Passes::parsePassPipeline(ModulePassManager &MPM, StringRef PipelineText,
+                               bool VerifyEachPass, bool DebugLogging) {
   // By default, try to parse the pipeline as-if it were within an implicit
   // 'module(...)' pass pipeline. If this will parse at all, it needs to
   // consume the entire string.

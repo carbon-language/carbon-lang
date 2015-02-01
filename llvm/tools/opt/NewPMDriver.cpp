@@ -38,14 +38,16 @@ static cl::opt<bool>
 bool llvm::runPassPipeline(StringRef Arg0, LLVMContext &Context, Module &M,
                            tool_output_file *Out, StringRef PassPipeline,
                            OutputKind OK, VerifierKind VK) {
+  Passes P;
+
   FunctionAnalysisManager FAM(DebugPM);
   CGSCCAnalysisManager CGAM(DebugPM);
   ModuleAnalysisManager MAM(DebugPM);
 
   // Register all the basic analyses with the managers.
-  registerModuleAnalyses(MAM);
-  registerCGSCCAnalyses(CGAM);
-  registerFunctionAnalyses(FAM);
+  P.registerModuleAnalyses(MAM);
+  P.registerCGSCCAnalyses(CGAM);
+  P.registerFunctionAnalyses(FAM);
 
   // Cross register the analysis managers through their proxies.
   MAM.registerPass(FunctionAnalysisManagerModuleProxy(FAM));
@@ -59,7 +61,8 @@ bool llvm::runPassPipeline(StringRef Arg0, LLVMContext &Context, Module &M,
   if (VK > VK_NoVerifier)
     MPM.addPass(VerifierPass());
 
-  if (!parsePassPipeline(MPM, PassPipeline, VK == VK_VerifyEachPass, DebugPM)) {
+  if (!P.parsePassPipeline(MPM, PassPipeline, VK == VK_VerifyEachPass,
+                           DebugPM)) {
     errs() << Arg0 << ": unable to parse pass pipeline description.\n";
     return false;
   }
