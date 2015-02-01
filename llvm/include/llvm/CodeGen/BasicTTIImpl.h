@@ -77,8 +77,8 @@ private:
 protected:
   const TargetMachine *TM;
 
-  explicit BasicTTIImplBase(const TargetMachine *TM = nullptr)
-      : BaseT(TM ? TM->getDataLayout() : nullptr), TM(TM) {}
+  explicit BasicTTIImplBase(const TargetMachine *TM)
+      : BaseT(TM->getDataLayout()), TM(TM) {}
 
 public:
   // Provide value semantics. MSVC requires that we spell all of these out.
