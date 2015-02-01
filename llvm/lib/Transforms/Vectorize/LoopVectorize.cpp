@@ -611,6 +611,66 @@ struct RuntimePointerCheck {
   /// Holds the id of the disjoint alias set to which this pointer belongs.
   SmallVector<unsigned, 2> AliasSetId;
 };
+
+/// \brief Drive the analysis of memory accesses in the loop
+///
+/// This class is responsible for analyzing the memory accesses of a loop.  It
+/// collects the accesses and then its main helper the AccessAnalysis class
+/// finds and categorizes the dependences in buildDependenceSets.
+///
+/// For memory dependences that can be analyzed at compile time, it determines
+/// whether the dependence is part of cycle inhibiting vectorization.  This work
+/// is delegated to the MemoryDepChecker class.
+///
+/// For memory dependences that cannot be determined at compile time, it
+/// generates run-time checks to prove independence.  This is done by
+/// AccessAnalysis::canCheckPtrAtRT and the checks are maintained by the
+/// RuntimePointerCheck class.
+class LoopAccessAnalysis {
+public:
+  LoopAccessAnalysis(Function *F, Loop *L, ScalarEvolution *SE,
+                     const DataLayout *DL, const TargetLibraryInfo *TLI,
+                     AliasAnalysis *AA, DominatorTree *DT) :
+      TheFunction(F), TheLoop(L), SE(SE), DL(DL), TLI(TLI), AA(AA), DT(DT),
+      NumLoads(0), NumStores(0), MaxSafeDepDistBytes(-1U) {
+  }
+
+  /// Return true we can analyze the memory accesses in the loop and there are
+  /// no memory dependence cycles.  Replaces symbolic strides using Strides.
+  bool canVectorizeMemory(ValueToValueMap &Strides);
+
+  RuntimePointerCheck *getRuntimePointerCheck() { return &PtrRtCheck; }
+
+  /// Return true if the block BB needs to be predicated in order for the loop
+  /// to be vectorized.
+  bool blockNeedsPredication(BasicBlock *BB);
+
+  /// Returns true if the value V is uniform within the loop.
+  bool isUniform(Value *V);
+
+  unsigned getMaxSafeDepDistBytes() { return MaxSafeDepDistBytes; }
+
+private:
+  void emitAnalysis(Report &Message) {
+    emitLoopAnalysis(Message, TheFunction, TheLoop);
+  }
+
+  /// We need to check that all of the pointers in this list are disjoint
+  /// at runtime.
+  RuntimePointerCheck PtrRtCheck;
+  Function *TheFunction;
+  Loop *TheLoop;
+  ScalarEvolution *SE;
+  const DataLayout *DL;
+  const TargetLibraryInfo *TLI;
+  AliasAnalysis *AA;
+  DominatorTree *DT;
+
+  unsigned NumLoads;
+  unsigned NumStores;
+
+  unsigned MaxSafeDepDistBytes;
+};
 } // end anonymous namespace
 
 /// LoopVectorizationLegality checks if it is legal to vectorize a loop, and
@@ -632,9 +692,9 @@ public:
                             DominatorTree *DT, TargetLibraryInfo *TLI,
                             AliasAnalysis *AA, Function *F,
                             const TargetTransformInfo *TTI)
-      : NumLoads(0), NumStores(0), NumPredStores(0), TheLoop(L), SE(SE), DL(DL),
-        DT(DT), TLI(TLI), AA(AA), TheFunction(F), TTI(TTI), Induction(nullptr),
-        WidestIndTy(nullptr), HasFunNoNaNAttr(false), MaxSafeDepDistBytes(-1U) {
+      : NumPredStores(0), TheLoop(L), SE(SE), DL(DL), TLI(TLI), TheFunction(F),
+        TTI(TTI), Induction(nullptr), WidestIndTy(nullptr),
+        LAA(F, L, SE, DL, TLI, AA, DT), HasFunNoNaNAttr(false) {
   }
 
   /// This enum represents the kinds of reductions that we support.
@@ -820,13 +880,15 @@ public:
   bool isUniformAfterVectorization(Instruction* I) { return Uniforms.count(I); }
 
   /// Returns the information that we collected about runtime memory check.
-  RuntimePointerCheck *getRuntimePointerCheck() { return &PtrRtCheck; }
+  RuntimePointerCheck *getRuntimePointerCheck() {
+    return LAA.getRuntimePointerCheck();
+  }
 
   /// This function returns the identity element (or neutral element) for
   /// the operation K.
   static Constant *getReductionIdentity(ReductionKind K, Type *Tp);
 
-  unsigned getMaxSafeDepDistBytes() { return MaxSafeDepDistBytes; }
+  unsigned getMaxSafeDepDistBytes() { return LAA.getMaxSafeDepDistBytes(); }
 
   bool hasStride(Value *V) { return StrideSet.count(V); }
   bool mustCheckStrides() { return !StrideSet.empty(); }
@@ -923,12 +985,8 @@ private:
   ScalarEvolution *SE;
   /// DataLayout analysis.
   const DataLayout *DL;
-  /// Dominators.
-  DominatorTree *DT;
   /// Target Library Info.
   TargetLibraryInfo *TLI;
-  /// Alias analysis.
-  AliasAnalysis *AA;
   /// Parent function
   Function *TheFunction;
   /// Target Transform Info
@@ -954,13 +1012,9 @@ private:
   /// This set holds the variables which are known to be uniform after
   /// vectorization.
   SmallPtrSet<Instruction*, 4> Uniforms;
-  /// We need to check that all of the pointers in this list are disjoint
-  /// at runtime.
-  RuntimePointerCheck PtrRtCheck;
+  LoopAccessAnalysis LAA;
   /// Can we assume the absence of NaNs.
   bool HasFunNoNaNAttr;
-
-  unsigned MaxSafeDepDistBytes;
 
   ValueToValueMap Strides;
   SmallPtrSet<Value *, 8> StrideSet;
@@ -1800,8 +1854,12 @@ int LoopVectorizationLegality::isConsecutivePtr(Value *Ptr) {
   return 0;
 }
 
-bool LoopVectorizationLegality::isUniform(Value *V) {
+bool LoopAccessAnalysis::isUniform(Value *V) {
   return (SE->isLoopInvariant(SE->getSCEV(V), TheLoop));
+}
+
+bool LoopVectorizationLegality::isUniform(Value *V) {
+  return LAA.isUniform(V);
 }
 
 InnerLoopVectorizer::VectorParts&
@@ -3636,7 +3694,8 @@ bool LoopVectorizationLegality::canVectorize() {
   collectLoopUniforms();
 
   DEBUG(dbgs() << "LV: We can vectorize this loop" <<
-        (PtrRtCheck.Need ? " (with a runtime bound check)" : "")
+        (LAA.getRuntimePointerCheck()->Need ? " (with a runtime bound check)" :
+         "")
         <<"!\n");
 
   // Okay! We can vectorize. At this point we don't have any other mem analysis
@@ -4775,7 +4834,7 @@ bool MemoryDepChecker::areDepsSafe(AccessAnalysis::DepCandidates &AccessSets,
   return true;
 }
 
-bool LoopVectorizationLegality::canVectorizeMemory() {
+bool LoopAccessAnalysis::canVectorizeMemory(ValueToValueMap &Strides) {
 
   typedef SmallVector<Value*, 16> ValueVector;
   typedef SmallPtrSet<Value*, 16> ValueSet;
@@ -5027,6 +5086,10 @@ bool LoopVectorizationLegality::canVectorizeMemory() {
         " need a runtime memory check.\n");
 
   return CanVecMem;
+}
+
+bool LoopVectorizationLegality::canVectorizeMemory() {
+  return LAA.canVectorizeMemory(Strides);
 }
 
 static bool hasMultipleUsesOf(Instruction *I,
@@ -5369,12 +5432,16 @@ bool LoopVectorizationLegality::isInductionVariable(const Value *V) {
   return Inductions.count(PN);
 }
 
-bool LoopVectorizationLegality::blockNeedsPredication(BasicBlock *BB)  {
+bool LoopAccessAnalysis::blockNeedsPredication(BasicBlock *BB)  {
   assert(TheLoop->contains(BB) && "Unknown block used");
 
   // Blocks that do not dominate the latch need predication.
   BasicBlock* Latch = TheLoop->getLoopLatch();
   return !DT->dominates(BB, Latch);
+}
+
+bool LoopVectorizationLegality::blockNeedsPredication(BasicBlock *BB)  {
+  return LAA.blockNeedsPredication(BB);
 }
 
 bool LoopVectorizationLegality::blockCanBePredicated(BasicBlock *BB,
