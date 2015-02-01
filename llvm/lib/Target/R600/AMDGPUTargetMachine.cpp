@@ -120,8 +120,9 @@ TargetPassConfig *AMDGPUTargetMachine::createPassConfig(PassManagerBase &PM) {
 // AMDGPU Pass Setup
 //===----------------------------------------------------------------------===//
 
-TargetTransformInfo AMDGPUTargetMachine::getTTI() {
-  return TargetTransformInfo(AMDGPUTTIImpl(this));
+TargetIRAnalysis AMDGPUTargetMachine::getTargetIRAnalysis() {
+  return TargetIRAnalysis(
+      [this](Function &F) { return TargetTransformInfo(AMDGPUTTIImpl(this)); });
 }
 
 void AMDGPUPassConfig::addIRPasses() {

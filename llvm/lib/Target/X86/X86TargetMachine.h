@@ -39,7 +39,7 @@ public:
   const X86Subtarget *getSubtargetImpl() const override { return &Subtarget; }
   const X86Subtarget *getSubtargetImpl(const Function &F) const override;
 
-  TargetTransformInfo getTTI() override;
+  TargetIRAnalysis getTargetIRAnalysis() override;
 
   // Set up the pass pipeline.
   TargetPassConfig *createPassConfig(PassManagerBase &PM) override;

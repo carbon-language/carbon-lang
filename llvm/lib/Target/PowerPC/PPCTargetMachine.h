@@ -45,7 +45,7 @@ public:
   // Pass Pipeline Configuration
   TargetPassConfig *createPassConfig(PassManagerBase &PM) override;
 
-  TargetTransformInfo getTTI() override;
+  TargetIRAnalysis getTargetIRAnalysis() override;
 
   TargetLoweringObjectFile *getObjFileLowering() const override {
     return TLOF.get();

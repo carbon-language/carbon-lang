@@ -15,6 +15,7 @@
 #define LLVM_LIB_TARGET_MIPS_MIPSTARGETMACHINE_H
 
 #include "MipsSubtarget.h"
+#include "llvm/CodeGen/BasicTTIImpl.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/CodeGen/SelectionDAGISel.h"
 #include "llvm/Target/TargetFrameLowering.h"
@@ -44,7 +45,7 @@ public:
                     CodeModel::Model CM, CodeGenOpt::Level OL, bool isLittle);
   ~MipsTargetMachine() override;
 
-  TargetTransformInfo getTTI() override;
+  TargetIRAnalysis getTargetIRAnalysis() override;
 
   const DataLayout *getDataLayout() const override { return &DL; }
   const MipsSubtarget *getSubtargetImpl() const override {

@@ -165,8 +165,9 @@ UseVZeroUpper("x86-use-vzeroupper", cl::Hidden,
 // X86 TTI query.
 //===----------------------------------------------------------------------===//
 
-TargetTransformInfo X86TargetMachine::getTTI() {
-  return TargetTransformInfo(X86TTIImpl(this));
+TargetIRAnalysis X86TargetMachine::getTargetIRAnalysis() {
+  return TargetIRAnalysis(
+      [this](Function &F) { return TargetTransformInfo(X86TTIImpl(this, F)); });
 }
 
 

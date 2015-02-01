@@ -238,18 +238,17 @@ void MipsPassConfig::addPreRegAlloc() {
     addPass(createMipsOptimizePICCallPass(getMipsTargetMachine()));
 }
 
-TargetTransformInfo MipsTargetMachine::getTTI() {
-  if (Subtarget->allowMixed16_32()) {
-    DEBUG(errs() << "No Target Transform Info Pass Added\n");
-    //FIXME: The Basic Target Transform Info
-    // pass needs to become a function pass instead of
-    // being an immutable pass and then this method as it exists now
-    // would be unnecessary.
-    return TargetTransformInfo(getDataLayout());
-  }
+TargetIRAnalysis MipsTargetMachine::getTargetIRAnalysis() {
+  return TargetIRAnalysis([this](Function &F) {
+    if (Subtarget->allowMixed16_32()) {
+      DEBUG(errs() << "No Target Transform Info Pass Added\n");
+      // FIXME: This is no longer necessary as the TTI returned is per-function.
+      return TargetTransformInfo(getDataLayout());
+    }
 
-  DEBUG(errs() << "Target Transform Info Pass Added\n");
-  return LLVMTargetMachine::getTTI();
+    DEBUG(errs() << "Target Transform Info Pass Added\n");
+    return TargetTransformInfo(BasicTTIImpl(this));
+  });
 }
 
 // Implemented by targets that want to run passes immediately before

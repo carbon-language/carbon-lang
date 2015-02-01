@@ -173,14 +173,8 @@ void TargetMachine::setDataSections(bool V) {
 }
 
 TargetIRAnalysis TargetMachine::getTargetIRAnalysis() {
-  // While targets are free to just override getTTI and rely on this analysis,
-  // it would be more efficient to override and provide an analysis that could
-  // directly construct that target's TTI without the virtual call.
-  return TargetIRAnalysis([this](Function &) { return getTTI(); });
-}
-
-TargetTransformInfo TargetMachine::getTTI() {
-  return TargetTransformInfo(getDataLayout());
+  return TargetIRAnalysis(
+      [this](Function &) { return TargetTransformInfo(getDataLayout()); });
 }
 
 static bool canUsePrivateLabel(const MCAsmInfo &AsmInfo,

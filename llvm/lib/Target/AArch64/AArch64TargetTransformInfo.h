@@ -44,8 +44,8 @@ class AArch64TTIImpl : public BasicTTIImplBase<AArch64TTIImpl> {
   };
 
 public:
-  explicit AArch64TTIImpl(const AArch64TargetMachine *TM)
-      : BaseT(TM), ST(TM->getSubtargetImpl()), TLI(ST->getTargetLowering()) {}
+  explicit AArch64TTIImpl(const AArch64TargetMachine *TM, Function &F)
+      : BaseT(TM), ST(TM->getSubtargetImpl(F)), TLI(ST->getTargetLowering()) {}
 
   // Provide value semantics. MSVC requires that we spell all of these out.
   AArch64TTIImpl(const AArch64TTIImpl &Arg)

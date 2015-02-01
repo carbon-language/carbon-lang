@@ -78,8 +78,9 @@ LLVMTargetMachine::LLVMTargetMachine(const Target &T, StringRef Triple,
   CodeGenInfo = T.createMCCodeGenInfo(Triple, RM, CM, OL);
 }
 
-TargetTransformInfo LLVMTargetMachine::getTTI() {
-  return TargetTransformInfo(BasicTTIImpl(this));
+TargetIRAnalysis LLVMTargetMachine::getTargetIRAnalysis() {
+  return TargetIRAnalysis(
+      [this](Function &) { return TargetTransformInfo(BasicTTIImpl(this)); });
 }
 
 /// addPassesToX helper drives creation and initialization of TargetPassConfig.

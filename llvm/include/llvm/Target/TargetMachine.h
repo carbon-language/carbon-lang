@@ -191,15 +191,9 @@ public:
   /// \brief Get a \c TargetIRAnalysis appropriate for the target.
   ///
   /// This is used to construct the new pass manager's target IR analysis pass,
-  /// set up appropriately for this target machine.
+  /// set up appropriately for this target machine. Even the old pass manager
+  /// uses this to answer queries about the IR.
   virtual TargetIRAnalysis getTargetIRAnalysis();
-
-  /// \brief Get a TTI implementation for the target.
-  ///
-  /// Targets should override this method to provide target-accurate
-  /// information to the mid-level optimizer. If left with the baseline only
-  /// a very conservative set of heuristics will be used.
-  virtual TargetTransformInfo getTTI();
 
   /// CodeGenFileType - These enums are meant to be passed into
   /// addPassesToEmitFile to indicate what type of file to emit, and returned by
@@ -252,12 +246,11 @@ protected: // Can only create subclasses.
 
   void initAsmInfo();
 public:
-  /// \brief Get a TTI implementation for the target.
+  /// \brief Get a TargetIRAnalysis implementation for the target.
   ///
-  /// This uses the common code generator to produce a TTI implementation.
-  /// Targets may override it to provide more customized TTI implementation
-  /// instead.
-  TargetTransformInfo getTTI() override;
+  /// This analysis will produce a TTI result which uses the common code
+  /// generator to answer queries about the IR.
+  TargetIRAnalysis getTargetIRAnalysis() override;
 
   /// createPassConfig - Create a pass configuration object to be used by
   /// addPassToEmitX methods for generating a pipeline of CodeGen passes.

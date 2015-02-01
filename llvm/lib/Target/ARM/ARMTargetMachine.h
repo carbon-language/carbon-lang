@@ -49,8 +49,8 @@ public:
   const ARMSubtarget *getSubtargetImpl(const Function &F) const override;
   const DataLayout *getDataLayout() const override { return &DL; }
 
-  /// \brief Register ARM analysis passes with a pass manager.
-  TargetTransformInfo getTTI() override;
+  /// \brief Get the TargetIRAnalysis for this target.
+  TargetIRAnalysis getTargetIRAnalysis() override;
 
   // Pass Pipeline Configuration
   TargetPassConfig *createPassConfig(PassManagerBase &PM) override;

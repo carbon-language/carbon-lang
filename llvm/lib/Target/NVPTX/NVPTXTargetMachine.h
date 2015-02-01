@@ -56,7 +56,7 @@ public:
     return TLOF.get();
   }
 
-  TargetTransformInfo getTTI() override;
+  TargetIRAnalysis getTargetIRAnalysis() override;
 
 }; // NVPTXTargetMachine.
 
