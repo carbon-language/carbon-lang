@@ -262,8 +262,6 @@ void PPCPassConfig::addPreRegAlloc() {
 }
 
 void PPCPassConfig::addPreSched2() {
-  addPass(createPPCVSXCopyCleanupPass(), false);
-
   if (getOptLevel() != CodeGenOpt::None)
     addPass(&IfConverterID);
 }

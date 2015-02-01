@@ -36,7 +36,6 @@ namespace llvm {
 #endif
   FunctionPass *createPPCEarlyReturnPass();
   FunctionPass *createPPCVSXCopyPass();
-  FunctionPass *createPPCVSXCopyCleanupPass();
   FunctionPass *createPPCVSXFMAMutatePass();
   FunctionPass *createPPCBranchSelectionPass();
   FunctionPass *createPPCISelDag(PPCTargetMachine &TM);
