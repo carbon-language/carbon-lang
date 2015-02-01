@@ -1535,11 +1535,11 @@ AC_ARG_WITH(oprofile,
             AC_SEARCH_LIBS(bfd_init, bfd, [], [])
             AC_SEARCH_LIBS(op_open_agent, opagent, [], [
               echo "Error! You need to have libopagent around."
-              exit -1
+              exit 1
             ])
             AC_CHECK_HEADER([opagent.h], [], [
               echo "Error! You need to have opagent.h around."
-              exit -1
+              exit 1
               ])
           fi ;;
         *)

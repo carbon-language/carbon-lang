@@ -23,7 +23,7 @@ fi
 # sitecustomize.
 if ! python -c \
       'import sitecustomize, sys; sys.exit("coverage" not in dir(sitecustomize))' \
-      &> /dev/null; then
+      >/dev/null 2>&1; then
     printf 1>&2 "error: active python does not appear to enable coverage in its 'sitecustomize.py'\n"
     exit 1
 fi

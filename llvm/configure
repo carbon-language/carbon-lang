@@ -9910,7 +9910,7 @@ if test "$ac_res" != no; then
 else
 
               echo "Error! You need to have libopagent around."
-              exit -1
+              exit 1
 
 fi
 
@@ -10073,7 +10073,7 @@ if test $ac_cv_header_opagent_h = yes; then
 else
 
               echo "Error! You need to have opagent.h around."
-              exit -1
+              exit 1
 
 fi
 
