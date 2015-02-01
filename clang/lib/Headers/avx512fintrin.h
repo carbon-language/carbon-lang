@@ -672,19 +672,37 @@ _mm512_mask_blend_epi32(__mmask16 __U, __m512i __A, __m512i __W)
 
 /* Compare */
 
-#define _mm512_cmp_ps_mask(a, b, p) __extension__ ({ \
-  __m512 __a = (a); \
-  __m512 __b = (b); \
-  (__mmask16)__builtin_ia32_cmpps512_mask((__v16sf)__a, (__v16sf)__b, (p), \
-                                          (__mmask16)-1,                   \
-                                          _MM_FROUND_CUR_DIRECTION); })
+#define _mm512_cmp_round_ps_mask(A, B, P, R) __extension__ ({ \
+  (__mmask16)__builtin_ia32_cmpps512_mask((__v16sf)(__m512)(A), \
+                                          (__v16sf)(__m512)(B), \
+                                          (P), (__mmask16)-1, (R)); })
 
-#define _mm512_cmp_pd_mask(a, b, p) __extension__ ({ \
-  __m512 __a = (a); \
-  __m512 __b = (b); \
-  (__mmask8)__builtin_ia32_cmppd512_mask((__v8df)__a, (__v8df)__b, (p), \
-                                          (__mmask8)-1,                 \
-                                          _MM_FROUND_CUR_DIRECTION); })
+#define _mm512_mask_cmp_round_ps_mask(U, A, B, P, R) __extension__ ({ \
+  (__mmask16)__builtin_ia32_cmpps512_mask((__v16sf)(__m512)(A), \
+                                          (__v16sf)(__m512)(B), \
+                                          (P), (__mmask16)(U), (R)); })
+
+#define _mm512_cmp_ps_mask(A, B, P) \
+  _mm512_cmp_round_ps_mask((A), (B), (P), _MM_FROUND_CUR_DIRECTION)
+
+#define _mm512_mask_cmp_ps_mask(U, A, B, P) \
+  _mm512_mask_cmp_round_ps_mask((U), (A), (B), (P), _MM_FROUND_CUR_DIRECTION)
+
+#define _mm512_cmp_round_pd_mask(A, B, P, R) __extension__ ({ \
+  (__mmask8)__builtin_ia32_cmppd512_mask((__v8df)(__m512d)(A), \
+                                         (__v8df)(__m512d)(B), \
+                                         (P), (__mmask8)-1, (R)); })
+
+#define _mm512_mask_cmp_round_pd_mask(U, A, B, P, R) __extension__ ({ \
+  (__mmask8)__builtin_ia32_cmppd512_mask((__v8df)(__m512d)(A), \
+                                         (__v8df)(__m512d)(B), \
+                                         (P), (__mmask8)(U), (R)); })
+
+#define _mm512_cmp_pd_mask(A, B, P) \
+  _mm512_cmp_round_pd_mask((A), (B), (P), _MM_FROUND_CUR_DIRECTION)
+
+#define _mm512_mask_cmp_pd_mask(U, A, B, P) \
+  _mm512_mask_cmp_round_pd_mask((U), (A), (B), (P), _MM_FROUND_CUR_DIRECTION)
 
 /* Conversion */
 
