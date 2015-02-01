@@ -628,12 +628,37 @@ struct RuntimePointerCheck {
 /// RuntimePointerCheck class.
 class LoopAccessAnalysis {
 public:
+  /// \brief Collection of parameters used from the vectorizer.
+  struct VectorizerParams {
+    /// \brief Maximum simd width.
+    unsigned MaxVectorWidth;
+
+    /// \brief VF as overridden by the user.
+    unsigned VectorizationFactor;
+    /// \brief Interleave factor as overridden by the user.
+    unsigned VectorizationInterleave;
+
+    /// \\brief When performing memory disambiguation checks at runtime do not
+    /// make more than this number of comparisons.
+    unsigned RuntimeMemoryCheckThreshold;
+
+    VectorizerParams(unsigned MaxVectorWidth,
+                     unsigned VectorizationFactor,
+                     unsigned VectorizationInterleave,
+                     unsigned RuntimeMemoryCheckThreshold) :
+        MaxVectorWidth(MaxVectorWidth),
+        VectorizationFactor(VectorizationFactor),
+        VectorizationInterleave(VectorizationInterleave),
+        RuntimeMemoryCheckThreshold(RuntimeMemoryCheckThreshold) {}
+  };
+
   LoopAccessAnalysis(Function *F, Loop *L, ScalarEvolution *SE,
                      const DataLayout *DL, const TargetLibraryInfo *TLI,
-                     AliasAnalysis *AA, DominatorTree *DT) :
+                     AliasAnalysis *AA, DominatorTree *DT,
+                     const VectorizerParams &VectParams) :
       TheFunction(F), TheLoop(L), SE(SE), DL(DL), TLI(TLI), AA(AA), DT(DT),
-      NumLoads(0), NumStores(0), MaxSafeDepDistBytes(-1U) {
-  }
+      NumLoads(0), NumStores(0), MaxSafeDepDistBytes(-1U),
+      VectParams(VectParams) {}
 
   /// Return true we can analyze the memory accesses in the loop and there are
   /// no memory dependence cycles.  Replaces symbolic strides using Strides.
@@ -670,6 +695,9 @@ private:
   unsigned NumStores;
 
   unsigned MaxSafeDepDistBytes;
+
+  /// \brief Vectorizer parameters used by the analysis.
+  VectorizerParams VectParams;
 };
 } // end anonymous namespace
 
@@ -694,7 +722,10 @@ public:
                             const TargetTransformInfo *TTI)
       : NumPredStores(0), TheLoop(L), SE(SE), DL(DL), TLI(TLI), TheFunction(F),
         TTI(TTI), Induction(nullptr), WidestIndTy(nullptr),
-        LAA(F, L, SE, DL, TLI, AA, DT), HasFunNoNaNAttr(false) {
+        LAA(F, L, SE, DL, TLI, AA, DT,
+            {MaxVectorWidth, VectorizationFactor, VectorizationInterleave,
+             RuntimeMemoryCheckThreshold}),
+        HasFunNoNaNAttr(false) {
   }
 
   /// This enum represents the kinds of reductions that we support.
@@ -4463,9 +4494,10 @@ public:
   typedef PointerIntPair<Value *, 1, bool> MemAccessInfo;
   typedef SmallPtrSet<MemAccessInfo, 8> MemAccessInfoSet;
 
-  MemoryDepChecker(ScalarEvolution *Se, const DataLayout *Dl, const Loop *L)
+  MemoryDepChecker(ScalarEvolution *Se, const DataLayout *Dl, const Loop *L,
+                   const LoopAccessAnalysis::VectorizerParams &VectParams)
       : SE(Se), DL(Dl), InnermostLoop(L), AccessIdx(0),
-        ShouldRetryWithRuntimeCheck(false) {}
+        ShouldRetryWithRuntimeCheck(false), VectParams(VectParams) {}
 
   /// \brief Register the location (instructions are given increasing numbers)
   /// of a write access.
@@ -4519,6 +4551,9 @@ private:
   /// \brief If we see a non-constant dependence distance we can still try to
   /// vectorize this loop with runtime checks.
   bool ShouldRetryWithRuntimeCheck;
+
+  /// \brief Vectorizer parameters used by the analysis.
+  LoopAccessAnalysis::VectorizerParams VectParams;
 
   /// \brief Check whether there is a plausible dependence between the two
   /// accesses.
@@ -4643,7 +4678,7 @@ bool MemoryDepChecker::couldPreventStoreLoadForward(unsigned Distance,
   // Store-load forwarding distance.
   const unsigned NumCyclesForStoreLoadThroughMemory = 8*TypeByteSize;
   // Maximum vector factor.
-  unsigned MaxVFWithoutSLForwardIssues = MaxVectorWidth*TypeByteSize;
+  unsigned MaxVFWithoutSLForwardIssues = VectParams.MaxVectorWidth*TypeByteSize;
   if(MaxSafeDepDistBytes < MaxVFWithoutSLForwardIssues)
     MaxVFWithoutSLForwardIssues = MaxSafeDepDistBytes;
 
@@ -4662,7 +4697,7 @@ bool MemoryDepChecker::couldPreventStoreLoadForward(unsigned Distance,
   }
 
   if (MaxVFWithoutSLForwardIssues < MaxSafeDepDistBytes &&
-      MaxVFWithoutSLForwardIssues != MaxVectorWidth*TypeByteSize)
+      MaxVFWithoutSLForwardIssues != VectParams.MaxVectorWidth*TypeByteSize)
     MaxSafeDepDistBytes = MaxVFWithoutSLForwardIssues;
   return false;
 }
@@ -4767,8 +4802,10 @@ bool MemoryDepChecker::isDependent(const MemAccessInfo &A, unsigned AIdx,
   unsigned Distance = (unsigned) Val.getZExtValue();
 
   // Bail out early if passed-in parameters make vectorization not feasible.
-  unsigned ForcedFactor = VectorizationFactor ? VectorizationFactor : 1;
-  unsigned ForcedUnroll = VectorizationInterleave ? VectorizationInterleave : 1;
+  unsigned ForcedFactor = (VectParams.VectorizationFactor ?
+                           VectParams.VectorizationFactor : 1);
+  unsigned ForcedUnroll = (VectParams.VectorizationInterleave ?
+                           VectParams.VectorizationInterleave : 1);
 
   // The distance must be bigger than the size needed for a vectorized version
   // of the operation and the size of the vectorized operation must not be
@@ -4851,7 +4888,7 @@ bool LoopAccessAnalysis::canVectorizeMemory(ValueToValueMap &Strides) {
   PtrRtCheck.Need = false;
 
   const bool IsAnnotatedParallel = TheLoop->isAnnotatedParallel();
-  MemoryDepChecker DepChecker(SE, DL, TheLoop);
+  MemoryDepChecker DepChecker(SE, DL, TheLoop, VectParams);
 
   // For each block.
   for (Loop::block_iterator bb = TheLoop->block_begin(),
@@ -5020,7 +5057,7 @@ bool LoopAccessAnalysis::canVectorizeMemory(ValueToValueMap &Strides) {
 
   // Check that we did not collect too many pointers or found an unsizeable
   // pointer.
-  if (!CanDoRT || NumComparisons > RuntimeMemoryCheckThreshold) {
+  if (!CanDoRT || NumComparisons > VectParams.RuntimeMemoryCheckThreshold) {
     PtrRtCheck.reset();
     CanDoRT = false;
   }
@@ -5060,14 +5097,14 @@ bool LoopAccessAnalysis::canVectorizeMemory(ValueToValueMap &Strides) {
                                          TheLoop, Strides, true);
       // Check that we did not collect too many pointers or found an unsizeable
       // pointer.
-      if (!CanDoRT || NumComparisons > RuntimeMemoryCheckThreshold) {
+      if (!CanDoRT || NumComparisons > VectParams.RuntimeMemoryCheckThreshold) {
         if (!CanDoRT && NumComparisons > 0)
           emitAnalysis(VectorizationReport()
                        << "cannot check memory dependencies at runtime");
         else
           emitAnalysis(VectorizationReport()
                        << NumComparisons << " exceeds limit of "
-                       << RuntimeMemoryCheckThreshold
+                       << VectParams.RuntimeMemoryCheckThreshold
                        << " dependent memory operations checked at runtime");
         DEBUG(dbgs() << "LV: Can't vectorize with memory checks\n");
         PtrRtCheck.reset();
