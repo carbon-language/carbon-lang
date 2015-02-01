@@ -22,7 +22,6 @@ add_llvm_library(LLVMAnalysis
   DependenceAnalysis.cpp
   DomPrinter.cpp
   DominanceFrontier.cpp
-  FunctionTargetTransformInfo.cpp
   IVUsers.cpp
   InstCount.cpp
   InstructionSimplify.cpp

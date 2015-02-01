@@ -264,7 +264,6 @@ void initializeTailDuplicatePassPass(PassRegistry&);
 void initializeTargetPassConfigPass(PassRegistry&);
 void initializeDataLayoutPassPass(PassRegistry &);
 void initializeTargetTransformInfoWrapperPassPass(PassRegistry &);
-void initializeFunctionTargetTransformInfoPass(PassRegistry &);
 void initializeTargetLibraryInfoWrapperPassPass(PassRegistry &);
 void initializeAssumptionCacheTrackerPass(PassRegistry &);
 void initializeTwoAddressInstructionPassPass(PassRegistry&);
