@@ -16,8 +16,8 @@
 #define LLVM_CLANG_AST_CANONICALTYPE_H
 
 #include "clang/AST/Type.h"
+#include "llvm/ADT/iterator.h"
 #include "llvm/Support/Casting.h"
-#include <iterator>
 
 namespace clang {
 
@@ -381,93 +381,22 @@ namespace clang {
 
 /// \brief Iterator adaptor that turns an iterator over canonical QualTypes
 /// into an iterator over CanQualTypes.
-template<typename InputIterator>
-class CanTypeIterator {
-  InputIterator Iter;
+template <typename InputIterator>
+class CanTypeIterator
+    : public llvm::iterator_adaptor_base<
+          CanTypeIterator<InputIterator>, InputIterator,
+          typename std::iterator_traits<InputIterator>::iterator_category,
+          CanQualType,
+          typename std::iterator_traits<InputIterator>::difference_type,
+          CanProxy<Type>, CanQualType> {
+  typedef typename CanTypeIterator::iterator_adaptor_base BaseT;
 
 public:
-  typedef CanQualType    value_type;
-  typedef value_type     reference;
-  typedef CanProxy<Type> pointer;
-  typedef typename std::iterator_traits<InputIterator>::difference_type
-    difference_type;
-  typedef typename std::iterator_traits<InputIterator>::iterator_category
-    iterator_category;
+  CanTypeIterator() {}
+  explicit CanTypeIterator(InputIterator Iter) : BaseT(std::move(Iter)) {}
 
-  CanTypeIterator() : Iter() { }
-  explicit CanTypeIterator(InputIterator Iter) : Iter(Iter) { }
-
-  // Input iterator
-  reference operator*() const {
-    return CanQualType::CreateUnsafe(*Iter);
-  }
-
-  pointer operator->() const;
-
-  CanTypeIterator &operator++() {
-    ++Iter;
-    return *this;
-  }
-
-  CanTypeIterator operator++(int) {
-    CanTypeIterator Tmp(*this);
-    ++Iter;
-    return Tmp;
-  }
-
-  friend bool operator==(const CanTypeIterator& X, const CanTypeIterator &Y) {
-    return X.Iter == Y.Iter;
-  }
-  friend bool operator!=(const CanTypeIterator& X, const CanTypeIterator &Y) {
-    return X.Iter != Y.Iter;
-  }
-
-  // Bidirectional iterator
-  CanTypeIterator &operator--() {
-    --Iter;
-    return *this;
-  }
-
-  CanTypeIterator operator--(int) {
-    CanTypeIterator Tmp(*this);
-    --Iter;
-    return Tmp;
-  }
-
-  // Random access iterator
-  reference operator[](difference_type n) const {
-    return CanQualType::CreateUnsafe(Iter[n]);
-  }
-
-  CanTypeIterator &operator+=(difference_type n) {
-    Iter += n;
-    return *this;
-  }
-
-  CanTypeIterator &operator-=(difference_type n) {
-    Iter -= n;
-    return *this;
-  }
-
-  friend CanTypeIterator operator+(CanTypeIterator X, difference_type n) {
-    X += n;
-    return X;
-  }
-
-  friend CanTypeIterator operator+(difference_type n, CanTypeIterator X) {
-    X += n;
-    return X;
-  }
-
-  friend CanTypeIterator operator-(CanTypeIterator X, difference_type n) {
-    X -= n;
-    return X;
-  }
-
-  friend difference_type operator-(const CanTypeIterator &X,
-                                   const CanTypeIterator &Y) {
-    return X - Y;
-  }
+  CanQualType operator*() const { return CanQualType::CreateUnsafe(*BaseT::I); }
+  CanProxy<Type> operator->() const;
 };
 
 template<>
@@ -727,9 +656,8 @@ CanProxy<T> CanQual<T>::operator->() const {
   return CanProxy<T>(*this);
 }
 
-template<typename InputIterator>
-typename CanTypeIterator<InputIterator>::pointer
-CanTypeIterator<InputIterator>::operator->() const {
+template <typename InputIterator>
+CanProxy<Type> CanTypeIterator<InputIterator>::operator->() const {
   return CanProxy<Type>(*this);
 }
 

@@ -735,22 +735,18 @@ public:
   }
 
   class iterator
-      : public std::iterator<std::forward_iterator_tag, NamedDecl *> {
-    typedef llvm::DenseMap<NamedDecl*,NamedDecl*>::iterator inner_iterator;
-    inner_iterator iter;
-
+      : public llvm::iterator_adaptor_base<iterator, decltype(Decls)::iterator,
+                                           std::forward_iterator_tag,
+                                           NamedDecl *> {
     friend class ADLResult;
-    iterator(const inner_iterator &iter) : iter(iter) {}
+
+    iterator(decltype(Decls)::iterator Iter)
+        : iterator_adaptor_base(std::move(Iter)) {}
+
   public:
     iterator() {}
 
-    iterator &operator++() { ++iter; return *this; }
-    iterator operator++(int) { return iterator(iter++); }
-
-    value_type operator*() const { return iter->second; }
-
-    bool operator==(const iterator &other) const { return iter == other.iter; }
-    bool operator!=(const iterator &other) const { return iter != other.iter; }
+    value_type operator*() const { return I->second; }
   };
 
   iterator begin() { return iterator(Decls.begin()); }
