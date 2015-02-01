@@ -249,8 +249,7 @@ public:
   /// \brief Get target-customized preferences for the generic loop unrolling
   /// transformation. The caller will initialize UP with the current
   /// target-independent defaults.
-  void getUnrollingPreferences(const Function *F, Loop *L,
-                               UnrollingPreferences &UP) const;
+  void getUnrollingPreferences(Loop *L, UnrollingPreferences &UP) const;
 
   /// @}
 
@@ -499,8 +498,7 @@ public:
   virtual unsigned getUserCost(const User *U) = 0;
   virtual bool hasBranchDivergence() = 0;
   virtual bool isLoweredToCall(const Function *F) = 0;
-  virtual void getUnrollingPreferences(const Function *F, Loop *L,
-                                       UnrollingPreferences &UP) = 0;
+  virtual void getUnrollingPreferences(Loop *L, UnrollingPreferences &UP) = 0;
   virtual bool isLegalAddImmediate(int64_t Imm) = 0;
   virtual bool isLegalICmpImmediate(int64_t Imm) = 0;
   virtual bool isLegalAddressingMode(Type *Ty, GlobalValue *BaseGV,
@@ -596,9 +594,8 @@ public:
   bool isLoweredToCall(const Function *F) override {
     return Impl.isLoweredToCall(F);
   }
-  void getUnrollingPreferences(const Function *F, Loop *L,
-                               UnrollingPreferences &UP) override {
-    return Impl.getUnrollingPreferences(F, L, UP);
+  void getUnrollingPreferences(Loop *L, UnrollingPreferences &UP) override {
+    return Impl.getUnrollingPreferences(L, UP);
   }
   bool isLegalAddImmediate(int64_t Imm) override {
     return Impl.isLegalAddImmediate(Imm);

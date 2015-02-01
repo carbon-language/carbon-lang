@@ -198,8 +198,7 @@ public:
     return true;
   }
 
-  void getUnrollingPreferences(const Function *, Loop *,
-                               TTI::UnrollingPreferences &) {}
+  void getUnrollingPreferences(Loop *, TTI::UnrollingPreferences &) {}
 
   bool isLegalAddImmediate(int64_t Imm) { return false; }
 

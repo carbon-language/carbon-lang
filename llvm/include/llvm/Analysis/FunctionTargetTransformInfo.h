@@ -42,7 +42,7 @@ public:
   void
   getUnrollingPreferences(Loop *L,
                           TargetTransformInfo::UnrollingPreferences &UP) const {
-    TTI->getUnrollingPreferences(Fn, L, UP);
+    TTI->getUnrollingPreferences(L, UP);
   }
 };
 }

@@ -424,7 +424,7 @@ unsigned AArch64TTIImpl::getMaxInterleaveFactor() {
   return 2;
 }
 
-void AArch64TTIImpl::getUnrollingPreferences(const Function *F, Loop *L,
+void AArch64TTIImpl::getUnrollingPreferences(Loop *L,
                                              TTI::UnrollingPreferences &UP) {
   // Disable partial & runtime unrolling on -Os.
   UP.PartialOptSizeThreshold = 0;
