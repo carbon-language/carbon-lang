@@ -77,9 +77,6 @@ class X86MachineFunctionInfo : public MachineFunctionInfo {
   unsigned ArgumentStackSize;
   /// NumLocalDynamics - Number of local-dynamic TLS accesses.
   unsigned NumLocalDynamics;
-  /// HasPushSequences - Keeps track of whether this function uses sequences
-  /// of pushes to pass function parameters.
-  bool HasPushSequences;
 
 private:
   /// ForwardedMustTailRegParms - A list of virtual and physical registers
@@ -100,8 +97,7 @@ public:
                              VarArgsGPOffset(0),
                              VarArgsFPOffset(0),
                              ArgumentStackSize(0),
-                             NumLocalDynamics(0),
-                             HasPushSequences(false) {}
+                             NumLocalDynamics(0) {}
 
   explicit X86MachineFunctionInfo(MachineFunction &MF)
     : ForceFramePointer(false),
@@ -117,14 +113,10 @@ public:
       VarArgsGPOffset(0),
       VarArgsFPOffset(0),
       ArgumentStackSize(0),
-      NumLocalDynamics(0),
-      HasPushSequences(false) {}
+      NumLocalDynamics(0) {}
 
   bool getForceFramePointer() const { return ForceFramePointer;}
   void setForceFramePointer(bool forceFP) { ForceFramePointer = forceFP; }
-
-  bool getHasPushSequences() const { return HasPushSequences; }
-  void setHasPushSequences(bool HasPush) { HasPushSequences = HasPush; }
 
   bool getRestoreBasePointer() const { return RestoreBasePointerOffset!=0; }
   void setRestoreBasePointer(const MachineFunction *MF);

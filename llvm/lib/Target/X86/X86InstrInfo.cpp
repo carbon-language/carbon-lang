@@ -1804,58 +1804,6 @@ X86InstrInfo::isCoalescableExtInstr(const MachineInstr &MI,
   return false;
 }
 
-int X86InstrInfo::getSPAdjust(const MachineInstr *MI) const {
-  const MachineFunction *MF = MI->getParent()->getParent();
-  const TargetFrameLowering *TFI = MF->getSubtarget().getFrameLowering();
-
-  if (MI->getOpcode() == getCallFrameSetupOpcode() ||
-      MI->getOpcode() == getCallFrameDestroyOpcode()) {
-    unsigned StackAlign = TFI->getStackAlignment();
-    int SPAdj = (MI->getOperand(0).getImm() + StackAlign - 1) / StackAlign * 
-                 StackAlign;
-
-    SPAdj -= MI->getOperand(1).getImm();
-
-    if (MI->getOpcode() == getCallFrameSetupOpcode())
-      return SPAdj;
-    else
-      return -SPAdj;
-  }
-  
-  // To know whether a call adjusts the stack, we need information 
-  // that is bound to the following ADJCALLSTACKUP pseudo.
-  // Look for the next ADJCALLSTACKUP that follows the call.
-  if (MI->isCall()) {
-    const MachineBasicBlock* MBB = MI->getParent();
-    auto I = ++MachineBasicBlock::const_iterator(MI);
-    for (auto E = MBB->end(); I != E; ++I) {
-      if (I->getOpcode() == getCallFrameDestroyOpcode() ||
-          I->isCall())
-        break;
-    }
-
-    // If we could not find a frame destroy opcode, then it has already
-    // been simplified, so we don't care.
-    if (I->getOpcode() != getCallFrameDestroyOpcode())
-      return 0;
-
-    return -(I->getOperand(1).getImm());
-  }
-
-  // Currently handle only PUSHes we can reasonably expect to see
-  // in call sequences
-  switch (MI->getOpcode()) {
-  default: 
-    return 0;
-  case X86::PUSH32i8:
-  case X86::PUSH32r:
-  case X86::PUSH32rmm:
-  case X86::PUSH32rmr:
-  case X86::PUSHi32:
-    return 4;
-  }
-}
-
 /// isFrameOperand - Return true and the FrameIndex if the specified
 /// operand and follow operands form a reference to the stack frame.
 bool X86InstrInfo::isFrameOperand(const MachineInstr *MI, unsigned int Op,

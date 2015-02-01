@@ -31,7 +31,7 @@ blah:
           to label %invoke.cont unwind label %lpad
 
 ;  Uses end as sret param.
-; CHECK:  pushl %[[end]]
+; CHECK:  movl %[[end]], (%esp)
 ; CHECK:  calll _plus
 
 invoke.cont:
