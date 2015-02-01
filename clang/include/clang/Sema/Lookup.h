@@ -735,12 +735,12 @@ public:
   }
 
   class iterator
-      : public llvm::iterator_adaptor_base<iterator, decltype(Decls)::iterator,
-                                           std::forward_iterator_tag,
-                                           NamedDecl *> {
+      : public llvm::iterator_adaptor_base<
+            iterator, llvm::DenseMap<NamedDecl *, NamedDecl *>::iterator,
+            std::forward_iterator_tag, NamedDecl *> {
     friend class ADLResult;
 
-    iterator(decltype(Decls)::iterator Iter)
+    iterator(llvm::DenseMap<NamedDecl *, NamedDecl *>::iterator Iter)
         : iterator_adaptor_base(std::move(Iter)) {}
 
   public:
