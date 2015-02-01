@@ -2620,20 +2620,20 @@ bool llvm::isSafeToSpeculativelyExecute(const Value *V,
   case Instruction::SDiv:
   case Instruction::SRem: {
     // x / y is undefined if y == 0 or x == INT_MIN and y == -1
-    const APInt *X, *Y;
-    if (match(Inst->getOperand(1), m_APInt(Y))) {
-      if (*Y != 0) {
-        if (*Y == -1) {
-          // The numerator can't be MinSignedValue if the denominator is -1.
-          if (match(Inst->getOperand(0), m_APInt(X)))
-            return !Y->isMinSignedValue();
-          // The numerator *might* be MinSignedValue.
-          return false;
-        }
-        // The denominator is not 0 or -1, it's safe to proceed.
-        return true;
-      }
-    }
+    const APInt *Numerator, *Denominator;
+    if (!match(Inst->getOperand(1), m_APInt(Denominator)))
+      return false;
+    // We cannot hoist this division if the denominator is 0.
+    if (*Denominator == 0)
+      return false;
+    // It's safe to hoist if the denominator is not 0 or -1.
+    if (*Denominator != -1)
+      return true;
+    // At this point we know that the denominator is -1.  It is safe to hoist as
+    // long we know that the numerator is not INT_MIN.
+    if (match(Inst->getOperand(0), m_APInt(Numerator)))
+      return !Numerator->isMinSignedValue();
+    // The numerator *might* be MinSignedValue.
     return false;
   }
   case Instruction::Load: {
