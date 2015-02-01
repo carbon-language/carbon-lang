@@ -28,26 +28,39 @@ namespace llvm {
 class AMDGPUTTIImpl : public BasicTTIImplBase<AMDGPUTTIImpl> {
   typedef BasicTTIImplBase<AMDGPUTTIImpl> BaseT;
   typedef TargetTransformInfo TTI;
+  friend BaseT;
 
+  const AMDGPUTargetMachine *TM;
   const AMDGPUSubtarget *ST;
+  const AMDGPUTargetLowering *TLI;
+
+  const AMDGPUTargetMachine *getTM() const { return TM; }
+  const AMDGPUTargetLowering *getTLI() const { return TLI; }
 
 public:
   explicit AMDGPUTTIImpl(const AMDGPUTargetMachine *TM)
-      : BaseT(TM), ST(TM->getSubtargetImpl()) {}
+      : BaseT(TM), TM(TM), ST(TM->getSubtargetImpl()),
+        TLI(ST->getTargetLowering()) {}
 
   // Provide value semantics. MSVC requires that we spell all of these out.
   AMDGPUTTIImpl(const AMDGPUTTIImpl &Arg)
-      : BaseT(static_cast<const BaseT &>(Arg)), ST(Arg.ST) {}
+      : BaseT(static_cast<const BaseT &>(Arg)), TM(Arg.TM), ST(Arg.ST),
+        TLI(Arg.TLI) {}
   AMDGPUTTIImpl(AMDGPUTTIImpl &&Arg)
-      : BaseT(std::move(static_cast<BaseT &>(Arg))), ST(std::move(Arg.ST)) {}
+      : BaseT(std::move(static_cast<BaseT &>(Arg))), TM(std::move(Arg.TM)),
+        ST(std::move(Arg.ST)), TLI(std::move(Arg.TLI)) {}
   AMDGPUTTIImpl &operator=(const AMDGPUTTIImpl &RHS) {
     BaseT::operator=(static_cast<const BaseT &>(RHS));
+    TM = RHS.TM;
     ST = RHS.ST;
+    TLI = RHS.TLI;
     return *this;
   }
   AMDGPUTTIImpl &operator=(AMDGPUTTIImpl &&RHS) {
     BaseT::operator=(std::move(static_cast<BaseT &>(RHS)));
+    TM = std::move(RHS.TM);
     ST = std::move(RHS.ST);
+    TLI = std::move(RHS.TLI);
     return *this;
   }
 

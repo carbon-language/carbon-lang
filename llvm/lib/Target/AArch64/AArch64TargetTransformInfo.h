@@ -29,13 +29,18 @@ namespace llvm {
 class AArch64TTIImpl : public BasicTTIImplBase<AArch64TTIImpl> {
   typedef BasicTTIImplBase<AArch64TTIImpl> BaseT;
   typedef TargetTransformInfo TTI;
+  friend BaseT;
 
+  const AArch64TargetMachine *TM;
   const AArch64Subtarget *ST;
   const AArch64TargetLowering *TLI;
 
   /// Estimate the overhead of scalarizing an instruction. Insert and Extract
   /// are set if the result needs to be inserted and/or extracted from vectors.
   unsigned getScalarizationOverhead(Type *Ty, bool Insert, bool Extract);
+
+  const AArch64TargetMachine *getTM() const { return TM; }
+  const AArch64TargetLowering *getTLI() const { return TLI; }
 
   enum MemIntrinsicType {
     VECTOR_LDST_TWO_ELEMENTS,
@@ -45,22 +50,26 @@ class AArch64TTIImpl : public BasicTTIImplBase<AArch64TTIImpl> {
 
 public:
   explicit AArch64TTIImpl(const AArch64TargetMachine *TM, Function &F)
-      : BaseT(TM), ST(TM->getSubtargetImpl(F)), TLI(ST->getTargetLowering()) {}
+      : BaseT(TM), TM(TM), ST(TM->getSubtargetImpl(F)),
+        TLI(ST->getTargetLowering()) {}
 
   // Provide value semantics. MSVC requires that we spell all of these out.
   AArch64TTIImpl(const AArch64TTIImpl &Arg)
-      : BaseT(static_cast<const BaseT &>(Arg)), ST(Arg.ST), TLI(Arg.TLI) {}
+      : BaseT(static_cast<const BaseT &>(Arg)), TM(Arg.TM), ST(Arg.ST),
+        TLI(Arg.TLI) {}
   AArch64TTIImpl(AArch64TTIImpl &&Arg)
-      : BaseT(std::move(static_cast<BaseT &>(Arg))), ST(std::move(Arg.ST)),
-        TLI(std::move(Arg.TLI)) {}
+      : BaseT(std::move(static_cast<BaseT &>(Arg))), TM(std::move(Arg.TM)),
+        ST(std::move(Arg.ST)), TLI(std::move(Arg.TLI)) {}
   AArch64TTIImpl &operator=(const AArch64TTIImpl &RHS) {
     BaseT::operator=(static_cast<const BaseT &>(RHS));
+    TM = RHS.TM;
     ST = RHS.ST;
     TLI = RHS.TLI;
     return *this;
   }
   AArch64TTIImpl &operator=(AArch64TTIImpl &&RHS) {
     BaseT::operator=(std::move(static_cast<BaseT &>(RHS)));
+    TM = std::move(RHS.TM);
     ST = std::move(RHS.ST);
     TLI = std::move(RHS.TLI);
     return *this;

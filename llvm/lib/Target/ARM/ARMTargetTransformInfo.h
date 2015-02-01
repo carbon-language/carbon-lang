@@ -28,7 +28,9 @@ namespace llvm {
 class ARMTTIImpl : public BasicTTIImplBase<ARMTTIImpl> {
   typedef BasicTTIImplBase<ARMTTIImpl> BaseT;
   typedef TargetTransformInfo TTI;
+  friend BaseT;
 
+  const ARMBaseTargetMachine *TM;
   const ARMSubtarget *ST;
   const ARMTargetLowering *TLI;
 
@@ -36,24 +38,30 @@ class ARMTTIImpl : public BasicTTIImplBase<ARMTTIImpl> {
   /// are set if the result needs to be inserted and/or extracted from vectors.
   unsigned getScalarizationOverhead(Type *Ty, bool Insert, bool Extract);
 
+  const ARMBaseTargetMachine *getTM() const { return TM; }
+  const ARMTargetLowering *getTLI() const { return TLI; }
+
 public:
   explicit ARMTTIImpl(const ARMBaseTargetMachine *TM, Function &F)
-      : BaseT(TM), ST(TM->getSubtargetImpl(F)), TLI(ST->getTargetLowering()) {}
+      : BaseT(TM), TM(TM), ST(TM->getSubtargetImpl(F)),
+        TLI(ST->getTargetLowering()) {}
 
   // Provide value semantics. MSVC requires that we spell all of these out.
   ARMTTIImpl(const ARMTTIImpl &Arg)
-      : BaseT(static_cast<const BaseT &>(Arg)), ST(Arg.ST), TLI(Arg.TLI) {}
+      : BaseT(static_cast<const BaseT &>(Arg)), TM(Arg.TM), ST(Arg.ST), TLI(Arg.TLI) {}
   ARMTTIImpl(ARMTTIImpl &&Arg)
-      : BaseT(std::move(static_cast<BaseT &>(Arg))), ST(std::move(Arg.ST)),
-        TLI(std::move(Arg.TLI)) {}
+      : BaseT(std::move(static_cast<BaseT &>(Arg))), TM(std::move(Arg.TM)),
+        ST(std::move(Arg.ST)), TLI(std::move(Arg.TLI)) {}
   ARMTTIImpl &operator=(const ARMTTIImpl &RHS) {
     BaseT::operator=(static_cast<const BaseT &>(RHS));
+    TM = RHS.TM;
     ST = RHS.ST;
     TLI = RHS.TLI;
     return *this;
   }
   ARMTTIImpl &operator=(ARMTTIImpl &&RHS) {
     BaseT::operator=(std::move(static_cast<BaseT &>(RHS)));
+    TM = std::move(RHS.TM);
     ST = std::move(RHS.ST);
     TLI = std::move(RHS.TLI);
     return *this;
