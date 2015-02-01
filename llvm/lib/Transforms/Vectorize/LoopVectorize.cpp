@@ -558,6 +558,45 @@ static void propagateMetadata(SmallVectorImpl<Value *> &To, const Instruction *F
       propagateMetadata(I, From);
 }
 
+namespace {
+/// This struct holds information about the memory runtime legality
+/// check that a group of pointers do not overlap.
+struct RuntimePointerCheck {
+  RuntimePointerCheck() : Need(false) {}
+
+  /// Reset the state of the pointer runtime information.
+  void reset() {
+    Need = false;
+    Pointers.clear();
+    Starts.clear();
+    Ends.clear();
+    IsWritePtr.clear();
+    DependencySetId.clear();
+    AliasSetId.clear();
+  }
+
+  /// Insert a pointer and calculate the start and end SCEVs.
+  void insert(ScalarEvolution *SE, Loop *Lp, Value *Ptr, bool WritePtr,
+              unsigned DepSetId, unsigned ASId, ValueToValueMap &Strides);
+
+  /// This flag indicates if we need to add the runtime check.
+  bool Need;
+  /// Holds the pointers that we need to check.
+  SmallVector<TrackingVH<Value>, 2> Pointers;
+  /// Holds the pointer value at the beginning of the loop.
+  SmallVector<const SCEV*, 2> Starts;
+  /// Holds the pointer value at the end of the loop.
+  SmallVector<const SCEV*, 2> Ends;
+  /// Holds the information if this pointer is used for writing to memory.
+  SmallVector<bool, 2> IsWritePtr;
+  /// Holds the id of the set of pointers that could be dependent because of a
+  /// shared underlying object.
+  SmallVector<unsigned, 2> DependencySetId;
+  /// Holds the id of the disjoint alias set to which this pointer belongs.
+  SmallVector<unsigned, 2> AliasSetId;
+};
+} // end anonymous namespace
+
 /// LoopVectorizationLegality checks if it is legal to vectorize a loop, and
 /// to what vectorization factor.
 /// This class does not look at the profitability of vectorization, only the
@@ -653,43 +692,6 @@ public:
     Instruction *PatternLastInst;
     // If this is a min/max pattern the comparison predicate.
     MinMaxReductionKind MinMaxKind;
-  };
-
-  /// This struct holds information about the memory runtime legality
-  /// check that a group of pointers do not overlap.
-  struct RuntimePointerCheck {
-    RuntimePointerCheck() : Need(false) {}
-
-    /// Reset the state of the pointer runtime information.
-    void reset() {
-      Need = false;
-      Pointers.clear();
-      Starts.clear();
-      Ends.clear();
-      IsWritePtr.clear();
-      DependencySetId.clear();
-      AliasSetId.clear();
-    }
-
-    /// Insert a pointer and calculate the start and end SCEVs.
-    void insert(ScalarEvolution *SE, Loop *Lp, Value *Ptr, bool WritePtr,
-                unsigned DepSetId, unsigned ASId, ValueToValueMap &Strides);
-
-    /// This flag indicates if we need to add the runtime check.
-    bool Need;
-    /// Holds the pointers that we need to check.
-    SmallVector<TrackingVH<Value>, 2> Pointers;
-    /// Holds the pointer value at the beginning of the loop.
-    SmallVector<const SCEV*, 2> Starts;
-    /// Holds the pointer value at the end of the loop.
-    SmallVector<const SCEV*, 2> Ends;
-    /// Holds the information if this pointer is used for writing to memory.
-    SmallVector<bool, 2> IsWritePtr;
-    /// Holds the id of the set of pointers that could be dependent because of a
-    /// shared underlying object.
-    SmallVector<unsigned, 2> DependencySetId;
-    /// Holds the id of the disjoint alias set to which this pointer belongs.
-    SmallVector<unsigned, 2> AliasSetId;
   };
 
   /// A struct for saving information about induction variables.
@@ -1608,9 +1610,9 @@ static const SCEV *replaceSymbolicStrideSCEV(ScalarEvolution *SE,
   return SE->getSCEV(Ptr);
 }
 
-void LoopVectorizationLegality::RuntimePointerCheck::insert(
-    ScalarEvolution *SE, Loop *Lp, Value *Ptr, bool WritePtr, unsigned DepSetId,
-    unsigned ASId, ValueToValueMap &Strides) {
+void RuntimePointerCheck::insert(ScalarEvolution *SE, Loop *Lp, Value *Ptr,
+                                 bool WritePtr, unsigned DepSetId,
+                                 unsigned ASId, ValueToValueMap &Strides) {
   // Get the stride replaced scev.
   const SCEV *Sc = replaceSymbolicStrideSCEV(SE, Strides, Ptr);
   const SCEVAddRecExpr *AR = dyn_cast<SCEVAddRecExpr>(Sc);
@@ -2132,8 +2134,7 @@ InnerLoopVectorizer::addStrideCheck(Instruction *Loc) {
 
 std::pair<Instruction *, Instruction *>
 InnerLoopVectorizer::addRuntimeCheck(Instruction *Loc) {
-  LoopVectorizationLegality::RuntimePointerCheck *PtrRtCheck =
-  Legal->getRuntimePointerCheck();
+  RuntimePointerCheck *PtrRtCheck = Legal->getRuntimePointerCheck();
 
   Instruction *tnullptr = nullptr;
   if (!PtrRtCheck->Need)
@@ -4066,9 +4067,9 @@ public:
 
   /// \brief Check whether we can check the pointers at runtime for
   /// non-intersection.
-  bool canCheckPtrAtRT(LoopVectorizationLegality::RuntimePointerCheck &RtCheck,
-                       unsigned &NumComparisons, ScalarEvolution *SE,
-                       Loop *TheLoop, ValueToValueMap &Strides,
+  bool canCheckPtrAtRT(RuntimePointerCheck &RtCheck, unsigned &NumComparisons,
+                       ScalarEvolution *SE, Loop *TheLoop,
+                       ValueToValueMap &Strides,
                        bool ShouldCheckStride = false);
 
   /// \brief Goes over all memory accesses, checks whether a RT check is needed
@@ -4133,7 +4134,7 @@ static int isStridedPtr(ScalarEvolution *SE, const DataLayout *DL, Value *Ptr,
                         const Loop *Lp, ValueToValueMap &StridesMap);
 
 bool AccessAnalysis::canCheckPtrAtRT(
-    LoopVectorizationLegality::RuntimePointerCheck &RtCheck,
+    RuntimePointerCheck &RtCheck,
     unsigned &NumComparisons, ScalarEvolution *SE, Loop *TheLoop,
     ValueToValueMap &StridesMap, bool ShouldCheckStride) {
   // Find pointers with computable bounds. We are going to use this information
