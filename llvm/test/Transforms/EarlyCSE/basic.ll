@@ -1,4 +1,5 @@
 ; RUN: opt < %s -S -early-cse | FileCheck %s
+; RUN: opt < %s -S -passes=early-cse | FileCheck %s
 
 declare void @llvm.assume(i1) nounwind
 

@@ -12,7 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Transforms/Scalar.h"
+#include "llvm/Transforms/Scalar/EarlyCSE.h"
 #include "llvm/ADT/Hashing.h"
 #include "llvm/ADT/ScopedHashTable.h"
 #include "llvm/ADT/Statistic.h"
@@ -28,6 +28,7 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/RecyclingAllocator.h"
 #include "llvm/Analysis/TargetLibraryInfo.h"
+#include "llvm/Transforms/Scalar.h"
 #include "llvm/Transforms/Utils/Local.h"
 #include <deque>
 using namespace llvm;
@@ -687,6 +688,27 @@ bool EarlyCSE::run() {
   CurrentGeneration = LiveOutGeneration;
 
   return Changed;
+}
+
+PreservedAnalyses EarlyCSEPass::run(Function &F,
+                                    AnalysisManager<Function> *AM) {
+  const DataLayout *DL = F.getParent()->getDataLayout();
+
+  auto &TLI = AM->getResult<TargetLibraryAnalysis>(F);
+  auto &TTI = AM->getResult<TargetIRAnalysis>(F);
+  auto &DT = AM->getResult<DominatorTreeAnalysis>(F);
+  auto &AC = AM->getResult<AssumptionAnalysis>(F);
+
+  EarlyCSE CSE(F, DL, TLI, TTI, DT, AC);
+
+  if (!CSE.run())
+    return PreservedAnalyses::all();
+
+  // CSE preserves the dominator tree because it doesn't mutate the CFG.
+  // FIXME: Bundle this with other CFG-preservation.
+  PreservedAnalyses PA;
+  PA.preserve<DominatorTreeAnalysis>();
+  return PA;
 }
 
 namespace {
