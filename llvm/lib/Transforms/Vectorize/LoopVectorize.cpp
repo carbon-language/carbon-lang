@@ -239,6 +239,11 @@ public:
 
   std::string &str() { return Out.str(); }
   operator Twine() { return Out.str(); }
+
+  /// \brief Emit an analysis note with the debug location from the instruction
+  /// in \p Message if available.  Otherwise use the location of \p TheLoop.
+  static void emitAnalysis(Report &Message, const Function *TheFunction,
+                           const Loop *TheLoop);
 };
 
 /// InnerLoopVectorizer vectorizes loops which contain only one basic
@@ -549,6 +554,15 @@ static void propagateMetadata(Instruction *To, const Instruction *From) {
 
     To->setMetadata(Kind, M.second);
   }
+}
+
+void Report::emitAnalysis(Report &Message, const Function *TheFunction,
+                          const Loop *TheLoop) {
+  DebugLoc DL = TheLoop->getStartLoc();
+  if (Instruction *I = Message.getInstr())
+    DL = I->getDebugLoc();
+  emitOptimizationRemarkAnalysis(TheFunction->getContext(), DEBUG_TYPE,
+                                 *TheFunction, DL, Message.str());
 }
 
 /// \brief Propagate known metadata from one instruction to a vector of others.
@@ -889,11 +903,7 @@ private:
   /// Report an analysis message to assist the user in diagnosing loops that are
   /// not vectorized.
   void emitAnalysis(Report &Message) {
-    DebugLoc DL = TheLoop->getStartLoc();
-    if (Instruction *I = Message.getInstr())
-      DL = I->getDebugLoc();
-    emitOptimizationRemarkAnalysis(TheFunction->getContext(), DEBUG_TYPE,
-                                   *TheFunction, DL, Message.str());
+    Report::emitAnalysis(Message, TheFunction, TheLoop);
   }
 
   /// The loop that we evaluate.
@@ -1029,11 +1039,7 @@ private:
   /// Report an analysis message to assist the user in diagnosing loops that are
   /// not vectorized.
   void emitAnalysis(Report &Message) {
-    DebugLoc DL = TheLoop->getStartLoc();
-    if (Instruction *I = Message.getInstr())
-      DL = I->getDebugLoc();
-    emitOptimizationRemarkAnalysis(TheFunction->getContext(), DEBUG_TYPE,
-                                   *TheFunction, DL, Message.str());
+    Report::emitAnalysis(Message, TheFunction, TheLoop);
   }
 
   /// Values used only by @llvm.assume calls.
