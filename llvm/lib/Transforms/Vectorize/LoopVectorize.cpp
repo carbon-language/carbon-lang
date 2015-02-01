@@ -558,10 +558,10 @@ public:
       : NumPredStores(0), TheLoop(L), SE(SE), DL(DL), TLI(TLI), TheFunction(F),
         TTI(TTI), Induction(nullptr), WidestIndTy(nullptr),
         LAA(F, L, SE, DL, TLI, AA, DT,
-            {MaxVectorWidth, VectorizationFactor, VectorizationInterleave,
-             RuntimeMemoryCheckThreshold}),
-        HasFunNoNaNAttr(false) {
-  }
+            LoopAccessAnalysis::VectorizerParams(
+                MaxVectorWidth, VectorizationFactor, VectorizationInterleave,
+                RuntimeMemoryCheckThreshold)),
+        HasFunNoNaNAttr(false) {}
 
   /// This enum represents the kinds of reductions that we support.
   enum ReductionKind {
