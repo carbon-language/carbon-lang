@@ -187,6 +187,7 @@ private:
   const Function *F;
   std::string CurrentFnName;
 
+  void EmitBasicBlockStart(const MachineBasicBlock &MBB) const override;
   void EmitFunctionEntryLabel() override;
   void EmitFunctionBodyStart() override;
   void EmitFunctionBodyEnd() override;
@@ -281,6 +282,8 @@ private:
                                MCOperand &MCOp);
   void lowerImageHandleSymbol(unsigned Index, MCOperand &MCOp);
 
+  bool isLoopHeaderOfNoUnroll(const MachineBasicBlock &MBB) const;
+
   LineReader *reader;
   LineReader *getReader(std::string);
 
@@ -309,6 +312,11 @@ public:
   ~NVPTXAsmPrinter() {
     if (!reader)
       delete reader;
+  }
+
+  void getAnalysisUsage(AnalysisUsage &AU) const override {
+    AU.addRequired<MachineLoopInfo>();
+    AsmPrinter::getAnalysisUsage(AU);
   }
 
   bool ignoreLoc(const MachineInstr &);

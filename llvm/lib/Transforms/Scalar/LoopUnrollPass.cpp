@@ -234,44 +234,27 @@ static unsigned ApproximateLoopSize(const Loop *L, unsigned &NumCalls,
 // Returns the loop hint metadata node with the given name (for example,
 // "llvm.loop.unroll.count").  If no such metadata node exists, then nullptr is
 // returned.
-static const MDNode *GetUnrollMetadata(const Loop *L, StringRef Name) {
+static const MDNode *GetUnrollMetadataForLoop(const Loop *L, StringRef Name) {
   MDNode *LoopID = L->getLoopID();
   if (!LoopID)
     return nullptr;
-
-  // First operand should refer to the loop id itself.
-  assert(LoopID->getNumOperands() > 0 && "requires at least one operand");
-  assert(LoopID->getOperand(0) == LoopID && "invalid loop id");
-
-  for (unsigned i = 1, e = LoopID->getNumOperands(); i < e; ++i) {
-    const MDNode *MD = dyn_cast<MDNode>(LoopID->getOperand(i));
-    if (!MD)
-      continue;
-
-    const MDString *S = dyn_cast<MDString>(MD->getOperand(0));
-    if (!S)
-      continue;
-
-    if (Name.equals(S->getString()))
-      return MD;
-  }
-  return nullptr;
+  return GetUnrollMetadata(LoopID, Name);
 }
 
 // Returns true if the loop has an unroll(full) pragma.
 static bool HasUnrollFullPragma(const Loop *L) {
-  return GetUnrollMetadata(L, "llvm.loop.unroll.full");
+  return GetUnrollMetadataForLoop(L, "llvm.loop.unroll.full");
 }
 
 // Returns true if the loop has an unroll(disable) pragma.
 static bool HasUnrollDisablePragma(const Loop *L) {
-  return GetUnrollMetadata(L, "llvm.loop.unroll.disable");
+  return GetUnrollMetadataForLoop(L, "llvm.loop.unroll.disable");
 }
 
 // If loop has an unroll_count pragma return the (necessarily
 // positive) value from the pragma.  Otherwise return 0.
 static unsigned UnrollCountPragmaValue(const Loop *L) {
-  const MDNode *MD = GetUnrollMetadata(L, "llvm.loop.unroll.count");
+  const MDNode *MD = GetUnrollMetadataForLoop(L, "llvm.loop.unroll.count");
   if (MD) {
     assert(MD->getNumOperands() == 2 &&
            "Unroll count hint metadata should have two operands.");

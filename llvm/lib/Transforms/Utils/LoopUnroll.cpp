@@ -549,3 +549,26 @@ bool llvm::UnrollLoop(Loop *L, unsigned Count, unsigned TripCount,
 
   return true;
 }
+
+/// Given an llvm.loop loop id metadata node, returns the loop hint metadata
+/// node with the given name (for example, "llvm.loop.unroll.count"). If no
+/// such metadata node exists, then nullptr is returned.
+const MDNode *llvm::GetUnrollMetadata(const MDNode *LoopID, StringRef Name) {
+  // First operand should refer to the loop id itself.
+  assert(LoopID->getNumOperands() > 0 && "requires at least one operand");
+  assert(LoopID->getOperand(0) == LoopID && "invalid loop id");
+
+  for (unsigned i = 1, e = LoopID->getNumOperands(); i < e; ++i) {
+    const MDNode *MD = dyn_cast<MDNode>(LoopID->getOperand(i));
+    if (!MD)
+      continue;
+
+    const MDString *S = dyn_cast<MDString>(MD->getOperand(0));
+    if (!S)
+      continue;
+
+    if (Name.equals(S->getString()))
+      return MD;
+  }
+  return nullptr;
+}

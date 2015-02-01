@@ -238,10 +238,6 @@ public:
   ///
   void EmitAlignment(unsigned NumBits, const GlobalObject *GO = nullptr) const;
 
-  /// This method prints the label for the specified MachineBasicBlock, an
-  /// alignment (if present) and a comment describing it if appropriate.
-  void EmitBasicBlockStart(const MachineBasicBlock &MBB) const;
-
   /// Lower the specified LLVM Constant to an MCExpr.
   const MCExpr *lowerConstant(const Constant *CV);
 
@@ -270,6 +266,12 @@ public:
   /// Targets can override this to emit stuff after the last basic block in the
   /// function.
   virtual void EmitFunctionBodyEnd() {}
+
+  /// Targets can override this to emit stuff at the start of a basic block.
+  /// By default, this method prints the label for the specified
+  /// MachineBasicBlock, an alignment (if present) and a comment describing it
+  /// if appropriate.
+  virtual void EmitBasicBlockStart(const MachineBasicBlock &MBB) const;
 
   /// Targets can override this to emit stuff at the end of a basic block.
   virtual void EmitBasicBlockEnd(const MachineBasicBlock &MBB) {}

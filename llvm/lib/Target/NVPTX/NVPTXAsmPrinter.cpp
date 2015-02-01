@@ -27,6 +27,7 @@
 #include "llvm/Analysis/ConstantFolding.h"
 #include "llvm/CodeGen/Analysis.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
+#include "llvm/CodeGen/MachineLoopInfo.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/IR/DebugInfo.h"
@@ -45,6 +46,7 @@
 #include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/TimeValue.h"
 #include "llvm/Target/TargetLoweringObjectFile.h"
+#include "llvm/Transforms/Utils/UnrollLoop.h"
 #include <sstream>
 using namespace llvm;
 
@@ -416,6 +418,44 @@ void NVPTXAsmPrinter::printReturnValStr(const MachineFunction &MF,
                                         raw_ostream &O) {
   const Function *F = MF.getFunction();
   printReturnValStr(F, O);
+}
+
+// Return true if MBB is the header of a loop marked with
+// llvm.loop.unroll.disable.
+// TODO(jingyue): consider "#pragma unroll 1" which is equivalent to "#pragma
+// nounroll".
+bool NVPTXAsmPrinter::isLoopHeaderOfNoUnroll(
+    const MachineBasicBlock &MBB) const {
+  MachineLoopInfo &LI = getAnalysis<MachineLoopInfo>();
+  // TODO(jingyue): isLoopHeader() should take "const MachineBasicBlock *".
+  // We insert .pragma "nounroll" only to the loop header.
+  if (!LI.isLoopHeader(const_cast<MachineBasicBlock *>(&MBB)))
+    return false;
+
+  // llvm.loop.unroll.disable is marked on the back edges of a loop. Therefore,
+  // we iterate through each back edge of the loop with header MBB, and check
+  // whether its metadata contains llvm.loop.unroll.disable.
+  for (auto I = MBB.pred_begin(); I != MBB.pred_end(); ++I) {
+    const MachineBasicBlock *PMBB = *I;
+    if (LI.getLoopFor(PMBB) != LI.getLoopFor(&MBB)) {
+      // Edges from other loops to MBB are not back edges.
+      continue;
+    }
+    if (const BasicBlock *PBB = PMBB->getBasicBlock()) {
+      if (const MDNode *LoopID =
+              PBB->getTerminator()->getMetadata("llvm.loop")) {
+        if (GetUnrollMetadata(LoopID, "llvm.loop.unroll.disable"))
+          return true;
+      }
+    }
+  }
+  return false;
+}
+
+void NVPTXAsmPrinter::EmitBasicBlockStart(const MachineBasicBlock &MBB) const {
+  AsmPrinter::EmitBasicBlockStart(MBB);
+  if (isLoopHeaderOfNoUnroll(MBB))
+    OutStreamer.EmitRawText(StringRef("\t.pragma \"nounroll\";\n"));
 }
 
 void NVPTXAsmPrinter::EmitFunctionEntryLabel() {
