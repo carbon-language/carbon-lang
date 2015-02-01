@@ -73,7 +73,7 @@ attributes #2 = { nounwind }
 
 !0 = !{!"0x11\0012\00clang version 3.5.0 \000\00\000\00\001", !1, !2, !2, !3, !2, !2} ; [ DW_TAG_compile_unit ] [ DW_TAG_compile_unit ] [sroasplit-2.c] [DW_LANG_C99]
 !1 = !{!"sroasplit-2.c", !""}
-!2 = !{}
+!2 = !{!"0x102"}                                 ; [ DW_TAG_expression ]
 !3 = !{!4}
 !4 = !{!"0x2e\00foo\00foo\00\0010\000\001\000\006\00256\000\0010", !1, !5, !6, null, i32 (i64, i64)* @foo, null, null, !2} ; [ DW_TAG_subprogram ] [ DW_TAG_subprogram ] [line 10] [def] [foo]
 !5 = !{!"0x29", !1} ; [ DW_TAG_file_type ] [ DW_TAG_file_type ] [sroasplit-2.c]
