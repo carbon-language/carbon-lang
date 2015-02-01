@@ -29,84 +29,50 @@
 
 
 // rsqrt28
-static  __inline__ __m512d __attribute__((__always_inline__, __nodebug__))
-_mm512_rsqrt28_round_pd (__m512d __A, int __R)
-{
-  return (__m512d)__builtin_ia32_rsqrt28pd_mask ((__v8df)__A,
-                                                 (__v8df)_mm512_setzero_pd(),
-                                                 (__mmask8)-1,
-                                                 __R);
-}
-static  __inline__ __m512 __attribute__((__always_inline__, __nodebug__))
-_mm512_rsqrt28_round_ps(__m512 __A, int __R)
-{
-  return (__m512)__builtin_ia32_rsqrt28ps_mask ((__v16sf)__A,
-                                                (__v16sf)_mm512_setzero_ps(),
-                                                (__mmask16)-1,
-                                                __R);
-}
+#define _mm512_rsqrt28_round_pd(A, R) __extension ({ \
+  (__m512d)__builtin_ia32_rsqrt28pd_mask((__v8df)(__m512d)(A), \
+                                         (__v8df)_mm512_setzero_pd(), \
+                                         (__mmask8)-1, (R)); })
 
-static  __inline__ __m128 __attribute__((__always_inline__, __nodebug__))
-_mm_rsqrt28_round_ss(__m128 __A, __m128 __B, int __R)
-{
-  return (__m128) __builtin_ia32_rsqrt28ss_mask ((__v4sf) __A,
-             (__v4sf) __B,
-             (__v4sf)
-             _mm_setzero_ps (),
-             (__mmask8) -1,
-             __R);
-}
+#define _mm512_rsqrt28_round_ps(A, R) __extension__ ({ \
+  (__m512)__builtin_ia32_rsqrt28ps_mask((__v16sf)(__m512)(A), \
+                                        (__v16sf)_mm512_setzero_ps(), \
+                                        (__mmask16)-1, (R)); })
 
-static  __inline__ __m128d __attribute__((__always_inline__, __nodebug__))
-_mm_rsqrt28_round_sd (__m128d __A, __m128d __B, int __R)
-{
-  return (__m128d) __builtin_ia32_rsqrt28sd_mask ((__v2df) __A,
-              (__v2df) __B,
-              (__v2df)
-              _mm_setzero_pd (),
-              (__mmask8) -1,
-             __R);
-}
+#define _mm_rsqrt28_round_ss(A, B, R) __extension__ ({ \
+  (__m128)__builtin_ia32_rsqrt28ss_mask((__v4sf)(__m128)(A), \
+                                        (__v4sf)(__m128(B), \
+                                        (__v4sf)_mm_setzero_ps(), \
+                                        (__mmask8)-1, (R)); })
+
+#define _mm_rsqrt28_round_sd (A, B, R) __extension__ ({ \
+  (__m128d)__builtin_ia32_rsqrt28sd_mask((__v2df)(__m128d)(A), \
+                                         (__v2df)(__m128d)(B), \
+                                         (__v2df)_mm_setzero_pd(), \
+                                         (__mmask8)-1, (R)); })
 
 
 // rcp28
-static  __inline__ __m512d __attribute__((__always_inline__, __nodebug__))
-_mm512_rcp28_round_pd (__m512d __A, int __R)
-{
-  return (__m512d)__builtin_ia32_rcp28pd_mask ((__v8df)__A,
-                                               (__v8df)_mm512_setzero_pd(),
-                                               (__mmask8)-1,
-                                               __R);
-}
+#define _mm512_rcp28_round_pd(A, R) __extension__ ({ \
+  (__m512d)__builtin_ia32_rcp28pd_mask((__v8df)(__m512d)(A), \
+                                       (__v8df)_mm512_setzero_pd(), \
+                                       (__mmask8)-1, (R)); })
 
-static  __inline__ __m512 __attribute__((__always_inline__, __nodebug__))
-_mm512_rcp28_round_ps (__m512 __A, int __R)
-{
-  return (__m512)__builtin_ia32_rcp28ps_mask ((__v16sf)__A,
-                                              (__v16sf)_mm512_setzero_ps (),
-                                              (__mmask16)-1,
-                                              __R);
-}
+#define _mm512_rcp28_round_ps(A, R) __extension__ ({ \
+  (__m512)__builtin_ia32_rcp28ps_mask((__v16sf)(__m512)(A), \
+                                      (__v16sf)_mm512_setzero_ps(), \
+                                      (__mmask16)-1, (R)); })
 
-static  __inline__ __m128 __attribute__((__always_inline__, __nodebug__))
-_mm_rcp28_round_ss (__m128 __A, __m128 __B, int __R)
-{
-  return (__m128) __builtin_ia32_rcp28ss_mask ((__v4sf) __A,
-             (__v4sf) __B,
-             (__v4sf)
-             _mm_setzero_ps (),
-             (__mmask8) -1,
-             __R);
-}
-static  __inline__ __m128d __attribute__((__always_inline__, __nodebug__))
-_mm_rcp28_round_sd (__m128d __A, __m128d __B, int __R)
-{
-  return (__m128d) __builtin_ia32_rcp28sd_mask ((__v2df) __A,
-              (__v2df) __B,
-              (__v2df)
-              _mm_setzero_pd (),
-              (__mmask8) -1,
-             __R);
-}
+#define _mm_rcp28_round_ss(A, B, R) __extension__ ({ \
+  (__m128) __builtin_ia32_rcp28ss_mask ((__v4sf)(__m128)(A), \
+                                        (__v4sf)(__m128)(B), \
+                                        (__v4sf)_mm_setzero_ps(), \
+                                        (__mmask8)-1, (R)); })
+
+#define _mm_rcp28_round_sd(A, B, R) __extension__ ({ \
+  (__m128d)__builtin_ia32_rcp28sd_mask((__v2df)(__m128d)(A), \
+                                       (__v2df)(__m128d)(B), \
+                                       (__v2df)_mm_setzero_pd(), \
+                                       (__mmask8)-1, (R)); })
 
 #endif // __AVX512ERINTRIN_H
