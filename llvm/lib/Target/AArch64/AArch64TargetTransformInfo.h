@@ -39,7 +39,7 @@ class AArch64TTIImpl : public BasicTTIImplBase<AArch64TTIImpl> {
   /// are set if the result needs to be inserted and/or extracted from vectors.
   unsigned getScalarizationOverhead(Type *Ty, bool Insert, bool Extract);
 
-  const AArch64TargetMachine *getTM() const { return TM; }
+  const AArch64Subtarget *getST() const { return ST; }
   const AArch64TargetLowering *getTLI() const { return TLI; }
 
   enum MemIntrinsicType {

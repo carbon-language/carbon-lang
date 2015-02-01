@@ -31,10 +31,10 @@ extern cl::opt<unsigned> PartialUnrollingThreshold;
 /// This class provides as much implementation of the TTI interface as is
 /// possible using the target independent parts of the code generator.
 ///
-/// In order to subclass it, your class must implement a getTM() method to
-/// return the target machine, and a getTLI() method to return the target
-/// lowering. We need these methods implemented in the derived class so that
-/// this class doesn't have to duplicate storage for them.
+/// In order to subclass it, your class must implement a getST() method to
+/// return the subtarget, and a getTLI() method to return the target lowering.
+/// We need these methods implemented in the derived class so that this class
+/// doesn't have to duplicate storage for them.
 template <typename T>
 class BasicTTIImplBase : public TargetTransformInfoImplCRTPBase<T> {
 private:
@@ -80,8 +80,8 @@ private:
   }
 
   /// \brief Local query method delegates up to T which *must* implement this!
-  const TargetMachine *getTM() const {
-    return static_cast<const T *>(this)->getTM();
+  const TargetSubtargetInfo *getST() const {
+    return static_cast<const T *>(this)->getST();
   }
 
   /// \brief Local query method delegates up to T which *must* implement this!
@@ -193,7 +193,7 @@ public:
     // until someone finds a case where it matters in practice.
 
     unsigned MaxOps;
-    const TargetSubtargetInfo *ST = getTM()->getSubtargetImpl(*F);
+    const TargetSubtargetInfo *ST = getST();
     if (PartialUnrollingThreshold.getNumOccurrences() > 0)
       MaxOps = PartialUnrollingThreshold;
     else if (ST->getSchedModel().LoopMicroOpBufferSize > 0)
@@ -639,30 +639,30 @@ class BasicTTIImpl : public BasicTTIImplBase<BasicTTIImpl> {
   typedef BasicTTIImplBase<BasicTTIImpl> BaseT;
   friend class BasicTTIImplBase<BasicTTIImpl>;
 
-  const TargetMachine *TM;
+  const TargetSubtargetInfo *ST;
   const TargetLoweringBase *TLI;
 
-  const TargetMachine *getTM() const { return TM; }
+  const TargetSubtargetInfo *getST() const { return ST; }
   const TargetLoweringBase *getTLI() const { return TLI; }
 
 public:
-  explicit BasicTTIImpl(const TargetMachine *TM);
+  explicit BasicTTIImpl(const TargetMachine *ST, Function &F);
 
   // Provide value semantics. MSVC requires that we spell all of these out.
   BasicTTIImpl(const BasicTTIImpl &Arg)
-      : BaseT(static_cast<const BaseT &>(Arg)), TM(Arg.TM), TLI(Arg.TLI) {}
+      : BaseT(static_cast<const BaseT &>(Arg)), ST(Arg.ST), TLI(Arg.TLI) {}
   BasicTTIImpl(BasicTTIImpl &&Arg)
-      : BaseT(std::move(static_cast<BaseT &>(Arg))), TM(std::move(Arg.TM)),
+      : BaseT(std::move(static_cast<BaseT &>(Arg))), ST(std::move(Arg.ST)),
         TLI(std::move(Arg.TLI)) {}
   BasicTTIImpl &operator=(const BasicTTIImpl &RHS) {
     BaseT::operator=(static_cast<const BaseT &>(RHS));
-    TM = RHS.TM;
+    ST = RHS.ST;
     TLI = RHS.TLI;
     return *this;
   }
   BasicTTIImpl &operator=(BasicTTIImpl &&RHS) {
     BaseT::operator=(std::move(static_cast<BaseT &>(RHS)));
-    TM = std::move(RHS.TM);
+    ST = std::move(RHS.ST);
     TLI = std::move(RHS.TLI);
     return *this;
   }

@@ -183,7 +183,7 @@ unsigned PPCTTIImpl::getIntImmCost(unsigned Opcode, unsigned Idx,
 
 void PPCTTIImpl::getUnrollingPreferences(const Function *F, Loop *L,
                                          TTI::UnrollingPreferences &UP) {
-  if (TM->getSubtarget<PPCSubtarget>(F).getDarwinDirective() == PPC::DIR_A2) {
+  if (ST->getDarwinDirective() == PPC::DIR_A2) {
     // The A2 is in-order with a deep pipeline, and concatenation unrolling
     // helps expose latency-hiding opportunities to the instruction scheduler.
     UP.Partial = UP.Runtime = true;

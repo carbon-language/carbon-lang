@@ -79,8 +79,9 @@ LLVMTargetMachine::LLVMTargetMachine(const Target &T, StringRef Triple,
 }
 
 TargetIRAnalysis LLVMTargetMachine::getTargetIRAnalysis() {
-  return TargetIRAnalysis(
-      [this](Function &) { return TargetTransformInfo(BasicTTIImpl(this)); });
+  return TargetIRAnalysis([this](Function &F) {
+    return TargetTransformInfo(BasicTTIImpl(this, F));
+  });
 }
 
 /// addPassesToX helper drives creation and initialization of TargetPassConfig.
