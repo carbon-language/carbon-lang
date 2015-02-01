@@ -30,7 +30,7 @@ class XCoreTTIImpl : public BasicTTIImplBase<XCoreTTIImpl> {
   typedef TargetTransformInfo TTI;
 
 public:
-  explicit XCoreTTIImpl(const XCoreTargetMachine *TM = nullptr) : BaseT(TM) {}
+  explicit XCoreTTIImpl(const XCoreTargetMachine *TM) : BaseT(TM) {}
 
   // Provide value semantics. MSVC requires that we spell all of these out.
   XCoreTTIImpl(const XCoreTTIImpl &Arg)

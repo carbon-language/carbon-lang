@@ -35,9 +35,8 @@ class X86TTIImpl : public BasicTTIImplBase<X86TTIImpl> {
   unsigned getScalarizationOverhead(Type *Ty, bool Insert, bool Extract);
 
 public:
-  explicit X86TTIImpl(const X86TargetMachine *TM = nullptr)
-      : BaseT(TM), ST(TM ? TM->getSubtargetImpl() : nullptr),
-        TLI(ST ? ST->getTargetLowering() : nullptr) {}
+  explicit X86TTIImpl(const X86TargetMachine *TM)
+      : BaseT(TM), ST(TM->getSubtargetImpl()), TLI(ST->getTargetLowering()) {}
 
   // Provide value semantics. MSVC requires that we spell all of these out.
   X86TTIImpl(const X86TTIImpl &Arg)

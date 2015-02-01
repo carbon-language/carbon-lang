@@ -33,7 +33,7 @@ class PPCTTIImpl : public BasicTTIImplBase<PPCTTIImpl> {
   const PPCTargetLowering *TLI;
 
 public:
-  explicit PPCTTIImpl(const PPCTargetMachine *TM = nullptr)
+  explicit PPCTTIImpl(const PPCTargetMachine *TM)
       : BaseT(TM), ST(TM->getSubtargetImpl()), TLI(ST->getTargetLowering()) {}
 
   // Provide value semantics. MSVC requires that we spell all of these out.

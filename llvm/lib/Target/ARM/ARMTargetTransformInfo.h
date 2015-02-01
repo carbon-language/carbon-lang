@@ -37,9 +37,8 @@ class ARMTTIImpl : public BasicTTIImplBase<ARMTTIImpl> {
   unsigned getScalarizationOverhead(Type *Ty, bool Insert, bool Extract);
 
 public:
-  explicit ARMTTIImpl(const ARMBaseTargetMachine *TM = nullptr)
-      : BaseT(TM), ST(TM ? TM->getSubtargetImpl() : nullptr),
-        TLI(ST ? ST->getTargetLowering() : nullptr) {}
+  explicit ARMTTIImpl(const ARMBaseTargetMachine *TM)
+      : BaseT(TM), ST(TM->getSubtargetImpl()), TLI(ST->getTargetLowering()) {}
 
   // Provide value semantics. MSVC requires that we spell all of these out.
   ARMTTIImpl(const ARMTTIImpl &Arg)

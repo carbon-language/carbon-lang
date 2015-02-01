@@ -32,7 +32,7 @@ class AMDGPUTTIImpl : public BasicTTIImplBase<AMDGPUTTIImpl> {
   const AMDGPUSubtarget *ST;
 
 public:
-  explicit AMDGPUTTIImpl(const AMDGPUTargetMachine *TM = nullptr)
+  explicit AMDGPUTTIImpl(const AMDGPUTargetMachine *TM)
       : BaseT(TM), ST(TM->getSubtargetImpl()) {}
 
   // Provide value semantics. MSVC requires that we spell all of these out.

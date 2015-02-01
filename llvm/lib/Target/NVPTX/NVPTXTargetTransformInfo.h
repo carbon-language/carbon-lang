@@ -32,9 +32,8 @@ class NVPTXTTIImpl : public BasicTTIImplBase<NVPTXTTIImpl> {
   const NVPTXTargetLowering *TLI;
 
 public:
-  explicit NVPTXTTIImpl(const NVPTXTargetMachine *TM = nullptr)
-      : BaseT(TM),
-        TLI(TM ? TM->getSubtargetImpl()->getTargetLowering() : nullptr) {}
+  explicit NVPTXTTIImpl(const NVPTXTargetMachine *TM)
+      : BaseT(TM), TLI(TM->getSubtargetImpl()->getTargetLowering()) {}
 
   // Provide value semantics. MSVC requires that we spell all of these out.
   NVPTXTTIImpl(const NVPTXTTIImpl &Arg)

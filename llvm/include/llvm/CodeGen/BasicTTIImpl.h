@@ -628,7 +628,7 @@ class BasicTTIImpl : public BasicTTIImplBase<BasicTTIImpl> {
   typedef BasicTTIImplBase<BasicTTIImpl> BaseT;
 
 public:
-  explicit BasicTTIImpl(const TargetMachine *TM = nullptr);
+  explicit BasicTTIImpl(const TargetMachine *TM);
 
   // Provide value semantics. MSVC requires that we spell all of these out.
   BasicTTIImpl(const BasicTTIImpl &Arg)
