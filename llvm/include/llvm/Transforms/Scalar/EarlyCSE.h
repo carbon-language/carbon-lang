@@ -31,12 +31,6 @@ public:
   static StringRef name() { return "EarlyCSEPass"; }
 
   /// \brief Run the pass over the function.
-  ///
-  /// This will lower all of th expect intrinsic calls in this function into
-  /// branch weight metadata. That metadata will subsequently feed the analysis
-  /// of the probabilities and frequencies of the CFG. After running this pass,
-  /// no more expect intrinsics remain, allowing the rest of the optimizer to
-  /// ignore them.
   PreservedAnalyses run(Function &F, AnalysisManager<Function> *AM);
 };
 
