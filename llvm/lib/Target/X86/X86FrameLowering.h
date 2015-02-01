@@ -66,6 +66,8 @@ public:
 
   bool hasFP(const MachineFunction &MF) const override;
   bool hasReservedCallFrame(const MachineFunction &MF) const override;
+  bool canSimplifyCallFramePseudos(const MachineFunction &MF) const override;
+  bool needsFrameIndexResolution(const MachineFunction &MF) const override;
 
   int getFrameIndexOffset(const MachineFunction &MF, int FI) const override;
   int getFrameIndexReference(const MachineFunction &MF, int FI,

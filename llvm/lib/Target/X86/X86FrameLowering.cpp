@@ -38,7 +38,34 @@ using namespace llvm;
 extern cl::opt<bool> ForceStackAlign;
 
 bool X86FrameLowering::hasReservedCallFrame(const MachineFunction &MF) const {
-  return !MF.getFrameInfo()->hasVarSizedObjects();
+  return !MF.getFrameInfo()->hasVarSizedObjects() &&
+         !MF.getInfo<X86MachineFunctionInfo>()->getHasPushSequences();
+}
+
+/// canSimplifyCallFramePseudos - If there is a reserved call frame, the
+/// call frame pseudos can be simplified.  Having a FP, as in the default
+/// implementation, is not sufficient here since we can't always use it.
+/// Use a more nuanced condition.
+bool
+X86FrameLowering::canSimplifyCallFramePseudos(const MachineFunction &MF) const {
+  const X86RegisterInfo *TRI = static_cast<const X86RegisterInfo *>
+                               (MF.getSubtarget().getRegisterInfo());
+  return hasReservedCallFrame(MF) ||
+         (hasFP(MF) && !TRI->needsStackRealignment(MF))
+         || TRI->hasBasePointer(MF);
+}
+
+// needsFrameIndexResolution - Do we need to perform FI resolution for
+// this function. Normally, this is required only when the function
+// has any stack objects. However, FI resolution actually has another job,
+// not apparent from the title - it resolves callframesetup/destroy 
+// that were not simplified earlier.
+// So, this is required for x86 functions that have push sequences even
+// when there are no stack objects.
+bool
+X86FrameLowering::needsFrameIndexResolution(const MachineFunction &MF) const {
+  return MF.getFrameInfo()->hasStackObjects() ||
+         MF.getInfo<X86MachineFunctionInfo>()->getHasPushSequences();
 }
 
 /// hasFP - Return true if the specified function should have a dedicated frame
@@ -99,16 +126,6 @@ static unsigned getANDriOpcode(bool IsLP64, int64_t Imm) {
   if (isInt<8>(Imm))
     return X86::AND32ri8;
   return X86::AND32ri;
-}
-
-static unsigned getPUSHiOpcode(bool IsLP64, MachineOperand MO) {
-  // We don't support LP64 for now.
-  assert(!IsLP64);
-
-  if (MO.isImm() && isInt<8>(MO.getImm()))
-    return X86::PUSH32i8;
-
-  return X86::PUSHi32;;
 }
 
 static unsigned getLEArOpcode(unsigned IsLP64) {
@@ -1917,100 +1934,6 @@ void X86FrameLowering::adjustForHiPEPrologue(MachineFunction &MF) const {
 #endif
 }
 
-bool X86FrameLowering::
-convertArgMovsToPushes(MachineFunction &MF, MachineBasicBlock &MBB,
-                       MachineBasicBlock::iterator I, uint64_t Amount) const {
-  const TargetInstrInfo &TII = *MF.getSubtarget().getInstrInfo();
-  const X86RegisterInfo &RegInfo = *static_cast<const X86RegisterInfo *>(
-    MF.getSubtarget().getRegisterInfo());
-  unsigned StackPtr = RegInfo.getStackRegister();
-
-  // Scan the call setup sequence for the pattern we're looking for.
-  // We only handle a simple case now - a sequence of MOV32mi or MOV32mr
-  // instructions, that push a sequence of 32-bit values onto the stack, with
-  // no gaps.  
-  std::map<int64_t, MachineBasicBlock::iterator> MovMap;
-  do {
-    int Opcode = I->getOpcode();
-    if (Opcode != X86::MOV32mi && Opcode != X86::MOV32mr)
-      break;
- 
-    // We only want movs of the form:
-    // movl imm/r32, k(%ecx)
-    // If we run into something else, bail
-    // Note that AddrBaseReg may, counterintuitively, not be a register...
-    if (!I->getOperand(X86::AddrBaseReg).isReg() || 
-        (I->getOperand(X86::AddrBaseReg).getReg() != StackPtr) ||
-        !I->getOperand(X86::AddrScaleAmt).isImm() ||
-        (I->getOperand(X86::AddrScaleAmt).getImm() != 1) ||
-        (I->getOperand(X86::AddrIndexReg).getReg() != X86::NoRegister) ||
-        (I->getOperand(X86::AddrSegmentReg).getReg() != X86::NoRegister) ||
-        !I->getOperand(X86::AddrDisp).isImm())
-      return false;
-
-    int64_t StackDisp = I->getOperand(X86::AddrDisp).getImm();
-    
-    // We don't want to consider the unaligned case.
-    if (StackDisp % 4)
-      return false;
-
-    // If the same stack slot is being filled twice, something's fishy.
-    if (!MovMap.insert(std::pair<int64_t, MachineInstr*>(StackDisp, I)).second)
-      return false;
-
-    ++I;
-  } while (I != MBB.end());
-
-  // We now expect the end of the sequence - a call and a stack adjust.
-  if (I == MBB.end())
-    return false;
-  if (!I->isCall())
-    return false;
-  MachineBasicBlock::iterator Call = I;
-  if ((++I)->getOpcode() != TII.getCallFrameDestroyOpcode())
-    return false;
-
-  // Now, go through the map, and see that we don't have any gaps,
-  // but only a series of 32-bit MOVs.
-  // Since std::map provides ordered iteration, the original order
-  // of the MOVs doesn't matter.
-  int64_t ExpectedDist = 0;
-  for (auto MMI = MovMap.begin(), MME = MovMap.end(); MMI != MME; 
-       ++MMI, ExpectedDist += 4)
-    if (MMI->first != ExpectedDist)
-      return false;
-
-  // Ok, everything looks fine. Do the transformation.
-  DebugLoc DL = I->getDebugLoc();
-
-  // It's possible the original stack adjustment amount was larger than
-  // that done by the pushes. If so, we still need a SUB.
-  Amount -= ExpectedDist;
-  if (Amount) {
-    MachineInstr* Sub = BuildMI(MBB, Call, DL,
-                          TII.get(getSUBriOpcode(false, Amount)), StackPtr)
-                  .addReg(StackPtr).addImm(Amount);
-    Sub->getOperand(3).setIsDead();
-  }
-
-  // Now, iterate through the map in reverse order, and replace the movs
-  // with pushes. MOVmi/MOVmr doesn't have any defs, so need to replace uses.
-  for (auto MMI = MovMap.rbegin(), MME = MovMap.rend(); MMI != MME; ++MMI) {
-    MachineBasicBlock::iterator MOV = MMI->second;
-    MachineOperand PushOp = MOV->getOperand(X86::AddrNumOperands);
-
-    // Replace MOVmr with PUSH32r, and MOVmi with PUSHi of appropriate size
-    int PushOpcode = X86::PUSH32r;
-    if (MOV->getOpcode() == X86::MOV32mi)
-      PushOpcode = getPUSHiOpcode(false, PushOp);
-
-    BuildMI(MBB, Call, DL, TII.get(PushOpcode)).addOperand(PushOp);
-    MBB.erase(MOV);
-  }
-
-  return true;
-}
-
 void X86FrameLowering::
 eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
                               MachineBasicBlock::iterator I) const {
@@ -2025,7 +1948,7 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
   bool IsLP64 = STI.isTarget64BitLP64();
   DebugLoc DL = I->getDebugLoc();
   uint64_t Amount = !reserveCallFrame ? I->getOperand(0).getImm() : 0;
-  uint64_t CalleeAmt = isDestroy ? I->getOperand(1).getImm() : 0;
+  uint64_t InternalAmt = (isDestroy || Amount) ? I->getOperand(1).getImm() : 0;
   I = MBB.erase(I);
 
   if (!reserveCallFrame) {
@@ -2045,24 +1968,18 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
     Amount = (Amount + StackAlign - 1) / StackAlign * StackAlign;
 
     MachineInstr *New = nullptr;
-    if (Opcode == TII.getCallFrameSetupOpcode()) {
-      // Try to convert movs to the stack into pushes.
-      // We currently only look for a pattern that appears in 32-bit
-      // calling conventions.
-      if (!IsLP64 && convertArgMovsToPushes(MF, MBB, I, Amount))
-        return;
 
-      New = BuildMI(MF, DL, TII.get(getSUBriOpcode(IsLP64, Amount)),
-                    StackPtr)
-        .addReg(StackPtr)
-        .addImm(Amount);
-    } else {
-      assert(Opcode == TII.getCallFrameDestroyOpcode());
+    // Factor out the amount that gets handled inside the sequence
+    // (Pushes of argument for frame setup, callee pops for frame destroy)
+    Amount -= InternalAmt;
 
-      // Factor out the amount the callee already popped.
-      Amount -= CalleeAmt;
+    if (Amount) {
+      if (Opcode == TII.getCallFrameSetupOpcode()) {
+        New = BuildMI(MF, DL, TII.get(getSUBriOpcode(IsLP64, Amount)), StackPtr)
+          .addReg(StackPtr).addImm(Amount);
+      } else {
+        assert(Opcode == TII.getCallFrameDestroyOpcode());
 
-      if (Amount) {
         unsigned Opc = getADDriOpcode(IsLP64, Amount);
         New = BuildMI(MF, DL, TII.get(Opc), StackPtr)
           .addReg(StackPtr).addImm(Amount);
@@ -2080,13 +1997,13 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
     return;
   }
 
-  if (Opcode == TII.getCallFrameDestroyOpcode() && CalleeAmt) {
+  if (Opcode == TII.getCallFrameDestroyOpcode() && InternalAmt) {
     // If we are performing frame pointer elimination and if the callee pops
     // something off the stack pointer, add it back.  We do this until we have
     // more advanced stack pointer tracking ability.
-    unsigned Opc = getSUBriOpcode(IsLP64, CalleeAmt);
+    unsigned Opc = getSUBriOpcode(IsLP64, InternalAmt);
     MachineInstr *New = BuildMI(MF, DL, TII.get(Opc), StackPtr)
-      .addReg(StackPtr).addImm(CalleeAmt);
+      .addReg(StackPtr).addImm(InternalAmt);
 
     // The EFLAGS implicit def is dead.
     New->getOperand(3).setIsDead();

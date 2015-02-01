@@ -703,7 +703,8 @@ void PEI::insertPrologEpilogCode(MachineFunction &Fn) {
 /// register references and actual offsets.
 ///
 void PEI::replaceFrameIndices(MachineFunction &Fn) {
-  if (!Fn.getFrameInfo()->hasStackObjects()) return; // Nothing to do?
+  const TargetFrameLowering &TFI = *Fn.getSubtarget().getFrameLowering();
+  if (!TFI.needsFrameIndexResolution(Fn)) return;
 
   // Store SPAdj at exit of a basic block.
   SmallVector<int, 8> SPState;
@@ -768,13 +769,6 @@ void PEI::replaceFrameIndices(MachineBasicBlock *BB, MachineFunction &Fn,
         I = std::next(PrevI);
       continue;
     }
-
-    // If we are looking at a call sequence, we need to keep track of
-    // the SP adjustment made by each instruction in the sequence.
-    // This includes both the frame setup/destroy pseudos (handled above),
-    // as well as other instructions that have side effects w.r.t the SP.
-    if (InsideCallSequence)
-      SPAdj += TII.getSPAdjust(I);
 
     MachineInstr *MI = I;
     bool DoIncr = true;
@@ -853,6 +847,16 @@ void PEI::replaceFrameIndices(MachineBasicBlock *BB, MachineFunction &Fn,
       MI = nullptr;
       break;
     }
+
+    // If we are looking at a call sequence, we need to keep track of
+    // the SP adjustment made by each instruction in the sequence.
+    // This includes both the frame setup/destroy pseudos (handled above),
+    // as well as other instructions that have side effects w.r.t the SP.
+    // Note that this must come after eliminateFrameIndex, because 
+    // if I itself referred to a frame index, we shouldn't count its own
+    // adjustment.
+    if (MI && InsideCallSequence)
+      SPAdj += TII.getSPAdjust(MI);
 
     if (DoIncr && I != BB->end()) ++I;
 
