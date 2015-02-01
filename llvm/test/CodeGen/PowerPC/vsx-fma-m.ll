@@ -269,10 +269,10 @@ entry:
 ; re-ordering the instructions.
 ; CHECK-DAG: xvmaddadp [[V1]], 35, 36
 
-; CHECK-DAG: xvmaddmdp 36, 35, 37
+; CHECK-DAG: xvmaddmdp 35, 36, 37
 ; CHECK-DAG: xvmaddadp 34, 35, 38
 ; CHECK-DAG: stxvd2x 32, 0, 3
-; CHECK-DAG: stxvd2x 36, 3, [[C1]]
+; CHECK-DAG: stxvd2x 35, 3, [[C1]]
 ; CHECK-DAG: stxvd2x 34, 3, [[C2]]
 ; CHECK-DAG: stxvd2x 37, 3, [[C3]]
 ; CHECK: blr
