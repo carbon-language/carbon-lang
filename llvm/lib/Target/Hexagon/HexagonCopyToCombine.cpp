@@ -418,7 +418,7 @@ bool HexagonCopyToCombine::runOnMachineFunction(MachineFunction &MF) {
 
   // Get target info.
   TRI = MF.getSubtarget().getRegisterInfo();
-  TII = static_cast<const HexagonInstrInfo *>(MF.getSubtarget().getInstrInfo());
+  TII = MF.getSubtarget<HexagonSubtarget>().getInstrInfo();
 
   // Combine aggressively (for code size)
   ShouldCombineAggressively =
