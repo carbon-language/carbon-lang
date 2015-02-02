@@ -22,7 +22,6 @@
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ProfileData/CoverageMapping.h"
-#include "llvm/ProfileData/CoverageMappingReader.h"
 #include "llvm/ProfileData/InstrProfReader.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/FileSystem.h"
