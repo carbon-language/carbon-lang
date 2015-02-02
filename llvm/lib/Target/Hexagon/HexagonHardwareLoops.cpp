@@ -28,7 +28,7 @@
 
 #include "llvm/ADT/SmallSet.h"
 #include "Hexagon.h"
-#include "HexagonTargetMachine.h"
+#include "HexagonSubtarget.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/CodeGen/MachineDominators.h"
 #include "llvm/CodeGen/MachineFunction.h"
@@ -64,9 +64,7 @@ namespace {
     MachineLoopInfo            *MLI;
     MachineRegisterInfo        *MRI;
     MachineDominatorTree       *MDT;
-    const HexagonTargetMachine *TM;
     const HexagonInstrInfo     *TII;
-    const HexagonRegisterInfo  *TRI;
 #ifndef NDEBUG
     static int Counter;
 #endif
@@ -265,9 +263,7 @@ namespace {
       return Contents.ImmVal;
     }
 
-    void print(raw_ostream &OS, const TargetMachine *TM = nullptr) const {
-      const TargetRegisterInfo *TRI =
-          TM ? TM->getSubtargetImpl()->getRegisterInfo() : nullptr;
+    void print(raw_ostream &OS, const TargetRegisterInfo *TRI = nullptr) const {
       if (isReg()) { OS << PrintReg(Contents.R.Reg, TRI, Contents.R.Sub); }
       if (isImm()) { OS << Contents.ImmVal; }
     }
@@ -302,11 +298,7 @@ bool HexagonHardwareLoops::runOnMachineFunction(MachineFunction &MF) {
   MLI = &getAnalysis<MachineLoopInfo>();
   MRI = &MF.getRegInfo();
   MDT = &getAnalysis<MachineDominatorTree>();
-  TM  = static_cast<const HexagonTargetMachine*>(&MF.getTarget());
-  TII = static_cast<const HexagonInstrInfo *>(
-      TM->getSubtargetImpl()->getInstrInfo());
-  TRI = static_cast<const HexagonRegisterInfo *>(
-      TM->getSubtargetImpl()->getRegisterInfo());
+  TII = MF.getSubtarget<HexagonSubtarget>().getInstrInfo();
 
   for (MachineLoopInfo::iterator I = MLI->begin(), E = MLI->end();
        I != E; ++I) {
