@@ -76,12 +76,21 @@ define void @load_lds_i64_align_4_with_split_offset(i64 addrspace(1)* nocapture 
   ret void
 }
 
-; FIXME: Need to fix this case.
-; define void @load_lds_i64_align_1(i64 addrspace(1)* nocapture %out, i64 addrspace(3)* %in) #0 {
-;   %val = load i64 addrspace(3)* %in, align 1
-;   store i64 %val, i64 addrspace(1)* %out, align 8
-;   ret void
-; }
+; SI: {{^}}load_lds_i64_align_1
+; SI: ds_read_u8
+; SI: ds_read_u8
+; SI: ds_read_u8
+; SI: ds_read_u8
+; SI: ds_read_u8
+; SI: ds_read_u8
+; SI: ds_read_u8
+; SI: ds_read_u8
+; SI: s_endpgm
+define void @load_lds_i64_align_1(i64 addrspace(1)* nocapture %out, i64 addrspace(3)* %in) #0 {
+  %val = load i64 addrspace(3)* %in, align 1
+  store i64 %val, i64 addrspace(1)* %out, align 8
+  ret void
+}
 
 ; SI-LABEL: {{^}}store_lds_i64_align_4:
 ; SI: ds_write2_b32
