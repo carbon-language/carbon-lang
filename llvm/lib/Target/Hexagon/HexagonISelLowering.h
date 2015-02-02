@@ -77,6 +77,8 @@ bool isPositiveHalfWord(SDNode *N);
     };
   }
 
+  class HexagonSubtarget;
+
   class HexagonTargetLowering : public TargetLowering {
     int VarArgsFrameOffset;   // Frame offset to start of varargs area.
 
@@ -84,8 +86,9 @@ bool isPositiveHalfWord(SDNode *N);
                               unsigned& RetSize) const;
 
   public:
-    const TargetMachine &TM;
-    explicit HexagonTargetLowering(const TargetMachine &targetmachine);
+    const HexagonSubtarget *Subtarget;
+    explicit HexagonTargetLowering(const TargetMachine &TM,
+                                   const HexagonSubtarget &Subtarget);
 
     /// IsEligibleForTailCallOptimization - Check whether the call is eligible
     /// for tail call optimization. Targets which want to do tail call

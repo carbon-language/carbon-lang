@@ -74,7 +74,7 @@ HexagonSubtarget::initializeSubtargetDependencies(StringRef CPU, StringRef FS) {
 HexagonSubtarget::HexagonSubtarget(StringRef TT, StringRef CPU, StringRef FS,
                                    const TargetMachine &TM)
     : HexagonGenSubtargetInfo(TT, CPU, FS), CPUString(CPU.str()),
-      InstrInfo(initializeSubtargetDependencies(CPU, FS)), TLInfo(TM),
+      InstrInfo(initializeSubtargetDependencies(CPU, FS)), TLInfo(TM, *this),
       TSInfo(*TM.getDataLayout()), FrameLowering() {
 
   // Initialize scheduling itinerary for the specified CPU.
