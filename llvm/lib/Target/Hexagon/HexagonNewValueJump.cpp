@@ -355,11 +355,8 @@ bool HexagonNewValueJump::runOnMachineFunction(MachineFunction &MF) {
                << "********** Function: "
                << MF.getName() << "\n");
 
-#if 0
-  // for now disable this, if we move NewValueJump before register
-  // allocation we need this information.
-  LiveVariables &LVs = getAnalysis<LiveVariables>();
-#endif
+  // If we move NewValueJump before register allocation we'll need live variable
+  // analysis here too.
 
   QII = static_cast<const HexagonInstrInfo *>(MF.getSubtarget().getInstrInfo());
   QRI = static_cast<const HexagonRegisterInfo *>(
