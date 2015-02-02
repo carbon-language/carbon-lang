@@ -1,5 +1,5 @@
-; RUN: llc < %s -march=x86 -mattr=+mmx,+sse2 | FileCheck -check-prefix=X32 %s
-; RUN: llc < %s -march=x86-64 -mattr=+mmx,+sse2 | FileCheck -check-prefix=X64 %s
+; RUN: llc < %s -mtriple=i686-darwin -mattr=+mmx,+sse2 | FileCheck -check-prefix=X32 %s
+; RUN: llc < %s -mtriple=x86_64-darwin -mattr=+mmx,+sse2 | FileCheck -check-prefix=X64 %s
 
 ; If there is no explicit MMX type usage, always promote to XMM.
 
@@ -34,6 +34,21 @@ entry:
   %tmp556 = bitcast <8 x i8> %tmp555 to x86_mmx
   %tmp557 = bitcast <8 x i8> zeroinitializer to x86_mmx
   tail call void @llvm.x86.mmx.maskmovq( x86_mmx %tmp557, x86_mmx %tmp556, i8* null)
+  ret void
+}
+
+@tmp_V2i = common global <2 x i32> zeroinitializer
+
+define void @test2() nounwind {
+; X32-LABEL: test2:
+; X32:    movsd
+; X32-NEXT:    movlhps {{.*#+}} xmm0 = xmm0[0,0]
+; X32-NEXT:    pshufd {{.*#+}} xmm0 = xmm0[0,2,2,3]
+; X32-NEXT:    movlpd %xmm0, (%eax)
+entry:
+  %0 = load <2 x i32>* @tmp_V2i, align 8
+  %1 = shufflevector <2 x i32> %0, <2 x i32> undef, <2 x i32> zeroinitializer
+  store <2 x i32> %1, <2 x i32>* @tmp_V2i, align 8
   ret void
 }
 

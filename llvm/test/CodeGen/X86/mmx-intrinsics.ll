@@ -1347,3 +1347,12 @@ define <4 x float> @test89(<4 x float> %a, x86_mmx %b) nounwind {
 }
 
 declare <4 x float> @llvm.x86.sse.cvtpi2ps(<4 x float>, x86_mmx) nounwind readnone
+
+; CHECK-LABEL: test90
+define void @test90() {
+; CHECK: emms
+  call void @llvm.x86.mmx.emms()
+  ret void
+}
+
+declare void @llvm.x86.mmx.emms()
