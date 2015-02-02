@@ -1496,7 +1496,12 @@ PlatformDarwin::AddClangModuleCompilationOptionsForSDKType (Target *target, std:
         options.push_back(minimum_version_option.GetString());
     }
 
-    FileSpec sysroot_spec = GetSDKDirectoryForModules(sdk_type);
+    FileSpec sysroot_spec;
+    // Scope for mutex locker below
+    {
+        Mutex::Locker locker (m_mutex);
+        sysroot_spec = GetSDKDirectoryForModules(sdk_type);
+    }
     
     if (sysroot_spec.IsDirectory())
     {

@@ -952,8 +952,7 @@ namespace lldb_private {
         uint32_t m_update_os_version;
         ArchSpec m_system_arch; // The architecture of the kernel or the remote platform
         typedef std::map<uint32_t, ConstString> IDToNameMap;
-        Mutex m_uid_map_mutex;
-        Mutex m_gid_map_mutex;
+        Mutex m_mutex; // Mutex for modifying Platform data structures that should only be used for non-reentrant code
         IDToNameMap m_uid_map;
         IDToNameMap m_gid_map;
         size_t m_max_uid_name_len;
@@ -967,7 +966,6 @@ namespace lldb_private {
         std::string m_local_cache_directory;
         std::vector<ConstString> m_trap_handlers;
         bool m_calculated_trap_handlers;
-        Mutex m_trap_handler_mutex;
 
         //------------------------------------------------------------------
         /// Ask the Platform subclass to fill in the list of trap handler names
@@ -988,7 +986,7 @@ namespace lldb_private {
         const char *
         GetCachedUserName (uint32_t uid)
         {
-            Mutex::Locker locker (m_uid_map_mutex);
+            Mutex::Locker locker (m_mutex);
             IDToNameMap::iterator pos = m_uid_map.find (uid);
             if (pos != m_uid_map.end())
             {
@@ -1004,7 +1002,7 @@ namespace lldb_private {
         const char *
         SetCachedUserName (uint32_t uid, const char *name, size_t name_len)
         {
-            Mutex::Locker locker (m_uid_map_mutex);
+            Mutex::Locker locker (m_mutex);
             ConstString const_name (name);
             m_uid_map[uid] = const_name;
             if (m_max_uid_name_len < name_len)
@@ -1016,7 +1014,7 @@ namespace lldb_private {
         void
         SetUserNameNotFound (uint32_t uid)
         {
-            Mutex::Locker locker (m_uid_map_mutex);
+            Mutex::Locker locker (m_mutex);
             m_uid_map[uid] = ConstString();
         }
         
@@ -1024,14 +1022,14 @@ namespace lldb_private {
         void
         ClearCachedUserNames ()
         {
-            Mutex::Locker locker (m_uid_map_mutex);
+            Mutex::Locker locker (m_mutex);
             m_uid_map.clear();
         }
     
         const char *
         GetCachedGroupName (uint32_t gid)
         {
-            Mutex::Locker locker (m_gid_map_mutex);
+            Mutex::Locker locker (m_mutex);
             IDToNameMap::iterator pos = m_gid_map.find (gid);
             if (pos != m_gid_map.end())
             {
@@ -1047,7 +1045,7 @@ namespace lldb_private {
         const char *
         SetCachedGroupName (uint32_t gid, const char *name, size_t name_len)
         {
-            Mutex::Locker locker (m_gid_map_mutex);
+            Mutex::Locker locker (m_mutex);
             ConstString const_name (name);
             m_gid_map[gid] = const_name;
             if (m_max_gid_name_len < name_len)
@@ -1059,14 +1057,14 @@ namespace lldb_private {
         void
         SetGroupNameNotFound (uint32_t gid)
         {
-            Mutex::Locker locker (m_gid_map_mutex);
+            Mutex::Locker locker (m_mutex);
             m_gid_map[gid] = ConstString();
         }
 
         void
         ClearCachedGroupNames ()
         {
-            Mutex::Locker locker (m_gid_map_mutex);
+            Mutex::Locker locker (m_mutex);
             m_gid_map.clear();
         }
 
