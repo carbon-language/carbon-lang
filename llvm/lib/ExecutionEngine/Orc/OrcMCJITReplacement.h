@@ -154,8 +154,13 @@ public:
     std::tie(Obj, Buf) = O.takeBinary();
     std::vector<std::unique_ptr<object::ObjectFile>> Objs;
     Objs.push_back(std::move(Obj));
-    ObjectLayer.addObjectSet(std::move(Objs),
-                             llvm::make_unique<ForwardingRTDyldMM>(*this));
+    auto H =
+      ObjectLayer.addObjectSet(std::move(Objs),
+                               llvm::make_unique<ForwardingRTDyldMM>(*this));
+
+    std::vector<std::unique_ptr<MemoryBuffer>> Bufs;
+    Bufs.push_back(std::move(Buf));
+    ObjectLayer.takeOwnershipOfBuffers(H, std::move(Bufs));
   }
 
   void addArchive(object::OwningBinary<object::Archive> A) override {
