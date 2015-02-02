@@ -18,10 +18,6 @@
 
 namespace llvm {
 
-class MCSymbol;
-class X86TargetMachine;
-class X86Subtarget;
-
 class X86FrameLowering : public TargetFrameLowering {
 public:
   explicit X86FrameLowering(StackDirection D, unsigned StackAl, int LAO)
