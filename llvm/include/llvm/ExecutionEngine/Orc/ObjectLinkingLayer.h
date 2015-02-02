@@ -115,9 +115,9 @@ public:
   /// @brief Construct an ObjectLinkingLayer with the given NotifyLoaded,
   ///        NotifyFinalized and CreateMemoryManager functors.
   ObjectLinkingLayer(
-      CreateRTDyldMMFtor CreateMemoryManager,
-      NotifyLoadedFtor NotifyLoaded,
-      NotifyFinalizedFtor NotifyFinalized)
+      CreateRTDyldMMFtor CreateMemoryManager = CreateRTDyldMMFtor(),
+      NotifyLoadedFtor NotifyLoaded = NotifyLoadedFtor(),
+      NotifyFinalizedFtor NotifyFinalized = NotifyFinalizedFtor())
       : NotifyLoaded(std::move(NotifyLoaded)),
         NotifyFinalized(std::move(NotifyFinalized)),
         CreateMemoryManager(std::move(CreateMemoryManager)) {}
