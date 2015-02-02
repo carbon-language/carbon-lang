@@ -1,3 +1,5 @@
+#!/bin/sh
+
 set -e
 
 SRCS="
@@ -109,7 +111,7 @@ for F in $SRCS; do
 done
 
 FLAGS=" -I../rtl -I../.. -I../../sanitizer_common -I../../../include -std=c++11 -m64 -Wall -fno-exceptions -fno-rtti -DSANITIZER_GO -DSANITIZER_DEADLOCK_DETECTOR_VERSION=2 $OSCFLAGS"
-if [ "$DEBUG" == "" ]; then
+if [ "$DEBUG" = "" ]; then
 	FLAGS="$FLAGS -DSANITIZER_DEBUG=0 -O3 -msse3 -fomit-frame-pointer"
 else
 	FLAGS="$FLAGS -DSANITIZER_DEBUG=1 -g"
