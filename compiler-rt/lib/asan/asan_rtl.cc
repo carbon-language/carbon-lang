@@ -245,7 +245,13 @@ static void InitializeHighMemEnd() {
 }
 
 static void ProtectGap(uptr a, uptr size) {
-  CHECK_EQ(a, (uptr)Mprotect(a, size));
+  void *res = Mprotect(a, size);
+  if (a == (uptr)res)
+    return;
+  Report("ERROR: Failed to protect the shadow gap. "
+         "ASan cannot proceed correctly. ABORTING.\n");
+  DumpProcessMap();
+  Die();
 }
 
 static void PrintAddressSpaceLayout() {

@@ -123,8 +123,13 @@ void *MmapNoReserveOrDie(uptr size, const char *mem_type) {
 }
 
 void *Mprotect(uptr fixed_addr, uptr size) {
-  return VirtualAlloc((LPVOID)fixed_addr, size,
-                      MEM_RESERVE | MEM_COMMIT, PAGE_NOACCESS);
+  void *res = VirtualAlloc((LPVOID)fixed_addr, size,
+                           MEM_RESERVE | MEM_COMMIT, PAGE_NOACCESS);
+  if (res == 0)
+    Report("WARNING: %s failed to "
+           "mprotect %p (%zd) bytes at %p (error code: %d)\n",
+           SanitizerToolName, size, size, fixed_addr, GetLastError());
+  return res;
 }
 
 void FlushUnneededShadowMemory(uptr addr, uptr size) {
@@ -139,7 +144,7 @@ void NoHugePagesInRegion(uptr addr, uptr size) {
 bool MemoryRangeIsAvailable(uptr range_start, uptr range_end) {
   MEMORY_BASIC_INFORMATION mbi;
   CHECK(VirtualQuery((void *)range_start, &mbi, sizeof(mbi)));
-  return mbi.Protect & PAGE_NOACCESS &&
+  return mbi.Protect == PAGE_NOACCESS &&
          (uptr)mbi.BaseAddress + mbi.RegionSize >= range_end;
 }
 
