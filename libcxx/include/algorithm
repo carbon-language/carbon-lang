@@ -4407,6 +4407,9 @@ __inplace_merge(_BidirectionalIterator __first, _BidirectionalIterator __middle,
         // if __middle == __last, we're done
         if (__len2 == 0)
             return;
+        if (__len1 <= __buff_size || __len2 <= __buff_size)
+            return __buffered_inplace_merge<_Compare>
+                   (__first, __middle, __last, __comp, __len1, __len2, __buff);
         // shrink [__first, __middle) as much as possible (with no moves), returning if it shrinks to 0
         for (; true; ++__first, (void) --__len1)
         {
@@ -4414,11 +4417,6 @@ __inplace_merge(_BidirectionalIterator __first, _BidirectionalIterator __middle,
                 return;
             if (__comp(*__middle, *__first))
                 break;
-        }
-        if (__len1 <= __buff_size || __len2 <= __buff_size)
-        {
-            __buffered_inplace_merge<_Compare>(__first, __middle, __last, __comp, __len1, __len2, __buff);
-            return;
         }
         // __first < __middle < __last
         // *__first > *__middle
