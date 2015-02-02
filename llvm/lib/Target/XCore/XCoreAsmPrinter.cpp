@@ -50,15 +50,13 @@ using namespace llvm;
 
 namespace {
   class XCoreAsmPrinter : public AsmPrinter {
-    const XCoreSubtarget &Subtarget;
     XCoreMCInstLower MCInstLowering;
     XCoreTargetStreamer &getTargetStreamer();
 
   public:
     explicit XCoreAsmPrinter(TargetMachine &TM,
                              std::unique_ptr<MCStreamer> Streamer)
-        : AsmPrinter(TM, std::move(Streamer)),
-          Subtarget(TM.getSubtarget<XCoreSubtarget>()), MCInstLowering(*this) {}
+        : AsmPrinter(TM, std::move(Streamer)), MCInstLowering(*this) {}
 
     const char *getPassName() const override {
       return "XCore Assembly Printer";
