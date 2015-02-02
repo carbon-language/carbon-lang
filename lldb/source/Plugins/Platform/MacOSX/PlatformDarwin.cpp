@@ -987,6 +987,7 @@ PlatformDarwin::ARMGetSupportedArchitectureAtIndex (uint32_t idx, ArchSpec &arch
 const char *
 PlatformDarwin::GetDeveloperDirectory()
 {
+    Mutex::Locker locker (m_mutex);
     if (m_developer_directory.empty())
     {
         bool developer_dir_path_valid = false;
