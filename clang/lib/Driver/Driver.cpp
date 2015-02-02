@@ -44,19 +44,17 @@ using namespace clang::driver;
 using namespace clang;
 using namespace llvm::opt;
 
-Driver::Driver(StringRef ClangExecutable,
-               StringRef DefaultTargetTriple,
+Driver::Driver(StringRef ClangExecutable, StringRef DefaultTargetTriple,
                DiagnosticsEngine &Diags)
-  : Opts(createDriverOptTable()), Diags(Diags), Mode(GCCMode),
-    ClangExecutable(ClangExecutable), SysRoot(DEFAULT_SYSROOT),
-    UseStdLib(true), DefaultTargetTriple(DefaultTargetTriple),
-    DriverTitle("clang LLVM compiler"),
-    CCPrintOptionsFilename(nullptr), CCPrintHeadersFilename(nullptr),
-    CCLogDiagnosticsFilename(nullptr),
-    CCCPrintBindings(false),
-    CCPrintHeaders(false), CCLogDiagnostics(false),
-    CCGenDiagnostics(false), CCCGenericGCCName(""), CheckInputsExist(true),
-    CCCUsePCH(true), SuppressMissingInputWarning(false) {
+    : Opts(createDriverOptTable()), Diags(Diags), Mode(GCCMode),
+      SaveTemps(SaveTempsNone), ClangExecutable(ClangExecutable),
+      SysRoot(DEFAULT_SYSROOT), UseStdLib(true),
+      DefaultTargetTriple(DefaultTargetTriple),
+      DriverTitle("clang LLVM compiler"), CCPrintOptionsFilename(nullptr),
+      CCPrintHeadersFilename(nullptr), CCLogDiagnosticsFilename(nullptr),
+      CCCPrintBindings(false), CCPrintHeaders(false), CCLogDiagnostics(false),
+      CCGenDiagnostics(false), CCCGenericGCCName(""), CheckInputsExist(true),
+      CCCUsePCH(true), SuppressMissingInputWarning(false) {
 
   Name = llvm::sys::path::stem(ClangExecutable);
   Dir  = llvm::sys::path::parent_path(ClangExecutable);
@@ -364,6 +362,13 @@ Compilation *Driver::BuildCompilation(ArrayRef<const char *> ArgList) {
   if (const Arg *A = Args->getLastArg(options::OPT_resource_dir))
     ResourceDir = A->getValue();
 
+  if (const Arg *A = Args->getLastArg(options::OPT_save_temps_EQ)) {
+    SaveTemps = llvm::StringSwitch<SaveTempsMode>(A->getValue())
+                    .Case("cwd", SaveTempsCwd)
+                    .Case("obj", SaveTempsObj)
+                    .Default(SaveTempsCwd);
+  }
+
   // Perform the default argument translations.
   DerivedArgList *TranslatedArgs = TranslateInputArgs(*Args);
 
@@ -504,7 +509,7 @@ void Driver::generateCompilationDiagnostics(Compilation &C,
 
   // If any of the preprocessing commands failed, clean up and exit.
   if (!FailingCommands.empty()) {
-    if (!C.getArgs().hasArg(options::OPT_save_temps))
+    if (!isSaveTempsEnabled())
       C.CleanupFileList(C.getTempFiles(), true);
 
     Diag(clang::diag::note_drv_command_failed_diag_msg)
@@ -612,7 +617,7 @@ int Driver::ExecuteCompilation(Compilation &C,
     const Command *FailingCommand = it->second;
 
     // Remove result files if we're not saving temps.
-    if (!C.getArgs().hasArg(options::OPT_save_temps)) {
+    if (!isSaveTempsEnabled()) {
       const JobAction *JA = cast<JobAction>(&FailingCommand->getSource());
       C.CleanupFileMap(C.getResultFiles(), JA, true);
 
@@ -1471,8 +1476,8 @@ void Driver::BuildJobs(Compilation &C) const {
   }
 }
 
-static const Tool *SelectToolForJob(Compilation &C, const ToolChain *TC,
-                                    const JobAction *JA,
+static const Tool *SelectToolForJob(Compilation &C, bool SaveTemps,
+                                    const ToolChain *TC, const JobAction *JA,
                                     const ActionList *&Inputs) {
   const Tool *ToolForJob = nullptr;
 
@@ -1481,7 +1486,7 @@ static const Tool *SelectToolForJob(Compilation &C, const ToolChain *TC,
   // compiler input.
 
   if (TC->useIntegratedAs() &&
-      !C.getArgs().hasArg(options::OPT_save_temps) &&
+      !SaveTemps &&
       !C.getArgs().hasArg(options::OPT_via_file_asm) &&
       !C.getArgs().hasArg(options::OPT__SLASH_FA) &&
       !C.getArgs().hasArg(options::OPT__SLASH_Fa) &&
@@ -1512,8 +1517,7 @@ static const Tool *SelectToolForJob(Compilation &C, const ToolChain *TC,
     const Tool *Compiler = TC->SelectTool(*CompileJA);
     if (!Compiler)
       return nullptr;
-    if (!Compiler->canEmitIR() ||
-        !C.getArgs().hasArg(options::OPT_save_temps)) {
+    if (!Compiler->canEmitIR() || !SaveTemps) {
       Inputs = &(*Inputs)[0]->getInputs();
       ToolForJob = Compiler;
     }
@@ -1529,7 +1533,7 @@ static const Tool *SelectToolForJob(Compilation &C, const ToolChain *TC,
   if (Inputs->size() == 1 && isa<PreprocessJobAction>(*Inputs->begin()) &&
       !C.getArgs().hasArg(options::OPT_no_integrated_cpp) &&
       !C.getArgs().hasArg(options::OPT_traditional_cpp) &&
-      !C.getArgs().hasArg(options::OPT_save_temps) &&
+      !SaveTemps &&
       !C.getArgs().hasArg(options::OPT_rewrite_objc) &&
       ToolForJob->hasIntegratedCPP())
     Inputs = &(*Inputs)[0]->getInputs();
@@ -1577,7 +1581,7 @@ void Driver::BuildJobsForAction(Compilation &C,
   const ActionList *Inputs = &A->getInputs();
 
   const JobAction *JA = cast<JobAction>(A);
-  const Tool *T = SelectToolForJob(C, TC, JA, Inputs);
+  const Tool *T = SelectToolForJob(C, isSaveTempsEnabled(), TC, JA, Inputs);
   if (!T)
     return;
 
@@ -1708,7 +1712,7 @@ const char *Driver::GetNamedOutputPath(Compilation &C,
   }
 
   // Output to a temporary file?
-  if ((!AtTopLevel && !C.getArgs().hasArg(options::OPT_save_temps) &&
+  if ((!AtTopLevel && !isSaveTempsEnabled() &&
         !C.getArgs().hasArg(options::OPT__SLASH_Fo)) ||
       CCGenDiagnostics) {
     StringRef Name = llvm::sys::path::filename(BaseInput);
@@ -1780,11 +1784,20 @@ const char *Driver::GetNamedOutputPath(Compilation &C,
     NamedOutput = C.getArgs().MakeArgString(Suffixed.c_str());
   }
 
+  // Prepend object file path if -save-temps=obj
+  if (!AtTopLevel && isSaveTempsObj() && C.getArgs().hasArg(options::OPT_o) &&
+      JA.getType() != types::TY_PCH) {
+    Arg *FinalOutput = C.getArgs().getLastArg(options::OPT_o);
+    SmallString<128> TempPath(FinalOutput->getValue());
+    llvm::sys::path::remove_filename(TempPath);
+    StringRef OutputFileName = llvm::sys::path::filename(NamedOutput);
+    llvm::sys::path::append(TempPath, OutputFileName);
+    NamedOutput = C.getArgs().MakeArgString(TempPath.c_str());
+  }
+
   // If we're saving temps and the temp file conflicts with the input file,
   // then avoid overwriting input file.
-  if (!AtTopLevel && C.getArgs().hasArg(options::OPT_save_temps) &&
-      NamedOutput == BaseName) {
-
+  if (!AtTopLevel && isSaveTempsEnabled() && NamedOutput == BaseName) {
     bool SameFile = false;
     SmallString<256> Result;
     llvm::sys::fs::current_path(Result);
