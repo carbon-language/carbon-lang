@@ -2509,8 +2509,7 @@ bool Parser::ParseUnqualifiedId(CXXScopeSpec &SS, bool EnteringContext,
 
     // If the user wrote ~T::T, correct it to T::~T.
     DeclaratorScopeObj DeclScopeObj(*this, SS);
-    if (!TemplateSpecified && //!ColonIsSacred &&
-        NextToken().is(tok::coloncolon)) {
+    if (!TemplateSpecified && NextToken().is(tok::coloncolon)) {
       // Don't let ParseOptionalCXXScopeSpecifier() "correct"
       // `int A; struct { ~A::A(); };` to `int A; struct { ~A:A(); };`,
       // it will confuse this recovery logic.
