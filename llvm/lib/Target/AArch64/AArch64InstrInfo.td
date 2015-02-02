@@ -3716,29 +3716,21 @@ defm : Neon_INS_elt_pattern<v2i64, v1i64, i64, INSvi32lane>;
 
 
 // Floating point vector extractions are codegen'd as either a sequence of
-// subregister extractions, possibly fed by an INS if the lane number is
-// anything other than zero.
+// subregister extractions, or a MOV (aka CPY here, alias for DUP) if
+// the lane number is anything other than zero.
 def : Pat<(vector_extract (v2f64 V128:$Rn), 0),
           (f64 (EXTRACT_SUBREG V128:$Rn, dsub))>;
 def : Pat<(vector_extract (v4f32 V128:$Rn), 0),
           (f32 (EXTRACT_SUBREG V128:$Rn, ssub))>;
 def : Pat<(vector_extract (v8f16 V128:$Rn), 0),
           (f16 (EXTRACT_SUBREG V128:$Rn, hsub))>;
+
 def : Pat<(vector_extract (v2f64 V128:$Rn), VectorIndexD:$idx),
-          (f64 (EXTRACT_SUBREG
-            (INSvi64lane (v2f64 (IMPLICIT_DEF)), 0,
-                         V128:$Rn, VectorIndexD:$idx),
-            dsub))>;
+          (f64 (CPYi64 V128:$Rn, VectorIndexD:$idx))>;
 def : Pat<(vector_extract (v4f32 V128:$Rn), VectorIndexS:$idx),
-          (f32 (EXTRACT_SUBREG
-            (INSvi32lane (v4f32 (IMPLICIT_DEF)), 0,
-                         V128:$Rn, VectorIndexS:$idx),
-            ssub))>;
+          (f32 (CPYi32 V128:$Rn, VectorIndexS:$idx))>;
 def : Pat<(vector_extract (v8f16 V128:$Rn), VectorIndexH:$idx),
-          (f16 (EXTRACT_SUBREG
-            (INSvi16lane (v8f16 (IMPLICIT_DEF)), 0,
-                         V128:$Rn, VectorIndexH:$idx),
-            hsub))>;
+          (f16 (CPYi16 V128:$Rn, VectorIndexH:$idx))>;
 
 // All concat_vectors operations are canonicalised to act on i64 vectors for
 // AArch64. In the general case we need an instruction, which had just as well be

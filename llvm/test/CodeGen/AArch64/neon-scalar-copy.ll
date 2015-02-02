@@ -2,7 +2,7 @@
 
 define float @test_dup_sv2S(<2 x float> %v) #0 {
  ; CHECK-LABEL: test_dup_sv2S:
- ; CHECK-NEXT: ins {{v[0-9]+}}.s[0], {{v[0-9]+}}.s[1]
+ ; CHECK-NEXT: mov s{{[0-9]+}}, {{v[0-9]+}}.s[1]
  ; CHECK-NEXT: ret
  %tmp1 = extractelement <2 x float> %v, i32 1
  ret float  %tmp1
@@ -19,7 +19,7 @@ define float @test_dup_sv2S_0(<2 x float> %v) #0 {
 
 define float @test_dup_sv4S(<4 x float> %v) #0 {
  ; CHECK-LABEL: test_dup_sv4S:
- ; CHECK-NEXT: ins {{v[0-9]+}}.s[0], {{v[0-9]+}}.s[1]
+ ; CHECK-NEXT: mov s{{[0-9]+}}, {{v[0-9]+}}.s[1]
  ; CHECK-NEXT: ret
  %tmp1 = extractelement <4 x float> %v, i32 1
  ret float  %tmp1
@@ -45,7 +45,7 @@ define double @test_dup_dvD(<1 x double> %v) #0 {
 
 define double @test_dup_dv2D(<2 x double> %v) #0 {
  ; CHECK-LABEL: test_dup_dv2D:
- ; CHECK-NEXT: ins {{v[0-9]+}}.d[0], {{v[0-9]+}}.d[1]
+ ; CHECK-NEXT: mov d{{[0-9]+}}, {{v[0-9]+}}.d[1]
  ; CHECK-NEXT: ret
  %tmp1 = extractelement <2 x double> %v, i32 1
  ret double  %tmp1
@@ -62,7 +62,7 @@ define double @test_dup_dv2D_0(<2 x double> %v) #0 {
 
 define half @test_dup_hv8H(<8 x half> %v) #0 {
  ; CHECK-LABEL: test_dup_hv8H:
- ; CHECK-NEXT: ins {{v[0-9]+}}.h[0], {{v[0-9]+}}.h[1]
+ ; CHECK-NEXT: mov h{{[0-9]+}}, {{v[0-9]+}}.h[1]
  ; CHECK-NEXT: ret
  %tmp1 = extractelement <8 x half> %v, i32 1
  ret half  %tmp1

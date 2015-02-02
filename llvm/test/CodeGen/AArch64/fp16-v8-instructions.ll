@@ -188,10 +188,10 @@ define <8 x half> @s_to_h(<8 x float> %a) {
 
 define <8 x half> @d_to_h(<8 x double> %a) {
 ; CHECK-LABEL: d_to_h:
-; CHECK-DAG: ins v{{[0-9]+}}.d
-; CHECK-DAG: ins v{{[0-9]+}}.d
-; CHECK-DAG: ins v{{[0-9]+}}.d
-; CHECK-DAG: ins v{{[0-9]+}}.d
+; CHECK-DAG: mov d{{[0-9]+}}, v{{[0-9]+}}.d[1]
+; CHECK-DAG: mov d{{[0-9]+}}, v{{[0-9]+}}.d[1]
+; CHECK-DAG: mov d{{[0-9]+}}, v{{[0-9]+}}.d[1]
+; CHECK-DAG: mov d{{[0-9]+}}, v{{[0-9]+}}.d[1]
 ; CHECK-DAG: fcvt h
 ; CHECK-DAG: fcvt h
 ; CHECK-DAG: fcvt h
