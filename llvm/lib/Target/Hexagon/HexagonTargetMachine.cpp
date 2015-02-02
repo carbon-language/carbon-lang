@@ -151,7 +151,6 @@ void HexagonPassConfig::addPreSched2() {
 }
 
 void HexagonPassConfig::addPreEmitPass() {
-  const HexagonTargetMachine &TM = getHexagonTargetMachine();
   bool NoOpt = (getOptLevel() == CodeGenOpt::None);
 
   if (!NoOpt)
@@ -161,7 +160,7 @@ void HexagonPassConfig::addPreEmitPass() {
   addPass(createHexagonExpandPredSpillCode(), false);
 
   // Split up TFRcondsets into conditional transfers.
-  addPass(createHexagonSplitTFRCondSets(TM), false);
+  addPass(createHexagonSplitTFRCondSets(), false);
 
   // Create Packets.
   if (!NoOpt) {
