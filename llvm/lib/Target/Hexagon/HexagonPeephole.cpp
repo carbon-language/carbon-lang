@@ -112,7 +112,7 @@ INITIALIZE_PASS(HexagonPeephole, "hexagon-peephole", "Hexagon Peephole",
 
 bool HexagonPeephole::runOnMachineFunction(MachineFunction &MF) {
   QII = static_cast<const HexagonInstrInfo *>(MF.getSubtarget().getInstrInfo());
-  QRI = MF.getTarget().getSubtarget<HexagonSubtarget>().getRegisterInfo();
+  QRI = MF.getSubtarget<HexagonSubtarget>().getRegisterInfo();
   MRI = &MF.getRegInfo();
 
   DenseMap<unsigned, unsigned> PeepholeMap;
