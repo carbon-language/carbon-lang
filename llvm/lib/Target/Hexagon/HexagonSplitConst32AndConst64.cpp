@@ -48,12 +48,9 @@ using namespace llvm;
 namespace {
 
 class HexagonSplitConst32AndConst64 : public MachineFunctionPass {
-  const HexagonTargetMachine &QTM;
-
  public:
     static char ID;
-    HexagonSplitConst32AndConst64(const HexagonTargetMachine &TM)
-        : MachineFunctionPass(ID), QTM(TM) {}
+    HexagonSplitConst32AndConst64() : MachineFunctionPass(ID) {}
 
     const char *getPassName() const override {
       return "Hexagon Split Const32s and Const64s";
@@ -68,13 +65,12 @@ char HexagonSplitConst32AndConst64::ID = 0;
 bool HexagonSplitConst32AndConst64::runOnMachineFunction(MachineFunction &Fn) {
 
   const HexagonTargetObjectFile &TLOF =
-      (const HexagonTargetObjectFile &)QTM.getSubtargetImpl()
-          ->getTargetLowering()
-          ->getObjFileLowering();
+      *static_cast<const HexagonTargetObjectFile *>(
+          Fn.getTarget().getObjFileLowering());
   if (TLOF.IsSmallDataEnabled())
     return true;
 
-  const TargetInstrInfo *TII = QTM.getSubtargetImpl()->getInstrInfo();
+  const TargetInstrInfo *TII = Fn.getSubtarget().getInstrInfo();
 
   // Loop over all of the basic blocks
   for (MachineFunction::iterator MBBb = Fn.begin(), MBBe = Fn.end();
@@ -139,9 +135,9 @@ bool HexagonSplitConst32AndConst64::runOnMachineFunction(MachineFunction &Fn) {
       else if (Opc == Hexagon::CONST64_Int_Real) {
         int DestReg = MI->getOperand(0).getReg();
         int64_t ImmValue = MI->getOperand(1).getImm ();
-        unsigned DestLo = QTM.getSubtargetImpl()->getRegisterInfo()->getSubReg(
+        unsigned DestLo = Fn.getSubtarget().getRegisterInfo()->getSubReg(
             DestReg, Hexagon::subreg_loreg);
-        unsigned DestHi = QTM.getSubtargetImpl()->getRegisterInfo()->getSubReg(
+        unsigned DestHi = Fn.getSubtarget().getRegisterInfo()->getSubReg(
             DestReg, Hexagon::subreg_hireg);
 
         int32_t LowWord = (ImmValue & 0xFFFFFFFF);
@@ -176,6 +172,6 @@ bool HexagonSplitConst32AndConst64::runOnMachineFunction(MachineFunction &Fn) {
 //===----------------------------------------------------------------------===//
 
 FunctionPass *
-llvm::createHexagonSplitConst32AndConst64(const HexagonTargetMachine &TM) {
-  return new HexagonSplitConst32AndConst64(TM);
+llvm::createHexagonSplitConst32AndConst64() {
+  return new HexagonSplitConst32AndConst64();
 }
