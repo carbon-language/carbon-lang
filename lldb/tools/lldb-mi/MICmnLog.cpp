@@ -73,7 +73,6 @@ CMICmnLog::Initialize(void)
     // Mediums set inside because explicitly initing in MIDriverMain.cpp causes compile errors with CAtlFile
     CMICmnLogMediumFile &rFileLog(CMICmnLogMediumFile::Instance());
     bool bOk = RegisterMedium(rFileLog);
-    bOk = bOk && SetEnabled(true);
     if (bOk)
     {
         // Set the Log trace file's header

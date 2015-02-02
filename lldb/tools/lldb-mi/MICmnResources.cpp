@@ -82,7 +82,7 @@ const CMICmnResources::SRsrcTextData CMICmnResources::ms_pResourceId2TextData[] 
     {IDE_MI_APP_ARG_EXECUTEABLE, "--executable\n\tUse the MI Driver in MI mode for the debugging the specified\n\texecutable. Any LLDB "
                                  "command line options are ignored even\n\tif the MI Driver falls through to the LLDB driver. "
                                  "(Depends\n\ton the build configuration see MICmnConfig.h)\n\tNormally specified from the command line."},
-    {IDE_MI_APP_ARG_NO_APP_LOG, "--noLog\n\tUse this argument to tell the MI Driver not to update it's log\n\tfile '%s'."},
+    {IDE_MI_APP_ARG_APP_LOG, "--log\n\tUse this argument to tell the MI Driver to update it's log\n\tfile '%s'."},
     {IDE_MI_APP_ARG_EXAMPLE, "Example MI command:\n\t3-info-gdb-mi-command gdb-set\n\t3^done,command={exists=\"true\"}"},
     {IDE_MI_APP_ARG_EXECUTABLE, "executable (NOT IMPLEMENTED)\n\tThe file path to the executable i.e. '\"C:\\My Dev\\foo.exe\"'."},
     {IDS_STDIN_ERR_INVALID_PROMPT, "Stdin. Invalid prompt description '%s'"},

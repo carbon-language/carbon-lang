@@ -125,8 +125,6 @@ CMIDriverMgr::Shutdown(void)
 
     if (vbAppExitOk)
     {
-        // The MI Driver's log updating may have been switched off switch back on to say all is ok.
-        CMICmnLog::Instance().SetEnabled(true);
 #if _DEBUG
         CMICmnStreamStdout::Instance().Write(MIRSRC(IDE_MI_APP_EXIT_OK)); // Both stdout and Log
 #else
@@ -144,8 +142,6 @@ CMIDriverMgr::Shutdown(void)
         }
         else
         {
-            // The MI Driver's log updating may have been switched off switch back on to say there has been problem.
-            rAppLog.SetEnabled(true);
             const CMIUtilString msg(
                 CMIUtilString::Format(MIRSRC(IDE_MI_APP_EXIT_WITH_PROBLEM_NO_LOG), CMICmnLogMediumFile::Instance().GetFileName().c_str()));
             CMICmnStreamStdout::Instance().Write(msg);
@@ -495,7 +491,7 @@ CMIDriverMgr::DriverGetTheDebugger(void)
 //              --interpreter
 //              --version
 //              --versionLong
-//              --noLog
+//              --log
 //              --executable
 //          The above arguments are not handled by any driver object except for --executable.
 //          The options --interpreter and --executable in code act very similar. The
@@ -552,7 +548,7 @@ CMIDriverMgr::ParseArgs(const int argc, const char *argv[], bool &vwbExiting)
     bool bHaveArgInterpret = false;
     bool bHaveArgVersion = false;
     bool bHaveArgVersionLong = false;
-    bool bHaveArgNoLog = false;
+    bool bHaveArgLog = false;
     bool bHaveArgHelp = false;
 
 // Hardcode the use of the MI driver
@@ -582,9 +578,9 @@ CMIDriverMgr::ParseArgs(const int argc, const char *argv[], bool &vwbExiting)
             {
                 bHaveArgVersionLong = true;
             }
-            if (0 == strArg.compare("--noLog"))
+            if (0 == strArg.compare("--log"))
             {
-                bHaveArgNoLog = true;
+                bHaveArgLog = true;
             }
             if ((0 == strArg.compare("--help")) || (0 == strArg.compare("-h")))
             {
@@ -593,9 +589,9 @@ CMIDriverMgr::ParseArgs(const int argc, const char *argv[], bool &vwbExiting)
         }
     }
 
-    if (bHaveArgNoLog)
+    if (bHaveArgLog)
     {
-        CMICmnLog::Instance().SetEnabled(false);
+        CMICmnLog::Instance().SetEnabled(true);
     }
 
     // Todo: Remove this output when MI is finished. It is temporary to persuade Ecllipse plugin to work.
@@ -687,7 +683,7 @@ CMIDriverMgr::GetHelpOnCmdLineArgOptions(void) const
         MIRSRC(IDE_MI_APP_ARG_VERSION_LONG),
         MIRSRC(IDE_MI_APP_ARG_INTERPRETER),
         MIRSRC(IDE_MI_APP_ARG_EXECUTEABLE),
-        CMIUtilString::Format(MIRSRC(IDE_MI_APP_ARG_NO_APP_LOG), CMICmnLogMediumFile::Instance().GetFileName().c_str()),
+        CMIUtilString::Format(MIRSRC(IDE_MI_APP_ARG_APP_LOG), CMICmnLogMediumFile::Instance().GetFileName().c_str()),
         MIRSRC(IDE_MI_APP_ARG_EXECUTABLE),
         MIRSRC(IDS_CMD_QUIT_HELP),
         MIRSRC(IDE_MI_APP_ARG_EXAMPLE)};
