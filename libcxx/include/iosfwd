@@ -180,12 +180,7 @@ typedef fpos<mbstate_t>    u16streampos;
 typedef fpos<mbstate_t>    u32streampos;
 #endif  // _LIBCPP_HAS_NO_UNICODE_CHARS
 
-#if defined(_NEWLIB_VERSION)
-// On newlib, off_t is 'long int'
-typedef long int streamoff;         // for char_traits in <string>
-#else
 typedef long long streamoff;        // for char_traits in <string>
-#endif
 
 template <class _CharT,             // for <stdexcept>
           class _Traits = char_traits<_CharT>,
