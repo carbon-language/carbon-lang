@@ -100,6 +100,12 @@ protected:
   }
   ~DebugNode() {}
 
+  StringRef getStringOperand(unsigned I) const {
+    if (auto *S = cast_or_null<MDString>(getOperand(I)))
+      return S->getString();
+    return StringRef();
+  }
+
 public:
   unsigned getTag() const { return SubclassData16; }
 
@@ -171,11 +177,7 @@ public:
   TempGenericDebugNode clone() const { return cloneImpl(); }
 
   unsigned getTag() const { return SubclassData16; }
-  StringRef getHeader() const {
-    if (auto *S = cast_or_null<MDString>(getOperand(0)))
-      return S->getString();
-    return StringRef();
-  }
+  StringRef getHeader() const { return getStringOperand(0); }
 
   op_iterator dwarf_op_begin() const { return op_begin() + 1; }
   op_iterator dwarf_op_end() const { return op_end(); }

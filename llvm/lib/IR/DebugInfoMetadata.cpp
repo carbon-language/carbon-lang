@@ -71,6 +71,13 @@ MDLocation *MDLocation::getImpl(LLVMContext &Context, unsigned Line,
                    Storage, Context.pImpl->MDLocations);
 }
 
+/// \brief Get the MDString, or nullptr if the string is empty.
+static MDString *getCanonicalMDString(LLVMContext &Context, StringRef S) {
+  if (S.empty())
+    return nullptr;
+  return MDString::get(Context, S);
+}
+
 GenericDebugNode *GenericDebugNode::getImpl(LLVMContext &Context, unsigned Tag,
                                             StringRef Header,
                                             ArrayRef<Metadata *> DwarfOps,
@@ -89,8 +96,7 @@ GenericDebugNode *GenericDebugNode::getImpl(LLVMContext &Context, unsigned Tag,
   }
 
   // Use a nullptr for empty headers.
-  Metadata *PreOps[] = {Header.empty() ? nullptr
-                                       : MDString::get(Context, Header)};
+  Metadata *PreOps[] = {getCanonicalMDString(Context, Header)};
   return storeImpl(new (DwarfOps.size() + 1) GenericDebugNode(
                        Context, Storage, Hash, Tag, PreOps, DwarfOps),
                    Storage, Context.pImpl->GenericDebugNodes);
