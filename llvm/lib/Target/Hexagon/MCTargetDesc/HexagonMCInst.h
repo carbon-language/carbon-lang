@@ -50,9 +50,6 @@ public:
   static const size_t packetEndIndex = 1;
   void resetPacket();
 
-  // Return the slots used by the insn.
-  unsigned getUnits(const HexagonTargetMachine *TM) const;
-
   // Return the Hexagon ISA class for the insn.
   unsigned getType() const;
 
