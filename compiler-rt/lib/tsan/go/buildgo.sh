@@ -35,7 +35,8 @@ if [ "`uname -a | grep Linux`" != "" ]; then
 	SUFFIX="linux_amd64"
 	OSCFLAGS="-fPIC -ffreestanding -Wno-maybe-uninitialized -Wno-unused-const-variable -Werror -Wno-unknown-warning-option"
 	OSLDFLAGS="-lpthread -fPIC -fpie"
-	SRCS+="
+	SRCS="
+		$SRCS
 		../rtl/tsan_platform_linux.cc
 		../../sanitizer_common/sanitizer_posix.cc
 		../../sanitizer_common/sanitizer_posix_libcdep.cc
@@ -49,7 +50,8 @@ elif [ "`uname -a | grep FreeBSD`" != "" ]; then
         SUFFIX="freebsd_amd64"
         OSCFLAGS="-fno-strict-aliasing -fPIC -Werror"
         OSLDFLAGS="-lpthread -fPIC -fpie"
-        SRCS+="
+        SRCS="
+                $SRCS
                 ../rtl/tsan_platform_linux.cc
                 ../../sanitizer_common/sanitizer_posix.cc
                 ../../sanitizer_common/sanitizer_posix_libcdep.cc
@@ -63,7 +65,8 @@ elif [ "`uname -a | grep Darwin`" != "" ]; then
 	SUFFIX="darwin_amd64"
 	OSCFLAGS="-fPIC -Wno-unused-const-variable -Wno-unknown-warning-option"
 	OSLDFLAGS="-lpthread -fPIC -fpie"
-	SRCS+="
+	SRCS="
+		$SRCS
 		../rtl/tsan_platform_mac.cc
 		../../sanitizer_common/sanitizer_mac.cc
 		../../sanitizer_common/sanitizer_posix.cc
@@ -74,7 +77,8 @@ elif [ "`uname -a | grep MINGW`" != "" ]; then
 	SUFFIX="windows_amd64"
 	OSCFLAGS="-Wno-error=attributes -Wno-attributes -Wno-unused-const-variable -Wno-unknown-warning-option"
 	OSLDFLAGS=""
-	SRCS+="
+	SRCS="
+		$SRCS
 		../rtl/tsan_platform_windows.cc
 		../../sanitizer_common/sanitizer_win.cc
 	"
@@ -97,7 +101,7 @@ else
   DIR=.
 fi
 
-SRCS+=$ADD_SRCS
+SRCS="$SRCS $ADD_SRCS"
 
 rm -f $DIR/gotsan.cc
 for F in $SRCS; do
@@ -106,9 +110,9 @@ done
 
 FLAGS=" -I../rtl -I../.. -I../../sanitizer_common -I../../../include -std=c++11 -m64 -Wall -fno-exceptions -fno-rtti -DSANITIZER_GO -DSANITIZER_DEADLOCK_DETECTOR_VERSION=2 $OSCFLAGS"
 if [ "$DEBUG" == "" ]; then
-	FLAGS+=" -DSANITIZER_DEBUG=0 -O3 -msse3 -fomit-frame-pointer"
+	FLAGS="$FLAGS -DSANITIZER_DEBUG=0 -O3 -msse3 -fomit-frame-pointer"
 else
-	FLAGS+=" -DSANITIZER_DEBUG=1 -g"
+	FLAGS="$FLAGS -DSANITIZER_DEBUG=1 -g"
 fi
 
 if [ "$SILENT" != "1" ]; then

@@ -101,10 +101,10 @@ endif()
 add_dependencies(compiler-rt tsan)
 
 # Sanity check for Go runtime.
+set(BUILDGO_SCRIPT ${CMAKE_CURRENT_SOURCE_DIR}/go/buildgo.sh)
 add_custom_target(GotsanRuntimeCheck
-  COMMAND CC=${CMAKE_C_COMPILER} IN_TMPDIR=1 SILENT=1
-          ${CMAKE_CURRENT_SOURCE_DIR}/go/buildgo.sh
-  DEPENDS clang_rt.tsan-${arch}
+  COMMAND CC=${CMAKE_C_COMPILER} IN_TMPDIR=1 SILENT=1 ${BUILDGO_SCRIPT}
+  DEPENDS clang_rt.tsan-${arch} ${BUILDGO_SCRIPT}
   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/go
   COMMENT "Checking TSan Go runtime..."
   VERBATIM)
