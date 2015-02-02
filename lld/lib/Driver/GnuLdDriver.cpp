@@ -280,9 +280,7 @@ GnuLdDriver::evalLinkerScript(ELFLinkingContext &ctx,
   if (!script)
     return LinkerScriptReaderError::parse_error;
   // Evaluate script commands.
-  // Currently we only recognize this subset of linker script commands:
-  // - GROUP()
-  // - SEARCH_DIR()
+  // Currently we only recognize this subset of linker script commands.
   for (const script::Command *c : script->_commands) {
     if (auto *group = dyn_cast<script::Group>(c))
       if (std::error_code ec = evaluateLinkerScriptGroup(ctx, path, group, diag))
@@ -291,6 +289,8 @@ GnuLdDriver::evalLinkerScript(ELFLinkingContext &ctx,
       ctx.addSearchPath(searchDir->getSearchPath());
     if (auto *entry = dyn_cast<script::Entry>(c))
       ctx.setEntrySymbolName(entry->getEntryName());
+    if (auto *output = dyn_cast<script::Output>(c))
+      ctx.setOutputPath(output->getOutputFileName());
   }
   return std::error_code();
 }
