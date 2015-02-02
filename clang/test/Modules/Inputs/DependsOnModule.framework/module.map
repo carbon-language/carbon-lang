@@ -16,6 +16,12 @@ framework module DependsOnModule {
     requires !objc
     header "not_objc.h"
   }
+  explicit module CustomReq1 {
+    requires custom_req1
+  }
+  explicit module CustomReq2 {
+    requires custom_req2
+  }
 
   explicit framework module SubFramework {
     umbrella header "SubFramework.h"
