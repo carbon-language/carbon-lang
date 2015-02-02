@@ -76,7 +76,12 @@ public:
       Buffers.push_back(std::move(Buffer));
     }
 
-    return BaseLayer.addObjectSet(std::move(Objects), std::move(MM));
+    ModuleSetHandleT H =
+      BaseLayer.addObjectSet(Objects, std::move(MM));
+
+    BaseLayer.takeOwnershipOfBuffers(H, std::move(Buffers));
+
+    return H;
   }
 
   /// @brief Remove the module set associated with the handle H.
