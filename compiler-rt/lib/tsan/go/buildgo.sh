@@ -83,11 +83,25 @@ else
 	exit 1
 fi
 
+CC=${CC:-gcc}
+IN_TMPDIR=${IN_TMPDIR:-0}
+SILENT=${SILENT:-0}
+
+if [ $IN_TMPDIR != "0" ]; then
+  DIR=$(mktemp -qd /tmp/gotsan.XXXXXXXXXX)
+  cleanup() {
+    rm -rf $DIR
+  }
+  trap cleanup EXIT
+else
+  DIR=.
+fi
+
 SRCS+=$ADD_SRCS
 
-rm -f gotsan.cc
+rm -f $DIR/gotsan.cc
 for F in $SRCS; do
-	cat $F >> gotsan.cc
+	cat $F >> $DIR/gotsan.cc
 done
 
 FLAGS=" -I../rtl -I../.. -I../../sanitizer_common -I../../../include -std=c++11 -m64 -Wall -fno-exceptions -fno-rtti -DSANITIZER_GO -DSANITIZER_DEADLOCK_DETECTOR_VERSION=2 $OSCFLAGS"
@@ -97,10 +111,16 @@ else
 	FLAGS+=" -DSANITIZER_DEBUG=1 -g"
 fi
 
-CC=${CC:-gcc}
+if [ "$SILENT" != "1" ]; then
+  echo $CC gotsan.cc -c -o $DIR/race_$SUFFIX.syso $FLAGS $CFLAGS
+fi
+$CC $DIR/gotsan.cc -c -o $DIR/race_$SUFFIX.syso $FLAGS $CFLAGS
 
-echo $CC gotsan.cc -c -o race_$SUFFIX.syso $FLAGS $CFLAGS
-$CC gotsan.cc -c -o race_$SUFFIX.syso $FLAGS $CFLAGS
+$CC test.c $DIR/race_$SUFFIX.syso -m64 -o $DIR/test $OSLDFLAGS
 
-$CC test.c race_$SUFFIX.syso -m64 -o test $OSLDFLAGS
-GORACE="exitcode=0 atexit_sleep_ms=0" ./test
+export GORACE="exitcode=0 atexit_sleep_ms=0"
+if [ "$SILENT" != "1" ]; then
+  $DIR/test
+else
+  $DIR/test 2>/dev/null
+fi

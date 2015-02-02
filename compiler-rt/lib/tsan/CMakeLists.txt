@@ -100,6 +100,15 @@ endif()
 
 add_dependencies(compiler-rt tsan)
 
+# Sanity check for Go runtime.
+add_custom_target(GotsanRuntimeCheck
+  COMMAND CC=${CMAKE_C_COMPILER} IN_TMPDIR=1 SILENT=1
+          ${CMAKE_CURRENT_SOURCE_DIR}/go/buildgo.sh
+  DEPENDS clang_rt.tsan-${arch}
+  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/go
+  COMMENT "Checking TSan Go runtime..."
+  VERBATIM)
+
 # Build libcxx instrumented with TSan.
 if(TSAN_SUPPORTED_ARCH AND
    COMPILER_RT_HAS_LIBCXX_SOURCES AND
