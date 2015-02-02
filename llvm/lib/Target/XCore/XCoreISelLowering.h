@@ -93,8 +93,8 @@ namespace llvm {
   class XCoreTargetLowering : public TargetLowering
   {
   public:
-
-    explicit XCoreTargetLowering(const TargetMachine &TM);
+    explicit XCoreTargetLowering(const TargetMachine &TM,
+                                 const XCoreSubtarget &Subtarget);
 
     using TargetLowering::isZExtFree;
     bool isZExtFree(SDValue Val, EVT VT2) const override;
