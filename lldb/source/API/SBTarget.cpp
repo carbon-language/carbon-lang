@@ -729,6 +729,9 @@ SBTarget::Launch
     {
         Mutex::Locker api_locker (target_sp->GetAPIMutex());
 
+        if (stop_at_entry)
+            launch_flags |= eLaunchFlagStopAtEntry;
+
         if (getenv("LLDB_LAUNCH_FLAG_DISABLE_ASLR"))
             launch_flags |= eLaunchFlagDisableASLR;
 
