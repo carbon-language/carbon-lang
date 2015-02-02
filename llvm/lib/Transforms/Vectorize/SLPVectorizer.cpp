@@ -3943,6 +3943,7 @@ bool SLPVectorizer::vectorizeChainsInBlock(BasicBlock *BB, BoUpSLP &R) {
             // and the iterator may become invalid value.
             it = BB->begin();
             e = BB->end();
+            break;
           }
         }
       }
