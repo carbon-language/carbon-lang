@@ -16,6 +16,7 @@
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/StringSet.h"
 #include "llvm/Analysis/TargetLibraryInfo.h"
+#include "llvm/Analysis/TargetTransformInfo.h"
 #include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/CodeGen/Analysis.h"
 #include "llvm/CodeGen/CommandFlags.h"
@@ -696,8 +697,11 @@ getModuleForFile(LLVMContext &Context, claimed_file &F, raw_fd_ostream *ApiFile,
   return Obj.takeModule();
 }
 
-static void runLTOPasses(Module &M, const TargetMachine &TM) {
+static void runLTOPasses(Module &M, TargetMachine &TM) {
   PassManager passes;
+  passes.add(new DataLayoutPass());
+  passes.add(createTargetTransformInfoWrapperPass(TM.getTargetIRAnalysis()));
+
   PassManagerBuilder PMB;
   PMB.LibraryInfo = new TargetLibraryInfoImpl(Triple(TM.getTargetTriple()));
   PMB.Inliner = createFunctionInliningPass();
