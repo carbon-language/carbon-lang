@@ -69,6 +69,10 @@ MCInstrDesc const &HexagonMCInst::getDesc() const {
   return (MCII->get(getOpcode()));
 }
 
+MCInstrDesc const &HexagonMCInst::getDesc() const {
+  return (MCII->get(getOpcode()));
+}
+
 // Return the Hexagon ISA class for the insn.
 unsigned HexagonMCInst::getType() const {
   const uint64_t F = getDesc().TSFlags;
