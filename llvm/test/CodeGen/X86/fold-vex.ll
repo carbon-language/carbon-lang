@@ -1,7 +1,7 @@
 ; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mcpu=corei7-avx | FileCheck %s
 
 ;CHECK: @test
-; No need to load from memory. The operand will be loaded as part of th AND instr.
+; No need to load from memory. The operand will be loaded as part of the AND instr.
 ;CHECK-NOT: vmovaps
 ;CHECK: vandps
 ;CHECK: ret
