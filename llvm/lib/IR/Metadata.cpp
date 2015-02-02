@@ -1,4 +1,4 @@
-//===-- Metadata.cpp - Implement Metadata classes -------------------------===//
+//===- Metadata.cpp - Implement Metadata classes --------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

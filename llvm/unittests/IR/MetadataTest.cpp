@@ -1,4 +1,4 @@
-//===- llvm/unittest/IR/Metadata.cpp - Metadata unit tests ----------------===//
+//===- unittests/IR/MetadataTest.cpp - Metadata unit tests ----------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
