@@ -21,7 +21,6 @@
 namespace llvm {
 
 class DataLayout;
-class TargetMachine;
 
 //===----------------------------------------------------------------------===//
 /// TargetSelectionDAGInfo - Targets can subclass this to parameterize the
