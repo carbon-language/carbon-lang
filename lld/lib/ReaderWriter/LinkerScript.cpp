@@ -69,6 +69,7 @@ void Token::dump(raw_ostream &os) const {
     CASE(kw_provide_hidden)
     CASE(kw_only_if_ro)
     CASE(kw_only_if_rw)
+    CASE(kw_output)
     CASE(kw_output_arch)
     CASE(kw_output_format)
     CASE(kw_overlay)
@@ -515,6 +516,7 @@ void Lexer::lex(Token &tok) {
             .Case("KEEP", Token::kw_keep)
             .Case("ONLY_IF_RO", Token::kw_only_if_ro)
             .Case("ONLY_IF_RW", Token::kw_only_if_rw)
+            .Case("OUTPUT", Token::kw_output)
             .Case("OUTPUT_ARCH", Token::kw_output_arch)
             .Case("OUTPUT_FORMAT", Token::kw_output_format)
             .Case("OVERLAY", Token::kw_overlay)
@@ -901,6 +903,13 @@ LinkerScript *Parser::parse() {
     case Token::semicolon:
       consumeToken();
       break;
+    case Token::kw_output: {
+      auto output = parseOutput();
+      if (!output)
+        return nullptr;
+      _script._commands.push_back(output);
+      break;
+    }
     case Token::kw_output_format: {
       auto outputFormat = parseOutputFormat();
       if (!outputFormat)
@@ -1209,6 +1218,27 @@ const Expression *Parser::parseTernaryCondOp(const Expression *lhs) {
     return nullptr;
 
   return new (_alloc) TernaryConditional(lhs, trueExpr, falseExpr);
+}
+
+// Parse OUTPUT(ident)
+Output *Parser::parseOutput() {
+  assert(_tok._kind == Token::kw_output && "Expected OUTPUT");
+  consumeToken();
+  if (!expectAndConsume(Token::l_paren, "expected ("))
+    return nullptr;
+
+  if (_tok._kind != Token::identifier) {
+    error(_tok, "Expected identifier in OUTPUT.");
+    return nullptr;
+  }
+
+  auto ret = new (_alloc) Output(_tok._range);
+  consumeToken();
+
+  if (!expectAndConsume(Token::r_paren, "expected )"))
+    return nullptr;
+
+  return ret;
 }
 
 // Parse OUTPUT_FORMAT(ident)

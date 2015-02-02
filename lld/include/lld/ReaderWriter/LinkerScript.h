@@ -78,6 +78,7 @@ public:
     kw_provide_hidden,
     kw_only_if_ro,
     kw_only_if_rw,
+    kw_output,
     kw_output_arch,
     kw_output_format,
     kw_overlay,
@@ -149,6 +150,7 @@ public:
     Entry,
     Group,
     InputSectionsCmd,
+    Output,
     OutputArch,
     OutputFormat,
     OutputSectionDescription,
@@ -169,6 +171,23 @@ protected:
 
 private:
   Kind _kind;
+};
+
+class Output : public Command {
+public:
+  explicit Output(StringRef outputFileName)
+      : Command(Kind::Output), _outputFileName(outputFileName) {}
+
+  static bool classof(const Command *c) { return c->getKind() == Kind::Output; }
+
+  void dump(raw_ostream &os) const override {
+    os << "OUTPUT(" << _outputFileName << ")\n";
+  }
+
+  StringRef getOutputFileName() const { return _outputFileName; }
+
+private:
+  StringRef _outputFileName;
 };
 
 class OutputFormat : public Command {
@@ -833,6 +852,13 @@ private:
   const Expression *parseTernaryCondOp(const Expression *lhs);
 
   // ==== High-level commands parsing ====
+
+  /// Parse the OUTPUT linker script command.
+  /// Example:
+  /// OUTPUT(/path/to/file)
+  /// ^~~~> parseOutput()
+  ///
+  Output *parseOutput();
 
   /// Parse the OUTPUT_FORMAT linker script command.
   /// Example:
