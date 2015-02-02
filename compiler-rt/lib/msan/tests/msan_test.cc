@@ -1732,6 +1732,7 @@ TEST(MemorySanitizer, sincosf) {
   EXPECT_NOT_POISONED(s);
   EXPECT_NOT_POISONED(c);
 }
+#endif
 
 // There's no sincosl() on FreeBSD.
 #if !defined(__FreeBSD__)
