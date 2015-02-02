@@ -58,8 +58,8 @@ class X86FastISel final : public FastISel {
 public:
   explicit X86FastISel(FunctionLoweringInfo &funcInfo,
                        const TargetLibraryInfo *libInfo)
-    : FastISel(funcInfo, libInfo) {
-    Subtarget = &TM.getSubtarget<X86Subtarget>();
+      : FastISel(funcInfo, libInfo) {
+    Subtarget = &funcInfo.MF->getSubtarget<X86Subtarget>();
     X86ScalarSSEf64 = Subtarget->hasSSE2();
     X86ScalarSSEf32 = Subtarget->hasSSE1();
   }
@@ -127,7 +127,7 @@ private:
   bool X86SelectFPTrunc(const Instruction *I);
 
   const X86InstrInfo *getInstrInfo() const {
-    return getTargetMachine()->getSubtargetImpl()->getInstrInfo();
+    return Subtarget->getInstrInfo();
   }
   const X86TargetMachine *getTargetMachine() const {
     return static_cast<const X86TargetMachine *>(&TM);
@@ -2148,8 +2148,7 @@ bool X86FastISel::fastLowerIntrinsicCall(const IntrinsicInst *II) {
     MachineFrameInfo *MFI = FuncInfo.MF->getFrameInfo();
     MFI->setFrameAddressIsTaken(true);
 
-    const X86RegisterInfo *RegInfo = static_cast<const X86RegisterInfo *>(
-        TM.getSubtargetImpl()->getRegisterInfo());
+    const X86RegisterInfo *RegInfo = Subtarget->getRegisterInfo();
     unsigned FrameReg = RegInfo->getPtrSizedFrameRegister(*(FuncInfo.MF));
     assert(((FrameReg == X86::RBP && VT == MVT::i64) ||
             (FrameReg == X86::EBP && VT == MVT::i32)) &&
@@ -2738,8 +2737,7 @@ bool X86FastISel::fastLowerCall(CallLoweringInfo &CLI) {
     .addImm(NumBytes).addImm(0);
 
   // Walk the register/memloc assignments, inserting copies/loads.
-  const X86RegisterInfo *RegInfo = static_cast<const X86RegisterInfo *>(
-      TM.getSubtargetImpl()->getRegisterInfo());
+  const X86RegisterInfo *RegInfo = Subtarget->getRegisterInfo();
   for (unsigned i = 0, e = ArgLocs.size(); i != e; ++i) {
     CCValAssign const &VA = ArgLocs[i];
     const Value *ArgVal = OutVals[VA.getValNo()];
