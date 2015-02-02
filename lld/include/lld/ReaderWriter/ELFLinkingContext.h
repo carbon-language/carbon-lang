@@ -291,6 +291,11 @@ public:
   bool alignSegments() const { return _alignSegments; }
   void setAlignSegments(bool align) { _alignSegments = align; }
 
+  /// \brief add platform specific search directories.
+  virtual void addDefaultSearchDirs(llvm::Triple & /*triple*/) {
+    addSearchPath("=/usr/lib");
+  }
+
 private:
   ELFLinkingContext() LLVM_DELETED_FUNCTION;
 

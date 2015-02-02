@@ -36,6 +36,15 @@ public:
       return false;
     }
   }
+
+  void addDefaultSearchDirs(llvm::Triple &baseTriple) override {
+    if (_triple.getOS() == llvm::Triple::NetBSD &&
+        baseTriple.getArch() == llvm::Triple::x86_64) {
+      addSearchPath("=/usr/lib/i386");
+      return;
+    }
+    ELFLinkingContext::addDefaultSearchDirs(baseTriple);
+  }
 };
 } // end namespace elf
 } // end namespace lld
