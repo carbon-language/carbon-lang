@@ -35,6 +35,8 @@ Value *IslExprBuilder::createOpUnary(__isl_take isl_ast_expr *Expr) {
 
   Value *V;
   Type *MaxType = getType(Expr);
+  assert(MaxType->isIntegerTy() &&
+         "Unary expressions can only be created for integer types");
 
   V = create(isl_ast_expr_get_op_arg(Expr, 0));
   MaxType = getWidestType(MaxType, V->getType());
@@ -164,6 +166,7 @@ Value *IslExprBuilder::createOpAccess(isl_ast_expr *Expr) {
 Value *IslExprBuilder::createOpBin(__isl_take isl_ast_expr *Expr) {
   Value *LHS, *RHS, *Res;
   Type *MaxType;
+  isl_ast_expr *LOp, *ROp;
   isl_ast_op_type OpType;
 
   assert(isl_ast_expr_get_type(Expr) == isl_ast_expr_op &&
@@ -173,10 +176,44 @@ Value *IslExprBuilder::createOpBin(__isl_take isl_ast_expr *Expr) {
 
   OpType = isl_ast_expr_get_op_type(Expr);
 
-  LHS = create(isl_ast_expr_get_op_arg(Expr, 0));
-  RHS = create(isl_ast_expr_get_op_arg(Expr, 1));
+  LOp = isl_ast_expr_get_op_arg(Expr, 0);
+  ROp = isl_ast_expr_get_op_arg(Expr, 1);
+
+  // Catch the special case ((-<pointer>) + <pointer>) which is for
+  // isl the same as (<pointer> - <pointer>). We have to treat it here because
+  // there is no valid semantics for the (-<pointer>) expression, hence in
+  // createOpUnary such an expression will trigger a crash.
+  // FIXME: The same problem can now be triggered by a subexpression of the LHS,
+  //        however it is much less likely.
+  if (OpType == isl_ast_op_add &&
+      isl_ast_expr_get_type(LOp) == isl_ast_expr_op &&
+      isl_ast_expr_get_op_type(LOp) == isl_ast_op_minus) {
+    // Change the binary addition to a substraction.
+    OpType = isl_ast_op_sub;
+
+    // Extract the unary operand of the LHS.
+    auto *LOpOp = isl_ast_expr_get_op_arg(LOp, 0);
+    isl_ast_expr_free(LOp);
+
+    // Swap the unary operand of the LHS and the RHS.
+    LOp = ROp;
+    ROp = LOpOp;
+  }
+
+  LHS = create(LOp);
+  RHS = create(ROp);
+
   Type *LHSType = LHS->getType();
   Type *RHSType = RHS->getType();
+
+  // Handle <pointer> - <pointer>
+  if (LHSType->isPointerTy() && RHSType->isPointerTy()) {
+    isl_ast_expr_free(Expr);
+    assert(OpType == isl_ast_op_sub && "Substraction is the only valid binary "
+                                       "pointer <-> pointer operation.");
+
+    return Builder.CreatePtrDiff(LHS, RHS);
+  }
 
   // Handle <pointer> +/- <integer> and <integer> +/- <pointer>
   if (LHSType->isPointerTy() || RHSType->isPointerTy()) {
