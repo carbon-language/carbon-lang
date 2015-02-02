@@ -55,6 +55,11 @@ public:
   SmallVector<const SCEV *, 4> Subscripts, Sizes;
 
   explicit IRAccess(TypeKind Type, Value *BaseAddress, const SCEV *Offset,
+                    unsigned elemBytes, bool Affine)
+      : BaseAddress(BaseAddress), Offset(Offset), ElemBytes(elemBytes),
+        Type(Type), IsAffine(Affine) {}
+
+  explicit IRAccess(TypeKind Type, Value *BaseAddress, const SCEV *Offset,
                     unsigned elemBytes, bool Affine,
                     SmallVector<const SCEV *, 4> Subscripts,
                     SmallVector<const SCEV *, 4> Sizes)

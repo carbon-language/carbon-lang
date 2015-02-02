@@ -136,12 +136,9 @@ bool TempScopInfo::buildScalarDependences(Instruction *Inst, Region *R) {
 
     assert(!isa<PHINode>(UI) && "Non synthesizable PHINode found in a SCoP!");
 
-    SmallVector<const SCEV *, 4> Subscripts, Sizes;
-
     // Use the def instruction as base address of the IRAccess, so that it will
     // become the name of the scalar access in the polyhedral form.
-    IRAccess ScalarAccess(IRAccess::READ, Inst, ZeroOffset, 1, true, Subscripts,
-                          Sizes);
+    IRAccess ScalarAccess(IRAccess::READ, Inst, ZeroOffset, 1, true);
     AccFuncMap[UseParent].push_back(std::make_pair(ScalarAccess, UI));
   }
 
@@ -172,7 +169,6 @@ IRAccess TempScopInfo::buildIRAccess(Instruction *Inst, Loop *L, Region *R) {
 
   assert(BasePointer && "Could not find base pointer");
   AccessFunction = SE->getMinusSCEV(AccessFunction, BasePointer);
-  SmallVector<const SCEV *, 4> Subscripts, Sizes;
 
   MemAcc *Acc = InsnToMemAcc[Inst];
   if (PollyDelinearize && Acc)
@@ -180,11 +176,14 @@ IRAccess TempScopInfo::buildIRAccess(Instruction *Inst, Loop *L, Region *R) {
                     Acc->DelinearizedSubscripts, Acc->Shape->DelinearizedSizes);
 
   bool IsAffine = isAffineExpr(R, AccessFunction, *SE, BasePointer->getValue());
+
+  SmallVector<const SCEV *, 4> Subscripts, Sizes;
   Subscripts.push_back(AccessFunction);
+  Sizes.push_back(SE->getConstant(ZeroOffset->getType(), Size));
+
   if (!IsAffine && Type == IRAccess::MUST_WRITE)
     Type = IRAccess::MAY_WRITE;
 
-  Sizes.push_back(SE->getConstant(ZeroOffset->getType(), Size));
   return IRAccess(Type, BasePointer->getValue(), AccessFunction, Size, IsAffine,
                   Subscripts, Sizes);
 }
@@ -201,9 +200,7 @@ void TempScopInfo::buildAccessFunctions(Region &R, BasicBlock &BB) {
     if (!isa<StoreInst>(Inst) && buildScalarDependences(Inst, &R)) {
       // If the Instruction is used outside the statement, we need to build the
       // write access.
-      SmallVector<const SCEV *, 4> Subscripts, Sizes;
-      IRAccess ScalarAccess(IRAccess::MUST_WRITE, Inst, ZeroOffset, 1, true,
-                            Subscripts, Sizes);
+      IRAccess ScalarAccess(IRAccess::MUST_WRITE, Inst, ZeroOffset, 1, true);
       Functions.push_back(std::make_pair(ScalarAccess, Inst));
     }
   }
