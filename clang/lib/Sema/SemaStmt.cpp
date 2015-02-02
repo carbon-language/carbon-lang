@@ -3303,6 +3303,13 @@ StmtResult Sema::ActOnCXXTryBlock(SourceLocation TryLoc, Stmt *TryBlock,
   if (getCurScope() && getCurScope()->isOpenMPSimdDirectiveScope())
     Diag(TryLoc, diag::err_omp_simd_region_cannot_use_stmt) << "try";
 
+  // C++ try is incompatible with SEH __try.
+  if (!getLangOpts().Borland && getCurFunction()->FirstSEHTryLoc.isValid()) {
+    Diag(TryLoc, diag::err_mixing_cxx_try_seh_try);
+    Diag(getCurFunction()->FirstSEHTryLoc, diag::note_conflicting_try_here)
+        << "'__try'";
+  }
+
   const unsigned NumHandlers = Handlers.size();
   assert(NumHandlers > 0 &&
          "The parser shouldn't call this if there are no handlers.");
@@ -3345,7 +3352,7 @@ StmtResult Sema::ActOnCXXTryBlock(SourceLocation TryLoc, Stmt *TryBlock,
     }
   }
 
-  getCurFunction()->setHasBranchProtectedScope();
+  getCurFunction()->setHasCXXTry(TryLoc);
 
   // FIXME: We should detect handlers that cannot catch anything because an
   // earlier handler catches a superclass. Need to find a method that is not
@@ -3356,16 +3363,21 @@ StmtResult Sema::ActOnCXXTryBlock(SourceLocation TryLoc, Stmt *TryBlock,
   return CXXTryStmt::Create(Context, TryLoc, TryBlock, Handlers);
 }
 
-StmtResult
-Sema::ActOnSEHTryBlock(bool IsCXXTry,
-                       SourceLocation TryLoc,
-                       Stmt *TryBlock,
-                       Stmt *Handler) {
+StmtResult Sema::ActOnSEHTryBlock(bool IsCXXTry, SourceLocation TryLoc,
+                                  Stmt *TryBlock, Stmt *Handler) {
   assert(TryBlock && Handler);
 
-  getCurFunction()->setHasBranchProtectedScope();
+  // SEH __try is incompatible with C++ try. Borland appears to support this,
+  // however.
+  if (!getLangOpts().Borland && getCurFunction()->FirstCXXTryLoc.isValid()) {
+    Diag(TryLoc, diag::err_mixing_cxx_try_seh_try);
+    Diag(getCurFunction()->FirstCXXTryLoc, diag::note_conflicting_try_here)
+        << "'try'";
+  }
 
-  return SEHTryStmt::Create(Context,IsCXXTry,TryLoc,TryBlock,Handler);
+  getCurFunction()->setHasSEHTry(TryLoc);
+
+  return SEHTryStmt::Create(Context, IsCXXTry, TryLoc, TryBlock, Handler);
 }
 
 StmtResult

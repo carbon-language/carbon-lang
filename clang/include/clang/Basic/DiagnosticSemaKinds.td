@@ -5447,6 +5447,10 @@ def err_exceptions_disabled : Error<
   "cannot use '%0' with exceptions disabled">;
 def err_objc_exceptions_disabled : Error<
   "cannot use '%0' with Objective-C exceptions disabled">;
+def err_mixing_cxx_try_seh_try : Error<
+  "cannot use C++ 'try' in the same function as SEH '__try'">;
+def note_conflicting_try_here : Note<
+  "conflicting %0 here">;
 def warn_non_virtual_dtor : Warning<
   "%0 has virtual functions but non-virtual destructor">,
   InGroup<NonVirtualDtor>, DefaultIgnore;

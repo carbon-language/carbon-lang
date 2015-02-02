@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -triple x86_64-windows-msvc -fms-extensions -fsyntax-only -verify %s
+// RUN: %clang_cc1 -triple x86_64-windows-msvc -fms-extensions -fsyntax-only -fexceptions -fcxx-exceptions -verify %s
 
 // Basic usage should work.
 int safe_div(int n, int d) {
@@ -45,4 +45,26 @@ T func_template() {
 void inject_builtins() {
   func_template<void *, __exception_info>();
   func_template<unsigned long, __exception_code>();
+}
+
+void use_seh_after_cxx() {
+  try { // expected-note {{conflicting 'try' here}}
+    might_crash();
+  } catch (int) {
+  }
+  __try { // expected-error {{cannot use C++ 'try' in the same function as SEH '__try'}}
+    might_crash();
+  } __except(1) {
+  }
+}
+
+void use_cxx_after_seh() {
+  __try { // expected-note {{conflicting '__try' here}}
+    might_crash();
+  } __except(1) {
+  }
+  try { // expected-error {{cannot use C++ 'try' in the same function as SEH '__try'}}
+    might_crash();
+  } catch (int) {
+  }
 }
