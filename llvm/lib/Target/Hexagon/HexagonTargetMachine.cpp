@@ -160,7 +160,7 @@ void HexagonPassConfig::addPreEmitPass() {
     addPass(createHexagonNewValueJump(), false);
 
   // Expand Spill code for predicate registers.
-  addPass(createHexagonExpandPredSpillCode(TM), false);
+  addPass(createHexagonExpandPredSpillCode(), false);
 
   // Split up TFRcondsets into conditional transfers.
   addPass(createHexagonSplitTFRCondSets(TM), false);
