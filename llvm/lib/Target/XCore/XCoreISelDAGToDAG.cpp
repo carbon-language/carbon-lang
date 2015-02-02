@@ -37,12 +37,10 @@ using namespace llvm;
 ///
 namespace {
   class XCoreDAGToDAGISel : public SelectionDAGISel {
-    const XCoreSubtarget &Subtarget;
 
   public:
     XCoreDAGToDAGISel(XCoreTargetMachine &TM, CodeGenOpt::Level OptLevel)
-      : SelectionDAGISel(TM, OptLevel),
-        Subtarget(*TM.getSubtargetImpl()) { }
+      : SelectionDAGISel(TM, OptLevel) {}
 
     SDNode *Select(SDNode *N) override;
     SDNode *SelectBRIND(SDNode *N);
