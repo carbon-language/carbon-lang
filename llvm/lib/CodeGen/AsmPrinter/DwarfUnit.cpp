@@ -606,6 +606,7 @@ static bool isUnsignedDIType(DwarfDebug *DD, DIType Ty) {
           Encoding == dwarf::DW_ATE_unsigned_char ||
           Encoding == dwarf::DW_ATE_signed ||
           Encoding == dwarf::DW_ATE_signed_char ||
+          Encoding == dwarf::DW_ATE_float ||
           Encoding == dwarf::DW_ATE_UTF || Encoding == dwarf::DW_ATE_boolean ||
           (Ty.getTag() == dwarf::DW_TAG_unspecified_type &&
            Ty.getName() == "decltype(nullptr)")) &&
