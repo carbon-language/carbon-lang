@@ -22,7 +22,7 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/iterator_range.h"
-#include "llvm/IR/Metadata.h"
+#include "llvm/IR/DebugInfoMetadata.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/Dwarf.h"
 #include "llvm/Support/ErrorHandling.h"
