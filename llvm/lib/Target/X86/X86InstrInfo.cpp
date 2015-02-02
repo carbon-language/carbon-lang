@@ -3700,11 +3700,9 @@ void X86InstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
   assert(MF.getFrameInfo()->getObjectSize(FrameIdx) >= RC->getSize() &&
          "Stack slot too small for store");
   unsigned Alignment = std::max<uint32_t>(RC->getSize(), 16);
-  bool isAligned = (MF.getTarget()
-                        .getSubtargetImpl()
-                        ->getFrameLowering()
-                        ->getStackAlignment() >= Alignment) ||
-                   RI.canRealignStack(MF);
+  bool isAligned =
+      (Subtarget.getFrameLowering()->getStackAlignment() >= Alignment) ||
+      RI.canRealignStack(MF);
   unsigned Opc = getStoreRegOpcode(SrcReg, RC, isAligned, Subtarget);
   DebugLoc DL = MBB.findDebugLoc(MI);
   addFrameReference(BuildMI(MBB, MI, DL, get(Opc)), FrameIdx)
@@ -3739,11 +3737,9 @@ void X86InstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
                                         const TargetRegisterInfo *TRI) const {
   const MachineFunction &MF = *MBB.getParent();
   unsigned Alignment = std::max<uint32_t>(RC->getSize(), 16);
-  bool isAligned = (MF.getTarget()
-                        .getSubtargetImpl()
-                        ->getFrameLowering()
-                        ->getStackAlignment() >= Alignment) ||
-                   RI.canRealignStack(MF);
+  bool isAligned =
+      (Subtarget.getFrameLowering()->getStackAlignment() >= Alignment) ||
+      RI.canRealignStack(MF);
   unsigned Opc = getLoadRegOpcode(DestReg, RC, isAligned, Subtarget);
   DebugLoc DL = MBB.findDebugLoc(MI);
   addFrameReference(BuildMI(MBB, MI, DL, get(Opc), DestReg), FrameIdx);
@@ -4875,10 +4871,8 @@ X86InstrInfo::foldMemoryOperandImpl(MachineFunction &MF, MachineInstr *MI,
   // If the function stack isn't realigned we don't want to fold instructions
   // that need increased alignment.
   if (!RI.needsStackRealignment(MF))
-    Alignment = std::min(Alignment, MF.getTarget()
-                                        .getSubtargetImpl()
-                                        ->getFrameLowering()
-                                        ->getStackAlignment());
+    Alignment =
+        std::min(Alignment, Subtarget.getFrameLowering()->getStackAlignment());
   if (Ops.size() == 2 && Ops[0] == 0 && Ops[1] == 1) {
     unsigned NewOpc = 0;
     unsigned RCSize = 0;
@@ -5955,10 +5949,11 @@ namespace {
     bool runOnMachineFunction(MachineFunction &MF) override {
       const X86TargetMachine *TM =
         static_cast<const X86TargetMachine *>(&MF.getTarget());
+      const X86Subtarget &STI = MF.getSubtarget<X86Subtarget>();
 
       // Don't do anything if this is 64-bit as 64-bit PIC
       // uses RIP relative addressing.
-      if (TM->getSubtarget<X86Subtarget>().is64Bit())
+      if (STI.is64Bit())
         return false;
 
       // Only emit a global base reg in PIC mode.
@@ -5977,10 +5972,10 @@ namespace {
       MachineBasicBlock::iterator MBBI = FirstMBB.begin();
       DebugLoc DL = FirstMBB.findDebugLoc(MBBI);
       MachineRegisterInfo &RegInfo = MF.getRegInfo();
-      const X86InstrInfo *TII = TM->getSubtargetImpl()->getInstrInfo();
+      const X86InstrInfo *TII = STI.getInstrInfo();
 
       unsigned PC;
-      if (TM->getSubtarget<X86Subtarget>().isPICStyleGOT())
+      if (STI.isPICStyleGOT())
         PC = RegInfo.createVirtualRegister(&X86::GR32RegClass);
       else
         PC = GlobalBaseReg;
@@ -5991,7 +5986,7 @@ namespace {
 
       // If we're using vanilla 'GOT' PIC style, we should use relative addressing
       // not to pc, but to _GLOBAL_OFFSET_TABLE_ external.
-      if (TM->getSubtarget<X86Subtarget>().isPICStyleGOT()) {
+      if (STI.isPICStyleGOT()) {
         // Generate addl $__GLOBAL_OFFSET_TABLE_ + [.-piclabel], %some_register
         BuildMI(FirstMBB, MBBI, DL, TII->get(X86::ADD32ri), GlobalBaseReg)
           .addReg(PC).addExternalSymbol("_GLOBAL_OFFSET_TABLE_",
@@ -6072,10 +6067,9 @@ namespace {
     MachineInstr *ReplaceTLSBaseAddrCall(MachineInstr *I,
                                          unsigned TLSBaseAddrReg) {
       MachineFunction *MF = I->getParent()->getParent();
-      const X86TargetMachine *TM =
-          static_cast<const X86TargetMachine *>(&MF->getTarget());
-      const bool is64Bit = TM->getSubtarget<X86Subtarget>().is64Bit();
-      const X86InstrInfo *TII = TM->getSubtargetImpl()->getInstrInfo();
+      const X86Subtarget &STI = MF->getSubtarget<X86Subtarget>();
+      const bool is64Bit = STI.is64Bit();
+      const X86InstrInfo *TII = STI.getInstrInfo();
 
       // Insert a Copy from TLSBaseAddrReg to RAX/EAX.
       MachineInstr *Copy = BuildMI(*I->getParent(), I, I->getDebugLoc(),
@@ -6093,10 +6087,9 @@ namespace {
     // inserting a copy instruction after I. Returns the new instruction.
     MachineInstr *SetRegister(MachineInstr *I, unsigned *TLSBaseAddrReg) {
       MachineFunction *MF = I->getParent()->getParent();
-      const X86TargetMachine *TM =
-          static_cast<const X86TargetMachine *>(&MF->getTarget());
-      const bool is64Bit = TM->getSubtarget<X86Subtarget>().is64Bit();
-      const X86InstrInfo *TII = TM->getSubtargetImpl()->getInstrInfo();
+      const X86Subtarget &STI = MF->getSubtarget<X86Subtarget>();
+      const bool is64Bit = STI.is64Bit();
+      const X86InstrInfo *TII = STI.getInstrInfo();
 
       // Create a virtual register for the TLS base address.
       MachineRegisterInfo &RegInfo = MF->getRegInfo();

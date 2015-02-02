@@ -554,7 +554,8 @@ namespace llvm {
   //  X86 Implementation of the TargetLowering interface
   class X86TargetLowering final : public TargetLowering {
   public:
-    explicit X86TargetLowering(const X86TargetMachine &TM);
+    explicit X86TargetLowering(const X86TargetMachine &TM,
+                               const X86Subtarget &STI);
 
     unsigned getJumpTableEncoding() const override;
 
@@ -781,10 +782,6 @@ namespace llvm {
     /// load node to a smaller type.
     bool shouldReduceLoadWidth(SDNode *Load, ISD::LoadExtType ExtTy,
                                EVT NewVT) const override;
-
-    const X86Subtarget* getSubtarget() const {
-      return Subtarget;
-    }
 
     /// Return true if the specified scalar FP type is computed in an SSE
     /// register, not on the X87 floating point stack.

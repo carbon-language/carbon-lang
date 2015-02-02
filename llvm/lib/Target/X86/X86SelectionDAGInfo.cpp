@@ -57,7 +57,8 @@ X86SelectionDAGInfo::EmitTargetCodeForMemset(SelectionDAG &DAG, SDLoc dl,
                                              bool isVolatile,
                                          MachinePointerInfo DstPtrInfo) const {
   ConstantSDNode *ConstantSize = dyn_cast<ConstantSDNode>(Size);
-  const X86Subtarget &Subtarget = DAG.getTarget().getSubtarget<X86Subtarget>();
+  const X86Subtarget &Subtarget =
+      DAG.getMachineFunction().getSubtarget<X86Subtarget>();
 
 #ifndef NDEBUG
   // If the base register might conflict with our physical registers, bail out.
@@ -199,17 +200,15 @@ X86SelectionDAGInfo::EmitTargetCodeForMemset(SelectionDAG &DAG, SDLoc dl,
   return Chain;
 }
 
-SDValue
-X86SelectionDAGInfo::EmitTargetCodeForMemcpy(SelectionDAG &DAG, SDLoc dl,
-                                        SDValue Chain, SDValue Dst, SDValue Src,
-                                        SDValue Size, unsigned Align,
-                                        bool isVolatile, bool AlwaysInline,
-                                         MachinePointerInfo DstPtrInfo,
-                                         MachinePointerInfo SrcPtrInfo) const {
+SDValue X86SelectionDAGInfo::EmitTargetCodeForMemcpy(
+    SelectionDAG &DAG, SDLoc dl, SDValue Chain, SDValue Dst, SDValue Src,
+    SDValue Size, unsigned Align, bool isVolatile, bool AlwaysInline,
+    MachinePointerInfo DstPtrInfo, MachinePointerInfo SrcPtrInfo) const {
   // This requires the copy size to be a constant, preferably
   // within a subtarget-specific limit.
   ConstantSDNode *ConstantSize = dyn_cast<ConstantSDNode>(Size);
-  const X86Subtarget &Subtarget = DAG.getTarget().getSubtarget<X86Subtarget>();
+  const X86Subtarget &Subtarget =
+      DAG.getMachineFunction().getSubtarget<X86Subtarget>();
   if (!ConstantSize)
     return SDValue();
   uint64_t SizeVal = ConstantSize->getZExtValue();

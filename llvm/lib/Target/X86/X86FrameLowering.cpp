@@ -429,8 +429,8 @@ void X86FrameLowering::emitStackProbeCall(MachineFunction &MF,
                                           MachineBasicBlock &MBB,
                                           MachineBasicBlock::iterator MBBI,
                                           DebugLoc DL) {
-  const TargetInstrInfo &TII = *MF.getSubtarget().getInstrInfo();
-  const X86Subtarget &STI = MF.getTarget().getSubtarget<X86Subtarget>();
+  const X86Subtarget &STI = MF.getSubtarget<X86Subtarget>();
+  const TargetInstrInfo &TII = *STI.getInstrInfo();
   bool Is64Bit = STI.is64Bit();
   bool IsLargeCodeModel = MF.getTarget().getCodeModel() == CodeModel::Large;
 
@@ -573,15 +573,14 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF) const {
   MachineBasicBlock::iterator MBBI = MBB.begin();
   MachineFrameInfo *MFI = MF.getFrameInfo();
   const Function *Fn = MF.getFunction();
-  const X86RegisterInfo *RegInfo =
-      static_cast<const X86RegisterInfo *>(MF.getSubtarget().getRegisterInfo());
-  const TargetInstrInfo &TII = *MF.getSubtarget().getInstrInfo();
+  const X86Subtarget &STI = MF.getSubtarget<X86Subtarget>();
+  const X86RegisterInfo *RegInfo = STI.getRegisterInfo();
+  const TargetInstrInfo &TII = *STI.getInstrInfo();
   MachineModuleInfo &MMI = MF.getMMI();
   X86MachineFunctionInfo *X86FI = MF.getInfo<X86MachineFunctionInfo>();
   uint64_t MaxAlign  = MFI->getMaxAlignment(); // Desired stack alignment.
   uint64_t StackSize = MFI->getStackSize();    // Number of bytes to allocate.
   bool HasFP = hasFP(MF);
-  const X86Subtarget &STI = MF.getTarget().getSubtarget<X86Subtarget>();
   bool Is64Bit = STI.is64Bit();
   // standard x86_64 and NaCl use 64-bit frame/stack pointers, x32 - 32-bit.
   const bool Uses64BitFramePtr = STI.isTarget64BitLP64() || STI.isTargetNaCl64();
@@ -595,8 +594,10 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF) const {
   unsigned StackAlign = getStackAlignment();
   unsigned SlotSize = RegInfo->getSlotSize();
   unsigned FramePtr = RegInfo->getFrameRegister(MF);
-  const unsigned MachineFramePtr = STI.isTarget64BitILP32() ?
-                 getX86SubSuperRegister(FramePtr, MVT::i64, false) : FramePtr;
+  const unsigned MachineFramePtr =
+      STI.isTarget64BitILP32()
+          ? getX86SubSuperRegister(FramePtr, MVT::i64, false)
+          : FramePtr;
   unsigned StackPtr = RegInfo->getStackRegister();
   unsigned BasePtr = RegInfo->getBaseRegister();
   DebugLoc DL;
@@ -973,14 +974,13 @@ void X86FrameLowering::emitEpilogue(MachineFunction &MF,
                                     MachineBasicBlock &MBB) const {
   const MachineFrameInfo *MFI = MF.getFrameInfo();
   X86MachineFunctionInfo *X86FI = MF.getInfo<X86MachineFunctionInfo>();
-  const X86RegisterInfo *RegInfo =
-      static_cast<const X86RegisterInfo *>(MF.getSubtarget().getRegisterInfo());
-  const TargetInstrInfo &TII = *MF.getSubtarget().getInstrInfo();
+  const X86Subtarget &STI = MF.getSubtarget<X86Subtarget>();
+  const X86RegisterInfo *RegInfo = STI.getRegisterInfo();
+  const TargetInstrInfo &TII = *STI.getInstrInfo();
   MachineBasicBlock::iterator MBBI = MBB.getLastNonDebugInstr();
   assert(MBBI != MBB.end() && "Returning block has no instructions");
   unsigned RetOpcode = MBBI->getOpcode();
   DebugLoc DL = MBBI->getDebugLoc();
-  const X86Subtarget &STI = MF.getTarget().getSubtarget<X86Subtarget>();
   bool Is64Bit = STI.is64Bit();
   // standard x86_64 and NaCl use 64-bit frame/stack pointers, x32 - 32-bit.
   const bool Uses64BitFramePtr = STI.isTarget64BitLP64() || STI.isTargetNaCl64();
@@ -989,8 +989,9 @@ void X86FrameLowering::emitEpilogue(MachineFunction &MF,
   unsigned StackAlign = getStackAlignment();
   unsigned SlotSize = RegInfo->getSlotSize();
   unsigned FramePtr = RegInfo->getFrameRegister(MF);
-  unsigned MachineFramePtr = Is64BitILP32 ?
-             getX86SubSuperRegister(FramePtr, MVT::i64, false) : FramePtr;
+  unsigned MachineFramePtr =
+      Is64BitILP32 ? getX86SubSuperRegister(FramePtr, MVT::i64, false)
+                   : FramePtr;
   unsigned StackPtr = RegInfo->getStackRegister();
 
   bool IsWinEH = MF.getTarget().getMCAsmInfo()->usesWindowsCFI();
@@ -1192,7 +1193,7 @@ void X86FrameLowering::emitEpilogue(MachineFunction &MF,
 int X86FrameLowering::getFrameIndexOffset(const MachineFunction &MF,
                                           int FI) const {
   const X86RegisterInfo *RegInfo =
-      static_cast<const X86RegisterInfo *>(MF.getSubtarget().getRegisterInfo());
+      MF.getSubtarget<X86Subtarget>().getRegisterInfo();
   const MachineFrameInfo *MFI = MF.getFrameInfo();
   int Offset = MFI->getObjectOffset(FI) - getOffsetOfLocalArea();
   uint64_t StackSize = MFI->getStackSize();
@@ -1235,7 +1236,7 @@ int X86FrameLowering::getFrameIndexOffset(const MachineFunction &MF,
 int X86FrameLowering::getFrameIndexReference(const MachineFunction &MF, int FI,
                                              unsigned &FrameReg) const {
   const X86RegisterInfo *RegInfo =
-      static_cast<const X86RegisterInfo *>(MF.getSubtarget().getRegisterInfo());
+      MF.getSubtarget<X86Subtarget>().getRegisterInfo();
   // We can't calculate offset from frame pointer if the stack is realigned,
   // so enforce usage of stack/base pointer.  The base pointer is used when we
   // have dynamic allocas in addition to dynamic realignment.
@@ -1256,7 +1257,7 @@ int X86FrameLowering::getFrameIndexOffsetFromSP(const MachineFunction &MF, int F
   {
 #ifndef NDEBUG
     const X86RegisterInfo *RegInfo =
-      static_cast<const X86RegisterInfo*>(MF.getSubtarget().getRegisterInfo());
+        MF.getSubtarget<X86Subtarget>().getRegisterInfo();
     // Note: LLVM arranges the stack as:
     // Args > Saved RetPC (<--FP) > CSRs > dynamic alignment (<--BP)
     //      > "Stack Slots" (<--SP)
@@ -1310,11 +1311,11 @@ int X86FrameLowering::getFrameIndexOffsetFromSP(const MachineFunction &MF, int F
   return Offset + StackSize;
 }
 // Simplified from getFrameIndexReference keeping only StackPointer cases
-int X86FrameLowering::getFrameIndexReferenceFromSP(const MachineFunction &MF, int FI,
-                                                  unsigned &FrameReg) const {
+int X86FrameLowering::getFrameIndexReferenceFromSP(const MachineFunction &MF,
+                                                   int FI,
+                                                   unsigned &FrameReg) const {
   const X86RegisterInfo *RegInfo =
-    static_cast<const X86RegisterInfo*>(MF.getSubtarget().getRegisterInfo());
-
+      MF.getSubtarget<X86Subtarget>().getRegisterInfo();
   assert(!RegInfo->hasBasePointer(MF) && "we don't handle this case");
 
   FrameReg = RegInfo->getStackRegister();
@@ -1326,7 +1327,7 @@ bool X86FrameLowering::assignCalleeSavedSpillSlots(
     std::vector<CalleeSavedInfo> &CSI) const {
   MachineFrameInfo *MFI = MF.getFrameInfo();
   const X86RegisterInfo *RegInfo =
-      static_cast<const X86RegisterInfo *>(MF.getSubtarget().getRegisterInfo());
+      MF.getSubtarget<X86Subtarget>().getRegisterInfo();
   unsigned SlotSize = RegInfo->getSlotSize();
   X86MachineFunctionInfo *X86FI = MF.getInfo<X86MachineFunctionInfo>();
 
@@ -1393,8 +1394,8 @@ bool X86FrameLowering::spillCalleeSavedRegisters(
   DebugLoc DL = MBB.findDebugLoc(MI);
 
   MachineFunction &MF = *MBB.getParent();
-  const TargetInstrInfo &TII = *MF.getSubtarget().getInstrInfo();
-  const X86Subtarget &STI = MF.getTarget().getSubtarget<X86Subtarget>();
+  const X86Subtarget &STI = MF.getSubtarget<X86Subtarget>();
+  const TargetInstrInfo &TII = *STI.getInstrInfo();
 
   // Push GPRs. It increases frame size.
   unsigned Opc = STI.is64Bit() ? X86::PUSH64r : X86::PUSH32r;
@@ -1441,8 +1442,8 @@ bool X86FrameLowering::restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
   DebugLoc DL = MBB.findDebugLoc(MI);
 
   MachineFunction &MF = *MBB.getParent();
-  const TargetInstrInfo &TII = *MF.getSubtarget().getInstrInfo();
-  const X86Subtarget &STI = MF.getTarget().getSubtarget<X86Subtarget>();
+  const X86Subtarget &STI = MF.getSubtarget<X86Subtarget>();
+  const TargetInstrInfo &TII = *STI.getInstrInfo();
 
   // Reload XMMs from stack frame.
   for (unsigned i = 0, e = CSI.size(); i != e; ++i) {
@@ -1473,7 +1474,7 @@ X86FrameLowering::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
                                                        RegScavenger *RS) const {
   MachineFrameInfo *MFI = MF.getFrameInfo();
   const X86RegisterInfo *RegInfo =
-      static_cast<const X86RegisterInfo *>(MF.getSubtarget().getRegisterInfo());
+      MF.getSubtarget<X86Subtarget>().getRegisterInfo();
   unsigned SlotSize = RegInfo->getSlotSize();
 
   X86MachineFunctionInfo *X86FI = MF.getInfo<X86MachineFunctionInfo>();
@@ -1554,9 +1555,9 @@ void
 X86FrameLowering::adjustForSegmentedStacks(MachineFunction &MF) const {
   MachineBasicBlock &prologueMBB = MF.front();
   MachineFrameInfo *MFI = MF.getFrameInfo();
-  const TargetInstrInfo &TII = *MF.getSubtarget().getInstrInfo();
+  const X86Subtarget &STI = MF.getSubtarget<X86Subtarget>();
+  const TargetInstrInfo &TII = *STI.getInstrInfo();
   uint64_t StackSize;
-  const X86Subtarget &STI = MF.getTarget().getSubtarget<X86Subtarget>();
   bool Is64Bit = STI.is64Bit();
   const bool IsLP64 = STI.isTarget64BitLP64();
   unsigned TlsReg, TlsOffset;
@@ -1802,12 +1803,10 @@ X86FrameLowering::adjustForSegmentedStacks(MachineFunction &MF) const {
 ///       temp0 = sp - MaxStack
 ///       if( temp0 < SP_LIMIT(P) ) goto IncStack else goto OldStart
 void X86FrameLowering::adjustForHiPEPrologue(MachineFunction &MF) const {
-  const TargetInstrInfo &TII = *MF.getSubtarget().getInstrInfo();
+  const X86Subtarget &STI = MF.getSubtarget<X86Subtarget>();
+  const TargetInstrInfo &TII = *STI.getInstrInfo();
   MachineFrameInfo *MFI = MF.getFrameInfo();
-  const unsigned SlotSize =
-      static_cast<const X86RegisterInfo *>(MF.getSubtarget().getRegisterInfo())
-          ->getSlotSize();
-  const X86Subtarget &STI = MF.getTarget().getSubtarget<X86Subtarget>();
+  const unsigned SlotSize = STI.getRegisterInfo()->getSlotSize();
   const bool Is64Bit = STI.is64Bit();
   const bool IsLP64 = STI.isTarget64BitLP64();
   DebugLoc DL;
@@ -1937,14 +1936,13 @@ void X86FrameLowering::adjustForHiPEPrologue(MachineFunction &MF) const {
 void X86FrameLowering::
 eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
                               MachineBasicBlock::iterator I) const {
-  const TargetInstrInfo &TII = *MF.getSubtarget().getInstrInfo();
-  const X86RegisterInfo &RegInfo = *static_cast<const X86RegisterInfo *>(
-                                       MF.getSubtarget().getRegisterInfo());
+  const X86Subtarget &STI = MF.getSubtarget<X86Subtarget>();
+  const TargetInstrInfo &TII = *STI.getInstrInfo();
+  const X86RegisterInfo &RegInfo = *STI.getRegisterInfo();
   unsigned StackPtr = RegInfo.getStackRegister();
   bool reserveCallFrame = hasReservedCallFrame(MF);
   int Opcode = I->getOpcode();
   bool isDestroy = Opcode == TII.getCallFrameDestroyOpcode();
-  const X86Subtarget &STI = MF.getTarget().getSubtarget<X86Subtarget>();
   bool IsLP64 = STI.isTarget64BitLP64();
   DebugLoc DL = I->getDebugLoc();
   uint64_t Amount = !reserveCallFrame ? I->getOperand(0).getImm() : 0;
@@ -1961,10 +1959,7 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
     // We need to keep the stack aligned properly.  To do this, we round the
     // amount of space needed for the outgoing arguments up to the next
     // alignment boundary.
-    unsigned StackAlign = MF.getTarget()
-                              .getSubtargetImpl()
-                              ->getFrameLowering()
-                              ->getStackAlignment();
+    unsigned StackAlign = STI.getFrameLowering()->getStackAlignment();
     Amount = (Amount + StackAlign - 1) / StackAlign * StackAlign;
 
     MachineInstr *New = nullptr;

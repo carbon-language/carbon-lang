@@ -156,9 +156,7 @@ namespace {
 
   public:
     explicit X86DAGToDAGISel(X86TargetMachine &tm, CodeGenOpt::Level OptLevel)
-      : SelectionDAGISel(tm, OptLevel),
-        Subtarget(&tm.getSubtarget<X86Subtarget>()),
-        OptForSize(false) {}
+        : SelectionDAGISel(tm, OptLevel), OptForSize(false) {}
 
     const char *getPassName() const override {
       return "X86 DAG->DAG Instruction Selection";
@@ -166,7 +164,7 @@ namespace {
 
     bool runOnMachineFunction(MachineFunction &MF) override {
       // Reset the subtarget each time through.
-      Subtarget = &TM.getSubtarget<X86Subtarget>();
+      Subtarget = &MF.getSubtarget<X86Subtarget>();
       SelectionDAGISel::runOnMachineFunction(MF);
       return true;
     }
@@ -298,7 +296,7 @@ namespace {
     /// getInstrInfo - Return a reference to the TargetInstrInfo, casted
     /// to the target-specific type.
     const X86InstrInfo *getInstrInfo() const {
-      return getTargetMachine().getSubtargetImpl()->getInstrInfo();
+      return Subtarget->getInstrInfo();
     }
 
     /// \brief Address-mode matching performs shift-of-and to and-of-shift
@@ -573,7 +571,7 @@ void X86DAGToDAGISel::PreprocessISelDAG() {
 /// the main function.
 void X86DAGToDAGISel::EmitSpecialCodeForMain(MachineBasicBlock *BB,
                                              MachineFrameInfo *MFI) {
-  const TargetInstrInfo *TII = TM.getSubtargetImpl()->getInstrInfo();
+  const TargetInstrInfo *TII = getInstrInfo();
   if (Subtarget->isTargetCygMing()) {
     unsigned CallOp =
       Subtarget->is64Bit() ? X86::CALL64pcrel32 : X86::CALLpcrel32;
