@@ -77,7 +77,9 @@ unsigned HexagonMCInst::getUnits(const HexagonTargetMachine *TM) const {
   return (IS->getUnits());
 }
 
-MCInstrDesc const& HexagonMCInst::getDesc() const { return (MCII->get(getOpcode())); }
+MCInstrDesc const &HexagonMCInst::getDesc() const {
+  return (MCII->get(getOpcode()));
+}
 
 // Return the Hexagon ISA class for the insn.
 unsigned HexagonMCInst::getType() const {
