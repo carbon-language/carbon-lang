@@ -44,6 +44,6 @@ return:
 ; CHECK:              (P >= 1 and i0 >= 0 and i0 <= -1 + N)
 ; CHECK:                   };
 ; CHECK:        Scattering :=
-; CHECK:            [N, P] -> { Stmt_store[i0] -> scattering[i0] };
+; CHECK:            [N, P] -> { Stmt_store[i0] -> [i0] };
 ; CHECK:        MustWriteAccess := [Reduction Type: NONE]
 ; CHECK:            [N, P] -> { Stmt_store[i0] -> MemRef_a[i0] };

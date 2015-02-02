@@ -15,7 +15,7 @@
          ],
          "domain" : "[n] -> { Stmt_S0[i0] : i0 >= 0 and i0 <= -1 + 2n and n >= 1 }",
          "name" : "Stmt_S0",
-         "schedule" : "[n] -> { Stmt_S0[i0] -> scattering[0, n - i0, 0] }"
+         "schedule" : "[n] -> { Stmt_S0[i0] -> [0, n - i0, 0] }"
       },
       {
          "accesses" : [
@@ -26,7 +26,7 @@
          ],
          "domain" : "[n] -> { Stmt_S1[i0] : i0 >= 0 and i0 <= -1 + 2n and n >= 1 }",
          "name" : "Stmt_S1",
-         "schedule" : "[n] -> { Stmt_S1[i0] -> scattering[1, n - i0, 0] }"
+         "schedule" : "[n] -> { Stmt_S1[i0] -> [1, n - i0, 0] }"
       }
    ]
 }

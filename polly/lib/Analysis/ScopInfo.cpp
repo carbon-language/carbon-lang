@@ -696,7 +696,6 @@ void ScopStmt::buildScattering(SmallVectorImpl<unsigned> &Scatter) {
   unsigned NbScatteringDims = Parent.getMaxLoopDepth() * 2 + 1;
 
   isl_space *Space = isl_space_set_alloc(getIslCtx(), 0, NbScatteringDims);
-  Space = isl_space_set_tuple_name(Space, isl_dim_out, "scattering");
 
   Scattering = isl_map_from_domain_and_range(isl_set_universe(getDomainSpace()),
                                              isl_set_universe(Space));
@@ -1512,8 +1511,6 @@ void Scop::dropConstantScheduleDims() {
       isl_val_free(FixedVal);
     }
 
-  DropDimMap = isl_map_set_tuple_id(
-      DropDimMap, isl_dim_out, isl_map_get_tuple_id(DropDimMap, isl_dim_in));
   for (auto *S : *this) {
     isl_map *Schedule = S->getScattering();
     Schedule = isl_map_apply_range(Schedule, isl_map_copy(DropDimMap));
