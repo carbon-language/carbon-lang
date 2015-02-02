@@ -34,7 +34,7 @@ bool UnrollLoop(Loop *L, unsigned Count, unsigned TripCount, bool AllowRuntime,
 bool UnrollRuntimeLoopProlog(Loop *L, unsigned Count, LoopInfo *LI,
                              LPPassManager* LPM);
 
-const MDNode *GetUnrollMetadata(const MDNode *LoopID, StringRef Name);
+MDNode *GetUnrollMetadata(MDNode *LoopID, StringRef Name);
 }
 
 #endif

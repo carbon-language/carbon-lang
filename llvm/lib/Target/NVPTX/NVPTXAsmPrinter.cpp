@@ -442,8 +442,7 @@ bool NVPTXAsmPrinter::isLoopHeaderOfNoUnroll(
       continue;
     }
     if (const BasicBlock *PBB = PMBB->getBasicBlock()) {
-      if (const MDNode *LoopID =
-              PBB->getTerminator()->getMetadata("llvm.loop")) {
+      if (MDNode *LoopID = PBB->getTerminator()->getMetadata("llvm.loop")) {
         if (GetUnrollMetadata(LoopID, "llvm.loop.unroll.disable"))
           return true;
       }
