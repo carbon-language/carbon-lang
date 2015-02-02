@@ -59,7 +59,7 @@ real_pthread_attr_getstack(void *attr, void **addr, size_t *size);
 
 static int my_pthread_attr_getstack(void *attr, void **addr, size_t *size) {
 #if !SANITIZER_GO
-  if (real_pthread_attr_getstack)
+  if (&real_pthread_attr_getstack)
     return real_pthread_attr_getstack((pthread_attr_t *)attr, addr, size);
 #endif
   return pthread_attr_getstack((pthread_attr_t *)attr, addr, size);
@@ -70,7 +70,7 @@ real_sigaction(int signum, const void *act, void *oldact);
 
 int internal_sigaction(int signum, const void *act, void *oldact) {
 #if !SANITIZER_GO
-  if (real_sigaction)
+  if (&real_sigaction)
     return real_sigaction(signum, act, oldact);
 #endif
   return sigaction(signum, (const struct sigaction *)act,
