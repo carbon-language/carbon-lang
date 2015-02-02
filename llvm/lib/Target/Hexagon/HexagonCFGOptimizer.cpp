@@ -37,15 +37,11 @@ namespace {
 class HexagonCFGOptimizer : public MachineFunctionPass {
 
 private:
-  const HexagonTargetMachine& QTM;
-  const HexagonSubtarget &QST;
-
   void InvertAndChangeJumpTarget(MachineInstr*, MachineBasicBlock*);
 
  public:
   static char ID;
-  HexagonCFGOptimizer(const HexagonTargetMachine& TM)
-    : MachineFunctionPass(ID), QTM(TM), QST(*TM.getSubtargetImpl()) {
+  HexagonCFGOptimizer() : MachineFunctionPass(ID) {
     initializeHexagonCFGOptimizerPass(*PassRegistry::getPassRegistry());
   }
 
@@ -72,7 +68,8 @@ static bool IsUnconditionalJump(int Opc) {
 void
 HexagonCFGOptimizer::InvertAndChangeJumpTarget(MachineInstr* MI,
                                                MachineBasicBlock* NewTarget) {
-  const HexagonInstrInfo *QII = QTM.getSubtargetImpl()->getInstrInfo();
+  const TargetInstrInfo *TII =
+      MI->getParent()->getParent()->getSubtarget().getInstrInfo();
   int NewOpcode = 0;
   switch(MI->getOpcode()) {
   case Hexagon::J2_jumpt:
@@ -95,13 +92,12 @@ HexagonCFGOptimizer::InvertAndChangeJumpTarget(MachineInstr* MI,
     llvm_unreachable("Cannot handle this case");
   }
 
-  MI->setDesc(QII->get(NewOpcode));
+  MI->setDesc(TII->get(NewOpcode));
   MI->getOperand(1).setMBB(NewTarget);
 }
 
 
 bool HexagonCFGOptimizer::runOnMachineFunction(MachineFunction &Fn) {
-
   // Loop over all of the basic blocks.
   for (MachineFunction::iterator MBBb = Fn.begin(), MBBe = Fn.end();
        MBBb != MBBe; ++MBBb) {
@@ -248,6 +244,6 @@ void llvm::initializeHexagonCFGOptimizerPass(PassRegistry &Registry) {
   CALL_ONCE_INITIALIZATION(initializePassOnce)
 }
 
-FunctionPass *llvm::createHexagonCFGOptimizer(const HexagonTargetMachine &TM) {
-  return new HexagonCFGOptimizer(TM);
+FunctionPass *llvm::createHexagonCFGOptimizer() {
+  return new HexagonCFGOptimizer();
 }

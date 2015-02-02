@@ -138,10 +138,9 @@ void HexagonPassConfig::addPreRegAlloc() {
 }
 
 void HexagonPassConfig::addPostRegAlloc() {
-  const HexagonTargetMachine &TM = getHexagonTargetMachine();
   if (getOptLevel() != CodeGenOpt::None)
     if (!DisableHexagonCFGOpt)
-      addPass(createHexagonCFGOptimizer(TM), false);
+      addPass(createHexagonCFGOptimizer(), false);
 }
 
 void HexagonPassConfig::addPreSched2() {
