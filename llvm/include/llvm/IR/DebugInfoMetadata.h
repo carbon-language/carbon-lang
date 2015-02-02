@@ -16,6 +16,28 @@
 
 #include "llvm/IR/Metadata.h"
 
+// Helper macros for defining get() overrides.
+#define DEFINE_MDNODE_GET_UNPACK_IMPL(...) __VA_ARGS__
+#define DEFINE_MDNODE_GET_UNPACK(ARGS) DEFINE_MDNODE_GET_UNPACK_IMPL ARGS
+#define DEFINE_MDNODE_GET(CLASS, FORMAL, ARGS)                                 \
+  static CLASS *get(LLVMContext &Context, DEFINE_MDNODE_GET_UNPACK(FORMAL)) {  \
+    return getImpl(Context, DEFINE_MDNODE_GET_UNPACK(ARGS), Uniqued);          \
+  }                                                                            \
+  static CLASS *getIfExists(LLVMContext &Context,                              \
+                            DEFINE_MDNODE_GET_UNPACK(FORMAL)) {                \
+    return getImpl(Context, DEFINE_MDNODE_GET_UNPACK(ARGS), Uniqued,           \
+                   /* ShouldCreate */ false);                                  \
+  }                                                                            \
+  static CLASS *getDistinct(LLVMContext &Context,                              \
+                            DEFINE_MDNODE_GET_UNPACK(FORMAL)) {                \
+    return getImpl(Context, DEFINE_MDNODE_GET_UNPACK(ARGS), Distinct);         \
+  }                                                                            \
+  static Temp##CLASS getTemporary(LLVMContext &Context,                        \
+                                  DEFINE_MDNODE_GET_UNPACK(FORMAL)) {          \
+    return Temp##CLASS(                                                        \
+        getImpl(Context, DEFINE_MDNODE_GET_UNPACK(ARGS), Temporary));          \
+  }
+
 namespace llvm {
 
 /// \brief Debug location.
@@ -43,27 +65,10 @@ class MDLocation : public MDNode {
   void replaceOperandWith(unsigned I, Metadata *New) LLVM_DELETED_FUNCTION;
 
 public:
-  static MDLocation *get(LLVMContext &Context, unsigned Line, unsigned Column,
-                         Metadata *Scope, Metadata *InlinedAt = nullptr) {
-    return getImpl(Context, Line, Column, Scope, InlinedAt, Uniqued);
-  }
-  static MDLocation *getIfExists(LLVMContext &Context, unsigned Line,
-                                 unsigned Column, Metadata *Scope,
-                                 Metadata *InlinedAt = nullptr) {
-    return getImpl(Context, Line, Column, Scope, InlinedAt, Uniqued,
-                   /* ShouldCreate */ false);
-  }
-  static MDLocation *getDistinct(LLVMContext &Context, unsigned Line,
-                                 unsigned Column, Metadata *Scope,
-                                 Metadata *InlinedAt = nullptr) {
-    return getImpl(Context, Line, Column, Scope, InlinedAt, Distinct);
-  }
-  static TempMDLocation getTemporary(LLVMContext &Context, unsigned Line,
-                                     unsigned Column, Metadata *Scope,
-                                     Metadata *InlinedAt = nullptr) {
-    return TempMDLocation(
-        getImpl(Context, Line, Column, Scope, InlinedAt, Temporary));
-  }
+  DEFINE_MDNODE_GET(MDLocation,
+                    (unsigned Line, unsigned Column, Metadata *Scope,
+                     Metadata *InlinedAt = nullptr),
+                    (Line, Column, Scope, InlinedAt))
 
   /// \brief Return a (temporary) clone of this.
   TempMDLocation clone() const { return cloneImpl(); }
@@ -150,28 +155,9 @@ class GenericDebugNode : public DebugNode {
 public:
   unsigned getHash() const { return SubclassData32; }
 
-  static GenericDebugNode *get(LLVMContext &Context, unsigned Tag,
-                               StringRef Header,
-                               ArrayRef<Metadata *> DwarfOps) {
-    return getImpl(Context, Tag, Header, DwarfOps, Uniqued);
-  }
-  static GenericDebugNode *getIfExists(LLVMContext &Context, unsigned Tag,
-                                       StringRef Header,
-                                       ArrayRef<Metadata *> DwarfOps) {
-    return getImpl(Context, Tag, Header, DwarfOps, Uniqued,
-                   /* ShouldCreate */ false);
-  }
-  static GenericDebugNode *getDistinct(LLVMContext &Context, unsigned Tag,
-                                       StringRef Header,
-                                       ArrayRef<Metadata *> DwarfOps) {
-    return getImpl(Context, Tag, Header, DwarfOps, Distinct);
-  }
-  static TempGenericDebugNode getTemporary(LLVMContext &Context, unsigned Tag,
-                                           StringRef Header,
-                                           ArrayRef<Metadata *> DwarfOps) {
-    return TempGenericDebugNode(
-        getImpl(Context, Tag, Header, DwarfOps, Temporary));
-  }
+  DEFINE_MDNODE_GET(GenericDebugNode, (unsigned Tag, StringRef Header,
+                                       ArrayRef<Metadata *> DwarfOps),
+                    (Tag, Header, DwarfOps))
 
   /// \brief Return a (temporary) clone of this.
   TempGenericDebugNode clone() const { return cloneImpl(); }
@@ -199,5 +185,9 @@ public:
 };
 
 } // end namespace llvm
+
+#undef DEFINE_MDNODE_GET_UNPACK_IMPL
+#undef DEFINE_MDNODE_GET_UNPACK
+#undef DEFINE_MDNODE_GET
 
 #endif
