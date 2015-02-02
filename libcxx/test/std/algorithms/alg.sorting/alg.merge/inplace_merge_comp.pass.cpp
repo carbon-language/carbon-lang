@@ -31,6 +31,7 @@ struct indirect_less
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 #include "test_iterators.h"
+#include "counting_predicates.hpp"
 
 template <class Iter>
 void
@@ -43,12 +44,14 @@ test_one(unsigned N, unsigned M)
     std::random_shuffle(ia, ia+N);
     std::sort(ia, ia+M, std::greater<int>());
     std::sort(ia+M, ia+N, std::greater<int>());
-    std::inplace_merge(Iter(ia), Iter(ia+M), Iter(ia+N), std::greater<int>());
+    binary_counting_predicate<std::greater<int>, int, int> pred((std::greater<int>()));
+    std::inplace_merge(Iter(ia), Iter(ia+M), Iter(ia+N), std::ref(pred));
     if(N > 0)
     {
         assert(ia[0] == N-1);
         assert(ia[N-1] == 0);
         assert(std::is_sorted(ia, ia+N, std::greater<int>()));
+        assert(pred.count() <= (N-1));
     }
     delete [] ia;
 }
@@ -79,6 +82,7 @@ test()
     test_one<Iter>(3, 2);
     test_one<Iter>(3, 3);
     test<Iter>(4);
+    test<Iter>(20);
     test<Iter>(100);
     test<Iter>(1000);
 }

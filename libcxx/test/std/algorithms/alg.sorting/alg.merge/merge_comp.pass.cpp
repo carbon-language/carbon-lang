@@ -25,6 +25,7 @@
 #include <cassert>
 
 #include "test_iterators.h"
+#include "counting_predicates.hpp"
 
 template <class InIter1, class InIter2, class OutIter>
 void
@@ -41,12 +42,14 @@ test()
         ib[i] = 2*i+1;
     std::reverse(ia, ia+N);
     std::reverse(ib, ib+N);
+    binary_counting_predicate<std::greater<int>, int, int> pred((std::greater<int>()));
     OutIter r = std::merge(InIter1(ia), InIter1(ia+N),
-                           InIter2(ib), InIter2(ib+N), OutIter(ic), std::greater<int>());
+                           InIter2(ib), InIter2(ib+N), OutIter(ic), pred);
     assert(base(r) == ic+2*N);
     assert(ic[0] == 2*N-1);
     assert(ic[2*N-1] == 0);
     assert(std::is_sorted(ic, ic+2*N, std::greater<int>()));
+    assert(pred.count() <= (N + N - 1));
     delete [] ic;
     delete [] ib;
     delete [] ia;
@@ -63,12 +66,14 @@ test()
     std::copy(ic+N, ic+2*N, ib);
     std::sort(ia, ia+N, std::greater<int>());
     std::sort(ib, ib+N, std::greater<int>());
+    binary_counting_predicate<std::greater<int>, int, int> pred((std::greater<int>()));
     OutIter r = std::merge(InIter1(ia), InIter1(ia+N),
-                           InIter2(ib), InIter2(ib+N), OutIter(ic), std::greater<int>());
+                           InIter2(ib), InIter2(ib+N), OutIter(ic), pred);
     assert(base(r) == ic+2*N);
     assert(ic[0] == 2*N-1);
     assert(ic[2*N-1] == 0);
     assert(std::is_sorted(ic, ic+2*N, std::greater<int>()));
+    assert(pred.count() <= (N + N - 1));
     delete [] ic;
     delete [] ib;
     delete [] ia;

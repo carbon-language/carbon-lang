@@ -4482,12 +4482,6 @@ __inplace_merge(_BidirectionalIterator __first, _BidirectionalIterator __middle,
     }
 }
 
-template <class _Tp>
-struct __inplace_merge_switch
-{
-    static const unsigned value = is_trivially_copy_assignable<_Tp>::value;
-};
-
 template <class _BidirectionalIterator, class _Compare>
 inline _LIBCPP_INLINE_VISIBILITY
 void
@@ -4499,13 +4493,9 @@ inplace_merge(_BidirectionalIterator __first, _BidirectionalIterator __middle, _
     difference_type __len1 = _VSTD::distance(__first, __middle);
     difference_type __len2 = _VSTD::distance(__middle, __last);
     difference_type __buf_size = _VSTD::min(__len1, __len2);
-    pair<value_type*, ptrdiff_t> __buf(0, 0);
-    unique_ptr<value_type, __return_temporary_buffer> __h;
-    if (__inplace_merge_switch<value_type>::value && __buf_size > 8)
-    {
-        __buf = _VSTD::get_temporary_buffer<value_type>(__buf_size);
-        __h.reset(__buf.first);
-    }
+    pair<value_type*, ptrdiff_t> __buf = _VSTD::get_temporary_buffer<value_type>(__buf_size);
+    unique_ptr<value_type, __return_temporary_buffer> __h(__buf.first);
+
 #ifdef _LIBCPP_DEBUG
     typedef typename add_lvalue_reference<__debug_less<_Compare> >::type _Comp_ref;
     __debug_less<_Compare> __c(__comp);
