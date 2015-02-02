@@ -23,21 +23,21 @@
 ; AST:     for (int c2 = 0; c2 < n + c0; c2 += 1)
 ; AST:       Stmt_for_body6(c0, c1, c2);
 
-; IR: %polly.par.userContext = alloca { i64, i64 }
-; IR: %4 = bitcast { i64, i64 }* %polly.par.userContext to i8*
-; IR-NEXT: call void @llvm.lifetime.start(i64 16, i8* %4)
-; IR-NEXT: %5 = getelementptr inbounds { i64, i64 }* %polly.par.userContext, i32 0, i32 0
-; IR-NEXT: store i64 %n, i64* %5
-; IR-NEXT: %6 = getelementptr inbounds { i64, i64 }* %polly.par.userContext, i32 0, i32 1
-; IR-NEXT: store i64 %polly.indvar, i64* %6
+; IR:      %polly.par.userContext = alloca { i64, i64 }
+; IR:      %[[R0:[0-9]+]] = bitcast { i64, i64 }* %polly.par.userContext to i8*
+; IR-NEXT: call void @llvm.lifetime.start(i64 16, i8* %[[R0]])
+; IR-NEXT: %[[R1:[0-9]+]] = getelementptr inbounds { i64, i64 }* %polly.par.userContext, i32 0, i32 0
+; IR-NEXT: store i64 %n, i64* %[[R1]]
+; IR-NEXT: %[[R2:[0-9]+]] = getelementptr inbounds { i64, i64 }* %polly.par.userContext, i32 0, i32 1
+; IR-NEXT: store i64 %polly.indvar, i64* %[[R2]]
 ; IR-NEXT: %polly.par.userContext1 = bitcast { i64, i64 }* %polly.par.userContext to i8*
 
 ; IR-LABEL: @loop_references_outer_ids.polly.subfn(i8* %polly.par.userContext)
-; IR: %polly.par.userContext1 = bitcast i8* %polly.par.userContext to { i64, i64 }*
-; IR-NEXT: %0 = getelementptr inbounds { i64, i64 }* %polly.par.userContext1, i32 0, i32 0
-; IR-NEXT: %1 = load i64* %0
-; IR-NEXT: %2 = getelementptr inbounds { i64, i64 }* %polly.par.userContext1, i32 0, i32 1
-; IR-NEXT: %3 = load i64* %2
+; IR:       %polly.par.userContext1 = bitcast i8* %polly.par.userContext to { i64, i64 }*
+; IR-NEXT:  %[[R3:[0-9]+]] = getelementptr inbounds { i64, i64 }* %polly.par.userContext1, i32 0, i32 0
+; IR-NEXT:  %[[R4:[0-9]+]] = load i64* %[[R3]]
+; IR-NEXT:  %[[R5:[0-9]+]] = getelementptr inbounds { i64, i64 }* %polly.par.userContext1, i32 0, i32 1
+; IR-NEXT:  %[[R6:[0-9]+]] = load i64* %[[R5]]
 
 target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
 
