@@ -27,7 +27,7 @@ enum OverloadsShown : unsigned {
 /// \brief Options for controlling the compiler diagnostics engine.
 class DiagnosticOptions : public RefCountedBase<DiagnosticOptions>{
 public:
-  enum TextDiagnosticFormat { Clang, Msvc, Vi };
+  enum TextDiagnosticFormat { Clang, MSVC, Vi };
 
   // Default values.
   enum { DefaultTabStop = 8, MaxTabStop = 100,

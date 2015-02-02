@@ -1761,17 +1761,17 @@ def TypeTagForDatatype : InheritableAttr {
 
 // Microsoft-related attributes
 
-def MsNoVTable : InheritableAttr {
+def MSNoVTable : InheritableAttr {
   let Spellings = [Declspec<"novtable">];
   let Subjects = SubjectList<[CXXRecord]>;
-  let Documentation = [MsNoVTableDocs];
+  let Documentation = [MSNoVTableDocs];
 }
 
-def MsProperty : IgnoredAttr {
+def : IgnoredAttr {
   let Spellings = [Declspec<"property">];
 }
 
-def MsStruct : InheritableAttr {
+def MSStruct : InheritableAttr {
   let Spellings = [GCC<"ms_struct">];
   let Subjects = SubjectList<[Record]>;
   let Documentation = [Undocumented];

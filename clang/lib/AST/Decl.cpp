@@ -3589,7 +3589,7 @@ void RecordDecl::completeDefinition() {
 /// This which can be turned on with an attribute, pragma, or the
 /// -mms-bitfields command-line option.
 bool RecordDecl::isMsStruct(const ASTContext &C) const {
-  return hasAttr<MsStructAttr>() || C.getLangOpts().MSBitfields == 1;
+  return hasAttr<MSStructAttr>() || C.getLangOpts().MSBitfields == 1;
 }
 
 static bool isFieldOrIndirectField(Decl::Kind K) {

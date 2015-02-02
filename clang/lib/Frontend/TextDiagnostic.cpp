@@ -799,14 +799,14 @@ void TextDiagnostic::emitDiagnosticLoc(SourceLocation Loc, PresumedLoc PLoc,
   OS << PLoc.getFilename();
   switch (DiagOpts->getFormat()) {
   case DiagnosticOptions::Clang: OS << ':'  << LineNo; break;
-  case DiagnosticOptions::Msvc:  OS << '('  << LineNo; break;
+  case DiagnosticOptions::MSVC:  OS << '('  << LineNo; break;
   case DiagnosticOptions::Vi:    OS << " +" << LineNo; break;
   }
 
   if (DiagOpts->ShowColumn)
     // Compute the column number.
     if (unsigned ColNo = PLoc.getColumn()) {
-      if (DiagOpts->getFormat() == DiagnosticOptions::Msvc) {
+      if (DiagOpts->getFormat() == DiagnosticOptions::MSVC) {
         OS << ',';
         // Visual Studio 2010 or earlier expects column number to be off by one
         if (LangOpts.MSCompatibilityVersion &&
@@ -819,7 +819,7 @@ void TextDiagnostic::emitDiagnosticLoc(SourceLocation Loc, PresumedLoc PLoc,
   switch (DiagOpts->getFormat()) {
   case DiagnosticOptions::Clang:
   case DiagnosticOptions::Vi:    OS << ':';    break;
-  case DiagnosticOptions::Msvc:  OS << ") : "; break;
+  case DiagnosticOptions::MSVC:  OS << ") : "; break;
   }
 
   if (DiagOpts->ShowSourceRanges && !Ranges.empty()) {

@@ -4689,11 +4689,11 @@ static void ProcessDeclAttribute(Sema &S, Scope *scope, Decl *D,
     break;
 
   // Microsoft attributes:
-  case AttributeList::AT_MsNoVTable:
-    handleSimpleAttribute<MsNoVTableAttr>(S, D, Attr);
+  case AttributeList::AT_MSNoVTable:
+    handleSimpleAttribute<MSNoVTableAttr>(S, D, Attr);
     break;
-  case AttributeList::AT_MsStruct:
-    handleSimpleAttribute<MsStructAttr>(S, D, Attr);
+  case AttributeList::AT_MSStruct:
+    handleSimpleAttribute<MSStructAttr>(S, D, Attr);
     break;
   case AttributeList::AT_Uuid:
     handleUuidAttr(S, D, Attr);

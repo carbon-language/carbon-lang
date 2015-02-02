@@ -1954,7 +1954,7 @@ CodeGenFunction::InitializeVTablePointer(BaseSubobject Base,
   // Don't initialize the vtable pointer if the class is marked with the
   // 'novtable' attribute.
   if ((RD == VTableClass || RD == NearestVBase) &&
-      VTableClass->hasAttr<MsNoVTableAttr>())
+      VTableClass->hasAttr<MSNoVTableAttr>())
     return;
 
   // Compute the address point.

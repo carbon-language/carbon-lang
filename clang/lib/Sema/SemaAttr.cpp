@@ -131,7 +131,7 @@ void Sema::AddAlignmentAttributesForRecord(RecordDecl *RD) {
 
 void Sema::AddMsStructLayoutForRecord(RecordDecl *RD) {
   if (MSStructPragmaOn)
-    RD->addAttr(MsStructAttr::CreateImplicit(Context));
+    RD->addAttr(MSStructAttr::CreateImplicit(Context));
 
   // FIXME: We should merge AddAlignmentAttributesForRecord with
   // AddMsStructLayoutForRecord into AddPragmaAttributesForRecord, which takes

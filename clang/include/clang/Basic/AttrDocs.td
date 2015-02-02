@@ -1253,7 +1253,7 @@ an error:
 }];
 }
 
-def MsNoVTableDocs : Documentation {
+def MSNoVTableDocs : Documentation {
   let Category = DocCatType;
   let Content = [{
 This attribute can be added to a class declaration or definition to signal to
