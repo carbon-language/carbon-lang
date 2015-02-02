@@ -174,6 +174,11 @@ namespace DtorErrors {
     int I; // expected-note {{declared here}}
     ~I::I() {} // expected-error {{'I' is not a class, namespace, or enumeration}} expected-error {{'~' in destructor name should be after nested name specifier}}
   };
+
+  struct T {};
+  T t1 = t1.T::~T<int>; // expected-error {{destructor name 'T' does not refer to a template}} expected-error {{expected '(' for function-style cast or type construction}} expected-error {{expected expression}}
+  // Emit the same diagnostic as for the previous case, plus something about ~.
+  T t2 = t2.~T::T<int>; // expected-error {{'~' in destructor name should be after nested name specifier}} expected-error {{destructor name 'T' does not refer to a template}} expected-error {{expected '(' for function-style cast or type construction}} expected-error {{expected expression}}
 }
 
 namespace BadFriend {
