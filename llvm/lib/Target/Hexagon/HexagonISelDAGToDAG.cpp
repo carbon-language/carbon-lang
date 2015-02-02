@@ -47,7 +47,7 @@ namespace {
 class HexagonDAGToDAGISel : public SelectionDAGISel {
   /// Subtarget - Keep a pointer to the Hexagon Subtarget around so that we can
   /// make the right decision when generating code for different targets.
-  const HexagonSubtarget &Subtarget;
+  const HexagonSubtarget *Subtarget;
 
   // Keep a reference to HexagonTargetMachine.
   const HexagonTargetMachine& TM;
@@ -55,9 +55,7 @@ class HexagonDAGToDAGISel : public SelectionDAGISel {
 public:
   explicit HexagonDAGToDAGISel(HexagonTargetMachine &targetmachine,
                                CodeGenOpt::Level OptLevel)
-    : SelectionDAGISel(targetmachine, OptLevel),
-      Subtarget(targetmachine.getSubtarget<HexagonSubtarget>()),
-      TM(targetmachine) {
+      : SelectionDAGISel(targetmachine, OptLevel), TM(targetmachine) {
     initializeHexagonDAGToDAGISelPass(*PassRegistry::getPassRegistry());
   }
   bool hasNumUsesBelowThresGA(SDNode *N) const;
@@ -83,6 +81,11 @@ public:
 
   const char *getPassName() const override {
     return "Hexagon DAG->DAG Pattern Instruction Selection";
+  }
+
+  bool runOnMachineFunction(MachineFunction &MF) override {
+    Subtarget = &MF.getSubtarget<HexagonSubtarget>();
+    return SelectionDAGISel::runOnMachineFunction(MF);
   }
 
   /// SelectInlineAsmMemoryOperand - Implement addressing mode selection for
@@ -411,8 +414,7 @@ SDNode *HexagonDAGToDAGISel::SelectIndexedLoadSignExtend64(LoadSDNode *LD,
 
   if (SelectADDRriS11_2(N1, CPTmpN1_0, CPTmpN1_1) &&
       N1.getNode()->getValueType(0) == MVT::i32) {
-    const HexagonInstrInfo *TII = static_cast<const HexagonInstrInfo *>(
-        TM.getSubtargetImpl()->getInstrInfo());
+    const HexagonInstrInfo *TII = Subtarget->getInstrInfo();
     if (TII->isValidAutoIncImm(LoadedVT, Val)) {
       SDValue TargetConst = CurDAG->getTargetConstant(Val, MVT::i32);
       SDNode *Result_1 = CurDAG->getMachineNode(Opcode, dl, MVT::i32, MVT::i32,
@@ -478,8 +480,7 @@ SDNode *HexagonDAGToDAGISel::SelectIndexedLoadZeroExtend64(LoadSDNode *LD,
 
   if (SelectADDRriS11_2(N1, CPTmpN1_0, CPTmpN1_1) &&
       N1.getNode()->getValueType(0) == MVT::i32) {
-    const HexagonInstrInfo *TII = static_cast<const HexagonInstrInfo *>(
-        TM.getSubtargetImpl()->getInstrInfo());
+    const HexagonInstrInfo *TII = Subtarget->getInstrInfo();
     if (TII->isValidAutoIncImm(LoadedVT, Val)) {
       SDValue TargetConstVal = CurDAG->getTargetConstant(Val, MVT::i32);
       SDValue TargetConst0 = CurDAG->getTargetConstant(0, MVT::i32);
@@ -556,8 +557,7 @@ SDNode *HexagonDAGToDAGISel::SelectIndexedLoad(LoadSDNode *LD, SDLoc dl) {
   bool zextval = (LD->getExtensionType() == ISD::ZEXTLOAD);
 
   // Figure out the opcode.
-  const HexagonInstrInfo *TII = static_cast<const HexagonInstrInfo *>(
-      TM.getSubtargetImpl()->getInstrInfo());
+  const HexagonInstrInfo *TII = Subtarget->getInstrInfo();
   if (LoadedVT == MVT::i64) {
     if (TII->isValidAutoIncImm(LoadedVT, Val))
       Opcode = Hexagon::L2_loadrd_pi;
@@ -666,8 +666,7 @@ SDNode *HexagonDAGToDAGISel::SelectIndexedStore(StoreSDNode *ST, SDLoc dl) {
 
   // Offset value must be within representable range
   // and must have correct alignment properties.
-  const HexagonInstrInfo *TII = static_cast<const HexagonInstrInfo *>(
-      TM.getSubtargetImpl()->getInstrInfo());
+  const HexagonInstrInfo *TII = Subtarget->getInstrInfo();
   if (TII->isValidAutoIncImm(StoredVT, Val)) {
     SDValue Ops[] = {Base, CurDAG->getTargetConstant(Val, MVT::i32), Value,
                      Chain};

@@ -34,18 +34,18 @@ def ArchV5       : SubtargetFeature<"v5", "HexagonArchVersion", "V5",
 //===----------------------------------------------------------------------===//
 // Hexagon Instruction Predicate Definitions.
 //===----------------------------------------------------------------------===//
-def HasV2T                      : Predicate<"Subtarget.hasV2TOps()">;
-def HasV2TOnly                  : Predicate<"Subtarget.hasV2TOpsOnly()">;
-def NoV2T                       : Predicate<"!Subtarget.hasV2TOps()">;
-def HasV3T                      : Predicate<"Subtarget.hasV3TOps()">;
-def HasV3TOnly                  : Predicate<"Subtarget.hasV3TOpsOnly()">;
-def NoV3T                       : Predicate<"!Subtarget.hasV3TOps()">;
-def HasV4T                      : Predicate<"Subtarget.hasV4TOps()">;
-def NoV4T                       : Predicate<"!Subtarget.hasV4TOps()">;
-def HasV5T                      : Predicate<"Subtarget.hasV5TOps()">;
-def NoV5T                       : Predicate<"!Subtarget.hasV5TOps()">;
-def UseMEMOP                    : Predicate<"Subtarget.useMemOps()">;
-def IEEERndNearV5T              : Predicate<"Subtarget.modeIEEERndNear()">;
+def HasV2T                      : Predicate<"Subtarget->hasV2TOps()">;
+def HasV2TOnly                  : Predicate<"Subtarget->hasV2TOpsOnly()">;
+def NoV2T                       : Predicate<"!Subtarget->hasV2TOps()">;
+def HasV3T                      : Predicate<"Subtarget->hasV3TOps()">;
+def HasV3TOnly                  : Predicate<"Subtarget->hasV3TOpsOnly()">;
+def NoV3T                       : Predicate<"!Subtarget->hasV3TOps()">;
+def HasV4T                      : Predicate<"Subtarget->hasV4TOps()">;
+def NoV4T                       : Predicate<"!Subtarget->hasV4TOps()">;
+def HasV5T                      : Predicate<"Subtarget->hasV5TOps()">;
+def NoV5T                       : Predicate<"!Subtarget->hasV5TOps()">;
+def UseMEMOP                    : Predicate<"Subtarget->useMemOps()">;
+def IEEERndNearV5T              : Predicate<"Subtarget->modeIEEERndNear()">;
 
 //===----------------------------------------------------------------------===//
 // Classes used for relation maps.
