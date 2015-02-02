@@ -111,6 +111,12 @@ protected:
     return StringRef();
   }
 
+  static MDString *getCanonicalMDString(LLVMContext &Context, StringRef S) {
+    if (S.empty())
+      return nullptr;
+    return MDString::get(Context, S);
+  }
+
 public:
   unsigned getTag() const { return SubclassData16; }
 
@@ -144,6 +150,15 @@ class GenericDebugNode : public DebugNode {
                                    StringRef Header,
                                    ArrayRef<Metadata *> DwarfOps,
                                    StorageType Storage,
+                                   bool ShouldCreate = true) {
+    return getImpl(Context, Tag, getCanonicalMDString(Context, Header),
+                   DwarfOps, Storage, ShouldCreate);
+  }
+
+  static GenericDebugNode *getImpl(LLVMContext &Context, unsigned Tag,
+                                   MDString *Header,
+                                   ArrayRef<Metadata *> DwarfOps,
+                                   StorageType Storage,
                                    bool ShouldCreate = true);
 
   TempGenericDebugNode cloneImpl() const {
@@ -156,6 +171,9 @@ public:
   unsigned getHash() const { return SubclassData32; }
 
   DEFINE_MDNODE_GET(GenericDebugNode, (unsigned Tag, StringRef Header,
+                                       ArrayRef<Metadata *> DwarfOps),
+                    (Tag, Header, DwarfOps))
+  DEFINE_MDNODE_GET(GenericDebugNode, (unsigned Tag, MDString *Header,
                                        ArrayRef<Metadata *> DwarfOps),
                     (Tag, Header, DwarfOps))
 

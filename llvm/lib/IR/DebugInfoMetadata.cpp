@@ -71,21 +71,24 @@ MDLocation *MDLocation::getImpl(LLVMContext &Context, unsigned Line,
                    Storage, Context.pImpl->MDLocations);
 }
 
-/// \brief Get the MDString, or nullptr if the string is empty.
-static MDString *getCanonicalMDString(LLVMContext &Context, StringRef S) {
-  if (S.empty())
-    return nullptr;
-  return MDString::get(Context, S);
+static StringRef getString(const MDString *S) {
+  if (S)
+    return S->getString();
+  return StringRef();
+}
+
+static bool isCanonical(const MDString *S) {
+  return !S || !S->getString().empty();
 }
 
 GenericDebugNode *GenericDebugNode::getImpl(LLVMContext &Context, unsigned Tag,
-                                            StringRef Header,
+                                            MDString *Header,
                                             ArrayRef<Metadata *> DwarfOps,
                                             StorageType Storage,
                                             bool ShouldCreate) {
   unsigned Hash = 0;
   if (Storage == Uniqued) {
-    GenericDebugNodeInfo::KeyTy Key(Tag, Header, DwarfOps);
+    GenericDebugNodeInfo::KeyTy Key(Tag, getString(Header), DwarfOps);
     if (auto *N = getUniqued(Context.pImpl->GenericDebugNodes, Key))
       return N;
     if (!ShouldCreate)
@@ -96,7 +99,8 @@ GenericDebugNode *GenericDebugNode::getImpl(LLVMContext &Context, unsigned Tag,
   }
 
   // Use a nullptr for empty headers.
-  Metadata *PreOps[] = {getCanonicalMDString(Context, Header)};
+  assert(isCanonical(Header) && "Expected canonical MDString");
+  Metadata *PreOps[] = {Header};
   return storeImpl(new (DwarfOps.size() + 1) GenericDebugNode(
                        Context, Storage, Hash, Tag, PreOps, DwarfOps),
                    Storage, Context.pImpl->GenericDebugNodes);
