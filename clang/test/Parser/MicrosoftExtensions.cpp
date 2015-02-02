@@ -339,7 +339,7 @@ void TestProperty() {
 //expected-warning@+1 {{C++ operator 'and' (aka '&&') used as a macro name}}
 #define and foo
 
-struct __declspec(uuid("00000000-0000-0000-C000-000000000046")) __declspec(novtable) IUnknown {}; // expected-warning{{__declspec attribute 'novtable' is not supported}}
+struct __declspec(uuid("00000000-0000-0000-C000-000000000046")) __declspec(novtable) IUnknown {};
 
 typedef bool (__stdcall __stdcall *blarg)(int);
 

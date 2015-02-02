@@ -1582,7 +1582,8 @@ void MicrosoftCXXABI::emitVirtualInheritanceTables(const CXXRecordDecl *RD) {
   for (unsigned I = 0, E = VBGlobals.VBTables->size(); I != E; ++I) {
     const VPtrInfo *VBT = (*VBGlobals.VBTables)[I];
     llvm::GlobalVariable *GV = VBGlobals.Globals[I];
-    emitVBTableDefinition(*VBT, RD, GV);
+    if (GV->isDeclaration())
+      emitVBTableDefinition(*VBT, RD, GV);
   }
 }
 
@@ -1608,6 +1609,9 @@ MicrosoftCXXABI::getAddrOfVBTable(const VPtrInfo &VBT, const CXXRecordDecl *RD,
     GV->setDLLStorageClass(llvm::GlobalValue::DLLImportStorageClass);
   else if (RD->hasAttr<DLLExportAttr>())
     GV->setDLLStorageClass(llvm::GlobalValue::DLLExportStorageClass);
+
+  if (!GV->hasExternalLinkage())
+    emitVBTableDefinition(VBT, RD, GV);
 
   return GV;
 }

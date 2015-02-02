@@ -4689,6 +4689,9 @@ static void ProcessDeclAttribute(Sema &S, Scope *scope, Decl *D,
     break;
 
   // Microsoft attributes:
+  case AttributeList::AT_MsNoVTable:
+    handleSimpleAttribute<MsNoVTableAttr>(S, D, Attr);
+    break;
   case AttributeList::AT_MsStruct:
     handleSimpleAttribute<MsStructAttr>(S, D, Attr);
     break;

@@ -1949,6 +1949,14 @@ CodeGenFunction::InitializeVTablePointer(BaseSubobject Base,
                                          const CXXRecordDecl *NearestVBase,
                                          CharUnits OffsetFromNearestVBase,
                                          const CXXRecordDecl *VTableClass) {
+  const CXXRecordDecl *RD = Base.getBase();
+
+  // Don't initialize the vtable pointer if the class is marked with the
+  // 'novtable' attribute.
+  if ((RD == VTableClass || RD == NearestVBase) &&
+      VTableClass->hasAttr<MsNoVTableAttr>())
+    return;
+
   // Compute the address point.
   bool NeedsVirtualOffset;
   llvm::Value *VTableAddressPoint =
