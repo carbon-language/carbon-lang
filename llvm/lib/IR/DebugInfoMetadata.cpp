@@ -77,9 +77,11 @@ static StringRef getString(const MDString *S) {
   return StringRef();
 }
 
+#ifndef NDEBUG
 static bool isCanonical(const MDString *S) {
   return !S || !S->getString().empty();
 }
+#endif
 
 GenericDebugNode *GenericDebugNode::getImpl(LLVMContext &Context, unsigned Tag,
                                             MDString *Header,
