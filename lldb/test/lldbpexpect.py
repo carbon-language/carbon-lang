@@ -23,7 +23,7 @@ class PExpectTest(TestBase):
 
     def launch(self):
         self.timeout = 5
-        self.child = pexpect.spawn('%s %s' % self.lldbHere, self.launchArgs())
+        self.child = pexpect.spawn('%s %s' % (self.lldbHere, self.launchArgs()))
 
     def expect(self, patterns=None, timeout=None):
         if patterns is None: patterns = '.*'
