@@ -68,7 +68,6 @@ char HexagonExpandPredSpillCode::ID = 0;
 bool HexagonExpandPredSpillCode::runOnMachineFunction(MachineFunction &Fn) {
 
   const HexagonSubtarget &QST = Fn.getSubtarget<HexagonSubtarget>();
-  const HexagonRegisterInfo *TRI = QST.getRegisterInfo();
   const HexagonInstrInfo *TII = QST.getInstrInfo();
 
   // Loop over all of the basic blocks.
@@ -83,7 +82,7 @@ bool HexagonExpandPredSpillCode::runOnMachineFunction(MachineFunction &Fn) {
       if (Opc == Hexagon::STriw_pred) {
         // STriw_pred [R30], ofst, SrcReg;
         unsigned FP = MI->getOperand(0).getReg();
-        assert(FP == TRI->getFrameRegister() &&
+        assert(FP == QST.getRegisterInfo()->getFrameRegister() &&
                "Not a Frame Pointer, Nor a Spill Slot");
         assert(MI->getOperand(1).isImm() && "Not an offset");
         int Offset = MI->getOperand(1).getImm();
@@ -130,7 +129,7 @@ bool HexagonExpandPredSpillCode::runOnMachineFunction(MachineFunction &Fn) {
         assert(Hexagon::PredRegsRegClass.contains(DstReg) &&
                "Not a predicate register");
         unsigned FP = MI->getOperand(1).getReg();
-        assert(FP == TRI->getFrameRegister() &&
+        assert(FP == QST.getRegisterInfo()->getFrameRegister() &&
                "Not a Frame Pointer, Nor a Spill Slot");
         assert(MI->getOperand(2).isImm() && "Not an offset");
         int Offset = MI->getOperand(2).getImm();
