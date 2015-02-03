@@ -109,9 +109,12 @@ def FeatureQPX       : SubtargetFeature<"qpx","HasQPX", "true",
 def FeatureVSX       : SubtargetFeature<"vsx","HasVSX", "true",
                                         "Enable VSX instructions",
                                         [FeatureAltivec]>;
+def FeatureP8Altivec : SubtargetFeature<"power8-altivec", "HasP8Altivec", "true",
+                                        "Enable POWER8 Altivec instructions",
+                                        [FeatureAltivec]>;
 def FeatureP8Vector  : SubtargetFeature<"power8-vector", "HasP8Vector", "true",
                                         "Enable POWER8 vector instructions",
-                                        [FeatureVSX, FeatureAltivec]>;
+                                        [FeatureVSX, FeatureP8Altivec]>;
 
 def FeatureInvariantFunctionDescriptors :
   SubtargetFeature<"invariant-function-descriptors",
@@ -260,9 +263,9 @@ def : Processor<"g4+", G4PlusItineraries, [Directive7400, FeatureAltivec,
 */
 def ProcessorFeatures {
     list<SubtargetFeature> Power8FeatureList =
-        [DirectivePwr8, FeatureAltivec, FeatureVSX, FeatureP8Vector,
-        FeatureMFOCRF, FeatureFCPSGN, FeatureFSqrt, FeatureFRE,
-        FeatureFRES, FeatureFRSQRTE, FeatureFRSQRTES,
+        [DirectivePwr8, FeatureAltivec, FeatureP8Altivec, FeatureVSX, 
+        FeatureP8Vector, FeatureMFOCRF, FeatureFCPSGN, FeatureFSqrt, 
+        FeatureFRE, FeatureFRES, FeatureFRSQRTE, FeatureFRSQRTES,
         FeatureRecipPrec, FeatureSTFIWX, FeatureLFIWAX,
         FeatureFPRND, FeatureFPCVT, FeatureISEL,
         FeaturePOPCNTD, FeatureCMPB, FeatureLDBRX,

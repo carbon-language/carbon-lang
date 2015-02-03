@@ -543,6 +543,23 @@
 # CHECK-LE: vrsqrtefp 2, 3                  # encoding: [0x4a,0x19,0x40,0x10]
             vrsqrtefp 2, 3
 
+# Vector population count instructions
+# CHECK-BE: vpopcntb 2, 3                   # encoding: [0x10,0x40,0x1f,0x03]
+# CHECK-LE: vpopcntb 2, 3                   # encoding: [0x03,0x1f,0x40,0x10]
+            vpopcntb 2, 3
+
+# CHECK-BE: vpopcnth 2, 3                   # encoding: [0x10,0x40,0x1f,0x43]
+# CHECK-LE: vpopcnth 2, 3                   # encoding: [0x43,0x1f,0x40,0x10]
+            vpopcnth 2, 3	
+
+# CHECK-BE: vpopcntw 2, 3                   # encoding: [0x10,0x40,0x1f,0x83]
+# CHECK-LE: vpopcntw 2, 3                   # encoding: [0x83,0x1f,0x40,0x10]
+            vpopcntw 2, 3
+	
+# BCHECK-BE: vpopcntd 2, 3                   # encoding: [0x10,0x40,0x1f,0xC3]
+# BCHECK-LE: vpopcntd 2, 3                   # encoding: [0xC3,0x1f,0x40,0x10]
+#            vpopcntd 2, 3
+	
 # Vector status and control register instructions
 
 # CHECK-BE: mtvscr 2                        # encoding: [0x10,0x00,0x16,0x44]

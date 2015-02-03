@@ -791,18 +791,27 @@ def : Pat<(store v4i32:$rS, xoaddr:$dst),
 def : Pat<(v16i8 (bitconvert (v8i16 VRRC:$src))), (v16i8 VRRC:$src)>;
 def : Pat<(v16i8 (bitconvert (v4i32 VRRC:$src))), (v16i8 VRRC:$src)>;
 def : Pat<(v16i8 (bitconvert (v4f32 VRRC:$src))), (v16i8 VRRC:$src)>;
+def : Pat<(v16i8 (bitconvert (v2i64 VRRC:$src))), (v16i8 VRRC:$src)>;
 
 def : Pat<(v8i16 (bitconvert (v16i8 VRRC:$src))), (v8i16 VRRC:$src)>;
 def : Pat<(v8i16 (bitconvert (v4i32 VRRC:$src))), (v8i16 VRRC:$src)>;
 def : Pat<(v8i16 (bitconvert (v4f32 VRRC:$src))), (v8i16 VRRC:$src)>;
+def : Pat<(v8i16 (bitconvert (v2i64 VRRC:$src))), (v8i16 VRRC:$src)>;
 
 def : Pat<(v4i32 (bitconvert (v16i8 VRRC:$src))), (v4i32 VRRC:$src)>;
 def : Pat<(v4i32 (bitconvert (v8i16 VRRC:$src))), (v4i32 VRRC:$src)>;
 def : Pat<(v4i32 (bitconvert (v4f32 VRRC:$src))), (v4i32 VRRC:$src)>;
+def : Pat<(v4i32 (bitconvert (v2i64 VRRC:$src))), (v4i32 VRRC:$src)>;
 
 def : Pat<(v4f32 (bitconvert (v16i8 VRRC:$src))), (v4f32 VRRC:$src)>;
 def : Pat<(v4f32 (bitconvert (v8i16 VRRC:$src))), (v4f32 VRRC:$src)>;
 def : Pat<(v4f32 (bitconvert (v4i32 VRRC:$src))), (v4f32 VRRC:$src)>;
+def : Pat<(v4f32 (bitconvert (v2i64 VRRC:$src))), (v4f32 VRRC:$src)>;
+
+def : Pat<(v2i64 (bitconvert (v16i8 VRRC:$src))), (v2i64 VRRC:$src)>;
+def : Pat<(v2i64 (bitconvert (v8i16 VRRC:$src))), (v2i64 VRRC:$src)>;
+def : Pat<(v2i64 (bitconvert (v4i32 VRRC:$src))), (v2i64 VRRC:$src)>;
+def : Pat<(v2i64 (bitconvert (v4f32 VRRC:$src))), (v2i64 VRRC:$src)>;
 
 // Shuffles.
 
@@ -929,3 +938,19 @@ def : Pat<(v4f32 (fnearbyint v4f32:$vA)),
 
 } // end HasAltivec
 
+def HasP8Altivec : Predicate<"PPCSubTarget->hasP8Altivec()">;
+let Predicates = [HasP8Altivec] in {
+// Population Count
+def VPOPCNTB : VXForm_2<1795, (outs vrrc:$vD), (ins vrrc:$vB),
+                        "vpopcntb $vD, $vB", IIC_VecGeneral,
+                        [(set v16i8:$vD, (ctpop v16i8:$vB))]>;
+def VPOPCNTH : VXForm_2<1859, (outs vrrc:$vD), (ins vrrc:$vB),
+                        "vpopcnth $vD, $vB", IIC_VecGeneral,
+                        [(set v8i16:$vD, (ctpop v8i16:$vB))]>;
+def VPOPCNTW : VXForm_2<1923, (outs vrrc:$vD), (ins vrrc:$vB),
+                        "vpopcntw $vD, $vB", IIC_VecGeneral,
+                        [(set v4i32:$vD, (ctpop v4i32:$vB))]>;
+def VPOPCNTD : VXForm_2<1987, (outs vrrc:$vD), (ins vrrc:$vB),
+                        "vpopcntd $vD, $vB", IIC_VecGeneral,
+                        [(set v2i64:$vD, (ctpop v2i64:$vB))]>;
+} // end HasP8Altivec

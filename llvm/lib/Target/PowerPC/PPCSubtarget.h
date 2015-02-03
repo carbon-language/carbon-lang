@@ -89,6 +89,7 @@ protected:
   bool HasQPX;
   bool HasVSX;
   bool HasP8Vector;
+  bool HasP8Altivec;
   bool HasFCPSGN;
   bool HasFSQRT;
   bool HasFRE, HasFRES, HasFRSQRTE, HasFRSQRTES;
@@ -216,6 +217,7 @@ public:
   bool hasQPX() const { return HasQPX; }
   bool hasVSX() const { return HasVSX; }
   bool hasP8Vector() const { return HasP8Vector; }
+  bool hasP8Altivec() const { return HasP8Altivec; }
   bool hasMFOCRF() const { return HasMFOCRF; }
   bool hasISEL() const { return HasISEL; }
   bool hasPOPCNTD() const { return HasPOPCNTD; }
