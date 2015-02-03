@@ -18,3 +18,8 @@ struct __declspec(align(64)) S {
   char fd;
 } s;
 // CHECK-DAG: @s = global %struct.S zeroinitializer, align 64
+
+struct Wrap {
+  struct S x;
+} w;
+// CHECK-DAG: @w = global %struct.Wrap zeroinitializer, align 64
