@@ -2114,7 +2114,7 @@ NativeProcessLinux::MonitorSIGTRAP(const siginfo_t *info, lldb::pid_t pid)
                                                        [=](lldb::tid_t tid_to_resume, bool supress_signal)
                                                        {
                                                            reinterpret_cast<NativeThreadLinux*> (new_thread_sp.get ())->SetRunning ();
-                                                           Resume (tid_to_resume, LLDB_INVALID_SIGNAL_NUMBER);
+                                                           return Resume (tid_to_resume, LLDB_INVALID_SIGNAL_NUMBER);
                                                        },
                                                        CoordinatorErrorHandler);
             }
@@ -2136,7 +2136,7 @@ NativeProcessLinux::MonitorSIGTRAP(const siginfo_t *info, lldb::pid_t pid)
                                                [=](lldb::tid_t tid_to_resume, bool supress_signal)
                                                {
                                                    reinterpret_cast<NativeThreadLinux*> (thread_sp.get ())->SetRunning ();
-                                                   Resume (tid_to_resume, LLDB_INVALID_SIGNAL_NUMBER);
+                                                   return Resume (tid_to_resume, LLDB_INVALID_SIGNAL_NUMBER);
                                                },
                                                CoordinatorErrorHandler);
 
@@ -2240,7 +2240,7 @@ NativeProcessLinux::MonitorSIGTRAP(const siginfo_t *info, lldb::pid_t pid)
                                                [=](lldb::tid_t tid_to_resume, bool supress_signal)
                                                {
                                                    reinterpret_cast<NativeThreadLinux*> (thread_sp.get ())->SetRunning ();
-                                                   Resume (tid_to_resume, (supress_signal) ? LLDB_INVALID_SIGNAL_NUMBER : signo);
+                                                   return Resume (tid_to_resume, (supress_signal) ? LLDB_INVALID_SIGNAL_NUMBER : signo);
                                                },
                                                CoordinatorErrorHandler);
 
@@ -2349,7 +2349,7 @@ NativeProcessLinux::MonitorSIGTRAP(const siginfo_t *info, lldb::pid_t pid)
                                                [=](lldb::tid_t tid_to_resume, bool supress_signal)
                                                {
                                                    reinterpret_cast<NativeThreadLinux*> (thread_sp.get ())->SetRunning ();
-                                                   Resume (tid_to_resume, LLDB_INVALID_SIGNAL_NUMBER);
+                                                   return Resume (tid_to_resume, LLDB_INVALID_SIGNAL_NUMBER);
                                                },
                                                CoordinatorErrorHandler);
         break;
@@ -2429,7 +2429,7 @@ NativeProcessLinux::MonitorSignal(const siginfo_t *info, lldb::pid_t pid, bool e
                                                    [=](lldb::tid_t tid_to_resume, bool supress_signal)
                                                    {
                                                        reinterpret_cast<NativeThreadLinux*> (thread_sp.get ())->SetRunning ();
-                                                       Resume (tid_to_resume, LLDB_INVALID_SIGNAL_NUMBER);
+                                                       return Resume (tid_to_resume, LLDB_INVALID_SIGNAL_NUMBER);
                                                    },
                                                    CoordinatorErrorHandler);
         }
@@ -2528,7 +2528,7 @@ NativeProcessLinux::MonitorSignal(const siginfo_t *info, lldb::pid_t pid, bool e
                                                    {
                                                        reinterpret_cast<NativeThreadLinux*> (thread_sp.get ())->SetRunning ();
                                                        // Pass this signal number on to the inferior to handle.
-                                                       Resume (tid_to_resume, (supress_signal) ? LLDB_INVALID_SIGNAL_NUMBER : signo);
+                                                       return Resume (tid_to_resume, (supress_signal) ? LLDB_INVALID_SIGNAL_NUMBER : signo);
                                                    },
                                                    CoordinatorErrorHandler);
         }
@@ -2603,7 +2603,7 @@ NativeProcessLinux::Resume (const ResumeActionList &resume_actions)
                                                                {
                                                                    reinterpret_cast<NativeThreadLinux*> (thread_sp.get ())->SetRunning ();
                                                                    // Pass this signal number on to the inferior to handle.
-                                                                   Resume (tid_to_resume, (signo > 0 && !supress_signal) ? signo : LLDB_INVALID_SIGNAL_NUMBER);
+                                                                   return Resume (tid_to_resume, (signo > 0 && !supress_signal) ? signo : LLDB_INVALID_SIGNAL_NUMBER);
                                                                },
                                                                CoordinatorErrorHandler);
                 ++resume_count;
@@ -2618,8 +2618,9 @@ NativeProcessLinux::Resume (const ResumeActionList &resume_actions)
                                                        [=](lldb::tid_t tid_to_step, bool supress_signal)
                                                        {
                                                            reinterpret_cast<NativeThreadLinux*> (thread_sp.get ())->SetStepping ();
-                                                           auto step_result = SingleStep (tid_to_step,(signo > 0 && !supress_signal) ? signo : LLDB_INVALID_SIGNAL_NUMBER);
-                                                           assert (step_result && "SingleStep() failed");
+                                                           const auto step_result = SingleStep (tid_to_step,(signo > 0 && !supress_signal) ? signo : LLDB_INVALID_SIGNAL_NUMBER);
+                                                           assert (step_result.Success() && "SingleStep() failed");
+                                                           return step_result;
                                                        },
                                                        CoordinatorErrorHandler);
                 stepping = true;
@@ -3872,7 +3873,7 @@ NativeProcessLinux::CallAfterRunningThreadsStop (lldb::tid_t tid,
     m_coordinator_up->CallAfterRunningThreadsStop (tid,
                                                    [=](lldb::tid_t request_stop_tid)
                                                    {
-                                                       RequestThreadStop(pid, request_stop_tid);
+                                                       return RequestThreadStop(pid, request_stop_tid);
                                                    },
                                                    call_after_function,
                                                    CoordinatorErrorHandler);
@@ -3892,7 +3893,7 @@ NativeProcessLinux::CallAfterRunningThreadsStopWithSkipTID (lldb::tid_t deferred
                                                                skip_stop_request_tid != LLDB_INVALID_THREAD_ID ? ThreadStateCoordinator::ThreadIDSet {skip_stop_request_tid} : ThreadStateCoordinator::ThreadIDSet (),
                                                                [=](lldb::tid_t request_stop_tid)
                                                                {
-                                                                   RequestThreadStop(pid, request_stop_tid);
+                                                                   return RequestThreadStop(pid, request_stop_tid);
                                                                },
                                                                call_after_function,
                                                                CoordinatorErrorHandler);

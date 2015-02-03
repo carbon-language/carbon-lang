@@ -19,6 +19,8 @@
 
 #include "lldb/lldb-types.h"
 
+#include "lldb/Core/Error.h"
+
 namespace lldb_private
 {
     class ThreadStateCoordinator
@@ -38,7 +40,8 @@ namespace lldb_private
         typedef std::function<void (lldb::tid_t tid)> ThreadIDFunction;
         typedef std::function<void (const char *format, va_list args)> LogFunction;
         typedef std::function<void (const std::string &error_message)> ErrorFunction;
-        typedef std::function<void (lldb::tid_t tid, bool supress_signal)> ResumeThreadFunction;
+        typedef std::function<Error (lldb::tid_t tid)> StopThreadFunction;
+        typedef std::function<Error (lldb::tid_t tid, bool supress_signal)> ResumeThreadFunction;
 
         // Constructors.
         ThreadStateCoordinator (const LogFunction &log_function);
@@ -68,7 +71,7 @@ namespace lldb_private
         void
         CallAfterThreadsStop (lldb::tid_t triggering_tid,
                               const ThreadIDSet &wait_for_stop_tids,
-                              const ThreadIDFunction &request_thread_stop_function,
+                              const StopThreadFunction &request_thread_stop_function,
                               const ThreadIDFunction &call_after_function,
                               const ErrorFunction &error_function);
 
@@ -78,7 +81,7 @@ namespace lldb_private
         // be fired if the triggering tid is unknown at the time of execution.
         void
         CallAfterRunningThreadsStop (lldb::tid_t triggering_tid,
-                                     const ThreadIDFunction &request_thread_stop_function,
+                                     const StopThreadFunction &request_thread_stop_function,
                                      const ThreadIDFunction &call_after_function,
                                      const ErrorFunction &error_function);
 
@@ -91,7 +94,7 @@ namespace lldb_private
         void
         CallAfterRunningThreadsStopWithSkipTIDs (lldb::tid_t triggering_tid,
                                                  const ThreadIDSet &skip_stop_request_tids,
-                                                 const ThreadIDFunction &request_thread_stop_function,
+                                                 const StopThreadFunction &request_thread_stop_function,
                                                  const ThreadIDFunction &call_after_function,
                                                  const ErrorFunction &error_function);
 

@@ -73,7 +73,7 @@ class ThreadStateCoordinator::EventCallAfterThreadsStop : public ThreadStateCoor
 public:
     EventCallAfterThreadsStop (lldb::tid_t triggering_tid,
                                const ThreadIDSet &wait_for_stop_tids,
-                               const ThreadIDFunction &request_thread_stop_function,
+                               const StopThreadFunction &request_thread_stop_function,
                                const ThreadIDFunction &call_after_function,
                                const ErrorFunction &error_function):
     EventBase (),
@@ -89,7 +89,7 @@ public:
     }
 
     EventCallAfterThreadsStop (lldb::tid_t triggering_tid,
-                               const ThreadIDFunction &request_thread_stop_function,
+                               const StopThreadFunction &request_thread_stop_function,
                                const ThreadIDFunction &call_after_function,
                                const ErrorFunction &error_function) :
     EventBase (),
@@ -105,7 +105,7 @@ public:
     }
 
     EventCallAfterThreadsStop (lldb::tid_t triggering_tid,
-                               const ThreadIDFunction &request_thread_stop_function,
+                               const StopThreadFunction &request_thread_stop_function,
                                const ThreadIDFunction &call_after_function,
                                const ThreadIDSet &skip_stop_request_tids,
                                const ErrorFunction &error_function) :
@@ -261,10 +261,10 @@ private:
             }
 
             // If the pending stop thread is currently running, we need to send it a stop request.
-            if (find_it->second.m_state == ThreadState::Running)
+            auto& context = find_it->second;
+            if (context.m_state == ThreadState::Running)
             {
-                m_request_thread_stop_function (tid);
-                RequestThreadStop (tid, find_it->second);
+                RequestThreadStop (tid, coordinator, context);
                 sent_tids.insert (tid);
             }
         }
@@ -297,7 +297,7 @@ private:
                 // Request this thread stop if the tid stop request is not explicitly ignored.
                 const bool skip_stop_request = m_skip_stop_request_tids.count (tid) > 0;
                 if (!skip_stop_request)
-                    RequestThreadStop (tid, it->second);
+                    RequestThreadStop (tid, coordinator, it->second);
 
                 // Even if we skipped sending the stop request for other reasons (like stepping),
                 // we still need to wait for that stepping thread to notify completion/stop.
@@ -310,16 +310,24 @@ private:
     }
 
     void
-    RequestThreadStop (lldb::tid_t tid, ThreadContext& context)
+    RequestThreadStop (lldb::tid_t tid, ThreadStateCoordinator &coordinator, ThreadContext& context)
     {
-        m_request_thread_stop_function (tid);
-        context.m_stop_requested = true;
+        const auto error = m_request_thread_stop_function (tid);
+        if (error.Success ())
+        {
+            context.m_stop_requested = true;
+        }
+        else
+        {
+            coordinator.Log ("EventCallAfterThreadsStop::%s failed to request thread stop tid  %" PRIu64 ": %s",
+                             __FUNCTION__, tid, error.AsCString ());
+        }
     }
 
     const lldb::tid_t m_triggering_tid;
     ThreadIDSet m_wait_for_stop_tids;
     const ThreadIDSet m_original_wait_for_stop_tids;
-    ThreadIDFunction m_request_thread_stop_function;
+    StopThreadFunction m_request_thread_stop_function;
     ThreadIDFunction m_call_after_function;
     ErrorFunction m_error_function;
     const bool m_request_stop_on_all_unstopped_threads;
@@ -543,11 +551,18 @@ public:
 
         // Request a resume.  We expect this to be synchronous and the system
         // to reflect it is running after this completes.
-        m_request_thread_resume_function (m_tid, false);
-
-        // Now mark it is running.
-        context.m_state = ThreadState::Running;
-        context.m_request_resume_function = m_request_thread_resume_function;
+        const auto error = m_request_thread_resume_function (m_tid, false);
+        if (error.Success ())
+        {
+            // Now mark it is running.
+            context.m_state = ThreadState::Running;
+            context.m_request_resume_function = m_request_thread_resume_function;
+        }
+        else
+        {
+            coordinator.Log ("EventRequestResume::%s failed to resume thread tid  %" PRIu64 ": %s",
+                             __FUNCTION__, m_tid, error.AsCString ());
+        }
 
         return eventLoopResultContinue;
     }
@@ -633,7 +648,7 @@ ThreadStateCoordinator::SetPendingNotification (const EventBaseSP &event_sp)
 void
 ThreadStateCoordinator::CallAfterThreadsStop (const lldb::tid_t triggering_tid,
                                               const ThreadIDSet &wait_for_stop_tids,
-                                              const ThreadIDFunction &request_thread_stop_function,
+                                              const StopThreadFunction &request_thread_stop_function,
                                               const ThreadIDFunction &call_after_function,
                                               const ErrorFunction &error_function)
 {
@@ -646,7 +661,7 @@ ThreadStateCoordinator::CallAfterThreadsStop (const lldb::tid_t triggering_tid,
 
 void
 ThreadStateCoordinator::CallAfterRunningThreadsStop (const lldb::tid_t triggering_tid,
-                                                     const ThreadIDFunction &request_thread_stop_function,
+                                                     const StopThreadFunction &request_thread_stop_function,
                                                      const ThreadIDFunction &call_after_function,
                                                      const ErrorFunction &error_function)
 {
@@ -659,7 +674,7 @@ ThreadStateCoordinator::CallAfterRunningThreadsStop (const lldb::tid_t triggerin
 void
 ThreadStateCoordinator::CallAfterRunningThreadsStopWithSkipTIDs (lldb::tid_t triggering_tid,
                                                                  const ThreadIDSet &skip_stop_request_tids,
-                                                                 const ThreadIDFunction &request_thread_stop_function,
+                                                                 const StopThreadFunction &request_thread_stop_function,
                                                                  const ThreadIDFunction &call_after_function,
                                                                  const ErrorFunction &error_function)
 {
@@ -708,8 +723,16 @@ ThreadStateCoordinator::ThreadDidStop (lldb::tid_t tid, bool initiated_by_llgs, 
         // We can end up here if stop was initiated by LLGS but by this time a
         // thread stop has occurred - maybe initiated by another event.
         Log ("Resuming thread %"  PRIu64 " since stop wasn't requested", tid);
-        context.m_request_resume_function (tid, true);
-        context.m_state = ThreadState::Running;
+        const auto error = context.m_request_resume_function (tid, true);
+        if (error.Success ())
+        {
+            context.m_state = ThreadState::Running;
+        }
+        else
+        {
+            Log ("ThreadStateCoordinator::%s failed to resume thread tid  %" PRIu64 ": %s",
+                 __FUNCTION__, tid, error.AsCString ());
+        }
     }
 }
 
