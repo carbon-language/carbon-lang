@@ -129,14 +129,14 @@ CMICmnLLDBProxySBValue::GetCString(const lldb::SBValue &vrValue, CMIUtilString &
         return MIstatus::failure;
 
     CMICmnLLDBDebugSessionInfo &rSessionInfo(CMICmnLLDBDebugSessionInfo::Instance());
-    lldb::SBProcess &rProcess = rSessionInfo.m_lldbProcess;
+    lldb::SBProcess sbProcess = rSessionInfo.GetProcess();
     MIuint nBufferSize = 64;
     bool bNeedResize = false;
     MIchar *pBuffer = static_cast<MIchar *>(::malloc(nBufferSize));
     do
     {
         lldb::SBError error;
-        const size_t nReadSize = rProcess.ReadCStringFromMemory((lldb::addr_t)nNum, pBuffer, nBufferSize, error);
+        const size_t nReadSize = sbProcess.ReadCStringFromMemory((lldb::addr_t)nNum, pBuffer, nBufferSize, error);
         if (nReadSize == (nBufferSize - 1))
         {
             bNeedResize = true;

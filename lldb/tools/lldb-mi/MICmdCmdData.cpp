@@ -122,8 +122,8 @@ CMICmdCmdDataEvaluateExpression::Execute(void)
 
     const CMIUtilString &rExpression(pArgExpr->GetValue());
     CMICmnLLDBDebugSessionInfo &rSessionInfo(CMICmnLLDBDebugSessionInfo::Instance());
-    lldb::SBProcess &rProcess = rSessionInfo.m_lldbProcess;
-    lldb::SBThread thread = rProcess.GetSelectedThread();
+    lldb::SBProcess sbProcess = rSessionInfo.GetProcess();
+    lldb::SBThread thread = sbProcess.GetSelectedThread();
     m_bExpressionValid = (thread.GetNumFrames() > 0);
     if (!m_bExpressionValid)
         return MIstatus::success;
@@ -410,22 +410,22 @@ CMICmdCmdDataDisassemble::Execute(void)
     const MIuint nDisasmMode = pArgMode->GetValue();
 
     CMICmnLLDBDebugSessionInfo &rSessionInfo(CMICmnLLDBDebugSessionInfo::Instance());
-    lldb::SBTarget &rTarget = rSessionInfo.m_lldbTarget;
+    lldb::SBTarget sbTarget = rSessionInfo.GetTarget();
     lldb::addr_t lldbStartAddr = static_cast<lldb::addr_t>(nAddrStart);
-    lldb::SBInstructionList instructions = rTarget.ReadInstructions(lldb::SBAddress(lldbStartAddr, rTarget), nAddrEnd - nAddrStart);
+    lldb::SBInstructionList instructions = sbTarget.ReadInstructions(lldb::SBAddress(lldbStartAddr, sbTarget), nAddrEnd - nAddrStart);
     const MIuint nInstructions = instructions.GetSize();
     for (size_t i = 0; i < nInstructions; i++)
     {
         const MIchar *pUnknown = "??";
         lldb::SBInstruction instrt = instructions.GetInstructionAtIndex(i);
-        const MIchar *pStrMnemonic = instrt.GetMnemonic(rTarget);
+        const MIchar *pStrMnemonic = instrt.GetMnemonic(sbTarget);
         pStrMnemonic = (pStrMnemonic != nullptr) ? pStrMnemonic : pUnknown;
         lldb::SBAddress address = instrt.GetAddress();
-        lldb::addr_t addr = address.GetLoadAddress(rTarget);
+        lldb::addr_t addr = address.GetLoadAddress(sbTarget);
         const MIchar *pFnName = address.GetFunction().GetName();
         pFnName = (pFnName != nullptr) ? pFnName : pUnknown;
         lldb::addr_t addrOffSet = address.GetOffset();
-        const MIchar *pStrOperands = instrt.GetOperands(rTarget);
+        const MIchar *pStrOperands = instrt.GetOperands(sbTarget);
         pStrOperands = (pStrOperands != nullptr) ? pStrOperands : pUnknown;
 
         // MI "{address=\"0x%08llx\",func-name=\"%s\",offset=\"%lld\",inst=\"%s %s\"}"
@@ -599,9 +599,9 @@ CMICmdCmdDataReadMemoryBytes::Execute(void)
     }
 
     CMICmnLLDBDebugSessionInfo &rSessionInfo(CMICmnLLDBDebugSessionInfo::Instance());
-    lldb::SBProcess &rProcess = rSessionInfo.m_lldbProcess;
+    lldb::SBProcess sbProcess = rSessionInfo.GetProcess();
     lldb::SBError error;
-    const MIuint64 nReadBytes = rProcess.ReadMemory(static_cast<lldb::addr_t>(nAddrStart), (void *)m_pBufferMemory, nAddrNumBytes, error);
+    const MIuint64 nReadBytes = sbProcess.ReadMemory(static_cast<lldb::addr_t>(nAddrStart), (void *)m_pBufferMemory, nAddrNumBytes, error);
     if (nReadBytes != nAddrNumBytes)
     {
         SetError(
@@ -827,14 +827,14 @@ bool
 CMICmdCmdDataListRegisterNames::Execute(void)
 {
     CMICmnLLDBDebugSessionInfo &rSessionInfo(CMICmnLLDBDebugSessionInfo::Instance());
-    lldb::SBProcess &rProcess = rSessionInfo.m_lldbProcess;
-    if (!rProcess.IsValid())
+    lldb::SBProcess sbProcess = rSessionInfo.GetProcess();
+    if (sbProcess.IsValid())
     {
         SetError(CMIUtilString::Format(MIRSRC(IDS_CMD_ERR_INVALID_PROCESS), m_cmdData.strMiCmd.c_str()));
         return MIstatus::failure;
     }
 
-    lldb::SBThread thread = rProcess.GetSelectedThread();
+    lldb::SBThread thread = sbProcess.GetSelectedThread();
     lldb::SBFrame frame = thread.GetSelectedFrame();
     lldb::SBValueList registers = frame.GetRegisters();
     const MIuint nRegisters = registers.GetSize();
@@ -906,7 +906,6 @@ CMICmdCmdDataListRegisterValues::CMICmdCmdDataListRegisterValues(void)
     , m_constStrArgFormat("fmt")
     , m_constStrArgRegNo("regno")
     , m_miValueList(true)
-    , m_pProcess(nullptr)
 {
     // Command factory matches this name with that received from the stdin stream
     m_strMiCmd = "data-list-register-values";
@@ -975,13 +974,12 @@ CMICmdCmdDataListRegisterValues::Execute(void)
     }
 
     CMICmnLLDBDebugSessionInfo &rSessionInfo(CMICmnLLDBDebugSessionInfo::Instance());
-    lldb::SBProcess &rProcess = rSessionInfo.m_lldbProcess;
-    if (!rProcess.IsValid())
+    lldb::SBProcess sbProcess = rSessionInfo.GetProcess();
+    if (!sbProcess.IsValid())
     {
         SetError(CMIUtilString::Format(MIRSRC(IDS_CMD_ERR_INVALID_PROCESS), m_cmdData.strMiCmd.c_str()));
         return MIstatus::failure;
     }
-    m_pProcess = &rProcess;
 
     const CMICmdArgValListBase::VecArgObjPtr_t &rVecRegNo(pArgRegNo->GetExpectedOptions());
     CMICmdArgValListBase::VecArgObjPtr_t::const_iterator it = rVecRegNo.begin();
@@ -1051,7 +1049,7 @@ CMICmdCmdDataListRegisterValues::CreateSelf(void)
 lldb::SBValue
 CMICmdCmdDataListRegisterValues::GetRegister(const MIuint vRegisterIndex) const
 {
-    lldb::SBThread thread = m_pProcess->GetSelectedThread();
+    lldb::SBThread thread = CMICmnLLDBDebugSessionInfo::Instance().GetProcess().GetSelectedThread();
     lldb::SBFrame frame = thread.GetSelectedFrame();
     lldb::SBValueList registers = frame.GetRegisters();
     const MIuint nRegisters = registers.GetSize();
@@ -1371,10 +1369,10 @@ CMICmdCmdDataWriteMemory::Execute(void)
     *m_pBufferMemory = static_cast<MIchar>(nValue);
 
     CMICmnLLDBDebugSessionInfo &rSessionInfo(CMICmnLLDBDebugSessionInfo::Instance());
-    lldb::SBProcess &rProcess = rSessionInfo.m_lldbProcess;
+    lldb::SBProcess sbProcess = rSessionInfo.GetProcess();
     lldb::SBError error;
     lldb::addr_t addr = static_cast<lldb::addr_t>(m_nAddr + nAddrOffset);
-    const size_t nBytesWritten = rProcess.WriteMemory(addr, (const void *)m_pBufferMemory, (size_t)m_nCount, error);
+    const size_t nBytesWritten = sbProcess.WriteMemory(addr, (const void *)m_pBufferMemory, (size_t)m_nCount, error);
     if (nBytesWritten != static_cast<size_t>(m_nCount))
     {
         SetError(CMIUtilString::Format(MIRSRC(IDS_CMD_ERR_LLDB_ERR_NOT_WRITE_WHOLEBLK), m_cmdData.strMiCmd.c_str(), m_nCount, addr));

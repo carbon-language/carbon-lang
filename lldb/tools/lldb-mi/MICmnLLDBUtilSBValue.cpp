@@ -219,7 +219,7 @@ CMICmnLLDBUtilSBValue::ReadCStringFromHostMemory(const lldb::SBValue &vrValueObj
     const MIuint nBytes(128);
     const MIchar *pBufferMemory = new MIchar[nBytes];
     lldb::SBError error;
-    const MIuint64 nReadBytes = rSessionInfo.m_lldbProcess.ReadMemory(addr, (void *)pBufferMemory, nBytes, error);
+    const MIuint64 nReadBytes = rSessionInfo.GetProcess().ReadMemory(addr, (void *)pBufferMemory, nBytes, error);
     MIunused(nReadBytes);
     text = CMIUtilString::Format("\\\"%s\\\"", pBufferMemory);
     delete[] pBufferMemory;

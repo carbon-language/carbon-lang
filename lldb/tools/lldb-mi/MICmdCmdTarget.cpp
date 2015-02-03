@@ -100,7 +100,7 @@ CMICmdCmdTargetSelect::Execute(void)
 
     // Check we have a valid target
     // Note: target created via 'file-exec-and-symbols' command
-    if (!rSessionInfo.m_lldbTarget.IsValid())
+    if (!rSessionInfo.GetTarget().IsValid())
     {
         SetError(CMIUtilString::Format(MIRSRC(IDS_CMD_ERR_INVALID_TARGET_CURRENT), m_cmdData.strMiCmd.c_str()));
         return MIstatus::failure;
@@ -120,7 +120,7 @@ CMICmdCmdTargetSelect::Execute(void)
     // Ask LLDB to collect to the target port
     const MIchar *pPlugin("gdb-remote");
     lldb::SBError error;
-    lldb::SBProcess process = rSessionInfo.m_lldbTarget.ConnectRemote(rSessionInfo.m_rLlldbListener, strUrl.c_str(), pPlugin, error);
+    lldb::SBProcess process = rSessionInfo.GetTarget().ConnectRemote(rSessionInfo.GetListener(), strUrl.c_str(), pPlugin, error);
 
     // Verify that we have managed to connect successfully
     lldb::SBStream errMsg;
@@ -135,16 +135,11 @@ CMICmdCmdTargetSelect::Execute(void)
         return MIstatus::failure;
     }
 
-    // Save the process in the session info
-    // Note: Order is important here since this process handle may be used by CMICmnLLDBDebugHandleEvents
-    //       which can fire when interpreting via HandleCommand() below.
-    rSessionInfo.m_lldbProcess = process;
-
     // Set the environment path if we were given one
     CMIUtilString strWkDir;
     if (rSessionInfo.SharedDataRetrieve<CMIUtilString>(rSessionInfo.m_constStrSharedDataKeyWkDir, strWkDir))
     {
-        lldb::SBDebugger &rDbgr = rSessionInfo.m_rLldbDebugger;
+        lldb::SBDebugger &rDbgr = rSessionInfo.GetDebugger();
         if (!rDbgr.SetCurrentPlatformSDKRoot(strWkDir.c_str()))
         {
             SetError(CMIUtilString::Format(MIRSRC(IDS_CMD_ERR_FNFAILED), m_cmdData.strMiCmd.c_str(), "target-select"));
@@ -156,7 +151,7 @@ CMICmdCmdTargetSelect::Execute(void)
     CMIUtilString strSolibPath;
     if (rSessionInfo.SharedDataRetrieve<CMIUtilString>(rSessionInfo.m_constStrSharedDataSolibPath, strSolibPath))
     {
-        lldb::SBDebugger &rDbgr = rSessionInfo.m_rLldbDebugger;
+        lldb::SBDebugger &rDbgr = rSessionInfo.GetDebugger();
         lldb::SBCommandInterpreter cmdIterpreter = rDbgr.GetCommandInterpreter();
 
         CMIUtilString strCmdString = CMIUtilString::Format("target modules search-paths add . %s", strSolibPath.c_str());
@@ -190,7 +185,7 @@ CMICmdCmdTargetSelect::Acknowledge(void)
     m_miResultRecord = miRecordResult;
 
     CMICmnLLDBDebugSessionInfo &rSessionInfo(CMICmnLLDBDebugSessionInfo::Instance());
-    lldb::pid_t pid = rSessionInfo.m_lldbProcess.GetProcessID();
+    lldb::pid_t pid = rSessionInfo.GetProcess().GetProcessID();
     // Prod the client i.e. Eclipse with out-of-band results to help it 'continue' because it is using LLDB debugger
     // Give the client '=thread-group-started,id="i1"'
     m_bHasResultRecordExtra = true;

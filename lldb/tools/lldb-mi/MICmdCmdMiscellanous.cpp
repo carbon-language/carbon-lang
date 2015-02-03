@@ -84,7 +84,7 @@ bool
 CMICmdCmdGdbExit::Execute(void)
 {
     CMICmnLLDBDebugger::Instance().GetDriver().SetExitApplicationFlag(true);
-    const lldb::SBError sbErr = m_rLLDBDebugSessionInfo.m_lldbProcess.Detach();
+    const lldb::SBError sbErr = m_rLLDBDebugSessionInfo.GetProcess().Detach();
     // Do not check for sbErr.Fail() here, m_lldbProcess is likely !IsValid()
 
     return MIstatus::success;
@@ -234,17 +234,17 @@ CMICmdCmdListThreadGroups::Execute(void)
     m_bIsI1 = true;
 
     CMICmnLLDBDebugSessionInfo &rSessionInfo(CMICmnLLDBDebugSessionInfo::Instance());
-    lldb::SBProcess &rProcess = rSessionInfo.m_lldbProcess;
+    lldb::SBProcess sbProcess = rSessionInfo.GetProcess();
 
-    // Note do not check for rProcess is IsValid(), continue
+    // Note do not check for sbProcess is IsValid(), continue
 
     m_vecMIValueTuple.clear();
-    const MIuint nThreads = rProcess.GetNumThreads();
+    const MIuint nThreads = sbProcess.GetNumThreads();
     for (MIuint i = 0; i < nThreads; i++)
     {
         //  GetThreadAtIndex() uses a base 0 index
         //  GetThreadByIndexID() uses a base 1 index
-        lldb::SBThread thread = rProcess.GetThreadAtIndex(i);
+        lldb::SBThread thread = sbProcess.GetThreadAtIndex(i);
 
         if (thread.IsValid())
         {
@@ -292,9 +292,9 @@ CMICmdCmdListThreadGroups::Acknowledge(void)
         miTuple.Add(miValueResult2);
 
         CMICmnLLDBDebugSessionInfo &rSessionInfo(CMICmnLLDBDebugSessionInfo::Instance());
-        if (rSessionInfo.m_lldbProcess.IsValid())
+        if (rSessionInfo.GetProcess().IsValid())
         {
-            const lldb::pid_t pid = rSessionInfo.m_lldbProcess.GetProcessID();
+            const lldb::pid_t pid = rSessionInfo.GetProcess().GetProcessID();
             const CMIUtilString strPid(CMIUtilString::Format("%lld", pid));
             const CMICmnMIValueConst miValueConst3(strPid);
             const CMICmnMIValueResult miValueResult3("pid", miValueConst3);
@@ -328,20 +328,20 @@ CMICmdCmdListThreadGroups::Acknowledge(void)
         miTuple.Add(miValueResult2);
 
         CMICmnLLDBDebugSessionInfo &rSessionInfo(CMICmnLLDBDebugSessionInfo::Instance());
-        if (rSessionInfo.m_lldbProcess.IsValid())
+        if (rSessionInfo.GetProcess().IsValid())
         {
-            const lldb::pid_t pid = rSessionInfo.m_lldbProcess.GetProcessID();
+            const lldb::pid_t pid = rSessionInfo.GetProcess().GetProcessID();
             const CMIUtilString strPid(CMIUtilString::Format("%lld", pid));
             const CMICmnMIValueConst miValueConst3(strPid);
             const CMICmnMIValueResult miValueResult3("pid", miValueConst3);
             miTuple.Add(miValueResult3);
         }
 
-        if (rSessionInfo.m_lldbTarget.IsValid())
+        if (rSessionInfo.GetTarget().IsValid())
         {
-            lldb::SBTarget &rTrgt = rSessionInfo.m_lldbTarget;
-            const MIchar *pDir = rTrgt.GetExecutable().GetDirectory();
-            const MIchar *pFileName = rTrgt.GetExecutable().GetFilename();
+            lldb::SBTarget sbTrgt = rSessionInfo.GetTarget();
+            const MIchar *pDir = sbTrgt.GetExecutable().GetDirectory();
+            const MIchar *pFileName = sbTrgt.GetExecutable().GetFilename();
             const CMIUtilString strFile(CMIUtilString::Format("%s/%s", pDir, pFileName));
             const CMICmnMIValueConst miValueConst4(strFile);
             const CMICmnMIValueResult miValueResult4("executable", miValueConst4);
@@ -470,7 +470,7 @@ CMICmdCmdInterpreterExec::Execute(void)
     const CMIUtilString &rStrCommand(pArgCommand->GetValue());
     CMICmnLLDBDebugSessionInfo &rSessionInfo(CMICmnLLDBDebugSessionInfo::Instance());
     const lldb::ReturnStatus rtn =
-        rSessionInfo.m_rLldbDebugger.GetCommandInterpreter().HandleCommand(rStrCommand.c_str(), m_lldbResult, true);
+        rSessionInfo.GetDebugger().GetCommandInterpreter().HandleCommand(rStrCommand.c_str(), m_lldbResult, true);
     MIunused(rtn);
 
     return MIstatus::success;

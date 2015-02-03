@@ -156,14 +156,14 @@ class CMICmnLLDBDebugSessionInfo : public CMICmnBase, public MI::ISingleton<CMIC
     bool RecordBrkPtInfo(const MIuint vnBrkPtId, const SBrkPtInfo &vrBrkPtInfo);
     bool RecordBrkPtInfoGet(const MIuint vnBrkPtId, SBrkPtInfo &vrwBrkPtInfo) const;
     bool RecordBrkPtInfoDelete(const MIuint vnBrkPtId);
+    lldb::SBDebugger &GetDebugger() const;
+    lldb::SBListener &GetListener() const;
+    lldb::SBTarget GetTarget() const;
+    lldb::SBProcess GetProcess() const;
 
     // Attributes:
   public:
     // The following are available to all command instances
-    lldb::SBDebugger &m_rLldbDebugger;
-    lldb::SBListener &m_rLlldbListener;
-    lldb::SBTarget m_lldbTarget;
-    lldb::SBProcess m_lldbProcess;
     const MIuint m_nBrkPointCntMax;
     VecActiveThreadId_t m_vecActiveThreadId;
     lldb::tid_t m_currentSelectedThread;

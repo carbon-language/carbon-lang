@@ -96,7 +96,7 @@ CMICmdCmdFileExecAndSymbols::Execute(void)
     CMICmdArgValFile *pArgFile = static_cast<CMICmdArgValFile *>(pArgNamedFile);
     const CMIUtilString &strExeFilePath(pArgFile->GetValue());
     CMICmnLLDBDebugSessionInfo &rSessionInfo(CMICmnLLDBDebugSessionInfo::Instance());
-    lldb::SBDebugger &rDbgr = rSessionInfo.m_rLldbDebugger;
+    lldb::SBDebugger &rDbgr = rSessionInfo.GetDebugger();
     lldb::SBError error;
     const MIchar *pTargetTriple = nullptr; // Let LLDB discover the triple required
     const MIchar *pTargetPlatformName = "";
@@ -136,8 +136,6 @@ CMICmdCmdFileExecAndSymbols::Execute(void)
         SetError(CMIUtilString::Format(MIRSRC(IDS_CMD_ERR_CREATE_TARGET), m_cmdData.strMiCmd.c_str(), err.GetData()));
         return MIstatus::failure;
     }
-
-    rSessionInfo.m_lldbTarget = target;
 
     return MIstatus::success;
 }

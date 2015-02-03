@@ -148,7 +148,8 @@ CMICmnLLDBDebugger::Shutdown(void)
 
     // Explicitly delete the remote target in case MI needs to exit prematurely otherwise
     // LLDB debugger may hang in its Destroy() fn waiting on events
-    m_lldbDebugger.DeleteTarget(CMICmnLLDBDebugSessionInfo::Instance().m_lldbTarget);
+    lldb::SBTarget sbTarget = CMICmnLLDBDebugSessionInfo::Instance().GetTarget();
+    m_lldbDebugger.DeleteTarget(sbTarget);
 
     // Debug: May need this but does seem to work without it so commented out the fudge 19/06/2014
     // It appears we need to wait as hang does not occur when hitting a debug breakpoint here

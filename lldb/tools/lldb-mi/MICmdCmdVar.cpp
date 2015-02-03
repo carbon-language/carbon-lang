@@ -169,8 +169,8 @@ CMICmdCmdVarCreate::Execute(void)
         m_strVarName = CMIUtilString::Format("var%u", CMICmnLLDBDebugSessionInfoVarObj::VarObjIdGet());
         CMICmnLLDBDebugSessionInfoVarObj::VarObjIdInc();
     }
-    lldb::SBProcess &rProcess = rSessionInfo.m_lldbProcess;
-    lldb::SBThread thread = (nThreadId != UINT64_MAX) ? rProcess.GetThreadByIndexID(nThreadId) : rProcess.GetSelectedThread();
+    lldb::SBProcess sbProcess = rSessionInfo.GetProcess();
+    lldb::SBThread thread = (nThreadId != UINT64_MAX) ? sbProcess.GetThreadByIndexID(nThreadId) : sbProcess.GetSelectedThread();
     m_nThreadId = thread.GetIndexID();
     lldb::SBFrame frame = thread.GetFrameAtIndex(nFrame);
     lldb::SBValue value = frame.FindVariable(rStrExpression.c_str());
@@ -519,8 +519,8 @@ CMICmdCmdVarUpdate::ExamineSBValueForChange(const CMICmnLLDBDebugSessionInfoVarO
     vrwbChanged = false;
 
     CMICmnLLDBDebugSessionInfo &rSessionInfo(CMICmnLLDBDebugSessionInfo::Instance());
-    lldb::SBProcess &rProcess = rSessionInfo.m_lldbProcess;
-    lldb::SBThread thread = rProcess.GetSelectedThread();
+    lldb::SBProcess sbProcess = rSessionInfo.GetProcess();
+    lldb::SBThread thread = sbProcess.GetSelectedThread();
     if (thread.GetNumFrames() == 0)
     {
         return MIstatus::success;

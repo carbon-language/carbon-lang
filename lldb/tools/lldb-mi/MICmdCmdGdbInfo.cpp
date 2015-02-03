@@ -198,11 +198,11 @@ CMICmdCmdGdbInfo::PrintFnSharedLibrary(void)
     bool bOk = rStdout.TextToStdout("~\"From        To          Syms Read   Shared Object Library\"");
 
     CMICmnLLDBDebugSessionInfo &rSessionInfo(CMICmnLLDBDebugSessionInfo::Instance());
-    lldb::SBTarget &rTarget = rSessionInfo.m_lldbTarget;
-    const MIuint nModules = rTarget.GetNumModules();
+    lldb::SBTarget sbTarget = rSessionInfo.GetTarget();
+    const MIuint nModules = sbTarget.GetNumModules();
     for (MIuint i = 0; bOk && (i < nModules); i++)
     {
-        lldb::SBModule module = rTarget.GetModuleAtIndex(i);
+        lldb::SBModule module = sbTarget.GetModuleAtIndex(i);
         if (module.IsValid())
         {
             const CMIUtilString strModuleFilePath(module.GetFileSpec().GetDirectory());
@@ -216,7 +216,7 @@ CMICmdCmdGdbInfo::PrintFnSharedLibrary(void)
             for (MIuint j = 0; j < nSections; j++)
             {
                 lldb::SBSection section = module.GetSectionAtIndex(j);
-                lldb::addr_t addrLoad = section.GetLoadAddress(rTarget);
+                lldb::addr_t addrLoad = section.GetLoadAddress(sbTarget);
                 if (addrLoad != (lldb::addr_t) - 1)
                 {
                     if (!bHaveAddrLoad)

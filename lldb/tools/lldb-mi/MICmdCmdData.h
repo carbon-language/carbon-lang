@@ -263,7 +263,6 @@ class CMICmdCmdDataListRegisterValues : public CMICmdBase
     const CMIUtilString m_constStrArgFormat;
     const CMIUtilString m_constStrArgRegNo;
     CMICmnMIValueList m_miValueList;
-    lldb::SBProcess *m_pProcess;
 };
 
 //++ ============================================================================

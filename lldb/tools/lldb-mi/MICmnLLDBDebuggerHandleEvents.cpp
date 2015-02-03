@@ -722,9 +722,9 @@ CMICmnLLDBDebuggerHandleEvents::HandleProcessEventStateSuspended(const lldb::SBE
         return MIstatus::success;
 
     bool bOk = MIstatus::success;
-    lldb::SBDebugger &rDebugger = CMICmnLLDBDebugSessionInfo::Instance().m_rLldbDebugger;
-    lldb::SBProcess &rProcess = CMICmnLLDBDebugSessionInfo::Instance().m_lldbProcess;
-    lldb::SBTarget target = rProcess.GetTarget();
+    lldb::SBDebugger &rDebugger = CMICmnLLDBDebugSessionInfo::Instance().GetDebugger();
+    lldb::SBProcess sbProcess = CMICmnLLDBDebugSessionInfo::Instance().GetProcess();
+    lldb::SBTarget target = sbProcess.GetTarget();
     if (rDebugger.GetSelectedTarget() == target)
     {
         if (!UpdateSelectedThread())
@@ -768,8 +768,8 @@ CMICmnLLDBDebuggerHandleEvents::HandleProcessEventStateStopped(bool &vwrbShouldB
 
     const MIchar *pEventType = "";
     bool bOk = MIstatus::success;
-    lldb::SBProcess &rProcess = CMICmnLLDBDebugSessionInfo::Instance().m_lldbProcess;
-    const lldb::StopReason eStoppedReason = rProcess.GetSelectedThread().GetStopReason();
+    lldb::SBProcess sbProcess = CMICmnLLDBDebugSessionInfo::Instance().GetProcess();
+    const lldb::StopReason eStoppedReason = sbProcess.GetSelectedThread().GetStopReason();
     switch (eStoppedReason)
     {
         case lldb::eStopReasonInvalid:
@@ -831,8 +831,8 @@ CMICmnLLDBDebuggerHandleEvents::HandleProcessEventStopSignal(bool &vwrbShouldBrk
 {
     bool bOk = MIstatus::success;
 
-    lldb::SBProcess &rProcess = CMICmnLLDBDebugSessionInfo::Instance().m_lldbProcess;
-    const MIuint64 nStopReason = rProcess.GetSelectedThread().GetStopReasonDataAtIndex(0);
+    lldb::SBProcess sbProcess = CMICmnLLDBDebugSessionInfo::Instance().GetProcess();
+    const MIuint64 nStopReason = sbProcess.GetSelectedThread().GetStopReasonDataAtIndex(0);
     switch (nStopReason)
     {
         case 2: // Terminal interrupt signal. SIGINT
@@ -868,7 +868,7 @@ CMICmnLLDBDebuggerHandleEvents::HandleProcessEventStopSignal(bool &vwrbShouldBrk
             const CMICmnMIValueConst miValueConst3("Segmentation fault");
             const CMICmnMIValueResult miValueResult3("signal-meaning", miValueConst3);
             bOk = bOk && miOutOfBandRecord.Add(miValueResult3);
-            const CMIUtilString strThreadId(CMIUtilString::Format("%d", rProcess.GetSelectedThread().GetIndexID()));
+            const CMIUtilString strThreadId(CMIUtilString::Format("%d", sbProcess.GetSelectedThread().GetIndexID()));
             const CMICmnMIValueConst miValueConst4(strThreadId);
             const CMICmnMIValueResult miValueResult4("thread-id", miValueConst4);
             bOk = bOk && miOutOfBandRecord.Add(miValueResult4);
@@ -881,12 +881,12 @@ CMICmnLLDBDebuggerHandleEvents::HandleProcessEventStopSignal(bool &vwrbShouldBrk
         }
         break;
         case 19:
-            if (rProcess.IsValid())
-                rProcess.Continue();
+            if (sbProcess.IsValid())
+                sbProcess.Continue();
             break;
         case 5: //  Trace/breakpoint trap. SIGTRAP
         {
-            lldb::SBThread thread = rProcess.GetSelectedThread();
+            lldb::SBThread thread = sbProcess.GetSelectedThread();
             const MIuint nFrames = thread.GetNumFrames();
             if (nFrames > 0)
             {
@@ -899,9 +899,9 @@ CMICmnLLDBDebuggerHandleEvents::HandleProcessEventStopSignal(bool &vwrbShouldBrk
 
                     if (CMIUtilString::Compare(threadCloneFn, fnName))
                     {
-                        if (rProcess.IsValid())
+                        if (sbProcess.IsValid())
                         {
-                            rProcess.Continue();
+                            sbProcess.Continue();
                             vwrbShouldBrk = true;
                             break;
                         }
@@ -942,8 +942,8 @@ bool
 CMICmnLLDBDebuggerHandleEvents::MiHelpGetCurrentThreadFrame(CMICmnMIValueTuple &vwrMiValueTuple)
 {
     CMIUtilString strThreadFrame;
-    lldb::SBProcess &rProcess = CMICmnLLDBDebugSessionInfo::Instance().m_lldbProcess;
-    lldb::SBThread thread = rProcess.GetSelectedThread();
+    lldb::SBProcess sbProcess = CMICmnLLDBDebugSessionInfo::Instance().GetProcess();
+    lldb::SBThread thread = sbProcess.GetSelectedThread();
     const MIuint nFrame = thread.GetNumFrames();
     if (nFrame == 0)
     {
@@ -997,9 +997,9 @@ CMICmnLLDBDebuggerHandleEvents::HandleProcessEventStopReasonBreakpoint(void)
         return MIstatus::failure;
     }
 
-    lldb::SBProcess &rProcess = CMICmnLLDBDebugSessionInfo::Instance().m_lldbProcess;
-    const MIuint64 brkPtId = rProcess.GetSelectedThread().GetStopReasonDataAtIndex(0);
-    lldb::SBBreakpoint brkPt = CMICmnLLDBDebugSessionInfo::Instance().m_lldbTarget.GetBreakpointAtIndex((MIuint)brkPtId);
+    lldb::SBProcess sbProcess = CMICmnLLDBDebugSessionInfo::Instance().GetProcess();
+    const MIuint64 brkPtId = sbProcess.GetSelectedThread().GetStopReasonDataAtIndex(0);
+    lldb::SBBreakpoint brkPt = CMICmnLLDBDebugSessionInfo::Instance().GetTarget().GetBreakpointAtIndex((MIuint)brkPtId);
 
     return MiStoppedAtBreakPoint(brkPtId, brkPt);
 }
@@ -1018,8 +1018,8 @@ CMICmnLLDBDebuggerHandleEvents::MiStoppedAtBreakPoint(const MIuint64 vBrkPtId, c
 {
     bool bOk = MIstatus::success;
 
-    lldb::SBProcess &rProcess = CMICmnLLDBDebugSessionInfo::Instance().m_lldbProcess;
-    lldb::SBThread thread = rProcess.GetSelectedThread();
+    lldb::SBProcess sbProcess = CMICmnLLDBDebugSessionInfo::Instance().GetProcess();
+    lldb::SBThread thread = sbProcess.GetSelectedThread();
     const MIuint nFrame = thread.GetNumFrames();
     if (nFrame == 0)
     {
@@ -1121,8 +1121,8 @@ bool
 CMICmnLLDBDebuggerHandleEvents::HandleProcessEventStopReasonTrace(void)
 {
     bool bOk = true;
-    lldb::SBProcess &rProcess = CMICmnLLDBDebugSessionInfo::Instance().m_lldbProcess;
-    lldb::SBThread thread = rProcess.GetSelectedThread();
+    lldb::SBProcess sbProcess = CMICmnLLDBDebugSessionInfo::Instance().GetProcess();
+    lldb::SBThread thread = sbProcess.GetSelectedThread();
     const MIuint nFrame = thread.GetNumFrames();
     if (nFrame == 0)
     {
@@ -1200,7 +1200,7 @@ CMICmnLLDBDebuggerHandleEvents::HandleProcessEventStopReasonTrace(void)
 bool
 CMICmnLLDBDebuggerHandleEvents::UpdateSelectedThread(void)
 {
-    lldb::SBProcess process = CMICmnLLDBDebugSessionInfo::Instance().m_rLldbDebugger.GetSelectedTarget().GetProcess();
+    lldb::SBProcess process = CMICmnLLDBDebugSessionInfo::Instance().GetDebugger().GetSelectedTarget().GetProcess();
     if (!process.IsValid())
         return MIstatus::success;
 
@@ -1342,7 +1342,7 @@ CMICmnLLDBDebuggerHandleEvents::GetProcessStdout(void)
     char c;
     size_t nBytes = 0;
     CMIUtilString text;
-    lldb::SBProcess process = CMICmnLLDBDebugSessionInfo::Instance().m_rLldbDebugger.GetSelectedTarget().GetProcess();
+    lldb::SBProcess process = CMICmnLLDBDebugSessionInfo::Instance().GetDebugger().GetSelectedTarget().GetProcess();
     while (process.GetSTDOUT(&c, 1) > 0)
     {
         CMIUtilString str;
@@ -1377,7 +1377,7 @@ CMICmnLLDBDebuggerHandleEvents::GetProcessStderr(void)
     char c;
     size_t nBytes = 0;
     CMIUtilString text;
-    lldb::SBProcess process = CMICmnLLDBDebugSessionInfo::Instance().m_rLldbDebugger.GetSelectedTarget().GetProcess();
+    lldb::SBProcess process = CMICmnLLDBDebugSessionInfo::Instance().GetDebugger().GetSelectedTarget().GetProcess();
     while (process.GetSTDERR(&c, 1) > 0)
     {
         CMIUtilString str;
@@ -1451,22 +1451,22 @@ CMICmnLLDBDebuggerHandleEvents::ConvertPrintfCtrlCodeToString(const MIchar vCtrl
 bool
 CMICmnLLDBDebuggerHandleEvents::ChkForStateChanges(void)
 {
-    lldb::SBProcess &rProcess = CMICmnLLDBDebugSessionInfo::Instance().m_lldbProcess;
-    if (!rProcess.IsValid())
+    lldb::SBProcess sbProcess = CMICmnLLDBDebugSessionInfo::Instance().GetProcess();
+    if (!sbProcess.IsValid())
         return MIstatus::success;
-    lldb::SBTarget &rTarget = CMICmnLLDBDebugSessionInfo::Instance().m_lldbTarget;
-    if (!rTarget.IsValid())
+    lldb::SBTarget sbTarget = CMICmnLLDBDebugSessionInfo::Instance().GetTarget();
+    if (!sbTarget.IsValid())
         return MIstatus::success;
 
     bool bOk = MIstatus::success;
 
     // Check for created threads
-    const MIuint nThread = rProcess.GetNumThreads();
+    const MIuint nThread = sbProcess.GetNumThreads();
     for (MIuint i = 0; i < nThread; i++)
     {
         //  GetThreadAtIndex() uses a base 0 index
         //  GetThreadByIndexID() uses a base 1 index
-        lldb::SBThread thread = rProcess.GetThreadAtIndex(i);
+        lldb::SBThread thread = sbProcess.GetThreadAtIndex(i);
         if (!thread.IsValid())
             continue;
 
@@ -1503,7 +1503,7 @@ CMICmnLLDBDebuggerHandleEvents::ChkForStateChanges(void)
         }
     }
 
-    lldb::SBThread currentThread = rProcess.GetSelectedThread();
+    lldb::SBThread currentThread = sbProcess.GetSelectedThread();
     if (currentThread.IsValid())
     {
         const MIuint threadId = currentThread.GetIndexID();
@@ -1526,7 +1526,7 @@ CMICmnLLDBDebuggerHandleEvents::ChkForStateChanges(void)
     while (it != CMICmnLLDBDebugSessionInfo::Instance().m_vecActiveThreadId.end())
     {
         const MIuint nThreadId = *it;
-        lldb::SBThread thread = rProcess.GetThreadAtIndex(nThreadId);
+        lldb::SBThread thread = sbProcess.GetThreadAtIndex(nThreadId);
         if (!thread.IsValid())
         {
             // Form MI "=thread-exited,id=\"%ld\",group-id=\"i1\""

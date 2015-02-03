@@ -47,9 +47,7 @@
 // Throws:  None.
 //--
 CMICmnLLDBDebugSessionInfo::CMICmnLLDBDebugSessionInfo(void)
-    : m_rLldbDebugger(CMICmnLLDBDebugger::Instance().GetTheDebugger())
-    , m_rLlldbListener(CMICmnLLDBDebugger::Instance().GetTheListener())
-    , m_nBrkPointCntMax(INT32_MAX)
+    : m_nBrkPointCntMax(INT32_MAX)
     , m_currentSelectedThread(LLDB_INVALID_THREAD_ID)
     , m_constStrSharedDataKeyWkDir("Working Directory")
     , m_constStrSharedDataSolibPath("Solib Path")
@@ -226,7 +224,7 @@ CMICmnLLDBDebugSessionInfo::RecordBrkPtInfoDelete(const MIuint vnBrkPtId)
 bool
 CMICmnLLDBDebugSessionInfo::GetThreadFrames(const SMICmdData &vCmdData, const MIuint vThreadIdx, CMIUtilString &vwrThreadFrames)
 {
-    lldb::SBThread thread = m_lldbProcess.GetThreadByIndexID(vThreadIdx);
+    lldb::SBThread thread = GetProcess().GetThreadByIndexID(vThreadIdx);
     const uint32_t nFrames = thread.GetNumFrames();
     if (nFrames == 0)
     {
@@ -299,7 +297,7 @@ CMICmnLLDBDebugSessionInfo::GetThreadFrames(const SMICmdData &vCmdData, const MI
 bool
 CMICmnLLDBDebugSessionInfo::GetThreadFrames2(const SMICmdData &vCmdData, const MIuint vThreadIdx, CMIUtilString &vwrThreadFrames)
 {
-    lldb::SBThread thread = m_lldbProcess.GetThreadByIndexID(vThreadIdx);
+    lldb::SBThread thread = GetProcess().GetThreadByIndexID(vThreadIdx);
     const uint32_t nFrames = thread.GetNumFrames();
     if (nFrames == 0)
     {
@@ -1329,7 +1327,7 @@ CMICmnLLDBDebugSessionInfo::GetBrkPtInfo(const lldb::SBBreakpoint &vBrkPt, SBrkP
     const MIchar *pFn = pUnkwn;
     const MIchar *pFilePath = pUnkwn;
     size_t nLine = 0;
-    const size_t nAddr = brkPtAddr.GetLoadAddress(m_lldbTarget);
+    const size_t nAddr = brkPtAddr.GetLoadAddress(GetTarget());
 
     lldb::SBCompileUnit rCmplUnit = symbolCntxt.GetCompileUnit();
     if (rCmplUnit.IsValid())
@@ -1355,4 +1353,56 @@ CMICmnLLDBDebugSessionInfo::GetBrkPtInfo(const lldb::SBBreakpoint &vBrkPt, SBrkP
     vrwBrkPtInfo.m_nTimes = vBrkPt.GetHitCount();
 
     return MIstatus::success;
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details: Get current debugger.
+// Type:    Method.
+// Args:    None.
+// Return:  lldb::SBDebugger   - current debugger.
+// Throws:  None.
+//--
+lldb::SBDebugger &
+CMICmnLLDBDebugSessionInfo::GetDebugger() const
+{
+    return CMICmnLLDBDebugger::Instance().GetTheDebugger();
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details: Get current listener.
+// Type:    Method.
+// Args:    None.
+// Return:  lldb::SBListener   - current listener.
+// Throws:  None.
+//--
+lldb::SBListener &
+CMICmnLLDBDebugSessionInfo::GetListener() const
+{
+    return CMICmnLLDBDebugger::Instance().GetTheListener();
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details: Get current target.
+// Type:    Method.
+// Args:    None.
+// Return:  lldb::SBTarget   - current target.
+// Throws:  None.
+//--
+lldb::SBTarget
+CMICmnLLDBDebugSessionInfo::GetTarget() const
+{
+    return GetDebugger().GetSelectedTarget();
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details: Get current process.
+// Type:    Method.
+// Args:    None.
+// Return:  lldb::SBProcess   - current process.
+// Throws:  None.
+//--
+lldb::SBProcess
+CMICmnLLDBDebugSessionInfo::GetProcess() const
+{
+    return GetTarget().GetProcess();
 }

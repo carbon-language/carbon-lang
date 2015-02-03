@@ -99,12 +99,12 @@ CMICmdCmdThreadInfo::Execute(void)
     }
 
     CMICmnLLDBDebugSessionInfo &rSessionInfo(CMICmnLLDBDebugSessionInfo::Instance());
-    lldb::SBProcess &rProcess = rSessionInfo.m_lldbProcess;
-    lldb::SBThread thread = rProcess.GetSelectedThread();
+    lldb::SBProcess sbProcess = rSessionInfo.GetProcess();
+    lldb::SBThread thread = sbProcess.GetSelectedThread();
 
     if (m_bSingleThread)
     {
-        thread = rProcess.GetThreadByIndexID(nThreadId);
+        thread = sbProcess.GetThreadByIndexID(nThreadId);
         m_bThreadInvalid = thread.IsValid();
         if (!m_bThreadInvalid)
             return MIstatus::success;
@@ -120,10 +120,10 @@ CMICmdCmdThreadInfo::Execute(void)
 
     // Multiple threads
     m_vecMIValueTuple.clear();
-    const MIuint nThreads = rProcess.GetNumThreads();
+    const MIuint nThreads = sbProcess.GetNumThreads();
     for (MIuint i = 0; i < nThreads; i++)
     {
-        lldb::SBThread thread = rProcess.GetThreadAtIndex(i);
+        lldb::SBThread thread = sbProcess.GetThreadAtIndex(i);
         if (thread.IsValid())
         {
             CMICmnMIValueTuple miTuple;
