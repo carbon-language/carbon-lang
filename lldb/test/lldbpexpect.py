@@ -32,6 +32,13 @@ class PExpectTest(TestBase):
         else:
             return self.child.expect(patterns, timeout=timeout)
 
+    def expectall(self, patterns=None, timeout=None, exact=None):
+        if patterns is None: return None
+        if timeout is None: timeout = self.timeout
+        if exact is None: exact = False
+        for pattern in patterns:
+            self.expect(pattern, timeout=timeout, exact=exact)
+
     def sendimpl(self, sender, command, patterns=None, timeout=None, exact=None):
         sender(command)
         return self.expect(patterns=patterns, timeout=timeout, exact=exact)
