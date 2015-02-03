@@ -1679,6 +1679,22 @@ class ThreadSafetyReporter : public clang::threadSafety::ThreadSafetyHandler {
     Warnings.push_back(DelayedDiag(Warning, getNotes()));
   }
 
+
+  virtual void handleLockAcquiredBefore(StringRef Kind, Name L1Name,
+                                        Name L2Name, SourceLocation Loc)
+      override {
+    PartialDiagnosticAt Warning(Loc,
+      S.PDiag(diag::warn_acquired_before) << Kind << L1Name << L2Name);
+    Warnings.push_back(DelayedDiag(Warning, getNotes()));
+  }
+
+  virtual void handleBeforeAfterCycle(Name L1Name, SourceLocation Loc)
+      override {
+    PartialDiagnosticAt Warning(Loc,
+      S.PDiag(diag::warn_acquired_before_after_cycle) << L1Name);
+    Warnings.push_back(DelayedDiag(Warning, getNotes()));
+  }
+
   void enterFunction(const FunctionDecl* FD) override {
     CurrentFunction = FD;
   }
@@ -1704,7 +1720,7 @@ class ConsumedWarningsHandler : public ConsumedWarningsHandlerBase {
   DiagList Warnings;
   
 public:
-  
+
   ConsumedWarningsHandler(Sema &S) : S(S) {}
 
   void emitDiagnostics() override {
@@ -1981,7 +1997,8 @@ AnalysisBasedWarnings::IssueWarnings(sema::AnalysisBasedWarnings::Policy P,
     if (!Diags.isIgnored(diag::warn_thread_safety_verbose, D->getLocStart()))
       Reporter.setVerbose(true);
 
-    threadSafety::runThreadSafetyAnalysis(AC, Reporter);
+    threadSafety::runThreadSafetyAnalysis(AC, Reporter,
+                                          &S.ThreadSafetyDeclCache);
     Reporter.emitDiagnostics();
   }
 
