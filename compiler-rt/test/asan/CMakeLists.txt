@@ -93,13 +93,18 @@ add_lit_testsuite(check-asan "Running the AddressSanitizer tests"
 set_target_properties(check-asan PROPERTIES FOLDER "ASan tests")
 
 if(COMPILER_RT_ASAN_HAS_STATIC_RUNTIME)
-  # Add check-dynamic-asan target (not included in check-all)
-  set(EXCLUDE_FROM_ALL TRUE)
+  # Add check-dynamic-asan target. It is a part of check-all only on Windows,
+  # where we want to always test both dynamic and static runtime.
+  if(NOT OS_NAME MATCHES "Windows")
+    set(EXCLUDE_FROM_ALL TRUE)
+  endif()
   add_lit_testsuite(check-asan-dynamic
                     "Running the AddressSanitizer tests with dynamic runtime"
                     ${ASAN_DYNAMIC_TESTSUITES}
                     DEPENDS ${ASAN_DYNAMIC_TEST_DEPS})
   set_target_properties(check-asan-dynamic
                         PROPERTIES FOLDER "ASan dynamic tests")
-  set(EXCLUDE_FROM_ALL FALSE)
+  if(NOT OS_NAME MATCHES "Windows")
+    set(EXCLUDE_FROM_ALL FALSE)
+  endif()
 endif()
