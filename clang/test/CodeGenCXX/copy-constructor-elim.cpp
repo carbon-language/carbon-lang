@@ -43,3 +43,17 @@ int main() {
   S s;
   Call(s);
 }
+
+struct V {
+  int x;
+};
+
+typedef V V_over_aligned __attribute((aligned(8)));
+extern const V_over_aligned gv1 = {};
+
+extern "C" V f() { return gv1; }
+
+// Make sure that we obey the destination's alignment requirements when emitting
+// the copy.
+// CHECK-LABEL: define i32 @f()
+// CHECK:   call void @llvm.memcpy.p0i8.p0i8.i64({{.*}}, i8* bitcast (%struct.V* @gv1 to i8*), i64 4, i32 4, i1 false)

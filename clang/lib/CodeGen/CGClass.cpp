@@ -1747,9 +1747,10 @@ void CodeGenFunction::EmitCXXConstructorCall(const CXXConstructorDecl *D,
            "trivial 1-arg ctor not a copy/move ctor");
 
     const Expr *Arg = E->getArg(0);
-    QualType Ty = Arg->getType();
+    QualType SrcTy = Arg->getType();
     llvm::Value *Src = EmitLValue(Arg).getAddress();
-    EmitAggregateCopy(This, Src, Ty);
+    QualType DestTy = getContext().getTypeDeclType(D->getParent());
+    EmitAggregateCopyCtor(This, Src, DestTy, SrcTy);
     return;
   }
 
@@ -1789,7 +1790,9 @@ CodeGenFunction::EmitSynthesizedCXXCopyCtorCall(const CXXConstructorDecl *D,
     assert(E->getNumArgs() == 1 && "unexpected argcount for trivial ctor");
     assert(D->isCopyOrMoveConstructor() &&
            "trivial 1-arg ctor not a copy/move ctor");
-    EmitAggregateCopy(This, Src, E->arg_begin()->getType());
+    EmitAggregateCopyCtor(This, Src,
+                          getContext().getTypeDeclType(D->getParent()),
+                          E->arg_begin()->getType());
     return;
   }
   llvm::Value *Callee = CGM.getAddrOfCXXStructor(D, StructorType::Complete);
