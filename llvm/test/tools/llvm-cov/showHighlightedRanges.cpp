@@ -2,17 +2,17 @@
 
 void func() {
   return;
-  int i = 0;                     // CHECK: Highlighted line [[@LINE]], 3 -> 12
-}
+  int i = 0;                     // CHECK: Highlighted line [[@LINE]], 3 -> ?
+}                                // CHECK: Highlighted line [[@LINE]], 1 -> 2
 
 void func2(int x) {
   if(x > 5) {
     while(x >= 9) {
       return;
-      --x;                       // CHECK: Highlighted line [[@LINE]], 7 -> 10
-    }
-    int i = 0;                   // CHECK: Highlighted line [[@LINE]], 5 -> 14
-  }
+      --x;                       // CHECK: Highlighted line [[@LINE]], 7 -> ?
+    }                            // CHECK: Highlighted line [[@LINE]], 1 -> 6
+    int i = 0;                   // CHECK: Highlighted line [[@LINE]], 5 -> ?
+  }                              // CHECK: Highlighted line [[@LINE]], 1 -> 4
 }
 
 void test() {
