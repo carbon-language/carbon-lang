@@ -1004,10 +1004,12 @@ static StringRef getCoverageSection(const CodeGenModule &CGM) {
   return isMachO(CGM) ? "__DATA,__llvm_covmap" : "__llvm_covmap";
 }
 
-static void dump(llvm::raw_ostream &OS, const CoverageMappingRecord &Function) {
-  OS << Function.FunctionName << ":\n";
-  CounterMappingContext Ctx(Function.Expressions);
-  for (const auto &R : Function.MappingRegions) {
+static void dump(llvm::raw_ostream &OS, StringRef FunctionName,
+                 ArrayRef<CounterExpression> Expressions,
+                 ArrayRef<CounterMappingRegion> Regions) {
+  OS << FunctionName << ":\n";
+  CounterMappingContext Ctx(Expressions);
+  for (const auto &R : Regions) {
     OS.indent(2);
     switch (R.Kind) {
     case CounterMappingRegion::CodeRegion:
@@ -1067,13 +1069,11 @@ void CoverageMappingModuleGen::addFunctionMappingRecord(
     FilenameRefs.resize(FileEntries.size());
     for (const auto &Entry : FileEntries)
       FilenameRefs[Entry.second] = Entry.first->getName();
-    RawCoverageMappingReader Reader(FunctionNameValue, CoverageMapping,
-                                    FilenameRefs,
-                                    Filenames, Expressions, Regions);
-    CoverageMappingRecord FunctionRecord;
-    if (Reader.read(FunctionRecord))
+    RawCoverageMappingReader Reader(CoverageMapping, FilenameRefs, Filenames,
+                                    Expressions, Regions);
+    if (Reader.read())
       return;
-    dump(llvm::outs(), FunctionRecord);
+    dump(llvm::outs(), FunctionNameValue, Expressions, Regions);
   }
 }
 
