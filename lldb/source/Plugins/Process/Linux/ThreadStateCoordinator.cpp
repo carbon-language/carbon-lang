@@ -83,7 +83,8 @@ public:
     m_request_thread_stop_function (request_thread_stop_function),
     m_call_after_function (call_after_function),
     m_error_function (error_function),
-    m_request_stop_on_all_unstopped_threads (false)
+    m_request_stop_on_all_unstopped_threads (false),
+    m_skip_stop_request_tids ()
     {
     }
 
@@ -98,7 +99,25 @@ public:
     m_request_thread_stop_function (request_thread_stop_function),
     m_call_after_function (call_after_function),
     m_error_function (error_function),
-    m_request_stop_on_all_unstopped_threads (true)
+    m_request_stop_on_all_unstopped_threads (true),
+    m_skip_stop_request_tids ()
+    {
+    }
+
+    EventCallAfterThreadsStop (lldb::tid_t triggering_tid,
+                               const ThreadIDFunction &request_thread_stop_function,
+                               const ThreadIDFunction &call_after_function,
+                               const ThreadIDSet &skip_stop_request_tids,
+                               const ErrorFunction &error_function) :
+    EventBase (),
+    m_triggering_tid (triggering_tid),
+    m_wait_for_stop_tids (),
+    m_original_wait_for_stop_tids (),
+    m_request_thread_stop_function (request_thread_stop_function),
+    m_call_after_function (call_after_function),
+    m_error_function (error_function),
+    m_request_stop_on_all_unstopped_threads (true),
+    m_skip_stop_request_tids (skip_stop_request_tids)
     {
     }
 
@@ -203,7 +222,7 @@ public:
     GetDescription () override
     {
         std::ostringstream description;
-        description << "EventCallAfterThreadsStop (triggering_tid=" << m_triggering_tid << ", request_stop_on_all_unstopped_threads=" << m_request_stop_on_all_unstopped_threads << ")";
+        description << "EventCallAfterThreadsStop (triggering_tid=" << m_triggering_tid << ", request_stop_on_all_unstopped_threads=" << m_request_stop_on_all_unstopped_threads << ", skip_stop_request_tids.size()=" << m_skip_stop_request_tids.size () << ")";
         return description.str ();
     }
 
@@ -268,6 +287,10 @@ private:
         ThreadIDSet sent_tids;
         for (auto it = coordinator.m_tid_stop_map.begin(); it != coordinator.m_tid_stop_map.end(); ++it)
         {
+            // Ignore threads we explicitly listed as skipped for stop requests.
+            if (m_skip_stop_request_tids.count (it->first) > 0)
+                continue;
+
             // We only care about threads not stopped.
             const bool running = !it->second;
             if (running)
@@ -290,6 +313,7 @@ private:
     ThreadIDFunction m_call_after_function;
     ErrorFunction m_error_function;
     const bool m_request_stop_on_all_unstopped_threads;
+    ThreadIDSet m_skip_stop_request_tids;
 };
 
 //===----------------------------------------------------------------------===//
@@ -599,6 +623,21 @@ ThreadStateCoordinator::CallAfterRunningThreadsStop (const lldb::tid_t triggerin
                                                               call_after_function,
                                                               error_function)));
 }
+
+void
+ThreadStateCoordinator::CallAfterRunningThreadsStopWithSkipTIDs (lldb::tid_t triggering_tid,
+                                                                 const ThreadIDSet &skip_stop_request_tids,
+                                                                 const ThreadIDFunction &request_thread_stop_function,
+                                                                 const ThreadIDFunction &call_after_function,
+                                                                 const ErrorFunction &error_function)
+{
+    EnqueueEvent (EventBaseSP (new EventCallAfterThreadsStop (triggering_tid,
+                                                              request_thread_stop_function,
+                                                              call_after_function,
+                                                              skip_stop_request_tids,
+                                                              error_function)));
+}
+
 
 void
 ThreadStateCoordinator::ThreadDidStop (lldb::tid_t tid, ErrorFunction &error_function)

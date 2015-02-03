@@ -398,6 +398,11 @@ namespace lldb_private
         CallAfterRunningThreadsStop (lldb::tid_t tid,
                                      const std::function<void (lldb::tid_t tid)> &call_after_function);
 
+        void
+        CallAfterRunningThreadsStopWithSkipTID (lldb::tid_t deferred_signal_tid,
+                                                lldb::tid_t skip_stop_request_tid,
+                                                const std::function<void (lldb::tid_t tid)> &call_after_function);
+
         lldb_private::Error
         Detach(lldb::tid_t tid);
     };
