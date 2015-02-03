@@ -429,12 +429,12 @@ entry:
   ret <16 x i8> %s.16.0
 }
 
-define <16 x i8> @stress_test1(<16 x i8> %s.0.5, <16 x i8> %s.0.8, <16 x i8> %s.0.9) noinline nounwind {
+define <16 x i8> @undef_test1(<16 x i8> %s.0.5, <16 x i8> %s.0.8, <16 x i8> %s.0.9) noinline nounwind {
 ; There is nothing interesting to check about these instructions other than
 ; that they survive codegen. However, we actually do better and delete all of
 ; them because the result is 'undef'.
 ;
-; ALL-LABEL: stress_test1:
+; ALL-LABEL: undef_test1:
 ; ALL:       # BB#0: # %entry
 ; ALL-NEXT:    retq
 entry:

@@ -122,6 +122,9 @@ def main():
           continue
         f = m.group('f')
         f_asm = scrub_asm(m.group('body'))
+        if f.startswith('stress'):
+          # We only use the last line of the asm for stress tests.
+          f_asm = '\n'.join(f_asm.splitlines()[-1:])
         if args.verbose:
           print >>sys.stderr, 'Processing asm for function: ' + f
           for l in f_asm.splitlines():
