@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Support/Dwarf.h"
+#include "llvm/ADT/StringSwitch.h"
 #include "llvm/Support/ErrorHandling.h"
 
 using namespace llvm;
@@ -25,6 +26,13 @@ const char *llvm::dwarf::TagString(unsigned Tag) {
     return "DW_TAG_" #NAME;
 #include "llvm/Support/Dwarf.def"
   }
+}
+
+unsigned llvm::dwarf::getTag(StringRef TagString) {
+  return StringSwitch<unsigned>(TagString)
+#define HANDLE_DW_TAG(ID, NAME) .Case("DW_TAG_" #NAME, DW_TAG_##NAME)
+#include "llvm/Support/Dwarf.def"
+      .Default(DW_TAG_invalid);
 }
 
 const char *llvm::dwarf::ChildrenString(unsigned Children) {

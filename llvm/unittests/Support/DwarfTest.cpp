@@ -26,4 +26,20 @@ TEST(DwarfTest, TagStringOnInvalid) {
   EXPECT_EQ(nullptr, TagString(DW_TAG_user_base));
 }
 
+TEST(DwarfTest, getTag) {
+  // A couple of valid tags.
+  EXPECT_EQ(DW_TAG_array_type, getTag("DW_TAG_array_type"));
+  EXPECT_EQ(DW_TAG_module, getTag("DW_TAG_module"));
+
+  // Invalid tags.
+  EXPECT_EQ(DW_TAG_invalid, getTag("DW_TAG_invalid"));
+  EXPECT_EQ(DW_TAG_invalid, getTag("DW_TAG_madeuptag"));
+  EXPECT_EQ(DW_TAG_invalid, getTag("something else"));
+
+  // Tag range markers should not be recognized.
+  EXPECT_EQ(DW_TAG_invalid, getTag("DW_TAG_lo_user"));
+  EXPECT_EQ(DW_TAG_invalid, getTag("DW_TAG_hi_user"));
+  EXPECT_EQ(DW_TAG_invalid, getTag("DW_TAG_user_base"));
+}
+
 } // end namespace

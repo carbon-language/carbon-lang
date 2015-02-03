@@ -20,6 +20,7 @@
 #ifndef LLVM_SUPPORT_DWARF_H
 #define LLVM_SUPPORT_DWARF_H
 
+#include "llvm/ADT/StringRef.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/DataTypes.h"
 
@@ -782,6 +783,9 @@ const char *AtomTypeString(unsigned Atom);
 const char *GDBIndexEntryKindString(GDBIndexEntryKind Kind);
 const char *GDBIndexEntryLinkageString(GDBIndexEntryLinkage Linkage);
 /// @}
+
+/// \brief Get the tag number associated with a tag string.
+unsigned getTag(StringRef TagString);
 
 /// \brief Returns the symbolic string representing Val when used as a value
 /// for attribute Attr.
