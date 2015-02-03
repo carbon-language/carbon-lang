@@ -543,7 +543,7 @@ ObjectFileCoverageMappingReader::readNextRecord(CoverageMappingRecord &Record) {
   auto &R = MappingRecords[CurrentRecord];
   RawCoverageMappingReader Reader(
       R.FunctionName, R.CoverageMapping,
-      makeArrayRef(Filenames.data() + R.FilenamesBegin, R.FilenamesSize),
+      makeArrayRef(Filenames).slice(R.FilenamesBegin, R.FilenamesSize),
       FunctionsFilenames, Expressions, MappingRegions);
   if (auto Err = Reader.read(Record))
     return Err;
