@@ -23,10 +23,15 @@
 .sw?
 # OS X specific files.
 .DS_store
+DerivedData/
+
+# Remote build configuration files.
+.remote-build.conf
 
 build/
 llvm-build/
 *xcuserdata
+xcshareddata/
 test/20*
 
 # We should ignore Xcode-style embedding of llvm/ at lldb root dir.
