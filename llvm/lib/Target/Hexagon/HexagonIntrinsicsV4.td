@@ -34,6 +34,10 @@ def : MType_R32_pat <int_hexagon_M2_hmmpyh_s1, M2_hmmpyh_s1>;
 def : MType_R32_pat <int_hexagon_M2_hmmpyl_s1, M2_hmmpyl_s1>;
 def : MType_R32_pat <int_hexagon_M2_mpy_up_s1_sat, M2_mpy_up_s1_sat>;
 
+// Vector reduce add unsigned halfwords
+def : Pat <(int_hexagon_M2_vraddh DoubleRegs:$src1, DoubleRegs:$src2),
+           (M2_vraddh DoubleRegs:$src1, DoubleRegs:$src2)>;
+
 def : T_P_pat <S2_brevp, int_hexagon_S2_brevp>;
 
 def: T_P_pat  <S2_ct0p,      int_hexagon_S2_ct0p>;
@@ -82,11 +86,38 @@ def : T_RP_pat  <S4_extract_rp, int_hexagon_S4_extract_rp>;
 def : T_PII_pat <S4_extractp, int_hexagon_S4_extractp>;
 def : T_RII_pat <S4_extract, int_hexagon_S4_extract>;
 
+// Vector conditional negate
+// Rdd=vcnegh(Rss,Rt)
+def : T_PR_pat <S2_vcnegh, int_hexagon_S2_vcnegh>;
+
 // Shift an immediate left by register amount
 def : T_IR_pat<S4_lsli, int_hexagon_S4_lsli>;
 
+// Vector reduce maximum halfwords
+def : T_PPR_pat <A4_vrmaxh, int_hexagon_A4_vrmaxh>;
+def : T_PPR_pat <A4_vrmaxuh, int_hexagon_A4_vrmaxuh>;
+
+// Vector reduce maximum words
+def : T_PPR_pat <A4_vrmaxw, int_hexagon_A4_vrmaxw>;
+def : T_PPR_pat <A4_vrmaxuw, int_hexagon_A4_vrmaxuw>;
+
+// Vector reduce minimum halfwords
+def : T_PPR_pat <A4_vrminh, int_hexagon_A4_vrminh>;
+def : T_PPR_pat <A4_vrminuh, int_hexagon_A4_vrminuh>;
+
+// Vector reduce minimum words
+def : T_PPR_pat <A4_vrminw, int_hexagon_A4_vrminw>;
+def : T_PPR_pat <A4_vrminuw, int_hexagon_A4_vrminuw>;
+
+// Vector conditional negate
+def : T_PPR_pat<S2_vrcnegh, int_hexagon_S2_vrcnegh>;
+
 // Logical xor with xor accumulation
 def : T_PPP_pat<M4_xor_xacc, int_hexagon_M4_xor_xacc>;
+
+// ALU64 - Vector min/max byte
+def : T_PP_pat <A2_vminb, int_hexagon_A2_vminb>;
+def : T_PP_pat <A2_vmaxb, int_hexagon_A2_vmaxb>;
 
 // Shift and add/sub/and/or
 def : T_IRI_pat <S4_andi_asl_ri, int_hexagon_S4_andi_asl_ri>;

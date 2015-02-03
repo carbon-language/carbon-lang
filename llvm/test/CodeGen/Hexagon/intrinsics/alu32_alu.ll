@@ -127,6 +127,72 @@ define i32 @A2_tfr(i32 %a) {
 }
 ; CHECK: r0 = r0
 
+; Vector add halfwords
+declare i32 @llvm.hexagon.A2.svaddh(i32, i32)
+define i32 @A2_svaddh(i32 %a, i32 %b) {
+  %z = call i32 @llvm.hexagon.A2.svaddh(i32 %a, i32 %b)
+  ret i32 %z
+}
+; CHECK: r0 = vaddh(r0, r1)
+
+declare i32 @llvm.hexagon.A2.svaddhs(i32, i32)
+define i32 @A2_svaddhs(i32 %a, i32 %b) {
+  %z = call i32 @llvm.hexagon.A2.svaddhs(i32 %a, i32 %b)
+  ret i32 %z
+}
+; CHECK: r0 = vaddh(r0, r1):sat
+
+declare i32 @llvm.hexagon.A2.svadduhs(i32, i32)
+define i32 @A2_svadduhs(i32 %a, i32 %b) {
+  %z = call i32 @llvm.hexagon.A2.svadduhs(i32 %a, i32 %b)
+  ret i32 %z
+}
+; CHECK: r0 = vadduh(r0, r1):sat
+
+; Vector average halfwords
+declare i32 @llvm.hexagon.A2.svavgh(i32, i32)
+define i32 @A2_svavgh(i32 %a, i32 %b) {
+  %z = call i32 @llvm.hexagon.A2.svavgh(i32 %a, i32 %b)
+  ret i32 %z
+}
+; CHECK: r0 = vavgh(r0, r1)
+
+declare i32 @llvm.hexagon.A2.svavghs(i32, i32)
+define i32 @A2_svavghs(i32 %a, i32 %b) {
+  %z = call i32 @llvm.hexagon.A2.svavghs(i32 %a, i32 %b)
+  ret i32 %z
+}
+; CHECK: r0 = vavgh(r0, r1):rnd
+
+declare i32 @llvm.hexagon.A2.svnavgh(i32, i32)
+define i32 @A2_svnavgh(i32 %a, i32 %b) {
+  %z = call i32 @llvm.hexagon.A2.svnavgh(i32 %a, i32 %b)
+  ret i32 %z
+}
+; CHECK: r0 = vnavgh(r0, r1)
+
+; Vector subtract halfwords
+declare i32 @llvm.hexagon.A2.svsubh(i32, i32)
+define i32 @A2_svsubh(i32 %a, i32 %b) {
+  %z = call i32 @llvm.hexagon.A2.svsubh(i32 %a, i32 %b)
+  ret i32 %z
+}
+; CHECK: r0 = vsubh(r0, r1)
+
+declare i32 @llvm.hexagon.A2.svsubhs(i32, i32)
+define i32 @A2_svsubhs(i32 %a, i32 %b) {
+  %z = call i32 @llvm.hexagon.A2.svsubhs(i32 %a, i32 %b)
+  ret i32 %z
+}
+; CHECK: r0 = vsubh(r0, r1):sat
+
+declare i32 @llvm.hexagon.A2.svsubuhs(i32, i32)
+define i32 @A2_svsubuhs(i32 %a, i32 %b) {
+  %z = call i32 @llvm.hexagon.A2.svsubuhs(i32 %a, i32 %b)
+  ret i32 %z
+}
+; CHECK: r0 = vsubuh(r0, r1):sat
+
 ; Zero extend
 declare i32 @llvm.hexagon.A2.zxth(i32)
 define i32 @A2_zxth(i32 %a) {

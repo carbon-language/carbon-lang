@@ -551,3 +551,470 @@ define i64 @A2_sxtw(i32 %a) {
   ret i64 %z
 }
 ; CHECK:  = sxtw(r0)
+
+; Vector absolute value halfwords
+declare i64 @llvm.hexagon.A2.vabsh(i64)
+define i64 @A2_vabsh(i64 %a) {
+  %z = call i64 @llvm.hexagon.A2.vabsh(i64 %a)
+  ret i64 %z
+}
+; CHECK: r1:0 = vabsh(r1:0)
+
+declare i64 @llvm.hexagon.A2.vabshsat(i64)
+define i64 @A2_vabshsat(i64 %a) {
+  %z = call i64 @llvm.hexagon.A2.vabshsat(i64 %a)
+  ret i64 %z
+}
+; CHECK: r1:0 = vabsh(r1:0):sat
+
+; Vector absolute value words
+declare i64 @llvm.hexagon.A2.vabsw(i64)
+define i64 @A2_vabsw(i64 %a) {
+  %z = call i64 @llvm.hexagon.A2.vabsw(i64 %a)
+  ret i64 %z
+}
+; CHECK: r1:0 = vabsw(r1:0)
+
+declare i64 @llvm.hexagon.A2.vabswsat(i64)
+define i64 @A2_vabswsat(i64 %a) {
+  %z = call i64 @llvm.hexagon.A2.vabswsat(i64 %a)
+  ret i64 %z
+}
+; CHECK: r1:0 = vabsw(r1:0):sat
+
+; Vector absolute difference halfwords
+declare i64 @llvm.hexagon.M2.vabsdiffh(i64, i64)
+define i64 @M2_vabsdiffh(i64 %a, i64 %b) {
+  %z = call i64 @llvm.hexagon.M2.vabsdiffh(i64 %a, i64 %b)
+  ret i64 %z
+}
+; CHECK: r1:0 = vabsdiffh(r1:0, r3:2)
+
+; Vector absolute difference words
+declare i64 @llvm.hexagon.M2.vabsdiffw(i64, i64)
+define i64 @M2_vabsdiffw(i64 %a, i64 %b) {
+  %z = call i64 @llvm.hexagon.M2.vabsdiffw(i64 %a, i64 %b)
+  ret i64 %z
+}
+; CHECK: r1:0 = vabsdiffw(r1:0, r3:2)
+
+; Vector add halfwords
+declare i64 @llvm.hexagon.A2.vaddh(i64, i64)
+define i64 @A2_vaddh(i64 %a, i64 %b) {
+  %z = call i64 @llvm.hexagon.A2.vaddh(i64 %a, i64 %b)
+  ret i64 %z
+}
+; CHECK: r1:0 = vaddh(r1:0, r3:2)
+
+declare i64 @llvm.hexagon.A2.vaddhs(i64, i64)
+define i64 @A2_vaddhs(i64 %a, i64 %b) {
+  %z = call i64 @llvm.hexagon.A2.vaddhs(i64 %a, i64 %b)
+  ret i64 %z
+}
+; CHECK: r1:0 = vaddh(r1:0, r3:2):sat
+
+declare i64 @llvm.hexagon.A2.vadduhs(i64, i64)
+define i64 @A2_vadduhs(i64 %a, i64 %b) {
+  %z = call i64 @llvm.hexagon.A2.vadduhs(i64 %a, i64 %b)
+  ret i64 %z
+}
+; CHECK: r1:0 = vadduh(r1:0, r3:2):sat
+
+; Vector add halfwords with saturate and pack to unsigned bytes
+declare i32 @llvm.hexagon.A5.vaddhubs(i64, i64)
+define i32 @A5_vaddhubs(i64 %a, i64 %b) {
+  %z = call i32 @llvm.hexagon.A5.vaddhubs(i64 %a, i64 %b)
+  ret i32 %z
+}
+; CHECK: r0 = vaddhub(r1:0, r3:2):sat
+
+; Vector reduce add unsigned bytes
+declare i64 @llvm.hexagon.A2.vraddub(i64, i64)
+define i64 @A2_vraddub(i64 %a, i64 %b) {
+  %z = call i64 @llvm.hexagon.A2.vraddub(i64 %a, i64 %b)
+  ret i64 %z
+}
+; CHECK: r1:0 = vraddub(r1:0, r3:2)
+
+declare i64 @llvm.hexagon.A2.vraddub.acc(i64, i64, i64)
+define i64 @A2_vraddub_acc(i64 %a, i64 %b, i64 %c) {
+  %z = call i64 @llvm.hexagon.A2.vraddub.acc(i64 %a, i64 %b, i64 %c)
+  ret i64 %z
+}
+; CHECK: r1:0 += vraddub(r3:2, r5:4)
+
+; Vector reduce add halfwords
+declare i32 @llvm.hexagon.M2.vradduh(i64, i64)
+define i32 @M2_vradduh(i64 %a, i64 %b) {
+  %z = call i32 @llvm.hexagon.M2.vradduh(i64 %a, i64 %b)
+  ret i32 %z
+}
+; CHECK: r0 = vradduh(r1:0, r3:2)
+
+declare i32 @llvm.hexagon.M2.vraddh(i64, i64)
+define i32 @M2_vraddh(i64 %a, i64 %b) {
+  %z = call i32 @llvm.hexagon.M2.vraddh(i64 %a, i64 %b)
+  ret i32 %z
+}
+; CHECK: r0 = vraddh(r1:0, r3:2)
+
+; Vector add bytes
+declare i64 @llvm.hexagon.A2.vaddub(i64, i64)
+define i64 @A2_vaddub(i64 %a, i64 %b) {
+  %z = call i64 @llvm.hexagon.A2.vaddub(i64 %a, i64 %b)
+  ret i64 %z
+}
+; CHECK: r1:0 = vaddub(r1:0, r3:2)
+
+declare i64 @llvm.hexagon.A2.vaddubs(i64, i64)
+define i64 @A2_vaddubs(i64 %a, i64 %b) {
+  %z = call i64 @llvm.hexagon.A2.vaddubs(i64 %a, i64 %b)
+  ret i64 %z
+}
+; CHECK: r1:0 = vaddub(r1:0, r3:2):sat
+
+; Vector add words
+declare i64 @llvm.hexagon.A2.vaddw(i64, i64)
+define i64 @A2_vaddw(i64 %a, i64 %b) {
+  %z = call i64 @llvm.hexagon.A2.vaddw(i64 %a, i64 %b)
+  ret i64 %z
+}
+; CHECK: r1:0 = vaddw(r1:0, r3:2)
+
+declare i64 @llvm.hexagon.A2.vaddws(i64, i64)
+define i64 @A2_vaddws(i64 %a, i64 %b) {
+  %z = call i64 @llvm.hexagon.A2.vaddws(i64 %a, i64 %b)
+  ret i64 %z
+}
+; CHECK: r1:0 = vaddw(r1:0, r3:2):sat
+
+; Vector average halfwords
+declare i64 @llvm.hexagon.A2.vavgh(i64, i64)
+define i64 @A2_vavgh(i64 %a, i64 %b) {
+  %z = call i64 @llvm.hexagon.A2.vavgh(i64 %a, i64 %b)
+  ret i64 %z
+}
+; CHECK: r1:0 = vavgh(r1:0, r3:2)
+
+declare i64 @llvm.hexagon.A2.vavghr(i64, i64)
+define i64 @A2_vavghr(i64 %a, i64 %b) {
+  %z = call i64 @llvm.hexagon.A2.vavghr(i64 %a, i64 %b)
+  ret i64 %z
+}
+; CHECK: r1:0 = vavgh(r1:0, r3:2):rnd
+
+declare i64 @llvm.hexagon.A2.vavghcr(i64, i64)
+define i64 @A2_vavghcr(i64 %a, i64 %b) {
+  %z = call i64 @llvm.hexagon.A2.vavghcr(i64 %a, i64 %b)
+  ret i64 %z
+}
+; CHECK: r1:0 = vavgh(r1:0, r3:2):crnd
+
+declare i64 @llvm.hexagon.A2.vavguh(i64, i64)
+define i64 @A2_vavguh(i64 %a, i64 %b) {
+  %z = call i64 @llvm.hexagon.A2.vavguh(i64 %a, i64 %b)
+  ret i64 %z
+}
+; CHECK: r1:0 = vavguh(r1:0, r3:2)
+
+declare i64 @llvm.hexagon.A2.vavguhr(i64, i64)
+define i64 @A2_vavguhr(i64 %a, i64 %b) {
+  %z = call i64 @llvm.hexagon.A2.vavguhr(i64 %a, i64 %b)
+  ret i64 %z
+}
+; CHECK: r1:0 = vavguh(r1:0, r3:2):rnd
+
+declare i64 @llvm.hexagon.A2.vnavgh(i64, i64)
+define i64 @A2_vnavgh(i64 %a, i64 %b) {
+  %z = call i64 @llvm.hexagon.A2.vnavgh(i64 %a, i64 %b)
+  ret i64 %z
+}
+; CHECK: r1:0 = vnavgh(r1:0, r3:2)
+
+declare i64 @llvm.hexagon.A2.vnavghr(i64, i64)
+define i64 @A2_vnavghr(i64 %a, i64 %b) {
+  %z = call i64 @llvm.hexagon.A2.vnavghr(i64 %a, i64 %b)
+  ret i64 %z
+}
+; CHECK: r1:0 = vnavgh(r1:0, r3:2):rnd
+
+declare i64 @llvm.hexagon.A2.vnavghcr(i64, i64)
+define i64 @A2_vnavghcr(i64 %a, i64 %b) {
+  %z = call i64 @llvm.hexagon.A2.vnavghcr(i64 %a, i64 %b)
+  ret i64 %z
+}
+; CHECK: r1:0 = vnavgh(r1:0, r3:2):crnd
+
+; Vector average unsigned bytes
+declare i64 @llvm.hexagon.A2.vavgub(i64, i64)
+define i64 @A2_vavgub(i64 %a, i64 %b) {
+  %z = call i64 @llvm.hexagon.A2.vavgub(i64 %a, i64 %b)
+  ret i64 %z
+}
+; CHECK: r1:0 = vavgub(r1:0, r3:2)
+
+declare i64 @llvm.hexagon.A2.vavgubr(i64, i64)
+define i64 @A2_vavgubr(i64 %a, i64 %b) {
+  %z = call i64 @llvm.hexagon.A2.vavgubr(i64 %a, i64 %b)
+  ret i64 %z
+}
+; CHECK: r1:0 = vavgub(r1:0, r3:2):rnd
+
+; Vector average words
+declare i64 @llvm.hexagon.A2.vavgw(i64, i64)
+define i64 @A2_vavgw(i64 %a, i64 %b) {
+  %z = call i64 @llvm.hexagon.A2.vavgw(i64 %a, i64 %b)
+  ret i64 %z
+}
+; CHECK: r1:0 = vavgw(r1:0, r3:2)
+
+declare i64 @llvm.hexagon.A2.vavgwr(i64, i64)
+define i64 @A2_vavgwr(i64 %a, i64 %b) {
+  %z = call i64 @llvm.hexagon.A2.vavgwr(i64 %a, i64 %b)
+  ret i64 %z
+}
+; CHECK: r1:0 = vavgw(r1:0, r3:2):rnd
+
+declare i64 @llvm.hexagon.A2.vavgwcr(i64, i64)
+define i64 @A2_vavgwcr(i64 %a, i64 %b) {
+  %z = call i64 @llvm.hexagon.A2.vavgwcr(i64 %a, i64 %b)
+  ret i64 %z
+}
+; CHECK: r1:0 = vavgw(r1:0, r3:2):crnd
+
+declare i64 @llvm.hexagon.A2.vavguw(i64, i64)
+define i64 @A2_vavguw(i64 %a, i64 %b) {
+  %z = call i64 @llvm.hexagon.A2.vavguw(i64 %a, i64 %b)
+  ret i64 %z
+}
+; CHECK: r1:0 = vavguw(r1:0, r3:2)
+
+declare i64 @llvm.hexagon.A2.vavguwr(i64, i64)
+define i64 @A2_vavguwr(i64 %a, i64 %b) {
+  %z = call i64 @llvm.hexagon.A2.vavguwr(i64 %a, i64 %b)
+  ret i64 %z
+}
+; CHECK: r1:0 = vavguw(r1:0, r3:2):rnd
+
+declare i64 @llvm.hexagon.A2.vnavgw(i64, i64)
+define i64 @A2_vnavgw(i64 %a, i64 %b) {
+  %z = call i64 @llvm.hexagon.A2.vnavgw(i64 %a, i64 %b)
+  ret i64 %z
+}
+; CHECK: r1:0 = vnavgw(r1:0, r3:2)
+
+declare i64 @llvm.hexagon.A2.vnavgwr(i64, i64)
+define i64 @A2_vnavgwr(i64 %a, i64 %b) {
+  %z = call i64 @llvm.hexagon.A2.vnavgwr(i64 %a, i64 %b)
+  ret i64 %z
+}
+; CHECK: r1:0 = vnavgw(r1:0, r3:2):rnd
+
+declare i64 @llvm.hexagon.A2.vnavgwcr(i64, i64)
+define i64 @A2_vnavgwcr(i64 %a, i64 %b) {
+  %z = call i64 @llvm.hexagon.A2.vnavgwcr(i64 %a, i64 %b)
+  ret i64 %z
+}
+; CHECK: r1:0 = vnavgw(r1:0, r3:2):crnd
+
+; Vector conditional negate
+declare i64 @llvm.hexagon.S2.vcnegh(i64, i32)
+define i64 @S2_vcnegh(i64 %a, i32 %b) {
+  %z = call i64 @llvm.hexagon.S2.vcnegh(i64 %a, i32 %b)
+  ret i64 %z
+}
+; CHECK: r1:0 = vcnegh(r1:0, r2)
+
+declare i64 @llvm.hexagon.S2.vrcnegh(i64, i64, i32)
+define i64 @S2_vrcnegh(i64 %a, i64 %b, i32 %c) {
+  %z = call i64 @llvm.hexagon.S2.vrcnegh(i64 %a, i64 %b, i32 %c)
+  ret i64 %z
+}
+; CHECK: r1:0 += vrcnegh(r3:2, r4)
+
+; Vector maximum bytes
+declare i64 @llvm.hexagon.A2.vmaxub(i64, i64)
+define i64 @A2_vmaxub(i64 %a, i64 %b) {
+  %z = call i64 @llvm.hexagon.A2.vmaxub(i64 %a, i64 %b)
+  ret i64 %z
+}
+; CHECK: r1:0 = vmaxub(r1:0, r3:2)
+
+declare i64 @llvm.hexagon.A2.vmaxb(i64, i64)
+define i64 @A2_vmaxb(i64 %a, i64 %b) {
+  %z = call i64 @llvm.hexagon.A2.vmaxb(i64 %a, i64 %b)
+  ret i64 %z
+}
+; CHECK: r1:0 = vmaxb(r1:0, r3:2)
+
+; Vector maximum halfwords
+declare i64 @llvm.hexagon.A2.vmaxh(i64, i64)
+define i64 @A2_vmaxh(i64 %a, i64 %b) {
+  %z = call i64 @llvm.hexagon.A2.vmaxh(i64 %a, i64 %b)
+  ret i64 %z
+}
+; CHECK: r1:0 = vmaxh(r1:0, r3:2)
+
+declare i64 @llvm.hexagon.A2.vmaxuh(i64, i64)
+define i64 @A2_vmaxuh(i64 %a, i64 %b) {
+  %z = call i64 @llvm.hexagon.A2.vmaxuh(i64 %a, i64 %b)
+  ret i64 %z
+}
+; CHECK: r1:0 = vmaxuh(r1:0, r3:2)
+
+; Vector reduce maximum halfwords
+declare i64 @llvm.hexagon.A4.vrmaxh(i64, i64, i32)
+define i64 @A4_vrmaxh(i64 %a, i64 %b, i32 %c) {
+  %z = call i64 @llvm.hexagon.A4.vrmaxh(i64 %a, i64 %b, i32 %c)
+  ret i64 %z
+}
+; CHECK: r1:0 = vrmaxh(r3:2, r4)
+
+declare i64 @llvm.hexagon.A4.vrmaxuh(i64, i64, i32)
+define i64 @A4_vrmaxuh(i64 %a, i64 %b, i32 %c) {
+  %z = call i64 @llvm.hexagon.A4.vrmaxuh(i64 %a, i64 %b, i32 %c)
+  ret i64 %z
+}
+; CHECK: r1:0 = vrmaxuh(r3:2, r4)
+
+; Vector reduce maximum words
+declare i64 @llvm.hexagon.A4.vrmaxw(i64, i64, i32)
+define i64 @A4_vrmaxw(i64 %a, i64 %b, i32 %c) {
+  %z = call i64 @llvm.hexagon.A4.vrmaxw(i64 %a, i64 %b, i32 %c)
+  ret i64 %z
+}
+; CHECK: r1:0 = vrmaxw(r3:2, r4)
+
+declare i64 @llvm.hexagon.A4.vrmaxuw(i64, i64, i32)
+define i64 @A4_vrmaxuw(i64 %a, i64 %b, i32 %c) {
+  %z = call i64 @llvm.hexagon.A4.vrmaxuw(i64 %a, i64 %b, i32 %c)
+  ret i64 %z
+}
+; CHECK: r1:0 = vrmaxuw(r3:2, r4)
+
+; Vector minimum bytes
+declare i64 @llvm.hexagon.A2.vminub(i64, i64)
+define i64 @A2_vminub(i64 %a, i64 %b) {
+  %z = call i64 @llvm.hexagon.A2.vminub(i64 %a, i64 %b)
+  ret i64 %z
+}
+; CHECK: r1:0 = vminub(r1:0, r3:2)
+
+declare i64 @llvm.hexagon.A2.vminb(i64, i64)
+define i64 @A2_vminb(i64 %a, i64 %b) {
+  %z = call i64 @llvm.hexagon.A2.vminb(i64 %a, i64 %b)
+  ret i64 %z
+}
+; CHECK: r1:0 = vminb(r1:0, r3:2)
+
+; Vector minimum halfwords
+declare i64 @llvm.hexagon.A2.vminh(i64, i64)
+define i64 @A2_vminh(i64 %a, i64 %b) {
+  %z = call i64 @llvm.hexagon.A2.vminh(i64 %a, i64 %b)
+  ret i64 %z
+}
+; CHECK: r1:0 = vminh(r1:0, r3:2)
+
+declare i64 @llvm.hexagon.A2.vminuh(i64, i64)
+define i64 @A2_vminuh(i64 %a, i64 %b) {
+  %z = call i64 @llvm.hexagon.A2.vminuh(i64 %a, i64 %b)
+  ret i64 %z
+}
+; CHECK: r1:0 = vminuh(r1:0, r3:2)
+
+; Vector reduce minimum halfwords
+declare i64 @llvm.hexagon.A4.vrminh(i64, i64, i32)
+define i64 @A4_vrminh(i64 %a, i64 %b, i32 %c) {
+  %z = call i64 @llvm.hexagon.A4.vrminh(i64 %a, i64 %b, i32 %c)
+  ret i64 %z
+}
+; CHECK: r1:0 = vrminh(r3:2, r4)
+
+declare i64 @llvm.hexagon.A4.vrminuh(i64, i64, i32)
+define i64 @A4_vrminuh(i64 %a, i64 %b, i32 %c) {
+  %z = call i64 @llvm.hexagon.A4.vrminuh(i64 %a, i64 %b, i32 %c)
+  ret i64 %z
+}
+; CHECK: r1:0 = vrminuh(r3:2, r4)
+
+; Vector reduce minimum words
+declare i64 @llvm.hexagon.A4.vrminw(i64, i64, i32)
+define i64 @A4_vrminw(i64 %a, i64 %b, i32 %c) {
+  %z = call i64 @llvm.hexagon.A4.vrminw(i64 %a, i64 %b, i32 %c)
+  ret i64 %z
+}
+; CHECK: r1:0 = vrminw(r3:2, r4)
+
+declare i64 @llvm.hexagon.A4.vrminuw(i64, i64, i32)
+define i64 @A4_vrminuw(i64 %a, i64 %b, i32 %c) {
+  %z = call i64 @llvm.hexagon.A4.vrminuw(i64 %a, i64 %b, i32 %c)
+  ret i64 %z
+}
+; CHECK: r1:0 = vrminuw(r3:2, r4)
+
+; Vector sum of absolute differences unsigned bytes
+declare i64 @llvm.hexagon.A2.vrsadub(i64, i64)
+define i64 @A2_vrsadub(i64 %a, i64 %b) {
+  %z = call i64 @llvm.hexagon.A2.vrsadub(i64 %a, i64 %b)
+  ret i64 %z
+}
+; CHECK: r1:0 = vrsadub(r1:0, r3:2)
+
+declare i64 @llvm.hexagon.A2.vrsadub.acc(i64, i64, i64)
+define i64 @A2_vrsadub_acc(i64 %a, i64 %b, i64 %c) {
+  %z = call i64 @llvm.hexagon.A2.vrsadub.acc(i64 %a, i64 %b, i64 %c)
+  ret i64 %z
+}
+; CHECK: r1:0 += vrsadub(r3:2, r5:4)
+
+; Vector subtract halfwords
+declare i64 @llvm.hexagon.A2.vsubh(i64, i64)
+define i64 @A2_vsubh(i64 %a, i64 %b) {
+  %z = call i64 @llvm.hexagon.A2.vsubh(i64 %a, i64 %b)
+  ret i64 %z
+}
+; CHECK: r1:0 = vsubh(r1:0, r3:2)
+
+declare i64 @llvm.hexagon.A2.vsubhs(i64, i64)
+define i64 @A2_vsubhs(i64 %a, i64 %b) {
+  %z = call i64 @llvm.hexagon.A2.vsubhs(i64 %a, i64 %b)
+  ret i64 %z
+}
+; CHECK: r1:0 = vsubh(r1:0, r3:2):sat
+
+declare i64 @llvm.hexagon.A2.vsubuhs(i64, i64)
+define i64 @A2_vsubuhs(i64 %a, i64 %b) {
+  %z = call i64 @llvm.hexagon.A2.vsubuhs(i64 %a, i64 %b)
+  ret i64 %z
+}
+; CHECK: r1:0 = vsubuh(r1:0, r3:2):sat
+
+; Vector subtract bytes
+declare i64 @llvm.hexagon.A2.vsubub(i64, i64)
+define i64 @A2_vsubub(i64 %a, i64 %b) {
+  %z = call i64 @llvm.hexagon.A2.vsubub(i64 %a, i64 %b)
+  ret i64 %z
+}
+; CHECK: r1:0 = vsubub(r1:0, r3:2)
+
+declare i64 @llvm.hexagon.A2.vsububs(i64, i64)
+define i64 @A2_vsububs(i64 %a, i64 %b) {
+  %z = call i64 @llvm.hexagon.A2.vsububs(i64 %a, i64 %b)
+  ret i64 %z
+}
+; CHECK: r1:0 = vsubub(r1:0, r3:2):sat
+
+; Vector subtract words
+declare i64 @llvm.hexagon.A2.vsubw(i64, i64)
+define i64 @A2_vsubw(i64 %a, i64 %b) {
+  %z = call i64 @llvm.hexagon.A2.vsubw(i64 %a, i64 %b)
+  ret i64 %z
+}
+; CHECK: r1:0 = vsubw(r1:0, r3:2)
+
+declare i64 @llvm.hexagon.A2.vsubws(i64, i64)
+define i64 @A2_vsubws(i64 %a, i64 %b) {
+  %z = call i64 @llvm.hexagon.A2.vsubws(i64 %a, i64 %b)
+  ret i64 %z
+}
+; CHECK: r1:0 = vsubw(r1:0, r3:2):sat

@@ -629,6 +629,22 @@ def : Pat <(i32 (int_hexagon_C2_cmpltu (I32:$src1),
       (i32 (C2_cmpgtu (I32:$src2), (I32:$src1)))>;
 
 /********************************************************************
+*            ALU32/VH                                               *
+*********************************************************************/
+// Vector add, subtract, average halfwords
+def: T_RR_pat<A2_svaddh,   int_hexagon_A2_svaddh>;
+def: T_RR_pat<A2_svaddhs,  int_hexagon_A2_svaddhs>;
+def: T_RR_pat<A2_svadduhs, int_hexagon_A2_svadduhs>;
+
+def: T_RR_pat<A2_svsubh,   int_hexagon_A2_svsubh>;
+def: T_RR_pat<A2_svsubhs,  int_hexagon_A2_svsubhs>;
+def: T_RR_pat<A2_svsubuhs, int_hexagon_A2_svsubuhs>;
+
+def: T_RR_pat<A2_svavgh,   int_hexagon_A2_svavgh>;
+def: T_RR_pat<A2_svavghs,  int_hexagon_A2_svavghs>;
+def: T_RR_pat<A2_svnavgh,  int_hexagon_A2_svnavgh>;
+
+/********************************************************************
 *            ALU64/ALU                                              *
 *********************************************************************/
 def: T_RR_pat<A2_addsat,   int_hexagon_A2_addsat>;
@@ -646,6 +662,83 @@ def: T_PP_pat<C2_cmpgtup,  int_hexagon_C2_cmpgtup>;
 
 def: T_PP_pat<S2_parityp,  int_hexagon_S2_parityp>;
 def: T_RR_pat<S2_packhl,   int_hexagon_S2_packhl>;
+
+/********************************************************************
+*            ALU64/VB                                               *
+*********************************************************************/
+// ALU64 - Vector add
+def : T_PP_pat <A2_vaddub,   int_hexagon_A2_vaddub>;
+def : T_PP_pat <A2_vaddubs,  int_hexagon_A2_vaddubs>;
+def : T_PP_pat <A2_vaddh,    int_hexagon_A2_vaddh>;
+def : T_PP_pat <A2_vaddhs,   int_hexagon_A2_vaddhs>;
+def : T_PP_pat <A2_vadduhs,  int_hexagon_A2_vadduhs>;
+def : T_PP_pat <A2_vaddw,    int_hexagon_A2_vaddw>;
+def : T_PP_pat <A2_vaddws,   int_hexagon_A2_vaddws>;
+
+// ALU64 - Vector average
+def : T_PP_pat <A2_vavgub,   int_hexagon_A2_vavgub>;
+def : T_PP_pat <A2_vavgubr,  int_hexagon_A2_vavgubr>;
+def : T_PP_pat <A2_vavgh,    int_hexagon_A2_vavgh>;
+def : T_PP_pat <A2_vavghr,   int_hexagon_A2_vavghr>;
+def : T_PP_pat <A2_vavghcr,  int_hexagon_A2_vavghcr>;
+def : T_PP_pat <A2_vavguh,   int_hexagon_A2_vavguh>;
+def : T_PP_pat <A2_vavguhr,  int_hexagon_A2_vavguhr>;
+
+def : T_PP_pat <A2_vavgw,    int_hexagon_A2_vavgw>;
+def : T_PP_pat <A2_vavgwr,   int_hexagon_A2_vavgwr>;
+def : T_PP_pat <A2_vavgwcr,  int_hexagon_A2_vavgwcr>;
+def : T_PP_pat <A2_vavguw,   int_hexagon_A2_vavguw>;
+def : T_PP_pat <A2_vavguwr,  int_hexagon_A2_vavguwr>;
+
+// ALU64 - Vector negative average
+def : T_PP_pat <A2_vnavgh,   int_hexagon_A2_vnavgh>;
+def : T_PP_pat <A2_vnavghr,  int_hexagon_A2_vnavghr>;
+def : T_PP_pat <A2_vnavghcr, int_hexagon_A2_vnavghcr>;
+def : T_PP_pat <A2_vnavgw,   int_hexagon_A2_vnavgw>;
+def : T_PP_pat <A2_vnavgwr,  int_hexagon_A2_vnavgwr>;
+def : T_PP_pat <A2_vnavgwcr, int_hexagon_A2_vnavgwcr>;
+
+// ALU64 - Vector max
+def : T_PP_pat <A2_vmaxh,    int_hexagon_A2_vmaxh>;
+def : T_PP_pat <A2_vmaxw,    int_hexagon_A2_vmaxw>;
+def : T_PP_pat <A2_vmaxub,   int_hexagon_A2_vmaxub>;
+def : T_PP_pat <A2_vmaxuh,   int_hexagon_A2_vmaxuh>;
+def : T_PP_pat <A2_vmaxuw,   int_hexagon_A2_vmaxuw>;
+
+// ALU64 - Vector min
+def : T_PP_pat <A2_vminh,    int_hexagon_A2_vminh>;
+def : T_PP_pat <A2_vminw,    int_hexagon_A2_vminw>;
+def : T_PP_pat <A2_vminub,   int_hexagon_A2_vminub>;
+def : T_PP_pat <A2_vminuh,   int_hexagon_A2_vminuh>;
+def : T_PP_pat <A2_vminuw,   int_hexagon_A2_vminuw>;
+
+// ALU64 - Vector sub
+def : T_PP_pat <A2_vsubub,   int_hexagon_A2_vsubub>;
+def : T_PP_pat <A2_vsububs,  int_hexagon_A2_vsububs>;
+def : T_PP_pat <A2_vsubh,    int_hexagon_A2_vsubh>;
+def : T_PP_pat <A2_vsubhs,   int_hexagon_A2_vsubhs>;
+def : T_PP_pat <A2_vsubuhs,  int_hexagon_A2_vsubuhs>;
+def : T_PP_pat <A2_vsubw,    int_hexagon_A2_vsubw>;
+def : T_PP_pat <A2_vsubws,   int_hexagon_A2_vsubws>;
+
+// ALU64 - Vector compare bytes
+def : T_PP_pat <A2_vcmpbeq,  int_hexagon_A2_vcmpbeq>;
+def : T_PP_pat <A4_vcmpbgt,  int_hexagon_A4_vcmpbgt>;
+def : T_PP_pat <A2_vcmpbgtu, int_hexagon_A2_vcmpbgtu>;
+
+// ALU64 - Vector compare halfwords
+def : T_PP_pat <A2_vcmpheq,  int_hexagon_A2_vcmpheq>;
+def : T_PP_pat <A2_vcmphgt,  int_hexagon_A2_vcmphgt>;
+def : T_PP_pat <A2_vcmphgtu, int_hexagon_A2_vcmphgtu>;
+
+// ALU64 - Vector compare words
+def : T_PP_pat <A2_vcmpweq,  int_hexagon_A2_vcmpweq>;
+def : T_PP_pat <A2_vcmpwgt,  int_hexagon_A2_vcmpwgt>;
+def : T_PP_pat <A2_vcmpwgtu, int_hexagon_A2_vcmpwgtu>;
+
+// ALU64 / VB / Vector mux.
+def : Pat<(int_hexagon_C2_vmux PredRegs:$Pu, DoubleRegs:$Rs, DoubleRegs:$Rt),
+          (C2_vmux PredRegs:$Pu, DoubleRegs:$Rs, DoubleRegs:$Rt)>;
 
 // MPY - Multiply and use full result
 // Rdd = mpy[u](Rs, Rt)
@@ -1387,60 +1480,6 @@ class di_LDInstPI_diu4<string opc, Intrinsic IntID>
            [],
            "$src1 = $dst">;
 
-/********************************************************************
-*            ALU32/VH                                               *
-*********************************************************************/
-
-// ALU32 / VH / Vector add halfwords.
-// Rd32=vadd[u]h(Rs32,Rt32:sat]
-def HEXAGON_A2_svaddh:
-  si_ALU32_sisi                   <"vaddh",    int_hexagon_A2_svaddh>;
-def HEXAGON_A2_svaddhs:
-  si_ALU32_sisi_sat               <"vaddh",    int_hexagon_A2_svaddhs>;
-def HEXAGON_A2_svadduhs:
-  si_ALU32_sisi_sat               <"vadduh",   int_hexagon_A2_svadduhs>;
-
-// ALU32 / VH / Vector average halfwords.
-def HEXAGON_A2_svavgh:
-  si_ALU32_sisi                   <"vavgh",    int_hexagon_A2_svavgh>;
-def HEXAGON_A2_svavghs:
-  si_ALU32_sisi_rnd               <"vavgh",    int_hexagon_A2_svavghs>;
-def HEXAGON_A2_svnavgh:
-  si_ALU32_sisi                   <"vnavgh",   int_hexagon_A2_svnavgh>;
-
-// ALU32 / VH / Vector subtract halfwords.
-def HEXAGON_A2_svsubh:
-  si_ALU32_sisi                   <"vsubh",    int_hexagon_A2_svsubh>;
-def HEXAGON_A2_svsubhs:
-  si_ALU32_sisi_sat               <"vsubh",    int_hexagon_A2_svsubhs>;
-def HEXAGON_A2_svsubuhs:
-  si_ALU32_sisi_sat               <"vsubuh",   int_hexagon_A2_svsubuhs>;
-
-// ALU64 / ALU / Transfer register.
-def HEXAGON_A2_tfrp:
-  di_ALU64_di                     <"",         int_hexagon_A2_tfrp>;
-
-/********************************************************************
-*            ALU64/VB                                               *
-*********************************************************************/
-
-// ALU64 / VB / Vector add unsigned bytes.
-def HEXAGON_A2_vaddub:
-  di_ALU64_didi                   <"vaddub",   int_hexagon_A2_vaddub>;
-def HEXAGON_A2_vaddubs:
-  di_ALU64_didi_sat               <"vaddub",   int_hexagon_A2_vaddubs>;
-
-// ALU64 / VB / Vector average unsigned bytes.
-def HEXAGON_A2_vavgub:
-  di_ALU64_didi                   <"vavgub",   int_hexagon_A2_vavgub>;
-def HEXAGON_A2_vavgubr:
-  di_ALU64_didi_rnd               <"vavgub",   int_hexagon_A2_vavgubr>;
-
-// ALU64 / VB / Vector compare unsigned bytes.
-def HEXAGON_A2_vcmpbeq:
-  qi_ALU64_didi                   <"vcmpb.eq", int_hexagon_A2_vcmpbeq>;
-def HEXAGON_A2_vcmpbgtu:
-  qi_ALU64_didi                   <"vcmpb.gtu",int_hexagon_A2_vcmpbgtu>;
 
 // ALU64 / VB / Vector maximum/minimum unsigned bytes.
 def HEXAGON_A2_vmaxub:
@@ -1453,127 +1492,6 @@ def HEXAGON_A2_vsubub:
   di_ALU64_didi                   <"vsubub",   int_hexagon_A2_vsubub>;
 def HEXAGON_A2_vsububs:
   di_ALU64_didi_sat               <"vsubub",   int_hexagon_A2_vsububs>;
-
-// ALU64 / VB / Vector mux.
-def HEXAGON_C2_vmux:
-  di_ALU64_qididi                 <"vmux",     int_hexagon_C2_vmux>;
-
-
-/********************************************************************
-*            ALU64/VH                                               *
-*********************************************************************/
-
-// ALU64 / VH / Vector add halfwords.
-// Rdd64=vadd[u]h(Rss64,Rtt64:sat]
-def HEXAGON_A2_vaddh:
-  di_ALU64_didi                   <"vaddh",    int_hexagon_A2_vaddh>;
-def HEXAGON_A2_vaddhs:
-  di_ALU64_didi_sat               <"vaddh",    int_hexagon_A2_vaddhs>;
-def HEXAGON_A2_vadduhs:
-  di_ALU64_didi_sat               <"vadduh",   int_hexagon_A2_vadduhs>;
-
-// ALU64 / VH / Vector average halfwords.
-// Rdd64=v[n]avg[u]h(Rss64,Rtt64:rnd/:crnd][:sat]
-def HEXAGON_A2_vavgh:
-  di_ALU64_didi                   <"vavgh",    int_hexagon_A2_vavgh>;
-def HEXAGON_A2_vavghcr:
-  di_ALU64_didi_crnd              <"vavgh",    int_hexagon_A2_vavghcr>;
-def HEXAGON_A2_vavghr:
-  di_ALU64_didi_rnd               <"vavgh",    int_hexagon_A2_vavghr>;
-def HEXAGON_A2_vavguh:
-  di_ALU64_didi                   <"vavguh",   int_hexagon_A2_vavguh>;
-def HEXAGON_A2_vavguhr:
-  di_ALU64_didi_rnd               <"vavguh",   int_hexagon_A2_vavguhr>;
-def HEXAGON_A2_vnavgh:
-  di_ALU64_didi                   <"vnavgh",   int_hexagon_A2_vnavgh>;
-def HEXAGON_A2_vnavghcr:
-  di_ALU64_didi_crnd_sat          <"vnavgh",   int_hexagon_A2_vnavghcr>;
-def HEXAGON_A2_vnavghr:
-  di_ALU64_didi_rnd_sat           <"vnavgh",   int_hexagon_A2_vnavghr>;
-
-// ALU64 / VH / Vector compare halfwords.
-def HEXAGON_A2_vcmpheq:
-  qi_ALU64_didi                   <"vcmph.eq", int_hexagon_A2_vcmpheq>;
-def HEXAGON_A2_vcmphgt:
-  qi_ALU64_didi                   <"vcmph.gt", int_hexagon_A2_vcmphgt>;
-def HEXAGON_A2_vcmphgtu:
-  qi_ALU64_didi                   <"vcmph.gtu",int_hexagon_A2_vcmphgtu>;
-
-// ALU64 / VH / Vector maximum halfwords.
-def HEXAGON_A2_vmaxh:
-  di_ALU64_didi                   <"vmaxh",    int_hexagon_A2_vmaxh>;
-def HEXAGON_A2_vmaxuh:
-  di_ALU64_didi                   <"vmaxuh",   int_hexagon_A2_vmaxuh>;
-
-// ALU64 / VH / Vector minimum halfwords.
-def HEXAGON_A2_vminh:
-  di_ALU64_didi                   <"vminh",    int_hexagon_A2_vminh>;
-def HEXAGON_A2_vminuh:
-  di_ALU64_didi                   <"vminuh",   int_hexagon_A2_vminuh>;
-
-// ALU64 / VH / Vector subtract halfwords.
-def HEXAGON_A2_vsubh:
-  di_ALU64_didi                   <"vsubh",    int_hexagon_A2_vsubh>;
-def HEXAGON_A2_vsubhs:
-  di_ALU64_didi_sat               <"vsubh",    int_hexagon_A2_vsubhs>;
-def HEXAGON_A2_vsubuhs:
-  di_ALU64_didi_sat               <"vsubuh",   int_hexagon_A2_vsubuhs>;
-
-
-/********************************************************************
-*            ALU64/VW                                               *
-*********************************************************************/
-
-// ALU64 / VW / Vector add words.
-// Rdd32=vaddw(Rss32,Rtt32)[:sat]
-def HEXAGON_A2_vaddw:
-  di_ALU64_didi                   <"vaddw",    int_hexagon_A2_vaddw>;
-def HEXAGON_A2_vaddws:
-  di_ALU64_didi_sat               <"vaddw",   int_hexagon_A2_vaddws>;
-
-// ALU64 / VW / Vector average words.
-def HEXAGON_A2_vavguw:
-  di_ALU64_didi                   <"vavguw",   int_hexagon_A2_vavguw>;
-def HEXAGON_A2_vavguwr:
-  di_ALU64_didi_rnd               <"vavguw",   int_hexagon_A2_vavguwr>;
-def HEXAGON_A2_vavgw:
-  di_ALU64_didi                   <"vavgw",    int_hexagon_A2_vavgw>;
-def HEXAGON_A2_vavgwcr:
-  di_ALU64_didi_crnd              <"vavgw",    int_hexagon_A2_vavgwcr>;
-def HEXAGON_A2_vavgwr:
-  di_ALU64_didi_rnd               <"vavgw",    int_hexagon_A2_vavgwr>;
-def HEXAGON_A2_vnavgw:
-  di_ALU64_didi                   <"vnavgw",   int_hexagon_A2_vnavgw>;
-def HEXAGON_A2_vnavgwcr:
-  di_ALU64_didi_crnd_sat          <"vnavgw",   int_hexagon_A2_vnavgwcr>;
-def HEXAGON_A2_vnavgwr:
-  di_ALU64_didi_rnd_sat           <"vnavgw",   int_hexagon_A2_vnavgwr>;
-
-// ALU64 / VW / Vector compare words.
-def HEXAGON_A2_vcmpweq:
-  qi_ALU64_didi                   <"vcmpw.eq", int_hexagon_A2_vcmpweq>;
-def HEXAGON_A2_vcmpwgt:
-  qi_ALU64_didi                   <"vcmpw.gt", int_hexagon_A2_vcmpwgt>;
-def HEXAGON_A2_vcmpwgtu:
-  qi_ALU64_didi                   <"vcmpw.gtu",int_hexagon_A2_vcmpwgtu>;
-
-// ALU64 / VW / Vector maximum words.
-def HEXAGON_A2_vmaxw:
-  di_ALU64_didi                   <"vmaxw",    int_hexagon_A2_vmaxw>;
-def HEXAGON_A2_vmaxuw:
-  di_ALU64_didi                   <"vmaxuw",   int_hexagon_A2_vmaxuw>;
-
-// ALU64 / VW / Vector minimum words.
-def HEXAGON_A2_vminw:
-  di_ALU64_didi                   <"vminw",    int_hexagon_A2_vminw>;
-def HEXAGON_A2_vminuw:
-  di_ALU64_didi                   <"vminuw",   int_hexagon_A2_vminuw>;
-
-// ALU64 / VW / Vector subtract words.
-def HEXAGON_A2_vsubw:
-  di_ALU64_didi                   <"vsubw",    int_hexagon_A2_vsubw>;
-def HEXAGON_A2_vsubws:
-  di_ALU64_didi_sat               <"vsubw",    int_hexagon_A2_vsubws>;
 
 /********************************************************************
 *            MTYPE/ALU                                              *
