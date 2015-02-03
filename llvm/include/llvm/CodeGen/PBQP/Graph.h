@@ -548,14 +548,14 @@ namespace PBQP {
     /// @brief Get the first node connected to this edge.
     /// @param EId Edge id.
     /// @return The first node connected to the given edge.
-    NodeId getEdgeNode1Id(EdgeId EId) {
+    NodeId getEdgeNode1Id(EdgeId EId) const {
       return getEdge(EId).getN1Id();
     }
 
     /// @brief Get the second node connected to this edge.
     /// @param EId Edge id.
     /// @return The second node connected to the given edge.
-    NodeId getEdgeNode2Id(EdgeId EId) {
+    NodeId getEdgeNode2Id(EdgeId EId) const {
       return getEdge(EId).getN2Id();
     }
 
