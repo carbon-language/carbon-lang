@@ -7,17 +7,17 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "NativeProcessProtocol.h"
+#include "lldb/Host/common/NativeProcessProtocol.h"
 
 #include "lldb/lldb-enumerations.h"
 #include "lldb/Core/ArchSpec.h"
 #include "lldb/Core/Log.h"
 #include "lldb/Core/State.h"
 #include "lldb/Host/Host.h"
-#include "lldb/Target/NativeRegisterContext.h"
+#include "lldb/Host/common/NativeRegisterContext.h"
 
-#include "NativeThreadProtocol.h"
-#include "SoftwareBreakpoint.h"
+#include "lldb/Host/common/NativeThreadProtocol.h"
+#include "lldb/Host/common/SoftwareBreakpoint.h"
 
 using namespace lldb;
 using namespace lldb_private;

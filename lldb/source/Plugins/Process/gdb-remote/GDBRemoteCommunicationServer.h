@@ -23,7 +23,7 @@
 #include "lldb/Target/Process.h"
 #include "GDBRemoteCommunication.h"
 
-#include "../../../Host/common/NativeProcessProtocol.h"
+#include "lldb/Host/common/NativeProcessProtocol.h"
 
 class ProcessGDBRemote;
 class StringExtractorGDBRemote;

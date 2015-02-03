@@ -13,8 +13,8 @@
 #include "lldb/Core/DataBufferHeap.h"
 #include "lldb/Core/Error.h"
 #include "lldb/Core/RegisterValue.h"
-#include "Host/common/NativeProcessProtocol.h"
-#include "Host/common/NativeThreadProtocol.h"
+#include "lldb/Host/common/NativeProcessProtocol.h"
+#include "lldb/Host/common/NativeThreadProtocol.h"
 #include "Plugins/Process/Linux/NativeProcessLinux.h"
 
 using namespace lldb_private;

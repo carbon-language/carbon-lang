@@ -7,11 +7,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "NativeBreakpointList.h"
+#include "lldb/Host/common/NativeBreakpointList.h"
 
 #include "lldb/Core/Log.h"
 
-#include "NativeBreakpoint.h"
+#include "lldb/Host/common/NativeBreakpoint.h"
 
 using namespace lldb;
 using namespace lldb_private;

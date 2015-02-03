@@ -7,15 +7,15 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "lldb/Target/NativeRegisterContext.h"
+#include "lldb/Host/common/NativeRegisterContext.h"
 
 #include "lldb/Core/Log.h"
 #include "lldb/Core/RegisterValue.h"
 
 #include "lldb/lldb-private-log.h"
 
-#include "Host/common/NativeProcessProtocol.h"
-#include "Host/common/NativeThreadProtocol.h"
+#include "lldb/Host/common/NativeProcessProtocol.h"
+#include "lldb/Host/common/NativeThreadProtocol.h"
 
 using namespace lldb;
 using namespace lldb_private;

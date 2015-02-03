@@ -19,6 +19,8 @@ add_host_subdirectory(common
   common/NativeBreakpoint.cpp
   common/NativeBreakpointList.cpp
   common/NativeProcessProtocol.cpp
+  common/NativeRegisterContext.cpp
+  common/NativeRegisterContextRegisterInfo.cpp
   common/NativeThreadProtocol.cpp
   common/OptionParser.cpp
   common/PipeBase.cpp

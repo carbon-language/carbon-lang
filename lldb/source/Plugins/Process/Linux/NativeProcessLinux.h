@@ -25,7 +25,7 @@
 #include "lldb/Host/Mutex.h"
 #include "lldb/Target/MemoryRegionInfo.h"
 
-#include "Host/common/NativeProcessProtocol.h"
+#include "lldb/Host/common/NativeProcessProtocol.h"
 
 namespace lldb_private
 {

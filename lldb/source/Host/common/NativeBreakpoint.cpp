@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "NativeBreakpoint.h"
+#include "lldb/Host/common/NativeBreakpoint.h"
 
 #include "lldb/lldb-defines.h"
 #include "lldb/Core/Error.h"

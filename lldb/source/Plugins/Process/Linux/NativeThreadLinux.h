@@ -11,7 +11,7 @@
 #define liblldb_NativeThreadLinux_H_
 
 #include "lldb/lldb-private-forward.h"
-#include "../../../Host/common/NativeThreadProtocol.h"
+#include "lldb/Host/common/NativeThreadProtocol.h"
 
 namespace lldb_private
 {

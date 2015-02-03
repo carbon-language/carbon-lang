@@ -7,14 +7,14 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "SoftwareBreakpoint.h"
+#include "lldb/Host/common/SoftwareBreakpoint.h"
 
 #include "lldb/Core/Error.h"
 #include "lldb/Core/Log.h"
 #include "lldb/Host/Debug.h"
 #include "lldb/Host/Mutex.h"
 
-#include "NativeProcessProtocol.h"
+#include "lldb/Host/common/NativeProcessProtocol.h"
 
 using namespace lldb_private;
 

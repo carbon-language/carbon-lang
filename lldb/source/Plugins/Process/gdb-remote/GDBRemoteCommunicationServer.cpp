@@ -39,9 +39,9 @@
 #include "lldb/Target/FileAction.h"
 #include "lldb/Target/Platform.h"
 #include "lldb/Target/Process.h"
-#include "lldb/Target/NativeRegisterContext.h"
-#include "Host/common/NativeProcessProtocol.h"
-#include "Host/common/NativeThreadProtocol.h"
+#include "lldb/Host/common/NativeRegisterContext.h"
+#include "lldb/Host/common/NativeProcessProtocol.h"
+#include "lldb/Host/common/NativeThreadProtocol.h"
 
 // Project includes
 #include "Utility/StringExtractorGDBRemote.h"

@@ -9,7 +9,7 @@
 
 #include "lldb/lldb-types.h"
 #include "lldb/lldb-private-forward.h"
-#include "lldb/Target/NativeRegisterContextRegisterInfo.h"
+#include "lldb/Host/common/NativeRegisterContextRegisterInfo.h"
 
 using namespace lldb_private;
 

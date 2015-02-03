@@ -56,11 +56,11 @@
 #include "lldb/Host/HostInfo.h"
 #include "lldb/Host/ThreadLauncher.h"
 #include "lldb/Symbol/ObjectFile.h"
-#include "lldb/Target/NativeRegisterContext.h"
+#include "lldb/Host/common/NativeRegisterContext.h"
 #include "lldb/Target/ProcessLaunchInfo.h"
 #include "lldb/Utility/PseudoTerminal.h"
 
-#include "Host/common/NativeBreakpoint.h"
+#include "lldb/Host/common/NativeBreakpoint.h"
 #include "Utility/StringExtractor.h"
 
 #include "Plugins/Process/Utility/LinuxSignals.h"
