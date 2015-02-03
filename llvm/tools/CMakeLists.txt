@@ -67,7 +67,7 @@ if(MSVC AND NOT(MSVC_VERSION LESS 1800))
   # to drop support for MSVC 2012 soon, don't build this for MSVC < 2013.
   add_llvm_tool_subdirectory(llvm-pdbdump)
 else()
-  ignore_llvm_tool_subdirectory(llbm-pdbdump)
+  ignore_llvm_tool_subdirectory(llvm-pdbdump)
 endif()
 
 if(NOT CYGWIN AND LLVM_ENABLE_PIC)
