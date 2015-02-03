@@ -447,7 +447,8 @@ void JumpScopeChecker::BuildScopeInformation(Stmt *S, unsigned &origParentScope)
     unsigned newParentScope;
     // Disallow jumps into the protected statement of an @synchronized, but
     // allow jumps into the object expression it protects.
-    if (ObjCAtSynchronizedStmt *AS = dyn_cast<ObjCAtSynchronizedStmt>(SubStmt)){
+    if (ObjCAtSynchronizedStmt *AS =
+            dyn_cast<ObjCAtSynchronizedStmt>(SubStmt)) {
       // Recursively walk the AST for the @synchronized object expr, it is
       // evaluated in the normal scope.
       BuildScopeInformation(AS->getSynchExpr(), ParentScope);
@@ -464,14 +465,16 @@ void JumpScopeChecker::BuildScopeInformation(Stmt *S, unsigned &origParentScope)
     }
 
     // Disallow jumps into the protected statement of an @autoreleasepool.
-    if (ObjCAutoreleasePoolStmt *AS = dyn_cast<ObjCAutoreleasePoolStmt>(SubStmt)){
-      // Recursively walk the AST for the @autoreleasepool part, protected by a new
-      // scope.
+    if (ObjCAutoreleasePoolStmt *AS =
+            dyn_cast<ObjCAutoreleasePoolStmt>(SubStmt)) {
+      // Recursively walk the AST for the @autoreleasepool part, protected by a
+      // new scope.
       Scopes.push_back(GotoScope(ParentScope,
                                  diag::note_protected_by_objc_autoreleasepool,
                                  diag::note_exits_objc_autoreleasepool,
                                  AS->getAtLoc()));
-      BuildScopeInformation(AS->getSubStmt(), (newParentScope = Scopes.size()-1));
+      BuildScopeInformation(AS->getSubStmt(),
+                            (newParentScope = Scopes.size() - 1));
       continue;
     }
 
