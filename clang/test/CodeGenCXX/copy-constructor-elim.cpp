@@ -56,4 +56,4 @@ extern "C" V f() { return gv1; }
 // Make sure that we obey the destination's alignment requirements when emitting
 // the copy.
 // CHECK-LABEL: define i32 @f()
-// CHECK:   call void @llvm.memcpy.p0i8.p0i8.i64({{.*}}, i8* bitcast (%struct.V* @gv1 to i8*), i64 4, i32 4, i1 false)
+// CHECK:   call void @llvm.memcpy.p0i8.p0i8.{{i64|i32}}({{.*}}, i8* bitcast (%struct.V* @gv1 to i8*), i64 4, i32 4, i1 false)
