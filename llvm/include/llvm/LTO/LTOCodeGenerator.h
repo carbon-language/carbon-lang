@@ -117,6 +117,18 @@ struct LTOCodeGenerator {
                       bool disableVectorization,
                       std::string &errMsg);
 
+  // Optimizes the merged module. Returns true on success.
+  bool optimize(bool disableOpt,
+                bool disableInline,
+                bool disableGVNLoadPRE,
+                bool disableVectorization,
+                std::string &errMsg);
+
+  // Compiles the merged optimized module into a single object file. It brings
+  // the object to a buffer, and returns the buffer to the caller. Return NULL
+  // if the compilation was not successful.
+  const void *compileOptimized(size_t *length, std::string &errMsg);
+
   void setDiagnosticHandler(lto_diagnostic_handler_t, void *);
 
   LLVMContext &getContext() { return Context; }
@@ -124,9 +136,8 @@ struct LTOCodeGenerator {
 private:
   void initializeLTOPasses();
 
-  bool generateObjectFile(raw_ostream &out, bool disableOpt, bool disableInline,
-                          bool disableGVNLoadPRE, bool disableVectorization,
-                          std::string &errMsg);
+  bool compileOptimized(raw_ostream &out, std::string &errMsg);
+  bool compileOptimizedToFile(const char **name, std::string &errMsg);
   void applyScopeRestrictions();
   void applyRestriction(GlobalValue &GV, ArrayRef<StringRef> Libcalls,
                         std::vector<const char *> &MustPreserveList,

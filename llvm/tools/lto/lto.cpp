@@ -296,6 +296,26 @@ const void *lto_codegen_compile(lto_code_gen_t cg, size_t *length) {
                              sLastErrorString);
 }
 
+bool lto_codegen_optimize(lto_code_gen_t cg) {
+  if (!parsedOptions) {
+    unwrap(cg)->parseCodeGenDebugOptions();
+    lto_add_attrs(cg);
+    parsedOptions = true;
+  }
+  return !unwrap(cg)->optimize(DisableOpt, DisableInline,
+                               DisableGVNLoadPRE, DisableLTOVectorization,
+                               sLastErrorString);
+}
+
+const void *lto_codegen_compile_optimized(lto_code_gen_t cg, size_t *length) {
+  if (!parsedOptions) {
+    unwrap(cg)->parseCodeGenDebugOptions();
+    lto_add_attrs(cg);
+    parsedOptions = true;
+  }
+  return unwrap(cg)->compileOptimized(length, sLastErrorString);
+}
+
 bool lto_codegen_compile_to_file(lto_code_gen_t cg, const char **name) {
   if (!parsedOptions) {
     unwrap(cg)->parseCodeGenDebugOptions();

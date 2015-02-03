@@ -202,12 +202,8 @@ bool LTOCodeGenerator::writeMergedModules(const char *path,
   return true;
 }
 
-bool LTOCodeGenerator::compile_to_file(const char** name,
-                                       bool disableOpt,
-                                       bool disableInline,
-                                       bool disableGVNLoadPRE,
-                                       bool disableVectorization,
-                                       std::string& errMsg) {
+bool LTOCodeGenerator::compileOptimizedToFile(const char **name,
+                                              std::string &errMsg) {
   // make unique temp .o file to put generated object file
   SmallString<128> Filename;
   int FD;
@@ -221,9 +217,7 @@ bool LTOCodeGenerator::compile_to_file(const char** name,
   // generate object file
   tool_output_file objFile(Filename.c_str(), FD);
 
-  bool genResult =
-      generateObjectFile(objFile.os(), disableOpt, disableInline,
-                         disableGVNLoadPRE, disableVectorization, errMsg);
+  bool genResult = compileOptimized(objFile.os(), errMsg);
   objFile.os().close();
   if (objFile.os().has_error()) {
     objFile.os().clear_error();
@@ -242,15 +236,10 @@ bool LTOCodeGenerator::compile_to_file(const char** name,
   return true;
 }
 
-const void* LTOCodeGenerator::compile(size_t* length,
-                                      bool disableOpt,
-                                      bool disableInline,
-                                      bool disableGVNLoadPRE,
-                                      bool disableVectorization,
-                                      std::string& errMsg) {
+const void *LTOCodeGenerator::compileOptimized(size_t *length,
+                                               std::string &errMsg) {
   const char *name;
-  if (!compile_to_file(&name, disableOpt, disableInline, disableGVNLoadPRE,
-                       disableVectorization, errMsg))
+  if (!compileOptimizedToFile(&name, errMsg))
     return nullptr;
 
   // read .o file into memory buffer
@@ -271,6 +260,33 @@ const void* LTOCodeGenerator::compile(size_t* length,
     return nullptr;
   *length = NativeObjectFile->getBufferSize();
   return NativeObjectFile->getBufferStart();
+}
+
+
+bool LTOCodeGenerator::compile_to_file(const char **name,
+                                       bool disableOpt,
+                                       bool disableInline,
+                                       bool disableGVNLoadPRE,
+                                       bool disableVectorization,
+                                       std::string &errMsg) {
+  if (!optimize(disableOpt, disableInline, disableGVNLoadPRE,
+                disableVectorization, errMsg))
+    return false;
+
+  return compileOptimizedToFile(name, errMsg);
+}
+
+const void* LTOCodeGenerator::compile(size_t *length,
+                                      bool disableOpt,
+                                      bool disableInline,
+                                      bool disableGVNLoadPRE,
+                                      bool disableVectorization,
+                                      std::string &errMsg) {
+  if (!optimize(disableOpt, disableInline, disableGVNLoadPRE,
+                disableVectorization, errMsg))
+    return nullptr;
+
+  return compileOptimized(length, errMsg);
 }
 
 bool LTOCodeGenerator::determineTarget(std::string &errMsg) {
@@ -469,12 +485,11 @@ void LTOCodeGenerator::applyScopeRestrictions() {
 }
 
 /// Optimize merged modules using various IPO passes
-bool LTOCodeGenerator::generateObjectFile(raw_ostream &out,
-                                          bool DisableOpt,
-                                          bool DisableInline,
-                                          bool DisableGVNLoadPRE,
-                                          bool DisableVectorization,
-                                          std::string &errMsg) {
+bool LTOCodeGenerator::optimize(bool DisableOpt,
+                                bool DisableInline,
+                                bool DisableGVNLoadPRE,
+                                bool DisableVectorization,
+                                std::string &errMsg) {
   if (!this->determineTarget(errMsg))
     return false;
 
@@ -508,6 +523,21 @@ bool LTOCodeGenerator::generateObjectFile(raw_ostream &out,
 
   PMB.populateLTOPassManager(passes);
 
+  // Run our queue of passes all at once now, efficiently.
+  passes.run(*mergedModule);
+
+  return true;
+}
+
+bool LTOCodeGenerator::compileOptimized(raw_ostream &out, std::string &errMsg) {
+  if (!this->determineTarget(errMsg))
+    return false;
+
+  Module *mergedModule = IRLinker.getModule();
+
+  // Mark which symbols can not be internalized
+  this->applyScopeRestrictions();
+
   PassManager codeGenPasses;
 
   codeGenPasses.add(new DataLayoutPass());
@@ -523,9 +553,6 @@ bool LTOCodeGenerator::generateObjectFile(raw_ostream &out,
     errMsg = "target file type not supported";
     return false;
   }
-
-  // Run our queue of passes all at once now, efficiently.
-  passes.run(*mergedModule);
 
   // Run the code generator, and write assembly file
   codeGenPasses.run(*mergedModule);

@@ -40,7 +40,7 @@ typedef bool lto_bool_t;
  * @{
  */
 
-#define LTO_API_VERSION 11
+#define LTO_API_VERSION 12
 
 /**
  * \since prior to LTO_API_VERSION=3
@@ -464,6 +464,8 @@ lto_codegen_write_merged_modules(lto_code_gen_t cg, const char* path);
 
 /**
  * Generates code for all added modules into one native object file.
+ * This calls lto_codegen_optimize then lto_codegen_compile_optimized.
+ *
  * On success returns a pointer to a generated mach-o/ELF buffer and
  * length set to the buffer size.  The buffer is owned by the
  * lto_code_gen_t and will be freed when lto_codegen_dispose()
@@ -477,6 +479,9 @@ lto_codegen_compile(lto_code_gen_t cg, size_t* length);
 
 /**
  * Generates code for all added modules into one native object file.
+ * This calls lto_codegen_optimize then lto_codegen_compile_optimized (instead
+ * of returning a generated mach-o/ELF buffer, it writes to a file).
+ *
  * The name of the file is written to name. Returns true on error.
  *
  * \since LTO_API_VERSION=5
@@ -484,6 +489,38 @@ lto_codegen_compile(lto_code_gen_t cg, size_t* length);
 extern lto_bool_t
 lto_codegen_compile_to_file(lto_code_gen_t cg, const char** name);
 
+/**
+ * Runs optimization for the merged module. Returns true on error.
+ *
+ * \since LTO_API_VERSION=12
+ */
+extern lto_bool_t
+lto_codegen_optimize(lto_code_gen_t cg);
+
+/**
+ * Generates code for the optimized merged module into one native object file.
+ * It will not run any IR optimizations on the merged module.
+ *
+ * On success returns a pointer to a generated mach-o/ELF buffer and length set
+ * to the buffer size.  The buffer is owned by the lto_code_gen_t and will be
+ * freed when lto_codegen_dispose() is called, or
+ * lto_codegen_compile_optimized() is called again. On failure, returns NULL
+ * (check lto_get_error_message() for details).
+ *
+ * \since LTO_API_VERSION=12
+ */
+extern const void*
+lto_codegen_compile_optimized(lto_code_gen_t cg, size_t* length);
+
+/**
+ * Returns the runtime API version.
+ *
+ * \since LTO_API_VERSION=12
+ */
+extern unsigned int
+lto_api_version() {
+  return LTO_API_VERSION;
+}
 
 /**
  * Sets options to help debug codegen bugs.
