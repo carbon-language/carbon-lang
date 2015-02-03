@@ -978,6 +978,12 @@ GDBRemoteCommunicationServer::SendStopReplyPacketForThread (lldb::tid_t tid)
     case eStopReasonExec:
         reason_str = "exec";
         break;
+    case eStopReasonInstrumentation:
+    case eStopReasonInvalid:
+    case eStopReasonPlanComplete:
+    case eStopReasonThreadExiting:
+    case eStopReasonNone:
+        break;
     }
     if (reason_str != nullptr)
     {
@@ -3765,7 +3771,7 @@ GDBRemoteCommunicationServer::Handle_Z (StringExtractorGDBRemote &packet)
             want_hardware = true;  want_breakpoint = false; break;
         case eWatchpointReadWrite:
             want_hardware = true;  want_breakpoint = false; break;
-        default:
+        case eStoppointInvalid:
             return SendIllFormedResponse(packet, "Z packet had invalid software/hardware specifier");
 
     }
@@ -3803,13 +3809,10 @@ GDBRemoteCommunicationServer::Handle_Z (StringExtractorGDBRemote &packet)
     }
     else
     {
-        uint32_t watch_flags = 0x0;
-        switch (stoppoint_type)
-        {
-            case eWatchpointWrite:     watch_flags = 0x1; break;
-            case eWatchpointRead:      watch_flags = 0x3; break;
-            case eWatchpointReadWrite: watch_flags = 0x3; break;
-        }
+        uint32_t watch_flags =
+            stoppoint_type == eWatchpointWrite
+            ? watch_flags = 0x1  // Write
+            : watch_flags = 0x3; // ReadWrite
 
         // Try to set the watchpoint.
         const Error error = m_debugged_process_sp->SetWatchpoint (
