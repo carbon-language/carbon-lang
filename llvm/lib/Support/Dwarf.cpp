@@ -76,8 +76,6 @@ const char *llvm::dwarf::TagString(unsigned Tag) {
   case DW_TAG_imported_unit:             return "DW_TAG_imported_unit";
   case DW_TAG_condition:                 return "DW_TAG_condition";
   case DW_TAG_shared_type:               return "DW_TAG_shared_type";
-  case DW_TAG_lo_user:                   return "DW_TAG_lo_user";
-  case DW_TAG_hi_user:                   return "DW_TAG_hi_user";
   case DW_TAG_auto_variable:             return "DW_TAG_auto_variable";
   case DW_TAG_arg_variable:              return "DW_TAG_arg_variable";
   case DW_TAG_expression:                return "DW_TAG_expression";
