@@ -7906,7 +7906,7 @@ static SDValue lowerVectorShuffleAsZeroOrAnyExtend(
   int NumElements = VT.getVectorNumElements();
   assert(VT.getScalarSizeInBits() <= 32 &&
          "Exceeds 32-bit integer zero extension limit");
-  assert(Mask.size() == NumElements && "Unexpected shuffle mask size");
+  assert((int)Mask.size() == NumElements && "Unexpected shuffle mask size");
 
   // Define a helper function to check a particular ext-scale and lower to it if
   // valid.
