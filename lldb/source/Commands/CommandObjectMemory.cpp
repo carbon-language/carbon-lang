@@ -1447,7 +1447,7 @@ protected:
         if (m_memory_options.m_infile)
         {
             size_t length = SIZE_MAX;
-            if (item_byte_size > 0)
+            if (item_byte_size > 1)
                 length = item_byte_size;
             lldb::DataBufferSP data_sp (m_memory_options.m_infile.ReadFileContents (m_memory_options.m_infile_offset, length));
             if (data_sp)
