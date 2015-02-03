@@ -22764,14 +22764,29 @@ static SDValue PerformEXTRACT_VECTOR_ELTCombine(SDNode *N, SelectionDAG &DAG,
 
   SDValue InputVector = N->getOperand(0);
 
-  // Detect whether we are trying to convert from mmx to i32 and the bitcast
-  // from mmx to v2i32 has a single usage.
-  if (InputVector.getNode()->getOpcode() == llvm::ISD::BITCAST &&
-      InputVector.getNode()->getOperand(0).getValueType() == MVT::x86mmx &&
-      InputVector.hasOneUse() && N->getValueType(0) == MVT::i32)
-    return DAG.getNode(X86ISD::MMX_MOVD2W, SDLoc(InputVector),
-                       N->getValueType(0),
-                       InputVector.getNode()->getOperand(0));
+  // Detect mmx to i32 conversion through a v2i32 elt extract.
+  if (InputVector.getOpcode() == ISD::BITCAST && InputVector.hasOneUse() &&
+      N->getValueType(0) == MVT::i32 &&
+      InputVector.getValueType() == MVT::v2i32) {
+
+    // The bitcast source is a direct mmx result.
+    SDValue MMXSrc = InputVector.getNode()->getOperand(0);
+    if (MMXSrc.getValueType() == MVT::x86mmx)
+      return DAG.getNode(X86ISD::MMX_MOVD2W, SDLoc(InputVector),
+                         N->getValueType(0),
+                         InputVector.getNode()->getOperand(0));
+
+    // The mmx is indirect: (i64 extract_elt (v1i64 bitcast (x86mmx ...))).
+    SDValue MMXSrcOp = MMXSrc.getOperand(0);
+    if (MMXSrc.getOpcode() == ISD::EXTRACT_VECTOR_ELT && MMXSrc.hasOneUse() &&
+        MMXSrc.getValueType() == MVT::i64 && MMXSrcOp.hasOneUse() &&
+        MMXSrcOp.getOpcode() == ISD::BITCAST &&
+        MMXSrcOp.getValueType() == MVT::v1i64 &&
+        MMXSrcOp.getOperand(0).getValueType() == MVT::x86mmx)
+      return DAG.getNode(X86ISD::MMX_MOVD2W, SDLoc(InputVector),
+                         N->getValueType(0),
+                         MMXSrcOp.getOperand(0));
+  }
 
   // Only operate on vectors of 4 elements, where the alternative shuffling
   // gets to be more expensive.
