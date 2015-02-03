@@ -91,7 +91,7 @@ HostInfoWindows::GetProgramFileSpec()
         char buffer[PATH_MAX];
         ::GetModuleFileName(NULL, buffer, sizeof(buffer));
         m_program_filespec.SetFile(buffer, false);
-    }
+    });
     return m_program_filespec;
 }
 
