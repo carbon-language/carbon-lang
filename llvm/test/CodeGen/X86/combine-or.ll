@@ -207,11 +207,10 @@ define <4 x i32> @test17(<4 x i32> %a, <4 x i32> %b) {
 ; CHECK-LABEL: test17:
 ; CHECK:       # BB#0:
 ; CHECK-NEXT:    xorps %xmm2, %xmm2
-; CHECK-NEXT:    shufps {{.*#+}} xmm1 = xmm1[0,1],xmm2[0,0]
 ; CHECK-NEXT:    shufps {{.*#+}} xmm2 = xmm2[0,0],xmm0[0,2]
 ; CHECK-NEXT:    shufps {{.*#+}} xmm2 = xmm2[0,2,1,3]
-; CHECK-NEXT:    orps %xmm1, %xmm2
-; CHECK-NEXT:    movaps %xmm2, %xmm0
+; CHECK-NEXT:    movq {{.*#+}} xmm0 = xmm1[0],zero
+; CHECK-NEXT:    orps %xmm2, %xmm0
 ; CHECK-NEXT:    retq
   %shuf1 = shufflevector <4 x i32> %a, <4 x i32> zeroinitializer, <4 x i32><i32 4, i32 0, i32 4, i32 2>
   %shuf2 = shufflevector <4 x i32> %b, <4 x i32> zeroinitializer, <4 x i32><i32 0, i32 1, i32 4, i32 4>

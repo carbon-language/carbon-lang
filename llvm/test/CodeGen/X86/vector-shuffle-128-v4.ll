@@ -1076,6 +1076,20 @@ define <4 x i32> @shuffle_v4i32_0z1z(<4 x i32> %a) {
   ret <4 x i32> %shuffle
 }
 
+define <4 x i32> @shuffle_v4i32_01zu(<4 x i32> %a) {
+; SSE-LABEL: shuffle_v4i32_01zu:
+; SSE:       # BB#0:
+; SSE-NEXT:    movq {{.*#+}} xmm0 = xmm0[0],zero
+; SSE-NEXT:    retq
+;
+; AVX-LABEL: shuffle_v4i32_01zu:
+; AVX:       # BB#0:
+; AVX-NEXT:    vmovq {{.*#+}} xmm0 = xmm0[0],zero
+; AVX-NEXT:    retq
+  %shuffle = shufflevector <4 x i32> %a, <4 x i32> zeroinitializer, <4 x i32> <i32 0, i32 1, i32 7, i32 undef>
+  ret <4 x i32> %shuffle
+}
+
 define <4 x i32> @insert_reg_and_zero_v4i32(i32 %a) {
 ; SSE-LABEL: insert_reg_and_zero_v4i32:
 ; SSE:       # BB#0:

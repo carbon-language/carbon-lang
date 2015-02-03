@@ -1917,3 +1917,17 @@ define <8 x i16> @shuffle_v8i16_0z1z2z3z(<8 x i16> %a) {
   %shuffle = shufflevector <8 x i16> %a, <8 x i16> zeroinitializer, <8 x i32> <i32 0, i32 9, i32 1, i32 11, i32 2, i32 13, i32 3, i32 15>
   ret <8 x i16> %shuffle
 }
+
+define <8 x i16> @shuffle_v8i16_01u3zzuz(<8 x i16> %a) {
+; SSE-LABEL: shuffle_v8i16_01u3zzuz:
+; SSE:       # BB#0:
+; SSE-NEXT:    movq {{.*#+}} xmm0 = xmm0[0],zero
+; SSE-NEXT:    retq
+;
+; AVX-LABEL: shuffle_v8i16_01u3zzuz:
+; AVX:       # BB#0:
+; AVX-NEXT:    vmovq {{.*#+}} xmm0 = xmm0[0],zero
+; AVX-NEXT:    retq
+  %shuffle = shufflevector <8 x i16> %a, <8 x i16> zeroinitializer, <8 x i32> <i32 0, i32 1, i32 undef, i32 3, i32 8, i32 8, i32 undef, i32 8>
+  ret <8 x i16> %shuffle
+}
