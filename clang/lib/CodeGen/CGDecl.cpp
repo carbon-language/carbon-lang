@@ -1090,7 +1090,7 @@ void CodeGenFunction::EmitAutoVarInit(const AutoVarEmission &emission) {
   if (emission.wasEmittedAsGlobal()) return;
 
   const VarDecl &D = *emission.Variable;
-  ApplyDebugLocation DL(*this, D.getLocation());
+  ApplyDebugLocation DL(*this, ApplyDebugLocation::Artificial, D.getLocation());
   QualType type = D.getType();
 
   // If this local has an initializer, emit it now.

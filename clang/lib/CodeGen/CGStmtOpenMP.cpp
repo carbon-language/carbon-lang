@@ -86,13 +86,13 @@ static void EmitOMPIfClause(CodeGenFunction &CGF, const Expr *Cond,
   // Emit the 'else' code if present.
   {
     // There is no need to emit line number for unconditional branch.
-    ApplyDebugLocation DL(CGF);
+    ApplyDebugLocation NL(CGF, ApplyDebugLocation::NoLocation);
     CGF.EmitBlock(ElseBlock);
   }
   CodeGen(/*ThenBlock*/ false);
   {
     // There is no need to emit line number for unconditional branch.
-    ApplyDebugLocation DL(CGF);
+    ApplyDebugLocation NL(CGF, ApplyDebugLocation::NoLocation);
     CGF.EmitBranch(ContBlock);
   }
   // Emit the continuation block for code after the if.

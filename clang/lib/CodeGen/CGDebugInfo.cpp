@@ -52,28 +52,34 @@ CGDebugInfo::~CGDebugInfo() {
          "Region stack mismatch, stack not empty!");
 }
 
-ArtificialLocation::ArtificialLocation(CodeGenFunction &CGF)
-    : ApplyDebugLocation(CGF) {
-  if (auto *DI = CGF.getDebugInfo()) {
-    // Construct a location that has a valid scope, but no line info.
-    assert(!DI->LexicalBlockStack.empty());
-    llvm::DIDescriptor Scope(DI->LexicalBlockStack.back());
-    CGF.Builder.SetCurrentDebugLocation(llvm::DebugLoc::get(0, 0, Scope));
-  }
-}
-
 ApplyDebugLocation::ApplyDebugLocation(CodeGenFunction &CGF,
                                        SourceLocation TemporaryLocation)
     : CGF(CGF) {
+  assert(!TemporaryLocation.isInvalid() && "invalid location");
   init(TemporaryLocation);
 }
 
-void ApplyDebugLocation::init(SourceLocation TemporaryLocation) {
+ApplyDebugLocation::ApplyDebugLocation(CodeGenFunction &CGF,
+                                       bool MarkAsPrologue,
+                                       SourceLocation TemporaryLocation)
+    : CGF(CGF) {
+  init(TemporaryLocation, MarkAsPrologue);
+}
+
+void ApplyDebugLocation::init(SourceLocation TemporaryLocation,
+                              bool MarkAsPrologue) {
   if (auto *DI = CGF.getDebugInfo()) {
     OriginalLocation = CGF.Builder.getCurrentDebugLocation();
-    if (TemporaryLocation.isInvalid())
-      CGF.Builder.SetCurrentDebugLocation(llvm::DebugLoc());
-    else
+    if (TemporaryLocation.isInvalid()) {
+      if (MarkAsPrologue)
+        CGF.Builder.SetCurrentDebugLocation(llvm::DebugLoc());
+      else {
+        // Construct a location that has a valid scope, but no line info.
+        assert(!DI->LexicalBlockStack.empty());
+        llvm::DIDescriptor Scope(DI->LexicalBlockStack.back());
+        CGF.Builder.SetCurrentDebugLocation(llvm::DebugLoc::get(0, 0, Scope));
+      }
+    } else
       DI->EmitLocation(CGF.Builder, TemporaryLocation);
   }
 }

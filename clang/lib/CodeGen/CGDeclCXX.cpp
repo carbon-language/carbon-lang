@@ -469,11 +469,11 @@ CodeGenFunction::GenerateCXXGlobalInitFunc(llvm::Function *Fn,
                                            ArrayRef<llvm::Function *> Decls,
                                            llvm::GlobalVariable *Guard) {
   {
-    ApplyDebugLocation NL(*this);
+    ApplyDebugLocation NL(*this, ApplyDebugLocation::MarkAsPrologue);
     StartFunction(GlobalDecl(), getContext().VoidTy, Fn,
                   getTypes().arrangeNullaryFunction(), FunctionArgList());
     // Emit an artificial location for this function.
-    ArtificialLocation AL(*this);
+    ApplyDebugLocation AL(*this, ApplyDebugLocation::Artificial);
 
     llvm::BasicBlock *ExitBlock = nullptr;
     if (Guard) {
@@ -520,11 +520,11 @@ void CodeGenFunction::GenerateCXXGlobalDtorsFunc(llvm::Function *Fn,
                   const std::vector<std::pair<llvm::WeakVH, llvm::Constant*> >
                                                 &DtorsAndObjects) {
   {
-    ApplyDebugLocation NL(*this);
+    ApplyDebugLocation NL(*this, ApplyDebugLocation::MarkAsPrologue);
     StartFunction(GlobalDecl(), getContext().VoidTy, Fn,
                   getTypes().arrangeNullaryFunction(), FunctionArgList());
     // Emit an artificial location for this function.
-    ArtificialLocation AL(*this);
+    ApplyDebugLocation AL(*this, ApplyDebugLocation::Artificial);
 
     // Emit the dtors, in reverse order from construction.
     for (unsigned i = 0, e = DtorsAndObjects.size(); i != e; ++i) {

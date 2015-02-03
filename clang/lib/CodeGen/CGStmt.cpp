@@ -564,8 +564,8 @@ void CodeGenFunction::EmitIfStmt(const IfStmt &S) {
   // Emit the 'else' code if present.
   if (const Stmt *Else = S.getElse()) {
     {
-      // There is no need to emit line number for unconditional branch.
-      ApplyDebugLocation DL(*this);
+      // There is no need to emit line number for an unconditional branch.
+      ApplyDebugLocation NL(*this, ApplyDebugLocation::NoLocation);
       EmitBlock(ElseBlock);
     }
     {
@@ -573,8 +573,8 @@ void CodeGenFunction::EmitIfStmt(const IfStmt &S) {
       EmitStmt(Else);
     }
     {
-      // There is no need to emit line number for unconditional branch.
-      ApplyDebugLocation DL(*this);
+      // There is no need to emit line number for an unconditional branch.
+      ApplyDebugLocation NL(*this, ApplyDebugLocation::NoLocation);
       EmitBranch(ContBlock);
     }
   }

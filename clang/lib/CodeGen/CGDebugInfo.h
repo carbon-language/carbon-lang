@@ -47,7 +47,7 @@ namespace CodeGen {
 /// and is responsible for emitting to llvm globals or pass directly to
 /// the backend.
 class CGDebugInfo {
-  friend class ArtificialLocation;
+  friend class ApplyDebugLocation;
   friend class SaveAndRestoreLocation;
   CodeGenModule &CGM;
   const CodeGenOptions::DebugInfoKind DebugKind;
@@ -447,36 +447,34 @@ private:
 /// location or preferred location of the specified Expr.
 class ApplyDebugLocation {
 private:
-  void init(SourceLocation TemporaryLocation);
+  void init(SourceLocation TemporaryLocation, bool MarkAsPrologue = false);
 
 protected:
   llvm::DebugLoc OriginalLocation;
   CodeGenFunction &CGF;
 
 public:
-  /// If TemporaryLocation is invalid, the IRBuilder will be set to not attach
-  /// debug locations, thus marking the instructions as prologue.
-  ApplyDebugLocation(CodeGenFunction &CGF,
+  enum { Artificial = false, MarkAsPrologue = true, NoLocation = true };
+
+  /// \brief Set the location to the (valid) TemporaryLocation.
+  ApplyDebugLocation(CodeGenFunction &CGF, SourceLocation TemporaryLocation);
+  /// \brief Apply TemporaryLocation if it is valid, or apply a default
+  /// location: If MarkAsPrologue is true, the IRBuilder will be set to not
+  /// attach debug locations, thus marking the instructions as
+  /// prologue. Otherwise this switches to an artificial debug location that has
+  /// a valid scope, but no line information.
+  ///
+  /// Artificial locations are useful when emitting compiler-generated helper
+  /// functions that have no source location associated with them. The DWARF
+  /// specification allows the compiler to use the special line number 0 to
+  /// indicate code that can not be attributed to any source location. Note that
+  /// passing an empty SourceLocation to CGDebugInfo::setLocation() will result
+  /// in the last valid location being reused.
+  ApplyDebugLocation(CodeGenFunction &CGF, bool MarkAsPrologue,
                      SourceLocation TemporaryLocation = SourceLocation());
   ApplyDebugLocation(CodeGenFunction &CGF, const Expr *E);
   ApplyDebugLocation(CodeGenFunction &CGF, llvm::DebugLoc Loc);
   ~ApplyDebugLocation();
-};
-
-/// \brief An RAII object that temporarily switches to
-/// an artificial debug location that has a valid scope, but no line
-/// information. This is useful when emitting compiler-generated
-/// helper functions that have no source location associated with
-/// them. The DWARF specification allows the compiler to use the
-/// special line number 0 to indicate code that can not be attributed
-/// to any source location.
-///
-/// This is necessary because passing an empty SourceLocation to
-/// CGDebugInfo::setLocation() will result in the last valid location
-/// being reused.
-class ArtificialLocation : public ApplyDebugLocation {
-public:
-  ArtificialLocation(CodeGenFunction &CGF);
 };
 
 
