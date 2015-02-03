@@ -9,6 +9,8 @@
 
 #include "lldb/Host/windows/windows.h"
 
+#include <mutex> // std::once
+
 #include "lldb/Host/windows/HostInfoWindows.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Support/raw_ostream.h"
@@ -84,14 +86,11 @@ HostInfoWindows::GetHostname(std::string &s)
 FileSpec
 HostInfoWindows::GetProgramFileSpec()
 {
-    static bool is_initialized = false;
-    if (!is_initialized)
-    {
-        is_initialized = true;
-
-        std::vector<char> buffer(PATH_MAX);
-        ::GetModuleFileName(NULL, &buffer[0], buffer.size());
-        m_program_filespec.SetFile(&buffer[0], false);
+    static std::once_flag g_once_flag;
+    std::call_once(g_once_flag,  []() {
+        char buffer[PATH_MAX];
+        ::GetModuleFileName(NULL, buffer, sizeof(buffer));
+        m_program_filespec.SetFile(buffer, false);
     }
     return m_program_filespec;
 }

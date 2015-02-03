@@ -23,60 +23,56 @@
 #include "llvm/Support/raw_ostream.h"
 
 #include <thread>
+#include <mutex> // std::once
 
 using namespace lldb;
 using namespace lldb_private;
 
 namespace
 {
-void
-CleanupProcessSpecificLLDBTempDir()
-{
-    // Get the process specific LLDB temporary directory and delete it.
-    FileSpec tmpdir_file_spec;
-    if (!HostInfo::GetLLDBPath(ePathTypeLLDBTempSystemDir, tmpdir_file_spec))
-        return;
+    void
+    CleanupProcessSpecificLLDBTempDir()
+    {
+        // Get the process specific LLDB temporary directory and delete it.
+        FileSpec tmpdir_file_spec;
+        if (!HostInfo::GetLLDBPath(ePathTypeLLDBTempSystemDir, tmpdir_file_spec))
+            return;
 
-    // Remove the LLDB temporary directory if we have one. Set "recurse" to
-    // true to all files that were created for the LLDB process can be cleaned up.
-    FileSystem::DeleteDirectory(tmpdir_file_spec.GetDirectory().GetCString(), true);
-}
-
-struct HostInfoBaseFields
-{
-    uint32_t m_number_cpus;
-    std::string m_vendor_string;
-    std::string m_os_string;
-    std::string m_host_triple;
-
-    ArchSpec m_host_arch_32;
-    ArchSpec m_host_arch_64;
-
-    FileSpec m_lldb_so_dir;
-    FileSpec m_lldb_support_exe_dir;
-    FileSpec m_lldb_headers_dir;
-    FileSpec m_lldb_python_dir;
-    FileSpec m_lldb_clang_resource_dir;
-    FileSpec m_lldb_system_plugin_dir;
-    FileSpec m_lldb_user_plugin_dir;
-    FileSpec m_lldb_tmp_dir;
-};
-
-HostInfoBaseFields *g_fields = nullptr;
-}
-
-#define COMPUTE_LLDB_PATH(compute_function, member_var)                                                                                    \
-    {                                                                                                                                      \
-        static bool is_initialized = false;                                                                                                \
-        static bool success = false;                                                                                                       \
-        if (!is_initialized)                                                                                                               \
-        {                                                                                                                                  \
-            is_initialized = true;                                                                                                         \
-            success = HostInfo::compute_function(member_var);                                                                              \
-        }                                                                                                                                  \
-        if (success)                                                                                                                       \
-            result = &member_var;                                                                                                          \
+        // Remove the LLDB temporary directory if we have one. Set "recurse" to
+        // true to all files that were created for the LLDB process can be cleaned up.
+        FileSystem::DeleteDirectory(tmpdir_file_spec.GetDirectory().GetCString(), true);
     }
+
+    //----------------------------------------------------------------------
+    // The HostInfoBaseFields is a work around for windows not supporting
+    // static variables correctly in a thread safe way. Really each of the
+    // variables in HostInfoBaseFields should live in the functions in which
+    // they are used and each one should be static, but the work around is
+    // in place to avoid this restriction. Ick.
+    //----------------------------------------------------------------------
+
+    struct HostInfoBaseFields
+    {
+        uint32_t m_number_cpus;
+        std::string m_vendor_string;
+        std::string m_os_string;
+        std::string m_host_triple;
+
+        ArchSpec m_host_arch_32;
+        ArchSpec m_host_arch_64;
+
+        FileSpec m_lldb_so_dir;
+        FileSpec m_lldb_support_exe_dir;
+        FileSpec m_lldb_headers_dir;
+        FileSpec m_lldb_python_dir;
+        FileSpec m_lldb_clang_resource_dir;
+        FileSpec m_lldb_system_plugin_dir;
+        FileSpec m_lldb_user_plugin_dir;
+        FileSpec m_lldb_tmp_dir;
+    };
+    
+    HostInfoBaseFields *g_fields = nullptr;
+}
 
 void
 HostInfoBase::Initialize()
@@ -87,13 +83,10 @@ HostInfoBase::Initialize()
 uint32_t
 HostInfoBase::GetNumberCPUS()
 {
-    static bool is_initialized = false;
-    if (!is_initialized)
-    {
+    static std::once_flag g_once_flag;
+    std::call_once(g_once_flag,  []() {
         g_fields->m_number_cpus = std::thread::hardware_concurrency();
-        is_initialized = true;
-    }
-
+    });
     return g_fields->m_number_cpus;
 }
 
@@ -106,53 +99,40 @@ HostInfoBase::GetMaxThreadNameLength()
 llvm::StringRef
 HostInfoBase::GetVendorString()
 {
-    static bool is_initialized = false;
-    if (!is_initialized)
-    {
-        const ArchSpec &host_arch = HostInfo::GetArchitecture();
-        const llvm::StringRef &str_ref = host_arch.GetTriple().getVendorName();
-        g_fields->m_vendor_string.assign(str_ref.begin(), str_ref.end());
-        is_initialized = true;
-    }
+    static std::once_flag g_once_flag;
+    std::call_once(g_once_flag,  []() {
+        g_fields->m_vendor_string = std::move(HostInfo::GetArchitecture().GetTriple().getVendorName().str());
+    });
     return g_fields->m_vendor_string;
 }
 
 llvm::StringRef
 HostInfoBase::GetOSString()
 {
-    static bool is_initialized = false;
-    if (!is_initialized)
-    {
-        const ArchSpec &host_arch = HostInfo::GetArchitecture();
-        const llvm::StringRef &str_ref = host_arch.GetTriple().getOSName();
-        g_fields->m_os_string.assign(str_ref.begin(), str_ref.end());
-        is_initialized = true;
-    }
+    static std::once_flag g_once_flag;
+    std::call_once(g_once_flag,  []() {
+        g_fields->m_os_string = std::move(HostInfo::GetArchitecture().GetTriple().getOSName());
+    });
     return g_fields->m_os_string;
 }
 
 llvm::StringRef
 HostInfoBase::GetTargetTriple()
 {
-    static bool is_initialized = false;
-    if (!is_initialized)
-    {
-        const ArchSpec &host_arch = HostInfo::GetArchitecture();
-        g_fields->m_host_triple = host_arch.GetTriple().getTriple();
-        is_initialized = true;
-    }
+    static std::once_flag g_once_flag;
+    std::call_once(g_once_flag,  []() {
+        g_fields->m_host_triple = HostInfo::GetArchitecture().GetTriple().getTriple();
+    });
     return g_fields->m_host_triple;
 }
 
 const ArchSpec &
 HostInfoBase::GetArchitecture(ArchitectureKind arch_kind)
 {
-    static bool is_initialized = false;
-    if (!is_initialized)
-    {
+    static std::once_flag g_once_flag;
+    std::call_once(g_once_flag,  []() {
         HostInfo::ComputeHostArchitectureSupport(g_fields->m_host_arch_32, g_fields->m_host_arch_64);
-        is_initialized = true;
-    }
+    });
 
     // If an explicit 32 or 64-bit architecture was requested, return that.
     if (arch_kind == eArchKind32)
@@ -174,52 +154,123 @@ HostInfoBase::GetLLDBPath(lldb::PathType type, FileSpec &file_spec)
         return false;
 #endif
 
-    Log *log = lldb_private::GetLogIfAllCategoriesSet(LIBLLDB_LOG_HOST);
     FileSpec *result = nullptr;
     switch (type)
     {
         case lldb::ePathTypeLLDBShlibDir:
-            COMPUTE_LLDB_PATH(ComputeSharedLibraryDirectory, g_fields->m_lldb_so_dir)
-            if (log)
-                log->Printf("HostInfoBase::GetLLDBPath(ePathTypeLLDBShlibDir) => '%s'", g_fields->m_lldb_so_dir.GetPath().c_str());
+            {
+                static std::once_flag g_once_flag;
+                static bool success = false;
+                std::call_once(g_once_flag,  []() {
+                    success = HostInfo::ComputeSharedLibraryDirectory (g_fields->m_lldb_so_dir);
+                    Log *log = lldb_private::GetLogIfAllCategoriesSet(LIBLLDB_LOG_HOST);
+                    if (log)
+                        log->Printf("HostInfoBase::GetLLDBPath(ePathTypeLLDBShlibDir) => '%s'", g_fields->m_lldb_so_dir.GetPath().c_str());
+                });
+                if (success)
+                    result = &g_fields->m_lldb_so_dir;
+            }
             break;
         case lldb::ePathTypeSupportExecutableDir:
-            COMPUTE_LLDB_PATH(ComputeSupportExeDirectory, g_fields->m_lldb_support_exe_dir)
-            if (log)
-                log->Printf("HostInfoBase::GetLLDBPath(ePathTypeSupportExecutableDir) => '%s'",
-                            g_fields->m_lldb_support_exe_dir.GetPath().c_str());
+            {
+                static std::once_flag g_once_flag;
+                static bool success = false;
+                std::call_once(g_once_flag,  []() {
+                    success = HostInfo::ComputeSupportExeDirectory (g_fields->m_lldb_support_exe_dir);
+                    Log *log = lldb_private::GetLogIfAllCategoriesSet(LIBLLDB_LOG_HOST);
+                    if (log)
+                        log->Printf("HostInfoBase::GetLLDBPath(ePathTypeSupportExecutableDir) => '%s'",
+                                    g_fields->m_lldb_support_exe_dir.GetPath().c_str());
+                });
+                if (success)
+                    result = &g_fields->m_lldb_support_exe_dir;
+            }
             break;
         case lldb::ePathTypeHeaderDir:
-            COMPUTE_LLDB_PATH(ComputeHeaderDirectory, g_fields->m_lldb_headers_dir)
-            if (log)
-                log->Printf("HostInfoBase::GetLLDBPath(ePathTypeHeaderDir) => '%s'", g_fields->m_lldb_headers_dir.GetPath().c_str());
+            {
+                static std::once_flag g_once_flag;
+                static bool success = false;
+                std::call_once(g_once_flag,  []() {
+                    success = HostInfo::ComputeHeaderDirectory (g_fields->m_lldb_headers_dir);
+                    Log *log = lldb_private::GetLogIfAllCategoriesSet(LIBLLDB_LOG_HOST);
+                    if (log)
+                        log->Printf("HostInfoBase::GetLLDBPath(ePathTypeHeaderDir) => '%s'", g_fields->m_lldb_headers_dir.GetPath().c_str());
+                });
+                if (success)
+                    result = &g_fields->m_lldb_headers_dir;
+            }
             break;
         case lldb::ePathTypePythonDir:
-            COMPUTE_LLDB_PATH(ComputePythonDirectory, g_fields->m_lldb_python_dir)
-            if (log)
-                log->Printf("HostInfoBase::GetLLDBPath(ePathTypePythonDir) => '%s'", g_fields->m_lldb_python_dir.GetPath().c_str());
+            {
+                static std::once_flag g_once_flag;
+                static bool success = false;
+                std::call_once(g_once_flag,  []() {
+                    success = HostInfo::ComputePythonDirectory (g_fields->m_lldb_python_dir);
+                    Log *log = lldb_private::GetLogIfAllCategoriesSet(LIBLLDB_LOG_HOST);
+                    if (log)
+                        log->Printf("HostInfoBase::GetLLDBPath(ePathTypePythonDir) => '%s'", g_fields->m_lldb_python_dir.GetPath().c_str());
+                });
+                if (success)
+                    result = &g_fields->m_lldb_python_dir;
+            }
             break;
         case lldb::ePathTypeClangDir:
-            COMPUTE_LLDB_PATH(ComputeClangDirectory, g_fields->m_lldb_clang_resource_dir)
-            if (log)
-                log->Printf("HostInfoBase::GetLLDBPath(ePathTypeClangResourceDir) => '%s'", g_fields->m_lldb_clang_resource_dir.GetPath().c_str());
+            {
+                static std::once_flag g_once_flag;
+                static bool success = false;
+                std::call_once(g_once_flag,  []() {
+                    success = HostInfo::ComputeClangDirectory (g_fields->m_lldb_clang_resource_dir);
+                    Log *log = lldb_private::GetLogIfAllCategoriesSet(LIBLLDB_LOG_HOST);
+                    if (log)
+                        log->Printf("HostInfoBase::GetLLDBPath(ePathTypeClangResourceDir) => '%s'", g_fields->m_lldb_clang_resource_dir.GetPath().c_str());
+                });
+                if (success)
+                    result = &g_fields->m_lldb_clang_resource_dir;
+            }
             break;
         case lldb::ePathTypeLLDBSystemPlugins:
-            COMPUTE_LLDB_PATH(ComputeSystemPluginsDirectory, g_fields->m_lldb_system_plugin_dir)
-            if (log)
-                log->Printf("HostInfoBase::GetLLDBPath(ePathTypeLLDBSystemPlugins) => '%s'",
-                            g_fields->m_lldb_system_plugin_dir.GetPath().c_str());
+            {
+                static std::once_flag g_once_flag;
+                static bool success = false;
+                std::call_once(g_once_flag,  []() {
+                    success = HostInfo::ComputeSystemPluginsDirectory (g_fields->m_lldb_system_plugin_dir);
+                    Log *log = lldb_private::GetLogIfAllCategoriesSet(LIBLLDB_LOG_HOST);
+                    if (log)
+                        log->Printf("HostInfoBase::GetLLDBPath(ePathTypeLLDBSystemPlugins) => '%s'",
+                                    g_fields->m_lldb_system_plugin_dir.GetPath().c_str());
+                });
+                if (success)
+                    result = &g_fields->m_lldb_system_plugin_dir;
+            }
             break;
         case lldb::ePathTypeLLDBUserPlugins:
-            COMPUTE_LLDB_PATH(ComputeUserPluginsDirectory, g_fields->m_lldb_user_plugin_dir)
-            if (log)
-                log->Printf("HostInfoBase::GetLLDBPath(ePathTypeLLDBUserPlugins) => '%s'",
-                            g_fields->m_lldb_user_plugin_dir.GetPath().c_str());
+            {
+                static std::once_flag g_once_flag;
+                static bool success = false;
+                std::call_once(g_once_flag,  []() {
+                    success = HostInfo::ComputeUserPluginsDirectory (g_fields->m_lldb_user_plugin_dir);
+                    Log *log = lldb_private::GetLogIfAllCategoriesSet(LIBLLDB_LOG_HOST);
+                    if (log)
+                        log->Printf("HostInfoBase::GetLLDBPath(ePathTypeLLDBUserPlugins) => '%s'",
+                                    g_fields->m_lldb_user_plugin_dir.GetPath().c_str());
+                });
+                if (success)
+                    result = &g_fields->m_lldb_user_plugin_dir;
+            }
             break;
         case lldb::ePathTypeLLDBTempSystemDir:
-            COMPUTE_LLDB_PATH(ComputeTempFileDirectory, g_fields->m_lldb_tmp_dir)
-            if (log)
-                log->Printf("HostInfoBase::GetLLDBPath(ePathTypeLLDBTempSystemDir) => '%s'", g_fields->m_lldb_tmp_dir.GetPath().c_str());
+            {
+                static std::once_flag g_once_flag;
+                static bool success = false;
+                std::call_once(g_once_flag,  []() {
+                    success = HostInfo::ComputeTempFileDirectory (g_fields->m_lldb_tmp_dir);
+                    Log *log = lldb_private::GetLogIfAllCategoriesSet(LIBLLDB_LOG_HOST);
+                    if (log)
+                        log->Printf("HostInfoBase::GetLLDBPath(ePathTypeLLDBTempSystemDir) => '%s'", g_fields->m_lldb_tmp_dir.GetPath().c_str());
+                });
+                if (success)
+                    result = &g_fields->m_lldb_tmp_dir;
+            }
             break;
     }
 

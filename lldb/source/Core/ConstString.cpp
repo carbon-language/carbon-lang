@@ -11,7 +11,7 @@
 #include "lldb/Host/Mutex.h"
 #include "llvm/ADT/StringMap.h"
 
-#include <mutex>
+#include <mutex> // std::once
 
 using namespace lldb_private;
 

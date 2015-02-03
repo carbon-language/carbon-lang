@@ -7,8 +7,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "lldb/Core/StreamString.h"
+#include <mutex> // std::once
+
 #include "lldb/Expression/ClangModulesDeclVendor.h"
+
+#include "lldb/Core/StreamString.h"
 #include "lldb/Host/FileSpec.h"
 #include "lldb/Host/Host.h"
 #include "lldb/Host/HostInfo.h"
@@ -22,7 +25,6 @@
 #include "clang/Sema/Lookup.h"
 #include "clang/Serialization/ASTReader.h"
 
-#include <mutex>
 
 using namespace lldb_private;
 
