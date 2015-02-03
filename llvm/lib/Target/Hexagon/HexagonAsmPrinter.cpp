@@ -63,9 +63,7 @@ static cl::opt<bool> AlignCalls(
 
 HexagonAsmPrinter::HexagonAsmPrinter(TargetMachine &TM,
                                      std::unique_ptr<MCStreamer> Streamer)
-    : AsmPrinter(TM, std::move(Streamer)) {
-  Subtarget = &TM.getSubtarget<HexagonSubtarget>();
-}
+    : AsmPrinter(TM, std::move(Streamer)), Subtarget(nullptr) {}
 
 void HexagonAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
                                     raw_ostream &O) {
