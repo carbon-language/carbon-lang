@@ -139,11 +139,11 @@ def MOVSX64rm16: RI<0xBF, MRMSrcMem, (outs GR64:$dst), (ins i16mem:$src),
 def MOVSX64rr32: RI<0x63, MRMSrcReg, (outs GR64:$dst), (ins GR32:$src),
                     "movs{lq|xd}\t{$src, $dst|$dst, $src}",
                     [(set GR64:$dst, (sext GR32:$src))], IIC_MOVSX>,
-                    Sched<[WriteALU]>;
+                    Sched<[WriteALU]>, Requires<[In64BitMode]>;
 def MOVSX64rm32: RI<0x63, MRMSrcMem, (outs GR64:$dst), (ins i32mem:$src),
                     "movs{lq|xd}\t{$src, $dst|$dst, $src}",
                     [(set GR64:$dst, (sextloadi64i32 addr:$src))], IIC_MOVSX>,
-                    Sched<[WriteALULd]>;
+                    Sched<[WriteALULd]>, Requires<[In64BitMode]>;
 
 // movzbq and movzwq encodings for the disassembler
 def MOVZX64rr8_Q : RI<0xB6, MRMSrcReg, (outs GR64:$dst), (ins GR8:$src),
