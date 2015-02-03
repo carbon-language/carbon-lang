@@ -412,6 +412,8 @@ createSeparateConstOffsetFromGEPPass(const TargetMachine *TM = nullptr,
 //
 BasicBlockPass *createLoadCombinePass();
 
+FunctionPass *createStraightLineStrengthReducePass();
+
 } // End llvm namespace
 
 #endif

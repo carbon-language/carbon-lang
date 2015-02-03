@@ -167,6 +167,7 @@ namespace {
       (void) llvm::createScalarizerPass();
       (void) llvm::createSeparateConstOffsetFromGEPPass();
       (void) llvm::createRewriteSymbolsPass();
+      (void) llvm::createStraightLineStrengthReducePass();
 
       (void)new llvm::IntervalPartition();
       (void)new llvm::ScalarEvolution();

@@ -158,6 +158,7 @@ void NVPTXPassConfig::addIRPasses() {
   addPass(createNVPTXAssignValidGlobalNamesPass());
   addPass(createGenericToNVVMPass());
   addPass(createNVPTXFavorNonGenericAddrSpacesPass());
+  addPass(createStraightLineStrengthReducePass());
   addPass(createSeparateConstOffsetFromGEPPass());
   // The SeparateConstOffsetFromGEP pass creates variadic bases that can be used
   // by multiple GEPs. Run GVN or EarlyCSE to really reuse them. GVN generates

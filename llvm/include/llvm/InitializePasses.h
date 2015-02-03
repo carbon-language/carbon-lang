@@ -254,6 +254,7 @@ void initializeSpillPlacementPass(PassRegistry&);
 void initializeStackProtectorPass(PassRegistry&);
 void initializeStackColoringPass(PassRegistry&);
 void initializeStackSlotColoringPass(PassRegistry&);
+void initializeStraightLineStrengthReducePass(PassRegistry &);
 void initializeStripDeadDebugInfoPass(PassRegistry&);
 void initializeStripDeadPrototypesPassPass(PassRegistry&);
 void initializeStripDebugDeclarePass(PassRegistry&);
