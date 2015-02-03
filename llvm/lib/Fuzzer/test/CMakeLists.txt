@@ -56,5 +56,5 @@ set_target_properties(${TestBinaries}
 
 add_lit_testsuite(check-fuzzer "Running Fuzzer tests"
     ${CMAKE_CURRENT_BINARY_DIR}
-    DEPENDS ${TestBinaries}
+    DEPENDS ${TestBinaries} FileCheck not
     )
