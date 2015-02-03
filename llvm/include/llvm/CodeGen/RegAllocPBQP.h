@@ -23,6 +23,9 @@
 #include "llvm/Support/ErrorHandling.h"
 
 namespace llvm {
+
+class raw_ostream;
+
 namespace PBQP {
 namespace RegAlloc {
 
@@ -501,6 +504,17 @@ private:
   typedef PBQP::Graph<RegAllocSolverImpl> BaseT;
 public:
   PBQPRAGraph(GraphMetadata Metadata) : BaseT(Metadata) {}
+
+  /// @brief Dump this graph to dbgs().
+  void dump() const;
+
+  /// @brief Dump this graph to an output stream.
+  /// @param OS Output stream to print on.
+  void dump(raw_ostream &OS) const;
+
+  /// @brief Print a representation of this graph in DOT format.
+  /// @param OS Output stream to print on.
+  void printDot(raw_ostream &OS) const;
 };
 
 inline Solution solve(PBQPRAGraph& G) {

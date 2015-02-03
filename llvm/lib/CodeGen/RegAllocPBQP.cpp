@@ -727,7 +727,7 @@ bool RegAllocPBQP::runOnMachineFunction(MachineFunction &MF) {
         raw_fd_ostream OS(GraphFileName, EC, sys::fs::F_Text);
         DEBUG(dbgs() << "Dumping graph for round " << Round << " to \""
               << GraphFileName << "\"\n");
-        G.dumpToStream(OS);
+        G.dump(OS);
       }
 #endif
 
@@ -745,6 +745,79 @@ bool RegAllocPBQP::runOnMachineFunction(MachineFunction &MF) {
   DEBUG(dbgs() << "Post alloc VirtRegMap:\n" << VRM << "\n");
 
   return true;
+}
+
+namespace {
+// A Helper class for print node and register info in a consistent way
+class PrintNodeInfo {
+public:
+  typedef PBQP::RegAlloc::PBQPRAGraph Graph;
+  typedef PBQP::RegAlloc::PBQPRAGraph::NodeId NodeId;
+
+  PrintNodeInfo(NodeId NId, const Graph &G) : G(G), NId(NId) {}
+
+  void print(raw_ostream &OS) const {
+    const MachineRegisterInfo &MRI = G.getMetadata().MF.getRegInfo();
+    const TargetRegisterInfo *TRI = MRI.getTargetRegisterInfo();
+    unsigned VReg = G.getNodeMetadata(NId).getVReg();
+    const char *RegClassName = TRI->getRegClassName(MRI.getRegClass(VReg));
+    OS << NId << " (" << RegClassName << ':' << PrintReg(VReg, TRI) << ')';
+  }
+
+private:
+  const Graph &G;
+  NodeId NId;
+};
+
+inline raw_ostream &operator<<(raw_ostream &OS, const PrintNodeInfo &PR) {
+  PR.print(OS);
+  return OS;
+}
+} // anonymous namespace
+
+void PBQP::RegAlloc::PBQPRAGraph::dump(raw_ostream &OS) const {
+  for (auto NId : nodeIds()) {
+    const Vector &Costs = getNodeCosts(NId);
+    assert(Costs.getLength() != 0 && "Empty vector in graph.");
+    OS << PrintNodeInfo(NId, *this) << ": " << Costs << '\n';
+  }
+  OS << '\n';
+
+  for (auto EId : edgeIds()) {
+    NodeId N1Id = getEdgeNode1Id(EId);
+    NodeId N2Id = getEdgeNode2Id(EId);
+    assert(N1Id != N2Id && "PBQP graphs should not have self-edges.");
+    const Matrix &M = getEdgeCosts(EId);
+    assert(M.getRows() != 0 && "No rows in matrix.");
+    assert(M.getCols() != 0 && "No cols in matrix.");
+    OS << PrintNodeInfo(N1Id, *this) << ' ' << M.getRows() << " rows / ";
+    OS << PrintNodeInfo(N2Id, *this) << ' ' << M.getCols() << " cols:\n";
+    OS << M << '\n';
+  }
+}
+
+void PBQP::RegAlloc::PBQPRAGraph::dump() const { dump(dbgs()); }
+
+void PBQP::RegAlloc::PBQPRAGraph::printDot(raw_ostream &OS) const {
+  OS << "graph {\n";
+  for (auto NId : nodeIds()) {
+    OS << "  node" << NId << " [ label=\""
+       << PrintNodeInfo(NId, *this) << "\\n"
+       << getNodeCosts(NId) << "\" ]\n";
+  }
+
+  OS << "  edge [ len=" << nodeIds().size() << " ]\n";
+  for (auto EId : edgeIds()) {
+    OS << "  node" << getEdgeNode1Id(EId)
+       << " -- node" << getEdgeNode2Id(EId)
+       << " [ label=\"";
+    const Matrix &EdgeCosts = getEdgeCosts(EId);
+    for (unsigned i = 0; i < EdgeCosts.getRows(); ++i) {
+      OS << EdgeCosts.getRowAsVector(i) << "\\n";
+    }
+    OS << "\" ]\n";
+  }
+  OS << "}\n";
 }
 
 FunctionPass *llvm::createPBQPRegisterAllocator(char *customPassID) {
