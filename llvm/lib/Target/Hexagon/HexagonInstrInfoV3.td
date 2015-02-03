@@ -106,7 +106,7 @@ def A2_addspl : T_ALU64_addsp_hl<":raw:lo", 0b110>;
 def A2_addsph : T_ALU64_addsp_hl<":raw:hi", 0b111>;
 }
 
-let hasSideEffects = 0, isCodeGenOnly = 0 in
+let hasSideEffects = 0, isCodeGenOnly = 1 in
 def A2_addsp : ALU64_rr<(outs DoubleRegs:$Rd),
   (ins IntRegs:$Rs, DoubleRegs:$Rt), "$Rd = add($Rs, $Rt)",
   [(set (i64 DoubleRegs:$Rd), (i64 (add (i64 (sext (i32 IntRegs:$Rs))),
@@ -225,7 +225,7 @@ def M2_vrcmpys_s1_l: T_vrcmpRaw<"lo", 0b111>;
 }
 
 // Assembler mapped to M2_vrcmpys_s1_h or M2_vrcmpys_s1_l
-let hasSideEffects = 0 in
+let hasSideEffects = 0, isCodeGenOnly = 1 in
 def M2_vrcmpys_s1
  : MInst<(outs DoubleRegs:$Rdd), (ins DoubleRegs:$Rss, IntRegs:$Rt),
  "$Rdd=vrcmpys($Rss,$Rt):<<1:sat">;
@@ -258,6 +258,7 @@ def M2_vrcmpys_acc_s1_l: T_vrcmpys_acc<"lo", 0b111>;
 
 // Assembler mapped to M2_vrcmpys_acc_s1_h or M2_vrcmpys_acc_s1_l
 
+let isCodeGenOnly = 1 in
 def M2_vrcmpys_acc_s1
   : MInst <(outs DoubleRegs:$dst),
            (ins DoubleRegs:$dst2, DoubleRegs:$src1, IntRegs:$src2),
@@ -270,6 +271,7 @@ def M2_vrcmpys_s1rp_l : T_MType_vrcmpy <"vrcmpys", 0b101, 0b111, 0>;
 }
 
 // Assembler mapped to M2_vrcmpys_s1rp_h or M2_vrcmpys_s1rp_l
+let isCodeGenOnly = 1 in
 def M2_vrcmpys_s1rp
   : MInst <(outs IntRegs:$Rd), (ins DoubleRegs:$Rss, IntRegs:$Rt),
   "$Rd=vrcmpys($Rss,$Rt):<<1:rnd:sat">;
