@@ -81,6 +81,9 @@
 void
 sigwinch_handler(int vSigno)
 {
+#ifdef _WIN32 // Restore handler as it is not persistent on Windows
+    signal(SIGWINCH, sigwinch_handler);
+#endif
     MIunused(vSigno);
 
     struct winsize window_size;
@@ -111,6 +114,9 @@ sigwinch_handler(int vSigno)
 void
 sigint_handler(int vSigno)
 {
+#ifdef _WIN32 // Restore handler as it is not persistent on Windows
+    signal(SIGINT, sigint_handler);
+#endif
     static bool g_interrupt_sent = false;
     CMIDriverMgr &rDriverMgr = CMIDriverMgr::Instance();
     lldb::SBDebugger *pDebugger = rDriverMgr.DriverGetTheDebugger();
@@ -147,6 +153,9 @@ sigint_handler(int vSigno)
 void
 sigtstp_handler(int vSigno)
 {
+#ifdef _WIN32 // Restore handler as it is not persistent on Windows
+    signal(SIGTSTP, sigtstp_handler);
+#endif
     CMIDriverMgr &rDriverMgr = CMIDriverMgr::Instance();
     lldb::SBDebugger *pDebugger = rDriverMgr.DriverGetTheDebugger();
     if (pDebugger != nullptr)
@@ -175,6 +184,9 @@ sigtstp_handler(int vSigno)
 void
 sigcont_handler(int vSigno)
 {
+#ifdef _WIN32 // Restore handler as it is not persistent on Windows
+    signal(SIGCONT, sigcont_handler);
+#endif
     CMIDriverMgr &rDriverMgr = CMIDriverMgr::Instance();
     lldb::SBDebugger *pDebugger = rDriverMgr.DriverGetTheDebugger();
     if (pDebugger != nullptr)
