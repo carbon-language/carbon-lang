@@ -5,10 +5,12 @@ LEVEL := $(realpath $(THIS_FILE_DIR)../../../../make)
 CFLAGS_EXTRAS := -D__STDC_LIMIT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_CONSTANT_MACROS
 ENABLE_THREADS := YES
 CXX_SOURCES := $(wildcard *.cpp) \
-	$(realpath $(LEVEL)/../../source/Plugins/Process/Linux/ThreadStateCoordinator.cpp)
+	$(realpath $(LEVEL)/../../source/Plugins/Process/Linux/ThreadStateCoordinator.cpp) \
+	$(realpath $(LEVEL)/../../source/Core/Error.cpp)
 MAKE_DSYM := NO
 
 OS := $(shell uname -s)
+
 # $(info OS $(OS))
 ifeq ($(OS),Linux)
     LD_EXTRAS := -lncurses -ldl

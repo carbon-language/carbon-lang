@@ -1,6 +1,7 @@
 #include <limits.h>
 #include "gtest/gtest.h"
 
+#include "lldb/Core/Error.h"
 #include "Plugins/Process/Linux/ThreadStateCoordinator.h"
 
 using namespace lldb_private;
@@ -67,19 +68,15 @@ ASSERT_EQ (true, HasError ());
         // Member functions.
 
         // Error handling.
-        void
-        SetErrorString (const std::string &error_string)
-        {
-            m_error_called = true;
-            m_error_string = error_string;
-            printf ("received error: %s (test might be expecting)\n", error_string.c_str ());
-        }
-
         ThreadStateCoordinator::ErrorFunction
         GetErrorFunction ()
         {
-            using namespace std::placeholders;
-            return std::bind(&ThreadStateCoordinatorTest::SetErrorString, this, _1);
+            return [this] (const std::string &error_string)
+            {
+                m_error_called = true;
+                m_error_string = error_string;
+                printf ("received error: %s (test might be expecting)\n", error_string.c_str ());
+            };
         }
 
         bool
@@ -88,19 +85,15 @@ ASSERT_EQ (true, HasError ());
             return m_error_called;
         }
 
-        // Deferred notificaton reception.
-        void
-        DeferredStopNotificationHandler (lldb::tid_t triggered_tid)
-        {
-            m_deferred_notification_called = true;
-            m_deferred_notification_tid = triggered_tid;
-        }
-
+        // Deferred notification reception.
         ThreadStateCoordinator::ThreadIDFunction
         GetDeferredStopNotificationFunction ()
         {
-            using namespace std::placeholders;
-            return std::bind(&ThreadStateCoordinatorTest::DeferredStopNotificationHandler, this, _1);
+            return [this] (lldb::tid_t triggered_tid)
+            {
+                m_deferred_notification_called = true;
+                m_deferred_notification_tid = triggered_tid;
+            };
         }
 
         bool
@@ -116,23 +109,31 @@ ASSERT_EQ (true, HasError ());
         }
 
         // Stop request call reception.
-        void
-        ThreadStopRequested (lldb::tid_t stop_tid)
-        {
-            m_requested_stop_tids.insert (stop_tid);
-        }
-
-        ThreadStateCoordinator::ThreadIDFunction
+        ThreadStateCoordinator::StopThreadFunction
         GetStopRequestFunction ()
         {
-            using namespace std::placeholders;
-            return std::bind(&ThreadStateCoordinatorTest::ThreadStopRequested, this, _1);
+            return [this] (lldb::tid_t stop_tid)
+            {
+                m_requested_stop_tids.insert (stop_tid);
+                return Error();
+            };
         }
 
         ThreadStateCoordinator::ThreadIDSet::size_type
         GetRequestedStopCount () const
         {
             return m_requested_stop_tids.size();
+        }
+
+        ThreadStateCoordinator::ResumeThreadFunction
+        GetResumeThreadFunction (lldb::tid_t& resumed_tid, int& resume_call_count)
+        {
+            return [this, &resumed_tid, &resume_call_count] (lldb::tid_t tid, bool)
+            {
+                resumed_tid = tid;
+                ++resume_call_count;
+                return Error();
+            };
         }
 
         bool
@@ -187,7 +188,7 @@ ASSERT_EQ (true, HasError ());
         void
         NotifyThreadStop (lldb::tid_t stopped_tid)
         {
-            m_coordinator.NotifyThreadStop (stopped_tid, GetErrorFunction ());
+            m_coordinator.NotifyThreadStop (stopped_tid, false, GetErrorFunction ());
         }
 
         void
@@ -195,7 +196,7 @@ ASSERT_EQ (true, HasError ());
         {
             m_coordinator.NotifyThreadDeath (tid, GetErrorFunction ());
         }
-};
+    };
 }
 
 TEST_F (ThreadStateCoordinatorTest, StopCoordinatorWorksNoPriorEvents)
@@ -572,11 +573,7 @@ TEST_F (ThreadStateCoordinatorTest, RequestThreadResumeSignalsErrorOnUnknownThre
     int resume_call_count = 0;
 
     m_coordinator.RequestThreadResume (UNKNOWN_TID,
-                                       [&](lldb::tid_t tid)
-                                       {
-                                           ++resume_call_count;
-                                           resumed_tid = tid;
-                                       },
+                                       GetResumeThreadFunction(resumed_tid, resume_call_count),
                                        GetErrorFunction ());
     // Shouldn't be called yet.
     ASSERT_EQ (0, resume_call_count);
@@ -596,12 +593,8 @@ TEST_F (ThreadStateCoordinatorTest, RequestThreadResumeCallsCallbackWhenThreadIs
     int resume_call_count = 0;
 
     m_coordinator.RequestThreadResume (NEW_THREAD_TID,
-                                      [&](lldb::tid_t tid)
-                                      {
-                                          ++resume_call_count;
-                                          resumed_tid = tid;
-                                      },
-                                      GetErrorFunction ());
+                                       GetResumeThreadFunction(resumed_tid, resume_call_count),
+                                       GetErrorFunction ());
     // Shouldn't be called yet.
     ASSERT_EQ (0, resume_call_count);
 
@@ -621,11 +614,7 @@ TEST_F (ThreadStateCoordinatorTest, RequestThreadResumeSkipsCallbackOnSecondResu
     int resume_call_count = 0;
 
     m_coordinator.RequestThreadResume (NEW_THREAD_TID,
-                                       [&](lldb::tid_t tid)
-                                       {
-                                           ++resume_call_count;
-                                           resumed_tid = tid;
-                                       },
+                                       GetResumeThreadFunction(resumed_tid, resume_call_count),
                                        GetErrorFunction ());
     // Shouldn't be called yet.
     ASSERT_EQ (0, resume_call_count);
@@ -638,11 +627,7 @@ TEST_F (ThreadStateCoordinatorTest, RequestThreadResumeSkipsCallbackOnSecondResu
     // Make a second resume request.
     const int initial_resume_call_count = resume_call_count;
     m_coordinator.RequestThreadResume (NEW_THREAD_TID,
-                                       [&](lldb::tid_t tid)
-                                       {
-                                           ++resume_call_count;
-                                           resumed_tid = tid;
-                                       },
+                                       GetResumeThreadFunction(resumed_tid, resume_call_count),
                                        GetErrorFunction ());
 
     // Process next event.  This should fail since the thread should already be running.
@@ -662,12 +647,8 @@ TEST_F (ThreadStateCoordinatorTest, RequestThreadResumeSignalsErrorOnAlreadyRunn
     int resume_call_count = 0;
 
     m_coordinator.RequestThreadResume (TEST_TID,
-                                     [&](lldb::tid_t tid)
-                                     {
-                                         ++resume_call_count;
-                                         resumed_tid = tid;
-                                     },
-                                     GetErrorFunction ());
+                                       GetResumeThreadFunction(resumed_tid, resume_call_count),
+                                       GetErrorFunction ());
 
     // Shouldn't be called yet.
     ASSERT_EQ (0, resume_call_count);
@@ -726,13 +707,15 @@ TEST_F (ThreadStateCoordinatorTest, ResumedThreadAlreadyMarkedDoesNotHoldUpPendi
     ASSERT_EQ (false, DidFireDeferredNotification ());
 
     // Now report thread A is resuming.  Ensure the resume is called.
-    bool resume_called = false;
+    lldb::tid_t resumed_tid = 0;
+    int resume_call_count = 0;
     m_coordinator.RequestThreadResume (PENDING_TID_A,
-                                     [&](lldb::tid_t tid) { resume_called = true; },
-                                     GetErrorFunction ());
-    ASSERT_EQ (false, resume_called);
+                                       GetResumeThreadFunction(resumed_tid, resume_call_count),
+                                       GetErrorFunction ());
+    ASSERT_EQ (0, resume_call_count);
     ASSERT_PROCESS_NEXT_EVENT_SUCCEEDS ();
-    ASSERT_EQ (true, resume_called);
+    ASSERT_EQ (1, resume_call_count);
+    ASSERT_EQ (PENDING_TID_A, resumed_tid);
 
     // Report thread B stopped.
     NotifyThreadStop (PENDING_TID_B);
