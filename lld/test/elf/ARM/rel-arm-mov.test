@@ -1,17 +1,18 @@
-# Check handling of R_ARM_CALL relocation.
+# Check handling of R_ARM_MOVW_ABS_NC and R_ARM_MOVT_ABS relocation pair.
 # RUN: yaml2obj -format=elf %s > %t-o.o
 # RUN: lld -flavor gnu -target arm -m armelf_linux_eabi -Bstatic \
 # RUN: --noinhibit-exec %t-o.o -o %t
 # RUN: llvm-objdump -s -t %t | FileCheck %s
 
 # CHECK: Contents of section .text:
-# CHECK: 400084 1eff2fe1 00482de9 04b08de2 f7ffffeb
-#                          offset = -0x24  ^^
-#               call site  offset  PC(arm) _Z1fv addr
-#               0x400090 + (-0x24) + 0x8 = 0x400074
+# CHECK: 400074 04b02de5 00b08de2 003001e3 403040e3
+#                    addrL = 0x1000  ^^
+#                               addrH = 0x40  ^^
+#                   addrH      addrL    _ZL5data1 addr
+#               (0x40 << 16) + 0x1000 = 0x401000
 # CHECK: SYMBOL TABLE:
-# CHECK: 00400074 g     F .text  {{[0-9a-f]+}} _Z1fv
-# CHECK: 00400088 g     F .text  {{[0-9a-f]+}} main
+# CHECK: 00401000 l       .bss   00000004 _ZL5data1
+# CHECK: 00400074 g     F .text  {{[0-9a-f]+}} main
 
 ---
 FileHeader:
@@ -25,16 +26,20 @@ Sections:
     Type:            SHT_PROGBITS
     Flags:           [ SHF_ALLOC, SHF_EXECINSTR ]
     AddressAlign:    0x0000000000000004
-    Content:         04B02DE500B08DE200D04BE204B09DE41EFF2FE100482DE904B08DE2FEFFFFEB0030A0E30300A0E10088BDE8
+    Content:         04B02DE500B08DE2003000E3003040E30A20A0E3002083E50030A0E30300A0E100D04BE204B09DE41EFF2FE1
   - Name:            .rel.text
     Type:            SHT_REL
     Link:            .symtab
     AddressAlign:    0x0000000000000004
     Info:            .text
     Relocations:
-      - Offset:          0x000000000000001C
-        Symbol:          _Z1fv
-        Type:            R_ARM_CALL
+      - Offset:          0x0000000000000008
+        Symbol:          _ZL5data1
+        Type:            R_ARM_MOVW_ABS_NC
+        Addend:          0
+      - Offset:          0x000000000000000C
+        Symbol:          _ZL5data1
+        Type:            R_ARM_MOVT_ABS
         Addend:          0
   - Name:            .data
     Type:            SHT_PROGBITS
@@ -44,17 +49,16 @@ Sections:
   - Name:            .bss
     Type:            SHT_NOBITS
     Flags:           [ SHF_WRITE, SHF_ALLOC ]
-    AddressAlign:    0x0000000000000001
-    Content:         ''
+    AddressAlign:    0x0000000000000004
+    Content:         411C0000
 Symbols:
+  Local:
+    - Name:            _ZL5data1
+      Type:            STT_OBJECT
+      Section:         .bss
+      Size:            0x0000000000000004
   Global:
-    - Name:            _Z1fv
-      Type:            STT_FUNC
-      Section:         .text
-      Size:            0x0000000000000014
     - Name:            main
       Type:            STT_FUNC
       Section:         .text
-      Value:           0x0000000000000014
-      Size:            0x0000000000000018
 ...

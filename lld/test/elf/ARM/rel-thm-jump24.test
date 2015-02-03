@@ -1,17 +1,17 @@
-# Check handling of R_ARM_CALL relocation.
+# Check handling of R_ARM_THM_JUMP24 relocation.
 # RUN: yaml2obj -format=elf %s > %t-o.o
 # RUN: lld -flavor gnu -target arm -m armelf_linux_eabi -Bstatic \
 # RUN: --noinhibit-exec %t-o.o -o %t
 # RUN: llvm-objdump -s -t %t | FileCheck %s
 
 # CHECK: Contents of section .text:
-# CHECK: 400084 1eff2fe1 00482de9 04b08de2 f7ffffeb
-#                          offset = -0x24  ^^
-#               call site  offset  PC(arm) _Z1fv addr
-#               0x400090 + (-0x24) + 0x8 = 0x400074
+# CHECK: 400084 80b500af fff7f4bf 03461846 80bd00bf
+#                           ^^ offset = -0x18
+#               call site  offset  PC(thm) _Z1fv addr
+#               0x400088 + (-0x18) + 0x4 = 0x400074
 # CHECK: SYMBOL TABLE:
 # CHECK: 00400074 g     F .text  {{[0-9a-f]+}} _Z1fv
-# CHECK: 00400088 g     F .text  {{[0-9a-f]+}} main
+# CHECK: 00400084 g     F .text  {{[0-9a-f]+}} main
 
 ---
 FileHeader:
@@ -25,16 +25,16 @@ Sections:
     Type:            SHT_PROGBITS
     Flags:           [ SHF_ALLOC, SHF_EXECINSTR ]
     AddressAlign:    0x0000000000000004
-    Content:         04B02DE500B08DE200D04BE204B09DE41EFF2FE100482DE904B08DE2FEFFFFEB0030A0E30300A0E10088BDE8
+    Content:         80B400AF00231846BD465DF8047B704780B500AFFFF7FEBF0346184680BD00BF
   - Name:            .rel.text
     Type:            SHT_REL
     Link:            .symtab
     AddressAlign:    0x0000000000000004
     Info:            .text
     Relocations:
-      - Offset:          0x000000000000001C
+      - Offset:          0x0000000000000014
         Symbol:          _Z1fv
-        Type:            R_ARM_CALL
+        Type:            R_ARM_THM_JUMP24
         Addend:          0
   - Name:            .data
     Type:            SHT_PROGBITS
@@ -51,10 +51,9 @@ Symbols:
     - Name:            _Z1fv
       Type:            STT_FUNC
       Section:         .text
-      Size:            0x0000000000000014
+      Value:           0x0000000000000001
     - Name:            main
       Type:            STT_FUNC
       Section:         .text
-      Value:           0x0000000000000014
-      Size:            0x0000000000000018
+      Value:           0x0000000000000011
 ...

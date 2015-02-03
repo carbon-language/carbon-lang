@@ -10,7 +10,7 @@
 #               data     main addr  content
 #             0x400084 = 0x400074 + 0x10
 # CHECK: SYMBOL TABLE:
-# CHECK: 00400074 g     F .text  0000001c main
+# CHECK: 00400074 g     F .text  {{[0-9a-f]+}} main
 # CHECK: 00401000 g       .data  00000004 data
 
 ---
