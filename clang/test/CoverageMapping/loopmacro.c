@@ -11,7 +11,7 @@
     prev[(s) & WMASK] = match_head = head[ins_h], \
     head[ins_h] = (s))
 
-int main() {                                // CHECK: File 0, [[@LINE]]:12 -> [[@LINE+12]]:2 = #0 (HasCodeBefore = 0)
+int main() {                                // CHECK: File 0, [[@LINE]]:12 -> [[@LINE+12]]:2 = #0
   int strstart = 0;
   int hash_head = 2;
   int prev_length = 5;
@@ -19,22 +19,22 @@ int main() {                                // CHECK: File 0, [[@LINE]]:12 -> [[
   int prev[32] = { 0 };
   int head[32] = { 0 };
   int window[1024] = { 0 };
-  do {                                     // CHECK-NEXT: File 0, [[@LINE]]:6 -> [[@LINE+3]]:30 = (#0 + #1) (HasCodeBefore = 0)
+  do {                                     // CHECK-NEXT: File 0, [[@LINE]]:6 -> [[@LINE+3]]:30 = (#0 + #1)
       strstart++;
-      INSERT_STRING(strstart, hash_head);  // CHECK-NEXT: Expansion,File 0, [[@LINE]]:7 -> [[@LINE]]:20 = (#0 + #1) (HasCodeBefore = 0, Expanded file = 1)
+      INSERT_STRING(strstart, hash_head);  // CHECK-NEXT: Expansion,File 0, [[@LINE]]:7 -> [[@LINE]]:20 = (#0 + #1) (Expanded file = 1)
   } while (--prev_length != 0);
 }
-// CHECK-NEXT: File 0, 24:21 -> 24:29 = (#0 + #1) (HasCodeBefore = 0)
-// CHECK-NEXT: File 0, 24:21 -> 24:29 = (#0 + #1) (HasCodeBefore = 0)
-// CHECK-NEXT: File 0, 24:21 -> 24:29 = (#0 + #1) (HasCodeBefore = 0)
-// CHECK-NEXT: File 0, 24:31 -> 24:40 = (#0 + #1) (HasCodeBefore = 0)
-// CHECK-NEXT: File 1, 10:4 -> 12:23 = (#0 + #1) (HasCodeBefore = 0)
-// CHECK-NEXT: Expansion,File 1, 10:5 -> 10:16 = (#0 + #1) (HasCodeBefore = 0, Expanded file = 2)
-// CHECK-NEXT: File 1, 10:17 -> 10:22 = (#0 + #1) (HasCodeBefore = 0)
-// CHECK-NEXT: File 1, 10:17 -> 10:22 = (#0 + #1) (HasCodeBefore = 0)
-// CHECK-NEXT: File 1, 10:24 -> 10:32 = (#0 + #1) (HasCodeBefore = 0)
-// CHECK-NEXT: File 1, 10:33 -> 10:36 = (#0 + #1) (HasCodeBefore = 0)
-// CHECK-NEXT: File 1, 10:46 -> 10:49 = (#0 + #1) (HasCodeBefore = 0)
-// CHECK-NEXT: File 2, 8:26 -> 8:66 = (#0 + #1) (HasCodeBefore = 0)
-// CHECK-NEXT: Expansion,File 2, 8:38 -> 8:45 = (#0 + #1) (HasCodeBefore = 0, Expanded file = 3)
-// CHECK-NEXT: File 3, 5:18 -> 5:53 = (#0 + #1) (HasCodeBefore = 0)
+// CHECK-NEXT: File 0, 24:21 -> 24:29 = (#0 + #1)
+// CHECK-NEXT: File 0, 24:21 -> 24:29 = (#0 + #1)
+// CHECK-NEXT: File 0, 24:21 -> 24:29 = (#0 + #1)
+// CHECK-NEXT: File 0, 24:31 -> 24:40 = (#0 + #1)
+// CHECK-NEXT: File 1, 10:4 -> 12:23 = (#0 + #1)
+// CHECK-NEXT: Expansion,File 1, 10:5 -> 10:16 = (#0 + #1) (Expanded file = 2)
+// CHECK-NEXT: File 1, 10:17 -> 10:22 = (#0 + #1)
+// CHECK-NEXT: File 1, 10:17 -> 10:22 = (#0 + #1)
+// CHECK-NEXT: File 1, 10:24 -> 10:32 = (#0 + #1)
+// CHECK-NEXT: File 1, 10:33 -> 10:36 = (#0 + #1)
+// CHECK-NEXT: File 1, 10:46 -> 10:49 = (#0 + #1)
+// CHECK-NEXT: File 2, 8:26 -> 8:66 = (#0 + #1)
+// CHECK-NEXT: Expansion,File 2, 8:38 -> 8:45 = (#0 + #1) (Expanded file = 3)
+// CHECK-NEXT: File 3, 5:18 -> 5:53 = (#0 + #1)

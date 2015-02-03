@@ -13,25 +13,25 @@ public:
   double bases[BaseCount];
 
                                         // CHECK-CONSTRUCTOR: _ZN4TestIjEC
-  Test() { }                            // CHECK-CONSTRUCTOR: File 0, [[@LINE]]:10 -> [[@LINE]]:13 = #0 (HasCodeBefore = 0)
+  Test() { }                            // CHECK-CONSTRUCTOR: File 0, [[@LINE]]:10 -> [[@LINE]]:13 = #0
 
   // FIXME: It would be nice to emit no-coverage for get, but trying to do this
   // runs afoul of cases like Test3::unmangleable below.
                                         // FIXME-GETTER: _ZNK4TestIjE3get
-  double get(TT position) const {       // FIXME-GETTER: File 0, [[@LINE]]:33 -> [[@LINE+2]]:4 = 0 (HasCodeBefore = 0)
+  double get(TT position) const {       // FIXME-GETTER: File 0, [[@LINE]]:33 -> [[@LINE+2]]:4 = 0
     return bases[position];
   }
                                         // CHECK-SETTER: _ZN4TestIjE3set
-  void set(TT position, double value) { // CHECK-SETTER: File 0, [[@LINE]]:39 -> [[@LINE+2]]:4 = #0 (HasCodeBefore = 0)
+  void set(TT position, double value) { // CHECK-SETTER: File 0, [[@LINE]]:39 -> [[@LINE+2]]:4 = #0
     bases[position] = value;
   }
 };
 
 class Test2 {
                                         // CHECK-CONSTRUCTOR: _ZN5Test2C
-  Test2() { }                           // CHECK-CONSTRUCTOR: File 0, [[@LINE]]:11 -> [[@LINE]]:14 = 0 (HasCodeBefore = 0)
+  Test2() { }                           // CHECK-CONSTRUCTOR: File 0, [[@LINE]]:11 -> [[@LINE]]:14 = 0
                                         // CHECK-GETTER: _ZNK5Test23get
-  double get(unsigned position) const { // CHECK-GETTER: File 0, [[@LINE]]:39 -> [[@LINE+2]]:4 = 0 (HasCodeBefore = 0)
+  double get(unsigned position) const { // CHECK-GETTER: File 0, [[@LINE]]:39 -> [[@LINE+2]]:4 = 0
     return 0.0;
   }
 };

@@ -247,7 +247,7 @@ public:
       unsigned LineEnd = SM.getSpellingLineNumber(LocEnd);
       unsigned ColumnEnd = SM.getSpellingColumnNumber(LocEnd);
       CounterMappingRegion Region(Counter(), *CovFileID, LineStart, ColumnStart,
-                                  LineEnd, ColumnEnd, false,
+                                  LineEnd, ColumnEnd,
                                   CounterMappingRegion::SkippedRegion);
       // Make sure that we only collect the regions that are inside
       // the souce code of this function.
@@ -286,7 +286,7 @@ public:
 
     MappingRegions.push_back(CounterMappingRegion(
         Counter(), *CovFileID, LineStart, ColumnStart, LineEnd, ColumnEnd,
-        false, CounterMappingRegion::ExpansionRegion));
+        CounterMappingRegion::ExpansionRegion));
     MappingRegions.back().ExpandedFileID = *ExpandedFileID;
   }
 
@@ -377,7 +377,7 @@ public:
       assert(LineStart <= LineEnd);
       MappingRegions.push_back(CounterMappingRegion(
           I->getCounter(), *CovFileID, LineStart, ColumnStart, LineEnd,
-          ColumnEnd, false, CounterMappingRegion::CodeRegion));
+          ColumnEnd, CounterMappingRegion::CodeRegion));
     }
   }
 };
@@ -566,8 +566,8 @@ struct CounterCoverageMappingBuilder
     createFileIDMapping(VirtualFileMapping);
     gatherSkippedRegions();
 
-    CoverageMappingWriter Writer(
-        VirtualFileMapping, Builder.getExpressions(), MappingRegions);
+    CoverageMappingWriter Writer(VirtualFileMapping, Builder.getExpressions(),
+                                 MappingRegions);
     Writer.write(OS);
   }
 
@@ -986,8 +986,8 @@ struct CounterCoverageMappingBuilder
 
   void VisitObjCMessageExpr(const ObjCMessageExpr *E) {
     mapToken(E->getLeftLoc());
-    for (Stmt::const_child_range I = static_cast<const Stmt*>(E)->children(); I;
-         ++I) {
+    for (Stmt::const_child_range I = static_cast<const Stmt *>(E)->children();
+         I; ++I) {
       if (*I)
         this->Visit(*I);
     }
@@ -1022,15 +1022,12 @@ static void dump(llvm::raw_ostream &OS, StringRef FunctionName,
       break;
     }
 
-    OS << "File " << R.FileID << ", " << R.LineStart << ":"
-           << R.ColumnStart << " -> " << R.LineEnd << ":" << R.ColumnEnd
-           << " = ";
+    OS << "File " << R.FileID << ", " << R.LineStart << ":" << R.ColumnStart
+       << " -> " << R.LineEnd << ":" << R.ColumnEnd << " = ";
     Ctx.dump(R.Count, OS);
-    OS << " (HasCodeBefore = " << R.HasCodeBefore;
     if (R.Kind == CounterMappingRegion::ExpansionRegion)
-      OS << ", Expanded file = " << R.ExpandedFileID;
-
-    OS << ")\n";
+      OS << " (Expanded file = " << R.ExpandedFileID << ")";
+    OS << "\n";
   }
 }
 

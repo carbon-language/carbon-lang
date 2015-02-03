@@ -3,7 +3,7 @@
 // Test the coverage mapping generation for built-in macroes.
 
 // CHECK: filename
-const char *filename (const char *name) { // CHECK-NEXT: File 0, [[@LINE]]:41 -> [[@LINE+3]]:2 = #0 (HasCodeBefore = 0)
+const char *filename (const char *name) { // CHECK-NEXT: File 0, [[@LINE]]:41 -> [[@LINE+3]]:2 = #0
   static const char this_file[] = __FILE__;
   return this_file;
 }
