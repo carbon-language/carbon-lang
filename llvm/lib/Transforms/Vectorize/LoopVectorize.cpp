@@ -555,8 +555,9 @@ public:
                             DominatorTree *DT, TargetLibraryInfo *TLI,
                             AliasAnalysis *AA, Function *F,
                             const TargetTransformInfo *TTI)
-      : NumPredStores(0), TheLoop(L), SE(SE), DL(DL), TLI(TLI), TheFunction(F),
-        TTI(TTI), Induction(nullptr), WidestIndTy(nullptr),
+      : NumLoads(0), NumStores(0), NumPredStores(0), TheLoop(L), SE(SE), DL(DL),
+        TLI(TLI), TheFunction(F), TTI(TTI), Induction(nullptr),
+        WidestIndTy(nullptr),
         LAA(F, L, SE, DL, TLI, AA, DT,
             LoopAccessAnalysis::VectorizerParams(
                 MaxVectorWidth, VectorizationFactor, VectorizationInterleave,
