@@ -20,9 +20,10 @@ class ThreadStateTestCase(TestBase):
         self.buildDsym(dictionary=self.getBuildFlags(use_cpp11=False))
         self.thread_state_after_breakpoint_test()
 
-    @expectedFailureFreeBSD('llvm.org/pr15824')
-    @dwarf_test
     @expectedFailureDarwin("rdar://15367566")
+    @expectedFailureFreeBSD('llvm.org/pr15824')
+    @expectedFailureLLGS("llvm.org/pr15824") # thread states not properly maintained
+    @dwarf_test
     def test_state_after_breakpoint_with_dwarf(self):
         """Test thread state after breakpoint."""
         self.buildDwarf(dictionary=self.getBuildFlags(use_cpp11=False))

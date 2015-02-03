@@ -22,6 +22,7 @@ class ExitDuringBreakpointTestCase(TestBase):
 
     @expectedFailureDarwin("llvm.org/pr15824") # thread states not properly maintained
     @expectedFailureFreeBSD("llvm.org/pr18190") # thread states not properly maintained
+    @expectedFailureLLGS("llvm.org/pr15824") # thread states not properly maintained
     @dwarf_test
     def test_with_dwarf(self):
         """Test thread exit during breakpoint handling."""

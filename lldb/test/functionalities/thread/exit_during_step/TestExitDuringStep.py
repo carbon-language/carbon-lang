@@ -22,6 +22,7 @@ class ExitDuringStepTestCase(TestBase):
 
     @expectedFailureDarwin("llvm.org/pr15824") # thread states not properly maintained
     @expectedFailureFreeBSD("llvm.org/pr18190") # thread states not properly maintained
+    @expectedFailureLLGS("llvm.org/pr15824") # thread states not properly maintained
     @dwarf_test
     def test_thread_state_is_stopped_with_dwarf(self):
         """Test thread exit during step handling."""
@@ -57,6 +58,7 @@ class ExitDuringStepTestCase(TestBase):
         self.exit_during_step_inst_test()
 
     @skipIfFreeBSD # llvm.org/pr21411: test is hanging
+    @expectedFailureLLGS("llvm.org/pr15824") # thread states not properly maintained
     @dwarf_test
     def test_step_over_with_dwarf(self):
         """Test thread exit during step-over handling."""
@@ -64,6 +66,7 @@ class ExitDuringStepTestCase(TestBase):
         self.exit_during_step_over_test()
 
     @skipIfFreeBSD # llvm.org/pr21411: test is hanging
+    @expectedFailureLLGS("llvm.org/pr15824") # thread states not properly maintained
     @dwarf_test
     def test_step_in_with_dwarf(self):
         """Test thread exit during step-in handling."""

@@ -519,6 +519,11 @@ def expectedFailureLinux(bugnumber=None, compilers=None):
 def expectedFailureWindows(bugnumber=None, compilers=None):
     if bugnumber: return expectedFailureOS('win32', bugnumber, compilers)
 
+def expectedFailureLLGS(bugnumber=None, compilers=None):
+    def fn(self):
+        return 'PLATFORM_LINUX_FORCE_LLGS_LOCAL' in os.environ and self.expectedCompiler(compilers)
+    if bugnumber: return expectedFailure(fn, bugnumber)
+
 def skipIfRemote(func):
     """Decorate the item to skip tests if testing remotely."""
     if isinstance(func, type) and issubclass(func, unittest2.TestCase):
