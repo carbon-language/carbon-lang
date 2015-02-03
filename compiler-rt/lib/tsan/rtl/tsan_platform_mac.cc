@@ -60,6 +60,8 @@ void InitializeShadowMemory() {
            "to link with -pie.\n");
     Die();
   }
+  if (common_flags()->use_madv_dontdump)
+    DontDumpShadowMemory(kShadowBeg, kShadowEnd - kShadowBeg);
   DPrintf("kShadow %zx-%zx (%zuGB)\n",
       kShadowBeg, kShadowEnd,
       (kShadowEnd - kShadowBeg) >> 30);

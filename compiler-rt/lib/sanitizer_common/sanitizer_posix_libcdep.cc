@@ -50,6 +50,12 @@ void NoHugePagesInRegion(uptr addr, uptr size) {
 #endif  // MADV_NOHUGEPAGE
 }
 
+void DontDumpShadowMemory(uptr addr, uptr length) {
+#ifdef MADV_DONTDUMP
+  madvise((void *)addr, length, MADV_DONTDUMP);
+#endif
+}
+
 static rlim_t getlim(int res) {
   rlimit rlim;
   CHECK_EQ(0, getrlimit(res, &rlim));

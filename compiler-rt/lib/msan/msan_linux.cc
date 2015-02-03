@@ -119,6 +119,8 @@ bool InitShadow(bool map_shadow, bool init_origins) {
         (init_origins && type == MappingDesc::ORIGIN)) {
       if (!CheckMemoryRangeAvailability(start, size)) return false;
       if ((uptr)MmapFixedNoReserve(start, size) != start) return false;
+      if (common_flags()->use_madv_dontdump)
+        DontDumpShadowMemory(start, size);
     } else if (type == MappingDesc::INVALID) {
       if (!CheckMemoryRangeAvailability(start, size)) return false;
       if (!ProtectMemoryRange(start, size)) return false;

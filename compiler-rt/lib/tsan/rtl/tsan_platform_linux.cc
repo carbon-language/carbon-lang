@@ -218,6 +218,8 @@ void InitializeShadowMemory() {
   // FIXME: don't use constants here.
   NoHugePagesInRegion(MemToShadow(0x7f0000000000ULL),
                       0x10000000000ULL * kShadowMultiplier);
+  if (common_flags()->use_madv_dontdump)
+    DontDumpShadowMemory(kShadowBeg, kShadowEnd - kShadowBeg);
   DPrintf("memory shadow: %zx-%zx (%zuGB)\n",
       kShadowBeg, kShadowEnd,
       (kShadowEnd - kShadowBeg) >> 30);
@@ -231,6 +233,8 @@ void InitializeShadowMemory() {
                "to link with -pie (%p, %p).\n", meta, kMetaShadowBeg);
     Die();
   }
+  if (common_flags()->use_madv_dontdump)
+    DontDumpShadowMemory(meta, meta_size);
   DPrintf("meta shadow: %zx-%zx (%zuGB)\n",
       meta, meta + meta_size, meta_size >> 30);
 
