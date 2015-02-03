@@ -39,10 +39,10 @@ namespace
         switch (stop_info.reason)
         {
             case eStopReasonSignal:
-                log.Printf ("%s: %s signal 0x%" PRIx32, __FUNCTION__, header, stop_info.details.signal.signo);
+                log.Printf ("%s: %s signal 0x%02" PRIx32, __FUNCTION__, header, stop_info.details.signal.signo);
                 return;
             case eStopReasonException:
-                log.Printf ("%s: %s exception type 0x%" PRIx64, __FUNCTION__, header, stop_info.details.exception.type);
+                log.Printf ("%s: %s exception type 0x%02" PRIx64, __FUNCTION__, header, stop_info.details.exception.type);
                 return;
             case eStopReasonExec:
                 log.Printf ("%s: %s exec, stopping signal 0x%" PRIx32, __FUNCTION__, header, stop_info.details.signal.signo);

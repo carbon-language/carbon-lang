@@ -2340,24 +2340,10 @@ NativeProcessLinux::MonitorSIGTRAP(const siginfo_t *info, lldb::pid_t pid)
         // This thread is currently stopped.
         NotifyThreadStop (pid);
 
-        if (thread_sp)
-        {
-            reinterpret_cast<NativeThreadLinux*> (thread_sp.get ())->SetStoppedBySignal (SIGTRAP);
-        }
-        else
-        {
-            if (log)
-                log->Printf ("NativeProcessLinux::%s() pid %" PRIu64 " tid %" PRIu64 " single stepping received trace but thread not found", __FUNCTION__, GetID (), pid);
-        }
-
-        // We need to tell all other running threads before we notify the delegate about this stop.
-        CallAfterRunningThreadsStop (pid,
-                                     [=](lldb::tid_t deferred_notification_tid)
-                                     {
-                                         SetCurrentThreadID (deferred_notification_tid);
-                                         // Tell the process we have a stop (from single stepping).
-                                         SetState (StateType::eStateStopped, true);
-                                     });
+        // Here we don't have to request the rest of the threads to stop or request a deferred stop.
+        // This would have already happened at the time the Resume() with step operation was signaled.
+        // At this point, we just need to say we stopped, and the deferred notifcation will fire off
+        // once all running threads have checked in as stopped.
         break;
 
     case SI_KERNEL:
@@ -2670,7 +2656,9 @@ NativeProcessLinux::Resume (const ResumeActionList &resume_actions)
     if (log)
         log->Printf ("NativeProcessLinux::%s called: pid %" PRIu64, __FUNCTION__, GetID ());
 
-    int stop_thread_id = LLDB_INVALID_THREAD_ID;
+    int deferred_signal_tid = LLDB_INVALID_THREAD_ID;
+    int deferred_signo = 0;
+    NativeThreadProtocolSP deferred_signal_thread_sp;
 
     std::vector<NativeThreadProtocolSP> new_stop_threads;
 
@@ -2680,7 +2668,6 @@ NativeProcessLinux::Resume (const ResumeActionList &resume_actions)
         for (auto thread_sp : m_threads)
         {
             assert (thread_sp && "thread list should not contain NULL threads");
-            NativeThreadLinux *const linux_thread_p = reinterpret_cast<NativeThreadLinux*> (thread_sp.get ());
 
             const ResumeAction *const action = resume_actions.GetActionForThread (thread_sp->GetID (), true);
             assert (action && "NULL ResumeAction returned for thread during Resume ()");
@@ -2709,26 +2696,37 @@ NativeProcessLinux::Resume (const ResumeActionList &resume_actions)
             }
 
             case eStateStepping:
-                linux_thread_p->SetStepping ();
-                if (SingleStep (thread_sp->GetID (), 0))
-                {
-                    if (log)
-                        log->Printf ("NativeProcessLinux::%s pid %" PRIu64 " tid %" PRIu64 " single step succeeded",
-                                     __FUNCTION__, GetID (), thread_sp->GetID ());
-                }
-                else
-                {
-                    if (log)
-                        log->Printf ("NativeProcessLinux::%s pid %" PRIu64 " tid %" PRIu64 " single step failed",
-                                     __FUNCTION__, GetID (), thread_sp->GetID ());
-                }
+            {
+                // Request the step.
+                const int signo = action->signal;
+                m_coordinator_up->RequestThreadResume (thread_sp->GetID (),
+                                                       [=](lldb::tid_t tid_to_step)
+                                                       {
+                                                           reinterpret_cast<NativeThreadLinux*> (thread_sp.get ())->SetStepping ();
+                                                           auto step_result = SingleStep (tid_to_step,(signo > 0) ? signo : LLDB_INVALID_SIGNAL_NUMBER);
+                                                           assert (step_result && "SingleStep() failed");
+                                                       },
+                                                       CoordinatorErrorHandler);
+
+                // The deferred signal tid is the stepping tid.
+                // This assumes there is only one stepping tid, or the last stepping tid is a fine choice.
+                deferred_signal_tid = thread_sp->GetID ();
+                deferred_signal_thread_sp = thread_sp;
+
+                // And the stop signal we should apply for it is a SIGTRAP.
+                deferred_signo = SIGTRAP;
                 break;
+            }
 
             case eStateSuspended:
             case eStateStopped:
-                // if we haven't chosen a stop thread id yet, use this one.
-                if (stop_thread_id == LLDB_INVALID_THREAD_ID)
-                    stop_thread_id = thread_sp->GetID ();
+                // if we haven't chosen a deferred signal tid yet, use this one.
+                if (deferred_signal_tid == LLDB_INVALID_THREAD_ID)
+                {
+                    deferred_signal_tid = thread_sp->GetID ();
+                    deferred_signal_thread_sp = thread_sp;
+                    deferred_signo = SIGSTOP;
+                }
                 break;
 
             default:
@@ -2742,13 +2740,18 @@ NativeProcessLinux::Resume (const ResumeActionList &resume_actions)
 
     // If we had any thread stopping, then do a deferred notification of the chosen stop thread id and signal
     // after all other running threads have stopped.
-    if (stop_thread_id != LLDB_INVALID_THREAD_ID)
+    if (deferred_signal_tid != LLDB_INVALID_THREAD_ID)
     {
-        CallAfterRunningThreadsStop (stop_thread_id,
+        CallAfterRunningThreadsStop (deferred_signal_tid,
                                      [=](lldb::tid_t deferred_notification_tid)
                                      {
+                                         // Set the signal thread to the current thread.
                                          SetCurrentThreadID (deferred_notification_tid);
-                                         // Tell the process we have a stop.
+
+                                         // Set the thread state as stopped by the deferred signo.
+                                         reinterpret_cast<NativeThreadLinux*> (deferred_signal_thread_sp.get ())->SetStoppedBySignal (deferred_signo);
+
+                                         // Tell the process delegate that the process is in a stopped state.
                                          SetState (StateType::eStateStopped, true);
                                      });
     }
