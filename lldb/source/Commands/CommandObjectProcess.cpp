@@ -489,6 +489,8 @@ protected:
     DoExecute (Args& command,
              CommandReturnObject &result)
     {
+        PlatformSP platform_sp (m_interpreter.GetDebugger().GetPlatformList().GetSelectedPlatform());
+
         Target *target = m_interpreter.GetDebugger().GetSelectedTarget().get();
         // N.B. The attach should be synchronous.  It doesn't help much to get the prompt back between initiating the attach
         // and the target actually stopping.  So even if the interpreter is set to be asynchronous, we wait for the stop
@@ -527,122 +529,130 @@ protected:
         ModuleSP old_exec_module_sp = target->GetExecutableModule();
         ArchSpec old_arch_spec = target->GetArchitecture();
 
+        ProcessSP process_sp;
+        Error error;
         if (command.GetArgumentCount())
         {
             result.AppendErrorWithFormat("Invalid arguments for '%s'.\nUsage: %s\n", m_cmd_name.c_str(), m_cmd_syntax.c_str());
             result.SetStatus (eReturnStatusFailed);
+            return false;
+        }
+
+        m_interpreter.UpdateExecutionContext(nullptr);
+        ListenerSP listener_sp (new Listener("lldb.CommandObjectProcessAttach.DoExecute.attach.hijack"));
+        m_options.attach_info.SetHijackListener(listener_sp);
+
+        // If no process info was specified, then use the target executable
+        // name as the process to attach to by default
+        if (!m_options.attach_info.ProcessInfoSpecified ())
+        {
+            if (old_exec_module_sp)
+                m_options.attach_info.GetExecutableFile().GetFilename() = old_exec_module_sp->GetPlatformFileSpec().GetFilename();
+
+            if (!m_options.attach_info.ProcessInfoSpecified ())
+            {
+                error.SetErrorString ("no process specified, create a target with a file, or specify the --pid or --name command option");
+            }
+        }
+
+        if (error.Success())
+        {
+            if (state != eStateConnected && platform_sp != nullptr && platform_sp->CanDebugProcess())
+            {
+                target->SetPlatform(platform_sp);
+                process = platform_sp->Attach(m_options.attach_info, m_interpreter.GetDebugger(), target, error).get();
+            }
+            else
+            {
+                if (state != eStateConnected)
+                {
+                    const char *plugin_name = m_options.attach_info.GetProcessPluginName();
+                    process = target->CreateProcess (m_interpreter.GetDebugger().GetListener(), plugin_name, nullptr).get();
+                    if (process == nullptr)
+                        error.SetErrorStringWithFormat("failed to create process using plugin %s", plugin_name);
+                }
+                if (process)
+                {
+                    process->HijackProcessEvents(listener_sp.get());
+                    error = process->Attach(m_options.attach_info);
+                }
+            }
+        }
+
+        if (error.Success() && process != nullptr)
+        {
+            result.SetStatus (eReturnStatusSuccessContinuingNoResult);
+            StreamString stream;
+            StateType state = process->WaitForProcessToStop (nullptr, nullptr, false, listener_sp.get(), &stream);
+
+            process->RestoreProcessEvents();
+            result.SetDidChangeProcessState (true);
+
+            if (stream.GetData())
+                result.AppendMessage(stream.GetData());
+
+            if (state == eStateStopped)
+            {
+                result.SetStatus (eReturnStatusSuccessFinishNoResult);
+            }
+            else
+            {
+                const char *exit_desc = process->GetExitDescription();
+                if (exit_desc)
+                    result.AppendErrorWithFormat ("attach failed: %s", exit_desc);
+                else
+                    result.AppendError ("attach failed: process did not stop (no such process or permission problem?)");
+                process->Destroy();
+                result.SetStatus (eReturnStatusFailed);
+            }
         }
         else
         {
-            if (state != eStateConnected)
-            {
-                const char *plugin_name = m_options.attach_info.GetProcessPluginName();
-                process = target->CreateProcess (m_interpreter.GetDebugger().GetListener(), plugin_name, NULL).get();
-            }
-
-            if (process)
-            {
-                Error error;
-                // If no process info was specified, then use the target executable 
-                // name as the process to attach to by default
-                if (!m_options.attach_info.ProcessInfoSpecified ())
-                {
-                    if (old_exec_module_sp)
-                        m_options.attach_info.GetExecutableFile().GetFilename() = old_exec_module_sp->GetPlatformFileSpec().GetFilename();
-
-                    if (!m_options.attach_info.ProcessInfoSpecified ())
-                    {
-                        error.SetErrorString ("no process specified, create a target with a file, or specify the --pid or --name command option");
-                    }
-                }
-
-                if (error.Success())
-                {
-                    // Update the execution context so the current target and process are now selected
-                    // in case we interrupt
-                    m_interpreter.UpdateExecutionContext(NULL);
-                    ListenerSP listener_sp (new Listener("lldb.CommandObjectProcessAttach.DoExecute.attach.hijack"));
-                    m_options.attach_info.SetHijackListener(listener_sp);
-                    process->HijackProcessEvents(listener_sp.get());
-                    error = process->Attach (m_options.attach_info);
-                    
-                    if (error.Success())
-                    {
-                        result.SetStatus (eReturnStatusSuccessContinuingNoResult);
-                        StreamString stream;
-                        StateType state = process->WaitForProcessToStop (NULL, NULL, false, listener_sp.get(), &stream);
-
-                        process->RestoreProcessEvents();
-
-                        result.SetDidChangeProcessState (true);
-                        
-                        if (stream.GetData())
-                            result.AppendMessage(stream.GetData());
-
-                        if (state == eStateStopped)
-                        {
-                            result.SetStatus (eReturnStatusSuccessFinishNoResult);
-                        }
-                        else
-                        {
-                            const char *exit_desc = process->GetExitDescription();
-                            if (exit_desc)
-                                result.AppendErrorWithFormat ("attach failed: %s", exit_desc);
-                            else
-                                result.AppendError ("attach failed: process did not stop (no such process or permission problem?)");
-                            process->Destroy();
-                            result.SetStatus (eReturnStatusFailed);
-                        }
-                    }
-                    else
-                    {
-                        result.AppendErrorWithFormat ("attach failed: %s\n", error.AsCString());
-                        result.SetStatus (eReturnStatusFailed);
-                    }
-                }
-            }
+            result.AppendErrorWithFormat ("attach failed: %s\n", error.AsCString());
+            result.SetStatus (eReturnStatusFailed);
         }
-        
-        if (result.Succeeded())
+
+        if (!result.Succeeded())
+            return false;
+
+        // Okay, we're done.  Last step is to warn if the executable module has changed:
+        char new_path[PATH_MAX];
+        ModuleSP new_exec_module_sp (target->GetExecutableModule());
+        if (!old_exec_module_sp)
         {
-            // Okay, we're done.  Last step is to warn if the executable module has changed:
-            char new_path[PATH_MAX];
-            ModuleSP new_exec_module_sp (target->GetExecutableModule());
-            if (!old_exec_module_sp)
+            // We might not have a module if we attached to a raw pid...
+            if (new_exec_module_sp)
             {
-                // We might not have a module if we attached to a raw pid...
-                if (new_exec_module_sp)
-                {
-                    new_exec_module_sp->GetFileSpec().GetPath(new_path, PATH_MAX);
-                    result.AppendMessageWithFormat("Executable module set to \"%s\".\n", new_path);
-                }
+                new_exec_module_sp->GetFileSpec().GetPath(new_path, PATH_MAX);
+                result.AppendMessageWithFormat("Executable module set to \"%s\".\n", new_path);
             }
-            else if (old_exec_module_sp->GetFileSpec() != new_exec_module_sp->GetFileSpec())
-            {
-                char old_path[PATH_MAX];
-                
-                old_exec_module_sp->GetFileSpec().GetPath (old_path, PATH_MAX);
-                new_exec_module_sp->GetFileSpec().GetPath (new_path, PATH_MAX);
-                
-                result.AppendWarningWithFormat("Executable module changed from \"%s\" to \"%s\".\n",
-                                                    old_path, new_path);
-            }
-            
-            if (!old_arch_spec.IsValid())
-            {
-                result.AppendMessageWithFormat ("Architecture set to: %s.\n", target->GetArchitecture().GetTriple().getTriple().c_str());
-            }
-            else if (!old_arch_spec.IsExactMatch(target->GetArchitecture()))
-            {
-                result.AppendWarningWithFormat("Architecture changed from %s to %s.\n", 
-                                               old_arch_spec.GetTriple().getTriple().c_str(),
-                                               target->GetArchitecture().GetTriple().getTriple().c_str());
-            }
-
-            // This supports the use-case scenario of immediately continuing the process once attached.
-            if (m_options.attach_info.GetContinueOnceAttached())
-                m_interpreter.HandleCommand("process continue", eLazyBoolNo, result);
         }
+        else if (old_exec_module_sp->GetFileSpec() != new_exec_module_sp->GetFileSpec())
+        {
+            char old_path[PATH_MAX];
+
+            old_exec_module_sp->GetFileSpec().GetPath (old_path, PATH_MAX);
+            new_exec_module_sp->GetFileSpec().GetPath (new_path, PATH_MAX);
+
+            result.AppendWarningWithFormat("Executable module changed from \"%s\" to \"%s\".\n",
+                                                old_path, new_path);
+        }
+
+        if (!old_arch_spec.IsValid())
+        {
+            result.AppendMessageWithFormat ("Architecture set to: %s.\n", target->GetArchitecture().GetTriple().getTriple().c_str());
+        }
+        else if (!old_arch_spec.IsExactMatch(target->GetArchitecture()))
+        {
+            result.AppendWarningWithFormat("Architecture changed from %s to %s.\n",
+                                           old_arch_spec.GetTriple().getTriple().c_str(),
+                                           target->GetArchitecture().GetTriple().getTriple().c_str());
+        }
+
+        // This supports the use-case scenario of immediately continuing the process once attached.
+        if (m_options.attach_info.GetContinueOnceAttached())
+            m_interpreter.HandleCommand("process continue", eLazyBoolNo, result);
+
         return result.Succeeded();
     }
     

@@ -542,6 +542,9 @@ DynamicLoaderPOSIXDYLD::ComputeLoadOffset()
         return LLDB_INVALID_ADDRESS;
 
     ObjectFile *exe = module->GetObjectFile();
+    if (!exe)
+        return LLDB_INVALID_ADDRESS;
+
     Address file_entry = exe->GetEntryPointAddress();
 
     if (!file_entry.IsValid())

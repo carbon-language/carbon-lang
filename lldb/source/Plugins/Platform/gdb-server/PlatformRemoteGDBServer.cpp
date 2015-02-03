@@ -665,10 +665,16 @@ PlatformRemoteGDBServer::Attach (lldb_private::ProcessAttachInfo &attach_info,
                                                                 override_hostname ? override_hostname : m_platform_hostname.c_str(),
                                                                 port + port_offset);
                         assert (connect_url_len < (int)sizeof(connect_url));
-                        error = process_sp->ConnectRemote (NULL, connect_url);
+                        error = process_sp->ConnectRemote(nullptr, connect_url);
                         if (error.Success())
+                        {
+                            auto listener = attach_info.GetHijackListener();
+                            if (listener != nullptr)
+                                process_sp->HijackProcessEvents(listener.get());
                             error = process_sp->Attach(attach_info);
-                        else if (debugserver_pid != LLDB_INVALID_PROCESS_ID)
+                        }
+
+                        if (error.Fail() && debugserver_pid != LLDB_INVALID_PROCESS_ID)
                         {
                             m_gdb_client.KillSpawnedProcess(debugserver_pid);
                         }

@@ -765,8 +765,12 @@ PlatformPOSIX::Attach (ProcessAttachInfo &attach_info,
                 // Set UnixSignals appropriately.
                 process_sp->SetUnixSignals (Host::GetUnixSignals ());
 
-                ListenerSP listener_sp (new Listener("lldb.PlatformPOSIX.attach.hijack"));
-                attach_info.SetHijackListener(listener_sp);
+                auto listener_sp = attach_info.GetHijackListener();
+                if (listener_sp == nullptr)
+                {
+                    listener_sp.reset(new Listener("lldb.PlatformPOSIX.attach.hijack"));
+                    attach_info.SetHijackListener(listener_sp);
+                }
                 process_sp->HijackProcessEvents(listener_sp.get());
                 error = process_sp->Attach (attach_info);
             }
