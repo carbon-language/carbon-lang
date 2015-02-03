@@ -160,7 +160,7 @@ PlatformLinux::CreateInstance (bool force, const ArchSpec *arch)
             case llvm::Triple::PC:
                 create = true;
                 break;
-                
+
 #if defined(__linux__)
             // Only accept "unknown" for the vendor if the host is linux and
             // it "unknown" wasn't specified (it was just returned because it
