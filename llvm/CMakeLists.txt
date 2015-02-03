@@ -96,6 +96,9 @@ if(WIN32 AND NOT UNIX)
     "ExecWait '$INSTDIR/tools/msbuild/install.bat'")
   set(CPACK_NSIS_EXTRA_UNINSTALL_COMMANDS
     "ExecWait '$INSTDIR/tools/msbuild/uninstall.bat'")
+  if( CMAKE_CL_64 )
+    set(CPACK_NSIS_INSTALL_ROOT "$PROGRAMFILES64")
+  endif()
 endif()
 include(CPack)
 
