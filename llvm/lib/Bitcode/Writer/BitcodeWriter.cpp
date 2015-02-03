@@ -792,10 +792,20 @@ static void WriteMDLocation(const MDLocation *N, const ValueEnumerator &VE,
   Record.clear();
 }
 
-static void WriteGenericDebugNode(const GenericDebugNode *,
-                                  const ValueEnumerator &, BitstreamWriter &,
-                                  SmallVectorImpl<uint64_t> &, unsigned) {
-  llvm_unreachable("unimplemented");
+static void WriteGenericDebugNode(const GenericDebugNode *N,
+                                  const ValueEnumerator &VE,
+                                  BitstreamWriter &Stream,
+                                  SmallVectorImpl<uint64_t> &Record,
+                                  unsigned Abbrev) {
+  Record.push_back(N->isDistinct());
+  Record.push_back(N->getTag());
+  Record.push_back(0); // Per-tag version field; unused for now.
+
+  for (auto &I : N->operands())
+    Record.push_back(VE.getMetadataOrNullID(I));
+
+  Stream.EmitRecord(bitc::METADATA_GENERIC_DEBUG, Record, Abbrev);
+  Record.clear();
 }
 
 static void WriteModuleMetadata(const Module *M,
@@ -833,6 +843,23 @@ static void WriteModuleMetadata(const Module *M,
     MDLocationAbbrev = Stream.EmitAbbrev(Abbv);
   }
 
+  unsigned GenericDebugNodeAbbrev = 0;
+  if (VE.hasGenericDebugNode()) {
+    // Abbrev for METADATA_GENERIC_DEBUG.
+    //
+    // Assume the column is usually under 128, and always output the inlined-at
+    // location (it's never more expensive than building an array size 1).
+    BitCodeAbbrev *Abbv = new BitCodeAbbrev();
+    Abbv->Add(BitCodeAbbrevOp(bitc::METADATA_GENERIC_DEBUG));
+    Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 1));
+    Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 6));
+    Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 1));
+    Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 6));
+    Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Array));
+    Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 6));
+    GenericDebugNodeAbbrev = Stream.EmitAbbrev(Abbv);
+  }
+
   unsigned NameAbbrev = 0;
   if (!M->named_metadata_empty()) {
     // Abbrev for METADATA_NAME.
@@ -844,7 +871,6 @@ static void WriteModuleMetadata(const Module *M,
   }
 
   unsigned MDTupleAbbrev = 0;
-  unsigned GenericDebugNodeAbbrev = 0;
   SmallVector<uint64_t, 64> Record;
   for (const Metadata *MD : MDs) {
     if (const MDNode *N = dyn_cast<MDNode>(MD)) {

@@ -2945,6 +2945,24 @@ bool LLParser::ParseMDField(LocTy Loc, StringRef Name, MDField &Result) {
   return false;
 }
 
+bool LLParser::ParseMDField(LocTy Loc, StringRef Name, MDStringField &Result) {
+  std::string S;
+  if (ParseStringConstant(S))
+    return true;
+
+  Result.assign(std::move(S));
+  return false;
+}
+
+bool LLParser::ParseMDField(LocTy Loc, StringRef Name, MDFieldList &Result) {
+  SmallVector<Metadata *, 4> MDs;
+  if (ParseMDNodeVector(MDs))
+    return true;
+
+  Result.assign(std::move(MDs));
+  return false;
+}
+
 template <class ParserTy>
 bool LLParser::ParseMDFieldsImplBody(ParserTy parseField) {
   do {
@@ -2990,6 +3008,7 @@ bool LLParser::ParseSpecializedMDNode(MDNode *&N, bool IsDistinct) {
     return Parse##CLASS(N, IsDistinct);
 
   DISPATCH_TO_PARSER(MDLocation);
+  DISPATCH_TO_PARSER(GenericDebugNode);
 #undef DISPATCH_TO_PARSER
 
   return TokError("expected metadata type");
@@ -3014,6 +3033,8 @@ bool LLParser::ParseSpecializedMDNode(MDNode *&N, bool IsDistinct) {
       return true;                                                             \
     VISIT_MD_FIELDS(NOP_FIELD, REQUIRE_FIELD)                                  \
   } while (false)
+#define GET_OR_DISTINCT(CLASS, ARGS)                                           \
+  (IsDistinct ? CLASS::getDistinct ARGS : CLASS::get ARGS)
 
 /// ParseMDLocationFields:
 ///   ::= !MDLocation(line: 43, column: 8, scope: !5, inlinedAt: !6)
@@ -3028,6 +3049,21 @@ bool LLParser::ParseMDLocation(MDNode *&Result, bool IsDistinct) {
 
   auto get = (IsDistinct ? MDLocation::getDistinct : MDLocation::get);
   Result = get(Context, line.Val, column.Val, scope.Val, inlinedAt.Val);
+  return false;
+}
+
+/// ParseGenericDebugNode:
+///   ::= !GenericDebugNode(tag: 15, header: "...", operands: {...})
+bool LLParser::ParseGenericDebugNode(MDNode *&Result, bool IsDistinct) {
+#define VISIT_MD_FIELDS(OPTIONAL, REQUIRED)                                    \
+  REQUIRED(tag, MDUnsignedField<uint32_t>, (0, ~0u >> 16));                    \
+  OPTIONAL(header, MDStringField, );                                           \
+  OPTIONAL(operands, MDFieldList, );
+  PARSE_MD_FIELDS();
+#undef VISIT_MD_FIELDS
+
+  Result = GET_OR_DISTINCT(GenericDebugNode,
+                           (Context, tag.Val, header.Val, operands.Val));
   return false;
 }
 #undef PARSE_MD_FIELD

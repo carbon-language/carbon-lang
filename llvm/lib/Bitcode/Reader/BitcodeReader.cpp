@@ -1181,6 +1181,17 @@ std::error_code BitcodeReader::ParseMetadata() {
 
   SmallVector<uint64_t, 64> Record;
 
+  auto getMDString = [&](unsigned ID) -> MDString *{
+    // This requires that the ID is not really a forward reference.  In
+    // particular, the MDString must already have been resolved.
+    if (ID)
+      return cast<MDString>(MDValueList.getValueFwdRef(ID - 1));
+    return nullptr;
+  };
+
+#define GET_OR_DISTINCT(CLASS, DISTINCT, ARGS)                                 \
+  (DISTINCT ? CLASS::getDistinct ARGS : CLASS::get ARGS)
+
   // Read all the records.
   while (1) {
     BitstreamEntry Entry = Stream.advanceSkippingSubblocks();
@@ -1318,6 +1329,26 @@ std::error_code BitcodeReader::ParseMetadata() {
                               NextMDValueNo++);
       break;
     }
+    case bitc::METADATA_GENERIC_DEBUG: {
+      if (Record.size() < 4)
+        return Error("Invalid record");
+
+      unsigned Tag = Record[1];
+      unsigned Version = Record[2];
+
+      if (Tag >= 1u << 16 || Version != 0)
+        return Error("Invalid record");
+
+      auto *Header = getMDString(Record[3]);
+      SmallVector<Metadata *, 8> DwarfOps;
+      for (unsigned I = 4, E = Record.size(); I != E; ++I)
+        DwarfOps.push_back(Record[I] ? MDValueList.getValueFwdRef(Record[I] - 1)
+                                     : nullptr);
+      MDValueList.AssignValue(GET_OR_DISTINCT(GenericDebugNode, Record[0],
+                                              (Context, Tag, Header, DwarfOps)),
+                              NextMDValueNo++);
+      break;
+    }
     case bitc::METADATA_STRING: {
       std::string String(Record.begin(), Record.end());
       llvm::UpgradeMDStringConstant(String);
@@ -1339,6 +1370,7 @@ std::error_code BitcodeReader::ParseMetadata() {
     }
     }
   }
+#undef GET_OR_DISTINCT
 }
 
 /// decodeSignRotatedValue - Decode a signed value stored with the sign bit in
