@@ -65,6 +65,7 @@ static const uint64_t kSmallX86_64ShadowOffset = 0x7FFF8000;  // < 2G.
 static const uint64_t kPPC64_ShadowOffset64 = 1ULL << 41;
 static const uint64_t kMIPS32_ShadowOffset32 = 0x0aaa0000;
 static const uint64_t kMIPS64_ShadowOffset64 = 1ULL << 37;
+static const uint64_t kAArch64_ShadowOffset64 = 1ULL << 36;
 static const uint64_t kFreeBSD_ShadowOffset32 = 1ULL << 30;
 static const uint64_t kFreeBSD_ShadowOffset64 = 1ULL << 46;
 static const uint64_t kWindowsShadowOffset32 = 3ULL << 28;
@@ -308,6 +309,7 @@ static ShadowMapping getShadowMapping(Triple &TargetTriple, int LongSize) {
                   TargetTriple.getArch() == llvm::Triple::mipsel;
   bool IsMIPS64 = TargetTriple.getArch() == llvm::Triple::mips64 ||
                   TargetTriple.getArch() == llvm::Triple::mips64el;
+  bool IsAArch64 = TargetTriple.getArch() == llvm::Triple::aarch64;
   bool IsWindows = TargetTriple.isOSWindows();
 
   ShadowMapping Mapping;
@@ -334,6 +336,8 @@ static ShadowMapping getShadowMapping(Triple &TargetTriple, int LongSize) {
       Mapping.Offset = kSmallX86_64ShadowOffset;
     else if (IsMIPS64)
       Mapping.Offset = kMIPS64_ShadowOffset64;
+    else if (IsAArch64)
+      Mapping.Offset = kAArch64_ShadowOffset64;
     else
       Mapping.Offset = kDefaultShadowOffset64;
   }
