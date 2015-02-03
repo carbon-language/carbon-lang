@@ -7818,7 +7818,6 @@ static SDValue lowerVectorShuffleAsBitShift(SDLoc DL, MVT VT, SDValue V1,
                                             SDValue V2, ArrayRef<int> Mask,
                                             SelectionDAG &DAG) {
   SmallBitVector Zeroable = computeZeroableShuffleElements(Mask, V1, V2);
-  const TargetLowering &TLI = DAG.getTargetLoweringInfo();
 
   int Size = Mask.size();
   assert(Size == VT.getVectorNumElements() && "Unexpected mask size");
@@ -7832,7 +7831,8 @@ static SDValue lowerVectorShuffleAsBitShift(SDLoc DL, MVT VT, SDValue V1,
   auto MatchBitShift = [&](int Shift, int Scale) -> SDValue {
     MVT ShiftSVT = MVT::getIntegerVT(VT.getScalarSizeInBits() * Scale);
     MVT ShiftVT = MVT::getVectorVT(ShiftSVT, Size / Scale);
-    assert(TLI.isTypeLegal(ShiftVT) && "Illegal integer vector type");
+    assert(DAG.getTargetLoweringInfo().isTypeLegal(ShiftVT) &&
+           "Illegal integer vector type");
 
     bool MatchLeft = true, MatchRight = true;
     for (int i = 0; i != Size; i += Scale) {
