@@ -616,7 +616,7 @@ public:
             std::string cmd_line;
             args.GetCommandString(cmd_line);
             uint32_t mode;
-            const OptionPermissions* options_permissions = (OptionPermissions*)m_options.GetGroupWithOption('r');
+            const OptionPermissions* options_permissions = (const OptionPermissions*)m_options.GetGroupWithOption('r');
             if (options_permissions)
                 mode = options_permissions->m_permissions;
             else
@@ -685,7 +685,7 @@ public:
             std::string cmd_line;
             args.GetCommandString(cmd_line);
             mode_t perms;
-            const OptionPermissions* options_permissions = (OptionPermissions*)m_options.GetGroupWithOption('r');
+            const OptionPermissions* options_permissions = (const OptionPermissions*)m_options.GetGroupWithOption('r');
             if (options_permissions)
                 perms = options_permissions->m_permissions;
             else
