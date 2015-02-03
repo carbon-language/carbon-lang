@@ -126,7 +126,7 @@ namespace lldb_private
         /// dependent) offset.
         ///
         /// This method is provided for use by RegisterContextLinux derivatives.
-        bool
+        Error
         ReadRegisterValue(lldb::tid_t tid, unsigned offset, const char *reg_name,
                           unsigned size, lldb_private::RegisterValue &value);
 
@@ -134,34 +134,34 @@ namespace lldb_private
         /// (architecture dependent) offset.
         ///
         /// This method is provided for use by RegisterContextLinux derivatives.
-        bool
+        Error
         WriteRegisterValue(lldb::tid_t tid, unsigned offset, const char *reg_name,
                            const lldb_private::RegisterValue &value);
 
         /// Reads all general purpose registers into the specified buffer.
-        bool
+        Error
         ReadGPR(lldb::tid_t tid, void *buf, size_t buf_size);
 
         /// Reads generic floating point registers into the specified buffer.
-        bool
+        Error
         ReadFPR(lldb::tid_t tid, void *buf, size_t buf_size);
 
         /// Reads the specified register set into the specified buffer.
         /// For instance, the extended floating-point register set.
-        bool
+        Error
         ReadRegisterSet(lldb::tid_t tid, void *buf, size_t buf_size, unsigned int regset);
 
         /// Writes all general purpose registers into the specified buffer.
-        bool
+        Error
         WriteGPR(lldb::tid_t tid, void *buf, size_t buf_size);
 
         /// Writes generic floating point registers into the specified buffer.
-        bool
+        Error
         WriteFPR(lldb::tid_t tid, void *buf, size_t buf_size);
 
         /// Writes the specified register set into the specified buffer.
         /// For instance, the extended floating-point register set.
-        bool
+        Error
         WriteRegisterSet(lldb::tid_t tid, void *buf, size_t buf_size, unsigned int regset);
         
     protected:
@@ -285,7 +285,7 @@ namespace lldb_private
         static bool
         Attach(AttachArgs *args);
 
-        static bool
+        static Error
         SetDefaultPtraceOpts(const lldb::pid_t);
 
         static void
@@ -365,23 +365,23 @@ namespace lldb_private
 
         /// Writes a siginfo_t structure corresponding to the given thread ID to the
         /// memory region pointed to by @p siginfo.
-        bool
-        GetSignalInfo(lldb::tid_t tid, void *siginfo, int &ptrace_err);
+        Error
+        GetSignalInfo(lldb::tid_t tid, void *siginfo);
 
         /// Writes the raw event message code (vis-a-vis PTRACE_GETEVENTMSG)
         /// corresponding to the given thread ID to the memory pointed to by @p
         /// message.
-        bool
+        Error
         GetEventMessage(lldb::tid_t tid, unsigned long *message);
 
         /// Resumes the given thread.  If @p signo is anything but
         /// LLDB_INVALID_SIGNAL_NUMBER, deliver that signal to the thread.
-        bool
+        Error
         Resume(lldb::tid_t tid, uint32_t signo);
 
         /// Single steps the given thread.  If @p signo is anything but
         /// LLDB_INVALID_SIGNAL_NUMBER, deliver that signal to the thread.
-        bool
+        Error
         SingleStep(lldb::tid_t tid, uint32_t signo);
 
         // ThreadStateCoordinator helper methods.
