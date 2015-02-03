@@ -2303,28 +2303,17 @@ NativeProcessLinux::MonitorSIGTRAP(const siginfo_t *info, lldb::pid_t pid)
                     is_main_thread ? "is main thread" : "not main thread");
         }
 
-        // We'll set the thread to exited later...
-//        if (thread_sp)
-//            reinterpret_cast<NativeThreadLinux*> (thread_sp.get ())->SetExited ();
-//        else
-//        {
-//            if (log)
-//                log->Printf ("NativeProcessLinux::%s() pid %" PRIu64 " failed to retrieve thread for tid %" PRIu64", cannot set thread state", __FUNCTION__, GetID (), pid);
-//        }
-
-        // FIXME: review if this is the spot, or the follow up, which tells us the real exit code.
-        // If it's this one, we need to track it or set it here.  Setting it here is not really in the
-        // right time flow though unless we skip the follow up.
         if (is_main_thread)
         {
             SetExitStatus (convert_pid_status_to_exit_type (data), convert_pid_status_to_return_code (data), nullptr, true);
         }
 
+        const int signo = static_cast<int> (data);
         m_coordinator_up->RequestThreadResume (pid,
                                                [=](lldb::tid_t tid_to_resume)
                                                {
                                                    reinterpret_cast<NativeThreadLinux*> (thread_sp.get ())->SetRunning ();
-                                                   Resume (tid_to_resume, LLDB_INVALID_SIGNAL_NUMBER);
+                                                   Resume (tid_to_resume, signo);
                                                },
                                                CoordinatorErrorHandler);
 
