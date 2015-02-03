@@ -2333,7 +2333,7 @@ void InnerLoopVectorizer::createEmptyLoop() {
   if (MemRuntimeCheck) {
     // Create a new block containing the memory check.
     BasicBlock *CheckBlock =
-        LastBypassBlock->splitBasicBlock(MemRuntimeCheck, "vector.memcheck");
+        LastBypassBlock->splitBasicBlock(FirstCheckInst, "vector.memcheck");
     if (ParentLoop)
       ParentLoop->addBasicBlockToLoop(CheckBlock, *LI);
     LoopBypassBlocks.push_back(CheckBlock);
