@@ -10,7 +10,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "FuzzerInternal.h"
-#include <sanitizer/asan_interface.h>
+#include <sanitizer/coverage_interface.h>
 #include <algorithm>
 #include <iostream>
 
