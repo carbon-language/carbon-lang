@@ -4810,3 +4810,21 @@ Hexagon_di_di_Intrinsic<"HEXAGON_S2_interleave">;
 //
 def int_hexagon_S2_deinterleave :
 Hexagon_di_di_Intrinsic<"HEXAGON_S2_deinterleave">;
+
+def llvm_ptr32_ty : LLVMPointerType<llvm_i32_ty>;
+def llvm_ptr64_ty : LLVMPointerType<llvm_i64_ty>;
+
+// Mark locked loads as read/write to prevent any accidental reordering.
+def int_hexagon_L2_loadw_locked :
+Hexagon_Intrinsic<"HEXAGON_L2_loadw_locked", [llvm_i32_ty], [llvm_ptr32_ty],
+      [IntrReadWriteArgMem, NoCapture<0>]>;
+def int_hexagon_L4_loadd_locked :
+Hexagon_Intrinsic<"HEXAGON_L4_loadd_locked", [llvm_i64_ty], [llvm_ptr64_ty],
+      [IntrReadWriteArgMem, NoCapture<0>]>;
+
+def int_hexagon_S2_storew_locked :
+Hexagon_Intrinsic<"HEXAGON_S2_storew_locked", [llvm_i32_ty],
+      [llvm_ptr32_ty, llvm_i32_ty], [IntrReadWriteArgMem, NoCapture<0>]>;
+def int_hexagon_S4_stored_locked :
+Hexagon_Intrinsic<"HEXAGON_S4_stored_locked", [llvm_i32_ty],
+      [llvm_ptr64_ty, llvm_i64_ty], [IntrReadWriteArgMem, NoCapture<0>]>;

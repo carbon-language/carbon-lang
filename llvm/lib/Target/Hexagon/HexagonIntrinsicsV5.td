@@ -1,4 +1,4 @@
-//===- HexagonIntrinsicsV5.td - V4 Instruction intrinsics --*- tablegen -*-===//
+//===- HexagonIntrinsicsV5.td - V5 Instruction intrinsics --*- tablegen -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -6,6 +6,32 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
+
+//Rdd[+]=vrmpybsu(Rss,Rtt)
+//Rdd[+]=vrmpybuu(Rss,Rtt)
+let Predicates = [HasV5T]  in {
+def : T_PP_pat  <M5_vrmpybsu, int_hexagon_M5_vrmpybsu>;
+def : T_PP_pat  <M5_vrmpybuu, int_hexagon_M5_vrmpybuu>;
+
+def : T_PP_pat <M5_vdmpybsu, int_hexagon_M5_vdmpybsu>;
+
+def : T_PPP_pat <M5_vrmacbsu, int_hexagon_M5_vrmacbsu>;
+def : T_PPP_pat <M5_vrmacbuu, int_hexagon_M5_vrmacbuu>;
+//Rxx+=vdmpybsu(Rss,Rtt):sat
+def : T_PPP_pat <M5_vdmacbsu, int_hexagon_M5_vdmacbsu>;
+
+// Vector multiply bytes
+// Rdd=vmpyb[s]u(Rs,Rt)
+def : T_RR_pat <M5_vmpybsu, int_hexagon_M5_vmpybsu>;
+def : T_RR_pat <M5_vmpybuu, int_hexagon_M5_vmpybuu>;
+
+// Rxx+=vmpyb[s]u(Rs,Rt)
+def : T_PRR_pat <M5_vmacbsu, int_hexagon_M5_vmacbsu>;
+def : T_PRR_pat <M5_vmacbuu, int_hexagon_M5_vmacbuu>;
+
+// Rd=vaddhub(Rss,Rtt):sat
+def : T_PP_pat <A5_vaddhubs, int_hexagon_A5_vaddhubs>;
+}
 
 def : T_FF_pat<F2_sfadd, int_hexagon_F2_sfadd>;
 def : T_FF_pat<F2_sfsub, int_hexagon_F2_sfsub>;
@@ -29,6 +55,8 @@ def : T_PI_pat <S2_asr_i_p_rnd_goodsyntax,
 
 def : T_PI_pat <S5_asrhub_rnd_sat_goodsyntax,
                 int_hexagon_S5_asrhub_rnd_sat_goodsyntax>;
+
+def : T_PI_pat <S5_vasrhrnd_goodsyntax, int_hexagon_S5_vasrhrnd_goodsyntax>;
 
 def : T_FFF_pat <F2_sffma, int_hexagon_F2_sffma>;
 def : T_FFF_pat <F2_sffms, int_hexagon_F2_sffms>;
@@ -81,53 +109,3 @@ def : T_D_pat <F2_conv_df2uw_chop, int_hexagon_F2_conv_df2uw_chop>;
 def : T_D_pat <F2_conv_df2w_chop,  int_hexagon_F2_conv_df2w_chop>;
 def : T_D_pat <F2_conv_df2ud_chop, int_hexagon_F2_conv_df2ud_chop>;
 def : T_D_pat <F2_conv_df2d_chop,  int_hexagon_F2_conv_df2d_chop>;
-
-class qi_ALU64_dfdf<string opc, Intrinsic IntID>
-  : ALU64_rr<(outs PredRegs:$dst), (ins DoubleRegs:$src1, DoubleRegs:$src2),
-           !strconcat("$dst = ", !strconcat(opc , "($src1, $src2)")),
-           [(set PredRegs:$dst, (IntID DoubleRegs:$src1, DoubleRegs:$src2))]>;
-
-class qi_ALU64_dfu5<string opc, Intrinsic IntID>
-  : ALU64_ri<(outs PredRegs:$dst), (ins DoubleRegs:$src1, u5Imm:$src2),
-           !strconcat("$dst = ", !strconcat(opc , "($src1, #$src2)")),
-           [(set PredRegs:$dst, (IntID DoubleRegs:$src1, imm:$src2))]>;
-
-class qi_SInst_sfsf<string opc, Intrinsic IntID>
-  : SInst<(outs PredRegs:$dst), (ins IntRegs:$src1, IntRegs:$src2),
-             !strconcat("$dst = ", !strconcat(opc , "($src1, $src2)")),
-             [(set PredRegs:$dst, (IntID IntRegs:$src1, IntRegs:$src2))]>;
-
-class qi_SInst_sfu5<string opc, Intrinsic IntID>
-  : MInst<(outs PredRegs:$dst), (ins IntRegs:$src1, u5Imm:$src2),
-             !strconcat("$dst = ", !strconcat(opc , "($src1, #$src2)")),
-             [(set PredRegs:$dst, (IntID IntRegs:$src1, imm:$src2))]>;
-
-class di_MInst_diu4_rnd<string opc, Intrinsic IntID>
-  : MInst<(outs DoubleRegs:$dst), (ins DoubleRegs:$src1, u4Imm:$src2),
-          !strconcat("$dst = ", !strconcat(opc , "($src1, #$src2):rnd")),
-          [(set DoubleRegs:$dst, (IntID DoubleRegs:$src1, imm:$src2))]>;
-
-def HEXAGON_M5_vrmpybuu:
-    di_MInst_didi <"vrmpybu", int_hexagon_M5_vrmpybuu>;
-def HEXAGON_M5_vrmacbuu:
-    di_MInst_dididi_acc <"vrmpybu", int_hexagon_M5_vrmacbuu>;
-def HEXAGON_M5_vrmpybsu:
-    di_MInst_didi <"vrmpybsu", int_hexagon_M5_vrmpybsu>;
-def HEXAGON_M5_vrmacbsu:
-    di_MInst_dididi_acc <"vrmpybsu", int_hexagon_M5_vrmacbsu>;
-def HEXAGON_M5_vmpybuu:
-    di_MInst_sisi <"vmpybu", int_hexagon_M5_vmpybuu>;
-def HEXAGON_M5_vmpybsu:
-    di_MInst_sisi <"vmpybsu", int_hexagon_M5_vmpybsu>;
-def HEXAGON_M5_vmacbuu:
-    di_MInst_disisi_acc <"vmpybu", int_hexagon_M5_vmacbuu>;
-def HEXAGON_M5_vmacbsu:
-    di_MInst_disisi_acc <"vmpybsu", int_hexagon_M5_vmacbsu>;
-def HEXAGON_M5_vdmpybsu:
-    di_MInst_didi_sat <"vdmpybsu", int_hexagon_M5_vdmpybsu>;
-def HEXAGON_M5_vdmacbsu:
-    di_MInst_dididi_acc_sat <"vdmpybsu", int_hexagon_M5_vdmacbsu>;
-def HEXAGON_A5_vaddhubs:
-    si_SInst_didi_sat <"vaddhub", int_hexagon_A5_vaddhubs>;
-def HEXAGON_S5_vasrhrnd_goodsyntax:
-    di_MInst_diu4_rnd <"vasrh", int_hexagon_S5_vasrhrnd_goodsyntax>;

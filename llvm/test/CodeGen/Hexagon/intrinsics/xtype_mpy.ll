@@ -1,4 +1,4 @@
-; RUN: llc -march=hexagon -O0 < %s | FileCheck %s
+; RUN: llc -march=hexagon -mcpu=hexagonv5 -O0 < %s | FileCheck %s
 ; Hexagon Programmer's Reference Manual 11.10.5 XTYPE/MPY
 
 ; Multiply and use lower result

@@ -633,3 +633,91 @@ define i32 @S2_asl_r_r_sat(i32 %a, i32 %b) {
   ret i32 %z
 }
 ; CHECK: r0 = asl(r0, r1):sat
+
+; Vector shift halfwords by immediate
+declare i64 @llvm.hexagon.S2.asr.i.vh(i64, i32)
+define i64 @S2_asr_i_vh(i64 %a) {
+  %z = call i64 @llvm.hexagon.S2.asr.i.vh(i64 %a, i32 0)
+  ret i64 %z
+}
+; CHECK: r1:0 = vasrh(r1:0, #0)
+
+declare i64 @llvm.hexagon.S2.lsr.i.vh(i64, i32)
+define i64 @S2_lsr_i_vh(i64 %a) {
+  %z = call i64 @llvm.hexagon.S2.lsr.i.vh(i64 %a, i32 0)
+  ret i64 %z
+}
+; CHECK: r1:0 = vlsrh(r1:0, #0)
+
+declare i64 @llvm.hexagon.S2.asl.i.vh(i64, i32)
+define i64 @S2_asl_i_vh(i64 %a) {
+  %z = call i64 @llvm.hexagon.S2.asl.i.vh(i64 %a, i32 0)
+  ret i64 %z
+}
+; CHECK: r1:0 = vaslh(r1:0, #0)
+
+; Vector shift halfwords by register
+declare i64 @llvm.hexagon.S2.asr.r.vh(i64, i32)
+define i64 @S2_asr_r_vh(i64 %a, i32 %b) {
+  %z = call i64 @llvm.hexagon.S2.asr.r.vh(i64 %a, i32 %b)
+  ret i64 %z
+}
+; CHECK: r1:0 = vasrh(r1:0, r2)
+
+declare i64 @llvm.hexagon.S2.lsr.r.vh(i64, i32)
+define i64 @S2_lsr_r_vh(i64 %a, i32 %b) {
+  %z = call i64 @llvm.hexagon.S2.lsr.r.vh(i64 %a, i32 %b)
+  ret i64 %z
+}
+; CHECK: r1:0 = vlsrh(r1:0, r2)
+
+declare i64 @llvm.hexagon.S2.asl.r.vh(i64, i32)
+define i64 @S2_asl_r_vh(i64 %a, i32 %b) {
+  %z = call i64 @llvm.hexagon.S2.asl.r.vh(i64 %a, i32 %b)
+  ret i64 %z
+}
+; CHECK: r1:0 = vaslh(r1:0, r2)
+
+declare i64 @llvm.hexagon.S2.lsl.r.vh(i64, i32)
+define i64 @S2_lsl_r_vh(i64 %a, i32 %b) {
+  %z = call i64 @llvm.hexagon.S2.lsl.r.vh(i64 %a, i32 %b)
+  ret i64 %z
+}
+; CHECK: r1:0 = vlslh(r1:0, r2)
+
+; Vector shift words by immediate
+declare i64 @llvm.hexagon.S2.asr.i.vw(i64, i32)
+define i64 @S2_asr_i_vw(i64 %a) {
+  %z = call i64 @llvm.hexagon.S2.asr.i.vw(i64 %a, i32 0)
+  ret i64 %z
+}
+; CHECK: r1:0 = vasrw(r1:0, #0)
+
+declare i64 @llvm.hexagon.S2.lsr.i.vw(i64, i32)
+define i64 @S2_lsr_i_vw(i64 %a) {
+  %z = call i64 @llvm.hexagon.S2.lsr.i.vw(i64 %a, i32 0)
+  ret i64 %z
+}
+; CHECK: r1:0 = vlsrw(r1:0, #0)
+
+declare i64 @llvm.hexagon.S2.asl.i.vw(i64, i32)
+define i64 @S2_asl_i_vw(i64 %a) {
+  %z = call i64 @llvm.hexagon.S2.asl.i.vw(i64 %a, i32 0)
+  ret i64 %z
+}
+; CHECK: r1:0 = vaslw(r1:0, #0)
+
+; Vector shift words by with truncate and pack
+declare i32 @llvm.hexagon.S2.asr.i.svw.trun(i64, i32)
+define i32 @S2_asr_i_svw_trun(i64 %a) {
+  %z = call i32 @llvm.hexagon.S2.asr.i.svw.trun(i64 %a, i32 0)
+  ret i32 %z
+}
+; CHECK: r0 = vasrw(r1:0, #0)
+
+declare i32 @llvm.hexagon.S2.asr.r.svw.trun(i64, i32)
+define i32 @S2_asr_r_svw_trun(i64 %a, i32 %b) {
+  %z = call i32 @llvm.hexagon.S2.asr.r.svw.trun(i64 %a, i32 %b)
+  ret i32 %z
+}
+; CHECK: r0 = vasrw(r1:0, r2)

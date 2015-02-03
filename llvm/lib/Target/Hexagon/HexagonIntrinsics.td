@@ -1136,7 +1136,6 @@ def : T_R_pat <S2_vzxthw,   int_hexagon_S2_vzxthw>;
 def : T_R_pat <S2_vsplatrh, int_hexagon_S2_vsplatrh>;
 def : T_R_pat <A2_sxtw,     int_hexagon_A2_sxtw>;
 
-
 // Vector saturate and pack
 def : T_R_pat <S2_svsathb,  int_hexagon_S2_svsathb>;
 def : T_R_pat <S2_svsathub, int_hexagon_S2_svsathub>;
@@ -1163,6 +1162,9 @@ def : T_R_pat <A2_sath,   int_hexagon_A2_sath>;
 def : T_R_pat <A2_satuh,  int_hexagon_A2_satuh>;
 def : T_R_pat <A2_satub,  int_hexagon_A2_satub>;
 def : T_R_pat <A2_satb,   int_hexagon_A2_satb>;
+
+// Vector arithmetic shift right by immediate with truncate and pack.
+def : T_PI_pat<S2_asr_i_svw_trun, int_hexagon_S2_asr_i_svw_trun>;
 
 def : T_RI_pat <S2_asr_i_r,     int_hexagon_S2_asr_i_r>;
 def : T_RI_pat <S2_lsr_i_r,     int_hexagon_S2_lsr_i_r>;
@@ -1201,599 +1203,60 @@ def : S2op_tableidx_pat <int_hexagon_S2_tableidxw_goodsyntax, S2_tableidxw,
 def : S2op_tableidx_pat <int_hexagon_S2_tableidxd_goodsyntax, S2_tableidxd,
                          DEC3_CONST_SIGNED>;
 
-//
-// ALU 32 types.
-//
-
-class qi_ALU32_sisi<string opc, Intrinsic IntID>
-  : ALU32_rr<(outs PredRegs:$dst), (ins IntRegs:$src1, IntRegs:$src2),
-             !strconcat("$dst = ", !strconcat(opc , "($src1, $src2)")),
-             [(set PredRegs:$dst, (IntID IntRegs:$src1, IntRegs:$src2))]>;
-
-class qi_ALU32_sis10<string opc, Intrinsic IntID>
-  : ALU32_rr<(outs PredRegs:$dst), (ins IntRegs:$src1, s10Imm:$src2),
-             !strconcat("$dst = ", !strconcat(opc , "($src1, #$src2)")),
-             [(set PredRegs:$dst, (IntID IntRegs:$src1, imm:$src2))]>;
-
-class qi_ALU32_sis8<string opc, Intrinsic IntID>
-  : ALU32_rr<(outs PredRegs:$dst), (ins IntRegs:$src1, s8Imm:$src2),
-             !strconcat("$dst = ", !strconcat(opc , "($src1, #$src2)")),
-             [(set PredRegs:$dst, (IntID IntRegs:$src1, imm:$src2))]>;
-
-class qi_ALU32_siu8<string opc, Intrinsic IntID>
-  : ALU32_rr<(outs PredRegs:$dst), (ins IntRegs:$src1, u8Imm:$src2),
-             !strconcat("$dst = ", !strconcat(opc , "($src1, #$src2)")),
-             [(set PredRegs:$dst, (IntID IntRegs:$src1, imm:$src2))]>;
-
-class qi_ALU32_siu9<string opc, Intrinsic IntID>
-  : ALU32_rr<(outs PredRegs:$dst), (ins IntRegs:$src1, u9Imm:$src2),
-             !strconcat("$dst = ", !strconcat(opc , "($src1, #$src2)")),
-             [(set PredRegs:$dst, (IntID IntRegs:$src1, imm:$src2))]>;
-
-class si_ALU32_qisisi<string opc, Intrinsic IntID>
-  : ALU32_rr<(outs IntRegs:$dst), (ins IntRegs:$src1, IntRegs:$src2,
-                                      IntRegs:$src3),
-             !strconcat("$dst = ", !strconcat(opc , "($src1, $src2, $src3)")),
-             [(set IntRegs:$dst, (IntID IntRegs:$src1, IntRegs:$src2,
-                                        IntRegs:$src3))]>;
-
-class si_ALU32_sisi<string opc, Intrinsic IntID>
-  : ALU32_rr<(outs IntRegs:$dst), (ins IntRegs:$src1, IntRegs:$src2),
-             !strconcat("$dst = ", !strconcat(opc , "($src1, $src2)")),
-             [(set IntRegs:$dst, (IntID IntRegs:$src1, IntRegs:$src2))]>;
-
-class si_ALU32_sisi_sat<string opc, Intrinsic IntID>
-  : ALU32_rr<(outs IntRegs:$dst), (ins IntRegs:$src1, IntRegs:$src2),
-             !strconcat("$dst = ", !strconcat(opc , "($src1, $src2):sat")),
-             [(set IntRegs:$dst, (IntID IntRegs:$src1, IntRegs:$src2))]>;
-
-class si_ALU32_sisi_rnd<string opc, Intrinsic IntID>
-  : ALU32_rr<(outs IntRegs:$dst), (ins IntRegs:$src1, IntRegs:$src2),
-             !strconcat("$dst = ", !strconcat(opc , "($src1, $src2):rnd")),
-             [(set IntRegs:$dst, (IntID IntRegs:$src1, IntRegs:$src2))]>;
-
-class di_ALU64_di<string opc, Intrinsic IntID>
-  : ALU64_rr<(outs DoubleRegs:$dst), (ins DoubleRegs:$src),
-             !strconcat("$dst = ", !strconcat(opc , "$src")),
-             [(set DoubleRegs:$dst, (IntID DoubleRegs:$src))]>;
-
-//
-// ALU 64 types.
-//
-
-class di_ALU64_didi<string opc, Intrinsic IntID>
-  : ALU64_rr<(outs DoubleRegs:$dst), (ins DoubleRegs:$src1, DoubleRegs:$src2),
-             !strconcat("$dst = ", !strconcat(opc , "($src1, $src2)")),
-             [(set DoubleRegs:$dst, (IntID DoubleRegs:$src1,
-                                           DoubleRegs:$src2))]>;
-
-class di_ALU64_qididi<string opc, Intrinsic IntID>
-  : ALU64_rr<(outs DoubleRegs:$dst), (ins IntRegs:$src1, DoubleRegs:$src2,
-                                          DoubleRegs:$src3),
-             !strconcat("$dst = ", !strconcat(opc , "($src1, $src2, $src3)")),
-             [(set DoubleRegs:$dst, (IntID IntRegs:$src1, DoubleRegs:$src2,
-                                           DoubleRegs:$src3))]>;
-
-class di_ALU64_didi_sat<string opc, Intrinsic IntID>
-  : ALU64_rr<(outs DoubleRegs:$dst), (ins DoubleRegs:$src1, DoubleRegs:$src2),
-             !strconcat("$dst = ", !strconcat(opc , "($src1, $src2):sat")),
-             [(set DoubleRegs:$dst, (IntID DoubleRegs:$src1,
-                                           DoubleRegs:$src2))]>;
-
-class di_ALU64_didi_rnd<string opc, Intrinsic IntID>
-  : ALU64_rr<(outs DoubleRegs:$dst), (ins DoubleRegs:$src1, DoubleRegs:$src2),
-             !strconcat("$dst = ", !strconcat(opc , "($src1, $src2):rnd")),
-             [(set DoubleRegs:$dst, (IntID DoubleRegs:$src1,
-                                           DoubleRegs:$src2))]>;
-
-class di_ALU64_didi_crnd<string opc, Intrinsic IntID>
-  : ALU64_rr<(outs DoubleRegs:$dst), (ins DoubleRegs:$src1, DoubleRegs:$src2),
-             !strconcat("$dst = ", !strconcat(opc , "($src1, $src2):crnd")),
-             [(set DoubleRegs:$dst, (IntID DoubleRegs:$src1,
-                                           DoubleRegs:$src2))]>;
-
-class di_ALU64_didi_rnd_sat<string opc, Intrinsic IntID>
-  : ALU64_rr<(outs DoubleRegs:$dst), (ins DoubleRegs:$src1, DoubleRegs:$src2),
-             !strconcat("$dst = ", !strconcat(opc , "($src1, $src2):rnd:sat")),
-             [(set DoubleRegs:$dst, (IntID DoubleRegs:$src1,
-                                           DoubleRegs:$src2))]>;
-
-class di_ALU64_didi_crnd_sat<string opc, Intrinsic IntID>
-  : ALU64_rr<(outs DoubleRegs:$dst), (ins DoubleRegs:$src1, DoubleRegs:$src2),
-             !strconcat("$dst = ", !strconcat(opc , "($src1, $src2):crnd:sat")),
-             [(set DoubleRegs:$dst, (IntID DoubleRegs:$src1,
-                                           DoubleRegs:$src2))]>;
-
-class qi_ALU64_didi<string opc, Intrinsic IntID>
-  : ALU64_rr<(outs PredRegs:$dst), (ins DoubleRegs:$src1, DoubleRegs:$src2),
-             !strconcat("$dst = ", !strconcat(opc , "($src1, $src2)")),
-             [(set PredRegs:$dst, (IntID DoubleRegs:$src1, DoubleRegs:$src2))]>;
-
-//
-// SInst classes.
-//
-
-class qi_SInst_qi<string opc, Intrinsic IntID>
-  : SInst<(outs PredRegs:$dst), (ins IntRegs:$src),
-             !strconcat("$dst = ", !strconcat(opc , "($src)")),
-             [(set PredRegs:$dst, (IntID IntRegs:$src))]>;
-
-class qi_SInst_qi_pxfer<string opc, Intrinsic IntID>
-  : SInst<(outs PredRegs:$dst), (ins IntRegs:$src),
-             !strconcat("$dst = ", !strconcat(opc , "$src")),
-             [(set PredRegs:$dst, (IntID IntRegs:$src))]>;
-
-class qi_SInst_qiqi<string opc, Intrinsic IntID>
-  : SInst<(outs PredRegs:$dst), (ins IntRegs:$src1, IntRegs:$src2),
-             !strconcat("$dst = ", !strconcat(opc , "($src1, $src2)")),
-             [(set PredRegs:$dst, (IntID IntRegs:$src1, IntRegs:$src2))]>;
-
-class qi_SInst_qiqi_neg<string opc, Intrinsic IntID>
-  : SInst<(outs PredRegs:$dst), (ins IntRegs:$src1, IntRegs:$src2),
-             !strconcat("$dst = ", !strconcat(opc , "($src1, !$src2)")),
-             [(set PredRegs:$dst, (IntID IntRegs:$src1, IntRegs:$src2))]>;
-
-class di_SInst_di<string opc, Intrinsic IntID>
-  : SInst<(outs DoubleRegs:$dst), (ins DoubleRegs:$src),
-             !strconcat("$dst = ", !strconcat(opc , "($src)")),
-             [(set DoubleRegs:$dst, (IntID DoubleRegs:$src))]>;
-
-class di_SInst_di_sat<string opc, Intrinsic IntID>
-  : SInst<(outs DoubleRegs:$dst), (ins DoubleRegs:$src),
-             !strconcat("$dst = ", !strconcat(opc , "($src):sat")),
-             [(set DoubleRegs:$dst, (IntID DoubleRegs:$src))]>;
-
-class si_SInst_di<string opc, Intrinsic IntID>
-  : SInst<(outs IntRegs:$dst), (ins DoubleRegs:$src),
-          !strconcat("$dst = ", !strconcat(opc , "($src)")),
-          [(set IntRegs:$dst, (IntID DoubleRegs:$src))]>;
-
-class si_SInst_di_sat<string opc, Intrinsic IntID>
-  : SInst<(outs IntRegs:$dst), (ins DoubleRegs:$src),
-          !strconcat("$dst = ", !strconcat(opc , "($src):sat")),
-          [(set IntRegs:$dst, (IntID DoubleRegs:$src))]>;
-
-class di_SInst_disi<string opc, Intrinsic IntID>
-  : SInst<(outs DoubleRegs:$dst), (ins DoubleRegs:$src1, IntRegs:$src2),
-          !strconcat("$dst = ", !strconcat(opc , "($src1, $src2)")),
-          [(set DoubleRegs:$dst, (IntID DoubleRegs:$src1, IntRegs:$src2))]>;
-
-class di_SInst_didi<string opc, Intrinsic IntID>
-  : SInst<(outs DoubleRegs:$dst), (ins DoubleRegs:$src1, DoubleRegs:$src2),
-          !strconcat("$dst = ", !strconcat(opc , "($src1, $src2)")),
-          [(set DoubleRegs:$dst, (IntID DoubleRegs:$src1, DoubleRegs:$src2))]>;
-
-class di_SInst_si<string opc, Intrinsic IntID>
-  : SInst<(outs DoubleRegs:$dst), (ins IntRegs:$src1),
-          !strconcat("$dst = ", !strconcat(opc , "($src1)")),
-          [(set DoubleRegs:$dst, (IntID IntRegs:$src1))]>;
-
-class si_SInst_diu5<string opc, Intrinsic IntID>
-  : SInst<(outs IntRegs:$dst), (ins DoubleRegs:$src1, u5Imm:$src2),
-          !strconcat("$dst = ", !strconcat(opc , "($src1, #$src2)")),
-          [(set IntRegs:$dst, (IntID DoubleRegs:$src1, imm:$src2))]>;
-
-class si_SInst_disi<string opc, Intrinsic IntID>
-  : SInst<(outs IntRegs:$dst), (ins DoubleRegs:$src1, IntRegs:$src2),
-          !strconcat("$dst = ", !strconcat(opc , "($src1, $src2)")),
-          [(set IntRegs:$dst, (IntID DoubleRegs:$src1, IntRegs:$src2))]>;
-
-class si_SInst_si<string opc, Intrinsic IntID>
-  : SInst<(outs IntRegs:$dst), (ins IntRegs:$src),
-          !strconcat("$dst = ", !strconcat(opc , "($src)")),
-          [(set IntRegs:$dst, (IntID IntRegs:$src))]>;
-
-class di_SInst_qi<string opc, Intrinsic IntID>
-  : SInst<(outs DoubleRegs:$dst), (ins IntRegs:$src),
-          !strconcat("$dst = ", !strconcat(opc , "($src)")),
-          [(set DoubleRegs:$dst, (IntID IntRegs:$src))]>;
-
-class si_SInst_qi<string opc, Intrinsic IntID>
-  : SInst<(outs IntRegs:$dst), (ins IntRegs:$src),
-          !strconcat("$dst = ", !strconcat(opc , "$src")),
-          [(set IntRegs:$dst, (IntID IntRegs:$src))]>;
-
-class si_SInst_qiqi<string opc, Intrinsic IntID>
-  : SInst<(outs IntRegs:$dst), (ins IntRegs:$src1, IntRegs:$src2),
-          !strconcat("$dst = ", !strconcat(opc , "($src1, $src2)")),
-          [(set IntRegs:$dst, (IntID IntRegs:$src1, IntRegs:$src2))]>;
-
-class qi_SInst_si<string opc, Intrinsic IntID>
-  : SInst<(outs PredRegs:$dst), (ins IntRegs:$src),
-          !strconcat("$dst = ", !strconcat(opc , "$src")),
-          [(set PredRegs:$dst, (IntID IntRegs:$src))]>;
-
-class di_SInst_didiqi<string opc, Intrinsic IntID>
-  : SInst<(outs DoubleRegs:$dst), (ins DoubleRegs:$src1, DoubleRegs:$src2,
-                                       IntRegs:$src3),
-          !strconcat("$dst = ", !strconcat(opc , "($src1, $src2, $src3)")),
-          [(set DoubleRegs:$dst, (IntID DoubleRegs:$src1, DoubleRegs:$src2,
-                                        IntRegs:$src3))]>;
-
-class di_SInst_didiu3<string opc, Intrinsic IntID>
-  : SInst<(outs DoubleRegs:$dst), (ins DoubleRegs:$src1, DoubleRegs:$src2,
-                                       u3Imm:$src3),
-          !strconcat("$dst = ", !strconcat(opc , "($src1, $src2, #$src3)")),
-          [(set DoubleRegs:$dst, (IntID DoubleRegs:$src1, DoubleRegs:$src2,
-                                        imm:$src3))]>;
-
-
-//
-// MInst classes.
-//
-
-class di_MInst_disisi_acc<string opc, Intrinsic IntID>
-  : MInst_acc<(outs DoubleRegs:$dst), (ins DoubleRegs:$dst2, IntRegs:$src1,
-                                           IntRegs:$src2),
-             !strconcat("$dst += ", !strconcat(opc , "($src1, $src2)")),
-             [(set DoubleRegs:$dst, (IntID DoubleRegs:$dst2, IntRegs:$src1,
-                                           IntRegs:$src2))],
-             "$dst2 = $dst">;
-
-class di_MInst_disisi_nac<string opc, Intrinsic IntID>
-  : MInst_acc<(outs DoubleRegs:$dst), (ins DoubleRegs:$dst2, IntRegs:$src1,
-                                           IntRegs:$src2),
-             !strconcat("$dst -= ", !strconcat(opc , "($src1, $src2)")),
-             [(set DoubleRegs:$dst, (IntID DoubleRegs:$dst2, IntRegs:$src1,
-                                           IntRegs:$src2))],
-             "$dst2 = $dst">;
-
-class di_MInst_disisi_acc_sat<string opc, Intrinsic IntID>
-  : MInst_acc<(outs DoubleRegs:$dst), (ins DoubleRegs:$dst2, IntRegs:$src1,
-                                           IntRegs:$src2),
-             !strconcat("$dst += ", !strconcat(opc , "($src1, $src2):sat")),
-             [(set DoubleRegs:$dst, (IntID DoubleRegs:$dst2, IntRegs:$src1,
-                                           IntRegs:$src2))],
-             "$dst2 = $dst">;
-
-class di_MInst_disisi_nac_sat<string opc, Intrinsic IntID>
-  : MInst_acc<(outs DoubleRegs:$dst), (ins DoubleRegs:$dst2, IntRegs:$src1,
-                                           IntRegs:$src2),
-             !strconcat("$dst -= ", !strconcat(opc , "($src1, $src2):sat")),
-             [(set DoubleRegs:$dst, (IntID DoubleRegs:$dst2, IntRegs:$src1,
-                                           IntRegs:$src2))],
-             "$dst2 = $dst">;
-
-class di_MInst_disisi_acc_sat_conj<string opc, Intrinsic IntID>
-  : MInst_acc<(outs DoubleRegs:$dst), (ins DoubleRegs:$dst2, IntRegs:$src1,
-                                           IntRegs:$src2),
-             !strconcat("$dst += ", !strconcat(opc , "($src1, $src2*):sat")),
-             [(set DoubleRegs:$dst, (IntID DoubleRegs:$dst2, IntRegs:$src1,
-                                           IntRegs:$src2))],
-             "$dst2 = $dst">;
-
-class di_MInst_disisi_nac_sat_conj<string opc, Intrinsic IntID>
-  : MInst_acc<(outs DoubleRegs:$dst), (ins DoubleRegs:$dst2, IntRegs:$src1,
-                                           IntRegs:$src2),
-             !strconcat("$dst -= ", !strconcat(opc , "($src1, $src2*):sat")),
-             [(set DoubleRegs:$dst, (IntID DoubleRegs:$dst2, IntRegs:$src1,
-                                           IntRegs:$src2))],
-             "$dst2 = $dst">;
-
-class di_MInst_disisi_nac_s1_sat<string opc, Intrinsic IntID>
-  : MInst_acc<(outs DoubleRegs:$dst), (ins DoubleRegs:$dst2, IntRegs:$src1,
-                                           IntRegs:$src2),
-             !strconcat("$dst -= ", !strconcat(opc ,
-                                               "($src1, $src2):<<1:sat")),
-             [(set DoubleRegs:$dst, (IntID DoubleRegs:$dst2, IntRegs:$src1,
-                                           IntRegs:$src2))],
-             "$dst2 = $dst">;
-
-class di_MInst_disisi_acc_s1_sat_conj<string opc, Intrinsic IntID>
-  : MInst_acc<(outs DoubleRegs:$dst), (ins DoubleRegs:$dst2, IntRegs:$src1,
-                                           IntRegs:$src2),
-             !strconcat("$dst += ", !strconcat(opc ,
-                                               "($src1, $src2*):<<1:sat")),
-             [(set DoubleRegs:$dst, (IntID DoubleRegs:$dst2, IntRegs:$src1,
-                                           IntRegs:$src2))],
-             "$dst2 = $dst">;
-
-class di_MInst_disisi_nac_s1_sat_conj<string opc, Intrinsic IntID>
-  : MInst_acc<(outs DoubleRegs:$dst), (ins DoubleRegs:$dst2, IntRegs:$src1,
-                                           IntRegs:$src2),
-             !strconcat("$dst -= ", !strconcat(opc ,
-                                               "($src1, $src2*):<<1:sat")),
-             [(set DoubleRegs:$dst, (IntID DoubleRegs:$dst2, IntRegs:$src1,
-                                           IntRegs:$src2))],
-             "$dst2 = $dst">;
-
-class di_MInst_didi<string opc, Intrinsic IntID>
-  : MInst<(outs DoubleRegs:$dst), (ins DoubleRegs:$src1, DoubleRegs:$src2),
-             !strconcat("$dst = ", !strconcat(opc , "($src1, $src2)")),
-             [(set DoubleRegs:$dst, (IntID DoubleRegs:$src1,
-                                           DoubleRegs:$src2))]>;
-
-class di_MInst_didi_conj<string opc, Intrinsic IntID>
-  : MInst<(outs DoubleRegs:$dst), (ins DoubleRegs:$src1, DoubleRegs:$src2),
-             !strconcat("$dst = ", !strconcat(opc , "($src1, $src2*)")),
-             [(set DoubleRegs:$dst, (IntID DoubleRegs:$src1,
-                                           DoubleRegs:$src2))]>;
-
-class di_MInst_sisi_s1_sat_conj<string opc, Intrinsic IntID>
-  : MInst<(outs DoubleRegs:$dst), (ins IntRegs:$src1, IntRegs:$src2),
-             !strconcat("$dst = ", !strconcat(opc ,
-                                              "($src1, $src2*):<<1:sat")),
-             [(set DoubleRegs:$dst, (IntID IntRegs:$src1, IntRegs:$src2))]>;
-
-class di_MInst_didi_s1_rnd_sat<string opc, Intrinsic IntID>
-  : MInst<(outs DoubleRegs:$dst), (ins DoubleRegs:$src1, DoubleRegs:$src2),
-             !strconcat("$dst = ", !strconcat(opc ,
-                                              "($src1, $src2):<<1:rnd:sat")),
-             [(set DoubleRegs:$dst, (IntID DoubleRegs:$src1,
-                                           DoubleRegs:$src2))]>;
-
-class di_MInst_didi_sat<string opc, Intrinsic IntID>
-  : MInst<(outs DoubleRegs:$dst), (ins DoubleRegs:$src1, DoubleRegs:$src2),
-             !strconcat("$dst = ", !strconcat(opc , "($src1, $src2):sat")),
-             [(set DoubleRegs:$dst, (IntID DoubleRegs:$src1,
-                                           DoubleRegs:$src2))]>;
-
-class di_MInst_didi_rnd_sat<string opc, Intrinsic IntID>
-  : MInst<(outs DoubleRegs:$dst), (ins DoubleRegs:$src1, DoubleRegs:$src2),
-             !strconcat("$dst = ", !strconcat(opc ,
-                                              "($src1, $src2):rnd:sat")),
-             [(set DoubleRegs:$dst, (IntID DoubleRegs:$src1,
-                                           DoubleRegs:$src2))]>;
-
-class si_SInst_didi_sat<string opc, Intrinsic IntID>
-  : SInst<(outs IntRegs:$dst), (ins DoubleRegs:$src1, DoubleRegs:$src2),
-          !strconcat("$dst = ", !strconcat(opc , "($src1, $src2):sat")),
-          [(set IntRegs:$dst, (IntID DoubleRegs:$src1, DoubleRegs:$src2))]>;
-
-class si_SInst_disi_s1_rnd_sat<string opc, Intrinsic IntID>
-  : MInst<(outs IntRegs:$dst), (ins DoubleRegs:$src1, IntRegs:$src2),
-             !strconcat("$dst = ", !strconcat(opc ,
-                                              "($src1, $src2):<<1:rnd:sat")),
-             [(set IntRegs:$dst, (IntID DoubleRegs:$src1, IntRegs:$src2))]>;
-
-class si_MInst_sisi_s1_rnd_sat<string opc, Intrinsic IntID>
-  : MInst<(outs IntRegs:$dst), (ins IntRegs:$src1, IntRegs:$src2),
-             !strconcat("$dst = ", !strconcat(opc ,
-                                              "($src1, $src2):<<1:rnd:sat")),
-             [(set IntRegs:$dst, (IntID IntRegs:$src1, IntRegs:$src2))]>;
-
-class si_MInst_sisi_rnd_sat_conj<string opc, Intrinsic IntID>
-  : MInst<(outs IntRegs:$dst), (ins IntRegs:$src1, IntRegs:$src2),
-             !strconcat("$dst = ", !strconcat(opc ,
-                                              "($src1, $src2*):rnd:sat")),
-             [(set IntRegs:$dst, (IntID IntRegs:$src1, IntRegs:$src2))]>;
-
-class si_MInst_sisi_s1_rnd_sat_conj<string opc, Intrinsic IntID>
-  : MInst<(outs IntRegs:$dst), (ins IntRegs:$src1, IntRegs:$src2),
-             !strconcat("$dst = ", !strconcat(opc ,
-                                              "($src1, $src2*):<<1:rnd:sat")),
-             [(set IntRegs:$dst, (IntID IntRegs:$src1, IntRegs:$src2))]>;
-
-class si_MInst_sisi_rnd_sat<string opc, Intrinsic IntID>
-  : MInst<(outs IntRegs:$dst), (ins IntRegs:$src1, IntRegs:$src2),
-             !strconcat("$dst = ", !strconcat(opc ,
-                                              "($src1, $src2):rnd:sat")),
-             [(set IntRegs:$dst, (IntID IntRegs:$src1, IntRegs:$src2))]>;
-
-class di_MInst_sisi<string opc, Intrinsic IntID>
-  : MInst<(outs DoubleRegs:$dst), (ins IntRegs:$src1, IntRegs:$src2),
-             !strconcat("$dst = ", !strconcat(opc , "($src1, $src2)")),
-             [(set DoubleRegs:$dst, (IntID IntRegs:$src1, IntRegs:$src2))]>;
-
-class di_MInst_sisi_sat<string opc, Intrinsic IntID>
-  : MInst<(outs DoubleRegs:$dst), (ins IntRegs:$src1, IntRegs:$src2),
-             !strconcat("$dst = ", !strconcat(opc , "($src1, $src2):sat")),
-             [(set DoubleRegs:$dst, (IntID IntRegs:$src1, IntRegs:$src2))]>;
-
-class di_MInst_sisi_sat_conj<string opc, Intrinsic IntID>
-  : MInst<(outs DoubleRegs:$dst), (ins IntRegs:$src1, IntRegs:$src2),
-             !strconcat("$dst = ", !strconcat(opc , "($src1, $src2*):sat")),
-             [(set DoubleRegs:$dst, (IntID IntRegs:$src1, IntRegs:$src2))]>;
-
-class di_MInst_sisi_s1_sat<string opc, Intrinsic IntID>
-  : MInst<(outs DoubleRegs:$dst), (ins IntRegs:$src1, IntRegs:$src2),
-             !strconcat("$dst = ", !strconcat(opc , "($src1, $src2):<<1:sat")),
-             [(set DoubleRegs:$dst, (IntID IntRegs:$src1, IntRegs:$src2))]>;
-
-class di_MInst_didi_s1_sat<string opc, Intrinsic IntID>
-  : MInst<(outs DoubleRegs:$dst), (ins DoubleRegs:$src1, DoubleRegs:$src2),
-             !strconcat("$dst = ", !strconcat(opc , "($src1, $src2):<<1:sat")),
-             [(set DoubleRegs:$dst, (IntID DoubleRegs:$src1,
-                                           DoubleRegs:$src2))]>;
-
-class si_MInst_didi_s1_rnd_sat<string opc, Intrinsic IntID>
-  : MInst<(outs IntRegs:$dst), (ins DoubleRegs:$src1, DoubleRegs:$src2),
-             !strconcat("$dst = ", !strconcat(opc ,
-                                              "($src1, $src2):<<1:rnd:sat")),
-             [(set IntRegs:$dst, (IntID DoubleRegs:$src1, DoubleRegs:$src2))]>;
-
-class si_MInst_didi_rnd_sat<string opc, Intrinsic IntID>
-  : MInst<(outs IntRegs:$dst), (ins DoubleRegs:$src1, DoubleRegs:$src2),
-             !strconcat("$dst = ", !strconcat(opc , "($src1, $src2):rnd:sat")),
-             [(set IntRegs:$dst, (IntID DoubleRegs:$src1, DoubleRegs:$src2))]>;
-
-class di_MInst_dididi_acc_sat<string opc, Intrinsic IntID>
-  : MInst_acc<(outs DoubleRegs:$dst), (ins DoubleRegs:$dst2,
-                                           DoubleRegs:$src1, DoubleRegs:$src2),
-               !strconcat("$dst += ", !strconcat(opc , "($src1, $src2):sat")),
-               [(set DoubleRegs:$dst, (IntID DoubleRegs:$dst2,
-                                             DoubleRegs:$src1,
-                                             DoubleRegs:$src2))],
-               "$dst2 = $dst">;
-
-class di_MInst_dididi_acc_rnd_sat<string opc, Intrinsic IntID>
-  : MInst_acc<(outs DoubleRegs:$dst), (ins DoubleRegs:$dst2, DoubleRegs:$src1,
-                                           DoubleRegs:$src2),
-               !strconcat("$dst += ",
-                          !strconcat(opc , "($src1, $src2):rnd:sat")),
-               [(set DoubleRegs:$dst, (IntID DoubleRegs:$dst2,
-                                             DoubleRegs:$src1,
-                                             DoubleRegs:$src2))],
-               "$dst2 = $dst">;
-
-class di_MInst_dididi_acc_s1<string opc, Intrinsic IntID>
-  : MInst_acc<(outs DoubleRegs:$dst), (ins DoubleRegs:$dst2,
-                                           DoubleRegs:$src1,
-                                           DoubleRegs:$src2),
-               !strconcat("$dst += ",
-                          !strconcat(opc , "($src1, $src2):<<1")),
-               [(set DoubleRegs:$dst, (IntID DoubleRegs:$dst2,
-                                             DoubleRegs:$src1,
-                                             DoubleRegs:$src2))],
-               "$dst2 = $dst">;
-
-
-class di_MInst_dididi_acc_s1_sat<string opc, Intrinsic IntID>
-  : MInst_acc<(outs DoubleRegs:$dst), (ins DoubleRegs:$dst2,
-                                           DoubleRegs:$src1,
-                                           DoubleRegs:$src2),
-               !strconcat("$dst += ",
-                          !strconcat(opc , "($src1, $src2):<<1:sat")),
-               [(set DoubleRegs:$dst, (IntID DoubleRegs:$dst2,
-                                             DoubleRegs:$src1,
-                                             DoubleRegs:$src2))],
-               "$dst2 = $dst">;
-
-class di_MInst_dididi_acc_s1_rnd_sat<string opc, Intrinsic IntID>
-  : MInst_acc<(outs DoubleRegs:$dst), (ins DoubleRegs:$dst2, DoubleRegs:$src1,
-                                           DoubleRegs:$src2),
-               !strconcat("$dst += ",
-                          !strconcat(opc , "($src1, $src2):<<1:rnd:sat")),
-               [(set DoubleRegs:$dst, (IntID DoubleRegs:$dst2,
-                                             DoubleRegs:$src1,
-                                             DoubleRegs:$src2))],
-               "$dst2 = $dst">;
-
-class di_MInst_dididi_acc<string opc, Intrinsic IntID>
-  : MInst_acc<(outs DoubleRegs:$dst), (ins DoubleRegs:$dst2, DoubleRegs:$src1,
-                                           DoubleRegs:$src2),
-               !strconcat("$dst += ", !strconcat(opc , "($src1, $src2)")),
-               [(set DoubleRegs:$dst, (IntID DoubleRegs:$dst2,
-                                             DoubleRegs:$src1,
-                                             DoubleRegs:$src2))],
-               "$dst2 = $dst">;
-
-class di_MInst_dididi_acc_conj<string opc, Intrinsic IntID>
-  : MInst_acc<(outs DoubleRegs:$dst), (ins DoubleRegs:$dst2, DoubleRegs:$src1,
-                                           DoubleRegs:$src2),
-               !strconcat("$dst += ", !strconcat(opc , "($src1, $src2*)")),
-               [(set DoubleRegs:$dst, (IntID DoubleRegs:$dst2,
-                                             DoubleRegs:$src1,
-                                             DoubleRegs:$src2))],
-               "$dst2 = $dst">;
-
-class di_MInst_disisi_acc_s1_sat<string opc, Intrinsic IntID>
-  : MInst_acc<(outs DoubleRegs:$dst), (ins DoubleRegs:$dst2, IntRegs:$src1,
-                                           IntRegs:$src2),
-               !strconcat("$dst += ",
-                          !strconcat(opc , "($src1, $src2):<<1:sat")),
-               [(set DoubleRegs:$dst, (IntID DoubleRegs:$dst2, IntRegs:$src1,
-                                             IntRegs:$src2))],
-               "$dst2 = $dst">;
-
-class di_MInst_disi_s1_sat<string opc, Intrinsic IntID>
-  : MInst<(outs DoubleRegs:$dst), (ins DoubleRegs:$src1, IntRegs:$src2),
-             !strconcat("$dst = ", !strconcat(opc , "($src1, $src2):<<1:sat")),
-             [(set DoubleRegs:$dst, (IntID DoubleRegs:$src1, IntRegs:$src2))]>;
-
-class di_MInst_didisi_acc_s1_sat<string opc, Intrinsic IntID>
-  : MInst_acc<(outs DoubleRegs:$dst), (ins DoubleRegs:$dst2, DoubleRegs:$src1,
-                                           IntRegs:$src2),
-               !strconcat("$dst += ",
-                          !strconcat(opc , "($src1, $src2):<<1:sat")),
-               [(set DoubleRegs:$dst, (IntID DoubleRegs:$dst2,
-                                             DoubleRegs:$src1,
-                                             IntRegs:$src2))],
-               "$dst2 = $dst">;
-
-class si_MInst_disi_s1_rnd_sat<string opc, Intrinsic IntID>
-  : MInst<(outs IntRegs:$dst), (ins DoubleRegs:$src1, IntRegs:$src2),
-             !strconcat("$dst = ",
-                        !strconcat(opc , "($src1, $src2):<<1:rnd:sat")),
-             [(set IntRegs:$dst, (IntID DoubleRegs:$src1, IntRegs:$src2))]>;
-
-class si_MInst_didi<string opc, Intrinsic IntID>
-  : MInst<(outs IntRegs:$dst), (ins DoubleRegs:$src1, DoubleRegs:$src2),
-             !strconcat("$dst = ", !strconcat(opc , "($src1, $src2)")),
-             [(set IntRegs:$dst, (IntID DoubleRegs:$src1, DoubleRegs:$src2))]>;
-
-//
-// LDInst classes.
-//
-let mayLoad = 1, hasSideEffects = 0 in
-class di_LDInstPI_diu4<string opc, Intrinsic IntID>
-  : LDInstPI<(outs IntRegs:$dst, DoubleRegs:$dst2),
-           (ins IntRegs:$src1, IntRegs:$src2, CtrRegs:$src3, s4Imm:$offset),
-           "$dst2 = memd($src1++#$offset:circ($src3))",
-           [],
-           "$src1 = $dst">;
-
 /********************************************************************
 *            STYPE/VH                                               *
 *********************************************************************/
 
-// STYPE / VH / Vector absolute value halfwords.
-// Rdd64=vabsh(Rss64)
-def HEXAGON_A2_vabsh:
-  di_SInst_di                     <"vabsh",   int_hexagon_A2_vabsh>;
-def HEXAGON_A2_vabshsat:
-  di_SInst_di_sat                 <"vabsh",   int_hexagon_A2_vabshsat>;
+// Vector absolute value halfwords with and without saturation
+// Rdd64=vabsh(Rss64)[:sat]
+def : T_P_pat <A2_vabsh, int_hexagon_A2_vabsh>;
+def : T_P_pat <A2_vabshsat, int_hexagon_A2_vabshsat>;
 
-// STYPE / VH / Vector shift halfwords by immediate.
-// Rdd64=v[asl/asr/lsr]h(Rss64,Rt32)
-def HEXAGON_S2_asl_i_vh:
-  di_SInst_disi                   <"vaslh",   int_hexagon_S2_asl_i_vh>;
-def HEXAGON_S2_asr_i_vh:
-  di_SInst_disi                   <"vasrh",   int_hexagon_S2_asr_i_vh>;
-def HEXAGON_S2_lsr_i_vh:
-  di_SInst_disi                   <"vlsrh",   int_hexagon_S2_lsr_i_vh>;
+// Vector shift halfwords by immediate
+// Rdd64=[vaslh/vasrh/vlsrh](Rss64,u4)
+def : T_PI_pat <S2_asr_i_vh, int_hexagon_S2_asr_i_vh>;
+def : T_PI_pat <S2_lsr_i_vh, int_hexagon_S2_lsr_i_vh>;
+def : T_PI_pat <S2_asl_i_vh, int_hexagon_S2_asl_i_vh>;
 
-// STYPE / VH / Vector shift halfwords by register.
-// Rdd64=v[asl/asr/lsl/lsr]w(Rss64,Rt32)
-def HEXAGON_S2_asl_r_vh:
-  di_SInst_disi                   <"vaslh",   int_hexagon_S2_asl_r_vh>;
-def HEXAGON_S2_asr_r_vh:
-  di_SInst_disi                   <"vasrh",   int_hexagon_S2_asr_r_vh>;
-def HEXAGON_S2_lsl_r_vh:
-  di_SInst_disi                   <"vlslh",   int_hexagon_S2_lsl_r_vh>;
-def HEXAGON_S2_lsr_r_vh:
-  di_SInst_disi                   <"vlsrh",   int_hexagon_S2_lsr_r_vh>;
-
+// Vector shift halfwords by register
+// Rdd64=[vaslw/vasrw/vlslw/vlsrw](Rss64,Rt32)
+def : T_PR_pat <S2_asr_r_vh, int_hexagon_S2_asr_r_vh>;
+def : T_PR_pat <S2_lsr_r_vh, int_hexagon_S2_lsr_r_vh>;
+def : T_PR_pat <S2_asl_r_vh, int_hexagon_S2_asl_r_vh>;
+def : T_PR_pat <S2_lsl_r_vh, int_hexagon_S2_lsl_r_vh>;
 
 /********************************************************************
 *            STYPE/VW                                               *
 *********************************************************************/
 
-// STYPE / VW / Vector absolute value words.
-def HEXAGON_A2_vabsw:
-  di_SInst_di                     <"vabsw",   int_hexagon_A2_vabsw>;
-def HEXAGON_A2_vabswsat:
-  di_SInst_di_sat                 <"vabsw",   int_hexagon_A2_vabswsat>;
+// Vector absolute value words with and without saturation
+def : T_P_pat <A2_vabsw, int_hexagon_A2_vabsw>;
+def : T_P_pat <A2_vabswsat, int_hexagon_A2_vabswsat>;
 
-// STYPE / VW / Vector shift words by immediate.
-// Rdd64=v[asl/vsl]w(Rss64,Rt32)
-def HEXAGON_S2_asl_i_vw:
-  di_SInst_disi                   <"vaslw",   int_hexagon_S2_asl_i_vw>;
-def HEXAGON_S2_asr_i_vw:
-  di_SInst_disi                   <"vasrw",   int_hexagon_S2_asr_i_vw>;
-def HEXAGON_S2_lsr_i_vw:
-  di_SInst_disi                   <"vlsrw",   int_hexagon_S2_lsr_i_vw>;
+// Vector shift words by immediate.
+// Rdd64=[vasrw/vlsrw|vaslw](Rss64,u5)
+def : T_PI_pat <S2_asr_i_vw, int_hexagon_S2_asr_i_vw>;
+def : T_PI_pat <S2_lsr_i_vw, int_hexagon_S2_lsr_i_vw>;
+def : T_PI_pat <S2_asl_i_vw, int_hexagon_S2_asl_i_vw>;
 
-// STYPE / VW / Vector shift words by register.
-// Rdd64=v[asl/vsl]w(Rss64,Rt32)
-def HEXAGON_S2_asl_r_vw:
-  di_SInst_disi                   <"vaslw",   int_hexagon_S2_asl_r_vw>;
-def HEXAGON_S2_asr_r_vw:
-  di_SInst_disi                   <"vasrw",   int_hexagon_S2_asr_r_vw>;
-def HEXAGON_S2_lsl_r_vw:
-  di_SInst_disi                   <"vlslw",   int_hexagon_S2_lsl_r_vw>;
-def HEXAGON_S2_lsr_r_vw:
-  di_SInst_disi                   <"vlsrw",   int_hexagon_S2_lsr_r_vw>;
+// Vector shift words by register.
+// Rdd64=[vasrw/vlsrw|vaslw|vlslw](Rss64,Rt32)
+def : T_PR_pat <S2_asr_r_vw, int_hexagon_S2_asr_r_vw>;
+def : T_PR_pat <S2_lsr_r_vw, int_hexagon_S2_lsr_r_vw>;
+def : T_PR_pat <S2_asl_r_vw, int_hexagon_S2_asl_r_vw>;
+def : T_PR_pat <S2_lsl_r_vw, int_hexagon_S2_lsl_r_vw>;
 
-// STYPE / VW / Vector shift words with truncate and pack.
-def HEXAGON_S2_asr_r_svw_trun:
-  si_SInst_disi                   <"vasrw",   int_hexagon_S2_asr_r_svw_trun>;
-def HEXAGON_S2_asr_i_svw_trun:
-  si_SInst_diu5                   <"vasrw",   int_hexagon_S2_asr_i_svw_trun>;
+// Vector shift words with truncate and pack
 
-// LD / Circular loads.
-def HEXAGON_circ_ldd:
-  di_LDInstPI_diu4                <"circ_ldd", int_hexagon_circ_ldd>;
+def : T_PR_pat <S2_asr_r_svw_trun, int_hexagon_S2_asr_r_svw_trun>;
+
+def : T_R_pat<L2_loadw_locked, int_hexagon_L2_loadw_locked>;
+def : T_R_pat<L4_loadd_locked, int_hexagon_L4_loadd_locked>;
+
+def: Pat<(i32 (int_hexagon_S2_storew_locked (I32:$Rs), (I32:$Rt))),
+         (i32 (C2_tfrpr (S2_storew_locked (I32:$Rs), (I32:$Rt))))>;
+def: Pat<(i32 (int_hexagon_S4_stored_locked (I32:$Rs), (I64:$Rt))),
+         (i32 (C2_tfrpr (S4_stored_locked (I32:$Rs), (I64:$Rt))))>;
 
 include "HexagonIntrinsicsV3.td"
 include "HexagonIntrinsicsV4.td"

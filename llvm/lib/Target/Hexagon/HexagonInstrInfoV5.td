@@ -808,6 +808,10 @@ def S5_vasrhrnd : SInst <(outs DoubleRegs:$Rdd),
     let Inst{4-0}   = Rdd;
   }
 
+def S5_vasrhrnd_goodsyntax
+  : SInst <(outs DoubleRegs:$Rdd), (ins DoubleRegs:$Rss, u4Imm:$u4),
+  "$Rdd = vasrh($Rss,#$u4):rnd">, Requires<[HasV5T]>;
+
 // Floating point reciprocal square root approximation
 let Uses = [USR], isPredicateLate = 1, isFP = 1,
     hasSideEffects = 0, hasNewValue = 1, opNewValue = 0,

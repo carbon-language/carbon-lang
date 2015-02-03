@@ -11,26 +11,13 @@
 //
 //===----------------------------------------------------------------------===//
 
+// Vector reduce complex multiply real or imaginary
+def : T_PR_pat <M2_vrcmpys_s1,     int_hexagon_M2_vrcmpys_s1>;
+def : T_PPR_pat<M2_vrcmpys_acc_s1, int_hexagon_M2_vrcmpys_acc_s1>;
+def : T_PR_pat <M2_vrcmpys_s1rp,   int_hexagon_M2_vrcmpys_s1rp>;
 
-
-
-// MTYPE / COMPLEX / Vector reduce complex multiply real or imaginary.
-def Hexagon_M2_vrcmpys_s1:
-  di_MInst_disi_s1_sat            <"vrcmpys",  int_hexagon_M2_vrcmpys_s1>;
-def Hexagon_M2_vrcmpys_acc_s1:
-  di_MInst_didisi_acc_s1_sat      <"vrcmpys",  int_hexagon_M2_vrcmpys_acc_s1>;
-def Hexagon_M2_vrcmpys_s1rp:
-  si_MInst_disi_s1_rnd_sat        <"vrcmpys",  int_hexagon_M2_vrcmpys_s1rp>;
-
-
-/********************************************************************
-*            MTYPE/VB                                               *
-*********************************************************************/
-
-// MTYPE / VB / Vector reduce add unsigned bytes.
-def Hexagon_M2_vradduh:
-  si_MInst_didi                   <"vradduh",  int_hexagon_M2_vradduh>;
-
+// Vector reduce add unsigned halfwords
+def : T_PP_pat<M2_vradduh, int_hexagon_M2_vradduh>;
 
 def: T_RP_pat<A2_addsp,   int_hexagon_A2_addsp>;
 def: T_PP_pat<A2_addpsat, int_hexagon_A2_addpsat>;
