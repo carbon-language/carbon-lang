@@ -159,7 +159,9 @@ public:
   /// Returns true if the value V is uniform within the loop.
   bool isUniform(Value *V);
 
-  unsigned getMaxSafeDepDistBytes() { return MaxSafeDepDistBytes; }
+  unsigned getMaxSafeDepDistBytes() const { return MaxSafeDepDistBytes; }
+  unsigned getNumStores() const { return NumStores; }
+  unsigned getNumLoads() const { return NumLoads;}
 
 private:
   void emitAnalysis(VectorizationReport &Message);

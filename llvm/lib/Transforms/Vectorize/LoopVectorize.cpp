@@ -555,7 +555,7 @@ public:
                             DominatorTree *DT, TargetLibraryInfo *TLI,
                             AliasAnalysis *AA, Function *F,
                             const TargetTransformInfo *TTI)
-      : NumLoads(0), NumStores(0), NumPredStores(0), TheLoop(L), SE(SE), DL(DL),
+      : NumPredStores(0), TheLoop(L), SE(SE), DL(DL),
         TLI(TLI), TheFunction(F), TTI(TTI), Induction(nullptr),
         WidestIndTy(nullptr),
         LAA(F, L, SE, DL, TLI, AA, DT,
@@ -780,10 +780,10 @@ public:
     return (MaskedOp.count(I) != 0);
   }
   unsigned getNumStores() const {
-    return NumStores;
+    return LAA.getNumStores();
   }
   unsigned getNumLoads() const {
-    return NumLoads;
+    return LAA.getNumLoads();
   }
   unsigned getNumPredStores() const {
     return NumPredStores;
@@ -842,8 +842,6 @@ private:
     VectorizationReport::emitAnalysis(Message, TheFunction, TheLoop);
   }
 
-  unsigned NumLoads;
-  unsigned NumStores;
   unsigned NumPredStores;
 
   /// The loop that we evaluate.
