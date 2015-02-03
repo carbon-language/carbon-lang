@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Sema/SemaInternal.h"
+#include "clang/AST/ExprCXX.h"
 #include "clang/AST/RecordLayout.h"
 #include "clang/AST/TypeLoc.h"
 #include "clang/Basic/TargetInfo.h"
@@ -86,6 +87,11 @@ static bool CheckNakedParmReference(Expr *E, Sema &S) {
   WorkList.push_back(E);
   while (WorkList.size()) {
     Expr *E = WorkList.pop_back_val();
+    if (isa<CXXThisExpr>(E)) {
+      S.Diag(E->getLocStart(), diag::err_asm_naked_this_ref);
+      S.Diag(Func->getAttr<NakedAttr>()->getLocation(), diag::note_attribute);
+      return true;
+    }
     if (DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(E)) {
       if (isa<ParmVarDecl>(DRE->getDecl())) {
         S.Diag(DRE->getLocStart(), diag::err_asm_naked_parm_ref);
