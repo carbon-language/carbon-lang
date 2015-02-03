@@ -384,6 +384,140 @@ define <16 x i8> @shuffle_v16i8_03_02_01_00_31_30_29_28_11_10_09_08_23_22_21_20(
   ret <16 x i8> %shuffle
 }
 
+define <16 x i8> @shuffle_v16i8_00_17_02_19_04_21_06_23_08_25_10_27_12_29_14_31(<16 x i8> %a, <16 x i8> %b) {
+; SSE2-LABEL: shuffle_v16i8_00_17_02_19_04_21_06_23_08_25_10_27_12_29_14_31:
+; SSE2:       # BB#0:
+; SSE2-NEXT:    pxor %xmm2, %xmm2
+; SSE2-NEXT:    movdqa %xmm1, %xmm3
+; SSE2-NEXT:    punpckhbw {{.*#+}} xmm3 = xmm3[8],xmm2[8],xmm3[9],xmm2[9],xmm3[10],xmm2[10],xmm3[11],xmm2[11],xmm3[12],xmm2[12],xmm3[13],xmm2[13],xmm3[14],xmm2[14],xmm3[15],xmm2[15]
+; SSE2-NEXT:    pshuflw {{.*#+}} xmm3 = xmm3[3,1,2,3,4,5,6,7]
+; SSE2-NEXT:    pshufhw {{.*#+}} xmm3 = xmm3[0,1,2,3,7,5,6,7]
+; SSE2-NEXT:    pshufd {{.*#+}} xmm3 = xmm3[0,2,2,3]
+; SSE2-NEXT:    pshuflw {{.*#+}} xmm3 = xmm3[1,0,3,2,4,5,6,7]
+; SSE2-NEXT:    punpcklbw {{.*#+}} xmm1 = xmm1[0],xmm2[0],xmm1[1],xmm2[1],xmm1[2],xmm2[2],xmm1[3],xmm2[3],xmm1[4],xmm2[4],xmm1[5],xmm2[5],xmm1[6],xmm2[6],xmm1[7],xmm2[7]
+; SSE2-NEXT:    pshuflw {{.*#+}} xmm1 = xmm1[3,1,2,3,4,5,6,7]
+; SSE2-NEXT:    pshufhw {{.*#+}} xmm1 = xmm1[0,1,2,3,7,5,6,7]
+; SSE2-NEXT:    pshufd {{.*#+}} xmm1 = xmm1[0,2,2,3]
+; SSE2-NEXT:    pshuflw {{.*#+}} xmm1 = xmm1[1,0,3,2,4,5,6,7]
+; SSE2-NEXT:    punpcklqdq {{.*#+}} xmm1 = xmm1[0],xmm3[0]
+; SSE2-NEXT:    packuswb %xmm0, %xmm1
+; SSE2-NEXT:    pand {{.*}}(%rip), %xmm0
+; SSE2-NEXT:    packuswb %xmm0, %xmm0
+; SSE2-NEXT:    punpcklbw {{.*#+}} xmm0 = xmm0[0],xmm1[0],xmm0[1],xmm1[1],xmm0[2],xmm1[2],xmm0[3],xmm1[3],xmm0[4],xmm1[4],xmm0[5],xmm1[5],xmm0[6],xmm1[6],xmm0[7],xmm1[7]
+; SSE2-NEXT:    retq
+;
+; SSSE3-LABEL: shuffle_v16i8_00_17_02_19_04_21_06_23_08_25_10_27_12_29_14_31:
+; SSSE3:       # BB#0:
+; SSSE3-NEXT:    pshufb {{.*#+}} xmm1 = xmm1[1,3,5,7,9,11,13,15,u,u,u,u,u,u,u,u]
+; SSSE3-NEXT:    pshufb {{.*#+}} xmm0 = xmm0[0,2,4,6,8,10,12,14,u,u,u,u,u,u,u,u]
+; SSSE3-NEXT:    punpcklbw {{.*#+}} xmm0 = xmm0[0],xmm1[0],xmm0[1],xmm1[1],xmm0[2],xmm1[2],xmm0[3],xmm1[3],xmm0[4],xmm1[4],xmm0[5],xmm1[5],xmm0[6],xmm1[6],xmm0[7],xmm1[7]
+; SSSE3-NEXT:    retq
+;
+; SSE41-LABEL: shuffle_v16i8_00_17_02_19_04_21_06_23_08_25_10_27_12_29_14_31:
+; SSE41:       # BB#0:
+; SSE41-NEXT:    pshufb {{.*#+}} xmm1 = xmm1[1,3,5,7,9,11,13,15,u,u,u,u,u,u,u,u]
+; SSE41-NEXT:    pshufb {{.*#+}} xmm0 = xmm0[0,2,4,6,8,10,12,14,u,u,u,u,u,u,u,u]
+; SSE41-NEXT:    punpcklbw {{.*#+}} xmm0 = xmm0[0],xmm1[0],xmm0[1],xmm1[1],xmm0[2],xmm1[2],xmm0[3],xmm1[3],xmm0[4],xmm1[4],xmm0[5],xmm1[5],xmm0[6],xmm1[6],xmm0[7],xmm1[7]
+; SSE41-NEXT:    retq
+;
+; AVX-LABEL: shuffle_v16i8_00_17_02_19_04_21_06_23_08_25_10_27_12_29_14_31:
+; AVX:       # BB#0:
+; AVX-NEXT:    vpshufb {{.*#+}} xmm1 = xmm1[1,3,5,7,9,11,13,15,u,u,u,u,u,u,u,u]
+; AVX-NEXT:    vpshufb {{.*#+}} xmm0 = xmm0[0,2,4,6,8,10,12,14,u,u,u,u,u,u,u,u]
+; AVX-NEXT:    vpunpcklbw {{.*#+}} xmm0 = xmm0[0],xmm1[0],xmm0[1],xmm1[1],xmm0[2],xmm1[2],xmm0[3],xmm1[3],xmm0[4],xmm1[4],xmm0[5],xmm1[5],xmm0[6],xmm1[6],xmm0[7],xmm1[7]
+; AVX-NEXT:    retq
+  %shuffle = shufflevector <16 x i8> %a, <16 x i8> %b, <16 x i32> <i32 0, i32 17, i32 2, i32 19, i32 4, i32 21, i32 6, i32 23, i32 8, i32 25, i32 10, i32 27, i32 12, i32 29, i32 14, i32 31>
+  ret <16 x i8> %shuffle
+}
+
+define <16 x i8> @shuffle_v16i8_16_17_18_19_04_05_06_07_24_25_10_11_28_13_30_15(<16 x i8> %a, <16 x i8> %b) {
+; SSE2-LABEL: shuffle_v16i8_16_17_18_19_04_05_06_07_24_25_10_11_28_13_30_15:
+; SSE2:       # BB#0:
+; SSE2-NEXT:    pxor %xmm2, %xmm2
+; SSE2-NEXT:    movdqa %xmm0, %xmm3
+; SSE2-NEXT:    punpcklbw {{.*#+}} xmm3 = xmm3[0],xmm2[0],xmm3[1],xmm2[1],xmm3[2],xmm2[2],xmm3[3],xmm2[3],xmm3[4],xmm2[4],xmm3[5],xmm2[5],xmm3[6],xmm2[6],xmm3[7],xmm2[7]
+; SSE2-NEXT:    pshufd {{.*#+}} xmm3 = xmm3[2,3,2,3]
+; SSE2-NEXT:    pshuflw {{.*#+}} xmm4 = xmm3[0,1,1,3,4,5,6,7]
+; SSE2-NEXT:    movdqa %xmm0, %xmm3
+; SSE2-NEXT:    punpckhbw {{.*#+}} xmm3 = xmm3[8],xmm2[8],xmm3[9],xmm2[9],xmm3[10],xmm2[10],xmm3[11],xmm2[11],xmm3[12],xmm2[12],xmm3[13],xmm2[13],xmm3[14],xmm2[14],xmm3[15],xmm2[15]
+; SSE2-NEXT:    pshufhw {{.*#+}} xmm3 = xmm3[0,1,2,3,7,5,6,7]
+; SSE2-NEXT:    pshufd {{.*#+}} xmm3 = xmm3[2,1,2,3]
+; SSE2-NEXT:    pshuflw {{.*#+}} xmm3 = xmm3[0,3,1,0,4,5,6,7]
+; SSE2-NEXT:    punpcklqdq {{.*#+}} xmm4 = xmm4[0],xmm3[0]
+; SSE2-NEXT:    movdqa %xmm1, %xmm3
+; SSE2-NEXT:    punpckhbw {{.*#+}} xmm3 = xmm3[8],xmm2[8],xmm3[9],xmm2[9],xmm3[10],xmm2[10],xmm3[11],xmm2[11],xmm3[12],xmm2[12],xmm3[13],xmm2[13],xmm3[14],xmm2[14],xmm3[15],xmm2[15]
+; SSE2-NEXT:    movdqa %xmm1, %xmm5
+; SSE2-NEXT:    punpcklbw {{.*#+}} xmm5 = xmm5[0],xmm2[0],xmm5[1],xmm2[1],xmm5[2],xmm2[2],xmm5[3],xmm2[3],xmm5[4],xmm2[4],xmm5[5],xmm2[5],xmm5[6],xmm2[6],xmm5[7],xmm2[7]
+; SSE2-NEXT:    punpcklwd {{.*#+}} xmm5 = xmm5[0],xmm3[0],xmm5[1],xmm3[1],xmm5[2],xmm3[2],xmm5[3],xmm3[3]
+; SSE2-NEXT:    pshufd {{.*#+}} xmm2 = xmm5[3,1,2,1]
+; SSE2-NEXT:    pshuflw {{.*#+}} xmm2 = xmm2[2,0,2,3,4,5,6,7]
+; SSE2-NEXT:    pshufhw {{.*#+}} xmm2 = xmm2[0,1,2,3,7,5,6,7]
+; SSE2-NEXT:    movdqa %xmm4, %xmm3
+; SSE2-NEXT:    shufps {{.*#+}} xmm3 = xmm3[1,0],xmm2[0,0]
+; SSE2-NEXT:    shufps {{.*#+}} xmm3 = xmm3[2,0],xmm2[2,3]
+; SSE2-NEXT:    punpckhwd {{.*#+}} xmm4 = xmm4[4],xmm2[4],xmm4[5],xmm2[5],xmm4[6],xmm2[6],xmm4[7],xmm2[7]
+; SSE2-NEXT:    pshuflw {{.*#+}} xmm2 = xmm4[2,1,2,3,4,5,6,7]
+; SSE2-NEXT:    pshufhw {{.*#+}} xmm2 = xmm2[0,1,2,3,4,6,6,7]
+; SSE2-NEXT:    pshufd {{.*#+}} xmm2 = xmm2[0,2,2,3]
+; SSE2-NEXT:    pshuflw {{.*#+}} xmm2 = xmm2[1,0,2,3,4,5,6,7]
+; SSE2-NEXT:    punpcklqdq {{.*#+}} xmm3 = xmm3[0],xmm2[0]
+; SSE2-NEXT:    packuswb %xmm0, %xmm3
+; SSE2-NEXT:    movdqa {{.*#+}} xmm2 = [255,255,255,255,255,255,255,255]
+; SSE2-NEXT:    pand %xmm2, %xmm1
+; SSE2-NEXT:    pand %xmm2, %xmm0
+; SSE2-NEXT:    movdqa %xmm0, %xmm2
+; SSE2-NEXT:    shufps {{.*#+}} xmm2 = xmm2[1,0],xmm1[0,0]
+; SSE2-NEXT:    shufps {{.*#+}} xmm2 = xmm2[2,0],xmm1[2,3]
+; SSE2-NEXT:    punpckhwd {{.*#+}} xmm1 = xmm1[4],xmm0[4],xmm1[5],xmm0[5],xmm1[6],xmm0[6],xmm1[7],xmm0[7]
+; SSE2-NEXT:    pshuflw {{.*#+}} xmm0 = xmm1[0,3,2,3,4,5,6,7]
+; SSE2-NEXT:    pshufhw {{.*#+}} xmm0 = xmm0[0,1,2,3,4,6,6,7]
+; SSE2-NEXT:    pshufd {{.*#+}} xmm0 = xmm0[0,2,2,3]
+; SSE2-NEXT:    punpcklqdq {{.*#+}} xmm2 = xmm2[0],xmm0[0]
+; SSE2-NEXT:    packuswb %xmm0, %xmm2
+; SSE2-NEXT:    punpcklbw {{.*#+}} xmm2 = xmm2[0],xmm3[0],xmm2[1],xmm3[1],xmm2[2],xmm3[2],xmm2[3],xmm3[3],xmm2[4],xmm3[4],xmm2[5],xmm3[5],xmm2[6],xmm3[6],xmm2[7],xmm3[7]
+; SSE2-NEXT:    movdqa %xmm2, %xmm0
+; SSE2-NEXT:    retq
+;
+; SSSE3-LABEL: shuffle_v16i8_16_17_18_19_04_05_06_07_24_25_10_11_28_13_30_15:
+; SSSE3:       # BB#0:
+; SSSE3-NEXT:    movdqa %xmm1, %xmm2
+; SSSE3-NEXT:    pshufb {{.*#+}} xmm2 = xmm2[1,3],zero,zero,xmm2[9],zero,zero,zero,xmm2[u,u,u,u,u,u,u,u]
+; SSSE3-NEXT:    movdqa %xmm0, %xmm3
+; SSSE3-NEXT:    pshufb {{.*#+}} xmm3 = zero,zero,xmm3[5,7],zero,xmm3[11,13,15,u,u,u,u,u,u,u,u]
+; SSSE3-NEXT:    por %xmm2, %xmm3
+; SSSE3-NEXT:    pshufb {{.*#+}} xmm0 = zero,zero,xmm0[4,6],zero,xmm0[10],zero,zero,xmm0[u,u,u,u,u,u,u,u]
+; SSSE3-NEXT:    pshufb {{.*#+}} xmm1 = xmm1[0,2],zero,zero,xmm1[8],zero,xmm1[12,14,u,u,u,u,u,u,u,u]
+; SSSE3-NEXT:    por %xmm1, %xmm0
+; SSSE3-NEXT:    punpcklbw {{.*#+}} xmm0 = xmm0[0],xmm3[0],xmm0[1],xmm3[1],xmm0[2],xmm3[2],xmm0[3],xmm3[3],xmm0[4],xmm3[4],xmm0[5],xmm3[5],xmm0[6],xmm3[6],xmm0[7],xmm3[7]
+; SSSE3-NEXT:    retq
+;
+; SSE41-LABEL: shuffle_v16i8_16_17_18_19_04_05_06_07_24_25_10_11_28_13_30_15:
+; SSE41:       # BB#0:
+; SSE41-NEXT:    movdqa %xmm1, %xmm2
+; SSE41-NEXT:    pshufb {{.*#+}} xmm2 = xmm2[1,3],zero,zero,xmm2[9],zero,zero,zero,xmm2[u,u,u,u,u,u,u,u]
+; SSE41-NEXT:    movdqa %xmm0, %xmm3
+; SSE41-NEXT:    pshufb {{.*#+}} xmm3 = zero,zero,xmm3[5,7],zero,xmm3[11,13,15,u,u,u,u,u,u,u,u]
+; SSE41-NEXT:    por %xmm2, %xmm3
+; SSE41-NEXT:    pshufb {{.*#+}} xmm0 = zero,zero,xmm0[4,6],zero,xmm0[10],zero,zero,xmm0[u,u,u,u,u,u,u,u]
+; SSE41-NEXT:    pshufb {{.*#+}} xmm1 = xmm1[0,2],zero,zero,xmm1[8],zero,xmm1[12,14,u,u,u,u,u,u,u,u]
+; SSE41-NEXT:    por %xmm1, %xmm0
+; SSE41-NEXT:    punpcklbw {{.*#+}} xmm0 = xmm0[0],xmm3[0],xmm0[1],xmm3[1],xmm0[2],xmm3[2],xmm0[3],xmm3[3],xmm0[4],xmm3[4],xmm0[5],xmm3[5],xmm0[6],xmm3[6],xmm0[7],xmm3[7]
+; SSE41-NEXT:    retq
+;
+; AVX-LABEL: shuffle_v16i8_16_17_18_19_04_05_06_07_24_25_10_11_28_13_30_15:
+; AVX:       # BB#0:
+; AVX-NEXT:    vpshufb {{.*#+}} xmm2 = xmm1[1,3],zero,zero,xmm1[9],zero,zero,zero,xmm1[u,u,u,u,u,u,u,u]
+; AVX-NEXT:    vpshufb {{.*#+}} xmm3 = zero,zero,xmm0[5,7],zero,xmm0[11,13,15,u,u,u,u,u,u,u,u]
+; AVX-NEXT:    vpor %xmm2, %xmm3, %xmm2
+; AVX-NEXT:    vpshufb {{.*#+}} xmm0 = zero,zero,xmm0[4,6],zero,xmm0[10],zero,zero,xmm0[u,u,u,u,u,u,u,u]
+; AVX-NEXT:    vpshufb {{.*#+}} xmm1 = xmm1[0,2],zero,zero,xmm1[8],zero,xmm1[12,14,u,u,u,u,u,u,u,u]
+; AVX-NEXT:    vpor %xmm0, %xmm1, %xmm0
+; AVX-NEXT:    vpunpcklbw {{.*#+}} xmm0 = xmm0[0],xmm2[0],xmm0[1],xmm2[1],xmm0[2],xmm2[2],xmm0[3],xmm2[3],xmm0[4],xmm2[4],xmm0[5],xmm2[5],xmm0[6],xmm2[6],xmm0[7],xmm2[7]
+; AVX-NEXT:    retq
+  %shuffle = shufflevector <16 x i8> %a, <16 x i8> %b, <16 x i32> <i32 16, i32 17, i32 18, i32 19, i32 4, i32 5, i32 6, i32 7, i32 24, i32 25, i32 10, i32 11, i32 28, i32 13, i32 30, i32 15>
+  ret <16 x i8> %shuffle
+}
+
 define <16 x i8> @trunc_v4i32_shuffle(<16 x i8> %a) {
 ; SSE2-LABEL: trunc_v4i32_shuffle:
 ; SSE2:       # BB#0:
