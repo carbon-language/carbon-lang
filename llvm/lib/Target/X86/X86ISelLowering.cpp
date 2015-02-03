@@ -7808,6 +7808,79 @@ static SDValue lowerVectorShuffleAsByteShift(SDLoc DL, MVT VT, SDValue V1,
   return SDValue();
 }
 
+/// \brief Try to lower a vector shuffle as a bit shift (shifts in zeros).
+///
+/// Attempts to match a shuffle mask against the PSRL(W/D/Q) and PSLL(W/D/Q)
+/// SSE2 and AVX2 logical bit-shift instructions. The function matches
+/// elements from one of the input vectors shuffled to the left or right
+/// with zeroable elements 'shifted in'.
+static SDValue lowerVectorShuffleAsBitShift(SDLoc DL, MVT VT, SDValue V1,
+                                            SDValue V2, ArrayRef<int> Mask,
+                                            SelectionDAG &DAG) {
+  SmallBitVector Zeroable = computeZeroableShuffleElements(Mask, V1, V2);
+  const TargetLowering &TLI = DAG.getTargetLoweringInfo();
+
+  int Size = Mask.size();
+  assert(Size == VT.getVectorNumElements() && "Unexpected mask size");
+
+  // PSRL : (little-endian) right bit shift.
+  // [  1, zz,  3, zz]
+  // [ -1, -1,  7, zz]
+  // PSHL : (little-endian) left bit shift.
+  // [ zz, 0, zz,  2 ]
+  // [ -1, 4, zz, -1 ]
+  auto MatchBitShift = [&](int Shift, int Scale) -> SDValue {
+    MVT ShiftSVT = MVT::getIntegerVT(VT.getScalarSizeInBits() * Scale);
+    MVT ShiftVT = MVT::getVectorVT(ShiftSVT, Size / Scale);
+    assert(TLI.isTypeLegal(ShiftVT) && "Illegal integer vector type");
+
+    bool MatchLeft = true, MatchRight = true;
+    for (int i = 0; i != Size; i += Scale) {
+      for (int j = 0; j != Shift; j++) {
+        MatchLeft &= Zeroable[i + j];
+      }
+      for (int j = Scale - Shift; j != Scale; j++) {
+        MatchRight &= Zeroable[i + j];
+      }
+    }
+    if (!(MatchLeft || MatchRight))
+      return SDValue();
+
+    bool MatchV1 = true, MatchV2 = true;
+    for (int i = 0; i != Size; i += Scale) {
+      unsigned Pos = MatchLeft ? i + Shift : i;
+      unsigned Low = MatchLeft ? i : i + Shift;
+      unsigned Len = Scale - Shift;
+      MatchV1 &= isSequentialOrUndefInRange(Mask, Pos, Len, Low);
+      MatchV2 &= isSequentialOrUndefInRange(Mask, Pos, Len, Low + Size);
+    }
+    if (!(MatchV1 || MatchV2))
+      return SDValue();
+
+    // Cast the inputs to ShiftVT to match VSRLI/VSHLI and back again.
+    unsigned OpCode = MatchLeft ? X86ISD::VSHLI : X86ISD::VSRLI;
+    int ShiftAmt = Shift * VT.getScalarSizeInBits();
+    SDValue V = MatchV1 ? V1 : V2;
+    V = DAG.getNode(ISD::BITCAST, DL, ShiftVT, V);
+    V = DAG.getNode(OpCode, DL, ShiftVT, V, DAG.getConstant(ShiftAmt, MVT::i8));
+    return DAG.getNode(ISD::BITCAST, DL, VT, V);
+  };
+
+  // SSE/AVX supports logical shifts up to 64-bit integers - so we can just
+  // keep doubling the size of the integer elements up to that. We can
+  // then shift the elements of the integer vector by whole multiples of
+  // their width within the elements of the larger integer vector. Test each
+  // multiple to see if we can find a match with the moved element indices
+  // and that the shifted in elements are all zeroable.
+  for (int Scale = 2; Scale * VT.getScalarSizeInBits() <= 64; Scale *= 2)
+    for (int Shift = 1; Shift != Scale; Shift++)
+      if (SDValue BitShift = MatchBitShift(Shift, Scale))
+        return BitShift;
+
+  // no match
+  return SDValue();
+}
+
 /// \brief Lower a vector shuffle as a zero or any extension.
 ///
 /// Given a specific number of elements, element bit width, and extension
@@ -8654,6 +8727,11 @@ static SDValue lowerV4I32VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
                        getV4X86ShuffleImm8ForMask(Mask, DAG));
   }
 
+  // Try to use bit shift instructions.
+  if (SDValue Shift = lowerVectorShuffleAsBitShift(
+          DL, MVT::v4i32, V1, V2, Mask, DAG))
+    return Shift;
+
   // Try to use byte shift instructions.
   if (SDValue Shift = lowerVectorShuffleAsByteShift(
           DL, MVT::v4i32, V1, V2, Mask, DAG))
@@ -8738,6 +8816,11 @@ static SDValue lowerV8I16SingleInputVectorShuffle(
   if (SDValue Broadcast = lowerVectorShuffleAsBroadcast(MVT::v8i16, DL, V,
                                                         Mask, Subtarget, DAG))
     return Broadcast;
+
+  // Try to use bit shift instructions.
+  if (SDValue Shift = lowerVectorShuffleAsBitShift(
+          DL, MVT::v8i16, V, V, Mask, DAG))
+    return Shift;
 
   // Try to use byte shift instructions.
   if (SDValue Shift = lowerVectorShuffleAsByteShift(
@@ -9356,6 +9439,11 @@ static SDValue lowerV8I16VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
   assert(NumV1Inputs > 0 && "All single-input shuffles should be canonicalized "
                             "to be V1-input shuffles.");
 
+  // Try to use bit shift instructions.
+  if (SDValue Shift = lowerVectorShuffleAsBitShift(
+          DL, MVT::v8i16, V1, V2, Mask, DAG))
+    return Shift;
+
   // Try to use byte shift instructions.
   if (SDValue Shift = lowerVectorShuffleAsByteShift(
           DL, MVT::v8i16, V1, V2, Mask, DAG))
@@ -9511,6 +9599,11 @@ static SDValue lowerV16I8VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
   ShuffleVectorSDNode *SVOp = cast<ShuffleVectorSDNode>(Op);
   ArrayRef<int> OrigMask = SVOp->getMask();
   assert(OrigMask.size() == 16 && "Unexpected mask size for v16 shuffle!");
+
+  // Try to use bit shift instructions.
+  if (SDValue Shift = lowerVectorShuffleAsBitShift(
+          DL, MVT::v16i8, V1, V2, OrigMask, DAG))
+    return Shift;
 
   // Try to use byte shift instructions.
   if (SDValue Shift = lowerVectorShuffleAsByteShift(
@@ -10602,6 +10695,11 @@ static SDValue lowerV8I32VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
         DAG.getNode(ISD::BUILD_VECTOR, DL, MVT::v8i32, VPermMask), V1);
   }
 
+  // Try to use bit shift instructions.
+  if (SDValue Shift = lowerVectorShuffleAsBitShift(
+          DL, MVT::v8i32, V1, V2, Mask, DAG))
+    return Shift;
+
   // Try to simplify this by merging 128-bit lanes to enable a lane-based
   // shuffle.
   if (SDValue Result = lowerVectorShuffleByMerging128BitLanes(
@@ -10685,6 +10783,11 @@ static SDValue lowerV16I16VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
             DAG.getNode(ISD::BUILD_VECTOR, DL, MVT::v32i8, PSHUFBMask)));
   }
 
+  // Try to use bit shift instructions.
+  if (SDValue Shift = lowerVectorShuffleAsBitShift(
+          DL, MVT::v16i16, V1, V2, Mask, DAG))
+    return Shift;
+
   // Try to simplify this by merging 128-bit lanes to enable a lane-based
   // shuffle.
   if (SDValue Result = lowerVectorShuffleByMerging128BitLanes(
@@ -10762,6 +10865,11 @@ static SDValue lowerV32I8VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
         X86ISD::PSHUFB, DL, MVT::v32i8, V1,
         DAG.getNode(ISD::BUILD_VECTOR, DL, MVT::v32i8, PSHUFBMask));
   }
+
+  // Try to use bit shift instructions.
+  if (SDValue Shift = lowerVectorShuffleAsBitShift(
+          DL, MVT::v32i8, V1, V2, Mask, DAG))
+    return Shift;
 
   // Try to simplify this by merging 128-bit lanes to enable a lane-based
   // shuffle.

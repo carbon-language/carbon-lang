@@ -1848,6 +1848,42 @@ define <8 x float> @splat_v8f32(<4 x float> %r) {
   ret <8 x float> %1
 }
 
+;
+; Shuffle to logical bit shifts
+;
+
+define <8 x i32> @shuffle_v8i32_z0U2zUz6(<8 x i32> %a) {
+; AVX1-LABEL: shuffle_v8i32_z0U2zUz6:
+; AVX1:       # BB#0:
+; AVX1-NEXT:    vxorps %xmm1, %xmm1, %xmm1
+; AVX1-NEXT:    vmovsldup {{.*#+}} ymm0 = ymm0[0,0,2,2,4,4,6,6]
+; AVX1-NEXT:    vblendps {{.*#+}} ymm0 = ymm1[0],ymm0[1,2,3],ymm1[4],ymm0[5],ymm1[6],ymm0[7]
+; AVX1-NEXT:    retq
+;
+; AVX2-LABEL: shuffle_v8i32_z0U2zUz6:
+; AVX2:       # BB#0:
+; AVX2-NEXT:    vpsllq $32, %ymm0
+; AVX2-NEXT:    retq
+  %shuffle = shufflevector <8 x i32> %a, <8 x i32> zeroinitializer, <8 x i32> <i32 8, i32 0, i32 undef, i32 2, i32 8, i32 undef, i32 8, i32 6>
+  ret <8 x i32> %shuffle
+}
+
+define <8 x i32> @shuffle_v8i32_1U3z5zUU(<8 x i32> %a) {
+; AVX1-LABEL: shuffle_v8i32_1U3z5zUU:
+; AVX1:       # BB#0:
+; AVX1-NEXT:    vxorps %xmm1, %xmm1, %xmm1
+; AVX1-NEXT:    vmovshdup {{.*#+}} ymm0 = ymm0[1,1,3,3,5,5,7,7]
+; AVX1-NEXT:    vblendps {{.*#+}} ymm0 = ymm0[0,1,2],ymm1[3],ymm0[4],ymm1[5],ymm0[6,7]
+; AVX1-NEXT:    retq
+;
+; AVX2-LABEL: shuffle_v8i32_1U3z5zUU:
+; AVX2:       # BB#0:
+; AVX2-NEXT:    vpsrlq $32, %ymm0
+; AVX2-NEXT:    retq
+  %shuffle = shufflevector <8 x i32> %a, <8 x i32> zeroinitializer, <8 x i32> <i32 1, i32 undef, i32 3, i32 8, i32 5, i32 8, i32 undef, i32 undef>
+  ret <8 x i32> %shuffle
+}
+
 define <8x float> @concat_v2f32_1(<2 x float>* %tmp64, <2 x float>* %tmp65) {
 ; ALL-LABEL: concat_v2f32_1:
 ; ALL:       # BB#0: # %entry
