@@ -3279,7 +3279,8 @@ GDBRemoteCommunicationServer::Handle_P (StringExtractorGDBRemote &packet)
     }
 
     // Parse out the value.
-    const uint64_t raw_value = packet.GetHexMaxU64 (process_arch.GetByteOrder () == lldb::eByteOrderLittle, std::numeric_limits<uint64_t>::max ());
+    uint8_t reg_bytes[32]; // big enough to support up to 256 bit ymmN register
+    size_t reg_size = packet.GetHexBytesAvail (reg_bytes, sizeof(reg_bytes));
 
     // Get the thread to use.
     NativeThreadProtocolSP thread_sp = GetThreadFromSuffix (packet);
@@ -3299,7 +3300,7 @@ GDBRemoteCommunicationServer::Handle_P (StringExtractorGDBRemote &packet)
         return SendErrorResponse (0x15);
     }
 
-    const RegisterInfo *reg_info = reg_context_sp->GetRegisterInfoAtIndex(reg_index);
+    const RegisterInfo *reg_info = reg_context_sp->GetRegisterInfoAtIndex (reg_index);
     if (!reg_info)
     {
         if (log)
@@ -3315,13 +3316,16 @@ GDBRemoteCommunicationServer::Handle_P (StringExtractorGDBRemote &packet)
         return SendErrorResponse (0x47);
     }
 
+    if (reg_size != reg_info->byte_size)
+    {
+        return SendIllFormedResponse (packet, "P packet register size is incorrect");
+    }
 
     // Build the reginfos response.
     StreamGDBRemote response;
 
-    // FIXME Could be suffixed with a thread: parameter.
-    // That thread then needs to be fed back into the reg context retrieval above.
-    Error error = reg_context_sp->WriteRegisterFromUnsigned (reg_info, raw_value);
+    RegisterValue reg_value (reg_bytes, reg_size, process_arch.GetByteOrder ());
+    Error error = reg_context_sp->WriteRegister (reg_info, reg_value);
     if (error.Fail ())
     {
         if (log)
