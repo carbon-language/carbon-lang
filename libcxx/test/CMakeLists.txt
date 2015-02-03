@@ -6,26 +6,20 @@ macro(pythonize_bool var)
   endif()
 endmacro()
 
-set(LIT_EXECUTABLE "" CACHE FILEPATH "Path to LLVM's llvm-lit.")
-
-if(LIBCXX_BUILT_STANDALONE)
-  # Make sure we can use the console pool for recent cmake and ninja > 1.5
-  if(CMAKE_VERSION VERSION_LESS 3.1.20141117)
-    set(cmake_3_2_USES_TERMINAL)
+include(FindPythonInterp)
+if(PYTHONINTERP_FOUND)
+  if(LIBCXX_BUILT_STANDALONE)
+    set(LIT_EXECUTABLE "" CACHE FILEPATH "Path to LLVM's lit.py.")
+    # Make sure we can use the console pool for recent cmake and ninja > 1.5
+    if(CMAKE_VERSION VERSION_LESS 3.1.20141117)
+      set(cmake_3_2_USES_TERMINAL)
+    else()
+      set(cmake_3_2_USES_TERMINAL USES_TERMINAL)
+    endif()
   else()
-    set(cmake_3_2_USES_TERMINAL USES_TERMINAL)
+    set(LIT_EXECUTABLE "${CMAKE_SOURCE_DIR}/utils/lit/lit.py")
   endif()
-else()
-  include(FindPythonInterp)
-  if(PYTHONINTERP_FOUND)
-    set(LIT_EXECUTABLE
-        "${PYTHON_EXECUTABLE} ${CMAKE_SOURCE_DIR}/utils/lit/lit.py")
-  else()
-    message(WARNING "Could not find Python, cannot set LIT_EXECUTABLE.")
-  endif()
-endif()
 
-if (LIT_EXECUTABLE)
   set(LIT_ARGS_DEFAULT "-sv --show-unsupported --show-xfail")
   if (MSVC OR XCODE)
     set(LIT_ARGS_DEFAULT "${LIT_ARGS_DEFAULT} --no-progress-bar")
@@ -53,13 +47,13 @@ if (LIT_EXECUTABLE)
     @ONLY)
 
   add_custom_target(check-libcxx
-    COMMAND ${LIT_EXECUTABLE}
+    COMMAND ${PYTHON_EXECUTABLE}
+            ${LIT_EXECUTABLE}
             ${LIT_ARGS}
             ${CMAKE_CURRENT_BINARY_DIR}
     DEPENDS cxx
     COMMENT "Running libcxx tests"
     ${cmake_3_2_USES_TERMINAL})
 else()
-  message(WARNING
-          "LIT_EXECUTABLE not set, no check-libcxx target will be available!")
+  message(WARNING "Could not find Python, no check target will be available!")
 endif()
