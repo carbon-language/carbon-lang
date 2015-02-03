@@ -2104,8 +2104,16 @@ TEST(Matcher, FloatLiterals) {
   EXPECT_TRUE(matches("double i = 10.0;", HasFloatLiteral));
   EXPECT_TRUE(matches("double i = 10.0L;", HasFloatLiteral));
   EXPECT_TRUE(matches("double i = 1e10;", HasFloatLiteral));
+  EXPECT_TRUE(matches("double i = 5.0;", floatLiteral(equals(5.0))));
+  EXPECT_TRUE(matches("double i = 5.0;", floatLiteral(equals(5.0f))));
+  EXPECT_TRUE(
+      matches("double i = 5.0;", floatLiteral(equals(llvm::APFloat(5.0)))));
 
   EXPECT_TRUE(notMatches("float i = 10;", HasFloatLiteral));
+  EXPECT_TRUE(notMatches("double i = 5.0;", floatLiteral(equals(6.0))));
+  EXPECT_TRUE(notMatches("double i = 5.0;", floatLiteral(equals(6.0f))));
+  EXPECT_TRUE(
+      notMatches("double i = 5.0;", floatLiteral(equals(llvm::APFloat(6.0)))));
 }
 
 TEST(Matcher, NullPtrLiteral) {

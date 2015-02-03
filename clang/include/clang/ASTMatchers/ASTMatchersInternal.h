@@ -1456,6 +1456,32 @@ private:
   const ValueT ExpectedValue;
 };
 
+/// \brief Template specializations to easily write matchers for floating point
+/// literals.
+inline template <>
+bool ValueEqualsMatcher<FloatingLiteral, double>::matchesNode(
+    const FloatingLiteral &Node) const {
+  if ((&Node.getSemantics()) == &llvm::APFloat::IEEEsingle)
+    return Node.getValue().convertToFloat() == ExpectedValue;
+  if ((&Node.getSemantics()) == &llvm::APFloat::IEEEdouble)
+    return Node.getValue().convertToDouble() == ExpectedValue;
+  return false;
+}
+inline template <>
+bool ValueEqualsMatcher<FloatingLiteral, float>::matchesNode(
+    const FloatingLiteral &Node) const {
+  if ((&Node.getSemantics()) == &llvm::APFloat::IEEEsingle)
+    return Node.getValue().convertToFloat() == ExpectedValue;
+  if ((&Node.getSemantics()) == &llvm::APFloat::IEEEdouble)
+    return Node.getValue().convertToDouble() == ExpectedValue;
+  return false;
+}
+inline template <>
+bool ValueEqualsMatcher<FloatingLiteral, llvm::APFloat>::matchesNode(
+    const FloatingLiteral &Node) const {
+  return ExpectedValue.compare(Node.getValue()) == llvm::APFloat::cmpEqual;
+}
+
 /// \brief A VariadicDynCastAllOfMatcher<SourceT, TargetT> object is a
 /// variadic functor that takes a number of Matcher<TargetT> and returns a
 /// Matcher<SourceT> that matches TargetT nodes that are matched by all of the
