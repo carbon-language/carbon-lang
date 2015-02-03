@@ -12,6 +12,38 @@
 // 80-V9418-12 Rev. A
 // June 15, 2010
 
+// Vector reduce multiply word by signed half (32x16)
+//Rdd=vrmpyweh(Rss,Rtt)[:<<1]
+def : T_PP_pat <M4_vrmpyeh_s0, int_hexagon_M4_vrmpyeh_s0>;
+def : T_PP_pat <M4_vrmpyeh_s1, int_hexagon_M4_vrmpyeh_s1>;
+
+//Rdd=vrmpywoh(Rss,Rtt)[:<<1]
+def : T_PP_pat <M4_vrmpyoh_s0, int_hexagon_M4_vrmpyoh_s0>;
+def : T_PP_pat <M4_vrmpyoh_s1, int_hexagon_M4_vrmpyoh_s1>;
+
+//Rdd+=vrmpyweh(Rss,Rtt)[:<<1]
+def : T_PPP_pat <M4_vrmpyeh_acc_s0, int_hexagon_M4_vrmpyeh_acc_s0>;
+def : T_PPP_pat <M4_vrmpyeh_acc_s1, int_hexagon_M4_vrmpyeh_acc_s1>;
+
+//Rdd=vrmpywoh(Rss,Rtt)[:<<1]
+def : T_PPP_pat <M4_vrmpyoh_acc_s0, int_hexagon_M4_vrmpyoh_acc_s0>;
+def : T_PPP_pat <M4_vrmpyoh_acc_s1, int_hexagon_M4_vrmpyoh_acc_s1>;
+
+// Vector multiply halfwords, signed by unsigned
+// Rdd=vmpyhsu(Rs,Rt)[:<<1]:sat
+def : T_RR_pat <M2_vmpy2su_s0, int_hexagon_M2_vmpy2su_s0>;
+def : T_RR_pat <M2_vmpy2su_s1, int_hexagon_M2_vmpy2su_s1>;
+
+// Rxx+=vmpyhsu(Rs,Rt)[:<<1]:sat
+def : T_PRR_pat <M2_vmac2su_s0, int_hexagon_M2_vmac2su_s0>;
+def : T_PRR_pat <M2_vmac2su_s1, int_hexagon_M2_vmac2su_s1>;
+
+// Vector polynomial multiply halfwords
+// Rdd=vpmpyh(Rs,Rt)
+def : T_RR_pat <M4_vpmpyh, int_hexagon_M4_vpmpyh>;
+// Rxx[^]=vpmpyh(Rs,Rt)
+def : T_PRR_pat <M4_vpmpyh_acc, int_hexagon_M4_vpmpyh_acc>;
+
 // Polynomial multiply words
 // Rdd=pmpyw(Rs,Rt)
 def : T_RR_pat <M4_pmpyw, int_hexagon_M4_pmpyw>;

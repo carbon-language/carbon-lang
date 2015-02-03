@@ -2862,6 +2862,10 @@ def A2_vrsadub: T_XTYPE_Vect <"vrsadub", 0b010, 0b010, 0>;
 def A2_vrsadub_acc: T_XTYPE_Vect_acc <"vrsadub", 0b010, 0b010, 0>;
 }
 
+// Vector absolute difference words: Rdd=vabsdiffw(Rtt,Rss)
+let isCodeGenOnly = 0 in
+def M2_vabsdiffw: T_XTYPE_Vect_diff<0b001, "vabsdiffw">;
+
 // Vector absolute difference: Rdd=vabsdiffh(Rtt,Rss)
 let isCodeGenOnly = 0 in
 def M2_vabsdiffh: T_XTYPE_Vect_diff<0b011, "vabsdiffh">;
@@ -2949,6 +2953,22 @@ def M2_mmachs_s1:  T_M2_vmpy_acc_sat <"vmpywoh", 0b100, 0b111, 1, 0>;
 def M2_mmachs_s0:  T_M2_vmpy_acc_sat <"vmpywoh", 0b000, 0b111, 0, 0>;
 def M2_mmachs_rs1: T_M2_vmpy_acc_sat <"vmpywoh", 0b101, 0b111, 1, 1>;
 def M2_mmachs_rs0: T_M2_vmpy_acc_sat <"vmpywoh", 0b001, 0b111, 0, 1>;
+}
+
+// Vector multiply word by unsigned half with accumulation
+// Rxx+=vmpyw[eo]uh(Rss,Rtt)[:<<1][:rnd]:sat
+let isCodeGenOnly = 0 in {
+def M2_mmaculs_s1:  T_M2_vmpy_acc_sat <"vmpyweuh", 0b110, 0b101, 1, 0>;
+def M2_mmaculs_s0:  T_M2_vmpy_acc_sat <"vmpyweuh", 0b010, 0b101, 0, 0>;
+def M2_mmaculs_rs1: T_M2_vmpy_acc_sat <"vmpyweuh", 0b111, 0b101, 1, 1>;
+def M2_mmaculs_rs0: T_M2_vmpy_acc_sat <"vmpyweuh", 0b011, 0b101, 0, 1>;
+}
+
+let isCodeGenOnly = 0 in {
+def M2_mmacuhs_s1:  T_M2_vmpy_acc_sat <"vmpywouh", 0b110, 0b111, 1, 0>;
+def M2_mmacuhs_s0:  T_M2_vmpy_acc_sat <"vmpywouh", 0b010, 0b111, 0, 0>;
+def M2_mmacuhs_rs1: T_M2_vmpy_acc_sat <"vmpywouh", 0b111, 0b111, 1, 1>;
+def M2_mmacuhs_rs0: T_M2_vmpy_acc_sat <"vmpywouh", 0b011, 0b111, 0, 1>;
 }
 
 // Vector multiply even halfwords with accumulation

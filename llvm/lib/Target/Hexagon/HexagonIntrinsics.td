@@ -345,6 +345,52 @@ def : T_PP_pat <M2_vcmpy_s0_sat_i, int_hexagon_M2_vcmpy_s0_sat_i>;
 def : T_PP_pat <M2_vcmpy_s1_sat_r, int_hexagon_M2_vcmpy_s1_sat_r>;
 def : T_PP_pat <M2_vcmpy_s0_sat_r, int_hexagon_M2_vcmpy_s0_sat_r>;
 
+// Vector dual multiply: Rdd=vdmpy(Rss,Rtt)[:<<1]:sat
+def : T_PP_pat <M2_vdmpys_s1, int_hexagon_M2_vdmpys_s1>;
+def : T_PP_pat <M2_vdmpys_s0, int_hexagon_M2_vdmpys_s0>;
+
+// Vector multiply even halfwords: Rdd=vmpyeh(Rss,Rtt)[:<<1]:sat
+def : T_PP_pat <M2_vmpy2es_s1, int_hexagon_M2_vmpy2es_s1>;
+def : T_PP_pat <M2_vmpy2es_s0, int_hexagon_M2_vmpy2es_s0>;
+
+//Rdd=vmpywoh(Rss,Rtt)[:<<1][:rnd]:sat
+def : T_PP_pat <M2_mmpyh_s0,  int_hexagon_M2_mmpyh_s0>;
+def : T_PP_pat <M2_mmpyh_s1,  int_hexagon_M2_mmpyh_s1>;
+def : T_PP_pat <M2_mmpyh_rs0, int_hexagon_M2_mmpyh_rs0>;
+def : T_PP_pat <M2_mmpyh_rs1, int_hexagon_M2_mmpyh_rs1>;
+
+//Rdd=vmpyweh(Rss,Rtt)[:<<1][:rnd]:sat
+def : T_PP_pat <M2_mmpyl_s0,  int_hexagon_M2_mmpyl_s0>;
+def : T_PP_pat <M2_mmpyl_s1,  int_hexagon_M2_mmpyl_s1>;
+def : T_PP_pat <M2_mmpyl_rs0, int_hexagon_M2_mmpyl_rs0>;
+def : T_PP_pat <M2_mmpyl_rs1, int_hexagon_M2_mmpyl_rs1>;
+
+//Rdd=vmpywouh(Rss,Rtt)[:<<1][:rnd]:sat
+def : T_PP_pat <M2_mmpyuh_s0,  int_hexagon_M2_mmpyuh_s0>;
+def : T_PP_pat <M2_mmpyuh_s1,  int_hexagon_M2_mmpyuh_s1>;
+def : T_PP_pat <M2_mmpyuh_rs0, int_hexagon_M2_mmpyuh_rs0>;
+def : T_PP_pat <M2_mmpyuh_rs1, int_hexagon_M2_mmpyuh_rs1>;
+
+//Rdd=vmpyweuh(Rss,Rtt)[:<<1][:rnd]:sat
+def : T_PP_pat <M2_mmpyul_s0,  int_hexagon_M2_mmpyul_s0>;
+def : T_PP_pat <M2_mmpyul_s1,  int_hexagon_M2_mmpyul_s1>;
+def : T_PP_pat <M2_mmpyul_rs0, int_hexagon_M2_mmpyul_rs0>;
+def : T_PP_pat <M2_mmpyul_rs1, int_hexagon_M2_mmpyul_rs1>;
+
+// Vector reduce add unsigned bytes: Rdd32[+]=vrmpybu(Rss32,Rtt32)
+def : T_PP_pat  <A2_vraddub,     int_hexagon_A2_vraddub>;
+def : T_PPP_pat <A2_vraddub_acc, int_hexagon_A2_vraddub_acc>;
+
+// Vector sum of absolute differences unsigned bytes: Rdd=vrsadub(Rss,Rtt)
+def : T_PP_pat  <A2_vrsadub,     int_hexagon_A2_vrsadub>;
+def : T_PPP_pat <A2_vrsadub_acc, int_hexagon_A2_vrsadub_acc>;
+
+// Vector absolute difference: Rdd=vabsdiffh(Rtt,Rss)
+def : T_PP_pat <M2_vabsdiffh, int_hexagon_M2_vabsdiffh>;
+
+// Vector absolute difference words: Rdd=vabsdiffw(Rtt,Rss)
+def : T_PP_pat <M2_vabsdiffw, int_hexagon_M2_vabsdiffw>;
+
 // Vector reduce complex multiply real or imaginary:
 // Rdd[+]=vrcmpy[ir](Rss,Rtt[*])
 def : T_PP_pat  <M2_vrcmpyi_s0,  int_hexagon_M2_vrcmpyi_s0>;
@@ -361,6 +407,43 @@ def : T_PPP_pat <M2_vrcmacr_s0c, int_hexagon_M2_vrcmacr_s0c>;
 // Rdd[+]=vrmpyh(Rss,Rtt)
 def : T_PP_pat  <M2_vrmpy_s0, int_hexagon_M2_vrmpy_s0>;
 def : T_PPP_pat <M2_vrmac_s0, int_hexagon_M2_vrmac_s0>;
+
+//===----------------------------------------------------------------------===//
+// Vector Multipy with accumulation
+//===----------------------------------------------------------------------===//
+
+// Vector multiply word by signed half with accumulation
+// Rxx+=vmpyw[eo]h(Rss,Rtt)[:<<1][:rnd]:sat
+def : T_PPP_pat <M2_mmacls_s1, int_hexagon_M2_mmacls_s1>;
+def : T_PPP_pat <M2_mmacls_s0, int_hexagon_M2_mmacls_s0>;
+def : T_PPP_pat <M2_mmacls_rs1, int_hexagon_M2_mmacls_rs1>;
+def : T_PPP_pat <M2_mmacls_rs0, int_hexagon_M2_mmacls_rs0>;
+def : T_PPP_pat <M2_mmachs_s1, int_hexagon_M2_mmachs_s1>;
+def : T_PPP_pat <M2_mmachs_s0, int_hexagon_M2_mmachs_s0>;
+def : T_PPP_pat <M2_mmachs_rs1, int_hexagon_M2_mmachs_rs1>;
+def : T_PPP_pat <M2_mmachs_rs0, int_hexagon_M2_mmachs_rs0>;
+
+// Vector multiply word by unsigned half with accumulation
+// Rxx+=vmpyw[eo]uh(Rss,Rtt)[:<<1][:rnd]:sat
+def : T_PPP_pat <M2_mmaculs_s1, int_hexagon_M2_mmaculs_s1>;
+def : T_PPP_pat <M2_mmaculs_s0, int_hexagon_M2_mmaculs_s0>;
+def : T_PPP_pat <M2_mmaculs_rs1, int_hexagon_M2_mmaculs_rs1>;
+def : T_PPP_pat <M2_mmaculs_rs0, int_hexagon_M2_mmaculs_rs0>;
+def : T_PPP_pat <M2_mmacuhs_s1, int_hexagon_M2_mmacuhs_s1>;
+def : T_PPP_pat <M2_mmacuhs_s0, int_hexagon_M2_mmacuhs_s0>;
+def : T_PPP_pat <M2_mmacuhs_rs1, int_hexagon_M2_mmacuhs_rs1>;
+def : T_PPP_pat <M2_mmacuhs_rs0, int_hexagon_M2_mmacuhs_rs0>;
+
+// Vector multiply even halfwords with accumulation
+// Rxx+=vmpyeh(Rss,Rtt)[:<<1][:sat]
+def : T_PPP_pat <M2_vmac2es, int_hexagon_M2_vmac2es>;
+def : T_PPP_pat <M2_vmac2es_s1, int_hexagon_M2_vmac2es_s1>;
+def : T_PPP_pat <M2_vmac2es_s0, int_hexagon_M2_vmac2es_s0>;
+
+// Vector dual multiply with accumulation
+// Rxx+=vdmpy(Rss,Rtt)[:sat]
+def : T_PPP_pat <M2_vdmacs_s1, int_hexagon_M2_vdmacs_s1>;
+def : T_PPP_pat <M2_vdmacs_s0, int_hexagon_M2_vdmacs_s0>;
 
 // Vector complex multiply real or imaginary with accumulation
 // Rxx+=vcmpy[ir](Rss,Rtt):sat
@@ -784,6 +867,11 @@ def : T_RR_pat <M2_cmpysc_s0,  int_hexagon_M2_cmpysc_s0>;
 def : T_RR_pat <M2_cmpys_s1,   int_hexagon_M2_cmpys_s1>;
 def : T_RR_pat <M2_cmpysc_s1,  int_hexagon_M2_cmpysc_s1>;
 
+// Vector multiply halfwords
+// Rdd=vmpyh(Rs,Rt)[:<<1]:sat
+def : T_RR_pat <M2_vmpy2s_s0,  int_hexagon_M2_vmpy2s_s0>;
+def : T_RR_pat <M2_vmpy2s_s1,  int_hexagon_M2_vmpy2s_s1>;
+
 // Rxx[+-]= mpy[u](Rs,Rt)
 def : T_PRR_pat <M2_dpmpyss_acc_s0, int_hexagon_M2_dpmpyss_acc_s0>;
 def : T_PRR_pat <M2_dpmpyss_nac_s0, int_hexagon_M2_dpmpyss_nac_s0>;
@@ -805,6 +893,11 @@ def : T_PRR_pat <M2_cnacsc_s1, int_hexagon_M2_cnacsc_s1>;
 // Rxx+=cmpy[ir](Rs,Rt)
 def : T_PRR_pat <M2_cmaci_s0, int_hexagon_M2_cmaci_s0>;
 def : T_PRR_pat <M2_cmacr_s0, int_hexagon_M2_cmacr_s0>;
+
+// Rxx+=vmpyh(Rs,Rt)[:<<1][:sat]
+def : T_PRR_pat <M2_vmac2, int_hexagon_M2_vmac2>;
+def : T_PRR_pat <M2_vmac2s_s0, int_hexagon_M2_vmac2s_s0>;
+def : T_PRR_pat <M2_vmac2s_s1, int_hexagon_M2_vmac2s_s1>;
 
 /********************************************************************
 *            CR                                                     *
@@ -847,6 +940,19 @@ def : T_RRR_pat <M2_xor_xacc, int_hexagon_M2_xor_xacc>;
 class MType_R32_pat <Intrinsic IntID, InstHexagon OutputInst> :
       Pat <(IntID IntRegs:$src1, IntRegs:$src2),
            (OutputInst IntRegs:$src1, IntRegs:$src2)>;
+
+// Vector dual multiply with round and pack
+
+def : Pat <(int_hexagon_M2_vdmpyrs_s0 DoubleRegs:$src1, DoubleRegs:$src2),
+           (M2_vdmpyrs_s0 DoubleRegs:$src1, DoubleRegs:$src2)>;
+
+def : Pat <(int_hexagon_M2_vdmpyrs_s1 DoubleRegs:$src1, DoubleRegs:$src2),
+           (M2_vdmpyrs_s1 DoubleRegs:$src1, DoubleRegs:$src2)>;
+
+// Vector multiply halfwords with round and pack
+
+def : MType_R32_pat <int_hexagon_M2_vmpy2s_s0pack, M2_vmpy2s_s0pack>;
+def : MType_R32_pat <int_hexagon_M2_vmpy2s_s1pack, M2_vmpy2s_s1pack>;
 
 // Multiply and use lower result
 def : MType_R32_pat <int_hexagon_M2_mpyi, M2_mpyi>;
@@ -945,6 +1051,15 @@ def: T_RR_pat<S2_togglebit_r, int_hexagon_S2_togglebit_r>;
 // Test Bit
 def: T_RI_pat<S2_tstbit_i,    int_hexagon_S2_tstbit_i>;
 def: T_RR_pat<S2_tstbit_r,    int_hexagon_S2_tstbit_r>;
+
+/********************************************************************
+*            STYPE/COMPLEX                                          *
+*********************************************************************/
+// Vector Complex conjugate
+def : T_P_pat <A2_vconj, int_hexagon_A2_vconj>;
+
+// Vector Complex rotate
+def : T_PR_pat <S2_vcrotate, int_hexagon_S2_vcrotate>;
 
 /********************************************************************
 *            STYPE/SHIFT                                            *
@@ -1541,191 +1656,6 @@ class di_LDInstPI_diu4<string opc, Intrinsic IntID>
            "$dst2 = memd($src1++#$offset:circ($src3))",
            [],
            "$src1 = $dst">;
-
-
-// ALU64 / VB / Vector maximum/minimum unsigned bytes.
-def HEXAGON_A2_vmaxub:
-  di_ALU64_didi                   <"vmaxub",   int_hexagon_A2_vmaxub>;
-def HEXAGON_A2_vminub:
-  di_ALU64_didi                   <"vminub",   int_hexagon_A2_vminub>;
-
-// ALU64 / VB / Vector subtract unsigned bytes.
-def HEXAGON_A2_vsubub:
-  di_ALU64_didi                   <"vsubub",   int_hexagon_A2_vsubub>;
-def HEXAGON_A2_vsububs:
-  di_ALU64_didi_sat               <"vsubub",   int_hexagon_A2_vsububs>;
-
-/********************************************************************
-*            MTYPE/ALU                                              *
-*********************************************************************/
-
-// MTYPE / ALU / Vector absolute difference.
-def HEXAGON_M2_vabsdiffh:
-  di_MInst_didi                   <"vabsdiffh",int_hexagon_M2_vabsdiffh>;
-def HEXAGON_M2_vabsdiffw:
-  di_MInst_didi                   <"vabsdiffw",int_hexagon_M2_vabsdiffw>;
-
-/********************************************************************
-*            MTYPE/MPYH                                             *
-*********************************************************************/
-
-// MTYPE / MPYH / Multiply word by half (32x16).
-//Rdd[+]=vmpywoh(Rss,Rtt)[:<<1][:rnd][:sat]
-//Rdd[+]=vmpyweh(Rss,Rtt)[:<<1][:rnd][:sat]
-def HEXAGON_M2_mmpyl_rs1:
-  di_MInst_didi_s1_rnd_sat        <"vmpyweh",  int_hexagon_M2_mmpyl_rs1>;
-def HEXAGON_M2_mmpyl_s1:
-  di_MInst_didi_s1_sat            <"vmpyweh",  int_hexagon_M2_mmpyl_s1>;
-def HEXAGON_M2_mmpyl_rs0:
-  di_MInst_didi_rnd_sat           <"vmpyweh",  int_hexagon_M2_mmpyl_rs0>;
-def HEXAGON_M2_mmpyl_s0:
-  di_MInst_didi_sat               <"vmpyweh",  int_hexagon_M2_mmpyl_s0>;
-def HEXAGON_M2_mmpyh_rs1:
-  di_MInst_didi_s1_rnd_sat        <"vmpywoh",  int_hexagon_M2_mmpyh_rs1>;
-def HEXAGON_M2_mmpyh_s1:
-  di_MInst_didi_s1_sat            <"vmpywoh",  int_hexagon_M2_mmpyh_s1>;
-def HEXAGON_M2_mmpyh_rs0:
-  di_MInst_didi_rnd_sat           <"vmpywoh",  int_hexagon_M2_mmpyh_rs0>;
-def HEXAGON_M2_mmpyh_s0:
-  di_MInst_didi_sat               <"vmpywoh",  int_hexagon_M2_mmpyh_s0>;
-def HEXAGON_M2_mmacls_rs1:
-  di_MInst_dididi_acc_s1_rnd_sat  <"vmpyweh",  int_hexagon_M2_mmacls_rs1>;
-def HEXAGON_M2_mmacls_s1:
-  di_MInst_dididi_acc_s1_sat      <"vmpyweh",  int_hexagon_M2_mmacls_s1>;
-def HEXAGON_M2_mmacls_rs0:
-  di_MInst_dididi_acc_rnd_sat     <"vmpyweh",  int_hexagon_M2_mmacls_rs0>;
-def HEXAGON_M2_mmacls_s0:
-  di_MInst_dididi_acc_sat         <"vmpyweh",  int_hexagon_M2_mmacls_s0>;
-def HEXAGON_M2_mmachs_rs1:
-  di_MInst_dididi_acc_s1_rnd_sat  <"vmpywoh",  int_hexagon_M2_mmachs_rs1>;
-def HEXAGON_M2_mmachs_s1:
-  di_MInst_dididi_acc_s1_sat      <"vmpywoh",  int_hexagon_M2_mmachs_s1>;
-def HEXAGON_M2_mmachs_rs0:
-  di_MInst_dididi_acc_rnd_sat     <"vmpywoh",  int_hexagon_M2_mmachs_rs0>;
-def HEXAGON_M2_mmachs_s0:
-  di_MInst_dididi_acc_sat         <"vmpywoh",  int_hexagon_M2_mmachs_s0>;
-
-// MTYPE / MPYH / Multiply word by unsigned half (32x16).
-//Rdd[+]=vmpywouh(Rss,Rtt)[:<<1][:rnd][:sat]
-//Rdd[+]=vmpyweuh(Rss,Rtt)[:<<1][:rnd][:sat]
-def HEXAGON_M2_mmpyul_rs1:
-  di_MInst_didi_s1_rnd_sat        <"vmpyweuh", int_hexagon_M2_mmpyul_rs1>;
-def HEXAGON_M2_mmpyul_s1:
-  di_MInst_didi_s1_sat            <"vmpyweuh", int_hexagon_M2_mmpyul_s1>;
-def HEXAGON_M2_mmpyul_rs0:
-  di_MInst_didi_rnd_sat           <"vmpyweuh", int_hexagon_M2_mmpyul_rs0>;
-def HEXAGON_M2_mmpyul_s0:
-  di_MInst_didi_sat               <"vmpyweuh", int_hexagon_M2_mmpyul_s0>;
-def HEXAGON_M2_mmpyuh_rs1:
-  di_MInst_didi_s1_rnd_sat        <"vmpywouh", int_hexagon_M2_mmpyuh_rs1>;
-def HEXAGON_M2_mmpyuh_s1:
-  di_MInst_didi_s1_sat            <"vmpywouh", int_hexagon_M2_mmpyuh_s1>;
-def HEXAGON_M2_mmpyuh_rs0:
-  di_MInst_didi_rnd_sat           <"vmpywouh", int_hexagon_M2_mmpyuh_rs0>;
-def HEXAGON_M2_mmpyuh_s0:
-  di_MInst_didi_sat               <"vmpywouh", int_hexagon_M2_mmpyuh_s0>;
-def HEXAGON_M2_mmaculs_rs1:
-  di_MInst_dididi_acc_s1_rnd_sat  <"vmpyweuh", int_hexagon_M2_mmaculs_rs1>;
-def HEXAGON_M2_mmaculs_s1:
-  di_MInst_dididi_acc_s1_sat      <"vmpyweuh", int_hexagon_M2_mmaculs_s1>;
-def HEXAGON_M2_mmaculs_rs0:
-  di_MInst_dididi_acc_rnd_sat     <"vmpyweuh", int_hexagon_M2_mmaculs_rs0>;
-def HEXAGON_M2_mmaculs_s0:
-  di_MInst_dididi_acc_sat         <"vmpyweuh", int_hexagon_M2_mmaculs_s0>;
-def HEXAGON_M2_mmacuhs_rs1:
-  di_MInst_dididi_acc_s1_rnd_sat  <"vmpywouh", int_hexagon_M2_mmacuhs_rs1>;
-def HEXAGON_M2_mmacuhs_s1:
-  di_MInst_dididi_acc_s1_sat      <"vmpywouh", int_hexagon_M2_mmacuhs_s1>;
-def HEXAGON_M2_mmacuhs_rs0:
-  di_MInst_dididi_acc_rnd_sat     <"vmpywouh", int_hexagon_M2_mmacuhs_rs0>;
-def HEXAGON_M2_mmacuhs_s0:
-  di_MInst_dididi_acc_sat         <"vmpywouh", int_hexagon_M2_mmacuhs_s0>;
-
-/********************************************************************
-*            MTYPE/VB                                               *
-*********************************************************************/
-
-// MTYPE / VB / Vector reduce add unsigned bytes.
-def HEXAGON_A2_vraddub:
-  di_MInst_didi                   <"vraddub", int_hexagon_A2_vraddub>;
-def HEXAGON_A2_vraddub_acc:
-  di_MInst_dididi_acc             <"vraddub", int_hexagon_A2_vraddub_acc>;
-
-// MTYPE / VB / Vector sum of absolute differences unsigned bytes.
-def HEXAGON_A2_vrsadub:
-  di_MInst_didi                   <"vrsadub", int_hexagon_A2_vrsadub>;
-def HEXAGON_A2_vrsadub_acc:
-  di_MInst_dididi_acc             <"vrsadub", int_hexagon_A2_vrsadub_acc>;
-
-/********************************************************************
-*            MTYPE/VH                                               *
-*********************************************************************/
-
-// MTYPE / VH / Vector dual multiply.
-def HEXAGON_M2_vdmpys_s1:
-  di_MInst_didi_s1_sat            <"vdmpy",   int_hexagon_M2_vdmpys_s1>;
-def HEXAGON_M2_vdmpys_s0:
-  di_MInst_didi_sat               <"vdmpy",   int_hexagon_M2_vdmpys_s0>;
-def HEXAGON_M2_vdmacs_s1:
-  di_MInst_dididi_acc_s1_sat      <"vdmpy",   int_hexagon_M2_vdmacs_s1>;
-def HEXAGON_M2_vdmacs_s0:
-  di_MInst_dididi_acc_sat         <"vdmpy",   int_hexagon_M2_vdmacs_s0>;
-
-// MTYPE / VH / Vector dual multiply with round and pack.
-def HEXAGON_M2_vdmpyrs_s0:
-  si_MInst_didi_rnd_sat           <"vdmpy",   int_hexagon_M2_vdmpyrs_s0>;
-def HEXAGON_M2_vdmpyrs_s1:
-  si_MInst_didi_s1_rnd_sat        <"vdmpy",   int_hexagon_M2_vdmpyrs_s1>;
-
-// MTYPE / VH / Vector multiply even halfwords.
-def HEXAGON_M2_vmpy2es_s1:
-  di_MInst_didi_s1_sat            <"vmpyeh",  int_hexagon_M2_vmpy2es_s1>;
-def HEXAGON_M2_vmpy2es_s0:
-  di_MInst_didi_sat               <"vmpyeh",  int_hexagon_M2_vmpy2es_s0>;
-def HEXAGON_M2_vmac2es:
-  di_MInst_dididi_acc             <"vmpyeh",  int_hexagon_M2_vmac2es>;
-def HEXAGON_M2_vmac2es_s1:
-  di_MInst_dididi_acc_s1_sat      <"vmpyeh",  int_hexagon_M2_vmac2es_s1>;
-def HEXAGON_M2_vmac2es_s0:
-  di_MInst_dididi_acc_sat         <"vmpyeh",  int_hexagon_M2_vmac2es_s0>;
-
-// MTYPE / VH / Vector multiply halfwords.
-def HEXAGON_M2_vmpy2s_s0:
-  di_MInst_sisi_sat               <"vmpyh",   int_hexagon_M2_vmpy2s_s0>;
-def HEXAGON_M2_vmpy2s_s1:
-  di_MInst_sisi_s1_sat            <"vmpyh",   int_hexagon_M2_vmpy2s_s1>;
-def HEXAGON_M2_vmac2:
-  di_MInst_disisi_acc             <"vmpyh",   int_hexagon_M2_vmac2>;
-def HEXAGON_M2_vmac2s_s0:
-  di_MInst_disisi_acc_sat         <"vmpyh",   int_hexagon_M2_vmac2s_s0>;
-def HEXAGON_M2_vmac2s_s1:
-  di_MInst_disisi_acc_s1_sat      <"vmpyh",   int_hexagon_M2_vmac2s_s1>;
-
-// MTYPE / VH / Vector multiply halfwords with round and pack.
-def HEXAGON_M2_vmpy2s_s0pack:
-  si_MInst_sisi_rnd_sat           <"vmpyh",   int_hexagon_M2_vmpy2s_s0pack>;
-def HEXAGON_M2_vmpy2s_s1pack:
-  si_MInst_sisi_s1_rnd_sat        <"vmpyh",   int_hexagon_M2_vmpy2s_s1pack>;
-
-// MTYPE / VH / Vector reduce multiply halfwords.
-// Rxx32+=vrmpyh(Rss32,Rtt32)
-def HEXAGON_M2_vrmpy_s0:
-  di_MInst_didi                   <"vrmpyh",  int_hexagon_M2_vrmpy_s0>;
-def HEXAGON_M2_vrmac_s0:
-  di_MInst_dididi_acc             <"vrmpyh",  int_hexagon_M2_vrmac_s0>;
-
-/********************************************************************
-*            STYPE/COMPLEX                                          *
-*********************************************************************/
-
-// STYPE / COMPLEX / Vector Complex conjugate.
-def HEXAGON_A2_vconj:
-  di_SInst_di_sat                 <"vconj",   int_hexagon_A2_vconj>;
-
-// STYPE / COMPLEX / Vector Complex rotate.
-def HEXAGON_S2_vcrotate:
-  di_SInst_disi                   <"vcrotate",int_hexagon_S2_vcrotate>;
-
 
 /********************************************************************
 *            STYPE/PERM                                             *

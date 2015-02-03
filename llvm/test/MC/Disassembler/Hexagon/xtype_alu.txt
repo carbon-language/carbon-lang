@@ -219,6 +219,10 @@
 0x10 0xd4 0x7e 0xe8
 # CHECK: r17:16 = vabsdiffh(r21:20, r31:30)
 
+# Vector absolute difference words
+0x10 0xd4 0x3e 0xe8
+# CHECK: r17:16 = vabsdiffw(r21:20, r31:30)
+
 # Vector add halfwords
 0x50 0xde 0x14 0xd3
 # CHECK: r17:16 = vaddh(r21:20, r31:30)

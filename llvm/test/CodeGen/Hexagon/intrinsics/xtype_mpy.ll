@@ -37,6 +37,120 @@ define i32 @M4_mpyrr_addr(i32 %a, i32 %b, i32 %c) {
 }
 ; CHECK: r1 = add(r0, mpyi(r1, r2))
 
+; Vector multiply word by signed half (32x16)
+declare i64 @llvm.hexagon.M2.mmpyl.s0(i64, i64)
+define i64 @M2_mmpyl_s0(i64 %a, i64 %b) {
+  %z = call i64 @llvm.hexagon.M2.mmpyl.s0(i64 %a, i64 %b)
+  ret i64 %z
+}
+; CHECK: r1:0 = vmpyweh(r1:0, r3:2):sat
+
+declare i64 @llvm.hexagon.M2.mmpyl.s1(i64, i64)
+define i64 @M2_mmpyl_s1(i64 %a, i64 %b) {
+  %z = call i64 @llvm.hexagon.M2.mmpyl.s1(i64 %a, i64 %b)
+  ret i64 %z
+}
+; CHECK: r1:0 = vmpyweh(r1:0, r3:2):<<1:sat
+
+declare i64 @llvm.hexagon.M2.mmpyh.s0(i64, i64)
+define i64 @M2_mmpyh_s0(i64 %a, i64 %b) {
+  %z = call i64 @llvm.hexagon.M2.mmpyh.s0(i64 %a, i64 %b)
+  ret i64 %z
+}
+; CHECK: r1:0 = vmpywoh(r1:0, r3:2):sat
+
+declare i64 @llvm.hexagon.M2.mmpyh.s1(i64, i64)
+define i64 @M2_mmpyh_s1(i64 %a, i64 %b) {
+  %z = call i64 @llvm.hexagon.M2.mmpyh.s1(i64 %a, i64 %b)
+  ret i64 %z
+}
+; CHECK: r1:0 = vmpywoh(r1:0, r3:2):<<1:sat
+
+declare i64 @llvm.hexagon.M2.mmpyl.rs0(i64, i64)
+define i64 @M2_mmpyl_rs0(i64 %a, i64 %b) {
+  %z = call i64 @llvm.hexagon.M2.mmpyl.rs0(i64 %a, i64 %b)
+  ret i64 %z
+}
+; CHECK: r1:0 = vmpyweh(r1:0, r3:2):rnd:sat
+
+declare i64 @llvm.hexagon.M2.mmpyl.rs1(i64, i64)
+define i64 @M2_mmpyl_rs1(i64 %a, i64 %b) {
+  %z = call i64 @llvm.hexagon.M2.mmpyl.rs1(i64 %a, i64 %b)
+  ret i64 %z
+}
+; CHECK: r1:0 = vmpyweh(r1:0, r3:2):<<1:rnd:sat
+
+declare i64 @llvm.hexagon.M2.mmpyh.rs0(i64, i64)
+define i64 @M2_mmpyh_rs0(i64 %a, i64 %b) {
+  %z = call i64 @llvm.hexagon.M2.mmpyh.rs0(i64 %a, i64 %b)
+  ret i64 %z
+}
+; CHECK: r1:0 = vmpywoh(r1:0, r3:2):rnd:sat
+
+declare i64 @llvm.hexagon.M2.mmpyh.rs1(i64, i64)
+define i64 @M2_mmpyh_rs1(i64 %a, i64 %b) {
+  %z = call i64 @llvm.hexagon.M2.mmpyh.rs1(i64 %a, i64 %b)
+  ret i64 %z
+}
+; CHECK: r1:0 = vmpywoh(r1:0, r3:2):<<1:rnd:sat
+
+; Vector multiply word by unsigned half (32x16)
+declare i64 @llvm.hexagon.M2.mmpyul.s0(i64, i64)
+define i64 @M2_mmpyul_s0(i64 %a, i64 %b) {
+  %z = call i64 @llvm.hexagon.M2.mmpyul.s0(i64 %a, i64 %b)
+  ret i64 %z
+}
+; CHECK: r1:0 = vmpyweuh(r1:0, r3:2):sat
+
+declare i64 @llvm.hexagon.M2.mmpyul.s1(i64, i64)
+define i64 @M2_mmpyul_s1(i64 %a, i64 %b) {
+  %z = call i64 @llvm.hexagon.M2.mmpyul.s1(i64 %a, i64 %b)
+  ret i64 %z
+}
+; CHECK: r1:0 = vmpyweuh(r1:0, r3:2):<<1:sat
+
+declare i64 @llvm.hexagon.M2.mmpyuh.s0(i64, i64)
+define i64 @M2_mmpyuh_s0(i64 %a, i64 %b) {
+  %z = call i64 @llvm.hexagon.M2.mmpyuh.s0(i64 %a, i64 %b)
+  ret i64 %z
+}
+; CHECK: r1:0 = vmpywouh(r1:0, r3:2):sat
+
+declare i64 @llvm.hexagon.M2.mmpyuh.s1(i64, i64)
+define i64 @M2_mmpyuh_s1(i64 %a, i64 %b) {
+  %z = call i64 @llvm.hexagon.M2.mmpyuh.s1(i64 %a, i64 %b)
+  ret i64 %z
+}
+; CHECK: r1:0 = vmpywouh(r1:0, r3:2):<<1:sat
+
+declare i64 @llvm.hexagon.M2.mmpyul.rs0(i64, i64)
+define i64 @M2_mmpyul_rs0(i64 %a, i64 %b) {
+  %z = call i64 @llvm.hexagon.M2.mmpyul.rs0(i64 %a, i64 %b)
+  ret i64 %z
+}
+; CHECK: r1:0 = vmpyweuh(r1:0, r3:2):rnd:sat
+
+declare i64 @llvm.hexagon.M2.mmpyul.rs1(i64, i64)
+define i64 @M2_mmpyul_rs1(i64 %a, i64 %b) {
+  %z = call i64 @llvm.hexagon.M2.mmpyul.rs1(i64 %a, i64 %b)
+  ret i64 %z
+}
+; CHECK: r1:0 = vmpyweuh(r1:0, r3:2):<<1:rnd:sat
+
+declare i64 @llvm.hexagon.M2.mmpyuh.rs0(i64, i64)
+define i64 @M2_mmpyuh_rs0(i64 %a, i64 %b) {
+  %z = call i64 @llvm.hexagon.M2.mmpyuh.rs0(i64 %a, i64 %b)
+  ret i64 %z
+}
+; CHECK: r1:0 = vmpywouh(r1:0, r3:2):rnd:sat
+
+declare i64 @llvm.hexagon.M2.mmpyuh.rs1(i64, i64)
+define i64 @M2_mmpyuh_rs1(i64 %a, i64 %b) {
+  %z = call i64 @llvm.hexagon.M2.mmpyuh.rs1(i64 %a, i64 %b)
+  ret i64 %z
+}
+; CHECK: r1:0 = vmpywouh(r1:0, r3:2):<<1:rnd:sat
+
 ; Multiply signed halfwords
 declare i64 @llvm.hexagon.M2.mpyd.ll.s0(i32, i32)
 define i64 @M2_mpyd_ll_s0(i32 %a, i32 %b) {
@@ -1006,6 +1120,63 @@ define i64 @M4_pmpyw_acc(i64 %a, i32 %b, i32 %c) {
 }
 ; CHECK: r1:0 ^= pmpyw(r2, r3)
 
+; Vector reduce multiply word by signed half
+declare i64 @llvm.hexagon.M4.vrmpyoh.s0(i64, i64)
+define i64 @M4_vrmpyoh_s0(i64 %a, i64 %b) {
+  %z = call i64 @llvm.hexagon.M4.vrmpyoh.s0(i64 %a, i64 %b)
+  ret i64 %z
+}
+; CHECK: r1:0 = vrmpywoh(r1:0, r3:2)
+
+declare i64 @llvm.hexagon.M4.vrmpyoh.s1(i64, i64)
+define i64 @M4_vrmpyoh_s1(i64 %a, i64 %b) {
+  %z = call i64 @llvm.hexagon.M4.vrmpyoh.s1(i64 %a, i64 %b)
+  ret i64 %z
+}
+; CHECK: r1:0 = vrmpywoh(r1:0, r3:2):<<1
+
+declare i64 @llvm.hexagon.M4.vrmpyeh.s0(i64, i64)
+define i64 @M4_vrmpyeh_s0(i64 %a, i64 %b) {
+  %z = call i64 @llvm.hexagon.M4.vrmpyeh.s0(i64 %a, i64 %b)
+  ret i64 %z
+}
+; CHECK: r1:0 = vrmpyweh(r1:0, r3:2)
+
+declare i64 @llvm.hexagon.M4.vrmpyeh.s1(i64, i64)
+define i64 @M4_vrmpyeh_s1(i64 %a, i64 %b) {
+  %z = call i64 @llvm.hexagon.M4.vrmpyeh.s1(i64 %a, i64 %b)
+  ret i64 %z
+}
+; CHECK: r1:0 = vrmpyweh(r1:0, r3:2):<<1
+
+declare i64 @llvm.hexagon.M4.vrmpyoh.acc.s0(i64, i64, i64)
+define i64 @M4_vrmpyoh_acc_s0(i64 %a, i64 %b, i64 %c) {
+  %z = call i64 @llvm.hexagon.M4.vrmpyoh.acc.s0(i64 %a, i64 %b, i64 %c)
+  ret i64 %z
+}
+; CHECK: r1:0 += vrmpywoh(r3:2, r5:4)
+
+declare i64 @llvm.hexagon.M4.vrmpyoh.acc.s1(i64, i64, i64)
+define i64 @M4_vrmpyoh_acc_s1(i64 %a, i64 %b, i64 %c) {
+  %z = call i64 @llvm.hexagon.M4.vrmpyoh.acc.s1(i64 %a, i64 %b, i64 %c)
+  ret i64 %z
+}
+; CHECK: r1:0 += vrmpywoh(r3:2, r5:4):<<1
+
+declare i64 @llvm.hexagon.M4.vrmpyeh.acc.s0(i64, i64, i64)
+define i64 @M4_vrmpyeh_acc_s0(i64 %a, i64 %b, i64 %c) {
+  %z = call i64 @llvm.hexagon.M4.vrmpyeh.acc.s0(i64 %a, i64 %b, i64 %c)
+  ret i64 %z
+}
+; CHECK: r1:0 += vrmpyweh(r3:2, r5:4)
+
+declare i64 @llvm.hexagon.M4.vrmpyeh.acc.s1(i64, i64, i64)
+define i64 @M4_vrmpyeh_acc_s1(i64 %a, i64 %b, i64 %c) {
+  %z = call i64 @llvm.hexagon.M4.vrmpyeh.acc.s1(i64 %a, i64 %b, i64 %c)
+  ret i64 %z
+}
+; CHECK: r1:0 += vrmpyweh(r3:2, r5:4):<<1
+
 ; Multiply and use upper result
 declare i32 @llvm.hexagon.M2.dpmpyss.rnd.s0(i32, i32)
 define i32 @M2_dpmpyss_rnd_s0(i32 %a, i32 %b) {
@@ -1133,3 +1304,222 @@ define i64 @M2_dpmpyuu_nac_s0(i64 %a, i32 %b, i32 %c) {
   ret i64 %z
 }
 ; CHECK: r1:0 -= mpyu(r2, r3)
+
+; Vector dual multiply
+declare i64 @llvm.hexagon.M2.vdmpys.s0(i64, i64)
+define i64 @M2_vdmpys_s0(i64 %a, i64 %b) {
+  %z = call i64 @llvm.hexagon.M2.vdmpys.s0(i64 %a, i64 %b)
+  ret i64 %z
+}
+; CHECK: r1:0 = vdmpy(r1:0, r3:2):sat
+
+declare i64 @llvm.hexagon.M2.vdmpys.s1(i64, i64)
+define i64 @M2_vdmpys_s1(i64 %a, i64 %b) {
+  %z = call i64 @llvm.hexagon.M2.vdmpys.s1(i64 %a, i64 %b)
+  ret i64 %z
+}
+; CHECK: r1:0 = vdmpy(r1:0, r3:2):<<1:sat
+
+; Vector reduce multiply bytes
+declare i64 @llvm.hexagon.M5.vrmpybuu(i64, i64)
+define i64 @M5_vrmpybuu(i64 %a, i64 %b) {
+  %z = call i64 @llvm.hexagon.M5.vrmpybuu(i64 %a, i64 %b)
+  ret i64 %z
+}
+; CHECK: r1:0 = vrmpybu(r1:0, r3:2)
+
+declare i64 @llvm.hexagon.M5.vrmpybsu(i64, i64)
+define i64 @M5_vrmpybsu(i64 %a, i64 %b) {
+  %z = call i64 @llvm.hexagon.M5.vrmpybsu(i64 %a, i64 %b)
+  ret i64 %z
+}
+; CHECK: r1:0 = vrmpybsu(r1:0, r3:2)
+
+declare i64 @llvm.hexagon.M5.vrmacbuu(i64, i64, i64)
+define i64 @M5_vrmacbuu(i64 %a, i64 %b, i64 %c) {
+  %z = call i64 @llvm.hexagon.M5.vrmacbuu(i64 %a, i64 %b, i64 %c)
+  ret i64 %z
+}
+; CHECK: r1:0 += vrmpybu(r3:2, r5:4)
+
+declare i64 @llvm.hexagon.M5.vrmacbsu(i64, i64, i64)
+define i64 @M5_vrmacbsu(i64 %a, i64 %b, i64 %c) {
+  %z = call i64 @llvm.hexagon.M5.vrmacbsu(i64 %a, i64 %b, i64 %c)
+  ret i64 %z
+}
+; CHECK: r1:0 += vrmpybsu(r3:2, r5:4)
+
+; Vector dual multiply signed by unsigned bytes
+declare i64 @llvm.hexagon.M5.vdmpybsu(i64, i64)
+define i64 @M5_vdmpybsu(i64 %a, i64 %b) {
+  %z = call i64 @llvm.hexagon.M5.vdmpybsu(i64 %a, i64 %b)
+  ret i64 %z
+}
+; CHECK: r1:0 = vdmpybsu(r1:0, r3:2):sat
+
+declare i64 @llvm.hexagon.M5.vdmacbsu(i64, i64, i64)
+define i64 @M5_vdmacbsu(i64 %a, i64 %b, i64 %c) {
+  %z = call i64 @llvm.hexagon.M5.vdmacbsu(i64 %a, i64 %b, i64 %c)
+  ret i64 %z
+}
+; CHECK: r1:0 += vdmpybsu(r3:2, r5:4):sat
+
+; Vector multiply even halfwords
+declare i64 @llvm.hexagon.M2.vmpy2es.s0(i64, i64)
+define i64 @M2_vmpy2es_s0(i64 %a, i64 %b) {
+  %z = call i64 @llvm.hexagon.M2.vmpy2es.s0(i64 %a, i64 %b)
+  ret i64 %z
+}
+; CHECK: r1:0 = vmpyeh(r1:0, r3:2):sat
+
+declare i64 @llvm.hexagon.M2.vmpy2es.s1(i64, i64)
+define i64 @M2_vmpy2es_s1(i64 %a, i64 %b) {
+  %z = call i64 @llvm.hexagon.M2.vmpy2es.s1(i64 %a, i64 %b)
+  ret i64 %z
+}
+; CHECK: r1:0 = vmpyeh(r1:0, r3:2):<<1:sat
+
+declare i64 @llvm.hexagon.M2.vmac2es(i64, i64, i64)
+define i64 @M2_vmac2es(i64 %a, i64 %b, i64 %c) {
+  %z = call i64 @llvm.hexagon.M2.vmac2es(i64 %a, i64 %b, i64 %c)
+  ret i64 %z
+}
+; CHECK: r1:0 += vmpyeh(r3:2, r5:4)
+
+declare i64 @llvm.hexagon.M2.vmac2es.s0(i64, i64, i64)
+define i64 @M2_vmac2es_s0(i64 %a, i64 %b, i64 %c) {
+  %z = call i64 @llvm.hexagon.M2.vmac2es.s0(i64 %a, i64 %b, i64 %c)
+  ret i64 %z
+}
+; CHECK: r1:0 += vmpyeh(r3:2, r5:4):sat
+
+declare i64 @llvm.hexagon.M2.vmac2es.s1(i64, i64, i64)
+define i64 @M2_vmac2es_s1(i64 %a, i64 %b, i64 %c) {
+  %z = call i64 @llvm.hexagon.M2.vmac2es.s1(i64 %a, i64 %b, i64 %c)
+  ret i64 %z
+}
+; CHECK: r1:0 += vmpyeh(r3:2, r5:4):<<1:sat
+
+; Vector multiply halfwords
+declare i64 @llvm.hexagon.M2.vmpy2s.s0(i32, i32)
+define i64 @M2_vmpy2s_s0(i32 %a, i32 %b) {
+  %z = call i64 @llvm.hexagon.M2.vmpy2s.s0(i32 %a, i32 %b)
+  ret i64 %z
+}
+; CHECK: r1:0 = vmpyh(r0, r1):sat
+
+declare i64 @llvm.hexagon.M2.vmpy2s.s1(i32, i32)
+define i64 @M2_vmpy2s_s1(i32 %a, i32 %b) {
+  %z = call i64 @llvm.hexagon.M2.vmpy2s.s1(i32 %a, i32 %b)
+  ret i64 %z
+}
+; CHECK: r1:0 = vmpyh(r0, r1):<<1:sat
+
+declare i64 @llvm.hexagon.M2.vmac2(i64, i32, i32)
+define i64 @M2_vmac2(i64 %a, i32 %b, i32 %c) {
+  %z = call i64 @llvm.hexagon.M2.vmac2(i64 %a, i32 %b, i32 %c)
+  ret i64 %z
+}
+; CHECK: r1:0 += vmpyh(r2, r3)
+
+declare i64 @llvm.hexagon.M2.vmac2s.s0(i64, i32, i32)
+define i64 @M2_vmac2s_s0(i64 %a, i32 %b, i32 %c) {
+  %z = call i64 @llvm.hexagon.M2.vmac2s.s0(i64 %a, i32 %b, i32 %c)
+  ret i64 %z
+}
+; CHECK: r1:0 += vmpyh(r2, r3):sat
+
+declare i64 @llvm.hexagon.M2.vmac2s.s1(i64, i32, i32)
+define i64 @M2_vmac2s_s1(i64 %a, i32 %b, i32 %c) {
+  %z = call i64 @llvm.hexagon.M2.vmac2s.s1(i64 %a, i32 %b, i32 %c)
+  ret i64 %z
+}
+; CHECK: r1:0 += vmpyh(r2, r3):<<1:sat
+
+; Vector multiply halfwords signed by unsigned
+declare i64 @llvm.hexagon.M2.vmpy2su.s0(i32, i32)
+define i64 @M2_vmpy2su_s0(i32 %a, i32 %b) {
+  %z = call i64 @llvm.hexagon.M2.vmpy2su.s0(i32 %a, i32 %b)
+  ret i64 %z
+}
+; CHECK: r1:0 = vmpyhsu(r0, r1):sat
+
+declare i64 @llvm.hexagon.M2.vmpy2su.s1(i32, i32)
+define i64 @M2_vmpy2su_s1(i32 %a, i32 %b) {
+  %z = call i64 @llvm.hexagon.M2.vmpy2su.s1(i32 %a, i32 %b)
+  ret i64 %z
+}
+; CHECK: r1:0 = vmpyhsu(r0, r1):<<1:sat
+
+declare i64 @llvm.hexagon.M2.vmac2su.s0(i64, i32, i32)
+define i64 @M2_vmac2su_s0(i64 %a, i32 %b, i32 %c) {
+  %z = call i64 @llvm.hexagon.M2.vmac2su.s0(i64 %a, i32 %b, i32 %c)
+  ret i64 %z
+}
+; CHECK: r1:0 += vmpyhsu(r2, r3):sat
+
+declare i64 @llvm.hexagon.M2.vmac2su.s1(i64, i32, i32)
+define i64 @M2_vmac2su_s1(i64 %a, i32 %b, i32 %c) {
+  %z = call i64 @llvm.hexagon.M2.vmac2su.s1(i64 %a, i32 %b, i32 %c)
+  ret i64 %z
+}
+; CHECK: r1:0 += vmpyhsu(r2, r3):<<1:sat
+
+; Vector reduce multiply halfwords
+declare i64 @llvm.hexagon.M2.vrmpy.s0(i64, i64)
+define i64 @M2_vrmpy_s0(i64 %a, i64 %b) {
+  %z = call i64 @llvm.hexagon.M2.vrmpy.s0(i64 %a, i64 %b)
+  ret i64 %z
+}
+; CHECK: r1:0 = vrmpyh(r1:0, r3:2)
+
+declare i64 @llvm.hexagon.M2.vrmac.s0(i64, i64, i64)
+define i64 @M2_vrmac_s0(i64 %a, i64 %b, i64 %c) {
+  %z = call i64 @llvm.hexagon.M2.vrmac.s0(i64 %a, i64 %b, i64 %c)
+  ret i64 %z
+}
+; CHECK: r1:0 += vrmpyh(r3:2, r5:4)
+
+; Vector multiply bytes
+declare i64 @llvm.hexagon.M5.vmpybsu(i32, i32)
+define i64 @M2_vmpybsu(i32 %a, i32 %b) {
+  %z = call i64 @llvm.hexagon.M5.vmpybsu(i32 %a, i32 %b)
+  ret i64 %z
+}
+; CHECK: r1:0 = vmpybsu(r0, r1)
+
+declare i64 @llvm.hexagon.M5.vmpybuu(i32, i32)
+define i64 @M2_vmpybuu(i32 %a, i32 %b) {
+  %z = call i64 @llvm.hexagon.M5.vmpybuu(i32 %a, i32 %b)
+  ret i64 %z
+}
+; CHECK: r1:0 = vmpybu(r0, r1)
+
+declare i64 @llvm.hexagon.M5.vmacbuu(i64, i32, i32)
+define i64 @M2_vmacbuu(i64 %a, i32 %b, i32 %c) {
+  %z = call i64 @llvm.hexagon.M5.vmacbuu(i64 %a, i32 %b, i32 %c)
+  ret i64 %z
+}
+; CHECK: r1:0 += vmpybu(r2, r3)
+
+declare i64 @llvm.hexagon.M5.vmacbsu(i64, i32, i32)
+define i64 @M2_vmacbsu(i64 %a, i32 %b, i32 %c) {
+  %z = call i64 @llvm.hexagon.M5.vmacbsu(i64 %a, i32 %b, i32 %c)
+  ret i64 %z
+}
+; CHECK: r1:0 += vmpybsu(r2, r3)
+
+; Vector polynomial multiply halfwords
+declare i64 @llvm.hexagon.M4.vpmpyh(i32, i32)
+define i64 @M4_vpmpyh(i32 %a, i32 %b) {
+  %z = call i64 @llvm.hexagon.M4.vpmpyh(i32 %a, i32 %b)
+  ret i64 %z
+}
+; CHECK: r1:0 = vpmpyh(r0, r1)
+
+declare i64 @llvm.hexagon.M4.vpmpyh.acc(i64, i32, i32)
+define i64 @M4_vpmpyh_acc(i64 %a, i32 %b, i32 %c) {
+  %z = call i64 @llvm.hexagon.M4.vpmpyh.acc(i64 %a, i32 %b, i32 %c)
+  ret i64 %z
+}
+; CHECK: r1:0 ^= vpmpyh(r2, r3)
