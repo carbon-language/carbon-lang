@@ -6,7 +6,7 @@
 ; CHECK: Write: { [Stmt_for_cond[i0] -> MemRef_sum[0]] -> MemRef_sum[0] : i0 >= 0 and i0 <= 100 }
 ; CHECK: Schedule: {
 ; CHECK-DAG: [Stmt_for_cond[i0] -> MemRef_sum[0]] -> [i0] : i0 <= 100 and i0 >= 0
-; CHECK-DAGL Stmt_for_cond[i0] -> [i0]
+; CHECK-DAG: Stmt_for_cond[i0] -> [i0]
 ; CHECK: }
 ; CHECK: Wrapped Dependences:
 ; CHECK: RAW dependences:
