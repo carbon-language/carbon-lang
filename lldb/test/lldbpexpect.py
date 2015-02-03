@@ -20,20 +20,24 @@ class PExpectTest(TestBase):
         self.timeout = 5
         self.child = pexpect.spawn('%s %s' % (self.lldbHere, self.launchArgs()))
 
-    def expect(self, patterns=None, timeout=None):
+    def expect(self, exact=None, patterns=None, timeout=None, exact=None):
         if patterns is None: return None
         if timeout is None: timeout = self.timeout
-        return self.child.expect(patterns, timeout=timeout)
+        if exact is None: exact = False
+        if exact:
+            return self.child.expect_exact(patterns, timeout=timeout)
+        else:
+            return self.child.expect(patterns, timeout=timeout)
 
-    def sendimpl(self, sender, command, patterns=None, timeout=None):
+    def sendimpl(self, sender, command, patterns=None, timeout=None, exact=None):
         sender(command)
-        return self.expect(patterns=patterns, timeout=timeout)
+        return self.expect(patterns=patterns, timeout=timeout, exact=exact)
 
-    def send(self, command, patterns=None, timeout=None):
-        return self.sendimpl(self.child.send, command, patterns, timeout)
+    def send(self, command, patterns=None, timeout=None, exact=None):
+        return self.sendimpl(self.child.send, command, patterns, timeout, exact)
 
-    def sendline(self, command, patterns=None, timeout=None):
-        return self.sendimpl(self.child.sendline, command, patterns, timeout)
+    def sendline(self, command, patterns=None, timeout=None, exact=None):
+        return self.sendimpl(self.child.sendline, command, patterns, timeout, exact)
 
     def quit(self, gracefully=None):
         if gracefully is None: gracefully = True
