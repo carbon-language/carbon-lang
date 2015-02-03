@@ -22,7 +22,7 @@ int main() {
     static_assert(ex::is_error_condition_enum_v<std::errc>, "");
 
     static_assert(ex::is_error_condition_enum_v<std::errc> ==
-                  std::is_error_condition_enum<std::errc>::value, "");
+                  std::is_error_condition_enum <std::errc>::value, "");
 
     static_assert(
         std::is_same<decltype(ex::is_error_condition_enum_v<std::errc>),
@@ -33,6 +33,6 @@ int main() {
     static_assert(!ex::is_error_condition_enum_v<int>, "");
 
     static_assert(ex::is_error_condition_enum_v<int> ==
-                  std::is_error_condition_enum<int>::value, "");
+                  std::is_error_condition_enum <int>::value, "");
   }
 }
