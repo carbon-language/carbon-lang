@@ -2521,11 +2521,44 @@ NativeProcessLinux::MonitorSignal(const siginfo_t *info, lldb::pid_t pid, bool e
                              GetID (),
                              pid);
 
-            // An inferior thread just stopped, but was not the primary cause of the process stop.
-            // Instead, something else (like a breakpoint or step) caused the stop.  Mark the
-            // stop signal as 0 to let lldb know this isn't the important stop.
-            reinterpret_cast<NativeThreadLinux*> (thread_sp.get ())->SetStoppedBySignal (0);
-            SetCurrentThreadID (thread_sp->GetID ());
+            // Check that we're not already marked with a stop reason.
+            // Note this thread really shouldn't already be marked as stopped - if we were, that would imply that
+            // the kernel signaled us with the thread stopping which we handled and marked as stopped,
+            // and that, without an intervening resume, we received another stop.  It is more likely
+            // that we are missing the marking of a run state somewhere if we find that the thread was
+            // marked as stopped.
+            NativeThreadLinux *const linux_thread_p = reinterpret_cast<NativeThreadLinux*> (thread_sp.get ());
+            assert (linux_thread_p && "linux_thread_p is null!");
+
+            const StateType thread_state = linux_thread_p->GetState ();
+            if (!StateIsStoppedState (thread_state, false))
+            {
+                // An inferior thread just stopped, but was not the primary cause of the process stop.
+                // Instead, something else (like a breakpoint or step) caused the stop.  Mark the
+                // stop signal as 0 to let lldb know this isn't the important stop.
+                reinterpret_cast<NativeThreadLinux*> (thread_sp.get ())->SetStoppedBySignal (0);
+                SetCurrentThreadID (thread_sp->GetID ());
+            }
+            else
+            {
+                if (log)
+                {
+                    // Retrieve the signal name if the thread was stopped by a signal.
+                    int stop_signo = 0;
+                    const bool stopped_by_signal = linux_thread_p->IsStopped (&stop_signo);
+                    const char *signal_name = stopped_by_signal ? GetUnixSignals ().GetSignalAsCString (stop_signo) : "<not stopped by signal>";
+                    if (!signal_name)
+                        signal_name = "<no-signal-name>";
+
+                    log->Printf ("NativeProcessLinux::%s() pid %" PRIu64 " tid %" PRIu64 ", thread was already marked as a stopped state (state=%s, signal=%d (%s)), leaving stop signal as is",
+                                 __FUNCTION__,
+                                 GetID (),
+                                 linux_thread_p->GetID (),
+                                 StateAsCString (thread_state),
+                                 stop_signo,
+                                 signal_name);
+                }
+            }
 
             // Tell the thread state coordinator about the stop.
             NotifyThreadStop (thread_sp->GetID ());
