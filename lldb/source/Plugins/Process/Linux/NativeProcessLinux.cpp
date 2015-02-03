@@ -166,7 +166,7 @@ namespace
     {
         Log *const log = GetLogIfAllCategoriesSet (LIBLLDB_LOG_THREAD);
         if (log)
-            log->Printf ("NativePlatformLinux::%s %s", __FUNCTION__, error_message.c_str ());
+            log->Printf ("NativeProcessLinux::%s %s", __FUNCTION__, error_message.c_str ());
         assert (false && "ThreadStateCoordinator error reported");
     }
 
@@ -1952,7 +1952,7 @@ NativeProcessLinux::MonitorCallback(void *callback_baton,
     if (exited)
     {
         if (log)
-            log->Printf ("NativeProcessLinux::%s() got exit signal, tid = %"  PRIu64 " (%s main thread)", __FUNCTION__, pid, is_main_thread ? "is" : "is not");
+            log->Printf ("NativeProcessLinux::%s() got exit signal(%d) , tid = %"  PRIu64 " (%s main thread)", __FUNCTION__, signal, pid, is_main_thread ? "is" : "is not");
 
         // This is a thread that exited.  Ensure we're not tracking it anymore.
         const bool thread_found = process->StopTrackingThread (pid);
@@ -2111,7 +2111,7 @@ NativeProcessLinux::MonitorSIGTRAP(const siginfo_t *info, lldb::pid_t pid)
                 // We can now resume the newly created thread since it is fully created.
                 NotifyThreadCreateStopped (tid);
                 m_coordinator_up->RequestThreadResume (tid,
-                                                       [=](lldb::tid_t tid_to_resume)
+                                                       [=](lldb::tid_t tid_to_resume, bool supress_signal)
                                                        {
                                                            reinterpret_cast<NativeThreadLinux*> (new_thread_sp.get ())->SetRunning ();
                                                            Resume (tid_to_resume, LLDB_INVALID_SIGNAL_NUMBER);
@@ -2133,7 +2133,7 @@ NativeProcessLinux::MonitorSIGTRAP(const siginfo_t *info, lldb::pid_t pid)
 
         // In all cases, we can resume the main thread here.
         m_coordinator_up->RequestThreadResume (pid,
-                                               [=](lldb::tid_t tid_to_resume)
+                                               [=](lldb::tid_t tid_to_resume, bool supress_signal)
                                                {
                                                    reinterpret_cast<NativeThreadLinux*> (thread_sp.get ())->SetRunning ();
                                                    Resume (tid_to_resume, LLDB_INVALID_SIGNAL_NUMBER);
@@ -2237,10 +2237,10 @@ NativeProcessLinux::MonitorSIGTRAP(const siginfo_t *info, lldb::pid_t pid)
 
         const int signo = static_cast<int> (data);
         m_coordinator_up->RequestThreadResume (pid,
-                                               [=](lldb::tid_t tid_to_resume)
+                                               [=](lldb::tid_t tid_to_resume, bool supress_signal)
                                                {
                                                    reinterpret_cast<NativeThreadLinux*> (thread_sp.get ())->SetRunning ();
-                                                   Resume (tid_to_resume, signo);
+                                                   Resume (tid_to_resume, (supress_signal) ? LLDB_INVALID_SIGNAL_NUMBER : signo);
                                                },
                                                CoordinatorErrorHandler);
 
@@ -2253,6 +2253,11 @@ NativeProcessLinux::MonitorSIGTRAP(const siginfo_t *info, lldb::pid_t pid)
         if (log)
             log->Printf ("NativeProcessLinux::%s() received trace event, pid = %" PRIu64 " (single stepping)", __FUNCTION__, pid);
 
+        if (thread_sp)
+        {
+            reinterpret_cast<NativeThreadLinux*> (thread_sp.get ())->SetStoppedBySignal (SIGTRAP);
+        }
+
         // This thread is currently stopped.
         NotifyThreadStop (pid);
 
@@ -2260,6 +2265,9 @@ NativeProcessLinux::MonitorSIGTRAP(const siginfo_t *info, lldb::pid_t pid)
         // This would have already happened at the time the Resume() with step operation was signaled.
         // At this point, we just need to say we stopped, and the deferred notifcation will fire off
         // once all running threads have checked in as stopped.
+        SetCurrentThreadID (pid);
+        // Tell the process we have a stop (from software breakpoint).
+        SetState (StateType::eStateStopped, true);
         break;
 
     case SI_KERNEL:
@@ -2338,7 +2346,7 @@ NativeProcessLinux::MonitorSIGTRAP(const siginfo_t *info, lldb::pid_t pid)
             
         // Ignore these signals until we know more about them.
         m_coordinator_up->RequestThreadResume (pid,
-                                               [=](lldb::tid_t tid_to_resume)
+                                               [=](lldb::tid_t tid_to_resume, bool supress_signal)
                                                {
                                                    reinterpret_cast<NativeThreadLinux*> (thread_sp.get ())->SetRunning ();
                                                    Resume (tid_to_resume, LLDB_INVALID_SIGNAL_NUMBER);
@@ -2418,7 +2426,7 @@ NativeProcessLinux::MonitorSignal(const siginfo_t *info, lldb::pid_t pid, bool e
             // We can now resume the newly created thread since it is fully created.
             NotifyThreadCreateStopped (pid);
             m_coordinator_up->RequestThreadResume (pid,
-                                                   [=](lldb::tid_t tid_to_resume)
+                                                   [=](lldb::tid_t tid_to_resume, bool supress_signal)
                                                    {
                                                        reinterpret_cast<NativeThreadLinux*> (thread_sp.get ())->SetRunning ();
                                                        Resume (tid_to_resume, LLDB_INVALID_SIGNAL_NUMBER);
@@ -2463,8 +2471,9 @@ NativeProcessLinux::MonitorSignal(const siginfo_t *info, lldb::pid_t pid, bool e
                 // An inferior thread just stopped, but was not the primary cause of the process stop.
                 // Instead, something else (like a breakpoint or step) caused the stop.  Mark the
                 // stop signal as 0 to let lldb know this isn't the important stop.
-                reinterpret_cast<NativeThreadLinux*> (thread_sp.get ())->SetStoppedBySignal (0);
+                linux_thread_p->SetStoppedBySignal (0);
                 SetCurrentThreadID (thread_sp->GetID ());
+                m_coordinator_up->NotifyThreadStop (thread_sp->GetID (), true, CoordinatorErrorHandler);
             }
             else
             {
@@ -2485,10 +2494,9 @@ NativeProcessLinux::MonitorSignal(const siginfo_t *info, lldb::pid_t pid, bool e
                                  stop_signo,
                                  signal_name);
                 }
+                // Tell the thread state coordinator about the stop.
+                NotifyThreadStop (thread_sp->GetID ());
             }
-
-            // Tell the thread state coordinator about the stop.
-            NotifyThreadStop (thread_sp->GetID ());
         }
 
         // Done handling.
@@ -2498,55 +2506,13 @@ NativeProcessLinux::MonitorSignal(const siginfo_t *info, lldb::pid_t pid, bool e
     if (log)
         log->Printf ("NativeProcessLinux::%s() received signal %s", __FUNCTION__, GetUnixSignals ().GetSignalAsCString (signo));
 
+    // This thread is stopped.
+    NotifyThreadStop (pid);
+
     switch (signo)
     {
-    case SIGSEGV:
-    case SIGABRT:
-    case SIGILL:
-    case SIGFPE:
-    case SIGBUS:
-    default:
-        {
-            // This thread is stopped.
-            NotifyThreadStop (pid);
-
-            // lldb::addr_t fault_addr = reinterpret_cast<lldb::addr_t>(info->si_addr);
-
-            // This is just a pre-signal-delivery notification of the incoming signal.
-            if (thread_sp)
-                reinterpret_cast<NativeThreadLinux*> (thread_sp.get ())->SetStoppedBySignal (signo);
-
-            // We can get more details on the exact nature of the crash here.
-            // ProcessMessage::CrashReason reason = GetCrashReasonForSIGSEGV(info);
-            if (!exited)
-            {
-                // Send a stop to the debugger after we get all other threads to stop.
-                CallAfterRunningThreadsStop (pid,
-                                             [=] (lldb::tid_t signaling_tid)
-                                             {
-                                                 SetCurrentThreadID (signaling_tid);
-                                                 SetState (StateType::eStateStopped, true);
-                                             });
-            }
-            else
-            {
-                // FIXME the process might die right after this - might not ever get stops on any other threads.
-                // Send a stop to the debugger after we get all other threads to stop.
-                CallAfterRunningThreadsStop (pid,
-                                             [=] (lldb::tid_t signaling_tid)
-                                             {
-                                                 SetCurrentThreadID (signaling_tid);
-                                                 SetState (StateType::eStateCrashed, true);
-                                             });
-            }
-        }
-        break;
-
     case SIGSTOP:
         {
-            // This thread is stopped.
-            NotifyThreadStop (pid);
-
             if (log)
             {
                 if (is_from_llgs)
@@ -2558,25 +2524,38 @@ NativeProcessLinux::MonitorSignal(const siginfo_t *info, lldb::pid_t pid, bool e
             // Resume this thread to get the group-stop mechanism to fire off the true group stops.
             // This thread will get stopped again as part of the group-stop completion.
             m_coordinator_up->RequestThreadResume (pid,
-                                                   [=](lldb::tid_t tid_to_resume)
+                                                   [=](lldb::tid_t tid_to_resume, bool supress_signal)
                                                    {
                                                        reinterpret_cast<NativeThreadLinux*> (thread_sp.get ())->SetRunning ();
                                                        // Pass this signal number on to the inferior to handle.
-                                                       Resume (tid_to_resume, signo);
+                                                       Resume (tid_to_resume, (supress_signal) ? LLDB_INVALID_SIGNAL_NUMBER : signo);
                                                    },
                                                    CoordinatorErrorHandler);
-
-            // And now we want to signal that we received a SIGSTOP on this thread
-            // as soon as all running threads stop (i.e. the group stop sequence completes).
-            CallAfterRunningThreadsStop (pid,
-                                         [=] (lldb::tid_t signaling_tid)
-                                         {
-                                             SetCurrentThreadID (signaling_tid);
-                                             SetState (StateType::eStateStopped, true);
-                                         });
         }
         break;
+    case SIGSEGV:
+    case SIGILL:
+    case SIGFPE:
+    case SIGBUS:
+        if (thread_sp)
+            reinterpret_cast<NativeThreadLinux*>(thread_sp.get())->SetCrashedWithException(
+                signo, reinterpret_cast<lldb::addr_t>(info->si_addr));
+        break;
+    default:
+        // This is just a pre-signal-delivery notification of the incoming signal.
+        if (thread_sp)
+            reinterpret_cast<NativeThreadLinux*> (thread_sp.get ())->SetStoppedBySignal (signo);
+
+        break;
     }
+
+    // Send a stop to the debugger after we get all other threads to stop.
+    CallAfterRunningThreadsStop (pid,
+                                 [=] (lldb::tid_t signaling_tid)
+                                 {
+                                     SetCurrentThreadID (signaling_tid);
+                                     SetState (StateType::eStateStopped, true);
+                                 });
 }
 
 Error
@@ -2593,6 +2572,7 @@ NativeProcessLinux::Resume (const ResumeActionList &resume_actions)
     int deferred_signo = 0;
     NativeThreadProtocolSP deferred_signal_thread_sp;
     int resume_count = 0;
+    bool stepping = false;
 
 
     // std::vector<NativeThreadProtocolSP> new_stop_threads;
@@ -2620,11 +2600,11 @@ NativeProcessLinux::Resume (const ResumeActionList &resume_actions)
                 // Run the thread, possibly feeding it the signal.
                 const int signo = action->signal;
                 m_coordinator_up->RequestThreadResumeAsNeeded (thread_sp->GetID (),
-                                                               [=](lldb::tid_t tid_to_resume)
+                                                               [=](lldb::tid_t tid_to_resume, bool supress_signal)
                                                                {
                                                                    reinterpret_cast<NativeThreadLinux*> (thread_sp.get ())->SetRunning ();
                                                                    // Pass this signal number on to the inferior to handle.
-                                                                   Resume (tid_to_resume, (signo > 0) ? signo : LLDB_INVALID_SIGNAL_NUMBER);
+                                                                   Resume (tid_to_resume, (signo > 0 && !supress_signal) ? signo : LLDB_INVALID_SIGNAL_NUMBER);
                                                                },
                                                                CoordinatorErrorHandler);
                 ++resume_count;
@@ -2636,31 +2616,14 @@ NativeProcessLinux::Resume (const ResumeActionList &resume_actions)
                 // Request the step.
                 const int signo = action->signal;
                 m_coordinator_up->RequestThreadResume (thread_sp->GetID (),
-                                                       [=](lldb::tid_t tid_to_step)
+                                                       [=](lldb::tid_t tid_to_step, bool supress_signal)
                                                        {
                                                            reinterpret_cast<NativeThreadLinux*> (thread_sp.get ())->SetStepping ();
-                                                           auto step_result = SingleStep (tid_to_step,(signo > 0) ? signo : LLDB_INVALID_SIGNAL_NUMBER);
+                                                           auto step_result = SingleStep (tid_to_step,(signo > 0 && !supress_signal) ? signo : LLDB_INVALID_SIGNAL_NUMBER);
                                                            assert (step_result && "SingleStep() failed");
                                                        },
                                                        CoordinatorErrorHandler);
-
-                // The deferred signal tid is the stepping tid.
-                // This assumes there is only one stepping tid, or the last stepping tid is a fine choice.
-                deferred_signal_tid = thread_sp->GetID ();
-                deferred_signal_thread_sp = thread_sp;
-
-                // Don't send a stop request to this thread.  The thread resume request
-                // above will actually run the step thread, and it will finish the step
-                // by sending a SIGTRAP with the appropriate bits set.  So, the deferred
-                // signal call that happens at the end of the loop below needs to let
-                // the pending signal handling to *not* send a stop for this thread here
-                // since the start/stop step functionality will end up with a stop state.
-                // Otherwise, this stepping thread will get sent an erroneous tgkill for
-                // with a SIGSTOP signal.
-                deferred_signal_skip_tid = thread_sp->GetID ();
-
-                // And the stop signal we should apply for it is a SIGTRAP.
-                deferred_signo = SIGTRAP;
+                stepping = true;
                 break;
             }
 
@@ -2684,7 +2647,8 @@ NativeProcessLinux::Resume (const ResumeActionList &resume_actions)
 
     // If we had any thread stopping, then do a deferred notification of the chosen stop thread id and signal
     // after all other running threads have stopped.
-    if (deferred_signal_tid != LLDB_INVALID_THREAD_ID)
+    // If there is a stepping thread involved we'll be eventually stopped by SIGTRAP trace signal.
+    if (deferred_signal_tid != LLDB_INVALID_THREAD_ID && !stepping)
     {
         CallAfterRunningThreadsStopWithSkipTID (deferred_signal_tid,
                                                 deferred_signal_skip_tid,
@@ -3894,18 +3858,22 @@ NativeProcessLinux::NotifyThreadDeath (lldb::tid_t tid)
 void
 NativeProcessLinux::NotifyThreadStop (lldb::tid_t tid)
 {
-    m_coordinator_up->NotifyThreadStop (tid, CoordinatorErrorHandler);
+    m_coordinator_up->NotifyThreadStop (tid, false, CoordinatorErrorHandler);
 }
 
 void
 NativeProcessLinux::CallAfterRunningThreadsStop (lldb::tid_t tid,
                                                  const std::function<void (lldb::tid_t tid)> &call_after_function)
 {
+    Log *const log (GetLogIfAllCategoriesSet (LIBLLDB_LOG_THREAD));
+    if (log)
+        log->Printf("NativeProcessLinux::%s tid %" PRIu64, __FUNCTION__, tid);
+
     const lldb::pid_t pid = GetID ();
     m_coordinator_up->CallAfterRunningThreadsStop (tid,
                                                    [=](lldb::tid_t request_stop_tid)
                                                    {
-                                                       tgkill (pid, request_stop_tid, SIGSTOP);
+                                                       RequestThreadStop(pid, request_stop_tid);
                                                    },
                                                    call_after_function,
                                                    CoordinatorErrorHandler);
@@ -3916,13 +3884,36 @@ NativeProcessLinux::CallAfterRunningThreadsStopWithSkipTID (lldb::tid_t deferred
                                                             lldb::tid_t skip_stop_request_tid,
                                                             const std::function<void (lldb::tid_t tid)> &call_after_function)
 {
+    Log *const log (GetLogIfAllCategoriesSet (LIBLLDB_LOG_THREAD));
+    if (log)
+        log->Printf("NativeProcessLinux::%s deferred_signal_tid %" PRIu64 ", skip_stop_request_tid %" PRIu64, __FUNCTION__, deferred_signal_tid, skip_stop_request_tid);
+
     const lldb::pid_t pid = GetID ();
     m_coordinator_up->CallAfterRunningThreadsStopWithSkipTIDs (deferred_signal_tid,
                                                                skip_stop_request_tid != LLDB_INVALID_THREAD_ID ? ThreadStateCoordinator::ThreadIDSet {skip_stop_request_tid} : ThreadStateCoordinator::ThreadIDSet (),
                                                                [=](lldb::tid_t request_stop_tid)
                                                                {
-                                                                   tgkill (pid, request_stop_tid, SIGSTOP);
+                                                                   RequestThreadStop(pid, request_stop_tid);
                                                                },
                                                                call_after_function,
                                                                CoordinatorErrorHandler);
+}
+
+lldb_private::Error
+NativeProcessLinux::RequestThreadStop (const lldb::pid_t pid, const lldb::tid_t tid)
+{
+    Log* log (GetLogIfAllCategoriesSet (LIBLLDB_LOG_THREAD));
+    if (log)
+        log->Printf ("NativeProcessLinux::%s requesting thread stop(pid: %" PRIu64 ", tid: %" PRIu64 ")", __FUNCTION__, pid, tid);
+
+    Error err;
+    errno = 0;
+    if (::tgkill (pid, tid, SIGSTOP) != 0)
+    {
+        err.SetErrorToErrno ();
+        if (log)
+            log->Printf ("NativeProcessLinux::%s tgkill(%" PRIu64 ", %" PRIu64 ", SIGSTOP) failed: %s", __FUNCTION__, pid, tid, err.AsCString ());
+    }
+
+    return err;
 }

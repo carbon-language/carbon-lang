@@ -408,6 +408,9 @@ namespace lldb_private
 
         lldb_private::Error
         Detach(lldb::tid_t tid);
+
+        lldb_private::Error
+        RequestThreadStop (const lldb::pid_t pid, const lldb::tid_t tid);
     };
 } // End lldb_private namespace.
 

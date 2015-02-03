@@ -372,7 +372,7 @@ class ConcurrentEventsTestCase(TestBase):
         """
         return self.finish_breakpoint.GetHitCount() > 0 or \
                 self.crash_count > 0 or \
-                self.inferior_process.GetState == lldb.eStateExited
+                self.inferior_process.GetState() == lldb.eStateExited
 
     def do_thread_actions(self,
                           num_breakpoint_threads = 0,
