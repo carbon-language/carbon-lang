@@ -60,18 +60,18 @@ ApplyDebugLocation::ApplyDebugLocation(CodeGenFunction &CGF,
 }
 
 ApplyDebugLocation::ApplyDebugLocation(CodeGenFunction &CGF,
-                                       bool MarkAsPrologue,
+                                       bool DefaultToEmpty,
                                        SourceLocation TemporaryLocation)
     : CGF(CGF) {
-  init(TemporaryLocation, MarkAsPrologue);
+  init(TemporaryLocation, DefaultToEmpty);
 }
 
 void ApplyDebugLocation::init(SourceLocation TemporaryLocation,
-                              bool MarkAsPrologue) {
+                              bool DefaultToEmpty) {
   if (auto *DI = CGF.getDebugInfo()) {
     OriginalLocation = CGF.Builder.getCurrentDebugLocation();
     if (TemporaryLocation.isInvalid()) {
-      if (MarkAsPrologue)
+      if (DefaultToEmpty)
         CGF.Builder.SetCurrentDebugLocation(llvm::DebugLoc());
       else {
         // Construct a location that has a valid scope, but no line info.
