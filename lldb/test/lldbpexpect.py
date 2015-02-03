@@ -20,7 +20,7 @@ class PExpectTest(TestBase):
         self.timeout = 5
         self.child = pexpect.spawn('%s %s' % (self.lldbHere, self.launchArgs()))
 
-    def expect(self, exact=None, patterns=None, timeout=None, exact=None):
+    def expect(self, patterns=None, timeout=None, exact=None):
         if patterns is None: return None
         if timeout is None: timeout = self.timeout
         if exact is None: exact = False
