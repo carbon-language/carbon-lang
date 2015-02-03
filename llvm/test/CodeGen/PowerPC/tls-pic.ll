@@ -65,5 +65,5 @@ entry:
 ; OPT1:      bl __tls_get_addr(a2@tlsgd)
 ; OPT1-NEXT: nop
 ; OPT1-32-LABEL: main2
-; OPT1-32:        addi 3, {{[0-9]+}}, a2@got@tlsgd
+; OPT1-32:        addi {{[0-9]+}}, {{[0-9]+}}, a2@got@tlsgd
 ; OPT1-32:        bl __tls_get_addr(a2@tlsgd)@PLT
