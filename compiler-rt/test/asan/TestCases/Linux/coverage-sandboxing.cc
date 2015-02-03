@@ -27,7 +27,7 @@
 #include <string.h>
 #include <unistd.h>
 
-#include <sanitizer/common_interface_defs.h>
+#include <sanitizer/coverage_interface.h>
 
 #define bb0(n)                        \
   case n:                             \

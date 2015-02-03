@@ -2,6 +2,7 @@ set(SANITIZER_HEADERS
   sanitizer/allocator_interface.h
   sanitizer/asan_interface.h
   sanitizer/common_interface_defs.h
+  sanitizer/coverage_interface.h
   sanitizer/dfsan_interface.h
   sanitizer/linux_syscall_hooks.h
   sanitizer/lsan_interface.h

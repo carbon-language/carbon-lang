@@ -6,7 +6,7 @@
 //
 // REQUIRES: asan-64-bits
 
-#include <sanitizer/common_interface_defs.h>
+#include <sanitizer/coverage_interface.h>
 #include <stdio.h>
 #include <assert.h>
 int P = 0;

@@ -3,7 +3,7 @@
 // RUN: %clangxx_asan -fsanitize-coverage=1 %s -o %t
 // RUN: ASAN_OPTIONS=coverage=1 %run %t
 
-#include <sanitizer/common_interface_defs.h>
+#include <sanitizer/coverage_interface.h>
 #include <stdio.h>
 #include <assert.h>
 static volatile int sink;

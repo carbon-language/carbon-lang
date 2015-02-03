@@ -13,7 +13,7 @@
 // https://code.google.com/p/address-sanitizer/issues/detail?id=263
 // XFAIL: android
 
-#include "sanitizer/common_interface_defs.h"
+#include <sanitizer/coverage_interface.h>
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>

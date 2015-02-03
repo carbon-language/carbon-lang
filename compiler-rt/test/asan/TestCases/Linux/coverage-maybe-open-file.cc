@@ -13,7 +13,7 @@
 #include <string.h>
 #include <unistd.h>
 
-#include <sanitizer/common_interface_defs.h>
+#include <sanitizer/coverage_interface.h>
 
 int main(int argc, char **argv) {
   int fd = __sanitizer_maybe_open_cov_file("test");
