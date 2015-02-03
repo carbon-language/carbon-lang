@@ -210,10 +210,9 @@ std::error_code RawCoverageMappingReader::readMappingRegionsSubArray(
       dbgs() << "\n";
     });
 
-    MappingRegions.push_back(
-        CounterMappingRegion(C, InferredFileID, LineStart, ColumnStart,
-                             LineStart + NumLines, ColumnEnd, Kind));
-    MappingRegions.back().ExpandedFileID = ExpandedFileID;
+    MappingRegions.push_back(CounterMappingRegion(
+        C, InferredFileID, ExpandedFileID, LineStart, ColumnStart,
+        LineStart + NumLines, ColumnEnd, Kind));
   }
   return success();
 }
