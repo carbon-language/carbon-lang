@@ -116,13 +116,13 @@
 # CHECK: xabort $13
 0xc6 0xf8 0x0d
 
-# CHECK: xsaveq (%rax)
+# CHECK: xsave64 (%rax)
 0x48 0x0f 0xae 0x20
 
-# CHECK: xrstorq (%rax)
+# CHECK: xrstor64 (%rax)
 0x48 0x0f 0xae 0x28
 
-# CHECK: xsaveoptq (%rax)
+# CHECK: xsaveopt64 (%rax)
 0x48 0x0f 0xae 0x30
 
 # CHECK: clac

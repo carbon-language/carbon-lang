@@ -2564,6 +2564,12 @@ def : MnemonicAlias<"fnstsww",  "fnstsw",   "att">;
 def : MnemonicAlias<"fucomip",  "fucompi",  "att">;
 def : MnemonicAlias<"fwait",    "wait">;
 
+def : MnemonicAlias<"fxsaveq",   "fxsave64",   "att">;
+def : MnemonicAlias<"fxrstorq",  "fxrstor64",  "att">;
+def : MnemonicAlias<"xsaveq",    "xsave64",    "att">;
+def : MnemonicAlias<"xrstorq",   "xrstor64",   "att">;
+def : MnemonicAlias<"xsaveoptq", "xsaveopt64", "att">;
+
 
 class CondCodeAlias<string Prefix,string Suffix, string OldCond, string NewCond,
                     string VariantName>
