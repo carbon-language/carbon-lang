@@ -19,85 +19,12 @@ using namespace dwarf;
 
 const char *llvm::dwarf::TagString(unsigned Tag) {
   switch (Tag) {
-  case DW_TAG_array_type:                return "DW_TAG_array_type";
-  case DW_TAG_class_type:                return "DW_TAG_class_type";
-  case DW_TAG_entry_point:               return "DW_TAG_entry_point";
-  case DW_TAG_enumeration_type:          return "DW_TAG_enumeration_type";
-  case DW_TAG_formal_parameter:          return "DW_TAG_formal_parameter";
-  case DW_TAG_imported_declaration:      return "DW_TAG_imported_declaration";
-  case DW_TAG_label:                     return "DW_TAG_label";
-  case DW_TAG_lexical_block:             return "DW_TAG_lexical_block";
-  case DW_TAG_member:                    return "DW_TAG_member";
-  case DW_TAG_pointer_type:              return "DW_TAG_pointer_type";
-  case DW_TAG_reference_type:            return "DW_TAG_reference_type";
-  case DW_TAG_compile_unit:              return "DW_TAG_compile_unit";
-  case DW_TAG_string_type:               return "DW_TAG_string_type";
-  case DW_TAG_structure_type:            return "DW_TAG_structure_type";
-  case DW_TAG_subroutine_type:           return "DW_TAG_subroutine_type";
-  case DW_TAG_typedef:                   return "DW_TAG_typedef";
-  case DW_TAG_union_type:                return "DW_TAG_union_type";
-  case DW_TAG_unspecified_parameters:    return "DW_TAG_unspecified_parameters";
-  case DW_TAG_variant:                   return "DW_TAG_variant";
-  case DW_TAG_common_block:              return "DW_TAG_common_block";
-  case DW_TAG_common_inclusion:          return "DW_TAG_common_inclusion";
-  case DW_TAG_inheritance:               return "DW_TAG_inheritance";
-  case DW_TAG_inlined_subroutine:        return "DW_TAG_inlined_subroutine";
-  case DW_TAG_module:                    return "DW_TAG_module";
-  case DW_TAG_ptr_to_member_type:        return "DW_TAG_ptr_to_member_type";
-  case DW_TAG_set_type:                  return "DW_TAG_set_type";
-  case DW_TAG_subrange_type:             return "DW_TAG_subrange_type";
-  case DW_TAG_with_stmt:                 return "DW_TAG_with_stmt";
-  case DW_TAG_access_declaration:        return "DW_TAG_access_declaration";
-  case DW_TAG_base_type:                 return "DW_TAG_base_type";
-  case DW_TAG_catch_block:               return "DW_TAG_catch_block";
-  case DW_TAG_const_type:                return "DW_TAG_const_type";
-  case DW_TAG_constant:                  return "DW_TAG_constant";
-  case DW_TAG_enumerator:                return "DW_TAG_enumerator";
-  case DW_TAG_file_type:                 return "DW_TAG_file_type";
-  case DW_TAG_friend:                    return "DW_TAG_friend";
-  case DW_TAG_namelist:                  return "DW_TAG_namelist";
-  case DW_TAG_namelist_item:             return "DW_TAG_namelist_item";
-  case DW_TAG_packed_type:               return "DW_TAG_packed_type";
-  case DW_TAG_subprogram:                return "DW_TAG_subprogram";
-  case DW_TAG_template_type_parameter:   return "DW_TAG_template_type_parameter";
-  case DW_TAG_template_value_parameter:  return "DW_TAG_template_value_parameter";
-  case DW_TAG_thrown_type:               return "DW_TAG_thrown_type";
-  case DW_TAG_try_block:                 return "DW_TAG_try_block";
-  case DW_TAG_variant_part:              return "DW_TAG_variant_part";
-  case DW_TAG_variable:                  return "DW_TAG_variable";
-  case DW_TAG_volatile_type:             return "DW_TAG_volatile_type";
-  case DW_TAG_dwarf_procedure:           return "DW_TAG_dwarf_procedure";
-  case DW_TAG_restrict_type:             return "DW_TAG_restrict_type";
-  case DW_TAG_interface_type:            return "DW_TAG_interface_type";
-  case DW_TAG_namespace:                 return "DW_TAG_namespace";
-  case DW_TAG_imported_module:           return "DW_TAG_imported_module";
-  case DW_TAG_unspecified_type:          return "DW_TAG_unspecified_type";
-  case DW_TAG_partial_unit:              return "DW_TAG_partial_unit";
-  case DW_TAG_imported_unit:             return "DW_TAG_imported_unit";
-  case DW_TAG_condition:                 return "DW_TAG_condition";
-  case DW_TAG_shared_type:               return "DW_TAG_shared_type";
-  case DW_TAG_auto_variable:             return "DW_TAG_auto_variable";
-  case DW_TAG_arg_variable:              return "DW_TAG_arg_variable";
-  case DW_TAG_expression:                return "DW_TAG_expression";
-  case DW_TAG_rvalue_reference_type:     return "DW_TAG_rvalue_reference_type";
-  case DW_TAG_template_alias:            return "DW_TAG_template_alias";
-  case DW_TAG_coarray_type:              return "DW_TAG_coarray_type";
-  case DW_TAG_generic_subrange:          return "DW_TAG_generic_subrange";
-  case DW_TAG_dynamic_type:              return "DW_TAG_dynamic_type";
-  case DW_TAG_MIPS_loop:                 return "DW_TAG_MIPS_loop";
-  case DW_TAG_type_unit:                 return "DW_TAG_type_unit";
-  case DW_TAG_format_label:              return "DW_TAG_format_label";
-  case DW_TAG_function_template:         return "DW_TAG_function_template";
-  case DW_TAG_class_template:            return "DW_TAG_class_template";
-  case DW_TAG_GNU_template_template_param:
-    return "DW_TAG_GNU_template_template_param";
-  case DW_TAG_GNU_template_parameter_pack:
-    return "DW_TAG_GNU_template_parameter_pack";
-  case DW_TAG_GNU_formal_parameter_pack:
-    return "DW_TAG_GNU_formal_parameter_pack";
-  case DW_TAG_APPLE_property:            return "DW_TAG_APPLE_property";
+  default: return nullptr;
+#define HANDLE_DW_TAG(ID, NAME)                                                \
+  case DW_TAG_##NAME:                                                          \
+    return "DW_TAG_" #NAME;
+#include "llvm/Support/Dwarf.def"
   }
-  return nullptr;
 }
 
 const char *llvm::dwarf::ChildrenString(unsigned Children) {

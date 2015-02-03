@@ -1,0 +1,100 @@
+//===- llvm/Support/Dwarf.def - Dwarf definitions ---------------*- C++ -*-===//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+//
+// Macros for running through Dwarf enumerators.
+//
+//===----------------------------------------------------------------------===//
+
+// TODO: Add other DW-based macros.
+#if !defined HANDLE_DW_TAG
+#error "Missing macro definition of HANDLE_DW*"
+#endif
+
+HANDLE_DW_TAG(0x0001, array_type)
+HANDLE_DW_TAG(0x0002, class_type)
+HANDLE_DW_TAG(0x0003, entry_point)
+HANDLE_DW_TAG(0x0004, enumeration_type)
+HANDLE_DW_TAG(0x0005, formal_parameter)
+HANDLE_DW_TAG(0x0008, imported_declaration)
+HANDLE_DW_TAG(0x000a, label)
+HANDLE_DW_TAG(0x000b, lexical_block)
+HANDLE_DW_TAG(0x000d, member)
+HANDLE_DW_TAG(0x000f, pointer_type)
+HANDLE_DW_TAG(0x0010, reference_type)
+HANDLE_DW_TAG(0x0011, compile_unit)
+HANDLE_DW_TAG(0x0012, string_type)
+HANDLE_DW_TAG(0x0013, structure_type)
+HANDLE_DW_TAG(0x0015, subroutine_type)
+HANDLE_DW_TAG(0x0016, typedef)
+HANDLE_DW_TAG(0x0017, union_type)
+HANDLE_DW_TAG(0x0018, unspecified_parameters)
+HANDLE_DW_TAG(0x0019, variant)
+HANDLE_DW_TAG(0x001a, common_block)
+HANDLE_DW_TAG(0x001b, common_inclusion)
+HANDLE_DW_TAG(0x001c, inheritance)
+HANDLE_DW_TAG(0x001d, inlined_subroutine)
+HANDLE_DW_TAG(0x001e, module)
+HANDLE_DW_TAG(0x001f, ptr_to_member_type)
+HANDLE_DW_TAG(0x0020, set_type)
+HANDLE_DW_TAG(0x0021, subrange_type)
+HANDLE_DW_TAG(0x0022, with_stmt)
+HANDLE_DW_TAG(0x0023, access_declaration)
+HANDLE_DW_TAG(0x0024, base_type)
+HANDLE_DW_TAG(0x0025, catch_block)
+HANDLE_DW_TAG(0x0026, const_type)
+HANDLE_DW_TAG(0x0027, constant)
+HANDLE_DW_TAG(0x0028, enumerator)
+HANDLE_DW_TAG(0x0029, file_type)
+HANDLE_DW_TAG(0x002a, friend)
+HANDLE_DW_TAG(0x002b, namelist)
+HANDLE_DW_TAG(0x002c, namelist_item)
+HANDLE_DW_TAG(0x002d, packed_type)
+HANDLE_DW_TAG(0x002e, subprogram)
+HANDLE_DW_TAG(0x002f, template_type_parameter)
+HANDLE_DW_TAG(0x0030, template_value_parameter)
+HANDLE_DW_TAG(0x0031, thrown_type)
+HANDLE_DW_TAG(0x0032, try_block)
+HANDLE_DW_TAG(0x0033, variant_part)
+HANDLE_DW_TAG(0x0034, variable)
+HANDLE_DW_TAG(0x0035, volatile_type)
+HANDLE_DW_TAG(0x0036, dwarf_procedure)
+HANDLE_DW_TAG(0x0037, restrict_type)
+HANDLE_DW_TAG(0x0038, interface_type)
+HANDLE_DW_TAG(0x0039, namespace)
+HANDLE_DW_TAG(0x003a, imported_module)
+HANDLE_DW_TAG(0x003b, unspecified_type)
+HANDLE_DW_TAG(0x003c, partial_unit)
+HANDLE_DW_TAG(0x003d, imported_unit)
+HANDLE_DW_TAG(0x003f, condition)
+HANDLE_DW_TAG(0x0040, shared_type)
+HANDLE_DW_TAG(0x0041, type_unit)
+HANDLE_DW_TAG(0x0042, rvalue_reference_type)
+HANDLE_DW_TAG(0x0043, template_alias)
+
+// Mock tags we use as discriminators.
+HANDLE_DW_TAG(0x0100, auto_variable) // Tag for local (auto) variables.
+HANDLE_DW_TAG(0x0101, arg_variable)  // Tag for argument variables.
+HANDLE_DW_TAG(0x0102, expression)    // Tag for complex address expressions.
+
+// New in DWARF v5.
+HANDLE_DW_TAG(0x0044, coarray_type)
+HANDLE_DW_TAG(0x0045, generic_subrange)
+HANDLE_DW_TAG(0x0046, dynamic_type)
+
+// User-defined tags.
+HANDLE_DW_TAG(0x4081, MIPS_loop)
+HANDLE_DW_TAG(0x4101, format_label)
+HANDLE_DW_TAG(0x4102, function_template)
+HANDLE_DW_TAG(0x4103, class_template)
+HANDLE_DW_TAG(0x4106, GNU_template_template_param)
+HANDLE_DW_TAG(0x4107, GNU_template_parameter_pack)
+HANDLE_DW_TAG(0x4108, GNU_formal_parameter_pack)
+HANDLE_DW_TAG(0x4200, APPLE_property)
+
+#undef HANDLE_DW_TAG
