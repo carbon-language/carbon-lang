@@ -252,9 +252,6 @@ void __asan_mz_destroy(malloc_zone_t* zone) {
   Report("__asan_mz_destroy() called -- ignoring\n");
 }
 
-  // from AvailabilityMacros.h
-#if defined(MAC_OS_X_VERSION_10_6) && \
-    MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_6
 extern "C"
 SANITIZER_INTERFACE_ATTRIBUTE
 void *__asan_mz_memalign(malloc_zone_t *zone, size_t align, size_t size) {
@@ -273,7 +270,6 @@ void __asan_mz_free_definite_size(
   // TODO(glider): check that |size| is valid.
   UNIMPLEMENTED();
 }
-#endif
 #endif
 
 kern_return_t mi_enumerator(task_t task, void *,
@@ -316,13 +312,10 @@ void mi_statistics(malloc_zone_t *zone, malloc_statistics_t *stats) {
   internal_memcpy(stats, &malloc_stats, sizeof(malloc_statistics_t));
 }
 
-#if defined(MAC_OS_X_VERSION_10_6) && \
-    MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_6
 boolean_t mi_zone_locked(malloc_zone_t *zone) {
   // UNIMPLEMENTED();
   return false;
 }
-#endif
 
 }  // unnamed namespace
 
@@ -341,11 +334,12 @@ void ReplaceSystemMalloc() {
   asan_introspection.force_lock = &mi_force_lock;
   asan_introspection.force_unlock = &mi_force_unlock;
   asan_introspection.statistics = &mi_statistics;
+  asan_introspection.zone_locked = &mi_zone_locked;
 
   internal_memset(&asan_zone, 0, sizeof(malloc_zone_t));
 
-  // Start with a version 4 zone which is used for OS X 10.4 and 10.5.
-  asan_zone.version = 4;
+  // Use version 6 for OSX >= 10.6.
+  asan_zone.version = 6;
   asan_zone.zone_name = "asan";
   asan_zone.size = &__asan_mz_size;
   asan_zone.malloc = &__asan_mz_malloc;
@@ -356,17 +350,9 @@ void ReplaceSystemMalloc() {
   asan_zone.destroy = &__asan_mz_destroy;
   asan_zone.batch_malloc = 0;
   asan_zone.batch_free = 0;
-  asan_zone.introspect = &asan_introspection;
-
-  // from AvailabilityMacros.h
-#if defined(MAC_OS_X_VERSION_10_6) && \
-    MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_6
-  // Switch to version 6 on OSX 10.6 to support memalign.
-  asan_zone.version = 6;
   asan_zone.free_definite_size = 0;
   asan_zone.memalign = &__asan_mz_memalign;
-  asan_introspection.zone_locked = &mi_zone_locked;
-#endif
+  asan_zone.introspect = &asan_introspection;
 
   // Register the ASan zone.
   malloc_zone_register(&asan_zone);
