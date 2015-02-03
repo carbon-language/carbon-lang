@@ -2394,13 +2394,6 @@ def warn_fun_excludes_mutex : Warning<
 def warn_cannot_resolve_lock : Warning<
   "cannot resolve lock expression">,
   InGroup<ThreadSafetyAnalysis>, DefaultIgnore;
-def warn_acquired_before : Warning<
-  "%0 '%1' must be acquired before '%2'">,
-  InGroup<ThreadSafetyAnalysis>, DefaultIgnore;
-def warn_acquired_before_after_cycle : Warning<
-  "Cycle in acquired_before/after dependencies, starting with '%0'">,
-  InGroup<ThreadSafetyAnalysis>, DefaultIgnore;
-
 
 // Thread safety warnings negative capabilities
 def warn_acquire_requires_negative_cap : Warning<

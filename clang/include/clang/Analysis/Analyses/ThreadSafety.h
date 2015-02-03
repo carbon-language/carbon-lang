@@ -26,8 +26,6 @@
 namespace clang {
 namespace threadSafety {
 
-class BeforeSet;
-
 /// This enum distinguishes between different kinds of operations that may
 /// need to be protected by locks. We use this enum in error handling.
 enum ProtectedOperationKind {
@@ -185,14 +183,6 @@ public:
   virtual void handleFunExcludesLock(StringRef Kind, Name FunName,
                                      Name LockName, SourceLocation Loc) {}
 
-
-  /// Warn that L1 cannot be acquired before L2.
-  virtual void handleLockAcquiredBefore(StringRef Kind, Name L1Name,
-                                        Name L2Name, SourceLocation Loc) {}
-
-  /// Warn that there is a cycle in acquired_before/after dependencies.
-  virtual void handleBeforeAfterCycle(Name L1Name, SourceLocation Loc) {}
-
   /// Called by the analysis when starting analysis of a function.
   /// Used to issue suggestions for changes to annotations.
   virtual void enterFunction(const FunctionDecl *FD) {}
@@ -213,8 +203,7 @@ private:
 /// at the end of each block, and issue warnings for thread safety violations.
 /// Each block in the CFG is traversed exactly once.
 void runThreadSafetyAnalysis(AnalysisDeclContext &AC,
-                             ThreadSafetyHandler &Handler,
-                             BeforeSet **Bset);
+                             ThreadSafetyHandler &Handler);
 
 /// \brief Helper function that returns a LockKind required for the given level
 /// of access.
