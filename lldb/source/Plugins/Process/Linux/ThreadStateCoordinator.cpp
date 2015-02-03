@@ -287,17 +287,19 @@ private:
         ThreadIDSet sent_tids;
         for (auto it = coordinator.m_tid_stop_map.begin(); it != coordinator.m_tid_stop_map.end(); ++it)
         {
-            // Ignore threads we explicitly listed as skipped for stop requests.
-            if (m_skip_stop_request_tids.count (it->first) > 0)
-                continue;
-
             // We only care about threads not stopped.
             const bool running = !it->second;
             if (running)
             {
-                // Request this thread stop.
                 const lldb::tid_t tid = it->first;
-                m_request_thread_stop_function (tid);
+
+                // Request this thread stop if the tid stop request is not explicitly ignored.
+                const bool skip_stop_request = m_skip_stop_request_tids.count (tid) > 0;
+                if (!skip_stop_request)
+                    m_request_thread_stop_function (tid);
+
+                // Even if we skipped sending the stop request for other reasons (like stepping),
+                // we still need to wait for that stepping thread to notify completion/stop.
                 sent_tids.insert (tid);
             }
         }
@@ -452,11 +454,13 @@ class ThreadStateCoordinator::EventRequestResume : public ThreadStateCoordinator
 public:
     EventRequestResume (lldb::tid_t tid,
                         const ThreadIDFunction &request_thread_resume_function,
-                        const ErrorFunction &error_function):
+                        const ErrorFunction &error_function,
+                        bool error_when_already_running):
     EventBase (),
     m_tid (tid),
     m_request_thread_resume_function (request_thread_resume_function),
-    m_error_function (error_function)
+    m_error_function (error_function),
+    m_error_when_already_running (error_when_already_running)
     {
     }
 
@@ -478,10 +482,25 @@ public:
         const bool is_stopped = find_it->second;
         if (!is_stopped)
         {
-            // Skip the resume call - we have tracked it to be running.
-            std::ostringstream error_message;
-            error_message << "error: tid " << m_tid << " asked to resume but we think it is already running";
-            m_error_function (error_message.str ());
+            // It's not an error, just a log, if the m_already_running_no_error flag is set.
+            // This covers cases where, for instance, we're just trying to resume all threads
+            // from the user side.
+            if (!m_error_when_already_running)
+            {
+                coordinator.Log ("EventRequestResume::%s tid %" PRIu64 " optional resume skipped since it is already running",
+                                 __FUNCTION__,
+                                 m_tid);
+            }
+            else
+            {
+                // Skip the resume call - we have tracked it to be running.  And we unconditionally
+                // expected to resume this thread.  Flag this as an error.
+                std::ostringstream error_message;
+                error_message << "error: tid " << m_tid << " asked to resume but we think it is already running";
+                m_error_function (error_message.str ());
+            }
+
+            // Error or not, we're done.
             return eventLoopResultContinue;
         }
 
@@ -534,6 +553,7 @@ private:
     const lldb::tid_t m_tid;
     ThreadIDFunction m_request_thread_resume_function;
     ErrorFunction m_error_function;
+    const bool m_error_when_already_running;
 };
 
 //===----------------------------------------------------------------------===//
@@ -763,7 +783,17 @@ ThreadStateCoordinator::RequestThreadResume (lldb::tid_t tid,
                                              const ThreadIDFunction &request_thread_resume_function,
                                              const ErrorFunction &error_function)
 {
-    EnqueueEvent (EventBaseSP (new EventRequestResume (tid, request_thread_resume_function, error_function)));
+    const bool error_when_already_running = true;
+    EnqueueEvent (EventBaseSP (new EventRequestResume (tid, request_thread_resume_function, error_function, error_when_already_running)));
+}
+
+void
+ThreadStateCoordinator::RequestThreadResumeAsNeeded (lldb::tid_t tid,
+                                                     const ThreadIDFunction &request_thread_resume_function,
+                                                     const ErrorFunction &error_function)
+{
+    const bool error_when_already_running = false;
+    EnqueueEvent (EventBaseSP (new EventRequestResume (tid, request_thread_resume_function, error_function, error_when_already_running)));
 }
 
 void

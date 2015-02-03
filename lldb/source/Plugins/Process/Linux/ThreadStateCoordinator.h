@@ -102,11 +102,21 @@ namespace lldb_private
 
         // Request that the given thread id should have the request_thread_resume_function
         // called.  Will trigger the error_function if the thread is thought to be running
-        // already at that point.
+        // already at that point.  This call signals an error if the thread resume is for
+        // a thread that is already in a running state.
         void
         RequestThreadResume (lldb::tid_t tid,
                              const ThreadIDFunction &request_thread_resume_function,
                              const ErrorFunction &error_function);
+
+        // Request that the given thread id should have the request_thread_resume_function
+        // called.  Will trigger the error_function if the thread is thought to be running
+        // already at that point.  This call ignores threads that are already running and
+        // does not trigger an error in that case.
+        void
+        RequestThreadResumeAsNeeded (lldb::tid_t tid,
+                                     const ThreadIDFunction &request_thread_resume_function,
+                                     const ErrorFunction &error_function);
 
         // Indicate the calling process did an exec and that the thread state
         // should be 100% cleared.

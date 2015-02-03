@@ -166,7 +166,7 @@ namespace
     {
         Log *const log = GetLogIfAllCategoriesSet (LIBLLDB_LOG_THREAD);
         if (log)
-            log->Printf ("NativePlatformLinux::%s ThreadStateCoordinator error received: %s", __FUNCTION__, error_message.c_str ());
+            log->Printf ("NativePlatformLinux::%s %s", __FUNCTION__, error_message.c_str ());
         assert (false && "ThreadStateCoordinator error reported");
     }
 
@@ -2689,14 +2689,14 @@ NativeProcessLinux::Resume (const ResumeActionList &resume_actions)
             {
                 // Run the thread, possibly feeding it the signal.
                 const int signo = action->signal;
-                m_coordinator_up->RequestThreadResume (thread_sp->GetID (),
-                                                       [=](lldb::tid_t tid_to_resume)
-                                                       {
-                                                           reinterpret_cast<NativeThreadLinux*> (thread_sp.get ())->SetRunning ();
-                                                           // Pass this signal number on to the inferior to handle.
-                                                           Resume (tid_to_resume, (signo > 0) ? signo : LLDB_INVALID_SIGNAL_NUMBER);
-                                                       },
-                                                       CoordinatorErrorHandler);
+                m_coordinator_up->RequestThreadResumeAsNeeded (thread_sp->GetID (),
+                                                               [=](lldb::tid_t tid_to_resume)
+                                                               {
+                                                                   reinterpret_cast<NativeThreadLinux*> (thread_sp.get ())->SetRunning ();
+                                                                   // Pass this signal number on to the inferior to handle.
+                                                                   Resume (tid_to_resume, (signo > 0) ? signo : LLDB_INVALID_SIGNAL_NUMBER);
+                                                               },
+                                                               CoordinatorErrorHandler);
                 ++resume_count;
                 break;
             }

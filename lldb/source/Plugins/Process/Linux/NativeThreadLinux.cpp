@@ -250,7 +250,7 @@ NativeThreadLinux::SetStoppedBySignal (uint32_t signo)
 {
     Log *log (GetLogIfAllCategoriesSet (LIBLLDB_LOG_THREAD));
     if (log)
-        log->Printf ("NativeThreadLinux::%s called with signal 0x%" PRIx32, __FUNCTION__, signo);
+        log->Printf ("NativeThreadLinux::%s called with signal 0x%02" PRIx32, __FUNCTION__, signo);
 
     const StateType new_state = StateType::eStateStopped;
     MaybeLogStateChange (new_state);
