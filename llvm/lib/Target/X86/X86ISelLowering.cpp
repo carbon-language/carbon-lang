@@ -7814,10 +7814,11 @@ static SDValue lowerVectorShuffleAsByteShift(SDLoc DL, MVT VT, SDValue V1,
 /// stride, produce either a zero or any extension based on the available
 /// features of the subtarget.
 static SDValue lowerVectorShuffleAsSpecificZeroOrAnyExtend(
-    SDLoc DL, MVT VT, int NumElements, int Scale, bool AnyExt, SDValue InputV,
+    SDLoc DL, MVT VT, int Scale, bool AnyExt, SDValue InputV,
     const X86Subtarget *Subtarget, SelectionDAG &DAG) {
   assert(Scale > 1 && "Need a scale to extend.");
-  int EltBits = VT.getSizeInBits() / NumElements;
+  int NumElements = VT.getVectorNumElements();
+  int EltBits = VT.getScalarSizeInBits();
   assert((EltBits == 8 || EltBits == 16 || EltBits == 32) &&
          "Only 8, 16, and 32 bit elements can be extended.");
   assert(Scale * EltBits <= 64 && "Cannot zero extend past 64 bits.");
@@ -7825,10 +7826,8 @@ static SDValue lowerVectorShuffleAsSpecificZeroOrAnyExtend(
   // Found a valid zext mask! Try various lowering strategies based on the
   // input type and available ISA extensions.
   if (Subtarget->hasSSE41()) {
-    MVT InputVT = MVT::getVectorVT(MVT::getIntegerVT(EltBits), NumElements);
     MVT ExtVT = MVT::getVectorVT(MVT::getIntegerVT(EltBits * Scale),
                                  NumElements / Scale);
-    InputV = DAG.getNode(ISD::BITCAST, DL, InputVT, InputV);
     return DAG.getNode(ISD::BITCAST, DL, VT,
                        DAG.getNode(X86ISD::VZEXT, DL, ExtVT, InputV));
   }
@@ -7886,7 +7885,7 @@ static SDValue lowerVectorShuffleAsSpecificZeroOrAnyExtend(
   return DAG.getNode(ISD::BITCAST, DL, VT, InputV);
 }
 
-/// \brief Try to lower a vector shuffle as a zero extension on any micrarch.
+/// \brief Try to lower a vector shuffle as a zero extension on any microarch.
 ///
 /// This routine will try to do everything in its power to cleverly lower
 /// a shuffle which happens to match the pattern of a zero extend. It doesn't
@@ -7904,7 +7903,10 @@ static SDValue lowerVectorShuffleAsZeroOrAnyExtend(
   SmallBitVector Zeroable = computeZeroableShuffleElements(Mask, V1, V2);
 
   int Bits = VT.getSizeInBits();
-  int NumElements = Mask.size();
+  int EltBits = VT.getScalarSizeInBits();
+  int NumElements = VT.getVectorNumElements();
+  assert(EltBits <= 32 && "Exceeds 32-bit integer zero extension limit");
+  assert(Mask.size() == NumElements && "Unexpected shuffle mask size");
 
   // Define a helper function to check a particular ext-scale and lower to it if
   // valid.
@@ -7943,7 +7945,7 @@ static SDValue lowerVectorShuffleAsZeroOrAnyExtend(
       return SDValue();
 
     return lowerVectorShuffleAsSpecificZeroOrAnyExtend(
-        DL, VT, NumElements, Scale, AnyExt, InputV, Subtarget, DAG);
+        DL, VT, Scale, AnyExt, InputV, Subtarget, DAG);
   };
 
   // The widest scale possible for extending is to a 64-bit integer.
@@ -10532,6 +10534,13 @@ static SDValue lowerV8I32VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
   assert(Mask.size() == 8 && "Unexpected mask size for v8 shuffle!");
   assert(Subtarget->hasAVX2() && "We can only lower v8i32 with AVX2!");
 
+  // Whenever we can lower this as a zext, that instruction is strictly faster
+  // than any alternative. It also allows us to fold memory operands into the
+  // shuffle in many cases.
+  if (SDValue ZExt = lowerVectorShuffleAsZeroOrAnyExtend(DL, MVT::v8i32, V1, V2,
+                                                         Mask, Subtarget, DAG))
+    return ZExt;
+
   if (SDValue Blend = lowerVectorShuffleAsBlend(DL, MVT::v8i32, V1, V2, Mask,
                                                 Subtarget, DAG))
     return Blend;
@@ -10595,6 +10604,13 @@ static SDValue lowerV16I16VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
   ArrayRef<int> Mask = SVOp->getMask();
   assert(Mask.size() == 16 && "Unexpected mask size for v16 shuffle!");
   assert(Subtarget->hasAVX2() && "We can only lower v16i16 with AVX2!");
+
+  // Whenever we can lower this as a zext, that instruction is strictly faster
+  // than any alternative. It also allows us to fold memory operands into the
+  // shuffle in many cases.
+  if (SDValue ZExt = lowerVectorShuffleAsZeroOrAnyExtend(DL, MVT::v16i16, V1, V2,
+                                                         Mask, Subtarget, DAG))
+    return ZExt;
 
   // Check for being able to broadcast a single element.
   if (SDValue Broadcast = lowerVectorShuffleAsBroadcast(MVT::v16i16, DL, V1,
@@ -10670,6 +10686,13 @@ static SDValue lowerV32I8VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
   ArrayRef<int> Mask = SVOp->getMask();
   assert(Mask.size() == 32 && "Unexpected mask size for v32 shuffle!");
   assert(Subtarget->hasAVX2() && "We can only lower v32i8 with AVX2!");
+
+  // Whenever we can lower this as a zext, that instruction is strictly faster
+  // than any alternative. It also allows us to fold memory operands into the
+  // shuffle in many cases.
+  if (SDValue ZExt = lowerVectorShuffleAsZeroOrAnyExtend(DL, MVT::v32i8, V1, V2,
+                                                         Mask, Subtarget, DAG))
+    return ZExt;
 
   // Check for being able to broadcast a single element.
   if (SDValue Broadcast = lowerVectorShuffleAsBroadcast(MVT::v32i8, DL, V1,
