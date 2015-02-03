@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-// REQUIRES: linux2
+// REQUIRES: linux
 
 #include <assert.h>
 #include <cxxabi.h>
