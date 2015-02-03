@@ -190,8 +190,8 @@ define i32 @t11(i32 %x, i32 %y, i32 %z.0, i32 %z.1, i32 %z.2) nounwind ssp {
 ; 32: jmp {{_?}}foo5
 
 ; 64-LABEL: t11:
-; 64-NOT: subq ${{[0-9]+}}, %esp
-; 64-NOT: addq ${{[0-9]+}}, %esp
+; 64-NOT: subq ${{[0-9]+}}, %rsp
+; 64-NOT: addq ${{[0-9]+}}, %rsp
 ; 64: jmp {{_?}}foo5
 
 ; X32ABI-LABEL: t11:
@@ -221,8 +221,8 @@ define i32 @t12(i32 %x, i32 %y, %struct.t* byval align 4 %z) nounwind ssp {
 ; 32: jmp {{_?}}foo6
 
 ; 64-LABEL: t12:
-; 64-NOT: subq ${{[0-9]+}}, %esp
-; 64-NOT: addq ${{[0-9]+}}, %esp
+; 64-NOT: subq ${{[0-9]+}}, %rsp
+; 64-NOT: addq ${{[0-9]+}}, %rsp
 ; 64: jmp {{_?}}foo6
 
 ; X32ABI-LABEL: t12:
