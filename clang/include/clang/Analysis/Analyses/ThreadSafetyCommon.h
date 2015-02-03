@@ -286,6 +286,14 @@ public:
             sx::partiallyMatches(CapExpr, other.CapExpr);
   }
 
+  const ValueDecl* valueDecl() const {
+    if (Negated)
+      return nullptr;
+    if (auto *P = dyn_cast<til::Project>(CapExpr))
+      return P->clangDecl();
+    return nullptr;
+  }
+
   std::string toString() const {
     if (Negated)
       return "!" + sx::toString(CapExpr);

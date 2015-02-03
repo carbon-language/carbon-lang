@@ -101,17 +101,22 @@ private:
   LockKind          LKind;            ///<  exclusive or shared
   SourceLocation    AcquireLoc;       ///<  where it was acquired.
   bool              Asserted;         ///<  true if the lock was asserted
+  bool              Declared;         ///<  true if the lock was declared
 
 public:
   FactEntry(const CapabilityExpr &CE, LockKind LK, SourceLocation Loc,
-            bool Asrt)
-      : CapabilityExpr(CE), LKind(LK), AcquireLoc(Loc), Asserted(Asrt) {}
+            bool Asrt, bool Declrd = false)
+      : CapabilityExpr(CE), LKind(LK), AcquireLoc(Loc), Asserted(Asrt),
+        Declared(Declrd) {}
 
   virtual ~FactEntry() {}
 
-  LockKind          kind()       const { return LKind;    }
+  LockKind          kind()       const { return LKind;      }
   SourceLocation    loc()        const { return AcquireLoc; }
   bool              asserted()   const { return Asserted; }
+  bool              declared()   const { return Declared; }
+
+  void setDeclared(bool D) { Declared = D; }
 
   virtual void
   handleRemovalFromIntersection(const FactSet &FSet, FactManager &FactMan,
@@ -231,12 +236,57 @@ public:
 
   FactEntry *findPartialMatch(FactManager &FM,
                               const CapabilityExpr &CapE) const {
-    auto I = std::find_if(begin(), end(), [&](FactID ID) {
+    auto I = std::find_if(begin(), end(), [&](FactID ID) -> bool {
       return FM[ID].partiallyMatches(CapE);
     });
     return I != end() ? &FM[*I] : nullptr;
   }
+
+  bool containsMutexDecl(FactManager &FM, const ValueDecl* Vd) const {
+    auto I = std::find_if(begin(), end(), [&](FactID ID) -> bool {
+      return FM[ID].valueDecl() == Vd;
+    });
+    return I != end();
+  }
 };
+
+
+class ThreadSafetyAnalyzer;
+
+
+class BeforeSet {
+private:
+  typedef SmallVector<const ValueDecl*, 4>  BeforeVect;
+
+  struct BeforeInfo {
+    BeforeInfo() : Vect(nullptr), Visited(false) { }
+    BeforeInfo(BeforeInfo &&O)
+        : Vect(std::move(O.Vect)), Visited(O.Visited)
+    {}
+
+    std::unique_ptr<BeforeVect> Vect;
+    int                         Visited;
+  };
+
+  typedef llvm::DenseMap<const ValueDecl*, BeforeInfo>  BeforeMap;
+  typedef llvm::DenseMap<const ValueDecl*, bool>        CycleMap;
+
+public:
+  BeforeSet() { }
+
+  BeforeInfo* insertAttrExprs(const ValueDecl* Vd,
+                              ThreadSafetyAnalyzer& Analyzer);
+
+  void checkBeforeAfter(const ValueDecl* Vd,
+                        const FactSet& FSet,
+                        ThreadSafetyAnalyzer& Analyzer,
+                        SourceLocation Loc, StringRef CapKind);
+
+private:
+  BeforeMap BMap;
+  CycleMap  CycMap;
+};
+
 
 
 typedef llvm::ImmutableMap<const NamedDecl*, unsigned> LocalVarContext;
@@ -853,6 +903,7 @@ public:
 /// \brief Class which implements the core thread safety analysis routines.
 class ThreadSafetyAnalyzer {
   friend class BuildLockset;
+  friend class BeforeSet;
 
   llvm::BumpPtrAllocator Bpa;
   threadSafety::til::MemRegionRef Arena;
@@ -864,9 +915,11 @@ class ThreadSafetyAnalyzer {
   FactManager               FactMan;
   std::vector<CFGBlockInfo> BlockInfo;
 
+  BeforeSet* GlobalBeforeSet;
+
 public:
-  ThreadSafetyAnalyzer(ThreadSafetyHandler &H)
-     : Arena(&Bpa), SxBuilder(Arena), Handler(H) {}
+  ThreadSafetyAnalyzer(ThreadSafetyHandler &H, BeforeSet* Bset)
+     : Arena(&Bpa), SxBuilder(Arena), Handler(H), GlobalBeforeSet(Bset) {}
 
   bool inCurrentScope(const CapabilityExpr &CapE);
 
@@ -906,6 +959,135 @@ public:
 
   void runAnalysis(AnalysisDeclContext &AC);
 };
+
+
+
+/// Process acquired_before and acquired_after attributes on Vd.
+BeforeSet::BeforeInfo* BeforeSet::insertAttrExprs(const ValueDecl* Vd,
+    ThreadSafetyAnalyzer& Analyzer) {
+  // Create a new entry for Vd.
+  auto& Entry = BMap.FindAndConstruct(Vd);
+  BeforeInfo* Info = &Entry.second;
+  BeforeVect* Bv = nullptr;
+
+  for (Attr* At : Vd->attrs()) {
+    switch (At->getKind()) {
+      case attr::AcquiredBefore: {
+        auto *A = cast<AcquiredBeforeAttr>(At);
+
+        // Create a new BeforeVect for Vd if necessary.
+        if (!Bv) {
+          Bv = new BeforeVect;
+          Info->Vect.reset(Bv);
+        }
+        // Read exprs from the attribute, and add them to BeforeVect.
+        for (const auto *Arg : A->args()) {
+          CapabilityExpr Cp =
+            Analyzer.SxBuilder.translateAttrExpr(Arg, nullptr);
+          if (const ValueDecl *Cpvd = Cp.valueDecl()) {
+            Bv->push_back(Cpvd);
+            auto It = BMap.find(Cpvd);
+            if (It == BMap.end())
+              insertAttrExprs(Cpvd, Analyzer);
+          }
+        }
+        break;
+      }
+      case attr::AcquiredAfter: {
+        auto *A = cast<AcquiredAfterAttr>(At);
+
+        // Read exprs from the attribute, and add them to BeforeVect.
+        for (const auto *Arg : A->args()) {
+          CapabilityExpr Cp =
+            Analyzer.SxBuilder.translateAttrExpr(Arg, nullptr);
+          if (const ValueDecl *ArgVd = Cp.valueDecl()) {
+            // Get entry for mutex listed in attribute
+            BeforeInfo* ArgInfo;
+            auto It = BMap.find(ArgVd);
+            if (It == BMap.end())
+              ArgInfo = insertAttrExprs(ArgVd, Analyzer);
+            else
+              ArgInfo = &It->second;
+
+            // Create a new BeforeVect if necessary.
+            BeforeVect* ArgBv = ArgInfo->Vect.get();
+            if (!ArgBv) {
+              ArgBv = new BeforeVect;
+              ArgInfo->Vect.reset(ArgBv);
+            }
+            ArgBv->push_back(Vd);
+          }
+        }
+        break;
+      }
+      default:
+        break;
+    }
+  }
+
+  return Info;
+}
+
+
+/// Return true if any mutexes in FSet are in the acquired_before set of Vd.
+void BeforeSet::checkBeforeAfter(const ValueDecl* StartVd,
+                                 const FactSet& FSet,
+                                 ThreadSafetyAnalyzer& Analyzer,
+                                 SourceLocation Loc, StringRef CapKind) {
+  SmallVector<BeforeInfo*, 8> InfoVect;
+
+  // Do a depth-first traversal of Vd.
+  // Return true if there are cycles.
+  std::function<bool (const ValueDecl*)> traverse = [&](const ValueDecl* Vd) {
+    if (!Vd)
+      return false;
+
+    BeforeSet::BeforeInfo* Info;
+    auto It = BMap.find(Vd);
+    if (It == BMap.end())
+      Info = insertAttrExprs(Vd, Analyzer);
+    else
+      Info = &It->second;
+
+    if (Info->Visited == 1)
+      return true;
+
+    if (Info->Visited == 2)
+      return false;
+
+    BeforeVect* Bv = Info->Vect.get();
+    if (!Bv)
+      return false;
+
+    InfoVect.push_back(Info);
+    Info->Visited = 1;
+    for (auto *Vdb : *Bv) {
+      // Exclude mutexes in our immediate before set.
+      if (FSet.containsMutexDecl(Analyzer.FactMan, Vdb)) {
+        StringRef L1 = StartVd->getName();
+        StringRef L2 = Vdb->getName();
+        Analyzer.Handler.handleLockAcquiredBefore(CapKind, L1, L2, Loc);
+      }
+      // Transitively search other before sets, and warn on cycles.
+      if (traverse(Vdb)) {
+        if (CycMap.find(Vd) == CycMap.end()) {
+          CycMap.insert(std::make_pair(Vd, true));
+          StringRef L1 = Vd->getName();
+          Analyzer.Handler.handleBeforeAfterCycle(L1, Vd->getLocation());
+        }
+      }
+    }
+    Info->Visited = 2;
+    return false;
+  };
+
+  traverse(StartVd);
+
+  for (auto* Info : InfoVect)
+    Info->Visited = 0;
+}
+
+
 
 /// \brief Gets the value decl pointer from DeclRefExprs or MemberExprs.
 static const ValueDecl *getValueDecl(const Expr *Exp) {
@@ -1020,7 +1202,13 @@ void ThreadSafetyAnalyzer::addLock(FactSet &FSet,
     }
   }
 
-  // FIXME: deal with acquired before/after annotations.
+  // Check before/after constraints
+  if (Handler.issueBetaWarnings() &&
+      !Entry->asserted() && !Entry->declared()) {
+    GlobalBeforeSet->checkBeforeAfter(Entry->valueDecl(), FSet, *this,
+                                      Entry->loc(), DiagKind);
+  }
+
   // FIXME: Don't always warn when we have support for reentrant locks.
   if (FSet.findLock(FactMan, *Entry)) {
     if (!Entry->asserted())
@@ -1230,7 +1418,7 @@ void ThreadSafetyAnalyzer::getEdgeLockset(FactSet& Result,
   CapExprSet SharedLocksToAdd;
 
   // If the condition is a call to a Trylock function, then grab the attributes
-  for (auto *Attr : FunDecl->getAttrs()) {
+  for (auto *Attr : FunDecl->attrs()) {
     switch (Attr->getKind()) {
       case attr::ExclusiveTrylockFunction: {
         ExclusiveTrylockFunctionAttr *A =
@@ -1500,13 +1688,12 @@ void BuildLockset::checkPtAccess(const Expr *Exp, AccessKind AK,
 ///
 void BuildLockset::handleCall(Expr *Exp, const NamedDecl *D, VarDecl *VD) {
   SourceLocation Loc = Exp->getExprLoc();
-  const AttrVec &ArgAttrs = D->getAttrs();
   CapExprSet ExclusiveLocksToAdd, SharedLocksToAdd;
   CapExprSet ExclusiveLocksToRemove, SharedLocksToRemove, GenericLocksToRemove;
   StringRef CapDiagKind = "mutex";
 
-  for(unsigned i = 0; i < ArgAttrs.size(); ++i) {
-    Attr *At = const_cast<Attr*>(ArgAttrs[i]);
+  for(Attr *Atconst : D->attrs()) {
+    Attr* At = const_cast<Attr*>(Atconst);
     switch (At->getKind()) {
       // When we encounter a lock function, we need to add the lock to our
       // lockset.
@@ -1940,14 +2127,13 @@ void ThreadSafetyAnalyzer::runAnalysis(AnalysisDeclContext &AC) {
   if (!SortedGraph->empty() && D->hasAttrs()) {
     const CFGBlock *FirstBlock = *SortedGraph->begin();
     FactSet &InitialLockset = BlockInfo[FirstBlock->getBlockID()].EntrySet;
-    const AttrVec &ArgAttrs = D->getAttrs();
 
     CapExprSet ExclusiveLocksToAdd;
     CapExprSet SharedLocksToAdd;
     StringRef CapDiagKind = "mutex";
 
     SourceLocation Loc = D->getLocation();
-    for (const auto *Attr : ArgAttrs) {
+    for (const auto *Attr : D->attrs()) {
       Loc = Attr->getLocation();
       if (const auto *A = dyn_cast<RequiresCapabilityAttr>(Attr)) {
         getMutexIDs(A->isShared() ? SharedLocksToAdd : ExclusiveLocksToAdd, A,
@@ -1979,14 +2165,16 @@ void ThreadSafetyAnalyzer::runAnalysis(AnalysisDeclContext &AC) {
     }
 
     // FIXME -- Loc can be wrong here.
-    for (const auto &Mu : ExclusiveLocksToAdd)
-      addLock(InitialLockset,
-              llvm::make_unique<LockableFactEntry>(Mu, LK_Exclusive, Loc),
-              CapDiagKind, true);
-    for (const auto &Mu : SharedLocksToAdd)
-      addLock(InitialLockset,
-              llvm::make_unique<LockableFactEntry>(Mu, LK_Shared, Loc),
-              CapDiagKind, true);
+    for (const auto &Mu : ExclusiveLocksToAdd) {
+      auto Entry = llvm::make_unique<LockableFactEntry>(Mu, LK_Exclusive, Loc);
+      Entry->setDeclared(true);
+      addLock(InitialLockset, std::move(Entry), CapDiagKind, true);
+    }
+    for (const auto &Mu : SharedLocksToAdd) {
+      auto Entry = llvm::make_unique<LockableFactEntry>(Mu, LK_Shared, Loc);
+      Entry->setDeclared(true);
+      addLock(InitialLockset, std::move(Entry), CapDiagKind, true);
+    }
   }
 
   for (const auto *CurrBlock : *SortedGraph) {
@@ -2180,10 +2368,19 @@ void ThreadSafetyAnalyzer::runAnalysis(AnalysisDeclContext &AC) {
 /// at the end of each block, and issue warnings for thread safety violations.
 /// Each block in the CFG is traversed exactly once.
 void runThreadSafetyAnalysis(AnalysisDeclContext &AC,
-                             ThreadSafetyHandler &Handler) {
-  ThreadSafetyAnalyzer Analyzer(Handler);
+                             ThreadSafetyHandler &Handler,
+                             BeforeSet **BSet) {
+  if (!*BSet)
+    *BSet = new BeforeSet;
+  ThreadSafetyAnalyzer Analyzer(Handler, *BSet);
   Analyzer.runAnalysis(AC);
 }
+
+
+void threadSafetyCleanup(BeforeSet* Cache) {
+  delete Cache;
+}
+
 
 /// \brief Helper function that returns a LockKind required for the given level
 /// of access.
