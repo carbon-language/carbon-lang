@@ -353,7 +353,7 @@ SBTypeCategory::AddTypeSummary (SBTypeNameSpecifier type_name,
     // this should eventually be fixed by deciding a final location in the LLDB object space for formatters
     if (summary.IsFunctionCode())
     {
-        void *name_token = (void*)ConstString(type_name.GetName()).GetCString();
+        const void *name_token = (const void*)ConstString(type_name.GetName()).GetCString();
         const char* script = summary.GetData();
         StringList input; input.SplitIntoLines(script, strlen(script));
         uint32_t num_debuggers = lldb_private::Debugger::GetNumDebuggers();
@@ -461,7 +461,7 @@ SBTypeCategory::AddTypeSynthetic (SBTypeNameSpecifier type_name,
     // this should eventually be fixed by deciding a final location in the LLDB object space for formatters
     if (synth.IsClassCode())
     {
-        void *name_token = (void*)ConstString(type_name.GetName()).GetCString();
+        const void *name_token = (const void*)ConstString(type_name.GetName()).GetCString();
         const char* script = synth.GetData();
         StringList input; input.SplitIntoLines(script, strlen(script));
         uint32_t num_debuggers = lldb_private::Debugger::GetNumDebuggers();

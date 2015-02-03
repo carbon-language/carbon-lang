@@ -65,17 +65,17 @@ public:
     ExportFunctionDefinitionToInterpreter (StringList &function_def) override;
 
     bool
-    GenerateTypeScriptFunction (StringList &input, std::string& output, void* name_token = NULL) override;
+    GenerateTypeScriptFunction (StringList &input, std::string& output, const void* name_token = NULL) override;
     
     bool
-    GenerateTypeSynthClass (StringList &input, std::string& output, void* name_token = NULL) override;
+    GenerateTypeSynthClass (StringList &input, std::string& output, const void* name_token = NULL) override;
     
     bool
-    GenerateTypeSynthClass (const char* oneliner, std::string& output, void* name_token = NULL) override;
+    GenerateTypeSynthClass (const char* oneliner, std::string& output, const void* name_token = NULL) override;
     
     // use this if the function code is just a one-liner script
     bool
-    GenerateTypeScriptFunction (const char* oneliner, std::string& output, void* name_token = NULL) override;
+    GenerateTypeScriptFunction (const char* oneliner, std::string& output, const void* name_token = NULL) override;
     
     bool
     GenerateScriptAliasFunction (StringList &input, std::string& output) override;

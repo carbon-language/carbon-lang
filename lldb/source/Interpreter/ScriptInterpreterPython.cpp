@@ -538,7 +538,7 @@ ScriptInterpreterPython::GetSysModuleDictionary ()
 static std::string
 GenerateUniqueName (const char* base_name_wanted,
                     uint32_t& functions_counter,
-                    void* name_token = nullptr)
+                    const void* name_token = nullptr)
 {
     StreamString sstr;
     
@@ -1254,7 +1254,7 @@ ScriptInterpreterPython::GenerateFunction(const char *signature, const StringLis
 }
 
 bool
-ScriptInterpreterPython::GenerateTypeScriptFunction (StringList &user_input, std::string& output, void* name_token)
+ScriptInterpreterPython::GenerateTypeScriptFunction (StringList &user_input, std::string& output, const void* name_token)
 {
     static uint32_t num_created_functions = 0;
     user_input.RemoveBlankLines ();
@@ -1303,7 +1303,7 @@ ScriptInterpreterPython::GenerateScriptAliasFunction (StringList &user_input, st
 
 
 bool
-ScriptInterpreterPython::GenerateTypeSynthClass (StringList &user_input, std::string &output, void* name_token)
+ScriptInterpreterPython::GenerateTypeSynthClass (StringList &user_input, std::string &output, const void* name_token)
 {
     static uint32_t num_created_classes = 0;
     user_input.RemoveBlankLines ();
@@ -1806,7 +1806,7 @@ ScriptInterpreterPython::CreateSyntheticScriptedProvider (const char *class_name
 }
 
 bool
-ScriptInterpreterPython::GenerateTypeScriptFunction (const char* oneliner, std::string& output, void* name_token)
+ScriptInterpreterPython::GenerateTypeScriptFunction (const char* oneliner, std::string& output, const void* name_token)
 {
     StringList input;
     input.SplitIntoLines(oneliner, strlen(oneliner));
@@ -1814,7 +1814,7 @@ ScriptInterpreterPython::GenerateTypeScriptFunction (const char* oneliner, std::
 }
 
 bool
-ScriptInterpreterPython::GenerateTypeSynthClass (const char* oneliner, std::string& output, void* name_token)
+ScriptInterpreterPython::GenerateTypeSynthClass (const char* oneliner, std::string& output, const void* name_token)
 {
     StringList input;
     input.SplitIntoLines(oneliner, strlen(oneliner));
