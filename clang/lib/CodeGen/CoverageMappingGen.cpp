@@ -246,9 +246,8 @@ public:
       unsigned ColumnStart = SM.getSpellingColumnNumber(LocStart);
       unsigned LineEnd = SM.getSpellingLineNumber(LocEnd);
       unsigned ColumnEnd = SM.getSpellingColumnNumber(LocEnd);
-      CounterMappingRegion Region(Counter(), *CovFileID, LineStart, ColumnStart,
-                                  LineEnd, ColumnEnd,
-                                  CounterMappingRegion::SkippedRegion);
+      auto Region = CounterMappingRegion::makeSkipped(
+          *CovFileID, LineStart, ColumnStart, LineEnd, ColumnEnd);
       // Make sure that we only collect the regions that are inside
       // the souce code of this function.
       if (Region.LineStart >= FileLineRanges[*CovFileID].first &&
@@ -284,10 +283,9 @@ public:
         ColumnStart +
         Lexer::MeasureTokenLength(SM.getSpellingLoc(LocStart), SM, LangOpts);
 
-    MappingRegions.push_back(CounterMappingRegion(
-        Counter(), *CovFileID, LineStart, ColumnStart, LineEnd, ColumnEnd,
-        CounterMappingRegion::ExpansionRegion));
-    MappingRegions.back().ExpandedFileID = *ExpandedFileID;
+    MappingRegions.push_back(CounterMappingRegion::makeExpansion(
+        *CovFileID, *ExpandedFileID, LineStart, ColumnStart, LineEnd,
+        ColumnEnd));
   }
 
   /// \brief Enter a source region group that is identified by the given
@@ -375,9 +373,9 @@ public:
         continue;
 
       assert(LineStart <= LineEnd);
-      MappingRegions.push_back(CounterMappingRegion(
+      MappingRegions.push_back(CounterMappingRegion::makeRegion(
           I->getCounter(), *CovFileID, LineStart, ColumnStart, LineEnd,
-          ColumnEnd, CounterMappingRegion::CodeRegion));
+          ColumnEnd));
     }
   }
 };
