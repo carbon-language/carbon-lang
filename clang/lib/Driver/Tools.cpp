@@ -40,6 +40,10 @@
 #include "llvm/Support/Program.h"
 #include "llvm/Support/raw_ostream.h"
 
+#ifdef LLVM_ON_UNIX
+#include <unistd.h> // For getuid().
+#endif
+
 using namespace clang::driver;
 using namespace clang::driver::tools;
 using namespace clang;
@@ -2456,6 +2460,38 @@ static void claimNoWarnArgs(const ArgList &Args) {
   Args.ClaimAllArgs(options::OPT_fno_lto);
 }
 
+static void appendUserToPath(SmallVectorImpl<char> &Result) {
+#ifdef LLVM_ON_UNIX
+  const char *Username = getenv("LOGNAME");
+#else
+  const char *Username = getenv("USERNAME");
+#endif
+  if (Username) {
+    // Validate that LoginName can be used in a path, and get its length.
+    size_t Len = 0;
+    for (const char *P = Username; *P; ++P, ++Len) {
+      if (!isalnum(*P) && *P != '_') {
+        Username = nullptr;
+        break;
+      }
+    }
+
+    if (Username && Len > 0) {
+      Result.append(Username, Username + Len);
+      return;
+    }
+  }
+
+  // Fallback to user id.
+#ifdef LLVM_ON_UNIX
+  std::string UID = llvm::utostr(getuid());
+#else
+  // FIXME: Windows seems to have an 'SID' that might work.
+  std::string UID = "9999";
+#endif
+  Result.append(UID.begin(), UID.end());
+}
+
 void Clang::ConstructJob(Compilation &C, const JobAction &JA,
                          const InputInfo &Output,
                          const InputInfoList &Inputs,
@@ -3878,7 +3914,8 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
       // No module path was provided: use the default.
       llvm::sys::path::system_temp_directory(/*erasedOnReboot=*/false,
                                              ModuleCachePath);
-      llvm::sys::path::append(ModuleCachePath, "org.llvm.clang");
+      llvm::sys::path::append(ModuleCachePath, "org.llvm.clang.");
+      appendUserToPath(ModuleCachePath);
       llvm::sys::path::append(ModuleCachePath, "ModuleCache");
     }
     const char Arg[] = "-fmodules-cache-path=";
