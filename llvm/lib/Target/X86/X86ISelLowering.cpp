@@ -7820,7 +7820,7 @@ static SDValue lowerVectorShuffleAsBitShift(SDLoc DL, MVT VT, SDValue V1,
   SmallBitVector Zeroable = computeZeroableShuffleElements(Mask, V1, V2);
 
   int Size = Mask.size();
-  assert(Size == VT.getVectorNumElements() && "Unexpected mask size");
+  assert(Size == (int)VT.getVectorNumElements() && "Unexpected mask size");
 
   // PSRL : (little-endian) right bit shift.
   // [  1, zz,  3, zz]
