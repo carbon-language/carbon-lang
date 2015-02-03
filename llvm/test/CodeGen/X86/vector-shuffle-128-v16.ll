@@ -1061,25 +1061,25 @@ define <16 x i8> @PR12412(<16 x i8> %inval1, <16 x i8> %inval2) {
 ; SSE2-NEXT:    retq
 ;
 ; SSSE3-LABEL: PR12412:
-; SSSE3:      # BB#0: # %entry
-; SSSE3-NEXT:   pshufb {{.*#+}} xmm1 = zero,zero,zero,zero,zero,zero,zero,zero,xmm1[0,2,4,6,8,10,12,14]
-; SSSE3-NEXT:   pshufb {{.*#+}} xmm0 = xmm0[0,2,4,6,8,10,12,14],zero,zero,zero,zero,zero,zero,zero,zero
-; SSSE3-NEXT:   por %xmm1, %xmm0
-; SSSE3-NEXT:   retq
+; SSSE3:       # BB#0: # %entry
+; SSSE3-NEXT:    pshufb {{.*#+}} xmm1 = zero,zero,zero,zero,zero,zero,zero,zero,xmm1[0,2,4,6,8,10,12,14]
+; SSSE3-NEXT:    pshufb {{.*#+}} xmm0 = xmm0[0,2,4,6,8,10,12,14],zero,zero,zero,zero,zero,zero,zero,zero
+; SSSE3-NEXT:    por %xmm1, %xmm0
+; SSSE3-NEXT:    retq
 ;
 ; SSE41-LABEL: PR12412:
-; SSE41:      # BB#0: # %entry
-; SSE41-NEXT:   pshufb {{.*#+}} xmm1 = zero,zero,zero,zero,zero,zero,zero,zero,xmm1[0,2,4,6,8,10,12,14]
-; SSE41-NEXT:   pshufb {{.*#+}} xmm0 = xmm0[0,2,4,6,8,10,12,14],zero,zero,zero,zero,zero,zero,zero,zero
-; SSE41-NEXT:   por %xmm1, %xmm0
-; SSE41-NEXT:   retq
+; SSE41:       # BB#0: # %entry
+; SSE41-NEXT:    pshufb {{.*#+}} xmm1 = zero,zero,zero,zero,zero,zero,zero,zero,xmm1[0,2,4,6,8,10,12,14]
+; SSE41-NEXT:    pshufb {{.*#+}} xmm0 = xmm0[0,2,4,6,8,10,12,14],zero,zero,zero,zero,zero,zero,zero,zero
+; SSE41-NEXT:    por %xmm1, %xmm0
+; SSE41-NEXT:    retq
 ;
 ; AVX-LABEL: PR12412:
-; AVX:        # BB#0: # %entry
-; AVX-NEXT:     vpshufb {{.*#+}} xmm1 = zero,zero,zero,zero,zero,zero,zero,zero,xmm1[0,2,4,6,8,10,12,14]
-; AVX-NEXT:     vpshufb {{.*#+}} xmm0 = xmm0[0,2,4,6,8,10,12,14],zero,zero,zero,zero,zero,zero,zero,zero
-; AVX-NEXT:     vpor %xmm1, %xmm0, %xmm0
-; AVX-NEXT:     retq
+; AVX:       # BB#0: # %entry
+; AVX-NEXT:    vpshufb {{.*#+}} xmm1 = zero,zero,zero,zero,zero,zero,zero,zero,xmm1[0,2,4,6,8,10,12,14]
+; AVX-NEXT:    vpshufb {{.*#+}} xmm0 = xmm0[0,2,4,6,8,10,12,14],zero,zero,zero,zero,zero,zero,zero,zero
+; AVX-NEXT:    vpor %xmm1, %xmm0, %xmm0
+; AVX-NEXT:    retq
 entry:
   %0 = shufflevector <16 x i8> %inval1, <16 x i8> %inval2, <16 x i32> <i32 0, i32 2, i32 4, i32 6, i32 8, i32 10, i32 12, i32 14, i32 16, i32 18, i32 20, i32 22, i32 24, i32 26, i32 28, i32 30>
   ret <16 x i8> %0
