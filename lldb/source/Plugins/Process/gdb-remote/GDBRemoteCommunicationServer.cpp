@@ -2530,10 +2530,6 @@ GDBRemoteCommunicationServer::Handle_vCont (StringExtractorGDBRemote &packet)
         thread_actions.Append (thread_action);
     }
 
-    // If a default action for all other threads wasn't mentioned
-    // then we should stop the threads.
-    thread_actions.SetDefaultThreadActionIfNeeded (eStateStopped, 0);
-
     Error error = m_debugged_process_sp->Resume (thread_actions);
     if (error.Fail ())
     {

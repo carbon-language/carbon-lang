@@ -2584,7 +2584,14 @@ NativeProcessLinux::Resume (const ResumeActionList &resume_actions)
             assert (thread_sp && "thread list should not contain NULL threads");
 
             const ResumeAction *const action = resume_actions.GetActionForThread (thread_sp->GetID (), true);
-            assert (action && "NULL ResumeAction returned for thread during Resume ()");
+
+            if (action == nullptr)
+            {
+                if (log)
+                    log->Printf ("NativeProcessLinux::%s no action specified for pid %" PRIu64 " tid %" PRIu64,
+                        __FUNCTION__, GetID (), thread_sp->GetID ());
+                continue;
+            }
 
             if (log)
             {
