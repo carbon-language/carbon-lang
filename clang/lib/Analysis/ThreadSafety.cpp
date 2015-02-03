@@ -261,6 +261,8 @@ private:
   struct BeforeInfo {
     BeforeInfo() : Vect(nullptr), Visited(false) { }
 
+    BeforeInfo(BeforeInfo &&O) : Vect(std::move(O.Vect)), Visited(O.Visited) {}
+
     std::unique_ptr<BeforeVect> Vect;
     int                         Visited;
   };
