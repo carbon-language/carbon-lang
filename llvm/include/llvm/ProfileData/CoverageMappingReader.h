@@ -104,7 +104,6 @@ public:
 
 /// \brief Reader for the raw coverage mapping data.
 class RawCoverageMappingReader : public RawCoverageReader {
-  StringRef FunctionName;
   ArrayRef<StringRef> TranslationUnitFilenames;
   std::vector<StringRef> &Filenames;
   std::vector<CounterExpression> &Expressions;
@@ -116,17 +115,17 @@ class RawCoverageMappingReader : public RawCoverageReader {
   operator=(const RawCoverageMappingReader &) LLVM_DELETED_FUNCTION;
 
 public:
-  RawCoverageMappingReader(StringRef FunctionName, StringRef MappingData,
+  RawCoverageMappingReader(StringRef MappingData,
                            ArrayRef<StringRef> TranslationUnitFilenames,
                            std::vector<StringRef> &Filenames,
                            std::vector<CounterExpression> &Expressions,
                            std::vector<CounterMappingRegion> &MappingRegions)
-      : RawCoverageReader(MappingData), FunctionName(FunctionName),
+      : RawCoverageReader(MappingData),
         TranslationUnitFilenames(TranslationUnitFilenames),
         Filenames(Filenames), Expressions(Expressions),
         MappingRegions(MappingRegions) {}
 
-  std::error_code read(CoverageMappingRecord &Record);
+  std::error_code read();
 
 private:
   std::error_code decodeCounter(unsigned Value, Counter &C);

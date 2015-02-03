@@ -221,7 +221,7 @@ std::error_code RawCoverageMappingReader::readMappingRegionsSubArray(
   return success();
 }
 
-std::error_code RawCoverageMappingReader::read(CoverageMappingRecord &Record) {
+std::error_code RawCoverageMappingReader::read() {
 
   // Read the virtual file mapping.
   llvm::SmallVector<unsigned, 8> VirtualFileMapping;
@@ -287,10 +287,6 @@ std::error_code RawCoverageMappingReader::read(CoverageMappingRecord &Record) {
     }
   }
 
-  Record.FunctionName = FunctionName;
-  Record.Filenames = Filenames;
-  Record.Expressions = Expressions;
-  Record.MappingRegions = MappingRegions;
   return success();
 }
 
@@ -542,12 +538,18 @@ ObjectFileCoverageMappingReader::readNextRecord(CoverageMappingRecord &Record) {
   MappingRegions.clear();
   auto &R = MappingRecords[CurrentRecord];
   RawCoverageMappingReader Reader(
-      R.FunctionName, R.CoverageMapping,
+      R.CoverageMapping,
       makeArrayRef(Filenames).slice(R.FilenamesBegin, R.FilenamesSize),
       FunctionsFilenames, Expressions, MappingRegions);
-  if (auto Err = Reader.read(Record))
+  if (auto Err = Reader.read())
     return Err;
+
+  Record.FunctionName = R.FunctionName;
   Record.FunctionHash = R.FunctionHash;
+  Record.Filenames = FunctionsFilenames;
+  Record.Expressions = Expressions;
+  Record.MappingRegions = MappingRegions;
+
   ++CurrentRecord;
   return success();
 }
