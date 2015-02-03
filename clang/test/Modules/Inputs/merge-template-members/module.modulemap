@@ -1,2 +1,6 @@
 module def { header "def.h" export * }
 module update { header "update.h" export * }
+
+module a { header "a.h" export * }
+module b { header "b.h" export * }
+module c { header "c.h" export * }
