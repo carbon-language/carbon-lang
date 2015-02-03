@@ -16,9 +16,11 @@ class PExpectTest(TestBase):
     def launchArgs(self):
         pass
 
-    def launch(self):
-        self.timeout = 5
+    def launch(self, timeout=None):
+        if timeout is None: timeout = 30
         self.child = pexpect.spawn('%s %s' % (self.lldbHere, self.launchArgs()))
+        self.child.timeout = timeout
+        self.timeout = timeout
 
     def expect(self, patterns=None, timeout=None, exact=None):
         if patterns is None: return None
