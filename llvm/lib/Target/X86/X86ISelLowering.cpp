@@ -7903,9 +7903,9 @@ static SDValue lowerVectorShuffleAsZeroOrAnyExtend(
   SmallBitVector Zeroable = computeZeroableShuffleElements(Mask, V1, V2);
 
   int Bits = VT.getSizeInBits();
-  int EltBits = VT.getScalarSizeInBits();
   int NumElements = VT.getVectorNumElements();
-  assert(EltBits <= 32 && "Exceeds 32-bit integer zero extension limit");
+  assert(VT.getScalarSizeInBits() <= 32 &&
+         "Exceeds 32-bit integer zero extension limit");
   assert(Mask.size() == NumElements && "Unexpected shuffle mask size");
 
   // Define a helper function to check a particular ext-scale and lower to it if
