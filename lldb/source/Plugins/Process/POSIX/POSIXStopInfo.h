@@ -16,8 +16,10 @@
 // Project includes
 #include "lldb/Target/StopInfo.h"
 
+#include "CrashReason.h"
 #include "POSIXThread.h"
-#include "ProcessMessage.h"
+
+#include <string>
 
 //===----------------------------------------------------------------------===//
 /// @class POSIXStopInfo
@@ -69,25 +71,13 @@ class POSIXCrashStopInfo
 {
 public:
     POSIXCrashStopInfo(POSIXThread &thread, uint32_t status,
-                       ProcessMessage::CrashReason reason,
-                       lldb::addr_t fault_addr)
-        : POSIXStopInfo(thread, status),
-          m_crash_reason(reason),
-          m_fault_addr(fault_addr)
-        { }
-
+                       CrashReason reason,
+                       lldb::addr_t fault_addr);
     ~POSIXCrashStopInfo();
 
     lldb::StopReason
     GetStopReason() const;
-
-    const char *
-    GetDescription();
-
-private:
-    ProcessMessage::CrashReason m_crash_reason;
-    lldb::addr_t m_fault_addr;
-};    
+};
 
 //===----------------------------------------------------------------------===//
 /// @class POSIXNewThreadStopInfo

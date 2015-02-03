@@ -53,10 +53,7 @@ namespace lldb_private
         RestoreAllRegisters (lldb::DataBufferSP &data_sp);
 
         virtual bool
-        GetStopReason (ThreadStopInfo &stop_info) = 0;
-
-        virtual uint32_t
-        TranslateStopInfoToGdbSignal (const ThreadStopInfo &stop_info) const;
+        GetStopReason (ThreadStopInfo &stop_info, std::string& description) = 0;
 
         lldb::tid_t
         GetID() const

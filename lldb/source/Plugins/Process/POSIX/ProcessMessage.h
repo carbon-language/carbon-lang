@@ -10,7 +10,10 @@
 #ifndef liblldb_ProcessMessage_H_
 #define liblldb_ProcessMessage_H_
 
+#include "CrashReason.h"
+
 #include <cassert>
+#include <string>
 
 #include "lldb/lldb-defines.h"
 #include "lldb/lldb-types.h"
@@ -36,44 +39,10 @@ public:
         eExecMessage
     };
 
-    enum CrashReason
-    {
-        eInvalidCrashReason,
-
-        // SIGSEGV crash reasons.
-        eInvalidAddress,
-        ePrivilegedAddress,
-
-        // SIGILL crash reasons.
-        eIllegalOpcode,
-        eIllegalOperand,
-        eIllegalAddressingMode,
-        eIllegalTrap,
-        ePrivilegedOpcode,
-        ePrivilegedRegister,
-        eCoprocessorError,
-        eInternalStackError,
-
-        // SIGBUS crash reasons,
-        eIllegalAlignment,
-        eIllegalAddress,
-        eHardwareError,
-
-        // SIGFPE crash reasons,
-        eIntegerDivideByZero,
-        eIntegerOverflow,
-        eFloatDivideByZero,
-        eFloatOverflow,
-        eFloatUnderflow,
-        eFloatInexactResult,
-        eFloatInvalidOperation,
-        eFloatSubscriptRange
-    };
-
     ProcessMessage()
         : m_tid(LLDB_INVALID_PROCESS_ID),
           m_kind(eInvalidMessage),
-          m_crash_reason(eInvalidCrashReason),
+          m_crash_reason(CrashReason::eInvalidCrashReason),
           m_status(0),
           m_addr(0) { }
 
@@ -175,14 +144,8 @@ public:
         return m_child_tid;
     }
 
-    static const char *
-    GetCrashReasonString(CrashReason reason, lldb::addr_t fault_addr);
-
     const char *
     PrintCrashReason() const;
-
-    static const char *
-    PrintCrashReason(CrashReason reason);
 
     const char *
     PrintKind() const;
@@ -195,7 +158,7 @@ private:
                    int status = 0, lldb::addr_t addr = 0)
         : m_tid(tid),
           m_kind(kind),
-          m_crash_reason(eInvalidCrashReason),
+          m_crash_reason(CrashReason::eInvalidCrashReason),
           m_status(status),
           m_addr(addr),
           m_child_tid(0) { }
@@ -203,14 +166,14 @@ private:
     ProcessMessage(lldb::tid_t tid, Kind kind, lldb::tid_t child_tid)
         : m_tid(tid),
           m_kind(kind),
-          m_crash_reason(eInvalidCrashReason),
+          m_crash_reason(CrashReason::eInvalidCrashReason),
           m_status(0),
           m_addr(0),
           m_child_tid(child_tid) { }
 
     lldb::tid_t m_tid;
     Kind        m_kind         : 8;
-    CrashReason m_crash_reason : 8;
+    CrashReason m_crash_reason;
     int m_status;
     lldb::addr_t m_addr;
     lldb::tid_t m_child_tid;

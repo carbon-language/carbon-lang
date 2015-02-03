@@ -311,18 +311,6 @@ private:
     MonitorSignal(ProcessMonitor *monitor, 
                   const siginfo_t *info, lldb::pid_t pid);
 
-    static ProcessMessage::CrashReason
-    GetCrashReasonForSIGSEGV(const siginfo_t *info);
-
-    static ProcessMessage::CrashReason
-    GetCrashReasonForSIGILL(const siginfo_t *info);
-
-    static ProcessMessage::CrashReason
-    GetCrashReasonForSIGFPE(const siginfo_t *info);
-
-    static ProcessMessage::CrashReason
-    GetCrashReasonForSIGBUS(const siginfo_t *info);
-
     void
     DoOperation(Operation *op);
 

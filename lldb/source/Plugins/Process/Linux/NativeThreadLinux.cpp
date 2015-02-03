@@ -24,6 +24,8 @@
 
 #include "llvm/ADT/SmallString.h"
 
+#include "Plugins/Process/POSIX/CrashReason.h"
+
 #include "Plugins/Process/Utility/RegisterContextLinux_arm64.h"
 #include "Plugins/Process/Utility/RegisterContextLinux_i386.h"
 #include "Plugins/Process/Utility/RegisterContextLinux_x86_64.h"
@@ -57,7 +59,8 @@ NativeThreadLinux::NativeThreadLinux (NativeProcessLinux *process, lldb::tid_t t
     NativeThreadProtocol (process, tid),
     m_state (StateType::eStateInvalid),
     m_stop_info (),
-    m_reg_context_sp ()
+    m_reg_context_sp (),
+    m_stop_description ()
 {
 }
 
@@ -82,9 +85,12 @@ NativeThreadLinux::GetState ()
 
 
 bool
-NativeThreadLinux::GetStopReason (ThreadStopInfo &stop_info)
+NativeThreadLinux::GetStopReason (ThreadStopInfo &stop_info, std::string& description)
 {
     Log *log (GetLogIfAllCategoriesSet (LIBLLDB_LOG_THREAD));
+
+    description.clear();
+
     switch (m_state)
     {
     case eStateStopped:
@@ -95,8 +101,11 @@ NativeThreadLinux::GetStopReason (ThreadStopInfo &stop_info)
         if (log)
             LogThreadStopInfo (*log, m_stop_info, "m_stop_info in thread:");
         stop_info = m_stop_info;
+        if (m_stop_info.reason == StopReason::eStopReasonException)
+            description = m_stop_description;
         if (log)
             LogThreadStopInfo (*log, stop_info, "returned stop_info:");
+
         return true;
 
     case eStateInvalid:
@@ -233,6 +242,7 @@ NativeThreadLinux::SetRunning ()
     m_state = new_state;
 
     m_stop_info.reason = StopReason::eStopReasonNone;
+    m_stop_description.clear();
 }
 
 void
@@ -301,7 +311,7 @@ NativeThreadLinux::SetStoppedByBreakpoint ()
     MaybeLogStateChange (new_state);
     m_state = new_state;
 
-    m_stop_info.reason = StopReason::eStopReasonSignal;
+    m_stop_info.reason = StopReason::eStopReasonBreakpoint;
     m_stop_info.details.signal.signo = SIGTRAP;
 }
 
@@ -313,23 +323,34 @@ NativeThreadLinux::IsStoppedAtBreakpoint ()
         return false;
 
     // Was the stop reason a signal with signal number SIGTRAP? If not, not a breakpoint.
-    return (m_stop_info.reason == StopReason::eStopReasonSignal) &&
+    return (m_stop_info.reason == StopReason::eStopReasonBreakpoint) &&
             (m_stop_info.details.signal.signo == SIGTRAP);
 }
 
 void
-NativeThreadLinux::SetCrashedWithException (uint64_t exception_type, lldb::addr_t exception_addr)
+NativeThreadLinux::SetStoppedByTrace ()
+{
+    const StateType new_state = StateType::eStateStopped;
+    MaybeLogStateChange (new_state);
+    m_state = new_state;
+
+    m_stop_info.reason = StopReason::eStopReasonTrace;
+    m_stop_info.details.signal.signo = SIGTRAP;
+}
+
+void
+NativeThreadLinux::SetCrashedWithException (const siginfo_t& info)
 {
     const StateType new_state = StateType::eStateCrashed;
     MaybeLogStateChange (new_state);
     m_state = new_state;
 
     m_stop_info.reason = StopReason::eStopReasonException;
-    m_stop_info.details.exception.type = exception_type;
-    m_stop_info.details.exception.data_count = 1;
-    m_stop_info.details.exception.data[0] = exception_addr;
-}
+    m_stop_info.details.signal.signo = info.si_signo;
 
+    const auto reason = GetCrashReason (info);
+    m_stop_description = GetCrashReasonString (reason, reinterpret_cast<lldb::addr_t> (info.si_addr));
+}
 
 void
 NativeThreadLinux::SetSuspended ()
@@ -371,33 +392,3 @@ NativeThreadLinux::MaybeLogStateChange (lldb::StateType new_state)
     // Log it.
     log->Printf ("NativeThreadLinux: thread (pid=%" PRIu64 ", tid=%" PRIu64 ") changing from state %s to %s", pid, GetID (), StateAsCString (old_state), StateAsCString (new_state));
 }
-
-uint32_t
-NativeThreadLinux::TranslateStopInfoToGdbSignal (const ThreadStopInfo &stop_info) const
-{
-    switch (stop_info.reason)
-    {
-        case eStopReasonSignal:
-            // No translation.
-            return stop_info.details.signal.signo;
-
-        case eStopReasonException:
-            {
-                Log *log (GetLogIfAllCategoriesSet (LIBLLDB_LOG_THREAD));
-                // FIXME I think the eStopReasonException is a xnu/Mach exception, which we
-                // shouldn't see on Linux.
-                // No translation.
-                if (log)
-                    log->Printf ("NativeThreadLinux::%s saw an exception stop type (signo %"
-                                 PRIu64 "), not expecting to see exceptions on Linux",
-                                 __FUNCTION__,
-                                 stop_info.details.exception.type);
-                return static_cast<uint32_t> (stop_info.details.exception.type);
-            }
-
-        default:
-            assert (0 && "unexpected stop_info.reason found");
-            return 0;
-    }
-}
-

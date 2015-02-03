@@ -45,18 +45,21 @@ POSIXLimboStopInfo::ShouldNotify(Event *event_ptr)
 //===----------------------------------------------------------------------===//
 // POSIXCrashStopInfo
 
+POSIXCrashStopInfo::POSIXCrashStopInfo(POSIXThread &thread,
+                                       uint32_t status,
+                                       CrashReason reason,
+                                       lldb::addr_t fault_addr)
+    : POSIXStopInfo(thread, status)
+{
+    m_description = ::GetCrashReasonString(reason, fault_addr);
+}
+
 POSIXCrashStopInfo::~POSIXCrashStopInfo() { }
 
 lldb::StopReason
 POSIXCrashStopInfo::GetStopReason() const
 {
     return lldb::eStopReasonException;
-}
-
-const char *
-POSIXCrashStopInfo::GetDescription()
-{
-    return ProcessMessage::GetCrashReasonString(m_crash_reason, m_fault_addr);
 }
 
 //===----------------------------------------------------------------------===//

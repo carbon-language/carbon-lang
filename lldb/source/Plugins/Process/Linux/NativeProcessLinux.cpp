@@ -2255,7 +2255,7 @@ NativeProcessLinux::MonitorSIGTRAP(const siginfo_t *info, lldb::pid_t pid)
 
         if (thread_sp)
         {
-            reinterpret_cast<NativeThreadLinux*> (thread_sp.get ())->SetStoppedBySignal (SIGTRAP);
+            reinterpret_cast<NativeThreadLinux*> (thread_sp.get ())->SetStoppedByTrace ();
         }
 
         // This thread is currently stopped.
@@ -2281,7 +2281,7 @@ NativeProcessLinux::MonitorSIGTRAP(const siginfo_t *info, lldb::pid_t pid)
         // Mark the thread as stopped at breakpoint.
         if (thread_sp)
         {
-            reinterpret_cast<NativeThreadLinux*> (thread_sp.get ())->SetStoppedBySignal (SIGTRAP);
+            reinterpret_cast<NativeThreadLinux*> (thread_sp.get ())->SetStoppedByBreakpoint ();
             Error error = FixupBreakpointPCAsNeeded (thread_sp);
             if (error.Fail ())
             {
@@ -2538,8 +2538,7 @@ NativeProcessLinux::MonitorSignal(const siginfo_t *info, lldb::pid_t pid, bool e
     case SIGFPE:
     case SIGBUS:
         if (thread_sp)
-            reinterpret_cast<NativeThreadLinux*>(thread_sp.get())->SetCrashedWithException(
-                signo, reinterpret_cast<lldb::addr_t>(info->si_addr));
+            reinterpret_cast<NativeThreadLinux*> (thread_sp.get ())->SetCrashedWithException (*info);
         break;
     default:
         // This is just a pre-signal-delivery notification of the incoming signal.

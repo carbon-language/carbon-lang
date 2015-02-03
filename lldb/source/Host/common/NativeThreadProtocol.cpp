@@ -73,25 +73,3 @@ NativeThreadProtocol::GetProcess ()
 {
     return m_process_wp.lock ();
 }
-
-uint32_t
-NativeThreadProtocol::TranslateStopInfoToGdbSignal (const ThreadStopInfo &stop_info) const
-{
-    // Default: no translation.  Do the real translation where there
-    // is access to the host signal numbers.
-    switch (stop_info.reason)
-    {
-        case eStopReasonSignal:
-            return stop_info.details.signal.signo;
-            break;
-
-        case eStopReasonException:
-            // FIXME verify the way to specify pass-thru here.
-            return static_cast<uint32_t> (stop_info.details.exception.type);
-            break;
-
-        default:
-            assert (0 && "unexpected stop_info.reason found");
-            return 0;
-    }
-}

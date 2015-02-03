@@ -837,12 +837,12 @@ GDBRemoteCommunicationServer::SendStopReplyPacketForThread (lldb::tid_t tid)
 
     // Grab the reason this thread stopped.
     struct ThreadStopInfo tid_stop_info;
-    if (!thread_sp->GetStopReason (tid_stop_info))
+    std::string description;
+    if (!thread_sp->GetStopReason (tid_stop_info, description))
         return SendErrorResponse (52);
 
-    const bool did_exec = tid_stop_info.reason == eStopReasonExec;
     // FIXME implement register handling for exec'd inferiors.
-    // if (did_exec)
+    // if (tid_stop_info.reason == eStopReasonExec)
     // {
     //     const bool force = true;
     //     InitializeRegisters(force);
@@ -861,25 +861,6 @@ GDBRemoteCommunicationServer::SendStopReplyPacketForThread (lldb::tid_t tid)
                 signum,
                 tid_stop_info.reason,
                 tid_stop_info.details.exception.type);
-    }
-
-    switch (tid_stop_info.reason)
-    {
-    case eStopReasonSignal:
-    case eStopReasonException:
-        signum = thread_sp->TranslateStopInfoToGdbSignal (tid_stop_info);
-        break;
-    default:
-        signum = 0;
-        if (log)
-        {
-            log->Printf ("GDBRemoteCommunicationServer::%s pid %" PRIu64 " tid %" PRIu64 " has stop reason %d, using signo = 0 in stop reply response",
-                __FUNCTION__,
-                m_debugged_process_sp->GetID (),
-                tid,
-                tid_stop_info.reason);
-        }
-        break;
     }
 
     // Print the signal number.
@@ -907,14 +888,6 @@ GDBRemoteCommunicationServer::SendStopReplyPacketForThread (lldb::tid_t tid)
         }
         response.PutChar (';');
     }
-
-    // FIXME look for analog
-    // thread_identifier_info_data_t thread_ident_info;
-    // if (DNBThreadGetIdentifierInfo (pid, tid, &thread_ident_info))
-    // {
-    //     if (thread_ident_info.dispatch_qaddr != 0)
-    //         ostrm << std::hex << "qaddr:" << thread_ident_info.dispatch_qaddr << ';';
-    // }
 
     // If a 'QListThreadsInStopReply' was sent to enable this feature, we
     // will send all thread IDs back in the "threads" key whose value is
@@ -980,9 +953,39 @@ GDBRemoteCommunicationServer::SendStopReplyPacketForThread (lldb::tid_t tid)
         }
     }
 
-    if (did_exec)
+    const char* reason_str = nullptr;
+    switch (tid_stop_info.reason)
     {
-        response.PutCString ("reason:exec;");
+    case eStopReasonTrace:
+        reason_str = "trace";
+        break;
+    case eStopReasonBreakpoint:
+        reason_str = "breakpoint";
+        break;
+    case eStopReasonWatchpoint:
+        reason_str = "watchpoint";
+        break;
+    case eStopReasonSignal:
+        reason_str = "signal";
+        break;
+    case eStopReasonException:
+        reason_str = "exception";
+        break;
+    case eStopReasonExec:
+        reason_str = "exec";
+        break;
+    }
+    if (reason_str != nullptr)
+    {
+        response.Printf ("reason:%s;", reason_str);
+    }
+
+    if (!description.empty())
+    {
+        // Description may contains special chars, send as hex bytes.
+        response.PutCString ("description:");
+        response.PutCStringAsRawHex8 (description.c_str ());
+        response.PutChar (';');
     }
     else if ((tid_stop_info.reason == eStopReasonException) && tid_stop_info.details.exception.type)
     {

@@ -92,7 +92,7 @@ class CrashingInferiorTestCase(TestBase):
         if sys.platform.startswith("darwin"):
             stop_reason = 'stop reason = EXC_BAD_ACCESS'
         else:
-            stop_reason = 'stop reason = signal SIGSEGV'
+            stop_reason = 'stop reason = invalid address'
 
         # The stop reason of the thread should be a bad access exception.
         self.expect("thread list", STOPPED_DUE_TO_EXC_BAD_ACCESS,
@@ -102,9 +102,7 @@ class CrashingInferiorTestCase(TestBase):
         return stop_reason
 
     def get_api_stop_reason(self):
-        if sys.platform.startswith("darwin"):
-            return lldb.eStopReasonException
-        return lldb.eStopReasonSignal
+        return lldb.eStopReasonException
 
     def setUp(self):
         # Call super's setUp().

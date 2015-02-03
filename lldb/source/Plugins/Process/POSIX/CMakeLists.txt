@@ -5,6 +5,7 @@ include_directories(../Linux)
 include_directories(../Utility)
 
 add_lldb_library(lldbPluginProcessPOSIX
+  CrashReason.cpp
   POSIXStopInfo.cpp
   POSIXThread.cpp
   ProcessMessage.cpp
