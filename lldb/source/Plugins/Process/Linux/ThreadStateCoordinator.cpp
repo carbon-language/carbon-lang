@@ -35,6 +35,9 @@ public:
     {
     }
 
+    virtual std::string
+    GetDescription () = 0;
+
     // Return false if the coordinator should terminate running.
     virtual EventLoopResult
     ProcessEvent (ThreadStateCoordinator &coordinator) = 0;
@@ -54,6 +57,12 @@ public:
     ProcessEvent(ThreadStateCoordinator &coordinator) override
     {
         return eventLoopResultStop;
+    }
+
+    std::string
+    GetDescription () override
+    {
+        return "EventStopCoordinator";
     }
 };
 
@@ -190,6 +199,14 @@ public:
             m_request_thread_stop_function (tid);
     }
 
+    std::string
+    GetDescription () override
+    {
+        std::ostringstream description;
+        description << "EventCallAfterThreadsStop (triggering_tid=" << m_triggering_tid << ", request_stop_on_all_unstopped_threads=" << m_request_stop_on_all_unstopped_threads << ")";
+        return description.str ();
+    }
+
 private:
 
     void
@@ -291,6 +308,12 @@ public:
         coordinator.ResetNow ();
         return eventLoopResultContinue;
     }
+
+    std::string
+    GetDescription () override
+    {
+        return "EventReset";
+    }
 };
 
 //===----------------------------------------------------------------------===//
@@ -311,6 +334,14 @@ public:
     {
         coordinator.ThreadDidStop (m_tid, m_error_function);
         return eventLoopResultContinue;
+    }
+
+    std::string
+    GetDescription () override
+    {
+        std::ostringstream description;
+        description << "EventThreadStopped (tid=" << m_tid << ")";
+        return description.str ();
     }
 
 private:
@@ -341,6 +372,14 @@ public:
         return eventLoopResultContinue;
     }
 
+    std::string
+    GetDescription () override
+    {
+        std::ostringstream description;
+        description << "EventThreadCreate (tid=" << m_tid << ", " << (m_is_stopped ? "stopped" : "running") << ")";
+        return description.str ();
+    }
+
 private:
 
     const lldb::tid_t m_tid;
@@ -366,6 +405,14 @@ public:
     {
         coordinator.ThreadDidDie (m_tid, m_error_function);
         return eventLoopResultContinue;
+    }
+
+    std::string
+    GetDescription () override
+    {
+        std::ostringstream description;
+        description << "EventThreadDeath (tid=" << m_tid << ")";
+        return description.str ();
     }
 
 private:
@@ -450,6 +497,14 @@ public:
         return eventLoopResultContinue;
     }
 
+    std::string
+    GetDescription () override
+    {
+        std::ostringstream description;
+        description << "EventRequestResume (tid=" << m_tid << ")";
+        return description.str ();
+    }
+
 private:
 
     const lldb::tid_t m_tid;
@@ -464,7 +519,8 @@ ThreadStateCoordinator::ThreadStateCoordinator (const LogFunction &log_function)
     m_event_queue (),
     m_queue_condition (),
     m_queue_mutex (),
-    m_tid_stop_map ()
+    m_tid_stop_map (),
+    m_log_event_processing (false)
 {
 }
 
@@ -711,7 +767,39 @@ ThreadStateCoordinator::StopCoordinator ()
 ThreadStateCoordinator::EventLoopResult
 ThreadStateCoordinator::ProcessNextEvent ()
 {
-    return DequeueEventWithWait()->ProcessEvent (*this);
+    // Dequeue the next event, synchronous.
+    if (m_log_event_processing)
+        Log ("ThreadStateCoordinator::%s about to dequeue next event in blocking mode", __FUNCTION__);
+
+    EventBaseSP event_sp = DequeueEventWithWait();
+    assert (event_sp && "event should never be null");
+    if (!event_sp)
+    {
+        Log ("ThreadStateCoordinator::%s error: event_sp was null, signaling exit of event loop.", __FUNCTION__);
+        return eventLoopResultStop;
+    }
+
+    if (m_log_event_processing)
+    {
+        Log ("ThreadStateCoordinator::%s about to process event: %s", __FUNCTION__, event_sp->GetDescription ().c_str ());
+    }
+
+    // Process the event.
+    const EventLoopResult result = event_sp->ProcessEvent (*this);
+
+    if (m_log_event_processing)
+    {
+        Log ("ThreadStateCoordinator::%s event processing returned value %s", __FUNCTION__,
+             result == eventLoopResultContinue ? "eventLoopResultContinue" : "eventLoopResultStop");
+    }
+
+    return result;
+}
+
+void
+ThreadStateCoordinator::LogEnableEventProcessing (bool enabled)
+{
+    m_log_event_processing = enabled;
 }
 
 ThreadStateCoordinator::EventCallAfterThreadsStop *

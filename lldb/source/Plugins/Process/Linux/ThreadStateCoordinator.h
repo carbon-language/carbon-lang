@@ -115,6 +115,10 @@ namespace lldb_private
         EventLoopResult
         ProcessNextEvent ();
 
+        // Enable/disable verbose logging of event processing.
+        void
+        LogEnableEventProcessing (bool enabled);
+
     private:
 
         // Typedefs.
@@ -179,6 +183,8 @@ namespace lldb_private
 
         // Maps known TIDs to stop (true) or not-stopped (false) state.
         TIDBoolMap m_tid_stop_map;
+
+        bool m_log_event_processing;
     };
 }
 
