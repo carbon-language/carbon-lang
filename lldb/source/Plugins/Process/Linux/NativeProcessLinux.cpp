@@ -2840,6 +2840,79 @@ NativeProcessLinux::Signal (int signo)
 }
 
 Error
+NativeProcessLinux::Interrupt ()
+{
+    // Pick a running thread (or if none, a not-dead stopped thread) as
+    // the chosen thread that will be the stop-reason thread.
+    Error error;
+    Log *log (GetLogIfAllCategoriesSet (LIBLLDB_LOG_PROCESS));
+
+    NativeThreadProtocolSP running_thread_sp;
+    NativeThreadProtocolSP stopped_thread_sp;
+    {
+        Mutex::Locker locker (m_threads_mutex);
+
+        if (log)
+            log->Printf ("NativeProcessLinux::%s selecting running thread for interrupt target", __FUNCTION__);
+
+        for (auto thread_sp : m_threads)
+        {
+            // The thread shouldn't be null but lets just cover that here.
+            if (!thread_sp)
+                continue;
+
+            // If we have a running or stepping thread, we'll call that the
+            // target of the interrupt.
+            const auto thread_state = thread_sp->GetState ();
+            if (thread_state == eStateRunning ||
+                thread_state == eStateStepping)
+            {
+                running_thread_sp = thread_sp;
+                break;
+            }
+            else if (!stopped_thread_sp && StateIsStoppedState (thread_state, true))
+            {
+                // Remember the first non-dead stopped thread.  We'll use that as a backup if there are no running threads.
+                stopped_thread_sp = thread_sp;
+            }
+        }
+    }
+
+    if (!running_thread_sp && !stopped_thread_sp)
+    {
+        error.SetErrorString ("found no running/stepping or live stopped threads as target for interrupt");
+        if (log)
+        {
+            log->Printf ("NativeProcessLinux::%s skipping due to error: %s", __FUNCTION__, error.AsCString ());
+        }
+        return error;
+    }
+
+    NativeThreadProtocolSP deferred_signal_thread_sp = running_thread_sp ? running_thread_sp : stopped_thread_sp;
+
+    if (log)
+        log->Printf ("NativeProcessLinux::%s pid %" PRIu64 " %s tid %" PRIu64 " chosen for interrupt target",
+                     __FUNCTION__,
+                     GetID (),
+                     running_thread_sp ? "running" : "stopped",
+                     deferred_signal_thread_sp->GetID ());
+
+    CallAfterRunningThreadsStop (deferred_signal_thread_sp->GetID (),
+                                 [=](lldb::tid_t deferred_notification_tid)
+                                 {
+                                     // Set the signal thread to the current thread.
+                                     SetCurrentThreadID (deferred_notification_tid);
+
+                                     // Set the thread state as stopped by the deferred signo.
+                                     reinterpret_cast<NativeThreadLinux*> (deferred_signal_thread_sp.get ())->SetStoppedBySignal (SIGSTOP);
+
+                                                // Tell the process delegate that the process is in a stopped state.
+                                                SetState (StateType::eStateStopped, true);
+                                            });
+    return error;
+}
+
+Error
 NativeProcessLinux::Kill ()
 {
     Log *log (GetLogIfAllCategoriesSet (LIBLLDB_LOG_PROCESS));

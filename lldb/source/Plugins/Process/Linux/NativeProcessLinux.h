@@ -83,6 +83,9 @@ namespace lldb_private
         Signal (int signo) override;
 
         Error
+        Interrupt () override;
+
+        Error
         Kill () override;
 
         Error
