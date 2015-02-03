@@ -15,6 +15,7 @@
 #ifndef LLD_READER_WRITER_LINKER_SCRIPT_H
 #define LLD_READER_WRITER_LINKER_SCRIPT_H
 
+#include "lld/Core/Error.h"
 #include "lld/Core/LLVM.h"
 #include "lld/Core/range.h"
 #include "llvm/ADT/StringSwitch.h"
@@ -739,9 +740,18 @@ public:
 /// https://sourceware.org/binutils/docs/ld/Scripts.html
 class Parser {
 public:
-  explicit Parser(Lexer &lex) : _lex(lex), _peekAvailable(false) {}
+  explicit Parser(std::unique_ptr<MemoryBuffer> mb)
+      : _lex(std::move(mb)), _peekAvailable(false) {}
 
-  LinkerScript *parse();
+  /// Let's not allow copying of Parser class because it would be expensive
+  /// to update all the AST pointers to a new buffer.
+  Parser(const Parser &instance) LLVM_DELETED_FUNCTION;
+
+  /// Lex and parse the current memory buffer to create a linker script AST.
+  std::error_code parse();
+
+  /// Returns a reference to the top level node of the linker script AST.
+  LinkerScript *get() { return &_script; }
 
 private:
   /// Advances to the next token, either asking the Lexer to lex the next token
@@ -981,7 +991,7 @@ private:
   // The top-level/entry-point linker script AST node
   LinkerScript _script;
 
-  Lexer &_lex;
+  Lexer _lex;
 
   // Current token being analyzed
   Token _tok;

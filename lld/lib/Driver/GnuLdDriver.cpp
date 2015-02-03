@@ -274,9 +274,10 @@ GnuLdDriver::evalLinkerScript(ELFLinkingContext &ctx,
                               raw_ostream &diag) {
   // Read the script file from disk and parse.
   StringRef path = mb->getBufferIdentifier();
-  auto lexer = llvm::make_unique<script::Lexer>(std::move(mb));
-  auto parser = llvm::make_unique<script::Parser>(*lexer);
-  script::LinkerScript *script = parser->parse();
+  auto parser = llvm::make_unique<script::Parser>(std::move(mb));
+  if (std::error_code ec = parser->parse())
+    return ec;
+  script::LinkerScript *script = parser->get();
   if (!script)
     return LinkerScriptReaderError::parse_error;
   // Evaluate script commands.
@@ -292,6 +293,8 @@ GnuLdDriver::evalLinkerScript(ELFLinkingContext &ctx,
     if (auto *output = dyn_cast<script::Output>(c))
       ctx.setOutputPath(output->getOutputFileName());
   }
+  // Transfer ownership of the script to the linking context
+  ctx.addLinkerScript(std::move(parser));
   return std::error_code();
 }
 

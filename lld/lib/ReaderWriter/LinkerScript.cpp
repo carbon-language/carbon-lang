@@ -892,67 +892,67 @@ void Sections::dump(raw_ostream &os) const {
 }
 
 // Parser functions
-LinkerScript *Parser::parse() {
+std::error_code Parser::parse() {
   // Get the first token.
   _lex.lex(_tok);
   // Parse top level commands.
   while (true) {
     switch (_tok._kind) {
     case Token::eof:
-      return &_script;
+      return std::error_code();
     case Token::semicolon:
       consumeToken();
       break;
     case Token::kw_output: {
       auto output = parseOutput();
       if (!output)
-        return nullptr;
+        return LinkerScriptReaderError::parse_error;
       _script._commands.push_back(output);
       break;
     }
     case Token::kw_output_format: {
       auto outputFormat = parseOutputFormat();
       if (!outputFormat)
-        return nullptr;
+        return LinkerScriptReaderError::parse_error;
       _script._commands.push_back(outputFormat);
       break;
     }
     case Token::kw_output_arch: {
       auto outputArch = parseOutputArch();
       if (!outputArch)
-        return nullptr;
+        return LinkerScriptReaderError::parse_error;
       _script._commands.push_back(outputArch);
       break;
     }
     case Token::kw_group: {
       auto group = parseGroup();
       if (!group)
-        return nullptr;
+        return LinkerScriptReaderError::parse_error;
       _script._commands.push_back(group);
       break;
     }
     case Token::kw_as_needed:
       // Not allowed at top level.
       error(_tok, "AS_NEEDED not allowed at top level.");
-      return nullptr;
+      return LinkerScriptReaderError::parse_error;
     case Token::kw_entry: {
       Entry *entry = parseEntry();
       if (!entry)
-        return nullptr;
+        return LinkerScriptReaderError::parse_error;
       _script._commands.push_back(entry);
       break;
     }
     case Token::kw_search_dir: {
       SearchDir *searchDir = parseSearchDir();
       if (!searchDir)
-        return nullptr;
+        return LinkerScriptReaderError::parse_error;
       _script._commands.push_back(searchDir);
       break;
     }
     case Token::kw_sections: {
       Sections *sections = parseSections();
       if (!sections)
-        return nullptr;
+        return LinkerScriptReaderError::parse_error;
       _script._commands.push_back(sections);
       break;
     }
@@ -962,18 +962,17 @@ LinkerScript *Parser::parse() {
     case Token::kw_provide_hidden: {
       const Command *cmd = parseSymbolAssignment();
       if (!cmd)
-        return nullptr;
+        return LinkerScriptReaderError::parse_error;
       _script._commands.push_back(cmd);
       break;
     }
     default:
       // Unexpected.
       error(_tok, "expected linker script command");
-      return nullptr;
+      return LinkerScriptReaderError::parse_error;
     }
   }
-
-  return nullptr;
+  return LinkerScriptReaderError::parse_error;
 }
 
 const Expression *Parser::parseFunctionCall() {

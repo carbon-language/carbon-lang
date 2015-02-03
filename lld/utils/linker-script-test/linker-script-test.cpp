@@ -48,10 +48,10 @@ int main(int argc, const char **argv) {
       llvm::errs() << ec.message() << "\n";
       return 1;
     }
-    Lexer l(std::move(mb.get()));
-    Parser p(l);
-    LinkerScript *ls = p.parse();
-    if (ls)
+    Parser p(std::move(mb.get()));
+    if (!p.parse()) {
+      LinkerScript *ls = p.get();
       ls->dump(llvm::outs());
+    }
   }
 }

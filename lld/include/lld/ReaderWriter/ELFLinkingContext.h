@@ -17,6 +17,7 @@
 #include "lld/Core/range.h"
 #include "lld/Core/Reader.h"
 #include "lld/Core/Writer.h"
+#include "lld/ReaderWriter/LinkerScript.h"
 #include "llvm/ADT/StringSet.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/Object/ELF.h"
@@ -296,6 +297,12 @@ public:
     addSearchPath("=/usr/lib");
   }
 
+  // We can parse several linker scripts via command line whose ASTs are stored
+  // in the current linking context via addLinkerScript().
+  void addLinkerScript(std::unique_ptr<script::Parser> script) {
+    _scripts.push_back(std::move(script));
+  }
+
 private:
   ELFLinkingContext() LLVM_DELETED_FUNCTION;
 
@@ -335,6 +342,7 @@ protected:
   StringRefVector _rpathLinkList;
   std::map<std::string, uint64_t> _absoluteSymbols;
   llvm::StringSet<> _dynamicallyExportedSymbols;
+  std::vector<std::unique_ptr<script::Parser>> _scripts;
 };
 } // end namespace lld
 
