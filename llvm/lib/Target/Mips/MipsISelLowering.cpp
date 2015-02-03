@@ -1598,10 +1598,10 @@ SDValue MipsTargetLowering::lowerGlobalAddress(SDValue Op,
   const GlobalValue *GV = N->getGlobal();
 
   if (getTargetMachine().getRelocationModel() != Reloc::PIC_ && !ABI.IsN64()) {
-    const MipsTargetObjectFile &TLOF =
-        (const MipsTargetObjectFile &)getObjFileLowering();
-
-    if (TLOF.IsGlobalInSmallSection(GV, getTargetMachine()))
+    const MipsTargetObjectFile *TLOF =
+        static_cast<const MipsTargetObjectFile *>(
+            getTargetMachine().getObjFileLowering());
+    if (TLOF->IsGlobalInSmallSection(GV, getTargetMachine()))
       // %gp_rel relocation
       return getAddrGPRel(N, SDLoc(N), Ty, DAG);
 
@@ -1732,10 +1732,11 @@ lowerConstantPool(SDValue Op, SelectionDAG &DAG) const
   EVT Ty = Op.getValueType();
 
   if (getTargetMachine().getRelocationModel() != Reloc::PIC_ && !ABI.IsN64()) {
-    const MipsTargetObjectFile &TLOF =
-        (const MipsTargetObjectFile &)getObjFileLowering();
+    const MipsTargetObjectFile *TLOF =
+        static_cast<const MipsTargetObjectFile *>(
+            getTargetMachine().getObjFileLowering());
 
-    if (TLOF.IsConstantInSmallSection(N->getConstVal(), getTargetMachine()))
+    if (TLOF->IsConstantInSmallSection(N->getConstVal(), getTargetMachine()))
       // %gp_rel relocation
       return getAddrGPRel(N, SDLoc(N), Ty, DAG);
 

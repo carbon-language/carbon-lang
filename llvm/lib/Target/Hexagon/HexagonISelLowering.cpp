@@ -1018,9 +1018,10 @@ SDValue HexagonTargetLowering::LowerGLOBALADDRESS(SDValue Op,
   SDLoc dl(Op);
   Result = DAG.getTargetGlobalAddress(GV, dl, getPointerTy(), Offset);
 
-  const HexagonTargetObjectFile &TLOF =
-      static_cast<const HexagonTargetObjectFile &>(getObjFileLowering());
-  if (TLOF.IsGlobalInSmallSection(GV, getTargetMachine())) {
+  const HexagonTargetObjectFile *TLOF =
+      static_cast<const HexagonTargetObjectFile *>(
+          getTargetMachine().getObjFileLowering());
+  if (TLOF->IsGlobalInSmallSection(GV, getTargetMachine())) {
     return DAG.getNode(HexagonISD::CONST32_GP, dl, getPointerTy(), Result);
   }
 

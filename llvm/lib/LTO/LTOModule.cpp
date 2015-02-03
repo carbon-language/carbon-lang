@@ -649,10 +649,8 @@ void LTOModule::parseMetadata() {
         // here.
         StringRef Op =
             _linkeropt_strings.insert(MDOption->getString()).first->first();
-        StringRef DepLibName = _target->getSubtargetImpl()
-                                   ->getTargetLowering()
-                                   ->getObjFileLowering()
-                                   .getDepLibFromLinkerOpt(Op);
+        StringRef DepLibName =
+            _target->getObjFileLowering()->getDepLibFromLinkerOpt(Op);
         if (!DepLibName.empty())
           _deplibs.push_back(DepLibName.data());
         else if (!Op.empty())

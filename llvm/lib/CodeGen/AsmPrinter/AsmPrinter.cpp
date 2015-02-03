@@ -129,7 +129,7 @@ unsigned AsmPrinter::getFunctionNumber() const {
 }
 
 const TargetLoweringObjectFile &AsmPrinter::getObjFileLowering() const {
-  return TM.getSubtargetImpl()->getTargetLowering()->getObjFileLowering();
+  return *TM.getObjFileLowering();
 }
 
 /// getDataLayout - Return information about data layout.

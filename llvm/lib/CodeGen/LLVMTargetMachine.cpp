@@ -116,7 +116,7 @@ static MCContext *addPassesToGenerateCode(LLVMTargetMachine *TM,
   // all the per-module stuff we're generating, including MCContext.
   MachineModuleInfo *MMI = new MachineModuleInfo(
       *TM->getMCAsmInfo(), *TM->getSubtargetImpl()->getRegisterInfo(),
-      &TM->getSubtargetImpl()->getTargetLowering()->getObjFileLowering());
+      TM->getObjFileLowering());
   PM.add(MMI);
 
   // Set up a MachineFunction for the rest of CodeGen to work on.
