@@ -1458,8 +1458,8 @@ private:
 
 /// \brief Template specializations to easily write matchers for floating point
 /// literals.
-inline template <>
-bool ValueEqualsMatcher<FloatingLiteral, double>::matchesNode(
+template <>
+inline bool ValueEqualsMatcher<FloatingLiteral, double>::matchesNode(
     const FloatingLiteral &Node) const {
   if ((&Node.getSemantics()) == &llvm::APFloat::IEEEsingle)
     return Node.getValue().convertToFloat() == ExpectedValue;
@@ -1467,8 +1467,8 @@ bool ValueEqualsMatcher<FloatingLiteral, double>::matchesNode(
     return Node.getValue().convertToDouble() == ExpectedValue;
   return false;
 }
-inline template <>
-bool ValueEqualsMatcher<FloatingLiteral, float>::matchesNode(
+template <>
+inline bool ValueEqualsMatcher<FloatingLiteral, float>::matchesNode(
     const FloatingLiteral &Node) const {
   if ((&Node.getSemantics()) == &llvm::APFloat::IEEEsingle)
     return Node.getValue().convertToFloat() == ExpectedValue;
@@ -1476,8 +1476,8 @@ bool ValueEqualsMatcher<FloatingLiteral, float>::matchesNode(
     return Node.getValue().convertToDouble() == ExpectedValue;
   return false;
 }
-inline template <>
-bool ValueEqualsMatcher<FloatingLiteral, llvm::APFloat>::matchesNode(
+template <>
+inline bool ValueEqualsMatcher<FloatingLiteral, llvm::APFloat>::matchesNode(
     const FloatingLiteral &Node) const {
   return ExpectedValue.compare(Node.getValue()) == llvm::APFloat::cmpEqual;
 }
