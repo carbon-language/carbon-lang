@@ -330,3 +330,5 @@ bool lto_codegen_compile_to_file(lto_code_gen_t cg, const char **name) {
 void lto_codegen_debug_options(lto_code_gen_t cg, const char *opt) {
   unwrap(cg)->setCodeGenDebugOptions(opt);
 }
+
+unsigned int lto_api_version() { return LTO_API_VERSION; }
