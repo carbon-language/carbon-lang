@@ -240,18 +240,17 @@ static bool isPathUnderSysroot(StringRef sysroot, StringRef path) {
 }
 
 static std::error_code
-evaluateLinkerScriptGroup(ELFLinkingContext &ctx, StringRef path,
-                          const script::Group *group, raw_ostream &diag) {
+addFilesFromLinkerScript(ELFLinkingContext &ctx, StringRef scriptPath,
+                         const std::vector<script::Path> &inputPaths,
+                         raw_ostream &diag) {
   bool sysroot = (!ctx.getSysroot().empty()
-                  && isPathUnderSysroot(ctx.getSysroot(), path));
-  int numfiles = 0;
-  for (const script::Path &path : group->getPaths()) {
+                  && isPathUnderSysroot(ctx.getSysroot(), scriptPath));
+  for (const script::Path &path : inputPaths) {
     ErrorOr<StringRef> pathOrErr = path._isDashlPrefix
       ? ctx.searchLibrary(path._path) : ctx.searchFile(path._path, sysroot);
     if (std::error_code ec = pathOrErr.getError()) {
       auto file = llvm::make_unique<ErrorFile>(path._path, ec);
       ctx.getNodes().push_back(llvm::make_unique<FileNode>(std::move(file)));
-      ++numfiles;
       continue;
     }
 
@@ -261,10 +260,8 @@ evaluateLinkerScriptGroup(ELFLinkingContext &ctx, StringRef path,
       if (ctx.logInputFiles())
         diag << file->path() << "\n";
       ctx.getNodes().push_back(llvm::make_unique<FileNode>(std::move(file)));
-      ++numfiles;
     }
   }
-  ctx.getNodes().push_back(llvm::make_unique<GroupEnd>(numfiles));
   return std::error_code();
 }
 
@@ -283,9 +280,18 @@ GnuLdDriver::evalLinkerScript(ELFLinkingContext &ctx,
   // Evaluate script commands.
   // Currently we only recognize this subset of linker script commands.
   for (const script::Command *c : script->_commands) {
-    if (auto *group = dyn_cast<script::Group>(c))
-      if (std::error_code ec = evaluateLinkerScriptGroup(ctx, path, group, diag))
+    if (auto *input = dyn_cast<script::Input>(c))
+      if (std::error_code ec = addFilesFromLinkerScript(
+            ctx, path, input->getPaths(), diag))
         return ec;
+    if (auto *group = dyn_cast<script::Group>(c)) {
+      int origSize = ctx.getNodes().size();
+      if (std::error_code ec = addFilesFromLinkerScript(
+            ctx, path, group->getPaths(), diag))
+        return ec;
+      size_t groupSize = ctx.getNodes().size() - origSize;
+      ctx.getNodes().push_back(llvm::make_unique<GroupEnd>(groupSize));
+    }
     if (auto *searchDir = dyn_cast<script::SearchDir>(c))
       ctx.addSearchPath(searchDir->getSearchPath());
     if (auto *entry = dyn_cast<script::Entry>(c))

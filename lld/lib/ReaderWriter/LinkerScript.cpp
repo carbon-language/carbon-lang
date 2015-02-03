@@ -64,6 +64,7 @@ void Token::dump(raw_ostream &os) const {
     CASE(kw_exclude_file)
     CASE(kw_group)
     CASE(kw_hidden)
+    CASE(kw_input)
     CASE(kw_keep)
     CASE(kw_provide)
     CASE(kw_provide_hidden)
@@ -513,6 +514,7 @@ void Lexer::lex(Token &tok) {
             .Case("EXCLUDE_FILE", Token::kw_exclude_file)
             .Case("GROUP", Token::kw_group)
             .Case("HIDDEN", Token::kw_hidden)
+            .Case("INPUT", Token::kw_input)
             .Case("KEEP", Token::kw_keep)
             .Case("ONLY_IF_RO", Token::kw_only_if_ro)
             .Case("ONLY_IF_RW", Token::kw_only_if_rw)
@@ -924,8 +926,15 @@ std::error_code Parser::parse() {
       _script._commands.push_back(outputArch);
       break;
     }
+    case Token::kw_input: {
+      Input *input = parsePathList<Input>();
+      if (!input)
+        return LinkerScriptReaderError::parse_error;
+      _script._commands.push_back(input);
+      break;
+    }
     case Token::kw_group: {
-      auto group = parseGroup();
+      Group *group = parsePathList<Group>();
       if (!group)
         return LinkerScriptReaderError::parse_error;
       _script._commands.push_back(group);
@@ -1295,15 +1304,13 @@ OutputArch *Parser::parseOutputArch() {
   return ret;
 }
 
-// Parse GROUP(file ...)
-Group *Parser::parseGroup() {
-  assert(_tok._kind == Token::kw_group && "Expected GROUP!");
+// Parse file list for INPUT or GROUP
+template<class T> T *Parser::parsePathList() {
   consumeToken();
   if (!expectAndConsume(Token::l_paren, "expected ("))
     return nullptr;
 
   std::vector<Path> paths;
-
   while (_tok._kind == Token::identifier || _tok._kind == Token::libname ||
          _tok._kind == Token::kw_as_needed) {
     switch (_tok._kind) {
@@ -1323,13 +1330,9 @@ Group *Parser::parseGroup() {
       llvm_unreachable("Invalid token.");
     }
   }
-
-  auto ret = new (_alloc) Group(paths);
-
   if (!expectAndConsume(Token::r_paren, "expected )"))
     return nullptr;
-
-  return ret;
+  return new (_alloc) T(paths);
 }
 
 // Parse AS_NEEDED(file ...)

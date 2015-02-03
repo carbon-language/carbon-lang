@@ -181,6 +181,14 @@ TEST_F(GnuLdParserTest, AsNeeded) {
 
 // Linker script
 
+TEST_F(LinkerScriptTest, Input) {
+  parse("INPUT(/x /y)");
+  std::vector<std::unique_ptr<Node>> &nodes = _ctx->getNodes();
+  EXPECT_EQ((size_t)2, nodes.size());
+  EXPECT_EQ("/x", cast<FileNode>(nodes[0].get())->getFile()->path());
+  EXPECT_EQ("/y", cast<FileNode>(nodes[1].get())->getFile()->path());
+}
+
 TEST_F(LinkerScriptTest, Group) {
   parse("GROUP(/x /y)");
   std::vector<std::unique_ptr<Node>> &nodes = _ctx->getNodes();

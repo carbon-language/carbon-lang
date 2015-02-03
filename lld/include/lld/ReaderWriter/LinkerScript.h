@@ -74,6 +74,7 @@ public:
     kw_exclude_file,
     kw_group,
     kw_hidden,
+    kw_input,
     kw_keep,
     kw_provide,
     kw_provide_hidden,
@@ -150,6 +151,7 @@ public:
   enum class Kind {
     Entry,
     Group,
+    Input,
     InputSectionsCmd,
     Output,
     OutputArch,
@@ -250,16 +252,18 @@ struct Path {
       : _path(path), _asNeeded(asNeeded), _isDashlPrefix(isLib) {}
 };
 
-class Group : public Command {
+template<Command::Kind K>
+class PathList : public Command {
 public:
-  template <class RangeT> explicit Group(RangeT range) : Command(Kind::Group) {
+  template <class RangeT> PathList(StringRef name, RangeT range)
+      : Command(K), _name(name) {
     std::copy(std::begin(range), std::end(range), std::back_inserter(_paths));
   }
 
-  static bool classof(const Command *c) { return c->getKind() == Kind::Group; }
+  static bool classof(const Command *c) { return c->getKind() == K; }
 
   void dump(raw_ostream &os) const override {
-    os << "GROUP(";
+    os << _name << "(";
     bool first = true;
     for (const Path &path : getPaths()) {
       if (!first)
@@ -279,7 +283,20 @@ public:
   const std::vector<Path> &getPaths() const { return _paths; }
 
 private:
+  StringRef _name;
   std::vector<Path> _paths;
+};
+
+class Group : public PathList<Command::Kind::Group> {
+public:
+  template <class RangeT> Group(RangeT range)
+      : PathList("GROUP", std::move(range)) {}
+};
+
+class Input : public PathList<Command::Kind::Input> {
+public:
+  template <class RangeT> Input(RangeT range)
+      : PathList("INPUT", std::move(range)) {}
 };
 
 class Entry : public Command {
@@ -886,7 +903,7 @@ private:
   ///
   OutputArch *parseOutputArch();
 
-  /// Parse the GROUP linker script command.
+  /// Parse the INPUT or GROUP linker script command.
   /// Example:
   ///
   /// GROUP ( /lib/x86_64-linux-gnu/libc.so.6
@@ -894,7 +911,7 @@ private:
   ///         AS_NEEDED ( /lib/x86_64-linux-gnu/ld-linux-x86-64.so.2 )
   ///         -lm -l:libgcc.a )
   ///
-  Group *parseGroup();
+  template<class T> T *parsePathList();
   bool parseAsNeeded(std::vector<Path> &paths);
 
   /// Parse the ENTRY linker script command.
