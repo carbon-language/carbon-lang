@@ -311,22 +311,21 @@ bool GnuLdDriver::applyEmulation(llvm::Triple &triple,
   return true;
 }
 
-#define LLVM_TARGET(targetName) \
-  if ((p = elf::targetName##LinkingContext::create(triple))) return p;
-
 std::unique_ptr<ELFLinkingContext>
-createELFLinkingContext(llvm::Triple triple) {
+GnuLdDriver::createELFLinkingContext(llvm::Triple triple) {
   std::unique_ptr<ELFLinkingContext> p;
   // FIXME: #include "llvm/Config/Targets.def"
+#define LLVM_TARGET(targetName) \
+  if ((p = elf::targetName##LinkingContext::create(triple))) return p;
   LLVM_TARGET(AArch64)
   LLVM_TARGET(ARM)
   LLVM_TARGET(Hexagon)
   LLVM_TARGET(Mips)
   LLVM_TARGET(X86)
   LLVM_TARGET(X86_64)
+#undef LLVM_TARGET
   return nullptr;
 }
-#undef LLVM_TARGET
 
 bool GnuLdDriver::parse(int argc, const char *argv[],
                         std::unique_ptr<ELFLinkingContext> &context,

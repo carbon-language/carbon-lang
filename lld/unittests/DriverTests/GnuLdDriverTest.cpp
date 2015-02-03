@@ -20,12 +20,31 @@ using namespace llvm;
 using namespace lld;
 
 namespace {
+
 class GnuLdParserTest
     : public ParserTest<GnuLdDriver, std::unique_ptr<ELFLinkingContext>> {
 protected:
   const LinkingContext *linkingContext() override { return _context.get(); }
 };
-}
+
+class LinkerScriptTest : public testing::Test {
+protected:
+  void parse(StringRef script) {
+    llvm::Triple triple(llvm::sys::getDefaultTargetTriple());
+    _ctx = std::move(GnuLdDriver::createELFLinkingContext(triple));
+    std::unique_ptr<MemoryBuffer> mb = MemoryBuffer::getMemBuffer(
+      script, "foo.so");
+    std::string s;
+    raw_string_ostream out(s);
+    std::error_code ec = GnuLdDriver::evalLinkerScript(
+      *_ctx, std::move(mb), out);
+    EXPECT_FALSE(ec);
+  };
+
+  std::unique_ptr<ELFLinkingContext> _ctx;
+};
+
+} // anonymous namespace
 
 TEST_F(GnuLdParserTest, Empty) {
   EXPECT_FALSE(parse("ld", nullptr));
@@ -162,58 +181,28 @@ TEST_F(GnuLdParserTest, AsNeeded) {
 
 // Linker script
 
-TEST_F(GnuLdParserTest, LinkerScriptGroup) {
-  parse("ld", "a.o", nullptr);
-  std::unique_ptr<MemoryBuffer> mb = MemoryBuffer::getMemBuffer(
-    "GROUP(/x /y)", "foo.so");
-  std::string s;
-  raw_string_ostream out(s);
-  std::error_code ec = GnuLdDriver::evalLinkerScript(
-    *_context, std::move(mb), out);
-  EXPECT_FALSE(ec);
-  std::vector<std::unique_ptr<Node>> &nodes = _context->getNodes();
-  EXPECT_EQ((size_t)4, nodes.size());
-  EXPECT_EQ("/x", cast<FileNode>(nodes[1].get())->getFile()->path());
-  EXPECT_EQ("/y", cast<FileNode>(nodes[2].get())->getFile()->path());
-  EXPECT_EQ(2, cast<GroupEnd>(nodes[3].get())->getSize());
+TEST_F(LinkerScriptTest, Group) {
+  parse("GROUP(/x /y)");
+  std::vector<std::unique_ptr<Node>> &nodes = _ctx->getNodes();
+  EXPECT_EQ((size_t)3, nodes.size());
+  EXPECT_EQ("/x", cast<FileNode>(nodes[0].get())->getFile()->path());
+  EXPECT_EQ("/y", cast<FileNode>(nodes[1].get())->getFile()->path());
+  EXPECT_EQ(2, cast<GroupEnd>(nodes[2].get())->getSize());
 }
 
-TEST_F(GnuLdParserTest, LinkerScriptSearchDir) {
-  parse("ld", "a.o", nullptr);
-  std::unique_ptr<MemoryBuffer> mb = MemoryBuffer::getMemBuffer(
-    "SEARCH_DIR(\"/foo/bar\")", "foo.so");
-  std::string s;
-  raw_string_ostream out(s);
-  std::error_code ec = GnuLdDriver::evalLinkerScript(
-    *_context, std::move(mb), out);
-  EXPECT_FALSE(ec);
-  std::vector<StringRef> searchPaths = _context->getSearchPaths();
-  EXPECT_EQ((size_t)2, searchPaths.size());
-  EXPECT_EQ("/foo/bar", searchPaths[1]);
+TEST_F(LinkerScriptTest, SearchDir) {
+  parse("SEARCH_DIR(\"/foo/bar\")");
+  std::vector<StringRef> paths = _ctx->getSearchPaths();
+  EXPECT_EQ((size_t)1, paths.size());
+  EXPECT_EQ("/foo/bar", paths[0]);
 }
 
-TEST_F(GnuLdParserTest, LinkerScriptEntry) {
-  parse("ld", "a.o", nullptr);
-  std::unique_ptr<MemoryBuffer> mb = MemoryBuffer::getMemBuffer(
-    "ENTRY(blah)", "foo.so");
-  std::string s;
-  raw_string_ostream out(s);
-  std::error_code ec = GnuLdDriver::evalLinkerScript(
-    *_context, std::move(mb), out);
-  EXPECT_FALSE(ec);
-  StringRef entrySymbol = _context->entrySymbolName();
-  EXPECT_EQ("blah", entrySymbol);
+TEST_F(LinkerScriptTest, Entry) {
+  parse("ENTRY(blah)");
+  EXPECT_EQ("blah", _ctx->entrySymbolName());
 }
 
-TEST_F(GnuLdParserTest, LinkerScriptOutput) {
-  parse("ld", "a.o", nullptr);
-  std::unique_ptr<MemoryBuffer> mb = MemoryBuffer::getMemBuffer(
-    "OUTPUT(\"/path/to/output\")", "foo.so");
-  std::string s;
-  raw_string_ostream out(s);
-  std::error_code ec = GnuLdDriver::evalLinkerScript(
-    *_context, std::move(mb), out);
-  EXPECT_FALSE(ec);
-  StringRef output = _context->outputPath();
-  EXPECT_EQ("/path/to/output", output);
+TEST_F(LinkerScriptTest, Output) {
+  parse("OUTPUT(\"/path/to/output\")");
+  EXPECT_EQ("/path/to/output", _ctx->outputPath());
 }
