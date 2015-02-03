@@ -6011,9 +6011,9 @@ LowerAsSplatVectorLoad(SDValue SrcOp, MVT VT, SDLoc dl, SelectionDAG &DAG) {
   return SDValue();
 }
 
-/// EltsFromConsecutiveLoads - Given the initializing elements 'Elts' of a
-/// vector of type 'VT', see if the elements can be replaced by a single large
-/// load which has the same value as a build_vector whose operands are 'elts'.
+/// Given the initializing elements 'Elts' of a vector of type 'VT', see if the
+/// elements can be replaced by a single large load which has the same value as
+/// a build_vector or insert_subvector whose loaded operands are 'Elts'.
 ///
 /// Example: <load i32 *a, load i32 *a+4, undef, undef> -> zextload a
 ///
@@ -6023,7 +6023,6 @@ LowerAsSplatVectorLoad(SDValue SrcOp, MVT VT, SDLoc dl, SelectionDAG &DAG) {
 static SDValue EltsFromConsecutiveLoads(EVT VT, ArrayRef<SDValue> Elts,
                                         SDLoc &DL, SelectionDAG &DAG,
                                         bool isAfterLegalize) {
-  EVT EltVT = VT.getVectorElementType();
   unsigned NumElems = Elts.size();
 
   LoadSDNode *LDBase = nullptr;
@@ -6034,7 +6033,9 @@ static SDValue EltsFromConsecutiveLoads(EVT VT, ArrayRef<SDValue> Elts,
   // non-consecutive, bail out.
   for (unsigned i = 0; i < NumElems; ++i) {
     SDValue Elt = Elts[i];
-
+    // Look through a bitcast.
+    if (Elt.getNode() && Elt.getOpcode() == ISD::BITCAST)
+      Elt = Elt.getOperand(0);
     if (!Elt.getNode() ||
         (Elt.getOpcode() != ISD::UNDEF && !ISD::isNON_EXTLoad(Elt.getNode())))
       return SDValue();
@@ -6049,7 +6050,12 @@ static SDValue EltsFromConsecutiveLoads(EVT VT, ArrayRef<SDValue> Elts,
       continue;
 
     LoadSDNode *LD = cast<LoadSDNode>(Elt);
-    if (!DAG.isConsecutiveLoad(LD, LDBase, EltVT.getSizeInBits()/8, i))
+    EVT LdVT = Elt.getValueType();
+    // Each loaded element must be the correct fractional portion of the
+    // requested vector load.
+    if (LdVT.getSizeInBits() != VT.getSizeInBits() / NumElems)
+      return SDValue();
+    if (!DAG.isConsecutiveLoad(LD, LDBase, LdVT.getSizeInBits() / 8, i))
       return SDValue();
     LastLoadedElt = i;
   }
@@ -6058,6 +6064,12 @@ static SDValue EltsFromConsecutiveLoads(EVT VT, ArrayRef<SDValue> Elts,
   // load of the entire vector width starting at the base pointer.  If we found
   // consecutive loads for the low half, generate a vzext_load node.
   if (LastLoadedElt == NumElems - 1) {
+    assert(LDBase && "Did not find base load for merging consecutive loads");
+    EVT EltVT = LDBase->getValueType(0);
+    // Ensure that the input vector size for the merged loads matches the
+    // cumulative size of the input elements.
+    if (VT.getSizeInBits() != EltVT.getSizeInBits() * NumElems)
+      return SDValue();
 
     if (isAfterLegalize &&
         !DAG.getTargetLoweringInfo().isOperationLegal(ISD::LOAD, VT))
@@ -6084,6 +6096,7 @@ static SDValue EltsFromConsecutiveLoads(EVT VT, ArrayRef<SDValue> Elts,
 
   //TODO: The code below fires only for for loading the low v2i32 / v2f32
   //of a v4i32 / v4f32. It's probably worth generalizing.
+  EVT EltVT = VT.getVectorElementType();
   if (NumElems == 4 && LastLoadedElt == 1 && (EltVT.getSizeInBits() == 32) &&
       DAG.getTargetLoweringInfo().isTypeLegal(MVT::v2i64)) {
     SDVTList Tys = DAG.getVTList(MVT::v2i64, MVT::Other);
@@ -13164,25 +13177,44 @@ static SDValue LowerINSERT_SUBVECTOR(SDValue Op, const X86Subtarget *Subtarget,
                                      SelectionDAG &DAG) {
   if (!Subtarget->hasAVX())
     return SDValue();
-  
+
   SDLoc dl(Op);
   SDValue Vec = Op.getOperand(0);
   SDValue SubVec = Op.getOperand(1);
   SDValue Idx = Op.getOperand(2);
+
+  if (!isa<ConstantSDNode>(Idx))
+    return SDValue();
+
+  unsigned IdxVal = cast<ConstantSDNode>(Idx)->getZExtValue();
   MVT OpVT = Op.getSimpleValueType();
   MVT SubVecVT = SubVec.getSimpleValueType();
-    
-  if ((OpVT.is256BitVector() || OpVT.is512BitVector()) &&
-      SubVecVT.is128BitVector() && isa<ConstantSDNode>(Idx)) {
-    unsigned IdxVal = cast<ConstantSDNode>(Idx)->getZExtValue();
-    return Insert128BitVector(Vec, SubVec, IdxVal, DAG, dl);
+
+  // Fold two 16-byte subvector loads into one 32-byte load:
+  // (insert_subvector (insert_subvector undef, (load addr), 0),
+  //                   (load addr + 16), Elts/2)
+  // --> load32 addr
+  if ((IdxVal == OpVT.getVectorNumElements() / 2) &&
+      Vec.getOpcode() == ISD::INSERT_SUBVECTOR &&
+      OpVT.is256BitVector() && SubVecVT.is128BitVector() &&
+      !Subtarget->isUnalignedMem32Slow()) {
+    SDValue SubVec2 = Vec.getOperand(1);
+    if (auto *Idx2 = dyn_cast<ConstantSDNode>(Vec.getOperand(2))) {
+      if (Idx2->getZExtValue() == 0) {
+        SDValue Ops[] = { SubVec2, SubVec };
+        SDValue LD = EltsFromConsecutiveLoads(OpVT, Ops, dl, DAG, false);
+        if (LD.getNode())
+          return LD;
+      }
+    }
   }
 
-  if (OpVT.is512BitVector() &&
-      SubVecVT.is256BitVector() && isa<ConstantSDNode>(Idx)) {
-    unsigned IdxVal = cast<ConstantSDNode>(Idx)->getZExtValue();
+  if ((OpVT.is256BitVector() || OpVT.is512BitVector()) &&
+      SubVecVT.is128BitVector())
+    return Insert128BitVector(Vec, SubVec, IdxVal, DAG, dl);
+
+  if (OpVT.is512BitVector() && SubVecVT.is256BitVector())
     return Insert256BitVector(Vec, SubVec, IdxVal, DAG, dl);
-  }
 
   return SDValue();
 }
