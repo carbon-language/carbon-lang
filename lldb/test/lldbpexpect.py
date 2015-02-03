@@ -18,7 +18,8 @@ class PExpectTest(TestBase):
 
     def launch(self, timeout=None):
         if timeout is None: timeout = 30
-        self.child = pexpect.spawn('%s %s' % (self.lldbHere, self.launchArgs()))
+        logfile = sys.stdout if self.TraceOn() else None
+        self.child = pexpect.spawn('%s %s' % (self.lldbHere, self.launchArgs()), logfile=logfile)
         self.child.timeout = timeout
         self.timeout = timeout
 
