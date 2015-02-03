@@ -77,8 +77,24 @@ def : T_RRI_pat <M4_mpyri_addr, int_hexagon_M4_mpyri_addr>;
 def : T_RRR_pat <M4_mac_up_s1_sat, int_hexagon_M4_mac_up_s1_sat>;
 def : T_RRR_pat <M4_nac_up_s1_sat, int_hexagon_M4_nac_up_s1_sat>;
 
+// Complex multiply 32x16
+def : T_PR_pat <M4_cmpyi_wh, int_hexagon_M4_cmpyi_wh>;
+def : T_PR_pat <M4_cmpyr_wh, int_hexagon_M4_cmpyr_wh>;
+
+def : T_PR_pat <M4_cmpyi_whc, int_hexagon_M4_cmpyi_whc>;
+def : T_PR_pat <M4_cmpyr_whc, int_hexagon_M4_cmpyr_whc>;
+
 def : T_PP_pat<A4_andnp, int_hexagon_A4_andnp>;
 def : T_PP_pat<A4_ornp,  int_hexagon_A4_ornp>;
+
+// Complex add/sub halfwords/words
+def : T_PP_pat <S4_vxaddsubw, int_hexagon_S4_vxaddsubw>;
+def : T_PP_pat <S4_vxsubaddw, int_hexagon_S4_vxsubaddw>;
+def : T_PP_pat <S4_vxaddsubh, int_hexagon_S4_vxaddsubh>;
+def : T_PP_pat <S4_vxsubaddh, int_hexagon_S4_vxsubaddh>;
+
+def : T_PP_pat <S4_vxaddsubhr, int_hexagon_S4_vxaddsubhr>;
+def : T_PP_pat <S4_vxsubaddhr, int_hexagon_S4_vxsubaddhr>;
 
 // Extract bitfield
 def : T_PP_pat  <S4_extractp_rp, int_hexagon_S4_extractp_rp>;
@@ -108,6 +124,18 @@ def : T_PPR_pat <A4_vrminuh, int_hexagon_A4_vrminuh>;
 // Vector reduce minimum words
 def : T_PPR_pat <A4_vrminw, int_hexagon_A4_vrminw>;
 def : T_PPR_pat <A4_vrminuw, int_hexagon_A4_vrminuw>;
+
+// Rotate and reduce bytes
+def : Pat <(int_hexagon_S4_vrcrotate DoubleRegs:$src1, IntRegs:$src2,
+                                     u2ImmPred:$src3),
+           (S4_vrcrotate DoubleRegs:$src1, IntRegs:$src2, u2ImmPred:$src3)>;
+
+// Rotate and reduce bytes with accumulation
+// Rxx+=vrcrotate(Rss,Rt,#u2)
+def : Pat <(int_hexagon_S4_vrcrotate_acc DoubleRegs:$src1, DoubleRegs:$src2,
+                                         IntRegs:$src3, u2ImmPred:$src4),
+           (S4_vrcrotate_acc DoubleRegs:$src1, DoubleRegs:$src2,
+                             IntRegs:$src3, u2ImmPred:$src4)>;
 
 // Vector conditional negate
 def : T_PPR_pat<S2_vrcnegh, int_hexagon_S2_vrcnegh>;

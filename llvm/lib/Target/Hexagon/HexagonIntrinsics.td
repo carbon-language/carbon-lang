@@ -337,6 +337,35 @@ def : T_PRR_pat <M2_mpyud_nac_hl_s1, int_hexagon_M2_mpyud_nac_hl_s1>;
 def : T_PRR_pat <M2_mpyud_nac_lh_s1, int_hexagon_M2_mpyud_nac_lh_s1>;
 def : T_PRR_pat <M2_mpyud_nac_ll_s1, int_hexagon_M2_mpyud_nac_ll_s1>;
 
+// Vector complex multiply imaginary: Rdd=vcmpyi(Rss,Rtt)[:<<1]:sat
+def : T_PP_pat <M2_vcmpy_s1_sat_i, int_hexagon_M2_vcmpy_s1_sat_i>;
+def : T_PP_pat <M2_vcmpy_s0_sat_i, int_hexagon_M2_vcmpy_s0_sat_i>;
+
+// Vector complex multiply real: Rdd=vcmpyr(Rss,Rtt)[:<<1]:sat
+def : T_PP_pat <M2_vcmpy_s1_sat_r, int_hexagon_M2_vcmpy_s1_sat_r>;
+def : T_PP_pat <M2_vcmpy_s0_sat_r, int_hexagon_M2_vcmpy_s0_sat_r>;
+
+// Vector reduce complex multiply real or imaginary:
+// Rdd[+]=vrcmpy[ir](Rss,Rtt[*])
+def : T_PP_pat  <M2_vrcmpyi_s0,  int_hexagon_M2_vrcmpyi_s0>;
+def : T_PP_pat  <M2_vrcmpyi_s0c, int_hexagon_M2_vrcmpyi_s0c>;
+def : T_PPP_pat <M2_vrcmaci_s0,  int_hexagon_M2_vrcmaci_s0>;
+def : T_PPP_pat <M2_vrcmaci_s0c, int_hexagon_M2_vrcmaci_s0c>;
+
+def : T_PP_pat  <M2_vrcmpyr_s0,  int_hexagon_M2_vrcmpyr_s0>;
+def : T_PP_pat  <M2_vrcmpyr_s0c, int_hexagon_M2_vrcmpyr_s0c>;
+def : T_PPP_pat <M2_vrcmacr_s0,  int_hexagon_M2_vrcmacr_s0>;
+def : T_PPP_pat <M2_vrcmacr_s0c, int_hexagon_M2_vrcmacr_s0c>;
+
+// Vector reduce halfwords
+// Rdd[+]=vrmpyh(Rss,Rtt)
+def : T_PP_pat  <M2_vrmpy_s0, int_hexagon_M2_vrmpy_s0>;
+def : T_PPP_pat <M2_vrmac_s0, int_hexagon_M2_vrmac_s0>;
+
+// Vector complex multiply real or imaginary with accumulation
+// Rxx+=vcmpy[ir](Rss,Rtt):sat
+def : T_PPP_pat <M2_vcmac_s0_sat_r, int_hexagon_M2_vcmac_s0_sat_r>;
+def : T_PPP_pat <M2_vcmac_s0_sat_i, int_hexagon_M2_vcmac_s0_sat_i>;
 
 //===----------------------------------------------------------------------===//
 // Add/Subtract halfword
@@ -745,11 +774,37 @@ def : Pat<(int_hexagon_C2_vmux PredRegs:$Pu, DoubleRegs:$Rs, DoubleRegs:$Rt),
 def : T_RR_pat <M2_dpmpyss_s0, int_hexagon_M2_dpmpyss_s0>;
 def : T_RR_pat <M2_dpmpyuu_s0, int_hexagon_M2_dpmpyuu_s0>;
 
+// Complex multiply real or imaginary
+def : T_RR_pat <M2_cmpyi_s0,   int_hexagon_M2_cmpyi_s0>;
+def : T_RR_pat <M2_cmpyr_s0,   int_hexagon_M2_cmpyr_s0>;
+
+// Complex multiply
+def : T_RR_pat <M2_cmpys_s0,   int_hexagon_M2_cmpys_s0>;
+def : T_RR_pat <M2_cmpysc_s0,  int_hexagon_M2_cmpysc_s0>;
+def : T_RR_pat <M2_cmpys_s1,   int_hexagon_M2_cmpys_s1>;
+def : T_RR_pat <M2_cmpysc_s1,  int_hexagon_M2_cmpysc_s1>;
+
 // Rxx[+-]= mpy[u](Rs,Rt)
 def : T_PRR_pat <M2_dpmpyss_acc_s0, int_hexagon_M2_dpmpyss_acc_s0>;
 def : T_PRR_pat <M2_dpmpyss_nac_s0, int_hexagon_M2_dpmpyss_nac_s0>;
 def : T_PRR_pat <M2_dpmpyuu_acc_s0, int_hexagon_M2_dpmpyuu_acc_s0>;
 def : T_PRR_pat <M2_dpmpyuu_nac_s0, int_hexagon_M2_dpmpyuu_nac_s0>;
+
+// Rxx[-+]=cmpy(Rs,Rt)[:<<1]:sat
+def : T_PRR_pat <M2_cmacs_s0, int_hexagon_M2_cmacs_s0>;
+def : T_PRR_pat <M2_cnacs_s0, int_hexagon_M2_cnacs_s0>;
+def : T_PRR_pat <M2_cmacs_s1, int_hexagon_M2_cmacs_s1>;
+def : T_PRR_pat <M2_cnacs_s1, int_hexagon_M2_cnacs_s1>;
+
+// Rxx[-+]=cmpy(Rs,Rt*)[:<<1]:sat
+def : T_PRR_pat <M2_cmacsc_s0, int_hexagon_M2_cmacsc_s0>;
+def : T_PRR_pat <M2_cnacsc_s0, int_hexagon_M2_cnacsc_s0>;
+def : T_PRR_pat <M2_cmacsc_s1, int_hexagon_M2_cmacsc_s1>;
+def : T_PRR_pat <M2_cnacsc_s1, int_hexagon_M2_cnacsc_s1>;
+
+// Rxx+=cmpy[ir](Rs,Rt)
+def : T_PRR_pat <M2_cmaci_s0, int_hexagon_M2_cmaci_s0>;
+def : T_PRR_pat <M2_cmacr_s0, int_hexagon_M2_cmacr_s0>;
 
 /********************************************************************
 *            CR                                                     *
@@ -806,6 +861,13 @@ def : MType_R32_pat <int_hexagon_M2_mpyu_up, M2_mpyu_up>;
 def : MType_R32_pat <int_hexagon_M2_hmmpyh_rs1, M2_hmmpyh_rs1>;
 def : MType_R32_pat <int_hexagon_M2_hmmpyl_rs1, M2_hmmpyl_rs1>;
 def : MType_R32_pat <int_hexagon_M2_dpmpyss_rnd_s0, M2_dpmpyss_rnd_s0>;
+
+// Complex multiply with round and pack
+// Rxx32+=cmpy(Rs32,[*]Rt32:<<1]:rnd:sat
+def : MType_R32_pat <int_hexagon_M2_cmpyrs_s0, M2_cmpyrs_s0>;
+def : MType_R32_pat <int_hexagon_M2_cmpyrs_s1, M2_cmpyrs_s1>;
+def : MType_R32_pat <int_hexagon_M2_cmpyrsc_s0, M2_cmpyrsc_s0>;
+def : MType_R32_pat <int_hexagon_M2_cmpyrsc_s1, M2_cmpyrsc_s1>;
 
 /********************************************************************
 *            STYPE/ALU                                              *
@@ -1502,101 +1564,6 @@ def HEXAGON_M2_vabsdiffh:
   di_MInst_didi                   <"vabsdiffh",int_hexagon_M2_vabsdiffh>;
 def HEXAGON_M2_vabsdiffw:
   di_MInst_didi                   <"vabsdiffw",int_hexagon_M2_vabsdiffw>;
-
-
-/********************************************************************
-*            MTYPE/COMPLEX                                          *
-*********************************************************************/
-
-// MTYPE / COMPLEX / Complex multiply.
-// Rdd[-+]=cmpy(Rs, Rt:<<1]:sat
-def HEXAGON_M2_cmpys_s1:
-  di_MInst_sisi_s1_sat            <"cmpy",     int_hexagon_M2_cmpys_s1>;
-def HEXAGON_M2_cmpys_s0:
-  di_MInst_sisi_sat               <"cmpy",     int_hexagon_M2_cmpys_s0>;
-def HEXAGON_M2_cmpysc_s1:
-  di_MInst_sisi_s1_sat_conj       <"cmpy",     int_hexagon_M2_cmpysc_s1>;
-def HEXAGON_M2_cmpysc_s0:
-  di_MInst_sisi_sat_conj          <"cmpy",     int_hexagon_M2_cmpysc_s0>;
-
-def HEXAGON_M2_cmacs_s1:
-  di_MInst_disisi_acc_s1_sat      <"cmpy",     int_hexagon_M2_cmacs_s1>;
-def HEXAGON_M2_cmacs_s0:
-  di_MInst_disisi_acc_sat         <"cmpy",     int_hexagon_M2_cmacs_s0>;
-def HEXAGON_M2_cmacsc_s1:
-  di_MInst_disisi_acc_s1_sat_conj <"cmpy",     int_hexagon_M2_cmacsc_s1>;
-def HEXAGON_M2_cmacsc_s0:
-  di_MInst_disisi_acc_sat_conj    <"cmpy",     int_hexagon_M2_cmacsc_s0>;
-
-def HEXAGON_M2_cnacs_s1:
-  di_MInst_disisi_nac_s1_sat      <"cmpy",     int_hexagon_M2_cnacs_s1>;
-def HEXAGON_M2_cnacs_s0:
-  di_MInst_disisi_nac_sat         <"cmpy",     int_hexagon_M2_cnacs_s0>;
-def HEXAGON_M2_cnacsc_s1:
-  di_MInst_disisi_nac_s1_sat_conj <"cmpy",     int_hexagon_M2_cnacsc_s1>;
-def HEXAGON_M2_cnacsc_s0:
-  di_MInst_disisi_nac_sat_conj    <"cmpy",     int_hexagon_M2_cnacsc_s0>;
-
-// MTYPE / COMPLEX / Complex multiply real or imaginary.
-def HEXAGON_M2_cmpyr_s0:
-  di_MInst_sisi                   <"cmpyr",    int_hexagon_M2_cmpyr_s0>;
-def HEXAGON_M2_cmacr_s0:
-  di_MInst_disisi_acc             <"cmpyr",    int_hexagon_M2_cmacr_s0>;
-
-def HEXAGON_M2_cmpyi_s0:
-  di_MInst_sisi                   <"cmpyi",    int_hexagon_M2_cmpyi_s0>;
-def HEXAGON_M2_cmaci_s0:
-  di_MInst_disisi_acc             <"cmpyi",    int_hexagon_M2_cmaci_s0>;
-
-// MTYPE / COMPLEX / Complex multiply with round and pack.
-// Rxx32+=cmpy(Rs32,[*]Rt32:<<1]:rnd:sat
-def HEXAGON_M2_cmpyrs_s0:
-  si_MInst_sisi_rnd_sat           <"cmpy",     int_hexagon_M2_cmpyrs_s0>;
-def HEXAGON_M2_cmpyrs_s1:
-  si_MInst_sisi_s1_rnd_sat        <"cmpy",     int_hexagon_M2_cmpyrs_s1>;
-
-def HEXAGON_M2_cmpyrsc_s0:
-  si_MInst_sisi_rnd_sat_conj      <"cmpy",     int_hexagon_M2_cmpyrsc_s0>;
-def HEXAGON_M2_cmpyrsc_s1:
-  si_MInst_sisi_s1_rnd_sat_conj   <"cmpy",     int_hexagon_M2_cmpyrsc_s1>;
-
-//MTYPE / COMPLEX / Vector complex multiply real or imaginary.
-def HEXAGON_M2_vcmpy_s0_sat_i:
-  di_MInst_didi_sat               <"vcmpyi",   int_hexagon_M2_vcmpy_s0_sat_i>;
-def HEXAGON_M2_vcmpy_s1_sat_i:
-  di_MInst_didi_s1_sat            <"vcmpyi",   int_hexagon_M2_vcmpy_s1_sat_i>;
-
-def HEXAGON_M2_vcmpy_s0_sat_r:
-  di_MInst_didi_sat               <"vcmpyr",   int_hexagon_M2_vcmpy_s0_sat_r>;
-def HEXAGON_M2_vcmpy_s1_sat_r:
-  di_MInst_didi_s1_sat            <"vcmpyr",   int_hexagon_M2_vcmpy_s1_sat_r>;
-
-def HEXAGON_M2_vcmac_s0_sat_i:
-  di_MInst_dididi_acc_sat         <"vcmpyi",   int_hexagon_M2_vcmac_s0_sat_i>;
-def HEXAGON_M2_vcmac_s0_sat_r:
-  di_MInst_dididi_acc_sat         <"vcmpyr",   int_hexagon_M2_vcmac_s0_sat_r>;
-
-//MTYPE / COMPLEX / Vector reduce complex multiply real or imaginary.
-def HEXAGON_M2_vrcmpyi_s0:
-  di_MInst_didi                   <"vrcmpyi",  int_hexagon_M2_vrcmpyi_s0>;
-def HEXAGON_M2_vrcmpyr_s0:
-  di_MInst_didi                   <"vrcmpyr",  int_hexagon_M2_vrcmpyr_s0>;
-
-def HEXAGON_M2_vrcmpyi_s0c:
-  di_MInst_didi_conj              <"vrcmpyi",  int_hexagon_M2_vrcmpyi_s0c>;
-def HEXAGON_M2_vrcmpyr_s0c:
-  di_MInst_didi_conj              <"vrcmpyr",  int_hexagon_M2_vrcmpyr_s0c>;
-
-def HEXAGON_M2_vrcmaci_s0:
-  di_MInst_dididi_acc             <"vrcmpyi",  int_hexagon_M2_vrcmaci_s0>;
-def HEXAGON_M2_vrcmacr_s0:
-  di_MInst_dididi_acc             <"vrcmpyr",  int_hexagon_M2_vrcmacr_s0>;
-
-def HEXAGON_M2_vrcmaci_s0c:
-  di_MInst_dididi_acc_conj        <"vrcmpyi",  int_hexagon_M2_vrcmaci_s0c>;
-def HEXAGON_M2_vrcmacr_s0c:
-  di_MInst_dididi_acc_conj        <"vrcmpyr",  int_hexagon_M2_vrcmacr_s0c>;
-
 
 /********************************************************************
 *            MTYPE/MPYH                                             *
