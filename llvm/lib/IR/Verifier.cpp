@@ -370,7 +370,7 @@ private:
                            const Value *V);
 
   void VerifyConstantExprBitcastType(const ConstantExpr *CE);
-  void VerifyStatepoint(CallInst &CI);
+  void VerifyStatepoint(ImmutableCallSite CS);
 };
 class DebugInfoVerifier : public VerifierSupport {
 public:
@@ -1047,26 +1047,26 @@ bool Verifier::VerifyAttributeCount(AttributeSet Attrs, unsigned Params) {
 }
 
 /// \brief Verify that statepoint intrinsic is well formed.
-void Verifier::VerifyStatepoint(CallInst &CI) {
-  assert(CI.getCalledFunction() &&
-         CI.getCalledFunction()->getIntrinsicID() ==
-         Intrinsic::experimental_gc_statepoint);
+void Verifier::VerifyStatepoint(ImmutableCallSite CS) {
+  assert(CS.getCalledFunction() &&
+         CS.getCalledFunction()->getIntrinsicID() ==
+           Intrinsic::experimental_gc_statepoint);
 
-  Assert1(!CI.doesNotAccessMemory() &&
-          !CI.onlyReadsMemory(),
+  const Instruction &CI = *CS.getInstruction();
+
+  Assert1(!CS.doesNotAccessMemory() &&
+          !CS.onlyReadsMemory(),
           "gc.statepoint must read and write memory to preserve "
           "reordering restrictions required by safepoint semantics", &CI);
-  Assert1(!CI.isInlineAsm(),
-          "gc.statepoint support for inline assembly unimplemented", &CI);
     
-  const Value *Target = CI.getArgOperand(0);
+  const Value *Target = CS.getArgument(0);
   const PointerType *PT = dyn_cast<PointerType>(Target->getType());
   Assert2(PT && PT->getElementType()->isFunctionTy(),
           "gc.statepoint callee must be of function pointer type",
           &CI, Target);
   FunctionType *TargetFuncType = cast<FunctionType>(PT->getElementType());
 
-  const Value *NumCallArgsV = CI.getArgOperand(1);
+  const Value *NumCallArgsV = CS.getArgument(1);
   Assert1(isa<ConstantInt>(NumCallArgsV),
           "gc.statepoint number of arguments to underlying call "
           "must be constant integer", &CI);
@@ -1087,7 +1087,7 @@ void Verifier::VerifyStatepoint(CallInst &CI) {
     Assert1(NumCallArgs == NumParams,
             "gc.statepoint mismatch in number of call args", &CI);
 
-  const Value *Unused = CI.getArgOperand(2);
+  const Value *Unused = CS.getArgument(2);
   Assert1(isa<ConstantInt>(Unused) &&
           cast<ConstantInt>(Unused)->isNullValue(),
           "gc.statepoint parameter #3 must be zero", &CI);
@@ -1096,13 +1096,13 @@ void Verifier::VerifyStatepoint(CallInst &CI) {
   // the type of the wrapped callee.
   for (int i = 0; i < NumParams; i++) {
     Type *ParamType = TargetFuncType->getParamType(i);
-    Type *ArgType = CI.getArgOperand(3+i)->getType();
+    Type *ArgType = CS.getArgument(3+i)->getType();
     Assert1(ArgType == ParamType,
             "gc.statepoint call argument does not match wrapped "
             "function type", &CI);
   }
   const int EndCallArgsInx = 2+NumCallArgs;
-  const Value *NumDeoptArgsV = CI.getArgOperand(EndCallArgsInx+1);
+  const Value *NumDeoptArgsV = CS.getArgument(EndCallArgsInx+1);
   Assert1(isa<ConstantInt>(NumDeoptArgsV),
           "gc.statepoint number of deoptimization arguments "
           "must be constant integer", &CI);
@@ -1111,13 +1111,13 @@ void Verifier::VerifyStatepoint(CallInst &CI) {
           "gc.statepoint number of deoptimization arguments "
           "must be positive", &CI);
 
-  Assert1(4 + NumCallArgs + NumDeoptArgs <= (int)CI.getNumArgOperands(),
+  Assert1(4 + NumCallArgs + NumDeoptArgs <= (int)CS.arg_size(),
           "gc.statepoint too few arguments according to length fields", &CI);
     
   // Check that the only uses of this gc.statepoint are gc.result or 
   // gc.relocate calls which are tied to this statepoint and thus part
   // of the same statepoint sequence
-  for (User *U : CI.users()) {
+  for (const User *U : CI.users()) {
     const CallInst *Call = dyn_cast<const CallInst>(U);
     Assert2(Call, "illegal use of statepoint token", &CI, U);
     if (!Call) continue;
@@ -2727,7 +2727,10 @@ void Verifier::visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI) {
   }
 
   case Intrinsic::experimental_gc_statepoint:
-    VerifyStatepoint(CI);
+    Assert1(!CI.isInlineAsm(),
+            "gc.statepoint support for inline assembly unimplemented", &CI);
+
+    VerifyStatepoint(ImmutableCallSite(&CI));
     break;
   case Intrinsic::experimental_gc_result_int:
   case Intrinsic::experimental_gc_result_float:
