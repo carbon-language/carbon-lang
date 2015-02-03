@@ -528,7 +528,11 @@ void
 ThreadStateCoordinator::EnqueueEvent (EventBaseSP event_sp)
 {
     std::lock_guard<std::mutex> lock (m_queue_mutex);
+
     m_event_queue.push (event_sp);
+    if (m_log_event_processing)
+        Log ("ThreadStateCoordinator::%s enqueued event: %s", __FUNCTION__, event_sp->GetDescription ().c_str ());
+
     m_queue_condition.notify_one ();
 }
 

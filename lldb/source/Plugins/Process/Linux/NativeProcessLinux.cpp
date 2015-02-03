@@ -3894,7 +3894,7 @@ NativeProcessLinux::CallAfterRunningThreadsStop (lldb::tid_t tid,
                                                  const std::function<void (lldb::tid_t tid)> &call_after_function)
 {
     const lldb::pid_t pid = GetID ();
-    m_coordinator_up->CallAfterRunningThreadsStop (pid,
+    m_coordinator_up->CallAfterRunningThreadsStop (tid,
                                                    [=](lldb::tid_t request_stop_tid)
                                                    {
                                                        tgkill (pid, request_stop_tid, SIGSTOP);
