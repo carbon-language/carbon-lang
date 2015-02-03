@@ -309,8 +309,8 @@ private:
   /// \brief Emit call to llvm.dbg.declare for a variable declaration.
   /// Tag accepts custom types DW_TAG_arg_variable and DW_TAG_auto_variable,
   /// otherwise would be of type llvm::dwarf::Tag.
-  void EmitDeclare(const VarDecl *decl, llvm::dwarf::LLVMConstants Tag,
-                   llvm::Value *AI, unsigned ArgNo, CGBuilderTy &Builder);
+  void EmitDeclare(const VarDecl *decl, llvm::dwarf::Tag Tag, llvm::Value *AI,
+                   unsigned ArgNo, CGBuilderTy &Builder);
 
   // EmitTypeForVarWithBlocksAttr - Build up structure info for the byref.
   // See BuildByRefType.
