@@ -21,15 +21,6 @@
 
 #include "GDBRemoteCommunication.h"
 
-typedef enum 
-{
-    eBreakpointSoftware = 0,
-    eBreakpointHardware,
-    eWatchpointWrite,
-    eWatchpointRead,
-    eWatchpointReadWrite
-} GDBStoppointType;
-
 class GDBRemoteCommunicationClient : public GDBRemoteCommunication
 {
 public:

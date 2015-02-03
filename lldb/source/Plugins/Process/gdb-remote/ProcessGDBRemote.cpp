@@ -1844,8 +1844,24 @@ ProcessGDBRemote::SetThreadStopInfo (StringExtractor& stop_packet)
                         }
                         else if (reason.compare("watchpoint") == 0)
                         {
-                            break_id_t watch_id = LLDB_INVALID_WATCH_ID;
-                            // TODO: locate the watchpoint somehow...
+                            StringExtractor desc_extractor(description.c_str());
+                            addr_t wp_addr = desc_extractor.GetU64(LLDB_INVALID_ADDRESS);
+                            uint32_t wp_index = desc_extractor.GetU32(LLDB_INVALID_INDEX32);
+                            watch_id_t watch_id = LLDB_INVALID_WATCH_ID;
+                            if (wp_addr != LLDB_INVALID_ADDRESS)
+                            {
+                                WatchpointSP wp_sp = GetTarget().GetWatchpointList().FindByAddress(wp_addr);
+                                if (wp_sp)
+                                {
+                                    wp_sp->SetHardwareIndex(wp_index);
+                                    watch_id = wp_sp->GetID();
+                                }
+                            }
+                            if (watch_id == LLDB_INVALID_WATCH_ID)
+                            {
+                                Log *log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet (GDBR_LOG_WATCHPOINTS));
+                                if (log) log->Printf ("failed to find watchpoint");
+                            }
                             thread_sp->SetStopInfo (StopInfo::CreateStopReasonWithWatchpointID (*thread_sp, watch_id));
                             handled = true;
                         }

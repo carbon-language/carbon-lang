@@ -15,6 +15,7 @@
 // Other libraries and framework includes
 // Project includes
 #include "lldb/lldb-private.h"
+#include "lldb/Host/common/NativeWatchpointList.h"
 
 namespace lldb_private {
 
@@ -94,6 +95,9 @@ public:
 
     virtual bool
     ClearHardwareWatchpoint (uint32_t hw_index);
+
+    virtual Error
+    ClearAllHardwareWatchpoints ();
 
     virtual bool
     HardwareSingleStep (bool enable);

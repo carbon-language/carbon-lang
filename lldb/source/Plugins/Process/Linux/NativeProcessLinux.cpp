@@ -2316,7 +2316,7 @@ NativeProcessLinux::MonitorSIGTRAP(const siginfo_t *info, lldb::pid_t pid)
         // Mark the thread as stopped at watchpoint.
         // The address is at (lldb::addr_t)info->si_addr if we need it.
         if (thread_sp)
-            reinterpret_cast<NativeThreadLinux*> (thread_sp.get ())->SetStoppedBySignal (SIGTRAP);
+            reinterpret_cast<NativeThreadLinux*> (thread_sp.get ())->SetStoppedByWatchpoint ();
         else
         {
             if (log)

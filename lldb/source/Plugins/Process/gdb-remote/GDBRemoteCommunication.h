@@ -27,6 +27,16 @@
 
 #include "Utility/StringExtractorGDBRemote.h"
 
+typedef enum
+{
+    eStoppointInvalid = -1,
+    eBreakpointSoftware = 0,
+    eBreakpointHardware,
+    eWatchpointWrite,
+    eWatchpointRead,
+    eWatchpointReadWrite
+} GDBStoppointType;
+
 class ProcessGDBRemote;
 
 class GDBRemoteCommunication : public lldb_private::Communication

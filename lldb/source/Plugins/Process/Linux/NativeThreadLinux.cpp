@@ -10,6 +10,7 @@
 #include "NativeThreadLinux.h"
 
 #include <signal.h>
+#include <sstream>
 
 #include "NativeProcessLinux.h"
 #include "NativeRegisterContextLinux_x86_64.h"
@@ -101,8 +102,15 @@ NativeThreadLinux::GetStopReason (ThreadStopInfo &stop_info, std::string& descri
         if (log)
             LogThreadStopInfo (*log, m_stop_info, "m_stop_info in thread:");
         stop_info = m_stop_info;
-        if (m_stop_info.reason == StopReason::eStopReasonException)
-            description = m_stop_description;
+        switch (m_stop_info.reason)
+        {
+            case StopReason::eStopReasonException:
+            case StopReason::eStopReasonBreakpoint:
+            case StopReason::eStopReasonWatchpoint:
+                description = m_stop_description;
+            default:
+                break;
+        }
         if (log)
             LogThreadStopInfo (*log, stop_info, "returned stop_info:");
 
@@ -209,15 +217,30 @@ NativeThreadLinux::GetRegisterContext ()
 Error
 NativeThreadLinux::SetWatchpoint (lldb::addr_t addr, size_t size, uint32_t watch_flags, bool hardware)
 {
-    // TODO implement
-    return Error ("not implemented");
+    if (!hardware)
+        return Error ("not implemented");
+    Error error = RemoveWatchpoint(addr);
+    if (error.Fail()) return error;
+    NativeRegisterContextSP reg_ctx = GetRegisterContext ();
+    uint32_t wp_index =
+        reg_ctx->SetHardwareWatchpoint (addr, size, watch_flags);
+    if (wp_index == LLDB_INVALID_INDEX32)
+        return Error ("Setting hardware watchpoint failed.");
+    m_watchpoint_index_map.insert({addr, wp_index});
+    return Error ();
 }
 
 Error
 NativeThreadLinux::RemoveWatchpoint (lldb::addr_t addr)
 {
-    // TODO implement
-    return Error ("not implemented");
+    auto wp = m_watchpoint_index_map.find(addr);
+    if (wp == m_watchpoint_index_map.end())
+        return Error ();
+    uint32_t wp_index = wp->second;
+    m_watchpoint_index_map.erase(wp);
+    if (GetRegisterContext()->ClearHardwareWatchpoint(wp_index))
+        return Error ();
+    return Error ("Clearing hardware watchpoint failed.");
 }
 
 void
@@ -243,6 +266,20 @@ NativeThreadLinux::SetRunning ()
 
     m_stop_info.reason = StopReason::eStopReasonNone;
     m_stop_description.clear();
+
+    // If watchpoints have been set, but none on this thread,
+    // then this is a new thread. So set all existing watchpoints.
+    if (m_watchpoint_index_map.empty())
+    {
+        const auto &watchpoint_map = GetProcess()->GetWatchpointMap();
+        if (watchpoint_map.empty()) return;
+        GetRegisterContext()->ClearAllHardwareWatchpoints();
+        for (const auto &pair : watchpoint_map)
+        {
+            const auto& wp = pair.second;
+            SetWatchpoint(wp.m_addr, wp.m_size, wp.m_watch_flags, wp.m_hardware);
+        }
+    }
 }
 
 void
@@ -313,18 +350,56 @@ NativeThreadLinux::SetStoppedByBreakpoint ()
 
     m_stop_info.reason = StopReason::eStopReasonBreakpoint;
     m_stop_info.details.signal.signo = SIGTRAP;
+    m_stop_description.clear();
+}
+
+void
+NativeThreadLinux::SetStoppedByWatchpoint ()
+{
+    const StateType new_state = StateType::eStateStopped;
+    MaybeLogStateChange (new_state);
+    m_state = new_state;
+
+    m_stop_info.reason = StopReason::eStopReasonWatchpoint;
+    m_stop_info.details.signal.signo = SIGTRAP;
+
+    NativeRegisterContextLinux_x86_64 *reg_ctx =
+        reinterpret_cast<NativeRegisterContextLinux_x86_64*> (GetRegisterContext().get());
+    const uint32_t num_hw_watchpoints =
+        reg_ctx->NumSupportedHardwareWatchpoints();
+
+    m_stop_description.clear ();
+    for (uint32_t wp_index = 0; wp_index < num_hw_watchpoints; ++wp_index)
+        if (reg_ctx->IsWatchpointHit(wp_index).Success())
+        {
+            std::ostringstream ostr;
+            ostr << reg_ctx->GetWatchpointAddress(wp_index) << " " << wp_index;
+            m_stop_description = ostr.str();
+            return;
+        }
+    Log *log (GetLogIfAllCategoriesSet (LIBLLDB_LOG_THREAD));
+    if (log)
+    {
+        NativeProcessProtocolSP m_process_sp = m_process_wp.lock ();
+        lldb::pid_t pid = m_process_sp ? m_process_sp->GetID () : LLDB_INVALID_PROCESS_ID;
+        log->Printf ("NativeThreadLinux: thread (pid=%" PRIu64 ", tid=%" PRIu64 ") "
+                "stopped by a watchpoint, but failed to find it",
+                pid, GetID ());
+    }
 }
 
 bool
 NativeThreadLinux::IsStoppedAtBreakpoint ()
 {
-    // Are we stopped? If not, this can't be a breakpoint.
-    if (GetState () != StateType::eStateStopped)
-        return false;
+    return GetState () == StateType::eStateStopped &&
+        m_stop_info.reason == StopReason::eStopReasonBreakpoint;
+}
 
-    // Was the stop reason a signal with signal number SIGTRAP? If not, not a breakpoint.
-    return (m_stop_info.reason == StopReason::eStopReasonBreakpoint) &&
-            (m_stop_info.details.signal.signo == SIGTRAP);
+bool
+NativeThreadLinux::IsStoppedAtWatchpoint ()
+{
+    return GetState () == StateType::eStateStopped &&
+        m_stop_info.reason == StopReason::eStopReasonWatchpoint;
 }
 
 void

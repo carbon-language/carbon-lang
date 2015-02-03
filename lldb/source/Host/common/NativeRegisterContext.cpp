@@ -297,6 +297,12 @@ NativeRegisterContext::ClearHardwareWatchpoint (uint32_t hw_index)
     return false;
 }
 
+Error
+NativeRegisterContext::ClearAllHardwareWatchpoints ()
+{
+    return Error ("not implemented");
+}
+
 bool
 NativeRegisterContext::HardwareSingleStep (bool enable)
 {

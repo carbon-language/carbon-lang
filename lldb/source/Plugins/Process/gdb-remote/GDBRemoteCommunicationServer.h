@@ -465,6 +465,9 @@ protected:
     PacketResult
     Handle_qThreadStopInfo (StringExtractorGDBRemote &packet);
 
+    PacketResult
+    Handle_qWatchpointSupportInfo (StringExtractorGDBRemote &packet);
+
     void
     SetCurrentThreadID (lldb::tid_t tid);
 

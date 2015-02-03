@@ -18,6 +18,7 @@
 #include "lldb/Host/Mutex.h"
 
 #include "NativeBreakpointList.h"
+#include "NativeWatchpointList.h"
 
 namespace lldb_private
 {
@@ -130,6 +131,9 @@ namespace lldb_private
         //----------------------------------------------------------------------
         // Watchpoint functions
         //----------------------------------------------------------------------
+        virtual const NativeWatchpointList::WatchpointMap&
+        GetWatchpointMap () const;
+
         virtual uint32_t
         GetMaxWatchpoints () const;
 
@@ -295,6 +299,7 @@ namespace lldb_private
         Mutex m_delegates_mutex;
         std::vector<NativeDelegate*> m_delegates;
         NativeBreakpointList m_breakpoint_list;
+        NativeWatchpointList m_watchpoint_list;
         int m_terminal_fd;
         uint32_t m_stop_id;
 

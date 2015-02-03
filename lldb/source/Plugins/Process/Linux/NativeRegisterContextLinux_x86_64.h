@@ -42,6 +42,32 @@ namespace lldb_private
         Error
         WriteAllRegisterValues (const lldb::DataBufferSP &data_sp) override;
 
+        Error
+        IsWatchpointHit(uint8_t wp_index);
+
+        Error
+        IsWatchpointVacant(uint32_t wp_index);
+
+        bool
+        ClearHardwareWatchpoint(uint32_t wp_index);
+
+        Error
+        ClearAllHardwareWatchpoints ();
+
+        Error
+        SetHardwareWatchpointWithIndex(lldb::addr_t addr, size_t size,
+                uint32_t watch_flags, uint32_t wp_index);
+
+        uint32_t
+        SetHardwareWatchpoint(lldb::addr_t addr, size_t size,
+                uint32_t watch_flags);
+
+        lldb::addr_t
+        GetWatchpointAddress(uint32_t wp_index);
+
+        uint32_t
+        NumSupportedHardwareWatchpoints();
+
     private:
 
         // Private member types.
