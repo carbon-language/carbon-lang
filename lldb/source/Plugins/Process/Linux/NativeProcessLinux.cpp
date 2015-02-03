@@ -2578,6 +2578,7 @@ NativeProcessLinux::MonitorSignal(const siginfo_t *info, lldb::pid_t pid, bool e
     case SIGILL:
     case SIGFPE:
     case SIGBUS:
+    default:
         {
             // This thread is stopped.
             NotifyThreadStop (pid);
@@ -2646,26 +2647,6 @@ NativeProcessLinux::MonitorSignal(const siginfo_t *info, lldb::pid_t pid, bool e
                                              SetCurrentThreadID (signaling_tid);
                                              SetState (StateType::eStateStopped, true);
                                          });
-            break;
-        }
-
-    default:
-        {
-            // This thread is stopped.
-            NotifyThreadStop (pid);
-
-            if (log)
-                log->Printf ("NativeProcessLinux::%s pid = %" PRIu64 " tid %" PRIu64 " resuming thread with signal %s (%d)", __FUNCTION__, GetID (), pid, GetUnixSignals().GetSignalAsCString (signo), signo);
-
-            // Pass the signal on to the inferior.
-            m_coordinator_up->RequestThreadResume (pid,
-                                                   [=](lldb::tid_t tid_to_resume)
-                                                   {
-                                                       reinterpret_cast<NativeThreadLinux*> (thread_sp.get ())->SetRunning ();
-                                                       // Pass this signal number on to the inferior to handle.
-                                                       Resume (tid_to_resume, signo);
-                                                   },
-                                                   CoordinatorErrorHandler);
         }
         break;
     }
