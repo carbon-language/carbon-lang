@@ -1,5 +1,5 @@
-// RUN: %clang_cc1 -fsyntax-only -verify -fblocks -fcxx-exceptions %s -Wno-unreachable-code
-// RUN: %clang_cc1 -fsyntax-only -verify -fblocks -fcxx-exceptions -std=gnu++11 %s -Wno-unreachable-code
+// RUN: %clang_cc1 -fsyntax-only -verify -fblocks -fcxx-exceptions -fms-extensions %s -Wno-unreachable-code
+// RUN: %clang_cc1 -fsyntax-only -verify -fblocks -fcxx-exceptions -fms-extensions -std=gnu++11 %s -Wno-unreachable-code
 
 namespace testInvalid {
 Invalid inv; // expected-error {{unknown type name}}
@@ -441,3 +441,192 @@ namespace test_recovery {
     }
   }
 }
+
+namespace seh {
+
+// Jumping into SEH try blocks is not permitted.
+
+void jump_into_except() {
+  goto into_try_except_try; // expected-error {{cannot jump from this goto statement to its label}}
+  __try { // expected-note {{jump bypasses initialization of __try block}}
+  into_try_except_try:
+    ;
+  } __except(0) {
+  }
+
+  goto into_try_except_except; // expected-error {{cannot jump from this goto statement to its label}}
+  __try {
+  } __except(0) { // expected-note {{jump bypasses initialization of __except block}}
+  into_try_except_except:
+    ;
+  }
+}
+
+void jump_into_finally() {
+  goto into_try_except_try; // expected-error {{cannot jump from this goto statement to its label}}
+  __try { // expected-note {{jump bypasses initialization of __try block}}
+  into_try_except_try:
+    ;
+  } __finally {
+  }
+
+  goto into_try_except_finally; // expected-error {{cannot jump from this goto statement to its label}}
+  __try {
+  } __finally { // expected-note {{jump bypasses initialization of __finally block}}
+  into_try_except_finally:
+    ;
+  }
+}
+
+// Jumping out of SEH try blocks ok in general. (Jumping out of a __finally
+// has undefined behavior.)
+
+void jump_out_of_except() {
+  __try {
+    goto out_of_except_try;
+  } __except(0) {
+  }
+out_of_except_try:
+  ;
+
+  __try {
+  } __except(0) {
+    goto out_of_except_except;
+  }
+out_of_except_except:
+  ;
+}
+
+void jump_out_of_finally() {
+  __try {
+  goto out_of_finally_try;
+  } __finally {
+  }
+out_of_finally_try:
+  ;
+
+  __try {
+  } __finally {
+    // FIXME: This should warn that jumping out of __finally has undefined
+    // behavior.
+    // FIXME: Once that warns, check that
+    //   __try { __try {} __finally { __leave; } } __except (0) {}
+    // warns in the same way.
+    goto out_of_finally_finally;
+  }
+out_of_finally_finally:
+  ;
+}
+
+// Jumping between protected scope and handler is not permitted.
+
+void jump_try_except() {
+  __try {
+    goto from_try_to_except; // expected-error {{cannot jump from this goto statement to its label}}
+  } __except(0) { // expected-note {{jump bypasses initialization of __except block}}
+  from_try_to_except:
+    ;
+  }
+
+  __try { // expected-note {{jump bypasses initialization of __try block}}
+  from_except_to_try:
+    ;
+  } __except(0) {
+    goto from_except_to_try; // expected-error {{cannot jump from this goto statement to its label}}
+  }
+}
+
+void jump_try_finally() {
+  __try {
+    goto from_try_to_finally; // expected-error {{cannot jump from this goto statement to its label}}
+  } __finally { // expected-note {{jump bypasses initialization of __finally block}}
+  from_try_to_finally:
+    ;
+  }
+
+  __try { // expected-note {{jump bypasses initialization of __try block}}
+  from_finally_to_try:
+    ;
+  } __finally {
+    goto from_finally_to_try; // expected-error {{cannot jump from this goto statement to its label}}
+  }
+}
+
+void nested() {
+  // These are not permitted.
+  __try {
+    __try {
+    } __finally {
+      goto outer_except; // expected-error {{cannot jump from this goto statement to its label}}
+    }
+  } __except(0) { // expected-note {{jump bypasses initialization of __except bloc}}
+  outer_except:
+    ;
+  }
+
+  __try {
+    __try{
+    } __except(0) {
+      goto outer_finally; // expected-error {{cannot jump from this goto statement to its label}}
+    }
+  } __finally { // expected-note {{jump bypasses initialization of __finally bloc}}
+  outer_finally:
+    ;
+  }
+
+  // These are permitted.
+  __try {
+    __try {
+    } __finally {
+      // FIXME: This should warn that jumping out of __finally has undefined
+      // behavior.
+      goto after_outer_except;
+    }
+  } __except(0) {
+  }
+after_outer_except:
+  ;
+
+  __try {
+    __try{
+    } __except(0) {
+      goto after_outer_finally;
+    }
+  } __finally {
+  }
+after_outer_finally:
+  ;
+}
+
+// This section is academic, as MSVC doesn't support indirect gotos.
+
+void indirect_jumps(void **ip) {
+  static void *ips[] = { &&l };
+
+  __try { // expected-note {{jump exits __try block}}
+    // FIXME: Should this be allowed? Jumping out of the guarded section of a
+    // __try/__except doesn't require unwinding.
+    goto *ip; // expected-error {{cannot jump from this indirect goto statement to one of its possible targets}}
+  } __except(0) {
+  }
+
+  __try {
+  } __except(0) { // expected-note {{jump exits __except block}}
+    // FIXME: What about here?
+    goto *ip; // expected-error {{cannot jump from this indirect goto statement to one of its possible targets}}
+  }
+
+  __try { // expected-note {{jump exits __try block}}
+    goto *ip; // expected-error {{cannot jump from this indirect goto statement to one of its possible targets}}
+  } __finally {
+  }
+
+  __try {
+  } __finally { // expected-note {{jump exits __finally block}}
+    goto *ip; // expected-error {{cannot jump from this indirect goto statement to one of its possible targets}}
+  }
+l: // expected-note 4 {{possible target of indirect goto statement}}
+  ;
+}
+
+} // namespace seh

@@ -338,9 +338,35 @@ void JumpScopeChecker::BuildScopeInformation(Stmt *S, unsigned &origParentScope)
     return;
   }
 
-  case Stmt::SEHTryStmtClass:
-    // FIXME: Implement jump diagnostics for bad SEH jumps.
-    break;
+  case Stmt::SEHTryStmtClass: {
+    SEHTryStmt *TS = cast<SEHTryStmt>(S);
+    unsigned newParentScope;
+    Scopes.push_back(GotoScope(ParentScope,
+                               diag::note_protected_by_seh_try,
+                               diag::note_exits_seh_try,
+                               TS->getSourceRange().getBegin()));
+    if (Stmt *TryBlock = TS->getTryBlock())
+      BuildScopeInformation(TryBlock, (newParentScope = Scopes.size()-1));
+
+    // Jump from __except or __finally into the __try are not allowed either.
+    if (SEHExceptStmt *Except = TS->getExceptHandler()) {
+      Scopes.push_back(GotoScope(ParentScope,
+                                 diag::note_protected_by_seh_except,
+                                 diag::note_exits_seh_except,
+                                 Except->getSourceRange().getBegin()));
+      BuildScopeInformation(Except->getBlock(), 
+                            (newParentScope = Scopes.size()-1));
+    } else if (SEHFinallyStmt *Finally = TS->getFinallyHandler()) {
+      Scopes.push_back(GotoScope(ParentScope,
+                                 diag::note_protected_by_seh_finally,
+                                 diag::note_exits_seh_finally,
+                                 Finally->getSourceRange().getBegin()));
+      BuildScopeInformation(Finally->getBlock(), 
+                            (newParentScope = Scopes.size()-1));
+    }
+
+    return;
+  }
 
   default:
     break;

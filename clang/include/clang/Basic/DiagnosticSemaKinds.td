@@ -4291,6 +4291,12 @@ def note_protected_by_cxx_try : Note<
   "jump bypasses initialization of try block">;
 def note_protected_by_cxx_catch : Note<
   "jump bypasses initialization of catch block">;
+def note_protected_by_seh_try : Note<
+  "jump bypasses initialization of __try block">;
+def note_protected_by_seh_except : Note<
+  "jump bypasses initialization of __except block">;
+def note_protected_by_seh_finally : Note<
+  "jump bypasses initialization of __finally block">;
 def note_protected_by___block : Note<
   "jump bypasses setup of __block variable">;
 def note_protected_by_objc_ownership : Note<
@@ -4323,6 +4329,12 @@ def note_exits_cxx_try : Note<
   "jump exits try block">;
 def note_exits_cxx_catch : Note<
   "jump exits catch block">;
+def note_exits_seh_try : Note<
+  "jump exits __try block">;
+def note_exits_seh_except : Note<
+  "jump exits __except block">;
+def note_exits_seh_finally : Note<
+  "jump exits __finally block">;
 def note_exits_objc_autoreleasepool : Note<
   "jump exits autoreleasepool block">;
 def note_exits_objc_ownership : Note<
