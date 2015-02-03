@@ -102,6 +102,9 @@ namespace llvm {
                     NumTy Max = std::numeric_limits<NumTy>::max())
         : ImplTy(Default), Max(Max) {}
   };
+  struct DwarfTagField : public MDUnsignedField<uint32_t> {
+    DwarfTagField() : MDUnsignedField<uint32_t>(0, ~0u >> 16) {}
+  };
   struct MDField : public MDFieldImpl<Metadata *> {
     MDField() : ImplTy(nullptr) {}
   };
@@ -427,6 +430,7 @@ namespace llvm {
 
     bool ParseMDField(LocTy Loc, StringRef Name,
                       MDUnsignedField<uint32_t> &Result);
+    bool ParseMDField(LocTy Loc, StringRef Name, DwarfTagField &Result);
     bool ParseMDField(LocTy Loc, StringRef Name, MDField &Result);
     bool ParseMDField(LocTy Loc, StringRef Name, MDStringField &Result);
     bool ParseMDField(LocTy Loc, StringRef Name, MDFieldList &Result);

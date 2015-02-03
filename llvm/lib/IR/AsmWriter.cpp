@@ -1291,8 +1291,11 @@ static void writeGenericDebugNode(raw_ostream &Out, const GenericDebugNode *N,
                                   SlotTracker *Machine, const Module *Context) {
   Out << "!GenericDebugNode(";
   FieldSeparator FS;
-  // Always output the line, since 0 is a relevant and important value for it.
-  Out << FS << "tag: " << N->getTag();
+  Out << FS << "tag: ";
+  if (const char *Tag = dwarf::TagString(N->getTag()))
+    Out << Tag;
+  else
+    Out << N->getTag();
   if (!N->getHeader().empty()) {
     Out << FS << "header: \"";
     PrintEscapedString(N->getHeader(), Out);

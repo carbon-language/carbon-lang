@@ -24,6 +24,7 @@
 #include "llvm/IR/Module.h"
 #include "llvm/IR/Operator.h"
 #include "llvm/IR/ValueSymbolTable.h"
+#include "llvm/Support/Dwarf.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/SaveAndRestore.h"
 #include "llvm/Support/raw_ostream.h"
@@ -2936,6 +2937,28 @@ bool LLParser::ParseMDField(LocTy Loc, StringRef Name,
   return false;
 }
 
+bool LLParser::ParseMDField(LocTy Loc, StringRef Name, DwarfTagField &Result) {
+  if (Lex.getKind() == lltok::APSInt)
+    return ParseMDField(Loc, Name,
+                        static_cast<MDUnsignedField<uint32_t> &>(Result));
+
+  if (Result.Seen)
+    return Error(Loc,
+                 "field '" + Name + "' cannot be specified more than once");
+
+  if (Lex.getKind() != lltok::DwarfTag)
+    return TokError("expected DWARF tag");
+
+  unsigned Tag = dwarf::getTag(Lex.getStrVal());
+  if (Tag == dwarf::DW_TAG_invalid)
+    return TokError("invalid DWARF tag" + Twine(" '") + Lex.getStrVal() + "'");
+  assert(Tag < 1u << 16 && "Expected valid DWARF tag");
+
+  Result.assign(Tag);
+  Lex.Lex();
+  return false;
+}
+
 bool LLParser::ParseMDField(LocTy Loc, StringRef Name, MDField &Result) {
   Metadata *MD;
   if (ParseMetadata(MD, nullptr))
@@ -3056,7 +3079,7 @@ bool LLParser::ParseMDLocation(MDNode *&Result, bool IsDistinct) {
 ///   ::= !GenericDebugNode(tag: 15, header: "...", operands: {...})
 bool LLParser::ParseGenericDebugNode(MDNode *&Result, bool IsDistinct) {
 #define VISIT_MD_FIELDS(OPTIONAL, REQUIRED)                                    \
-  REQUIRED(tag, MDUnsignedField<uint32_t>, (0, ~0u >> 16));                    \
+  REQUIRED(tag, DwarfTagField, );                                              \
   OPTIONAL(header, MDStringField, );                                           \
   OPTIONAL(operands, MDFieldList, );
   PARSE_MD_FIELDS();
