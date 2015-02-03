@@ -109,6 +109,10 @@ class T_PRR_pat <InstHexagon MI, Intrinsic IntID>
   : Pat <(IntID I64:$Rs, I32:$Rt, I32:$Ru),
          (MI DoubleRegs:$Rs, I32:$Rt, I32:$Ru)>;
 
+class T_PPQ_pat <InstHexagon MI, Intrinsic IntID>
+  : Pat <(IntID I64:$Rs, I64:$Rt, (i32 PredRegs:$Ru)),
+         (MI DoubleRegs:$Rs, DoubleRegs:$Rt, PredRegs:$Ru)>;
+
 class T_PR_pat <InstHexagon MI, Intrinsic IntID>
   : Pat <(IntID I64:$Rs, I32:$Rt),
          (MI DoubleRegs:$Rs, I32:$Rt)>;
@@ -1002,8 +1006,22 @@ def: T_RR_pat<C2_bitsclr,  int_hexagon_C2_bitsclr>;
 def: T_RI_pat<C2_bitsclri, int_hexagon_C2_bitsclri>;
 def: T_RR_pat<C2_bitsset,  int_hexagon_C2_bitsset>;
 
+// Vector shuffle
+def : T_PP_pat <S2_shuffeb, int_hexagon_S2_shuffeb>;
+def : T_PP_pat <S2_shuffob, int_hexagon_S2_shuffob>;
+def : T_PP_pat <S2_shuffeh, int_hexagon_S2_shuffeh>;
+def : T_PP_pat <S2_shuffoh, int_hexagon_S2_shuffoh>;
+
+// Vector truncate
+def : T_PP_pat <S2_vtrunewh, int_hexagon_S2_vtrunewh>;
+def : T_PP_pat <S2_vtrunowh, int_hexagon_S2_vtrunowh>;
+
 // Linear feedback-shift Iteration.
 def : T_PP_pat <S2_lfsp, int_hexagon_S2_lfsp>;
+
+// Vector splice
+def : T_PPQ_pat <S2_vsplicerb, int_hexagon_S2_vsplicerb>;
+def : T_PPI_pat <S2_vspliceib, int_hexagon_S2_vspliceib>;
 
 // Shift by immediate and add
 def : T_RRI_pat<S2_addasl_rrri, int_hexagon_S2_addasl_rrri>;
@@ -1062,6 +1080,16 @@ def : T_P_pat <A2_vconj, int_hexagon_A2_vconj>;
 def : T_PR_pat <S2_vcrotate, int_hexagon_S2_vcrotate>;
 
 /********************************************************************
+*            STYPE/PERM                                             *
+*********************************************************************/
+
+// Vector saturate without pack
+def : T_P_pat <S2_vsathb_nopack, int_hexagon_S2_vsathb_nopack>;
+def : T_P_pat <S2_vsathub_nopack, int_hexagon_S2_vsathub_nopack>;
+def : T_P_pat <S2_vsatwh_nopack, int_hexagon_S2_vsatwh_nopack>;
+def : T_P_pat <S2_vsatwuh_nopack, int_hexagon_S2_vsatwuh_nopack>;
+
+/********************************************************************
 *            STYPE/SHIFT                                            *
 *********************************************************************/
 
@@ -1082,9 +1110,28 @@ def : T_RR_pat <S2_lsl_r_r, int_hexagon_S2_lsl_r_r>;
 def : T_RR_pat <S2_asr_r_r_sat, int_hexagon_S2_asr_r_r_sat>;
 def : T_RR_pat <S2_asl_r_r_sat, int_hexagon_S2_asl_r_r_sat>;
 
+def : T_R_pat <S2_vsxtbh,   int_hexagon_S2_vsxtbh>;
+def : T_R_pat <S2_vzxtbh,   int_hexagon_S2_vzxtbh>;
+def : T_R_pat <S2_vsxthw,   int_hexagon_S2_vsxthw>;
+def : T_R_pat <S2_vzxthw,   int_hexagon_S2_vzxthw>;
+def : T_R_pat <S2_vsplatrh, int_hexagon_S2_vsplatrh>;
 def : T_R_pat <A2_sxtw,     int_hexagon_A2_sxtw>;
 
+
+// Vector saturate and pack
+def : T_R_pat <S2_svsathb,  int_hexagon_S2_svsathb>;
+def : T_R_pat <S2_svsathub, int_hexagon_S2_svsathub>;
+def : T_P_pat <S2_vsathub,  int_hexagon_S2_vsathub>;
+def : T_P_pat <S2_vsatwh,   int_hexagon_S2_vsatwh>;
+def : T_P_pat <S2_vsatwuh,  int_hexagon_S2_vsatwuh>;
+def : T_P_pat <S2_vsathb,   int_hexagon_S2_vsathb>;
+
+def : T_P_pat <S2_vtrunohb,    int_hexagon_S2_vtrunohb>;
+def : T_P_pat <S2_vtrunehb,    int_hexagon_S2_vtrunehb>;
+def : T_P_pat <S2_vrndpackwh,  int_hexagon_S2_vrndpackwh>;
+def : T_P_pat <S2_vrndpackwhs, int_hexagon_S2_vrndpackwhs>;
 def : T_R_pat <S2_brev,        int_hexagon_S2_brev>;
+def : T_R_pat <S2_vsplatrb,    int_hexagon_S2_vsplatrb>;
 
 def : T_R_pat <A2_abs,    int_hexagon_A2_abs>;
 def : T_R_pat <A2_abssat, int_hexagon_A2_abssat>;
@@ -1656,94 +1703,6 @@ class di_LDInstPI_diu4<string opc, Intrinsic IntID>
            "$dst2 = memd($src1++#$offset:circ($src3))",
            [],
            "$src1 = $dst">;
-
-/********************************************************************
-*            STYPE/PERM                                             *
-*********************************************************************/
-
-// STYPE / PERM / Vector align.
-// Need custom lowering
-def HEXAGON_S2_valignib:
-  di_SInst_didiu3                 <"valignb", int_hexagon_S2_valignib>;
-def HEXAGON_S2_valignrb:
-  di_SInst_didiqi                 <"valignb", int_hexagon_S2_valignrb>;
-
-// STYPE / PERM / Vector round and pack.
-def HEXAGON_S2_vrndpackwh:
-  si_SInst_di                     <"vrndwh",  int_hexagon_S2_vrndpackwh>;
-def HEXAGON_S2_vrndpackwhs:
-  si_SInst_di_sat                 <"vrndwh",  int_hexagon_S2_vrndpackwhs>;
-
-// STYPE / PERM / Vector saturate and pack.
-def HEXAGON_S2_svsathb:
-  si_SInst_si                     <"vsathb",  int_hexagon_S2_svsathb>;
-def HEXAGON_S2_vsathb:
-  si_SInst_di                     <"vsathb",  int_hexagon_S2_vsathb>;
-def HEXAGON_S2_svsathub:
-  si_SInst_si                     <"vsathub", int_hexagon_S2_svsathub>;
-def HEXAGON_S2_vsathub:
-  si_SInst_di                     <"vsathub", int_hexagon_S2_vsathub>;
-def HEXAGON_S2_vsatwh:
-  si_SInst_di                     <"vsatwh",  int_hexagon_S2_vsatwh>;
-def HEXAGON_S2_vsatwuh:
-  si_SInst_di                     <"vsatwuh", int_hexagon_S2_vsatwuh>;
-
-// STYPE / PERM / Vector saturate without pack.
-def HEXAGON_S2_vsathb_nopack:
-  di_SInst_di                     <"vsathb",  int_hexagon_S2_vsathb_nopack>;
-def HEXAGON_S2_vsathub_nopack:
-  di_SInst_di                     <"vsathub", int_hexagon_S2_vsathub_nopack>;
-def HEXAGON_S2_vsatwh_nopack:
-  di_SInst_di                     <"vsatwh",  int_hexagon_S2_vsatwh_nopack>;
-def HEXAGON_S2_vsatwuh_nopack:
-  di_SInst_di                     <"vsatwuh", int_hexagon_S2_vsatwuh_nopack>;
-
-// STYPE / PERM / Vector shuffle.
-def HEXAGON_S2_shuffeb:
-  di_SInst_didi                   <"shuffeb", int_hexagon_S2_shuffeb>;
-def HEXAGON_S2_shuffeh:
-  di_SInst_didi                   <"shuffeh", int_hexagon_S2_shuffeh>;
-def HEXAGON_S2_shuffob:
-  di_SInst_didi                   <"shuffob", int_hexagon_S2_shuffob>;
-def HEXAGON_S2_shuffoh:
-  di_SInst_didi                   <"shuffoh", int_hexagon_S2_shuffoh>;
-
-// STYPE / PERM / Vector splat bytes.
-def HEXAGON_S2_vsplatrb:
-  si_SInst_si                     <"vsplatb", int_hexagon_S2_vsplatrb>;
-
-// STYPE / PERM / Vector splat halfwords.
-def HEXAGON_S2_vsplatrh:
-  di_SInst_si                     <"vsplath", int_hexagon_S2_vsplatrh>;
-
-// STYPE / PERM / Vector splice.
-def Hexagon_S2_vsplicerb:
-  di_SInst_didiqi                 <"vspliceb",int_hexagon_S2_vsplicerb>;
-def Hexagon_S2_vspliceib:
-  di_SInst_didiu3                 <"vspliceb",int_hexagon_S2_vspliceib>;
-
-// STYPE / PERM / Sign extend.
-def HEXAGON_S2_vsxtbh:
-  di_SInst_si                     <"vsxtbh",  int_hexagon_S2_vsxtbh>;
-def HEXAGON_S2_vsxthw:
-  di_SInst_si                     <"vsxthw",  int_hexagon_S2_vsxthw>;
-
-// STYPE / PERM / Truncate.
-def HEXAGON_S2_vtrunehb:
-  si_SInst_di                     <"vtrunehb",int_hexagon_S2_vtrunehb>;
-def HEXAGON_S2_vtrunohb:
-  si_SInst_di                     <"vtrunohb",int_hexagon_S2_vtrunohb>;
-def HEXAGON_S2_vtrunewh:
-  di_SInst_didi                   <"vtrunewh",int_hexagon_S2_vtrunewh>;
-def HEXAGON_S2_vtrunowh:
-  di_SInst_didi                   <"vtrunowh",int_hexagon_S2_vtrunowh>;
-
-// STYPE / PERM / Zero extend.
-def HEXAGON_S2_vzxtbh:
-  di_SInst_si                     <"vzxtbh",  int_hexagon_S2_vzxtbh>;
-def HEXAGON_S2_vzxthw:
-  di_SInst_si                     <"vzxthw",  int_hexagon_S2_vzxthw>;
-
 
 /********************************************************************
 *            STYPE/PRED                                             *
