@@ -1090,6 +1090,25 @@ def : T_P_pat <S2_vsatwh_nopack, int_hexagon_S2_vsatwh_nopack>;
 def : T_P_pat <S2_vsatwuh_nopack, int_hexagon_S2_vsatwuh_nopack>;
 
 /********************************************************************
+*            STYPE/PRED                                             *
+*********************************************************************/
+
+// Predicate transfer
+def: Pat<(i32 (int_hexagon_C2_tfrpr (I32:$Rs))),
+         (i32 (C2_tfrpr (C2_tfrrp (I32:$Rs))))>;
+def: Pat<(i32 (int_hexagon_C2_tfrrp (I32:$Rs))),
+         (i32 (C2_tfrpr (C2_tfrrp (I32:$Rs))))>;
+
+// Mask generate from predicate
+def: Pat<(i64 (int_hexagon_C2_mask (I32:$Rs))),
+         (i64 (C2_mask (C2_tfrrp (I32:$Rs))))>;
+
+// Viterbi pack even and odd predicate bits
+def: Pat<(i32 (int_hexagon_C2_vitpack (I32:$Rs), (I32:$Rt))),
+         (i32 (C2_vitpack (C2_tfrrp (I32:$Rs)),
+                          (C2_tfrrp (I32:$Rt))))>;
+
+/********************************************************************
 *            STYPE/SHIFT                                            *
 *********************************************************************/
 
@@ -1703,25 +1722,6 @@ class di_LDInstPI_diu4<string opc, Intrinsic IntID>
            "$dst2 = memd($src1++#$offset:circ($src3))",
            [],
            "$src1 = $dst">;
-
-/********************************************************************
-*            STYPE/PRED                                             *
-*********************************************************************/
-
-// STYPE / PRED / Mask generate from predicate.
-def HEXAGON_C2_mask:
-  di_SInst_qi                     <"mask",   int_hexagon_C2_mask>;
-
-// STYPE / PRED / Predicate transfer.
-def HEXAGON_C2_tfrpr:
-  si_SInst_qi                     <"",       int_hexagon_C2_tfrpr>;
-def HEXAGON_C2_tfrrp:
-  qi_SInst_si                     <"",       int_hexagon_C2_tfrrp>;
-
-// STYPE / PRED / Viterbi pack even and odd predicate bits.
-def HEXAGON_C2_vitpack:
-  si_SInst_qiqi                   <"vitpack",int_hexagon_C2_vitpack>;
-
 
 /********************************************************************
 *            STYPE/VH                                               *

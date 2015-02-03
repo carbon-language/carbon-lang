@@ -158,7 +158,7 @@ define i64 @C2_mask(i32 %a) {
   %z = call i64 @llvm.hexagon.C2.mask(i32 %a)
   ret i64 %z
 }
-; CHECK:  = mask(r0)
+; CHECK:  = mask(p0)
 
 ; Check for TLB match
 declare i32 @llvm.hexagon.A4.tlbmatch(i64, i32)
@@ -196,3 +196,156 @@ define i32 @S4_ntstbit_r(i32 %a, i32 %b) {
   ret i32 %z
 }
 ; CHECK: p0 = !tstbit(r0, r1)
+
+; Vector compare halfwords
+declare i32 @llvm.hexagon.A2.vcmpheq(i64, i64)
+define i32 @A2_vcmpheq(i64 %a, i64 %b) {
+  %z = call i32 @llvm.hexagon.A2.vcmpheq(i64 %a, i64 %b)
+  ret i32 %z
+}
+; CHECK: p0 = vcmph.eq(r1:0, r3:2)
+
+declare i32 @llvm.hexagon.A2.vcmphgt(i64, i64)
+define i32 @A2_vcmphgt(i64 %a, i64 %b) {
+  %z = call i32 @llvm.hexagon.A2.vcmphgt(i64 %a, i64 %b)
+  ret i32 %z
+}
+; CHECK: p0 = vcmph.gt(r1:0, r3:2)
+
+declare i32 @llvm.hexagon.A2.vcmphgtu(i64, i64)
+define i32 @A2_vcmphgtu(i64 %a, i64 %b) {
+  %z = call i32 @llvm.hexagon.A2.vcmphgtu(i64 %a, i64 %b)
+  ret i32 %z
+}
+; CHECK: p0 = vcmph.gtu(r1:0, r3:2)
+
+declare i32 @llvm.hexagon.A4.vcmpheqi(i64, i32)
+define i32 @A4_vcmpheqi(i64 %a) {
+  %z = call i32 @llvm.hexagon.A4.vcmpheqi(i64 %a, i32 0)
+  ret i32 %z
+}
+; CHECK: p0 = vcmph.eq(r1:0, #0)
+
+declare i32 @llvm.hexagon.A4.vcmphgti(i64, i32)
+define i32 @A4_vcmphgti(i64 %a) {
+  %z = call i32 @llvm.hexagon.A4.vcmphgti(i64 %a, i32 0)
+  ret i32 %z
+}
+; CHECK: p0 = vcmph.gt(r1:0, #0)
+
+declare i32 @llvm.hexagon.A4.vcmphgtui(i64, i32)
+define i32 @A4_vcmphgtui(i64 %a) {
+  %z = call i32 @llvm.hexagon.A4.vcmphgtui(i64 %a, i32 0)
+  ret i32 %z
+}
+; CHECK: p0 = vcmph.gtu(r1:0, #0)
+
+; Vector compare bytes for any match
+declare i32 @llvm.hexagon.A4.vcmpbeq.any(i64, i64)
+define i32 @A4_vcmpbeq_any(i64 %a, i64 %b) {
+  %z = call i32 @llvm.hexagon.A4.vcmpbeq.any(i64 %a, i64 %b)
+  ret i32 %z
+}
+; CHECK: p0 = any8(vcmpb.eq(r1:0, r3:2))
+
+; Vector compare bytes
+declare i32 @llvm.hexagon.A2.vcmpbeq(i64, i64)
+define i32 @A2_vcmpbeq(i64 %a, i64 %b) {
+  %z = call i32 @llvm.hexagon.A2.vcmpbeq(i64 %a, i64 %b)
+  ret i32 %z
+}
+; CHECK: p0 = vcmpb.eq(r1:0, r3:2)
+
+declare i32 @llvm.hexagon.A2.vcmpbgtu(i64, i64)
+define i32 @A2_vcmpbgtu(i64 %a, i64 %b) {
+  %z = call i32 @llvm.hexagon.A2.vcmpbgtu(i64 %a, i64 %b)
+  ret i32 %z
+}
+; CHECK: p0 = vcmpb.gtu(r1:0, r3:2)
+
+declare i32 @llvm.hexagon.A4.vcmpbgt(i64, i64)
+define i32 @A4_vcmpbgt(i64 %a, i64 %b) {
+  %z = call i32 @llvm.hexagon.A4.vcmpbgt(i64 %a, i64 %b)
+  ret i32 %z
+}
+; CHECK: p0 = vcmpb.gt(r1:0, r3:2)
+
+declare i32 @llvm.hexagon.A4.vcmpbeqi(i64, i32)
+define i32 @A4_vcmpbeqi(i64 %a) {
+  %z = call i32 @llvm.hexagon.A4.vcmpbeqi(i64 %a, i32 0)
+  ret i32 %z
+}
+; CHECK: p0 = vcmpb.eq(r1:0, #0)
+
+declare i32 @llvm.hexagon.A4.vcmpbgti(i64, i32)
+define i32 @A4_vcmpbgti(i64 %a) {
+  %z = call i32 @llvm.hexagon.A4.vcmpbgti(i64 %a, i32 0)
+  ret i32 %z
+}
+; CHECK: p0 = vcmpb.gt(r1:0, #0)
+
+declare i32 @llvm.hexagon.A4.vcmpbgtui(i64, i32)
+define i32 @A4_vcmpbgtui(i64 %a) {
+  %z = call i32 @llvm.hexagon.A4.vcmpbgtui(i64 %a, i32 0)
+  ret i32 %z
+}
+; CHECK: p0 = vcmpb.gtu(r1:0, #0)
+
+; Vector compare words
+declare i32 @llvm.hexagon.A2.vcmpweq(i64, i64)
+define i32 @A2_vcmpweq(i64 %a, i64 %b) {
+  %z = call i32 @llvm.hexagon.A2.vcmpweq(i64 %a, i64 %b)
+  ret i32 %z
+}
+; CHECK: p0 = vcmpw.eq(r1:0, r3:2)
+
+declare i32 @llvm.hexagon.A2.vcmpwgt(i64, i64)
+define i32 @A2_vcmpwgt(i64 %a, i64 %b) {
+  %z = call i32 @llvm.hexagon.A2.vcmpwgt(i64 %a, i64 %b)
+  ret i32 %z
+}
+; CHECK: p0 = vcmpw.gt(r1:0, r3:2)
+
+declare i32 @llvm.hexagon.A2.vcmpwgtu(i64, i64)
+define i32 @A2_vcmpwgtu(i64 %a, i64 %b) {
+  %z = call i32 @llvm.hexagon.A2.vcmpwgtu(i64 %a, i64 %b)
+  ret i32 %z
+}
+; CHECK: p0 = vcmpw.gtu(r1:0, r3:2)
+
+declare i32 @llvm.hexagon.A4.vcmpweqi(i64, i32)
+define i32 @A4_vcmpweqi(i64 %a) {
+  %z = call i32 @llvm.hexagon.A4.vcmpweqi(i64 %a, i32 0)
+  ret i32 %z
+}
+; CHECK: p0 = vcmpw.eq(r1:0, #0)
+
+declare i32 @llvm.hexagon.A4.vcmpwgti(i64, i32)
+define i32 @A4_vcmpwgti(i64 %a) {
+  %z = call i32 @llvm.hexagon.A4.vcmpwgti(i64 %a, i32 0)
+  ret i32 %z
+}
+; CHECK: p0 = vcmpw.gt(r1:0, #0)
+
+declare i32 @llvm.hexagon.A4.vcmpwgtui(i64, i32)
+define i32 @A4_vcmpwgtui(i64 %a) {
+  %z = call i32 @llvm.hexagon.A4.vcmpwgtui(i64 %a, i32 0)
+  ret i32 %z
+}
+; CHECK: p0 = vcmpw.gtu(r1:0, #0)
+
+; Viterbi pack even and odd predicate bitsclr
+declare i32 @llvm.hexagon.C2.vitpack(i32, i32)
+define i32 @C2_vitpack(i32 %a, i32 %b) {
+  %z = call i32 @llvm.hexagon.C2.vitpack(i32 %a, i32 %b)
+  ret i32 %z
+}
+; CHECK: r0 = vitpack(p1, p0)
+
+; Vector mux
+declare i64 @llvm.hexagon.C2.vmux(i32, i64, i64)
+define i64 @C2_vmux(i32 %a, i64 %b, i64 %c) {
+  %z = call i64 @llvm.hexagon.C2.vmux(i32 %a, i64 %b, i64 %c)
+  ret i64 %z
+}
+; CHECK:  = vmux(p0, r3:2, r5:4)

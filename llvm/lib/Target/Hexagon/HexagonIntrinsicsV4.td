@@ -78,6 +78,25 @@ def: T_RR_pat<C4_nbitsset,  int_hexagon_C4_nbitsset>;
 def: T_RR_pat<C4_nbitsclr,  int_hexagon_C4_nbitsclr>;
 def: T_RI_pat<C4_nbitsclri, int_hexagon_C4_nbitsclri>;
 
+
+class vcmpImm_pat <InstHexagon MI, Intrinsic IntID, PatLeaf immPred> :
+      Pat <(IntID  (i64 DoubleRegs:$src1), immPred:$src2),
+           (MI (i64 DoubleRegs:$src1), immPred:$src2)>;
+
+def : vcmpImm_pat <A4_vcmpbeqi, int_hexagon_A4_vcmpbeqi, u8ImmPred>;
+def : vcmpImm_pat <A4_vcmpbgti, int_hexagon_A4_vcmpbgti, s8ImmPred>;
+def : vcmpImm_pat <A4_vcmpbgtui, int_hexagon_A4_vcmpbgtui, u7ImmPred>;
+
+def : vcmpImm_pat <A4_vcmpheqi, int_hexagon_A4_vcmpheqi, s8ImmPred>;
+def : vcmpImm_pat <A4_vcmphgti, int_hexagon_A4_vcmphgti, s8ImmPred>;
+def : vcmpImm_pat <A4_vcmphgtui, int_hexagon_A4_vcmphgtui, u7ImmPred>;
+
+def : vcmpImm_pat <A4_vcmpweqi, int_hexagon_A4_vcmpweqi, s8ImmPred>;
+def : vcmpImm_pat <A4_vcmpwgti, int_hexagon_A4_vcmpwgti, s8ImmPred>;
+def : vcmpImm_pat <A4_vcmpwgtui, int_hexagon_A4_vcmpwgtui, u7ImmPred>;
+
+def : T_PP_pat<A4_vcmpbeq_any, int_hexagon_A4_vcmpbeq_any>;
+
 def : T_RR_pat<A4_cmpbeq,   int_hexagon_A4_cmpbeq>;
 def : T_RR_pat<A4_cmpbgt,   int_hexagon_A4_cmpbgt>;
 def : T_RR_pat<A4_cmpbgtu,  int_hexagon_A4_cmpbgtu>;
