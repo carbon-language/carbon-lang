@@ -152,13 +152,17 @@ INTERCEPTOR(int, posix_memalign, void **memptr, size_t alignment, size_t size) {
 
 namespace {
 
-// TODO(glider): the mz_* functions should be united with the Linux wrappers,
-// as they are basically copied from there.
-size_t mz_size(malloc_zone_t* zone, const void* ptr) {
+// TODO(glider): the __asan_mz_* functions should be united with the Linux
+// wrappers, as they are basically copied from there.
+extern "C"
+SANITIZER_INTERFACE_ATTRIBUTE
+size_t __asan_mz_size(malloc_zone_t* zone, const void* ptr) {
   return asan_mz_size(ptr);
 }
 
-void *mz_malloc(malloc_zone_t *zone, size_t size) {
+extern "C"
+SANITIZER_INTERFACE_ATTRIBUTE
+void *__asan_mz_malloc(malloc_zone_t *zone, uptr size) {
   if (UNLIKELY(!asan_inited)) {
     CHECK(system_malloc_zone);
     return malloc_zone_malloc(system_malloc_zone, size);
@@ -167,7 +171,9 @@ void *mz_malloc(malloc_zone_t *zone, size_t size) {
   return asan_malloc(size, &stack);
 }
 
-void *mz_calloc(malloc_zone_t *zone, size_t nmemb, size_t size) {
+extern "C"
+SANITIZER_INTERFACE_ATTRIBUTE
+void *__asan_mz_calloc(malloc_zone_t *zone, size_t nmemb, size_t size) {
   if (UNLIKELY(!asan_inited)) {
     // Hack: dlsym calls calloc before REAL(calloc) is retrieved from dlsym.
     const size_t kCallocPoolSize = 1024;
@@ -183,7 +189,9 @@ void *mz_calloc(malloc_zone_t *zone, size_t nmemb, size_t size) {
   return asan_calloc(nmemb, size, &stack);
 }
 
-void *mz_valloc(malloc_zone_t *zone, size_t size) {
+extern "C"
+SANITIZER_INTERFACE_ATTRIBUTE
+void *__asan_mz_valloc(malloc_zone_t *zone, size_t size) {
   if (UNLIKELY(!asan_inited)) {
     CHECK(system_malloc_zone);
     return malloc_zone_valloc(system_malloc_zone, size);
@@ -210,11 +218,15 @@ void ALWAYS_INLINE free_common(void *context, void *ptr) {
 }
 
 // TODO(glider): the allocation callbacks need to be refactored.
-void mz_free(malloc_zone_t *zone, void *ptr) {
+extern "C"
+SANITIZER_INTERFACE_ATTRIBUTE
+void __asan_mz_free(malloc_zone_t *zone, void *ptr) {
   free_common(zone, ptr);
 }
 
-void *mz_realloc(malloc_zone_t *zone, void *ptr, size_t size) {
+extern "C"
+SANITIZER_INTERFACE_ATTRIBUTE
+void *__asan_mz_realloc(malloc_zone_t *zone, void *ptr, size_t size) {
   if (!ptr) {
     GET_STACK_TRACE_MALLOC;
     return asan_malloc(size, &stack);
@@ -233,15 +245,19 @@ void *mz_realloc(malloc_zone_t *zone, void *ptr, size_t size) {
   }
 }
 
-void mz_destroy(malloc_zone_t* zone) {
+extern "C"
+SANITIZER_INTERFACE_ATTRIBUTE
+void __asan_mz_destroy(malloc_zone_t* zone) {
   // A no-op -- we will not be destroyed!
-  Report("mz_destroy() called -- ignoring\n");
+  Report("__asan_mz_destroy() called -- ignoring\n");
 }
 
   // from AvailabilityMacros.h
 #if defined(MAC_OS_X_VERSION_10_6) && \
     MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_6
-void *mz_memalign(malloc_zone_t *zone, size_t align, size_t size) {
+extern "C"
+SANITIZER_INTERFACE_ATTRIBUTE
+void *__asan_mz_memalign(malloc_zone_t *zone, size_t align, size_t size) {
   if (UNLIKELY(!asan_inited)) {
     CHECK(system_malloc_zone);
     return malloc_zone_memalign(system_malloc_zone, align, size);
@@ -252,7 +268,8 @@ void *mz_memalign(malloc_zone_t *zone, size_t align, size_t size) {
 
 // This function is currently unused, and we build with -Werror.
 #if 0
-void mz_free_definite_size(malloc_zone_t* zone, void *ptr, size_t size) {
+void __asan_mz_free_definite_size(
+    malloc_zone_t* zone, void *ptr, size_t size) {
   // TODO(glider): check that |size| is valid.
   UNIMPLEMENTED();
 }
@@ -330,13 +347,13 @@ void ReplaceSystemMalloc() {
   // Start with a version 4 zone which is used for OS X 10.4 and 10.5.
   asan_zone.version = 4;
   asan_zone.zone_name = "asan";
-  asan_zone.size = &mz_size;
-  asan_zone.malloc = &mz_malloc;
-  asan_zone.calloc = &mz_calloc;
-  asan_zone.valloc = &mz_valloc;
-  asan_zone.free = &mz_free;
-  asan_zone.realloc = &mz_realloc;
-  asan_zone.destroy = &mz_destroy;
+  asan_zone.size = &__asan_mz_size;
+  asan_zone.malloc = &__asan_mz_malloc;
+  asan_zone.calloc = &__asan_mz_calloc;
+  asan_zone.valloc = &__asan_mz_valloc;
+  asan_zone.free = &__asan_mz_free;
+  asan_zone.realloc = &__asan_mz_realloc;
+  asan_zone.destroy = &__asan_mz_destroy;
   asan_zone.batch_malloc = 0;
   asan_zone.batch_free = 0;
   asan_zone.introspect = &asan_introspection;
@@ -347,7 +364,7 @@ void ReplaceSystemMalloc() {
   // Switch to version 6 on OSX 10.6 to support memalign.
   asan_zone.version = 6;
   asan_zone.free_definite_size = 0;
-  asan_zone.memalign = &mz_memalign;
+  asan_zone.memalign = &__asan_mz_memalign;
   asan_introspection.zone_locked = &mi_zone_locked;
 #endif
 
