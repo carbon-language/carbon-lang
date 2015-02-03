@@ -603,7 +603,8 @@ NOINLINE void SigLongJmpFunc1(sigjmp_buf buf) {
 }
 
 #if !defined(__ANDROID__) && !defined(__arm__) && \
-    !defined(__powerpc64__) && !defined(__powerpc__)
+    !defined(__powerpc64__) && !defined(__powerpc__) && \
+    !defined(__aarch64__)
 // Does not work on Power and ARM:
 // https://code.google.com/p/address-sanitizer/issues/detail?id=185
 TEST(AddressSanitizer, BuiltinLongJmpTest) {
