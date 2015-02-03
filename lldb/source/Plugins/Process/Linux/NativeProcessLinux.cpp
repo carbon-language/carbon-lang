@@ -2741,11 +2741,6 @@ NativeProcessLinux::Resume (const ResumeActionList &resume_actions)
         }
     }
 
-    // If we resumed anything, this command was about starting a stopped thread,
-    // not about stopping something that we should trigger later.
-    if (resume_count > 0)
-        return error;
-
     // If we had any thread stopping, then do a deferred notification of the chosen stop thread id and signal
     // after all other running threads have stopped.
     if (deferred_signal_tid != LLDB_INVALID_THREAD_ID)
