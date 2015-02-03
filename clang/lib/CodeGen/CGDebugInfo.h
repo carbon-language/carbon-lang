@@ -443,8 +443,8 @@ private:
   }
 };
 
-/// A scoped helper to set the current debug location to the specified location
-/// or preferred location of the specified Expr.
+/// \brief A scoped helper to set the current debug location to the specified
+/// location or preferred location of the specified Expr.
 class ApplyDebugLocation {
 private:
   void init(SourceLocation TemporaryLocation);
@@ -454,6 +454,8 @@ protected:
   CodeGenFunction &CGF;
 
 public:
+  /// If TemporaryLocation is invalid, the IRBuilder will be set to not attach
+  /// debug locations, thus marking the instructions as prologue.
   ApplyDebugLocation(CodeGenFunction &CGF,
                      SourceLocation TemporaryLocation = SourceLocation());
   ApplyDebugLocation(CodeGenFunction &CGF, const Expr *E);
