@@ -666,7 +666,12 @@ static LinkageInfo getLVForNamespaceScopeDecl(const NamedDecl *D,
       // Use global type/value visibility as appropriate.
       Visibility globalVisibility;
       if (computation == LVForValue) {
-        globalVisibility = Context.getLangOpts().getValueVisibilityMode();
+        const FunctionDecl *FD = D->getAsFunction();
+        if (FD && FD->getCorrespondingUnsizedGlobalDeallocationFunction())
+          // C++14's implicit sized deallocation functions always have default visibility.
+          globalVisibility = DefaultVisibility;
+        else
+          globalVisibility = Context.getLangOpts().getValueVisibilityMode();
       } else {
         assert(computation == LVForType);
         globalVisibility = Context.getLangOpts().getTypeVisibilityMode();
