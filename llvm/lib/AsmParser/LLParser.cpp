@@ -2960,6 +2960,8 @@ struct MDFieldList : public MDFieldImpl<SmallVector<Metadata *, 4>> {
 
 } // end namespace
 
+namespace llvm {
+
 template <>
 bool LLParser::ParseMDField(LocTy Loc, StringRef Name,
                             MDUnsignedField &Result) {
@@ -3023,6 +3025,8 @@ bool LLParser::ParseMDField(LocTy Loc, StringRef Name, MDFieldList &Result) {
   Result.assign(std::move(MDs));
   return false;
 }
+
+} // end namespace llvm
 
 template <class ParserTy>
 bool LLParser::ParseMDFieldsImplBody(ParserTy parseField) {
