@@ -27,6 +27,7 @@ add_lldb_library(lldbCore
   FastDemangle.cpp
   FileLineResolver.cpp
   FileSpecList.cpp
+  FormatEntity.cpp
   History.cpp
   IOHandler.cpp
   Language.cpp
