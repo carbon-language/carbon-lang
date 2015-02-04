@@ -360,7 +360,7 @@ void StructurizeCFG::analyzeLoops(RegionNode *N) {
     for (unsigned i = 0, e = Term->getNumSuccessors(); i != e; ++i) {
       BasicBlock *Succ = Term->getSuccessor(i);
 
-      if (Visited.count(Succ) && LI->isLoopHeader(Succ) ) {
+      if (Visited.count(Succ)) {
         Loops[Succ] = BB;
       }
     }
