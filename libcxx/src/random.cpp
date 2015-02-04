@@ -70,7 +70,6 @@ random_device::operator()()
 {
     unsigned r;
     size_t n = sizeof(r);
-    char* p = reinterpret_cast<char*>(&r);
     size_t bytes_written;
     int error = nacl_secure_random(&r, n, &bytes_written);
     if (error != 0)
