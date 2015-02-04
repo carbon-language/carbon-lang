@@ -518,7 +518,7 @@ lto_codegen_compile_optimized(lto_code_gen_t cg, size_t* length);
  * \since LTO_API_VERSION=12
  */
 extern unsigned int
-lto_api_version();
+lto_api_version(void);
 
 /**
  * Sets options to help debug codegen bugs.
