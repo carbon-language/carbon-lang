@@ -11,7 +11,6 @@
 
 #include "FuzzerInternal.h"
 
-#include <climits>
 #include <cstring>
 #include <unistd.h>
 #include <iostream>
@@ -164,6 +163,8 @@ int main(int argc, char **argv) {
   Options.MutateDepth = Flags.mutate_depth;
   Options.ExitOnFirst = Flags.exit_on_first;
   Options.UseFullCoverageSet = Flags.use_full_coverage_set;
+  if (Flags.runs >= 0)
+    Options.MaxNumberOfRuns = Flags.runs;
   if (!inputs.empty())
     Options.OutputCorpus = inputs[0];
   Fuzzer F(Options);

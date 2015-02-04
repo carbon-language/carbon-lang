@@ -9,6 +9,7 @@
 // Define the main class fuzzer::Fuzzer and most functions.
 //===----------------------------------------------------------------------===//
 #include <cassert>
+#include <climits>
 #include <chrono>
 #include <cstddef>
 #include <cstdlib>
@@ -46,6 +47,7 @@ class Fuzzer {
     int  MutateDepth = 5;
     bool ExitOnFirst = false;
     bool UseFullCoverageSet  = false;
+    size_t MaxNumberOfRuns = ULONG_MAX;
     std::string OutputCorpus;
   };
   Fuzzer(FuzzingOptions Options) : Options(Options) {

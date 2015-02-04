@@ -147,6 +147,8 @@ void Fuzzer::SaveCorpus() {
 size_t Fuzzer::MutateAndTestOne(Unit *U) {
   size_t NewUnits = 0;
   for (int i = 0; i < Options.MutateDepth; i++) {
+    if (TotalNumberOfRuns >= Options.MaxNumberOfRuns)
+      return NewUnits;
     Mutate(U, Options.MaxLen);
     size_t NewCoverage = RunOne(*U);
     if (NewCoverage) {
@@ -177,18 +179,19 @@ size_t Fuzzer::MutateAndTestOne(Unit *U) {
 size_t Fuzzer::Loop(size_t NumIterations) {
   size_t NewUnits = 0;
   for (size_t i = 1; i <= NumIterations; i++) {
-    if (Options.DoCrossOver) {
-      for (size_t J1 = 0; J1 < Corpus.size(); J1++) {
+    for (size_t J1 = 0; J1 < Corpus.size(); J1++) {
+      if (TotalNumberOfRuns >= Options.MaxNumberOfRuns)
+        return NewUnits;
+      // First, simply mutate the unit w/o doing crosses.
+      CurrentUnit = Corpus[J1];
+      NewUnits += MutateAndTestOne(&CurrentUnit);
+      // Now, cross with others.
+      if (Options.DoCrossOver) {
         for (size_t J2 = 0; J2 < Corpus.size(); J2++) {
           CurrentUnit.clear();
           CrossOver(Corpus[J1], Corpus[J2], &CurrentUnit, Options.MaxLen);
           NewUnits += MutateAndTestOne(&CurrentUnit);
         }
-      }
-    } else {  // No CrossOver
-      for (size_t J = 0; J < Corpus.size(); J++) {
-        CurrentUnit = Corpus[J];
-        NewUnits += MutateAndTestOne(&CurrentUnit);
       }
     }
   }
