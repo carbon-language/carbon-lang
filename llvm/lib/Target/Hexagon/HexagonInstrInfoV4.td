@@ -4053,6 +4053,19 @@ let AddedComplexity = 120 in {
   def: Loadam_pat<extloadi32,  i64, addrga, Zext64, L4_loadri_abs>;
   def: Loadam_pat<sextloadi32, i64, addrga, Sext64, L4_loadri_abs>;
   def: Loadam_pat<zextloadi32, i64, addrga, Zext64, L4_loadri_abs>;
+
+let AddedComplexity = 100 in {
+  def: Loada_pat<extloadi8,   i32, addrgp, L4_loadrub_abs>;
+  def: Loada_pat<sextloadi8,  i32, addrgp, L4_loadrb_abs>;
+  def: Loada_pat<zextloadi8,  i32, addrgp, L4_loadrub_abs>;
+
+  def: Loada_pat<extloadi16,  i32, addrgp, L4_loadruh_abs>;
+  def: Loada_pat<sextloadi16, i32, addrgp, L4_loadrh_abs>;
+  def: Loada_pat<zextloadi16, i32, addrgp, L4_loadruh_abs>;
+
+  def: Loada_pat<load,        i32, addrgp, L4_loadri_abs>;
+  def: Loada_pat<load,        i64, addrgp, L4_loadrd_abs>;
+}
 }
 let AddedComplexity = 100 in {
   def: Storea_pat<truncstorei8,  I32, addrgp, S2_storerbabs>;
@@ -4080,54 +4093,6 @@ def STrih_offset_ext_V4 : STInst<(outs),
             [(truncstorei16 (HexagonCONST32 tglobaladdr:$src3),
                     (add IntRegs:$src1, u6_1ImmPred:$src2))]>,
             Requires<[HasV4T]>;
-
-// Map from load(globaladdress + x) -> memd(#foo + x)
-let AddedComplexity = 100 in
-def : Pat<(i64 (load FoldGlobalAddrGP:$addr)),
-          (i64 (L4_loadrd_abs FoldGlobalAddrGP:$addr))>,
-           Requires<[HasV4T]>;
-
-// Map from load(globaladdress + x) -> memb(#foo + x)
-let AddedComplexity = 100 in
-def : Pat<(i32 (extloadi8 FoldGlobalAddrGP:$addr)),
-          (i32 (L4_loadrb_abs FoldGlobalAddrGP:$addr))>,
-           Requires<[HasV4T]>;
-
-// Map from load(globaladdress + x) -> memb(#foo + x)
-let AddedComplexity = 100 in
-def : Pat<(i32 (sextloadi8 FoldGlobalAddrGP:$addr)),
-          (i32 (L4_loadrb_abs FoldGlobalAddrGP:$addr))>,
-           Requires<[HasV4T]>;
-
-//let AddedComplexity = 100 in
-let AddedComplexity = 100 in
-def : Pat<(i32 (extloadi16 FoldGlobalAddrGP:$addr)),
-          (i32 (L4_loadrh_abs FoldGlobalAddrGP:$addr))>,
-           Requires<[HasV4T]>;
-
-// Map from load(globaladdress + x) -> memh(#foo + x)
-let AddedComplexity = 100 in
-def : Pat<(i32 (sextloadi16 FoldGlobalAddrGP:$addr)),
-          (i32 (L4_loadrh_abs FoldGlobalAddrGP:$addr))>,
-           Requires<[HasV4T]>;
-
-// Map from load(globaladdress + x) -> memuh(#foo + x)
-let AddedComplexity = 100 in
-def : Pat<(i32 (zextloadi16 FoldGlobalAddrGP:$addr)),
-          (i32 (L4_loadruh_abs FoldGlobalAddrGP:$addr))>,
-           Requires<[HasV4T]>;
-
-// Map from load(globaladdress + x) -> memub(#foo + x)
-let AddedComplexity = 100 in
-def : Pat<(i32 (zextloadi8 FoldGlobalAddrGP:$addr)),
-          (i32 (L4_loadrub_abs FoldGlobalAddrGP:$addr))>,
-           Requires<[HasV4T]>;
-
-// Map from load(globaladdress + x) -> memw(#foo + x)
-let AddedComplexity = 100 in
-def : Pat<(i32 (load FoldGlobalAddrGP:$addr)),
-          (i32 (L4_loadri_abs FoldGlobalAddrGP:$addr))>,
-           Requires<[HasV4T]>;
 
 //===----------------------------------------------------------------------===//
 // :raw for of boundscheck:hi:lo insns
