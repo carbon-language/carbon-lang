@@ -13,19 +13,44 @@ void basic_finally(void) {
 
 // CHECK-LABEL: define void @basic_finally()
 // CHECK: invoke void @might_crash()
+// CHECK:     to label %[[invoke_cont:[^ ]*]] unwind label %[[lpad:[^ ]*]]
+//
+// CHECK: [[invoke_cont]]
+// CHECK: store i8 0, i8* %[[abnormal:[^ ]*]]
+// CHECK: br label %[[finally:[^ ]*]]
+//
+// CHECK: [[finally]]
 // CHECK: call void @cleanup()
+// CHECK: load i8* %[[abnormal]]
+// CHECK: icmp eq
+// CHECK: br i1 %{{.*}}, label %[[finallycont:[^ ]*]], label %[[resumecont:[^ ]*]]
 //
-// CHECK: landingpad
+// CHECK: [[finallycont]]
+// CHECK-NEXT: ret void
+//
+// CHECK: [[lpad]]
+// CHECK-NEXT: landingpad
 // CHECK-NEXT: cleanup
-// CHECK: invoke void @cleanup()
+// CHECK: store i8 1, i8* %[[abnormal]]
+// CHECK: br label %[[finally]]
 //
-// CHECK: landingpad
-// CHECK-NEXT: catch i8* null
-// CHECK: call void @abort()
+// CHECK: [[resumecont]]
+// CHECK: br label %[[ehresume:[^ ]*]]
+//
+// CHECK: [[ehresume]]
+// CHECK: resume { i8*, i32 }
 
-// FIXME: This crashes.
-#if 0
-void basic_finally(void) {
+// Mostly check that we don't double emit 'r' which would crash.
+void decl_in_finally(void) {
+  __try {
+    might_crash();
+  } __finally {
+    int r;
+  }
+}
+
+// Ditto, don't crash double emitting 'l'.
+void label_in_finally(void) {
   __try {
     might_crash();
   } __finally {
@@ -35,4 +60,60 @@ l:
       goto l;
   }
 }
-#endif
+
+// CHECK-LABEL: define void @label_in_finally()
+// CHECK: invoke void @might_crash()
+// CHECK:     to label %[[invoke_cont:[^ ]*]] unwind label %[[lpad:[^ ]*]]
+//
+// CHECK: [[invoke_cont]]
+// CHECK: store i8 0, i8* %[[abnormal:[^ ]*]]
+// CHECK: br label %[[finally:[^ ]*]]
+//
+// CHECK: [[finally]]
+// CHECK: br label %[[l:[^ ]*]]
+//
+// CHECK: [[l]]
+// CHECK: call void @cleanup()
+// CHECK: call i32 @check_condition()
+// CHECK: br i1 {{.*}}, label
+// CHECK: br label %[[l]]
+
+int crashed;
+void use_abnormal_termination(void) {
+  __try {
+    might_crash();
+  } __finally {
+    crashed = __abnormal_termination();
+  }
+}
+
+// CHECK-LABEL: define void @use_abnormal_termination()
+// CHECK: invoke void @might_crash()
+// CHECK:     to label %[[invoke_cont:[^ ]*]] unwind label %[[lpad:[^ ]*]]
+//
+// CHECK: [[invoke_cont]]
+// CHECK: store i8 0, i8* %[[abnormal:[^ ]*]]
+// CHECK: br label %[[finally:[^ ]*]]
+//
+// CHECK: [[finally]]
+// CHECK: load i8* %[[abnormal]]
+// CHECK: zext i8 %{{.*}} to i32
+// CHECK: store i32 %{{.*}}, i32* @crashed
+// CHECK: load i8* %[[abnormal]]
+// CHECK: icmp eq
+// CHECK: br i1 %{{.*}}, label %[[finallycont:[^ ]*]], label %[[resumecont:[^ ]*]]
+//
+// CHECK: [[finallycont]]
+// CHECK-NEXT: ret void
+//
+// CHECK: [[lpad]]
+// CHECK-NEXT: landingpad
+// CHECK-NEXT: cleanup
+// CHECK: store i8 1, i8* %[[abnormal]]
+// CHECK: br label %[[finally]]
+//
+// CHECK: [[resumecont]]
+// CHECK: br label %[[ehresume:[^ ]*]]
+//
+// CHECK: [[ehresume]]
+// CHECK: resume { i8*, i32 }

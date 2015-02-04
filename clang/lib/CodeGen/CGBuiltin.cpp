@@ -1663,6 +1663,9 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
   case Builtin::BI__exception_info:
   case Builtin::BI_exception_info:
     return RValue::get(EmitSEHExceptionInfo());
+  case Builtin::BI__abnormal_termination:
+  case Builtin::BI_abnormal_termination:
+    return RValue::get(EmitSEHAbnormalTermination());
   case Builtin::BI_setjmpex: {
     if (getTarget().getTriple().isOSMSVCRT()) {
       llvm::Type *ArgTypes[] = {Int8PtrTy, Int8PtrTy};

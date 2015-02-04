@@ -15,7 +15,7 @@ unsigned long __exception_code();
 #ifdef BORLAND
 struct EXCEPTION_INFO* __exception_info();
 #endif
-void __abnormal_termination();
+int __abnormal_termination();
 
 #define GetExceptionCode __exception_code
 #define GetExceptionInformation __exception_info

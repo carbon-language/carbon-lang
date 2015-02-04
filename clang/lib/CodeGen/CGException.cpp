@@ -451,6 +451,12 @@ llvm::Value *CodeGenFunction::getSelectorFromSlot() {
   return Builder.CreateLoad(getEHSelectorSlot(), "sel");
 }
 
+llvm::Value *CodeGenFunction::getAbnormalTerminationSlot() {
+  if (!AbnormalTerminationSlot)
+    AbnormalTerminationSlot = CreateTempAlloca(Int8Ty, "abnormal.termination.slot");
+  return AbnormalTerminationSlot;
+}
+
 void CodeGenFunction::EmitCXXThrowExpr(const CXXThrowExpr *E,
                                        bool KeepInsertionPoint) {
   if (!E->getSubExpr()) {
@@ -1686,18 +1692,45 @@ void CodeGenFunction::EmitSEHTryStmt(const SEHTryStmt &S) {
     return;
   }
 
-  EnterSEHTryStmt(S);
+  SEHFinallyInfo FI;
+  EnterSEHTryStmt(S, FI);
   EmitStmt(S.getTryBlock());
-  ExitSEHTryStmt(S);
+  ExitSEHTryStmt(S, FI);
 }
 
 namespace {
 struct PerformSEHFinally : EHScopeStack::Cleanup  {
-  Stmt *Block;
-  PerformSEHFinally(Stmt *Block) : Block(Block) {}
+  CodeGenFunction::SEHFinallyInfo *FI;
+  PerformSEHFinally(CodeGenFunction::SEHFinallyInfo *FI) : FI(FI) {}
+
   void Emit(CodeGenFunction &CGF, Flags F) override {
-    // FIXME: Don't double-emit LabelDecls.
-    CGF.EmitStmt(Block);
+    // Cleanups are emitted at most twice: once for normal control flow and once
+    // for exception control flow. Branch into the finally block, and remember
+    // the continuation block so we can branch out later.
+    if (!FI->FinallyBB) {
+      FI->FinallyBB = CGF.createBasicBlock("__finally");
+      FI->FinallyBB->insertInto(CGF.CurFn);
+      FI->FinallyBB->moveAfter(CGF.Builder.GetInsertBlock());
+    }
+
+    // Set the termination status and branch in.
+    CGF.Builder.CreateStore(
+        llvm::ConstantInt::get(CGF.Int8Ty, F.isForEHCleanup()),
+        CGF.getAbnormalTerminationSlot());
+    CGF.Builder.CreateBr(FI->FinallyBB);
+
+    // Create a continuation block for normal or exceptional control.
+    if (F.isForEHCleanup()) {
+      assert(!FI->ResumeBB && "double emission for EH");
+      FI->ResumeBB = CGF.createBasicBlock("__finally.resume");
+      CGF.EmitBlock(FI->ResumeBB);
+    } else {
+      assert(F.isForNormalCleanup() && !FI->ContBB && "double normal emission");
+      FI->ContBB = CGF.createBasicBlock("__finally.cont");
+      CGF.EmitBlock(FI->ContBB);
+      // Try to keep source order.
+      FI->ContBB->moveAfter(FI->FinallyBB);
+    }
   }
 };
 }
@@ -1827,11 +1860,17 @@ llvm::Value *CodeGenFunction::EmitSEHExceptionCode() {
   return Builder.CreateTrunc(Code, CGM.Int32Ty);
 }
 
-void CodeGenFunction::EnterSEHTryStmt(const SEHTryStmt &S) {
+llvm::Value *CodeGenFunction::EmitSEHAbnormalTermination() {
+  // Load from the abnormal termination slot. It will be uninitialized outside
+  // of __finally blocks, which we should warn or error on.
+  llvm::Value *IsEH = Builder.CreateLoad(getAbnormalTerminationSlot());
+  return Builder.CreateZExt(IsEH, Int32Ty);
+}
+
+void CodeGenFunction::EnterSEHTryStmt(const SEHTryStmt &S, SEHFinallyInfo &FI) {
   if (SEHFinallyStmt *Finally = S.getFinallyHandler()) {
     // Push a cleanup for __finally blocks.
-    EHStack.pushCleanup<PerformSEHFinally>(NormalAndEHCleanup,
-                                           Finally->getBlock());
+    EHStack.pushCleanup<PerformSEHFinally>(NormalAndEHCleanup, &FI);
     return;
   }
 
@@ -1859,15 +1898,34 @@ void CodeGenFunction::EnterSEHTryStmt(const SEHTryStmt &S) {
   CatchScope->setHandler(0, OpaqueFunc, createBasicBlock("__except"));
 }
 
-void CodeGenFunction::ExitSEHTryStmt(const SEHTryStmt &S) {
+void CodeGenFunction::ExitSEHTryStmt(const SEHTryStmt &S, SEHFinallyInfo &FI) {
   // Just pop the cleanup if it's a __finally block.
-  if (S.getFinallyHandler()) {
+  if (const SEHFinallyStmt *Finally = S.getFinallyHandler()) {
     PopCleanupBlock();
+
+    // Emit the code into FinallyBB.
+    Builder.SetInsertPoint(FI.FinallyBB);
+    EmitStmt(Finally->getBlock());
+
+    assert(FI.ContBB);
+    if (FI.ResumeBB) {
+      llvm::Value *IsEH = Builder.CreateLoad(getAbnormalTerminationSlot(),
+                                             "abnormal.termination");
+      IsEH = Builder.CreateICmpEQ(IsEH, llvm::ConstantInt::get(Int8Ty, 0));
+      Builder.CreateCondBr(IsEH, FI.ContBB, FI.ResumeBB);
+    } else {
+      // There was nothing exceptional in the try body, so we only have normal
+      // control flow.
+      Builder.CreateBr(FI.ContBB);
+    }
+
+    Builder.SetInsertPoint(FI.ContBB);
+
     return;
   }
 
   // Otherwise, we must have an __except block.
-  SEHExceptStmt *Except = S.getExceptHandler();
+  const SEHExceptStmt *Except = S.getExceptHandler();
   assert(Except && "__try must have __finally xor __except");
   EHCatchScope &CatchScope = cast<EHCatchScope>(*EHStack.begin());
 
