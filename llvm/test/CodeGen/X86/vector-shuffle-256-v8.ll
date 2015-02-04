@@ -1862,7 +1862,7 @@ define <8 x i32> @shuffle_v8i32_z0U2zUz6(<8 x i32> %a) {
 ;
 ; AVX2-LABEL: shuffle_v8i32_z0U2zUz6:
 ; AVX2:       # BB#0:
-; AVX2-NEXT:    vpsllq $32, %ymm0
+; AVX2-NEXT:    vpsllq $32, %ymm0, %ymm0
 ; AVX2-NEXT:    retq
   %shuffle = shufflevector <8 x i32> %a, <8 x i32> zeroinitializer, <8 x i32> <i32 8, i32 0, i32 undef, i32 2, i32 8, i32 undef, i32 8, i32 6>
   ret <8 x i32> %shuffle
@@ -1878,7 +1878,7 @@ define <8 x i32> @shuffle_v8i32_1U3z5zUU(<8 x i32> %a) {
 ;
 ; AVX2-LABEL: shuffle_v8i32_1U3z5zUU:
 ; AVX2:       # BB#0:
-; AVX2-NEXT:    vpsrlq $32, %ymm0
+; AVX2-NEXT:    vpsrlq $32, %ymm0, %ymm0
 ; AVX2-NEXT:    retq
   %shuffle = shufflevector <8 x i32> %a, <8 x i32> zeroinitializer, <8 x i32> <i32 1, i32 undef, i32 3, i32 8, i32 5, i32 8, i32 undef, i32 undef>
   ret <8 x i32> %shuffle

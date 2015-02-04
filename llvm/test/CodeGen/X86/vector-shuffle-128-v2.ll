@@ -1091,22 +1091,22 @@ define <2 x double> @insert_dup_mem_v2f64(double* %ptr) {
 ;
 ; SSE3-LABEL: insert_dup_mem_v2f64:
 ; SSE3:       # BB#0:
-; SSE3-NEXT:    movddup (%rdi), %xmm0
+; SSE3-NEXT:    movddup {{.*#+}} xmm0 = mem[0,0]
 ; SSE3-NEXT:    retq
 ;
 ; SSSE3-LABEL: insert_dup_mem_v2f64:
 ; SSSE3:       # BB#0:
-; SSSE3-NEXT:    movddup (%rdi), %xmm0
+; SSSE3-NEXT:    movddup {{.*#+}} xmm0 = mem[0,0]
 ; SSSE3-NEXT:    retq
 ;
 ; SSE41-LABEL: insert_dup_mem_v2f64:
 ; SSE41:       # BB#0:
-; SSE41-NEXT:    movddup (%rdi), %xmm0
+; SSE41-NEXT:    movddup {{.*#+}} xmm0 = mem[0,0]
 ; SSE41-NEXT:    retq
 ;
 ; AVX-LABEL: insert_dup_mem_v2f64:
 ; AVX:       # BB#0:
-; AVX-NEXT:    vmovddup (%rdi), %xmm0
+; AVX-NEXT:    vmovddup {{.*#+}} xmm0 = mem[0,0]
 ; AVX-NEXT:    retq
   %a = load double* %ptr
   %v = insertelement <2 x double> undef, double %a, i32 0

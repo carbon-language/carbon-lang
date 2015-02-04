@@ -1383,7 +1383,7 @@ define <16 x i16> @shuffle_v16i16_zz_00_zz_02_zz_04_zz_06_zz_08_zz_10_zz_12_zz_1
 ;
 ; AVX2-LABEL: shuffle_v16i16_zz_00_zz_02_zz_04_zz_06_zz_08_zz_10_zz_12_zz_14:
 ; AVX2:       # BB#0:
-; AVX2-NEXT:    vpslld $16, %ymm0
+; AVX2-NEXT:    vpslld $16, %ymm0, %ymm0
 ; AVX2-NEXT:    retq
   %shuffle = shufflevector <16 x i16> %a, <16 x i16> zeroinitializer, <16 x i32> <i32 16, i32 0, i32 16, i32 2, i32 16, i32 4, i32 16, i32 6, i32 16, i32 8, i32 16, i32 10, i32 16, i32 12, i32 16, i32 14>
   ret <16 x i16> %shuffle
@@ -1410,7 +1410,7 @@ define <16 x i16> @shuffle_v16i16_zz_zz_zz_00_zz_zz_zz_04_zz_zz_zz_08_zz_zz_zz_1
 ;
 ; AVX2-LABEL: shuffle_v16i16_zz_zz_zz_00_zz_zz_zz_04_zz_zz_zz_08_zz_zz_zz_12:
 ; AVX2:       # BB#0:
-; AVX2-NEXT:    vpsllq $48, %ymm0
+; AVX2-NEXT:    vpsllq $48, %ymm0, %ymm0
 ; AVX2-NEXT:    retq
   %shuffle = shufflevector <16 x i16> %a, <16 x i16> zeroinitializer, <16 x i32> <i32 16, i32 16, i32 16, i32 0, i32 16, i32 16, i32 16, i32 4, i32 16, i32 16, i32 16, i32 8, i32 16, i32 16, i32 16, i32 12>
   ret <16 x i16> %shuffle
@@ -1432,7 +1432,7 @@ define <16 x i16> @shuffle_v16i16_01_zz_03_zz_05_zz_07_zz_09_zz_11_zz_13_zz_15_z
 ;
 ; AVX2-LABEL: shuffle_v16i16_01_zz_03_zz_05_zz_07_zz_09_zz_11_zz_13_zz_15_zz:
 ; AVX2:       # BB#0:
-; AVX2-NEXT:    vpsrld $16, %ymm0
+; AVX2-NEXT:    vpsrld $16, %ymm0, %ymm0
 ; AVX2-NEXT:    retq
   %shuffle = shufflevector <16 x i16> %a, <16 x i16> zeroinitializer, <16 x i32> <i32 1, i32 16, i32 3, i32 16, i32 5, i32 16, i32 7, i32 16, i32 9, i32 16, i32 11, i32 16, i32 13, i32 16, i32 15, i32 16>
   ret <16 x i16> %shuffle
@@ -1461,7 +1461,7 @@ define <16 x i16> @shuffle_v16i16_02_03_zz_zz_06_07_zz_zz_10_11_zz_zz_14_15_zz_z
 ;
 ; AVX2-LABEL: shuffle_v16i16_02_03_zz_zz_06_07_zz_zz_10_11_zz_zz_14_15_zz_zz:
 ; AVX2:       # BB#0:
-; AVX2-NEXT:    vpsrlq $32, %ymm0
+; AVX2-NEXT:    vpsrlq $32, %ymm0, %ymm0
 ; AVX2-NEXT:    retq
   %shuffle = shufflevector <16 x i16> %a, <16 x i16> zeroinitializer, <16 x i32> <i32 2, i32 3, i32 16, i32 16, i32 6, i32 7, i32 16, i32 16, i32 10, i32 11, i32 16, i32 16, i32 14, i32 15, i32 16, i32 16>
   ret <16 x i16> %shuffle

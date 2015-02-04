@@ -749,21 +749,8 @@ define <4 x i64> @shuffle_v4i64_0415(<4 x i64> %a, <4 x i64> %b) {
 }
 
 define <4 x i64> @stress_test1(<4 x i64> %a, <4 x i64> %b) {
-; AVX1-LABEL: stress_test1:
-; AVX1:       # BB#0:
-; AVX1-NEXT:    vperm2f128 {{.*#+}} ymm0 = ymm1[2,3,0,1]
-; AVX1-NEXT:    vpermilpd {{.*#+}} ymm2 = ymm0[1,0,3,2]
-; AVX1-NEXT:    vblendpd {{.*#+}} ymm1 = ymm2[0],ymm1[1],ymm2[2,3]
-; AVX1-NEXT:    vpermilpd {{.*#+}} ymm0 = ymm0[1,1,3,2]
-; AVX1-NEXT:    vunpckhpd {{.*#+}} ymm0 = ymm0[1],ymm1[1],ymm0[3],ymm1[3]
-; AVX1-NEXT:    retq
-;
-; AVX2-LABEL: stress_test1:
-; AVX2:       # BB#0:
-; AVX2-NEXT:    vpermq {{.*#+}} ymm0 = ymm1[3,1,1,0]
-; AVX2-NEXT:    vpermq {{.*#+}} ymm1 = ymm1[3,3,1,3]
-; AVX2-NEXT:    vpunpckhqdq {{.*#+}} ymm0 = ymm1[1],ymm0[1],ymm1[3],ymm0[3]
-; AVX2-NEXT:    retq
+; ALL-LABEL: stress_test1:
+; ALL:         retq
   %c = shufflevector <4 x i64> %b, <4 x i64> undef, <4 x i32> <i32 3, i32 1, i32 1, i32 0>
   %d = shufflevector <4 x i64> %c, <4 x i64> undef, <4 x i32> <i32 3, i32 undef, i32 2, i32 undef>
   %e = shufflevector <4 x i64> %b, <4 x i64> undef, <4 x i32> <i32 3, i32 3, i32 1, i32 undef>
@@ -847,7 +834,7 @@ define <4 x double> @splat_mem_v4f64(double* %ptr) {
 define <4 x i64> @splat_mem_v4i64(i64* %ptr) {
 ; AVX1-LABEL: splat_mem_v4i64:
 ; AVX1:       # BB#0:
-; AVX1-NEXT:    vmovddup (%rdi), %xmm0
+; AVX1-NEXT:    vmovddup {{.*#+}} xmm0 = mem[0,0]
 ; AVX1-NEXT:    vinsertf128 $1, %xmm0, %ymm0, %ymm0
 ; AVX1-NEXT:    retq
 ;
