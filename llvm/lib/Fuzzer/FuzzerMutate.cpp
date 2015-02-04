@@ -31,18 +31,25 @@ static char RandCh() {
   return Special[rand() % (sizeof(Special) - 1)];
 }
 
+// Mutate U in place.
 void Mutate(Unit *U, size_t MaxLen) {
   assert(MaxLen > 0);
   assert(U->size() <= MaxLen);
+  if (U->empty()) {
+    for (size_t i = 0; i < MaxLen; i++)
+      U->push_back(RandCh());
+    return;
+  }
+  assert(!U->empty());
   switch (rand() % 3) {
   case 0:
-    if (U->size())
+    if (U->size() > 1) {
       U->erase(U->begin() + rand() % U->size());
-    break;
+      break;
+    }
+    // Fallthrough
   case 1:
-    if (U->empty()) {
-      U->push_back(RandCh());
-    } else if (U->size() < MaxLen) {
+    if (U->size() < MaxLen) {
       U->insert(U->begin() + rand() % U->size(), RandCh());
     } else { // At MaxLen.
       uint8_t Ch = RandCh();
@@ -51,12 +58,13 @@ void Mutate(Unit *U, size_t MaxLen) {
     }
     break;
   default:
-    if (!U->empty()) {
-      size_t idx = rand() % U->size();
-      (*U)[idx] = FlipRandomBit((*U)[idx]);
+    {
+      size_t Idx = rand() % U->size();
+      (*U)[Idx] = FlipRandomBit((*U)[Idx]);
     }
     break;
   }
+  assert(!U->empty());
 }
 
 }  // namespace fuzzer

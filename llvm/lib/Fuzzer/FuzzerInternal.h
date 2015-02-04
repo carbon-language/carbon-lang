@@ -23,6 +23,7 @@ using namespace std::chrono;
 Unit ReadFile(const char *Path);
 void ReadDirToVectorOfUnits(const char *Path, std::vector<Unit> *V);
 void WriteToFile(const Unit &U, const std::string &Path);
+void CopyFileToErr(const std::string &Path);
 // Returns "Dir/FileName" or equivalent for the current OS.
 std::string DirPlusFile(const std::string &DirPath,
                         const std::string &FileName);
@@ -42,7 +43,7 @@ class Fuzzer {
     int Verbosity = 1;
     int MaxLen = 0;
     bool DoCrossOver = true;
-    bool MutateDepth = 10;
+    int  MutateDepth = 5;
     bool ExitOnFirst = false;
     bool UseFullCoverageSet  = false;
     std::string OutputCorpus;

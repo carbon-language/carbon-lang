@@ -9,6 +9,8 @@
 // IO functions.
 //===----------------------------------------------------------------------===//
 #include "FuzzerInternal.h"
+#include <iostream>
+#include <iterator>
 #include <fstream>
 #include <dirent.h>
 namespace fuzzer {
@@ -29,6 +31,12 @@ Unit FileToVector(const std::string &Path) {
   std::ifstream T(Path);
   return Unit((std::istreambuf_iterator<char>(T)),
               std::istreambuf_iterator<char>());
+}
+
+void CopyFileToErr(const std::string &Path) {
+  std::ifstream T(Path);
+  std::copy(std::istreambuf_iterator<char>(T), std::istreambuf_iterator<char>(),
+            std::ostream_iterator<char>(std::cerr, ""));
 }
 
 void WriteToFile(const Unit &U, const std::string &Path) {

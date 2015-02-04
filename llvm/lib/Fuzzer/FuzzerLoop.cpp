@@ -146,9 +146,8 @@ void Fuzzer::SaveCorpus() {
 
 size_t Fuzzer::MutateAndTestOne(Unit *U) {
   size_t NewUnits = 0;
-  for (size_t i = 0; i < Options.MutateDepth; i++) {
+  for (int i = 0; i < Options.MutateDepth; i++) {
     Mutate(U, Options.MaxLen);
-    if (U->empty()) continue;
     size_t NewCoverage = RunOne(*U);
     if (NewCoverage) {
       Corpus.push_back(*U);
@@ -158,6 +157,7 @@ size_t Fuzzer::MutateAndTestOne(Unit *U) {
                   << "\tNEW: " << NewCoverage
                   << " L: " << U->size()
                   << " S: " << Corpus.size()
+                  << " I: " << i
                   << "\t";
         if (U->size() < 30) {
           PrintASCII(*U);

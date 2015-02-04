@@ -17,6 +17,7 @@
 #include <iostream>
 #include <thread>
 #include <atomic>
+#include <mutex>
 
 // ASAN options:
 //   * don't dump the coverage to disk.
@@ -105,20 +106,30 @@ static void ParseFlags(int argc, char **argv) {
 }
 
 static void WorkerThread(const std::string &Cmd, std::atomic<int> *Counter,
-                         int NumJobs) {
+                        int NumJobs, std::atomic<bool> *HasErrors) {
+  static std::mutex CerrMutex;
   while (true) {
     int C = (*Counter)++;
-    if (C >= NumJobs) return;
-    std::string ToRun = Cmd + " > fuzz-" + std::to_string(C) + ".log 2>&1\n";
+    if (C >= NumJobs) break;
+    std::string Log = "fuzz-" + std::to_string(C) + ".log";
+    std::string ToRun = Cmd + " > " + Log + " 2>&1\n";
     if (Flags.verbosity)
       std::cerr << ToRun;
-    system(ToRun.c_str());
+    int ExitCode = system(ToRun.c_str());
+    if (ExitCode != 0)
+      *HasErrors = true;
+    std::lock_guard<std::mutex> Lock(CerrMutex);
+    std::cerr << "================== Job " << C
+              << " exited with exit code " << ExitCode
+              << " =================\n";
+    fuzzer::CopyFileToErr(Log);
   }
 }
 
 static int RunInMultipleProcesses(int argc, char **argv, int NumWorkers,
                                   int NumJobs) {
   std::atomic<int> Counter(0);
+  std::atomic<bool> HasErrors(false);
   std::string Cmd;
   for (int i = 0; i < argc; i++) {
     if (FlagValue(argv[i], "jobs") || FlagValue(argv[i], "workers")) continue;
@@ -127,10 +138,10 @@ static int RunInMultipleProcesses(int argc, char **argv, int NumWorkers,
   }
   std::vector<std::thread> V;
   for (int i = 0; i < NumWorkers; i++)
-    V.push_back(std::thread(WorkerThread, Cmd, &Counter, NumJobs));
+    V.push_back(std::thread(WorkerThread, Cmd, &Counter, NumJobs, &HasErrors));
   for (auto &T : V)
     T.join();
-  return 0;
+  return HasErrors ? 1 : 0;
 }
 
 int main(int argc, char **argv) {
