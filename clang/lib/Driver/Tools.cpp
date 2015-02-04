@@ -1731,7 +1731,7 @@ static bool DecodeAArch64Mcpu(const Driver &D, StringRef Mcpu, StringRef &CPU,
                               std::vector<const char *> &Features) {
   std::pair<StringRef, StringRef> Split = Mcpu.split("+");
   CPU = Split.first;
-  if (CPU == "cyclone" || CPU == "cortex-a53" || CPU == "cortex-a57") {
+  if (CPU == "cyclone" || CPU == "cortex-a53" || CPU == "cortex-a57" || CPU == "cortex-a72") {
     Features.push_back("+neon");
     Features.push_back("+crc");
     Features.push_back("+crypto");
@@ -5533,7 +5533,7 @@ const char *arm::getLLVMArchSuffixForARM(StringRef CPU) {
     .Cases("cortex-m4", "cortex-m7", "v7em")
     .Case("swift", "v7s")
     .Case("cyclone", "v8")
-    .Cases("cortex-a53", "cortex-a57", "v8")
+    .Cases("cortex-a53", "cortex-a57", "cortex-a72", "v8")
     .Default("");
 }
 
