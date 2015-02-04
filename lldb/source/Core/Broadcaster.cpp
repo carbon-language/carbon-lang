@@ -303,6 +303,16 @@ Broadcaster::HijackBroadcaster (Listener *listener, uint32_t event_mask)
     return true;
 }
 
+bool
+Broadcaster::IsHijackedForEvent (uint32_t event_mask)
+{
+    Mutex::Locker event_types_locker(m_listeners_mutex);
+
+    if (!m_hijacking_listeners.empty())
+        return (event_mask & m_hijacking_masks.back()) != 0;
+    return false;
+}
+
 void
 Broadcaster::RestoreBroadcaster ()
 {

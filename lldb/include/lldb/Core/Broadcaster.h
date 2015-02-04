@@ -419,12 +419,7 @@ public:
     HijackBroadcaster (Listener *listener, uint32_t event_mask = UINT32_MAX);
     
     bool
-    IsHijackedForEvent (uint32_t event_mask)
-    {
-        if (m_hijacking_listeners.size() > 0)
-            return (event_mask & m_hijacking_masks.back()) != 0;
-        return false;
-    }
+    IsHijackedForEvent (uint32_t event_mask);
 
     //------------------------------------------------------------------
     /// Restore the state of the Broadcaster from a previous hijack attempt.
