@@ -2945,6 +2945,12 @@ struct MDUnsignedField : public MDFieldImpl<uint64_t> {
   MDUnsignedField(uint64_t Default = 0, uint64_t Max = UINT64_MAX)
       : ImplTy(Default), Max(Max) {}
 };
+struct LineField : public MDUnsignedField {
+  LineField() : MDUnsignedField(0, UINT32_MAX >> 8) {}
+};
+struct ColumnField : public MDUnsignedField {
+  ColumnField() : MDUnsignedField(0, UINT16_MAX) {}
+};
 struct DwarfTagField : public MDUnsignedField {
   DwarfTagField() : MDUnsignedField(0, ~0u >> 16) {}
 };
@@ -2976,6 +2982,15 @@ bool LLParser::ParseMDField(LocTy Loc, StringRef Name,
   assert(Result.Val <= Result.Max && "Expected value in range");
   Lex.Lex();
   return false;
+}
+
+template <>
+bool LLParser::ParseMDField(LocTy Loc, StringRef Name, LineField &Result) {
+  return ParseMDField(Loc, Name, static_cast<MDUnsignedField &>(Result));
+}
+template <>
+bool LLParser::ParseMDField(LocTy Loc, StringRef Name, ColumnField &Result) {
+  return ParseMDField(Loc, Name, static_cast<MDUnsignedField &>(Result));
 }
 
 template <>
@@ -3105,8 +3120,8 @@ bool LLParser::ParseSpecializedMDNode(MDNode *&N, bool IsDistinct) {
 ///   ::= !MDLocation(line: 43, column: 8, scope: !5, inlinedAt: !6)
 bool LLParser::ParseMDLocation(MDNode *&Result, bool IsDistinct) {
 #define VISIT_MD_FIELDS(OPTIONAL, REQUIRED)                                    \
-  OPTIONAL(line, MDUnsignedField, (0, ~0u >> 8));                              \
-  OPTIONAL(column, MDUnsignedField, (0, ~0u >> 16));                           \
+  OPTIONAL(line, LineField, );                                                 \
+  OPTIONAL(column, ColumnField, );                                             \
   REQUIRED(scope, MDField, );                                                  \
   OPTIONAL(inlinedAt, MDField, );
   PARSE_MD_FIELDS();
