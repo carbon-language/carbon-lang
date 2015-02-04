@@ -767,7 +767,7 @@ class T_ST_absset_nv <string mnemonic, string BaseOp, bits<2> MajOp,
     let Inst{5-0}   = addr;
   }
 
-let mayStore = 1, addrMode = AbsoluteSet in {
+let mayStore = 1, addrMode = AbsoluteSet, isCodeGenOnly = 0 in {
   def S4_storerbnew_ap : T_ST_absset_nv <"memb", "STrib", 0b00, ByteAccess>;
   def S4_storerhnew_ap : T_ST_absset_nv <"memh", "STrih", 0b01, HalfWordAccess>;
   def S4_storerinew_ap : T_ST_absset_nv <"memw", "STriw", 0b10, WordAccess>;
@@ -802,6 +802,7 @@ class T_StoreAbsReg <string mnemonic, string CextOp, RegisterClass RC,
     let Inst{5-0}   = src3;
 }
 
+let isCodeGenOnly = 0 in {
 def S4_storerb_ur : T_StoreAbsReg <"memb", "STrib", IntRegs, 0b000, ByteAccess>;
 def S4_storerh_ur : T_StoreAbsReg <"memh", "STrih", IntRegs, 0b010,
                                    HalfWordAccess>;
@@ -810,6 +811,7 @@ def S4_storerf_ur : T_StoreAbsReg <"memh", "STrif", IntRegs, 0b011,
 def S4_storeri_ur : T_StoreAbsReg <"memw", "STriw", IntRegs, 0b100, WordAccess>;
 def S4_storerd_ur : T_StoreAbsReg <"memd", "STrid", DoubleRegs, 0b110,
                                    DoubleWordAccess>;
+}
 
 let AddedComplexity = 40 in
 multiclass T_StoreAbsReg_Pats <InstHexagon MI, RegisterClass RC, ValueType VT,
@@ -861,9 +863,11 @@ class T_StoreAbsRegNV <string mnemonic, string CextOp, bits<2> MajOp,
     let Inst{5-0}   = src3;
   }
 
+let isCodeGenOnly = 0 in {
 def S4_storerbnew_ur : T_StoreAbsRegNV <"memb", "STrib", 0b00, ByteAccess>;
 def S4_storerhnew_ur : T_StoreAbsRegNV <"memh", "STrih", 0b01, HalfWordAccess>;
 def S4_storerinew_ur : T_StoreAbsRegNV <"memw", "STriw", 0b10, WordAccess>;
+}
 
 //===----------------------------------------------------------------------===//
 // Template classes for the non-predicated store instructions with
@@ -1027,7 +1031,8 @@ multiclass ST_Idxd_shl_nv <string mnemonic, string CextOp, RegisterClass RC,
   }
 }
 
-let addrMode = BaseRegOffset, InputType = "reg", hasSideEffects = 0 in {
+let addrMode = BaseRegOffset, InputType = "reg", hasSideEffects = 0,
+    isCodeGenOnly = 0 in {
   let accessSize = ByteAccess in
   defm storerb: ST_Idxd_shl<"memb", "STrib", IntRegs, 0b000>,
                 ST_Idxd_shl_nv<"memb", "STrib", IntRegs, 0b00>;
