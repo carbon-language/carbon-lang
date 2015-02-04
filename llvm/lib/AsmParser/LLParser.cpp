@@ -2942,10 +2942,6 @@ bool LLParser::ParseMDField(LocTy Loc, StringRef Name, DwarfTagField &Result) {
   if (Lex.getKind() == lltok::APSInt)
     return ParseMDField(Loc, Name, static_cast<MDUnsignedField &>(Result));
 
-  if (Result.Seen)
-    return Error(Loc,
-                 "field '" + Name + "' cannot be specified more than once");
-
   if (Lex.getKind() != lltok::DwarfTag)
     return TokError("expected DWARF tag");
 
