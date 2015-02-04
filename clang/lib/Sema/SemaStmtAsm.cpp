@@ -313,32 +313,22 @@ StmtResult Sema::ActOnGCCAsmStmt(SourceLocation AsmLoc, bool IsSimple,
     if (!Piece.isOperand()) continue;
 
     // Look for the correct constraint index.
-    unsigned Idx = 0;
-    unsigned ConstraintIdx = 0;
-    for (unsigned i = 0, e = NS->getNumOutputs(); i != e; ++i, ++ConstraintIdx) {
-      TargetInfo::ConstraintInfo &Info = OutputConstraintInfos[i];
-      if (Idx == Piece.getOperandNo())
-        break;
-      ++Idx;
+    unsigned ConstraintIdx = Piece.getOperandNo();
+    unsigned NumOperands = NS->getNumOutputs() + NS->getNumInputs();
 
-      if (Info.isReadWrite()) {
-        if (Idx == Piece.getOperandNo())
+    // Look for the (ConstraintIdx - NumOperands + 1)th constraint with
+    // modifier '+'.
+    if (ConstraintIdx >= NumOperands) {
+      unsigned I = 0, E = NS->getNumOutputs();
+
+      for (unsigned Cnt = ConstraintIdx - NumOperands; I != E; ++I)
+        if (OutputConstraintInfos[I].isReadWrite() && Cnt-- == 0) {
+          ConstraintIdx = I;
           break;
-        ++Idx;
-      }
-    }
+        }
 
-    for (unsigned i = 0, e = NS->getNumInputs(); i != e; ++i, ++ConstraintIdx) {
-      TargetInfo::ConstraintInfo &Info = InputConstraintInfos[i];
-      if (Idx == Piece.getOperandNo())
-        break;
-      ++Idx;
-
-      if (Info.isReadWrite()) {
-        if (Idx == Piece.getOperandNo())
-          break;
-        ++Idx;
-      }
+      assert(I != E && "Invalid operand number should have been caught in "
+                       " AnalyzeAsmString");
     }
 
     // Now that we have the right indexes go ahead and check.

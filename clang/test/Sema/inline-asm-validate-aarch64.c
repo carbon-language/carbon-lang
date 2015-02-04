@@ -36,3 +36,19 @@ uint8_t constraint_r_symbolic_macro(uint8_t *addr) {
 
   return byte;
 }
+
+// CHECK: warning: value size does not match register size specified by the constraint and modifier
+// CHECK: asm ("%w0 %w1 %2" : "+r" (one) : "r" (wide_two));
+// CHECK: note: use constraint modifier "w"
+// CHECK: fix-it:{{.*}}:{47:17-47:19}:"%w2"
+
+void read_write_modifier0(int one, int two) {
+  long wide_two = two;
+  asm ("%w0 %w1 %2" : "+r" (one) : "r" (wide_two));
+}
+
+// CHECK-NOT: warning: 
+void read_write_modifier1(int one, int two) {
+  long wide_two = two;
+  asm ("%w0 %1" : "+r" (one), "+r" (wide_two));
+}
