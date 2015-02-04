@@ -2948,7 +2948,7 @@ bool LLParser::ParseMDField(LocTy Loc, StringRef Name, DwarfTagField &Result) {
   unsigned Tag = dwarf::getTag(Lex.getStrVal());
   if (Tag == dwarf::DW_TAG_invalid)
     return TokError("invalid DWARF tag" + Twine(" '") + Lex.getStrVal() + "'");
-  assert(Tag < 1u << 16 && "Expected valid DWARF tag");
+  assert(Tag <= Result.Max && "Expected valid DWARF tag");
 
   Result.assign(Tag);
   Lex.Lex();
