@@ -77,6 +77,9 @@ public:
   bool SelectADDRriU6_1(SDValue& N, SDValue &R1, SDValue &R2);
   bool SelectADDRriU6_2(SDValue& N, SDValue &R1, SDValue &R2);
 
+  // Complex Pattern Selectors.
+  inline bool SelectAddrGA(SDValue &N, SDValue &R);
+  bool SelectGlobalAddress(SDValue &N, SDValue &R, bool UseGP);
   bool SelectAddrFI(SDValue &N, SDValue &R);
 
   const char *getPassName() const override {
@@ -1628,6 +1631,51 @@ bool HexagonDAGToDAGISel::SelectAddrFI(SDValue& N, SDValue &R) {
   FrameIndexSDNode *FX = cast<FrameIndexSDNode>(N);
   R = CurDAG->getTargetFrameIndex(FX->getIndex(), MVT::i32);
   return true;
+}
+
+inline bool HexagonDAGToDAGISel::SelectAddrGA(SDValue &N, SDValue &R) {
+  return SelectGlobalAddress(N, R, false);
+}
+
+bool HexagonDAGToDAGISel::SelectGlobalAddress(SDValue &N, SDValue &R,
+                                              bool UseGP) {
+  switch (N.getOpcode()) {
+  case ISD::ADD: {
+    SDValue N0 = N.getOperand(0);
+    SDValue N1 = N.getOperand(1);
+    unsigned GAOpc = N0.getOpcode();
+    if (UseGP && GAOpc != HexagonISD::CONST32_GP)
+      return false;
+    if (!UseGP && GAOpc != HexagonISD::CONST32)
+      return false;
+    if (ConstantSDNode *Const = dyn_cast<ConstantSDNode>(N1)) {
+      SDValue Addr = N0.getOperand(0);
+      if (GlobalAddressSDNode *GA = dyn_cast<GlobalAddressSDNode>(Addr)) {
+        if (GA->getOpcode() == ISD::TargetGlobalAddress) {
+          uint64_t NewOff = GA->getOffset() + (uint64_t)Const->getSExtValue();
+          R = CurDAG->getTargetGlobalAddress(GA->getGlobal(), SDLoc(Const),
+                                             N.getValueType(), NewOff);
+          return true;
+        }
+      }
+    }
+    break;
+  }
+  case HexagonISD::CONST32:
+    // The operand(0) of CONST32 is TargetGlobalAddress, which is what we
+    // want in the instruction.
+    if (!UseGP)
+      R = N.getOperand(0);
+    return !UseGP;
+  case HexagonISD::CONST32_GP:
+    if (UseGP)
+      R = N.getOperand(0);
+    return UseGP;
+  default:
+    return false;
+  }
+
+  return false;
 }
 
 bool HexagonDAGToDAGISel::isValueExtension(SDValue const &Val,

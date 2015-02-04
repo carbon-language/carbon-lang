@@ -11,6 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+def addrga: PatLeaf<(i32 AddrGA:$Addr)>;
+
 let hasSideEffects = 0 in
 class T_Immext<Operand ImmType>
   : EXTENDERInst<(outs), (ins ImmType:$imm),
@@ -332,6 +334,12 @@ def A4_combineii: ALU32Inst<(outs DoubleRegs:$Rdd), (ins s8Imm:$s8, u6Ext:$U6),
 //===----------------------------------------------------------------------===//
 // LD +
 //===----------------------------------------------------------------------===//
+
+def Zext64: OutPatFrag<(ops node:$Rs),
+  (i64 (A4_combineir 0, (i32 $Rs)))>;
+def Sext64: OutPatFrag<(ops node:$Rs),
+  (i64 (A2_sxtw (i32 $Rs)))>;
+
 //===----------------------------------------------------------------------===//
 // Template class for load instructions with Absolute set addressing mode.
 //===----------------------------------------------------------------------===//
@@ -3633,6 +3641,13 @@ let isNVStorable = 0, accessSize = HalfWordAccess in
 def S2_storerfgp : T_StoreGP <"memh", "STrif", IntRegs,
                               u16_1Imm, 0b01, 1>, PredNewRel;
 
+class Loada_pat<PatFrag Load, ValueType VT, PatFrag Addr, InstHexagon MI>
+  : Pat<(VT (Load Addr:$addr)), (MI Addr:$addr)>;
+
+class Loadam_pat<PatFrag Load, ValueType VT, PatFrag Addr, PatFrag ValueMod,
+                 InstHexagon MI>
+  : Pat<(VT (Load Addr:$addr)), (ValueMod (MI Addr:$addr))>;
+
 let Predicates = [HasV4T], AddedComplexity = 30 in {
 def : Pat<(truncstorei8 (i32 IntRegs:$src1),
                         (HexagonCONST32 tglobaladdr:$absaddr)),
@@ -4019,84 +4034,21 @@ def : Pat<(i64 (cttz (i64 DoubleRegs:$src1))),
           (i64 (A4_combineir (i32 0), (i32 (S2_ct0p DoubleRegs:$src1))))>,
           Requires<[HasV4T]>;
 
-
-// i8 -> i64 loads
+// i8/i16/i32 -> i64 loads
 // We need a complexity of 120 here to override preceding handling of
-// zextloadi8.
-let Predicates = [HasV4T], AddedComplexity = 120 in {
-def:  Pat <(i64 (extloadi8 (NumUsesBelowThresCONST32 tglobaladdr:$addr))),
-      (i64 (A4_combineir 0, (L4_loadrb_abs tglobaladdr:$addr)))>;
-
-def:  Pat <(i64 (zextloadi8 (NumUsesBelowThresCONST32 tglobaladdr:$addr))),
-      (i64 (A4_combineir 0, (L4_loadrub_abs tglobaladdr:$addr)))>;
-
-def:  Pat <(i64 (sextloadi8 (NumUsesBelowThresCONST32 tglobaladdr:$addr))),
-      (i64 (A2_sxtw (L4_loadrb_abs tglobaladdr:$addr)))>;
-
-def:  Pat <(i64 (extloadi8 FoldGlobalAddr:$addr)),
-      (i64 (A4_combineir 0, (L4_loadrb_abs FoldGlobalAddr:$addr)))>;
-
-def:  Pat <(i64 (zextloadi8 FoldGlobalAddr:$addr)),
-      (i64 (A4_combineir 0, (L4_loadrub_abs FoldGlobalAddr:$addr)))>;
-
-def:  Pat <(i64 (sextloadi8 FoldGlobalAddr:$addr)),
-      (i64 (A2_sxtw (L4_loadrb_abs FoldGlobalAddr:$addr)))>;
-}
-// i16 -> i64 loads
-// We need a complexity of 120 here to override preceding handling of
-// zextloadi16.
+// zextload.
 let AddedComplexity = 120 in {
-def:  Pat <(i64 (extloadi16 (NumUsesBelowThresCONST32 tglobaladdr:$addr))),
-      (i64 (A4_combineir 0, (L4_loadrh_abs tglobaladdr:$addr)))>,
-      Requires<[HasV4T]>;
+  def: Loadam_pat<extloadi8,   i64, addrga, Zext64, L4_loadrub_abs>;
+  def: Loadam_pat<sextloadi8,  i64, addrga, Sext64, L4_loadrb_abs>;
+  def: Loadam_pat<zextloadi8,  i64, addrga, Zext64, L4_loadrub_abs>;
 
-def:  Pat <(i64 (zextloadi16 (NumUsesBelowThresCONST32 tglobaladdr:$addr))),
-      (i64 (A4_combineir 0, (L4_loadruh_abs tglobaladdr:$addr)))>,
-      Requires<[HasV4T]>;
+  def: Loadam_pat<extloadi16,  i64, addrga, Zext64, L4_loadruh_abs>;
+  def: Loadam_pat<sextloadi16, i64, addrga, Sext64, L4_loadrh_abs>;
+  def: Loadam_pat<zextloadi16, i64, addrga, Zext64, L4_loadruh_abs>;
 
-def:  Pat <(i64 (sextloadi16 (NumUsesBelowThresCONST32 tglobaladdr:$addr))),
-      (i64 (A2_sxtw (L4_loadrh_abs tglobaladdr:$addr)))>,
-      Requires<[HasV4T]>;
-
-def:  Pat <(i64 (extloadi16 FoldGlobalAddr:$addr)),
-      (i64 (A4_combineir 0, (L4_loadrh_abs FoldGlobalAddr:$addr)))>,
-      Requires<[HasV4T]>;
-
-def:  Pat <(i64 (zextloadi16 FoldGlobalAddr:$addr)),
-      (i64 (A4_combineir 0, (L4_loadruh_abs FoldGlobalAddr:$addr)))>,
-      Requires<[HasV4T]>;
-
-def:  Pat <(i64 (sextloadi16 FoldGlobalAddr:$addr)),
-      (i64 (A2_sxtw (L4_loadrh_abs FoldGlobalAddr:$addr)))>,
-      Requires<[HasV4T]>;
-}
-// i32->i64 loads
-// We need a complexity of 120 here to override preceding handling of
-// zextloadi32.
-let AddedComplexity = 120 in {
-def:  Pat <(i64 (extloadi32 (NumUsesBelowThresCONST32 tglobaladdr:$addr))),
-      (i64 (A4_combineir 0, (L4_loadri_abs tglobaladdr:$addr)))>,
-      Requires<[HasV4T]>;
-
-def:  Pat <(i64 (zextloadi32 (NumUsesBelowThresCONST32 tglobaladdr:$addr))),
-      (i64 (A4_combineir 0, (L4_loadri_abs tglobaladdr:$addr)))>,
-      Requires<[HasV4T]>;
-
-def:  Pat <(i64 (sextloadi32 (NumUsesBelowThresCONST32 tglobaladdr:$addr))),
-      (i64 (A2_sxtw (L4_loadri_abs tglobaladdr:$addr)))>,
-      Requires<[HasV4T]>;
-
-def:  Pat <(i64 (extloadi32 FoldGlobalAddr:$addr)),
-      (i64 (A4_combineir 0, (L4_loadri_abs FoldGlobalAddr:$addr)))>,
-      Requires<[HasV4T]>;
-
-def:  Pat <(i64 (zextloadi32 FoldGlobalAddr:$addr)),
-      (i64 (A4_combineir 0, (L4_loadri_abs FoldGlobalAddr:$addr)))>,
-      Requires<[HasV4T]>;
-
-def:  Pat <(i64 (sextloadi32 FoldGlobalAddr:$addr)),
-      (i64 (A2_sxtw (L4_loadri_abs FoldGlobalAddr:$addr)))>,
-      Requires<[HasV4T]>;
+  def: Loadam_pat<extloadi32,  i64, addrga, Zext64, L4_loadri_abs>;
+  def: Loadam_pat<sextloadi32, i64, addrga, Sext64, L4_loadri_abs>;
+  def: Loadam_pat<zextloadi32, i64, addrga, Zext64, L4_loadri_abs>;
 }
 
 // Indexed store double word - global address.

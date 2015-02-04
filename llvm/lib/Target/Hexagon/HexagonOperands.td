@@ -826,6 +826,11 @@ def u6_3ExtPred  : PatLeaf<(i32 imm), [{
 // in the patterns.
 def AddrFI : ComplexPattern<i32, 1, "SelectAddrFI", [frameindex], []>;
 
+// These complex patterns are not strictly necessary, since global address
+// folding will happen during DAG combining. For distinguishing between GA
+// and GP, pat frags with HexagonCONST32 and HexagonCONST32_GP can be used.
+def AddrGA : ComplexPattern<i32, 1, "SelectAddrGA", [], []>;
+
 // Addressing modes.
 
 def ADDRrr : ComplexPattern<i32, 2, "SelectADDRrr", [], []>;
