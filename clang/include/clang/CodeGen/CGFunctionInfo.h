@@ -63,10 +63,10 @@ public:
     Expand,
 
     /// InAlloca - Pass the argument directly using the LLVM inalloca attribute.
-    /// This is similar to 'direct', except it only applies to arguments stored
-    /// in memory and forbids any implicit copies.  When applied to a return
-    /// type, it means the value is returned indirectly via an implicit sret
-    /// parameter stored in the argument struct.
+    /// This is similar to indirect with byval, except it only applies to
+    /// arguments stored in memory and forbids any implicit copies.  When
+    /// applied to a return type, it means the value is returned indirectly via
+    /// an implicit sret parameter stored in the argument struct.
     InAlloca,
     KindFirst = Direct,
     KindLast = InAlloca
