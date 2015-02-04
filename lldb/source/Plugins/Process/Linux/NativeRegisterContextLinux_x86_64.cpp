@@ -786,7 +786,7 @@ NativeRegisterContextLinux_x86_64::WriteAllRegisterValues (const lldb::DataBuffe
         return error;
     }
 
-    
+
     uint8_t *src = data_sp->GetBytes ();
     if (src == nullptr)
     {
