@@ -129,8 +129,8 @@ struct _Unwind_Exception {
   uintptr_t private_2; // holds sp that phase1 found for phase2 to use
 #if !__LP64__
   // The gcc implementation of _Unwind_Exception used attribute mode on the
-  // above fields which had the side effect of causing this whole struct to 
-  // round up to 32 bytes in size. To be more explicit, we add pad fields 
+  // above fields which had the side effect of causing this whole struct to
+  // round up to 32 bytes in size. To be more explicit, we add pad fields
   // added for binary compatibility.
   uint32_t reserved[3];
 #endif
@@ -284,7 +284,7 @@ typedef _Unwind_Reason_Code (*_Unwind_Trace_Fn)(struct _Unwind_Context *,
 extern _Unwind_Reason_Code _Unwind_Backtrace(_Unwind_Trace_Fn, void *);
 
 // _Unwind_GetCFA is a gcc extension that can be called from within a
-// personality handler to get the CFA (stack pointer before call) of 
+// personality handler to get the CFA (stack pointer before call) of
 // current frame.
 extern uintptr_t _Unwind_GetCFA(struct _Unwind_Context *);
 
@@ -301,17 +301,17 @@ extern uintptr_t _Unwind_GetIPInfo(struct _Unwind_Context *context,
 
 // __register_frame() is used with dynamically generated code to register the
 // FDE for a generated (JIT) code.  The FDE must use pc-rel addressing to point
-// to its function and optional LSDA.  
-// __register_frame() has existed in all versions of Mac OS X, but in 10.4 and 
-// 10.5 it was buggy and did not actually register the FDE with the unwinder.  
+// to its function and optional LSDA.
+// __register_frame() has existed in all versions of Mac OS X, but in 10.4 and
+// 10.5 it was buggy and did not actually register the FDE with the unwinder.
 // In 10.6 and later it does register properly.
 extern void __register_frame(const void *fde);
 extern void __deregister_frame(const void *fde);
 
 // _Unwind_Find_FDE() will locate the FDE if the pc is in some function that has
 // an associated FDE. Note, Mac OS X 10.6 and later, introduces "compact unwind
-// info" which the runtime uses in preference to dwarf unwind info.  This 
-// function will only work if the target function has an FDE but no compact 
+// info" which the runtime uses in preference to dwarf unwind info.  This
+// function will only work if the target function has an FDE but no compact
 // unwind info.
 struct dwarf_eh_bases {
   uintptr_t tbase;
@@ -336,7 +336,7 @@ extern uintptr_t _Unwind_GetTextRelBase(struct _Unwind_Context *context)
     LIBUNWIND_UNAVAIL;
 
 // Mac OS X 10.4 and 10.5 had implementations of these functions in
-// libgcc_s.dylib, but they never worked.  
+// libgcc_s.dylib, but they never worked.
 /// These functions are no longer available on Mac OS X.
 extern void __register_frame_info_bases(const void *fde, void *ob, void *tb,
                                         void *db) LIBUNWIND_UNAVAIL;
