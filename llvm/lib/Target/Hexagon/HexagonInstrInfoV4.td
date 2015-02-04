@@ -4061,6 +4061,16 @@ let AddedComplexity = 100 in {
   def: Storea_pat<store,         I64, addrgp, S2_storerdabs>;
 }
 
+def: Loada_pat<atomic_load_8,  i32, addrgp, L4_loadrub_abs>;
+def: Loada_pat<atomic_load_16, i32, addrgp, L4_loadruh_abs>;
+def: Loada_pat<atomic_load_32, i32, addrgp, L4_loadri_abs>;
+def: Loada_pat<atomic_load_64, i64, addrgp, L4_loadrd_abs>;
+
+def: Storea_pat<SwapSt<atomic_store_8>,  I32, addrgp, S2_storerbabs>;
+def: Storea_pat<SwapSt<atomic_store_16>, I32, addrgp, S2_storerhabs>;
+def: Storea_pat<SwapSt<atomic_store_32>, I32, addrgp, S2_storeriabs>;
+def: Storea_pat<SwapSt<atomic_store_64>, I64, addrgp, S2_storerdabs>;
+
 // Indexed store double word - global address.
 // memw(Rs+#u6:2)=#S8
 let AddedComplexity = 10 in
@@ -4071,30 +4081,9 @@ def STrih_offset_ext_V4 : STInst<(outs),
                     (add IntRegs:$src1, u6_1ImmPred:$src2))]>,
             Requires<[HasV4T]>;
 
-def : Pat<(atomic_store_64 FoldGlobalAddrGP:$addr,
-                           (i64 DoubleRegs:$src1)),
-          (S2_storerdabs FoldGlobalAddrGP:$addr, (i64 DoubleRegs:$src1))>,
-          Requires<[HasV4T]>;
-
-def : Pat<(atomic_store_8 FoldGlobalAddrGP:$addr, (i32 IntRegs:$src1)),
-          (S2_storerbabs FoldGlobalAddrGP:$addr, (i32 IntRegs:$src1))>,
-            Requires<[HasV4T]>;
-
-def : Pat<(atomic_store_16 FoldGlobalAddrGP:$addr, (i32 IntRegs:$src1)),
-          (S2_storerhabs FoldGlobalAddrGP:$addr, (i32 IntRegs:$src1))>,
-            Requires<[HasV4T]>;
-
-def : Pat<(atomic_store_32 FoldGlobalAddrGP:$addr, (i32 IntRegs:$src1)),
-          (S2_storeriabs FoldGlobalAddrGP:$addr, (i32 IntRegs:$src1))>,
-            Requires<[HasV4T]>;
-
 // Map from load(globaladdress + x) -> memd(#foo + x)
 let AddedComplexity = 100 in
 def : Pat<(i64 (load FoldGlobalAddrGP:$addr)),
-          (i64 (L4_loadrd_abs FoldGlobalAddrGP:$addr))>,
-           Requires<[HasV4T]>;
-
-def : Pat<(atomic_load_64 FoldGlobalAddrGP:$addr),
           (i64 (L4_loadrd_abs FoldGlobalAddrGP:$addr))>,
            Requires<[HasV4T]>;
 
@@ -4128,27 +4117,15 @@ def : Pat<(i32 (zextloadi16 FoldGlobalAddrGP:$addr)),
           (i32 (L4_loadruh_abs FoldGlobalAddrGP:$addr))>,
            Requires<[HasV4T]>;
 
-def : Pat<(atomic_load_16 FoldGlobalAddrGP:$addr),
-          (i32 (L4_loadruh_abs FoldGlobalAddrGP:$addr))>,
-           Requires<[HasV4T]>;
-
 // Map from load(globaladdress + x) -> memub(#foo + x)
 let AddedComplexity = 100 in
 def : Pat<(i32 (zextloadi8 FoldGlobalAddrGP:$addr)),
           (i32 (L4_loadrub_abs FoldGlobalAddrGP:$addr))>,
            Requires<[HasV4T]>;
 
-def : Pat<(atomic_load_8 FoldGlobalAddrGP:$addr),
-          (i32 (L4_loadrub_abs FoldGlobalAddrGP:$addr))>,
-           Requires<[HasV4T]>;
-
 // Map from load(globaladdress + x) -> memw(#foo + x)
 let AddedComplexity = 100 in
 def : Pat<(i32 (load FoldGlobalAddrGP:$addr)),
-          (i32 (L4_loadri_abs FoldGlobalAddrGP:$addr))>,
-           Requires<[HasV4T]>;
-
-def : Pat<(atomic_load_32 FoldGlobalAddrGP:$addr),
           (i32 (L4_loadri_abs FoldGlobalAddrGP:$addr))>,
            Requires<[HasV4T]>;
 
