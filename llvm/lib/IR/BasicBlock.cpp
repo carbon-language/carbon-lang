@@ -239,6 +239,20 @@ BasicBlock *BasicBlock::getUniquePredecessor() {
   return PredBB;
 }
 
+BasicBlock *BasicBlock::getUniqueSuccessor() {
+  succ_iterator SI = succ_begin(this), E = succ_end(this);
+  if (SI == E) return NULL; // No successors
+  BasicBlock *SuccBB = *SI;
+  ++SI;
+  for (;SI != E; ++SI) {
+    if (*SI != SuccBB)
+      return NULL;
+    // The same successor appears multiple times in the successor list.
+    // This is OK.
+  }
+  return SuccBB;
+}
+
 /// removePredecessor - This method is used to notify a BasicBlock that the
 /// specified Predecessor of the block is no longer able to reach it.  This is
 /// actually not used to update the Predecessor list, but is actually used to

@@ -208,6 +208,14 @@ public:
     return const_cast<BasicBlock*>(this)->getUniquePredecessor();
   }
 
+  /// Return the successor of this block if it has a unique successor.
+  /// Otherwise return a null pointer.  This method is analogous to
+  /// getUniquePredeccessor above.
+  BasicBlock *getUniqueSuccessor();
+  const BasicBlock *getUniqueSuccessor() const {
+    return const_cast<BasicBlock*>(this)->getUniqueSuccessor();
+  }
+
   //===--------------------------------------------------------------------===//
   /// Instruction iterator methods
   ///

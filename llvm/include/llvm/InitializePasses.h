@@ -288,6 +288,8 @@ void initializeMachineCombinerPass(PassRegistry &);
 void initializeLoadCombinePass(PassRegistry&);
 void initializeRewriteSymbolsPass(PassRegistry&);
 void initializeWinEHPreparePass(PassRegistry&);
+void initializePlaceBackedgeSafepointsImplPass(PassRegistry&);
+void initializePlaceSafepointsPass(PassRegistry&);
 }
 
 #endif

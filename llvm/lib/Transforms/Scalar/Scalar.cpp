@@ -71,6 +71,8 @@ void llvm::initializeScalarOpts(PassRegistry &Registry) {
   initializeSeparateConstOffsetFromGEPPass(Registry);
   initializeStraightLineStrengthReducePass(Registry);
   initializeLoadCombinePass(Registry);
+  initializePlaceBackedgeSafepointsImplPass(Registry);
+  initializePlaceSafepointsPass(Registry);
 }
 
 void LLVMInitializeScalarOpts(LLVMPassRegistryRef R) {
