@@ -1241,6 +1241,9 @@ def err_storageclass_invalid_for_member : Error<
   "storage class specified for a member declaration">;
 def err_mutable_function : Error<"'mutable' cannot be applied to functions">;
 def err_mutable_reference : Error<"'mutable' cannot be applied to references">;
+def ext_mutable_reference : ExtWarn<
+  "'mutable' on a reference type is a Microsoft extension">,
+  InGroup<Microsoft>;
 def err_mutable_const : Error<"'mutable' and 'const' cannot be mixed">;
 def err_mutable_nonmember : Error<
   "'mutable' can only be applied to member variables">;
