@@ -21,6 +21,7 @@
 #include "lldb/Interpreter/OptionValueFileSpec.h"
 #include "lldb/Interpreter/OptionValueFileSpecList.h"
 #include "lldb/Interpreter/OptionValueFormat.h"
+#include "lldb/Interpreter/OptionValueFormatEntity.h"
 #include "lldb/Interpreter/OptionValuePathMappings.h"
 #include "lldb/Interpreter/OptionValueProperties.h"
 #include "lldb/Interpreter/OptionValueRegex.h"

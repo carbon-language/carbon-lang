@@ -13,6 +13,7 @@
 #include "lldb/Breakpoint/BreakpointLocation.h"
 #include "lldb/Core/Debugger.h"
 #include "lldb/Core/Log.h"
+#include "lldb/Core/FormatEntity.h"
 #include "lldb/Core/State.h"
 #include "lldb/Core/Stream.h"
 #include "lldb/Core/StreamString.h"
@@ -2043,13 +2044,17 @@ Thread::DumpUsingSettingsFormat (Stream &strm, uint32_t frame_idx)
         }
     }
 
-    const char *thread_format = exe_ctx.GetTargetRef().GetDebugger().GetThreadFormat();
+    const FormatEntity::Entry *thread_format = exe_ctx.GetTargetRef().GetDebugger().GetThreadFormat();
     assert (thread_format);
-    Debugger::FormatPrompt (thread_format, 
-                            frame_sp ? &frame_sc : NULL,
-                            &exe_ctx, 
-                            NULL,
-                            strm);
+    
+    FormatEntity::Format(*thread_format,
+                         strm,
+                         frame_sp ? &frame_sc : NULL,
+                         &exe_ctx,
+                         NULL,
+                         NULL,
+                         false,
+                         false);
 }
 
 void

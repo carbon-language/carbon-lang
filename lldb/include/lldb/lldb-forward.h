@@ -146,6 +146,7 @@ class   OptionValueEnumeration;
 class   OptionValueFileSpec;
 class   OptionValueFileSpecList;
 class   OptionValueFormat;
+class   OptionValueFormatEntity;
 class   OptionValuePathMappings;
 class   OptionValueProperties;
 class   OptionValueRegex;

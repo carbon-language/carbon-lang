@@ -58,7 +58,7 @@ class PythonSynthDataFormatterTestCase(TestBase):
         self.addTearDownHook(cleanup)
         
         self.runCmd("command script import helperfunc.py")
-        self.runCmd('type summary add -x "^something<.*>$" -s "T is a ${var.script:helperfunc.f}"')
+        self.runCmd('type summary add -x "^something<.*>$" -s "T is a ${script.var:helperfunc.f}"')
 
         self.expect("frame variable x", substrs = ['T is a non-pointer type']);
             

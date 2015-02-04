@@ -178,8 +178,9 @@ SBInstruction::GetDescription (lldb::SBStream &s)
             module_sp->ResolveSymbolContextForAddress(addr, eSymbolContextEverything, sc);
         // Use the "ref()" instead of the "get()" accessor in case the SBStream 
         // didn't have a stream already created, one will get created...
-        const char *disassemble_format = "${addr-file-or-load}: ";
-        m_opaque_sp->Dump (&s.ref(), 0, true, false, NULL, &sc, NULL, disassemble_format);
+        FormatEntity::Entry format;
+        FormatEntity::Parse("${addr}: ", format);
+        m_opaque_sp->Dump (&s.ref(), 0, true, false, NULL, &sc, NULL, &format);
         return true;
     }
     return false;
@@ -199,8 +200,9 @@ SBInstruction::Print (FILE *out)
         if (module_sp)
             module_sp->ResolveSymbolContextForAddress(addr, eSymbolContextEverything, sc);
         StreamFile out_stream (out, false);
-        const char *disassemble_format = "${addr-file-or-load}: ";
-        m_opaque_sp->Dump (&out_stream, 0, true, false, NULL, &sc, NULL, disassemble_format);
+        FormatEntity::Entry format;
+        FormatEntity::Parse("${addr}: ", format);
+        m_opaque_sp->Dump (&out_stream, 0, true, false, NULL, &sc, NULL, &format);
     }
 }
 

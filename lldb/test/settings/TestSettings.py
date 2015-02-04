@@ -123,7 +123,7 @@ class SettingsCommandTestCase(TestBase):
 
         self.runCmd("settings show frame-format")
         m = re.match(
-                '^frame-format \(string\) = "(.*)\"$',
+                '^frame-format \(format-string\) = "(.*)\"$',
                 self.res.GetOutput())
         self.assertTrue(m, "Bad settings string")
         self.format_string = m.group(1)

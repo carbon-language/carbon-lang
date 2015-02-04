@@ -19,6 +19,7 @@
 #include "lldb/lldb-public.h"
 #include "lldb/Core/Broadcaster.h"
 #include "lldb/Core/Communication.h"
+#include "lldb/Core/FormatEntity.h"
 #include "lldb/Core/IOHandler.h"
 #include "lldb/Core/Listener.h"
 #include "lldb/Core/SourceManager.h"
@@ -247,15 +248,7 @@ public:
     GetDebuggerAtIndex (size_t index);
 
     static bool
-    FormatPrompt (const char *format,
-                  const SymbolContext *sc,
-                  const ExecutionContext *exe_ctx,
-                  const Address *addr,
-                  Stream &s,
-                  ValueObject* valobj = NULL);
-
-    static bool
-    FormatDisassemblerAddress (const char *format,
+    FormatDisassemblerAddress (const FormatEntity::Entry *format,
                                const SymbolContext *sc,
                                const SymbolContext *prev_sc,
                                const ExecutionContext *exe_ctx,
@@ -300,13 +293,13 @@ public:
     bool
     GetAutoConfirm () const;
 
-    const char *
+    const FormatEntity::Entry *
     GetDisassemblyFormat() const;
 
-    const char *
+    const FormatEntity::Entry *
     GetFrameFormat() const;
 
-    const char *
+    const FormatEntity::Entry *
     GetThreadFormat() const;
     
     lldb::ScriptLanguage

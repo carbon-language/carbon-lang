@@ -199,28 +199,8 @@ IRExecutionUnit::DisassembleFunction (Stream &stream,
     disassembler_sp->DecodeInstructions (Address (func_remote_addr), extractor, 0, UINT32_MAX, false, false);
 
     InstructionList &instruction_list = disassembler_sp->GetInstructionList();
-    const uint32_t max_opcode_byte_size = instruction_list.GetMaxOpcocdeByteSize();
-    const char *disassemble_format = "${addr-file-or-load}: ";
-    if (exe_ctx.HasTargetScope())
-    {
-        disassemble_format = exe_ctx.GetTargetRef().GetDebugger().GetDisassemblyFormat();
-    }
-
-    for (size_t instruction_index = 0, num_instructions = instruction_list.GetSize();
-         instruction_index < num_instructions;
-         ++instruction_index)
-    {
-        Instruction *instruction = instruction_list.GetInstructionAtIndex(instruction_index).get();
-        instruction->Dump (&stream,
-                           max_opcode_byte_size,
-                           true,
-                           true,
-                           &exe_ctx,
-                           NULL,
-                           NULL,
-                           disassemble_format);
-        stream.PutChar('\n');
-    }
+    instruction_list.Dump(&stream, true, true, &exe_ctx);
+    
     // FIXME: The DisassemblerLLVMC has a reference cycle and won't go away if it has any active instructions.
     // I'll fix that but for now, just clear the list and it will go away nicely.
     disassembler_sp->GetInstructionList().Clear();

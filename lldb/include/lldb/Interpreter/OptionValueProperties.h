@@ -15,6 +15,7 @@
 // Other libraries and framework includes
 // Project includes
 #include "lldb/Core/ConstString.h"
+#include "lldb/Core/FormatEntity.h"
 #include "lldb/Core/UniqueCStringMap.h"
 #include "lldb/Interpreter/OptionValue.h"
 #include "lldb/Interpreter/Property.h"
@@ -191,6 +192,9 @@ public:
     bool
     SetPropertyAtIndexAsEnumeration (const ExecutionContext *exe_ctx, uint32_t idx, int64_t new_value);
     
+    const FormatEntity::Entry *
+    GetPropertyAtIndexAsFormatEntity (const ExecutionContext *exe_ctx, uint32_t idx);
+
     const RegularExpression *
     GetPropertyAtIndexAsOptionValueRegex (const ExecutionContext *exe_ctx, uint32_t idx) const;
 

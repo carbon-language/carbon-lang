@@ -57,7 +57,7 @@ class SmartArrayDataFormatterTestCase(TestBase):
         self.runCmd("type summary add --summary-string \"${var%V}\" SomeData")
 
         self.expect("frame variable data",
-            substrs = ['invalid use of aggregate type'])
+            substrs = ['SomeData @ 0x'])
 # ${var%s}
         self.runCmd("type summary add --summary-string \"ptr = ${var%s}\" \"char *\"")
 

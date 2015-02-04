@@ -1,0 +1,107 @@
+//===-- OptionValueFormatEntity.h --------------------------------------*- C++ -*-===//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+
+#ifndef liblldb_OptionValueFormatEntity_h_
+#define liblldb_OptionValueFormatEntity_h_
+
+// C Includes
+// C++ Includes
+// Other libraries and framework includes
+// Project includes
+#include "lldb/Core/FormatEntity.h"
+#include "lldb/Interpreter/OptionValue.h"
+
+namespace lldb_private {
+
+class OptionValueFormatEntity : public OptionValue
+{
+public:
+    OptionValueFormatEntity (const char *default_format);
+    
+    virtual
+    ~OptionValueFormatEntity()
+    {
+    }
+    
+    //---------------------------------------------------------------------
+    // Virtual subclass pure virtual overrides
+    //---------------------------------------------------------------------
+    
+    OptionValue::Type
+    GetType () const override
+    {
+        return eTypeFormatEntity;
+    }
+    
+    void
+    DumpValue (const ExecutionContext *exe_ctx, Stream &strm, uint32_t dump_mask) override;
+    
+    Error
+    SetValueFromCString (const char *value,
+                         VarSetOperationType op = eVarSetOperationAssign) override;
+    
+    bool
+    Clear () override;
+    
+    lldb::OptionValueSP
+    DeepCopy () const override;
+
+    size_t
+    AutoComplete (CommandInterpreter &interpreter,
+                  const char *s,
+                  int match_start_point,
+                  int max_return_elements,
+                  bool &word_complete,
+                  StringList &matches) override;
+
+    //---------------------------------------------------------------------
+    // Subclass specific functions
+    //---------------------------------------------------------------------
+    
+    FormatEntity::Entry &
+    GetCurrentValue()
+    {
+        return m_current_entry;
+    }
+    
+    const FormatEntity::Entry &
+    GetCurrentValue() const
+    {
+        return m_current_entry;
+    }
+    
+    void
+    SetCurrentValue (const FormatEntity::Entry &value)
+    {
+        m_current_entry = value;
+    }
+
+    FormatEntity::Entry &
+    GetDefaultValue()
+    {
+        return m_default_entry;
+    }
+    
+    const FormatEntity::Entry &
+    GetDefaultValue() const
+    {
+        return m_default_entry;
+    }
+
+
+protected:
+    std::string m_current_format;
+    std::string m_default_format;
+    FormatEntity::Entry m_current_entry;
+    FormatEntity::Entry m_default_entry;
+};
+
+} // namespace lldb_private
+
+#endif  // liblldb_OptionValueFormatEntity_h_

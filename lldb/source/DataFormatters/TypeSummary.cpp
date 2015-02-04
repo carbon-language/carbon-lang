@@ -86,12 +86,29 @@ m_flags(flags)
 
 StringSummaryFormat::StringSummaryFormat (const TypeSummaryImpl::Flags& flags,
                                           const char *format_cstr) :
-TypeSummaryImpl(flags),
-m_format()
+    TypeSummaryImpl(flags),
+    m_format_str()
 {
-    if (format_cstr)
-        m_format.assign(format_cstr);
+    SetSummaryString (format_cstr);
 }
+
+void
+StringSummaryFormat::SetSummaryString (const char* format_cstr)
+{
+    m_format.Clear();
+    if (format_cstr && format_cstr[0])
+    {
+        m_format_str = format_cstr;
+        m_error = FormatEntity::Parse(format_cstr, m_format);
+    }
+    else
+    {
+        m_format_str.clear();
+        m_error.Clear();
+    }
+}
+
+
 
 bool
 StringSummaryFormat::FormatObject (ValueObject *valobj,
@@ -120,7 +137,7 @@ StringSummaryFormat::FormatObject (ValueObject *valobj,
     }
     else
     {
-        if (Debugger::FormatPrompt(m_format.c_str(), &sc, &exe_ctx, &sc.line_entry.range.GetBaseAddress(), s, valobj))
+        if (FormatEntity::Format(m_format, s, &sc, &exe_ctx, &sc.line_entry.range.GetBaseAddress(), valobj, false, false))
         {
             retval.assign(s.GetString());
             return true;
@@ -138,7 +155,10 @@ StringSummaryFormat::GetDescription ()
 {
     StreamString sstr;
     
-    sstr.Printf ("`%s`%s%s%s%s%s%s%s",      m_format.c_str(),
+    sstr.Printf ("`%s`%s%s%s%s%s%s%s%s%s",
+                 m_format_str.c_str(),
+                 m_error.Fail() ? " error: " : "",
+                 m_error.Fail() ? m_error.AsCString() : "",
                  Cascades() ? "" : " (not cascading)",
                  !DoesPrintChildren(nullptr) ? "" : " (show children)",
                  !DoesPrintValue(nullptr) ? " (hide value)" : "",
@@ -153,8 +173,8 @@ CXXFunctionSummaryFormat::CXXFunctionSummaryFormat (const TypeSummaryImpl::Flags
                                                     Callback impl,
                                                     const char* description) :
 TypeSummaryImpl(flags),
-m_impl(impl),
-m_description(description ? description : "")
+    m_impl(impl),
+    m_description(description ? description : "")
 {
 }
 

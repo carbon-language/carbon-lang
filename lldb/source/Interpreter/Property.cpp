@@ -109,16 +109,21 @@ Property::Property (const PropertyDefinition &definition) :
             // "definition.default_cstr_value" is NULL, otherwise interpret
             // "definition.default_cstr_value" as a string value that represents the default
             // value.
-        {
-            Format new_format = eFormatInvalid;
-            if (definition.default_cstr_value)
-                Args::StringToFormat (definition.default_cstr_value, new_format, nullptr);
-            else
-                new_format = (Format)definition.default_uint_value;
-            m_value_sp.reset (new OptionValueFormat(new_format));
-        }
+            {
+                Format new_format = eFormatInvalid;
+                if (definition.default_cstr_value)
+                    Args::StringToFormat (definition.default_cstr_value, new_format, nullptr);
+                else
+                    new_format = (Format)definition.default_uint_value;
+                m_value_sp.reset (new OptionValueFormat(new_format));
+            }
             break;
             
+        case OptionValue::eTypeFormatEntity:
+            // "definition.default_cstr_value" as a string value that represents the default
+            m_value_sp.reset (new OptionValueFormatEntity(definition.default_cstr_value));
+            break;
+
         case OptionValue::eTypePathMap:
             // "definition.default_uint_value" tells us if notifications should occur for
             // path mappings
@@ -151,12 +156,12 @@ Property::Property (const PropertyDefinition &definition) :
         case OptionValue::eTypeUUID:
             // "definition.default_uint_value" is not used for a OptionValue::eTypeUUID
             // "definition.default_cstr_value" can contain a default UUID value
-        {
-            UUID uuid;
-            if (definition.default_cstr_value)
-                uuid.SetFromCString (definition.default_cstr_value);
-            m_value_sp.reset (new OptionValueUUID(uuid));
-        }
+            {
+                UUID uuid;
+                if (definition.default_cstr_value)
+                    uuid.SetFromCString (definition.default_cstr_value);
+                m_value_sp.reset (new OptionValueUUID(uuid));
+            }
             break;
             
         case OptionValue::eTypeString:

@@ -50,37 +50,6 @@
 namespace lldb_utility {
 
     namespace ansi {
-        const char *k_escape_start	 = "\033[";
-        const char *k_escape_end	 = "m";
-
-        const char *k_fg_black	     = "30";
-        const char *k_fg_red	     = "31";
-        const char *k_fg_green	     = "32";
-        const char *k_fg_yellow      = "33";
-        const char *k_fg_blue	     = "34";
-        const char *k_fg_purple      = "35";
-        const char *k_fg_cyan        = "36";
-        const char *k_fg_white	     = "37";
-
-        const char *k_bg_black	     = "40";
-        const char *k_bg_red	     = "41";
-        const char *k_bg_green	     = "42";
-        const char *k_bg_yellow      = "43";
-        const char *k_bg_blue	     = "44";
-        const char *k_bg_purple      = "45";
-        const char *k_bg_cyan        = "46";
-        const char *k_bg_white	     = "47";
-
-        const char *k_ctrl_normal	     = "0";
-        const char *k_ctrl_bold	         = "1";
-        const char *k_ctrl_faint	     = "2";
-        const char *k_ctrl_italic        = "3";
-        const char *k_ctrl_underline	 = "4";
-        const char *k_ctrl_slow_blink    = "5";
-        const char *k_ctrl_fast_blink    = "6";
-        const char *k_ctrl_negative	     = "7";
-        const char *k_ctrl_conceal	     = "8";
-        const char *k_ctrl_crossed_out	 = "9";
 
         inline std::string
         FormatAnsiTerminalCodes(const char *format, bool do_color = true)

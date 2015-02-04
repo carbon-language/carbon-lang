@@ -17,6 +17,7 @@
 #include "lldb/lldb-defines.h"
 #include "lldb/Core/ConstString.h"
 #include "lldb/Core/Error.h"
+#include "lldb/Core/FormatEntity.h"
 
 namespace lldb_private {
 
@@ -45,7 +46,8 @@ namespace lldb_private {
             eTypeSInt64,
             eTypeString,
             eTypeUInt64,
-            eTypeUUID
+            eTypeUUID,
+            eTypeFormatEntity
         } Type;
 
         enum {
@@ -309,7 +311,13 @@ namespace lldb_private {
         
         const OptionValueUUID *
         GetAsUUID () const;
-        
+
+        OptionValueFormatEntity *
+        GetAsFormatEntity ();
+
+        const OptionValueFormatEntity *
+        GetAsFormatEntity () const;
+
         bool
         GetBooleanValue (bool fail_value = false) const;
         
@@ -340,6 +348,9 @@ namespace lldb_private {
 
         bool
         SetFormatValue (lldb::Format new_value);
+
+        const FormatEntity::Entry *
+        GetFormatEntity () const;
 
         const RegularExpression *
         GetRegexValue () const;

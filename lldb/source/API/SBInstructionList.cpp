@@ -102,7 +102,8 @@ SBInstructionList::GetDescription (lldb::SBStream &description)
             // exist already inside description...
             Stream &sref = description.ref();
             const uint32_t max_opcode_byte_size = m_opaque_sp->GetInstructionList().GetMaxOpcocdeByteSize();
-            const char *disassemble_format = "${addr-file-or-load}: ";
+            FormatEntity::Entry format;
+            FormatEntity::Parse("${addr}: ", format);
             SymbolContext sc;
             SymbolContext prev_sc;
             for (size_t i=0; i<num_instructions; ++i)
@@ -119,7 +120,7 @@ SBInstructionList::GetDescription (lldb::SBStream &description)
                     module_sp->ResolveSymbolContextForAddress(addr, eSymbolContextEverything, sc);
                 }
 
-                inst->Dump (&sref, max_opcode_byte_size, true, false, NULL, &sc, &prev_sc, disassemble_format);
+                inst->Dump (&sref, max_opcode_byte_size, true, false, NULL, &sc, &prev_sc, &format);
                 sref.EOL();
             }
             return true;

@@ -15,6 +15,7 @@
 #include "lldb/Core/DataExtractor.h"
 #include "lldb/Core/Disassembler.h"
 #include "lldb/Core/Error.h"
+#include "lldb/Core/FormatEntity.h"
 #include "lldb/Core/Log.h"
 #include "lldb/Core/PluginManager.h"
 #include "lldb/Core/StreamString.h"
@@ -146,8 +147,9 @@ UnwindAssemblyInstEmulation::GetNonCallSiteUnwindPlanFromAssembly (AddressRange&
                         if (log && log->GetVerbose ())
                         {
                             StreamString strm;
-                            const char *disassemble_format = "${frame.pc}: ";
-                            inst->Dump(&strm, inst_list.GetMaxOpcocdeByteSize (), show_address, show_bytes, NULL, NULL, NULL, disassemble_format);
+                            lldb_private::FormatEntity::Entry format;
+                            FormatEntity::Parse("${frame.pc}: ", format);
+                            inst->Dump(&strm, inst_list.GetMaxOpcocdeByteSize (), show_address, show_bytes, NULL, NULL, NULL, &format);
                             log->PutCString (strm.GetData());
                         }
 

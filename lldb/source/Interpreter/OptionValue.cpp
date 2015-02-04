@@ -222,6 +222,22 @@ OptionValue::GetAsFormat () const
     return nullptr;
 }
 
+OptionValueFormatEntity *
+OptionValue::GetAsFormatEntity ()
+{
+    if (GetType () == OptionValue::eTypeFormatEntity)
+        return static_cast<OptionValueFormatEntity *>(this);
+    return nullptr;
+}
+
+const OptionValueFormatEntity *
+OptionValue::GetAsFormatEntity () const
+{
+    if (GetType () == OptionValue::eTypeFormatEntity)
+        return static_cast<const OptionValueFormatEntity *>(this);
+    return nullptr;
+}
+
 OptionValuePathMappings *
 OptionValue::GetAsPathMappings ()
 {
@@ -452,6 +468,15 @@ OptionValue::SetFormatValue (lldb::Format new_value)
     return false;
 }
 
+const FormatEntity::Entry *
+OptionValue::GetFormatEntity () const
+{
+    const OptionValueFormatEntity *option_value = GetAsFormatEntity();
+    if (option_value)
+        return &option_value->GetCurrentValue();
+    return nullptr;
+}
+
 const RegularExpression *
 OptionValue::GetRegexValue () const
 {
@@ -563,6 +588,7 @@ OptionValue::GetBuiltinTypeAsCString (Type t)
         case eTypeFileSpec:     return "file";
         case eTypeFileSpecList: return "file-list";
         case eTypeFormat:       return "format";
+        case eTypeFormatEntity: return "format-string";
         case eTypePathMap:      return "path-map";
         case eTypeProperties:   return "properties";
         case eTypeRegex:        return "regex";
@@ -583,15 +609,16 @@ OptionValue::CreateValueFromCStringForTypeMask (const char *value_cstr, uint32_t
     lldb::OptionValueSP value_sp;
     switch (type_mask)
     {
-    case 1u << eTypeArch:       value_sp.reset(new OptionValueArch()); break;
-    case 1u << eTypeBoolean:    value_sp.reset(new OptionValueBoolean(false)); break;
-    case 1u << eTypeChar:       value_sp.reset(new OptionValueChar('\0')); break;
-    case 1u << eTypeFileSpec:   value_sp.reset(new OptionValueFileSpec()); break;
-    case 1u << eTypeFormat:     value_sp.reset(new OptionValueFormat(eFormatInvalid));    break;
-    case 1u << eTypeSInt64:     value_sp.reset(new OptionValueSInt64()); break;
-    case 1u << eTypeString:     value_sp.reset(new OptionValueString()); break;
-    case 1u << eTypeUInt64:     value_sp.reset(new OptionValueUInt64()); break;
-    case 1u << eTypeUUID:       value_sp.reset(new OptionValueUUID()); break;
+    case 1u << eTypeArch:           value_sp.reset(new OptionValueArch()); break;
+    case 1u << eTypeBoolean:        value_sp.reset(new OptionValueBoolean(false)); break;
+    case 1u << eTypeChar:           value_sp.reset(new OptionValueChar('\0')); break;
+    case 1u << eTypeFileSpec:       value_sp.reset(new OptionValueFileSpec()); break;
+    case 1u << eTypeFormat:         value_sp.reset(new OptionValueFormat(eFormatInvalid));    break;
+    case 1u << eTypeFormatEntity:   value_sp.reset(new OptionValueFormatEntity(NULL));    break;
+    case 1u << eTypeSInt64:         value_sp.reset(new OptionValueSInt64()); break;
+    case 1u << eTypeString:         value_sp.reset(new OptionValueString()); break;
+    case 1u << eTypeUInt64:         value_sp.reset(new OptionValueUInt64()); break;
+    case 1u << eTypeUUID:           value_sp.reset(new OptionValueUUID()); break;
     }
 
     if (value_sp)

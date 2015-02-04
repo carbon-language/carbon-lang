@@ -18,6 +18,7 @@
 #include "lldb/Core/Module.h"
 #include "lldb/Core/Debugger.h"
 #include "lldb/Core/Disassembler.h"
+#include "lldb/Core/FormatEntity.h"
 #include "lldb/Core/Value.h"
 #include "lldb/Core/ValueObjectVariable.h"
 #include "lldb/Core/ValueObjectConstResult.h"
@@ -1373,11 +1374,11 @@ StackFrame::DumpUsingSettingsFormat (Stream *strm, const char *frame_marker)
     if (frame_marker)
         s.PutCString(frame_marker);
 
-    const char *frame_format = NULL;
+    const FormatEntity::Entry *frame_format = NULL;
     Target *target = exe_ctx.GetTargetPtr();
     if (target)
         frame_format = target->GetDebugger().GetFrameFormat();
-    if (frame_format && Debugger::FormatPrompt (frame_format, &m_sc, &exe_ctx, NULL, s))
+    if (frame_format && FormatEntity::Format(*frame_format, s, &m_sc, &exe_ctx, NULL, NULL, false, false))
     {
         strm->Write(s.GetData(), s.GetSize());
     }

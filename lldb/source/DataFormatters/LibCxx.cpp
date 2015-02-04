@@ -14,6 +14,7 @@
 #include "lldb/Core/DataBufferHeap.h"
 #include "lldb/Core/Debugger.h"
 #include "lldb/Core/Error.h"
+#include "lldb/Core/FormatEntity.h"
 #include "lldb/Core/Stream.h"
 #include "lldb/Core/ValueObject.h"
 #include "lldb/Core/ValueObjectConstResult.h"
@@ -460,5 +461,5 @@ lldb_private::formatters::LibcxxContainerSummaryProvider (ValueObject& valobj, S
             return false;
         stream.Printf("0x%016" PRIx64 " ", value);
     }
-    return Debugger::FormatPrompt("size=${svar%#}", NULL, NULL, NULL, stream, &valobj);
+    return FormatEntity::FormatStringRef("size=${svar%#}", stream, NULL, NULL, NULL, &valobj, false, false);
 }

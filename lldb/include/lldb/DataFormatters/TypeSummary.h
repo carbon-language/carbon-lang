@@ -23,6 +23,8 @@
 #include "lldb/lldb-public.h"
 #include "lldb/lldb-enumerations.h"
 
+#include "lldb/Core/Error.h"
+#include "lldb/Core/FormatEntity.h"
 #include "lldb/Core/ValueObject.h"
 #include "lldb/Interpreter/ScriptInterpreterPython.h"
 #include "lldb/Symbol/Type.h"
@@ -372,31 +374,27 @@ namespace lldb_private {
     // simple string-based summaries, using ${var to show data
     struct StringSummaryFormat : public TypeSummaryImpl
     {
-        std::string m_format;
+        std::string m_format_str;
+        FormatEntity::Entry m_format;
+        Error m_error;
         
         StringSummaryFormat(const TypeSummaryImpl::Flags& flags,
                             const char* f);
-        
-        const char*
-        GetSummaryString () const
-        {
-            return m_format.c_str();
-        }
-        
-        void
-        SetSummaryString (const char* data)
-        {
-            if (data)
-                m_format.assign(data);
-            else
-                m_format.clear();
-        }
         
         virtual
         ~StringSummaryFormat()
         {
         }
+
+        const char*
+        GetSummaryString () const
+        {
+            return m_format_str.c_str();
+        }
         
+        void
+        SetSummaryString (const char* f);
+
         virtual bool
         FormatObject(ValueObject *valobj,
                      std::string& dest,

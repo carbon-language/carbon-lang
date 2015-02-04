@@ -3217,6 +3217,8 @@ public:
     FrameTreeDelegate () :
         TreeDelegate()
     {
+        FormatEntity::Parse ("frame #${frame.index}: {${function.name}${function.pc-offset}}}",
+                             m_format);
     }
     
     virtual ~FrameTreeDelegate()
@@ -3236,9 +3238,7 @@ public:
                 StreamString strm;
                 const SymbolContext &sc = frame_sp->GetSymbolContext(eSymbolContextEverything);
                 ExecutionContext exe_ctx (frame_sp);
-                //const char *frame_format = "frame #${frame.index}: ${module.file.basename}{`${function.name}${function.pc-offset}}}";
-                const char *frame_format = "frame #${frame.index}: {${function.name}${function.pc-offset}}}";
-                if (Debugger::FormatPrompt (frame_format, &sc, &exe_ctx, NULL, strm))
+                if (FormatEntity::Format(m_format, strm, &sc, &exe_ctx, NULL, NULL, false, false))
                 {
                     int right_pad = 1;
                     window.PutCStringTruncated(strm.GetString().c_str(), right_pad);
@@ -3265,6 +3265,8 @@ public:
         }
         return false;
     }
+protected:
+    FormatEntity::Entry m_format;
 };
 
 class ThreadTreeDelegate : public TreeDelegate
@@ -3276,6 +3278,8 @@ public:
         m_tid (LLDB_INVALID_THREAD_ID),
         m_stop_id (UINT32_MAX)
     {
+        FormatEntity::Parse ("thread #${thread.index}: tid = ${thread.id}{, stop reason = ${thread.stop-reason}}",
+                             m_format);
     }
     
     virtual
@@ -3306,8 +3310,7 @@ public:
         {
             StreamString strm;
             ExecutionContext exe_ctx (thread_sp);
-            const char *format = "thread #${thread.index}: tid = ${thread.id}{, stop reason = ${thread.stop-reason}}";
-            if (Debugger::FormatPrompt (format, NULL, &exe_ctx, NULL, strm))
+            if (FormatEntity::Format (m_format, strm, NULL, &exe_ctx, NULL, NULL, false, false))
             {
                 int right_pad = 1;
                 window.PutCStringTruncated(strm.GetString().c_str(), right_pad);
@@ -3383,6 +3386,8 @@ protected:
     std::shared_ptr<FrameTreeDelegate> m_frame_delegate_sp;
     lldb::user_id_t m_tid;
     uint32_t m_stop_id;
+    FormatEntity::Entry m_format;
+
 };
 
 class ThreadsTreeDelegate : public TreeDelegate
@@ -3394,6 +3399,8 @@ public:
         m_debugger (debugger),
         m_stop_id (UINT32_MAX)
     {
+        FormatEntity::Parse("process ${process.id}{, name = ${process.name}}",
+                            m_format);
     }
     
     virtual
@@ -3415,8 +3422,7 @@ public:
         {
             StreamString strm;
             ExecutionContext exe_ctx (process_sp);
-            const char *format = "process ${process.id}{, name = ${process.name}}";
-            if (Debugger::FormatPrompt (format, NULL, &exe_ctx, NULL, strm))
+            if (FormatEntity::Format (m_format, strm, NULL, &exe_ctx, NULL, NULL, false, false))
             {
                 int right_pad = 1;
                 window.PutCStringTruncated(strm.GetString().c_str(), right_pad);
@@ -3472,6 +3478,8 @@ protected:
     std::shared_ptr<ThreadTreeDelegate> m_thread_delegate_sp;
     Debugger &m_debugger;
     uint32_t m_stop_id;
+    FormatEntity::Entry m_format;
+
 };
 
 class ValueObjectListDelegate : public WindowDelegate
@@ -4635,6 +4643,8 @@ public:
     StatusBarWindowDelegate (Debugger &debugger) :
         m_debugger (debugger)
     {
+        FormatEntity::Parse("Thread: ${thread.id%tid}",
+                            m_format);
     }
     
     virtual
@@ -4659,8 +4669,7 @@ public:
             if (StateIsStoppedState(state, true))
             {
                 StreamString strm;
-                const char *format = "Thread: ${thread.id%tid}";
-                if (thread && Debugger::FormatPrompt (format, NULL, &exe_ctx, NULL, strm))
+                if (thread && FormatEntity::Format (m_format, strm, NULL, &exe_ctx, NULL, NULL, false, false))
                 {
                     window.MoveCursor (40, 0);
                     window.PutCStringTruncated(strm.GetString().c_str(), 1);
@@ -4686,6 +4695,7 @@ public:
 
 protected:
     Debugger &m_debugger;
+    FormatEntity::Entry m_format;
 };
 
 class SourceFileWindowDelegate : public WindowDelegate
