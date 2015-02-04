@@ -161,7 +161,7 @@ void StraightLineStrengthReduce::allocateCandidateAndFindBasis(Value *B,
   // Try to compute the immediate basis of C.
   unsigned NumIterations = 0;
   // Limit the scan radius to avoid running forever.
-  static const int MaxNumIterations = 50;
+  static const unsigned MaxNumIterations = 50;
   for (auto Basis = Candidates.rbegin();
        Basis != Candidates.rend() && NumIterations < MaxNumIterations;
        ++Basis, ++NumIterations) {
