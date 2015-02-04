@@ -5203,12 +5203,8 @@ ObjectFileMachO::GetMinimumOSVersion (uint32_t *versions, uint32_t num_versions)
                     if (xxxx)
                     {
                         m_min_os_versions.push_back(xxxx);
-                        if (yy)
-                        {
-                            m_min_os_versions.push_back(yy);
-                            if (zz)
-                                m_min_os_versions.push_back(zz);
-                        }
+                        m_min_os_versions.push_back(yy);
+                        m_min_os_versions.push_back(zz);
                     }
                     success = true;
                 }
@@ -5265,12 +5261,8 @@ ObjectFileMachO::GetSDKVersion(uint32_t *versions, uint32_t num_versions)
                     if (xxxx)
                     {
                         m_sdk_versions.push_back(xxxx);
-                        if (yy)
-                        {
-                            m_sdk_versions.push_back(yy);
-                            if (zz)
-                                m_sdk_versions.push_back(zz);
-                        }
+                        m_sdk_versions.push_back(yy);
+                        m_sdk_versions.push_back(zz);
                     }
                     success = true;
                 }
