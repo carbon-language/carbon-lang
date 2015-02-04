@@ -784,7 +784,7 @@ _mm256_loadu_pd(double const *__p)
 {
   struct __loadu_pd {
     __m256d __v;
-  } __attribute__((packed, may_alias));
+  } __attribute__((__packed__, __may_alias__));
   return ((struct __loadu_pd*)__p)->__v;
 }
 
@@ -793,7 +793,7 @@ _mm256_loadu_ps(float const *__p)
 {
   struct __loadu_ps {
     __m256 __v;
-  } __attribute__((packed, may_alias));
+  } __attribute__((__packed__, __may_alias__));
   return ((struct __loadu_ps*)__p)->__v;
 }
 
@@ -808,7 +808,7 @@ _mm256_loadu_si256(__m256i const *__p)
 {
   struct __loadu_si256 {
     __m256i __v;
-  } __attribute__((packed, may_alias));
+  } __attribute__((__packed__, __may_alias__));
   return ((struct __loadu_si256*)__p)->__v;
 }
 
@@ -1194,7 +1194,7 @@ _mm256_loadu2_m128i(__m128i const *__addr_hi, __m128i const *__addr_lo)
 {
   struct __loadu_si128 {
     __m128i __v;
-  } __attribute__((packed, may_alias));
+  } __attribute__((__packed__, __may_alias__));
   __m256i __v256 = _mm256_castsi128_si256(
     ((struct __loadu_si128*)__addr_lo)->__v);
   return _mm256_insertf128_si256(__v256,

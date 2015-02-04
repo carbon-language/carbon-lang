@@ -30,7 +30,7 @@
 
 typedef unsigned int __mmask32;
 typedef unsigned long long __mmask64;
-typedef char __v64qi __attribute__ ((vector_size (64)));
+typedef char __v64qi __attribute__ ((__vector_size__ (64)));
 typedef short __v32hi __attribute__ ((__vector_size__ (64)));
 
 

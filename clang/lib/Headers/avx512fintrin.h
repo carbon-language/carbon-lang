@@ -924,7 +924,7 @@ _mm512_loadu_pd(double const *__p)
 {
   struct __loadu_pd {
     __m512d __v;
-  } __attribute__((packed, may_alias));
+  } __attribute__((__packed__, __may_alias__));
   return ((struct __loadu_pd*)__p)->__v;
 }
 
@@ -933,7 +933,7 @@ _mm512_loadu_ps(float const *__p)
 {
   struct __loadu_ps {
     __m512 __v;
-  } __attribute__((packed, may_alias));
+  } __attribute__((__packed__, __may_alias__));
   return ((struct __loadu_ps*)__p)->__v;
 }
 

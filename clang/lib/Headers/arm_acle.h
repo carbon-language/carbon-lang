@@ -45,23 +45,23 @@ extern "C" {
 /* 8.4 Hints */
 
 #if !defined(_MSC_VER)
-static __inline__ void __attribute__((always_inline, nodebug)) __wfi(void) {
+static __inline__ void __attribute__((__always_inline__, __nodebug__)) __wfi(void) {
   __builtin_arm_wfi();
 }
 
-static __inline__ void __attribute__((always_inline, nodebug)) __wfe(void) {
+static __inline__ void __attribute__((__always_inline__, __nodebug__)) __wfe(void) {
   __builtin_arm_wfe();
 }
 
-static __inline__ void __attribute__((always_inline, nodebug)) __sev(void) {
+static __inline__ void __attribute__((__always_inline__, __nodebug__)) __sev(void) {
   __builtin_arm_sev();
 }
 
-static __inline__ void __attribute__((always_inline, nodebug)) __sevl(void) {
+static __inline__ void __attribute__((__always_inline__, __nodebug__)) __sevl(void) {
   __builtin_arm_sevl();
 }
 
-static __inline__ void __attribute__((always_inline, nodebug)) __yield(void) {
+static __inline__ void __attribute__((__always_inline__, __nodebug__)) __yield(void) {
   __builtin_arm_yield();
 }
 #endif
@@ -71,7 +71,7 @@ static __inline__ void __attribute__((always_inline, nodebug)) __yield(void) {
 #endif
 
 /* 8.5 Swap */
-static __inline__ uint32_t __attribute__((always_inline, nodebug))
+static __inline__ uint32_t __attribute__((__always_inline__, __nodebug__))
   __swp(uint32_t x, volatile uint32_t *p) {
   uint32_t v;
   do v = __builtin_arm_ldrex(p); while (__builtin_arm_strex(x, p));
@@ -102,28 +102,28 @@ static __inline__ uint32_t __attribute__((always_inline, nodebug))
 #endif
 
 /* 8.7 NOP */
-static __inline__ void __attribute__((always_inline, nodebug)) __nop(void) {
+static __inline__ void __attribute__((__always_inline__, __nodebug__)) __nop(void) {
   __builtin_arm_nop();
 }
 
 /* 9 DATA-PROCESSING INTRINSICS */
 /* 9.2 Miscellaneous data-processing intrinsics */
 /* ROR */
-static __inline__ uint32_t __attribute__((always_inline, nodebug))
+static __inline__ uint32_t __attribute__((__always_inline__, __nodebug__))
   __ror(uint32_t x, uint32_t y) {
   y %= 32;
   if (y == 0)  return x;
   return (x >> y) | (x << (32 - y));
 }
 
-static __inline__ uint64_t __attribute__((always_inline, nodebug))
+static __inline__ uint64_t __attribute__((__always_inline__, __nodebug__))
   __rorll(uint64_t x, uint32_t y) {
   y %= 64;
   if (y == 0)  return x;
   return (x >> y) | (x << (64 - y));
 }
 
-static __inline__ unsigned long __attribute__((always_inline, nodebug))
+static __inline__ unsigned long __attribute__((__always_inline__, __nodebug__))
   __rorl(unsigned long x, uint32_t y) {
 #if __SIZEOF_LONG__ == 4
   return __ror(x, y);
@@ -134,28 +134,28 @@ static __inline__ unsigned long __attribute__((always_inline, nodebug))
 
 
 /* CLZ */
-static __inline__ uint32_t __attribute__((always_inline, nodebug))
+static __inline__ uint32_t __attribute__((__always_inline__, __nodebug__))
   __clz(uint32_t t) {
   return __builtin_clz(t);
 }
 
-static __inline__ unsigned long __attribute__((always_inline, nodebug))
+static __inline__ unsigned long __attribute__((__always_inline__, __nodebug__))
   __clzl(unsigned long t) {
   return __builtin_clzl(t);
 }
 
-static __inline__ uint64_t __attribute__((always_inline, nodebug))
+static __inline__ uint64_t __attribute__((__always_inline__, __nodebug__))
   __clzll(uint64_t t) {
   return __builtin_clzll(t);
 }
 
 /* REV */
-static __inline__ uint32_t __attribute__((always_inline, nodebug))
+static __inline__ uint32_t __attribute__((__always_inline__, __nodebug__))
   __rev(uint32_t t) {
   return __builtin_bswap32(t);
 }
 
-static __inline__ unsigned long __attribute__((always_inline, nodebug))
+static __inline__ unsigned long __attribute__((__always_inline__, __nodebug__))
   __revl(unsigned long t) {
 #if __SIZEOF_LONG__ == 4
   return __builtin_bswap32(t);
@@ -164,40 +164,40 @@ static __inline__ unsigned long __attribute__((always_inline, nodebug))
 #endif
 }
 
-static __inline__ uint64_t __attribute__((always_inline, nodebug))
+static __inline__ uint64_t __attribute__((__always_inline__, __nodebug__))
   __revll(uint64_t t) {
   return __builtin_bswap64(t);
 }
 
 /* REV16 */
-static __inline__ uint32_t __attribute__((always_inline, nodebug))
+static __inline__ uint32_t __attribute__((__always_inline__, __nodebug__))
   __rev16(uint32_t t) {
   return __ror(__rev(t), 16);
 }
 
-static __inline__ unsigned long __attribute__((always_inline, nodebug))
+static __inline__ unsigned long __attribute__((__always_inline__, __nodebug__))
   __rev16l(unsigned long t) {
     return __rorl(__revl(t), sizeof(long) / 2);
 }
 
-static __inline__ uint64_t __attribute__((always_inline, nodebug))
+static __inline__ uint64_t __attribute__((__always_inline__, __nodebug__))
   __rev16ll(uint64_t t) {
   return __rorll(__revll(t), 32);
 }
 
 /* REVSH */
-static __inline__ int16_t __attribute__((always_inline, nodebug))
+static __inline__ int16_t __attribute__((__always_inline__, __nodebug__))
   __revsh(int16_t t) {
   return __builtin_bswap16(t);
 }
 
 /* RBIT */
-static __inline__ uint32_t __attribute__((always_inline, nodebug))
+static __inline__ uint32_t __attribute__((__always_inline__, __nodebug__))
   __rbit(uint32_t t) {
   return __builtin_arm_rbit(t);
 }
 
-static __inline__ uint64_t __attribute__((always_inline, nodebug))
+static __inline__ uint64_t __attribute__((__always_inline__, __nodebug__))
   __rbitll(uint64_t t) {
 #if __ARM_32BIT_STATE
   return (((uint64_t) __builtin_arm_rbit(t)) << 32) |
@@ -207,7 +207,7 @@ static __inline__ uint64_t __attribute__((always_inline, nodebug))
 #endif
 }
 
-static __inline__ unsigned long __attribute__((always_inline, nodebug))
+static __inline__ unsigned long __attribute__((__always_inline__, __nodebug__))
   __rbitl(unsigned long t) {
 #if __SIZEOF_LONG__ == 4
   return __rbit(t);
@@ -230,17 +230,17 @@ static __inline__ unsigned long __attribute__((always_inline, nodebug))
 
 /* 9.4.2 Saturating addition and subtraction intrinsics */
 #if __ARM_32BIT_STATE
-static __inline__ int32_t __attribute__((always_inline, nodebug))
+static __inline__ int32_t __attribute__((__always_inline__, __nodebug__))
   __qadd(int32_t t, int32_t v) {
   return __builtin_arm_qadd(t, v);
 }
 
-static __inline__ int32_t __attribute__((always_inline, nodebug))
+static __inline__ int32_t __attribute__((__always_inline__, __nodebug__))
   __qsub(int32_t t, int32_t v) {
   return __builtin_arm_qsub(t, v);
 }
 
-static __inline__ int32_t __attribute__((always_inline, nodebug))
+static __inline__ int32_t __attribute__((__always_inline__, __nodebug__))
 __qdbl(int32_t t) {
   return __builtin_arm_qadd(t, t);
 }
@@ -248,42 +248,42 @@ __qdbl(int32_t t) {
 
 /* 9.7 CRC32 intrinsics */
 #if __ARM_FEATURE_CRC32
-static __inline__ uint32_t __attribute__((always_inline, nodebug))
+static __inline__ uint32_t __attribute__((__always_inline__, __nodebug__))
   __crc32b(uint32_t a, uint8_t b) {
   return __builtin_arm_crc32b(a, b);
 }
 
-static __inline__ uint32_t __attribute__((always_inline, nodebug))
+static __inline__ uint32_t __attribute__((__always_inline__, __nodebug__))
   __crc32h(uint32_t a, uint16_t b) {
   return __builtin_arm_crc32h(a, b);
 }
 
-static __inline__ uint32_t __attribute__((always_inline, nodebug))
+static __inline__ uint32_t __attribute__((__always_inline__, __nodebug__))
   __crc32w(uint32_t a, uint32_t b) {
   return __builtin_arm_crc32w(a, b);
 }
 
-static __inline__ uint32_t __attribute__((always_inline, nodebug))
+static __inline__ uint32_t __attribute__((__always_inline__, __nodebug__))
   __crc32d(uint32_t a, uint64_t b) {
   return __builtin_arm_crc32d(a, b);
 }
 
-static __inline__ uint32_t __attribute__((always_inline, nodebug))
+static __inline__ uint32_t __attribute__((__always_inline__, __nodebug__))
   __crc32cb(uint32_t a, uint8_t b) {
   return __builtin_arm_crc32cb(a, b);
 }
 
-static __inline__ uint32_t __attribute__((always_inline, nodebug))
+static __inline__ uint32_t __attribute__((__always_inline__, __nodebug__))
   __crc32ch(uint32_t a, uint16_t b) {
   return __builtin_arm_crc32ch(a, b);
 }
 
-static __inline__ uint32_t __attribute__((always_inline, nodebug))
+static __inline__ uint32_t __attribute__((__always_inline__, __nodebug__))
   __crc32cw(uint32_t a, uint32_t b) {
   return __builtin_arm_crc32cw(a, b);
 }
 
-static __inline__ uint32_t __attribute__((always_inline, nodebug))
+static __inline__ uint32_t __attribute__((__always_inline__, __nodebug__))
   __crc32cd(uint32_t a, uint64_t b) {
   return __builtin_arm_crc32cd(a, b);
 }

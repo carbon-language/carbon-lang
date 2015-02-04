@@ -235,9 +235,9 @@ void *_Unwind_FindEnclosingFunction(void *);
 #ifdef __APPLE__
 
 _Unwind_Ptr _Unwind_GetDataRelBase(struct _Unwind_Context *)
-    __attribute__((unavailable));
+    __attribute__((__unavailable__));
 _Unwind_Ptr _Unwind_GetTextRelBase(struct _Unwind_Context *)
-    __attribute__((unavailable));
+    __attribute__((__unavailable__));
 
 /* Darwin-specific functions */
 void __register_frame(const void *);
@@ -251,15 +251,15 @@ struct dwarf_eh_bases {
 void *_Unwind_Find_FDE(const void *, struct dwarf_eh_bases *);
 
 void __register_frame_info_bases(const void *, void *, void *, void *)
-  __attribute__((unavailable));
-void __register_frame_info(const void *, void *) __attribute__((unavailable));
+  __attribute__((__unavailable__));
+void __register_frame_info(const void *, void *) __attribute__((__unavailable__));
 void __register_frame_info_table_bases(const void *, void*, void *, void *)
-  __attribute__((unavailable));
+  __attribute__((__unavailable__));
 void __register_frame_info_table(const void *, void *)
-  __attribute__((unavailable));
-void __register_frame_table(const void *) __attribute__((unavailable));
-void __deregister_frame_info(const void *) __attribute__((unavailable));
-void __deregister_frame_info_bases(const void *)__attribute__((unavailable));
+  __attribute__((__unavailable__));
+void __register_frame_table(const void *) __attribute__((__unavailable__));
+void __deregister_frame_info(const void *) __attribute__((__unavailable__));
+void __deregister_frame_info_bases(const void *)__attribute__((__unavailable__));
 
 #else
 

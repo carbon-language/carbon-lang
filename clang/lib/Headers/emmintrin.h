@@ -489,7 +489,7 @@ _mm_loadu_pd(double const *__dp)
 {
   struct __loadu_pd {
     __m128d __v;
-  } __attribute__((packed, may_alias));
+  } __attribute__((__packed__, __may_alias__));
   return ((struct __loadu_pd*)__dp)->__v;
 }
 
@@ -1070,7 +1070,7 @@ _mm_loadu_si128(__m128i const *__p)
 {
   struct __loadu_si128 {
     __m128i __v;
-  } __attribute__((packed, may_alias));
+  } __attribute__((__packed__, __may_alias__));
   return ((struct __loadu_si128*)__p)->__v;
 }
 

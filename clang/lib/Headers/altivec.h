@@ -2270,7 +2270,7 @@ vec_vlogefp(vector float __a)
 
 #ifdef __LITTLE_ENDIAN__
 static vector unsigned char __ATTRS_o_ai
-__attribute__((deprecated("use assignment for unaligned little endian \
+__attribute__((__deprecated__("use assignment for unaligned little endian \
 loads/stores")))
 vec_lvsl(int __a, const signed char *__b)
 {
@@ -2289,7 +2289,7 @@ vec_lvsl(int __a, const signed char *__b)
 
 #ifdef __LITTLE_ENDIAN__
 static vector unsigned char __ATTRS_o_ai
-__attribute__((deprecated("use assignment for unaligned little endian \
+__attribute__((__deprecated__("use assignment for unaligned little endian \
 loads/stores")))
 vec_lvsl(int __a, const unsigned char *__b)
 {
@@ -2308,7 +2308,7 @@ vec_lvsl(int __a, const unsigned char *__b)
 
 #ifdef __LITTLE_ENDIAN__
 static vector unsigned char __ATTRS_o_ai
-__attribute__((deprecated("use assignment for unaligned little endian \
+__attribute__((__deprecated__("use assignment for unaligned little endian \
 loads/stores")))
 vec_lvsl(int __a, const short *__b)
 {
@@ -2327,7 +2327,7 @@ vec_lvsl(int __a, const short *__b)
 
 #ifdef __LITTLE_ENDIAN__
 static vector unsigned char __ATTRS_o_ai
-__attribute__((deprecated("use assignment for unaligned little endian \
+__attribute__((__deprecated__("use assignment for unaligned little endian \
 loads/stores")))
 vec_lvsl(int __a, const unsigned short *__b)
 {
@@ -2346,7 +2346,7 @@ vec_lvsl(int __a, const unsigned short *__b)
 
 #ifdef __LITTLE_ENDIAN__
 static vector unsigned char __ATTRS_o_ai
-__attribute__((deprecated("use assignment for unaligned little endian \
+__attribute__((__deprecated__("use assignment for unaligned little endian \
 loads/stores")))
 vec_lvsl(int __a, const int *__b)
 {
@@ -2365,7 +2365,7 @@ vec_lvsl(int __a, const int *__b)
 
 #ifdef __LITTLE_ENDIAN__
 static vector unsigned char __ATTRS_o_ai
-__attribute__((deprecated("use assignment for unaligned little endian \
+__attribute__((__deprecated__("use assignment for unaligned little endian \
 loads/stores")))
 vec_lvsl(int __a, const unsigned int *__b)
 {
@@ -2384,7 +2384,7 @@ vec_lvsl(int __a, const unsigned int *__b)
 
 #ifdef __LITTLE_ENDIAN__
 static vector unsigned char __ATTRS_o_ai
-__attribute__((deprecated("use assignment for unaligned little endian \
+__attribute__((__deprecated__("use assignment for unaligned little endian \
 loads/stores")))
 vec_lvsl(int __a, const float *__b)
 {
@@ -2405,7 +2405,7 @@ vec_lvsl(int __a, const float *__b)
 
 #ifdef __LITTLE_ENDIAN__
 static vector unsigned char __ATTRS_o_ai
-__attribute__((deprecated("use assignment for unaligned little endian \
+__attribute__((__deprecated__("use assignment for unaligned little endian \
 loads/stores")))
 vec_lvsr(int __a, const signed char *__b)
 {
@@ -2424,7 +2424,7 @@ vec_lvsr(int __a, const signed char *__b)
 
 #ifdef __LITTLE_ENDIAN__
 static vector unsigned char __ATTRS_o_ai
-__attribute__((deprecated("use assignment for unaligned little endian \
+__attribute__((__deprecated__("use assignment for unaligned little endian \
 loads/stores")))
 vec_lvsr(int __a, const unsigned char *__b)
 {
@@ -2443,7 +2443,7 @@ vec_lvsr(int __a, const unsigned char *__b)
 
 #ifdef __LITTLE_ENDIAN__
 static vector unsigned char __ATTRS_o_ai
-__attribute__((deprecated("use assignment for unaligned little endian \
+__attribute__((__deprecated__("use assignment for unaligned little endian \
 loads/stores")))
 vec_lvsr(int __a, const short *__b)
 {
@@ -2462,7 +2462,7 @@ vec_lvsr(int __a, const short *__b)
 
 #ifdef __LITTLE_ENDIAN__
 static vector unsigned char __ATTRS_o_ai
-__attribute__((deprecated("use assignment for unaligned little endian \
+__attribute__((__deprecated__("use assignment for unaligned little endian \
 loads/stores")))
 vec_lvsr(int __a, const unsigned short *__b)
 {
@@ -2481,7 +2481,7 @@ vec_lvsr(int __a, const unsigned short *__b)
 
 #ifdef __LITTLE_ENDIAN__
 static vector unsigned char __ATTRS_o_ai
-__attribute__((deprecated("use assignment for unaligned little endian \
+__attribute__((__deprecated__("use assignment for unaligned little endian \
 loads/stores")))
 vec_lvsr(int __a, const int *__b)
 {
@@ -2500,7 +2500,7 @@ vec_lvsr(int __a, const int *__b)
 
 #ifdef __LITTLE_ENDIAN__
 static vector unsigned char __ATTRS_o_ai
-__attribute__((deprecated("use assignment for unaligned little endian \
+__attribute__((__deprecated__("use assignment for unaligned little endian \
 loads/stores")))
 vec_lvsr(int __a, const unsigned int *__b)
 {
@@ -2519,7 +2519,7 @@ vec_lvsr(int __a, const unsigned int *__b)
 
 #ifdef __LITTLE_ENDIAN__
 static vector unsigned char __ATTRS_o_ai
-__attribute__((deprecated("use assignment for unaligned little endian \
+__attribute__((__deprecated__("use assignment for unaligned little endian \
 loads/stores")))
 vec_lvsr(int __a, const float *__b)
 {

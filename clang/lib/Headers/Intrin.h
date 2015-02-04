@@ -781,17 +781,17 @@ _InterlockedCompareExchange64(__int64 volatile *_Destination,
 \*----------------------------------------------------------------------------*/
 #if defined(__i386__) || defined(__x86_64__)
 static __inline__ void __attribute__((__always_inline__, __nodebug__))
-__attribute__((deprecated("use other intrinsics or C++11 atomics instead")))
+__attribute__((__deprecated__("use other intrinsics or C++11 atomics instead")))
 _ReadWriteBarrier(void) {
   __asm__ volatile ("" : : : "memory");
 }
 static __inline__ void __attribute__((__always_inline__, __nodebug__))
-__attribute__((deprecated("use other intrinsics or C++11 atomics instead")))
+__attribute__((__deprecated__("use other intrinsics or C++11 atomics instead")))
 _ReadBarrier(void) {
   __asm__ volatile ("" : : : "memory");
 }
 static __inline__ void __attribute__((__always_inline__, __nodebug__))
-__attribute__((deprecated("use other intrinsics or C++11 atomics instead")))
+__attribute__((__deprecated__("use other intrinsics or C++11 atomics instead")))
 _WriteBarrier(void) {
   __asm__ volatile ("" : : : "memory");
 }
@@ -944,14 +944,14 @@ __readmsr(unsigned long __register) {
   return (((unsigned __int64)__edx) << 32) | (unsigned __int64)__eax;
 }
 
-static __inline__ unsigned long __attribute__((always_inline, __nodebug__))
+static __inline__ unsigned long __attribute__((__always_inline__, __nodebug__))
 __readcr3(void) {
   unsigned long __cr3_val;
   __asm__ __volatile__ ("mov %%cr3, %0" : "=q"(__cr3_val) : : "memory");
   return __cr3_val;
 }
 
-static __inline__ void __attribute__((always_inline, __nodebug__))
+static __inline__ void __attribute__((__always_inline__, __nodebug__))
 __writecr3(unsigned int __cr3_val) {
   __asm__ ("mov %0, %%cr3" : : "q"(__cr3_val) : "memory");
 }
