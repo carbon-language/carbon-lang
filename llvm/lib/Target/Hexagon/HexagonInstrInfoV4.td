@@ -3652,71 +3652,28 @@ class Loadam_pat<PatFrag Load, ValueType VT, PatFrag Addr, PatFrag ValueMod,
 class Storea_pat<PatFrag Store, PatFrag Value, PatFrag Addr, InstHexagon MI>
   : Pat<(Store Value:$val, Addr:$addr), (MI Addr:$addr, Value:$val)>;
 
-let Predicates = [HasV4T], AddedComplexity = 30 in {
-def : Pat<(truncstorei8 (i32 IntRegs:$src1),
-                        (HexagonCONST32 tglobaladdr:$absaddr)),
-          (S2_storerbabs tglobaladdr: $absaddr, IntRegs: $src1)>;
+class Stoream_pat<PatFrag Store, PatFrag Value, PatFrag Addr, PatFrag ValueMod,
+                  InstHexagon MI>
+  : Pat<(Store Value:$val, Addr:$addr),
+        (MI Addr:$addr, (ValueMod Value:$val))>;
 
-def : Pat<(truncstorei16 (i32 IntRegs:$src1),
-                          (HexagonCONST32 tglobaladdr:$absaddr)),
-          (S2_storerhabs tglobaladdr: $absaddr, IntRegs: $src1)>;
+def: Storea_pat<SwapSt<atomic_store_8>,  I32, addrgp, S2_storerbgp>;
+def: Storea_pat<SwapSt<atomic_store_16>, I32, addrgp, S2_storerhgp>;
+def: Storea_pat<SwapSt<atomic_store_32>, I32, addrgp, S2_storerigp>;
+def: Storea_pat<SwapSt<atomic_store_64>, I64, addrgp, S2_storerdgp>;
 
-def : Pat<(store (i32 IntRegs:$src1), (HexagonCONST32 tglobaladdr:$absaddr)),
-          (S2_storeriabs tglobaladdr: $absaddr, IntRegs: $src1)>;
+let AddedComplexity = 100 in {
+  def: Storea_pat<truncstorei8,  I32, addrgp, S2_storerbgp>;
+  def: Storea_pat<truncstorei16, I32, addrgp, S2_storerhgp>;
+  def: Storea_pat<store,         I32, addrgp, S2_storerigp>;
+  def: Storea_pat<store,         I64, addrgp, S2_storerdgp>;
 
-def : Pat<(store (i64 DoubleRegs:$src1),
-                 (HexagonCONST32 tglobaladdr:$absaddr)),
-          (S2_storerdabs tglobaladdr: $absaddr, DoubleRegs: $src1)>;
+  // Map from "i1 = constant<-1>; memw(CONST32(#foo)) = i1"
+  //       to "r0 = 1; memw(#foo) = r0"
+  let AddedComplexity = 100 in
+  def: Pat<(store (i1 -1), (HexagonCONST32_GP tglobaladdr:$global)),
+           (S2_storerbgp tglobaladdr:$global, (A2_tfrsi 1))>;
 }
-
-// 64 bit atomic store
-def : Pat <(atomic_store_64 (HexagonCONST32_GP tglobaladdr:$global),
-                            (i64 DoubleRegs:$src1)),
-           (S2_storerdgp tglobaladdr:$global, (i64 DoubleRegs:$src1))>,
-           Requires<[HasV4T]>;
-
-// Map from store(globaladdress) -> memd(#foo)
-let AddedComplexity = 100 in
-def : Pat <(store (i64 DoubleRegs:$src1),
-                  (HexagonCONST32_GP tglobaladdr:$global)),
-           (S2_storerdgp tglobaladdr:$global, (i64 DoubleRegs:$src1))>;
-
-// 8 bit atomic store
-def : Pat < (atomic_store_8 (HexagonCONST32_GP tglobaladdr:$global),
-                            (i32 IntRegs:$src1)),
-            (S2_storerbgp tglobaladdr:$global, (i32 IntRegs:$src1))>;
-
-// Map from store(globaladdress) -> memb(#foo)
-let AddedComplexity = 100 in
-def : Pat<(truncstorei8 (i32 IntRegs:$src1),
-          (HexagonCONST32_GP tglobaladdr:$global)),
-          (S2_storerbgp tglobaladdr:$global, (i32 IntRegs:$src1))>;
-
-// Map from "i1 = constant<-1>; memw(CONST32(#foo)) = i1"
-//       to "r0 = 1; memw(#foo) = r0"
-let AddedComplexity = 100 in
-def : Pat<(store (i1 -1), (HexagonCONST32_GP tglobaladdr:$global)),
-          (S2_storerbgp tglobaladdr:$global, (A2_tfrsi 1))>;
-
-def : Pat<(atomic_store_16 (HexagonCONST32_GP tglobaladdr:$global),
-                           (i32 IntRegs:$src1)),
-          (S2_storerhgp tglobaladdr:$global, (i32 IntRegs:$src1))>;
-
-// Map from store(globaladdress) -> memh(#foo)
-let AddedComplexity = 100 in
-def : Pat<(truncstorei16 (i32 IntRegs:$src1),
-                         (HexagonCONST32_GP tglobaladdr:$global)),
-          (S2_storerhgp tglobaladdr:$global, (i32 IntRegs:$src1))>;
-
-// 32 bit atomic store
-def : Pat<(atomic_store_32 (HexagonCONST32_GP tglobaladdr:$global),
-                           (i32 IntRegs:$src1)),
-          (S2_storerigp tglobaladdr:$global, (i32 IntRegs:$src1))>;
-
-// Map from store(globaladdress) -> memw(#foo)
-let AddedComplexity = 100 in
-def : Pat<(store (i32 IntRegs:$src1), (HexagonCONST32_GP tglobaladdr:$global)),
-          (S2_storerigp tglobaladdr:$global, (i32 IntRegs:$src1))>;
 
 //===----------------------------------------------------------------------===//
 // Template class for non predicated load instructions with
@@ -3899,21 +3856,33 @@ let AddedComplexity  = 30 in {
   def: Loada_pat<zextloadi16, i32, u0AlwaysExtPred, L4_loadruh_abs>;
 }
 
-let Predicates = [HasV4T], AddedComplexity  = 30 in {
-def : Pat<(i32 (load (HexagonCONST32 tglobaladdr:$absaddr))),
-          (L4_loadri_abs tglobaladdr: $absaddr)>;
+// Indexed store word - global address.
+// memw(Rs+#u6:2)=#S8
+let AddedComplexity = 100 in
+def: Storex_add_pat<store, addrga, u6_2ImmPred, S4_storeiri_io>;
 
-def : Pat<(i32 (sextloadi8 (HexagonCONST32 tglobaladdr:$absaddr))),
-          (L4_loadrb_abs tglobaladdr:$absaddr)>;
+// Load from a global address that has only one use in the current basic block.
+let AddedComplexity = 100 in {
+  def: Loada_pat<extloadi8,   i32, addrga, L4_loadrub_abs>;
+  def: Loada_pat<sextloadi8,  i32, addrga, L4_loadrb_abs>;
+  def: Loada_pat<zextloadi8,  i32, addrga, L4_loadrub_abs>;
 
-def : Pat<(i32 (zextloadi8 (HexagonCONST32 tglobaladdr:$absaddr))),
-          (L4_loadrub_abs tglobaladdr:$absaddr)>;
+  def: Loada_pat<extloadi16,  i32, addrga, L4_loadruh_abs>;
+  def: Loada_pat<sextloadi16, i32, addrga, L4_loadrh_abs>;
+  def: Loada_pat<zextloadi16, i32, addrga, L4_loadruh_abs>;
 
-def : Pat<(i32 (sextloadi16 (HexagonCONST32 tglobaladdr:$absaddr))),
-          (L4_loadrh_abs tglobaladdr:$absaddr)>;
+  def: Loada_pat<load,        i32, addrga, L4_loadri_abs>;
+  def: Loada_pat<load,        i64, addrga, L4_loadrd_abs>;
+}
 
-def : Pat<(i32 (zextloadi16 (HexagonCONST32 tglobaladdr:$absaddr))),
-          (L4_loadruh_abs tglobaladdr:$absaddr)>;
+// Store to a global address that has only one use in the current basic block.
+let AddedComplexity = 100 in {
+  def: Storea_pat<truncstorei8,  I32, addrga, S2_storerbabs>;
+  def: Storea_pat<truncstorei16, I32, addrga, S2_storerhabs>;
+  def: Storea_pat<store,         I32, addrga, S2_storeriabs>;
+  def: Storea_pat<store,         I64, addrga, S2_storerdabs>;
+
+  def: Stoream_pat<truncstorei32, I64, addrga, LoReg, S2_storeriabs>;
 }
 
 // Map from Pd = load(globaladdress) -> Rd = memb(globaladdress), Pd = Rd
