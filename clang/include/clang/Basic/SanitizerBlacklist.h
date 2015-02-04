@@ -28,7 +28,8 @@ class SanitizerBlacklist {
   SourceManager &SM;
 
 public:
-  SanitizerBlacklist(StringRef BlacklistPath, SourceManager &SM);
+  SanitizerBlacklist(const std::vector<std::string> &BlacklistPaths,
+                     SourceManager &SM);
   bool isBlacklistedGlobal(StringRef GlobalName,
                            StringRef Category = StringRef()) const;
   bool isBlacklistedType(StringRef MangledTypeName,

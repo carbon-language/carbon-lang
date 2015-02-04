@@ -151,7 +151,7 @@ bool SanitizerArgs::needsUnwindTables() const {
 void SanitizerArgs::clear() {
   Sanitizers.clear();
   RecoverableSanitizers.clear();
-  BlacklistFile = "";
+  BlacklistFiles.clear();
   SanitizeCoverage = 0;
   MsanTrackOrigins = 0;
   AsanFieldPadding = 0;
@@ -285,30 +285,34 @@ SanitizerArgs::SanitizerArgs(const ToolChain &TC,
   // -f(-no)sanitize=leak should change whether leak detection is enabled by
   // default in ASan?
 
-  // Parse -f(no-)sanitize-blacklist options.
-  if (Arg *BLArg = Args.getLastArg(options::OPT_fsanitize_blacklist,
-                                   options::OPT_fno_sanitize_blacklist)) {
-    if (BLArg->getOption().matches(options::OPT_fsanitize_blacklist)) {
-      std::string BLPath = BLArg->getValue();
-      if (llvm::sys::fs::exists(BLPath)) {
-        // Validate the blacklist format.
-        std::string BLError;
-        std::unique_ptr<llvm::SpecialCaseList> SCL(
-            llvm::SpecialCaseList::create(BLPath, BLError));
-        if (!SCL.get())
-          D.Diag(clang::diag::err_drv_malformed_sanitizer_blacklist) << BLError;
-        else
-          BlacklistFile = BLPath;
-      } else {
-        D.Diag(clang::diag::err_drv_no_such_file) << BLPath;
-      }
-    }
-  } else {
-    // If no -fsanitize-blacklist option is specified, try to look up for
-    // blacklist in the resource directory.
+  // Setup blacklist files.
+  // Add default blacklist from resource directory.
+  {
     std::string BLPath;
     if (getDefaultBlacklist(D, BLPath) && llvm::sys::fs::exists(BLPath))
-      BlacklistFile = BLPath;
+      BlacklistFiles.push_back(BLPath);
+  }
+  // Parse -f(no-)sanitize-blacklist options.
+  for (const auto *Arg : Args) {
+    if (Arg->getOption().matches(options::OPT_fsanitize_blacklist)) {
+      Arg->claim();
+      std::string BLPath = Arg->getValue();
+      if (llvm::sys::fs::exists(BLPath))
+        BlacklistFiles.push_back(BLPath);
+      else
+        D.Diag(clang::diag::err_drv_no_such_file) << BLPath;
+    } else if (Arg->getOption().matches(options::OPT_fno_sanitize_blacklist)) {
+      Arg->claim();
+      BlacklistFiles.clear();
+    }
+  }
+  // Validate blacklists format.
+  {
+    std::string BLError;
+    std::unique_ptr<llvm::SpecialCaseList> SCL(
+        llvm::SpecialCaseList::create(BlacklistFiles, BLError));
+    if (!SCL.get())
+      D.Diag(clang::diag::err_drv_malformed_sanitizer_blacklist) << BLError;
   }
 
   // Parse -f[no-]sanitize-memory-track-origins[=level] options.
@@ -405,9 +409,9 @@ void SanitizerArgs::addArgs(const llvm::opt::ArgList &Args,
   if (UbsanTrapOnError)
     CmdArgs.push_back("-fsanitize-undefined-trap-on-error");
 
-  if (!BlacklistFile.empty()) {
+  for (const auto &BLPath : BlacklistFiles) {
     SmallString<64> BlacklistOpt("-fsanitize-blacklist=");
-    BlacklistOpt += BlacklistFile;
+    BlacklistOpt += BLPath;
     CmdArgs.push_back(Args.MakeArgString(BlacklistOpt));
   }
 

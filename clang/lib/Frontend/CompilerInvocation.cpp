@@ -1669,7 +1669,7 @@ static void ParseLangArgs(LangOptions &Opts, ArgList &Args, InputKind IK,
   // -fsanitize-address-field-padding=N has to be a LangOpt, parse it here.
   Opts.SanitizeAddressFieldPadding =
       getLastArgIntValue(Args, OPT_fsanitize_address_field_padding, 0, Diags);
-  Opts.SanitizerBlacklistFile = Args.getLastArgValue(OPT_fsanitize_blacklist);
+  Opts.SanitizerBlacklistFiles = Args.getAllArgValues(OPT_fsanitize_blacklist);
 }
 
 static void ParsePreprocessorArgs(PreprocessorOptions &Opts, ArgList &Args,
