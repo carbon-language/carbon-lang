@@ -2032,17 +2032,18 @@ DEF_TRAVERSE_STMT(CXXStaticCastExpr, {
 // to the syntactic form.
 template <typename Derived>
 bool RecursiveASTVisitor<Derived>::TraverseInitListExpr(InitListExpr *S) {
-  if (InitListExpr *Syn = S->getSyntacticForm())
-    S = Syn;
-  TRY_TO(WalkUpFromInitListExpr(S));
-  // All we need are the default actions.  FIXME: use a helper function.
-  for (Stmt::child_range range = S->children(); range; ++range) {
-    TRY_TO(TraverseStmt(*range));
-  }
-  if (InitListExpr *Syn = S->getSemanticForm()) {
+  InitListExpr *Syn = S->isSemanticForm() ? S->getSyntacticForm() : S;
+  if (Syn) {
     TRY_TO(WalkUpFromInitListExpr(Syn));
     // All we need are the default actions.  FIXME: use a helper function.
     for (Stmt::child_range range = Syn->children(); range; ++range) {
+      TRY_TO(TraverseStmt(*range));
+    }
+  }
+  InitListExpr *Sem = S->isSemanticForm() ? S : S->getSemanticForm();
+  if (Sem) {
+    TRY_TO(WalkUpFromInitListExpr(Sem));
+    for (Stmt::child_range range = Sem->children(); range; ++range) {
       TRY_TO(TraverseStmt(*range));
     }
   }

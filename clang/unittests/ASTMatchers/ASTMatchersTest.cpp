@@ -3148,6 +3148,8 @@ TEST(InitListExpression, MatchesInitListExpression) {
                       "void f();"
                       "S s[1] = { &f };",
                       declRefExpr(to(functionDecl(hasName("f"))))));
+  EXPECT_TRUE(
+      matches("int i[1] = {42, [0] = 43};", integerLiteral(equals(42))));
 }
 
 TEST(UsingDeclaration, MatchesUsingDeclarations) {
