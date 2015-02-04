@@ -561,8 +561,7 @@ bool ArgPromotion::isSafeToPromoteArgument(Argument *Arg,
     // Now check every path from the entry block to the load for transparency.
     // To do this, we perform a depth first search on the inverse CFG from the
     // loading block.
-    for (pred_iterator PI = pred_begin(BB), E = pred_end(BB); PI != E; ++PI) {
-      BasicBlock *P = *PI;
+    for (BasicBlock *P : predecessors(BB)) {
       for (BasicBlock *TranspBB : inverse_depth_first_ext(P, TranspBlocks))
         if (AA.canBasicBlockModify(*TranspBB, Loc))
           return false;

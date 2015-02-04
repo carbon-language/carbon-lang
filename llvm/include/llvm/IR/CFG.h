@@ -16,6 +16,7 @@
 #define LLVM_IR_CFG_H
 
 #include "llvm/ADT/GraphTraits.h"
+#include "llvm/ADT/iterator_range.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/InstrTypes.h"
 
@@ -84,6 +85,8 @@ public:
 typedef PredIterator<BasicBlock, Value::user_iterator> pred_iterator;
 typedef PredIterator<const BasicBlock,
                      Value::const_user_iterator> const_pred_iterator;
+typedef llvm::iterator_range<pred_iterator> pred_range;
+typedef llvm::iterator_range<const_pred_iterator> pred_const_range;
 
 inline pred_iterator pred_begin(BasicBlock *BB) { return pred_iterator(BB); }
 inline const_pred_iterator pred_begin(const BasicBlock *BB) {
@@ -96,8 +99,12 @@ inline const_pred_iterator pred_end(const BasicBlock *BB) {
 inline bool pred_empty(const BasicBlock *BB) {
   return pred_begin(BB) == pred_end(BB);
 }
-
-
+inline pred_range predecessors(BasicBlock *BB) {
+  return pred_range(pred_begin(BB), pred_end(BB));
+}
+inline pred_const_range predecessors(const BasicBlock *BB) {
+  return pred_const_range(pred_begin(BB), pred_end(BB));
+}
 
 //===----------------------------------------------------------------------===//
 // BasicBlock succ_iterator definition
@@ -247,6 +254,8 @@ public:
 typedef SuccIterator<TerminatorInst*, BasicBlock> succ_iterator;
 typedef SuccIterator<const TerminatorInst*,
                      const BasicBlock> succ_const_iterator;
+typedef llvm::iterator_range<succ_iterator> succ_range;
+typedef llvm::iterator_range<succ_const_iterator> succ_const_range;
 
 inline succ_iterator succ_begin(BasicBlock *BB) {
   return succ_iterator(BB->getTerminator());
@@ -263,6 +272,13 @@ inline succ_const_iterator succ_end(const BasicBlock *BB) {
 inline bool succ_empty(const BasicBlock *BB) {
   return succ_begin(BB) == succ_end(BB);
 }
+inline succ_range successors(BasicBlock *BB) {
+  return succ_range(succ_begin(BB), succ_end(BB));
+}
+inline succ_const_range successors(const BasicBlock *BB) {
+  return succ_const_range(succ_begin(BB), succ_end(BB));
+}
+
 
 template <typename T, typename U> struct isPodLike<SuccIterator<T, U> > {
   static const bool value = isPodLike<T>::value;

@@ -58,13 +58,13 @@ Function* PartialInliner::unswitchFunction(Function* F) {
   BasicBlock* returnBlock = nullptr;
   BasicBlock* nonReturnBlock = nullptr;
   unsigned returnCount = 0;
-  for (succ_iterator SI = succ_begin(entryBlock), SE = succ_end(entryBlock);
-       SI != SE; ++SI)
-    if (isa<ReturnInst>((*SI)->getTerminator())) {
-      returnBlock = *SI;
+  for (BasicBlock *BB : successors(entryBlock)) {
+    if (isa<ReturnInst>(BB->getTerminator())) {
+      returnBlock = BB;
       returnCount++;
     } else
-      nonReturnBlock = *SI;
+      nonReturnBlock = BB;
+  }
   
   if (returnCount != 1)
     return nullptr;
