@@ -664,7 +664,13 @@ CMICmnLLDBDebugger::MonitorSBListenerEvents(bool &vrbIsAlive)
 
     bool bHandledEvent = false;
     bool bExitAppEvent = false;
-    const bool bOk = CMICmnLLDBDebuggerHandleEvents::Instance().HandleEvent(event, bHandledEvent, bExitAppEvent);
+
+    bool bOk = false;
+    {
+        // Lock Mutex before handling events so that we don't disturb a running cmd
+        CMIUtilThreadLock lock(CMICmnLLDBDebugSessionInfo::Instance().GetSessionMutex());
+        bOk = CMICmnLLDBDebuggerHandleEvents::Instance().HandleEvent(event, bHandledEvent, bExitAppEvent);
+    }
     if (!bHandledEvent)
     {
         const CMIUtilString msg(CMIUtilString::Format(MIRSRC(IDS_LLDBDEBUGGER_WRN_UNKNOWN_EVENT), event.GetBroadcasterClass()));

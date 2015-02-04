@@ -35,6 +35,7 @@
 #include "MICmnLLDBDebugSessionInfoVarObj.h"
 #include "MICmnMIValueTuple.h"
 #include "MIUtilMapIdToVariant.h"
+#include "MIUtilThreadBaseStd.h"
 
 // Declarations:
 class CMICmnLLDBDebugger;
@@ -156,6 +157,7 @@ class CMICmnLLDBDebugSessionInfo : public CMICmnBase, public MI::ISingleton<CMIC
     bool RecordBrkPtInfo(const MIuint vnBrkPtId, const SBrkPtInfo &vrBrkPtInfo);
     bool RecordBrkPtInfoGet(const MIuint vnBrkPtId, SBrkPtInfo &vrwBrkPtInfo) const;
     bool RecordBrkPtInfoDelete(const MIuint vnBrkPtId);
+    CMIUtilThreadMutex& GetSessionMutex() { return m_sessionMutex;}
     lldb::SBDebugger &GetDebugger() const;
     lldb::SBListener &GetListener() const;
     lldb::SBTarget GetTarget() const;
@@ -200,6 +202,7 @@ class CMICmnLLDBDebugSessionInfo : public CMICmnBase, public MI::ISingleton<CMIC
     CMIUtilMapIdToVariant m_mapIdToSessionData; // Hold and retrieve key to value data available across all commands
     VecVarObj_t m_vecVarObj;                    // Vector of session variable objects
     MapBrkPtIdToBrkPtInfo_t m_mapBrkPtIdToBrkPtInfo;
+    CMIUtilThreadMutex m_sessionMutex;
 };
 
 //++ ------------------------------------------------------------------------------------
