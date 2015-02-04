@@ -707,19 +707,41 @@ def:  Pat <(i64 (extloadi32 (i32 (add IntRegs:$src1, s11_2ExtPred:$offset)))),
 //===----------------------------------------------------------------------===//
 // Template class for store instructions with Absolute set addressing mode.
 //===----------------------------------------------------------------------===//
-let isExtended = 1, opExtendable = 2, validSubTargets = HasV4SubT,
-addrMode = AbsoluteSet in
-class T_ST_abs_set<string mnemonic, RegisterClass RC>:
-            STInst2<(outs IntRegs:$dst1),
-            (ins RC:$src1, u0AlwaysExt:$src2),
-            mnemonic#"($dst1=##$src2) = $src1",
-            []>,
-            Requires<[HasV4T]>;
+let isExtended = 1, opExtendable = 1, opExtentBits = 6,
+    addrMode = AbsoluteSet, isNVStorable = 1 in
+class T_ST_absset <string mnemonic, string BaseOp, RegisterClass RC,
+                   bits<3> MajOp, MemAccessSize AccessSz, bit isHalf = 0>
+  : STInst<(outs IntRegs:$dst),
+           (ins u6Ext:$addr, RC:$src),
+    mnemonic#"($dst = #$addr) = $src"#!if(isHalf, ".h","")>, NewValueRel {
+    bits<5> dst;
+    bits<6> addr;
+    bits<5> src;
+    let accessSize = AccessSz;
+    let BaseOpcode = BaseOp#"_AbsSet";
 
-def STrid_abs_set_V4 : T_ST_abs_set <"memd", DoubleRegs>;
-def STrib_abs_set_V4 : T_ST_abs_set <"memb", IntRegs>;
-def STrih_abs_set_V4 : T_ST_abs_set <"memh", IntRegs>;
-def STriw_abs_set_V4 : T_ST_abs_set <"memw", IntRegs>;
+    let IClass = 0b1010;
+
+    let Inst{27-24} = 0b1011;
+    let Inst{23-21} = MajOp;
+    let Inst{20-16} = dst;
+    let Inst{13}    = 0b0;
+    let Inst{12-8}  = src;
+    let Inst{7}     = 0b1;
+    let Inst{5-0}   = addr;
+  }
+
+def S4_storerb_ap : T_ST_absset <"memb", "STrib", IntRegs, 0b000, ByteAccess>;
+def S4_storerh_ap : T_ST_absset <"memh", "STrih", IntRegs, 0b010,
+                                 HalfWordAccess>;
+def S4_storeri_ap : T_ST_absset <"memw", "STriw", IntRegs, 0b100, WordAccess>;
+
+let isNVStorable = 0 in {
+  def S4_storerf_ap : T_ST_absset <"memh", "STrif", IntRegs,
+                                   0b011, HalfWordAccess, 1>;
+  def S4_storerd_ap : T_ST_absset <"memd", "STrid", DoubleRegs,
+                                   0b110, DoubleWordAccess>;
+}
 
 //===----------------------------------------------------------------------===//
 // Template classes for the non-predicated store instructions with
