@@ -1103,6 +1103,20 @@ Platform::LaunchProcess (ProcessLaunchInfo &launch_info)
     return error;
 }
 
+Error
+Platform::KillProcess (const lldb::pid_t pid)
+{
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_PLATFORM));
+    if (log)
+        log->Printf ("Platform::%s, pid %" PRIu64, __FUNCTION__, pid);
+
+    if (!IsHost ())
+        return Error ("base lldb_private::Platform class can't launch remote processes");
+
+    Host::Kill (pid, SIGTERM);
+    return Error();
+}
+
 lldb::ProcessSP
 Platform::DebugProcess (ProcessLaunchInfo &launch_info, 
                         Debugger &debugger,

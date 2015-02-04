@@ -380,6 +380,12 @@ namespace lldb_private {
         LaunchProcess (ProcessLaunchInfo &launch_info);
 
         //------------------------------------------------------------------
+        /// Kill process on a platform.
+        //------------------------------------------------------------------
+        virtual Error
+        KillProcess (const lldb::pid_t pid);
+
+        //------------------------------------------------------------------
         /// Lets a platform answer if it is compatible with a given
         /// architecture and the target triple contained within.
         //------------------------------------------------------------------

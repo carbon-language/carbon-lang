@@ -99,6 +99,7 @@ HEADER_FILES="${SRC_ROOT}/include/lldb/lldb.h"\
 " ${SRC_ROOT}/include/lldb/API/SBHostOS.h"\
 " ${SRC_ROOT}/include/lldb/API/SBInstruction.h"\
 " ${SRC_ROOT}/include/lldb/API/SBInstructionList.h"\
+" ${SRC_ROOT}/include/lldb/API/SBLaunchInfo.h"\
 " ${SRC_ROOT}/include/lldb/API/SBLineEntry.h"\
 " ${SRC_ROOT}/include/lldb/API/SBListener.h"\
 " ${SRC_ROOT}/include/lldb/API/SBModule.h"\
@@ -150,6 +151,7 @@ INTERFACE_FILES="${SRC_ROOT}/scripts/Python/interface/SBAddress.i"\
 " ${SRC_ROOT}/scripts/Python/interface/SBHostOS.i"\
 " ${SRC_ROOT}/scripts/Python/interface/SBInstruction.i"\
 " ${SRC_ROOT}/scripts/Python/interface/SBInstructionList.i"\
+" ${SRC_ROOT}/scripts/Python/interface/SBLaunchInfo.i"\
 " ${SRC_ROOT}/scripts/Python/interface/SBLineEntry.i"\
 " ${SRC_ROOT}/scripts/Python/interface/SBListener.i"\
 " ${SRC_ROOT}/scripts/Python/interface/SBModule.i"\

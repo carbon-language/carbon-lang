@@ -1211,13 +1211,13 @@ GDBRemoteCommunicationClient::SendInterrupt
 }
 
 lldb::pid_t
-GDBRemoteCommunicationClient::GetCurrentProcessID ()
+GDBRemoteCommunicationClient::GetCurrentProcessID (bool allow_lazy)
 {
-    if (m_curr_pid_is_valid == eLazyBoolYes)
+    if (allow_lazy && m_curr_pid_is_valid == eLazyBoolYes)
         return m_curr_pid;
     
     // First try to retrieve the pid via the qProcessInfo request.
-    GetCurrentProcessInfo ();
+    GetCurrentProcessInfo (allow_lazy);
     if (m_curr_pid_is_valid == eLazyBoolYes)
     {
         // We really got it.
@@ -2409,14 +2409,17 @@ GDBRemoteCommunicationClient::GetProcessInfo (lldb::pid_t pid, ProcessInstanceIn
 }
 
 bool
-GDBRemoteCommunicationClient::GetCurrentProcessInfo ()
+GDBRemoteCommunicationClient::GetCurrentProcessInfo (bool allow_lazy)
 {
     Log *log (ProcessGDBRemoteLog::GetLogIfAnyCategoryIsSet (GDBR_LOG_PROCESS | GDBR_LOG_PACKETS));
 
-    if (m_qProcessInfo_is_valid == eLazyBoolYes)
-        return true;
-    if (m_qProcessInfo_is_valid == eLazyBoolNo)
-        return false;
+    if (allow_lazy)
+    {
+        if (m_qProcessInfo_is_valid == eLazyBoolYes)
+            return true;
+        if (m_qProcessInfo_is_valid == eLazyBoolNo)
+            return false;
+    }
 
     GetHostInfo ();
 

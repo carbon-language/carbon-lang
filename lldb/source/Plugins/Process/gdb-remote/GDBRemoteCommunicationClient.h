@@ -100,7 +100,7 @@ public:
                    bool &timed_out);
 
     lldb::pid_t
-    GetCurrentProcessID ();
+    GetCurrentProcessID (bool allow_lazy = true);
 
     bool
     GetLaunchSuccess (std::string &error_str);
@@ -525,7 +525,7 @@ protected:
                                         StringExtractorGDBRemote &response);
 
     bool
-    GetCurrentProcessInfo ();
+    GetCurrentProcessInfo (bool allow_lazy_pid = true);
 
     bool
     GetGDBServerVersion();

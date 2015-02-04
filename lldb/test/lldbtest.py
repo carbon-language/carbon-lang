@@ -31,6 +31,7 @@ OK
 $ 
 """
 
+import abc
 import os, sys, traceback
 import os.path
 import re
@@ -41,6 +42,7 @@ import time
 import types
 import unittest2
 import lldb
+from _pyio import __metaclass__
 
 # See also dotest.parseOptionsAndInitTestdirs(), where the environment variables
 # LLDB_COMMAND_TRACE and LLDB_DO_CLEANUP are set from '-t' and '-r dir' options.
@@ -232,6 +234,78 @@ class recording(StringIO.StringIO):
         if self.session:
             print >> self.session, self.getvalue()
         self.close()
+
+class _BaseProcess(object):
+    __metaclass__ = abc.ABCMeta
+
+    @abc.abstractproperty
+    def pid(self):
+        """Returns process PID if has been launched already."""
+
+    @abc.abstractmethod
+    def launch(self, executable, args):
+        """Launches new process with given executable and args."""
+
+    @abc.abstractmethod
+    def terminate(self):
+        """Terminates previously launched process.."""
+
+class _LocalProcess(_BaseProcess):
+
+    def __init__(self, trace_on):
+        self._proc = None
+        self._trace_on = trace_on
+
+    @property
+    def pid(self):
+        return self._proc.pid
+
+    def launch(self, executable, args):
+        self._proc = Popen([executable] + args,
+                           stdout = open(os.devnull) if not self._trace_on else None,
+                           stdin = PIPE)
+
+    def terminate(self):
+        if self._proc.poll() == None:
+            self._proc.terminate()
+
+class _RemoteProcess(_BaseProcess):
+
+    def __init__(self):
+        self._pid = None
+
+    @property
+    def pid(self):
+        return self._pid
+
+    def launch(self, executable, args):
+        remote_work_dir = lldb.remote_platform.GetWorkingDirectory()
+        src_path = executable
+        dst_path = os.path.join(remote_work_dir, os.path.basename(executable))
+
+        dst_file_spec = lldb.SBFileSpec(dst_path, False)
+        err = lldb.remote_platform.Install(lldb.SBFileSpec(src_path, True),
+                                           dst_file_spec)
+        if err.Fail():
+            raise Exception("remote_platform.Install('%s', '%s') failed: %s" % (src_path, dst_path, err))
+
+        launch_info = lldb.SBLaunchInfo(args)
+        launch_info.SetExecutableFile(dst_file_spec, True)
+        launch_info.SetWorkingDirectory(remote_work_dir)
+
+        # Redirect stdout and stderr to /dev/null
+        launch_info.AddSuppressFileAction(1, False, True)
+        launch_info.AddSuppressFileAction(2, False, True)
+
+        err = lldb.remote_platform.Launch(launch_info)
+        if err.Fail():
+            raise Exception("remote_platform.Launch('%s', '%s') failed: %s" % (dst_path, args, err))
+        self._pid = launch_info.GetProcessID()
+
+    def terminate(self):
+        err = lldb.remote_platform.Kill(self._pid)
+        if err.Fail():
+            raise Exception("remote_platform.Kill(%d) failed: %s" % (self._pid, err))
 
 # From 2.7's subprocess.check_output() convenience function.
 # Return a tuple (stdoutdata, stderrdata).
@@ -961,8 +1035,7 @@ class Base(unittest2.TestCase):
     def cleanupSubprocesses(self):
         # Ensure any subprocesses are cleaned up
         for p in self.subprocesses:
-            if p.poll() == None:
-                p.terminate()
+            p.terminate()
             del p
         del self.subprocesses[:]
         # Ensure any forked processes are cleaned up
@@ -979,11 +1052,8 @@ class Base(unittest2.TestCase):
 
             otherwise the test suite will leak processes.
         """
-
-        # Don't display the stdout if not in TraceOn() mode.
-        proc = Popen([executable] + args,
-                     stdout = open(os.devnull) if not self.TraceOn() else None,
-                     stdin = PIPE)
+        proc = _RemoteProcess() if lldb.remote_platform else _LocalProcess(self.TraceOn())
+        proc.launch(executable, args)
         self.subprocesses.append(proc)
         return proc
 

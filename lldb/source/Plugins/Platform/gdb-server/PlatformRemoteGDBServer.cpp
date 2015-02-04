@@ -430,14 +430,30 @@ PlatformRemoteGDBServer::LaunchProcess (ProcessLaunchInfo &launch_info)
 {
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_PLATFORM));
     Error error;
-    lldb::pid_t pid = LLDB_INVALID_PROCESS_ID;
 
     if (log)
         log->Printf ("PlatformRemoteGDBServer::%s() called", __FUNCTION__);
 
-    m_gdb_client.SetSTDIN ("/dev/null");
-    m_gdb_client.SetSTDOUT ("/dev/null");
-    m_gdb_client.SetSTDERR ("/dev/null");
+    auto num_file_actions = launch_info.GetNumFileActions ();
+    for (decltype(num_file_actions) i = 0; i < num_file_actions; ++i)
+    {
+        const auto file_action = launch_info.GetFileActionAtIndex (i);
+        if (file_action->GetAction () != FileAction::eFileActionOpen)
+            continue;
+        switch(file_action->GetFD())
+        {
+        case STDIN_FILENO:
+            m_gdb_client.SetSTDIN (file_action->GetPath());
+            break;
+        case STDOUT_FILENO:
+            m_gdb_client.SetSTDOUT (file_action->GetPath());
+            break;
+        case STDERR_FILENO:
+            m_gdb_client.SetSTDERR (file_action->GetPath());
+            break;
+        }
+    }
+
     m_gdb_client.SetDisableASLR (launch_info.GetFlags().Test (eLaunchFlagDisableASLR));
     m_gdb_client.SetDetachOnError (launch_info.GetFlags().Test (eLaunchFlagDetachOnError));
     
@@ -475,7 +491,7 @@ PlatformRemoteGDBServer::LaunchProcess (ProcessLaunchInfo &launch_info)
         std::string error_str;
         if (m_gdb_client.GetLaunchSuccess (error_str))
         {
-            pid = m_gdb_client.GetCurrentProcessID ();
+            const auto pid = m_gdb_client.GetCurrentProcessID (false);
             if (pid != LLDB_INVALID_PROCESS_ID)
             {
                 launch_info.SetProcessID (pid);
@@ -486,7 +502,7 @@ PlatformRemoteGDBServer::LaunchProcess (ProcessLaunchInfo &launch_info)
             {
                 if (log)
                     log->Printf ("PlatformRemoteGDBServer::%s() launch succeeded but we didn't get a valid process id back!", __FUNCTION__);
-                // FIXME isn't this an error condition? Do we need to set an error here?  Check with Greg.
+                error.SetErrorString ("failed to get PID");
             }
         }
         else
@@ -501,6 +517,14 @@ PlatformRemoteGDBServer::LaunchProcess (ProcessLaunchInfo &launch_info)
         error.SetErrorStringWithFormat("'A' packet returned an error: %i", arg_packet_err);
     }
     return error;
+}
+
+Error
+PlatformRemoteGDBServer::KillProcess (const lldb::pid_t pid)
+{
+    if (!m_gdb_client.KillSpawnedProcess(pid))
+        return Error("failed to kill remote spawned process");
+    return Error();
 }
 
 lldb::ProcessSP

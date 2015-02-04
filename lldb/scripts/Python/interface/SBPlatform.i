@@ -174,6 +174,12 @@ public:
     Run (lldb::SBPlatformShellCommand &shell_command);
 
     lldb::SBError
+    Launch (lldb::SBLaunchInfo &launch_info);
+
+    lldb::SBError
+    Kill (const lldb::pid_t pid);
+
+    lldb::SBError
     MakeDirectory (const char *path, uint32_t file_permissions = lldb::eFilePermissionsDirectoryDefault);
     
     uint32_t

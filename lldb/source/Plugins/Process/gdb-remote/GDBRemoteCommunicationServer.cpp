@@ -607,14 +607,12 @@ GDBRemoteCommunicationServer::LaunchPlatformProcess ()
 
     // add to list of spawned processes.  On an lldb-gdbserver, we
     // would expect there to be only one.
-    lldb::pid_t pid;
-    if ( (pid = m_process_launch_info.GetProcessID()) != LLDB_INVALID_PROCESS_ID )
+    const auto pid = m_process_launch_info.GetProcessID();
+    if (pid != LLDB_INVALID_PROCESS_ID)
     {
         // add to spawned pids
-        {
-            Mutex::Locker locker (m_spawned_pids_mutex);
-            m_spawned_pids.insert(pid);
-        }
+        Mutex::Locker locker (m_spawned_pids_mutex);
+        m_spawned_pids.insert(pid);
     }
 
     return error;
@@ -1437,23 +1435,33 @@ CreateProcessInfoResponse_DebugServerStyle (const ProcessInstanceInfo &proc_info
 GDBRemoteCommunication::PacketResult
 GDBRemoteCommunicationServer::Handle_qProcessInfo (StringExtractorGDBRemote &packet)
 {
-    // Only the gdb server handles this.
-    if (!IsGdbServer ())
-        return SendUnimplementedResponse (packet.GetStringRef ().c_str ());
-    
-    // Fail if we don't have a current process.
-    if (!m_debugged_process_sp || (m_debugged_process_sp->GetID () == LLDB_INVALID_PROCESS_ID))
-        return SendErrorResponse (68);
-    
-    ProcessInstanceInfo proc_info;
-    if (Host::GetProcessInfo (m_debugged_process_sp->GetID (), proc_info))
+    lldb::pid_t pid = LLDB_INVALID_PROCESS_ID;
+
+    if (IsGdbServer ())
     {
-        StreamString response;
-        CreateProcessInfoResponse_DebugServerStyle(proc_info, response);
-        return SendPacketNoLock (response.GetData (), response.GetSize ());
+        // Fail if we don't have a current process.
+        if (!m_debugged_process_sp || (m_debugged_process_sp->GetID () == LLDB_INVALID_PROCESS_ID))
+            return SendErrorResponse (68);
+
+        pid = m_debugged_process_sp->GetID ();
     }
-    
-    return SendErrorResponse (1);
+    else if (m_is_platform)
+    {
+        pid = m_process_launch_info.GetProcessID ();
+    }
+    else
+        return SendUnimplementedResponse (packet.GetStringRef ().c_str ());
+
+    if (pid == LLDB_INVALID_PROCESS_ID)
+        return SendErrorResponse (1);
+
+    ProcessInstanceInfo proc_info;
+    if (!Host::GetProcessInfo (pid, proc_info))
+        return SendErrorResponse (1);
+
+    StreamString response;
+    CreateProcessInfoResponse_DebugServerStyle(proc_info, response);
+    return SendPacketNoLock (response.GetData (), response.GetSize ());
 }
 
 GDBRemoteCommunication::PacketResult

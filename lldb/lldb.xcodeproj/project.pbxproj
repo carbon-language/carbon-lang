@@ -92,6 +92,8 @@
 		23F4034D1926E0F60046DC9B /* NativeRegisterContextRegisterInfo.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 23F403481926CC250046DC9B /* NativeRegisterContextRegisterInfo.cpp */; };
 		25420ECD1A6490B8009ADBCB /* OptionValueChar.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 25420ECC1A6490B8009ADBCB /* OptionValueChar.cpp */; };
 		25420ED21A649D88009ADBCB /* PipeBase.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 25420ED11A649D88009ADBCB /* PipeBase.cpp */; };
+		254FBB951A81AA7F00BD6378 /* SBLaunchInfo.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 254FBB941A81AA7F00BD6378 /* SBLaunchInfo.cpp */; };
+		254FBB971A81B03100BD6378 /* SBLaunchInfo.h in Headers */ = {isa = PBXBuildFile; fileRef = 254FBB961A81B03100BD6378 /* SBLaunchInfo.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		260157C61885F51C00F875CF /* libpanel.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 260157C41885F4FF00F875CF /* libpanel.dylib */; };
 		260157C71885F52500F875CF /* libpanel.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 260157C41885F4FF00F875CF /* libpanel.dylib */; };
 		260157C81885F53100F875CF /* libpanel.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 260157C41885F4FF00F875CF /* libpanel.dylib */; };
@@ -1168,6 +1170,9 @@
 		25420ECC1A6490B8009ADBCB /* OptionValueChar.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = OptionValueChar.cpp; path = source/Interpreter/OptionValueChar.cpp; sourceTree = "<group>"; };
 		25420ECE1A64911B009ADBCB /* OptionValueChar.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = OptionValueChar.h; path = include/lldb/Interpreter/OptionValueChar.h; sourceTree = "<group>"; };
 		25420ED11A649D88009ADBCB /* PipeBase.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PipeBase.cpp; sourceTree = "<group>"; };
+		254FBB921A81AA5200BD6378 /* SBLaunchInfo.i */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c.preprocessed; path = SBLaunchInfo.i; sourceTree = "<group>"; };
+		254FBB941A81AA7F00BD6378 /* SBLaunchInfo.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SBLaunchInfo.cpp; path = source/API/SBLaunchInfo.cpp; sourceTree = "<group>"; };
+		254FBB961A81B03100BD6378 /* SBLaunchInfo.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SBLaunchInfo.h; path = include/lldb/API/SBLaunchInfo.h; sourceTree = "<group>"; };
 		260157C41885F4FF00F875CF /* libpanel.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libpanel.dylib; path = /usr/lib/libpanel.dylib; sourceTree = "<absolute>"; };
 		260223E7115F06D500A601A2 /* SBCommunication.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SBCommunication.h; path = include/lldb/API/SBCommunication.h; sourceTree = "<group>"; };
 		260223E8115F06E500A601A2 /* SBCommunication.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SBCommunication.cpp; path = source/API/SBCommunication.cpp; sourceTree = "<group>"; };
@@ -3028,6 +3033,7 @@
 		2611FEEE142D83060017FEA3 /* interface */ = {
 			isa = PBXGroup;
 			children = (
+				254FBB921A81AA5200BD6378 /* SBLaunchInfo.i */,
 				2611FEEF142D83060017FEA3 /* SBAddress.i */,
 				2611FEF0142D83060017FEA3 /* SBBlock.i */,
 				2611FEF1142D83060017FEA3 /* SBBreakpoint.i */,
@@ -3097,6 +3103,8 @@
 		262D3190111B4341004E6F88 /* API */ = {
 			isa = PBXGroup;
 			children = (
+				254FBB961A81B03100BD6378 /* SBLaunchInfo.h */,
+				254FBB941A81AA7F00BD6378 /* SBLaunchInfo.cpp */,
 				2611FEEE142D83060017FEA3 /* interface */,
 				26BC7C2510F1B3BC00F91463 /* lldb-defines.h */,
 				26BC7C2610F1B3BC00F91463 /* lldb-enumerations.h */,
@@ -5040,6 +5048,7 @@
 				9AC7038E117674FB0086C050 /* SBInstruction.h in Headers */,
 				9AC70390117675270086C050 /* SBInstructionList.h in Headers */,
 				26DE205911618FE700A093E2 /* SBLineEntry.h in Headers */,
+				254FBB971A81B03100BD6378 /* SBLaunchInfo.h in Headers */,
 				AF0EBBED185941360059E52F /* SBQueueItem.h in Headers */,
 				26680227115FD13D008E1FE4 /* SBListener.h in Headers */,
 				26DE204F11618E9800A093E2 /* SBModule.h in Headers */,
@@ -5644,6 +5653,7 @@
 				9452573A16262D0200325455 /* SBDeclaration.cpp in Sources */,
 				4CE4F675162C973F00F75CB3 /* SBExpressionOptions.cpp in Sources */,
 				AF9107EE168570D200DBCD3C /* RegisterContextDarwin_arm64.cpp in Sources */,
+				254FBB951A81AA7F00BD6378 /* SBLaunchInfo.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

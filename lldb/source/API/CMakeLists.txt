@@ -27,6 +27,7 @@ add_lldb_library(lldbAPI
   SBHostOS.cpp
   SBInstruction.cpp
   SBInstructionList.cpp
+  SBLaunchInfo.cpp
   SBLineEntry.cpp
   SBListener.cpp
   SBModule.cpp

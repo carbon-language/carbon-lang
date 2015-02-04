@@ -10,12 +10,15 @@
 #include "lldb/API/SBPlatform.h"
 #include "lldb/API/SBError.h"
 #include "lldb/API/SBFileSpec.h"
+#include "lldb/API/SBLaunchInfo.h"
 #include "lldb/Core/ArchSpec.h"
 #include "lldb/Core/Error.h"
 #include "lldb/Host/File.h"
 #include "lldb/Interpreter/Args.h"
 #include "lldb/Target/Target.h"
 #include "lldb/Target/Platform.h"
+
+#include <functional>
 
 using namespace lldb;
 using namespace lldb_private;
@@ -484,104 +487,108 @@ SBError
 SBPlatform::Put (SBFileSpec &src,
                  SBFileSpec &dst)
 {
-    SBError sb_error;
-    
-    PlatformSP platform_sp(GetSP());
-    if (platform_sp)
-    {
-        if (src.Exists())
-        {
-            uint32_t permissions = src.ref().GetPermissions();
-            if (permissions == 0)
-            {
-                if (src.ref().GetFileType() == FileSpec::eFileTypeDirectory)
-                    permissions = eFilePermissionsDirectoryDefault;
-                else
-                    permissions = eFilePermissionsFileDefault;
-            }
+  return ExecuteConnected(
+      [&](const lldb::PlatformSP& platform_sp)
+      {
+          if (src.Exists())
+          {
+              uint32_t permissions = src.ref().GetPermissions();
+              if (permissions == 0)
+              {
+                  if (src.ref().GetFileType() == FileSpec::eFileTypeDirectory)
+                      permissions = eFilePermissionsDirectoryDefault;
+                  else
+                      permissions = eFilePermissionsFileDefault;
+              }
 
-            sb_error.ref() = platform_sp->PutFile(src.ref(),
-                                                  dst.ref(),
-                                                  permissions);
-        }
-        else
-        {
-            sb_error.ref().SetErrorStringWithFormat("'src' argument doesn't exist: '%s'", src.ref().GetPath().c_str());
-        }
-    }
-    else
-    {
-        sb_error.SetErrorString("invalid platform");
-    }
-    return sb_error;
+              return platform_sp->PutFile(src.ref(), dst.ref(), permissions);
+          }
+
+          Error error;
+          error.SetErrorStringWithFormat("'src' argument doesn't exist: '%s'", src.ref().GetPath().c_str());
+          return error;
+      });
 }
 
 SBError
 SBPlatform::Install (SBFileSpec &src,
                      SBFileSpec &dst)
 {
-    SBError sb_error;
-    PlatformSP platform_sp(GetSP());
-    if (platform_sp)
-    {
-        if (src.Exists())
-        {
-            sb_error.ref() = platform_sp->Install(src.ref(), dst.ref());
-        }
-        else
-        {
-            sb_error.ref().SetErrorStringWithFormat("'src' argument doesn't exist: '%s'", src.ref().GetPath().c_str());
-        }
-    }
-    else
-    {
-        sb_error.SetErrorString("invalid platform");
-    }
-    return sb_error;
+  return ExecuteConnected(
+      [&](const lldb::PlatformSP& platform_sp)
+      {
+          if (src.Exists())
+              return platform_sp->Install(src.ref(), dst.ref());
+
+          Error error;
+          error.SetErrorStringWithFormat("'src' argument doesn't exist: '%s'", src.ref().GetPath().c_str());
+          return error;
+      });
 }
 
 
 SBError
 SBPlatform::Run (SBPlatformShellCommand &shell_command)
 {
+    return ExecuteConnected(
+        [&](const lldb::PlatformSP& platform_sp)
+        {
+            const char *command = shell_command.GetCommand();
+            if (!command)
+                return Error("invalid shell command (empty)");
+
+            const char *working_dir = shell_command.GetWorkingDirectory();
+            if (working_dir == NULL)
+            {
+                working_dir = platform_sp->GetWorkingDirectory().GetCString();
+                if (working_dir)
+                    shell_command.SetWorkingDirectory(working_dir);
+            }
+            return platform_sp->RunShellCommand(command,
+                                                working_dir,
+                                                &shell_command.m_opaque_ptr->m_status,
+                                                &shell_command.m_opaque_ptr->m_signo,
+                                                &shell_command.m_opaque_ptr->m_output,
+                                                shell_command.m_opaque_ptr->m_timeout_sec);
+        });
+}
+
+SBError
+SBPlatform::Launch (SBLaunchInfo &launch_info)
+{
+    return ExecuteConnected(
+        [&](const lldb::PlatformSP& platform_sp)
+        {
+            return platform_sp->LaunchProcess(launch_info.ref());
+        });
+}
+
+SBError
+SBPlatform::Kill (const lldb::pid_t pid)
+{
+    return ExecuteConnected(
+        [&](const lldb::PlatformSP& platform_sp)
+        {
+            return platform_sp->KillProcess(pid);
+        });
+}
+
+SBError
+SBPlatform::ExecuteConnected (const std::function<Error(const lldb::PlatformSP&)>& func)
+{
     SBError sb_error;
-    PlatformSP platform_sp(GetSP());
+    const auto platform_sp(GetSP());
     if (platform_sp)
     {
         if (platform_sp->IsConnected())
-        {
-            const char *command = shell_command.GetCommand();
-            if (command)
-            {
-                const char *working_dir = shell_command.GetWorkingDirectory();
-                if (working_dir == NULL)
-                {
-                    working_dir = platform_sp->GetWorkingDirectory().GetCString();
-                    if (working_dir)
-                        shell_command.SetWorkingDirectory(working_dir);
-                }
-                sb_error.ref() = platform_sp->RunShellCommand(command,
-                                                              working_dir,
-                                                              &shell_command.m_opaque_ptr->m_status,
-                                                              &shell_command.m_opaque_ptr->m_signo,
-                                                              &shell_command.m_opaque_ptr->m_output,
-                                                              shell_command.m_opaque_ptr->m_timeout_sec);
-            }
-            else
-            {
-                sb_error.SetErrorString("invalid shell command (empty)");
-            }
-        }
+            sb_error.ref() = func(platform_sp);
         else
-        {
             sb_error.SetErrorString("not connected");
-        }
     }
     else
-    {
         sb_error.SetErrorString("invalid platform");
-    }
-    return sb_error;
+
+  return sb_error;
 }
 
 SBError

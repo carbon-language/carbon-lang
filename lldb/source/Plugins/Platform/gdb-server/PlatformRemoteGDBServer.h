@@ -86,7 +86,10 @@ public:
 
     virtual lldb_private::Error
     LaunchProcess (lldb_private::ProcessLaunchInfo &launch_info);
-    
+
+    virtual lldb_private::Error
+    KillProcess (const lldb::pid_t pid);
+
     virtual lldb::ProcessSP
     DebugProcess (lldb_private::ProcessLaunchInfo &launch_info,
                   lldb_private::Debugger &debugger,
