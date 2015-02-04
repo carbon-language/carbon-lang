@@ -180,5 +180,5 @@ int main(int argc, char **argv) {
   F.Loop(Flags.iterations < 0 ? INT_MAX : Flags.iterations);
   if (Flags.verbosity)
     std::cerr << "Done\n";
-  return 1;
+  return 0;
 }
