@@ -416,6 +416,10 @@ def : ProcNoItin<"cortex-a53",      [ProcA53, HasV8Ops, FeatureAClass,
 def : ProcNoItin<"cortex-a57",      [ProcA57, HasV8Ops, FeatureAClass,
                                     FeatureDB, FeatureFPARMv8,
                                     FeatureNEON, FeatureDSPThumb2]>;
+// FIXME: Cortex-A72 is currently modelled as an Cortex-A57.
+def : ProcNoItin<"cortex-a72",      [ProcA57, HasV8Ops, FeatureAClass,
+                                    FeatureDB, FeatureFPARMv8,
+                                    FeatureNEON, FeatureDSPThumb2]>;
 
 // Cyclone is very similar to swift
 def : ProcessorModel<"cyclone",     SwiftModel,
