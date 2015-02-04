@@ -1,5 +1,5 @@
-// RUN: %clang_cc1 -emit-llvm -triple %itanium_abi_triple -o - -std=c++14 %s 2>&1 | FileCheck %s -check-prefix=CHECKDEF -check-prefix=CHECK
-// RUN: %clang_cc1 -emit-llvm -triple %itanium_abi_triple -o - -std=c++14 -fvisibility hidden %s 2>&1 | FileCheck %s -check-prefix=CHECKHID -check-prefix=CHECK
+// RUN: %clang_cc1 -emit-llvm -triple x86_64-unknown-unknown -o - -std=c++14 %s 2>&1 | FileCheck %s -check-prefix=CHECKDEF -check-prefix=CHECK
+// RUN: %clang_cc1 -emit-llvm -triple x86_64-unknown-unknown -o - -std=c++14 -fvisibility hidden %s 2>&1 | FileCheck %s -check-prefix=CHECKHID -check-prefix=CHECK
 
 // PR22419: Implicit sized deallocation functions always have default visibility.
 
