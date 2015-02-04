@@ -616,7 +616,11 @@ static void DumpRawSectionContents(MachOObjectFile *O, const char *sect,
   }
 }
 
-static void DumpSectionContents(MachOObjectFile *O, bool verbose) {
+static void DisassembleMachO(StringRef Filename, MachOObjectFile *MachOOF,
+                             StringRef DisSegName, StringRef DisSectName);
+
+static void DumpSectionContents(StringRef Filename, MachOObjectFile *O,
+                                bool verbose) {
   SymbolAddressMap AddrMap;
   if (verbose)
     CreateSymbolAddressMap(O, &AddrMap);
@@ -642,15 +646,16 @@ static void DumpSectionContents(MachOObjectFile *O, bool verbose) {
           (SectName == DumpSectName)) {
         outs() << "Contents of (" << SegName << "," << SectName
                << ") section\n";
-        uint32_t section_type;
+        uint32_t section_flags;
         if (O->is64Bit()) {
           const MachO::section_64 Sec = O->getSection64(Ref);
-          section_type = Sec.flags & MachO::SECTION_TYPE;
+          section_flags = Sec.flags;
 
         } else {
           const MachO::section Sec = O->getSection(Ref);
-          section_type = Sec.flags & MachO::SECTION_TYPE;
+          section_flags = Sec.flags;
         }
+        uint32_t section_type = section_flags & MachO::SECTION_TYPE;
 
         StringRef BytesStr;
         Section.getContents(BytesStr);
@@ -659,6 +664,11 @@ static void DumpSectionContents(MachOObjectFile *O, bool verbose) {
         uint64_t sect_addr = Section.getAddress();
 
         if (verbose) {
+          if ((section_flags & MachO::S_ATTR_PURE_INSTRUCTIONS) ||
+              (section_flags & MachO::S_ATTR_SOME_INSTRUCTIONS)) {
+            DisassembleMachO(Filename, O, SegName, SectName);
+            continue;
+          }
           switch (section_type) {
           case MachO::S_REGULAR:
             DumpRawSectionContents(O, sect, sect_size, sect_addr);
@@ -722,8 +732,6 @@ static bool checkMachOAndArchFlags(ObjectFile *O, StringRef Filename) {
   return true;
 }
 
-static void DisassembleMachO(StringRef Filename, MachOObjectFile *MachOOF);
-
 // ProcessMachO() is passed a single opened Mach-O file, which may be an
 // archive member and or in a slice of a universal file.  It prints the
 // the file name and header info and then processes it according to the
@@ -746,7 +754,7 @@ static void ProcessMachO(StringRef Filename, MachOObjectFile *MachOOF,
   }
 
   if (Disassemble)
-    DisassembleMachO(Filename, MachOOF);
+    DisassembleMachO(Filename, MachOOF, "__TEXT", "__text");
   if (IndirectSymbols)
     PrintIndirectSymbols(MachOOF, true);
   if (DataInCode)
@@ -760,7 +768,7 @@ static void ProcessMachO(StringRef Filename, MachOObjectFile *MachOOF,
   if (SectionContents)
     PrintSectionContents(MachOOF);
   if (DumpSections.size() != 0)
-    DumpSectionContents(MachOOF, true);
+    DumpSectionContents(Filename, MachOOF, true);
   if (SymbolTable)
     PrintSymbolTable(MachOOF);
   if (UnwindInfo)
@@ -2547,7 +2555,8 @@ static void emitComments(raw_svector_ostream &CommentStream,
   CommentStream.resync();
 }
 
-static void DisassembleMachO(StringRef Filename, MachOObjectFile *MachOOF) {
+static void DisassembleMachO(StringRef Filename, MachOObjectFile *MachOOF,
+                             StringRef DisSegName, StringRef DisSectName) {
   const char *McpuDefault = nullptr;
   const Target *ThumbTarget = nullptr;
   const Target *TheTarget = GetTarget(MachOOF, &McpuDefault, &ThumbTarget);
@@ -2715,28 +2724,18 @@ static void DisassembleMachO(StringRef Filename, MachOObjectFile *MachOOF) {
     diContext.reset(DIContext::getDWARFContext(*DbgObj));
   }
 
-  // TODO: For now this only disassembles the (__TEXT,__text) section (see the
-  // checks in the code below at the top of this loop).  It should allow a
-  // darwin otool(1) like -s option to disassemble any named segment & section
-  // that is marked as containing instructions with the attributes
-  // S_ATTR_PURE_INSTRUCTIONS or S_ATTR_SOME_INSTRUCTIONS in the flags field of
-  // the section structure.
-  outs() << "(__TEXT,__text) section\n";
+  if (DumpSections.size() == 0)
+    outs() << "(" << DisSegName << "," << DisSectName << ") section\n";
 
   for (unsigned SectIdx = 0; SectIdx != Sections.size(); SectIdx++) {
-
-    bool SectIsText = Sections[SectIdx].isText();
-    if (SectIsText == false)
-      continue;
-
     StringRef SectName;
-    if (Sections[SectIdx].getName(SectName) || SectName != "__text")
-      continue; // Skip non-text sections
+    if (Sections[SectIdx].getName(SectName) || SectName != DisSectName)
+      continue;
 
     DataRefImpl DR = Sections[SectIdx].getRawDataRefImpl();
 
     StringRef SegmentName = MachOOF->getSectionFinalSegmentName(DR);
-    if (SegmentName != "__TEXT")
+    if (SegmentName != DisSegName)
       continue;
 
     StringRef BytesStr;
