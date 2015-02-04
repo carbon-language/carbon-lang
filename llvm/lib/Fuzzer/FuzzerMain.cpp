@@ -163,6 +163,8 @@ int main(int argc, char **argv) {
   Options.MutateDepth = Flags.mutate_depth;
   Options.ExitOnFirst = Flags.exit_on_first;
   Options.UseFullCoverageSet = Flags.use_full_coverage_set;
+  Options.PreferSmallDuringInitialShuffle =
+      Flags.prefer_small_during_initial_shuffle;
   if (Flags.runs >= 0)
     Options.MaxNumberOfRuns = Flags.runs;
   if (!inputs.empty())
@@ -191,6 +193,8 @@ int main(int argc, char **argv) {
     F.SaveCorpus();
   F.Loop(Flags.iterations < 0 ? INT_MAX : Flags.iterations);
   if (Flags.verbosity)
-    std::cerr << "Done\n";
+    std::cerr << "Done " << F.getTotalNumberOfRuns()
+              << " runs in " << F.secondsSinceProcessStartUp()
+              << " seconds\n";
   return 0;
 }

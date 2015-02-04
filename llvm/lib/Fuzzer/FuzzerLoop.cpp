@@ -48,10 +48,19 @@ void Fuzzer::AlarmCallback() {
 }
 
 void Fuzzer::ShuffleAndMinimize() {
+  bool PreferSmall =
+      (Options.PreferSmallDuringInitialShuffle == 1 ||
+       (Options.PreferSmallDuringInitialShuffle == -1 && rand() % 2));
   if (Options.Verbosity)
-    std::cerr << "Shuffle: " << Corpus.size() << "\n";
+    std::cerr << "Shuffle: Size: " << Corpus.size()
+              << " prefer small: " << PreferSmall
+              << "\n";
   std::vector<Unit> NewCorpus;
-  random_shuffle(Corpus.begin(), Corpus.end());
+  std::random_shuffle(Corpus.begin(), Corpus.end());
+  if (PreferSmall)
+    std::stable_sort(
+        Corpus.begin(), Corpus.end(),
+        [](const Unit &A, const Unit &B) { return A.size() < B.size(); });
   size_t MaxCov = 0;
   Unit &U = CurrentUnit;
   for (const auto &C : Corpus) {
@@ -64,7 +73,9 @@ void Fuzzer::ShuffleAndMinimize() {
         MaxCov = NewCoverage;
         NewCorpus.push_back(U);
         if (Options.Verbosity >= 2)
-          std::cerr << "NEW0: " << NewCoverage << "\n";
+          std::cerr << "NEW0: " << NewCoverage
+                    << " L " << U.size()
+                    << "\n";
       }
     }
   }
@@ -109,8 +120,7 @@ size_t Fuzzer::RunOneMaximizeTotalCoverage(const Unit &U) {
   TestOneInput(U.data(), U.size());
   size_t NewCoverage = __sanitizer_get_total_unique_coverage();
   if (!(TotalNumberOfRuns & (TotalNumberOfRuns - 1)) && Options.Verbosity) {
-    size_t Seconds =
-        duration_cast<seconds>(system_clock::now() - ProcessStartTime).count();
+    size_t Seconds = secondsSinceProcessStartUp();
     std::cerr
         << "#" << TotalNumberOfRuns
         << "\tcov: " << NewCoverage

@@ -21,6 +21,10 @@ FUZZER_FLAG(int, max_len, 64, "Maximal length of the test input.")
 FUZZER_FLAG(int, cross_over, 1, "If 1, cross over inputs.")
 FUZZER_FLAG(int, mutate_depth, 5,
             "Apply this number of consecutive mutations to each input.")
+FUZZER_FLAG(
+    int, prefer_small_during_initial_shuffle, -1,
+    "If 1, always prefer smaller inputs during the initial corpus shuffle."
+    " If 0, never do that. If -1, do it sometimes.")
 FUZZER_FLAG(int, exit_on_first, 0,
             "If 1, exit after the first new interesting input is found.")
 FUZZER_FLAG(int, timeout, -1, "Timeout in seconds (if positive).")
