@@ -2116,6 +2116,10 @@ void Sema::DeclareGlobalAllocationFunction(DeclarationName Name,
                          SourceLocation(), Name,
                          FnType, /*TInfo=*/nullptr, SC_None, false, true);
   Alloc->setImplicit();
+  
+  // Implicit sized deallocation functions always have default visibility.
+  Alloc->addAttr(VisibilityAttr::CreateImplicit(Context,
+                                                VisibilityAttr::Default));
 
   if (AddMallocAttr)
     Alloc->addAttr(MallocAttr::CreateImplicit(Context));
