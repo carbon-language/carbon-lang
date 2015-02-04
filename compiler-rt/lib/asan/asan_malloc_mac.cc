@@ -156,7 +156,7 @@ namespace {
 // wrappers, as they are basically copied from there.
 extern "C"
 SANITIZER_INTERFACE_ATTRIBUTE
-size_t __asan_mz_size(malloc_zone_t *zone, const void* ptr) {
+size_t __asan_mz_size(malloc_zone_t* zone, const void* ptr) {
   return asan_mz_size(ptr);
 }
 
