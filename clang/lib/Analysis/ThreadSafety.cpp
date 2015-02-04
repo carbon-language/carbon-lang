@@ -1797,10 +1797,6 @@ void BuildLockset::handleCall(Expr *Exp, const NamedDecl *D, VarDecl *VD) {
     DeclRefExpr DRE(VD, false, VD->getType(), VK_LValue, VD->getLocation());
     // FIXME: does this store a pointer to DRE?
     CapabilityExpr Scp = Analyzer->SxBuilder.translateAttrExpr(&DRE, nullptr);
-
-    CapExprSet UnderlyingMutexes(ExclusiveLocksToAdd);
-    std::copy(SharedLocksToAdd.begin(), SharedLocksToAdd.end(),
-              std::back_inserter(UnderlyingMutexes));
     Analyzer->addLock(FSet,
                       llvm::make_unique<ScopedLockableFactEntry>(
                           Scp, MLoc, ExclusiveLocksToAdd, SharedLocksToAdd),
