@@ -3864,6 +3864,41 @@ def L2_loadrigp  : T_LoadGP<"memw",  "LDriw",  IntRegs, u16_2Imm, 0b100>;
 let accessSize = DoubleWordAccess in
 def L2_loadrdgp  : T_LoadGP<"memd", "LDrid", DoubleRegs, u16_3Imm, 0b110>;
 
+def: Loada_pat<atomic_load_8,  i32, addrgp, L2_loadrubgp>;
+def: Loada_pat<atomic_load_16, i32, addrgp, L2_loadruhgp>;
+def: Loada_pat<atomic_load_32, i32, addrgp, L2_loadrigp>;
+def: Loada_pat<atomic_load_64, i64, addrgp, L2_loadrdgp>;
+
+// Map from load(globaladdress) -> mem[u][bhwd](#foo)
+class LoadGP_pats <PatFrag ldOp, InstHexagon MI, ValueType VT = i32>
+  : Pat <(VT (ldOp (HexagonCONST32_GP tglobaladdr:$global))),
+         (VT (MI tglobaladdr:$global))>;
+
+let AddedComplexity = 100 in {
+  def: LoadGP_pats <extloadi8, L2_loadrbgp>;
+  def: LoadGP_pats <sextloadi8, L2_loadrbgp>;
+  def: LoadGP_pats <zextloadi8, L2_loadrubgp>;
+  def: LoadGP_pats <extloadi16, L2_loadrhgp>;
+  def: LoadGP_pats <sextloadi16, L2_loadrhgp>;
+  def: LoadGP_pats <zextloadi16, L2_loadruhgp>;
+  def: LoadGP_pats <load, L2_loadrigp>;
+  def: LoadGP_pats <load, L2_loadrdgp, i64>;
+}
+
+let AddedComplexity  = 30 in {
+  def: Storea_pat<truncstorei8,  I32, u0AlwaysExtPred, S2_storerbabs>;
+  def: Storea_pat<truncstorei16, I32, u0AlwaysExtPred, S2_storerhabs>;
+  def: Storea_pat<store,         I32, u0AlwaysExtPred, S2_storeriabs>;
+}
+
+let AddedComplexity  = 30 in {
+  def: Loada_pat<load,        i32, u0AlwaysExtPred, L4_loadri_abs>;
+  def: Loada_pat<sextloadi8,  i32, u0AlwaysExtPred, L4_loadrb_abs>;
+  def: Loada_pat<zextloadi8,  i32, u0AlwaysExtPred, L4_loadrub_abs>;
+  def: Loada_pat<sextloadi16, i32, u0AlwaysExtPred, L4_loadrh_abs>;
+  def: Loada_pat<zextloadi16, i32, u0AlwaysExtPred, L4_loadruh_abs>;
+}
+
 let Predicates = [HasV4T], AddedComplexity  = 30 in {
 def : Pat<(i32 (load (HexagonCONST32 tglobaladdr:$absaddr))),
           (L4_loadri_abs tglobaladdr: $absaddr)>;
@@ -3881,23 +3916,6 @@ def : Pat<(i32 (zextloadi16 (HexagonCONST32 tglobaladdr:$absaddr))),
           (L4_loadruh_abs tglobaladdr:$absaddr)>;
 }
 
-def : Pat <(atomic_load_64 (HexagonCONST32_GP tglobaladdr:$global)),
-           (i64 (L2_loadrdgp tglobaladdr:$global))>;
-
-def : Pat <(atomic_load_32 (HexagonCONST32_GP tglobaladdr:$global)),
-           (i32 (L2_loadrigp tglobaladdr:$global))>;
-
-def : Pat <(atomic_load_16 (HexagonCONST32_GP tglobaladdr:$global)),
-           (i32 (L2_loadruhgp tglobaladdr:$global))>;
-
-def : Pat <(atomic_load_8 (HexagonCONST32_GP tglobaladdr:$global)),
-           (i32 (L2_loadrubgp tglobaladdr:$global))>;
-
-// Map from load(globaladdress) -> memw(#foo + 0)
-let AddedComplexity = 100 in
-def : Pat <(i64 (load (HexagonCONST32_GP tglobaladdr:$global))),
-           (i64 (L2_loadrdgp tglobaladdr:$global))>;
-
 // Map from Pd = load(globaladdress) -> Rd = memb(globaladdress), Pd = Rd
 let AddedComplexity = 100 in
 def : Pat <(i1 (load (HexagonCONST32_GP tglobaladdr:$global))),
@@ -3914,44 +3932,9 @@ let AddedComplexity = 100 in
 def : Pat <(i32 (sextloadi1 (HexagonCONST32_GP tglobaladdr:$global))),
            (i32 (L2_loadrbgp tglobaladdr:$global))>;
 
-// Map from load(globaladdress) -> memb(#foo)
-let AddedComplexity = 100 in
-def : Pat <(i32 (extloadi8 (HexagonCONST32_GP tglobaladdr:$global))),
-           (i32 (L2_loadrbgp tglobaladdr:$global))>;
-
-// Map from load(globaladdress) -> memb(#foo)
-let AddedComplexity = 100 in
-def : Pat <(i32 (sextloadi8 (HexagonCONST32_GP tglobaladdr:$global))),
-           (i32 (L2_loadrbgp tglobaladdr:$global))>;
-
 let AddedComplexity = 100 in
 def : Pat <(i32 (zextloadi1 (HexagonCONST32_GP tglobaladdr:$global))),
            (i32 (L2_loadrubgp tglobaladdr:$global))>;
-
-// Map from load(globaladdress) -> memub(#foo)
-let AddedComplexity = 100 in
-def : Pat <(i32 (zextloadi8 (HexagonCONST32_GP tglobaladdr:$global))),
-           (i32 (L2_loadrubgp tglobaladdr:$global))>;
-
-// Map from load(globaladdress) -> memh(#foo)
-let AddedComplexity = 100 in
-def : Pat <(i32 (extloadi16 (HexagonCONST32_GP tglobaladdr:$global))),
-           (i32 (L2_loadrhgp tglobaladdr:$global))>;
-
-// Map from load(globaladdress) -> memh(#foo)
-let AddedComplexity = 100 in
-def : Pat <(i32 (sextloadi16 (HexagonCONST32_GP tglobaladdr:$global))),
-           (i32 (L2_loadrhgp tglobaladdr:$global))>;
-
-// Map from load(globaladdress) -> memuh(#foo)
-let AddedComplexity = 100 in
-def : Pat <(i32 (zextloadi16 (HexagonCONST32_GP tglobaladdr:$global))),
-           (i32 (L2_loadruhgp tglobaladdr:$global))>;
-
-// Map from load(globaladdress) -> memw(#foo)
-let AddedComplexity = 100 in
-def : Pat <(i32 (load (HexagonCONST32_GP tglobaladdr:$global))),
-           (i32 (L2_loadrigp tglobaladdr:$global))>;
 
 
 // Transfer global address into a register
@@ -4003,22 +3986,6 @@ let AddedComplexity = 50, Predicates = [HasV4T] in
 def : Pat<(HexagonCONST32_GP tglobaladdr:$src1),
            (TFRI_V4 tglobaladdr:$src1)>,
            Requires<[HasV4T]>;
-
-let Predicates = [HasV4T], AddedComplexity  = 30 in {
-def : Pat<(truncstorei8 (i32 IntRegs:$src1), u0AlwaysExtPred:$src2),
-          (S2_storerbabs u0AlwaysExtPred:$src2, IntRegs: $src1)>;
-
-def : Pat<(truncstorei16 (i32 IntRegs:$src1), u0AlwaysExtPred:$src2),
-          (S2_storerhabs u0AlwaysExtPred:$src2, IntRegs: $src1)>;
-
-def : Pat<(store (i32 IntRegs:$src1), u0AlwaysExtPred:$src2),
-          (S2_storeriabs u0AlwaysExtPred:$src2, IntRegs: $src1)>;
-}
-
-let Predicates = [HasV4T], AddedComplexity  = 30 in {
-def : Pat<(i32 (load u0AlwaysExtPred:$src)),
-          (L4_loadri_abs u0AlwaysExtPred:$src)>;
-}
 
 // Indexed store word - global address.
 // memw(Rs+#u6:2)=#S8
