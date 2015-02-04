@@ -166,7 +166,7 @@ static unsigned getELFSectionType(StringRef Name, SectionKind K) {
 
 
 static unsigned
-getELFSectionFlags(SectionKind K) {
+getELFSectionFlags(SectionKind K, bool InCOMDAT) {
   unsigned Flags = 0;
 
   if (!K.isMetadata())
@@ -181,7 +181,7 @@ getELFSectionFlags(SectionKind K) {
   if (K.isThreadLocal())
     Flags |= ELF::SHF_TLS;
 
-  if (K.isMergeableCString() || K.isMergeableConst())
+  if (!InCOMDAT && (K.isMergeableCString() || K.isMergeableConst()))
     Flags |= ELF::SHF_MERGE;
 
   if (K.isMergeableCString())
@@ -211,7 +211,7 @@ const MCSection *TargetLoweringObjectFileELF::getExplicitSectionGlobal(
   Kind = getELFKindForNamedSection(SectionName, Kind);
 
   StringRef Group = "";
-  unsigned Flags = getELFSectionFlags(Kind);
+  unsigned Flags = getELFSectionFlags(Kind, GV->hasComdat());
   if (const Comdat *C = getELFComdat(GV)) {
     Group = C->getName();
     Flags |= ELF::SHF_GROUP;
@@ -243,7 +243,7 @@ static StringRef getSectionPrefixForGlobal(SectionKind Kind) {
 const MCSection *TargetLoweringObjectFileELF::
 SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
                        Mangler &Mang, const TargetMachine &TM) const {
-  unsigned Flags = getELFSectionFlags(Kind);
+  unsigned Flags = getELFSectionFlags(Kind, GV->hasComdat());
 
   // If we have -ffunction-section or -fdata-section then we should emit the
   // global value to a uniqued section specifically for it.
