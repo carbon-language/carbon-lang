@@ -654,7 +654,8 @@ static void WriteModuleInfo(const Module *M, const ValueEnumerator &VE,
 
     // GLOBALVAR: [type, isconst, initid,
     //             linkage, alignment, section, visibility, threadlocal,
-    //             unnamed_addr, externally_initialized, dllstorageclass]
+    //             unnamed_addr, externally_initialized, dllstorageclass,
+    //             comdat]
     Vals.push_back(VE.getTypeID(GV.getType()));
     Vals.push_back(GV.isConstant());
     Vals.push_back(GV.isDeclaration() ? 0 :
