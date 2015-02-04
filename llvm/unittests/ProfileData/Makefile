@@ -1,4 +1,4 @@
-##===- unittests/Makefile ----------------------------------*- Makefile -*-===##
+##===- unittests/ProfileData/Makefile ----------------------*- Makefile -*-===##
 #
 #                     The LLVM Compiler Infrastructure
 #
@@ -7,13 +7,9 @@
 #
 ##===----------------------------------------------------------------------===##
 
-LEVEL = ..
-
-PARALLEL_DIRS = ADT Analysis Bitcode CodeGen DebugInfo ExecutionEngine IR \
-		LineEditor Linker MC Option ProfileData Support Transforms
+LEVEL = ../..
+TESTNAME = ProfileData
+LINK_COMPONENTS := ProfileData Core Support
 
 include $(LEVEL)/Makefile.config
 include $(LLVM_SRC_ROOT)/unittests/Makefile.unittest
-
-clean::
-	$(Verb) $(RM) -f *Tests
