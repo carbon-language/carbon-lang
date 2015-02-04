@@ -4,3 +4,4 @@ struct __declspec(novtable) S {};
 enum __declspec(novtable) E {}; // expected-warning{{'novtable' attribute only applies to classes}}
 int __declspec(novtable) I; // expected-warning{{'novtable' attribute only applies to classes}}
 typedef struct T __declspec(novtable) U; // expected-warning{{'novtable' attribute only applies to classes}}
+auto z = []() __declspec(novtable) { return nullptr; }; // expected-warning{{'novtable' attribute only applies to classes}}

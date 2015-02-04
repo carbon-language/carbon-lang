@@ -1085,6 +1085,11 @@ ExprResult Parser::ParseLambdaExpressionAfterIntroducer(
     // compatible with GCC.
     MaybeParseGNUAttributes(Attr, &DeclEndLoc);
 
+    // MSVC-style attributes must be parsed before the mutable specifier to be
+    // compatible with MSVC.
+    while (Tok.is(tok::kw___declspec))
+      ParseMicrosoftDeclSpec(Attr);
+
     // Parse 'mutable'[opt].
     SourceLocation MutableLoc;
     if (TryConsumeToken(tok::kw_mutable, MutableLoc))
