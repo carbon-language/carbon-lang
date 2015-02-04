@@ -1,30 +1,30 @@
 ; RUN: llc < %s -march=mips -mcpu=mips2 | FileCheck %s \
 ; RUN:    -check-prefix=ALL -check-prefix=GP32 \
-; RUN:    -check-prefix=M2 -check-prefix=NOT-R2-R6
+; RUN:    -check-prefix=M2
 ; RUN: llc < %s -march=mips -mcpu=mips32 | FileCheck %s \
-; RUN:    -check-prefix=ALL -check-prefix=GP32 -check-prefix=NOT-R2-R6 \
+; RUN:    -check-prefix=ALL -check-prefix=GP32 \
 ; RUN:    -check-prefix=32R1-R2
 ; RUN: llc < %s -march=mips -mcpu=mips32r2 | FileCheck %s \
 ; RUN:    -check-prefix=ALL -check-prefix=GP32 \
-; RUN:    -check-prefix=32R1-R2 -check-prefix=R2-R6
+; RUN:    -check-prefix=32R1-R2
 ; RUN: llc < %s -march=mips -mcpu=mips32r6 | FileCheck %s \
 ; RUN:    -check-prefix=ALL -check-prefix=GP32 \
-; RUN:    -check-prefix=32R6 -check-prefix=R2-R6
+; RUN:    -check-prefix=32R6
 ; RUN: llc < %s -march=mips64 -mcpu=mips3 | FileCheck %s \
 ; RUN:    -check-prefix=ALL -check-prefix=GP64 \
-; RUN:    -check-prefix=M3 -check-prefix=NOT-R2-R6
+; RUN:    -check-prefix=M3
 ; RUN: llc < %s -march=mips64 -mcpu=mips4 | FileCheck %s \
 ; RUN:    -check-prefix=ALL -check-prefix=GP64 \
-; RUN:    -check-prefix=GP64-NOT-R6 -check-prefix=NOT-R2-R6
+; RUN:    -check-prefix=GP64-NOT-R6
 ; RUN: llc < %s -march=mips64 -mcpu=mips64 | FileCheck %s \
 ; RUN:    -check-prefix=ALL -check-prefix=GP64 \
-; RUN:    -check-prefix=GP64-NOT-R6 -check-prefix=NOT-R2-R6
+; RUN:    -check-prefix=GP64-NOT-R6
 ; RUN: llc < %s -march=mips64 -mcpu=mips64r2 | FileCheck %s \
 ; RUN:    -check-prefix=ALL -check-prefix=GP64 \
-; RUN:    -check-prefix=GP64-NOT-R6 -check-prefix R2-R6
+; RUN:    -check-prefix=GP64-NOT-R6
 ; RUN: llc < %s -march=mips64 -mcpu=mips64r6 | FileCheck %s \
 ; RUN:    -check-prefix=ALL -check-prefix=GP64 \
-; RUN:    -check-prefix=64R6 -check-prefix=R2-R6
+; RUN:    -check-prefix=64R6
 
 define signext i1 @ashr_i1(i1 signext %a, i1 signext %b) {
 entry:
