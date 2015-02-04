@@ -548,54 +548,20 @@ defm loadrd  : ld_idxd_shl<"memd", "LDrid", DoubleRegs, 0b110>;
 // 'def pats' for load instructions with base + register offset and non-zero
 // immediate value. Immediate value is used to left-shift the second
 // register operand.
+class Loadxs_pat<PatFrag Load, ValueType VT, InstHexagon MI>
+  : Pat<(VT (Load (add (i32 IntRegs:$Rs),
+                       (i32 (shl (i32 IntRegs:$Rt), u2ImmPred:$u2))))),
+        (VT (MI IntRegs:$Rs, IntRegs:$Rt, imm:$u2))>;
+
 let AddedComplexity = 40 in {
-def : Pat <(i32 (sextloadi8 (add IntRegs:$src1,
-                                 (shl IntRegs:$src2, u2ImmPred:$offset)))),
-           (L4_loadrb_rr IntRegs:$src1,
-            IntRegs:$src2, u2ImmPred:$offset)>,
-            Requires<[HasV4T]>;
-
-def : Pat <(i32 (zextloadi8 (add IntRegs:$src1,
-                                 (shl IntRegs:$src2, u2ImmPred:$offset)))),
-           (L4_loadrub_rr IntRegs:$src1,
-            IntRegs:$src2, u2ImmPred:$offset)>,
-            Requires<[HasV4T]>;
-
-def : Pat <(i32 (extloadi8 (add IntRegs:$src1,
-                                (shl IntRegs:$src2, u2ImmPred:$offset)))),
-           (L4_loadrub_rr IntRegs:$src1,
-            IntRegs:$src2, u2ImmPred:$offset)>,
-            Requires<[HasV4T]>;
-
-def : Pat <(i32 (sextloadi16 (add IntRegs:$src1,
-                                  (shl IntRegs:$src2, u2ImmPred:$offset)))),
-           (L4_loadrh_rr IntRegs:$src1,
-            IntRegs:$src2, u2ImmPred:$offset)>,
-            Requires<[HasV4T]>;
-
-def : Pat <(i32 (zextloadi16 (add IntRegs:$src1,
-                                  (shl IntRegs:$src2, u2ImmPred:$offset)))),
-           (L4_loadruh_rr IntRegs:$src1,
-            IntRegs:$src2, u2ImmPred:$offset)>,
-            Requires<[HasV4T]>;
-
-def : Pat <(i32 (extloadi16 (add IntRegs:$src1,
-                                 (shl IntRegs:$src2, u2ImmPred:$offset)))),
-           (L4_loadruh_rr IntRegs:$src1,
-            IntRegs:$src2, u2ImmPred:$offset)>,
-            Requires<[HasV4T]>;
-
-def : Pat <(i32 (load (add IntRegs:$src1,
-                           (shl IntRegs:$src2, u2ImmPred:$offset)))),
-           (L4_loadri_rr IntRegs:$src1,
-            IntRegs:$src2, u2ImmPred:$offset)>,
-            Requires<[HasV4T]>;
-
-def : Pat <(i64 (load (add IntRegs:$src1,
-                           (shl IntRegs:$src2, u2ImmPred:$offset)))),
-           (L4_loadrd_rr IntRegs:$src1,
-            IntRegs:$src2, u2ImmPred:$offset)>,
-            Requires<[HasV4T]>;
+  def: Loadxs_pat<extloadi8,   i32, L4_loadrub_rr>;
+  def: Loadxs_pat<zextloadi8,  i32, L4_loadrub_rr>;
+  def: Loadxs_pat<sextloadi8,  i32, L4_loadrb_rr>;
+  def: Loadxs_pat<extloadi16,  i32, L4_loadruh_rr>;
+  def: Loadxs_pat<zextloadi16, i32, L4_loadruh_rr>;
+  def: Loadxs_pat<sextloadi16, i32, L4_loadrh_rr>;
+  def: Loadxs_pat<load,        i32, L4_loadri_rr>;
+  def: Loadxs_pat<load,        i64, L4_loadrd_rr>;
 }
 
 // 'def pats' for load instruction base + register offset and
@@ -4033,18 +3999,6 @@ def : Pat<(store (i32 IntRegs:$src1), u0AlwaysExtPred:$src2),
 let Predicates = [HasV4T], AddedComplexity  = 30 in {
 def : Pat<(i32 (load u0AlwaysExtPred:$src)),
           (L4_loadri_abs u0AlwaysExtPred:$src)>;
-
-def : Pat<(i32 (sextloadi8 u0AlwaysExtPred:$src)),
-          (L4_loadrb_abs u0AlwaysExtPred:$src)>;
-
-def : Pat<(i32 (zextloadi8 u0AlwaysExtPred:$src)),
-          (L4_loadrub_abs u0AlwaysExtPred:$src)>;
-
-def : Pat<(i32 (sextloadi16 u0AlwaysExtPred:$src)),
-          (L4_loadrh_abs u0AlwaysExtPred:$src)>;
-
-def : Pat<(i32 (zextloadi16 u0AlwaysExtPred:$src)),
-          (L4_loadruh_abs u0AlwaysExtPred:$src)>;
 }
 
 // Indexed store word - global address.
