@@ -357,9 +357,8 @@ public:
   DenseMap<Value *, ValueAsMetadata *> ValuesAsMetadata;
   DenseMap<Metadata *, MetadataAsValue *> MetadataAsValues;
 
-  DenseSet<MDTuple *, MDTupleInfo> MDTuples;
-  DenseSet<MDLocation *, MDLocationInfo> MDLocations;
-  DenseSet<GenericDebugNode *, GenericDebugNodeInfo> GenericDebugNodes;
+#define HANDLE_MDNODE_LEAF(CLASS) DenseSet<CLASS *, CLASS##Info> CLASS##s;
+#include "llvm/IR/Metadata.def"
 
   // MDNodes may be uniqued or not uniqued.  When they're not uniqued, they
   // aren't in the MDNodeSet, but they're still shared between objects, so no
