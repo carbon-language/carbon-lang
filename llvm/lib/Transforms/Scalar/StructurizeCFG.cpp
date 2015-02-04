@@ -10,12 +10,14 @@
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/ADT/MapVector.h"
 #include "llvm/ADT/SCCIterator.h"
+#include "llvm/ADT/PostOrderIterator.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/RegionInfo.h"
 #include "llvm/Analysis/RegionIterator.h"
 #include "llvm/Analysis/RegionPass.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/PatternMatch.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Transforms/Utils/SSAUpdater.h"
 
 using namespace llvm;
@@ -281,11 +283,65 @@ bool StructurizeCFG::doInitialization(Region *R, RGPassManager &RGM) {
 
 /// \brief Build up the general order of nodes
 void StructurizeCFG::orderNodes() {
-  scc_iterator<Region *> I = scc_begin(ParentRegion);
-  for (Order.clear(); !I.isAtEnd(); ++I) {
-    const std::vector<RegionNode *> &Nodes = *I;
-    Order.append(Nodes.begin(), Nodes.end());
+  RNVector TempOrder;
+  ReversePostOrderTraversal<Region*> RPOT(ParentRegion);
+  TempOrder.append(RPOT.begin(), RPOT.end());
+
+  std::map<Loop*, unsigned> LoopBlocks;
+
+
+  // The reverse post-order traversal of the list gives us an ordering close
+  // to what we want.  The only problem with it is that sometimes backedges
+  // for outer loops will be visited before backedges for inner loops.
+  for (RegionNode *RN : TempOrder) {
+    BasicBlock *BB = RN->getEntry();
+    Loop *Loop = LI->getLoopFor(BB);
+    if (!LoopBlocks.count(Loop)) {
+      LoopBlocks[Loop] = 1;
+      continue;
+    }
+    LoopBlocks[Loop]++;
   }
+
+  unsigned CurrentLoopDepth = 0;
+  Loop *CurrentLoop = nullptr;
+  BBSet TempVisited;
+  for (RNVector::iterator I = TempOrder.begin(), E = TempOrder.end(); I != E; ++I) {
+    BasicBlock *BB = (*I)->getEntry();
+    unsigned LoopDepth = LI->getLoopDepth(BB);
+
+    if (std::find(Order.begin(), Order.end(), *I) != Order.end())
+      continue;
+
+    if (LoopDepth < CurrentLoopDepth) {
+      // Make sure we have visited all blocks in this loop before moving back to
+      // the outer loop.
+
+      RNVector::iterator LoopI = I;
+      while(LoopBlocks[CurrentLoop]) {
+        LoopI++;
+        BasicBlock *LoopBB = (*LoopI)->getEntry();
+        if (LI->getLoopFor(LoopBB) == CurrentLoop) {
+          LoopBlocks[CurrentLoop]--;
+          Order.push_back(*LoopI);
+        }
+      }
+    }
+
+    CurrentLoop = LI->getLoopFor(BB);
+    if (CurrentLoop) {
+      LoopBlocks[CurrentLoop]--;
+    }
+
+    CurrentLoopDepth = LoopDepth;
+    Order.push_back(*I);
+  }
+
+  // This pass originally used a post-order traversal and then operated on
+  // the list in reverse. Now that we are using a reverse post-order traversal
+  // rather than re-working the whole pass to operate on the list in order,
+  // we just reverse the list and continue to operate on it in reverse.
+  std::reverse(Order.begin(), Order.end());
 }
 
 /// \brief Determine the end of the loops
@@ -440,6 +496,10 @@ void StructurizeCFG::collectInfos() {
 
   for (RNVector::reverse_iterator OI = Order.rbegin(), OE = Order.rend();
        OI != OE; ++OI) {
+
+    DEBUG(dbgs() << "Visiting: " <<
+                    ((*OI)->isSubRegion() ? "SubRegion with entry: " : "") <<
+                    (*OI)->getEntry()->getName() << " Loop Depth: " << LI->getLoopDepth((*OI)->getEntry()) << "\n");
 
     // Analyze all the conditions leading to a node
     gatherPredicates(*OI);
