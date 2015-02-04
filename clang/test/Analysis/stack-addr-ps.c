@@ -90,3 +90,10 @@ RDar10348049 test_rdar10348049(void) {
   return b; // no-warning
 }
 
+void testRegister(register const char *reg) {
+    if (reg) (void)reg[0];
+}
+void callTestRegister() {
+    char buf[20];
+    testRegister(buf); // no-warning
+}

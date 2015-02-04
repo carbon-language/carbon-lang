@@ -840,7 +840,7 @@ public:
       return !isFileVarDecl() && getTSCSpec() == TSCS_unspecified;
 
     // Global Named Register (GNU extension)
-    if (getStorageClass() == SC_Register && !isLocalVarDecl())
+    if (getStorageClass() == SC_Register && !isLocalVarDeclOrParm())
       return false;
 
     // Return true for:  Auto, Register.
