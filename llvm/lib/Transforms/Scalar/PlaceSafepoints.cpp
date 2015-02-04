@@ -761,6 +761,7 @@ InsertSafepointPoll(DominatorTree &DT, Instruction *term,
   InlineFunctionInfo IFI;
   bool inlineStatus = InlineFunction(poll, IFI);
   assert(inlineStatus && "inline must succeed");
+  (void)inlineStatus; // suppress warning in release-asserts
 
   // Check post conditions
   assert(IFI.StaticAllocas.empty() && "can't have allocs");
