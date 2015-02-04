@@ -56,7 +56,9 @@ protected:
         MachineInstr *MI = I;
 
         if (MI->getOpcode() != PPC::GETtlsADDR &&
-            MI->getOpcode() != PPC::GETtlsldADDR)
+            MI->getOpcode() != PPC::GETtlsldADDR &&
+	    MI->getOpcode() != PPC::GETtlsADDR32 &&
+	    MI->getOpcode() != PPC::GETtlsldADDR32)
           continue;
 
         DEBUG(dbgs() << "TLS Dynamic Call Fixup:\n    " << *MI;);

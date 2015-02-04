@@ -25,12 +25,12 @@ entry:
 ; OPT0:      addis [[REG2:[0-9]+]], 3, a@dtprel@ha
 ; OPT0:      addi {{[0-9]+}}, [[REG2]], a@dtprel@l
 ; OPT0-32-LABEL: main
-; OPT0-32:        addi {{[0-9]+}}, {{[0-9]+}}, a@got@tlsld
+; OPT0-32:        addi 3, {{[0-9]+}}, a@got@tlsld
 ; OPT0-32:        bl __tls_get_addr(a@tlsld)@PLT
 ; OPT0-32:        addis [[REG:[0-9]+]], 3, a@dtprel@ha
 ; OPT0-32:        addi  {{[0-9]+}}, [[REG]], a@dtprel@l
 ; OPT1-32-LABEL: main
-; OPT1-32:        addi {{[0-9]+}}, {{[0-9]+}}, a@got@tlsld
+; OPT1-32:        addi 3, {{[0-9]+}}, a@got@tlsld
 ; OPT1-32:        bl __tls_get_addr(a@tlsld)@PLT
 ; OPT1-32:        addis [[REG:[0-9]+]], 3, a@dtprel@ha
 ; OPT1-32:        addi  {{[0-9]+}}, [[REG]], a@dtprel@l
