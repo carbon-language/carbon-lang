@@ -9,5 +9,5 @@ define <4 x float> @foo(<4 x float>* %P, <4 x float> %In) nounwind {
 	ret <4 x float> %B
 
 ; CHECK-LABEL: @foo
-; CHECK:       addps (
+; CHECK:       addps (%eax), %xmm0
 }
