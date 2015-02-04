@@ -6,16 +6,16 @@
 // Declare malloc here explicitly so we don't depend on system headers.
 void * malloc(size_t) __attribute((malloc));
 
-int no_vars __attribute((malloc)); // expected-warning {{functions returning a pointer type}}
+int no_vars __attribute((malloc)); // expected-warning {{attribute only applies to functions}}
 
-void  returns_void  (void) __attribute((malloc)); // expected-warning {{functions returning a pointer type}}
-int   returns_int   (void) __attribute((malloc)); // expected-warning {{functions returning a pointer type}}
+void  returns_void  (void) __attribute((malloc)); // expected-warning {{attribute only applies to return values that are pointers}}
+int   returns_int   (void) __attribute((malloc)); // expected-warning {{attribute only applies to return values that are pointers}}
 int * returns_intptr(void) __attribute((malloc)); // no-warning
 typedef int * iptr;
 iptr  returns_iptr  (void) __attribute((malloc)); // no-warning
 
-__attribute((malloc)) void *(*f)(); //  expected-warning{{'malloc' attribute only applies to functions returning a pointer type}}
-__attribute((malloc)) int (*g)(); // expected-warning{{'malloc' attribute only applies to functions returning a pointer type}}
+__attribute((malloc)) void *(*f)(); //  expected-warning{{attribute only applies to functions}}
+__attribute((malloc)) int (*g)(); // expected-warning{{attribute only applies to functions}}
 
 __attribute((malloc))
 void * xalloc(unsigned n) { return malloc(n); } // no-warning

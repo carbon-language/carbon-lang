@@ -790,9 +790,9 @@ def IBOutletCollection : InheritableAttr {
   let Documentation = [Undocumented];
 }
 
-def Malloc : InheritableAttr {
-  let Spellings = [GCC<"malloc">];
-//  let Subjects = [Function];
+def Restrict : InheritableAttr {
+  let Spellings = [Declspec<"restrict">, GCC<"malloc">];
+  let Subjects = SubjectList<[Function]>;
   let Documentation = [Undocumented];
 }
 
