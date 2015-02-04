@@ -505,23 +505,22 @@ void Lexer::skipWhitespace() {
       break;
     // Potential comment.
     case '/':
-      if (_buffer.size() >= 2 && _buffer[1] == '*') {
-        // Skip starting /*
-        _buffer = _buffer.drop_front(2);
-        // If the next char is also a /, it's not the end.
-        if (!_buffer.empty() && _buffer[0] == '/')
-          _buffer = _buffer.drop_front();
-
-        // Scan for /'s. We're done if it is preceded by a *.
-        while (true) {
-          if (_buffer.empty())
-            break;
-          _buffer = _buffer.drop_front();
-          if (_buffer.data()[-1] == '/' && _buffer.data()[-2] == '*')
-            break;
-        }
-      } else
+      if (_buffer.size() <= 1 || _buffer[1] != '*')
         return;
+      // Skip starting /*
+      _buffer = _buffer.drop_front(2);
+      // If the next char is also a /, it's not the end.
+      if (!_buffer.empty() && _buffer[0] == '/')
+        _buffer = _buffer.drop_front();
+
+      // Scan for /'s. We're done if it is preceded by a *.
+      while (true) {
+        if (_buffer.empty())
+          break;
+        _buffer = _buffer.drop_front();
+        if (_buffer.data()[-1] == '/' && _buffer.data()[-2] == '*')
+          break;
+      }
       break;
     default:
       return;
