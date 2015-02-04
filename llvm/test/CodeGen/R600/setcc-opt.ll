@@ -199,7 +199,7 @@ define void @cmp_sext_k_neg1_i8_arg(i1 addrspace(1)* %out, i8 %b) nounwind {
 
 ; FUNC-LABEL: {{^}}cmp_zext_k_neg1:
 ; SI: v_mov_b32_e32 [[RESULT:v[0-9]+]], 1{{$}}
-; SI-NEXT: buffer_store_byte [[RESULT]]
+; SI: buffer_store_byte [[RESULT]]
 ; SI: s_endpgm
 define void @cmp_zext_k_neg1(i1 addrspace(1)* %out, i8 %b) nounwind {
   %b.ext = zext i8 %b to i32
@@ -210,7 +210,7 @@ define void @cmp_zext_k_neg1(i1 addrspace(1)* %out, i8 %b) nounwind {
 
 ; FUNC-LABEL: {{^}}zext_bool_icmp_ne_k:
 ; SI: v_mov_b32_e32 [[RESULT:v[0-9]+]], 1{{$}}
-; SI-NEXT: buffer_store_byte [[RESULT]]
+; SI: buffer_store_byte [[RESULT]]
 ; SI-NEXT: s_endpgm
 define void @zext_bool_icmp_ne_k(i1 addrspace(1)* %out, i32 %a, i32 %b) nounwind {
   %icmp0 = icmp ne i32 %a, %b
@@ -222,7 +222,7 @@ define void @zext_bool_icmp_ne_k(i1 addrspace(1)* %out, i32 %a, i32 %b) nounwind
 
 ; FUNC-LABEL: {{^}}zext_bool_icmp_eq_k:
 ; SI: v_mov_b32_e32 [[RESULT:v[0-9]+]], 0{{$}}
-; SI-NEXT: buffer_store_byte [[RESULT]]
+; SI: buffer_store_byte [[RESULT]]
 ; SI-NEXT: s_endpgm
 define void @zext_bool_icmp_eq_k(i1 addrspace(1)* %out, i32 %a, i32 %b) nounwind {
   %icmp0 = icmp ne i32 %a, %b

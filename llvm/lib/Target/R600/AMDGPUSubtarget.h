@@ -243,6 +243,10 @@ public:
     // FIXME: Not sure what this is for other subtagets.
     llvm_unreachable("do not know max waves per CU for this subtarget.");
   }
+
+  bool enableSubRegLiveness() const override {
+    return true;
+  }
 };
 
 } // End namespace llvm

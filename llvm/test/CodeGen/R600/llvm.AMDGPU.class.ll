@@ -472,7 +472,7 @@ define void @test_no_fold_or_class_f32_0(i32 addrspace(1)* %out, float addrspace
 ; SI-LABEL: {{^}}test_class_0_f32:
 ; SI-NOT: v_cmp_class
 ; SI: v_mov_b32_e32 [[RESULT:v[0-9]+]], 0{{$}}
-; SI-NEXT: buffer_store_dword [[RESULT]]
+; SI: buffer_store_dword [[RESULT]]
 ; SI: s_endpgm
 define void @test_class_0_f32(i32 addrspace(1)* %out, float %a) #0 {
   %result = call i1 @llvm.AMDGPU.class.f32(float %a, i32 0) #1
