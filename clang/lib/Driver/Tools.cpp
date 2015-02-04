@@ -10,6 +10,7 @@
 #include "Tools.h"
 #include "InputInfo.h"
 #include "ToolChains.h"
+#include "clang/Basic/CharInfo.h"
 #include "clang/Basic/LangOptions.h"
 #include "clang/Basic/ObjCRuntime.h"
 #include "clang/Basic/Version.h"
@@ -2470,7 +2471,7 @@ static void appendUserToPath(SmallVectorImpl<char> &Result) {
     // Validate that LoginName can be used in a path, and get its length.
     size_t Len = 0;
     for (const char *P = Username; *P; ++P, ++Len) {
-      if (!isalnum(*P) && *P != '_') {
+      if (!isAlphanumeric(*P) && *P != '_') {
         Username = nullptr;
         break;
       }
