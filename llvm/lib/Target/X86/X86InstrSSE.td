@@ -2864,10 +2864,9 @@ defm PANDN : PDI_binop_all<0xDF, "pandn", X86andnp, v2i64, v4i64,
 // SSE 1 & 2 - Logical Instructions
 //===----------------------------------------------------------------------===//
 
-/// sse12_fp_alias_pack_logical - SSE 1 & 2 aliased packed FP logical ops
-///
-multiclass sse12_fp_alias_pack_logical<bits<8> opc, string OpcodeStr,
-                                       SDNode OpNode, OpndItins itins> {
+// Multiclass for scalars using the X86 logical operation aliases for FP.
+multiclass sse12_fp_packed_scalar_logical_alias<
+    bits<8> opc, string OpcodeStr, SDNode OpNode, OpndItins itins> {
   defm V#NAME#PS : sse12_fp_packed<opc, !strconcat(OpcodeStr, "ps"), OpNode,
               FR32, f32, f128mem, memopfsf32, SSEPackedSingle, itins, 0>,
               PS, VEX_4V;
@@ -2887,17 +2886,53 @@ multiclass sse12_fp_alias_pack_logical<bits<8> opc, string OpcodeStr,
   }
 }
 
-// Alias bitwise logical operations using SSE logical ops on packed FP values.
 let isCodeGenOnly = 1 in {
-  defm FsAND  : sse12_fp_alias_pack_logical<0x54, "and", X86fand,
+  defm FsAND  : sse12_fp_packed_scalar_logical_alias<0x54, "and", X86fand,
                 SSE_BIT_ITINS_P>;
-  defm FsOR   : sse12_fp_alias_pack_logical<0x56, "or", X86for,
+  defm FsOR   : sse12_fp_packed_scalar_logical_alias<0x56, "or", X86for,
                 SSE_BIT_ITINS_P>;
-  defm FsXOR  : sse12_fp_alias_pack_logical<0x57, "xor", X86fxor,
+  defm FsXOR  : sse12_fp_packed_scalar_logical_alias<0x57, "xor", X86fxor,
                 SSE_BIT_ITINS_P>;
 
   let isCommutable = 0 in
-    defm FsANDN : sse12_fp_alias_pack_logical<0x55, "andn", X86fandn,
+    defm FsANDN : sse12_fp_packed_scalar_logical_alias<0x55, "andn", X86fandn,
+                  SSE_BIT_ITINS_P>;
+}
+
+// Multiclass for vectors using the X86 logical operation aliases for FP.
+multiclass sse12_fp_packed_vector_logical_alias<
+    bits<8> opc, string OpcodeStr, SDNode OpNode, OpndItins itins> {
+  let Predicates = [HasAVX, NoVLX] in {
+  defm V#NAME#PS : sse12_fp_packed<opc, !strconcat(OpcodeStr, "ps"), OpNode,
+              VR128, v4f32, f128mem, memopv4f32, SSEPackedSingle, itins, 0>,
+              PS, VEX_4V;
+
+  defm V#NAME#PD : sse12_fp_packed<opc, !strconcat(OpcodeStr, "pd"), OpNode,
+        VR128, v2f64, f128mem, memopv2f64, SSEPackedDouble, itins, 0>,
+        PD, VEX_4V;
+  }
+
+  let Constraints = "$src1 = $dst" in {
+    defm PS : sse12_fp_packed<opc, !strconcat(OpcodeStr, "ps"), OpNode, VR128,
+                v4f32, f128mem, memopv4f32, SSEPackedSingle, itins>,
+                PS;
+
+    defm PD : sse12_fp_packed<opc, !strconcat(OpcodeStr, "pd"), OpNode, VR128,
+                v2f64, f128mem, memopv2f64, SSEPackedDouble, itins>,
+                PD;
+  }
+}
+
+let isCodeGenOnly = 1 in {
+  defm FvAND  : sse12_fp_packed_vector_logical_alias<0x54, "and", X86fand,
+                SSE_BIT_ITINS_P>;
+  defm FvOR   : sse12_fp_packed_vector_logical_alias<0x56, "or", X86for,
+                SSE_BIT_ITINS_P>;
+  defm FvXOR  : sse12_fp_packed_vector_logical_alias<0x57, "xor", X86fxor,
+                SSE_BIT_ITINS_P>;
+
+  let isCommutable = 0 in
+    defm FvANDN : sse12_fp_packed_vector_logical_alias<0x55, "andn", X86fandn,
                   SSE_BIT_ITINS_P>;
 }
 
