@@ -122,8 +122,7 @@ struct PlaceBackedgeSafepointsImpl : public LoopPass {
   bool CallSafepointsEnabled;
   PlaceBackedgeSafepointsImpl(bool CallSafepoints = false)
       : LoopPass(ID), CallSafepointsEnabled(CallSafepoints) {
-    initializePlaceBackedgeSafepointsImplPass(
-        *PassRegistry::getPassRegistry());
+    initializePlaceBackedgeSafepointsImplPass(*PassRegistry::getPassRegistry());
   }
 
   bool runOnLoop(Loop *, LPPassManager &LPM) override;
@@ -180,8 +179,9 @@ struct PlaceSafepoints : public ModulePass {
 // Insert a safepoint poll immediately before the given instruction.  Does
 // not handle the parsability of state at the runtime call, that's the
 // callers job.
-static void InsertSafepointPoll(DominatorTree &DT, Instruction *after,
-                         std::vector<CallSite> &ParsePointsNeeded /*rval*/);
+static void
+InsertSafepointPoll(DominatorTree &DT, Instruction *after,
+                    std::vector<CallSite> &ParsePointsNeeded /*rval*/);
 
 static bool isGCLeafFunction(const CallSite &CS);
 
@@ -199,8 +199,7 @@ static bool needsStatepoint(const CallSite &CS) {
   return true;
 }
 
-static Value *ReplaceWithStatepoint(const CallSite &CS,
-                                    Pass *P);
+static Value *ReplaceWithStatepoint(const CallSite &CS, Pass *P);
 
 /// Returns true if this loop is known to contain a call safepoint which
 /// must unconditionally execute on any iteration of the loop which returns
@@ -248,7 +247,7 @@ static bool containsUnconditionalCallSafepoint(Loop *L, BasicBlock *Header,
 /// does actual terminate in a finite constant number of iterations due to
 /// conservatism in the analysis.
 static bool mustBeFiniteCountedLoop(Loop *L, ScalarEvolution *SE,
-                                      BasicBlock *Pred) {
+                                    BasicBlock *Pred) {
   // Only used when SkipCounted is off
   const unsigned upperTripBound = 8192;
 
@@ -282,8 +281,9 @@ static bool mustBeFiniteCountedLoop(Loop *L, ScalarEvolution *SE,
 }
 
 static void scanOneBB(Instruction *start, Instruction *end,
-               std::vector<CallInst *> &calls, std::set<BasicBlock *> &seen,
-               std::vector<BasicBlock *> &worklist) {
+                      std::vector<CallInst *> &calls,
+                      std::set<BasicBlock *> &seen,
+                      std::vector<BasicBlock *> &worklist) {
   for (BasicBlock::iterator itr(start);
        itr != start->getParent()->end() && itr != BasicBlock::iterator(end);
        itr++) {
@@ -297,8 +297,7 @@ static void scanOneBB(Instruction *start, Instruction *end,
     // without encountering end first
     if (itr->isTerminator()) {
       BasicBlock *BB = itr->getParent();
-      for (succ_iterator PI = succ_begin(BB), E = succ_end(BB); PI != E;
-           ++PI) {
+      for (succ_iterator PI = succ_begin(BB), E = succ_end(BB); PI != E; ++PI) {
         BasicBlock *Succ = *PI;
         if (seen.count(Succ) == 0) {
           worklist.push_back(Succ);
@@ -309,8 +308,8 @@ static void scanOneBB(Instruction *start, Instruction *end,
   }
 }
 static void scanInlinedCode(Instruction *start, Instruction *end,
-                     std::vector<CallInst *> &calls,
-                     std::set<BasicBlock *> &seen) {
+                            std::vector<CallInst *> &calls,
+                            std::set<BasicBlock *> &seen) {
   calls.clear();
   std::vector<BasicBlock *> worklist;
   seen.insert(start->getParent());
@@ -431,7 +430,6 @@ static Instruction *findLocationForEntrySafepoint(Function &F,
   for (cursor = F.getEntryBlock().begin(); hasNextInstruction(cursor);
        cursor = nextInstruction(cursor)) {
 
-
     // We need to stop going forward as soon as we see a call that can
     // grow the stack (i.e. the call target has a non-zero frame
     // size).
@@ -447,9 +445,8 @@ static Instruction *findLocationForEntrySafepoint(Function &F,
     }
   }
 
-  assert((hasNextInstruction(cursor) ||
-          cursor->isTerminator()) &&
-             "either we stopped because of a call, or because of terminator");
+  assert((hasNextInstruction(cursor) || cursor->isTerminator()) &&
+         "either we stopped because of a call, or because of terminator");
 
   if (cursor->isTerminator()) {
     return cursor;
@@ -566,7 +563,7 @@ bool PlaceSafepoints::runOnFunction(Function &F) {
         // it. Its possible that we have a) duplicate edges to the same header
         // and b) edges to distinct loop headers.  We need to insert pools on
         // each. (Note: This still relies on LoopSimplify.)
-        DenseSet<BasicBlock*> Headers;
+        DenseSet<BasicBlock *> Headers;
         for (unsigned i = 0; i < Term->getNumSuccessors(); i++) {
           BasicBlock *Succ = Term->getSuccessor(i);
           if (DT.dominates(Succ, Term->getParent())) {
@@ -578,7 +575,7 @@ bool PlaceSafepoints::runOnFunction(Function &F) {
         // The split loop structure here is so that we only need to recalculate
         // the dominator tree once.  Alternatively, we could just keep it up to
         // date and use a more natural merged loop.
-        DenseSet<BasicBlock*> SplitBackedges;
+        DenseSet<BasicBlock *> SplitBackedges;
         for (BasicBlock *Header : Headers) {
           BasicBlock *NewBB = SplitEdge(Term->getParent(), Header, nullptr);
           SplitBackedges.insert(NewBB);
@@ -594,7 +591,6 @@ bool PlaceSafepoints::runOnFunction(Function &F) {
         InsertSafepointPoll(DT, Term, ParsePoints);
         NumBackedgeSafepoints++;
       }
-
 
       // Record the parse points for later use
       ParsePointNeeded.insert(ParsePointNeeded.end(), ParsePoints.begin(),
@@ -622,8 +618,7 @@ bool PlaceSafepoints::runOnFunction(Function &F) {
     std::vector<CallSite> Calls;
     findCallSafepoints(F, Calls);
     NumCallSafepoints += Calls.size();
-    ParsePointNeeded.insert(ParsePointNeeded.end(), Calls.begin(),
-                            Calls.end());
+    ParsePointNeeded.insert(ParsePointNeeded.end(), Calls.begin(), Calls.end());
   }
 
   // Unique the vectors since we can end up with duplicates if we scan the call
@@ -686,9 +681,7 @@ bool PlaceSafepoints::runOnFunction(Function &F) {
 char PlaceBackedgeSafepointsImpl::ID = 0;
 char PlaceSafepoints::ID = 0;
 
-ModulePass *llvm::createPlaceSafepointsPass() {
-  return new PlaceSafepoints();
-}
+ModulePass *llvm::createPlaceSafepointsPass() { return new PlaceSafepoints(); }
 
 INITIALIZE_PASS_BEGIN(PlaceBackedgeSafepointsImpl,
                       "place-backedge-safepoints-impl",
@@ -732,9 +725,9 @@ static bool isGCLeafFunction(const CallSite &CS) {
   return false;
 }
 
-static void InsertSafepointPoll(
-    DominatorTree &DT, Instruction *term,
-    std::vector<CallSite> &ParsePointsNeeded /*rval*/) {
+static void
+InsertSafepointPoll(DominatorTree &DT, Instruction *term,
+                    std::vector<CallSite> &ParsePointsNeeded /*rval*/) {
   Module *M = term->getParent()->getParent()->getParent();
   assert(M);
 
@@ -948,7 +941,7 @@ static Value *ReplaceWithStatepoint(const CallSite &CS, /* to replace */
   // Only add the gc_result iff there is actually a used result
   if (!CS.getType()->isVoidTy() && !CS.getInstruction()->use_empty()) {
     Instruction *gc_result = nullptr;
-    std::vector<Type *> types;          // one per 'any' type
+    std::vector<Type *> types;     // one per 'any' type
     types.push_back(CS.getType()); // result type
     auto get_gc_result_id = [&](Type &Ty) {
       if (Ty.isIntegerTy()) {
