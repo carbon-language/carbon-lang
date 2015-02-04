@@ -242,6 +242,7 @@ bool Lexer::canStartNumber(char c) const {
 }
 
 bool Lexer::canContinueNumber(char c) const {
+  // [xX] = hex marker, [hHoO] = type suffix, [MK] = scale suffix.
   return strchr("0123456789ABCDEFabcdefxXhHoOMK", c);
 }
 
