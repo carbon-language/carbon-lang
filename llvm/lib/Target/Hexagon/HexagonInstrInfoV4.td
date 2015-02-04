@@ -341,6 +341,32 @@ def Zext64: OutPatFrag<(ops node:$Rs),
 def Sext64: OutPatFrag<(ops node:$Rs),
   (i64 (A2_sxtw (i32 $Rs)))>;
 
+// Patterns to generate indexed loads with different forms of the address:
+// - frameindex,
+// - base + offset,
+// - base (without offset).
+multiclass Loadxm_pat<PatFrag Load, ValueType VT, PatFrag ValueMod,
+                      PatLeaf ImmPred, InstHexagon MI> {
+  def: Pat<(VT (Load AddrFI:$fi)),
+           (VT (ValueMod (MI AddrFI:$fi, 0)))>;
+  def: Pat<(VT (Load (add IntRegs:$Rs, ImmPred:$Off))),
+           (VT (ValueMod (MI IntRegs:$Rs, imm:$Off)))>;
+  def: Pat<(VT (Load (i32 IntRegs:$Rs))),
+           (VT (ValueMod (MI IntRegs:$Rs, 0)))>;
+}
+
+defm: Loadxm_pat<extloadi1,   i64, Zext64, s11_0ExtPred, L2_loadrub_io>;
+defm: Loadxm_pat<extloadi8,   i64, Zext64, s11_0ExtPred, L2_loadrub_io>;
+defm: Loadxm_pat<extloadi16,  i64, Zext64, s11_1ExtPred, L2_loadruh_io>;
+defm: Loadxm_pat<zextloadi1,  i64, Zext64, s11_0ExtPred, L2_loadrub_io>;
+defm: Loadxm_pat<zextloadi8,  i64, Zext64, s11_0ExtPred, L2_loadrub_io>;
+defm: Loadxm_pat<zextloadi16, i64, Zext64, s11_1ExtPred, L2_loadruh_io>;
+defm: Loadxm_pat<sextloadi8,  i64, Sext64, s11_0ExtPred, L2_loadrb_io>;
+defm: Loadxm_pat<sextloadi16, i64, Sext64, s11_1ExtPred, L2_loadrh_io>;
+
+// Map Rdd = anyext(Rs) -> Rdd = combine(#0, Rs).
+def: Pat<(i64 (anyext (i32 IntRegs:$src1))), (Zext64 IntRegs:$src1)>;
+
 //===----------------------------------------------------------------------===//
 // Template class for load instructions with Absolute set addressing mode.
 //===----------------------------------------------------------------------===//
@@ -591,61 +617,12 @@ let AddedComplexity = 20 in {
 }
 
 // zext i1->i64
-def : Pat <(i64 (zext (i1 PredRegs:$src1))),
-      (i64 (A4_combineir 0, (C2_muxii (i1 PredRegs:$src1), 1, 0)))>,
-      Requires<[HasV4T]>;
+def: Pat<(i64 (zext (i1 PredRegs:$src1))),
+         (Zext64 (C2_muxii PredRegs:$src1, 1, 0))>;
 
 // zext i32->i64
-def : Pat <(i64 (zext (i32 IntRegs:$src1))),
-      (i64 (A4_combineir 0, (i32 IntRegs:$src1)))>,
-      Requires<[HasV4T]>;
-// zext i8->i64
-def:  Pat <(i64 (zextloadi8 ADDRriS11_0:$src1)),
-      (i64 (A4_combineir 0, (L2_loadrub_io AddrFI:$src1, 0)))>,
-      Requires<[HasV4T]>;
-
-let AddedComplexity = 20 in
-def:  Pat <(i64 (zextloadi8 (add (i32 IntRegs:$src1),
-                                s11_0ExtPred:$offset))),
-      (i64 (A4_combineir 0, (L2_loadrub_io IntRegs:$src1,
-                                  s11_0ExtPred:$offset)))>,
-      Requires<[HasV4T]>;
-
-// zext i1->i64
-def:  Pat <(i64 (zextloadi1 ADDRriS11_0:$src1)),
-      (i64 (A4_combineir 0, (L2_loadrub_io AddrFI:$src1, 0)))>,
-      Requires<[HasV4T]>;
-
-let AddedComplexity = 20 in
-def:  Pat <(i64 (zextloadi1 (add (i32 IntRegs:$src1),
-                                s11_0ExtPred:$offset))),
-      (i64 (A4_combineir 0, (L2_loadrub_io IntRegs:$src1,
-                                  s11_0ExtPred:$offset)))>,
-      Requires<[HasV4T]>;
-
-// zext i16->i64
-def:  Pat <(i64 (zextloadi16 ADDRriS11_1:$src1)),
-      (i64 (A4_combineir 0, (L2_loadruh_io AddrFI:$src1, 0)))>,
-      Requires<[HasV4T]>;
-
-let AddedComplexity = 20 in
-def:  Pat <(i64 (zextloadi16 (add (i32 IntRegs:$src1),
-                                  s11_1ExtPred:$offset))),
-      (i64 (A4_combineir 0, (L2_loadruh_io IntRegs:$src1,
-                                  s11_1ExtPred:$offset)))>,
-      Requires<[HasV4T]>;
-
-// anyext i16->i64
-def:  Pat <(i64 (extloadi16 ADDRriS11_2:$src1)),
-      (i64 (A4_combineir 0, (L2_loadrh_io AddrFI:$src1, 0)))>,
-      Requires<[HasV4T]>;
-
-let AddedComplexity = 20 in
-def:  Pat <(i64 (extloadi16 (add (i32 IntRegs:$src1),
-                                  s11_1ExtPred:$offset))),
-      (i64 (A4_combineir 0, (L2_loadrh_io IntRegs:$src1,
-                                  s11_1ExtPred:$offset)))>,
-      Requires<[HasV4T]>;
+def: Pat<(i64 (zext (i32 IntRegs:$src1))),
+         (Zext64 IntRegs:$src1)>;
 
 // zext i32->i64
 def:  Pat <(i64 (zextloadi32 ADDRriS11_2:$src1)),
@@ -3913,38 +3890,6 @@ def TFRI_V4 : ALU32_ri<(outs IntRegs:$dst), (ins s16Ext:$src1),
 def : Pat<(HexagonCONST32_GP tblockaddress:$src1),
           (TFRI_V4 tblockaddress:$src1)>,
           Requires<[HasV4T]>;
-
-let isExtended = 1, opExtendable = 2, AddedComplexity=50,
-hasSideEffects = 0, isPredicated = 1, validSubTargets = HasV4SubT in
-def TFRI_cPt_V4 : ALU32_ri<(outs IntRegs:$dst),
-                           (ins PredRegs:$src1, s16Ext:$src2),
-           "if($src1) $dst = #$src2",
-           []>,
-           Requires<[HasV4T]>;
-
-let isExtended = 1, opExtendable = 2, AddedComplexity=50, isPredicatedFalse = 1,
-hasSideEffects = 0, isPredicated = 1, validSubTargets = HasV4SubT in
-def TFRI_cNotPt_V4 : ALU32_ri<(outs IntRegs:$dst),
-                              (ins PredRegs:$src1, s16Ext:$src2),
-           "if(!$src1) $dst = #$src2",
-           []>,
-           Requires<[HasV4T]>;
-
-let isExtended = 1, opExtendable = 2, AddedComplexity=50,
-hasSideEffects = 0, isPredicated = 1, validSubTargets = HasV4SubT in
-def TFRI_cdnPt_V4 : ALU32_ri<(outs IntRegs:$dst),
-                             (ins PredRegs:$src1, s16Ext:$src2),
-           "if($src1.new) $dst = #$src2",
-           []>,
-           Requires<[HasV4T]>;
-
-let isExtended = 1, opExtendable = 2, AddedComplexity=50, isPredicatedFalse = 1,
-hasSideEffects = 0, isPredicated = 1, validSubTargets = HasV4SubT in
-def TFRI_cdnNotPt_V4 : ALU32_ri<(outs IntRegs:$dst),
-                                (ins PredRegs:$src1, s16Ext:$src2),
-           "if(!$src1.new) $dst = #$src2",
-           []>,
-           Requires<[HasV4T]>;
 
 let AddedComplexity = 50, Predicates = [HasV4T] in
 def : Pat<(HexagonCONST32_GP tglobaladdr:$src1),
