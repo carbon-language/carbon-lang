@@ -177,6 +177,24 @@ extern "C" {
   void __asan_poison_intra_object_redzone(uptr p, uptr size);
   SANITIZER_INTERFACE_ATTRIBUTE
   void __asan_unpoison_intra_object_redzone(uptr p, uptr size);
+#if SANITIZER_MAC
+  SANITIZER_INTERFACE_ATTRIBUTE
+  void * __asan_mz_calloc(void *zone, uptr nmemb, uptr size);
+  SANITIZER_INTERFACE_ATTRIBUTE
+  void __asan_mz_destroy(void* zone);
+  SANITIZER_INTERFACE_ATTRIBUTE
+  void __asan_mz_free(void *zone, void *ptr);
+  SANITIZER_INTERFACE_ATTRIBUTE
+  void * __asan_mz_malloc(void *zone, uptr size);
+  SANITIZER_INTERFACE_ATTRIBUTE
+  void * __asan_mz_memalign(void *zone, uptr align, uptr size);
+  SANITIZER_INTERFACE_ATTRIBUTE
+  void * __asan_mz_realloc(void *zone, void *ptr, uptr size);
+  SANITIZER_INTERFACE_ATTRIBUTE
+  uptr __asan_mz_size(void *zone, const void* ptr);
+  SANITIZER_INTERFACE_ATTRIBUTE
+  void * __asan_mz_valloc(void *zone, uptr size);
+#endif  // SANITIZER_MAC
 }  // extern "C"
 
 #endif  // ASAN_INTERFACE_INTERNAL_H
