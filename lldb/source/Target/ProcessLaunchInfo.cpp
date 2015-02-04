@@ -344,7 +344,7 @@ ProcessLaunchInfo::FinalizeFileActions (Target *target, bool default_to_use_pty)
                     log->Printf ("ProcessLaunchInfo::%s default_to_use_pty is set, and at least one stdin/stderr/stdout is unset, so generating a pty to use for it",
                                  __FUNCTION__);
 
-                if (m_pty->OpenFirstAvailableMaster(O_RDWR| O_NOCTTY, NULL, 0))
+                if (m_pty->OpenFirstAvailableMaster(O_RDWR | O_NOCTTY | O_CLOEXEC, NULL, 0))
                 {
                     const char *slave_path = m_pty->GetSlaveName(NULL, 0);
 

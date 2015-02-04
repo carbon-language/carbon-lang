@@ -1356,6 +1356,11 @@ ProcessMonitor::Launch(LaunchArgs *args)
         if (PTRACE(PTRACE_TRACEME, 0, NULL, NULL, 0) < 0)
             exit(ePtraceFailed);
 
+        // terminal has already dupped the tty descriptors to stdin/out/err.
+        // This closes original fd from which they were copied (and avoids
+        // leaking descriptors to the debugged process.
+        terminal.CloseSlaveFileDescriptor();
+
         // Do not inherit setgid powers.
         if (setgid(getgid()) != 0)
             exit(eSetGidFailed);
@@ -2319,7 +2324,10 @@ ProcessMonitor::DupDescriptor(const char *path, int fd, int flags)
     if (target_fd == -1)
         return false;
 
-    return (dup2(target_fd, fd) == -1) ? false : true;
+    if (dup2(target_fd, fd) == -1)
+        return false;
+
+    return (close(target_fd) == -1) ? false : true;
 }
 
 void
