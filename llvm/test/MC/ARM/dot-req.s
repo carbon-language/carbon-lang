@@ -1,6 +1,9 @@
 @ RUN: llvm-mc -triple=armv7-apple-darwin -show-encoding < %s | FileCheck %s
         .syntax unified
 bar:
+@ The line is duplicated on purpose, it is legal to redefine a req with
+@ the same value.
+fred .req r5
 fred .req r5
         mov r11, fred
 .unreq fred

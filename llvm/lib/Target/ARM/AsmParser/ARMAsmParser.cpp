@@ -9010,7 +9010,7 @@ bool ARMAsmParser::parseDirectiveReq(StringRef Name, SMLoc L) {
 
   Parser.Lex(); // Consume the EndOfStatement
 
-  if (!RegisterReqs.insert(std::make_pair(Name, Reg)).second) {
+  if (RegisterReqs.insert(std::make_pair(Name, Reg)).first->second != Reg) {
     Error(SRegLoc, "redefinition of '" + Name + "' does not match original.");
     return false;
   }
