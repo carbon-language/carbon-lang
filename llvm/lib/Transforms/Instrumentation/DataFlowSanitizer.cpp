@@ -83,14 +83,14 @@ static cl::opt<bool> ClPreserveAlignment(
     cl::desc("respect alignment requirements provided by input IR"), cl::Hidden,
     cl::init(false));
 
-// The ABI list file controls how shadow parameters are passed.  The pass treats
+// The ABI list files control how shadow parameters are passed. The pass treats
 // every function labelled "uninstrumented" in the ABI list file as conforming
 // to the "native" (i.e. unsanitized) ABI.  Unless the ABI list contains
 // additional annotations for those functions, a call to one of those functions
 // will produce a warning message, as the labelling behaviour of the function is
 // unknown.  The other supported annotations are "functional" and "discard",
 // which are described below under DataFlowSanitizer::WrapperKind.
-static cl::opt<std::string> ClABIListFile(
+static cl::list<std::string> ClABIListFiles(
     "dfsan-abilist",
     cl::desc("File listing native ABI functions and how the pass treats them"),
     cl::Hidden);
@@ -141,7 +141,9 @@ class DFSanABIList {
   std::unique_ptr<SpecialCaseList> SCL;
 
  public:
-  DFSanABIList(std::unique_ptr<SpecialCaseList> SCL) : SCL(std::move(SCL)) {}
+  DFSanABIList() {}
+
+  void set(std::unique_ptr<SpecialCaseList> List) { SCL = std::move(List); }
 
   /// Returns whether either this function or its source file are listed in the
   /// given category.
@@ -264,9 +266,9 @@ class DataFlowSanitizer : public ModulePass {
   Constant *getOrBuildTrampolineFunction(FunctionType *FT, StringRef FName);
 
  public:
-  DataFlowSanitizer(StringRef ABIListFile = StringRef(),
-                    void *(*getArgTLS)() = nullptr,
-                    void *(*getRetValTLS)() = nullptr);
+  DataFlowSanitizer(
+      const std::vector<std::string> &ABIListFiles = std::vector<std::string>(),
+      void *(*getArgTLS)() = nullptr, void *(*getRetValTLS)() = nullptr);
   static char ID;
   bool doInitialization(Module &M) override;
   bool runOnModule(Module &M) override;
@@ -351,18 +353,21 @@ char DataFlowSanitizer::ID;
 INITIALIZE_PASS(DataFlowSanitizer, "dfsan",
                 "DataFlowSanitizer: dynamic data flow analysis.", false, false)
 
-ModulePass *llvm::createDataFlowSanitizerPass(StringRef ABIListFile,
-                                              void *(*getArgTLS)(),
-                                              void *(*getRetValTLS)()) {
-  return new DataFlowSanitizer(ABIListFile, getArgTLS, getRetValTLS);
+ModulePass *
+llvm::createDataFlowSanitizerPass(const std::vector<std::string> &ABIListFiles,
+                                  void *(*getArgTLS)(),
+                                  void *(*getRetValTLS)()) {
+  return new DataFlowSanitizer(ABIListFiles, getArgTLS, getRetValTLS);
 }
 
-DataFlowSanitizer::DataFlowSanitizer(StringRef ABIListFile,
-                                     void *(*getArgTLS)(),
-                                     void *(*getRetValTLS)())
-    : ModulePass(ID), GetArgTLSPtr(getArgTLS), GetRetvalTLSPtr(getRetValTLS),
-      ABIList(SpecialCaseList::createOrDie(ABIListFile.empty() ? ClABIListFile
-                                                               : ABIListFile)) {
+DataFlowSanitizer::DataFlowSanitizer(
+    const std::vector<std::string> &ABIListFiles, void *(*getArgTLS)(),
+    void *(*getRetValTLS)())
+    : ModulePass(ID), GetArgTLSPtr(getArgTLS), GetRetvalTLSPtr(getRetValTLS) {
+  std::vector<std::string> AllABIListFiles(std::move(ABIListFiles));
+  AllABIListFiles.insert(AllABIListFiles.end(), ClABIListFiles.begin(),
+                         ClABIListFiles.end());
+  ABIList.set(SpecialCaseList::createOrDie(AllABIListFiles));
 }
 
 FunctionType *DataFlowSanitizer::getArgsFunctionType(FunctionType *T) {

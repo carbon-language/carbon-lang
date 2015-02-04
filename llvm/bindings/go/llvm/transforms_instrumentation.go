@@ -36,8 +36,11 @@ func (pm PassManager) AddMemorySanitizerPass() {
 	C.LLVMAddMemorySanitizerPass(pm.C)
 }
 
-func (pm PassManager) AddDataFlowSanitizerPass(abilist string) {
-	cabilist := C.CString(abilist)
-	defer C.free(unsafe.Pointer(cabilist))
-	C.LLVMAddDataFlowSanitizerPass(pm.C, cabilist)
+func (pm PassManager) AddDataFlowSanitizerPass(abilist []string) {
+	abiliststrs := make([]*C.char, len(abilist))
+	for i, arg := range abilist {
+		abiliststrs[i] = C.CString(arg)
+		defer C.free(unsafe.Pointer(abiliststrs[i]))
+	}
+	C.LLVMAddDataFlowSanitizerPass(pm.C, C.int(len(abilist)), &abiliststrs[0])
 }

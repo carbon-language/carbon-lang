@@ -86,17 +86,17 @@ FunctionPass *createMemorySanitizerPass(int TrackOrigins = 0);
 FunctionPass *createThreadSanitizerPass();
 
 // Insert DataFlowSanitizer (dynamic data flow analysis) instrumentation
-ModulePass *createDataFlowSanitizerPass(StringRef ABIListFile = StringRef(),
-                                        void *(*getArgTLS)() = nullptr,
-                                        void *(*getRetValTLS)() = nullptr);
+ModulePass *createDataFlowSanitizerPass(
+    const std::vector<std::string> &ABIListFiles = std::vector<std::string>(),
+    void *(*getArgTLS)() = nullptr, void *(*getRetValTLS)() = nullptr);
 
 // Insert SanitizerCoverage instrumentation.
 ModulePass *createSanitizerCoverageModulePass(int CoverageLevel);
 
 #if defined(__GNUC__) && defined(__linux__) && !defined(ANDROID)
-inline ModulePass *createDataFlowSanitizerPassForJIT(StringRef ABIListFile =
-                                                         StringRef()) {
-  return createDataFlowSanitizerPass(ABIListFile, getDFSanArgTLSPtrForJIT,
+inline ModulePass *createDataFlowSanitizerPassForJIT(
+    const std::vector<std::string> &ABIListFiles = std::vector<std::string>()) {
+  return createDataFlowSanitizerPass(ABIListFiles, getDFSanArgTLSPtrForJIT,
                                      getDFSanRetValTLSPtrForJIT);
 }
 #endif

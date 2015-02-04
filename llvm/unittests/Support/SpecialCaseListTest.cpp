@@ -7,6 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/Support/FileSystem.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/SpecialCaseList.h"
 #include "gtest/gtest.h"
@@ -29,6 +30,16 @@ protected:
     assert(SCL);
     assert(Error == "");
     return SCL;
+  }
+
+  std::string makeSpecialCaseListFile(StringRef Contents) {
+    int FD;
+    SmallString<64> Path;
+    sys::fs::createTemporaryFile("SpecialCaseListTest", "temp", FD, Path);
+    raw_fd_ostream OF(FD, true, true);
+    OF << Contents;
+    OF.close();
+    return Path.str();
   }
 };
 
@@ -86,17 +97,18 @@ TEST_F(SpecialCaseListTest, Substring) {
 TEST_F(SpecialCaseListTest, InvalidSpecialCaseList) {
   std::string Error;
   EXPECT_EQ(nullptr, makeSpecialCaseList("badline", Error));
-  EXPECT_EQ("Malformed line 1: 'badline'", Error);
+  EXPECT_EQ("malformed line 1: 'badline'", Error);
   EXPECT_EQ(nullptr, makeSpecialCaseList("src:bad[a-", Error));
-  EXPECT_EQ("Malformed regex in line 1: 'bad[a-': invalid character range",
+  EXPECT_EQ("malformed regex in line 1: 'bad[a-': invalid character range",
             Error);
   EXPECT_EQ(nullptr, makeSpecialCaseList("src:a.c\n"
                                    "fun:fun(a\n",
                                    Error));
-  EXPECT_EQ("Malformed regex in line 2: 'fun(a': parentheses not balanced",
+  EXPECT_EQ("malformed regex in line 2: 'fun(a': parentheses not balanced",
             Error);
-  EXPECT_EQ(nullptr, SpecialCaseList::create("unexisting", Error));
-  EXPECT_EQ(0U, Error.find("Can't open file 'unexisting':"));
+  std::vector<std::string> Files(1, "unexisting");
+  EXPECT_EQ(nullptr, SpecialCaseList::create(Files, Error));
+  EXPECT_EQ(0U, Error.find("can't open file 'unexisting':"));
 }
 
 TEST_F(SpecialCaseListTest, EmptySpecialCaseList) {
@@ -104,6 +116,20 @@ TEST_F(SpecialCaseListTest, EmptySpecialCaseList) {
   EXPECT_FALSE(SCL->inSection("foo", "bar"));
 }
 
+TEST_F(SpecialCaseListTest, MultipleBlacklists) {
+  std::vector<std::string> Files;
+  Files.push_back(makeSpecialCaseListFile("src:bar\n"
+                                          "src:*foo*\n"
+                                          "src:ban=init\n"));
+  Files.push_back(makeSpecialCaseListFile("src:baz\n"
+                                          "src:*fog*\n"));
+  auto SCL = SpecialCaseList::createOrDie(Files);
+  EXPECT_TRUE(SCL->inSection("src", "bar"));
+  EXPECT_TRUE(SCL->inSection("src", "baz"));
+  EXPECT_FALSE(SCL->inSection("src", "ban"));
+  EXPECT_TRUE(SCL->inSection("src", "ban", "init"));
+  EXPECT_TRUE(SCL->inSection("src", "tomfoolery"));
+  EXPECT_TRUE(SCL->inSection("src", "tomfoglery"));
 }
 
-
+}

@@ -28,8 +28,8 @@ void LLVMAddAddressSanitizerFunctionPass(LLVMPassManagerRef PM);
 void LLVMAddAddressSanitizerModulePass(LLVMPassManagerRef PM);
 void LLVMAddThreadSanitizerPass(LLVMPassManagerRef PM);
 void LLVMAddMemorySanitizerPass(LLVMPassManagerRef PM);
-void LLVMAddDataFlowSanitizerPass(LLVMPassManagerRef PM,
-                                  const char *ABIListFile);
+void LLVMAddDataFlowSanitizerPass(LLVMPassManagerRef PM, int ABIListFilesNum,
+                                  const char **ABIListFiles);
 
 #ifdef __cplusplus
 }
