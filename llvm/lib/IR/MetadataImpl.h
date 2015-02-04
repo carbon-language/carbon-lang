@@ -15,6 +15,7 @@
 #define LLVM_IR_METADATAIMPL_H
 
 #include "llvm/ADT/DenseSet.h"
+#include "llvm/IR/Metadata.h"
 
 namespace llvm {
 
