@@ -580,8 +580,15 @@ bool MachineCSE::ProcessBlock(MachineBasicBlock *MBB) {
     // Actually perform the elimination.
     if (DoCSE) {
       for (unsigned i = 0, e = CSEPairs.size(); i != e; ++i) {
-        MRI->replaceRegWith(CSEPairs[i].first, CSEPairs[i].second);
-        MRI->clearKillFlags(CSEPairs[i].second);
+        unsigned OldReg = CSEPairs[i].first;
+        unsigned NewReg = CSEPairs[i].second;
+        // OldReg may have been unused but is used now, clear the Dead flag
+        MachineInstr *Def = MRI->getUniqueVRegDef(NewReg);
+        assert(Def != nullptr && "CSEd register has no unique definition?");
+        Def->clearRegisterDeads(NewReg);
+        // Replace with NewReg and clear kill flags which may be wrong now.
+        MRI->replaceRegWith(OldReg, NewReg);
+        MRI->clearKillFlags(NewReg);
       }
 
       // Go through implicit defs of CSMI and MI, if a def is not dead at MI,

@@ -1048,6 +1048,9 @@ public:
   bool addRegisterDead(unsigned Reg, const TargetRegisterInfo *RegInfo,
                        bool AddIfNotFound = false);
 
+  /// Clear all dead flags on operands defining register @p Reg.
+  void clearRegisterDeads(unsigned Reg);
+
   /// Mark all subregister defs of register @p Reg with the undef flag.
   /// This function is used when we determined to have a subregister def in an
   /// otherwise undefined super register.

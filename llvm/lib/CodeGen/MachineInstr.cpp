@@ -1889,6 +1889,14 @@ bool MachineInstr::addRegisterDead(unsigned Reg,
   return true;
 }
 
+void MachineInstr::clearRegisterDeads(unsigned Reg) {
+  for (MachineOperand &MO : operands()) {
+    if (!MO.isReg() || !MO.isDef() || MO.getReg() != Reg)
+      continue;
+    MO.setIsDead(false);
+  }
+}
+
 void MachineInstr::addRegisterDefReadUndef(unsigned Reg) {
   for (MachineOperand &MO : operands()) {
     if (!MO.isReg() || !MO.isDef() || MO.getReg() != Reg || MO.getSubReg() == 0)
