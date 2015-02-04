@@ -179,7 +179,7 @@ protected:
       : RawOps(Ops), Hash(calculateHash(Ops)) {}
 
   template <class NodeTy>
-  MDNodeOpsKey(NodeTy *N, unsigned Offset = 0)
+  MDNodeOpsKey(const NodeTy *N, unsigned Offset = 0)
       : Ops(N->op_begin() + Offset, N->op_end()), Hash(N->getHash()) {}
 
   template <class NodeTy>
@@ -208,124 +208,96 @@ public:
   unsigned getHash() const { return Hash; }
 };
 
+template <class NodeTy> struct MDNodeKeyImpl;
+template <class NodeTy> struct MDNodeInfo;
+
 /// \brief DenseMapInfo for MDTuple.
 ///
 /// Note that we don't need the is-function-local bit, since that's implicit in
 /// the operands.
-struct MDTupleInfo {
-  struct KeyTy : MDNodeOpsKey {
-    KeyTy(ArrayRef<Metadata *> Ops) : MDNodeOpsKey(Ops) {}
-    KeyTy(MDTuple *N) : MDNodeOpsKey(N) {}
+template <> struct MDNodeKeyImpl<MDTuple> : MDNodeOpsKey {
+  MDNodeKeyImpl(ArrayRef<Metadata *> Ops) : MDNodeOpsKey(Ops) {}
+  MDNodeKeyImpl(const MDTuple *N) : MDNodeOpsKey(N) {}
 
-    bool operator==(const MDTuple *RHS) const {
-      if (RHS == getEmptyKey() || RHS == getTombstoneKey())
-        return false;
-      return compareOps(RHS);
-    }
+  bool operator==(const MDTuple *RHS) const { return compareOps(RHS); }
 
-    static unsigned calculateHash(MDTuple *N) {
-      return MDNodeOpsKey::calculateHash(N);
-    }
-  };
-  static inline MDTuple *getEmptyKey() {
-    return DenseMapInfo<MDTuple *>::getEmptyKey();
-  }
-  static inline MDTuple *getTombstoneKey() {
-    return DenseMapInfo<MDTuple *>::getTombstoneKey();
-  }
-  static unsigned getHashValue(const KeyTy &Key) { return Key.getHash(); }
-  static unsigned getHashValue(const MDTuple *U) { return U->getHash(); }
-  static bool isEqual(const KeyTy &LHS, const MDTuple *RHS) {
-    return LHS == RHS;
-  }
-  static bool isEqual(const MDTuple *LHS, const MDTuple *RHS) {
-    return LHS == RHS;
+  unsigned getHashValue() const { return getHash(); }
+
+  static unsigned calculateHash(MDTuple *N) {
+    return MDNodeOpsKey::calculateHash(N);
   }
 };
 
 /// \brief DenseMapInfo for MDLocation.
-struct MDLocationInfo {
-  struct KeyTy {
-    unsigned Line;
-    unsigned Column;
-    Metadata *Scope;
-    Metadata *InlinedAt;
+template <> struct MDNodeKeyImpl<MDLocation> {
+  unsigned Line;
+  unsigned Column;
+  Metadata *Scope;
+  Metadata *InlinedAt;
 
-    KeyTy(unsigned Line, unsigned Column, Metadata *Scope, Metadata *InlinedAt)
-        : Line(Line), Column(Column), Scope(Scope), InlinedAt(InlinedAt) {}
+  MDNodeKeyImpl(unsigned Line, unsigned Column, Metadata *Scope,
+                Metadata *InlinedAt)
+      : Line(Line), Column(Column), Scope(Scope), InlinedAt(InlinedAt) {}
 
-    KeyTy(const MDLocation *L)
-        : Line(L->getLine()), Column(L->getColumn()), Scope(L->getScope()),
-          InlinedAt(L->getInlinedAt()) {}
+  MDNodeKeyImpl(const MDLocation *L)
+      : Line(L->getLine()), Column(L->getColumn()), Scope(L->getScope()),
+        InlinedAt(L->getInlinedAt()) {}
 
-    bool operator==(const MDLocation *RHS) const {
-      if (RHS == getEmptyKey() || RHS == getTombstoneKey())
-        return false;
-      return Line == RHS->getLine() && Column == RHS->getColumn() &&
-             Scope == RHS->getScope() && InlinedAt == RHS->getInlinedAt();
-    }
-  };
-  static inline MDLocation *getEmptyKey() {
-    return DenseMapInfo<MDLocation *>::getEmptyKey();
+  bool operator==(const MDLocation *RHS) const {
+    return Line == RHS->getLine() && Column == RHS->getColumn() &&
+           Scope == RHS->getScope() && InlinedAt == RHS->getInlinedAt();
   }
-  static inline MDLocation *getTombstoneKey() {
-    return DenseMapInfo<MDLocation *>::getTombstoneKey();
-  }
-  static unsigned getHashValue(const KeyTy &Key) {
-    return hash_combine(Key.Line, Key.Column, Key.Scope, Key.InlinedAt);
-  }
-  static unsigned getHashValue(const MDLocation *U) {
-    return getHashValue(KeyTy(U));
-  }
-  static bool isEqual(const KeyTy &LHS, const MDLocation *RHS) {
-    return LHS == RHS;
-  }
-  static bool isEqual(const MDLocation *LHS, const MDLocation *RHS) {
-    return LHS == RHS;
+  unsigned getHashValue() const {
+    return hash_combine(Line, Column, Scope, InlinedAt);
   }
 };
 
 /// \brief DenseMapInfo for GenericDebugNode.
-struct GenericDebugNodeInfo {
-  struct KeyTy : MDNodeOpsKey {
-    unsigned Tag;
-    StringRef Header;
-    KeyTy(unsigned Tag, StringRef Header, ArrayRef<Metadata *> DwarfOps)
-        : MDNodeOpsKey(DwarfOps), Tag(Tag), Header(Header) {}
-    KeyTy(GenericDebugNode *N)
-        : MDNodeOpsKey(N, 1), Tag(N->getTag()), Header(N->getHeader()) {}
+template <> struct MDNodeKeyImpl<GenericDebugNode> : MDNodeOpsKey {
+  unsigned Tag;
+  StringRef Header;
+  MDNodeKeyImpl(unsigned Tag, StringRef Header, ArrayRef<Metadata *> DwarfOps)
+      : MDNodeOpsKey(DwarfOps), Tag(Tag), Header(Header) {}
+  MDNodeKeyImpl(const GenericDebugNode *N)
+      : MDNodeOpsKey(N, 1), Tag(N->getTag()), Header(N->getHeader()) {}
 
-    bool operator==(const GenericDebugNode *RHS) const {
-      if (RHS == getEmptyKey() || RHS == getTombstoneKey())
-        return false;
-      return Tag == RHS->getTag() && Header == RHS->getHeader() &&
-             compareOps(RHS, 1);
-    }
+  bool operator==(const GenericDebugNode *RHS) const {
+    return Tag == RHS->getTag() && Header == RHS->getHeader() &&
+           compareOps(RHS, 1);
+  }
 
-    static unsigned calculateHash(GenericDebugNode *N) {
-      return MDNodeOpsKey::calculateHash(N, 1);
-    }
-  };
-  static inline GenericDebugNode *getEmptyKey() {
-    return DenseMapInfo<GenericDebugNode *>::getEmptyKey();
+  unsigned getHashValue() const { return hash_combine(getHash(), Tag, Header); }
+
+  static unsigned calculateHash(GenericDebugNode *N) {
+    return MDNodeOpsKey::calculateHash(N, 1);
   }
-  static inline GenericDebugNode *getTombstoneKey() {
-    return DenseMapInfo<GenericDebugNode *>::getTombstoneKey();
+};
+
+/// \brief DenseMapInfo for MDNode subclasses.
+template <class NodeTy> struct MDNodeInfo {
+  typedef MDNodeKeyImpl<NodeTy> KeyTy;
+  static inline NodeTy *getEmptyKey() {
+    return DenseMapInfo<NodeTy *>::getEmptyKey();
   }
-  static unsigned getHashValue(const KeyTy &Key) {
-    return hash_combine(Key.getHash(), Key.Tag, Key.Header);
+  static inline NodeTy *getTombstoneKey() {
+    return DenseMapInfo<NodeTy *>::getTombstoneKey();
   }
-  static unsigned getHashValue(const GenericDebugNode *U) {
-    return hash_combine(U->getHash(), U->getTag(), U->getHeader());
+  static unsigned getHashValue(const KeyTy &Key) { return Key.getHashValue(); }
+  static unsigned getHashValue(const NodeTy *N) {
+    return KeyTy(N).getHashValue();
   }
-  static bool isEqual(const KeyTy &LHS, const GenericDebugNode *RHS) {
+  static bool isEqual(const KeyTy &LHS, const NodeTy *RHS) {
+    if (RHS == getEmptyKey() || RHS == getTombstoneKey())
+      return false;
     return LHS == RHS;
   }
-  static bool isEqual(const GenericDebugNode *LHS,
-                      const GenericDebugNode *RHS) {
+  static bool isEqual(const NodeTy *LHS, const NodeTy *RHS) {
     return LHS == RHS;
   }
 };
+
+#define HANDLE_MDNODE_LEAF(CLASS) typedef MDNodeInfo<CLASS> CLASS##Info;
+#include "llvm/IR/Metadata.def"
 
 class LLVMContextImpl {
 public:
