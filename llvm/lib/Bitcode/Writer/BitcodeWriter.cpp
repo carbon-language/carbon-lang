@@ -828,7 +828,10 @@ static void WriteModuleMetadata(const Module *M,
     MDSAbbrev = Stream.EmitAbbrev(Abbv);
   }
 
-  unsigned MDLocationAbbrev = 0;
+  // Initialize MDNode abbreviations.
+#define HANDLE_MDNODE_LEAF(CLASS) unsigned CLASS##Abbrev = 0;
+#include "llvm/IR/Metadata.def"
+
   if (VE.hasMDLocation()) {
     // Abbrev for METADATA_LOCATION.
     //
@@ -844,7 +847,6 @@ static void WriteModuleMetadata(const Module *M,
     MDLocationAbbrev = Stream.EmitAbbrev(Abbv);
   }
 
-  unsigned GenericDebugNodeAbbrev = 0;
   if (VE.hasGenericDebugNode()) {
     // Abbrev for METADATA_GENERIC_DEBUG.
     //
@@ -871,7 +873,6 @@ static void WriteModuleMetadata(const Module *M,
     NameAbbrev = Stream.EmitAbbrev(Abbv);
   }
 
-  unsigned MDTupleAbbrev = 0;
   SmallVector<uint64_t, 64> Record;
   for (const Metadata *MD : MDs) {
     if (const MDNode *N = dyn_cast<MDNode>(MD)) {
