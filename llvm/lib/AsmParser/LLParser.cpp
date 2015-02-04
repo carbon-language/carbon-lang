@@ -2924,23 +2924,23 @@ bool LLParser::ParseMDNodeTail(MDNode *&N) {
 }
 
 bool LLParser::ParseMDField(LocTy Loc, StringRef Name,
-                            MDUnsignedField<uint32_t> &Result) {
+                            MDUnsignedField &Result) {
   if (Lex.getKind() != lltok::APSInt || Lex.getAPSIntVal().isSigned())
     return TokError("expected unsigned integer");
-  uint64_t Val64 = Lex.getAPSIntVal().getLimitedValue(Result.Max + 1ull);
 
-  if (Val64 > Result.Max)
+  auto &U = Lex.getAPSIntVal();
+  if (U.ugt(Result.Max))
     return TokError("value for '" + Name + "' too large, limit is " +
                     Twine(Result.Max));
-  Result.assign(Val64);
+  Result.assign(U.getZExtValue());
+  assert(Result.Val <= Result.Max && "Expected value in range");
   Lex.Lex();
   return false;
 }
 
 bool LLParser::ParseMDField(LocTy Loc, StringRef Name, DwarfTagField &Result) {
   if (Lex.getKind() == lltok::APSInt)
-    return ParseMDField(Loc, Name,
-                        static_cast<MDUnsignedField<uint32_t> &>(Result));
+    return ParseMDField(Loc, Name, static_cast<MDUnsignedField &>(Result));
 
   if (Result.Seen)
     return Error(Loc,
@@ -3063,8 +3063,8 @@ bool LLParser::ParseSpecializedMDNode(MDNode *&N, bool IsDistinct) {
 ///   ::= !MDLocation(line: 43, column: 8, scope: !5, inlinedAt: !6)
 bool LLParser::ParseMDLocation(MDNode *&Result, bool IsDistinct) {
 #define VISIT_MD_FIELDS(OPTIONAL, REQUIRED)                                    \
-  OPTIONAL(line, MDUnsignedField<uint32_t>, (0, ~0u >> 8));                    \
-  OPTIONAL(column, MDUnsignedField<uint32_t>, (0, ~0u >> 16));                 \
+  OPTIONAL(line, MDUnsignedField, (0, ~0u >> 8));                              \
+  OPTIONAL(column, MDUnsignedField, (0, ~0u >> 16));                           \
   REQUIRED(scope, MDField, );                                                  \
   OPTIONAL(inlinedAt, MDField, );
   PARSE_MD_FIELDS();

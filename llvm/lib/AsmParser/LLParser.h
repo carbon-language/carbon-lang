@@ -94,16 +94,14 @@ namespace llvm {
     explicit MDFieldImpl(FieldTy Default)
         : Val(std::move(Default)), Seen(false) {}
   };
-  template <class NumTy> struct MDUnsignedField : public MDFieldImpl<NumTy> {
-    typedef typename MDUnsignedField::ImplTy ImplTy;
-    NumTy Max;
+  struct MDUnsignedField : public MDFieldImpl<uint64_t> {
+    uint64_t Max;
 
-    MDUnsignedField(NumTy Default = 0,
-                    NumTy Max = std::numeric_limits<NumTy>::max())
+    MDUnsignedField(uint64_t Default = 0, uint64_t Max = UINT64_MAX)
         : ImplTy(Default), Max(Max) {}
   };
-  struct DwarfTagField : public MDUnsignedField<uint32_t> {
-    DwarfTagField() : MDUnsignedField<uint32_t>(0, ~0u >> 16) {}
+  struct DwarfTagField : public MDUnsignedField {
+    DwarfTagField() : MDUnsignedField(0, ~0u >> 16) {}
   };
   struct MDField : public MDFieldImpl<Metadata *> {
     MDField() : ImplTy(nullptr) {}
@@ -428,8 +426,7 @@ namespace llvm {
     bool ParseMDNodeVector(SmallVectorImpl<Metadata *> &MDs);
     bool ParseInstructionMetadata(Instruction *Inst, PerFunctionState *PFS);
 
-    bool ParseMDField(LocTy Loc, StringRef Name,
-                      MDUnsignedField<uint32_t> &Result);
+    bool ParseMDField(LocTy Loc, StringRef Name, MDUnsignedField &Result);
     bool ParseMDField(LocTy Loc, StringRef Name, DwarfTagField &Result);
     bool ParseMDField(LocTy Loc, StringRef Name, MDField &Result);
     bool ParseMDField(LocTy Loc, StringRef Name, MDStringField &Result);
