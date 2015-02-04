@@ -1,0 +1,3 @@
+[M, N, O] -> { S1[i0] -> [i0, 0] : i0 >= -M and i0 >= -N and i0 <= N and i0 <= O }
+[M, N, O] -> {  :  }
+[M, N, O] -> { [i, j] -> separate[o0] }

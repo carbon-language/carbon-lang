@@ -1,0 +1,43 @@
+Algorithm for Arbitrary Precision Unsigned Division
+
+Inputs:
+  A = [a1 ... an]       -- array representation
+  B = [b1 ... bm]
+  ai, bi \in {0,..radix}
+
+Preconditions:
+  n >= m
+
+Outputs:
+  Q, R satisfying A = QB + R with 0 <= R < B.
+
+let Q = [], j = n, i = 1, skip = 0 in 
+  while j > 0 do
+    if B > A[j,..j + i + 1] then
+      decrement j
+      increment i
+      increment skip
+      if skip > 1 then
+        Q.append(0)
+    else
+      let pfx = A[j] in
+        if pfx < bm and j > 1 then
+          pfx := pfx * radix + A[j - 1]
+        
+        q := pfx div bm
+        if q >= radix then
+          if q > radix then
+            q = radix
+          else 
+            q := 1
+
+        let t = B * q in
+          while t > A[j,..j + i + 1] do
+            t := t - B
+            decrement q
+        
+        Q.append(q)
+        skip := 0
+  end    
+  
+  result Q, A

@@ -76,22 +76,28 @@ endif ()
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-exceptions -fno-rtti")
 
+# Define the FLAGS for the compilation of isl and imath
+#
+# Those are the only C files we have in the repository. Hence, we can just use
+# the CFLAGS to identify them.
+#
+# We first set the visibility of all isl functions to hidden to ensure we do
+# not clash with other isl versions that got linked into a program that uses
+# Polly. (This happens e.g when linking Polly with dragonegg)
+#
+# We also disable all warnings, as these should be fixed upstream. There is
+# no value in reporting them here.
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fvisibility=hidden -w")
+
 # Add path for custom modules
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${POLLY_SOURCE_DIR}/cmake")
 
 SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
-FIND_PACKAGE(Isl REQUIRED)
-set(POLLY_LINK_LIBS ${ISL_LIBRARY})
-
 FIND_PACKAGE(Pluto)
 if(PLUTO_FOUND)
   set(POLLY_LINK_LIBS ${POLLY_LINK_LIBS} ${PLUTO_LIBRARY})
 endif(PLUTO_FOUND)
-
-if(GMP_FOUND)
-  set(POLLY_LINK_LIBS ${POLLY_LINK_LIBS} ${GMP_LIBRARY})
-endif(GMP_FOUND)
 
 option(POLLY_ENABLE_GPGPU_CODEGEN "Enable GPGPU code generation feature" OFF)
 if (POLLY_ENABLE_GPGPU_CODEGEN)
@@ -118,6 +124,9 @@ include_directories(
   BEFORE
   ${CMAKE_CURRENT_SOURCE_DIR}/include
   ${CMAKE_CURRENT_SOURCE_DIR}/lib/JSON/include
+  ${CMAKE_CURRENT_SOURCE_DIR}/lib/External/isl/include
+  ${CMAKE_CURRENT_SOURCE_DIR}/lib/External/isl/imath
+  ${CMAKE_CURRENT_SOURCE_DIR}/lib/External/isl
   ${CMAKE_CURRENT_BINARY_DIR}/include
   )
 
@@ -151,7 +160,10 @@ configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/include/polly/Config/config.h.cmake
 # Add target to check formatting of polly files
 file( GLOB_RECURSE files *.h *.cpp)
 file( GLOB_RECURSE jsonfiles lib/JSON/*.h lib/JSON/*.cpp)
-list( REMOVE_ITEM files ${jsonfiles} )
+file( GLOB_RECURSE islfiles lib/External/isl/*.h lib/External/isl/*.c
+                   lib/External/isl/include/isl/*.h lib/External/isl/imath/*.h
+                   lib/External/isl/imath/*.c)
+list( REMOVE_ITEM files ${jsonfiles} ${islfiles})
 add_custom_command( OUTPUT formatting COMMAND
   CLANG_FORMAT=${LLVM_BINARY_DIR}/bin/clang-format
   ${CMAKE_CURRENT_SOURCE_DIR}/utils/check_format.sh ${files})

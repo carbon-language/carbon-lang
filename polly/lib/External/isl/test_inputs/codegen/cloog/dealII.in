@@ -1,0 +1,3 @@
+[T_2, T_67, T_66] -> { S1[scat_0] -> [scat_0, 0] : (scat_0 <= -1 + T_2 and scat_0 >= 0) or (scat_0 <= -T_67 and scat_0 >= 0); S2[scat_0] -> [scat_0, 1] : (scat_0 <= -1 + T_2 and scat_0 >= 0 and scat_0 <= T_66) or (scat_0 <= -1 + T_67 and scat_0 >= 0 and scat_0 <= T_66) }
+[T_2, T_67, T_66] -> {  : T_2 <= 4 and T_2 >= 0 and T_67 <= 4 and T_67 >= 0 }
+[T_2, T_67, T_66] -> { [i, j] -> separate[o0] }

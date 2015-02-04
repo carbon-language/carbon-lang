@@ -1,0 +1,3 @@
+[outerTimeTileScatter, outerProcTileScatter1, outerProcTileScatter2, M, N] -> { S1[i0, i1, i2, 2i0 + i1 + i2, 1 + i0 + i1 + i2, 1 + i0 + i1] -> [2i0 + i1 + i2, 1 + i0 + i1 + i2, 1 + i0 + i1] : N >= 3 and i2 <= 3 + 5outerProcTileScatter1 - i0 - i1 and i1 >= -1 + 5outerProcTileScatter2 - i0 and M >= 2 and i2 <= 4 + 5outerTimeTileScatter - 2i0 - i1 and i1 <= 3 + 5outerProcTileScatter2 - i0 and i2 >= 1 and i2 <= -2 + N and i1 >= 1 and i1 <= -2 + N and i0 >= 1 and i0 <= -1 + M and i2 >= 5outerTimeTileScatter - 2i0 - i1 and i2 >= -1 + 5outerProcTileScatter1 - i0 - i1 }
+[outerTimeTileScatter, outerProcTileScatter1, outerProcTileScatter2, M, N] -> {  :  }
+[outerTimeTileScatter, outerProcTileScatter1, outerProcTileScatter2, M, N] -> { [i, j, k] -> separate[o0] }

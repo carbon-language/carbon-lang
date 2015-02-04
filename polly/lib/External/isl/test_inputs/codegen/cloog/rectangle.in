@@ -1,0 +1,3 @@
+[n] -> { S1[i0, i1] -> [i0 + i1] : i0 >= 0 and i0 <= n and i1 >= 0 and i1 <= n }
+[n] -> {  : n >= 0 }
+[n] -> { [i] -> separate[o0] }

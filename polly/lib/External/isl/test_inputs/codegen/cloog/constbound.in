@@ -1,0 +1,3 @@
+{ S2[i0, i1, i2] -> [i0, 1, i1, i2] : i1 >= 0 and i1 <= 9999 and i2 >= 0 and i2 <= i1 and i1 >= 25 + 50i0 and i1 <= 49 + 50i0; S1[i0, i1, i2] -> [i0, 0, i1, i2] : i1 >= 0 and i1 <= 9999 and i2 >= 0 and i2 <= i1 and i1 >= 50i0 and i1 <= 24 + 50i0 }
+{  :  }
+{ [i, j, k, l] -> separate[o0] }

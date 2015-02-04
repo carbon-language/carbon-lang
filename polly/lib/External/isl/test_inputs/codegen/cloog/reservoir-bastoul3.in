@@ -1,0 +1,3 @@
+{ S1[i0, i1, i2] -> [i0, i1, k, 0] : 2k = i0 - i1 and 2i2 = i0 - i1 and i1 >= 1 and i1 <= 3 and i1 <= -2 + i0 and i1 >= -6 + i0 }
+{  :  }
+{ [i, j, k, l] -> separate[o0] }
