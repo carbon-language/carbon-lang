@@ -2288,27 +2288,49 @@ static bool addSanitizerRuntimes(const ToolChain &TC, const ArgList &Args,
   return !StaticRuntimes.empty();
 }
 
+static bool areOptimizationsEnabled(const ArgList &Args) {
+  // Find the last -O arg and see if it is non-zero.
+  if (Arg *A = Args.getLastArg(options::OPT_O_Group))
+    return !A->getOption().matches(options::OPT_O0);
+  // Defaults to -O0.
+  return false;
+}
+
 static bool shouldUseFramePointerForTarget(const ArgList &Args,
                                            const llvm::Triple &Triple) {
-  switch (Triple.getArch()) {
-  // Don't use a frame pointer on linux if optimizing for certain targets.
-  case llvm::Triple::mips64:
-  case llvm::Triple::mips64el:
-  case llvm::Triple::mips:
-  case llvm::Triple::mipsel:
-  case llvm::Triple::systemz:
-  case llvm::Triple::x86:
-  case llvm::Triple::x86_64:
-    if (Triple.isOSLinux())
-      if (Arg *A = Args.getLastArg(options::OPT_O_Group))
-        if (!A->getOption().matches(options::OPT_O0))
-          return false;
-    return true;
-  case llvm::Triple::xcore:
+  // XCore never wants frame pointers, regardless of OS.
+  if (Triple.getArch() == llvm::Triple::xcore) {
     return false;
-  default:
-    return true;
   }
+
+  if (Triple.isOSLinux()) {
+    switch (Triple.getArch()) {
+    // Don't use a frame pointer on linux if optimizing for certain targets.
+    case llvm::Triple::mips64:
+    case llvm::Triple::mips64el:
+    case llvm::Triple::mips:
+    case llvm::Triple::mipsel:
+    case llvm::Triple::systemz:
+    case llvm::Triple::x86:
+    case llvm::Triple::x86_64:
+      return !areOptimizationsEnabled(Args);
+    default:
+      return true;
+    }
+  }
+
+  if (Triple.isOSWindows()) {
+    switch (Triple.getArch()) {
+    case llvm::Triple::x86:
+      return !areOptimizationsEnabled(Args);
+    default:
+      // All other supported Windows ISAs use xdata unwind information, so frame
+      // pointers are not generally useful.
+      return false;
+    }
+  }
+
+  return true;
 }
 
 static bool shouldUseFramePointer(const ArgList &Args,
