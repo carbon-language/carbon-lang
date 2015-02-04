@@ -2923,6 +2923,44 @@ bool LLParser::ParseMDNodeTail(MDNode *&N) {
   return ParseMDNodeID(N);
 }
 
+namespace {
+
+/// Structure to represent an optional metadata field.
+template <class FieldTy> struct MDFieldImpl {
+  typedef MDFieldImpl ImplTy;
+  FieldTy Val;
+  bool Seen;
+
+  void assign(FieldTy Val) {
+    Seen = true;
+    this->Val = std::move(Val);
+  }
+
+  explicit MDFieldImpl(FieldTy Default)
+      : Val(std::move(Default)), Seen(false) {}
+};
+struct MDUnsignedField : public MDFieldImpl<uint64_t> {
+  uint64_t Max;
+
+  MDUnsignedField(uint64_t Default = 0, uint64_t Max = UINT64_MAX)
+      : ImplTy(Default), Max(Max) {}
+};
+struct DwarfTagField : public MDUnsignedField {
+  DwarfTagField() : MDUnsignedField(0, ~0u >> 16) {}
+};
+struct MDField : public MDFieldImpl<Metadata *> {
+  MDField() : ImplTy(nullptr) {}
+};
+struct MDStringField : public MDFieldImpl<std::string> {
+  MDStringField() : ImplTy(std::string()) {}
+};
+struct MDFieldList : public MDFieldImpl<SmallVector<Metadata *, 4>> {
+  MDFieldList() : ImplTy(SmallVector<Metadata *, 4>()) {}
+};
+
+} // end namespace
+
+template <>
 bool LLParser::ParseMDField(LocTy Loc, StringRef Name,
                             MDUnsignedField &Result) {
   if (Lex.getKind() != lltok::APSInt || Lex.getAPSIntVal().isSigned())
@@ -2938,6 +2976,7 @@ bool LLParser::ParseMDField(LocTy Loc, StringRef Name,
   return false;
 }
 
+template <>
 bool LLParser::ParseMDField(LocTy Loc, StringRef Name, DwarfTagField &Result) {
   if (Lex.getKind() == lltok::APSInt)
     return ParseMDField(Loc, Name, static_cast<MDUnsignedField &>(Result));
@@ -2955,6 +2994,7 @@ bool LLParser::ParseMDField(LocTy Loc, StringRef Name, DwarfTagField &Result) {
   return false;
 }
 
+template <>
 bool LLParser::ParseMDField(LocTy Loc, StringRef Name, MDField &Result) {
   Metadata *MD;
   if (ParseMetadata(MD, nullptr))
@@ -2964,6 +3004,7 @@ bool LLParser::ParseMDField(LocTy Loc, StringRef Name, MDField &Result) {
   return false;
 }
 
+template <>
 bool LLParser::ParseMDField(LocTy Loc, StringRef Name, MDStringField &Result) {
   std::string S;
   if (ParseStringConstant(S))
@@ -2973,6 +3014,7 @@ bool LLParser::ParseMDField(LocTy Loc, StringRef Name, MDStringField &Result) {
   return false;
 }
 
+template <>
 bool LLParser::ParseMDField(LocTy Loc, StringRef Name, MDFieldList &Result) {
   SmallVector<Metadata *, 4> MDs;
   if (ParseMDNodeVector(MDs))

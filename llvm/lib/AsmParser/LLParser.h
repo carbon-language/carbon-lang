@@ -80,39 +80,6 @@ namespace llvm {
     }
   };
 
-  /// Structure to represent an optional metadata field.
-  template <class FieldTy> struct MDFieldImpl {
-    typedef MDFieldImpl ImplTy;
-    FieldTy Val;
-    bool Seen;
-
-    void assign(FieldTy Val) {
-      Seen = true;
-      this->Val = std::move(Val);
-    }
-
-    explicit MDFieldImpl(FieldTy Default)
-        : Val(std::move(Default)), Seen(false) {}
-  };
-  struct MDUnsignedField : public MDFieldImpl<uint64_t> {
-    uint64_t Max;
-
-    MDUnsignedField(uint64_t Default = 0, uint64_t Max = UINT64_MAX)
-        : ImplTy(Default), Max(Max) {}
-  };
-  struct DwarfTagField : public MDUnsignedField {
-    DwarfTagField() : MDUnsignedField(0, ~0u >> 16) {}
-  };
-  struct MDField : public MDFieldImpl<Metadata *> {
-    MDField() : ImplTy(nullptr) {}
-  };
-  struct MDStringField : public MDFieldImpl<std::string> {
-    MDStringField() : ImplTy(std::string()) {}
-  };
-  struct MDFieldList : public MDFieldImpl<SmallVector<Metadata *, 4>> {
-    MDFieldList() : ImplTy(SmallVector<Metadata *, 4>()) {}
-  };
-
   class LLParser {
   public:
     typedef LLLexer::LocTy LocTy;
@@ -426,11 +393,8 @@ namespace llvm {
     bool ParseMDNodeVector(SmallVectorImpl<Metadata *> &MDs);
     bool ParseInstructionMetadata(Instruction *Inst, PerFunctionState *PFS);
 
-    bool ParseMDField(LocTy Loc, StringRef Name, MDUnsignedField &Result);
-    bool ParseMDField(LocTy Loc, StringRef Name, DwarfTagField &Result);
-    bool ParseMDField(LocTy Loc, StringRef Name, MDField &Result);
-    bool ParseMDField(LocTy Loc, StringRef Name, MDStringField &Result);
-    bool ParseMDField(LocTy Loc, StringRef Name, MDFieldList &Result);
+    template <class FieldTy>
+    bool ParseMDField(LocTy Loc, StringRef Name, FieldTy &Result);
     template <class FieldTy> bool ParseMDField(StringRef Name, FieldTy &Result);
     template <class ParserTy>
     bool ParseMDFieldsImplBody(ParserTy parseField);
