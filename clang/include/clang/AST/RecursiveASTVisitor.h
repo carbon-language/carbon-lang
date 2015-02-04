@@ -2039,6 +2039,13 @@ bool RecursiveASTVisitor<Derived>::TraverseInitListExpr(InitListExpr *S) {
   for (Stmt::child_range range = S->children(); range; ++range) {
     TRY_TO(TraverseStmt(*range));
   }
+  if (InitListExpr *Syn = S->getSemanticForm()) {
+    TRY_TO(WalkUpFromInitListExpr(Syn));
+    // All we need are the default actions.  FIXME: use a helper function.
+    for (Stmt::child_range range = Syn->children(); range; ++range) {
+      TRY_TO(TraverseStmt(*range));
+    }
+  }
   return true;
 }
 
