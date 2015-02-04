@@ -1533,14 +1533,14 @@ int HexagonInstrInfo::GetDotNewOp(const MachineInstr* MI) const {
   switch (MI->getOpcode()) {
   default: llvm_unreachable("Unknown .new type");
   // store new value byte
-  case Hexagon::STrib_shl_V4:
-    return Hexagon::STrib_shl_nv_V4;
+  case Hexagon::S4_storerb_ur:
+    return Hexagon::S4_storerbnew_ur;
 
-  case Hexagon::STrih_shl_V4:
-    return Hexagon::STrih_shl_nv_V4;
+  case Hexagon::S4_storerh_ur:
+    return Hexagon::S4_storerhnew_ur;
 
-  case Hexagon::STriw_shl_V4:
-    return Hexagon::STriw_shl_nv_V4;
+  case Hexagon::S4_storeri_ur:
+    return Hexagon::S4_storerinew_ur;
 
   }
   return 0;

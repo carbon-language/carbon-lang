@@ -743,6 +743,128 @@ let isNVStorable = 0 in {
                                    0b110, DoubleWordAccess>;
 }
 
+let opExtendable = 1, isNewValue = 1, isNVStore = 1, opNewValue = 2,
+isExtended = 1, opExtentBits= 6 in
+class T_ST_absset_nv <string mnemonic, string BaseOp, bits<2> MajOp,
+                      MemAccessSize AccessSz >
+  : NVInst <(outs IntRegs:$dst),
+            (ins u6Ext:$addr, IntRegs:$src),
+    mnemonic#"($dst = #$addr) = $src.new">, NewValueRel {
+    bits<5> dst;
+    bits<6> addr;
+    bits<3> src;
+    let accessSize = AccessSz;
+    let BaseOpcode = BaseOp#"_AbsSet";
+
+    let IClass = 0b1010;
+
+    let Inst{27-21} = 0b1011101;
+    let Inst{20-16} = dst;
+    let Inst{13-11} = 0b000;
+    let Inst{12-11} = MajOp;
+    let Inst{10-8}  = src;
+    let Inst{7}     = 0b1;
+    let Inst{5-0}   = addr;
+  }
+
+let mayStore = 1, addrMode = AbsoluteSet in {
+  def S4_storerbnew_ap : T_ST_absset_nv <"memb", "STrib", 0b00, ByteAccess>;
+  def S4_storerhnew_ap : T_ST_absset_nv <"memh", "STrih", 0b01, HalfWordAccess>;
+  def S4_storerinew_ap : T_ST_absset_nv <"memw", "STriw", 0b10, WordAccess>;
+}
+
+let isExtended = 1, opExtendable = 2, opExtentBits = 6, InputType = "imm",
+addrMode = BaseLongOffset, AddedComplexity = 40 in
+class T_StoreAbsReg <string mnemonic, string CextOp, RegisterClass RC,
+                     bits<3> MajOp, MemAccessSize AccessSz, bit isHalf = 0>
+  : STInst<(outs),
+           (ins IntRegs:$src1, u2Imm:$src2, u6Ext:$src3, RC:$src4),
+   mnemonic#"($src1<<#$src2 + #$src3) = $src4"#!if(isHalf, ".h",""),
+   []>, ImmRegShl, NewValueRel {
+
+    bits<5> src1;
+    bits<2> src2;
+    bits<6> src3;
+    bits<5> src4;
+
+    let accessSize = AccessSz;
+    let CextOpcode = CextOp;
+    let BaseOpcode = CextOp#"_shl";
+    let IClass = 0b1010;
+
+    let Inst{27-24} =0b1101;
+    let Inst{23-21} = MajOp;
+    let Inst{20-16} = src1;
+    let Inst{13}    = src2{1};
+    let Inst{12-8}  = src4;
+    let Inst{7}     = 0b1;
+    let Inst{6}     = src2{0};
+    let Inst{5-0}   = src3;
+}
+
+def S4_storerb_ur : T_StoreAbsReg <"memb", "STrib", IntRegs, 0b000, ByteAccess>;
+def S4_storerh_ur : T_StoreAbsReg <"memh", "STrih", IntRegs, 0b010,
+                                   HalfWordAccess>;
+def S4_storerf_ur : T_StoreAbsReg <"memh", "STrif", IntRegs, 0b011,
+                                   HalfWordAccess, 1>;
+def S4_storeri_ur : T_StoreAbsReg <"memw", "STriw", IntRegs, 0b100, WordAccess>;
+def S4_storerd_ur : T_StoreAbsReg <"memd", "STrid", DoubleRegs, 0b110,
+                                   DoubleWordAccess>;
+
+let AddedComplexity = 40 in
+multiclass T_StoreAbsReg_Pats <InstHexagon MI, RegisterClass RC, ValueType VT,
+                           PatFrag stOp> {
+ def : Pat<(stOp (VT RC:$src4),
+                 (add (shl (i32 IntRegs:$src1), u2ImmPred:$src2),
+                      u0AlwaysExtPred:$src3)),
+          (MI IntRegs:$src1, u2ImmPred:$src2, u0AlwaysExtPred:$src3, RC:$src4)>;
+
+ def : Pat<(stOp (VT RC:$src4),
+                 (add (shl IntRegs:$src1, u2ImmPred:$src2),
+                      (HexagonCONST32 tglobaladdr:$src3))),
+           (MI IntRegs:$src1, u2ImmPred:$src2, tglobaladdr:$src3, RC:$src4)>;
+
+ def : Pat<(stOp (VT RC:$src4),
+                 (add IntRegs:$src1, (HexagonCONST32 tglobaladdr:$src3))),
+           (MI IntRegs:$src1, 0, tglobaladdr:$src3, RC:$src4)>;
+}
+
+defm : T_StoreAbsReg_Pats <S4_storerd_ur, DoubleRegs, i64, store>;
+defm : T_StoreAbsReg_Pats <S4_storeri_ur, IntRegs, i32, store>;
+defm : T_StoreAbsReg_Pats <S4_storerb_ur, IntRegs, i32, truncstorei8>;
+defm : T_StoreAbsReg_Pats <S4_storerh_ur, IntRegs, i32, truncstorei16>;
+
+let mayStore = 1, isNVStore = 1, isExtended = 1, addrMode = BaseLongOffset,
+    opExtentBits = 6, isNewValue = 1, opNewValue = 3, opExtendable = 2 in
+class T_StoreAbsRegNV <string mnemonic, string CextOp, bits<2> MajOp,
+                       MemAccessSize AccessSz>
+  : NVInst <(outs ),
+            (ins IntRegs:$src1, u2Imm:$src2, u6Ext:$src3, IntRegs:$src4),
+  mnemonic#"($src1<<#$src2 + #$src3) = $src4.new">, NewValueRel {
+    bits<5> src1;
+    bits<2> src2;
+    bits<6> src3;
+    bits<3> src4;
+
+    let CextOpcode  = CextOp;
+    let BaseOpcode  = CextOp#"_shl";
+    let IClass      = 0b1010;
+
+    let Inst{27-21} = 0b1101101;
+    let Inst{12-11} = 0b00;
+    let Inst{7}     = 0b1;
+    let Inst{20-16} = src1;
+    let Inst{13}    = src2{1};
+    let Inst{12-11} = MajOp;
+    let Inst{10-8}  = src4;
+    let Inst{6}     = src2{0};
+    let Inst{5-0}   = src3;
+  }
+
+def S4_storerbnew_ur : T_StoreAbsRegNV <"memb", "STrib", 0b00, ByteAccess>;
+def S4_storerhnew_ur : T_StoreAbsRegNV <"memh", "STrih", 0b01, HalfWordAccess>;
+def S4_storerinew_ur : T_StoreAbsRegNV <"memw", "STriw", 0b10, WordAccess>;
+
 //===----------------------------------------------------------------------===//
 // Template classes for the non-predicated store instructions with
 // base + register offset addressing mode
@@ -905,8 +1027,7 @@ multiclass ST_Idxd_shl_nv <string mnemonic, string CextOp, RegisterClass RC,
   }
 }
 
-let addrMode = BaseRegOffset, InputType = "reg", hasSideEffects = 0,
-    isCodeGenOnly = 0 in {
+let addrMode = BaseRegOffset, InputType = "reg", hasSideEffects = 0 in {
   let accessSize = ByteAccess in
   defm storerb: ST_Idxd_shl<"memb", "STrib", IntRegs, 0b000>,
                 ST_Idxd_shl_nv<"memb", "STrib", IntRegs, 0b00>;
@@ -926,82 +1047,17 @@ let addrMode = BaseRegOffset, InputType = "reg", hasSideEffects = 0,
   defm storerf: ST_Idxd_shl<"memh", "STrif", IntRegs, 0b011, 1>;
 }
 
-let Predicates = [HasV4T], AddedComplexity = 10 in {
-def : Pat<(truncstorei8 (i32 IntRegs:$src4),
-                       (add IntRegs:$src1, (shl IntRegs:$src2,
-                                                u2ImmPred:$src3))),
-          (S4_storerb_rr IntRegs:$src1, IntRegs:$src2,
-                                u2ImmPred:$src3, IntRegs:$src4)>;
+class Storexs_pat<PatFrag Store, PatFrag Value, InstHexagon MI>
+  : Pat<(Store Value:$Ru, (add (i32 IntRegs:$Rs),
+                               (i32 (shl (i32 IntRegs:$Rt), u2ImmPred:$u2)))),
+        (MI IntRegs:$Rs, IntRegs:$Rt, imm:$u2, Value:$Ru)>;
 
-def : Pat<(truncstorei16 (i32 IntRegs:$src4),
-                        (add IntRegs:$src1, (shl IntRegs:$src2,
-                                                 u2ImmPred:$src3))),
-          (S4_storerh_rr IntRegs:$src1, IntRegs:$src2,
-                                u2ImmPred:$src3, IntRegs:$src4)>;
-
-def : Pat<(store (i32 IntRegs:$src4),
-                 (add IntRegs:$src1, (shl IntRegs:$src2, u2ImmPred:$src3))),
-          (S4_storeri_rr IntRegs:$src1, IntRegs:$src2,
-                                u2ImmPred:$src3, IntRegs:$src4)>;
-
-def : Pat<(store (i64 DoubleRegs:$src4),
-                (add IntRegs:$src1, (shl IntRegs:$src2, u2ImmPred:$src3))),
-          (S4_storerd_rr IntRegs:$src1, IntRegs:$src2,
-                                u2ImmPred:$src3, DoubleRegs:$src4)>;
+let AddedComplexity = 40 in {
+  def: Storexs_pat<truncstorei8,  I32, S4_storerb_rr>;
+  def: Storexs_pat<truncstorei16, I32, S4_storerh_rr>;
+  def: Storexs_pat<store,         I32, S4_storeri_rr>;
+  def: Storexs_pat<store,         I64, S4_storerd_rr>;
 }
-
-let isExtended = 1, opExtendable = 2 in
-class T_ST_LongOff <string mnemonic, PatFrag stOp, RegisterClass RC, ValueType VT> :
-            STInst<(outs),
-            (ins IntRegs:$src1, u2Imm:$src2, u0AlwaysExt:$src3, RC:$src4),
-            mnemonic#"($src1<<#$src2+##$src3) = $src4",
-            [(stOp (VT RC:$src4),
-                    (add (shl (i32 IntRegs:$src1), u2ImmPred:$src2),
-                         u0AlwaysExtPred:$src3))]>,
-            Requires<[HasV4T]>;
-
-let isExtended = 1, opExtendable = 2, mayStore = 1, isNVStore = 1 in
-class T_ST_LongOff_nv <string mnemonic> :
-            NVInst_V4<(outs),
-            (ins IntRegs:$src1, u2Imm:$src2, u0AlwaysExt:$src3, IntRegs:$src4),
-            mnemonic#"($src1<<#$src2+##$src3) = $src4.new",
-            []>,
-            Requires<[HasV4T]>;
-
-multiclass ST_LongOff <string mnemonic, string BaseOp, PatFrag stOp> {
-  let  BaseOpcode = BaseOp#"_shl" in {
-    let isNVStorable = 1 in
-    def NAME#_V4 : T_ST_LongOff<mnemonic, stOp, IntRegs, i32>;
-
-    def NAME#_nv_V4 : T_ST_LongOff_nv<mnemonic>;
-  }
-}
-
-let AddedComplexity = 10, validSubTargets = HasV4SubT in {
-  def STrid_shl_V4 : T_ST_LongOff<"memd", store, DoubleRegs, i64>;
-  defm STrib_shl   : ST_LongOff <"memb", "STrib", truncstorei8>, NewValueRel;
-  defm STrih_shl   : ST_LongOff <"memh", "Strih", truncstorei16>, NewValueRel;
-  defm STriw_shl   : ST_LongOff <"memw", "STriw", store>, NewValueRel;
-}
-
-let AddedComplexity = 40 in
-multiclass T_ST_LOff_Pats <InstHexagon I, RegisterClass RC, ValueType VT,
-                           PatFrag stOp> {
- def : Pat<(stOp (VT RC:$src4),
-           (add (shl IntRegs:$src1, u2ImmPred:$src2),
-               (NumUsesBelowThresCONST32 tglobaladdr:$src3))),
-           (I IntRegs:$src1, u2ImmPred:$src2, tglobaladdr:$src3, RC:$src4)>;
-
- def : Pat<(stOp (VT RC:$src4),
-           (add IntRegs:$src1,
-               (NumUsesBelowThresCONST32 tglobaladdr:$src3))),
-           (I IntRegs:$src1, 0, tglobaladdr:$src3, RC:$src4)>;
-}
-
-defm : T_ST_LOff_Pats<STrid_shl_V4, DoubleRegs, i64, store>;
-defm : T_ST_LOff_Pats<STriw_shl_V4, IntRegs, i32, store>;
-defm : T_ST_LOff_Pats<STrib_shl_V4, IntRegs, i32, truncstorei8>;
-defm : T_ST_LOff_Pats<STrih_shl_V4, IntRegs, i32, truncstorei16>;
 
 // memd(Rx++#s4:3)=Rtt
 // memd(Rx++#s4:3:circ(Mu))=Rtt
