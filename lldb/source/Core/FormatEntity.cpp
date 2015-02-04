@@ -2261,7 +2261,7 @@ FormatEntity::ParseInternal (llvm::StringRef &format, Entry &parent_entry, uint3
                                             entry.number = ValueObject::eValueObjectRepresentationStyleName;
                                             clear_printf = true;
                                             break;
-                                        case '>': // if this is a '>', print the name
+                                        case '>': // if this is a '>', print the expression path
                                             entry.number = ValueObject::eValueObjectRepresentationStyleExpressionPath;
                                             clear_printf = true;
                                             break;

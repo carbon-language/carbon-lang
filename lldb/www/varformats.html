@@ -559,17 +559,26 @@
                     <td><b>%T</b></td>
                     <td>Use this object's datatype name</td>
                   </tr>
+                  <tr valign="top">
+                    <td><b>%N</b></td>
+                    <td>Print the variable's basename</td>
+                  </tr>
+                  <tr valign="top">
+                    <td><b>%></b></td>
+                    <td>Print the expression path for this item</td>
+                  </tr>
 				</tbody>
 			</table>
                 
-                <p>Starting with SVN r220821, you can also specify ${var.script:<i>pythonFuncName</i>}.
+                <p>Starting with SVN r228207, you can also specify ${script.var:<i>pythonFuncName</i>}. Previously, back to r220821, this was
+                    specified with a different syntax: ${var.script:<i>pythonFuncName</i>}.
                   <br/>It is expected that the function name you use specifies a function whose signature is the same
                   as a Python summary function. The return string from the function will be placed verbatim in the output.
                   <br/><br/>
                   You cannot use element access, or formatting symbols, in combination with this syntax. For example the following:
                   <table class="stats" width="620" cellspacing="0">
                           <td class="content">
-                          	${var.element[0].script:myFunctionName%@}
+                          	${script.var.element[0]:myFunctionName%@}
                           </td>
                   <table>
                   is not valid and will cause the summary to fail to evaluate.
