@@ -13,6 +13,8 @@
 #include "llvm/Support/raw_ostream.h"
 #include "gtest/gtest.h"
 
+#include <string>
+
 using namespace llvm;
 using namespace coverage;
 
