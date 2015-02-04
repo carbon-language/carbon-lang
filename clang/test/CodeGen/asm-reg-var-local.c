@@ -2,6 +2,7 @@
 // Exercise various use cases for local asm "register variables".
 
 int foo() {
+// CHECK-LABEL: define i32 @foo()
 // CHECK: [[A:%[a-zA-Z0-9]+]] = alloca i32
 
   register int a asm("rsi")=5;
@@ -9,6 +10,29 @@ int foo() {
 
   asm volatile("; %0 This asm defines rsi" : "=r"(a));
 // CHECK: [[Z:%[a-zA-Z0-9]+]] = call i32 asm sideeffect "; $0 This asm defines rsi", "={rsi},~{dirflag},~{fpsr},~{flags}"()
+// CHECK: store i32 [[Z]], i32* [[A]]
+
+  a = 42;
+// CHECK:  store i32 42, i32* [[A]]
+
+  asm volatile("; %0 This asm uses rsi" : : "r"(a));
+// CHECK:  [[TMP:%[a-zA-Z0-9]+]] = load i32* [[A]]
+// CHECK:  call void asm sideeffect "; $0 This asm uses rsi", "{rsi},~{dirflag},~{fpsr},~{flags}"(i32 [[TMP]])
+
+  return a;
+// CHECK:  [[TMP1:%[a-zA-Z0-9]+]] = load i32* [[A]]
+// CHECK:  ret i32 [[TMP1]]
+}
+
+int earlyclobber() {
+// CHECK-LABEL: define i32 @earlyclobber()
+// CHECK: [[A:%[a-zA-Z0-9]+]] = alloca i32
+
+  register int a asm("rsi")=5;
+// CHECK: store i32 5, i32* [[A]]
+
+  asm volatile("; %0 This asm defines rsi" : "=&r"(a));
+// CHECK: [[Z:%[a-zA-Z0-9]+]] = call i32 asm sideeffect "; $0 This asm defines rsi", "=&{rsi},~{dirflag},~{fpsr},~{flags}"()
 // CHECK: store i32 [[Z]], i32* [[A]]
 
   a = 42;

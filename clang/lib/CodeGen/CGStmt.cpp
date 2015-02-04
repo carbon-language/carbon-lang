@@ -1696,7 +1696,7 @@ SimplifyConstraint(const char *Constraint, const TargetInfo &Target,
 static std::string
 AddVariableConstraints(const std::string &Constraint, const Expr &AsmExpr,
                        const TargetInfo &Target, CodeGenModule &CGM,
-                       const AsmStmt &Stmt) {
+                       const AsmStmt &Stmt, const bool EarlyClobber) {
   const DeclRefExpr *AsmDeclRef = dyn_cast<DeclRefExpr>(&AsmExpr);
   if (!AsmDeclRef)
     return Constraint;
@@ -1721,7 +1721,7 @@ AddVariableConstraints(const std::string &Constraint, const Expr &AsmExpr,
   }
   // Canonicalize the register here before returning it.
   Register = Target.getNormalizedGCCRegisterName(Register);
-  return "{" + Register.str() + "}";
+  return (EarlyClobber ? "&{" : "{") + Register.str() + "}";
 }
 
 llvm::Value*
@@ -1854,7 +1854,8 @@ void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {
     OutExpr = OutExpr->IgnoreParenNoopCasts(getContext());
 
     OutputConstraint = AddVariableConstraints(OutputConstraint, *OutExpr,
-                                              getTarget(), CGM, S);
+                                              getTarget(), CGM, S,
+                                              Info.earlyClobber());
 
     LValue Dest = EmitLValue(OutExpr);
     if (!Constraints.empty())
@@ -1959,7 +1960,7 @@ void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {
     InputConstraint =
       AddVariableConstraints(InputConstraint,
                             *InputExpr->IgnoreParenNoopCasts(getContext()),
-                            getTarget(), CGM, S);
+                            getTarget(), CGM, S, Info.earlyClobber());
 
     llvm::Value *Arg = EmitAsmInput(Info, InputExpr, Constraints);
 
