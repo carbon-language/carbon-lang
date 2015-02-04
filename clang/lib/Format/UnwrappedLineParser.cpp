@@ -374,6 +374,7 @@ void UnwrappedLineParser::calculateBraceTypes() {
     case tok::kw_for:
     case tok::kw_switch:
     case tok::kw_try:
+    case tok::kw___try:
       if (!LBraceStack.empty())
         LBraceStack.back()->BlockKind = BK_Block;
       break;
@@ -713,6 +714,7 @@ void UnwrappedLineParser::parseStructuralElement() {
     parseCaseLabel();
     return;
   case tok::kw_try:
+  case tok::kw___try:
     parseTryCatch();
     return;
   case tok::kw_extern:
@@ -1149,7 +1151,7 @@ void UnwrappedLineParser::parseIfThenElse() {
 }
 
 void UnwrappedLineParser::parseTryCatch() {
-  assert(FormatTok->is(tok::kw_try) && "'try' expected");
+  assert(FormatTok->isOneOf(tok::kw_try, tok::kw___try) && "'try' expected");
   nextToken();
   bool NeedsUnwrappedLine = false;
   if (FormatTok->is(tok::colon)) {
@@ -1189,7 +1191,8 @@ void UnwrappedLineParser::parseTryCatch() {
     parseStructuralElement();
     --Line->Level;
   }
-  while (FormatTok->is(tok::kw_catch) ||
+  while (FormatTok->isOneOf(tok::kw_catch, Keywords.kw___except,
+                            tok::kw___finally) ||
          ((Style.Language == FormatStyle::LK_Java ||
            Style.Language == FormatStyle::LK_JavaScript) &&
           FormatTok->is(Keywords.kw_finally))) {

@@ -1701,8 +1701,8 @@ bool TokenAnnotator::spaceRequiredBetween(const AnnotatedLine &Line,
            (Style.SpaceBeforeParens != FormatStyle::SBPO_Never &&
             (Left.isOneOf(tok::kw_if, tok::kw_for, tok::kw_while,
                           tok::kw_switch, tok::kw_case) ||
-             (Left.isOneOf(tok::kw_try, tok::kw_catch, tok::kw_new,
-                           tok::kw_delete) &&
+             (Left.isOneOf(tok::kw_try, Keywords.kw___except, tok::kw_catch,
+                           tok::kw_new, tok::kw_delete) &&
               (!Left.Previous || Left.Previous->isNot(tok::period))) ||
              Left.IsForEachMacro)) ||
            (Style.SpaceBeforeParens == FormatStyle::SBPO_Always &&

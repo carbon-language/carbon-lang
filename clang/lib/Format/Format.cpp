@@ -1123,7 +1123,8 @@ public:
     ContinuationIndenter Indenter(Style, Tokens.getKeywords(), SourceMgr,
                                   Whitespaces, Encoding,
                                   BinPackInconclusiveFunctions);
-    UnwrappedLineFormatter Formatter(&Indenter, &Whitespaces, Style);
+    UnwrappedLineFormatter Formatter(&Indenter, &Whitespaces, Style,
+                                     Tokens.getKeywords());
     Formatter.format(AnnotatedLines, /*DryRun=*/false);
     return Whitespaces.generateReplacements();
   }
@@ -1399,6 +1400,7 @@ LangOptions getFormattingLangOpts(const FormatStyle &Style) {
   LangOpts.Bool = 1;
   LangOpts.ObjC1 = 1;
   LangOpts.ObjC2 = 1;
+  LangOpts.MicrosoftExt = 1; // To get kw___try, kw___finally.
   return LangOpts;
 }
 

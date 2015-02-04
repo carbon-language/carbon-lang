@@ -32,8 +32,10 @@ class UnwrappedLineFormatter {
 public:
   UnwrappedLineFormatter(ContinuationIndenter *Indenter,
                          WhitespaceManager *Whitespaces,
-                         const FormatStyle &Style)
-      : Indenter(Indenter), Whitespaces(Whitespaces), Style(Style) {}
+                         const FormatStyle &Style,
+                         const AdditionalKeywords &Keywords)
+      : Indenter(Indenter), Whitespaces(Whitespaces), Style(Style),
+        Keywords(Keywords) {}
 
   unsigned format(const SmallVectorImpl<AnnotatedLine *> &Lines, bool DryRun,
                   int AdditionalIndent = 0, bool FixBadIndentation = false);
@@ -153,6 +155,7 @@ private:
   ContinuationIndenter *Indenter;
   WhitespaceManager *Whitespaces;
   FormatStyle Style;
+  const AdditionalKeywords &Keywords;
 
   llvm::SpecificBumpPtrAllocator<StateNode> Allocator;
 

@@ -2244,6 +2244,26 @@ TEST_F(FormatTest, FormatTryCatch) {
   verifyFormat("try {} catch (");
 }
 
+TEST_F(FormatTest, FormatSEHTryCatch) {
+  verifyFormat("__try {\n"
+               "  int a = b * c;\n"
+               "} __except (EXCEPTION_EXECUTE_HANDLER) {\n"
+               "  // Do nothing.\n"
+               "}");
+
+  verifyFormat("__try {\n"
+               "  int a = b * c;\n"
+               "} __finally {\n"
+               "  // Do nothing.\n"
+               "}");
+
+  verifyFormat("DEBUG({\n"
+               "  __try {\n"
+               "  } __finally {\n"
+               "  }\n"
+               "});\n");
+}
+
 TEST_F(FormatTest, IncompleteTryCatchBlocks) {
   verifyFormat("try {\n"
                "  f();\n"
@@ -2273,6 +2293,13 @@ TEST_F(FormatTest, FormatTryCatchBraceStyles) {
                "  // something\n"
                "}\n"
                "catch (...) {\n"
+               "  // something\n"
+               "}",
+               Style);
+  verifyFormat("__try {\n"
+               "  // something\n"
+               "}\n"
+               "__finally {\n"
                "  // something\n"
                "}",
                Style);
