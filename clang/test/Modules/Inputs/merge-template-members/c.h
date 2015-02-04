@@ -11,4 +11,4 @@ namespace N {
 }
 
 // Merge in another declaration and update records.
-#include "b.h"
+#include "b1.h"

@@ -3648,7 +3648,8 @@ void ASTDeclReader::UpdateDecl(Decl *D, ModuleFile &ModuleFile,
       auto *RD = cast<CXXRecordDecl>(D);
       auto *OldDD = RD->DefinitionData.getNotUpdated();
       bool HadRealDefinition =
-          OldDD && !Reader.PendingFakeDefinitionData.count(OldDD);
+          OldDD && (OldDD->Definition != RD ||
+                    !Reader.PendingFakeDefinitionData.count(OldDD));
       ReadCXXRecordDefinition(RD, /*Update*/true);
 
       // Visible update is handled separately.
