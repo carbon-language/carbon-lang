@@ -50,7 +50,7 @@ class GenericTester(TestBase):
     #         True: build dSYM file                                            #
     #         False: build DWARF map                                           #
     # bc -> blockCaptured (defaulted to False)                                 #
-    #         True: testing vars of various basic types from isnide a block    #
+    #         True: testing vars of various basic types from inside a block    #
     #         False: testing vars of various basic types from a function       #
     # qd -> quotedDisplay (defaulted to False)                                 #
     #         True: the output from 'frame var' or 'expr var' contains a pair  #
@@ -81,6 +81,19 @@ class GenericTester(TestBase):
         else:
             self.generic_type_tester(self.exe_name, atoms, blockCaptured=bc, quotedDisplay=qd)
 
+    def process_launch_o(self, localPath):
+        # process launch command output redirect always goes to host the process is running on
+        if lldb.remote_platform:
+            # process launch -o requires a path that is valid on the target
+            self.assertIsNotNone(lldb.remote_platform.GetWorkingDirectory())
+            remote_path = os.path.join(lldb.remote_platform.GetWorkingDirectory(), "lldb-stdout-redirect.txt")
+            self.runCmd('process launch -o {remote}'.format(remote=remote_path))
+            # copy remote_path to local host
+            self.runCmd('platform get-file {remote} "{local}"'.format(
+                remote=remote_path, local=self.golden_filename))
+        else:
+            self.runCmd('process launch -o "{local}"'.format(local=self.golden_filename))
+
     def generic_type_tester(self, exe_name, atoms, quotedDisplay=False, blockCaptured=False):
         """Test that variables with basic types are displayed correctly."""
 
@@ -88,7 +101,9 @@ class GenericTester(TestBase):
 
         # First, capture the golden output emitted by the oracle, i.e., the
         # series of printf statements.
-        self.runCmd('process launch -o "%s"'%(self.golden_filename))
+
+        self.process_launch_o(self.golden_filename)
+
         with open(self.golden_filename) as f:
             go = f.read()
 
@@ -169,7 +184,9 @@ class GenericTester(TestBase):
 
         # First, capture the golden output emitted by the oracle, i.e., the
         # series of printf statements.
-        self.runCmd('process launch -o "%s"'%(self.golden_filename))
+
+        self.process_launch_o(self.golden_filename)
+
         with open(self.golden_filename) as f:
             go = f.read()
 

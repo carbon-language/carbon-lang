@@ -2281,18 +2281,15 @@ CommandObjectPlatform::CommandObjectPlatform(CommandInterpreter &interpreter) :
     LoadSubCommand ("connect", CommandObjectSP (new CommandObjectPlatformConnect (interpreter)));
     LoadSubCommand ("disconnect", CommandObjectSP (new CommandObjectPlatformDisconnect (interpreter)));
     LoadSubCommand ("settings", CommandObjectSP (new CommandObjectPlatformSettings (interpreter)));
-#ifdef LLDB_CONFIGURATION_DEBUG
     LoadSubCommand ("mkdir", CommandObjectSP (new CommandObjectPlatformMkDir (interpreter)));
     LoadSubCommand ("file", CommandObjectSP (new CommandObjectPlatformFile (interpreter)));
     LoadSubCommand ("get-file", CommandObjectSP (new CommandObjectPlatformGetFile (interpreter)));
     LoadSubCommand ("get-size", CommandObjectSP (new CommandObjectPlatformGetSize (interpreter)));
     LoadSubCommand ("put-file", CommandObjectSP (new CommandObjectPlatformPutFile (interpreter)));
-#endif
     LoadSubCommand ("process", CommandObjectSP (new CommandObjectPlatformProcess (interpreter)));
     LoadSubCommand ("shell", CommandObjectSP (new CommandObjectPlatformShell (interpreter)));
     LoadSubCommand ("target-install", CommandObjectSP (new CommandObjectPlatformInstall (interpreter)));
 }
-
 
 //----------------------------------------------------------------------
 // Destructor
