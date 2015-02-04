@@ -8,6 +8,8 @@ __complex__ signed yy;
 __complex__ int result;
 int ii;
 int aa = 1 + 1.0iF;
+int bb = 0;
+bb += 1i;
 
 result = arr*ii;
 result = ii*brr;
