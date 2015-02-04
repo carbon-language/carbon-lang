@@ -327,7 +327,7 @@ CMICmdCmdBreakInsert::Acknowledge(void)
     sBrkPtInfo.m_bEnabled = m_bBrkPtEnabled;
     sBrkPtInfo.m_bHaveArgOptionThreadGrp = m_bHaveArgOptionThreadGrp;
     sBrkPtInfo.m_strOptThrdGrp = m_strArgOptionThreadGrp;
-    sBrkPtInfo.m_nTimes = m_brkPt.GetNumLocations();
+    sBrkPtInfo.m_nTimes = m_brkPt.GetHitCount();
     sBrkPtInfo.m_strOrigLoc = m_brkName;
     sBrkPtInfo.m_nIgnore = m_nBrkPtIgnoreCount;
     sBrkPtInfo.m_bPending = m_bBrkPtIsPending;
