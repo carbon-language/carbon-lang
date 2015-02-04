@@ -537,6 +537,25 @@ static const char *GuessSymbolName(uint64_t value, SymbolAddressMap *AddrMap) {
   return SymbolName;
 }
 
+static void DumpCstringSection(MachOObjectFile *O, const char *sect,
+                               uint32_t sect_size, uint64_t sect_addr,
+                               bool verbose) {
+  for (uint32_t i = 0; i < sect_size; i++) {
+    if (O->is64Bit())
+      outs() << format("0x%016" PRIx64, sect_addr + i) << "  ";
+    else
+      outs() << format("0x%08" PRIx64, sect_addr + i) << "  ";
+    for ( ; i < sect_size && sect[i] != '\0'; i++) {
+      char p[2];
+      p[0] = sect[i];
+      p[1] = '\0';
+      outs().write_escaped(p);
+    }
+    if (i < sect_size && sect[i] == '\0')
+      outs() << "\n";
+  }
+}
+
 static void DumpInitTermPointerSection(MachOObjectFile *O, const char *sect,
                                        uint32_t sect_size, uint64_t sect_addr,
                                        SymbolAddressMap *AddrMap,
@@ -675,6 +694,9 @@ static void DumpSectionContents(StringRef Filename, MachOObjectFile *O,
             break;
           case MachO::S_ZEROFILL:
             outs() << "zerofill section and has no contents in the file\n";
+            break;
+          case MachO::S_CSTRING_LITERALS:
+            DumpCstringSection(O, sect, sect_size, sect_addr, verbose);
             break;
           case MachO::S_MOD_INIT_FUNC_POINTERS:
           case MachO::S_MOD_TERM_FUNC_POINTERS:
