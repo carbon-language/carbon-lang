@@ -3205,7 +3205,7 @@ defm L4_return: LD_MISC_L4_RETURN <"dealloc_return">, PredNewRel;
 
 // Restore registers and dealloc return function call.
 let isCall = 1, isBarrier = 1, isReturn = 1, isTerminator = 1,
-  Defs = [R29, R30, R31, PC], isCodeGenOnly = 1 in {
+  Defs = [R29, R30, R31, PC], isAsmParserOnly = 1 in {
 let validSubTargets = HasV4SubT in
   def RESTORE_DEALLOC_RET_JMP_V4 : JInst<(outs),
                                    (ins calltarget:$dst),
@@ -3215,7 +3215,7 @@ let validSubTargets = HasV4SubT in
 }
 
 // Restore registers and dealloc frame before a tail call.
-let isCall = 1, isBarrier = 1, isCodeGenOnly = 1,
+let isCall = 1, isBarrier = 1, isAsmParserOnly = 1,
   Defs = [R29, R30, R31, PC] in {
 let validSubTargets = HasV4SubT in
   def RESTORE_DEALLOC_BEFORE_TAILCALL_V4 : JInst<(outs),
@@ -3226,7 +3226,7 @@ let validSubTargets = HasV4SubT in
 }
 
 // Save registers function call.
-let isCall = 1, isBarrier = 1, isCodeGenOnly = 1,
+let isCall = 1, isBarrier = 1, isAsmParserOnly = 1,
   Uses = [R29, R31] in {
   def SAVE_REGISTERS_CALL_V4 : JInst<(outs),
                                (ins calltarget:$dst),
@@ -3468,7 +3468,7 @@ defm storerf : ST_Abs <"memh", "STrif", IntRegs, u16_1Imm, 0b01, 1>;
 // if ([!]Pv[.new]) mem[bhwd](##global)=Rt
 //===----------------------------------------------------------------------===//
 
-let validSubTargets = HasV4SubT, isCodeGenOnly = 1 in
+let validSubTargets = HasV4SubT, isAsmParserOnly = 1 in
 class T_StoreGP <string mnemonic, string BaseOp, RegisterClass RC,
                  Operand ImmOp, bits<2> MajOp, bit isHalf = 0>
   : T_StoreAbsGP <mnemonic, RC, ImmOp, MajOp, globaladdress, 0, isHalf> {
@@ -3478,7 +3478,7 @@ class T_StoreGP <string mnemonic, string BaseOp, RegisterClass RC,
     let BaseOpcode = BaseOp#_abs;
   }
 
-let validSubTargets = HasV4SubT, isCodeGenOnly = 1 in
+let validSubTargets = HasV4SubT, isAsmParserOnly = 1 in
 multiclass ST_GP <string mnemonic, string BaseOp, Operand ImmOp,
                   bits<2> MajOp, bit isHalf = 0> {
   // Set BaseOpcode same as absolute addressing instructions so that
@@ -3698,7 +3698,7 @@ defm loadrd  : LD_Abs<"memd",  "LDrid", DoubleRegs, u16_3Imm, 0b110>;
 // if ([!]Pv[.new]) Rx=mem[bhwd](##global)
 //===----------------------------------------------------------------------===//
 
-let isCodeGenOnly = 1 in
+let isAsmParserOnly = 1 in
 class T_LoadGP <string mnemonic, string BaseOp, RegisterClass RC, Operand ImmOp,
                 bits<3> MajOp>
   : T_LoadAbsGP <mnemonic, RC, ImmOp, MajOp, globaladdress, 0>, PredNewRel {
@@ -4192,7 +4192,7 @@ def A4_boundscheck_hi: ALU64Inst <
     let Inst{12-8} = Rtt;
   }
 
-let hasSideEffects = 0, isCodeGenOnly = 1 in
+let hasSideEffects = 0, isAsmParserOnly = 1 in
 def A4_boundscheck : MInst <
   (outs PredRegs:$Pd), (ins IntRegs:$Rs, DoubleRegs:$Rtt),
   "$Pd=boundscheck($Rs,$Rtt)">;

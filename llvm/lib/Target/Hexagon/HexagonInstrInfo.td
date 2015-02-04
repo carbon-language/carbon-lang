@@ -650,19 +650,19 @@ def A2_tfrsi : ALU32Inst<(outs IntRegs:$Rd), (ins s16Ext:$s16), "$Rd = #$s16",
 
 let isCodeGenOnly = 0 in
 defm A2_tfr  : tfr_base<"TFR">, ImmRegRel, PredNewRel;
-let isCodeGenOnly = 1 in
+let isAsmParserOnly = 1 in
 defm A2_tfrp : TFR64_base<"TFR64">, PredNewRel;
 
 // Assembler mapped
 let isReMaterializable = 1, isMoveImm = 1, isAsCheapAsAMove = 1,
-    isCodeGenOnly = 1 in
+    isAsmParserOnly = 1 in
 def A2_tfrpi : ALU64_rr<(outs DoubleRegs:$dst), (ins s8Imm64:$src1),
                       "$dst = #$src1",
                       [(set (i64 DoubleRegs:$dst), s8Imm64Pred:$src1)]>;
 
 // TODO: see if this instruction can be deleted..
 let isExtendable = 1, opExtendable = 1, opExtentBits = 6,
-    isCodeGenOnly = 1 in
+    isAsmParserOnly = 1 in
 def TFRI64_V4 : ALU64_rr<(outs DoubleRegs:$dst), (ins u6Ext:$src1),
                          "$dst = #$src1">;
 
@@ -2689,7 +2689,7 @@ def M2_mpyui : MInst<(outs IntRegs:$dst),
 // depending on the value of m9. See Arch Spec.
 let isExtendable = 1, opExtendable = 2, isExtentSigned = 1, opExtentBits = 9,
     CextOpcode = "mpyi", InputType = "imm", hasNewValue = 1,
-    isCodeGenOnly = 1 in
+    isAsmParserOnly = 1 in
 def M2_mpysmi : MInst<(outs IntRegs:$dst), (ins IntRegs:$src1, s9Ext:$src2),
     "$dst = mpyi($src1, #$src2)",
     [(set (i32 IntRegs:$dst), (mul (i32 IntRegs:$src1),
@@ -4025,7 +4025,7 @@ def S2_asl_i_r_sat : T_S2op_2_ii <"asl", 0b010, 0b010, 1>;
 let isCodeGenOnly = 0 in
 def S2_asr_i_r_rnd : T_S2op_2_ii <"asr", 0b010, 0b000, 0, 1>;
 
-let isCodeGenOnly = 1 in
+let isAsmParserOnly = 1 in
 def S2_asr_i_r_rnd_goodsyntax
   : SInst <(outs IntRegs:$dst), (ins  IntRegs:$src, u5Imm:$u5),
   "$dst = asrrnd($src, #$u5)",
@@ -4684,51 +4684,51 @@ def HexagonCONST32_GP : SDNode<"HexagonISD::CONST32_GP",     SDTHexagonCONST32>;
 
 // HI/LO Instructions
 let isReMaterializable = 1, isMoveImm = 1, hasSideEffects = 0,
-    isCodeGenOnly = 1 in
+    isAsmParserOnly = 1 in
 def LO : ALU32_ri<(outs IntRegs:$dst), (ins globaladdress:$global),
                   "$dst.l = #LO($global)",
                   []>;
 
 let isReMaterializable = 1, isMoveImm = 1, hasSideEffects = 0,
-    isCodeGenOnly = 1 in
+    isAsmParserOnly = 1 in
 def HI : ALU32_ri<(outs IntRegs:$dst), (ins globaladdress:$global),
                   "$dst.h = #HI($global)",
                   []>;
 
 let isReMaterializable = 1, isMoveImm = 1, hasSideEffects = 0,
-    isCodeGenOnly = 1 in
+    isAsmParserOnly = 1 in
 def LOi : ALU32_ri<(outs IntRegs:$dst), (ins i32imm:$imm_value),
                   "$dst.l = #LO($imm_value)",
                   []>;
 
 
 let isReMaterializable = 1, isMoveImm = 1, hasSideEffects = 0,
-    isCodeGenOnly = 1 in
+    isAsmParserOnly = 1 in
 def HIi : ALU32_ri<(outs IntRegs:$dst), (ins i32imm:$imm_value),
                   "$dst.h = #HI($imm_value)",
                   []>;
 
 let isReMaterializable = 1, isMoveImm = 1, hasSideEffects = 0,
-    isCodeGenOnly = 1 in
+    isAsmParserOnly = 1 in
 def LO_jt : ALU32_ri<(outs IntRegs:$dst), (ins jumptablebase:$jt),
                   "$dst.l = #LO($jt)",
                   []>;
 
 let isReMaterializable = 1, isMoveImm = 1, hasSideEffects = 0,
-    isCodeGenOnly = 1 in
+    isAsmParserOnly = 1 in
 def HI_jt : ALU32_ri<(outs IntRegs:$dst), (ins jumptablebase:$jt),
                   "$dst.h = #HI($jt)",
                   []>;
 
 
 let isReMaterializable = 1, isMoveImm = 1, hasSideEffects = 0,
-    isCodeGenOnly = 1 in
+    isAsmParserOnly = 1 in
 def LO_label : ALU32_ri<(outs IntRegs:$dst), (ins bblabel:$label),
                   "$dst.l = #LO($label)",
                   []>;
 
 let isReMaterializable = 1, isMoveImm = 1 , hasSideEffects = 0,
-    isCodeGenOnly = 1 in
+    isAsmParserOnly = 1 in
 def HI_label : ALU32_ri<(outs IntRegs:$dst), (ins bblabel:$label),
                   "$dst.h = #HI($label)",
                   []>;
@@ -4736,32 +4736,32 @@ def HI_label : ALU32_ri<(outs IntRegs:$dst), (ins bblabel:$label),
 // This pattern is incorrect. When we add small data, we should change
 // this pattern to use memw(#foo).
 // This is for sdata.
-let isMoveImm = 1, isCodeGenOnly = 1 in
+let isMoveImm = 1, isAsmParserOnly = 1 in
 def CONST32 : LDInst<(outs IntRegs:$dst), (ins globaladdress:$global),
               "$dst = CONST32(#$global)",
               [(set (i32 IntRegs:$dst),
                     (load (HexagonCONST32 tglobaltlsaddr:$global)))]>;
 
 // This is for non-sdata.
-let isReMaterializable = 1, isMoveImm = 1, isCodeGenOnly = 1 in
+let isReMaterializable = 1, isMoveImm = 1, isAsmParserOnly = 1 in
 def CONST32_set : LDInst2<(outs IntRegs:$dst), (ins globaladdress:$global),
                   "$dst = CONST32(#$global)",
                   [(set (i32 IntRegs:$dst),
                         (HexagonCONST32 tglobaladdr:$global))]>;
 
-let isReMaterializable = 1, isMoveImm = 1, isCodeGenOnly = 1 in
+let isReMaterializable = 1, isMoveImm = 1, isAsmParserOnly = 1 in
 def CONST32_set_jt : LDInst2<(outs IntRegs:$dst), (ins jumptablebase:$jt),
                      "$dst = CONST32(#$jt)",
                      [(set (i32 IntRegs:$dst),
                            (HexagonCONST32 tjumptable:$jt))]>;
 
-let isReMaterializable = 1, isMoveImm = 1, isCodeGenOnly = 1 in
+let isReMaterializable = 1, isMoveImm = 1, isAsmParserOnly = 1 in
 def CONST32GP_set : LDInst2<(outs IntRegs:$dst), (ins globaladdress:$global),
                     "$dst = CONST32(#$global)",
                     [(set (i32 IntRegs:$dst),
                           (HexagonCONST32_GP tglobaladdr:$global))]>;
 
-let isReMaterializable = 1, isMoveImm = 1, isCodeGenOnly = 1 in
+let isReMaterializable = 1, isMoveImm = 1, isAsmParserOnly = 1 in
 def CONST32_Int_Real : LDInst2<(outs IntRegs:$dst), (ins i32imm:$global),
                        "$dst = CONST32(#$global)",
                        [(set (i32 IntRegs:$dst), imm:$global) ]>;
@@ -4770,12 +4770,12 @@ def CONST32_Int_Real : LDInst2<(outs IntRegs:$dst), (ins i32imm:$global),
 def : Pat<(HexagonCONST32_GP tblockaddress:$addr),
           (CONST32_Int_Real tblockaddress:$addr)>;
 
-let isReMaterializable = 1, isMoveImm = 1, isCodeGenOnly = 1 in
+let isReMaterializable = 1, isMoveImm = 1, isAsmParserOnly = 1 in
 def CONST32_Label : LDInst2<(outs IntRegs:$dst), (ins bblabel:$label),
                     "$dst = CONST32($label)",
                     [(set (i32 IntRegs:$dst), (HexagonCONST32 bbl:$label))]>;
 
-let isReMaterializable = 1, isMoveImm = 1, isCodeGenOnly = 1 in
+let isReMaterializable = 1, isMoveImm = 1, isAsmParserOnly = 1 in
 def CONST64_Int_Real : LDInst2<(outs DoubleRegs:$dst), (ins i64imm:$global),
                        "$dst = CONST64(#$global)",
                        [(set (i64 DoubleRegs:$dst), imm:$global) ]>;
@@ -4814,7 +4814,7 @@ let Defs = [R29, R30, R31], Uses = [R29] in {
                       [(callseq_end timm:$amt1, timm:$amt2)]>;
 }
 // Call subroutine.
-let isCall = 1, hasSideEffects = 0, isCodeGenOnly = 1,
+let isCall = 1, hasSideEffects = 0, isAsmParserOnly = 1,
   Defs = [D0, D1, D2, D3, D4, D5, D6, D7, D8, D9, D10,
           R22, R23, R28, R31, P0, P1, P2, P3, LC0, LC1, SA0, SA1] in {
   def CALL : JInst<(outs), (ins calltarget:$dst),
@@ -5404,7 +5404,7 @@ def SDTHexagonADJDYNALLOC : SDTypeProfile<1, 2,
 def Hexagon_ADJDYNALLOC : SDNode<"HexagonISD::ADJDYNALLOC",
                                   SDTHexagonADJDYNALLOC>;
 // Needed to tag these instructions for stack layout.
-let usesCustomInserter = 1, isCodeGenOnly = 1 in
+let usesCustomInserter = 1, isAsmParserOnly = 1 in
 def ADJDYNALLOC : ALU32_ri<(outs IntRegs:$dst), (ins IntRegs:$src1,
                                                      s16Imm:$src2),
                   "$dst = add($src1, #$src2)",

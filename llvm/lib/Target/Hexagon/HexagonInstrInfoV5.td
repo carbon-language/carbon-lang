@@ -53,7 +53,7 @@ def S2_asr_i_p_rnd : S_2OpInstImm<"asr", 0b110, 0b111, u6Imm,
   let Inst{13-8} = src2;
 }
 
-let isCodeGenOnly = 1 in
+let isAsmParserOnly = 1 in
 def S2_asr_i_p_rnd_goodsyntax
   : MInst<(outs DoubleRegs:$dst), (ins DoubleRegs:$src1, u6Imm:$src2),
     "$dst = asrrnd($src1, #$src2)">;
@@ -75,20 +75,20 @@ def SDTHexagonFCONST32 : SDTypeProfile<1, 1, [
                                             SDTCisPtrTy<1>]>;
 def HexagonFCONST32 : SDNode<"HexagonISD::FCONST32",     SDTHexagonFCONST32>;
 
-let isReMaterializable = 1, isMoveImm = 1, isCodeGenOnly = 1 in
+let isReMaterializable = 1, isMoveImm = 1, isAsmParserOnly = 1 in
 def FCONST32_nsdata : LDInst<(outs IntRegs:$dst), (ins globaladdress:$global),
               "$dst = CONST32(#$global)",
               [(set (f32 IntRegs:$dst),
               (HexagonFCONST32 tglobaladdr:$global))]>,
                Requires<[HasV5T]>;
 
-let isReMaterializable = 1, isMoveImm = 1, isCodeGenOnly = 1 in
+let isReMaterializable = 1, isMoveImm = 1, isAsmParserOnly = 1 in
 def CONST64_Float_Real : LDInst<(outs DoubleRegs:$dst), (ins f64imm:$src1),
                        "$dst = CONST64(#$src1)",
                        [(set DoubleRegs:$dst, fpimm:$src1)]>,
           Requires<[HasV5T]>;
 
-let isReMaterializable = 1, isMoveImm = 1, isCodeGenOnly = 1 in
+let isReMaterializable = 1, isMoveImm = 1, isAsmParserOnly = 1 in
 def CONST32_Float_Real : LDInst<(outs IntRegs:$dst), (ins f32imm:$src1),
                        "$dst = CONST32(#$src1)",
                        [(set IntRegs:$dst, fpimm:$src1)]>,
@@ -785,7 +785,7 @@ def S5_asrhub_rnd_sat : T_ASRHUB <0>;
 def S5_asrhub_sat : T_ASRHUB <1>;
 }
 
-let isCodeGenOnly = 1 in
+let isAsmParserOnly = 1 in
 def S5_asrhub_rnd_sat_goodsyntax
   : SInst <(outs IntRegs:$Rd), (ins DoubleRegs:$Rss, u4Imm:$u4),
   "$Rd = vasrhub($Rss, #$u4):rnd:sat">, Requires<[HasV5T]>;
@@ -810,7 +810,7 @@ def S5_vasrhrnd : SInst <(outs DoubleRegs:$Rdd),
     let Inst{4-0}   = Rdd;
   }
 
-let isCodeGenOnly = 1 in
+let isAsmParserOnly = 1 in
 def S5_vasrhrnd_goodsyntax
   : SInst <(outs DoubleRegs:$Rdd), (ins DoubleRegs:$Rss, u4Imm:$u4),
   "$Rdd = vasrh($Rss,#$u4):rnd">, Requires<[HasV5T]>;

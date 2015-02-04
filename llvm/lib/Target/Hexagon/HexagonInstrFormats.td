@@ -192,7 +192,6 @@ class InstHexagon<dag outs, dag ins, string asmstr, list<dag> pattern,
                                     "");
   let PNewValue = !if(isPredicatedNew, "new", "");
   let NValueST = !if(isNVStore, "true", "false");
-  let isCodeGenOnly = 1;
 
   // *** Must match MCTargetDesc/HexagonBaseInfo.h ***
 }
