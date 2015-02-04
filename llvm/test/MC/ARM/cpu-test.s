@@ -11,3 +11,7 @@ dsb
 dsb
 // CHECK-ERROR: error: Unknown CPU name
 .cpu foobar
+// CHECK: .cpu cortex-m3
+.cpu cortex-m3
+// CHECK: sub sp, #16
+sub sp,#16

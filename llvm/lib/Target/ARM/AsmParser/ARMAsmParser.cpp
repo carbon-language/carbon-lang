@@ -9182,8 +9182,7 @@ bool ARMAsmParser::parseDirectiveCPU(SMLoc L) {
   // see: http://llvm.org/bugs/show_bug.cgi?id=20757
   STI.InitMCProcessorInfo(CPU, "");
   STI.InitCPUSchedModel(CPU);
-  unsigned FB = ComputeAvailableFeatures(STI.getFeatureBits());
-  setAvailableFeatures(FB);
+  setAvailableFeatures(ComputeAvailableFeatures(STI.getFeatureBits()));
 
   return false;
 }
