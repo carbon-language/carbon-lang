@@ -3842,6 +3842,17 @@ let AddedComplexity = 100 in {
   def: LoadGP_pats <load, L2_loadrdgp, i64>;
 }
 
+// When the Interprocedural Global Variable optimizer realizes that a certain
+// global variable takes only two constant values, it shrinks the global to
+// a boolean. Catch those loads here in the following 3 patterns.
+let AddedComplexity = 100 in {
+  def: LoadGP_pats <extloadi1, L2_loadrubgp>;
+  def: LoadGP_pats <zextloadi1, L2_loadrubgp>;
+}
+
+def: Pat<(i64 (ctlz I64:$src1)), (Zext64 (S2_cl0p I64:$src1))>;
+def: Pat<(i64 (cttz I64:$src1)), (Zext64 (S2_ct0p I64:$src1))>;
+
 let AddedComplexity  = 30 in {
   def: Storea_pat<truncstorei8,  I32, u0AlwaysExtPred, S2_storerbabs>;
   def: Storea_pat<truncstorei16, I32, u0AlwaysExtPred, S2_storerhabs>;
@@ -3889,22 +3900,6 @@ let AddedComplexity = 100 in {
 let AddedComplexity = 100 in
 def : Pat <(i1 (load (HexagonCONST32_GP tglobaladdr:$global))),
            (i1 (C2_tfrrp (i32 (L2_loadrbgp tglobaladdr:$global))))>;
-
-// When the Interprocedural Global Variable optimizer realizes that a certain
-// global variable takes only two constant values, it shrinks the global to
-// a boolean. Catch those loads here in the following 3 patterns.
-let AddedComplexity = 100 in
-def : Pat <(i32 (extloadi1 (HexagonCONST32_GP tglobaladdr:$global))),
-           (i32 (L2_loadrbgp tglobaladdr:$global))>;
-
-let AddedComplexity = 100 in
-def : Pat <(i32 (sextloadi1 (HexagonCONST32_GP tglobaladdr:$global))),
-           (i32 (L2_loadrbgp tglobaladdr:$global))>;
-
-let AddedComplexity = 100 in
-def : Pat <(i32 (zextloadi1 (HexagonCONST32_GP tglobaladdr:$global))),
-           (i32 (L2_loadrubgp tglobaladdr:$global))>;
-
 
 // Transfer global address into a register
 let isExtended = 1, opExtendable = 1, AddedComplexity=50, isMoveImm = 1,
@@ -3965,14 +3960,6 @@ def STriw_offset_ext_V4 : STInst<(outs),
             [(store (HexagonCONST32 tglobaladdr:$src3),
                     (add IntRegs:$src1, u6_2ImmPred:$src2))]>,
             Requires<[HasV4T]>;
-
-def : Pat<(i64 (ctlz (i64 DoubleRegs:$src1))),
-          (i64 (A4_combineir (i32 0), (i32 (S2_cl0p DoubleRegs:$src1))))>,
-          Requires<[HasV4T]>;
-
-def : Pat<(i64 (cttz (i64 DoubleRegs:$src1))),
-          (i64 (A4_combineir (i32 0), (i32 (S2_ct0p DoubleRegs:$src1))))>,
-          Requires<[HasV4T]>;
 
 // i8/i16/i32 -> i64 loads
 // We need a complexity of 120 here to override preceding handling of
