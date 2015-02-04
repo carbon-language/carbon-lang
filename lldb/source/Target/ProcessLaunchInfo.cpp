@@ -344,7 +344,14 @@ ProcessLaunchInfo::FinalizeFileActions (Target *target, bool default_to_use_pty)
                     log->Printf ("ProcessLaunchInfo::%s default_to_use_pty is set, and at least one stdin/stderr/stdout is unset, so generating a pty to use for it",
                                  __FUNCTION__);
 
-                if (m_pty->OpenFirstAvailableMaster(O_RDWR | O_NOCTTY | O_CLOEXEC, NULL, 0))
+                int open_flags = O_RDWR | O_NOCTTY;
+#if !defined(_MSC_VER)
+                // We really shouldn't be specifying platform specific flags
+                // that are intended for a system call in generic code.  But
+                // this will have to do for now.
+                open_flags |= O_CLOEXEC;
+#endif
+                if (m_pty->OpenFirstAvailableMaster(open_flags, NULL, 0))
                 {
                     const char *slave_path = m_pty->GetSlaveName(NULL, 0);
 
