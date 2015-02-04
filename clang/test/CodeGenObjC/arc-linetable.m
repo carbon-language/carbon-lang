@@ -4,8 +4,8 @@
 
 // CHECK: define {{.*}}testNoSideEffect
 // CHECK: call void @objc_storeStrong{{.*}}
-// CHECK: call void @objc_storeStrong{{.*}} !dbg ![[ARC1:[0-9]+]]
-// CHECK: ret {{.*}} !dbg ![[RET1:[0-9]+]]
+// CHECK: call void @objc_storeStrong{{.*}} !dbg ![[RET1:[0-9]+]]
+// CHECK: ret {{.*}} !dbg ![[RET1]]
 
 // CHECK: define {{.*}}testNoCleanup
 // CHECK: ret {{.*}} !dbg ![[RET2:[0-9]+]]
@@ -21,8 +21,8 @@
 
 // CHECK: define {{.*}}testVoid
 // CHECK: call void @objc_storeStrong{{.*}}
-// CHECK: call void @objc_storeStrong{{.*}} !dbg ![[ARC5:[0-9]+]]
-// CHECK: ret {{.*}} !dbg ![[RET5:[0-9]+]]
+// CHECK: call void @objc_storeStrong{{.*}} !dbg ![[RET5:[0-9]+]]
+// CHECK: ret {{.*}} !dbg ![[RET5]]
 
 // CHECK: define {{.*}}testVoidNoReturn
 // CHECK: @objc_msgSend{{.*}} !dbg ![[MSG6:[0-9]+]]
@@ -57,9 +57,8 @@ typedef signed char BOOL;
 // CHECK: ![[TESTNOSIDEEFFECT:.*]] = {{.*}}[ DW_TAG_subprogram ] [line [[@LINE+1]]] [local] [def] [-[AppDelegate testNoSideEffect:]]
 - (int)testNoSideEffect:(NSString *)foo {
   int x = 1;
-  // CHECK: ![[ARC1]] = !MDLocation(line: [[@LINE+1]], scope: ![[TESTNOSIDEEFFECT]])
   return 1; // Return expression
-  // CHECK: ![[RET1]] = !MDLocation(line: [[@LINE+1]], scope: !{{.*}})
+  // CHECK: ![[RET1]] = !MDLocation(line: [[@LINE+1]], scope: ![[TESTNOSIDEEFFECT]])
 }           // Cleanup + Ret
 
 - (int)testNoCleanup {
@@ -82,7 +81,6 @@ typedef signed char BOOL;
 }
 
 - (void)testVoid:(NSString *)foo {
-  // CHECK: ![[ARC5]] = !MDLocation(line: [[@LINE+1]], scope: !{{.*}})
   return;
   // CHECK: ![[RET5]] = !MDLocation(line: [[@LINE+1]], scope: !{{.*}})
 }

@@ -259,6 +259,21 @@ void f21() {
   f21_b();
 }
 
+// CHECK-LABEL: define
+struct f22_dtor {
+  ~f22_dtor();
+};
+void f22() {
+  {
+    f22_dtor f;
+    src();
+// CHECK: call {{.*}}src
+// CHECK: call {{.*}}, !dbg [[DBG_F22:![0-9]*]]
+// CHECK: call {{.*}}, !dbg [[DBG_F22]]
+#line 2400
+  }
+}
+
 // CHECK: [[DBG_F1]] = !MDLocation(line: 100,
 // CHECK: [[DBG_FOO_VALUE]] = !MDLocation(line: 200,
 // CHECK: [[DBG_FOO_REF]] = !MDLocation(line: 202,

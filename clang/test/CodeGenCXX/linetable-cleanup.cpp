@@ -4,8 +4,8 @@
 // simple return expressions.
 
 // CHECK: define {{.*}}foo
-// CHECK: call void @_ZN1CD1Ev(%class.C* {{.*}}), !dbg ![[CLEANUP:[0-9]+]]
-// CHECK: ret i32 0, !dbg ![[RET:[0-9]+]]
+// CHECK: call void @_ZN1CD1Ev(%class.C* {{.*}}), !dbg ![[RET:[0-9]+]]
+// CHECK: ret i32 0, !dbg ![[RET]]
 
 // CHECK: define {{.*}}bar
 // CHECK: ret void, !dbg ![[RETBAR:[0-9]+]]
@@ -23,9 +23,8 @@ int foo()
 {
   C c;
   c.i = 42;
-  // This breakpoint should be at/before the cleanup code.
-  // CHECK: ![[CLEANUP]] = !MDLocation(line: [[@LINE+1]], scope: !{{.*}})
   return 0;
+  // This breakpoint should be at/before the cleanup code.
   // CHECK: ![[RET]] = !MDLocation(line: [[@LINE+1]], scope: !{{.*}})
 }
 

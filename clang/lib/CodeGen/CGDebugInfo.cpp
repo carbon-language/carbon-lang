@@ -55,7 +55,6 @@ CGDebugInfo::~CGDebugInfo() {
 ApplyDebugLocation::ApplyDebugLocation(CodeGenFunction &CGF,
                                        SourceLocation TemporaryLocation)
     : CGF(CGF) {
-  assert(!TemporaryLocation.isInvalid() && "invalid location");
   init(TemporaryLocation);
 }
 
