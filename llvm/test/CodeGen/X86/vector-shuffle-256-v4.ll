@@ -801,7 +801,7 @@ define <4 x i64> @insert_mem_and_zero_v4i64(i64* %ptr) {
 define <4 x double> @insert_reg_and_zero_v4f64(double %a) {
 ; ALL-LABEL: insert_reg_and_zero_v4f64:
 ; ALL:       # BB#0:
-; ALL-NEXT:    vxorps %xmm1, %xmm1, %xmm1
+; ALL-NEXT:    vxorpd %xmm1, %xmm1, %xmm1
 ; ALL-NEXT:    vmovsd {{.*#+}} xmm0 = xmm0[0],xmm1[1]
 ; ALL-NEXT:    retq
   %v = insertelement <4 x double> undef, double %a, i32 0

@@ -18,7 +18,7 @@ define <4 x float> @test2(<4 x float> %a, <4 x float> %b) {
 ; CHECK-LABEL: test2:
 ; CHECK:       # BB#0:
 ; CHECK-NEXT:    movsd {{.*#+}} xmm1 = xmm0[0],xmm1[1]
-; CHECK-NEXT:    movaps %xmm1, %xmm0
+; CHECK-NEXT:    movapd %xmm1, %xmm0
 ; CHECK-NEXT:    retq
   %1 = select <4 x i1> <i1 true, i1 true, i1 false, i1 false>, <4 x float> %a, <4 x float> %b
   ret <4 x float> %1
@@ -226,7 +226,7 @@ define <2 x double> @test24(<2 x double> %a, <2 x double> %b) {
 ; CHECK-LABEL: test24:
 ; CHECK:       # BB#0:
 ; CHECK-NEXT:    movsd {{.*#+}} xmm1 = xmm0[0],xmm1[1]
-; CHECK-NEXT:    movaps %xmm1, %xmm0
+; CHECK-NEXT:    movapd %xmm1, %xmm0
 ; CHECK-NEXT:    retq
   %1 = select <2 x i1> <i1 true, i1 false>, <2 x double> %a, <2 x double> %b
   ret <2 x double> %1
@@ -236,7 +236,7 @@ define <2 x i64> @test25(<2 x i64> %a, <2 x i64> %b) {
 ; CHECK-LABEL: test25:
 ; CHECK:       # BB#0:
 ; CHECK-NEXT:    movsd {{.*#+}} xmm1 = xmm0[0],xmm1[1]
-; CHECK-NEXT:    movaps %xmm1, %xmm0
+; CHECK-NEXT:    movapd %xmm1, %xmm0
 ; CHECK-NEXT:    retq
   %1 = select <2 x i1> <i1 true, i1 false>, <2 x i64> %a, <2 x i64> %b
   ret <2 x i64> %1

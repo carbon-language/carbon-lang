@@ -1467,7 +1467,7 @@ define <4 x float> @insert_reg_lo_v4f32(double %a, <4 x float> %b) {
 ; SSE-LABEL: insert_reg_lo_v4f32:
 ; SSE:       # BB#0:
 ; SSE-NEXT:    movsd {{.*#+}} xmm1 = xmm0[0],xmm1[1]
-; SSE-NEXT:    movaps %xmm1, %xmm0
+; SSE-NEXT:    movapd %xmm1, %xmm0
 ; SSE-NEXT:    retq
 ;
 ; AVX-LABEL: insert_reg_lo_v4f32:

@@ -179,7 +179,7 @@ define void @test12() nounwind {
 ; CHECK-LABEL: test12:
 ; CHECK:       ## BB#0:
 ; CHECK-NEXT:    movapd 0, %xmm0
-; CHECK-NEXT:    movaps {{.*#+}} xmm1 = [1.000000e+00,1.000000e+00,1.000000e+00,1.000000e+00]
+; CHECK-NEXT:    movapd {{.*#+}} xmm1 = [1.000000e+00,1.000000e+00,1.000000e+00,1.000000e+00]
 ; CHECK-NEXT:    movsd {{.*#+}} xmm1 = xmm0[0],xmm1[1]
 ; CHECK-NEXT:    xorpd %xmm2, %xmm2
 ; CHECK-NEXT:    unpckhpd {{.*#+}} xmm0 = xmm0[1],xmm2[1]

@@ -548,13 +548,13 @@ let isReMaterializable = 1, isAsCheapAsAMove = 1, canFoldAsLoad = 1,
 
 multiclass sse12_move_rr<RegisterClass RC, SDNode OpNode, ValueType vt,
                          X86MemOperand x86memop, string base_opc,
-                         string asm_opr> {
+                         string asm_opr, Domain d = GenericDomain> {
   def rr : SI<0x10, MRMSrcReg, (outs VR128:$dst),
               (ins VR128:$src1, RC:$src2),
               !strconcat(base_opc, asm_opr),
               [(set VR128:$dst, (vt (OpNode VR128:$src1,
                                  (scalar_to_vector RC:$src2))))],
-              IIC_SSE_MOV_S_RR>, Sched<[WriteFShuffle]>;
+              IIC_SSE_MOV_S_RR, d>, Sched<[WriteFShuffle]>;
 
   // For the disassembler
   let isCodeGenOnly = 1, ForceDisassemble = 1, hasSideEffects = 0 in
@@ -565,49 +565,55 @@ multiclass sse12_move_rr<RegisterClass RC, SDNode OpNode, ValueType vt,
 }
 
 multiclass sse12_move<RegisterClass RC, SDNode OpNode, ValueType vt,
-                      X86MemOperand x86memop, string OpcodeStr> {
+                      X86MemOperand x86memop, string OpcodeStr,
+                      Domain d = GenericDomain> {
   // AVX
   defm V#NAME : sse12_move_rr<RC, OpNode, vt, x86memop, OpcodeStr,
-                              "\t{$src2, $src1, $dst|$dst, $src1, $src2}">,
+                              "\t{$src2, $src1, $dst|$dst, $src1, $src2}", d>,
                               VEX_4V, VEX_LIG;
 
   def V#NAME#mr : SI<0x11, MRMDestMem, (outs), (ins x86memop:$dst, RC:$src),
                      !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"),
-                     [(store RC:$src, addr:$dst)], IIC_SSE_MOV_S_MR>,
+                     [(store RC:$src, addr:$dst)], IIC_SSE_MOV_S_MR, d>,
                      VEX, VEX_LIG, Sched<[WriteStore]>;
   // SSE1 & 2
   let Constraints = "$src1 = $dst" in {
     defm NAME : sse12_move_rr<RC, OpNode, vt, x86memop, OpcodeStr,
-                              "\t{$src2, $dst|$dst, $src2}">;
+                              "\t{$src2, $dst|$dst, $src2}", d>;
   }
 
   def NAME#mr   : SI<0x11, MRMDestMem, (outs), (ins x86memop:$dst, RC:$src),
                      !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"),
-                     [(store RC:$src, addr:$dst)], IIC_SSE_MOV_S_MR>,
+                     [(store RC:$src, addr:$dst)], IIC_SSE_MOV_S_MR, d>,
                   Sched<[WriteStore]>;
 }
 
 // Loading from memory automatically zeroing upper bits.
 multiclass sse12_move_rm<RegisterClass RC, X86MemOperand x86memop,
-                         PatFrag mem_pat, string OpcodeStr> {
+                         PatFrag mem_pat, string OpcodeStr,
+                         Domain d = GenericDomain> {
   def V#NAME#rm : SI<0x10, MRMSrcMem, (outs RC:$dst), (ins x86memop:$src),
                      !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"),
                      [(set RC:$dst, (mem_pat addr:$src))],
-                     IIC_SSE_MOV_S_RM>, VEX, VEX_LIG, Sched<[WriteLoad]>;
+                     IIC_SSE_MOV_S_RM, d>, VEX, VEX_LIG, Sched<[WriteLoad]>;
   def NAME#rm   : SI<0x10, MRMSrcMem, (outs RC:$dst), (ins x86memop:$src),
                      !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"),
                      [(set RC:$dst, (mem_pat addr:$src))],
-                     IIC_SSE_MOV_S_RM>, Sched<[WriteLoad]>;
+                     IIC_SSE_MOV_S_RM, d>, Sched<[WriteLoad]>;
 }
 
-defm MOVSS : sse12_move<FR32, X86Movss, v4f32, f32mem, "movss">, XS;
-defm MOVSD : sse12_move<FR64, X86Movsd, v2f64, f64mem, "movsd">, XD;
+defm MOVSS : sse12_move<FR32, X86Movss, v4f32, f32mem, "movss",
+                        SSEPackedSingle>, XS;
+defm MOVSD : sse12_move<FR64, X86Movsd, v2f64, f64mem, "movsd",
+                        SSEPackedDouble>, XD;
 
 let canFoldAsLoad = 1, isReMaterializable = 1 in {
-  defm MOVSS : sse12_move_rm<FR32, f32mem, loadf32, "movss">, XS;
+  defm MOVSS : sse12_move_rm<FR32, f32mem, loadf32, "movss",
+                             SSEPackedSingle>, XS;
 
   let AddedComplexity = 20 in
-    defm MOVSD : sse12_move_rm<FR64, f64mem, loadf64, "movsd">, XD;
+    defm MOVSD : sse12_move_rm<FR64, f64mem, loadf64, "movsd",
+                               SSEPackedDouble>, XD;
 }
 
 // Patterns

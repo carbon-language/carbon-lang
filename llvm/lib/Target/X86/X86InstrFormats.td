@@ -422,8 +422,9 @@ class Iseg32 <bits<8> o, Format f, dag outs, dag ins, string asm,
 
 // SI - SSE 1 & 2 scalar instructions
 class SI<bits<8> o, Format F, dag outs, dag ins, string asm,
-         list<dag> pattern, InstrItinClass itin = NoItinerary>
-      : I<o, F, outs, ins, asm, pattern, itin> {
+         list<dag> pattern, InstrItinClass itin = NoItinerary,
+         Domain d = GenericDomain>
+      : I<o, F, outs, ins, asm, pattern, itin, d> {
   let Predicates = !if(!eq(OpEnc.Value, EncEVEX.Value), [HasAVX512],
                    !if(!eq(OpEnc.Value, EncVEX.Value), [UseAVX],
                    !if(!eq(OpPrefix.Value, XS.Value), [UseSSE1],

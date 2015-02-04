@@ -168,13 +168,13 @@ define <2 x double> @vsel_double(<2 x double> %v1, <2 x double> %v2) {
 ; SSE2-LABEL: vsel_double:
 ; SSE2:       # BB#0: # %entry
 ; SSE2-NEXT:    movsd {{.*#+}} xmm1 = xmm0[0],xmm1[1]
-; SSE2-NEXT:    movaps %xmm1, %xmm0
+; SSE2-NEXT:    movapd %xmm1, %xmm0
 ; SSE2-NEXT:    retq
 ;
 ; SSSE3-LABEL: vsel_double:
 ; SSSE3:       # BB#0: # %entry
 ; SSSE3-NEXT:    movsd {{.*#+}} xmm1 = xmm0[0],xmm1[1]
-; SSSE3-NEXT:    movaps %xmm1, %xmm0
+; SSSE3-NEXT:    movapd %xmm1, %xmm0
 ; SSSE3-NEXT:    retq
 ;
 ; SSE41-LABEL: vsel_double:
@@ -195,13 +195,13 @@ define <2 x i64> @vsel_i64(<2 x i64> %v1, <2 x i64> %v2) {
 ; SSE2-LABEL: vsel_i64:
 ; SSE2:       # BB#0: # %entry
 ; SSE2-NEXT:    movsd {{.*#+}} xmm1 = xmm0[0],xmm1[1]
-; SSE2-NEXT:    movaps %xmm1, %xmm0
+; SSE2-NEXT:    movapd %xmm1, %xmm0
 ; SSE2-NEXT:    retq
 ;
 ; SSSE3-LABEL: vsel_i64:
 ; SSSE3:       # BB#0: # %entry
 ; SSSE3-NEXT:    movsd {{.*#+}} xmm1 = xmm0[0],xmm1[1]
-; SSSE3-NEXT:    movaps %xmm1, %xmm0
+; SSSE3-NEXT:    movapd %xmm1, %xmm0
 ; SSSE3-NEXT:    retq
 ;
 ; SSE41-LABEL: vsel_i64:
@@ -362,9 +362,9 @@ define <8 x double> @vsel_double8(<8 x double> %v1, <8 x double> %v2) {
 ; SSE2:       # BB#0: # %entry
 ; SSE2-NEXT:    movsd {{.*#+}} xmm4 = xmm0[0],xmm4[1]
 ; SSE2-NEXT:    movsd {{.*#+}} xmm6 = xmm2[0],xmm6[1]
-; SSE2-NEXT:    movaps %xmm4, %xmm0
+; SSE2-NEXT:    movapd %xmm4, %xmm0
 ; SSE2-NEXT:    movaps %xmm5, %xmm1
-; SSE2-NEXT:    movaps %xmm6, %xmm2
+; SSE2-NEXT:    movapd %xmm6, %xmm2
 ; SSE2-NEXT:    movaps %xmm7, %xmm3
 ; SSE2-NEXT:    retq
 ;
@@ -372,9 +372,9 @@ define <8 x double> @vsel_double8(<8 x double> %v1, <8 x double> %v2) {
 ; SSSE3:       # BB#0: # %entry
 ; SSSE3-NEXT:    movsd {{.*#+}} xmm4 = xmm0[0],xmm4[1]
 ; SSSE3-NEXT:    movsd {{.*#+}} xmm6 = xmm2[0],xmm6[1]
-; SSSE3-NEXT:    movaps %xmm4, %xmm0
+; SSSE3-NEXT:    movapd %xmm4, %xmm0
 ; SSSE3-NEXT:    movaps %xmm5, %xmm1
-; SSSE3-NEXT:    movaps %xmm6, %xmm2
+; SSSE3-NEXT:    movapd %xmm6, %xmm2
 ; SSSE3-NEXT:    movaps %xmm7, %xmm3
 ; SSSE3-NEXT:    retq
 ;
@@ -401,9 +401,9 @@ define <8 x i64> @vsel_i648(<8 x i64> %v1, <8 x i64> %v2) {
 ; SSE2:       # BB#0: # %entry
 ; SSE2-NEXT:    movsd {{.*#+}} xmm4 = xmm0[0],xmm4[1]
 ; SSE2-NEXT:    movsd {{.*#+}} xmm6 = xmm2[0],xmm6[1]
-; SSE2-NEXT:    movaps %xmm4, %xmm0
+; SSE2-NEXT:    movapd %xmm4, %xmm0
 ; SSE2-NEXT:    movaps %xmm5, %xmm1
-; SSE2-NEXT:    movaps %xmm6, %xmm2
+; SSE2-NEXT:    movapd %xmm6, %xmm2
 ; SSE2-NEXT:    movaps %xmm7, %xmm3
 ; SSE2-NEXT:    retq
 ;
@@ -411,9 +411,9 @@ define <8 x i64> @vsel_i648(<8 x i64> %v1, <8 x i64> %v2) {
 ; SSSE3:       # BB#0: # %entry
 ; SSSE3-NEXT:    movsd {{.*#+}} xmm4 = xmm0[0],xmm4[1]
 ; SSSE3-NEXT:    movsd {{.*#+}} xmm6 = xmm2[0],xmm6[1]
-; SSSE3-NEXT:    movaps %xmm4, %xmm0
+; SSSE3-NEXT:    movapd %xmm4, %xmm0
 ; SSSE3-NEXT:    movaps %xmm5, %xmm1
-; SSSE3-NEXT:    movaps %xmm6, %xmm2
+; SSSE3-NEXT:    movapd %xmm6, %xmm2
 ; SSSE3-NEXT:    movaps %xmm7, %xmm3
 ; SSSE3-NEXT:    retq
 ;
@@ -446,16 +446,16 @@ define <4 x double> @vsel_double4(<4 x double> %v1, <4 x double> %v2) {
 ; SSE2:       # BB#0: # %entry
 ; SSE2-NEXT:    movsd {{.*#+}} xmm2 = xmm0[0],xmm2[1]
 ; SSE2-NEXT:    movsd {{.*#+}} xmm3 = xmm1[0],xmm3[1]
-; SSE2-NEXT:    movaps %xmm2, %xmm0
-; SSE2-NEXT:    movaps %xmm3, %xmm1
+; SSE2-NEXT:    movapd %xmm2, %xmm0
+; SSE2-NEXT:    movapd %xmm3, %xmm1
 ; SSE2-NEXT:    retq
 ;
 ; SSSE3-LABEL: vsel_double4:
 ; SSSE3:       # BB#0: # %entry
 ; SSSE3-NEXT:    movsd {{.*#+}} xmm2 = xmm0[0],xmm2[1]
 ; SSSE3-NEXT:    movsd {{.*#+}} xmm3 = xmm1[0],xmm3[1]
-; SSSE3-NEXT:    movaps %xmm2, %xmm0
-; SSSE3-NEXT:    movaps %xmm3, %xmm1
+; SSSE3-NEXT:    movapd %xmm2, %xmm0
+; SSSE3-NEXT:    movapd %xmm3, %xmm1
 ; SSSE3-NEXT:    retq
 ;
 ; SSE41-LABEL: vsel_double4:
@@ -558,14 +558,14 @@ define <4 x double> @constant_blendvpd_avx(<4 x double> %xy, <4 x double> %ab) {
 ; SSE2:       # BB#0: # %entry
 ; SSE2-NEXT:    movsd {{.*#+}} xmm3 = xmm1[0],xmm3[1]
 ; SSE2-NEXT:    movaps %xmm2, %xmm0
-; SSE2-NEXT:    movaps %xmm3, %xmm1
+; SSE2-NEXT:    movapd %xmm3, %xmm1
 ; SSE2-NEXT:    retq
 ;
 ; SSSE3-LABEL: constant_blendvpd_avx:
 ; SSSE3:       # BB#0: # %entry
 ; SSSE3-NEXT:    movsd {{.*#+}} xmm3 = xmm1[0],xmm3[1]
 ; SSSE3-NEXT:    movaps %xmm2, %xmm0
-; SSSE3-NEXT:    movaps %xmm3, %xmm1
+; SSSE3-NEXT:    movapd %xmm3, %xmm1
 ; SSSE3-NEXT:    retq
 ;
 ; SSE41-LABEL: constant_blendvpd_avx:
@@ -744,13 +744,13 @@ define <4 x double> @blend_shufflevector_4xdouble(<4 x double> %a, <4 x double> 
 ; SSE2-LABEL: blend_shufflevector_4xdouble:
 ; SSE2:       # BB#0: # %entry
 ; SSE2-NEXT:    movsd {{.*#+}} xmm2 = xmm0[0],xmm2[1]
-; SSE2-NEXT:    movaps %xmm2, %xmm0
+; SSE2-NEXT:    movapd %xmm2, %xmm0
 ; SSE2-NEXT:    retq
 ;
 ; SSSE3-LABEL: blend_shufflevector_4xdouble:
 ; SSSE3:       # BB#0: # %entry
 ; SSSE3-NEXT:    movsd {{.*#+}} xmm2 = xmm0[0],xmm2[1]
-; SSSE3-NEXT:    movaps %xmm2, %xmm0
+; SSSE3-NEXT:    movapd %xmm2, %xmm0
 ; SSSE3-NEXT:    retq
 ;
 ; SSE41-LABEL: blend_shufflevector_4xdouble:
