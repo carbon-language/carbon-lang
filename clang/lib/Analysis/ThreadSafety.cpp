@@ -1690,7 +1690,18 @@ void BuildLockset::handleCall(Expr *Exp, const NamedDecl *D, VarDecl *VD) {
   SourceLocation Loc = Exp->getExprLoc();
   CapExprSet ExclusiveLocksToAdd, SharedLocksToAdd;
   CapExprSet ExclusiveLocksToRemove, SharedLocksToRemove, GenericLocksToRemove;
+  CapExprSet ScopedExclusiveReqs, ScopedSharedReqs;
   StringRef CapDiagKind = "mutex";
+
+  // Figure out if we're calling the constructor of scoped lockable class
+  bool isScopedVar = false;
+  if (VD) {
+    if (const CXXConstructorDecl *CD = dyn_cast<const CXXConstructorDecl>(D)) {
+      const CXXRecordDecl* PD = CD->getParent();
+      if (PD && PD->hasAttr<ScopedLockableAttr>())
+        isScopedVar = true;
+    }
+  }
 
   for(Attr *Atconst : D->attrs()) {
     Attr* At = const_cast<Attr*>(Atconst);
@@ -1751,10 +1762,17 @@ void BuildLockset::handleCall(Expr *Exp, const NamedDecl *D, VarDecl *VD) {
 
       case attr::RequiresCapability: {
         RequiresCapabilityAttr *A = cast<RequiresCapabilityAttr>(At);
-        for (auto *Arg : A->args())
+        for (auto *Arg : A->args()) {
           warnIfMutexNotHeld(D, Exp, A->isShared() ? AK_Read : AK_Written, Arg,
                              POK_FunctionCall, ClassifyDiagnostic(A),
                              Exp->getExprLoc());
+          // use for adopting a lock
+          if (isScopedVar) {
+            Analyzer->getMutexIDs(A->isShared() ? ScopedSharedReqs
+                                                : ScopedExclusiveReqs,
+                                  A, Exp, D, VD);
+          }
+        }
         break;
       }
 
@@ -1768,16 +1786,6 @@ void BuildLockset::handleCall(Expr *Exp, const NamedDecl *D, VarDecl *VD) {
       // Ignore attributes unrelated to thread-safety
       default:
         break;
-    }
-  }
-
-  // Figure out if we're calling the constructor of scoped lockable class
-  bool isScopedVar = false;
-  if (VD) {
-    if (const CXXConstructorDecl *CD = dyn_cast<const CXXConstructorDecl>(D)) {
-      const CXXRecordDecl* PD = CD->getParent();
-      if (PD && PD->hasAttr<ScopedLockableAttr>())
-        isScopedVar = true;
     }
   }
 
@@ -1797,6 +1805,11 @@ void BuildLockset::handleCall(Expr *Exp, const NamedDecl *D, VarDecl *VD) {
     DeclRefExpr DRE(VD, false, VD->getType(), VK_LValue, VD->getLocation());
     // FIXME: does this store a pointer to DRE?
     CapabilityExpr Scp = Analyzer->SxBuilder.translateAttrExpr(&DRE, nullptr);
+
+    std::copy(ScopedExclusiveReqs.begin(), ScopedExclusiveReqs.end(),
+              std::back_inserter(ExclusiveLocksToAdd));
+    std::copy(ScopedSharedReqs.begin(), ScopedSharedReqs.end(),
+              std::back_inserter(SharedLocksToAdd));
     Analyzer->addLock(FSet,
                       llvm::make_unique<ScopedLockableFactEntry>(
                           Scp, MLoc, ExclusiveLocksToAdd, SharedLocksToAdd),
