@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 def addrga: PatLeaf<(i32 AddrGA:$Addr)>;
+def addrgp: PatLeaf<(i32 AddrGP:$Addr)>;
 
 let hasSideEffects = 0 in
 class T_Immext<Operand ImmType>
@@ -3648,6 +3649,9 @@ class Loadam_pat<PatFrag Load, ValueType VT, PatFrag Addr, PatFrag ValueMod,
                  InstHexagon MI>
   : Pat<(VT (Load Addr:$addr)), (ValueMod (MI Addr:$addr))>;
 
+class Storea_pat<PatFrag Store, PatFrag Value, PatFrag Addr, InstHexagon MI>
+  : Pat<(Store Value:$val, Addr:$addr), (MI Addr:$addr, Value:$val)>;
+
 let Predicates = [HasV4T], AddedComplexity = 30 in {
 def : Pat<(truncstorei8 (i32 IntRegs:$src1),
                         (HexagonCONST32 tglobaladdr:$absaddr)),
@@ -4050,6 +4054,12 @@ let AddedComplexity = 120 in {
   def: Loadam_pat<sextloadi32, i64, addrga, Sext64, L4_loadri_abs>;
   def: Loadam_pat<zextloadi32, i64, addrga, Zext64, L4_loadri_abs>;
 }
+let AddedComplexity = 100 in {
+  def: Storea_pat<truncstorei8,  I32, addrgp, S2_storerbabs>;
+  def: Storea_pat<truncstorei16, I32, addrgp, S2_storerhabs>;
+  def: Storea_pat<store,         I32, addrgp, S2_storeriabs>;
+  def: Storea_pat<store,         I64, addrgp, S2_storerdabs>;
+}
 
 // Indexed store double word - global address.
 // memw(Rs+#u6:2)=#S8
@@ -4060,43 +4070,19 @@ def STrih_offset_ext_V4 : STInst<(outs),
             [(truncstorei16 (HexagonCONST32 tglobaladdr:$src3),
                     (add IntRegs:$src1, u6_1ImmPred:$src2))]>,
             Requires<[HasV4T]>;
-// Map from store(globaladdress + x) -> memd(#foo + x)
-let AddedComplexity = 100 in
-def : Pat<(store (i64 DoubleRegs:$src1),
-                 FoldGlobalAddrGP:$addr),
-          (S2_storerdabs FoldGlobalAddrGP:$addr, (i64 DoubleRegs:$src1))>,
-          Requires<[HasV4T]>;
 
 def : Pat<(atomic_store_64 FoldGlobalAddrGP:$addr,
                            (i64 DoubleRegs:$src1)),
           (S2_storerdabs FoldGlobalAddrGP:$addr, (i64 DoubleRegs:$src1))>,
           Requires<[HasV4T]>;
 
-// Map from store(globaladdress + x) -> memb(#foo + x)
-let AddedComplexity = 100 in
-def : Pat<(truncstorei8 (i32 IntRegs:$src1), FoldGlobalAddrGP:$addr),
-          (S2_storerbabs FoldGlobalAddrGP:$addr, (i32 IntRegs:$src1))>,
-            Requires<[HasV4T]>;
-
 def : Pat<(atomic_store_8 FoldGlobalAddrGP:$addr, (i32 IntRegs:$src1)),
           (S2_storerbabs FoldGlobalAddrGP:$addr, (i32 IntRegs:$src1))>,
-            Requires<[HasV4T]>;
-
-// Map from store(globaladdress + x) -> memh(#foo + x)
-let AddedComplexity = 100 in
-def : Pat<(truncstorei16 (i32 IntRegs:$src1), FoldGlobalAddrGP:$addr),
-          (S2_storerhabs FoldGlobalAddrGP:$addr, (i32 IntRegs:$src1))>,
             Requires<[HasV4T]>;
 
 def : Pat<(atomic_store_16 FoldGlobalAddrGP:$addr, (i32 IntRegs:$src1)),
           (S2_storerhabs FoldGlobalAddrGP:$addr, (i32 IntRegs:$src1))>,
             Requires<[HasV4T]>;
-
-// Map from store(globaladdress + x) -> memw(#foo + x)
-let AddedComplexity = 100 in
-def : Pat<(store (i32 IntRegs:$src1), FoldGlobalAddrGP:$addr),
-          (S2_storeriabs FoldGlobalAddrGP:$addr, (i32 IntRegs:$src1))>,
-           Requires<[HasV4T]>;
 
 def : Pat<(atomic_store_32 FoldGlobalAddrGP:$addr, (i32 IntRegs:$src1)),
           (S2_storeriabs FoldGlobalAddrGP:$addr, (i32 IntRegs:$src1))>,

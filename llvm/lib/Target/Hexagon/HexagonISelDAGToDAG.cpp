@@ -79,6 +79,7 @@ public:
 
   // Complex Pattern Selectors.
   inline bool SelectAddrGA(SDValue &N, SDValue &R);
+  inline bool SelectAddrGP(SDValue &N, SDValue &R);
   bool SelectGlobalAddress(SDValue &N, SDValue &R, bool UseGP);
   bool SelectAddrFI(SDValue &N, SDValue &R);
 
@@ -1635,6 +1636,10 @@ bool HexagonDAGToDAGISel::SelectAddrFI(SDValue& N, SDValue &R) {
 
 inline bool HexagonDAGToDAGISel::SelectAddrGA(SDValue &N, SDValue &R) {
   return SelectGlobalAddress(N, R, false);
+}
+
+inline bool HexagonDAGToDAGISel::SelectAddrGP(SDValue &N, SDValue &R) {
+  return SelectGlobalAddress(N, R, true);
 }
 
 bool HexagonDAGToDAGISel::SelectGlobalAddress(SDValue &N, SDValue &R,
