@@ -288,6 +288,8 @@ File::Open (const char *path, uint32_t options, uint32_t permissions)
 #ifndef _WIN32
     if (options & eOpenOptionNonBlocking)
         oflag |= O_NONBLOCK;
+    if (options & eOpenOptionCloseOnExec)
+        oflag |= O_CLOEXEC;
 #else
     oflag |= O_BINARY;
 #endif

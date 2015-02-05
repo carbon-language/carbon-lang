@@ -42,7 +42,8 @@ public:
         eOpenOptionNonBlocking          = (1u << 4),    // File reads
         eOpenOptionCanCreate            = (1u << 5),    // Create file if doesn't already exist
         eOpenOptionCanCreateNewOnly     = (1u << 6),    // Can create file only if it doesn't already exist
-        eOpenoptionDontFollowSymlinks   = (1u << 7)
+        eOpenoptionDontFollowSymlinks   = (1u << 7),
+        eOpenOptionCloseOnExec          = (1u << 8)     // Close the file when executing a new process
     };
     
     static mode_t

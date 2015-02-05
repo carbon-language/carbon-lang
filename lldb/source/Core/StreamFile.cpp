@@ -49,7 +49,8 @@ StreamFile::StreamFile (FILE *fh, bool transfer_ownership) :
 
 StreamFile::StreamFile (const char *path) :
     Stream (),
-    m_file (path, File::eOpenOptionWrite | File::eOpenOptionCanCreate, lldb::eFilePermissionsFileDefault)
+    m_file (path, File::eOpenOptionWrite | File::eOpenOptionCanCreate | File::eOpenOptionCloseOnExec,
+                    lldb::eFilePermissionsFileDefault)
 {
 }
 
