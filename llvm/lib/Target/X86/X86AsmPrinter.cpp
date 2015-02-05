@@ -47,6 +47,8 @@ using namespace llvm;
 /// runOnMachineFunction - Emit the function body.
 ///
 bool X86AsmPrinter::runOnMachineFunction(MachineFunction &MF) {
+  Subtarget = &MF.getSubtarget<X86Subtarget>();
+
   SMShadowTracker.startFunction(MF);
 
   SetupMachineFunction(MF);
@@ -505,13 +507,15 @@ bool X86AsmPrinter::PrintAsmMemoryOperand(const MachineInstr *MI,
 }
 
 void X86AsmPrinter::EmitStartOfAsmFile(Module &M) {
-  if (Subtarget->isTargetMachO())
+  Triple TT(TM.getTargetTriple());
+
+  if (TT.isOSBinFormatMachO())
     OutStreamer.SwitchSection(getObjFileLowering().getTextSection());
 
-  if (Subtarget->isTargetCOFF()) {
+  if (TT.isOSBinFormatCOFF()) {
     // Emit an absolute @feat.00 symbol.  This appears to be some kind of
     // compiler features bitfield read by link.exe.
-    if (!Subtarget->is64Bit()) {
+    if (TT.getArch() == Triple::x86) {
       MCSymbol *S = MMI->getContext().GetOrCreateSymbol(StringRef("@feat.00"));
       OutStreamer.BeginCOFFSymbolDef(S);
       OutStreamer.EmitCOFFSymbolStorageClass(COFF::IMAGE_SYM_CLASS_STATIC);
@@ -578,20 +582,21 @@ void X86AsmPrinter::GenerateExportDirective(const MCSymbol *Sym, bool IsData) {
   SmallString<128> Directive;
   raw_svector_ostream OS(Directive);
   StringRef Name = Sym->getName();
+  Triple TT(TM.getTargetTriple());
 
-  if (Subtarget->isTargetKnownWindowsMSVC())
+  if (TT.isKnownWindowsMSVCEnvironment())
     OS << " /EXPORT:";
   else
     OS << " -export:";
 
-  if ((Subtarget->isTargetWindowsGNU() || Subtarget->isTargetWindowsCygwin()) &&
+  if ((TT.isWindowsGNUEnvironment() || TT.isWindowsCygwinEnvironment()) &&
       (Name[0] == getDataLayout().getGlobalPrefix()))
     Name = Name.drop_front();
 
   OS << Name;
 
   if (IsData) {
-    if (Subtarget->isTargetKnownWindowsMSVC())
+    if (TT.isKnownWindowsMSVCEnvironment())
       OS << ",DATA";
     else
       OS << ",data";
@@ -602,7 +607,9 @@ void X86AsmPrinter::GenerateExportDirective(const MCSymbol *Sym, bool IsData) {
 }
 
 void X86AsmPrinter::EmitEndOfAsmFile(Module &M) {
-  if (Subtarget->isTargetMachO()) {
+  Triple TT(TM.getTargetTriple());
+
+  if (TT.isOSBinFormatMachO()) {
     // All darwin targets use mach-o.
     MachineModuleInfoMachO &MMIMacho =
         MMI->getObjFileInfo<MachineModuleInfoMachO>();
@@ -676,13 +683,14 @@ void X86AsmPrinter::EmitEndOfAsmFile(Module &M) {
     OutStreamer.EmitAssemblerFlag(MCAF_SubsectionsViaSymbols);
   }
 
-  if (Subtarget->isTargetKnownWindowsMSVC() && MMI->usesVAFloatArgument()) {
-    StringRef SymbolName = Subtarget->is64Bit() ? "_fltused" : "__fltused";
+  if (TT.isKnownWindowsMSVCEnvironment() && MMI->usesVAFloatArgument()) {
+    StringRef SymbolName =
+        (TT.getArch() == Triple::x86_64) ? "_fltused" : "__fltused";
     MCSymbol *S = MMI->getContext().GetOrCreateSymbol(SymbolName);
     OutStreamer.EmitSymbolAttribute(S, MCSA_Global);
   }
 
-  if (Subtarget->isTargetCOFF()) {
+  if (TT.isOSBinFormatCOFF()) {
     // Necessary for dllexport support
     std::vector<const MCSymbol*> DLLExportedFns, DLLExportedGlobals;
 
@@ -718,7 +726,7 @@ void X86AsmPrinter::EmitEndOfAsmFile(Module &M) {
     }
   }
 
-  if (Subtarget->isTargetELF()) {
+  if (TT.isOSBinFormatELF()) {
     const TargetLoweringObjectFileELF &TLOFELF =
       static_cast<const TargetLoweringObjectFileELF &>(getObjFileLowering());
 
