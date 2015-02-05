@@ -496,7 +496,7 @@ static bool isDereferenceablePointer(const Value *V, const DataLayout *DL,
   // is at least as large as for the resulting pointer type, then
   // we can look through the bitcast.
   if (DL)
-    if (const BitCastInst* BC = dyn_cast<BitCastInst>(V)) {
+    if (const BitCastOperator *BC = dyn_cast<BitCastOperator>(V)) {
       Type *STy = BC->getSrcTy()->getPointerElementType(),
            *DTy = BC->getDestTy()->getPointerElementType();
       if (STy->isSized() && DTy->isSized() &&
