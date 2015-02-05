@@ -700,14 +700,11 @@ INITIALIZE_PASS_END(PlaceSafepoints, "place-safepoints", "Place Safepoints",
 static bool isGCLeafFunction(const CallSite &CS) {
   Instruction *inst = CS.getInstruction();
   if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(inst)) {
-    switch (II->getIntrinsicID()) {
-    default:
-      // Most LLVM intrinsics are things which can never take a safepoint.
-      // As a result, we don't need to have the stack parsable at the
-      // callsite.  This is a highly useful optimization since intrinsic
-      // calls are fairly prevelent, particularly in debug builds.
-      return true;
-    }
+    // Most LLVM intrinsics are things which can never take a safepoint.
+    // As a result, we don't need to have the stack parsable at the
+    // callsite.  This is a highly useful optimization since intrinsic
+    // calls are fairly prevelent, particularly in debug builds.
+    return true;
   }
 
   // If this function is marked explicitly as a leaf call, we don't need to
