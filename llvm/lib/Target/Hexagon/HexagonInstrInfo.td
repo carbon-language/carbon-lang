@@ -4739,38 +4739,30 @@ def : Pat <(brcond (i1 (setule (i64 DoubleRegs:$src1), (i64 DoubleRegs:$src2))),
 
 // Map from a 64-bit select to an emulated 64-bit mux.
 // Hexagon does not support 64-bit MUXes; so emulate with combines.
-def : Pat <(select (i1 PredRegs:$src1), (i64 DoubleRegs:$src2),
-                   (i64 DoubleRegs:$src3)),
-      (i64 (A2_combinew (i32 (C2_mux (i1 PredRegs:$src1),
-                                    (i32 (EXTRACT_SUBREG (i64 DoubleRegs:$src2),
-                                                         subreg_hireg)),
-                                    (i32 (EXTRACT_SUBREG (i64 DoubleRegs:$src3),
-                                                         subreg_hireg)))),
-                       (i32 (C2_mux (i1 PredRegs:$src1),
-                                    (i32 (EXTRACT_SUBREG (i64 DoubleRegs:$src2),
-                                                         subreg_loreg)),
-                                    (i32 (EXTRACT_SUBREG (i64 DoubleRegs:$src3),
-                                                         subreg_loreg))))))>;
+def: Pat<(select (i1 PredRegs:$src1), (i64 DoubleRegs:$src2),
+                 (i64 DoubleRegs:$src3)),
+         (A2_combinew (C2_mux PredRegs:$src1, (HiReg DoubleRegs:$src2),
+                                              (HiReg DoubleRegs:$src3)),
+                      (C2_mux PredRegs:$src1, (LoReg DoubleRegs:$src2),
+                                              (LoReg DoubleRegs:$src3)))>;
 
 // Map from a 1-bit select to logical ops.
 // From LegalizeDAG.cpp: (B1 ? B2 : B3) <=> (B1 & B2)|(!B1&B3).
-def : Pat <(select (i1 PredRegs:$src1), (i1 PredRegs:$src2),
-                   (i1 PredRegs:$src3)),
-      (C2_or (C2_and (i1 PredRegs:$src1), (i1 PredRegs:$src2)),
-             (C2_and (C2_not (i1 PredRegs:$src1)), (i1 PredRegs:$src3)))>;
+def: Pat<(select (i1 PredRegs:$src1), (i1 PredRegs:$src2), (i1 PredRegs:$src3)),
+         (C2_or (C2_and PredRegs:$src1, PredRegs:$src2),
+                (C2_and (C2_not PredRegs:$src1), PredRegs:$src3))>;
 
 // Map Pd = load(addr) -> Rs = load(addr); Pd = Rs.
 def : Pat<(i1 (load ADDRriS11_2:$addr)),
       (i1 (C2_tfrrp (i32 (L2_loadrb_io AddrFI:$addr, 0))))>;
 
 // Map for truncating from 64 immediates to 32 bit immediates.
-def : Pat<(i32 (trunc (i64 DoubleRegs:$src))),
-      (i32 (EXTRACT_SUBREG (i64 DoubleRegs:$src), subreg_loreg))>;
+def: Pat<(i32 (trunc (i64 DoubleRegs:$src))),
+         (LoReg DoubleRegs:$src)>;
 
 // Map for truncating from i64 immediates to i1 bit immediates.
-def :  Pat<(i1 (trunc (i64 DoubleRegs:$src))),
-       (i1 (C2_tfrrp (i32 (EXTRACT_SUBREG (i64 DoubleRegs:$src),
-                                          subreg_loreg))))>;
+def: Pat<(i1 (trunc (i64 DoubleRegs:$src))),
+         (C2_tfrrp (LoReg DoubleRegs:$src))>;
 
 // Map memb(Rs) = Rdd -> memb(Rs) = Rt.
 def : Pat<(truncstorei8 (i64 DoubleRegs:$src), ADDRriS11_0:$addr),
@@ -4804,30 +4796,25 @@ def : Pat<(store (i1 -1), ADDRriS11_2:$addr),
 def : Pat<(store (i1 PredRegs:$src1), ADDRriS11_2:$addr),
       (S2_storerb_io AddrFI:$addr, 0, (i32 (C2_muxii (i1 PredRegs:$src1), 1, 0)) )>;
 
-// Map Rdd = anyext(Rs) -> Rdd = A2_sxtw(Rs).
-// Hexagon_TODO: We can probably use combine but that will cost 2 instructions.
-// Better way to do this?
-def : Pat<(i64 (anyext (i32 IntRegs:$src1))),
-      (i64 (A2_sxtw (i32 IntRegs:$src1)))>;
-
-// Map cmple -> cmpgt.
 // rs <= rt -> !(rs > rt).
-def : Pat<(i1 (setle (i32 IntRegs:$src1), s10ExtPred:$src2)),
-      (i1 (C2_not (C2_cmpgti (i32 IntRegs:$src1), s10ExtPred:$src2)))>;
+let AddedComplexity = 30 in
+def: Pat<(i1 (setle (i32 IntRegs:$src1), s10ExtPred:$src2)),
+         (C2_not (C2_cmpgti IntRegs:$src1, s10ExtPred:$src2))>;
 
 // rs <= rt -> !(rs > rt).
 def : Pat<(i1 (setle (i32 IntRegs:$src1), (i32 IntRegs:$src2))),
       (i1 (C2_not (C2_cmpgt (i32 IntRegs:$src1), (i32 IntRegs:$src2))))>;
 
 // Rss <= Rtt -> !(Rss > Rtt).
-def : Pat<(i1 (setle (i64 DoubleRegs:$src1), (i64 DoubleRegs:$src2))),
-      (i1 (C2_not (C2_cmpgtp (i64 DoubleRegs:$src1), (i64 DoubleRegs:$src2))))>;
+def: Pat<(i1 (setle (i64 DoubleRegs:$src1), (i64 DoubleRegs:$src2))),
+         (C2_not (C2_cmpgtp DoubleRegs:$src1, DoubleRegs:$src2))>;
 
 // Map cmpne -> cmpeq.
 // Hexagon_TODO: We should improve on this.
 // rs != rt -> !(rs == rt).
-def : Pat <(i1 (setne (i32 IntRegs:$src1), s10ExtPred:$src2)),
-      (i1 (C2_not(i1 (C2_cmpeqi (i32 IntRegs:$src1), s10ExtPred:$src2))))>;
+let AddedComplexity = 30 in
+def: Pat<(i1 (setne (i32 IntRegs:$src1), s10ExtPred:$src2)),
+         (C2_not (C2_cmpeqi IntRegs:$src1, s10ExtPred:$src2))>;
 
 // Map cmpne(Rs) -> !cmpeqe(Rs).
 // rs != rt -> !(rs == rt).
@@ -4835,14 +4822,13 @@ def : Pat <(i1 (setne (i32 IntRegs:$src1), (i32 IntRegs:$src2))),
       (i1 (C2_not (i1 (C2_cmpeq (i32 IntRegs:$src1), (i32 IntRegs:$src2)))))>;
 
 // Convert setne back to xor for hexagon since we compute w/ pred registers.
-def : Pat <(i1 (setne (i1 PredRegs:$src1), (i1 PredRegs:$src2))),
-      (i1 (C2_xor (i1 PredRegs:$src1), (i1 PredRegs:$src2)))>;
+def: Pat<(i1 (setne (i1 PredRegs:$src1), (i1 PredRegs:$src2))),
+         (C2_xor PredRegs:$src1, PredRegs:$src2)>;
 
 // Map cmpne(Rss) -> !cmpew(Rss).
 // rs != rt -> !(rs == rt).
-def : Pat <(i1 (setne (i64 DoubleRegs:$src1), (i64 DoubleRegs:$src2))),
-      (i1 (C2_not (i1 (C2_cmpeqp (i64 DoubleRegs:$src1),
-                                     (i64 DoubleRegs:$src2)))))>;
+def: Pat<(i1 (setne (i64 DoubleRegs:$src1), (i64 DoubleRegs:$src2))),
+         (C2_not (C2_cmpeqp DoubleRegs:$src1, DoubleRegs:$src2))>;
 
 // Map cmpge(Rs, Rt) -> !(cmpgt(Rs, Rt).
 // rs >= rt -> !(rt > rs).
@@ -4850,20 +4836,21 @@ def : Pat <(i1 (setge (i32 IntRegs:$src1), (i32 IntRegs:$src2))),
       (i1 (C2_not (i1 (C2_cmpgt (i32 IntRegs:$src2), (i32 IntRegs:$src1)))))>;
 
 // cmpge(Rs, Imm) -> cmpgt(Rs, Imm-1)
-def : Pat <(i1 (setge (i32 IntRegs:$src1), s8ExtPred:$src2)),
-      (i1 (C2_cmpgti (i32 IntRegs:$src1), (DEC_CONST_SIGNED s8ExtPred:$src2)))>;
+let AddedComplexity = 30 in
+def: Pat<(i1 (setge (i32 IntRegs:$src1), s8ExtPred:$src2)),
+         (C2_cmpgti IntRegs:$src1, (DEC_CONST_SIGNED s8ExtPred:$src2))>;
 
 // Map cmpge(Rss, Rtt) -> !cmpgt(Rtt, Rss).
 // rss >= rtt -> !(rtt > rss).
-def : Pat <(i1 (setge (i64 DoubleRegs:$src1), (i64 DoubleRegs:$src2))),
-      (i1 (C2_not (i1 (C2_cmpgtp (i64 DoubleRegs:$src2),
-                                (i64 DoubleRegs:$src1)))))>;
+def: Pat<(i1 (setge (i64 DoubleRegs:$src1), (i64 DoubleRegs:$src2))),
+         (C2_not (C2_cmpgtp DoubleRegs:$src2, DoubleRegs:$src1))>;
 
 // Map cmplt(Rs, Imm) -> !cmpge(Rs, Imm).
 // !cmpge(Rs, Imm) -> !cmpgt(Rs, Imm-1).
 // rs < rt -> !(rs >= rt).
-def : Pat <(i1 (setlt (i32 IntRegs:$src1), s8ExtPred:$src2)),
-      (i1 (C2_not (C2_cmpgti (i32 IntRegs:$src1), (DEC_CONST_SIGNED s8ExtPred:$src2))))>;
+let AddedComplexity = 30 in
+def: Pat<(i1 (setlt (i32 IntRegs:$src1), s8ExtPred:$src2)),
+         (C2_not (C2_cmpgti IntRegs:$src1, (DEC_CONST_SIGNED s8ExtPred:$src2)))>;
 
 // Map cmplt(Rs, Rt) -> cmpgt(Rt, Rs).
 // rs < rt -> rt > rs.
@@ -4888,21 +4875,21 @@ def : Pat <(i1 (setult (i64 DoubleRegs:$src1), (i64 DoubleRegs:$src2))),
       (i1 (C2_cmpgtup (i64 DoubleRegs:$src2), (i64 DoubleRegs:$src1)))>;
 
 // Generate cmpgeu(Rs, #0) -> cmpeq(Rs, Rs)
-def : Pat <(i1 (setuge (i32 IntRegs:$src1), 0)),
-      (i1 (C2_cmpeq (i32 IntRegs:$src1), (i32 IntRegs:$src1)))>;
+def: Pat<(i1 (setuge (i32 IntRegs:$src1), 0)),
+         (C2_cmpeq IntRegs:$src1, IntRegs:$src1)>;
 
 // Generate cmpgeu(Rs, #u8) -> cmpgtu(Rs, #u8 -1)
-def : Pat <(i1 (setuge (i32 IntRegs:$src1), u8ExtPred:$src2)),
-      (i1 (C2_cmpgtui (i32 IntRegs:$src1), (DEC_CONST_UNSIGNED u8ExtPred:$src2)))>;
+def: Pat<(i1 (setuge (i32 IntRegs:$src1), u8ExtPred:$src2)),
+         (C2_cmpgtui IntRegs:$src1, (DEC_CONST_UNSIGNED u8ExtPred:$src2))>;
 
 // Generate cmpgtu(Rs, #u9)
-def : Pat <(i1 (setugt (i32 IntRegs:$src1), u9ExtPred:$src2)),
-      (i1 (C2_cmpgtui (i32 IntRegs:$src1), u9ExtPred:$src2))>;
+def: Pat<(i1 (setugt (i32 IntRegs:$src1), u9ExtPred:$src2)),
+         (C2_cmpgtui IntRegs:$src1, u9ExtPred:$src2)>;
 
 // Map from Rs >= Rt -> !(Rt > Rs).
 // rs >= rt -> !(rt > rs).
-def : Pat <(i1 (setuge (i32 IntRegs:$src1), (i32 IntRegs:$src2))),
-      (i1 (C2_not (C2_cmpgtu (i32 IntRegs:$src2), (i32 IntRegs:$src1))))>;
+def: Pat<(i1 (setuge (i64 DoubleRegs:$src1), (i64 DoubleRegs:$src2))),
+         (C2_not (C2_cmpgtup DoubleRegs:$src2, DoubleRegs:$src1))>;
 
 // Map from Rs >= Rt -> !(Rt > Rs).
 // rs >= rt -> !(rt > rs).
@@ -4916,17 +4903,17 @@ def : Pat <(i1 (setule (i32 IntRegs:$src1), (i32 IntRegs:$src2))),
 
 // Map from cmpleu(Rss, Rtt) -> !cmpgtu(Rss, Rtt-1).
 // Map from (Rs <= Rt) -> !(Rs > Rt).
-def : Pat <(i1 (setule (i64 DoubleRegs:$src1), (i64 DoubleRegs:$src2))),
-      (i1 (C2_not (C2_cmpgtup (i64 DoubleRegs:$src1), (i64 DoubleRegs:$src2))))>;
+def: Pat<(i1 (setule (i64 DoubleRegs:$src1), (i64 DoubleRegs:$src2))),
+         (C2_not (C2_cmpgtup DoubleRegs:$src1, DoubleRegs:$src2))>;
 
 // Sign extends.
 // i1 -> i32
-def : Pat <(i32 (sext (i1 PredRegs:$src1))),
-      (i32 (C2_muxii (i1 PredRegs:$src1), -1, 0))>;
+def: Pat<(i32 (sext (i1 PredRegs:$src1))),
+         (C2_muxii PredRegs:$src1, -1, 0)>;
 
 // i1 -> i64
-def : Pat <(i64 (sext (i1 PredRegs:$src1))),
-      (i64 (A2_combinew (A2_tfrsi -1), (C2_muxii (i1 PredRegs:$src1), -1, 0)))>;
+def: Pat<(i64 (sext (i1 PredRegs:$src1))),
+         (A2_combinew (A2_tfrsi -1), (C2_muxii PredRegs:$src1, -1, 0))>;
 
 // Convert sign-extended load back to load and sign extend.
 // i8 -> i64
@@ -4948,11 +4935,10 @@ def:  Pat <(i64 (sextloadi16 ADDRriS11_1:$src1)),
 def:  Pat <(i64 (sextloadi32 ADDRriS11_2:$src1)),
       (i64 (A2_sxtw (L2_loadri_io AddrFI:$src1, 0)))>;
 
-
 // Zero extends.
 // i1 -> i32
-def : Pat <(i32 (zext (i1 PredRegs:$src1))),
-      (i32 (C2_muxii (i1 PredRegs:$src1), 1, 0))>;
+def: Pat<(i32 (zext (i1 PredRegs:$src1))),
+         (C2_muxii PredRegs:$src1, 1, 0)>;
 
 // i1 -> i64
 def : Pat <(i64 (zext (i1 PredRegs:$src1))),
@@ -5016,12 +5002,12 @@ def:  Pat <(i32 (zextloadi1 ADDRriS11_0:$src1)),
       (i32 (L2_loadri_io AddrFI:$src1, 0))>;
 
 // Map from Rs = Pd to Pd = mux(Pd, #1, #0)
-def : Pat <(i32 (zext (i1 PredRegs:$src1))),
-      (i32 (C2_muxii (i1 PredRegs:$src1), 1, 0))>;
+def: Pat<(i32 (anyext (i1 PredRegs:$src1))),
+         (C2_muxii PredRegs:$src1, 1, 0)>;
 
-// Map from Rs = Pd to Pd = mux(Pd, #1, #0)
-def : Pat <(i32 (anyext (i1 PredRegs:$src1))),
-      (i32 (C2_muxii (i1 PredRegs:$src1), 1, 0))>;
+// Map from Rss = Pd to Rdd = sxtw (mux(Pd, #1, #0))
+def: Pat<(i64 (anyext (i1 PredRegs:$src1))),
+         (A2_sxtw (C2_muxii PredRegs:$src1, 1, 0))>;
 
 // Map from Rss = Pd to Rdd = A2_sxtw (mux(Pd, #1, #0))
 def : Pat <(i64 (anyext (i1 PredRegs:$src1))),
@@ -5111,91 +5097,38 @@ def : Pat<(i64 (zext (i32 IntRegs:$src1))),
 
 // Multiply 64-bit unsigned and use upper result.
 def : Pat <(mulhu (i64 DoubleRegs:$src1), (i64 DoubleRegs:$src2)),
-      (i64
-       (M2_dpmpyuu_acc_s0
-        (i64
-         (A2_combinew
-          (A2_tfrsi 0),
-           (i32
-            (EXTRACT_SUBREG
-             (i64
-              (S2_lsr_i_p
-               (i64
-                (M2_dpmpyuu_acc_s0
-                 (i64
-                  (M2_dpmpyuu_acc_s0
-                   (i64
-                    (A2_combinew (A2_tfrsi 0),
-                     (i32
-                      (EXTRACT_SUBREG
-                       (i64
-                        (S2_lsr_i_p
-                         (i64
-                          (M2_dpmpyuu_s0 
-                            (i32 (EXTRACT_SUBREG (i64 DoubleRegs:$src1),
-                                                       subreg_loreg)),
-                                  (i32 (EXTRACT_SUBREG (i64 DoubleRegs:$src2),
-                                                       subreg_loreg)))), 32)),
-                       subreg_loreg)))),
-                  (i32 (EXTRACT_SUBREG (i64 DoubleRegs:$src1), subreg_hireg)),
-                  (i32 (EXTRACT_SUBREG (i64 DoubleRegs:$src2), subreg_loreg)))),
-                 (i32 (EXTRACT_SUBREG (i64 DoubleRegs:$src1), subreg_loreg)),
-                 (i32 (EXTRACT_SUBREG (i64 DoubleRegs:$src2), subreg_hireg)))),
-               32)), subreg_loreg)))),
-        (i32 (EXTRACT_SUBREG (i64 DoubleRegs:$src1), subreg_hireg)),
-        (i32 (EXTRACT_SUBREG (i64 DoubleRegs:$src2), subreg_hireg))))>;
-
-// Multiply 64-bit signed and use upper result.
-def : Pat <(mulhs (i64 DoubleRegs:$src1), (i64 DoubleRegs:$src2)),
-      (i64
-       (M2_dpmpyss_acc_s0
-        (i64
-         (A2_combinew (A2_tfrsi 0),
-          (i32
-           (EXTRACT_SUBREG
-            (i64
-             (S2_lsr_i_p
-              (i64
-               (M2_dpmpyss_acc_s0
-                (i64
-                 (M2_dpmpyss_acc_s0
-                  (i64
-                   (A2_combinew (A2_tfrsi 0),
-                    (i32
-                     (EXTRACT_SUBREG
-                      (i64
-                       (S2_lsr_i_p
-                        (i64
-                         (M2_dpmpyuu_s0 
-                           (i32 (EXTRACT_SUBREG (i64 DoubleRegs:$src1),
-                                                      subreg_loreg)),
-                                 (i32 (EXTRACT_SUBREG (i64 DoubleRegs:$src2),
-                                                      subreg_loreg)))), 32)),
-                      subreg_loreg)))),
-                  (i32 (EXTRACT_SUBREG (i64 DoubleRegs:$src1), subreg_hireg)),
-                  (i32 (EXTRACT_SUBREG (i64 DoubleRegs:$src2), subreg_loreg)))),
-                (i32 (EXTRACT_SUBREG (i64 DoubleRegs:$src1), subreg_loreg)),
-                (i32 (EXTRACT_SUBREG (i64 DoubleRegs:$src2), subreg_hireg)))),
-              32)), subreg_loreg)))),
-        (i32 (EXTRACT_SUBREG (i64 DoubleRegs:$src1), subreg_hireg)),
-        (i32 (EXTRACT_SUBREG (i64 DoubleRegs:$src2), subreg_hireg))))>;
+  (A2_addp
+    (M2_dpmpyuu_acc_s0
+      (S2_lsr_i_p
+        (A2_addp
+          (M2_dpmpyuu_acc_s0
+            (S2_lsr_i_p (M2_dpmpyuu_s0 (LoReg $src1), (LoReg $src2)), 32),
+            (HiReg $src1),
+            (LoReg $src2)),
+          (A2_combinew (A2_tfrsi 0),
+                       (LoReg (M2_dpmpyuu_s0 (LoReg $src1), (HiReg $src2))))),
+        32),
+      (HiReg $src1),
+      (HiReg $src2)),
+    (S2_lsr_i_p (M2_dpmpyuu_s0 (LoReg $src1), (HiReg $src2)), 32)
+)>;
 
 // Hexagon specific ISD nodes.
-def SDTHexagonADJDYNALLOC : SDTypeProfile<1, 2,
-                                  [SDTCisVT<0, i32>, SDTCisVT<1, i32>]>;
+def SDTHexagonADJDYNALLOC : SDTypeProfile<1, 2, [SDTCisVT<0, i32>,
+                                                 SDTCisVT<1, i32>]>;
+def SDTHexagonARGEXTEND   : SDTypeProfile<1, 1, [SDTCisVT<0, i32>]>;
+
 def Hexagon_ADJDYNALLOC : SDNode<"HexagonISD::ADJDYNALLOC",
                                   SDTHexagonADJDYNALLOC>;
-// Needed to tag these instructions for stack layout.
-let usesCustomInserter = 1, isAsmParserOnly = 1 in
-def ADJDYNALLOC : ALU32_ri<(outs IntRegs:$dst), (ins IntRegs:$src1,
-                                                     s16Imm:$src2),
-                  "$dst = add($src1, #$src2)",
-                  [(set (i32 IntRegs:$dst),
-                        (Hexagon_ADJDYNALLOC (i32 IntRegs:$src1),
-                                             s16ImmPred:$src2))]>;
+def Hexagon_ARGEXTEND   : SDNode<"HexagonISD::ARGEXTEND", SDTHexagonARGEXTEND>;
 
-def SDTHexagonARGEXTEND : SDTypeProfile<1, 1, [SDTCisVT<0, i32>]>;
-def Hexagon_ARGEXTEND : SDNode<"HexagonISD::ARGEXTEND", SDTHexagonARGEXTEND>;
+// Needed to tag these instructions for stack layout.
+let isCodeGenOnly = 1, usesCustomInserter = 1 in
+def ADJDYNALLOC : T_Addri<s6Imm>;
+
+def: Pat<(Hexagon_ADJDYNALLOC I32:$Rs, s16ImmPred:$s16),
+         (ADJDYNALLOC I32:$Rs, imm:$s16)>;
+
 let isCodeGenOnly = 1 in
 def ARGEXTEND : ALU32_rr <(outs IntRegs:$dst), (ins IntRegs:$src1),
                 "$dst = $src1",
@@ -5203,8 +5136,8 @@ def ARGEXTEND : ALU32_rr <(outs IntRegs:$dst), (ins IntRegs:$src1),
                       (Hexagon_ARGEXTEND (i32 IntRegs:$src1)))]>;
 
 let AddedComplexity = 100 in
-def : Pat<(i32 (sext_inreg (Hexagon_ARGEXTEND (i32 IntRegs:$src1)), i16)),
-      (COPY (i32 IntRegs:$src1))>;
+def: Pat<(i32 (sext_inreg (Hexagon_ARGEXTEND (i32 IntRegs:$src1)), i16)),
+         (i32 IntRegs:$src1)>;
 
 def HexagonWrapperJT: SDNode<"HexagonISD::WrapperJT", SDTIntUnaryOp>;
 
@@ -5712,6 +5645,10 @@ let hasNewValue = 1 in {
   def S2_extractu    : T_S2op_extract <"extractu", 0b1101, IntRegs, u5Imm>;
 }
 
+// Change the sign of the immediate for Rd=-mpyi(Rs,#u8)
+def: Pat<(mul (i32 IntRegs:$src1), (ineg n8ImmPred:$src2)),
+         (M2_mpysin IntRegs:$src1, u8ImmPred:$src2)>;
+
 //===----------------------------------------------------------------------===//
 // :raw for of tableindx[bdhw] insns
 //===----------------------------------------------------------------------===//
@@ -5742,10 +5679,6 @@ def S2_tableidxb : tableidxRaw<"tableidxb", 0b00>;
 def S2_tableidxh : tableidxRaw<"tableidxh", 0b01>;
 def S2_tableidxw : tableidxRaw<"tableidxw", 0b10>;
 def S2_tableidxd : tableidxRaw<"tableidxd", 0b11>;
-
-// Change the sign of the immediate for Rd=-mpyi(Rs,#u8)
-def : Pat <(mul (i32 IntRegs:$src1), (ineg n8ImmPred:$src2)),
-      (i32 (M2_mpysin (i32 IntRegs:$src1), u8ImmPred:$src2))>;
 
 //===----------------------------------------------------------------------===//
 // V3 Instructions +
