@@ -190,7 +190,7 @@ define void @test_asr_arith(i32 %lhs32, i32 %rhs32, i64 %lhs64, i64 %rhs64) {
 ; CHECK: ret
 }
 
-define i32 @test_cmp(i32 %lhs32, i32 %rhs32, i64 %lhs64, i64 %rhs64) {
+define void @test_cmp(i32 %lhs32, i32 %rhs32, i64 %lhs64, i64 %rhs64, i32 %v) {
 ; CHECK-LABEL: test_cmp:
 
   %shift1 = shl i32 %rhs32, 13
@@ -199,40 +199,46 @@ define i32 @test_cmp(i32 %lhs32, i32 %rhs32, i64 %lhs64, i64 %rhs64) {
 ; CHECK: cmp {{w[0-9]+}}, {{w[0-9]+}}, lsl #13
 
 t2:
+  store volatile i32 %v, i32* @var32
   %shift2 = lshr i32 %rhs32, 20
   %tst2 = icmp ne i32 %lhs32, %shift2
   br i1 %tst2, label %t3, label %end
 ; CHECK: cmp {{w[0-9]+}}, {{w[0-9]+}}, lsr #20
 
 t3:
+  store volatile i32 %v, i32* @var32
   %shift3 = ashr i32 %rhs32, 9
   %tst3 = icmp ne i32 %lhs32, %shift3
   br i1 %tst3, label %t4, label %end
 ; CHECK: cmp {{w[0-9]+}}, {{w[0-9]+}}, asr #9
 
 t4:
+  store volatile i32 %v, i32* @var32
   %shift4 = shl i64 %rhs64, 43
   %tst4 = icmp uge i64 %lhs64, %shift4
   br i1 %tst4, label %t5, label %end
 ; CHECK: cmp {{x[0-9]+}}, {{x[0-9]+}}, lsl #43
 
 t5:
+  store volatile i32 %v, i32* @var32
   %shift5 = lshr i64 %rhs64, 20
   %tst5 = icmp ne i64 %lhs64, %shift5
   br i1 %tst5, label %t6, label %end
 ; CHECK: cmp {{x[0-9]+}}, {{x[0-9]+}}, lsr #20
 
 t6:
+  store volatile i32 %v, i32* @var32
   %shift6 = ashr i64 %rhs64, 59
   %tst6 = icmp ne i64 %lhs64, %shift6
   br i1 %tst6, label %t7, label %end
 ; CHECK: cmp {{x[0-9]+}}, {{x[0-9]+}}, asr #59
 
 t7:
-  ret i32 1
-end:
+  store volatile i32 %v, i32* @var32
+  br label %end
 
-  ret i32 0
+end:
+  ret void
 ; CHECK: ret
 }
 
