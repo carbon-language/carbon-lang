@@ -399,28 +399,28 @@ endif
 # and the -MM option will list all non-system dependencies.
 #----------------------------------------------------------------------
 %.d: %.c
-	@set -e; rm -f $@; \
-	$(CC) -M $(CFLAGS) $< > $@.$$$$; \
-	sed 's,\($*\)\.o[ :]*,\1.o $@ : ,g' < $@.$$$$ > $@; \
-	rm -f $@.$$$$
+	@rm -f $@; \
+	$(CC) -M $(CFLAGS) $< > $@.tmp && \
+	sed 's,\($*\)\.o[ :]*,\1.o $@ : ,g' < $@.tmp > $@; \
+	rm -f $@.tmp
 
 %.d: %.cpp
-	@set -e; rm -f $@; \
-	$(CXX) -M $(CXXFLAGS) $< > $@.$$$$; \
-	sed 's,\($*\)\.o[ :]*,\1.o $@ : ,g' < $@.$$$$ > $@; \
-	rm -f $@.$$$$
+	@rm -f $@; \
+	$(CXX) -M $(CXXFLAGS) $< > $@.tmp && \
+	sed 's,\($*\)\.o[ :]*,\1.o $@ : ,g' < $@.tmp > $@; \
+	rm -f $@.tmp
 
 %.d: %.m
-	@set -e; rm -f $@; \
-	$(CC) -M $(CFLAGS) $< > $@.$$$$; \
-	sed 's,\($*\)\.o[ :]*,\1.o $@ : ,g' < $@.$$$$ > $@; \
-	rm -f $@.$$$$
+	@rm -f $@; \
+	$(CC) -M $(CFLAGS) $< > $@.tmp && \
+	sed 's,\($*\)\.o[ :]*,\1.o $@ : ,g' < $@.tmp > $@; \
+	rm -f $@.tmp
 
 %.d: %.mm
-	@set -e; rm -f $@; \
-	$(CXX) -M $(CXXFLAGS) $< > $@.$$$$; \
-	sed 's,\($*\)\.o[ :]*,\1.o $@ : ,g' < $@.$$$$ > $@; \
-	rm -f $@.$$$$
+	@rm -f $@; \
+	$(CXX) -M $(CXXFLAGS) $< > $@.tmp && \
+	sed 's,\($*\)\.o[ :]*,\1.o $@ : ,g' < $@.tmp > $@; \
+	rm -f $@.tmp
 
 #----------------------------------------------------------------------
 # Include all of the makefiles for each source file so we don't have
@@ -440,11 +440,10 @@ endif
 dsym:	$(DSYM)
 all:	$(EXE) $(DSYM)
 clean::
-	$(RM) "$(EXE)" $(OBJECTS) $(PREREQS) $(ARCHIVE_NAME) $(ARCHIVE_OBJECTS)
-	$(RM) -r $(wildcard *.d.[0-9] *.d.[0-9][0-9] *.d.[0-9][0-9][0-9] *.d.[0-9][0-9][0-9][0-9] *.d.[0-9][0-9][0-9][0-9][0-9])
+	$(RM) "$(EXE)" $(OBJECTS) $(PREREQS) $(PREREQS:.d=.d.tmp) $(ARCHIVE_NAME) $(ARCHIVE_OBJECTS)
 ifneq "$(DYLIB_NAME)" ""
 	$(RM) -r $(DYLIB_FILENAME).dSYM
-	$(RM) $(DYLIB_OBJECTS) $(DYLIB_PREREQS) $(DYLIB_FILENAME) $(DYLIB_FILENAME).debug
+	$(RM) $(DYLIB_OBJECTS) $(DYLIB_PREREQS) $(DYLIB_PREREQS:.d=.d.tmp) $(DYLIB_FILENAME) $(DYLIB_FILENAME).debug
 endif
 ifneq "$(DSYM)" ""
 	$(RM) -r "$(DSYM)"
