@@ -1190,14 +1190,6 @@ def : Pat <(truncstorei16 s8ExtPred:$src2, (i32 IntRegs:$src1)),
 // memw(Re=#U6)=Rt
 // TODO: Needs to be implemented.
 
-// Store predicate:
-let hasSideEffects = 0 in
-def STriw_pred_V4 : STInst2<(outs),
-            (ins MEMri:$addr, PredRegs:$src1),
-            "Error; should not emit",
-            []>,
-            Requires<[HasV4T]>;
-
 let AddedComplexity = 6 in
 def : Pat <(store s8ExtPred:$src2, (i32 IntRegs:$src1)),
            (S4_storeiri_io IntRegs:$src1, 0, s8ExtPred:$src2)>,
@@ -3880,7 +3872,8 @@ def : Pat <(i1 (load (HexagonCONST32_GP tglobaladdr:$global))),
 
 // Transfer global address into a register
 let isExtended = 1, opExtendable = 1, AddedComplexity=50, isMoveImm = 1,
-isAsCheapAsAMove = 1, isReMaterializable = 1, validSubTargets = HasV4SubT in
+isAsCheapAsAMove = 1, isReMaterializable = 1, validSubTargets = HasV4SubT,
+isCodeGenOnly = 1 in
 def TFRI_V4 : ALU32_ri<(outs IntRegs:$dst), (ins s16Ext:$src1),
            "$dst = #$src1",
            [(set IntRegs:$dst, (HexagonCONST32 tglobaladdr:$src1))]>,
@@ -3895,16 +3888,6 @@ let AddedComplexity = 50, Predicates = [HasV4T] in
 def : Pat<(HexagonCONST32_GP tglobaladdr:$src1),
            (TFRI_V4 tglobaladdr:$src1)>,
            Requires<[HasV4T]>;
-
-// Indexed store word - global address.
-// memw(Rs+#u6:2)=#S8
-let AddedComplexity = 10 in
-def STriw_offset_ext_V4 : STInst<(outs),
-            (ins IntRegs:$src1, u6_2Imm:$src2, globaladdress:$src3),
-            "memw($src1+#$src2) = ##$src3",
-            [(store (HexagonCONST32 tglobaladdr:$src3),
-                    (add IntRegs:$src1, u6_2ImmPred:$src2))]>,
-            Requires<[HasV4T]>;
 
 // i8/i16/i32 -> i64 loads
 // We need a complexity of 120 here to override preceding handling of
@@ -3951,16 +3934,6 @@ def: Storea_pat<SwapSt<atomic_store_8>,  I32, addrgp, S2_storerbabs>;
 def: Storea_pat<SwapSt<atomic_store_16>, I32, addrgp, S2_storerhabs>;
 def: Storea_pat<SwapSt<atomic_store_32>, I32, addrgp, S2_storeriabs>;
 def: Storea_pat<SwapSt<atomic_store_64>, I64, addrgp, S2_storerdabs>;
-
-// Indexed store double word - global address.
-// memw(Rs+#u6:2)=#S8
-let AddedComplexity = 10 in
-def STrih_offset_ext_V4 : STInst<(outs),
-            (ins IntRegs:$src1, u6_1Imm:$src2, globaladdress:$src3),
-            "memh($src1+#$src2) = ##$src3",
-            [(truncstorei16 (HexagonCONST32 tglobaladdr:$src3),
-                    (add IntRegs:$src1, u6_1ImmPred:$src2))]>,
-            Requires<[HasV4T]>;
 
 //===----------------------------------------------------------------------===//
 // :raw for of boundscheck:hi:lo insns

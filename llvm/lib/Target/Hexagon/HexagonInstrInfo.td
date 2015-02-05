@@ -4644,7 +4644,7 @@ def Y4_trace: CRInst <(outs), (ins IntRegs:$Rs),
     let Inst{20-16} = Rs;
   }
 
-let AddedComplexity = 100, isPredicated = 1 in
+let AddedComplexity = 100, isPredicated = 1, isCodeGenOnly = 1 in
 def TFR_condset_ri : ALU32_rr<(outs IntRegs:$dst),
             (ins PredRegs:$src1, IntRegs:$src2, s12Imm:$src3),
             "Error; should not emit",
@@ -4652,7 +4652,7 @@ def TFR_condset_ri : ALU32_rr<(outs IntRegs:$dst),
              (i32 (select (i1 PredRegs:$src1), (i32 IntRegs:$src2),
                           s12ImmPred:$src3)))]>;
 
-let AddedComplexity = 100, isPredicated = 1 in
+let AddedComplexity = 100, isPredicated = 1, isCodeGenOnly = 1 in
 def TFR_condset_ir : ALU32_rr<(outs IntRegs:$dst),
             (ins PredRegs:$src1, s12Imm:$src2, IntRegs:$src3),
             "Error; should not emit",
@@ -4660,7 +4660,7 @@ def TFR_condset_ir : ALU32_rr<(outs IntRegs:$dst),
              (i32 (select (i1 PredRegs:$src1), s12ImmPred:$src2,
                           (i32 IntRegs:$src3))))]>;
 
-let AddedComplexity = 100, isPredicated = 1 in
+let AddedComplexity = 100, isPredicated = 1, isCodeGenOnly = 1 in
 def TFR_condset_ii : ALU32_rr<(outs IntRegs:$dst),
                               (ins PredRegs:$src1, s12Imm:$src2, s12Imm:$src3),
                      "Error; should not emit",
@@ -4669,7 +4669,7 @@ def TFR_condset_ii : ALU32_rr<(outs IntRegs:$dst),
                                         s12ImmPred:$src3)))]>;
 
 // Generate frameindex addresses.
-let isReMaterializable = 1 in
+let isReMaterializable = 1, isCodeGenOnly = 1 in
 def TFR_FI : ALU32_ri<(outs IntRegs:$dst), (ins FrameIndex:$src1),
              "$dst = add($src1)",
              [(set (i32 IntRegs:$dst), ADDRri:$src1)]>;
@@ -4780,6 +4780,7 @@ def CONST64_Int_Real : LDInst2<(outs DoubleRegs:$dst), (ins i64imm:$global),
                        "$dst = CONST64(#$global)",
                        [(set (i64 DoubleRegs:$dst), imm:$global) ]>;
 
+let isCodeGenOnly = 1 in
 def TFR_PdFalse : SInst<(outs PredRegs:$dst), (ins),
                   "$dst = xor($dst, $dst)",
                   [(set (i1 PredRegs:$dst), 0)]>;
