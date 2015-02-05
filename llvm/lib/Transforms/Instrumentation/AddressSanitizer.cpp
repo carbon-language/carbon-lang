@@ -189,7 +189,7 @@ static cl::opt<bool> ClCheckLifetime("asan-check-lifetime",
 static cl::opt<bool> ClDynamicAllocaStack(
     "asan-stack-dynamic-alloca",
     cl::desc("Use dynamic alloca to represent stack variables"), cl::Hidden,
-    cl::init(false));
+    cl::init(true));
 
 // Debug flags.
 static cl::opt<int> ClDebug("asan-debug", cl::desc("debug"), cl::Hidden,
