@@ -647,7 +647,8 @@ void AtomChunk::applyRelocationsX86(uint8_t *buffer,
       auto relocSite32 = reinterpret_cast<ulittle32_t *>(
           buffer + layout->_fileOffset + ref->offsetInAtom());
       auto relocSite16 = reinterpret_cast<ulittle16_t *>(relocSite32);
-      uint64_t targetAddr = atomRva[ref->target()];
+      const Atom *target = ref->target();
+      uint64_t targetAddr = atomRva[target];
       // Also account for whatever offset is already stored at the relocation
       // site.
       switch (ref->kindValue()) {
@@ -656,7 +657,10 @@ void AtomChunk::applyRelocationsX86(uint8_t *buffer,
         break;
       case llvm::COFF::IMAGE_REL_I386_DIR32:
         // Set target's 32-bit VA.
-        *relocSite32 += targetAddr + imageBaseAddress;
+        if (auto *abs = dyn_cast<AbsoluteAtom>(target))
+          *relocSite32 += abs->value();
+        else
+          *relocSite32 += targetAddr + imageBaseAddress;
         break;
       case llvm::COFF::IMAGE_REL_I386_DIR32NB:
         // Set target's 32-bit RVA.
