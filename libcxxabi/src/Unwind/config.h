@@ -50,7 +50,7 @@
   #define _LIBUNWIND_LOG(msg, ...) fprintf(stderr, "libuwind: " msg, __VA_ARGS__)
   #define _LIBUNWIND_ABORT(msg) __assert_rtn(__func__, __FILE__, __LINE__, msg)
 
-  #if FOR_DYLD
+  #if defined(FOR_DYLD)
     #define _LIBUNWIND_SUPPORT_COMPACT_UNWIND 1
     #define _LIBUNWIND_SUPPORT_DWARF_UNWIND   0
     #define _LIBUNWIND_SUPPORT_DWARF_INDEX    0
