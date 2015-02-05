@@ -84,7 +84,7 @@ elseif ("${LIBCXX_CXX_ABI_LIBNAME}" STREQUAL "libcxxabi")
     set(CXXABI_LIBNAME "c++abi")
   endif()
   setup_abi_lib("LIBCXX_LIBCXXABI_INCLUDE_PATHS" ""
-    ${CXXABI_LIBNAME} "cxxabi.h" ""
+    ${CXXABI_LIBNAME} "cxxabi.h;__cxxabi_config.h" ""
     )
 elseif ("${LIBCXX_CXX_ABI_LIBNAME}" STREQUAL "libcxxrt")
   setup_abi_lib("LIBCXX_LIBCXXRT_INCLUDE_PATHS" "-DLIBCXXRT"
