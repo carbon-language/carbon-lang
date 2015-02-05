@@ -30,6 +30,7 @@
 #include "lldb/Host/ThreadLauncher.h"
 #include "lldb/Host/TimeValue.h"
 #include "lldb/Target/Process.h"
+#include "llvm/ADT/SmallString.h"
 
 // Project includes
 #include "ProcessGDBRemoteLog.h"
@@ -764,8 +765,7 @@ GDBRemoteCommunication::StartDebugserverProcess (const char *hostname,
             debugserver_args.AppendArgument("--setsid");
         }
 
-        char named_pipe_path[PATH_MAX];
-        named_pipe_path[0] = '\0';
+        llvm::SmallString<PATH_MAX> named_pipe_path;
         Pipe port_named_pipe;
 
         bool listen = false;
@@ -779,25 +779,11 @@ GDBRemoteCommunication::StartDebugserverProcess (const char *hostname,
             {
                 // Binding to port zero, we need to figure out what port it ends up
                 // using using a named pipe...
-                FileSpec tmpdir_file_spec;
-                if (HostInfo::GetLLDBPath(ePathTypeLLDBTempSystemDir, tmpdir_file_spec))
-                {
-                    tmpdir_file_spec.AppendPathComponent("debugserver-named-pipe.XXXXXX");
-                    strncpy(named_pipe_path, tmpdir_file_spec.GetPath().c_str(), sizeof(named_pipe_path));
-                }
-                else
-                {
-                    strncpy(named_pipe_path, "/tmp/debugserver-named-pipe.XXXXXX", sizeof(named_pipe_path));
-                }
-
-                if (::mktemp (named_pipe_path))
-                {
-                    error = port_named_pipe.CreateNew(named_pipe_path, false);
-                    if (error.Fail())
-                        return error;
-                    debugserver_args.AppendArgument("--named-pipe");
-                    debugserver_args.AppendArgument(named_pipe_path);
-                }
+                error = port_named_pipe.CreateWithUniqueName("debugserver-named-pipe", false, named_pipe_path);
+                if (error.Fail())
+                    return error;
+                debugserver_args.AppendArgument("--named-pipe");
+                debugserver_args.AppendArgument(named_pipe_path.c_str());
             }
             else
             {
@@ -877,7 +863,7 @@ GDBRemoteCommunication::StartDebugserverProcess (const char *hostname,
         
         if (error.Success() && launch_info.GetProcessID() != LLDB_INVALID_PROCESS_ID)
         {
-            if (named_pipe_path[0])
+            if (named_pipe_path.size() > 0)
             {
                 error = port_named_pipe.OpenAsReader(named_pipe_path, false);
                 if (error.Success())
@@ -897,7 +883,7 @@ GDBRemoteCommunication::StartDebugserverProcess (const char *hostname,
                     else
                     {
                         if (log)
-                            log->Printf("GDBRemoteCommunication::%s() failed to read a port value from named pipe %s: %s", __FUNCTION__, named_pipe_path, error.AsCString());
+                            log->Printf("GDBRemoteCommunication::%s() failed to read a port value from named pipe %s: %s", __FUNCTION__, named_pipe_path.c_str(), error.AsCString());
 
                     }
                     port_named_pipe.Close();
@@ -905,13 +891,13 @@ GDBRemoteCommunication::StartDebugserverProcess (const char *hostname,
                 else
                 {
                     if (log)
-                        log->Printf("GDBRemoteCommunication::%s() failed to open named pipe %s for reading: %s", __FUNCTION__, named_pipe_path, error.AsCString());
+                        log->Printf("GDBRemoteCommunication::%s() failed to open named pipe %s for reading: %s", __FUNCTION__, named_pipe_path.c_str(), error.AsCString());
                 }
                 const auto err = port_named_pipe.Delete(named_pipe_path);
                 if (err.Fail())
                 {
                     if (log)
-                        log->Printf ("GDBRemoteCommunication::%s failed to delete pipe %s: %s", __FUNCTION__, named_pipe_path, err.AsCString());
+                        log->Printf ("GDBRemoteCommunication::%s failed to delete pipe %s: %s", __FUNCTION__, named_pipe_path.c_str(), err.AsCString());
                 }
             }
             else if (listen)

@@ -9,6 +9,8 @@
 
 #include "lldb/Host/windows/PipeWindows.h"
 
+#include "llvm/ADT/SmallString.h"
+#include "llvm/Support/Process.h"
 #include "llvm/Support/raw_ostream.h"
 
 #include <fcntl.h>
@@ -87,6 +89,24 @@ PipeWindows::CreateNew(llvm::StringRef name, bool child_process_inherit)
     }
 
     return result;
+}
+
+Error
+PipeWindows::CreateWithUniqueName(llvm::StringRef prefix, bool child_process_inherit, llvm::SmallVectorImpl<char>& name)
+{
+    llvm::SmallString<128> pipe_name;
+    Error error;
+    do {
+        pipe_name = prefix;
+        pipe_name += "-";
+        for (unsigned i = 0; i < 6; i++) {
+            pipe_name += "0123456789abcdef"[llvm::sys::Process::GetRandomNumber() & 15];
+        }
+        Error error = CreateNew(pipe_name, child_process_inherit);
+    } while (error.GetError() == ERROR_ALREADY_EXISTS);
+    if (error.Success())
+        name = pipe_name;
+    return error;
 }
 
 Error

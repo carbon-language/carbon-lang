@@ -14,6 +14,7 @@
 #include <string>
 
 #include "lldb/Core/Error.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
 
 namespace lldb_private
@@ -25,6 +26,7 @@ class PipeBase
 
     virtual Error CreateNew(bool child_process_inherit) = 0;
     virtual Error CreateNew(llvm::StringRef name, bool child_process_inherit) = 0;
+    virtual Error CreateWithUniqueName(llvm::StringRef prefix, bool child_process_inherit, llvm::SmallVectorImpl<char>& name) = 0;
 
     virtual Error OpenAsReader(llvm::StringRef name, bool child_process_inherit) = 0;
 

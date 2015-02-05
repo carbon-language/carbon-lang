@@ -36,6 +36,8 @@ public:
     Error
     CreateNew(llvm::StringRef name, bool child_process_inherit) override;
     Error
+    CreateWithUniqueName(llvm::StringRef prefix, bool child_process_inherit, llvm::SmallVectorImpl<char>& name) override;
+    Error
     OpenAsReader(llvm::StringRef name, bool child_process_inherit) override;
     Error
     OpenAsWriterWithTimeout(llvm::StringRef name, bool child_process_inherit, const std::chrono::microseconds &timeout) override;
