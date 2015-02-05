@@ -341,8 +341,9 @@ class Configuration(object):
             self.cxx.flags += ['-target', self.config.target_triple]
 
     def configure_compile_flags_header_includes(self):
-        self.cxx.compile_flags += [
-            '-I' + os.path.join(self.libcxx_src_root, 'test/support')]
+        support_path = os.path.join(self.libcxx_src_root, 'test/support')
+        self.cxx.compile_flags += ['-I' + support_path]
+        self.cxx.compile_flags += ['-include', os.path.join(support_path, 'nasty_macros.hpp')]
         libcxx_headers = self.get_lit_conf(
             'libcxx_headers', os.path.join(self.libcxx_src_root, 'include'))
         if not os.path.isdir(libcxx_headers):
