@@ -292,7 +292,11 @@ void MacOSKeychainAPIChecker::checkPreStmt(const CallExpr *CE,
   // If it is a call to an allocator function, it could be a double allocation.
   idx = getTrackedFunctionIndex(funName, true);
   if (idx != InvalidIdx) {
-    const Expr *ArgExpr = CE->getArg(FunctionsToTrack[idx].Param);
+    unsigned paramIdx = FunctionsToTrack[idx].Param;
+    if (CE->getNumArgs() <= paramIdx)
+      return;
+
+    const Expr *ArgExpr = CE->getArg(paramIdx);
     if (SymbolRef V = getAsPointeeSymbol(ArgExpr, C))
       if (const AllocationState *AS = State->get<AllocatedData>(V)) {
         if (!definitelyReturnedError(AS->Region, State, C.getSValBuilder())) {
@@ -325,8 +329,12 @@ void MacOSKeychainAPIChecker::checkPreStmt(const CallExpr *CE,
   if (idx == InvalidIdx)
     return;
 
+  unsigned paramIdx = FunctionsToTrack[idx].Param;
+  if (CE->getNumArgs() <= paramIdx)
+    return;
+
   // Check the argument to the deallocator.
-  const Expr *ArgExpr = CE->getArg(FunctionsToTrack[idx].Param);
+  const Expr *ArgExpr = CE->getArg(paramIdx);
   SVal ArgSVal = State->getSVal(ArgExpr, C.getLocationContext());
 
   // Undef is reported by another checker.
