@@ -492,9 +492,22 @@ let Uses = [RDX, RAX] in {
   def XRSTOR64 : RI<0xAE, MRM5m, (outs), (ins opaque512mem:$dst),
                  "xrstor64\t$dst", []>, TB, Requires<[In64BitMode]>;
   def XSAVEOPT : I<0xAE, MRM6m, (outs opaque512mem:$dst), (ins),
-                  "xsaveopt\t$dst", []>, TB;
+                  "xsaveopt\t$dst", []>, PS;
   def XSAVEOPT64 : RI<0xAE, MRM6m, (outs opaque512mem:$dst), (ins),
-                    "xsaveopt64\t$dst", []>, TB, Requires<[In64BitMode]>;
+                    "xsaveopt64\t$dst", []>, PS, Requires<[In64BitMode]>;
+
+  def XRSTORS : I<0xC7, MRM3m, (outs), (ins opaque512mem:$dst),
+                "xrstors\t$dst", []>, TB;
+  def XRSTORS64 : RI<0xC7, MRM3m, (outs), (ins opaque512mem:$dst),
+                  "xrstors64\t$dst", []>, TB, Requires<[In64BitMode]>;
+  def XSAVEC : I<0xC7, MRM4m, (outs opaque512mem:$dst), (ins),
+                "xsavec\t$dst", []>, TB;
+  def XSAVEC64 : RI<0xC7, MRM4m, (outs opaque512mem:$dst), (ins),
+                  "xsavec64\t$dst", []>, TB, Requires<[In64BitMode]>;
+  def XSAVES : I<0xC7, MRM5m, (outs opaque512mem:$dst), (ins),
+                "xsaves\t$dst", []>, TB;
+  def XSAVES64 : RI<0xC7, MRM5m, (outs opaque512mem:$dst), (ins),
+                  "xsaves64\t$dst", []>, TB, Requires<[In64BitMode]>;
 }
 } // SchedRW
 
