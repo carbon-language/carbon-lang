@@ -31,7 +31,7 @@ namespace __cxxabiv1
 namespace
 {
 
-#if __arm__
+#ifdef __arm__
 
 // A 32-bit, 4-byte-aligned static data value. The least significant 2 bits must
 // be statically initialized to 0.

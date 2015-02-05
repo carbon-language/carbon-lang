@@ -234,7 +234,7 @@ __cxa_throw(void* thrown_object, std::type_info* tinfo, void (*dest)(void*))
     globals->uncaughtExceptions += 1;   // Not atomically, since globals are thread-local
 
     exception_header->unwindHeader.exception_cleanup = exception_cleanup_func;
-#if __USING_SJLJ_EXCEPTIONS__
+#ifdef __USING_SJLJ_EXCEPTIONS__
     _Unwind_SjLj_RaiseException(&exception_header->unwindHeader);
 #else
     _Unwind_RaiseException(&exception_header->unwindHeader);
@@ -571,7 +571,7 @@ __cxa_rethrow()
         //   nothing
         globals->caughtExceptions = 0;
     }
-#if __USING_SJLJ_EXCEPTIONS__
+#ifdef __USING_SJLJ_EXCEPTIONS__
     _Unwind_SjLj_RaiseException(&exception_header->unwindHeader);
 #else
     _Unwind_RaiseException(&exception_header->unwindHeader);
@@ -700,7 +700,7 @@ __cxa_rethrow_primary_exception(void* thrown_object)
         setDependentExceptionClass(&dep_exception_header->unwindHeader);
         __cxa_get_globals()->uncaughtExceptions += 1;
         dep_exception_header->unwindHeader.exception_cleanup = dependent_exception_cleanup;
-#if __USING_SJLJ_EXCEPTIONS__
+#ifdef __USING_SJLJ_EXCEPTIONS__
         _Unwind_SjLj_RaiseException(&dep_exception_header->unwindHeader);
 #else
         _Unwind_RaiseException(&dep_exception_header->unwindHeader);

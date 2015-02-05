@@ -11,7 +11,7 @@
 
     .text
 
-#if __i386__
+#if defined(__i386__)
 
 #
 # extern int unw_getcontext(unw_context_t* thread_state)

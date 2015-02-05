@@ -159,7 +159,7 @@ extern "C" {
 //
 // The following are the base functions documented by the C++ ABI
 //
-#if __USING_SJLJ_EXCEPTIONS__
+#ifdef __USING_SJLJ_EXCEPTIONS__
 extern _Unwind_Reason_Code
     _Unwind_SjLj_RaiseException(_Unwind_Exception *exception_object);
 extern void _Unwind_SjLj_Resume(_Unwind_Exception *exception_object);
@@ -245,7 +245,7 @@ extern void _Unwind_SetIP(struct _Unwind_Context *, uintptr_t new_value);
 extern uintptr_t _Unwind_GetRegionStart(struct _Unwind_Context *context);
 extern uintptr_t
     _Unwind_GetLanguageSpecificData(struct _Unwind_Context *context);
-#if __USING_SJLJ_EXCEPTIONS__
+#ifdef __USING_SJLJ_EXCEPTIONS__
 extern _Unwind_Reason_Code
     _Unwind_SjLj_ForcedUnwind(_Unwind_Exception *exception_object,
                               _Unwind_Stop_Fn stop, void *stop_parameter);
@@ -255,7 +255,7 @@ extern _Unwind_Reason_Code
                          _Unwind_Stop_Fn stop, void *stop_parameter);
 #endif
 
-#if __USING_SJLJ_EXCEPTIONS__
+#ifdef __USING_SJLJ_EXCEPTIONS__
 typedef struct _Unwind_FunctionContext *_Unwind_FunctionContext_t;
 extern void _Unwind_SjLj_Register(_Unwind_FunctionContext_t fc);
 extern void _Unwind_SjLj_Unregister(_Unwind_FunctionContext_t fc);
@@ -268,7 +268,7 @@ extern void _Unwind_SjLj_Unregister(_Unwind_FunctionContext_t fc);
 //
 //  called by __cxa_rethrow().
 //
-#if __USING_SJLJ_EXCEPTIONS__
+#ifdef __USING_SJLJ_EXCEPTIONS__
 extern _Unwind_Reason_Code
     _Unwind_SjLj_Resume_or_Rethrow(_Unwind_Exception *exception_object);
 #else

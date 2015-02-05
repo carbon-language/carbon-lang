@@ -43,16 +43,16 @@ _LIBUNWIND_EXPORT int unw_init_local(unw_cursor_t *cursor,
   _LIBUNWIND_TRACE_API("unw_init_local(cursor=%p, context=%p)\n",
                               cursor, context);
   // Use "placement new" to allocate UnwindCursor in the cursor buffer.
-#if __i386__
+#if defined(__i386__)
   new ((void *)cursor) UnwindCursor<LocalAddressSpace, Registers_x86>(
                                  context, LocalAddressSpace::sThisAddressSpace);
-#elif __x86_64__
+#elif defined(__x86_64__)
   new ((void *)cursor) UnwindCursor<LocalAddressSpace, Registers_x86_64>(
                                  context, LocalAddressSpace::sThisAddressSpace);
-#elif __ppc__
+#elif defined(__ppc__)
   new ((void *)cursor) UnwindCursor<LocalAddressSpace, Registers_ppc>(
                                  context, LocalAddressSpace::sThisAddressSpace);
-#elif __arm64__
+#elif defined(__arm64__)
   new ((void *)cursor) UnwindCursor<LocalAddressSpace, Registers_arm64>(
                                  context, LocalAddressSpace::sThisAddressSpace);
 #elif LIBCXXABI_ARM_EHABI
@@ -65,7 +65,7 @@ _LIBUNWIND_EXPORT int unw_init_local(unw_cursor_t *cursor,
   return UNW_ESUCCESS;
 }
 
-#if UNW_REMOTE
+#ifdef UNW_REMOTE
 
 _LIBUNWIND_EXPORT unw_addr_space_t unw_local_addr_space =
     (unw_addr_space_t) & sThisAddressSpace;
@@ -287,7 +287,7 @@ _LIBUNWIND_EXPORT int unw_is_signal_frame(unw_cursor_t *cursor) {
   return co->isSignalFrame();
 }
 
-#if __arm__
+#ifdef __arm__
 // Save VFP registers d0-d15 using FSTMIADX instead of FSTMIADD
 _LIBUNWIND_EXPORT void unw_save_vfp_as_X(unw_cursor_t *cursor) {
   _LIBUNWIND_TRACE_API("unw_fpreg_save_vfp_as_X(cursor=%p)\n", cursor);

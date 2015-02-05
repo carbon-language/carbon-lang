@@ -34,7 +34,7 @@
 // 
 // _LIBCXX_DYNAMIC_FALLBACK is currently off by default.
 
-#if _LIBCXX_DYNAMIC_FALLBACK
+#ifdef _LIBCXX_DYNAMIC_FALLBACK
 #include "abort_message.h"
 #include <string.h>
 #include <sys/syslog.h>
@@ -57,7 +57,7 @@ namespace __cxxabiv1
 
 #pragma GCC visibility push(hidden)
 
-#if _LIBCXX_DYNAMIC_FALLBACK
+#ifdef _LIBCXX_DYNAMIC_FALLBACK
 
 inline
 bool
@@ -515,7 +515,7 @@ __dynamic_cast(const void* static_ptr,
         info.number_of_dst_type = 1;
         // Do the  search
         dynamic_type->search_above_dst(&info, dynamic_ptr, dynamic_ptr, public_path, false);
-#if _LIBCXX_DYNAMIC_FALLBACK
+#ifdef _LIBCXX_DYNAMIC_FALLBACK
         // The following if should always be false because we should definitely
         //   find (static_ptr, static_type), either on a public or private path
         if (info.path_dst_ptr_to_static_ptr == unknown)
@@ -539,7 +539,7 @@ __dynamic_cast(const void* static_ptr,
     {
         // Not using giant short cut.  Do the search
         dynamic_type->search_below_dst(&info, dynamic_ptr, public_path, false);
- #if _LIBCXX_DYNAMIC_FALLBACK
+ #ifdef _LIBCXX_DYNAMIC_FALLBACK
         // The following if should always be false because we should definitely
         //   find (static_ptr, static_type), either on a public or private path
         if (info.path_dst_ptr_to_static_ptr == unknown &&

@@ -28,7 +28,7 @@
 #endif
 
 // Platform specific configuration defines.
-#if __APPLE__
+#ifdef __APPLE__
   #include <Availability.h>
   #ifdef __cplusplus
     extern "C" {
@@ -39,9 +39,12 @@
     }
   #endif
 
-  #define _LIBUNWIND_BUILD_ZERO_COST_APIS (__i386__ || __x86_64__ || __arm64__)
-  #define _LIBUNWIND_BUILD_SJLJ_APIS      (__arm__)
-  #define _LIBUNWIND_SUPPORT_FRAME_APIS   (__i386__ || __x86_64__)
+  #define _LIBUNWIND_BUILD_ZERO_COST_APIS (defined(__i386__) || \
+                                           defined(__x86_64__) || \
+                                           defined(__arm64__))
+  #define _LIBUNWIND_BUILD_SJLJ_APIS      defined(__arm__)
+  #define _LIBUNWIND_SUPPORT_FRAME_APIS   (defined(__i386__) || \
+                                           defined(__x86_64__))
   #define _LIBUNWIND_EXPORT               __attribute__((visibility("default")))
   #define _LIBUNWIND_HIDDEN               __attribute__((visibility("hidden")))
   #define _LIBUNWIND_LOG(msg, ...) fprintf(stderr, "libuwind: " msg, __VA_ARGS__)
@@ -67,9 +70,13 @@
     abort();
   }
 
-  #define _LIBUNWIND_BUILD_ZERO_COST_APIS (__i386__ || __x86_64__ || __arm64__ || __arm__)
+  #define _LIBUNWIND_BUILD_ZERO_COST_APIS (defined(__i386__) || \
+                                           defined(__x86_64__) || \
+                                           defined(__arm64__) || \
+                                           defined(__arm__))
   #define _LIBUNWIND_BUILD_SJLJ_APIS      0
-  #define _LIBUNWIND_SUPPORT_FRAME_APIS   (__i386__ || __x86_64__)
+  #define _LIBUNWIND_SUPPORT_FRAME_APIS   (defined(__i386__) || \
+                                           defined(__x86_64__))
   #define _LIBUNWIND_EXPORT               __attribute__((visibility("default")))
   #define _LIBUNWIND_HIDDEN               __attribute__((visibility("hidden")))
   #define _LIBUNWIND_LOG(msg, ...) fprintf(stderr, "libuwind: " msg, __VA_ARGS__)

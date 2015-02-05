@@ -25,9 +25,9 @@
 #define LIBCXXABI_ARM_EHABI 0
 #endif
 
-#if __APPLE__
+#ifdef __APPLE__
   #include <Availability.h>
-    #if __arm__
+    #ifdef __arm__
        #define LIBUNWIND_AVAIL __attribute__((unavailable))
     #else
       #define LIBUNWIND_AVAIL __OSX_AVAILABLE_STARTING(__MAC_10_6, __IPHONE_5_0)
@@ -100,7 +100,7 @@ extern int unw_set_reg(unw_cursor_t *, unw_regnum_t, unw_word_t) LIBUNWIND_AVAIL
 extern int unw_set_fpreg(unw_cursor_t *, unw_regnum_t, unw_fpreg_t)  LIBUNWIND_AVAIL;
 extern int unw_resume(unw_cursor_t *) LIBUNWIND_AVAIL;
 
-#if __arm__
+#ifdef __arm__
 /* Save VFP registers in FSTMX format (instead of FSTMD). */
 extern void unw_save_vfp_as_X(unw_cursor_t *) LIBUNWIND_AVAIL;
 #endif
@@ -113,7 +113,7 @@ extern int unw_is_signal_frame(unw_cursor_t *) LIBUNWIND_AVAIL;
 extern int unw_get_proc_name(unw_cursor_t *, char *, size_t, unw_word_t *) LIBUNWIND_AVAIL;
 //extern int       unw_get_save_loc(unw_cursor_t*, int, unw_save_loc_t*);
 
-#if UNW_REMOTE
+#ifdef UNW_REMOTE
 /*
  * Mac OS X "remote" API for unwinding other processes on same machine
  *
@@ -122,7 +122,7 @@ extern unw_addr_space_t unw_local_addr_space;
 extern unw_addr_space_t unw_create_addr_space_for_task(task_t);
 extern void unw_destroy_addr_space(unw_addr_space_t);
 extern int unw_init_remote_thread(unw_cursor_t *, unw_addr_space_t, thread_t *);
-#endif
+#endif /* UNW_REMOTE */
 
 /*
  * traditional libuwind "remote" API

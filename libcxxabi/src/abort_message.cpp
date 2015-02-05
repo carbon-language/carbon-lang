@@ -24,7 +24,7 @@ extern "C" void android_set_abort_message(const char* msg);
 
 #pragma GCC visibility push(hidden)
 
-#if __APPLE__
+#ifdef __APPLE__
 #   if defined(__has_include) && __has_include(<CrashReporterClient.h>)
 #       define HAVE_CRASHREPORTERCLIENT_H 1
 #       include <CrashReporterClient.h>
@@ -35,7 +35,7 @@ __attribute__((visibility("hidden"), noreturn))
 void abort_message(const char* format, ...)
 {
     // write message to stderr
-#if __APPLE__
+#ifdef __APPLE__
     fprintf(stderr, "libc++abi.dylib: ");
 #endif
     va_list list;
@@ -44,7 +44,7 @@ void abort_message(const char* format, ...)
     va_end(list);
     fprintf(stderr, "\n");
 
-#if __APPLE__ && HAVE_CRASHREPORTERCLIENT_H
+#if defined(__APPLE__) && HAVE_CRASHREPORTERCLIENT_H
     // record message in crash report
     char* buffer;
     va_list list2;
@@ -52,7 +52,7 @@ void abort_message(const char* format, ...)
     vasprintf(&buffer, format, list2);
     va_end(list2);
     CRSetCrashLogMessage(buffer);
-#elif __BIONIC__
+#elif defined(__BIONIC__)
     char* buffer;
     va_list list2;
     va_start(list2, format);

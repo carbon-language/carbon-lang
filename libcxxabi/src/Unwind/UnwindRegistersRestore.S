@@ -11,7 +11,7 @@
 
   .text
 
-#if __i386__
+#if defined(__i386__)
 DEFINE_LIBUNWIND_PRIVATE_FUNCTION(_ZN9libunwind13Registers_x866jumptoEv)
 #
 # void libunwind::Registers_x86::jumpto()

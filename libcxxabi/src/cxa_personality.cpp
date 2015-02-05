@@ -55,7 +55,7 @@
 +------------------+--+-----+-----+------------------------+--------------------------+
 | callSiteTableLength | (ULEB128) | Call Site Table length, used to find Action table |
 +---------------------+-----------+---------------------------------------------------+
-#if !__USING_SJLJ_EXCEPTIONS__
+#ifndef __USING_SJLJ_EXCEPTIONS__
 +---------------------+-----------+------------------------------------------------+
 | Beginning of Call Site Table            The current ip lies within the           |
 | ...                                     (start, length) range of one of these    |
@@ -595,7 +595,7 @@ static void scan_eh_tab(scan_results &results, _Unwind_Action actions,
     // Get beginning current frame's code (as defined by the 
     // emitted dwarf code)
     uintptr_t funcStart = _Unwind_GetRegionStart(context);
-#if __USING_SJLJ_EXCEPTIONS__
+#ifdef __USING_SJLJ_EXCEPTIONS__
     if (ip == uintptr_t(-1))
     {
         // no action
@@ -628,7 +628,7 @@ static void scan_eh_tab(scan_results &results, _Unwind_Action actions,
     // Walk call-site table looking for range that 
     // includes current PC. 
     uint8_t callSiteEncoding = *lsda++;
-#if __USING_SJLJ_EXCEPTIONS__
+#ifdef __USING_SJLJ_EXCEPTIONS__
     (void)callSiteEncoding;  // When using SjLj exceptions, callSiteEncoding is never used
 #endif
     uint32_t callSiteTableLength = static_cast<uint32_t>(readULEB128(&lsda));
@@ -639,7 +639,7 @@ static void scan_eh_tab(scan_results &results, _Unwind_Action actions,
     while (callSitePtr < callSiteTableEnd)
     {
         // There is one entry per call site.
-#if !__USING_SJLJ_EXCEPTIONS__
+#ifndef __USING_SJLJ_EXCEPTIONS__
         // The call sites are non-overlapping in [start, start+length)
         // The call sites are ordered in increasing value of start
         uintptr_t start = readEncodedPointer(&callSitePtr, callSiteEncoding);
@@ -655,7 +655,7 @@ static void scan_eh_tab(scan_results &results, _Unwind_Action actions,
 #endif  // __USING_SJLJ_EXCEPTIONS__
         {
             // Found the call site containing ip.
-#if !__USING_SJLJ_EXCEPTIONS__
+#ifndef __USING_SJLJ_EXCEPTIONS__
             if (landingPad == 0)
             {
                 // No handler here
@@ -857,7 +857,7 @@ static void scan_eh_tab(scan_results &results, _Unwind_Action actions,
                 action += actionOffset;
             }  // there is no break out of this loop, only return
         }
-#if !__USING_SJLJ_EXCEPTIONS__
+#ifndef __USING_SJLJ_EXCEPTIONS__
         else if (ipOffset < start)
         {
             // There is no call site for this ip
@@ -923,7 +923,7 @@ _UA_CLEANUP_PHASE
 
 #if !LIBCXXABI_ARM_EHABI
 _Unwind_Reason_Code
-#if __USING_SJLJ_EXCEPTIONS__
+#ifdef __USING_SJLJ_EXCEPTIONS__
 __gxx_personality_sj0
 #else
 __gxx_personality_v0
