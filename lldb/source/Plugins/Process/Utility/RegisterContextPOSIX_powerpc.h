@@ -147,6 +147,7 @@ public:
 
 protected:
     uint64_t m_gpr_powerpc[k_num_gpr_registers_powerpc];         // general purpose registers.
+    uint64_t m_fpr_powerpc[k_num_fpr_registers_powerpc];         // floating point registers.
     std::unique_ptr<lldb_private::RegisterInfoInterface> m_register_info_ap; // Register Info Interface (FreeBSD or Linux)
 
     // Determines if an extended register set is supported on the processor running the inferior process.

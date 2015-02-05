@@ -38,15 +38,15 @@ RegisterContextPOSIXProcessMonitor_powerpc::GetMonitor()
 bool
 RegisterContextPOSIXProcessMonitor_powerpc::ReadGPR()
 {
-     ProcessMonitor &monitor = GetMonitor();
-     return monitor.ReadGPR(m_thread.GetID(), &m_gpr_powerpc, GetGPRSize());
+    ProcessMonitor &monitor = GetMonitor();
+    return monitor.ReadGPR(m_thread.GetID(), &m_gpr_powerpc, GetGPRSize());
 }
 
 bool
 RegisterContextPOSIXProcessMonitor_powerpc::ReadFPR()
 {
-    // XXX not yet implemented
-    return false;
+    ProcessMonitor &monitor = GetMonitor();
+    return monitor.ReadFPR(m_thread.GetID(), &m_fpr_powerpc, sizeof(m_fpr_powerpc));
 }
 
 bool
@@ -59,8 +59,8 @@ RegisterContextPOSIXProcessMonitor_powerpc::WriteGPR()
 bool
 RegisterContextPOSIXProcessMonitor_powerpc::WriteFPR()
 {
-    // XXX not yet implemented
-    return false;
+    ProcessMonitor &monitor = GetMonitor();
+    return monitor.WriteFPR(m_thread.GetID(), &m_fpr_powerpc, sizeof(m_fpr_powerpc));
 }
 
 bool
@@ -146,26 +146,15 @@ RegisterContextPOSIXProcessMonitor_powerpc::ReadRegister(const RegisterInfo *reg
     {
         if (!ReadFPR())
             return false;
+        uint8_t *src = (uint8_t *)&m_fpr_powerpc + reg_info->byte_offset;
+        value.SetUInt64(*(uint64_t*)src);
     }
-    else
+    else if (IsGPR(reg))
     {
-        uint32_t full_reg = reg;
-        bool is_subreg = reg_info->invalidate_regs && (reg_info->invalidate_regs[0] != LLDB_INVALID_REGNUM);
-
-        if (is_subreg)
-        {
-            // Read the full aligned 64-bit register.
-            full_reg = reg_info->invalidate_regs[0];
-        }
-
-        bool success = ReadRegister(full_reg, value);
+        bool success = ReadRegister(reg, value);
 
         if (success)
         {
-            // If our read was not aligned (for ah,bh,ch,dh), shift our returned value one byte to the right.
-            if (is_subreg && (reg_info->byte_offset & 0x1))
-                value.SetUInt64(value.GetAsUInt64() >> 8);
-
             // If our return byte size was greater than the return value reg size, then
             // use the type specified by reg_info rather than the uint64_t default
             if (value.GetByteSize() > reg_info->byte_size)
@@ -183,7 +172,16 @@ RegisterContextPOSIXProcessMonitor_powerpc::WriteRegister(const RegisterInfo *re
     const uint32_t reg = reg_info->kinds[eRegisterKindLLDB];
 
     if (IsGPR(reg))
+    {
         return WriteRegister(reg, value);
+    }
+    else if (IsFPR(reg))
+    {
+        assert (reg_info->byte_offset < sizeof(m_fpr_powerpc));
+        uint8_t *dst = (uint8_t *)&m_fpr_powerpc + reg_info->byte_offset;
+        *(uint64_t *)dst = value.GetAsUInt64();
+        return WriteFPR();
+    }
 
     return false;
 }
@@ -221,6 +219,9 @@ RegisterContextPOSIXProcessMonitor_powerpc::WriteAllRegisterValues(const DataBuf
             if (WriteGPR())
             {
                 src += GetGPRSize();
+                ::memcpy (&m_fpr_powerpc, src, sizeof(m_fpr_powerpc));
+
+                success = WriteFPR();
             }
         }
     }
