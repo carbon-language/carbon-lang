@@ -196,7 +196,7 @@ private:
       llvm::errs() << memberPath << "\n";
 
     std::unique_ptr<MemoryBuffer> memberMB(MemoryBuffer::getMemBuffer(
-        mb.getBuffer(), memberPath, false));
+        mb.getBuffer(), mb.getBufferIdentifier(), false));
 
     std::vector<std::unique_ptr<File>> files;
     if (std::error_code ec = _registry.loadFile(std::move(memberMB), files))
@@ -205,6 +205,7 @@ private:
     result = std::move(files[0]);
     if (std::error_code ec = result->parse())
       return ec;
+    result->setArchivePath(_archive->getFileName());
 
     // The memory buffer is co-owned by the archive file and the children,
     // so that the bufffer is deallocated when all the members are destructed.
