@@ -1868,7 +1868,7 @@ llvm::Value *CodeGenFunction::EmitSEHAbnormalTermination() {
 }
 
 void CodeGenFunction::EnterSEHTryStmt(const SEHTryStmt &S, SEHFinallyInfo &FI) {
-  if (SEHFinallyStmt *Finally = S.getFinallyHandler()) {
+  if (S.getFinallyHandler()) {
     // Push a cleanup for __finally blocks.
     EHStack.pushCleanup<PerformSEHFinally>(NormalAndEHCleanup, &FI);
     return;
