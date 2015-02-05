@@ -1,4 +1,5 @@
-; RUN: llc -mcpu=pwr7 < %s | FileCheck %s
+; RUN: llc -mcpu=pwr7 -disable-ppc-preinc-prep < %s | FileCheck %s
+; RUN: llc -mcpu=pwr7 < %s | FileCheck %s -check-prefix=PIP
 target datalayout = "E-m:e-i64:64-n32:64"
 target triple = "powerpc64-unknown-linux-gnu"
 
@@ -20,6 +21,14 @@ entry:
 ; CHECK-DAG: lfsx {{[0-9]+}}, [[REG1]],
 ; CHECK-DAG: lfsx {{[0-9]+}}, [[REG2]],
 ; CHECK: blr
+
+; PIP-LABEL: @foo
+; PIP: addi [[REG1:[0-9]+]], 1,
+; PIP: addi [[REG2:[0-9]+]], 1,
+; PIP: %for.body.i
+; PIP-DAG: lfsu {{[0-9]+}}, 4([[REG1]])
+; PIP-DAG: lfsu {{[0-9]+}}, 4([[REG2]])
+; PIP: blr
 
 for.body.i:                                       ; preds = %for.body.i.preheader, %for.body.i
   %accumulator.09.i = phi double [ %add.i, %for.body.i ], [ 0.000000e+00, %entry ]

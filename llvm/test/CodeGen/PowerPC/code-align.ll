@@ -44,6 +44,9 @@ entry:
 ; GENERIC-NOT: .align
 ; BASIC: .align  4
 ; PWR: .align  4
+; GENERIC: lwzu
+; BASIC: lwzu
+; PWR: lwzu
 ; GENERIC: bdnz
 ; BASIC: bdnz
 ; PWR: bdnz
@@ -57,11 +60,13 @@ vector.body:                                      ; preds = %vector.body, %entry
   %3 = load i32* %1, align 4
   %4 = add nsw i32 %2, 4
   %5 = add nsw i32 %3, 4
-  store i32 %4, i32* %0, align 4
-  store i32 %5, i32* %1, align 4
+  %6 = mul nsw i32 %4, 3
+  %7 = mul nsw i32 %5, 3
+  store i32 %6, i32* %0, align 4
+  store i32 %7, i32* %1, align 4
   %index.next = add i64 %index, 2
-  %6 = icmp eq i64 %index.next, 2048
-  br i1 %6, label %for.end, label %vector.body
+  %8 = icmp eq i64 %index.next, 2048
+  br i1 %8, label %for.end, label %vector.body
 
 for.end:                                          ; preds = %vector.body
   ret void
@@ -90,7 +95,8 @@ for.body:                                         ; preds = %for.body, %entry
   %arrayidx = getelementptr inbounds i32* %a, i64 %indvars.iv
   %0 = load i32* %arrayidx, align 4
   %add = add nsw i32 %0, 4
-  store i32 %add, i32* %arrayidx, align 4
+  %mul = mul nsw i32 %add, 3
+  store i32 %mul, i32* %arrayidx, align 4
   %indvars.iv.next = add nuw nsw i64 %indvars.iv, 1
   %exitcond = icmp eq i64 %indvars.iv.next, 2048
   br i1 %exitcond, label %for.end, label %for.body
