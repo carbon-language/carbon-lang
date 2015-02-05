@@ -241,10 +241,9 @@ FileOptionsProvider::TryReadConfigFile(StringRef Directory) {
       continue;
     }
 
-    ClangTidyOptions Defaults = DefaultOptionsProvider::getOptions(Directory);
-    // Only use checks from the config file.
-    Defaults.Checks = None;
-    return Defaults.mergeWith(*ParsedOptions).mergeWith(OverrideOptions);
+    return DefaultOptionsProvider::getOptions(Directory)
+        .mergeWith(*ParsedOptions)
+        .mergeWith(OverrideOptions);
   }
   return llvm::None;
 }
