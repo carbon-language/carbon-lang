@@ -88,6 +88,9 @@ private:
     OMPRTL__kmpc_master,
     // Call to void __kmpc_end_master(ident_t *, kmp_int32 global_tid);
     OMPRTL__kmpc_end_master,
+    // Call to kmp_int32 __kmpc_omp_taskyield(ident_t *, kmp_int32 global_tid,
+    // int end_part);
+    OMPRTL__kmpc_omp_taskyield,
   };
 
   /// \brief Values for bit flags used in the ident_t to describe the fields.
@@ -305,6 +308,9 @@ public:
   virtual void EmitOMPMasterRegion(CodeGenFunction &CGF,
                                    const std::function<void()> &MasterOpGen,
                                    SourceLocation Loc);
+
+  /// \brief Emits code for a taskyield directive.
+  virtual void EmitOMPTaskyieldCall(CodeGenFunction &CGF, SourceLocation Loc);
 
   /// \brief Emits explicit barrier for OpenMP threads.
   /// \param IsExplicit true, if it is explicitly specified barrier.

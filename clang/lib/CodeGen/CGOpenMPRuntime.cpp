@@ -475,6 +475,15 @@ CGOpenMPRuntime::CreateRuntimeFunction(OpenMPRTLFunction Function) {
     RTLFn = CGM.CreateRuntimeFunction(FnTy, /*Name=*/"__kmpc_end_master");
     break;
   }
+  case OMPRTL__kmpc_omp_taskyield: {
+    // Build kmp_int32 __kmpc_omp_taskyield(ident_t *, kmp_int32 global_tid,
+    // int end_part);
+    llvm::Type *TypeParams[] = {getIdentTyPointerTy(), CGM.Int32Ty, CGM.IntTy};
+    llvm::FunctionType *FnTy =
+        llvm::FunctionType::get(CGM.Int32Ty, TypeParams, /*isVarArg=*/false);
+    RTLFn = CGM.CreateRuntimeFunction(FnTy, /*Name=*/"__kmpc_omp_taskyield");
+    break;
+  }
   }
   return RTLFn;
 }
@@ -784,6 +793,16 @@ void CGOpenMPRuntime::EmitOMPMasterRegion(
     RTLFn = CreateRuntimeFunction(OMPRTL__kmpc_end_master);
     CGF.EmitRuntimeCall(RTLFn, Args);
   });
+}
+
+void CGOpenMPRuntime::EmitOMPTaskyieldCall(CodeGenFunction &CGF,
+                                           SourceLocation Loc) {
+  // Build call __kmpc_omp_taskyield(loc, thread_id, 0);
+  llvm::Value *Args[] = {
+      EmitOpenMPUpdateLocation(CGF, Loc), GetOpenMPThreadID(CGF, Loc),
+      llvm::ConstantInt::get(CGM.IntTy, /*V=*/0, /*isSigned=*/true)};
+  auto RTLFn = CreateRuntimeFunction(OMPRTL__kmpc_omp_taskyield);
+  CGF.EmitRuntimeCall(RTLFn, Args);
 }
 
 void CGOpenMPRuntime::EmitOMPBarrierCall(CodeGenFunction &CGF,
