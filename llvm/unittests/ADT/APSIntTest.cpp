@@ -41,4 +41,106 @@ TEST(APSIntTest, MoveTest) {
   EXPECT_EQ(Bits, A.getRawData()); // Verify that "Wide" was really moved.
 }
 
+TEST(APSIntTest, get) {
+  EXPECT_TRUE(APSInt::get(7).isSigned());
+  EXPECT_EQ(64u, APSInt::get(7).getBitWidth());
+  EXPECT_EQ(7u, APSInt::get(7).getZExtValue());
+  EXPECT_EQ(7, APSInt::get(7).getSExtValue());
+  EXPECT_TRUE(APSInt::get(-7).isSigned());
+  EXPECT_EQ(64u, APSInt::get(-7).getBitWidth());
+  EXPECT_EQ(-7, APSInt::get(-7).getSExtValue());
+  EXPECT_EQ(UINT64_C(0) - 7, APSInt::get(-7).getZExtValue());
+}
+
+TEST(APSIntTest, getUnsigned) {
+  EXPECT_TRUE(APSInt::getUnsigned(7).isUnsigned());
+  EXPECT_EQ(64u, APSInt::getUnsigned(7).getBitWidth());
+  EXPECT_EQ(7u, APSInt::getUnsigned(7).getZExtValue());
+  EXPECT_EQ(7, APSInt::getUnsigned(7).getSExtValue());
+  EXPECT_TRUE(APSInt::getUnsigned(-7).isUnsigned());
+  EXPECT_EQ(64u, APSInt::getUnsigned(-7).getBitWidth());
+  EXPECT_EQ(-7, APSInt::getUnsigned(-7).getSExtValue());
+  EXPECT_EQ(UINT64_C(0) - 7, APSInt::getUnsigned(-7).getZExtValue());
+}
+
+TEST(APSIntTest, getExtValue) {
+  EXPECT_TRUE(APSInt(APInt(3, 7), true).isUnsigned());
+  EXPECT_TRUE(APSInt(APInt(3, 7), false).isSigned());
+  EXPECT_TRUE(APSInt(APInt(4, 7), true).isUnsigned());
+  EXPECT_TRUE(APSInt(APInt(4, 7), false).isSigned());
+  EXPECT_TRUE(APSInt(APInt(4, -7), true).isUnsigned());
+  EXPECT_TRUE(APSInt(APInt(4, -7), false).isSigned());
+  EXPECT_EQ(7, APSInt(APInt(3, 7), true).getExtValue());
+  EXPECT_EQ(-1, APSInt(APInt(3, 7), false).getExtValue());
+  EXPECT_EQ(7, APSInt(APInt(4, 7), true).getExtValue());
+  EXPECT_EQ(7, APSInt(APInt(4, 7), false).getExtValue());
+  EXPECT_EQ(9, APSInt(APInt(4, -7), true).getExtValue());
+  EXPECT_EQ(-7, APSInt(APInt(4, -7), false).getExtValue());
+}
+
+TEST(APSIntTest, compareValues) {
+  auto U = [](uint64_t V) { return APSInt::getUnsigned(V); };
+  auto S = [](int64_t V) { return APSInt::get(V); };
+
+  // Bit-width matches and is-signed.
+  EXPECT_TRUE(APSInt::compareValues(S(7), S(8)) < 0);
+  EXPECT_TRUE(APSInt::compareValues(S(8), S(7)) > 0);
+  EXPECT_TRUE(APSInt::compareValues(S(7), S(7)) == 0);
+  EXPECT_TRUE(APSInt::compareValues(S(-7), S(8)) < 0);
+  EXPECT_TRUE(APSInt::compareValues(S(8), S(-7)) > 0);
+  EXPECT_TRUE(APSInt::compareValues(S(-7), S(-7)) == 0);
+  EXPECT_TRUE(APSInt::compareValues(S(-7), S(-8)) > 0);
+  EXPECT_TRUE(APSInt::compareValues(S(-8), S(-7)) < 0);
+  EXPECT_TRUE(APSInt::compareValues(S(-7), S(-7)) == 0);
+
+  // Bit-width matches and not is-signed.
+  EXPECT_TRUE(APSInt::compareValues(U(7), U(8)) < 0);
+  EXPECT_TRUE(APSInt::compareValues(U(8), U(7)) > 0);
+  EXPECT_TRUE(APSInt::compareValues(U(7), U(7)) == 0);
+
+  // Bit-width matches and mixed signs.
+  EXPECT_TRUE(APSInt::compareValues(U(7), S(8)) < 0);
+  EXPECT_TRUE(APSInt::compareValues(U(8), S(7)) > 0);
+  EXPECT_TRUE(APSInt::compareValues(U(7), S(7)) == 0);
+  EXPECT_TRUE(APSInt::compareValues(U(8), S(-7)) > 0);
+
+  // Bit-width mismatch and is-signed.
+  EXPECT_TRUE(APSInt::compareValues(S(7).trunc(32), S(8)) < 0);
+  EXPECT_TRUE(APSInt::compareValues(S(8).trunc(32), S(7)) > 0);
+  EXPECT_TRUE(APSInt::compareValues(S(7).trunc(32), S(7)) == 0);
+  EXPECT_TRUE(APSInt::compareValues(S(-7).trunc(32), S(8)) < 0);
+  EXPECT_TRUE(APSInt::compareValues(S(8).trunc(32), S(-7)) > 0);
+  EXPECT_TRUE(APSInt::compareValues(S(-7).trunc(32), S(-7)) == 0);
+  EXPECT_TRUE(APSInt::compareValues(S(-7).trunc(32), S(-8)) > 0);
+  EXPECT_TRUE(APSInt::compareValues(S(-8).trunc(32), S(-7)) < 0);
+  EXPECT_TRUE(APSInt::compareValues(S(-7).trunc(32), S(-7)) == 0);
+  EXPECT_TRUE(APSInt::compareValues(S(7), S(8).trunc(32)) < 0);
+  EXPECT_TRUE(APSInt::compareValues(S(8), S(7).trunc(32)) > 0);
+  EXPECT_TRUE(APSInt::compareValues(S(7), S(7).trunc(32)) == 0);
+  EXPECT_TRUE(APSInt::compareValues(S(-7), S(8).trunc(32)) < 0);
+  EXPECT_TRUE(APSInt::compareValues(S(8), S(-7).trunc(32)) > 0);
+  EXPECT_TRUE(APSInt::compareValues(S(-7), S(-7).trunc(32)) == 0);
+  EXPECT_TRUE(APSInt::compareValues(S(-7), S(-8).trunc(32)) > 0);
+  EXPECT_TRUE(APSInt::compareValues(S(-8), S(-7).trunc(32)) < 0);
+  EXPECT_TRUE(APSInt::compareValues(S(-7), S(-7).trunc(32)) == 0);
+
+  // Bit-width mismatch and not is-signed.
+  EXPECT_TRUE(APSInt::compareValues(U(7), U(8).trunc(32)) < 0);
+  EXPECT_TRUE(APSInt::compareValues(U(8), U(7).trunc(32)) > 0);
+  EXPECT_TRUE(APSInt::compareValues(U(7), U(7).trunc(32)) == 0);
+  EXPECT_TRUE(APSInt::compareValues(U(7).trunc(32), U(8)) < 0);
+  EXPECT_TRUE(APSInt::compareValues(U(8).trunc(32), U(7)) > 0);
+  EXPECT_TRUE(APSInt::compareValues(U(7).trunc(32), U(7)) == 0);
+
+  // Bit-width mismatch and mixed signs.
+  EXPECT_TRUE(APSInt::compareValues(U(7).trunc(32), S(8)) < 0);
+  EXPECT_TRUE(APSInt::compareValues(U(8).trunc(32), S(7)) > 0);
+  EXPECT_TRUE(APSInt::compareValues(U(7).trunc(32), S(7)) == 0);
+  EXPECT_TRUE(APSInt::compareValues(U(8).trunc(32), S(-7)) > 0);
+  EXPECT_TRUE(APSInt::compareValues(U(7), S(8).trunc(32)) < 0);
+  EXPECT_TRUE(APSInt::compareValues(U(8), S(7).trunc(32)) > 0);
+  EXPECT_TRUE(APSInt::compareValues(U(7), S(7).trunc(32)) == 0);
+  EXPECT_TRUE(APSInt::compareValues(U(8), S(-7).trunc(32)) > 0);
+}
+
 }
