@@ -982,24 +982,41 @@ CMICmdCmdDataListRegisterValues::Execute(void)
     }
 
     const CMICmdArgValListBase::VecArgObjPtr_t &rVecRegNo(pArgRegNo->GetExpectedOptions());
-    CMICmdArgValListBase::VecArgObjPtr_t::const_iterator it = rVecRegNo.begin();
-    while (it != rVecRegNo.end())
+    if (!rVecRegNo.empty ())
     {
-        const CMICmdArgValNumber *pRegNo = static_cast<CMICmdArgValNumber *>(*it);
-        const MIuint nReg = pRegNo->GetValue();
-        lldb::SBValue regValue = GetRegister(nReg);
-        const CMIUtilString strRegValue(CMICmnLLDBDebugSessionInfoVarObj::GetValueStringFormatted(regValue, eFormat));
-
-        const CMICmnMIValueConst miValueConst(CMIUtilString::Format("%u", nReg));
-        const CMICmnMIValueResult miValueResult("number", miValueConst);
-        CMICmnMIValueTuple miValueTuple(miValueResult);
-        const CMICmnMIValueConst miValueConst2(strRegValue);
-        const CMICmnMIValueResult miValueResult2("value", miValueConst2);
-        miValueTuple.Add(miValueResult2);
-        m_miValueList.Add(miValueTuple);
-
-        // Next
-        ++it;
+        CMICmdArgValListBase::VecArgObjPtr_t::const_iterator it = rVecRegNo.begin();
+        while (it != rVecRegNo.end ())
+        {
+            const CMICmdArgValNumber *pRegNo = static_cast<CMICmdArgValNumber *>(*it);
+            const MIuint nReg = pRegNo->GetValue ();
+            lldb::SBValue regValue = GetRegister (nReg);
+            AddToOutput (regValue, nReg, eFormat);
+            // Next
+            ++it;
+        }
+    }
+    else
+    {
+        // No register numbers are provided. Output all registers.
+        lldb::SBThread thread = sbProcess.GetSelectedThread ();
+        lldb::SBFrame frame = thread.GetSelectedFrame ();
+        lldb::SBValueList registers = frame.GetRegisters ();
+        const MIuint nRegisters = registers.GetSize ();
+        MIuint index = 0;
+        for (MIuint i = 0; i < nRegisters; i++)
+        {
+            lldb::SBValue value = registers.GetValueAtIndex (i);
+            const MIuint nRegChildren = value.GetNumChildren ();
+            for (MIuint j = 0; j < nRegChildren; j++)
+            {
+                lldb::SBValue reg_value = value.GetChildAtIndex (j);
+                if (reg_value.IsValid ())
+                {
+                    AddToOutput (reg_value, index, eFormat);
+                    index++;
+                }
+            }
+        }
     }
 
     return MIstatus::success;
@@ -1068,6 +1085,28 @@ CMICmdCmdDataListRegisterValues::GetRegister(const MIuint vRegisterIndex) const
     }
 
     return lldb::SBValue();
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details: Adds the register value to the output list.
+// Type:    Method.
+// Args:    Value of the register, its index and output format.
+// Return:  None
+// Throws:  None.
+//--
+void
+CMICmdCmdDataListRegisterValues::AddToOutput (const lldb::SBValue& value, MIuint index,
+	    CMICmnLLDBDebugSessionInfoVarObj::varFormat_e eFormat)
+{
+    const CMICmnMIValueConst miValueConst (CMIUtilString::Format ("%u", index));
+    const CMICmnMIValueResult miValueResult ("number", miValueConst);
+    const CMIUtilString strRegValue (CMICmnLLDBDebugSessionInfoVarObj::GetValueStringFormatted (value, eFormat));
+    const CMICmnMIValueConst miValueConst2 (strRegValue);
+    const CMICmnMIValueResult miValueResult2 ("value", miValueConst2);
+
+    CMICmnMIValueTuple miValueTuple (miValueResult);
+    miValueTuple.Add (miValueResult2);
+    m_miValueList.Add (miValueTuple);
 }
 
 //---------------------------------------------------------------------------------------

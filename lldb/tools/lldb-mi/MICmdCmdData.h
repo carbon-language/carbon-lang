@@ -42,6 +42,7 @@
 #include "MICmdBase.h"
 #include "MICmnMIValueTuple.h"
 #include "MICmnMIValueList.h"
+#include "MICmnLLDBDebugSessionInfoVarObj.h"
 
 //++ ============================================================================
 // Details: MI command class. MI commands derived from the command base class.
@@ -255,6 +256,7 @@ class CMICmdCmdDataListRegisterValues : public CMICmdBase
     // Methods:
   private:
     lldb::SBValue GetRegister(const MIuint vRegisterIndex) const;
+    void AddToOutput (const lldb::SBValue& value, MIuint index, CMICmnLLDBDebugSessionInfoVarObj::varFormat_e eFormat);
 
     // Attributes:
   private:
