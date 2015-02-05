@@ -30,7 +30,7 @@ using namespace llvm;
 void AMDGPUTTIImpl::getUnrollingPreferences(Loop *L,
                                             TTI::UnrollingPreferences &UP) {
   UP.Threshold = 300; // Twice the default.
-  UP.Count = UINT_MAX;
+  UP.MaxCount = UINT_MAX;
   UP.Partial = true;
 
   // TODO: Do we want runtime unrolling?
