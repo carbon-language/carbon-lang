@@ -128,12 +128,7 @@ namespace {
     // This function must have prototype void(void*).
     const char *CatchallRethrowFn;
 
-    static const EHPersonality &get(CodeGenModule &CGM,
-                                    const FunctionDecl *FD);
-    static const EHPersonality &get(CodeGenFunction &CGF) {
-      return get(CGF.CGM, dyn_cast_or_null<FunctionDecl>(CGF.CurCodeDecl));
-    }
-
+    static const EHPersonality &get(CodeGenModule &CGM);
     static const EHPersonality GNU_C;
     static const EHPersonality GNU_C_SJLJ;
     static const EHPersonality GNU_C_SEH;
@@ -146,7 +141,6 @@ namespace {
     static const EHPersonality GNU_CPlusPlus_SEH;
     static const EHPersonality MSVC_except_handler;
     static const EHPersonality MSVC_C_specific_handler;
-    static const EHPersonality MSVC_CxxFrameHandler3;
   };
 }
 
@@ -173,8 +167,6 @@ const EHPersonality
 EHPersonality::MSVC_except_handler = { "_except_handler3", nullptr };
 const EHPersonality
 EHPersonality::MSVC_C_specific_handler = { "__C_specific_handler", nullptr };
-const EHPersonality
-EHPersonality::MSVC_CxxFrameHandler3 = { "__CxxFrameHandler3", nullptr };
 
 /// On Win64, use libgcc's SEH personality function. We fall back to dwarf on
 /// other platforms, unless the user asked for SjLj exceptions.
@@ -247,27 +239,35 @@ static const EHPersonality &getObjCXXPersonality(const llvm::Triple &T,
   llvm_unreachable("bad runtime kind");
 }
 
-static const EHPersonality &getSEHPersonalityMSVC(const llvm::Triple &T) {
+static const EHPersonality &getCPersonalityMSVC(const llvm::Triple &T,
+                                                const LangOptions &L) {
+  if (L.SjLjExceptions)
+    return EHPersonality::GNU_C_SJLJ;
+
   if (T.getArch() == llvm::Triple::x86)
     return EHPersonality::MSVC_except_handler;
   return EHPersonality::MSVC_C_specific_handler;
 }
 
-const EHPersonality &EHPersonality::get(CodeGenModule &CGM,
-                                        const FunctionDecl *FD) {
+static const EHPersonality &getCXXPersonalityMSVC(const llvm::Triple &T,
+                                                  const LangOptions &L) {
+  if (L.SjLjExceptions)
+    return EHPersonality::GNU_CPlusPlus_SJLJ;
+  // FIXME: Implement C++ exceptions.
+  return getCPersonalityMSVC(T, L);
+}
+
+const EHPersonality &EHPersonality::get(CodeGenModule &CGM) {
   const llvm::Triple &T = CGM.getTarget().getTriple();
   const LangOptions &L = CGM.getLangOpts();
-
   // Try to pick a personality function that is compatible with MSVC if we're
   // not compiling Obj-C. Obj-C users better have an Obj-C runtime that supports
   // the GCC-style personality function.
   if (T.isWindowsMSVCEnvironment() && !L.ObjC1) {
-    if (L.SjLjExceptions)
-      return EHPersonality::GNU_CPlusPlus_SJLJ;
-    else if (FD && FD->usesSEHTry())
-      return getSEHPersonalityMSVC(T);
+    if (L.CPlusPlus)
+      return getCXXPersonalityMSVC(T, L);
     else
-      return EHPersonality::MSVC_CxxFrameHandler3;
+      return getCPersonalityMSVC(T, L);
   }
 
   if (L.CPlusPlus && L.ObjC1)
@@ -354,7 +354,7 @@ void CodeGenModule::SimplifyPersonality() {
   if (!LangOpts.ObjCRuntime.isNeXTFamily())
     return;
 
-  const EHPersonality &ObjCXX = EHPersonality::get(*this, /*FD=*/nullptr);
+  const EHPersonality &ObjCXX = EHPersonality::get(*this);
   const EHPersonality &CXX =
       getCXXPersonality(getTarget().getTriple(), LangOpts);
   if (&ObjCXX == &CXX)
@@ -778,7 +778,7 @@ llvm::BasicBlock *CodeGenFunction::EmitLandingPad() {
   CGBuilderTy::InsertPoint savedIP = Builder.saveAndClearIP();
   auto DL = ApplyDebugLocation::CreateDefaultArtificial(*this, CurEHLocation);
 
-  const EHPersonality &personality = EHPersonality::get(*this);
+  const EHPersonality &personality = EHPersonality::get(CGM);
 
   // Create and configure the landing pad.
   llvm::BasicBlock *lpad = createBasicBlock("lpad");
@@ -1595,7 +1595,7 @@ llvm::BasicBlock *CodeGenFunction::getTerminateLandingPad() {
   Builder.SetInsertPoint(TerminateLandingPad);
 
   // Tell the backend that this is a landing pad.
-  const EHPersonality &Personality = EHPersonality::get(*this);
+  const EHPersonality &Personality = EHPersonality::get(CGM);
   llvm::LandingPadInst *LPadInst =
     Builder.CreateLandingPad(llvm::StructType::get(Int8PtrTy, Int32Ty, nullptr),
                              getOpaquePersonalityFn(CGM, Personality), 0);
@@ -1654,7 +1654,7 @@ llvm::BasicBlock *CodeGenFunction::getEHResumeBlock(bool isCleanup) {
   EHResumeBlock = createBasicBlock("eh.resume");
   Builder.SetInsertPoint(EHResumeBlock);
 
-  const EHPersonality &Personality = EHPersonality::get(*this);
+  const EHPersonality &Personality = EHPersonality::get(CGM);
 
   // This can always be a call because we necessarily didn't find
   // anything on the EH stack which needs our help.
