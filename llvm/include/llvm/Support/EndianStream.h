@@ -31,6 +31,31 @@ template <endianness endian> struct Writer {
     OS.write((const char *)&Val, sizeof(value_type));
   }
 };
+
+template <>
+template <>
+inline void Writer<little>::write<float>(float Val) {
+  write(FloatToBits(Val));
+}
+
+template <>
+template <>
+inline void Writer<little>::write<double>(double Val) {
+  write(DoubleToBits(Val));
+}
+
+template <>
+template <>
+inline void Writer<big>::write<float>(float Val) {
+  write(FloatToBits(Val));
+}
+
+template <>
+template <>
+inline void Writer<big>::write<double>(double Val) {
+  write(DoubleToBits(Val));
+}
+
 } // end namespace endian
 
 } // end namespace support
