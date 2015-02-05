@@ -44,6 +44,7 @@ int main()
     assert(A::count == 1);
     assert(B::count == 0);
     A* i = p.get();
+    assert(i != nullptr);
     p.reset(new B);
     assert(A::count == 1);
     assert(B::count == 1);
@@ -55,6 +56,7 @@ int main()
     assert(A::count == 1);
     assert(B::count == 1);
     A* i = p.get();
+    assert(i != nullptr);
     p.reset(new B);
     assert(A::count == 1);
     assert(B::count == 1);

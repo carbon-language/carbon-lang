@@ -41,7 +41,9 @@ int main()
 
     std::false_type f1;
     std::false_type f2 = f1;
+    assert(!f2);
 
     std::true_type t1;
     std::true_type t2 = t1;
+    assert(t2);
 }

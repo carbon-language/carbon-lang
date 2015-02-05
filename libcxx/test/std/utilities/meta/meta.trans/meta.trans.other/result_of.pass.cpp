@@ -67,12 +67,12 @@ int main()
 #endif
 #ifndef _LIBCPP_HAS_NO_TEMPLATE_ALIASES
     using type1 = std::result_of<decltype(&wat::foo)(wat)>::type;
+    static_assert(std::is_same<type1, void>::value, "");
 #endif
 #if _LIBCPP_STD_VER > 11
     using type2 = std::result_of_t<decltype(&wat::foo)(wat)>;
+    static_assert(std::is_same<type2, void>::value, "");
 #endif
-
-
 
     static_assert((std::is_same<std::result_of<S(int)>::type, short>::value), "Error!");
     static_assert((std::is_same<std::result_of<S&(unsigned char, int&)>::type, double>::value), "Error!");
@@ -91,8 +91,5 @@ int main()
     static_assert((std::is_same<std::result_of<int (F::* (F      &&)) ()      &&>::type, int>::value), "Error!");
     static_assert((std::is_same<std::result_of<int (F::* (F      &&)) () const&&>::type, int>::value), "Error!");
     static_assert((std::is_same<std::result_of<int (F::* (F const&&)) () const&&>::type, int>::value), "Error!");
-#endif
-#ifndef _LIBCPP_HAS_NO_TEMPLATE_ALIASES
-    using type = std::result_of<decltype(&wat::foo)(wat)>::type;
 #endif
 }

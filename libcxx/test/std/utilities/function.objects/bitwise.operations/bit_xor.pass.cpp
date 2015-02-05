@@ -17,6 +17,7 @@
 
 int main()
 {
+    {
     typedef std::bit_xor<int> F;
     const F f = F();
     static_assert((std::is_same<int, F::first_argument_type>::value), "" );
@@ -27,9 +28,11 @@ int main()
     assert(f(0x58D3, 0xEA95) == 0xB246);
     assert(f(0x58D3, 0) == 0x58D3);
     assert(f(0xFFFF, 0x58D3) == 0xA72C);
+    }
 #if _LIBCPP_STD_VER > 11
+    {
     typedef std::bit_xor<> F2;
-    const F2 f2 = F2();
+    const F2 f = F2();
     assert(f(0xEA95, 0xEA95) == 0);
     assert(f(0xEA95L, 0xEA95) == 0);
     assert(f(0xEA95, 0xEA95L) == 0);
@@ -55,5 +58,6 @@ int main()
 
     constexpr int bar = std::bit_xor<> () (0x58D3L, 0xEA95);
     static_assert ( bar == 0xB246, "" );
+    }
 #endif
 }

@@ -25,16 +25,20 @@ int main()
 {
     {
         std::tuple<> t = std::tuple_cat();
+        ((void)t); // Prevent unused warning
     }
     {
         std::tuple<> t1;
         std::tuple<> t2 = std::tuple_cat(t1);
+        ((void)t2); // Prevent unused warning
     }
     {
         std::tuple<> t = std::tuple_cat(std::tuple<>());
+        ((void)t); // Prevent unused warning
     }
     {
         std::tuple<> t = std::tuple_cat(std::array<int, 0>());
+        ((void)t); // Prevent unused warning
     }
     {
         std::tuple<int> t1(1);
@@ -42,19 +46,23 @@ int main()
         assert(std::get<0>(t) == 1);
     }
 
-#if _LIBCPP_STD_VER > 11 
+#if _LIBCPP_STD_VER > 11
     {
         constexpr std::tuple<> t = std::tuple_cat();
+        ((void)t); // Prevent unused warning
     }
     {
         constexpr std::tuple<> t1;
         constexpr std::tuple<> t2 = std::tuple_cat(t1);
+        ((void)t2); // Prevent unused warning
     }
     {
         constexpr std::tuple<> t = std::tuple_cat(std::tuple<>());
+        ((void)t); // Prevent unused warning
     }
     {
         constexpr std::tuple<> t = std::tuple_cat(std::array<int, 0>());
+        ((void)t); // Prevent unused warning
     }
     {
         constexpr std::tuple<int> t1(1);
@@ -90,6 +98,7 @@ int main()
         std::tuple<> t1;
         std::tuple<> t2;
         std::tuple<> t3 = std::tuple_cat(t1, t2);
+        ((void)t3); // Prevent unused warning
     }
     {
         std::tuple<> t1;

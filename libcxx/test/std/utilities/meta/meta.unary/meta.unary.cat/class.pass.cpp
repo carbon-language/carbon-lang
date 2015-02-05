@@ -45,8 +45,6 @@ void test_class()
 
 class Class
 {
-    int _;
-    double __;
 };
 
 int main()

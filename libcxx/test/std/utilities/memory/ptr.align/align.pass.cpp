@@ -16,7 +16,6 @@
 
 int main()
 {
-    int i = 0;
     const unsigned N = 20;
     char buf[N];
     void* r;

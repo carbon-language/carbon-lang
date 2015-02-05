@@ -21,6 +21,7 @@
 int main()
 {
     std::clock_t c = 0;
+    ((void)c); // avoid unused warning
     std::size_t s = 0;
     std::time_t t = 0;
     std::tm tm = {0};

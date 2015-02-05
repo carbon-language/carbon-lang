@@ -25,6 +25,7 @@ int main()
         typedef std::tuple<> T;
         T t0;
         T t = t0;
+        ((void)t); // Prevent unused warning
     }
     {
         typedef std::tuple<int> T;
@@ -47,7 +48,7 @@ int main()
         assert(std::get<1>(t) == 'a');
         assert(std::get<2>(t) == "some text");
     }
-#if _LIBCPP_STD_VER > 11 
+#if _LIBCPP_STD_VER > 11
     {
         typedef std::tuple<int> T;
         constexpr T t0(2);
@@ -58,6 +59,8 @@ int main()
         typedef std::tuple<Empty> T;
         constexpr T t0;
         constexpr T t = t0;
+        constexpr Empty e = std::get<0>(t);
+        ((void)e); // Prevent unused warning
     }
 #endif
 }

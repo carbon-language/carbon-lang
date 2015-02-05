@@ -46,4 +46,5 @@ int main()
     std::allocator<char> a2 = a;
     a2 = a;
     std::allocator<int> a3 = a2;
+    ((void)a3);
 }

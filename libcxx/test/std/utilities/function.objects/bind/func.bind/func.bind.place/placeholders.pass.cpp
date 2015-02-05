@@ -12,13 +12,20 @@
 // placeholders
 
 #include <functional>
+#include <type_traits>
 
 template <class T>
 void
 test(const T& t)
 {
+    // Test default constructible.
     T t2;
+    ((void)t2);
+    // Test copy constructible.
     T t3 = t;
+    ((void)t3);
+    static_assert(std::is_nothrow_copy_constructible<T>::value, "");
+    static_assert(std::is_nothrow_move_constructible<T>::value, "");
 }
 
 int main()

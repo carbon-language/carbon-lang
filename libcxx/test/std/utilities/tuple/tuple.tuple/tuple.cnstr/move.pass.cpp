@@ -37,6 +37,7 @@ int main()
         typedef std::tuple<> T;
         T t0;
         T t = std::move(t0);
+        ((void)t); // Prevent unused warning
     }
     {
         typedef std::tuple<MoveOnly> T;

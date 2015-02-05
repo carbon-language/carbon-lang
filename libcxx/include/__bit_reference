@@ -906,7 +906,6 @@ rotate(__bit_iterator<_Cp, false> __first, __bit_iterator<_Cp, false> __middle, 
 {
     typedef __bit_iterator<_Cp, false> _I1;
     typedef  typename _I1::difference_type difference_type;
-    typedef typename _I1::__storage_type __storage_type;
     difference_type __d1 = __middle - __first;
     difference_type __d2 = __last - __middle;
     _I1 __r = __first + __d2;

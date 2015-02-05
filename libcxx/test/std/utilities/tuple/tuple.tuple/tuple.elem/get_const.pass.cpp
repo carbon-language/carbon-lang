@@ -45,6 +45,7 @@ int main()
         typedef std::tuple<Empty> T;
         constexpr T t{Empty()};
         constexpr Empty e = std::get<0>(t);
+        ((void)e); // Prevent unused warning
     }
 #endif
     {
