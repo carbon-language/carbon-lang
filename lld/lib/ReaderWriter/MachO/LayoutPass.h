@@ -42,7 +42,7 @@ public:
   typedef std::function<bool (const DefinedAtom *left, const DefinedAtom *right,
                               bool &leftBeforeRight)> SortOverride;
 
-  LayoutPass(const Registry &registry, SortOverride sorter=nullptr);
+  LayoutPass(const Registry &registry, SortOverride sorter);
 
   /// Sorts atoms in mergedFile by content type then by command line order.
   void perform(std::unique_ptr<MutableFile> &mergedFile) override;

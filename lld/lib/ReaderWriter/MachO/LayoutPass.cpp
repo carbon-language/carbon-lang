@@ -26,7 +26,7 @@ namespace mach_o {
 
 static bool compareAtoms(const LayoutPass::SortKey &,
                          const LayoutPass::SortKey &,
-                         LayoutPass::SortOverride customSorter=nullptr);
+                         LayoutPass::SortOverride customSorter);
 
 #ifndef NDEBUG
 // Return "reason (leftval, rightval)"
@@ -38,11 +38,12 @@ static std::string formatReason(StringRef reason, int leftVal, int rightVal) {
 // Less-than relationship of two atoms must be transitive, which is, if a < b
 // and b < c, a < c must be true. This function checks the transitivity by
 // checking the sort results.
-static void checkTransitivity(std::vector<LayoutPass::SortKey> &vec) {
+static void checkTransitivity(std::vector<LayoutPass::SortKey> &vec,
+                              LayoutPass::SortOverride customSorter) {
   for (auto i = vec.begin(), e = vec.end(); (i + 1) != e; ++i) {
     for (auto j = i + 1; j != e; ++j) {
-      assert(compareAtoms(*i, *j));
-      assert(!compareAtoms(*j, *i));
+      assert(compareAtoms(*i, *j, customSorter));
+      assert(!compareAtoms(*j, *i, customSorter));
     }
   }
 }
@@ -168,7 +169,7 @@ void LayoutPass::checkFollowonChain(MutableFile::DefinedAtomRange &range) {
 /// b) Sorts atoms by their ordinal overrides (layout-after/ingroup)
 /// c) Sorts atoms by their permissions
 /// d) Sorts atoms by their content
-/// e) If custom sorter provided, let it sort
+/// e) Sorts atoms by custom sorter
 /// f) Sorts atoms on how they appear using File Ordinality
 /// g) Sorts atoms on how they appear within the File
 static bool compareAtomsSub(const LayoutPass::SortKey &lc,
@@ -473,7 +474,7 @@ void LayoutPass::perform(std::unique_ptr<MutableFile> &mergedFile) {
       [&](const LayoutPass::SortKey &l, const LayoutPass::SortKey &r) -> bool {
         return compareAtoms(l, r, _customSorter);
       });
-  DEBUG(checkTransitivity(vec));
+  DEBUG(checkTransitivity(vec, _customSorter));
   undecorate(atomRange, vec);
 
   DEBUG({
@@ -485,8 +486,7 @@ void LayoutPass::perform(std::unique_ptr<MutableFile> &mergedFile) {
 void addLayoutPass(PassManager &pm, const MachOLinkingContext &ctx) {
   pm.add(std::unique_ptr<Pass>(new LayoutPass(
       ctx.registry(), [&](const DefinedAtom * left, const DefinedAtom * right,
-                      bool & leftBeforeRight)
-                      ->bool {
+                          bool & leftBeforeRight) ->bool {
     return ctx.customAtomOrderer(left, right, leftBeforeRight);
   })));
 }
