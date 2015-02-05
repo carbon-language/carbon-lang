@@ -1519,35 +1519,20 @@ int SymbolizerGetOpInfo(void *DisInfo, uint64_t Pc, uint64_t Offset,
       const char *name = SymName.data();
       op_info->AddSymbol.Present = 1;
       op_info->AddSymbol.Name = name;
-      if (value != 0) {
-        switch (r_type) {
-        case MachO::ARM_RELOC_HALF:
-          if ((r_length & 0x1) == 1) {
-            op_info->Value = value << 16 | other_half;
-            op_info->VariantKind = LLVMDisassembler_VariantKind_ARM_HI16;
-          } else {
-            op_info->Value = other_half << 16 | value;
-            op_info->VariantKind = LLVMDisassembler_VariantKind_ARM_LO16;
-          }
-          break;
-        default:
-          break;
+      switch (r_type) {
+      case MachO::ARM_RELOC_HALF:
+        if ((r_length & 0x1) == 1) {
+          op_info->Value = value << 16 | other_half;
+          op_info->VariantKind = LLVMDisassembler_VariantKind_ARM_HI16;
+        } else {
+          op_info->Value = other_half << 16 | value;
+          op_info->VariantKind = LLVMDisassembler_VariantKind_ARM_LO16;
         }
-      } else {
-        switch (r_type) {
-        case MachO::ARM_RELOC_HALF:
-          if ((r_length & 0x1) == 1) {
-            op_info->Value = value << 16 | other_half;
-            op_info->VariantKind = LLVMDisassembler_VariantKind_ARM_HI16;
-          } else {
-            op_info->Value = other_half << 16 | value;
-            op_info->VariantKind = LLVMDisassembler_VariantKind_ARM_LO16;
-          }
+        break;
+      default:
           break;
-        default:
-          break;
-        }
       }
+    }
       return 1;
     }
     // If we have a branch that is not an external relocation entry then
