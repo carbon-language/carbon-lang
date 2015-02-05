@@ -114,6 +114,8 @@ public:
 
   unsigned getAddressComputationCost(Type *Val, bool IsComplex);
 
+  unsigned getFPOpCost(Type *Ty);
+
   unsigned getArithmeticInstrCost(
       unsigned Opcode, Type *Ty,
       TTI::OperandValueKind Op1Info = TTI::OK_AnyValue,

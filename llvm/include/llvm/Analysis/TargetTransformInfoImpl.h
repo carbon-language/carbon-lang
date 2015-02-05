@@ -239,6 +239,8 @@ public:
 
   bool haveFastSqrt(Type *Ty) { return false; }
 
+  unsigned getFPOpCost(Type *Ty) { return TargetTransformInfo::TCC_Basic; }
+
   unsigned getIntImmCost(const APInt &Imm, Type *Ty) { return TTI::TCC_Basic; }
 
   unsigned getIntImmCost(unsigned Opcode, unsigned Idx, const APInt &Imm,

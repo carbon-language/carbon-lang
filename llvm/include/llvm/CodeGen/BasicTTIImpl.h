@@ -167,6 +167,12 @@ public:
            TLI->isOperationLegalOrCustom(ISD::FSQRT, VT);
   }
 
+  unsigned getFPOpCost(Type *Ty) {
+    // By default, FP instructions are no more expensive since they are
+    // implemented in HW.  Target specific TTI can override this.
+    return TargetTransformInfo::TCC_Basic;
+  }
+
   void getUnrollingPreferences(Loop *L, TTI::UnrollingPreferences &UP) {
     // This unrolling functionality is target independent, but to provide some
     // motivation for its intended use, for x86:

@@ -148,6 +148,10 @@ bool TargetTransformInfo::haveFastSqrt(Type *Ty) const {
   return TTIImpl->haveFastSqrt(Ty);
 }
 
+unsigned TargetTransformInfo::getFPOpCost(Type *Ty) const {
+  return TTIImpl->getFPOpCost(Ty);
+}
+
 unsigned TargetTransformInfo::getIntImmCost(const APInt &Imm, Type *Ty) const {
   return TTIImpl->getIntImmCost(Imm, Ty);
 }

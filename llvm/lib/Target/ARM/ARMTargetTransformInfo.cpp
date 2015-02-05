@@ -314,6 +314,25 @@ unsigned ARMTTIImpl::getAddressComputationCost(Type *Ty, bool IsComplex) {
   return 1;
 }
 
+unsigned ARMTTIImpl::getFPOpCost(Type *Ty) {
+  // Use similar logic that's in ARMISelLowering:
+  // Any ARM CPU with VFP2 has floating point, but Thumb1 didn't have access
+  // to VFP.
+
+  if (ST->hasVFP2() && !ST->isThumb1Only()) {
+    if (Ty->isFloatTy()) {
+      return TargetTransformInfo::TCC_Basic;
+    }
+
+    if (Ty->isDoubleTy()) {
+      return ST->isFPOnlySP() ? TargetTransformInfo::TCC_Expensive :
+        TargetTransformInfo::TCC_Basic;
+    }
+  }
+
+  return TargetTransformInfo::TCC_Expensive;
+}
+
 unsigned ARMTTIImpl::getShuffleCost(TTI::ShuffleKind Kind, Type *Tp, int Index,
                                     Type *SubTp) {
   // We only handle costs of reverse and alternate shuffles for now.

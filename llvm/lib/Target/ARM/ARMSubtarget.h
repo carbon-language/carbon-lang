@@ -310,7 +310,8 @@ public:
   bool hasCRC() const { return HasCRC; }
   bool hasVirtualization() const { return HasVirtualization; }
   bool useNEONForSinglePrecisionFP() const {
-    return hasNEON() && UseNEONForSinglePrecisionFP; }
+    return hasNEON() && UseNEONForSinglePrecisionFP;
+  }
 
   bool hasDivide() const { return HasHardwareDivide; }
   bool hasDivideInARMMode() const { return HasHardwareDivideInARM; }
