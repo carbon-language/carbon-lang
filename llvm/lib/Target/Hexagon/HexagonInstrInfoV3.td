@@ -83,7 +83,6 @@ let isCodeGenOnly = 1, Defs = VolatileV3.Regs, validSubTargets = HasV3SubT in {
   def CALLRv3nr : JUMPR_MISC_CALLR<0, 1>; // Call, no return.
 }
 
-
 //===----------------------------------------------------------------------===//
 // JR -
 //===----------------------------------------------------------------------===//
@@ -91,7 +90,6 @@ let isCodeGenOnly = 1, Defs = VolatileV3.Regs, validSubTargets = HasV3SubT in {
 //===----------------------------------------------------------------------===//
 // ALU64/ALU +
 //===----------------------------------------------------------------------===//
-
 
 let Defs = [USR_OVF], Itinerary = ALU64_tc_2_SLOT23,
     validSubTargets = HasV3SubT in

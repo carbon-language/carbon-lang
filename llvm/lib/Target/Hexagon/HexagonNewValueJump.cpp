@@ -299,48 +299,48 @@ static unsigned getNewValueJumpOpcode(MachineInstr *MI, int reg,
 
   switch (MI->getOpcode()) {
     case Hexagon::C2_cmpeq:
-      return taken ? Hexagon::CMPEQrr_t_Jumpnv_t_V4
-                   : Hexagon::CMPEQrr_t_Jumpnv_nt_V4;
+      return taken ? Hexagon::J4_cmpeq_t_jumpnv_t
+                   : Hexagon::J4_cmpeq_t_jumpnv_nt;
 
     case Hexagon::C2_cmpeqi: {
       if (reg >= 0)
-        return taken ? Hexagon::CMPEQri_t_Jumpnv_t_V4
-                     : Hexagon::CMPEQri_t_Jumpnv_nt_V4;
+        return taken ? Hexagon::J4_cmpeqi_t_jumpnv_t
+                     : Hexagon::J4_cmpeqi_t_jumpnv_nt;
       else
-        return taken ? Hexagon::CMPEQn1_t_Jumpnv_t_V4
-                     : Hexagon::CMPEQn1_t_Jumpnv_nt_V4;
+        return taken ? Hexagon::J4_cmpeqn1_t_jumpnv_t
+                     : Hexagon::J4_cmpeqn1_t_jumpnv_nt;
     }
 
     case Hexagon::C2_cmpgt: {
       if (secondRegNewified)
-        return taken ? Hexagon::CMPLTrr_t_Jumpnv_t_V4
-                     : Hexagon::CMPLTrr_t_Jumpnv_nt_V4;
+        return taken ? Hexagon::J4_cmplt_t_jumpnv_t
+                     : Hexagon::J4_cmplt_t_jumpnv_nt;
       else
-        return taken ? Hexagon::CMPGTrr_t_Jumpnv_t_V4
-                     : Hexagon::CMPGTrr_t_Jumpnv_nt_V4;
+        return taken ? Hexagon::J4_cmpgt_t_jumpnv_t
+                     : Hexagon::J4_cmpgt_t_jumpnv_nt;
     }
 
     case Hexagon::C2_cmpgti: {
       if (reg >= 0)
-        return taken ? Hexagon::CMPGTri_t_Jumpnv_t_V4
-                     : Hexagon::CMPGTri_t_Jumpnv_nt_V4;
+        return taken ? Hexagon::J4_cmpgti_t_jumpnv_t
+                     : Hexagon::J4_cmpgti_t_jumpnv_nt;
       else
-        return taken ? Hexagon::CMPGTn1_t_Jumpnv_t_V4
-                     : Hexagon::CMPGTn1_t_Jumpnv_nt_V4;
+        return taken ? Hexagon::J4_cmpgtn1_t_jumpnv_t
+                     : Hexagon::J4_cmpgtn1_t_jumpnv_nt;
     }
 
     case Hexagon::C2_cmpgtu: {
       if (secondRegNewified)
-        return taken ? Hexagon::CMPLTUrr_t_Jumpnv_t_V4
-                     : Hexagon::CMPLTUrr_t_Jumpnv_nt_V4;
+        return taken ? Hexagon::J4_cmpltu_t_jumpnv_t
+                     : Hexagon::J4_cmpltu_t_jumpnv_nt;
       else
-        return taken ? Hexagon::CMPGTUrr_t_Jumpnv_t_V4
-                     : Hexagon::CMPGTUrr_t_Jumpnv_nt_V4;
+        return taken ? Hexagon::J4_cmpgtu_t_jumpnv_t
+                     : Hexagon::J4_cmpgtu_t_jumpnv_nt;
     }
 
     case Hexagon::C2_cmpgtui:
-      return taken ? Hexagon::CMPGTUri_t_Jumpnv_t_V4
-                   : Hexagon::CMPGTUri_t_Jumpnv_nt_V4;
+      return taken ? Hexagon::J4_cmpgtui_t_jumpnv_t
+                   : Hexagon::J4_cmpgtui_t_jumpnv_nt;
 
     default:
        llvm_unreachable("Could not find matching New Value Jump instruction.");

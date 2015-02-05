@@ -1502,7 +1502,7 @@ class NVJrr_template<string mnemonic, bits<3> majOp, bit NvOpNum,
       let RegOp = !if(!eq(NvOpNum, 0), src2, src1);
 
       let IClass = 0b0010;
-      let Inst{26} = 0b0;
+      let Inst{27-26} = 0b00;
       let Inst{25-23} = majOp;
       let Inst{22} = isNegCond;
       let Inst{18-16} = Ns;
@@ -1516,9 +1516,9 @@ class NVJrr_template<string mnemonic, bits<3> majOp, bit NvOpNum,
 multiclass NVJrr_cond<string mnemonic, bits<3> majOp, bit NvOpNum,
                        bit isNegCond> {
   // Branch not taken:
-  def _nt_V4: NVJrr_template<mnemonic, majOp, NvOpNum, isNegCond, 0>;
+  def _nt: NVJrr_template<mnemonic, majOp, NvOpNum, isNegCond, 0>;
   // Branch taken:
-  def _t_V4: NVJrr_template<mnemonic, majOp, NvOpNum, isNegCond, 1>;
+  def _t : NVJrr_template<mnemonic, majOp, NvOpNum, isNegCond, 1>;
 }
 
 // NvOpNum = 0 -> First Operand is a new-value Register
@@ -1527,8 +1527,8 @@ multiclass NVJrr_cond<string mnemonic, bits<3> majOp, bit NvOpNum,
 multiclass NVJrr_base<string mnemonic, string BaseOp, bits<3> majOp,
                        bit NvOpNum> {
   let BaseOpcode = BaseOp#_NVJ in {
-    defm _t_Jumpnv : NVJrr_cond<mnemonic, majOp, NvOpNum, 0>; // True cond
-    defm _f_Jumpnv : NVJrr_cond<mnemonic, majOp, NvOpNum, 1>; // False cond
+    defm _t_jumpnv : NVJrr_cond<mnemonic, majOp, NvOpNum, 0>; // True cond
+    defm _f_jumpnv : NVJrr_cond<mnemonic, majOp, NvOpNum, 1>; // False cond
   }
 }
 
@@ -1540,11 +1540,11 @@ multiclass NVJrr_base<string mnemonic, string BaseOp, bits<3> majOp,
 
 let isPredicated = 1, isBranch = 1, isNewValue = 1, isTerminator = 1,
     Defs = [PC], hasSideEffects = 0, validSubTargets = HasV4SubT in {
-  defm CMPEQrr  : NVJrr_base<"cmp.eq",  "CMPEQ",  0b000, 0>, PredRel;
-  defm CMPGTrr  : NVJrr_base<"cmp.gt",  "CMPGT",  0b001, 0>, PredRel;
-  defm CMPGTUrr : NVJrr_base<"cmp.gtu", "CMPGTU", 0b010, 0>, PredRel;
-  defm CMPLTrr  : NVJrr_base<"cmp.gt",  "CMPLT",  0b011, 1>, PredRel;
-  defm CMPLTUrr : NVJrr_base<"cmp.gtu", "CMPLTU", 0b100, 1>, PredRel;
+  defm J4_cmpeq  : NVJrr_base<"cmp.eq",  "CMPEQ",  0b000, 0>, PredRel;
+  defm J4_cmpgt  : NVJrr_base<"cmp.gt",  "CMPGT",  0b001, 0>, PredRel;
+  defm J4_cmpgtu : NVJrr_base<"cmp.gtu", "CMPGTU", 0b010, 0>, PredRel;
+  defm J4_cmplt  : NVJrr_base<"cmp.gt",  "CMPLT",  0b011, 1>, PredRel;
+  defm J4_cmpltu : NVJrr_base<"cmp.gtu", "CMPLTU", 0b100, 1>, PredRel;
 }
 
 //===----------------------------------------------------------------------===//
@@ -1582,15 +1582,15 @@ class NVJri_template<string mnemonic, bits<3> majOp, bit isNegCond,
 
 multiclass NVJri_cond<string mnemonic, bits<3> majOp, bit isNegCond> {
   // Branch not taken:
-  def _nt_V4: NVJri_template<mnemonic, majOp, isNegCond, 0>;
+  def _nt: NVJri_template<mnemonic, majOp, isNegCond, 0>;
   // Branch taken:
-  def _t_V4: NVJri_template<mnemonic, majOp, isNegCond, 1>;
+  def _t : NVJri_template<mnemonic, majOp, isNegCond, 1>;
 }
 
 multiclass NVJri_base<string mnemonic, string BaseOp, bits<3> majOp> {
   let BaseOpcode = BaseOp#_NVJri in {
-    defm _t_Jumpnv : NVJri_cond<mnemonic, majOp, 0>; // True Cond
-    defm _f_Jumpnv : NVJri_cond<mnemonic, majOp, 1>; // False cond
+    defm _t_jumpnv : NVJri_cond<mnemonic, majOp, 0>; // True Cond
+    defm _f_jumpnv : NVJri_cond<mnemonic, majOp, 1>; // False cond
   }
 }
 
@@ -1600,9 +1600,9 @@ multiclass NVJri_base<string mnemonic, string BaseOp, bits<3> majOp> {
 
 let isPredicated = 1, isBranch = 1, isNewValue = 1, isTerminator = 1,
     Defs = [PC], hasSideEffects = 0, validSubTargets = HasV4SubT in {
-  defm CMPEQri  : NVJri_base<"cmp.eq", "CMPEQ", 0b000>, PredRel;
-  defm CMPGTri  : NVJri_base<"cmp.gt", "CMPGT", 0b001>, PredRel;
-  defm CMPGTUri : NVJri_base<"cmp.gtu", "CMPGTU", 0b010>, PredRel;
+  defm J4_cmpeqi  : NVJri_base<"cmp.eq", "CMPEQ", 0b000>, PredRel;
+  defm J4_cmpgti  : NVJri_base<"cmp.gt", "CMPGT", 0b001>, PredRel;
+  defm J4_cmpgtui : NVJri_base<"cmp.gtu", "CMPGTU", 0b010>, PredRel;
 }
 
 //===----------------------------------------------------------------------===//
@@ -1639,16 +1639,16 @@ class NVJ_ConstImm_template<string mnemonic, bits<3> majOp, string ImmVal,
 multiclass NVJ_ConstImm_cond<string mnemonic, bits<3> majOp, string ImmVal,
                              bit isNegCond> {
   // Branch not taken:
-  def _nt_V4: NVJ_ConstImm_template<mnemonic, majOp, ImmVal, isNegCond, 0>;
+  def _nt: NVJ_ConstImm_template<mnemonic, majOp, ImmVal, isNegCond, 0>;
   // Branch taken:
-  def _t_V4: NVJ_ConstImm_template<mnemonic, majOp, ImmVal, isNegCond, 1>;
+  def _t : NVJ_ConstImm_template<mnemonic, majOp, ImmVal, isNegCond, 1>;
 }
 
 multiclass NVJ_ConstImm_base<string mnemonic, string BaseOp, bits<3> majOp,
                              string ImmVal> {
   let BaseOpcode = BaseOp#_NVJ_ConstImm in {
-    defm _t_Jumpnv : NVJ_ConstImm_cond<mnemonic, majOp, ImmVal, 0>; // True
-    defm _f_Jumpnv : NVJ_ConstImm_cond<mnemonic, majOp, ImmVal, 1>; // False
+    defm _t_jumpnv : NVJ_ConstImm_cond<mnemonic, majOp, ImmVal, 0>; // True
+    defm _f_jumpnv : NVJ_ConstImm_cond<mnemonic, majOp, ImmVal, 1>; // False
   }
 }
 
@@ -1658,9 +1658,9 @@ multiclass NVJ_ConstImm_base<string mnemonic, string BaseOp, bits<3> majOp,
 
 let isPredicated = 1, isBranch = 1, isNewValue = 1, isTerminator=1,
     Defs = [PC], hasSideEffects = 0 in {
-  defm TSTBIT0  : NVJ_ConstImm_base<"tstbit", "TSTBIT", 0b011, "0">, PredRel;
-  defm CMPEQn1  : NVJ_ConstImm_base<"cmp.eq", "CMPEQ",  0b100, "-1">, PredRel;
-  defm CMPGTn1  : NVJ_ConstImm_base<"cmp.gt", "CMPGT",  0b101, "-1">, PredRel;
+  defm J4_tstbit0 : NVJ_ConstImm_base<"tstbit", "TSTBIT", 0b011, "0">, PredRel;
+  defm J4_cmpeqn1 : NVJ_ConstImm_base<"cmp.eq", "CMPEQ",  0b100, "-1">, PredRel;
+  defm J4_cmpgtn1 : NVJ_ConstImm_base<"cmp.gt", "CMPGT",  0b101, "-1">, PredRel;
 }
 
 // J4_hintjumpr: Hint indirect conditional jump.
