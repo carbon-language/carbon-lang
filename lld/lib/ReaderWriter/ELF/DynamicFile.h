@@ -45,7 +45,7 @@ protected:
   std::error_code doParse() override {
     std::error_code ec;
     _objFile.reset(
-        new llvm::object::ELFFile<ELFT>(_mb.release()->getBuffer(), ec));
+        new llvm::object::ELFFile<ELFT>(_mb->getBuffer(), ec));
     if (ec)
       return ec;
 

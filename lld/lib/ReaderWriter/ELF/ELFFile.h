@@ -420,7 +420,7 @@ ELFFile<ELFT>::create(std::unique_ptr<MemoryBuffer> mb, bool atomizeStrings) {
 template <class ELFT>
 std::error_code ELFFile<ELFT>::doParse() {
   std::error_code ec;
-  _objFile.reset(new llvm::object::ELFFile<ELFT>(_mb.release()->getBuffer(), ec));
+  _objFile.reset(new llvm::object::ELFFile<ELFT>(_mb->getBuffer(), ec));
   if (ec)
     return ec;
 
