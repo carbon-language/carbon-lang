@@ -8,7 +8,7 @@ int
 main (int argc, char const **argv)
 {
     struct stat buf;
-    int i;
+    int i, rv = 0;
 
     // Make sure stdin/stdout/stderr exist.
     for (i = 0; i <= 2; ++i) {
@@ -20,9 +20,9 @@ main (int argc, char const **argv)
     for (i = 3; i <= 256; ++i) {
         if (fstat(i, &buf) == 0 || errno != EBADF) {
             fprintf(stderr, "File descriptor %d is open.\n", i);
-            return 2;
+            rv = 2;
         }
     }
 
-    return 0;
+    return rv;
 }
