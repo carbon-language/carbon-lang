@@ -186,10 +186,6 @@ public:
     return getTM<X86TargetMachine>();
   }
 
-  const X86Subtarget &getX86Subtarget() const {
-    return *getX86TargetMachine().getSubtargetImpl();
-  }
-
   void addIRPasses() override;
   bool addInstSelector() override;
   bool addILPOpts() override;
@@ -214,7 +210,8 @@ bool X86PassConfig::addInstSelector() {
   addPass(createX86ISelDag(getX86TargetMachine(), getOptLevel()));
 
   // For ELF, cleanup any local-dynamic TLS accesses.
-  if (getX86Subtarget().isTargetELF() && getOptLevel() != CodeGenOpt::None)
+  if (Triple(TM->getTargetTriple()).isOSBinFormatELF() &&
+      getOptLevel() != CodeGenOpt::None)
     addPass(createCleanupLocalDynamicTLSPass());
 
   addPass(createX86GlobalBaseRegPass());
@@ -236,7 +233,7 @@ void X86PassConfig::addPostRegAlloc() {
 }
 
 void X86PassConfig::addPreEmitPass() {
-  if (getOptLevel() != CodeGenOpt::None && getX86Subtarget().hasSSE2())
+  if (getOptLevel() != CodeGenOpt::None)
     addPass(createExecutionDependencyFixPass(&X86::VR128RegClass));
 
   if (UseVZeroUpper)
