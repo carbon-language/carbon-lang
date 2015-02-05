@@ -649,23 +649,23 @@ def : T_PPR_pat <S2_lsl_r_p_or,   int_hexagon_S2_lsl_r_p_or>;
 *            ALU32/ALU                                              *
 *********************************************************************/
 def : T_RR_pat<A2_add,      int_hexagon_A2_add>;
-def : T_RI_pat<A2_addi,      int_hexagon_A2_addi>;
+def : T_RI_pat<A2_addi,     int_hexagon_A2_addi>;
 def : T_RR_pat<A2_sub,      int_hexagon_A2_sub>;
-def : T_IR_pat<SUB_ri,      int_hexagon_A2_subri>;
+def : T_IR_pat<A2_subri,    int_hexagon_A2_subri>;
 def : T_RR_pat<A2_and,      int_hexagon_A2_and>;
-def : T_RI_pat<AND_ri,      int_hexagon_A2_andir>;
+def : T_RI_pat<A2_andir,    int_hexagon_A2_andir>;
 def : T_RR_pat<A2_or,       int_hexagon_A2_or>;
-def : T_RI_pat<OR_ri,       int_hexagon_A2_orir>;
+def : T_RI_pat<A2_orir,     int_hexagon_A2_orir>;
 def : T_RR_pat<A2_xor,      int_hexagon_A2_xor>;
 def : T_RR_pat<A2_combinew, int_hexagon_A2_combinew>;
 
 // Assembler mapped from Rd32=not(Rs32) to Rd32=sub(#-1,Rs32)
 def : Pat <(int_hexagon_A2_not (I32:$Rs)),
-           (SUB_ri -1, IntRegs:$Rs)>;
+           (A2_subri -1, IntRegs:$Rs)>;
 
 // Assembler mapped from Rd32=neg(Rs32) to Rd32=sub(#0,Rs32)
 def : Pat <(int_hexagon_A2_neg IntRegs:$Rs),
-           (SUB_ri 0, IntRegs:$Rs)>;
+           (A2_subri 0, IntRegs:$Rs)>;
 
 // Transfer immediate
 def  : Pat <(int_hexagon_A2_tfril (I32:$Rs), u16_0ImmPred:$Is),

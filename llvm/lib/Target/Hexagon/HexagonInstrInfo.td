@@ -391,15 +391,13 @@ multiclass Addri_Pred<string mnemonic, bit PredNot> {
   }
 }
 
-let isExtendable = 1, InputType = "imm" in
+let isExtendable = 1, isExtentSigned = 1, InputType = "imm" in
 multiclass Addri_base<string mnemonic, SDNode OpNode> {
   let CextOpcode = mnemonic, BaseOpcode = mnemonic#_ri in {
-    let opExtendable = 2, isExtentSigned = 1, opExtentBits = 16,
-    isPredicable = 1 in
+    let opExtendable = 2, opExtentBits = 16, isPredicable = 1 in
     def A2_#NAME : T_Addri<s16Ext>;
 
-    let opExtendable = 3, isExtentSigned = 1, opExtentBits = 8,
-    hasSideEffects = 0, isPredicated = 1 in {
+    let opExtendable = 3, opExtentBits = 8, isPredicated = 1 in {
       defm A2_p#NAME#t : Addri_Pred<mnemonic, 0>;
       defm A2_p#NAME#f : Addri_Pred<mnemonic, 1>;
     }
@@ -438,17 +436,15 @@ class T_ALU32ri_logical <string mnemonic, SDNode OpNode, bits<2> MinOp>
     let Inst{4-0}   = Rd;
   }
 
-def OR_ri  : T_ALU32ri_logical<"or", or, 0b10>, ImmRegRel;
-def AND_ri : T_ALU32ri_logical<"and", and, 0b00>, ImmRegRel;
+def A2_orir  : T_ALU32ri_logical<"or", or, 0b10>, ImmRegRel;
+def A2_andir : T_ALU32ri_logical<"and", and, 0b00>, ImmRegRel;
 
 // Subtract register from immediate
 // Rd32=sub(#s10,Rs32)
-let isExtendable = 1, opExtendable = 1, isExtentSigned = 1, opExtentBits = 10,
-CextOpcode = "sub", InputType = "imm", hasNewValue = 1 in
-def SUB_ri: ALU32_ri <(outs IntRegs:$Rd), (ins s10Ext:$s10, IntRegs:$Rs),
-  "$Rd = sub(#$s10, $Rs)" ,
-  [(set IntRegs:$Rd, (sub s10ExtPred:$s10, IntRegs:$Rs))] > ,
-  ImmRegRel {
+let isExtendable = 1, CextOpcode = "sub", opExtendable = 1, isExtentSigned = 1,
+    opExtentBits = 10, InputType = "imm", hasNewValue = 1, hasSideEffects = 0 in
+def A2_subri: ALU32_ri <(outs IntRegs:$Rd), (ins s10Ext:$s10, IntRegs:$Rs),
+  "$Rd = sub(#$s10, $Rs)", []>, ImmRegRel {
     bits<5> Rd;
     bits<10> s10;
     bits<5> Rs;
@@ -468,9 +464,13 @@ def A2_nop: ALU32Inst <(outs), (ins), "nop" > {
   let IClass = 0b0111;
   let Inst{27-24} = 0b1111;
 }
+
+def: Pat<(sub s10ExtPred:$s10, IntRegs:$Rs),
+         (A2_subri imm:$s10, IntRegs:$Rs)>;
+
 // Rd = not(Rs) gets mapped to Rd=sub(#-1, Rs).
-def : Pat<(not (i32 IntRegs:$src1)),
-          (SUB_ri -1, (i32 IntRegs:$src1))>;
+def: Pat<(not (i32 IntRegs:$src1)),
+         (A2_subri -1, IntRegs:$src1)>;
 
 let hasSideEffects = 0, hasNewValue = 1 in
 class T_tfr16<bit isHi>
@@ -712,8 +712,8 @@ def C2_muxii: ALU32Inst <(outs IntRegs:$Rd),
 //===----------------------------------------------------------------------===//
 let hasNewValue = 1, opNewValue = 0 in
 class T_ALU32_2op <string mnemonic, bits<3> minOp> :
-    ALU32Inst < (outs IntRegs:$Rd), (ins IntRegs:$Rs),
-    "$Rd = "#mnemonic#"($Rs)", [] > {
+  ALU32Inst <(outs IntRegs:$Rd), (ins IntRegs:$Rs),
+             "$Rd = "#mnemonic#"($Rs)", [] > {
   bits<5> Rd;
   bits<5> Rs;
 
@@ -732,11 +732,11 @@ class T_ALU32_2op <string mnemonic, bits<3> minOp> :
 //===----------------------------------------------------------------------===//
 let hasSideEffects = 0, validSubTargets = HasV4SubT,
     hasNewValue = 1, opNewValue = 0 in
-class T_ALU32_2op_Pred <string mnemonic, bits<3> minOp, bit isPredNot, 
-    bit isPredNew > :
-    ALU32Inst <(outs IntRegs:$Rd), (ins PredRegs:$Pu, IntRegs:$Rs),
-    !if(isPredNot, "if (!$Pu", "if ($Pu")
-    #!if(isPredNew, ".new) ",") ")#"$Rd = "#mnemonic#"($Rs)"> {
+class T_ALU32_2op_Pred <string mnemonic, bits<3> minOp, bit isPredNot,
+                        bit isPredNew > :
+  ALU32Inst <(outs IntRegs:$Rd), (ins PredRegs:$Pu, IntRegs:$Rs),
+             !if(isPredNot, "if (!$Pu", "if ($Pu")
+             #!if(isPredNew, ".new) ",") ")#"$Rd = "#mnemonic#"($Rs)"> {
   bits<5> Rd;
   bits<2> Pu;
   bits<5> Rs;
@@ -816,7 +816,6 @@ multiclass ZXTB_base <string mnemonic, bits<3> minOp> {
   }
 }
 
-let isCodeGenOnly=0 in
 defm zxtb : ZXTB_base<"zxtb",0b100>, PredNewRel;
 
 def: Pat<(shl I32:$src1, (i32 16)),   (A2_aslh I32:$src1)>;
@@ -997,7 +996,8 @@ def: T_vcmp_pat<A2_vcmpwgtu, setugt, v2i32>;
 
 //===----------------------------------------------------------------------===//
 // ALU64/ALU +
-//===----------------------------------------------------------------------===//// Add.
+//===----------------------------------------------------------------------===//
+// Add.
 //===----------------------------------------------------------------------===//
 // Template Class
 // Add/Subtract halfword
@@ -1394,7 +1394,7 @@ def C2_mask : SInst<(outs DoubleRegs:$Rd), (ins PredRegs:$Pt),
 //===----------------------------------------------------------------------===//
 
 def retflag : SDNode<"HexagonISD::RET_FLAG", SDTNone,
-                               [SDNPHasChain, SDNPOptInGlue, SDNPVariadic]>;
+                     [SDNPHasChain, SDNPOptInGlue, SDNPVariadic]>;
 def eh_return: SDNode<"HexagonISD::EH_RETURN", SDTNone, [SDNPHasChain]>;
 
 def SDHexagonBR_JT: SDTypeProfile<0, 1, [SDTCisVT<0, i32>]>;
@@ -1404,7 +1404,7 @@ class CondStr<string CReg, bit True, bit New> {
   string S = "if (" # !if(True,"","!") # CReg # !if(New,".new","") # ") ";
 }
 class JumpOpcStr<string Mnemonic, bit New, bit Taken> {
-  string S = Mnemonic # !if(New, !if(Taken,":t",":nt"), "");
+  string S = Mnemonic # !if(Taken, ":t", !if(New, ":nt", ""));
 }
 
 let isBranch = 1, isBarrier = 1, Defs = [PC], hasSideEffects = 0,
@@ -1442,7 +1442,7 @@ class T_JMP_c<bit PredNot, bit isPredNew, bit isTak, string ExtStr>
 
     let Inst{27-24} = 0b1100;
     let Inst{21} = PredNot;
-    let Inst{12} = !if(isPredNew, isTak, zero);
+    let Inst{12} = isTak;
     let Inst{11} = isPredNew;
     let Inst{9-8} = src;
     let Inst{23-22} = dst{16-15};
@@ -1452,7 +1452,7 @@ class T_JMP_c<bit PredNot, bit isPredNew, bit isTak, string ExtStr>
   }
 
 multiclass JMP_Pred<bit PredNot, string ExtStr> {
-  def NAME : T_JMP_c<PredNot, 0, 0, ExtStr>;
+  def NAME       : T_JMP_c<PredNot, 0, 0, ExtStr>; // not taken
   // Predicate new
   def NAME#newpt : T_JMP_c<PredNot, 1, 1, ExtStr>; // taken
   def NAME#new   : T_JMP_c<PredNot, 1, 0, ExtStr>; // not taken
@@ -1499,13 +1499,13 @@ class T_JMPr_c <bit PredNot, bit isPredNew, bit isTak>
     let Inst{27-22} = 0b001101;
     let Inst{21} = PredNot;
     let Inst{20-16} = dst;
-    let Inst{12} = !if(isPredNew, isTak, zero);
+    let Inst{12} = isTak;
     let Inst{11} = isPredNew;
     let Inst{9-8} = src;
 }
 
 multiclass JMPR_Pred<bit PredNot> {
-  def NAME: T_JMPr_c<PredNot, 0, 0>;
+  def NAME        : T_JMPr_c<PredNot, 0, 0>; // not taken
   // Predicate new
   def NAME#newpt  : T_JMPr_c<PredNot, 1, 1>; // taken
   def NAME#new    : T_JMPr_c<PredNot, 1, 0>; // not taken
@@ -1609,7 +1609,7 @@ class T_load_io <string mnemonic, RegisterClass RC, bits<4> MajOp,
                        !if (!eq(ImmOpStr, "s11_2Ext"), 13,
                        !if (!eq(ImmOpStr, "s11_1Ext"), 12,
                                         /* s11_0Ext */ 11)));
-    let hasNewValue = !if (!eq(ImmOpStr, "s11_3Ext"), 0, 1);
+    let hasNewValue = !if (!eq(!cast<string>(RC), "DoubleRegs"), 0, 1);
 
     let IClass = 0b1001;
 
@@ -1739,7 +1739,7 @@ let AddedComplexity = 20 in {
 // do the trick.
 let AddedComplexity = 20 in
 def: Pat<(i32 (sextloadi1 (i32 IntRegs:$Rs))),
-         (SUB_ri 0, (L2_loadrub_io IntRegs:$Rs, 0))>;
+         (A2_subri 0, (L2_loadrub_io IntRegs:$Rs, 0))>;
 
 //===----------------------------------------------------------------------===//
 // Post increment load
