@@ -2864,7 +2864,7 @@ recurse:
 
   case Expr::CXXConstructExprClass: {
     const auto *CE = cast<CXXConstructExpr>(E);
-    if (!CE->isListInitialization()) {
+    if (!CE->isListInitialization() || CE->isStdInitListInitialization()) {
       assert(
           CE->getNumArgs() >= 1 &&
           (CE->getNumArgs() == 1 || isa<CXXDefaultArgExpr>(CE->getArg(1))) &&
@@ -2890,8 +2890,18 @@ recurse:
     mangleType(CE->getType());
     if (!List && N != 1)
       Out << '_';
-    for (auto *E : CE->arguments())
-      mangleExpression(E);
+    if (CE->isStdInitListInitialization()) {
+      // We implicitly created a std::initializer_list<T> for the first argument
+      // of a constructor of type U in an expression of the form U{a, b, c}.
+      // Strip all the semantic gunk off the initializer list.
+      auto *SILE =
+          cast<CXXStdInitializerListExpr>(CE->getArg(0)->IgnoreImplicit());
+      auto *ILE = cast<InitListExpr>(SILE->getSubExpr()->IgnoreImplicit());
+      mangleInitListElements(ILE);
+    } else {
+      for (auto *E : CE->arguments())
+        mangleExpression(E);
+    }
     if (List || N != 1)
       Out << 'E';
     break;

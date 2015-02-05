@@ -314,6 +314,16 @@ namespace dr1467 {  // dr1467: 3.7 c++11
       NonAggregate z{{x}};
     }
   } // nonaggregate
+
+  namespace SelfInitIsNotListInit {
+    struct S {
+      S();
+      explicit S(S &);
+      S(const S &);
+    };
+    S s1;
+    S s2 = {s1}; // ok, not list-initialization so we pick the non-explicit constructor
+  }
 } // dr1467
 
 namespace dr1490 {  // dr1490: 3.7 c++11
