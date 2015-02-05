@@ -707,8 +707,13 @@ void CodeGenFunction::EmitOMPSectionDirective(const OMPSectionDirective &) {
   llvm_unreachable("CodeGen for 'omp section' is not supported yet.");
 }
 
-void CodeGenFunction::EmitOMPSingleDirective(const OMPSingleDirective &) {
-  llvm_unreachable("CodeGen for 'omp single' is not supported yet.");
+void CodeGenFunction::EmitOMPSingleDirective(const OMPSingleDirective &S) {
+  CGM.getOpenMPRuntime().EmitOMPSingleRegion(*this, [&]() -> void {
+    InlinedOpenMPRegion Region(*this, S.getAssociatedStmt());
+    RunCleanupsScope Scope(*this);
+    EmitStmt(cast<CapturedStmt>(S.getAssociatedStmt())->getCapturedStmt());
+    EnsureInsertPoint();
+  }, S.getLocStart());
 }
 
 void CodeGenFunction::EmitOMPMasterDirective(const OMPMasterDirective &S) {
