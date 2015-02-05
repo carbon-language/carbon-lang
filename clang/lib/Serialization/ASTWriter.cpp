@@ -3097,6 +3097,37 @@ void ASTWriter::WriteReferencedSelectorsPool(Sema &SemaRef) {
 // Identifier Table Serialization
 //===----------------------------------------------------------------------===//
 
+/// Determine the declaration that should be put into the name lookup table to
+/// represent the given declaration in this module. This is usually D itself,
+/// but if D was imported and merged into a local declaration, we want the most
+/// recent local declaration instead. The chosen declaration will be the most
+/// recent declaration in any module that imports this one.
+static NamedDecl *getDeclForLocalLookup(const LangOptions &LangOpts,
+                                        NamedDecl *D) {
+  if (!LangOpts.Modules || !D->isFromASTFile())
+    return D;
+
+  if (Decl *Redecl = D->getPreviousDecl()) {
+    // For Redeclarable decls, a prior declaration might be local.
+    for (; Redecl; Redecl = Redecl->getPreviousDecl()) {
+      if (!Redecl->isFromASTFile())
+        return cast<NamedDecl>(Redecl);
+      // If we come up a decl from a (chained-)PCH stop since we won't find a
+      // local one.
+      if (D->getOwningModuleID() == 0)
+        break;
+    }
+  } else if (Decl *First = D->getCanonicalDecl()) {
+    // For Mergeable decls, the first decl might be local.
+    if (!First->isFromASTFile())
+      return cast<NamedDecl>(First);
+  }
+
+  // All declarations are imported. Our most recent declaration will also be
+  // the most recent one in anyone who imports us.
+  return D;
+}
+
 namespace {
 class ASTIdentifierTableTrait {
   ASTWriter &Writer;
@@ -3400,36 +3431,15 @@ public:
     // Emit the declaration IDs in reverse order, because the
     // IdentifierResolver provides the declarations as they would be
     // visible (e.g., the function "stat" would come before the struct
-    // "stat"), but the ASTReader adds declarations to the end of the list 
-    // (so we need to see the struct "status" before the function "status").
+    // "stat"), but the ASTReader adds declarations to the end of the list
+    // (so we need to see the struct "stat" before the function "stat").
     // Only emit declarations that aren't from a chained PCH, though.
-    SmallVector<Decl *, 16> Decls(IdResolver.begin(II),
-                                  IdResolver.end());
-    for (SmallVectorImpl<Decl *>::reverse_iterator D = Decls.rbegin(),
-                                                DEnd = Decls.rend();
+    SmallVector<NamedDecl *, 16> Decls(IdResolver.begin(II), IdResolver.end());
+    for (SmallVectorImpl<NamedDecl *>::reverse_iterator D = Decls.rbegin(),
+                                                        DEnd = Decls.rend();
          D != DEnd; ++D)
-      LE.write<uint32_t>(Writer.getDeclID(getMostRecentLocalDecl(*D)));
-  }
-
-  /// \brief Returns the most recent local decl or the given decl if there are
-  /// no local ones. The given decl is assumed to be the most recent one.
-  Decl *getMostRecentLocalDecl(Decl *Orig) {
-    // The only way a "from AST file" decl would be more recent from a local one
-    // is if it came from a module.
-    if (!PP.getLangOpts().Modules)
-      return Orig;
-
-    // Look for a local in the decl chain.
-    for (Decl *D = Orig; D; D = D->getPreviousDecl()) {
-      if (!D->isFromASTFile())
-        return D;
-      // If we come up a decl from a (chained-)PCH stop since we won't find a
-      // local one.
-      if (D->getOwningModuleID() == 0)
-        break;
-    }
-
-    return Orig;
+      LE.write<uint32_t>(
+          Writer.getDeclID(getDeclForLocalLookup(PP.getLangOpts(), *D)));
   }
 };
 } // end anonymous namespace
@@ -3523,31 +3533,6 @@ void ASTWriter::WriteIdentifierTable(Preprocessor &PP,
 //===----------------------------------------------------------------------===//
 // DeclContext's Name Lookup Table Serialization
 //===----------------------------------------------------------------------===//
-
-/// Determine the declaration that should be put into the name lookup table to
-/// represent the given declaration in this module. This is usually D itself,
-/// but if D was imported and merged into a local declaration, we want the most
-/// recent local declaration instead. The chosen declaration will be the most
-/// recent declaration in any module that imports this one.
-static NamedDecl *getDeclForLocalLookup(NamedDecl *D) {
-  if (!D->isFromASTFile())
-    return D;
-
-  if (Decl *Redecl = D->getPreviousDecl()) {
-    // For Redeclarable decls, a prior declaration might be local.
-    for (; Redecl; Redecl = Redecl->getPreviousDecl())
-      if (!Redecl->isFromASTFile())
-        return cast<NamedDecl>(Redecl);
-  } else if (Decl *First = D->getCanonicalDecl()) {
-    // For Mergeable decls, the first decl might be local.
-    if (!First->isFromASTFile())
-      return cast<NamedDecl>(First);
-  }
-
-  // All declarations are imported. Our most recent declaration will also be
-  // the most recent one in anyone who imports us.
-  return D;
-}
 
 namespace {
 // Trait used for the on-disk hash table used in the method pool.
@@ -3666,7 +3651,8 @@ public:
     LE.write<uint16_t>(Lookup.size());
     for (DeclContext::lookup_iterator I = Lookup.begin(), E = Lookup.end();
          I != E; ++I)
-      LE.write<uint32_t>(Writer.GetDeclRef(getDeclForLocalLookup(*I)));
+      LE.write<uint32_t>(
+          Writer.GetDeclRef(getDeclForLocalLookup(Writer.getLangOpts(), *I)));
 
     assert(Out.tell() - Start == DataLen && "Data length is wrong");
   }
@@ -3712,7 +3698,7 @@ void ASTWriter::AddUpdatedDeclContext(const DeclContext *DC) {
                             [&](DeclarationName Name,
                                 DeclContext::lookup_const_result Result) {
       for (auto *Decl : Result)
-        GetDeclRef(getDeclForLocalLookup(Decl));
+        GetDeclRef(getDeclForLocalLookup(getLangOpts(), Decl));
     });
   }
 }
@@ -4186,6 +4172,11 @@ ASTWriter::ASTWriter(llvm::BitstreamWriter &Stream)
 
 ASTWriter::~ASTWriter() {
   llvm::DeleteContainerSeconds(FileDeclIDs);
+}
+
+const LangOptions &ASTWriter::getLangOpts() const {
+  assert(WritingAST && "can't determine lang opts when not writing AST");
+  return Context->getLangOpts();
 }
 
 void ASTWriter::WriteAST(Sema &SemaRef,

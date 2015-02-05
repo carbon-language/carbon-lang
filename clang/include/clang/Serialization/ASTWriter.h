@@ -531,6 +531,8 @@ public:
   ASTWriter(llvm::BitstreamWriter &Stream);
   ~ASTWriter();
 
+  const LangOptions &getLangOpts() const;
+
   /// \brief Write a precompiled header for the given semantic analysis.
   ///
   /// \param SemaRef a reference to the semantic analysis object that processed
