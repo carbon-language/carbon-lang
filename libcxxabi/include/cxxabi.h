@@ -18,16 +18,10 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include <__cxxabi_config.h>
+
 #define _LIBCPPABI_VERSION 1001
 #define LIBCXXABI_NORETURN  __attribute__((noreturn))
-
-// FIXME: This is also in unwind.h and libunwind.h, can we consolidate?
-#if !defined(__USING_SJLJ_EXCEPTIONS__) && defined(__arm__) && \
-    !defined(__ARM_DWARF_EH__) && !defined(__APPLE__)
-#define LIBCXXABI_ARM_EHABI 1
-#else
-#define LIBCXXABI_ARM_EHABI 0
-#endif
 
 #ifdef __cplusplus
 

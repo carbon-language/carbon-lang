@@ -17,13 +17,7 @@
 #include <stdint.h>
 #include <stddef.h>
 
-// FIXME: This is also in unwind.h and cxxabi.h, can we consolidate?
-#if !defined(__USING_SJLJ_EXCEPTIONS__) && defined(__arm__) && \
-    !defined(__ARM_DWARF_EH__) && !defined(__APPLE__)
-#define LIBCXXABI_ARM_EHABI 1
-#else
-#define LIBCXXABI_ARM_EHABI 0
-#endif
+#include <__cxxabi_config.h>
 
 #ifdef __APPLE__
   #include <Availability.h>

@@ -23,13 +23,7 @@
 #define LIBUNWIND_UNAVAIL
 #endif
 
-// FIXME: This is also in cxxabi.h and libunwind.h, can we consolidate?
-#if !defined(__USING_SJLJ_EXCEPTIONS__) && defined(__arm__) && \
-    !defined(__ARM_DWARF_EH__) && !defined(__APPLE__)
-#define LIBCXXABI_ARM_EHABI 1
-#else
-#define LIBCXXABI_ARM_EHABI 0
-#endif
+#include <__cxxabi_config.h>
 
 typedef enum {
   _URC_NO_REASON = 0,
@@ -208,9 +202,7 @@ extern _Unwind_VRS_Result
 _Unwind_VRS_Pop(_Unwind_Context *context, _Unwind_VRS_RegClass regclass,
                 uint32_t discriminator,
                 _Unwind_VRS_DataRepresentation representation);
-#endif
 
-#if LIBCXXABI_ARM_EHABI
 static inline uintptr_t _Unwind_GetGR(struct _Unwind_Context* context,
                                       int index) {
   uintptr_t value = 0;

@@ -23,17 +23,15 @@
   #include <mach-o/dyld.h>
 #endif
 
-#include "libunwind.h"
-
-#include "AddressSpace.hpp"
-#include "Registers.hpp"
-#include "DwarfInstructions.hpp"
-#include "CompactUnwinder.hpp"
 #include "config.h"
 
-#if LIBCXXABI_ARM_EHABI
+#include "AddressSpace.hpp"
+#include "CompactUnwinder.hpp"
+#include "config.h"
+#include "DwarfInstructions.hpp"
+#include "libunwind.h"
+#include "Registers.hpp"
 #include "Unwind-EHABI.h"
-#endif
 
 namespace libunwind {
 

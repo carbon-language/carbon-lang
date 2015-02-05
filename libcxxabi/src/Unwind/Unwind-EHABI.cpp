@@ -12,7 +12,7 @@
 
 #include "Unwind-EHABI.h"
 
-#include <unwind.h>
+#if LIBCXXABI_ARM_EHABI
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -26,7 +26,6 @@
 #include "unwind.h"
 #include "../private_typeinfo.h"
 
-#if LIBCXXABI_ARM_EHABI
 namespace {
 
 // Strange order: take words in order, but inside word, take from most to least

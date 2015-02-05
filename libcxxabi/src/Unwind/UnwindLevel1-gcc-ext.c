@@ -16,14 +16,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "libunwind.h"
-#include "unwind.h"
-#include "libunwind_ext.h"
 #include "config.h"
-
-#if LIBCXXABI_ARM_EHABI
+#include "libunwind_ext.h"
+#include "libunwind.h"
 #include "Unwind-EHABI.h"
-#endif
+#include "unwind.h"
 
 #if _LIBUNWIND_BUILD_ZERO_COST_APIS
 
