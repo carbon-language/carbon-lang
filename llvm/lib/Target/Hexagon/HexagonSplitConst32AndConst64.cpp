@@ -113,9 +113,9 @@ bool HexagonSplitConst32AndConst64::runOnMachineFunction(MachineFunction &Fn) {
         MachineOperand &Symbol = MI->getOperand (1);
 
         BuildMI (*MBB, MII, MI->getDebugLoc(),
-                 TII->get(Hexagon::LO_label), DestReg).addOperand(Symbol);
+                 TII->get(Hexagon::LO_PIC), DestReg).addOperand(Symbol);
         BuildMI (*MBB, MII, MI->getDebugLoc(),
-                 TII->get(Hexagon::HI_label), DestReg).addOperand(Symbol);
+                 TII->get(Hexagon::HI_PIC), DestReg).addOperand(Symbol);
         // MBB->erase returns the iterator to the next instruction, which is the
         // one we want to process next
         MII = MBB->erase (MI);

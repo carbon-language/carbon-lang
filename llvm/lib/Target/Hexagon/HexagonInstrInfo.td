@@ -4487,21 +4487,44 @@ def TFR_FI : ALU32_ri<(outs IntRegs:$dst), (ins FrameIndex:$src1),
 def SDTHexagonCONST32 : SDTypeProfile<1, 1, [SDTCisVT<0, i32>,
                                              SDTCisVT<1, i32>,
                                              SDTCisPtrTy<0>]>;
-def HexagonCONST32    : SDNode<"HexagonISD::CONST32",        SDTHexagonCONST32>;
-def HexagonCONST32_GP : SDNode<"HexagonISD::CONST32_GP",     SDTHexagonCONST32>;
+def HexagonCONST32    : SDNode<"HexagonISD::CONST32",    SDTHexagonCONST32>;
+def HexagonCONST32_GP : SDNode<"HexagonISD::CONST32_GP", SDTHexagonCONST32>;
 
 // HI/LO Instructions
 let isReMaterializable = 1, isMoveImm = 1, hasSideEffects = 0,
-    isAsmParserOnly = 1 in
-def LO : ALU32_ri<(outs IntRegs:$dst), (ins globaladdress:$global),
-                  "$dst.l = #LO($global)",
-                  []>;
+    hasNewValue = 1, opNewValue = 0 in
+class REG_IMMED<string RegHalf, string Op, bit Rs, bits<3> MajOp, bit MinOp>
+  : ALU32_ri<(outs IntRegs:$dst),
+              (ins i32imm:$imm_value),
+              "$dst"#RegHalf#" = #"#Op#"($imm_value)", []> {
+    bits<5> dst;
+    bits<32> imm_value;
+    let IClass = 0b0111;
 
-let isReMaterializable = 1, isMoveImm = 1, hasSideEffects = 0,
-    isAsmParserOnly = 1 in
-def HI : ALU32_ri<(outs IntRegs:$dst), (ins globaladdress:$global),
-                  "$dst.h = #HI($global)",
-                  []>;
+    let Inst{27} = Rs;
+    let Inst{26-24} = MajOp;
+    let Inst{21} = MinOp;
+    let Inst{20-16} = dst;
+    let Inst{23-22} = !if (!eq(Op, "LO"), imm_value{15-14}, imm_value{31-30});
+    let Inst{13-0} = !if (!eq(Op, "LO"), imm_value{13-0}, imm_value{29-16});
+}
+
+let isAsmParserOnly = 1 in {
+  def LO : REG_IMMED<".l", "LO", 0b0, 0b001, 0b1>;
+  def LO_H : REG_IMMED<".l", "HI", 0b0, 0b001, 0b1>;
+  def HI : REG_IMMED<".h", "HI", 0b0, 0b010, 0b1>;
+  def HI_L : REG_IMMED<".h", "LO", 0b0, 0b010, 0b1>;
+}
+
+let  isMoveImm = 1, isCodeGenOnly = 1 in
+def LO_PIC : ALU32_ri<(outs IntRegs:$dst), (ins bblabel:$label),
+             "$dst.l = #LO($label@GOTREL)",
+             []>;
+
+let  isMoveImm = 1, isCodeGenOnly = 1 in
+def HI_PIC : ALU32_ri<(outs IntRegs:$dst), (ins bblabel:$label),
+             "$dst.h = #HI($label@GOTREL)",
+             []>;
 
 let isReMaterializable = 1, isMoveImm = 1, hasSideEffects = 0,
     isAsmParserOnly = 1 in
@@ -4528,37 +4551,23 @@ def HI_jt : ALU32_ri<(outs IntRegs:$dst), (ins jumptablebase:$jt),
                   "$dst.h = #HI($jt)",
                   []>;
 
-
-let isReMaterializable = 1, isMoveImm = 1, hasSideEffects = 0,
-    isAsmParserOnly = 1 in
-def LO_label : ALU32_ri<(outs IntRegs:$dst), (ins bblabel:$label),
-                  "$dst.l = #LO($label)",
-                  []>;
-
-let isReMaterializable = 1, isMoveImm = 1 , hasSideEffects = 0,
-    isAsmParserOnly = 1 in
-def HI_label : ALU32_ri<(outs IntRegs:$dst), (ins bblabel:$label),
-                  "$dst.h = #HI($label)",
-                  []>;
-
 // This pattern is incorrect. When we add small data, we should change
 // this pattern to use memw(#foo).
 // This is for sdata.
 let isMoveImm = 1, isAsmParserOnly = 1 in
-def CONST32 : LDInst<(outs IntRegs:$dst), (ins globaladdress:$global),
+def CONST32 : CONSTLDInst<(outs IntRegs:$dst), (ins globaladdress:$global),
               "$dst = CONST32(#$global)",
               [(set (i32 IntRegs:$dst),
                     (load (HexagonCONST32 tglobaltlsaddr:$global)))]>;
 
-// This is for non-sdata.
-let isReMaterializable = 1, isMoveImm = 1, isAsmParserOnly = 1 in
+let isReMaterializable = 1, isMoveImm = 1 in
 def CONST32_set : LDInst2<(outs IntRegs:$dst), (ins globaladdress:$global),
                   "$dst = CONST32(#$global)",
                   [(set (i32 IntRegs:$dst),
                         (HexagonCONST32 tglobaladdr:$global))]>;
 
 let isReMaterializable = 1, isMoveImm = 1, isAsmParserOnly = 1 in
-def CONST32_set_jt : LDInst2<(outs IntRegs:$dst), (ins jumptablebase:$jt),
+def CONST32_set_jt : CONSTLDInst<(outs IntRegs:$dst), (ins jumptablebase:$jt),
                      "$dst = CONST32(#$jt)",
                      [(set (i32 IntRegs:$dst),
                            (HexagonCONST32 tjumptable:$jt))]>;
@@ -4570,7 +4579,7 @@ def CONST32GP_set : LDInst2<(outs IntRegs:$dst), (ins globaladdress:$global),
                           (HexagonCONST32_GP tglobaladdr:$global))]>;
 
 let isReMaterializable = 1, isMoveImm = 1, isAsmParserOnly = 1 in
-def CONST32_Int_Real : LDInst2<(outs IntRegs:$dst), (ins i32imm:$global),
+def CONST32_Int_Real : CONSTLDInst<(outs IntRegs:$dst), (ins i32imm:$global),
                        "$dst = CONST32(#$global)",
                        [(set (i32 IntRegs:$dst), imm:$global) ]>;
 
@@ -4584,9 +4593,9 @@ def CONST32_Label : LDInst2<(outs IntRegs:$dst), (ins bblabel:$label),
                     [(set (i32 IntRegs:$dst), (HexagonCONST32 bbl:$label))]>;
 
 let isReMaterializable = 1, isMoveImm = 1, isAsmParserOnly = 1 in
-def CONST64_Int_Real : LDInst2<(outs DoubleRegs:$dst), (ins i64imm:$global),
+def CONST64_Int_Real : CONSTLDInst<(outs DoubleRegs:$dst), (ins i64imm:$global),
                        "$dst = CONST64(#$global)",
-                       [(set (i64 DoubleRegs:$dst), imm:$global) ]>;
+                       [(set (i64 DoubleRegs:$dst), imm:$global)]>;
 
 let isCodeGenOnly = 1 in
 def TFR_PdFalse : SInst<(outs PredRegs:$dst), (ins),
@@ -4608,20 +4617,19 @@ def SDT_SPCall  : SDTypeProfile<0, 1, [SDTCisVT<0, i32>]>;
 // For tailcalls a HexagonTCRet SDNode has 3 SDNode Properties - a chain,
 // Optional Flag and Variable Arguments.
 // Its 1 Operand has pointer type.
-def HexagonTCRet    : SDNode<"HexagonISD::TC_RETURN", SDT_SPCall,
-                     [SDNPHasChain,  SDNPOptInGlue, SDNPVariadic]>;
+def HexagonTCRet : SDNode<"HexagonISD::TC_RETURN", SDT_SPCall,
+                          [SDNPHasChain,  SDNPOptInGlue, SDNPVariadic]>;
 
-let Defs = [R29, R30], Uses = [R31, R30, R29] in {
- def ADJCALLSTACKDOWN : Pseudo<(outs), (ins i32imm:$amt),
-                        "Should never be emitted",
-                        [(callseq_start timm:$amt)]>;
-}
+let Defs = [R29, R30], Uses = [R31, R30, R29], isPseudo = 1 in
+def ADJCALLSTACKDOWN : Pseudo<(outs), (ins i32imm:$amt),
+                              ".error \"should not emit\" ",
+                              [(callseq_start timm:$amt)]>;
 
-let Defs = [R29, R30, R31], Uses = [R29] in {
- def ADJCALLSTACKUP : Pseudo<(outs), (ins i32imm:$amt1, i32imm:$amt2),
-                      "Should never be emitted",
-                      [(callseq_end timm:$amt1, timm:$amt2)]>;
-}
+let Defs = [R29, R30, R31], Uses = [R29], isPseudo = 1 in
+def ADJCALLSTACKUP : Pseudo<(outs), (ins i32imm:$amt1, i32imm:$amt2),
+                             ".error \"should not emit\" ",
+                             [(callseq_end timm:$amt1, timm:$amt2)]>;
+
 // Call subroutine.
 let isCall = 1, hasSideEffects = 0, isAsmParserOnly = 1,
   Defs = [D0, D1, D2, D3, D4, D5, D6, D7, D8, D9, D10,
@@ -4635,8 +4643,9 @@ let Defs = VolatileV3.Regs in
 def J2_callr : JUMPR_MISC_CALLR<0, 1>;
 
 // Indirect tail-call.
-let isCodeGenOnly = 1, isCall = 1, isReturn = 1  in
-def TCRETURNR : T_JMPr;
+let isPseudo = 1, isCall = 1, isReturn = 1, isBarrier = 1, isPredicable = 0,
+    isTerminator = 1, isCodeGenOnly = 1 in
+def TCRETURNr : T_JMPr;
 
 // Direct tail-calls.
 let isCall = 1, isReturn = 1, isBarrier = 1, isPredicable = 0,
@@ -4648,26 +4657,26 @@ isTerminator = 1, isCodeGenOnly = 1 in {
 }
 
 //Tail calls.
-def : Pat<(HexagonTCRet tglobaladdr:$dst),
-      (TCRETURNtg tglobaladdr:$dst)>;
-def : Pat<(HexagonTCRet texternalsym:$dst),
-      (TCRETURNtext texternalsym:$dst)>;
-def : Pat<(HexagonTCRet (i32 IntRegs:$dst)),
-      (TCRETURNR (i32 IntRegs:$dst))>;
+def: Pat<(HexagonTCRet tglobaladdr:$dst),
+         (TCRETURNtg tglobaladdr:$dst)>;
+def: Pat<(HexagonTCRet texternalsym:$dst),
+         (TCRETURNtext texternalsym:$dst)>;
+def: Pat<(HexagonTCRet (i32 IntRegs:$dst)),
+         (TCRETURNr (i32 IntRegs:$dst))>;
 
 // Map from r0 = and(r1, 65535) to r0 = zxth(r1)
-def : Pat <(and (i32 IntRegs:$src1), 65535),
-      (A2_zxth (i32 IntRegs:$src1))>;
+def: Pat<(and (i32 IntRegs:$src1), 65535),
+         (A2_zxth IntRegs:$src1)>;
 
 // Map from r0 = and(r1, 255) to r0 = zxtb(r1).
-def : Pat <(and (i32 IntRegs:$src1), 255),
-      (A2_zxtb (i32 IntRegs:$src1))>;
+def: Pat<(and (i32 IntRegs:$src1), 255),
+         (A2_zxtb IntRegs:$src1)>;
 
 // Map Add(p1, true) to p1 = not(p1).
 //     Add(p1, false) should never be produced,
 //     if it does, it got to be mapped to NOOP.
-def : Pat <(add (i1 PredRegs:$src1), -1),
-      (C2_not (i1 PredRegs:$src1))>;
+def: Pat<(add (i1 PredRegs:$src1), -1),
+         (C2_not PredRegs:$src1)>;
 
 // Map from p0 = pnot(p0); r0 = mux(p0, #i, #j) => r0 = mux(p0, #j, #i).
 def : Pat <(select (not (i1 PredRegs:$src1)), s8ImmPred:$src2, s8ImmPred:$src3),

@@ -113,8 +113,8 @@ def TFRI_cPt_f : ALU32_ri<(outs IntRegs:$dst),
            []>,
           Requires<[HasV5T]>;
 
-let isExtended = 1, opExtendable = 2, isPredicated = 1, isPredicatedFalse = 1,
-hasSideEffects = 0, validSubTargets = HasV5SubT in
+let isPseudo = 1, isExtended = 1, opExtendable = 2, isPredicated = 1, 
+    isPredicatedFalse = 1, hasSideEffects = 0, validSubTargets = HasV5SubT in
 def TFRI_cNotPt_f : ALU32_ri<(outs IntRegs:$dst),
                              (ins PredRegs:$src1, f32Ext:$src2),
            "if (!$src1) $dst =#$src2",
