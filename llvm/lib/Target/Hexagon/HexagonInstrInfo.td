@@ -3212,40 +3212,15 @@ defm storerd: ST_PostInc <"memd", "STrid", DoubleRegs, s4_3Imm, 0b1110>;
 let accessSize = HalfWordAccess, isNVStorable = 0 in
 defm storerf: ST_PostInc <"memh", "STrih_H", IntRegs, s4_1Imm, 0b1011, 1>;
 
-// Patterns for generating stores, where the address takes different forms:
-// - frameindex,,
-// - base + offset,
-// - simple (base address without offset).
-// These would usually be used together (via Storex_pat defined below), but
-// in some cases one may want to apply different properties (such as
-// AddedComplexity) to the individual patterns.
-class Storex_fi_pat<PatFrag Store, PatFrag Value, InstHexagon MI>
-  : Pat<(Store Value:$Rs, AddrFI:$fi), (MI AddrFI:$fi, 0, Value:$Rs)>;
-class Storex_add_pat<PatFrag Store, PatFrag Value, PatFrag ImmPred,
-                     InstHexagon MI>
-  : Pat<(Store Value:$Rt, (add (i32 IntRegs:$Rs), ImmPred:$Off)),
-        (MI IntRegs:$Rs, imm:$Off, Value:$Rt)>;
+class Storepi_pat<PatFrag Store, PatFrag Value, PatFrag Offset,
+                  InstHexagon MI>
+  : Pat<(Store Value:$src1, I32:$src2, Offset:$offset),
+        (MI I32:$src2, imm:$offset, Value:$src1)>;
 
-multiclass Storex_pat<PatFrag Store, PatFrag Value, PatLeaf ImmPred,
-                      InstHexagon MI> {
-  def: Storex_fi_pat  <Store, Value, MI>;
-  def: Storex_add_pat <Store, Value, ImmPred, MI>;
-}
-
-def : Pat<(post_truncsti8 (i32 IntRegs:$src1), IntRegs:$src2,
-                           s4_3ImmPred:$offset),
-          (S2_storerb_pi IntRegs:$src2, s4_0ImmPred:$offset, IntRegs:$src1)>;
-
-def : Pat<(post_truncsti16 (i32 IntRegs:$src1), IntRegs:$src2,
-                            s4_3ImmPred:$offset),
-          (S2_storerh_pi IntRegs:$src2, s4_1ImmPred:$offset, IntRegs:$src1)>;
-
-def : Pat<(post_store (i32 IntRegs:$src1), IntRegs:$src2, s4_2ImmPred:$offset),
-          (S2_storeri_pi IntRegs:$src2, s4_1ImmPred:$offset, IntRegs:$src1)>;
-
-def : Pat<(post_store (i64 DoubleRegs:$src1), IntRegs:$src2,
-                       s4_3ImmPred:$offset),
-          (S2_storerd_pi IntRegs:$src2, s4_3ImmPred:$offset, DoubleRegs:$src1)>;
+def: Storepi_pat<post_truncsti8,  I32, s4_0ImmPred, S2_storerb_pi>;
+def: Storepi_pat<post_truncsti16, I32, s4_1ImmPred, S2_storerh_pi>;
+def: Storepi_pat<post_store,      I32, s4_2ImmPred, S2_storeri_pi>;
+def: Storepi_pat<post_store,      I64, s4_3ImmPred, S2_storerd_pi>;
 
 //===----------------------------------------------------------------------===//
 // Template class for post increment stores with register offset.
@@ -3391,9 +3366,28 @@ let addrMode = BaseImmOffset, InputType = "imm" in {
                             u6_1Ext, 0b011, 1>;
 }
 
+// Patterns for generating stores, where the address takes different forms:
+// - frameindex,,
+// - base + offset,
+// - simple (base address without offset).
+// These would usually be used together (via Storex_pat defined below), but
+// in some cases one may want to apply different properties (such as
+// AddedComplexity) to the individual patterns.
+class Storex_fi_pat<PatFrag Store, PatFrag Value, InstHexagon MI>
+  : Pat<(Store Value:$Rs, AddrFI:$fi), (MI AddrFI:$fi, 0, Value:$Rs)>;
+class Storex_add_pat<PatFrag Store, PatFrag Value, PatFrag ImmPred,
+                     InstHexagon MI>
+  : Pat<(Store Value:$Rt, (add (i32 IntRegs:$Rs), ImmPred:$Off)),
+        (MI IntRegs:$Rs, imm:$Off, Value:$Rt)>;
 class Storex_simple_pat<PatFrag Store, PatFrag Value, InstHexagon MI>
   : Pat<(Store Value:$Rt, (i32 IntRegs:$Rs)),
         (MI IntRegs:$Rs, 0, Value:$Rt)>;
+
+multiclass Storex_pat<PatFrag Store, PatFrag Value, PatLeaf ImmPred,
+                      InstHexagon MI> {
+  def: Storex_fi_pat  <Store, Value, MI>;
+  def: Storex_add_pat <Store, Value, ImmPred, MI>;
+}
 
 // Regular stores in the DAG have two operands: value and address.
 // Atomic stores also have two, but they are reversed: address, value.
@@ -4630,14 +4624,6 @@ def ADJCALLSTACKUP : Pseudo<(outs), (ins i32imm:$amt1, i32imm:$amt2),
                              ".error \"should not emit\" ",
                              [(callseq_end timm:$amt1, timm:$amt2)]>;
 
-// Call subroutine.
-let isCall = 1, hasSideEffects = 0, isAsmParserOnly = 1,
-  Defs = [D0, D1, D2, D3, D4, D5, D6, D7, D8, D9, D10,
-          R22, R23, R28, R31, P0, P1, P2, P3, LC0, LC1, SA0, SA1] in {
-  def CALL : JInst<(outs), (ins calltarget:$dst),
-             "call $dst", []>;
-}
-
 // Call subroutine indirectly.
 let Defs = VolatileV3.Regs in
 def J2_callr : JUMPR_MISC_CALLR<0, 1>;
@@ -4679,56 +4665,35 @@ def: Pat<(add (i1 PredRegs:$src1), -1),
          (C2_not PredRegs:$src1)>;
 
 // Map from p0 = pnot(p0); r0 = mux(p0, #i, #j) => r0 = mux(p0, #j, #i).
-def : Pat <(select (not (i1 PredRegs:$src1)), s8ImmPred:$src2, s8ImmPred:$src3),
-      (i32 (TFR_condset_ii (i1 PredRegs:$src1), s8ImmPred:$src3,
-                           s8ImmPred:$src2))>;
+def: Pat<(select (not (i1 PredRegs:$src1)), s8ImmPred:$src2, s8ExtPred:$src3),
+         (C2_muxii PredRegs:$src1, s8ExtPred:$src3, s8ImmPred:$src2)>;
 
 // Map from p0 = pnot(p0); r0 = select(p0, #i, r1)
-// => r0 = TFR_condset_ri(p0, r1, #i)
-def : Pat <(select (not (i1 PredRegs:$src1)), s12ImmPred:$src2,
-                   (i32 IntRegs:$src3)),
-      (i32 (TFR_condset_ri (i1 PredRegs:$src1), (i32 IntRegs:$src3),
-                           s12ImmPred:$src2))>;
+// => r0 = C2_muxir(p0, r1, #i)
+def: Pat<(select (not (i1 PredRegs:$src1)), s8ExtPred:$src2,
+                 (i32 IntRegs:$src3)),
+         (C2_muxir PredRegs:$src1, IntRegs:$src3, s8ExtPred:$src2)>;
 
 // Map from p0 = pnot(p0); r0 = mux(p0, r1, #i)
-// => r0 = TFR_condset_ir(p0, #i, r1)
-def : Pat <(select (not (i1 PredRegs:$src1)), IntRegs:$src2, s12ImmPred:$src3),
-      (i32 (TFR_condset_ir (i1 PredRegs:$src1), s12ImmPred:$src3,
-                           (i32 IntRegs:$src2)))>;
+// => r0 = C2_muxri (p0, #i, r1)
+def: Pat<(select (not (i1 PredRegs:$src1)), IntRegs:$src2, s8ExtPred:$src3),
+         (C2_muxri PredRegs:$src1, s8ExtPred:$src3, IntRegs:$src2)>;
 
 // Map from p0 = pnot(p0); if (p0) jump => if (!p0) jump.
-def : Pat <(brcond (not (i1 PredRegs:$src1)), bb:$offset),
-      (J2_jumpf (i1 PredRegs:$src1), bb:$offset)>;
-
-// Map from p2 = pnot(p2); p1 = and(p0, p2) => p1 = and(p0, !p2).
-def : Pat <(and (i1 PredRegs:$src1), (not (i1 PredRegs:$src2))),
-      (i1 (C2_andn (i1 PredRegs:$src1), (i1 PredRegs:$src2)))>;
-
-
-let AddedComplexity = 100 in
-def : Pat <(i64 (zextloadi1 (HexagonCONST32 tglobaladdr:$global))),
-      (i64 (A2_combinew (A2_tfrsi 0),
-                       (L2_loadrub_io (CONST32_set tglobaladdr:$global), 0)))>,
-      Requires<[NoV4T]>;
-
-// Map from i1 loads to 32 bits. This assumes that the i1* is byte aligned.
-let AddedComplexity = 10 in
-def : Pat <(i32 (zextloadi1 ADDRriS11_0:$addr)),
-      (i32 (A2_and (i32 (L2_loadrb_io AddrFI:$addr, 0)), (A2_tfrsi 0x1)))>;
+def: Pat<(brcond (not (i1 PredRegs:$src1)), bb:$offset),
+         (J2_jumpf PredRegs:$src1, bb:$offset)>;
 
 // Map from Rdd = sign_extend_inreg(Rss, i32) -> Rdd = A2_sxtw(Rss.lo).
-def : Pat <(i64 (sext_inreg (i64 DoubleRegs:$src1), i32)),
-      (i64 (A2_sxtw (i32 (EXTRACT_SUBREG (i64 DoubleRegs:$src1), subreg_loreg))))>;
+def: Pat<(i64 (sext_inreg (i64 DoubleRegs:$src1), i32)),
+         (A2_sxtw (LoReg DoubleRegs:$src1))>;
 
-// Map from Rdd = sign_extend_inreg(Rss, i16) -> Rdd = A2_sxtw(SXTH(Rss.lo)).
-def : Pat <(i64 (sext_inreg (i64 DoubleRegs:$src1), i16)),
-      (i64 (A2_sxtw (i32 (A2_sxth (i32 (EXTRACT_SUBREG (i64 DoubleRegs:$src1),
-                                                 subreg_loreg))))))>;
+// Map from Rdd = sign_extend_inreg(Rss, i16) -> Rdd = A2_sxtw(A2_sxth(Rss.lo)).
+def: Pat<(i64 (sext_inreg (i64 DoubleRegs:$src1), i16)),
+         (A2_sxtw (A2_sxth (LoReg DoubleRegs:$src1)))>;
 
-// Map from Rdd = sign_extend_inreg(Rss, i8) -> Rdd = A2_sxtw(SXTB(Rss.lo)).
-def : Pat <(i64 (sext_inreg (i64 DoubleRegs:$src1), i8)),
-      (i64 (A2_sxtw (i32 (A2_sxtb (i32 (EXTRACT_SUBREG (i64 DoubleRegs:$src1),
-                                                 subreg_loreg))))))>;
+// Map from Rdd = sign_extend_inreg(Rss, i8) -> Rdd = A2_sxtw(A2_sxtb(Rss.lo)).
+def: Pat<(i64 (sext_inreg (i64 DoubleRegs:$src1), i8)),
+         (A2_sxtw (A2_sxtb (LoReg DoubleRegs:$src1)))>;
 
 // We want to prevent emitting pnot's as much as possible.
 // Map brcond with an unsupported setcc to a J2_jumpf.
@@ -4741,17 +4706,16 @@ def : Pat <(brcond (i1 (setne (i32 IntRegs:$src1), s10ImmPred:$src2)),
                         bb:$offset),
       (J2_jumpf (C2_cmpeqi (i32 IntRegs:$src1), s10ImmPred:$src2), bb:$offset)>;
 
-def : Pat <(brcond (i1 (setne (i1 PredRegs:$src1), (i1 -1))), bb:$offset),
-      (J2_jumpf (i1 PredRegs:$src1), bb:$offset)>;
+def: Pat<(brcond (i1 (setne (i1 PredRegs:$src1), (i1 -1))), bb:$offset),
+         (J2_jumpf PredRegs:$src1, bb:$offset)>;
 
-def : Pat <(brcond (i1 (setne (i1 PredRegs:$src1), (i1 0))), bb:$offset),
-      (J2_jumpt (i1 PredRegs:$src1), bb:$offset)>;
+def: Pat<(brcond (i1 (setne (i1 PredRegs:$src1), (i1 0))), bb:$offset),
+         (J2_jumpt PredRegs:$src1, bb:$offset)>;
 
 // cmp.lt(Rs, Imm) -> !cmp.ge(Rs, Imm) -> !cmp.gt(Rs, Imm-1)
-def : Pat <(brcond (i1 (setlt (i32 IntRegs:$src1), s8ImmPred:$src2)),
-                        bb:$offset),
-      (J2_jumpf (C2_cmpgti (i32 IntRegs:$src1),
-                (DEC_CONST_SIGNED s8ImmPred:$src2)), bb:$offset)>;
+def: Pat<(brcond (i1 (setlt (i32 IntRegs:$src1), s8ImmPred:$src2)), bb:$offset),
+        (J2_jumpf (C2_cmpgti IntRegs:$src1, (DEC_CONST_SIGNED s8ImmPred:$src2)),
+                  bb:$offset)>;
 
 // cmp.lt(r0, r1) -> cmp.gt(r1, r0)
 def : Pat <(brcond (i1 (setlt (i32 IntRegs:$src1), (i32 IntRegs:$src2))),
