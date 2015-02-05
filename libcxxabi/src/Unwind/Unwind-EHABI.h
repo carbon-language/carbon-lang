@@ -22,7 +22,7 @@ static inline uint32_t signExtendPrel31(uint32_t data) {
 }
 
 static inline uint32_t readPrel31(const uint32_t *data) {
-  return (((uint32_t) data) + signExtendPrel31(*data));
+  return (((uint32_t)(uintptr_t)data) + signExtendPrel31(*data));
 }
 
 #if defined(__cplusplus)
