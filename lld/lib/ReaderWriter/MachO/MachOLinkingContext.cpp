@@ -17,7 +17,6 @@
 #include "lld/Core/Reader.h"
 #include "lld/Core/Writer.h"
 #include "lld/Driver/Driver.h"
-#include "lld/Passes/LayoutPass.h"
 #include "lld/Passes/RoundTripYAMLPass.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/Triple.h"
@@ -583,12 +582,7 @@ bool MachOLinkingContext::validateImpl(raw_ostream &diagnostics) {
 }
 
 void MachOLinkingContext::addPasses(PassManager &pm) {
-  pm.add(std::unique_ptr<Pass>(new LayoutPass(
-      registry(), [&](const DefinedAtom * left, const DefinedAtom * right,
-                      bool & leftBeforeRight)
-                      ->bool {
-    return customAtomOrderer(left, right, leftBeforeRight);
-  })));
+  mach_o::addLayoutPass(pm, *this);
   if (needsStubsPass())
     mach_o::addStubsPass(pm, *this);
   if (needsCompactUnwindPass())
@@ -908,7 +902,7 @@ MachOLinkingContext::findOrderOrdinal(const std::vector<OrderFileNode> &nodes,
 
 bool MachOLinkingContext::customAtomOrderer(const DefinedAtom *left,
                                             const DefinedAtom *right,
-                                            bool &leftBeforeRight) {
+                                            bool &leftBeforeRight) const {
   // No custom sorting if no order file entries.
   if (!_orderFileEntries)
     return false;

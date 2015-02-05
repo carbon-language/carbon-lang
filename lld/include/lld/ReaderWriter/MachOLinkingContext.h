@@ -293,13 +293,14 @@ public:
 
   void maybeSortInputFiles() override;
 
+  bool customAtomOrderer(const DefinedAtom *left, const DefinedAtom *right,
+                         bool &leftBeforeRight) const;
+
 private:
   Writer &writer() const override;
   mach_o::MachODylibFile* loadIndirectDylib(StringRef path);
   void checkExportWhiteList(const DefinedAtom *atom) const;
   void checkExportBlackList(const DefinedAtom *atom) const;
-  bool customAtomOrderer(const DefinedAtom *left, const DefinedAtom *right,
-                         bool &leftBeforeRight);
   struct ArchInfo {
     StringRef                 archName;
     MachOLinkingContext::Arch arch;

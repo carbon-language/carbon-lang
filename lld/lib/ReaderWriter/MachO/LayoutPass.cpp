@@ -1,4 +1,4 @@
-//===--Passes/LayoutPass.cpp - Layout atoms -------------------------------===//
+//===-- ReaderWriter/MachO/LayoutPass.cpp - Layout atoms ------------------===//
 //
 //                             The LLVM Linker
 //
@@ -7,9 +7,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "lld/Passes/LayoutPass.h"
+#include "LayoutPass.h"
 #include "lld/Core/Instrumentation.h"
 #include "lld/Core/Parallel.h"
+#include "lld/Core/PassManager.h"
+#include "lld/ReaderWriter/MachOLinkingContext.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/Debug.h"
 #include <algorithm>
@@ -18,6 +20,9 @@
 using namespace lld;
 
 #define DEBUG_TYPE "LayoutPass"
+
+namespace lld {
+namespace mach_o {
 
 static bool compareAtoms(const LayoutPass::SortKey &,
                          const LayoutPass::SortKey &,
@@ -476,3 +481,15 @@ void LayoutPass::perform(std::unique_ptr<MutableFile> &mergedFile) {
     printDefinedAtoms(atomRange);
   });
 }
+
+void addLayoutPass(PassManager &pm, const MachOLinkingContext &ctx) {
+  pm.add(std::unique_ptr<Pass>(new LayoutPass(
+      ctx.registry(), [&](const DefinedAtom * left, const DefinedAtom * right,
+                      bool & leftBeforeRight)
+                      ->bool {
+    return ctx.customAtomOrderer(left, right, leftBeforeRight);
+  })));
+}
+
+} // namespace mach_o
+} // namespace lld

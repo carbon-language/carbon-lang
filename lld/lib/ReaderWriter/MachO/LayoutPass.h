@@ -1,4 +1,4 @@
-//===------ Passes/LayoutPass.h - Handles Layout of atoms ------------------===//
+//===------ lib/ReaderWriter/MachO/LayoutPass.h - Handles Layout of atoms -===//
 //
 //                             The LLVM Linker
 //
@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLD_PASSES_LAYOUT_PASS_H
-#define LLD_PASSES_LAYOUT_PASS_H
+#ifndef LLD_READER_WRITER_MACHO_LAYOUT_PASS_H
+#define LLD_READER_WRITER_MACHO_LAYOUT_PASS_H
 
 #include "lld/Core/File.h"
 #include "lld/Core/Pass.h"
@@ -21,6 +21,8 @@
 namespace lld {
 class DefinedAtom;
 class MutableFile;
+
+namespace mach_o {
 
 /// This linker pass does the layout of the atoms. The pass is done after the
 /// order their .o files were found on the command line, then by order of the
@@ -89,6 +91,7 @@ private:
   void checkFollowonChain(MutableFile::DefinedAtomRange &range);
 };
 
+} // namespace mach_o
 } // namespace lld
 
-#endif // LLD_PASSES_LAYOUT_PASS_H
+#endif // LLD_READER_WRITER_MACHO_LAYOUT_PASS_H
