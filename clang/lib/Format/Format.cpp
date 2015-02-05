@@ -884,6 +884,9 @@ private:
           Column = 0;
           break;
         case '\r':
+          FormatTok->LastNewlineOffset = WhitespaceLength + i + 1;
+          Column = 0;
+          break;
         case '\f':
         case '\v':
           Column = 0;

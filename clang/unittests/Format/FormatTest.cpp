@@ -2495,6 +2495,10 @@ TEST_F(FormatTest, DoesntRemoveUnknownTokens) {
             "\\na : b);",
             format("const char * c = STRINGIFY(\n"
                    "\\na : b);"));
+
+  verifyFormat("a\r\\");
+  verifyFormat("a\v\\");
+  verifyFormat("a\f\\");
 }
 
 TEST_F(FormatTest, IndentsPPDirectiveInReducedSpace) {
