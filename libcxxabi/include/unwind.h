@@ -127,7 +127,7 @@ struct _Unwind_Exception {
                             _Unwind_Exception *exc);
   uintptr_t private_1; // non-zero means forced unwind
   uintptr_t private_2; // holds sp that phase1 found for phase2 to use
-#if !__LP64__
+#ifndef __LP64__
   // The gcc implementation of _Unwind_Exception used attribute mode on the
   // above fields which had the side effect of causing this whole struct to
   // round up to 32 bytes in size. To be more explicit, we add pad fields

@@ -35,7 +35,7 @@ namespace libunwind {
 #include "Registers.hpp"
 
 #if LIBCXXABI_ARM_EHABI
-#if __linux__
+#ifdef __linux__
 
 typedef long unsigned int *_Unwind_Ptr;
 extern "C" _Unwind_Ptr __gnu_Unwind_Find_exidx(_Unwind_Ptr addr, int *len);
@@ -91,7 +91,7 @@ struct UnwindInfoSections {
 /// making local unwinds fast.
 class __attribute__((visibility("hidden"))) LocalAddressSpace {
 public:
-#if __LP64__
+#ifdef __LP64__
   typedef uint64_t pint_t;
   typedef int64_t  sint_t;
 #else
@@ -142,7 +142,7 @@ public:
 };
 
 inline uintptr_t LocalAddressSpace::getP(pint_t addr) {
-#if __LP64__
+#ifdef __LP64__
   return get64(addr);
 #else
   return get32(addr);
