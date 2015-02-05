@@ -267,7 +267,7 @@ void f22() {
   {
     f22_dtor f;
     src();
-// CHECK: call {{.*}}src
+// CHECK: invoke {{.*}}src
 // CHECK: call {{.*}}, !dbg [[DBG_F22:![0-9]*]]
 // CHECK: call {{.*}}, !dbg [[DBG_F22]]
 #line 2400
