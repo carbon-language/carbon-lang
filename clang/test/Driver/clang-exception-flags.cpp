@@ -1,4 +1,6 @@
-// RUN: %clang -### %s 2>&1 | FileCheck %s -check-prefix=DEFAULT
+// We force the target to unknown because clang's default behavior for
+// exception handling is target dependent.
+// RUN: %clang -### -target unknown %s 2>&1 | FileCheck %s -check-prefix=DEFAULT
 // DEFAULT: "-cc1" {{.*}} "-fcxx-exceptions" "-fexceptions"
 //
 // RUN: %clang -### -fexceptions %s 2>&1 | FileCheck %s -check-prefix=ON1
