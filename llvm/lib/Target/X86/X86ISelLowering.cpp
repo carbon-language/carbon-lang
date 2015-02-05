@@ -2107,14 +2107,15 @@ X86TargetLowering::LowerReturn(SDValue Chain,
   // Win32 requires us to put the sret argument to %eax as well.
   // We saved the argument into a virtual register in the entry block,
   // so now we copy the value out and into %rax/%eax.
-  if (DAG.getMachineFunction().getFunction()->hasStructRetAttr() &&
-      (Subtarget->is64Bit() || Subtarget->isTargetKnownWindowsMSVC())) {
-    MachineFunction &MF = DAG.getMachineFunction();
-    X86MachineFunctionInfo *FuncInfo = MF.getInfo<X86MachineFunctionInfo>();
-    unsigned Reg = FuncInfo->getSRetReturnReg();
-    assert(Reg &&
-           "SRetReturnReg should have been set in LowerFormalArguments().");
-    SDValue Val = DAG.getCopyFromReg(Chain, dl, Reg, getPointerTy());
+  //
+  // Checking Function.hasStructRetAttr() here is insufficient because the IR
+  // may not have an explicit sret argument. If FuncInfo.CanLowerReturn is
+  // false, then an sret argument may be implicitly inserted in the SelDAG. In
+  // either case FuncInfo->setSRetReturnReg() will have been called.
+  if (unsigned SRetReg = FuncInfo->getSRetReturnReg()) {
+    assert((Subtarget->is64Bit() || Subtarget->isTargetKnownWindowsMSVC()) &&
+           "No need for an sret register");
+    SDValue Val = DAG.getCopyFromReg(Chain, dl, SRetReg, getPointerTy());
 
     unsigned RetValReg
         = (Subtarget->is64Bit() && !Subtarget->isTarget64BitILP32()) ?

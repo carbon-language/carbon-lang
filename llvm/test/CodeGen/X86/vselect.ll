@@ -275,6 +275,7 @@ define <16 x double> @select_illegal(<16 x double> %a, <16 x double> %b) {
 ; CHECK-NEXT:    movaps %xmm2, 32(%rdi)
 ; CHECK-NEXT:    movaps %xmm1, 16(%rdi)
 ; CHECK-NEXT:    movaps %xmm0, (%rdi)
+; CHECK-NEXT:    movq %rdi, %rax
 ; CHECK-NEXT:    retq
   %sel = select <16 x i1> <i1 true, i1 true, i1 true, i1 true, i1 true, i1 true, i1 true, i1 true, i1 false, i1 false, i1 false, i1 false, i1 false, i1 false, i1 false, i1 false>, <16 x double> %a, <16 x double> %b
   ret <16 x double> %sel
