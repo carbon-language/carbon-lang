@@ -13,7 +13,7 @@
 #include "llvm/Support/raw_ostream.h"
 #include "gtest/gtest.h"
 
-#include <string>
+#include <sstream>
 
 using namespace llvm;
 using namespace coverage;
@@ -52,7 +52,9 @@ readCoverageRegions(std::string Coverage, int NumFiles) {
   SmallVector<std::string, 8> Filenames;
   SmallVector<StringRef, 8> FilenameRefs;
   for (int I = 0; I < NumFiles; ++I) {
-    Filenames.push_back("file" + std::to_string(I));
+    std::ostringstream S;
+    S << "file" << I;
+    Filenames.push_back(S.str());
     FilenameRefs.push_back(Filenames.back());
   }
 
