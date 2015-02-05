@@ -234,9 +234,6 @@ def MMX_MOVD64mr : MMXI<0x7E, MRMDestMem, (outs), (ins i32mem:$dst, VR64:$src),
                         "movd\t{$src, $dst|$dst, $src}", [], IIC_MMX_MOV_MM_RM>,
                    Sched<[WriteStore]>;
 
-// Low word of MMX to GPR.
-def MMX_X86movd2w : SDNode<"X86ISD::MMX_MOVD2W", SDTypeProfile<1, 1,
-                            [SDTCisVT<0, i32>, SDTCisVT<1, x86mmx>]>>;
 def MMX_MOVD64grr : MMXI<0x7E, MRMDestReg, (outs GR32:$dst), (ins VR64:$src),
                          "movd\t{$src, $dst|$dst, $src}",
                          [(set GR32:$dst,
