@@ -293,3 +293,29 @@ namespace test6 {
   // CHECK-LABEL: define weak_odr void @_ZN5test62f8IiEEvDTcvT_dtptL_ZNS_2zpEE4uuss1iE
 }
 
+namespace test7 {
+  struct A { int x[3]; };
+  struct B { B(int, int); } extern b;
+  struct C { C(B); };
+  struct D { D(C); };
+
+  template<class T> decltype(A{1,2},T()) fA1(T t) {}
+  template<class T> decltype(A({1,2}),T()) fA2(T t) {}
+  template<class T> decltype(B{1,2},T()) fB1(T t) {}
+  template<class T> decltype(B({1,2}),T()) fB2(T t) {}
+  template<class T> decltype(C{{1,2}},T()) fC1(T t) {}
+  template<class T> decltype(C({1,2}),T()) fC2(T t) {}
+  template<class T> decltype(D{b},T()) fD1(T t) {}
+  template<class T> decltype(D(b),T()) fD2(T t) {}
+
+  int main() {
+    fA1(1); // CHECK-LABEL: define {{.*}} @_ZN5test73fA1IiEEDTcmtlNS_1AELi1ELi2EEcvT__EES2_
+    fA2(1); // CHECK-LABEL: define {{.*}} @_ZN5test73fA2IiEEDTcmcvNS_1AEilLi1ELi2EEcvT__EES2_
+    fB1(1); // CHECK-LABEL: define {{.*}} @_ZN5test73fB1IiEEDTcmtlNS_1BELi1ELi2EEcvT__EES2_
+    fB2(1); // CHECK-LABEL: define {{.*}} @_ZN5test73fB2IiEEDTcmcvNS_1BEilLi1ELi2EEcvT__EES2_
+    fC1(1); // CHECK-LABEL: define {{.*}} @_ZN5test73fC1IiEEDTcmtlNS_1CEilLi1ELi2EEEcvT__EES2_
+    fC2(1); // CHECK-LABEL: define {{.*}} @_ZN5test73fC2IiEEDTcmcvNS_1CEilLi1ELi2EEcvT__EES2_
+    fD1(1); // CHECK-LABEL: define {{.*}} @_ZN5test73fD1IiEEDTcmtlNS_1DEL_ZNS_1bEEEcvT__EES2_
+    fD2(1); // CHECK-LABEL: define {{.*}} @_ZN5test73fD2IiEEDTcmcvNS_1DEL_ZNS_1bEEcvT__EES2_
+  }
+}

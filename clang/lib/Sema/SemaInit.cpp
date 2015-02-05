@@ -640,6 +640,9 @@ InitListChecker::InitListChecker(Sema &S, const InitializedEntity &Entity,
                                  InitListExpr *IL, QualType &T,
                                  bool VerifyOnly)
   : SemaRef(S), VerifyOnly(VerifyOnly) {
+  // FIXME: Check that IL isn't already the semantic form of some other
+  // InitListExpr. If it is, we'd create a broken AST.
+
   hadError = false;
 
   FullyStructuredList =
