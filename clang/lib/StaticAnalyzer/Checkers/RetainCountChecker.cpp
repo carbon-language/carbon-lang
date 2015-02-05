@@ -2190,7 +2190,7 @@ static AllocationInfo
 GetAllocationSite(ProgramStateManager& StateMgr, const ExplodedNode *N,
                   SymbolRef Sym) {
   const ExplodedNode *AllocationNode = N;
-  const ExplodedNode *AllocationNodeInCurrentContext = N;
+  const ExplodedNode *AllocationNodeInCurrentOrParentContext = N;
   const MemRegion *FirstBinding = nullptr;
   const LocationContext *LeakContext = N->getLocationContext();
 
@@ -2220,10 +2220,15 @@ GetAllocationSite(ProgramStateManager& StateMgr, const ExplodedNode *N,
     // AllocationNode is the last node in which the symbol was tracked.
     AllocationNode = N;
 
-    // AllocationNodeInCurrentContext, is the last node in the current context
-    // in which the symbol was tracked.
-    if (NContext == LeakContext)
-      AllocationNodeInCurrentContext = N;
+    // AllocationNodeInCurrentContext, is the last node in the current or
+    // parent context in which the symbol was tracked.
+    //
+    // Note that the allocation site might be in the parent conext. For example,
+    // the case where an allocation happens in a block that captures a reference
+    // to it and that reference is overwritten/dropped by another call to
+    // the block.
+    if (NContext == LeakContext || NContext->isParentOf(LeakContext))
+      AllocationNodeInCurrentOrParentContext = N;
 
     // Find the last init that was called on the given symbol and store the
     // init method's location context.
@@ -2261,7 +2266,7 @@ GetAllocationSite(ProgramStateManager& StateMgr, const ExplodedNode *N,
     FirstBinding = nullptr;
   }
 
-  return AllocationInfo(AllocationNodeInCurrentContext,
+  return AllocationInfo(AllocationNodeInCurrentOrParentContext,
                         FirstBinding,
                         InterestingMethodContext);
 }
@@ -2392,20 +2397,8 @@ CFRefLeakReport::CFRefLeakReport(CFRefBug &D, const LangOptions &LOpts,
   ProgramPoint P = AllocNode->getLocation();
   if (Optional<CallExitEnd> Exit = P.getAs<CallExitEnd>())
     AllocStmt = Exit->getCalleeContext()->getCallSite();
-  else {
-    // We are going to get a BlockEdge when the leak and allocation happen in
-    // different, non-nested frames (contexts). For example, the case where an
-    // allocation happens in a block that captures a reference to it and
-    // that reference is overwritten/dropped by another call to the block.
-    if (Optional<BlockEdge> Edge = P.getAs<BlockEdge>()) {
-      if (Optional<CFGStmt> St = Edge->getDst()->front().getAs<CFGStmt>()) {
-        AllocStmt = St->getStmt();
-      }
-    }
-    else {
-      AllocStmt = P.castAs<PostStmt>().getStmt();
-    }
-  }
+  else
+    AllocStmt = P.castAs<PostStmt>().getStmt();
   assert(AllocStmt && "Cannot find allocation statement");
 
   PathDiagnosticLocation AllocLocation =

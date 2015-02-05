@@ -1801,9 +1801,11 @@ MallocChecker::getAllocationSite(const ExplodedNode *N, SymbolRef Sym,
         }
       }
 
-    // Allocation node, is the last node in the current context in which the
-    // symbol was tracked.
-    if (N->getLocationContext() == LeakContext)
+    // Allocation node, is the last node in the current or parent context in
+    // which the symbol was tracked.
+    const LocationContext *NContext = N->getLocationContext();
+    if (NContext == LeakContext ||
+        NContext->isParentOf(LeakContext))
       AllocNode = N;
     N = N->pred_empty() ? nullptr : *(N->pred_begin());
   }
