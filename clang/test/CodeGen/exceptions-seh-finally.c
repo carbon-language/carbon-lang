@@ -1,5 +1,6 @@
 // RUN: %clang_cc1 %s -triple x86_64-pc-win32 -fexceptions -fms-extensions -emit-llvm -o - | FileCheck %s
 
+void abort(void) __attribute__((noreturn));
 void might_crash(void);
 void cleanup(void);
 int check_condition(void);
@@ -117,3 +118,45 @@ void use_abnormal_termination(void) {
 //
 // CHECK: [[ehresume]]
 // CHECK: resume { i8*, i32 }
+
+void noreturn_noop_finally() {
+  __try {
+    __noop();
+  } __finally {
+    abort();
+  }
+}
+
+// CHECK-LABEL: define void @noreturn_noop_finally()
+// CHECK: store i8 0, i8* %
+// CHECK: br label %[[finally:[^ ]*]]
+// CHECK: [[finally]]
+// CHECK: call void @abort()
+// CHECK-NEXT: unreachable
+// CHECK-NOT: load
+
+void noreturn_finally() {
+  __try {
+    might_crash();
+  } __finally {
+    abort();
+  }
+}
+
+// CHECK-LABEL: define void @noreturn_finally()
+// CHECK: invoke void @might_crash()
+// CHECK:     to label %[[cont:[^ ]*]] unwind label %[[lpad:[^ ]*]]
+//
+// CHECK: [[cont]]
+// CHECK: store i8 0, i8* %
+// CHECK: br label %[[finally:[^ ]*]]
+//
+// CHECK: [[finally]]
+// CHECK: call void @abort()
+// CHECK-NEXT: unreachable
+//
+// CHECK: [[lpad]]
+// CHECK: landingpad
+// CHECK-NEXT: cleanup
+// CHECK: store i8 1, i8* %
+// CHECK: br label %[[finally]]

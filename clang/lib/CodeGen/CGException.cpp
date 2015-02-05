@@ -1902,12 +1902,20 @@ void CodeGenFunction::ExitSEHTryStmt(const SEHTryStmt &S, SEHFinallyInfo &FI) {
   // Just pop the cleanup if it's a __finally block.
   if (const SEHFinallyStmt *Finally = S.getFinallyHandler()) {
     PopCleanupBlock();
+    assert(FI.ContBB && "did not emit normal cleanup");
 
     // Emit the code into FinallyBB.
     Builder.SetInsertPoint(FI.FinallyBB);
     EmitStmt(Finally->getBlock());
 
-    assert(FI.ContBB);
+    // If the finally block doesn't fall through, we don't need these blocks.
+    if (!HaveInsertPoint()) {
+      FI.ContBB->eraseFromParent();
+      if (FI.ResumeBB)
+        FI.ResumeBB->eraseFromParent();
+      return;
+    }
+
     if (FI.ResumeBB) {
       llvm::Value *IsEH = Builder.CreateLoad(getAbnormalTerminationSlot(),
                                              "abnormal.termination");
