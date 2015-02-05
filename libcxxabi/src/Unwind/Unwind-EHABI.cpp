@@ -47,23 +47,23 @@ const char* getNextNibble(const char* data, uint32_t* out) {
 }
 
 struct Descriptor {
-   // See # 9.2
-   typedef enum {
-     SU16 = 0, // Short descriptor, 16-bit entries
-     LU16 = 1, // Long descriptor,  16-bit entries
-     LU32 = 3, // Long descriptor,  32-bit entries
-     RESERVED0 =  4, RESERVED1 =  5, RESERVED2  = 6,  RESERVED3  =  7,
-     RESERVED4 =  8, RESERVED5 =  9, RESERVED6  = 10, RESERVED7  = 11,
-     RESERVED8 = 12, RESERVED9 = 13, RESERVED10 = 14, RESERVED11 = 15
-   } Format;
+  // See # 9.2
+  typedef enum {
+    SU16 = 0, // Short descriptor, 16-bit entries
+    LU16 = 1, // Long descriptor,  16-bit entries
+    LU32 = 3, // Long descriptor,  32-bit entries
+    RESERVED0 =  4, RESERVED1 =  5, RESERVED2  = 6,  RESERVED3  =  7,
+    RESERVED4 =  8, RESERVED5 =  9, RESERVED6  = 10, RESERVED7  = 11,
+    RESERVED8 = 12, RESERVED9 = 13, RESERVED10 = 14, RESERVED11 = 15
+  } Format;
 
-   // See # 9.2
-   typedef enum {
-     CLEANUP = 0x0,
-     FUNC    = 0x1,
-     CATCH   = 0x2,
-     INVALID = 0x4
-   } Kind;
+  // See # 9.2
+  typedef enum {
+    CLEANUP = 0x0,
+    FUNC    = 0x1,
+    CATCH   = 0x2,
+    INVALID = 0x4
+  } Kind;
 };
 
 _Unwind_Reason_Code ProcessDescriptors(
@@ -133,7 +133,7 @@ _Unwind_Reason_Code ProcessDescriptors(
           landing_pad = signExtendPrel31(landing_pad & ~0x80000000);
           if (landing_pad == 0xffffffff) {
             return _URC_HANDLER_FOUND;
-          } else if (landing_pad == 0xfffffffe ) {
+          } else if (landing_pad == 0xfffffffe) {
             return _URC_FAILURE;
           } else {
             /*
@@ -152,7 +152,7 @@ _Unwind_Reason_Code ProcessDescriptors(
       }
       default:
         _LIBUNWIND_ABORT("Invalid descriptor kind found.");
-    };
+    }
 
     getNextWord(descriptor, &descriptorWord);
   }
@@ -948,7 +948,7 @@ _Unwind_VRS_Result _Unwind_VRS_Pop(
       return _Unwind_VRS_Set(context, _UVRSC_CORE, UNW_ARM_SP, _UVRSD_UINT32,
                              &sp);
     }
-  };
+  }
 }
 
 /// Called by personality handler during phase 2 to find the start of the
@@ -961,7 +961,7 @@ _Unwind_GetRegionStart(struct _Unwind_Context *context) {
   if (unw_get_proc_info(cursor, &frameInfo) == UNW_ESUCCESS)
     result = (uintptr_t)frameInfo.start_ip;
   _LIBUNWIND_TRACE_API("_Unwind_GetRegionStart(context=%p) => 0x%llX\n",
-                             context, (long long)result);
+                       context, (long long)result);
   return result;
 }
 
@@ -971,7 +971,7 @@ _Unwind_GetRegionStart(struct _Unwind_Context *context) {
 _LIBUNWIND_EXPORT void
 _Unwind_DeleteException(_Unwind_Exception *exception_object) {
   _LIBUNWIND_TRACE_API("_Unwind_DeleteException(ex_obj=%p)\n",
-                              exception_object);
+                       exception_object);
   if (exception_object->exception_cleanup != NULL)
     (*exception_object->exception_cleanup)(_URC_FOREIGN_EXCEPTION_CAUGHT,
                                            exception_object);

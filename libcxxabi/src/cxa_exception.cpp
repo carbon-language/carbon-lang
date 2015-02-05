@@ -258,12 +258,10 @@ __cxa_get_exception_ptr(void* unwind_exception) throw()
 {
 #if LIBCXXABI_ARM_EHABI
     return reinterpret_cast<void*>(
-           static_cast<_Unwind_Control_Block*>(unwind_exception)->barrier_cache.bitpattern[0]);
+        static_cast<_Unwind_Control_Block*>(unwind_exception)->barrier_cache.bitpattern[0]);
 #else
-    return cxa_exception_from_exception_unwind_exception
-           (
-               static_cast<_Unwind_Exception*>(unwind_exception)
-           )->adjustedPtr;
+    return cxa_exception_from_exception_unwind_exception(
+        static_cast<_Unwind_Exception*>(unwind_exception))->adjustedPtr;
 #endif
 }
 
