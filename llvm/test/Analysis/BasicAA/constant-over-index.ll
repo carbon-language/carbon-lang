@@ -1,10 +1,13 @@
 ; RUN: opt < %s -basicaa -aa-eval -print-all-alias-modref-info 2>&1 | FileCheck %s
 ; PR4267
 
-; CHECK: MayAlias: double* %p.0.i.0, double* %p3
+target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
+
+; CHECK: PartialAlias: double* %p.0.i.0, double* %p3
 
 ; %p3 is equal to %p.0.i.0 on the second iteration of the loop,
-; so MayAlias is needed.
+; so MayAlias is needed.  In practice, basicaa returns PartialAlias
+; for GEPs to ignore TBAA.
 
 define void @foo([3 x [3 x double]]* noalias %p) {
 entry:
