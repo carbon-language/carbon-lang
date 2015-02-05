@@ -139,7 +139,7 @@ public:
     return Op;
   }
 
-  void print(raw_ostream &OS, const MCAsmInfo *MAI) const;
+  void print(raw_ostream &OS) const;
   void dump() const;
 };
 
@@ -181,24 +181,23 @@ public:
     return Operands.insert(I, Op);
   }
 
-  void print(raw_ostream &OS, const MCAsmInfo *MAI) const;
+  void print(raw_ostream &OS) const;
   void dump() const;
 
   /// \brief Dump the MCInst as prettily as possible using the additional MC
   /// structures, if given. Operators are separated by the \p Separator
   /// string.
-  void dump_pretty(raw_ostream &OS, const MCAsmInfo *MAI = nullptr,
-                   const MCInstPrinter *Printer = nullptr,
+  void dump_pretty(raw_ostream &OS, const MCInstPrinter *Printer = nullptr,
                    StringRef Separator = " ") const;
 };
 
 inline raw_ostream& operator<<(raw_ostream &OS, const MCOperand &MO) {
-  MO.print(OS, nullptr);
+  MO.print(OS);
   return OS;
 }
 
 inline raw_ostream& operator<<(raw_ostream &OS, const MCInst &MI) {
-  MI.print(OS, nullptr);
+  MI.print(OS);
   return OS;
 }
 

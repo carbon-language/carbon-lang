@@ -55,7 +55,7 @@ public:
   bool isAbsolute() const { return !SymA && !SymB; }
 
   /// print - Print the value to the stream \p OS.
-  void print(raw_ostream &OS, const MCAsmInfo *MAI) const;
+  void print(raw_ostream &OS) const;
 
   /// dump - Print the value to stderr.
   void dump() const;

@@ -1256,7 +1256,7 @@ void MCAsmStreamer::EmitInstruction(const MCInst &Inst, const MCSubtargetInfo &S
 
   // Show the MCInst if enabled.
   if (ShowInst) {
-    Inst.dump_pretty(GetCommentOS(), MAI, InstPrinter.get(), "\n ");
+    Inst.dump_pretty(GetCommentOS(), InstPrinter.get(), "\n ");
     GetCommentOS() << "\n";
   }
 
@@ -1264,7 +1264,7 @@ void MCAsmStreamer::EmitInstruction(const MCInst &Inst, const MCSubtargetInfo &S
   if (InstPrinter)
     InstPrinter->printInst(&Inst, OS, "");
   else
-    Inst.print(OS, MAI);
+    Inst.print(OS);
   EmitEOL();
 }
 

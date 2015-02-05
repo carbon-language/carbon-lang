@@ -15,7 +15,7 @@
 
 using namespace llvm;
 
-void MCValue::print(raw_ostream &OS, const MCAsmInfo *MAI) const {
+void MCValue::print(raw_ostream &OS) const {
   if (isAbsolute()) {
     OS << getConstant();
     return;
