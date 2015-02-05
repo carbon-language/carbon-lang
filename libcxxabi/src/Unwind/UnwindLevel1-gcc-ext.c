@@ -29,7 +29,7 @@
 
 ///  Called by __cxa_rethrow().
 _LIBUNWIND_EXPORT _Unwind_Reason_Code
-_Unwind_Resume_or_Rethrow(_Unwind_Exception *exception_object) {
+_Unwind_Resume_or_Rethrow(struct _Unwind_Exception *exception_object) {
 #if LIBCXXABI_ARM_EHABI
   _LIBUNWIND_TRACE_API("_Unwind_Resume_or_Rethrow(ex_obj=%p), "
                        "private_1=%ld\n",
@@ -145,7 +145,7 @@ _Unwind_Backtrace(_Unwind_Trace_Fn callback, void *ref) {
       // _US_FORCE_UNWIND) state.
 
       // Create a mock exception object for force unwinding.
-      _Unwind_Exception ex;
+      struct _Unwind_Exception ex;
       ex.exception_class = 0x434C4E47554E5700; // CLNGUNW\0
       ex.pr_cache.fnstart = frameInfo.start_ip;
       ex.pr_cache.ehtp = (_Unwind_EHT_Header *) unwindInfo;
