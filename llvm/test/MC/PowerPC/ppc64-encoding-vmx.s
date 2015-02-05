@@ -543,6 +543,23 @@
 # CHECK-LE: vrsqrtefp 2, 3                  # encoding: [0x4a,0x19,0x40,0x10]
             vrsqrtefp 2, 3
 
+# Vector count leading zero instructions
+# CHECK-BE: vclzb 2, 3                      # encoding: [0x10,0x40,0x1f,0x02]
+# CHECK-LE: vclzb 2, 3                      # encoding: [0x02,0x1f,0x40,0x10]
+            vclzb 2, 3
+
+# CHECK-BE: vclzh 2, 3                      # encoding: [0x10,0x40,0x1f,0x42]
+# CHECK-LE: vclzh 2, 3                      # encoding: [0x42,0x1f,0x40,0x10]
+            vclzh 2, 3
+
+# CHECK-BE: vclzw 2, 3                      # encoding: [0x10,0x40,0x1f,0x82]
+# CHECK-LE: vclzw 2, 3                      # encoding: [0x82,0x1f,0x40,0x10]
+            vclzw 2, 3
+
+# CHECK-BE: vclzd 2, 3                      # encoding: [0x10,0x40,0x1f,0xc2]
+# CHECK-LE: vclzd 2, 3                      # encoding: [0xc2,0x1f,0x40,0x10]
+            vclzd 2, 3                      
+
 # Vector population count instructions
 # CHECK-BE: vpopcntb 2, 3                   # encoding: [0x10,0x40,0x1f,0x03]
 # CHECK-LE: vpopcntb 2, 3                   # encoding: [0x03,0x1f,0x40,0x10]

@@ -940,6 +940,21 @@ def : Pat<(v4f32 (fnearbyint v4f32:$vA)),
 
 def HasP8Altivec : Predicate<"PPCSubTarget->hasP8Altivec()">;
 let Predicates = [HasP8Altivec] in {
+
+// Count Leading Zeros
+def VCLZB : VXForm_2<1794, (outs vrrc:$vD), (ins vrrc:$vB),
+                     "vclzb $vD, $vB", IIC_VecGeneral,
+                     [(set v16i8:$vD, (ctlz v16i8:$vB))]>;
+def VCLZH : VXForm_2<1858, (outs vrrc:$vD), (ins vrrc:$vB),
+                     "vclzh $vD, $vB", IIC_VecGeneral,
+                     [(set v8i16:$vD, (ctlz v8i16:$vB))]>;
+def VCLZW : VXForm_2<1922, (outs vrrc:$vD), (ins vrrc:$vB),
+                     "vclzw $vD, $vB", IIC_VecGeneral,
+                     [(set v4i32:$vD, (ctlz v4i32:$vB))]>;
+def VCLZD : VXForm_2<1986, (outs vrrc:$vD), (ins vrrc:$vB),
+                     "vclzd $vD, $vB", IIC_VecGeneral,
+                     [(set v2i64:$vD, (ctlz v2i64:$vB))]>;
+
 // Population Count
 def VPOPCNTB : VXForm_2<1795, (outs vrrc:$vD), (ins vrrc:$vB),
                         "vpopcntb $vD, $vB", IIC_VecGeneral,

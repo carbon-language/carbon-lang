@@ -401,11 +401,15 @@ PPCTargetLowering::PPCTargetLowering(const PPCTargetMachine &TM,
       setOperationAction(ISD::ADD , VT, Legal);
       setOperationAction(ISD::SUB , VT, Legal);
 
-      // Vector popcnt instructions introduced in P8
-      if (Subtarget.hasP8Altivec()) 
+      // Vector instructions introduced in P8
+      if (Subtarget.hasP8Altivec()) {
         setOperationAction(ISD::CTPOP, VT, Legal);
-      else 
+        setOperationAction(ISD::CTLZ, VT, Legal);
+      }
+      else {
         setOperationAction(ISD::CTPOP, VT, Expand);
+        setOperationAction(ISD::CTLZ, VT, Expand);
+      }
 
       // We promote all shuffles to v16i8.
       setOperationAction(ISD::VECTOR_SHUFFLE, VT, Promote);
@@ -461,7 +465,6 @@ PPCTargetLowering::PPCTargetLowering(const PPCTargetMachine &TM,
       setOperationAction(ISD::SCALAR_TO_VECTOR, VT, Expand);
       setOperationAction(ISD::FPOW, VT, Expand);
       setOperationAction(ISD::BSWAP, VT, Expand);
-      setOperationAction(ISD::CTLZ, VT, Expand);
       setOperationAction(ISD::CTLZ_ZERO_UNDEF, VT, Expand);
       setOperationAction(ISD::CTTZ, VT, Expand);
       setOperationAction(ISD::CTTZ_ZERO_UNDEF, VT, Expand);
