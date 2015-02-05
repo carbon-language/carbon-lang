@@ -181,6 +181,9 @@ getELFSectionFlags(SectionKind K, bool InCOMDAT) {
   if (K.isThreadLocal())
     Flags |= ELF::SHF_TLS;
 
+  // FIXME: There is nothing in ELF preventing an SHF_MERGE from being
+  // in a comdat. We just avoid it for now because we don't print
+  // those .sections correctly.
   if (!InCOMDAT && (K.isMergeableCString() || K.isMergeableConst()))
     Flags |= ELF::SHF_MERGE;
 
