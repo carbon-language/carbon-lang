@@ -80,7 +80,7 @@ void test2()
     assert ( dest[1][0] == 2 );
     assert ( dest[1][1] == 3 );
     }
-    
+
     {
     int src[3][3]      = {{0, 1, 2}, {3, 4, 5}, {6, 7, 8}};
     decltype(src) dest = {{9, 8, 7}, {6, 5, 4}, {3, 2, 1}};
