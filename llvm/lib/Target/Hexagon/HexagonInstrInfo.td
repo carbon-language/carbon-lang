@@ -4852,28 +4852,6 @@ let AddedComplexity = 30 in
 def: Pat<(i1 (setlt (i32 IntRegs:$src1), s8ExtPred:$src2)),
          (C2_not (C2_cmpgti IntRegs:$src1, (DEC_CONST_SIGNED s8ExtPred:$src2)))>;
 
-// Map cmplt(Rs, Rt) -> cmpgt(Rt, Rs).
-// rs < rt -> rt > rs.
-// We can let assembler map it, or we can do in the compiler itself.
-def : Pat <(i1 (setlt (i32 IntRegs:$src1), (i32 IntRegs:$src2))),
-      (i1 (C2_cmpgt (i32 IntRegs:$src2), (i32 IntRegs:$src1)))>;
-
-// Map cmplt(Rss, Rtt) -> cmpgt(Rtt, Rss).
-// rss < rtt -> (rtt > rss).
-def : Pat <(i1 (setlt (i64 DoubleRegs:$src1), (i64 DoubleRegs:$src2))),
-      (i1 (C2_cmpgtp (i64 DoubleRegs:$src2), (i64 DoubleRegs:$src1)))>;
-
-// Map from cmpltu(Rs, Rd) -> cmpgtu(Rd, Rs)
-// rs < rt -> rt > rs.
-// We can let assembler map it, or we can do in the compiler itself.
-def : Pat <(i1 (setult (i32 IntRegs:$src1), (i32 IntRegs:$src2))),
-      (i1 (C2_cmpgtu (i32 IntRegs:$src2), (i32 IntRegs:$src1)))>;
-
-// Map from cmpltu(Rss, Rdd) -> cmpgtu(Rdd, Rss).
-// rs < rt -> rt > rs.
-def : Pat <(i1 (setult (i64 DoubleRegs:$src1), (i64 DoubleRegs:$src2))),
-      (i1 (C2_cmpgtup (i64 DoubleRegs:$src2), (i64 DoubleRegs:$src1)))>;
-
 // Generate cmpgeu(Rs, #0) -> cmpeq(Rs, Rs)
 def: Pat<(i1 (setuge (i32 IntRegs:$src1), 0)),
          (C2_cmpeq IntRegs:$src1, IntRegs:$src1)>;
@@ -4891,16 +4869,6 @@ def: Pat<(i1 (setugt (i32 IntRegs:$src1), u9ExtPred:$src2)),
 def: Pat<(i1 (setuge (i64 DoubleRegs:$src1), (i64 DoubleRegs:$src2))),
          (C2_not (C2_cmpgtup DoubleRegs:$src2, DoubleRegs:$src1))>;
 
-// Map from Rs >= Rt -> !(Rt > Rs).
-// rs >= rt -> !(rt > rs).
-def : Pat <(i1 (setuge (i64 DoubleRegs:$src1), (i64 DoubleRegs:$src2))),
-      (i1 (C2_not (C2_cmpgtup (i64 DoubleRegs:$src2), (i64 DoubleRegs:$src1))))>;
-
-// Map from cmpleu(Rs, Rt) -> !cmpgtu(Rs, Rt).
-// Map from (Rs <= Rt) -> !(Rs > Rt).
-def : Pat <(i1 (setule (i32 IntRegs:$src1), (i32 IntRegs:$src2))),
-      (i1 (C2_not (C2_cmpgtu (i32 IntRegs:$src1), (i32 IntRegs:$src2))))>;
-
 // Map from cmpleu(Rss, Rtt) -> !cmpgtu(Rss, Rtt-1).
 // Map from (Rs <= Rt) -> !(Rs > Rt).
 def: Pat<(i1 (setule (i64 DoubleRegs:$src1), (i64 DoubleRegs:$src2))),
@@ -4916,21 +4884,6 @@ def: Pat<(i64 (sext (i1 PredRegs:$src1))),
          (A2_combinew (A2_tfrsi -1), (C2_muxii PredRegs:$src1, -1, 0))>;
 
 // Convert sign-extended load back to load and sign extend.
-// i8 -> i64
-def:  Pat <(i64 (sextloadi8 ADDRriS11_0:$src1)),
-      (i64 (A2_sxtw (L2_loadrb_io AddrFI:$src1, 0)))>;
-
-// Convert any-extended load back to load and sign extend.
-// i8 -> i64
-def:  Pat <(i64 (extloadi8 ADDRriS11_0:$src1)),
-      (i64 (A2_sxtw (L2_loadrb_io AddrFI:$src1, 0)))>;
-
-// Convert sign-extended load back to load and sign extend.
-// i16 -> i64
-def:  Pat <(i64 (sextloadi16 ADDRriS11_1:$src1)),
-      (i64 (A2_sxtw (L2_loadrh_io AddrFI:$src1, 0)))>;
-
-// Convert sign-extended load back to load and sign extend.
 // i32 -> i64
 def:  Pat <(i64 (sextloadi32 ADDRriS11_2:$src1)),
       (i64 (A2_sxtw (L2_loadri_io AddrFI:$src1, 0)))>;
@@ -4940,67 +4893,6 @@ def:  Pat <(i64 (sextloadi32 ADDRriS11_2:$src1)),
 def: Pat<(i32 (zext (i1 PredRegs:$src1))),
          (C2_muxii PredRegs:$src1, 1, 0)>;
 
-// i1 -> i64
-def : Pat <(i64 (zext (i1 PredRegs:$src1))),
-      (i64 (A2_combinew (A2_tfrsi 0), (C2_muxii (i1 PredRegs:$src1), 1, 0)))>,
-      Requires<[NoV4T]>;
-
-// i32 -> i64
-def : Pat <(i64 (zext (i32 IntRegs:$src1))),
-      (i64 (A2_combinew (A2_tfrsi 0), (i32 IntRegs:$src1)))>,
-      Requires<[NoV4T]>;
-
-// i8 -> i64
-def:  Pat <(i64 (zextloadi8 ADDRriS11_0:$src1)),
-      (i64 (A2_combinew (A2_tfrsi 0), (L2_loadrub_io AddrFI:$src1, 0)))>,
-      Requires<[NoV4T]>;
-
-let AddedComplexity = 20 in
-def:  Pat <(i64 (zextloadi8 (add (i32 IntRegs:$src1),
-                                s11_0ExtPred:$offset))),
-      (i64 (A2_combinew (A2_tfrsi 0), (L2_loadrub_io IntRegs:$src1,
-                                  s11_0ExtPred:$offset)))>,
-      Requires<[NoV4T]>;
-
-// i1 -> i64
-def:  Pat <(i64 (zextloadi1 ADDRriS11_0:$src1)),
-      (i64 (A2_combinew (A2_tfrsi 0), (L2_loadrub_io AddrFI:$src1, 0)))>,
-      Requires<[NoV4T]>;
-
-let AddedComplexity = 20 in
-def:  Pat <(i64 (zextloadi1 (add (i32 IntRegs:$src1),
-                                s11_0ExtPred:$offset))),
-      (i64 (A2_combinew (A2_tfrsi 0), (L2_loadrub_io IntRegs:$src1,
-                                  s11_0ExtPred:$offset)))>,
-      Requires<[NoV4T]>;
-
-// i16 -> i64
-def:  Pat <(i64 (zextloadi16 ADDRriS11_1:$src1)),
-      (i64 (A2_combinew (A2_tfrsi 0), (L2_loadruh_io AddrFI:$src1, 0)))>,
-      Requires<[NoV4T]>;
-
-let AddedComplexity = 20 in
-def:  Pat <(i64 (zextloadi16 (add (i32 IntRegs:$src1),
-                                  s11_1ExtPred:$offset))),
-      (i64 (A2_combinew (A2_tfrsi 0), (L2_loadruh_io IntRegs:$src1,
-                                  s11_1ExtPred:$offset)))>,
-      Requires<[NoV4T]>;
-
-// i32 -> i64
-def:  Pat <(i64 (zextloadi32 ADDRriS11_2:$src1)),
-      (i64 (A2_combinew (A2_tfrsi 0), (L2_loadri_io AddrFI:$src1, 0)))>,
-      Requires<[NoV4T]>;
-
-let AddedComplexity = 100 in
-def:  Pat <(i64 (zextloadi32 (i32 (add IntRegs:$src1, s11_2ExtPred:$offset)))),
-      (i64 (A2_combinew (A2_tfrsi 0), (L2_loadri_io IntRegs:$src1,
-                                  s11_2ExtPred:$offset)))>,
-      Requires<[NoV4T]>;
-
-let AddedComplexity = 10 in
-def:  Pat <(i32 (zextloadi1 ADDRriS11_0:$src1)),
-      (i32 (L2_loadri_io AddrFI:$src1, 0))>;
-
 // Map from Rs = Pd to Pd = mux(Pd, #1, #0)
 def: Pat<(i32 (anyext (i1 PredRegs:$src1))),
          (C2_muxii PredRegs:$src1, 1, 0)>;
@@ -5009,91 +4901,11 @@ def: Pat<(i32 (anyext (i1 PredRegs:$src1))),
 def: Pat<(i64 (anyext (i1 PredRegs:$src1))),
          (A2_sxtw (C2_muxii PredRegs:$src1, 1, 0))>;
 
-// Map from Rss = Pd to Rdd = A2_sxtw (mux(Pd, #1, #0))
-def : Pat <(i64 (anyext (i1 PredRegs:$src1))),
-      (i64 (A2_sxtw (i32 (C2_muxii (i1 PredRegs:$src1), 1, 0))))>;
-
-
-let AddedComplexity = 100 in
-def: Pat<(i64 (or (i64 (shl (i64 DoubleRegs:$srcHigh),
-                           (i32 32))),
-               (i64 (zextloadi32 (i32 (add IntRegs:$src2,
-                                         s11_2ExtPred:$offset2)))))),
-        (i64 (A2_combinew (EXTRACT_SUBREG (i64 DoubleRegs:$srcHigh), subreg_loreg),
-                        (L2_loadri_io IntRegs:$src2,
-                                       s11_2ExtPred:$offset2)))>;
-
 def: Pat<(i64 (or (i64 (shl (i64 DoubleRegs:$srcHigh),
                            (i32 32))),
                (i64 (zextloadi32 ADDRriS11_2:$srcLow)))),
         (i64 (A2_combinew (EXTRACT_SUBREG (i64 DoubleRegs:$srcHigh), subreg_loreg),
                         (L2_loadri_io AddrFI:$srcLow, 0)))>;
-
-def: Pat<(i64 (or (i64 (shl (i64 DoubleRegs:$srcHigh),
-                           (i32 32))),
-               (i64 (zext (i32 IntRegs:$srcLow))))),
-        (i64 (A2_combinew (EXTRACT_SUBREG (i64 DoubleRegs:$srcHigh), subreg_loreg),
-                        IntRegs:$srcLow))>;
-
-let AddedComplexity = 100 in
-def: Pat<(i64 (or (i64 (shl (i64 DoubleRegs:$srcHigh),
-                           (i32 32))),
-               (i64 (zextloadi32 (i32 (add IntRegs:$src2,
-                                         s11_2ExtPred:$offset2)))))),
-        (i64 (A2_combinew (EXTRACT_SUBREG (i64 DoubleRegs:$srcHigh), subreg_loreg),
-                        (L2_loadri_io IntRegs:$src2,
-                                       s11_2ExtPred:$offset2)))>;
-
-def: Pat<(i64 (or (i64 (shl (i64 DoubleRegs:$srcHigh),
-                           (i32 32))),
-               (i64 (zextloadi32 ADDRriS11_2:$srcLow)))),
-        (i64 (A2_combinew (EXTRACT_SUBREG (i64 DoubleRegs:$srcHigh), subreg_loreg),
-                        (L2_loadri_io AddrFI:$srcLow, 0)))>;
-
-def: Pat<(i64 (or (i64 (shl (i64 DoubleRegs:$srcHigh),
-                           (i32 32))),
-               (i64 (zext (i32 IntRegs:$srcLow))))),
-        (i64 (A2_combinew (EXTRACT_SUBREG (i64 DoubleRegs:$srcHigh), subreg_loreg),
-                        IntRegs:$srcLow))>;
-
-// Any extended 64-bit load.
-// anyext i32 -> i64
-def:  Pat <(i64 (extloadi32 ADDRriS11_2:$src1)),
-      (i64 (A2_combinew (A2_tfrsi 0), (L2_loadri_io AddrFI:$src1, 0)))>,
-      Requires<[NoV4T]>;
-
-// When there is an offset we should prefer the pattern below over the pattern above.
-// The complexity of the above is 13 (gleaned from HexagonGenDAGIsel.inc)
-// So this complexity below is comfortably higher to allow for choosing the below.
-// If this is not done then we generate addresses such as
-// ********************************************
-//        r1 = add (r0, #4)
-//        r1 = memw(r1 + #0)
-//  instead of
-//        r1 = memw(r0 + #4)
-// ********************************************
-let AddedComplexity = 100 in
-def:  Pat <(i64 (extloadi32 (i32 (add IntRegs:$src1, s11_2ExtPred:$offset)))),
-      (i64 (A2_combinew (A2_tfrsi 0), (L2_loadri_io IntRegs:$src1,
-                                  s11_2ExtPred:$offset)))>,
-      Requires<[NoV4T]>;
-
-// anyext i16 -> i64.
-def:  Pat <(i64 (extloadi16 ADDRriS11_2:$src1)),
-      (i64 (A2_combinew (A2_tfrsi 0), (L2_loadrh_io AddrFI:$src1, 0)))>,
-      Requires<[NoV4T]>;
-
-let AddedComplexity = 20 in
-def:  Pat <(i64 (extloadi16 (add (i32 IntRegs:$src1),
-                                  s11_1ExtPred:$offset))),
-      (i64 (A2_combinew (A2_tfrsi 0), (L2_loadrh_io IntRegs:$src1,
-                                  s11_1ExtPred:$offset)))>,
-      Requires<[NoV4T]>;
-
-// Map from Rdd = zxtw(Rs) -> Rdd = combine(0, Rs).
-def : Pat<(i64 (zext (i32 IntRegs:$src1))),
-      (i64 (A2_combinew (A2_tfrsi 0), (i32 IntRegs:$src1)))>,
-      Requires<[NoV4T]>;
 
 // Multiply 64-bit unsigned and use upper result.
 def : Pat <(mulhu (i64 DoubleRegs:$src1), (i64 DoubleRegs:$src2)),
