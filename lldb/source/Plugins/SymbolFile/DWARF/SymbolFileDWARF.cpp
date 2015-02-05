@@ -893,13 +893,22 @@ SymbolFileDWARF::GetDWARFCompileUnit(lldb_private::CompileUnit *comp_unit)
             // only 1 compile unit which is at offset zero in the DWARF.
             // TODO: modify to support LTO .o files where each .o file might
             // have multiple DW_TAG_compile_unit tags.
-            return info->GetCompileUnit(0).get();
+            
+            DWARFCompileUnit *dwarf_cu = info->GetCompileUnit(0).get();
+            if (dwarf_cu && dwarf_cu->GetUserData() == NULL)
+                dwarf_cu->SetUserData(comp_unit);
+            return dwarf_cu;
         }
         else
         {
             // Just a normal DWARF file whose user ID for the compile unit is
             // the DWARF offset itself
-            return info->GetCompileUnit((dw_offset_t)comp_unit->GetID()).get();
+
+            DWARFCompileUnit *dwarf_cu = info->GetCompileUnit((dw_offset_t)comp_unit->GetID()).get();
+            if (dwarf_cu && dwarf_cu->GetUserData() == NULL)
+                dwarf_cu->SetUserData(comp_unit);
+            return dwarf_cu;
+
         }
     }
     return NULL;
