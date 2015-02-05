@@ -560,7 +560,7 @@ def INVPCID64 : I<0x82, MRMSrcMem, (outs), (ins GR64:$src1, i128mem:$src2),
 
 //===----------------------------------------------------------------------===//
 // SMAP Instruction
-let Predicates = [HasSMAP], Defs = [EFLAGS] in {
+let Defs = [EFLAGS] in {
   def CLAC : I<0x01, MRM_CA, (outs), (ins), "clac", []>, TB;
   def STAC : I<0x01, MRM_CB, (outs), (ins), "stac", []>, TB;
 }

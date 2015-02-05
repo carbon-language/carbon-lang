@@ -134,17 +134,11 @@ protected:
   /// Processor has SHA instructions.
   bool HasSHA;
 
-  /// Processor has SGX instructions.
-  bool HasSGX;
-
   /// Processor has PRFCHW instructions.
   bool HasPRFCHW;
 
   /// Processor has RDSEED instructions.
   bool HasRDSEED;
-
-  /// Processor has SMAP instructions.
-  bool HasSMAP;
 
   /// True if BT (bit test) of memory instructions are slow.
   bool IsBTMemSlow;
@@ -364,10 +358,8 @@ public:
   bool hasHLE() const { return HasHLE; }
   bool hasADX() const { return HasADX; }
   bool hasSHA() const { return HasSHA; }
-  bool hasSGX() const { return HasSGX; }
   bool hasPRFCHW() const { return HasPRFCHW; }
   bool hasRDSEED() const { return HasRDSEED; }
-  bool hasSMAP() const { return HasSMAP; }
   bool isBTMemSlow() const { return IsBTMemSlow; }
   bool isSHLDSlow() const { return IsSHLDSlow; }
   bool isUnalignedMemAccessFast() const { return IsUAMemFast; }
