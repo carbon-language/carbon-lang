@@ -828,7 +828,7 @@ CMICmdCmdDataListRegisterNames::Execute(void)
 {
     CMICmnLLDBDebugSessionInfo &rSessionInfo(CMICmnLLDBDebugSessionInfo::Instance());
     lldb::SBProcess sbProcess = rSessionInfo.GetProcess();
-    if (sbProcess.IsValid())
+    if (!sbProcess.IsValid())
     {
         SetError(CMIUtilString::Format(MIRSRC(IDS_CMD_ERR_INVALID_PROCESS), m_cmdData.strMiCmd.c_str()));
         return MIstatus::failure;
