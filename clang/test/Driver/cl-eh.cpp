@@ -10,11 +10,11 @@
 
 // RUN: %clang_cl /c /EHs-c- -### -- %s 2>&1 | FileCheck -check-prefix=EHs_c_ %s
 // EHs_c_-NOT: "-fcxx-exceptions"
-// EHs_c_: "-fexceptions"
+// EHs_c_-NOT: "-fexceptions"
 
 // RUN: %clang_cl /c /EHs- /EHc- -### -- %s 2>&1 | FileCheck -check-prefix=EHs_EHc_ %s
 // EHs_EHc_-NOT: "-fcxx-exceptions"
-// EHs_EHc_: "-fexceptions"
+// EHs_EHc_-NOT: "-fexceptions"
 
 // RUN: %clang_cl /c /EHs- /EHs -### -- %s 2>&1 | FileCheck -check-prefix=EHs_EHs %s
 // EHs_EHs: "-fcxx-exceptions"

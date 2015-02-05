@@ -1,4 +1,4 @@
-// RUN: not %clang_cc1 -triple x86_64-pc-win32 -fexceptions -fms-extensions -emit-llvm -o - %s 2>&1 | FileCheck %s
+// RUN: not %clang_cc1 -triple x86_64-pc-win32 -fms-extensions -emit-llvm -o - %s 2>&1 | FileCheck %s
 
 // This is a codegen test because we only emit the diagnostic when we start
 // generating code.
