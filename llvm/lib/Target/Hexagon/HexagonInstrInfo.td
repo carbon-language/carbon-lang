@@ -1589,6 +1589,8 @@ def: Pat<(brind (i32 IntRegs:$dst)),
 //===----------------------------------------------------------------------===//
 // LD +
 //===----------------------------------------------------------------------===//
+
+// Load - Base with Immediate offset addressing mode
 let isExtendable = 1, opExtendable = 2, isExtentSigned = 1, AddedComplexity = 20 in
 class T_load_io <string mnemonic, RegisterClass RC, bits<4> MajOp,
                  Operand ImmOp>
@@ -1912,11 +1914,10 @@ def L2_loadbzw4_pr : T_load_pr <"memubh", DoubleRegs, 0b0101, WordAccess>;
 
 // Load predicate.
 let isExtendable = 1, opExtendable = 2, isExtentSigned = 1, opExtentBits = 13,
-isPseudo = 1, Defs = [R10,R11,D5], hasSideEffects = 0 in
-def LDriw_pred : LDInst2<(outs PredRegs:$dst),
-            (ins MEMri:$addr),
-            "Error; should not emit",
-            []>;
+    isCodeGenOnly = 1, isPseudo = 1, hasSideEffects = 0 in
+def LDriw_pred : LDInst<(outs PredRegs:$dst),
+                        (ins IntRegs:$addr, s11_2Ext:$off),
+                        ".error \"should not emit\"", []>;
 
 let Defs = [R29, R30, R31], Uses = [R30], hasSideEffects = 0 in
   def L2_deallocframe : LDInst<(outs), (ins),
@@ -1930,7 +1931,7 @@ let Defs = [R29, R30, R31], Uses = [R30], hasSideEffects = 0 in
 }
 
 // Load / Post increment circular addressing mode.
-let Uses = [CS], hasSideEffects = 0, hasNewValue = 1, opNewValue = 0 in
+let Uses = [CS], hasSideEffects = 0 in
 class T_load_pcr<string mnemonic, RegisterClass RC, bits<4> MajOp>
   : LDInst <(outs RC:$dst, IntRegs:$_dst_),
             (ins IntRegs:$Rz, ModRegs:$Mu),
@@ -1940,6 +1941,7 @@ class T_load_pcr<string mnemonic, RegisterClass RC, bits<4> MajOp>
     bits<5> Rz;
     bit Mu;
 
+    let hasNewValue = !if (!eq(!cast<string>(RC), "DoubleRegs"), 0, 1);
     let IClass = 0b1001;
 
     let Inst{27-25} = 0b100;
@@ -1978,7 +1980,7 @@ def L2_loadrd_pcr  : T_load_pcr <"memd", DoubleRegs, 0b1110>;
 //===----------------------------------------------------------------------===//
 // Circular loads with immediate offset.
 //===----------------------------------------------------------------------===//
-let Uses = [CS], mayLoad = 1, hasSideEffects = 0, hasNewValue = 1 in
+let Uses = [CS], mayLoad = 1, hasSideEffects = 0 in
 class T_load_pci <string mnemonic, RegisterClass RC,
                   Operand ImmOp, bits<4> MajOp>
   : LDInstPI<(outs RC:$dst, IntRegs:$_dst_),
@@ -1992,6 +1994,7 @@ class T_load_pci <string mnemonic, RegisterClass RC,
     bits<4> offsetBits;
 
     string ImmOpStr = !cast<string>(ImmOp);
+    let hasNewValue = !if (!eq(!cast<string>(RC), "DoubleRegs"), 0, 1);
     let offsetBits = !if (!eq(ImmOpStr, "s4_3Imm"), offset{6-3},
                      !if (!eq(ImmOpStr, "s4_2Imm"), offset{5-2},
                      !if (!eq(ImmOpStr, "s4_1Imm"), offset{4-1},
@@ -2045,6 +2048,7 @@ class T_load_locked <string mnemonic, RegisterClass RC>
     let Inst{27-21} = 0b0010000;
     let Inst{20-16} = src;
     let Inst{13-12} = !if (!eq(mnemonic, "memd_locked"), 0b01, 0b00);
+    let Inst{5}   = 0;
     let Inst{4-0} = dst;
 }
 let hasNewValue = 1, accessSize = WordAccess, opNewValue = 0 in
@@ -2420,7 +2424,6 @@ class T_M2_vmpy < string opc, bits<3> MajOp, bits<3> MinOp, bit hasShift,
 let Defs = [USR_OVF] in {
 def M2_vcmpy_s1_sat_i: T_M2_vmpy <"vcmpyi", 0b110, 0b110, 1, 0, 1>;
 def M2_vcmpy_s0_sat_i: T_M2_vmpy <"vcmpyi", 0b010, 0b110, 0, 0, 1>;
-}
 
 // Vector complex multiply real: Rdd=vcmpyr(Rss,Rtt)[:<<1]:sat
 def M2_vcmpy_s1_sat_r: T_M2_vmpy <"vcmpyr", 0b101, 0b110, 1, 0, 1>;
@@ -2457,6 +2460,7 @@ def M2_mmpyul_s0:  T_M2_vmpy <"vmpyweuh", 0b010, 0b101, 0, 0, 1>;
 def M2_mmpyul_s1:  T_M2_vmpy <"vmpyweuh", 0b110, 0b101, 1, 0, 1>;
 def M2_mmpyul_rs0: T_M2_vmpy <"vmpyweuh", 0b011, 0b101, 0, 1, 1>;
 def M2_mmpyul_rs1: T_M2_vmpy <"vmpyweuh", 0b111, 0b101, 1, 1, 1>;
+}
 
 let hasNewValue = 1, opNewValue = 0 in
 class T_MType_mpy <string mnemonic, bits<4> RegTyBits, RegisterClass RC,
@@ -2745,11 +2749,11 @@ def A2_vraddub_acc: T_XTYPE_Vect_acc <"vraddub", 0b010, 0b001, 0>;
 def A2_vrsadub: T_XTYPE_Vect <"vrsadub", 0b010, 0b010, 0>;
 def A2_vrsadub_acc: T_XTYPE_Vect_acc <"vrsadub", 0b010, 0b010, 0>;
 
-// Vector absolute difference words: Rdd=vabsdiffw(Rtt,Rss)
-def M2_vabsdiffw: T_XTYPE_Vect_diff<0b001, "vabsdiffw">;
-
 // Vector absolute difference: Rdd=vabsdiffh(Rtt,Rss)
 def M2_vabsdiffh: T_XTYPE_Vect_diff<0b011, "vabsdiffh">;
+
+// Vector absolute difference words: Rdd=vabsdiffw(Rtt,Rss)
+def M2_vabsdiffw: T_XTYPE_Vect_diff<0b001, "vabsdiffw">;
 
 // Vector reduce complex multiply real or imaginary:
 // Rdd[+]=vrcmpy[ir](Rss,Rtt[*])
@@ -3390,7 +3394,7 @@ let addrMode = BaseImmOffset, InputType = "imm" in {
 class Storex_simple_pat<PatFrag Store, PatFrag Value, InstHexagon MI>
   : Pat<(Store Value:$Rt, (i32 IntRegs:$Rs)),
         (MI IntRegs:$Rs, 0, Value:$Rt)>;
-		
+
 // Regular stores in the DAG have two operands: value and address.
 // Atomic stores also have two, but they are reversed: address, value.
 // To use atomic stores with the patterns, they need to have their operands
@@ -3685,6 +3689,9 @@ def S2_storerinew_pbr : T_storenew_pbr<"memw", WordAccess, 0b10>;
 // ST -
 //===----------------------------------------------------------------------===//
 
+//===----------------------------------------------------------------------===//
+// Template class for S_2op instructions.
+//===----------------------------------------------------------------------===//
 let hasSideEffects = 0 in
 class T_S2op_1 <string mnemonic, bits<4> RegTyBits, RegisterClass RCOut,
                 RegisterClass RCIn, bits<2> MajOp, bits<3> MinOp, bit isSat>
@@ -3822,7 +3829,7 @@ class T_S2op_2_di <string mnemonic, bits<3> MajOp, bits<3> MinOp>
 let hasNewValue = 1 in
 class T_S2op_2_id <string mnemonic, bits<3> MajOp, bits<3> MinOp>
   : T_S2op_2 <mnemonic, 0b1000, IntRegs, DoubleRegs, MajOp, MinOp, 0, 0>;
-  
+
 let hasNewValue = 1 in
 class T_S2op_2_ii <string mnemonic, bits<3> MajOp, bits<3> MinOp,
                    bit isSat = 0, bit isRnd = 0, list<dag> pattern = []>
@@ -4048,6 +4055,7 @@ let AddedComplexity = 20 in { // Complexity greater than cmp reg-imm.
   def: Pat<(i1 (trunc (i64 DoubleRegs:$Rs))),
            (S2_tstbit_i (LoReg DoubleRegs:$Rs), 0)>;
 }
+
 let hasSideEffects = 0 in
 class T_TEST_BITS_IMM<string MnOp, bits<2> MajOp, bit IsNeg>
     : SInst<(outs PredRegs:$Pd), (ins IntRegs:$Rs, u6Imm:$u6),
@@ -4234,7 +4242,7 @@ def S2_addasl_rrri: SInst <(outs IntRegs:$Rd),
 def HexagonBARRIER: SDNode<"HexagonISD::BARRIER", SDTNone, [SDNPHasChain]>;
 
 let hasSideEffects = 1, isSoloAX = 1 in
-def BARRIER : SYSInst<(outs), (ins),
+def Y2_barrier : SYSInst<(outs), (ins),
                      "barrier",
                      [(HexagonBARRIER)],"",ST_tc_st_SLOT0> {
   let Inst{31-28} = 0b1010;

@@ -370,7 +370,7 @@ static bool IsDirectJump(MachineInstr* MI) {
 
 static bool IsSchedBarrier(MachineInstr* MI) {
   switch (MI->getOpcode()) {
-  case Hexagon::BARRIER:
+  case Hexagon::Y2_barrier:
     return true;
   }
   return false;
