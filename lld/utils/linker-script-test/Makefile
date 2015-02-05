@@ -19,6 +19,6 @@ LEVEL := $(LLD_LEVEL)/../..
 include $(LEVEL)/Makefile.config
 
 LINK_COMPONENTS := $(TARGETS_TO_BUILD)
-USEDLIBS = lldReaderWriter.a LLVMSupport.a
+USEDLIBS = lldReaderWriter.a lldCore.a LLVMSupport.a
 
 include $(LLD_LEVEL)/Makefile
