@@ -48,16 +48,23 @@ SourceRange FindToken(const SourceManager &Sources, LangOptions LangOpts,
   return SourceRange();
 }
 
+bool declIsStdInitializerList(const NamedDecl *D) {
+  // First use the fast getName() method to avoid unnecessary calls to the
+  // slow getQualifiedNameAsString().
+  return D->getName() == "initializer_list" &&
+         D->getQualifiedNameAsString() == "std::initializer_list";
+}
+
 bool isStdInitializerList(QualType Type) {
-  if (const RecordType *RT = Type.getCanonicalType()->getAs<RecordType>()) {
-    if (ClassTemplateSpecializationDecl *Specialization =
-            dyn_cast<ClassTemplateSpecializationDecl>(RT->getDecl())) {
-      ClassTemplateDecl *Template = Specialization->getSpecializedTemplate();
-      // First use the fast getName() method to avoid unnecessary calls to the
-      // slow getQualifiedNameAsString().
-      return Template->getName() == "initializer_list" &&
-             Template->getQualifiedNameAsString() == "std::initializer_list";
-    }
+  Type = Type.getCanonicalType();
+  if (const auto *TS = Type->getAs<TemplateSpecializationType>()) {
+    if (const TemplateDecl *TD = TS->getTemplateName().getAsTemplateDecl())
+      return declIsStdInitializerList(TD);
+  }
+  if (const auto *RT = Type->getAs<RecordType>()) {
+    if (const auto *Specialization =
+            dyn_cast<ClassTemplateSpecializationDecl>(RT->getDecl()))
+      return declIsStdInitializerList(Specialization->getSpecializedTemplate());
   }
   return false;
 }

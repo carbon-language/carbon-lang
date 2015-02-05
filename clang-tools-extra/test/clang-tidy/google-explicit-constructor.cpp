@@ -49,7 +49,7 @@ struct A {
   // CHECK-FIXES: {{^  }}explicit A(int x1) {}
 
   A(double x2, double y = 3.14) {}
-  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: single-argument constructors must be explicit
+  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: single-argument constructors
   // CHECK-FIXES: {{^  }}explicit A(double x2, double y = 3.14) {}
 };
 
@@ -63,11 +63,11 @@ struct B {
   // CHECK-FIXES: {{^  }}B(::std::initializer_list<double> list4) {}
 
   explicit B(const ::std::initializer_list<char> &list5) {}
-  // CHECK-MESSAGES: :[[@LINE-1]]:12: warning: initializer-list constructor should not be declared explicit [google-explicit-constructor]
+  // CHECK-MESSAGES: :[[@LINE-1]]:12: warning: initializer-list constructor
   // CHECK-FIXES: {{^  }}B(const ::std::initializer_list<char> &list5) {}
 
   explicit B(::std::initializer_list<char> &&list6) {}
-  // CHECK-MESSAGES: :[[@LINE-1]]:12: warning: initializer-list constructor should not be declared explicit [google-explicit-constructor]
+  // CHECK-MESSAGES: :[[@LINE-1]]:12: warning: initializer-list constructor
   // CHECK-FIXES: {{^  }}B(::std::initializer_list<char> &&list6) {}
 };
 
@@ -79,6 +79,27 @@ struct C {
   C(initializer_list<unsigned> &&list3) {}
 };
 
+template <typename T>
+struct C2 {
+  C2(initializer_list<int> list1) {}
+  C2(const initializer_list<unsigned> &list2) {}
+  C2(initializer_list<unsigned> &&list3) {}
+
+  explicit C2(initializer_list<double> list4) {}
+  // CHECK-MESSAGES: :[[@LINE-1]]:12: warning: initializer-list constructor
+  // CHECK-FIXES: {{^  }}C2(initializer_list<double> list4) {}
+};
+
+template <typename T>
+struct C3 {
+  C3(initializer_list<T> list1) {}
+  C3(const std::initializer_list<T*> &list2) {}
+  C3(::std::initializer_list<T**> &&list3) {}
+
+  template <typename U>
+  C3(initializer_list<U> list3) {}
+};
+
 struct D {
   template <typename T>
   explicit D(T t) {}
@@ -86,6 +107,14 @@ struct D {
 
 template <typename T>
 struct E {
+  E(T *pt) {}
+  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: single-argument constructors
+  // CHECK-FIXES: {{^  }}explicit E(T *pt) {}
+  template <typename U>
+  E(U *pu) {}
+  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: single-argument constructors
+  // CHECK-FIXES: {{^  }}explicit E(U *pu) {}
+
   explicit E(T t) {}
   template <typename U>
   explicit E(U u) {}
