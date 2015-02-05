@@ -219,7 +219,7 @@ template <> struct MDNodeKeyImpl<MDTuple> : MDNodeOpsKey {
   MDNodeKeyImpl(ArrayRef<Metadata *> Ops) : MDNodeOpsKey(Ops) {}
   MDNodeKeyImpl(const MDTuple *N) : MDNodeOpsKey(N) {}
 
-  bool operator==(const MDTuple *RHS) const { return compareOps(RHS); }
+  bool isKeyOf(const MDTuple *RHS) const { return compareOps(RHS); }
 
   unsigned getHashValue() const { return getHash(); }
 
@@ -243,7 +243,7 @@ template <> struct MDNodeKeyImpl<MDLocation> {
       : Line(L->getLine()), Column(L->getColumn()), Scope(L->getScope()),
         InlinedAt(L->getInlinedAt()) {}
 
-  bool operator==(const MDLocation *RHS) const {
+  bool isKeyOf(const MDLocation *RHS) const {
     return Line == RHS->getLine() && Column == RHS->getColumn() &&
            Scope == RHS->getScope() && InlinedAt == RHS->getInlinedAt();
   }
@@ -261,7 +261,7 @@ template <> struct MDNodeKeyImpl<GenericDebugNode> : MDNodeOpsKey {
   MDNodeKeyImpl(const GenericDebugNode *N)
       : MDNodeOpsKey(N, 1), Tag(N->getTag()), Header(N->getHeader()) {}
 
-  bool operator==(const GenericDebugNode *RHS) const {
+  bool isKeyOf(const GenericDebugNode *RHS) const {
     return Tag == RHS->getTag() && Header == RHS->getHeader() &&
            compareOps(RHS, 1);
   }
@@ -289,7 +289,7 @@ template <class NodeTy> struct MDNodeInfo {
   static bool isEqual(const KeyTy &LHS, const NodeTy *RHS) {
     if (RHS == getEmptyKey() || RHS == getTombstoneKey())
       return false;
-    return LHS == RHS;
+    return LHS.isKeyOf(RHS);
   }
   static bool isEqual(const NodeTy *LHS, const NodeTy *RHS) {
     return LHS == RHS;
