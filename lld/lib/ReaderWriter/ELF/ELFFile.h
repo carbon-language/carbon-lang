@@ -479,12 +479,6 @@ std::error_code ELFFile<ELFT>::createAtomizableSections() {
       continue;
     }
 
-    // Create a sectionSymbols entry for every progbits section.
-    if ((section.sh_type == llvm::ELF::SHT_PROGBITS) ||
-        (section.sh_type == llvm::ELF::SHT_INIT_ARRAY) ||
-        (section.sh_type == llvm::ELF::SHT_FINI_ARRAY))
-      _sectionSymbols[&section];
-
     if (section.sh_type == llvm::ELF::SHT_RELA) {
       auto sHdr = _objFile->getSection(section.sh_info);
 
@@ -497,9 +491,7 @@ std::error_code ELFFile<ELFT>::createAtomizableSections() {
 
       _relocationAddendReferences[*sectionName] = make_range(rai, rae);
       totalRelocs += std::distance(rai, rae);
-    }
-
-    if (section.sh_type == llvm::ELF::SHT_REL) {
+    } else if (section.sh_type == llvm::ELF::SHT_REL) {
       auto sHdr = _objFile->getSection(section.sh_info);
 
       auto sectionName = _objFile->getSectionName(sHdr);
@@ -511,6 +503,8 @@ std::error_code ELFFile<ELFT>::createAtomizableSections() {
 
       _relocationReferences[*sectionName] = make_range(ri, re);
       totalRelocs += std::distance(ri, re);
+    } else {
+      _sectionSymbols[&section];
     }
   }
   _references.reserve(totalRelocs);
@@ -840,7 +834,7 @@ template <class ELFT> void ELFFile<ELFT>::updateReferences() {
 template <class ELFT>
 bool ELFFile<ELFT>::isIgnoredSection(const Elf_Shdr *section) {
   switch (section->sh_type) {
-  case llvm::ELF::SHT_NOTE:
+  case llvm::ELF::SHT_NULL:
   case llvm::ELF::SHT_STRTAB:
   case llvm::ELF::SHT_SYMTAB:
   case llvm::ELF::SHT_SYMTAB_SHNDX:
