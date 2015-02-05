@@ -105,8 +105,12 @@ protected:
   }
   ~DebugNode() {}
 
+  template <class Ty> Ty *getOperandAs(unsigned I) const {
+    return cast_or_null<Ty>(getOperand(I));
+  }
+
   StringRef getStringOperand(unsigned I) const {
-    if (auto *S = cast_or_null<MDString>(getOperand(I)))
+    if (auto *S = getOperandAs<MDString>(I))
       return S->getString();
     return StringRef();
   }
