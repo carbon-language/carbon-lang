@@ -499,10 +499,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
 
   case Builtin::BI__builtin_powi:
   case Builtin::BI__builtin_powif:
-  case Builtin::BI__builtin_powil:
-  case Builtin::BIpowi:
-  case Builtin::BIpowif:
-  case Builtin::BIpowil: {
+  case Builtin::BI__builtin_powil: {
     Value *Base = EmitScalarExpr(E->getArg(0));
     Value *Exponent = EmitScalarExpr(E->getArg(1));
     llvm::Type *ArgType = Base->getType();
