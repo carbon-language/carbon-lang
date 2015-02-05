@@ -61,8 +61,6 @@ def DEC_CONST_UNSIGNED : SDNodeXForm<imm, [{
 }]>;
 
 //===----------------------------------------------------------------------===//
-
-//===----------------------------------------------------------------------===//
 // Compare
 //===----------------------------------------------------------------------===//
 let hasSideEffects = 0, isCompare = 1, InputType = "imm", isExtendable = 1,
@@ -366,12 +364,10 @@ class T_Addri_Pred <bit PredNot, bit PredNew>
 // A2_addi: Add a signed immediate to a register.
 //===----------------------------------------------------------------------===//
 let hasNewValue = 1, hasSideEffects = 0 in
-class T_Addri <Operand immOp, list<dag> pattern = [] >
+class T_Addri <Operand immOp>
   : ALU32_ri <(outs IntRegs:$Rd),
               (ins IntRegs:$Rs, immOp:$s16),
-  "$Rd = add($Rs, #$s16)", pattern,
-  //[(set (i32 IntRegs:$Rd), (add (i32 IntRegs:$Rs), (s16ExtPred:$s16)))],
-  "", ALU32_ADDI_tc_1_SLOT0123> {
+  "$Rd = add($Rs, #$s16)", [], "", ALU32_ADDI_tc_1_SLOT0123> {
     bits<5> Rd;
     bits<5> Rs;
     bits<16> s16;
@@ -389,9 +385,9 @@ class T_Addri <Operand immOp, list<dag> pattern = [] >
 //===----------------------------------------------------------------------===//
 multiclass Addri_Pred<string mnemonic, bit PredNot> {
   let isPredicatedFalse = PredNot in {
-    def _c#NAME : T_Addri_Pred<PredNot, 0>;
+    def NAME     : T_Addri_Pred<PredNot, 0>;
     // Predicate new
-    def _cdn#NAME : T_Addri_Pred<PredNot, 1>;
+    def NAME#new : T_Addri_Pred<PredNot, 1>;
   }
 }
 
@@ -400,19 +396,20 @@ multiclass Addri_base<string mnemonic, SDNode OpNode> {
   let CextOpcode = mnemonic, BaseOpcode = mnemonic#_ri in {
     let opExtendable = 2, isExtentSigned = 1, opExtentBits = 16,
     isPredicable = 1 in
-    def NAME : T_Addri< s16Ext, // Rd=add(Rs,#s16)
-                        [(set (i32 IntRegs:$Rd),
-                              (add IntRegs:$Rs, s16ExtPred:$s16))]>;
+    def A2_#NAME : T_Addri<s16Ext>;
 
     let opExtendable = 3, isExtentSigned = 1, opExtentBits = 8,
     hasSideEffects = 0, isPredicated = 1 in {
-      defm Pt : Addri_Pred<mnemonic, 0>;
-      defm NotPt : Addri_Pred<mnemonic, 1>;
+      defm A2_p#NAME#t : Addri_Pred<mnemonic, 0>;
+      defm A2_p#NAME#f : Addri_Pred<mnemonic, 1>;
     }
   }
 }
 
-defm ADD_ri : Addri_base<"add", add>, ImmRegRel, PredNewRel;
+defm addi : Addri_base<"add", add>, ImmRegRel, PredNewRel;
+
+def: Pat<(i32 (add I32:$Rs, s16ExtPred:$s16)),
+         (i32 (A2_addi I32:$Rs, imm:$s16))>;
 
 //===----------------------------------------------------------------------===//
 // Template class used for the following ALU32 instructions.

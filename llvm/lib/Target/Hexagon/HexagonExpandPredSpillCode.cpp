@@ -90,7 +90,7 @@ bool HexagonExpandPredSpillCode::runOnMachineFunction(MachineFunction &Fn) {
         assert(Hexagon::PredRegsRegClass.contains(SrcReg) &&
                "Not a predicate register");
         if (!TII->isValidOffset(Hexagon::S2_storeri_io, Offset)) {
-          if (!TII->isValidOffset(Hexagon::ADD_ri, Offset)) {
+          if (!TII->isValidOffset(Hexagon::A2_addi, Offset)) {
             BuildMI(*MBB, MII, MI->getDebugLoc(),
                     TII->get(Hexagon::CONST32_Int_Real),
                       HEXAGON_RESERVED_REG_1).addImm(Offset);
@@ -104,7 +104,7 @@ bool HexagonExpandPredSpillCode::runOnMachineFunction(MachineFunction &Fn) {
               .addReg(HEXAGON_RESERVED_REG_1)
               .addImm(0).addReg(HEXAGON_RESERVED_REG_2);
           } else {
-            BuildMI(*MBB, MII, MI->getDebugLoc(), TII->get(Hexagon::ADD_ri),
+            BuildMI(*MBB, MII, MI->getDebugLoc(), TII->get(Hexagon::A2_addi),
                       HEXAGON_RESERVED_REG_1).addReg(FP).addImm(Offset);
             BuildMI(*MBB, MII, MI->getDebugLoc(), TII->get(Hexagon::C2_tfrpr),
                       HEXAGON_RESERVED_REG_2).addReg(SrcReg);
@@ -134,7 +134,7 @@ bool HexagonExpandPredSpillCode::runOnMachineFunction(MachineFunction &Fn) {
         assert(MI->getOperand(2).isImm() && "Not an offset");
         int Offset = MI->getOperand(2).getImm();
         if (!TII->isValidOffset(Hexagon::L2_loadri_io, Offset)) {
-          if (!TII->isValidOffset(Hexagon::ADD_ri, Offset)) {
+          if (!TII->isValidOffset(Hexagon::A2_addi, Offset)) {
             BuildMI(*MBB, MII, MI->getDebugLoc(),
                     TII->get(Hexagon::CONST32_Int_Real),
                       HEXAGON_RESERVED_REG_1).addImm(Offset);
@@ -149,7 +149,7 @@ bool HexagonExpandPredSpillCode::runOnMachineFunction(MachineFunction &Fn) {
             BuildMI(*MBB, MII, MI->getDebugLoc(), TII->get(Hexagon::C2_tfrrp),
                       DstReg).addReg(HEXAGON_RESERVED_REG_2);
           } else {
-            BuildMI(*MBB, MII, MI->getDebugLoc(), TII->get(Hexagon::ADD_ri),
+            BuildMI(*MBB, MII, MI->getDebugLoc(), TII->get(Hexagon::A2_addi),
                       HEXAGON_RESERVED_REG_1).addReg(FP).addImm(Offset);
             BuildMI(*MBB, MII, MI->getDebugLoc(), TII->get(Hexagon::L2_loadri_io),
                       HEXAGON_RESERVED_REG_2)

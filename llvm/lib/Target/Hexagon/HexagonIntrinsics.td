@@ -649,7 +649,7 @@ def : T_PPR_pat <S2_lsl_r_p_or,   int_hexagon_S2_lsl_r_p_or>;
 *            ALU32/ALU                                              *
 *********************************************************************/
 def : T_RR_pat<A2_add,      int_hexagon_A2_add>;
-def : T_RI_pat<ADD_ri,      int_hexagon_A2_addi>;
+def : T_RI_pat<A2_addi,      int_hexagon_A2_addi>;
 def : T_RR_pat<A2_sub,      int_hexagon_A2_sub>;
 def : T_IR_pat<SUB_ri,      int_hexagon_A2_subri>;
 def : T_RR_pat<A2_and,      int_hexagon_A2_and>;

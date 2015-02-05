@@ -447,7 +447,7 @@ SDNode *HexagonDAGToDAGISel::SelectIndexedLoadSignExtend64(LoadSDNode *LD,
                                               Chain);
     SDNode *Result_2 = CurDAG->getMachineNode(Hexagon::A2_sxtw, dl,
                                                 MVT::i64, SDValue(Result_1, 0));
-    SDNode* Result_3 = CurDAG->getMachineNode(Hexagon::ADD_ri, dl,
+    SDNode* Result_3 = CurDAG->getMachineNode(Hexagon::A2_addi, dl,
                                               MVT::i32, Base, TargetConstVal,
                                                 SDValue(Result_1, 1));
     MachineSDNode::mmo_iterator MemOp = MF->allocateMemRefsArray(1);
@@ -525,7 +525,7 @@ SDNode *HexagonDAGToDAGISel::SelectIndexedLoadZeroExtend64(LoadSDNode *LD,
                                               SDValue(Result_2,0),
                                               SDValue(Result_1,0));
     // Add offset to base.
-    SDNode* Result_4 = CurDAG->getMachineNode(Hexagon::ADD_ri, dl, MVT::i32,
+    SDNode* Result_4 = CurDAG->getMachineNode(Hexagon::A2_addi, dl, MVT::i32,
                                               Base, TargetConstVal,
                                               SDValue(Result_1, 1));
     MachineSDNode::mmo_iterator MemOp = MF->allocateMemRefsArray(1);
@@ -621,7 +621,7 @@ SDNode *HexagonDAGToDAGISel::SelectIndexedLoad(LoadSDNode *LD, SDLoc dl) {
                                               LD->getValueType(0),
                                               MVT::Other, Base, TargetConst0,
                                               Chain);
-    SDNode* Result_2 = CurDAG->getMachineNode(Hexagon::ADD_ri, dl, MVT::i32,
+    SDNode* Result_2 = CurDAG->getMachineNode(Hexagon::A2_addi, dl, MVT::i32,
                                               Base, TargetConstVal,
                                               SDValue(Result_1, 1));
     MachineSDNode::mmo_iterator MemOp = MF->allocateMemRefsArray(1);
@@ -713,7 +713,7 @@ SDNode *HexagonDAGToDAGISel::SelectIndexedStore(StoreSDNode *ST, SDLoc dl) {
   SDValue TargetConstVal = CurDAG->getTargetConstant(Val, MVT::i32);
   SDNode* Result_1 = CurDAG->getMachineNode(Opcode, dl, MVT::Other, Ops);
   // Build splitted incriment instruction.
-  SDNode* Result_2 = CurDAG->getMachineNode(Hexagon::ADD_ri, dl, MVT::i32,
+  SDNode* Result_2 = CurDAG->getMachineNode(Hexagon::A2_addi, dl, MVT::i32,
                                             Base,
                                             TargetConstVal,
                                             SDValue(Result_1, 0));

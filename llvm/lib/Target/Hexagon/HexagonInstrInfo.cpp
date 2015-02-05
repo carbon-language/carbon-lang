@@ -696,7 +696,7 @@ bool HexagonInstrInfo::isPredicable(MachineInstr *MI) const {
     return (isUInt<6>(MI->getOperand(1).getImm()) &&
             isInt<6>(MI->getOperand(2).getImm()));
 
-  case Hexagon::ADD_ri:
+  case Hexagon::A2_addi:
     return isInt<8>(MI->getOperand(2).getImm());
 
   case Hexagon::A2_aslh:
@@ -1107,7 +1107,7 @@ isValidOffset(const int Opcode, const int Offset) const {
     return (Offset >= Hexagon_MEMB_OFFSET_MIN) &&
       (Offset <= Hexagon_MEMB_OFFSET_MAX);
 
-  case Hexagon::ADD_ri:
+  case Hexagon::A2_addi:
   case Hexagon::TFR_FI:
     return (Offset >= Hexagon_ADDI_OFFSET_MIN) &&
       (Offset <= Hexagon_ADDI_OFFSET_MAX);
@@ -1308,8 +1308,8 @@ bool HexagonInstrInfo::isConditionalALU32 (const MachineInstr* MI) const {
     case Hexagon::A4_pzxthfnew:
     case Hexagon::A4_pzxtht:
     case Hexagon::A4_pzxthtnew:
-    case Hexagon::ADD_ri_cPt:
-    case Hexagon::ADD_ri_cNotPt:
+    case Hexagon::A2_paddit:
+    case Hexagon::A2_paddif:
     case Hexagon::C2_ccombinewt:
     case Hexagon::C2_ccombinewf:
       return true;
