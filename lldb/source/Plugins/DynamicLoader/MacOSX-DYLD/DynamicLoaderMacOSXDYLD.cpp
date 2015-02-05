@@ -832,9 +832,6 @@ DynamicLoaderMacOSXDYLD::AddModulesUsingImageInfos (DYLDImageInfo::collection &i
 
         if (image_module_sp)
         {
-            if (image_infos[idx].header.filetype == llvm::MachO::MH_DYLINKER)
-                image_module_sp->SetIsDynamicLinkEditor (true);
-
             ObjectFile *objfile = image_module_sp->GetObjectFile ();
             if (objfile)
             {

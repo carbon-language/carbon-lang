@@ -152,7 +152,6 @@ Module::Module (const ModuleSpec &module_spec) :
     m_did_load_symbol_vendor (false),
     m_did_parse_uuid (false),
     m_did_init_ast (false),
-    m_is_dynamic_loader_module (false),
     m_file_has_changed (false),
     m_first_file_changed_log (false)
 {
@@ -257,7 +256,6 @@ Module::Module(const FileSpec& file_spec,
     m_did_load_symbol_vendor (false),
     m_did_parse_uuid (false),
     m_did_init_ast (false),
-    m_is_dynamic_loader_module (false),
     m_file_has_changed (false),
     m_first_file_changed_log (false)
 {
@@ -304,7 +302,6 @@ Module::Module () :
     m_did_load_symbol_vendor (false),
     m_did_parse_uuid (false),
     m_did_init_ast (false),
-    m_is_dynamic_loader_module (false),
     m_file_has_changed (false),
     m_first_file_changed_log (false)
 {
@@ -1825,3 +1822,13 @@ Module::CreateJITModule (const lldb::ObjectFileJITDelegateSP &delegate_sp)
     return ModuleSP();
 }
 
+bool
+Module::GetIsDynamicLinkEditor()
+{
+    ObjectFile * obj_file = GetObjectFile ();
+
+    if (obj_file)
+        return obj_file->GetIsDynamicLinkEditor();
+
+    return false;
+}

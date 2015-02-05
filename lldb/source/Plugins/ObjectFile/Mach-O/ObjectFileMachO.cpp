@@ -5296,6 +5296,12 @@ ObjectFileMachO::GetSDKVersion(uint32_t *versions, uint32_t num_versions)
 }
 
 
+bool
+ObjectFileMachO::GetIsDynamicLinkEditor()
+{
+    return m_header.filetype == llvm::MachO::MH_DYLINKER;
+}
+
 //------------------------------------------------------------------
 // PluginInterface protocol
 //------------------------------------------------------------------

@@ -767,6 +767,23 @@ public:
         return 0;
     }
 
+
+    //------------------------------------------------------------------
+    /// Return true if this file is a dynamic link editor (dyld)
+    ///
+    /// Often times dyld has symbols that mirror symbols in libc and
+    /// other shared libraries (like "malloc" and "free") and the user
+    /// does _not_ want to stop in these shared libraries by default.
+    /// We can ask the ObjectFile if it is such a file and should be
+    /// avoided for things like settings breakpoints and doing function
+    /// lookups for expressions.
+    //------------------------------------------------------------------
+    virtual bool
+    GetIsDynamicLinkEditor()
+    {
+        return false;
+    }
+
     //------------------------------------------------------------------
     // Member Functions
     //------------------------------------------------------------------

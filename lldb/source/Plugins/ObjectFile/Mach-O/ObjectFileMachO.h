@@ -173,7 +173,10 @@ public:
     
     virtual uint32_t
     GetSDKVersion (uint32_t *versions, uint32_t num_versions);
-    
+
+    virtual bool
+    GetIsDynamicLinkEditor();
+
     static bool
     ParseHeader (lldb_private::DataExtractor &data,
                  lldb::offset_t *data_offset_ptr,

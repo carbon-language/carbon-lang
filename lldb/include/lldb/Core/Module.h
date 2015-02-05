@@ -941,17 +941,8 @@ public:
                               const ConstString &object_name);
 
     bool
-    GetIsDynamicLinkEditor () const
-    {
-        return m_is_dynamic_loader_module;
-    }
-    
-    void
-    SetIsDynamicLinkEditor (bool b)
-    {
-        m_is_dynamic_loader_module = b;
-    }
-    
+    GetIsDynamicLinkEditor ();
+
     ClangASTContext &
     GetClangASTContext ();
 
@@ -1124,8 +1115,7 @@ protected:
     bool                        m_did_load_objfile:1,
                                 m_did_load_symbol_vendor:1,
                                 m_did_parse_uuid:1,
-                                m_did_init_ast:1,
-                                m_is_dynamic_loader_module:1;
+                                m_did_init_ast:1;
     mutable bool                m_file_has_changed:1,
                                 m_first_file_changed_log:1;   /// See if the module was modified after it was initially opened.
     
