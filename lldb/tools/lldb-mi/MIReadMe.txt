@@ -1,5 +1,5 @@
 ========================================================================
-    The MI Driver - LLDB Machine Interface V2 (MI)  Project Overview  
+    The MI Driver - LLDB Machine Interface V2 (MI)  Project Overview
 	24/07/2014
 ========================================================================
 
