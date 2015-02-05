@@ -574,6 +574,14 @@ public:
       getLoadExtAction(ExtType, ValVT, MemVT) == Legal;
   }
 
+  /// Return true if the specified load with extension is legal or custom
+  /// on this target.
+  bool isLoadExtLegalOrCustom(unsigned ExtType, EVT ValVT, EVT MemVT) const {
+    return ValVT.isSimple() && MemVT.isSimple() &&
+      (getLoadExtAction(ExtType, ValVT, MemVT) == Legal ||
+       getLoadExtAction(ExtType, ValVT, MemVT) == Custom);
+  }
+
   /// Return how this store with truncation should be treated: either it is
   /// legal, needs to be promoted to a larger size, needs to be expanded to some
   /// other code sequence, or the target has a custom expander for it.
