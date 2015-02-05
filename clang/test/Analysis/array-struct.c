@@ -183,3 +183,19 @@ int offset_of_data_array(void)
   return ((char *)&(((struct s*)0)->data_array)) - ((char *)0); // no-warning
 }
 
+int testPointerArithmeticOnVoid(void *bytes) {
+  int p = 0;
+  if (&bytes[0] == &bytes[1])
+    return 6/p; // no-warning
+  return 0;
+}
+
+int testRValueArraySubscriptExpr(void *bytes) {
+  int *p = (int*)&bytes[0];
+  *p = 0;
+  if (*(int*)&bytes[0] == 0)
+    return 0;
+  return 5/(*p); // no-warning
+}
+
+
