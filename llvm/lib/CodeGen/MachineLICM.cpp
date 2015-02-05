@@ -693,6 +693,10 @@ void MachineLICM::ExitScopeIfDone(MachineDomTreeNode *Node,
 /// one pass without iteration.
 ///
 void MachineLICM::HoistOutOfLoop(MachineDomTreeNode *HeaderN) {
+  MachineBasicBlock *Preheader = getCurPreheader();
+  if (!Preheader)
+    return;
+
   SmallVector<MachineDomTreeNode*, 32> Scopes;
   SmallVector<MachineDomTreeNode*, 8> WorkList;
   DenseMap<MachineDomTreeNode*, MachineDomTreeNode*> ParentMap;
@@ -700,7 +704,7 @@ void MachineLICM::HoistOutOfLoop(MachineDomTreeNode *HeaderN) {
 
   // Perform a DFS walk to determine the order of visit.
   WorkList.push_back(HeaderN);
-  do {
+  while (!WorkList.empty()) {
     MachineDomTreeNode *Node = WorkList.pop_back_val();
     assert(Node && "Null dominator tree node?");
     MachineBasicBlock *BB = Node->getBlock();
@@ -734,27 +738,20 @@ void MachineLICM::HoistOutOfLoop(MachineDomTreeNode *HeaderN) {
       ParentMap[Child] = Node;
       WorkList.push_back(Child);
     }
-  } while (!WorkList.empty());
-
-  if (Scopes.size() != 0) {
-    MachineBasicBlock *Preheader = getCurPreheader();
-    if (!Preheader)
-      return;
-
-    // Compute registers which are livein into the loop headers.
-    RegSeen.clear();
-    BackTrace.clear();
-    InitRegPressure(Preheader);
   }
+
+  if (Scopes.size() == 0)
+    return;
+
+  // Compute registers which are livein into the loop headers.
+  RegSeen.clear();
+  BackTrace.clear();
+  InitRegPressure(Preheader);
 
   // Now perform LICM.
   for (unsigned i = 0, e = Scopes.size(); i != e; ++i) {
     MachineDomTreeNode *Node = Scopes[i];
     MachineBasicBlock *MBB = Node->getBlock();
-
-    MachineBasicBlock *Preheader = getCurPreheader();
-    if (!Preheader)
-      continue;
 
     EnterScope(MBB);
 
