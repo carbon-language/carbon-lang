@@ -16294,6 +16294,7 @@ static SDValue LowerSIGN_EXTEND(SDValue Op, const X86Subtarget *Subtarget,
 // may emit an illegal shuffle but the expansion is still better than scalar
 // code. We generate X86ISD::VSEXT for SEXTLOADs if it's available, otherwise
 // we'll emit a shuffle and a arithmetic shift.
+// FIXME: Is the expansion actually better than scalar code? It doesn't seem so.
 // TODO: It is possible to support ZExt by zeroing the undef values during
 // the shuffle phase or after the shuffle.
 static SDValue LowerExtendedLoad(SDValue Op, const X86Subtarget *Subtarget,
@@ -20398,6 +20399,8 @@ bool X86TargetLowering::isZExtFree(SDValue Val, EVT VT2) const {
 
   return false;
 }
+
+bool X86TargetLowering::isVectorLoadExtDesirable(SDValue) const { return true; }
 
 bool
 X86TargetLowering::isFMAFasterThanFMulAndFAdd(EVT VT) const {

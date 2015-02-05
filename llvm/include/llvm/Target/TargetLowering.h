@@ -1518,6 +1518,10 @@ public:
     return false;
   }
 
+  /// Return true if folding a vector load into ExtVal (a sign, zero, or any
+  /// extend node) is profitable.
+  virtual bool isVectorLoadExtDesirable(SDValue ExtVal) const { return false; }
+
   /// Return true if an fneg operation is free to the point where it is never
   /// worthwhile to replace it with a bitwise operation.
   virtual bool isFNegFree(EVT VT) const {

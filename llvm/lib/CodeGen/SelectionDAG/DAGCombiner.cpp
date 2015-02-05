@@ -327,6 +327,7 @@ namespace {
     SDValue SimplifyNodeWithTwoResults(SDNode *N, unsigned LoOp,
                                          unsigned HiOp);
     SDValue CombineConsecutiveLoads(SDNode *N, EVT VT);
+    SDValue CombineExtLoad(SDNode *N);
     SDValue ConstantFoldBITCASTofBUILD_VECTOR(SDNode *, EVT);
     SDValue BuildSDIV(SDNode *N);
     SDValue BuildSDIVPow2(SDNode *N);
@@ -5307,6 +5308,102 @@ void DAGCombiner::ExtendSetCCUses(const SmallVectorImpl<SDNode *> &SetCCs,
   }
 }
 
+// FIXME: Bring more similar combines here, common to sext/zext (maybe aext?).
+SDValue DAGCombiner::CombineExtLoad(SDNode *N) {
+  SDValue N0 = N->getOperand(0);
+  EVT DstVT = N->getValueType(0);
+  EVT SrcVT = N0.getValueType();
+
+  assert((N->getOpcode() == ISD::SIGN_EXTEND ||
+          N->getOpcode() == ISD::ZERO_EXTEND) &&
+         "Unexpected node type (not an extend)!");
+
+  // fold (sext (load x)) to multiple smaller sextloads; same for zext.
+  // For example, on a target with legal v4i32, but illegal v8i32, turn:
+  //   (v8i32 (sext (v8i16 (load x))))
+  // into:
+  //   (v8i32 (concat_vectors (v4i32 (sextload x)),
+  //                          (v4i32 (sextload (x + 16)))))
+  // Where uses of the original load, i.e.:
+  //   (v8i16 (load x))
+  // are replaced with:
+  //   (v8i16 (truncate
+  //     (v8i32 (concat_vectors (v4i32 (sextload x)),
+  //                            (v4i32 (sextload (x + 16)))))))
+  //
+  // This combine is only applicable to illegal, but splittable, vectors.
+  // All legal types, and illegal non-vector types, are handled elsewhere.
+  // This combine is controlled by TargetLowering::isVectorLoadExtDesirable.
+  //
+  if (N0->getOpcode() != ISD::LOAD)
+    return SDValue();
+
+  LoadSDNode *LN0 = cast<LoadSDNode>(N0);
+
+  if (!ISD::isNON_EXTLoad(LN0) || !ISD::isUNINDEXEDLoad(LN0) ||
+      !N0.hasOneUse() || LN0->isVolatile() || !DstVT.isVector() ||
+      !DstVT.isPow2VectorType() || !TLI.isVectorLoadExtDesirable(SDValue(N, 0)))
+    return SDValue();
+
+  SmallVector<SDNode *, 4> SetCCs;
+  if (!ExtendUsesToFormExtLoad(N, N0, N->getOpcode(), SetCCs, TLI))
+    return SDValue();
+
+  ISD::LoadExtType ExtType =
+      N->getOpcode() == ISD::SIGN_EXTEND ? ISD::SEXTLOAD : ISD::ZEXTLOAD;
+
+  // Try to split the vector types to get down to legal types.
+  EVT SplitSrcVT = SrcVT;
+  EVT SplitDstVT = DstVT;
+  while (!TLI.isLoadExtLegalOrCustom(ExtType, SplitDstVT, SplitSrcVT) &&
+         SplitSrcVT.getVectorNumElements() > 1) {
+    SplitDstVT = DAG.GetSplitDestVTs(SplitDstVT).first;
+    SplitSrcVT = DAG.GetSplitDestVTs(SplitSrcVT).first;
+  }
+
+  if (!TLI.isLoadExtLegalOrCustom(ExtType, SplitDstVT, SplitSrcVT))
+    return SDValue();
+
+  SDLoc DL(N);
+  const unsigned NumSplits =
+      DstVT.getVectorNumElements() / SplitDstVT.getVectorNumElements();
+  const unsigned Stride = SplitSrcVT.getStoreSize();
+  SmallVector<SDValue, 4> Loads;
+  SmallVector<SDValue, 4> Chains;
+
+  SDValue BasePtr = LN0->getBasePtr();
+  for (unsigned Idx = 0; Idx < NumSplits; Idx++) {
+    const unsigned Offset = Idx * Stride;
+    const unsigned Align = MinAlign(LN0->getAlignment(), Offset);
+
+    SDValue SplitLoad = DAG.getExtLoad(
+        ExtType, DL, SplitDstVT, LN0->getChain(), BasePtr,
+        LN0->getPointerInfo().getWithOffset(Offset), SplitSrcVT,
+        LN0->isVolatile(), LN0->isNonTemporal(), LN0->isInvariant(),
+        Align, LN0->getAAInfo());
+
+    BasePtr = DAG.getNode(ISD::ADD, DL, BasePtr.getValueType(), BasePtr,
+                          DAG.getConstant(Stride, BasePtr.getValueType()));
+
+    Loads.push_back(SplitLoad.getValue(0));
+    Chains.push_back(SplitLoad.getValue(1));
+  }
+
+  SDValue NewChain = DAG.getNode(ISD::TokenFactor, DL, MVT::Other, Chains);
+  SDValue NewValue = DAG.getNode(ISD::CONCAT_VECTORS, DL, DstVT, Loads);
+
+  CombineTo(N, NewValue);
+
+  // Replace uses of the original load (before extension)
+  // with a truncate of the concatenated sextloaded vectors.
+  SDValue Trunc =
+      DAG.getNode(ISD::TRUNCATE, SDLoc(N0), N0.getValueType(), NewValue);
+  CombineTo(N0.getNode(), Trunc, NewChain);
+  ExtendSetCCUses(SetCCs, Trunc, NewValue, DL,
+                  (ISD::NodeType)N->getOpcode());
+  return SDValue(N, 0); // Return N so it doesn't get rechecked!
+}
+
 SDValue DAGCombiner::visitSIGN_EXTEND(SDNode *N) {
   SDValue N0 = N->getOperand(0);
   EVT VT = N->getValueType(0);
@@ -5373,17 +5470,18 @@ SDValue DAGCombiner::visitSIGN_EXTEND(SDNode *N) {
   }
 
   // fold (sext (load x)) -> (sext (truncate (sextload x)))
-  // None of the supported targets knows how to perform load and sign extend
-  // on vectors in one instruction.  We only perform this transformation on
-  // scalars.
-  if (ISD::isNON_EXTLoad(N0.getNode()) && !VT.isVector() &&
-      ISD::isUNINDEXEDLoad(N0.getNode()) &&
-      ((!LegalOperations && !cast<LoadSDNode>(N0)->isVolatile()) ||
+  // Only generate vector extloads when 1) they're legal, and 2) they are
+  // deemed desirable by the target.
+  if (ISD::isNON_EXTLoad(N0.getNode()) && ISD::isUNINDEXEDLoad(N0.getNode()) &&
+      ((!LegalOperations && !VT.isVector() &&
+        !cast<LoadSDNode>(N0)->isVolatile()) ||
        TLI.isLoadExtLegal(ISD::SEXTLOAD, VT, N0.getValueType()))) {
     bool DoXform = true;
     SmallVector<SDNode*, 4> SetCCs;
     if (!N0.hasOneUse())
       DoXform = ExtendUsesToFormExtLoad(N, N0, ISD::SIGN_EXTEND, SetCCs, TLI);
+    if (VT.isVector())
+      DoXform &= TLI.isVectorLoadExtDesirable(SDValue(N, 0));
     if (DoXform) {
       LoadSDNode *LN0 = cast<LoadSDNode>(N0);
       SDValue ExtLoad = DAG.getExtLoad(ISD::SEXTLOAD, SDLoc(N), VT,
@@ -5399,6 +5497,11 @@ SDValue DAGCombiner::visitSIGN_EXTEND(SDNode *N) {
       return SDValue(N, 0);   // Return N so it doesn't get rechecked!
     }
   }
+
+  // fold (sext (load x)) to multiple smaller sextloads.
+  // Only on illegal but splittable vectors.
+  if (SDValue ExtLoad = CombineExtLoad(N))
+    return ExtLoad;
 
   // fold (sext (sextload x)) -> (sext (truncate (sextload x)))
   // fold (sext ( extload x)) -> (sext (truncate (sextload x)))
@@ -5663,17 +5766,18 @@ SDValue DAGCombiner::visitZERO_EXTEND(SDNode *N) {
   }
 
   // fold (zext (load x)) -> (zext (truncate (zextload x)))
-  // None of the supported targets knows how to perform load and vector_zext
-  // on vectors in one instruction.  We only perform this transformation on
-  // scalars.
-  if (ISD::isNON_EXTLoad(N0.getNode()) && !VT.isVector() &&
-      ISD::isUNINDEXEDLoad(N0.getNode()) &&
-      ((!LegalOperations && !cast<LoadSDNode>(N0)->isVolatile()) ||
+  // Only generate vector extloads when 1) they're legal, and 2) they are
+  // deemed desirable by the target.
+  if (ISD::isNON_EXTLoad(N0.getNode()) && ISD::isUNINDEXEDLoad(N0.getNode()) &&
+      ((!LegalOperations && !VT.isVector() &&
+        !cast<LoadSDNode>(N0)->isVolatile()) ||
        TLI.isLoadExtLegal(ISD::ZEXTLOAD, VT, N0.getValueType()))) {
     bool DoXform = true;
     SmallVector<SDNode*, 4> SetCCs;
     if (!N0.hasOneUse())
       DoXform = ExtendUsesToFormExtLoad(N, N0, ISD::ZERO_EXTEND, SetCCs, TLI);
+    if (VT.isVector())
+      DoXform &= TLI.isVectorLoadExtDesirable(SDValue(N, 0));
     if (DoXform) {
       LoadSDNode *LN0 = cast<LoadSDNode>(N0);
       SDValue ExtLoad = DAG.getExtLoad(ISD::ZEXTLOAD, SDLoc(N), VT,
@@ -5690,6 +5794,11 @@ SDValue DAGCombiner::visitZERO_EXTEND(SDNode *N) {
       return SDValue(N, 0);   // Return N so it doesn't get rechecked!
     }
   }
+
+  // fold (zext (load x)) to multiple smaller zextloads.
+  // Only on illegal but splittable vectors.
+  if (SDValue ExtLoad = CombineExtLoad(N))
+    return ExtLoad;
 
   // fold (zext (and/or/xor (load x), cst)) ->
   //      (and/or/xor (zextload x), (zext cst))

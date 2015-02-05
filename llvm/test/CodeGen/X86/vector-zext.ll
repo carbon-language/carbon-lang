@@ -230,20 +230,14 @@ define <16 x i16> @load_zext_16i8_to_16i16(<16 x i8> *%ptr) {
 
 ; SSE41-LABEL: load_zext_16i8_to_16i16:
 ; SSE41:        # BB#0: # %entry
-; SSE41-NEXT:    movdqa (%rdi), %xmm1
-; SSE41-NEXT:    pmovzxbw %xmm1, %xmm0
-; SSE41-NEXT:    movdqa {{.*#+}} xmm2 = [255,255,255,255,255,255,255,255]
-; SSE41-NEXT:    pand %xmm2, %xmm0
-; SSE41-NEXT:    punpckhbw %xmm1, %xmm1 # xmm1 = xmm1[8,8,9,9,10,10,11,11,12,12,13,13,14,14,15,15]
-; SSE41-NEXT:    pand %xmm2, %xmm1
+; SSE41-NEXT:    pmovzxbw (%rdi), %xmm0
+; SSE41-NEXT:    pmovzxbw 8(%rdi), %xmm1
 ; SSE41-NEXT:    retq
 
 ; AVX1-LABEL: load_zext_16i8_to_16i16:
 ; AVX1:        # BB#0: # %entry
-; AVX1-NEXT:    vmovdqa (%rdi), %xmm0
-; AVX1-NEXT:    vpxor %xmm1, %xmm1, %xmm1
-; AVX1-NEXT:    vpunpckhbw %xmm1, %xmm0, %xmm1 # xmm1 = xmm0[8],xmm1[8],xmm0[9],xmm1[9],xmm0[10],xmm1[10],xmm0[11],xmm1[11],xmm0[12],xmm1[12],xmm0[13],xmm1[13],xmm0[14],xmm1[14],xmm0[15],xmm1[15]
-; AVX1-NEXT:    vpmovzxbw %xmm0, %xmm0
+; AVX1-NEXT:    vpmovzxbw (%rdi), %xmm0
+; AVX1-NEXT:    vpmovzxbw 8(%rdi), %xmm1
 ; AVX1-NEXT:    vinsertf128 $1, %xmm1, %ymm0, %ymm0
 ; AVX1-NEXT:    retq
 
@@ -282,20 +276,14 @@ define <8 x i32> @load_zext_8i16_to_8i32(<8 x i16> *%ptr) {
 
 ; SSE41-LABEL: load_zext_8i16_to_8i32:
 ; SSE41:        # BB#0: # %entry
-; SSE41-NEXT:    movdqa (%rdi), %xmm1
-; SSE41-NEXT:    pmovzxwd %xmm1, %xmm0
-; SSE41-NEXT:    movdqa {{.*#+}} xmm2 = [65535,65535,65535,65535]
-; SSE41-NEXT:    pand %xmm2, %xmm0
-; SSE41-NEXT:    punpckhwd %xmm1, %xmm1 # xmm1 = xmm1[4,4,5,5,6,6,7,7]
-; SSE41-NEXT:    pand %xmm2, %xmm1
+; SSE41-NEXT:    pmovzxwd (%rdi), %xmm0
+; SSE41-NEXT:    pmovzxwd 8(%rdi), %xmm1
 ; SSE41-NEXT:    retq
 
 ; AVX1-LABEL: load_zext_8i16_to_8i32:
 ; AVX1:        # BB#0: # %entry
-; AVX1-NEXT:    vmovdqa (%rdi), %xmm0
-; AVX1-NEXT:    vpxor %xmm1, %xmm1, %xmm1
-; AVX1-NEXT:    vpunpckhwd %xmm1, %xmm0, %xmm1 # xmm1 = xmm0[4],xmm1[4],xmm0[5],xmm1[5],xmm0[6],xmm1[6],xmm0[7],xmm1[7]
-; AVX1-NEXT:    vpmovzxwd %xmm0, %xmm0
+; AVX1-NEXT:    vpmovzxwd (%rdi), %xmm0
+; AVX1-NEXT:    vpmovzxwd 8(%rdi), %xmm1
 ; AVX1-NEXT:    vinsertf128 $1, %xmm1, %ymm0, %ymm0
 ; AVX1-NEXT:    retq
 
@@ -332,20 +320,14 @@ define <4 x i64> @load_zext_4i32_to_4i64(<4 x i32> *%ptr) {
 
 ; SSE41-LABEL: load_zext_4i32_to_4i64:
 ; SSE41:        # BB#0: # %entry
-; SSE41-NEXT:    movdqa (%rdi), %xmm1
-; SSE41-NEXT:    pmovzxdq %xmm1, %xmm0
-; SSE41-NEXT:    movdqa {{.*#+}} xmm2 = [4294967295,4294967295]
-; SSE41-NEXT:    pand %xmm2, %xmm0
-; SSE41-NEXT:    pshufd $250, %xmm1, %xmm1 # xmm1 = xmm1[2,2,3,3]
-; SSE41-NEXT:    pand %xmm2, %xmm1
+; SSE41-NEXT:    pmovzxdq (%rdi), %xmm0
+; SSE41-NEXT:    pmovzxdq 8(%rdi), %xmm1
 ; SSE41-NEXT:    retq
 
 ; AVX1-LABEL: load_zext_4i32_to_4i64:
 ; AVX1:        # BB#0: # %entry
-; AVX1-NEXT:    vmovdqa (%rdi), %xmm0
-; AVX1-NEXT:    vpxor %xmm1, %xmm1, %xmm1
-; AVX1-NEXT:    vpunpckhdq %xmm1, %xmm0, %xmm1 # xmm1 = xmm0[2],xmm1[2],xmm0[3],xmm1[3]
-; AVX1-NEXT:    vpmovzxdq %xmm0, %xmm0
+; AVX1-NEXT:    vpmovzxdq (%rdi), %xmm0
+; AVX1-NEXT:    vpmovzxdq 8(%rdi), %xmm1
 ; AVX1-NEXT:    vinsertf128 $1, %xmm1, %ymm0, %ymm0
 ; AVX1-NEXT:    retq
 

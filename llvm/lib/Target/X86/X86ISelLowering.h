@@ -744,6 +744,10 @@ namespace llvm {
     bool isZExtFree(EVT VT1, EVT VT2) const override;
     bool isZExtFree(SDValue Val, EVT VT2) const override;
 
+    /// Return true if folding a vector load into ExtVal (a sign, zero, or any
+    /// extend node) is profitable.
+    bool isVectorLoadExtDesirable(SDValue) const override;
+
     /// Return true if an FMA operation is faster than a pair of fmul and fadd
     /// instructions. fmuladd intrinsics will be expanded to FMAs when this
     /// method returns true, otherwise fmuladd is expanded to fmul + fadd.
