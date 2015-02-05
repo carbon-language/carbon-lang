@@ -18,7 +18,7 @@ class MiBreakpointTestCase(lldbmi_testcase.MiTestCaseBase):
         self.runCmd("-file-exec-and-symbols %s" % self.myexe)
         self.expect("\^done")
 
-        self.runCmd("-break-insert -f a_MyFunction")
+        self.runCmd("-break-insert -f b_MyFunction")
         self.expect("\^done,bkpt={number=\"1\"")
 
         self.runCmd("-exec-run")
@@ -40,7 +40,7 @@ class MiBreakpointTestCase(lldbmi_testcase.MiTestCaseBase):
         self.expect("\^done")
 
         # Find the line number to break inside main() and set
-        # pending BP.
+        # pending BP
         line = line_number('main.c', '//BP_source')
         self.runCmd("-break-insert -f main.c:%d" % line)
         self.expect("\^done,bkpt={number=\"1\"")
@@ -70,15 +70,15 @@ class MiBreakpointTestCase(lldbmi_testcase.MiTestCaseBase):
         self.expect("\^running")
         self.expect("\*stopped,reason=\"breakpoint-hit\"")
 
-        #break on symbol
-        self.runCmd("-break-insert a_MyFunction")
+        # Break on symbol
+        self.runCmd("-break-insert b_MyFunction")
         self.expect("\^done,bkpt={number=\"2\"")
 
         self.runCmd("-exec-continue")
         self.expect("\^running")
         self.expect("\*stopped,reason=\"breakpoint-hit\"")
 
-        #break on source
+        # Break on source
         line = line_number('main.c', '//BP_source')
         self.runCmd("-break-insert main.c:%d" % line)
         self.expect("\^done,bkpt={number=\"3\"")
@@ -87,7 +87,7 @@ class MiBreakpointTestCase(lldbmi_testcase.MiTestCaseBase):
         self.expect("\^running")
         self.expect("\*stopped,reason=\"breakpoint-hit\"")
 
-        #run to exit
+        # Run to exit
         self.runCmd("-exec-continue")
         self.expect("\^running")
         self.expect("\*stopped,reason=\"exited-normally\"")

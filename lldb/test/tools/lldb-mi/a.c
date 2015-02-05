@@ -3,7 +3,6 @@
 int
 a_MyFunction ()
 {
-  // Set a breakpoint here.
-  printf ("a is about to return 10.\n");
+  printf ("a is about to return 10.\n"); //BP_a_MyFunction
   return 10;
 }

@@ -15,7 +15,7 @@ class MiLaunchTestCase(lldbmi_testcase.MiTestCaseBase):
 
         self.spawnLldbMi(args = None)
 
-        #use no path
+        # Use no path
         self.runCmd("-file-exec-and-symbols %s" % self.myexe)
         self.expect("\^done")
 
@@ -30,7 +30,7 @@ class MiLaunchTestCase(lldbmi_testcase.MiTestCaseBase):
 
         self.spawnLldbMi(args = None)
 
-        #use full path
+        # Use full path
         import os
         exe = os.path.join(os.getcwd(), self.myexe)
         self.runCmd("-file-exec-and-symbols %s" % exe)
@@ -47,7 +47,7 @@ class MiLaunchTestCase(lldbmi_testcase.MiTestCaseBase):
 
         self.spawnLldbMi(args = None)
 
-        #use relative path
+        # Use relative path
         exe = "../../" + self.mydir + "/" + self.myexe
         self.runCmd("-file-exec-and-symbols %s" % exe)
         self.expect("\^done")
@@ -63,7 +63,7 @@ class MiLaunchTestCase(lldbmi_testcase.MiTestCaseBase):
 
         self.spawnLldbMi(args = None)
 
-        #use non-existant path
+        # Use non-existant path
         exe = "badpath/" + self.myexe
         self.runCmd("-file-exec-and-symbols %s" % exe)
         self.expect("\^error")

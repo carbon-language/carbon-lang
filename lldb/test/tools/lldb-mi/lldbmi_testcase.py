@@ -37,5 +37,7 @@ class MiTestCaseBase(Base):
     def runCmd(self, cmd):
         self.child.sendline(cmd)
 
-    def expect(self, pattern, *args, **kwargs):
-        self.child.expect(pattern, *args, **kwargs)
+    def expect(self, pattern, exactly=False, *args, **kwargs):
+        if exactly:
+            return self.child.expect_exact(pattern, *args, **kwargs)
+        return self.child.expect(pattern, *args, **kwargs)
