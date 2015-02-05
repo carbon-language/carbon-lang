@@ -274,8 +274,11 @@ class CMICmdCmdVarListChildren : public CMICmdBase
     bool m_bValueValid; // True = yes SBValue object is valid, false = not valid
     VecMIValueResult_t m_vecMiValueResult;
     MIuint m_nChildren;
-    const CMIUtilString m_constStrArgPrintValues; // Not handled by *this command
+    const CMIUtilString m_constStrArgPrintValues;
     const CMIUtilString m_constStrArgName;
+    const CMIUtilString m_constStrArgNoValues;
+    const CMIUtilString m_constStrArgAllValues;
+    const CMIUtilString m_constStrArgSimpleValues;
 };
 
 //++ ============================================================================

@@ -964,7 +964,10 @@ CMICmdCmdVarListChildren::CMICmdCmdVarListChildren(void)
     , m_nChildren(0)
     , m_constStrArgPrintValues("print-values")
     , m_constStrArgName("name")
-{
+    , m_constStrArgNoValues("no-values")
+    , m_constStrArgAllValues("all-values")
+    , m_constStrArgSimpleValues("simple-values")
+    {
     // Command factory matches this name with that received from the stdin stream
     m_strMiCmd = "var-list-children";
 
@@ -996,7 +999,10 @@ CMICmdCmdVarListChildren::~CMICmdCmdVarListChildren(void)
 bool
 CMICmdCmdVarListChildren::ParseArgs(void)
 {
-    bool bOk = m_setCmdArgs.Add(*(new CMICmdArgValNumber(m_constStrArgPrintValues, false, false)));
+    bool bOk = m_setCmdArgs.Add(*(new CMICmdArgValNumber(m_constStrArgPrintValues, false, true)));
+    bOk = bOk && m_setCmdArgs.Add(*(new CMICmdArgValOptionLong(m_constStrArgNoValues, false, true)));
+    bOk = bOk && m_setCmdArgs.Add(*(new CMICmdArgValOptionLong(m_constStrArgAllValues, false, true)));
+    bOk = bOk && m_setCmdArgs.Add(*(new CMICmdArgValOptionLong(m_constStrArgSimpleValues, false, true)));
     bOk = bOk && m_setCmdArgs.Add(*(new CMICmdArgValString(m_constStrArgName, true, true)));
     return (bOk && ParseValidateCmdOptions());
 }
@@ -1014,6 +1020,24 @@ bool
 CMICmdCmdVarListChildren::Execute(void)
 {
     CMICMDBASE_GETOPTION(pArgName, String, m_constStrArgName);
+    CMICMDBASE_GETOPTION(pArgPrintValue, Number, m_constStrArgPrintValues);
+    CMICMDBASE_GETOPTION(pArgNoValue, OptionLong, m_constStrArgNoValues);
+    CMICMDBASE_GETOPTION(pArgAllValue, OptionLong, m_constStrArgAllValues);
+    CMICMDBASE_GETOPTION(pArgSimpleValue, OptionLong, m_constStrArgSimpleValues);
+
+    MIuint print_value = 0;
+    if (pArgPrintValue->GetFound())
+    {
+        MIuint tmp = pArgPrintValue->GetValue();
+        if (tmp <= 2)
+            print_value = tmp;
+    }
+    else if (pArgNoValue->GetFound())
+        print_value = 0; // no value
+    else if (pArgAllValue->GetFound())
+        print_value = 1; // all values
+    else if (pArgSimpleValue->GetFound())
+        print_value = 2; // simple values
 
     const CMIUtilString &rVarObjName(pArgName->GetValue());
     CMICmnLLDBDebugSessionInfoVarObj varObj;
@@ -1041,9 +1065,6 @@ CMICmdCmdVarListChildren::Execute(void)
         const MIuint nChildren = member.GetNumChildren();
         const CMIUtilString strThreadId(CMIUtilString::Format("%u", member.GetThread().GetIndexID()));
 
-        // Varobj gets added to CMICmnLLDBDebugSessionInfoVarObj static container of varObjs
-        CMICmnLLDBDebugSessionInfoVarObj var(strExp, name, member, rVarObjName);
-
         // MI print "child={name=\"%s\",exp=\"%s\",numchild=\"%d\",value=\"%s\",type=\"%s\",thread-id=\"%u\",has_more=\"%u\"}"
         const CMICmnMIValueConst miValueConst(name);
         const CMICmnMIValueResult miValueResult("name", miValueConst);
@@ -1061,11 +1082,23 @@ CMICmdCmdVarListChildren::Execute(void)
         const CMICmnMIValueConst miValueConst6(strThreadId);
         const CMICmnMIValueResult miValueResult6("thread-id", miValueConst6);
         miValueTuple.Add(miValueResult6);
-        const CMICmnMIValueConst miValueConst7("0");
-        const CMICmnMIValueResult miValueResult7("has_more", miValueConst7);
-        miValueTuple.Add(miValueResult7);
-        const CMICmnMIValueResult miValueResult8("child", miValueTuple);
-        m_vecMiValueResult.push_back(miValueResult8);
+        // nChildren == 0 is used to check for simple values
+        if ( (print_value == 2 && nChildren == 0) || (print_value == 1) )
+        {
+            // Varobj gets added to CMICmnLLDBDebugSessionInfoVarObj static container of varObjs
+            CMICmnLLDBDebugSessionInfoVarObj var(strExp, name, member, rVarObjName);
+            const CMIUtilString strValue(
+            CMICmnLLDBDebugSessionInfoVarObj::GetValueStringFormatted(member, CMICmnLLDBDebugSessionInfoVarObj::eVarFormat_Natural));
+            const CMICmnMIValueConst miValueConst7(strValue);
+            const CMICmnMIValueResult miValueResult7("value", miValueConst7);
+            miValueTuple.Add(miValueResult7);
+        }
+        const CMICmnMIValueConst miValueConst8("0");
+        const CMICmnMIValueResult miValueResult8("has_more", miValueConst8);
+        miValueTuple.Add(miValueResult8);
+        const CMICmnMIValueResult miValueResult9("child", miValueTuple);
+        m_vecMiValueResult.push_back(miValueResult9);
+
     }
 
     return MIstatus::success;
