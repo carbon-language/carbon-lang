@@ -229,6 +229,16 @@ def MMX_MOVD64rm : MMXI<0x6E, MRMSrcMem, (outs VR64:$dst), (ins i32mem:$src),
                         [(set VR64:$dst,
                         (x86mmx (scalar_to_vector (loadi32 addr:$src))))],
                         IIC_MMX_MOV_MM_RM>, Sched<[WriteLoad]>;
+
+let Predicates = [HasMMX] in {
+  let AddedComplexity = 15 in
+    def : Pat<(x86mmx (MMX_X86movw2d GR32:$src)),
+              (MMX_MOVD64rr GR32:$src)>;
+  let AddedComplexity = 20 in
+    def : Pat<(x86mmx (MMX_X86movw2d (loadi32 addr:$src))),
+              (MMX_MOVD64rm addr:$src)>;
+}
+
 let mayStore = 1 in
 def MMX_MOVD64mr : MMXI<0x7E, MRMDestMem, (outs), (ins i32mem:$dst, VR64:$src),
                         "movd\t{$src, $dst|$dst, $src}", [], IIC_MMX_MOV_MM_RM>,

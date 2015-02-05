@@ -22,11 +22,10 @@ entry:
 define i64 @t1(i64 %x, i32 %n) {
 ; CHECK-LABEL: t1:
 ; CHECK:       ## BB#0: ## %entry
-; CHECK-NEXT:    movd %rdi, %mm0
-; CHECK-NEXT:    movd %esi, %xmm0
-; CHECK-NEXT:    movaps %xmm0, -{{[0-9]+}}(%rsp)
-; CHECK-NEXT:    psllq -{{[0-9]+}}(%rsp), %mm0
-; CHECK-NEXT:    movd %mm0, %rax
+; CHECK-NEXT:    movd %esi, %mm0
+; CHECK-NEXT:    movd %rdi, %mm1
+; CHECK-NEXT:    psllq %mm0, %mm1
+; CHECK-NEXT:    movd %mm1, %rax
 ; CHECK-NEXT:    retq
 entry:
   %0 = bitcast i64 %x to x86_mmx
@@ -38,15 +37,12 @@ entry:
 define i64 @t2(i64 %x, i32 %n, i32 %w) {
 ; CHECK-LABEL: t2:
 ; CHECK:       ## BB#0: ## %entry
-; CHECK-NEXT:    movd %edx, %xmm0
-; CHECK-NEXT:    movaps %xmm0, -{{[0-9]+}}(%rsp)
-; CHECK-NEXT:    movq -{{[0-9]+}}(%rsp), %mm0
-; CHECK-NEXT:    movd %esi, %xmm0
-; CHECK-NEXT:    movaps %xmm0, -{{[0-9]+}}(%rsp)
-; CHECK-NEXT:    psllq -{{[0-9]+}}(%rsp), %mm0
-; CHECK-NEXT:    movd %rdi, %mm1
-; CHECK-NEXT:    por %mm0, %mm1
-; CHECK-NEXT:    movd %mm1, %rax
+; CHECK-NEXT:    movd %esi, %mm0
+; CHECK-NEXT:    movd %edx, %mm1
+; CHECK-NEXT:    psllq %mm0, %mm1
+; CHECK-NEXT:    movd %rdi, %mm0
+; CHECK-NEXT:    por %mm1, %mm0
+; CHECK-NEXT:    movd %mm0, %rax
 ; CHECK-NEXT:    retq
 entry:
   %0 = insertelement <2 x i32> undef, i32 %w, i32 0
@@ -63,9 +59,8 @@ define i64 @t3(<1 x i64>* %y, i32* %n) {
 ; CHECK-LABEL: t3:
 ; CHECK:       ## BB#0: ## %entry
 ; CHECK-NEXT:    movq (%rdi), %mm0
-; CHECK-NEXT:    movd {{.*#+}} xmm0 = mem[0],zero,zero,zero
-; CHECK-NEXT:    movaps %xmm0, -{{[0-9]+}}(%rsp)
-; CHECK-NEXT:    psllq -{{[0-9]+}}(%rsp), %mm0
+; CHECK-NEXT:    movd (%rsi), %mm1
+; CHECK-NEXT:    psllq %mm1, %mm0
 ; CHECK-NEXT:    movd %mm0, %rax
 ; CHECK-NEXT:    retq
 entry:

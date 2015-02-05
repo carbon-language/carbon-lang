@@ -1675,6 +1675,7 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
   // We have target-specific dag combine patterns for the following nodes:
   setTargetDAGCombine(ISD::VECTOR_SHUFFLE);
   setTargetDAGCombine(ISD::EXTRACT_VECTOR_ELT);
+  setTargetDAGCombine(ISD::BITCAST);
   setTargetDAGCombine(ISD::VSELECT);
   setTargetDAGCombine(ISD::SELECT);
   setTargetDAGCombine(ISD::SHL);
@@ -22986,6 +22987,25 @@ static SDValue XFormVExtractWithShuffleIntoLoad(SDNode *N, SelectionDAG &DAG,
                      EltNo);
 }
 
+/// \brief Detect bitcasts between i32 to x86mmx low word. Since MMX types are
+/// special and don't usually play with other vector types, it's better to
+/// handle them early to be sure we emit efficient code by avoiding
+/// store-load conversions.
+static SDValue PerformBITCASTCombine(SDNode *N, SelectionDAG &DAG) {
+  if (N->getValueType(0) != MVT::x86mmx ||
+      N->getOperand(0)->getOpcode() != ISD::BUILD_VECTOR ||
+      N->getOperand(0)->getValueType(0) != MVT::v2i32)
+    return SDValue();
+
+  SDValue V = N->getOperand(0);
+  ConstantSDNode *C = dyn_cast<ConstantSDNode>(V.getOperand(1));
+  if (C && C->getZExtValue() == 0 && V.getOperand(0).getValueType() == MVT::i32)
+    return DAG.getNode(X86ISD::MMX_MOVW2D, SDLoc(V.getOperand(0)),
+                       N->getValueType(0), V.getOperand(0));
+
+  return SDValue();
+}
+
 /// PerformEXTRACT_VECTOR_ELTCombine - Detect vector gather/scatter index
 /// generation and convert it from being a bunch of shuffles and extracts
 /// into a somewhat faster sequence. For i686, the best sequence is apparently
@@ -26129,6 +26149,7 @@ SDValue X86TargetLowering::PerformDAGCombine(SDNode *N,
   case ISD::SELECT:
   case X86ISD::SHRUNKBLEND:
     return PerformSELECTCombine(N, DAG, DCI, Subtarget);
+  case ISD::BITCAST:        return PerformBITCASTCombine(N, DAG);
   case X86ISD::CMOV:        return PerformCMOVCombine(N, DAG, DCI, Subtarget);
   case ISD::ADD:            return PerformAddCombine(N, DAG, Subtarget);
   case ISD::SUB:            return PerformSubCombine(N, DAG, Subtarget);

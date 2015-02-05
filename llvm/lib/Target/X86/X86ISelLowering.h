@@ -158,6 +158,10 @@ namespace llvm {
       /// vector to a GPR.
       MMX_MOVD2W,
 
+      /// MMX_MOVW2D - Copies a GPR into the low 32-bit word of a MMX vector
+      /// and zero out the high word.
+      MMX_MOVW2D,
+
       /// PEXTRB - Extract an 8-bit value from a vector and zero extend it to
       /// i32, corresponds to X86::PEXTRB.
       PEXTRB,
