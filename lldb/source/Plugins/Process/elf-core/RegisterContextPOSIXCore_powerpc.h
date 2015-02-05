@@ -20,7 +20,8 @@ public:
     RegisterContextCorePOSIX_powerpc (lldb_private::Thread &thread,
                                      lldb_private::RegisterInfoInterface *register_info,
                                      const lldb_private::DataExtractor &gpregset,
-                                     const lldb_private::DataExtractor &fpregset);
+                                     const lldb_private::DataExtractor &fpregset,
+                                     const lldb_private::DataExtractor &vregset);
 
     ~RegisterContextCorePOSIX_powerpc();
 
@@ -47,16 +48,24 @@ protected:
     ReadFPR();
 
     bool
+    ReadVMX();
+
+    bool
     WriteGPR();
 
     bool
     WriteFPR();
 
+    bool
+    WriteVMX();
+
 private:
     lldb::DataBufferSP m_gpr_buffer;
     lldb::DataBufferSP m_fpr_buffer;
+    lldb::DataBufferSP m_vec_buffer;
     lldb_private::DataExtractor m_gpr;
     lldb_private::DataExtractor m_fpr;
+    lldb_private::DataExtractor m_vec;
 };
 
 #endif // #ifndef liblldb_RegisterContextCorePOSIX_powerpc_H_

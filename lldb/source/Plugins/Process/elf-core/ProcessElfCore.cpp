@@ -412,7 +412,8 @@ enum {
     NT_FPREGSET,
     NT_PRPSINFO,
     NT_THRMISC       = 7,
-    NT_PROCSTAT_AUXV = 16
+    NT_PROCSTAT_AUXV = 16,
+    NT_PPC_VMX       = 0x100
 };
 
 }
@@ -537,6 +538,9 @@ ProcessElfCore::ParseThreadContextsFromNoteSegment(const elf::ELFProgramHeader *
                 case FREEBSD::NT_PROCSTAT_AUXV:
                     // FIXME: FreeBSD sticks an int at the beginning of the note
                     m_auxv = DataExtractor(segment_data, note_start + 4, note_size - 4);
+                    break;
+                case FREEBSD::NT_PPC_VMX:
+                    thread_data->vregset = note_data;
                     break;
                 default:
                     break;

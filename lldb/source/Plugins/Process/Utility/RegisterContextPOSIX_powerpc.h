@@ -97,9 +97,47 @@ enum
     fpr_fpscr_powerpc,
     k_last_fpr = fpr_fpscr_powerpc,
 
+    k_first_vmx,
+    vmx_v0_powerpc = k_first_vmx,
+    vmx_v1_powerpc,
+    vmx_v2_powerpc,
+    vmx_v3_powerpc,
+    vmx_v4_powerpc,
+    vmx_v5_powerpc,
+    vmx_v6_powerpc,
+    vmx_v7_powerpc,
+    vmx_v8_powerpc,
+    vmx_v9_powerpc,
+    vmx_v10_powerpc,
+    vmx_v11_powerpc,
+    vmx_v12_powerpc,
+    vmx_v13_powerpc,
+    vmx_v14_powerpc,
+    vmx_v15_powerpc,
+    vmx_v16_powerpc,
+    vmx_v17_powerpc,
+    vmx_v18_powerpc,
+    vmx_v19_powerpc,
+    vmx_v20_powerpc,
+    vmx_v21_powerpc,
+    vmx_v22_powerpc,
+    vmx_v23_powerpc,
+    vmx_v24_powerpc,
+    vmx_v25_powerpc,
+    vmx_v26_powerpc,
+    vmx_v27_powerpc,
+    vmx_v28_powerpc,
+    vmx_v29_powerpc,
+    vmx_v30_powerpc,
+    vmx_v31_powerpc,
+    vmx_vrsave_powerpc,
+    vmx_vscr_powerpc,
+    k_last_vmx = vmx_vscr_powerpc,
+
     k_num_registers_powerpc,
     k_num_gpr_registers_powerpc = k_last_gpr_powerpc - k_first_gpr_powerpc + 1,
     k_num_fpr_registers_powerpc = k_last_fpr - k_first_fpr + 1,
+    k_num_vmx_registers_powerpc = k_last_vmx - k_first_vmx + 1,
 };
 
 class RegisterContextPOSIX_powerpc
@@ -148,6 +186,7 @@ public:
 protected:
     uint64_t m_gpr_powerpc[k_num_gpr_registers_powerpc];         // general purpose registers.
     uint64_t m_fpr_powerpc[k_num_fpr_registers_powerpc];         // floating point registers.
+    uint32_t m_vmx_powerpc[k_num_vmx_registers_powerpc][4];
     std::unique_ptr<lldb_private::RegisterInfoInterface> m_register_info_ap; // Register Info Interface (FreeBSD or Linux)
 
     // Determines if an extended register set is supported on the processor running the inferior process.
@@ -163,12 +202,17 @@ protected:
     bool
     IsFPR(unsigned reg);
 
+    bool
+    IsVMX(unsigned reg);
+
     lldb::ByteOrder GetByteOrder();
 
     virtual bool ReadGPR() = 0;
     virtual bool ReadFPR() = 0;
+    virtual bool ReadVMX() = 0;
     virtual bool WriteGPR() = 0;
     virtual bool WriteFPR() = 0;
+    virtual bool WriteVMX() = 0;
 };
 
 #endif // #ifndef liblldb_RegisterContextPOSIX_powerpc_H_

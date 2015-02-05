@@ -23,16 +23,25 @@ public:
 
 protected:
     bool
+    IsVMX();
+
+    bool
     ReadGPR();
 
     bool
     ReadFPR();
 
     bool
+    ReadVMX();
+
+    bool
     WriteGPR();
 
     bool
     WriteFPR();
+
+    bool
+    WriteVMX();
 
     // lldb_private::RegisterContext
     bool

@@ -685,9 +685,7 @@ ABISysV_ppc::GetReturnValueObjectSimple (Thread &thread,
         if (byte_size > 0)
         {
 
-            const RegisterInfo *altivec_reg = reg_ctx->GetRegisterInfoByName("v0", 0);
-            if (altivec_reg == NULL)
-                altivec_reg = reg_ctx->GetRegisterInfoByName("mm0", 0);
+            const RegisterInfo *altivec_reg = reg_ctx->GetRegisterInfoByName("v2", 0);
             if (altivec_reg)
             {
                 if (byte_size <= altivec_reg->byte_size)

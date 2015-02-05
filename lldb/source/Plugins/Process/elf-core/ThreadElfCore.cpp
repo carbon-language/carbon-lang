@@ -38,7 +38,8 @@ ThreadElfCore::ThreadElfCore (Process &process, tid_t tid,
     m_thread_reg_ctx_sp (),
     m_signo(td.signo),
     m_gpregset_data(td.gpregset),
-    m_fpregset_data(td.fpregset)
+    m_fpregset_data(td.fpregset),
+    m_vregset_data(td.vregset)
 {
 }
 
@@ -148,7 +149,7 @@ ThreadElfCore::CreateRegisterContextForFrame (StackFrame *frame)
                 break;
             case llvm::Triple::ppc:
             case llvm::Triple::ppc64:
-                m_thread_reg_ctx_sp.reset(new RegisterContextCorePOSIX_powerpc (*this, reg_interface, m_gpregset_data, m_fpregset_data));
+                m_thread_reg_ctx_sp.reset(new RegisterContextCorePOSIX_powerpc (*this, reg_interface, m_gpregset_data, m_fpregset_data, m_vregset_data));
                 break;
             case llvm::Triple::x86:
             case llvm::Triple::x86_64:

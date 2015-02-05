@@ -106,10 +106,49 @@ uint32_t g_fpr_regnums[] =
     fpr_fpscr_powerpc,
 };
 
+static const
+uint32_t g_vmx_regnums[] =
+{
+    vmx_v0_powerpc,
+    vmx_v1_powerpc,
+    vmx_v2_powerpc,
+    vmx_v3_powerpc,
+    vmx_v4_powerpc,
+    vmx_v5_powerpc,
+    vmx_v6_powerpc,
+    vmx_v7_powerpc,
+    vmx_v8_powerpc,
+    vmx_v9_powerpc,
+    vmx_v10_powerpc,
+    vmx_v11_powerpc,
+    vmx_v12_powerpc,
+    vmx_v13_powerpc,
+    vmx_v14_powerpc,
+    vmx_v15_powerpc,
+    vmx_v16_powerpc,
+    vmx_v17_powerpc,
+    vmx_v18_powerpc,
+    vmx_v19_powerpc,
+    vmx_v20_powerpc,
+    vmx_v21_powerpc,
+    vmx_v22_powerpc,
+    vmx_v23_powerpc,
+    vmx_v24_powerpc,
+    vmx_v25_powerpc,
+    vmx_v26_powerpc,
+    vmx_v27_powerpc,
+    vmx_v28_powerpc,
+    vmx_v29_powerpc,
+    vmx_v30_powerpc,
+    vmx_v31_powerpc,
+    vmx_vrsave_powerpc,
+    vmx_vscr_powerpc,
+};
+
 // Number of register sets provided by this context.
 enum
 {
-    k_num_register_sets = 2
+    k_num_register_sets = 3
 };
 
 static const RegisterSet
@@ -117,6 +156,7 @@ g_reg_sets_powerpc[k_num_register_sets] =
 {
     { "General Purpose Registers",  "gpr", k_num_gpr_registers_powerpc, g_gpr_regnums },
     { "Floating Point Registers",  "fpr", k_num_fpr_registers_powerpc, g_fpr_regnums },
+    { "Altivec/VMX Registers",  "vmx", k_num_vmx_registers_powerpc, g_vmx_regnums },
 };
 
 bool RegisterContextPOSIX_powerpc::IsGPR(unsigned reg)
@@ -127,8 +167,13 @@ bool RegisterContextPOSIX_powerpc::IsGPR(unsigned reg)
 bool
 RegisterContextPOSIX_powerpc::IsFPR(unsigned reg)
 {
-    // XXX
     return (reg >= k_first_fpr) && (reg <= k_last_fpr);
+}
+
+bool
+RegisterContextPOSIX_powerpc::IsVMX(unsigned reg)
+{
+    return (reg >= k_first_vmx) && (reg <= k_last_vmx);
 }
 
 RegisterContextPOSIX_powerpc::RegisterContextPOSIX_powerpc(Thread &thread,

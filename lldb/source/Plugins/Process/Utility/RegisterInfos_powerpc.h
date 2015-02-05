@@ -14,6 +14,8 @@
     (offsetof(GPR, regname))
 #define FPR_OFFSET(regname)                                                 \
     (offsetof(FPR, regname))
+#define VMX_OFFSET(regname)                                                 \
+    (offsetof(VMX, regname))
 #define GPR_SIZE(regname)                                                   \
     (sizeof(((GPR*)NULL)->regname))
 
@@ -26,6 +28,9 @@
 #define DEFINE_FPR(reg, lldb_kind)           \
     { #reg, NULL, 8, FPR_OFFSET(reg), eEncodingIEEE754, \
       eFormatFloat, { gcc_dwarf_##reg##_powerpc, gcc_dwarf_##reg##_powerpc, lldb_kind, gdb_##reg##_powerpc, fpr_##reg##_powerpc }, NULL, NULL }
+#define DEFINE_VMX(reg, lldb_kind)           \
+    { #reg, NULL, 16, VMX_OFFSET(reg), eEncodingVector, \
+      eFormatVectorOfUInt32, { gcc_dwarf_##reg##_powerpc, gcc_dwarf_##reg##_powerpc, lldb_kind, gdb_##reg##_powerpc, vmx_##reg##_powerpc }, NULL, NULL }
 
     // General purpose registers.                 GCC,                  DWARF,              Generic,                GDB
 #define POWERPC_REGS \
@@ -98,7 +103,42 @@
     DEFINE_FPR(f29,      LLDB_INVALID_REGNUM), \
     DEFINE_FPR(f30,      LLDB_INVALID_REGNUM), \
     DEFINE_FPR(f31,      LLDB_INVALID_REGNUM), \
-    { "fpscr", NULL, 8, FPR_OFFSET(fpscr), eEncodingUint, eFormatHex, { gcc_dwarf_fpscr_powerpc, gcc_dwarf_fpscr_powerpc, LLDB_INVALID_REGNUM, gdb_fpscr_powerpc, fpr_fpscr_powerpc }, NULL, NULL },
+    { "fpscr", NULL, 8, FPR_OFFSET(fpscr), eEncodingUint, eFormatHex, { gcc_dwarf_fpscr_powerpc, gcc_dwarf_fpscr_powerpc, LLDB_INVALID_REGNUM, gdb_fpscr_powerpc, fpr_fpscr_powerpc }, NULL, NULL }, \
+    DEFINE_VMX(v0,       LLDB_INVALID_REGNUM), \
+    DEFINE_VMX(v1,       LLDB_INVALID_REGNUM), \
+    DEFINE_VMX(v2,       LLDB_INVALID_REGNUM), \
+    DEFINE_VMX(v3,       LLDB_INVALID_REGNUM), \
+    DEFINE_VMX(v4,       LLDB_INVALID_REGNUM), \
+    DEFINE_VMX(v5,       LLDB_INVALID_REGNUM), \
+    DEFINE_VMX(v6,       LLDB_INVALID_REGNUM), \
+    DEFINE_VMX(v7,       LLDB_INVALID_REGNUM), \
+    DEFINE_VMX(v8,       LLDB_INVALID_REGNUM), \
+    DEFINE_VMX(v9,       LLDB_INVALID_REGNUM), \
+    DEFINE_VMX(v10,      LLDB_INVALID_REGNUM), \
+    DEFINE_VMX(v11,      LLDB_INVALID_REGNUM), \
+    DEFINE_VMX(v12,      LLDB_INVALID_REGNUM), \
+    DEFINE_VMX(v13,      LLDB_INVALID_REGNUM), \
+    DEFINE_VMX(v14,      LLDB_INVALID_REGNUM), \
+    DEFINE_VMX(v15,      LLDB_INVALID_REGNUM), \
+    DEFINE_VMX(v16,      LLDB_INVALID_REGNUM), \
+    DEFINE_VMX(v17,      LLDB_INVALID_REGNUM), \
+    DEFINE_VMX(v18,      LLDB_INVALID_REGNUM), \
+    DEFINE_VMX(v19,      LLDB_INVALID_REGNUM), \
+    DEFINE_VMX(v20,      LLDB_INVALID_REGNUM), \
+    DEFINE_VMX(v21,      LLDB_INVALID_REGNUM), \
+    DEFINE_VMX(v22,      LLDB_INVALID_REGNUM), \
+    DEFINE_VMX(v23,      LLDB_INVALID_REGNUM), \
+    DEFINE_VMX(v24,      LLDB_INVALID_REGNUM), \
+    DEFINE_VMX(v25,      LLDB_INVALID_REGNUM), \
+    DEFINE_VMX(v26,      LLDB_INVALID_REGNUM), \
+    DEFINE_VMX(v27,      LLDB_INVALID_REGNUM), \
+    DEFINE_VMX(v28,      LLDB_INVALID_REGNUM), \
+    DEFINE_VMX(v29,      LLDB_INVALID_REGNUM), \
+    DEFINE_VMX(v30,      LLDB_INVALID_REGNUM), \
+    DEFINE_VMX(v31,      LLDB_INVALID_REGNUM), \
+    { "vrsave", NULL, 4, VMX_OFFSET(vrsave), eEncodingUint, eFormatHex, { gcc_dwarf_vrsave_powerpc, gcc_dwarf_vrsave_powerpc, LLDB_INVALID_REGNUM, gdb_vrsave_powerpc, vmx_vrsave_powerpc }, NULL, NULL }, \
+    { "vscr", NULL, 4, VMX_OFFSET(vscr), eEncodingUint, eFormatHex, { gcc_dwarf_vscr_powerpc, gcc_dwarf_vscr_powerpc, LLDB_INVALID_REGNUM, gdb_vscr_powerpc, vmx_vscr_powerpc }, NULL, NULL },
+
 static RegisterInfo
 g_register_infos_powerpc64[] =
 {

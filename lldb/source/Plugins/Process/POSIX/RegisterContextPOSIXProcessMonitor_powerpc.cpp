@@ -50,6 +50,13 @@ RegisterContextPOSIXProcessMonitor_powerpc::ReadFPR()
 }
 
 bool
+RegisterContextPOSIXProcessMonitor_powerpc::ReadVMX()
+{
+    // XXX: Need a way to read/write process VMX registers with ptrace.
+    return false;
+}
+
+bool
 RegisterContextPOSIXProcessMonitor_powerpc::WriteGPR()
 {
     ProcessMonitor &monitor = GetMonitor();
@@ -61,6 +68,13 @@ RegisterContextPOSIXProcessMonitor_powerpc::WriteFPR()
 {
     ProcessMonitor &monitor = GetMonitor();
     return monitor.WriteFPR(m_thread.GetID(), &m_fpr_powerpc, sizeof(m_fpr_powerpc));
+}
+
+bool
+RegisterContextPOSIXProcessMonitor_powerpc::WriteVMX()
+{
+    // XXX: Need a way to read/write process VMX registers with ptrace.
+    return false;
 }
 
 bool

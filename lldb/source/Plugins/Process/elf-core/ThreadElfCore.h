@@ -111,6 +111,7 @@ struct ThreadData
 {
     lldb_private::DataExtractor gpregset;
     lldb_private::DataExtractor fpregset;
+    lldb_private::DataExtractor vregset;
     int signo;
     std::string name;
 };
@@ -170,6 +171,7 @@ protected:
 
     lldb_private::DataExtractor m_gpregset_data;
     lldb_private::DataExtractor m_fpregset_data;
+    lldb_private::DataExtractor m_vregset_data;
 
     virtual bool CalculateStopInfo();
 

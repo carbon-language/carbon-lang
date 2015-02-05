@@ -18,7 +18,8 @@ using namespace lldb_private;
 RegisterContextCorePOSIX_powerpc::RegisterContextCorePOSIX_powerpc(Thread &thread,
                                                                  RegisterInfoInterface *register_info,
                                                                  const DataExtractor &gpregset,
-                                                                 const DataExtractor &fpregset)
+                                                                 const DataExtractor &fpregset,
+                                                                 const DataExtractor &vregset)
     : RegisterContextPOSIX_powerpc(thread, 0, register_info)
 {
     m_gpr_buffer.reset(new DataBufferHeap(gpregset.GetDataStart(), gpregset.GetByteSize()));
@@ -27,6 +28,9 @@ RegisterContextCorePOSIX_powerpc::RegisterContextCorePOSIX_powerpc(Thread &threa
     m_fpr_buffer.reset(new DataBufferHeap(fpregset.GetDataStart(), fpregset.GetByteSize()));
     m_fpr.SetData(m_fpr_buffer);
     m_fpr.SetByteOrder(fpregset.GetByteOrder());
+    m_vec_buffer.reset(new DataBufferHeap(vregset.GetDataStart(), vregset.GetByteSize()));
+    m_vec.SetData(m_vec_buffer);
+    m_vec.SetByteOrder(fpregset.GetByteOrder());
 }
 
 RegisterContextCorePOSIX_powerpc::~RegisterContextCorePOSIX_powerpc()
@@ -46,6 +50,12 @@ RegisterContextCorePOSIX_powerpc::ReadFPR()
 }
 
 bool
+RegisterContextCorePOSIX_powerpc::ReadVMX()
+{
+    return true;
+}
+
+bool
 RegisterContextCorePOSIX_powerpc::WriteGPR()
 {
     assert(0);
@@ -60,14 +70,29 @@ RegisterContextCorePOSIX_powerpc::WriteFPR()
 }
 
 bool
+RegisterContextCorePOSIX_powerpc::WriteVMX()
+{
+    assert(0);
+    return false;
+}
+
+bool
 RegisterContextCorePOSIX_powerpc::ReadRegister(const RegisterInfo *reg_info, RegisterValue &value)
 {
     lldb::offset_t offset = reg_info->byte_offset;
-    if (reg_info->name[0] == 'f') {
+    if (IsFPR(reg_info->kinds[lldb::eRegisterKindLLDB])) {
         uint64_t v = m_fpr.GetMaxU64(&offset, reg_info->byte_size);
         if (offset == reg_info->byte_offset + reg_info->byte_size)
         {
             value = v;
+            return true;
+        }
+    } else if (IsVMX(reg_info->kinds[lldb::eRegisterKindLLDB])) {
+        uint32_t v[4];
+        offset = m_vec.CopyData(offset, reg_info->byte_size, &v);
+        if (offset == reg_info->byte_size)
+        {
+            value.SetBytes(v, reg_info->byte_size, m_vec.GetByteOrder());
             return true;
         }
     } else {
