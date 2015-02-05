@@ -64,7 +64,6 @@ multiclass T_Calls<string ExtStr> {
   def f    : T_CallPred<0, ExtStr>;
 }
 
-let isCodeGenOnly = 0 in
 defm J2_call: T_Calls<"">, PredRel;
 
 let isCodeGenOnly = 1, isCall = 1, hasSideEffects = 1, Defs = VolatileV3.Regs in
@@ -95,16 +94,14 @@ let isCodeGenOnly = 1, Defs = VolatileV3.Regs, validSubTargets = HasV3SubT in {
 
 
 let Defs = [USR_OVF], Itinerary = ALU64_tc_2_SLOT23,
-    validSubTargets = HasV3SubT, isCodeGenOnly = 0 in
+    validSubTargets = HasV3SubT in
 def A2_addpsat : T_ALU64_arith<"add", 0b011, 0b101, 1, 0, 1>;
 
 class T_ALU64_addsp_hl<string suffix, bits<3> MinOp>
   : T_ALU64_rr<"add", suffix, 0b0011, 0b011, MinOp, 0, 0, "">;
 
-let isCodeGenOnly = 0 in {
 def A2_addspl : T_ALU64_addsp_hl<":raw:lo", 0b110>;
 def A2_addsph : T_ALU64_addsp_hl<":raw:hi", 0b111>;
-}
 
 let hasSideEffects = 0, isAsmParserOnly = 1 in
 def A2_addsp : ALU64_rr<(outs DoubleRegs:$Rd),
@@ -135,12 +132,10 @@ class T_XTYPE_MIN_MAX_P<bit isMax, bit isUnsigned>
   let Inst{4-0} = Rd;
 }
 
-let isCodeGenOnly = 0 in {
 def A2_minp  : T_XTYPE_MIN_MAX_P<0, 0>;
 def A2_minup : T_XTYPE_MIN_MAX_P<0, 1>;
 def A2_maxp  : T_XTYPE_MIN_MAX_P<1, 0>;
 def A2_maxup : T_XTYPE_MIN_MAX_P<1, 1>;
-}
 
 multiclass MinMax_pats_p<PatFrag Op, InstHexagon Inst, InstHexagon SwapInst> {
   defm: T_MinMax_pats<Op, DoubleRegs, i64, Inst, SwapInst>;
@@ -219,10 +214,8 @@ class T_vrcmpRaw<string HiLo, bits<3>MajOp>:
     let Inst{4-0}   = Rdd;
 }
 
-let isCodeGenOnly = 0 in {
 def M2_vrcmpys_s1_h: T_vrcmpRaw<"hi", 0b101>;
 def M2_vrcmpys_s1_l: T_vrcmpRaw<"lo", 0b111>;
-}
 
 // Assembler mapped to M2_vrcmpys_s1_h or M2_vrcmpys_s1_l
 let hasSideEffects = 0, isAsmParserOnly = 1 in
@@ -251,10 +244,8 @@ class T_vrcmpys_acc<string HiLo, bits<3>MajOp>:
     let Inst{4-0}   = Rxx;
   }
 
-let isCodeGenOnly = 0 in {
 def M2_vrcmpys_acc_s1_h: T_vrcmpys_acc<"hi", 0b101>;
 def M2_vrcmpys_acc_s1_l: T_vrcmpys_acc<"lo", 0b111>;
-}
 
 // Assembler mapped to M2_vrcmpys_acc_s1_h or M2_vrcmpys_acc_s1_l
 
@@ -265,10 +256,8 @@ def M2_vrcmpys_acc_s1
            "$dst += vrcmpys($src1, $src2):<<1:sat", [],
            "$dst2 = $dst">;
 
-let isCodeGenOnly = 0 in {
 def M2_vrcmpys_s1rp_h : T_MType_vrcmpy <"vrcmpys", 0b101, 0b110, 1>;
 def M2_vrcmpys_s1rp_l : T_MType_vrcmpy <"vrcmpys", 0b101, 0b111, 0>;
-}
 
 // Assembler mapped to M2_vrcmpys_s1rp_h or M2_vrcmpys_s1rp_l
 let isAsmParserOnly = 1 in
@@ -278,6 +267,5 @@ def M2_vrcmpys_s1rp
 
 
 // S2_cabacdecbin: Cabac decode bin.
-let Defs = [P0], isPredicateLate = 1, Itinerary = S_3op_tc_1_SLOT23,
-    isCodeGenOnly = 0 in
+let Defs = [P0], isPredicateLate = 1, Itinerary = S_3op_tc_1_SLOT23 in
 def S2_cabacdecbin : T_S3op_64 < "decbin", 0b11, 0b110, 0>;

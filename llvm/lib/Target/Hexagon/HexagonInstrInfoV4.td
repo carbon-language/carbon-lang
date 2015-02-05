@@ -122,21 +122,19 @@ class T_ALU32_3op_not<string mnemonic, bits<3> MajOp, bits<3> MinOp,
   let AsmString = "$Rd = "#mnemonic#"($Rs, ~$Rt)";
 }
 
-let BaseOpcode = "andn_rr", CextOpcode = "andn", isCodeGenOnly = 0 in
+let BaseOpcode = "andn_rr", CextOpcode = "andn" in
 def A4_andn    : T_ALU32_3op_not<"and", 0b001, 0b100, 1>;
-let BaseOpcode = "orn_rr", CextOpcode = "orn", isCodeGenOnly = 0 in
+let BaseOpcode = "orn_rr", CextOpcode = "orn" in
 def A4_orn     : T_ALU32_3op_not<"or",  0b001, 0b101, 1>;
 
-let CextOpcode = "rcmp.eq", isCodeGenOnly = 0 in
+let CextOpcode = "rcmp.eq" in
 def A4_rcmpeq  : T_ALU32_3op<"cmp.eq",  0b011, 0b010, 0, 1>;
-let CextOpcode = "!rcmp.eq", isCodeGenOnly = 0 in
+let CextOpcode = "!rcmp.eq" in
 def A4_rcmpneq : T_ALU32_3op<"!cmp.eq", 0b011, 0b011, 0, 1>;
 
-let isCodeGenOnly = 0 in {
 def C4_cmpneq  : T_ALU32_3op_cmp<"!cmp.eq",  0b00, 1, 1>;
 def C4_cmplte  : T_ALU32_3op_cmp<"!cmp.gt",  0b10, 1, 0>;
 def C4_cmplteu : T_ALU32_3op_cmp<"!cmp.gtu", 0b11, 1, 0>;
-}
 
 // Pats for instruction selection.
 
@@ -174,14 +172,12 @@ class T_CMP_rrbh<string mnemonic, bits<3> MinOp, bit IsComm>
   let Inst{1-0} = Pd;
 }
 
-let isCodeGenOnly = 0 in {
 def A4_cmpbeq  : T_CMP_rrbh<"cmpb.eq",  0b110, 1>;
 def A4_cmpbgt  : T_CMP_rrbh<"cmpb.gt",  0b010, 0>;
 def A4_cmpbgtu : T_CMP_rrbh<"cmpb.gtu", 0b111, 0>;
 def A4_cmpheq  : T_CMP_rrbh<"cmph.eq",  0b011, 1>;
 def A4_cmphgt  : T_CMP_rrbh<"cmph.gt",  0b100, 0>;
 def A4_cmphgtu : T_CMP_rrbh<"cmph.gtu", 0b101, 0>;
-}
 
 class T_CMP_ribh<string mnemonic, bits<2> MajOp, bit IsHalf, bit IsComm,
                  Operand ImmType, bit IsImmExt, bit IsImmSigned, int ImmBits>
@@ -213,14 +209,13 @@ class T_CMP_ribh<string mnemonic, bits<2> MajOp, bit IsHalf, bit IsComm,
   let Inst{1-0} = Pd;
 }
 
-let isCodeGenOnly = 0 in {
 def A4_cmpbeqi  : T_CMP_ribh<"cmpb.eq",  0b00, 0, 1, u8Imm, 0, 0, 8>;
 def A4_cmpbgti  : T_CMP_ribh<"cmpb.gt",  0b01, 0, 0, s8Imm, 0, 1, 8>;
 def A4_cmpbgtui : T_CMP_ribh<"cmpb.gtu", 0b10, 0, 0, u7Ext, 1, 0, 7>;
 def A4_cmpheqi  : T_CMP_ribh<"cmph.eq",  0b00, 1, 1, s8Ext, 1, 1, 8>;
 def A4_cmphgti  : T_CMP_ribh<"cmph.gt",  0b01, 1, 0, s8Ext, 1, 1, 8>;
 def A4_cmphgtui : T_CMP_ribh<"cmph.gtu", 0b10, 1, 0, u7Ext, 1, 0, 7>;
-}
+
 class T_RCMP_EQ_ri<string mnemonic, bit IsNeg>
   : ALU32_ri<(outs IntRegs:$Rd), (ins IntRegs:$Rs, s8Ext:$s8),
     "$Rd = "#mnemonic#"($Rs, #$s8)", [], "", ALU32_2op_tc_1_SLOT0123>,
@@ -248,10 +243,8 @@ class T_RCMP_EQ_ri<string mnemonic, bit IsNeg>
   let Inst{4-0} = Rd;
 }
 
-let isCodeGenOnly = 0 in {
 def A4_rcmpeqi  : T_RCMP_EQ_ri<"cmp.eq",  0>;
 def A4_rcmpneqi : T_RCMP_EQ_ri<"!cmp.eq", 1>;
-}
 
 def: Pat<(i32 (zext (i1 (seteq (i32 IntRegs:$Rs), s8ExtPred:$s8)))),
          (A4_rcmpeqi IntRegs:$Rs, s8ExtPred:$s8)>;
@@ -291,11 +284,11 @@ class T_Combine1 <bits<2> MajOp, dag ins, string AsmStr>
     let Inst{4-0}   = Rdd;
   }
 
-let opExtendable = 2, isCodeGenOnly = 0 in
+let opExtendable = 2 in
 def A4_combineri : T_Combine1<0b00, (ins IntRegs:$Rs, s8Ext:$s8),
                                     "$Rdd = combine($Rs, #$s8)">;
 
-let opExtendable = 1, isCodeGenOnly = 0 in
+let opExtendable = 1 in
 def A4_combineir : T_Combine1<0b01, (ins s8Ext:$s8, IntRegs:$Rs),
                                     "$Rdd = combine(#$s8, $Rs)">;
 
@@ -392,20 +385,20 @@ class T_LD_abs_set<string mnemonic, RegisterClass RC, bits<4>MajOp>:
   let Inst{6-5}   = addr{1-0};
 }
 
-let accessSize = ByteAccess, hasNewValue = 1, isCodeGenOnly = 0 in {
+let accessSize = ByteAccess, hasNewValue = 1 in {
   def L4_loadrb_ap   : T_LD_abs_set <"memb",   IntRegs, 0b1000>;
   def L4_loadrub_ap  : T_LD_abs_set <"memub",  IntRegs, 0b1001>;
 }
 
-let accessSize = HalfWordAccess, hasNewValue = 1, isCodeGenOnly = 0 in {
+let accessSize = HalfWordAccess, hasNewValue = 1 in {
   def L4_loadrh_ap  : T_LD_abs_set <"memh",  IntRegs, 0b1010>;
   def L4_loadruh_ap : T_LD_abs_set <"memuh", IntRegs, 0b1011>;
 }
 
-let accessSize = WordAccess, hasNewValue = 1, isCodeGenOnly = 0 in
+let accessSize = WordAccess, hasNewValue = 1 in
   def L4_loadri_ap : T_LD_abs_set <"memw", IntRegs, 0b1100>;
 
-let accessSize = DoubleWordAccess, isCodeGenOnly = 0 in
+let accessSize = DoubleWordAccess in
 def L4_loadrd_ap : T_LD_abs_set <"memd", DoubleRegs, 0b1110>;
 // Load - Indirect with long offset
 let InputType = "imm", addrMode = BaseLongOffset, isExtended = 1,
@@ -434,14 +427,14 @@ class T_LoadAbsReg <string mnemonic, string CextOp, RegisterClass RC,
     let Inst{4-0}   = dst;
   }
 
-let accessSize = ByteAccess, isCodeGenOnly = 0 in {
+let accessSize = ByteAccess in {
   def L4_loadrb_ur  : T_LoadAbsReg<"memb",  "LDrib", IntRegs, 0b1000>;
   def L4_loadrub_ur : T_LoadAbsReg<"memub", "LDriub", IntRegs, 0b1001>;
   def L4_loadalignb_ur : T_LoadAbsReg<"memb_fifo", "LDrib_fifo",
                                       DoubleRegs, 0b0100>;
 }
 
-let accessSize = HalfWordAccess, isCodeGenOnly = 0 in {
+let accessSize = HalfWordAccess in {
   def L4_loadrh_ur   : T_LoadAbsReg<"memh",   "LDrih",    IntRegs, 0b1010>;
   def L4_loadruh_ur  : T_LoadAbsReg<"memuh",  "LDriuh",   IntRegs, 0b1011>;
   def L4_loadbsw2_ur : T_LoadAbsReg<"membh",  "LDribh2",  IntRegs, 0b0001>;
@@ -450,13 +443,13 @@ let accessSize = HalfWordAccess, isCodeGenOnly = 0 in {
                                       DoubleRegs, 0b0010>;
 }
 
-let accessSize = WordAccess, isCodeGenOnly = 0 in {
+let accessSize = WordAccess in {
   def L4_loadri_ur   : T_LoadAbsReg<"memw", "LDriw", IntRegs, 0b1100>;
   def L4_loadbsw4_ur : T_LoadAbsReg<"membh", "LDribh4", DoubleRegs, 0b0111>;
   def L4_loadbzw4_ur : T_LoadAbsReg<"memubh", "LDriubh4", DoubleRegs, 0b0101>;
 }
 
-let accessSize = DoubleWordAccess, isCodeGenOnly = 0 in
+let accessSize = DoubleWordAccess in
 def L4_loadrd_ur  : T_LoadAbsReg<"memd", "LDrid", DoubleRegs, 0b1110>;
 
 
@@ -564,20 +557,20 @@ multiclass ld_idxd_shl <string mnemonic, string CextOp, RegisterClass RC,
   }
 }
 
-let hasNewValue = 1, accessSize = ByteAccess, isCodeGenOnly = 0 in {
+let hasNewValue = 1, accessSize = ByteAccess in {
   defm loadrb  : ld_idxd_shl<"memb", "LDrib", IntRegs, 0b000>;
   defm loadrub : ld_idxd_shl<"memub", "LDriub", IntRegs, 0b001>;
 }
 
-let hasNewValue = 1, accessSize = HalfWordAccess, isCodeGenOnly = 0 in {
+let hasNewValue = 1, accessSize = HalfWordAccess in {
   defm loadrh  : ld_idxd_shl<"memh", "LDrih", IntRegs, 0b010>;
   defm loadruh : ld_idxd_shl<"memuh", "LDriuh", IntRegs, 0b011>;
 }
 
-let hasNewValue = 1, accessSize = WordAccess, isCodeGenOnly = 0 in
+let hasNewValue = 1, accessSize = WordAccess in
 defm loadri : ld_idxd_shl<"memw", "LDriw", IntRegs, 0b100>;
 
-let accessSize = DoubleWordAccess, isCodeGenOnly = 0 in
+let accessSize = DoubleWordAccess in
 defm loadrd  : ld_idxd_shl<"memd", "LDrid", DoubleRegs, 0b110>;
 
 // 'def pats' for load instructions with base + register offset and non-zero
@@ -719,7 +712,7 @@ class T_ST_absset_nv <string mnemonic, string BaseOp, bits<2> MajOp,
     let Inst{5-0}   = addr;
   }
 
-let mayStore = 1, addrMode = AbsoluteSet, isCodeGenOnly = 0 in {
+let mayStore = 1, addrMode = AbsoluteSet in {
   def S4_storerbnew_ap : T_ST_absset_nv <"memb", "STrib", 0b00, ByteAccess>;
   def S4_storerhnew_ap : T_ST_absset_nv <"memh", "STrih", 0b01, HalfWordAccess>;
   def S4_storerinew_ap : T_ST_absset_nv <"memw", "STriw", 0b10, WordAccess>;
@@ -754,7 +747,6 @@ class T_StoreAbsReg <string mnemonic, string CextOp, RegisterClass RC,
     let Inst{5-0}   = src3;
 }
 
-let isCodeGenOnly = 0 in {
 def S4_storerb_ur : T_StoreAbsReg <"memb", "STrib", IntRegs, 0b000, ByteAccess>;
 def S4_storerh_ur : T_StoreAbsReg <"memh", "STrih", IntRegs, 0b010,
                                    HalfWordAccess>;
@@ -763,7 +755,6 @@ def S4_storerf_ur : T_StoreAbsReg <"memh", "STrif", IntRegs, 0b011,
 def S4_storeri_ur : T_StoreAbsReg <"memw", "STriw", IntRegs, 0b100, WordAccess>;
 def S4_storerd_ur : T_StoreAbsReg <"memd", "STrid", DoubleRegs, 0b110,
                                    DoubleWordAccess>;
-}
 
 let AddedComplexity = 40 in
 multiclass T_StoreAbsReg_Pats <InstHexagon MI, RegisterClass RC, ValueType VT,
@@ -815,11 +806,9 @@ class T_StoreAbsRegNV <string mnemonic, string CextOp, bits<2> MajOp,
     let Inst{5-0}   = src3;
   }
 
-let isCodeGenOnly = 0 in {
 def S4_storerbnew_ur : T_StoreAbsRegNV <"memb", "STrib", 0b00, ByteAccess>;
 def S4_storerhnew_ur : T_StoreAbsRegNV <"memh", "STrih", 0b01, HalfWordAccess>;
 def S4_storerinew_ur : T_StoreAbsRegNV <"memw", "STriw", 0b10, WordAccess>;
-}
 
 //===----------------------------------------------------------------------===//
 // Template classes for the non-predicated store instructions with
@@ -983,8 +972,7 @@ multiclass ST_Idxd_shl_nv <string mnemonic, string CextOp, RegisterClass RC,
   }
 }
 
-let addrMode = BaseRegOffset, InputType = "reg", hasSideEffects = 0,
-    isCodeGenOnly = 0 in {
+let addrMode = BaseRegOffset, InputType = "reg", hasSideEffects = 0 in {
   let accessSize = ByteAccess in
   defm storerb: ST_Idxd_shl<"memb", "STrib", IntRegs, 0b000>,
                 ST_Idxd_shl_nv<"memb", "STrib", IntRegs, 0b00>;
@@ -1119,7 +1107,7 @@ multiclass ST_Imm <string mnemonic, string CextOp, Operand OffsetOp,
 }
 
 let hasSideEffects = 0, validSubTargets = HasV4SubT, addrMode = BaseImmOffset,
-    InputType = "imm", isCodeGenOnly = 0 in {
+    InputType = "imm" in {
   let accessSize = ByteAccess in
   defm S4_storeirb : ST_Imm<"memb", "STrib", u6_0Imm, 0b00>;
 
@@ -1309,7 +1297,7 @@ multiclass ST_Idxd_nv<string mnemonic, string CextOp, RegisterClass RC,
   }
 }
 
-let addrMode = BaseImmOffset, InputType = "imm", isCodeGenOnly = 0 in {
+let addrMode = BaseImmOffset, InputType = "imm" in {
   let accessSize = ByteAccess in
   defm storerb: ST_Idxd_nv<"memb", "STrib", IntRegs, s11_0Ext,
                            u6_0Ext, 0b00>, AddrModeRel;
@@ -1327,10 +1315,9 @@ let addrMode = BaseImmOffset, InputType = "imm", isCodeGenOnly = 0 in {
 // Post increment loads with register offset.
 //===----------------------------------------------------------------------===//
 
-let hasNewValue = 1, isCodeGenOnly = 0 in
+let hasNewValue = 1 in
 def L2_loadbsw2_pr : T_load_pr <"membh", IntRegs, 0b0001, HalfWordAccess>;
 
-let isCodeGenOnly = 0 in
 def L2_loadbsw4_pr : T_load_pr <"membh", DoubleRegs, 0b0111, WordAccess>;
 
 //===----------------------------------------------------------------------===//
@@ -1426,13 +1413,13 @@ multiclass ST_PostInc_nv<string mnemonic, string BaseOp, Operand ImmOp,
   }
 }
 
-let accessSize = ByteAccess, isCodeGenOnly = 0 in
+let accessSize = ByteAccess in
 defm storerbnew: ST_PostInc_nv <"memb", "STrib", s4_0Imm, 0b00>;
 
-let accessSize = HalfWordAccess, isCodeGenOnly = 0 in
+let accessSize = HalfWordAccess in
 defm storerhnew: ST_PostInc_nv <"memh", "STrih", s4_1Imm, 0b01>;
 
-let accessSize = WordAccess, isCodeGenOnly = 0 in
+let accessSize = WordAccess in
 defm storerinew: ST_PostInc_nv <"memw", "STriw", s4_2Imm, 0b10>;
 
 //===----------------------------------------------------------------------===//
@@ -1459,11 +1446,9 @@ class T_StorePI_RegNV <string mnemonic, bits<2> MajOp, MemAccessSize AccessSz>
     let Inst{7}     = 0b0;
   }
 
-let isCodeGenOnly = 0 in {
 def S2_storerbnew_pr : T_StorePI_RegNV<"memb", 0b00, ByteAccess>;
 def S2_storerhnew_pr : T_StorePI_RegNV<"memh", 0b01, HalfWordAccess>;
 def S2_storerinew_pr : T_StorePI_RegNV<"memw", 0b10, WordAccess>;
-}
 
 // memb(Rx++#s4:0:circ(Mu))=Nt.new
 // memb(Rx++I:circ(Mu))=Nt.new
@@ -1554,8 +1539,7 @@ multiclass NVJrr_base<string mnemonic, string BaseOp, bits<3> majOp,
 // if ([!]cmp.gtu(Rt,Ns.new)) jump:[n]t #r9:2
 
 let isPredicated = 1, isBranch = 1, isNewValue = 1, isTerminator = 1,
-    Defs = [PC], hasSideEffects = 0, validSubTargets = HasV4SubT,
-    isCodeGenOnly = 0 in {
+    Defs = [PC], hasSideEffects = 0, validSubTargets = HasV4SubT in {
   defm CMPEQrr  : NVJrr_base<"cmp.eq",  "CMPEQ",  0b000, 0>, PredRel;
   defm CMPGTrr  : NVJrr_base<"cmp.gt",  "CMPGT",  0b001, 0>, PredRel;
   defm CMPGTUrr : NVJrr_base<"cmp.gtu", "CMPGTU", 0b010, 0>, PredRel;
@@ -1615,8 +1599,7 @@ multiclass NVJri_base<string mnemonic, string BaseOp, bits<3> majOp> {
 // if ([!]cmp.gtu(Ns.new,#U5)) jump:[n]t #r9:2
 
 let isPredicated = 1, isBranch = 1, isNewValue = 1, isTerminator = 1,
-    Defs = [PC], hasSideEffects = 0, validSubTargets = HasV4SubT,
-    isCodeGenOnly = 0 in {
+    Defs = [PC], hasSideEffects = 0, validSubTargets = HasV4SubT in {
   defm CMPEQri  : NVJri_base<"cmp.eq", "CMPEQ", 0b000>, PredRel;
   defm CMPGTri  : NVJri_base<"cmp.gt", "CMPGT", 0b001>, PredRel;
   defm CMPGTUri : NVJri_base<"cmp.gtu", "CMPGTU", 0b010>, PredRel;
@@ -1674,14 +1657,14 @@ multiclass NVJ_ConstImm_base<string mnemonic, string BaseOp, bits<3> majOp,
 // if ([!]cmp.gt(Ns.new,#-1)) jump:[n]t #r9:2
 
 let isPredicated = 1, isBranch = 1, isNewValue = 1, isTerminator=1,
-    Defs = [PC], hasSideEffects = 0, isCodeGenOnly = 0 in {
+    Defs = [PC], hasSideEffects = 0 in {
   defm TSTBIT0  : NVJ_ConstImm_base<"tstbit", "TSTBIT", 0b011, "0">, PredRel;
   defm CMPEQn1  : NVJ_ConstImm_base<"cmp.eq", "CMPEQ",  0b100, "-1">, PredRel;
   defm CMPGTn1  : NVJ_ConstImm_base<"cmp.gt", "CMPGT",  0b101, "-1">, PredRel;
 }
 
 // J4_hintjumpr: Hint indirect conditional jump.
-let isBranch = 1, isIndirectBranch = 1, hasSideEffects = 0, isCodeGenOnly = 0 in
+let isBranch = 1, isIndirectBranch = 1, hasSideEffects = 0 in
 def J4_hintjumpr: JRInst <
   (outs),
   (ins IntRegs:$Rs),
@@ -1703,7 +1686,7 @@ def J4_hintjumpr: JRInst <
 // PC-relative add
 let hasNewValue = 1, isExtendable = 1, opExtendable = 1,
     isExtentSigned = 0, opExtentBits = 6, hasSideEffects = 0,
-    Uses = [PC], validSubTargets = HasV4SubT, isCodeGenOnly = 0 in
+    Uses = [PC], validSubTargets = HasV4SubT in
 def C4_addipc : CRInst <(outs IntRegs:$Rd), (ins u6Ext:$u6),
   "$Rd = add(pc, #$u6)", [], "", CR_tc_2_SLOT3 > {
     bits<5> Rd;
@@ -1741,7 +1724,6 @@ class T_LOGICAL_3OP<string MnOp1, string MnOp2, bits<2> OpBits, bit IsNeg>
   let Inst{1-0} = Pd;
 }
 
-let isCodeGenOnly = 0 in {
 def C4_and_and  : T_LOGICAL_3OP<"and", "and", 0b00, 0>;
 def C4_and_or   : T_LOGICAL_3OP<"and", "or",  0b01, 0>;
 def C4_or_and   : T_LOGICAL_3OP<"or",  "and", 0b10, 0>;
@@ -1750,7 +1732,6 @@ def C4_and_andn : T_LOGICAL_3OP<"and", "and", 0b00, 1>;
 def C4_and_orn  : T_LOGICAL_3OP<"and", "or",  0b01, 1>;
 def C4_or_andn  : T_LOGICAL_3OP<"or",  "and", 0b10, 1>;
 def C4_or_orn   : T_LOGICAL_3OP<"or",  "or",  0b11, 1>;
-}
 
 //===----------------------------------------------------------------------===//
 // CR -
@@ -1761,12 +1742,12 @@ def C4_or_orn   : T_LOGICAL_3OP<"or",  "or",  0b11, 1>;
 //===----------------------------------------------------------------------===//
 
 // Logical with-not instructions.
-let validSubTargets = HasV4SubT, isCodeGenOnly = 0 in {
+let validSubTargets = HasV4SubT in {
   def A4_andnp : T_ALU64_logical<"and", 0b001, 1, 0, 1>;
   def A4_ornp  : T_ALU64_logical<"or",  0b011, 1, 0, 1>;
 }
 
-let hasNewValue = 1, hasSideEffects = 0, isCodeGenOnly = 0 in
+let hasNewValue = 1, hasSideEffects = 0 in
 def S4_parity: ALU64Inst<(outs IntRegs:$Rd), (ins IntRegs:$Rs, IntRegs:$Rt),
       "$Rd = parity($Rs, $Rt)", [], "", ALU64_tc_2_SLOT23> {
   bits<5> Rd;
@@ -1782,7 +1763,7 @@ def S4_parity: ALU64Inst<(outs IntRegs:$Rd), (ins IntRegs:$Rs, IntRegs:$Rt),
 //  Add and accumulate.
 //  Rd=add(Rs,add(Ru,#s6))
 let isExtentSigned = 1, hasNewValue = 1, isExtendable = 1, opExtentBits = 6,
-    opExtendable = 3, isCodeGenOnly = 0 in
+    opExtendable = 3 in
 def S4_addaddi : ALU64Inst <(outs IntRegs:$Rd),
                             (ins IntRegs:$Rs, IntRegs:$Ru, s6Ext:$s6),
   "$Rd = add($Rs, add($Ru, #$s6))" ,
@@ -1806,7 +1787,7 @@ def S4_addaddi : ALU64Inst <(outs IntRegs:$Rd),
   }
 
 let isExtentSigned = 1, hasSideEffects = 0, hasNewValue = 1, isExtendable = 1,
-    opExtentBits = 6, opExtendable = 2, isCodeGenOnly = 0 in
+    opExtentBits = 6, opExtendable = 2 in
 def S4_subaddi: ALU64Inst <(outs IntRegs:$Rd),
                            (ins IntRegs:$Rs, s6Ext:$s6, IntRegs:$Ru),
   "$Rd = add($Rs, sub(#$s6, $Ru))",
@@ -1833,37 +1814,35 @@ def S4_subaddi: ALU64Inst <(outs IntRegs:$Rd),
 // Rd=extract(Rs,Rtt)
 // Rd=extract(Rs,#u5,#U5)
 
-let isCodeGenOnly = 0 in {
 def S4_extractp_rp : T_S3op_64 < "extract",  0b11, 0b100, 0>;
 def S4_extractp    : T_S2op_extract <"extract",  0b1010, DoubleRegs, u6Imm>;
-}
 
-let hasNewValue = 1, isCodeGenOnly = 0 in {
+let hasNewValue = 1 in {
   def S4_extract_rp : T_S3op_extract<"extract",  0b01>;
   def S4_extract    : T_S2op_extract <"extract",  0b1101, IntRegs, u5Imm>;
 }
 
 // Complex add/sub halfwords/words
-let Defs = [USR_OVF], isCodeGenOnly = 0 in {
+let Defs = [USR_OVF] in {
   def S4_vxaddsubh : T_S3op_64 < "vxaddsubh", 0b01, 0b100, 0, 1>;
   def S4_vxaddsubw : T_S3op_64 < "vxaddsubw", 0b01, 0b000, 0, 1>;
   def S4_vxsubaddh : T_S3op_64 < "vxsubaddh", 0b01, 0b110, 0, 1>;
   def S4_vxsubaddw : T_S3op_64 < "vxsubaddw", 0b01, 0b010, 0, 1>;
 }
 
-let Defs = [USR_OVF], isCodeGenOnly = 0 in {
+let Defs = [USR_OVF] in {
   def S4_vxaddsubhr : T_S3op_64 < "vxaddsubh", 0b11, 0b000, 0, 1, 1, 1>;
   def S4_vxsubaddhr : T_S3op_64 < "vxsubaddh", 0b11, 0b010, 0, 1, 1, 1>;
 }
 
-let Itinerary = M_tc_3x_SLOT23, Defs = [USR_OVF], isCodeGenOnly = 0 in {
+let Itinerary = M_tc_3x_SLOT23, Defs = [USR_OVF] in {
   def M4_mac_up_s1_sat: T_MType_acc_rr<"+= mpy", 0b011, 0b000, 0, [], 0, 1, 1>;
   def M4_nac_up_s1_sat: T_MType_acc_rr<"-= mpy", 0b011, 0b001, 0, [], 0, 1, 1>;
 }
 
 // Logical xor with xor accumulation.
 // Rxx^=xor(Rss,Rtt)
-let hasSideEffects = 0, isCodeGenOnly = 0 in
+let hasSideEffects = 0 in
 def M4_xor_xacc
   : SInst <(outs DoubleRegs:$Rxx),
            (ins DoubleRegs:$dst2, DoubleRegs:$Rss, DoubleRegs:$Rtt),
@@ -1886,7 +1865,7 @@ def M4_xor_xacc
 
 // Rotate and reduce bytes
 // Rdd=vrcrotate(Rss,Rt,#u2)
-let hasSideEffects = 0, isCodeGenOnly = 0 in
+let hasSideEffects = 0 in
 def S4_vrcrotate
   : SInst <(outs DoubleRegs:$Rdd),
            (ins DoubleRegs:$Rss, IntRegs:$Rt, u2Imm:$u2),
@@ -1910,7 +1889,7 @@ def S4_vrcrotate
 
 // Rotate and reduce bytes with accumulation
 // Rxx+=vrcrotate(Rss,Rt,#u2)
-let hasSideEffects = 0, isCodeGenOnly = 0 in
+let hasSideEffects = 0 in
 def S4_vrcrotate_acc
   : SInst <(outs DoubleRegs:$Rxx),
            (ins DoubleRegs:$dst2, DoubleRegs:$Rss, IntRegs:$Rt, u2Imm:$u2),
@@ -1933,7 +1912,7 @@ def S4_vrcrotate_acc
 
 
 // Vector reduce conditional negate halfwords
-let hasSideEffects = 0, isCodeGenOnly = 0 in
+let hasSideEffects = 0 in
 def S2_vrcnegh
   : SInst <(outs DoubleRegs:$Rxx),
            (ins DoubleRegs:$dst2, DoubleRegs:$Rss, IntRegs:$Rt),
@@ -1954,23 +1933,20 @@ def S2_vrcnegh
   }
 
 // Split bitfield
-let isCodeGenOnly = 0 in
 def A4_bitspliti : T_S2op_2_di <"bitsplit", 0b110, 0b100>;
 
 // Arithmetic/Convergent round
-let isCodeGenOnly = 0 in
 def A4_cround_ri : T_S2op_2_ii <"cround", 0b111, 0b000>;
 
-let isCodeGenOnly = 0 in
 def A4_round_ri  : T_S2op_2_ii <"round", 0b111, 0b100>;
 
-let Defs = [USR_OVF], isCodeGenOnly = 0 in
+let Defs = [USR_OVF] in
 def A4_round_ri_sat : T_S2op_2_ii <"round", 0b111, 0b110, 1>;
 
 // Logical-logical words.
 // Compound or-and -- Rx=or(Ru,and(Rx,#s10))
 let isExtentSigned = 1, hasNewValue = 1, isExtendable = 1, opExtentBits = 10,
-    opExtendable = 3, isCodeGenOnly = 0 in
+    opExtendable = 3 in
 def S4_or_andix:
   ALU64Inst<(outs IntRegs:$Rx),
             (ins IntRegs:$Ru, IntRegs:$_src_, s10Ext:$s10),
@@ -1993,7 +1969,7 @@ def S4_or_andix:
 
 // Miscellaneous ALU64 instructions.
 //
-let hasNewValue = 1, hasSideEffects = 0, isCodeGenOnly = 0 in
+let hasNewValue = 1, hasSideEffects = 0 in
 def A4_modwrapu: ALU64Inst<(outs IntRegs:$Rd), (ins IntRegs:$Rs, IntRegs:$Rt),
       "$Rd = modwrap($Rs, $Rt)", [], "", ALU64_tc_2_SLOT23> {
   bits<5> Rd;
@@ -2008,7 +1984,7 @@ def A4_modwrapu: ALU64Inst<(outs IntRegs:$Rd), (ins IntRegs:$Rs, IntRegs:$Rt),
   let Inst{4-0} = Rd;
 }
 
-let hasSideEffects = 0, isCodeGenOnly = 0 in
+let hasSideEffects = 0 in
 def A4_bitsplit: ALU64Inst<(outs DoubleRegs:$Rd),
       (ins IntRegs:$Rs, IntRegs:$Rt),
       "$Rd = bitsplit($Rs, $Rt)", [], "", ALU64_tc_1_SLOT23> {
@@ -2024,7 +2000,6 @@ def A4_bitsplit: ALU64Inst<(outs DoubleRegs:$Rd),
   let Inst{4-0} = Rd;
 }
 
-let isCodeGenOnly = 0 in {
 // Rx[&|]=xor(Rs,Rt)
 def M4_or_xor   : T_MType_acc_rr < "|= xor", 0b110, 0b001, 0>;
 def M4_and_xor  : T_MType_acc_rr < "&= xor", 0b010, 0b010, 0>;
@@ -2047,7 +2022,6 @@ def M4_and_and  : T_MType_acc_rr < "&= and", 0b010, 0b000, 0>;
 def M4_xor_andn : T_MType_acc_rr < "^= and", 0b001, 0b010, 0, [], 1>;
 def M4_or_andn  : T_MType_acc_rr < "|= and", 0b001, 0b000, 0, [], 1>;
 def M4_and_andn : T_MType_acc_rr < "&= and", 0b001, 0b001, 0, [], 1>;
-}
 
 // Compound or-or and or-and
 let isExtentSigned = 1, InputType = "imm", hasNewValue = 1, isExtendable = 1,
@@ -2073,10 +2047,10 @@ class T_CompOR <string mnemonic, bits<2> MajOp, SDNode OpNode>
     let Inst{4-0}   = Rx;
   }
 
-let CextOpcode = "ORr_ANDr", isCodeGenOnly = 0 in
+let CextOpcode = "ORr_ANDr" in
 def S4_or_andi : T_CompOR <"and", 0b00, and>;
 
-let CextOpcode = "ORr_ORr", isCodeGenOnly = 0 in
+let CextOpcode = "ORr_ORr" in
 def S4_or_ori : T_CompOR <"or", 0b10, or>;
 
 //    Modulo wrap
@@ -2121,22 +2095,19 @@ def S4_or_ori : T_CompOR <"or", 0b10, or>;
 //===----------------------------------------------------------------------===//
 
 // Bit reverse
-let isCodeGenOnly = 0 in
 def S2_brevp : T_S2op_3 <"brev", 0b11, 0b110>;
 
 // Bit count
-let isCodeGenOnly = 0 in {
 def S2_ct0p : T_COUNT_LEADING_64<"ct0", 0b111, 0b010>;
 def S2_ct1p : T_COUNT_LEADING_64<"ct1", 0b111, 0b100>;
 def S4_clbpnorm : T_COUNT_LEADING_64<"normamt", 0b011, 0b000>;
-}
 
 def: Pat<(i32 (trunc (cttz (i64 DoubleRegs:$Rss)))),
          (S2_ct0p (i64 DoubleRegs:$Rss))>;
 def: Pat<(i32 (trunc (cttz (not (i64 DoubleRegs:$Rss))))),
          (S2_ct1p (i64 DoubleRegs:$Rss))>;
 
-let hasSideEffects = 0, hasNewValue = 1, isCodeGenOnly = 0 in
+let hasSideEffects = 0, hasNewValue = 1 in
 def S4_clbaddi : SInst<(outs IntRegs:$Rd), (ins IntRegs:$Rs, s6Imm:$s6),
     "$Rd = add(clb($Rs), #$s6)", [], "", S_2op_tc_2_SLOT23> {
   bits<5> Rs;
@@ -2151,7 +2122,7 @@ def S4_clbaddi : SInst<(outs IntRegs:$Rd), (ins IntRegs:$Rs, s6Imm:$s6),
   let Inst{4-0} = Rd;
 }
 
-let hasSideEffects = 0, hasNewValue = 1, isCodeGenOnly = 0 in
+let hasSideEffects = 0, hasNewValue = 1 in
 def S4_clbpaddi : SInst<(outs IntRegs:$Rd), (ins DoubleRegs:$Rs, s6Imm:$s6),
     "$Rd = add(clb($Rs), #$s6)", [], "", S_2op_tc_2_SLOT23> {
   bits<5> Rs;
@@ -2168,10 +2139,8 @@ def S4_clbpaddi : SInst<(outs IntRegs:$Rd), (ins DoubleRegs:$Rs, s6Imm:$s6),
 
 
 // Bit test/set/clear
-let isCodeGenOnly = 0 in {
 def S4_ntstbit_i : T_TEST_BIT_IMM<"!tstbit", 0b001>;
 def S4_ntstbit_r : T_TEST_BIT_REG<"!tstbit", 1>;
-}
 
 let AddedComplexity = 20 in {   // Complexity greater than cmp reg-imm.
   def: Pat<(i1 (seteq (and (shl 1, u5ImmPred:$u5), (i32 IntRegs:$Rs)), 0)),
@@ -2191,11 +2160,9 @@ let AddedComplexity = 100 in
 def: Pat<(i1 (seteq (and (i32 IntRegs:$Rs), (i32 Set5ImmPred:$u5)), (i32 0))),
          (S4_ntstbit_i (i32 IntRegs:$Rs), (BITPOS32 Set5ImmPred:$u5))>;
 
-let isCodeGenOnly = 0 in {
 def C4_nbitsset  : T_TEST_BITS_REG<"!bitsset", 0b01, 1>;
 def C4_nbitsclr  : T_TEST_BITS_REG<"!bitsclr", 0b10, 1>;
 def C4_nbitsclri : T_TEST_BITS_IMM<"!bitsclr", 0b10, 1>;
-}
 
 // Do not increase complexity of these patterns. In the DAG, "cmp i8" may be
 // represented as a compare against "value & 0xFF", which is an exact match
@@ -2220,8 +2187,7 @@ def: Pat<(i1 (setne (and I32:$Rs, I32:$Rt), I32:$Rt)),
 
 // Rd=add(#u6,mpyi(Rs,#U6)) -- Multiply by immed and add immed.
 
-let hasNewValue = 1, isExtendable = 1, opExtentBits = 6, opExtendable = 1,
-    isCodeGenOnly = 0 in
+let hasNewValue = 1, isExtendable = 1, opExtentBits = 6, opExtendable = 1 in
 def M4_mpyri_addi : MInst<(outs IntRegs:$Rd),
   (ins u6Ext:$u6, IntRegs:$Rs, u6Imm:$U6),
   "$Rd = add(#$u6, mpyi($Rs, #$U6))" ,
@@ -2247,7 +2213,7 @@ def M4_mpyri_addi : MInst<(outs IntRegs:$Rd),
 
 // Rd=add(#u6,mpyi(Rs,Rt))
 let CextOpcode = "ADD_MPY", InputType = "imm", hasNewValue = 1,
-    isExtendable = 1, opExtentBits = 6, opExtendable = 1, isCodeGenOnly = 0 in
+    isExtendable = 1, opExtentBits = 6, opExtendable = 1 in
 def M4_mpyrr_addi : MInst <(outs IntRegs:$Rd),
   (ins u6Ext:$u6, IntRegs:$Rs, IntRegs:$Rt),
   "$Rd = add(#$u6, mpyi($Rs, $Rt))" ,
@@ -2297,18 +2263,17 @@ class T_AddMpy <bit MajOp, PatLeaf ImmPred, dag ins>
     let Inst{4-0}   = src1;
   }
 
-let isCodeGenOnly = 0 in
 def M4_mpyri_addr_u2 : T_AddMpy<0b0, u6_2ImmPred,
                        (ins IntRegs:$src1, u6_2Imm:$src2, IntRegs:$src3)>;
 
 let isExtendable = 1, opExtentBits = 6, opExtendable = 3,
-    CextOpcode = "ADD_MPY", InputType = "imm", isCodeGenOnly = 0 in
+    CextOpcode = "ADD_MPY", InputType = "imm" in
 def M4_mpyri_addr : T_AddMpy<0b1, u6ExtPred,
                     (ins IntRegs:$src1, IntRegs:$src3, u6Ext:$src2)>, ImmRegRel;
 
 // Rx=add(Ru,mpyi(Rx,Rs))
 let validSubTargets = HasV4SubT, CextOpcode = "ADD_MPY", InputType = "reg",
-    hasNewValue = 1, isCodeGenOnly = 0 in
+    hasNewValue = 1 in
 def M4_mpyrr_addr: MInst_acc <(outs IntRegs:$Rx),
                               (ins IntRegs:$Ru, IntRegs:$_src_, IntRegs:$Rs),
   "$Rx = add($Ru, mpyi($_src_, $Rs))",
@@ -2341,57 +2306,42 @@ def : Pat <(add (mul (i32 IntRegs:$src2), (i32 IntRegs:$src3)),
 
 // Vector reduce multiply word by signed half (32x16)
 //Rdd=vrmpyweh(Rss,Rtt)[:<<1]
-let isCodeGenOnly = 0 in {
 def M4_vrmpyeh_s0 : T_M2_vmpy<"vrmpyweh", 0b010, 0b100, 0, 0, 0>;
 def M4_vrmpyeh_s1 : T_M2_vmpy<"vrmpyweh", 0b110, 0b100, 1, 0, 0>;
-}
 
 //Rdd=vrmpywoh(Rss,Rtt)[:<<1]
-let isCodeGenOnly = 0 in {
 def M4_vrmpyoh_s0 : T_M2_vmpy<"vrmpywoh", 0b001, 0b010, 0, 0, 0>;
 def M4_vrmpyoh_s1 : T_M2_vmpy<"vrmpywoh", 0b101, 0b010, 1, 0, 0>;
-}
+
 //Rdd+=vrmpyweh(Rss,Rtt)[:<<1]
-let isCodeGenOnly = 0 in {
 def M4_vrmpyeh_acc_s0: T_M2_vmpy_acc<"vrmpyweh", 0b001, 0b110, 0, 0>;
 def M4_vrmpyeh_acc_s1: T_M2_vmpy_acc<"vrmpyweh", 0b101, 0b110, 1, 0>;
-}
 
 //Rdd=vrmpywoh(Rss,Rtt)[:<<1]
-let isCodeGenOnly = 0 in {
 def M4_vrmpyoh_acc_s0: T_M2_vmpy_acc<"vrmpywoh", 0b011, 0b110, 0, 0>;
 def M4_vrmpyoh_acc_s1: T_M2_vmpy_acc<"vrmpywoh", 0b111, 0b110, 1, 0>;
-}
 
 // Vector multiply halfwords, signed by unsigned
 // Rdd=vmpyhsu(Rs,Rt)[:<<]:sat
-let isCodeGenOnly = 0 in {
 def M2_vmpy2su_s0 : T_XTYPE_mpy64 < "vmpyhsu", 0b000, 0b111, 1, 0, 0>;
 def M2_vmpy2su_s1 : T_XTYPE_mpy64 < "vmpyhsu", 0b100, 0b111, 1, 1, 0>;
-}
 
 // Rxx+=vmpyhsu(Rs,Rt)[:<<1]:sat
-let isCodeGenOnly = 0 in {
 def M2_vmac2su_s0 : T_XTYPE_mpy64_acc < "vmpyhsu", "+", 0b011, 0b101, 1, 0, 0>;
 def M2_vmac2su_s1 : T_XTYPE_mpy64_acc < "vmpyhsu", "+", 0b111, 0b101, 1, 1, 0>;
-}
 
 // Vector polynomial multiply halfwords
 // Rdd=vpmpyh(Rs,Rt)
-let isCodeGenOnly = 0 in
 def M4_vpmpyh : T_XTYPE_mpy64 < "vpmpyh", 0b110, 0b111, 0, 0, 0>;
 
 // Rxx^=vpmpyh(Rs,Rt)
-let isCodeGenOnly = 0 in
 def M4_vpmpyh_acc : T_XTYPE_mpy64_acc < "vpmpyh", "^", 0b101, 0b111, 0, 0, 0>;
 
 // Polynomial multiply words
 // Rdd=pmpyw(Rs,Rt)
-let isCodeGenOnly = 0 in
 def M4_pmpyw : T_XTYPE_mpy64 < "pmpyw", 0b010, 0b111, 0, 0, 0>;
 
 // Rxx^=pmpyw(Rs,Rt)
-let isCodeGenOnly = 0 in
 def M4_pmpyw_acc  : T_XTYPE_mpy64_acc < "pmpyw", "^", 0b001, 0b111, 0, 0, 0>;
 
 //===----------------------------------------------------------------------===//
@@ -2430,33 +2380,25 @@ class T_vcmpImm <string Str, bits<2> cmpOp, bits<2> minOp, Operand ImmOprnd>
   }
 
 // Vector compare bytes
-let isCodeGenOnly = 0 in
 def A4_vcmpbgt   : T_vcmp <"vcmpb.gt", 0b1010>;
 def: T_vcmp_pat<A4_vcmpbgt, setgt, v8i8>;
 
 let AsmString = "$Pd = any8(vcmpb.eq($Rss, $Rtt))" in
-let isCodeGenOnly = 0 in
 def A4_vcmpbeq_any : T_vcmp <"any8(vcmpb.gt", 0b1000>;
 
-let isCodeGenOnly = 0 in {
 def A4_vcmpbeqi  : T_vcmpImm <"vcmpb.eq",  0b00, 0b00, u8Imm>;
 def A4_vcmpbgti  : T_vcmpImm <"vcmpb.gt",  0b01, 0b00, s8Imm>;
 def A4_vcmpbgtui : T_vcmpImm <"vcmpb.gtu", 0b10, 0b00, u7Imm>;
-}
 
 // Vector compare halfwords
-let isCodeGenOnly = 0 in {
 def A4_vcmpheqi  : T_vcmpImm <"vcmph.eq",  0b00, 0b01, s8Imm>;
 def A4_vcmphgti  : T_vcmpImm <"vcmph.gt",  0b01, 0b01, s8Imm>;
 def A4_vcmphgtui : T_vcmpImm <"vcmph.gtu", 0b10, 0b01, u7Imm>;
-}
 
 // Vector compare words
-let isCodeGenOnly = 0 in {
 def A4_vcmpweqi  : T_vcmpImm <"vcmpw.eq",  0b00, 0b10, s8Imm>;
 def A4_vcmpwgti  : T_vcmpImm <"vcmpw.gt",  0b01, 0b10, s8Imm>;
 def A4_vcmpwgtui : T_vcmpImm <"vcmpw.gtu", 0b10, 0b10, u7Imm>;
-}
 
 //===----------------------------------------------------------------------===//
 // XTYPE/SHIFT +
@@ -2499,35 +2441,33 @@ multiclass T_ShiftOperate<string mnemonic, SDNode Op, bits<2> MajOp,
   def _lsr_ri : T_S4_ShiftOperate<mnemonic, "lsr", Op, srl, 1, MajOp, Itin>;
 }
 
-let AddedComplexity = 200, isCodeGenOnly = 0 in {
+let AddedComplexity = 200 in {
   defm S4_addi : T_ShiftOperate<"add", add, 0b10, ALU64_tc_2_SLOT23>;
   defm S4_andi : T_ShiftOperate<"and", and, 0b00, ALU64_tc_2_SLOT23>;
 }
 
-let AddedComplexity = 30, isCodeGenOnly = 0 in
+let AddedComplexity = 30 in
 defm S4_ori  : T_ShiftOperate<"or",  or,  0b01, ALU64_tc_1_SLOT23>;
 
-let isCodeGenOnly = 0 in
 defm S4_subi : T_ShiftOperate<"sub", sub, 0b11, ALU64_tc_1_SLOT23>;
 
 // Vector conditional negate
 // Rdd=vcnegh(Rss,Rt)
-let Defs = [USR_OVF], Itinerary = S_3op_tc_2_SLOT23, isCodeGenOnly = 0 in
+let Defs = [USR_OVF], Itinerary = S_3op_tc_2_SLOT23 in
 def S2_vcnegh   : T_S3op_shiftVect < "vcnegh",   0b11, 0b01>;
 
 // Rd=[cround|round](Rs,Rt)
-let hasNewValue = 1, Itinerary = S_3op_tc_2_SLOT23, isCodeGenOnly = 0 in {
+let hasNewValue = 1, Itinerary = S_3op_tc_2_SLOT23 in {
   def A4_cround_rr    : T_S3op_3 < "cround", IntRegs, 0b11, 0b00>;
   def A4_round_rr     : T_S3op_3 < "round", IntRegs, 0b11, 0b10>;
 }
 
 // Rd=round(Rs,Rt):sat
-let hasNewValue = 1, Defs = [USR_OVF], Itinerary = S_3op_tc_2_SLOT23,
-    isCodeGenOnly = 0 in
+let hasNewValue = 1, Defs = [USR_OVF], Itinerary = S_3op_tc_2_SLOT23 in
 def A4_round_rr_sat : T_S3op_3 < "round", IntRegs, 0b11, 0b11, 1>;
 
 // Rd=[cmpyiwh|cmpyrwh](Rss,Rt):<<1:rnd:sat
-let Defs = [USR_OVF], Itinerary = S_3op_tc_3x_SLOT23, isCodeGenOnly = 0 in {
+let Defs = [USR_OVF], Itinerary = S_3op_tc_3x_SLOT23 in {
   def M4_cmpyi_wh     : T_S3op_8<"cmpyiwh", 0b100, 1, 1, 1>;
   def M4_cmpyr_wh     : T_S3op_8<"cmpyrwh", 0b110, 1, 1, 1>;
 }
@@ -2554,10 +2494,8 @@ class T_S3op_carry <string mnemonic, bits<3> MajOp>
     let Inst{4-0}   = Rdd;
   }
 
-let isCodeGenOnly = 0 in {
 def A4_addp_c : T_S3op_carry < "add", 0b110 >;
 def A4_subp_c : T_S3op_carry < "sub", 0b111 >;
-}
 
 let Itinerary = S_3op_tc_3_SLOT23, hasSideEffects = 0 in
 class T_S3op_6 <string mnemonic, bits<3> MinOp, bit isUnsigned>
@@ -2581,32 +2519,26 @@ class T_S3op_6 <string mnemonic, bits<3> MinOp, bit isUnsigned>
 
 // Vector reduce maximum halfwords
 // Rxx=vrmax[u]h(Rss,Ru)
-let isCodeGenOnly = 0 in {
 def A4_vrmaxh  : T_S3op_6 < "vrmaxh",  0b001, 0>;
 def A4_vrmaxuh : T_S3op_6 < "vrmaxuh", 0b001, 1>;
-}
+
 // Vector reduce maximum words
 // Rxx=vrmax[u]w(Rss,Ru)
-let isCodeGenOnly = 0 in {
 def A4_vrmaxw  : T_S3op_6 < "vrmaxw",  0b010, 0>;
 def A4_vrmaxuw : T_S3op_6 < "vrmaxuw", 0b010, 1>;
-}
+
 // Vector reduce minimum halfwords
 // Rxx=vrmin[u]h(Rss,Ru)
-let isCodeGenOnly = 0 in {
 def A4_vrminh  : T_S3op_6 < "vrminh",  0b101, 0>;
 def A4_vrminuh : T_S3op_6 < "vrminuh", 0b101, 1>;
-}
 
 // Vector reduce minimum words
 // Rxx=vrmin[u]w(Rss,Ru)
-let isCodeGenOnly = 0 in {
 def A4_vrminw  : T_S3op_6 < "vrminw",  0b110, 0>;
 def A4_vrminuw : T_S3op_6 < "vrminuw", 0b110, 1>;
-}
 
 // Shift an immediate left by register amount.
-let hasNewValue = 1, hasSideEffects = 0, isCodeGenOnly = 0 in
+let hasNewValue = 1, hasSideEffects = 0 in
 def S4_lsli: SInst <(outs IntRegs:$Rd), (ins s6Imm:$s6, IntRegs:$Rt),
   "$Rd = lsl(#$s6, $Rt)" ,
   [(set (i32 IntRegs:$Rd), (shl s6ImmPred:$s6,
@@ -2791,13 +2723,13 @@ multiclass MemOp_base <string opc, bits<2> opcBits, Operand ImmOp> {
 // Define MemOp instructions.
 let isExtendable = 1, opExtendable = 1, isExtentSigned = 0,
     validSubTargets =HasV4SubT in {
-  let opExtentBits = 6, accessSize = ByteAccess, isCodeGenOnly = 0 in
+  let opExtentBits = 6, accessSize = ByteAccess in
   defm memopb_io : MemOp_base <"memb", 0b00, u6_0Ext>;
 
-  let opExtentBits = 7, accessSize = HalfWordAccess, isCodeGenOnly = 0 in
+  let opExtentBits = 7, accessSize = HalfWordAccess in
   defm memoph_io : MemOp_base <"memh", 0b01, u6_1Ext>;
 
-  let opExtentBits = 8, accessSize = WordAccess, isCodeGenOnly = 0 in
+  let opExtentBits = 8, accessSize = WordAccess in
   defm memopw_io : MemOp_base <"memw", 0b10, u6_2Ext>;
 }
 
@@ -3016,11 +2948,9 @@ let Predicates = [HasV4T, UseMEMOP] in {
 // Pd=cmpb.eq(Rs,#u8)
 
 // p=!cmp.eq(r1,#s10)
-let isCodeGenOnly = 0 in {
 def C4_cmpneqi  : T_CMP <"cmp.eq",  0b00, 1, s10Ext>;
 def C4_cmpltei  : T_CMP <"cmp.gt",  0b01, 1, s10Ext>;
 def C4_cmplteui : T_CMP <"cmp.gtu", 0b10, 1, u9Ext>;
-}
 
 def : T_CMP_pat <C4_cmpneqi,  setne,  s10ExtPred>;
 def : T_CMP_pat <C4_cmpltei,  setle,  s10ExtPred>;
@@ -3302,7 +3232,7 @@ multiclass LD_MISC_L4_RETURN<string mnemonic> {
 
 let isReturn = 1, isTerminator = 1,
     Defs = [R29, R30, R31, PC], Uses = [R30], hasSideEffects = 0,
-    validSubTargets = HasV4SubT, isCodeGenOnly = 0 in
+    validSubTargets = HasV4SubT in
 defm L4_return: LD_MISC_L4_RETURN <"dealloc_return">, PredNewRel;
 
 // Restore registers and dealloc return function call.
@@ -3545,22 +3475,22 @@ multiclass ST_Abs_NV <string mnemonic, string CextOp, Operand ImmOp,
 //===----------------------------------------------------------------------===//
 // Stores with absolute addressing
 //===----------------------------------------------------------------------===//
-let accessSize = ByteAccess, isCodeGenOnly = 0 in
+let accessSize = ByteAccess in
 defm storerb : ST_Abs    <"memb", "STrib", IntRegs, u16_0Imm, 0b00>,
                ST_Abs_NV <"memb", "STrib", u16_0Imm, 0b00>;
 
-let accessSize = HalfWordAccess, isCodeGenOnly = 0 in
+let accessSize = HalfWordAccess in
 defm storerh : ST_Abs    <"memh", "STrih", IntRegs, u16_1Imm, 0b01>,
                ST_Abs_NV <"memh", "STrih", u16_1Imm, 0b01>;
 
-let accessSize = WordAccess, isCodeGenOnly = 0 in
+let accessSize = WordAccess in
 defm storeri : ST_Abs    <"memw", "STriw", IntRegs, u16_2Imm, 0b10>,
                ST_Abs_NV <"memw", "STriw", u16_2Imm, 0b10>;
 
-let isNVStorable = 0, accessSize = DoubleWordAccess, isCodeGenOnly = 0 in
+let isNVStorable = 0, accessSize = DoubleWordAccess in
 defm storerd : ST_Abs <"memd", "STrid", DoubleRegs, u16_3Imm, 0b11>;
 
-let isNVStorable = 0, accessSize = HalfWordAccess, isCodeGenOnly = 0 in
+let isNVStorable = 0, accessSize = HalfWordAccess in
 defm storerf : ST_Abs <"memh", "STrif", IntRegs, u16_1Imm, 0b01, 1>;
 
 //===----------------------------------------------------------------------===//
@@ -3744,20 +3674,20 @@ multiclass LD_Abs<string mnemonic, string CextOp, RegisterClass RC,
   }
 }
 
-let accessSize = ByteAccess, hasNewValue = 1, isCodeGenOnly = 0 in {
+let accessSize = ByteAccess, hasNewValue = 1 in {
   defm loadrb  : LD_Abs<"memb",  "LDrib",  IntRegs, u16_0Imm, 0b000>;
   defm loadrub : LD_Abs<"memub", "LDriub", IntRegs, u16_0Imm, 0b001>;
 }
 
-let accessSize = HalfWordAccess, hasNewValue = 1, isCodeGenOnly = 0 in {
+let accessSize = HalfWordAccess, hasNewValue = 1 in {
   defm loadrh  : LD_Abs<"memh",  "LDrih",  IntRegs, u16_1Imm, 0b010>;
   defm loadruh : LD_Abs<"memuh", "LDriuh", IntRegs, u16_1Imm, 0b011>;
 }
 
-let accessSize = WordAccess, hasNewValue = 1, isCodeGenOnly = 0 in
+let accessSize = WordAccess, hasNewValue = 1 in
 defm loadri  : LD_Abs<"memw",  "LDriw",  IntRegs, u16_2Imm, 0b100>;
 
-let accessSize = DoubleWordAccess, isCodeGenOnly = 0 in
+let accessSize = DoubleWordAccess in
 defm loadrd  : LD_Abs<"memd",  "LDrid", DoubleRegs, u16_3Imm, 0b110>;
 
 //===----------------------------------------------------------------------===//
@@ -3940,7 +3870,7 @@ def: Storea_pat<SwapSt<atomic_store_64>, I64, addrgp, S2_storerdabs>;
 //===----------------------------------------------------------------------===//
 
 // A4_boundscheck_lo: Detect if a register is within bounds.
-let hasSideEffects = 0, isCodeGenOnly = 0 in
+let hasSideEffects = 0 in
 def A4_boundscheck_lo: ALU64Inst <
   (outs PredRegs:$Pd),
   (ins DoubleRegs:$Rss, DoubleRegs:$Rtt),
@@ -3960,7 +3890,7 @@ def A4_boundscheck_lo: ALU64Inst <
   }
 
 // A4_boundscheck_hi: Detect if a register is within bounds.
-let hasSideEffects = 0, isCodeGenOnly = 0 in
+let hasSideEffects = 0 in
 def A4_boundscheck_hi: ALU64Inst <
   (outs PredRegs:$Pd),
   (ins DoubleRegs:$Rss, DoubleRegs:$Rtt),
@@ -3985,7 +3915,7 @@ def A4_boundscheck : MInst <
   "$Pd=boundscheck($Rs,$Rtt)">;
 
 // A4_tlbmatch: Detect if a VA/ASID matches a TLB entry.
-let isPredicateLate = 1, hasSideEffects = 0, isCodeGenOnly = 0 in
+let isPredicateLate = 1, hasSideEffects = 0 in
 def A4_tlbmatch : ALU64Inst<(outs PredRegs:$Pd),
   (ins DoubleRegs:$Rs, IntRegs:$Rt),
   "$Pd = tlbmatch($Rs, $Rt)",
@@ -4012,7 +3942,7 @@ def HexagonDCFETCH : SDNode<"HexagonISD::DCFETCH", SDTHexagonDCFETCH,
 
 // Use LD0Inst for dcfetch, but set "mayLoad" to 0 because this doesn't
 // really do a load.
-let hasSideEffects = 1, mayLoad = 0, isCodeGenOnly = 0 in
+let hasSideEffects = 1, mayLoad = 0 in
 def Y2_dcfetchbo : LD0Inst<(outs), (ins IntRegs:$Rs, u11_3Imm:$u11_3),
       "dcfetch($Rs + #$u11_3)",
       [(HexagonDCFETCH IntRegs:$Rs, u11_3ImmPred:$u11_3)],
@@ -4062,14 +3992,14 @@ class CJInst_tstbit_R0<string px, bit np, string tnt>
   let Inst{7-1} = r9_2{8-2};
 }
 
-let Defs = [PC, P0], Uses = [P0], isCodeGenOnly = 0 in {
+let Defs = [PC, P0], Uses = [P0] in {
   def J4_tstbit0_tp0_jump_nt : CJInst_tstbit_R0<"p0", 0, "nt">;
   def J4_tstbit0_tp0_jump_t : CJInst_tstbit_R0<"p0", 0, "t">;
   def J4_tstbit0_fp0_jump_nt : CJInst_tstbit_R0<"p0", 1, "nt">;
   def J4_tstbit0_fp0_jump_t : CJInst_tstbit_R0<"p0", 1, "t">;
 }
 
-let Defs = [PC, P1], Uses = [P1], isCodeGenOnly = 0 in {
+let Defs = [PC, P1], Uses = [P1] in {
   def J4_tstbit0_tp1_jump_nt : CJInst_tstbit_R0<"p1", 0, "nt">;
   def J4_tstbit0_tp1_jump_t : CJInst_tstbit_R0<"p1", 0, "t">;
   def J4_tstbit0_fp1_jump_nt : CJInst_tstbit_R0<"p1", 1, "nt">;
@@ -4128,11 +4058,9 @@ multiclass T_pnp_CJInst_RR<string op>{
   defm J4_cmp#NAME#_f : T_tnt_CJInst_RR<op, 1>;
 }
 // TypeCJ Instructions compare RR and jump
-let isCodeGenOnly = 0 in {
 defm eq : T_pnp_CJInst_RR<"eq">;
 defm gt : T_pnp_CJInst_RR<"gt">;
 defm gtu : T_pnp_CJInst_RR<"gtu">;
-}
 
 let isBranch = 1, hasSideEffects = 0, isExtentSigned = 1,
     isPredicated = 1, isPredicatedNew = 1, isExtendable = 1, opExtentBits = 11,
@@ -4185,11 +4113,9 @@ multiclass T_pnp_CJInst_RU5<string op>{
   defm J4_cmp#NAME#i_f : T_tnt_CJInst_RU5<op, 1>;
 }
 // TypeCJ Instructions compare RI and jump
-let isCodeGenOnly = 0 in {
 defm eq : T_pnp_CJInst_RU5<"eq">;
 defm gt : T_pnp_CJInst_RU5<"gt">;
 defm gtu : T_pnp_CJInst_RU5<"gtu">;
-}
 
 let isBranch = 1, hasSideEffects = 0, isExtentSigned = 1,
     isPredicated = 1, isPredicatedFalse = 1, isPredicatedNew = 1,
@@ -4241,16 +4167,13 @@ multiclass T_pnp_CJInst_Rn1<string op>{
   defm J4_cmp#NAME#n1_f : T_tnt_CJInst_Rn1<op, 1>;
 }
 // TypeCJ Instructions compare -1 and jump
-let isCodeGenOnly = 0 in {
 defm eq : T_pnp_CJInst_Rn1<"eq">;
 defm gt : T_pnp_CJInst_Rn1<"gt">;
-}
 
 // J4_jumpseti: Direct unconditional jump and set register to immediate.
 let Defs = [PC], isBranch = 1, hasSideEffects = 0, hasNewValue = 1,
     isExtentSigned = 1, opNewValue = 0, isExtendable = 1, opExtentBits = 11,
-    opExtentAlign = 2, opExtendable = 2, validSubTargets = HasV4SubT,
-    isCodeGenOnly = 0 in
+    opExtentAlign = 2, opExtendable = 2, validSubTargets = HasV4SubT in
 def J4_jumpseti: CJInst <
   (outs IntRegs:$Rd),
   (ins u6Imm:$U6, brtarget:$r9_2),
@@ -4270,8 +4193,7 @@ def J4_jumpseti: CJInst <
 // J4_jumpsetr: Direct unconditional jump and transfer register.
 let Defs = [PC], isBranch = 1, hasSideEffects = 0, hasNewValue = 1,
     isExtentSigned = 1, opNewValue = 0, isExtendable = 1, opExtentBits = 11,
-    opExtentAlign = 2, opExtendable = 2, validSubTargets = HasV4SubT,
-    isCodeGenOnly = 0 in
+    opExtentAlign = 2, opExtendable = 2, validSubTargets = HasV4SubT in
 def J4_jumpsetr: CJInst <
   (outs IntRegs:$Rd),
   (ins IntRegs:$Rs, brtarget:$r9_2),

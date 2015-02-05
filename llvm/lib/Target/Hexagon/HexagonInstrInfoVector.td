@@ -44,7 +44,6 @@ class vshift_v2i32<SDNode Op, string Str, bits<3>MajOp, bits<3>MinOp>
   let Inst{12-8} = src2;
 }
 
-let isCodeGenOnly = 0 in {
 def S2_asr_i_vw : vshift_v2i32<sra, "vasrw", 0b010, 0b000>;
 def S2_lsr_i_vw : vshift_v2i32<srl, "vlsrw", 0b010, 0b001>;
 def S2_asl_i_vw : vshift_v2i32<shl, "vaslw", 0b010, 0b010>;
@@ -64,4 +63,3 @@ def S2_asr_r_vh : T_S3op_shiftVect < "vasrh", 0b01, 0b00>;
 def S2_lsr_r_vh : T_S3op_shiftVect < "vlsrh", 0b01, 0b01>;
 def S2_asl_r_vh : T_S3op_shiftVect < "vaslh", 0b01, 0b10>;
 def S2_lsl_r_vh : T_S3op_shiftVect < "vlslh", 0b01, 0b11>;
-}
