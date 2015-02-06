@@ -82,8 +82,6 @@ void MemoryDependenceAnalysis::releaseMemory() {
   PredCache->clear();
 }
 
-
-
 /// getAnalysisUsage - Does not modify anything.  It uses Alias Analysis.
 ///
 void MemoryDependenceAnalysis::getAnalysisUsage(AnalysisUsage &AU) const {
