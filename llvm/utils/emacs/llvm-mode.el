@@ -23,7 +23,7 @@
    ;; Unnamed variable slots
    '("%[-]?[0-9]+" . font-lock-variable-name-face)
    ;; Types
-   `(,(regexp-opt '("void" "i1" "i8" "i16" "i32" "i64" "i128" "float" "double" "type" "label" "opaque") 'words) . font-lock-type-face)
+   `(,(regexp-opt '("void" "i1" "i8" "i16" "i32" "i64" "i128" "float" "double" "type" "label" "opaque") 'symbol) . font-lock-type-face)
    ;; Integer literals
    '("\\b[-]?[0-9]+\\b" . font-lock-preprocessor-face)
    ;; Floating point constants
@@ -35,28 +35,28 @@
                     "define" "global" "constant" "const" "internal" "linkonce" "linkonce_odr"
                     "weak" "weak_odr" "appending" "uninitialized" "implementation" "..."
                     "null" "undef" "to" "except" "not" "target" "endian" "little" "big"
-                    "pointersize" "volatile" "fastcc" "coldcc" "cc") 'words) . font-lock-keyword-face)
+                    "pointersize" "volatile" "fastcc" "coldcc" "cc") 'symbols) . font-lock-keyword-face)
    ;; Arithmetic and Logical Operators
    `(,(regexp-opt '("add" "sub" "mul" "sdiv" "udiv" "urem" "srem" "and" "or" "xor"
-                    "setne" "seteq" "setlt" "setgt" "setle" "setge") 'words) . font-lock-keyword-face)
+                    "setne" "seteq" "setlt" "setgt" "setle" "setge") 'symbols) . font-lock-keyword-face)
    ;; Floating-point operators
-   `(,(regexp-opt '("fadd" "fsub" "fmul" "fdiv" "frem") 'words) . font-lock-keyword-face)
+   `(,(regexp-opt '("fadd" "fsub" "fmul" "fdiv" "frem") 'symbols) . font-lock-keyword-face)
    ;; Special instructions
-   `(,(regexp-opt '("phi" "tail" "call" "select" "to" "shl" "lshr" "ashr" "fcmp" "icmp" "va_arg" "landingpad") 'words) . font-lock-keyword-face)
+   `(,(regexp-opt '("phi" "tail" "call" "select" "to" "shl" "lshr" "ashr" "fcmp" "icmp" "va_arg" "landingpad") 'symbols) . font-lock-keyword-face)
    ;; Control instructions
-   `(,(regexp-opt '("ret" "br" "switch" "invoke" "resume" "unwind" "unreachable" "indirectbr") 'words) . font-lock-keyword-face)
+   `(,(regexp-opt '("ret" "br" "switch" "invoke" "resume" "unwind" "unreachable" "indirectbr") 'symbols) . font-lock-keyword-face)
    ;; Memory operators
-   `(,(regexp-opt '("malloc" "alloca" "free" "load" "store" "getelementptr" "fence" "cmpxchg" "atomicrmw") 'words) . font-lock-keyword-face)
+   `(,(regexp-opt '("malloc" "alloca" "free" "load" "store" "getelementptr" "fence" "cmpxchg" "atomicrmw") 'symbols) . font-lock-keyword-face)
    ;; Casts
-   `(,(regexp-opt '("bitcast" "inttoptr" "ptrtoint" "trunc" "zext" "sext" "fptrunc" "fpext" "fptoui" "fptosi" "uitofp" "sitofp" "addrspacecast") 'words) . font-lock-keyword-face)
+   `(,(regexp-opt '("bitcast" "inttoptr" "ptrtoint" "trunc" "zext" "sext" "fptrunc" "fpext" "fptoui" "fptosi" "uitofp" "sitofp" "addrspacecast") 'symbols) . font-lock-keyword-face)
    ;; Vector ops
-   `(,(regexp-opt '("extractelement" "insertelement" "shufflevector") 'words) . font-lock-keyword-face)
+   `(,(regexp-opt '("extractelement" "insertelement" "shufflevector") 'symbols) . font-lock-keyword-face)
    ;; Aggregate ops
-   `(,(regexp-opt '("extractvalue" "insertvalue") 'words) . font-lock-keyword-face)
+   `(,(regexp-opt '("extractvalue" "insertvalue") 'symbols) . font-lock-keyword-face)
    ;; Metadata types
-   `(,(regexp-opt '("distinct") 'words) . font-lock-keyword-face)
+   `(,(regexp-opt '("distinct") 'symbols) . font-lock-keyword-face)
    ;; Use-list order directives
-   `(,(regexp-opt '("uselistorder" "uselistorder_bb") 'words) . font-lock-keyword-face)
+   `(,(regexp-opt '("uselistorder" "uselistorder_bb") 'symbols) . font-lock-keyword-face)
 
    )
   "Syntax highlighting for LLVM."
