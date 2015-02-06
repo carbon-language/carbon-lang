@@ -321,6 +321,18 @@ bool GnuLdDriver::applyEmulation(llvm::Triple &triple,
   return true;
 }
 
+void GnuLdDriver::addPlatformSearchDirs(ELFLinkingContext &ctx,
+                                        llvm::Triple &triple,
+                                        llvm::Triple &baseTriple) {
+  if (triple.getOS() == llvm::Triple::NetBSD &&
+      triple.getArch() == llvm::Triple::x86 &&
+      baseTriple.getArch() == llvm::Triple::x86_64) {
+    ctx.addSearchPath("=/usr/lib/i386");
+    return;
+  }
+  ctx.addSearchPath("=/usr/lib");
+}
+
 std::unique_ptr<ELFLinkingContext>
 GnuLdDriver::createELFLinkingContext(llvm::Triple triple) {
   std::unique_ptr<ELFLinkingContext> p;
@@ -404,7 +416,7 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
 
   // Add the default search directory specific to the target.
   if (!(hasNoStdLib = parsedArgs->hasArg(OPT_nostdlib)))
-    ctx->addDefaultSearchDirs(baseTriple);
+    addPlatformSearchDirs(*ctx, triple, baseTriple);
 
   // Handle --demangle option(For compatibility)
   if (parsedArgs->getLastArg(OPT_demangle))

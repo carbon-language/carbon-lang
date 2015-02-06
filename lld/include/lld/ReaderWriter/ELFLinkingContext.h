@@ -292,11 +292,6 @@ public:
   bool alignSegments() const { return _alignSegments; }
   void setAlignSegments(bool align) { _alignSegments = align; }
 
-  /// \brief add platform specific search directories.
-  virtual void addDefaultSearchDirs(llvm::Triple & /*triple*/) {
-    addSearchPath("=/usr/lib");
-  }
-
   // We can parse several linker scripts via command line whose ASTs are stored
   // in the current linking context via addLinkerScript().
   void addLinkerScript(std::unique_ptr<script::Parser> script) {
