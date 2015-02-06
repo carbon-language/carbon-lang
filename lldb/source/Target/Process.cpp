@@ -3121,6 +3121,11 @@ Process::Launch (ProcessLaunchInfo &launch_info)
                             StartPrivateStateThread ();
 
                         m_stop_info_override_callback = GetTarget().GetArchitecture().GetStopInfoOverrideCallback();
+
+                        // Target was stopped at entry as was intended. Need to notify the listeners
+                        // about it.
+                        if (launch_info.GetFlags().Test(eLaunchFlagStopAtEntry) == true)
+                            HandlePrivateEvent(event_sp);
                     }
                     else if (state == eStateExited)
                     {

@@ -49,7 +49,6 @@ class MiNotificationTestCase(lldbmi_testcase.MiTestCaseBase):
 
     @lldbmi_test
     @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
-    @unittest2.skip("reviews.llvm.org/D7273: requires this patch")
     def test_lldbmi_stopped_when_stopatentry_local(self):
         """Test that 'lldb-mi --interpreter' notifies after it was stopped on entry (local)."""
 
@@ -64,11 +63,10 @@ class MiNotificationTestCase(lldbmi_testcase.MiTestCaseBase):
         self.expect("\^done")
 
         # Test that *stopped is printed
-        self.expect("\*stopped,reason=\"signal-received\",signal=\"17\",thread-id=\"1\",stopped-threads=\"all\"")
+        self.expect("\*stopped,reason=\"signal-received\",signal=\"17\",stopped-threads=\"all\"")
 
     @lldbmi_test
     @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
-    @unittest2.skip("reviews.llvm.org/D7273: requires this patch")
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     def test_lldbmi_stopped_when_stopatentry_remote(self):
         """Test that 'lldb-mi --interpreter' notifies after it was stopped on entry (remote)."""
@@ -103,7 +101,12 @@ class MiNotificationTestCase(lldbmi_testcase.MiTestCaseBase):
             self.expect("\^done")
 
             # Test that *stopped is printed
-            self.expect("\*stopped,reason=\"signal-received\",signal=\"17\",thread-id=\"1\",stopped-threads=\"all\"")
+            self.expect("\*stopped,reason=\"signal-received\",signal=\"17\",stopped-threads=\"all\"")
+
+            # Exit
+            self.runCmd("-gdb-exit")
+            self.runCmd("") #FIXME lldb-mi hangs here on Linux; extra return is needed
+            self.expect("\^exit")
 
         finally:
             # Clean up
