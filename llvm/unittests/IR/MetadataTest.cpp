@@ -538,21 +538,20 @@ TEST_F(MDLocationTest, Overflow) {
     EXPECT_EQ(2u, L->getLine());
     EXPECT_EQ(7u, L->getColumn());
   }
-  unsigned U24 = 1u << 24;
   unsigned U16 = 1u << 16;
   {
-    MDLocation *L = MDLocation::get(Context, U24 - 1, U16 - 1, N);
-    EXPECT_EQ(U24 - 1, L->getLine());
+    MDLocation *L = MDLocation::get(Context, UINT32_MAX, U16 - 1, N);
+    EXPECT_EQ(UINT32_MAX, L->getLine());
     EXPECT_EQ(U16 - 1, L->getColumn());
   }
   {
-    MDLocation *L = MDLocation::get(Context, U24, U16, N);
-    EXPECT_EQ(0u, L->getLine());
+    MDLocation *L = MDLocation::get(Context, UINT32_MAX, U16, N);
+    EXPECT_EQ(UINT32_MAX, L->getLine());
     EXPECT_EQ(0u, L->getColumn());
   }
   {
-    MDLocation *L = MDLocation::get(Context, U24 + 1, U16 + 1, N);
-    EXPECT_EQ(0u, L->getLine());
+    MDLocation *L = MDLocation::get(Context, UINT32_MAX, U16 + 1, N);
+    EXPECT_EQ(UINT32_MAX, L->getLine());
     EXPECT_EQ(0u, L->getColumn());
   }
 }

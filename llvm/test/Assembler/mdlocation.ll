@@ -19,5 +19,5 @@
 !5 = !MDLocation(scope: !0)
 !6 = !MDLocation(scope: !0, column: 0, line: 0)
 
-; CHECK-NEXT: !4 = !MDLocation(line: 16777215, column: 65535, scope: !0)
-!7 = !MDLocation(line: 16777215, column: 65535, scope: !0)
+; CHECK-NEXT: !4 = !MDLocation(line: 4294967295, column: 65535, scope: !0)
+!7 = !MDLocation(line: 4294967295, column: 65535, scope: !0)

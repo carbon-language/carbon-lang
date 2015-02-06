@@ -2946,7 +2946,7 @@ struct MDUnsignedField : public MDFieldImpl<uint64_t> {
       : ImplTy(Default), Max(Max) {}
 };
 struct LineField : public MDUnsignedField {
-  LineField() : MDUnsignedField(0, UINT32_MAX >> 8) {}
+  LineField() : MDUnsignedField(0, UINT32_MAX) {}
 };
 struct ColumnField : public MDUnsignedField {
   ColumnField() : MDUnsignedField(0, UINT16_MAX) {}

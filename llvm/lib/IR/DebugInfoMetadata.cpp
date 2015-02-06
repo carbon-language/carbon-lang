@@ -24,17 +24,10 @@ MDLocation::MDLocation(LLVMContext &C, StorageType Storage, unsigned Line,
          "Expected a scope and optional inlined-at");
 
   // Set line and column.
-  assert(Line < (1u << 24) && "Expected 24-bit line");
   assert(Column < (1u << 16) && "Expected 16-bit column");
 
   SubclassData32 = Line;
   SubclassData16 = Column;
-}
-
-static void adjustLine(unsigned &Line) {
-  // Set to unknown on overflow.  Still use 24 bits for now.
-  if (Line >= (1u << 24))
-    Line = 0;
 }
 
 static void adjustColumn(unsigned &Column) {
@@ -47,8 +40,7 @@ MDLocation *MDLocation::getImpl(LLVMContext &Context, unsigned Line,
                                 unsigned Column, Metadata *Scope,
                                 Metadata *InlinedAt, StorageType Storage,
                                 bool ShouldCreate) {
-  // Fixup line/column.
-  adjustLine(Line);
+  // Fixup column.
   adjustColumn(Column);
 
   if (Storage == Uniqued) {

@@ -3,7 +3,7 @@
 !0 = !{}
 
 ; CHECK-NOT: error
-!1 = !MDLocation(line: 16777215, scope: !0)
+!1 = !MDLocation(line: 4294967295, scope: !0)
 
-; CHECK: <stdin>:[[@LINE+1]]:24: error: value for 'line' too large, limit is 16777215
-!2 = !MDLocation(line: 16777216, scope: !0)
+; CHECK: <stdin>:[[@LINE+1]]:24: error: value for 'line' too large, limit is 4294967295
+!2 = !MDLocation(line: 4294967296, scope: !0)
