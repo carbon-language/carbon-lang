@@ -45,6 +45,17 @@ static cl::opt<unsigned> UnrollMaxIterationsCountToAnalyze(
     cl::desc("Don't allow loop unrolling to simulate more than this number of"
              "iterations when checking full unroll profitability"));
 
+static cl::opt<unsigned> UnrollMinPercentOfOptimized(
+    "unroll-percent-of-optimized-for-complete-unroll", cl::init(20), cl::Hidden,
+    cl::desc("If complete unrolling could trigger further optimizations, and, "
+             "by that, remove the given percent of instructions, perform the "
+             "complete unroll even if it's beyond the threshold"));
+
+static cl::opt<unsigned> UnrollAbsoluteThreshold(
+    "unroll-absolute-threshold", cl::init(2000), cl::Hidden,
+    cl::desc("Don't unroll if the unrolled size is bigger than this threshold,"
+             " even if we can remove big portion of instructions later."));
+
 static cl::opt<unsigned>
 UnrollCount("unroll-count", cl::init(0), cl::Hidden,
   cl::desc("Use this unroll count for all loops including those with "
@@ -70,11 +81,16 @@ namespace {
     static char ID; // Pass ID, replacement for typeid
     LoopUnroll(int T = -1, int C = -1, int P = -1, int R = -1) : LoopPass(ID) {
       CurrentThreshold = (T == -1) ? UnrollThreshold : unsigned(T);
+      CurrentAbsoluteThreshold = UnrollAbsoluteThreshold;
+      CurrentMinPercentOfOptimized = UnrollMinPercentOfOptimized;
       CurrentCount = (C == -1) ? UnrollCount : unsigned(C);
       CurrentAllowPartial = (P == -1) ? UnrollAllowPartial : (bool)P;
       CurrentRuntime = (R == -1) ? UnrollRuntime : (bool)R;
 
       UserThreshold = (T != -1) || (UnrollThreshold.getNumOccurrences() > 0);
+      UserAbsoluteThreshold = (UnrollAbsoluteThreshold.getNumOccurrences() > 0);
+      UserPercentOfOptimized =
+          (UnrollMinPercentOfOptimized.getNumOccurrences() > 0);
       UserAllowPartial = (P != -1) ||
                          (UnrollAllowPartial.getNumOccurrences() > 0);
       UserRuntime = (R != -1) || (UnrollRuntime.getNumOccurrences() > 0);
@@ -98,10 +114,16 @@ namespace {
 
     unsigned CurrentCount;
     unsigned CurrentThreshold;
+    unsigned CurrentAbsoluteThreshold;
+    unsigned CurrentMinPercentOfOptimized;
     bool     CurrentAllowPartial;
     bool     CurrentRuntime;
     bool     UserCount;            // CurrentCount is user-specified.
     bool     UserThreshold;        // CurrentThreshold is user-specified.
+    bool UserAbsoluteThreshold;    // CurrentAbsoluteThreshold is
+                                   // user-specified.
+    bool UserPercentOfOptimized;   // CurrentMinPercentOfOptimized is
+                                   // user-specified.
     bool     UserAllowPartial;     // CurrentAllowPartial is user-specified.
     bool     UserRuntime;          // CurrentRuntime is user-specified.
 
@@ -133,6 +155,8 @@ namespace {
     void getUnrollingPreferences(Loop *L, const TargetTransformInfo &TTI,
                                  TargetTransformInfo::UnrollingPreferences &UP) {
       UP.Threshold = CurrentThreshold;
+      UP.AbsoluteThreshold = CurrentAbsoluteThreshold;
+      UP.MinPercentOfOptimized = CurrentMinPercentOfOptimized;
       UP.OptSizeThreshold = OptSizeUnrollThreshold;
       UP.PartialThreshold = CurrentThreshold;
       UP.PartialOptSizeThreshold = OptSizeUnrollThreshold;
@@ -160,13 +184,32 @@ namespace {
     void selectThresholds(const Loop *L, bool HasPragma,
                           const TargetTransformInfo::UnrollingPreferences &UP,
                           unsigned &Threshold, unsigned &PartialThreshold,
-                          unsigned NumberOfSimplifiedInstructions) {
+                          unsigned NumberOfOptimizedInstructions) {
       // Determine the current unrolling threshold.  While this is
       // normally set from UnrollThreshold, it is overridden to a
       // smaller value if the current function is marked as
       // optimize-for-size, and the unroll threshold was not user
       // specified.
       Threshold = UserThreshold ? CurrentThreshold : UP.Threshold;
+
+      // If we are allowed to completely unroll if we can remove M% of
+      // instructions, and we know that with complete unrolling we'll be able
+      // to kill N instructions, then we can afford to completely unroll loops
+      // with unrolled size up to N*100/M.
+      // Adjust the threshold according to that:
+      unsigned PercentOfOptimizedForCompleteUnroll =
+          UserPercentOfOptimized ? CurrentMinPercentOfOptimized
+                                 : UP.MinPercentOfOptimized;
+      unsigned AbsoluteThreshold = UserAbsoluteThreshold
+                                       ? CurrentAbsoluteThreshold
+                                       : UP.AbsoluteThreshold;
+      if (PercentOfOptimizedForCompleteUnroll)
+        Threshold = std::max<unsigned>(Threshold,
+                                       NumberOfOptimizedInstructions * 100 /
+                                           PercentOfOptimizedForCompleteUnroll);
+      // But don't allow unrolling loops bigger than absolute threshold.
+      Threshold = std::min<unsigned>(Threshold, AbsoluteThreshold);
+
       PartialThreshold = UserThreshold ? CurrentThreshold : UP.PartialThreshold;
       if (!UserThreshold &&
           L->getHeader()->getParent()->getAttributes().
@@ -186,7 +229,6 @@ namespace {
           PartialThreshold =
               std::max<unsigned>(PartialThreshold, PragmaUnrollThreshold);
       }
-      Threshold += NumberOfSimplifiedInstructions;
     }
   };
 }
