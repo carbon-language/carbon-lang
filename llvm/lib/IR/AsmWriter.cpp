@@ -1297,16 +1297,20 @@ static void writeMetadataAsOperand(raw_ostream &Out, const Metadata *MD,
   WriteAsOperandInternal(Out, MD, TypePrinter, Machine, Context);
 }
 
-static void writeGenericDebugNode(raw_ostream &Out, const GenericDebugNode *N,
-                                  TypePrinting *TypePrinter,
-                                  SlotTracker *Machine, const Module *Context) {
-  Out << "!GenericDebugNode(";
-  FieldSeparator FS;
+static void writeTag(raw_ostream &Out, FieldSeparator &FS, const DebugNode *N) {
   Out << FS << "tag: ";
   if (const char *Tag = dwarf::TagString(N->getTag()))
     Out << Tag;
   else
     Out << N->getTag();
+}
+
+static void writeGenericDebugNode(raw_ostream &Out, const GenericDebugNode *N,
+                                  TypePrinting *TypePrinter,
+                                  SlotTracker *Machine, const Module *Context) {
+  Out << "!GenericDebugNode(";
+  FieldSeparator FS;
+  writeTag(Out, FS, N);
   if (!N->getHeader().empty()) {
     Out << FS << "header: \"";
     PrintEscapedString(N->getHeader(), Out);
