@@ -366,28 +366,44 @@ private:
 };
 #endif // _LIBUNWIND_SUPPORT_COMPACT_UNWIND
 
-
 class _LIBUNWIND_HIDDEN AbstractUnwindCursor {
 public:
-  virtual             ~AbstractUnwindCursor() {}
-  virtual bool        validReg(int) = 0;
-  virtual unw_word_t  getReg(int) = 0;
-  virtual void        setReg(int, unw_word_t) = 0;
-  virtual bool        validFloatReg(int) = 0;
-  virtual unw_fpreg_t getFloatReg(int) = 0;
-  virtual void        setFloatReg(int, unw_fpreg_t) = 0;
-  virtual int         step() = 0;
-  virtual void        getInfo(unw_proc_info_t *) = 0;
-  virtual void        jumpto() = 0;
-  virtual bool        isSignalFrame() = 0;
-  virtual bool        getFunctionName(char *bf, size_t ln, unw_word_t *off) = 0;
-  virtual void        setInfoBasedOnIPRegister(bool isReturnAddr = false) = 0;
-  virtual const char *getRegisterName(int num) = 0;
+  virtual ~AbstractUnwindCursor() {}
+  virtual bool validReg(int) { _LIBUNWIND_ABORT("validReg not implemented"); }
+  virtual unw_word_t getReg(int) { _LIBUNWIND_ABORT("getReg not implemented"); }
+  virtual void setReg(int, unw_word_t) {
+    _LIBUNWIND_ABORT("setReg not implemented");
+  }
+  virtual bool validFloatReg(int) {
+    _LIBUNWIND_ABORT("validFloatReg not implemented");
+  }
+  virtual unw_fpreg_t getFloatReg(int) {
+    _LIBUNWIND_ABORT("getFloatReg not implemented");
+  }
+  virtual void setFloatReg(int, unw_fpreg_t) {
+    _LIBUNWIND_ABORT("setFloatReg not implemented");
+  }
+  virtual int step() { _LIBUNWIND_ABORT("step not implemented"); }
+  virtual void getInfo(unw_proc_info_t *) {
+    _LIBUNWIND_ABORT("getInfo not implemented");
+  }
+  virtual void jumpto() { _LIBUNWIND_ABORT("jumpto not implemented"); }
+  virtual bool isSignalFrame() {
+    _LIBUNWIND_ABORT("isSignalFrame not implemented");
+  }
+  virtual bool getFunctionName(char *, size_t, unw_word_t *) {
+    _LIBUNWIND_ABORT("getFunctionName not implemented");
+  }
+  virtual void setInfoBasedOnIPRegister(bool = false) {
+    _LIBUNWIND_ABORT("setInfoBasedOnIPRegister not implemented");
+  }
+  virtual const char *getRegisterName(int) {
+    _LIBUNWIND_ABORT("getRegisterName not implemented");
+  }
 #ifdef __arm__
-  virtual void        saveVFPAsX() = 0;
+  virtual void saveVFPAsX() { _LIBUNWIND_ABORT("saveVFPAsX not implemented"); }
 #endif
 };
-
 
 /// UnwindCursor contains all state (including all register values) during
 /// an unwind.  This is normally stack allocated inside a unw_cursor_t.
