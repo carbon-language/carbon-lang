@@ -316,10 +316,6 @@ public:
   /// Return the next ordinal and Increment it.
   virtual uint64_t getNextOrdinalAndIncrement() const { return _nextOrdinal++; }
 
-#ifndef NDEBUG
-  bool runRoundTripPass() const { return _runRoundTripPasses; }
-#endif
-
   // This function is called just before the Resolver kicks in.
   // Derived classes may use that chance to rearrange the input files.
   virtual void maybeSortInputFiles() {}
@@ -357,9 +353,6 @@ protected:
   bool _allowRemainingUndefines;
   bool _logInputFiles;
   bool _allowShlibUndefines;
-#ifndef NDEBUG
-  bool _runRoundTripPasses;
-#endif
   OutputFileType _outputFileType;
   std::vector<StringRef> _deadStripRoots;
   std::map<std::string, std::string> _aliasSymbols;
