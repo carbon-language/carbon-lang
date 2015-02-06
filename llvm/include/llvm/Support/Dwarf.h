@@ -749,6 +749,7 @@ const char *GDBIndexEntryLinkageString(GDBIndexEntryLinkage Linkage);
 /// @{
 unsigned getTag(StringRef TagString);
 unsigned getLanguage(StringRef LanguageString);
+unsigned getAttributeEncoding(StringRef EncodingString);
 /// @}
 
 /// \brief Returns the symbolic string representing Val when used as a value

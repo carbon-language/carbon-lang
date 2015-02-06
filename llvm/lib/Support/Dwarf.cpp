@@ -414,6 +414,13 @@ const char *llvm::dwarf::AttributeEncodingString(unsigned Encoding) {
   }
 }
 
+unsigned llvm::dwarf::getAttributeEncoding(StringRef EncodingString) {
+  return StringSwitch<unsigned>(EncodingString)
+#define HANDLE_DW_ATE(ID, NAME) .Case("DW_ATE_" #NAME, DW_ATE_##NAME)
+#include "llvm/Support/Dwarf.def"
+      .Default(0);
+}
+
 const char *llvm::dwarf::DecimalSignString(unsigned Sign) {
   switch (Sign) {
   case DW_DS_unsigned:                   return "DW_DS_unsigned";

@@ -79,4 +79,20 @@ TEST(DwarfTest, AttributeEncodingStringOnInvalid) {
   EXPECT_EQ(nullptr, AttributeEncodingString(DW_ATE_hi_user));
 }
 
+TEST(DwarfTest, getAttributeEncoding) {
+  // A couple of valid languages.
+  EXPECT_EQ(DW_ATE_boolean, getAttributeEncoding("DW_ATE_boolean"));
+  EXPECT_EQ(DW_ATE_imaginary_float,
+            getAttributeEncoding("DW_ATE_imaginary_float"));
+
+  // Invalid languages.
+  EXPECT_EQ(0u, getAttributeEncoding("DW_ATE_invalid"));
+  EXPECT_EQ(0u, getAttributeEncoding("DW_TAG_array_type"));
+  EXPECT_EQ(0u, getAttributeEncoding("something else"));
+
+  // AttributeEncoding range markers should not be recognized.
+  EXPECT_EQ(0u, getAttributeEncoding("DW_ATE_lo_user"));
+  EXPECT_EQ(0u, getAttributeEncoding("DW_ATE_hi_user"));
+}
+
 } // end namespace
