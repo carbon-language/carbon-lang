@@ -42,11 +42,15 @@ using namespace llvm;
 cl::opt<bool> ANDIGlueBug("expose-ppc-andi-glue-bug",
 cl::desc("expose the ANDI glue bug on PPC"), cl::Hidden);
 
-cl::opt<bool> UseBitPermRewriter("ppc-use-bit-perm-rewriter", cl::init(true),
-  cl::desc("use aggressive ppc isel for bit permutations"), cl::Hidden);
-cl::opt<bool> BPermRewriterNoMasking("ppc-bit-perm-rewriter-stress-rotates",
-  cl::desc("stress rotate selection in aggressive ppc isel for "
-           "bit permutations"), cl::Hidden);
+static cl::opt<bool>
+    UseBitPermRewriter("ppc-use-bit-perm-rewriter", cl::init(true),
+                       cl::desc("use aggressive ppc isel for bit permutations"),
+                       cl::Hidden);
+static cl::opt<bool> BPermRewriterNoMasking(
+    "ppc-bit-perm-rewriter-stress-rotates",
+    cl::desc("stress rotate selection in aggressive ppc isel for "
+             "bit permutations"),
+    cl::Hidden);
 
 namespace llvm {
   void initializePPCDAGToDAGISelPass(PassRegistry&);

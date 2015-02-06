@@ -104,7 +104,7 @@ static cl::opt<bool> SkipCounted("spp-counted", cl::init(true));
 static cl::opt<bool> SplitBackedge("spp-split-backedge", cl::init(false));
 
 // Print tracing output
-cl::opt<bool> TraceLSP("spp-trace", cl::init(false));
+static cl::opt<bool> TraceLSP("spp-trace", cl::init(false));
 
 namespace {
 

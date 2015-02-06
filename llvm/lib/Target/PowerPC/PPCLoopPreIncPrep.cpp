@@ -88,7 +88,7 @@ namespace {
 }
 
 char PPCLoopPreIncPrep::ID = 0;
-const char *name = "Prepare loop for pre-inc. addressing modes";
+static const char *name = "Prepare loop for pre-inc. addressing modes";
 INITIALIZE_PASS_BEGIN(PPCLoopPreIncPrep, DEBUG_TYPE, name, false, false)
 INITIALIZE_PASS_DEPENDENCY(LoopInfoWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(ScalarEvolution)

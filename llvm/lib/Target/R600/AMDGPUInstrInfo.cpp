@@ -350,7 +350,7 @@ enum SISubtarget {
   VI = 1
 };
 
-enum SISubtarget AMDGPUSubtargetToSISubtarget(unsigned Gen) {
+static enum SISubtarget AMDGPUSubtargetToSISubtarget(unsigned Gen) {
   switch (Gen) {
   default:
     return SI;

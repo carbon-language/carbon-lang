@@ -186,9 +186,9 @@ static bool CC_MipsO32_FP32(unsigned ValNo, MVT ValVT, MVT LocVT,
   llvm_unreachable("should not be called");
 }
 
-bool CC_MipsO32_FP64(unsigned ValNo, MVT ValVT, MVT LocVT,
-                     CCValAssign::LocInfo LocInfo, ISD::ArgFlagsTy ArgFlags,
-                     CCState &State) {
+static bool CC_MipsO32_FP64(unsigned ValNo, MVT ValVT, MVT LocVT,
+                            CCValAssign::LocInfo LocInfo,
+                            ISD::ArgFlagsTy ArgFlags, CCState &State) {
   llvm_unreachable("should not be called");
 }
 

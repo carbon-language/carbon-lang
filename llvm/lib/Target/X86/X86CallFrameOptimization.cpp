@@ -37,9 +37,10 @@ using namespace llvm;
 
 #define DEBUG_TYPE "x86-cf-opt"
 
-cl::opt<bool> NoX86CFOpt("no-x86-call-frame-opt",
-              cl::desc("Avoid optimizing x86 call frames for size"),
-              cl::init(false), cl::Hidden);
+static cl::opt<bool>
+    NoX86CFOpt("no-x86-call-frame-opt",
+               cl::desc("Avoid optimizing x86 call frames for size"),
+               cl::init(false), cl::Hidden);
 
 namespace {
 class X86CallFrameOptimization : public MachineFunctionPass {

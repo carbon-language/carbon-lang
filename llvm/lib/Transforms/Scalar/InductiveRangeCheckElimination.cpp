@@ -76,11 +76,11 @@
 
 using namespace llvm;
 
-cl::opt<unsigned> LoopSizeCutoff("irce-loop-size-cutoff", cl::Hidden,
-                                 cl::init(64));
+static cl::opt<unsigned> LoopSizeCutoff("irce-loop-size-cutoff", cl::Hidden,
+                                        cl::init(64));
 
-cl::opt<bool> PrintChangedLoops("irce-print-changed-loops", cl::Hidden,
-                                cl::init(false));
+static cl::opt<bool> PrintChangedLoops("irce-print-changed-loops", cl::Hidden,
+                                       cl::init(false));
 
 #define DEBUG_TYPE "irce"
 

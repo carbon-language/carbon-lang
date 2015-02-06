@@ -83,6 +83,8 @@ void StringSaver::anchor() {}
 
 //===----------------------------------------------------------------------===//
 
+namespace {
+
 class CommandLineParser {
 public:
   // Globals for name and overview of program.  Program name is not a string to
@@ -189,6 +191,8 @@ public:
 
   void printOptionValues();
 };
+
+} // namespace
 
 static ManagedStatic<CommandLineParser> GlobalParser;
 
