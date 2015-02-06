@@ -515,6 +515,9 @@ void IndependentBlocks::getAnalysisUsage(AnalysisUsage &AU) const {
 }
 
 bool IndependentBlocks::runOnFunction(llvm::Function &F) {
+  if (DisableIntraScopScalarToArray && PollyModelPHINodes)
+    return false;
+
   bool Changed = false;
 
   RI = &getAnalysis<RegionInfoPass>().getRegionInfo();
@@ -548,6 +551,9 @@ bool IndependentBlocks::runOnFunction(llvm::Function &F) {
 }
 
 void IndependentBlocks::verifyAnalysis() const {
+  if (DisableIntraScopScalarToArray && PollyModelPHINodes)
+    return;
+
   for (const Region *R : *SD)
     verifyScop(R);
 }

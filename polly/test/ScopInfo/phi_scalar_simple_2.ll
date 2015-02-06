@@ -20,8 +20,8 @@ for.cond:                                         ; preds = %for.inc5, %entry
 ; CHECK: Stmt_for_cond
 ; CHECK:     ReadAccess := [Reduction Type: NONE] [Scalar: 1]
 ; CHECK:         [N, c] -> { Stmt_for_cond[i0] -> MemRef_x_addr_0[] };
-; CHECK:     MustWriteAccess :=  [Reduction Type: NONE] [Scalar: 0]
-; CHECK:         [N, c] -> { Stmt_for_cond[i0] -> MemRef_x_addr_0_s2a[0] };
+; CHECK:     MustWriteAccess :=  [Reduction Type: NONE] [Scalar: 1]
+; CHECK:         [N, c] -> { Stmt_for_cond[i0] -> MemRef_x_addr_0[] };
 ; CHECK:     MustWriteAccess :=  [Reduction Type: NONE] [Scalar: 0]
 ; CHECK:         [N, c] -> { Stmt_for_cond[i0] -> MemRef_A[i0] };
 ; CHECK:     MustWriteAccess :=  [Reduction Type: NONE] [Scalar: 1]
