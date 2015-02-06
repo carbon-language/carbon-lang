@@ -748,7 +748,7 @@ bool RegAllocPBQP::runOnMachineFunction(MachineFunction &MF) {
 }
 
 namespace {
-// A Helper class for print node and register info in a consistent way
+// A helper class for printing node and register info in a consistent way
 class PrintNodeInfo {
 public:
   typedef PBQP::RegAlloc::PBQPRAGraph Graph;
