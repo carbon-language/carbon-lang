@@ -5,6 +5,7 @@ add_llvm_library(LLVMExecutionEngine
   ExecutionEngineBindings.cpp
   GDBRegistrationListener.cpp
   RTDyldMemoryManager.cpp
+  SectionMemoryManager.cpp
   TargetSelect.cpp
   )
 
