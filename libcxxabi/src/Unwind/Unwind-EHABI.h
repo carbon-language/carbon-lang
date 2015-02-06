@@ -18,8 +18,6 @@
 #include <stdint.h>
 #include <unwind.h>
 
-#if LIBCXXABI_ARM_EHABI
-
 // Unable to unwind in the ARM index table (section 5 EHABI).
 #define UNW_EXIDX_CANTUNWIND 0x1
 
