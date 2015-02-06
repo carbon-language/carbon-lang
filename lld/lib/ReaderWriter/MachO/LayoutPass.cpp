@@ -484,11 +484,11 @@ void LayoutPass::perform(std::unique_ptr<MutableFile> &mergedFile) {
 }
 
 void addLayoutPass(PassManager &pm, const MachOLinkingContext &ctx) {
-  pm.add(std::unique_ptr<Pass>(new LayoutPass(
+  pm.add(llvm::make_unique<LayoutPass>(
       ctx.registry(), [&](const DefinedAtom * left, const DefinedAtom * right,
                           bool & leftBeforeRight) ->bool {
     return ctx.customAtomOrderer(left, right, leftBeforeRight);
-  })));
+  }));
 }
 
 } // namespace mach_o

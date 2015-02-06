@@ -122,7 +122,7 @@ private:
 
 
 void addShimPass(PassManager &pm, const MachOLinkingContext &ctx) {
-  pm.add(std::unique_ptr<Pass>(new ShimPass(ctx)));
+  pm.add(llvm::make_unique<ShimPass>(ctx));
 }
 
 } // end namespace mach_o

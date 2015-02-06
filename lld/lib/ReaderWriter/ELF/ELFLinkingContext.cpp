@@ -65,7 +65,7 @@ ELFLinkingContext::ELFLinkingContext(
       _finiFunction("_fini"), _sysrootPath("") {}
 
 void ELFLinkingContext::addPasses(PassManager &pm) {
-  pm.add(std::unique_ptr<Pass>(new elf::OrderPass()));
+  pm.add(llvm::make_unique<elf::OrderPass>());
 }
 
 uint16_t ELFLinkingContext::getOutputMachine() const {

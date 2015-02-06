@@ -319,7 +319,7 @@ public:
 
 void elf::HexagonLinkingContext::addPasses(PassManager &pm) {
   if (isDynamic())
-    pm.add(std::unique_ptr<Pass>(new DynamicGOTPLTPass(*this)));
+    pm.add(llvm::make_unique<DynamicGOTPLTPass>(*this));
   ELFLinkingContext::addPasses(pm);
 }
 

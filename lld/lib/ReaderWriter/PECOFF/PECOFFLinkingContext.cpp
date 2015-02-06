@@ -345,12 +345,12 @@ std::string PECOFFLinkingContext::getPDBFilePath() const {
 }
 
 void PECOFFLinkingContext::addPasses(PassManager &pm) {
-  pm.add(std::unique_ptr<Pass>(new pecoff::PDBPass(*this)));
-  pm.add(std::unique_ptr<Pass>(new pecoff::EdataPass(*this)));
-  pm.add(std::unique_ptr<Pass>(new pecoff::IdataPass(*this)));
-  pm.add(std::unique_ptr<Pass>(new pecoff::OrderPass()));
-  pm.add(std::unique_ptr<Pass>(new pecoff::LoadConfigPass(*this)));
-  pm.add(std::unique_ptr<Pass>(new pecoff::InferSubsystemPass(*this)));
+  pm.add(llvm::make_unique<pecoff::PDBPass>(*this));
+  pm.add(llvm::make_unique<pecoff::EdataPass>(*this));
+  pm.add(llvm::make_unique<pecoff::IdataPass>(*this));
+  pm.add(llvm::make_unique<pecoff::OrderPass>());
+  pm.add(llvm::make_unique<pecoff::LoadConfigPass>(*this));
+  pm.add(llvm::make_unique<pecoff::InferSubsystemPass>(*this));
 }
 
 } // end namespace lld

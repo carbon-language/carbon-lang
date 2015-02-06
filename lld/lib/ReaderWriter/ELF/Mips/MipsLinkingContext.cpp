@@ -71,7 +71,7 @@ void MipsLinkingContext::addPasses(PassManager &pm) {
   if (pass)
     pm.add(std::move(pass));
   ELFLinkingContext::addPasses(pm);
-  pm.add(std::unique_ptr<Pass>(new elf::MipsCtorsOrderPass()));
+  pm.add(llvm::make_unique<elf::MipsCtorsOrderPass>());
 }
 
 bool MipsLinkingContext::isDynamicRelocation(const DefinedAtom &,

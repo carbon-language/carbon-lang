@@ -521,7 +521,7 @@ private:
 
 void addCompactUnwindPass(PassManager &pm, const MachOLinkingContext &ctx) {
   assert(ctx.needsCompactUnwindPass());
-  pm.add(std::unique_ptr<Pass>(new CompactUnwindPass(ctx)));
+  pm.add(llvm::make_unique<CompactUnwindPass>(ctx));
 }
 
 } // end namesapce mach_o

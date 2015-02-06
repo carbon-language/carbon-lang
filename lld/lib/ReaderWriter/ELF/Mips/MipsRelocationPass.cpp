@@ -949,9 +949,9 @@ RelocationPass<ELFT>::getObjectEntry(const SharedLibraryAtom *a) {
 static std::unique_ptr<Pass> createPass(MipsLinkingContext &ctx) {
   switch (ctx.getTriple().getArch()) {
   case llvm::Triple::mipsel:
-    return std::unique_ptr<Pass>(new RelocationPass<Mips32ELType>(ctx));
+    return llvm::make_unique<RelocationPass<Mips32ELType>>(ctx);
   case llvm::Triple::mips64el:
-    return std::unique_ptr<Pass>(new RelocationPass<Mips64ELType>(ctx));
+    return llvm::make_unique<RelocationPass<Mips64ELType>>(ctx);
   default:
     llvm_unreachable("Unhandled arch");
   }
@@ -964,7 +964,7 @@ lld::elf::createMipsRelocationPass(MipsLinkingContext &ctx) {
   case llvm::ELF::ET_DYN:
     return createPass(ctx);
   case llvm::ELF::ET_REL:
-    return std::unique_ptr<Pass>();
+    return nullptr;
   default:
     llvm_unreachable("Unhandled output file type");
   }

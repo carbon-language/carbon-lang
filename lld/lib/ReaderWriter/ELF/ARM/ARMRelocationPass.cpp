@@ -128,8 +128,7 @@ lld::elf::createARMRelocationPass(const ARMLinkingContext &ctx) {
   case llvm::ELF::ET_EXEC:
     if (ctx.isDynamic())
       llvm_unreachable("Unhandled output file type");
-    else
-      return std::unique_ptr<Pass>(new ARMStaticRelocationPass(ctx));
+    return llvm::make_unique<ARMStaticRelocationPass>(ctx);
   default:
     llvm_unreachable("Unhandled output file type");
   }

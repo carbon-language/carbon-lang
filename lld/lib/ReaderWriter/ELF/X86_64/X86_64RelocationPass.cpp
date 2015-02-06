@@ -502,13 +502,12 @@ lld::elf::createX86_64RelocationPass(const X86_64LinkingContext &ctx) {
   switch (ctx.getOutputELFType()) {
   case llvm::ELF::ET_EXEC:
     if (ctx.isDynamic())
-      return std::unique_ptr<Pass>(new DynamicRelocationPass(ctx));
-    else
-      return std::unique_ptr<Pass>(new StaticRelocationPass(ctx));
+      return llvm::make_unique<DynamicRelocationPass>(ctx);
+    return llvm::make_unique<StaticRelocationPass>(ctx);
   case llvm::ELF::ET_DYN:
-    return std::unique_ptr<Pass>(new DynamicRelocationPass(ctx));
+    return llvm::make_unique<DynamicRelocationPass>(ctx);
   case llvm::ELF::ET_REL:
-    return std::unique_ptr<Pass>();
+    return nullptr;
   default:
     llvm_unreachable("Unhandled output file type");
   }

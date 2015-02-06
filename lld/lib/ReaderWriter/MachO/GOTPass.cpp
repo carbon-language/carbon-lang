@@ -177,7 +177,7 @@ private:
 
 void addGOTPass(PassManager &pm, const MachOLinkingContext &ctx) {
   assert(ctx.needsGOTPass());
-  pm.add(std::unique_ptr<Pass>(new GOTPass(ctx)));
+  pm.add(llvm::make_unique<GOTPass>(ctx));
 }
   
 

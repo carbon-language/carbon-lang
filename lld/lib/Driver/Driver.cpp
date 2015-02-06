@@ -122,8 +122,8 @@ bool Driver::link(LinkingContext &context, raw_ostream &diagnostics) {
       llvm::sys::Process::GetEnv("LLD_RUN_ROUNDTRIP_TEST");
 
   if (env.hasValue() && !env.getValue().empty()) {
-    pm.add(std::unique_ptr<Pass>(new RoundTripYAMLPass(context)));
-    pm.add(std::unique_ptr<Pass>(new RoundTripNativePass(context)));
+    pm.add(llvm::make_unique<RoundTripYAMLPass>(context));
+    pm.add(llvm::make_unique<RoundTripNativePass>(context));
   }
 #endif
 
