@@ -15,6 +15,8 @@
 #define LLVM_EXECUTIONENGINE_ORC_LAZYEMITTINGLAYER_H
 
 #include "LookasideRTDyldMM.h"
+#include "llvm/ExecutionEngine/RTDyldMemoryManager.h"
+#include "llvm/IR/GlobalValue.h"
 #include "llvm/IR/Mangler.h"
 #include <list>
 

@@ -18,6 +18,7 @@
 #include "IndirectionUtils.h"
 #include "LookasideRTDyldMM.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/ExecutionEngine/SectionMemoryManager.h"
 #include <list>
 
 namespace llvm {

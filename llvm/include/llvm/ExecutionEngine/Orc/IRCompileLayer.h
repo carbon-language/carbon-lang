@@ -15,6 +15,7 @@
 #define LLVM_EXECUTIONENGINE_ORC_IRCOMPILELAYER_H
 
 #include "llvm/ExecutionEngine/ObjectCache.h"
+#include "llvm/ExecutionEngine/RTDyldMemoryManager.h"
 #include "llvm/Object/ObjectFile.h"
 #include <memory>
 
