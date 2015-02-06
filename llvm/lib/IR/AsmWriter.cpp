@@ -1286,6 +1286,17 @@ raw_ostream &operator<<(raw_ostream &OS, FieldSeparator &FS) {
 }
 } // end namespace
 
+static void writeMetadataAsOperand(raw_ostream &Out, const Metadata *MD,
+                                   TypePrinting *TypePrinter,
+                                   SlotTracker *Machine,
+                                   const Module *Context) {
+  if (!MD) {
+    Out << "null";
+    return;
+  }
+  WriteAsOperandInternal(Out, MD, TypePrinter, Machine, Context);
+}
+
 static void writeGenericDebugNode(raw_ostream &Out, const GenericDebugNode *N,
                                   TypePrinting *TypePrinter,
                                   SlotTracker *Machine, const Module *Context) {
@@ -1306,11 +1317,7 @@ static void writeGenericDebugNode(raw_ostream &Out, const GenericDebugNode *N,
     FieldSeparator IFS;
     for (auto &I : N->dwarf_operands()) {
       Out << IFS;
-      if (!I) {
-        Out << "null";
-        continue;
-      }
-      WriteAsOperandInternal(Out, I, TypePrinter, Machine, Context);
+      writeMetadataAsOperand(Out, I, TypePrinter, Machine, Context);
     }
     Out << "}";
   }
