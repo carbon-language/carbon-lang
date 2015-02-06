@@ -355,20 +355,6 @@ static bool hasNonRISpills(const MachineFunction &MF) {
   return FuncInfo->hasNonRISpills();
 }
 
-/// MustSaveLR - Return true if this function requires that we save the LR
-/// register onto the stack in the prolog and restore it in the epilog of the
-/// function.
-static bool MustSaveLR(const MachineFunction &MF, unsigned LR) {
-  const PPCFunctionInfo *MFI = MF.getInfo<PPCFunctionInfo>();
-
-  // We need a save/restore of LR if there is any def of LR (which is
-  // defined by calls, including the PIC setup sequence), or if there is
-  // some use of the LR stack slot (e.g. for builtin_return_address).
-  // (LR comes in 32 and 64 bit versions.)
-  MachineRegisterInfo::def_iterator RI = MF.getRegInfo().def_begin(LR);
-  return RI !=MF.getRegInfo().def_end() || MFI->isLRStoreRequired();
-}
-
 /// determineFrameLayout - Determine the size of the frame and maximum call
 /// frame size.
 unsigned PPCFrameLowering::determineFrameLayout(MachineFunction &MF,
@@ -395,7 +381,6 @@ unsigned PPCFrameLowering::determineFrameLayout(MachineFunction &MF,
   // stackless code if all local vars are reg-allocated.
   bool DisableRedZone = MF.getFunction()->getAttributes().
     hasAttribute(AttributeSet::FunctionIndex, Attribute::NoRedZone);
-  unsigned LR = RegInfo->getRARegister();
   if (!DisableRedZone &&
       (Subtarget.isPPC64() ||                      // 32-bit SVR4, no stack-
        !Subtarget.isSVR4ABI() ||                   //   allocated locals.
@@ -403,7 +388,6 @@ unsigned PPCFrameLowering::determineFrameLayout(MachineFunction &MF,
       FrameSize <= 224 &&                          // Fits in red zone.
       !MFI->hasVarSizedObjects() &&                // No dynamic alloca.
       !MFI->adjustsStack() &&                      // No calls.
-      !MustSaveLR(MF, LR) &&
       !RegInfo->hasBasePointer(MF)) { // No special alignment.
     // No need for frame
     if (UpdateMF)
@@ -1122,6 +1106,20 @@ void PPCFrameLowering::emitEpilogue(MachineFunction &MF,
     MachineOperand &JumpTarget = MBBI->getOperand(0);
     BuildMI(MBB, MBBI, dl, TII.get(PPC::TAILBA8)).addImm(JumpTarget.getImm());
   }
+}
+
+/// MustSaveLR - Return true if this function requires that we save the LR
+/// register onto the stack in the prolog and restore it in the epilog of the
+/// function.
+static bool MustSaveLR(const MachineFunction &MF, unsigned LR) {
+  const PPCFunctionInfo *MFI = MF.getInfo<PPCFunctionInfo>();
+
+  // We need a save/restore of LR if there is any def of LR (which is
+  // defined by calls, including the PIC setup sequence), or if there is
+  // some use of the LR stack slot (e.g. for builtin_return_address).
+  // (LR comes in 32 and 64 bit versions.)
+  MachineRegisterInfo::def_iterator RI = MF.getRegInfo().def_begin(LR);
+  return RI !=MF.getRegInfo().def_end() || MFI->isLRStoreRequired();
 }
 
 void

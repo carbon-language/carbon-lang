@@ -1,7 +1,7 @@
 ; RUN: llc -march=ppc64 -mcpu=pwr7 -O0 -relocation-model=pic < %s | FileCheck -check-prefix=OPT0 %s
 ; RUN: llc -march=ppc64 -mcpu=pwr7 -O1 -relocation-model=pic < %s | FileCheck -check-prefix=OPT1 %s
-; R;U;N: llc -march=ppc32 -O0 -relocation-model=pic < %s | FileCheck -check-prefix=OPT0-32 %s
-; R;U;N: llc -march=ppc32 -O1 -relocation-model=pic < %s | FileCheck -check-prefix=OPT1-32 %s
+; RUN: llc -march=ppc32 -O0 -relocation-model=pic < %s | FileCheck -check-prefix=OPT0-32 %s
+; RUN: llc -march=ppc32 -O1 -relocation-model=pic < %s | FileCheck -check-prefix=OPT1-32 %s
 
 target triple = "powerpc64-unknown-linux-gnu"
 ; Test correct assembly code generation for thread-local storage using
@@ -65,5 +65,5 @@ entry:
 ; OPT1:      bl __tls_get_addr(a2@tlsgd)
 ; OPT1-NEXT: nop
 ; OPT1-32-LABEL: main2
-; OPT1-32:        addi {{[0-9]+}}, {{[0-9]+}}, a2@got@tlsgd
+; OPT1-32:        addi 3, {{[0-9]+}}, a2@got@tlsgd
 ; OPT1-32:        bl __tls_get_addr(a2@tlsgd)@PLT

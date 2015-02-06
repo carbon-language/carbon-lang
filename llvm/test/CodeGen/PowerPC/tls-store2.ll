@@ -19,11 +19,13 @@ entry:
 }
 
 ; CHECK-LABEL: call_once:
-; CHECK: addi 3, {{[0-9]+}}, __once_callable@got@tlsgd@l
+; CHECK: addis 3, 2, __once_callable@got@tlsgd@ha
+; CHECK: addi 3, 3, __once_callable@got@tlsgd@l
 ; CHECK: bl __tls_get_addr(__once_callable@tlsgd)
 ; CHECK-NEXT: nop
 ; CHECK: std {{[0-9]+}}, 0(3)
-; CHECK: addi 3, {{[0-9]+}}, __once_call@got@tlsgd@l
+; CHECK: addis 3, 2, __once_call@got@tlsgd@ha
+; CHECK: addi 3, 3, __once_call@got@tlsgd@l
 ; CHECK: bl __tls_get_addr(__once_call@tlsgd)
 ; CHECK-NEXT: nop
 ; CHECK: std {{[0-9]+}}, 0(3)
