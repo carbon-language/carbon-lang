@@ -163,6 +163,13 @@ public:
   unsigned getNumStores() const { return NumStores; }
   unsigned getNumLoads() const { return NumLoads;}
 
+  /// \brief Add code that checks at runtime if the accessed arrays overlap.
+  ///
+  /// Returns a pair of instructions where the first element is the first
+  /// instruction generated in possibly a sequence of instructions and the
+  /// second value is the final comparator value or NULL if no check is needed.
+  std::pair<Instruction *, Instruction *> addRuntimeCheck(Instruction *Loc);
+
 private:
   void emitAnalysis(VectorizationReport &Message);
 
