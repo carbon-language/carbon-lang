@@ -106,17 +106,12 @@ protected:
 private:
   template <typename UseT> // UseT == 'Use' or 'const Use'
   class use_iterator_impl
-      : public std::iterator<std::forward_iterator_tag, UseT *, ptrdiff_t> {
-    typedef std::iterator<std::forward_iterator_tag, UseT *, ptrdiff_t> super;
-
+      : public std::iterator<std::forward_iterator_tag, UseT *> {
     UseT *U;
     explicit use_iterator_impl(UseT *u) : U(u) {}
     friend class Value;
 
   public:
-    typedef typename super::reference reference;
-    typedef typename super::pointer pointer;
-
     use_iterator_impl() : U() {}
 
     bool operator==(const use_iterator_impl &x) const { return U == x.U; }
@@ -147,17 +142,12 @@ private:
 
   template <typename UserTy> // UserTy == 'User' or 'const User'
   class user_iterator_impl
-      : public std::iterator<std::forward_iterator_tag, UserTy *, ptrdiff_t> {
-    typedef std::iterator<std::forward_iterator_tag, UserTy *, ptrdiff_t> super;
-
+      : public std::iterator<std::forward_iterator_tag, UserTy *> {
     use_iterator_impl<Use> UI;
     explicit user_iterator_impl(Use *U) : UI(U) {}
     friend class Value;
 
   public:
-    typedef typename super::reference reference;
-    typedef typename super::pointer pointer;
-
     user_iterator_impl() {}
 
     bool operator==(const user_iterator_impl &x) const { return UI == x.UI; }
@@ -188,11 +178,6 @@ private:
     }
 
     Use &getUse() const { return *UI; }
-
-    /// \brief Return the operand # of this use in its User.
-    ///
-    /// FIXME: Replace all callers with a direct call to Use::getOperandNo.
-    unsigned getOperandNo() const { return UI->getOperandNo(); }
   };
 
   void operator=(const Value &) LLVM_DELETED_FUNCTION;
