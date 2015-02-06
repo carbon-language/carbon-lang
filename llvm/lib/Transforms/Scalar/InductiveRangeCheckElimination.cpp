@@ -569,10 +569,8 @@ class LoopConstrainer {
   // Even though we do not preserve any passes at this time, we at least need to
   // keep the parent loop structure consistent.  The `LPPassManager' seems to
   // verify this after running a loop pass.  This function adds the list of
-  // blocks denoted by the iterator range [BlocksBegin, BlocksEnd) to this loops
-  // parent loop if required.
-  template<typename IteratorTy>
-  void addToParentLoopIfNeeded(IteratorTy BlocksBegin, IteratorTy BlocksEnd);
+  // blocks denoted by BBs to this loops parent loop if required.
+  void addToParentLoopIfNeeded(ArrayRef<BasicBlock *> BBs);
 
   // Some global state.
   Function &F;
@@ -1009,15 +1007,13 @@ LoopConstrainer::createPreheader(const LoopConstrainer::LoopStructure &LS,
   return Preheader;
 }
 
-template<typename IteratorTy>
-void LoopConstrainer::addToParentLoopIfNeeded(IteratorTy Begin,
-                                              IteratorTy End) {
+void LoopConstrainer::addToParentLoopIfNeeded(ArrayRef<BasicBlock *> BBs) {
   Loop *ParentLoop = OriginalLoop.getParentLoop();
   if (!ParentLoop)
     return;
 
-  for (; Begin != End; Begin++)
-    ParentLoop->addBasicBlockToLoop(*Begin, OriginalLoopInfo);
+  for (BasicBlock *BB : BBs)
+    ParentLoop->addBasicBlockToLoop(BB, OriginalLoopInfo);
 }
 
 bool LoopConstrainer::run() {
@@ -1082,27 +1078,20 @@ bool LoopConstrainer::run() {
                                  PostLoopRRI);
   }
 
-  SmallVector<BasicBlock *, 6> NewBlocks;
-  NewBlocks.push_back(PostLoopPreheader);
-  NewBlocks.push_back(PreLoopRRI.PseudoExit);
-  NewBlocks.push_back(PreLoopRRI.ExitSelector);
-  NewBlocks.push_back(PostLoopRRI.PseudoExit);
-  NewBlocks.push_back(PostLoopRRI.ExitSelector);
-  if (MainLoopPreheader != Preheader)
-    NewBlocks.push_back(MainLoopPreheader);
+  BasicBlock *NewMainLoopPreheader =
+      MainLoopPreheader != Preheader ? MainLoopPreheader : nullptr;
+  BasicBlock *NewBlocks[] = {PostLoopPreheader,        PreLoopRRI.PseudoExit,
+                             PreLoopRRI.ExitSelector,  PostLoopRRI.PseudoExit,
+                             PostLoopRRI.ExitSelector, NewMainLoopPreheader};
 
   // Some of the above may be nullptr, filter them out before passing to
   // addToParentLoopIfNeeded.
-  auto NewBlocksEnd = std::remove(NewBlocks.begin(), NewBlocks.end(), nullptr);
+  auto NewBlocksEnd =
+      std::remove(std::begin(NewBlocks), std::end(NewBlocks), nullptr);
 
-  typedef SmallVector<BasicBlock *, 6>::iterator SmallVectItTy;
-  typedef std::vector<BasicBlock *>::iterator StdVectItTy;
-
-  addToParentLoopIfNeeded<SmallVectItTy>(NewBlocks.begin(), NewBlocksEnd);
-  addToParentLoopIfNeeded<StdVectItTy>(PreLoop.Blocks.begin(),
-                                       PreLoop.Blocks.end());
-  addToParentLoopIfNeeded<StdVectItTy>(PostLoop.Blocks.begin(),
-                                       PostLoop.Blocks.end());
+  addToParentLoopIfNeeded(makeArrayRef(std::begin(NewBlocks), NewBlocksEnd));
+  addToParentLoopIfNeeded(PreLoop.Blocks);
+  addToParentLoopIfNeeded(PostLoop.Blocks);
 
   return true;
 }
