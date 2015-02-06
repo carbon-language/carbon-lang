@@ -608,7 +608,8 @@ SBValue::GetValueDidChange ()
     lldb::ValueObjectSP value_sp(GetSP(locker));
     if (value_sp)
     {
-        result = value_sp->GetValueDidChange ();
+        if (value_sp->UpdateValueIfNeeded(false))
+            result = value_sp->GetValueDidChange ();
     }
     if (log)
         log->Printf ("SBValue(%p)::GetValueDidChange() => %i",

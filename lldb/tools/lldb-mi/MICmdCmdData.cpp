@@ -130,14 +130,14 @@ CMICmdCmdDataEvaluateExpression::Execute(void)
 
     lldb::SBFrame frame = thread.GetSelectedFrame();
     lldb::SBValue value = frame.EvaluateExpression(rExpression.c_str());
-    if (!value.IsValid())
+    if (!value.IsValid() || value.GetError().Fail())
         value = frame.FindVariable(rExpression.c_str());
-    if (!value.IsValid())
+    const CMICmnLLDBUtilSBValue utilValue(value);
+    if (!utilValue.IsValid() || utilValue.IsValueUnknown())
     {
         m_bEvaluatedExpression = false;
         return MIstatus::success;
     }
-    const CMICmnLLDBUtilSBValue utilValue(value);
     if (!utilValue.HasName())
     {
         if (HaveInvalidCharacterInExpression(rExpression, m_cExpressionInvalidChar))
@@ -279,16 +279,10 @@ CMICmdCmdDataEvaluateExpression::CreateSelf(void)
 bool
 CMICmdCmdDataEvaluateExpression::HaveInvalidCharacterInExpression(const CMIUtilString &vrExpr, MIchar &vrwInvalidChar)
 {
-    bool bFoundInvalidCharInExpression = false;
-    vrwInvalidChar = 0x00;
-
-    if (vrExpr.at(0) == '\\')
-    {
-        // Example: Mouse hover over "%5d" expression has \"%5d\" in it
-        bFoundInvalidCharInExpression = true;
-        vrwInvalidChar = '\\';
-    }
-
+    static const std::string strInvalidCharacters(";#\\");
+    const size_t nInvalidCharacterOffset = vrExpr.find_first_of(strInvalidCharacters);
+    const bool bFoundInvalidCharInExpression = (nInvalidCharacterOffset != CMIUtilString::npos);
+    vrwInvalidChar = bFoundInvalidCharInExpression ? vrExpr[nInvalidCharacterOffset] : 0x00;
     return bFoundInvalidCharInExpression;
 }
 

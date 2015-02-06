@@ -10,7 +10,6 @@ class MiEvaluateTestCase(lldbmi_testcase.MiTestCaseBase):
 
     @lldbmi_test
     @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
-    @unittest2.skip("evaluation doesn't work properly")
     def test_lldbmi_eval(self):
         """Test that 'lldb-mi --interpreter' works for evaluating."""
 

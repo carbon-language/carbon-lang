@@ -137,7 +137,7 @@ CMICmdCmdVarCreate::Execute(void)
 
     // Retrieve the --frame option's number
     MIuint64 nFrame = UINT64_MAX;
-    if (!pArgFrame->GetExpectedOption<CMICmdArgValNumber, MIuint64>(nFrame))
+    if (pArgThread->GetFound() && !pArgFrame->GetExpectedOption<CMICmdArgValNumber, MIuint64>(nFrame))
     {
         SetError(CMIUtilString::Format(MIRSRC(IDS_CMD_ERR_OPTION_NOT_FOUND), m_cmdData.strMiCmd.c_str(), m_constStrArgFrame.c_str()));
         return MIstatus::failure;
@@ -151,28 +151,41 @@ CMICmdCmdVarCreate::Execute(void)
         nFrame = pOption->GetValue();
     }
 
-    bool bAutoName = false;
-    const CMIUtilString strArgName;
+    m_strVarName = "<unnamedvariable>";
     if (pArgName->GetFound())
     {
         const CMIUtilString &rArg = pArgName->GetValue();
-        bAutoName = (rArg == "-");
+        const bool bAutoName = (rArg == "-");
+        if (bAutoName)
+        {
+            m_strVarName = CMIUtilString::Format("var%u", CMICmnLLDBDebugSessionInfoVarObj::VarObjIdGet());
+            CMICmnLLDBDebugSessionInfoVarObj::VarObjIdInc();
+        }
+        else
+            m_strVarName = rArg;
+    }
+
+    bool bCurrentFrame = false;
+    if (pArgFrameAddr->GetFound())
+    {
+        const CMIUtilString &rStrFrameAddr(pArgFrameAddr->GetValue());
+        bCurrentFrame = CMIUtilString::Compare(rStrFrameAddr, "*");
+        if (!bCurrentFrame && (nFrame == UINT64_MAX))
+        {
+            //FIXME: *addr isn't implemented. Exit with error if --thread isn't specified.
+            SetError(CMIUtilString::Format(MIRSRC(IDS_CMD_ERR_OPTION_NOT_FOUND), m_cmdData.strMiCmd.c_str(), m_constStrArgFrame.c_str()));
+            return MIstatus::failure;
+        }
     }
 
     const CMIUtilString &rStrExpression(pArgExpression->GetValue());
     m_strExpression = rStrExpression;
 
     CMICmnLLDBDebugSessionInfo &rSessionInfo(CMICmnLLDBDebugSessionInfo::Instance());
-    m_strVarName = "<unnamedvariable>";
-    if (bAutoName)
-    {
-        m_strVarName = CMIUtilString::Format("var%u", CMICmnLLDBDebugSessionInfoVarObj::VarObjIdGet());
-        CMICmnLLDBDebugSessionInfoVarObj::VarObjIdInc();
-    }
     lldb::SBProcess sbProcess = rSessionInfo.GetProcess();
     lldb::SBThread thread = (nThreadId != UINT64_MAX) ? sbProcess.GetThreadByIndexID(nThreadId) : sbProcess.GetSelectedThread();
     m_nThreadId = thread.GetIndexID();
-    lldb::SBFrame frame = thread.GetFrameAtIndex(nFrame);
+    lldb::SBFrame frame = bCurrentFrame ? thread.GetSelectedFrame() : thread.GetFrameAtIndex(nFrame);
     lldb::SBValue value = frame.FindVariable(rStrExpression.c_str());
     if (!value.IsValid())
         value = frame.EvaluateExpression(rStrExpression.c_str());
@@ -260,7 +273,8 @@ CMICmdCmdVarCreate::CreateSelf(void)
 // Throws:  None.
 //--
 CMICmdCmdVarUpdate::CMICmdCmdVarUpdate(void)
-    : m_constStrArgPrintValues("print-values")
+    : m_eVarInfoFormat(CMICmnLLDBDebugSessionInfo::eVariableInfoFormat_NoValues)
+    , m_constStrArgPrintValues("print-values")
     , m_constStrArgName("name")
     , m_bValueChangedArrayType(false)
     , m_bValueChangedCompositeType(false)
@@ -297,7 +311,7 @@ CMICmdCmdVarUpdate::~CMICmdCmdVarUpdate(void)
 bool
 CMICmdCmdVarUpdate::ParseArgs(void)
 {
-    bool bOk = m_setCmdArgs.Add(*(new CMICmdArgValNumber(m_constStrArgPrintValues, false, false)));
+    bool bOk = m_setCmdArgs.Add(*(new CMICmdArgValNumber(m_constStrArgPrintValues, false, true)));
     bOk = bOk && m_setCmdArgs.Add(*(new CMICmdArgValString(m_constStrArgName, true, true)));
     return (bOk && ParseValidateCmdOptions());
 }
@@ -314,6 +328,7 @@ CMICmdCmdVarUpdate::ParseArgs(void)
 bool
 CMICmdCmdVarUpdate::Execute(void)
 {
+    CMICMDBASE_GETOPTION(pArgPrintValues, Number, m_constStrArgPrintValues);
     CMICMDBASE_GETOPTION(pArgName, String, m_constStrArgName);
 
     const CMIUtilString &rVarObjName(pArgName->GetValue());
@@ -323,6 +338,14 @@ CMICmdCmdVarUpdate::Execute(void)
         SetError(CMIUtilString::Format(MIRSRC(IDS_CMD_ERR_VARIABLE_DOESNOTEXIST), m_cmdData.strMiCmd.c_str(), rVarObjName.c_str()));
         return MIstatus::failure;
     }
+
+    const MIuint nPrintValues = pArgPrintValues->GetValue();
+    if (nPrintValues >= CMICmnLLDBDebugSessionInfo::kNumVariableInfoFormats)
+    {
+        SetError(CMIUtilString::Format(MIRSRC(IDS_CMD_ERR_INVALID_PRINT_VALUES), m_cmdData.strMiCmd.c_str()));
+        return MIstatus::failure;
+    }
+    m_eVarInfoFormat = static_cast<CMICmnLLDBDebugSessionInfo::VariableInfoFormat_e>(nPrintValues);
 
     const CMIUtilString &rVarRealName(varObj.GetNameReal());
     MIunused(rVarRealName);
@@ -413,9 +436,12 @@ CMICmdCmdVarUpdate::Acknowledge(void)
         const CMICmnMIValueConst miValueConst(m_strValueName);
         CMICmnMIValueResult miValueResult("name", miValueConst);
         CMICmnMIValueTuple miValueTuple(miValueResult);
-        const CMICmnMIValueConst miValueConst2(strValue);
-        CMICmnMIValueResult miValueResult2("value", miValueConst2);
-        miValueTuple.Add(miValueResult2);
+        if (m_eVarInfoFormat != CMICmnLLDBDebugSessionInfo::eVariableInfoFormat_NoValues)
+        {
+            const CMICmnMIValueConst miValueConst2(strValue);
+            CMICmnMIValueResult miValueResult2("value", miValueConst2);
+            miValueTuple.Add(miValueResult2);
+        }
         const CMICmnMIValueConst miValueConst3(strInScope);
         CMICmnMIValueResult miValueResult3("in_scope", miValueConst3);
         miValueTuple.Add(miValueResult3);
@@ -1526,7 +1552,7 @@ CMICmdCmdVarShowAttributes::Execute(void)
 
     const CMIUtilString &rVarObjName(pArgName->GetValue());
     CMICmnLLDBDebugSessionInfoVarObj varObj;
-    if (CMICmnLLDBDebugSessionInfoVarObj::VarObjGet(rVarObjName, varObj))
+    if (!CMICmnLLDBDebugSessionInfoVarObj::VarObjGet(rVarObjName, varObj))
     {
         SetError(CMIUtilString::Format(MIRSRC(IDS_CMD_ERR_VARIABLE_DOESNOTEXIST), m_cmdData.strMiCmd.c_str(), rVarObjName.c_str()));
         return MIstatus::failure;

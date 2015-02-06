@@ -42,6 +42,7 @@
 #include "MICmdBase.h"
 #include "MICmnMIValueTuple.h"
 #include "MICmnMIValueList.h"
+#include "MICmnLLDBDebugSessionInfo.h"
 #include "MICmnLLDBDebugSessionInfoVarObj.h"
 
 // Declarations:
@@ -129,6 +130,7 @@ class CMICmdCmdVarUpdate : public CMICmdBase
     // Attribute:
   private:
     CMIUtilString m_strValueName;
+    CMICmnLLDBDebugSessionInfo::VariableInfoFormat_e m_eVarInfoFormat;
     const CMIUtilString m_constStrArgPrintValues; // Not handled by *this command
     const CMIUtilString m_constStrArgName;
     bool m_bValueChangedArrayType;     // True = yes value changed, false = no change
