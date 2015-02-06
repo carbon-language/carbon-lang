@@ -11,7 +11,6 @@
 #define LLD_READER_WRITER_ELF_ORDER_PASS_H
 
 #include "lld/Core/Parallel.h"
-#include <algorithm>
 #include <limits>
 
 namespace lld {
