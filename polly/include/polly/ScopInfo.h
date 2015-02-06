@@ -46,6 +46,7 @@ struct isl_set;
 struct isl_union_set;
 struct isl_union_map;
 struct isl_space;
+struct isl_ast_build;
 struct isl_constraint;
 struct isl_pw_multi_aff;
 
@@ -426,6 +427,9 @@ class ScopStmt {
   /// The BasicBlock represented by this statement.
   BasicBlock *BB;
 
+  /// @brief The isl AST build for the new generated AST.
+  isl_ast_build *Build;
+
   std::vector<Loop *> NestLoops;
 
   std::string BaseName;
@@ -558,6 +562,12 @@ public:
   const Scop *getParent() const { return &Parent; }
 
   const char *getBaseName() const;
+
+  /// @brief Set the isl AST build.
+  void setAstBuild(__isl_keep isl_ast_build *B) { Build = B; }
+
+  /// @brief Get the isl AST build.
+  __isl_keep isl_ast_build *getAstBuild() const { return Build; }
 
   /// @brief Restrict the domain of the statement.
   ///

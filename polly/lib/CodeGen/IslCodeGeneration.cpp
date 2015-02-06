@@ -64,7 +64,8 @@ public:
                  DominatorTree &DT, Scop &S)
       : S(S), Builder(Builder), Annotator(Annotator),
         Rewriter(new SCEVExpander(SE, "polly")),
-        ExprBuilder(Builder, IDToValue, *Rewriter), P(P), DL(DL), LI(LI),
+        ExprBuilder(Builder, IDToValue, *Rewriter),
+        BlockGen(Builder, P, LI, SE, &ExprBuilder), P(P), DL(DL), LI(LI),
         SE(SE), DT(DT) {}
 
   ~IslNodeBuilder() { delete Rewriter; }
@@ -82,6 +83,7 @@ private:
   SCEVExpander *Rewriter;
 
   IslExprBuilder ExprBuilder;
+  BlockGenerator BlockGen;
   Pass *P;
   const DataLayout &DL;
   LoopInfo &LI;
@@ -398,6 +400,7 @@ void IslNodeBuilder::createUserVector(__isl_take isl_ast_node *User,
   isl_id *Id = isl_ast_expr_get_id(StmtExpr);
   isl_ast_expr_free(StmtExpr);
   ScopStmt *Stmt = (ScopStmt *)isl_id_get_user(Id);
+  Stmt->setAstBuild(IslAstInfo::getBuild(User));
   VectorValueMapT VectorMap(IVS.size());
   std::vector<LoopToScevMapT> VLTS(IVS.size());
 
@@ -406,8 +409,7 @@ void IslNodeBuilder::createUserVector(__isl_take isl_ast_node *User,
   isl_map *S = isl_map_from_union_map(Schedule);
 
   createSubstitutionsVector(Expr, Stmt, VectorMap, VLTS, IVS, IteratorID);
-  VectorBlockGenerator::generate(Builder, *Stmt, VectorMap, VLTS, S, P, LI, SE,
-                                 IslAstInfo::getBuild(User), &ExprBuilder);
+  VectorBlockGenerator::generate(BlockGen, *Stmt, VectorMap, VLTS, S);
 
   isl_map_free(S);
   isl_id_free(Id);
@@ -795,10 +797,10 @@ void IslNodeBuilder::createUser(__isl_take isl_ast_node *User) {
   LTS.insert(OutsideLoopIterations.begin(), OutsideLoopIterations.end());
 
   Stmt = (ScopStmt *)isl_id_get_user(Id);
+  Stmt->setAstBuild(IslAstInfo::getBuild(User));
 
   createSubstitutions(Expr, Stmt, VMap, LTS);
-  BlockGenerator::generate(Builder, *Stmt, VMap, LTS, P, LI, SE,
-                           IslAstInfo::getBuild(User), &ExprBuilder);
+  BlockGen.copyBB(*Stmt, VMap, LTS);
 
   isl_ast_node_free(User);
   isl_id_free(Id);

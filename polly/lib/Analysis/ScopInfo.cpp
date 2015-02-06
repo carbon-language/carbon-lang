@@ -907,7 +907,7 @@ void ScopStmt::deriveAssumptions() {
 ScopStmt::ScopStmt(Scop &parent, TempScop &tempScop, const Region &CurRegion,
                    BasicBlock &bb, SmallVectorImpl<Loop *> &Nest,
                    SmallVectorImpl<unsigned> &Scatter)
-    : Parent(parent), BB(&bb), NestLoops(Nest.size()) {
+    : Parent(parent), BB(&bb), Build(nullptr), NestLoops(Nest.size()) {
   // Setup the induction variables.
   for (unsigned i = 0, e = Nest.size(); i < e; ++i)
     NestLoops[i] = Nest[i];
