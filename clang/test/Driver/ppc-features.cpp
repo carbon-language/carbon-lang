@@ -132,8 +132,10 @@
 // linker features
 // RUN: %clang -target powerpc64-unknown-linux-gnu %s -### -o %t.o 2>&1 | FileCheck -check-prefix=CHECK_BE_LD_ARGS %s
 // CHECK_BE_LD_ARGS: "elf64ppc"
+// CHECK_BE_LD_ARGS: "--no-tls-optimize"
 
 // RUN: %clang -target powerpc64le-unknown-linux-gnu %s -### -o %t.o 2>&1 | FileCheck -check-prefix=CHECK_LE_LD_ARGS %s
 // CHECK_LE_LD_ARGS: "elf64lppc"
+// CHECK_LE_LD_ARGS: "--no-tls-optimize"
 
 
