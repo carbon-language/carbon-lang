@@ -117,6 +117,17 @@ class CMICmnLLDBDebugSessionInfo : public CMICmnBase, public MI::ISingleton<CMIC
         eVariableType_Arguments = (1u << 3)  // Arguments.
     };
 
+    //++ ===================================================================
+    // Details: Determine the information that should be shown by using MIResponseFormVariableInfo family functions.
+    //--
+    enum VariableInfoFormat_e
+    {
+        eVariableInfoFormat_NoValues,
+        eVariableInfoFormat_AllValues,
+        eVariableInfoFormat_SimpleValues,
+        kNumVariableInfoFormats
+    };
+
     // Typedefs:
   public:
     typedef std::vector<uint32_t> VecActiveThreadId_t;
@@ -148,9 +159,12 @@ class CMICmnLLDBDebugSessionInfo : public CMICmnBase, public MI::ISingleton<CMIC
     bool MIResponseFormThreadInfo(const SMICmdData &vCmdData, const lldb::SBThread &vrThread, CMICmnMIValueTuple &vwrMIValueTuple);
     bool MIResponseFormThreadInfo2(const SMICmdData &vCmdData, const lldb::SBThread &vrThread, CMICmnMIValueTuple &vwrMIValueTuple);
     bool MIResponseFormThreadInfo3(const SMICmdData &vCmdData, const lldb::SBThread &vrThread, CMICmnMIValueTuple &vwrMIValueTuple);
-    bool MIResponseFormVariableInfo(const lldb::SBFrame &vrFrame, const MIuint vMaskVarTypes, CMICmnMIValueList &vwrMiValueList);
-    bool MIResponseFormVariableInfo2(const lldb::SBFrame &vrFrame, const MIuint vMaskVarTypes, CMICmnMIValueList &vwrMiValueList);
-    bool MIResponseFormVariableInfo3(const lldb::SBFrame &vrFrame, const MIuint vMaskVarTypes, CMICmnMIValueList &vwrMiValueList);
+    bool MIResponseFormVariableInfo(const lldb::SBFrame &vrFrame, const MIuint vMaskVarTypes,
+                                    const VariableInfoFormat_e veVarInfoFormat, CMICmnMIValueList &vwrMiValueList);
+    bool MIResponseFormVariableInfo2(const lldb::SBFrame &vrFrame, const MIuint vMaskVarTypes,
+                                     const VariableInfoFormat_e veVarInfoFormat, CMICmnMIValueList &vwrMiValueList);
+    bool MIResponseFormVariableInfo3(const lldb::SBFrame &vrFrame, const MIuint vMaskVarTypes,
+                                     const VariableInfoFormat_e veVarInfoFormat, CMICmnMIValueList &vwrMiValueList);
     bool MIResponseFormBrkPtFrameInfo(const SBrkPtInfo &vrBrkPtInfo, CMICmnMIValueTuple &vwrMiValueTuple);
     bool MIResponseFormBrkPtInfo(const SBrkPtInfo &vrBrkPtInfo, CMICmnMIValueTuple &vwrMiValueTuple);
     bool GetBrkPtInfo(const lldb::SBBreakpoint &vBrkPt, SBrkPtInfo &vrwBrkPtInfo) const;
@@ -188,9 +202,9 @@ class CMICmnLLDBDebugSessionInfo : public CMICmnBase, public MI::ISingleton<CMIC
     void operator=(const CMICmnLLDBDebugSessionInfo &);
     //
     bool GetVariableInfo(const MIuint vnMaxDepth, const lldb::SBValue &vrValue, const bool vbIsChildValue,
-                         CMICmnMIValueList &vwrMiValueList, MIuint &vrwnDepth);
+                         const VariableInfoFormat_e veVarInfoFormat, CMICmnMIValueList &vwrMiValueList, MIuint &vrwnDepth);
     bool GetVariableInfo2(const MIuint vnMaxDepth, const lldb::SBValue &vrValue, const bool vbIsChildValue,
-                          CMICmnMIValueList &vwrMiValueList, MIuint &vrwnDepth);
+                          const VariableInfoFormat_e veVarInfoFormat, CMICmnMIValueList &vwrMiValueList, MIuint &vrwnDepth);
 
     // Overridden:
   private:

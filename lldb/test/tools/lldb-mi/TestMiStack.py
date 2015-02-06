@@ -10,7 +10,6 @@ class MiStackTestCase(lldbmi_testcase.MiTestCaseBase):
 
     @lldbmi_test
     @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
-    @unittest2.skip("-stack-list-locals doesn't work properly")
     def test_lldbmi_stackargs(self):
         """Test that 'lldb-mi --interpreter' can shows arguments."""
 
@@ -27,15 +26,26 @@ class MiStackTestCase(lldbmi_testcase.MiTestCaseBase):
         self.expect("\^running")
         self.expect("\*stopped,reason=\"breakpoint-hit\"")
 
-        # Test arguments
-        self.runCmd("-stack-list-arguments 0") #FIXME: --no-values doesn't work
+        # Test -stack-list-arguments: use 0 or --no-values
+        self.runCmd("-stack-list-arguments 0")
         self.expect("\^done,stack-args=\[frame={level=\"0\",args=\[name=\"argc\",name=\"argv\"\]}")
+        self.runCmd("-stack-list-arguments --no-values")
+        self.expect("\^done,stack-args=\[frame={level=\"0\",args=\[name=\"argc\",name=\"argv\"\]}")
+
+        # Test -stack-list-arguments: use 1 or --all-values
         self.runCmd("-stack-list-arguments 1")
+        self.expect("\^done,stack-args=\[frame={level=\"0\",args=\[{name=\"argc\",value=\"1\"},{name=\"argv\",value=\".*\"}\]}")
+        self.runCmd("-stack-list-arguments --all-values")
+        self.expect("\^done,stack-args=\[frame={level=\"0\",args=\[{name=\"argc\",value=\"1\"},{name=\"argv\",value=\".*\"}\]}")
+
+        # Test -stack-list-arguments: use 2 or --simple-values
+        self.runCmd("-stack-list-arguments 2")
+        self.expect("\^done,stack-args=\[frame={level=\"0\",args=\[{name=\"argc\",value=\"1\"},{name=\"argv\",value=\".*\"}\]}")
+        self.runCmd("-stack-list-arguments --simple-values")
         self.expect("\^done,stack-args=\[frame={level=\"0\",args=\[{name=\"argc\",value=\"1\"},{name=\"argv\",value=\".*\"}\]}")
 
     @lldbmi_test
     @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
-    @unittest2.skip("-stack-list-locals doesn't work properly")
     def test_lldbmi_locals(self):
         """Test that 'lldb-mi --interpreter' can shows local variables."""
 
@@ -53,10 +63,22 @@ class MiStackTestCase(lldbmi_testcase.MiTestCaseBase):
         self.expect("\^running")
         self.expect("\*stopped,reason=\"breakpoint-hit\"")
 
-        # Test locals
-        self.runCmd("-stack-list-locals 0") #FIXME: --no-values doesn't work
+        # Test -stack-list-locals: use 0 or --no-values
+        self.runCmd("-stack-list-locals 0")
         self.expect("\^done,locals=\[name=\"a\",name=\"b\"\]")
+        self.runCmd("-stack-list-locals --no-values")
+        self.expect("\^done,locals=\[name=\"a\",name=\"b\"\]")
+
+        # Test -stack-list-locals: use 1 or --all-values
         self.runCmd("-stack-list-locals 1")
+        self.expect("\^done,locals=\[{name=\"a\",value=\"10\"},{name=\"b\",value=\"20\"}\]")
+        self.runCmd("-stack-list-locals --all-values")
+        self.expect("\^done,locals=\[{name=\"a\",value=\"10\"},{name=\"b\",value=\"20\"}\]")
+
+        # Test -stack-list-locals: use 2 or --simple-values
+        self.runCmd("-stack-list-locals 2")
+        self.expect("\^done,locals=\[{name=\"a\",value=\"10\"},{name=\"b\",value=\"20\"}\]")
+        self.runCmd("-stack-list-locals --simple-values")
         self.expect("\^done,locals=\[{name=\"a\",value=\"10\"},{name=\"b\",value=\"20\"}\]")
 
     @lldbmi_test

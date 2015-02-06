@@ -143,7 +143,10 @@ class CMICmdCmdStackListArguments : public CMICmdBase
     bool m_bThreadInvalid; // True = yes invalid thread, false = thread object valid
     CMICmnMIValueList m_miValueList;
     const CMIUtilString m_constStrArgThread;      // Not specified in MI spec but Eclipse gives this option
-    const CMIUtilString m_constStrArgPrintValues; // Not handled by *this command
+    const CMIUtilString m_constStrArgPrintValues;
+    const CMIUtilString m_constStrArgNoValues;
+    const CMIUtilString m_constStrArgAllValues;
+    const CMIUtilString m_constStrArgSimpleValues;
 };
 
 //++ ============================================================================
@@ -179,5 +182,8 @@ class CMICmdCmdStackListLocals : public CMICmdBase
     CMICmnMIValueList m_miValueList;
     const CMIUtilString m_constStrArgThread;      // Not specified in MI spec but Eclipse gives this option
     const CMIUtilString m_constStrArgFrame;       // Not specified in MI spec but Eclipse gives this option
-    const CMIUtilString m_constStrArgPrintValues; // Not handled by *this command
+    const CMIUtilString m_constStrArgPrintValues;
+    const CMIUtilString m_constStrArgNoValues;
+    const CMIUtilString m_constStrArgAllValues;
+    const CMIUtilString m_constStrArgSimpleValues;
 };
