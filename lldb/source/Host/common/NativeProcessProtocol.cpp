@@ -402,6 +402,10 @@ void
 NativeProcessProtocol::SetState (lldb::StateType state, bool notify_delegates)
 {
     Mutex::Locker locker (m_state_mutex);
+
+    if (state == m_state)
+        return;
+
     m_state = state;
 
     if (StateIsStoppedState (state, false))
