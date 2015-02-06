@@ -61,8 +61,8 @@ ELFLinkingContext::ELFLinkingContext(
       _mergeCommonStrings(false), _useShlibUndefines(true),
       _dynamicLinkerArg(false), _noAllowDynamicLibraries(false),
       _mergeRODataToTextSegment(true), _demangle(true), _alignSegments(true),
-      _outputMagic(OutputMagic::DEFAULT), _initFunction("_init"),
-      _finiFunction("_fini"), _sysrootPath("") {}
+      _nostdlib(false), _outputMagic(OutputMagic::DEFAULT),
+      _initFunction("_init"), _finiFunction("_fini"), _sysrootPath("") {}
 
 void ELFLinkingContext::addPasses(PassManager &pm) {
   pm.add(std::unique_ptr<Pass>(new elf::OrderPass()));

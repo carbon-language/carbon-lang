@@ -293,7 +293,8 @@ GnuLdDriver::evalLinkerScript(ELFLinkingContext &ctx,
       ctx.getNodes().push_back(llvm::make_unique<GroupEnd>(groupSize));
     }
     if (auto *searchDir = dyn_cast<script::SearchDir>(c))
-      ctx.addSearchPath(searchDir->getSearchPath());
+      if (!ctx.nostdlib())
+        ctx.addSearchPath(searchDir->getSearchPath());
     if (auto *entry = dyn_cast<script::Entry>(c))
       ctx.setEntrySymbolName(entry->getEntryName());
     if (auto *output = dyn_cast<script::Output>(c))
@@ -386,6 +387,8 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
 
   bool _outputOptionSet = false;
 
+  bool hasNoStdLib = false;
+
   // Ignore unknown arguments.
   for (auto unknownArg : parsedArgs->filtered(OPT_UNKNOWN))
     diag << "warning: ignoring unknown argument: "
@@ -400,8 +403,11 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
     ctx->addSearchPath(libDir->getValue());
 
   // Add the default search directory specific to the target.
-  if (!parsedArgs->hasArg(OPT_nostdlib))
+  if (!(hasNoStdLib = parsedArgs->hasArg(OPT_nostdlib)))
     ctx->addDefaultSearchDirs(baseTriple);
+
+  // -nostdlib support.
+  ctx->setNoStdLib(hasNoStdLib);
 
   // Handle --demangle option(For compatibility)
   if (parsedArgs->getLastArg(OPT_demangle))

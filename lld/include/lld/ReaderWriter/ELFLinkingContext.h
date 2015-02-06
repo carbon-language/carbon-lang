@@ -303,6 +303,10 @@ public:
     _scripts.push_back(std::move(script));
   }
 
+  /// \brief nostdlib support.
+  bool nostdlib() const { return _nostdlib; }
+  void setNoStdLib(bool nostdlib) { _nostdlib = nostdlib; }
+
 private:
   ELFLinkingContext() LLVM_DELETED_FUNCTION;
 
@@ -328,6 +332,7 @@ protected:
   bool _mergeRODataToTextSegment;
   bool _demangle;
   bool _alignSegments;
+  bool _nostdlib;
   llvm::Optional<uint64_t> _maxPageSize;
 
   OutputMagic _outputMagic;
