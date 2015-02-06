@@ -1452,6 +1452,7 @@ GDBRemoteCommunicationServer::Handle_qProcessInfo (StringExtractorGDBRemote &pac
     else if (m_is_platform)
     {
         pid = m_process_launch_info.GetProcessID ();
+        m_process_launch_info.Clear ();
     }
     else
         return SendUnimplementedResponse (packet.GetStringRef ().c_str ());
