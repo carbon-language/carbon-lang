@@ -9,5 +9,3 @@ set(DebugInfoSources
 add_llvm_unittest(DebugInfoTests
   ${DebugInfoSources}
   )
-
-add_subdirectory(PDB)
