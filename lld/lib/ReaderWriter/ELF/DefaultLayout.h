@@ -755,7 +755,7 @@ DefaultLayout<ELFT>::assignVirtualAddress() {
 
   std::sort(_segments.begin(), _segments.end(), Segment<ELFT>::compareSegments);
 
-  uint64_t virtualAddress = _context.getBaseAddress();
+  uint64_t baseAddress = _context.getBaseAddress();
 
   // HACK: This is a super dirty hack. The elf header and program header are
   // not part of a section, but we need them to be loaded at the base address
@@ -774,6 +774,7 @@ DefaultLayout<ELFT>::assignVirtualAddress() {
   firstLoadSegment->prepend(_elfHeader);
   bool newSegmentHeaderAdded = true;
   bool virtualAddressAssigned = false;
+  bool fileOffsetAssigned = false;
   while (true) {
     for (auto si : _segments) {
       si->finalize();
@@ -783,8 +784,8 @@ DefaultLayout<ELFT>::assignVirtualAddress() {
     }
     if (!newSegmentHeaderAdded && virtualAddressAssigned)
       break;
-    virtualAddressAssigned = true;
-    uint64_t address = virtualAddress;
+    uint64_t address = baseAddress;
+    ;
     // start assigning virtual addresses
     for (auto &si : _segments) {
       if ((si->segmentType() != llvm::ELF::PT_LOAD) &&
@@ -794,18 +795,27 @@ DefaultLayout<ELFT>::assignVirtualAddress() {
       if (si->segmentType() == llvm::ELF::PT_NULL) {
         si->assignVirtualAddress(0 /*non loadable*/);
       } else {
+        if (virtualAddressAssigned && (address != baseAddress) &&
+            (address == si->virtualAddr()))
+          break;
         si->assignVirtualAddress(address);
       }
       address = si->virtualAddr() + si->memSize();
     }
-    uint64_t fileoffset = 0;
+    uint64_t baseFileOffset = 0;
+    uint64_t fileoffset = baseFileOffset;
     for (auto &si : _segments) {
       if ((si->segmentType() != llvm::ELF::PT_LOAD) &&
           (si->segmentType() != llvm::ELF::PT_NULL))
         continue;
+      if (fileOffsetAssigned && (fileoffset != baseFileOffset) &&
+          (fileoffset == si->fileOffset()))
+        break;
       si->assignFileOffsets(fileoffset);
       fileoffset = si->fileOffset() + si->fileSize();
     }
+    virtualAddressAssigned = true;
+    fileOffsetAssigned = true;
     _programHeader->resetProgramHeaders();
   }
   Section<ELFT> *section;
