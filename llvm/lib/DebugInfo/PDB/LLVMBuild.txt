@@ -1,4 +1,4 @@
-;===- ./lib/DebugInfo/LLVMBuild.txt ----------------------------*- Conf -*--===;
+;===- ./lib/DebugInfo/PDB/LLVMBuild.txt ------------------------*- Conf -*--===;
 ;
 ;                     The LLVM Compiler Infrastructure
 ;
@@ -15,10 +15,9 @@
 ;
 ;===------------------------------------------------------------------------===;
 
-[common]
-subdirectories = DWARF PDB
-
 [component_0]
-type = Group
-name = DebugInfo
-parent = $ROOT
+type = Library
+name = DebugInfoPDB
+parent = DebugInfo
+required_libraries = Support
+
