@@ -570,7 +570,8 @@ void MemoryAccess::print(raw_ostream &OS) const {
     OS.indent(12) << "MayWriteAccess :=\t";
     break;
   }
-  OS << "[Reduction Type: " << getReductionType() << "]\n";
+  OS << "[Reduction Type: " << getReductionType() << "] ";
+  OS << "[Scalar: " << isScalar() << "]\n";
   OS.indent(16) << getOriginalAccessRelationStr() << ";\n";
 }
 

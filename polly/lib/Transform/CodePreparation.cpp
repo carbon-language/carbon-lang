@@ -27,6 +27,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "polly/LinkAllPasses.h"
+#include "polly/ScopDetection.h"
 #include "polly/CodeGen/BlockGenerators.h"
 #include "polly/Support/ScopHelper.h"
 #include "llvm/Analysis/DominanceFrontier.h"
@@ -201,6 +202,9 @@ void CodePreparation::getAnalysisUsage(AnalysisUsage &AU) const {
 }
 
 bool CodePreparation::runOnFunction(Function &F) {
+  if (PollyModelPHINodes)
+    return false;
+
   LI = &getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
   SE = &getAnalysis<ScalarEvolution>();
 

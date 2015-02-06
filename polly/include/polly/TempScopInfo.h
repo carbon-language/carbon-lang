@@ -275,6 +275,13 @@ class TempScopInfo : public FunctionPass {
   ///             Access is required.
   bool buildScalarDependences(Instruction *Inst, Region *R);
 
+  /// @brief Create IRAccesses for the given PHI node in the given region.
+  ///
+  /// @param PHI       The PHI node to be handled
+  /// @param R         The SCoP region
+  /// @param Functions The access functions of the current BB
+  void buildPHIAccesses(PHINode *PHI, Region &R, AccFuncSetType &Functions);
+
   void buildAccessFunctions(Region &RefRegion, BasicBlock &BB);
 
 public:

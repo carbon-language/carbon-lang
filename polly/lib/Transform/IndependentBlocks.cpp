@@ -256,7 +256,8 @@ bool IndependentBlocks::createIndependentBlocks(BasicBlock *BB,
   Instruction *InsertPos = BB->getFirstNonPHIOrDbg();
 
   for (Instruction *Inst : WorkList)
-    moveOperandTree(Inst, R, ReplacedMap, InsertPos);
+    if (!isa<PHINode>(Inst))
+      moveOperandTree(Inst, R, ReplacedMap, InsertPos);
 
   // The BB was changed if we replaced any operand.
   return !ReplacedMap.empty();
