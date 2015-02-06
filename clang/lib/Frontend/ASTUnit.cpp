@@ -924,8 +924,8 @@ public:
     Hash = 0;
   }
 
-  bool HandleTopLevelDecl(DeclGroupRef D) override {
-    for (Decl *D : D) {
+  bool HandleTopLevelDecl(DeclGroupRef DG) override {
+    for (Decl *D : DG) {
       // FIXME: Currently ObjC method declarations are incorrectly being
       // reported as top-level declarations, even though their DeclContext
       // is the containing ObjC @interface/@implementation.  This is a
