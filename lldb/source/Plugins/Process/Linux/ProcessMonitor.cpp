@@ -16,22 +16,6 @@
 #include <stdint.h>
 #include <unistd.h>
 #include <elf.h>
-#if defined(__ANDROID_NDK__) && defined (__arm__)
-#include <linux/personality.h>
-#include <linux/user.h>
-#else
-#include <sys/personality.h>
-#include <sys/user.h>
-#endif
-#ifndef __ANDROID__
-#include <sys/procfs.h>
-#endif
-#include <sys/ptrace.h>
-#include <sys/uio.h>
-#include <sys/socket.h>
-#include <sys/syscall.h>
-#include <sys/types.h>
-#include <sys/wait.h>
 
 // C++ Includes
 // Other libraries and framework includes
@@ -51,6 +35,20 @@
 #include "ProcessLinux.h"
 #include "Plugins/Process/POSIX/ProcessPOSIXLog.h"
 #include "ProcessMonitor.h"
+
+// System includes - They have to be included after framework includes because they define some
+// macros which collide with variable names in other modules
+#ifndef __ANDROID__
+#include <sys/procfs.h>
+#endif
+#include <sys/personality.h>
+#include <sys/ptrace.h>
+#include <sys/socket.h>
+#include <sys/syscall.h>
+#include <sys/types.h>
+#include <sys/uio.h>
+#include <sys/user.h>
+#include <sys/wait.h>
 
 #ifdef __ANDROID__
 #define __ptrace_request int
