@@ -1866,6 +1866,21 @@ GDBRemoteCommunicationClient::SendAttach
     return -1;
 }
 
+int
+GDBRemoteCommunicationClient::SendStdinNotification (const char* data, size_t data_len)
+{
+    StreamString packet;
+    packet.PutCString("I");
+    packet.PutBytesAsRawHex8(data, data_len);
+    StringExtractorGDBRemote response;
+    if (SendPacketAndWaitForResponse (packet.GetData(), packet.GetSize(), response, false) == PacketResult::Success)
+    {
+        return 0;
+    }
+    return response.GetError();
+
+}
+
 const lldb_private::ArchSpec &
 GDBRemoteCommunicationClient::GetHostArchitecture ()
 {

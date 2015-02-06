@@ -175,6 +175,23 @@ public:
 
 
     //------------------------------------------------------------------
+    /// Sends a GDB remote protocol 'I' packet that delivers stdin
+    /// data to the remote process.
+    ///
+    /// @param[in] data
+    ///     A pointer to stdin data.
+    ///
+    /// @param[in] data_len
+    ///     The number of bytes available at \a data.
+    ///
+    /// @return
+    ///     Zero if the attach was successful, or an error indicating
+    ///     an error code.
+    //------------------------------------------------------------------
+    int
+    SendStdinNotification(const char* data, size_t data_len);
+
+    //------------------------------------------------------------------
     /// Sets the path to use for stdin/out/err for a process
     /// that will be launched with the 'A' packet.
     ///

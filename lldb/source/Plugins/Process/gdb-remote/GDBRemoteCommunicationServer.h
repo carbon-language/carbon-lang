@@ -415,6 +415,9 @@ protected:
     Handle_H (StringExtractorGDBRemote &packet);
 
     PacketResult
+    Handle_I (StringExtractorGDBRemote &packet);
+
+    PacketResult
     Handle_interrupt (StringExtractorGDBRemote &packet);
 
     PacketResult

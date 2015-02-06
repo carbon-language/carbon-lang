@@ -130,6 +130,7 @@ public:
         eServerPacketType_g,
         eServerPacketType_G,
         eServerPacketType_H,
+        eServerPacketType_I, // stdin notification
         eServerPacketType_k,
         eServerPacketType_m,
         eServerPacketType_M,

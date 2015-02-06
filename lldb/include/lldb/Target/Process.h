@@ -3180,6 +3180,7 @@ protected:
     lldb::IOHandlerSP           m_process_input_reader;
     Communication               m_stdio_communication;
     Mutex                       m_stdio_communication_mutex;
+    bool                        m_stdio_disable;           /// Remember process launch setting
     std::string                 m_stdout_data;
     std::string                 m_stderr_data;
     Mutex                       m_profile_data_comm_mutex;

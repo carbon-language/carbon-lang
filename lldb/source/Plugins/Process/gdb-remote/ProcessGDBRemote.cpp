@@ -942,6 +942,7 @@ ProcessGDBRemote::DoLaunch (Module *exe_module, ProcessLaunchInfo &launch_info)
 
                 SetPrivateState (SetThreadStopInfo (m_last_stop_packet));
                 
+                m_stdio_disable = disable_stdio;
                 if (!disable_stdio)
                 {
                     if (pty.GetMasterFileDescriptor() != lldb_utility::PseudoTerminal::invalid_fd)
@@ -2476,6 +2477,10 @@ ProcessGDBRemote::PutSTDIN (const char *src, size_t src_len, Error &error)
     {
         ConnectionStatus status;
         m_stdio_communication.Write(src, src_len, status, NULL);
+    }
+    else if (!m_stdio_disable)
+    {
+        m_gdb_comm.SendStdinNotification(src, src_len);
     }
     return 0;
 }

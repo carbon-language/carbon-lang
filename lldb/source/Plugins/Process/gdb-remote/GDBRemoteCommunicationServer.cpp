@@ -370,6 +370,10 @@ GDBRemoteCommunicationServer::GetPacketAndSendResponse (uint32_t timeout_usec,
             packet_result = Handle_H (packet);
             break;
 
+        case StringExtractorGDBRemote::eServerPacketType_I:
+            packet_result = Handle_I (packet);
+            break;
+
         case StringExtractorGDBRemote::eServerPacketType_m:
             packet_result = Handle_m (packet);
             break;
@@ -3424,6 +3428,46 @@ GDBRemoteCommunicationServer::Handle_H (StringExtractorGDBRemote &packet)
         default:
             assert (false && "unsupported $H variant - shouldn't get here");
             return SendIllFormedResponse (packet, "H variant unsupported, should be c or g");
+    }
+
+    return SendOKResponse();
+}
+
+GDBRemoteCommunicationServer::PacketResult
+GDBRemoteCommunicationServer::Handle_I (StringExtractorGDBRemote &packet)
+{
+    Log *log (GetLogIfAnyCategoriesSet(LIBLLDB_LOG_THREAD));
+
+    // Ensure we're llgs.
+    if (!IsGdbServer())
+        return SendUnimplementedResponse("GDBRemoteCommunicationServer::Handle_I() unimplemented");
+
+    // Fail if we don't have a current process.
+    if (!m_debugged_process_sp || (m_debugged_process_sp->GetID () == LLDB_INVALID_PROCESS_ID))
+    {
+        if (log)
+            log->Printf ("GDBRemoteCommunicationServer::%s failed, no process available", __FUNCTION__);
+        return SendErrorResponse (0x15);
+    }
+
+    packet.SetFilePos (::strlen("I"));
+    char tmp[4096];
+    for (;;)
+    {
+        size_t read = packet.GetHexBytesAvail(tmp, sizeof(tmp));
+        if (read == 0)
+        {
+            break;
+        }
+        // write directly to stdin *this might block if stdin buffer is full*
+        // TODO: enqueue this block in circular buffer and send window size to remote host
+        ConnectionStatus status;
+        Error error;
+        m_stdio_communication.Write(tmp, read, status, &error);
+        if (error.Fail())
+        {
+            return SendErrorResponse (0x15);
+        }
     }
 
     return SendOKResponse();
