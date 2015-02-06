@@ -516,38 +516,9 @@ enum VirtualityAttribute {
 };
 
 enum SourceLanguage {
-  // Language names
-  DW_LANG_C89 = 0x0001,
-  DW_LANG_C = 0x0002,
-  DW_LANG_Ada83 = 0x0003,
-  DW_LANG_C_plus_plus = 0x0004,
-  DW_LANG_Cobol74 = 0x0005,
-  DW_LANG_Cobol85 = 0x0006,
-  DW_LANG_Fortran77 = 0x0007,
-  DW_LANG_Fortran90 = 0x0008,
-  DW_LANG_Pascal83 = 0x0009,
-  DW_LANG_Modula2 = 0x000a,
-  DW_LANG_Java = 0x000b,
-  DW_LANG_C99 = 0x000c,
-  DW_LANG_Ada95 = 0x000d,
-  DW_LANG_Fortran95 = 0x000e,
-  DW_LANG_PLI = 0x000f,
-  DW_LANG_ObjC = 0x0010,
-  DW_LANG_ObjC_plus_plus = 0x0011,
-  DW_LANG_UPC = 0x0012,
-  DW_LANG_D = 0x0013,
-  // New in DWARF 5:
-  DW_LANG_Python = 0x0014,
-  DW_LANG_OpenCL = 0x0015,
-  DW_LANG_Go = 0x0016,
-  DW_LANG_Modula3 = 0x0017,
-  DW_LANG_Haskell = 0x0018,
-  DW_LANG_C_plus_plus_03 = 0x0019,
-  DW_LANG_C_plus_plus_11 = 0x001a,
-  DW_LANG_OCaml = 0x001b,
-
+#define HANDLE_DW_LANG(ID, NAME) DW_LANG_##NAME = ID,
+#include "llvm/Support/Dwarf.def"
   DW_LANG_lo_user = 0x8000,
-  DW_LANG_Mips_Assembler = 0x8001,
   DW_LANG_hi_user = 0xffff
 };
 

@@ -12,8 +12,16 @@
 //===----------------------------------------------------------------------===//
 
 // TODO: Add other DW-based macros.
-#if !defined HANDLE_DW_TAG
+#if !(defined HANDLE_DW_TAG || defined HANDLE_DW_LANG)
 #error "Missing macro definition of HANDLE_DW*"
+#endif
+
+#ifndef HANDLE_DW_TAG
+#define HANDLE_DW_TAG(ID, NAME)
+#endif
+
+#ifndef HANDLE_DW_LANG
+#define HANDLE_DW_LANG(ID, NAME)
 #endif
 
 HANDLE_DW_TAG(0x0001, array_type)
@@ -97,4 +105,37 @@ HANDLE_DW_TAG(0x4107, GNU_template_parameter_pack)
 HANDLE_DW_TAG(0x4108, GNU_formal_parameter_pack)
 HANDLE_DW_TAG(0x4200, APPLE_property)
 
+// DWARF languages.
+HANDLE_DW_LANG(0x0001, C89)
+HANDLE_DW_LANG(0x0002, C)
+HANDLE_DW_LANG(0x0003, Ada83)
+HANDLE_DW_LANG(0x0004, C_plus_plus)
+HANDLE_DW_LANG(0x0005, Cobol74)
+HANDLE_DW_LANG(0x0006, Cobol85)
+HANDLE_DW_LANG(0x0007, Fortran77)
+HANDLE_DW_LANG(0x0008, Fortran90)
+HANDLE_DW_LANG(0x0009, Pascal83)
+HANDLE_DW_LANG(0x000a, Modula2)
+HANDLE_DW_LANG(0x000b, Java)
+HANDLE_DW_LANG(0x000c, C99)
+HANDLE_DW_LANG(0x000d, Ada95)
+HANDLE_DW_LANG(0x000e, Fortran95)
+HANDLE_DW_LANG(0x000f, PLI)
+HANDLE_DW_LANG(0x0010, ObjC)
+HANDLE_DW_LANG(0x0011, ObjC_plus_plus)
+HANDLE_DW_LANG(0x0012, UPC)
+HANDLE_DW_LANG(0x0013, D)
+
+// New in DWARF 5:
+HANDLE_DW_LANG(0x0014, Python)
+HANDLE_DW_LANG(0x0015, OpenCL)
+HANDLE_DW_LANG(0x0016, Go)
+HANDLE_DW_LANG(0x0017, Modula3)
+HANDLE_DW_LANG(0x0018, Haskell)
+HANDLE_DW_LANG(0x0019, C_plus_plus_03)
+HANDLE_DW_LANG(0x001a, C_plus_plus_11)
+HANDLE_DW_LANG(0x001b, OCaml)
+HANDLE_DW_LANG(0x8001, Mips_Assembler)
+
 #undef HANDLE_DW_TAG
+#undef HANDLE_DW_LANG

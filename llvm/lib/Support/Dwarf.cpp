@@ -480,36 +480,13 @@ const char *llvm::dwarf::VirtualityString(unsigned Virtuality) {
 
 const char *llvm::dwarf::LanguageString(unsigned Language) {
   switch (Language) {
-  case DW_LANG_C89:                      return "DW_LANG_C89";
-  case DW_LANG_C:                        return "DW_LANG_C";
-  case DW_LANG_Ada83:                    return "DW_LANG_Ada83";
-  case DW_LANG_C_plus_plus:              return "DW_LANG_C_plus_plus";
-  case DW_LANG_Cobol74:                  return "DW_LANG_Cobol74";
-  case DW_LANG_Cobol85:                  return "DW_LANG_Cobol85";
-  case DW_LANG_Fortran77:                return "DW_LANG_Fortran77";
-  case DW_LANG_Fortran90:                return "DW_LANG_Fortran90";
-  case DW_LANG_Pascal83:                 return "DW_LANG_Pascal83";
-  case DW_LANG_Modula2:                  return "DW_LANG_Modula2";
-  case DW_LANG_Java:                     return "DW_LANG_Java";
-  case DW_LANG_C99:                      return "DW_LANG_C99";
-  case DW_LANG_Ada95:                    return "DW_LANG_Ada95";
-  case DW_LANG_Fortran95:                return "DW_LANG_Fortran95";
-  case DW_LANG_PLI:                      return "DW_LANG_PLI";
-  case DW_LANG_ObjC:                     return "DW_LANG_ObjC";
-  case DW_LANG_ObjC_plus_plus:           return "DW_LANG_ObjC_plus_plus";
-  case DW_LANG_UPC:                      return "DW_LANG_UPC";
-  case DW_LANG_D:                        return "DW_LANG_D";
-  case DW_LANG_Python:                   return "DW_LANG_Python";
-  case DW_LANG_OpenCL:                   return "DW_LANG_OpenCL";
-  case DW_LANG_Go:                       return "DW_LANG_Go";
-  case DW_LANG_Modula3:                  return "DW_LANG_Modula3";
-  case DW_LANG_Haskell:                  return "DW_LANG_Haskell";
-  case DW_LANG_C_plus_plus_03:           return "DW_LANG_C_plus_plus_03";
-  case DW_LANG_C_plus_plus_11:           return "DW_LANG_C_plus_plus_11";
-  case DW_LANG_OCaml:                    return "DW_LANG_OCaml";
-  case DW_LANG_Mips_Assembler:           return "DW_LANG_Mips_Assembler";
+  default:
+    return nullptr;
+#define HANDLE_DW_LANG(ID, NAME)                                               \
+  case DW_LANG_##NAME:                                                         \
+    return "DW_LANG_" #NAME;
+#include "llvm/Support/Dwarf.def"
   }
-  return nullptr;
 }
 
 const char *llvm::dwarf::CaseString(unsigned Case) {
