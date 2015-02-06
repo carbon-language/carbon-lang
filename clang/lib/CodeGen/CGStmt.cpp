@@ -1957,10 +1957,9 @@ void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {
     InputConstraint = SimplifyConstraint(InputConstraint.c_str(), getTarget(),
                                          &OutputConstraintInfos);
 
-    InputConstraint =
-      AddVariableConstraints(InputConstraint,
-                            *InputExpr->IgnoreParenNoopCasts(getContext()),
-                            getTarget(), CGM, S, Info.earlyClobber());
+    InputConstraint = AddVariableConstraints(
+        InputConstraint, *InputExpr->IgnoreParenNoopCasts(getContext()),
+        getTarget(), CGM, S, false /* No EarlyClobber */);
 
     llvm::Value *Arg = EmitAsmInput(Info, InputExpr, Constraints);
 
