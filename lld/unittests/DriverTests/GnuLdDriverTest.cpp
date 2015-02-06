@@ -34,13 +34,13 @@ protected:
     _ctx = std::move(GnuLdDriver::createELFLinkingContext(triple));
   }
 
-  void parse(StringRef script) {
+  void parse(StringRef script, bool nostdlib = false) {
     std::unique_ptr<MemoryBuffer> mb = MemoryBuffer::getMemBuffer(
       script, "foo.so");
     std::string s;
     raw_string_ostream out(s);
-    std::error_code ec = GnuLdDriver::evalLinkerScript(
-      *_ctx, std::move(mb), out);
+    std::error_code ec =
+        GnuLdDriver::evalLinkerScript(*_ctx, std::move(mb), out, nostdlib);
     EXPECT_FALSE(ec);
   };
 
@@ -220,8 +220,7 @@ TEST_F(LinkerScriptTest, Output) {
 
 // Test that search paths are ignored when nostdlib is set.
 TEST_F(LinkerScriptTest, IgnoreSearchDirNoStdLib) {
-  _ctx->setNoStdLib(true);
-  parse("SEARCH_DIR(\"/foo/bar\")");
+  parse("SEARCH_DIR(\"/foo/bar\")", true /*nostdlib*/);
   std::vector<StringRef> paths = _ctx->getSearchPaths();
   EXPECT_EQ((size_t)0, paths.size());
 }

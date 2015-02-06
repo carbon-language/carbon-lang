@@ -80,7 +80,7 @@ public:
   /// Public function for testing.
   static std::error_code evalLinkerScript(ELFLinkingContext &ctx,
                                           std::unique_ptr<MemoryBuffer> mb,
-                                          raw_ostream &diag);
+                                          raw_ostream &diag, bool nostdlib);
 
   /// A factory method to create an instance of ELFLinkingContext.
   static std::unique_ptr<ELFLinkingContext>
