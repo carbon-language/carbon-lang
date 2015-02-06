@@ -26,7 +26,7 @@ extern "C" void android_set_abort_message(const char* msg);
 
 #ifdef __APPLE__
 #   if defined(__has_include) && __has_include(<CrashReporterClient.h>)
-#       define HAVE_CRASHREPORTERCLIENT_H 1
+#       define HAVE_CRASHREPORTERCLIENT_H
 #       include <CrashReporterClient.h>
 #   endif
 #endif
@@ -44,7 +44,7 @@ void abort_message(const char* format, ...)
     va_end(list);
     fprintf(stderr, "\n");
 
-#if defined(__APPLE__) && HAVE_CRASHREPORTERCLIENT_H
+#if defined(__APPLE__) && defined(HAVE_CRASHREPORTERCLIENT_H)
     // record message in crash report
     char* buffer;
     va_list list2;
