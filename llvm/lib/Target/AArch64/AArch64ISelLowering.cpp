@@ -3263,8 +3263,8 @@ SDValue AArch64TargetLowering::LowerBR_CC(SDValue Op, SelectionDAG &DAG) const {
       OFCC = getInvertedCondCode(OFCC);
     SDValue CCVal = DAG.getConstant(OFCC, MVT::i32);
 
-    return DAG.getNode(AArch64ISD::BRCOND, SDLoc(LHS), MVT::Other, Chain, Dest,
-                       CCVal, Overflow);
+    return DAG.getNode(AArch64ISD::BRCOND, dl, MVT::Other, Chain, Dest, CCVal,
+                       Overflow);
   }
 
   if (LHS.getValueType().isInteger()) {
