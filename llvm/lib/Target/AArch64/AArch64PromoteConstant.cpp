@@ -22,7 +22,7 @@
 
 #include "AArch64.h"
 #include "llvm/ADT/DenseMap.h"
-#include "llvm/ADT/SmallSet.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/IR/Constants.h"
@@ -31,6 +31,7 @@
 #include "llvm/IR/GlobalVariable.h"
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/InlineAsm.h"
+#include "llvm/IR/InstIterator.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/IntrinsicInst.h"
 #include "llvm/IR/Module.h"
@@ -112,44 +113,42 @@ private:
     AU.addPreserved<DominatorTreeWrapperPass>();
   }
 
-  /// Type to store a list of User.
-  typedef SmallVector<Value::user_iterator, 4> Users;
+  /// Type to store a list of Uses.
+  typedef SmallVector<Use *, 4> Uses;
   /// Map an insertion point to all the uses it dominates.
-  typedef DenseMap<Instruction *, Users> InsertionPoints;
+  typedef DenseMap<Instruction *, Uses> InsertionPoints;
   /// Map a function to the required insertion point of load for a
   /// global variable.
   typedef DenseMap<Function *, InsertionPoints> InsertionPointsPerFunc;
 
   /// Find the closest point that dominates the given Use.
-  Instruction *findInsertionPoint(Value::user_iterator &Use);
+  Instruction *findInsertionPoint(Use &Use);
 
   /// Check if the given insertion point is dominated by an existing
   /// insertion point.
   /// If true, the given use is added to the list of dominated uses for
   /// the related existing point.
   /// \param NewPt the insertion point to be checked
-  /// \param UseIt the use to be added into the list of dominated uses
+  /// \param Use the use to be added into the list of dominated uses
   /// \param InsertPts existing insertion points
   /// \pre NewPt and all instruction in InsertPts belong to the same function
   /// \return true if one of the insertion point in InsertPts dominates NewPt,
   ///         false otherwise
-  bool isDominated(Instruction *NewPt, Value::user_iterator &UseIt,
-                   InsertionPoints &InsertPts);
+  bool isDominated(Instruction *NewPt, Use &Use, InsertionPoints &InsertPts);
 
   /// Check if the given insertion point can be merged with an existing
   /// insertion point in a common dominator.
   /// If true, the given use is added to the list of the created insertion
   /// point.
   /// \param NewPt the insertion point to be checked
-  /// \param UseIt the use to be added into the list of dominated uses
+  /// \param Use the use to be added into the list of dominated uses
   /// \param InsertPts existing insertion points
   /// \pre NewPt and all instruction in InsertPts belong to the same function
   /// \pre isDominated returns false for the exact same parameters.
   /// \return true if it exists an insertion point in InsertPts that could
   ///         have been merged with NewPt in a common dominator,
   ///         false otherwise
-  bool tryAndMerge(Instruction *NewPt, Value::user_iterator &UseIt,
-                   InsertionPoints &InsertPts);
+  bool tryAndMerge(Instruction *NewPt, Use &Use, InsertionPoints &InsertPts);
 
   /// Compute the minimal insertion points to dominates all the interesting
   /// uses of value.
@@ -182,21 +181,19 @@ private:
   bool promoteConstant(Constant *Cst);
 
   /// Transfer the list of dominated uses of IPI to NewPt in InsertPts.
-  /// Append UseIt to this list and delete the entry of IPI in InsertPts.
-  static void appendAndTransferDominatedUses(Instruction *NewPt,
-                                             Value::user_iterator &UseIt,
+  /// Append Use to this list and delete the entry of IPI in InsertPts.
+  static void appendAndTransferDominatedUses(Instruction *NewPt, Use &Use,
                                              InsertionPoints::iterator &IPI,
                                              InsertionPoints &InsertPts) {
     // Record the dominated use.
-    IPI->second.push_back(UseIt);
+    IPI->second.push_back(&Use);
     // Transfer the dominated uses of IPI to NewPt
     // Inserting into the DenseMap may invalidate existing iterator.
     // Keep a copy of the key to find the iterator to erase.
     Instruction *OldInstr = IPI->first;
     InsertPts[NewPt] = std::move(IPI->second);
     // Erase IPI.
-    IPI = InsertPts.find(OldInstr);
-    InsertPts.erase(IPI);
+    InsertPts.erase(OldInstr);
   }
 };
 } // end anonymous namespace
@@ -328,23 +325,18 @@ static bool shouldConvert(const Constant *Cst) {
   return isConstantUsingVectorTy(Cst->getType());
 }
 
-Instruction *
-AArch64PromoteConstant::findInsertionPoint(Value::user_iterator &Use) {
+Instruction *AArch64PromoteConstant::findInsertionPoint(Use &Use) {
+  Instruction *User = cast<Instruction>(Use.getUser());
+
   // If this user is a phi, the insertion point is in the related
   // incoming basic block.
-  PHINode *PhiInst = dyn_cast<PHINode>(*Use);
-  Instruction *InsertionPoint;
-  if (PhiInst)
-    InsertionPoint =
-        PhiInst->getIncomingBlock(Use.getOperandNo())->getTerminator();
-  else
-    InsertionPoint = dyn_cast<Instruction>(*Use);
-  assert(InsertionPoint && "User is not an instruction!");
-  return InsertionPoint;
+  if (PHINode *PhiInst = dyn_cast<PHINode>(User))
+    return PhiInst->getIncomingBlock(Use.getOperandNo())->getTerminator();
+
+  return User;
 }
 
-bool AArch64PromoteConstant::isDominated(Instruction *NewPt,
-                                         Value::user_iterator &UseIt,
+bool AArch64PromoteConstant::isDominated(Instruction *NewPt, Use &Use,
                                          InsertionPoints &InsertPts) {
 
   DominatorTree &DT = getAnalysis<DominatorTreeWrapperPass>(
@@ -363,15 +355,14 @@ bool AArch64PromoteConstant::isDominated(Instruction *NewPt,
       DEBUG(dbgs() << "Insertion point dominated by:\n");
       DEBUG(IPI.first->print(dbgs()));
       DEBUG(dbgs() << '\n');
-      IPI.second.push_back(UseIt);
+      IPI.second.push_back(&Use);
       return true;
     }
   }
   return false;
 }
 
-bool AArch64PromoteConstant::tryAndMerge(Instruction *NewPt,
-                                         Value::user_iterator &UseIt,
+bool AArch64PromoteConstant::tryAndMerge(Instruction *NewPt, Use &Use,
                                          InsertionPoints &InsertPts) {
   DominatorTree &DT = getAnalysis<DominatorTreeWrapperPass>(
       *NewPt->getParent()->getParent()).getDomTree();
@@ -391,7 +382,7 @@ bool AArch64PromoteConstant::tryAndMerge(Instruction *NewPt,
       DEBUG(dbgs() << "Merge insertion point with:\n");
       DEBUG(IPI->first->print(dbgs()));
       DEBUG(dbgs() << "\nat considered insertion point.\n");
-      appendAndTransferDominatedUses(NewPt, UseIt, IPI, InsertPts);
+      appendAndTransferDominatedUses(NewPt, Use, IPI, InsertPts);
       return true;
     }
 
@@ -415,7 +406,7 @@ bool AArch64PromoteConstant::tryAndMerge(Instruction *NewPt,
     DEBUG(dbgs() << '\n');
     DEBUG(NewPt->print(dbgs()));
     DEBUG(dbgs() << '\n');
-    appendAndTransferDominatedUses(NewPt, UseIt, IPI, InsertPts);
+    appendAndTransferDominatedUses(NewPt, Use, IPI, InsertPts);
     return true;
   }
   return false;
@@ -424,22 +415,22 @@ bool AArch64PromoteConstant::tryAndMerge(Instruction *NewPt,
 void AArch64PromoteConstant::computeInsertionPoints(
     Constant *Val, InsertionPointsPerFunc &InsPtsPerFunc) {
   DEBUG(dbgs() << "** Compute insertion points **\n");
-  for (Value::user_iterator UseIt = Val->user_begin(),
-                            EndUseIt = Val->user_end();
-       UseIt != EndUseIt; ++UseIt) {
+  for (Use &Use : Val->uses()) {
+    Instruction *User = dyn_cast<Instruction>(Use.getUser());
+
     // If the user is not an Instruction, we cannot modify it.
-    if (!isa<Instruction>(*UseIt))
+    if (!User)
       continue;
 
     // Filter out uses that should not be converted.
-    if (!shouldConvertUse(Val, cast<Instruction>(*UseIt), UseIt.getOperandNo()))
+    if (!shouldConvertUse(Val, User, Use.getOperandNo()))
       continue;
 
-    DEBUG(dbgs() << "Considered use, opidx " << UseIt.getOperandNo() << ":\n");
-    DEBUG((*UseIt)->print(dbgs()));
+    DEBUG(dbgs() << "Considered use, opidx " << Use.getOperandNo() << ":\n");
+    DEBUG(User->print(dbgs()));
     DEBUG(dbgs() << '\n');
 
-    Instruction *InsertionPoint = findInsertionPoint(UseIt);
+    Instruction *InsertionPoint = findInsertionPoint(Use);
 
     DEBUG(dbgs() << "Considered insertion point:\n");
     DEBUG(InsertionPoint->print(dbgs()));
@@ -449,17 +440,17 @@ void AArch64PromoteConstant::computeInsertionPoints(
     // by another one.
     InsertionPoints &InsertPts =
         InsPtsPerFunc[InsertionPoint->getParent()->getParent()];
-    if (isDominated(InsertionPoint, UseIt, InsertPts))
+    if (isDominated(InsertionPoint, Use, InsertPts))
       continue;
     // This insertion point is useful, check if we can merge some insertion
     // point in a common dominator or if NewPt dominates an existing one.
-    if (tryAndMerge(InsertionPoint, UseIt, InsertPts))
+    if (tryAndMerge(InsertionPoint, Use, InsertPts))
       continue;
 
     DEBUG(dbgs() << "Keep considered insertion point\n");
 
     // It is definitely useful by its own
-    InsertPts[InsertionPoint].push_back(UseIt);
+    InsertPts[InsertionPoint].push_back(&Use);
   }
 }
 
@@ -470,41 +461,32 @@ bool AArch64PromoteConstant::insertDefinitions(
   bool HasChanged = false;
 
   // Traverse all insertion points in all the function.
-  for (InsertionPointsPerFunc::iterator FctToInstPtsIt = InsPtsPerFunc.begin(),
-                                        EndIt = InsPtsPerFunc.end();
-       FctToInstPtsIt != EndIt; ++FctToInstPtsIt) {
-    InsertionPoints &InsertPts = FctToInstPtsIt->second;
+  for (const auto &FctToInstPtsIt : InsPtsPerFunc) {
+    const InsertionPoints &InsertPts = FctToInstPtsIt.second;
 // Do more checking for debug purposes.
 #ifndef NDEBUG
     DominatorTree &DT = getAnalysis<DominatorTreeWrapperPass>(
-        *FctToInstPtsIt->first).getDomTree();
+                            *FctToInstPtsIt.first).getDomTree();
 #endif
-    GlobalVariable *PromotedGV;
     assert(!InsertPts.empty() && "Empty uses does not need a definition");
 
-    Module *M = FctToInstPtsIt->first->getParent();
-    DenseMap<Module *, GlobalVariable *>::iterator MapIt =
-        ModuleToMergedGV.find(M);
-    if (MapIt == ModuleToMergedGV.end()) {
+    Module *M = FctToInstPtsIt.first->getParent();
+    GlobalVariable *&PromotedGV = ModuleToMergedGV[M];
+    if (!PromotedGV) {
       PromotedGV = new GlobalVariable(
           *M, Cst->getType(), true, GlobalValue::InternalLinkage, nullptr,
           "_PromotedConst", nullptr, GlobalVariable::NotThreadLocal);
       PromotedGV->setInitializer(Cst);
-      ModuleToMergedGV[M] = PromotedGV;
       DEBUG(dbgs() << "Global replacement: ");
       DEBUG(PromotedGV->print(dbgs()));
       DEBUG(dbgs() << '\n');
       ++NumPromoted;
       HasChanged = true;
-    } else {
-      PromotedGV = MapIt->second;
     }
 
-    for (InsertionPoints::iterator IPI = InsertPts.begin(),
-                                   EndIPI = InsertPts.end();
-         IPI != EndIPI; ++IPI) {
+    for (const auto &IPI : InsertPts) {
       // Create the load of the global variable.
-      IRBuilder<> Builder(IPI->first->getParent(), IPI->first);
+      IRBuilder<> Builder(IPI.first->getParent(), IPI.first);
       LoadInst *LoadedCst = Builder.CreateLoad(PromotedGV);
       DEBUG(dbgs() << "**********\n");
       DEBUG(dbgs() << "New def: ");
@@ -512,18 +494,15 @@ bool AArch64PromoteConstant::insertDefinitions(
       DEBUG(dbgs() << '\n');
 
       // Update the dominated uses.
-      Users &DominatedUsers = IPI->second;
-      for (Value::user_iterator Use : DominatedUsers) {
+      for (Use *Use : IPI.second) {
 #ifndef NDEBUG
-        assert((DT.dominates(LoadedCst, cast<Instruction>(*Use)) ||
-                (isa<PHINode>(*Use) &&
-                 DT.dominates(LoadedCst, findInsertionPoint(Use)))) &&
+        assert(DT.dominates(LoadedCst, findInsertionPoint(*Use)) &&
                "Inserted definition does not dominate all its uses!");
 #endif
-        DEBUG(dbgs() << "Use to update " << Use.getOperandNo() << ":");
-        DEBUG(Use->print(dbgs()));
+        DEBUG(dbgs() << "Use to update " << Use->getOperandNo() << ":");
+        DEBUG(Use->getUser()->print(dbgs()));
         DEBUG(dbgs() << '\n');
-        Use->setOperand(Use.getOperandNo(), LoadedCst);
+        Use->set(LoadedCst);
         ++NumPromotedUses;
       }
     }
@@ -556,22 +535,19 @@ bool AArch64PromoteConstant::runOnFunction(Function &F) {
   // global variable. Create as few loads of this variable as possible and
   // update the uses accordingly.
   bool LocalChange = false;
-  SmallSet<Constant *, 8> AlreadyChecked;
+  SmallPtrSet<Constant *, 8> AlreadyChecked;
 
-  for (auto &MBB : F) {
-    for (auto &MI : MBB) {
-      // Traverse the operand, looking for constant vectors. Replace them by a
-      // load of a global variable of constant vector type.
-      for (unsigned OpIdx = 0, EndOpIdx = MI.getNumOperands();
-           OpIdx != EndOpIdx; ++OpIdx) {
-        Constant *Cst = dyn_cast<Constant>(MI.getOperand(OpIdx));
-        // There is no point in promoting global values as they are already
-        // global. Do not promote constant expressions either, as they may
-        // require some code expansion.
-        if (Cst && !isa<GlobalValue>(Cst) && !isa<ConstantExpr>(Cst) &&
-            AlreadyChecked.insert(Cst).second)
-          LocalChange |= promoteConstant(Cst);
-      }
+  for (Instruction &I : inst_range(&F)) {
+    // Traverse the operand, looking for constant vectors. Replace them by a
+    // load of a global variable of constant vector type.
+    for (Value *Op : I.operand_values()) {
+      Constant *Cst = dyn_cast<Constant>(Op);
+      // There is no point in promoting global values as they are already
+      // global. Do not promote constant expressions either, as they may
+      // require some code expansion.
+      if (Cst && !isa<GlobalValue>(Cst) && !isa<ConstantExpr>(Cst) &&
+          AlreadyChecked.insert(Cst).second)
+        LocalChange |= promoteConstant(Cst);
     }
   }
   return LocalChange;
