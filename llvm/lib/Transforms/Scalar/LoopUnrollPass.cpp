@@ -311,7 +311,12 @@ class UnrollAnalyzer : public InstVisitor<UnrollAnalyzer, bool> {
     if (!isa<Constant>(RHS))
       if (Constant *SimpleRHS = SimplifiedValues.lookup(RHS))
         RHS = SimpleRHS;
-    Value *SimpleV = SimplifyBinOp(I.getOpcode(), LHS, RHS);
+    Value *SimpleV = nullptr;
+    if (auto FI = dyn_cast<FPMathOperator>(&I))
+      SimpleV =
+          SimplifyFPBinOp(I.getOpcode(), LHS, RHS, FI->getFastMathFlags());
+    else
+      SimpleV = SimplifyBinOp(I.getOpcode(), LHS, RHS);
 
     if (SimpleV && CountedInsns.insert(&I).second)
       NumberOfOptimizedInstructions += TTI.getUserCost(&I);

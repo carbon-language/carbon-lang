@@ -601,7 +601,13 @@ bool CallAnalyzer::visitBinaryOperator(BinaryOperator &I) {
   if (!isa<Constant>(RHS))
     if (Constant *SimpleRHS = SimplifiedValues.lookup(RHS))
       RHS = SimpleRHS;
-  Value *SimpleV = SimplifyBinOp(I.getOpcode(), LHS, RHS, DL);
+  Value *SimpleV = nullptr;
+  if (auto FI = dyn_cast<FPMathOperator>(&I))
+    SimpleV =
+        SimplifyFPBinOp(I.getOpcode(), LHS, RHS, FI->getFastMathFlags(), DL);
+  else
+    SimpleV = SimplifyBinOp(I.getOpcode(), LHS, RHS, DL);
+
   if (Constant *C = dyn_cast_or_null<Constant>(SimpleV)) {
     SimplifiedValues[&I] = C;
     return true;
