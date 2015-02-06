@@ -588,7 +588,7 @@ CMICmdCmdInferiorTtySet::Execute(void)
 bool
 CMICmdCmdInferiorTtySet::Acknowledge(void)
 {
-    const CMICmnMIResultRecord miRecordResult(m_cmdData.strMiCmdToken, CMICmnMIResultRecord::eResultClass_Done);
+    const CMICmnMIResultRecord miRecordResult(m_cmdData.strMiCmdToken, CMICmnMIResultRecord::eResultClass_Error);
     m_miResultRecord = miRecordResult;
 
     return MIstatus::success;
