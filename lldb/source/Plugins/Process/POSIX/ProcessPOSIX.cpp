@@ -252,7 +252,16 @@ ProcessPOSIX::DoLaunch (Module *module,
     if (!error.Success())
         return error;
 
-    SetSTDIOFileDescriptor(m_monitor->GetTerminalFD());
+    int terminal = m_monitor->GetTerminalFD();
+    if (terminal >= 0) {
+        // The reader thread will close the file descriptor when done, so we pass it a copy.
+        int stdio = fcntl(terminal, F_DUPFD_CLOEXEC, 0);
+        if (stdio == -1) {
+            error.SetErrorToErrno();
+            return error;
+        }
+        SetSTDIOFileDescriptor(stdio);
+    }
 
     SetID(m_monitor->GetPID());
     return error;

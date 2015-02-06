@@ -84,7 +84,8 @@ public:
     /// Reads from this file descriptor yield both the standard output and
     /// standard error of this debugee.  Even if stderr and stdout were
     /// redirected on launch it may still happen that data is available on this
-    /// descriptor (if the inferior process opens /dev/tty, for example).
+    /// descriptor (if the inferior process opens /dev/tty, for example). This descriptor is
+    /// closed after a call to StopMonitor().
     ///
     /// If this monitor was attached to an existing process this method returns
     /// -1.
