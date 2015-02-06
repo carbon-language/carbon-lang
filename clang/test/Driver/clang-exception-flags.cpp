@@ -23,3 +23,6 @@
 //
 // RUN: %clang -### -fexceptions -fno-cxx-exceptions %s 2>&1 | FileCheck %s -check-prefix=OFF4
 // OFF4-NOT: "-cc1" {{.*}} "-fcxx-exceptions"
+//
+// RUN: %clang -### -target x86_64-scei-ps4 %s 2>&1 | FileCheck %s -check-prefix=PS4-OFF
+// PS4-OFF-NOT: "-cc1" {{.*}} "-f{{(cxx-)?}}exceptions"
