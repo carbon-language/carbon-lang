@@ -606,6 +606,10 @@ namespace llvm {
     LiveInterval(unsigned Reg, float Weight)
       : SubRanges(nullptr), reg(Reg), weight(Weight) {}
 
+    ~LiveInterval() {
+      clearSubRanges();
+    }
+
     template<typename T>
     class SingleLinkedListIterator {
       T *P;
@@ -681,9 +685,7 @@ namespace llvm {
     }
 
     /// Removes all subregister liveness information.
-    void clearSubRanges() {
-      SubRanges = nullptr;
-    }
+    void clearSubRanges();
 
     /// Removes all subranges without any segments (subranges without segments
     /// are not considered valid and should only exist temporarily).
@@ -733,6 +735,9 @@ namespace llvm {
       Range->Next = SubRanges;
       SubRanges = Range;
     }
+
+    /// Free memory held by SubRange.
+    void freeSubRange(SubRange *S);
   };
 
   inline raw_ostream &operator<<(raw_ostream &OS, const LiveInterval &LI) {

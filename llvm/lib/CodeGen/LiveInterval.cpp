@@ -598,6 +598,11 @@ VNInfo *LiveRange::MergeValueNumberInto(VNInfo *V1, VNInfo *V2) {
   return V2;
 }
 
+void LiveInterval::freeSubRange(SubRange *S) {
+  S->~SubRange();
+  // Memory was allocated with BumpPtr allocator and is not freed here.
+}
+
 void LiveInterval::removeEmptySubRanges() {
   SubRange **NextPtr = &SubRanges;
   SubRange *I = *NextPtr;
@@ -609,10 +614,20 @@ void LiveInterval::removeEmptySubRanges() {
     }
     // Skip empty subranges until we find the first nonempty one.
     do {
-      I = I->Next;
+      SubRange *Next = I->Next;
+      freeSubRange(I);
+      I = Next;
     } while (I != nullptr && I->empty());
     *NextPtr = I;
   }
+}
+
+void LiveInterval::clearSubRanges() {
+  for (SubRange *I = SubRanges, *Next; I != nullptr; I = Next) {
+    Next = I->Next;
+    freeSubRange(I);
+  }
+  SubRanges = nullptr;
 }
 
 /// Helper function for constructMainRangeFromSubranges(): Search the CFG
