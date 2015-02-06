@@ -15,6 +15,7 @@
 #ifndef LLVM_EXECUTIONENGINE_ORC_LOOKASIDERTDYLDMM_H
 #define LLVM_EXECUTIONENGINE_ORC_LOOKASIDERTDYLDMM_H
 
+#include "llvm/ADT/STLExtras.h"
 #include <memory>
 #include <vector>
 
