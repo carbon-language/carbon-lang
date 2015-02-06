@@ -80,12 +80,12 @@ class ConvenienceVariablesCase(TestBase):
         child.sendline('print lldb.thread')
         child.expect_exact(python_prompt)
         self.expect(child.before, exe=False,
-            patterns = ['SBThread: tid = 0x[0-9a-f]+'])
+            patterns = ['thread #1: tid = 0x[0-9a-f]+, 0x[0-9a-f]+ a\.out`main\(argc=1, argv=0x[0-9a-f]+\) \+ \d+ at main\.c:%d, queue = \'.+\', stop reason = breakpoint 1\.1' % self.line])
 
         child.sendline('print lldb.frame')
         child.expect_exact(python_prompt)
         self.expect(child.before, exe=False,
-            substrs = ['frame #0', 'main.c:%d' % self.line])
+            patterns = ['frame #0: 0x[0-9a-f]+ a\.out`main\(argc=1, argv=0x[0-9a-f]+\) \+ \d+ at main\.c:%d' % self.line])
 
 
 if __name__ == '__main__':
