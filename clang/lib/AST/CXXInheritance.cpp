@@ -569,18 +569,14 @@ void FinalOverriderCollector::Collect(const CXXRecordDecl *RD,
     // overrider. To do so, we dig down to the original virtual
     // functions using data recursion and update all of the methods it
     // overrides.
-    typedef std::pair<CXXMethodDecl::method_iterator, 
-                      CXXMethodDecl::method_iterator> OverriddenMethods;
+    typedef llvm::iterator_range<CXXMethodDecl::method_iterator>
+        OverriddenMethods;
     SmallVector<OverriddenMethods, 4> Stack;
-    Stack.push_back(std::make_pair(CanonM->begin_overridden_methods(),
-                                   CanonM->end_overridden_methods()));
+    Stack.push_back(llvm::make_range(CanonM->begin_overridden_methods(),
+                                     CanonM->end_overridden_methods()));
     while (!Stack.empty()) {
-      OverriddenMethods OverMethods = Stack.back();
-      Stack.pop_back();
-
-      for (; OverMethods.first != OverMethods.second; ++OverMethods.first) {
-        const CXXMethodDecl *CanonOM
-          = cast<CXXMethodDecl>((*OverMethods.first)->getCanonicalDecl());
+      for (const CXXMethodDecl *OM : Stack.pop_back_val()) {
+        const CXXMethodDecl *CanonOM = OM->getCanonicalDecl();
 
         // C++ [class.virtual]p2:
         //   A virtual member function C::vf of a class object S is
@@ -601,8 +597,8 @@ void FinalOverriderCollector::Collect(const CXXRecordDecl *RD,
 
         // Continue recursion to the methods that this virtual method
         // overrides.
-        Stack.push_back(std::make_pair(CanonOM->begin_overridden_methods(),
-                                       CanonOM->end_overridden_methods()));
+        Stack.push_back(llvm::make_range(CanonOM->begin_overridden_methods(),
+                                         CanonOM->end_overridden_methods()));
       }
     }
 

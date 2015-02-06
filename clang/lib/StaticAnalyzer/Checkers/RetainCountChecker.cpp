@@ -1788,12 +1788,11 @@ namespace {
       addGCModeDescription(LOpts, GCEnabled);
     }
 
-    std::pair<ranges_iterator, ranges_iterator> getRanges() override {
+    llvm::iterator_range<ranges_iterator> getRanges() override {
       const CFRefBug& BugTy = static_cast<CFRefBug&>(getBugType());
       if (!BugTy.isLeak())
         return BugReport::getRanges();
-      else
-        return std::make_pair(ranges_iterator(), ranges_iterator());
+      return llvm::make_range(ranges_iterator(), ranges_iterator());
     }
   };
 

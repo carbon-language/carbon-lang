@@ -240,9 +240,8 @@ static bool visitPreprocessedEntitiesInRange(SourceRange R,
       FID = FileID();
   }
 
-  std::pair<PreprocessingRecord::iterator, PreprocessingRecord::iterator>
-    Entities = PPRec.getPreprocessedEntitiesInRange(R);
-  return Visitor.visitPreprocessedEntities(Entities.first, Entities.second,
+  const auto &Entities = PPRec.getPreprocessedEntitiesInRange(R);
+  return Visitor.visitPreprocessedEntities(Entities.begin(), Entities.end(),
                                            PPRec, FID);
 }
 

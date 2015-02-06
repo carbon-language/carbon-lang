@@ -45,22 +45,23 @@ PreprocessingRecord::PreprocessingRecord(SourceManager &SM)
 
 /// \brief Returns a pair of [Begin, End) iterators of preprocessed entities
 /// that source range \p Range encompasses.
-std::pair<PreprocessingRecord::iterator, PreprocessingRecord::iterator>
+llvm::iterator_range<PreprocessingRecord::iterator>
 PreprocessingRecord::getPreprocessedEntitiesInRange(SourceRange Range) {
   if (Range.isInvalid())
-    return std::make_pair(iterator(), iterator());
+    return llvm::make_range(iterator(), iterator());
 
   if (CachedRangeQuery.Range == Range) {
-    return std::make_pair(iterator(this, CachedRangeQuery.Result.first),
-                          iterator(this, CachedRangeQuery.Result.second));
+    return llvm::make_range(iterator(this, CachedRangeQuery.Result.first),
+                            iterator(this, CachedRangeQuery.Result.second));
   }
 
   std::pair<int, int> Res = getPreprocessedEntitiesInRangeSlow(Range);
   
   CachedRangeQuery.Range = Range;
   CachedRangeQuery.Result = Res;
-  
-  return std::make_pair(iterator(this, Res.first), iterator(this, Res.second));
+
+  return llvm::make_range(iterator(this, Res.first),
+                          iterator(this, Res.second));
 }
 
 static bool isPreprocessedEntityIfInFileID(PreprocessedEntity *PPE, FileID FID,

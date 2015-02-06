@@ -356,11 +356,8 @@ void TransferFunctions::VisitBinaryOperator(BinaryOperator *B) {
 }
 
 void TransferFunctions::VisitBlockExpr(BlockExpr *BE) {
-  AnalysisDeclContext::referenced_decls_iterator I, E;
-  std::tie(I, E) =
-    LV.analysisContext.getReferencedBlockVars(BE->getBlockDecl());
-  for ( ; I != E ; ++I) {
-    const VarDecl *VD = *I;
+  for (const VarDecl *VD :
+       LV.analysisContext.getReferencedBlockVars(BE->getBlockDecl())) {
     if (isAlwaysAlive(VD))
       continue;
     val.liveDecls = LV.DSetFact.add(val.liveDecls, VD);

@@ -3634,11 +3634,8 @@ static OverloadingResult TryRefInitWithConversionFunction(Sema &S,
     // functions.
     CXXRecordDecl *T2RecordDecl = cast<CXXRecordDecl>(T2RecordType->getDecl());
 
-    std::pair<CXXRecordDecl::conversion_iterator,
-              CXXRecordDecl::conversion_iterator>
-      Conversions = T2RecordDecl->getVisibleConversionFunctions();
-    for (CXXRecordDecl::conversion_iterator
-           I = Conversions.first, E = Conversions.second; I != E; ++I) {
+    const auto &Conversions = T2RecordDecl->getVisibleConversionFunctions();
+    for (auto I = Conversions.begin(), E = Conversions.end(); I != E; ++I) {
       NamedDecl *D = *I;
       CXXRecordDecl *ActingDC = cast<CXXRecordDecl>(D->getDeclContext());
       if (isa<UsingShadowDecl>(D))
@@ -4266,11 +4263,9 @@ static void TryUserDefinedConversion(Sema &S,
       CXXRecordDecl *SourceRecordDecl
         = cast<CXXRecordDecl>(SourceRecordType->getDecl());
 
-      std::pair<CXXRecordDecl::conversion_iterator,
-                CXXRecordDecl::conversion_iterator>
-        Conversions = SourceRecordDecl->getVisibleConversionFunctions();
-      for (CXXRecordDecl::conversion_iterator
-             I = Conversions.first, E = Conversions.second; I != E; ++I) {
+      const auto &Conversions =
+          SourceRecordDecl->getVisibleConversionFunctions();
+      for (auto I = Conversions.begin(), E = Conversions.end(); I != E; ++I) {
         NamedDecl *D = *I;
         CXXRecordDecl *ActingDC = cast<CXXRecordDecl>(D->getDeclContext());
         if (isa<UsingShadowDecl>(D))

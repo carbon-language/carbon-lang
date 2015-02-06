@@ -3099,11 +3099,8 @@ IsUserDefinedConversion(Sema &S, Expr *From, QualType ToType,
     if (CXXRecordDecl *FromRecordDecl
          = dyn_cast<CXXRecordDecl>(FromRecordType->getDecl())) {
       // Add all of the conversion functions as candidates.
-      std::pair<CXXRecordDecl::conversion_iterator,
-                CXXRecordDecl::conversion_iterator>
-        Conversions = FromRecordDecl->getVisibleConversionFunctions();
-      for (CXXRecordDecl::conversion_iterator
-             I = Conversions.first, E = Conversions.second; I != E; ++I) {
+      const auto &Conversions = FromRecordDecl->getVisibleConversionFunctions();
+      for (auto I = Conversions.begin(), E = Conversions.end(); I != E; ++I) {
         DeclAccessPair FoundDecl = I.getPair();
         NamedDecl *D = FoundDecl.getDecl();
         CXXRecordDecl *ActingContext = cast<CXXRecordDecl>(D->getDeclContext());
@@ -4045,11 +4042,8 @@ FindConversionForRefInit(Sema &S, ImplicitConversionSequence &ICS,
     = dyn_cast<CXXRecordDecl>(T2->getAs<RecordType>()->getDecl());
 
   OverloadCandidateSet CandidateSet(DeclLoc, OverloadCandidateSet::CSK_Normal);
-  std::pair<CXXRecordDecl::conversion_iterator,
-            CXXRecordDecl::conversion_iterator>
-    Conversions = T2RecordDecl->getVisibleConversionFunctions();
-  for (CXXRecordDecl::conversion_iterator
-         I = Conversions.first, E = Conversions.second; I != E; ++I) {
+  const auto &Conversions = T2RecordDecl->getVisibleConversionFunctions();
+  for (auto I = Conversions.begin(), E = Conversions.end(); I != E; ++I) {
     NamedDecl *D = *I;
     CXXRecordDecl *ActingDC = cast<CXXRecordDecl>(D->getDeclContext());
     if (isa<UsingShadowDecl>(D))
@@ -5399,21 +5393,18 @@ ExprResult Sema::PerformContextualImplicitConversion(
   UnresolvedSet<4>
       ViableConversions; // These are *potentially* viable in C++1y.
   UnresolvedSet<4> ExplicitConversions;
-  std::pair<CXXRecordDecl::conversion_iterator,
-            CXXRecordDecl::conversion_iterator> Conversions =
+  const auto &Conversions =
       cast<CXXRecordDecl>(RecordTy->getDecl())->getVisibleConversionFunctions();
 
   bool HadMultipleCandidates =
-      (std::distance(Conversions.first, Conversions.second) > 1);
+      (std::distance(Conversions.begin(), Conversions.end()) > 1);
 
   // To check that there is only one target type, in C++1y:
   QualType ToType;
   bool HasUniqueTargetType = true;
 
   // Collect explicit or viable (potentially in C++1y) conversions.
-  for (CXXRecordDecl::conversion_iterator I = Conversions.first,
-                                          E = Conversions.second;
-       I != E; ++I) {
+  for (auto I = Conversions.begin(), E = Conversions.end(); I != E; ++I) {
     NamedDecl *D = (*I)->getUnderlyingDecl();
     CXXConversionDecl *Conversion;
     FunctionTemplateDecl *ConvTemplate = dyn_cast<FunctionTemplateDecl>(D);
@@ -6944,12 +6935,7 @@ BuiltinCandidateTypeSet::AddTypesConvertedFrom(QualType Ty,
       return;
 
     CXXRecordDecl *ClassDecl = cast<CXXRecordDecl>(TyRec->getDecl());
-    std::pair<CXXRecordDecl::conversion_iterator,
-              CXXRecordDecl::conversion_iterator>
-      Conversions = ClassDecl->getVisibleConversionFunctions();
-    for (CXXRecordDecl::conversion_iterator
-           I = Conversions.first, E = Conversions.second; I != E; ++I) {
-      NamedDecl *D = I.getDecl();
+    for (NamedDecl *D : ClassDecl->getVisibleConversionFunctions()) {
       if (isa<UsingShadowDecl>(D))
         D = cast<UsingShadowDecl>(D)->getTargetDecl();
 
@@ -7013,13 +6999,7 @@ static  Qualifiers CollectVRQualifiers(ASTContext &Context, Expr* ArgExpr) {
     if (!ClassDecl->hasDefinition())
       return VRQuals;
 
-    std::pair<CXXRecordDecl::conversion_iterator,
-              CXXRecordDecl::conversion_iterator>
-      Conversions = ClassDecl->getVisibleConversionFunctions();
-
-    for (CXXRecordDecl::conversion_iterator
-           I = Conversions.first, E = Conversions.second; I != E; ++I) {
-      NamedDecl *D = I.getDecl();
+    for (NamedDecl *D : ClassDecl->getVisibleConversionFunctions()) {
       if (isa<UsingShadowDecl>(D))
         D = cast<UsingShadowDecl>(D)->getTargetDecl();
       if (CXXConversionDecl *Conv = dyn_cast<CXXConversionDecl>(D)) {
@@ -11868,11 +11848,9 @@ Sema::BuildCallToObjectOfClassType(Scope *S, Expr *Obj,
   //   functions for each conversion function declared in an
   //   accessible base class provided the function is not hidden
   //   within T by another intervening declaration.
-  std::pair<CXXRecordDecl::conversion_iterator,
-            CXXRecordDecl::conversion_iterator> Conversions
-    = cast<CXXRecordDecl>(Record->getDecl())->getVisibleConversionFunctions();
-  for (CXXRecordDecl::conversion_iterator
-         I = Conversions.first, E = Conversions.second; I != E; ++I) {
+  const auto &Conversions =
+      cast<CXXRecordDecl>(Record->getDecl())->getVisibleConversionFunctions();
+  for (auto I = Conversions.begin(), E = Conversions.end(); I != E; ++I) {
     NamedDecl *D = *I;
     CXXRecordDecl *ActingContext = cast<CXXRecordDecl>(D->getDeclContext());
     if (isa<UsingShadowDecl>(D))

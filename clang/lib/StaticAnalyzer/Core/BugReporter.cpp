@@ -2702,22 +2702,22 @@ const Stmt *BugReport::getStmt() const {
   return S;
 }
 
-std::pair<BugReport::ranges_iterator, BugReport::ranges_iterator>
-BugReport::getRanges() {
-    // If no custom ranges, add the range of the statement corresponding to
-    // the error node.
-    if (Ranges.empty()) {
-      if (const Expr *E = dyn_cast_or_null<Expr>(getStmt()))
-        addRange(E->getSourceRange());
-      else
-        return std::make_pair(ranges_iterator(), ranges_iterator());
-    }
+llvm::iterator_range<BugReport::ranges_iterator> BugReport::getRanges() {
+  // If no custom ranges, add the range of the statement corresponding to
+  // the error node.
+  if (Ranges.empty()) {
+    if (const Expr *E = dyn_cast_or_null<Expr>(getStmt()))
+      addRange(E->getSourceRange());
+    else
+      return llvm::make_range(ranges_iterator(), ranges_iterator());
+  }
 
-    // User-specified absence of range info.
-    if (Ranges.size() == 1 && !Ranges.begin()->isValid())
-      return std::make_pair(ranges_iterator(), ranges_iterator());
+  // User-specified absence of range info.
+  if (Ranges.size() == 1 && !Ranges.begin()->isValid())
+    return llvm::make_range(ranges_iterator(), ranges_iterator());
 
-    return std::make_pair(Ranges.begin(), Ranges.end());
+  return llvm::iterator_range<BugReport::ranges_iterator>(Ranges.begin(),
+                                                          Ranges.end());
 }
 
 PathDiagnosticLocation BugReport::getLocation(const SourceManager &SM) const {
@@ -3434,10 +3434,8 @@ void BugReporter::FlushReport(BugReport *exampleReport,
     PathDiagnosticLocation L = exampleReport->getLocation(getSourceManager());
     auto piece = llvm::make_unique<PathDiagnosticEventPiece>(
         L, exampleReport->getDescription());
-    BugReport::ranges_iterator Beg, End;
-    std::tie(Beg, End) = exampleReport->getRanges();
-    for ( ; Beg != End; ++Beg)
-      piece->addRange(*Beg);
+    for (const SourceRange &Range : exampleReport->getRanges())
+      piece->addRange(Range);
     D->setEndOfPath(std::move(piece));
   }
 

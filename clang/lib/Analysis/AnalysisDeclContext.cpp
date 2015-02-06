@@ -530,14 +530,14 @@ static DeclVec* LazyInitializeReferencedDecls(const BlockDecl *BD,
   return BV;
 }
 
-std::pair<AnalysisDeclContext::referenced_decls_iterator,
-          AnalysisDeclContext::referenced_decls_iterator>
+llvm::iterator_range<AnalysisDeclContext::referenced_decls_iterator>
 AnalysisDeclContext::getReferencedBlockVars(const BlockDecl *BD) {
   if (!ReferencedBlockVars)
     ReferencedBlockVars = new llvm::DenseMap<const BlockDecl*,void*>();
 
-  DeclVec *V = LazyInitializeReferencedDecls(BD, (*ReferencedBlockVars)[BD], A);
-  return std::make_pair(V->begin(), V->end());
+  const DeclVec *V =
+      LazyInitializeReferencedDecls(BD, (*ReferencedBlockVars)[BD], A);
+  return llvm::make_range(V->begin(), V->end());
 }
 
 ManagedAnalysis *&AnalysisDeclContext::getAnalysisImpl(const void *tag) {

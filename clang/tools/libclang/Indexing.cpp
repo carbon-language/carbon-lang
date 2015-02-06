@@ -697,13 +697,8 @@ static void indexPreprocessingRecord(ASTUnit &Unit, IndexingContext &IdxCtx) {
 
   // FIXME: Only deserialize inclusion directives.
 
-  PreprocessingRecord::iterator I, E;
-  std::tie(I, E) = Unit.getLocalPreprocessingEntities();
-
   bool isModuleFile = Unit.isModuleFile();
-  for (; I != E; ++I) {
-    PreprocessedEntity *PPE = *I;
-
+  for (PreprocessedEntity *PPE : Unit.getLocalPreprocessingEntities()) {
     if (InclusionDirective *ID = dyn_cast<InclusionDirective>(PPE)) {
       SourceLocation Loc = ID->getSourceRange().getBegin();
       // Modules have synthetic main files as input, give an invalid location

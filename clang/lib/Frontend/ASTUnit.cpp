@@ -2736,7 +2736,7 @@ SourceLocation ASTUnit::getStartOfMainFileID() {
   return SourceMgr->getLocForStartOfFile(FID);
 }
 
-std::pair<PreprocessingRecord::iterator, PreprocessingRecord::iterator>
+llvm::iterator_range<PreprocessingRecord::iterator>
 ASTUnit::getLocalPreprocessingEntities() const {
   if (isMainFileAST()) {
     serialization::ModuleFile &
@@ -2745,20 +2745,18 @@ ASTUnit::getLocalPreprocessingEntities() const {
   }
 
   if (PreprocessingRecord *PPRec = PP->getPreprocessingRecord())
-    return std::make_pair(PPRec->local_begin(), PPRec->local_end());
+    return llvm::make_range(PPRec->local_begin(), PPRec->local_end());
 
-  return std::make_pair(PreprocessingRecord::iterator(),
-                        PreprocessingRecord::iterator());
+  return llvm::make_range(PreprocessingRecord::iterator(),
+                          PreprocessingRecord::iterator());
 }
 
 bool ASTUnit::visitLocalTopLevelDecls(void *context, DeclVisitorFn Fn) {
   if (isMainFileAST()) {
     serialization::ModuleFile &
       Mod = Reader->getModuleManager().getPrimaryModule();
-    ASTReader::ModuleDeclIterator MDI, MDE;
-    std::tie(MDI, MDE) = Reader->getModuleFileLevelDecls(Mod);
-    for (; MDI != MDE; ++MDI) {
-      if (!Fn(context, *MDI))
+    for (const Decl *D : Reader->getModuleFileLevelDecls(Mod)) {
+      if (!Fn(context, D))
         return false;
     }
 

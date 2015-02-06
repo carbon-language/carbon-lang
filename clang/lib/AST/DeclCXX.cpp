@@ -1173,7 +1173,7 @@ static void CollectVisibleConversions(ASTContext &Context,
 
 /// getVisibleConversionFunctions - get all conversion functions visible
 /// in current class; including conversion function templates.
-std::pair<CXXRecordDecl::conversion_iterator,CXXRecordDecl::conversion_iterator>
+llvm::iterator_range<CXXRecordDecl::conversion_iterator>
 CXXRecordDecl::getVisibleConversionFunctions() {
   ASTContext &Ctx = getASTContext();
 
@@ -1189,7 +1189,7 @@ CXXRecordDecl::getVisibleConversionFunctions() {
       data().ComputedVisibleConversions = true;
     }
   }
-  return std::make_pair(Set->begin(), Set->end());
+  return llvm::make_range(Set->begin(), Set->end());
 }
 
 void CXXRecordDecl::removeConversion(const NamedDecl *ConvDecl) {

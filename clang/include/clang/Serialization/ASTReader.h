@@ -1218,66 +1218,38 @@ private:
 
   /// \brief Returns (begin, end) pair for the preprocessed entities of a
   /// particular module.
-  std::pair<PreprocessingRecord::iterator, PreprocessingRecord::iterator>
-    getModulePreprocessedEntities(ModuleFile &Mod) const;
+  llvm::iterator_range<PreprocessingRecord::iterator>
+  getModulePreprocessedEntities(ModuleFile &Mod) const;
 
-  class ModuleDeclIterator {
+  class ModuleDeclIterator
+      : public llvm::iterator_adaptor_base<
+            ModuleDeclIterator, const serialization::LocalDeclID *,
+            std::random_access_iterator_tag, const Decl *, ptrdiff_t,
+            const Decl *, const Decl *> {
     ASTReader *Reader;
     ModuleFile *Mod;
-    const serialization::LocalDeclID *Pos;
 
   public:
-    typedef const Decl *value_type;
-    typedef value_type&         reference;
-    typedef value_type*         pointer;
-
-    ModuleDeclIterator() : Reader(nullptr), Mod(nullptr), Pos(nullptr) { }
+    ModuleDeclIterator()
+        : iterator_adaptor_base(nullptr), Reader(nullptr), Mod(nullptr) {}
 
     ModuleDeclIterator(ASTReader *Reader, ModuleFile *Mod,
                        const serialization::LocalDeclID *Pos)
-      : Reader(Reader), Mod(Mod), Pos(Pos) { }
+        : iterator_adaptor_base(Pos), Reader(Reader), Mod(Mod) {}
 
     value_type operator*() const {
-      return Reader->GetDecl(Reader->getGlobalDeclID(*Mod, *Pos));
+      return Reader->GetDecl(Reader->getGlobalDeclID(*Mod, *I));
     }
+    value_type operator->() const { return **this; }
 
-    ModuleDeclIterator &operator++() {
-      ++Pos;
-      return *this;
-    }
-
-    ModuleDeclIterator operator++(int) {
-      ModuleDeclIterator Prev(*this);
-      ++Pos;
-      return Prev;
-    }
-
-    ModuleDeclIterator &operator--() {
-      --Pos;
-      return *this;
-    }
-
-    ModuleDeclIterator operator--(int) {
-      ModuleDeclIterator Prev(*this);
-      --Pos;
-      return Prev;
-    }
-
-    friend bool operator==(const ModuleDeclIterator &LHS,
-                           const ModuleDeclIterator &RHS) {
-      assert(LHS.Reader == RHS.Reader && LHS.Mod == RHS.Mod);
-      return LHS.Pos == RHS.Pos;
-    }
-
-    friend bool operator!=(const ModuleDeclIterator &LHS,
-                           const ModuleDeclIterator &RHS) {
-      assert(LHS.Reader == RHS.Reader && LHS.Mod == RHS.Mod);
-      return LHS.Pos != RHS.Pos;
+    bool operator==(const ModuleDeclIterator &RHS) const {
+      assert(Reader == RHS.Reader && Mod == RHS.Mod);
+      return I == RHS.I;
     }
   };
 
-  std::pair<ModuleDeclIterator, ModuleDeclIterator>
-    getModuleFileLevelDecls(ModuleFile &Mod);
+  llvm::iterator_range<ModuleDeclIterator>
+  getModuleFileLevelDecls(ModuleFile &Mod);
 
   void PassInterestingDeclsToConsumer();
   void PassInterestingDeclToConsumer(Decl *D);

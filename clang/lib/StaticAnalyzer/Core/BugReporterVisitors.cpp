@@ -111,15 +111,14 @@ std::unique_ptr<PathDiagnosticPiece> BugReporterVisitor::getDefaultEndPath(
   PathDiagnosticLocation L =
     PathDiagnosticLocation::createEndOfPath(EndPathNode,BRC.getSourceManager());
 
-  BugReport::ranges_iterator Beg, End;
-  std::tie(Beg, End) = BR.getRanges();
+  const auto &Ranges = BR.getRanges();
 
   // Only add the statement itself as a range if we didn't specify any
   // special ranges for this report.
-  auto P = llvm::make_unique<PathDiagnosticEventPiece>(L, BR.getDescription(),
-                                                       Beg == End);
-  for (; Beg != End; ++Beg)
-    P->addRange(*Beg);
+  auto P = llvm::make_unique<PathDiagnosticEventPiece>(
+      L, BR.getDescription(), Ranges.begin() == Ranges.end());
+  for (const SourceRange &Range : Ranges)
+    P->addRange(Range);
 
   return std::move(P);
 }

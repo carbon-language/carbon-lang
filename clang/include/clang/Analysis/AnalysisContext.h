@@ -173,8 +173,8 @@ public:
 
   typedef const VarDecl * const * referenced_decls_iterator;
 
-  std::pair<referenced_decls_iterator, referenced_decls_iterator>
-    getReferencedBlockVars(const BlockDecl *BD);
+  llvm::iterator_range<referenced_decls_iterator>
+  getReferencedBlockVars(const BlockDecl *BD);
 
   /// Return the ImplicitParamDecl* associated with 'self' if this
   /// AnalysisDeclContext wraps an ObjCMethodDecl.  Returns NULL otherwise.

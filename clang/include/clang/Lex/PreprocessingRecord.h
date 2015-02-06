@@ -518,23 +518,24 @@ namespace clang {
       return iterator(this, PreprocessedEntities.size());
     }
 
-    /// \brief begin/end iterator pair for the given range of loaded
+    /// \brief iterator range for the given range of loaded
     /// preprocessed entities.
-    std::pair<iterator, iterator>
-    getIteratorsForLoadedRange(unsigned start, unsigned count) {
+    llvm::iterator_range<iterator> getIteratorsForLoadedRange(unsigned start,
+                                                              unsigned count) {
       unsigned end = start + count;
       assert(end <= LoadedPreprocessedEntities.size());
-      return std::make_pair(
-                   iterator(this, int(start)-LoadedPreprocessedEntities.size()),
-                   iterator(this, int(end)-LoadedPreprocessedEntities.size()));
+      return llvm::make_range(
+          iterator(this, int(start) - LoadedPreprocessedEntities.size()),
+          iterator(this, int(end) - LoadedPreprocessedEntities.size()));
     }
 
-    /// \brief Returns a pair of [Begin, End) iterators of preprocessed entities
-    /// that source range \p R encompasses.
+    /// \brief Returns a range of preprocessed entities that source range \p R
+    /// encompasses.
     ///
     /// \param R the range to look for preprocessed entities.
     ///
-    std::pair<iterator, iterator> getPreprocessedEntitiesInRange(SourceRange R);
+    llvm::iterator_range<iterator>
+    getPreprocessedEntitiesInRange(SourceRange R);
 
     /// \brief Returns true if the preprocessed entity that \p PPEI iterator
     /// points to is coming from the file \p FID.

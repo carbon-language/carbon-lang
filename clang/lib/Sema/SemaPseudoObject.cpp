@@ -1051,17 +1051,13 @@ Sema::ObjCSubscriptKind
   
   // Look for a conversion to an integral, enumeration type, or
   // objective-C pointer type.
-  std::pair<CXXRecordDecl::conversion_iterator,
-            CXXRecordDecl::conversion_iterator> Conversions
-    = cast<CXXRecordDecl>(RecordTy->getDecl())->getVisibleConversionFunctions();
-  
   int NoIntegrals=0, NoObjCIdPointers=0;
   SmallVector<CXXConversionDecl *, 4> ConversionDecls;
-    
-  for (CXXRecordDecl::conversion_iterator
-         I = Conversions.first, E = Conversions.second; I != E; ++I) {
-    if (CXXConversionDecl *Conversion
-        = dyn_cast<CXXConversionDecl>((*I)->getUnderlyingDecl())) {
+
+  for (NamedDecl *D : cast<CXXRecordDecl>(RecordTy->getDecl())
+                          ->getVisibleConversionFunctions()) {
+    if (CXXConversionDecl *Conversion =
+            dyn_cast<CXXConversionDecl>(D->getUnderlyingDecl())) {
       QualType CT = Conversion->getConversionType().getNonReferenceType();
       if (CT->isIntegralOrEnumerationType()) {
         ++NoIntegrals;

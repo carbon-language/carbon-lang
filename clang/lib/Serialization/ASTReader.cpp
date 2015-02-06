@@ -4823,21 +4823,22 @@ ASTReader::getModulePreprocessedEntity(unsigned GlobalIndex) {
   return std::make_pair(M, LocalIndex);
 }
 
-std::pair<PreprocessingRecord::iterator, PreprocessingRecord::iterator>
+llvm::iterator_range<PreprocessingRecord::iterator>
 ASTReader::getModulePreprocessedEntities(ModuleFile &Mod) const {
   if (PreprocessingRecord *PPRec = PP.getPreprocessingRecord())
     return PPRec->getIteratorsForLoadedRange(Mod.BasePreprocessedEntityID,
                                              Mod.NumPreprocessedEntities);
 
-  return std::make_pair(PreprocessingRecord::iterator(),
-                        PreprocessingRecord::iterator());
+  return llvm::make_range(PreprocessingRecord::iterator(),
+                          PreprocessingRecord::iterator());
 }
 
-std::pair<ASTReader::ModuleDeclIterator, ASTReader::ModuleDeclIterator>
+llvm::iterator_range<ASTReader::ModuleDeclIterator>
 ASTReader::getModuleFileLevelDecls(ModuleFile &Mod) {
-  return std::make_pair(ModuleDeclIterator(this, &Mod, Mod.FileSortedDecls),
-                        ModuleDeclIterator(this, &Mod,
-                                 Mod.FileSortedDecls + Mod.NumFileSortedDecls));
+  return llvm::make_range(
+      ModuleDeclIterator(this, &Mod, Mod.FileSortedDecls),
+      ModuleDeclIterator(this, &Mod,
+                         Mod.FileSortedDecls + Mod.NumFileSortedDecls));
 }
 
 PreprocessedEntity *ASTReader::ReadPreprocessedEntity(unsigned Index) {
