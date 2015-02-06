@@ -27,6 +27,7 @@
 #include "llvm/Support/Allocator.h"
 #include <cassert>
 #include <climits>
+#include <set>
 
 namespace llvm {
   class CoalescerPair;
@@ -194,6 +195,12 @@ namespace llvm {
     Segments segments;   // the liveness segments
     VNInfoList valnos;   // value#'s
 
+    // The segment set is used temporarily to accelerate initial computation
+    // of live ranges of physical registers in computeRegUnitRange.
+    // After that the set is flushed to the segment vector and deleted.
+    typedef std::set<Segment> SegmentSet;
+    SegmentSet *segmentSet;
+
     typedef Segments::iterator iterator;
     iterator begin() { return segments.begin(); }
     iterator end()   { return segments.end(); }
@@ -211,12 +218,18 @@ namespace llvm {
     const_vni_iterator vni_end() const   { return valnos.end(); }
 
     /// Constructs a new LiveRange object.
-    LiveRange() {
+    LiveRange(bool UseSegmentSet = false) : segmentSet(nullptr) {
+      if (UseSegmentSet)
+        segmentSet = new SegmentSet();
     }
 
     /// Constructs a new LiveRange object by copying segments and valnos from
     /// another LiveRange.
-    LiveRange(const LiveRange &Other, BumpPtrAllocator &Allocator) {
+    LiveRange(const LiveRange &Other, BumpPtrAllocator &Allocator)
+        : segmentSet(nullptr) {
+      assert(Other.segmentSet == nullptr &&
+             "Copying of LiveRanges with active SegmentSets is not supported");
+
       // Duplicate valnos.
       for (const VNInfo *VNI : Other.valnos) {
         createValueCopy(VNI, Allocator);
@@ -226,6 +239,8 @@ namespace llvm {
         segments.push_back(Segment(S.start, S.end, valnos[S.valno->id]));
       }
     }
+
+    ~LiveRange() { delete segmentSet; }
 
     /// advanceTo - Advance the specified iterator to point to the Segment
     /// containing the specified position, or end() if the position is past the
@@ -437,9 +452,7 @@ namespace llvm {
     /// Add the specified Segment to this range, merging segments as
     /// appropriate.  This returns an iterator to the inserted segment (which
     /// may have grown since it was inserted).
-    iterator addSegment(Segment S) {
-      return addSegmentFrom(S, segments.begin());
-    }
+    iterator addSegment(Segment S);
 
     /// extendInBlock - If this range is live before Kill in the basic block
     /// that starts at StartIdx, extend it to be live up to Kill, and return
@@ -540,6 +553,12 @@ namespace llvm {
       return thisIndex < otherIndex;
     }
 
+    /// Flush segment set into the regular segment vector.
+    /// The method is to be called after the live range
+    /// has been created, if use of the segment set was
+    /// activated in the constructor of the live range.
+    void flushSegmentSet();
+
     void print(raw_ostream &OS) const;
     void dump() const;
 
@@ -557,10 +576,8 @@ namespace llvm {
     void append(const LiveRange::Segment S);
 
   private:
-
-    iterator addSegmentFrom(Segment S, iterator From);
-    void extendSegmentEndTo(iterator I, SlotIndex NewEnd);
-    iterator extendSegmentStartTo(iterator I, SlotIndex NewStr);
+    friend class LiveRangeUpdater;
+    void addSegmentToSet(Segment S);
     void markValNoForDeletion(VNInfo *V);
 
   };

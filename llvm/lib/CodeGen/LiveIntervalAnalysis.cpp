@@ -67,6 +67,13 @@ static cl::opt<bool> EnableSubRegLiveness(
   "enable-subreg-liveness", cl::Hidden, cl::init(true),
   cl::desc("Enable subregister liveness tracking."));
 
+namespace llvm {
+cl::opt<bool> UseSegmentSetForPhysRegs(
+    "use-segment-set-for-physregs", cl::Hidden, cl::init(true),
+    cl::desc(
+        "Use segment set for the computation of the live ranges of physregs."));
+}
+
 void LiveIntervals::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.setPreservesCFG();
   AU.addRequired<AliasAnalysis>();
@@ -268,6 +275,10 @@ void LiveIntervals::computeRegUnitRange(LiveRange &LR, unsigned Unit) {
         LRCalc->extendToUses(LR, Reg);
     }
   }
+
+  // Flush the segment set to the segment vector.
+  if (UseSegmentSetForPhysRegs)
+    LR.flushSegmentSet();
 }
 
 
@@ -300,7 +311,8 @@ void LiveIntervals::computeLiveInRegUnits() {
         unsigned Unit = *Units;
         LiveRange *LR = RegUnitRanges[Unit];
         if (!LR) {
-          LR = RegUnitRanges[Unit] = new LiveRange();
+          // Use segment set to speed-up initial computation of the live range.
+          LR = RegUnitRanges[Unit] = new LiveRange(UseSegmentSetForPhysRegs);
           NewRanges.push_back(Unit);
         }
         VNInfo *VNI = LR->createDeadDef(Begin, getVNInfoAllocator());

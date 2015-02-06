@@ -27,11 +27,14 @@
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/SlotIndexes.h"
 #include "llvm/Support/Allocator.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 #include <cmath>
 #include <iterator>
 
 namespace llvm {
+
+extern cl::opt<bool> UseSegmentSetForPhysRegs;
 
   class AliasAnalysis;
   class BitVector;
@@ -377,7 +380,8 @@ namespace llvm {
       LiveRange *LR = RegUnitRanges[Unit];
       if (!LR) {
         // Compute missing ranges on demand.
-        RegUnitRanges[Unit] = LR = new LiveRange();
+        // Use segment set to speed-up initial computation of the live range.
+        RegUnitRanges[Unit] = LR = new LiveRange(UseSegmentSetForPhysRegs);
         computeRegUnitRange(*LR, Unit);
       }
       return *LR;

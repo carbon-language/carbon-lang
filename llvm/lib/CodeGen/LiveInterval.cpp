@@ -32,6 +32,272 @@
 #include <algorithm>
 using namespace llvm;
 
+//===----------------------------------------------------------------------===//
+// Implementation of various methods necessary for calculation of live ranges.
+// The implementation of the methods abstracts from the concrete type of the
+// segment collection.
+//
+// Implementation of the class follows the Template design pattern. The base
+// class contains generic algorithms that call collection-specific methods,
+// which are provided in concrete subclasses. In order to avoid virtual calls
+// these methods are provided by means of C++ template instantiation.
+// The base class calls the methods of the subclass through method impl(),
+// which casts 'this' pointer to the type of the subclass.
+//
+//===----------------------------------------------------------------------===//
+
+template <typename ImplT, typename IteratorT, typename CollectionT>
+class CalcLiveRangeUtilBase {
+protected:
+  LiveRange *LR;
+
+protected:
+  CalcLiveRangeUtilBase(LiveRange *LR) : LR(LR) {}
+
+public:
+  typedef LiveRange::Segment Segment;
+  typedef IteratorT iterator;
+
+  VNInfo *createDeadDef(SlotIndex Def, VNInfo::Allocator &VNInfoAllocator) {
+    assert(!Def.isDead() && "Cannot define a value at the dead slot");
+
+    iterator I = impl().find(Def);
+    if (I == segments().end()) {
+      VNInfo *VNI = LR->getNextValue(Def, VNInfoAllocator);
+      impl().insertAtEnd(Segment(Def, Def.getDeadSlot(), VNI));
+      return VNI;
+    }
+
+    Segment *S = segmentAt(I);
+    if (SlotIndex::isSameInstr(Def, S->start)) {
+      assert(S->valno->def == S->start && "Inconsistent existing value def");
+
+      // It is possible to have both normal and early-clobber defs of the same
+      // register on an instruction. It doesn't make a lot of sense, but it is
+      // possible to specify in inline assembly.
+      //
+      // Just convert everything to early-clobber.
+      Def = std::min(Def, S->start);
+      if (Def != S->start)
+        S->start = S->valno->def = Def;
+      return S->valno;
+    }
+    assert(SlotIndex::isEarlierInstr(Def, S->start) && "Already live at def");
+    VNInfo *VNI = LR->getNextValue(Def, VNInfoAllocator);
+    segments().insert(I, Segment(Def, Def.getDeadSlot(), VNI));
+    return VNI;
+  }
+
+  VNInfo *extendInBlock(SlotIndex StartIdx, SlotIndex Kill) {
+    if (segments().empty())
+      return nullptr;
+    iterator I =
+        impl().findInsertPos(Segment(Kill.getPrevSlot(), Kill, nullptr));
+    if (I == segments().begin())
+      return nullptr;
+    --I;
+    if (I->end <= StartIdx)
+      return nullptr;
+    if (I->end < Kill)
+      extendSegmentEndTo(I, Kill);
+    return I->valno;
+  }
+
+  /// This method is used when we want to extend the segment specified
+  /// by I to end at the specified endpoint. To do this, we should
+  /// merge and eliminate all segments that this will overlap
+  /// with. The iterator is not invalidated.
+  void extendSegmentEndTo(iterator I, SlotIndex NewEnd) {
+    assert(I != segments().end() && "Not a valid segment!");
+    Segment *S = segmentAt(I);
+    VNInfo *ValNo = I->valno;
+
+    // Search for the first segment that we can't merge with.
+    iterator MergeTo = std::next(I);
+    for (; MergeTo != segments().end() && NewEnd >= MergeTo->end; ++MergeTo)
+      assert(MergeTo->valno == ValNo && "Cannot merge with differing values!");
+
+    // If NewEnd was in the middle of a segment, make sure to get its endpoint.
+    S->end = std::max(NewEnd, std::prev(MergeTo)->end);
+
+    // If the newly formed segment now touches the segment after it and if they
+    // have the same value number, merge the two segments into one segment.
+    if (MergeTo != segments().end() && MergeTo->start <= I->end &&
+        MergeTo->valno == ValNo) {
+      S->end = MergeTo->end;
+      ++MergeTo;
+    }
+
+    // Erase any dead segments.
+    segments().erase(std::next(I), MergeTo);
+  }
+
+  /// This method is used when we want to extend the segment specified
+  /// by I to start at the specified endpoint.  To do this, we should
+  /// merge and eliminate all segments that this will overlap with.
+  iterator extendSegmentStartTo(iterator I, SlotIndex NewStart) {
+    assert(I != segments().end() && "Not a valid segment!");
+    Segment *S = segmentAt(I);
+    VNInfo *ValNo = I->valno;
+
+    // Search for the first segment that we can't merge with.
+    iterator MergeTo = I;
+    do {
+      if (MergeTo == segments().begin()) {
+        S->start = NewStart;
+        segments().erase(MergeTo, I);
+        return I;
+      }
+      assert(MergeTo->valno == ValNo && "Cannot merge with differing values!");
+      --MergeTo;
+    } while (NewStart <= MergeTo->start);
+
+    // If we start in the middle of another segment, just delete a range and
+    // extend that segment.
+    if (MergeTo->end >= NewStart && MergeTo->valno == ValNo) {
+      segmentAt(MergeTo)->end = S->end;
+    } else {
+      // Otherwise, extend the segment right after.
+      ++MergeTo;
+      Segment *MergeToSeg = segmentAt(MergeTo);
+      MergeToSeg->start = NewStart;
+      MergeToSeg->end = S->end;
+    }
+
+    segments().erase(std::next(MergeTo), std::next(I));
+    return MergeTo;
+  }
+
+  iterator addSegment(Segment S) {
+    SlotIndex Start = S.start, End = S.end;
+    iterator I = impl().findInsertPos(S);
+
+    // If the inserted segment starts in the middle or right at the end of
+    // another segment, just extend that segment to contain the segment of S.
+    if (I != segments().begin()) {
+      iterator B = std::prev(I);
+      if (S.valno == B->valno) {
+        if (B->start <= Start && B->end >= Start) {
+          extendSegmentEndTo(B, End);
+          return B;
+        }
+      } else {
+        // Check to make sure that we are not overlapping two live segments with
+        // different valno's.
+        assert(B->end <= Start &&
+               "Cannot overlap two segments with differing ValID's"
+               " (did you def the same reg twice in a MachineInstr?)");
+      }
+    }
+
+    // Otherwise, if this segment ends in the middle of, or right next
+    // to, another segment, merge it into that segment.
+    if (I != segments().end()) {
+      if (S.valno == I->valno) {
+        if (I->start <= End) {
+          I = extendSegmentStartTo(I, Start);
+
+          // If S is a complete superset of a segment, we may need to grow its
+          // endpoint as well.
+          if (End > I->end)
+            extendSegmentEndTo(I, End);
+          return I;
+        }
+      } else {
+        // Check to make sure that we are not overlapping two live segments with
+        // different valno's.
+        assert(I->start >= End &&
+               "Cannot overlap two segments with differing ValID's");
+      }
+    }
+
+    // Otherwise, this is just a new segment that doesn't interact with
+    // anything.
+    // Insert it.
+    return segments().insert(I, S);
+  }
+
+private:
+  ImplT &impl() { return *static_cast<ImplT *>(this); }
+
+  CollectionT &segments() { return impl().segmentsColl(); }
+
+  Segment *segmentAt(iterator I) { return const_cast<Segment *>(&(*I)); }
+};
+
+//===----------------------------------------------------------------------===//
+//   Instantiation of the methods for calculation of live ranges
+//   based on a segment vector.
+//===----------------------------------------------------------------------===//
+
+class CalcLiveRangeUtilVector;
+typedef CalcLiveRangeUtilBase<CalcLiveRangeUtilVector, LiveRange::iterator,
+                              LiveRange::Segments> CalcLiveRangeUtilVectorBase;
+
+class CalcLiveRangeUtilVector : public CalcLiveRangeUtilVectorBase {
+public:
+  CalcLiveRangeUtilVector(LiveRange *LR) : CalcLiveRangeUtilVectorBase(LR) {}
+
+private:
+  friend CalcLiveRangeUtilVectorBase;
+
+  LiveRange::Segments &segmentsColl() { return LR->segments; }
+
+  void insertAtEnd(const Segment &S) { LR->segments.push_back(S); }
+
+  iterator find(SlotIndex Pos) { return LR->find(Pos); }
+
+  iterator findInsertPos(Segment S) {
+    return std::upper_bound(LR->begin(), LR->end(), S.start);
+  }
+};
+
+//===----------------------------------------------------------------------===//
+//   Instantiation of the methods for calculation of live ranges
+//   based on a segment set.
+//===----------------------------------------------------------------------===//
+
+class CalcLiveRangeUtilSet;
+typedef CalcLiveRangeUtilBase<CalcLiveRangeUtilSet,
+                              LiveRange::SegmentSet::iterator,
+                              LiveRange::SegmentSet> CalcLiveRangeUtilSetBase;
+
+class CalcLiveRangeUtilSet : public CalcLiveRangeUtilSetBase {
+public:
+  CalcLiveRangeUtilSet(LiveRange *LR) : CalcLiveRangeUtilSetBase(LR) {}
+
+private:
+  friend CalcLiveRangeUtilSetBase;
+
+  LiveRange::SegmentSet &segmentsColl() { return *LR->segmentSet; }
+
+  void insertAtEnd(const Segment &S) {
+    LR->segmentSet->insert(LR->segmentSet->end(), S);
+  }
+
+  iterator find(SlotIndex Pos) {
+    iterator I =
+        LR->segmentSet->upper_bound(Segment(Pos, Pos.getNextSlot(), nullptr));
+    if (I == LR->segmentSet->begin())
+      return I;
+    iterator PrevI = std::prev(I);
+    if (Pos < (*PrevI).end)
+      return PrevI;
+    return I;
+  }
+
+  iterator findInsertPos(Segment S) {
+    iterator I = LR->segmentSet->upper_bound(S);
+    if (I != LR->segmentSet->end() && !(S.start < *I))
+      ++I;
+    return I;
+  }
+};
+
+//===----------------------------------------------------------------------===//
+//   LiveRange methods
+//===----------------------------------------------------------------------===//
+
 LiveRange::iterator LiveRange::find(SlotIndex Pos) {
   // This algorithm is basically std::upper_bound.
   // Unfortunately, std::upper_bound cannot be used with mixed types until we
@@ -52,30 +318,11 @@ LiveRange::iterator LiveRange::find(SlotIndex Pos) {
 
 VNInfo *LiveRange::createDeadDef(SlotIndex Def,
                                   VNInfo::Allocator &VNInfoAllocator) {
-  assert(!Def.isDead() && "Cannot define a value at the dead slot");
-  iterator I = find(Def);
-  if (I == end()) {
-    VNInfo *VNI = getNextValue(Def, VNInfoAllocator);
-    segments.push_back(Segment(Def, Def.getDeadSlot(), VNI));
-    return VNI;
-  }
-  if (SlotIndex::isSameInstr(Def, I->start)) {
-    assert(I->valno->def == I->start && "Inconsistent existing value def");
-
-    // It is possible to have both normal and early-clobber defs of the same
-    // register on an instruction. It doesn't make a lot of sense, but it is
-    // possible to specify in inline assembly.
-    //
-    // Just convert everything to early-clobber.
-    Def = std::min(Def, I->start);
-    if (Def != I->start)
-      I->start = I->valno->def = Def;
-    return I->valno;
-  }
-  assert(SlotIndex::isEarlierInstr(Def, I->start) && "Already live at def");
-  VNInfo *VNI = getNextValue(Def, VNInfoAllocator);
-  segments.insert(I, Segment(Def, Def.getDeadSlot(), VNI));
-  return VNI;
+  // Use the segment set, if it is available.
+  if (segmentSet != nullptr)
+    return CalcLiveRangeUtilSet(this).createDeadDef(Def, VNInfoAllocator);
+  // Otherwise use the segment vector.
+  return CalcLiveRangeUtilVector(this).createDeadDef(Def, VNInfoAllocator);
 }
 
 // overlaps - Return true if the intersection of the two live ranges is
@@ -236,68 +483,18 @@ void LiveRange::RenumberValues() {
   }
 }
 
-/// This method is used when we want to extend the segment specified by I to end
-/// at the specified endpoint.  To do this, we should merge and eliminate all
-/// segments that this will overlap with.  The iterator is not invalidated.
-void LiveRange::extendSegmentEndTo(iterator I, SlotIndex NewEnd) {
-  assert(I != end() && "Not a valid segment!");
-  VNInfo *ValNo = I->valno;
-
-  // Search for the first segment that we can't merge with.
-  iterator MergeTo = std::next(I);
-  for (; MergeTo != end() && NewEnd >= MergeTo->end; ++MergeTo) {
-    assert(MergeTo->valno == ValNo && "Cannot merge with differing values!");
-  }
-
-  // If NewEnd was in the middle of a segment, make sure to get its endpoint.
-  I->end = std::max(NewEnd, std::prev(MergeTo)->end);
-
-  // If the newly formed segment now touches the segment after it and if they
-  // have the same value number, merge the two segments into one segment.
-  if (MergeTo != end() && MergeTo->start <= I->end &&
-      MergeTo->valno == ValNo) {
-    I->end = MergeTo->end;
-    ++MergeTo;
-  }
-
-  // Erase any dead segments.
-  segments.erase(std::next(I), MergeTo);
+void LiveRange::addSegmentToSet(Segment S) {
+  CalcLiveRangeUtilSet(this).addSegment(S);
 }
 
-
-/// This method is used when we want to extend the segment specified by I to
-/// start at the specified endpoint.  To do this, we should merge and eliminate
-/// all segments that this will overlap with.
-LiveRange::iterator
-LiveRange::extendSegmentStartTo(iterator I, SlotIndex NewStart) {
-  assert(I != end() && "Not a valid segment!");
-  VNInfo *ValNo = I->valno;
-
-  // Search for the first segment that we can't merge with.
-  iterator MergeTo = I;
-  do {
-    if (MergeTo == begin()) {
-      I->start = NewStart;
-      segments.erase(MergeTo, I);
-      return I;
-    }
-    assert(MergeTo->valno == ValNo && "Cannot merge with differing values!");
-    --MergeTo;
-  } while (NewStart <= MergeTo->start);
-
-  // If we start in the middle of another segment, just delete a range and
-  // extend that segment.
-  if (MergeTo->end >= NewStart && MergeTo->valno == ValNo) {
-    MergeTo->end = I->end;
-  } else {
-    // Otherwise, extend the segment right after.
-    ++MergeTo;
-    MergeTo->start = NewStart;
-    MergeTo->end = I->end;
+LiveRange::iterator LiveRange::addSegment(Segment S) {
+  // Use the segment set, if it is available.
+  if (segmentSet != nullptr) {
+    addSegmentToSet(S);
+    return end();
   }
-
-  segments.erase(std::next(MergeTo), std::next(I));
-  return MergeTo;
+  // Otherwise use the segment vector.
+  return CalcLiveRangeUtilVector(this).addSegment(S);
 }
 
 void LiveRange::append(const Segment S) {
@@ -306,69 +503,15 @@ void LiveRange::append(const Segment S) {
   segments.push_back(S);
 }
 
-LiveRange::iterator LiveRange::addSegmentFrom(Segment S, iterator From) {
-  SlotIndex Start = S.start, End = S.end;
-  iterator it = std::upper_bound(From, end(), Start);
-
-  // If the inserted segment starts in the middle or right at the end of
-  // another segment, just extend that segment to contain the segment of S.
-  if (it != begin()) {
-    iterator B = std::prev(it);
-    if (S.valno == B->valno) {
-      if (B->start <= Start && B->end >= Start) {
-        extendSegmentEndTo(B, End);
-        return B;
-      }
-    } else {
-      // Check to make sure that we are not overlapping two live segments with
-      // different valno's.
-      assert(B->end <= Start &&
-             "Cannot overlap two segments with differing ValID's"
-             " (did you def the same reg twice in a MachineInstr?)");
-    }
-  }
-
-  // Otherwise, if this segment ends in the middle of, or right next to, another
-  // segment, merge it into that segment.
-  if (it != end()) {
-    if (S.valno == it->valno) {
-      if (it->start <= End) {
-        it = extendSegmentStartTo(it, Start);
-
-        // If S is a complete superset of a segment, we may need to grow its
-        // endpoint as well.
-        if (End > it->end)
-          extendSegmentEndTo(it, End);
-        return it;
-      }
-    } else {
-      // Check to make sure that we are not overlapping two live segments with
-      // different valno's.
-      assert(it->start >= End &&
-             "Cannot overlap two segments with differing ValID's");
-    }
-  }
-
-  // Otherwise, this is just a new segment that doesn't interact with anything.
-  // Insert it.
-  return segments.insert(it, S);
-}
-
 /// extendInBlock - If this range is live before Kill in the basic
 /// block that starts at StartIdx, extend it to be live up to Kill and return
 /// the value. If there is no live range before Kill, return NULL.
 VNInfo *LiveRange::extendInBlock(SlotIndex StartIdx, SlotIndex Kill) {
-  if (empty())
-    return nullptr;
-  iterator I = std::upper_bound(begin(), end(), Kill.getPrevSlot());
-  if (I == begin())
-    return nullptr;
-  --I;
-  if (I->end <= StartIdx)
-    return nullptr;
-  if (I->end < Kill)
-    extendSegmentEndTo(I, Kill);
-  return I->valno;
+  // Use the segment set, if it is available.
+  if (segmentSet != nullptr)
+    return CalcLiveRangeUtilSet(this).extendInBlock(StartIdx, Kill);
+  // Otherwise use the segment vector.
+  return CalcLiveRangeUtilVector(this).extendInBlock(StartIdx, Kill);
 }
 
 /// Remove the specified segment from this range.  Note that the segment must
@@ -596,6 +739,17 @@ VNInfo *LiveRange::MergeValueNumberInto(VNInfo *V1, VNInfo *V2) {
   markValNoForDeletion(V1);
 
   return V2;
+}
+
+void LiveRange::flushSegmentSet() {
+  assert(segmentSet != nullptr && "segment set must have been created");
+  assert(
+      segments.empty() &&
+      "segment set can be used only initially before switching to the array");
+  segments.append(segmentSet->begin(), segmentSet->end());
+  delete segmentSet;
+  segmentSet = nullptr;
+  verify();
 }
 
 void LiveInterval::freeSubRange(SubRange *S) {
@@ -1011,6 +1165,13 @@ static inline bool coalescable(const LiveRange::Segment &A,
 
 void LiveRangeUpdater::add(LiveRange::Segment Seg) {
   assert(LR && "Cannot add to a null destination");
+
+  // Fall back to the regular add method if the live range
+  // is using the segment set instead of the segment vector.
+  if (LR->segmentSet != nullptr) {
+    LR->addSegmentToSet(Seg);
+    return;
+  }
 
   // Flush the state if Start moves backwards.
   if (!LastStart.isValid() || LastStart > Seg.start) {
