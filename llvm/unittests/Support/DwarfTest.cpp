@@ -52,4 +52,21 @@ TEST(DwarfTest, LanguageStringOnInvalid) {
   EXPECT_EQ(nullptr, LanguageString(DW_LANG_hi_user));
 }
 
+TEST(DwarfTest, getLanguage) {
+  // A couple of valid languages.
+  EXPECT_EQ(DW_LANG_C89, getLanguage("DW_LANG_C89"));
+  EXPECT_EQ(DW_LANG_C_plus_plus_11, getLanguage("DW_LANG_C_plus_plus_11"));
+  EXPECT_EQ(DW_LANG_OCaml, getLanguage("DW_LANG_OCaml"));
+  EXPECT_EQ(DW_LANG_Mips_Assembler, getLanguage("DW_LANG_Mips_Assembler"));
+
+  // Invalid languages.
+  EXPECT_EQ(0u, getLanguage("DW_LANG_invalid"));
+  EXPECT_EQ(0u, getLanguage("DW_TAG_array_type"));
+  EXPECT_EQ(0u, getLanguage("something else"));
+
+  // Language range markers should not be recognized.
+  EXPECT_EQ(0u, getLanguage("DW_LANG_lo_user"));
+  EXPECT_EQ(0u, getLanguage("DW_LANG_hi_user"));
+}
+
 } // end namespace

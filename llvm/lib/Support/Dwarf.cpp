@@ -489,6 +489,13 @@ const char *llvm::dwarf::LanguageString(unsigned Language) {
   }
 }
 
+unsigned llvm::dwarf::getLanguage(StringRef LanguageString) {
+  return StringSwitch<unsigned>(LanguageString)
+#define HANDLE_DW_LANG(ID, NAME) .Case("DW_LANG_" #NAME, DW_LANG_##NAME)
+#include "llvm/Support/Dwarf.def"
+      .Default(0);
+}
+
 const char *llvm::dwarf::CaseString(unsigned Case) {
   switch (Case) {
   case DW_ID_case_sensitive:             return "DW_ID_case_sensitive";

@@ -755,8 +755,16 @@ const char *GDBIndexEntryKindString(GDBIndexEntryKind Kind);
 const char *GDBIndexEntryLinkageString(GDBIndexEntryLinkage Linkage);
 /// @}
 
-/// \brief Get the tag number associated with a tag string.
+/// \defgroup DwarfConstantsParsing Dwarf constants parsing functions
+///
+/// These functions map their strings back to the corresponding enumeration
+/// value or return 0 if there is none.  As an exception, \a getTag() returns
+/// \a DW_TAG_invalid on invalid input.
+///
+/// @{
 unsigned getTag(StringRef TagString);
+unsigned getLanguage(StringRef LanguageString);
+/// @}
 
 /// \brief Returns the symbolic string representing Val when used as a value
 /// for attribute Attr.
