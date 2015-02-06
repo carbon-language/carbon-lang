@@ -36,28 +36,25 @@ private:
     return name.startswith(".init_array") || name.startswith(".fini_array");
   }
 
+  // Parses the number in .{init,fini}_array.<number>.
+  // Returns UINT32_MAX by default.
+  static uint32_t getPriority(const DefinedAtom *atom) {
+    StringRef sec = atom->customSectionName();
+    StringRef num = sec.drop_front().rsplit('.').second;
+    uint32_t prio;
+    if (num.getAsInteger(10, prio))
+      return std::numeric_limits<uint32_t>::max();
+    return prio;
+  }
+
   static bool compareInitFini(const DefinedAtom *lhs, const DefinedAtom *rhs) {
-    StringRef lhsSec = lhs->customSectionName();
-    StringRef rhsSec = rhs->customSectionName();
-
-    // Drop the front dot from the section name and get
-    // an optional section's number starting after the second dot.
-    StringRef lhsNum = lhsSec.drop_front().rsplit('.').second;
-    StringRef rhsNum = rhsSec.drop_front().rsplit('.').second;
-
     // Sort {.init_array, .fini_array}[.<num>] sections
     // according to their number. Sections without optional
     // numer suffix should go last.
-
-    uint32_t lhsPriority;
-    uint32_t rhsPriority;
-    if (lhsNum.getAsInteger(10, lhsPriority))
-      lhsPriority = std::numeric_limits<uint32_t>::max();
-    if (rhsNum.getAsInteger(10, rhsPriority))
-      rhsPriority = std::numeric_limits<uint32_t>::max();
-
-    if (lhsPriority != rhsPriority)
-      return lhsPriority < rhsPriority;
+    uint32_t lp = getPriority(lhs);
+    uint32_t rp = getPriority(rhs);
+    if (lp != rp)
+      return lp < rp;
 
     // If both atoms have the same priority, fall back to default.
     return DefinedAtom::compareByPosition(lhs, rhs);
