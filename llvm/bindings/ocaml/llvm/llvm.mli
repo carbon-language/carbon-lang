@@ -2422,6 +2422,12 @@ val build_fcmp : Fcmp.t -> llvalue -> llvalue -> string ->
 val build_phi : (llvalue * llbasicblock) list -> string -> llbuilder ->
                      llvalue
 
+(** [build_empty_phi ty name b] creates a
+    [%name = phi %ty] instruction at the position specified by
+    the instruction builder [b]. [ty] is the type of the instruction.
+    See the method [llvm::LLVMBuilder::CreatePHI]. *)
+val build_empty_phi : lltype -> string -> llbuilder -> llvalue
+
 (** [build_call fn args name b] creates a
     [%name = call %fn(args...)]
     instruction at the position specified by the instruction builder [b].

@@ -2191,6 +2191,15 @@ CAMLprim LLVMValueRef llvm_build_phi(value Incoming, value Name, value B) {
   return PhiNode;
 }
 
+/* lltype -> string -> llbuilder -> value */
+CAMLprim LLVMValueRef llvm_build_empty_phi(LLVMTypeRef Type, value Name, value B) {
+  LLVMValueRef PhiNode;
+
+  return LLVMBuildPhi(Builder_val(B), Type, String_val(Name));
+
+  return PhiNode;
+}
+
 /* llvalue -> llvalue array -> string -> llbuilder -> llvalue */
 CAMLprim LLVMValueRef llvm_build_call(LLVMValueRef Fn, value Params,
                                       value Name, value B) {

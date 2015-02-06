@@ -1428,6 +1428,15 @@ let test_builder () =
     add_incoming (p2, b2) phi;
     insist ([(p1, b1); (p2, b2)] = incoming phi);
 
+    (* CHECK: %PhiEmptyNode = phi i8
+     *)
+    let phi_empty = build_empty_phi i8_type "PhiEmptyNode" at_jb in
+    insist ([] = incoming phi_empty);
+
+    (* can't emit an empty phi to bitcode *)
+    add_incoming (const_int i8_type 1, b1) phi_empty;
+    add_incoming (const_int i8_type 2, b2) phi_empty;
+
     ignore (build_unreachable at_jb);
   end
 
