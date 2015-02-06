@@ -219,6 +219,10 @@ class CMICmdCmdDataListRegisterNames : public CMICmdBase
     // From CMICmnBase
     /* dtor */ virtual ~CMICmdCmdDataListRegisterNames(void);
 
+    // Methods:
+  private:
+    lldb::SBValue GetRegister(const MIuint vRegisterIndex) const;
+
     // Attributes:
   private:
     const CMIUtilString m_constStrArgThreadGroup; // Not specified in MI spec but Eclipse gives this option
@@ -256,7 +260,7 @@ class CMICmdCmdDataListRegisterValues : public CMICmdBase
     // Methods:
   private:
     lldb::SBValue GetRegister(const MIuint vRegisterIndex) const;
-    void AddToOutput (const lldb::SBValue& value, MIuint index, CMICmnLLDBDebugSessionInfoVarObj::varFormat_e eFormat);
+    bool AddToOutput(const MIuint vnIndex, const lldb::SBValue &vrValue, CMICmnLLDBDebugSessionInfoVarObj::varFormat_e veVarFormat);
 
     // Attributes:
   private:

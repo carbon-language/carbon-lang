@@ -10,7 +10,6 @@ class MiDataTestCase(lldbmi_testcase.MiTestCaseBase):
 
     @lldbmi_test
     @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
-    @unittest2.skip("-data-disassemble doesn't show 'size' field")
     def test_lldbmi_data_disassemble(self):
         """Test that 'lldb-mi --interpreter' works for -data-disassemble."""
 
@@ -38,7 +37,6 @@ class MiDataTestCase(lldbmi_testcase.MiTestCaseBase):
 
     @lldbmi_test
     @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
-    @unittest2.skip("-data-list-register-names doesn't work properly")
     def test_lldbmi_data_list_register_names(self):
         """Test that 'lldb-mi --interpreter' works for -data-list-register-names."""
 
@@ -65,7 +63,6 @@ class MiDataTestCase(lldbmi_testcase.MiTestCaseBase):
 
     @lldbmi_test
     @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
-    @unittest2.skip("-data-list-register-values doesn't work properly")
     def test_lldbmi_data_list_register_values(self):
         """Test that 'lldb-mi --interpreter' works for -data-list-register-values."""
 

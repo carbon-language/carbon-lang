@@ -427,6 +427,7 @@ CMICmdCmdDataDisassemble::Execute(void)
         lldb::addr_t addrOffSet = address.GetOffset();
         const MIchar *pStrOperands = instrt.GetOperands(sbTarget);
         pStrOperands = (pStrOperands != nullptr) ? pStrOperands : pUnknown;
+        const size_t instrtSize = instrt.GetByteSize();
 
         // MI "{address=\"0x%08llx\",func-name=\"%s\",offset=\"%lld\",inst=\"%s %s\"}"
         const CMICmnMIValueConst miValueConst(CMIUtilString::Format("0x%08llx", addr));
@@ -438,9 +439,12 @@ CMICmdCmdDataDisassemble::Execute(void)
         const CMICmnMIValueConst miValueConst3(CMIUtilString::Format("0x%lld", addrOffSet));
         const CMICmnMIValueResult miValueResult3("offset", miValueConst3);
         miValueTuple.Add(miValueResult3);
-        const CMICmnMIValueConst miValueConst4(CMIUtilString::Format("%s %s", pStrMnemonic, pStrOperands));
-        const CMICmnMIValueResult miValueResult4("inst", miValueConst4);
+        const CMICmnMIValueConst miValueConst4(CMIUtilString::Format("%d", instrtSize));
+        const CMICmnMIValueResult miValueResult4("size", miValueConst4);
         miValueTuple.Add(miValueResult4);
+        const CMICmnMIValueConst miValueConst5(CMIUtilString::Format("%s %s", pStrMnemonic, pStrOperands));
+        const CMICmnMIValueResult miValueResult5("inst", miValueConst5);
+        miValueTuple.Add(miValueResult5);
 
         if (nDisasmMode == 1)
         {
@@ -826,6 +830,8 @@ CMICmdCmdDataListRegisterNames::ParseArgs(void)
 bool
 CMICmdCmdDataListRegisterNames::Execute(void)
 {
+    CMICMDBASE_GETOPTION(pArgRegNo, ListOfN, m_constStrArgRegNo);
+
     CMICmnLLDBDebugSessionInfo &rSessionInfo(CMICmnLLDBDebugSessionInfo::Instance());
     lldb::SBProcess sbProcess = rSessionInfo.GetProcess();
     if (!sbProcess.IsValid())
@@ -834,21 +840,47 @@ CMICmdCmdDataListRegisterNames::Execute(void)
         return MIstatus::failure;
     }
 
-    lldb::SBThread thread = sbProcess.GetSelectedThread();
-    lldb::SBFrame frame = thread.GetSelectedFrame();
-    lldb::SBValueList registers = frame.GetRegisters();
-    const MIuint nRegisters = registers.GetSize();
-    for (MIuint i = 0; i < nRegisters; i++)
+    const CMICmdArgValListBase::VecArgObjPtr_t &rVecRegNo(pArgRegNo->GetExpectedOptions());
+    if (!rVecRegNo.empty())
     {
-        lldb::SBValue value = registers.GetValueAtIndex(i);
-        const MIuint nRegChildren = value.GetNumChildren();
-        for (MIuint j = 0; j < nRegChildren; j++)
+        // List of required registers
+        CMICmdArgValListBase::VecArgObjPtr_t::const_iterator it = rVecRegNo.begin();
+        while (it != rVecRegNo.end())
         {
-            lldb::SBValue value2 = value.GetChildAtIndex(j);
-            if (value2.IsValid())
+            const CMICmdArgValNumber *pRegNo = static_cast<CMICmdArgValNumber *>(*it);
+            const MIuint nRegIndex = pRegNo->GetValue();
+            lldb::SBValue regValue = GetRegister(nRegIndex);
+            if (regValue.IsValid())
             {
-                const CMICmnMIValueConst miValueConst(CMICmnLLDBUtilSBValue(value2).GetName());
+                const CMICmnMIValueConst miValueConst(CMICmnLLDBUtilSBValue(regValue).GetName());
                 m_miValueList.Add(miValueConst);
+            }
+
+            // Next
+            ++it;
+        }
+    }
+    else
+    {
+        // List of all registers
+        lldb::SBThread thread = sbProcess.GetSelectedThread();
+        lldb::SBFrame frame = thread.GetSelectedFrame();
+        lldb::SBValueList registers = frame.GetRegisters();
+        const MIuint nRegisters = registers.GetSize();
+        for (MIuint i = 0; i < nRegisters; i++)
+        {
+            lldb::SBValue value = registers.GetValueAtIndex(i);
+            const MIuint nRegChildren = value.GetNumChildren();
+            for (MIuint j = 0; j < nRegChildren; j++)
+            {
+                lldb::SBValue regValue = value.GetChildAtIndex(j);
+                if (regValue.IsValid())
+                {
+                    const CMICmnMIValueConst miValueConst(CMICmnLLDBUtilSBValue(regValue).GetName());
+                    const bool bOk = m_miValueList.Add(miValueConst);
+                    if (!bOk)
+                        return MIstatus::failure;
+                }
             }
         }
     }
@@ -887,6 +919,42 @@ CMICmdBase *
 CMICmdCmdDataListRegisterNames::CreateSelf(void)
 {
     return new CMICmdCmdDataListRegisterNames();
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details: Required by the CMICmdFactory when registering *this command. The factory
+//          calls this function to create an instance of *this command.
+// Type:    Method.
+// Args:    None.
+// Return:  lldb::SBValue - LLDB SBValue object.
+// Throws:  None.
+//--
+lldb::SBValue
+CMICmdCmdDataListRegisterNames::GetRegister(const MIuint vRegisterIndex) const
+{
+    lldb::SBThread thread = CMICmnLLDBDebugSessionInfo::Instance().GetProcess().GetSelectedThread();
+    lldb::SBFrame frame = thread.GetSelectedFrame();
+    lldb::SBValueList registers = frame.GetRegisters();
+    const MIuint nRegisters = registers.GetSize();
+    MIuint nRegisterIndex(vRegisterIndex);
+    for (MIuint i = 0; i < nRegisters; i++)
+    {
+        lldb::SBValue value = registers.GetValueAtIndex(i);
+        const MIuint nRegChildren = value.GetNumChildren();
+        if (nRegisterIndex >= nRegChildren)
+        {
+            nRegisterIndex -= nRegChildren;
+            continue;
+        }
+
+        lldb::SBValue value2 = value.GetChildAtIndex(nRegisterIndex);
+        if (value2.IsValid())
+        {
+            return value2;
+        }
+    }
+
+    return lldb::SBValue();
 }
 
 //---------------------------------------------------------------------------------------
@@ -982,15 +1050,22 @@ CMICmdCmdDataListRegisterValues::Execute(void)
     }
 
     const CMICmdArgValListBase::VecArgObjPtr_t &rVecRegNo(pArgRegNo->GetExpectedOptions());
-    if (!rVecRegNo.empty ())
+    if (!rVecRegNo.empty())
     {
+        // List of required registers
         CMICmdArgValListBase::VecArgObjPtr_t::const_iterator it = rVecRegNo.begin();
-        while (it != rVecRegNo.end ())
+        while (it != rVecRegNo.end())
         {
             const CMICmdArgValNumber *pRegNo = static_cast<CMICmdArgValNumber *>(*it);
-            const MIuint nReg = pRegNo->GetValue ();
-            lldb::SBValue regValue = GetRegister (nReg);
-            AddToOutput (regValue, nReg, eFormat);
+            const MIuint nRegIndex = pRegNo->GetValue();
+            lldb::SBValue regValue = GetRegister(nRegIndex);
+            if (regValue.IsValid())
+            {
+                const bool bOk = AddToOutput(nRegIndex, regValue, eFormat);
+                if (!bOk)
+                    return MIstatus::failure;
+            }
+
             // Next
             ++it;
         }
@@ -998,23 +1073,27 @@ CMICmdCmdDataListRegisterValues::Execute(void)
     else
     {
         // No register numbers are provided. Output all registers.
-        lldb::SBThread thread = sbProcess.GetSelectedThread ();
-        lldb::SBFrame frame = thread.GetSelectedFrame ();
-        lldb::SBValueList registers = frame.GetRegisters ();
-        const MIuint nRegisters = registers.GetSize ();
-        MIuint index = 0;
+        lldb::SBThread thread = sbProcess.GetSelectedThread();
+        lldb::SBFrame frame = thread.GetSelectedFrame();
+        lldb::SBValueList registers = frame.GetRegisters();
+        const MIuint nRegisters = registers.GetSize();
+        MIuint nRegIndex = 0;
         for (MIuint i = 0; i < nRegisters; i++)
         {
-            lldb::SBValue value = registers.GetValueAtIndex (i);
-            const MIuint nRegChildren = value.GetNumChildren ();
+            lldb::SBValue value = registers.GetValueAtIndex(i);
+            const MIuint nRegChildren = value.GetNumChildren();
             for (MIuint j = 0; j < nRegChildren; j++)
             {
-                lldb::SBValue reg_value = value.GetChildAtIndex (j);
-                if (reg_value.IsValid ())
+                lldb::SBValue regValue = value.GetChildAtIndex(j);
+                if (regValue.IsValid())
                 {
-                    AddToOutput (reg_value, index, eFormat);
-                    index++;
+                    const bool bOk = AddToOutput(nRegIndex, regValue, eFormat);
+                    if (!bOk)
+                        return MIstatus::failure;
                 }
+
+                // Next
+                ++nRegIndex;
             }
         }
     }
@@ -1070,17 +1149,21 @@ CMICmdCmdDataListRegisterValues::GetRegister(const MIuint vRegisterIndex) const
     lldb::SBFrame frame = thread.GetSelectedFrame();
     lldb::SBValueList registers = frame.GetRegisters();
     const MIuint nRegisters = registers.GetSize();
+    MIuint nRegisterIndex(vRegisterIndex);
     for (MIuint i = 0; i < nRegisters; i++)
     {
         lldb::SBValue value = registers.GetValueAtIndex(i);
         const MIuint nRegChildren = value.GetNumChildren();
-        if (nRegChildren > 0)
+        if (nRegisterIndex >= nRegChildren)
         {
-            lldb::SBValue value2 = value.GetChildAtIndex(vRegisterIndex);
-            if (value2.IsValid())
-            {
-                return value2;
-            }
+            nRegisterIndex -= nRegChildren;
+            continue;
+        }
+
+        lldb::SBValue value2 = value.GetChildAtIndex(nRegisterIndex);
+        if (value2.IsValid())
+        {
+            return value2;
         }
     }
 
@@ -1094,19 +1177,18 @@ CMICmdCmdDataListRegisterValues::GetRegister(const MIuint vRegisterIndex) const
 // Return:  None
 // Throws:  None.
 //--
-void
-CMICmdCmdDataListRegisterValues::AddToOutput (const lldb::SBValue& value, MIuint index,
-	    CMICmnLLDBDebugSessionInfoVarObj::varFormat_e eFormat)
+bool
+CMICmdCmdDataListRegisterValues::AddToOutput(const MIuint vnIndex, const lldb::SBValue &vrValue,
+	    CMICmnLLDBDebugSessionInfoVarObj::varFormat_e veVarFormat)
 {
-    const CMICmnMIValueConst miValueConst (CMIUtilString::Format ("%u", index));
-    const CMICmnMIValueResult miValueResult ("number", miValueConst);
-    const CMIUtilString strRegValue (CMICmnLLDBDebugSessionInfoVarObj::GetValueStringFormatted (value, eFormat));
-    const CMICmnMIValueConst miValueConst2 (strRegValue);
-    const CMICmnMIValueResult miValueResult2 ("value", miValueConst2);
-
-    CMICmnMIValueTuple miValueTuple (miValueResult);
-    miValueTuple.Add (miValueResult2);
-    m_miValueList.Add (miValueTuple);
+    const CMICmnMIValueConst miValueConst(CMIUtilString::Format("%u", vnIndex));
+    const CMICmnMIValueResult miValueResult("number", miValueConst);
+    CMICmnMIValueTuple miValueTuple(miValueResult);
+    const CMIUtilString strRegValue(CMICmnLLDBDebugSessionInfoVarObj::GetValueStringFormatted(vrValue, veVarFormat));
+    const CMICmnMIValueConst miValueConst2(strRegValue);
+    const CMICmnMIValueResult miValueResult2("value", miValueConst2);
+    bool bOk = miValueTuple.Add(miValueResult2);
+    return bOk && m_miValueList.Add(miValueTuple);
 }
 
 //---------------------------------------------------------------------------------------
