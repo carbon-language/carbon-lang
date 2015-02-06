@@ -710,6 +710,10 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
   Builder.defineMacro("__POINTER_WIDTH__",
                       Twine((int)TI.getPointerWidth(0)));
 
+  // Define __BIGGEST_ALIGNMENT__ to be compatible with gcc.
+  Builder.defineMacro("__BIGGEST_ALIGNMENT__",
+                      Twine(TI.getSuitableAlign() / TI.getCharWidth()) );
+
   if (!LangOpts.CharIsSigned)
     Builder.defineMacro("__CHAR_UNSIGNED__");
 

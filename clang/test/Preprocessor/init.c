@@ -241,6 +241,7 @@
 // AARCH64:#define __ARM_ARCH 8
 // AARCH64:#define __ARM_ARCH_ISA_A64 1
 // AARCH64-NOT:#define __ARM_BIG_ENDIAN 1
+// AARCH64:#define __BIGGEST_ALIGNMENT__ 16
 // AARCH64:#define __BYTE_ORDER__ __ORDER_LITTLE_ENDIAN__
 // AARCH64:#define __CHAR16_TYPE__ unsigned short
 // AARCH64:#define __CHAR32_TYPE__ unsigned int
@@ -431,6 +432,7 @@
 // AARCH64-BE:#define __ARM_ARCH 8
 // AARCH64-BE:#define __ARM_ARCH_ISA_A64 1
 // AARCH64-BE:#define __ARM_BIG_ENDIAN 1
+// AARCH64-BE:#define __BIGGEST_ALIGNMENT__ 16
 // AARCH64-BE:#define __BYTE_ORDER__ __ORDER_BIG_ENDIAN__
 // AARCH64-BE:#define __CHAR16_TYPE__ unsigned short
 // AARCH64-BE:#define __CHAR32_TYPE__ unsigned int
@@ -621,6 +623,7 @@
 // AARCH64-NETBSD:#define __ARM_ARCH 8
 // AARCH64-NETBSD:#define __ARM_ARCH_ISA_A64 1
 // AARCH64-NETBSD-NOT:#define __ARM_BIG_ENDIAN 1
+// AARCH64-NETBSD:#define __BIGGEST_ALIGNMENT__ 16
 // AARCH64-NETBSD:#define __BYTE_ORDER__ __ORDER_LITTLE_ENDIAN__
 // AARCH64-NETBSD:#define __CHAR16_TYPE__ unsigned short
 // AARCH64-NETBSD:#define __CHAR32_TYPE__ unsigned int
@@ -812,6 +815,7 @@
 // AARCH64-FREEBSD:#define __ARM_ARCH 8
 // AARCH64-FREEBSD:#define __ARM_ARCH_ISA_A64 1
 // AARCH64-FREEBSD-NOT:#define __ARM_BIG_ENDIAN 1
+// AARCH64-FREEBSD:#define __BIGGEST_ALIGNMENT__ 16
 // AARCH64-FREEBSD:#define __BYTE_ORDER__ __ORDER_LITTLE_ENDIAN__
 // AARCH64-FREEBSD:#define __CHAR16_TYPE__ unsigned short
 // AARCH64-FREEBSD:#define __CHAR32_TYPE__ unsigned int
@@ -995,6 +999,197 @@
 // AARCH64-FREEBSD:#define __WINT_WIDTH__ 32
 // AARCH64-FREEBSD:#define __aarch64__ 1
 
+// RUN: %clang_cc1 -E -dM -ffreestanding -triple=aarch64-apple-ios7.0 < /dev/null | FileCheck -check-prefix AARCH64-DARWIN %s
+//
+// AARCH64-DARWIN: #define _LP64 1
+// AARCH64-NOT: #define __AARCH64EB__ 1
+// AARCH64-DARWIN: #define __AARCH64EL__ 1
+// AARCH64-NOT: #define __AARCH_BIG_ENDIAN 1
+// AARCH64-DARWIN: #define __ARM_64BIT_STATE 1
+// AARCH64-DARWIN: #define __ARM_ARCH 8
+// AARCH64-DARWIN: #define __ARM_ARCH_ISA_A64 1
+// AARCH64-NOT: #define __ARM_BIG_ENDIAN 1
+// AARCH64-DARWIN: #define __BIGGEST_ALIGNMENT__ 8
+// AARCH64-DARWIN: #define __BYTE_ORDER__ __ORDER_LITTLE_ENDIAN__
+// AARCH64-DARWIN: #define __CHAR16_TYPE__ unsigned short
+// AARCH64-DARWIN: #define __CHAR32_TYPE__ unsigned int
+// AARCH64-DARWIN: #define __CHAR_BIT__ 8
+// AARCH64-DARWIN: #define __DBL_DENORM_MIN__ 4.9406564584124654e-324
+// AARCH64-DARWIN: #define __DBL_DIG__ 15
+// AARCH64-DARWIN: #define __DBL_EPSILON__ 2.2204460492503131e-16
+// AARCH64-DARWIN: #define __DBL_HAS_DENORM__ 1
+// AARCH64-DARWIN: #define __DBL_HAS_INFINITY__ 1
+// AARCH64-DARWIN: #define __DBL_HAS_QUIET_NAN__ 1
+// AARCH64-DARWIN: #define __DBL_MANT_DIG__ 53
+// AARCH64-DARWIN: #define __DBL_MAX_10_EXP__ 308
+// AARCH64-DARWIN: #define __DBL_MAX_EXP__ 1024
+// AARCH64-DARWIN: #define __DBL_MAX__ 1.7976931348623157e+308
+// AARCH64-DARWIN: #define __DBL_MIN_10_EXP__ (-307)
+// AARCH64-DARWIN: #define __DBL_MIN_EXP__ (-1021)
+// AARCH64-DARWIN: #define __DBL_MIN__ 2.2250738585072014e-308
+// AARCH64-DARWIN: #define __DECIMAL_DIG__ 17
+// AARCH64-DARWIN: #define __FLT_DENORM_MIN__ 1.40129846e-45F
+// AARCH64-DARWIN: #define __FLT_DIG__ 6
+// AARCH64-DARWIN: #define __FLT_EPSILON__ 1.19209290e-7F
+// AARCH64-DARWIN: #define __FLT_EVAL_METHOD__ 0
+// AARCH64-DARWIN: #define __FLT_HAS_DENORM__ 1
+// AARCH64-DARWIN: #define __FLT_HAS_INFINITY__ 1
+// AARCH64-DARWIN: #define __FLT_HAS_QUIET_NAN__ 1
+// AARCH64-DARWIN: #define __FLT_MANT_DIG__ 24
+// AARCH64-DARWIN: #define __FLT_MAX_10_EXP__ 38
+// AARCH64-DARWIN: #define __FLT_MAX_EXP__ 128
+// AARCH64-DARWIN: #define __FLT_MAX__ 3.40282347e+38F
+// AARCH64-DARWIN: #define __FLT_MIN_10_EXP__ (-37)
+// AARCH64-DARWIN: #define __FLT_MIN_EXP__ (-125)
+// AARCH64-DARWIN: #define __FLT_MIN__ 1.17549435e-38F
+// AARCH64-DARWIN: #define __FLT_RADIX__ 2
+// AARCH64-DARWIN: #define __INT16_C_SUFFIX__ {{$}}
+// AARCH64-DARWIN: #define __INT16_FMTd__ "hd"
+// AARCH64-DARWIN: #define __INT16_FMTi__ "hi"
+// AARCH64-DARWIN: #define __INT16_MAX__ 32767
+// AARCH64-DARWIN: #define __INT16_TYPE__ short
+// AARCH64-DARWIN: #define __INT32_C_SUFFIX__ {{$}}
+// AARCH64-DARWIN: #define __INT32_FMTd__ "d"
+// AARCH64-DARWIN: #define __INT32_FMTi__ "i"
+// AARCH64-DARWIN: #define __INT32_MAX__ 2147483647
+// AARCH64-DARWIN: #define __INT32_TYPE__ int
+// AARCH64-DARWIN: #define __INT64_C_SUFFIX__ L
+// AARCH64-DARWIN: #define __INT64_FMTd__ "lld"
+// AARCH64-DARWIN: #define __INT64_FMTi__ "lli"
+// AARCH64-DARWIN: #define __INT64_MAX__ 9223372036854775807L
+// AARCH64-DARWIN: #define __INT64_TYPE__ long long int
+// AARCH64-DARWIN: #define __INT8_C_SUFFIX__ {{$}}
+// AARCH64-DARWIN: #define __INT8_FMTd__ "hhd"
+// AARCH64-DARWIN: #define __INT8_FMTi__ "hhi"
+// AARCH64-DARWIN: #define __INT8_MAX__ 127
+// AARCH64-DARWIN: #define __INT8_TYPE__ signed char
+// AARCH64-DARWIN: #define __INTMAX_C_SUFFIX__ L
+// AARCH64-DARWIN: #define __INTMAX_FMTd__ "ld"
+// AARCH64-DARWIN: #define __INTMAX_FMTi__ "li"
+// AARCH64-DARWIN: #define __INTMAX_MAX__ 9223372036854775807L
+// AARCH64-DARWIN: #define __INTMAX_TYPE__ long int
+// AARCH64-DARWIN: #define __INTMAX_WIDTH__ 64
+// AARCH64-DARWIN: #define __INTPTR_FMTd__ "ld"
+// AARCH64-DARWIN: #define __INTPTR_FMTi__ "li"
+// AARCH64-DARWIN: #define __INTPTR_MAX__ 9223372036854775807L
+// AARCH64-DARWIN: #define __INTPTR_TYPE__ long int
+// AARCH64-DARWIN: #define __INTPTR_WIDTH__ 64
+// AARCH64-DARWIN: #define __INT_FAST16_FMTd__ "hd"
+// AARCH64-DARWIN: #define __INT_FAST16_FMTi__ "hi"
+// AARCH64-DARWIN: #define __INT_FAST16_MAX__ 32767
+// AARCH64-DARWIN: #define __INT_FAST16_TYPE__ short
+// AARCH64-DARWIN: #define __INT_FAST32_FMTd__ "d"
+// AARCH64-DARWIN: #define __INT_FAST32_FMTi__ "i"
+// AARCH64-DARWIN: #define __INT_FAST32_MAX__ 2147483647
+// AARCH64-DARWIN: #define __INT_FAST32_TYPE__ int
+// AARCH64-DARWIN: #define __INT_FAST64_FMTd__ "ld"
+// AARCH64-DARWIN: #define __INT_FAST64_FMTi__ "li"
+// AARCH64-DARWIN: #define __INT_FAST64_MAX__ 9223372036854775807L
+// AARCH64-DARWIN: #define __INT_FAST64_TYPE__ long int
+// AARCH64-DARWIN: #define __INT_FAST8_FMTd__ "hhd"
+// AARCH64-DARWIN: #define __INT_FAST8_FMTi__ "hhi"
+// AARCH64-DARWIN: #define __INT_FAST8_MAX__ 127
+// AARCH64-DARWIN: #define __INT_FAST8_TYPE__ signed char
+// AARCH64-DARWIN: #define __INT_LEAST16_FMTd__ "hd"
+// AARCH64-DARWIN: #define __INT_LEAST16_FMTi__ "hi"
+// AARCH64-DARWIN: #define __INT_LEAST16_MAX__ 32767
+// AARCH64-DARWIN: #define __INT_LEAST16_TYPE__ short
+// AARCH64-DARWIN: #define __INT_LEAST32_FMTd__ "d"
+// AARCH64-DARWIN: #define __INT_LEAST32_FMTi__ "i"
+// AARCH64-DARWIN: #define __INT_LEAST32_MAX__ 2147483647
+// AARCH64-DARWIN: #define __INT_LEAST32_TYPE__ int
+// AARCH64-DARWIN: #define __INT_LEAST64_FMTd__ "ld"
+// AARCH64-DARWIN: #define __INT_LEAST64_FMTi__ "li"
+// AARCH64-DARWIN: #define __INT_LEAST64_MAX__ 9223372036854775807L
+// AARCH64-DARWIN: #define __INT_LEAST64_TYPE__ long int
+// AARCH64-DARWIN: #define __INT_LEAST8_FMTd__ "hhd"
+// AARCH64-DARWIN: #define __INT_LEAST8_FMTi__ "hhi"
+// AARCH64-DARWIN: #define __INT_LEAST8_MAX__ 127
+// AARCH64-DARWIN: #define __INT_LEAST8_TYPE__ signed char
+// AARCH64-DARWIN: #define __INT_MAX__ 2147483647
+// AARCH64-DARWIN: #define __LDBL_DENORM_MIN__ 4.9406564584124654e-324L
+// AARCH64-DARWIN: #define __LDBL_DIG__ 15
+// AARCH64-DARWIN: #define __LDBL_EPSILON__ 2.2204460492503131e-16L
+// AARCH64-DARWIN: #define __LDBL_HAS_DENORM__ 1
+// AARCH64-DARWIN: #define __LDBL_HAS_INFINITY__ 1
+// AARCH64-DARWIN: #define __LDBL_HAS_QUIET_NAN__ 1
+// AARCH64-DARWIN: #define __LDBL_MANT_DIG__ 53
+// AARCH64-DARWIN: #define __LDBL_MAX_10_EXP__ 308
+// AARCH64-DARWIN: #define __LDBL_MAX_EXP__ 1024
+// AARCH64-DARWIN: #define __LDBL_MAX__ 1.7976931348623157e+308L
+// AARCH64-DARWIN: #define __LDBL_MIN_10_EXP__ (-307)
+// AARCH64-DARWIN: #define __LDBL_MIN_EXP__ (-1021)
+// AARCH64-DARWIN: #define __LDBL_MIN__ 2.2250738585072014e-308L
+// AARCH64-DARWIN: #define __LONG_LONG_MAX__ 9223372036854775807LL
+// AARCH64-DARWIN: #define __LONG_MAX__ 9223372036854775807L
+// AARCH64-DARWIN: #define __LP64__ 1
+// AARCH64-DARWIN: #define __POINTER_WIDTH__ 64
+// AARCH64-DARWIN: #define __PTRDIFF_TYPE__ long int
+// AARCH64-DARWIN: #define __PTRDIFF_WIDTH__ 64
+// AARCH64-DARWIN: #define __SCHAR_MAX__ 127
+// AARCH64-DARWIN: #define __SHRT_MAX__ 32767
+// AARCH64-DARWIN: #define __SIG_ATOMIC_MAX__ 2147483647
+// AARCH64-DARWIN: #define __SIG_ATOMIC_WIDTH__ 32
+// AARCH64-DARWIN: #define __SIZEOF_DOUBLE__ 8
+// AARCH64-DARWIN: #define __SIZEOF_FLOAT__ 4
+// AARCH64-DARWIN: #define __SIZEOF_INT128__ 16
+// AARCH64-DARWIN: #define __SIZEOF_INT__ 4
+// AARCH64-DARWIN: #define __SIZEOF_LONG_DOUBLE__ 8
+// AARCH64-DARWIN: #define __SIZEOF_LONG_LONG__ 8
+// AARCH64-DARWIN: #define __SIZEOF_LONG__ 8
+// AARCH64-DARWIN: #define __SIZEOF_POINTER__ 8
+// AARCH64-DARWIN: #define __SIZEOF_PTRDIFF_T__ 8
+// AARCH64-DARWIN: #define __SIZEOF_SHORT__ 2
+// AARCH64-DARWIN: #define __SIZEOF_SIZE_T__ 8
+// AARCH64-DARWIN: #define __SIZEOF_WCHAR_T__ 4
+// AARCH64-DARWIN: #define __SIZEOF_WINT_T__ 4
+// AARCH64-DARWIN: #define __SIZE_MAX__ 18446744073709551615UL
+// AARCH64-DARWIN: #define __SIZE_TYPE__ long unsigned int
+// AARCH64-DARWIN: #define __SIZE_WIDTH__ 64
+// AARCH64-DARWIN: #define __UINT16_C_SUFFIX__ {{$}}
+// AARCH64-DARWIN: #define __UINT16_MAX__ 65535
+// AARCH64-DARWIN: #define __UINT16_TYPE__ unsigned short
+// AARCH64-DARWIN: #define __UINT32_C_SUFFIX__ U
+// AARCH64-DARWIN: #define __UINT32_MAX__ 4294967295U
+// AARCH64-DARWIN: #define __UINT32_TYPE__ unsigned int
+// AARCH64-DARWIN: #define __UINT64_C_SUFFIX__ UL
+// AARCH64-DARWIN: #define __UINT64_MAX__ 18446744073709551615UL
+// AARCH64-DARWIN: #define __UINT64_TYPE__ long long unsigned int
+// AARCH64-DARWIN: #define __UINT8_C_SUFFIX__ {{$}}
+// AARCH64-DARWIN: #define __UINT8_MAX__ 255
+// AARCH64-DARWIN: #define __UINT8_TYPE__ unsigned char
+// AARCH64-DARWIN: #define __UINTMAX_C_SUFFIX__ UL
+// AARCH64-DARWIN: #define __UINTMAX_MAX__ 18446744073709551615UL
+// AARCH64-DARWIN: #define __UINTMAX_TYPE__ long unsigned int
+// AARCH64-DARWIN: #define __UINTMAX_WIDTH__ 64
+// AARCH64-DARWIN: #define __UINTPTR_MAX__ 18446744073709551615UL
+// AARCH64-DARWIN: #define __UINTPTR_TYPE__ long unsigned int
+// AARCH64-DARWIN: #define __UINTPTR_WIDTH__ 64
+// AARCH64-DARWIN: #define __UINT_FAST16_MAX__ 65535
+// AARCH64-DARWIN: #define __UINT_FAST16_TYPE__ unsigned short
+// AARCH64-DARWIN: #define __UINT_FAST32_MAX__ 4294967295U
+// AARCH64-DARWIN: #define __UINT_FAST32_TYPE__ unsigned int
+// AARCH64-DARWIN: #define __UINT_FAST64_MAX__ 18446744073709551615UL
+// AARCH64-DARWIN: #define __UINT_FAST64_TYPE__ long unsigned int
+// AARCH64-DARWIN: #define __UINT_FAST8_MAX__ 255
+// AARCH64-DARWIN: #define __UINT_FAST8_TYPE__ unsigned char
+// AARCH64-DARWIN: #define __UINT_LEAST16_MAX__ 65535
+// AARCH64-DARWIN: #define __UINT_LEAST16_TYPE__ unsigned short
+// AARCH64-DARWIN: #define __UINT_LEAST32_MAX__ 4294967295U
+// AARCH64-DARWIN: #define __UINT_LEAST32_TYPE__ unsigned int
+// AARCH64-DARWIN: #define __UINT_LEAST64_MAX__ 18446744073709551615UL
+// AARCH64-DARWIN: #define __UINT_LEAST64_TYPE__ long unsigned int
+// AARCH64-DARWIN: #define __UINT_LEAST8_MAX__ 255
+// AARCH64-DARWIN: #define __UINT_LEAST8_TYPE__ unsigned char
+// AARCH64-DARWIN: #define __USER_LABEL_PREFIX__ _
+// AARCH64-DARWIN: #define __WCHAR_MAX__ 2147483647
+// AARCH64-DARWIN: #define __WCHAR_TYPE__ int
+// AARCH64-DARWIN-NOT: #define __WCHAR_UNSIGNED__
+// AARCH64-DARWIN: #define __WCHAR_WIDTH__ 32
+// AARCH64-DARWIN: #define __WINT_TYPE__ int
+// AARCH64-DARWIN: #define __WINT_WIDTH__ 32
+// AARCH64-DARWIN: #define __aarch64__ 1
+
 // RUN: %clang_cc1 -E -dM -ffreestanding -triple=arm-none-none < /dev/null | FileCheck -check-prefix ARM %s
 //
 // ARM-NOT:#define _LP64
@@ -1003,6 +1198,7 @@
 // ARM:#define __ARMEL__ 1
 // ARM:#define __ARM_ARCH_6J__ 1
 // ARM-NOT:#define __ARM_BIG_ENDIAN 1
+// ARM:#define __BIGGEST_ALIGNMENT__ 8
 // ARM:#define __BYTE_ORDER__ __ORDER_LITTLE_ENDIAN__
 // ARM:#define __CHAR16_TYPE__ unsigned short
 // ARM:#define __CHAR32_TYPE__ unsigned int
@@ -1193,6 +1389,7 @@
 // ARM-BE-NOT:#define __ARMEL__ 1
 // ARM-BE:#define __ARM_ARCH_6J__ 1
 // ARM-BE:#define __ARM_BIG_ENDIAN 1
+// ARM-BE:#define __BIGGEST_ALIGNMENT__ 8
 // ARM-BE:#define __BIG_ENDIAN__ 1
 // ARM-BE:#define __BYTE_ORDER__ __ORDER_BIG_ENDIAN__
 // ARM-BE:#define __CHAR16_TYPE__ unsigned short
@@ -1387,6 +1584,7 @@
 // ARMEABISOFTFP:#define __ARM_EABI__ 1
 // ARMEABISOFTFP:#define __ARM_PCS 1
 // ARMEABISOFTFP-NOT:#define __ARM_PCS_VFP 1
+// ARMEABISOFTFP:#define __BIGGEST_ALIGNMENT__ 8
 // ARMEABISOFTFP:#define __BYTE_ORDER__ __ORDER_LITTLE_ENDIAN__
 // ARMEABISOFTFP:#define __CHAR16_TYPE__ unsigned short
 // ARMEABISOFTFP:#define __CHAR32_TYPE__ unsigned int
@@ -1582,6 +1780,7 @@
 // ARMEABIHARDFP:#define __ARM_EABI__ 1
 // ARMEABIHARDFP:#define __ARM_PCS 1
 // ARMEABIHARDFP:#define __ARM_PCS_VFP 1
+// ARMEABIHARDFP:#define __BIGGEST_ALIGNMENT__ 8
 // ARMEABIHARDFP:#define __BYTE_ORDER__ __ORDER_LITTLE_ENDIAN__
 // ARMEABIHARDFP:#define __CHAR16_TYPE__ unsigned short
 // ARMEABIHARDFP:#define __CHAR32_TYPE__ unsigned int
@@ -1775,6 +1974,7 @@
 // ARM-NETBSD:#define __ARM_DWARF_EH__ 1
 // ARM-NETBSD:#define __ARM_EABI__ 1
 // ARM-NETBSD-NOT:#define __ARM_BIG_ENDIAN 1
+// ARM-NETBSD:#define __BIGGEST_ALIGNMENT__ 8
 // ARM-NETBSD:#define __BYTE_ORDER__ __ORDER_LITTLE_ENDIAN__
 // ARM-NETBSD:#define __CHAR16_TYPE__ unsigned short
 // ARM-NETBSD:#define __CHAR32_TYPE__ unsigned int
@@ -2021,6 +2221,7 @@
 // RUN: %clang_cc1 -E -dM -ffreestanding -triple=i386-none-none < /dev/null | FileCheck -check-prefix I386 %s
 //
 // I386-NOT:#define _LP64
+// I386:#define __BIGGEST_ALIGNMENT__ 16
 // I386:#define __BYTE_ORDER__ __ORDER_LITTLE_ENDIAN__
 // I386:#define __CHAR16_TYPE__ unsigned short
 // I386:#define __CHAR32_TYPE__ unsigned int
@@ -2207,6 +2408,7 @@
 // RUN: %clang_cc1 -E -dM -ffreestanding -triple=i386-pc-linux-gnu -target-cpu pentium4 < /dev/null | FileCheck -check-prefix I386-LINUX %s
 //
 // I386-LINUX-NOT:#define _LP64
+// I386-LINUX:#define __BIGGEST_ALIGNMENT__ 16
 // I386-LINUX:#define __BYTE_ORDER__ __ORDER_LITTLE_ENDIAN__
 // I386-LINUX:#define __CHAR16_TYPE__ unsigned short
 // I386-LINUX:#define __CHAR32_TYPE__ unsigned int
@@ -2393,6 +2595,7 @@
 // RUN: %clang_cc1 -E -dM -ffreestanding -triple=i386-netbsd < /dev/null | FileCheck -check-prefix I386-NETBSD %s
 //
 // I386-NETBSD-NOT:#define _LP64
+// I386-NETBSD:#define __BIGGEST_ALIGNMENT__ 16
 // I386-NETBSD:#define __BYTE_ORDER__ __ORDER_LITTLE_ENDIAN__
 // I386-NETBSD:#define __CHAR16_TYPE__ unsigned short
 // I386-NETBSD:#define __CHAR32_TYPE__ unsigned int
@@ -2597,6 +2800,7 @@
 // MIPS32BE:#define _MIPS_SZINT 32
 // MIPS32BE:#define _MIPS_SZLONG 32
 // MIPS32BE:#define _MIPS_SZPTR 32
+// MIPS32BE:#define __BIGGEST_ALIGNMENT__ 8
 // MIPS32BE:#define __BIG_ENDIAN__ 1
 // MIPS32BE:#define __BYTE_ORDER__ __ORDER_BIG_ENDIAN__
 // MIPS32BE:#define __CHAR16_TYPE__ unsigned short
@@ -2805,6 +3009,7 @@
 // MIPS32EL:#define _MIPS_SZINT 32
 // MIPS32EL:#define _MIPS_SZLONG 32
 // MIPS32EL:#define _MIPS_SZPTR 32
+// MIPS32EL:#define __BIGGEST_ALIGNMENT__ 8
 // MIPS32EL:#define __BYTE_ORDER__ __ORDER_LITTLE_ENDIAN__
 // MIPS32EL:#define __CHAR16_TYPE__ unsigned short
 // MIPS32EL:#define __CHAR32_TYPE__ unsigned int
@@ -3624,6 +3829,7 @@
 // MIPS64BE:#define _MIPS_SZINT 32
 // MIPS64BE:#define _MIPS_SZLONG 64
 // MIPS64BE:#define _MIPS_SZPTR 64
+// MIPS64BE:#define __BIGGEST_ALIGNMENT__ 16
 // MIPS64BE:#define __BIG_ENDIAN__ 1
 // MIPS64BE:#define __BYTE_ORDER__ __ORDER_BIG_ENDIAN__
 // MIPS64BE:#define __CHAR16_TYPE__ unsigned short
@@ -3832,6 +4038,7 @@
 // MIPS64EL:#define _MIPS_SZINT 32
 // MIPS64EL:#define _MIPS_SZLONG 64
 // MIPS64EL:#define _MIPS_SZPTR 64
+// MIPS64EL:#define __BIGGEST_ALIGNMENT__ 16
 // MIPS64EL:#define __BYTE_ORDER__ __ORDER_LITTLE_ENDIAN__
 // MIPS64EL:#define __CHAR16_TYPE__ unsigned short
 // MIPS64EL:#define __CHAR32_TYPE__ unsigned int
@@ -4215,6 +4422,7 @@
 //
 // MSP430:#define MSP430 1
 // MSP430-NOT:#define _LP64
+// MSP430:#define __BIGGEST_ALIGNMENT__ 2
 // MSP430:#define __BYTE_ORDER__ __ORDER_LITTLE_ENDIAN__
 // MSP430:#define __CHAR16_TYPE__ unsigned short
 // MSP430:#define __CHAR32_TYPE__ unsigned int
@@ -4398,6 +4606,7 @@
 // RUN: %clang_cc1 -E -dM -ffreestanding -triple=nvptx-none-none < /dev/null | FileCheck -check-prefix NVPTX32 %s
 //
 // NVPTX32-NOT:#define _LP64
+// NVPTX32:#define __BIGGEST_ALIGNMENT__ 8
 // NVPTX32:#define __BYTE_ORDER__ __ORDER_LITTLE_ENDIAN__
 // NVPTX32:#define __CHAR16_TYPE__ unsigned short
 // NVPTX32:#define __CHAR32_TYPE__ unsigned int
@@ -4584,6 +4793,7 @@
 // RUN: %clang_cc1 -E -dM -ffreestanding -triple=nvptx64-none-none < /dev/null | FileCheck -check-prefix NVPTX64 %s
 //
 // NVPTX64:#define _LP64 1
+// NVPTX64:#define __BIGGEST_ALIGNMENT__ 8
 // NVPTX64:#define __BYTE_ORDER__ __ORDER_LITTLE_ENDIAN__
 // NVPTX64:#define __CHAR16_TYPE__ unsigned short
 // NVPTX64:#define __CHAR32_TYPE__ unsigned int
@@ -4775,6 +4985,7 @@
 // PPC603E:#define _ARCH_PPCGR 1
 // PPC603E:#define _BIG_ENDIAN 1
 // PPC603E-NOT:#define _LP64
+// PPC603E:#define __BIGGEST_ALIGNMENT__ 8
 // PPC603E:#define __BIG_ENDIAN__ 1
 // PPC603E:#define __BYTE_ORDER__ __ORDER_BIG_ENDIAN__
 // PPC603E:#define __CHAR16_TYPE__ unsigned short
@@ -4972,6 +5183,7 @@
 // PPC64:#define _ARCH_PWR7 1
 // PPC64:#define _BIG_ENDIAN 1
 // PPC64:#define _LP64 1
+// PPC64:#define __BIGGEST_ALIGNMENT__ 8
 // PPC64:#define __BIG_ENDIAN__ 1
 // PPC64:#define __BYTE_ORDER__ __ORDER_BIG_ENDIAN__
 // PPC64:#define __CHAR16_TYPE__ unsigned short
@@ -5174,6 +5386,7 @@
 // PPC64LE:#define _CALL_ELF 2
 // PPC64LE:#define _LITTLE_ENDIAN 1
 // PPC64LE:#define _LP64 1
+// PPC64LE:#define __BIGGEST_ALIGNMENT__ 8
 // PPC64LE:#define __BYTE_ORDER__ __ORDER_LITTLE_ENDIAN__
 // PPC64LE:#define __CHAR16_TYPE__ unsigned short
 // PPC64LE:#define __CHAR32_TYPE__ unsigned int
@@ -5555,6 +5768,7 @@
 // PPC64-LINUX:#define _ARCH_PPC64 1
 // PPC64-LINUX:#define _BIG_ENDIAN 1
 // PPC64-LINUX:#define _LP64 1
+// PPC64-LINUX:#define __BIGGEST_ALIGNMENT__ 8
 // PPC64-LINUX:#define __BIG_ENDIAN__ 1
 // PPC64-LINUX:#define __BYTE_ORDER__ __ORDER_BIG_ENDIAN__
 // PPC64-LINUX:#define __CHAR16_TYPE__ unsigned short
@@ -5759,6 +5973,7 @@
 // PPC:#define _ARCH_PPC 1
 // PPC:#define _BIG_ENDIAN 1
 // PPC-NOT:#define _LP64
+// PPC:#define __BIGGEST_ALIGNMENT__ 8
 // PPC:#define __BIG_ENDIAN__ 1
 // PPC:#define __BYTE_ORDER__ __ORDER_BIG_ENDIAN__
 // PPC:#define __CHAR16_TYPE__ unsigned short
@@ -5949,6 +6164,7 @@
 // PPC-LINUX:#define _ARCH_PPC 1
 // PPC-LINUX:#define _BIG_ENDIAN 1
 // PPC-LINUX-NOT:#define _LP64
+// PPC-LINUX:#define __BIGGEST_ALIGNMENT__ 8
 // PPC-LINUX:#define __BIG_ENDIAN__ 1
 // PPC-LINUX:#define __BYTE_ORDER__ __ORDER_BIG_ENDIAN__
 // PPC-LINUX:#define __CHAR16_TYPE__ unsigned short
@@ -6140,6 +6356,7 @@
 //
 // PPC-DARWIN:#define _ARCH_PPC 1
 // PPC-DARWIN:#define _BIG_ENDIAN 1
+// PPC-DARWIN:#define __BIGGEST_ALIGNMENT__ 16
 // PPC-DARWIN:#define __BIG_ENDIAN__ 1
 // PPC-DARWIN:#define __BYTE_ORDER__ __ORDER_BIG_ENDIAN__
 // PPC-DARWIN:#define __CHAR16_TYPE__ unsigned short
@@ -6333,6 +6550,7 @@
 //
 // RUN: %clang_cc1 -E -dM -ffreestanding -triple=s390x-none-none -fno-signed-char < /dev/null | FileCheck -check-prefix S390X %s
 //
+// S390X:#define __BIGGEST_ALIGNMENT__ 8
 // S390X:#define __CHAR16_TYPE__ unsigned short
 // S390X:#define __CHAR32_TYPE__ unsigned int
 // S390X:#define __CHAR_BIT__ 8
@@ -6514,6 +6732,7 @@
 // RUN: %clang_cc1 -E -dM -ffreestanding -triple=sparc-none-none < /dev/null | FileCheck -check-prefix SPARC %s
 //
 // SPARC-NOT:#define _LP64
+// SPARC:#define __BIGGEST_ALIGNMENT__ 8
 // SPARC:#define __BIG_ENDIAN__ 1
 // SPARC:#define __BYTE_ORDER__ __ORDER_BIG_ENDIAN__
 // SPARC:#define __CHAR16_TYPE__ unsigned short
@@ -6701,6 +6920,7 @@
 // RUN: %clang_cc1 -E -dM -ffreestanding -triple=tce-none-none < /dev/null | FileCheck -check-prefix TCE %s
 //
 // TCE-NOT:#define _LP64
+// TCE:#define __BIGGEST_ALIGNMENT__ 4
 // TCE:#define __BIG_ENDIAN__ 1
 // TCE:#define __BYTE_ORDER__ __ORDER_BIG_ENDIAN__
 // TCE:#define __CHAR16_TYPE__ unsigned short
@@ -6868,6 +7088,7 @@
 //
 // X86_64:#define _LP64 1
 // X86_64-NOT:#define _LP32 1
+// X86_64:#define __BIGGEST_ALIGNMENT__ 16
 // X86_64:#define __BYTE_ORDER__ __ORDER_LITTLE_ENDIAN__
 // X86_64:#define __CHAR16_TYPE__ unsigned short
 // X86_64:#define __CHAR32_TYPE__ unsigned int
@@ -7069,6 +7290,7 @@
 //
 // X32:#define _ILP32 1
 // X32-NOT:#define _LP64 1
+// X32:#define __BIGGEST_ALIGNMENT__ 16
 // X32:#define __BYTE_ORDER__ __ORDER_LITTLE_ENDIAN__
 // X32:#define __CHAR16_TYPE__ unsigned short
 // X32:#define __CHAR32_TYPE__ unsigned int
@@ -7262,6 +7484,7 @@
 // RUN: %clang_cc1 -E -dM -ffreestanding -triple=x86_64-pc-linux-gnu < /dev/null | FileCheck -check-prefix X86_64-LINUX %s
 //
 // X86_64-LINUX:#define _LP64 1
+// X86_64-LINUX:#define __BIGGEST_ALIGNMENT__ 16
 // X86_64-LINUX:#define __BYTE_ORDER__ __ORDER_LITTLE_ENDIAN__
 // X86_64-LINUX:#define __CHAR16_TYPE__ unsigned short
 // X86_64-LINUX:#define __CHAR32_TYPE__ unsigned int
@@ -7460,6 +7683,7 @@
 // RUN: %clang_cc1 -E -dM -ffreestanding -triple=x86_64-netbsd < /dev/null | FileCheck -check-prefix X86_64-NETBSD %s
 //
 // X86_64-NETBSD:#define _LP64 1
+// X86_64-NETBSD:#define __BIGGEST_ALIGNMENT__ 16
 // X86_64-NETBSD:#define __BYTE_ORDER__ __ORDER_LITTLE_ENDIAN__
 // X86_64-NETBSD:#define __CHAR16_TYPE__ unsigned short
 // X86_64-NETBSD:#define __CHAR32_TYPE__ unsigned int
