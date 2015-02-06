@@ -368,6 +368,10 @@ private:
 
 class _LIBUNWIND_HIDDEN AbstractUnwindCursor {
 public:
+  // NOTE: provide a class specific placement deallocation function (S5.3.4 p20)
+  // This avoids an unnecessary dependency to libc++abi.
+  void operator delete(void *, size_t) {}
+
   virtual ~AbstractUnwindCursor() {}
   virtual bool validReg(int) { _LIBUNWIND_ABORT("validReg not implemented"); }
   virtual unw_word_t getReg(int) { _LIBUNWIND_ABORT("getReg not implemented"); }
@@ -430,8 +434,6 @@ public:
 #ifdef __arm__
   virtual void        saveVFPAsX();
 #endif
-
-  void            operator delete(void *, size_t) {}
 
 private:
 
