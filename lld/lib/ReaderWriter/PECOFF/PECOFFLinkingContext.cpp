@@ -51,6 +51,12 @@ bool PECOFFLinkingContext::validateImpl(raw_ostream &diagnostics) {
     return false;
   }
 
+  // Specifing /noentry without /dll is an error.
+  if (!hasEntry() && !isDll()) {
+    diagnostics << "/noentry must be specified with /dll\n";
+    return false;
+  }
+
   // Check for duplicate export ordinals.
   std::set<int> exports;
   for (const PECOFFLinkingContext::ExportDesc &desc : getDllExports()) {

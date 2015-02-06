@@ -1377,12 +1377,6 @@ bool WinLinkDriver::parse(int argc, const char *argv[],
     }
   }
 
-  // Specify /noentry without /dll is an error.
-  if (!ctx.hasEntry() && !parsedArgs->getLastArg(OPT_dll)) {
-    diag << "/noentry must be specified with /dll\n";
-    return false;
-  }
-
   // If dead-stripping is enabled, we need to add the entry symbol and
   // symbols given by /include to the dead strip root set, so that it
   // won't be removed from the output.
