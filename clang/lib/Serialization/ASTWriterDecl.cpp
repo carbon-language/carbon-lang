@@ -1448,25 +1448,42 @@ void ASTDeclWriter::VisitDeclContext(DeclContext *DC, uint64_t LexicalOffset,
 template <typename T>
 void ASTDeclWriter::VisitRedeclarable(Redeclarable<T> *D) {
   T *First = D->getFirstDecl();
-  if (First->getMostRecentDecl() != First) {
+  T *MostRecent = First->getMostRecentDecl();
+  if (MostRecent != First) {
     assert(isRedeclarableDeclKind(static_cast<T *>(D)->getKind()) &&
            "Not considered redeclarable?");
-    
+
+    auto *Previous = D->getPreviousDecl();
+    auto *FirstToEmit = First;
+    if (Context.getLangOpts().Modules && Writer.Chain && !Previous) {
+      // In a modules build, we can have imported declarations after a local
+      // canonical declaration. If we do, we want to treat the first imported
+      // declaration as our canonical declaration on reload, in order to
+      // rebuild the redecl chain in the right order.
+      for (auto *Redecl = MostRecent; Redecl;
+           Redecl = Redecl->getPreviousDecl())
+        if (Redecl->isFromASTFile())
+          FirstToEmit = Redecl;
+    }
+
     // There is more than one declaration of this entity, so we will need to
     // write a redeclaration chain.
-    Writer.AddDeclRef(First, Record);
+    Writer.AddDeclRef(FirstToEmit, Record);
+    Record.push_back(FirstToEmit != First);
     Writer.Redeclarations.insert(First);
 
     // Make sure that we serialize both the previous and the most-recent 
     // declarations, which (transitively) ensures that all declarations in the
     // chain get serialized.
-    (void)Writer.GetDeclRef(D->getPreviousDecl());
-    (void)Writer.GetDeclRef(First->getMostRecentDecl());
+    //
+    // FIXME: This is not correct; when we reach an imported declaration we
+    // won't emit its previous declaration.
+    (void)Writer.GetDeclRef(Previous);
+    (void)Writer.GetDeclRef(MostRecent);
   } else {
     // We use the sentinel value 0 to indicate an only declaration.
     Record.push_back(0);
   }
-  
 }
 
 void ASTDeclWriter::VisitOMPThreadPrivateDecl(OMPThreadPrivateDecl *D) {
@@ -1948,9 +1965,10 @@ void ASTWriter::WriteDecl(ASTContext &Context, Decl *D) {
 
   // Determine the ID for this declaration.
   serialization::DeclID ID;
-  if (D->isFromASTFile())
+  if (D->isFromASTFile()) {
+    assert(isRewritten(D) && "should not be emitting imported decl");
     ID = getDeclID(D);
-  else {
+  } else {
     serialization::DeclID &IDR = DeclIDs[D];
     if (IDR == 0)
       IDR = NextDeclID++;

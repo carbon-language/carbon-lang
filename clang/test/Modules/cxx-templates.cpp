@@ -28,14 +28,8 @@ void g() {
   f<double>(1.0);
   f<int>();
   f(); // expected-error {{no matching function}}
-#ifdef EARLY_IMPORT
-  // FIXME: The textual inclusion above shouldn't affect this!
-  // expected-note@Inputs/cxx-templates-a.h:3 {{couldn't infer template argument}}
-  // expected-note@Inputs/cxx-templates-a.h:4 {{requires 1 argument}}
-#else
   // expected-note@Inputs/cxx-templates-b.h:3 {{couldn't infer template argument}}
   // expected-note@Inputs/cxx-templates-b.h:4 {{requires single argument}}
-#endif
 
   N::f(0);
   N::f<double>(1.0);
