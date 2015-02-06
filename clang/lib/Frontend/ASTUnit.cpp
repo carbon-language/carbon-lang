@@ -120,11 +120,10 @@ static OnDiskDataMap &getOnDiskDataMap() {
 static void cleanupOnDiskMapAtExit() {
   // Use the mutex because there can be an alive thread destroying an ASTUnit.
   llvm::MutexGuard Guard(getOnDiskMutex());
-  OnDiskDataMap &M = getOnDiskDataMap();
-  for (OnDiskDataMap::iterator I = M.begin(), E = M.end(); I != E; ++I) {
+  for (const auto &I : getOnDiskDataMap()) {
     // We don't worry about freeing the memory associated with OnDiskDataMap.
     // All we care about is erasing stale files.
-    I->second->Cleanup();
+    I.second->Cleanup();
   }
 }
 
@@ -151,7 +150,7 @@ static void removeOnDiskEntry(const ASTUnit *AU) {
   OnDiskDataMap::iterator I = M.find(AU);
   if (I != M.end()) {
     I->second->Cleanup();
-    M.erase(AU);
+    M.erase(I);
   }
 }
 
@@ -164,8 +163,8 @@ static const std::string &getPreambleFile(const ASTUnit *AU) {
 }
 
 void OnDiskData::CleanTemporaryFiles() {
-  for (unsigned I = 0, N = TemporaryFiles.size(); I != N; ++I)
-    llvm::sys::fs::remove(TemporaryFiles[I]);
+  for (StringRef File : TemporaryFiles)
+    llvm::sys::fs::remove(File);
   TemporaryFiles.clear();
 }
 
@@ -354,26 +353,24 @@ void ASTUnit::CacheCodeCompletionResults() {
   
   // Translate global code completions into cached completions.
   llvm::DenseMap<CanQualType, unsigned> CompletionTypes;
-  
-  for (unsigned I = 0, N = Results.size(); I != N; ++I) {
-    switch (Results[I].Kind) {
+
+  for (Result &R : Results) {
+    switch (R.Kind) {
     case Result::RK_Declaration: {
       bool IsNestedNameSpecifier = false;
       CachedCodeCompletionResult CachedResult;
-      CachedResult.Completion = Results[I].CreateCodeCompletionString(*TheSema,
-                                                    *CachedCompletionAllocator,
-                                                    CCTUInfo,
-                                          IncludeBriefCommentsInCodeCompletion);
-      CachedResult.ShowInContexts = getDeclShowContexts(Results[I].Declaration,
-                                                        Ctx->getLangOpts(),
-                                                        IsNestedNameSpecifier);
-      CachedResult.Priority = Results[I].Priority;
-      CachedResult.Kind = Results[I].CursorKind;
-      CachedResult.Availability = Results[I].Availability;
+      CachedResult.Completion = R.CreateCodeCompletionString(
+          *TheSema, *CachedCompletionAllocator, CCTUInfo,
+          IncludeBriefCommentsInCodeCompletion);
+      CachedResult.ShowInContexts = getDeclShowContexts(
+          R.Declaration, Ctx->getLangOpts(), IsNestedNameSpecifier);
+      CachedResult.Priority = R.Priority;
+      CachedResult.Kind = R.CursorKind;
+      CachedResult.Availability = R.Availability;
 
       // Keep track of the type of this completion in an ASTContext-agnostic 
       // way.
-      QualType UsageType = getDeclUsageType(*Ctx, Results[I].Declaration);
+      QualType UsageType = getDeclUsageType(*Ctx, R.Declaration);
       if (UsageType.isNull()) {
         CachedResult.TypeClass = STC_Void;
         CachedResult.Type = 0;
@@ -398,8 +395,8 @@ void ASTUnit::CacheCodeCompletionResults() {
       CachedCompletionResults.push_back(CachedResult);
       
       /// Handle nested-name-specifiers in C++.
-      if (TheSema->Context.getLangOpts().CPlusPlus && 
-          IsNestedNameSpecifier && !Results[I].StartsNestedNameSpecifier) {
+      if (TheSema->Context.getLangOpts().CPlusPlus && IsNestedNameSpecifier &&
+          !R.StartsNestedNameSpecifier) {
         // The contexts in which a nested-name-specifier can appear in C++.
         uint64_t NNSContexts
           = (1LL << CodeCompletionContext::CCC_TopLevel)
@@ -415,8 +412,8 @@ void ASTUnit::CacheCodeCompletionResults() {
           | (1LL << CodeCompletionContext::CCC_PotentiallyQualifiedName)
           | (1LL << CodeCompletionContext::CCC_ParenthesizedExpression);
 
-        if (isa<NamespaceDecl>(Results[I].Declaration) ||
-            isa<NamespaceAliasDecl>(Results[I].Declaration))
+        if (isa<NamespaceDecl>(R.Declaration) ||
+            isa<NamespaceAliasDecl>(R.Declaration))
           NNSContexts |= (1LL << CodeCompletionContext::CCC_Namespace);
 
         if (unsigned RemainingContexts 
@@ -424,12 +421,10 @@ void ASTUnit::CacheCodeCompletionResults() {
           // If there any contexts where this completion can be a 
           // nested-name-specifier but isn't already an option, create a 
           // nested-name-specifier completion.
-          Results[I].StartsNestedNameSpecifier = true;
-          CachedResult.Completion 
-            = Results[I].CreateCodeCompletionString(*TheSema,
-                                                    *CachedCompletionAllocator,
-                                                    CCTUInfo,
-                                        IncludeBriefCommentsInCodeCompletion);
+          R.StartsNestedNameSpecifier = true;
+          CachedResult.Completion = R.CreateCodeCompletionString(
+              *TheSema, *CachedCompletionAllocator, CCTUInfo,
+              IncludeBriefCommentsInCodeCompletion);
           CachedResult.ShowInContexts = RemainingContexts;
           CachedResult.Priority = CCP_NestedNameSpecifier;
           CachedResult.TypeClass = STC_Void;
@@ -448,11 +443,9 @@ void ASTUnit::CacheCodeCompletionResults() {
       
     case Result::RK_Macro: {
       CachedCodeCompletionResult CachedResult;
-      CachedResult.Completion 
-        = Results[I].CreateCodeCompletionString(*TheSema,
-                                                *CachedCompletionAllocator,
-                                                CCTUInfo,
-                                          IncludeBriefCommentsInCodeCompletion);
+      CachedResult.Completion = R.CreateCodeCompletionString(
+          *TheSema, *CachedCompletionAllocator, CCTUInfo,
+          IncludeBriefCommentsInCodeCompletion);
       CachedResult.ShowInContexts
         = (1LL << CodeCompletionContext::CCC_TopLevel)
         | (1LL << CodeCompletionContext::CCC_ObjCInterface)
@@ -466,10 +459,10 @@ void ASTUnit::CacheCodeCompletionResults() {
         | (1LL << CodeCompletionContext::CCC_PreprocessorExpression)
         | (1LL << CodeCompletionContext::CCC_ParenthesizedExpression)
         | (1LL << CodeCompletionContext::CCC_OtherWithMacros);
-      
-      CachedResult.Priority = Results[I].Priority;
-      CachedResult.Kind = Results[I].CursorKind;
-      CachedResult.Availability = Results[I].Availability;
+
+      CachedResult.Priority = R.Priority;
+      CachedResult.Kind = R.CursorKind;
+      CachedResult.Availability = R.Availability;
       CachedResult.TypeClass = STC_Void;
       CachedResult.Type = 0;
       CachedCompletionResults.push_back(CachedResult);
@@ -689,8 +682,8 @@ std::unique_ptr<ASTUnit> ASTUnit::LoadFromASTFile(
 
   PreprocessorOptions *PPOpts = new PreprocessorOptions();
 
-  for (unsigned I = 0, N = RemappedFiles.size(); I != N; ++I)
-    PPOpts->addRemappedFile(RemappedFiles[I].first, RemappedFiles[I].second);
+  for (const auto &RemappedFile : RemappedFiles)
+    PPOpts->addRemappedFile(RemappedFile.first, RemappedFile.second);
 
   // Gather Info for preprocessor construction later on.
 
@@ -853,8 +846,8 @@ public:
   }
 
   bool HandleTopLevelDecl(DeclGroupRef D) override {
-    for (DeclGroupRef::iterator it = D.begin(), ie = D.end(); it != ie; ++it)
-      handleTopLevelDecl(*it);
+    for (Decl *TopLevelDecl : D)
+      handleTopLevelDecl(TopLevelDecl);
     return true;
   }
 
@@ -862,8 +855,8 @@ public:
   void HandleInterestingDecl(DeclGroupRef) override {}
 
   void HandleTopLevelDeclInObjCContainer(DeclGroupRef D) override {
-    for (DeclGroupRef::iterator it = D.begin(), ie = D.end(); it != ie; ++it)
-      handleTopLevelDecl(*it);
+    for (Decl *TopLevelDecl : D)
+      handleTopLevelDecl(TopLevelDecl);
   }
 
   ASTMutationListener *GetASTMutationListener() override {
@@ -932,8 +925,7 @@ public:
   }
 
   bool HandleTopLevelDecl(DeclGroupRef D) override {
-    for (DeclGroupRef::iterator it = D.begin(), ie = D.end(); it != ie; ++it) {
-      Decl *D = *it;
+    for (Decl *D : D) {
       // FIXME: Currently ObjC method declarations are incorrectly being
       // reported as top-level declarations, even though their DeclContext
       // is the containing ObjC @interface/@implementation.  This is a
@@ -953,8 +945,7 @@ public:
       // parsing into declaration IDs in the precompiled
       // preamble. This will allow us to deserialize those top-level
       // declarations when requested.
-      for (unsigned I = 0, N = TopLevelDecls.size(); I != N; ++I) {
-        Decl *D = TopLevelDecls[I];
+      for (Decl *D : TopLevelDecls) {
         // Invalid top-level decls may not have been serialized.
         if (D->isInvalidDecl())
           continue;
@@ -1009,10 +1000,10 @@ static void checkAndSanitizeDiags(SmallVectorImpl<StoredDiagnostic> &
   // been careful to make sure that the source manager's state
   // before and after are identical, so that we can reuse the source
   // location itself.
-  for (unsigned I = 0, N = StoredDiagnostics.size(); I < N; ++I) {
-    if (StoredDiagnostics[I].getLocation().isValid()) {
-      FullSourceLoc Loc(StoredDiagnostics[I].getLocation(), SM);
-      StoredDiagnostics[I].setLocation(Loc);
+  for (StoredDiagnostic &SD : StoredDiagnostics) {
+    if (SD.getLocation().isValid()) {
+      FullSourceLoc Loc(SD.getLocation(), SM);
+      SD.setLocation(Loc);
     }
   }
 }
@@ -1300,14 +1291,10 @@ makeStandaloneDiagnostic(const LangOptions &LangOpts,
   if (OutDiag.Filename.empty())
     return OutDiag;
   OutDiag.LocOffset = SM.getFileOffset(FileLoc);
-  for (StoredDiagnostic::range_iterator
-         I = InDiag.range_begin(), E = InDiag.range_end(); I != E; ++I) {
-    OutDiag.Ranges.push_back(makeStandaloneRange(*I, SM, LangOpts));
-  }
-  for (StoredDiagnostic::fixit_iterator I = InDiag.fixit_begin(),
-                                        E = InDiag.fixit_end();
-       I != E; ++I)
-    OutDiag.FixIts.push_back(makeStandaloneFixIt(SM, LangOpts, *I));
+  for (const CharSourceRange &Range : InDiag.getRanges())
+    OutDiag.Ranges.push_back(makeStandaloneRange(Range, SM, LangOpts));
+  for (const FixItHint &FixIt : InDiag.getFixIts())
+    OutDiag.FixIts.push_back(makeStandaloneFixIt(SM, LangOpts, FixIt));
 
   return OutDiag;
 }
@@ -1634,11 +1621,10 @@ void ASTUnit::RealizeTopLevelDeclsFromPreamble() {
   std::vector<Decl *> Resolved;
   Resolved.reserve(TopLevelDeclsInPreamble.size());
   ExternalASTSource &Source = *getASTContext().getExternalSource();
-  for (unsigned I = 0, N = TopLevelDeclsInPreamble.size(); I != N; ++I) {
+  for (serialization::DeclID TopLevelDecl : TopLevelDeclsInPreamble) {
     // Resolve the declaration ID to an actual declaration, possibly
     // deserializing the declaration in the process.
-    Decl *D = Source.GetExternalDecl(TopLevelDeclsInPreamble[I]);
-    if (D)
+    if (Decl *D = Source.GetExternalDecl(TopLevelDecl))
       Resolved.push_back(D);
   }
   TopLevelDeclsInPreamble.clear();
@@ -1943,9 +1929,9 @@ ASTUnit *ASTUnit::LoadFromCommandLine(
   }
 
   // Override any files that need remapping
-  for (unsigned I = 0, N = RemappedFiles.size(); I != N; ++I) {
-    CI->getPreprocessorOpts().addRemappedFile(RemappedFiles[I].first,
-                                              RemappedFiles[I].second);
+  for (const auto &RemappedFile : RemappedFiles) {
+    CI->getPreprocessorOpts().addRemappedFile(RemappedFile.first,
+                                              RemappedFile.second);
   }
   PreprocessorOptions &PPOpts = CI->getPreprocessorOpts();
   PPOpts.RemappedFilesKeepOriginalName = RemappedFilesKeepOriginalName;
@@ -2015,9 +2001,9 @@ bool ASTUnit::Reparse(ArrayRef<RemappedFile> RemappedFiles) {
     delete RB.second;
 
   Invocation->getPreprocessorOpts().clearRemappedFiles();
-  for (unsigned I = 0, N = RemappedFiles.size(); I != N; ++I) {
-    Invocation->getPreprocessorOpts().addRemappedFile(RemappedFiles[I].first,
-                                                      RemappedFiles[I].second);
+  for (const auto &RemappedFile : RemappedFiles) {
+    Invocation->getPreprocessorOpts().addRemappedFile(RemappedFile.first,
+                                                      RemappedFile.second);
   }
 
   // If we have a preamble file lying around, or if we might try to
@@ -2375,10 +2361,9 @@ void ASTUnit::CodeComplete(StringRef File, unsigned Line, unsigned Column,
   // Remap files.
   PreprocessorOpts.clearRemappedFiles();
   PreprocessorOpts.RetainRemappedFileBuffers = true;
-  for (unsigned I = 0, N = RemappedFiles.size(); I != N; ++I) {
-    PreprocessorOpts.addRemappedFile(RemappedFiles[I].first,
-                                     RemappedFiles[I].second);
-    OwnedBuffers.push_back(RemappedFiles[I].second);
+  for (const auto &RemappedFile : RemappedFiles) {
+    PreprocessorOpts.addRemappedFile(RemappedFile.first, RemappedFile.second);
+    OwnedBuffers.push_back(RemappedFile.second);
   }
 
   // Use the code completion consumer we were given, but adding any cached
@@ -2509,9 +2494,8 @@ void ASTUnit::TranslateStoredDiagnostics(
 
   SmallVector<StoredDiagnostic, 4> Result;
   Result.reserve(Diags.size());
-  for (unsigned I = 0, N = Diags.size(); I != N; ++I) {
+  for (const StandaloneDiagnostic &SD : Diags) {
     // Rebuild the StoredDiagnostic.
-    const StandaloneDiagnostic &SD = Diags[I];
     if (SD.Filename.empty())
       continue;
     const FileEntry *FE = FileMgr.getFile(SD.Filename);
@@ -2526,23 +2510,20 @@ void ASTUnit::TranslateStoredDiagnostics(
 
     SmallVector<CharSourceRange, 4> Ranges;
     Ranges.reserve(SD.Ranges.size());
-    for (std::vector<std::pair<unsigned, unsigned> >::const_iterator
-           I = SD.Ranges.begin(), E = SD.Ranges.end(); I != E; ++I) {
-      SourceLocation BL = FileLoc.getLocWithOffset((*I).first);
-      SourceLocation EL = FileLoc.getLocWithOffset((*I).second);
+    for (const auto &Range : SD.Ranges) {
+      SourceLocation BL = FileLoc.getLocWithOffset(Range.first);
+      SourceLocation EL = FileLoc.getLocWithOffset(Range.second);
       Ranges.push_back(CharSourceRange::getCharRange(BL, EL));
     }
 
     SmallVector<FixItHint, 2> FixIts;
     FixIts.reserve(SD.FixIts.size());
-    for (std::vector<StandaloneFixIt>::const_iterator
-           I = SD.FixIts.begin(), E = SD.FixIts.end();
-         I != E; ++I) {
+    for (const StandaloneFixIt &FixIt : SD.FixIts) {
       FixIts.push_back(FixItHint());
       FixItHint &FH = FixIts.back();
-      FH.CodeToInsert = I->CodeToInsert;
-      SourceLocation BL = FileLoc.getLocWithOffset(I->RemoveRange.first);
-      SourceLocation EL = FileLoc.getLocWithOffset(I->RemoveRange.second);
+      FH.CodeToInsert = FixIt.CodeToInsert;
+      SourceLocation BL = FileLoc.getLocWithOffset(FixIt.RemoveRange.first);
+      SourceLocation EL = FileLoc.getLocWithOffset(FixIt.RemoveRange.second);
       FH.RemoveRange = CharSourceRange::getCharRange(BL, EL);
     }
 
@@ -2819,11 +2800,8 @@ void ASTUnit::PreambleData::countLines() const {
   if (empty())
     return;
 
-  for (std::vector<char>::const_iterator
-         I = Buffer.begin(), E = Buffer.end(); I != E; ++I) {
-    if (*I == '\n')
-      ++NumLines;
-  }
+  NumLines = std::count(Buffer.begin(), Buffer.end(), '\n');
+
   if (Buffer.back() != '\n')
     ++NumLines;
 }

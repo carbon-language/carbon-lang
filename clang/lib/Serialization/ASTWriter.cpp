@@ -1062,7 +1062,8 @@ void ASTWriter::WriteBlockInfoBlock() {
 /// to an absolute path and removing nested './'s.
 ///
 /// \return \c true if the path was changed.
-bool cleanPathForOutput(FileManager &FileMgr, SmallVectorImpl<char> &Path) {
+static bool cleanPathForOutput(FileManager &FileMgr,
+                               SmallVectorImpl<char> &Path) {
   bool Changed = false;
 
   if (!llvm::sys::path::is_absolute(StringRef(Path.data(), Path.size()))) {
