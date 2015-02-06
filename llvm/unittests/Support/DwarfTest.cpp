@@ -69,4 +69,14 @@ TEST(DwarfTest, getLanguage) {
   EXPECT_EQ(0u, getLanguage("DW_LANG_hi_user"));
 }
 
+TEST(DwarfTest, AttributeEncodingStringOnInvalid) {
+  // This is invalid, so it shouldn't be stringified.
+  EXPECT_EQ(nullptr, AttributeEncodingString(0));
+
+  // These aren't really tags: they describe ranges within tags.  They
+  // shouldn't be stringified either.
+  EXPECT_EQ(nullptr, AttributeEncodingString(DW_ATE_lo_user));
+  EXPECT_EQ(nullptr, AttributeEncodingString(DW_ATE_hi_user));
+}
+
 } // end namespace

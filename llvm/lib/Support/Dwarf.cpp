@@ -422,8 +422,6 @@ const char *llvm::dwarf::AttributeEncodingString(unsigned Encoding) {
   case DW_ATE_signed_fixed:              return "DW_ATE_signed_fixed";
   case DW_ATE_unsigned_fixed:            return "DW_ATE_unsigned_fixed";
   case DW_ATE_decimal_float:             return "DW_ATE_decimal_float";
-  case DW_ATE_lo_user:                   return "DW_ATE_lo_user";
-  case DW_ATE_hi_user:                   return "DW_ATE_hi_user";
   }
   return nullptr;
 }
