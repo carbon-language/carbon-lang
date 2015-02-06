@@ -94,6 +94,26 @@ inline signed long long getSwappedBytes(signed long long C) {
   return SwapByteOrder_64(C);
 }
 
+inline float getSwappedBytes(float C) {
+  union {
+    uint32_t i;
+    float f;
+  } in, out;
+  in.f = C;
+  out.i = SwapByteOrder_32(in.i);
+  return out.f;
+}
+
+inline float getSwappedBytes(double C) {
+  union {
+    uint64_t i;
+    double d;
+  } in, out;
+  in.d = C;
+  out.i = SwapByteOrder_64(in.i);
+  return out.d;
+}
+
 template<typename T>
 inline void swapByteOrder(T &Value) {
   Value = getSwappedBytes(Value);

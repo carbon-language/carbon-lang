@@ -1,0 +1,48 @@
+# RUN: llvm-mc < %s -triple x86_64-apple-darwin -filetype=obj | llvm-objdump -m -section __TEXT,__literal4 - | FileCheck %s -check-prefix=CHECK-LIT4
+# RUN: llvm-mc < %s -triple x86_64-apple-darwin -filetype=obj | llvm-objdump -m -section __TEXT,__literal8 - | FileCheck %s -check-prefix=CHECK-LIT8
+# RUN: llvm-mc < %s -triple x86_64-apple-darwin -filetype=obj | llvm-objdump -m -section __TEXT,__literal16 - | FileCheck %s -check-prefix=CHECK-LIT16
+
+.literal4
+.float 2.5
+.float 8.25
+.long 0x7f800000
+.long 0xff800000
+.long 0x7fc00000
+.long 0x7f800001
+
+# CHECK-LIT4: Contents of (__TEXT,__literal4) section
+# CHECK-LIT4: 0x0000000000000000  0x40200000
+# CHECK-LIT4: 0x0000000000000004  0x41040000
+# CHECK-LIT4: 0x0000000000000008  0x7f800000
+# CHECK-LIT4: 0x000000000000000c  0xff800000
+# CHECK-LIT4: 0x0000000000000010  0x7fc00000
+# CHECK-LIT4: 0x0000000000000014  0x7f800001
+
+.literal8
+.double 2.5
+.double 8.25
+.long 0
+.long 0x7ff00000
+.long 0
+.long 0xfff00000
+.long 0
+.long 0x7ff80000
+.long 1
+.long 0x7ff00000
+
+# CHECK-LIT8: Contents of (__TEXT,__literal8) section
+# CHECK-LIT8: 0x0000000000000018  0x00000000 0x40040000
+# CHECK-LIT8: 0x0000000000000020  0x00000000 0x40208000
+# CHECK-LIT8: 0x0000000000000028  0x00000000 0x7ff00000
+# CHECK-LIT8: 0x0000000000000030  0x00000000 0xfff00000
+# CHECK-LIT8: 0x0000000000000038  0x00000000 0x7ff80000
+# CHECK-LIT8: 0x0000000000000040  0x00000001 0x7ff00000
+
+.literal16
+.long 1
+.long 2
+.long 3
+.long 4
+
+# CHECK-LIT16: Contents of (__TEXT,__literal16) section
+# CHECK-LIT16: 0x0000000000000050  0x00000001 0x00000002 0x00000003 0x00000004
