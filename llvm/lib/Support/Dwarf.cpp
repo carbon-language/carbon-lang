@@ -406,24 +406,12 @@ const char *llvm::dwarf::OperationEncodingString(unsigned Encoding) {
 
 const char *llvm::dwarf::AttributeEncodingString(unsigned Encoding) {
   switch (Encoding) {
-  case DW_ATE_address:                   return "DW_ATE_address";
-  case DW_ATE_boolean:                   return "DW_ATE_boolean";
-  case DW_ATE_complex_float:             return "DW_ATE_complex_float";
-  case DW_ATE_float:                     return "DW_ATE_float";
-  case DW_ATE_signed:                    return "DW_ATE_signed";
-  case DW_ATE_signed_char:               return "DW_ATE_signed_char";
-  case DW_ATE_unsigned:                  return "DW_ATE_unsigned";
-  case DW_ATE_unsigned_char:             return "DW_ATE_unsigned_char";
-  case DW_ATE_imaginary_float:           return "DW_ATE_imaginary_float";
-  case DW_ATE_UTF:                       return "DW_ATE_UTF";
-  case DW_ATE_packed_decimal:            return "DW_ATE_packed_decimal";
-  case DW_ATE_numeric_string:            return "DW_ATE_numeric_string";
-  case DW_ATE_edited:                    return "DW_ATE_edited";
-  case DW_ATE_signed_fixed:              return "DW_ATE_signed_fixed";
-  case DW_ATE_unsigned_fixed:            return "DW_ATE_unsigned_fixed";
-  case DW_ATE_decimal_float:             return "DW_ATE_decimal_float";
+  default: return nullptr;
+#define HANDLE_DW_ATE(ID, NAME)                                                \
+  case DW_ATE_##NAME:                                                          \
+    return "DW_ATE_" #NAME;
+#include "llvm/Support/Dwarf.def"
   }
-  return nullptr;
 }
 
 const char *llvm::dwarf::DecimalSignString(unsigned Sign) {
