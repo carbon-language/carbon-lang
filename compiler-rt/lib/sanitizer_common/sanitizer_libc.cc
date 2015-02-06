@@ -28,6 +28,15 @@ void *internal_memchr(const void *s, int c, uptr n) {
   return 0;
 }
 
+void *internal_memrchr(const void *s, int c, uptr n) {
+  const char *t = (const char *)s;
+  void *res = nullptr;
+  for (uptr i = 0; i < n; ++i, ++t) {
+    if (*t == c) res = reinterpret_cast<void *>(const_cast<char *>(t));
+  }
+  return res;
+}
+
 int internal_memcmp(const void* s1, const void* s2, uptr n) {
   const char *t1 = (const char *)s1;
   const char *t2 = (const char *)s2;
