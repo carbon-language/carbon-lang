@@ -167,6 +167,7 @@ public:
                         case eLanguageTypeC_plus_plus:
                         case eLanguageTypeC_plus_plus_03:
                         case eLanguageTypeC_plus_plus_11:
+                        case eLanguageTypeC_plus_plus_14:
                             m_language = eLanguageTypeC_plus_plus;
                             break;
                         case eLanguageTypeObjC:

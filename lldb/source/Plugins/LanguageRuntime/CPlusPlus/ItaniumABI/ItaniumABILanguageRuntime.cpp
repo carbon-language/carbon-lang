@@ -291,7 +291,8 @@ ItaniumABILanguageRuntime::CreateInstance (Process *process, lldb::LanguageType 
     // the Itanium ABI.
     if (language == eLanguageTypeC_plus_plus ||
         language == eLanguageTypeC_plus_plus_03 ||
-        language == eLanguageTypeC_plus_plus_11)
+        language == eLanguageTypeC_plus_plus_11 ||
+        language == eLanguageTypeC_plus_plus_14)
         return new ItaniumABILanguageRuntime (process);
     else
         return NULL;

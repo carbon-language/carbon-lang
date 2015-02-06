@@ -337,6 +337,9 @@ struct language_name_pair language_names[] =
     {   "swift",            eLanguageTypeSwift          },
     {   "julia",            eLanguageTypeJulia          },
     {   "dylan",            eLanguageTypeDylan          },
+    {   "c++14",            eLanguageTypeC_plus_plus_14 },
+    {   "fortran03",        eLanguageTypeFortran03      },
+    {   "fortran08",        eLanguageTypeFortran08      },
     // Now synonyms, in arbitrary order
     {   "objc",             eLanguageTypeObjC           },
     {   "objc++",           eLanguageTypeObjC_plus_plus }
