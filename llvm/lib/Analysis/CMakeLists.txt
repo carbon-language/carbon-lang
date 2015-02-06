@@ -38,6 +38,7 @@ add_llvm_library(LLVMAnalysis
   LoopInfo.cpp
   LoopPass.cpp
   MemDepPrinter.cpp
+  MemDerefPrinter.cpp
   MemoryBuiltins.cpp
   MemoryDependenceAnalysis.cpp
   ModuleDebugInfoPrinter.cpp

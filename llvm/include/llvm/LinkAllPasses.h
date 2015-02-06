@@ -168,6 +168,7 @@ namespace {
       (void) llvm::createSeparateConstOffsetFromGEPPass();
       (void) llvm::createRewriteSymbolsPass();
       (void) llvm::createStraightLineStrengthReducePass();
+      (void) llvm::createMemDerefPrinter();
 
       (void)new llvm::IntervalPartition();
       (void)new llvm::ScalarEvolution();

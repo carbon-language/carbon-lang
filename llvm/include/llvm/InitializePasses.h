@@ -199,6 +199,7 @@ void initializeMachineTraceMetricsPass(PassRegistry&);
 void initializeMachineVerifierPassPass(PassRegistry&);
 void initializeMemCpyOptPass(PassRegistry&);
 void initializeMemDepPrinterPass(PassRegistry&);
+void initializeMemDerefPrinterPass(PassRegistry&);
 void initializeMemoryDependenceAnalysisPass(PassRegistry&);
 void initializeMergedLoadStoreMotionPass(PassRegistry &);
 void initializeMetaRenamerPass(PassRegistry&);
