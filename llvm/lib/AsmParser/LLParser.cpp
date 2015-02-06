@@ -2952,7 +2952,7 @@ struct ColumnField : public MDUnsignedField {
   ColumnField() : MDUnsignedField(0, UINT16_MAX) {}
 };
 struct DwarfTagField : public MDUnsignedField {
-  DwarfTagField() : MDUnsignedField(0, ~0u >> 16) {}
+  DwarfTagField() : MDUnsignedField(0, dwarf::DW_TAG_hi_user) {}
 };
 struct MDField : public MDFieldImpl<Metadata *> {
   MDField() : ImplTy(nullptr) {}
