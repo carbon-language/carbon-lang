@@ -204,3 +204,9 @@
 // RUN: FileCheck -check-prefix=LINK_IOS_SIMULATOR_VERSION_MIN %s < %t.log
 // LINK_IPHONEOS_VERSION_MIN: -iphoneos_version_min
 // LINK_IOS_SIMULATOR_VERSION_MIN: -ios_simulator_version_min
+
+// Check -iframework gets forward to ld as -F
+// RUN: %clang -target x86_64-apple-darwin %s -iframework Bar -framework Foo -### 2>&1 | \
+// RUN:   FileCheck --check-prefix=LINK-IFRAMEWORK %s
+// LINK-IFRAMEWORK: {{ld(.exe)?"}}
+// LINK-IFRAMEWORK: "-FBar"

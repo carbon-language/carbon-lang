@@ -6106,6 +6106,12 @@ void darwin::Link::ConstructJob(Compilation &C, const JobAction &JA,
   Args.AddAllArgs(CmdArgs, options::OPT_T_Group);
   Args.AddAllArgs(CmdArgs, options::OPT_F);
 
+  // -iframework should be forwarded as -F.
+  for (auto it = Args.filtered_begin(options::OPT_iframework),
+         ie = Args.filtered_end(); it != ie; ++it)
+    CmdArgs.push_back(Args.MakeArgString(std::string("-F") +
+                                         (*it)->getValue()));
+
   const char *Exec =
     Args.MakeArgString(getToolChain().GetLinkerPath());
   std::unique_ptr<Command> Cmd =
