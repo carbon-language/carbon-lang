@@ -1,4 +1,4 @@
-##===- lib/DebugInfo/Makefile ------------------------------*- Makefile -*-===##
+##===- lib/DebugInfo/PDB/Makefile --------------------------*- Makefile -*-===##
 #
 #                     The LLVM Compiler Infrastructure
 #
@@ -6,10 +6,9 @@
 # License. See LICENSE.TXT for details.
 #
 ##===----------------------------------------------------------------------===##
-LEVEL = ../..
 
-include $(LEVEL)/Makefile.config
-
-PARALLEL_DIRS := DWARF PDB
+LEVEL = ../../..
+LIBRARYNAME = LLVMDebugInfoPDB
+BUILD_ARCHIVE := 1
 
 include $(LEVEL)/Makefile.common
