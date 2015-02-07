@@ -145,7 +145,7 @@ DICompileUnit DIBuilder::createCompileUnit(unsigned Lang, StringRef Filename,
                                            DebugEmissionKind Kind,
                                            bool EmitDebugInfo) {
 
-  assert(((Lang <= dwarf::DW_LANG_OCaml && Lang >= dwarf::DW_LANG_C89) ||
+  assert(((Lang <= dwarf::DW_LANG_Fortran08 && Lang >= dwarf::DW_LANG_C89) ||
           (Lang <= dwarf::DW_LANG_hi_user && Lang >= dwarf::DW_LANG_lo_user)) &&
          "Invalid Language tag");
   assert(!Filename.empty() &&

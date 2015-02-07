@@ -130,6 +130,30 @@ int64_t DwarfUnit::getDefaultLowerBound() const {
     if (dwarf::DWARF_VERSION >= 4)
       return 1;
     break;
+
+  // The languages below have valid values only if the DWARF version >= 5.
+  case dwarf::DW_LANG_OpenCL:
+  case dwarf::DW_LANG_Go:
+  case dwarf::DW_LANG_Haskell:
+  case dwarf::DW_LANG_C_plus_plus_03:
+  case dwarf::DW_LANG_C_plus_plus_11:
+  case dwarf::DW_LANG_OCaml:
+  case dwarf::DW_LANG_Rust:
+  case dwarf::DW_LANG_C11:
+  case dwarf::DW_LANG_Swift:
+  case dwarf::DW_LANG_Dylan:
+  case dwarf::DW_LANG_C_plus_plus_14:
+    if (dwarf::DWARF_VERSION >= 5)
+      return 0;
+    break;
+
+  case dwarf::DW_LANG_Modula3:
+  case dwarf::DW_LANG_Julia:
+  case dwarf::DW_LANG_Fortran03:
+  case dwarf::DW_LANG_Fortran08:
+    if (dwarf::DWARF_VERSION >= 5)
+      return 1;
+    break;
   }
 
   return -1;
