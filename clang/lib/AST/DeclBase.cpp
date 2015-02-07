@@ -846,6 +846,10 @@ bool DeclContext::isDependentContext() const {
       return getLexicalParent()->isDependentContext();
   }
 
+  // FIXME: A variable template is a dependent context, but is not a
+  // DeclContext. A context within it (such as a lambda-expression)
+  // should be considered dependent.
+
   return getParent() && getParent()->isDependentContext();
 }
 

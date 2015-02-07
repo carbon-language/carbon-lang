@@ -478,8 +478,7 @@ void ASTDeclReader::VisitTranslationUnitDecl(TranslationUnitDecl *TU) {
 void ASTDeclReader::VisitNamedDecl(NamedDecl *ND) {
   VisitDecl(ND);
   ND->setDeclName(Reader.ReadDeclarationName(F, Record, Idx));
-  if (needsAnonymousDeclarationNumber(ND))
-    AnonymousDeclNumber = Record[Idx++];
+  AnonymousDeclNumber = Record[Idx++];
 }
 
 void ASTDeclReader::VisitTypeDecl(TypeDecl *TD) {
@@ -2631,8 +2630,7 @@ ASTDeclReader::FindExistingResult::~FindExistingResult() {
 
   DeclarationName Name = New->getDeclName();
   DeclContext *DC = New->getDeclContext()->getRedeclContext();
-  if (!Name) {
-    assert(needsAnonymousDeclarationNumber(New));
+  if (needsAnonymousDeclarationNumber(New)) {
     setAnonymousDeclForMerging(Reader, New->getLexicalDeclContext(),
                                AnonymousDeclNumber, New);
   } else if (DC->isTranslationUnit() && Reader.SemaObj) {
@@ -2681,17 +2679,12 @@ NamedDecl *ASTDeclReader::getAnonymousDeclForMerging(ASTReader &Reader,
   // If this is the first time, but we have parsed a declaration of the context,
   // build the anonymous declaration list from the parsed declaration.
   if (!cast<Decl>(DC)->isFromASTFile()) {
-    unsigned Index = 0;
-    for (Decl *LexicalD : DC->decls()) {
-      auto *ND = dyn_cast<NamedDecl>(LexicalD);
-      if (!ND || !needsAnonymousDeclarationNumber(ND))
-        continue;
-      if (Previous.size() == Index)
+    numberAnonymousDeclsWithin(DC, [&](NamedDecl *ND, unsigned Number) {
+      if (Previous.size() == Number)
         Previous.push_back(cast<NamedDecl>(ND->getCanonicalDecl()));
       else
-        Previous[Index] = cast<NamedDecl>(ND->getCanonicalDecl());
-      ++Index;
-    }
+        Previous[Number] = cast<NamedDecl>(ND->getCanonicalDecl());
+    });
   }
 
   return Index < Previous.size() ? Previous[Index] : nullptr;
@@ -2740,10 +2733,9 @@ ASTDeclReader::FindExistingResult ASTDeclReader::findExisting(NamedDecl *D) {
     // was not imported.
   }
 
-  if (!Name) {
+  if (needsAnonymousDeclarationNumber(D)) {
     // This is an anonymous declaration that we may need to merge. Look it up
     // in its context by number.
-    assert(needsAnonymousDeclarationNumber(D));
     if (auto *Existing = getAnonymousDeclForMerging(
             Reader, D->getLexicalDeclContext(), AnonymousDeclNumber))
       if (isSameEntity(Existing, D))

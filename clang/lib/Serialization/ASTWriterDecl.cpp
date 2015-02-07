@@ -203,8 +203,9 @@ void ASTDeclWriter::VisitTranslationUnitDecl(TranslationUnitDecl *D) {
 void ASTDeclWriter::VisitNamedDecl(NamedDecl *D) {
   VisitDecl(D);
   Writer.AddDeclarationName(D->getDeclName(), Record);
-  if (needsAnonymousDeclarationNumber(D))
-    Record.push_back(Writer.getAnonymousDeclarationNumber(D));
+  Record.push_back(needsAnonymousDeclarationNumber(D)
+                       ? Writer.getAnonymousDeclarationNumber(D)
+                       : 0);
 }
 
 void ASTDeclWriter::VisitTypeDecl(TypeDecl *D) {
@@ -1521,6 +1522,7 @@ void ASTWriter::WriteDeclAbbrevs() {
   // NamedDecl
   Abv->Add(BitCodeAbbrevOp(0));                       // NameKind = Identifier
   Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 6)); // Name
+  Abv->Add(BitCodeAbbrevOp(0));                       // AnonDeclNumber
   // ValueDecl
   Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 6)); // Type
   // DeclaratorDecl
@@ -1553,6 +1555,7 @@ void ASTWriter::WriteDeclAbbrevs() {
   // NamedDecl
   Abv->Add(BitCodeAbbrevOp(0));                       // NameKind = Identifier
   Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 6)); // Name
+  Abv->Add(BitCodeAbbrevOp(0));                       // AnonDeclNumber
   // ValueDecl
   Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 6)); // Type
   // DeclaratorDecl
@@ -1590,6 +1593,7 @@ void ASTWriter::WriteDeclAbbrevs() {
   // NamedDecl
   Abv->Add(BitCodeAbbrevOp(0));                       // NameKind = Identifier
   Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 6)); // Name
+  Abv->Add(BitCodeAbbrevOp(0));                       // AnonDeclNumber
   // TypeDecl
   Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 6)); // Source Location
   Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 6)); // Type Ref
@@ -1637,6 +1641,7 @@ void ASTWriter::WriteDeclAbbrevs() {
   // NamedDecl
   Abv->Add(BitCodeAbbrevOp(0));                       // NameKind = Identifier
   Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 6)); // Name
+  Abv->Add(BitCodeAbbrevOp(0));                       // AnonDeclNumber
   // TypeDecl
   Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 6)); // Source Location
   Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 6)); // Type Ref
@@ -1679,6 +1684,7 @@ void ASTWriter::WriteDeclAbbrevs() {
   // NamedDecl
   Abv->Add(BitCodeAbbrevOp(0));                       // NameKind = Identifier
   Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 6)); // Name
+  Abv->Add(BitCodeAbbrevOp(0));                       // AnonDeclNumber
   // ValueDecl
   Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 6)); // Type
   // DeclaratorDecl
@@ -1732,6 +1738,7 @@ void ASTWriter::WriteDeclAbbrevs() {
   // NamedDecl
   Abv->Add(BitCodeAbbrevOp(0));                       // NameKind = Identifier
   Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 6)); // Name
+  Abv->Add(BitCodeAbbrevOp(0));                       // AnonDeclNumber
   // TypeDecl
   Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 6)); // Source Location
   Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 6)); // Type Ref
@@ -1760,6 +1767,7 @@ void ASTWriter::WriteDeclAbbrevs() {
   // NamedDecl
   Abv->Add(BitCodeAbbrevOp(0));                       // NameKind = Identifier
   Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 6)); // Name
+  Abv->Add(BitCodeAbbrevOp(0));                       // AnonDeclNumber
   // ValueDecl
   Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 6)); // Type
   // DeclaratorDecl
@@ -1805,6 +1813,7 @@ void ASTWriter::WriteDeclAbbrevs() {
   // NamedDecl
   Abv->Add(BitCodeAbbrevOp(DeclarationName::Identifier)); // NameKind
   Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 6));   // Identifier
+  Abv->Add(BitCodeAbbrevOp(0));                         // AnonDeclNumber
   // ValueDecl
   Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 6));   // Type
   // DeclaratorDecl
