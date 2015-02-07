@@ -8,10 +8,3 @@ __m64 test1(__m64 a, __m64 b, int c) {
    // be removed when that is fixed.
    return _mm_alignr_pi8(a, b, c); // expected-error {{argument to '__builtin_ia32_palignr' must be a constant integer}} expected-error {{incompatible result type}}
 }
-
-int test2(int N) {
- __m128i white2;
- white2 = __builtin_ia32_pslldqi128(white2, N); // expected-error {{argument to '__builtin_ia32_pslldqi128' must be a constant integer}}
- return 0;
-} 
-

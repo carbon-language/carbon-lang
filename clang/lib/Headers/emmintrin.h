@@ -825,11 +825,30 @@ _mm_xor_si128(__m128i __a, __m128i __b)
   return __a ^ __b;
 }
 
-#define _mm_slli_si128(a, count) __extension__ ({ \
-  _Pragma("clang diagnostic push") _Pragma("clang diagnostic ignored \"-Wshadow\""); \
-  __m128i __a = (a); \
-   _Pragma("clang diagnostic pop"); \
-  (__m128i)__builtin_ia32_pslldqi128(__a, (count)*8); })
+#define _mm_slli_si128(a, imm) __extension__({                                 \
+    _Pragma("clang diagnostic push")                                           \
+        _Pragma("clang diagnostic ignored \"-Wshadow\"");                      \
+    __m128i __a = (a);                                                         \
+    _Pragma("clang diagnostic pop");                                           \
+    (__m128i)                                                                  \
+        __builtin_shufflevector((__v16qi)_mm_setzero_si128(), (__v16qi)__a,    \
+                                ((imm)&0xF0) ? 0 : 16 - ((imm)&0xF),           \
+                                ((imm)&0xF0) ? 0 : 17 - ((imm)&0xF),           \
+                                ((imm)&0xF0) ? 0 : 18 - ((imm)&0xF),           \
+                                ((imm)&0xF0) ? 0 : 19 - ((imm)&0xF),           \
+                                ((imm)&0xF0) ? 0 : 20 - ((imm)&0xF),           \
+                                ((imm)&0xF0) ? 0 : 21 - ((imm)&0xF),           \
+                                ((imm)&0xF0) ? 0 : 22 - ((imm)&0xF),           \
+                                ((imm)&0xF0) ? 0 : 23 - ((imm)&0xF),           \
+                                ((imm)&0xF0) ? 0 : 24 - ((imm)&0xF),           \
+                                ((imm)&0xF0) ? 0 : 25 - ((imm)&0xF),           \
+                                ((imm)&0xF0) ? 0 : 26 - ((imm)&0xF),           \
+                                ((imm)&0xF0) ? 0 : 27 - ((imm)&0xF),           \
+                                ((imm)&0xF0) ? 0 : 28 - ((imm)&0xF),           \
+                                ((imm)&0xF0) ? 0 : 29 - ((imm)&0xF),           \
+                                ((imm)&0xF0) ? 0 : 30 - ((imm)&0xF),           \
+                                ((imm)&0xF0) ? 0 : 31 - ((imm)&0xF));          \
+  })
 
 static __inline__ __m128i __attribute__((__always_inline__, __nodebug__))
 _mm_slli_epi16(__m128i __a, int __count)
@@ -891,12 +910,30 @@ _mm_sra_epi32(__m128i __a, __m128i __count)
   return (__m128i)__builtin_ia32_psrad128((__v4si)__a, (__v4si)__count);
 }
 
-
-#define _mm_srli_si128(a, count) __extension__ ({ \
-  _Pragma("clang diagnostic push") _Pragma("clang diagnostic ignored \"-Wshadow\""); \
-  __m128i __a = (a); \
-  _Pragma("clang diagnostic pop"); \
-  (__m128i)__builtin_ia32_psrldqi128(__a, (count)*8); })
+#define _mm_srli_si128(a, imm) __extension__({                                 \
+    _Pragma("clang diagnostic push")                                           \
+        _Pragma("clang diagnostic ignored \"-Wshadow\"");                      \
+    __m128i __a = (a);                                                         \
+    _Pragma("clang diagnostic pop");                                           \
+    (__m128i)                                                                  \
+        __builtin_shufflevector((__v16qi)__a, (__v16qi)_mm_setzero_si128(),    \
+                                ((imm)&0xF0) ? 16 : ((imm)&0xF) + 0,           \
+                                ((imm)&0xF0) ? 16 : ((imm)&0xF) + 1,           \
+                                ((imm)&0xF0) ? 16 : ((imm)&0xF) + 2,           \
+                                ((imm)&0xF0) ? 16 : ((imm)&0xF) + 3,           \
+                                ((imm)&0xF0) ? 16 : ((imm)&0xF) + 4,           \
+                                ((imm)&0xF0) ? 16 : ((imm)&0xF) + 5,           \
+                                ((imm)&0xF0) ? 16 : ((imm)&0xF) + 6,           \
+                                ((imm)&0xF0) ? 16 : ((imm)&0xF) + 7,           \
+                                ((imm)&0xF0) ? 16 : ((imm)&0xF) + 8,           \
+                                ((imm)&0xF0) ? 16 : ((imm)&0xF) + 9,           \
+                                ((imm)&0xF0) ? 16 : ((imm)&0xF) + 10,          \
+                                ((imm)&0xF0) ? 16 : ((imm)&0xF) + 11,          \
+                                ((imm)&0xF0) ? 16 : ((imm)&0xF) + 12,          \
+                                ((imm)&0xF0) ? 16 : ((imm)&0xF) + 13,          \
+                                ((imm)&0xF0) ? 16 : ((imm)&0xF) + 14,          \
+                                ((imm)&0xF0) ? 16 : ((imm)&0xF) + 15);         \
+  })
 
 static __inline__ __m128i __attribute__((__always_inline__, __nodebug__))
 _mm_srli_epi16(__m128i __a, int __count)
