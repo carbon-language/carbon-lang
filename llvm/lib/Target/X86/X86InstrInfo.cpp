@@ -638,6 +638,7 @@ X86InstrInfo::X86InstrInfo(X86Subtarget &STI)
     { X86::VMOVUPSYrr,      X86::VMOVUPSYrm,          0 },
     { X86::VPERMILPDYri,    X86::VPERMILPDYmi,        0 },
     { X86::VPERMILPSYri,    X86::VPERMILPSYmi,        0 },
+    { X86::VPTESTYrr,       X86::VPTESTYrm,           0 },
     { X86::VRCPPSYr,        X86::VRCPPSYm,            0 },
     { X86::VRCPPSYr_Int,    X86::VRCPPSYm_Int,        0 },
     { X86::VROUNDYPDr,      X86::VROUNDYPDm,          0 },
