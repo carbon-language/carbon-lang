@@ -51,6 +51,6 @@ public:
   }
 };
 
-}; // namespace llvm
+} // namespace llvm
 
 #endif // LLVM_DEBUGINFO_PDB_PDBSYMBOLDATA_H

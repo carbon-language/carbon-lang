@@ -7,6 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include <type_traits>
 #include <unordered_map>
 
 #include "llvm/DebugInfo/PDB/IPDBEnumChildren.h"
@@ -60,7 +61,7 @@ namespace std {
 namespace {
 
 #define MOCK_SYMBOL_ACCESSOR(Func)                                             \
-  auto Func() const->decltype(((IPDBRawSymbol *)nullptr)->Func()) override {   \
+  decltype(std::declval<IPDBRawSymbol>().Func()) Func() const override {       \
     typedef decltype(IPDBRawSymbol::Func()) ReturnType;                        \
     return ReturnType();                                                       \
   }
