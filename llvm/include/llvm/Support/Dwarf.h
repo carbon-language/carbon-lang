@@ -38,7 +38,8 @@ namespace dwarf {
 
 enum LLVMConstants : uint32_t {
   // LLVM mock tags (see also llvm/Support/Dwarf.def).
-  DW_TAG_invalid = ~0U,    // Tag for invalid results.
+  DW_TAG_invalid = ~0U,        // Tag for invalid results.
+  DW_VIRTUALITY_invalid = ~0U, // Virtuality for invalid results.
 
   // Other constants.
   DWARF_VERSION = 4,       // Default dwarf version we output.
@@ -742,11 +743,14 @@ const char *GDBIndexEntryLinkageString(GDBIndexEntryLinkage Linkage);
 /// \defgroup DwarfConstantsParsing Dwarf constants parsing functions
 ///
 /// These functions map their strings back to the corresponding enumeration
-/// value or return 0 if there is none.  As an exception, \a getTag() returns
-/// \a DW_TAG_invalid on invalid input.
+/// value or return 0 if there is none, except for these exceptions:
+///
+/// \li \a getTag() returns \a DW_TAG_invalid on invalid input.
+/// \li \a getVirtuality() returns \a DW_VIRTUALITY_invalid on invalid input.
 ///
 /// @{
 unsigned getTag(StringRef TagString);
+unsigned getVirtuality(StringRef VirtualityString);
 unsigned getLanguage(StringRef LanguageString);
 unsigned getAttributeEncoding(StringRef EncodingString);
 /// @}

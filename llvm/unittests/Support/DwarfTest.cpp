@@ -109,4 +109,16 @@ TEST(DwarfTest, VirtualityString) {
   EXPECT_EQ(nullptr, VirtualityString(DW_VIRTUALITY_max + 77));
 }
 
+TEST(DwarfTest, getVirtuality) {
+  EXPECT_EQ(DW_VIRTUALITY_none, getVirtuality("DW_VIRTUALITY_none"));
+  EXPECT_EQ(DW_VIRTUALITY_virtual, getVirtuality("DW_VIRTUALITY_virtual"));
+  EXPECT_EQ(DW_VIRTUALITY_pure_virtual,
+            getVirtuality("DW_VIRTUALITY_pure_virtual"));
+
+  // Invalid strings.
+  EXPECT_EQ(DW_VIRTUALITY_invalid, getVirtuality("DW_VIRTUALITY_invalid"));
+  EXPECT_EQ(DW_VIRTUALITY_invalid, getVirtuality("DW_VIRTUALITY_max"));
+  EXPECT_EQ(DW_VIRTUALITY_invalid, getVirtuality("something else"));
+}
+
 } // end namespace

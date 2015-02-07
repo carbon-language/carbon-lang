@@ -473,6 +473,14 @@ const char *llvm::dwarf::VirtualityString(unsigned Virtuality) {
   }
 }
 
+unsigned llvm::dwarf::getVirtuality(StringRef VirtualityString) {
+  return StringSwitch<unsigned>(VirtualityString)
+#define HANDLE_DW_VIRTUALITY(ID, NAME)                                         \
+  .Case("DW_VIRTUALITY_" #NAME, DW_VIRTUALITY_##NAME)
+#include "llvm/Support/Dwarf.def"
+      .Default(DW_VIRTUALITY_invalid);
+}
+
 const char *llvm::dwarf::LanguageString(unsigned Language) {
   switch (Language) {
   default:
