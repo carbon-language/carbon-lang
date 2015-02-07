@@ -284,3 +284,18 @@ define void @test10(i8* nocapture %P) nounwind {
 ; CHECK-NOT: memset
 ; CHECK: ret void
 }
+
+; Memset followed by odd store.
+define void @test11(i32* nocapture %P) nounwind ssp {
+entry:
+  %add.ptr = getelementptr inbounds i32* %P, i64 3
+  %0 = bitcast i32* %add.ptr to i8*
+  tail call void @llvm.memset.p0i8.i64(i8* %0, i8 1, i64 11, i32 1, i1 false)
+  %arrayidx = getelementptr inbounds i32* %P, i64 0
+  %arrayidx.cast = bitcast i32* %arrayidx to i96*
+  store i96 310698676526526814092329217, i96* %arrayidx.cast, align 4
+  ret void
+; CHECK-LABEL: @test11(
+; CHECK-NOT: store
+; CHECK: call void @llvm.memset.p0i8.i64(i8* %1, i8 1, i64 23, i32 4, i1 false)
+}

@@ -2121,26 +2121,16 @@ Value *llvm::isBytewiseValue(Value *V) {
     // Don't handle long double formats, which have strange constraints.
   }
 
-  // We can handle constant integers that are power of two in size and a
-  // multiple of 8 bits.
+  // We can handle constant integers that are multiple of 8 bits.
   if (ConstantInt *CI = dyn_cast<ConstantInt>(V)) {
-    unsigned Width = CI->getBitWidth();
-    if (isPowerOf2_32(Width) && Width > 8) {
-      // We can handle this value if the recursive binary decomposition is the
-      // same at all levels.
-      APInt Val = CI->getValue();
-      APInt Val2;
-      while (Val.getBitWidth() != 8) {
-        unsigned NextWidth = Val.getBitWidth()/2;
-        Val2  = Val.lshr(NextWidth);
-        Val2 = Val2.trunc(Val.getBitWidth()/2);
-        Val = Val.trunc(Val.getBitWidth()/2);
+    if (CI->getBitWidth() % 8 == 0) {
+      assert(CI->getBitWidth() > 8 && "8 bits should be handled above!");
 
-        // If the top/bottom halves aren't the same, reject it.
-        if (Val != Val2)
-          return nullptr;
-      }
-      return ConstantInt::get(V->getContext(), Val);
+      // We can check that all bytes of an integer are equal by making use of a
+      // little trick: rotate by 8 and check if it's still the same value.
+      if (CI->getValue() != CI->getValue().rotl(8))
+        return nullptr;
+      return ConstantInt::get(V->getContext(), CI->getValue().trunc(8));
     }
   }
 
