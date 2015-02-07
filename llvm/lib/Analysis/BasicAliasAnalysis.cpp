@@ -890,6 +890,99 @@ BasicAliasAnalysis::getModRefInfo(ImmutableCallSite CS1,
   return AliasAnalysis::getModRefInfo(CS1, CS2);
 }
 
+/// \brief Provide ad-hoc rules to disambiguate accesses through two GEP
+/// operators, both having the exact same pointer operand.
+static AliasAnalysis::AliasResult
+aliasSameBasePointerGEPs(const GEPOperator *GEP1, uint64_t V1Size,
+                         const GEPOperator *GEP2, uint64_t V2Size,
+                         const DataLayout &DL) {
+
+  assert(GEP1->getPointerOperand() == GEP2->getPointerOperand() &&
+         "Expected GEPs with the same pointer operand");
+
+  // Try to determine whether GEP1 and GEP2 index through arrays, into structs,
+  // such that the struct field accesses provably cannot alias.
+  // We also need at least two indices (the pointer, and the struct field).
+  if (GEP1->getNumIndices() != GEP2->getNumIndices() ||
+      GEP1->getNumIndices() < 2)
+    return AliasAnalysis::MayAlias;
+
+  // If we don't know the size of the accesses through both GEPs, we can't
+  // determine whether the struct fields accessed can't alias.
+  if (V1Size == AliasAnalysis::UnknownSize ||
+      V2Size == AliasAnalysis::UnknownSize)
+    return AliasAnalysis::MayAlias;
+
+  ConstantInt *C1 =
+      dyn_cast<ConstantInt>(GEP1->getOperand(GEP1->getNumOperands() - 1));
+  ConstantInt *C2 =
+      dyn_cast<ConstantInt>(GEP2->getOperand(GEP2->getNumOperands() - 1));
+
+  // If the last (struct) indices aren't constants, we can't say anything.
+  // If they're identical, the other indices might be also be dynamically
+  // equal, so the GEPs can alias.
+  if (!C1 || !C2 || C1 == C2)
+    return AliasAnalysis::MayAlias;
+
+  // Find the last-indexed type of the GEP, i.e., the type you'd get if
+  // you stripped the last index.
+  // On the way, look at each indexed type.  If there's something other
+  // than an array, different indices can lead to different final types.
+  SmallVector<Value *, 8> IntermediateIndices;
+
+  // Insert the first index; we don't need to check the type indexed
+  // through it as it only drops the pointer indirection.
+  assert(GEP1->getNumIndices() > 1 && "Not enough GEP indices to examine");
+  IntermediateIndices.push_back(GEP1->getOperand(1));
+
+  // Insert all the remaining indices but the last one.
+  // Also, check that they all index through arrays.
+  for (unsigned i = 1, e = GEP1->getNumIndices() - 1; i != e; ++i) {
+    if (!isa<ArrayType>(GetElementPtrInst::getIndexedType(
+            GEP1->getPointerOperandType(), IntermediateIndices)))
+      return AliasAnalysis::MayAlias;
+    IntermediateIndices.push_back(GEP1->getOperand(i + 1));
+  }
+
+  StructType *LastIndexedStruct =
+      dyn_cast<StructType>(GetElementPtrInst::getIndexedType(
+          GEP1->getPointerOperandType(), IntermediateIndices));
+
+  if (!LastIndexedStruct)
+    return AliasAnalysis::MayAlias;
+
+  // We know that:
+  // - both GEPs begin indexing from the exact same pointer;
+  // - the last indices in both GEPs are constants, indexing into a struct;
+  // - said indices are different, hence, the pointed-to fields are different;
+  // - both GEPs only index through arrays prior to that.
+  //
+  // This lets us determine that the struct that GEP1 indexes into and the
+  // struct that GEP2 indexes into must either precisely overlap or be
+  // completely disjoint.  Because they cannot partially overlap, indexing into
+  // different non-overlapping fields of the struct will never alias.
+
+  // Therefore, the only remaining thing needed to show that both GEPs can't
+  // alias is that the fields are not overlapping.
+  const StructLayout *SL = DL.getStructLayout(LastIndexedStruct);
+  const uint64_t StructSize = SL->getSizeInBytes();
+  const uint64_t V1Off = SL->getElementOffset(C1->getZExtValue());
+  const uint64_t V2Off = SL->getElementOffset(C2->getZExtValue());
+
+  auto EltsDontOverlap = [StructSize](uint64_t V1Off, uint64_t V1Size,
+                                      uint64_t V2Off, uint64_t V2Size) {
+    return V1Off < V2Off && V1Off + V1Size <= V2Off &&
+           ((V2Off + V2Size <= StructSize) ||
+            (V2Off + V2Size - StructSize <= V1Off));
+  };
+
+  if (EltsDontOverlap(V1Off, V1Size, V2Off, V2Size) ||
+      EltsDontOverlap(V2Off, V2Size, V1Off, V1Size))
+    return AliasAnalysis::NoAlias;
+
+  return AliasAnalysis::MayAlias;
+}
+
 /// aliasGEP - Provide a bunch of ad-hoc rules to disambiguate a GEP instruction
 /// against another pointer.  We know that V1 is a GEP, but we don't know
 /// anything about V2.  UnderlyingV1 is GetUnderlyingObject(GEP1, DL),
@@ -997,6 +1090,17 @@ BasicAliasAnalysis::aliasGEP(const GEPOperator *GEP1, uint64_t V1Size,
              "DecomposeGEPExpression and GetUnderlyingObject disagree!");
       return MayAlias;
     }
+
+    // If we know the two GEPs are based off of the exact same pointer (and not
+    // just the same underlying object), see if that tells us anything about
+    // the resulting pointers.
+    if (DL && GEP1->getPointerOperand() == GEP2->getPointerOperand()) {
+      AliasResult R = aliasSameBasePointerGEPs(GEP1, V1Size, GEP2, V2Size, *DL);
+      // If we couldn't find anything interesting, don't abandon just yet.
+      if (R != MayAlias)
+        return R;
+    }
+
     // If the max search depth is reached the result is undefined
     if (GEP2MaxLookupReached || GEP1MaxLookupReached)
       return MayAlias;
