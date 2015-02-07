@@ -896,6 +896,14 @@ TEST(SmallVectorTest, EmplaceBack) {
     EXPECT_TRUE(V.back().A2.State == EAS_RValue);
     EXPECT_TRUE(V.back().A3.State == EAS_LValue);
   }
+  {
+    SmallVector<int, 1> V;
+    V.emplace_back();
+    V.emplace_back(42);
+    EXPECT_EQ(2U, V.size());
+    EXPECT_EQ(0, V[0]);
+    EXPECT_EQ(42, V[1]);
+  }
 }
 
 } // end namespace
