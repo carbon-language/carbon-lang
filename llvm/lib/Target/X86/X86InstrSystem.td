@@ -438,7 +438,9 @@ def LLDT16m : I<0x00, MRM2m, (outs), (ins i16mem:$src),
 //===----------------------------------------------------------------------===//
 // Specialized register support
 let SchedRW = [WriteSystem] in {
+let Uses = [EAX, ECX, EDX] in
 def WRMSR : I<0x30, RawFrm, (outs), (ins), "wrmsr", [], IIC_WRMSR>, TB;
+let Defs = [EAX, EDX], Uses = [ECX] in
 def RDMSR : I<0x32, RawFrm, (outs), (ins), "rdmsr", [], IIC_RDMSR>, TB;
 
 let Defs = [RAX, RDX], Uses = [ECX] in
