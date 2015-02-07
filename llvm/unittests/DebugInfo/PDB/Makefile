@@ -1,4 +1,4 @@
-##===- unittests/DebugInfo/Makefile ------------------------*- Makefile -*-===##
+##===- unittests/DebugInfo/PDB/Makefile -------------------*- Makefile -*-===##
 #
 #                     The LLVM Compiler Infrastructure
 #
@@ -6,10 +6,11 @@
 # License. See LICENSE.TXT for details.
 #
 ##===----------------------------------------------------------------------===##
-LEVEL = ../..
+
+LEVEL = ../../..
+TESTNAME = DebugInfoPDB
+LINK_COMPONENTS := DebugInfoPDB support
 
 include $(LEVEL)/Makefile.config
-
-PARALLEL_DIRS := DWARF PDB
 
 include $(LLVM_SRC_ROOT)/unittests/Makefile.unittest

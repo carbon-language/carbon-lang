@@ -6,10 +6,11 @@
 # License. See LICENSE.TXT for details.
 #
 ##===----------------------------------------------------------------------===##
-LEVEL = ../..
+
+LEVEL = ../../..
+TESTNAME = DebugInfoDWARF
+LINK_COMPONENTS := DebugInfoDWARF object support
 
 include $(LEVEL)/Makefile.config
-
-PARALLEL_DIRS := DWARF PDB
 
 include $(LLVM_SRC_ROOT)/unittests/Makefile.unittest
