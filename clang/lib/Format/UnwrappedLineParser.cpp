@@ -657,6 +657,11 @@ void UnwrappedLineParser::parseStructuralElement() {
       nextToken();
       addUnwrappedLine();
       return;
+    case tok::objc_try:
+      // This branch isn't strictly necessary (the kw_try case below would
+      // do this too after the tok::at is parsed above).  But be explicit.
+      parseTryCatch();
+      return;
     default:
       break;
     }
@@ -1191,11 +1196,17 @@ void UnwrappedLineParser::parseTryCatch() {
     parseStructuralElement();
     --Line->Level;
   }
-  while (FormatTok->isOneOf(tok::kw_catch, Keywords.kw___except,
-                            tok::kw___finally) ||
-         ((Style.Language == FormatStyle::LK_Java ||
-           Style.Language == FormatStyle::LK_JavaScript) &&
-          FormatTok->is(Keywords.kw_finally))) {
+  while (1) {
+    if (FormatTok->is(tok::at))
+      nextToken();
+    if (!(FormatTok->isOneOf(tok::kw_catch, Keywords.kw___except,
+                             tok::kw___finally) ||
+          ((Style.Language == FormatStyle::LK_Java ||
+            Style.Language == FormatStyle::LK_JavaScript) &&
+           FormatTok->is(Keywords.kw_finally)) ||
+          (FormatTok->Tok.isObjCAtKeyword(tok::objc_catch) ||
+           FormatTok->Tok.isObjCAtKeyword(tok::objc_finally))))
+      break;
     nextToken();
     while (FormatTok->isNot(tok::l_brace)) {
       if (FormatTok->is(tok::l_paren)) {

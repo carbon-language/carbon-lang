@@ -192,6 +192,8 @@ private:
     AnnotatedLine &Line = **I;
 
     // Don't merge ObjC @ keywords and methods.
+    // FIXME: If an option to allow short exception handling clauses on a single
+    // line is added, change this to not return for @try and friends.
     if (Style.Language != FormatStyle::LK_Java &&
         Line.First->isOneOf(tok::at, tok::minus, tok::plus))
       return 0;
