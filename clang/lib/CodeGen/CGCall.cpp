@@ -2342,7 +2342,7 @@ void CodeGenFunction::EmitFunctionEpilog(const CGFunctionInfo &FI,
   }
 
   if (!RetDbgLoc.isUnknown())
-    Ret->setDebugLoc(RetDbgLoc);
+    Ret->setDebugLoc(std::move(RetDbgLoc));
 }
 
 static bool isInAllocaArgument(CGCXXABI &ABI, QualType type) {

@@ -93,7 +93,7 @@ ApplyDebugLocation::ApplyDebugLocation(CodeGenFunction &CGF, llvm::DebugLoc Loc)
   if (CGF.getDebugInfo()) {
     OriginalLocation = CGF.Builder.getCurrentDebugLocation();
     if (!Loc.isUnknown())
-      CGF.Builder.SetCurrentDebugLocation(Loc);
+      CGF.Builder.SetCurrentDebugLocation(std::move(Loc));
   }
 }
 
@@ -101,7 +101,7 @@ ApplyDebugLocation::~ApplyDebugLocation() {
   // Query CGF so the location isn't overwritten when location updates are
   // temporarily disabled (for C++ default function arguments)
   if (CGF.getDebugInfo())
-    CGF.Builder.SetCurrentDebugLocation(OriginalLocation);
+    CGF.Builder.SetCurrentDebugLocation(std::move(OriginalLocation));
 }
 
 /// ArtificialLocation - An RAII object that temporarily switches to
