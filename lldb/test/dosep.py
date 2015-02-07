@@ -55,11 +55,18 @@ eTimedOut, ePassed, eFailed = 124, 0, 1
 
 def call_with_timeout(command, timeout):
     """Run command with a timeout if possible."""
-    if timeout_command and timeout != "0":
-        return subprocess.call([timeout_command, timeout] + command,
-                               stdin=subprocess.PIPE, close_fds=True)
-    return (ePassed if subprocess.call(command, stdin=subprocess.PIPE, close_fds=True) == 0
-            else eFailed)
+    if os.name != "nt":
+        if timeout_command and timeout != "0":
+            return subprocess.call([timeout_command, timeout] + command,
+                                   stdin=subprocess.PIPE, close_fds=True)
+        return (ePassed if subprocess.call(command, stdin=subprocess.PIPE, close_fds=True) == 0
+                else eFailed)
+    else:
+        if timeout_command and timeout != "0":
+            return subprocess.call([timeout_command, timeout] + command,
+                                   stdin=subprocess.PIPE)
+        return (ePassed if subprocess.call(command, stdin=subprocess.PIPE) == 0
+                else eFailed)
 
 def process_dir(root, files, test_root, dotest_options):
     """Examine a directory for tests, and invoke any found within it."""
