@@ -42,7 +42,7 @@ public:
         _target(nullptr), _targetSymbolIndex(idx), _offsetInAtom(off),
         _addend(rela->r_addend) {}
 
-  ELFReference(const Elf_Rel *rel, uint64_t off, Reference::KindArch arch,
+  ELFReference(uint64_t off, Reference::KindArch arch,
                Reference::KindValue relocType, uint32_t idx)
       : Reference(Reference::KindNamespace::ELF, arch, relocType),
         _target(nullptr), _targetSymbolIndex(idx), _offsetInAtom(off),

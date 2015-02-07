@@ -778,7 +778,7 @@ void ELFFile<ELFT>::createRelocationReferences(const Elf_Sym &symbol,
         symValue + symContent.size() <= rel.r_offset)
       continue;
     _references.push_back(new (_readerStorage) ELFReference<ELFT>(
-        &rel, rel.r_offset - symValue, kindArch(),
+        rel.r_offset - symValue, kindArch(),
         rel.getType(isMips64EL), rel.getSymbol(isMips64EL)));
     int32_t addend = *(symContent.data() + rel.r_offset - symValue);
     _references.back()->setAddend(addend);

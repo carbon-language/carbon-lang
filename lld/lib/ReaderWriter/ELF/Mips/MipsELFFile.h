@@ -164,7 +164,7 @@ private:
         continue;
 
       this->_references.push_back(new (this->_readerStorage) ELFReference<ELFT>(
-          &*rit, rit->r_offset - symbol.st_value, this->kindArch(),
+          rit->r_offset - symbol.st_value, this->kindArch(),
           rit->getType(isMips64EL()), rit->getSymbol(isMips64EL())));
 
       auto addend = getAddend(*rit, secContent);
