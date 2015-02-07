@@ -1672,7 +1672,7 @@ private:
 
   template<decl_iterator (DeclContext::*Begin)() const,
            decl_iterator (DeclContext::*End)() const>
-  void buildLookupImpl(DeclContext *DCtx);
+  void buildLookupImpl(DeclContext *DCtx, bool Internal);
   void makeDeclVisibleInContextWithFlags(NamedDecl *D, bool Internal,
                                          bool Rediscoverable);
   void makeDeclVisibleInContextImpl(NamedDecl *D, bool Internal);
