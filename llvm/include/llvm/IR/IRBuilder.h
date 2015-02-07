@@ -115,12 +115,10 @@ public:
   }
 
   /// \brief Set location information used by debugging information.
-  void SetCurrentDebugLocation(const DebugLoc &L) {
-    CurDbgLocation = L;
-  }
+  void SetCurrentDebugLocation(DebugLoc L) { CurDbgLocation = std::move(L); }
 
   /// \brief Get location information used by debugging information.
-  DebugLoc getCurrentDebugLocation() const { return CurDbgLocation; }
+  const DebugLoc &getCurrentDebugLocation() const { return CurDbgLocation; }
 
   /// \brief If this builder has a current debug location, set it on the
   /// specified instruction.

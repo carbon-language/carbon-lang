@@ -201,7 +201,7 @@ public:
   void setAAMetadata(const AAMDNodes &N);
 
   /// setDebugLoc - Set the debug location information for this instruction.
-  void setDebugLoc(const DebugLoc &Loc) { DbgLoc = Loc; }
+  void setDebugLoc(DebugLoc Loc) { DbgLoc = std::move(Loc); }
 
   /// getDebugLoc - Return the debug location for this node as a DebugLoc.
   const DebugLoc &getDebugLoc() const { return DbgLoc; }

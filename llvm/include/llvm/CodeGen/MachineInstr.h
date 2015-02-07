@@ -110,8 +110,8 @@ private:
   /// MachineInstr ctor - This constructor create a MachineInstr and add the
   /// implicit operands.  It reserves space for number of operands specified by
   /// MCInstrDesc.  An explicit DebugLoc is supplied.
-  MachineInstr(MachineFunction&, const MCInstrDesc &MCID,
-               const DebugLoc dl, bool NoImp = false);
+  MachineInstr(MachineFunction &, const MCInstrDesc &MCID, DebugLoc dl,
+               bool NoImp = false);
 
   // MachineInstrs are pool-allocated and owned by MachineFunction.
   friend class MachineFunction;
@@ -242,7 +242,7 @@ public:
 
   /// getDebugLoc - Returns the debug location id of this MachineInstr.
   ///
-  DebugLoc getDebugLoc() const { return debugLoc; }
+  const DebugLoc &getDebugLoc() const { return debugLoc; }
 
   /// \brief Return the debug variable referenced by
   /// this DBG_VALUE instruction.
@@ -1147,8 +1147,8 @@ public:
   /// setDebugLoc - Replace current source information with new such.
   /// Avoid using this, the constructor argument is preferable.
   ///
-  void setDebugLoc(const DebugLoc dl) {
-    debugLoc = dl;
+  void setDebugLoc(DebugLoc dl) {
+    debugLoc = std::move(dl);
     assert(debugLoc.hasTrivialDestructor() && "Expected trivial destructor");
   }
 
