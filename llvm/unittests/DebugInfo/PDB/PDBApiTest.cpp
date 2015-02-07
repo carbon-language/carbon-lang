@@ -70,24 +70,24 @@ class MockRawSymbol : public IPDBRawSymbol {
 public:
   MockRawSymbol(PDB_SymType SymType) : Type(SymType) {}
 
-  virtual void dump(llvm::raw_ostream &OS) const {}
+  void dump(llvm::raw_ostream &OS) const override {}
 
-  virtual std::unique_ptr<IPDBEnumSymbols>
+  std::unique_ptr<IPDBEnumSymbols>
   findChildren(PDB_SymType Type, StringRef Name,
-               PDB_NameSearchFlags Flags) const {
+               PDB_NameSearchFlags Flags) const override {
     return nullptr;
   }
-  virtual std::unique_ptr<IPDBEnumSymbols>
+  std::unique_ptr<IPDBEnumSymbols>
   findChildrenByRVA(PDB_SymType Type, StringRef Name, PDB_NameSearchFlags Flags,
-                    uint32_t RVA) const {
+                    uint32_t RVA) const override {
     return nullptr;
   }
-  virtual std::unique_ptr<IPDBEnumSymbols>
-  findInlineFramesByRVA(uint32_t RVA) const {
+  std::unique_ptr<IPDBEnumSymbols>
+  findInlineFramesByRVA(uint32_t RVA) const override {
     return nullptr;
   }
 
-  virtual void getDataBytes(llvm::SmallVector<uint8_t, 32> &bytes) const {}
+  void getDataBytes(llvm::SmallVector<uint8_t, 32> &bytes) const override {}
 
   PDB_SymType getSymTag() const override { return Type; }
 
