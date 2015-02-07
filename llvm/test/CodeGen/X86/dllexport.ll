@@ -58,7 +58,7 @@ define weak_odr dllexport void @weak1() {
 ; CHECK: .globl _Var1
 @Var1 = dllexport global i32 1, align 4
 
-; CHECK: .rdata,"rd"
+; CHECK: .rdata,"dr"
 ; CHECK: .globl _Var2
 @Var2 = dllexport unnamed_addr constant i32 1
 

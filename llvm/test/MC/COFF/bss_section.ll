@@ -7,4 +7,4 @@
 
 $thingy_linkonce = comdat any
 @thingy_linkonce = linkonce_odr global %struct.foo zeroinitializer, comdat, align 4
-; CHECK: .section .bss,"wb",discard,_thingy_linkonce
+; CHECK: .section .bss,"bw",discard,_thingy_linkonce
