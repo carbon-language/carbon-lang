@@ -1323,11 +1323,13 @@ range of iterators over declarations of "``f``".
 ``DeclContext`` manages multiply-defined declaration contexts internally.  The
 function ``DeclContext::getPrimaryContext`` retrieves the "primary" context for
 a given ``DeclContext`` instance, which is the ``DeclContext`` responsible for
-maintaining the lookup table used for the semantics-centric view.  Given the
-primary context, one can follow the chain of ``DeclContext`` nodes that define
-additional declarations via ``DeclContext::getNextContext``.  Note that these
-functions are used internally within the lookup and insertion methods of the
-``DeclContext``, so the vast majority of clients can ignore them.
+maintaining the lookup table used for the semantics-centric view.  Given a
+DeclContext, one can obtain the set of declaration contexts that are semanticaly
+connected to this declaration context, in source order, including this context
+(which will be the only result, for non-namespace contexts) via
+``DeclContext::collectAllContexts``. Note that these functions are used
+internally within the lookup and insertion methods of the ``DeclContext``, so
+the vast majority of clients can ignore them.
 
 .. _CFG:
 
