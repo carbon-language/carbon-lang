@@ -1172,6 +1172,24 @@ Disassembler::Disassembler(const ArchSpec& arch, const char *flavor) :
         m_flavor.assign("default");
     else
         m_flavor.assign(flavor);
+
+    // If this is an arm variant that can only include thumb (T16, T32)
+    // instructions, force the arch triple to be "thumbv.." instead of
+    // "armv..."
+    if (arch.GetTriple().getArch() == llvm::Triple::arm
+        && (arch.GetCore() == ArchSpec::Core::eCore_arm_armv7m
+            || arch.GetCore() == ArchSpec::Core::eCore_arm_armv7em
+            || arch.GetCore() == ArchSpec::Core::eCore_arm_armv6m))
+    {
+        std::string thumb_arch_name (arch.GetTriple().getArchName().str());
+        // Replace "arm" with "thumb" so we get all thumb variants correct
+        if (thumb_arch_name.size() > 3)
+        {
+            thumb_arch_name.erase(0, 3);
+            thumb_arch_name.insert(0, "thumb");
+        }
+        m_arch.SetTriple (thumb_arch_name.c_str());
+    }
 }
 
 //----------------------------------------------------------------------

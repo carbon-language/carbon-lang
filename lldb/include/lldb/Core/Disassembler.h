@@ -457,7 +457,7 @@ protected:
     //------------------------------------------------------------------
     // Classes that inherit from Disassembler can see and modify these
     //------------------------------------------------------------------
-    const ArchSpec m_arch;
+    ArchSpec m_arch;
     InstructionList m_instruction_list;
     lldb::addr_t m_base_addr;
     std::string m_flavor;
