@@ -577,3 +577,9 @@ let Defs = [EFLAGS] in {
   def CLAC : I<0x01, MRM_CA, (outs), (ins), "clac", []>, TB;
   def STAC : I<0x01, MRM_CB, (outs), (ins), "stac", []>, TB;
 }
+
+//===----------------------------------------------------------------------===//
+// SMX Instruction
+let Uses = [RAX, RBX, RCX, RDX], Defs = [RAX, RBX, RCX] in {
+  def GETSEC : I<0x37, RawFrm, (outs), (ins), "getsec", []>, TB;
+}

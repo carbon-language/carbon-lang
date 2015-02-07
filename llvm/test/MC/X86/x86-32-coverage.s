@@ -10738,3 +10738,7 @@ btcq $4, (%eax)
 // CHECK: xrstors	305419896
 // CHECK:  encoding: [0x0f,0xc7,0x1d,0x78,0x56,0x34,0x12]
         	xrstors	0x12345678
+
+// CHECK: getsec
+// CHECK:  encoding: [0x0f,0x37]
+        	getsec
