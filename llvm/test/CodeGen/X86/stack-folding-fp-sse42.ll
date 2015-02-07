@@ -99,7 +99,9 @@ define <4 x float> @stack_fold_andnps(<4 x float> %a0, <4 x float> %a1) {
   %4 = xor <2 x i64> %2, <i64 -1, i64 -1>
   %5 = and <2 x i64> %4, %3
   %6 = bitcast <2 x i64> %5 to <4 x float>
-  ret <4 x float> %6
+  ; fadd forces execution domain
+  %7 = fadd <4 x float> %6, <float 0x0, float 0x0, float 0x0, float 0x0>
+  ret <4 x float> %7
 }
 
 define <2 x double> @stack_fold_andpd(<2 x double> %a0, <2 x double> %a1) {
@@ -123,7 +125,9 @@ define <4 x float> @stack_fold_andps(<4 x float> %a0, <4 x float> %a1) {
   %3 = bitcast <4 x float> %a1 to <2 x i64>
   %4 = and <2 x i64> %2, %3
   %5 = bitcast <2 x i64> %4 to <4 x float>
-  ret <4 x float> %5
+  ; fadd forces execution domain
+  %6 = fadd <4 x float> %5, <float 0x0, float 0x0, float 0x0, float 0x0>
+  ret <4 x float> %6
 }
 
 define <2 x double> @stack_fold_blendpd(<2 x double> %a0, <2 x double> %a1) {
@@ -837,7 +841,9 @@ define <4 x float> @stack_fold_orps(<4 x float> %a0, <4 x float> %a1) {
   %3 = bitcast <4 x float> %a1 to <2 x i64>
   %4 = or <2 x i64> %2, %3
   %5 = bitcast <2 x i64> %4 to <4 x float>
-  ret <4 x float> %5
+  ; fadd forces execution domain
+  %6 = fadd <4 x float> %5, <float 0x0, float 0x0, float 0x0, float 0x0>
+  ret <4 x float> %6
 }
 
 ; TODO stack_fold_rcpps
@@ -1077,5 +1083,7 @@ define <4 x float> @stack_fold_xorps(<4 x float> %a0, <4 x float> %a1) {
   %3 = bitcast <4 x float> %a1 to <2 x i64>
   %4 = xor <2 x i64> %2, %3
   %5 = bitcast <2 x i64> %4 to <4 x float>
-  ret <4 x float> %5
+  ; fadd forces execution domain
+  %6 = fadd <4 x float> %5, <float 0x0, float 0x0, float 0x0, float 0x0>
+  ret <4 x float> %6
 }
