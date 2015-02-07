@@ -95,4 +95,18 @@ TEST(DwarfTest, getAttributeEncoding) {
   EXPECT_EQ(0u, getAttributeEncoding("DW_ATE_hi_user"));
 }
 
+TEST(DwarfTest, VirtualityString) {
+  EXPECT_EQ("DW_VIRTUALITY_none", VirtualityString(DW_VIRTUALITY_none));
+  EXPECT_EQ("DW_VIRTUALITY_virtual", VirtualityString(DW_VIRTUALITY_virtual));
+  EXPECT_EQ("DW_VIRTUALITY_pure_virtual",
+            VirtualityString(DW_VIRTUALITY_pure_virtual));
+
+  // DW_VIRTUALITY_max should be pure virtual.
+  EXPECT_EQ("DW_VIRTUALITY_pure_virtual", VirtualityString(DW_VIRTUALITY_max));
+
+  // Invalid numbers shouldn't be stringified.
+  EXPECT_EQ(nullptr, VirtualityString(DW_VIRTUALITY_max + 1));
+  EXPECT_EQ(nullptr, VirtualityString(DW_VIRTUALITY_max + 77));
+}
+
 } // end namespace

@@ -494,10 +494,9 @@ enum VisibilityAttribute {
 };
 
 enum VirtualityAttribute {
-  // Virtuality codes
-  DW_VIRTUALITY_none = 0x00,
-  DW_VIRTUALITY_virtual = 0x01,
-  DW_VIRTUALITY_pure_virtual = 0x02
+#define HANDLE_DW_VIRTUALITY(ID, NAME) DW_VIRTUALITY_##NAME = ID,
+#include "llvm/Support/Dwarf.def"
+  DW_VIRTUALITY_max = 0x02
 };
 
 enum SourceLanguage {

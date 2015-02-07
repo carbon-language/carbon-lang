@@ -12,7 +12,8 @@
 //===----------------------------------------------------------------------===//
 
 // TODO: Add other DW-based macros.
-#if !(defined HANDLE_DW_TAG || defined HANDLE_DW_LANG || defined HANDLE_DW_ATE)
+#if !(defined HANDLE_DW_TAG || defined HANDLE_DW_LANG ||                       \
+      defined HANDLE_DW_ATE || defined HANDLE_DW_VIRTUALITY)
 #error "Missing macro definition of HANDLE_DW*"
 #endif
 
@@ -26,6 +27,10 @@
 
 #ifndef HANDLE_DW_ATE
 #define HANDLE_DW_ATE(ID, NAME)
+#endif
+
+#ifndef HANDLE_DW_VIRTUALITY
+#define HANDLE_DW_VIRTUALITY(ID, NAME)
 #endif
 
 HANDLE_DW_TAG(0x0001, array_type)
@@ -159,6 +164,12 @@ HANDLE_DW_ATE(0x0e, unsigned_fixed)
 HANDLE_DW_ATE(0x0f, decimal_float)
 HANDLE_DW_ATE(0x10, UTF)
 
+// DWARF virtuality codes.
+HANDLE_DW_VIRTUALITY(0x00, none)
+HANDLE_DW_VIRTUALITY(0x01, virtual)
+HANDLE_DW_VIRTUALITY(0x02, pure_virtual)
+
 #undef HANDLE_DW_TAG
 #undef HANDLE_DW_LANG
 #undef HANDLE_DW_ATE
+#undef HANDLE_DW_VIRTUALITY

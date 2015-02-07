@@ -464,11 +464,13 @@ const char *llvm::dwarf::VisibilityString(unsigned Visibility) {
 
 const char *llvm::dwarf::VirtualityString(unsigned Virtuality) {
   switch (Virtuality) {
-  case DW_VIRTUALITY_none:               return "DW_VIRTUALITY_none";
-  case DW_VIRTUALITY_virtual:            return "DW_VIRTUALITY_virtual";
-  case DW_VIRTUALITY_pure_virtual:       return "DW_VIRTUALITY_pure_virtual";
+  default:
+    return nullptr;
+#define HANDLE_DW_VIRTUALITY(ID, NAME)                                         \
+  case DW_VIRTUALITY_##NAME:                                                   \
+    return "DW_VIRTUALITY_" #NAME;
+#include "llvm/Support/Dwarf.def"
   }
-  return nullptr;
 }
 
 const char *llvm::dwarf::LanguageString(unsigned Language) {
