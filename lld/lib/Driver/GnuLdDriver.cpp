@@ -685,6 +685,11 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
       break;
     }
 
+    case OPT_strip_all: {
+      ctx->setStripSymbols(true);
+      break;
+    }
+
     case OPT_soname:
       ctx->setSharedObjectName(inputArg->getValue());
       break;

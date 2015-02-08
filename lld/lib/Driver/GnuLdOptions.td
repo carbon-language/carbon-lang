@@ -239,6 +239,11 @@ def demangle : Flag<["--"], "demangle">,
 def no_demangle : Flag<["--"], "no-demangle">,
      HelpText<"Dont demangle C++ symbols">,
      Group<grp_symbolopts>;
+def strip_all : Flag<["--"], "strip-all">,
+     HelpText<"Omit all symbol informations from output">,
+     Group<grp_symbolopts>;
+def alias_strip_all : Flag<["-"], "s">,
+     Alias<strip_all>;
 
 //===----------------------------------------------------------------------===//
 /// Optimization Options

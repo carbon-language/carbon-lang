@@ -60,7 +60,8 @@ ELFLinkingContext::ELFLinkingContext(
       _isStaticExecutable(false), _noInhibitExec(false), _exportDynamic(false),
       _mergeCommonStrings(false), _useShlibUndefines(true),
       _dynamicLinkerArg(false), _noAllowDynamicLibraries(false),
-      _mergeRODataToTextSegment(true), _demangle(true), _alignSegments(true),
+      _mergeRODataToTextSegment(true), _demangle(true),
+      _stripSymbols(false), _alignSegments(true),
       _outputMagic(OutputMagic::DEFAULT), _initFunction("_init"),
       _finiFunction("_fini"), _sysrootPath("") {}
 
