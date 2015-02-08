@@ -1124,6 +1124,19 @@ Function *FunctionAST::IRGen(IRGenContext &C) const {
 // Top-Level parsing and JIT Driver
 //===----------------------------------------------------------------------===//
 
+static std::unique_ptr<llvm::Module> IRGen(SessionContext &S,
+                                           const FunctionAST &F) {
+  IRGenContext C(S);
+  auto LF = F.IRGen(C);
+  if (!LF)
+    return nullptr;
+#ifndef MINIMAL_STDERR_OUTPUT
+  fprintf(stderr, "Read function definition:");
+  LF->dump();
+#endif
+  return C.takeM();
+}
+
 class KaleidoscopeJIT {
 public:
   typedef ObjectLinkingLayer<> ObjLayerT;
@@ -1166,20 +1179,19 @@ public:
 
                   // If we don't find 'Name' in the JIT, see if we have some AST
                   // for it.
-                  if (!Session.FunctionDefs.count(Name))
+                  auto DefI = Session.FunctionDefs.find(Name);
+                  if (DefI == Session.FunctionDefs.end())
                     return 0;
 
                   // We have AST for 'Name'. IRGen it, add it to the JIT, and
                   // return the address for it.
-                  IRGenContext C(Session);
-                  {
-                    // Take ownership of the AST: We can release the memory as
-                    // soon as we've IRGen'd it.
-                    auto FuncAST = std::move(Session.FunctionDefs[Name]);
-                    FuncAST->IRGen(C);
-                  }
+                  // FIXME: What happens if IRGen fails?
+                  addModule(IRGen(Session, *DefI->second));
 
-                  addModule(C.takeM());
+                  // Remove the function definition's AST now that we've
+                  // finished with it.
+                  Session.FunctionDefs.erase(DefI);
+
                   return getMangledSymbolAddress(Name);
                 }, 
                 [](const std::string &S) { return 0; } );

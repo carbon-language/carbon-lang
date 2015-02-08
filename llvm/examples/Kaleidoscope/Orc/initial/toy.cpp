@@ -1180,8 +1180,8 @@ private:
   CompileLayerT CompileLayer;
 };
 
-static std::unique_ptr<llvm::Module>
-IRGen(KaleidoscopeJIT &J, SessionContext &S, const FunctionAST &F) {
+static std::unique_ptr<llvm::Module> IRGen(SessionContext &S,
+                                           const FunctionAST &F) {
   IRGenContext C(S);
   auto LF = F.IRGen(C);
   if (!LF)
@@ -1195,7 +1195,7 @@ IRGen(KaleidoscopeJIT &J, SessionContext &S, const FunctionAST &F) {
 
 static void HandleDefinition(SessionContext &S, KaleidoscopeJIT &J) {
   if (auto F = ParseDefinition()) {
-    if (auto M = IRGen(J, S, *F)) {
+    if (auto M = IRGen(S, *F)) {
       S.addPrototypeAST(llvm::make_unique<PrototypeAST>(*F->Proto));
       J.addModule(std::move(M));
     }
