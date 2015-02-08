@@ -1364,7 +1364,24 @@ static const SCEV *getPreStartForSignExtend(const SCEVAddRecExpr *AR,
   const SCEVAddRecExpr *PreAR = dyn_cast<SCEVAddRecExpr>(
     SE->getAddRecExpr(PreStart, Step, L, SCEV::FlagAnyWrap));
 
-  if (PreAR && PreAR->getNoWrapFlags(SCEV::FlagNSW))
+  // WARNING: FIXME: the optimization below assumes that a sign-overflowing nsw
+  // operation is undefined behavior.  This is strictly more aggressive than the
+  // interpretation of nsw in other parts of LLVM (for instance, they may
+  // unconditionally hoist nsw arithmetic through control flow).  This logic
+  // needs to be revisited once we have a consistent semantics for poison
+  // values.
+  //
+  // "{S,+,X} is <nsw>" and "{S,+,X} is evaluated at least once" implies "S+X
+  // does not sign-overflow" (we'd have undefined behavior if it did).  If
+  // `L->getExitingBlock() == L->getLoopLatch()` then `PreAR` (= {S,+,X}<nsw>)
+  // is evaluated every-time `AR` (= {S+X,+,X}) is evaluated, and hence within
+  // `AR` we are safe to assume that "S+X" will not sign-overflow.
+  //
+
+  BasicBlock *ExitingBlock = L->getExitingBlock();
+  BasicBlock *LatchBlock = L->getLoopLatch();
+  if (PreAR && PreAR->getNoWrapFlags(SCEV::FlagNSW) &&
+      ExitingBlock != nullptr && ExitingBlock == LatchBlock)
     return PreStart;
 
   // 2. Direct overflow check on the step operation's expression.
