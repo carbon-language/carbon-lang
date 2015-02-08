@@ -1,4 +1,4 @@
-; RUN: llc -mtriple=x86_64-pc-linux -mcpu=corei7 < %s | FileCheck %s
+; RUN: llc -mtriple=x86_64-pc-linux -mattr=mmx < %s | FileCheck %s
 
 ; MMX packed sub opcodes were wrongly marked as commutative.
 ; This test checks that the operands of packed sub instructions are
