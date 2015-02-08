@@ -1165,7 +1165,7 @@ public:
     auto MM = createLookasideRTDyldMM<SectionMemoryManager>(
                 [&](const std::string &Name) -> uint64_t {
                   // First try to find 'Name' within the JIT.
-                  if (uint64_t Addr = getUnmangledSymbolAddress(Name))
+                  if (uint64_t Addr = getMangledSymbolAddress(Name))
                     return Addr;
 
                   // If we don't find 'Name' in the JIT, see if we have some AST
@@ -1184,7 +1184,7 @@ public:
                   }
 
                   addModule(C.takeM());
-                  return getUnmangledSymbolAddress(Name);
+                  return getMangledSymbolAddress(Name);
                 }, 
                 [](const std::string &S) { return 0; } );
 
@@ -1193,12 +1193,12 @@ public:
 
   void removeModule(ModuleHandleT H) { LazyEmitLayer.removeModuleSet(H); }
 
-  uint64_t getUnmangledSymbolAddress(const std::string &Name) {
+  uint64_t getMangledSymbolAddress(const std::string &Name) {
     return LazyEmitLayer.getSymbolAddress(Name, false);
   }
 
   uint64_t getSymbolAddress(const std::string &Name) {
-    return getUnmangledSymbolAddress(Mangle(Name));
+    return getMangledSymbolAddress(Mangle(Name));
   }
 
 private:

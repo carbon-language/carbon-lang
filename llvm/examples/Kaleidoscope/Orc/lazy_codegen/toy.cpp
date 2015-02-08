@@ -1154,7 +1154,7 @@ public:
     // new module. Create one that resolves symbols by looking back into the JIT.
     auto MM = createLookasideRTDyldMM<SectionMemoryManager>(
                 [&](const std::string &S) {
-                  return getUnmangledSymbolAddress(S);
+                  return getMangledSymbolAddress(S);
                 }, 
                 [](const std::string &S) { return 0; } );
 
@@ -1163,7 +1163,7 @@ public:
 
   void removeModule(ModuleHandleT H) { LazyEmitLayer.removeModuleSet(H); }
 
-  uint64_t getUnmangledSymbolAddress(const std::string &Name) {
+  uint64_t getMangledSymbolAddress(const std::string &Name) {
     return LazyEmitLayer.getSymbolAddress(Name, false);
   }
 
@@ -1173,7 +1173,7 @@ public:
       raw_string_ostream MangledNameStream(MangledName);
       Mang.getNameWithPrefix(MangledNameStream, Name);
     }
-    return getUnmangledSymbolAddress(MangledName);
+    return getMangledSymbolAddress(MangledName);
   }
 
 private:
