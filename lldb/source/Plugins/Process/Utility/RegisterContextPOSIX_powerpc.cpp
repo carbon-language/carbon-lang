@@ -161,7 +161,7 @@ g_reg_sets_powerpc[k_num_register_sets] =
 
 bool RegisterContextPOSIX_powerpc::IsGPR(unsigned reg)
 {
-    return reg <= k_num_gpr_registers_powerpc;   // GPR's come first.
+    return (reg >= k_first_gpr_powerpc) && (reg <= k_last_gpr_powerpc);   // GPR's come first.
 }
 
 bool
