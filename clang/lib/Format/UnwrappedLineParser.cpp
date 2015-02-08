@@ -1677,8 +1677,7 @@ void UnwrappedLineParser::readToken() {
            (FormatTok->HasUnescapedNewline || FormatTok->IsFirst)) {
       // If there is an unfinished unwrapped line, we flush the preprocessor
       // directives only after that unwrapped line was finished later.
-      bool SwitchToPreprocessorLines =
-          !Line->Tokens.empty() && CurrentLines == &Lines;
+      bool SwitchToPreprocessorLines = !Line->Tokens.empty();
       ScopedLineState BlockState(*this, SwitchToPreprocessorLines);
       // Comments stored before the preprocessor directive need to be output
       // before the preprocessor directive, at the same level as the
