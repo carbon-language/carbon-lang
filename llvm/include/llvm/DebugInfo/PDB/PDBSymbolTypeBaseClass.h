@@ -19,7 +19,8 @@ class raw_ostream;
 
 class PDBSymbolTypeBaseClass : public PDBSymbol {
 public:
-  PDBSymbolTypeBaseClass(std::unique_ptr<IPDBRawSymbol> BaseClassTypeSymbol);
+  PDBSymbolTypeBaseClass(IPDBSession &PDBSession,
+                         std::unique_ptr<IPDBRawSymbol> Symbol);
 
   void dump(llvm::raw_ostream &OS) const override;
 

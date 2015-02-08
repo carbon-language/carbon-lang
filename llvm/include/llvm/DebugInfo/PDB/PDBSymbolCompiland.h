@@ -20,7 +20,8 @@ class raw_ostream;
 
 class PDBSymbolCompiland : public PDBSymbol {
 public:
-  PDBSymbolCompiland(std::unique_ptr<IPDBRawSymbol> CompilandSymbol);
+  PDBSymbolCompiland(IPDBSession &PDBSession,
+                     std::unique_ptr<IPDBRawSymbol> CompilandSymbol);
 
   void dump(llvm::raw_ostream &OS) const override;
 

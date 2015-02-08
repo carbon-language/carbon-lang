@@ -20,7 +20,8 @@ class raw_ostream;
 
 class PDBSymbolBlock : public PDBSymbol {
 public:
-  PDBSymbolBlock(std::unique_ptr<IPDBRawSymbol> BlockSymbol);
+  PDBSymbolBlock(IPDBSession &PDBSession,
+                 std::unique_ptr<IPDBRawSymbol> Symbol);
 
   void dump(llvm::raw_ostream &OS) const override;
 

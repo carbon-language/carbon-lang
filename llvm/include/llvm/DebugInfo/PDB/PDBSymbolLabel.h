@@ -19,7 +19,8 @@ class raw_ostream;
 
 class PDBSymbolLabel : public PDBSymbol {
 public:
-  PDBSymbolLabel(std::unique_ptr<IPDBRawSymbol> LabelSymbol);
+  PDBSymbolLabel(IPDBSession &PDBSession,
+                 std::unique_ptr<IPDBRawSymbol> LabelSymbol);
 
   void dump(llvm::raw_ostream &OS) const override;
 

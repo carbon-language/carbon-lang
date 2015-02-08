@@ -12,6 +12,9 @@
 
 #include "llvm/DebugInfo/PDB/IPDBEnumChildren.h"
 #include "llvm/DebugInfo/PDB/IPDBRawSymbol.h"
+#include "llvm/DebugInfo/PDB/IPDBSession.h"
+#include "llvm/DebugInfo/PDB/IPDBSourceFile.h"
+
 #include "llvm/DebugInfo/PDB/PDBSymbol.h"
 #include "llvm/DebugInfo/PDB/PDBSymbolAnnotation.h"
 #include "llvm/DebugInfo/PDB/PDBSymbolBlock.h"
@@ -65,6 +68,21 @@ namespace {
     typedef decltype(IPDBRawSymbol::Func()) ReturnType;                        \
     return ReturnType();                                                       \
   }
+
+class MockSession : public IPDBSession {
+  uint64_t getLoadAddress() const override { return 0; }
+  void setLoadAddress(uint64_t Address) override {}
+  std::unique_ptr<PDBSymbolExe> getGlobalScope() const override {
+    return nullptr;
+  }
+  std::unique_ptr<PDBSymbol> getSymbolById() const override { return nullptr; }
+  std::unique_ptr<IPDBSourceFile> getSourceFileById() const override {
+    return nullptr;
+  }
+  std::unique_ptr<IPDBEnumDataStreams> getDebugStreams() const override {
+    return nullptr;
+  }
+};
 
 class MockRawSymbol : public IPDBRawSymbol {
 public:
@@ -257,6 +275,8 @@ public:
   std::unordered_map<PDB_SymType, std::unique_ptr<PDBSymbol>> SymbolMap;
 
   void SetUp() override {
+    Session.reset(new MockSession());
+
     InsertItemWithTag(PDB_SymType::None);
     InsertItemWithTag(PDB_SymType::Exe);
     InsertItemWithTag(PDB_SymType::Compiland);
@@ -291,14 +311,6 @@ public:
     InsertItemWithTag(PDB_SymType::Max);
   }
 
-private:
-  void InsertItemWithTag(PDB_SymType Tag) {
-    auto RawSymbol = std::unique_ptr<IPDBRawSymbol>(new MockRawSymbol(Tag));
-    auto Symbol = PDBSymbol::create(std::move(RawSymbol));
-    SymbolMap.insert(std::make_pair(Tag, std::move(Symbol)));
-  }
-
-public:
   template <class ExpectedType> void VerifyDyncast(PDB_SymType Tag) {
     for (auto item = SymbolMap.begin(); item != SymbolMap.end(); ++item) {
       EXPECT_EQ(item->first == Tag, llvm::isa<ExpectedType>(*item->second));
@@ -313,6 +325,15 @@ public:
 
       EXPECT_EQ(should_match, llvm::isa<PDBSymbolUnknown>(*item->second));
     }
+  }
+
+private:
+  std::unique_ptr<IPDBSession> Session;
+
+  void InsertItemWithTag(PDB_SymType Tag) {
+    auto RawSymbol = std::unique_ptr<IPDBRawSymbol>(new MockRawSymbol(Tag));
+    auto Symbol = PDBSymbol::create(*Session, std::move(RawSymbol));
+    SymbolMap.insert(std::make_pair(Tag, std::move(Symbol)));
   }
 };
 

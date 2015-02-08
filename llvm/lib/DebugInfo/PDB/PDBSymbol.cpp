@@ -48,17 +48,19 @@
 
 using namespace llvm;
 
-PDBSymbol::PDBSymbol(std::unique_ptr<IPDBRawSymbol> Symbol)
-    : RawSymbol(std::move(Symbol)) {}
+PDBSymbol::PDBSymbol(IPDBSession &PDBSession,
+                     std::unique_ptr<IPDBRawSymbol> Symbol)
+    : Session(PDBSession), RawSymbol(std::move(Symbol)) {}
 
 PDBSymbol::~PDBSymbol() {}
 
 #define FACTORY_SYMTAG_CASE(Tag, Type)                                         \
   case PDB_SymType::Tag:                                                       \
-    return std::unique_ptr<PDBSymbol>(new Type(std::move(Symbol)));
+    return std::unique_ptr<PDBSymbol>(new Type(PDBSession, std::move(Symbol)));
 
 std::unique_ptr<PDBSymbol>
-PDBSymbol::create(std::unique_ptr<IPDBRawSymbol> Symbol) {
+PDBSymbol::create(IPDBSession &PDBSession,
+                  std::unique_ptr<IPDBRawSymbol> Symbol) {
   switch (Symbol->getSymTag()) {
     FACTORY_SYMTAG_CASE(Exe, PDBSymbolExe)
     FACTORY_SYMTAG_CASE(Compiland, PDBSymbolCompiland)
@@ -91,7 +93,8 @@ PDBSymbol::create(std::unique_ptr<IPDBRawSymbol> Symbol) {
     FACTORY_SYMTAG_CASE(ManagedType, PDBSymbolTypeManaged)
     FACTORY_SYMTAG_CASE(Dimension, PDBSymbolTypeDimension)
   default:
-    return std::unique_ptr<PDBSymbol>(new PDBSymbolUnknown(std::move(Symbol)));
+    return std::unique_ptr<PDBSymbol>(
+        new PDBSymbolUnknown(PDBSession, std::move(Symbol)));
   }
 }
 

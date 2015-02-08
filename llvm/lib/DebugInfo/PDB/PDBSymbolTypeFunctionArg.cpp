@@ -15,7 +15,7 @@
 using namespace llvm;
 
 PDBSymbolTypeFunctionArg::PDBSymbolTypeFunctionArg(
-    std::unique_ptr<IPDBRawSymbol> Symbol)
-    : PDBSymbol(std::move(Symbol)) {}
+    IPDBSession &PDBSession, std::unique_ptr<IPDBRawSymbol> Symbol)
+    : PDBSymbol(PDBSession, std::move(Symbol)) {}
 
 void PDBSymbolTypeFunctionArg::dump(llvm::raw_ostream &OS) const {}

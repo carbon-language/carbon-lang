@@ -19,7 +19,8 @@ class raw_ostream;
 
 class PDBSymbolUnknown : public PDBSymbol {
 public:
-  PDBSymbolUnknown(std::unique_ptr<IPDBRawSymbol> UnknownSymbol);
+  PDBSymbolUnknown(IPDBSession &PDBSession,
+                   std::unique_ptr<IPDBRawSymbol> UnknownSymbol);
 
   void dump(llvm::raw_ostream &OS) const override;
 

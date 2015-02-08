@@ -7,11 +7,13 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include <utility>
 #include "llvm/DebugInfo/PDB/PDBSymbolData.h"
 
 using namespace llvm;
 
-PDBSymbolData::PDBSymbolData(std::unique_ptr<IPDBRawSymbol> DataSymbol)
-    : PDBSymbol(std::move(DataSymbol)) {}
+PDBSymbolData::PDBSymbolData(IPDBSession &PDBSession,
+                             std::unique_ptr<IPDBRawSymbol> DataSymbol)
+    : PDBSymbol(PDBSession, std::move(DataSymbol)) {}
 
 void PDBSymbolData::dump(llvm::raw_ostream &OS) const {}

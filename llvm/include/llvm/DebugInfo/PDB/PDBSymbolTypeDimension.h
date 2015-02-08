@@ -19,7 +19,8 @@ class raw_ostream;
 
 class PDBSymbolTypeDimension : public PDBSymbol {
 public:
-  PDBSymbolTypeDimension(std::unique_ptr<IPDBRawSymbol> DimensionTypeSymbol);
+  PDBSymbolTypeDimension(IPDBSession &PDBSession,
+                         std::unique_ptr<IPDBRawSymbol> Symbol);
 
   void dump(llvm::raw_ostream &OS) const override;
 

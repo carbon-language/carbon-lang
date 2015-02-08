@@ -14,7 +14,8 @@
 
 using namespace llvm;
 
-PDBSymbolAnnotation::PDBSymbolAnnotation(std::unique_ptr<IPDBRawSymbol> Symbol)
-    : PDBSymbol(std::move(Symbol)) {}
+PDBSymbolAnnotation::PDBSymbolAnnotation(IPDBSession &PDBSession,
+                                         std::unique_ptr<IPDBRawSymbol> Symbol)
+    : PDBSymbol(PDBSession, std::move(Symbol)) {}
 
 void PDBSymbolAnnotation::dump(llvm::raw_ostream &OS) const {}

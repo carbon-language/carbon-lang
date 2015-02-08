@@ -15,8 +15,9 @@
 
 using namespace llvm;
 
-PDBSymbolCustom::PDBSymbolCustom(std::unique_ptr<IPDBRawSymbol> CustomSymbol)
-    : PDBSymbol(std::move(CustomSymbol)) {}
+PDBSymbolCustom::PDBSymbolCustom(IPDBSession &PDBSession,
+                                 std::unique_ptr<IPDBRawSymbol> CustomSymbol)
+    : PDBSymbol(PDBSession, std::move(CustomSymbol)) {}
 
 void PDBSymbolCustom::getDataBytes(llvm::SmallVector<uint8_t, 32> &bytes) {
   RawSymbol->getDataBytes(bytes);

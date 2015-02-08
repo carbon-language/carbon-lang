@@ -21,7 +21,8 @@ class raw_ostream;
 
 class PDBSymbolThunk : public PDBSymbol {
 public:
-  PDBSymbolThunk(std::unique_ptr<IPDBRawSymbol> ThunkSymbol);
+  PDBSymbolThunk(IPDBSession &PDBSession,
+                 std::unique_ptr<IPDBRawSymbol> ThunkSymbol);
 
   void dump(llvm::raw_ostream &OS) const override;
 

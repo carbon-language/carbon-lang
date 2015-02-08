@@ -14,7 +14,8 @@
 
 using namespace llvm;
 
-PDBSymbolLabel::PDBSymbolLabel(std::unique_ptr<IPDBRawSymbol> Symbol)
-    : PDBSymbol(std::move(Symbol)) {}
+PDBSymbolLabel::PDBSymbolLabel(IPDBSession &PDBSession,
+                               std::unique_ptr<IPDBRawSymbol> Symbol)
+    : PDBSymbol(Session, std::move(Symbol)) {}
 
 void PDBSymbolLabel::dump(llvm::raw_ostream &OS) const {}

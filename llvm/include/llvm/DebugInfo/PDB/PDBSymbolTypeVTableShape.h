@@ -19,7 +19,8 @@ class raw_ostream;
 
 class PDBSymbolTypeVTableShape : public PDBSymbol {
 public:
-  PDBSymbolTypeVTableShape(std::unique_ptr<IPDBRawSymbol> VtblShapeSymbol);
+  PDBSymbolTypeVTableShape(IPDBSession &PDBSession,
+                           std::unique_ptr<IPDBRawSymbol> VtblShapeSymbol);
 
   void dump(llvm::raw_ostream &OS) const override;
 

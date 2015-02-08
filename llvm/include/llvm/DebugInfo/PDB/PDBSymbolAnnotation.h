@@ -20,7 +20,8 @@ class raw_ostream;
 
 class PDBSymbolAnnotation : public PDBSymbol {
 public:
-  PDBSymbolAnnotation(std::unique_ptr<IPDBRawSymbol> AnnotationSymbol);
+  PDBSymbolAnnotation(IPDBSession &PDBSession,
+                      std::unique_ptr<IPDBRawSymbol> Symbol);
 
   void dump(llvm::raw_ostream &OS) const override;
 
