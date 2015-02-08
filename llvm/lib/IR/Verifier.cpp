@@ -2555,6 +2555,23 @@ bool Verifier::VerifyIntrinsicType(Type *Ty,
     PointerType *ThisArgType = dyn_cast<PointerType>(Ty);
     return (!ThisArgType || ThisArgType->getElementType() != ReferenceType);
   }
+  case IITDescriptor::VecOfPtrsToElt: {
+    if (D.getArgumentNumber() >= ArgTys.size())
+      return true;
+    VectorType * ReferenceType =
+      dyn_cast<VectorType> (ArgTys[D.getArgumentNumber()]);
+    VectorType *ThisArgVecTy = dyn_cast<VectorType>(Ty);
+    if (!ThisArgVecTy || !ReferenceType || 
+        (ReferenceType->getVectorNumElements() !=
+         ThisArgVecTy->getVectorNumElements()))
+      return true;
+    PointerType *ThisArgEltTy =
+      dyn_cast<PointerType>(ThisArgVecTy->getVectorElementType());
+    if (!ThisArgEltTy)
+      return true;
+    return (!(ThisArgEltTy->getElementType() ==
+            ReferenceType->getVectorElementType()));
+  }
   }
   llvm_unreachable("unhandled");
 }

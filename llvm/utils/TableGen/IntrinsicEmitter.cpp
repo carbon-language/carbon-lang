@@ -259,7 +259,8 @@ enum IIT_Info {
   IIT_VARARG = 28,
   IIT_HALF_VEC_ARG = 29,
   IIT_SAME_VEC_WIDTH_ARG = 30,
-  IIT_PTR_TO_ARG = 31
+  IIT_PTR_TO_ARG = 31,
+  IIT_VEC_OF_PTRS_TO_ELT = 32
 };
 
 
@@ -314,9 +315,10 @@ static void EncodeFixedType(Record *R, std::vector<unsigned char> &ArgCodes,
       EncodeFixedValueType(VT, Sig);
       return;
     }
-    else if (R->isSubClassOf("LLVMPointerTo")) {
+    else if (R->isSubClassOf("LLVMPointerTo"))
       Sig.push_back(IIT_PTR_TO_ARG);
-    }
+    else if (R->isSubClassOf("LLVMVectorOfPointersToElt"))
+      Sig.push_back(IIT_VEC_OF_PTRS_TO_ELT);
     else
       Sig.push_back(IIT_ARG);
     return Sig.push_back((Number << 3) | ArgCodes[Number]);
