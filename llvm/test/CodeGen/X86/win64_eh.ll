@@ -1,5 +1,5 @@
-; RUN: llc < %s -O0 -mcpu=corei7 -mtriple=x86_64-pc-windows-itanium | FileCheck %s -check-prefix=WIN64
-; RUN: llc < %s -O0 -mcpu=corei7 -mtriple=x86_64-pc-mingw32 | FileCheck %s -check-prefix=WIN64
+; RUN: llc < %s -O0 -mattr=sse2 -mtriple=x86_64-pc-windows-itanium | FileCheck %s -check-prefix=WIN64
+; RUN: llc < %s -O0 -mattr=sse2 -mtriple=x86_64-pc-mingw32 | FileCheck %s -check-prefix=WIN64
 
 ; Check function without prolog
 define void @foo0() uwtable {
