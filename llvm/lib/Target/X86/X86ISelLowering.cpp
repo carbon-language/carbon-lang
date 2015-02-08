@@ -11315,7 +11315,7 @@ static bool isBlendMask(ArrayRef<int> MaskVals, MVT VT, bool hasSSE41,
   unsigned NumLanes = (NumElems - 1) / 8 + 1;
   unsigned NumElemsInLane = NumElems / NumLanes;
 
-  // Blend for v16i16 should be symetric for the both lanes.
+  // Blend for v16i16 should be symmetric for both lanes.
   for (unsigned i = 0; i < NumElemsInLane; ++i) {
 
     int SndLaneEltIdx = (NumLanes == 2) ? MaskVals[i + NumElemsInLane] : -1;
@@ -12197,7 +12197,7 @@ static
 SDValue getMOVDDup(SDValue &Op, SDLoc &dl, SDValue V1, SelectionDAG &DAG) {
   MVT VT = Op.getSimpleValueType();
 
-  // Canonizalize to v2f64.
+  // Canonicalize to v2f64.
   V1 = DAG.getNode(ISD::BITCAST, dl, MVT::v2f64, V1);
   return DAG.getNode(ISD::BITCAST, dl, VT,
                      getTargetShuffleNode(X86ISD::MOVDDUP, dl, MVT::v2f64,
@@ -12216,7 +12216,7 @@ SDValue getMOVLowToHigh(SDValue &Op, SDLoc &dl, SelectionDAG &DAG,
   if (HasSSE2 && VT == MVT::v2f64)
     return getTargetShuffleNode(X86ISD::MOVLHPD, dl, VT, V1, V2, DAG);
 
-  // v4f32 or v4i32: canonizalized to v4f32 (which is legal for SSE1)
+  // v4f32 or v4i32: canonicalize to v4f32 (which is legal for SSE1)
   return DAG.getNode(ISD::BITCAST, dl, VT,
                      getTargetShuffleNode(X86ISD::MOVLHPS, dl, MVT::v4f32,
                            DAG.getNode(ISD::BITCAST, dl, MVT::v4f32, V1),
