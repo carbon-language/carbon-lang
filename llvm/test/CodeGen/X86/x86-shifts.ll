@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=x86-64 -mcpu=corei7 | FileCheck %s
+; RUN: llc < %s -march=x86-64 -mattr=sse2 | FileCheck %s
 
 ; Splat patterns below
 
