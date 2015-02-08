@@ -15,6 +15,9 @@ void aliasb [[gnu::alias("_Z6alias1v")]] ();
 void alias1() {}
 void aliasa [[gnu::alias("_Z6alias1v")]] ();
 
+extern struct PR22493Ty {
+} PR22493 [[gnu::alias("_ZN7pcrecpp2RE6no_argE")]];
+
 [[gnu::aligned(8)]] int aligned;
 void aligned_fn [[gnu::aligned(32)]] ();
 struct [[gnu::aligned(8)]] aligned_struct {};
