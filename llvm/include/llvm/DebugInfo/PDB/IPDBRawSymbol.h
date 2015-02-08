@@ -14,11 +14,11 @@
 
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
-#include "llvm/Support/COFF.h"
-#include "llvm/Support/raw_ostream.h"
 #include "PDBTypes.h"
 
 namespace llvm {
+
+class raw_ostream;
 
 /// IPDBRawSymbol defines an interface used to represent an arbitrary symbol.
 /// It exposes a monolithic interface consisting of accessors for the union of
@@ -41,14 +41,12 @@ public:
   findInlineFramesByRVA(uint32_t RVA) const = 0;
 
   virtual void getDataBytes(llvm::SmallVector<uint8_t, 32> &bytes) const = 0;
+  virtual void getBackEndVersion(VersionInfo &Version) const = 0;
   virtual PDB_MemberAccess getAccess() const = 0;
   virtual uint32_t getAddressOffset() const = 0;
   virtual uint32_t getAddressSection() const = 0;
   virtual uint32_t getAge() const = 0;
   virtual uint32_t getArrayIndexTypeId() const = 0;
-  virtual uint32_t getBackEndBuild() const = 0;
-  virtual uint32_t getBackEndMajor() const = 0;
-  virtual uint32_t getBackEndMinor() const = 0;
   virtual uint32_t getBaseDataOffset() const = 0;
   virtual uint32_t getBaseDataSlot() const = 0;
   virtual uint32_t getBaseSymbolId() const = 0;
@@ -59,9 +57,7 @@ public:
   virtual std::string getCompilerName() const = 0;
   virtual uint32_t getCount() const = 0;
   virtual uint32_t getCountLiveRanges() const = 0;
-  virtual uint32_t getFrontEndBuild() const = 0;
-  virtual uint32_t getFrontEndMajor() const = 0;
-  virtual uint32_t getFrontEndMinor() const = 0;
+  virtual void getFrontEndVersion(VersionInfo &Version) const = 0;
   virtual PDB_Lang getLanguage() const = 0;
   virtual uint32_t getLexicalParentId() const = 0;
   virtual std::string getLibraryName() const = 0;
@@ -117,7 +113,7 @@ public:
   virtual int32_t getThisAdjust() const = 0;
   virtual int32_t getVirtualBasePointerOffset() const = 0;
   virtual PDB_LocType getLocationType() const = 0;
-  virtual COFF::MachineTypes getMachineType() const = 0;
+  virtual PDB_Machine getMachineType() const = 0;
   virtual PDB_ThunkOrdinal getThunkOrdinal() const = 0;
   virtual uint64_t getLength() const = 0;
   virtual uint64_t getLiveRangeLength() const = 0;

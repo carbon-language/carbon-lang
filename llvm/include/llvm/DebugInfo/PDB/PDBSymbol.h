@@ -13,7 +13,6 @@
 #include <memory>
 
 #include "llvm/ADT/StringRef.h"
-#include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Casting.h"
 
 #include "IPDBRawSymbol.h"
@@ -27,6 +26,7 @@
 namespace llvm {
 
 class IPDBRawSymbol;
+class raw_ostream;
 
 /// PDBSymbol defines the base of the inheritance hierarchy for concrete symbol
 /// types (e.g. functions, executables, vtables, etc).  All concrete symbol

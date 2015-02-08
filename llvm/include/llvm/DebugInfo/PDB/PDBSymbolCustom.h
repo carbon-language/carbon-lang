@@ -17,6 +17,8 @@
 
 namespace llvm {
 
+class raw_ostream;
+
 /// PDBSymbolCustom represents symbols that are compiler-specific and do not
 /// fit anywhere else in the lexical hierarchy.
 /// https://msdn.microsoft.com/en-us/library/d88sf09h.aspx
@@ -24,8 +26,9 @@ class PDBSymbolCustom : public PDBSymbol {
 public:
   PDBSymbolCustom(std::unique_ptr<IPDBRawSymbol> CustomSymbol);
 
-  void getDataBytes(llvm::SmallVector<uint8_t, 32> &bytes);
+  void dump(llvm::raw_ostream &OS) const override;
 
+  void getDataBytes(llvm::SmallVector<uint8_t, 32> &bytes);
   FORWARD_SYMBOL_METHOD(getSymIndexId)
 
   static bool classof(const PDBSymbol *S) {

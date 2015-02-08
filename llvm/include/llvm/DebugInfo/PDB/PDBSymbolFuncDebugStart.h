@@ -15,9 +15,13 @@
 
 namespace llvm {
 
+class raw_ostream;
+
 class PDBSymbolFuncDebugStart : public PDBSymbol {
 public:
   PDBSymbolFuncDebugStart(std::unique_ptr<IPDBRawSymbol> FuncDebugStartSymbol);
+
+  void dump(llvm::raw_ostream &OS) const override;
 
   FORWARD_SYMBOL_METHOD(getAddressOffset)
   FORWARD_SYMBOL_METHOD(getAddressSection)

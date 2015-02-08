@@ -88,6 +88,8 @@ public:
   }
 
   void getDataBytes(llvm::SmallVector<uint8_t, 32> &bytes) const override {}
+  void getFrontEndVersion(VersionInfo &Version) const override {}
+  void getBackEndVersion(VersionInfo &Version) const override {}
 
   PDB_SymType getSymTag() const override { return Type; }
 
@@ -96,9 +98,6 @@ public:
   MOCK_SYMBOL_ACCESSOR(getAddressSection)
   MOCK_SYMBOL_ACCESSOR(getAge)
   MOCK_SYMBOL_ACCESSOR(getArrayIndexTypeId)
-  MOCK_SYMBOL_ACCESSOR(getBackEndBuild)
-  MOCK_SYMBOL_ACCESSOR(getBackEndMajor)
-  MOCK_SYMBOL_ACCESSOR(getBackEndMinor)
   MOCK_SYMBOL_ACCESSOR(getBaseDataOffset)
   MOCK_SYMBOL_ACCESSOR(getBaseDataSlot)
   MOCK_SYMBOL_ACCESSOR(getBaseSymbolId)
@@ -109,9 +108,6 @@ public:
   MOCK_SYMBOL_ACCESSOR(getCompilerName)
   MOCK_SYMBOL_ACCESSOR(getCount)
   MOCK_SYMBOL_ACCESSOR(getCountLiveRanges)
-  MOCK_SYMBOL_ACCESSOR(getFrontEndBuild)
-  MOCK_SYMBOL_ACCESSOR(getFrontEndMajor)
-  MOCK_SYMBOL_ACCESSOR(getFrontEndMinor)
   MOCK_SYMBOL_ACCESSOR(getLanguage)
   MOCK_SYMBOL_ACCESSOR(getLexicalParentId)
   MOCK_SYMBOL_ACCESSOR(getLibraryName)

@@ -15,9 +15,13 @@
 
 namespace llvm {
 
+class raw_ostream;
+
 class PDBSymbolTypeBuiltin : public PDBSymbol {
 public:
   PDBSymbolTypeBuiltin(std::unique_ptr<IPDBRawSymbol> BuiltinTypeSymbol);
+
+  void dump(llvm::raw_ostream &OS) const override;
 
   FORWARD_SYMBOL_METHOD(getBuiltinType)
   FORWARD_SYMBOL_METHOD(isConstType)

@@ -15,9 +15,13 @@
 
 namespace llvm {
 
+class raw_ostream;
+
 class PDBSymbolUsingNamespace : public PDBSymbol {
 public:
   PDBSymbolUsingNamespace(std::unique_ptr<IPDBRawSymbol> UsingSymbol);
+
+  void dump(llvm::raw_ostream &OS) const override;
 
   FORWARD_SYMBOL_METHOD(getLexicalParentId)
   FORWARD_SYMBOL_METHOD(getName)

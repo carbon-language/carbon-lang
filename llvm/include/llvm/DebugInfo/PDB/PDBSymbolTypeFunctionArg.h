@@ -15,9 +15,13 @@
 
 namespace llvm {
 
+class raw_ostream;
+
 class PDBSymbolTypeFunctionArg : public PDBSymbol {
 public:
   PDBSymbolTypeFunctionArg(std::unique_ptr<IPDBRawSymbol> FuncArgTypeSymbol);
+
+  void dump(llvm::raw_ostream &OS) const override;
 
   FORWARD_SYMBOL_METHOD(getClassParentId)
   FORWARD_SYMBOL_METHOD(getLexicalParentId)

@@ -15,9 +15,13 @@
 
 namespace llvm {
 
+class raw_ostream;
+
 class PDBSymbolTypePointer : public PDBSymbol {
 public:
   PDBSymbolTypePointer(std::unique_ptr<IPDBRawSymbol> PointerTypeSymbol);
+
+  void dump(llvm::raw_ostream &OS) const override;
 
   FORWARD_SYMBOL_METHOD(isConstType)
   FORWARD_SYMBOL_METHOD(getLength)

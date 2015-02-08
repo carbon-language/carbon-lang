@@ -6,6 +6,7 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
+
 #ifndef LLVM_DEBUGINFO_PDB_PDBSYMBOLEXE_H
 #define LLVM_DEBUGINFO_PDB_PDBSYMBOLEXE_H
 
@@ -18,9 +19,13 @@
 
 namespace llvm {
 
+class raw_ostream;
+
 class PDBSymbolExe : public PDBSymbol {
 public:
   PDBSymbolExe(std::unique_ptr<IPDBRawSymbol> ExeSymbol);
+
+  void dump(llvm::raw_ostream &OS) const override;
 
   FORWARD_SYMBOL_METHOD(getAge)
   FORWARD_SYMBOL_METHOD(getGuid)

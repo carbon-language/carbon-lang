@@ -15,18 +15,24 @@
 
 namespace llvm {
 
+class raw_ostream;
+
 class PDBSymbolCompilandDetails : public PDBSymbol {
 public:
   PDBSymbolCompilandDetails(std::unique_ptr<IPDBRawSymbol> DetailsSymbol);
 
-  FORWARD_SYMBOL_METHOD(getBackEndBuild)
-  FORWARD_SYMBOL_METHOD(getBackEndMajor)
-  FORWARD_SYMBOL_METHOD(getBackEndMinor)
+  void dump(llvm::raw_ostream &OS) const override;
+
+  void getFrontEndVersion(VersionInfo &Version) const {
+    RawSymbol->getFrontEndVersion(Version);
+  }
+
+  void getBackEndVersion(VersionInfo &Version) const {
+    RawSymbol->getBackEndVersion(Version);
+  }
+
   FORWARD_SYMBOL_METHOD(getCompilerName)
   FORWARD_SYMBOL_METHOD(isEditAndContinueEnabled)
-  FORWARD_SYMBOL_METHOD(getFrontEndBuild)
-  FORWARD_SYMBOL_METHOD(getFrontEndMajor)
-  FORWARD_SYMBOL_METHOD(getFrontEndMinor)
   FORWARD_SYMBOL_METHOD(hasDebugInfo)
   FORWARD_SYMBOL_METHOD(hasManagedCode)
   FORWARD_SYMBOL_METHOD(hasSecurityChecks)

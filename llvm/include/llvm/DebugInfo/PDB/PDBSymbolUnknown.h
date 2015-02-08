@@ -15,9 +15,13 @@
 
 namespace llvm {
 
+class raw_ostream;
+
 class PDBSymbolUnknown : public PDBSymbol {
 public:
   PDBSymbolUnknown(std::unique_ptr<IPDBRawSymbol> UnknownSymbol);
+
+  void dump(llvm::raw_ostream &OS) const override;
 
   static bool classof(const PDBSymbol *S) {
     return (S->getSymTag() == PDB_SymType::None ||

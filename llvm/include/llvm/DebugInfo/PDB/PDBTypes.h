@@ -25,7 +25,7 @@ class IPDBRawSymbol;
 class IPDBSession;
 class IPDBSourceFile;
 
-typedef IPDBEnumChildren<IPDBRawSymbol> IPDBEnumSymbols;
+typedef IPDBEnumChildren<PDBSymbol> IPDBEnumSymbols;
 typedef IPDBEnumChildren<IPDBSourceFile> IPDBEnumSourceFiles;
 typedef IPDBEnumChildren<IPDBDataStream> IPDBEnumDataStreams;
 typedef IPDBEnumChildren<PDBSymbolCompiland> IPDBEnumCompilands;
@@ -169,6 +169,31 @@ enum class PDB_Cpu {
   Thumb = 0xf0,
   ARMNT = 0xf4,
   D3D11_Shader = 0x100,
+};
+
+enum class PDB_Machine {
+  Invalid = 0xffff,
+  Unknown = 0x0,
+  Am33 = 0x13,
+  Amd64 = 0x8664,
+  Arm = 0x1C0,
+  Armnt = 0x1C4,
+  Ebc = 0xEBC,
+  I386 = 0x14C,
+  Ia64 = 0x200,
+  M32r = 0x9041,
+  Mips16 = 0x266,
+  MipsFPU = 0x366,
+  MipsFPU16 = 0x466,
+  PowerPC = 0x1F0,
+  PowerPCFP = 0x1F1,
+  R4000 = 0x166,
+  SH3 = 0x1A2,
+  SH3DSP = 0x1A3,
+  SH4 = 0x1A6,
+  SH5 = 0x1A8,
+  Thumb = 0x1C2,
+  WceMipsV2 = 0x169
 };
 
 /// These values correspond to the CV_call_e enumeration, and are documented
@@ -344,6 +369,13 @@ enum class PDB_BuiltinType {
 };
 
 enum class PDB_MemberAccess { Private = 1, Protected = 2, Public = 3 };
+
+struct VersionInfo {
+  uint32_t Major;
+  uint32_t Minor;
+  uint32_t Build;
+  uint32_t QFE;
+};
 
 } // namespace llvm
 

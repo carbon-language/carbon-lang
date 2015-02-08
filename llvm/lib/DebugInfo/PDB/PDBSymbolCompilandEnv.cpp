@@ -15,7 +15,13 @@
 
 using namespace llvm;
 
+PDBSymbolCompilandEnv::PDBSymbolCompilandEnv(
+    std::unique_ptr<IPDBRawSymbol> Symbol)
+    : PDBSymbol(std::move(Symbol)) {}
+
 std::string PDBSymbolCompilandEnv::getValue() const {
   // call RawSymbol->getValue() and convert the result to an std::string.
   return std::string();
 }
+
+void PDBSymbolCompilandEnv::dump(llvm::raw_ostream &OS) const {}

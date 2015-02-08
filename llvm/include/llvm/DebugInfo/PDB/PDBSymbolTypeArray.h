@@ -15,9 +15,13 @@
 
 namespace llvm {
 
+class raw_ostream;
+
 class PDBSymbolTypeArray : public PDBSymbol {
 public:
   PDBSymbolTypeArray(std::unique_ptr<IPDBRawSymbol> ArrayTypeSymbol);
+
+  void dump(llvm::raw_ostream &OS) const override;
 
   FORWARD_SYMBOL_METHOD(getArrayIndexTypeId)
   FORWARD_SYMBOL_METHOD(isConstType)

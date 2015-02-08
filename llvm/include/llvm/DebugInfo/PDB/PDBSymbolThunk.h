@@ -6,6 +6,7 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
+
 #ifndef LLVM_DEBUGINFO_PDB_PDBSYMBOLTHUNK_H
 #define LLVM_DEBUGINFO_PDB_PDBSYMBOLTHUNK_H
 
@@ -16,9 +17,13 @@
 
 namespace llvm {
 
+class raw_ostream;
+
 class PDBSymbolThunk : public PDBSymbol {
 public:
   PDBSymbolThunk(std::unique_ptr<IPDBRawSymbol> ThunkSymbol);
+
+  void dump(llvm::raw_ostream &OS) const override;
 
   FORWARD_SYMBOL_METHOD(getAccess)
   FORWARD_SYMBOL_METHOD(getAddressOffset)

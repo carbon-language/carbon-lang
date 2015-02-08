@@ -15,9 +15,13 @@
 
 namespace llvm {
 
+class raw_ostream;
+
 class PDBSymbolTypeDimension : public PDBSymbol {
 public:
   PDBSymbolTypeDimension(std::unique_ptr<IPDBRawSymbol> DimensionTypeSymbol);
+
+  void dump(llvm::raw_ostream &OS) const override;
 
   FORWARD_SYMBOL_METHOD(getLowerBoundId)
   FORWARD_SYMBOL_METHOD(getUpperBoundId)

@@ -15,9 +15,13 @@
 
 namespace llvm {
 
+class raw_ostream;
+
 class PDBSymbolCompilandEnv : public PDBSymbol {
 public:
   PDBSymbolCompilandEnv(std::unique_ptr<IPDBRawSymbol> CompilandEnvSymbol);
+
+  void dump(llvm::raw_ostream &OS) const override;
 
   FORWARD_SYMBOL_METHOD(getLexicalParentId)
   FORWARD_SYMBOL_METHOD(getName)

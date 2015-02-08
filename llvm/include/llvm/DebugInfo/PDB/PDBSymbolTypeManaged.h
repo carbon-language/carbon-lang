@@ -15,9 +15,13 @@
 
 namespace llvm {
 
+class raw_ostream;
+
 class PDBSymbolTypeManaged : public PDBSymbol {
 public:
   PDBSymbolTypeManaged(std::unique_ptr<IPDBRawSymbol> ManagedTypeSymbol);
+
+  void dump(llvm::raw_ostream &OS) const override;
 
   FORWARD_SYMBOL_METHOD(getName)
   FORWARD_SYMBOL_METHOD(getSymIndexId)
