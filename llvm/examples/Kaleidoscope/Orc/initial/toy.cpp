@@ -14,8 +14,10 @@
 #include "llvm/Support/TargetSelect.h"
 #include "llvm/Transforms/Scalar.h"
 #include <cctype>
-#include <cstdio>
+#include <iomanip>
+#include <iostream>
 #include <map>
+#include <sstream>
 #include <string>
 #include <vector>
 using namespace llvm;
@@ -271,14 +273,14 @@ static int GetTokPrecedence() {
 }
 
 template <typename T>
-std::unique_ptr<T> ErrorU(const char *Str) {
-  fprintf(stderr, "Error: %s\n", Str);
+std::unique_ptr<T> ErrorU(const std::string &Str) {
+  std::cerr << "Error: " << Str << "\n";
   return nullptr;
 }
 
 template <typename T>
-T* ErrorP(const char *Str) {
-  fprintf(stderr, "Error: %s\n", Str);
+T* ErrorP(const std::string &Str) {
+  std::cerr << "Error: " << Str << "\n";
   return nullptr;
 }
 
@@ -644,13 +646,11 @@ static std::unique_ptr<PrototypeAST> ParseExtern() {
 //===----------------------------------------------------------------------===//
 
 // FIXME: Obviously we can do better than this
-std::string GenerateUniqueName(const char *root)
-{
+std::string GenerateUniqueName(const std::string &Root) {
   static int i = 0;
-  char s[16];
-  sprintf(s, "%s%d", root, i++);
-  std::string S = s;
-  return S;
+  std::ostringstream NameStream;
+  NameStream << Root << ++i;
+  return NameStream.str();
 }
 
 std::string MakeLegalFunctionName(std::string Name)
@@ -670,10 +670,9 @@ std::string MakeLegalFunctionName(std::string Name)
   std::string legal_elements = "_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
   size_t pos;
   while ((pos = NewName.find_first_not_of(legal_elements)) != std::string::npos) {
-    char old_c = NewName.at(pos);
-    char new_str[16];
-    sprintf(new_str, "%d", (int)old_c);
-    NewName = NewName.replace(pos, 1, new_str);
+    std::ostringstream NumStream;
+    NumStream << (int)NewName.at(pos);
+    NewName = NewName.replace(pos, 1, NumStream.str());
   }
 
   return NewName;
@@ -700,7 +699,7 @@ PrototypeAST* SessionContext::getPrototypeAST(const std::string &Name) {
   if (I != Prototypes.end())
     return I->second.get();
   return nullptr;
-} 
+}
 
 class IRGenContext {
 public:
@@ -751,11 +750,8 @@ Value *VariableExprAST::IRGen(IRGenContext &C) {
   // Look this variable up in the function.
   Value *V = C.NamedValues[Name];
 
-  if (V == 0) {
-    char ErrStr[256];
-    sprintf(ErrStr, "Unknown variable name %s", Name.c_str());
-    return ErrorP<Value>(ErrStr);
-  }
+  if (V == 0)
+    return ErrorP<Value>("Unknown variable name '" + Name + "'");
 
   // Load the value.
   return C.getBuilder().CreateLoad(V, Name.c_str());
@@ -1189,7 +1185,7 @@ static void HandleDefinition(SessionContext &S, KaleidoscopeJIT &J) {
     IRGenContext C(S);
     if (auto LF = F->IRGen(C)) {
 #ifndef MINIMAL_STDERR_OUTPUT
-      fprintf(stderr, "Read function definition:");
+      std::cerr << "Read function definition:\n";
       LF->dump();
 #endif
       J.addModule(C.takeM());
@@ -1216,7 +1212,7 @@ static void HandleTopLevelExpression(SessionContext &S, KaleidoscopeJIT &J) {
     IRGenContext C(S);
     if (auto ExprFunc = F->IRGen(C)) {
 #ifndef MINIMAL_STDERR_OUTPUT
-      fprintf(stderr, "Expression function:\n");
+      std::cerr << "Expression function:\n";
       ExprFunc->dump();
 #endif
       // Add the CodeGen'd module to the JIT. Keep a handle to it: We can remove
@@ -1232,7 +1228,7 @@ static void HandleTopLevelExpression(SessionContext &S, KaleidoscopeJIT &J) {
 #ifdef MINIMAL_STDERR_OUTPUT
       FP();
 #else
-      fprintf(stderr, "Evaluated to %f\n", FP());
+      std::cerr << "Evaluated to " << FP() << "\n";
 #endif
 
       // Remove the function.
@@ -1251,7 +1247,7 @@ static void MainLoop() {
 
   while (1) {
 #ifndef MINIMAL_STDERR_OUTPUT
-    fprintf(stderr, "ready> ");
+    std::cerr << "ready> ";
 #endif
     switch (CurTok) {
     case tok_eof:    return;
@@ -1307,9 +1303,11 @@ int main() {
 
   // Prime the first token.
 #ifndef MINIMAL_STDERR_OUTPUT
-  fprintf(stderr, "ready> ");
+  std::cerr << "ready> ";
 #endif
   getNextToken();
+
+  std::cerr << std::fixed;
 
   // Run the main "interpreter loop" now.
   MainLoop();
