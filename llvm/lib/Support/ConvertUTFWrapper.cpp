@@ -135,8 +135,11 @@ bool convertUTF8ToUTF16String(StringRef SrcUTF8,
   assert(DstUTF16.empty());
 
   // Avoid OOB by returning early on empty input.
-  if (SrcUTF8.empty())
+  if (SrcUTF8.empty()) {
+    DstUTF16.push_back(0);
+    DstUTF16.pop_back();
     return true;
+  }
 
   const UTF8 *Src = reinterpret_cast<const UTF8 *>(SrcUTF8.begin());
   const UTF8 *SrcEnd = reinterpret_cast<const UTF8 *>(SrcUTF8.end());
