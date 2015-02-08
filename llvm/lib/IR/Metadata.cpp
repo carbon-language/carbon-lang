@@ -84,8 +84,7 @@ MetadataAsValue *MetadataAsValue::getIfExists(LLVMContext &Context,
                                               Metadata *MD) {
   MD = canonicalizeMetadataForValue(Context, MD);
   auto &Store = Context.pImpl->MetadataAsValues;
-  auto I = Store.find(MD);
-  return I == Store.end() ? nullptr : I->second;
+  return Store.lookup(MD);
 }
 
 void MetadataAsValue::handleChangedMetadata(Metadata *MD) {
@@ -439,8 +438,7 @@ static bool isOperandUnresolved(Metadata *Op) {
 
 unsigned MDNode::countUnresolvedOperands() {
   assert(NumUnresolved == 0 && "Expected unresolved ops to be uncounted");
-  for (const auto &Op : operands())
-    NumUnresolved += unsigned(isOperandUnresolved(Op));
+  NumUnresolved = std::count_if(op_begin(), op_end(), isOperandUnresolved);
   return NumUnresolved;
 }
 
@@ -750,13 +748,10 @@ MDNode *MDNode::concatenate(MDNode *A, MDNode *B) {
   if (!B)
     return A;
 
-  SmallVector<Metadata *, 4> MDs(A->getNumOperands() + B->getNumOperands());
-
-  unsigned j = 0;
-  for (unsigned i = 0, ie = A->getNumOperands(); i != ie; ++i)
-    MDs[j++] = A->getOperand(i);
-  for (unsigned i = 0, ie = B->getNumOperands(); i != ie; ++i)
-    MDs[j++] = B->getOperand(i);
+  SmallVector<Metadata *, 4> MDs;
+  MDs.reserve(A->getNumOperands() + B->getNumOperands());
+  MDs.append(A->op_begin(), A->op_end());
+  MDs.append(B->op_begin(), B->op_end());
 
   // FIXME: This preserves long-standing behaviour, but is it really the right
   // behaviour?  Or was that an unintended side-effect of node uniquing?
@@ -768,14 +763,9 @@ MDNode *MDNode::intersect(MDNode *A, MDNode *B) {
     return nullptr;
 
   SmallVector<Metadata *, 4> MDs;
-  for (unsigned i = 0, ie = A->getNumOperands(); i != ie; ++i) {
-    Metadata *MD = A->getOperand(i);
-    for (unsigned j = 0, je = B->getNumOperands(); j != je; ++j)
-      if (MD == B->getOperand(j)) {
-        MDs.push_back(MD);
-        break;
-      }
-  }
+  for (Metadata *MD : A->operands())
+    if (std::find(B->op_begin(), B->op_end(), MD) != B->op_end())
+      MDs.push_back(MD);
 
   // FIXME: This preserves long-standing behaviour, but is it really the right
   // behaviour?  Or was that an unintended side-effect of node uniquing?
@@ -787,17 +777,9 @@ MDNode *MDNode::getMostGenericAliasScope(MDNode *A, MDNode *B) {
     return nullptr;
 
   SmallVector<Metadata *, 4> MDs(B->op_begin(), B->op_end());
-  for (unsigned i = 0, ie = A->getNumOperands(); i != ie; ++i) {
-    Metadata *MD = A->getOperand(i);
-    bool insert = true;
-    for (unsigned j = 0, je = B->getNumOperands(); j != je; ++j)
-      if (MD == B->getOperand(j)) {
-        insert = false;
-        break;
-      }
-    if (insert)
-        MDs.push_back(MD);
-  }
+  for (Metadata *MD : A->operands())
+    if (std::find(B->op_begin(), B->op_end(), MD) == B->op_end())
+      MDs.push_back(MD);
 
   // FIXME: This preserves long-standing behaviour, but is it really the right
   // behaviour?  Or was that an unintended side-effect of node uniquing?
