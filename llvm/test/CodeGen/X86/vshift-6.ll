@@ -1,4 +1,4 @@
-; RUN: llc < %s -mcpu=corei7 -march=x86-64 -mattr=+sse2  | FileCheck %s
+; RUN: llc < %s -march=x86-64 -mattr=+sse2  | FileCheck %s
 
 ; This test makes sure that the compiler does not crash with an
 ; assertion failure when trying to fold a vector shift left
