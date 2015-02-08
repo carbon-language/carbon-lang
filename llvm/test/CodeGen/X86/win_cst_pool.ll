@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=x86_64-win32 -mcpu=corei7 | FileCheck %s
+; RUN: llc < %s -mtriple=x86_64-win32 -mattr=sse2 | FileCheck %s
 target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
 target triple = "x86_64-pc-windows-msvc"
 
