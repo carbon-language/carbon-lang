@@ -19,7 +19,7 @@ class raw_ostream;
 
 class PDBSymbolTypeEnum : public PDBSymbol {
 public:
-  PDBSymbolTypeEnum(IPDBSession &PDBSession,
+  PDBSymbolTypeEnum(const IPDBSession &PDBSession,
                     std::unique_ptr<IPDBRawSymbol> EnumTypeSymbol);
 
   void dump(llvm::raw_ostream &OS) const override;

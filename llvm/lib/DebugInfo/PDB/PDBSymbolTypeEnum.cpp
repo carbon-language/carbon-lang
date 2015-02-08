@@ -14,7 +14,7 @@
 
 using namespace llvm;
 
-PDBSymbolTypeEnum::PDBSymbolTypeEnum(IPDBSession &PDBSession,
+PDBSymbolTypeEnum::PDBSymbolTypeEnum(const IPDBSession &PDBSession,
                                      std::unique_ptr<IPDBRawSymbol> Symbol)
     : PDBSymbol(PDBSession, std::move(Symbol)) {}
 

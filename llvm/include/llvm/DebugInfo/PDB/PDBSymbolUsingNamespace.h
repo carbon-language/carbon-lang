@@ -19,7 +19,7 @@ class raw_ostream;
 
 class PDBSymbolUsingNamespace : public PDBSymbol {
 public:
-  PDBSymbolUsingNamespace(IPDBSession &PDBSession,
+  PDBSymbolUsingNamespace(const IPDBSession &PDBSession,
                           std::unique_ptr<IPDBRawSymbol> Symbol);
 
   void dump(llvm::raw_ostream &OS) const override;

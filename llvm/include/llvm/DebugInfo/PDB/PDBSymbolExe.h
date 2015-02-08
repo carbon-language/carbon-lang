@@ -23,7 +23,7 @@ class raw_ostream;
 
 class PDBSymbolExe : public PDBSymbol {
 public:
-  PDBSymbolExe(IPDBSession &PDBSession,
+  PDBSymbolExe(const IPDBSession &PDBSession,
                std::unique_ptr<IPDBRawSymbol> ExeSymbol);
 
   void dump(llvm::raw_ostream &OS) const override;

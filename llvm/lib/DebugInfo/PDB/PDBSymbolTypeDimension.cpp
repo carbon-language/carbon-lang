@@ -16,7 +16,7 @@
 using namespace llvm;
 
 PDBSymbolTypeDimension::PDBSymbolTypeDimension(
-    IPDBSession &PDBSession, std::unique_ptr<IPDBRawSymbol> Symbol)
+    const IPDBSession &PDBSession, std::unique_ptr<IPDBRawSymbol> Symbol)
     : PDBSymbol(PDBSession, std::move(Symbol)) {}
 
 void PDBSymbolTypeDimension::dump(llvm::raw_ostream &OS) const {}

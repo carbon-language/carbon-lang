@@ -15,7 +15,7 @@
 
 using namespace llvm;
 
-PDBSymbolCustom::PDBSymbolCustom(IPDBSession &PDBSession,
+PDBSymbolCustom::PDBSymbolCustom(const IPDBSession &PDBSession,
                                  std::unique_ptr<IPDBRawSymbol> CustomSymbol)
     : PDBSymbol(PDBSession, std::move(CustomSymbol)) {}
 

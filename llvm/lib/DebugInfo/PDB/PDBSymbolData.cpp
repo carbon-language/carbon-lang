@@ -12,7 +12,7 @@
 
 using namespace llvm;
 
-PDBSymbolData::PDBSymbolData(IPDBSession &PDBSession,
+PDBSymbolData::PDBSymbolData(const IPDBSession &PDBSession,
                              std::unique_ptr<IPDBRawSymbol> DataSymbol)
     : PDBSymbol(PDBSession, std::move(DataSymbol)) {}
 

@@ -14,7 +14,7 @@
 
 using namespace llvm;
 
-PDBSymbolFunc::PDBSymbolFunc(IPDBSession &PDBSession,
+PDBSymbolFunc::PDBSymbolFunc(const IPDBSession &PDBSession,
                              std::unique_ptr<IPDBRawSymbol> Symbol)
     : PDBSymbol(PDBSession, std::move(Symbol)) {}
 

@@ -16,7 +16,7 @@
 using namespace llvm;
 
 PDBSymbolCompilandEnv::PDBSymbolCompilandEnv(
-    IPDBSession &PDBSession, std::unique_ptr<IPDBRawSymbol> Symbol)
+    const IPDBSession &PDBSession, std::unique_ptr<IPDBRawSymbol> Symbol)
     : PDBSymbol(PDBSession, std::move(Symbol)) {}
 
 std::string PDBSymbolCompilandEnv::getValue() const {

@@ -48,7 +48,7 @@
 
 using namespace llvm;
 
-PDBSymbol::PDBSymbol(IPDBSession &PDBSession,
+PDBSymbol::PDBSymbol(const IPDBSession &PDBSession,
                      std::unique_ptr<IPDBRawSymbol> Symbol)
     : Session(PDBSession), RawSymbol(std::move(Symbol)) {}
 
@@ -59,7 +59,7 @@ PDBSymbol::~PDBSymbol() {}
     return std::unique_ptr<PDBSymbol>(new Type(PDBSession, std::move(Symbol)));
 
 std::unique_ptr<PDBSymbol>
-PDBSymbol::create(IPDBSession &PDBSession,
+PDBSymbol::create(const IPDBSession &PDBSession,
                   std::unique_ptr<IPDBRawSymbol> Symbol) {
   switch (Symbol->getSymTag()) {
     FACTORY_SYMTAG_CASE(Exe, PDBSymbolExe)

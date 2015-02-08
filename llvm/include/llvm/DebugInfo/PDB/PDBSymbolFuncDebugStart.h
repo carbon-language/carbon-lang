@@ -19,7 +19,7 @@ class raw_ostream;
 
 class PDBSymbolFuncDebugStart : public PDBSymbol {
 public:
-  PDBSymbolFuncDebugStart(IPDBSession &PDBSession,
+  PDBSymbolFuncDebugStart(const IPDBSession &PDBSession,
                           std::unique_ptr<IPDBRawSymbol> FuncDebugStartSymbol);
 
   void dump(llvm::raw_ostream &OS) const override;

@@ -15,7 +15,7 @@
 using namespace llvm;
 
 PDBSymbolUsingNamespace::PDBSymbolUsingNamespace(
-    IPDBSession &PDBSession, std::unique_ptr<IPDBRawSymbol> Symbol)
+    const IPDBSession &PDBSession, std::unique_ptr<IPDBRawSymbol> Symbol)
     : PDBSymbol(PDBSession, std::move(Symbol)) {}
 
 void PDBSymbolUsingNamespace::dump(llvm::raw_ostream &OS) const {}

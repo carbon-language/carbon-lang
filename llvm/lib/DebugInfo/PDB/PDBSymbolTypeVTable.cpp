@@ -14,7 +14,7 @@
 
 using namespace llvm;
 
-PDBSymbolTypeVTable::PDBSymbolTypeVTable(IPDBSession &PDBSession,
+PDBSymbolTypeVTable::PDBSymbolTypeVTable(const IPDBSession &PDBSession,
                                          std::unique_ptr<IPDBRawSymbol> Symbol)
     : PDBSymbol(PDBSession, std::move(Symbol)) {}
 

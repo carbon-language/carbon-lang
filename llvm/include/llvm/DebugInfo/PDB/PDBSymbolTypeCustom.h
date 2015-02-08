@@ -19,7 +19,7 @@ class raw_ostream;
 
 class PDBSymbolTypeCustom : public PDBSymbol {
 public:
-  PDBSymbolTypeCustom(IPDBSession &PDBSession,
+  PDBSymbolTypeCustom(const IPDBSession &PDBSession,
                       std::unique_ptr<IPDBRawSymbol> Symbol);
 
   void dump(llvm::raw_ostream &OS) const override;

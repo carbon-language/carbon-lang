@@ -14,7 +14,7 @@
 
 using namespace llvm;
 
-PDBSymbolTypeUDT::PDBSymbolTypeUDT(IPDBSession &PDBSession,
+PDBSymbolTypeUDT::PDBSymbolTypeUDT(const IPDBSession &PDBSession,
                                    std::unique_ptr<IPDBRawSymbol> Symbol)
     : PDBSymbol(PDBSession, std::move(Symbol)) {}
 

@@ -36,11 +36,11 @@ class raw_ostream;
 /// https://msdn.microsoft.com/en-us/library/370hs6k4.aspx
 class PDBSymbol {
 protected:
-  PDBSymbol(IPDBSession &PDBSession, std::unique_ptr<IPDBRawSymbol> Symbol);
+  PDBSymbol(const IPDBSession &PDBSession, std::unique_ptr<IPDBRawSymbol> Symbol);
 
 public:
   static std::unique_ptr<PDBSymbol>
-  create(IPDBSession &PDBSession, std::unique_ptr<IPDBRawSymbol> Symbol);
+  create(const IPDBSession &PDBSession, std::unique_ptr<IPDBRawSymbol> Symbol);
 
   virtual ~PDBSymbol();
 
@@ -62,7 +62,7 @@ public:
   std::unique_ptr<IPDBEnumSymbols> findInlineFramesByRVA(uint32_t RVA) const;
 
 protected:
-  IPDBSession &Session;
+  const IPDBSession &Session;
   const std::unique_ptr<IPDBRawSymbol> RawSymbol;
 };
 
