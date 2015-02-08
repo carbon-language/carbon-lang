@@ -237,8 +237,7 @@ void BlockGenerator::copyInstruction(ScopStmt &Stmt, const Instruction *Inst,
   if (Inst->isTerminator())
     return;
 
-  if (canSynthesize(Inst, &P->getAnalysis<LoopInfoWrapperPass>().getLoopInfo(),
-                    &SE, &Stmt.getParent()->getRegion()))
+  if (canSynthesize(Inst, &LI, &SE, &Stmt.getParent()->getRegion()))
     return;
 
   if (const LoadInst *Load = dyn_cast<LoadInst>(Inst)) {
@@ -288,12 +287,10 @@ void BlockGenerator::copyBB(ScopStmt &Stmt, ValueMapT &GlobalMap,
                             LoopToScevMapT &LTS) {
   auto *DTWP = P->getAnalysisIfAvailable<DominatorTreeWrapperPass>();
   auto *DT = DTWP ? &DTWP->getDomTree() : nullptr;
-  auto *LIWP = P->getAnalysisIfAvailable<LoopInfoWrapperPass>();
-  auto *LI = LIWP ? &LIWP->getLoopInfo() : nullptr;
 
   BasicBlock *BB = Stmt.getBasicBlock();
   BasicBlock *CopyBB =
-      SplitBlock(Builder.GetInsertBlock(), Builder.GetInsertPoint(), DT, LI);
+      SplitBlock(Builder.GetInsertBlock(), Builder.GetInsertPoint(), DT, &LI);
   CopyBB->setName("polly.stmt." + BB->getName());
   Builder.SetInsertPoint(CopyBB->begin());
 
@@ -594,8 +591,7 @@ void VectorBlockGenerator::copyInstruction(ScopStmt &Stmt,
   if (Inst->isTerminator())
     return;
 
-  if (canSynthesize(Inst, &P->getAnalysis<LoopInfoWrapperPass>().getLoopInfo(),
-                    &SE, &Stmt.getParent()->getRegion()))
+  if (canSynthesize(Inst, &LI, &SE, &Stmt.getParent()->getRegion()))
     return;
 
   if (const LoadInst *Load = dyn_cast<LoadInst>(Inst)) {
@@ -629,12 +625,10 @@ void VectorBlockGenerator::copyInstruction(ScopStmt &Stmt,
 void VectorBlockGenerator::copyBB(ScopStmt &Stmt) {
   auto *DTWP = P->getAnalysisIfAvailable<DominatorTreeWrapperPass>();
   auto *DT = DTWP ? &DTWP->getDomTree() : nullptr;
-  auto *LIWP = P->getAnalysisIfAvailable<LoopInfoWrapperPass>();
-  auto *LI = LIWP ? &LIWP->getLoopInfo() : nullptr;
 
   BasicBlock *BB = Stmt.getBasicBlock();
   BasicBlock *CopyBB =
-      SplitBlock(Builder.GetInsertBlock(), Builder.GetInsertPoint(), DT, LI);
+      SplitBlock(Builder.GetInsertBlock(), Builder.GetInsertPoint(), DT, &LI);
   CopyBB->setName("polly.stmt." + BB->getName());
   Builder.SetInsertPoint(CopyBB->begin());
 
