@@ -83,6 +83,17 @@ class MiBreakpointTestCase(lldbmi_testcase.MiTestCaseBase):
         self.runCmd("-break-insert main.c:%d" % line)
         self.expect("\^done,bkpt={number=\"3\"")
 
+        # Check with full path. TODO, figure out why this commands fails
+        # if -f is not given
+        line = line_number('main.c', '// BP_doloop')
+        full_path = os.path.join(os.getcwd(), "main.c")
+        self.runCmd("-break-insert -f %s:%d" % (full_path, line))
+        self.expect("\^done,bkpt={number=\"4\"")
+
+        self.runCmd("-exec-continue")
+        self.expect("\^running")
+        self.expect("\*stopped,reason=\"breakpoint-hit\"")
+
         self.runCmd("-exec-continue")
         self.expect("\^running")
         self.expect("\*stopped,reason=\"breakpoint-hit\"")

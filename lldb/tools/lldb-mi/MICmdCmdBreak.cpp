@@ -180,19 +180,16 @@ CMICmdCmdBreakInsert::Execute(void)
     CMIUtilString fileName;
     MIuint nFileLine = 0;
     CMIUtilString strFileFn;
-    const MIint nPosColon = m_brkName.find(cColon);
-    if (nPosColon != (MIint)std::string::npos)
+    CMIUtilString rStrLineOrFn;
+    // Full path in windows can have : after drive letter. So look for the
+    // last colon
+    const size_t nPosColon = m_brkName.find_last_of(cColon);
+    if (nPosColon != std::string::npos)
     {
-        CMIUtilString::VecString_t vecFileAndLocation;
-        const MIuint nSplits = m_brkName.Split(cColon, vecFileAndLocation);
-        MIunused(nSplits);
-        if (vecFileAndLocation.size() != 2)
-        {
-            SetError(CMIUtilString::Format(MIRSRC(IDS_CMD_ERR_BRKPT_LOCATION_FORMAT), m_cmdData.strMiCmd.c_str(), m_brkName.c_str()));
-            return MIstatus::failure;
-        }
-        fileName = vecFileAndLocation.at(0);
-        const CMIUtilString &rStrLineOrFn(vecFileAndLocation.at(1));
+        // extract file name and line number from it
+        fileName = m_brkName.substr(0, nPosColon);
+        rStrLineOrFn = m_brkName.substr(nPosColon + 1, m_brkName.size() - nPosColon - 1);
+
         if (rStrLineOrFn.empty())
             eBrkPtType = eBreakPoint_ByName;
         else

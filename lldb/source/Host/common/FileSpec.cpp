@@ -240,6 +240,12 @@ void FileSpec::Normalize(llvm::SmallVectorImpl<char> &path, PathSyntax syntax)
         return;
 
     std::replace(path.begin(), path.end(), '\\', '/');
+    // Windows path can have \\ slashes which can be changed by replace
+    // call above to //. Here we remove the duplicate.
+    auto iter = std::unique ( path.begin(), path.end(),
+                               []( char &c1, char &c2 ){
+                                  return (c1 == '/' && c2 == '/');});
+    path.erase(iter, path.end());
 }
 
 void FileSpec::DeNormalize(llvm::SmallVectorImpl<char> &path, PathSyntax syntax)
