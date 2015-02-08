@@ -115,13 +115,13 @@ class IRGenContext;
 /// ExprAST - Base class for all expression nodes.
 struct ExprAST {
   virtual ~ExprAST() {}
-  virtual Value* IRGen(IRGenContext &C) = 0;
+  virtual Value *IRGen(IRGenContext &C) const = 0;
 };
 
 /// NumberExprAST - Expression class for numeric literals like "1.0".
 struct NumberExprAST : public ExprAST {
   NumberExprAST(double Val) : Val(Val) {}
-  Value* IRGen(IRGenContext &C) override;
+  Value *IRGen(IRGenContext &C) const override;
 
   double Val;
 };
@@ -129,7 +129,7 @@ struct NumberExprAST : public ExprAST {
 /// VariableExprAST - Expression class for referencing a variable, like "a".
 struct VariableExprAST : public ExprAST {
   VariableExprAST(std::string Name) : Name(std::move(Name)) {}
-  Value* IRGen(IRGenContext &C) override;
+  Value *IRGen(IRGenContext &C) const override;
 
   std::string Name;
 };
@@ -139,7 +139,7 @@ struct UnaryExprAST : public ExprAST {
   UnaryExprAST(char Opcode, std::unique_ptr<ExprAST> Operand) 
     : Opcode(std::move(Opcode)), Operand(std::move(Operand)) {}
 
-  Value* IRGen(IRGenContext &C) override;
+  Value *IRGen(IRGenContext &C) const override;
 
   char Opcode;
   std::unique_ptr<ExprAST> Operand;
@@ -151,7 +151,7 @@ struct BinaryExprAST : public ExprAST {
                 std::unique_ptr<ExprAST> RHS) 
     : Op(Op), LHS(std::move(LHS)), RHS(std::move(RHS)) {}
 
-  Value* IRGen(IRGenContext &C) override;
+  Value *IRGen(IRGenContext &C) const override;
 
   char Op;
   std::unique_ptr<ExprAST> LHS, RHS;
@@ -163,7 +163,7 @@ struct CallExprAST : public ExprAST {
               std::vector<std::unique_ptr<ExprAST>> Args)
     : CalleeName(std::move(CalleeName)), Args(std::move(Args)) {}
 
-  Value* IRGen(IRGenContext &C) override;
+  Value *IRGen(IRGenContext &C) const override;
 
   std::string CalleeName;
   std::vector<std::unique_ptr<ExprAST>> Args;
@@ -174,7 +174,7 @@ struct IfExprAST : public ExprAST {
   IfExprAST(std::unique_ptr<ExprAST> Cond, std::unique_ptr<ExprAST> Then,
             std::unique_ptr<ExprAST> Else)
     : Cond(std::move(Cond)), Then(std::move(Then)), Else(std::move(Else)) {}
-  Value* IRGen(IRGenContext &C) override;
+  Value *IRGen(IRGenContext &C) const override;
 
   std::unique_ptr<ExprAST> Cond, Then, Else;
 };
@@ -187,7 +187,7 @@ struct ForExprAST : public ExprAST {
     : VarName(std::move(VarName)), Start(std::move(Start)), End(std::move(End)),
       Step(std::move(Step)), Body(std::move(Body)) {}
 
-  Value* IRGen(IRGenContext &C) override;
+  Value *IRGen(IRGenContext &C) const override;
 
   std::string VarName;
   std::unique_ptr<ExprAST> Start, End, Step, Body;
@@ -200,8 +200,8 @@ struct VarExprAST : public ExprAST {
 
   VarExprAST(BindingList VarBindings, std::unique_ptr<ExprAST> Body)
     : VarBindings(std::move(VarBindings)), Body(std::move(Body)) {}
-  
-  Value* IRGen(IRGenContext &C) override;
+
+  Value *IRGen(IRGenContext &C) const override;
 
   BindingList VarBindings;
   std::unique_ptr<ExprAST> Body;
@@ -215,7 +215,7 @@ struct PrototypeAST {
     : Name(std::move(Name)), Args(std::move(Args)), IsOperator(IsOperator),
       Precedence(Precedence) {}
 
-  Function* IRGen(IRGenContext &C);
+  Function *IRGen(IRGenContext &C) const;
   void CreateArgumentAllocas(Function *F, IRGenContext &C);
 
   bool isUnaryOp() const { return IsOperator && Args.size() == 1; }
@@ -238,7 +238,7 @@ struct FunctionAST {
               std::unique_ptr<ExprAST> Body)
     : Proto(std::move(Proto)), Body(std::move(Body)) {}
 
-  Function* IRGen(IRGenContext &C);
+  Function *IRGen(IRGenContext &C) const;
 
   std::unique_ptr<PrototypeAST> Proto;
   std::unique_ptr<ExprAST> Body;
@@ -741,11 +741,11 @@ static AllocaInst *CreateEntryBlockAlloca(Function *TheFunction,
                            VarName.c_str());
 }
 
-Value *NumberExprAST::IRGen(IRGenContext &C) {
+Value *NumberExprAST::IRGen(IRGenContext &C) const {
   return ConstantFP::get(C.getLLVMContext(), APFloat(Val));
 }
 
-Value *VariableExprAST::IRGen(IRGenContext &C) {
+Value *VariableExprAST::IRGen(IRGenContext &C) const {
   // Look this variable up in the function.
   Value *V = C.NamedValues[Name];
 
@@ -756,7 +756,7 @@ Value *VariableExprAST::IRGen(IRGenContext &C) {
   return C.getBuilder().CreateLoad(V, Name.c_str());
 }
 
-Value *UnaryExprAST::IRGen(IRGenContext &C) {
+Value *UnaryExprAST::IRGen(IRGenContext &C) const {
   if (Value *OperandV = Operand->IRGen(C)) {
     std::string FnName = MakeLegalFunctionName(std::string("unary")+Opcode);
     if (Function *F = C.getPrototype(FnName))
@@ -768,7 +768,7 @@ Value *UnaryExprAST::IRGen(IRGenContext &C) {
   return nullptr;
 }
 
-Value *BinaryExprAST::IRGen(IRGenContext &C) {
+Value *BinaryExprAST::IRGen(IRGenContext &C) const {
   // Special case '=' because we don't want to emit the LHS as an expression.
   if (Op == '=') {
     // Assignment requires the LHS to be an identifier.
@@ -813,7 +813,7 @@ Value *BinaryExprAST::IRGen(IRGenContext &C) {
   return ErrorP<Value>("Unknown binary operator");
 }
 
-Value *CallExprAST::IRGen(IRGenContext &C) {
+Value *CallExprAST::IRGen(IRGenContext &C) const {
   // Look up the name in the global module table.
   if (auto CalleeF = C.getPrototype(CalleeName)) {
     // If argument mismatch error.
@@ -832,7 +832,7 @@ Value *CallExprAST::IRGen(IRGenContext &C) {
   return ErrorP<Value>("Unknown function referenced");
 }
 
-Value *IfExprAST::IRGen(IRGenContext &C) {
+Value *IfExprAST::IRGen(IRGenContext &C) const {
   Value *CondV = Cond->IRGen(C);
   if (!CondV) return nullptr;
   
@@ -883,7 +883,7 @@ Value *IfExprAST::IRGen(IRGenContext &C) {
   return PN;
 }
 
-Value *ForExprAST::IRGen(IRGenContext &C) {
+Value *ForExprAST::IRGen(IRGenContext &C) const {
   // Output this as:
   //   var = alloca double
   //   ...
@@ -982,7 +982,7 @@ Value *ForExprAST::IRGen(IRGenContext &C) {
   return Constant::getNullValue(Type::getDoubleTy(getGlobalContext()));
 }
 
-Value *VarExprAST::IRGen(IRGenContext &C) {
+Value *VarExprAST::IRGen(IRGenContext &C) const {
   std::vector<AllocaInst *> OldBindings;
   
   Function *TheFunction = C.getBuilder().GetInsertBlock()->getParent();
@@ -1027,7 +1027,7 @@ Value *VarExprAST::IRGen(IRGenContext &C) {
   return BodyVal;
 }
 
-Function *PrototypeAST::IRGen(IRGenContext &C) {
+Function *PrototypeAST::IRGen(IRGenContext &C) const {
   std::string FnName = MakeLegalFunctionName(Name);
 
   // Make the function type:  double(double,double) etc.
@@ -1083,7 +1083,7 @@ void PrototypeAST::CreateArgumentAllocas(Function *F, IRGenContext &C) {
   }
 }
 
-Function *FunctionAST::IRGen(IRGenContext &C) {
+Function *FunctionAST::IRGen(IRGenContext &C) const {
   C.NamedValues.clear();
   
   Function *TheFunction = Proto->IRGen(C);
