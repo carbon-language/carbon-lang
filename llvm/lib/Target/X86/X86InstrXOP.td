@@ -20,21 +20,21 @@ multiclass xop2op<bits<8> opc, string OpcodeStr, Intrinsic Int, PatFrag memop> {
            [(set VR128:$dst, (Int (bitconvert (memop addr:$src))))]>, XOP;
 }
 
-defm VPHSUBWD  : xop2op<0xE2, "vphsubwd", int_x86_xop_vphsubwd, memopv2i64>;
-defm VPHSUBDQ  : xop2op<0xE3, "vphsubdq", int_x86_xop_vphsubdq, memopv2i64>;
-defm VPHSUBBW  : xop2op<0xE1, "vphsubbw", int_x86_xop_vphsubbw, memopv2i64>;
-defm VPHADDWQ  : xop2op<0xC7, "vphaddwq", int_x86_xop_vphaddwq, memopv2i64>;
-defm VPHADDWD  : xop2op<0xC6, "vphaddwd", int_x86_xop_vphaddwd, memopv2i64>;
-defm VPHADDUWQ : xop2op<0xD7, "vphadduwq", int_x86_xop_vphadduwq, memopv2i64>;
-defm VPHADDUWD : xop2op<0xD6, "vphadduwd", int_x86_xop_vphadduwd, memopv2i64>;
-defm VPHADDUDQ : xop2op<0xDB, "vphaddudq", int_x86_xop_vphaddudq, memopv2i64>;
-defm VPHADDUBW : xop2op<0xD1, "vphaddubw", int_x86_xop_vphaddubw, memopv2i64>;
-defm VPHADDUBQ : xop2op<0xD3, "vphaddubq", int_x86_xop_vphaddubq, memopv2i64>;
-defm VPHADDUBD : xop2op<0xD2, "vphaddubd", int_x86_xop_vphaddubd, memopv2i64>;
-defm VPHADDDQ  : xop2op<0xCB, "vphadddq", int_x86_xop_vphadddq, memopv2i64>;
-defm VPHADDBW  : xop2op<0xC1, "vphaddbw", int_x86_xop_vphaddbw, memopv2i64>;
-defm VPHADDBQ  : xop2op<0xC3, "vphaddbq", int_x86_xop_vphaddbq, memopv2i64>;
-defm VPHADDBD  : xop2op<0xC2, "vphaddbd", int_x86_xop_vphaddbd, memopv2i64>;
+defm VPHSUBWD  : xop2op<0xE2, "vphsubwd", int_x86_xop_vphsubwd, loadv2i64>;
+defm VPHSUBDQ  : xop2op<0xE3, "vphsubdq", int_x86_xop_vphsubdq, loadv2i64>;
+defm VPHSUBBW  : xop2op<0xE1, "vphsubbw", int_x86_xop_vphsubbw, loadv2i64>;
+defm VPHADDWQ  : xop2op<0xC7, "vphaddwq", int_x86_xop_vphaddwq, loadv2i64>;
+defm VPHADDWD  : xop2op<0xC6, "vphaddwd", int_x86_xop_vphaddwd, loadv2i64>;
+defm VPHADDUWQ : xop2op<0xD7, "vphadduwq", int_x86_xop_vphadduwq, loadv2i64>;
+defm VPHADDUWD : xop2op<0xD6, "vphadduwd", int_x86_xop_vphadduwd, loadv2i64>;
+defm VPHADDUDQ : xop2op<0xDB, "vphaddudq", int_x86_xop_vphaddudq, loadv2i64>;
+defm VPHADDUBW : xop2op<0xD1, "vphaddubw", int_x86_xop_vphaddubw, loadv2i64>;
+defm VPHADDUBQ : xop2op<0xD3, "vphaddubq", int_x86_xop_vphaddubq, loadv2i64>;
+defm VPHADDUBD : xop2op<0xD2, "vphaddubd", int_x86_xop_vphaddubd, loadv2i64>;
+defm VPHADDDQ  : xop2op<0xCB, "vphadddq", int_x86_xop_vphadddq, loadv2i64>;
+defm VPHADDBW  : xop2op<0xC1, "vphaddbw", int_x86_xop_vphaddbw, loadv2i64>;
+defm VPHADDBQ  : xop2op<0xC3, "vphaddbq", int_x86_xop_vphaddbq, loadv2i64>;
+defm VPHADDBD  : xop2op<0xC2, "vphaddbd", int_x86_xop_vphaddbd, loadv2i64>;
 
 // Scalar load 2 addr operand instructions
 multiclass xop2opsld<bits<8> opc, string OpcodeStr, Intrinsic Int,
@@ -62,8 +62,8 @@ multiclass xop2op128<bits<8> opc, string OpcodeStr, Intrinsic Int,
            [(set VR128:$dst, (Int (bitconvert (memop addr:$src))))]>, XOP;
 }
 
-defm VFRCZPS : xop2op128<0x80, "vfrczps", int_x86_xop_vfrcz_ps, memopv4f32>;
-defm VFRCZPD : xop2op128<0x81, "vfrczpd", int_x86_xop_vfrcz_pd, memopv2f64>;
+defm VFRCZPS : xop2op128<0x80, "vfrczps", int_x86_xop_vfrcz_ps, loadv4f32>;
+defm VFRCZPD : xop2op128<0x81, "vfrczpd", int_x86_xop_vfrcz_pd, loadv2f64>;
 
 multiclass xop2op256<bits<8> opc, string OpcodeStr, Intrinsic Int,
                      PatFrag memop> {
@@ -75,8 +75,8 @@ multiclass xop2op256<bits<8> opc, string OpcodeStr, Intrinsic Int,
            [(set VR256:$dst, (Int (bitconvert (memop addr:$src))))]>, XOP, VEX_L;
 }
 
-defm VFRCZPS : xop2op256<0x80, "vfrczps", int_x86_xop_vfrcz_ps_256, memopv8f32>;
-defm VFRCZPD : xop2op256<0x81, "vfrczpd", int_x86_xop_vfrcz_pd_256, memopv4f64>;
+defm VFRCZPS : xop2op256<0x80, "vfrczps", int_x86_xop_vfrcz_ps_256, loadv8f32>;
+defm VFRCZPD : xop2op256<0x81, "vfrczpd", int_x86_xop_vfrcz_pd_256, loadv4f64>;
 
 multiclass xop3op<bits<8> opc, string OpcodeStr, Intrinsic Int> {
   def rr : IXOP<opc, MRMSrcReg, (outs VR128:$dst),
@@ -87,13 +87,13 @@ multiclass xop3op<bits<8> opc, string OpcodeStr, Intrinsic Int> {
            (ins VR128:$src1, i128mem:$src2),
            !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
            [(set VR128:$dst,
-              (Int VR128:$src1, (bitconvert (memopv2i64 addr:$src2))))]>,
+              (Int VR128:$src1, (bitconvert (loadv2i64 addr:$src2))))]>,
            XOP_4V, VEX_W;
   def mr : IXOP<opc, MRMSrcMem, (outs VR128:$dst),
            (ins i128mem:$src1, VR128:$src2),
            !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
            [(set VR128:$dst,
-              (Int (bitconvert (memopv2i64 addr:$src1)), VR128:$src2))]>,
+              (Int (bitconvert (loadv2i64 addr:$src1)), VR128:$src2))]>,
              XOP_4VOp3;
 }
 
@@ -119,7 +119,7 @@ multiclass xop3opimm<bits<8> opc, string OpcodeStr, Intrinsic Int> {
            (ins i128mem:$src1, i8imm:$src2),
            !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
            [(set VR128:$dst,
-             (Int (bitconvert (memopv2i64 addr:$src1)), imm:$src2))]>, XOP;
+             (Int (bitconvert (loadv2i64 addr:$src1)), imm:$src2))]>, XOP;
 }
 
 defm VPROTW : xop3opimm<0xC1, "vprotw", int_x86_xop_vprotwi>;
@@ -140,7 +140,7 @@ multiclass xop4opm2<bits<8> opc, string OpcodeStr, Intrinsic Int> {
            !strconcat(OpcodeStr,
            "\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}"),
            [(set VR128:$dst,
-              (Int VR128:$src1, (bitconvert (memopv2i64 addr:$src2)),
+              (Int VR128:$src1, (bitconvert (loadv2i64 addr:$src2)),
               VR128:$src3))]>, XOP_4V, VEX_I8IMM;
 }
 
@@ -170,7 +170,7 @@ multiclass xop4opimm<bits<8> opc, string OpcodeStr, Intrinsic Int> {
            !strconcat(OpcodeStr,
            "\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}"),
            [(set VR128:$dst,
-             (Int VR128:$src1, (bitconvert (memopv2i64 addr:$src2)),
+             (Int VR128:$src1, (bitconvert (loadv2i64 addr:$src2)),
               imm:$src3))]>, XOP_4V;
 }
 
@@ -197,14 +197,14 @@ multiclass xop4op<bits<8> opc, string OpcodeStr, Intrinsic Int> {
            "\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}"),
            [(set VR128:$dst,
              (Int VR128:$src1, VR128:$src2,
-              (bitconvert (memopv2i64 addr:$src3))))]>,
+              (bitconvert (loadv2i64 addr:$src3))))]>,
            XOP_4V, VEX_I8IMM, VEX_W, MemOp4;
   def mr : IXOPi8<opc, MRMSrcMem, (outs VR128:$dst),
            (ins VR128:$src1, i128mem:$src2, VR128:$src3),
            !strconcat(OpcodeStr,
            "\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}"),
            [(set VR128:$dst,
-             (Int VR128:$src1, (bitconvert (memopv2i64 addr:$src2)),
+             (Int VR128:$src1, (bitconvert (loadv2i64 addr:$src2)),
               VR128:$src3))]>,
            XOP_4V, VEX_I8IMM;
 }
@@ -225,14 +225,14 @@ multiclass xop4op256<bits<8> opc, string OpcodeStr, Intrinsic Int> {
            "\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}"),
            [(set VR256:$dst,
              (Int VR256:$src1, VR256:$src2,
-              (bitconvert (memopv4i64 addr:$src3))))]>,
+              (bitconvert (loadv4i64 addr:$src3))))]>,
            XOP_4V, VEX_I8IMM, VEX_W, MemOp4, VEX_L;
   def mrY : IXOPi8<opc, MRMSrcMem, (outs VR256:$dst),
            (ins VR256:$src1, f256mem:$src2, VR256:$src3),
            !strconcat(OpcodeStr,
            "\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}"),
            [(set VR256:$dst,
-             (Int VR256:$src1, (bitconvert (memopv4i64 addr:$src2)),
+             (Int VR256:$src1, (bitconvert (loadv4i64 addr:$src2)),
               VR256:$src3))]>,
            XOP_4V, VEX_I8IMM, VEX_L;
 }
@@ -283,7 +283,7 @@ multiclass xop5op<bits<8> opc, string OpcodeStr, Intrinsic Int128,
 }
 
 defm VPERMIL2PD : xop5op<0x49, "vpermil2pd", int_x86_xop_vpermil2pd,
-                         int_x86_xop_vpermil2pd_256, memopv2f64, memopv4f64>;
+                         int_x86_xop_vpermil2pd_256, loadv2f64, loadv4f64>;
 defm VPERMIL2PS : xop5op<0x48, "vpermil2ps", int_x86_xop_vpermil2ps,
-                         int_x86_xop_vpermil2ps_256, memopv4f32, memopv8f32>;
+                         int_x86_xop_vpermil2ps_256, loadv4f32, loadv8f32>;
 
