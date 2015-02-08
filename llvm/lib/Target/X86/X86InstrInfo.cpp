@@ -617,7 +617,6 @@ X86InstrInfo::X86InstrInfo(X86Subtarget &STI)
     { X86::VTESTPSrr,       X86::VTESTPSrm,           0 },
     { X86::VUCOMISDrr,      X86::VUCOMISDrm,          0 },
     { X86::VUCOMISSrr,      X86::VUCOMISSrm,          0 },
-    { X86::VBROADCASTSSrr,  X86::VBROADCASTSSrm,      TB_NO_REVERSE },
 
     // AVX 256-bit foldable instructions
     { X86::VCVTDQ2PDYrr,    X86::VCVTDQ2PDYrm,        0 },
@@ -649,10 +648,11 @@ X86InstrInfo::X86InstrInfo(X86Subtarget &STI)
     { X86::VSQRTPSYr,       X86::VSQRTPSYm,           0 },
     { X86::VTESTPDYrr,      X86::VTESTPDYrm,          0 },
     { X86::VTESTPSYrr,      X86::VTESTPSYrm,          0 },
-    { X86::VBROADCASTSSYrr, X86::VBROADCASTSSYrm,     TB_NO_REVERSE },
-    { X86::VBROADCASTSDYrr, X86::VBROADCASTSDYrm,     TB_NO_REVERSE },
 
     // AVX2 foldable instructions
+    { X86::VBROADCASTSSrr,  X86::VBROADCASTSSrm,      TB_NO_REVERSE },
+    { X86::VBROADCASTSSYrr, X86::VBROADCASTSSYrm,     TB_NO_REVERSE },
+    { X86::VBROADCASTSDYrr, X86::VBROADCASTSDYrm,     TB_NO_REVERSE },
     { X86::VPABSBrr256,     X86::VPABSBrm256,         0 },
     { X86::VPABSDrr256,     X86::VPABSDrm256,         0 },
     { X86::VPABSWrr256,     X86::VPABSWrm256,         0 },
