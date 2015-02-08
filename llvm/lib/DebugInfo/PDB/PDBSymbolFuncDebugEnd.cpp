@@ -16,6 +16,6 @@ using namespace llvm;
 
 PDBSymbolFuncDebugEnd::PDBSymbolFuncDebugEnd(
     const IPDBSession &PDBSession, std::unique_ptr<IPDBRawSymbol> Symbol)
-    : PDBSymbol(Session, std::move(Symbol)) {}
+    : PDBSymbol(PDBSession, std::move(Symbol)) {}
 
 void PDBSymbolFuncDebugEnd::dump(llvm::raw_ostream &OS) const {}
