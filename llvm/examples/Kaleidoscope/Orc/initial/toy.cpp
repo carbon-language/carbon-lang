@@ -1180,16 +1180,24 @@ private:
   CompileLayerT CompileLayer;
 };
 
+static std::unique_ptr<llvm::Module>
+IRGen(KaleidoscopeJIT &J, SessionContext &S, const FunctionAST &F) {
+  IRGenContext C(S);
+  auto LF = F.IRGen(C);
+  if (!LF)
+    return nullptr;
+#ifndef MINIMAL_STDERR_OUTPUT
+  fprintf(stderr, "Read function definition:");
+  LF->dump();
+#endif
+  return C.takeM();
+}
+
 static void HandleDefinition(SessionContext &S, KaleidoscopeJIT &J) {
   if (auto F = ParseDefinition()) {
-    IRGenContext C(S);
-    if (auto LF = F->IRGen(C)) {
-#ifndef MINIMAL_STDERR_OUTPUT
-      std::cerr << "Read function definition:\n";
-      LF->dump();
-#endif
-      J.addModule(C.takeM());
+    if (auto M = IRGen(J, S, *F)) {
       S.addPrototypeAST(llvm::make_unique<PrototypeAST>(*F->Proto));
+      J.addModule(std::move(M));
     }
   } else {
     // Skip token for error recovery.
