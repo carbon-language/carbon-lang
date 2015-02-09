@@ -274,6 +274,17 @@ void f22() {
   }
 }
 
+// CHECK-LABEL: define
+struct f23_struct {
+};
+f23_struct f23_a();
+void f23_b(f23_struct = f23_a());
+void f23() {
+// CHECK: call {{.*}}f23_a{{.*}}, !dbg [[DBG_F23:![0-9]*]]
+#line 2500
+  f23_b();
+}
+
 // CHECK: [[DBG_F1]] = !MDLocation(line: 100,
 // CHECK: [[DBG_FOO_VALUE]] = !MDLocation(line: 200,
 // CHECK: [[DBG_FOO_REF]] = !MDLocation(line: 202,
@@ -302,3 +313,4 @@ void f22() {
 // CHECK: [[DBG_F19_1]] = !MDLocation(line: 2100,
 // CHECK: [[DBG_F19_2]] = !MDLocation(line: 2101,
 // CHECK: [[DBG_F20_1]] = !MDLocation(line: 2200,
+// CHECK: [[DBG_F23]] = !MDLocation(line: 2500,
