@@ -39,6 +39,9 @@
 #include <memory>
 #include <sys/stat.h>
 #include <system_error>
+#if LLVM_ON_UNIX
+#include <unistd.h> // for gethostname()
+#endif
 using namespace clang;
 
 //===----------------------------------------------------------------------===//
