@@ -183,7 +183,6 @@ class MiExecTestCase(lldbmi_testcase.MiTestCaseBase):
 
     @lldbmi_test
     @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
-    @expectedFailureLinux("TODO: Figures why it is failing on Linux")
     def test_lldbmi_exec_next_instruction(self):
         """Test that 'lldb-mi --interpreter' works for instruction stepping."""
 
@@ -221,7 +220,8 @@ class MiExecTestCase(lldbmi_testcase.MiTestCaseBase):
         # Test that both --thread and --frame are optional
         self.runCmd("-exec-next-instruction --thread 1")
         self.expect("\^running")
-        self.expect("\*stopped,reason=\"end-stepping-range\".*main.c\",line=\"22\"")
+        # Depending on compiler, it can stop at different line.
+        self.expect("\*stopped,reason=\"end-stepping-range\".*main.c\",line=\"2[0-2]\"")
 
         # Test that an invalid --thread is handled
         self.runCmd("-exec-next-instruction --thread 0")
@@ -236,7 +236,6 @@ class MiExecTestCase(lldbmi_testcase.MiTestCaseBase):
 
     @lldbmi_test
     @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
-    @expectedFailureLinux("TODO: Figures why it is failing on Linux")
     def test_lldbmi_exec_step(self):
         """Test that 'lldb-mi --interpreter' works for stepping into."""
 
@@ -272,7 +271,9 @@ class MiExecTestCase(lldbmi_testcase.MiTestCaseBase):
         self.runCmd("-exec-step --frame 0")
         self.expect("\^running")
         self.expect("\*stopped,reason=\"end-stepping-range\".*func=\"a_MyFunction\"")
-        self.runCmd("-exec-step --frame 0")
+        # Use -exec-finish here to make sure that control reaches the caller.
+        # -exec-step can keep us in the a_MyFunction for gcc
+        self.runCmd("-exec-finish --frame 0")
         self.expect("\^running")
         self.expect("\*stopped,reason=\"end-stepping-range\".*main.c\",line=\"22\"")
         self.runCmd("-exec-step --frame 0")
