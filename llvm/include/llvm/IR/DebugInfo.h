@@ -722,15 +722,9 @@ public:
       : DIDescriptor(N) {}
 
   StringRef getName() const { return getHeaderField(1); }
-  unsigned getLineNumber() const { return getHeaderFieldAs<unsigned>(2); }
-  unsigned getColumnNumber() const { return getHeaderFieldAs<unsigned>(3); }
 
   DIScopeRef getContext() const { return getFieldAs<DIScopeRef>(1); }
   DITypeRef getType() const { return getFieldAs<DITypeRef>(2); }
-  StringRef getFilename() const { return getFieldAs<DIFile>(3).getFilename(); }
-  StringRef getDirectory() const {
-    return getFieldAs<DIFile>(3).getDirectory();
-  }
   bool Verify() const;
 };
 
@@ -741,16 +735,10 @@ public:
       : DIDescriptor(N) {}
 
   StringRef getName() const { return getHeaderField(1); }
-  unsigned getLineNumber() const { return getHeaderFieldAs<unsigned>(2); }
-  unsigned getColumnNumber() const { return getHeaderFieldAs<unsigned>(3); }
 
   DIScopeRef getContext() const { return getFieldAs<DIScopeRef>(1); }
   DITypeRef getType() const { return getFieldAs<DITypeRef>(2); }
   Metadata *getValue() const;
-  StringRef getFilename() const { return getFieldAs<DIFile>(4).getFilename(); }
-  StringRef getDirectory() const {
-    return getFieldAs<DIFile>(4).getDirectory();
-  }
   bool Verify() const;
 };
 
