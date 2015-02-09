@@ -1387,12 +1387,7 @@ void CodeGenFunction::EmitAggExpr(const Expr *E, AggValueSlot Slot) {
   // Optimize the slot if possible.
   CheckAggExprForMemSetUse(Slot, E, *this);
  
-  bool hasDebugInfo = getDebugInfo();
-  if (isa<CXXDefaultArgExpr>(E))
-    disableDebugInfo();
   AggExprEmitter(*this, Slot).Visit(const_cast<Expr*>(E));
-  if (isa<CXXDefaultArgExpr>(E) && hasDebugInfo)
-    enableDebugInfo();
 }
 
 LValue CodeGenFunction::EmitAggExprToLValue(const Expr *E) {

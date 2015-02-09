@@ -1033,14 +1033,8 @@ ComplexPairTy CodeGenFunction::EmitComplexExpr(const Expr *E, bool IgnoreReal,
   assert(E && getComplexType(E->getType()) &&
          "Invalid complex expression to emit");
 
-  bool hasDebugInfo = getDebugInfo();
-  if (isa<CXXDefaultArgExpr>(E))
-    disableDebugInfo();
-  auto R = ComplexExprEmitter(*this, IgnoreReal, IgnoreImag)
-                .Visit(const_cast<Expr *>(E));
-  if (isa<CXXDefaultArgExpr>(E) && hasDebugInfo)
-    enableDebugInfo();
-  return R;
+  return ComplexExprEmitter(*this, IgnoreReal, IgnoreImag)
+      .Visit(const_cast<Expr *>(E));
 }
 
 void CodeGenFunction::EmitComplexExprIntoLValue(const Expr *E, LValue dest,

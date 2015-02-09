@@ -2734,8 +2734,22 @@ struct DestroyUnpassedArg : EHScopeStack::Cleanup {
 
 }
 
+struct DisableDebugLocationUpdates {
+  CodeGenFunction &CGF;
+  bool disabledDebugInfo;
+  DisableDebugLocationUpdates(CodeGenFunction &CGF, const Expr *E) : CGF(CGF) {
+    if ((disabledDebugInfo = isa<CXXDefaultArgExpr>(E) && CGF.getDebugInfo()))
+      CGF.disableDebugInfo();
+  }
+  ~DisableDebugLocationUpdates() {
+    if (disabledDebugInfo)
+      CGF.enableDebugInfo();
+  }
+};
+
 void CodeGenFunction::EmitCallArg(CallArgList &args, const Expr *E,
                                   QualType type) {
+  DisableDebugLocationUpdates Dis(*this, E);
   if (const ObjCIndirectCopyRestoreExpr *CRE
         = dyn_cast<ObjCIndirectCopyRestoreExpr>(E)) {
     assert(getLangOpts().ObjCAutoRefCount);
