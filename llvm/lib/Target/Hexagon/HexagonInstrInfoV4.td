@@ -41,17 +41,6 @@ def BITPOS32 : SDNodeXForm<imm, [{
    return XformMskToBitPosU5Imm(imm);
 }]>;
 
-// Fold (add (CONST32 tglobaladdr:$addr) <offset>) into a global address.
-def FoldGlobalAddr : ComplexPattern<i32, 1, "foldGlobalAddress", [], []>;
-
-// Fold (add (CONST32_GP tglobaladdr:$addr) <offset>) into a global address.
-def FoldGlobalAddrGP : ComplexPattern<i32, 1, "foldGlobalAddressGP", [], []>;
-
-def NumUsesBelowThresCONST32 : PatFrag<(ops node:$addr),
-                                       (HexagonCONST32 node:$addr), [{
-  return hasNumUsesBelowThresGA(N->getOperand(0).getNode());
-}]>;
-
 // Hexagon V4 Architecture spec defines 8 instruction classes:
 // LD ST ALU32 XTYPE J JR MEMOP NV CR SYSTEM(system is not implemented in the
 // compiler)
@@ -177,6 +166,21 @@ def A4_cmpbgtu : T_CMP_rrbh<"cmpb.gtu", 0b111, 0>;
 def A4_cmpheq  : T_CMP_rrbh<"cmph.eq",  0b011, 1>;
 def A4_cmphgt  : T_CMP_rrbh<"cmph.gt",  0b100, 0>;
 def A4_cmphgtu : T_CMP_rrbh<"cmph.gtu", 0b101, 0>;
+
+let AddedComplexity = 100 in {
+  def: Pat<(i1 (seteq (and (xor (i32 IntRegs:$Rs), (i32 IntRegs:$Rt)),
+                       255), 0)),
+           (A4_cmpbeq IntRegs:$Rs, IntRegs:$Rt)>;
+  def: Pat<(i1 (setne (and (xor (i32 IntRegs:$Rs), (i32 IntRegs:$Rt)),
+                       255), 0)),
+           (C2_not (A4_cmpbeq IntRegs:$Rs, IntRegs:$Rt))>;
+  def: Pat<(i1 (seteq (and (xor (i32 IntRegs:$Rs), (i32 IntRegs:$Rt)),
+                           65535), 0)),
+           (A4_cmpheq IntRegs:$Rs, IntRegs:$Rt)>;
+  def: Pat<(i1 (setne (and (xor (i32 IntRegs:$Rs), (i32 IntRegs:$Rt)),
+                           65535), 0)),
+           (C2_not (A4_cmpheq IntRegs:$Rs, IntRegs:$Rt))>;
+}
 
 class T_CMP_ribh<string mnemonic, bits<2> MajOp, bit IsHalf, bit IsComm,
                  Operand ImmType, bit IsImmExt, bit IsImmSigned, int ImmBits>
@@ -314,6 +318,12 @@ def A4_combineii: ALU32Inst<(outs DoubleRegs:$Rdd), (ins s8Imm:$s8, u6Ext:$U6),
     let Inst{12-5}  = s8;
     let Inst{4-0}   = Rdd;
   }
+
+// The complexity of the combine with two immediates should be greater than
+// the complexity of a combine involving a register.
+let AddedComplexity = 75 in
+def: Pat<(HexagonCOMBINE s8ImmPred:$s8, u6ExtPred:$u6),
+         (A4_combineii imm:$s8, imm:$u6)>;
 
 //===----------------------------------------------------------------------===//
 // ALU32/PERM -
@@ -623,13 +633,6 @@ def:  Pat <(i64 (zextloadi32 (i32 (add IntRegs:$src1, s11_2ExtPred:$offset)))),
 // anyext i32->i64
 def:  Pat <(i64 (extloadi32 ADDRriS11_2:$src1)),
       (i64 (A4_combineir 0, (L2_loadri_io AddrFI:$src1, 0)))>;
-
-let AddedComplexity = 100 in
-def:  Pat <(i64 (extloadi32 (i32 (add IntRegs:$src1, s11_2ExtPred:$offset)))),
-      (i64 (A4_combineir 0, (L2_loadri_io IntRegs:$src1,
-                                  s11_2ExtPred:$offset)))>;
-
-
 
 //===----------------------------------------------------------------------===//
 // LD -
@@ -1108,21 +1111,49 @@ let hasSideEffects = 0, addrMode = BaseImmOffset,
   defm S4_storeiri : ST_Imm<"memw", "STriw", u6_2Imm, 0b10>;
 }
 
-let AddedComplexity = 10 in {
-def: Pat<(truncstorei8 s8ExtPred:$src3, (add IntRegs:$src1, u6_0ImmPred:$src2)),
-            (S4_storeirb_io IntRegs:$src1, u6_0ImmPred:$src2, s8ExtPred:$src3)>;
+def IMM_BYTE : SDNodeXForm<imm, [{
+  // -1 etc is  represented as 255 etc
+  // assigning to a byte restores our desired signed value.
+  int8_t imm = N->getSExtValue();
+  return CurDAG->getTargetConstant(imm, MVT::i32);
+}]>;
 
-def: Pat<(truncstorei16 s8ExtPred:$src3, (add IntRegs:$src1,
-                                              u6_1ImmPred:$src2)),
-            (S4_storeirh_io IntRegs:$src1, u6_1ImmPred:$src2, s8ExtPred:$src3)>;
+def IMM_HALF : SDNodeXForm<imm, [{
+  // -1 etc is  represented as 65535 etc
+  // assigning to a short restores our desired signed value.
+  int16_t imm = N->getSExtValue();
+  return CurDAG->getTargetConstant(imm, MVT::i32);
+}]>;
 
-def: Pat<(store s8ExtPred:$src3, (add IntRegs:$src1, u6_2ImmPred:$src2)),
-            (S4_storeiri_io IntRegs:$src1, u6_2ImmPred:$src2, s8ExtPred:$src3)>;
+def IMM_WORD : SDNodeXForm<imm, [{
+  // -1 etc can be represented as 4294967295 etc
+  // Currently, it's not doing this. But some optimization
+  // might convert -1 to a large +ve number.
+  // assigning to a word restores our desired signed value.
+  int32_t imm = N->getSExtValue();
+  return CurDAG->getTargetConstant(imm, MVT::i32);
+}]>;
+
+def ToImmByte : OutPatFrag<(ops node:$R), (IMM_BYTE $R)>;
+def ToImmHalf : OutPatFrag<(ops node:$R), (IMM_HALF $R)>;
+def ToImmWord : OutPatFrag<(ops node:$R), (IMM_WORD $R)>;
+
+let AddedComplexity = 40 in {
+  // Not using frameindex patterns for these stores, because the offset
+  // is not extendable. This could cause problems during removing the frame
+  // indices, since the offset with respect to R29/R30 may not fit in the
+  // u6 field.
+  def: Storexm_add_pat<truncstorei8, s8ExtPred, u6_0ImmPred, ToImmByte,
+                       S4_storeirb_io>;
+  def: Storexm_add_pat<truncstorei16, s8ExtPred, u6_1ImmPred, ToImmHalf,
+                       S4_storeirh_io>;
+  def: Storexm_add_pat<store, s8ExtPred, u6_2ImmPred, ToImmWord,
+                       S4_storeiri_io>;
 }
 
-let AddedComplexity = 6 in
-def : Pat <(truncstorei8 s8ExtPred:$src2, (i32 IntRegs:$src1)),
-           (S4_storeirb_io IntRegs:$src1, 0, s8ExtPred:$src2)>;
+def: Storexm_simple_pat<truncstorei8,  s8ExtPred, ToImmByte, S4_storeirb_io>;
+def: Storexm_simple_pat<truncstorei16, s8ExtPred, ToImmHalf, S4_storeirh_io>;
+def: Storexm_simple_pat<store,         s8ExtPred, ToImmWord, S4_storeiri_io>;
 
 // memb(Rx++#s4:0:circ(Mu))=Rt
 // memb(Rx++I:circ(Mu))=Rt
@@ -1130,15 +1161,10 @@ def : Pat <(truncstorei8 s8ExtPred:$src2, (i32 IntRegs:$src1)),
 // memb(Rx++Mu:brev)=Rt
 // memb(gp+#u16:0)=Rt
 
-
 // Store halfword.
 // TODO: needs to be implemented
 // memh(Re=#U6)=Rt.H
 // memh(Rs+#s11:1)=Rt.H
-let AddedComplexity = 6 in
-def : Pat <(truncstorei16 s8ExtPred:$src2, (i32 IntRegs:$src1)),
-           (S4_storeirh_io IntRegs:$src1, 0, s8ExtPred:$src2)>;
-
 // memh(Rs+Ru<<#u2)=Rt.H
 // TODO: needs to be implemented.
 
@@ -1155,7 +1181,6 @@ def : Pat <(truncstorei16 s8ExtPred:$src2, (i32 IntRegs:$src1)),
 // if ([!]Pv[.new]) memh(#u6)=Rt.H
 // if ([!]Pv[.new]) memh(#u6)=Rt
 
-
 // if ([!]Pv[.new]) memh(Rs+#u6:1)=Rt.H
 // TODO: needs to be implemented.
 
@@ -1165,11 +1190,6 @@ def : Pat <(truncstorei16 s8ExtPred:$src2, (i32 IntRegs:$src1)),
 // Store word.
 // memw(Re=#U6)=Rt
 // TODO: Needs to be implemented.
-
-let AddedComplexity = 6 in
-def : Pat <(store s8ExtPred:$src2, (i32 IntRegs:$src1)),
-           (S4_storeiri_io IntRegs:$src1, 0, s8ExtPred:$src2)>;
-
 // memw(Rx++#s4:2)=Rt
 // memw(Rx++#s4:2:circ(Mu))=Rt
 // memw(Rx++I:circ(Mu))=Rt
@@ -1730,6 +1750,11 @@ def C4_or_orn   : T_LOGICAL_3OP<"or",  "or",  0b11, 1>;
 def A4_andnp : T_ALU64_logical<"and", 0b001, 1, 0, 1>;
 def A4_ornp  : T_ALU64_logical<"or",  0b011, 1, 0, 1>;
 
+def: Pat<(i64 (and (i64 DoubleRegs:$Rs), (i64 (not (i64 DoubleRegs:$Rt))))),
+         (A4_andnp DoubleRegs:$Rs, DoubleRegs:$Rt)>;
+def: Pat<(i64 (or  (i64 DoubleRegs:$Rs), (i64 (not (i64 DoubleRegs:$Rt))))),
+         (A4_ornp DoubleRegs:$Rs, DoubleRegs:$Rt)>;
+
 let hasNewValue = 1, hasSideEffects = 0 in
 def S4_parity: ALU64Inst<(outs IntRegs:$Rd), (ins IntRegs:$Rs, IntRegs:$Rt),
       "$Rd = parity($Rs, $Rt)", [], "", ALU64_tc_2_SLOT23> {
@@ -1791,6 +1816,28 @@ def S4_subaddi: ALU64Inst <(outs IntRegs:$Rd),
     let Inst{7-5}   = s6{2-0};
     let Inst{4-0}   = Ru;
   }
+
+// Rd=add(Rs,sub(#s6,Ru))
+def: Pat<(add (i32 IntRegs:$src1), (sub s6_10ExtPred:$src2,
+                                        (i32 IntRegs:$src3))),
+         (S4_subaddi IntRegs:$src1, s6_10ExtPred:$src2, IntRegs:$src3)>;
+
+// Rd=sub(add(Rs,#s6),Ru)
+def: Pat<(sub (add (i32 IntRegs:$src1), s6_10ExtPred:$src2),
+                   (i32 IntRegs:$src3)),
+         (S4_subaddi IntRegs:$src1, s6_10ExtPred:$src2, IntRegs:$src3)>;
+
+// Rd=add(sub(Rs,Ru),#s6)
+def: Pat<(add (sub (i32 IntRegs:$src1), (i32 IntRegs:$src3)),
+                   (s6_10ExtPred:$src2)),
+         (S4_subaddi IntRegs:$src1, s6_10ExtPred:$src2, IntRegs:$src3)>;
+
+
+//  Add or subtract doublewords with carry.
+//TODO:
+//  Rdd=add(Rss,Rtt,Px):carry
+//TODO:
+//  Rdd=sub(Rss,Rtt,Px):carry
 
 // Extract bitfield
 // Rdd=extract(Rss,#u6,#U6)
