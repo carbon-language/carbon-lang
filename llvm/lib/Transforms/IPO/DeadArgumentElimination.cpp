@@ -387,12 +387,30 @@ bool DAE::RemoveDeadArgumentsFromCallers(Function &Fn)
 /// for void functions and 1 for functions not returning a struct. It returns
 /// the number of struct elements for functions returning a struct.
 static unsigned NumRetVals(const Function *F) {
-  if (F->getReturnType()->isVoidTy())
+  Type *RetTy = F->getReturnType();
+  if (RetTy->isVoidTy())
     return 0;
-  else if (StructType *STy = dyn_cast<StructType>(F->getReturnType()))
+  else if (StructType *STy = dyn_cast<StructType>(RetTy))
     return STy->getNumElements();
+  else if (ArrayType *ATy = dyn_cast<ArrayType>(RetTy))
+    return ATy->getNumElements();
   else
     return 1;
+}
+
+/// Returns the sub-type a function will return at a given Idx. Should
+/// correspond to the result type of an ExtractValue instruction executed with
+/// just that one Idx (i.e. only top-level structure is considered).
+static Type *getRetComponentType(const Function *F, unsigned Idx) {
+  Type *RetTy = F->getReturnType();
+  assert(!RetTy->isVoidTy() && "void type has no subtype");
+
+  if (StructType *STy = dyn_cast<StructType>(RetTy))
+    return STy->getElementType(Idx);
+  else if (ArrayType *ATy = dyn_cast<ArrayType>(RetTy))
+    return ATy->getElementType();
+  else
+    return RetTy;
 }
 
 /// MarkIfNotLive - This checks Use for liveness in LiveValues. If Use is not
@@ -775,39 +793,29 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
   if (RetTy->isVoidTy() || HasLiveReturnedArg) {
     NRetTy = RetTy;
   } else {
-    StructType *STy = dyn_cast<StructType>(RetTy);
-    if (STy)
-      // Look at each of the original return values individually.
-      for (unsigned i = 0; i != RetCount; ++i) {
-        RetOrArg Ret = CreateRet(F, i);
-        if (LiveValues.erase(Ret)) {
-          RetTypes.push_back(STy->getElementType(i));
-          NewRetIdxs[i] = RetTypes.size() - 1;
-        } else {
-          ++NumRetValsEliminated;
-          DEBUG(dbgs() << "DAE - Removing return value " << i << " from "
-                << F->getName() << "\n");
-        }
-      }
-    else
-      // We used to return a single value.
-      if (LiveValues.erase(CreateRet(F, 0))) {
-        RetTypes.push_back(RetTy);
-        NewRetIdxs[0] = 0;
+    // Look at each of the original return values individually.
+    for (unsigned i = 0; i != RetCount; ++i) {
+      RetOrArg Ret = CreateRet(F, i);
+      if (LiveValues.erase(Ret)) {
+        RetTypes.push_back(getRetComponentType(F, i));
+        NewRetIdxs[i] = RetTypes.size() - 1;
       } else {
-        DEBUG(dbgs() << "DAE - Removing return value from " << F->getName()
-              << "\n");
         ++NumRetValsEliminated;
+        DEBUG(dbgs() << "DAE - Removing return value " << i << " from "
+              << F->getName() << "\n");
       }
-    if (RetTypes.size() > 1)
-      // More than one return type? Return a struct with them. Also, if we used
-      // to return a struct and didn't change the number of return values,
-      // return a struct again. This prevents changing {something} into
-      // something and {} into void.
-      // Make the new struct packed if we used to return a packed struct
-      // already.
-      NRetTy = StructType::get(STy->getContext(), RetTypes, STy->isPacked());
-    else if (RetTypes.size() == 1)
+    }
+    if (RetTypes.size() > 1) {
+      // More than one return type? Reduce it down to size.
+      if (StructType *STy = dyn_cast<StructType>(RetTy)) {
+        // Make the new struct packed if we used to return a packed struct
+        // already.
+        NRetTy = StructType::get(STy->getContext(), RetTypes, STy->isPacked());
+      } else {
+        assert(isa<ArrayType>(RetTy) && "unexpected multi-value return");
+        NRetTy = ArrayType::get(RetTypes[0], RetTypes.size());
+      }
+    } else if (RetTypes.size() == 1)
       // One return type? Just a simple value then, but only if we didn't use to
       // return a struct with that simple value before.
       NRetTy = RetTypes.front();
@@ -959,9 +967,9 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
         if (!Call->getType()->isX86_MMXTy())
           Call->replaceAllUsesWith(Constant::getNullValue(Call->getType()));
       } else {
-        assert(RetTy->isStructTy() &&
+        assert((RetTy->isStructTy() || RetTy->isArrayTy()) &&
                "Return type changed, but not into a void. The old return type"
-               " must have been a struct!");
+               " must have been a struct or an array!");
         Instruction *InsertPt = Call;
         if (InvokeInst *II = dyn_cast<InvokeInst>(Call)) {
           BasicBlock::iterator IP = II->getNormalDest()->begin();
@@ -969,9 +977,9 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
           InsertPt = IP;
         }
 
-        // We used to return a struct. Instead of doing smart stuff with all the
-        // uses of this struct, we will just rebuild it using
-        // extract/insertvalue chaining and let instcombine clean that up.
+        // We used to return a struct or array. Instead of doing smart stuff
+        // with all the uses, we will just rebuild it using extract/insertvalue
+        // chaining and let instcombine clean that up.
         //
         // Start out building up our return value from undef
         Value *RetVal = UndefValue::get(RetTy);
@@ -1034,8 +1042,8 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
         if (NFTy->getReturnType()->isVoidTy()) {
           RetVal = nullptr;
         } else {
-          assert (RetTy->isStructTy());
-          // The original return value was a struct, insert
+          assert(RetTy->isStructTy() || RetTy->isArrayTy());
+          // The original return value was a struct or array, insert
           // extractvalue/insertvalue chains to extract only the values we need
           // to return and insert them into our new result.
           // This does generate messy code, but we'll let it to instcombine to
