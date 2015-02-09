@@ -259,6 +259,7 @@ void test(Odd *odd) {
 // CHECK-NEXT:    <key>description</key><string>Attempt to free released memory</string>
 // CHECK-NEXT:    <key>category</key><string>Memory Error</string>
 // CHECK-NEXT:    <key>type</key><string>Double free</string>
+// CHECK-NEXT:    <key>check_name</key><string>cplusplus.NewDelete</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>test</string>
 // CHECK-NEXT:   <key>issue_hash</key><string>8</string>
@@ -474,6 +475,7 @@ void test(Odd *odd) {
 // CHECK-NEXT:    <key>description</key><string>Attempt to free released memory</string>
 // CHECK-NEXT:    <key>category</key><string>Memory Error</string>
 // CHECK-NEXT:    <key>type</key><string>Double free</string>
+// CHECK-NEXT:    <key>check_name</key><string>cplusplus.NewDelete</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>test</string>
 // CHECK-NEXT:   <key>issue_hash</key><string>3</string>

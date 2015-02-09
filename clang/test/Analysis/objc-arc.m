@@ -366,6 +366,7 @@ id rdar14061675() {
 // CHECK-NEXT:    <key>description</key><string>Dereference of null pointer (loaded from variable &apos;p&apos;)</string>
 // CHECK-NEXT:    <key>category</key><string>Logic error</string>
 // CHECK-NEXT:    <key>type</key><string>Dereference of null pointer</string>
+// CHECK-NEXT:    <key>check_name</key><string>core.NullDereference</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>test_working</string>
 // CHECK-NEXT:   <key>issue_hash</key><string>2</string>
@@ -528,6 +529,7 @@ id rdar14061675() {
 // CHECK-NEXT:    <key>description</key><string>Potential leak of an object stored into &apos;date&apos;</string>
 // CHECK-NEXT:    <key>category</key><string>Memory (Core Foundation/Objective-C)</string>
 // CHECK-NEXT:    <key>type</key><string>Leak</string>
+// CHECK-NEXT:    <key>check_name</key><string>osx.cocoa.RetainCount</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>test_cf_leak</string>
 // CHECK-NEXT:   <key>issue_hash</key><string>2</string>
@@ -586,6 +588,7 @@ id rdar14061675() {
 // CHECK-NEXT:    <key>description</key><string>Value stored to &apos;x&apos; during its initialization is never read</string>
 // CHECK-NEXT:    <key>category</key><string>Dead store</string>
 // CHECK-NEXT:    <key>type</key><string>Dead initialization</string>
+// CHECK-NEXT:    <key>check_name</key><string>deadcode.DeadStores</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>rdar9424882</string>
 // CHECK-NEXT:   <key>issue_hash</key><string>1</string>
@@ -644,6 +647,7 @@ id rdar14061675() {
 // CHECK-NEXT:    <key>description</key><string>Value stored to &apos;obj1&apos; during its initialization is never read</string>
 // CHECK-NEXT:    <key>category</key><string>Dead store</string>
 // CHECK-NEXT:    <key>type</key><string>Dead initialization</string>
+// CHECK-NEXT:    <key>check_name</key><string>deadcode.DeadStores</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>from_cf</string>
 // CHECK-NEXT:   <key>issue_hash</key><string>1</string>
@@ -702,6 +706,7 @@ id rdar14061675() {
 // CHECK-NEXT:    <key>description</key><string>Value stored to &apos;obj4&apos; during its initialization is never read</string>
 // CHECK-NEXT:    <key>category</key><string>Dead store</string>
 // CHECK-NEXT:    <key>type</key><string>Dead initialization</string>
+// CHECK-NEXT:    <key>check_name</key><string>deadcode.DeadStores</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>from_cf</string>
 // CHECK-NEXT:   <key>issue_hash</key><string>6</string>
@@ -760,6 +765,7 @@ id rdar14061675() {
 // CHECK-NEXT:    <key>description</key><string>Value stored to &apos;obj5&apos; during its initialization is never read</string>
 // CHECK-NEXT:    <key>category</key><string>Dead store</string>
 // CHECK-NEXT:    <key>type</key><string>Dead initialization</string>
+// CHECK-NEXT:    <key>check_name</key><string>deadcode.DeadStores</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>from_cf</string>
 // CHECK-NEXT:   <key>issue_hash</key><string>7</string>
@@ -818,6 +824,7 @@ id rdar14061675() {
 // CHECK-NEXT:    <key>description</key><string>Value stored to &apos;obj6&apos; during its initialization is never read</string>
 // CHECK-NEXT:    <key>category</key><string>Dead store</string>
 // CHECK-NEXT:    <key>type</key><string>Dead initialization</string>
+// CHECK-NEXT:    <key>check_name</key><string>deadcode.DeadStores</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>from_cf</string>
 // CHECK-NEXT:   <key>issue_hash</key><string>8</string>
@@ -995,6 +1002,7 @@ id rdar14061675() {
 // CHECK-NEXT:    <key>description</key><string>Potential leak of an object stored into &apos;obj5&apos;</string>
 // CHECK-NEXT:    <key>category</key><string>Memory (Core Foundation/Objective-C)</string>
 // CHECK-NEXT:    <key>type</key><string>Leak</string>
+// CHECK-NEXT:    <key>check_name</key><string>osx.cocoa.RetainCount</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>from_cf</string>
 // CHECK-NEXT:   <key>issue_hash</key><string>7</string>
@@ -1123,6 +1131,7 @@ id rdar14061675() {
 // CHECK-NEXT:    <key>description</key><string>Potential leak of an object stored into &apos;obj6&apos;</string>
 // CHECK-NEXT:    <key>category</key><string>Memory (Core Foundation/Objective-C)</string>
 // CHECK-NEXT:    <key>type</key><string>Leak</string>
+// CHECK-NEXT:    <key>check_name</key><string>osx.cocoa.RetainCount</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>from_cf</string>
 // CHECK-NEXT:   <key>issue_hash</key><string>8</string>
@@ -1181,6 +1190,7 @@ id rdar14061675() {
 // CHECK-NEXT:    <key>description</key><string>Value stored to &apos;cf1&apos; during its initialization is never read</string>
 // CHECK-NEXT:    <key>category</key><string>Dead store</string>
 // CHECK-NEXT:    <key>type</key><string>Dead initialization</string>
+// CHECK-NEXT:    <key>check_name</key><string>deadcode.DeadStores</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>to_cf</string>
 // CHECK-NEXT:   <key>issue_hash</key><string>1</string>
@@ -1239,6 +1249,7 @@ id rdar14061675() {
 // CHECK-NEXT:    <key>description</key><string>Value stored to &apos;cf2&apos; during its initialization is never read</string>
 // CHECK-NEXT:    <key>category</key><string>Dead store</string>
 // CHECK-NEXT:    <key>type</key><string>Dead initialization</string>
+// CHECK-NEXT:    <key>check_name</key><string>deadcode.DeadStores</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>to_cf</string>
 // CHECK-NEXT:   <key>issue_hash</key><string>2</string>
@@ -1297,6 +1308,7 @@ id rdar14061675() {
 // CHECK-NEXT:    <key>description</key><string>Value stored to &apos;cf3&apos; during its initialization is never read</string>
 // CHECK-NEXT:    <key>category</key><string>Dead store</string>
 // CHECK-NEXT:    <key>type</key><string>Dead initialization</string>
+// CHECK-NEXT:    <key>check_name</key><string>deadcode.DeadStores</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>to_cf</string>
 // CHECK-NEXT:   <key>issue_hash</key><string>3</string>
@@ -1355,6 +1367,7 @@ id rdar14061675() {
 // CHECK-NEXT:    <key>description</key><string>Value stored to &apos;cf4&apos; during its initialization is never read</string>
 // CHECK-NEXT:    <key>category</key><string>Dead store</string>
 // CHECK-NEXT:    <key>type</key><string>Dead initialization</string>
+// CHECK-NEXT:    <key>check_name</key><string>deadcode.DeadStores</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>to_cf</string>
 // CHECK-NEXT:   <key>issue_hash</key><string>4</string>
@@ -1498,6 +1511,7 @@ id rdar14061675() {
 // CHECK-NEXT:    <key>description</key><string>Potential leak of an object stored into &apos;date&apos;</string>
 // CHECK-NEXT:    <key>category</key><string>Memory (Core Foundation/Objective-C)</string>
 // CHECK-NEXT:    <key>type</key><string>Leak</string>
+// CHECK-NEXT:    <key>check_name</key><string>osx.cocoa.RetainCount</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>test_objc_unretainedObject</string>
 // CHECK-NEXT:   <key>issue_hash</key><string>2</string>
@@ -1796,6 +1810,7 @@ id rdar14061675() {
 // CHECK-NEXT:    <key>description</key><string>Potential leak of an object</string>
 // CHECK-NEXT:    <key>category</key><string>Memory (Core Foundation/Objective-C)</string>
 // CHECK-NEXT:    <key>type</key><string>Leak</string>
+// CHECK-NEXT:    <key>check_name</key><string>osx.cocoa.RetainCount</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>test_objc_arrays</string>
 // CHECK-NEXT:   <key>issue_hash</key><string>24</string>
@@ -1965,6 +1980,7 @@ id rdar14061675() {
 // CHECK-NEXT:    <key>description</key><string>Potential leak of an object stored into &apos;o&apos;</string>
 // CHECK-NEXT:    <key>category</key><string>Memory (Core Foundation/Objective-C)</string>
 // CHECK-NEXT:    <key>type</key><string>Leak</string>
+// CHECK-NEXT:    <key>check_name</key><string>osx.cocoa.RetainCount</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>rdar11059275_positive</string>
 // CHECK-NEXT:   <key>issue_hash</key><string>1</string>
@@ -2079,6 +2095,7 @@ id rdar14061675() {
 // CHECK-NEXT:    <key>description</key><string>Dereference of null pointer</string>
 // CHECK-NEXT:    <key>category</key><string>Logic error</string>
 // CHECK-NEXT:    <key>type</key><string>Dereference of null pointer</string>
+// CHECK-NEXT:    <key>check_name</key><string>core.NullDereference</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>rdar14061675</string>
 // CHECK-NEXT:   <key>issue_hash</key><string>4</string>

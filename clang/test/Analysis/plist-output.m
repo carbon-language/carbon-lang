@@ -295,6 +295,7 @@ int testFoo(Foo *x) {
 // CHECK-NEXT:    <key>description</key><string>Dereference of null pointer (loaded from variable &apos;p&apos;)</string>
 // CHECK-NEXT:    <key>category</key><string>Logic error</string>
 // CHECK-NEXT:    <key>type</key><string>Dereference of null pointer</string>
+// CHECK-NEXT:    <key>check_name</key><string>core.NullDereference</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>test_null_init</string>
 // CHECK-NEXT:   <key>issue_hash</key><string>2</string>
@@ -438,6 +439,7 @@ int testFoo(Foo *x) {
 // CHECK-NEXT:    <key>description</key><string>Dereference of null pointer (loaded from variable &apos;p&apos;)</string>
 // CHECK-NEXT:    <key>category</key><string>Logic error</string>
 // CHECK-NEXT:    <key>type</key><string>Dereference of null pointer</string>
+// CHECK-NEXT:    <key>check_name</key><string>core.NullDereference</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>test_null_assign</string>
 // CHECK-NEXT:   <key>issue_hash</key><string>3</string>
@@ -644,6 +646,7 @@ int testFoo(Foo *x) {
 // CHECK-NEXT:    <key>description</key><string>Dereference of null pointer (loaded from variable &apos;q&apos;)</string>
 // CHECK-NEXT:    <key>category</key><string>Logic error</string>
 // CHECK-NEXT:    <key>type</key><string>Dereference of null pointer</string>
+// CHECK-NEXT:    <key>check_name</key><string>core.NullDereference</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>test_null_assign_transitive</string>
 // CHECK-NEXT:   <key>issue_hash</key><string>4</string>
@@ -821,6 +824,7 @@ int testFoo(Foo *x) {
 // CHECK-NEXT:    <key>description</key><string>Dereference of null pointer (loaded from variable &apos;p&apos;)</string>
 // CHECK-NEXT:    <key>category</key><string>Logic error</string>
 // CHECK-NEXT:    <key>type</key><string>Dereference of null pointer</string>
+// CHECK-NEXT:    <key>check_name</key><string>core.NullDereference</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>test_null_cond</string>
 // CHECK-NEXT:   <key>issue_hash</key><string>2</string>
@@ -1027,6 +1031,7 @@ int testFoo(Foo *x) {
 // CHECK-NEXT:    <key>description</key><string>Dereference of null pointer (loaded from variable &apos;p&apos;)</string>
 // CHECK-NEXT:    <key>category</key><string>Logic error</string>
 // CHECK-NEXT:    <key>type</key><string>Dereference of null pointer</string>
+// CHECK-NEXT:    <key>check_name</key><string>core.NullDereference</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>test_null_cond_transitive</string>
 // CHECK-NEXT:   <key>issue_hash</key><string>3</string>
@@ -1204,6 +1209,7 @@ int testFoo(Foo *x) {
 // CHECK-NEXT:    <key>description</key><string>Dereference of null pointer (loaded from field &apos;p&apos;)</string>
 // CHECK-NEXT:    <key>category</key><string>Logic error</string>
 // CHECK-NEXT:    <key>type</key><string>Dereference of null pointer</string>
+// CHECK-NEXT:    <key>check_name</key><string>core.NullDereference</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>test_null_field</string>
 // CHECK-NEXT:   <key>issue_hash</key><string>3</string>
@@ -1507,6 +1513,7 @@ int testFoo(Foo *x) {
 // CHECK-NEXT:    <key>description</key><string>Dereference of null pointer (loaded from variable &apos;p&apos;)</string>
 // CHECK-NEXT:    <key>category</key><string>Logic error</string>
 // CHECK-NEXT:    <key>type</key><string>Dereference of null pointer</string>
+// CHECK-NEXT:    <key>check_name</key><string>core.NullDereference</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>test_assumptions</string>
 // CHECK-NEXT:   <key>issue_hash</key><string>8</string>
@@ -1776,6 +1783,7 @@ int testFoo(Foo *x) {
 // CHECK-NEXT:    <key>description</key><string>Dereference of null pointer (loaded from variable &apos;p&apos;)</string>
 // CHECK-NEXT:    <key>category</key><string>Logic error</string>
 // CHECK-NEXT:    <key>type</key><string>Dereference of null pointer</string>
+// CHECK-NEXT:    <key>check_name</key><string>core.NullDereference</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>test_cond_assign</string>
 // CHECK-NEXT:   <key>issue_hash</key><string>4</string>
@@ -1919,6 +1927,7 @@ int testFoo(Foo *x) {
 // CHECK-NEXT:    <key>description</key><string>Dereference of null pointer (loaded from variable &apos;p&apos;)</string>
 // CHECK-NEXT:    <key>category</key><string>Logic error</string>
 // CHECK-NEXT:    <key>type</key><string>Dereference of null pointer</string>
+// CHECK-NEXT:    <key>check_name</key><string>core.NullDereference</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>Objective-C method</string>
 // CHECK-NEXT:   <key>issue_context</key><string>test</string>
 // CHECK-NEXT:   <key>issue_hash</key><string>3</string>
@@ -1977,6 +1986,7 @@ int testFoo(Foo *x) {
 // CHECK-NEXT:    <key>description</key><string>Value stored to &apos;foo&apos; during its initialization is never read</string>
 // CHECK-NEXT:    <key>category</key><string>Dead store</string>
 // CHECK-NEXT:    <key>type</key><string>Dead initialization</string>
+// CHECK-NEXT:    <key>check_name</key><string>deadcode.DeadStores</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>Objective-C method</string>
 // CHECK-NEXT:   <key>issue_context</key><string>test2</string>
 // CHECK-NEXT:   <key>issue_hash</key><string>2</string>
@@ -2139,6 +2149,7 @@ int testFoo(Foo *x) {
 // CHECK-NEXT:    <key>description</key><string>Potential leak of an object stored into &apos;foo&apos;</string>
 // CHECK-NEXT:    <key>category</key><string>Memory (Core Foundation/Objective-C)</string>
 // CHECK-NEXT:    <key>type</key><string>Leak</string>
+// CHECK-NEXT:    <key>check_name</key><string>osx.cocoa.RetainCount</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>Objective-C method</string>
 // CHECK-NEXT:   <key>issue_context</key><string>test2</string>
 // CHECK-NEXT:   <key>issue_hash</key><string>2</string>
@@ -2447,6 +2458,7 @@ int testFoo(Foo *x) {
 // CHECK-NEXT:    <key>description</key><string>Dereference of null pointer (loaded from variable &apos;p&apos;)</string>
 // CHECK-NEXT:    <key>category</key><string>Logic error</string>
 // CHECK-NEXT:    <key>type</key><string>Dereference of null pointer</string>
+// CHECK-NEXT:    <key>check_name</key><string>core.NullDereference</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>rdar12280665</string>
 // CHECK-NEXT:   <key>issue_hash</key><string>4</string>
@@ -2750,6 +2762,7 @@ int testFoo(Foo *x) {
 // CHECK-NEXT:    <key>description</key><string>Dereference of null pointer (loaded from variable &apos;p&apos;)</string>
 // CHECK-NEXT:    <key>category</key><string>Logic error</string>
 // CHECK-NEXT:    <key>type</key><string>Dereference of null pointer</string>
+// CHECK-NEXT:    <key>check_name</key><string>core.NullDereference</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>radar12322528_for</string>
 // CHECK-NEXT:   <key>issue_hash</key><string>5</string>
@@ -3053,6 +3066,7 @@ int testFoo(Foo *x) {
 // CHECK-NEXT:    <key>description</key><string>Dereference of null pointer (loaded from variable &apos;p&apos;)</string>
 // CHECK-NEXT:    <key>category</key><string>Logic error</string>
 // CHECK-NEXT:    <key>type</key><string>Dereference of null pointer</string>
+// CHECK-NEXT:    <key>check_name</key><string>core.NullDereference</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>radar12322528_while</string>
 // CHECK-NEXT:   <key>issue_hash</key><string>7</string>
@@ -3429,6 +3443,7 @@ int testFoo(Foo *x) {
 // CHECK-NEXT:    <key>description</key><string>Dereference of null pointer (loaded from variable &apos;p&apos;)</string>
 // CHECK-NEXT:    <key>category</key><string>Logic error</string>
 // CHECK-NEXT:    <key>type</key><string>Dereference of null pointer</string>
+// CHECK-NEXT:    <key>check_name</key><string>core.NullDereference</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>radar12322528_foo_2</string>
 // CHECK-NEXT:   <key>issue_hash</key><string>6</string>
@@ -3868,6 +3883,7 @@ int testFoo(Foo *x) {
 // CHECK-NEXT:    <key>description</key><string>Dereference of null pointer (loaded from variable &apos;p&apos;)</string>
 // CHECK-NEXT:    <key>category</key><string>Logic error</string>
 // CHECK-NEXT:    <key>type</key><string>Dereference of null pointer</string>
+// CHECK-NEXT:    <key>check_name</key><string>core.NullDereference</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>test_loop_diagnostics</string>
 // CHECK-NEXT:   <key>issue_hash</key><string>3</string>
@@ -4341,6 +4357,7 @@ int testFoo(Foo *x) {
 // CHECK-NEXT:    <key>description</key><string>Dereference of null pointer (loaded from variable &apos;p&apos;)</string>
 // CHECK-NEXT:    <key>category</key><string>Logic error</string>
 // CHECK-NEXT:    <key>type</key><string>Dereference of null pointer</string>
+// CHECK-NEXT:    <key>check_name</key><string>core.NullDereference</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>test_loop_diagnostics_2</string>
 // CHECK-NEXT:   <key>issue_hash</key><string>6</string>
@@ -4814,6 +4831,7 @@ int testFoo(Foo *x) {
 // CHECK-NEXT:    <key>description</key><string>Dereference of null pointer (loaded from variable &apos;p&apos;)</string>
 // CHECK-NEXT:    <key>category</key><string>Logic error</string>
 // CHECK-NEXT:    <key>type</key><string>Dereference of null pointer</string>
+// CHECK-NEXT:    <key>check_name</key><string>core.NullDereference</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>test_loop_diagnostics_3</string>
 // CHECK-NEXT:   <key>issue_hash</key><string>7</string>
@@ -4860,6 +4878,7 @@ int testFoo(Foo *x) {
 // CHECK-NEXT:    <key>description</key><string>Value stored to &apos;x&apos; is never read</string>
 // CHECK-NEXT:    <key>category</key><string>Dead store</string>
 // CHECK-NEXT:    <key>type</key><string>Dead increment</string>
+// CHECK-NEXT:    <key>check_name</key><string>deadcode.DeadStores</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>test_loop_fast_enumeration</string>
 // CHECK-NEXT:   <key>issue_hash</key><string>5</string>
@@ -5066,6 +5085,7 @@ int testFoo(Foo *x) {
 // CHECK-NEXT:    <key>description</key><string>The left expression of the compound assignment is an uninitialized value. The computed value will also be garbage</string>
 // CHECK-NEXT:    <key>category</key><string>Logic error</string>
 // CHECK-NEXT:    <key>type</key><string>Assigned value is garbage or undefined</string>
+// CHECK-NEXT:    <key>check_name</key><string>core.uninitialized.Assign</string> 
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>test_loop_fast_enumeration</string>
 // CHECK-NEXT:   <key>issue_hash</key><string>5</string>
@@ -5175,6 +5195,7 @@ int testFoo(Foo *x) {
 // CHECK-NEXT:    <key>description</key><string>Dereference of null pointer (loaded from ivar &apos;p&apos;)</string>
 // CHECK-NEXT:    <key>category</key><string>Logic error</string>
 // CHECK-NEXT:    <key>type</key><string>Dereference of null pointer</string>
+// CHECK-NEXT:    <key>check_name</key><string>core.NullDereference</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>Objective-C method</string>
 // CHECK-NEXT:   <key>issue_context</key><string>test</string>
 // CHECK-NEXT:   <key>issue_hash</key><string>2</string>
@@ -5284,6 +5305,7 @@ int testFoo(Foo *x) {
 // CHECK-NEXT:    <key>description</key><string>Null pointer passed as an argument to a &apos;nonnull&apos; parameter</string>
 // CHECK-NEXT:    <key>category</key><string>API</string>
 // CHECK-NEXT:    <key>type</key><string>Argument with &apos;nonnull&apos; attribute passed null</string>
+// CHECK-NEXT:    <key>check_name</key><string>core.NonNullParamChecker</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>RDar13295437</string>
 // CHECK-NEXT:   <key>issue_hash</key><string>3</string>
@@ -5524,6 +5546,7 @@ int testFoo(Foo *x) {
 // CHECK-NEXT:    <key>description</key><string>Dereference of null pointer</string>
 // CHECK-NEXT:    <key>category</key><string>Logic error</string>
 // CHECK-NEXT:    <key>type</key><string>Dereference of null pointer</string>
+// CHECK-NEXT:    <key>check_name</key><string>core.NullDereference</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>testFoo</string>
 // CHECK-NEXT:   <key>issue_hash</key><string>3</string>

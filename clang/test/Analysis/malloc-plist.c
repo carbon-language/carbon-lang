@@ -408,6 +408,7 @@ void testMyMalloc() {
 // CHECK-NEXT:    <key>description</key><string>Potential leak of memory pointed to by &apos;p&apos;</string>
 // CHECK-NEXT:    <key>category</key><string>Memory Error</string>
 // CHECK-NEXT:    <key>type</key><string>Memory leak</string>
+// CHECK-NEXT:    <key>check_name</key><string>unix.Malloc</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>diagnosticTest</string>
 // CHECK-NEXT:   <key>issue_hash</key><string>2</string>
@@ -570,6 +571,7 @@ void testMyMalloc() {
 // CHECK-NEXT:    <key>description</key><string>Potential leak of memory pointed to by &apos;A&apos;</string>
 // CHECK-NEXT:    <key>category</key><string>Memory Error</string>
 // CHECK-NEXT:    <key>type</key><string>Memory leak</string>
+// CHECK-NEXT:    <key>check_name</key><string>unix.Malloc</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>myArrayAllocation</string>
 // CHECK-NEXT:   <key>issue_hash</key><string>2</string>
@@ -955,6 +957,7 @@ void testMyMalloc() {
 // CHECK-NEXT:    <key>description</key><string>Potential leak of memory pointed to by &apos;buf&apos;</string>
 // CHECK-NEXT:    <key>category</key><string>Memory Error</string>
 // CHECK-NEXT:    <key>type</key><string>Memory leak</string>
+// CHECK-NEXT:    <key>check_name</key><string>unix.Malloc</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>reallocDiagnostics</string>
 // CHECK-NEXT:   <key>issue_hash</key><string>1</string>
@@ -1354,6 +1357,7 @@ void testMyMalloc() {
 // CHECK-NEXT:    <key>description</key><string>Potential leak of memory pointed to by &apos;buf&apos;</string>
 // CHECK-NEXT:    <key>category</key><string>Memory Error</string>
 // CHECK-NEXT:    <key>type</key><string>Memory leak</string>
+// CHECK-NEXT:    <key>check_name</key><string>unix.Malloc</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>test_wrapper</string>
 // CHECK-NEXT:   <key>issue_hash</key><string>1</string>
@@ -1874,6 +1878,7 @@ void testMyMalloc() {
 // CHECK-NEXT:    <key>description</key><string>Use of memory after it is freed</string>
 // CHECK-NEXT:    <key>category</key><string>Memory Error</string>
 // CHECK-NEXT:    <key>type</key><string>Use-after-free</string>
+// CHECK-NEXT:    <key>check_name</key><string>unix.Malloc</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>test_double_action_call</string>
 // CHECK-NEXT:   <key>issue_hash</key><string>3</string>
@@ -2433,6 +2438,7 @@ void testMyMalloc() {
 // CHECK-NEXT:    <key>description</key><string>Potential leak of memory pointed to by &apos;buf&apos;</string>
 // CHECK-NEXT:    <key>category</key><string>Memory Error</string>
 // CHECK-NEXT:    <key>type</key><string>Memory leak</string>
+// CHECK-NEXT:    <key>check_name</key><string>unix.Malloc</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>reallocIntra</string>
 // CHECK-NEXT:   <key>issue_hash</key><string>1</string>
@@ -2701,6 +2707,7 @@ void testMyMalloc() {
 // CHECK-NEXT:    <key>description</key><string>Potential leak of memory pointed to by &apos;v&apos;</string>
 // CHECK-NEXT:    <key>category</key><string>Memory Error</string>
 // CHECK-NEXT:    <key>type</key><string>Memory leak</string>
+// CHECK-NEXT:    <key>check_name</key><string>unix.Malloc</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>use_ret</string>
 // CHECK-NEXT:   <key>issue_hash</key><string>2</string>
@@ -2863,6 +2870,7 @@ void testMyMalloc() {
 // CHECK-NEXT:    <key>description</key><string>Potential leak of memory pointed to by &apos;m&apos;</string>
 // CHECK-NEXT:    <key>category</key><string>Memory Error</string>
 // CHECK-NEXT:    <key>type</key><string>Memory leak</string>
+// CHECK-NEXT:    <key>check_name</key><string>unix.Malloc</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>LeakedSymbol</string>
 // CHECK-NEXT:   <key>issue_hash</key><string>3</string>
@@ -3068,6 +3076,7 @@ void testMyMalloc() {
 // CHECK-NEXT:    <key>description</key><string>Potential leak of memory pointed to by &apos;x&apos;</string>
 // CHECK-NEXT:    <key>category</key><string>Memory Error</string>
 // CHECK-NEXT:    <key>type</key><string>Memory leak</string>
+// CHECK-NEXT:    <key>check_name</key><string>unix.Malloc</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>function_with_leak1</string>
 // CHECK-NEXT:   <key>issue_hash</key><string>1</string>
@@ -3273,6 +3282,7 @@ void testMyMalloc() {
 // CHECK-NEXT:    <key>description</key><string>Potential leak of memory pointed to by &apos;x&apos;</string>
 // CHECK-NEXT:    <key>category</key><string>Memory Error</string>
 // CHECK-NEXT:    <key>type</key><string>Memory leak</string>
+// CHECK-NEXT:    <key>check_name</key><string>unix.Malloc</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>function_with_leak2</string>
 // CHECK-NEXT:   <key>issue_hash</key><string>1</string>
@@ -3575,6 +3585,7 @@ void testMyMalloc() {
 // CHECK-NEXT:    <key>description</key><string>Potential leak of memory pointed to by &apos;x&apos;</string>
 // CHECK-NEXT:    <key>category</key><string>Memory Error</string>
 // CHECK-NEXT:    <key>type</key><string>Memory leak</string>
+// CHECK-NEXT:    <key>check_name</key><string>unix.Malloc</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>function_with_leak3</string>
 // CHECK-NEXT:   <key>issue_hash</key><string>1</string>
@@ -3877,6 +3888,7 @@ void testMyMalloc() {
 // CHECK-NEXT:    <key>description</key><string>Potential leak of memory pointed to by &apos;x&apos;</string>
 // CHECK-NEXT:    <key>category</key><string>Memory Error</string>
 // CHECK-NEXT:    <key>type</key><string>Memory leak</string>
+// CHECK-NEXT:    <key>check_name</key><string>unix.Malloc</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>function_with_leak4</string>
 // CHECK-NEXT:   <key>issue_hash</key><string>1</string>
@@ -4082,6 +4094,7 @@ void testMyMalloc() {
 // CHECK-NEXT:    <key>description</key><string>Potential leak of memory pointed to by &apos;x&apos;</string>
 // CHECK-NEXT:    <key>category</key><string>Memory Error</string>
 // CHECK-NEXT:    <key>type</key><string>Memory leak</string>
+// CHECK-NEXT:    <key>check_name</key><string>unix.Malloc</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>function_with_leak5</string>
 // CHECK-NEXT:   <key>issue_hash</key><string>1</string>
@@ -4287,6 +4300,7 @@ void testMyMalloc() {
 // CHECK-NEXT:    <key>description</key><string>Potential leak of memory pointed to by &apos;x&apos;</string>
 // CHECK-NEXT:    <key>category</key><string>Memory Error</string>
 // CHECK-NEXT:    <key>type</key><string>Memory leak</string>
+// CHECK-NEXT:    <key>check_name</key><string>unix.Malloc</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>function_with_leak6</string>
 // CHECK-NEXT:   <key>issue_hash</key><string>1</string>
@@ -4521,6 +4535,7 @@ void testMyMalloc() {
 // CHECK-NEXT:    <key>description</key><string>Potential memory leak</string>
 // CHECK-NEXT:    <key>category</key><string>Memory Error</string>
 // CHECK-NEXT:    <key>type</key><string>Memory leak</string>
+// CHECK-NEXT:    <key>check_name</key><string>unix.Malloc</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>use_function_with_leak7</string>
 // CHECK-NEXT:   <key>issue_hash</key><string>1</string>
@@ -4755,6 +4770,7 @@ void testMyMalloc() {
 // CHECK-NEXT:    <key>description</key><string>Potential memory leak</string>
 // CHECK-NEXT:    <key>category</key><string>Memory Error</string>
 // CHECK-NEXT:    <key>type</key><string>Memory leak</string>
+// CHECK-NEXT:    <key>check_name</key><string>unix.Malloc</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>testOnlyRefferToVisibleVariables</string>
 // CHECK-NEXT:   <key>issue_hash</key><string>1</string>
@@ -5023,6 +5039,7 @@ void testMyMalloc() {
 // CHECK-NEXT:    <key>description</key><string>Potential memory leak</string>
 // CHECK-NEXT:    <key>category</key><string>Memory Error</string>
 // CHECK-NEXT:    <key>type</key><string>Memory leak</string>
+// CHECK-NEXT:    <key>check_name</key><string>unix.Malloc</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>testMyMalloc</string>
 // CHECK-NEXT:   <key>issue_hash</key><string>1</string>

@@ -143,6 +143,7 @@ void test_cast(const TestInstanceCall *p) {
 // CHECK-NEXT:    <key>description</key><string>Called C++ object pointer is uninitialized</string>
 // CHECK-NEXT:    <key>category</key><string>Logic error</string>
 // CHECK-NEXT:    <key>type</key><string>Called C++ object pointer is uninitialized</string>
+// CHECK-NEXT:    <key>check_name</key><string>core.CallAndMessage</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>test_ic</string>
 // CHECK-NEXT:   <key>issue_hash</key><string>2</string>
@@ -252,6 +253,7 @@ void test_cast(const TestInstanceCall *p) {
 // CHECK-NEXT:    <key>description</key><string>Called C++ object pointer is null</string>
 // CHECK-NEXT:    <key>category</key><string>Logic error</string>
 // CHECK-NEXT:    <key>type</key><string>Called C++ object pointer is null</string>
+// CHECK-NEXT:    <key>check_name</key><string>core.CallAndMessage</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>test_ic_null</string>
 // CHECK-NEXT:   <key>issue_hash</key><string>2</string>
@@ -395,6 +397,7 @@ void test_cast(const TestInstanceCall *p) {
 // CHECK-NEXT:    <key>description</key><string>Called C++ object pointer is null</string>
 // CHECK-NEXT:    <key>category</key><string>Logic error</string>
 // CHECK-NEXT:    <key>type</key><string>Called C++ object pointer is null</string>
+// CHECK-NEXT:    <key>check_name</key><string>core.CallAndMessage</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>test_ic_set_to_null</string>
 // CHECK-NEXT:   <key>issue_hash</key><string>3</string>
@@ -538,6 +541,7 @@ void test_cast(const TestInstanceCall *p) {
 // CHECK-NEXT:    <key>description</key><string>Called C++ object pointer is null</string>
 // CHECK-NEXT:    <key>category</key><string>Logic error</string>
 // CHECK-NEXT:    <key>type</key><string>Called C++ object pointer is null</string>
+// CHECK-NEXT:    <key>check_name</key><string>core.CallAndMessage</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>test_ic_null</string>
 // CHECK-NEXT:   <key>issue_hash</key><string>2</string>
@@ -647,6 +651,7 @@ void test_cast(const TestInstanceCall *p) {
 // CHECK-NEXT:    <key>description</key><string>Called C++ object pointer is null</string>
 // CHECK-NEXT:    <key>category</key><string>Logic error</string>
 // CHECK-NEXT:    <key>type</key><string>Called C++ object pointer is null</string>
+// CHECK-NEXT:    <key>check_name</key><string>core.CallAndMessage</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>test_ic_member_ptr</string>
 // CHECK-NEXT:   <key>issue_hash</key><string>4</string>
@@ -790,6 +795,7 @@ void test_cast(const TestInstanceCall *p) {
 // CHECK-NEXT:    <key>description</key><string>Called C++ object pointer is null</string>
 // CHECK-NEXT:    <key>category</key><string>Logic error</string>
 // CHECK-NEXT:    <key>type</key><string>Called C++ object pointer is null</string>
+// CHECK-NEXT:    <key>check_name</key><string>core.CallAndMessage</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>test_cast</string>
 // CHECK-NEXT:   <key>issue_hash</key><string>2</string>

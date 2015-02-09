@@ -220,6 +220,7 @@ void test2(int *p) {
 // CHECK-NEXT:    <key>description</key><string>Memory allocated by malloc() should be deallocated by free(), not &apos;delete&apos;</string>
 // CHECK-NEXT:    <key>category</key><string>Memory Error</string>
 // CHECK-NEXT:    <key>type</key><string>Bad deallocator</string>
+// CHECK-NEXT:    <key>check_name</key><string>unix.MismatchedDeallocator</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>noteOnMacro</string>
 // CHECK-NEXT:   <key>issue_hash</key><string>6</string>
@@ -314,6 +315,7 @@ void test2(int *p) {
 // CHECK-NEXT:    <key>description</key><string>Potential leak of memory pointed to by &apos;x&apos;</string>
 // CHECK-NEXT:    <key>category</key><string>Memory Error</string>
 // CHECK-NEXT:    <key>type</key><string>Memory leak</string>
+// CHECK-NEXT:    <key>check_name</key><string>unix.Malloc</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>macroIsFirstInFunction</string>
 // CHECK-NEXT:   <key>issue_hash</key><string>1</string>
@@ -559,6 +561,7 @@ void test2(int *p) {
 // CHECK-NEXT:    <key>description</key><string>Dereference of null pointer (loaded from variable &apos;p&apos;)</string>
 // CHECK-NEXT:    <key>category</key><string>Logic error</string>
 // CHECK-NEXT:    <key>type</key><string>Dereference of null pointer</string>
+// CHECK-NEXT:    <key>check_name</key><string>core.NullDereference</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>macroInExpression</string>
 // CHECK-NEXT:   <key>issue_hash</key><string>4</string>
@@ -804,6 +807,7 @@ void test2(int *p) {
 // CHECK-NEXT:    <key>description</key><string>Dereference of null pointer (loaded from variable &apos;p&apos;)</string>
 // CHECK-NEXT:    <key>category</key><string>Logic error</string>
 // CHECK-NEXT:    <key>type</key><string>Dereference of null pointer</string>
+// CHECK-NEXT:    <key>check_name</key><string>core.NullDereference</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>macroInExpressionNoNote</string>
 // CHECK-NEXT:   <key>issue_hash</key><string>5</string>
@@ -1015,6 +1019,7 @@ void test2(int *p) {
 // CHECK-NEXT:    <key>description</key><string>Dereference of null pointer (loaded from variable &apos;p&apos;)</string>
 // CHECK-NEXT:    <key>category</key><string>Logic error</string>
 // CHECK-NEXT:    <key>type</key><string>Dereference of null pointer</string>
+// CHECK-NEXT:    <key>check_name</key><string>core.NullDereference</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>macroWithArgInExpression</string>
 // CHECK-NEXT:   <key>issue_hash</key><string>4</string>
@@ -1158,6 +1163,7 @@ void test2(int *p) {
 // CHECK-NEXT:    <key>description</key><string>Dereference of null pointer (loaded from variable &apos;p&apos;)</string>
 // CHECK-NEXT:    <key>category</key><string>Logic error</string>
 // CHECK-NEXT:    <key>type</key><string>Dereference of null pointer</string>
+// CHECK-NEXT:    <key>check_name</key><string>core.NullDereference</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>useMultiNoteMacroWithError</string>
 // CHECK-NEXT:   <key>issue_hash</key><string>2</string>
@@ -1364,6 +1370,7 @@ void test2(int *p) {
 // CHECK-NEXT:    <key>description</key><string>Dereference of null pointer (loaded from variable &apos;p&apos;)</string>
 // CHECK-NEXT:    <key>category</key><string>Logic error</string>
 // CHECK-NEXT:    <key>type</key><string>Dereference of null pointer</string>
+// CHECK-NEXT:    <key>check_name</key><string>core.NullDereference</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>useMultiNote</string>
 // CHECK-NEXT:   <key>issue_hash</key><string>4</string>
@@ -1584,6 +1591,7 @@ void test2(int *p) {
 // CHECK-NEXT:    <key>description</key><string>Dereference of null pointer (loaded from variable &apos;a&apos;)</string>
 // CHECK-NEXT:    <key>category</key><string>Logic error</string>
 // CHECK-NEXT:    <key>type</key><string>Dereference of null pointer</string>
+// CHECK-NEXT:    <key>check_name</key><string>core.NullDereference</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>null_deref</string>
 // CHECK-NEXT:   <key>issue_hash</key><string>3</string>

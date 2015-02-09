@@ -146,6 +146,7 @@ int test_calling_unimportant_callee(int argc, char *argv[]) {
 // CHECK-NEXT:    <key>description</key><string>Undefined or garbage value returned to caller</string>
 // CHECK-NEXT:    <key>category</key><string>Logic error</string>
 // CHECK-NEXT:    <key>type</key><string>Garbage return value</string>
+// CHECK-NEXT:    <key>check_name</key><string>core.uninitialized.UndefReturn</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>test_calling_unimportant_callee</string>
 // CHECK-NEXT:   <key>issue_hash</key><string>3</string>

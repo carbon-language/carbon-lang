@@ -275,6 +275,7 @@ int main() {
 // CHECK-NEXT:   <key>description</key><string>Division by zero</string>
 // CHECK-NEXT:   <key>category</key><string>Logic error</string>
 // CHECK-NEXT:   <key>type</key><string>Division by zero</string>
+// CHECK-NEXT:   <key>check_name</key><string>core.DivideZero</string>
 // CHECK-NEXT:  <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:  <key>issue_context</key><string>main</string>
 // CHECK-NEXT:  <key>issue_hash</key><string>15</string>

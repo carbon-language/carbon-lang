@@ -877,6 +877,7 @@ namespace PR17746 {
 // CHECK-NEXT:    <key>description</key><string>Dereference of null pointer (loaded from variable &apos;p&apos;)</string>
 // CHECK-NEXT:    <key>category</key><string>Logic error</string>
 // CHECK-NEXT:    <key>type</key><string>Dereference of null pointer</string>
+// CHECK-NEXT:    <key>check_name</key><string>core.NullDereference</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>C++ method</string>
 // CHECK-NEXT:   <key>issue_context</key><string>use</string>
 // CHECK-NEXT:   <key>issue_hash</key><string>1</string>
@@ -1165,6 +1166,7 @@ namespace PR17746 {
 // CHECK-NEXT:    <key>description</key><string>Dereference of null pointer (loaded from variable &apos;p&apos;)</string>
 // CHECK-NEXT:    <key>category</key><string>Logic error</string>
 // CHECK-NEXT:    <key>type</key><string>Dereference of null pointer</string>
+// CHECK-NEXT:    <key>check_name</key><string>core.NullDereference</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>C++ method</string>
 // CHECK-NEXT:   <key>issue_context</key><string>method</string>
 // CHECK-NEXT:   <key>issue_hash</key><string>1</string>
@@ -1414,6 +1416,7 @@ namespace PR17746 {
 // CHECK-NEXT:    <key>description</key><string>Dereference of null pointer (loaded from variable &apos;globalPtr&apos;)</string>
 // CHECK-NEXT:    <key>category</key><string>Logic error</string>
 // CHECK-NEXT:    <key>type</key><string>Dereference of null pointer</string>
+// CHECK-NEXT:    <key>check_name</key><string>core.NullDereference</string>
 // CHECK-NEXT:   <key>issue_hash</key><string>1</string>
 // CHECK-NEXT:   <key>location</key>
 // CHECK-NEXT:   <dict>
@@ -1661,6 +1664,7 @@ namespace PR17746 {
 // CHECK-NEXT:    <key>description</key><string>Dereference of null pointer (loaded from variable &apos;globalPtr&apos;)</string>
 // CHECK-NEXT:    <key>category</key><string>Logic error</string>
 // CHECK-NEXT:    <key>type</key><string>Dereference of null pointer</string>
+// CHECK-NEXT:    <key>check_name</key><string>core.NullDereference</string>
 // CHECK-NEXT:   <key>issue_hash</key><string>1</string>
 // CHECK-NEXT:   <key>location</key>
 // CHECK-NEXT:   <dict>
@@ -1942,6 +1946,7 @@ namespace PR17746 {
 // CHECK-NEXT:    <key>description</key><string>Dereference of null pointer (loaded from variable &apos;globalPtr&apos;)</string>
 // CHECK-NEXT:    <key>category</key><string>Logic error</string>
 // CHECK-NEXT:    <key>type</key><string>Dereference of null pointer</string>
+// CHECK-NEXT:    <key>check_name</key><string>core.NullDereference</string>
 // CHECK-NEXT:   <key>issue_hash</key><string>1</string>
 // CHECK-NEXT:   <key>location</key>
 // CHECK-NEXT:   <dict>
@@ -2257,6 +2262,7 @@ namespace PR17746 {
 // CHECK-NEXT:    <key>description</key><string>Dereference of null pointer (loaded from variable &apos;globalPtr&apos;)</string>
 // CHECK-NEXT:    <key>category</key><string>Logic error</string>
 // CHECK-NEXT:    <key>type</key><string>Dereference of null pointer</string>
+// CHECK-NEXT:    <key>check_name</key><string>core.NullDereference</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>C++ method</string>
 // CHECK-NEXT:   <key>issue_context</key><string>operator=</string>
 // CHECK-NEXT:   <key>issue_hash</key><string>1</string>
@@ -2608,6 +2614,7 @@ namespace PR17746 {
 // CHECK-NEXT:    <key>description</key><string>Dereference of null pointer (loaded from variable &apos;globalPtr&apos;)</string>
 // CHECK-NEXT:    <key>category</key><string>Logic error</string>
 // CHECK-NEXT:    <key>type</key><string>Dereference of null pointer</string>
+// CHECK-NEXT:    <key>check_name</key><string>core.NullDereference</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>C++ method</string>
 // CHECK-NEXT:   <key>issue_context</key><string>operator=</string>
 // CHECK-NEXT:   <key>issue_hash</key><string>1</string>
@@ -2895,6 +2902,7 @@ namespace PR17746 {
 // CHECK-NEXT:    <key>description</key><string>Dereference of null pointer (loaded from variable &apos;globalPtr&apos;)</string>
 // CHECK-NEXT:    <key>category</key><string>Logic error</string>
 // CHECK-NEXT:    <key>type</key><string>Dereference of null pointer</string>
+// CHECK-NEXT:    <key>check_name</key><string>core.NullDereference</string>
 // CHECK-NEXT:   <key>issue_hash</key><string>1</string>
 // CHECK-NEXT:   <key>location</key>
 // CHECK-NEXT:   <dict>
@@ -3142,6 +3150,7 @@ namespace PR17746 {
 // CHECK-NEXT:    <key>description</key><string>Division by zero</string>
 // CHECK-NEXT:    <key>category</key><string>Logic error</string>
 // CHECK-NEXT:    <key>type</key><string>Division by zero</string>
+// CHECK-NEXT:    <key>check_name</key><string>core.DivideZero</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>test</string>
 // CHECK-NEXT:   <key>issue_hash</key><string>1</string>
@@ -3488,6 +3497,7 @@ namespace PR17746 {
 // CHECK-NEXT:    <key>description</key><string>Division by zero</string>
 // CHECK-NEXT:    <key>category</key><string>Logic error</string>
 // CHECK-NEXT:    <key>type</key><string>Division by zero</string>
+// CHECK-NEXT:    <key>check_name</key><string>core.DivideZero</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>testRef</string>
 // CHECK-NEXT:   <key>issue_hash</key><string>1</string>
@@ -3597,6 +3607,7 @@ namespace PR17746 {
 // CHECK-NEXT:    <key>description</key><string>Returning null reference</string>
 // CHECK-NEXT:    <key>category</key><string>Logic error</string>
 // CHECK-NEXT:    <key>type</key><string>Returning null reference</string>
+// CHECK-NEXT:    <key>check_name</key><string>core.uninitialized.UndefReturn</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>returnNullReference</string>
 // CHECK-NEXT:   <key>issue_hash</key><string>3</string>
@@ -3962,6 +3973,7 @@ namespace PR17746 {
 // CHECK-NEXT:    <key>description</key><string>Dereference of null pointer (loaded from field &apos;ptr&apos;)</string>
 // CHECK-NEXT:    <key>category</key><string>Logic error</string>
 // CHECK-NEXT:    <key>type</key><string>Dereference of null pointer</string>
+// CHECK-NEXT:    <key>check_name</key><string>core.NullDereference</string>
 // CHECK-NEXT:   <key>issue_hash</key><string>1</string>
 // CHECK-NEXT:   <key>location</key>
 // CHECK-NEXT:   <dict>
@@ -4166,6 +4178,7 @@ namespace PR17746 {
 // CHECK-NEXT:    <key>description</key><string>Dereference of null pointer (loaded from variable &apos;y&apos;)</string>
 // CHECK-NEXT:    <key>category</key><string>Logic error</string>
 // CHECK-NEXT:    <key>type</key><string>Dereference of null pointer</string>
+// CHECK-NEXT:    <key>check_name</key><string>core.NullDereference</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>testNonPrintableAssignment</string>
 // CHECK-NEXT:   <key>issue_hash</key><string>3</string>
@@ -4275,6 +4288,7 @@ namespace PR17746 {
 // CHECK-NEXT:    <key>description</key><string>Dereference of null pointer (loaded from field &apos;x&apos;)</string>
 // CHECK-NEXT:    <key>category</key><string>Logic error</string>
 // CHECK-NEXT:    <key>type</key><string>Dereference of null pointer</string>
+// CHECK-NEXT:    <key>check_name</key><string>core.NullDereference</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>test</string>
 // CHECK-NEXT:   <key>issue_hash</key><string>2</string>
@@ -4452,6 +4466,7 @@ namespace PR17746 {
 // CHECK-NEXT:    <key>description</key><string>Dereference of null pointer</string>
 // CHECK-NEXT:    <key>category</key><string>Logic error</string>
 // CHECK-NEXT:    <key>type</key><string>Dereference of null pointer</string>
+// CHECK-NEXT:    <key>check_name</key><string>core.NullDereference</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>C++ method</string>
 // CHECK-NEXT:   <key>issue_context</key><string>testGetDerefExprOnMemberExprWithADot</string>
 // CHECK-NEXT:   <key>issue_hash</key><string>4</string>
@@ -4561,6 +4576,7 @@ namespace PR17746 {
 // CHECK-NEXT:    <key>description</key><string>Dereference of undefined pointer value</string>
 // CHECK-NEXT:    <key>category</key><string>Logic error</string>
 // CHECK-NEXT:    <key>type</key><string>Dereference of undefined pointer value</string>
+// CHECK-NEXT:    <key>check_name</key><string>core.NullDereference</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>testGetDerefExprOnMemberExprWithADot</string>
 // CHECK-NEXT:   <key>issue_hash</key><string>2</string>
@@ -4767,6 +4783,7 @@ namespace PR17746 {
 // CHECK-NEXT:    <key>description</key><string>Called C++ object pointer is null</string>
 // CHECK-NEXT:    <key>category</key><string>Logic error</string>
 // CHECK-NEXT:    <key>type</key><string>Called C++ object pointer is null</string>
+// CHECK-NEXT:    <key>check_name</key><string>core.CallAndMessage</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>testDeclRefExprToReferenceInGetDerefExpr</string>
 // CHECK-NEXT:   <key>issue_hash</key><string>8</string>
@@ -4987,6 +5004,7 @@ namespace PR17746 {
 // CHECK-NEXT:    <key>description</key><string>Division by zero</string>
 // CHECK-NEXT:    <key>category</key><string>Logic error</string>
 // CHECK-NEXT:    <key>type</key><string>Division by zero</string>
+// CHECK-NEXT:    <key>check_name</key><string>core.DivideZero</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>generateNoteOnDefaultArgument</string>
 // CHECK-NEXT:   <key>issue_hash</key><string>1</string>
@@ -5221,6 +5239,7 @@ namespace PR17746 {
 // CHECK-NEXT:    <key>description</key><string>Dereference of null pointer</string>
 // CHECK-NEXT:    <key>category</key><string>Logic error</string>
 // CHECK-NEXT:    <key>type</key><string>Dereference of null pointer</string>
+// CHECK-NEXT:    <key>check_name</key><string>core.NullDereference</string>
 // CHECK-NEXT:   <key>issue_hash</key><string>1</string>
 // CHECK-NEXT:   <key>location</key>
 // CHECK-NEXT:   <dict>

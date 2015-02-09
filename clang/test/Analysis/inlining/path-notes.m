@@ -575,6 +575,7 @@ void testNullDereferenceInDispatch() {
 // CHECK-NEXT:    <key>description</key><string>Dereference of null pointer</string>
 // CHECK-NEXT:    <key>category</key><string>Logic error</string>
 // CHECK-NEXT:    <key>type</key><string>Dereference of null pointer</string>
+// CHECK-NEXT:    <key>check_name</key><string>core.NullDereference</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>testReturnZeroIfNil</string>
 // CHECK-NEXT:   <key>issue_hash</key><string>1</string>
@@ -882,6 +883,7 @@ void testNullDereferenceInDispatch() {
 // CHECK-NEXT:    <key>description</key><string>Division by zero</string>
 // CHECK-NEXT:    <key>category</key><string>Logic error</string>
 // CHECK-NEXT:    <key>type</key><string>Division by zero</string>
+// CHECK-NEXT:    <key>check_name</key><string>core.DivideZero</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>testDispatchSyncInlining</string>
 // CHECK-NEXT:   <key>issue_hash</key><string>14</string>
@@ -1131,6 +1133,7 @@ void testNullDereferenceInDispatch() {
 // CHECK-NEXT:    <key>description</key><string>Variable &apos;x&apos; is uninitialized when captured by block</string>
 // CHECK-NEXT:    <key>category</key><string>Logic error</string>
 // CHECK-NEXT:    <key>type</key><string>uninitialized variable captured by block</string>
+// CHECK-NEXT:    <key>check_name</key><string>core.uninitialized.CapturedBlockVariable</string>
 // CHECK-NEXT:   <key>location</key>
 // CHECK-NEXT:   <dict>
 // CHECK-NEXT:    <key>line</key><integer>118</integer>
@@ -1445,6 +1448,7 @@ void testNullDereferenceInDispatch() {
 // CHECK-NEXT:    <key>description</key><string>Dereference of null pointer (loaded from variable &apos;x&apos;)</string>
 // CHECK-NEXT:    <key>category</key><string>Logic error</string>
 // CHECK-NEXT:    <key>type</key><string>Dereference of null pointer</string>
+// CHECK-NEXT:    <key>check_name</key><string>core.NullDereference</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>testNilReceiverHelper</string>
 // CHECK-NEXT:   <key>issue_hash</key><string>1</string>
@@ -1622,6 +1626,7 @@ void testNullDereferenceInDispatch() {
 // CHECK-NEXT:    <key>description</key><string>Array element cannot be nil</string>
 // CHECK-NEXT:    <key>category</key><string>API Misuse (Apple)</string>
 // CHECK-NEXT:    <key>type</key><string>nil argument</string>
+// CHECK-NEXT:    <key>check_name</key><string>osx.cocoa.NilArg</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>testCreateArrayLiteral</string>
 // CHECK-NEXT:   <key>issue_hash</key><string>3</string>
@@ -2017,6 +2022,7 @@ void testNullDereferenceInDispatch() {
 // CHECK-NEXT:    <key>description</key><string>Object autoreleased too many times</string>
 // CHECK-NEXT:    <key>category</key><string>Memory (Core Foundation/Objective-C)</string>
 // CHECK-NEXT:    <key>type</key><string>Object autoreleased too many times</string>
+// CHECK-NEXT:    <key>check_name</key><string>osx.cocoa.RetainCount</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>testAutoreleaseTakesEffectInDispatch</string>
 // CHECK-NEXT:   <key>issue_hash</key><string>11</string>

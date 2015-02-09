@@ -543,6 +543,7 @@ static void CreateRefUndef(SCDynamicStoreRef *storeRef, unsigned x) {
 // CHECK-NEXT:    <key>description</key><string>Null pointer argument in call to CFRelease</string>
 // CHECK-NEXT:    <key>category</key><string>API Misuse (Apple)</string>
 // CHECK-NEXT:    <key>type</key><string>null passed to CF memory management function</string>
+// CHECK-NEXT:    <key>check_name</key><string>osx.coreFoundation.CFRetainRelease</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>Objective-C method</string>
 // CHECK-NEXT:   <key>issue_context</key><string>test</string>
 // CHECK-NEXT:   <key>issue_hash</key><string>5</string>
@@ -923,6 +924,7 @@ static void CreateRefUndef(SCDynamicStoreRef *storeRef, unsigned x) {
 // CHECK-NEXT:    <key>description</key><string>Function call argument is an uninitialized value</string>
 // CHECK-NEXT:    <key>category</key><string>Logic error</string>
 // CHECK-NEXT:    <key>type</key><string>Uninitialized argument value</string>
+// CHECK-NEXT:    <key>check_name</key><string>core.CallAndMessage</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>Objective-C method</string>
 // CHECK-NEXT:   <key>issue_context</key><string>test2</string>
 // CHECK-NEXT:   <key>issue_hash</key><string>5</string>

@@ -387,7 +387,9 @@ void PlistDiagnostics::FlushDiagnosticsImpl(
     EmitString(o, D->getCategory()) << '\n';
     o << "   <key>type</key>";
     EmitString(o, D->getBugType()) << '\n';
-    
+    o << "   <key>check_name</key>";
+    EmitString(o, D->getCheckName()) << '\n';
+ 
     // Output information about the semantic context where
     // the issue occurred.
     if (const Decl *DeclWithIssue = D->getDeclWithIssue()) {

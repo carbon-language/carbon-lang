@@ -305,6 +305,7 @@ void testTrackConstraintBRVisitorIsTrackingTurnedOn(struct S syz, int *pp) {
 // CHECK-NEXT:    <key>description</key><string>Dereference of null pointer (loaded from field &apos;x&apos;)</string>
 // CHECK-NEXT:    <key>category</key><string>Logic error</string>
 // CHECK-NEXT:    <key>type</key><string>Dereference of null pointer</string>
+// CHECK-NEXT:    <key>check_name</key><string>core.NullDereference</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>test</string>
 // CHECK-NEXT:   <key>issue_hash</key><string>11</string>
@@ -642,6 +643,7 @@ void testTrackConstraintBRVisitorIsTrackingTurnedOn(struct S syz, int *pp) {
 // CHECK-NEXT:    <key>description</key><string>Dereference of null pointer (loaded from variable &apos;p&apos;)</string>
 // CHECK-NEXT:    <key>category</key><string>Logic error</string>
 // CHECK-NEXT:    <key>type</key><string>Dereference of null pointer</string>
+// CHECK-NEXT:    <key>check_name</key><string>core.NullDereference</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>testTrackConstraintBRVisitorIsTrackingTurnedOn</string>
 // CHECK-NEXT:   <key>issue_hash</key><string>11</string>
