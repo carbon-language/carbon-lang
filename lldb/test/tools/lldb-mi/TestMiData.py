@@ -33,7 +33,7 @@ class MiDataTestCase(lldbmi_testcase.MiTestCaseBase):
 
         # Test -data-disassemble: try to disassemble some address
         self.runCmd("-data-disassemble -s %#x -e %#x -- 0" % (addr, addr + 0x10))
-        self.expect("\^done,asm_insns=\[{address=\"%#x\",func-name=\"main\",offset=\"0x0\",size=\"[1-9]\",inst=\".+\"}," % addr)
+        self.expect("\^done,asm_insns=\[{address=\"0x%08x\",func-name=\"main\",offset=\"0\",size=\"[1-9]+\",inst=\".+\"}," % addr)
 
     @lldbmi_test
     @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")

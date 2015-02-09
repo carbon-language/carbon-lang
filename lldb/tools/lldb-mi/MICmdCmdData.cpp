@@ -408,6 +408,11 @@ CMICmdCmdDataDisassemble::Execute(void)
     lldb::addr_t lldbStartAddr = static_cast<lldb::addr_t>(nAddrStart);
     lldb::SBInstructionList instructions = sbTarget.ReadInstructions(lldb::SBAddress(lldbStartAddr, sbTarget), nAddrEnd - nAddrStart);
     const MIuint nInstructions = instructions.GetSize();
+    // Calculate the offset of first instruction so that we can generate offset starting at 0
+    lldb::addr_t start_offset = 0;
+    if(nInstructions > 0)
+        start_offset = instructions.GetInstructionAtIndex(0).GetAddress().GetOffset();
+
     for (size_t i = 0; i < nInstructions; i++)
     {
         const MIchar *pUnknown = "??";
@@ -418,7 +423,7 @@ CMICmdCmdDataDisassemble::Execute(void)
         lldb::addr_t addr = address.GetLoadAddress(sbTarget);
         const MIchar *pFnName = address.GetFunction().GetName();
         pFnName = (pFnName != nullptr) ? pFnName : pUnknown;
-        lldb::addr_t addrOffSet = address.GetOffset();
+        lldb::addr_t addrOffSet = address.GetOffset() - start_offset;
         const MIchar *pStrOperands = instrt.GetOperands(sbTarget);
         pStrOperands = (pStrOperands != nullptr) ? pStrOperands : pUnknown;
         const size_t instrtSize = instrt.GetByteSize();
@@ -430,7 +435,7 @@ CMICmdCmdDataDisassemble::Execute(void)
         const CMICmnMIValueConst miValueConst2(pFnName);
         const CMICmnMIValueResult miValueResult2("func-name", miValueConst2);
         miValueTuple.Add(miValueResult2);
-        const CMICmnMIValueConst miValueConst3(CMIUtilString::Format("0x%lld", addrOffSet));
+        const CMICmnMIValueConst miValueConst3(CMIUtilString::Format("%lld", addrOffSet));
         const CMICmnMIValueResult miValueResult3("offset", miValueConst3);
         miValueTuple.Add(miValueResult3);
         const CMICmnMIValueConst miValueConst4(CMIUtilString::Format("%d", instrtSize));
