@@ -191,7 +191,7 @@ class Verifier : public InstVisitor<Verifier>, VerifierSupport {
   SmallPtrSet<Instruction *, 16> InstsInThisBlock;
 
   /// \brief Keep track of the metadata nodes that have been checked already.
-  SmallPtrSet<Metadata *, 32> MDNodes;
+  SmallPtrSet<const Metadata *, 32> MDNodes;
 
   /// \brief The personality function referenced by the LandingPadInsts.
   /// All LandingPadInsts within the same function must use the same
@@ -290,9 +290,9 @@ private:
   void visitAliaseeSubExpr(SmallPtrSetImpl<const GlobalAlias *> &Visited,
                            const GlobalAlias &A, const Constant &C);
   void visitNamedMDNode(const NamedMDNode &NMD);
-  void visitMDNode(MDNode &MD);
-  void visitMetadataAsValue(MetadataAsValue &MD, Function *F);
-  void visitValueAsMetadata(ValueAsMetadata &MD, Function *F);
+  void visitMDNode(const MDNode &MD);
+  void visitMetadataAsValue(const MetadataAsValue &MD, Function *F);
+  void visitValueAsMetadata(const ValueAsMetadata &MD, Function *F);
   void visitComdat(const Comdat &C);
   void visitModuleIdents(const Module &M);
   void visitModuleFlags(const Module &M);
@@ -595,7 +595,7 @@ void Verifier::visitNamedMDNode(const NamedMDNode &NMD) {
   }
 }
 
-void Verifier::visitMDNode(MDNode &MD) {
+void Verifier::visitMDNode(const MDNode &MD) {
   // Only visit each node once.  Metadata can be mutually recursive, so this
   // avoids infinite recursion here, as well as being an optimization.
   if (!MDNodes.insert(&MD).second)
@@ -622,7 +622,7 @@ void Verifier::visitMDNode(MDNode &MD) {
   Assert1(MD.isResolved(), "All nodes should be resolved!", &MD);
 }
 
-void Verifier::visitValueAsMetadata(ValueAsMetadata &MD, Function *F) {
+void Verifier::visitValueAsMetadata(const ValueAsMetadata &MD, Function *F) {
   Assert1(MD.getValue(), "Expected valid value", &MD);
   Assert2(!MD.getValue()->getType()->isMetadataTy(),
           "Unexpected metadata round-trip through values", &MD, MD.getValue());
@@ -648,7 +648,7 @@ void Verifier::visitValueAsMetadata(ValueAsMetadata &MD, Function *F) {
   Assert1(ActualF == F, "function-local metadata used in wrong function", L);
 }
 
-void Verifier::visitMetadataAsValue(MetadataAsValue &MDV, Function *F) {
+void Verifier::visitMetadataAsValue(const MetadataAsValue &MDV, Function *F) {
   Metadata *MD = MDV.getMetadata();
   if (auto *N = dyn_cast<MDNode>(MD)) {
     visitMDNode(*N);
