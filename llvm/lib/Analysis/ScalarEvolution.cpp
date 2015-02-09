@@ -4297,9 +4297,10 @@ const SCEV *ScalarEvolution::createSCEV(Value *V) {
       case ICmpInst::ICMP_SGE:
         // a >s b ? a+x : b+x  ->  smax(a, b)+x
         // a >s b ? b+x : a+x  ->  smin(a, b)+x
-        if (LHS->getType() == U->getType()) {
-          const SCEV *LS = getSCEV(LHS);
-          const SCEV *RS = getSCEV(RHS);
+        if (getTypeSizeInBits(LHS->getType()) <=
+            getTypeSizeInBits(U->getType())) {
+          const SCEV *LS = getNoopOrSignExtend(getSCEV(LHS), U->getType());
+          const SCEV *RS = getNoopOrSignExtend(getSCEV(RHS), U->getType());
           const SCEV *LA = getSCEV(U->getOperand(1));
           const SCEV *RA = getSCEV(U->getOperand(2));
           const SCEV *LDiff = getMinusSCEV(LA, LS);
@@ -4320,9 +4321,10 @@ const SCEV *ScalarEvolution::createSCEV(Value *V) {
       case ICmpInst::ICMP_UGE:
         // a >u b ? a+x : b+x  ->  umax(a, b)+x
         // a >u b ? b+x : a+x  ->  umin(a, b)+x
-        if (LHS->getType() == U->getType()) {
-          const SCEV *LS = getSCEV(LHS);
-          const SCEV *RS = getSCEV(RHS);
+        if (getTypeSizeInBits(LHS->getType()) <=
+            getTypeSizeInBits(U->getType())) {
+          const SCEV *LS = getNoopOrZeroExtend(getSCEV(LHS), U->getType());
+          const SCEV *RS = getNoopOrZeroExtend(getSCEV(RHS), U->getType());
           const SCEV *LA = getSCEV(U->getOperand(1));
           const SCEV *RA = getSCEV(U->getOperand(2));
           const SCEV *LDiff = getMinusSCEV(LA, LS);
@@ -4337,11 +4339,11 @@ const SCEV *ScalarEvolution::createSCEV(Value *V) {
         break;
       case ICmpInst::ICMP_NE:
         // n != 0 ? n+x : 1+x  ->  umax(n, 1)+x
-        if (LHS->getType() == U->getType() &&
-            isa<ConstantInt>(RHS) &&
-            cast<ConstantInt>(RHS)->isZero()) {
-          const SCEV *One = getConstant(LHS->getType(), 1);
-          const SCEV *LS = getSCEV(LHS);
+        if (getTypeSizeInBits(LHS->getType()) <=
+                getTypeSizeInBits(U->getType()) &&
+            isa<ConstantInt>(RHS) && cast<ConstantInt>(RHS)->isZero()) {
+          const SCEV *One = getConstant(U->getType(), 1);
+          const SCEV *LS = getNoopOrZeroExtend(getSCEV(LHS), U->getType());
           const SCEV *LA = getSCEV(U->getOperand(1));
           const SCEV *RA = getSCEV(U->getOperand(2));
           const SCEV *LDiff = getMinusSCEV(LA, LS);
@@ -4352,11 +4354,11 @@ const SCEV *ScalarEvolution::createSCEV(Value *V) {
         break;
       case ICmpInst::ICMP_EQ:
         // n == 0 ? 1+x : n+x  ->  umax(n, 1)+x
-        if (LHS->getType() == U->getType() &&
-            isa<ConstantInt>(RHS) &&
-            cast<ConstantInt>(RHS)->isZero()) {
-          const SCEV *One = getConstant(LHS->getType(), 1);
-          const SCEV *LS = getSCEV(LHS);
+        if (getTypeSizeInBits(LHS->getType()) <=
+                getTypeSizeInBits(U->getType()) &&
+            isa<ConstantInt>(RHS) && cast<ConstantInt>(RHS)->isZero()) {
+          const SCEV *One = getConstant(U->getType(), 1);
+          const SCEV *LS = getNoopOrZeroExtend(getSCEV(LHS), U->getType());
           const SCEV *LA = getSCEV(U->getOperand(1));
           const SCEV *RA = getSCEV(U->getOperand(2));
           const SCEV *LDiff = getMinusSCEV(LA, One);
@@ -7028,8 +7030,8 @@ ScalarEvolution::isImpliedCondOperandsHelper(ICmpInst::Predicate Pred,
   return false;
 }
 
-// Verify if an linear IV with positive stride can overflow when in a 
-// less-than comparison, knowing the invariant term of the comparison, the 
+// Verify if an linear IV with positive stride can overflow when in a
+// less-than comparison, knowing the invariant term of the comparison, the
 // stride and the knowledge of NSW/NUW flags on the recurrence.
 bool ScalarEvolution::doesIVOverflowOnLT(const SCEV *RHS, const SCEV *Stride,
                                          bool IsSigned, bool NoWrap) {
@@ -7057,7 +7059,7 @@ bool ScalarEvolution::doesIVOverflowOnLT(const SCEV *RHS, const SCEV *Stride,
   return (MaxValue - MaxStrideMinusOne).ult(MaxRHS);
 }
 
-// Verify if an linear IV with negative stride can overflow when in a 
+// Verify if an linear IV with negative stride can overflow when in a
 // greater-than comparison, knowing the invariant term of the comparison,
 // the stride and the knowledge of NSW/NUW flags on the recurrence.
 bool ScalarEvolution::doesIVOverflowOnGT(const SCEV *RHS, const SCEV *Stride,
@@ -7088,7 +7090,7 @@ bool ScalarEvolution::doesIVOverflowOnGT(const SCEV *RHS, const SCEV *Stride,
 
 // Compute the backedge taken count knowing the interval difference, the
 // stride and presence of the equality in the comparison.
-const SCEV *ScalarEvolution::computeBECount(const SCEV *Delta, const SCEV *Step, 
+const SCEV *ScalarEvolution::computeBECount(const SCEV *Delta, const SCEV *Step,
                                             bool Equality) {
   const SCEV *One = getConstant(Step->getType(), 1);
   Delta = Equality ? getAddExpr(Delta, Step)
@@ -7128,7 +7130,7 @@ ScalarEvolution::HowManyLessThans(const SCEV *LHS, const SCEV *RHS,
 
   // Avoid proven overflow cases: this will ensure that the backedge taken count
   // will not generate any unsigned overflow. Relaxed no-overflow conditions
-  // exploit NoWrapFlags, allowing to optimize in presence of undefined 
+  // exploit NoWrapFlags, allowing to optimize in presence of undefined
   // behaviors like the case of C language.
   if (!Stride->isOne() && doesIVOverflowOnLT(RHS, Stride, IsSigned, NoWrap))
     return getCouldNotCompute();
@@ -7208,7 +7210,7 @@ ScalarEvolution::HowManyGreaterThans(const SCEV *LHS, const SCEV *RHS,
 
   // Avoid proven overflow cases: this will ensure that the backedge taken count
   // will not generate any unsigned overflow. Relaxed no-overflow conditions
-  // exploit NoWrapFlags, allowing to optimize in presence of undefined 
+  // exploit NoWrapFlags, allowing to optimize in presence of undefined
   // behaviors like the case of C language.
   if (!Stride->isOne() && doesIVOverflowOnGT(RHS, Stride, IsSigned, NoWrap))
     return getCouldNotCompute();
@@ -7256,7 +7258,7 @@ ScalarEvolution::HowManyGreaterThans(const SCEV *LHS, const SCEV *RHS,
   if (isa<SCEVConstant>(BECount))
     MaxBECount = BECount;
   else
-    MaxBECount = computeBECount(getConstant(MaxStart - MinEnd), 
+    MaxBECount = computeBECount(getConstant(MaxStart - MinEnd),
                                 getConstant(MinStride), false);
 
   if (isa<SCEVCouldNotCompute>(MaxBECount))
