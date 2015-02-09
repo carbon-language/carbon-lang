@@ -87,7 +87,8 @@ namespace llvm {
     /// unsigned-max(bitwidth).  This means that the recurrence will never reach
     /// its start value if the step is non-zero.  Computing the same value on
     /// each iteration is not considered wrapping, and recurrences with step = 0
-    /// are trivially <NW>.
+    /// are trivially <NW>.  <NW> is independent of the sign of step and the
+    /// value the add recurrence starts with.
     ///
     /// Note that NUW and NSW are also valid properties of a recurrence, and
     /// either implies NW. For convenience, NW will be set for a recurrence
