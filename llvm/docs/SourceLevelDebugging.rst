@@ -1807,7 +1807,6 @@ tag is one of:
 * DW_TAG_subrange_type
 * DW_TAG_base_type
 * DW_TAG_const_type
-* DW_TAG_constant
 * DW_TAG_file_type
 * DW_TAG_namelist
 * DW_TAG_packed_type

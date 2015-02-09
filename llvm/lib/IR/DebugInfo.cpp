@@ -254,8 +254,7 @@ bool DIDescriptor::isSubprogram() const {
 }
 
 bool DIDescriptor::isGlobalVariable() const {
-  return DbgNode && (getTag() == dwarf::DW_TAG_variable ||
-                     getTag() == dwarf::DW_TAG_constant);
+  return DbgNode && getTag() == dwarf::DW_TAG_variable;
 }
 
 bool DIDescriptor::isScope() const {

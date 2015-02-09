@@ -1559,7 +1559,6 @@ static dwarf::PubIndexEntryDescriptor computeIndexValue(DwarfUnit *CU,
     return dwarf::GIEK_TYPE;
   case dwarf::DW_TAG_subprogram:
     return dwarf::PubIndexEntryDescriptor(dwarf::GIEK_FUNCTION, Linkage);
-  case dwarf::DW_TAG_constant:
   case dwarf::DW_TAG_variable:
     return dwarf::PubIndexEntryDescriptor(dwarf::GIEK_VARIABLE, Linkage);
   case dwarf::DW_TAG_enumerator:
