@@ -63,7 +63,14 @@ class MiNotificationTestCase(lldbmi_testcase.MiTestCaseBase):
         self.expect("\^done")
 
         # Test that *stopped is printed
-        self.expect("\*stopped,reason=\"signal-received\",signal=\"17\",stopped-threads=\"all\"")
+        self.expect("\*stopped.*")
+        
+        # Run to main to make sure we have not exited the application
+        self.runCmd("-break-insert -f main")
+        self.expect("\^done,bkpt={number=\"1\"")
+        self.runCmd("-exec-continue")
+        self.expect("\^running")
+        self.expect("\*stopped,reason=\"breakpoint-hit\"")
 
     @lldbmi_test
     @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
