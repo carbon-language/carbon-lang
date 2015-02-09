@@ -691,6 +691,8 @@ class DILexicalBlockFile : public DIScope {
 public:
   explicit DILexicalBlockFile(const MDNode *N = nullptr) : DIScope(N) {}
   DIScope getContext() const {
+    // FIXME: This logic is horrible.  getScope() returns a DILexicalBlock, but
+    // then we check if it's a subprogram?  WHAT?!?
     if (getScope().isSubprogram())
       return getScope();
     return getScope().getContext();
