@@ -14,6 +14,7 @@
 #ifndef LLVM_EXECUTIONENGINE_ORC_INDIRECTIONUTILS_H
 #define LLVM_EXECUTIONENGINE_ORC_INDIRECTIONUTILS_H
 
+#include "JITSymbol.h"
 #include "llvm/IR/Mangler.h"
 #include "llvm/IR/Module.h"
 #include <sstream>
@@ -84,7 +85,7 @@ public:
   ///
   ///   This is expected to be called by code in the JIT process itself, in
   /// order to resolve a function.
-  virtual uint64_t resolve(StubIndex StubIdx) = 0;
+  virtual TargetAddress resolve(StubIndex StubIdx) = 0;
 
 private:
   FuncNameList FuncNames;
@@ -97,9 +98,9 @@ public:
   JITResolveCallbackHandlerImpl(LookupFtor Lookup, UpdateFtor Update)
       : Lookup(std::move(Lookup)), Update(std::move(Update)) {}
 
-  uint64_t resolve(StubIndex StubIdx) override {
+  TargetAddress resolve(StubIndex StubIdx) override {
     const std::string &FuncName = getFuncName(StubIdx);
-    uint64_t Addr = Lookup(FuncName);
+    TargetAddress Addr = Lookup(FuncName);
     Update(FuncName, Addr);
     return Addr;
   }
@@ -211,10 +212,10 @@ createCallbackHandlerFromJITIndirections(const JITIndirections &Indirs,
           [=](const std::string &S) {
             return Lookup(NM.getMangledName(GetImplName(S)));
           },
-          [=](const std::string &S, uint64_t Addr) {
+          [=](const std::string &S, TargetAddress Addr) {
             void *ImplPtr = reinterpret_cast<void *>(
                 Lookup(NM.getMangledName(GetAddrName(S))));
-            memcpy(ImplPtr, &Addr, sizeof(uint64_t));
+            memcpy(ImplPtr, &Addr, sizeof(TargetAddress));
           });
 
   for (const auto &FuncName : Indirs.IndirectedNames)
@@ -248,12 +249,12 @@ void initializeFuncAddrs(JITResolveCallbackHandler &J,
 
   // Now update indirects to point to the JIT resolve callback asm.
   for (JITResolveCallbackHandler::StubIndex I = 0; I < J.getNumFuncs(); ++I) {
-    uint64_t ResolveCallbackIdxAddr =
+    TargetAddress ResolveCallbackIdxAddr =
         Lookup(getJITResolveCallbackIndexLabel(I));
     void *AddrPtr = reinterpret_cast<void *>(
         Lookup(NM.getMangledName(Indirs.GetAddrName(J.getFuncName(I)))));
     assert(AddrPtr && "Can't find stub addr global to initialize.");
-    memcpy(AddrPtr, &ResolveCallbackIdxAddr, sizeof(uint64_t));
+    memcpy(AddrPtr, &ResolveCallbackIdxAddr, sizeof(TargetAddress));
   }
 }
 

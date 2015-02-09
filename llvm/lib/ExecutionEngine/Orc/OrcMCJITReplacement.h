@@ -213,7 +213,7 @@ public:
 
 private:
   uint64_t getSymbolAddressWithoutMangling(StringRef Name) {
-    if (uint64_t Addr = LazyEmitLayer.getSymbolAddress(Name, false))
+    if (uint64_t Addr = LazyEmitLayer.findSymbol(Name, false).getAddress())
       return Addr;
     if (uint64_t Addr = MM->getSymbolAddress(Name))
       return Addr;
@@ -241,7 +241,7 @@ private:
               static_cast<object::ObjectFile *>(ChildBin.release())));
           ObjectLayer.addObjectSet(
               std::move(ObjSet), llvm::make_unique<ForwardingRTDyldMM>(*this));
-          if (uint64_t Addr = ObjectLayer.getSymbolAddress(Name, true))
+          if (uint64_t Addr = ObjectLayer.findSymbol(Name, true).getAddress())
             return Addr;
         }
       }

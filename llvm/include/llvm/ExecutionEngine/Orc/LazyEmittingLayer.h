@@ -14,6 +14,7 @@
 #ifndef LLVM_EXECUTIONENGINE_ORC_LAZYEMITTINGLAYER_H
 #define LLVM_EXECUTIONENGINE_ORC_LAZYEMITTINGLAYER_H
 
+#include "JITSymbol.h"
 #include "LookasideRTDyldMM.h"
 #include "llvm/ExecutionEngine/RTDyldMemoryManager.h"
 #include "llvm/IR/GlobalValue.h"
@@ -26,8 +27,8 @@ namespace llvm {
 ///
 ///   This layer accepts sets of LLVM IR Modules (via addModuleSet), but does
 /// not immediately emit them the layer below. Instead, emissing to the base
-/// layer is deferred until some symbol in the module set is requested via
-/// getSymbolAddress.
+/// layer is deferred until the first time the client requests the address
+/// (via JITSymbol::getAddress) for a symbol contained in this layer.
 template <typename BaseLayerT> class LazyEmittingLayer {
 public:
   typedef typename BaseLayerT::ModuleSetHandleT BaseLayerHandleT;
@@ -38,32 +39,37 @@ private:
     EmissionDeferredSet() : EmitState(NotEmitted) {}
     virtual ~EmissionDeferredSet() {}
 
-    uint64_t Search(StringRef Name, bool ExportedSymbolsOnly, BaseLayerT &B) {
+    JITSymbol find(StringRef Name, bool ExportedSymbolsOnly, BaseLayerT &B) {
       switch (EmitState) {
-        case NotEmitted:
-          if (Provides(Name, ExportedSymbolsOnly)) {
-            EmitState = Emitting;
-            Handle = Emit(B);
-            EmitState = Emitted;
-          } else
-            return 0;
-          break;
-        case Emitting: 
-          // The module has been added to the base layer but we haven't gotten a
-          // handle back yet so we can't use lookupSymbolAddressIn. Just return
-          // '0' here - LazyEmittingLayer::getSymbolAddress will do a global
-          // search in the base layer when it doesn't find the symbol here, so
-          // we'll find it in the end.
-          return 0;
-        case Emitted:
-          // Nothing to do. Go ahead and search the base layer.
-          break;
+      case NotEmitted:
+        if (provides(Name, ExportedSymbolsOnly))
+          return JITSymbol(
+              [this,ExportedSymbolsOnly,Name,&B]() -> TargetAddress {
+                if (EmitState == Emitting)
+                  return 0;
+                else if (EmitState != Emitted) {
+                  EmitState = Emitting;
+                  Handle = emit(B);
+                  EmitState = Emitted;
+                }
+                return B.findSymbolIn(Handle, Name, ExportedSymbolsOnly)
+                          .getAddress();
+              });
+        else
+          return nullptr;
+      case Emitting:
+        // Calling "emit" can trigger external symbol lookup (e.g. to check for
+        // pre-existing definitions of common-symbol), but it will never find in
+        // this module that it would not have found already, so return null from
+        // here.
+        return nullptr;
+      case Emitted:
+        return B.findSymbolIn(Handle, Name, ExportedSymbolsOnly);
       }
-
-      return B.lookupSymbolAddressIn(Handle, Name, ExportedSymbolsOnly);
+      llvm_unreachable("Invalid emit-state.");
     }
 
-    void RemoveModulesFromBaseLayer(BaseLayerT &BaseLayer) {
+    void removeModulesFromBaseLayer(BaseLayerT &BaseLayer) {
       if (EmitState != NotEmitted)
         BaseLayer.removeModuleSet(Handle);
     }
@@ -74,8 +80,8 @@ private:
            std::unique_ptr<RTDyldMemoryManager> MM);
 
   protected:
-    virtual bool Provides(StringRef Name, bool ExportedSymbolsOnly) const = 0;
-    virtual BaseLayerHandleT Emit(BaseLayerT &BaseLayer) = 0;
+    virtual bool provides(StringRef Name, bool ExportedSymbolsOnly) const = 0;
+    virtual BaseLayerHandleT emit(BaseLayerT &BaseLayer) = 0;
 
   private:
     enum { NotEmitted, Emitting, Emitted } EmitState;
@@ -90,14 +96,14 @@ private:
         : Ms(std::move(Ms)), MM(std::move(MM)) {}
 
   protected:
-    BaseLayerHandleT Emit(BaseLayerT &BaseLayer) override {
+    BaseLayerHandleT emit(BaseLayerT &BaseLayer) override {
       // We don't need the mangled names set any more: Once we've emitted this
       // to the base layer we'll just look for symbols there.
       MangledNames.reset();
       return BaseLayer.addModuleSet(std::move(Ms), std::move(MM));
     }
 
-    bool Provides(StringRef Name, bool ExportedSymbolsOnly) const override {
+    bool provides(StringRef Name, bool ExportedSymbolsOnly) const override {
       // FIXME: We could clean all this up if we had a way to reliably demangle
       //        names: We could just demangle name and search, rather than
       //        mangling everything else.
@@ -190,12 +196,6 @@ public:
   LazyEmittingLayer(BaseLayerT &BaseLayer) : BaseLayer(BaseLayer) {}
 
   /// @brief Add the given set of modules to the lazy emitting layer.
-  ///
-  ///   This method stores the set of modules in a side table, rather than
-  /// immediately emitting them to the next layer of the JIT. When the address
-  /// of a symbol provided by this set is requested (via getSymbolAddress) it
-  /// triggers the emission of this set to the layer below (along with the given
-  /// memory manager instance), and returns the address of the requested symbol.
   template <typename ModuleSetT>
   ModuleSetHandleT addModuleSet(ModuleSetT Ms,
                                 std::unique_ptr<RTDyldMemoryManager> MM) {
@@ -209,39 +209,35 @@ public:
   ///   This method will free the memory associated with the given module set,
   /// both in this layer, and the base layer.
   void removeModuleSet(ModuleSetHandleT H) {
-    (*H)->RemoveModulesFromBaseLayer(BaseLayer);
+    (*H)->removeModulesFromBaseLayer(BaseLayer);
     ModuleSetList.erase(H);
   }
 
-  /// @brief Get the address of a symbol provided by this layer, or some layer
-  ///        below this one.
-  ///
-  ///   When called for a symbol that has been added to this layer (via
-  /// addModuleSet) but not yet emitted, this will trigger the emission of the
-  /// module set containing the definiton of the symbol.
-  uint64_t getSymbolAddress(const std::string &Name, bool ExportedSymbolsOnly) {
-    // Look up symbol among existing definitions.
-    if (uint64_t Addr = BaseLayer.getSymbolAddress(Name, ExportedSymbolsOnly))
-      return Addr;
+  /// @brief Search for the given named symbol.
+  /// @param Name The name of the symbol to search for.
+  /// @param ExportedSymbolsOnly If true, search only for exported symbols.
+  /// @return A handle for the given named symbol, if it exists.
+  JITSymbol findSymbol(const std::string &Name, bool ExportedSymbolsOnly) {
+    // Look for the symbol among existing definitions.
+    if (auto Symbol = BaseLayer.findSymbol(Name, ExportedSymbolsOnly))
+      return Symbol;
 
-    // If not found then search the deferred sets. The call to 'Search' will
-    // cause the set to be emitted to the next layer if it provides a definition
-    // of 'Name'.
+    // If not found then search the deferred sets. If any of these contain a
+    // definition of 'Name' then they will return a JITSymbol that will emit
+    // the corresponding module when the symbol address is requested.
     for (auto &DeferredSet : ModuleSetList)
-      if (uint64_t Addr =
-              DeferredSet->Search(Name, ExportedSymbolsOnly, BaseLayer))
-        return Addr;
+      if (auto Symbol = DeferredSet->find(Name, ExportedSymbolsOnly, BaseLayer))
+        return Symbol;
 
-    // If no definition found anywhere return 0.
-    return 0;
+    // If no definition found anywhere return a null symbol.
+    return nullptr;
   }
 
   /// @brief Get the address of the given symbol in the context of the set of
-  ///        compiled modules represented by the handle H. This call is
-  ///        forwarded to the base layer's implementation.
-  uint64_t lookupSymbolAddressIn(ModuleSetHandleT H, const std::string &Name,
-                                 bool ExportedSymbolsOnly) {
-    return (*H)->Search(Name, ExportedSymbolsOnly, BaseLayer);
+  ///        compiled modules represented by the handle H.
+  JITSymbol findSymbolIn(ModuleSetHandleT H, const std::string &Name,
+                         bool ExportedSymbolsOnly) {
+    return (*H)->find(Name, ExportedSymbolsOnly, BaseLayer);
   }
 };
 

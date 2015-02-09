@@ -78,24 +78,25 @@ public:
     void removeLogicalModule(LMHandle LMH) { Handles.erase(LMH); }
 
     /// @brief Look up a symbol in this context.
-    uint64_t lookup(LMHandle LMH, const std::string &Name) {
-      if (uint64_t Addr = lookupOnlyIn(LMH, Name))
-        return Addr;
+    JITSymbol findSymbol(LMHandle LMH, const std::string &Name) {
+      if (auto Symbol = findSymbolIn(LMH, Name))
+        return Symbol;
 
       for (auto I = Handles.begin(), E = Handles.end(); I != E; ++I)
         if (I != LMH)
-          if (uint64_t Addr = lookupOnlyIn(I, Name))
-            return Addr;
+          if (auto Symbol = findSymbolIn(I, Name))
+            return Symbol;
 
-      return 0;
+      return nullptr;
     }
 
   private:
-    uint64_t lookupOnlyIn(LMHandle LMH, const std::string &Name) {
+
+    JITSymbol findSymbolIn(LMHandle LMH, const std::string &Name) {
       for (auto H : *LMH)
-        if (uint64_t Addr = BaseLayer.lookupSymbolAddressIn(H, Name, false))
-          return Addr;
-      return 0;
+        if (auto Symbol = BaseLayer.findSymbolIn(H, Name, false))
+          return Symbol;
+      return nullptr;
     }
 
     BaseLayerT &BaseLayer;
@@ -190,7 +191,9 @@ public:
       MSI.JITResolveCallbackHandlers.push_back(
           createCallbackHandlerFromJITIndirections(
               Indirections, MSI.PersistentManglers.back(),
-              [=](StringRef S) { return DylibLookup->lookup(LMH, S); }));
+              [=](StringRef S) {
+                return DylibLookup->findSymbol(LMH, S).getAddress();
+              }));
 
       // Insert callback asm code into the first module.
       InsertCallbackAsm(*ExplodedModules[0],
@@ -209,12 +212,12 @@ public:
             std::move(MSet),
             createLookasideRTDyldMM<SectionMemoryManager>(
                 [=](const std::string &Name) {
-                  if (uint64_t Addr = DylibLookup->lookup(LMH, Name))
-                    return Addr;
-                  return getSymbolAddress(Name, true);
+                  if (auto Symbol = DylibLookup->findSymbol(LMH, Name))
+                    return Symbol.getAddress();
+                  return findSymbol(Name, true).getAddress();
                 },
                 [=](const std::string &Name) {
-                  return DylibLookup->lookup(LMH, Name);
+                  return DylibLookup->findSymbol(LMH, Name).getAddress();
                 }));
         DylibLookup->addToLogicalModule(LMH, H);
         MSI.BaseLayerModuleSetHandles.push_back(H);
@@ -222,7 +225,7 @@ public:
 
       initializeFuncAddrs(*MSI.JITResolveCallbackHandlers.back(), Indirections,
                           MSI.PersistentManglers.back(), [=](StringRef S) {
-                            return DylibLookup->lookup(LMH, S);
+                            return DylibLookup->findSymbol(LMH, S).getAddress();
                           });
     }
 
@@ -238,23 +241,24 @@ public:
     ModuleSetInfos.erase(H);
   }
 
-  /// @brief Get the address of a symbol provided by this layer, or some layer
-  ///        below this one.
-  uint64_t getSymbolAddress(const std::string &Name, bool ExportedSymbolsOnly) {
-    return BaseLayer.getSymbolAddress(Name, ExportedSymbolsOnly);
+  /// @brief Search for the given named symbol.
+  /// @param Name The name of the symbol to search for.
+  /// @param ExportedSymbolsOnly If true, search only for exported symbols.
+  /// @return A handle for the given named symbol, if it exists.
+  JITSymbol findSymbol(StringRef Name, bool ExportedSymbolsOnly) {
+    return BaseLayer.findSymbol(Name, ExportedSymbolsOnly);
   }
 
   /// @brief Get the address of a symbol provided by this layer, or some layer
   ///        below this one.
-  uint64_t lookupSymbolAddressIn(ModuleSetHandleT H, const std::string &Name,
-                                 bool ExportedSymbolsOnly) {
+  JITSymbol findSymbolIn(ModuleSetHandleT H, const std::string &Name,
+                         bool ExportedSymbolsOnly) {
     BaseLayerModuleSetHandleListT &BaseLayerHandles = H->second;
     for (auto &BH : BaseLayerHandles) {
-      if (uint64_t Addr =
-            BaseLayer.lookupSymbolAddressIn(BH, Name, ExportedSymbolsOnly))
-        return Addr;
+      if (auto Symbol = BaseLayer.findSymbolIn(BH, Name, ExportedSymbolsOnly))
+        return Symbol;
     }
-    return 0;
+    return nullptr;
   }
 
 private:

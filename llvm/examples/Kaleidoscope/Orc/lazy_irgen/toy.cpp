@@ -1174,8 +1174,8 @@ public:
     auto MM = createLookasideRTDyldMM<SectionMemoryManager>(
                 [&](const std::string &Name) -> uint64_t {
                   // First try to find 'Name' within the JIT.
-                  if (uint64_t Addr = getMangledSymbolAddress(Name))
-                    return Addr;
+                  if (auto Symbol = findMangledSymbol(Name))
+                    return Symbol.getAddress();
 
                   // If we don't find 'Name' in the JIT, see if we have some AST
                   // for it.
@@ -1192,8 +1192,8 @@ public:
                   // finished with it.
                   Session.FunctionDefs.erase(DefI);
 
-                  return getMangledSymbolAddress(Name);
-                }, 
+                  return findMangledSymbol(Name).getAddress();
+                },
                 [](const std::string &S) { return 0; } );
 
     return LazyEmitLayer.addModuleSet(std::move(S), std::move(MM));
@@ -1201,12 +1201,12 @@ public:
 
   void removeModule(ModuleHandleT H) { LazyEmitLayer.removeModuleSet(H); }
 
-  uint64_t getMangledSymbolAddress(const std::string &Name) {
-    return LazyEmitLayer.getSymbolAddress(Name, false);
+  JITSymbol findMangledSymbol(const std::string &Name) {
+    return LazyEmitLayer.findSymbol(Name, false);
   }
 
-  uint64_t getSymbolAddress(const std::string &Name) {
-    return getMangledSymbolAddress(Mangle(Name));
+  JITSymbol findSymbol(const std::string &Name) {
+    return findMangledSymbol(Mangle(Name));
   }
 
 private:
@@ -1253,11 +1253,11 @@ static void HandleTopLevelExpression(SessionContext &S, KaleidoscopeJIT &J) {
       auto H = J.addModule(C.takeM());
 
       // Get the address of the JIT'd function in memory.
-      uint64_t ExprFuncAddr = J.getSymbolAddress("__anon_expr");
+      auto ExprSymbol = J.findSymbol("__anon_expr");
       
       // Cast it to the right type (takes no arguments, returns a double) so we
       // can call it as a native function.
-      double (*FP)() = (double (*)())(intptr_t)ExprFuncAddr;
+      double (*FP)() = (double (*)())(intptr_t)ExprSymbol.getAddress();
 #ifdef MINIMAL_STDERR_OUTPUT
       FP();
 #else

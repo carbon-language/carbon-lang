@@ -1150,8 +1150,8 @@ public:
     // new module. Create one that resolves symbols by looking back into the JIT.
     auto MM = createLookasideRTDyldMM<SectionMemoryManager>(
                 [&](const std::string &S) {
-                  return getMangledSymbolAddress(S);
-                }, 
+                  return findMangledSymbol(S).getAddress();
+                },
                 [](const std::string &S) { return 0; } );
 
     return LazyEmitLayer.addModuleSet(std::move(S), std::move(MM));
@@ -1159,17 +1159,17 @@ public:
 
   void removeModule(ModuleHandleT H) { LazyEmitLayer.removeModuleSet(H); }
 
-  uint64_t getMangledSymbolAddress(const std::string &Name) {
-    return LazyEmitLayer.getSymbolAddress(Name, false);
+  JITSymbol findMangledSymbol(const std::string &Name) {
+    return LazyEmitLayer.findSymbol(Name, false);
   }
 
-  uint64_t getSymbolAddress(const std::string Name) {
+  JITSymbol findSymbol(const std::string Name) {
     std::string MangledName;
     {
       raw_string_ostream MangledNameStream(MangledName);
       Mang.getNameWithPrefix(MangledNameStream, Name);
     }
-    return getMangledSymbolAddress(MangledName);
+    return findMangledSymbol(MangledName);
   }
 
 private:
@@ -1230,11 +1230,11 @@ static void HandleTopLevelExpression(SessionContext &S, KaleidoscopeJIT &J) {
       auto H = J.addModule(C.takeM());
 
       // Get the address of the JIT'd function in memory.
-      uint64_t ExprFuncAddr = J.getSymbolAddress("__anon_expr");
+      auto ExprSymbol = J.findSymbol("__anon_expr");
       
       // Cast it to the right type (takes no arguments, returns a double) so we
       // can call it as a native function.
-      double (*FP)() = (double (*)())(intptr_t)ExprFuncAddr;
+      double (*FP)() = (double (*)())(intptr_t)ExprSymbol.getAddress();
 #ifdef MINIMAL_STDERR_OUTPUT
       FP();
 #else
