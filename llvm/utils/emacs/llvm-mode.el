@@ -35,7 +35,7 @@
                     "define" "global" "constant" "const" "internal" "linkonce" "linkonce_odr"
                     "weak" "weak_odr" "appending" "uninitialized" "implementation" "..."
                     "null" "undef" "to" "except" "not" "target" "endian" "little" "big"
-                    "pointersize" "volatile" "fastcc" "coldcc" "cc") 'symbols) . font-lock-keyword-face)
+                    "pointersize" "volatile" "fastcc" "coldcc" "cc" "personality") 'symbols) . font-lock-keyword-face)
    ;; Arithmetic and Logical Operators
    `(,(regexp-opt '("add" "sub" "mul" "sdiv" "udiv" "urem" "srem" "and" "or" "xor"
                     "setne" "seteq" "setlt" "setgt" "setle" "setge") 'symbols) . font-lock-keyword-face)
