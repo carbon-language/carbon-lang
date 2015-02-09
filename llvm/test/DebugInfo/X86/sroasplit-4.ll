@@ -7,10 +7,10 @@
 ; CHECK: call void @llvm.dbg.value(metadata i64 %[[T1]], i64 0, metadata ![[Y]], metadata ![[P2:.*]])
 ; CHECK: call void @llvm.dbg.value(metadata i64 %[[T]], i64 0, metadata ![[R:.*]], metadata ![[P3:.*]])
 ; CHECK: call void @llvm.dbg.value(metadata i64 %[[T1]], i64 0, metadata ![[R]], metadata ![[P4:.*]])
-; CHECK: ![[P1]] = {{.*}} [DW_OP_piece offset=0, size=8]
-; CHECK: ![[P2]] = {{.*}} [DW_OP_piece offset=8, size=8]
-; CHECK: ![[P3]] = {{.*}} [DW_OP_piece offset=24, size=8]
-; CHECK: ![[P4]] = {{.*}} [DW_OP_piece offset=32, size=8]
+; CHECK: ![[P1]] = {{.*}} [DW_OP_bit_piece offset=0, size=64]
+; CHECK: ![[P2]] = {{.*}} [DW_OP_bit_piece offset=64, size=64]
+; CHECK: ![[P3]] = {{.*}} [DW_OP_bit_piece offset=192, size=64]
+; CHECK: ![[P4]] = {{.*}} [DW_OP_bit_piece offset=256, size=64]
 ; 
 ; struct p {
 ;   __SIZE_TYPE__ s;

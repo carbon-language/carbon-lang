@@ -961,9 +961,9 @@ DIExpression DIBuilder::createExpression(ArrayRef<int64_t> Signed) {
   return createExpression(Addr);
 }
 
-DIExpression DIBuilder::createPieceExpression(unsigned OffsetInBytes,
-                                              unsigned SizeInBytes) {
-  uint64_t Addr[] = {dwarf::DW_OP_piece, OffsetInBytes, SizeInBytes};
+DIExpression DIBuilder::createBitPieceExpression(unsigned OffsetInBits,
+                                                 unsigned SizeInBits) {
+  int64_t Addr[] = {dwarf::DW_OP_bit_piece, OffsetInBits, SizeInBits};
   return createExpression(Addr);
 }
 

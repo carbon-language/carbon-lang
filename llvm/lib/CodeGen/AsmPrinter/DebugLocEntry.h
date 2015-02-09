@@ -74,7 +74,7 @@ public:
     MachineLocation getLoc() const { return Loc; }
     const MDNode *getVariableNode() const { return Variable; }
     DIVariable getVariable() const { return DIVariable(Variable); }
-    bool isVariablePiece() const { return getExpression().isVariablePiece(); }
+    bool isBitPiece() const { return getExpression().isBitPiece(); }
     DIExpression getExpression() const { return DIExpression(Expression); }
     friend bool operator==(const Value &, const Value &);
     friend bool operator<(const Value &, const Value &);
@@ -101,8 +101,8 @@ public:
       DIVariable Var(Values[0].Variable);
       DIExpression NextExpr(Next.Values[0].Expression);
       DIVariable NextVar(Next.Values[0].Variable);
-      if (Var == NextVar && Expr.isVariablePiece() &&
-          NextExpr.isVariablePiece()) {
+      if (Var == NextVar && Expr.isBitPiece() &&
+          NextExpr.isBitPiece()) {
         addValues(Next.Values);
         End = Next.End;
         return true;
@@ -131,7 +131,7 @@ public:
     Values.append(Vals.begin(), Vals.end());
     sortUniqueValues();
     assert(std::all_of(Values.begin(), Values.end(), [](DebugLocEntry::Value V){
-          return V.isVariablePiece();
+          return V.isBitPiece();
         }) && "value must be a piece");
   }
 
@@ -176,8 +176,8 @@ inline bool operator==(const DebugLocEntry::Value &A,
 /// Compare two pieces based on their offset.
 inline bool operator<(const DebugLocEntry::Value &A,
                       const DebugLocEntry::Value &B) {
-  return A.getExpression().getPieceOffset() <
-         B.getExpression().getPieceOffset();
+  return A.getExpression().getBitPieceOffset() <
+         B.getExpression().getBitPieceOffset();
 }
 
 }

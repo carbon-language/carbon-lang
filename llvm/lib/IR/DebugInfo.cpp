@@ -147,18 +147,18 @@ uint64_t DIExpression::getElement(unsigned Idx) const {
   return getHeaderFieldAs<int64_t>(I);
 }
 
-bool DIExpression::isVariablePiece() const {
+bool DIExpression::isBitPiece() const {
   unsigned N = getNumElements();
-  return N >=3 && getElement(N-3) == dwarf::DW_OP_piece;
+  return N >=3 && getElement(N-3) == dwarf::DW_OP_bit_piece;
 }
 
-uint64_t DIExpression::getPieceOffset() const {
-  assert(isVariablePiece() && "not a piece");
+uint64_t DIExpression::getBitPieceOffset() const {
+  assert(isBitPiece() && "not a piece");
   return getElement(getNumElements()-2);
 }
 
-uint64_t DIExpression::getPieceSize() const {
-  assert(isVariablePiece() && "not a piece");
+uint64_t DIExpression::getBitPieceSize() const {
+  assert(isBitPiece() && "not a piece");
   return getElement(getNumElements()-1);
 }
 
@@ -612,7 +612,7 @@ bool DIExpression::Verify() const {
 
   for (auto Op : *this)
     switch (Op) {
-    case DW_OP_piece:
+    case DW_OP_bit_piece:
       // Must be the last element of the expression.
       return std::distance(Op.getBase(), DIHeaderFieldIterator()) == 3;
     case DW_OP_plus:
@@ -1417,7 +1417,7 @@ void DIExpression::printInternal(raw_ostream &OS) const {
       OS << " " << Op.getArg(1);
       break;
     }
-    case DW_OP_piece: {
+    case DW_OP_bit_piece: {
       OS << " offset=" << Op.getArg(1) << ", size=" << Op.getArg(2);
       break;
     }

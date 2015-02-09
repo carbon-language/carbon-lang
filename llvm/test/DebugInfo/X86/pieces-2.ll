@@ -86,6 +86,6 @@ attributes #2 = { nounwind }
 !26 = !MDLocation(line: 10, scope: !4)
 !27 = !MDLocation(line: 11, scope: !4)
 !28 = !{!"0x100\00i1\0011\000", !4, !5, !14} ; [ DW_TAG_auto_variable ] [i1] [line 11]
-!29 = !{!"0x102\00147\000\004"} ; [ DW_TAG_expression ] [DW_OP_piece 0 4] [piece, size 4, offset 0]
+!29 = !{!"0x102\00157\000\0032"} ; [ DW_TAG_expression ] [DW_OP_bit_piece size=32, offset=0]
 !31 = !{i32 3, i32 0, i32 12}
 !32 = !MDLocation(line: 12, scope: !4)

@@ -6,7 +6,7 @@
 ; CHECK: call void @llvm.dbg.value(metadata float %s.coerce, i64 0, metadata ![[VAR:[0-9]+]], metadata ![[EXPR:[0-9]+]])
 ; CHECK: ![[VAR]] = {{.*}} [ DW_TAG_arg_variable ] [s] [line 3]
 ; CHECK: ![[EXPR]] = {{.*}} [ DW_TAG_expression ]
-; CHECK-NOT: DW_OP_piece
+; CHECK-NOT: DW_OP_bit_piece
 
 ;
 ; struct S { float f; };

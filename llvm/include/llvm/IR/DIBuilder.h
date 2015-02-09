@@ -517,13 +517,13 @@ namespace llvm {
     DIExpression createExpression(ArrayRef<uint64_t> Addr = None);
     DIExpression createExpression(ArrayRef<int64_t> Addr);
 
-    /// createPieceExpression - Create a descriptor to describe one part
+    /// createBitPieceExpression - Create a descriptor to describe one part
     /// of aggregate variable that is fragmented across multiple Values.
     ///
-    /// @param OffsetInBytes Offset of the piece in bytes.
-    /// @param SizeInBytes   Size of the piece in bytes.
-    DIExpression createPieceExpression(unsigned OffsetInBytes,
-                                       unsigned SizeInBytes);
+    /// @param OffsetInBits Offset of the piece in bits.
+    /// @param SizeInBits   Size of the piece in bits.
+    DIExpression createBitPieceExpression(unsigned OffsetInBits,
+                                          unsigned SizeInBits);
 
     /// createFunction - Create a new descriptor for the specified subprogram.
     /// See comments in DISubprogram for descriptions of these fields.

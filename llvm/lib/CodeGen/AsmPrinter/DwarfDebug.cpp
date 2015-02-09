@@ -818,12 +818,12 @@ static DebugLocEntry::Value getDebugLocValue(const MachineInstr *MI) {
 
 /// Determine whether two variable pieces overlap.
 static bool piecesOverlap(DIExpression P1, DIExpression P2) {
-  if (!P1.isVariablePiece() || !P2.isVariablePiece())
+  if (!P1.isBitPiece() || !P2.isBitPiece())
     return true;
-  unsigned l1 = P1.getPieceOffset();
-  unsigned l2 = P2.getPieceOffset();
-  unsigned r1 = l1 + P1.getPieceSize();
-  unsigned r2 = l2 + P2.getPieceSize();
+  unsigned l1 = P1.getBitPieceOffset();
+  unsigned l2 = P2.getBitPieceOffset();
+  unsigned r1 = l1 + P1.getBitPieceSize();
+  unsigned r2 = l2 + P2.getBitPieceSize();
   // True where [l1,r1[ and [r1,r2[ overlap.
   return (l1 < r2) && (l2 < r1);
 }
@@ -894,7 +894,7 @@ DwarfDebug::buildLocationList(SmallVectorImpl<DebugLocEntry> &DebugLoc,
     bool couldMerge = false;
 
     // If this is a piece, it may belong to the current DebugLocEntry.
-    if (DIExpr.isVariablePiece()) {
+    if (DIExpr.isBitPiece()) {
       // Add this value to the list of open ranges.
       OpenRanges.push_back(Value);
 
@@ -1193,7 +1193,7 @@ void DwarfDebug::beginFunction(const MachineFunction *MF) {
     if (DIVar.isVariable() && DIVar.getTag() == dwarf::DW_TAG_arg_variable &&
         getDISubprogram(DIVar.getContext()).describes(MF->getFunction())) {
       LabelsBeforeInsn[Ranges.front().first] = FunctionBeginSym;
-      if (Ranges.front().first->getDebugExpression().isVariablePiece()) {
+      if (Ranges.front().first->getDebugExpression().isBitPiece()) {
         // Mark all non-overlapping initial pieces.
         for (auto I = Ranges.begin(); I != Ranges.end(); ++I) {
           DIExpression Piece = I->first->getDebugExpression();
@@ -1661,21 +1661,20 @@ void DwarfDebug::emitLocPieces(ByteStreamer &Streamer,
                                const DITypeIdentifierMap &Map,
                                ArrayRef<DebugLocEntry::Value> Values) {
   assert(std::all_of(Values.begin(), Values.end(), [](DebugLocEntry::Value P) {
-        return P.isVariablePiece();
+        return P.isBitPiece();
       }) && "all values are expected to be pieces");
   assert(std::is_sorted(Values.begin(), Values.end()) &&
          "pieces are expected to be sorted");
 
   unsigned Offset = 0;
   for (auto Piece : Values) {
-    const unsigned SizeOfByte = 8;
     DIExpression Expr = Piece.getExpression();
-    unsigned PieceOffset = Expr.getPieceOffset();
-    unsigned PieceSize = Expr.getPieceSize();
+    unsigned PieceOffset = Expr.getBitPieceOffset();
+    unsigned PieceSize = Expr.getBitPieceSize();
     assert(Offset <= PieceOffset && "overlapping or duplicate pieces");
     if (Offset < PieceOffset) {
       // The DWARF spec seriously mandates pieces with no locations for gaps.
-      Asm->EmitDwarfOpPiece(Streamer, (PieceOffset-Offset)*SizeOfByte);
+      Asm->EmitDwarfOpPiece(Streamer, PieceOffset-Offset);
       Offset += PieceOffset-Offset;
     }
     Offset += PieceSize;
@@ -1683,12 +1682,12 @@ void DwarfDebug::emitLocPieces(ByteStreamer &Streamer,
 #ifndef NDEBUG
     DIVariable Var = Piece.getVariable();
     unsigned VarSize = Var.getSizeInBits(Map);
-    assert(PieceSize+PieceOffset <= VarSize/SizeOfByte
+    assert(PieceSize+PieceOffset <= VarSize
            && "piece is larger than or outside of variable");
-    assert(PieceSize*SizeOfByte != VarSize
+    assert(PieceSize != VarSize
            && "piece covers entire variable");
 #endif
-    emitDebugLocValue(Streamer, Piece, PieceOffset*SizeOfByte);
+    emitDebugLocValue(Streamer, Piece, PieceOffset);
   }
 }
 
@@ -1696,7 +1695,7 @@ void DwarfDebug::emitLocPieces(ByteStreamer &Streamer,
 void DwarfDebug::emitDebugLocEntry(ByteStreamer &Streamer,
                                    const DebugLocEntry &Entry) {
   const DebugLocEntry::Value Value = Entry.getValues()[0];
-  if (Value.isVariablePiece())
+  if (Value.isBitPiece())
     // Emit all pieces that belong to the same variable and range.
     return emitLocPieces(Streamer, TypeIdentifierMap, Entry.getValues());
 

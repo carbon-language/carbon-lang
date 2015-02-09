@@ -211,10 +211,9 @@ bool DwarfExpression::AddMachineRegExpression(DIExpression Expr,
 
   bool ValidReg = false;
   switch (*I) {
-  case dwarf::DW_OP_piece: {
-    unsigned SizeOfByte = 8;
-    unsigned OffsetInBits = I->getArg(1) * SizeOfByte;
-    unsigned SizeInBits   = I->getArg(2) * SizeOfByte;
+  case dwarf::DW_OP_bit_piece: {
+    unsigned OffsetInBits = I->getArg(1);
+    unsigned SizeInBits   = I->getArg(2);
     // Piece always comes at the end of the expression.
     return AddMachineRegPiece(MachineReg, SizeInBits,
                getOffsetOrZero(OffsetInBits, PieceOffsetInBits));
@@ -249,10 +248,9 @@ void DwarfExpression::AddExpression(DIExpression::iterator I,
                                     unsigned PieceOffsetInBits) {
  for (; I != DIExpression::iterator(); ++I) {
     switch (*I) {
-    case dwarf::DW_OP_piece: {
-      unsigned SizeOfByte = 8;
-      unsigned OffsetInBits = I->getArg(1) * SizeOfByte;
-      unsigned SizeInBits   = I->getArg(2) * SizeOfByte;
+    case dwarf::DW_OP_bit_piece: {
+      unsigned OffsetInBits = I->getArg(1);
+      unsigned SizeInBits   = I->getArg(2);
       AddOpPiece(SizeInBits, getOffsetOrZero(OffsetInBits, PieceOffsetInBits));
       break;
     }

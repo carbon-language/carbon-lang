@@ -18,7 +18,7 @@
 ; CHECK: define i32 @main
 ; CHECK: call void @llvm.dbg.value(metadata i32 42, i64 0, metadata ![[ARRAY:[0-9]+]], metadata ![[EXPR:[0-9]+]])
 ; CHECK: ![[ARRAY]] = {{.*}}; [ DW_TAG_auto_variable ] [array] [line 6]
-; CHECK: ![[EXPR]] = {{.*}}; [ DW_TAG_expression ] [DW_OP_piece offset=0, size=4]
+; CHECK: ![[EXPR]] = {{.*}}; [ DW_TAG_expression ] [DW_OP_bit_piece offset=0, size=32]
 target datalayout = "e-m:o-i64:64-f80:128-n8:16:32:64-S128"
 target triple = "x86_64-apple-macosx10.9.0"
 

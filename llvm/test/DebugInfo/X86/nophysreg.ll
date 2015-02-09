@@ -169,9 +169,9 @@ attributes #3 = { ssp uwtable }
 !30 = !{i32 2, !"Debug Info Version", i32 2}
 !31 = !{i32 1, !"PIC Level", i32 2}
 !32 = !{!"clang version 3.7.0 (trunk 227088) (llvm/trunk 227091)"}
-!33 = !{!"0x102\00147\000\008"}                   ; [ DW_TAG_expression ] [DW_OP_piece offset=0, size=8]
+!33 = !{!"0x102\00157\000\008"}                   ; [ DW_TAG_expression ] [DW_OP_bit_piece offset=0, size=8]
 !34 = !MDLocation(line: 7, column: 42, scope: !11)
-!35 = !{!"0x102\00147\008\004"}                   ; [ DW_TAG_expression ] [DW_OP_piece offset=8, size=4]
+!35 = !{!"0x102\00157\008\004"}                   ; [ DW_TAG_expression ] [DW_OP_bit_piece offset=8, size=4]
 !36 = !{!"0x102"}                                 ; [ DW_TAG_expression ]
 !37 = !MDLocation(line: 7, column: 48, scope: !11)
 !38 = !MDLocation(line: 7, column: 66, scope: !11)

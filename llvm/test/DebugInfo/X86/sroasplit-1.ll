@@ -26,8 +26,8 @@
 ; CHECK: ret i32 %[[A]]
 ; Read Var and Piece:
 ; CHECK: ![[VAR]] = {{.*}} ; [ DW_TAG_auto_variable ] [i1] [line 11]
-; CHECK: ![[PIECE1]] = {{.*}} ; [ DW_TAG_expression ] [DW_OP_piece offset=4, size=12]
-; CHECK: ![[PIECE2]] = {{.*}} ; [ DW_TAG_expression ] [DW_OP_piece offset=0, size=4]
+; CHECK: ![[PIECE1]] = {{.*}} ; [ DW_TAG_expression ] [DW_OP_bit_piece offset=32, size=96]
+; CHECK: ![[PIECE2]] = {{.*}} ; [ DW_TAG_expression ] [DW_OP_bit_piece offset=0, size=32]
 
 target datalayout = "e-m:o-i64:64-f80:128-n8:16:32:64-S128"
 target triple = "x86_64-apple-macosx10.9.0"

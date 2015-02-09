@@ -851,11 +851,11 @@ public:
   uint64_t getElement(unsigned Idx) const;
 
   /// \brief Return whether this is a piece of an aggregate variable.
-  bool isVariablePiece() const;
-  /// \brief Return the offset of this piece in bytes.
-  uint64_t getPieceOffset() const;
-  /// \brief Return the size of this piece in bytes.
-  uint64_t getPieceSize() const;
+  bool isBitPiece() const;
+  /// \brief Return the offset of this piece in bits.
+  uint64_t getBitPieceOffset() const;
+  /// \brief Return the size of this piece in bits.
+  uint64_t getBitPieceSize() const;
 
   class iterator;
   /// \brief A lightweight wrapper around an element of a DIExpression.
@@ -906,9 +906,9 @@ public:
   private:
     void increment() {
       switch (**this) {
-      case dwarf::DW_OP_piece: std::advance(I, 3); break;
-      case dwarf::DW_OP_plus:  std::advance(I, 2); break;
-      case dwarf::DW_OP_deref: std::advance(I, 1); break;
+      case dwarf::DW_OP_bit_piece: std::advance(I, 3); break;
+      case dwarf::DW_OP_plus:      std::advance(I, 2); break;
+      case dwarf::DW_OP_deref:     std::advance(I, 1); break;
       default:
         llvm_unreachable("unsupported operand");
       }

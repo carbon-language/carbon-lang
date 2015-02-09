@@ -92,15 +92,15 @@ attributes #2 = { nounwind }
 !22 = !{i32 1, !"Debug Info Version", i32 2}
 !23 = !{!"clang version 3.5.0 "}
 !24 = !{!"0x101\00outer\0016777226\000", !4, !5, !9} ; [ DW_TAG_arg_variable ] [outer] [line 10]
-!25 = !{!"0x102\00147\000\008"} ; [ DW_TAG_expression ] [DW_OP_piece 0 8] [piece, size 8, offset 0]
+!25 = !{!"0x102\00157\000\0064"} ; [ DW_TAG_expression ] [DW_OP_bit_piece size=64, offset=0]
 !26 = !MDLocation(line: 10, scope: !4)
 !27 = !{!"0x101\00outer\0016777226\000", !4, !5, !9} ; [ DW_TAG_arg_variable ] [outer] [line 10]
-!28 = !{!"0x102\00147\008\008"} ; [ DW_TAG_expression ] [DW_OP_piece 8 8] [piece, size 8, offset 8]
+!28 = !{!"0x102\00157\0064\0064"} ; [ DW_TAG_expression ] [DW_OP_bit_piece size=64, offset=64]
 !29 = !{!"0x101\00outer\0016777226\000", !4, !5, !9} ; [ DW_TAG_arg_variable ] [outer] [line 10]
-!30 = !{!"0x102\00147\0012\004"} ; [ DW_TAG_expression ] [DW_OP_piece 12 4] [piece, size 4, offset 12]
+!30 = !{!"0x102\00157\0096\0032"} ; [ DW_TAG_expression ] [DW_OP_bit_piece size=32, offset=96]
 !31 = !{!"0x101\00outer\0016777226\000", !4, !5, !9} ; [ DW_TAG_arg_variable ] [outer] [line 10]
-!32 = !{!"0x102\00147\008\004"} ; [ DW_TAG_expression ] [DW_OP_piece 8 4] [piece, size 4, offset 8]
+!32 = !{!"0x102\00157\0064\0032"} ; [ DW_TAG_expression ] [DW_OP_bit_piece size=32, offset=64]
 !33 = !MDLocation(line: 11, scope: !4)
 !34 = !{!"0x100\00i1\0011\000", !4, !5, !14} ; [ DW_TAG_auto_variable ] [i1] [line 11]
-!35 = !{!"0x102\00147\000\004"} ; [ DW_TAG_expression ] [DW_OP_piece 0 4] [piece, size 4, offset 0]
+!35 = !{!"0x102\00157\000\0032"} ; [ DW_TAG_expression ] [DW_OP_bit_piece size=32, offset=0]
 !36 = !MDLocation(line: 12, scope: !4)
