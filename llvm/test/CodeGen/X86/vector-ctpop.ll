@@ -1,6 +1,6 @@
-; RUN: llc < %s -mtriple=x86_64-apple-darwin -mcpu=core-avx2 | FileCheck -check-prefix=AVX2 %s
-; RUN: llc < %s -mtriple=x86_64-apple-darwin -mcpu=corei7-avx -mattr=-popcnt | FileCheck -check-prefix=AVX1-NOPOPCNT %s
-; RUN: llc < %s -mtriple=x86_64-apple-darwin -mcpu=core-avx2 -mattr=-popcnt | FileCheck -check-prefix=AVX2-NOPOPCNT %s
+; RUN: llc < %s -mtriple=x86_64-apple-darwin -mattr=avx2                | FileCheck -check-prefix=AVX2 %s
+; RUN: llc < %s -mtriple=x86_64-apple-darwin -mattr=avx  -mattr=-popcnt | FileCheck -check-prefix=AVX1-NOPOPCNT %s
+; RUN: llc < %s -mtriple=x86_64-apple-darwin -mattr=avx2 -mattr=-popcnt | FileCheck -check-prefix=AVX2-NOPOPCNT %s
 
 ; Vector version of:
 ; v = v - ((v >> 1) & 0x55555555)
