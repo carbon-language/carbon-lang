@@ -501,6 +501,12 @@ template <typename T> static void unique_unsorted(std::vector<T> &vec) {
   }
 }
 
+static std::string GCSafepointPollName("gc.safepoint_poll");
+
+static bool isGCSafepointPoll(Function &F) {
+  return F.getName().equals(GCSafepointPollName);
+}
+
 bool PlaceSafepoints::runOnFunction(Function &F) {
   if (F.isDeclaration() || F.empty()) {
     // This is a declaration, nothing to do.  Must exit early to avoid crash in
@@ -526,14 +532,16 @@ bool PlaceSafepoints::runOnFunction(Function &F) {
 
   std::vector<CallSite> ParsePointNeeded;
 
-  if (EnableBackedgeSafepoints) {
+  if (EnableBackedgeSafepoints && !isGCSafepointPoll(F)) {
     // Construct a pass manager to run the LoopPass backedge logic.  We
     // need the pass manager to handle scheduling all the loop passes
     // appropriately.  Doing this by hand is painful and just not worth messing
     // with for the moment.
     FunctionPassManager FPM(F.getParent());
+    bool CanAssumeCallSafepoints = EnableCallSafepoints &&
+      !isGCSafepointPoll(F);
     PlaceBackedgeSafepointsImpl *PBS =
-        new PlaceBackedgeSafepointsImpl(EnableCallSafepoints);
+      new PlaceBackedgeSafepointsImpl(CanAssumeCallSafepoints);
     FPM.add(PBS);
     // Note: While the analysis pass itself won't modify the IR, LoopSimplify
     // (which it depends on) may.  i.e. analysis must be recalculated after run
@@ -598,7 +606,7 @@ bool PlaceSafepoints::runOnFunction(Function &F) {
     }
   }
 
-  if (EnableEntrySafepoints) {
+  if (EnableEntrySafepoints && !isGCSafepointPoll(F)) {
     DT.recalculate(F);
     Instruction *term = findLocationForEntrySafepoint(F, DT);
     if (!term) {
@@ -613,7 +621,7 @@ bool PlaceSafepoints::runOnFunction(Function &F) {
     }
   }
 
-  if (EnableCallSafepoints) {
+  if (EnableCallSafepoints && !isGCSafepointPoll(F)) {
     DT.recalculate(F);
     std::vector<CallSite> Calls;
     findCallSafepoints(F, Calls);
@@ -861,7 +869,7 @@ static Value *ReplaceWithStatepoint(const CallSite &CS, /* to replace */
   IRBuilder<> Builder(insertBefore);
   // First, create the statepoint (with all live ptrs as arguments).
   std::vector<llvm::Value *> args;
-  // target, #args, unused, args
+  // target, #call args, unused, call args..., #deopt args, deopt args..., gc args...
   Value *Target = CS.getCalledValue();
   args.push_back(Target);
   int callArgSize = CS.arg_size();
@@ -872,6 +880,14 @@ static Value *ReplaceWithStatepoint(const CallSite &CS, /* to replace */
 
   // Copy all the arguments of the original call
   args.insert(args.end(), CS.arg_begin(), CS.arg_end());
+
+  // # of deopt arguments: this pass currently does not support the
+  // identification of deopt arguments.  If this is interesting to you,
+  // please ask on llvm-dev.
+  args.push_back(ConstantInt::get(Type::getInt32Ty(M->getContext()), 0));
+
+  // Note: The gc args are not filled in at this time, that's handled by
+  // RewriteStatepointsForGC (which is currently under review).
 
   // Create the statepoint given all the arguments
   Instruction *token = nullptr;
