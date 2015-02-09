@@ -96,8 +96,8 @@ bool MemDepPrinter::runOnFunction(Function &F) {
 
   // All this code uses non-const interfaces because MemDep is not
   // const-friendly, though nothing is actually modified.
-  for (inst_iterator I = inst_begin(F), E = inst_end(F); I != E; ++I) {
-    Instruction *Inst = &*I;
+  for (auto &I: inst_range(F)) {
+    Instruction *Inst = &I;
 
     if (!Inst->mayReadFromMemory() && !Inst->mayWriteToMemory())
       continue;
@@ -135,8 +135,8 @@ bool MemDepPrinter::runOnFunction(Function &F) {
 }
 
 void MemDepPrinter::print(raw_ostream &OS, const Module *M) const {
-  for (const_inst_iterator I = inst_begin(*F), E = inst_end(*F); I != E; ++I) {
-    const Instruction *Inst = &*I;
+  for (auto &I: inst_range(*F)) {
+    const Instruction *Inst = &I;
 
     DepSetMap::const_iterator DI = Deps.find(Inst);
     if (DI == Deps.end())
@@ -144,11 +144,10 @@ void MemDepPrinter::print(raw_ostream &OS, const Module *M) const {
 
     const DepSet &InstDeps = DI->second;
 
-    for (DepSet::const_iterator I = InstDeps.begin(), E = InstDeps.end();
-         I != E; ++I) {
-      const Instruction *DepInst = I->first.getPointer();
-      DepType type = I->first.getInt();
-      const BasicBlock *DepBB = I->second;
+    for (auto &I: InstDeps) {
+      const Instruction *DepInst = I.first.getPointer();
+      DepType type = I.first.getInt();
+      const BasicBlock *DepBB = I.second;
 
       OS << "    ";
       OS << DepTypeStr[type];
