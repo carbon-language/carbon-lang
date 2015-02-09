@@ -11,6 +11,7 @@
 #include "llvm/ADT/SetVector.h"
 #include "llvm/Analysis/MemoryDependenceAnalysis.h"
 #include "llvm/IR/CallSite.h"
+#include "llvm/IR/DataLayout.h"
 #include "llvm/IR/InstIterator.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -25,6 +26,10 @@ namespace {
     MemDerefPrinter() : FunctionPass(ID) {
       initializeMemDerefPrinterPass(*PassRegistry::getPassRegistry());
     }
+    void getAnalysisUsage(AnalysisUsage &AU) const override {
+      AU.addRequired<DataLayoutPass>();
+      AU.setPreservesAll();
+    }
     bool runOnFunction(Function &F) override;
     void print(raw_ostream &OS, const Module * = nullptr) const override;
     void releaseMemory() override {
@@ -34,18 +39,22 @@ namespace {
 }
 
 char MemDerefPrinter::ID = 0;
-INITIALIZE_PASS(MemDerefPrinter, "print-memderefs",
-                "Memory Dereferenciblity of pointers in function", false, true)
+INITIALIZE_PASS_BEGIN(MemDerefPrinter, "print-memderefs",
+                      "Memory Dereferenciblity of pointers in function", false, true)
+INITIALIZE_PASS_DEPENDENCY(DataLayoutPass)
+INITIALIZE_PASS_END(MemDerefPrinter, "print-memderefs",
+                    "Memory Dereferenciblity of pointers in function", false, true)
 
 FunctionPass *llvm::createMemDerefPrinter() {
   return new MemDerefPrinter();
 }
 
 bool MemDerefPrinter::runOnFunction(Function &F) {
+  const DataLayout *DL = &getAnalysis<DataLayoutPass>().getDataLayout();
   for (auto &I: inst_range(F)) {
     if (LoadInst *LI = dyn_cast<LoadInst>(&I)) {
       Value *PO = LI->getPointerOperand();
-      if (PO->isDereferenceablePointer(nullptr))
+      if (PO->isDereferenceablePointer(DL))
         Vec.push_back(PO);
     }
   }
