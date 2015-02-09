@@ -239,7 +239,11 @@ PseudoTerminal::Fork (char *error_str, size_t error_len)
         error_str[0] = '\0';
 
     pid_t pid = LLDB_INVALID_PROCESS_ID;
-    if (OpenFirstAvailableMaster (O_RDWR | O_CLOEXEC, error_str, error_len))
+    int flags = O_RDWR;
+#if !defined(_MSC_VER)
+    flags |= O_CLOEXEC;
+#endif
+    if (OpenFirstAvailableMaster (flags, error_str, error_len))
     {
         // Successfully opened our master pseudo terminal
 
