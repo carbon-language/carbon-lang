@@ -21,8 +21,7 @@ def callv3nr : SDNode<"HexagonISD::CALLv3nr", SDT_SPCall,
 // J +
 //===----------------------------------------------------------------------===//
 // Call subroutine.
-let isCall = 1, hasSideEffects = 1, validSubTargets = HasV3SubT,
-    Defs = VolatileV3.Regs, isPredicable = 1,
+let isCall = 1, hasSideEffects = 1, Defs = VolatileV3.Regs, isPredicable = 1,
     isExtended = 0, isExtendable = 1, opExtendable = 0,
     isExtentSigned = 1, opExtentBits = 24, opExtentAlign = 2 in
 class T_Call<string ExtStr>
@@ -37,8 +36,7 @@ class T_Call<string ExtStr>
   let Inst{0} = 0b0;
 }
 
-let isCall = 1, hasSideEffects = 1, validSubTargets = HasV3SubT,
-    Defs = VolatileV3.Regs, isPredicated = 1,
+let isCall = 1, hasSideEffects = 1, Defs = VolatileV3.Regs, isPredicated = 1,
     isExtended = 0, isExtendable = 1, opExtendable = 1,
     isExtentSigned = 1, opExtentBits = 17, opExtentAlign = 2 in
 class T_CallPred<bit IfTrue, string ExtStr>
@@ -79,7 +77,7 @@ def CALLv3nr :  T_Call<"">, PredRel;
 //===----------------------------------------------------------------------===//
 // Call subroutine from register.
 
-let isCodeGenOnly = 1, Defs = VolatileV3.Regs, validSubTargets = HasV3SubT in {
+let isCodeGenOnly = 1, Defs = VolatileV3.Regs in {
   def CALLRv3nr : JUMPR_MISC_CALLR<0, 1>; // Call, no return.
 }
 
@@ -91,8 +89,7 @@ let isCodeGenOnly = 1, Defs = VolatileV3.Regs, validSubTargets = HasV3SubT in {
 // ALU64/ALU +
 //===----------------------------------------------------------------------===//
 
-let Defs = [USR_OVF], Itinerary = ALU64_tc_2_SLOT23,
-    validSubTargets = HasV3SubT in
+let Defs = [USR_OVF], Itinerary = ALU64_tc_2_SLOT23 in
 def A2_addpsat : T_ALU64_arith<"add", 0b011, 0b101, 1, 0, 1>;
 
 class T_ALU64_addsp_hl<string suffix, bits<3> MinOp>
@@ -158,36 +155,36 @@ let AddedComplexity = 200 in {
 
 
 //def : Pat <(brcond (i1 (seteq (i32 IntRegs:$src1), 0)), bb:$offset),
-//      (JMP_RegEzt (i32 IntRegs:$src1), bb:$offset)>, Requires<[HasV3T]>;
+//      (JMP_RegEzt (i32 IntRegs:$src1), bb:$offset)>;
 
 //def : Pat <(brcond (i1 (setne (i32 IntRegs:$src1), 0)), bb:$offset),
-//      (JMP_RegNzt (i32 IntRegs:$src1), bb:$offset)>, Requires<[HasV3T]>;
+//      (JMP_RegNzt (i32 IntRegs:$src1), bb:$offset)>;
 
 //def : Pat <(brcond (i1 (setle (i32 IntRegs:$src1), 0)), bb:$offset),
-//      (JMP_RegLezt (i32 IntRegs:$src1), bb:$offset)>, Requires<[HasV3T]>;
+//      (JMP_RegLezt (i32 IntRegs:$src1), bb:$offset)>;
 
 //def : Pat <(brcond (i1 (setge (i32 IntRegs:$src1), 0)), bb:$offset),
-//      (JMP_RegGezt (i32 IntRegs:$src1), bb:$offset)>, Requires<[HasV3T]>;
+//      (JMP_RegGezt (i32 IntRegs:$src1), bb:$offset)>;
 
 //def : Pat <(brcond (i1 (setgt (i32 IntRegs:$src1), -1)), bb:$offset),
-//      (JMP_RegGezt (i32 IntRegs:$src1), bb:$offset)>, Requires<[HasV3T]>;
+//      (JMP_RegGezt (i32 IntRegs:$src1), bb:$offset)>;
 
 // Map call instruction
 def : Pat<(callv3 (i32 IntRegs:$dst)),
-      (J2_callr (i32 IntRegs:$dst))>, Requires<[HasV3T]>;
+      (J2_callr (i32 IntRegs:$dst))>;
 def : Pat<(callv3 tglobaladdr:$dst),
-      (J2_call tglobaladdr:$dst)>, Requires<[HasV3T]>;
+      (J2_call tglobaladdr:$dst)>;
 def : Pat<(callv3 texternalsym:$dst),
-      (J2_call texternalsym:$dst)>, Requires<[HasV3T]>;
+      (J2_call texternalsym:$dst)>;
 def : Pat<(callv3 tglobaltlsaddr:$dst),
-      (J2_call tglobaltlsaddr:$dst)>, Requires<[HasV3T]>;
+      (J2_call tglobaltlsaddr:$dst)>;
 
 def : Pat<(callv3nr (i32 IntRegs:$dst)),
-      (CALLRv3nr (i32 IntRegs:$dst))>, Requires<[HasV3T]>;
+      (CALLRv3nr (i32 IntRegs:$dst))>;
 def : Pat<(callv3nr tglobaladdr:$dst),
-      (CALLv3nr tglobaladdr:$dst)>, Requires<[HasV3T]>;
+      (CALLv3nr tglobaladdr:$dst)>;
 def : Pat<(callv3nr texternalsym:$dst),
-      (CALLv3nr texternalsym:$dst)>, Requires<[HasV3T]>;
+      (CALLv3nr texternalsym:$dst)>;
 
 //===----------------------------------------------------------------------===//
 // :raw form of vrcmpys:hi/lo insns

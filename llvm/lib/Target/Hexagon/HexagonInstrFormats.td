@@ -28,20 +28,12 @@ def TypeXTYPE  : IType<8>;
 def TypeENDLOOP: IType<31>;
 
 // Maintain list of valid subtargets for each instruction.
-class SubTarget<bits<4> value> {
-  bits<4> Value = value;
+class SubTarget<bits<6> value> {
+  bits<6> Value = value;
 }
 
-def HasV2SubT     : SubTarget<0xf>;
-def HasV2SubTOnly : SubTarget<0x1>;
-def NoV2SubT      : SubTarget<0x0>;
-def HasV3SubT     : SubTarget<0xe>;
-def HasV3SubTOnly : SubTarget<0x2>;
-def NoV3SubT      : SubTarget<0x1>;
-def HasV4SubT     : SubTarget<0xc>;
-def NoV4SubT      : SubTarget<0x3>;
-def HasV5SubT     : SubTarget<0x8>;
-def NoV5SubT      : SubTarget<0x7>;
+def HasAnySubT    : SubTarget<0x3f>;  // 111111
+def HasV5SubT     : SubTarget<0x3e>;  // 111110
 
 // Addressing modes for load/store instructions
 class AddrModeType<bits<3> value> {
@@ -56,8 +48,8 @@ def BaseLongOffset : AddrModeType<4>;  // Indirect with long offset
 def BaseRegOffset  : AddrModeType<5>;  // Indirect with register offset
 def PostInc        : AddrModeType<6>;  // Post increment addressing mode
 
-class MemAccessSize<bits<3> value> {
-  bits<3> Value = value;
+class MemAccessSize<bits<4> value> {
+  bits<4> Value = value;
 }
 
 def NoMemAccess      : MemAccessSize<0>;// Not a memory acces instruction.
@@ -157,11 +149,11 @@ class InstHexagon<dag outs, dag ins, string asmstr, list<dag> pattern,
   bits<2> opExtentAlign = 0;
   let TSFlags{33-32} = opExtentAlign; // Alignment exponent before extending.
 
-  // If an instruction is valid on a subtarget (v2-v5), set the corresponding
-  // bit from validSubTargets. v2 is the least significant bit.
+  // If an instruction is valid on a subtarget, set the corresponding
+  // bit from validSubTargets.
   // By default, instruction is valid on all subtargets.
-  SubTarget validSubTargets = HasV2SubT;
-  let TSFlags{37-34} = validSubTargets.Value;
+  SubTarget validSubTargets = HasAnySubT;
+  let TSFlags{39-34} = validSubTargets.Value;
 
   // Addressing mode for load/store instructions.
   AddrModeType addrMode = NoAddrMode;
@@ -169,7 +161,7 @@ class InstHexagon<dag outs, dag ins, string asmstr, list<dag> pattern,
 
   // Memory access size for mem access instructions (load/store)
   MemAccessSize accessSize = NoMemAccess;
-  let TSFlags{45-43} = accessSize.Value;
+  let TSFlags{46-43} = accessSize.Value;
 
   bits<1> isTaken = 0;
   let TSFlags {47} = isTaken; // Branch prediction.
@@ -364,7 +356,6 @@ class ALU32_ri<dag outs, dag ins, string asmstr, list<dag> pattern = [],
 class ALU32_ii<dag outs, dag ins, string asmstr, list<dag> pattern = [],
                string cstr = "", InstrItinClass itin = ALU32_2op_tc_1_SLOT0123>
    : ALU32Inst<outs, ins, asmstr, pattern, cstr, itin>;
-
 
 //
 // ALU64 patterns.

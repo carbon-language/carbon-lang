@@ -153,7 +153,6 @@ class T_CMP_rrbh<string mnemonic, bits<3> MinOp, bit IsComm>
   : SInst<(outs PredRegs:$Pd), (ins IntRegs:$Rs, IntRegs:$Rt),
     "$Pd = "#mnemonic#"($Rs, $Rt)", [], "", S_3op_tc_2early_SLOT23>,
     ImmRegRel {
-  let validSubTargets = HasV4SubT;
   let InputType = "reg";
   let CextOpcode = mnemonic;
   let isCompare = 1;
@@ -184,7 +183,6 @@ class T_CMP_ribh<string mnemonic, bits<2> MajOp, bit IsHalf, bit IsComm,
   : ALU64Inst<(outs PredRegs:$Pd), (ins IntRegs:$Rs, ImmType:$Imm),
     "$Pd = "#mnemonic#"($Rs, #$Imm)", [], "", ALU64_tc_2early_SLOT23>,
     ImmRegRel {
-  let validSubTargets = HasV4SubT;
   let InputType = "imm";
   let CextOpcode = mnemonic;
   let isCompare = 1;
@@ -220,7 +218,6 @@ class T_RCMP_EQ_ri<string mnemonic, bit IsNeg>
   : ALU32_ri<(outs IntRegs:$Rd), (ins IntRegs:$Rs, s8Ext:$s8),
     "$Rd = "#mnemonic#"($Rs, #$s8)", [], "", ALU32_2op_tc_1_SLOT0123>,
     ImmRegRel {
-  let validSubTargets = HasV4SubT;
   let InputType = "imm";
   let CextOpcode = !if (IsNeg, "!rcmp.eq", "rcmp.eq");
   let isExtendable = 1;
@@ -1105,7 +1102,7 @@ multiclass ST_Imm <string mnemonic, string CextOp, Operand OffsetOp,
   }
 }
 
-let hasSideEffects = 0, validSubTargets = HasV4SubT, addrMode = BaseImmOffset,
+let hasSideEffects = 0, addrMode = BaseImmOffset,
     InputType = "imm" in {
   let accessSize = ByteAccess in
   defm S4_storeirb : ST_Imm<"memb", "STrib", u6_0Imm, 0b00>;
@@ -1323,8 +1320,8 @@ def L2_loadbsw4_pr : T_load_pr <"membh", DoubleRegs, 0b0111, WordAccess>;
 // Template class for non-predicated post increment .new stores
 // mem[bhwd](Rx++#s4:[0123])=Nt.new
 //===----------------------------------------------------------------------===//
-let isPredicable = 1, hasSideEffects = 0, validSubTargets = HasV4SubT,
-    addrMode = PostInc, isNVStore = 1, isNewValue = 1, opNewValue = 3 in
+let isPredicable = 1, hasSideEffects = 0, addrMode = PostInc, isNVStore = 1,
+    isNewValue = 1, opNewValue = 3 in
 class T_StorePI_nv <string mnemonic, Operand ImmOp, bits<2> MajOp >
   : NVInstPI_V4 <(outs IntRegs:$_dst_),
                  (ins IntRegs:$src1, ImmOp:$offset, IntRegs:$src2),
@@ -1356,8 +1353,8 @@ class T_StorePI_nv <string mnemonic, Operand ImmOp, bits<2> MajOp >
 // Template class for predicated post increment .new stores
 // if([!]Pv[.new]) mem[bhwd](Rx++#s4:[0123])=Nt.new
 //===----------------------------------------------------------------------===//
-let isPredicated = 1, hasSideEffects = 0, validSubTargets = HasV4SubT,
-    addrMode = PostInc, isNVStore = 1, isNewValue = 1, opNewValue = 4 in
+let isPredicated = 1, hasSideEffects = 0, addrMode = PostInc, isNVStore = 1,
+    isNewValue = 1, opNewValue = 4 in
 class T_StorePI_nv_pred <string mnemonic, Operand ImmOp,
                          bits<2> MajOp, bit isPredNot, bit isPredNew >
   : NVInstPI_V4 <(outs IntRegs:$_dst_),
@@ -1451,7 +1448,6 @@ def S2_storerinew_pr : T_StorePI_RegNV<"memw", 0b10, WordAccess>;
 
 // memb(Rx++#s4:0:circ(Mu))=Nt.new
 // memb(Rx++I:circ(Mu))=Nt.new
-// memb(Rx++Mu)=Nt.new
 // memb(Rx++Mu:brev)=Nt.new
 // memh(Rx++#s4:1:circ(Mu))=Nt.new
 // memh(Rx++I:circ(Mu))=Nt.new
@@ -1538,7 +1534,7 @@ multiclass NVJrr_base<string mnemonic, string BaseOp, bits<3> majOp,
 // if ([!]cmp.gtu(Rt,Ns.new)) jump:[n]t #r9:2
 
 let isPredicated = 1, isBranch = 1, isNewValue = 1, isTerminator = 1,
-    Defs = [PC], hasSideEffects = 0, validSubTargets = HasV4SubT in {
+    Defs = [PC], hasSideEffects = 0 in {
   defm J4_cmpeq  : NVJrr_base<"cmp.eq",  "CMPEQ",  0b000, 0>, PredRel;
   defm J4_cmpgt  : NVJrr_base<"cmp.gt",  "CMPGT",  0b001, 0>, PredRel;
   defm J4_cmpgtu : NVJrr_base<"cmp.gtu", "CMPGTU", 0b010, 0>, PredRel;
@@ -1598,7 +1594,7 @@ multiclass NVJri_base<string mnemonic, string BaseOp, bits<3> majOp> {
 // if ([!]cmp.gtu(Ns.new,#U5)) jump:[n]t #r9:2
 
 let isPredicated = 1, isBranch = 1, isNewValue = 1, isTerminator = 1,
-    Defs = [PC], hasSideEffects = 0, validSubTargets = HasV4SubT in {
+    Defs = [PC], hasSideEffects = 0 in {
   defm J4_cmpeqi  : NVJri_base<"cmp.eq", "CMPEQ", 0b000>, PredRel;
   defm J4_cmpgti  : NVJri_base<"cmp.gt", "CMPGT", 0b001>, PredRel;
   defm J4_cmpgtui : NVJri_base<"cmp.gtu", "CMPGTU", 0b010>, PredRel;
@@ -1684,8 +1680,7 @@ def J4_hintjumpr: JRInst <
 
 // PC-relative add
 let hasNewValue = 1, isExtendable = 1, opExtendable = 1,
-    isExtentSigned = 0, opExtentBits = 6, hasSideEffects = 0,
-    Uses = [PC], validSubTargets = HasV4SubT in
+    isExtentSigned = 0, opExtentBits = 6, hasSideEffects = 0, Uses = [PC] in
 def C4_addipc : CRInst <(outs IntRegs:$Rd), (ins u6Ext:$u6),
   "$Rd = add(pc, #$u6)", [], "", CR_tc_2_SLOT3 > {
     bits<5> Rd;
@@ -1741,10 +1736,8 @@ def C4_or_orn   : T_LOGICAL_3OP<"or",  "or",  0b11, 1>;
 //===----------------------------------------------------------------------===//
 
 // Logical with-not instructions.
-let validSubTargets = HasV4SubT in {
-  def A4_andnp : T_ALU64_logical<"and", 0b001, 1, 0, 1>;
-  def A4_ornp  : T_ALU64_logical<"or",  0b011, 1, 0, 1>;
-}
+def A4_andnp : T_ALU64_logical<"and", 0b001, 1, 0, 1>;
+def A4_ornp  : T_ALU64_logical<"or",  0b011, 1, 0, 1>;
 
 let hasNewValue = 1, hasSideEffects = 0 in
 def S4_parity: ALU64Inst<(outs IntRegs:$Rd), (ins IntRegs:$Rs, IntRegs:$Rt),
@@ -2272,8 +2265,7 @@ def M4_mpyri_addr : T_AddMpy<0b1, u6ExtPred,
                     (ins IntRegs:$src1, IntRegs:$src3, u6Ext:$src2)>, ImmRegRel;
 
 // Rx=add(Ru,mpyi(Rx,Rs))
-let validSubTargets = HasV4SubT, CextOpcode = "ADD_MPY", InputType = "reg",
-    hasNewValue = 1 in
+let CextOpcode = "ADD_MPY", InputType = "reg", hasNewValue = 1 in
 def M4_mpyrr_addr: MInst_acc <(outs IntRegs:$Rx),
                               (ins IntRegs:$Ru, IntRegs:$_src_, IntRegs:$Rs),
   "$Rx = add($Ru, mpyi($_src_, $Rs))",
@@ -2408,7 +2400,7 @@ def A4_vcmpwgtui : T_vcmpImm <"vcmpw.gtu", 0b10, 0b10, u7Imm>;
 // Rx=and(#u8,asl(Rx,#U5))  Rx=and(#u8,lsr(Rx,#U5))
 // Rx=or(#u8,asl(Rx,#U5))   Rx=or(#u8,lsr(Rx,#U5))
 let isExtendable = 1, opExtendable = 1, isExtentSigned = 0, opExtentBits = 8,
-    hasNewValue = 1, opNewValue = 0, validSubTargets = HasV4SubT in
+    hasNewValue = 1, opNewValue = 0 in
 class T_S4_ShiftOperate<string MnOp, string MnSh, SDNode Op, SDNode Sh,
                         bit asl_lsr, bits<2> MajOp, InstrItinClass Itin>
   : MInst_acc<(outs IntRegs:$Rd), (ins u8Ext:$u8, IntRegs:$Rx, u5Imm:$U5),
@@ -2720,8 +2712,7 @@ multiclass MemOp_base <string opc, bits<2> opcBits, Operand ImmOp> {
 }
 
 // Define MemOp instructions.
-let isExtendable = 1, opExtendable = 1, isExtentSigned = 0,
-    validSubTargets =HasV4SubT in {
+let isExtendable = 1, opExtendable = 1, isExtentSigned = 0 in {
   let opExtentBits = 6, accessSize = ByteAccess in
   defm memopb_io : MemOp_base <"memb", 0b00, u6_0Ext>;
 
@@ -2768,7 +2759,7 @@ multiclass MemOpi_u5ExtType<PatFrag ldOpByte, PatFrag ldOpHalf > {
                         L4_iadd_memopb_io, L4_isub_memopb_io>;
 }
 
-let Predicates = [HasV4T, UseMEMOP] in {
+let Predicates = [UseMEMOP] in {
   defm: MemOpi_u5ExtType<zextloadi8, zextloadi16>; // zero extend
   defm: MemOpi_u5ExtType<sextloadi8, sextloadi16>; // sign extend
   defm: MemOpi_u5ExtType<extloadi8,  extloadi16>;  // any extend
@@ -2808,7 +2799,7 @@ multiclass MemOpi_m5ExtType<PatFrag ldOpByte, PatFrag ldOpHalf > {
                         ADDRriU6_0, MEMOPIMM_BYTE, L4_isub_memopb_io>;
 }
 
-let Predicates = [HasV4T, UseMEMOP] in {
+let Predicates = [UseMEMOP] in {
   defm: MemOpi_m5ExtType<zextloadi8, zextloadi16>; // zero extend
   defm: MemOpi_m5ExtType<sextloadi8, sextloadi16>; // sign extend
   defm: MemOpi_m5ExtType<extloadi8,  extloadi16>;  // any extend
@@ -2858,7 +2849,7 @@ multiclass MemOpi_bitExtType<PatFrag ldOpByte, PatFrag ldOpHalf > {
                        ADDRriU6_1, SETMEMIMM_SHORT, L4_ior_memoph_io, or>;
 }
 
-let Predicates = [HasV4T, UseMEMOP] in {
+let Predicates = [UseMEMOP] in {
   // mem[bh](Rs+#0) = [clrbit|setbit](#U5)
   // mem[bh](Rs+#u6:[01]) = [clrbit|setbit](#U5)
   defm: MemOpi_bitExtType<zextloadi8, zextloadi16>; // zero extend
@@ -2920,7 +2911,7 @@ multiclass MemOPr_ExtType<PatFrag ldOpByte, PatFrag ldOpHalf > {
 }
 
 // Define 'def Pats' for MemOps with register addend.
-let Predicates = [HasV4T, UseMEMOP] in {
+let Predicates = [UseMEMOP] in {
   // Byte, Half Word
   defm: MemOPr_ExtType<zextloadi8, zextloadi16>; // zero extend
   defm: MemOPr_ExtType<sextloadi8, sextloadi16>; // sign extend
@@ -3171,7 +3162,7 @@ def: Pat<(i32 (zext (i1 (setult (i32 (and (i32 IntRegs:$src1), 255)),
                          u7StrictPosImmPred:$src2)))),
          (C2_muxii (A4_cmpbgtui IntRegs:$src1,
                     (DEC_CONST_BYTE u7StrictPosImmPred:$src2)),
-          0, 1)>, Requires<[HasV4T]>;
+          0, 1)>;
 
 //===----------------------------------------------------------------------===//
 // XTYPE/PRED -
@@ -3228,14 +3219,12 @@ multiclass LD_MISC_L4_RETURN<string mnemonic> {
 }
 
 let isReturn = 1, isTerminator = 1,
-    Defs = [R29, R30, R31, PC], Uses = [R30], hasSideEffects = 0,
-    validSubTargets = HasV4SubT in
+    Defs = [R29, R30, R31, PC], Uses = [R30], hasSideEffects = 0 in
 defm L4_return: LD_MISC_L4_RETURN <"dealloc_return">, PredNewRel;
 
 // Restore registers and dealloc return function call.
 let isCall = 1, isBarrier = 1, isReturn = 1, isTerminator = 1,
-  Defs = [R29, R30, R31, PC], isAsmParserOnly = 1 in {
-let validSubTargets = HasV4SubT in
+    Defs = [R29, R30, R31, PC], isPredicable = 0, isAsmParserOnly = 1 in {
   def RESTORE_DEALLOC_RET_JMP_V4 : JInst<(outs),
                                    (ins calltarget:$dst),
              "jump $dst",
@@ -3244,9 +3233,7 @@ let validSubTargets = HasV4SubT in
 }
 
 // Restore registers and dealloc frame before a tail call.
-let isCall = 1, isBarrier = 1, isAsmParserOnly = 1,
-  Defs = [R29, R30, R31, PC] in {
-let validSubTargets = HasV4SubT in
+let isCall = 1, Defs = [R29, R30, R31, PC], isAsmParserOnly = 1 in {
   def RESTORE_DEALLOC_BEFORE_TAILCALL_V4 : JInst<(outs),
                                            (ins calltarget:$dst),
              "call $dst",
@@ -3255,8 +3242,7 @@ let validSubTargets = HasV4SubT in
 }
 
 // Save registers function call.
-let isCall = 1, isBarrier = 1, isAsmParserOnly = 1,
-  Uses = [R29, R31] in {
+let isCall = 1, Uses = [R29, R31], isAsmParserOnly = 1 in {
   def SAVE_REGISTERS_CALL_V4 : JInst<(outs),
                                (ins calltarget:$dst),
              "call $dst // Save_calle_saved_registers",
@@ -3350,7 +3336,7 @@ class T_StoreAbs <string mnemonic, RegisterClass RC, Operand ImmOp,
 //===----------------------------------------------------------------------===//
 // Multiclass for store instructions with absolute addressing.
 //===----------------------------------------------------------------------===//
-let validSubTargets = HasV4SubT, addrMode = Absolute, isExtended = 1 in
+let addrMode = Absolute, isExtended = 1 in
 multiclass ST_Abs<string mnemonic, string CextOp, RegisterClass RC,
                   Operand ImmOp, bits<2> MajOp, bit isHalf = 0> {
   let CextOpcode = CextOp, BaseOpcode = CextOp#_abs in {
@@ -3452,7 +3438,7 @@ class T_StoreAbs_NV <string mnemonic, Operand ImmOp, bits<2> MajOp>
 //===----------------------------------------------------------------------===//
 // Multiclass for new-value store instructions with absolute addressing.
 //===----------------------------------------------------------------------===//
-let validSubTargets = HasV4SubT, addrMode = Absolute, isExtended = 1  in
+let addrMode = Absolute, isExtended = 1  in
 multiclass ST_Abs_NV <string mnemonic, string CextOp, Operand ImmOp,
                    bits<2> MajOp> {
   let CextOpcode = CextOp, BaseOpcode = CextOp#_abs in {
@@ -3497,7 +3483,7 @@ defm storerf : ST_Abs <"memh", "STrif", IntRegs, u16_1Imm, 0b01, 1>;
 // if ([!]Pv[.new]) mem[bhwd](##global)=Rt
 //===----------------------------------------------------------------------===//
 
-let validSubTargets = HasV4SubT, isAsmParserOnly = 1 in
+let isAsmParserOnly = 1 in
 class T_StoreGP <string mnemonic, string BaseOp, RegisterClass RC,
                  Operand ImmOp, bits<2> MajOp, bit isHalf = 0>
   : T_StoreAbsGP <mnemonic, RC, ImmOp, MajOp, globaladdress, 0, isHalf> {
@@ -3507,7 +3493,7 @@ class T_StoreGP <string mnemonic, string BaseOp, RegisterClass RC,
     let BaseOpcode = BaseOp#_abs;
   }
 
-let validSubTargets = HasV4SubT, isAsmParserOnly = 1 in
+let isAsmParserOnly = 1 in
 multiclass ST_GP <string mnemonic, string BaseOp, Operand ImmOp,
                   bits<2> MajOp, bit isHalf = 0> {
   // Set BaseOpcode same as absolute addressing instructions so that
@@ -3575,7 +3561,7 @@ let AddedComplexity = 100 in {
 // Template class for non predicated load instructions with
 // absolute addressing mode.
 //===----------------------------------------------------------------------===//
-let isPredicable = 1, hasSideEffects = 0, validSubTargets = HasV4SubT in
+let isPredicable = 1, hasSideEffects = 0 in
 class T_LoadAbsGP <string mnemonic, RegisterClass RC, Operand ImmOp,
                    bits<3> MajOp, Operand AddrOp, bit isAbs>
   : LDInst <(outs RC:$dst), (ins AddrOp:$addr),
@@ -3801,8 +3787,7 @@ def : Pat <(i1 (load (HexagonCONST32_GP tglobaladdr:$global))),
 
 // Transfer global address into a register
 let isExtended = 1, opExtendable = 1, AddedComplexity=50, isMoveImm = 1,
-isAsCheapAsAMove = 1, isReMaterializable = 1, validSubTargets = HasV4SubT,
-isCodeGenOnly = 1 in
+isAsCheapAsAMove = 1, isReMaterializable = 1, isCodeGenOnly = 1 in
 def TFRI_V4 : ALU32_ri<(outs IntRegs:$dst), (ins s16Ext:$src1),
            "$dst = #$src1",
            [(set IntRegs:$dst, (HexagonCONST32 tglobaladdr:$src1))]>,
@@ -3964,7 +3949,7 @@ def Y2_dcfetchbo : LD0Inst<(outs), (ins IntRegs:$Rs, u11_3Imm:$u11_3),
 let isBranch = 1, hasSideEffects = 0, isExtentSigned = 1,
     isPredicated = 1, isPredicatedNew = 1, isExtendable = 1,
     opExtentBits = 11, opExtentAlign = 2, opExtendable = 1,
-    isTerminator = 1, validSubTargets = HasV4SubT in
+    isTerminator = 1 in
 class CJInst_tstbit_R0<string px, bit np, string tnt>
   : InstHexagon<(outs), (ins IntRegs:$Rs, brtarget:$r9_2),
   ""#px#" = tstbit($Rs, #0); if ("
@@ -4010,7 +3995,7 @@ let Defs = [PC, P1], Uses = [P1] in {
 let isBranch = 1, hasSideEffects = 0,
     isExtentSigned = 1, isPredicated = 1, isPredicatedNew = 1,
     isExtendable = 1, opExtentBits = 11, opExtentAlign = 2,
-    opExtendable = 2, isTerminator = 1, validSubTargets = HasV4SubT in
+    opExtendable = 2, isTerminator = 1 in
 class CJInst_RR<string px, string op, bit np, string tnt>
   : InstHexagon<(outs), (ins IntRegs:$Rs, IntRegs:$Rt, brtarget:$r9_2),
   ""#px#" = cmp."#op#"($Rs, $Rt); if ("
@@ -4064,8 +4049,7 @@ defm gtu : T_pnp_CJInst_RR<"gtu">;
 
 let isBranch = 1, hasSideEffects = 0, isExtentSigned = 1,
     isPredicated = 1, isPredicatedNew = 1, isExtendable = 1, opExtentBits = 11,
-    opExtentAlign = 2, opExtendable = 2, isTerminator = 1,
-    validSubTargets = HasV4SubT in
+    opExtentAlign = 2, opExtendable = 2, isTerminator = 1 in
 class CJInst_RU5<string px, string op, bit np, string tnt>
   : InstHexagon<(outs), (ins IntRegs:$Rs, u5Imm:$U5, brtarget:$r9_2),
   ""#px#" = cmp."#op#"($Rs, #$U5); if ("
@@ -4120,7 +4104,7 @@ defm gtu : T_pnp_CJInst_RU5<"gtu">;
 let isBranch = 1, hasSideEffects = 0, isExtentSigned = 1,
     isPredicated = 1, isPredicatedFalse = 1, isPredicatedNew = 1,
     isExtendable = 1, opExtentBits = 11, opExtentAlign = 2, opExtendable = 1,
-    isTerminator = 1, validSubTargets = HasV4SubT in
+    isTerminator = 1 in
 class CJInst_Rn1<string px, string op, bit np, string tnt>
   : InstHexagon<(outs), (ins IntRegs:$Rs, brtarget:$r9_2),
   ""#px#" = cmp."#op#"($Rs,#-1); if ("
@@ -4173,7 +4157,7 @@ defm gt : T_pnp_CJInst_Rn1<"gt">;
 // J4_jumpseti: Direct unconditional jump and set register to immediate.
 let Defs = [PC], isBranch = 1, hasSideEffects = 0, hasNewValue = 1,
     isExtentSigned = 1, opNewValue = 0, isExtendable = 1, opExtentBits = 11,
-    opExtentAlign = 2, opExtendable = 2, validSubTargets = HasV4SubT in
+    opExtentAlign = 2, opExtendable = 2 in
 def J4_jumpseti: CJInst <
   (outs IntRegs:$Rd),
   (ins u6Imm:$U6, brtarget:$r9_2),
@@ -4193,7 +4177,7 @@ def J4_jumpseti: CJInst <
 // J4_jumpsetr: Direct unconditional jump and transfer register.
 let Defs = [PC], isBranch = 1, hasSideEffects = 0, hasNewValue = 1,
     isExtentSigned = 1, opNewValue = 0, isExtendable = 1, opExtentBits = 11,
-    opExtentAlign = 2, opExtendable = 2, validSubTargets = HasV4SubT in
+    opExtentAlign = 2, opExtendable = 2 in
 def J4_jumpsetr: CJInst <
   (outs IntRegs:$Rd),
   (ins IntRegs:$Rs, brtarget:$r9_2),

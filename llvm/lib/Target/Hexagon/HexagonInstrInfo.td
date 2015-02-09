@@ -730,8 +730,7 @@ class T_ALU32_2op <string mnemonic, bits<3> minOp> :
 // template class for predicated alu32_2op instructions
 // - aslh, asrh, sxtb, sxth, zxtb, zxth
 //===----------------------------------------------------------------------===//
-let hasSideEffects = 0, validSubTargets = HasV4SubT,
-    hasNewValue = 1, opNewValue = 0 in
+let hasSideEffects = 0, hasNewValue = 1, opNewValue = 0 in
 class T_ALU32_2op_Pred <string mnemonic, bits<3> minOp, bit isPredNot,
                         bit isPredNew > :
   ALU32Inst <(outs IntRegs:$Rd), (ins PredRegs:$Pu, IntRegs:$Rs),
@@ -768,7 +767,7 @@ multiclass ALU32_2op_base<string mnemonic, bits<3> minOp> {
     let isPredicable = 1, hasSideEffects = 0 in
     def A2_#NAME : T_ALU32_2op<mnemonic, minOp>;
 
-    let validSubTargets = HasV4SubT, isPredicated = 1, hasSideEffects = 0 in {
+    let isPredicated = 1, hasSideEffects = 0 in {
       defm A4_p#NAME#t : ALU32_2op_Pred<mnemonic, minOp, 0>;
       defm A4_p#NAME#f : ALU32_2op_Pred<mnemonic, minOp, 1>;
     }
@@ -809,7 +808,7 @@ multiclass ZXTB_base <string mnemonic, bits<3> minOp> {
     let isPredicable = 1, hasSideEffects = 0 in
     def A2_#NAME : T_ZXTB;
 
-    let validSubTargets = HasV4SubT, isPredicated = 1, hasSideEffects = 0 in {
+    let isPredicated = 1, hasSideEffects = 0 in {
       defm A4_p#NAME#t : ALU32_2op_Pred<mnemonic, minOp, 0>;
       defm A4_p#NAME#f : ALU32_2op_Pred<mnemonic, minOp, 1>;
     }
