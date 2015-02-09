@@ -82,12 +82,12 @@ namespace llvm {
     /// operator. NSW is a misnomer that we use to mean no signed overflow or
     /// underflow.
     ///
-    /// AddRec expression may have a no-self-wraparound <NW> property if the
-    /// result can never reach the start value. This property is independent of
-    /// the actual start value and step direction. Self-wraparound is defined
-    /// purely in terms of the recurrence's loop, step size, and
-    /// bitwidth. Formally, a recurrence with no self-wraparound satisfies:
-    /// abs(step) * max-iteration(loop) <= unsigned-max(bitwidth).
+    /// AddRec expressions may have a no-self-wraparound <NW> property if, in
+    /// the integer domain, abs(step) * max-iteration(loop) <=
+    /// unsigned-max(bitwidth).  This means that the recurrence will never reach
+    /// its start value if the step is non-zero.  Computing the same value on
+    /// each iteration is not considered wrapping, and recurrences with step = 0
+    /// are trivially <NW>.
     ///
     /// Note that NUW and NSW are also valid properties of a recurrence, and
     /// either implies NW. For convenience, NW will be set for a recurrence
