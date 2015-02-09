@@ -541,7 +541,6 @@ void DAE::SurveyFunction(const Function &F) {
   // Keep track of the number of live retvals, so we can skip checks once all
   // of them turn out to be live.
   unsigned NumLiveRetVals = 0;
-  Type *STy = dyn_cast<StructType>(F.getReturnType());
   // Loop all uses of the function.
   for (const Use &U : F.uses()) {
     // If the function is PASSED IN as an argument, its address has been
@@ -563,34 +562,35 @@ void DAE::SurveyFunction(const Function &F) {
 
     // Now, check how our return value(s) is/are used in this caller. Don't
     // bother checking return values if all of them are live already.
-    if (NumLiveRetVals != RetCount) {
-      if (STy) {
-        // Check all uses of the return value.
-        for (const User *U : TheCall->users()) {
-          const ExtractValueInst *Ext = dyn_cast<ExtractValueInst>(U);
-          if (Ext && Ext->hasIndices()) {
-            // This use uses a part of our return value, survey the uses of
-            // that part and store the results for this index only.
-            unsigned Idx = *Ext->idx_begin();
-            if (RetValLiveness[Idx] != Live) {
-              RetValLiveness[Idx] = SurveyUses(Ext, MaybeLiveRetUses[Idx]);
-              if (RetValLiveness[Idx] == Live)
-                NumLiveRetVals++;
-            }
-          } else {
-            // Used by something else than extractvalue. Mark all return
-            // values as live.
-            for (unsigned i = 0; i != RetCount; ++i )
-              RetValLiveness[i] = Live;
-            NumLiveRetVals = RetCount;
-            break;
-          }
+    if (NumLiveRetVals == RetCount)
+      continue;
+
+    // Check all uses of the return value.
+    for (const Use &U : TheCall->uses()) {
+      if (ExtractValueInst *Ext = dyn_cast<ExtractValueInst>(U.getUser())) {
+        // This use uses a part of our return value, survey the uses of
+        // that part and store the results for this index only.
+        unsigned Idx = *Ext->idx_begin();
+        if (RetValLiveness[Idx] != Live) {
+          RetValLiveness[Idx] = SurveyUses(Ext, MaybeLiveRetUses[Idx]);
+          if (RetValLiveness[Idx] == Live)
+            NumLiveRetVals++;
         }
       } else {
-        // Single return value
-        RetValLiveness[0] = SurveyUses(TheCall, MaybeLiveRetUses[0]);
-        if (RetValLiveness[0] == Live)
+        // Used by something else than extractvalue. Survey, but assume that the
+        // result applies to all sub-values.
+        UseVector MaybeLiveAggregateUses;
+        if (SurveyUse(&U, MaybeLiveAggregateUses) == Live) {
           NumLiveRetVals = RetCount;
+          RetValLiveness.assign(RetCount, Live);
+          break;
+        } else {
+          for (unsigned i = 0; i != RetCount; ++i) {
+            if (RetValLiveness[i] != Live)
+              MaybeLiveRetUses[i].append(MaybeLiveAggregateUses.begin(),
+                                         MaybeLiveAggregateUses.end());
+          }
+        }
       }
     }
   }
