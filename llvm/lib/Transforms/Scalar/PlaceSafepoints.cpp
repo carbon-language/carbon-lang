@@ -297,8 +297,7 @@ static void scanOneBB(Instruction *start, Instruction *end,
     // without encountering end first
     if (itr->isTerminator()) {
       BasicBlock *BB = itr->getParent();
-      for (succ_iterator PI = succ_begin(BB), E = succ_end(BB); PI != E; ++PI) {
-        BasicBlock *Succ = *PI;
+      for (BasicBlock *Succ : successors(BB)) {
         if (seen.count(Succ) == 0) {
           worklist.push_back(Succ);
           seen.insert(Succ);
@@ -336,9 +335,7 @@ bool PlaceBackedgeSafepointsImpl::runOnLoop(Loop *L, LPPassManager &LPM) {
   DT.recalculate(*header->getParent());
 
   bool modified = false;
-  for (pred_iterator PI = pred_begin(header), E = pred_end(header); PI != E;
-       PI++) {
-    BasicBlock *pred = *PI;
+  for (BasicBlock *pred : predecessors(header)) {
     if (!L->contains(pred)) {
       // This is not a backedge, it's coming from outside the loop
       continue;
@@ -470,9 +467,8 @@ static Instruction *findLocationForEntrySafepoint(Function &F,
 static void findCallSafepoints(Function &F,
                                std::vector<CallSite> &Found /*rval*/) {
   assert(Found.empty() && "must be empty!");
-  for (inst_iterator itr = inst_begin(F), end = inst_end(F); itr != end;
-       itr++) {
-    Instruction *inst = &*itr;
+  for (Instruction &I : inst_range(F)) {
+    Instruction *inst = &I;
     if (isa<CallInst>(inst) || isa<InvokeInst>(inst)) {
       CallSite CS(inst);
 
