@@ -2021,6 +2021,16 @@ std::string CompilerInvocation::getModuleHash() const {
     }
   }
 
+#if LLVM_ON_UNIX
+  // The LockFileManager cannot tell when processes from another host are
+  // running, so mangle the hostname in to the module hash to separate them.
+  char hostname[256];
+  hostname[255] = 0;
+  hostname[0] = 0;
+  gethostname(hostname, 255);
+  code = hash_combine(code, StringRef(hostname));
+#endif
+
   return llvm::APInt(64, code).toString(36, /*Signed=*/false);
 }
 
