@@ -14,6 +14,7 @@
 #ifndef LLVM_EXECUTIONENGINE_ORC_JITSYMBOL_H
 #define LLVM_EXECUTIONENGINE_ORC_JITSYMBOL_H
 
+#include "llvm/Support/Compiler.h"
 #include <functional>
 
 namespace llvm {
@@ -32,7 +33,7 @@ public:
       : CachedAddr(0), GetAddress(std::move(GetAddress)) {}
 
   /// @brief Returns true if the symbol exists, false otherwise.
-  explicit operator bool() const { return CachedAddr || GetAddress; }
+  LLVM_EXPLICIT operator bool() const { return CachedAddr || GetAddress; }
 
   /// @brief Get the address of the symbol in the target address space. Returns
   ///        '0' if the symbol does not exist.
