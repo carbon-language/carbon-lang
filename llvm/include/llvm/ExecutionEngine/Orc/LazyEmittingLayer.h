@@ -45,12 +45,12 @@ private:
         if (provides(Name, ExportedSymbolsOnly))
           return JITSymbol(
               [=,&B]() -> TargetAddress {
-                if (EmitState == Emitting)
+                if (this->EmitState == Emitting)
                   return 0;
-                else if (EmitState != Emitted) {
-                  EmitState = Emitting;
-                  Handle = emit(B);
-                  EmitState = Emitted;
+                else if (this->EmitState != Emitted) {
+                  this->EmitState = Emitting;
+                  Handle = this->emit(B);
+                  this->EmitState = Emitted;
                 }
                 return B.findSymbolIn(Handle, Name, ExportedSymbolsOnly)
                           .getAddress();
