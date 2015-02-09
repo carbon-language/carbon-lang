@@ -11,6 +11,7 @@
 #include "../ClangTidyModule.h"
 #include "../ClangTidyModuleRegistry.h"
 #include "ArgumentCommentCheck.h"
+#include "AssignOperatorSignatureCheck.h"
 #include "BoolPointerImplicitConversion.h"
 #include "InefficientAlgorithmCheck.h"
 #include "SwappedArgumentsCheck.h"
@@ -26,6 +27,8 @@ class MiscModule : public ClangTidyModule {
 public:
   void addCheckFactories(ClangTidyCheckFactories &CheckFactories) override {
     CheckFactories.registerCheck<ArgumentCommentCheck>("misc-argument-comment");
+    CheckFactories.registerCheck<AssignOperatorSignatureCheck>(
+        "misc-assign-operator-signature");
     CheckFactories.registerCheck<BoolPointerImplicitConversion>(
         "misc-bool-pointer-implicit-conversion");
     CheckFactories.registerCheck<InefficientAlgorithmCheck>(

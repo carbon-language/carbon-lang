@@ -2,6 +2,7 @@ set(LLVM_LINK_COMPONENTS support)
 
 add_clang_library(clangTidyMiscModule
   ArgumentCommentCheck.cpp
+  AssignOperatorSignatureCheck.cpp
   BoolPointerImplicitConversion.cpp
   InefficientAlgorithmCheck.cpp
   MiscTidyModule.cpp
