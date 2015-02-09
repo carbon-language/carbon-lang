@@ -3383,10 +3383,32 @@ class Storex_simple_pat<PatFrag Store, PatFrag Value, InstHexagon MI>
   : Pat<(Store Value:$Rt, (i32 IntRegs:$Rs)),
         (MI IntRegs:$Rs, 0, Value:$Rt)>;
 
+// Patterns for generating stores, where the address takes different forms,
+// and where the value being stored is transformed through the value modifier
+// ValueMod.  The address forms are same as above.
+class Storexm_fi_pat<PatFrag Store, PatFrag Value, PatFrag ValueMod,
+                     InstHexagon MI>
+  : Pat<(Store Value:$Rs, AddrFI:$fi),
+        (MI AddrFI:$fi, 0, (ValueMod Value:$Rs))>;
+class Storexm_add_pat<PatFrag Store, PatFrag Value, PatFrag ImmPred,
+                      PatFrag ValueMod, InstHexagon MI>
+  : Pat<(Store Value:$Rt, (add (i32 IntRegs:$Rs), ImmPred:$Off)),
+        (MI IntRegs:$Rs, imm:$Off, (ValueMod Value:$Rt))>;
+class Storexm_simple_pat<PatFrag Store, PatFrag Value, PatFrag ValueMod,
+                         InstHexagon MI>
+  : Pat<(Store Value:$Rt, (i32 IntRegs:$Rs)),
+        (MI IntRegs:$Rs, 0, (ValueMod Value:$Rt))>;
+
 multiclass Storex_pat<PatFrag Store, PatFrag Value, PatLeaf ImmPred,
                       InstHexagon MI> {
   def: Storex_fi_pat  <Store, Value, MI>;
   def: Storex_add_pat <Store, Value, ImmPred, MI>;
+}
+
+multiclass Storexm_pat<PatFrag Store, PatFrag Value, PatLeaf ImmPred,
+                       PatFrag ValueMod, InstHexagon MI> {
+  def: Storexm_fi_pat  <Store, Value,          ValueMod, MI>;
+  def: Storexm_add_pat <Store, Value, ImmPred, ValueMod, MI>;
 }
 
 // Regular stores in the DAG have two operands: value and address.
@@ -3397,47 +3419,38 @@ multiclass Storex_pat<PatFrag Store, PatFrag Value, PatLeaf ImmPred,
 class SwapSt<PatFrag F>
   : PatFrag<(ops node:$val, node:$ptr), F.Fragment>;
 
+let AddedComplexity = 20 in {
+  defm: Storex_pat<truncstorei8,    I32, s11_0ExtPred, S2_storerb_io>;
+  defm: Storex_pat<truncstorei16,   I32, s11_1ExtPred, S2_storerh_io>;
+  defm: Storex_pat<store,           I32, s11_2ExtPred, S2_storeri_io>;
+  defm: Storex_pat<store,           I64, s11_3ExtPred, S2_storerd_io>;
+
+  defm: Storex_pat<SwapSt<atomic_store_8>,  I32, s11_0ExtPred, S2_storerb_io>;
+  defm: Storex_pat<SwapSt<atomic_store_16>, I32, s11_1ExtPred, S2_storerh_io>;
+  defm: Storex_pat<SwapSt<atomic_store_32>, I32, s11_2ExtPred, S2_storeri_io>;
+  defm: Storex_pat<SwapSt<atomic_store_64>, I64, s11_3ExtPred, S2_storerd_io>;
+}
+
+// Simple patterns should be tried with the least priority.
+def: Storex_simple_pat<truncstorei8,    I32, S2_storerb_io>;
+def: Storex_simple_pat<truncstorei16,   I32, S2_storerh_io>;
+def: Storex_simple_pat<store,           I32, S2_storeri_io>;
+def: Storex_simple_pat<store,           I64, S2_storerd_io>;
+
 def: Storex_simple_pat<SwapSt<atomic_store_8>,  I32, S2_storerb_io>;
 def: Storex_simple_pat<SwapSt<atomic_store_16>, I32, S2_storerh_io>;
 def: Storex_simple_pat<SwapSt<atomic_store_32>, I32, S2_storeri_io>;
 def: Storex_simple_pat<SwapSt<atomic_store_64>, I64, S2_storerd_io>;
 
-def : Pat<(truncstorei8 (i32 IntRegs:$src1), ADDRriS11_0:$addr),
-          (S2_storerb_io AddrFI:$addr, 0, (i32 IntRegs:$src1))>;
-
-def : Pat<(truncstorei16 (i32 IntRegs:$src1), ADDRriS11_1:$addr),
-          (S2_storerh_io AddrFI:$addr, 0, (i32 IntRegs:$src1))>;
-
-def : Pat<(store (i32 IntRegs:$src1), ADDRriS11_2:$addr),
-          (S2_storeri_io AddrFI:$addr, 0, (i32 IntRegs:$src1))>;
-
-def : Pat<(store (i64 DoubleRegs:$src1), ADDRriS11_3:$addr),
-          (S2_storerd_io AddrFI:$addr, 0, (i64 DoubleRegs:$src1))>;
-
-
-let AddedComplexity = 10 in {
-def : Pat<(truncstorei8 (i32 IntRegs:$src1), (add IntRegs:$src2,
-                                                  s11_0ExtPred:$offset)),
-          (S2_storerb_io IntRegs:$src2, s11_0ImmPred:$offset,
-                         (i32 IntRegs:$src1))>;
-
-def : Pat<(truncstorei16 (i32 IntRegs:$src1), (add IntRegs:$src2,
-                                                   s11_1ExtPred:$offset)),
-          (S2_storerh_io IntRegs:$src2, s11_1ImmPred:$offset,
-                         (i32 IntRegs:$src1))>;
-
-def : Pat<(store (i32 IntRegs:$src1), (add IntRegs:$src2,
-                                           s11_2ExtPred:$offset)),
-          (S2_storeri_io IntRegs:$src2, s11_2ImmPred:$offset,
-                         (i32 IntRegs:$src1))>;
-
-def : Pat<(store (i64 DoubleRegs:$src1), (add IntRegs:$src2,
-                                              s11_3ExtPred:$offset)),
-          (S2_storerd_io IntRegs:$src2, s11_3ImmPred:$offset,
-                         (i64 DoubleRegs:$src1))>;
+let AddedComplexity = 20 in {
+  defm: Storexm_pat<truncstorei8,  I64, s11_0ExtPred, LoReg, S2_storerb_io>;
+  defm: Storexm_pat<truncstorei16, I64, s11_1ExtPred, LoReg, S2_storerh_io>;
+  defm: Storexm_pat<truncstorei32, I64, s11_2ExtPred, LoReg, S2_storeri_io>;
 }
 
-// memh(Rx++#s4:1)=Rt.H
+def: Storexm_simple_pat<truncstorei8,  I64, LoReg, S2_storerb_io>;
+def: Storexm_simple_pat<truncstorei16, I64, LoReg, S2_storerh_io>;
+def: Storexm_simple_pat<truncstorei32, I64, LoReg, S2_storeri_io>;
 
 // Store predicate.
 let isExtendable = 1, opExtendable = 1, isExtentSigned = 1, opExtentBits = 13,
