@@ -408,6 +408,15 @@
 # CHECK-BE: vandc 2, 3, 4                   # encoding: [0x10,0x43,0x24,0x44]
 # CHECK-LE: vandc 2, 3, 4                   # encoding: [0x44,0x24,0x43,0x10]
             vandc 2, 3, 4
+# CHECK-BE: veqv 2, 3, 4                    # encoding: [0x10,0x43,0x26,0x84]
+# CHECK-LE: veqv 2, 3, 4                    # encoding: [0x84,0x26,0x43,0x10]
+            veqv 2, 3, 4
+# CHECK-BE: vnand 2, 3, 4                   # encoding: [0x10,0x43,0x25,0x84]
+# CHECK-LE: vnand 2, 3, 4                   # encoding: [0x84,0x25,0x43,0x10]
+            vnand 2, 3, 4
+# CHECK-BE: vorc 2, 3, 4                    # encoding: [0x10,0x43,0x25,0x44]
+# CHECK-LE: vorc 2, 3, 4                    # encoding: [0x44,0x25,0x43,0x10]
+            vorc 2, 3, 4
 # CHECK-BE: vnor 2, 3, 4                    # encoding: [0x10,0x43,0x25,0x04]
 # CHECK-LE: vnor 2, 3, 4                    # encoding: [0x04,0x25,0x43,0x10]
             vnor 2, 3, 4

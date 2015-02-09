@@ -968,4 +968,29 @@ def VPOPCNTW : VXForm_2<1923, (outs vrrc:$vD), (ins vrrc:$vB),
 def VPOPCNTD : VXForm_2<1987, (outs vrrc:$vD), (ins vrrc:$vB),
                         "vpopcntd $vD, $vB", IIC_VecGeneral,
                         [(set v2i64:$vD, (ctpop v2i64:$vB))]>;
+
+let isCommutable = 1 in {
+let AddedComplexity = 500 in {
+// FIXME: Use AddedComplexity > 400 to ensure these patterns match before the 
+//        VSX equivalents. We need to fix this up at some point. Two possible
+//        solutions for this problem:
+//        1. Disable Altivec patterns that compete with VSX patterns using the
+//           !HasVSX predicate. This essentially favours VSX over Altivec, in 
+//           hopes of reducing register pressure (larger register set using VSX 
+//           instructions than VMX instructions)
+//        2. Employ a more disciplined use of AddedComplexity, which would provide
+//           more fine-grained control than option 1. This would be beneficial
+//           if we find situations where Altivec is really preferred over VSX. 
+def VEQV  : VXForm_1<1668, (outs vrrc:$vD), (ins vrrc:$vA, vrrc:$vB),
+                     "veqv $vD, $vA, $vB", IIC_VecGeneral,
+                     [(set v4i32:$vD, (vnot_ppc (xor v4i32:$vA, v4i32:$vB)))]>;
+def VNAND : VXForm_1<1412, (outs vrrc:$vD), (ins vrrc:$vA, vrrc:$vB),
+                     "vnand $vD, $vA, $vB", IIC_VecGeneral,
+                     [(set v4i32:$vD, (vnot_ppc (and v4i32:$vA, v4i32:$vB)))]>;
+def VORC : VXForm_1<1348, (outs vrrc:$vD), (ins vrrc:$vA, vrrc:$vB),
+                      "vorc $vD, $vA, $vB", IIC_VecGeneral,
+                      [(set v4i32:$vD, (or v4i32:$vA,
+                                           (vnot_ppc v4i32:$vB)))]>;
+} // AddedComplexity = 500
+} // isCommutable
 } // end HasP8Altivec
