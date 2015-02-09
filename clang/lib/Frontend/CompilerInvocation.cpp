@@ -2029,8 +2029,12 @@ std::string CompilerInvocation::getModuleHash() const {
   // running, so mangle the hostname in to the module hash to separate them.
   char hostname[256];
   hostname[0] = 0;
-  if (gethostname(hostname, 255) == 0)
+  if (gethostname(hostname, 255) == 0) {
+    // Forcibly null-terminate the result, since POSIX doesn't require that
+    // truncation result in an error or that truncated names be null-terminated.
+    hostname[sizeof(hostname)-1] = 0;
     code = hash_combine(code, StringRef(hostname));
+  }
   // Ignore failures in gethostname() by not including the hostname in the hash.
 #endif
 
