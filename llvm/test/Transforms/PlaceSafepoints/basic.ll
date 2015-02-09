@@ -2,7 +2,7 @@
 
 
 ; Do we insert a simple entry safepoint?
-define void @test_entry(i8 addrspace(1)* %arg) {
+define void @test_entry() gc "statepoint-example" {
 ; CHECK-LABEL: @test_entry
 entry:
 ; CHECK-LABEL: entry
@@ -12,7 +12,7 @@ entry:
 
 ; Do we insert a backedge safepoint in a statically
 ; infinite loop?
-define void @test_backedge(i8 addrspace(1)* %arg) {
+define void @test_backedge() gc "statepoint-example" {
 ; CHECK-LABEL: test_backedge
 entry:
 ; CHECK-LABEL: entry
@@ -23,14 +23,13 @@ entry:
 ; CHECK-LABEL: other
 ; CHECK: statepoint
 other:
-  %tmp = bitcast i8 addrspace(1)* %arg to i32 addrspace(1)*
   call void undef()
   br label %other
 }
 
 ; Check that we remove an unreachable block rather than trying
 ; to insert a backedge safepoint
-define void @test_unreachable(i8 addrspace(1)* %arg) {
+define void @test_unreachable() gc "statepoint-example" {
 ; CHECK-LABEL: test_unreachable
 entry:
 ; CHECK-LABEL: entry
@@ -46,7 +45,7 @@ other:
 declare void @foo()
 
 ; Do we turn a call into it's own statepoint
-define void @test_simple_call() {
+define void @test_simple_call() gc "statepoint-example" {
 ; CHECK-LABEL: test_simple_call
 entry:
   br label %other
