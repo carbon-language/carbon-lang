@@ -11,41 +11,40 @@
 // does not make relocation semantics or variable liveness explicit.  That's
 // done by RewriteStatepointsForGC.
 //
+// Terminology:
+// - A call is said to be "parseable" if there is a stack map generated for the
+// return PC of the call.  A runtime can determine where values listed in the
+// deopt arguments and (after RewriteStatepointsForGC) gc arguments are located
+// on the stack when the code is suspended inside such a call.  Every parse
+// point is represented by a call wrapped in an gc.statepoint intrinsic.  
+// - A "poll" is an explicit check in the generated code to determine if the
+// runtime needs the generated code to cooperate by calling a helper routine
+// and thus suspending its execution at a known state. The call to the helper
+// routine will be parseable.  The (gc & runtime specific) logic of a poll is
+// assumed to be provided in a function of the name "gc.safepoint_poll".
+//
+// We aim to insert polls such that running code can quickly be brought to a
+// well defined state for inspection by the collector.  In the current
+// implementation, this is done via the insertion of poll sites at method entry
+// and the backedge of most loops.  We try to avoid inserting more polls than
+// are neccessary to ensure a finite period between poll sites.  This is not
+// because the poll itself is expensive in the generated code; it's not.  Polls
+// do tend to impact the optimizer itself in negative ways; we'd like to avoid
+// perturbing the optimization of the method as much as we can.
+//
+// We also need to make most call sites parseable.  The callee might execute a
+// poll (or otherwise be inspected by the GC).  If so, the entire stack
+// (including the suspended frame of the current method) must be parseable.
+//
 // This pass will insert:
-//   - Call parse points ("call safepoints") for any call which may need to
-//   reach a safepoint during the execution of the callee function.
-//   - Backedge safepoint polls and entry safepoint polls to ensure that
-//   executing code reaches a safepoint poll in a finite amount of time.
-//   - We do not currently support return statepoints, but adding them would not
-//   be hard.  They are not required for correctness - entry safepoints are an
-//   alternative - but some GCs may prefer them.  Patches welcome.
+// - Call parse points ("call safepoints") for any call which may need to
+// reach a safepoint during the execution of the callee function.
+// - Backedge safepoint polls and entry safepoint polls to ensure that
+// executing code reaches a safepoint poll in a finite amount of time.
 //
-//   There are restrictions on the IR accepted.  We require that:
-//   - Pointer values may not be cast to integers and back.
-//   - Pointers to GC objects must be tagged with address space #1
-//   - Pointers loaded from the heap or global variables must refer to the
-//    base of an object.  In practice, interior pointers are probably fine as
-//   long as your GC can handle them, but exterior pointers loaded to from the
-//   heap or globals are explicitly unsupported at this time.
-//
-//   In addition to these fundemental limitations, we currently do not support:
-//   - use of indirectbr (in loops which need backedge safepoints)
-//   - aggregate types which contain pointers to GC objects
-//   - constant pointers to GC objects (other than null)
-//   - use of gc_root
-//
-//   Patches welcome for the later class of items.
-//
-//   This code is organized in two key concepts:
-//   - "parse point" - at these locations (all calls in the current
-//   implementation), the garbage collector must be able to inspect
-//   and modify all pointers to garbage collected objects.  The objects
-//   may be arbitrarily relocated and thus the pointers may be modified.
-//   - "poll" - this is a location where the compiled code needs to
-//   check (or poll) if the running thread needs to collaborate with
-//   the garbage collector by taking some action.  In this code, the
-//   checking condition and action are abstracted via a frontend
-//   provided "safepoint_poll" function.
+// We do not currently support return statepoints, but adding them would not
+// be hard.  They are not required for correctness - entry safepoints are an
+// alternative - but some GCs may prefer them.  Patches welcome.
 //
 //===----------------------------------------------------------------------===//
 
