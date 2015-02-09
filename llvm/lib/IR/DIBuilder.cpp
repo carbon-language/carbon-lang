@@ -947,17 +947,23 @@ DIVariable DIBuilder::createLocalVariable(unsigned Tag, DIDescriptor Scope,
   return RetVar;
 }
 
-DIExpression DIBuilder::createExpression(ArrayRef<int64_t> Addr) {
+DIExpression DIBuilder::createExpression(ArrayRef<uint64_t> Addr) {
   auto Header = HeaderBuilder::get(DW_TAG_expression);
-  for (int64_t I : Addr)
+  for (uint64_t I : Addr)
     Header.concat(I);
   Metadata *Elts[] = {Header.get(VMContext)};
   return DIExpression(MDNode::get(VMContext, Elts));
 }
 
+DIExpression DIBuilder::createExpression(ArrayRef<int64_t> Signed) {
+  // TODO: Remove the callers of this signed version and delete.
+  SmallVector<uint64_t, 8> Addr(Signed.begin(), Signed.end());
+  return createExpression(Addr);
+}
+
 DIExpression DIBuilder::createPieceExpression(unsigned OffsetInBytes,
                                               unsigned SizeInBytes) {
-  int64_t Addr[] = {dwarf::DW_OP_piece, OffsetInBytes, SizeInBytes};
+  uint64_t Addr[] = {dwarf::DW_OP_piece, OffsetInBytes, SizeInBytes};
   return createExpression(Addr);
 }
 

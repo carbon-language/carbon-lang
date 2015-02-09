@@ -1123,7 +1123,7 @@ bool llvm::replaceDbgDeclareForAlloca(AllocaInst *AI, Value *NewAllocaAddress,
     // "deref" operation to a list of address elements, as new llvm.dbg.declare
     // will take a value storing address of the memory for variable, not
     // alloca itself.
-    SmallVector<int64_t, 4> NewDIExpr;
+    SmallVector<uint64_t, 4> NewDIExpr;
     NewDIExpr.push_back(dwarf::DW_OP_deref);
     if (DIExpr)
       for (unsigned i = 0, n = DIExpr.getNumElements(); i < n; ++i)
