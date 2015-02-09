@@ -421,4 +421,29 @@ TEST(HashingTest, HashCombineBasicTest) {
             hash_combine(bigarr[0], l2, bigarr[9], l3, bigarr[18], bigarr[19]));
 }
 
+TEST(HashingTest, HashCombineArgs18) {
+  // This tests that we can pass in up to 18 args.
+#define CHECK_SAME(...)                                                        \
+  EXPECT_EQ(hash_combine(__VA_ARGS__), hash_combine(__VA_ARGS__))
+  CHECK_SAME(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18);
+  CHECK_SAME(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17);
+  CHECK_SAME(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16);
+  CHECK_SAME(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15);
+  CHECK_SAME(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14);
+  CHECK_SAME(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13);
+  CHECK_SAME(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12);
+  CHECK_SAME(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11);
+  CHECK_SAME(1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
+  CHECK_SAME(1, 2, 3, 4, 5, 6, 7, 8, 9);
+  CHECK_SAME(1, 2, 3, 4, 5, 6, 7, 8);
+  CHECK_SAME(1, 2, 3, 4, 5, 6, 7);
+  CHECK_SAME(1, 2, 3, 4, 5, 6);
+  CHECK_SAME(1, 2, 3, 4, 5);
+  CHECK_SAME(1, 2, 3, 4);
+  CHECK_SAME(1, 2, 3);
+  CHECK_SAME(1, 2);
+  CHECK_SAME(1);
+#undef CHECK_SAME
+}
+
 }

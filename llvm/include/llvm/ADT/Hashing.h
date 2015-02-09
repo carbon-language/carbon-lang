@@ -573,6 +573,171 @@ public:
   // documentation.
 
   template <typename T1, typename T2, typename T3, typename T4, typename T5,
+            typename T6, typename T7, typename T8, typename T9, typename T10,
+            typename T11, typename T12, typename T13, typename T14,
+            typename T15, typename T16, typename T17, typename T18>
+  hash_code combine(size_t length, char *buffer_ptr, char *buffer_end,
+                    const T1 &arg1, const T2 &arg2, const T3 &arg3,
+                    const T4 &arg4, const T5 &arg5, const T6 &arg6,
+                    const T7 &arg7, const T8 &arg8, const T9 &arg9,
+                    const T10 &arg10, const T11 &arg11, const T12 &arg12,
+                    const T13 &arg13, const T14 &arg14, const T15 &arg15,
+                    const T16 &arg16, const T17 &arg17, const T18 &arg18) {
+    buffer_ptr =
+        combine_data(length, buffer_ptr, buffer_end, get_hashable_data(arg1));
+    return combine(length, buffer_ptr, buffer_end, arg2, arg3, arg4, arg5, arg6,
+                   arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15,
+                   arg16, arg17, arg18);
+  }
+  template <typename T1, typename T2, typename T3, typename T4, typename T5,
+            typename T6, typename T7, typename T8, typename T9, typename T10,
+            typename T11, typename T12, typename T13, typename T14,
+            typename T15, typename T16, typename T17>
+  hash_code combine(size_t length, char *buffer_ptr, char *buffer_end,
+                    const T1 &arg1, const T2 &arg2, const T3 &arg3,
+                    const T4 &arg4, const T5 &arg5, const T6 &arg6,
+                    const T7 &arg7, const T8 &arg8, const T9 &arg9,
+                    const T10 &arg10, const T11 &arg11, const T12 &arg12,
+                    const T13 &arg13, const T14 &arg14, const T15 &arg15,
+                    const T16 &arg16, const T17 &arg17) {
+    buffer_ptr =
+        combine_data(length, buffer_ptr, buffer_end, get_hashable_data(arg1));
+    return combine(length, buffer_ptr, buffer_end, arg2, arg3, arg4, arg5, arg6,
+                   arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15,
+                   arg16, arg17);
+  }
+  template <typename T1, typename T2, typename T3, typename T4, typename T5,
+            typename T6, typename T7, typename T8, typename T9, typename T10,
+            typename T11, typename T12, typename T13, typename T14,
+            typename T15, typename T16>
+  hash_code combine(size_t length, char *buffer_ptr, char *buffer_end,
+                    const T1 &arg1, const T2 &arg2, const T3 &arg3,
+                    const T4 &arg4, const T5 &arg5, const T6 &arg6,
+                    const T7 &arg7, const T8 &arg8, const T9 &arg9,
+                    const T10 &arg10, const T11 &arg11, const T12 &arg12,
+                    const T13 &arg13, const T14 &arg14, const T15 &arg15,
+                    const T16 &arg16) {
+    buffer_ptr =
+        combine_data(length, buffer_ptr, buffer_end, get_hashable_data(arg1));
+    return combine(length, buffer_ptr, buffer_end, arg2, arg3, arg4, arg5, arg6,
+                   arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15,
+                   arg16);
+  }
+  template <typename T1, typename T2, typename T3, typename T4, typename T5,
+            typename T6, typename T7, typename T8, typename T9, typename T10,
+            typename T11, typename T12, typename T13, typename T14,
+            typename T15>
+  hash_code combine(size_t length, char *buffer_ptr, char *buffer_end,
+                    const T1 &arg1, const T2 &arg2, const T3 &arg3,
+                    const T4 &arg4, const T5 &arg5, const T6 &arg6,
+                    const T7 &arg7, const T8 &arg8, const T9 &arg9,
+                    const T10 &arg10, const T11 &arg11, const T12 &arg12,
+                    const T13 &arg13, const T14 &arg14, const T15 &arg15) {
+    buffer_ptr =
+        combine_data(length, buffer_ptr, buffer_end, get_hashable_data(arg1));
+    return combine(length, buffer_ptr, buffer_end, arg2, arg3, arg4, arg5, arg6,
+                   arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15);
+  }
+  template <typename T1, typename T2, typename T3, typename T4, typename T5,
+            typename T6, typename T7, typename T8, typename T9, typename T10,
+            typename T11, typename T12, typename T13, typename T14>
+  hash_code combine(size_t length, char *buffer_ptr, char *buffer_end,
+                    const T1 &arg1, const T2 &arg2, const T3 &arg3,
+                    const T4 &arg4, const T5 &arg5, const T6 &arg6,
+                    const T7 &arg7, const T8 &arg8, const T9 &arg9,
+                    const T10 &arg10, const T11 &arg11, const T12 &arg12,
+                    const T13 &arg13, const T14 &arg14) {
+    buffer_ptr =
+        combine_data(length, buffer_ptr, buffer_end, get_hashable_data(arg1));
+    return combine(length, buffer_ptr, buffer_end, arg2, arg3, arg4, arg5, arg6,
+                   arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14);
+  }
+  template <typename T1, typename T2, typename T3, typename T4, typename T5,
+            typename T6, typename T7, typename T8, typename T9, typename T10,
+            typename T11, typename T12, typename T13>
+  hash_code combine(size_t length, char *buffer_ptr, char *buffer_end,
+                    const T1 &arg1, const T2 &arg2, const T3 &arg3,
+                    const T4 &arg4, const T5 &arg5, const T6 &arg6,
+                    const T7 &arg7, const T8 &arg8, const T9 &arg9,
+                    const T10 &arg10, const T11 &arg11, const T12 &arg12,
+                    const T13 &arg13) {
+    buffer_ptr =
+        combine_data(length, buffer_ptr, buffer_end, get_hashable_data(arg1));
+    return combine(length, buffer_ptr, buffer_end, arg2, arg3, arg4, arg5, arg6,
+                   arg7, arg8, arg9, arg10, arg11, arg12, arg13);
+  }
+  template <typename T1, typename T2, typename T3, typename T4, typename T5,
+            typename T6, typename T7, typename T8, typename T9, typename T10,
+            typename T11, typename T12>
+  hash_code combine(size_t length, char *buffer_ptr, char *buffer_end,
+                    const T1 &arg1, const T2 &arg2, const T3 &arg3,
+                    const T4 &arg4, const T5 &arg5, const T6 &arg6,
+                    const T7 &arg7, const T8 &arg8, const T9 &arg9,
+                    const T10 &arg10, const T11 &arg11, const T12 &arg12) {
+    buffer_ptr =
+        combine_data(length, buffer_ptr, buffer_end, get_hashable_data(arg1));
+    return combine(length, buffer_ptr, buffer_end, arg2, arg3, arg4, arg5, arg6,
+                   arg7, arg8, arg9, arg10, arg11, arg12);
+  }
+  template <typename T1, typename T2, typename T3, typename T4, typename T5,
+            typename T6, typename T7, typename T8, typename T9, typename T10,
+            typename T11>
+  hash_code combine(size_t length, char *buffer_ptr, char *buffer_end,
+                    const T1 &arg1, const T2 &arg2, const T3 &arg3,
+                    const T4 &arg4, const T5 &arg5, const T6 &arg6,
+                    const T7 &arg7, const T8 &arg8, const T9 &arg9,
+                    const T10 &arg10, const T11 &arg11) {
+    buffer_ptr =
+        combine_data(length, buffer_ptr, buffer_end, get_hashable_data(arg1));
+    return combine(length, buffer_ptr, buffer_end, arg2, arg3, arg4, arg5, arg6,
+                   arg7, arg8, arg9, arg10, arg11);
+  }
+  template <typename T1, typename T2, typename T3, typename T4, typename T5,
+            typename T6, typename T7, typename T8, typename T9, typename T10>
+  hash_code combine(size_t length, char *buffer_ptr, char *buffer_end,
+                    const T1 &arg1, const T2 &arg2, const T3 &arg3,
+                    const T4 &arg4, const T5 &arg5, const T6 &arg6,
+                    const T7 &arg7, const T8 &arg8, const T9 &arg9,
+                    const T10 &arg10) {
+    buffer_ptr =
+        combine_data(length, buffer_ptr, buffer_end, get_hashable_data(arg1));
+    return combine(length, buffer_ptr, buffer_end, arg2, arg3, arg4, arg5, arg6,
+                   arg7, arg8, arg9, arg10);
+  }
+  template <typename T1, typename T2, typename T3, typename T4, typename T5,
+            typename T6, typename T7, typename T8, typename T9>
+  hash_code combine(size_t length, char *buffer_ptr, char *buffer_end,
+                    const T1 &arg1, const T2 &arg2, const T3 &arg3,
+                    const T4 &arg4, const T5 &arg5, const T6 &arg6,
+                    const T7 &arg7, const T8 &arg8, const T9 &arg9) {
+    buffer_ptr =
+        combine_data(length, buffer_ptr, buffer_end, get_hashable_data(arg1));
+    return combine(length, buffer_ptr, buffer_end, arg2, arg3, arg4, arg5, arg6,
+                   arg7, arg8, arg9);
+  }
+  template <typename T1, typename T2, typename T3, typename T4, typename T5,
+            typename T6, typename T7, typename T8>
+  hash_code combine(size_t length, char *buffer_ptr, char *buffer_end,
+                    const T1 &arg1, const T2 &arg2, const T3 &arg3,
+                    const T4 &arg4, const T5 &arg5, const T6 &arg6,
+                    const T7 &arg7, const T8 &arg8) {
+    buffer_ptr =
+        combine_data(length, buffer_ptr, buffer_end, get_hashable_data(arg1));
+    return combine(length, buffer_ptr, buffer_end, arg2, arg3, arg4, arg5, arg6,
+                   arg7, arg8);
+  }
+  template <typename T1, typename T2, typename T3, typename T4, typename T5,
+            typename T6, typename T7>
+  hash_code combine(size_t length, char *buffer_ptr, char *buffer_end,
+                    const T1 &arg1, const T2 &arg2, const T3 &arg3,
+                    const T4 &arg4, const T5 &arg5, const T6 &arg6,
+                    const T7 &arg7) {
+    buffer_ptr =
+        combine_data(length, buffer_ptr, buffer_end, get_hashable_data(arg1));
+    return combine(length, buffer_ptr, buffer_end, arg2, arg3, arg4, arg5, arg6,
+                   arg7);
+  }
+  template <typename T1, typename T2, typename T3, typename T4, typename T5,
             typename T6>
   hash_code combine(size_t length, char *buffer_ptr, char *buffer_end,
                     const T1 &arg1, const T2 &arg2, const T3 &arg3,
@@ -668,6 +833,150 @@ template <typename ...Ts> hash_code hash_combine(const Ts &...args) {
 // What follows are manually exploded overloads for each argument width. See
 // the above variadic definition for documentation and specification.
 
+template <typename T1, typename T2, typename T3, typename T4, typename T5,
+          typename T6, typename T7, typename T8, typename T9, typename T10,
+          typename T11, typename T12, typename T13, typename T14, typename T15,
+          typename T16, typename T17, typename T18>
+hash_code hash_combine(const T1 &arg1, const T2 &arg2, const T3 &arg3,
+                       const T4 &arg4, const T5 &arg5, const T6 &arg6,
+                       const T7 &arg7, const T8 &arg8, const T9 &arg9,
+                       const T10 &arg10, const T11 &arg11, const T12 &arg12,
+                       const T13 &arg13, const T14 &arg14, const T15 &arg15,
+                       const T16 &arg16, const T17 &arg17, const T18 &arg18) {
+  ::llvm::hashing::detail::hash_combine_recursive_helper helper;
+  return helper.combine(0, helper.buffer, helper.buffer + 64, arg1, arg2, arg3,
+                        arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12,
+                        arg13, arg14, arg15, arg16, arg17, arg18);
+}
+template <typename T1, typename T2, typename T3, typename T4, typename T5,
+          typename T6, typename T7, typename T8, typename T9, typename T10,
+          typename T11, typename T12, typename T13, typename T14, typename T15,
+          typename T16, typename T17>
+hash_code hash_combine(const T1 &arg1, const T2 &arg2, const T3 &arg3,
+                       const T4 &arg4, const T5 &arg5, const T6 &arg6,
+                       const T7 &arg7, const T8 &arg8, const T9 &arg9,
+                       const T10 &arg10, const T11 &arg11, const T12 &arg12,
+                       const T13 &arg13, const T14 &arg14, const T15 &arg15,
+                       const T16 &arg16, const T17 &arg17) {
+  ::llvm::hashing::detail::hash_combine_recursive_helper helper;
+  return helper.combine(0, helper.buffer, helper.buffer + 64, arg1, arg2, arg3,
+                        arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12,
+                        arg13, arg14, arg15, arg16, arg17);
+}
+template <typename T1, typename T2, typename T3, typename T4, typename T5,
+          typename T6, typename T7, typename T8, typename T9, typename T10,
+          typename T11, typename T12, typename T13, typename T14, typename T15,
+          typename T16>
+hash_code hash_combine(const T1 &arg1, const T2 &arg2, const T3 &arg3,
+                       const T4 &arg4, const T5 &arg5, const T6 &arg6,
+                       const T7 &arg7, const T8 &arg8, const T9 &arg9,
+                       const T10 &arg10, const T11 &arg11, const T12 &arg12,
+                       const T13 &arg13, const T14 &arg14, const T15 &arg15,
+                       const T16 &arg16) {
+  ::llvm::hashing::detail::hash_combine_recursive_helper helper;
+  return helper.combine(0, helper.buffer, helper.buffer + 64, arg1, arg2, arg3,
+                        arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12,
+                        arg13, arg14, arg15, arg16);
+}
+template <typename T1, typename T2, typename T3, typename T4, typename T5,
+          typename T6, typename T7, typename T8, typename T9, typename T10,
+          typename T11, typename T12, typename T13, typename T14, typename T15>
+hash_code hash_combine(const T1 &arg1, const T2 &arg2, const T3 &arg3,
+                       const T4 &arg4, const T5 &arg5, const T6 &arg6,
+                       const T7 &arg7, const T8 &arg8, const T9 &arg9,
+                       const T10 &arg10, const T11 &arg11, const T12 &arg12,
+                       const T13 &arg13, const T14 &arg14, const T15 &arg15) {
+  ::llvm::hashing::detail::hash_combine_recursive_helper helper;
+  return helper.combine(0, helper.buffer, helper.buffer + 64, arg1, arg2, arg3,
+                        arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12,
+                        arg13, arg14, arg15);
+}
+template <typename T1, typename T2, typename T3, typename T4, typename T5,
+          typename T6, typename T7, typename T8, typename T9, typename T10,
+          typename T11, typename T12, typename T13, typename T14>
+hash_code hash_combine(const T1 &arg1, const T2 &arg2, const T3 &arg3,
+                       const T4 &arg4, const T5 &arg5, const T6 &arg6,
+                       const T7 &arg7, const T8 &arg8, const T9 &arg9,
+                       const T10 &arg10, const T11 &arg11, const T12 &arg12,
+                       const T13 &arg13, const T14 &arg14) {
+  ::llvm::hashing::detail::hash_combine_recursive_helper helper;
+  return helper.combine(0, helper.buffer, helper.buffer + 64, arg1, arg2, arg3,
+                        arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12,
+                        arg13, arg14);
+}
+template <typename T1, typename T2, typename T3, typename T4, typename T5,
+          typename T6, typename T7, typename T8, typename T9, typename T10,
+          typename T11, typename T12, typename T13>
+hash_code hash_combine(const T1 &arg1, const T2 &arg2, const T3 &arg3,
+                       const T4 &arg4, const T5 &arg5, const T6 &arg6,
+                       const T7 &arg7, const T8 &arg8, const T9 &arg9,
+                       const T10 &arg10, const T11 &arg11, const T12 &arg12,
+                       const T13 &arg13) {
+  ::llvm::hashing::detail::hash_combine_recursive_helper helper;
+  return helper.combine(0, helper.buffer, helper.buffer + 64, arg1, arg2, arg3,
+                        arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12,
+                        arg13);
+}
+template <typename T1, typename T2, typename T3, typename T4, typename T5,
+          typename T6, typename T7, typename T8, typename T9, typename T10,
+          typename T11, typename T12>
+hash_code hash_combine(const T1 &arg1, const T2 &arg2, const T3 &arg3,
+                       const T4 &arg4, const T5 &arg5, const T6 &arg6,
+                       const T7 &arg7, const T8 &arg8, const T9 &arg9,
+                       const T10 &arg10, const T11 &arg11, const T12 &arg12) {
+  ::llvm::hashing::detail::hash_combine_recursive_helper helper;
+  return helper.combine(0, helper.buffer, helper.buffer + 64, arg1, arg2, arg3,
+                        arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11,
+                        arg12);
+}
+template <typename T1, typename T2, typename T3, typename T4, typename T5,
+          typename T6, typename T7, typename T8, typename T9, typename T10,
+          typename T11>
+hash_code hash_combine(const T1 &arg1, const T2 &arg2, const T3 &arg3,
+                       const T4 &arg4, const T5 &arg5, const T6 &arg6,
+                       const T7 &arg7, const T8 &arg8, const T9 &arg9,
+                       const T10 &arg10, const T11 &arg11) {
+  ::llvm::hashing::detail::hash_combine_recursive_helper helper;
+  return helper.combine(0, helper.buffer, helper.buffer + 64, arg1, arg2, arg3,
+                        arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11);
+}
+template <typename T1, typename T2, typename T3, typename T4, typename T5,
+          typename T6, typename T7, typename T8, typename T9, typename T10>
+hash_code hash_combine(const T1 &arg1, const T2 &arg2, const T3 &arg3,
+                       const T4 &arg4, const T5 &arg5, const T6 &arg6,
+                       const T7 &arg7, const T8 &arg8, const T9 &arg9,
+                       const T10 &arg10) {
+  ::llvm::hashing::detail::hash_combine_recursive_helper helper;
+  return helper.combine(0, helper.buffer, helper.buffer + 64, arg1, arg2, arg3,
+                        arg4, arg5, arg6, arg7, arg8, arg9, arg10);
+}
+template <typename T1, typename T2, typename T3, typename T4, typename T5,
+          typename T6, typename T7, typename T8, typename T9>
+hash_code hash_combine(const T1 &arg1, const T2 &arg2, const T3 &arg3,
+                       const T4 &arg4, const T5 &arg5, const T6 &arg6,
+                       const T7 &arg7, const T8 &arg8, const T9 &arg9) {
+  ::llvm::hashing::detail::hash_combine_recursive_helper helper;
+  return helper.combine(0, helper.buffer, helper.buffer + 64, arg1, arg2, arg3,
+                        arg4, arg5, arg6, arg7, arg8, arg9);
+}
+template <typename T1, typename T2, typename T3, typename T4, typename T5,
+          typename T6, typename T7, typename T8>
+hash_code hash_combine(const T1 &arg1, const T2 &arg2, const T3 &arg3,
+                       const T4 &arg4, const T5 &arg5, const T6 &arg6,
+                       const T7 &arg7, const T8 &arg8) {
+  ::llvm::hashing::detail::hash_combine_recursive_helper helper;
+  return helper.combine(0, helper.buffer, helper.buffer + 64, arg1, arg2, arg3,
+                        arg4, arg5, arg6, arg7, arg8);
+}
+template <typename T1, typename T2, typename T3, typename T4, typename T5,
+          typename T6, typename T7>
+hash_code hash_combine(const T1 &arg1, const T2 &arg2, const T3 &arg3,
+                       const T4 &arg4, const T5 &arg5, const T6 &arg6,
+                       const T7 &arg7) {
+  ::llvm::hashing::detail::hash_combine_recursive_helper helper;
+  return helper.combine(0, helper.buffer, helper.buffer + 64, arg1, arg2, arg3,
+                        arg4, arg5, arg6, arg7);
+}
 template <typename T1, typename T2, typename T3, typename T4, typename T5,
           typename T6>
 hash_code hash_combine(const T1 &arg1, const T2 &arg2, const T3 &arg3,
