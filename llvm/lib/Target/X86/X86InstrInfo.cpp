@@ -4485,7 +4485,7 @@ static MachineInstr *MakeM0Inst(const TargetInstrInfo &TII, unsigned Opcode,
 
 MachineInstr*
 X86InstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
-                                    MachineInstr *MI, unsigned i,
+                                    MachineInstr *MI, unsigned OpNum,
                                     const SmallVectorImpl<MachineOperand> &MOs,
                                     unsigned Size, unsigned Align,
                                     bool AllowCommute) const {
@@ -4514,13 +4514,13 @@ X86InstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
   // Folding a memory location into the two-address part of a two-address
   // instruction is different than folding it other places.  It requires
   // replacing the *two* registers with the memory location.
-  if (isTwoAddr && NumOps >= 2 && i < 2 &&
+  if (isTwoAddr && NumOps >= 2 && OpNum < 2 &&
       MI->getOperand(0).isReg() &&
       MI->getOperand(1).isReg() &&
       MI->getOperand(0).getReg() == MI->getOperand(1).getReg()) {
     OpcodeTablePtr = &RegOp2MemOpTable2Addr;
     isTwoAddrFold = true;
-  } else if (i == 0) { // If operand 0
+  } else if (OpNum == 0) {
     if (MI->getOpcode() == X86::MOV32r0) {
       NewMI = MakeM0Inst(*this, X86::MOV32mi, MOs, MI);
       if (NewMI)
@@ -4528,13 +4528,13 @@ X86InstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
     }
 
     OpcodeTablePtr = &RegOp2MemOpTable0;
-  } else if (i == 1) {
+  } else if (OpNum == 1) {
     OpcodeTablePtr = &RegOp2MemOpTable1;
-  } else if (i == 2) {
+  } else if (OpNum == 2) {
     OpcodeTablePtr = &RegOp2MemOpTable2;
-  } else if (i == 3) {
+  } else if (OpNum == 3) {
     OpcodeTablePtr = &RegOp2MemOpTable3;
-  } else if (i == 4) {
+  } else if (OpNum == 4) {
     OpcodeTablePtr = &RegOp2MemOpTable4;
   }
 
@@ -4550,7 +4550,7 @@ X86InstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
         return nullptr;
       bool NarrowToMOV32rm = false;
       if (Size) {
-        unsigned RCSize = getRegClass(MI->getDesc(), i, &RI, MF)->getSize();
+        unsigned RCSize = getRegClass(MI->getDesc(), OpNum, &RI, MF)->getSize();
         if (Size < RCSize) {
           // Check if it's safe to fold the load. If the size of the object is
           // narrower than the load width, then it's not.
@@ -4569,7 +4569,7 @@ X86InstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
       if (isTwoAddrFold)
         NewMI = FuseTwoAddrInst(MF, Opcode, MOs, MI, *this);
       else
-        NewMI = FuseInst(MF, Opcode, i, MOs, MI, *this);
+        NewMI = FuseInst(MF, Opcode, OpNum, MOs, MI, *this);
 
       if (NarrowToMOV32rm) {
         // If this is the special case where we use a MOV32rm to load a 32-bit
@@ -4588,7 +4588,7 @@ X86InstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
   // If the instruction and target operand are commutable, commute the
   // instruction and try again.
   if (AllowCommute) {
-    unsigned OriginalOpIdx = i, CommuteOpIdx1, CommuteOpIdx2;
+    unsigned OriginalOpIdx = OpNum, CommuteOpIdx1, CommuteOpIdx2;
     if (findCommutedOpIndices(MI, CommuteOpIdx1, CommuteOpIdx2)) {
       bool HasDef = MI->getDesc().getNumDefs();
       unsigned Reg0 = HasDef ? MI->getOperand(0).getReg() : 0;
@@ -4646,7 +4646,7 @@ X86InstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
 
   // No fusion
   if (PrintFailedFusing && !MI->isCopy())
-    dbgs() << "We failed to fuse operand " << i << " in " << *MI;
+    dbgs() << "We failed to fuse operand " << OpNum << " in " << *MI;
   return nullptr;
 }
 
@@ -5092,7 +5092,7 @@ bool X86InstrInfo::canFoldMemoryOperand(const MachineInstr *MI,
                  std::pair<unsigned,unsigned> > *OpcodeTablePtr = nullptr;
   if (isTwoAddr && NumOps >= 2 && OpNum < 2) {
     OpcodeTablePtr = &RegOp2MemOpTable2Addr;
-  } else if (OpNum == 0) { // If operand 0
+  } else if (OpNum == 0) {
     if (Opc == X86::MOV32r0)
       return true;
 
