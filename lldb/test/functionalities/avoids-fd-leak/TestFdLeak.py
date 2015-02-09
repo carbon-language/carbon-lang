@@ -42,12 +42,10 @@ class AvoidsFdLeakTestCase(TestBase):
         exe = os.path.join (os.getcwd(), "a.out")
 
         target = self.dbg.CreateTarget(exe)
+	breakpoint = target.BreakpointCreateBySourceRegex ('Set breakpoint here', lldb.SBFileSpec ("main.c", False))
+	self.assertTrue(breakpoint, VALID_BREAKPOINT)
 
-        listener = lldb.SBListener()
-        error = lldb.SBError()
-        process1 = target.Launch (listener, None, None, None, None, None,
-                self.get_process_working_directory(), 0, True, # stop at entry
-                error)
+        process1 = target.LaunchSimple (None, None, self.get_process_working_directory())
         self.assertTrue(process1, PROCESS_IS_VALID)
         self.assertTrue(process1.GetState() == lldb.eStateStopped, "Process should have been stopped.")
 

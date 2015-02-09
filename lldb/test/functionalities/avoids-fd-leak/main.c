@@ -8,7 +8,7 @@ int
 main (int argc, char const **argv)
 {
     struct stat buf;
-    int i, rv = 0;
+    int i, rv = 0; // Set breakpoint here.
 
     // Make sure stdin/stdout/stderr exist.
     for (i = 0; i <= 2; ++i) {
