@@ -166,8 +166,7 @@ void HexagonFrameLowering::emitEpilogue(MachineFunction &MF,
     }
     // Replace 'jumpr r31' instruction with dealloc_return for V4 and higher
     // versions.
-    if (MF.getSubtarget<HexagonSubtarget>().hasV4TOps() &&
-        MBBI->getOpcode() == Hexagon::JMPret && !DisableDeallocRet) {
+    if (MBBI->getOpcode() == Hexagon::JMPret && !DisableDeallocRet) {
       // Check for RESTORE_DEALLOC_RET_JMP_V4 call. Don't emit an extra DEALLOC
       // instruction if we encounter it.
       MachineBasicBlock::iterator BeforeJMPR =

@@ -578,10 +578,6 @@ unsigned HexagonInstrInfo::createVR(MachineFunction* MF, MVT VT) const {
 }
 
 bool HexagonInstrInfo::isExtendable(const MachineInstr *MI) const {
-  // Constant extenders are allowed only for V4 and above.
-  if (!Subtarget.hasV4TOps())
-    return false;
-
   const MCInstrDesc &MID = MI->getDesc();
   const uint64_t F = MID.TSFlags;
   if ((F >> HexagonII::ExtendablePos) & HexagonII::ExtendableMask)
@@ -705,7 +701,7 @@ bool HexagonInstrInfo::isPredicable(MachineInstr *MI) const {
   case Hexagon::A2_sxth:
   case Hexagon::A2_zxtb:
   case Hexagon::A2_zxth:
-    return Subtarget.hasV4TOps();
+    return true;
   }
 
   return true;
@@ -1006,8 +1002,7 @@ bool HexagonInstrInfo::mayBeNewStore(const MachineInstr *MI) const {
   const uint64_t F = MI->getDesc().TSFlags;
 
   return ((F >> HexagonII::mayNVStorePos) &
-           HexagonII::mayNVStoreMask &
-           QRI.Subtarget.hasV4TOps());
+           HexagonII::mayNVStoreMask);
 }
 
 bool
@@ -1334,7 +1329,6 @@ isConditionalLoad (const MachineInstr* MI) const {
     case Hexagon::L2_ploadruhf_io:
     case Hexagon::L2_ploadrubt_io:
     case Hexagon::L2_ploadrubf_io:
-      return true;
     case Hexagon::L2_ploadrdt_pi:
     case Hexagon::L2_ploadrdf_pi:
     case Hexagon::L2_ploadrit_pi:
@@ -1347,7 +1341,6 @@ isConditionalLoad (const MachineInstr* MI) const {
     case Hexagon::L2_ploadruhf_pi:
     case Hexagon::L2_ploadrubt_pi:
     case Hexagon::L2_ploadrubf_pi:
-      return QRI.Subtarget.hasV4TOps();
     case Hexagon::L4_ploadrdt_rr:
     case Hexagon::L4_ploadrdf_rr:
     case Hexagon::L4_ploadrbt_rr:
@@ -1360,7 +1353,7 @@ isConditionalLoad (const MachineInstr* MI) const {
     case Hexagon::L4_ploadruhf_rr:
     case Hexagon::L4_ploadrit_rr:
     case Hexagon::L4_ploadrif_rr:
-      return QRI.Subtarget.hasV4TOps();
+      return true;
   }
 }
 
@@ -1434,7 +1427,6 @@ isConditionalStore (const MachineInstr* MI) const {
     case Hexagon::S4_pstorerif_rr:
     case Hexagon::S2_pstorerit_pi:
     case Hexagon::S2_pstorerif_pi:
-      return QRI.Subtarget.hasV4TOps();
 
     // V4 global address store before promoting to dot new.
     case Hexagon::S4_pstorerdt_abs:
@@ -1445,7 +1437,7 @@ isConditionalStore (const MachineInstr* MI) const {
     case Hexagon::S4_pstorerhf_abs:
     case Hexagon::S4_pstorerit_abs:
     case Hexagon::S4_pstorerif_abs:
-      return QRI.Subtarget.hasV4TOps();
+      return true;
 
     // Predicated new value stores (i.e. if (p0) memw(..)=r0.new) are excluded
     // from the "Conditional Store" list. Because a predicated new value store
@@ -1631,11 +1623,6 @@ bool HexagonInstrInfo::isSchedulingBoundary(const MachineInstr *MI,
 }
 
 bool HexagonInstrInfo::isConstExtended(MachineInstr *MI) const {
-
-  // Constant extenders are allowed only for V4 and above.
-  if (!Subtarget.hasV4TOps())
-    return false;
-
   const uint64_t F = MI->getDesc().TSFlags;
   unsigned isExtended = (F >> HexagonII::ExtendedPos) & HexagonII::ExtendedMask;
   if (isExtended) // Instruction must be extended.
@@ -1708,10 +1695,6 @@ HexagonInstrInfo::getDotNewPredJumpOp(MachineInstr *MI,
 // Returns true if a particular operand is extendable for an instruction.
 bool HexagonInstrInfo::isOperandExtended(const MachineInstr *MI,
                                          unsigned short OperandNum) const {
-  // Constant extenders are allowed only for V4 and above.
-  if (!Subtarget.hasV4TOps())
-    return false;
-
   const uint64_t F = MI->getDesc().TSFlags;
 
   return ((F >> HexagonII::ExtendableOpPos) & HexagonII::ExtendableOpMask)

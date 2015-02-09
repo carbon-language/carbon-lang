@@ -720,10 +720,7 @@ bool HexagonPacketizerList::CanPromoteToNewValue(
     MachineBasicBlock::iterator &MII) {
 
   const HexagonInstrInfo *QII = (const HexagonInstrInfo *) TII;
-  const HexagonRegisterInfo *QRI =
-      (const HexagonRegisterInfo *)MF.getSubtarget().getRegisterInfo();
-  if (!QRI->Subtarget.hasV4TOps() ||
-      !QII->mayBeNewStore(MI))
+  if (!QII->mayBeNewStore(MI))
     return false;
 
   MachineInstr *PacketMI = PacketSU->getInstr();
@@ -1054,84 +1051,82 @@ bool HexagonPacketizerList::isLegalToPacketizeTogether(SUnit *SUI, SUnit *SUJ) {
   // first store is not in SLOT0. New value store, new value jump,
   // dealloc_return and memop always take SLOT0.
   // Arch spec 3.4.4.2
-  if (QRI->Subtarget.hasV4TOps()) {
-    if (MCIDI.mayStore() && MCIDJ.mayStore() &&
-       (QII->isNewValueInst(J) || QII->isMemOp(J) || QII->isMemOp(I))) {
-      Dependence = true;
-      return false;
+  if (MCIDI.mayStore() && MCIDJ.mayStore() &&
+      (QII->isNewValueInst(J) || QII->isMemOp(J) || QII->isMemOp(I))) {
+    Dependence = true;
+    return false;
+  }
+
+  if ((QII->isMemOp(J) && MCIDI.mayStore())
+      || (MCIDJ.mayStore() && QII->isMemOp(I))
+      || (QII->isMemOp(J) && QII->isMemOp(I))) {
+    Dependence = true;
+    return false;
+  }
+
+  //if dealloc_return
+  if (MCIDJ.mayStore() && QII->isDeallocRet(I)) {
+    Dependence = true;
+    return false;
+  }
+
+  // If an instruction feeds new value jump, glue it.
+  MachineBasicBlock::iterator NextMII = I;
+  ++NextMII;
+  if (NextMII != I->getParent()->end() && QII->isNewValueJump(NextMII)) {
+    MachineInstr *NextMI = NextMII;
+
+    bool secondRegMatch = false;
+    bool maintainNewValueJump = false;
+
+    if (NextMI->getOperand(1).isReg() &&
+        I->getOperand(0).getReg() == NextMI->getOperand(1).getReg()) {
+      secondRegMatch = true;
+      maintainNewValueJump = true;
     }
 
-    if ((QII->isMemOp(J) && MCIDI.mayStore())
-        || (MCIDJ.mayStore() && QII->isMemOp(I))
-        || (QII->isMemOp(J) && QII->isMemOp(I))) {
-      Dependence = true;
-      return false;
+    if (!secondRegMatch &&
+          I->getOperand(0).getReg() == NextMI->getOperand(0).getReg()) {
+      maintainNewValueJump = true;
     }
 
-    //if dealloc_return
-    if (MCIDJ.mayStore() && QII->isDeallocRet(I)) {
-      Dependence = true;
-      return false;
-    }
+    for (std::vector<MachineInstr*>::iterator
+          VI = CurrentPacketMIs.begin(),
+            VE = CurrentPacketMIs.end();
+          (VI != VE && maintainNewValueJump); ++VI) {
+      SUnit *PacketSU = MIToSUnit.find(*VI)->second;
 
-    // If an instruction feeds new value jump, glue it.
-    MachineBasicBlock::iterator NextMII = I;
-    ++NextMII;
-    if (NextMII != I->getParent()->end() && QII->isNewValueJump(NextMII)) {
-      MachineInstr *NextMI = NextMII;
-
-      bool secondRegMatch = false;
-      bool maintainNewValueJump = false;
-
-      if (NextMI->getOperand(1).isReg() &&
-          I->getOperand(0).getReg() == NextMI->getOperand(1).getReg()) {
-        secondRegMatch = true;
-        maintainNewValueJump = true;
+      // NVJ can not be part of the dual jump - Arch Spec: section 7.8
+      if (PacketSU->getInstr()->getDesc().isCall()) {
+        Dependence = true;
+        break;
       }
-
-      if (!secondRegMatch &&
-           I->getOperand(0).getReg() == NextMI->getOperand(0).getReg()) {
-        maintainNewValueJump = true;
+      // Validate
+      // 1. Packet does not have a store in it.
+      // 2. If the first operand of the nvj is newified, and the second
+      //    operand is also a reg, it (second reg) is not defined in
+      //    the same packet.
+      // 3. If the second operand of the nvj is newified, (which means
+      //    first operand is also a reg), first reg is not defined in
+      //    the same packet.
+      if (PacketSU->getInstr()->getDesc().mayStore()               ||
+          PacketSU->getInstr()->getOpcode() == Hexagon::S2_allocframe ||
+          // Check #2.
+          (!secondRegMatch && NextMI->getOperand(1).isReg() &&
+            PacketSU->getInstr()->modifiesRegister(
+                              NextMI->getOperand(1).getReg(), QRI)) ||
+          // Check #3.
+          (secondRegMatch &&
+            PacketSU->getInstr()->modifiesRegister(
+                              NextMI->getOperand(0).getReg(), QRI))) {
+        Dependence = true;
+        break;
       }
-
-      for (std::vector<MachineInstr*>::iterator
-            VI = CurrentPacketMIs.begin(),
-             VE = CurrentPacketMIs.end();
-           (VI != VE && maintainNewValueJump); ++VI) {
-        SUnit *PacketSU = MIToSUnit.find(*VI)->second;
-
-        // NVJ can not be part of the dual jump - Arch Spec: section 7.8
-        if (PacketSU->getInstr()->getDesc().isCall()) {
-          Dependence = true;
-          break;
-        }
-        // Validate
-        // 1. Packet does not have a store in it.
-        // 2. If the first operand of the nvj is newified, and the second
-        //    operand is also a reg, it (second reg) is not defined in
-        //    the same packet.
-        // 3. If the second operand of the nvj is newified, (which means
-        //    first operand is also a reg), first reg is not defined in
-        //    the same packet.
-        if (PacketSU->getInstr()->getDesc().mayStore()               ||
-            PacketSU->getInstr()->getOpcode() == Hexagon::S2_allocframe ||
-            // Check #2.
-            (!secondRegMatch && NextMI->getOperand(1).isReg() &&
-             PacketSU->getInstr()->modifiesRegister(
-                               NextMI->getOperand(1).getReg(), QRI)) ||
-            // Check #3.
-            (secondRegMatch &&
-             PacketSU->getInstr()->modifiesRegister(
-                               NextMI->getOperand(0).getReg(), QRI))) {
-          Dependence = true;
-          break;
-        }
-      }
-      if (!Dependence)
-        GlueToNewValueJump = true;
-      else
-        return false;
     }
+    if (!Dependence)
+      GlueToNewValueJump = true;
+    else
+      return false;
   }
 
   if (SUJ->isSucc(SUI)) {
@@ -1253,9 +1248,7 @@ bool HexagonPacketizerList::isLegalToPacketizeTogether(SUnit *SUI, SUnit *SUJ) {
       else if ((DepType == SDep::Order) &&
                !I->hasOrderedMemoryRef() &&
                !J->hasOrderedMemoryRef()) {
-        if (QRI->Subtarget.hasV4TOps() &&
-            // hexagonv4 allows dual store.
-            MCIDI.mayStore() && MCIDJ.mayStore()) {
+        if (MCIDI.mayStore() && MCIDJ.mayStore()) {
           /* do nothing */
         }
         // store followed by store-- not OK on V2
@@ -1277,7 +1270,6 @@ bool HexagonPacketizerList::isLegalToPacketizeTogether(SUnit *SUI, SUnit *SUJ) {
       // packetized in a same packet. This implies that the store is using
       // caller's SP. Hence, offset needs to be updated accordingly.
       else if (DepType == SDep::Data
-               && QRI->Subtarget.hasV4TOps()
                && J->getOpcode() == Hexagon::S2_allocframe
                && (I->getOpcode() == Hexagon::S2_storerd_io
                    || I->getOpcode() == Hexagon::S2_storeri_io

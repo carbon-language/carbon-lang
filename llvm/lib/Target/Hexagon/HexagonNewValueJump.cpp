@@ -363,8 +363,7 @@ bool HexagonNewValueJump::runOnMachineFunction(MachineFunction &MF) {
       MF.getSubtarget().getRegisterInfo());
   MBPI = &getAnalysis<MachineBranchProbabilityInfo>();
 
-  if (!QRI->Subtarget.hasV4TOps() ||
-      DisableNewValueJumps) {
+  if (DisableNewValueJumps) {
     return false;
   }
 

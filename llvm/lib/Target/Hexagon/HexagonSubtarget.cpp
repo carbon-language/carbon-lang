@@ -54,12 +54,7 @@ HexagonSubtarget::initializeSubtargetDependencies(StringRef CPU, StringRef FS) {
   if (CPUString.empty())
     CPUString = "hexagonv4";
 
-  if (CPUString == "hexagonv2") {
-    HexagonArchVersion = V2;
-  } else if (CPUString == "hexagonv3") {
-    EnableV3 = true;
-    HexagonArchVersion = V3;
-  } else if (CPUString == "hexagonv4") {
+  if (CPUString == "hexagonv4") {
     HexagonArchVersion = V4;
   } else if (CPUString == "hexagonv5") {
     HexagonArchVersion = V5;

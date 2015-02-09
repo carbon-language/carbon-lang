@@ -21,27 +21,13 @@ include "llvm/Target/Target.td"
 // Hexagon Subtarget features.
 //===----------------------------------------------------------------------===//
 
-// Hexagon Archtectures
-def ArchV2       : SubtargetFeature<"v2", "HexagonArchVersion", "V2",
-                                    "Hexagon v2">;
-def ArchV3       : SubtargetFeature<"v3", "HexagonArchVersion", "V3",
-                                    "Hexagon v3">;
-def ArchV4       : SubtargetFeature<"v4", "HexagonArchVersion", "V4",
-                                    "Hexagon v4">;
-def ArchV5       : SubtargetFeature<"v5", "HexagonArchVersion", "V5",
-                                    "Hexagon v5">;
+// Hexagon Architectures
+def ArchV4:  SubtargetFeature<"v4",  "HexagonArchVersion", "V4",  "Hexagon V4">;
+def ArchV5:  SubtargetFeature<"v5",  "HexagonArchVersion", "V5",  "Hexagon V5">;
 
 //===----------------------------------------------------------------------===//
 // Hexagon Instruction Predicate Definitions.
 //===----------------------------------------------------------------------===//
-def HasV2T                      : Predicate<"Subtarget->hasV2TOps()">;
-def HasV2TOnly                  : Predicate<"Subtarget->hasV2TOpsOnly()">;
-def NoV2T                       : Predicate<"!Subtarget->hasV2TOps()">;
-def HasV3T                      : Predicate<"Subtarget->hasV3TOps()">;
-def HasV3TOnly                  : Predicate<"Subtarget->hasV3TOpsOnly()">;
-def NoV3T                       : Predicate<"!Subtarget->hasV3TOps()">;
-def HasV4T                      : Predicate<"Subtarget->hasV4TOps()">;
-def NoV4T                       : Predicate<"!Subtarget->hasV4TOps()">;
 def HasV5T                      : Predicate<"Subtarget->hasV5TOps()">;
 def NoV5T                       : Predicate<"!Subtarget->hasV5TOps()">;
 def UseMEMOP                    : Predicate<"Subtarget->useMemOps()">;
@@ -210,8 +196,10 @@ class Proc<string Name, SchedMachineModel Model,
            list<SubtargetFeature> Features>
  : ProcessorModel<Name, Model, Features>;
 
-def : Proc<"hexagonv4", HexagonModelV4, [ArchV2, ArchV3, ArchV4]>;
-def : Proc<"hexagonv5", HexagonModelV4, [ArchV2, ArchV3, ArchV4, ArchV5]>;
+def : Proc<"hexagonv4",  HexagonModelV4,
+           [ArchV4]>;
+def : Proc<"hexagonv5",  HexagonModelV4,
+           [ArchV4, ArchV5]>;
 
 //===----------------------------------------------------------------------===//
 // Declare the target which we are implementing

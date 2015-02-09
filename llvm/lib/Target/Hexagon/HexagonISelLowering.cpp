@@ -1436,13 +1436,8 @@ HexagonTargetLowering::HexagonTargetLowering(const TargetMachine &TM,
 
   setOperationAction(ISD::EH_RETURN, MVT::Other, Custom);
 
-  if (Subtarget->isSubtargetV2()) {
-    setExceptionPointerRegister(Hexagon::R20);
-    setExceptionSelectorRegister(Hexagon::R21);
-  } else {
-    setExceptionPointerRegister(Hexagon::R0);
-    setExceptionSelectorRegister(Hexagon::R1);
-  }
+  setExceptionPointerRegister(Hexagon::R0);
+  setExceptionSelectorRegister(Hexagon::R1);
 
   // VASTART needs to be custom lowered to use the VarArgsFrameIndex.
   setOperationAction(ISD::VASTART, MVT::Other, Custom);

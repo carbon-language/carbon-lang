@@ -294,12 +294,10 @@ def HexagonWrapperCombineIR_V4 :
   SDNode<"HexagonISD::WrapperCombineIR_V4", SDTHexagonI64I32I32>;
 
 def : Pat <(HexagonWrapperCombineRI_V4 IntRegs:$r, s8ExtPred:$i),
-           (A4_combineri IntRegs:$r, s8ExtPred:$i)>,
-          Requires<[HasV4T]>;
+           (A4_combineri IntRegs:$r, s8ExtPred:$i)>;
 
 def : Pat <(HexagonWrapperCombineIR_V4 s8ExtPred:$i, IntRegs:$r),
-           (A4_combineir s8ExtPred:$i, IntRegs:$r)>,
-          Requires<[HasV4T]>;
+           (A4_combineir s8ExtPred:$i, IntRegs:$r)>;
 
 // A4_combineii: Set two small immediates.
 let hasSideEffects = 0, isExtendable = 1, opExtentBits = 6, opExtendable = 2 in
@@ -615,25 +613,21 @@ def: Pat<(i64 (zext (i32 IntRegs:$src1))),
 
 // zext i32->i64
 def:  Pat <(i64 (zextloadi32 ADDRriS11_2:$src1)),
-      (i64 (A4_combineir 0, (L2_loadri_io AddrFI:$src1, 0)))>,
-      Requires<[HasV4T]>;
+      (i64 (A4_combineir 0, (L2_loadri_io AddrFI:$src1, 0)))>;
 
 let AddedComplexity = 100 in
 def:  Pat <(i64 (zextloadi32 (i32 (add IntRegs:$src1, s11_2ExtPred:$offset)))),
       (i64 (A4_combineir 0, (L2_loadri_io IntRegs:$src1,
-                                  s11_2ExtPred:$offset)))>,
-      Requires<[HasV4T]>;
+                                  s11_2ExtPred:$offset)))>;
 
 // anyext i32->i64
 def:  Pat <(i64 (extloadi32 ADDRriS11_2:$src1)),
-      (i64 (A4_combineir 0, (L2_loadri_io AddrFI:$src1, 0)))>,
-      Requires<[HasV4T]>;
+      (i64 (A4_combineir 0, (L2_loadri_io AddrFI:$src1, 0)))>;
 
 let AddedComplexity = 100 in
 def:  Pat <(i64 (extloadi32 (i32 (add IntRegs:$src1, s11_2ExtPred:$offset)))),
       (i64 (A4_combineir 0, (L2_loadri_io IntRegs:$src1,
-                                  s11_2ExtPred:$offset)))>,
-      Requires<[HasV4T]>;
+                                  s11_2ExtPred:$offset)))>;
 
 
 
@@ -1114,7 +1108,7 @@ let hasSideEffects = 0, addrMode = BaseImmOffset,
   defm S4_storeiri : ST_Imm<"memw", "STriw", u6_2Imm, 0b10>;
 }
 
-let Predicates = [HasV4T], AddedComplexity = 10 in {
+let AddedComplexity = 10 in {
 def: Pat<(truncstorei8 s8ExtPred:$src3, (add IntRegs:$src1, u6_0ImmPred:$src2)),
             (S4_storeirb_io IntRegs:$src1, u6_0ImmPred:$src2, s8ExtPred:$src3)>;
 
@@ -1128,8 +1122,7 @@ def: Pat<(store s8ExtPred:$src3, (add IntRegs:$src1, u6_2ImmPred:$src2)),
 
 let AddedComplexity = 6 in
 def : Pat <(truncstorei8 s8ExtPred:$src2, (i32 IntRegs:$src1)),
-           (S4_storeirb_io IntRegs:$src1, 0, s8ExtPred:$src2)>,
-           Requires<[HasV4T]>;
+           (S4_storeirb_io IntRegs:$src1, 0, s8ExtPred:$src2)>;
 
 // memb(Rx++#s4:0:circ(Mu))=Rt
 // memb(Rx++I:circ(Mu))=Rt
@@ -1144,8 +1137,7 @@ def : Pat <(truncstorei8 s8ExtPred:$src2, (i32 IntRegs:$src1)),
 // memh(Rs+#s11:1)=Rt.H
 let AddedComplexity = 6 in
 def : Pat <(truncstorei16 s8ExtPred:$src2, (i32 IntRegs:$src1)),
-           (S4_storeirh_io IntRegs:$src1, 0, s8ExtPred:$src2)>,
-           Requires<[HasV4T]>;
+           (S4_storeirh_io IntRegs:$src1, 0, s8ExtPred:$src2)>;
 
 // memh(Rs+Ru<<#u2)=Rt.H
 // TODO: needs to be implemented.
@@ -1176,8 +1168,7 @@ def : Pat <(truncstorei16 s8ExtPred:$src2, (i32 IntRegs:$src1)),
 
 let AddedComplexity = 6 in
 def : Pat <(store s8ExtPred:$src2, (i32 IntRegs:$src1)),
-           (S4_storeiri_io IntRegs:$src1, 0, s8ExtPred:$src2)>,
-           Requires<[HasV4T]>;
+           (S4_storeiri_io IntRegs:$src1, 0, s8ExtPred:$src2)>;
 
 // memw(Rx++#s4:2)=Rt
 // memw(Rx++#s4:2:circ(Mu))=Rt
@@ -2976,8 +2967,7 @@ def : Pat <(i32 (zext (i1 (seteq (i32 (and (i32 IntRegs:$Rs), 255)),
                                            u8ExtPred:$u8)))),
            (i32 (TFR_condset_ii (i1 (A4_cmpbeqi (i32 IntRegs:$Rs),
                                                  (u8ExtPred:$u8))),
-                                1, 0))>,
-           Requires<[HasV4T]>;
+                                1, 0))>;
 
 // For the sequence
 //   zext( setne ( and(Rs, 255), u8))
@@ -2989,8 +2979,7 @@ def : Pat <(i32 (zext (i1 (setne (i32 (and (i32 IntRegs:$Rs), 255)),
                                            u8ExtPred:$u8)))),
            (i32 (TFR_condset_ii (i1 (A4_cmpbeqi (i32 IntRegs:$Rs),
                                                  (u8ExtPred:$u8))),
-                                0, 1))>,
-           Requires<[HasV4T]>;
+                                0, 1))>;
 
 // For the sequence
 //   zext( seteq (Rs, and(Rt, 255)))
@@ -3002,8 +2991,7 @@ def : Pat <(i32 (zext (i1 (seteq (i32 IntRegs:$Rt),
                                  (i32 (and (i32 IntRegs:$Rs), 255)))))),
            (i32 (TFR_condset_ii (i1 (A4_cmpbeq (i32 IntRegs:$Rs),
                                                       (i32 IntRegs:$Rt))),
-                                1, 0))>,
-           Requires<[HasV4T]>;
+                                1, 0))>;
 
 // For the sequence
 //   zext( setne (Rs, and(Rt, 255)))
@@ -3015,8 +3003,7 @@ def : Pat <(i32 (zext (i1 (setne (i32 IntRegs:$Rt),
                                  (i32 (and (i32 IntRegs:$Rs), 255)))))),
            (i32 (TFR_condset_ii (i1 (A4_cmpbeq (i32 IntRegs:$Rs),
                                                       (i32 IntRegs:$Rt))),
-                                0, 1))>,
-           Requires<[HasV4T]>;
+                                0, 1))>;
 
 // For the sequence
 //   zext( setugt ( and(Rs, 255), u8))
@@ -3028,8 +3015,7 @@ def : Pat <(i32 (zext (i1 (setugt (i32 (and (i32 IntRegs:$Rs), 255)),
                                             u8ExtPred:$u8)))),
            (i32 (TFR_condset_ii (i1 (A4_cmpbgtui (i32 IntRegs:$Rs),
                                                   (u8ExtPred:$u8))),
-                                1, 0))>,
-           Requires<[HasV4T]>;
+                                1, 0))>;
 
 // For the sequence
 //   zext( setugt ( and(Rs, 254), u8))
@@ -3041,8 +3027,7 @@ def : Pat <(i32 (zext (i1 (setugt (i32 (and (i32 IntRegs:$Rs), 254)),
                                             u8ExtPred:$u8)))),
            (i32 (TFR_condset_ii (i1 (A4_cmpbgtui (i32 IntRegs:$Rs),
                                                   (u8ExtPred:$u8))),
-                                1, 0))>,
-           Requires<[HasV4T]>;
+                                1, 0))>;
 
 // For the sequence
 //   zext( setult ( Rs, Rt))
@@ -3054,8 +3039,7 @@ def : Pat <(i32 (zext (i1 (setugt (i32 (and (i32 IntRegs:$Rs), 254)),
 def : Pat <(i32 (zext (i1 (setult (i32 IntRegs:$Rs), (i32 IntRegs:$Rt))))),
            (i32 (TFR_condset_ii (i1 (C2_cmpgtu (i32 IntRegs:$Rt),
                                               (i32 IntRegs:$Rs))),
-                                1, 0))>,
-           Requires<[HasV4T]>;
+                                1, 0))>;
 
 // For the sequence
 //   zext( setlt ( Rs, Rt))
@@ -3067,8 +3051,7 @@ def : Pat <(i32 (zext (i1 (setult (i32 IntRegs:$Rs), (i32 IntRegs:$Rt))))),
 def : Pat <(i32 (zext (i1 (setlt (i32 IntRegs:$Rs), (i32 IntRegs:$Rt))))),
            (i32 (TFR_condset_ii (i1 (C2_cmpgt (i32 IntRegs:$Rt),
                                              (i32 IntRegs:$Rs))),
-                                1, 0))>,
-           Requires<[HasV4T]>;
+                                1, 0))>;
 
 // For the sequence
 //   zext( setugt ( Rs, Rt))
@@ -3079,8 +3062,7 @@ def : Pat <(i32 (zext (i1 (setlt (i32 IntRegs:$Rs), (i32 IntRegs:$Rt))))),
 def : Pat <(i32 (zext (i1 (setugt (i32 IntRegs:$Rs), (i32 IntRegs:$Rt))))),
            (i32 (TFR_condset_ii (i1 (C2_cmpgtu (i32 IntRegs:$Rs),
                                               (i32 IntRegs:$Rt))),
-                                1, 0))>,
-           Requires<[HasV4T]>;
+                                1, 0))>;
 
 // This pattern interefers with coremark performance, not implementing at this
 // time.
@@ -3101,8 +3083,7 @@ def : Pat <(i32 (zext (i1 (setugt (i32 IntRegs:$Rs), (i32 IntRegs:$Rt))))),
 def : Pat <(i32 (zext (i1 (setuge (i32 IntRegs:$Rs), (i32 IntRegs:$Rt))))),
            (i32 (TFR_condset_ii (i1 (C2_cmpgtu (i32 IntRegs:$Rt),
                                               (i32 IntRegs:$Rs))),
-                                0, 1))>,
-           Requires<[HasV4T]>;
+                                0, 1))>;
 
 // For the sequence
 //   zext( setge ( Rs, Rt))
@@ -3114,8 +3095,7 @@ def : Pat <(i32 (zext (i1 (setuge (i32 IntRegs:$Rs), (i32 IntRegs:$Rt))))),
 def : Pat <(i32 (zext (i1 (setge (i32 IntRegs:$Rs), (i32 IntRegs:$Rt))))),
            (i32 (TFR_condset_ii (i1 (C2_cmpgt (i32 IntRegs:$Rt),
                                              (i32 IntRegs:$Rs))),
-                                0, 1))>,
-           Requires<[HasV4T]>;
+                                0, 1))>;
 
 // For the sequence
 //   zext( setule ( Rs, Rt))
@@ -3126,8 +3106,7 @@ def : Pat <(i32 (zext (i1 (setge (i32 IntRegs:$Rs), (i32 IntRegs:$Rt))))),
 def : Pat <(i32 (zext (i1 (setule (i32 IntRegs:$Rs), (i32 IntRegs:$Rt))))),
            (i32 (TFR_condset_ii (i1 (C2_cmpgtu (i32 IntRegs:$Rs),
                                               (i32 IntRegs:$Rt))),
-                                0, 1))>,
-           Requires<[HasV4T]>;
+                                0, 1))>;
 
 // For the sequence
 //   zext( setle ( Rs, Rt))
@@ -3138,8 +3117,7 @@ def : Pat <(i32 (zext (i1 (setule (i32 IntRegs:$Rs), (i32 IntRegs:$Rt))))),
 def : Pat <(i32 (zext (i1 (setle (i32 IntRegs:$Rs), (i32 IntRegs:$Rt))))),
            (i32 (TFR_condset_ii (i1 (C2_cmpgt (i32 IntRegs:$Rs),
                                              (i32 IntRegs:$Rt))),
-                                0, 1))>,
-           Requires<[HasV4T]>;
+                                0, 1))>;
 
 // For the sequence
 //   zext( setult ( and(Rs, 255), u8))
@@ -3228,8 +3206,7 @@ let isCall = 1, isBarrier = 1, isReturn = 1, isTerminator = 1,
   def RESTORE_DEALLOC_RET_JMP_V4 : JInst<(outs),
                                    (ins calltarget:$dst),
              "jump $dst",
-             []>,
-             Requires<[HasV4T]>;
+             []>;
 }
 
 // Restore registers and dealloc frame before a tail call.
@@ -3237,8 +3214,7 @@ let isCall = 1, Defs = [R29, R30, R31, PC], isAsmParserOnly = 1 in {
   def RESTORE_DEALLOC_BEFORE_TAILCALL_V4 : JInst<(outs),
                                            (ins calltarget:$dst),
              "call $dst",
-             []>,
-             Requires<[HasV4T]>;
+             []>;
 }
 
 // Save registers function call.
@@ -3246,8 +3222,7 @@ let isCall = 1, Uses = [R29, R31], isAsmParserOnly = 1 in {
   def SAVE_REGISTERS_CALL_V4 : JInst<(outs),
                                (ins calltarget:$dst),
              "call $dst // Save_calle_saved_registers",
-             []>,
-             Requires<[HasV4T]>;
+             []>;
 }
 
 //===----------------------------------------------------------------------===//
@@ -3790,18 +3765,15 @@ let isExtended = 1, opExtendable = 1, AddedComplexity=50, isMoveImm = 1,
 isAsCheapAsAMove = 1, isReMaterializable = 1, isCodeGenOnly = 1 in
 def TFRI_V4 : ALU32_ri<(outs IntRegs:$dst), (ins s16Ext:$src1),
            "$dst = #$src1",
-           [(set IntRegs:$dst, (HexagonCONST32 tglobaladdr:$src1))]>,
-           Requires<[HasV4T]>;
+           [(set IntRegs:$dst, (HexagonCONST32 tglobaladdr:$src1))]>;
 
 // Transfer a block address into a register
 def : Pat<(HexagonCONST32_GP tblockaddress:$src1),
-          (TFRI_V4 tblockaddress:$src1)>,
-          Requires<[HasV4T]>;
+          (TFRI_V4 tblockaddress:$src1)>;
 
-let AddedComplexity = 50, Predicates = [HasV4T] in
+let AddedComplexity = 50 in
 def : Pat<(HexagonCONST32_GP tglobaladdr:$src1),
-           (TFRI_V4 tglobaladdr:$src1)>,
-           Requires<[HasV4T]>;
+           (TFRI_V4 tglobaladdr:$src1)>;
 
 // i8/i16/i32 -> i64 loads
 // We need a complexity of 120 here to override preceding handling of
