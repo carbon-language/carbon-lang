@@ -4494,12 +4494,11 @@ X86InstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
   bool isCallRegIndirect = Subtarget.callRegIndirect();
   bool isTwoAddrFold = false;
 
-  // Atom favors register form of call. So, we do not fold loads into calls
-  // when X86Subtarget is Atom.
+  // For CPUs that favor the register form of a call,
+  // do not fold loads into calls.
   if (isCallRegIndirect &&
-    (MI->getOpcode() == X86::CALL32r || MI->getOpcode() == X86::CALL64r)) {
+    (MI->getOpcode() == X86::CALL32r || MI->getOpcode() == X86::CALL64r))
     return nullptr;
-  }
 
   unsigned NumOps = MI->getDesc().getNumOperands();
   bool isTwoAddr = NumOps > 1 &&
