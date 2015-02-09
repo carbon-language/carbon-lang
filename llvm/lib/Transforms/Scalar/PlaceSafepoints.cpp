@@ -741,7 +741,8 @@ InsertSafepointPoll(DominatorTree &DT, Instruction *term,
   // different type inserted previously
   Function *F =
       dyn_cast<Function>(M->getOrInsertFunction("gc.safepoint_poll", ftype));
-  assert(F && !F->empty() && "definition must exist");
+  assert(F && "void @gc.safepoint_poll() must be defined");
+  assert(!F->empty() && "gc.safepoint_poll must be a non-empty function");
   CallInst *poll = CallInst::Create(F, "", term);
 
   // Record some information about the call site we're replacing

@@ -442,9 +442,9 @@ public:
   /// \brief Create a call to the experimental.gc.statepoint intrinsic to
   /// start a new statepoint sequence.
   CallInst *CreateGCStatepoint(Value *ActualCallee,
-                               ArrayRef<Value*> CallArgs,
-                               ArrayRef<Value*> DeoptArgs,
-                               ArrayRef<Value*> GCArgs,
+                               ArrayRef<Value *> CallArgs,
+                               ArrayRef<Value *> DeoptArgs,
+                               ArrayRef<Value *> GCArgs,
                                const Twine &Name = "");
 
   /// \brief Create a call to the experimental.gc.result intrinsic to extract

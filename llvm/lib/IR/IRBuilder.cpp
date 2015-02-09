@@ -231,10 +231,10 @@ CallInst *IRBuilderBase::CreateMaskedIntrinsic(unsigned Id,
 }
 
 CallInst *IRBuilderBase::CreateGCStatepoint(Value *ActualCallee,
-                                            ArrayRef<Value*> CallArgs,
-                                            ArrayRef<Value*> DeoptArgs,
-                                            ArrayRef<Value*> GCArgs,
-                                            const Twine& Name) {
+                                            ArrayRef<Value *> CallArgs,
+                                            ArrayRef<Value *> DeoptArgs,
+                                            ArrayRef<Value *> GCArgs,
+                                            const Twine &Name) {
  // Extract out the type of the callee.
  PointerType *FuncPtrType = cast<PointerType>(ActualCallee->getType());
  assert(isa<FunctionType>(FuncPtrType->getElementType()) &&
