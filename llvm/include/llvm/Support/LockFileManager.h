@@ -77,6 +77,10 @@ public:
 
   /// \brief For a shared lock, wait until the owner releases the lock.
   WaitForUnlockResult waitForUnlock();
+
+  /// \brief Remove the lock file.  This may delete a different lock file than
+  /// the one previously read if there is a race.
+  std::error_code unsafeRemoveLockFile();
 };
 
 } // end namespace llvm

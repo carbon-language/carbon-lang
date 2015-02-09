@@ -186,8 +186,8 @@ LockFileManager::WaitForUnlockResult LockFileManager::waitForUnlock() {
   Interval.tv_sec = 0;
   Interval.tv_nsec = 1000000;
 #endif
-  // Don't wait more than five minutes for the file to appear.
-  unsigned MaxSeconds = 300;
+  // Don't wait more than one minute for the file to appear.
+  unsigned MaxSeconds = 60;
   bool LockFileGone = false;
   do {
     // Sleep for the designated interval, to allow the owning process time to
@@ -262,4 +262,8 @@ LockFileManager::WaitForUnlockResult LockFileManager::waitForUnlock() {
 
   // Give up.
   return Res_Timeout;
+}
+
+std::error_code LockFileManager::unsafeRemoveLockFile() {
+  return sys::fs::remove(LockFileName.str());
 }
