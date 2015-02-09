@@ -12,8 +12,7 @@ define void @test(i32 addrspace(1)* byval %dparam) {
 ; CHECK: %globalptr
 ; CHECK: %alloca
 ; CHECK: %dparam
-; We haven't yet taught it to look through relocations
-; CHECK-NOT: %relocate
+; CHECK: %relocate
 ; CHECK-NOT: %nparam
 entry:
     %globalptr = getelementptr inbounds [6 x i8]* @globalstr, i32 0, i32 0
