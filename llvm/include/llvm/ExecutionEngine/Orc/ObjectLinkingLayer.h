@@ -221,7 +221,7 @@ public:
                          bool ExportedSymbolsOnly) {
     if (auto Addr = H->getSymbolAddress(Name, ExportedSymbolsOnly))
       return JITSymbol(
-        [=](){
+        [this, Addr, H](){
           if (H->NeedsFinalization()) {
             H->Finalize();
             if (this->NotifyFinalized)

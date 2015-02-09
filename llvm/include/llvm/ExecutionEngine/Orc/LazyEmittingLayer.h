@@ -44,7 +44,7 @@ private:
       case NotEmitted:
         if (provides(Name, ExportedSymbolsOnly))
           return JITSymbol(
-              [=,&B]() -> TargetAddress {
+              [this,ExportedSymbolsOnly,Name,&B]() -> TargetAddress {
                 if (this->EmitState == Emitting)
                   return 0;
                 else if (this->EmitState != Emitted) {
