@@ -51,11 +51,26 @@ entry:
   br label %other
 other:
 ; CHECK-LABEL: other
-; CHECK: statepoint 
+; CHECK: statepoint
+; CHECK-NOT: gc.result
   call void @foo()
   ret void
 }
 
+declare zeroext i1 @i1_return_i1(i1)
+
+define i1 @test_call_with_result() gc "statepoint-example" {
+; CHECK-LABEL: test_call_with_result
+; This is checking that a statepoint_poll + statepoint + result is
+; inserted for a function that takes 1 argument.
+; CHECK: gc.statepoint.p0f_isVoidf
+; CHECK: gc.statepoint.p0f_i1i1f
+; CHECK: (i1 (i1)* @i1_return_i1, i32 1, i32 0, i1 false, i32 0)
+; CHECK: gc.result.i1
+entry:
+  %call1 = tail call i1 (i1)* @i1_return_i1(i1 false)
+  ret i1 %call1
+}
 
 ; This function is inlined when inserting a poll.  To avoid recursive 
 ; issues, make sure we don't place safepoints in it.

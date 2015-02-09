@@ -952,18 +952,7 @@ static Value *ReplaceWithStatepoint(const CallSite &CS, /* to replace */
     Instruction *gc_result = nullptr;
     std::vector<Type *> types;     // one per 'any' type
     types.push_back(CS.getType()); // result type
-    auto get_gc_result_id = [&](Type &Ty) {
-      if (Ty.isIntegerTy()) {
-        return Intrinsic::experimental_gc_result_int;
-      } else if (Ty.isFloatingPointTy()) {
-        return Intrinsic::experimental_gc_result_float;
-      } else if (Ty.isPointerTy()) {
-        return Intrinsic::experimental_gc_result_ptr;
-      } else {
-        llvm_unreachable("non java type encountered");
-      }
-    };
-    Intrinsic::ID Id = get_gc_result_id(*CS.getType());
+    Intrinsic::ID Id = Intrinsic::experimental_gc_result;
     Value *gc_result_func = Intrinsic::getDeclaration(M, Id, types);
 
     std::vector<Value *> args;
