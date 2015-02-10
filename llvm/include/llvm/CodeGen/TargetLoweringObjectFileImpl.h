@@ -36,6 +36,8 @@ class TargetLoweringObjectFileELF : public TargetLoweringObjectFile {
   bool UseInitArray;
 
 public:
+  TargetLoweringObjectFileELF() : UseInitArray(false) {}
+
   virtual ~TargetLoweringObjectFileELF() {}
 
   void emitPersonalityValue(MCStreamer &Streamer, const TargetMachine &TM,
