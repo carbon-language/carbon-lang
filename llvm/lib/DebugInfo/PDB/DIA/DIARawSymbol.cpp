@@ -7,6 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/DebugInfo/PDB/PDBExtras.h"
 #include "llvm/DebugInfo/PDB/DIA/DIAEnumSymbols.h"
 #include "llvm/DebugInfo/PDB/DIA/DIARawSymbol.h"
@@ -275,7 +276,7 @@ DIARawSymbol::findChildren(PDB_SymType Type) const {
   if (S_OK != Symbol->findChildren(EnumVal, nullptr, nsNone, &DiaEnumerator))
     return nullptr;
 
-  return std::make_unique<DIAEnumSymbols>(Session, DiaEnumerator);
+  return llvm::make_unique<DIAEnumSymbols>(Session, DiaEnumerator);
 }
 
 std::unique_ptr<IPDBEnumSymbols>
@@ -293,7 +294,7 @@ DIARawSymbol::findChildren(PDB_SymType Type, StringRef Name,
       Symbol->findChildren(EnumVal, Name16Str, CompareFlags, &DiaEnumerator))
     return nullptr;
 
-  return std::make_unique<DIAEnumSymbols>(Session, DiaEnumerator);
+  return llvm::make_unique<DIAEnumSymbols>(Session, DiaEnumerator);
 }
 
 std::unique_ptr<IPDBEnumSymbols>
@@ -312,7 +313,7 @@ DIARawSymbol::findChildrenByRVA(PDB_SymType Type, StringRef Name,
                                   &DiaEnumerator))
     return nullptr;
 
-  return std::make_unique<DIAEnumSymbols>(Session, DiaEnumerator);
+  return llvm::make_unique<DIAEnumSymbols>(Session, DiaEnumerator);
 }
 
 std::unique_ptr<IPDBEnumSymbols>
@@ -321,7 +322,7 @@ DIARawSymbol::findInlineFramesByRVA(uint32_t RVA) const {
   if (S_OK != Symbol->findInlineFramesByRVA(RVA, &DiaEnumerator))
     return nullptr;
 
-  return std::make_unique<DIAEnumSymbols>(Session, DiaEnumerator);
+  return llvm::make_unique<DIAEnumSymbols>(Session, DiaEnumerator);
 }
 
 void DIARawSymbol::getDataBytes(llvm::SmallVector<uint8_t, 32> &bytes) const {

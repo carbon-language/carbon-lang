@@ -7,6 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/DebugInfo/PDB/PDBSymbolCompiland.h"
 #include "llvm/DebugInfo/PDB/PDBSymbolExe.h"
 
@@ -62,7 +63,7 @@ std::unique_ptr<PDBSymbolExe> DIASession::getGlobalScope() const {
   if (S_OK != Session->get_globalScope(&GlobalScope))
     return nullptr;
 
-  auto RawSymbol = std::make_unique<DIARawSymbol>(*this, GlobalScope);
+  auto RawSymbol = llvm::make_unique<DIARawSymbol>(*this, GlobalScope);
   auto PdbSymbol(PDBSymbol::create(*this, std::move(RawSymbol)));
   std::unique_ptr<PDBSymbolExe> ExeSymbol(
       static_cast<PDBSymbolExe *>(PdbSymbol.release()));
@@ -74,7 +75,7 @@ std::unique_ptr<PDBSymbol> DIASession::getSymbolById(uint32_t SymbolId) const {
   if (S_OK != Session->symbolById(SymbolId, &LocatedSymbol))
     return nullptr;
 
-  auto RawSymbol = std::make_unique<DIARawSymbol>(*this, LocatedSymbol);
+  auto RawSymbol = llvm::make_unique<DIARawSymbol>(*this, LocatedSymbol);
   return PDBSymbol::create(*this, std::move(RawSymbol));
 }
 
@@ -83,7 +84,7 @@ std::unique_ptr<IPDBEnumSourceFiles> DIASession::getAllSourceFiles() const {
   if (S_OK != Session->findFile(nullptr, nullptr, nsNone, &Files))
     return nullptr;
 
-  return std::make_unique<DIAEnumSourceFiles>(*this, Files);
+  return llvm::make_unique<DIAEnumSourceFiles>(*this, Files);
 }
 
 std::unique_ptr<IPDBEnumSourceFiles> DIASession::getSourceFilesForCompiland(
@@ -96,7 +97,7 @@ std::unique_ptr<IPDBEnumSourceFiles> DIASession::getSourceFilesForCompiland(
       Session->findFile(RawSymbol.getDiaSymbol(), nullptr, nsNone, &Files))
     return nullptr;
 
-  return std::make_unique<DIAEnumSourceFiles>(*this, Files);
+  return llvm::make_unique<DIAEnumSourceFiles>(*this, Files);
 }
 
 std::unique_ptr<IPDBSourceFile>
@@ -105,7 +106,7 @@ DIASession::getSourceFileById(uint32_t FileId) const {
   if (S_OK != Session->findFileById(FileId, &LocatedFile))
     return nullptr;
 
-  return std::make_unique<DIASourceFile>(*this, LocatedFile);
+  return llvm::make_unique<DIASourceFile>(*this, LocatedFile);
 }
 
 std::unique_ptr<IPDBEnumDataStreams> DIASession::getDebugStreams() const {
@@ -113,6 +114,5 @@ std::unique_ptr<IPDBEnumDataStreams> DIASession::getDebugStreams() const {
   if (S_OK != Session->getEnumDebugStreams(&DiaEnumerator))
     return nullptr;
 
-  return std::unique_ptr<IPDBEnumDataStreams>(
-      new DIAEnumDebugStreams(DiaEnumerator));
+  return llvm::make_unique<DIAEnumDebugStreams>(DiaEnumerator);
 }

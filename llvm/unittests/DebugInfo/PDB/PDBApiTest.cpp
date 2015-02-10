@@ -7,9 +7,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <memory>
 #include <unordered_map>
 
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/DebugInfo/PDB/IPDBEnumChildren.h"
 #include "llvm/DebugInfo/PDB/IPDBRawSymbol.h"
 #include "llvm/DebugInfo/PDB/IPDBSession.h"
@@ -339,7 +339,7 @@ private:
   std::unique_ptr<IPDBSession> Session;
 
   void InsertItemWithTag(PDB_SymType Tag) {
-    auto RawSymbol = std::make_unique<MockRawSymbol>(*Session, Tag);
+    auto RawSymbol = llvm::make_unique<MockRawSymbol>(*Session, Tag);
     auto Symbol = PDBSymbol::create(*Session, std::move(RawSymbol));
     SymbolMap.insert(std::make_pair(Tag, std::move(Symbol)));
   }
