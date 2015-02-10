@@ -52,7 +52,7 @@ DEFINE_LIBUNWIND_PRIVATE_FUNCTION(_ZN9libunwind13Registers_x866jumptoEv)
   # skip fs
   # skip gs
 
-#elif __x86_64__
+#elif defined(__x86_64__)
 
 DEFINE_LIBUNWIND_PRIVATE_FUNCTION(_ZN9libunwind16Registers_x86_646jumptoEv)
 #
@@ -93,7 +93,7 @@ DEFINE_LIBUNWIND_PRIVATE_FUNCTION(_ZN9libunwind16Registers_x86_646jumptoEv)
   ret            # rip was saved here
 
 
-#elif __ppc__
+#elif defined(__ppc__)
 
 DEFINE_LIBUNWIND_PRIVATE_FUNCTION(_ZN9libunwind13Registers_ppc6jumptoEv)
 ;
@@ -258,7 +258,7 @@ Lnovec:
   lwz    r3,20(r3)  ; do r3 last
   bctr
 
-#elif __arm64__
+#elif defined(__arm64__)
 
 ;
 ; void libunwind::Registers_arm64::jumpto()
@@ -308,7 +308,7 @@ DEFINE_LIBUNWIND_PRIVATE_FUNCTION(_ZN9libunwind15Registers_arm646jumptoEv)
   ldp    x0, x1,  [x0, #0x000]  ; restore x0,x1
   ret    lr            ; jump to pc
 
-#elif __arm__ && !__APPLE__
+#elif defined(__arm__) && !defined(__APPLE__)
 
 #if !defined(__ARM_ARCH_ISA_ARM)
   .thumb
@@ -390,7 +390,7 @@ DEFINE_LIBUNWIND_PRIVATE_FUNCTION(_ZN9libunwind13Registers_arm19restoreVFPWithFL
   .p2align 2
 DEFINE_LIBUNWIND_PRIVATE_FUNCTION(_ZN9libunwind13Registers_arm12restoreVFPv3EPy)
 #if defined(__ARM_FP)
-#ifndef __ARM_NEON
+#if !defined(__ARM_NEON)
   ldcl p11, cr0, [r0], {0x20}  @ vldm r0, {d16-d31}
 #else
   vldmia r0, {d16-d31}
@@ -406,7 +406,7 @@ DEFINE_LIBUNWIND_PRIVATE_FUNCTION(_ZN9libunwind13Registers_arm12restoreVFPv3EPy)
 @
   .p2align 2
 DEFINE_LIBUNWIND_PRIVATE_FUNCTION(_ZN9libunwind13Registers_arm12restoreiWMMXEPy)
-#if (!defined(__ARM_ARCH_6M__) && !defined(__ARM_ARCH_6SM__)) || __ARM_WMMX
+#if (!defined(__ARM_ARCH_6M__) && !defined(__ARM_ARCH_6SM__)) || defined(__ARM_WMMX)
   ldcl p1, cr0, [r0], #8  @ wldrd wR0, [r0], #8
   ldcl p1, cr1, [r0], #8  @ wldrd wR1, [r0], #8
   ldcl p1, cr2, [r0], #8  @ wldrd wR2, [r0], #8
@@ -434,7 +434,7 @@ DEFINE_LIBUNWIND_PRIVATE_FUNCTION(_ZN9libunwind13Registers_arm12restoreiWMMXEPy)
 @
   .p2align 2
 DEFINE_LIBUNWIND_PRIVATE_FUNCTION(_ZN9libunwind13Registers_arm19restoreiWMMXControlEPj)
-#if (!defined(__ARM_ARCH_6M__) && !defined(__ARM_ARCH_6SM__)) || __ARM_WMMX
+#if (!defined(__ARM_ARCH_6M__) && !defined(__ARM_ARCH_6SM__)) || defined(__ARM_WMMX)
   ldc2 p1, cr8, [r0], #4  @ wldrw wCGR0, [r0], #4
   ldc2 p1, cr9, [r0], #4  @ wldrw wCGR1, [r0], #4
   ldc2 p1, cr10, [r0], #4  @ wldrw wCGR2, [r0], #4
