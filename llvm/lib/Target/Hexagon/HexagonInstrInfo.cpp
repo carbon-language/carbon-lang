@@ -998,7 +998,6 @@ bool HexagonInstrInfo::isPredicatedNew(unsigned Opcode) const {
 
 // Returns true, if a ST insn can be promoted to a new-value store.
 bool HexagonInstrInfo::mayBeNewStore(const MachineInstr *MI) const {
-  const HexagonRegisterInfo& QRI = getRegisterInfo();
   const uint64_t F = MI->getDesc().TSFlags;
 
   return ((F >> HexagonII::mayNVStorePos) &
@@ -1313,7 +1312,6 @@ bool HexagonInstrInfo::isConditionalALU32 (const MachineInstr* MI) const {
 
 bool HexagonInstrInfo::
 isConditionalLoad (const MachineInstr* MI) const {
-  const HexagonRegisterInfo& QRI = getRegisterInfo();
   switch (MI->getOpcode())
   {
     default: return false;
@@ -1393,7 +1391,6 @@ isConditionalLoad (const MachineInstr* MI) const {
 // is not valid for new-value stores.
 bool HexagonInstrInfo::
 isConditionalStore (const MachineInstr* MI) const {
-  const HexagonRegisterInfo& QRI = getRegisterInfo();
   switch (MI->getOpcode())
   {
     default: return false;
