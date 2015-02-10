@@ -1096,24 +1096,16 @@ public:
 /// TODO: Remove File, Line and Column.  They're always 0 and never
 /// referenced.
 class MDTemplateParameter : public DebugNode {
-  unsigned Line;
-  unsigned Column;
-
 protected:
   MDTemplateParameter(LLVMContext &Context, unsigned ID, StorageType Storage,
-                      unsigned Tag, unsigned Line, unsigned Column,
-                      ArrayRef<Metadata *> Ops)
-      : DebugNode(Context, ID, Storage, Tag, Ops), Line(Line), Column(Column) {}
+                      unsigned Tag, ArrayRef<Metadata *> Ops)
+      : DebugNode(Context, ID, Storage, Tag, Ops) {}
   ~MDTemplateParameter() {}
 
 public:
-  unsigned getLine() const { return Line; }
-  unsigned getColumn() const { return Column; }
-
-  Metadata *getFile() const { return getOperand(0); }
-  Metadata *getScope() const { return getOperand(1); }
-  StringRef getName() const { return getStringOperand(2); }
-  Metadata *getType() const { return getOperand(3); }
+  Metadata *getScope() const { return getOperand(0); }
+  StringRef getName() const { return getStringOperand(1); }
+  Metadata *getType() const { return getOperand(2); }
 
   static bool classof(const Metadata *MD) {
     return MD->getMetadataID() == MDTemplateTypeParameterKind ||
@@ -1126,43 +1118,34 @@ class MDTemplateTypeParameter : public MDTemplateParameter {
   friend class MDNode;
 
   MDTemplateTypeParameter(LLVMContext &Context, StorageType Storage,
-                          unsigned Line, unsigned Column,
                           ArrayRef<Metadata *> Ops)
       : MDTemplateParameter(Context, MDTemplateTypeParameterKind, Storage,
-                            dwarf::DW_TAG_template_type_parameter, Line, Column,
-                            Ops) {}
+                            dwarf::DW_TAG_template_type_parameter, Ops) {}
   ~MDTemplateTypeParameter() {}
 
   static MDTemplateTypeParameter *getImpl(LLVMContext &Context, Metadata *Scope,
                                           StringRef Name, Metadata *Type,
-                                          Metadata *File, unsigned Line,
-                                          unsigned Column, StorageType Storage,
+                                          StorageType Storage,
                                           bool ShouldCreate = true) {
     return getImpl(Context, Scope, getCanonicalMDString(Context, Name), Type,
-                   File, Line, Column, Storage, ShouldCreate);
+                   Storage, ShouldCreate);
   }
   static MDTemplateTypeParameter *getImpl(LLVMContext &Context, Metadata *Scope,
                                           MDString *Name, Metadata *Type,
-                                          Metadata *File, unsigned Line,
-                                          unsigned Column, StorageType Storage,
+                                          StorageType Storage,
                                           bool ShouldCreate = true);
 
   TempMDTemplateTypeParameter cloneImpl() const {
-    return getTemporary(getContext(), getScope(), getName(), getType(),
-                        getFile(), getLine(), getColumn());
+    return getTemporary(getContext(), getScope(), getName(), getType());
   }
 
 public:
   DEFINE_MDNODE_GET(MDTemplateTypeParameter,
-                    (Metadata * Scope, StringRef Name, Metadata *Type,
-                     Metadata *File = nullptr, unsigned Line = 0,
-                     unsigned Column = 0),
-                    (Scope, Name, Type, File, Line, Column))
+                    (Metadata * Scope, StringRef Name, Metadata *Type),
+                    (Scope, Name, Type))
   DEFINE_MDNODE_GET(MDTemplateTypeParameter,
-                    (Metadata * Scope, MDString *Name, Metadata *Type,
-                     Metadata *File = nullptr, unsigned Line = 0,
-                     unsigned Column = 0),
-                    (Scope, Name, Type, File, Line, Column))
+                    (Metadata * Scope, MDString *Name, Metadata *Type),
+                    (Scope, Name, Type))
 
   TempMDTemplateTypeParameter clone() const { return cloneImpl(); }
 
@@ -1176,43 +1159,41 @@ class MDTemplateValueParameter : public MDTemplateParameter {
   friend class MDNode;
 
   MDTemplateValueParameter(LLVMContext &Context, StorageType Storage,
-                           unsigned Tag, unsigned Line, unsigned Column,
-                           ArrayRef<Metadata *> Ops)
+                           unsigned Tag, ArrayRef<Metadata *> Ops)
       : MDTemplateParameter(Context, MDTemplateValueParameterKind, Storage, Tag,
-                            Line, Column, Ops) {}
+                            Ops) {}
   ~MDTemplateValueParameter() {}
 
-  static MDTemplateValueParameter *
-  getImpl(LLVMContext &Context, unsigned Tag, Metadata *Scope, StringRef Name,
-          Metadata *Type, Metadata *Value, Metadata *File, unsigned Line,
-          unsigned Column, StorageType Storage, bool ShouldCreate = true) {
+  static MDTemplateValueParameter *getImpl(LLVMContext &Context, unsigned Tag,
+                                           Metadata *Scope, StringRef Name,
+                                           Metadata *Type, Metadata *Value,
+                                           StorageType Storage,
+                                           bool ShouldCreate = true) {
     return getImpl(Context, Tag, Scope, getCanonicalMDString(Context, Name),
-                   Type, Value, File, Line, Column, Storage, ShouldCreate);
+                   Type, Value, Storage, ShouldCreate);
   }
-  static MDTemplateValueParameter *
-  getImpl(LLVMContext &Context, unsigned Tag, Metadata *Scope, MDString *Name,
-          Metadata *Type, Metadata *Value, Metadata *File, unsigned Line,
-          unsigned Column, StorageType Storage, bool ShouldCreate = true);
+  static MDTemplateValueParameter *getImpl(LLVMContext &Context, unsigned Tag,
+                                           Metadata *Scope, MDString *Name,
+                                           Metadata *Type, Metadata *Value,
+                                           StorageType Storage,
+                                           bool ShouldCreate = true);
 
   TempMDTemplateValueParameter cloneImpl() const {
     return getTemporary(getContext(), getTag(), getScope(), getName(),
-                        getType(), getValue(), getFile(), getLine(),
-                        getColumn());
+                        getType(), getValue());
   }
 
 public:
   DEFINE_MDNODE_GET(MDTemplateValueParameter,
                     (unsigned Tag, Metadata *Scope, StringRef Name,
-                     Metadata *Type, Metadata *Value, Metadata *File = nullptr,
-                     unsigned Line = 0, unsigned Column = 0),
-                    (Tag, Scope, Name, Type, Value, File, Line, Column))
+                     Metadata *Type, Metadata *Value),
+                    (Tag, Scope, Name, Type, Value))
   DEFINE_MDNODE_GET(MDTemplateValueParameter,
                     (unsigned Tag, Metadata *Scope, MDString *Name,
-                     Metadata *Type, Metadata *Value, Metadata *File = nullptr,
-                     unsigned Line = 0, unsigned Column = 0),
-                    (Tag, Scope, Name, Type, Value, File, Line, Column))
+                     Metadata *Type, Metadata *Value),
+                    (Tag, Scope, Name, Type, Value))
 
-  Metadata *getValue() const { return getOperand(4); }
+  Metadata *getValue() const { return getOperand(3); }
 
   static bool classof(const Metadata *MD) {
     return MD->getMetadataID() == MDTemplateValueParameterKind;

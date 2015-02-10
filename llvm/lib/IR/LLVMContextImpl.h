@@ -649,26 +649,17 @@ template <> struct MDNodeKeyImpl<MDTemplateTypeParameter> {
   Metadata *Scope;
   StringRef Name;
   Metadata *Type;
-  Metadata *File;
-  unsigned Line;
-  unsigned Column;
 
-  MDNodeKeyImpl(Metadata *Scope, StringRef Name, Metadata *Type, Metadata *File,
-                unsigned Line, unsigned Column)
-      : Scope(Scope), Name(Name), Type(Type), File(File), Line(Line),
-        Column(Column) {}
+  MDNodeKeyImpl(Metadata *Scope, StringRef Name, Metadata *Type)
+      : Scope(Scope), Name(Name), Type(Type) {}
   MDNodeKeyImpl(const MDTemplateTypeParameter *N)
-      : Scope(N->getScope()), Name(N->getName()), Type(N->getType()),
-        File(N->getFile()), Line(N->getLine()), Column(N->getColumn()) {}
+      : Scope(N->getScope()), Name(N->getName()), Type(N->getType()) {}
 
   bool isKeyOf(const MDTemplateTypeParameter *RHS) const {
     return Scope == RHS->getScope() && Name == RHS->getName() &&
-           Type == RHS->getType() && File == RHS->getFile() &&
-           Line == RHS->getLine() && Column == RHS->getColumn();
+           Type == RHS->getType();
   }
-  unsigned getHashValue() const {
-    return hash_combine(Scope, Name, Type, File, Line, Column);
-  }
+  unsigned getHashValue() const { return hash_combine(Scope, Name, Type); }
 };
 
 template <> struct MDNodeKeyImpl<MDTemplateValueParameter> {
@@ -677,27 +668,21 @@ template <> struct MDNodeKeyImpl<MDTemplateValueParameter> {
   StringRef Name;
   Metadata *Type;
   Metadata *Value;
-  Metadata *File;
-  unsigned Line;
-  unsigned Column;
 
   MDNodeKeyImpl(unsigned Tag, Metadata *Scope, StringRef Name, Metadata *Type,
-                Metadata *Value, Metadata *File, unsigned Line, unsigned Column)
-      : Tag(Tag), Scope(Scope), Name(Name), Type(Type), Value(Value),
-        File(File), Line(Line), Column(Column) {}
+                Metadata *Value)
+      : Tag(Tag), Scope(Scope), Name(Name), Type(Type), Value(Value) {}
   MDNodeKeyImpl(const MDTemplateValueParameter *N)
       : Tag(N->getTag()), Scope(N->getScope()), Name(N->getName()),
-        Type(N->getType()), Value(N->getValue()), File(N->getFile()),
-        Line(N->getLine()), Column(N->getColumn()) {}
+        Type(N->getType()), Value(N->getValue()) {}
 
   bool isKeyOf(const MDTemplateValueParameter *RHS) const {
     return Tag == RHS->getTag() && Scope == RHS->getScope() &&
            Name == RHS->getName() && Type == RHS->getType() &&
-           Value == RHS->getValue() && File == RHS->getFile() &&
-           Line == RHS->getLine() && Column == RHS->getColumn();
+           Value == RHS->getValue();
   }
   unsigned getHashValue() const {
-    return hash_combine(Tag, Scope, Name, Type, Value, File, Line, Column);
+    return hash_combine(Tag, Scope, Name, Type, Value);
   }
 };
 

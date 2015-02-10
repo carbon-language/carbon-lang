@@ -1194,35 +1194,18 @@ TEST_F(MDTemplateTypeParameterTest, get) {
   Metadata *Scope = MDTuple::getDistinct(Context, None);
   StringRef Name = "template";
   Metadata *Type = MDTuple::getDistinct(Context, None);
-  Metadata *File = MDTuple::getDistinct(Context, None);
-  unsigned Line = 5;
-  unsigned Column = 7;
 
-  auto *N = MDTemplateTypeParameter::get(Context, Scope, Name, Type, File, Line,
-                                         Column);
+  auto *N = MDTemplateTypeParameter::get(Context, Scope, Name, Type);
 
   EXPECT_EQ(dwarf::DW_TAG_template_type_parameter, N->getTag());
   EXPECT_EQ(Scope, N->getScope());
   EXPECT_EQ(Name, N->getName());
   EXPECT_EQ(Type, N->getType());
-  EXPECT_EQ(File, N->getFile());
-  EXPECT_EQ(Line, N->getLine());
-  EXPECT_EQ(Column, N->getColumn());
-  EXPECT_EQ(N, MDTemplateTypeParameter::get(Context, Scope, Name, Type, File,
-                                            Line, Column));
+  EXPECT_EQ(N, MDTemplateTypeParameter::get(Context, Scope, Name, Type));
 
-  EXPECT_NE(N, MDTemplateTypeParameter::get(Context, Type, Name, Type, File,
-                                            Line, Column));
-  EXPECT_NE(N, MDTemplateTypeParameter::get(Context, Scope, "other", Type, File,
-                                            Line, Column));
-  EXPECT_NE(N, MDTemplateTypeParameter::get(Context, Scope, Name, Scope, File,
-                                            Line, Column));
-  EXPECT_NE(N, MDTemplateTypeParameter::get(Context, Scope, Name, Type, Scope,
-                                            Line, Column));
-  EXPECT_NE(N, MDTemplateTypeParameter::get(Context, Scope, Name, Type, File,
-                                            Line + 1, Column));
-  EXPECT_NE(N, MDTemplateTypeParameter::get(Context, Scope, Name, Type, File,
-                                            Line, Column + 1));
+  EXPECT_NE(N, MDTemplateTypeParameter::get(Context, Type, Name, Type));
+  EXPECT_NE(N, MDTemplateTypeParameter::get(Context, Scope, "other", Type));
+  EXPECT_NE(N, MDTemplateTypeParameter::get(Context, Scope, Name, Scope));
 }
 
 typedef MetadataTest MDTemplateValueParameterTest;
@@ -1233,40 +1216,28 @@ TEST_F(MDTemplateValueParameterTest, get) {
   StringRef Name = "template";
   Metadata *Type = MDTuple::getDistinct(Context, None);
   Metadata *Value = MDTuple::getDistinct(Context, None);
-  Metadata *File = MDTuple::getDistinct(Context, None);
-  unsigned Line = 5;
-  unsigned Column = 7;
 
-  auto *N = MDTemplateValueParameter::get(Context, Tag, Scope, Name, Type,
-                                          Value, File, Line, Column);
+  auto *N =
+      MDTemplateValueParameter::get(Context, Tag, Scope, Name, Type, Value);
   EXPECT_EQ(Tag, N->getTag());
   EXPECT_EQ(Scope, N->getScope());
   EXPECT_EQ(Name, N->getName());
   EXPECT_EQ(Type, N->getType());
   EXPECT_EQ(Value, N->getValue());
-  EXPECT_EQ(File, N->getFile());
-  EXPECT_EQ(Line, N->getLine());
-  EXPECT_EQ(Column, N->getColumn());
-  EXPECT_EQ(N, MDTemplateValueParameter::get(Context, Tag, Scope, Name, Type,
-                                             Value, File, Line, Column));
+  EXPECT_EQ(
+      N, MDTemplateValueParameter::get(Context, Tag, Scope, Name, Type, Value));
 
   EXPECT_NE(N, MDTemplateValueParameter::get(
                    Context, dwarf::DW_TAG_GNU_template_template_param, Scope,
-                   Name, Type, Value, File, Line, Column));
-  EXPECT_NE(N, MDTemplateValueParameter::get(Context, Tag, Type, Name, Type,
-                                             Value, File, Line, Column));
+                   Name, Type, Value));
+  EXPECT_NE(
+      N, MDTemplateValueParameter::get(Context, Tag, Type, Name, Type, Value));
   EXPECT_NE(N, MDTemplateValueParameter::get(Context, Tag, Scope, "other", Type,
-                                             Value, File, Line, Column));
+                                             Value));
   EXPECT_NE(N, MDTemplateValueParameter::get(Context, Tag, Scope, Name, Scope,
-                                             Value, File, Line, Column));
-  EXPECT_NE(N, MDTemplateValueParameter::get(Context, Tag, Scope, Name, Type,
-                                             Scope, File, Line, Column));
-  EXPECT_NE(N, MDTemplateValueParameter::get(Context, Tag, Scope, Name, Type,
-                                             Value, Scope, Line, Column));
-  EXPECT_NE(N, MDTemplateValueParameter::get(Context, Tag, Scope, Name, Type,
-                                             Value, File, Line + 1, Column));
-  EXPECT_NE(N, MDTemplateValueParameter::get(Context, Tag, Scope, Name, Type,
-                                             Value, File, Line, Column + 1));
+                                             Value));
+  EXPECT_NE(
+      N, MDTemplateValueParameter::get(Context, Tag, Scope, Name, Type, Scope));
 }
 
 typedef MetadataTest MDGlobalVariableTest;

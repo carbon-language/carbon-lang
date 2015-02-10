@@ -126,6 +126,10 @@ void GenericDebugNode::recalculateHash() {
 #define DEFINE_GETIMPL_STORE_NO_OPS(CLASS, ARGS)                               \
   return storeImpl(new (0u) CLASS(Context, Storage, UNWRAP_ARGS(ARGS)),        \
                    Storage, Context.pImpl->CLASS##s)
+#define DEFINE_GETIMPL_STORE_NO_CONSTRUCTOR_ARGS(CLASS, OPS)                   \
+  return storeImpl(new (ArrayRef<Metadata *>(OPS).size())                      \
+                       CLASS(Context, Storage, OPS),                           \
+                   Storage, Context.pImpl->CLASS##s)
 
 MDSubrange *MDSubrange::getImpl(LLVMContext &Context, int64_t Count, int64_t Lo,
                                 StorageType Storage, bool ShouldCreate) {
@@ -290,26 +294,23 @@ MDNamespace *MDNamespace::getImpl(LLVMContext &Context, Metadata *Scope,
 
 MDTemplateTypeParameter *
 MDTemplateTypeParameter::getImpl(LLVMContext &Context, Metadata *Scope,
-                                 MDString *Name, Metadata *Type, Metadata *File,
-                                 unsigned Line, unsigned Column,
+                                 MDString *Name, Metadata *Type,
                                  StorageType Storage, bool ShouldCreate) {
   assert(isCanonical(Name) && "Expected canonical MDString");
   DEFINE_GETIMPL_LOOKUP(MDTemplateTypeParameter,
-                        (Scope, getString(Name), Type, File, Line, Column));
-  Metadata *Ops[] = {File, Scope, Name, Type};
-  DEFINE_GETIMPL_STORE(MDTemplateTypeParameter, (Line, Column), Ops);
+                        (Scope, getString(Name), Type));
+  Metadata *Ops[] = {Scope, Name, Type};
+  DEFINE_GETIMPL_STORE_NO_CONSTRUCTOR_ARGS(MDTemplateTypeParameter, Ops);
 }
 
 MDTemplateValueParameter *MDTemplateValueParameter::getImpl(
     LLVMContext &Context, unsigned Tag, Metadata *Scope, MDString *Name,
-    Metadata *Type, Metadata *Value, Metadata *File, unsigned Line,
-    unsigned Column, StorageType Storage, bool ShouldCreate) {
+    Metadata *Type, Metadata *Value, StorageType Storage, bool ShouldCreate) {
   assert(isCanonical(Name) && "Expected canonical MDString");
-  DEFINE_GETIMPL_LOOKUP(
-      MDTemplateValueParameter,
-      (Tag, Scope, getString(Name), Type, Value, File, Line, Column));
-  Metadata *Ops[] = {File, Scope, Name, Type, Value};
-  DEFINE_GETIMPL_STORE(MDTemplateValueParameter, (Tag, Line, Column), Ops);
+  DEFINE_GETIMPL_LOOKUP(MDTemplateValueParameter,
+                        (Tag, Scope, getString(Name), Type, Value));
+  Metadata *Ops[] = {Scope, Name, Type, Value};
+  DEFINE_GETIMPL_STORE(MDTemplateValueParameter, (Tag), Ops);
 }
 
 MDGlobalVariable *
