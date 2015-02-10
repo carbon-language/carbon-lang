@@ -45,6 +45,15 @@
 
 # if defined __APPLE__ && defined __MACH__
 #  define KMP_PREFIX_UNDERSCORE(x) _##x  // extra underscore for OS X* symbols
+#  define KMP_LABEL(x) L_##x             // form the name of label
+.macro KMP_CFI_DEF_OFFSET
+.endmacro
+.macro KMP_CFI_OFFSET
+.endmacro
+.macro KMP_CFI_REGISTER
+.endmacro
+.macro KMP_CFI_DEF
+.endmacro
 .macro ALIGN
 	.align $0
 .endmacro
@@ -60,10 +69,16 @@ KMP_PREFIX_UNDERSCORE($0):
 .endmacro
 # else // defined __APPLE__ && defined __MACH__
 #  define KMP_PREFIX_UNDERSCORE(x) x  // no extra underscore for Linux* OS symbols
+# if __MIC__ || __MIC2__
+#  define KMP_LABEL(x) L_##x          // local label
+# else
+#  define KMP_LABEL(x) .L_##x         // local label hidden from backtraces
+# endif // __MIC__ || __MIC2__
 .macro ALIGN size
 	.align 1<<(\size)
 .endm
 .macro DEBUG_INFO proc
+	.cfi_endproc
 // Not sure why we need .type and .size for the functions
 	.align 16
 	.type  \proc,@function
@@ -73,6 +88,19 @@ KMP_PREFIX_UNDERSCORE($0):
 	ALIGN  4
         .globl KMP_PREFIX_UNDERSCORE(\proc)
 KMP_PREFIX_UNDERSCORE(\proc):
+	.cfi_startproc
+.endm
+.macro KMP_CFI_DEF_OFFSET sz
+	.cfi_def_cfa_offset	\sz
+.endm
+.macro KMP_CFI_OFFSET reg, sz
+	.cfi_offset	\reg,\sz
+.endm
+.macro KMP_CFI_REGISTER reg
+	.cfi_def_cfa_register	\reg
+.endm
+.macro KMP_CFI_DEF reg, sz
+	.cfi_def_cfa	\reg,\sz
 .endm
 # endif // defined __APPLE__ && defined __MACH__
 #endif // KMP_ARCH_X86 || KMP_ARCH_x86_64
@@ -558,14 +586,16 @@ __kmp_unnamed_critical_addr:
 	PROC  __kmp_invoke_microtask
 
 	pushl %ebp
+	KMP_CFI_DEF_OFFSET 8
+	KMP_CFI_OFFSET ebp,-8
 	movl %esp,%ebp		// establish the base pointer for this routine.
+	KMP_CFI_REGISTER ebp
 	subl $8,%esp		// allocate space for two local variables.
 				// These varibales are:
 				//	argv: -4(%ebp)
 				//	temp: -8(%ebp)
 				//
 	pushl %ebx		// save %ebx to use during this routine
-				//
 	movl 20(%ebp),%ebx	// Stack alignment - # args
 	addl $2,%ebx		// #args +2  Always pass at least 2 args (gtid and tid)
 	shll $2,%ebx		// Number of bytes used on stack: (#args+2)*4
@@ -583,21 +613,21 @@ __kmp_unnamed_critical_addr:
 	movl 20(%ebp),%ebx	// argc is 20(%ebp)
 	shll $2,%ebx
 
-.invoke_2:
+KMP_LABEL(invoke_2):
 	cmpl $0,%ebx
-	jg  .invoke_4
-	jmp .invoke_3
+	jg  KMP_LABEL(invoke_4)
+	jmp KMP_LABEL(invoke_3)
 	ALIGN 2
-.invoke_4:
+KMP_LABEL(invoke_4):
 	movl -4(%ebp),%eax
 	subl $4,%ebx			// decrement argc.
 	addl %ebx,%eax			// index into argv.
 	movl (%eax),%edx
 	pushl %edx
 
-	jmp .invoke_2
+	jmp KMP_LABEL(invoke_2)
 	ALIGN 2
-.invoke_3:
+KMP_LABEL(invoke_3):
 	leal 16(%ebp),%eax		// push & tid
 	pushl %eax
 
@@ -611,6 +641,7 @@ __kmp_unnamed_critical_addr:
 
 	movl -12(%ebp),%ebx		// restore %ebx
 	leave
+	KMP_CFI_DEF esp,4
 	ret
 
 	DEBUG_INFO __kmp_invoke_microtask
@@ -1213,9 +1244,11 @@ __tid = -24
 	PROC  __kmp_invoke_microtask
 
 	pushq 	%rbp		// save base pointer
+	KMP_CFI_DEF_OFFSET 16
+	KMP_CFI_OFFSET rbp,-16
 	movq 	%rsp,%rbp	// establish the base pointer for this routine.
+	KMP_CFI_REGISTER rbp
 	pushq 	%rbx		// %rbx is callee-saved register
-
 	pushq	%rsi		// Put gtid on stack so can pass &tgid to pkfn
 	pushq	%rdx		// Put tid on stack so can pass &tid to pkfn
 
@@ -1223,11 +1256,11 @@ __tid = -24
 	movq	$0, %rbx	// constant for cmovs later
 	subq	$4, %rax	// subtract four args passed in registers to pkfn
 #if __MIC__ || __MIC2__
-	js	L_kmp_0		// jump to movq
-	jmp	L_kmp_0_exit	// jump ahead
-L_kmp_0:
+	js	KMP_LABEL(kmp_0)	// jump to movq
+	jmp	KMP_LABEL(kmp_0_exit)	// jump ahead
+KMP_LABEL(kmp_0):
 	movq	%rbx, %rax	// zero negative value in %rax <- max(0, argc-4)
-L_kmp_0_exit:
+KMP_LABEL(kmp_0_exit):
 #else
 	cmovsq	%rbx, %rax	// zero negative value in %rax <- max(0, argc-4)
 #endif // __MIC__ || __MIC2__
@@ -1248,14 +1281,15 @@ L_kmp_0_exit:
 				// setup pkfn parameter reg and stack
 	movq	%rcx, %rax	// argc -> %rax
 	cmpq	$0, %rsi
-	je	L_kmp_invoke_pass_parms	// jump ahead if no parms to push
+	je	KMP_LABEL(kmp_invoke_pass_parms)	// jump ahead if no parms to push
 	shlq	$3, %rcx	// argc*8 -> %rcx
 	movq 	%r8, %rdx	// p_argv -> %rdx
 	addq	%rcx, %rdx	// &p_argv[argc] -> %rdx
 
 	movq	%rsi, %rcx	// max (0, argc-4) -> %rcx
 
-L_kmp_invoke_push_parms:	// push nth - 7th parms to pkfn on stack
+KMP_LABEL(kmp_invoke_push_parms):
+	// push nth - 7th parms to pkfn on stack
 	subq	$8, %rdx	// decrement p_argv pointer to previous parm
 	movq	(%rdx), %rsi	// p_argv[%rcx-1] -> %rsi
 	pushq	%rsi		// push p_argv[%rcx-1] onto stack (reverse order)
@@ -1266,11 +1300,10 @@ L_kmp_invoke_push_parms:	// push nth - 7th parms to pkfn on stack
 //	   Apple's linker does not support 1-byte length relocation;
 //         Resolution: replace all .labelX entries with L_labelX.
 
-	jecxz   L_kmp_invoke_pass_parms  // stop when four p_argv[] parms left
-	jmp	L_kmp_invoke_push_parms
-
+	jecxz   KMP_LABEL(kmp_invoke_pass_parms)  // stop when four p_argv[] parms left
+	jmp	KMP_LABEL(kmp_invoke_push_parms)
 	ALIGN 3
-L_kmp_invoke_pass_parms:	// put 1st - 6th parms to pkfn in registers.
+KMP_LABEL(kmp_invoke_pass_parms):	// put 1st - 6th parms to pkfn in registers.
 				// order here is important to avoid trashing
 				// registers used for both input and output parms!
 	movq	%rdi, %rbx	// pkfn -> %rbx
@@ -1281,32 +1314,32 @@ L_kmp_invoke_pass_parms:	// put 1st - 6th parms to pkfn in registers.
 
 #if __MIC__ || __MIC2__
 	cmpq	$4, %rax	// argc >= 4?
-	jns	L_kmp_4		// jump to movq
-	jmp	L_kmp_4_exit    // jump ahead
-L_kmp_4:
+	jns	KMP_LABEL(kmp_4)	// jump to movq
+	jmp	KMP_LABEL(kmp_4_exit)	// jump ahead
+KMP_LABEL(kmp_4):
 	movq	24(%r11), %r9	// p_argv[3] -> %r9 (store 6th parm to pkfn)
-L_kmp_4_exit:
+KMP_LABEL(kmp_4_exit):
 
 	cmpq	$3, %rax	// argc >= 3?
-	jns	L_kmp_3		// jump to movq
-	jmp	L_kmp_3_exit    // jump ahead
-L_kmp_3:
+	jns	KMP_LABEL(kmp_3)	// jump to movq
+	jmp	KMP_LABEL(kmp_3_exit)	// jump ahead
+KMP_LABEL(kmp_3):
 	movq	16(%r11), %r8	// p_argv[2] -> %r8 (store 5th parm to pkfn)
-L_kmp_3_exit:
+KMP_LABEL(kmp_3_exit):
 
 	cmpq	$2, %rax	// argc >= 2?
-	jns	L_kmp_2		// jump to movq
-	jmp	L_kmp_2_exit    // jump ahead
-L_kmp_2:
+	jns	KMP_LABEL(kmp_2)	// jump to movq
+	jmp	KMP_LABEL(kmp_2_exit)	// jump ahead
+KMP_LABEL(kmp_2):
 	movq	8(%r11), %rcx	// p_argv[1] -> %rcx (store 4th parm to pkfn)
-L_kmp_2_exit:
+KMP_LABEL(kmp_2_exit):
 
 	cmpq	$1, %rax	// argc >= 1?
-	jns	L_kmp_1		// jump to movq
-	jmp	L_kmp_1_exit    // jump ahead
-L_kmp_1:
+	jns	KMP_LABEL(kmp_1)	// jump to movq
+	jmp	KMP_LABEL(kmp_1_exit)	// jump ahead
+KMP_LABEL(kmp_1):
 	movq	(%r11), %rdx	// p_argv[0] -> %rdx (store 3rd parm to pkfn)
-L_kmp_1_exit:
+KMP_LABEL(kmp_1_exit):
 #else
 	cmpq	$4, %rax	// argc >= 4?
 	cmovnsq	24(%r11), %r9	// p_argv[3] -> %r9 (store 6th parm to pkfn)
@@ -1327,6 +1360,7 @@ L_kmp_1_exit:
 	movq	-8(%rbp), %rbx	// restore %rbx	using %rbp since %rsp was modified
 	movq 	%rbp, %rsp	// restore stack pointer
 	popq 	%rbp		// restore frame pointer
+	KMP_CFI_DEF rsp,8
 	ret
 
 	DEBUG_INFO __kmp_invoke_microtask
