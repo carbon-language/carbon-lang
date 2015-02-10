@@ -75,8 +75,11 @@ class MockSession : public IPDBSession {
   std::unique_ptr<PDBSymbolExe> getGlobalScope() const override {
     return nullptr;
   }
-  std::unique_ptr<PDBSymbol> getSymbolById() const override { return nullptr; }
-  std::unique_ptr<IPDBSourceFile> getSourceFileById() const override {
+  std::unique_ptr<PDBSymbol> getSymbolById(uint32_t SymbolId) const override {
+    return nullptr;
+  }
+  std::unique_ptr<IPDBSourceFile>
+  getSourceFileById(uint32_t SymbolId) const override {
     return nullptr;
   }
   std::unique_ptr<IPDBEnumDataStreams> getDebugStreams() const override {
