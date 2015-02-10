@@ -943,6 +943,40 @@ MipsMCCodeEmitter::getRegisterPairOpValue(const MCInst &MI, unsigned OpNo,
 }
 
 unsigned
+MipsMCCodeEmitter::getMovePRegPairOpValue(const MCInst &MI, unsigned OpNo,
+                                          SmallVectorImpl<MCFixup> &Fixups,
+                                          const MCSubtargetInfo &STI) const {
+  unsigned res = 0;
+
+  if (MI.getOperand(0).getReg() == Mips::A1 &&
+      MI.getOperand(1).getReg() == Mips::A2)
+    res = 0;
+  else if (MI.getOperand(0).getReg() == Mips::A1 &&
+           MI.getOperand(1).getReg() == Mips::A3)
+    res = 1;
+  else if (MI.getOperand(0).getReg() == Mips::A2 &&
+           MI.getOperand(1).getReg() == Mips::A3)
+    res = 2;
+  else if (MI.getOperand(0).getReg() == Mips::A0 &&
+           MI.getOperand(1).getReg() == Mips::S5)
+    res = 3;
+  else if (MI.getOperand(0).getReg() == Mips::A0 &&
+           MI.getOperand(1).getReg() == Mips::S6)
+    res = 4;
+  else if (MI.getOperand(0).getReg() == Mips::A0 &&
+           MI.getOperand(1).getReg() == Mips::A1)
+    res = 5;
+  else if (MI.getOperand(0).getReg() == Mips::A0 &&
+           MI.getOperand(1).getReg() == Mips::A2)
+    res = 6;
+  else if (MI.getOperand(0).getReg() == Mips::A0 &&
+           MI.getOperand(1).getReg() == Mips::A3)
+    res = 7;
+
+  return res;
+}
+
+unsigned
 MipsMCCodeEmitter::getSimm23Lsl2Encoding(const MCInst &MI, unsigned OpNo,
                                          SmallVectorImpl<MCFixup> &Fixups,
                                          const MCSubtargetInfo &STI) const {

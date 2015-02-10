@@ -114,6 +114,11 @@ static DecodeStatus DecodeGPRMM16ZeroRegisterClass(MCInst &Inst,
                                                    uint64_t Address,
                                                    const void *Decoder);
 
+static DecodeStatus DecodeGPRMM16MovePRegisterClass(MCInst &Inst,
+                                                    unsigned RegNo,
+                                                    uint64_t Address,
+                                                    const void *Decoder);
+
 static DecodeStatus DecodeGPR32RegisterClass(MCInst &Inst,
                                              unsigned RegNo,
                                              uint64_t Address,
@@ -438,6 +443,10 @@ static DecodeStatus DecodeRegListOperand(MCInst &Inst, unsigned Insn,
 static DecodeStatus DecodeRegListOperand16(MCInst &Inst, unsigned Insn,
                                            uint64_t Address,
                                            const void *Decoder);
+
+static DecodeStatus DecodeMovePRegPair(MCInst &Inst, unsigned Insn,
+                                       uint64_t Address,
+                                       const void *Decoder);
 
 namespace llvm {
 extern Target TheMipselTarget, TheMipsTarget, TheMips64Target,
@@ -1001,6 +1010,17 @@ static DecodeStatus DecodeGPRMM16ZeroRegisterClass(MCInst &Inst,
   if (RegNo > 7)
     return MCDisassembler::Fail;
   unsigned Reg = getReg(Decoder, Mips::GPRMM16ZeroRegClassID, RegNo);
+  Inst.addOperand(MCOperand::CreateReg(Reg));
+  return MCDisassembler::Success;
+}
+
+static DecodeStatus DecodeGPRMM16MovePRegisterClass(MCInst &Inst,
+                                                    unsigned RegNo,
+                                                    uint64_t Address,
+                                                    const void *Decoder) {
+  if (RegNo > 7)
+    return MCDisassembler::Fail;
+  unsigned Reg = getReg(Decoder, Mips::GPRMM16MovePRegClassID, RegNo);
   Inst.addOperand(MCOperand::CreateReg(Reg));
   return MCDisassembler::Success;
 }
@@ -1831,6 +1851,51 @@ static DecodeStatus DecodeRegListOperand16(MCInst &Inst, unsigned Insn,
     Inst.addOperand(MCOperand::CreateReg(Regs[i]));
 
   Inst.addOperand(MCOperand::CreateReg(Mips::RA));
+
+  return MCDisassembler::Success;
+}
+
+static DecodeStatus DecodeMovePRegPair(MCInst &Inst, unsigned Insn,
+                                       uint64_t Address, const void *Decoder) {
+
+  unsigned RegPair = fieldFromInstruction(Insn, 7, 3);
+
+  switch (RegPair) {
+  default:
+    return MCDisassembler::Fail;
+  case 0:
+    Inst.addOperand(MCOperand::CreateReg(Mips::A1));
+    Inst.addOperand(MCOperand::CreateReg(Mips::A2));
+    break;
+  case 1:
+    Inst.addOperand(MCOperand::CreateReg(Mips::A1));
+    Inst.addOperand(MCOperand::CreateReg(Mips::A3));
+    break;
+  case 2:
+    Inst.addOperand(MCOperand::CreateReg(Mips::A2));
+    Inst.addOperand(MCOperand::CreateReg(Mips::A3));
+    break;
+  case 3:
+    Inst.addOperand(MCOperand::CreateReg(Mips::A0));
+    Inst.addOperand(MCOperand::CreateReg(Mips::S5));
+    break;
+  case 4:
+    Inst.addOperand(MCOperand::CreateReg(Mips::A0));
+    Inst.addOperand(MCOperand::CreateReg(Mips::S6));
+    break;
+  case 5:
+    Inst.addOperand(MCOperand::CreateReg(Mips::A0));
+    Inst.addOperand(MCOperand::CreateReg(Mips::A1));
+    break;
+  case 6:
+    Inst.addOperand(MCOperand::CreateReg(Mips::A0));
+    Inst.addOperand(MCOperand::CreateReg(Mips::A2));
+    break;
+  case 7:
+    Inst.addOperand(MCOperand::CreateReg(Mips::A0));
+    Inst.addOperand(MCOperand::CreateReg(Mips::A3));
+    break;
+  }
 
   return MCDisassembler::Success;
 }

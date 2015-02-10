@@ -43,6 +43,7 @@
 # CHECK-EL: mfhi    $9              # encoding: [0x09,0x46]
 # CHECK-EL: mflo    $9              # encoding: [0x49,0x46]
 # CHECK-EL: move    $25, $1         # encoding: [0x21,0x0f]
+# CHECK-EL: movep   $5, $6, $2, $3  # encoding: [0x34,0x84]
 # CHECK-EL: jrc     $9              # encoding: [0xa9,0x45]
 # CHECK-NEXT: jalr    $9            # encoding: [0xc9,0x45]
 # CHECK-EL: jraddiusp 20            # encoding: [0x05,0x47]
@@ -97,6 +98,7 @@
 # CHECK-EB: mfhi    $9              # encoding: [0x46,0x09]
 # CHECK-EB: mflo    $9              # encoding: [0x46,0x49]
 # CHECK-EB: move    $25, $1         # encoding: [0x0f,0x21]
+# CHECK-EB: movep   $5, $6, $2, $3  # encoding: [0x84,0x34]
 # CHECK-EB: jrc     $9              # encoding: [0x45,0xa9]
 # CHECK-NEXT: jalr    $9            # encoding: [0x45,0xc9]
 # CHECK-EB: jraddiusp 20            # encoding: [0x47,0x05]
@@ -149,6 +151,7 @@
     mfhi    $9
     mflo    $9
     move    $25, $1
+    movep   $5, $6, $2, $3
     jrc     $9
     jalr    $9
     jraddiusp 20

@@ -501,3 +501,6 @@
 
 # CHECK: sdbbp16 14
 0x46 0xce
+
+# CHECK: movep $5, $6, $2, $3
+0x84 0x34
