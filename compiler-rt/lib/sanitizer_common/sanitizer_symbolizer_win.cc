@@ -30,25 +30,7 @@ class WinSymbolizer : public Symbolizer {
     SymbolizedStack *frame = SymbolizedStack::New(addr);
 
     BlockingMutexLock l(&dbghelp_mu_);
-    if (!initialized_) {
-      if (!TrySymInitialize()) {
-        // OK, maybe the client app has called SymInitialize already.
-        // That's a bit unfortunate for us as all the DbgHelp functions are
-        // single-threaded and we can't coordinate with the app.
-        // FIXME: Can we stop the other threads at this point?
-        // Anyways, we have to reconfigure stuff to make sure that SymInitialize
-        // has all the appropriate options set.
-        // Cross our fingers and reinitialize DbgHelp.
-        Report("*** WARNING: Failed to initialize DbgHelp!              ***\n");
-        Report("*** Most likely this means that the app is already      ***\n");
-        Report("*** using DbgHelp, possibly with incompatible flags.    ***\n");
-        Report("*** Due to technical reasons, symbolization might crash ***\n");
-        Report("*** or produce wrong results.                           ***\n");
-        SymCleanup(GetCurrentProcess());
-        TrySymInitialize();
-      }
-      initialized_ = true;
-    }
+    InitializeIfNeeded();
 
     // See http://msdn.microsoft.com/en-us/library/ms680578(VS.85).aspx
     char buffer[sizeof(SYMBOL_INFO) + MAX_SYM_NAME * sizeof(CHAR)];
@@ -100,6 +82,58 @@ class WinSymbolizer : public Symbolizer {
   // FIXME: Implement GetModuleNameAndOffsetForPC().
 
  private:
+  void InitializeIfNeeded() {
+    if (initialized_)
+      return;
+    if (!TrySymInitialize()) {
+      // OK, maybe the client app has called SymInitialize already.
+      // That's a bit unfortunate for us as all the DbgHelp functions are
+      // single-threaded and we can't coordinate with the app.
+      // FIXME: Can we stop the other threads at this point?
+      // Anyways, we have to reconfigure stuff to make sure that SymInitialize
+      // has all the appropriate options set.
+      // Cross our fingers and reinitialize DbgHelp.
+      Report("*** WARNING: Failed to initialize DbgHelp!              ***\n");
+      Report("*** Most likely this means that the app is already      ***\n");
+      Report("*** using DbgHelp, possibly with incompatible flags.    ***\n");
+      Report("*** Due to technical reasons, symbolization might crash ***\n");
+      Report("*** or produce wrong results.                           ***\n");
+      SymCleanup(GetCurrentProcess());
+      TrySymInitialize();
+    }
+    initialized_ = true;
+
+    // When an executable is run from a location different from the one where it
+    // was originally built, we may not see the nearby PDB files.
+    // To work around this, let's append the directory of the main module
+    // to the symbol search path.  All the failures below are not fatal.
+    const size_t kSymPathSize = 2048;
+    static wchar_t path_buffer[kSymPathSize + 1 + MAX_PATH];
+    if (!SymGetSearchPathW(GetCurrentProcess(), path_buffer, kSymPathSize)) {
+      Report("*** WARNING: Failed to SymGetSearchPathW ***\n");
+      return;
+    }
+    size_t sz = wcslen(path_buffer);
+    if (sz) {
+      CHECK_EQ(0, wcscat_s(path_buffer, L";"));
+      sz++;
+    }
+    DWORD res = GetModuleFileNameW(NULL, path_buffer + sz, MAX_PATH);
+    if (res == 0 || res == MAX_PATH) {
+      Report("*** WARNING: Failed to getting the EXE directory ***\n");
+      return;
+    }
+    // Write the zero character in place of the last backslash to get the
+    // directory of the main module at the end of path_buffer.
+    wchar_t *last_bslash = wcsrchr(path_buffer + sz, L'\\');
+    CHECK_NE(last_bslash, 0);
+    *last_bslash = L'\0';
+    if (!SymSetSearchPathW(GetCurrentProcess(), path_buffer)) {
+      Report("*** WARNING: Failed to SymSetSearchPathW\n");
+      return;
+    }
+  }
+
   bool TrySymInitialize() {
     SymSetOptions(SYMOPT_DEFERRED_LOADS | SYMOPT_UNDNAME | SYMOPT_LOAD_LINES);
     return SymInitialize(GetCurrentProcess(), 0, TRUE);
