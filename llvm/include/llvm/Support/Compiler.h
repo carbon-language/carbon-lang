@@ -297,7 +297,7 @@ extern "C" __declspec(dllimport) void __stdcall RaiseException(
 #endif
 # define LLVM_BUILTIN_TRAP                                                     \
   do {                                                                         \
-    ::RaiseException(0xDEADD0D0, 0x1 /*EXCEPTION_NONCONTINUABLE*/, 0, nullptr);\
+    ::RaiseException(0x8000DEAD, 0x1 /*EXCEPTION_NONCONTINUABLE*/, 0, nullptr);\
     __assume(false);                                                           \
   } while (0)
 #else
