@@ -350,6 +350,10 @@ public:
     hierarchy_info() : depth(1), uninitialized(true) {}
     void init(AddrUnsPair *adr2os, int num_addrs)
     {
+        /* Added explicit initialization of the depth here to prevent usage of dirty value
+           observed when static library is re-initialized multiple times (e.g. when
+           non-OpenMP thread repeatedly launches/joins thread that uses OpenMP). */
+        depth = 1;
         uninitialized = false;
         for (kmp_uint32 i=0; i<maxLevels; ++i) { // init numPerLevel[*] to 1 item per level
             numPerLevel[i] = 1;
