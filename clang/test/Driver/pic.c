@@ -11,6 +11,8 @@
 // CHECK-PIC2: "-mrelocation-model" "pic"
 // CHECK-PIC2: "-pic-level" "2"
 //
+// CHECK-NO-STATIC-NOT: "-static"
+//
 // CHECK-PIE1: "-mrelocation-model" "pic"
 // CHECK-PIE1: "-pic-level" "1"
 // CHECK-PIE1: "-pie-level" "1"
@@ -200,6 +202,8 @@
 // RUN:   | FileCheck %s --check-prefix=CHECK-PIC2
 // RUN: %clang -c %s -target arm64-apple-ios -mkernel -miphoneos-version-min=7.0.0 -### 2>&1 \
 // RUN:   | FileCheck %s --check-prefix=CHECK-PIC2
+// RUN: %clang -x assembler -c %s -target arm64-apple-ios -mkernel -miphoneos-version-min=7.0.0 -no-integrated-as -### 2>&1 \
+// RUN:   | FileCheck %s --check-prefix=CHECK-NO-STATIC
 // RUN: %clang -c %s -target armv7-apple-ios -fapple-kext -miphoneos-version-min=5.0.0 -### 2>&1 \
 // RUN:   | FileCheck %s --check-prefix=CHECK-NO-PIC
 // RUN: %clang -c %s -target armv7-apple-ios -fapple-kext -miphoneos-version-min=6.0.0 -static -### 2>&1 \
