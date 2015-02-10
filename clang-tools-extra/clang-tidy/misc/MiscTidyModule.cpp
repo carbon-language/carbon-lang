@@ -13,6 +13,7 @@
 #include "ArgumentCommentCheck.h"
 #include "AssignOperatorSignatureCheck.h"
 #include "BoolPointerImplicitConversion.h"
+#include "InaccurateEraseCheck.h"
 #include "InefficientAlgorithmCheck.h"
 #include "SwappedArgumentsCheck.h"
 #include "UndelegatedConstructor.h"
@@ -31,6 +32,8 @@ public:
         "misc-assign-operator-signature");
     CheckFactories.registerCheck<BoolPointerImplicitConversion>(
         "misc-bool-pointer-implicit-conversion");
+    CheckFactories.registerCheck<InaccurateEraseCheck>(
+        "misc-inaccurate-erase");
     CheckFactories.registerCheck<InefficientAlgorithmCheck>(
         "misc-inefficient-algorithm");
     CheckFactories.registerCheck<SwappedArgumentsCheck>(
