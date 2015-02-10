@@ -379,6 +379,21 @@ TEST(DeclarationMatcher, hasDeclContext) {
   EXPECT_TRUE(matches("class D{};", decl(hasDeclContext(decl()))));
 }
 
+TEST(DeclarationMatcher, translationUnitDecl) {
+  const std::string Code = "int MyVar1;\n"
+                           "namespace NameSpace {\n"
+                           "int MyVar2;\n"
+                           "}  // namespace NameSpace\n";
+  EXPECT_TRUE(matches(
+      Code, varDecl(hasName("MyVar1"), hasDeclContext(translationUnitDecl()))));
+  EXPECT_FALSE(matches(
+      Code, varDecl(hasName("MyVar2"), hasDeclContext(translationUnitDecl()))));
+  EXPECT_TRUE(matches(
+      Code,
+      varDecl(hasName("MyVar2"),
+              hasDeclContext(decl(hasDeclContext(translationUnitDecl()))))));
+}
+
 TEST(DeclarationMatcher, LinkageSpecification) {
   EXPECT_TRUE(matches("extern \"C\" { void foo() {}; }", linkageSpecDecl()));
   EXPECT_TRUE(notMatches("void foo() {};", linkageSpecDecl()));
