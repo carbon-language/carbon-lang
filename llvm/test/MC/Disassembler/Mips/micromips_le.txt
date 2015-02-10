@@ -489,3 +489,9 @@
 
 # CHECK: lw $3, 32($gp)
 0x88 0x65
+
+# CHECK: lwm16 $16, $17, $ra, 8($sp)
+0x12 0x45
+
+# CHECK: swm16 $16, $17, $ra, 8($sp)
+0x52 0x45

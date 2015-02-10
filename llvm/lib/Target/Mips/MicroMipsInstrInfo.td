@@ -505,6 +505,7 @@ class StoreMultMM16<string opstr,
                     ComplexPattern Addr = addr> :
   MicroMipsInst16<(outs), (ins reglist16:$rt, mem_mm_4sp:$addr),
                   !strconcat(opstr, "\t$rt, $addr"), [], Itin, FrmI> {
+  let DecoderMethod = "DecodeMemMMReglistImm4Lsl2";
   let mayStore = 1;
 }
 
@@ -513,6 +514,7 @@ class LoadMultMM16<string opstr,
                    ComplexPattern Addr = addr> :
   MicroMipsInst16<(outs reglist16:$rt), (ins mem_mm_4sp:$addr),
                   !strconcat(opstr, "\t$rt, $addr"), [], Itin, FrmI> {
+  let DecoderMethod = "DecodeMemMMReglistImm4Lsl2";
   let mayLoad = 1;
 }
 

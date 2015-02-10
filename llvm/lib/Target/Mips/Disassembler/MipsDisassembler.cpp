@@ -299,6 +299,11 @@ static DecodeStatus DecodeMemMMGPImm7Lsl2(MCInst &Inst,
                                           uint64_t Address,
                                           const void *Decoder);
 
+static DecodeStatus DecodeMemMMReglistImm4Lsl2(MCInst &Inst,
+                                               unsigned Insn,
+                                               uint64_t Address,
+                                               const void *Decoder);
+
 static DecodeStatus DecodeMemMMImm12(MCInst &Inst,
                                      unsigned Insn,
                                      uint64_t Address,
@@ -1304,6 +1309,22 @@ static DecodeStatus DecodeMemMMGPImm7Lsl2(MCInst &Inst,
   return MCDisassembler::Success;
 }
 
+static DecodeStatus DecodeMemMMReglistImm4Lsl2(MCInst &Inst,
+                                               unsigned Insn,
+                                               uint64_t Address,
+                                               const void *Decoder) {
+  int Offset = SignExtend32<4>(Insn & 0xf);
+
+  if (DecodeRegListOperand16(Inst, Insn, Address, Decoder)
+      == MCDisassembler::Fail)
+    return MCDisassembler::Fail;
+
+  Inst.addOperand(MCOperand::CreateReg(Mips::SP));
+  Inst.addOperand(MCOperand::CreateImm(Offset << 2));
+
+  return MCDisassembler::Success;
+}
+
 static DecodeStatus DecodeMemMMImm12(MCInst &Inst,
                                      unsigned Insn,
                                      uint64_t Address,
@@ -1803,15 +1824,10 @@ static DecodeStatus DecodeRegListOperand16(MCInst &Inst, unsigned Insn,
                                            uint64_t Address,
                                            const void *Decoder) {
   unsigned Regs[] = {Mips::S0, Mips::S1, Mips::S2, Mips::S3};
-  unsigned RegNum;
-
   unsigned RegLst = fieldFromInstruction(Insn, 4, 2);
-  // Empty register lists are not allowed.
-  if (RegLst == 0)
-    return MCDisassembler::Fail;
+  unsigned RegNum = RegLst & 0x3;
 
-  RegNum = RegLst & 0x3;
-  for (unsigned i = 0; i < RegNum - 1; i++)
+  for (unsigned i = 0; i <= RegNum; i++)
     Inst.addOperand(MCOperand::CreateReg(Regs[i]));
 
   Inst.addOperand(MCOperand::CreateReg(Mips::RA));
