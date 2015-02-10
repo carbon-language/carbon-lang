@@ -11,6 +11,7 @@
 #define LLVM_DEBUGINFO_PDB_IPDBSOURCEFILE_H
 
 #include <memory>
+#include <string>
 
 #include "PDBTypes.h"
 
@@ -26,7 +27,7 @@ public:
   virtual uint32_t getUniqueId() const = 0;
   virtual std::string getChecksum() const = 0;
   virtual PDB_Checksum getChecksumType() const = 0;
-  virtual std::unique_ptr<IPDBEnumCompilands> getCompilands() const = 0;
+  virtual std::unique_ptr<IPDBEnumSymbols> getCompilands() const = 0;
 };
 }
 

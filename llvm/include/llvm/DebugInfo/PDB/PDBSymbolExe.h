@@ -12,8 +12,6 @@
 
 #include <string>
 
-#include "llvm/Support/COFF.h"
-
 #include "PDBSymbol.h"
 #include "PDBTypes.h"
 

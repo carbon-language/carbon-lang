@@ -11,6 +11,7 @@
 #define LLVM_DEBUGINFO_PDB_PDBTYPES_H
 
 #include <stdint.h>
+#include "llvm/Config/llvm-config.h"
 
 namespace llvm {
 
@@ -28,7 +29,6 @@ class IPDBSourceFile;
 typedef IPDBEnumChildren<PDBSymbol> IPDBEnumSymbols;
 typedef IPDBEnumChildren<IPDBSourceFile> IPDBEnumSourceFiles;
 typedef IPDBEnumChildren<IPDBDataStream> IPDBEnumDataStreams;
-typedef IPDBEnumChildren<PDBSymbolCompiland> IPDBEnumCompilands;
 
 class PDBSymbolExe;
 class PDBSymbolCompiland;
@@ -65,10 +65,7 @@ class PDBSymbolUnknown;
 /// Specifies which PDB reader implementation is to be used.  Only a value
 /// of PDB_ReaderType::DIA is supported.
 enum class PDB_ReaderType {
-  SystemDefault = 0,
-#if defined(_MSC_VER)
-  DIA = 1,
-#endif
+  DIA = 0,
 };
 
 /// Defines a 128-bit unique identifier.  This maps to a GUID on Windows, but
@@ -177,14 +174,14 @@ enum class PDB_Machine {
   Am33 = 0x13,
   Amd64 = 0x8664,
   Arm = 0x1C0,
-  Armnt = 0x1C4,
+  ArmNT = 0x1C4,
   Ebc = 0xEBC,
-  I386 = 0x14C,
+  x86 = 0x14C,
   Ia64 = 0x200,
-  M32r = 0x9041,
+  M32R = 0x9041,
   Mips16 = 0x266,
-  MipsFPU = 0x366,
-  MipsFPU16 = 0x466,
+  MipsFpu = 0x366,
+  MipsFpu16 = 0x466,
   PowerPC = 0x1F0,
   PowerPCFP = 0x1F1,
   R4000 = 0x166,

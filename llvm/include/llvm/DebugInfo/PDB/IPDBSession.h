@@ -27,8 +27,9 @@ public:
   virtual uint64_t getLoadAddress() const = 0;
   virtual void setLoadAddress(uint64_t Address) = 0;
   virtual std::unique_ptr<PDBSymbolExe> getGlobalScope() const = 0;
-  virtual std::unique_ptr<PDBSymbol> getSymbolById() const = 0;
-  virtual std::unique_ptr<IPDBSourceFile> getSourceFileById() const = 0;
+  virtual std::unique_ptr<PDBSymbol> getSymbolById(uint32_t SymbolId) const = 0;
+  virtual std::unique_ptr<IPDBSourceFile>
+  getSourceFileById(uint32_t FileId) const = 0;
 
   virtual std::unique_ptr<IPDBEnumDataStreams> getDebugStreams() const = 0;
 };
