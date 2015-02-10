@@ -156,6 +156,8 @@ def export_dynamic : Flag<["-", "--"], "export-dynamic">,
      Group<grp_main>;
 def alias_export_dynamic: Flag<["-"], "E">,
       Alias<export_dynamic>;
+def no_export_dynamic : Flag<["--"], "no-export-dynamic">,
+     Group<grp_main>;
 
 //===----------------------------------------------------------------------===//
 /// Dynamic Library Options

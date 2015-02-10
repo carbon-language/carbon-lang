@@ -91,6 +91,18 @@ TEST_F(GnuLdParserTest, EntryJoined) {
   EXPECT_EQ("foo", _context->entrySymbolName());
 }
 
+// --export-dynamic
+
+TEST_F(GnuLdParserTest, ExportDynamic) {
+  EXPECT_TRUE(parse("ld", "a.o", "--export-dynamic", nullptr));
+  EXPECT_TRUE(_context->shouldExportDynamic());
+}
+
+TEST_F(GnuLdParserTest, NoExportDynamic) {
+  EXPECT_TRUE(parse("ld", "a.o", "--no-export-dynamic", nullptr));
+  EXPECT_FALSE(_context->shouldExportDynamic());
+}
+
 // --init
 
 TEST_F(GnuLdParserTest, Init) {

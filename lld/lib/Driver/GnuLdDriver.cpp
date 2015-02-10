@@ -508,8 +508,9 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
   if (parsedArgs->hasArg(OPT_noinhibit_exec))
     ctx->setAllowRemainingUndefines(true);
 
-  if (parsedArgs->hasArg(OPT_export_dynamic))
-    ctx->setExportDynamic(true);
+  if (auto val = getBool(*parsedArgs, OPT_export_dynamic,
+                         OPT_no_export_dynamic))
+    ctx->setExportDynamic(*val);
 
   if (parsedArgs->hasArg(OPT_allow_multiple_definition))
     ctx->setAllowDuplicates(true);
