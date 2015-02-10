@@ -20,8 +20,10 @@
 //--
 
 // Third Party Headers:
+#ifndef _WIN32
 #include <sys/select.h>
 #include <unistd.h> // For STDIN_FILENO
+#endif
 #include <string.h> // For std::strerror()
 
 // In-house headers:
@@ -152,6 +154,7 @@ CMICmnStreamStdinLinux::Shutdown(void)
 bool
 CMICmnStreamStdinLinux::InputAvailable(bool &vwbAvail)
 {
+#ifndef _WIN32
     // Wait for the input using select API. Timeout is used so that we get an
     // opportunity to check if m_waitForInput has been set to false by other thread.
     fd_set setOfStdin;
@@ -177,6 +180,7 @@ CMICmnStreamStdinLinux::InputAvailable(bool &vwbAvail)
             return MIstatus::success;
         }
     }
+#endif
     return MIstatus::failure;
 }
 
