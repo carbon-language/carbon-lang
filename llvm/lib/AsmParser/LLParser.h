@@ -401,8 +401,10 @@ namespace llvm {
     template <class ParserTy>
     bool ParseMDFieldsImpl(ParserTy parseField, LocTy &ClosingLoc);
     bool ParseSpecializedMDNode(MDNode *&N, bool IsDistinct = false);
-    bool ParseMDLocation(MDNode *&Result, bool IsDistinct);
-    bool ParseGenericDebugNode(MDNode *&Result, bool IsDistinct);
+
+#define HANDLE_SPECIALIZED_MDNODE_LEAF(CLASS)                                  \
+  bool Parse##CLASS(MDNode *&Result, bool IsDistinct);
+#include "llvm/IR/Metadata.def"
 
     // Function Parsing.
     struct ArgInfo {

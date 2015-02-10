@@ -3083,13 +3083,11 @@ bool LLParser::ParseMDField(StringRef Name, FieldTy &Result) {
 
 bool LLParser::ParseSpecializedMDNode(MDNode *&N, bool IsDistinct) {
   assert(Lex.getKind() == lltok::MetadataVar && "Expected metadata type name");
-#define DISPATCH_TO_PARSER(CLASS)                                              \
+
+#define HANDLE_SPECIALIZED_MDNODE_LEAF(CLASS)                                  \
   if (Lex.getStrVal() == #CLASS)                                               \
     return Parse##CLASS(N, IsDistinct);
-
-  DISPATCH_TO_PARSER(MDLocation);
-  DISPATCH_TO_PARSER(GenericDebugNode);
-#undef DISPATCH_TO_PARSER
+#include "llvm/IR/Metadata.def"
 
   return TokError("expected metadata type");
 }
@@ -3145,6 +3143,64 @@ bool LLParser::ParseGenericDebugNode(MDNode *&Result, bool IsDistinct) {
   Result = GET_OR_DISTINCT(GenericDebugNode,
                            (Context, tag.Val, header.Val, operands.Val));
   return false;
+}
+
+bool LLParser::ParseMDSubrange(MDNode *&Result, bool IsDistinct) {
+  return TokError("unimplemented parser");
+}
+bool LLParser::ParseMDEnumerator(MDNode *&Result, bool IsDistinct) {
+  return TokError("unimplemented parser");
+}
+bool LLParser::ParseMDBasicType(MDNode *&Result, bool IsDistinct) {
+  return TokError("unimplemented parser");
+}
+bool LLParser::ParseMDDerivedType(MDNode *&Result, bool IsDistinct) {
+  return TokError("unimplemented parser");
+}
+bool LLParser::ParseMDCompositeType(MDNode *&Result, bool IsDistinct) {
+  return TokError("unimplemented parser");
+}
+bool LLParser::ParseMDSubroutineType(MDNode *&Result, bool IsDistinct) {
+  return TokError("unimplemented parser");
+}
+bool LLParser::ParseMDFile(MDNode *&Result, bool IsDistinct) {
+  return TokError("unimplemented parser");
+}
+bool LLParser::ParseMDCompileUnit(MDNode *&Result, bool IsDistinct) {
+  return TokError("unimplemented parser");
+}
+bool LLParser::ParseMDSubprogram(MDNode *&Result, bool IsDistinct) {
+  return TokError("unimplemented parser");
+}
+bool LLParser::ParseMDLexicalBlock(MDNode *&Result, bool IsDistinct) {
+  return TokError("unimplemented parser");
+}
+bool LLParser::ParseMDLexicalBlockFile(MDNode *&Result, bool IsDistinct) {
+  return TokError("unimplemented parser");
+}
+bool LLParser::ParseMDNamespace(MDNode *&Result, bool IsDistinct) {
+  return TokError("unimplemented parser");
+}
+bool LLParser::ParseMDTemplateTypeParameter(MDNode *&Result, bool IsDistinct) {
+  return TokError("unimplemented parser");
+}
+bool LLParser::ParseMDTemplateValueParameter(MDNode *&Result, bool IsDistinct) {
+  return TokError("unimplemented parser");
+}
+bool LLParser::ParseMDGlobalVariable(MDNode *&Result, bool IsDistinct) {
+  return TokError("unimplemented parser");
+}
+bool LLParser::ParseMDLocalVariable(MDNode *&Result, bool IsDistinct) {
+  return TokError("unimplemented parser");
+}
+bool LLParser::ParseMDExpression(MDNode *&Result, bool IsDistinct) {
+  return TokError("unimplemented parser");
+}
+bool LLParser::ParseMDObjCProperty(MDNode *&Result, bool IsDistinct) {
+  return TokError("unimplemented parser");
+}
+bool LLParser::ParseMDImportedEntity(MDNode *&Result, bool IsDistinct) {
+  return TokError("unimplemented parser");
 }
 #undef PARSE_MD_FIELD
 #undef NOP_FIELD
