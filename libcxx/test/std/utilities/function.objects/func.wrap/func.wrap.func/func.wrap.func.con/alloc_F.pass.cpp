@@ -89,4 +89,12 @@ int main()
     fun(10);
     }
 #endif
+    {
+    std::function<void(int)> fun(std::allocator_arg,
+                                 test_allocator<int(*)(int)>(),
+                                 &g);
+    assert(fun);
+    assert(fun.target<int(*)(int)>() != 0);
+    fun(10);
+    }
 }

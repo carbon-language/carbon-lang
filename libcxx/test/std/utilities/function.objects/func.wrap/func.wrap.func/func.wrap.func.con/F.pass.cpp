@@ -81,4 +81,10 @@ int main()
     assert(globalMemCounter.checkOutstandingNewEq(0));
     assert(f.target<int (A::*)(int) const>() != 0);
     }
+    {
+      std::function<void(int)> f(&g);
+      assert(f);
+      assert(f.target<int(*)(int)>() != 0);
+      f(1);
+    }
 }

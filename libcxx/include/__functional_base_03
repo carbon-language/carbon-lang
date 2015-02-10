@@ -995,6 +995,63 @@ struct __invoke_return2
                                                     _VSTD::declval<_A2>())) type;
 };
 
+template <class _Ret>
+struct __invoke_void_return_wrapper
+{
+    template <class _Fn>
+    static _Ret __call(_Fn __f)
+    {
+        return __invoke(__f);
+    }
+
+    template <class _Fn, class _A0>
+    static _Ret __call(_Fn __f, _A0& __a0)
+    {
+        return __invoke(__f, __a0);
+    }
+
+    template <class _Fn, class _A0, class _A1>
+    static _Ret __call(_Fn __f, _A0& __a0, _A1& __a1)
+    {
+        return __invoke(__f, __a0, __a1);
+    }
+
+    template <class _Fn, class _A0, class _A1, class _A2>
+    static _Ret __call(_Fn __f, _A0& __a0, _A1& __a1, _A2& __a2)
+    {
+        return __invoke(__f, __a0, __a1, __a2);
+    }
+};
+
+
+template <>
+struct __invoke_void_return_wrapper<void>
+{
+    template <class _Fn>
+    static void __call(_Fn __f)
+    {
+        __invoke(__f);
+    }
+
+    template <class _Fn, class _A0>
+    static void __call(_Fn __f, _A0& __a0)
+    {
+        __invoke(__f, __a0);
+    }
+
+    template <class _Fn, class _A0, class _A1>
+    static void __call(_Fn __f, _A0& __a0, _A1& __a1)
+    {
+        __invoke(__f, __a0, __a1);
+    }
+
+    template <class _Fn, class _A0, class _A1, class _A2>
+    static void __call(_Fn __f, _A0& __a0, _A1& __a1, _A2& __a2)
+    {
+        __invoke(__f, __a0, __a1, __a2);
+    }
+};
+
 template <class _Tp>
 class _LIBCPP_TYPE_VIS_ONLY reference_wrapper
     : public __weak_result_type<_Tp>

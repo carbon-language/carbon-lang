@@ -419,6 +419,26 @@ struct __invoke_return
     typedef decltype(__invoke(_VSTD::declval<_Tp>(), _VSTD::declval<_Args>()...)) type;
 };
 
+template <class _Ret>
+struct __invoke_void_return_wrapper
+{
+    template <class ..._Args>
+    static _Ret __call(_Args&&... __args)
+    {
+        return __invoke(_VSTD::forward<_Args>(__args)...);
+    }
+};
+
+template <>
+struct __invoke_void_return_wrapper<void>
+{
+    template <class ..._Args>
+    static void __call(_Args&&... __args)
+    {
+        __invoke(_VSTD::forward<_Args>(__args)...);
+    }
+};
+
 template <class _Tp>
 class _LIBCPP_TYPE_VIS_ONLY reference_wrapper
     : public __weak_result_type<_Tp>

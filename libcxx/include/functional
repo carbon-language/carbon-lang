@@ -1367,7 +1367,8 @@ template<class _Fp, class _Alloc, class _Rp, class ..._ArgTypes>
 _Rp
 __func<_Fp, _Alloc, _Rp(_ArgTypes...)>::operator()(_ArgTypes&& ... __arg)
 {
-    return __invoke(__f_.first(), _VSTD::forward<_ArgTypes>(__arg)...);
+    typedef __invoke_void_return_wrapper<_Rp> _Invoker;
+    return _Invoker::__call(__f_.first(), _VSTD::forward<_ArgTypes>(__arg)...);
 }
 
 #ifndef _LIBCPP_NO_RTTI
@@ -1429,7 +1430,7 @@ class _LIBCPP_TYPE_VIS_ONLY function<_Rp(_ArgTypes...)>
     template <class _Fp>
         struct __callable<_Fp, true>
         {
-            static const bool value =
+            static const bool value = is_same<void, _Rp>::value ||
                 is_convertible<typename __invoke_of<_Fp&, _ArgTypes...>::type,
                                _Rp>::value;
         };

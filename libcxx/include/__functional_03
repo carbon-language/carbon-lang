@@ -369,7 +369,8 @@ template<class _Fp, class _Alloc, class _Rp>
 _Rp
 __func<_Fp, _Alloc, _Rp()>::operator()()
 {
-    return __invoke(__f_.first());
+    typedef __invoke_void_return_wrapper<_Rp> _Invoker;
+    return _Invoker::__call(__f_.first());
 }
 
 #ifndef _LIBCPP_NO_RTTI
@@ -452,7 +453,8 @@ template<class _Fp, class _Alloc, class _Rp, class _A0>
 _Rp
 __func<_Fp, _Alloc, _Rp(_A0)>::operator()(_A0 __a0)
 {
-    return __invoke(__f_.first(), __a0);
+    typedef __invoke_void_return_wrapper<_Rp> _Invoker;
+    return _Invoker::__call(__f_.first(), __a0);
 }
 
 #ifndef _LIBCPP_NO_RTTI
@@ -535,7 +537,8 @@ template<class _Fp, class _Alloc, class _Rp, class _A0, class _A1>
 _Rp
 __func<_Fp, _Alloc, _Rp(_A0, _A1)>::operator()(_A0 __a0, _A1 __a1)
 {
-    return __invoke(__f_.first(), __a0, __a1);
+    typedef __invoke_void_return_wrapper<_Rp> _Invoker;
+    return _Invoker::__call(__f_.first(), __a0, __a1);
 }
 
 #ifndef _LIBCPP_NO_RTTI
@@ -618,7 +621,8 @@ template<class _Fp, class _Alloc, class _Rp, class _A0, class _A1, class _A2>
 _Rp
 __func<_Fp, _Alloc, _Rp(_A0, _A1, _A2)>::operator()(_A0 __a0, _A1 __a1, _A2 __a2)
 {
-    return __invoke(__f_.first(), __a0, __a1, __a2);
+    typedef __invoke_void_return_wrapper<_Rp> _Invoker;
+    return _Invoker::__call(__f_.first(), __a0, __a1, __a2);
 }
 
 #ifndef _LIBCPP_NO_RTTI
