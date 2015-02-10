@@ -542,8 +542,7 @@ LineTable::LinkLineTable (const FileRangeMap &file_range_map)
             // This entry doesn't have a remapping and it needs to be removed.
             // Watch out in case we need to terminate a previous entry needs to
             // be terminated now that one line entry in a sequence is not longer valid.
-            if (!entry.is_terminal_entry &&
-                !sequence.m_entries.empty() &&
+            if (!sequence.m_entries.empty() &&
                 !sequence.m_entries.back().is_terminal_entry)
             {
                 terminate_previous_entry = true;
