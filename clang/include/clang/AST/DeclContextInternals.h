@@ -163,10 +163,10 @@ public:
 
   /// HandleRedeclaration - If this is a redeclaration of an existing decl,
   /// replace the old one with D and return true.  Otherwise return false.
-  bool HandleRedeclaration(NamedDecl *D) {
+  bool HandleRedeclaration(NamedDecl *D, bool IsKnownNewer) {
     // Most decls only have one entry in their list, special case it.
     if (NamedDecl *OldD = getAsDecl()) {
-      if (!D->declarationReplaces(OldD))
+      if (!D->declarationReplaces(OldD, IsKnownNewer))
         return false;
       setOnlyValue(D);
       return true;
@@ -177,7 +177,7 @@ public:
     for (DeclsTy::iterator OD = Vec.begin(), ODEnd = Vec.end();
          OD != ODEnd; ++OD) {
       NamedDecl *OldD = *OD;
-      if (D->declarationReplaces(OldD)) {
+      if (D->declarationReplaces(OldD, IsKnownNewer)) {
         *OD = D;
         return true;
       }

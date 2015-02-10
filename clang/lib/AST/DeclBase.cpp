@@ -1082,7 +1082,7 @@ ExternalASTSource::SetExternalVisibleDeclsForName(const DeclContext *DC,
     // first.
     llvm::SmallVector<unsigned, 8> Skip;
     for (unsigned I = 0, N = Decls.size(); I != N; ++I)
-      if (List.HandleRedeclaration(Decls[I]))
+      if (List.HandleRedeclaration(Decls[I], /*IsKnownNewer*/false))
         Skip.push_back(I);
     Skip.push_back(Decls.size());
 
@@ -1564,7 +1564,7 @@ void DeclContext::makeDeclVisibleInContextImpl(NamedDecl *D, bool Internal) {
     return;
   }
 
-  if (DeclNameEntries.HandleRedeclaration(D)) {
+  if (DeclNameEntries.HandleRedeclaration(D, /*IsKnownNewer*/!Internal)) {
     // This declaration has replaced an existing one for which
     // declarationReplaces returns true.
     return;

@@ -6,3 +6,5 @@ module C {
 }
 module X { header "x.h" export * }
 module Y { header "y.h" export * }
+module na { header "na.h" export * }
+module nb { header "nb.h" export * }

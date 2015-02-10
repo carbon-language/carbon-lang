@@ -179,14 +179,17 @@ public:
                                     const PrintingPolicy &Policy,
                                     bool Qualified) const;
 
-  /// declarationReplaces - Determine whether this declaration, if
+  /// \brief Determine whether this declaration, if
   /// known to be well-formed within its context, will replace the
   /// declaration OldD if introduced into scope. A declaration will
   /// replace another declaration if, for example, it is a
   /// redeclaration of the same variable or function, but not if it is
   /// a declaration of a different kind (function vs. class) or an
   /// overloaded function.
-  bool declarationReplaces(NamedDecl *OldD) const;
+  ///
+  /// \param IsKnownNewer \c true if this declaration is known to be newer
+  /// than \p OldD (for instance, if this declaration is newly-created).
+  bool declarationReplaces(NamedDecl *OldD, bool IsKnownNewer = true) const;
 
   /// \brief Determine whether this declaration has linkage.
   bool hasLinkage() const;

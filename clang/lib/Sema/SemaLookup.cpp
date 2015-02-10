@@ -414,6 +414,8 @@ void LookupResult::resolveKind() {
     if (!Unique.insert(D).second) {
       // If it's not unique, pull something off the back (and
       // continue at this index).
+      // FIXME: This is wrong. We need to take the more recent declaration in
+      // order to get the right type, default arguments, etc.
       Decls[I] = Decls[--N];
       continue;
     }
@@ -1254,6 +1256,9 @@ static NamedDecl *findAcceptableDecl(Sema &SemaRef, NamedDecl *D) {
 
   for (auto RD : D->redecls()) {
     if (auto ND = dyn_cast<NamedDecl>(RD)) {
+      // FIXME: This is wrong in the case where the previous declaration is not
+      // visible in the same scope as D. This needs to be done much more
+      // carefully.
       if (LookupResult::isVisible(SemaRef, ND))
         return ND;
     }

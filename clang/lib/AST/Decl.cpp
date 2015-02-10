@@ -1445,74 +1445,122 @@ void NamedDecl::getNameForDiagnostic(raw_ostream &OS,
     printName(OS);
 }
 
-bool NamedDecl::declarationReplaces(NamedDecl *OldD) const {
+static bool isKindReplaceableBy(Decl::Kind OldK, Decl::Kind NewK) {
+  // For method declarations, we never replace.
+  if (ObjCMethodDecl::classofKind(NewK))
+    return false;
+
+  if (OldK == NewK)
+    return true;
+
+  // A compatibility alias for a class can be replaced by an interface.
+  if (ObjCCompatibleAliasDecl::classofKind(OldK) &&
+      ObjCInterfaceDecl::classofKind(NewK))
+    return true;
+
+  // A typedef-declaration, alias-declaration, or Objective-C class declaration
+  // can replace another declaration of the same type. Semantic analysis checks
+  // that we have matching types.
+  if ((TypedefNameDecl::classofKind(OldK) ||
+       ObjCInterfaceDecl::classofKind(OldK)) &&
+      (TypedefNameDecl::classofKind(NewK) ||
+       ObjCInterfaceDecl::classofKind(NewK)))
+    return true;
+
+  // Otherwise, a kind mismatch implies that the declaration is not replaced.
+  return false;
+}
+
+template<typename T> static bool isRedeclarableImpl(Redeclarable<T> *) {
+  return true;
+}
+static bool isRedeclarableImpl(...) { return false; }
+static bool isRedeclarable(Decl::Kind K) {
+  switch (K) {
+#define DECL(Type, Base) \
+  case Decl::Type: \
+    return isRedeclarableImpl((Type##Decl *)nullptr);
+#define ABSTRACT_DECL(DECL)
+#include "clang/AST/DeclNodes.inc"
+  }
+  llvm_unreachable("unknown decl kind");
+}
+
+bool NamedDecl::declarationReplaces(NamedDecl *OldD, bool IsKnownNewer) const {
   assert(getDeclName() == OldD->getDeclName() && "Declaration name mismatch");
 
-  // UsingDirectiveDecl's are not really NamedDecl's, and all have same name.
-  // We want to keep it, unless it nominates same namespace.
-  if (getKind() == Decl::UsingDirective) {
-    return cast<UsingDirectiveDecl>(this)->getNominatedNamespace()
-             ->getOriginalNamespace() ==
-           cast<UsingDirectiveDecl>(OldD)->getNominatedNamespace()
-             ->getOriginalNamespace();
-  }
+  if (!isKindReplaceableBy(OldD->getKind(), getKind()))
+    return false;
+
+  // Inline namespaces can give us two declarations with the same
+  // name and kind in the same scope but different contexts; we should
+  // keep both declarations in this case.
+  if (!this->getDeclContext()->getRedeclContext()->Equals(
+          OldD->getDeclContext()->getRedeclContext()))
+    return false;
 
   if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(this))
     // For function declarations, we keep track of redeclarations.
-    return FD->getPreviousDecl() == OldD;
+    // FIXME: This returns false for functions that should in fact be replaced.
+    // Instead, perform some kind of type check?
+    if (FD->getPreviousDecl() != OldD)
+      return false;
 
   // For function templates, the underlying function declarations are linked.
-  if (const FunctionTemplateDecl *FunctionTemplate
-        = dyn_cast<FunctionTemplateDecl>(this))
-    if (const FunctionTemplateDecl *OldFunctionTemplate
-          = dyn_cast<FunctionTemplateDecl>(OldD))
-      return FunctionTemplate->getTemplatedDecl()
-               ->declarationReplaces(OldFunctionTemplate->getTemplatedDecl());
+  if (const FunctionTemplateDecl *FunctionTemplate =
+          dyn_cast<FunctionTemplateDecl>(this))
+    return FunctionTemplate->getTemplatedDecl()->declarationReplaces(
+        cast<FunctionTemplateDecl>(OldD)->getTemplatedDecl());
 
-  // For method declarations, we keep track of redeclarations.
-  if (isa<ObjCMethodDecl>(this))
-    return false;
+  // Using shadow declarations can be overloaded on their target declarations
+  // if they introduce functions.
+  // FIXME: If our target replaces the old target, can we replace the old
+  //        shadow declaration?
+  if (auto *USD = dyn_cast<UsingShadowDecl>(this))
+    if (USD->getTargetDecl() != cast<UsingShadowDecl>(OldD)->getTargetDecl())
+      return false;
 
-  // FIXME: Is this correct if one of the decls comes from an inline namespace?
-  if (isa<ObjCInterfaceDecl>(this) && isa<ObjCCompatibleAliasDecl>(OldD))
-    return true;
-
-  if (isa<UsingShadowDecl>(this) && isa<UsingShadowDecl>(OldD))
-    return cast<UsingShadowDecl>(this)->getTargetDecl() ==
-           cast<UsingShadowDecl>(OldD)->getTargetDecl();
-
-  if (isa<UsingDecl>(this) && isa<UsingDecl>(OldD)) {
+  // Using declarations can be overloaded if they introduce functions.
+  if (auto *UD = dyn_cast<UsingDecl>(this)) {
     ASTContext &Context = getASTContext();
-    return Context.getCanonicalNestedNameSpecifier(
-                                     cast<UsingDecl>(this)->getQualifier()) ==
+    return Context.getCanonicalNestedNameSpecifier(UD->getQualifier()) ==
            Context.getCanonicalNestedNameSpecifier(
-                                        cast<UsingDecl>(OldD)->getQualifier());
+               cast<UsingDecl>(OldD)->getQualifier());
   }
-
-  if (isa<UnresolvedUsingValueDecl>(this) &&
-      isa<UnresolvedUsingValueDecl>(OldD)) {
+  if (auto *UUVD = dyn_cast<UnresolvedUsingValueDecl>(this)) {
     ASTContext &Context = getASTContext();
-    return Context.getCanonicalNestedNameSpecifier(
-                      cast<UnresolvedUsingValueDecl>(this)->getQualifier()) ==
+    return Context.getCanonicalNestedNameSpecifier(UUVD->getQualifier()) ==
            Context.getCanonicalNestedNameSpecifier(
                         cast<UnresolvedUsingValueDecl>(OldD)->getQualifier());
   }
 
-  // A typedef of an Objective-C class type can replace an Objective-C class
-  // declaration or definition, and vice versa.
-  // FIXME: Is this correct if one of the decls comes from an inline namespace?
-  if ((isa<TypedefNameDecl>(this) && isa<ObjCInterfaceDecl>(OldD)) ||
-      (isa<ObjCInterfaceDecl>(this) && isa<TypedefNameDecl>(OldD)))
-    return true;
+  // UsingDirectiveDecl's are not really NamedDecl's, and all have same name.
+  // We want to keep it, unless it nominates same namespace.
+  if (auto *UD = dyn_cast<UsingDirectiveDecl>(this))
+    return UD->getNominatedNamespace()->getOriginalNamespace() ==
+           cast<UsingDirectiveDecl>(OldD)->getNominatedNamespace()
+               ->getOriginalNamespace();
 
-  // For non-function declarations, if the declarations are of the
-  // same kind and have the same parent then this must be a redeclaration,
-  // or semantic analysis would not have given us the new declaration.
-  // Note that inline namespaces can give us two declarations with the same
-  // name and kind in the same scope but different contexts.
-  return this->getKind() == OldD->getKind() &&
-         this->getDeclContext()->getRedeclContext()->Equals(
-             OldD->getDeclContext()->getRedeclContext());
+  if (!IsKnownNewer && isRedeclarable(getKind())) {
+    // Check whether this is actually newer than OldD. We want to keep the
+    // newer declaration. This loop will usually only iterate once, because
+    // OldD is usually the previous declaration.
+    for (auto D : redecls()) {
+      if (D == OldD)
+        break;
+
+      // If we reach the canonical declaration, then OldD is not actually older
+      // than this one.
+      //
+      // FIXME: In this case, we should not add this decl to the lookup table.
+      if (D->isCanonicalDecl())
+        return false;
+    }
+  }
+
+  // It's a newer declaration of the same kind of declaration in the same scope,
+  // and not an overload: we want this decl instead of the existing one.
+  return true;
 }
 
 bool NamedDecl::hasLinkage() const {

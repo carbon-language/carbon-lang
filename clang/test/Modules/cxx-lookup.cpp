@@ -4,3 +4,8 @@
 namespace llvm {}
 #include "c2.h"
 llvm::GlobalValue *p;
+
+#include "na.h"
+namespace N { struct foo; }
+#include "nb.h"
+N::foo *use_n_foo;
