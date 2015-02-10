@@ -257,45 +257,8 @@ entry:
 ; CHECK: call void @llvm.assume
 }
 
-declare i32** @id(i32** %a)
 
-; Check that nonnull return attribute is applied to call
-define i1 @nonnull5(i32** %a) {
-entry:
-  %idr = call i32** @id(i32** %a)
-  %load = load i32** %idr
-  %cmp = icmp ne i32* %load, null
-  tail call void @llvm.assume(i1 %cmp)
-  %rval = icmp eq i32* %load, null
-  ret i1 %rval
 
-; CHECK-LABEL: @nonnull5
-; CHECK: call nonnull
-; CHECK-NOT: call void @llvm.assume
-; CHECK: ret i1 false
-}
-
-declare i32 @__personality0(...)
-
-; Check that nonnull return attribute is applied to invoke
-define i1 @nonnull6(i32** %a) {
-entry:
-  %idr = invoke i32** @id(i32** %a) to label %norm unwind label %lpad
-norm:
-  %load = load i32** %idr
-  %cmp = icmp ne i32* %load, null
-  tail call void @llvm.assume(i1 %cmp)
-  %rval = icmp eq i32* %load, null
-  ret i1 %rval
-lpad:
-  %res = landingpad { i8*, i32 } personality i32 (...)* @__personality0 cleanup
-  resume { i8*, i32 } undef
-
-; CHECK-LABEL: @nonnull6
-; CHECK: invoke nonnull
-; CHECK-NOT: call void @llvm.assume
-; CHECK: ret i1 false
-}
 
 attributes #0 = { nounwind uwtable }
 attributes #1 = { nounwind }
