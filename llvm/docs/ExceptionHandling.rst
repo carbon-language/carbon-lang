@@ -328,7 +328,7 @@ C++ Exception Handling using the Windows Runtime
  not yet fully implemented.  The text below describes how it will work
  when completed.)
 
-The Windows runtime function for C++ exception handling uses a mutli-phase
+The Windows runtime function for C++ exception handling uses a multi-phase
 approach.  When an exception occurs it searches the current callstack for a
 frame that has a handler for the exception.  If a handler is found, it then
 calls the cleanup handler for each frame above the handler which has a
