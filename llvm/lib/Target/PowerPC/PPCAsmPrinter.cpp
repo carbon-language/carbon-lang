@@ -416,15 +416,15 @@ void PPCAsmPrinter::EmitTlsCall(const MachineInstr *MI,
   MCSymbolRefExpr::VariantKind Kind = MCSymbolRefExpr::VK_None;
 
   assert(MI->getOperand(0).isReg() &&
-         ((Subtarget.isPPC64() && MI->getOperand(0).getReg() == PPC::X3) ||
-          (!Subtarget.isPPC64() && MI->getOperand(0).getReg() == PPC::R3)) &&
+         ((Subtarget->isPPC64() && MI->getOperand(0).getReg() == PPC::X3) ||
+          (!Subtarget->isPPC64() && MI->getOperand(0).getReg() == PPC::R3)) &&
          "GETtls[ld]ADDR[32] must define GPR3");
   assert(MI->getOperand(1).isReg() &&
-         ((Subtarget.isPPC64() && MI->getOperand(1).getReg() == PPC::X3) ||
-          (!Subtarget.isPPC64() && MI->getOperand(1).getReg() == PPC::R3)) &&
+         ((Subtarget->isPPC64() && MI->getOperand(1).getReg() == PPC::X3) ||
+          (!Subtarget->isPPC64() && MI->getOperand(1).getReg() == PPC::R3)) &&
          "GETtls[ld]ADDR[32] must read GPR3");
 
-  if (!Subtarget.isPPC64() && !Subtarget.isDarwin() &&
+  if (!Subtarget->isPPC64() && !Subtarget->isDarwin() &&
       TM.getRelocationModel() == Reloc::PIC_)
     Kind = MCSymbolRefExpr::VK_PLT;
   const MCSymbolRefExpr *TlsRef =
@@ -434,7 +434,7 @@ void PPCAsmPrinter::EmitTlsCall(const MachineInstr *MI,
   MCSymbol *MOSymbol = getSymbol(GValue);
   const MCExpr *SymVar = MCSymbolRefExpr::Create(MOSymbol, VK, OutContext);
   EmitToStreamer(OutStreamer,
-                 MCInstBuilder(Subtarget.isPPC64() ?
+                 MCInstBuilder(Subtarget->isPPC64() ?
                                PPC::BL8_NOP_TLS : PPC::BL_TLS)
                  .addExpr(TlsRef)
                  .addExpr(SymVar));
