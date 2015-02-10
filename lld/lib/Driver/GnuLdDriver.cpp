@@ -151,8 +151,8 @@ static bool parseDefsymAsAlias(StringRef opt, StringRef &sym,
   return !target.empty();
 }
 
-// Parses dashz options for max-page-size.
-static bool parseZOption(StringRef opt, uint64_t &val) {
+// Parses -z max-page-size=<value>
+static bool parseMaxPageSize(StringRef opt, uint64_t &val) {
   size_t equalPos = opt.find('=');
   if (equalPos == 0 || equalPos == StringRef::npos)
     return false;
@@ -560,7 +560,7 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
       // Error if the page size user set is less than the maximum page size
       // and greather than the default page size and the user page size is a
       // modulo of the default page size.
-      if ((!parseZOption(opt, maxPageSize)) ||
+      if ((!parseMaxPageSize(opt, maxPageSize)) ||
           (maxPageSize < ctx->getPageSize()) ||
           (maxPageSize % ctx->getPageSize())) {
         diag << "invalid option: " << opt << "\n";
