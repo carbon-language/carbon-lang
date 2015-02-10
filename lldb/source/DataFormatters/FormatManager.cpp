@@ -885,6 +885,7 @@ FormatManager::FormatManager() :
     EnableCategory(m_appkit_category_name,TypeCategoryMap::Last);
     EnableCategory(m_coreservices_category_name,TypeCategoryMap::Last);
     EnableCategory(m_coregraphics_category_name,TypeCategoryMap::Last);
+    EnableCategory(m_coremedia_category_name,TypeCategoryMap::Last);
     EnableCategory(m_gnu_cpp_category_name,TypeCategoryMap::Last);
     EnableCategory(m_libcxx_category_name,TypeCategoryMap::Last);
     EnableCategory(m_vectortypes_category_name,TypeCategoryMap::Last);

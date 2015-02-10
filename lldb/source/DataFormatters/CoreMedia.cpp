@@ -79,7 +79,7 @@ lldb_private::formatters::CMTimeSummaryProvider (ValueObject& valobj, Stream& st
             stream.Printf("%" PRId64 " third%sof a second", value, value == 1 ? " " : "s ");
             return true;
         default:
-            stream.Printf("%" PRId64 " %" PRId32 " of a second", value, timescale);
+            stream.Printf("%" PRId64 " %" PRId32 "th%sof a second", value, timescale, value == 1 ? " " : "s ");
             return true;
     }
 }
