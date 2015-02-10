@@ -518,6 +518,44 @@ TEST_F(MDNodeTest, replaceWithDistinct) {
   }
 }
 
+TEST_F(MDNodeTest, replaceWithPermanent) {
+  Metadata *Ops[] = {nullptr};
+  auto Temp = MDTuple::getTemporary(Context, Ops);
+  auto *T = Temp.get();
+
+  // U is a normal, uniqued node that references T.
+  auto *U = MDTuple::get(Context, T);
+  EXPECT_TRUE(U->isUniqued());
+
+  // Make Temp self-referencing.
+  Temp->replaceOperandWith(0, T);
+
+  // Try to uniquify Temp.  This should, despite the name in the API, give a
+  // 'distinct' node, since self-references aren't allowed to be uniqued.
+  //
+  // Since it's distinct, N should have the same address as when it was a
+  // temporary (i.e., be equal to T not U).
+  auto *N = MDNode::replaceWithPermanent(std::move(Temp));
+  EXPECT_EQ(N, T);
+  EXPECT_TRUE(N->isDistinct());
+
+  // U should be the canonical unique node with N as the argument.
+  EXPECT_EQ(U, MDTuple::get(Context, N));
+  EXPECT_TRUE(U->isUniqued());
+
+  // This temporary should collide with U when replaced, but it should still be
+  // uniqued.
+  EXPECT_EQ(U, MDNode::replaceWithPermanent(MDTuple::getTemporary(Context, N)));
+  EXPECT_TRUE(U->isUniqued());
+
+  // This temporary should become a new uniqued node.
+  auto Temp2 = MDTuple::getTemporary(Context, U);
+  auto *V = Temp2.get();
+  EXPECT_EQ(V, MDNode::replaceWithPermanent(std::move(Temp2)));
+  EXPECT_TRUE(V->isUniqued());
+  EXPECT_EQ(U, V->getOperand(0));
+}
+
 TEST_F(MDNodeTest, deleteTemporaryWithTrackingRef) {
   TrackingMDRef Ref;
   EXPECT_EQ(nullptr, Ref.get());

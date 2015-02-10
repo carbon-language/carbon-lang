@@ -518,9 +518,23 @@ void MDNode::resolveCycles() {
   }
 }
 
+static bool hasSelfReference(MDNode *N) {
+  for (Metadata *MD : N->operands())
+    if (MD == N)
+      return true;
+  return false;
+}
+
+MDNode *MDNode::replaceWithPermanentImpl() {
+  if (hasSelfReference(this))
+    return replaceWithDistinctImpl();
+  return replaceWithUniquedImpl();
+}
+
 MDNode *MDNode::replaceWithUniquedImpl() {
   // Try to uniquify in place.
   MDNode *UniquedNode = uniquify();
+
   if (UniquedNode == this) {
     makeUniqued();
     return this;
@@ -633,6 +647,8 @@ template <class NodeTy> struct MDNode::HasCachedHash {
 };
 
 MDNode *MDNode::uniquify() {
+  assert(!hasSelfReference(this) && "Cannot uniquify a self-referencing node");
+
   // Try to insert into uniquing store.
   switch (getMetadataID()) {
   default:
