@@ -3863,6 +3863,13 @@ def: Loada_pat<atomic_load_16, i32, addrgp, L2_loadruhgp>;
 def: Loada_pat<atomic_load_32, i32, addrgp, L2_loadrigp>;
 def: Loada_pat<atomic_load_64, i64, addrgp, L2_loadrdgp>;
 
+// Map from Pd = load(globaladdress) -> Rd = memb(globaladdress), Pd = Rd
+def: Loadam_pat<load, i1, addrga, I32toI1, L4_loadrub_abs>;
+def: Loadam_pat<load, i1, addrgp, I32toI1, L2_loadrubgp>;
+
+def: Stoream_pat<store, I1, addrga, I1toI32, S2_storerbabs>;
+def: Stoream_pat<store, I1, addrgp, I1toI32, S2_storerbgp>;
+
 // Map from load(globaladdress) -> mem[u][bhwd](#foo)
 class LoadGP_pats <PatFrag ldOp, InstHexagon MI, ValueType VT = i32>
   : Pat <(VT (ldOp (HexagonCONST32_GP tglobaladdr:$global))),
@@ -3886,6 +3893,11 @@ let AddedComplexity = 100 in {
   def: LoadGP_pats <extloadi1, L2_loadrubgp>;
   def: LoadGP_pats <zextloadi1, L2_loadrubgp>;
 }
+
+// Transfer global address into a register
+def: Pat<(HexagonCONST32 tglobaladdr:$Rs),      (A2_tfrsi s16Ext:$Rs)>;
+def: Pat<(HexagonCONST32_GP tblockaddress:$Rs), (A2_tfrsi s16Ext:$Rs)>;
+def: Pat<(HexagonCONST32_GP tglobaladdr:$Rs),   (A2_tfrsi s16Ext:$Rs)>;
 
 def: Pat<(i64 (ctlz I64:$src1)), (Zext64 (S2_cl0p I64:$src1))>;
 def: Pat<(i64 (cttz I64:$src1)), (Zext64 (S2_ct0p I64:$src1))>;

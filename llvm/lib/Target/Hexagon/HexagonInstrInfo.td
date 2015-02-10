@@ -1707,6 +1707,37 @@ let accessSize = WordAccess, opExtentAlign = 2 in {
   def L2_loadbsw4_io: T_load_io<"membh",  DoubleRegs, 0b0111, s11_2Ext>;
 }
 
+let addrMode = BaseImmOffset, isExtendable = 1, hasSideEffects = 0,
+    opExtendable = 3, isExtentSigned = 1  in
+class T_loadalign_io <string str, bits<4> MajOp, Operand ImmOp>
+  : LDInst<(outs DoubleRegs:$dst),
+           (ins DoubleRegs:$src1, IntRegs:$src2, ImmOp:$offset),
+  "$dst = "#str#"($src2 + #$offset)", [],
+  "$src1 = $dst">, AddrModeRel {
+    bits<4> name;
+    bits<5> dst;
+    bits<5> src2;
+    bits<12> offset;
+    bits<11> offsetBits;
+
+    let offsetBits = !if (!eq(!cast<string>(ImmOp), "s11_1Ext"), offset{11-1},
+                                                  /* s11_0Ext */ offset{10-0});
+    let IClass = 0b1001;
+
+    let Inst{27}    = 0b0;
+    let Inst{26-25} = offsetBits{10-9};
+    let Inst{24-21} = MajOp;
+    let Inst{20-16} = src2;
+    let Inst{13-5}  = offsetBits{8-0};
+    let Inst{4-0}   = dst;
+  }
+
+let accessSize = HalfWordAccess, opExtentBits = 12, opExtentAlign = 1 in
+def L2_loadalignh_io: T_loadalign_io <"memh_fifo", 0b0010, s11_1Ext>;
+
+let accessSize = ByteAccess, opExtentBits = 11 in
+def L2_loadalignb_io: T_loadalign_io <"memb_fifo", 0b0100, s11_0Ext>;
+
 // Patterns to select load-indexed (i.e. load from base+offset).
 multiclass Loadx_pat<PatFrag Load, ValueType VT, PatLeaf ImmPred,
                      InstHexagon MI> {
@@ -1873,6 +1904,41 @@ let accessSize = WordAccess, opExtentAlign = 2, hasNewValue = 0 in {
 }
 
 //===----------------------------------------------------------------------===//
+// Template class for post increment fifo loads with immediate offset.
+//===----------------------------------------------------------------------===//
+let hasSideEffects = 0, addrMode = PostInc in
+class T_loadalign_pi <string mnemonic, Operand ImmOp, bits<4> MajOp >
+  : LDInstPI <(outs DoubleRegs:$dst, IntRegs:$dst2),
+  (ins DoubleRegs:$src1, IntRegs:$src2, ImmOp:$offset),
+  "$dst = "#mnemonic#"($src2++#$offset)" ,
+  [], "$src2 = $dst2, $src1 = $dst" > ,
+  PredNewRel {
+    bits<5> dst;
+    bits<5> src2;
+    bits<5> offset;
+    bits<4> offsetBits;
+
+    let offsetBits = !if (!eq(!cast<string>(ImmOp), "s4_1Imm"), offset{4-1},
+                                                  /* s4_0Imm */ offset{3-0});
+    let IClass = 0b1001;
+
+    let Inst{27-25} = 0b101;
+    let Inst{24-21} = MajOp;
+    let Inst{20-16} = src2;
+    let Inst{13-12} = 0b00;
+    let Inst{8-5} = offsetBits;
+    let Inst{4-0}   = dst;
+  }
+
+// Ryy=memh_fifo(Rx++#s4:1)
+// Ryy=memb_fifo(Rx++#s4:0)
+let accessSize = ByteAccess in
+def L2_loadalignb_pi : T_loadalign_pi <"memb_fifo", s4_0Imm, 0b0100>;
+
+let accessSize = HalfWordAccess, opExtentAlign = 1 in
+def L2_loadalignh_pi : T_loadalign_pi <"memh_fifo", s4_1Imm, 0b0010>;
+
+//===----------------------------------------------------------------------===//
 // Template class for post increment loads with register offset.
 //===----------------------------------------------------------------------===//
 let hasSideEffects = 0, addrMode = PostInc in
@@ -1976,6 +2042,33 @@ let accessSize = WordAccess in {
 let accessSize = DoubleWordAccess in
 def L2_loadrd_pcr  : T_load_pcr <"memd", DoubleRegs, 0b1110>;
 
+// Load / Post increment circular addressing mode.
+let Uses = [CS], hasSideEffects = 0 in
+class T_loadalign_pcr<string mnemonic, bits<4> MajOp, MemAccessSize AccessSz >
+  : LDInst <(outs DoubleRegs:$dst, IntRegs:$_dst_),
+            (ins DoubleRegs:$_src_, IntRegs:$Rz, ModRegs:$Mu),
+  "$dst = "#mnemonic#"($Rz ++ I:circ($Mu))", [],
+  "$Rz = $_dst_, $dst = $_src_" > {
+    bits<5> dst;
+    bits<5> Rz;
+    bit Mu;
+
+    let accessSize = AccessSz;
+    let IClass = 0b1001;
+
+    let Inst{27-25} = 0b100;
+    let Inst{24-21} = MajOp;
+    let Inst{20-16} = Rz;
+    let Inst{13}    = Mu;
+    let Inst{12}    = 0b0;
+    let Inst{9}     = 0b1;
+    let Inst{7}     = 0b0;
+    let Inst{4-0}   = dst;
+ }
+
+def L2_loadalignb_pcr : T_loadalign_pcr <"memb_fifo", 0b0100, ByteAccess>;
+def L2_loadalignh_pcr : T_loadalign_pcr <"memh_fifo", 0b0010, HalfWordAccess>;
+
 //===----------------------------------------------------------------------===//
 // Circular loads with immediate offset.
 //===----------------------------------------------------------------------===//
@@ -2034,6 +2127,37 @@ let accessSize = WordAccess, hasNewValue = 0 in {
 
 let accessSize = DoubleWordAccess, hasNewValue = 0 in
 def L2_loadrd_pci : T_load_pci <"memd", DoubleRegs, s4_3Imm, 0b1110>;
+
+//===----------------------------------------------------------------------===//
+// Circular loads - Pseudo
+//
+// Please note that the input operand order in the pseudo instructions
+// doesn't match with the real instructions. Pseudo instructions operand
+// order should mimics the ordering in the intrinsics. Also, 'src2' doesn't
+// appear in the AsmString because it's same as 'dst'.
+//===----------------------------------------------------------------------===//
+let isCodeGenOnly = 1,  mayLoad = 1, hasSideEffects = 0, isPseudo = 1 in
+class T_load_pci_pseudo <string opc, RegisterClass RC>
+  : LDInstPI<(outs IntRegs:$_dst_, RC:$dst),
+             (ins IntRegs:$src1, IntRegs:$src2, IntRegs:$src3, s4Imm:$src4),
+  ".error \"$dst = "#opc#"($src1++#$src4:circ($src3))\"",
+  [], "$src1 = $_dst_">;
+
+def L2_loadrb_pci_pseudo  : T_load_pci_pseudo <"memb",  IntRegs>;
+def L2_loadrub_pci_pseudo : T_load_pci_pseudo <"memub", IntRegs>;
+def L2_loadrh_pci_pseudo  : T_load_pci_pseudo <"memh",  IntRegs>;
+def L2_loadruh_pci_pseudo : T_load_pci_pseudo <"memuh", IntRegs>;
+def L2_loadri_pci_pseudo  : T_load_pci_pseudo <"memw",  IntRegs>;
+def L2_loadrd_pci_pseudo  : T_load_pci_pseudo <"memd",  DoubleRegs>;
+
+
+// TODO: memb_fifo and memh_fifo must take destination register as input.
+// One-off circ loads - not enough in common to break into a class.
+let accessSize = ByteAccess in
+def L2_loadalignb_pci : T_load_pci <"memb_fifo", DoubleRegs, s4_0Imm, 0b0100>;
+
+let accessSize = HalfWordAccess, opExtentAlign = 1 in
+def L2_loadalignh_pci : T_load_pci <"memh_fifo", DoubleRegs, s4_1Imm, 0b0010>;
 
 // L[24]_load[wd]_locked: Load word/double with lock.
 let isSoloAX = 1 in
@@ -2121,6 +2245,30 @@ let hasNewValue =1, opNewValue = 0 in {
 def L2_loadbzw4_pbr : T_load_pbr <"memubh", DoubleRegs, WordAccess, 0b0101>;
 def L2_loadbsw4_pbr : T_load_pbr <"membh",  DoubleRegs, WordAccess, 0b0111>;
 def L2_loadrd_pbr : T_load_pbr <"memd", DoubleRegs, DoubleWordAccess, 0b1110>;
+
+def L2_loadalignb_pbr :T_load_pbr <"memb_fifo", DoubleRegs, ByteAccess, 0b0100>;
+def L2_loadalignh_pbr :T_load_pbr <"memh_fifo", DoubleRegs,
+                                   HalfWordAccess, 0b0010>;
+
+//===----------------------------------------------------------------------===//
+// Bit-reversed loads - Pseudo
+//
+// Please note that 'src2' doesn't appear in the AsmString because
+// it's same as 'dst'.
+//===----------------------------------------------------------------------===//
+let isCodeGenOnly = 1, mayLoad = 1, hasSideEffects = 0, isPseudo = 1 in
+class T_load_pbr_pseudo <string opc, RegisterClass RC>
+  : LDInstPI<(outs IntRegs:$_dst_, RC:$dst),
+             (ins IntRegs:$src1, IntRegs:$src2, IntRegs:$src3),
+  ".error \"$dst = "#opc#"($src1++$src3:brev)\"",
+  [], "$src1 = $_dst_">;
+
+def L2_loadrb_pbr_pseudo  : T_load_pbr_pseudo <"memb",  IntRegs>;
+def L2_loadrub_pbr_pseudo : T_load_pbr_pseudo <"memub", IntRegs>;
+def L2_loadrh_pbr_pseudo  : T_load_pbr_pseudo <"memh",  IntRegs>;
+def L2_loadruh_pbr_pseudo : T_load_pbr_pseudo <"memuh", IntRegs>;
+def L2_loadri_pbr_pseudo  : T_load_pbr_pseudo <"memw",  IntRegs>;
+def L2_loadrd_pbr_pseudo  : T_load_pbr_pseudo <"memd",  DoubleRegs>;
 
 //===----------------------------------------------------------------------===//
 // LD -
@@ -3549,6 +3697,26 @@ def S2_storerhnew_pci : T_storenew_pci <"memh", s4_1Imm, 0b01, HalfWordAccess>;
 def S2_storerinew_pci : T_storenew_pci <"memw", s4_2Imm, 0b10, WordAccess>;
 
 //===----------------------------------------------------------------------===//
+// Circular stores - Pseudo
+//
+// Please note that the input operand order in the pseudo instructions
+// doesn't match with the real instructions. Pseudo instructions operand
+// order should mimics the ordering in the intrinsics.
+//===----------------------------------------------------------------------===//
+let isCodeGenOnly = 1, mayStore = 1, hasSideEffects = 0, isPseudo = 1 in
+class T_store_pci_pseudo <string opc, RegisterClass RC>
+  : STInstPI<(outs IntRegs:$_dst_),
+             (ins IntRegs:$src1, RC:$src2, IntRegs:$src3, s4Imm:$src4),
+  ".error \""#opc#"($src1++#$src4:circ($src3)) = $src2\"",
+  [], "$_dst_ = $src1">;
+
+def S2_storerb_pci_pseudo : T_store_pci_pseudo <"memb", IntRegs>;
+def S2_storerh_pci_pseudo : T_store_pci_pseudo <"memh", IntRegs>;
+def S2_storerf_pci_pseudo : T_store_pci_pseudo <"memh", IntRegs>;
+def S2_storeri_pci_pseudo : T_store_pci_pseudo <"memw", IntRegs>;
+def S2_storerd_pci_pseudo : T_store_pci_pseudo <"memd", DoubleRegs>;
+
+//===----------------------------------------------------------------------===//
 // Circular stores with auto-increment register
 //===----------------------------------------------------------------------===//
 let Uses = [CS], isNVStorable = 1 in
@@ -3690,6 +3858,26 @@ def S2_storerhnew_pbr : T_storenew_pbr<"memh", HalfWordAccess, 0b01>;
 
 let BaseOpcode = "S2_storeri_pbr" in
 def S2_storerinew_pbr : T_storenew_pbr<"memw", WordAccess, 0b10>;
+
+//===----------------------------------------------------------------------===//
+// Bit-reversed stores - Pseudo
+//
+// Please note that the input operand order in the pseudo instructions
+// doesn't match with the real instructions. Pseudo instructions operand
+// order should mimics the ordering in the intrinsics.
+//===----------------------------------------------------------------------===//
+let isCodeGenOnly = 1,  mayStore = 1, hasSideEffects = 0, isPseudo = 1 in
+class T_store_pbr_pseudo <string opc, RegisterClass RC>
+  : STInstPI<(outs IntRegs:$_dst_),
+             (ins IntRegs:$src1, RC:$src2, IntRegs:$src3),
+  ".error \""#opc#"($src1++$src3:brev) = $src2\"",
+  [], "$_dst_ = $src1">;
+
+def S2_storerb_pbr_pseudo : T_store_pbr_pseudo <"memb", IntRegs>;
+def S2_storerh_pbr_pseudo : T_store_pbr_pseudo <"memh", IntRegs>;
+def S2_storeri_pbr_pseudo : T_store_pbr_pseudo <"memw", IntRegs>;
+def S2_storerf_pbr_pseudo : T_store_pbr_pseudo <"memh", IntRegs>;
+def S2_storerd_pbr_pseudo : T_store_pbr_pseudo <"memd", DoubleRegs>;
 
 //===----------------------------------------------------------------------===//
 // ST -
@@ -3870,6 +4058,10 @@ def S2_asr_i_r_rnd_goodsyntax
   "$dst = asrrnd($src, #$u5)",
   [], "", S_2op_tc_1_SLOT23>;
 
+let isAsmParserOnly = 1 in
+def A2_not: ALU32_rr<(outs IntRegs:$dst),(ins IntRegs:$src),
+  "$dst = not($src)">;
+
 def: Pat<(i32 (sra (i32 (add (i32 (sra I32:$src1, u5ImmPred:$src2)),
                              (i32 1))),
                    (i32 1))),
@@ -3913,6 +4105,9 @@ def A2_vabshsat : T_S2op_3 <"vabsh", 0b01, 0b101, 1>;
 // Vector absolute value words with and without saturation
 def A2_vabsw    : T_S2op_3 <"vabsw", 0b01, 0b110>;
 def A2_vabswsat : T_S2op_3 <"vabsw", 0b01, 0b111, 1>;
+
+def : Pat<(not (i64 DoubleRegs:$src1)),
+          (A2_notp DoubleRegs:$src1)>;
 
 //===----------------------------------------------------------------------===//
 // STYPE/BIT +
@@ -4161,6 +4356,27 @@ def C2_tfrrp: SInst<(outs PredRegs:$Pd), (ins IntRegs:$Rs),
   let Inst{1-0} = Pd;
 }
 
+let hasSideEffects = 0, isCodeGenOnly = 1 in
+def C2_pxfer_map: SInst<(outs PredRegs:$dst), (ins PredRegs:$src),
+     "$dst = $src">;
+
+
+// Patterns for loads of i1:
+def: Pat<(i1 (load AddrFI:$fi)),
+         (C2_tfrrp (L2_loadrub_io AddrFI:$fi, 0))>;
+def: Pat<(i1 (load (add (i32 IntRegs:$Rs), s11_0ExtPred:$Off))),
+         (C2_tfrrp (L2_loadrub_io IntRegs:$Rs, imm:$Off))>;
+def: Pat<(i1 (load (i32 IntRegs:$Rs))),
+         (C2_tfrrp (L2_loadrub_io IntRegs:$Rs, 0))>;
+
+def I1toI32: OutPatFrag<(ops node:$Rs),
+                        (C2_muxii (i1 $Rs), 1, 0)>;
+
+def I32toI1: OutPatFrag<(ops node:$Rs),
+                        (i1 (C2_tfrrp (i32 $Rs)))>;
+
+defm: Storexm_pat<store, I1, s11_0ExtPred, I1toI32, S2_storerb_io>;
+def: Storexm_simple_pat<store, I1, I1toI32, S2_storerb_io>;
 
 //===----------------------------------------------------------------------===//
 // STYPE/PRED -
@@ -4423,6 +4639,7 @@ class TFR_CR_RS_base<RegisterClass CTRC, RegisterClass RC, bit isDouble>
   }
 
 def A2_tfrrcr : TFR_CR_RS_base<CtrRegs, IntRegs, 0b0>;
+def A4_tfrpcp : TFR_CR_RS_base<CtrRegs64, DoubleRegs, 0b1>;
 def : InstAlias<"m0 = $Rs", (A2_tfrrcr C6, IntRegs:$Rs)>;
 def : InstAlias<"m1 = $Rs", (A2_tfrrcr C7, IntRegs:$Rs)>;
 
@@ -4444,6 +4661,7 @@ class TFR_RD_CR_base<RegisterClass RC, RegisterClass CTRC, bit isSingle>
 
 let hasNewValue = 1, opNewValue = 0 in
 def A2_tfrcrr : TFR_RD_CR_base<IntRegs, CtrRegs, 1>;
+def A4_tfrcpp : TFR_RD_CR_base<DoubleRegs, CtrRegs64, 0>;
 def : InstAlias<"$Rd = m0", (A2_tfrcrr IntRegs:$Rd, C6)>;
 def : InstAlias<"$Rd = m1", (A2_tfrcrr IntRegs:$Rd, C7)>;
 
@@ -4603,9 +4821,14 @@ def CONST64_Int_Real : CONSTLDInst<(outs DoubleRegs:$dst), (ins i64imm:$global),
                        "$dst = CONST64(#$global)",
                        [(set (i64 DoubleRegs:$dst), imm:$global)]>;
 
-let isCodeGenOnly = 1 in
-def TFR_PdFalse : SInst<(outs PredRegs:$dst), (ins),
-                  "$dst = xor($dst, $dst)",
+let hasSideEffects = 0, isReMaterializable = 1, isPseudo = 1,
+    isCodeGenOnly = 1 in
+def TFR_PdTrue : SInst<(outs PredRegs:$dst), (ins), "",
+                 [(set (i1 PredRegs:$dst), 1)]>;
+
+let hasSideEffects = 0, isReMaterializable = 1, isPseudo = 1,
+    isCodeGenOnly = 1 in
+def TFR_PdFalse : SInst<(outs PredRegs:$dst), (ins), "$dst = xor($dst, $dst)",
                   [(set (i1 PredRegs:$dst), 0)]>;
 
 // Pseudo instructions.
