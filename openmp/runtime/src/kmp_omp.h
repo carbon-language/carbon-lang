@@ -28,7 +28,7 @@
  * stable, then any new updates to the structures or data structure traversal algorithms need to
  * change this value.
  */
-#define KMP_OMP_VERSION 8
+#define KMP_OMP_VERSION 9
 
 typedef struct {
     kmp_int32  offset;
@@ -71,6 +71,7 @@ typedef struct {
     addr_and_size_t    major;
     addr_and_size_t    minor;
     addr_and_size_t    build;
+    addr_and_size_t    openmp_version;
     addr_and_size_t    banner;
 
     /* Various globals. */
@@ -81,13 +82,14 @@ typedef struct {
     addr_and_size_t  lock_table;         // Pointer to __kmp_lock_table.
     addr_and_size_t  func_microtask;
     addr_and_size_t  func_fork;
+    addr_and_size_t  func_fork_teams;
     addr_and_size_t  team_counter;
     addr_and_size_t  task_counter;
     addr_and_size_t  nthr_info;
     kmp_int32        address_width;
     kmp_int32        indexed_locks;
-    kmp_int32        last_barrier;
-    kmp_int32        deque_size;
+    kmp_int32        last_barrier;       // The end in enum barrier_type
+    kmp_int32        deque_size;         // TASK_DEQUE_SIZE
 
     /* thread structure information. */
     kmp_int32          th_sizeof_struct;
@@ -98,11 +100,17 @@ typedef struct {
     offset_and_size_t  th_ident;         // location for this thread (if available)
     offset_and_size_t  th_spin_here;     // is thread waiting for lock (if available)
     offset_and_size_t  th_next_waiting;  // next thread waiting for lock (if available)
-    offset_and_size_t  th_task_team;
-    offset_and_size_t  th_current_task;
-    offset_and_size_t  th_task_state;
+    offset_and_size_t  th_task_team;     // task team struct
+    offset_and_size_t  th_current_task;  // innermost task being executed
+    offset_and_size_t  th_task_state;    // alternating 0/1 for task team identification
     offset_and_size_t  th_bar;
-    offset_and_size_t  th_b_worker_arrived;
+    offset_and_size_t  th_b_worker_arrived; // the worker increases it by 1 when it arrives to the barrier
+
+    /* teams information */
+    offset_and_size_t th_teams_microtask;// entry address for teams construct
+    offset_and_size_t th_teams_level;    // initial level of teams construct
+    offset_and_size_t th_teams_nteams;   // number of teams in a league
+    offset_and_size_t th_teams_nth;      // number of threads in each team of the league
 
     /* kmp_desc structure (for info field above) */
     kmp_int32          ds_sizeof_struct;
@@ -120,11 +128,12 @@ typedef struct {
     offset_and_size_t  t_serialized;     // # levels of serialized teams
     offset_and_size_t  t_id;             // unique team id
     offset_and_size_t  t_pkfn;
-    offset_and_size_t  t_task_team;
-    offset_and_size_t  t_implicit_task;
+    offset_and_size_t  t_task_team;      // task team structure
+    offset_and_size_t  t_implicit_task;  // taskdata for the thread's implicit task
+    offset_and_size_t  t_cancel_request;
     offset_and_size_t  t_bar;
-    offset_and_size_t  t_b_master_arrived;
-    offset_and_size_t  t_b_team_arrived;
+    offset_and_size_t  t_b_master_arrived; // increased by 1 when master arrives to a barrier
+    offset_and_size_t  t_b_team_arrived;   // increased by one when all the threads arrived
 
     /* root structure information */
     kmp_int32          r_sizeof_struct;
@@ -148,6 +157,7 @@ typedef struct {
     offset_and_size_t  lk_now_serving;
     offset_and_size_t  lk_owner_id;
     offset_and_size_t  lk_depth_locked;
+    offset_and_size_t  lk_lock_flags;
 
     /* lock_table_t */
     kmp_int32          lt_size_of_struct;    /* Size and layout of kmp_lock_table_t. */
@@ -165,13 +175,33 @@ typedef struct {
 
     /* kmp_taskdata_t */
     kmp_int32          td_sizeof_struct;
-    offset_and_size_t  td_task_id;
-    offset_and_size_t  td_flags;
-    offset_and_size_t  td_team;
-    offset_and_size_t  td_parent;
-    offset_and_size_t  td_ident;
-    offset_and_size_t  td_allocated_child_tasks;
-    offset_and_size_t  td_incomplete_child_tasks;
+    offset_and_size_t  td_task_id;                  // task id
+    offset_and_size_t  td_flags;                    // task flags
+    offset_and_size_t  td_team;                     // team for this task
+    offset_and_size_t  td_parent;                   // parent task
+    offset_and_size_t  td_level;                    // task testing level
+    offset_and_size_t  td_ident;                    // task identifier
+    offset_and_size_t  td_allocated_child_tasks;    // child tasks (+ current task) not yet deallocated
+    offset_and_size_t  td_incomplete_child_tasks;   // child tasks not yet complete
+
+    /* Taskwait */
+    offset_and_size_t  td_taskwait_ident;
+    offset_and_size_t  td_taskwait_counter;
+    offset_and_size_t  td_taskwait_thread;          // gtid + 1 of thread encountered taskwait
+
+    /* Taskgroup */
+    offset_and_size_t  td_taskgroup;                // pointer to the current taskgroup
+    offset_and_size_t  td_task_count;               // number of allocated and not yet complete tasks
+    offset_and_size_t  td_cancel;                   // request for cancellation of this taskgroup
+
+    /* Task dependency */
+    offset_and_size_t  td_depnode;                  // pointer to graph node if the task has dependencies
+    offset_and_size_t  dn_successors;
+    offset_and_size_t  dn_node;
+    offset_and_size_t  dn_next;
+    offset_and_size_t  dn_task;
+    offset_and_size_t  dn_npredecessors;
+    offset_and_size_t  dn_nrefs;
 
     /* kmp_thread_data_t */
     kmp_int32          hd_sizeof_struct;
@@ -183,15 +213,6 @@ typedef struct {
 
     // The last field of stable version.
     kmp_uint64         last_field;
-    // Extensions. 
-    // When KMP_OMP_VERSION is bumped, move these fields up to appropriate location,
-    // to let last_field be actually last.
-    addr_and_size_t    openmp_version;
-    offset_and_size_t  td_taskwait_ident;
-    offset_and_size_t  td_taskwait_counter;
-    offset_and_size_t  td_taskwait_thread;
-
-    offset_and_size_t  lk_lock_flags;
 
 } kmp_omp_struct_info_t;
 
