@@ -29,7 +29,7 @@ protected:
 
 class LinkerScriptTest : public testing::Test {
 protected:
-  virtual void SetUp() {
+  void SetUp() override {
     llvm::Triple triple(llvm::sys::getDefaultTargetTriple());
     _ctx = std::move(GnuLdDriver::createELFLinkingContext(triple));
   }
