@@ -113,3 +113,20 @@ define void @test_can_shrink_arrays() {
 
   ret void
 }
+
+; Case 5: %in gets passed directly to the return. It should mark be marked as
+; used if *any* of the return values are, not just if value 0 is.
+
+; CHECK-LABEL: define internal i32 @ret_applies_to_all({ i32, i32 } %in)
+; CHECK: [[RET:%.*]] = extractvalue { i32, i32 } %in, 1
+; CHECK: ret i32 [[RET]]
+
+define internal {i32, i32} @ret_applies_to_all({i32, i32} %in) {
+  ret {i32, i32} %in
+}
+
+define i32 @test_ret_applies_to_all() {
+  %val = call {i32, i32} @ret_applies_to_all({i32, i32} {i32 42, i32 43})
+  %ret = extractvalue {i32, i32} %val, 1
+  ret i32 %ret
+}
