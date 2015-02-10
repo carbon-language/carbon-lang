@@ -685,27 +685,113 @@ void Verifier::visitMDLocation(const MDLocation &N) {
             "inlined-at should be a location", &N, N.getInlinedAt());
 }
 
-void Verifier::visitGenericDebugNode(const GenericDebugNode &) {}
-void Verifier::visitMDSubrange(const MDSubrange &) {}
-void Verifier::visitMDEnumerator(const MDEnumerator &) {}
-void Verifier::visitMDBasicType(const MDBasicType &) {}
-void Verifier::visitMDDerivedType(const MDDerivedType &) {}
-void Verifier::visitMDCompositeType(const MDCompositeType &) {}
-void Verifier::visitMDSubroutineType(const MDSubroutineType &) {}
-void Verifier::visitMDFile(const MDFile &) {}
-void Verifier::visitMDCompileUnit(const MDCompileUnit &) {}
-void Verifier::visitMDSubprogram(const MDSubprogram &) {}
-void Verifier::visitMDLexicalBlock(const MDLexicalBlock &) {}
-void Verifier::visitMDLexicalBlockFile(const MDLexicalBlockFile &) {}
-void Verifier::visitMDNamespace(const MDNamespace &) {}
-void Verifier::visitMDTemplateTypeParameter(const MDTemplateTypeParameter &) {}
-void Verifier::visitMDTemplateValueParameter(const MDTemplateValueParameter &) {
+void Verifier::visitGenericDebugNode(const GenericDebugNode &N) {
+  Assert1(N.getTag(), "invalid tag", &N);
 }
-void Verifier::visitMDGlobalVariable(const MDGlobalVariable &) {}
-void Verifier::visitMDLocalVariable(const MDLocalVariable &) {}
-void Verifier::visitMDExpression(const MDExpression &) {}
-void Verifier::visitMDObjCProperty(const MDObjCProperty &) {}
-void Verifier::visitMDImportedEntity(const MDImportedEntity &) {}
+
+void Verifier::visitMDSubrange(const MDSubrange &N) {
+  Assert1(N.getTag() == dwarf::DW_TAG_subrange_type, "invalid tag", &N);
+}
+
+void Verifier::visitMDEnumerator(const MDEnumerator &N) {
+  Assert1(N.getTag() == dwarf::DW_TAG_enumerator, "invalid tag", &N);
+}
+
+void Verifier::visitMDBasicType(const MDBasicType &N) {
+  Assert1(N.getTag() == dwarf::DW_TAG_base_type ||
+              N.getTag() == dwarf::DW_TAG_unspecified_type,
+          "invalid tag", &N);
+}
+
+void Verifier::visitMDDerivedType(const MDDerivedType &N) {
+  Assert1(N.getTag() == dwarf::DW_TAG_typedef ||
+              N.getTag() == dwarf::DW_TAG_pointer_type ||
+              N.getTag() == dwarf::DW_TAG_ptr_to_member_type ||
+              N.getTag() == dwarf::DW_TAG_reference_type ||
+              N.getTag() == dwarf::DW_TAG_rvalue_reference_type ||
+              N.getTag() == dwarf::DW_TAG_const_type ||
+              N.getTag() == dwarf::DW_TAG_volatile_type ||
+              N.getTag() == dwarf::DW_TAG_restrict_type ||
+              N.getTag() == dwarf::DW_TAG_member ||
+              N.getTag() == dwarf::DW_TAG_inheritance ||
+              N.getTag() == dwarf::DW_TAG_friend,
+          "invalid tag", &N);
+}
+
+void Verifier::visitMDCompositeType(const MDCompositeType &N) {
+  Assert1(N.getTag() == dwarf::DW_TAG_array_type ||
+              N.getTag() == dwarf::DW_TAG_structure_type ||
+              N.getTag() == dwarf::DW_TAG_union_type ||
+              N.getTag() == dwarf::DW_TAG_enumeration_type ||
+              N.getTag() == dwarf::DW_TAG_subroutine_type ||
+              N.getTag() == dwarf::DW_TAG_class_type,
+          "invalid tag", &N);
+}
+
+void Verifier::visitMDSubroutineType(const MDSubroutineType &N) {
+  Assert1(N.getTag() == dwarf::DW_TAG_subroutine_type, "invalid tag", &N);
+}
+
+void Verifier::visitMDFile(const MDFile &N) {
+  Assert1(N.getTag() == dwarf::DW_TAG_file_type, "invalid tag", &N);
+}
+
+void Verifier::visitMDCompileUnit(const MDCompileUnit &N) {
+  Assert1(N.getTag() == dwarf::DW_TAG_compile_unit, "invalid tag", &N);
+}
+
+void Verifier::visitMDSubprogram(const MDSubprogram &N) {
+  Assert1(N.getTag() == dwarf::DW_TAG_subprogram, "invalid tag", &N);
+}
+
+void Verifier::visitMDLexicalBlock(const MDLexicalBlock &N) {
+  Assert1(N.getTag() == dwarf::DW_TAG_lexical_block, "invalid tag", &N);
+}
+
+void Verifier::visitMDLexicalBlockFile(const MDLexicalBlockFile &N) {
+  Assert1(N.getTag() == dwarf::DW_TAG_lexical_block, "invalid tag", &N);
+}
+
+void Verifier::visitMDNamespace(const MDNamespace &N) {
+  Assert1(N.getTag() == dwarf::DW_TAG_namespace, "invalid tag", &N);
+}
+
+void Verifier::visitMDTemplateTypeParameter(const MDTemplateTypeParameter &N) {
+  Assert1(N.getTag() == dwarf::DW_TAG_template_type_parameter, "invalid tag",
+          &N);
+}
+
+void Verifier::visitMDTemplateValueParameter(
+    const MDTemplateValueParameter &N) {
+  Assert1(N.getTag() == dwarf::DW_TAG_template_value_parameter ||
+              N.getTag() == dwarf::DW_TAG_GNU_template_template_param ||
+              N.getTag() == dwarf::DW_TAG_GNU_template_parameter_pack,
+          "invalid tag", &N);
+}
+
+void Verifier::visitMDGlobalVariable(const MDGlobalVariable &N) {
+  Assert1(N.getTag() == dwarf::DW_TAG_variable, "invalid tag", &N);
+}
+
+void Verifier::visitMDLocalVariable(const MDLocalVariable &N) {
+  Assert1(N.getTag() == dwarf::DW_TAG_auto_variable ||
+              N.getTag() == dwarf::DW_TAG_arg_variable,
+          "invalid tag", &N);
+}
+
+void Verifier::visitMDExpression(const MDExpression &N) {
+  Assert1(N.getTag() == dwarf::DW_TAG_expression, "invalid tag", &N);
+}
+
+void Verifier::visitMDObjCProperty(const MDObjCProperty &N) {
+  Assert1(N.getTag() == dwarf::DW_TAG_APPLE_property, "invalid tag", &N);
+}
+
+void Verifier::visitMDImportedEntity(const MDImportedEntity &N) {
+  Assert1(N.getTag() == dwarf::DW_TAG_imported_module ||
+              N.getTag() == dwarf::DW_TAG_imported_declaration,
+          "invalid tag", &N);
+}
 
 void Verifier::visitComdat(const Comdat &C) {
   // All Comdat::SelectionKind values other than Comdat::Any require a
