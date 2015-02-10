@@ -429,7 +429,7 @@ and uses them to build a simple application ``simple-tool``.
   add_definitions(${LLVM_DEFINITIONS})
 
   # Now build our tools
-  add_excutable(simple-tool tool.cpp)
+  add_executable(simple-tool tool.cpp)
 
   # Find the libraries that correspond to the LLVM components
   # that we wish to use
