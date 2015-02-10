@@ -49,7 +49,7 @@ macro(setup_abi_lib abipathvar abidefines abilib abifiles abidirs)
       endif()
     endforeach()
     if (NOT found)
-      message(FATAL_ERROR "Failed to find ${fpath}")
+      message(WARNING "Failed to find ${fpath}")
     endif()
   endforeach()
 
