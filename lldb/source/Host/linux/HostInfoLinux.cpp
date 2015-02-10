@@ -223,6 +223,15 @@ HostInfoLinux::GetProgramFileSpec()
 }
 
 bool
+HostInfoLinux::ComputeSharedLibraryDirectory(FileSpec &file_spec)
+{
+    if (HostInfoPosix::ComputeSharedLibraryDirectory(file_spec))
+        return true;
+    file_spec.GetDirectory() = GetProgramFileSpec().GetDirectory();
+    return (bool)file_spec.GetDirectory();
+}
+
+bool
 HostInfoLinux::ComputeSystemPluginsDirectory(FileSpec &file_spec)
 {
     FileSpec temp_file("/usr/lib/lldb", true);
