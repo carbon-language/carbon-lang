@@ -112,6 +112,7 @@ RegisterContextLinux_i386::GetRegisterInfo() const
     switch (m_target_arch.GetMachine())
     {
         case llvm::Triple::x86:            
+        case llvm::Triple::x86_64:
             return g_register_infos_i386;
         default:
             assert(false && "Unhandled target architecture.");
