@@ -509,6 +509,13 @@ bool PlaceSafepoints::runOnFunction(Function &F) {
     return false;
   }
 
+  if (isGCSafepointPoll(F)) {
+    // Given we're inlining this inside of safepoint poll insertion, this
+    // doesn't make any sense.  Note that we do make any contained calls
+    // parseable after we inline a poll.  
+    return false;
+  }
+
   bool modified = false;
 
   // In various bits below, we rely on the fact that uses are reachable from
@@ -527,14 +534,13 @@ bool PlaceSafepoints::runOnFunction(Function &F) {
 
   std::vector<CallSite> ParsePointNeeded;
 
-  if (EnableBackedgeSafepoints && !isGCSafepointPoll(F)) {
+  if (EnableBackedgeSafepoints) {
     // Construct a pass manager to run the LoopPass backedge logic.  We
     // need the pass manager to handle scheduling all the loop passes
     // appropriately.  Doing this by hand is painful and just not worth messing
     // with for the moment.
     FunctionPassManager FPM(F.getParent());
-    bool CanAssumeCallSafepoints = EnableCallSafepoints &&
-      !isGCSafepointPoll(F);
+    bool CanAssumeCallSafepoints = EnableCallSafepoints;
     PlaceBackedgeSafepointsImpl *PBS =
       new PlaceBackedgeSafepointsImpl(CanAssumeCallSafepoints);
     FPM.add(PBS);
@@ -601,7 +607,7 @@ bool PlaceSafepoints::runOnFunction(Function &F) {
     }
   }
 
-  if (EnableEntrySafepoints && !isGCSafepointPoll(F)) {
+  if (EnableEntrySafepoints) {
     DT.recalculate(F);
     Instruction *term = findLocationForEntrySafepoint(F, DT);
     if (!term) {
@@ -616,7 +622,7 @@ bool PlaceSafepoints::runOnFunction(Function &F) {
     }
   }
 
-  if (EnableCallSafepoints && !isGCSafepointPoll(F)) {
+  if (EnableCallSafepoints) {
     DT.recalculate(F);
     std::vector<CallSite> Calls;
     findCallSafepoints(F, Calls);
