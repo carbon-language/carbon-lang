@@ -5335,7 +5335,7 @@ X86InstrInfo::unfoldMemoryOperand(SelectionDAG &DAG, SDNode *N,
     NewNodes.push_back(Store);
 
     // Preserve memory reference information.
-    cast<MachineSDNode>(Load)->setMemRefs(MMOs.first, MMOs.second);
+    cast<MachineSDNode>(Store)->setMemRefs(MMOs.first, MMOs.second);
   }
 
   return true;
