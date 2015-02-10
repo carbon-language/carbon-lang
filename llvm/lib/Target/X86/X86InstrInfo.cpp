@@ -660,6 +660,45 @@ X86InstrInfo::X86InstrInfo(X86Subtarget &STI)
     { X86::VPSHUFHWYri,     X86::VPSHUFHWYmi,         0 },
     { X86::VPSHUFLWYri,     X86::VPSHUFLWYmi,         0 },
 
+    // XOP foldable instructions
+    { X86::VFRCZPDrr,          X86::VFRCZPDrm,        0 },
+    { X86::VFRCZPDrrY,         X86::VFRCZPDrmY,       0 },
+    { X86::VFRCZPSrr,          X86::VFRCZPSrm,        0 },
+    { X86::VFRCZPSrrY,         X86::VFRCZPSrmY,       0 },
+    { X86::VFRCZSDrr,          X86::VFRCZSDrm,        0 },
+    { X86::VFRCZSSrr,          X86::VFRCZSSrm,        0 },
+    { X86::VPHADDBDrr,         X86::VPHADDBDrm,       0 },
+    { X86::VPHADDBQrr,         X86::VPHADDBQrm,       0 },
+    { X86::VPHADDBWrr,         X86::VPHADDBWrm,       0 },
+    { X86::VPHADDDQrr,         X86::VPHADDDQrm,       0 },
+    { X86::VPHADDWDrr,         X86::VPHADDWDrm,       0 },
+    { X86::VPHADDWQrr,         X86::VPHADDWQrm,       0 },
+    { X86::VPHADDUBDrr,        X86::VPHADDUBDrm,      0 },
+    { X86::VPHADDUBQrr,        X86::VPHADDUBQrm,      0 },
+    { X86::VPHADDUBWrr,        X86::VPHADDUBWrm,      0 },
+    { X86::VPHADDUDQrr,        X86::VPHADDUDQrm,      0 },
+    { X86::VPHADDUWDrr,        X86::VPHADDUWDrm,      0 },
+    { X86::VPHADDUWQrr,        X86::VPHADDUWQrm,      0 },
+    { X86::VPHSUBBWrr,         X86::VPHSUBBWrm,       0 },
+    { X86::VPHSUBDQrr,         X86::VPHSUBDQrm,       0 },
+    { X86::VPHSUBWDrr,         X86::VPHSUBWDrm,       0 },
+    { X86::VPROTBri,           X86::VPROTBmi,         0 },
+    { X86::VPROTBrr,           X86::VPROTBmr,         0 },
+    { X86::VPROTDri,           X86::VPROTDmi,         0 },
+    { X86::VPROTDrr,           X86::VPROTDmr,         0 },
+    { X86::VPROTQri,           X86::VPROTQmi,         0 },
+    { X86::VPROTQrr,           X86::VPROTQmr,         0 },
+    { X86::VPROTWri,           X86::VPROTWmi,         0 },
+    { X86::VPROTWrr,           X86::VPROTWmr,         0 },
+    { X86::VPSHABrr,           X86::VPSHABmr,         0 },
+    { X86::VPSHADrr,           X86::VPSHADmr,         0 },
+    { X86::VPSHAQrr,           X86::VPSHAQmr,         0 },
+    { X86::VPSHAWrr,           X86::VPSHAWmr,         0 },
+    { X86::VPSHLBrr,           X86::VPSHLBmr,         0 },
+    { X86::VPSHLDrr,           X86::VPSHLDmr,         0 },
+    { X86::VPSHLQrr,           X86::VPSHLQmr,         0 },
+    { X86::VPSHLWrr,           X86::VPSHLWmr,         0 },
+
     // BMI/BMI2/LZCNT/POPCNT/TBM foldable instructions
     { X86::BEXTR32rr,       X86::BEXTR32rm,           0 },
     { X86::BEXTR64rr,       X86::BEXTR64rm,           0 },
@@ -751,9 +790,11 @@ X86InstrInfo::X86InstrInfo(X86Subtarget &STI)
     { X86::VMOVUPDZ128rr,      X86::VMOVUPDZ128rm,          0 },
     { X86::VMOVUPSZ128rr,      X86::VMOVUPSZ128rm,          0 },
     { X86::VBROADCASTSSZ128r,  X86::VBROADCASTSSZ128m,      TB_NO_REVERSE },
+
     // F16C foldable instructions
     { X86::VCVTPH2PSrr,        X86::VCVTPH2PSrm,            0 },
     { X86::VCVTPH2PSYrr,       X86::VCVTPH2PSYrm,           0 },
+
     // AES foldable instructions
     { X86::AESIMCrr,              X86::AESIMCrm,              TB_ALIGN_16 },
     { X86::AESKEYGENASSIST128rr,  X86::AESKEYGENASSIST128rm,  TB_ALIGN_16 },
@@ -1024,6 +1065,7 @@ X86InstrInfo::X86InstrInfo(X86Subtarget &STI)
     { X86::XOR8rr,          X86::XOR8rm,        0 },
     { X86::XORPDrr,         X86::XORPDrm,       TB_ALIGN_16 },
     { X86::XORPSrr,         X86::XORPSrm,       TB_ALIGN_16 },
+
     // AVX 128-bit versions of foldable instructions
     { X86::VCVTSD2SSrr,       X86::VCVTSD2SSrm,        0 },
     { X86::Int_VCVTSD2SSrr,   X86::Int_VCVTSD2SSrm,    0 },
@@ -1210,6 +1252,7 @@ X86InstrInfo::X86InstrInfo(X86Subtarget &STI)
     { X86::VUNPCKLPSrr,       X86::VUNPCKLPSrm,        0 },
     { X86::VXORPDrr,          X86::VXORPDrm,           0 },
     { X86::VXORPSrr,          X86::VXORPSrm,           0 },
+
     // AVX 256-bit foldable instructions
     { X86::VADDPDYrr,         X86::VADDPDYrm,          0 },
     { X86::VADDPSYrr,         X86::VADDPSYrm,          0 },
@@ -1254,6 +1297,7 @@ X86InstrInfo::X86InstrInfo(X86Subtarget &STI)
     { X86::VUNPCKLPSYrr,      X86::VUNPCKLPSYrm,       0 },
     { X86::VXORPDYrr,         X86::VXORPDYrm,          0 },
     { X86::VXORPSYrr,         X86::VXORPSYrm,          0 },
+
     // AVX2 foldable instructions
     { X86::VINSERTI128rr,     X86::VINSERTI128rm,      0 },
     { X86::VPACKSSDWYrr,      X86::VPACKSSDWYrm,       0 },
@@ -1391,6 +1435,47 @@ X86InstrInfo::X86InstrInfo(X86Subtarget &STI)
     { X86::VFMSUBADDPS4rrY,   X86::VFMSUBADDPS4mrY,    0 },
     { X86::VFMSUBADDPD4rrY,   X86::VFMSUBADDPD4mrY,    0 },
 
+    // XOP foldable instructions
+    { X86::VPCMOVrr,          X86::VPCMOVmr,            0 },
+    { X86::VPCMOVrrY,         X86::VPCMOVmrY,           0 },
+    { X86::VPCOMBri,          X86::VPCOMBmi,            0 },
+    { X86::VPCOMDri,          X86::VPCOMDmi,            0 },
+    { X86::VPCOMQri,          X86::VPCOMQmi,            0 },
+    { X86::VPCOMWri,          X86::VPCOMWmi,            0 },
+    { X86::VPCOMUBri,         X86::VPCOMUBmi,           0 },
+    { X86::VPCOMUDri,         X86::VPCOMUDmi,           0 },
+    { X86::VPCOMUQri,         X86::VPCOMUQmi,           0 },
+    { X86::VPCOMUWri,         X86::VPCOMUWmi,           0 },
+    { X86::VPERMIL2PDrr,      X86::VPERMIL2PDmr,        0 },
+    { X86::VPERMIL2PDrrY,     X86::VPERMIL2PDmrY,       0 },
+    { X86::VPERMIL2PSrr,      X86::VPERMIL2PSmr,        0 },
+    { X86::VPERMIL2PSrrY,     X86::VPERMIL2PSmrY,       0 },
+    { X86::VPMACSDDrr,        X86::VPMACSDDrm,          0 },
+    { X86::VPMACSDQHrr,       X86::VPMACSDQHrm,         0 },
+    { X86::VPMACSDQLrr,       X86::VPMACSDQLrm,         0 },
+    { X86::VPMACSSDDrr,       X86::VPMACSSDDrm,         0 },
+    { X86::VPMACSSDQHrr,      X86::VPMACSSDQHrm,        0 },
+    { X86::VPMACSSDQLrr,      X86::VPMACSSDQLrm,        0 },
+    { X86::VPMACSSWDrr,       X86::VPMACSSWDrm,         0 },
+    { X86::VPMACSSWWrr,       X86::VPMACSSWWrm,         0 },
+    { X86::VPMACSWDrr,        X86::VPMACSWDrm,          0 },
+    { X86::VPMACSWWrr,        X86::VPMACSWWrm,          0 },
+    { X86::VPMADCSSWDrr,      X86::VPMADCSSWDrm,        0 },
+    { X86::VPMADCSWDrr,       X86::VPMADCSWDrm,         0 },
+    { X86::VPPERMrr,          X86::VPPERMmr,            0 },
+    { X86::VPROTBrr,          X86::VPROTBrm,            0 },
+    { X86::VPROTDrr,          X86::VPROTDrm,            0 },
+    { X86::VPROTQrr,          X86::VPROTQrm,            0 },
+    { X86::VPROTWrr,          X86::VPROTWrm,            0 },
+    { X86::VPSHABrr,          X86::VPSHABrm,            0 },
+    { X86::VPSHADrr,          X86::VPSHADrm,            0 },
+    { X86::VPSHAQrr,          X86::VPSHAQrm,            0 },
+    { X86::VPSHAWrr,          X86::VPSHAWrm,            0 },
+    { X86::VPSHLBrr,          X86::VPSHLBrm,            0 },
+    { X86::VPSHLDrr,          X86::VPSHLDrm,            0 },
+    { X86::VPSHLQrr,          X86::VPSHLQrm,            0 },
+    { X86::VPSHLWrr,          X86::VPSHLWrm,            0 },
+
     // BMI/BMI2 foldable instructions
     { X86::ANDN32rr,          X86::ANDN32rm,            0 },
     { X86::ANDN64rr,          X86::ANDN64rm,            0 },
@@ -1470,7 +1555,7 @@ X86InstrInfo::X86InstrInfo(X86Subtarget &STI)
     { X86::SHA1RNDS4rri,      X86::SHA1RNDS4rmi,        TB_ALIGN_16 },
     { X86::SHA256MSG1rr,      X86::SHA256MSG1rm,        TB_ALIGN_16 },
     { X86::SHA256MSG2rr,      X86::SHA256MSG2rm,        TB_ALIGN_16 },
-    { X86::SHA256RNDS2rr,     X86::SHA256RNDS2rm,       TB_ALIGN_16 },
+    { X86::SHA256RNDS2rr,     X86::SHA256RNDS2rm,       TB_ALIGN_16 }
   };
 
   for (unsigned i = 0, e = array_lengthof(OpTbl2); i != e; ++i) {
@@ -1624,6 +1709,16 @@ X86InstrInfo::X86InstrInfo(X86Subtarget &STI)
     { X86::VFMSUBADDPD4rr,        X86::VFMSUBADDPD4rm,        TB_ALIGN_16 },
     { X86::VFMSUBADDPS4rrY,       X86::VFMSUBADDPS4rmY,       TB_ALIGN_32 },
     { X86::VFMSUBADDPD4rrY,       X86::VFMSUBADDPD4rmY,       TB_ALIGN_32 },
+
+    // XOP foldable instructions
+    { X86::VPCMOVrr,              X86::VPCMOVrm,              0 },
+    { X86::VPCMOVrrY,             X86::VPCMOVrmY,             0 },
+    { X86::VPERMIL2PDrr,          X86::VPERMIL2PDrm,          0 },
+    { X86::VPERMIL2PDrrY,         X86::VPERMIL2PDrmY,         0 },
+    { X86::VPERMIL2PSrr,          X86::VPERMIL2PSrm,          0 },
+    { X86::VPERMIL2PSrrY,         X86::VPERMIL2PSrmY,         0 },
+    { X86::VPPERMrr,              X86::VPPERMrm,              0 },
+
     // AVX-512 VPERMI instructions with 3 source operands.
     { X86::VPERMI2Drr,            X86::VPERMI2Drm,            0 },
     { X86::VPERMI2Qrr,            X86::VPERMI2Qrm,            0 },
@@ -1812,7 +1907,7 @@ int X86InstrInfo::getSPAdjust(const MachineInstr *MI) const {
   if (MI->getOpcode() == getCallFrameSetupOpcode() ||
       MI->getOpcode() == getCallFrameDestroyOpcode()) {
     unsigned StackAlign = TFI->getStackAlignment();
-    int SPAdj = (MI->getOperand(0).getImm() + StackAlign - 1) / StackAlign * 
+    int SPAdj = (MI->getOperand(0).getImm() + StackAlign - 1) / StackAlign *
                  StackAlign;
 
     SPAdj -= MI->getOperand(1).getImm();
@@ -1822,8 +1917,8 @@ int X86InstrInfo::getSPAdjust(const MachineInstr *MI) const {
     else
       return -SPAdj;
   }
-  
-  // To know whether a call adjusts the stack, we need information 
+
+  // To know whether a call adjusts the stack, we need information
   // that is bound to the following ADJCALLSTACKUP pseudo.
   // Look for the next ADJCALLSTACKUP that follows the call.
   if (MI->isCall()) {
@@ -1846,7 +1941,7 @@ int X86InstrInfo::getSPAdjust(const MachineInstr *MI) const {
   // Currently handle only PUSHes we can reasonably expect to see
   // in call sequences
   switch (MI->getOpcode()) {
-  default: 
+  default:
     return 0;
   case X86::PUSH32i8:
   case X86::PUSH32r:
