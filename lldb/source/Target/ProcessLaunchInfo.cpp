@@ -208,7 +208,15 @@ ProcessLaunchInfo::SetLaunchInSeparateProcessGroup (bool separate)
         m_flags.Set(lldb::eLaunchFlagLaunchInSeparateProcessGroup);
     else
         m_flags.Clear (lldb::eLaunchFlagLaunchInSeparateProcessGroup);
+}
 
+void
+ProcessLaunchInfo::SetGlobArguments (bool glob)
+{
+    if (glob)
+        m_flags.Set(lldb::eLaunchFlagGlobArguments);
+    else
+        m_flags.Clear(lldb::eLaunchFlagGlobArguments);
 }
 
 void

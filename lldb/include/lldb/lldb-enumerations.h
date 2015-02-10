@@ -49,8 +49,9 @@ namespace lldb {
         eLaunchFlagLaunchInSeparateProcessGroup = (1u << 7), ///< Launch the process in a separate process group
         eLaunchFlagDontSetExitStatus = (1u << 8), ///< If you are going to hand the process off (e.g. to debugserver)
                                                    ///< set this flag so lldb & the handee don't race to set its exit status.
-        eLaunchFlagDetachOnError = (1u << 9)      ///< If set, then the client stub should detach rather than killing the debugee
+        eLaunchFlagDetachOnError = (1u << 9),     ///< If set, then the client stub should detach rather than killing the debugee
                                                    ///< if it loses connection with lldb.
+        eLaunchFlagGlobArguments  = (1u << 10),       ///< Glob arguments without going through a shell
     } LaunchFlags;
         
     //----------------------------------------------------------------------
