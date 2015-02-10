@@ -783,10 +783,9 @@ void DwarfDebug::collectVariableInfoFromMMITable(
     DIVariable DV(VI.Var);
     DIExpression Expr(VI.Expr);
     ensureAbstractVariableIsCreatedIfScoped(DV, Scope->getScopeNode());
-    ConcreteVariables.push_back(make_unique<DbgVariable>(DV, Expr, this));
-    DbgVariable *RegVar = ConcreteVariables.back().get();
-    RegVar->setFrameIndex(VI.Slot);
-    InfoHolder.addScopeVariable(Scope, RegVar);
+    auto RegVar = make_unique<DbgVariable>(DV, Expr, this, VI.Slot);
+    if (InfoHolder.addScopeVariable(Scope, RegVar.get()))
+      ConcreteVariables.push_back(std::move(RegVar));
   }
 }
 

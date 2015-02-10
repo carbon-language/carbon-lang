@@ -146,7 +146,7 @@ void DwarfFile::emitStrings(const MCSection *StrSection,
   StrPool.emit(*Asm, StrSection, OffsetSection);
 }
 
-void DwarfFile::addScopeVariable(LexicalScope *LS, DbgVariable *Var) {
+bool DwarfFile::addScopeVariable(LexicalScope *LS, DbgVariable *Var) {
   SmallVectorImpl<DbgVariable *> &Vars = ScopeVariables[LS];
   DIVariable DV = Var->getVariable();
   // Variables with positive arg numbers are parameters.
@@ -168,13 +168,17 @@ void DwarfFile::addScopeVariable(LexicalScope *LS, DbgVariable *Var) {
       // A later indexed parameter has been found, insert immediately before it.
       if (CurNum > ArgNum)
         break;
-      assert(CurNum != ArgNum && "Duplicate argument");
+      if (CurNum == ArgNum) {
+        (*I)->addMMIEntry(*Var);
+        return false;
+      }
       ++I;
     }
     Vars.insert(I, Var);
-    return;
+    return true;
   }
 
   Vars.push_back(Var);
+  return true;
 }
 }

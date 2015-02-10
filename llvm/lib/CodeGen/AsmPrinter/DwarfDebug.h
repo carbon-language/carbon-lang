@@ -67,41 +67,66 @@ public:
 
 //===----------------------------------------------------------------------===//
 /// \brief This class is used to track local variable information.
+///
+/// - Variables whose location changes over time have a DotDebugLocOffset and the
+///   other fields are not used.
+///
+/// - Variables that are described by multiple MMI table entries have multiple
+///   expressions and frame indices.
 class DbgVariable {
-  DIVariable Var;             // Variable Descriptor.
-  DIExpression Expr;          // Complex address location expression.
-  DIE *TheDIE;                // Variable DIE.
-  unsigned DotDebugLocOffset; // Offset in DotDebugLocEntries.
-  const MachineInstr *MInsn;  // DBG_VALUE instruction of the variable.
-  int FrameIndex;
+  DIVariable Var;             /// Variable Descriptor.
+  SmallVector<DIExpression, 1> Expr; /// Complex address location expression.
+  DIE *TheDIE;                /// Variable DIE.
+  unsigned DotDebugLocOffset; /// Offset in DotDebugLocEntries.
+  const MachineInstr *MInsn;  /// DBG_VALUE instruction of the variable.
+  SmallVector<int, 1> FrameIndex; /// Frame index of the variable.
   DwarfDebug *DD;
 
 public:
   /// Construct a DbgVariable from a DIVariable.
-  DbgVariable(DIVariable V, DIExpression E, DwarfDebug *DD)
-      : Var(V), Expr(E), TheDIE(nullptr), DotDebugLocOffset(~0U),
-        MInsn(nullptr), FrameIndex(~0), DD(DD) {
-    assert(Var.Verify() && Expr.Verify());
+    DbgVariable(DIVariable V, DIExpression E, DwarfDebug *DD, int FI = ~0)
+    : Var(V), Expr(1, E), TheDIE(nullptr), DotDebugLocOffset(~0U),
+      MInsn(nullptr), DD(DD) {
+    FrameIndex.push_back(FI);
+    assert(Var.Verify() && E.Verify());
   }
 
   /// Construct a DbgVariable from a DEBUG_VALUE.
   /// AbstractVar may be NULL.
   DbgVariable(const MachineInstr *DbgValue, DwarfDebug *DD)
-      : Var(DbgValue->getDebugVariable()), Expr(DbgValue->getDebugExpression()),
-        TheDIE(nullptr), DotDebugLocOffset(~0U), MInsn(DbgValue),
-        FrameIndex(~0), DD(DD) {}
+    : Var(DbgValue->getDebugVariable()), Expr(1, DbgValue->getDebugExpression()),
+        TheDIE(nullptr), DotDebugLocOffset(~0U), MInsn(DbgValue), DD(DD) {
+    FrameIndex.push_back(~0);
+  }
 
   // Accessors.
   DIVariable getVariable() const { return Var; }
-  DIExpression getExpression() const { return Expr; }
+  const ArrayRef<DIExpression> getExpression() const { return Expr; }
   void setDIE(DIE &D) { TheDIE = &D; }
   DIE *getDIE() const { return TheDIE; }
   void setDotDebugLocOffset(unsigned O) { DotDebugLocOffset = O; }
   unsigned getDotDebugLocOffset() const { return DotDebugLocOffset; }
   StringRef getName() const { return Var.getName(); }
   const MachineInstr *getMInsn() const { return MInsn; }
-  int getFrameIndex() const { return FrameIndex; }
-  void setFrameIndex(int FI) { FrameIndex = FI; }
+  const ArrayRef<int> getFrameIndex() const { return FrameIndex; }
+
+  void addMMIEntry(const DbgVariable &V) {
+    assert(  DotDebugLocOffset == ~0U &&   !MInsn && "not an MMI entry");
+    assert(V.DotDebugLocOffset == ~0U && !V.MInsn && "not an MMI entry");
+    assert(V.Var == Var && "conflicting DIVariable");
+
+    if (V.getFrameIndex().back() != ~0) {
+      auto E = V.getExpression();
+      auto FI = V.getFrameIndex();
+      Expr.append(E.begin(), E.end());
+      FrameIndex.append(FI.begin(), FI.end());
+    }
+    assert(Expr.size() > 1
+           ? std::all_of(Expr.begin(), Expr.end(),
+                         [](DIExpression &E) { return E.isBitPiece(); })
+           : (true && "conflicting locations for variable"));
+  }
+
   // Translate tag to proper Dwarf tag.
   dwarf::Tag getTag() const {
     if (Var.getTag() == dwarf::DW_TAG_arg_variable)
@@ -128,14 +153,11 @@ public:
 
   bool variableHasComplexAddress() const {
     assert(Var.isVariable() && "Invalid complex DbgVariable!");
-    return Expr.getNumElements() > 0;
+    assert(Expr.size() == 1 &&
+           "variableHasComplexAddress() invoked on multi-FI variable");
+    return Expr.back().getNumElements() > 0;
   }
   bool isBlockByrefVariable() const;
-  unsigned getNumAddrElements() const {
-    assert(Var.isVariable() && "Invalid complex DbgVariable!");
-    return Expr.getNumElements();
-  }
-  uint64_t getAddrElement(unsigned i) const { return Expr.getElement(i); }
   DIType getType() const;
 
 private:

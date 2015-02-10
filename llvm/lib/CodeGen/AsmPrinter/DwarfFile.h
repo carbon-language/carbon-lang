@@ -95,7 +95,8 @@ public:
   /// \brief Returns the string pool.
   DwarfStringPool &getStringPool() { return StrPool; }
 
-  void addScopeVariable(LexicalScope *LS, DbgVariable *Var);
+  /// \returns false if the variable was merged with a previous one.
+  bool addScopeVariable(LexicalScope *LS, DbgVariable *Var);
 
   DenseMap<LexicalScope *, SmallVector<DbgVariable *, 8>> &getScopeVariables() {
     return ScopeVariables;

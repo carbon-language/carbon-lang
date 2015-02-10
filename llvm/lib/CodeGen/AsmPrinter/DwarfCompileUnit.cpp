@@ -516,15 +516,21 @@ DwarfCompileUnit::constructVariableDIEImpl(const DbgVariable &DV,
   }
 
   // .. else use frame index.
-  int FI = DV.getFrameIndex();
-  if (FI != ~0) {
+  if (DV.getFrameIndex().back() == ~0)
+    return VariableDie;
+
+  auto Expr = DV.getExpression().begin();
+  DIELoc *Loc = new (DIEValueAllocator) DIELoc();
+  DIEDwarfExpression DwarfExpr(*Asm, *this, *Loc);
+  for (auto FI : DV.getFrameIndex()) {
     unsigned FrameReg = 0;
     const TargetFrameLowering *TFI =
         Asm->TM.getSubtargetImpl()->getFrameLowering();
     int Offset = TFI->getFrameIndexReference(*Asm->MF, FI, FrameReg);
-    MachineLocation Location(FrameReg, Offset);
-    addVariableAddress(DV, *VariableDie, Location);
+    DwarfExpr.AddMachineRegIndirect(FrameReg, Offset);
+    DwarfExpr.AddExpression(*(Expr++));
   }
+  addBlock(*VariableDie, dwarf::DW_AT_location, Loc);
 
   return VariableDie;
 }
@@ -767,7 +773,8 @@ void DwarfCompileUnit::addComplexAddress(const DbgVariable &DV, DIE &Die,
                                          const MachineLocation &Location) {
   DIELoc *Loc = new (DIEValueAllocator) DIELoc();
   DIEDwarfExpression DwarfExpr(*Asm, *this, *Loc);
-  DIExpression Expr = DV.getExpression();
+  assert(DV.getExpression().size() == 1);
+  DIExpression Expr = DV.getExpression().back();
   bool ValidReg;
   if (Location.getOffset()) {
     ValidReg = DwarfExpr.AddMachineRegIndirect(Location.getReg(),
