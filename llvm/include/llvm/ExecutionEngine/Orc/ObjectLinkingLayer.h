@@ -224,8 +224,8 @@ public:
         [this, Addr, H](){
           if (H->NeedsFinalization()) {
             H->Finalize();
-            if (this->NotifyFinalized)
-              this->NotifyFinalized(H);
+            if (NotifyFinalized)
+              NotifyFinalized(H);
           }
           return Addr;
         });
