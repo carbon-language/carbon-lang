@@ -37,7 +37,7 @@ make(int size, int start = 0 )
     for (int i = 0; i < start; ++i)
         c.pop_front();
     return c;
-};
+}
 
 template <class C>
 void
