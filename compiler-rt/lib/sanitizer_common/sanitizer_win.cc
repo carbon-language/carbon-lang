@@ -263,8 +263,8 @@ void DumpProcessMap() {
   for (size_t i = 0; i < num_modules; ++i) {
     const ModuleInfo &mi = modules[i];
     char module_name[MAX_PATH];
-    bool got_module_name = GetModuleFileNameEx(
-        cur_process, mi.handle, module_name, sizeof(module_name));
+    bool got_module_name = GetModuleFileNameA(
+        mi.handle, module_name, sizeof(module_name));
     if (mi.end_address != 0) {
       Printf("\t%p-%p %s\n", mi.base_address, mi.end_address,
              got_module_name ? module_name : "[no name]");
