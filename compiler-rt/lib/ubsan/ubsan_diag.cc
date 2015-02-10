@@ -66,25 +66,24 @@ class Decorator : public SanitizerCommonDecorator {
 };
 }
 
-Location __ubsan::getCallerLocation(uptr CallerLoc) {
-  if (!CallerLoc)
+Location __ubsan::getCallerLocation(uptr CallerPC) {
+  if (!CallerPC)
     return Location();
 
-  uptr Loc = StackTrace::GetPreviousInstructionPc(CallerLoc);
-  return getFunctionLocation(Loc, 0);
+  return getFunctionLocation(StackTrace::GetPreviousInstructionPc(CallerPC), 0);
 }
 
-Location __ubsan::getFunctionLocation(uptr Loc, const char **FName) {
-  if (!Loc)
+Location __ubsan::getFunctionLocation(uptr PC, const char **FName) {
+  if (!PC)
     return Location();
   InitIfNecessary();
 
-  SymbolizedStack *Frames = Symbolizer::GetOrInit()->SymbolizePC(Loc);
+  SymbolizedStack *Frames = Symbolizer::GetOrInit()->SymbolizePC(PC);
   const AddressInfo &Info = Frames->info;
 
   if (!Info.module) {
     Frames->ClearAll();
-    return Location(Loc);
+    return Location(PC);
   }
 
   if (FName && Info.function)

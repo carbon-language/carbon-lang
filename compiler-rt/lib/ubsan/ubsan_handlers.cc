@@ -37,14 +37,14 @@ const char *TypeCheckKinds[] = {
 }
 
 static void handleTypeMismatchImpl(TypeMismatchData *Data, ValueHandle Pointer,
-                                   Location FallbackLoc, ReportOptions Opts) {
+                                   ReportOptions Opts) {
   Location Loc = Data->Loc.acquire();
   // Use the SourceLocation from Data to track deduplication, even if 'invalid'
   if (ignoreReport(Loc.getSourceLocation(), Opts))
     return;
 
   if (Data->Loc.isInvalid())
-    Loc = FallbackLoc;
+    Loc = getCallerLocation(Opts.pc);
 
   ScopedReport R(Opts, Loc);
 
@@ -67,12 +67,12 @@ static void handleTypeMismatchImpl(TypeMismatchData *Data, ValueHandle Pointer,
 void __ubsan::__ubsan_handle_type_mismatch(TypeMismatchData *Data,
                                            ValueHandle Pointer) {
   GET_REPORT_OPTIONS(false);
-  handleTypeMismatchImpl(Data, Pointer, getCallerLocation(), Opts);
+  handleTypeMismatchImpl(Data, Pointer, Opts);
 }
 void __ubsan::__ubsan_handle_type_mismatch_abort(TypeMismatchData *Data,
                                                  ValueHandle Pointer) {
   GET_REPORT_OPTIONS(true);
-  handleTypeMismatchImpl(Data, Pointer, getCallerLocation(), Opts);
+  handleTypeMismatchImpl(Data, Pointer, Opts);
   Die();
 }
 
@@ -288,7 +288,7 @@ void __ubsan::__ubsan_handle_vla_bound_not_positive_abort(VLABoundData *Data,
 static void handleFloatCastOverflow(FloatCastOverflowData *Data,
                                     ValueHandle From, ReportOptions Opts) {
   // TODO: Add deduplication once a SourceLocation is generated for this check.
-  Location Loc = getCallerLocation();
+  Location Loc = getCallerLocation(Opts.pc);
   ScopedReport R(Opts, Loc);
 
   Diag(Loc, DL_Error,
