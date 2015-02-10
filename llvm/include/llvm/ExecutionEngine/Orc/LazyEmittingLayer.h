@@ -42,20 +42,24 @@ private:
     JITSymbol find(StringRef Name, bool ExportedSymbolsOnly, BaseLayerT &B) {
       switch (EmitState) {
       case NotEmitted:
-        if (provides(Name, ExportedSymbolsOnly))
+        if (provides(Name, ExportedSymbolsOnly)) {
+          // Create a std::string version of Name to capture here - the argument
+          // (a StringRef) may go away before the lambda is executed.
+          // FIXME: Use capture-init when we move to C++14. 
+          std::string PName = Name;
           return JITSymbol(
-              [this,ExportedSymbolsOnly,Name,&B]() -> TargetAddress {
+              [this, ExportedSymbolsOnly, PName, &B]() -> TargetAddress {
                 if (this->EmitState == Emitting)
                   return 0;
-                else if (this->EmitState != Emitted) {
+                else if (this->EmitState == NotEmitted) {
                   this->EmitState = Emitting;
                   Handle = this->emit(B);
                   this->EmitState = Emitted;
                 }
-                return B.findSymbolIn(Handle, Name, ExportedSymbolsOnly)
+                return B.findSymbolIn(Handle, PName, ExportedSymbolsOnly)
                           .getAddress();
               });
-        else
+        } else
           return nullptr;
       case Emitting:
         // Calling "emit" can trigger external symbol lookup (e.g. to check for
