@@ -215,8 +215,8 @@ LLVM-specific variables
   Build in C++1y mode, if available. Defaults to OFF.
 
 **LLVM_ENABLE_ASSERTIONS**:BOOL
-  Enables code assertions. Defaults to OFF if and only if ``CMAKE_BUILD_TYPE``
-  is *Release*.
+  Enables code assertions. Defaults to ON if and only if ``CMAKE_BUILD_TYPE``
+  is *Debug*.
 
 **LLVM_ENABLE_EH**:BOOL
   Build LLVM with exception handling support. This is necessary if you wish to
@@ -316,8 +316,8 @@ LLVM-specific variables
   otherwise this has no effect.
 
 **LLVM_DOXYGEN_QCH_FILENAME**:STRING
-  The filename of the Qt Compressed Help file that will be genrated when
-  ``-DLLVM_ENABLE_DOXYGEN=ON`` and 
+  The filename of the Qt Compressed Help file that will be generated when
+  ``-DLLVM_ENABLE_DOXYGEN=ON`` and
   ``-DLLVM_ENABLE_DOXYGEN_QT_HELP=ON`` are given. Defaults to
   ``org.llvm.qch``.
   This option is only useful in combination with
@@ -330,7 +330,7 @@ LLVM-specific variables
   for more information. Defaults to "org.llvm". This option is only useful in
   combination with ``-DLLVM_ENABLE_DOXYGEN_QT_HELP=ON``; otherwise
   this has no effect.
-    
+
 **LLVM_DOXYGEN_QHP_CUST_FILTER_NAME**:STRING
   See `Qt Help Project`_ for
   more information. Defaults to the CMake variable ``${PACKAGE_STRING}`` which
