@@ -900,7 +900,7 @@ bool WinLinkDriver::parse(int argc, const char *argv[],
   std::vector<std::unique_ptr<File>> libraries;
 
   // Handle /help
-  if (parsedArgs->getLastArg(OPT_help)) {
+  if (parsedArgs->hasArg(OPT_help)) {
     WinLinkOptTable table;
     table.PrintHelp(llvm::outs(), argv[0], "LLVM Linker", false);
     return false;
@@ -970,10 +970,10 @@ bool WinLinkDriver::parse(int argc, const char *argv[],
   }
 
   // Parse /dll command line option
-  if (parsedArgs->getLastArg(OPT_dll)) {
+  if (parsedArgs->hasArg(OPT_dll)) {
     ctx.setIsDll(true);
     // Default base address of a DLL is 0x10000000.
-    if (!parsedArgs->getLastArg(OPT_base))
+    if (!parsedArgs->hasArg(OPT_base))
       ctx.setBaseAddress(0x10000000);
   }
 
@@ -1174,22 +1174,22 @@ bool WinLinkDriver::parse(int argc, const char *argv[],
   // any effect.
   // TODO: This should disable dead stripping. Currently we can't do that
   // because removal of associative sections depends on dead stripping.
-  if (parsedArgs->getLastArg(OPT_debug))
+  if (parsedArgs->hasArg(OPT_debug))
     ctx.setDebug(true);
 
-  if (parsedArgs->getLastArg(OPT_verbose))
+  if (parsedArgs->hasArg(OPT_verbose))
     ctx.setLogInputFiles(true);
 
   // /force and /force:unresolved mean the same thing. We do not currently
   // support /force:multiple.
-  if (parsedArgs->getLastArg(OPT_force) ||
-      parsedArgs->getLastArg(OPT_force_unresolved)) {
+  if (parsedArgs->hasArg(OPT_force) ||
+      parsedArgs->hasArg(OPT_force_unresolved)) {
     ctx.setAllowRemainingUndefines(true);
   }
 
-  if (parsedArgs->getLastArg(OPT_fixed)) {
+  if (parsedArgs->hasArg(OPT_fixed)) {
     // /fixed is not compatible with /dynamicbase. Check for it.
-    if (parsedArgs->getLastArg(OPT_dynamicbase)) {
+    if (parsedArgs->hasArg(OPT_dynamicbase)) {
       diag << "/dynamicbase must not be specified with /fixed\n";
       return false;
     }
@@ -1201,13 +1201,13 @@ bool WinLinkDriver::parse(int argc, const char *argv[],
   // bits in the COFF header, respectively. If one of the bits is on, the
   // Windows loader will copy the entire file to swap area then execute it,
   // so that the user can eject a CD or disconnect from the network.
-  if (parsedArgs->getLastArg(OPT_swaprun_cd))
+  if (parsedArgs->hasArg(OPT_swaprun_cd))
     ctx.setSwapRunFromCD(true);
 
-  if (parsedArgs->getLastArg(OPT_swaprun_net))
+  if (parsedArgs->hasArg(OPT_swaprun_net))
     ctx.setSwapRunFromNet(true);
 
-  if (parsedArgs->getLastArg(OPT_profile)) {
+  if (parsedArgs->hasArg(OPT_profile)) {
     // /profile implies /opt:ref, /opt:noicf, /incremental:no and /fixed:no.
     ctx.setDeadStripping(true);
     ctx.setBaseRelocationEnabled(true);
@@ -1240,10 +1240,10 @@ bool WinLinkDriver::parse(int argc, const char *argv[],
     }
   }
 
-  if (parsedArgs->getLastArg(OPT_noentry))
+  if (parsedArgs->hasArg(OPT_noentry))
     ctx.setHasEntry(false);
 
-  if (parsedArgs->getLastArg(OPT_nodefaultlib_all))
+  if (parsedArgs->hasArg(OPT_nodefaultlib_all))
     ctx.setNoDefaultLibAll(true);
 
   if (auto *arg = parsedArgs->getLastArg(OPT_out))
