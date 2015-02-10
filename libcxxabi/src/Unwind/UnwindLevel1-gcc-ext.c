@@ -28,14 +28,12 @@
 _LIBUNWIND_EXPORT _Unwind_Reason_Code
 _Unwind_Resume_or_Rethrow(_Unwind_Exception *exception_object) {
 #if LIBCXXABI_ARM_EHABI
-  _LIBUNWIND_TRACE_API("_Unwind_Resume_or_Rethrow(ex_obj=%p), "
-                       "private_1=%ld\n",
-                       exception_object,
+  _LIBUNWIND_TRACE_API("_Unwind_Resume_or_Rethrow(ex_obj=%p), private_1=%ld\n",
+                       (void *)exception_object,
                        (long)exception_object->unwinder_cache.reserved1);
 #else
-  _LIBUNWIND_TRACE_API("_Unwind_Resume_or_Rethrow(ex_obj=%p), "
-                       "private_1=%ld\n",
-                       exception_object,
+  _LIBUNWIND_TRACE_API("_Unwind_Resume_or_Rethrow(ex_obj=%p), private_1=%ld\n",
+                       (void *)exception_object,
                        (long)exception_object->private_1);
 #endif
 
@@ -67,7 +65,7 @@ _Unwind_Resume_or_Rethrow(_Unwind_Exception *exception_object) {
 _LIBUNWIND_EXPORT uintptr_t
 _Unwind_GetDataRelBase(struct _Unwind_Context *context) {
   (void)context;
-  _LIBUNWIND_TRACE_API("_Unwind_GetDataRelBase(context=%p)\n", context);
+  _LIBUNWIND_TRACE_API("_Unwind_GetDataRelBase(context=%p)\n", (void *)context);
   _LIBUNWIND_ABORT("_Unwind_GetDataRelBase() not implemented");
 }
 
@@ -77,7 +75,7 @@ _Unwind_GetDataRelBase(struct _Unwind_Context *context) {
 _LIBUNWIND_EXPORT uintptr_t
 _Unwind_GetTextRelBase(struct _Unwind_Context *context) {
   (void)context;
-  _LIBUNWIND_TRACE_API("_Unwind_GetTextRelBase(context=%p)\n", context);
+  _LIBUNWIND_TRACE_API("_Unwind_GetTextRelBase(context=%p)\n", (void *)context);
   _LIBUNWIND_ABORT("_Unwind_GetTextRelBase() not implemented");
 }
 
@@ -109,7 +107,8 @@ _Unwind_Backtrace(_Unwind_Trace_Fn callback, void *ref) {
   unw_getcontext(&uc);
   unw_init_local(&cursor, &uc);
 
-  _LIBUNWIND_TRACE_API("_Unwind_Backtrace(callback=%p)\n", callback);
+  _LIBUNWIND_TRACE_API("_Unwind_Backtrace(callback=%p)\n",
+                       (void *)(uintptr_t)callback);
 
   // walk each frame
   while (true) {
@@ -177,16 +176,15 @@ _Unwind_Backtrace(_Unwind_Trace_Fn callback, void *ref) {
       unw_get_proc_info(&cursor, &frame);
       _LIBUNWIND_TRACE_UNWINDING(
           " _backtrace: start_ip=0x%llX, func=%s, lsda=0x%llX, context=%p\n",
-          (long long)frame.start_ip, functionName,
-          (long long)frame.lsda, &cursor);
+          (long long)frame.start_ip, functionName, (long long)frame.lsda,
+          (void *)&cursor);
     }
 
     // call trace function with this frame
     result = (*callback)((struct _Unwind_Context *)(&cursor), ref);
     if (result != _URC_NO_REASON) {
-      _LIBUNWIND_TRACE_UNWINDING(" _backtrace: ended because callback "
-                                 "returned %d\n",
-                                 result);
+      _LIBUNWIND_TRACE_UNWINDING(
+          " _backtrace: ended because callback returned %d\n", result);
       return result;
     }
   }
@@ -219,8 +217,8 @@ _LIBUNWIND_EXPORT uintptr_t _Unwind_GetCFA(struct _Unwind_Context *context) {
   unw_cursor_t *cursor = (unw_cursor_t *)context;
   unw_word_t result;
   unw_get_reg(cursor, UNW_REG_SP, &result);
-  _LIBUNWIND_TRACE_API("_Unwind_GetCFA(context=%p) => 0x%" PRIx64 "\n", context,
-                       (uint64_t)result);
+  _LIBUNWIND_TRACE_API("_Unwind_GetCFA(context=%p) => 0x%" PRIx64 "\n",
+                       (void *)context, (uint64_t)result);
   return (uintptr_t)result;
 }
 
@@ -230,7 +228,7 @@ _LIBUNWIND_EXPORT uintptr_t _Unwind_GetCFA(struct _Unwind_Context *context) {
 /// site address.  Normally IP is the return address.
 _LIBUNWIND_EXPORT uintptr_t _Unwind_GetIPInfo(struct _Unwind_Context *context,
                                               int *ipBefore) {
-  _LIBUNWIND_TRACE_API("_Unwind_GetIPInfo(context=%p)\n", context);
+  _LIBUNWIND_TRACE_API("_Unwind_GetIPInfo(context=%p)\n", (void *)context);
   *ipBefore = 0;
   return _Unwind_GetIP(context);
 }
