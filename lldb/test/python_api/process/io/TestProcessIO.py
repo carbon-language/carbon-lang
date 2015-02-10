@@ -95,9 +95,13 @@ class ProcessIOTestCase(TestBase):
         TestBase.setUp(self)
         # Get the full path to our executable to be debugged.
         self.exe = os.path.join(os.getcwd(), "process_io")
-        self.input_file  = os.path.join(os.getcwd(), "input.txt")
-        self.output_file = os.path.join(os.getcwd(), "output.txt")
-        self.error_file  = os.path.join(os.getcwd(), "error.txt")
+        self.local_input_file  = os.path.join(os.getcwd(), "input.txt")
+        self.local_output_file = os.path.join(os.getcwd(), "output.txt")
+        self.local_error_file  = os.path.join(os.getcwd(), "error.txt")
+
+        self.input_file  = os.path.join(self.get_process_working_directory(), "input.txt")
+        self.output_file = os.path.join(self.get_process_working_directory(), "output.txt")
+        self.error_file  = os.path.join(self.get_process_working_directory(), "error.txt")
         self.lines = ["Line 1", "Line 2", "Line 3"]
     
     def read_output_file_and_delete (self):
@@ -128,15 +132,24 @@ class ProcessIOTestCase(TestBase):
         Make the input.txt file to use when redirecting STDIN, setup a cleanup action
         to delete the input.txt at the end of the test in case exceptions are thrown,
         and redirect STDIN in the launch info.'''
-        f = open(self.input_file, 'w')
+        f = open(self.local_input_file, 'w')
         for line in self.lines:
             f.write(line + "\n")
         f.close()
+
+        if lldb.remote_platform:
+            self.runCmd('platform put-file "{local}" "{remote}"'.format(
+                local=self.local_input_file, remote=self.input_file))
+
         # This is the function to remove the custom formats in order to have a
         # clean slate for the next test case.
         def cleanup():
-            os.unlink(self.input_file)
-        
+            os.unlink(self.local_input_file)
+            # if lldb.remote_platform:
+                # TODO: add delete file command
+                # self.runCmd('platform delete-file "{local}" "{remote}"'.format(
+                #    local=self.local_input_file, remote=self.input_file))'''
+
         # Execute the cleanup function during test case tear down.
         self.addTearDownHook(cleanup)
         self.launch_info.AddOpenFileAction(0, self.input_file, True, False);
