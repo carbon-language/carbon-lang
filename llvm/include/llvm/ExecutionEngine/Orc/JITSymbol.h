@@ -15,6 +15,7 @@
 #define LLVM_EXECUTIONENGINE_ORC_JITSYMBOL_H
 
 #include "llvm/Support/Compiler.h"
+#include <cassert>
 #include <functional>
 
 namespace llvm {
