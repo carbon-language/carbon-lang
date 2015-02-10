@@ -19,6 +19,9 @@
 #include <cassert>
 
 #include "test_iterators.h"
+#include "user_defined_integral.hpp"
+
+typedef UserDefinedIntegral<unsigned> UDI;
 
 struct gen_test
 {
@@ -31,7 +34,7 @@ test()
 {
     const unsigned n = 4;
     int ia[n] = {0};
-    assert(std::generate_n(Iter(ia), n, gen_test()) == Iter(ia+n));
+    assert(std::generate_n(Iter(ia), UDI(n), gen_test()) == Iter(ia+n));
     assert(ia[0] == 2);
     assert(ia[1] == 2);
     assert(ia[2] == 2);

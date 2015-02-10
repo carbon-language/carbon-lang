@@ -18,6 +18,9 @@
 #include <cassert>
 
 #include "test_iterators.h"
+#include "user_defined_integral.hpp"
+
+typedef UserDefinedIntegral<unsigned> UDI;
 
 template <class Iter>
 void
@@ -25,7 +28,7 @@ test_char()
 {
     const unsigned n = 4;
     char ca[n] = {0};
-    assert(std::fill_n(Iter(ca), n, char(1)) == std::next(Iter(ca), n));
+    assert(std::fill_n(Iter(ca), UDI(n), char(1)) == std::next(Iter(ca), n));
     assert(ca[0] == 1);
     assert(ca[1] == 1);
     assert(ca[2] == 1);
@@ -38,7 +41,7 @@ test_int()
 {
     const unsigned n = 4;
     int ia[n] = {0};
-    assert(std::fill_n(Iter(ia), n, 1) == std::next(Iter(ia), n));
+    assert(std::fill_n(Iter(ia), UDI(n), 1) == std::next(Iter(ia), n));
     assert(ia[0] == 1);
     assert(ia[1] == 1);
     assert(ia[2] == 1);
@@ -50,7 +53,7 @@ test_int_array()
 {
     const unsigned n = 4;
     int ia[n] = {0};
-    assert(std::fill_n(ia, n, static_cast<char>(1)) == std::next(ia, n));
+    assert(std::fill_n(ia, UDI(n), static_cast<char>(1)) == std::next(ia, n));
     assert(ia[0] == 1);
     assert(ia[1] == 1);
     assert(ia[2] == 1);
@@ -69,7 +72,7 @@ test_int_array_struct_source()
 {
     const unsigned n = 4;
     int ia[n] = {0};
-    assert(std::fill_n(ia, n, source()) == std::next(ia, n));
+    assert(std::fill_n(ia, UDI(n), source()) == std::next(ia, n));
     assert(ia[0] == 0);
     assert(ia[1] == 1);
     assert(ia[2] == 2);
@@ -87,7 +90,7 @@ test_struct_array()
 {
     const unsigned n = 4;
     test1 test1a[n] = {0};
-    assert(std::fill_n(test1a, n, static_cast<char>(10)) == std::next(test1a, n));    
+    assert(std::fill_n(test1a, UDI(n), static_cast<char>(10)) == std::next(test1a, n));
     assert(test1a[0].c == 11);
     assert(test1a[1].c == 11);
     assert(test1a[2].c == 11);
@@ -110,7 +113,7 @@ void
 test5()
 {
     A a[3];
-    assert(std::fill_n(&a[0], 3, A('a')) == a+3);
+    assert(std::fill_n(&a[0], UDI(3), A('a')) == a+3);
     assert(a[0] == A('a'));
     assert(a[1] == A('a'));
     assert(a[2] == A('a'));
@@ -124,11 +127,11 @@ struct Storage
     unsigned char b;
   };
 };
- 
+
 void test6()
 {
   Storage foo[5];
-  std::fill_n(&foo[0], 5, Storage());
+  std::fill_n(&foo[0], UDI(5), Storage());
 }
 
 
@@ -143,7 +146,7 @@ int main()
     test_int<bidirectional_iterator<int*> >();
     test_int<random_access_iterator<int*> >();
     test_int<int*>();
-    
+
     test_int_array();
     test_int_array_struct_source();
     test_struct_array();

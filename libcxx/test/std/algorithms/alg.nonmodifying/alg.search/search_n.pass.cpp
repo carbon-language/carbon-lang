@@ -18,6 +18,7 @@
 #include <cassert>
 
 #include "test_iterators.h"
+#include "user_defined_integral.hpp"
 
 template <class Iter>
 void
@@ -63,6 +64,9 @@ test()
     assert(std::search_n(Iter(ic), Iter(ic+sc), 2, 0) == Iter(ic));
     assert(std::search_n(Iter(ic), Iter(ic+sc), 3, 0) == Iter(ic));
     assert(std::search_n(Iter(ic), Iter(ic+sc), 4, 0) == Iter(ic+sc));
+
+    // Check that we properly convert the size argument to an integral.
+    std::search_n(Iter(ic), Iter(ic+sc), UserDefinedIntegral<unsigned>(0), 0);
 }
 
 int main()

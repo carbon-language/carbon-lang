@@ -18,6 +18,7 @@
 #include <cassert>
 
 #include "test_iterators.h"
+#include "user_defined_integral.hpp"
 
 struct count_equal
 {
@@ -28,6 +29,7 @@ struct count_equal
 };
 
 unsigned count_equal::count = 0;
+
 
 template <class Iter>
 void
@@ -137,6 +139,10 @@ test()
     count_equal::count = 0;
     assert(std::search_n(Iter(ic), Iter(ic+sc), 4, 0, count_equal()) == Iter(ic+sc));
     assert(count_equal::count <= sc);
+    count_equal::count = 0;
+
+    // Check that we properly convert the size argument to an integral.
+    std::search_n(Iter(ic), Iter(ic+sc), UserDefinedIntegral<unsigned>(4), 0, count_equal());
     count_equal::count = 0;
 }
 

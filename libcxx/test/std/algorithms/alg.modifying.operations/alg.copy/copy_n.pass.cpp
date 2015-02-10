@@ -17,6 +17,9 @@
 #include <cassert>
 
 #include "test_iterators.h"
+#include "user_defined_integral.hpp"
+
+typedef UserDefinedIntegral<unsigned> UDI;
 
 template <class InIter, class OutIter>
 void
@@ -28,7 +31,7 @@ test()
         ia[i] = i;
     int ib[N] = {0};
 
-    OutIter r = std::copy_n(InIter(ia), N/2, OutIter(ib));
+    OutIter r = std::copy_n(InIter(ia), UDI(N/2), OutIter(ib));
     assert(base(r) == ib+N/2);
     for (unsigned i = 0; i < N/2; ++i)
         assert(ia[i] == ib[i]);

@@ -3646,6 +3646,48 @@ struct underlying_type
 
 #endif // _LIBCPP_UNDERLYING_TYPE
 
+
+template <class _Tp, bool = std::is_enum<_Tp>::value>
+struct __sfinae_underlying_type
+{
+    typedef typename underlying_type<_Tp>::type type;
+    typedef decltype(((type)1) + 0) __promoted_type;
+};
+
+template <class _Tp>
+struct __sfinae_underlying_type<_Tp, false> {};
+
+inline _LIBCPP_INLINE_VISIBILITY _LIBCPP_ALWAYS_INLINE
+int __convert_to_integral(int __val) { return __val; }
+
+inline _LIBCPP_INLINE_VISIBILITY _LIBCPP_ALWAYS_INLINE
+unsigned __convert_to_integral(unsigned __val) { return __val; }
+
+inline _LIBCPP_INLINE_VISIBILITY _LIBCPP_ALWAYS_INLINE
+long __convert_to_integral(long __val) { return __val; }
+
+inline _LIBCPP_INLINE_VISIBILITY _LIBCPP_ALWAYS_INLINE
+unsigned long __convert_to_integral(unsigned long __val) { return __val; }
+
+inline _LIBCPP_INLINE_VISIBILITY _LIBCPP_ALWAYS_INLINE
+long long __convert_to_integral(long long __val) { return __val; }
+
+inline _LIBCPP_INLINE_VISIBILITY _LIBCPP_ALWAYS_INLINE
+unsigned long long __convert_to_integral(unsigned long long __val) {return __val; }
+
+#ifndef _LIBCPP_HAS_NO_INT128
+inline _LIBCPP_INLINE_VISIBILITY _LIBCPP_ALWAYS_INLINE
+__int128_t __convert_to_integral(__int128_t __val) { return __val; }
+
+inline _LIBCPP_INLINE_VISIBILITY _LIBCPP_ALWAYS_INLINE
+__uint128_t __convert_to_integral(__uint128_t __val) { return __val; }
+#endif
+
+template <class _Tp>
+inline _LIBCPP_INLINE_VISIBILITY _LIBCPP_ALWAYS_INLINE
+typename __sfinae_underlying_type<_Tp>::__promoted_type
+__convert_to_integral(_Tp __val) { return __val; }
+
 #ifndef _LIBCPP_HAS_NO_ADVANCED_SFINAE
 
 template <class _Tp>
