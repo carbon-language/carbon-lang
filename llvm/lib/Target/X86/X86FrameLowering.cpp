@@ -1242,6 +1242,9 @@ int X86FrameLowering::getFrameIndexOffset(const MachineFunction &MF,
       NumBytes = FrameSize - CSSize;
     }
     uint64_t SEHFrameOffset = calculateSetFPREG(NumBytes);
+    if (FI && FI == X86FI->getFAIndex())
+      return -SEHFrameOffset;
+
     // FPDelta is the offset from the "traditional" FP location of the old base
     // pointer followed by return address and the location required by the
     // restricted Win64 prologue.

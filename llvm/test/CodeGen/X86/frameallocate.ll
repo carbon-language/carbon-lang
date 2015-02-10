@@ -32,8 +32,12 @@ define void @alloc_func(i32* %s, i32* %d) {
 }
 
 ; CHECK-LABEL: alloc_func:
+; CHECK: subq    $48, %rsp
+; CHECK: .seh_stackalloc 48
+; CHECK: leaq    48(%rsp), %rbp
+; CHECK: .seh_setframe 5, 48
 ; CHECK: .Lframeallocation_alloc_func = -[[offs:[0-9]+]]
 ; CHECK: movl $42, -[[offs]](%rbp)
-; CHECK: movq %rbp, %rcx
+; CHECK: leaq    -48(%rbp), %rcx
 ; CHECK: callq print_framealloc_from_fp
 ; CHECK: retq

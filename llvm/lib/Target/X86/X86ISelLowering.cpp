@@ -17953,15 +17953,33 @@ SDValue X86TargetLowering::LowerRETURNADDR(SDValue Op,
 }
 
 SDValue X86TargetLowering::LowerFRAMEADDR(SDValue Op, SelectionDAG &DAG) const {
-  MachineFrameInfo *MFI = DAG.getMachineFunction().getFrameInfo();
+  MachineFunction &MF = DAG.getMachineFunction();
+  MachineFrameInfo *MFI = MF.getFrameInfo();
+  X86MachineFunctionInfo *FuncInfo = MF.getInfo<X86MachineFunctionInfo>();
+  const X86RegisterInfo *RegInfo = Subtarget->getRegisterInfo();
+  EVT VT = Op.getValueType();
+
   MFI->setFrameAddressIsTaken(true);
 
-  EVT VT = Op.getValueType();
+  if (MF.getTarget().getMCAsmInfo()->usesWindowsCFI()) {
+    // Depth > 0 makes no sense on targets which use Windows unwind codes.  It
+    // is not possible to crawl up the stack without looking at the unwind codes
+    // simultaneously.
+    int FrameAddrIndex = FuncInfo->getFAIndex();
+    if (!FrameAddrIndex) {
+      // Set up a frame object for the return address.
+      unsigned SlotSize = RegInfo->getSlotSize();
+      FrameAddrIndex = MF.getFrameInfo()->CreateFixedObject(
+          SlotSize, /*Offset=*/INT64_MIN, /*IsImmutable=*/false);
+      FuncInfo->setFAIndex(FrameAddrIndex);
+    }
+    return DAG.getFrameIndex(FrameAddrIndex, VT);
+  }
+
+  unsigned FrameReg =
+      RegInfo->getPtrSizedFrameRegister(DAG.getMachineFunction());
   SDLoc dl(Op);  // FIXME probably not meaningful
   unsigned Depth = cast<ConstantSDNode>(Op.getOperand(0))->getZExtValue();
-  const X86RegisterInfo *RegInfo = Subtarget->getRegisterInfo();
-  unsigned FrameReg = RegInfo->getPtrSizedFrameRegister(
-      DAG.getMachineFunction());
   assert(((FrameReg == X86::RBP && VT == MVT::i64) ||
           (FrameReg == X86::EBP && VT == MVT::i32)) &&
          "Invalid Frame Register!");
