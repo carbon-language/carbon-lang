@@ -393,12 +393,8 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
 
   std::stack<int> groupStack;
   int numfiles = 0;
-
   bool asNeeded = false;
   bool wholeArchive = false;
-
-  bool _outputOptionSet = false;
-
   bool hasNoStdLib = false;
 
   // Ignore unknown arguments.
@@ -513,7 +509,6 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
       break;
 
     case OPT_output:
-      _outputOptionSet = true;
       ctx->setOutputPath(inputArg->getValue());
       break;
 
@@ -723,9 +718,8 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
     return false;
   }
 
-  // Set default output file name if the output file was not
-  // specified.
-  if (!_outputOptionSet) {
+  // Set default output file name if the output file was not specified.
+  if (ctx->outputPath().empty()) {
     switch (ctx->outputFileType()) {
     case LinkingContext::OutputFileType::YAML:
       ctx->setOutputPath("-");

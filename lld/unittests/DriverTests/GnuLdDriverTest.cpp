@@ -62,6 +62,11 @@ TEST_F(GnuLdParserTest, Output) {
   EXPECT_EQ("foo", _context->outputPath());
 }
 
+TEST_F(GnuLdParserTest, OutputDefault) {
+  EXPECT_TRUE(parse("ld", "abc.o", nullptr));
+  EXPECT_EQ("a.out", _context->outputPath());
+}
+
 // --noinhibit-exec
 
 TEST_F(GnuLdParserTest, NoinhibitExec) {
