@@ -617,7 +617,11 @@ public:
     
     Error
     Launch (ProcessLaunchInfo &launch_info,
-            Stream *stream); // Optional stream to receive first stop info
+            Stream *stream);  // Optional stream to receive first stop info
+
+    Error
+    Attach (ProcessAttachInfo &attach_info,
+            Stream *stream);  // Optional stream to receive first stop info
 
     //------------------------------------------------------------------
     // This part handles the breakpoints.

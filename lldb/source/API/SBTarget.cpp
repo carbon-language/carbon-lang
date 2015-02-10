@@ -291,6 +291,32 @@ SBAttachInfo::SetListener (SBListener &listener)
     m_opaque_sp->SetListener(listener.GetSP());
 }
 
+namespace {
+
+Error
+AttachToProcess (ProcessAttachInfo &attach_info, Target &target)
+{
+    Mutex::Locker api_locker (target.GetAPIMutex ());
+
+    auto process_sp = target.GetProcessSP ();
+    if (process_sp)
+    {
+        const auto state = process_sp->GetState ();
+        if (process_sp->IsAlive () && state == eStateConnected)
+        {
+            // If we are already connected, then we have already specified the
+            // listener, so if a valid listener is supplied, we need to error out
+            // to let the client know.
+            if (attach_info.GetListener ())
+                return Error ("process is connected and already has a listener, pass empty listener");
+        }
+    }
+
+    return target.Attach (attach_info, nullptr);
+}
+
+}  // namespace
+
 //----------------------------------------------------------------------
 // SBTarget constructor
 //----------------------------------------------------------------------
@@ -613,7 +639,6 @@ SBTarget::Attach (SBAttachInfo &sb_attach_info, SBError& error)
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     SBProcess sb_process;
-    ProcessSP process_sp;
     TargetSP target_sp(GetSP());
 
     if (log)
@@ -622,72 +647,34 @@ SBTarget::Attach (SBAttachInfo &sb_attach_info, SBError& error)
 
     if (target_sp)
     {
-        Mutex::Locker api_locker (target_sp->GetAPIMutex());
-
-        StateType state = eStateInvalid;
-        process_sp = target_sp->GetProcessSP();
-        if (process_sp)
+        ProcessAttachInfo &attach_info = sb_attach_info.ref();
+        if (attach_info.ProcessIDIsValid() && !attach_info.UserIDIsValid())
         {
-            state = process_sp->GetState();
-
-            if (process_sp->IsAlive() && state != eStateConnected)
+            PlatformSP platform_sp = target_sp->GetPlatform();
+            // See if we can pre-verify if a process exists or not
+            if (platform_sp && platform_sp->IsConnected())
             {
-                if (state == eStateAttaching)
-                    error.SetErrorString ("process attach is in progress");
-                else
-                    error.SetErrorString ("a process is already being debugged");
-                if (log)
-                    log->Printf ("SBTarget(%p)::Attach (...) => error %s",
-                                 static_cast<void*>(target_sp.get()),
-                                 error.GetCString());
-                return sb_process;
-            }
-        }
-
-        if (state != eStateConnected)
-            process_sp = target_sp->CreateProcess (target_sp->GetDebugger().GetListener(), NULL, NULL);
-
-        if (process_sp)
-        {
-            ProcessAttachInfo &attach_info = sb_attach_info.ref();
-            if (attach_info.ProcessIDIsValid() && !attach_info.UserIDIsValid())
-            {
-                PlatformSP platform_sp = target_sp->GetPlatform();
-                // See if we can pre-verify if a process exists or not
-                if (platform_sp && platform_sp->IsConnected())
+                lldb::pid_t attach_pid = attach_info.GetProcessID();
+                ProcessInstanceInfo instance_info;
+                if (platform_sp->GetProcessInfo(attach_pid, instance_info))
                 {
-                    lldb::pid_t attach_pid = attach_info.GetProcessID();
-                    ProcessInstanceInfo instance_info;
-                    if (platform_sp->GetProcessInfo(attach_pid, instance_info))
+                    attach_info.SetUserID(instance_info.GetEffectiveUserID());
+                }
+                else
+                {
+                    error.ref().SetErrorStringWithFormat("no process found with process ID %" PRIu64, attach_pid);
+                    if (log)
                     {
-                        attach_info.SetUserID(instance_info.GetEffectiveUserID());
+                        log->Printf ("SBTarget(%p)::Attach (...) => error %s",
+                                     static_cast<void*>(target_sp.get()), error.GetCString());
                     }
-                    else
-                    {
-                        error.ref().SetErrorStringWithFormat("no process found with process ID %" PRIu64, attach_pid);
-                        if (log)
-                        {
-                            log->Printf ("SBTarget(%p)::Attach (...) => error %s",
-                                         static_cast<void*>(target_sp.get()), error.GetCString());
-                        }
-                        return sb_process;
-                    }
+                    return sb_process;
                 }
             }
-            error.SetError (process_sp->Attach (attach_info));
-            if (error.Success())
-            {
-                sb_process.SetSP (process_sp);
-                // If we are doing synchronous mode, then wait for the
-                // process to stop!
-                if (target_sp->GetDebugger().GetAsyncExecution () == false)
-                    process_sp->WaitForProcessToStop (NULL);
-            }
         }
-        else
-        {
-            error.SetErrorString ("unable to create lldb_private::Process");
-        }
+        error.SetError(AttachToProcess(attach_info, *target_sp));
+        if (error.Success())
+            sb_process.SetSP(target_sp->GetProcessSP());
     }
     else
     {
@@ -697,7 +684,7 @@ SBTarget::Attach (SBAttachInfo &sb_attach_info, SBError& error)
     if (log)
         log->Printf ("SBTarget(%p)::Attach (...) => SBProcess(%p)",
                      static_cast<void*>(target_sp.get()),
-                     static_cast<void*>(process_sp.get()));
+                     static_cast<void*>(sb_process.GetSP().get()));
 
     return sb_process;
 }
@@ -726,87 +713,37 @@ SBTarget::AttachToProcessWithID
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     SBProcess sb_process;
-    ProcessSP process_sp;
     TargetSP target_sp(GetSP());
 
     if (log)
-        log->Printf ("SBTarget(%p)::AttachToProcessWithID (listener, pid=%" PRId64 ", error)...",
-                     static_cast<void*>(target_sp.get()), pid);
+        log->Printf ("SBTarget(%p)::%s (listener, pid=%" PRId64 ", error)...",
+                     static_cast<void*>(target_sp.get()),
+                     __FUNCTION__,
+                     pid);
 
     if (target_sp)
     {
-        Mutex::Locker api_locker (target_sp->GetAPIMutex());
+        ProcessAttachInfo attach_info;
+        attach_info.SetProcessID (pid);
+        if (listener.IsValid())
+            attach_info.SetListener(listener.GetSP());
 
-        StateType state = eStateInvalid;
-        process_sp = target_sp->GetProcessSP();
-        if (process_sp)
-        {
-            state = process_sp->GetState();
+        ProcessInstanceInfo instance_info;
+        if (target_sp->GetPlatform ()->GetProcessInfo (pid, instance_info))
+            attach_info.SetUserID (instance_info.GetEffectiveUserID ());
 
-            if (process_sp->IsAlive() && state != eStateConnected)
-            {
-                if (state == eStateAttaching)
-                    error.SetErrorString ("process attach is in progress");
-                else
-                    error.SetErrorString ("a process is already being debugged");
-                return sb_process;
-            }
-        }
-
-        if (state == eStateConnected)
-        {
-            // If we are already connected, then we have already specified the
-            // listener, so if a valid listener is supplied, we need to error out
-            // to let the client know.
-            if (listener.IsValid())
-            {
-                error.SetErrorString ("process is connected and already has a listener, pass empty listener");
-                return sb_process;
-            }
-        }
-        else
-        {
-            if (listener.IsValid())
-                process_sp = target_sp->CreateProcess (listener.ref(), NULL, NULL);
-            else
-                process_sp = target_sp->CreateProcess (target_sp->GetDebugger().GetListener(), NULL, NULL);
-        }
-        if (process_sp)
-        {
-            sb_process.SetSP (process_sp);
-
-            ProcessAttachInfo attach_info;
-            attach_info.SetProcessID (pid);
-
-            PlatformSP platform_sp = target_sp->GetPlatform();
-            ProcessInstanceInfo instance_info;
-            if (platform_sp->GetProcessInfo(pid, instance_info))
-            {
-                attach_info.SetUserID(instance_info.GetEffectiveUserID());
-            }
-            error.SetError (process_sp->Attach (attach_info));            
-            if (error.Success())
-            {
-                // If we are doing synchronous mode, then wait for the
-                // process to stop!
-                if (target_sp->GetDebugger().GetAsyncExecution () == false)
-                    process_sp->WaitForProcessToStop (NULL);
-            }
-        }
-        else
-        {
-            error.SetErrorString ("unable to create lldb_private::Process");
-        }
+        error.SetError (AttachToProcess (attach_info, *target_sp));
+        if (error.Success ())
+            sb_process.SetSP (target_sp->GetProcessSP ());
     }
     else
-    {
         error.SetErrorString ("SBTarget is invalid");
-    }
 
     if (log)
-        log->Printf ("SBTarget(%p)::AttachToProcessWithID (...) => SBProcess(%p)",
-                     static_cast<void*>(target_sp.get()),
-                     static_cast<void*>(process_sp.get()));
+        log->Printf ("SBTarget(%p)::%s (...) => SBProcess(%p)",
+                     static_cast<void*>(target_sp.get ()),
+                     __FUNCTION__,
+                     static_cast<void*>(sb_process.GetSP().get ()));
     return sb_process;
 }
 
@@ -822,82 +759,35 @@ SBTarget::AttachToProcessWithName
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     SBProcess sb_process;
-    ProcessSP process_sp;
     TargetSP target_sp(GetSP());
 
     if (log)
-        log->Printf ("SBTarget(%p)::AttachToProcessWithName (listener, name=%s, wait_for=%s, error)...",
-                     static_cast<void*>(target_sp.get()), name,
+        log->Printf ("SBTarget(%p)::%s (listener, name=%s, wait_for=%s, error)...",
+                     static_cast<void*>(target_sp.get()),
+                     __FUNCTION__,
+                     name,
                      wait_for ? "true" : "false");
 
     if (name && target_sp)
     {
-        Mutex::Locker api_locker (target_sp->GetAPIMutex());
+        ProcessAttachInfo attach_info;
+        attach_info.GetExecutableFile().SetFile(name, false);
+        attach_info.SetWaitForLaunch(wait_for);
+        if (listener.IsValid())
+            attach_info.SetListener(listener.GetSP());
 
-        StateType state = eStateInvalid;
-        process_sp = target_sp->GetProcessSP();
-        if (process_sp)
-        {
-            state = process_sp->GetState();
-
-            if (process_sp->IsAlive() && state != eStateConnected)
-            {
-                if (state == eStateAttaching)
-                    error.SetErrorString ("process attach is in progress");
-                else
-                    error.SetErrorString ("a process is already being debugged");
-                return sb_process;
-            }
-        }
-
-        if (state == eStateConnected)
-        {
-            // If we are already connected, then we have already specified the
-            // listener, so if a valid listener is supplied, we need to error out
-            // to let the client know.
-            if (listener.IsValid())
-            {
-                error.SetErrorString ("process is connected and already has a listener, pass empty listener");
-                return sb_process;
-            }
-        }
-        else
-        {
-            if (listener.IsValid())
-                process_sp = target_sp->CreateProcess (listener.ref(), NULL, NULL);
-            else
-                process_sp = target_sp->CreateProcess (target_sp->GetDebugger().GetListener(), NULL, NULL);
-        }
-
-        if (process_sp)
-        {
-            sb_process.SetSP (process_sp);
-            ProcessAttachInfo attach_info;
-            attach_info.GetExecutableFile().SetFile(name, false);
-            attach_info.SetWaitForLaunch(wait_for);
-            error.SetError (process_sp->Attach (attach_info));
-            if (error.Success())
-            {
-                // If we are doing synchronous mode, then wait for the
-                // process to stop!
-                if (target_sp->GetDebugger().GetAsyncExecution () == false)
-                    process_sp->WaitForProcessToStop (NULL);
-            }
-        }
-        else
-        {
-            error.SetErrorString ("unable to create lldb_private::Process");
-        }
+        error.SetError (AttachToProcess (attach_info, *target_sp));
+        if (error.Success ())
+            sb_process.SetSP (target_sp->GetProcessSP ());
     }
     else
-    {
         error.SetErrorString ("SBTarget is invalid");
-    }
 
     if (log)
-        log->Printf ("SBTarget(%p)::AttachToPorcessWithName (...) => SBProcess(%p)",
+        log->Printf ("SBTarget(%p)::%s (...) => SBProcess(%p)",
                      static_cast<void*>(target_sp.get()),
-                     static_cast<void*>(process_sp.get()));
+                     __FUNCTION__,
+                     static_cast<void*>(sb_process.GetSP().get()));
     return sb_process;
 }
 
@@ -2678,4 +2568,3 @@ SBTarget::GetStackRedZoneSize()
     }
     return 0;
 }
-

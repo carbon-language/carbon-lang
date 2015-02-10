@@ -529,8 +529,6 @@ protected:
         ModuleSP old_exec_module_sp = target->GetExecutableModule();
         ArchSpec old_arch_spec = target->GetArchitecture();
 
-        ProcessSP process_sp;
-        Error error;
         if (command.GetArgumentCount())
         {
             result.AppendErrorWithFormat("Invalid arguments for '%s'.\nUsage: %s\n", m_cmd_name.c_str(), m_cmd_syntax.c_str());
@@ -539,70 +537,21 @@ protected:
         }
 
         m_interpreter.UpdateExecutionContext(nullptr);
-        ListenerSP listener_sp (new Listener("lldb.CommandObjectProcessAttach.DoExecute.attach.hijack"));
-        m_options.attach_info.SetHijackListener(listener_sp);
-
-        // If no process info was specified, then use the target executable
-        // name as the process to attach to by default
-        if (!m_options.attach_info.ProcessInfoSpecified ())
-        {
-            if (old_exec_module_sp)
-                m_options.attach_info.GetExecutableFile().GetFilename() = old_exec_module_sp->GetPlatformFileSpec().GetFilename();
-
-            if (!m_options.attach_info.ProcessInfoSpecified ())
-            {
-                error.SetErrorString ("no process specified, create a target with a file, or specify the --pid or --name command option");
-            }
-        }
-
+        StreamString stream;
+        const auto error = target->Attach(m_options.attach_info, &stream);
         if (error.Success())
         {
-            if (state != eStateConnected && platform_sp != nullptr && platform_sp->CanDebugProcess())
+            ProcessSP process_sp (target->GetProcessSP());
+            if (process_sp)
             {
-                target->SetPlatform(platform_sp);
-                process = platform_sp->Attach(m_options.attach_info, m_interpreter.GetDebugger(), target, error).get();
-            }
-            else
-            {
-                if (state != eStateConnected)
-                {
-                    const char *plugin_name = m_options.attach_info.GetProcessPluginName();
-                    process = target->CreateProcess (m_interpreter.GetDebugger().GetListener(), plugin_name, nullptr).get();
-                    if (process == nullptr)
-                        error.SetErrorStringWithFormat("failed to create process using plugin %s", plugin_name);
-                }
-                if (process)
-                {
-                    process->HijackProcessEvents(listener_sp.get());
-                    error = process->Attach(m_options.attach_info);
-                }
-            }
-        }
-
-        if (error.Success() && process != nullptr)
-        {
-            result.SetStatus (eReturnStatusSuccessContinuingNoResult);
-            StreamString stream;
-            StateType state = process->WaitForProcessToStop (nullptr, nullptr, false, listener_sp.get(), &stream);
-
-            process->RestoreProcessEvents();
-            result.SetDidChangeProcessState (true);
-
-            if (stream.GetData())
-                result.AppendMessage(stream.GetData());
-
-            if (state == eStateStopped)
-            {
+                if (stream.GetData())
+                    result.AppendMessage(stream.GetData());
                 result.SetStatus (eReturnStatusSuccessFinishNoResult);
+                result.SetDidChangeProcessState (true);
             }
             else
             {
-                const char *exit_desc = process->GetExitDescription();
-                if (exit_desc)
-                    result.AppendErrorWithFormat ("attach failed: %s", exit_desc);
-                else
-                    result.AppendError ("attach failed: process did not stop (no such process or permission problem?)");
-                process->Destroy();
+                result.AppendError("no error returned from Target::Attach, and target has no process");
                 result.SetStatus (eReturnStatusFailed);
             }
         }
