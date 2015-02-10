@@ -69,6 +69,8 @@ KMP_PREFIX_UNDERSCORE($0):
 .endmacro
 # else // defined __APPLE__ && defined __MACH__
 #  define KMP_PREFIX_UNDERSCORE(x) x  // no extra underscore for Linux* OS symbols
+// Format labels so that they don't override function names in gdb's backtraces
+// MIC assembler doesn't accept .L syntax, the L works fine there (as well as on OS X*)
 # if __MIC__ || __MIC2__
 #  define KMP_LABEL(x) L_##x          // local label
 # else
