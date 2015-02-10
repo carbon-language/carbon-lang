@@ -101,6 +101,7 @@
     #define FTN_SET_DEFAULT_DEVICE               omp_set_default_device
     #define FTN_GET_NUM_DEVICES                  omp_get_num_devices
 #endif
+    #define FTN_IS_INITIAL_DEVICE                omp_is_initial_device
 #endif
 
 #if OMP_40_ENABLED
@@ -192,6 +193,7 @@
     #define FTN_SET_DEFAULT_DEVICE               omp_set_default_device_
     #define FTN_GET_NUM_DEVICES                  omp_get_num_devices_
 #endif
+    #define FTN_IS_INITIAL_DEVICE                omp_is_initial_device_
 #endif
 
 
@@ -284,6 +286,7 @@
     #define FTN_SET_DEFAULT_DEVICE               OMP_SET_DEFAULT_DEVICE
     #define FTN_GET_NUM_DEVICES                  OMP_GET_NUM_DEVICES
 #endif
+    #define FTN_IS_INITIAL_DEVICE                OMP_IS_INITIAL_DEVICE
 #endif
 
 
@@ -376,6 +379,7 @@
     #define FTN_SET_DEFAULT_DEVICE               OMP_SET_DEFAULT_DEVICE_
     #define FTN_GET_NUM_DEVICES                  OMP_GET_NUM_DEVICES_
 #endif
+    #define FTN_IS_INITIAL_DEVICE                OMP_IS_INITIAL_DEVICE_
 #endif
 
 

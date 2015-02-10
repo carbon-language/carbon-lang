@@ -478,6 +478,7 @@ kmp_set_warnings_off                        780
     omp_get_team_num                        866
     omp_get_cancellation                    867
     kmp_get_cancellation_status             868
+    omp_is_initial_device                   869
 %endif # OMP_40
 
 %ifndef stub
