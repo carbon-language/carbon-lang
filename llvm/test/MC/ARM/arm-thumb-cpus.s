@@ -16,6 +16,9 @@
 @ RUN: not llvm-mc -show-encoding -triple=armv6m-eabi < %s 2>&1 \
 @ RUN:  | FileCheck %s --check-prefix=CHECK-THUMB-ONLY
 
+@ RUN: not llvm-mc -show-encoding -triple=armv6sm-eabi < %s 2>&1 \
+@ RUN:  | FileCheck %s --check-prefix=CHECK-THUMB-ONLY
+
         @ Make sure correct diagnostics are given for CPUs without support for
         @ one or other of the execution states.
         .thumb

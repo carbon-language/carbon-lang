@@ -7,6 +7,8 @@
 ; RUN: llc < %s -mtriple=armv6-linux-gnueabi -enable-sign-dependent-rounding-fp-math | FileCheck %s --check-prefix=DYN-ROUNDING
 ; RUN: llc < %s -mtriple=thumbv6m-linux-gnueabi | FileCheck %s --check-prefix=V6M
 ; RUN: llc < %s -mtriple=thumbv6m-linux-gnueabi  -enable-unsafe-fp-math -disable-fp-elim -enable-no-infs-fp-math -enable-no-nans-fp-math -fp-contract=fast | FileCheck %s --check-prefix=V6M-FAST
+; RUN: llc < %s -mtriple=thumbv6sm-linux-gnueabi | FileCheck %s --check-prefix=V6M
+; RUN: llc < %s -mtriple=thumbv6sm-linux-gnueabi  -enable-unsafe-fp-math -disable-fp-elim -enable-no-infs-fp-math -enable-no-nans-fp-math -fp-contract=fast | FileCheck %s --check-prefix=V6M-FAST
 ; RUN: llc < %s -mtriple=armv6-linux-gnueabi -mcpu=arm1156t2f-s | FileCheck %s --check-prefix=ARM1156T2F-S
 ; RUN: llc < %s -mtriple=armv6-linux-gnueabi -mcpu=arm1156t2f-s  -enable-unsafe-fp-math -disable-fp-elim -enable-no-infs-fp-math -enable-no-nans-fp-math -fp-contract=fast  | FileCheck %s --check-prefix=ARM1156T2F-S-FAST
 ; RUN: llc < %s -mtriple=armv6-linux-gnueabi -mcpu=arm1156t2f-s -enable-sign-dependent-rounding-fp-math | FileCheck %s --check-prefix=DYN-ROUNDING
@@ -168,6 +170,8 @@
 ; V6-FAST-NOT:   .eabi_attribute 22
 ; V6-FAST:   .eabi_attribute 23, 1
 
+;; We emit 6, 12 for both v6-M and v6S-M, technically this is incorrect for
+;; V6-M, however we don't model the OS extension so this is fine.
 ; V6M:  .eabi_attribute 6, 12
 ; V6M-NOT:  .eabi_attribute 7
 ; V6M:  .eabi_attribute 8, 0
