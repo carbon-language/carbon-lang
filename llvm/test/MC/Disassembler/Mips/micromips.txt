@@ -495,3 +495,9 @@
 
 # CHECK: swm16 $16, $17, $ra, 8($sp)
 0x45 0x52
+
+# CHECK: break16 8
+0x46 0x88
+
+# CHECK: sdbbp16 14
+0x46 0xce
