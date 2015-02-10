@@ -1501,7 +1501,7 @@ SDValue DAGCombiner::visitTokenFactor(SDNode *N) {
       switch (Op.getOpcode()) {
       case ISD::EntryToken:
         // Entry tokens don't need to be added to the list. They are
-        // rededundant.
+        // redundant.
         Changed = true;
         break;
 
@@ -1530,7 +1530,7 @@ SDValue DAGCombiner::visitTokenFactor(SDNode *N) {
 
   SDValue Result;
 
-  // If we've change things around then replace token factor.
+  // If we've changed things around then replace token factor.
   if (Changed) {
     if (Ops.empty()) {
       // The entry token is the only possible outcome.
