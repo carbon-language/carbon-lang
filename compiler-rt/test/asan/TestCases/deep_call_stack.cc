@@ -1,7 +1,8 @@
 // Check that UAR mode can handle very deep recusrion.
-// export ASAN_OPTIONS=detect_stack_use_after_return=1
+// RUN: export ASAN_OPTIONS=detect_stack_use_after_return=1
 // RUN: %clangxx_asan -O2 %s -o %t && \
 // RUN:   (ulimit -s 4096; %run %t) 2>&1 | FileCheck %s
+
 // Also check that use_sigaltstack+verbosity doesn't crash.
 // RUN: env ASAN_OPTIONS=verbosity=1:use_sigaltstack=1 %run %t  | FileCheck %s
 #include <stdio.h>
