@@ -351,8 +351,8 @@ ErrorOr<Archive::child_iterator> Archive::Symbol::getMember() const {
   const char *Offsets = Buf + 4;
   uint32_t Offset = 0;
   if (Parent->kind() == K_GNU) {
-    Offset = *(reinterpret_cast<const support::ubig32_t*>(Offsets)
-               + SymbolIndex);
+    Offset =
+        *(reinterpret_cast<const support::ubig32_t *>(Offsets) + SymbolIndex);
   } else if (Parent->kind() == K_BSD) {
     // The SymbolIndex is an index into the ranlib structs that start at
     // Offsets (the first uint32_t is the number of bytes of the ranlib
@@ -366,8 +366,8 @@ ErrorOr<Archive::child_iterator> Archive::Symbol::getMember() const {
     uint32_t MemberCount = *reinterpret_cast<const support::ulittle32_t*>(Buf);
     
     // Skip offsets.
-    Buf += sizeof(support::ulittle32_t)
-           + (MemberCount * sizeof(support::ulittle32_t));
+    Buf += sizeof(support::ulittle32_t) +
+           (MemberCount * sizeof(support::ulittle32_t));
 
     uint32_t SymbolCount = *reinterpret_cast<const support::ulittle32_t*>(Buf);
 
@@ -495,8 +495,7 @@ Archive::symbol_iterator Archive::symbol_end() const {
     buf += 4 + (member_count * 4); // Skip offsets.
     symbol_count = *reinterpret_cast<const support::ulittle32_t*>(buf);
   }
-  return symbol_iterator(
-    Symbol(this, symbol_count, 0));
+  return symbol_iterator(Symbol(this, symbol_count, 0));
 }
 
 Archive::child_iterator Archive::findSym(StringRef name) const {
