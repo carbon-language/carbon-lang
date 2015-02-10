@@ -527,6 +527,9 @@ bool EarlyCSE::processNode(DomTreeNode *Node) {
       // Ignore volatile loads.
       if (MemInst.isVolatile()) {
         LastStore = nullptr;
+        // Don't CSE across synchronization boundaries.
+        if (Inst->mayWriteToMemory())
+          ++CurrentGeneration;
         continue;
       }
 
