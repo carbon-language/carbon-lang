@@ -678,7 +678,13 @@ void Verifier::visitMetadataAsValue(const MetadataAsValue &MDV, Function *F) {
     visitValueAsMetadata(*V, F);
 }
 
-void Verifier::visitMDLocation(const MDLocation &) {}
+void Verifier::visitMDLocation(const MDLocation &N) {
+  Assert1(N.getScope(), "location requires a valid scope", &N);
+  if (N.getInlinedAt())
+    Assert2(isa<MDLocation>(N.getInlinedAt()),
+            "inlined-at should be a location", &N, N.getInlinedAt());
+}
+
 void Verifier::visitGenericDebugNode(const GenericDebugNode &) {}
 void Verifier::visitMDSubrange(const MDSubrange &) {}
 void Verifier::visitMDEnumerator(const MDEnumerator &) {}
