@@ -287,6 +287,19 @@
 /// which causes the program to exit abnormally.
 #if __has_builtin(__builtin_trap) || LLVM_GNUC_PREREQ(4, 3, 0)
 # define LLVM_BUILTIN_TRAP __builtin_trap()
+#elif defined(LLVM_ON_WIN32)
+#if defined(_WIN64)
+extern "C" __declspec(dllimport) void __stdcall RaiseException(
+    unsigned long, unsigned long, unsigned long, const unsigned long long *);
+#else
+extern "C" __declspec(dllimport) void __stdcall RaiseException(
+    unsigned long, unsigned long, unsigned long, const unsigned long *);
+#endif
+# define LLVM_BUILTIN_TRAP                                                     \
+  do {                                                                         \
+    ::RaiseException(0xDEADD0D0, 0x1 /*EXCEPTION_NONCONTINUABLE*/, 0, nullptr);\
+    __assume(false);                                                           \
+  } while (0)
 #else
 # define LLVM_BUILTIN_TRAP *(volatile int*)0x11 = 0
 #endif
