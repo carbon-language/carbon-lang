@@ -3113,7 +3113,7 @@ ResolveConstructorOverload(Sema &S, SourceLocation DeclLoc,
                            ArrayRef<NamedDecl *> Ctors,
                            OverloadCandidateSet::iterator &Best,
                            bool CopyInitializing, bool AllowExplicit,
-                           bool OnlyListConstructors) {
+                           bool OnlyListConstructors, bool IsListInit) {
   CandidateSet.clear();
 
   for (ArrayRef<NamedDecl *>::iterator
@@ -3138,7 +3138,16 @@ ResolveConstructorOverload(Sema &S, SourceLocation DeclLoc,
       //     of a class copy-initialization, or
       //   — 13.3.1.4, 13.3.1.5, or 13.3.1.6 (in all cases),
       //   user-defined conversion sequences are not considered.
-      if (CopyInitializing && Constructor->isCopyOrMoveConstructor())
+      // FIXME: This breaks backward compatibility, e.g. PR12117. As a
+      //        temporary fix, let's re-instate the third bullet above until
+      //        there is a resolution in the standard, i.e.,
+      //   - 13.3.1.7 when the initializer list has exactly one element that is
+      //     itself an initializer list and a conversion to some class X or
+      //     reference to (possibly cv-qualified) X is considered for the first
+      //     parameter of a constructor of X.
+      if ((CopyInitializing ||
+           (IsListInit && Args.size() == 1 && isa<InitListExpr>(Args[0]))) &&
+          Constructor->isCopyOrMoveConstructor())
         SuppressUserConversions = true;
     }
 
@@ -3240,7 +3249,8 @@ static void TryConstructorInitialization(Sema &S,
       Result = ResolveConstructorOverload(S, Kind.getLocation(), Args,
                                           CandidateSet, Ctors, Best,
                                           CopyInitialization, AllowExplicit,
-                                          /*OnlyListConstructor=*/true);
+                                          /*OnlyListConstructor=*/true,
+                                          IsListInit);
 
     // Time to unwrap the init list.
     Args = MultiExprArg(ILE->getInits(), ILE->getNumInits());
@@ -3256,7 +3266,8 @@ static void TryConstructorInitialization(Sema &S,
     Result = ResolveConstructorOverload(S, Kind.getLocation(), Args,
                                         CandidateSet, Ctors, Best,
                                         CopyInitialization, AllowExplicit,
-                                        /*OnlyListConstructors=*/false);
+                                        /*OnlyListConstructors=*/false,
+                                        IsListInit);
   }
   if (Result) {
     Sequence.SetOverloadFailure(IsListInit ?
