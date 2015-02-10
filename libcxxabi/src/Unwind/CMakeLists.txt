@@ -1,20 +1,24 @@
 # Get sources
-set(LIBUNWIND_SOURCES
-  libunwind.cpp
-  Unwind-EHABI.cpp
-  UnwindLevel1.c
-  UnwindLevel1-gcc-ext.c
-  Unwind-sjlj.c
-)
 
-append_if(LIBUNWIND_SOURCES APPLE Unwind_AppleExtras.cpp)
+set(LIBUNWIND_CXX_SOURCES
+    libunwind.cpp
+    Unwind-EHABI.cpp)
+append_if(LIBUNWIND_CXX_SOURCES APPLE Unwind_AppleExtras.cpp)
+
+set(LIBUNWIND_C_SOURCES
+    UnwindLevel1.c
+    UnwindLevel1-gcc-ext.c
+    Unwind-sjlj.c)
+set_source_files_properties(${LIBUNWIND_C_SOURCES}
+                            PROPERTIES
+                              COMPILE_FLAGS "-std=c99")
 
 set(LIBUNWIND_ASM_SOURCES
-  UnwindRegistersRestore.S
-  UnwindRegistersSave.S
-)
-
-set_source_files_properties(${LIBUNWIND_ASM_SOURCES} PROPERTIES LANGUAGE C)
+    UnwindRegistersRestore.S
+    UnwindRegistersSave.S)
+set_source_files_properties(${LIBUNWIND_ASM_SOURCES}
+                            PROPERTIES
+                              LANGUAGE C)
 
 set(LIBUNWIND_HEADERS
   AddressSpace.hpp
@@ -40,18 +44,15 @@ if (MSVC_IDE)
   source_group("Header Files" FILES ${LIBUNWIND_HEADERS})
 endif()
 
+set(LIBUNWIND_SOURCES
+    ${LIBUNWIND_CXX_SOURCES}
+    ${LIBUNWIND_C_SOURCES}
+    ${LIBUNWIND_ASM_SOURCES})
+
 if (LIBUNWIND_ENABLE_SHARED)
-  add_library(unwind SHARED
-    ${LIBUNWIND_SOURCES}
-    ${LIBUNWIND_ASM_SOURCES}
-    ${LIBUNWIND_HEADERS}
-    )
+  add_library(unwind SHARED ${LIBUNWIND_SOURCES} ${LIBUNWIND_HEADERS})
 else()
-  add_library(unwind STATIC
-    ${LIBUNWIND_SOURCES}
-    ${LIBUNWIND_ASM_SOURCES}
-    ${LIBUNWIND_HEADERS}
-    )
+  add_library(unwind STATIC ${LIBUNWIND_SOURCES} ${LIBUNWIND_HEADERS})
 endif()
 
 include_directories("${LIBCXXABI_LIBCXX_INCLUDES}")
