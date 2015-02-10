@@ -70,7 +70,7 @@ front-end arguments, which must follow the <module-map-file>.
 Module-Map-Checker Command Line Options
 =======================================
 
-.. option:: -I(include path)
+.. option:: -I (include path)
 
   Look at headers only in this directory tree.
   Must be a path relative to the module.map file.
