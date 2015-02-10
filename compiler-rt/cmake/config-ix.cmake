@@ -1,6 +1,7 @@
 include(CheckCXXCompilerFlag)
 include(CheckLibraryExists)
 include(CheckSymbolExists)
+include(TestBigEndian)
 
 # CodeGen options.
 check_cxx_compiler_flag(-fPIC                COMPILER_RT_HAS_FPIC_FLAG)
@@ -144,8 +145,12 @@ else()
       test_target_arch(i386 "")
     endif()
   elseif("${LLVM_NATIVE_ARCH}" STREQUAL "PowerPC")
-    test_target_arch(powerpc64 "-m64")
-    test_target_arch(powerpc64le "-m64")
+    TEST_BIG_ENDIAN(HOST_IS_BIG_ENDIAN)
+    if(HOST_IS_BIG_ENDIAN)
+      test_target_arch(powerpc64 "-m64")
+    else()
+      test_target_arch(powerpc64le "-m64")
+    endif()
   elseif("${LLVM_NATIVE_ARCH}" STREQUAL "Mips")
     if("${COMPILER_RT_TEST_TARGET_ARCH}" MATCHES "mipsel|mips64el")
       # regex for mipsel, mips64el
