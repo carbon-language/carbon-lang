@@ -69,4 +69,5 @@ class CMICmnStreamStdinLinux : public CMICmnBase, public CMICmnStreamStdin::IOSS
     const MIuint m_constBufferSize;
     FILE *m_pStdin;
     MIchar *m_pCmdBuffer;
+    bool m_waitForInput;
 };

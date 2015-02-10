@@ -28,7 +28,6 @@ class MiExitTestCase(lldbmi_testcase.MiTestCaseBase):
 
         # Test -gdb-exit: try to exit and check that program is finished
         self.runCmd("-gdb-exit")
-        self.runCmd("") #FIXME hangs here on Linux; extra return is needed
         self.expect("\^exit")
         import pexpect
         self.expect(pexpect.EOF)

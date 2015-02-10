@@ -20,10 +20,8 @@
 //--
 
 // Third Party Headers:
-#if defined(__APPLE__)
 #include <sys/select.h>
 #include <unistd.h> // For STDIN_FILENO
-#endif              // defined( __APPLE__ )
 #include <string.h> // For std::strerror()
 
 // In-house headers:
@@ -43,6 +41,7 @@ CMICmnStreamStdinLinux::CMICmnStreamStdinLinux(void)
     : m_constBufferSize(1024)
     , m_pStdin(nullptr)
     , m_pCmdBuffer(nullptr)
+    , m_waitForInput(true)
 {
 }
 
@@ -153,28 +152,32 @@ CMICmnStreamStdinLinux::Shutdown(void)
 bool
 CMICmnStreamStdinLinux::InputAvailable(bool &vwbAvail)
 {
-#if defined(__APPLE__)
-    // The code below is needed on OSX where lldb-mi hangs when doing -exec-run.
-    // The hang seems to come from calling fgets and fileno from different thread.
-    // Although this problem was not observed on Linux.
-    // A solution based on 'ioctl' was initially committed but it seems to make
-    // lldb-mi takes much more processor time. The solution based on 'select' works
-    // well but it seems to slow the execution of lldb-mi tests a lot on Linux.
-    // As a result, this code is #defined to run only on OSX.
+    // Wait for the input using select API. Timeout is used so that we get an
+    // opportunity to check if m_waitForInput has been set to false by other thread.
     fd_set setOfStdin;
-    FD_ZERO(&setOfStdin);
-    FD_SET(STDIN_FILENO, &setOfStdin);
+    struct timeval tv;
 
-    // Wait while input would be available
-    if (::select(STDIN_FILENO + 1, &setOfStdin, nullptr, nullptr, nullptr) == -1)
+    while (m_waitForInput)
     {
-        vwbAvail = false;
-        return MIstatus::failure;
+        FD_ZERO(&setOfStdin);
+        FD_SET(STDIN_FILENO, &setOfStdin);
+        tv.tv_sec = 1;
+        tv.tv_usec = 0;
+        int ret = ::select(STDIN_FILENO + 1, &setOfStdin, nullptr, nullptr, &tv);
+        if (ret == 0) // Timeout. Loop back if m_waitForInput is true
+            continue;
+        else if (ret == -1) // Error condition. Return
+        {
+            vwbAvail = false;
+            return MIstatus::failure;
+        }
+        else // Have some valid input
+        {
+            vwbAvail = true;
+            return MIstatus::success;
+        }
     }
-
-#endif // defined( __APPLE__ )
-    vwbAvail = true;
-    return MIstatus::success;
+    return MIstatus::failure;
 }
 
 //++ ------------------------------------------------------------------------------------
@@ -221,5 +224,5 @@ CMICmnStreamStdinLinux::ReadLine(CMIUtilString &vwErrMsg)
 void
 CMICmnStreamStdinLinux::InterruptReadLine(void)
 {
-    fclose(stdin);
+    m_waitForInput = false;
 }
