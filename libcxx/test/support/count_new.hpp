@@ -19,7 +19,7 @@ class MemCounter
 public:
     // Make MemCounter super hard to accidentally construct or copy.
     class MemCounterCtorArg_ {};
-    explicit MemCounter(MemCounterCtorArg_) {}
+    explicit MemCounter(MemCounterCtorArg_) { reset(); }
 
 private:
     MemCounter(MemCounter const &);
@@ -29,15 +29,15 @@ public:
     // All checks return true when disable_checking is enabled.
     static const bool disable_checking;
 
-    int outstanding_new = 0;
-    int new_called = 0;
-    int delete_called = 0;
-    int last_new_size = 0;
+    int outstanding_new;
+    int new_called;
+    int delete_called;
+    int last_new_size;
 
-    int outstanding_array_new = 0;
-    int new_array_called = 0;
-    int delete_array_called = 0;
-    int last_new_array_size = 0;
+    int outstanding_array_new;
+    int new_array_called;
+    int delete_array_called;
+    int last_new_array_size;
 
 public:
     void newCalled(std::size_t s)

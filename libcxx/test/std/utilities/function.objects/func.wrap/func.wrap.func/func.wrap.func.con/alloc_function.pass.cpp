@@ -79,7 +79,7 @@ int main()
     assert(globalMemCounter.checkOutstandingNewEq(0));
     {
     assert(globalMemCounter.checkOutstandingNewEq(0));
-    non_default_test_allocator<std::function<int(int)>> al(1);
+    non_default_test_allocator<std::function<int(int)> > al(1);
     std::function<int(int)> f2(std::allocator_arg, al, g);
     assert(globalMemCounter.checkOutstandingNewEq(0));
     assert(f2.target<int(*)(int)>());
