@@ -22,7 +22,7 @@ public:
   PDBSymbolTypeArray(const IPDBSession &PDBSession,
                      std::unique_ptr<IPDBRawSymbol> ArrayTypeSymbol);
 
-  void dump(llvm::raw_ostream &OS) const override;
+  void dump(raw_ostream &OS, int Indent, PDB_DumpLevel Level) const override;
 
   FORWARD_SYMBOL_METHOD(getArrayIndexTypeId)
   FORWARD_SYMBOL_METHOD(isConstType)

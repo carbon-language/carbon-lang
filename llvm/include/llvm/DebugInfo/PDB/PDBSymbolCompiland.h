@@ -23,7 +23,7 @@ public:
   PDBSymbolCompiland(const IPDBSession &PDBSession,
                      std::unique_ptr<IPDBRawSymbol> CompilandSymbol);
 
-  void dump(llvm::raw_ostream &OS) const override;
+  void dump(raw_ostream &OS, int Indent, PDB_DumpLevel Level) const override;
 
   FORWARD_SYMBOL_METHOD(isEditAndContinueEnabled)
   FORWARD_SYMBOL_METHOD(getLexicalParentId)

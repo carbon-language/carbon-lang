@@ -22,7 +22,7 @@ public:
   PDBSymbolTypeVTableShape(const IPDBSession &PDBSession,
                            std::unique_ptr<IPDBRawSymbol> VtblShapeSymbol);
 
-  void dump(llvm::raw_ostream &OS) const override;
+  void dump(raw_ostream &OS, int Indent, PDB_DumpLevel Level) const override;
 
   FORWARD_SYMBOL_METHOD(isConstType)
   FORWARD_SYMBOL_METHOD(getCount)

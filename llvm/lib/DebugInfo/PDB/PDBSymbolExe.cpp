@@ -9,6 +9,8 @@
 
 #include <utility>
 
+#include "llvm/DebugInfo/PDB/IPDBEnumChildren.h"
+#include "llvm/DebugInfo/PDB/PDBExtras.h"
 #include "llvm/DebugInfo/PDB/PDBSymbol.h"
 #include "llvm/DebugInfo/PDB/PDBSymbolExe.h"
 #include "llvm/Support/ConvertUTF.h"
@@ -21,5 +23,28 @@ PDBSymbolExe::PDBSymbolExe(const IPDBSession &PDBSession,
                            std::unique_ptr<IPDBRawSymbol> Symbol)
     : PDBSymbol(PDBSession, std::move(Symbol)) {}
 
-void PDBSymbolExe::dump(llvm::raw_ostream &OS) const {
+void PDBSymbolExe::dump(raw_ostream &OS, int Indent,
+                        PDB_DumpLevel Level) const {
+  std::string FileName(getSymbolsFileName());
+
+  OS << "Summary for " << FileName << "\n";
+
+  TagStats Stats;
+  auto ChildrenEnum = getChildStats(Stats);
+  OS << stream_indent(Indent + 2) << "Children: " << Stats << "\n";
+
+  uint64_t FileSize = 0;
+  if (!llvm::sys::fs::file_size(FileName, FileSize))
+    OS << "  Size: " << FileSize << " bytes\n";
+  else
+    OS << "  Size: (Unable to obtain file size)\n";
+  PDB_UniqueId Guid = getGuid();
+  OS << "  Guid: " << Guid << "\n";
+  OS << "  Age: " << getAge() << "\n";
+  OS << "  Attributes: ";
+  if (hasCTypes())
+    OS << "HasCTypes ";
+  if (hasPrivateSymbols())
+    OS << "HasPrivateSymbols ";
+  OS << "\n";
 }

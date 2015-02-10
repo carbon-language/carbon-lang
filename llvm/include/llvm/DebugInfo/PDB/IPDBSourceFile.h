@@ -17,11 +17,15 @@
 
 namespace llvm {
 
+class raw_ostream;
+
 /// IPDBSourceFile defines an interface used to represent source files whose
 /// information are stored in the PDB.
 class IPDBSourceFile {
 public:
   virtual ~IPDBSourceFile();
+
+  void dump(raw_ostream &OS, int Indent, PDB_DumpLevel Level) const;
 
   virtual std::string getFileName() const = 0;
   virtual uint32_t getUniqueId() const = 0;

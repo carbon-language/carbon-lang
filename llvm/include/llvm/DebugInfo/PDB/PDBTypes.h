@@ -11,6 +11,7 @@
 #define LLVM_DEBUGINFO_PDB_PDBTYPES_H
 
 #include <stdint.h>
+#include <functional>
 #include "llvm/Config/llvm-config.h"
 
 namespace llvm {
@@ -66,6 +67,12 @@ class PDBSymbolUnknown;
 /// of PDB_ReaderType::DIA is supported.
 enum class PDB_ReaderType {
   DIA = 0,
+};
+
+enum class PDB_DumpLevel {
+  Compact,
+  Normal,
+  Detailed,
 };
 
 /// Defines a 128-bit unique identifier.  This maps to a GUID on Windows, but
@@ -365,6 +372,58 @@ enum class PDB_BuiltinType {
   HResult = 31
 };
 
+enum class PDB_RegisterId {
+  Unknown = 0,
+  VFrame = 30006,
+  AL = 1,
+  CL = 2,
+  DL = 3,
+  BL = 4,
+  AH = 5,
+  CH = 6,
+  DH = 7,
+  BH = 8,
+  AX = 9,
+  CX = 10,
+  DX = 11,
+  BX = 12,
+  SP = 13,
+  BP = 14,
+  SI = 15,
+  DI = 16,
+  EAX = 17,
+  ECX = 18,
+  EDX = 19,
+  EBX = 20,
+  ESP = 21,
+  EBP = 22,
+  ESI = 23,
+  EDI = 24,
+  ES = 25,
+  CS = 26,
+  SS = 27,
+  DS = 28,
+  FS = 29,
+  GS = 30,
+  IP = 31,
+  RAX = 328,
+  RBX = 329,
+  RCX = 330,
+  RDX = 331,
+  RSI = 332,
+  RDI = 333,
+  RBP = 334,
+  RSP = 335,
+  R8 = 336,
+  R9 = 337,
+  R10 = 338,
+  R11 = 339,
+  R12 = 340,
+  R13 = 341,
+  R14 = 342,
+  R15 = 343,
+};
+
 enum class PDB_MemberAccess { Private = 1, Protected = 2, Public = 3 };
 
 struct VersionInfo {
@@ -375,5 +434,16 @@ struct VersionInfo {
 };
 
 } // namespace llvm
+
+namespace std {
+template <> struct hash<llvm::PDB_SymType> {
+  typedef llvm::PDB_SymType argument_type;
+  typedef std::size_t result_type;
+
+  result_type operator()(const argument_type &Arg) const {
+    return std::hash<int>()(static_cast<int>(Arg));
+  }
+};
+}
 
 #endif

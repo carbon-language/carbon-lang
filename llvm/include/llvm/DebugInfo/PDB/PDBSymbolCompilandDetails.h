@@ -22,7 +22,7 @@ public:
   PDBSymbolCompilandDetails(const IPDBSession &PDBSession,
                             std::unique_ptr<IPDBRawSymbol> Symbol);
 
-  void dump(llvm::raw_ostream &OS) const override;
+  void dump(raw_ostream &OS, int Indent, PDB_DumpLevel Level) const override;
 
   void getFrontEndVersion(VersionInfo &Version) const {
     RawSymbol->getFrontEndVersion(Version);

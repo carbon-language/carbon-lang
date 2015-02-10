@@ -22,7 +22,7 @@ public:
   PDBSymbolFunc(const IPDBSession &PDBSession,
                 std::unique_ptr<IPDBRawSymbol> FuncSymbol);
 
-  void dump(llvm::raw_ostream &OS) const override;
+  void dump(raw_ostream &OS, int Indent, PDB_DumpLevel Level) const override;
 
   FORWARD_SYMBOL_METHOD(getAccess)
   FORWARD_SYMBOL_METHOD(getAddressOffset)
@@ -46,8 +46,10 @@ public:
   FORWARD_SYMBOL_METHOD(isStatic)
   FORWARD_SYMBOL_METHOD(getLength)
   FORWARD_SYMBOL_METHOD(getLexicalParentId)
+  FORWARD_SYMBOL_METHOD(getLocalBasePointerRegisterId)
   FORWARD_SYMBOL_METHOD(getLocationType)
   FORWARD_SYMBOL_METHOD(getName)
+  FORWARD_SYMBOL_METHOD(hasFramePointer)
   FORWARD_SYMBOL_METHOD(hasNoInlineAttribute)
   FORWARD_SYMBOL_METHOD(hasNoReturnAttribute)
   FORWARD_SYMBOL_METHOD(isUnreached)

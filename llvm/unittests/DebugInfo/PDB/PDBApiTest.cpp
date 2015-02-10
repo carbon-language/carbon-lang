@@ -7,7 +7,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <type_traits>
 #include <unordered_map>
 
 #include "llvm/DebugInfo/PDB/IPDBEnumChildren.h"
@@ -51,16 +50,6 @@
 #include "gtest/gtest.h"
 using namespace llvm;
 
-namespace std {
-  template<>
-  struct hash<PDB_SymType> {
-  public:
-    std::size_t operator()(PDB_SymType Symbol) const {
-      return std::hash<int>()(static_cast<int>(Symbol));
-    }
-  };
-}
-
 namespace {
 
 #define MOCK_SYMBOL_ACCESSOR(Func)                                             \
@@ -82,17 +71,26 @@ class MockSession : public IPDBSession {
   getSourceFileById(uint32_t SymbolId) const override {
     return nullptr;
   }
-  std::unique_ptr<IPDBEnumDataStreams> getDebugStreams() const override {
+  std::unique_ptr<IPDBEnumSourceFiles> getAllSourceFiles() const override {
+    return nullptr;
+  }
+  std::unique_ptr<IPDBEnumSourceFiles> getSourceFilesForCompiland(
+      const PDBSymbolCompiland &Compiland) const override {
     return nullptr;
   }
 };
 
 class MockRawSymbol : public IPDBRawSymbol {
 public:
-  MockRawSymbol(PDB_SymType SymType) : Type(SymType) {}
+  MockRawSymbol(const IPDBSession &PDBSession, PDB_SymType SymType)
+      : Session(PDBSession), Type(SymType) {}
 
-  void dump(llvm::raw_ostream &OS) const override {}
+  void dump(raw_ostream &OS, int Indent, PDB_DumpLevel Level) const override {}
 
+  std::unique_ptr<IPDBEnumSymbols>
+  findChildren(PDB_SymType Type) const override {
+    return nullptr;
+  }
   std::unique_ptr<IPDBEnumSymbols>
   findChildren(PDB_SymType Type, StringRef Name,
                PDB_NameSearchFlags Flags) const override {
@@ -206,6 +204,7 @@ public:
   MOCK_SYMBOL_ACCESSOR(hasDebugInfo)
   MOCK_SYMBOL_ACCESSOR(hasEH)
   MOCK_SYMBOL_ACCESSOR(hasEHa)
+  MOCK_SYMBOL_ACCESSOR(hasFramePointer)
   MOCK_SYMBOL_ACCESSOR(hasInlAsm)
   MOCK_SYMBOL_ACCESSOR(hasInlineAttribute)
   MOCK_SYMBOL_ACCESSOR(hasInterruptReturn)
@@ -270,6 +269,7 @@ public:
   MOCK_SYMBOL_ACCESSOR(isVolatileType)
 
 private:
+  const IPDBSession &Session;
   PDB_SymType Type;
 };
 
@@ -334,7 +334,7 @@ private:
   std::unique_ptr<IPDBSession> Session;
 
   void InsertItemWithTag(PDB_SymType Tag) {
-    auto RawSymbol = std::unique_ptr<IPDBRawSymbol>(new MockRawSymbol(Tag));
+    auto RawSymbol = std::make_unique<MockRawSymbol>(*Session, Tag);
     auto Symbol = PDBSymbol::create(*Session, std::move(RawSymbol));
     SymbolMap.insert(std::make_pair(Tag, std::move(Symbol)));
   }

@@ -24,4 +24,5 @@ std::string PDBSymbolCompilandEnv::getValue() const {
   return std::string();
 }
 
-void PDBSymbolCompilandEnv::dump(llvm::raw_ostream &OS) const {}
+void PDBSymbolCompilandEnv::dump(raw_ostream &OS, int Indent,
+                                 PDB_DumpLevel Level) const {}

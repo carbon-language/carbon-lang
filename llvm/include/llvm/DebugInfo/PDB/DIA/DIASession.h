@@ -25,6 +25,10 @@ public:
   void setLoadAddress(uint64_t Address) override;
   std::unique_ptr<PDBSymbolExe> getGlobalScope() const override;
   std::unique_ptr<PDBSymbol> getSymbolById(uint32_t SymbolId) const override;
+
+  std::unique_ptr<IPDBEnumSourceFiles> getAllSourceFiles() const override;
+  std::unique_ptr<IPDBEnumSourceFiles> getSourceFilesForCompiland(
+      const PDBSymbolCompiland &Compiland) const override;
   std::unique_ptr<IPDBSourceFile>
   getSourceFileById(uint32_t FileId) const override;
 

@@ -18,4 +18,5 @@ PDBSymbolUnknown::PDBSymbolUnknown(const IPDBSession &PDBSession,
                                    std::unique_ptr<IPDBRawSymbol> Symbol)
     : PDBSymbol(PDBSession, std::move(Symbol)) {}
 
-void PDBSymbolUnknown::dump(llvm::raw_ostream &OS) const {}
+void PDBSymbolUnknown::dump(raw_ostream &OS, int Indent,
+                            PDB_DumpLevel Level) const {}

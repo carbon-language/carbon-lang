@@ -18,4 +18,5 @@ PDBSymbolTypeBaseClass::PDBSymbolTypeBaseClass(
     const IPDBSession &PDBSession, std::unique_ptr<IPDBRawSymbol> Symbol)
     : PDBSymbol(PDBSession, std::move(Symbol)) {}
 
-void PDBSymbolTypeBaseClass::dump(llvm::raw_ostream &OS) const {}
+void PDBSymbolTypeBaseClass::dump(raw_ostream &OS, int Indent,
+                                  PDB_DumpLevel Level) const {}

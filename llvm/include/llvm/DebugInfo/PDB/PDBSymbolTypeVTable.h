@@ -22,7 +22,7 @@ public:
   PDBSymbolTypeVTable(const IPDBSession &PDBSession,
                       std::unique_ptr<IPDBRawSymbol> VtblSymbol);
 
-  void dump(llvm::raw_ostream &OS) const override;
+  void dump(raw_ostream &OS, int Indent, PDB_DumpLevel Level) const override;
 
   FORWARD_SYMBOL_METHOD(getClassParentId)
   FORWARD_SYMBOL_METHOD(isConstType)

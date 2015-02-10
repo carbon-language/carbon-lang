@@ -29,7 +29,10 @@ class IPDBRawSymbol {
 public:
   virtual ~IPDBRawSymbol();
 
-  virtual void dump(llvm::raw_ostream &OS) const = 0;
+  virtual void dump(raw_ostream &OS, int Indent, PDB_DumpLevel Level) const = 0;
+
+  virtual std::unique_ptr<IPDBEnumSymbols>
+  findChildren(PDB_SymType Type) const = 0;
 
   virtual std::unique_ptr<IPDBEnumSymbols>
   findChildren(PDB_SymType Type, StringRef Name,
@@ -64,7 +67,7 @@ public:
   virtual uint32_t getLiveRangeStartAddressOffset() const = 0;
   virtual uint32_t getLiveRangeStartAddressSection() const = 0;
   virtual uint32_t getLiveRangeStartRelativeVirtualAddress() const = 0;
-  virtual uint32_t getLocalBasePointerRegisterId() const = 0;
+  virtual PDB_RegisterId getLocalBasePointerRegisterId() const = 0;
   virtual uint32_t getLowerBoundId() const = 0;
   virtual uint32_t getMemorySpaceKind() const = 0;
   virtual std::string getName() const = 0;
@@ -79,7 +82,7 @@ public:
   virtual uint32_t getOffsetInUdt() const = 0;
   virtual PDB_Cpu getPlatform() const = 0;
   virtual uint32_t getRank() const = 0;
-  virtual uint32_t getRegisterId() const = 0;
+  virtual PDB_RegisterId getRegisterId() const = 0;
   virtual uint32_t getRegisterType() const = 0;
   virtual uint32_t getRelativeVirtualAddress() const = 0;
   virtual uint32_t getSamplerSlot() const = 0;
@@ -136,6 +139,7 @@ public:
   virtual bool hasDebugInfo() const = 0;
   virtual bool hasEH() const = 0;
   virtual bool hasEHa() const = 0;
+  virtual bool hasFramePointer() const = 0;
   virtual bool hasInlAsm() const = 0;
   virtual bool hasInlineAttribute() const = 0;
   virtual bool hasInterruptReturn() const = 0;

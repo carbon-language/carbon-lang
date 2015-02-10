@@ -23,7 +23,7 @@ public:
   PDBSymbolBlock(const IPDBSession &PDBSession,
                  std::unique_ptr<IPDBRawSymbol> Symbol);
 
-  void dump(llvm::raw_ostream &OS) const override;
+  void dump(raw_ostream &OS, int Indent, PDB_DumpLevel Level) const override;
 
   FORWARD_SYMBOL_METHOD(getAddressOffset)
   FORWARD_SYMBOL_METHOD(getAddressSection)

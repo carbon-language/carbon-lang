@@ -23,4 +23,5 @@ void PDBSymbolCustom::getDataBytes(llvm::SmallVector<uint8_t, 32> &bytes) {
   RawSymbol->getDataBytes(bytes);
 }
 
-void PDBSymbolCustom::dump(llvm::raw_ostream &OS) const {}
+void PDBSymbolCustom::dump(raw_ostream &OS, int Indent,
+                           PDB_DumpLevel Level) const {}

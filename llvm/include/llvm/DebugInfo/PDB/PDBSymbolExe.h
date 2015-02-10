@@ -24,7 +24,7 @@ public:
   PDBSymbolExe(const IPDBSession &PDBSession,
                std::unique_ptr<IPDBRawSymbol> ExeSymbol);
 
-  void dump(llvm::raw_ostream &OS) const override;
+  void dump(raw_ostream &OS, int Indent, PDB_DumpLevel Level) const override;
 
   FORWARD_SYMBOL_METHOD(getAge)
   FORWARD_SYMBOL_METHOD(getGuid)

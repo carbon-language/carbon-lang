@@ -16,6 +16,7 @@
 
 namespace llvm {
 
+class PDBSymbolCompiland;
 class PDBSymbolExe;
 
 /// IPDBSession defines an interface used to provide a context for querying
@@ -28,6 +29,10 @@ public:
   virtual void setLoadAddress(uint64_t Address) = 0;
   virtual std::unique_ptr<PDBSymbolExe> getGlobalScope() const = 0;
   virtual std::unique_ptr<PDBSymbol> getSymbolById(uint32_t SymbolId) const = 0;
+
+  virtual std::unique_ptr<IPDBEnumSourceFiles> getAllSourceFiles() const = 0;
+  virtual std::unique_ptr<IPDBEnumSourceFiles>
+  getSourceFilesForCompiland(const PDBSymbolCompiland &Compiland) const = 0;
   virtual std::unique_ptr<IPDBSourceFile>
   getSourceFileById(uint32_t FileId) const = 0;
 

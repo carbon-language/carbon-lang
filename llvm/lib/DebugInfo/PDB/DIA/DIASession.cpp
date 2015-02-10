@@ -7,11 +7,14 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/DebugInfo/PDB/PDBSymbolCompiland.h"
+#include "llvm/DebugInfo/PDB/PDBSymbolExe.h"
+
 #include "llvm/DebugInfo/PDB/DIA/DIAEnumDebugStreams.h"
+#include "llvm/DebugInfo/PDB/DIA/DIAEnumSourceFiles.h"
 #include "llvm/DebugInfo/PDB/DIA/DIARawSymbol.h"
 #include "llvm/DebugInfo/PDB/DIA/DIASession.h"
 #include "llvm/DebugInfo/PDB/DIA/DIASourceFile.h"
-#include "llvm/DebugInfo/PDB/PDBSymbolExe.h"
 #include "llvm/Support/ConvertUTF.h"
 
 using namespace llvm;
@@ -73,6 +76,27 @@ std::unique_ptr<PDBSymbol> DIASession::getSymbolById(uint32_t SymbolId) const {
 
   auto RawSymbol = std::make_unique<DIARawSymbol>(*this, LocatedSymbol);
   return PDBSymbol::create(*this, std::move(RawSymbol));
+}
+
+std::unique_ptr<IPDBEnumSourceFiles> DIASession::getAllSourceFiles() const {
+  CComPtr<IDiaEnumSourceFiles> Files;
+  if (S_OK != Session->findFile(nullptr, nullptr, nsNone, &Files))
+    return nullptr;
+
+  return std::make_unique<DIAEnumSourceFiles>(*this, Files);
+}
+
+std::unique_ptr<IPDBEnumSourceFiles> DIASession::getSourceFilesForCompiland(
+    const PDBSymbolCompiland &Compiland) const {
+  CComPtr<IDiaEnumSourceFiles> Files;
+
+  const DIARawSymbol &RawSymbol =
+      static_cast<const DIARawSymbol &>(Compiland.getRawSymbol());
+  if (S_OK !=
+      Session->findFile(RawSymbol.getDiaSymbol(), nullptr, nsNone, &Files))
+    return nullptr;
+
+  return std::make_unique<DIAEnumSourceFiles>(*this, Files);
 }
 
 std::unique_ptr<IPDBSourceFile>

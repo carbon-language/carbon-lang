@@ -30,7 +30,9 @@ endif()
 list(APPEND LIBPDB_ADDITIONAL_HEADER_DIRS "../../../include/llvm/DebugInfo/PDB")
 
 add_llvm_library(LLVMDebugInfoPDB
+  IPDBSourceFile.cpp
   PDB.cpp
+  PDBExtras.cpp
   PDBInterfaceAnchors.cpp
   PDBSymbol.cpp
   PDBSymbolAnnotation.cpp

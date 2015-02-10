@@ -19,8 +19,12 @@ class DIARawSymbol : public IPDBRawSymbol {
 public:
   DIARawSymbol(const DIASession &PDBSession, CComPtr<IDiaSymbol> DiaSymbol);
 
-  void dump(llvm::raw_ostream &OS) const override;
+  void dump(raw_ostream &OS, int Indent, PDB_DumpLevel Level) const override;
 
+  CComPtr<IDiaSymbol> getDiaSymbol() const { return Symbol; }
+
+  std::unique_ptr<IPDBEnumSymbols>
+  DIARawSymbol::findChildren(PDB_SymType Type) const override;
   std::unique_ptr<IPDBEnumSymbols>
   findChildren(PDB_SymType Type, StringRef Name,
                PDB_NameSearchFlags Flags) const override;
@@ -54,7 +58,7 @@ public:
   uint32_t getLiveRangeStartAddressOffset() const override;
   uint32_t getLiveRangeStartAddressSection() const override;
   uint32_t getLiveRangeStartRelativeVirtualAddress() const override;
-  uint32_t getLocalBasePointerRegisterId() const override;
+  PDB_RegisterId getLocalBasePointerRegisterId() const override;
   uint32_t getLowerBoundId() const override;
   uint32_t getMemorySpaceKind() const override;
   std::string getName() const override;
@@ -69,7 +73,7 @@ public:
   uint32_t getOffsetInUdt() const override;
   PDB_Cpu getPlatform() const override;
   uint32_t getRank() const override;
-  uint32_t getRegisterId() const override;
+  PDB_RegisterId getRegisterId() const override;
   uint32_t getRegisterType() const override;
   uint32_t getRelativeVirtualAddress() const override;
   uint32_t getSamplerSlot() const override;
@@ -129,6 +133,7 @@ public:
   bool hasInlAsm() const override;
   bool hasInlineAttribute() const override;
   bool hasInterruptReturn() const override;
+  bool hasFramePointer() const override;
   bool hasLongJump() const override;
   bool hasManagedCode() const override;
   bool hasNestedTypes() const override;

@@ -22,7 +22,7 @@ public:
   PDBSymbolTypeCustom(const IPDBSession &PDBSession,
                       std::unique_ptr<IPDBRawSymbol> Symbol);
 
-  void dump(llvm::raw_ostream &OS) const override;
+  void dump(raw_ostream &OS, int Indent, PDB_DumpLevel Level) const override;
 
   FORWARD_SYMBOL_METHOD(getOemId)
   FORWARD_SYMBOL_METHOD(getOemSymbolId)

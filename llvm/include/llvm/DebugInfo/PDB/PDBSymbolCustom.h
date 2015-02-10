@@ -27,7 +27,7 @@ public:
   PDBSymbolCustom(const IPDBSession &PDBSession,
                   std::unique_ptr<IPDBRawSymbol> CustomSymbol);
 
-  void dump(llvm::raw_ostream &OS) const override;
+  void dump(raw_ostream &OS, int Indent, PDB_DumpLevel Level) const override;
 
   void getDataBytes(llvm::SmallVector<uint8_t, 32> &bytes);
   FORWARD_SYMBOL_METHOD(getSymIndexId)

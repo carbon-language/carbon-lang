@@ -25,6 +25,4 @@ IPDBDataStream::~IPDBDataStream() {}
 
 IPDBRawSymbol::~IPDBRawSymbol() {}
 
-IPDBSourceFile::~IPDBSourceFile() {}
-
 IPDBLineNumber::~IPDBLineNumber() {}
