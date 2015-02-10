@@ -51,10 +51,10 @@ protected:
 
     // Call the parser.
     raw_string_ostream os(_errorMessage);
-    return D::parse(vec.size(), &vec[0], _context, os);
+    return D::parse(vec.size(), &vec[0], _ctx, os);
   }
 
-  T _context;
+  T _ctx;
   std::string _errorMessage;
 };
 
