@@ -7,6 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include <memory>
 #include <unordered_map>
 
 #include "llvm/DebugInfo/PDB/IPDBEnumChildren.h"
@@ -76,6 +77,10 @@ class MockSession : public IPDBSession {
   }
   std::unique_ptr<IPDBEnumSourceFiles> getSourceFilesForCompiland(
       const PDBSymbolCompiland &Compiland) const override {
+    return nullptr;
+  }
+
+  std::unique_ptr<IPDBEnumDataStreams> getDebugStreams() const override {
     return nullptr;
   }
 };
