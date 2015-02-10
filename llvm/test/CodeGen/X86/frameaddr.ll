@@ -1,7 +1,7 @@
 ; RUN: llc < %s -march=x86                                | FileCheck %s --check-prefix=CHECK-32
 ; RUN: llc < %s -march=x86    -fast-isel -fast-isel-abort | FileCheck %s --check-prefix=CHECK-32
-; RUN: llc < %s -march=x86-64                             | FileCheck %s --check-prefix=CHECK-64
-; RUN: llc < %s -march=x86-64 -fast-isel -fast-isel-abort | FileCheck %s --check-prefix=CHECK-64
+; RUN: llc < %s -mtriple=x86_64-unknown                             | FileCheck %s --check-prefix=CHECK-64
+; RUN: llc < %s -mtriple=x86_64-unknown -fast-isel -fast-isel-abort | FileCheck %s --check-prefix=CHECK-64
 ; RUN: llc < %s -mtriple=x86_64-gnux32                    | FileCheck %s --check-prefix=CHECK-X32ABI
 ; RUN: llc < %s -mtriple=x86_64-gnux32 -fast-isel -fast-isel-abort | FileCheck %s --check-prefix=CHECK-X32ABI
 ; RUN: llc < %s -mtriple=x86_64-nacl                    | FileCheck %s --check-prefix=CHECK-NACL64

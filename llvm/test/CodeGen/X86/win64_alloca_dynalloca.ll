@@ -14,26 +14,24 @@ entry:
   %buf0 = alloca i8, i64 4096, align 1
 
 ; ___chkstk_ms does not adjust %rsp.
-; M64: movq  %rsp, %rbp
 ; M64:       $4096, %rax
 ; M64: callq ___chkstk_ms
 ; M64: subq  %rax, %rsp
+; M64: leaq 128(%rsp), %rbp
 
 ; __chkstk does not adjust %rsp.
-; W64: movq  %rsp, %rbp
 ; W64:       $4096, %rax
 ; W64: callq __chkstk
 ; W64: subq  %rax, %rsp
+; W64: leaq 128(%rsp), %rbp
 
 ; Use %r11 for the large model.
-; L64: movq  %rsp, %rbp
 ; L64:       $4096, %rax
 ; L64: movabsq $__chkstk, %r11
 ; L64: callq *%r11
 ; L64: subq  %rax, %rsp
 
 ; Freestanding
-; EFI: movq  %rsp, %rbp
 ; EFI:       $[[B0OFS:4096|4104]], %rsp
 ; EFI-NOT:   call
 
@@ -68,12 +66,12 @@ entry:
 
 ; M64: subq  $48, %rsp
 ; M64: movq  %rax, 32(%rsp)
-; M64: leaq  -4096(%rbp), %r9
+; M64: leaq  -128(%rbp), %r9
 ; M64: callq bar
 
 ; W64: subq  $48, %rsp
 ; W64: movq  %rax, 32(%rsp)
-; W64: leaq  -4096(%rbp), %r9
+; W64: leaq  -128(%rbp), %r9
 ; W64: callq bar
 
 ; EFI: subq  $48, %rsp
@@ -83,9 +81,9 @@ entry:
 
   ret i64 %r
 
-; M64: movq    %rbp, %rsp
+; M64: leaq    3968(%rbp), %rsp
 
-; W64: movq    %rbp, %rsp
+; W64: leaq    3968(%rbp), %rsp
 
 }
 
