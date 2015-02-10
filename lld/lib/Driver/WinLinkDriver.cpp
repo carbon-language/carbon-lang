@@ -784,6 +784,10 @@ parseArgs(int argc, const char **argv, PECOFFLinkingContext &ctx,
     diag << "warning: ignoring unknown argument: " << arg << "\n";
   }
 
+  // Copy mllvm
+  for (auto arg : parsedArgs->filtered(OPT_mllvm))
+    ctx.appendLLVMOption(arg->getValue());
+
   // If we have expaneded response files and /verbose is given, print out the
   // final command line.
   if (!isReadingDirectiveSection && expanded &&
@@ -936,168 +940,140 @@ bool WinLinkDriver::parse(int argc, const char *argv[],
 
   // Handle /nodefaultlib:<lib>. The same option without argument is handled in
   // the following for loop.
-  for (auto nodeDefaultLib : parsedArgs->filtered(OPT_nodefaultlib)) {
-    ctx.addNoDefaultLib(nodeDefaultLib->getValue());
-  }
+  for (auto *arg : parsedArgs->filtered(OPT_nodefaultlib))
+    ctx.addNoDefaultLib(arg->getValue());
 
   // Handle /defaultlib. Argument of the option is added to the input file list
   // unless it's blacklisted by /nodefaultlib.
   std::vector<StringRef> defaultLibs;
-  for (auto defaultLib : parsedArgs->filtered(OPT_defaultlib)) {
-    defaultLibs.push_back(defaultLib->getValue());
+  for (auto *arg : parsedArgs->filtered(OPT_defaultlib))
+    defaultLibs.push_back(arg->getValue());
+
+  // -alternatename:<alias>=<symbol>
+  for (auto *arg : parsedArgs->filtered(OPT_alternatename)) {
+    StringRef weak, def;
+    if (!parseAlternateName(arg->getValue(), weak, def, diag))
+      return false;
+    ctx.setAlternateName(weak, def);
   }
 
-  std::vector<StringRef> inputFiles;
-
-  // Process all the arguments and create input files
-  for (auto inputArg : *parsedArgs) {
-    switch (inputArg->getOption().getID()) {
-    case OPT_mllvm:
-      ctx.appendLLVMOption(inputArg->getValue());
-      break;
-
-    case OPT_alternatename: {
-      StringRef weak, def;
-      if (!parseAlternateName(inputArg->getValue(), weak, def, diag))
-        return false;
-      ctx.setAlternateName(weak, def);
-      break;
-    }
-
-    case OPT_base:
-      // Parse /base command line option. The argument for the parameter is in
-      // the form of "<address>[:<size>]".
+  // Parse /base command line option. The argument for the parameter is in
+  // the form of "<address>[:<size>]".
+  if (auto *arg = parsedArgs->getLastArg(OPT_base)) {
       uint64_t addr, size;
-
       // Size should be set to SizeOfImage field in the COFF header, and if
       // it's smaller than the actual size, the linker should warn about that.
       // Currently we just ignore the value of size parameter.
-      if (!parseMemoryOption(inputArg->getValue(), addr, size))
+      if (!parseMemoryOption(arg->getValue(), addr, size))
         return false;
       ctx.setBaseAddress(addr);
-      break;
+  }
 
-    case OPT_dll:
-      // Parse /dll command line option
-      ctx.setIsDll(true);
-      // Default base address of a DLL is 0x10000000.
-      if (!parsedArgs->getLastArg(OPT_base))
-        ctx.setBaseAddress(0x10000000);
-      break;
+  // Parse /dll command line option
+  if (parsedArgs->getLastArg(OPT_dll)) {
+    ctx.setIsDll(true);
+    // Default base address of a DLL is 0x10000000.
+    if (!parsedArgs->getLastArg(OPT_base))
+      ctx.setBaseAddress(0x10000000);
+  }
 
-    case OPT_stack: {
-      // Parse /stack command line option
-      uint64_t reserve;
-      uint64_t commit = ctx.getStackCommit();
-      if (!parseMemoryOption(inputArg->getValue(), reserve, commit))
-        return false;
-      ctx.setStackReserve(reserve);
-      ctx.setStackCommit(commit);
-      break;
+  // Parse /stack command line option
+  if (auto *arg = parsedArgs->getLastArg(OPT_stack)) {
+    uint64_t reserve;
+    uint64_t commit = ctx.getStackCommit();
+    if (!parseMemoryOption(arg->getValue(), reserve, commit))
+      return false;
+    ctx.setStackReserve(reserve);
+    ctx.setStackCommit(commit);
+  }
+
+  // Parse /heap command line option
+  if (auto *arg = parsedArgs->getLastArg(OPT_heap)) {
+    uint64_t reserve;
+    uint64_t commit = ctx.getHeapCommit();
+    if (!parseMemoryOption(arg->getValue(), reserve, commit))
+      return false;
+    ctx.setHeapReserve(reserve);
+    ctx.setHeapCommit(commit);
+  }
+
+  if (auto *arg = parsedArgs->getLastArg(OPT_align)) {
+    uint32_t align;
+    StringRef val = arg->getValue();
+    if (val.getAsInteger(10, align)) {
+      diag << "error: invalid value for /align: " << val << "\n";
+      return false;
     }
+    ctx.setSectionDefaultAlignment(align);
+  }
 
-    case OPT_heap: {
-      // Parse /heap command line option
-      uint64_t reserve;
-      uint64_t commit = ctx.getHeapCommit();
-      if (!parseMemoryOption(inputArg->getValue(), reserve, commit))
-        return false;
-      ctx.setHeapReserve(reserve);
-      ctx.setHeapCommit(commit);
-      break;
+  if (auto *arg = parsedArgs->getLastArg(OPT_version)) {
+    uint32_t major, minor;
+    if (!parseVersion(arg->getValue(), major, minor))
+      return false;
+    ctx.setImageVersion(PECOFFLinkingContext::Version(major, minor));
+  }
+
+  // Parse /merge:<from>=<to>.
+  for (auto *arg : parsedArgs->filtered(OPT_merge)) {
+    StringRef from, to;
+    std::tie(from, to) = StringRef(arg->getValue()).split('=');
+    if (from.empty() || to.empty()) {
+      diag << "error: malformed /merge option: " << arg->getValue() << "\n";
+      return false;
     }
+    if (!ctx.addSectionRenaming(diag, from, to))
+      return false;
+  }
 
-    case OPT_align: {
-      uint32_t align;
-      StringRef arg = inputArg->getValue();
-      if (arg.getAsInteger(10, align)) {
-        diag << "error: invalid value for /align: " << arg << "\n";
-        return false;
-      }
-      ctx.setSectionDefaultAlignment(align);
-      break;
+  // Parse /subsystem:<subsystem>[,<majorOSVersion>[.<minorOSVersion>]].
+  if (auto *arg = parsedArgs->getLastArg(OPT_subsystem)) {
+    llvm::COFF::WindowsSubsystem subsystem;
+    llvm::Optional<uint32_t> major, minor;
+    if (!parseSubsystem(arg->getValue(), subsystem, major, minor, diag))
+      return false;
+    ctx.setSubsystem(subsystem);
+    if (major.hasValue())
+      ctx.setMinOSVersion(PECOFFLinkingContext::Version(*major, *minor));
+  }
+
+  // Parse /section:name,[[!]{DEKPRSW}]
+  for (auto *arg : parsedArgs->filtered(OPT_section)) {
+    std::string section;
+    llvm::Optional<uint32_t> flags, mask;
+    if (!parseSection(arg->getValue(), section, flags, mask)) {
+      diag << "Unknown argument for /section: " << arg->getValue() << "\n";
+      return false;
     }
+    if (flags.hasValue())
+      ctx.setSectionSetMask(section, *flags);
+    if (mask.hasValue())
+      ctx.setSectionClearMask(section, *mask);
+  }
 
-    case OPT_version: {
-      uint32_t major, minor;
-      if (!parseVersion(inputArg->getValue(), major, minor))
-        return false;
-      ctx.setImageVersion(PECOFFLinkingContext::Version(major, minor));
-      break;
+  // Parse /manifest:EMBED[,ID=#]|NO.
+  if (auto *arg = parsedArgs->getLastArg(OPT_manifest_colon)) {
+    bool enable = true;
+    bool embed = false;
+    int id = 1;
+    if (!parseManifest(arg->getValue(), enable, embed, id)) {
+      diag << "Unknown argument for /manifest: " << arg->getValue() << "\n";
+      return false;
     }
+    ctx.setCreateManifest(enable);
+    ctx.setEmbedManifest(embed);
+    ctx.setManifestId(id);
+  }
 
-    case OPT_merge: {
-      // Parse /merge:<from>=<to>.
-      StringRef from, to;
-      std::tie(from, to) = StringRef(inputArg->getValue()).split('=');
-      if (from.empty() || to.empty()) {
-        diag << "error: malformed /merge option: " << inputArg->getValue()
-             << "\n";
-        return false;
-      }
-      if (!ctx.addSectionRenaming(diag, from, to))
-        return false;
-      break;
-    }
-
-    case OPT_subsystem: {
-      // Parse /subsystem:<subsystem>[,<majorOSVersion>[.<minorOSVersion>]].
-      llvm::COFF::WindowsSubsystem subsystem;
-      llvm::Optional<uint32_t> major, minor;
-      if (!parseSubsystem(inputArg->getValue(), subsystem, major, minor, diag))
-        return false;
-      ctx.setSubsystem(subsystem);
-      if (major.hasValue())
-        ctx.setMinOSVersion(PECOFFLinkingContext::Version(*major, *minor));
-      break;
-    }
-
-    case OPT_section: {
-      // Parse /section:name,[[!]{DEKPRSW}]
-      std::string section;
-      llvm::Optional<uint32_t> flags, mask;
-      if (!parseSection(inputArg->getValue(), section, flags, mask)) {
-        diag << "Unknown argument for /section: " << inputArg->getValue()
-             << "\n";
-        return false;
-      }
-      if (flags.hasValue())
-        ctx.setSectionSetMask(section, *flags);
-      if (mask.hasValue())
-        ctx.setSectionClearMask(section, *mask);
-      break;
-    }
-
-    case OPT_manifest:
-      // Do nothing. This is default.
-      break;
-
-    case OPT_manifest_colon: {
-      // Parse /manifest:EMBED[,ID=#]|NO.
-      bool enable = true;
-      bool embed = false;
-      int id = 1;
-      if (!parseManifest(inputArg->getValue(), enable, embed, id)) {
-        diag << "Unknown argument for /manifest: " << inputArg->getValue()
-             << "\n";
-        return false;
-      }
-      ctx.setCreateManifest(enable);
-      ctx.setEmbedManifest(embed);
-      ctx.setManifestId(id);
-      break;
-    }
-
-    case OPT_manifestuac: {
-      // Parse /manifestuac.
-      if (StringRef(inputArg->getValue()).equals_lower("no")) {
-        ctx.setManifestUAC(false);
-        break;
-      }
+  // Parse /manifestuac.
+  if (auto *arg = parsedArgs->getLastArg(OPT_manifestuac)) {
+    if (StringRef(arg->getValue()).equals_lower("no")) {
+      ctx.setManifestUAC(false);
+    } else {
       llvm::Optional<std::string> privilegeLevel;
       llvm::Optional<std::string> uiAccess;
-      if (!parseManifestUAC(inputArg->getValue(), privilegeLevel, uiAccess)) {
-        diag << "Unknown argument for /manifestuac: " << inputArg->getValue()
+      if (!parseManifestUAC(arg->getValue(), privilegeLevel, uiAccess)) {
+        diag << "Unknown argument for /manifestuac: " << arg->getValue()
              << "\n";
         return false;
       }
@@ -1105,231 +1081,197 @@ bool WinLinkDriver::parse(int argc, const char *argv[],
         ctx.setManifestLevel(privilegeLevel.getValue());
       if (uiAccess.hasValue())
         ctx.setManifestUiAccess(uiAccess.getValue());
-      break;
     }
+  }
 
-    case OPT_manifestfile:
-      ctx.setManifestOutputPath(ctx.allocate(inputArg->getValue()));
-      break;
+  if (auto *arg = parsedArgs->getLastArg(OPT_manifestfile))
+    ctx.setManifestOutputPath(ctx.allocate(arg->getValue()));
 
-    case OPT_manifestdependency:
-      // /manifestdependency:<string> option. Note that the argument will be
-      // embedded to the manifest XML file with no error check, for link.exe
-      // compatibility. We do not gurantete that the resulting XML file is
-      // valid.
-      ctx.setManifestDependency(ctx.allocate(inputArg->getValue()));
-      break;
+  // /manifestdependency:<string> option. Note that the argument will be
+  // embedded to the manifest XML file with no error check, for link.exe
+  // compatibility. We do not gurantete that the resulting XML file is
+  // valid.
+  if (auto *arg = parsedArgs->getLastArg(OPT_manifestdependency))
+    ctx.setManifestDependency(ctx.allocate(arg->getValue()));
 
-    case OPT_failifmismatch:
-      if (handleFailIfMismatchOption(inputArg->getValue(), failIfMismatchMap,
-                                     diag))
-        return false;
-      break;
+  for (auto *arg : parsedArgs->filtered(OPT_failifmismatch))
+    if (handleFailIfMismatchOption(arg->getValue(), failIfMismatchMap, diag))
+      return false;
 
-    case OPT_entry:
-      ctx.setEntrySymbolName(ctx.allocate(inputArg->getValue()));
-      break;
+  if (auto *arg = parsedArgs->getLastArg(OPT_entry))
+    ctx.setEntrySymbolName(ctx.allocate(arg->getValue()));
 
-    case OPT_export: {
-      PECOFFLinkingContext::ExportDesc desc;
-      if (!parseExport(inputArg->getValue(), desc)) {
-        diag << "Error: malformed /export option: " << inputArg->getValue()
-             << "\n";
-        return false;
-      }
-
-      // Mangle the symbol name only if it is reading user-supplied command line
-      // arguments. Because the symbol name in the .drectve section is already
-      // mangled by the compiler, we shouldn't add a leading underscore in that
-      // case. It's odd that the command line option has different semantics in
-      // the .drectve section, but this behavior is needed for compatibility
-      // with MSVC's link.exe.
-      if (!isReadingDirectiveSection)
-        desc.name = ctx.decorateSymbol(desc.name);
-      ctx.addDllExport(desc);
-      break;
-    }
-
-    case OPT_deffile: {
-      llvm::BumpPtrAllocator alloc;
-      std::vector<moduledef::Directive *> dirs;
-      if (!parseDef(inputArg->getValue(), alloc, dirs)) {
-        diag << "Error: invalid module-definition file\n";
-        return false;
-      }
-      for (moduledef::Directive *dir : dirs) {
-        if (auto *exp = dyn_cast<moduledef::Exports>(dir)) {
-          for (PECOFFLinkingContext::ExportDesc desc : exp->getExports()) {
-            desc.name = ctx.decorateSymbol(desc.name);
-            ctx.addDllExport(desc);
-          }
-        } else if (auto *hs = dyn_cast<moduledef::Heapsize>(dir)) {
-          ctx.setHeapReserve(hs->getReserve());
-          ctx.setHeapCommit(hs->getCommit());
-        } else if (auto *lib = dyn_cast<moduledef::Library>(dir)) {
-          ctx.setIsDll(true);
-          ctx.setOutputPath(ctx.allocate(lib->getName()));
-          if (lib->getBaseAddress() && !ctx.getBaseAddress())
-            ctx.setBaseAddress(lib->getBaseAddress());
-        } else if (auto *name = dyn_cast<moduledef::Name>(dir)) {
-          if (!name->getOutputPath().empty() && ctx.outputPath().empty())
-            ctx.setOutputPath(ctx.allocate(name->getOutputPath()));
-          if (name->getBaseAddress() && ctx.getBaseAddress())
-            ctx.setBaseAddress(name->getBaseAddress());
-        } else if (auto *ver = dyn_cast<moduledef::Version>(dir)) {
-          ctx.setImageVersion(PECOFFLinkingContext::Version(
-              ver->getMajorVersion(), ver->getMinorVersion()));
-        } else {
-          llvm::dbgs() << static_cast<int>(dir->getKind()) << "\n";
-          llvm_unreachable("Unknown module-definition directive.\n");
-        }
-      }
-    }
-
-    case OPT_libpath:
-      ctx.appendInputSearchPath(ctx.allocate(inputArg->getValue()));
-      break;
-
-    case OPT_opt: {
-      StringRef arg = inputArg->getValue();
-      if (arg.equals_lower("noref")) {
-        ctx.setDeadStripping(false);
-        break;
-      }
-      if (arg.equals_lower("ref") || arg.equals_lower("icf") ||
-          arg.equals_lower("noicf") || arg.startswith_lower("icf=") ||
-          arg.equals_lower("lbr") || arg.equals_lower("nolbr")) {
-        // Ignore known but unsupported options.
-        break;
-      }
-      diag << "unknown option for /opt: " << arg << "\n";
+  for (auto *arg : parsedArgs->filtered(OPT_export)) {
+    PECOFFLinkingContext::ExportDesc desc;
+    if (!parseExport(arg->getValue(), desc)) {
+      diag << "Error: malformed /export option: " << arg->getValue() << "\n";
       return false;
     }
 
-    case OPT_debug:
-      // LLD is not yet capable of creating a PDB file, so /debug does not have
-      // any effect.
-      // TODO: This should disable dead stripping. Currently we can't do that
-      // because removal of associative sections depends on dead stripping.
-      ctx.setDebug(true);
-      break;
+    // Mangle the symbol name only if it is reading user-supplied command line
+    // arguments. Because the symbol name in the .drectve section is already
+    // mangled by the compiler, we shouldn't add a leading underscore in that
+    // case. It's odd that the command line option has different semantics in
+    // the .drectve section, but this behavior is needed for compatibility
+    // with MSVC's link.exe.
+    if (!isReadingDirectiveSection)
+      desc.name = ctx.decorateSymbol(desc.name);
+    ctx.addDllExport(desc);
+  }
 
-    case OPT_verbose:
-      ctx.setLogInputFiles(true);
-      break;
-
-    case OPT_force:
-    case OPT_force_unresolved:
-      // /force and /force:unresolved mean the same thing. We do not currently
-      // support /force:multiple.
-      ctx.setAllowRemainingUndefines(true);
-      break;
-
-    case OPT_fixed:
-      // /fixed is not compatible with /dynamicbase. Check for it.
-      if (parsedArgs->getLastArg(OPT_dynamicbase)) {
-        diag << "/dynamicbase must not be specified with /fixed\n";
-        return false;
-      }
-      ctx.setBaseRelocationEnabled(false);
-      ctx.setDynamicBaseEnabled(false);
-      break;
-
-    case OPT_swaprun_cd:
-      // /swaprun:{cd,net} options set IMAGE_FILE_{REMOVABLE,NET}_RUN_FROM_SWAP
-      // bits in the COFF header, respectively. If one of the bits is on, the
-      // Windows loader will copy the entire file to swap area then execute it,
-      // so that the user can eject a CD or disconnect from the network.
-      ctx.setSwapRunFromCD(true);
-      break;
-
-    case OPT_swaprun_net:
-      ctx.setSwapRunFromNet(true);
-      break;
-
-    case OPT_profile:
-      // /profile implies /opt:ref, /opt:noicf, /incremental:no and /fixed:no.
-      ctx.setDeadStripping(true);
-      ctx.setBaseRelocationEnabled(true);
-      ctx.setDynamicBaseEnabled(true);
-      break;
-
-    case OPT_implib:
-      ctx.setOutputImportLibraryPath(inputArg->getValue());
-      break;
-
-    case OPT_delayload:
-      ctx.addInitialUndefinedSymbol(ctx.getDelayLoadHelperName());
-      ctx.addDelayLoadDLL(inputArg->getValue());
-      break;
-
-    case OPT_stub: {
-      ArrayRef<uint8_t> contents;
-      if (!readFile(ctx, inputArg->getValue(), contents)) {
-        diag << "Failed to read DOS stub file " << inputArg->getValue() << "\n";
-        return false;
-      }
-      ctx.setDosStub(contents);
-      break;
+  for (auto *arg : parsedArgs->filtered(OPT_deffile)) {
+    llvm::BumpPtrAllocator alloc;
+    std::vector<moduledef::Directive *> dirs;
+    if (!parseDef(arg->getValue(), alloc, dirs)) {
+      diag << "Error: invalid module-definition file\n";
+      return false;
     }
-
-    case OPT_incl: {
-      StringRef sym = ctx.allocate(inputArg->getValue());
-      if (isReadingDirectiveSection) {
-        undefinedSymbols->insert(sym);
+    for (moduledef::Directive *dir : dirs) {
+      if (auto *exp = dyn_cast<moduledef::Exports>(dir)) {
+        for (PECOFFLinkingContext::ExportDesc desc : exp->getExports()) {
+          desc.name = ctx.decorateSymbol(desc.name);
+          ctx.addDllExport(desc);
+        }
+      } else if (auto *hs = dyn_cast<moduledef::Heapsize>(dir)) {
+        ctx.setHeapReserve(hs->getReserve());
+        ctx.setHeapCommit(hs->getCommit());
+      } else if (auto *lib = dyn_cast<moduledef::Library>(dir)) {
+        ctx.setIsDll(true);
+        ctx.setOutputPath(ctx.allocate(lib->getName()));
+        if (lib->getBaseAddress() && !ctx.getBaseAddress())
+          ctx.setBaseAddress(lib->getBaseAddress());
+      } else if (auto *name = dyn_cast<moduledef::Name>(dir)) {
+        if (!name->getOutputPath().empty() && ctx.outputPath().empty())
+          ctx.setOutputPath(ctx.allocate(name->getOutputPath()));
+        if (name->getBaseAddress() && ctx.getBaseAddress())
+          ctx.setBaseAddress(name->getBaseAddress());
+      } else if (auto *ver = dyn_cast<moduledef::Version>(dir)) {
+        ctx.setImageVersion(PECOFFLinkingContext::Version(
+                              ver->getMajorVersion(), ver->getMinorVersion()));
       } else {
-        ctx.addInitialUndefinedSymbol(sym);
+        llvm::dbgs() << static_cast<int>(dir->getKind()) << "\n";
+        llvm_unreachable("Unknown module-definition directive.\n");
       }
-      break;
-    }
-
-    case OPT_noentry:
-      ctx.setHasEntry(false);
-      break;
-
-    case OPT_nodefaultlib_all:
-      ctx.setNoDefaultLibAll(true);
-      break;
-
-    case OPT_out:
-      ctx.setOutputPath(ctx.allocate(inputArg->getValue()));
-      break;
-
-    case OPT_INPUT:
-      inputFiles.push_back(ctx.allocate(inputArg->getValue()));
-      break;
-
-    case OPT_pdb:
-      ctx.setPDBFilePath(inputArg->getValue());
-      break;
-
-    case OPT_lldmoduledeffile:
-      ctx.setModuleDefinitionFile(inputArg->getValue());
-      break;
-
-#define DEFINE_BOOLEAN_FLAG(name, setter)       \
-    case OPT_##name:                            \
-      ctx.setter(true);                         \
-      break;                                    \
-    case OPT_##name##_no:                       \
-      ctx.setter(false);                        \
-      break
-
-    DEFINE_BOOLEAN_FLAG(nxcompat, setNxCompat);
-    DEFINE_BOOLEAN_FLAG(largeaddressaware, setLargeAddressAware);
-    DEFINE_BOOLEAN_FLAG(allowbind, setAllowBind);
-    DEFINE_BOOLEAN_FLAG(allowisolation, setAllowIsolation);
-    DEFINE_BOOLEAN_FLAG(dynamicbase, setDynamicBaseEnabled);
-    DEFINE_BOOLEAN_FLAG(tsaware, setTerminalServerAware);
-    DEFINE_BOOLEAN_FLAG(highentropyva, setHighEntropyVA);
-    DEFINE_BOOLEAN_FLAG(safeseh, setSafeSEH);
-
-#undef DEFINE_BOOLEAN_FLAG
-
-    default:
-      break;
     }
   }
+
+  for (auto *arg : parsedArgs->filtered(OPT_libpath))
+    ctx.appendInputSearchPath(ctx.allocate(arg->getValue()));
+
+  for (auto *arg : parsedArgs->filtered(OPT_opt)) {
+    std::string val = StringRef(arg->getValue()).lower();
+    if (val == "noref") {
+      ctx.setDeadStripping(false);
+    } else if (val != "ref" && val != "icf" && val != "noicf" &&
+	       val != "lbr" && val != "nolbr" &&
+               !StringRef(val).startswith("icf=")) {
+      diag << "unknown option for /opt: " << val << "\n";
+      return false;
+    }
+  }
+
+  // LLD is not yet capable of creating a PDB file, so /debug does not have
+  // any effect.
+  // TODO: This should disable dead stripping. Currently we can't do that
+  // because removal of associative sections depends on dead stripping.
+  if (parsedArgs->getLastArg(OPT_debug))
+    ctx.setDebug(true);
+
+  if (parsedArgs->getLastArg(OPT_verbose))
+    ctx.setLogInputFiles(true);
+
+  // /force and /force:unresolved mean the same thing. We do not currently
+  // support /force:multiple.
+  if (parsedArgs->getLastArg(OPT_force) ||
+      parsedArgs->getLastArg(OPT_force_unresolved)) {
+    ctx.setAllowRemainingUndefines(true);
+  }
+
+  if (parsedArgs->getLastArg(OPT_fixed)) {
+    // /fixed is not compatible with /dynamicbase. Check for it.
+    if (parsedArgs->getLastArg(OPT_dynamicbase)) {
+      diag << "/dynamicbase must not be specified with /fixed\n";
+      return false;
+    }
+    ctx.setBaseRelocationEnabled(false);
+    ctx.setDynamicBaseEnabled(false);
+  }
+
+  // /swaprun:{cd,net} options set IMAGE_FILE_{REMOVABLE,NET}_RUN_FROM_SWAP
+  // bits in the COFF header, respectively. If one of the bits is on, the
+  // Windows loader will copy the entire file to swap area then execute it,
+  // so that the user can eject a CD or disconnect from the network.
+  if (parsedArgs->getLastArg(OPT_swaprun_cd))
+    ctx.setSwapRunFromCD(true);
+
+  if (parsedArgs->getLastArg(OPT_swaprun_net))
+    ctx.setSwapRunFromNet(true);
+
+  if (parsedArgs->getLastArg(OPT_profile)) {
+    // /profile implies /opt:ref, /opt:noicf, /incremental:no and /fixed:no.
+    ctx.setDeadStripping(true);
+    ctx.setBaseRelocationEnabled(true);
+    ctx.setDynamicBaseEnabled(true);
+  }
+
+  for (auto *arg : parsedArgs->filtered(OPT_implib))
+    ctx.setOutputImportLibraryPath(arg->getValue());
+
+  for (auto *arg : parsedArgs->filtered(OPT_delayload)) {
+    ctx.addInitialUndefinedSymbol(ctx.getDelayLoadHelperName());
+    ctx.addDelayLoadDLL(arg->getValue());
+  }
+
+  if (auto *arg = parsedArgs->getLastArg(OPT_stub)) {
+    ArrayRef<uint8_t> contents;
+    if (!readFile(ctx, arg->getValue(), contents)) {
+      diag << "Failed to read DOS stub file " << arg->getValue() << "\n";
+      return false;
+    }
+    ctx.setDosStub(contents);
+  }
+
+  for (auto *arg : parsedArgs->filtered(OPT_incl)) {
+    StringRef sym = ctx.allocate(arg->getValue());
+    if (isReadingDirectiveSection) {
+      undefinedSymbols->insert(sym);
+    } else {
+      ctx.addInitialUndefinedSymbol(sym);
+    }
+  }
+
+  if (parsedArgs->getLastArg(OPT_noentry))
+    ctx.setHasEntry(false);
+
+  if (parsedArgs->getLastArg(OPT_nodefaultlib_all))
+    ctx.setNoDefaultLibAll(true);
+
+  if (auto *arg = parsedArgs->getLastArg(OPT_out))
+    ctx.setOutputPath(ctx.allocate(arg->getValue()));
+
+  if (auto *arg = parsedArgs->getLastArg(OPT_pdb))
+    ctx.setPDBFilePath(arg->getValue());
+
+  if (auto *arg = parsedArgs->getLastArg(OPT_lldmoduledeffile))
+    ctx.setModuleDefinitionFile(arg->getValue());
+
+  std::vector<StringRef> inputFiles;
+  for (auto *arg : parsedArgs->filtered(OPT_INPUT))
+    inputFiles.push_back(ctx.allocate(arg->getValue()));
+
+#define BOOLEAN_FLAG(name, setter) \
+  if (auto *arg = parsedArgs->getLastArg(OPT_##name, OPT_##name##_no)) \
+    ctx.setter(arg->getOption().matches(OPT_##name));
+
+  BOOLEAN_FLAG(nxcompat, setNxCompat);
+  BOOLEAN_FLAG(largeaddressaware, setLargeAddressAware);
+  BOOLEAN_FLAG(allowbind, setAllowBind);
+  BOOLEAN_FLAG(allowisolation, setAllowIsolation);
+  BOOLEAN_FLAG(dynamicbase, setDynamicBaseEnabled);
+  BOOLEAN_FLAG(tsaware, setTerminalServerAware);
+  BOOLEAN_FLAG(highentropyva, setHighEntropyVA);
+  BOOLEAN_FLAG(safeseh, setSafeSEH);
+#undef BOOLEAN_FLAG
 
   // Arguments after "--" are interpreted as filenames even if they
   // start with a hypen or a slash. This is not compatible with link.exe
