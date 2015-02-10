@@ -96,7 +96,7 @@ public:
   /// Emit a the operations remaining the DIExpressionIterator I.
   /// \param PieceOffsetInBits If this is one piece out of a fragmented
   /// location, this is the offset of the piece inside the entire variable.
-void AddExpression(DIExpression::iterator I, unsigned PieceOffsetInBits = 0);
+  void AddExpression(DIExpression::iterator I, unsigned PieceOffsetInBits = 0);
 };
 
 /// DwarfExpression implementation for .debug_loc entries.
