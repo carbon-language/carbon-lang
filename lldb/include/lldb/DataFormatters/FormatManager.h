@@ -287,6 +287,7 @@ private:
     ConstString m_coreservices_category_name;
     ConstString m_vectortypes_category_name;
     ConstString m_appkit_category_name;
+    ConstString m_coremedia_category_name;
     
     HardcodedFormatterFinders<TypeFormatImpl> m_hardcoded_formats;
     HardcodedFormatterFinders<TypeSummaryImpl> m_hardcoded_summaries;
@@ -326,6 +327,9 @@ private:
     
     void
     LoadObjCFormatters ();
+
+    void
+    LoadCoreMediaFormatters ();
     
     void
     LoadHardcodedFormatters ();

@@ -186,6 +186,9 @@ namespace lldb_private {
         extern template bool
         ObjCSELSummaryProvider<false> (ValueObject&, Stream&, const TypeSummaryOptions&);
         
+        bool
+        CMTimeSummaryProvider (ValueObject& valobj, Stream& stream, const TypeSummaryOptions& options);
+        
         SyntheticChildrenFrontEnd* NSArraySyntheticFrontEndCreator (CXXSyntheticChildren*, lldb::ValueObjectSP);
         
         SyntheticChildrenFrontEnd* NSDictionarySyntheticFrontEndCreator (CXXSyntheticChildren*, lldb::ValueObjectSP);

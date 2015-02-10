@@ -866,6 +866,7 @@ FormatManager::FormatManager() :
     m_coreservices_category_name(ConstString("CoreServices")),
     m_vectortypes_category_name(ConstString("VectorTypes")),
     m_appkit_category_name(ConstString("AppKit")),
+    m_coremedia_category_name(ConstString("CoreMedia")),
     m_hardcoded_formats(),
     m_hardcoded_summaries(),
     m_hardcoded_synthetics(),
@@ -876,6 +877,7 @@ FormatManager::FormatManager() :
     LoadLibStdcppFormatters();
     LoadLibcxxFormatters();
     LoadObjCFormatters();
+    LoadCoreMediaFormatters();
     LoadHardcodedFormatters();
     
     EnableCategory(m_objc_category_name,TypeCategoryMap::Last);
@@ -1560,6 +1562,23 @@ FormatManager::LoadObjCFormatters()
                      "",
                      ConstString("vBool32"),
                      vector_flags);
+}
+
+void
+FormatManager::LoadCoreMediaFormatters()
+{
+    TypeSummaryImpl::Flags cm_flags;
+    cm_flags.SetCascades(true)
+    .SetDontShowChildren(false)
+    .SetDontShowValue(false)
+    .SetHideItemNames(false)
+    .SetShowMembersOneLiner(false)
+    .SetSkipPointers(false)
+    .SetSkipReferences(false);
+    
+    TypeCategoryImpl::SharedPointer cm_category_sp = GetCategory(m_coremedia_category_name);
+
+    AddCXXSummary(cm_category_sp, lldb_private::formatters::CMTimeSummaryProvider, "CMTime summary provider", ConstString("CMTime"), cm_flags);
 }
 
 void
