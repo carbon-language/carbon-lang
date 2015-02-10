@@ -1410,6 +1410,12 @@ public:
 
   ArrayRef<uint64_t> getElements() const { return Elements; }
 
+  unsigned getNumElements() const { return Elements.size(); }
+  uint64_t getElement(unsigned I) const {
+    assert(I < Elements.size() && "Index out of range");
+    return Elements[I];
+  }
+
   typedef ArrayRef<uint64_t>::iterator element_iterator;
   element_iterator elements_begin() const { return getElements().begin(); }
   element_iterator elements_end() const { return getElements().end(); }

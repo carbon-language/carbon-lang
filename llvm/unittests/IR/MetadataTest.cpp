@@ -1389,6 +1389,13 @@ TEST_F(MDExpressionTest, get) {
   auto *N = MDExpression::get(Context, Elements);
   EXPECT_EQ(makeArrayRef(Elements), N->getElements());
   EXPECT_EQ(N, MDExpression::get(Context, Elements));
+
+  EXPECT_EQ(5u, N->getNumElements());
+  EXPECT_EQ(2u, N->getElement(0));
+  EXPECT_EQ(6u, N->getElement(1));
+  EXPECT_EQ(9u, N->getElement(2));
+  EXPECT_EQ(78u, N->getElement(3));
+  EXPECT_EQ(0u, N->getElement(4));
 }
 
 typedef MetadataTest MDObjCPropertyTest;
