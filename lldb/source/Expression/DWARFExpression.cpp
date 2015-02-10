@@ -2198,6 +2198,13 @@ DWARFExpression::Evaluate
         // constant.
         //----------------------------------------------------------------------
         case DW_OP_bra:
+            if (stack.empty())
+            {
+                if (error_ptr)
+                    error_ptr->SetErrorString("Expression stack needs at least 1 item for DW_OP_bra.");
+                return false;
+            }
+            else
             {
                 tmp = stack.back();
                 stack.pop_back();
