@@ -60,6 +60,10 @@ void PlatformTSDDtor(void *tsd) {
   AsanThread::TSDDtor(tsd);
 }
 // ---------------------- Various stuff ---------------- {{{1
+void DisableReexec() {
+  // No need to re-exec on Windows.
+}
+
 void MaybeReexec() {
   // No need to re-exec on Windows.
 }

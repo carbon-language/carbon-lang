@@ -33,7 +33,10 @@
 
 // Make sure __asan_init is called before any test case is run.
 struct AsanInitCaller {
-  AsanInitCaller() { __asan_init(); }
+  AsanInitCaller() {
+    __asan::DisableReexec();
+    __asan_init();
+  }
 };
 static AsanInitCaller asan_init_caller;
 

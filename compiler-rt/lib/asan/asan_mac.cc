@@ -101,7 +101,15 @@ void LeakyResetEnv(const char *name, const char *name_value) {
   }
 }
 
+static bool reexec_disabled = false;
+
+void DisableReexec() {
+  reexec_disabled = true;
+}
+
 void MaybeReexec() {
+  if (reexec_disabled) return;
+
   // Make sure the dynamic ASan runtime library is preloaded so that the
   // wrappers work. If it is not, set DYLD_INSERT_LIBRARIES and re-exec
   // ourselves.
