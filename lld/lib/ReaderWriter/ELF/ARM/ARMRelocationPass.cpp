@@ -31,6 +31,85 @@ using namespace lld::elf;
 using namespace llvm::ELF;
 
 namespace {
+// ARM B/BL instructions of static relocation veneer.
+// TODO: consider different instruction set for archs below ARMv5
+// (one as for Thumb may be used though it's less optimal).
+const uint8_t Veneer_ARM_B_BL_StaticAtomContent[8] = {
+    0x04, 0xf0, 0x1f, 0xe5,  // ldr pc, [pc, #-4]
+    0x00, 0x00, 0x00, 0x00   // <target_symbol_address>
+};
+
+// Thumb B/BL instructions of static relocation veneer.
+// TODO: consider different instruction set for archs above ARMv5
+// (one as for ARM may be used since it's more optimal).
+const uint8_t Veneer_THM_B_BL_StaticAtomContent[8] = {
+    0x78, 0x47,              // bx pc
+    0x00, 0x00,              // nop
+    0xfe, 0xff, 0xff, 0xea   // b <target_symbol_address>
+};
+
+/// \brief Atoms that hold veneer code.
+class VeneerAtom : public SimpleELFDefinedAtom {
+  StringRef _section;
+
+public:
+  VeneerAtom(const File &f, StringRef secName)
+      : SimpleELFDefinedAtom(f), _section(secName) {}
+
+  Scope scope() const override { return DefinedAtom::scopeTranslationUnit; }
+
+  SectionChoice sectionChoice() const override {
+    return DefinedAtom::sectionBasedOnContent;
+  }
+
+  StringRef customSectionName() const override { return _section; }
+
+  ContentType contentType() const override {
+    return DefinedAtom::typeCode;
+  }
+
+  uint64_t size() const override { return rawContent().size(); }
+
+  ContentPermissions permissions() const override { return permR_X; }
+
+  Alignment alignment() const override { return Alignment(2); }
+
+#ifndef NDEBUG
+  StringRef name() const override { return _name; }
+  std::string _name;
+#else
+  StringRef name() const override { return ""; }
+#endif
+};
+
+/// \brief Atoms that hold veneer for statically relocated
+/// ARM B/BL instructions.
+class Veneer_ARM_B_BL_StaticAtom : public VeneerAtom {
+public:
+  Veneer_ARM_B_BL_StaticAtom(const File &f, StringRef secName)
+      : VeneerAtom(f, secName) {}
+
+  ArrayRef<uint8_t> rawContent() const override {
+    return llvm::makeArrayRef(Veneer_ARM_B_BL_StaticAtomContent);
+  }
+};
+
+/// \brief Atoms that hold veneer for statically relocated
+/// Thumb B/BL instructions.
+class Veneer_THM_B_BL_StaticAtom : public VeneerAtom {
+public:
+  Veneer_THM_B_BL_StaticAtom(const File &f, StringRef secName)
+      : VeneerAtom(f, secName) {}
+
+  DefinedAtom::CodeModel codeModel() const override {
+    return DefinedAtom::codeARMThumb;
+  }
+
+  ArrayRef<uint8_t> rawContent() const override {
+    return llvm::makeArrayRef(Veneer_THM_B_BL_StaticAtomContent);
+  }
+};
+
 class ELFPassFile : public SimpleFile {
 public:
   ELFPassFile(const ELFLinkingContext &eti) : SimpleFile("ELFPassFile") {
@@ -51,12 +130,67 @@ template <class Derived> class ARMRelocationPass : public Pass {
     if (ref.kindNamespace() != Reference::KindNamespace::ELF)
       return;
     assert(ref.kindArch() == Reference::KindArch::ARM);
+    switch (ref.kindValue()) {
+    case R_ARM_JUMP24:
+    case R_ARM_THM_JUMP24:
+      static_cast<Derived *>(this)->handleVeneer(atom, ref);
+      break;
+    }
   }
 
 protected:
+  std::error_code handleVeneer(const DefinedAtom &atom, const Reference &ref) {
+    // Target symbol and relocated place should have different
+    // instruction sets in order a veneer to be generated in between.
+    const auto *target = dyn_cast_or_null<DefinedAtom>(ref.target());
+    if (!target || target->codeModel() == atom.codeModel())
+      return std::error_code();
+
+    // TODO: For unconditional jump instructions (R_ARM_CALL and R_ARM_THM_CALL)
+    // fixup isn't possible without veneer generation for archs below ARMv5.
+
+    // Veneers may only be generated for STT_FUNC target symbols
+    // or for symbols located in sections different to the place of relocation.
+    const auto kindValue = ref.kindValue();
+    StringRef secName = atom.customSectionName();
+    if (DefinedAtom::typeCode != target->contentType() &&
+        !target->customSectionName().equals(secName)) {
+      StringRef kindValStr;
+      if (!this->_ctx.registry().referenceKindToString(
+              ref.kindNamespace(), ref.kindArch(), kindValue, kindValStr)) {
+        kindValStr = "unknown";
+      }
+
+      std::string errStr =
+          (Twine("Reference of type ") + Twine(kindValue) + " (" + kindValStr +
+           ") from " + atom.name() + "+" + Twine(ref.offsetInAtom()) + " to " +
+           ref.target()->name() + "+" + Twine(ref.addend()) +
+           " cannot be effected without a veneer").str();
+
+      llvm_unreachable(errStr.c_str());
+    }
+
+    const Atom *veneer = nullptr;
+    switch (kindValue) {
+    case R_ARM_JUMP24:
+      veneer = static_cast<Derived *>(this)
+                   ->getVeneer_ARM_B_BL(target, secName);
+      break;
+    case R_ARM_THM_JUMP24:
+      veneer = static_cast<Derived *>(this)
+                   ->getVeneer_THM_B_BL(target, secName);
+      break;
+    default:
+      llvm_unreachable("Unhandled reference type for veneer generation");
+    }
+
+    assert(veneer && "The veneer is not set");
+    const_cast<Reference &>(ref).setTarget(veneer);
+    return std::error_code();
+  }
+
 public:
-  ARMRelocationPass(const ELFLinkingContext &ctx)
-      : _file(ctx), _ctx(ctx) {}
+  ARMRelocationPass(const ELFLinkingContext &ctx) : _file(ctx), _ctx(ctx) {}
 
   /// \brief Do the pass.
   ///
@@ -99,12 +233,25 @@ public:
         handleReference(*atom, *ref);
       }
     }
+
+    // Add all created atoms to the link.
+    uint64_t ordinal = 0;
+    for (auto &veneer : _veneerVector) {
+      veneer->setOrdinal(ordinal++);
+      mf->addAtom(*veneer);
+    }
   }
 
 protected:
   /// \brief Owner of all the Atoms created by this pass.
   ELFPassFile _file;
   const ELFLinkingContext &_ctx;
+
+  /// \brief Map Atoms to their veneers.
+  llvm::DenseMap<const Atom *, VeneerAtom *> _veneerMap;
+
+  /// \brief the list of veneer atoms.
+  std::vector<VeneerAtom *> _veneerVector;
 };
 
 /// This implements the static relocation model. Meaning GOT and PLT entries are
@@ -118,6 +265,44 @@ class ARMStaticRelocationPass final
 public:
   ARMStaticRelocationPass(const elf::ARMLinkingContext &ctx)
       : ARMRelocationPass(ctx) {}
+
+  /// \brief Get the veneer for ARM B/BL instructions.
+  const VeneerAtom *getVeneer_ARM_B_BL(const DefinedAtom *da,
+                                       StringRef secName) {
+    auto veneer = _veneerMap.find(da);
+    if (_veneerMap.end() != veneer)
+      return veneer->second;
+
+    auto v = new (_file._alloc) Veneer_ARM_B_BL_StaticAtom(_file, secName);
+    v->addReferenceELF_ARM(R_ARM_ABS32, 4, da, 0);
+#ifndef NDEBUG
+    v->_name = "__";
+    v->_name += da->name();
+    v->_name += "_from_arm";
+#endif
+    _veneerMap[da] = v;
+    _veneerVector.push_back(v);
+    return v;
+  }
+
+  /// \brief Get the veneer for Thumb B/BL instructions.
+  const VeneerAtom *getVeneer_THM_B_BL(const DefinedAtom *da,
+                                       StringRef secName) {
+    auto veneer = _veneerMap.find(da);
+    if (_veneerMap.end() != veneer)
+      return veneer->second;
+
+    auto v = new (_file._alloc) Veneer_THM_B_BL_StaticAtom(_file, secName);
+    v->addReferenceELF_ARM(R_ARM_JUMP24, 4, da, 0);
+#ifndef NDEBUG
+    v->_name = "__";
+    v->_name += da->name();
+    v->_name += "_from_thumb";
+#endif
+    _veneerMap[da] = v;
+    _veneerVector.push_back(v);
+    return v;
+  }
 };
 
 } // end of anon namespace
