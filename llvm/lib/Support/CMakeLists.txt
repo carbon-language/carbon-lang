@@ -121,30 +121,9 @@ add_llvm_library(LLVMSupport
   Valgrind.cpp
   Watchdog.cpp
 
-  ADDITIONAL_HEADERS
-  Unix/Host.inc
-  Unix/Memory.inc
-  Unix/Mutex.inc
-  Unix/Path.inc
-  Unix/Process.inc
-  Unix/Program.inc
-  Unix/RWMutex.inc
-  Unix/Signals.inc
-  Unix/ThreadLocal.inc
-  Unix/TimeValue.inc
-  Unix/Watchdog.inc
-  Windows/DynamicLibrary.inc
-  Windows/Host.inc
-  Windows/Memory.inc
-  Windows/Mutex.inc
-  Windows/Path.inc
-  Windows/Process.inc
-  Windows/Program.inc
-  Windows/RWMutex.inc
-  Windows/Signals.inc
-  Windows/ThreadLocal.inc
-  Windows/TimeValue.inc
-  Windows/Watchdog.inc
+  ADDITIONAL_HEADER_DIRS
+  Unix
+  Windows
 
   LINK_LIBS ${system_libs}
   )
