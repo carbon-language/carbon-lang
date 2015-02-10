@@ -101,10 +101,6 @@ namespace llvm {
       /// SVR4 calls.
       CALL, CALL_NOP,
 
-      /// CALL_TLS and CALL_NOP_TLS - Versions of CALL and CALL_NOP used
-      /// to access TLS variables.
-      CALL_TLS, CALL_NOP_TLS,
-
       /// CHAIN,FLAG = MTCTR(VAL, CHAIN[, INFLAG]) - Directly corresponds to a
       /// MTCTR instruction.
       MTCTR,
@@ -223,26 +219,46 @@ namespace llvm {
       /// register to sym\@got\@tlsgd\@ha.
       ADDIS_TLSGD_HA,
 
-      /// G8RC = ADDI_TLSGD_L G8RReg, Symbol - For the general-dynamic TLS
+      /// %X3 = ADDI_TLSGD_L G8RReg, Symbol - For the general-dynamic TLS
       /// model, produces an ADDI8 instruction that adds G8RReg to
-      /// sym\@got\@tlsgd\@l.
+      /// sym\@got\@tlsgd\@l and stores the result in X3.  Hidden by
+      /// ADDIS_TLSGD_L_ADDR until after register assignment.
       ADDI_TLSGD_L,
+
+      /// %X3 = GET_TLS_ADDR %X3, Symbol - For the general-dynamic TLS
+      /// model, produces a call to __tls_get_addr(sym\@tlsgd).  Hidden by
+      /// ADDIS_TLSGD_L_ADDR until after register assignment.
+      GET_TLS_ADDR,
+
+      /// G8RC = ADDI_TLSGD_L_ADDR G8RReg, Symbol, Symbol - Op that
+      /// combines ADDI_TLSGD_L and GET_TLS_ADDR until expansion following
+      /// register assignment.
+      ADDI_TLSGD_L_ADDR,
 
       /// G8RC = ADDIS_TLSLD_HA %X2, Symbol - For the local-dynamic TLS
       /// model, produces an ADDIS8 instruction that adds the GOT base
       /// register to sym\@got\@tlsld\@ha.
       ADDIS_TLSLD_HA,
 
-      /// G8RC = ADDI_TLSLD_L G8RReg, Symbol - For the local-dynamic TLS
+      /// %X3 = ADDI_TLSLD_L G8RReg, Symbol - For the local-dynamic TLS
       /// model, produces an ADDI8 instruction that adds G8RReg to
-      /// sym\@got\@tlsld\@l.
+      /// sym\@got\@tlsld\@l and stores the result in X3.  Hidden by
+      /// ADDIS_TLSLD_L_ADDR until after register assignment.
       ADDI_TLSLD_L,
 
-      /// G8RC = ADDIS_DTPREL_HA %X3, Symbol, Chain - For the
-      /// local-dynamic TLS model, produces an ADDIS8 instruction
-      /// that adds X3 to sym\@dtprel\@ha. The Chain operand is needed
-      /// to tie this in place following a copy to %X3 from the result
-      /// of a GET_TLSLD_ADDR.
+      /// %X3 = GET_TLSLD_ADDR %X3, Symbol - For the local-dynamic TLS
+      /// model, produces a call to __tls_get_addr(sym\@tlsld).  Hidden by
+      /// ADDIS_TLSLD_L_ADDR until after register assignment.
+      GET_TLSLD_ADDR,
+
+      /// G8RC = ADDI_TLSLD_L_ADDR G8RReg, Symbol, Symbol - Op that
+      /// combines ADDI_TLSLD_L and GET_TLSLD_ADDR until expansion
+      /// following register assignment.
+      ADDI_TLSLD_L_ADDR,
+
+      /// G8RC = ADDIS_DTPREL_HA %X3, Symbol - For the local-dynamic TLS
+      /// model, produces an ADDIS8 instruction that adds X3 to
+      /// sym\@dtprel\@ha.
       ADDIS_DTPREL_HA,
 
       /// G8RC = ADDI_DTPREL_L G8RReg, Symbol - For the local-dynamic TLS
@@ -635,8 +651,6 @@ namespace llvm {
     SDValue LowerFRAMEADDR(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerConstantPool(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerBlockAddress(SDValue Op, SelectionDAG &DAG) const;
-    std::pair<SDValue,SDValue> lowerTLSCall(SDValue Op, SDLoc dl,
-                                            SelectionDAG &DAG) const;
     SDValue LowerGlobalTLSAddress(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerGlobalAddress(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerJumpTable(SDValue Op, SelectionDAG &DAG) const;

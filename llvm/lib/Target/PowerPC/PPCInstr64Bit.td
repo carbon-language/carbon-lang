@@ -202,9 +202,6 @@ def : Pat<(PPCcall (i64 texternalsym:$dst)),
 def : Pat<(PPCcall_nop (i64 texternalsym:$dst)),
           (BL8_NOP texternalsym:$dst)>;
 
-def : Pat<(PPCcall_nop_tls texternalsym:$func, tglobaltlsaddr:$sym),
-          (BL8_NOP_TLS texternalsym:$func, tglobaltlsaddr:$sym)>;
-
 // Atomic operations
 let usesCustomInserter = 1 in {
   let Defs = [CR0] in {
@@ -904,6 +901,28 @@ def ADDItlsgdL : Pseudo<(outs g8rc:$rD), (ins g8rc_nox0:$reg, s16imm64:$disp),
                        [(set i64:$rD,
                          (PPCaddiTlsgdL i64:$reg, tglobaltlsaddr:$disp))]>,
                  isPPC64;
+// LR8 is a true define, while the rest of the Defs are clobbers.  X3 is
+// explicitly defined when this op is created, so not mentioned here.
+let hasExtraSrcRegAllocReq = 1, hasExtraDefRegAllocReq = 1,
+    Defs = [X0,X4,X5,X6,X7,X8,X9,X10,X11,X12,LR8,CTR8,CR0,CR1,CR5,CR6,CR7] in
+def GETtlsADDR : Pseudo<(outs g8rc:$rD), (ins g8rc:$reg, tlsgd:$sym),
+                        "#GETtlsADDR",
+                        [(set i64:$rD,
+                          (PPCgetTlsAddr i64:$reg, tglobaltlsaddr:$sym))]>,
+                 isPPC64;
+// Combined op for ADDItlsgdL and GETtlsADDR, late expanded.  X3 and LR8
+// are true defines while the rest of the Defs are clobbers.
+let hasExtraSrcRegAllocReq = 1, hasExtraDefRegAllocReq = 1,
+    Defs = [X0,X3,X4,X5,X6,X7,X8,X9,X10,X11,X12,LR8,CTR8,CR0,CR1,CR5,CR6,CR7]
+    in
+def ADDItlsgdLADDR : Pseudo<(outs g8rc:$rD),
+                            (ins g8rc_nox0:$reg, s16imm64:$disp, tlsgd:$sym),
+                            "#ADDItlsgdLADDR",
+                            [(set i64:$rD,
+                              (PPCaddiTlsgdLAddr i64:$reg,
+                                                 tglobaltlsaddr:$disp,
+                                                 tglobaltlsaddr:$sym))]>,
+                     isPPC64;
 def ADDIStlsldHA: Pseudo<(outs g8rc:$rD), (ins g8rc_nox0:$reg, s16imm64:$disp),
                          "#ADDIStlsldHA",
                          [(set i64:$rD,
@@ -914,6 +933,28 @@ def ADDItlsldL : Pseudo<(outs g8rc:$rD), (ins g8rc_nox0:$reg, s16imm64:$disp),
                        [(set i64:$rD,
                          (PPCaddiTlsldL i64:$reg, tglobaltlsaddr:$disp))]>,
                  isPPC64;
+// LR8 is a true define, while the rest of the Defs are clobbers.  X3 is
+// explicitly defined when this op is created, so not mentioned here.
+let hasExtraSrcRegAllocReq = 1, hasExtraDefRegAllocReq = 1,
+    Defs = [X0,X4,X5,X6,X7,X8,X9,X10,X11,X12,LR8,CTR8,CR0,CR1,CR5,CR6,CR7] in
+def GETtlsldADDR : Pseudo<(outs g8rc:$rD), (ins g8rc:$reg, tlsgd:$sym),
+                          "#GETtlsldADDR",
+                          [(set i64:$rD,
+                            (PPCgetTlsldAddr i64:$reg, tglobaltlsaddr:$sym))]>,
+                   isPPC64;
+// Combined op for ADDItlsldL and GETtlsADDR, late expanded.  X3 and LR8
+// are true defines, while the rest of the Defs are clobbers.
+let hasExtraSrcRegAllocReq = 1, hasExtraDefRegAllocReq = 1,
+    Defs = [X0,X3,X4,X5,X6,X7,X8,X9,X10,X11,X12,LR8,CTR8,CR0,CR1,CR5,CR6,CR7]
+    in
+def ADDItlsldLADDR : Pseudo<(outs g8rc:$rD),
+                            (ins g8rc_nox0:$reg, s16imm64:$disp, tlsgd:$sym),
+                            "#ADDItlsldLADDR",
+                            [(set i64:$rD,
+                              (PPCaddiTlsldLAddr i64:$reg,
+                                                 tglobaltlsaddr:$disp,
+                                                 tglobaltlsaddr:$sym))]>,
+                     isPPC64;
 def ADDISdtprelHA: Pseudo<(outs g8rc:$rD), (ins g8rc_nox0:$reg, s16imm64:$disp),
                           "#ADDISdtprelHA",
                           [(set i64:$rD,

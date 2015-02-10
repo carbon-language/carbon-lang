@@ -266,6 +266,8 @@ void PPCPassConfig::addPreRegAlloc() {
   initializePPCVSXFMAMutatePass(*PassRegistry::getPassRegistry());
   insertPass(VSXFMAMutateEarly ? &RegisterCoalescerID : &MachineSchedulerID,
              &PPCVSXFMAMutateID);
+  if (getPPCTargetMachine().getRelocationModel() == Reloc::PIC_)
+    addPass(createPPCTLSDynamicCallPass());
 }
 
 void PPCPassConfig::addPreSched2() {

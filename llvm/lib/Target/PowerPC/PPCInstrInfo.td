@@ -110,10 +110,19 @@ def PPCldGotTprelL : SDNode<"PPCISD::LD_GOT_TPREL_L", SDTIntBinOp,
 def PPCaddTls     : SDNode<"PPCISD::ADD_TLS", SDTIntBinOp, []>;
 def PPCaddisTlsgdHA : SDNode<"PPCISD::ADDIS_TLSGD_HA", SDTIntBinOp>;
 def PPCaddiTlsgdL   : SDNode<"PPCISD::ADDI_TLSGD_L", SDTIntBinOp>;
+def PPCgetTlsAddr   : SDNode<"PPCISD::GET_TLS_ADDR", SDTIntBinOp>;
+def PPCaddiTlsgdLAddr : SDNode<"PPCISD::ADDI_TLSGD_L_ADDR",
+                               SDTypeProfile<1, 3, [
+                                 SDTCisSameAs<0, 1>, SDTCisSameAs<0, 2>,
+                                 SDTCisSameAs<0, 3>, SDTCisInt<0> ]>>;
 def PPCaddisTlsldHA : SDNode<"PPCISD::ADDIS_TLSLD_HA", SDTIntBinOp>;
 def PPCaddiTlsldL   : SDNode<"PPCISD::ADDI_TLSLD_L", SDTIntBinOp>;
-def PPCaddisDtprelHA : SDNode<"PPCISD::ADDIS_DTPREL_HA", SDTIntBinOp,
-                              [SDNPHasChain]>;
+def PPCgetTlsldAddr : SDNode<"PPCISD::GET_TLSLD_ADDR", SDTIntBinOp>;
+def PPCaddiTlsldLAddr : SDNode<"PPCISD::ADDI_TLSLD_L_ADDR",
+                               SDTypeProfile<1, 3, [
+                                 SDTCisSameAs<0, 1>, SDTCisSameAs<0, 2>,
+                                 SDTCisSameAs<0, 3>, SDTCisInt<0> ]>>;
+def PPCaddisDtprelHA : SDNode<"PPCISD::ADDIS_DTPREL_HA", SDTIntBinOp>;
 def PPCaddiDtprelL   : SDNode<"PPCISD::ADDI_DTPREL_L", SDTIntBinOp>;
 
 def PPCvperm    : SDNode<"PPCISD::VPERM", SDT_PPCvperm, []>;
@@ -136,15 +145,9 @@ def SDT_PPCCall   : SDTypeProfile<0, -1, [SDTCisInt<0>]>;
 def PPCcall  : SDNode<"PPCISD::CALL", SDT_PPCCall,
                       [SDNPHasChain, SDNPOptInGlue, SDNPOutGlue,
                        SDNPVariadic]>;
-def PPCcall_tls : SDNode<"PPCISD::CALL_TLS", SDT_PPCCall,
-                         [SDNPHasChain, SDNPOptInGlue, SDNPOutGlue,
-                          SDNPVariadic]>;
 def PPCcall_nop  : SDNode<"PPCISD::CALL_NOP", SDT_PPCCall,
                           [SDNPHasChain, SDNPOptInGlue, SDNPOutGlue,
                            SDNPVariadic]>;
-def PPCcall_nop_tls : SDNode<"PPCISD::CALL_NOP_TLS", SDT_PPCCall,
-                             [SDNPHasChain, SDNPOptInGlue, SDNPOutGlue,
-                              SDNPVariadic]>;
 def PPCmtctr      : SDNode<"PPCISD::MTCTR", SDT_PPCCall,
                            [SDNPHasChain, SDNPOptInGlue, SDNPOutGlue]>;
 def PPCbctrl : SDNode<"PPCISD::BCTRL", SDTNone,
@@ -2459,9 +2462,6 @@ def : Pat<(PPCcall (i32 tglobaladdr:$dst)),
 def : Pat<(PPCcall (i32 texternalsym:$dst)),
           (BL texternalsym:$dst)>;
 
-def : Pat<(PPCcall_tls texternalsym:$func, tglobaltlsaddr:$sym),
-          (BL_TLS texternalsym:$func, tglobaltlsaddr:$sym)>;
-
 def : Pat<(PPCtc_return (i32 tglobaladdr:$dst),  imm:$imm),
           (TCRETURNdi tglobaladdr:$dst, imm:$imm)>;
 
@@ -2516,10 +2516,49 @@ def ADDItlsgdL32 : Pseudo<(outs gprc:$rD), (ins gprc_nor0:$reg, s16imm:$disp),
                          "#ADDItlsgdL32",
                          [(set i32:$rD,
                            (PPCaddiTlsgdL i32:$reg, tglobaltlsaddr:$disp))]>;
+// LR is a true define, while the rest of the Defs are clobbers.  R3 is
+// explicitly defined when this op is created, so not mentioned here.
+let hasExtraSrcRegAllocReq = 1, hasExtraDefRegAllocReq = 1,
+    Defs = [R0,R4,R5,R6,R7,R8,R9,R10,R11,R12,LR,CTR,CR0,CR1,CR5,CR6,CR7] in
+def GETtlsADDR32 : Pseudo<(outs gprc:$rD), (ins gprc:$reg, tlsgd32:$sym),
+                          "GETtlsADDR32",
+                          [(set i32:$rD,
+                            (PPCgetTlsAddr i32:$reg, tglobaltlsaddr:$sym))]>;
+// Combined op for ADDItlsgdL32 and GETtlsADDR32, late expanded.  R3 and LR
+// are true defines while the rest of the Defs are clobbers.
+let hasExtraSrcRegAllocReq = 1, hasExtraDefRegAllocReq = 1,
+    Defs = [R0,R3,R4,R5,R6,R7,R8,R9,R10,R11,R12,LR,CTR,CR0,CR1,CR5,CR6,CR7] in
+def ADDItlsgdLADDR32 : Pseudo<(outs gprc:$rD),
+                              (ins gprc_nor0:$reg, s16imm:$disp, tlsgd32:$sym),
+                              "#ADDItlsgdLADDR32",
+                              [(set i32:$rD,
+                                (PPCaddiTlsgdLAddr i32:$reg,
+                                                   tglobaltlsaddr:$disp,
+                                                   tglobaltlsaddr:$sym))]>;
 def ADDItlsldL32 : Pseudo<(outs gprc:$rD), (ins gprc_nor0:$reg, s16imm:$disp),
                           "#ADDItlsldL32",
                           [(set i32:$rD,
                             (PPCaddiTlsldL i32:$reg, tglobaltlsaddr:$disp))]>;
+// LR is a true define, while the rest of the Defs are clobbers.  R3 is
+// explicitly defined when this op is created, so not mentioned here.
+let hasExtraSrcRegAllocReq = 1, hasExtraDefRegAllocReq = 1,
+    Defs = [R0,R4,R5,R6,R7,R8,R9,R10,R11,R12,LR,CTR,CR0,CR1,CR5,CR6,CR7] in
+def GETtlsldADDR32 : Pseudo<(outs gprc:$rD), (ins gprc:$reg, tlsgd32:$sym),
+                            "GETtlsldADDR32",
+                            [(set i32:$rD,
+                              (PPCgetTlsldAddr i32:$reg,
+                                               tglobaltlsaddr:$sym))]>;
+// Combined op for ADDItlsldL32 and GETtlsADDR32, late expanded.  R3 and LR
+// are true defines while the rest of the Defs are clobbers.
+let hasExtraSrcRegAllocReq = 1, hasExtraDefRegAllocReq = 1,
+    Defs = [R0,R3,R4,R5,R6,R7,R8,R9,R10,R11,R12,LR,CTR,CR0,CR1,CR5,CR6,CR7] in
+def ADDItlsldLADDR32 : Pseudo<(outs gprc:$rD),
+                              (ins gprc_nor0:$reg, s16imm:$disp, tlsgd32:$sym),
+                              "#ADDItlsldLADDR32",
+                              [(set i32:$rD,
+                                (PPCaddiTlsldLAddr i32:$reg,
+                                                   tglobaltlsaddr:$disp,
+                                                   tglobaltlsaddr:$sym))]>;
 def ADDIdtprelL32 : Pseudo<(outs gprc:$rD), (ins gprc_nor0:$reg, s16imm:$disp),
                            "#ADDIdtprelL32",
                            [(set i32:$rD,

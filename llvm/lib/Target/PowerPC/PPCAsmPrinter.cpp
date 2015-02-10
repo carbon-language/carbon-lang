@@ -101,6 +101,7 @@ namespace {
                        const MachineInstr &MI);
     void LowerPATCHPOINT(MCStreamer &OutStreamer, StackMaps &SM,
                          const MachineInstr &MI);
+    void EmitTlsCall(const MachineInstr *MI, MCSymbolRefExpr::VariantKind VK);
   };
 
   /// PPCLinuxAsmPrinter - PowerPC assembly printer, customized for Linux
@@ -404,6 +405,39 @@ void PPCAsmPrinter::LowerPATCHPOINT(MCStreamer &OutStreamer, StackMaps &SM,
          "Invalid number of NOP bytes requested!");
   for (unsigned i = EncodedBytes; i < NumBytes; i += 4)
     EmitToStreamer(OutStreamer, MCInstBuilder(PPC::NOP));
+}
+
+/// EmitTlsCall -- Given a GETtls[ld]ADDR[32] instruction, print a
+/// call to __tls_get_addr to the current output stream.
+void PPCAsmPrinter::EmitTlsCall(const MachineInstr *MI,
+                                MCSymbolRefExpr::VariantKind VK) {
+  StringRef Name = "__tls_get_addr";
+  MCSymbol *TlsGetAddr = OutContext.GetOrCreateSymbol(Name);
+  MCSymbolRefExpr::VariantKind Kind = MCSymbolRefExpr::VK_None;
+
+  assert(MI->getOperand(0).isReg() &&
+         ((Subtarget.isPPC64() && MI->getOperand(0).getReg() == PPC::X3) ||
+          (!Subtarget.isPPC64() && MI->getOperand(0).getReg() == PPC::R3)) &&
+         "GETtls[ld]ADDR[32] must define GPR3");
+  assert(MI->getOperand(1).isReg() &&
+         ((Subtarget.isPPC64() && MI->getOperand(1).getReg() == PPC::X3) ||
+          (!Subtarget.isPPC64() && MI->getOperand(1).getReg() == PPC::R3)) &&
+         "GETtls[ld]ADDR[32] must read GPR3");
+
+  if (!Subtarget.isPPC64() && !Subtarget.isDarwin() &&
+      TM.getRelocationModel() == Reloc::PIC_)
+    Kind = MCSymbolRefExpr::VK_PLT;
+  const MCSymbolRefExpr *TlsRef =
+    MCSymbolRefExpr::Create(TlsGetAddr, Kind, OutContext);
+  const MachineOperand &MO = MI->getOperand(2);
+  const GlobalValue *GValue = MO.getGlobal();
+  MCSymbol *MOSymbol = getSymbol(GValue);
+  const MCExpr *SymVar = MCSymbolRefExpr::Create(MOSymbol, VK, OutContext);
+  EmitToStreamer(OutStreamer,
+                 MCInstBuilder(Subtarget.isPPC64() ?
+                               PPC::BL8_NOP_TLS : PPC::BL_TLS)
+                 .addExpr(TlsRef)
+                 .addExpr(SymVar));
 }
 
 /// EmitInstruction -- Print out a single PowerPC MI in Darwin syntax to
@@ -808,6 +842,15 @@ void PPCAsmPrinter::EmitInstruction(const MachineInstr *MI) {
                    .addExpr(SymGotTlsGD));
     return;
   }
+  case PPC::GETtlsADDR:
+    // Transform: %X3 = GETtlsADDR %X3, <ga:@sym>
+    // Into: BL8_NOP_TLS __tls_get_addr(sym at tlsgd)
+  case PPC::GETtlsADDR32: {
+    // Transform: %R3 = GETtlsADDR32 %R3, <ga:@sym>
+    // Into: BL_TLS __tls_get_addr(sym at tlsgd)@PLT
+    EmitTlsCall(MI, MCSymbolRefExpr::VK_PPC_TLSGD);
+    return;
+  }
   case PPC::ADDIStlsldHA: {
     // Transform: %Xd = ADDIStlsldHA %X2, <ga:@sym>
     // Into:      %Xd = ADDIS8 %X2, sym@got@tlsld@ha
@@ -842,6 +885,15 @@ void PPCAsmPrinter::EmitInstruction(const MachineInstr *MI) {
                        .addReg(MI->getOperand(0).getReg())
                        .addReg(MI->getOperand(1).getReg())
                        .addExpr(SymGotTlsLD));
+    return;
+  }
+  case PPC::GETtlsldADDR:
+    // Transform: %X3 = GETtlsldADDR %X3, <ga:@sym>
+    // Into: BL8_NOP_TLS __tls_get_addr(sym at tlsld)
+  case PPC::GETtlsldADDR32: {
+    // Transform: %R3 = GETtlsldADDR32 %R3, <ga:@sym>
+    // Into: BL_TLS __tls_get_addr(sym at tlsld)@PLT
+    EmitTlsCall(MI, MCSymbolRefExpr::VK_PPC_TLSLD);
     return;
   }
   case PPC::ADDISdtprelHA:
