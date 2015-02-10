@@ -909,29 +909,29 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF) const {
           .setMIFlag(MachineInstr::FrameSetup);
   }
 
-  // Skip the rest of register spilling code
-  while (MBBI != MBB.end() && MBBI->getFlag(MachineInstr::FrameSetup))
+  while (MBBI != MBB.end() && MBBI->getFlag(MachineInstr::FrameSetup)) {
+    const MachineInstr *FrameInstr = &*MBBI;
     ++MBBI;
 
-  if (NeedsWinEH) {
-    for (const CalleeSavedInfo &Info : MFI->getCalleeSavedInfo()) {
-      unsigned Reg = Info.getReg();
-      if (X86::GR64RegClass.contains(Reg) || X86::GR32RegClass.contains(Reg))
-        continue;
-      assert(X86::FR64RegClass.contains(Reg) && "Unexpected register class");
+    if (NeedsWinEH) {
+      int FI;
+      if (unsigned Reg = TII.isStoreToStackSlot(FrameInstr, FI)) {
+        if (X86::FR64RegClass.contains(Reg)) {
+          int Offset = getFrameIndexOffset(MF, FI);
+          Offset += SEHFrameOffset;
 
-      int Offset = getFrameIndexOffset(MF, Info.getFrameIdx());
-      Offset += SEHFrameOffset;
-
-      BuildMI(MBB, MBBI, DL, TII.get(X86::SEH_SaveXMM))
-          .addImm(Reg)
-          .addImm(Offset)
-          .setMIFlag(MachineInstr::FrameSetup);
+          BuildMI(MBB, MBBI, DL, TII.get(X86::SEH_SaveXMM))
+              .addImm(Reg)
+              .addImm(Offset)
+              .setMIFlag(MachineInstr::FrameSetup);
+        }
+      }
     }
+  }
 
+  if (NeedsWinEH)
     BuildMI(MBB, MBBI, DL, TII.get(X86::SEH_EndPrologue))
         .setMIFlag(MachineInstr::FrameSetup);
-  }
 
   // Realign stack after we spilled callee-saved registers (so that we'll be
   // able to calculate their offsets from the frame pointer).
@@ -1468,8 +1468,7 @@ bool X86FrameLowering::spillCalleeSavedRegisters(
   // It can be done by spilling XMMs to stack frame.
   for (unsigned i = CSI.size(); i != 0; --i) {
     unsigned Reg = CSI[i-1].getReg();
-    if (X86::GR64RegClass.contains(Reg) ||
-        X86::GR32RegClass.contains(Reg))
+    if (X86::GR64RegClass.contains(Reg) || X86::GR32RegClass.contains(Reg))
       continue;
     // Add the callee-saved register as live-in. It's killed at the spill.
     MBB.addLiveIn(Reg);

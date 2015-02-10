@@ -155,9 +155,9 @@ entry:
 ; WIN64: leaq  128(%rsp), %rbp
 ; WIN64: .seh_setframe 5, 128
 ; WIN64: movaps  %xmm7, -32(%rbp)        # 16-byte Spill
+; WIN64: .seh_savexmm 7, 96
 ; WIN64: movaps  %xmm6, -48(%rbp)        # 16-byte Spill
 ; WIN64: .seh_savexmm 6, 80
-; WIN64: .seh_savexmm 7, 96
 ; WIN64: .seh_endprologue
 ; WIN64: andq  $-64, %rsp
 ; WIN64: movaps  -48(%rbp), %xmm6        # 16-byte Reload
