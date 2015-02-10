@@ -15,6 +15,7 @@
 
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/Config/config.h"
 #include "llvm/DebugInfo/PDB/PDB.h"
 #include "llvm/DebugInfo/PDB/IPDBEnumChildren.h"
 #include "llvm/DebugInfo/PDB/IPDBSession.h"
@@ -30,7 +31,9 @@
 #include "llvm/Support/PrettyStackTrace.h"
 #include "llvm/Support/Signals.h"
 
+#if defined(HAVE_DIA_SDK)
 #include <Windows.h>
+#endif
 
 using namespace llvm;
 
@@ -88,11 +91,16 @@ int main(int argc_, const char *argv_[]) {
 
   cl::ParseCommandLineOptions(argv.size(), argv.data(), "LLVM PDB Dumper\n");
 
+#if defined(HAVE_DIA_SDK)
   CoInitializeEx(nullptr, COINIT_MULTITHREADED);
+#endif
 
   std::for_each(opts::InputFilenames.begin(), opts::InputFilenames.end(),
                 dumpInput);
 
+#if defined(HAVE_DIA_SDK)
   CoUninitialize();
+#endif
+
   return 0;
 }
