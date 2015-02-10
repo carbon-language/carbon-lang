@@ -16,7 +16,7 @@
 // Options:
 //
 //    -I(include path)      Look at headers only in this directory tree.
-//                          Must be a path relative to the module.map file.
+//                          Must be a path relative to the module.modulemap file.
 //                          There can be multiple -I options, for when the
 //                          module map covers multiple directories, and
 //                          excludes higher or sibling directories not
@@ -52,7 +52,7 @@
 //
 // Warning message have the form:
 //
-//  warning: module.map does not account for file: Level3A.h
+//  warning: module.modulemap does not account for file: Level3A.h
 //
 // Note that for the case of the module map referencing a file that does
 // not exist, the module map parser in Clang will (at the time of this
@@ -100,7 +100,7 @@ namespace sys = llvm::sys;
 // Option for include paths.
 static cl::list<std::string>
 IncludePaths("I", cl::desc("Include path."
-                           " Must be relative to module.map file."),
+                           " Must be relative to module.modulemap file."),
              cl::ZeroOrMore, cl::value_desc("path"));
 
 // Option for dumping the parsed module map.
@@ -108,11 +108,11 @@ static cl::opt<bool>
 DumpModuleMap("dump-module-map", cl::init(false),
               cl::desc("Dump the parsed module map information."));
 
-// Option for module.map path.
+// Option for module.modulemap path.
 static cl::opt<std::string>
-ModuleMapPath(cl::Positional, cl::init("module.map"),
-              cl::desc("<The module.map file path."
-                       " Uses module.map in current directory if omitted.>"));
+ModuleMapPath(cl::Positional, cl::init("module.modulemap"),
+              cl::desc("<The module.modulemap file path."
+                " Uses module.modulemap in current directory if omitted.>"));
 
 // Collect all other arguments, which will be passed to the front end.
 static cl::list<std::string>
@@ -235,10 +235,10 @@ ModuleMapChecker *ModuleMapChecker::createModuleMapChecker(
 }
 
 // Do checks.
-// Starting from the directory of the module.map file,
+// Starting from the directory of the module.modulemap file,
 // Find all header files, optionally looking only at files
 // covered by the include path options, and compare against
-// the headers referenced by the module.map file.
+// the headers referenced by the module.modulemap file.
 // Display warnings for unaccounted-for header files.
 // Returns error_code of 0 if there were no errors or warnings, 1 if there
 //   were warnings, 2 if any other problem, such as if a bad
@@ -276,9 +276,9 @@ std::error_code ModuleMapChecker::doChecks() {
 // The following functions are called by doChecks.
 
 // Load module map.
-// Returns true if module.map file loaded successfully.
+// Returns true if module.modulemap file loaded successfully.
 bool ModuleMapChecker::loadModuleMap() {
-  // Get file entry for module.map file.
+  // Get file entry for module.modulemap file.
   const FileEntry *ModuleMapEntry =
       SourceMgr->getFileManager().getFile(ModuleMapPath);
 
@@ -305,7 +305,7 @@ bool ModuleMapChecker::loadModuleMap() {
     assert(Dir && "parent must exist");
   }
 
-  // Parse module.map file into module map.
+  // Parse module.modulemap file into module map.
   if (ModMap->parseModuleMapFile(ModuleMapEntry, false, Dir))
     return false;
 
@@ -429,18 +429,18 @@ void ModuleMapChecker::collectUmbrellaHeaderHeader(StringRef HeaderName) {
 
 // Collect file system header files.
 // This function scans the file system for header files,
-// starting at the directory of the module.map file,
+// starting at the directory of the module.modulemap file,
 // optionally filtering out all but the files covered by
 // the include path options.
 // Returns true if no errors.
 bool ModuleMapChecker::collectFileSystemHeaders() {
 
-  // Get directory containing the module.map file.
+  // Get directory containing the module.modulemap file.
   // Might be relative to current directory, absolute, or empty.
   ModuleMapDirectory = getDirectoryFromPath(ModuleMapPath);
 
   // If no include paths specified, we do the whole tree starting
-  // at the module.map directory.
+  // at the module.modulemap directory.
   if (IncludePaths.size() == 0) {
     if (!collectFileSystemHeaders(StringRef("")))
       return false;
@@ -464,7 +464,7 @@ bool ModuleMapChecker::collectFileSystemHeaders() {
 // Collect file system header files from the given path.
 // This function scans the file system for header files,
 // starting at the given directory, which is assumed to be
-// relative to the directory of the module.map file.
+// relative to the directory of the module.modulemap file.
 // \returns True if no errors.
 bool ModuleMapChecker::collectFileSystemHeaders(StringRef IncludePath) {
 

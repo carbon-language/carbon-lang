@@ -44,11 +44,11 @@ public:
 class ModuleMapChecker {
   // Checker arguments.
 
-  /// The module.map file path. Can be relative or absolute.
+  /// The module.modulemap file path. Can be relative or absolute.
   llvm::StringRef ModuleMapPath;
   /// The include paths to check for files.
   /// (Note that other directories above these paths are ignored.
-  /// To expect all files to be accounted for from the module.map
+  /// To expect all files to be accounted for from the module.modulemap
   /// file directory on down, leave this empty.)
   std::vector<std::string> IncludePaths;
   /// Flag to dump the module map information during check.
@@ -102,11 +102,11 @@ public:
   /// Constructor.
   /// You can use the static createModuleMapChecker to create an instance
   /// of this object.
-  /// \param ModuleMapPath The module.map file path.
+  /// \param ModuleMapPath The module.modulemap file path.
   ///   Can be relative or absolute.
   /// \param IncludePaths The include paths to check for files.
   ///   (Note that other directories above these paths are ignored.
-  ///   To expect all files to be accounted for from the module.map
+  ///   To expect all files to be accounted for from the module.modulemap
   ///   file directory on down, leave this empty.)
   /// \param DumpModuleMap Flag to dump the module map information
   ///   during check.
@@ -115,11 +115,11 @@ public:
                    llvm::ArrayRef<std::string> CommandLine);
 
   /// Create instance of ModuleMapChecker.
-  /// \param ModuleMapPath The module.map file path.
+  /// \param ModuleMapPath The module.modulemap file path.
   ///   Can be relative or absolute.
   /// \param IncludePaths The include paths to check for files.
   ///   (Note that other directories above these paths are ignored.
-  ///   To expect all files to be accounted for from the module.map
+  ///   To expect all files to be accounted for from the module.modulemap
   ///   file directory on down, leave this empty.)
   /// \param DumpModuleMap Flag to dump the module map information
   ///   during check.
@@ -129,10 +129,10 @@ public:
       bool DumpModuleMap, llvm::ArrayRef<std::string> CommandLine);
 
   /// Do checks.
-  /// Starting from the directory of the module.map file,
+  /// Starting from the directory of the module.modulemap file,
   /// Find all header files, optionally looking only at files
   /// covered by the include path options, and compare against
-  /// the headers referenced by the module.map file.
+  /// the headers referenced by the module.modulemap file.
   /// Display warnings for unaccounted-for header files.
   /// \returns 0 if there were no errors or warnings, 1 if there
   ///   were warnings, 2 if any other problem, such as a bad
@@ -142,7 +142,7 @@ public:
   // The following functions are called by doChecks.
 
   /// Load module map.
-  /// \returns True if module.map file loaded successfully.
+  /// \returns True if module.modulemap file loaded successfully.
   bool loadModuleMap();
 
   /// Collect module headers.
@@ -174,7 +174,7 @@ public:
 
   /// Collect file system header files.
   /// This function scans the file system for header files,
-  /// starting at the directory of the module.map file,
+  /// starting at the directory of the module.modulemap file,
   /// optionally filtering out all but the files covered by
   /// the include path options.
   /// \returns True if no errors.
@@ -183,7 +183,7 @@ public:
   /// Collect file system header files from the given path.
   /// This function scans the file system for header files,
   /// starting at the given directory, which is assumed to be
-  /// relative to the directory of the module.map file.
+  /// relative to the directory of the module.modulemap file.
   /// \returns True if no errors.
   bool collectFileSystemHeaders(llvm::StringRef IncludePath);
 

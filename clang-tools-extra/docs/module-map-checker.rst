@@ -26,7 +26,7 @@ can be included on the command line after the module map file argument.
 
 Warning message have the form::
 
-  warning: module.map does not account for file: header.h
+  warning: module.modulemap does not account for file: header.h
 
 Note that for the case of the module map referencing a file that does
 not exist, the module map parser in Clang will display an error message.
@@ -73,7 +73,7 @@ Module-Map-Checker Command Line Options
 .. option:: -I (include path)
 
   Look at headers only in this directory tree.
-  Must be a path relative to the module.map file.
+  Must be a path relative to the module.modulemap file.
   There can be multiple ``-I`` options, for when the
   module map covers multiple directories, and
   excludes higher or sibling directories not
