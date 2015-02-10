@@ -37,6 +37,7 @@
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/IntrinsicInst.h"
 #include "llvm/IR/Operator.h"
+#include "llvm/MC/MCAsmInfo.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Target/TargetOptions.h"
 using namespace llvm;
@@ -2136,6 +2137,10 @@ bool X86FastISel::fastLowerIntrinsicCall(const IntrinsicInst *II) {
   switch (II->getIntrinsicID()) {
   default: return false;
   case Intrinsic::frameaddress: {
+    MachineFunction *MF = FuncInfo.MF;
+    if (MF->getTarget().getMCAsmInfo()->usesWindowsCFI())
+      return false;
+
     Type *RetTy = II->getCalledFunction()->getReturnType();
 
     MVT VT;
@@ -2153,11 +2158,11 @@ bool X86FastISel::fastLowerIntrinsicCall(const IntrinsicInst *II) {
 
     // This needs to be set before we call getPtrSizedFrameRegister, otherwise
     // we get the wrong frame register.
-    MachineFrameInfo *MFI = FuncInfo.MF->getFrameInfo();
+    MachineFrameInfo *MFI = MF->getFrameInfo();
     MFI->setFrameAddressIsTaken(true);
 
     const X86RegisterInfo *RegInfo = Subtarget->getRegisterInfo();
-    unsigned FrameReg = RegInfo->getPtrSizedFrameRegister(*(FuncInfo.MF));
+    unsigned FrameReg = RegInfo->getPtrSizedFrameRegister(*MF);
     assert(((FrameReg == X86::RBP && VT == MVT::i64) ||
             (FrameReg == X86::EBP && VT == MVT::i32)) &&
            "Invalid Frame Register!");
