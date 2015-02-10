@@ -62,6 +62,25 @@ public:
     MDTupleKind,
     MDLocationKind,
     GenericDebugNodeKind,
+    MDSubrangeKind,
+    MDEnumeratorKind,
+    MDBasicTypeKind,
+    MDDerivedTypeKind,
+    MDCompositeTypeKind,
+    MDSubroutineTypeKind,
+    MDFileKind,
+    MDCompileUnitKind,
+    MDSubprogramKind,
+    MDLexicalBlockKind,
+    MDLexicalBlockFileKind,
+    MDNamespaceKind,
+    MDTemplateTypeParameterKind,
+    MDTemplateValueParameterKind,
+    MDGlobalVariableKind,
+    MDLocalVariableKind,
+    MDExpressionKind,
+    MDObjCPropertyKind,
+    MDImportedEntityKind,
     ConstantAsMetadataKind,
     LocalAsMetadataKind,
     MDStringKind
@@ -865,9 +884,14 @@ public:
 
   /// \brief Methods for support type inquiry through isa, cast, and dyn_cast:
   static bool classof(const Metadata *MD) {
-    return MD->getMetadataID() == MDTupleKind ||
-           MD->getMetadataID() == MDLocationKind ||
-           MD->getMetadataID() == GenericDebugNodeKind;
+    switch (MD->getMetadataID()) {
+    default:
+      return false;
+#define HANDLE_MDNODE_LEAF(CLASS)                                              \
+  case CLASS##Kind:                                                            \
+    return true;
+#include "llvm/IR/Metadata.def"
+    }
   }
 
   /// \brief Check whether MDNode is a vtable access.

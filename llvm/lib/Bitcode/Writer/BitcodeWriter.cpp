@@ -809,6 +809,106 @@ static void WriteGenericDebugNode(const GenericDebugNode *N,
   Record.clear();
 }
 
+static void WriteMDSubrange(const MDSubrange *, const ValueEnumerator &,
+                            BitstreamWriter &, SmallVectorImpl<uint64_t> &,
+                            unsigned) {
+  llvm_unreachable("write not implemented");
+}
+static void WriteMDEnumerator(const MDEnumerator *, const ValueEnumerator &,
+                              BitstreamWriter &, SmallVectorImpl<uint64_t> &,
+                              unsigned) {
+  llvm_unreachable("write not implemented");
+}
+static void WriteMDBasicType(const MDBasicType *, const ValueEnumerator &,
+                             BitstreamWriter &, SmallVectorImpl<uint64_t> &,
+                             unsigned) {
+  llvm_unreachable("write not implemented");
+}
+static void WriteMDDerivedType(const MDDerivedType *, const ValueEnumerator &,
+                               BitstreamWriter &, SmallVectorImpl<uint64_t> &,
+                               unsigned) {
+  llvm_unreachable("write not implemented");
+}
+static void WriteMDCompositeType(const MDCompositeType *,
+                                 const ValueEnumerator &, BitstreamWriter &,
+                                 SmallVectorImpl<uint64_t> &, unsigned) {
+  llvm_unreachable("write not implemented");
+}
+static void WriteMDSubroutineType(const MDSubroutineType *,
+                                  const ValueEnumerator &, BitstreamWriter &,
+                                  SmallVectorImpl<uint64_t> &, unsigned) {
+  llvm_unreachable("write not implemented");
+}
+static void WriteMDFile(const MDFile *, const ValueEnumerator &,
+                        BitstreamWriter &, SmallVectorImpl<uint64_t> &,
+                        unsigned) {
+  llvm_unreachable("write not implemented");
+}
+static void WriteMDCompileUnit(const MDCompileUnit *, const ValueEnumerator &,
+                               BitstreamWriter &, SmallVectorImpl<uint64_t> &,
+                               unsigned) {
+  llvm_unreachable("write not implemented");
+}
+static void WriteMDSubprogram(const MDSubprogram *, const ValueEnumerator &,
+                              BitstreamWriter &, SmallVectorImpl<uint64_t> &,
+                              unsigned) {
+  llvm_unreachable("write not implemented");
+}
+static void WriteMDLexicalBlock(const MDLexicalBlock *, const ValueEnumerator &,
+                                BitstreamWriter &, SmallVectorImpl<uint64_t> &,
+                                unsigned) {
+  llvm_unreachable("write not implemented");
+}
+static void WriteMDLexicalBlockFile(const MDLexicalBlockFile *,
+                                    const ValueEnumerator &, BitstreamWriter &,
+                                    SmallVectorImpl<uint64_t> &, unsigned) {
+  llvm_unreachable("write not implemented");
+}
+static void WriteMDNamespace(const MDNamespace *, const ValueEnumerator &,
+                             BitstreamWriter &, SmallVectorImpl<uint64_t> &,
+                             unsigned) {
+  llvm_unreachable("write not implemented");
+}
+static void WriteMDTemplateTypeParameter(const MDTemplateTypeParameter *,
+                                         const ValueEnumerator &,
+                                         BitstreamWriter &,
+                                         SmallVectorImpl<uint64_t> &,
+                                         unsigned) {
+  llvm_unreachable("write not implemented");
+}
+static void WriteMDTemplateValueParameter(const MDTemplateValueParameter *,
+                                          const ValueEnumerator &,
+                                          BitstreamWriter &,
+                                          SmallVectorImpl<uint64_t> &,
+                                          unsigned) {
+  llvm_unreachable("write not implemented");
+}
+static void WriteMDGlobalVariable(const MDGlobalVariable *,
+                                  const ValueEnumerator &, BitstreamWriter &,
+                                  SmallVectorImpl<uint64_t> &, unsigned) {
+  llvm_unreachable("write not implemented");
+}
+static void WriteMDLocalVariable(const MDLocalVariable *,
+                                 const ValueEnumerator &, BitstreamWriter &,
+                                 SmallVectorImpl<uint64_t> &, unsigned) {
+  llvm_unreachable("write not implemented");
+}
+static void WriteMDExpression(const MDExpression *, const ValueEnumerator &,
+                              BitstreamWriter &, SmallVectorImpl<uint64_t> &,
+                              unsigned) {
+  llvm_unreachable("write not implemented");
+}
+static void WriteMDObjCProperty(const MDObjCProperty *, const ValueEnumerator &,
+                                BitstreamWriter &, SmallVectorImpl<uint64_t> &,
+                                unsigned) {
+  llvm_unreachable("write not implemented");
+}
+static void WriteMDImportedEntity(const MDImportedEntity *,
+                                  const ValueEnumerator &, BitstreamWriter &,
+                                  SmallVectorImpl<uint64_t> &, unsigned) {
+  llvm_unreachable("write not implemented");
+}
+
 static void WriteModuleMetadata(const Module *M,
                                 const ValueEnumerator &VE,
                                 BitstreamWriter &Stream) {
