@@ -287,19 +287,12 @@
 /// which causes the program to exit abnormally.
 #if __has_builtin(__builtin_trap) || LLVM_GNUC_PREREQ(4, 3, 0)
 # define LLVM_BUILTIN_TRAP __builtin_trap()
-#elif defined(LLVM_ON_WIN32)
-#if defined(_WIN64)
-extern "C" __declspec(dllimport) void __stdcall RaiseException(
-    unsigned long, unsigned long, unsigned long, const unsigned long long *);
-#else
-extern "C" __declspec(dllimport) void __stdcall RaiseException(
-    unsigned long, unsigned long, unsigned long, const unsigned long *);
-#endif
-# define LLVM_BUILTIN_TRAP                                                     \
-  do {                                                                         \
-    ::RaiseException(0x8000DEAD, 0x1 /*EXCEPTION_NONCONTINUABLE*/, 0, nullptr);\
-    __assume(false);                                                           \
-  } while (0)
+#elif defined(_MSC_VER)
+// The __debugbreak intrinsic is supported by MSVC, does not require forward
+// declarations involving platform-specific typedefs (unlike RaiseException),
+// results in a call to vectored exception handlers, and encodes to a short
+// instruction that still causes the trapping behavior we want.
+# define LLVM_BUILTIN_TRAP __debugbreak()
 #else
 # define LLVM_BUILTIN_TRAP *(volatile int*)0x11 = 0
 #endif
