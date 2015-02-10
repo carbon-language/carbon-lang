@@ -1310,6 +1310,6 @@ bool UnwindCursor<A, R>::getFunctionName(char *buf, size_t bufLen,
                                          buf, bufLen, offset);
 }
 
-}; // namespace libunwind
+} // namespace libunwind
 
 #endif // __UNWINDCURSOR_HPP__
