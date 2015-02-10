@@ -129,7 +129,7 @@ Module *Module::findSubModule(llvm::StringRef SubName) {
 
 // Implementation functions:
 
-// Reserved keywords in module.map syntax.
+// Reserved keywords in module.modulemap syntax.
 // Keep in sync with keywords in module map parser in Lex/ModuleMap.cpp,
 // such as in ModuleMapParser::consumeToken().
 static const char *ReservedNames[] = {
@@ -175,7 +175,7 @@ static bool addModuleDescription(Module *RootModule,
   if (Count != 0) {
     llvm::errs() << "warning: " << FilePath
                  << " depends on other headers being included first,"
-                    " meaning the module.map won't compile."
+                    " meaning the module.modulemap won't compile."
                     "  This header will be omitted from the module map.\n";
     return true;
   }

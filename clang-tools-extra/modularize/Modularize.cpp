@@ -90,16 +90,17 @@
 //
 // See PreprocessorTracker.cpp for additional details.
 //
-// Modularize also has an option ("-module-map-path=module.map") that will
-// skip the checks, and instead act as a module.map generation assistant,
+// Modularize also has an option ("-module-map-path=module.modulemap") that will
+// skip the checks, and instead act as a module.modulemap generation assistant,
 // generating a module map file based on the header list.  An optional
 // "-root-module=(rootName)" argument can specify a root module to be
-// created in the generated module.map file.  Note that you will likely
+// created in the generated module.modulemap file.  Note that you will likely
 // need to edit this file to suit the needs of your headers.
 //
-// An example command line for generating a module.map file:
+// An example command line for generating a module.modulemap file:
 //
-//   modularize -module-map-path=module.map -root-module=myroot headerlist.txt
+//   modularize -module-map-path=module.modulemap -root-module=myroot \
+//      headerlist.txt
 //
 // Note that if the headers in the header list have partial paths, sub-modules
 // will be created for the subdirectires involved, assuming that the
@@ -679,7 +680,7 @@ int main(int Argc, const char **Argv) {
   // Save program name for error messages.
   Argv0 = Argv[0];
 
-  // Save program arguments for use in module.map comment.
+  // Save program arguments for use in module.modulemap comment.
   CommandLine = sys::path::stem(sys::path::filename(Argv0));
   for (int ArgIndex = 1; ArgIndex < Argc; ArgIndex++) {
     CommandLine.append(" ");
