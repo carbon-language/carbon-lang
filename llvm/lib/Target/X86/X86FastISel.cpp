@@ -123,6 +123,9 @@ private:
 
   bool X86SelectTrunc(const Instruction *I);
 
+  bool X86SelectFPExtOrFPTrunc(const Instruction *I, unsigned Opc,
+                               const TargetRegisterClass *RC);
+
   bool X86SelectFPExt(const Instruction *I);
   bool X86SelectFPTrunc(const Instruction *I);
 
@@ -2001,41 +2004,46 @@ bool X86FastISel::X86SelectSelect(const Instruction *I) {
   return false;
 }
 
+// Helper method used by X86SelectFPExt and X86SelectFPTrunc.
+bool X86FastISel::X86SelectFPExtOrFPTrunc(const Instruction *I,
+                                          unsigned TargetOpc,
+                                          const TargetRegisterClass *RC) {
+  assert((I->getOpcode() == Instruction::FPExt ||
+          I->getOpcode() == Instruction::FPTrunc) &&
+         "Instruction must be an FPExt or FPTrunc!");
+
+  unsigned OpReg = getRegForValue(I->getOperand(0));
+  if (OpReg == 0)
+    return false;
+
+  unsigned ResultReg = createResultReg(RC);
+  MachineInstrBuilder MIB;
+  MIB = BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(TargetOpc),
+                ResultReg);
+  if (Subtarget->hasAVX())
+    MIB.addReg(OpReg);
+  MIB.addReg(OpReg);
+  updateValueMap(I, ResultReg);
+  return true;
+}
+
 bool X86FastISel::X86SelectFPExt(const Instruction *I) {
-  // fpext from float to double.
-  if (X86ScalarSSEf64 &&
-      I->getType()->isDoubleTy()) {
-    const Value *V = I->getOperand(0);
-    if (V->getType()->isFloatTy()) {
-      unsigned OpReg = getRegForValue(V);
-      if (OpReg == 0) return false;
-      unsigned ResultReg = createResultReg(&X86::FR64RegClass);
-      BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc,
-              TII.get(X86::CVTSS2SDrr), ResultReg)
-        .addReg(OpReg);
-      updateValueMap(I, ResultReg);
-      return true;
-    }
+  if (X86ScalarSSEf64 && I->getType()->isDoubleTy() &&
+      I->getOperand(0)->getType()->isFloatTy()) {
+    // fpext from float to double.
+    unsigned Opc = Subtarget->hasAVX() ? X86::VCVTSS2SDrr : X86::CVTSS2SDrr;
+    return X86SelectFPExtOrFPTrunc(I, Opc, &X86::FR64RegClass);
   }
 
   return false;
 }
 
 bool X86FastISel::X86SelectFPTrunc(const Instruction *I) {
-  if (X86ScalarSSEf64) {
-    if (I->getType()->isFloatTy()) {
-      const Value *V = I->getOperand(0);
-      if (V->getType()->isDoubleTy()) {
-        unsigned OpReg = getRegForValue(V);
-        if (OpReg == 0) return false;
-        unsigned ResultReg = createResultReg(&X86::FR32RegClass);
-        BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc,
-                TII.get(X86::CVTSD2SSrr), ResultReg)
-          .addReg(OpReg);
-        updateValueMap(I, ResultReg);
-        return true;
-      }
-    }
+  if (X86ScalarSSEf64 && I->getType()->isFloatTy() &&
+      I->getOperand(0)->getType()->isDoubleTy()) {
+    // fptrunc from double to float.
+    unsigned Opc = Subtarget->hasAVX() ? X86::VCVTSD2SSrr : X86::CVTSD2SSrr;
+    return X86SelectFPExtOrFPTrunc(I, Opc, &X86::FR32RegClass);
   }
 
   return false;
