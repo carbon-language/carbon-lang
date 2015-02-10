@@ -374,9 +374,12 @@ bool ModuleMapChecker::collectUmbrellaHeaders(StringRef UmbrellaDirName) {
     std::string File(I->path());
     I->status(Status);
     sys::fs::file_type Type = Status.type();
-    // If the file is a directory, ignore the name.
-    if (Type == sys::fs::file_type::directory_file)
+    // If the file is a directory, ignore the name and recurse.
+    if (Type == sys::fs::file_type::directory_file) {
+      if (!collectUmbrellaHeaders(File))
+        return false;
       continue;
+    }
     // If the file does not have a common header extension, ignore it.
     if (!isHeader(File))
       continue;
