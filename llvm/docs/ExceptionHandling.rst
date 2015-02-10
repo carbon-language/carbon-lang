@@ -64,6 +64,21 @@ handling at the expense of slower execution when no exceptions are thrown. As
 exceptions are, by their nature, intended for uncommon code paths, DWARF
 exception handling is generally preferred to SJLJ.
 
+Windows Runtime Exception Handling
+-----------------------------------
+
+Windows runtime based exception handling uses the same basic IR structure as
+Itanium ABI based exception handling, but it relies on the personality
+functions provided by the native Windows runtime library, ``__CxxFrameHandler3``
+for C++ exceptions: ``__C_specific_handler`` for 64-bit SEH or 
+``_frame_handler3/4`` for 32-bit SEH.  This results in a very different
+execution model and requires some minor modifications to the initial IR
+representation and a significant restructuring just before code generation.
+
+General information about the Windows x64 exception handling mechanism can be
+found at `MSDN Exception Handling (x64)
+<https://msdn.microsoft.com/en-us/library/1eyas8tf(v=vs.80).aspx>_`.
+
 Overview
 --------
 
@@ -306,6 +321,97 @@ the selector results they understand and then resume exception propagation with
 the `resume instruction <LangRef.html#i_resume>`_ if none of the conditions
 match.
 
+C++ Exception Handling using the Windows Runtime
+=================================================
+
+(Note: Windows C++ exception handling support is a work in progress and is
+ not yet fully implemented.  The text below describes how it will work
+ when completed.)
+
+The Windows runtime function for C++ exception handling uses a mutli-phase
+approach.  When an exception occurs it searches the current callstack for a
+frame that has a handler for the exception.  If a handler is found, it then
+calls the cleanup handler for each frame above the handler which has a
+cleanup handler before calling the catch handler.  These calls are all made
+from a stack context different from the original frame in which the handler
+is defined.  Therefore, it is necessary to outline these handlers from their
+original context before code generation.
+
+Catch handlers are called with a pointer to the handler itself as the first
+argument and a pointer to the parent function's stack frame as the second
+argument.  The catch handler uses the `llvm.recoverframe
+<LangRef.html#llvm-frameallocate-and-llvm-framerecover-intrinsics>`_ to get a
+pointer to a frame allocation block that is created in the parent frame using
+the `llvm.allocateframe 
+<LangRef.html#llvm-frameallocate-and-llvm-framerecover-intrinsics>`_ intrinsic.
+The ``WinEHPrepare`` pass will have created a structure definition for the
+contents of this block.  The first two members of the structure will always be
+(1) a 32-bit integer that the runtime uses to track the exception state of the
+parent frame for the purposes of handling chained exceptions and (2) a pointer
+to the object associated with the exception (roughly, the parameter of the
+catch clause). These two members will be followed by any frame variables from
+the parent function which must be accessed in any of the functions unwind or
+catch handlers.  The catch handler returns the address at which execution
+should continue.
+
+Cleanup handlers perform any cleanup necessary as the frame goes out of scope,
+such as calling object destructors.  The runtime handles the actual unwinding
+of the stack.  If an exception occurs in a cleanup handler the runtime manages
+termination of the process. Cleanup handlers are called with the same arguments
+as catch handlers (a pointer to the handler and a pointer to the parent stack
+frame) and use the same mechanism described above to access frame variables
+in the parent function.  Cleanup handlers do not return a value.
+
+The IR generated for Windows runtime based C++ exception handling is initially
+very similar to the ``landingpad`` mechanism described above.  Calls to
+libc++abi functions (such as ``__cxa_begin_catch``/``__cxa_end_catch`` and
+``__cxa_throw_exception`` are replaced with calls to intrinsics or Windows
+runtime functions (such as ``llvm.eh.begincatch``/``llvm.eh.endcatch`` and
+``__CxxThrowException``).
+
+During the WinEHPrepare pass, the handler functions are outlined into handler
+functions and the original landing pad code is replaced with a call to the
+``llvm.eh.actions`` intrinsic that describes the order in which handlers will
+be processed from the logical location of the landing pad and an indirect
+branch to the return value of the ``llvm.eh.actions`` intrinsic. The
+``llvm.eh.actions`` intrinsic is defined as returning the address at which
+execution will continue.  This is a temporary construct which will be removed
+before code generation, but it allows for the accurate tracking of control
+flow until then.
+
+A typical landing pad will look like this after outlining:
+
+.. code-block:: llvm
+
+    lpad:
+      %vals = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*)
+	      cleanup
+          catch i8* bitcast (i8** @_ZTIi to i8*)
+          catch i8* bitcast (i8** @_ZTIf to i8*)
+      %recover = call i8* (...)* @llvm.eh.actions(
+          i32 3, i8* bitcast (i8** @_ZTIi to i8*), i8* (i8*, i8*)* @_Z4testb.catch.1)
+          i32 2, i8* null, void (i8*, i8*)* @_Z4testb.cleanup.1)
+          i32 1, i8* bitcast (i8** @_ZTIf to i8*), i8* (i8*, i8*)* @_Z4testb.catch.0)
+          i32 0, i8* null, void (i8*, i8*)* @_Z4testb.cleanup.0)
+      indirectbr i8* %recover, [label %try.cont1, label %try.cont2]
+
+In this example, the landing pad represents an exception handling context with
+two catch handlers and a cleanup handler that have been outlined.  If an
+exception is thrown with a type that matches ``_ZTIi``, the ``_Z4testb.catch.1``
+handler will be called an no clean-up is needed.  If an exception is thrown
+with a type that matches ``_ZTIf``, first the ``_Z4testb.cleanup.1`` handler
+will be called to perform unwind-related cleanup, then the ``_Z4testb.catch.1``
+handler will be called.  If an exception is throw which does not match either
+of these types and the exception is handled by another frame further up the
+call stack, first the ``_Z4testb.cleanup.1`` handler will be called, then the
+``_Z4testb.cleanup.0`` handler (which corresponds to a different scope) will be
+called, and exception handling will continue at the next frame in the call
+stack will be called.  One of the catch handlers will return the address of
+``%try.cont1`` in the parent function and the other will return the address of
+``%try.cont2``, meaning that execution continues at one of those blocks after
+an exception is caught.
+
+
 Exception Handling Intrinsics
 =============================
 
@@ -328,6 +434,70 @@ function.  This value can be used to compare against the result of
 ``landingpad`` instruction.  The single argument is a reference to a type info.
 
 Uses of this intrinsic are generated by the C++ front-end.
+
+.. _llvm.eh.begincatch:
+
+``llvm.eh.begincatch``
+----------------------
+
+.. code-block:: llvm
+
+  i8* @llvm.eh.begincatch(i8* %exn)
+
+
+This intrinsic marks the beginning of catch handling code within the blocks
+following a ``landingpad`` instruction.  The exact behavior of this function
+depends on the compilation target and the personality function associated
+with the ``landingpad`` instruction.
+
+The argument to this intrinsic is a pointer that was previously extracted from
+the aggregate return value of the ``landingpad`` instruction.  The return
+value of the intrinsic is a pointer to the exception object to be used by the
+catch code.  This pointer is returned as an ``i8*`` value, but the actual type
+of the object will depend on the exception that was thrown.
+
+Uses of this intrinsic are generated by the C++ front-end.  Many targets will
+use implementation-specific functions (such as ``__cxa_begin_catch``) instead
+of this intrinsic.  The intrinsic is provided for targets that require a more
+abstract interface.
+
+When used in the native Windows C++ exception handling implementation, this
+intrinsic serves as a placeholder to delimit code before a catch handler is
+outlined.  When the handler is is outlined, this intrinsic will be replaced
+by instructions that retrieve the exception object pointer from the frame
+allocation block.
+
+
+.. _llvm.eh.endcatch:
+
+``llvm.eh.endcatch``
+----------------------
+
+.. code-block:: llvm
+
+  void @llvm.eh.endcatch()
+
+
+This intrinsic marks the end of catch handling code within the current block,
+which will be a successor of a block which called ``llvm.eh.begincatch''.
+The exact behavior of this function depends on the compilation target and the
+personality function associated with the corresponding ``landingpad``
+instruction.
+
+There may be more than one call to ``llvm.eh.endcatch`` for any given call to
+``llvm.eh.begincatch`` with each ``llvm.eh.endcatch`` call corresponding to the
+end of a different control path.  All control paths following a call to
+``llvm.eh.begincatch`` must reach a call to ``llvm.eh.endcatch``.
+
+Uses of this intrinsic are generated by the C++ front-end.  Many targets will
+use implementation-specific functions (such as ``__cxa_begin_catch``) instead
+of this intrinsic.  The intrinsic is provided for targets that require a more
+abstract interface.
+
+When used in the native Windows C++ exception handling implementation, this
+intrinsic serves as a placeholder to delimit code before a catch handler is
+outlined.  After the handler is outlined, this intrinsic is simply removed.
+
 
 SJLJ Intrinsics
 ---------------
