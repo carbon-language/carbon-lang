@@ -23,18 +23,12 @@
 
 int main()
 {
-    {
     typedef std::pair<const int, double> V;
+    {
     typedef std::map<int, double> M;
     {
-        V ar1[] =
-        {
-        };
-        V ar2[] =
-        {
-        };
-        M m1(ar1, ar1+sizeof(ar1)/sizeof(ar1[0]));
-        M m2(ar2, ar2+sizeof(ar2)/sizeof(ar2[0]));
+        M m1;
+        M m2;
         M m1_save = m1;
         M m2_save = m2;
         swap(m1, m2);
@@ -42,9 +36,6 @@ int main()
         assert(m2 == m1_save);
     }
     {
-        V ar1[] =
-        {
-        };
         V ar2[] =
         {
             V(5, 5),
@@ -56,7 +47,7 @@ int main()
             V(11, 11),
             V(12, 12)
         };
-        M m1(ar1, ar1+sizeof(ar1)/sizeof(ar1[0]));
+        M m1;
         M m2(ar2, ar2+sizeof(ar2)/sizeof(ar2[0]));
         M m1_save = m1;
         M m2_save = m2;
@@ -72,11 +63,8 @@ int main()
             V(3, 3),
             V(4, 4)
         };
-        V ar2[] =
-        {
-        };
         M m1(ar1, ar1+sizeof(ar1)/sizeof(ar1[0]));
-        M m2(ar2, ar2+sizeof(ar2)/sizeof(ar2[0]));
+        M m2;
         M m1_save = m1;
         M m2_save = m2;
         swap(m1, m2);
@@ -181,17 +169,10 @@ int main()
     }
 #if __cplusplus >= 201103L
     {
-    typedef std::pair<const int, double> V;
     typedef std::map<int, double, std::less<int>, min_allocator<V>> M;
     {
-        V ar1[] =
-        {
-        };
-        V ar2[] =
-        {
-        };
-        M m1(ar1, ar1+sizeof(ar1)/sizeof(ar1[0]));
-        M m2(ar2, ar2+sizeof(ar2)/sizeof(ar2[0]));
+        M m1;
+        M m2;
         M m1_save = m1;
         M m2_save = m2;
         swap(m1, m2);
@@ -199,9 +180,6 @@ int main()
         assert(m2 == m1_save);
     }
     {
-        V ar1[] =
-        {
-        };
         V ar2[] =
         {
             V(5, 5),
@@ -213,7 +191,7 @@ int main()
             V(11, 11),
             V(12, 12)
         };
-        M m1(ar1, ar1+sizeof(ar1)/sizeof(ar1[0]));
+        M m1;
         M m2(ar2, ar2+sizeof(ar2)/sizeof(ar2[0]));
         M m1_save = m1;
         M m2_save = m2;
@@ -229,11 +207,8 @@ int main()
             V(3, 3),
             V(4, 4)
         };
-        V ar2[] =
-        {
-        };
         M m1(ar1, ar1+sizeof(ar1)/sizeof(ar1[0]));
-        M m2(ar2, ar2+sizeof(ar2)/sizeof(ar2[0]));
+        M m2;
         M m1_save = m1;
         M m2_save = m2;
         swap(m1, m2);
