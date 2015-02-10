@@ -91,6 +91,12 @@ public:
 
     void
     SetShell (const char * path);
+    
+    bool
+    GetGlobArguments ();
+    
+    void
+    SetGlobArguments (bool glob);
 
     uint32_t
     GetResumeCount ();

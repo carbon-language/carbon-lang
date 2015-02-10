@@ -217,6 +217,18 @@ SBLaunchInfo::SetShell (const char * path)
     m_opaque_sp->SetShell (FileSpec(path, false));
 }
 
+bool
+SBLaunchInfo::GetGlobArguments ()
+{
+    return m_opaque_sp->GetGlobArguments();
+}
+
+void
+SBLaunchInfo::SetGlobArguments (bool glob)
+{
+    m_opaque_sp->SetGlobArguments(glob);
+}
+
 uint32_t
 SBLaunchInfo::GetResumeCount ()
 {
