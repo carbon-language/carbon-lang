@@ -1852,10 +1852,8 @@ extern kmp_int32 __kmp_task_stealing_constraint;
 
 // The tt_found_tasks flag is a signal to all threads in the team that tasks were spawned and
 // queued since the previous barrier release.
-// State is used to alternate task teams for successive barriers
-#define KMP_TASKING_ENABLED(task_team,state) \
-    ((TCR_SYNC_4((task_team)->tt.tt_found_tasks) == TRUE) && \
-     (TCR_4((task_team)->tt.tt_state)       == (state)))
+#define KMP_TASKING_ENABLED(task_team) \
+    (TCR_SYNC_4((task_team)->tt.tt_found_tasks) == TRUE)
 /*!
 @ingroup BASIC_TYPES
 @{
@@ -2071,8 +2069,6 @@ typedef struct kmp_base_task_team {
 
     volatile kmp_uint32     tt_ref_ct;             /* #threads accessing struct  */
                                                    /* (not incl. master)         */
-    kmp_int32               tt_state;              /* alternating 0/1 for task team identification */
-                                                   /* Note: VERY sensitive to padding! */
 } kmp_base_task_team_t;
 
 union KMP_ALIGN_CACHE kmp_task_team {
@@ -2195,6 +2191,9 @@ typedef struct KMP_ALIGN_CACHE kmp_base_info {
     kmp_task_team_t    * th_task_team;           // Task team struct
     kmp_taskdata_t     * th_current_task;        // Innermost Task being executed
     kmp_uint8            th_task_state;          // alternating 0/1 for task team identification
+    kmp_uint8          * th_task_state_memo_stack;  // Stack holding memos of th_task_state at nested levels
+    kmp_uint32           th_task_state_top;         // Top element of th_task_state_memo_stack
+    kmp_uint32           th_task_state_stack_sz;    // Size of th_task_state_memo_stack
 
     /*
      * More stuff for keeping track of active/sleeping threads
@@ -2294,7 +2293,7 @@ typedef struct KMP_ALIGN_CACHE kmp_base_team {
     kmp_team_p              *t_parent;       // parent team
     kmp_team_p              *t_next_pool;    // next free team in the team pool
     kmp_disp_t              *t_dispatch;     // thread's dispatch data
-    kmp_task_team_t         *t_task_team;    // Task team struct
+    kmp_task_team_t         *t_task_team[2]; // Task team struct; switch between 2
 #if OMP_40_ENABLED
     kmp_proc_bind_t          t_proc_bind;    // bind type for par region
 #endif // OMP_40_ENABLED
@@ -3100,7 +3099,7 @@ int __kmp_execute_tasks_oncore(kmp_info_t *thread, kmp_int32 gtid, kmp_flag_onco
 extern void __kmp_reap_task_teams( void );
 extern void __kmp_unref_task_team( kmp_task_team_t *task_team, kmp_info_t *thread );
 extern void __kmp_wait_to_unref_task_teams( void );
-extern void __kmp_task_team_setup ( kmp_info_t *this_thr, kmp_team_t *team );
+extern void __kmp_task_team_setup ( kmp_info_t *this_thr, kmp_team_t *team, int both );
 extern void __kmp_task_team_sync  ( kmp_info_t *this_thr, kmp_team_t *team );
 extern void __kmp_task_team_wait  ( kmp_info_t *this_thr, kmp_team_t *team
 #if USE_ITT_BUILD

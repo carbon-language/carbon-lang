@@ -1101,7 +1101,7 @@ __kmp_barrier(enum barrier_type bt, int gtid, int is_split, size_t reduce_size,
             if (__kmp_tasking_mode != tskm_immediate_exec) {
                 __kmp_task_team_wait(this_thr, team
                                      USE_ITT_BUILD_ARG(itt_sync_obj) );
-                __kmp_task_team_setup(this_thr, team);
+                __kmp_task_team_setup(this_thr, team, 0); // use 0 to only setup the current team
             }
 
 
@@ -1189,7 +1189,7 @@ __kmp_barrier(enum barrier_type bt, int gtid, int is_split, size_t reduce_size,
         status = 0;
         if (__kmp_tasking_mode != tskm_immediate_exec) {
             // The task team should be NULL for serialized code (tasks will be executed immediately)
-            KMP_DEBUG_ASSERT(team->t.t_task_team == NULL);
+            KMP_DEBUG_ASSERT(team->t.t_task_team[this_thr->th.th_task_state] == NULL);
             KMP_DEBUG_ASSERT(this_thr->th.th_task_team == NULL);
         }
     }
@@ -1293,9 +1293,9 @@ __kmp_join_barrier(int gtid)
 # ifdef KMP_DEBUG
     if (__kmp_tasking_mode != tskm_immediate_exec) {
         KA_TRACE(20, ( "__kmp_join_barrier: T#%d, old team = %d, old task_team = %p, th_task_team = %p\n",
-                       __kmp_gtid_from_thread(this_thr), team_id, team->t.t_task_team,
+                       __kmp_gtid_from_thread(this_thr), team_id, team->t.t_task_team[this_thr->th.th_task_state],
                        this_thr->th.th_task_team));
-        KMP_DEBUG_ASSERT(this_thr->th.th_task_team == team->t.t_task_team);
+        KMP_DEBUG_ASSERT(this_thr->th.th_task_team == team->t.t_task_team[this_thr->th.th_task_state]);
     }
 # endif /* KMP_DEBUG */
 
@@ -1448,7 +1448,7 @@ __kmp_fork_barrier(int gtid, int tid)
 #endif
 
         if (__kmp_tasking_mode != tskm_immediate_exec) {
-            __kmp_task_team_setup(this_thr, team);
+            __kmp_task_team_setup(this_thr, team, 1);  // 1 indicates setup both task teams
         }
 
         /* The master thread may have changed its blocktime between the join barrier and the

@@ -162,7 +162,6 @@ typedef struct {
     offset_and_size_t  tt_nproc;
     offset_and_size_t  tt_unfinished_threads;
     offset_and_size_t  tt_active;
-    offset_and_size_t  tt_state;
 
     /* kmp_taskdata_t */
     kmp_int32          td_sizeof_struct;

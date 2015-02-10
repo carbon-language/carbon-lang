@@ -284,7 +284,7 @@ __kmp_push_task(kmp_int32 gtid, kmp_task_t * task )
 
     // Now that serialized tasks have returned, we can assume that we are not in immediate exec mode
     KMP_DEBUG_ASSERT( __kmp_tasking_mode != tskm_immediate_exec );
-    if ( ! KMP_TASKING_ENABLED( task_team, thread->th.th_task_state ) ) {
+    if ( ! KMP_TASKING_ENABLED(task_team) ) {
          __kmp_enable_tasking( task_team, thread );
     }
     KMP_DEBUG_ASSERT( TCR_4(task_team -> tt.tt_found_tasks) == TRUE );
@@ -1180,7 +1180,7 @@ __kmpc_omp_taskyield( ident_t *loc_ref, kmp_int32 gtid, int end_part )
         if ( ! taskdata->td_flags.team_serial ) {
             kmp_task_team_t * task_team = thread->th.th_task_team;
             if (task_team != NULL) {
-                if (KMP_TASKING_ENABLED(task_team, thread->th.th_task_state)) {
+                if (KMP_TASKING_ENABLED(task_team)) {
                     __kmp_execute_tasks_32( thread, gtid, NULL, FALSE, &thread_finished
                                             USE_ITT_BUILD_ARG(itt_sync_obj), __kmp_task_stealing_constraint );
                 }
@@ -2101,7 +2101,6 @@ __kmp_allocate_task_team( kmp_info_t *thread, kmp_team_t *team )
     TCW_4(task_team -> tt.tt_found_tasks, FALSE);
     task_team -> tt.tt_nproc = nthreads = team->t.t_nproc;
 
-    task_team -> tt.tt_state = 0;
     TCW_4( task_team -> tt.tt_unfinished_threads, nthreads );
     TCW_4( task_team -> tt.tt_active, TRUE );
     TCW_4( task_team -> tt.tt_ref_ct, nthreads - 1);
@@ -2270,13 +2269,12 @@ __kmp_wait_to_unref_task_teams(void)
 // __kmp_task_team_setup:  Create a task_team for the current team, but use
 // an already created, unused one if it already exists.
 // This may be called by any thread, but only for teams with # threads >1.
-
 void
-__kmp_task_team_setup( kmp_info_t *this_thr, kmp_team_t *team )
+__kmp_task_team_setup( kmp_info_t *this_thr, kmp_team_t *team, int both )
 {
     KMP_DEBUG_ASSERT( __kmp_tasking_mode != tskm_immediate_exec );
 
-    if ( ( team->t.t_task_team == NULL ) && ( team->t.t_nproc > 1 ) ) {
+    if ( ( team->t.t_task_team[this_thr->th.th_task_state] == NULL ) && ( team->t.t_nproc > 1 ) ) {
         // Allocate a new task team, which will be propagated to
         // all of the worker threads after the barrier.  As they
         // spin in the barrier release phase, then will continue
@@ -2284,22 +2282,24 @@ __kmp_task_team_setup( kmp_info_t *this_thr, kmp_team_t *team )
         // the signal to stop checking for tasks (they can't safely
         // reference the kmp_team_t struct, which could be reallocated
         // by the master thread).
-        team->t.t_task_team = __kmp_allocate_task_team( this_thr, team );
-        KA_TRACE( 20, ( "__kmp_task_team_setup: Master T#%d created new "
-                        "task_team %p for team %d\n",
-                        __kmp_gtid_from_thread( this_thr ), team->t.t_task_team,
+        team->t.t_task_team[this_thr->th.th_task_state] = __kmp_allocate_task_team( this_thr, team );
+        KA_TRACE(20, ("__kmp_task_team_setup: Master T#%d created new task_team %p for team %d\n",
+                      __kmp_gtid_from_thread(this_thr), team->t.t_task_team[this_thr->th.th_task_state],
                         ((team != NULL) ? team->t.t_id : -1)) );
     }
-    else {
+    //else
         // All threads have reported in, and no tasks were spawned
         // for this release->gather region.  Leave the old task
         // team struct in place for the upcoming region.  No task
         // teams are formed for serialized teams.
+    if (both) {
+        int other_team = 1 - this_thr->th.th_task_state;
+        if ( ( team->t.t_task_team[other_team] == NULL ) && ( team->t.t_nproc > 1 ) ) { // setup other team as well
+            team->t.t_task_team[other_team] = __kmp_allocate_task_team( this_thr, team );
+            KA_TRACE( 20, ( "__kmp_task_team_setup: Master T#%d created new task_team %p for team %d\n",
+                            __kmp_gtid_from_thread( this_thr ), team->t.t_task_team[other_team],
+                            ((team != NULL) ? team->t.t_id : -1)) );
     }
-    if ( team->t.t_task_team != NULL ) {
-        // Toggle the state flag so that we can tell which side of
-        // the barrier we are on.
-        team->t.t_task_team->tt.tt_state = 1 - this_thr->th.th_task_state;
     }
 }
 
@@ -2314,35 +2314,20 @@ __kmp_task_team_sync( kmp_info_t *this_thr, kmp_team_t *team )
 {
     KMP_DEBUG_ASSERT( __kmp_tasking_mode != tskm_immediate_exec );
 
-    // On the rare chance that this thread never saw that the task
-    // team was no longer active, then unref/deallocate it now.
+    // In case this thread never saw that the task team was no longer active, unref/deallocate it now.
     if ( this_thr->th.th_task_team != NULL ) {
         if ( ! TCR_SYNC_4( this_thr->th.th_task_team->tt.tt_active ) ) {
             KMP_DEBUG_ASSERT( ! KMP_MASTER_TID( __kmp_tid_from_gtid( __kmp_gtid_from_thread( this_thr ) ) ) );
             __kmp_unref_task_team( this_thr->th.th_task_team, this_thr );
-        } else {
-            //
-            // We are re-using a task team that was never enabled.
-            //
-            KMP_DEBUG_ASSERT( this_thr->th.th_task_team == team->t.t_task_team );
+        } else {  // We are re-using a task team that was never enabled.
+            KMP_DEBUG_ASSERT(this_thr->th.th_task_team == team->t.t_task_team[this_thr->th.th_task_state]);
         }
     }
 
-    //
-    // It is now safe to propagate the task team pointer from the
-    // team struct to the current thread.
-    //
-    TCW_PTR(this_thr->th.th_task_team, team->t.t_task_team);
-    if ( this_thr->th.th_task_team != NULL ) {
-        //
-        // Toggle the th_task_state field, instead of reading it from
-        // the task team.  Reading the tt_state field at this point
-        // causes a 30% regression on EPCC parallel - toggling it
-        // is much cheaper.
-        //
+    // Toggle the th_task_state field, to switch which task_team this thread refers to
         this_thr->th.th_task_state = 1 - this_thr->th.th_task_state;
-        KMP_DEBUG_ASSERT( this_thr->th.th_task_state == TCR_4(team->t.t_task_team->tt.tt_state) );
-    }
+    // It is now safe to propagate the task team pointer from the team struct to the current thread.
+    TCW_PTR(this_thr->th.th_task_team, team->t.t_task_team[this_thr->th.th_task_state]);
     KA_TRACE( 20, ( "__kmp_task_team_sync: Thread T#%d task team assigned pointer (%p) from Team #%d task team\n",
                     __kmp_gtid_from_thread( this_thr ), &this_thr->th.th_task_team,
                     this_thr->th.th_task_team, ((team != NULL) ? (team->t.t_id) : -1) ) );
@@ -2350,41 +2335,31 @@ __kmp_task_team_sync( kmp_info_t *this_thr, kmp_team_t *team )
 
 
 //------------------------------------------------------------------------------
-// __kmp_task_team_wait: Master thread waits for outstanding tasks after
-// the barrier gather phase.  Only called by master thread if #threads
-// in team > 1 !
-
+// __kmp_task_team_wait: Master thread waits for outstanding tasks after the
+// barrier gather phase.  Only called by master thread if #threads in team > 1 !
 void
-__kmp_task_team_wait( kmp_info_t *this_thr,
-                      kmp_team_t *team
+__kmp_task_team_wait( kmp_info_t *this_thr, kmp_team_t *team
                       USE_ITT_BUILD_ARG(void * itt_sync_obj)
                       )
 {
-    kmp_task_team_t *task_team = team->t.t_task_team;
+    kmp_task_team_t *task_team = team->t.t_task_team[this_thr->th.th_task_state];
 
     KMP_DEBUG_ASSERT( __kmp_tasking_mode != tskm_immediate_exec );
     KMP_DEBUG_ASSERT( task_team == this_thr->th.th_task_team );
 
-    if ( ( task_team != NULL ) && KMP_TASKING_ENABLED( task_team, this_thr->th.th_task_state ) ) {
+    if ( ( task_team != NULL ) && KMP_TASKING_ENABLED(task_team) ) {
         KA_TRACE( 20, ( "__kmp_task_team_wait: Master T#%d waiting for all tasks: task_team = %p\n",
                           __kmp_gtid_from_thread( this_thr ), task_team ) );
-        //
-        // All worker threads might have dropped through to the
-        // release phase, but could still be executing tasks.
-        // Wait here for all tasks to complete.  To avoid memory
-        // contention, only the master thread checks for the
-        // termination condition.
-        //
+        // All worker threads might have dropped through to the release phase, but could still
+        // be executing tasks. Wait here for all tasks to complete.  To avoid memory contention,
+        // only the master thread checks for the termination condition.
         kmp_flag_32 flag(&task_team->tt.tt_unfinished_threads, 0U);
         flag.wait(this_thr, TRUE
                   USE_ITT_BUILD_ARG(itt_sync_obj));
 
-        //
-        // Kill the old task team, so that the worker threads will
-        // stop referencing it while spinning.  They will
-        // deallocate it when the reference count reaches zero.
+        // Kill the old task team, so that the worker threads will stop referencing it while spinning.
+        // They will deallocate it when the reference count reaches zero.
         // The master thread is not included in the ref count.
-        //
         KA_TRACE( 20, ( "__kmp_task_team_wait: Master T#%d deactivating task_team %p\n",
                           __kmp_gtid_from_thread( this_thr ), task_team ) );
         KMP_DEBUG_ASSERT( task_team->tt.tt_nproc > 1 );
@@ -2392,7 +2367,7 @@ __kmp_task_team_wait( kmp_info_t *this_thr,
         KMP_MB();
 
         TCW_PTR(this_thr->th.th_task_team, NULL);
-        team->t.t_task_team = NULL;
+        team->t.t_task_team[this_thr->th.th_task_state] = NULL;
     }
 }
 
@@ -2408,7 +2383,7 @@ __kmp_task_team_wait( kmp_info_t *this_thr,
 void
 __kmp_tasking_barrier( kmp_team_t *team, kmp_info_t *thread, int gtid )
 {
-    volatile kmp_uint32 *spin = &team->t.t_task_team->tt.tt_unfinished_threads;
+    volatile kmp_uint32 *spin = &team->t.t_task_team[thread->th.th_task_state]->tt.tt_unfinished_threads;
     int flag = FALSE;
     KMP_DEBUG_ASSERT( __kmp_tasking_mode == tskm_extra_barrier );
 
