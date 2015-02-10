@@ -303,6 +303,8 @@ private:
   void visitBasicBlock(BasicBlock &BB);
   void visitRangeMetadata(Instruction& I, MDNode* Range, Type* Ty);
 
+#define HANDLE_SPECIALIZED_MDNODE_LEAF(CLASS) void visit##CLASS(const CLASS &N);
+#include "llvm/IR/Metadata.def"
 
   // InstVisitor overrides...
   using InstVisitor<Verifier>::visit;
@@ -601,6 +603,18 @@ void Verifier::visitMDNode(const MDNode &MD) {
   if (!MDNodes.insert(&MD).second)
     return;
 
+  switch (MD.getMetadataID()) {
+  default:
+    llvm_unreachable("Invalid MDNode subclass");
+  case Metadata::MDTupleKind:
+    break;
+#define HANDLE_SPECIALIZED_MDNODE_LEAF(CLASS)                                  \
+  case Metadata::CLASS##Kind:                                                  \
+    visit##CLASS(cast<CLASS>(MD));                                             \
+    break;
+#include "llvm/IR/Metadata.def"
+  }
+
   for (unsigned i = 0, e = MD.getNumOperands(); i != e; ++i) {
     Metadata *Op = MD.getOperand(i);
     if (!Op)
@@ -663,6 +677,29 @@ void Verifier::visitMetadataAsValue(const MetadataAsValue &MDV, Function *F) {
   if (auto *V = dyn_cast<ValueAsMetadata>(MD))
     visitValueAsMetadata(*V, F);
 }
+
+void Verifier::visitMDLocation(const MDLocation &) {}
+void Verifier::visitGenericDebugNode(const GenericDebugNode &) {}
+void Verifier::visitMDSubrange(const MDSubrange &) {}
+void Verifier::visitMDEnumerator(const MDEnumerator &) {}
+void Verifier::visitMDBasicType(const MDBasicType &) {}
+void Verifier::visitMDDerivedType(const MDDerivedType &) {}
+void Verifier::visitMDCompositeType(const MDCompositeType &) {}
+void Verifier::visitMDSubroutineType(const MDSubroutineType &) {}
+void Verifier::visitMDFile(const MDFile &) {}
+void Verifier::visitMDCompileUnit(const MDCompileUnit &) {}
+void Verifier::visitMDSubprogram(const MDSubprogram &) {}
+void Verifier::visitMDLexicalBlock(const MDLexicalBlock &) {}
+void Verifier::visitMDLexicalBlockFile(const MDLexicalBlockFile &) {}
+void Verifier::visitMDNamespace(const MDNamespace &) {}
+void Verifier::visitMDTemplateTypeParameter(const MDTemplateTypeParameter &) {}
+void Verifier::visitMDTemplateValueParameter(const MDTemplateValueParameter &) {
+}
+void Verifier::visitMDGlobalVariable(const MDGlobalVariable &) {}
+void Verifier::visitMDLocalVariable(const MDLocalVariable &) {}
+void Verifier::visitMDExpression(const MDExpression &) {}
+void Verifier::visitMDObjCProperty(const MDObjCProperty &) {}
+void Verifier::visitMDImportedEntity(const MDImportedEntity &) {}
 
 void Verifier::visitComdat(const Comdat &C) {
   // All Comdat::SelectionKind values other than Comdat::Any require a
