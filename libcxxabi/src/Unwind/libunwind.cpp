@@ -254,8 +254,9 @@ _LIBUNWIND_EXPORT int unw_resume(unw_cursor_t *cursor) {
 /// Get name of function at cursor position in stack frame.
 _LIBUNWIND_EXPORT int unw_get_proc_name(unw_cursor_t *cursor, char *buf,
                                         size_t bufLen, unw_word_t *offset) {
-  _LIBUNWIND_TRACE_API("unw_get_proc_name(cursor=%p, &buf=%p, bufLen=%zu)\n",
-                       static_cast<void *>(cursor), buf, bufLen);
+  _LIBUNWIND_TRACE_API("unw_get_proc_name(cursor=%p, &buf=%p, bufLen=%lu)\n",
+                       static_cast<void *>(cursor), static_cast<void *>(buf),
+                       static_cast<unsigned long>(bufLen));
   AbstractUnwindCursor *co = (AbstractUnwindCursor *)cursor;
   if (co->getFunctionName(buf, bufLen, offset))
     return UNW_ESUCCESS;
@@ -294,7 +295,8 @@ _LIBUNWIND_EXPORT int unw_is_signal_frame(unw_cursor_t *cursor) {
 #ifdef __arm__
 // Save VFP registers d0-d15 using FSTMIADX instead of FSTMIADD
 _LIBUNWIND_EXPORT void unw_save_vfp_as_X(unw_cursor_t *cursor) {
-  _LIBUNWIND_TRACE_API("unw_fpreg_save_vfp_as_X(cursor=%p)\n", cursor);
+  _LIBUNWIND_TRACE_API("unw_fpreg_save_vfp_as_X(cursor=%p)\n",
+                       static_cast<void *>(cursor));
   AbstractUnwindCursor *co = (AbstractUnwindCursor *)cursor;
   return co->saveVFPAsX();
 }

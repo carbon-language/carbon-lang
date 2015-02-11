@@ -447,13 +447,13 @@ unwind_phase1(unw_context_t *uc, _Unwind_Exception *exception_object) {
     int stepResult = unw_step(&cursor1);
     if (stepResult == 0) {
       _LIBUNWIND_TRACE_UNWINDING("unwind_phase1(ex_ojb=%p): unw_step() reached "
-                            "bottom => _URC_END_OF_STACK\n",
-                            exception_object);
+                                 "bottom => _URC_END_OF_STACK\n",
+                                 static_cast<void *>(exception_object));
       return _URC_END_OF_STACK;
     } else if (stepResult < 0) {
       _LIBUNWIND_TRACE_UNWINDING("unwind_phase1(ex_ojb=%p): unw_step failed => "
-                            "_URC_FATAL_PHASE1_ERROR\n",
-                            exception_object);
+                                 "_URC_FATAL_PHASE1_ERROR\n",
+                                 static_cast<void *>(exception_object));
       return _URC_FATAL_PHASE1_ERROR;
     }
 
@@ -461,8 +461,8 @@ unwind_phase1(unw_context_t *uc, _Unwind_Exception *exception_object) {
     unw_proc_info_t frameInfo;
     if (unw_get_proc_info(&cursor1, &frameInfo) != UNW_ESUCCESS) {
       _LIBUNWIND_TRACE_UNWINDING("unwind_phase1(ex_ojb=%p): unw_get_proc_info "
-                            "failed => _URC_FATAL_PHASE1_ERROR\n",
-                            exception_object);
+                                 "failed => _URC_FATAL_PHASE1_ERROR\n",
+                                 static_cast<void *>(exception_object));
       return _URC_FATAL_PHASE1_ERROR;
     }
 
@@ -478,9 +478,9 @@ unwind_phase1(unw_context_t *uc, _Unwind_Exception *exception_object) {
       _LIBUNWIND_TRACE_UNWINDING(
           "unwind_phase1(ex_ojb=%p): pc=0x%llX, start_ip=0x%llX, func=%s, "
           "lsda=0x%llX, personality=0x%llX\n",
-          exception_object, (long long)pc, (long long)frameInfo.start_ip,
-          functionName, (long long)frameInfo.lsda,
-          (long long)frameInfo.handler);
+          static_cast<void *>(exception_object), (long long)pc,
+          (long long)frameInfo.start_ip, functionName,
+          (long long)frameInfo.lsda, (long long)frameInfo.handler);
     }
 
     // If there is a personality routine, ask it if it will want to stop at
@@ -490,7 +490,8 @@ unwind_phase1(unw_context_t *uc, _Unwind_Exception *exception_object) {
           (__personality_routine)(long)(frameInfo.handler);
       _LIBUNWIND_TRACE_UNWINDING(
           "unwind_phase1(ex_ojb=%p): calling personality function %p\n",
-          exception_object, p);
+          static_cast<void *>(exception_object),
+          reinterpret_cast<void *>(reinterpret_cast<uintptr_t>(p)));
       struct _Unwind_Context *context = (struct _Unwind_Context *)(&cursor1);
       exception_object->pr_cache.fnstart = frameInfo.start_ip;
       exception_object->pr_cache.ehtp =
@@ -499,10 +500,11 @@ unwind_phase1(unw_context_t *uc, _Unwind_Exception *exception_object) {
       _Unwind_Reason_Code personalityResult =
           (*p)(_US_VIRTUAL_UNWIND_FRAME, exception_object, context);
       _LIBUNWIND_TRACE_UNWINDING(
-          "unwind_phase1(ex_ojb=%p): personality result %d "
-          "start_ip %x ehtp %p additional %x\n",
-          exception_object, personalityResult,
-          exception_object->pr_cache.fnstart, exception_object->pr_cache.ehtp,
+          "unwind_phase1(ex_ojb=%p): personality result %d start_ip %x ehtp %p "
+          "additional %x\n",
+          static_cast<void *>(exception_object), personalityResult,
+          exception_object->pr_cache.fnstart,
+          static_cast<void *>(exception_object->pr_cache.ehtp),
           exception_object->pr_cache.additional);
       switch (personalityResult) {
       case _URC_HANDLER_FOUND:
@@ -510,15 +512,15 @@ unwind_phase1(unw_context_t *uc, _Unwind_Exception *exception_object) {
         // stop search and remember stack pointer at the frame
         handlerNotFound = false;
         // p should have initialized barrier_cache. EHABI #7.3.5
-        _LIBUNWIND_TRACE_UNWINDING("unwind_phase1(ex_ojb=%p): "
-                                   "_URC_HANDLER_FOUND \n",
-                                   exception_object);
+        _LIBUNWIND_TRACE_UNWINDING(
+            "unwind_phase1(ex_ojb=%p): _URC_HANDLER_FOUND \n",
+            static_cast<void *>(exception_object));
         return _URC_NO_REASON;
 
       case _URC_CONTINUE_UNWIND:
         _LIBUNWIND_TRACE_UNWINDING(
             "unwind_phase1(ex_ojb=%p): _URC_CONTINUE_UNWIND\n",
-            exception_object);
+            static_cast<void *>(exception_object));
         // continue unwinding
         break;
 
@@ -530,7 +532,7 @@ unwind_phase1(unw_context_t *uc, _Unwind_Exception *exception_object) {
         // something went wrong
         _LIBUNWIND_TRACE_UNWINDING(
             "unwind_phase1(ex_ojb=%p): _URC_FATAL_PHASE1_ERROR\n",
-            exception_object);
+            static_cast<void *>(exception_object));
         return _URC_FATAL_PHASE1_ERROR;
       }
     }
@@ -545,7 +547,8 @@ static _Unwind_Reason_Code unwind_phase2(unw_context_t *uc,
   unw_cursor_t cursor2;
   unw_init_local(&cursor2, uc);
 
-  _LIBUNWIND_TRACE_UNWINDING("unwind_phase2(ex_ojb=%p)\n", exception_object);
+  _LIBUNWIND_TRACE_UNWINDING("unwind_phase2(ex_ojb=%p)\n",
+                             static_cast<void *>(exception_object));
   int frame_count = 0;
 
   // Walk each frame until we reach where search phase said to stop.
@@ -572,13 +575,13 @@ static _Unwind_Reason_Code unwind_phase2(unw_context_t *uc,
     int stepResult = unw_step(&cursor2);
     if (stepResult == 0) {
       _LIBUNWIND_TRACE_UNWINDING("unwind_phase2(ex_ojb=%p): unw_step() reached "
-                            "bottom => _URC_END_OF_STACK\n",
-                            exception_object);
+                                 "bottom => _URC_END_OF_STACK\n",
+                                 static_cast<void *>(exception_object));
       return _URC_END_OF_STACK;
     } else if (stepResult < 0) {
       _LIBUNWIND_TRACE_UNWINDING("unwind_phase2(ex_ojb=%p): unw_step failed => "
-                            "_URC_FATAL_PHASE1_ERROR\n",
-                            exception_object);
+                                 "_URC_FATAL_PHASE1_ERROR\n",
+                                 static_cast<void *>(exception_object));
       return _URC_FATAL_PHASE2_ERROR;
     }
 
@@ -588,8 +591,8 @@ static _Unwind_Reason_Code unwind_phase2(unw_context_t *uc,
     unw_get_reg(&cursor2, UNW_REG_SP, &sp);
     if (unw_get_proc_info(&cursor2, &frameInfo) != UNW_ESUCCESS) {
       _LIBUNWIND_TRACE_UNWINDING("unwind_phase2(ex_ojb=%p): unw_get_proc_info "
-                            "failed => _URC_FATAL_PHASE1_ERROR\n",
-                            exception_object);
+                                 "failed => _URC_FATAL_PHASE1_ERROR\n",
+                                 static_cast<void *>(exception_object));
       return _URC_FATAL_PHASE2_ERROR;
     }
 
@@ -603,8 +606,8 @@ static _Unwind_Reason_Code unwind_phase2(unw_context_t *uc,
       _LIBUNWIND_TRACE_UNWINDING(
           "unwind_phase2(ex_ojb=%p): start_ip=0x%llX, func=%s, sp=0x%llX, "
           "lsda=0x%llX, personality=0x%llX\n",
-          exception_object, (long long)frameInfo.start_ip, functionName,
-          (long long)sp, (long long)frameInfo.lsda,
+          static_cast<void *>(exception_object), (long long)frameInfo.start_ip,
+          functionName, (long long)sp, (long long)frameInfo.lsda,
           (long long)frameInfo.handler);
     }
 
@@ -625,7 +628,7 @@ static _Unwind_Reason_Code unwind_phase2(unw_context_t *uc,
         // Continue unwinding
         _LIBUNWIND_TRACE_UNWINDING(
             "unwind_phase2(ex_ojb=%p): _URC_CONTINUE_UNWIND\n",
-            exception_object);
+            static_cast<void *>(exception_object));
         // EHABI #7.2
         if (sp == exception_object->barrier_cache.sp) {
           // Phase 1 said we would stop at this frame, but we did not...
@@ -636,17 +639,17 @@ static _Unwind_Reason_Code unwind_phase2(unw_context_t *uc,
       case _URC_INSTALL_CONTEXT:
         _LIBUNWIND_TRACE_UNWINDING(
             "unwind_phase2(ex_ojb=%p): _URC_INSTALL_CONTEXT\n",
-            exception_object);
+            static_cast<void *>(exception_object));
         // Personality routine says to transfer control to landing pad.
         // We may get control back if landing pad calls _Unwind_Resume().
         if (_LIBUNWIND_TRACING_UNWINDING) {
           unw_word_t pc;
           unw_get_reg(&cursor2, UNW_REG_IP, &pc);
           unw_get_reg(&cursor2, UNW_REG_SP, &sp);
-          _LIBUNWIND_TRACE_UNWINDING("unwind_phase2(ex_ojb=%p): re-entering  "
+          _LIBUNWIND_TRACE_UNWINDING("unwind_phase2(ex_ojb=%p): re-entering "
                                      "user code with ip=0x%llX, sp=0x%llX\n",
-                                     exception_object, (long long)pc,
-                                     (long long)sp);
+                                     static_cast<void *>(exception_object),
+                                     (long long)pc, (long long)sp);
         }
 
         {
@@ -683,7 +686,7 @@ static _Unwind_Reason_Code unwind_phase2(unw_context_t *uc,
 _LIBUNWIND_EXPORT _Unwind_Reason_Code
 _Unwind_RaiseException(_Unwind_Exception *exception_object) {
   _LIBUNWIND_TRACE_API("_Unwind_RaiseException(ex_obj=%p)\n",
-                             exception_object);
+                       static_cast<void *>(exception_object));
   unw_context_t uc;
   unw_getcontext(&uc);
 
@@ -719,7 +722,8 @@ _LIBUNWIND_EXPORT void _Unwind_Complete(_Unwind_Exception* exception_object) {
 /// in turn calls _Unwind_Resume_or_Rethrow().
 _LIBUNWIND_EXPORT void
 _Unwind_Resume(_Unwind_Exception *exception_object) {
-  _LIBUNWIND_TRACE_API("_Unwind_Resume(ex_obj=%p)\n", exception_object);
+  _LIBUNWIND_TRACE_API("_Unwind_Resume(ex_obj=%p)\n",
+                       static_cast<void *>(exception_object));
   unw_context_t uc;
   unw_getcontext(&uc);
 
@@ -740,8 +744,9 @@ _Unwind_GetLanguageSpecificData(struct _Unwind_Context *context) {
   uintptr_t result = 0;
   if (unw_get_proc_info(cursor, &frameInfo) == UNW_ESUCCESS)
     result = (uintptr_t)frameInfo.lsda;
-  _LIBUNWIND_TRACE_API("_Unwind_GetLanguageSpecificData(context=%p)"
-                       "=> 0x%llx\n", context, (long long)result);
+  _LIBUNWIND_TRACE_API(
+      "_Unwind_GetLanguageSpecificData(context=%p) => 0x%llx\n",
+      static_cast<void *>(context), (long long)result);
   if (result != 0) {
     if (*((uint8_t *)result) != 0xFF)
       _LIBUNWIND_DEBUG_LOG("lsda at 0x%llx does not start with 0xFF\n",
@@ -775,8 +780,9 @@ _Unwind_VRS_Result _Unwind_VRS_Set(
     _Unwind_VRS_DataRepresentation representation,
     void *valuep) {
   _LIBUNWIND_TRACE_API("_Unwind_VRS_Set(context=%p, regclass=%d, reg=%d, "
-                       "rep=%d, value=0x%llX)\n", context, regclass,
-                       regno, representation,
+                       "rep=%d, value=0x%llX)\n",
+                       static_cast<void *>(context), regclass, regno,
+                       representation,
                        ValueAsBitPattern(representation, valuep));
   unw_cursor_t *cursor = (unw_cursor_t *)context;
   switch (regclass) {
@@ -879,7 +885,8 @@ _Unwind_VRS_Result _Unwind_VRS_Get(
                                valuep);
   _LIBUNWIND_TRACE_API("_Unwind_VRS_Get(context=%p, regclass=%d, reg=%d, "
                        "rep=%d, value=0x%llX, result = %d)\n",
-                       context, regclass, regno, representation,
+                       static_cast<void *>(context), regclass, regno,
+                       representation,
                        ValueAsBitPattern(representation, valuep), result);
   return result;
 }
@@ -891,7 +898,8 @@ _Unwind_VRS_Result _Unwind_VRS_Pop(
     _Unwind_VRS_DataRepresentation representation) {
   _LIBUNWIND_TRACE_API("_Unwind_VRS_Pop(context=%p, regclass=%d, "
                        "discriminator=%d, representation=%d)\n",
-                        context, regclass, discriminator, representation);
+                       static_cast<void *>(context), regclass, discriminator,
+                       representation);
   switch (regclass) {
     case _UVRSC_CORE:
     case _UVRSC_WMMXC: {
@@ -962,7 +970,7 @@ _Unwind_GetRegionStart(struct _Unwind_Context *context) {
   if (unw_get_proc_info(cursor, &frameInfo) == UNW_ESUCCESS)
     result = (uintptr_t)frameInfo.start_ip;
   _LIBUNWIND_TRACE_API("_Unwind_GetRegionStart(context=%p) => 0x%llX\n",
-                       context, (long long)result);
+                       static_cast<void *>(context), (long long)result);
   return result;
 }
 
@@ -972,7 +980,7 @@ _Unwind_GetRegionStart(struct _Unwind_Context *context) {
 _LIBUNWIND_EXPORT void
 _Unwind_DeleteException(_Unwind_Exception *exception_object) {
   _LIBUNWIND_TRACE_API("_Unwind_DeleteException(ex_obj=%p)\n",
-                       exception_object);
+                       static_cast<void *>(exception_object));
   if (exception_object->exception_cleanup != NULL)
     (*exception_object->exception_cleanup)(_URC_FOREIGN_EXCEPTION_CAUGHT,
                                            exception_object);
