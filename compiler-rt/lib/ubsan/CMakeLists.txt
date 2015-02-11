@@ -17,12 +17,7 @@ include_directories(..)
 
 set(UBSAN_CFLAGS ${SANITIZER_COMMON_CFLAGS})
 append_no_rtti_flag(UBSAN_CFLAGS)
-append_list_if(COMPILER_RT_HAS_WGLOBAL_CONSTRUCTORS_FLAG -Wglobal-constructors
-               UBSAN_CFLAGS)
-
 set(UBSAN_CXXFLAGS ${SANITIZER_COMMON_CFLAGS})
-append_list_if(COMPILER_RT_HAS_WGLOBAL_CONSTRUCTORS_FLAG -Wglobal-constructors
-               UBSAN_CXXFLAGS)
 
 add_custom_target(ubsan)
 
