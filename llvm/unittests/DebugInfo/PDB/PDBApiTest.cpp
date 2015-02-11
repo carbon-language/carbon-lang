@@ -87,8 +87,8 @@ class MockSession : public IPDBSession {
 
 class MockRawSymbol : public IPDBRawSymbol {
 public:
-  MockRawSymbol(const IPDBSession &PDBSession, PDB_SymType SymType)
-      : Session(PDBSession), Type(SymType) {}
+  MockRawSymbol(PDB_SymType SymType)
+      : Type(SymType) {}
 
   void dump(raw_ostream &OS, int Indent, PDB_DumpLevel Level) const override {}
 
@@ -274,7 +274,6 @@ public:
   MOCK_SYMBOL_ACCESSOR(isVolatileType)
 
 private:
-  const IPDBSession &Session;
   PDB_SymType Type;
 };
 
@@ -339,7 +338,7 @@ private:
   std::unique_ptr<IPDBSession> Session;
 
   void InsertItemWithTag(PDB_SymType Tag) {
-    auto RawSymbol = llvm::make_unique<MockRawSymbol>(*Session, Tag);
+    auto RawSymbol = llvm::make_unique<MockRawSymbol>(Tag);
     auto Symbol = PDBSymbol::create(*Session, std::move(RawSymbol));
     SymbolMap.insert(std::make_pair(Tag, std::move(Symbol)));
   }
