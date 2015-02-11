@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 //
 // This file defines a pass that optimizes call sequences on x86.
-// Currently, it converts movs of function parameters onto the stack into 
+// Currently, it converts movs of function parameters onto the stack into
 // pushes. This is beneficial for two main reasons:
 // 1) The push instruction encoding is much smaller than an esp-relative mov
 // 2) It is possible to push memory arguments directly. So, if the
@@ -52,15 +52,38 @@ public:
 private:
   bool shouldPerformTransformation(MachineFunction &MF);
 
-  bool adjustCallSequence(MachineFunction &MF, MachineBasicBlock &MBB,
-                          MachineBasicBlock::iterator I);
+  // Information we know about a particular call site
+  struct CallContext {
+    CallContext()
+        : Call(nullptr), SPCopy(nullptr), ExpectedDist(0),
+          MovVector(4, nullptr), UsePush(false){};
+
+    // Actuall call instruction
+    MachineInstr *Call;
+
+    // A copy of the stack pointer
+    MachineInstr *SPCopy;
+
+    // The total displacement of all passed parameters
+    int64_t ExpectedDist;
+
+    // The sequence of movs used to pass the parameters
+    SmallVector<MachineInstr *, 4> MovVector;
+
+    // Whether this site should use push instructions
+    bool UsePush;
+  };
+
+  void collectCallInfo(MachineFunction &MF, MachineBasicBlock &MBB,
+                       MachineBasicBlock::iterator I, CallContext &Context);
+
+  bool adjustCallSequence(MachineFunction &MF, MachineBasicBlock::iterator I,
+                          const CallContext &Context);
 
   MachineInstr *canFoldIntoRegPush(MachineBasicBlock::iterator FrameSetup,
                                    unsigned Reg);
 
-  const char *getPassName() const override {
-    return "X86 Optimize Call Frame";
-  }
+  const char *getPassName() const override { return "X86 Optimize Call Frame"; }
 
   const TargetInstrInfo *TII;
   const TargetFrameLowering *TFL;
@@ -76,7 +99,8 @@ FunctionPass *llvm::createX86CallFrameOptimization() {
 }
 
 // This checks whether the transformation is legal and profitable
-bool X86CallFrameOptimization::shouldPerformTransformation(MachineFunction &MF) {
+bool X86CallFrameOptimization::shouldPerformTransformation(
+    MachineFunction &MF) {
   if (NoX86CFOpt.getValue())
     return false;
 
@@ -105,8 +129,7 @@ bool X86CallFrameOptimization::shouldPerformTransformation(MachineFunction &MF) 
         if (InsideFrameSequence)
           return false;
         InsideFrameSequence = true;
-      }
-      else if (MI.getOpcode() == FrameDestroyOpcode) {
+      } else if (MI.getOpcode() == FrameDestroyOpcode) {
         if (!InsideFrameSequence)
           return false;
         InsideFrameSequence = false;
@@ -123,7 +146,7 @@ bool X86CallFrameOptimization::shouldPerformTransformation(MachineFunction &MF) 
   //       and enable this for more cases.
 
   // This transformation is always a win when we expected to have
-  // a reserved call frame. Under other circumstances, it may be either 
+  // a reserved call frame. Under other circumstances, it may be either
   // a win or a loss, and requires a heuristic.
   // For now, enable it only for the relatively clear win cases.
   bool CannotReserveFrame = MF.getFrameInfo()->hasVarSizedObjects();
@@ -134,9 +157,9 @@ bool X86CallFrameOptimization::shouldPerformTransformation(MachineFunction &MF) 
   // not optimizing for size.
   AttributeSet FnAttrs = MF.getFunction()->getAttributes();
   bool OptForSize =
-    FnAttrs.hasAttribute(AttributeSet::FunctionIndex,
-    Attribute::OptimizeForSize) ||
-    FnAttrs.hasAttribute(AttributeSet::FunctionIndex, Attribute::MinSize);
+      FnAttrs.hasAttribute(AttributeSet::FunctionIndex,
+                           Attribute::OptimizeForSize) ||
+      FnAttrs.hasAttribute(AttributeSet::FunctionIndex, Attribute::MinSize);
 
   if (!OptForSize)
     return false;
@@ -163,18 +186,26 @@ bool X86CallFrameOptimization::runOnMachineFunction(MachineFunction &MF) {
 
   bool Changed = false;
 
+  DenseMap<MachineInstr *, CallContext> CallSeqMap;
+
   for (MachineFunction::iterator BB = MF.begin(), E = MF.end(); BB != E; ++BB)
     for (MachineBasicBlock::iterator I = BB->begin(); I != BB->end(); ++I)
-      if (I->getOpcode() == FrameSetupOpcode)
-        Changed |= adjustCallSequence(MF, *BB, I);
+      if (I->getOpcode() == FrameSetupOpcode) {
+        CallContext &Context = CallSeqMap[I];
+        collectCallInfo(MF, *BB, I, Context);
+      }
+
+  for (auto CC : CallSeqMap)
+    if (CC.second.UsePush)
+      Changed |= adjustCallSequence(MF, CC.first, CC.second);
 
   return Changed;
 }
 
-bool X86CallFrameOptimization::adjustCallSequence(MachineFunction &MF,
-                                                MachineBasicBlock &MBB,
-                                                MachineBasicBlock::iterator I) {
-
+void X86CallFrameOptimization::collectCallInfo(MachineFunction &MF,
+                                               MachineBasicBlock &MBB,
+                                               MachineBasicBlock::iterator I,
+                                               CallContext &Context) {
   // Check that this particular call sequence is amenable to the
   // transformation.
   const X86RegisterInfo &RegInfo = *static_cast<const X86RegisterInfo *>(
@@ -186,30 +217,28 @@ bool X86CallFrameOptimization::adjustCallSequence(MachineFunction &MF,
   assert(I->getOpcode() == TII->getCallFrameSetupOpcode());
   MachineBasicBlock::iterator FrameSetup = I++;
 
-  
   // For globals in PIC mode, we can have some LEAs here.
   // Ignore them, they don't bother us.
   // TODO: Extend this to something that covers more cases.
   while (I->getOpcode() == X86::LEA32r)
     ++I;
-  
+
   // We expect a copy instruction here.
   // TODO: The copy instruction is a lowering artifact.
   //       We should also support a copy-less version, where the stack
   //       pointer is used directly.
   if (!I->isCopy() || !I->getOperand(0).isReg())
-    return false;
-  MachineBasicBlock::iterator SPCopy = I++;
-  StackPtr = SPCopy->getOperand(0).getReg();
+    return;
+  Context.SPCopy = I++;
+  StackPtr = Context.SPCopy->getOperand(0).getReg();
 
   // Scan the call setup sequence for the pattern we're looking for.
   // We only handle a simple case - a sequence of MOV32mi or MOV32mr
   // instructions, that push a sequence of 32-bit values onto the stack, with
   // no gaps between them.
-  SmallVector<MachineInstr*, 4> MovVector(4, nullptr);
   unsigned int MaxAdjust = FrameSetup->getOperand(0).getImm() / 4;
   if (MaxAdjust > 4)
-    MovVector.resize(MaxAdjust, nullptr);
+    Context.MovVector.resize(MaxAdjust, nullptr);
 
   do {
     int Opcode = I->getOpcode();
@@ -231,77 +260,86 @@ bool X86CallFrameOptimization::adjustCallSequence(MachineFunction &MF,
         (I->getOperand(X86::AddrIndexReg).getReg() != X86::NoRegister) ||
         (I->getOperand(X86::AddrSegmentReg).getReg() != X86::NoRegister) ||
         !I->getOperand(X86::AddrDisp).isImm())
-      return false;
+      return;
 
     int64_t StackDisp = I->getOperand(X86::AddrDisp).getImm();
-    assert(StackDisp >= 0 && "Negative stack displacement when passing parameters");
+    assert(StackDisp >= 0 &&
+           "Negative stack displacement when passing parameters");
 
     // We really don't want to consider the unaligned case.
     if (StackDisp % 4)
-      return false;
+      return;
     StackDisp /= 4;
 
-    assert((size_t)StackDisp < MovVector.size() &&
-      "Function call has more parameters than the stack is adjusted for.");
+    assert((size_t)StackDisp < Context.MovVector.size() &&
+           "Function call has more parameters than the stack is adjusted for.");
 
     // If the same stack slot is being filled twice, something's fishy.
-    if (MovVector[StackDisp] != nullptr)
-      return false;
-    MovVector[StackDisp] = I;
+    if (Context.MovVector[StackDisp] != nullptr)
+      return;
+    Context.MovVector[StackDisp] = I;
 
     ++I;
   } while (I != MBB.end());
 
   // We now expect the end of the sequence - a call and a stack adjust.
   if (I == MBB.end())
-    return false;
+    return;
 
   // For PCrel calls, we expect an additional COPY of the basereg.
   // If we find one, skip it.
   if (I->isCopy()) {
     if (I->getOperand(1).getReg() ==
-      MF.getInfo<X86MachineFunctionInfo>()->getGlobalBaseReg())
+        MF.getInfo<X86MachineFunctionInfo>()->getGlobalBaseReg())
       ++I;
     else
-      return false;
+      return;
   }
 
   if (!I->isCall())
-    return false;
-  MachineBasicBlock::iterator Call = I;
+    return;
+
+  Context.Call = I;
   if ((++I)->getOpcode() != FrameDestroyOpcode)
-    return false;
+    return;
 
   // Now, go through the vector, and see that we don't have any gaps,
   // but only a series of 32-bit MOVs.
-  
-  int64_t ExpectedDist = 0;
-  auto MMI = MovVector.begin(), MME = MovVector.end();
-  for (; MMI != MME; ++MMI, ExpectedDist += 4)
+  auto MMI = Context.MovVector.begin(), MME = Context.MovVector.end();
+  for (; MMI != MME; ++MMI, Context.ExpectedDist += 4)
     if (*MMI == nullptr)
       break;
-  
-  // If the call had no parameters, do nothing
-  if (!ExpectedDist)
-    return false;
 
-  // We are either at the last parameter, or a gap. 
+  // If the call had no parameters, do nothing
+  if (MMI == Context.MovVector.begin())
+    return;
+
+  // We are either at the last parameter, or a gap.
   // Make sure it's not a gap
   for (; MMI != MME; ++MMI)
     if (*MMI != nullptr)
-      return false;
+      return;
 
+  Context.UsePush = true;
+  return;
+}
+
+bool X86CallFrameOptimization::adjustCallSequence(MachineFunction &MF,
+                                                  MachineBasicBlock::iterator I,
+                                                  const CallContext &Context) {
   // Ok, we can in fact do the transformation for this call.
   // Do not remove the FrameSetup instruction, but adjust the parameters.
   // PEI will end up finalizing the handling of this.
-  FrameSetup->getOperand(1).setImm(ExpectedDist);
+  MachineBasicBlock::iterator FrameSetup = I;
+  MachineBasicBlock &MBB = *(I->getParent());
+  FrameSetup->getOperand(1).setImm(Context.ExpectedDist);
 
   DebugLoc DL = I->getDebugLoc();
   // Now, iterate through the vector in reverse order, and replace the movs
-  // with pushes. MOVmi/MOVmr doesn't have any defs, so no need to 
+  // with pushes. MOVmi/MOVmr doesn't have any defs, so no need to
   // replace uses.
-  for (int Idx = (ExpectedDist / 4) - 1; Idx >= 0; --Idx) {
-    MachineBasicBlock::iterator MOV = *MovVector[Idx];
+  for (int Idx = (Context.ExpectedDist / 4) - 1; Idx >= 0; --Idx) {
+    MachineBasicBlock::iterator MOV = *Context.MovVector[Idx];
     MachineOperand PushOp = MOV->getOperand(X86::AddrNumOperands);
     if (MOV->getOpcode() == X86::MOV32mi) {
       unsigned PushOpcode = X86::PUSHi32;
@@ -314,7 +352,7 @@ bool X86CallFrameOptimization::adjustCallSequence(MachineFunction &MF,
         if (isInt<8>(Val))
           PushOpcode = X86::PUSH32i8;
       }
-      BuildMI(MBB, Call, DL, TII->get(PushOpcode)).addOperand(PushOp);
+      BuildMI(MBB, Context.Call, DL, TII->get(PushOpcode)).addOperand(PushOp);
     } else {
       unsigned int Reg = PushOp.getReg();
 
@@ -327,7 +365,8 @@ bool X86CallFrameOptimization::adjustCallSequence(MachineFunction &MF,
       // conservative about that.
       MachineInstr *DefMov = nullptr;
       if (!SlowPUSHrmm && (DefMov = canFoldIntoRegPush(FrameSetup, Reg))) {
-        MachineInstr *Push = BuildMI(MBB, Call, DL, TII->get(X86::PUSH32rmm));
+        MachineInstr *Push =
+            BuildMI(MBB, Context.Call, DL, TII->get(X86::PUSH32rmm));
 
         unsigned NumOps = DefMov->getDesc().getNumOperands();
         for (unsigned i = NumOps - X86::AddrNumOperands; i != NumOps; ++i)
@@ -335,7 +374,9 @@ bool X86CallFrameOptimization::adjustCallSequence(MachineFunction &MF,
 
         DefMov->eraseFromParent();
       } else {
-        BuildMI(MBB, Call, DL, TII->get(X86::PUSH32r)).addReg(Reg).getInstr();
+        BuildMI(MBB, Context.Call, DL, TII->get(X86::PUSH32r))
+            .addReg(Reg)
+            .getInstr();
       }
     }
 
@@ -344,8 +385,8 @@ bool X86CallFrameOptimization::adjustCallSequence(MachineFunction &MF,
 
   // The stack-pointer copy is no longer used in the call sequences.
   // There should not be any other users, but we can't commit to that, so:
-  if (MRI->use_empty(SPCopy->getOperand(0).getReg()))
-    SPCopy->eraseFromParent();
+  if (MRI->use_empty(Context.SPCopy->getOperand(0).getReg()))
+    Context.SPCopy->eraseFromParent();
 
   // Once we've done this, we need to make sure PEI doesn't assume a reserved
   // frame.
@@ -392,7 +433,7 @@ MachineInstr *X86CallFrameOptimization::canFoldIntoRegPush(
   // of MOVs. To be less conservative would require duplicating a lot of the
   // logic from PeepholeOptimizer.
   // FIXME: A possibly better approach would be to teach the PeepholeOptimizer
-  // to be smarter about folding into pushes. 
+  // to be smarter about folding into pushes.
   for (auto I = DefMI; I != FrameSetup; ++I)
     if (I->getOpcode() != X86::MOV32rm)
       return nullptr;
