@@ -111,7 +111,7 @@ public:
     }
     
     virtual bool
-    IsRuntimeSupportValue (const ValueObject& valobj)
+    IsRuntimeSupportValue (ValueObject& valobj)
     {
         return false;
     }
