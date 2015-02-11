@@ -415,7 +415,9 @@ DIDerivedType DIBuilder::createInheritance(DIType Ty, DIType BaseTy,
                           .concat(Flags)
                           .get(VMContext),
                       nullptr, Ty.getRef(), BaseTy.getRef()};
-  return DIDerivedType(MDNode::get(VMContext, Elts));
+  auto R = DIDerivedType(MDNode::get(VMContext, Elts));
+  trackIfUnresolved(R);
+  return R;
 }
 
 DIDerivedType DIBuilder::createMemberType(DIDescriptor Scope, StringRef Name,
