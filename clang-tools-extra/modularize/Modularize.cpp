@@ -209,6 +209,15 @@ cl::opt<std::string>
 RootModule("root-module", cl::init(""),
            cl::desc("Specify the name of the root module."));
 
+// Option for limiting the #include-inside-extern-or-namespace-block
+// check to only those headers explicitly listed in the header list.
+// This is a work-around for private includes that purposefully get
+// included inside blocks.
+static cl::opt<bool>
+BlockCheckHeaderListOnly("block-check-header-list-only", cl::init(false),
+cl::desc("Only warn if #include directives are inside extern or namespace"
+  " blocks if the included header is in the header list."));
+
 // Save the program name for error messages.
 const char *Argv0;
 // Save the command line for comments.
@@ -722,7 +731,8 @@ int main(int Argc, const char **Argv) {
       new FixedCompilationDatabase(Twine(PathBuf), CC1Arguments));
 
   // Create preprocessor tracker, to watch for macro and conditional problems.
-  std::unique_ptr<PreprocessorTracker> PPTracker(PreprocessorTracker::create());
+  std::unique_ptr<PreprocessorTracker> PPTracker(
+    PreprocessorTracker::create(Headers, BlockCheckHeaderListOnly));
 
   // Parse all of the headers, detecting duplicates.
   EntityMap Entities;

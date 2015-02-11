@@ -866,9 +866,19 @@ ConditionalExpansionMapIter;
 // course of running modularize.
 class PreprocessorTrackerImpl : public PreprocessorTracker {
 public:
-  PreprocessorTrackerImpl()
-      : CurrentInclusionPathHandle(InclusionPathHandleInvalid),
-        InNestedHeader(false) {}
+  PreprocessorTrackerImpl(llvm::SmallVector<std::string, 32> &Headers,
+        bool DoBlockCheckHeaderListOnly)
+      : BlockCheckHeaderListOnly(DoBlockCheckHeaderListOnly),
+        CurrentInclusionPathHandle(InclusionPathHandleInvalid),
+        InNestedHeader(false) {
+    // Use canonical header path representation.
+    for (llvm::ArrayRef<std::string>::iterator I = Headers.begin(),
+      E = Headers.end();
+      I != E; ++I) {
+      HeaderList.push_back(getCanonicalPath(*I));
+    }
+  }
+
   ~PreprocessorTrackerImpl() {}
 
   // Handle entering a preprocessing session.
@@ -889,6 +899,10 @@ public:
   // "namespace {}" blocks containing #include directives.
   void handleIncludeDirective(llvm::StringRef DirectivePath, int DirectiveLine,
                               int DirectiveColumn, llvm::StringRef TargetPath) {
+    // If it's not a header in the header list, ignore it with respect to
+    // the check.
+    if (BlockCheckHeaderListOnly && !isHeaderListHeader(DirectivePath))
+      return;
     HeaderHandle CurrentHeaderHandle = findHeaderHandle(DirectivePath);
     StringHandle IncludeHeaderHandle = addString(TargetPath);
     for (std::vector<PPItemKey>::const_iterator I = IncludeDirectives.begin(),
@@ -959,6 +973,7 @@ public:
     if (!InNestedHeader)
       InNestedHeader = !HeadersInThisCompile.insert(H).second;
   }
+
   // Handle exiting a header source file.
   void handleHeaderExit(llvm::StringRef HeaderPath) {
     // Ignore <built-in> and <command-line> to reduce message clutter.
@@ -980,6 +995,18 @@ public:
     std::string CanonicalPath(path);
     std::replace(CanonicalPath.begin(), CanonicalPath.end(), '\\', '/');
     return CanonicalPath;
+  }
+
+  // Return true if the given header is in the header list.
+  bool isHeaderListHeader(llvm::StringRef HeaderPath) const {
+    std::string CanonicalPath = getCanonicalPath(HeaderPath);
+    for (llvm::ArrayRef<std::string>::iterator I = HeaderList.begin(),
+        E = HeaderList.end();
+        I != E; ++I) {
+      if (*I == CanonicalPath)
+        return true;
+    }
+    return false;
   }
 
   // Get the handle of a header file entry.
@@ -1301,6 +1328,9 @@ public:
   }
 
 private:
+  llvm::SmallVector<std::string, 32> HeaderList;
+  // Only do extern, namespace check for headers in HeaderList.
+  bool BlockCheckHeaderListOnly;
   llvm::StringPool Strings;
   std::vector<StringHandle> HeaderPaths;
   std::vector<HeaderHandle> HeaderStack;
@@ -1319,8 +1349,10 @@ private:
 PreprocessorTracker::~PreprocessorTracker() {}
 
 // Create instance of PreprocessorTracker.
-PreprocessorTracker *PreprocessorTracker::create() {
-  return new PreprocessorTrackerImpl();
+PreprocessorTracker *PreprocessorTracker::create(
+    llvm::SmallVector<std::string, 32> &Headers,
+    bool DoBlockCheckHeaderListOnly) {
+  return new PreprocessorTrackerImpl(Headers, DoBlockCheckHeaderListOnly);
 }
 
 // Preprocessor callbacks for modularize.

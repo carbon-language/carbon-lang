@@ -77,7 +77,9 @@ public:
   virtual bool reportInconsistentConditionals(llvm::raw_ostream &OS) = 0;
 
   // Create instance of PreprocessorTracker.
-  static PreprocessorTracker *create();
+  static PreprocessorTracker *create(
+    llvm::SmallVector<std::string, 32> &Headers,
+    bool DoBlockCheckHeaderListOnly);
 };
 
 } // end namespace Modularize
