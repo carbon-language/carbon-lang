@@ -1409,23 +1409,23 @@ void ELFObjectWriter::CreateMetadataSections(MCAssembler &Asm,
       Ctx.getELFSection(".shstrtab", ELF::SHT_STRTAB, 0);
   MCSectionData &ShstrtabSD = Asm.getOrCreateSectionData(*ShstrtabSection);
   ShstrtabSD.setAlignment(1);
+  ShstrtabIndex = SectionIndexMap.size() + 1;
+  SectionIndexMap[ShstrtabSection] = ShstrtabIndex;
 
   const MCSectionELF *SymtabSection =
     Ctx.getELFSection(".symtab", ELF::SHT_SYMTAB, 0,
                       EntrySize, "");
   MCSectionData &SymtabSD = Asm.getOrCreateSectionData(*SymtabSection);
   SymtabSD.setAlignment(is64Bit() ? 8 : 4);
+  SymbolTableIndex = SectionIndexMap.size() + 1;
+  SectionIndexMap[SymtabSection] = SymbolTableIndex;
 
   const MCSectionELF *StrtabSection;
   StrtabSection = Ctx.getELFSection(".strtab", ELF::SHT_STRTAB, 0);
   MCSectionData &StrtabSD = Asm.getOrCreateSectionData(*StrtabSection);
   StrtabSD.setAlignment(1);
-
-  ComputeIndexMap(Asm, SectionIndexMap, RelMap);
-
-  ShstrtabIndex = SectionIndexMap.lookup(ShstrtabSection);
-  SymbolTableIndex = SectionIndexMap.lookup(SymtabSection);
-  StringTableIndex = SectionIndexMap.lookup(StrtabSection);
+  StringTableIndex = SectionIndexMap.size() + 1;
+  SectionIndexMap[StrtabSection] = StringTableIndex;
 
   // Symbol table
   F = new MCDataFragment(&SymtabSD);
