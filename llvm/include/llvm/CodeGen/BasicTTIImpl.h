@@ -150,6 +150,28 @@ public:
     return getTLI()->isTypeLegal(VT);
   }
 
+  unsigned getIntrinsicCost(Intrinsic::ID IID, Type *RetTy,
+                            ArrayRef<const Value *> Arguments) {
+    return BaseT::getIntrinsicCost(IID, RetTy, Arguments);
+  }
+
+  unsigned getIntrinsicCost(Intrinsic::ID IID, Type *RetTy,
+                            ArrayRef<Type *> ParamTys) {
+    if (IID == Intrinsic::cttz) {
+      if (getTLI()->isCheapToSpeculateCttz())
+        return TargetTransformInfo::TCC_Basic;
+      return TargetTransformInfo::TCC_Expensive;
+    }
+
+    if (IID == Intrinsic::ctlz) {
+       if (getTLI()->isCheapToSpeculateCtlz())
+        return TargetTransformInfo::TCC_Basic;
+      return TargetTransformInfo::TCC_Expensive;
+    }
+
+    return BaseT::getIntrinsicCost(IID, RetTy, ParamTys);
+  }
+
   unsigned getJumpBufAlignment() { return getTLI()->getJumpBufAlignment(); }
 
   unsigned getJumpBufSize() { return getTLI()->getJumpBufSize(); }
