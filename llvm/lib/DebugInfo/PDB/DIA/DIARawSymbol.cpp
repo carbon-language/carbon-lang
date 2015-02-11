@@ -18,7 +18,17 @@
 using namespace llvm;
 
 namespace {
-template <typename ArgType, typename RetType = ArgType>
+template <typename ArgType>
+ArgType PrivateGetDIAValue(IDiaSymbol *Symbol,
+                           HRESULT (__stdcall IDiaSymbol::*Method)(ArgType *)) {
+  ArgType Value;
+  if (S_OK == (Symbol->*Method)(&Value))
+    return static_cast<ArgType>(Value);
+
+  return ArgType();
+}
+
+template <typename ArgType, typename RetType>
 RetType PrivateGetDIAValue(IDiaSymbol *Symbol,
                            HRESULT (__stdcall IDiaSymbol::*Method)(ArgType *)) {
   ArgType Value;
