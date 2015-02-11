@@ -318,48 +318,36 @@ bool CXXRecordDecl::lookupInBases(BaseMatchesCallback *BaseMatches,
   //
   // FIXME: This is an O(N^2) algorithm, but DPG doesn't see an easy
   // way to make it any faster.
-  for (CXXBasePaths::paths_iterator P = Paths.begin(), PEnd = Paths.end();
-       P != PEnd; /* increment in loop */) {
-    bool Hidden = false;
+  Paths.Paths.remove_if([&Paths](const CXXBasePath &Path) {
+    for (const CXXBasePathElement &PE : Path) {
+      if (!PE.Base->isVirtual())
+        continue;
 
-    for (CXXBasePath::iterator PE = P->begin(), PEEnd = P->end();
-         PE != PEEnd && !Hidden; ++PE) {
-      if (PE->Base->isVirtual()) {
-        CXXRecordDecl *VBase = nullptr;
-        if (const RecordType *Record = PE->Base->getType()->getAs<RecordType>())
-          VBase = cast<CXXRecordDecl>(Record->getDecl());
-        if (!VBase)
+      CXXRecordDecl *VBase = nullptr;
+      if (const RecordType *Record = PE.Base->getType()->getAs<RecordType>())
+        VBase = cast<CXXRecordDecl>(Record->getDecl());
+      if (!VBase)
+        break;
+
+      // The declaration(s) we found along this path were found in a
+      // subobject of a virtual base. Check whether this virtual
+      // base is a subobject of any other path; if so, then the
+      // declaration in this path are hidden by that patch.
+      for (const CXXBasePath &HidingP : Paths) {
+        CXXRecordDecl *HidingClass = nullptr;
+        if (const RecordType *Record =
+                HidingP.back().Base->getType()->getAs<RecordType>())
+          HidingClass = cast<CXXRecordDecl>(Record->getDecl());
+        if (!HidingClass)
           break;
 
-        // The declaration(s) we found along this path were found in a
-        // subobject of a virtual base. Check whether this virtual
-        // base is a subobject of any other path; if so, then the
-        // declaration in this path are hidden by that patch.
-        for (CXXBasePaths::paths_iterator HidingP = Paths.begin(),
-                                       HidingPEnd = Paths.end();
-             HidingP != HidingPEnd;
-             ++HidingP) {
-          CXXRecordDecl *HidingClass = nullptr;
-          if (const RecordType *Record
-                       = HidingP->back().Base->getType()->getAs<RecordType>())
-            HidingClass = cast<CXXRecordDecl>(Record->getDecl());
-          if (!HidingClass)
-            break;
-
-          if (HidingClass->isVirtuallyDerivedFrom(VBase)) {
-            Hidden = true;
-            break;
-          }
-        }
+        if (HidingClass->isVirtuallyDerivedFrom(VBase))
+          return true;
       }
     }
+    return false;
+  });
 
-    if (Hidden)
-      P = Paths.Paths.erase(P);
-    else
-      ++P;
-  }
-  
   return true;
 }
 
@@ -626,54 +614,32 @@ CXXRecordDecl::getFinalOverriders(CXXFinalOverriderMap &FinalOverriders) const {
   // Weed out any final overriders that come from virtual base class
   // subobjects that were hidden by other subobjects along any path.
   // This is the final-overrider variant of C++ [class.member.lookup]p10.
-  for (CXXFinalOverriderMap::iterator OM = FinalOverriders.begin(), 
-                           OMEnd = FinalOverriders.end();
-       OM != OMEnd;
-       ++OM) {
-    for (OverridingMethods::iterator SO = OM->second.begin(), 
-                                  SOEnd = OM->second.end();
-         SO != SOEnd; 
-         ++SO) {
-      SmallVectorImpl<UniqueVirtualMethod> &Overriding = SO->second;
+  for (auto &OM : FinalOverriders) {
+    for (auto &SO : OM.second) {
+      SmallVectorImpl<UniqueVirtualMethod> &Overriding = SO.second;
       if (Overriding.size() < 2)
         continue;
 
-      for (SmallVectorImpl<UniqueVirtualMethod>::iterator
-             Pos = Overriding.begin(), PosEnd = Overriding.end();
-           Pos != PosEnd;
-           /* increment in loop */) {
-        if (!Pos->InVirtualSubobject) {
-          ++Pos;
-          continue;
-        }
+      auto IsHidden = [&Overriding](const UniqueVirtualMethod &M) {
+        if (!M.InVirtualSubobject)
+          return false;
 
         // We have an overriding method in a virtual base class
         // subobject (or non-virtual base class subobject thereof);
         // determine whether there exists an other overriding method
         // in a base class subobject that hides the virtual base class
         // subobject.
-        bool Hidden = false;
-        for (SmallVectorImpl<UniqueVirtualMethod>::iterator
-               OP = Overriding.begin(), OPEnd = Overriding.end();
-             OP != OPEnd && !Hidden; 
-             ++OP) {
-          if (Pos == OP)
-            continue;
+        for (const UniqueVirtualMethod &OP : Overriding)
+          if (&M != &OP &&
+              OP.Method->getParent()->isVirtuallyDerivedFrom(
+                  M.InVirtualSubobject))
+            return true;
+        return false;
+      };
 
-          if (OP->Method->getParent()->isVirtuallyDerivedFrom(
-                         const_cast<CXXRecordDecl *>(Pos->InVirtualSubobject)))
-            Hidden = true;
-        }
-
-        if (Hidden) {
-          // The current overriding function is hidden by another
-          // overriding function; remove this one.
-          Pos = Overriding.erase(Pos);
-          PosEnd = Overriding.end();
-        } else {
-          ++Pos;
-        }
-      }
+      Overriding.erase(
+          std::remove_if(Overriding.begin(), Overriding.end(), IsHidden),
+          Overriding.end());
     }
   }
 }
