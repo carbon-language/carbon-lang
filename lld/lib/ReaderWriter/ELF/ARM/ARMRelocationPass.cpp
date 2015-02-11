@@ -74,12 +74,8 @@ public:
 
   Alignment alignment() const override { return Alignment(2); }
 
-#ifndef NDEBUG
   StringRef name() const override { return _name; }
   std::string _name;
-#else
-  StringRef name() const override { return ""; }
-#endif
 };
 
 /// \brief Atoms that hold veneer for statically relocated
@@ -275,11 +271,11 @@ public:
 
     auto v = new (_file._alloc) Veneer_ARM_B_BL_StaticAtom(_file, secName);
     v->addReferenceELF_ARM(R_ARM_ABS32, 4, da, 0);
-#ifndef NDEBUG
+
     v->_name = "__";
     v->_name += da->name();
     v->_name += "_from_arm";
-#endif
+
     _veneerMap[da] = v;
     _veneerVector.push_back(v);
     return v;
@@ -294,11 +290,11 @@ public:
 
     auto v = new (_file._alloc) Veneer_THM_B_BL_StaticAtom(_file, secName);
     v->addReferenceELF_ARM(R_ARM_JUMP24, 4, da, 0);
-#ifndef NDEBUG
+
     v->_name = "__";
     v->_name += da->name();
     v->_name += "_from_thumb";
-#endif
+
     _veneerMap[da] = v;
     _veneerVector.push_back(v);
     return v;
