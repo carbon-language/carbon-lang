@@ -30,6 +30,13 @@
 #include <sys/personality.h>
 #endif
 
+#if SANITIZER_FREEBSD
+// The MAP_NORESERVE define has been removed in FreeBSD 11.x, and even before
+// that, it was never implemented.  So just define it to zero.
+#undef  MAP_NORESERVE
+#define MAP_NORESERVE 0
+#endif
+
 namespace __sanitizer {
 
 // ------------- sanitizer_common.h
