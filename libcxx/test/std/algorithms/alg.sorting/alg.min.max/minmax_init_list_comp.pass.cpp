@@ -23,6 +23,7 @@
 
 bool all_equal(int a, int b) { return false; } // everything is equal
 
+#ifndef _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
 void test_all_equal(std::initializer_list<int> il)
 {
     binary_counting_predicate<bool(*)(int, int), int, int> pred (all_equal);
@@ -32,6 +33,7 @@ void test_all_equal(std::initializer_list<int> il)
     assert(p.second == *--ptr);
     assert(pred.count() <= ((3 * il.size()) / 2));
 }
+#endif
 
 int main()
 {
