@@ -818,7 +818,7 @@ void Verifier::visitModuleIdents(const Module &M) {
     const MDNode *N = Idents->getOperand(i);
     Assert1(N->getNumOperands() == 1,
             "incorrect number of operands in llvm.ident metadata", N);
-    Assert1(isa<MDString>(N->getOperand(0)),
+    Assert1(dyn_cast_or_null<MDString>(N->getOperand(0)),
             ("invalid value for llvm.ident metadata entry operand"
              "(the operand should be a string)"),
             N->getOperand(0));
