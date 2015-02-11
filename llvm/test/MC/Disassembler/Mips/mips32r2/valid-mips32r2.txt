@@ -1,4 +1,7 @@
 # RUN: llvm-mc --disassemble %s -triple=mips-unknown-linux -mcpu=mips32r2 | FileCheck %s
+# Try a mips64* triple to confirm that mips* vs mips64* triples no longer have
+# an effect on the disassembler behaviour.
+# RUN: llvm-mc --disassemble %s -triple=mips64-unknown-linux -mcpu=mips32r2 | FileCheck %s
 0x46 0x20 0x73 0x05 # CHECK: abs.d $f12, $f14
 0x46 0x00 0x39 0x85 # CHECK: abs.s $f6, $f7
 0x00 0xc7 0x48 0x20 # CHECK: add $9, $6, $7
