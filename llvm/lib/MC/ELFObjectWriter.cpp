@@ -251,8 +251,7 @@ class ELFObjectWriter : public MCObjectWriter {
                          SectionIndexMapTy &SectionIndexMap,
                          const RelMapTy &RelMap);
 
-    void CreateRelocationSections(MCAssembler &Asm, MCAsmLayout &Layout,
-                                  RelMapTy &RelMap);
+    void CreateRelocationSections(MCAssembler &Asm, RelMapTy &RelMap);
 
     void CompressDebugSections(MCAssembler &Asm, MCAsmLayout &Layout);
 
@@ -1118,7 +1117,6 @@ ELFObjectWriter::computeSymbolTable(MCAssembler &Asm, const MCAsmLayout &Layout,
 }
 
 void ELFObjectWriter::CreateRelocationSections(MCAssembler &Asm,
-                                               MCAsmLayout &Layout,
                                                RelMapTy &RelMap) {
   for (MCAssembler::const_iterator it = Asm.begin(),
          ie = Asm.end(); it != ie; ++it) {
@@ -1721,7 +1719,7 @@ void ELFObjectWriter::WriteObject(MCAssembler &Asm,
   CompressDebugSections(Asm, const_cast<MCAsmLayout &>(Layout));
 
   DenseMap<const MCSectionELF*, const MCSectionELF*> RelMap;
-  CreateRelocationSections(Asm, const_cast<MCAsmLayout&>(Layout), RelMap);
+  CreateRelocationSections(Asm, RelMap);
 
   const unsigned NumUserAndRelocSections = Asm.size();
   CreateIndexedSections(Asm, const_cast<MCAsmLayout&>(Layout), GroupMap,
