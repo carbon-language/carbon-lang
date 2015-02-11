@@ -1,7 +1,8 @@
 @AUTO_GEN_COMMENT@
 config.cxx_under_test           = "@LIBCXXABI_COMPILER@"
 config.libcxxabi_src_root       = "@LIBCXXABI_SOURCE_DIR@"
-config.libcxxabi_obj_root       = "@LIBCXXABI_LIBRARY_DIR@"
+config.libcxxabi_obj_root       = "@LIBCXXABI_BINARY_DIR@"
+config.libcxxabi_lib_root       = "@LIBCXXABI_LIBRARY_DIR@"
 config.libcxx_src_root          = "@LIBCXXABI_LIBCXX_PATH@"
 config.cxx_headers              = "@LIBCXXABI_LIBCXX_INCLUDES@"
 config.llvm_unwinder            = "@LIBCXXABI_USE_LLVM_UNWINDER@"
