@@ -637,7 +637,7 @@ Diagnostics <cl_diag_formatting>`.
 Diagnostic Mappings
 ^^^^^^^^^^^^^^^^^^^
 
-All diagnostics are mapped into one of these 5 classes:
+All diagnostics are mapped into one of these 6 classes:
 
 -  Ignored
 -  Note
