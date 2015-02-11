@@ -493,7 +493,7 @@ ClangASTType::IsHomogeneousAggregate (ClangASTType* base_type_ptr) const
                             }
                             else if (field_qual_type->isVectorType() || field_qual_type->isExtVectorType())
                             {
-                                const clang::VectorType *array = llvm::cast<clang::VectorType>(field_qual_type.getTypePtr());
+                                const clang::VectorType *array = field_qual_type.getTypePtr()->getAs<clang::VectorType>();
                                 if (array && array->getNumElements() <= 4)
                                 {
                                     if (num_fields == 0)
