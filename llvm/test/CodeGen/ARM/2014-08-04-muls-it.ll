@@ -17,9 +17,7 @@ if.end:                                           ; preds = %if.then, %entry
 
 ; CHECK-LABEL: function
 ; CHECK: cmp r0, r1
-; CHECK: bne [[LABEL:[.*]]]
 ; CHECK-NOT: mulseq r0, r0, r0
-; CHECK: [[LABEL]]
-; CHECK: muls r0, r0, r0
+; CHECK: muleq r0, r0, r0
 ; CHECK: bx lr
 

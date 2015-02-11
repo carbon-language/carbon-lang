@@ -63,49 +63,23 @@ entry:
   ret <16 x i8> %add.i9
 }
 
-; Two different uses of the sane constant in two different basic blocks,
+; Two different uses of the same constant in two different basic blocks,
 ; one dominates the other
 define <16 x i8> @test3(<16 x i8> %arg, i32 %path) {
 ; PROMOTED-LABEL: test3:
 ; In stress mode, constant vector are promoted
 ; Since, the constant is the same as the previous function,
 ; the same address must be used
-; PROMOTED: adrp [[PAGEADDR:x[0-9]+]], [[CSTV1]]@PAGE
-; PROMOTED-NEXT: ldr q[[REGNUM:[0-9]+]], {{\[}}[[PAGEADDR]], [[CSTV1]]@PAGEOFF]
-; Destination register is defined by ABI
-; PROMOTED-NEXT: add.16b v0, v0, v[[REGNUM]]
-; PROMOTED-NEXT: cbnz w0, [[LABEL:LBB.*]]
-; Next BB
-; PROMOTED: adrp [[PAGEADDR:x[0-9]+]], [[CSTV2:__PromotedConst[0-9]+]]@PAGE
-; PROMOTED-NEXT: ldr q[[REGNUM]], {{\[}}[[PAGEADDR]], [[CSTV2]]@PAGEOFF]
-; Next BB
-; PROMOTED-NEXT: [[LABEL]]:
-; PROMOTED-NEXT: mul.16b [[DESTV:v[0-9]+]], v0, v[[REGNUM]]
-; PROMOTED-NEXT: add.16b v0, v0, [[DESTV]]
-; PROMOTED-NEXT: ret
+; PROMOTED: ldr
+; PROMOTED: ldr
+; PROMOTED-NOT: ldr
+; PROMOTED: ret
 
 ; REGULAR-LABEL: test3:
-; Regular mode does not elimitate common sub expression by its own.
-; In other words, the same loads appears several times.
-; REGULAR: adrp [[PAGEADDR:x[0-9]+]], [[CSTLABEL1:lCP.*]]@PAGE
-; REGULAR-NEXT: ldr q[[REGNUM:[0-9]+]], {{\[}}[[PAGEADDR]], [[CSTLABEL1]]@PAGEOFF]
-; Destination register is defined by ABI
-; REGULAR-NEXT: add.16b v0, v0, v[[REGNUM]]
-; REGULAR-NEXT: cbz w0, [[LABELelse:LBB.*]]
-; Next BB
-; Redundant load
-; REGULAR: adrp [[PAGEADDR:x[0-9]+]], [[CSTLABEL1]]@PAGE
-; REGULAR-NEXT: ldr q[[REGNUM]], {{\[}}[[PAGEADDR]], [[CSTLABEL1]]@PAGEOFF]
-; REGULAR-NEXT: b [[LABELend:LBB.*]]
-; Next BB
-; REGULAR-NEXT: [[LABELelse]]
-; REGULAR-NEXT: adrp [[PAGEADDR:x[0-9]+]], [[CSTLABEL2:lCP.*]]@PAGE
-; REGULAR-NEXT: ldr q[[REGNUM]], {{\[}}[[PAGEADDR]], [[CSTLABEL2]]@PAGEOFF]
-; Next BB
-; REGULAR-NEXT: [[LABELend]]:
-; REGULAR-NEXT: mul.16b [[DESTV:v[0-9]+]], v0, v[[REGNUM]]
-; REGULAR-NEXT: add.16b v0, v0, [[DESTV]]
-; REGULAR-NEXT: ret
+; REGULAR: ldr
+; REGULAR: ldr
+; REGULAR-NOT: ldr
+; REGULAR: ret
 entry:
   %add.i = add <16 x i8> %arg, <i8 -40, i8 -93, i8 -118, i8 -99, i8 -75, i8 -105, i8 74, i8 -110, i8 62, i8 -115, i8 -119, i8 -120, i8 34, i8 -124, i8 0, i8 -128>
   %tobool = icmp eq i32 %path, 0
@@ -132,33 +106,14 @@ define <16 x i8> @test4(<16 x i8> %arg, i32 %path) {
 ; In stress mode, constant vector are promoted
 ; Since, the constant is the same as the previous function,
 ; the same address must be used
-; PROMOTED: adrp [[PAGEADDR:x[0-9]+]], [[CSTV1]]@PAGE
-; PROMOTED-NEXT: ldr q[[REGNUM:[0-9]+]], {{\[}}[[PAGEADDR]], [[CSTV1]]@PAGEOFF]
-; Destination register is defined by ABI
-; PROMOTED-NEXT: add.16b v0, v0, v[[REGNUM]]
-; PROMOTED-NEXT: cbz w0, [[LABEL:LBB.*]]
-; Next BB
-; PROMOTED: mul.16b v0, v0, v[[REGNUM]]
-; Next BB
-; PROMOTED-NEXT: [[LABEL]]:
-; PROMOTED-NEXT: ret
-
+; PROMOTED: ldr
+; PROMOTED-NOT: ldr
+; PROMOTED: ret
 
 ; REGULAR-LABEL: test4:
-; REGULAR: adrp [[PAGEADDR:x[0-9]+]], [[CSTLABEL3:lCP.*]]@PAGE
-; REGULAR-NEXT: ldr q[[REGNUM:[0-9]+]], {{\[}}[[PAGEADDR]], [[CSTLABEL3]]@PAGEOFF]
-; Destination register is defined by ABI
-; REGULAR-NEXT: add.16b v0, v0, v[[REGNUM]]
-; REGULAR-NEXT: cbz w0, [[LABEL:LBB.*]]
-; Next BB
-; Redundant expression
-; REGULAR: adrp [[PAGEADDR:x[0-9]+]], [[CSTLABEL3]]@PAGE
-; REGULAR-NEXT: ldr q[[REGNUM:[0-9]+]], {{\[}}[[PAGEADDR]], [[CSTLABEL3]]@PAGEOFF]
-; Destination register is defined by ABI
-; REGULAR-NEXT: mul.16b v0, v0, v[[REGNUM]]
-; Next BB
-; REGULAR-NEXT: [[LABEL]]:
-; REGULAR-NEXT: ret
+; REGULAR: ldr
+; REGULAR-NOT: ldr
+; REGULAR: ret
 entry:
   %add.i = add <16 x i8> %arg, <i8 -40, i8 -93, i8 -118, i8 -99, i8 -75, i8 -105, i8 74, i8 -110, i8 62, i8 -115, i8 -119, i8 -120, i8 34, i8 -124, i8 0, i8 -128>
   %tobool = icmp eq i32 %path, 0

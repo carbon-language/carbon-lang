@@ -293,7 +293,6 @@ bb:
 ; CHECK: adjustCopiesBackFrom
 ; The shuffle in if.else3 must be preserved even though adjustCopiesBackFrom
 ; is tempted to remove it.
-; CHECK: %if.else3
 ; CHECK: vorr d
 define internal void @adjustCopiesBackFrom(<2 x i64>* noalias nocapture sret %agg.result, <2 x i64> %in) {
 entry:

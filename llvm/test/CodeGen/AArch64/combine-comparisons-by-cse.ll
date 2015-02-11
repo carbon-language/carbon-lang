@@ -366,7 +366,6 @@ define i32 @fcmpri(i32 %argc, i8** nocapture readonly %argv) {
 ; CHECK-LABEL-DAG: .LBB9_3
 ; CHECK: cmp w19, #0
 ; CHECK: fcmp d8, #0.0
-; CHECK: b.gt .LBB9_5
 ; CHECK-NOT: cmp w19, #1
 ; CHECK-NOT: b.ge .LBB9_5
 
