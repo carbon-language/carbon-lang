@@ -132,9 +132,9 @@ namespace PBQP {
     } else {
       const Matrix &YZECosts = G.getEdgeCosts(YZEId);
       if (YNId == G.getEdgeNode1Id(YZEId)) {
-        G.setEdgeCosts(YZEId, Delta + YZECosts);
+        G.updateEdgeCosts(YZEId, Delta + YZECosts);
       } else {
-        G.setEdgeCosts(YZEId, Delta.transpose() + YZECosts);
+        G.updateEdgeCosts(YZEId, Delta.transpose() + YZECosts);
       }
     }
 

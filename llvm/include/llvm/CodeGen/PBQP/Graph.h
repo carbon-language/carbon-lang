@@ -507,14 +507,14 @@ namespace PBQP {
       return getNode(NId).getAdjEdgeIds().size();
     }
 
-    /// @brief Set an edge's cost matrix.
+    /// @brief Update an edge's cost matrix.
     /// @param EId Edge id.
     /// @param Costs New cost matrix.
     template <typename OtherMatrixT>
-    void setEdgeCosts(EdgeId EId, OtherMatrixT Costs) {
+    void updateEdgeCosts(EdgeId EId, OtherMatrixT Costs) {
       MatrixPtr AllocatedCosts = CostAlloc.getMatrix(std::move(Costs));
       if (Solver)
-        Solver->handleSetEdgeCosts(EId, *AllocatedCosts);
+        Solver->handleUpdateCosts(EId, *AllocatedCosts);
       getEdge(EId).Costs = AllocatedCosts;
     }
 
