@@ -12,9 +12,9 @@ entry:
   br i1 %0, label %bb, label %bb1
 
 bb:                                               ; preds = %entry
-; CHECK:      ite lt
-; CHECK:      vsublt.f32
-; CHECK-NEXT: vaddge.f32
+; CHECK:      vsub.f32
+; CHECK-NEXT: vadd.f32
+; CHECK:      it gt
   %3 = fadd float %1, %2                          ; <float> [#uses=1]
   br label %bb2
 
