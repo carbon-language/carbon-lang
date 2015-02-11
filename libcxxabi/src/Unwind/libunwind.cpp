@@ -16,6 +16,9 @@
 #include <cstdlib> // getenv
 #endif
 #include <new>
+#include <tuple>
+#include <memory>
+#include <vector>
 
 #include "libunwind_ext.h"
 #include "config.h"
