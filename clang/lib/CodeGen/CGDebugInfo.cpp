@@ -621,6 +621,21 @@ static SmallString<256> getUniqueTagTypeName(const TagType *Ty,
   return FullName;
 }
 
+static llvm::dwarf::Tag getTagForRecord(const RecordDecl *RD) {
+   llvm::dwarf::Tag Tag;
+  if (RD->isStruct() || RD->isInterface())
+    Tag = llvm::dwarf::DW_TAG_structure_type;
+  else if (RD->isUnion())
+    Tag = llvm::dwarf::DW_TAG_union_type;
+  else {
+    // FIXME: This could be a struct type giving a default visibility different
+    // than C++ class type, but needs llvm metadata changes first.
+    assert(RD->isClass());
+    Tag = llvm::dwarf::DW_TAG_class_type;
+  }
+  return Tag;
+}
+
 // Creates a forward declaration for a RecordDecl in the given context.
 llvm::DICompositeType
 CGDebugInfo::getOrCreateRecordFwdDecl(const RecordType *Ty,
@@ -632,20 +647,12 @@ CGDebugInfo::getOrCreateRecordFwdDecl(const RecordType *Ty,
   unsigned Line = getLineNumber(RD->getLocation());
   StringRef RDName = getClassName(RD);
 
-  llvm::dwarf::Tag Tag;
-  if (RD->isStruct() || RD->isInterface())
-    Tag = llvm::dwarf::DW_TAG_structure_type;
-  else if (RD->isUnion())
-    Tag = llvm::dwarf::DW_TAG_union_type;
-  else {
-    assert(RD->isClass());
-    Tag = llvm::dwarf::DW_TAG_class_type;
-  }
 
   // Create the type.
   SmallString<256> FullName = getUniqueTagTypeName(Ty, CGM, TheCU);
-  llvm::DICompositeType RetTy = DBuilder.createReplaceableForwardDecl(
-      Tag, RDName, Ctx, DefUnit, Line, 0, 0, 0, FullName);
+  llvm::DICompositeType RetTy = DBuilder.createReplaceableCompositeType(
+      getTagForRecord(RD), RDName, Ctx, DefUnit, Line, 0, 0, 0,
+      llvm::DIDescriptor::FlagFwdDecl, FullName);
   ReplaceMap.emplace_back(
       std::piecewise_construct, std::make_tuple(Ty),
       std::make_tuple(static_cast<llvm::Metadata *>(RetTy)));
@@ -1567,7 +1574,8 @@ llvm::DIType CGDebugInfo::CreateTypeDefinition(const RecordType *Ty) {
   assert(FwdDecl.isCompositeType() &&
          "The debug type of a RecordType should be a llvm::DICompositeType");
 
-  if (FwdDecl.isForwardDecl())
+  const RecordDecl *D = RD->getDefinition();
+  if (!D || !D->isCompleteDefinition())
     return FwdDecl;
 
   if (const CXXRecordDecl *CXXDecl = dyn_cast<CXXRecordDecl>(RD))
@@ -1601,6 +1609,10 @@ llvm::DIType CGDebugInfo::CreateTypeDefinition(const RecordType *Ty) {
 
   llvm::DIArray Elements = DBuilder.getOrCreateArray(EltTys);
   DBuilder.replaceArrays(FwdDecl, Elements);
+
+  if (FwdDecl->isTemporary())
+    FwdDecl = llvm::DICompositeType(llvm::MDNode::replaceWithPermanent(
+      llvm::TempMDNode(FwdDecl.get())));
 
   RegionMap[Ty->getDecl()].reset(FwdDecl);
   return FwdDecl;
@@ -1653,7 +1665,7 @@ llvm::DIType CGDebugInfo::CreateType(const ObjCInterfaceType *Ty,
   // debug type since we won't be able to lay out the entire type.
   ObjCInterfaceDecl *Def = ID->getDefinition();
   if (!Def || !Def->getImplementation()) {
-    llvm::DIType FwdDecl = DBuilder.createReplaceableForwardDecl(
+    llvm::DIType FwdDecl = DBuilder.createReplaceableCompositeType(
         llvm::dwarf::DW_TAG_structure_type, ID->getName(), TheCU, DefUnit, Line,
         RuntimeLang);
     ObjCInterfaceCache.push_back(ObjCInterfaceCacheEntry(Ty, FwdDecl, Unit));
@@ -1933,9 +1945,9 @@ llvm::DIType CGDebugInfo::CreateEnumType(const EnumType *Ty) {
     llvm::DIFile DefUnit = getOrCreateFile(ED->getLocation());
     unsigned Line = getLineNumber(ED->getLocation());
     StringRef EDName = ED->getName();
-    llvm::DIType RetTy = DBuilder.createReplaceableForwardDecl(
+    llvm::DIType RetTy = DBuilder.createReplaceableCompositeType(
         llvm::dwarf::DW_TAG_enumeration_type, EDName, EDContext, DefUnit, Line,
-        0, Size, Align, FullName);
+        0, Size, Align, llvm::DIDescriptor::FlagFwdDecl, FullName);
     ReplaceMap.emplace_back(
         std::piecewise_construct, std::make_tuple(Ty),
         std::make_tuple(static_cast<llvm::Metadata *>(RetTy)));
@@ -2249,19 +2261,8 @@ llvm::DICompositeType CGDebugInfo::CreateLimitedType(const RecordType *Ty) {
 
   SmallString<256> FullName = getUniqueTagTypeName(Ty, CGM, TheCU);
 
-  if (RD->isUnion())
-    RealDecl = DBuilder.createUnionType(RDContext, RDName, DefUnit, Line, Size,
-                                        Align, 0, llvm::DIArray(), 0, FullName);
-  else if (RD->isClass()) {
-    // FIXME: This could be a struct type giving a default visibility different
-    // than C++ class type, but needs llvm metadata changes first.
-    RealDecl = DBuilder.createClassType(
-        RDContext, RDName, DefUnit, Line, Size, Align, 0, 0, llvm::DIType(),
-        llvm::DIArray(), llvm::DIType(), llvm::DIArray(), FullName);
-  } else
-    RealDecl = DBuilder.createStructType(
-        RDContext, RDName, DefUnit, Line, Size, Align, 0, llvm::DIType(),
-        llvm::DIArray(), 0, llvm::DIType(), FullName);
+  RealDecl = DBuilder.createReplaceableCompositeType(getTagForRecord(RD),
+      RDName, RDContext, DefUnit, Line, 0, Size, Align, 0, FullName);
 
   RegionMap[Ty->getDecl()].reset(RealDecl);
   TypeCache[QualType(Ty, 0).getAsOpaquePtr()].reset(RealDecl);
