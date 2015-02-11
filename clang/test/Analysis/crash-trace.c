@@ -3,7 +3,7 @@
 
 // FIXME: CHECKs might be incompatible to win32.
 // Stack traces also require back traces.
-// REQUIRES: shell backtrace
+// REQUIRES: shell, backtrace
 
 void clang_analyzer_crash(void);
 
