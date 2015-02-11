@@ -69,6 +69,7 @@ if ( CMAKE_SYSTEM_NAME MATCHES "Windows" )
     lldbPluginProcessElfCore
     lldbPluginJITLoaderGDB
     Ws2_32
+    Rpcrt4
     )
 endif ()
 

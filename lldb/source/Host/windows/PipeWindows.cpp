@@ -15,6 +15,7 @@
 
 #include <fcntl.h>
 #include <io.h>
+#include <rpc.h>
 
 #include <atomic>
 #include <string>
@@ -96,14 +97,23 @@ PipeWindows::CreateWithUniqueName(llvm::StringRef prefix, bool child_process_inh
 {
     llvm::SmallString<128> pipe_name;
     Error error;
-    do {
+    ::UUID unique_id;
+    RPC_CSTR unique_string;
+    RPC_STATUS status = ::UuidCreate(&unique_id);
+    if (status == RPC_S_OK || status == RPC_S_UUID_LOCAL_ONLY)
+        status = ::UuidToStringA(&unique_id, &unique_string);
+    if (status == RPC_S_OK)
+    {
         pipe_name = prefix;
         pipe_name += "-";
-        for (unsigned i = 0; i < 6; i++) {
-            pipe_name += "0123456789abcdef"[llvm::sys::Process::GetRandomNumber() & 15];
-        }
-        Error error = CreateNew(pipe_name, child_process_inherit);
-    } while (error.GetError() == ERROR_ALREADY_EXISTS);
+        pipe_name += reinterpret_cast<char *>(unique_string);
+        ::RpcStringFreeA(&unique_string);
+        error = CreateNew(pipe_name, child_process_inherit);
+    }
+    else
+    {
+        error.SetError(status, eErrorTypeWin32);
+    }
     if (error.Success())
         name = pipe_name;
     return error;
