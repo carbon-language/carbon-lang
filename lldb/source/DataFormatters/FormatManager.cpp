@@ -1579,7 +1579,9 @@ FormatManager::LoadCoreMediaFormatters()
     
     TypeCategoryImpl::SharedPointer cm_category_sp = GetCategory(m_coremedia_category_name);
 
+#ifndef LLDB_DISABLE_PYTHON
     AddCXXSummary(cm_category_sp, lldb_private::formatters::CMTimeSummaryProvider, "CMTime summary provider", ConstString("CMTime"), cm_flags);
+#endif // LLDB_DISABLE_PYTHON
 }
 
 void
