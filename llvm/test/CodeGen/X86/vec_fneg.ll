@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mcpu=corei7 | FileCheck %s
+; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mattr=sse | FileCheck %s
 
 ; FNEG is defined as subtraction from -0.0.
 
