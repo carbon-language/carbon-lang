@@ -2771,7 +2771,7 @@ minmax(initializer_list<_Tp> __t, _Compare __comp)
     typedef typename initializer_list<_Tp>::const_iterator _Iter;
     _Iter __first = __t.begin();
     _Iter __last  = __t.end();
-    std::pair<_Tp, _Tp> __result ( *__first, *__first );
+    std::pair<_Tp, _Tp> __result(*__first, *__first);
 
     ++__first;
     if (__t.size() % 2 == 0)
@@ -2786,13 +2786,13 @@ minmax(initializer_list<_Tp> __t, _Compare __comp)
     while (__first != __last)
     {
         _Tp __prev = *__first++;
-        if (__comp(__prev, *__first)) {
-            if (__comp(__prev, __result.first))    __result.first  = __prev;
-            if (__comp(__result.second, *__first)) __result.second = *__first;
+        if (__comp(*__first, __prev)) {
+            if ( __comp(*__first, __result.first)) __result.first  = *__first;
+            if (!__comp(__prev, __result.second))  __result.second = __prev;
             }
         else {
-            if (__comp(*__first, __result.first)) __result.first  = *__first;
-            if (__comp(__result.second, __prev))  __result.second = __prev;
+            if ( __comp(__prev, __result.first))    __result.first  = __prev;
+            if (!__comp(*__first, __result.second)) __result.second = *__first;
             }
                 
         __first++;
