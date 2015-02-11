@@ -107,8 +107,6 @@ raw_ostream &llvm::operator<<(raw_ostream &OS, const PDB_ThunkOrdinal &Thunk) {
     CASE_OUTPUT_ENUM_CLASS_NAME(PDB_ThunkOrdinal, TrampIncremental, OS)
     CASE_OUTPUT_ENUM_CLASS_NAME(PDB_ThunkOrdinal, UnknownLoad, OS)
     CASE_OUTPUT_ENUM_CLASS_NAME(PDB_ThunkOrdinal, Vcall, OS)
-  default:
-    OS << "Unknown";
   }
   return OS;
 }
@@ -118,8 +116,6 @@ raw_ostream &llvm::operator<<(raw_ostream &OS, const PDB_Checksum &Checksum) {
     CASE_OUTPUT_ENUM_CLASS_NAME(PDB_Checksum, None, OS)
     CASE_OUTPUT_ENUM_CLASS_NAME(PDB_Checksum, MD5, OS)
     CASE_OUTPUT_ENUM_CLASS_NAME(PDB_Checksum, SHA1, OS)
-  default:
-    OS << "Unknown";
   }
   return OS;
 }
@@ -143,8 +139,6 @@ raw_ostream &llvm::operator<<(raw_ostream &OS, const PDB_Lang &Lang) {
     CASE_OUTPUT_ENUM_CLASS_NAME(PDB_Lang, JScript, OS)
     CASE_OUTPUT_ENUM_CLASS_NAME(PDB_Lang, MSIL, OS)
     CASE_OUTPUT_ENUM_CLASS_NAME(PDB_Lang, HLSL, OS)
-  default:
-    OS << "Unknown";
   }
   return OS;
 }

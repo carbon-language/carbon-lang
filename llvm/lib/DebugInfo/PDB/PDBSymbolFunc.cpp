@@ -24,7 +24,6 @@ PDBSymbolFunc::PDBSymbolFunc(const IPDBSession &PDBSession,
 
 void PDBSymbolFunc::dump(raw_ostream &OS, int Indent,
                          PDB_DumpLevel Level) const {
-  bool doFullDump = false;
   if (Level == PDB_DumpLevel::Compact) {
     uint32_t FuncStart = getRelativeVirtualAddress();
     uint32_t FuncEnd = FuncStart + getLength();
@@ -55,7 +54,6 @@ void PDBSymbolFunc::dump(raw_ostream &OS, int Indent,
         OS << "(" << (int)Reg << ")";
     } else {
       OS << "(FPO)";
-      doFullDump = true;
     }
     OS << " " << getName() << "\n";
   }
