@@ -1509,11 +1509,7 @@ void ELFObjectWriter::WriteSection(MCAssembler &Asm,
 
   case ELF::SHT_REL:
   case ELF::SHT_RELA: {
-    const MCSectionELF *SymtabSection;
-    const MCSectionELF *InfoSection;
-    SymtabSection =
-        Asm.getContext().getELFSection(".symtab", ELF::SHT_SYMTAB, 0);
-    sh_link = SectionIndexMap.lookup(SymtabSection);
+    sh_link = SymbolTableIndex;
     assert(sh_link && ".symtab not found");
 
     // Remove ".rel" and ".rela" prefixes.
@@ -1522,8 +1518,8 @@ void ELFObjectWriter::WriteSection(MCAssembler &Asm,
     StringRef GroupName =
         Section.getGroup() ? Section.getGroup()->getName() : "";
 
-    InfoSection = Asm.getContext().getELFSection(SectionName, ELF::SHT_PROGBITS,
-                                                 0, 0, GroupName);
+    const MCSectionELF *InfoSection = Asm.getContext().getELFSection(
+        SectionName, ELF::SHT_PROGBITS, 0, 0, GroupName);
     sh_info = SectionIndexMap.lookup(InfoSection);
     break;
   }
