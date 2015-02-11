@@ -155,12 +155,6 @@ bool TempScopInfo::buildScalarDependences(Instruction *Inst, Region *R) {
     if (UI == 0)
       continue;
 
-    // Ignore branches as the can only use a synthesizable condition.
-    if (isa<BranchInst>(UI)) {
-      assert(canSynthesizeInst && "Branch condition was not synthesizable.");
-      continue;
-    }
-
     BasicBlock *UseParent = UI->getParent();
 
     // Ignore the users in the same BB (statement)

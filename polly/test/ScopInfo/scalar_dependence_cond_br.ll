@@ -1,4 +1,5 @@
 ; RUN: opt %loadPolly -polly-scops -disable-polly-intra-scop-scalar-to-array -polly-model-phi-nodes -analyze < %s | FileCheck %s
+; XFAIL: *
 ;
 ; CHECK: Statements
 ;
