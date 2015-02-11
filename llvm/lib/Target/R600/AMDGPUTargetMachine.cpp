@@ -39,7 +39,7 @@ using namespace llvm;
 
 extern "C" void LLVMInitializeR600Target() {
   // Register the target
-  RegisterTargetMachine<AMDGPUTargetMachine> X(TheAMDGPUTarget);
+  RegisterTargetMachine<R600TargetMachine> X(TheAMDGPUTarget);
   RegisterTargetMachine<GCNTargetMachine> Y(TheGCNTarget);
 }
 
@@ -83,6 +83,29 @@ AMDGPUTargetMachine::~AMDGPUTargetMachine() {
   delete TLOF;
 }
 
+//===----------------------------------------------------------------------===//
+// R600 Target Machine (R600 -> Cayman)
+//===----------------------------------------------------------------------===//
+
+R600TargetMachine::R600TargetMachine(const Target &T, StringRef TT, StringRef FS,
+                    StringRef CPU, TargetOptions Options, Reloc::Model RM,
+                    CodeModel::Model CM, CodeGenOpt::Level OL) :
+    AMDGPUTargetMachine(T, TT, FS, CPU, Options, RM, CM, OL) { }
+
+
+//===----------------------------------------------------------------------===//
+// GCN Target Machine (SI+)
+//===----------------------------------------------------------------------===//
+
+GCNTargetMachine::GCNTargetMachine(const Target &T, StringRef TT, StringRef FS,
+                    StringRef CPU, TargetOptions Options, Reloc::Model RM,
+                    CodeModel::Model CM, CodeGenOpt::Level OL) :
+    AMDGPUTargetMachine(T, TT, FS, CPU, Options, RM, CM, OL) { }
+
+//===----------------------------------------------------------------------===//
+// AMDGPU Pass Setup
+//===----------------------------------------------------------------------===//
+
 namespace {
 class AMDGPUPassConfig : public TargetPassConfig {
 public:
@@ -115,10 +138,6 @@ public:
 TargetPassConfig *AMDGPUTargetMachine::createPassConfig(PassManagerBase &PM) {
   return new AMDGPUPassConfig(this, PM);
 }
-
-//===----------------------------------------------------------------------===//
-// AMDGPU Pass Setup
-//===----------------------------------------------------------------------===//
 
 TargetIRAnalysis AMDGPUTargetMachine::getTargetIRAnalysis() {
   return TargetIRAnalysis(
@@ -234,13 +253,3 @@ void AMDGPUPassConfig::addPreEmitPass() {
     addPass(createSILowerControlFlowPass(*TM), false);
   }
 }
-
-
-//===----------------------------------------------------------------------===//
-// GCN Target Machine (SI+)
-//===----------------------------------------------------------------------===//
-
-GCNTargetMachine::GCNTargetMachine(const Target &T, StringRef TT, StringRef FS,
-                    StringRef CPU, TargetOptions Options, Reloc::Model RM,
-                    CodeModel::Model CM, CodeGenOpt::Level OL) :
-    AMDGPUTargetMachine(T, TT, FS, CPU, Options, RM, CM, OL) { }

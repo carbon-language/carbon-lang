@@ -63,6 +63,18 @@ public:
 };
 
 //===----------------------------------------------------------------------===//
+// R600 Target Machine (R600 -> Cayman)
+//===----------------------------------------------------------------------===//
+
+class R600TargetMachine : public AMDGPUTargetMachine {
+
+public:
+  R600TargetMachine(const Target &T, StringRef TT, StringRef FS,
+                    StringRef CPU, TargetOptions Options, Reloc::Model RM,
+                    CodeModel::Model CM, CodeGenOpt::Level OL);
+};
+
+//===----------------------------------------------------------------------===//
 // GCN Target Machine (SI+)
 //===----------------------------------------------------------------------===//
 
