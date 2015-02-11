@@ -1991,7 +1991,7 @@ Instruction *Reassociate::canonicalizeNegConstExpr(Instruction *I) {
   Constant *C = C0 ? C0 : C1;
   unsigned ConstIdx = C0 ? 0 : 1;
   if (auto *CI = dyn_cast<ConstantInt>(C)) {
-    if (!CI->isNegative())
+    if (!CI->isNegative() || CI->isMinValue(true))
       return nullptr;
   } else if (auto *CF = dyn_cast<ConstantFP>(C)) {
     if (!CF->isNegative())
