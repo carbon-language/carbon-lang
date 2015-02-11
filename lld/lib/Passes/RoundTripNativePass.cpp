@@ -22,7 +22,7 @@ using namespace lld;
 /// Perform the actual pass
 void RoundTripNativePass::perform(std::unique_ptr<MutableFile> &mergedFile) {
   ScopedTask task(getDefaultDomain(), "RoundTripNativePass");
-  std::unique_ptr<Writer> nativeWriter = createWriterNative(_context);
+  std::unique_ptr<Writer> nativeWriter = createWriterNative();
   SmallString<128> tmpNativeFile;
   // Separate the directory from the filename
   StringRef outFile = llvm::sys::path::filename(_context.outputPath());

@@ -28,8 +28,6 @@ namespace native {
 ///
 class Writer : public lld::Writer {
 public:
-  Writer(const LinkingContext &context) {}
-
   std::error_code writeFile(const lld::File &file, StringRef outPath) override {
     // reserve first byte for unnamed atoms
     _stringPool.push_back('\0');
@@ -561,7 +559,7 @@ private:
 };
 } // end namespace native
 
-std::unique_ptr<Writer> createWriterNative(const LinkingContext &context) {
-  return std::unique_ptr<Writer>(new native::Writer(context));
+std::unique_ptr<Writer> createWriterNative() {
+  return std::unique_ptr<Writer>(new native::Writer());
 }
 } // end namespace lld

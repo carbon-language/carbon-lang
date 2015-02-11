@@ -45,7 +45,7 @@ protected:
 std::unique_ptr<Writer> createWriterELF(TargetHandlerBase *handler);
 std::unique_ptr<Writer> createWriterMachO(const MachOLinkingContext &);
 std::unique_ptr<Writer> createWriterPECOFF(const PECOFFLinkingContext &);
-std::unique_ptr<Writer> createWriterNative(const LinkingContext &);
+std::unique_ptr<Writer> createWriterNative();
 std::unique_ptr<Writer> createWriterYAML(const LinkingContext &);
 } // end namespace lld
 
