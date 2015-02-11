@@ -975,11 +975,17 @@ public:
   // Lookup/add string.
   StringHandle addString(llvm::StringRef Str) { return Strings.intern(Str); }
 
+  // Convert to a canonical path.
+  std::string getCanonicalPath(llvm::StringRef path) const {
+    std::string CanonicalPath(path);
+    std::replace(CanonicalPath.begin(), CanonicalPath.end(), '\\', '/');
+    return CanonicalPath;
+  }
+
   // Get the handle of a header file entry.
   // Return HeaderHandleInvalid if not found.
   HeaderHandle findHeaderHandle(llvm::StringRef HeaderPath) const {
-    std::string CanonicalPath(HeaderPath);
-    std::replace(CanonicalPath.begin(), CanonicalPath.end(), '\\', '/');
+    std::string CanonicalPath = getCanonicalPath(HeaderPath);
     HeaderHandle H = 0;
     for (std::vector<StringHandle>::const_iterator I = HeaderPaths.begin(),
                                                    E = HeaderPaths.end();
@@ -993,8 +999,7 @@ public:
   // Add a new header file entry, or return existing handle.
   // Return the header handle.
   HeaderHandle addHeader(llvm::StringRef HeaderPath) {
-    std::string CanonicalPath(HeaderPath);
-    std::replace(CanonicalPath.begin(), CanonicalPath.end(), '\\', '/');
+    std::string CanonicalPath = getCanonicalPath(HeaderPath);
     HeaderHandle H = findHeaderHandle(CanonicalPath);
     if (H == HeaderHandleInvalid) {
       H = HeaderPaths.size();
