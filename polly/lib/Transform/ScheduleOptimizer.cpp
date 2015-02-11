@@ -106,6 +106,14 @@ public:
 private:
   isl_schedule *LastSchedule;
 
+  /// @brief Decide if the @p NewSchedule is profitable for @p S.
+  ///
+  /// @param S           The SCoP we optimize.
+  /// @param NewSchedule The new schedule we computed.
+  ///
+  /// @return True, if we believe @p NewSchedule is an improvement for @p S.
+  bool isProfitableSchedule(Scop &S, __isl_keep isl_union_map *NewSchedule);
+
   static void extendScattering(Scop &S, unsigned NewDimensions);
 
   /// @brief Create a map that describes a n-dimensonal tiling.
@@ -447,6 +455,23 @@ isl_union_map *IslScheduleOptimizer::getScheduleMap(isl_schedule *Schedule) {
   return ScheduleMap;
 }
 
+bool IslScheduleOptimizer::isProfitableSchedule(
+    Scop &S, __isl_keep isl_union_map *NewSchedule) {
+  // To understand if the schedule has been optimized we check if the schedule
+  // has changed at all.
+  // TODO: We can improve this by tracking if any necessarily beneficial
+  // transformations have been performed. This can e.g. be tiling, loop
+  // interchange, or ...) We can track this either at the place where the
+  // transformation has been performed or, in case of automatic ILP based
+  // optimizations, by comparing (yet to be defined) performance metrics
+  // before/after the scheduling optimizer
+  // (e.g., #stride-one accesses)
+  isl_union_map *OldSchedule = S.getSchedule();
+  bool changed = !isl_union_map_is_equal(OldSchedule, NewSchedule);
+  isl_union_map_free(OldSchedule);
+  return changed;
+}
+
 bool IslScheduleOptimizer::runOnScop(Scop &S) {
   Dependences *D = &getAnalysis<Dependences>();
 
@@ -554,13 +579,22 @@ bool IslScheduleOptimizer::runOnScop(Scop &S) {
 
   DEBUG(dbgs() << "Schedule := " << stringFromIslObj(Schedule) << ";\n");
 
-  isl_union_map *ScheduleMap = getScheduleMap(Schedule);
+  isl_union_map *NewSchedule = getScheduleMap(Schedule);
+
+  // Check if the optimizations performed were profitable, otherwise exit early.
+  if (!isProfitableSchedule(S, NewSchedule)) {
+    isl_schedule_free(Schedule);
+    isl_union_map_free(NewSchedule);
+    return false;
+  }
+
+  S.markAsOptimized();
 
   for (ScopStmt *Stmt : S) {
     isl_map *StmtSchedule;
     isl_set *Domain = Stmt->getDomain();
     isl_union_map *StmtBand;
-    StmtBand = isl_union_map_intersect_domain(isl_union_map_copy(ScheduleMap),
+    StmtBand = isl_union_map_intersect_domain(isl_union_map_copy(NewSchedule),
                                               isl_union_set_from_set(Domain));
     if (isl_union_map_is_empty(StmtBand)) {
       StmtSchedule = isl_map_from_domain(isl_set_empty(Stmt->getDomainSpace()));
@@ -573,7 +607,7 @@ bool IslScheduleOptimizer::runOnScop(Scop &S) {
     Stmt->setScattering(StmtSchedule);
   }
 
-  isl_union_map_free(ScheduleMap);
+  isl_union_map_free(NewSchedule);
   LastSchedule = Schedule;
 
   unsigned MaxScatDims = 0;

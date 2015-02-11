@@ -636,6 +636,9 @@ private:
   /// The underlying Region.
   Region &R;
 
+  /// Flag to indicate that the scheduler actually optimized the SCoP.
+  bool IsOptimized;
+
   /// Max loop depth.
   unsigned MaxLoopDepth;
 
@@ -790,6 +793,12 @@ public:
 
     return maxScatterDim;
   }
+
+  /// @brief Mark the SCoP as optimized by the scheduler.
+  void markAsOptimized() { IsOptimized = true; }
+
+  /// @brief Check if the SCoP has been optimized by the scheduler.
+  bool isOptimized() const { return IsOptimized; }
 
   /// @brief Get the name of this Scop.
   std::string getNameStr() const;

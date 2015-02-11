@@ -1,4 +1,4 @@
-;RUN: opt %loadPolly -polly-prepare -polly-detect-scops-in-regions-without-loops -polly-detect-scops-in-functions-without-loops -polly-ast -analyze < %s | FileCheck %s
+;RUN: opt %loadPolly -polly-no-early-exit -polly-prepare -polly-detect-scops-in-regions-without-loops -polly-detect-scops-in-functions-without-loops -polly-ast -analyze < %s | FileCheck %s
 
 ;#include <string.h>
 ;int A[1];

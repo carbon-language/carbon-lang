@@ -914,8 +914,14 @@ public:
   }
 
   bool runOnScop(Scop &S) {
-    LI = &getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
     AI = &getAnalysis<IslAstInfo>();
+
+    // Check if we created an isl_ast root node, otherwise exit.
+    isl_ast_node *AstRoot = AI->getAst();
+    if (!AstRoot)
+      return false;
+
+    LI = &getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
     DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
     SE = &getAnalysis<ScalarEvolution>();
     DL = &getAnalysis<DataLayoutPass>().getDataLayout();
@@ -937,7 +943,7 @@ public:
     BasicBlock *StartBlock = executeScopConditionally(S, this, RTC);
     Builder.SetInsertPoint(StartBlock->begin());
 
-    NodeBuilder.create(AI->getAst());
+    NodeBuilder.create(AstRoot);
     return true;
   }
 

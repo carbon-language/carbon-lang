@@ -63,6 +63,11 @@ static cl::opt<bool> DetectParallel("polly-ast-detect-parallel",
                                     cl::init(false), cl::ZeroOrMore,
                                     cl::cat(PollyCategory));
 
+static cl::opt<bool> NoEarlyExit(
+    "polly-no-early-exit",
+    cl::desc("Do not exit early if no benefit of the Polly version was found."),
+    cl::Hidden, cl::init(false), cl::ZeroOrMore, cl::cat(PollyCategory));
+
 namespace polly {
 class IslAst {
 public:
@@ -355,7 +360,38 @@ void IslAst::buildRunCondition(__isl_keep isl_ast_build *Build) {
   }
 }
 
-IslAst::IslAst(Scop *Scop, Dependences &D) : S(Scop) {
+/// @brief Simple cost analysis for a given SCoP
+///
+/// TODO: Improve this analysis and extract it to make it usable in other
+///       places too.
+///       In order to improve the cost model we could either keep track of
+///       performed optimizations (e.g., tiling) or compute properties on the
+///       original as well as optimized SCoP (e.g., #stride-one-accesses).
+static bool benefitsFromPolly(Scop *Scop, bool PerformParallelTest) {
+
+  // First check the user choice.
+  if (NoEarlyExit)
+    return true;
+
+  // Check if nothing interesting happened.
+  if (!PerformParallelTest && !Scop->isOptimized() &&
+      Scop->getAliasGroups().empty())
+    return false;
+
+  // The default assumption is that Polly improves the code.
+  return true;
+}
+
+IslAst::IslAst(Scop *Scop, Dependences &D)
+    : S(Scop), Root(nullptr), RunCondition(nullptr) {
+
+  bool PerformParallelTest = PollyParallel || DetectParallel ||
+                             PollyVectorizerChoice != VECTORIZER_NONE;
+
+  // Skip AST and code generation if there was no benefit achieved.
+  if (!benefitsFromPolly(Scop, PerformParallelTest))
+    return;
+
   isl_ctx *Ctx = S->getIslCtx();
   isl_options_set_ast_build_atomic_upper_bound(Ctx, true);
   isl_ast_build *Build;
@@ -371,8 +407,7 @@ IslAst::IslAst(Scop *Scop, Dependences &D) : S(Scop) {
   isl_union_map *Schedule =
       isl_union_map_intersect_domain(S->getSchedule(), S->getDomains());
 
-  if (PollyParallel || DetectParallel ||
-      PollyVectorizerChoice != VECTORIZER_NONE) {
+  if (PerformParallelTest) {
     BuildInfo.Deps = &D;
     BuildInfo.InParallelFor = 0;
 
@@ -505,10 +540,20 @@ isl_ast_build *IslAstInfo::getBuild(__isl_keep isl_ast_node *Node) {
 void IslAstInfo::printScop(raw_ostream &OS) const {
   isl_ast_print_options *Options;
   isl_ast_node *RootNode = getAst();
+  Scop &S = getCurScop();
+  Function *F = S.getRegion().getEntry()->getParent();
+
+  OS << ":: isl ast :: " << F->getName() << " :: " << S.getRegion().getNameStr()
+     << "\n";
+
+  if (!RootNode) {
+    OS << ":: isl ast generation and code generation was skipped!\n\n";
+    return;
+  }
+
   isl_ast_expr *RunCondition = getRunCondition();
   char *RtCStr, *AstStr;
 
-  Scop &S = getCurScop();
   Options = isl_ast_print_options_alloc(S.getIslCtx());
   Options = isl_ast_print_options_set_print_for(Options, cbPrintFor, nullptr);
 
@@ -521,12 +566,9 @@ void IslAstInfo::printScop(raw_ostream &OS) const {
   P = isl_ast_node_print(RootNode, P, Options);
   AstStr = isl_printer_get_str(P);
 
-  Function *F = S.getRegion().getEntry()->getParent();
   isl_union_map *Schedule =
       isl_union_map_intersect_domain(S.getSchedule(), S.getDomains());
 
-  OS << ":: isl ast :: " << F->getName() << " :: " << S.getRegion().getNameStr()
-     << "\n";
   DEBUG({
     dbgs() << S.getContextStr() << "\n";
     dbgs() << stringFromIslObj(Schedule);

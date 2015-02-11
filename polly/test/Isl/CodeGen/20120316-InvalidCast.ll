@@ -1,4 +1,4 @@
-; RUN: opt %loadPolly -S -polly-detect-scops-in-functions-without-loops -polly-detect-scops-in-regions-without-loops -polly-codegen-isl < %s | FileCheck %s
+; RUN: opt %loadPolly -S -polly-detect-scops-in-functions-without-loops -polly-detect-scops-in-regions-without-loops -polly-codegen-isl -polly-no-early-exit < %s | FileCheck %s
 
 ; CHECK: polly.start
 

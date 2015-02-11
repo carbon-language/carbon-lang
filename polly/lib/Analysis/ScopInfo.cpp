@@ -1550,7 +1550,7 @@ void Scop::dropConstantScheduleDims() {
 
 Scop::Scop(TempScop &tempScop, LoopInfo &LI, ScalarEvolution &ScalarEvolution,
            isl_ctx *Context)
-    : SE(&ScalarEvolution), R(tempScop.getMaxRegion()),
+    : SE(&ScalarEvolution), R(tempScop.getMaxRegion()), IsOptimized(false),
       MaxLoopDepth(getMaxLoopDepthInRegion(tempScop.getMaxRegion(), LI)) {
   IslCtx = Context;
   buildContext();

@@ -1,4 +1,4 @@
-; RUN: opt %loadPolly -polly-ast -S -analyze  < %s | FileCheck %s
+; RUN: opt %loadPolly -polly-no-early-exit -polly-ast -S -analyze  < %s | FileCheck %s
 ; XFAIL: *
 
 ;#include "limits.h"

@@ -1,4 +1,4 @@
-; RUN: opt %loadPolly -polly-ast -analyze  -S < %s | FileCheck %s
+; RUN: opt %loadPolly -polly-no-early-exit -polly-ast -analyze  -S < %s | FileCheck %s
 
 ;#include "limits.h"
 ;#define N 20
