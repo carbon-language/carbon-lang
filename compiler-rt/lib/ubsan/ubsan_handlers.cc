@@ -337,16 +337,19 @@ void __ubsan::__ubsan_handle_load_invalid_value_abort(InvalidValueData *Data,
 static void handleFunctionTypeMismatch(FunctionTypeMismatchData *Data,
                                        ValueHandle Function,
                                        ReportOptions Opts) {
+  SourceLocation CallLoc = Data->Loc.acquire();
+  if (ignoreReport(CallLoc, Opts))
+    return;
+
+  ScopedReport R(Opts, CallLoc);
+
   const char *FName = "(unknown)";
+  Location FLoc = getFunctionLocation(Function, &FName);
 
-  Location Loc = getFunctionLocation(Function, &FName);
-
-  ScopedReport R(Opts, Loc);
-
-  Diag(Data->Loc, DL_Error,
+  Diag(CallLoc, DL_Error,
        "call to function %0 through pointer to incorrect function type %1")
-    << FName << Data->Type;
-  Diag(Loc, DL_Note, "%0 defined here") << FName;
+      << FName << Data->Type;
+  Diag(FLoc, DL_Note, "%0 defined here") << FName;
 }
 
 void
