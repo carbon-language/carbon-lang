@@ -1,4 +1,5 @@
-;RUN: llc -march=amdgcn -mcpu=SI -verify-machineinstrs < %s | FileCheck --check-prefix=SI --check-prefix=FUNC %s
+;RUN: llc -march=amdgcn -mcpu=SI -verify-machineinstrs < %s | FileCheck --check-prefix=SI --check-prefix=GCN --check-prefix=FUNC %s
+;RUN: llc -march=amdgcn -mcpu=tonga -verify-machineinstrs < %s | FileCheck --check-prefix=VI --check-prefix=GCN --check-prefix=FUNC %s
 ;RUN: llc -march=r600 -mcpu=redwood < %s | FileCheck --check-prefix=EG --check-prefix=FUNC %s
 
 ;FUNC-LABEL: {{^}}test_sdiv:
@@ -35,39 +36,40 @@
 ;EG: BFE_UINT
 ;EG: BFE_UINT
 
-;SI: v_bfe_u32
-;SI: v_bfe_u32
-;SI: v_bfe_u32
-;SI: v_bfe_u32
-;SI: v_bfe_u32
-;SI: v_bfe_u32
-;SI: v_bfe_u32
-;SI: v_bfe_u32
-;SI: v_bfe_u32
-;SI: v_bfe_u32
-;SI: v_bfe_u32
-;SI: v_bfe_u32
-;SI: v_bfe_u32
-;SI: v_bfe_u32
-;SI: v_bfe_u32
-;SI: v_bfe_u32
-;SI: v_bfe_u32
-;SI: v_bfe_u32
-;SI: v_bfe_u32
-;SI: v_bfe_u32
-;SI: v_bfe_u32
-;SI: v_bfe_u32
-;SI: v_bfe_u32
-;SI: v_bfe_u32
-;SI: v_bfe_u32
-;SI: v_bfe_u32
-;SI: v_bfe_u32
-;SI: v_bfe_u32
-;SI: v_bfe_u32
-;SI: v_bfe_u32
-;SI-NOT: v_mad_f32
-;SI-NOT: v_lshr_64
-;SI: s_endpgm
+;GCN: v_bfe_u32
+;GCN: v_bfe_u32
+;GCN: v_bfe_u32
+;GCN: v_bfe_u32
+;GCN: v_bfe_u32
+;GCN: v_bfe_u32
+;GCN: v_bfe_u32
+;GCN: v_bfe_u32
+;GCN: v_bfe_u32
+;GCN: v_bfe_u32
+;GCN: v_bfe_u32
+;GCN: v_bfe_u32
+;GCN: v_bfe_u32
+;GCN: v_bfe_u32
+;GCN: v_bfe_u32
+;GCN: v_bfe_u32
+;GCN: v_bfe_u32
+;GCN: v_bfe_u32
+;GCN: v_bfe_u32
+;GCN: v_bfe_u32
+;GCN: v_bfe_u32
+;GCN: v_bfe_u32
+;GCN: v_bfe_u32
+;GCN: v_bfe_u32
+;GCN: v_bfe_u32
+;GCN: v_bfe_u32
+;GCN: v_bfe_u32
+;GCN: v_bfe_u32
+;GCN: v_bfe_u32
+;GCN: v_bfe_u32
+;GCN-NOT: v_mad_f32
+;SI-NOT: v_lshr_b64
+;VI-NOT: v_lshrrev_b64
+;GCN: s_endpgm
 define void @test_sdiv(i64 addrspace(1)* %out, i64 %x, i64 %y) {
   %result = sdiv i64 %x, %y
   store i64 %result, i64 addrspace(1)* %out
@@ -108,39 +110,40 @@ define void @test_sdiv(i64 addrspace(1)* %out, i64 %x, i64 %y) {
 ;EG: BFE_UINT
 ;EG: AND_INT {{.*}}, 1,
 
-;SI: s_bfe_u32
-;SI: s_bfe_u32
-;SI: s_bfe_u32
-;SI: s_bfe_u32
-;SI: s_bfe_u32
-;SI: s_bfe_u32
-;SI: s_bfe_u32
-;SI: s_bfe_u32
-;SI: s_bfe_u32
-;SI: s_bfe_u32
-;SI: s_bfe_u32
-;SI: s_bfe_u32
-;SI: s_bfe_u32
-;SI: s_bfe_u32
-;SI: s_bfe_u32
-;SI: s_bfe_u32
-;SI: s_bfe_u32
-;SI: s_bfe_u32
-;SI: s_bfe_u32
-;SI: s_bfe_u32
-;SI: s_bfe_u32
-;SI: s_bfe_u32
-;SI: s_bfe_u32
-;SI: s_bfe_u32
-;SI: s_bfe_u32
-;SI: s_bfe_u32
-;SI: s_bfe_u32
-;SI: s_bfe_u32
-;SI: s_bfe_u32
-;SI: s_bfe_u32
-;SI-NOT: v_mad_f32
-;SI-NOT: v_lshr_64
-;SI: s_endpgm
+;GCN: s_bfe_u32
+;GCN: s_bfe_u32
+;GCN: s_bfe_u32
+;GCN: s_bfe_u32
+;GCN: s_bfe_u32
+;GCN: s_bfe_u32
+;GCN: s_bfe_u32
+;GCN: s_bfe_u32
+;GCN: s_bfe_u32
+;GCN: s_bfe_u32
+;GCN: s_bfe_u32
+;GCN: s_bfe_u32
+;GCN: s_bfe_u32
+;GCN: s_bfe_u32
+;GCN: s_bfe_u32
+;GCN: s_bfe_u32
+;GCN: s_bfe_u32
+;GCN: s_bfe_u32
+;GCN: s_bfe_u32
+;GCN: s_bfe_u32
+;GCN: s_bfe_u32
+;GCN: s_bfe_u32
+;GCN: s_bfe_u32
+;GCN: s_bfe_u32
+;GCN: s_bfe_u32
+;GCN: s_bfe_u32
+;GCN: s_bfe_u32
+;GCN: s_bfe_u32
+;GCN: s_bfe_u32
+;GCN: s_bfe_u32
+;GCN-NOT: v_mad_f32
+;SI-NOT: v_lshr_b64
+;VI-NOT: v_lshrrev_b64
+;GCN: s_endpgm
 define void @test_srem(i64 addrspace(1)* %out, i64 %x, i64 %y) {
   %result = urem i64 %x, %y
   store i64 %result, i64 addrspace(1)* %out
@@ -151,10 +154,11 @@ define void @test_srem(i64 addrspace(1)* %out, i64 %x, i64 %y) {
 ;EG: RECIP_UINT
 ;EG-NOT: BFE_UINT
 
-;SI-NOT: s_bfe_u32
-;SI-NOT: v_mad_f32
-;SI-NOT: v_lshr_64
-;SI: s_endpgm
+;GCN-NOT: s_bfe_u32
+;GCN-NOT: v_mad_f32
+;SI-NOT: v_lshr_b64
+;VI-NOT: v_lshrrev_b64
+;GCN: s_endpgm
 define void @test_sdiv3264(i64 addrspace(1)* %out, i64 %x, i64 %y) {
   %1 = ashr i64 %x, 33
   %2 = ashr i64 %y, 33
@@ -167,10 +171,11 @@ define void @test_sdiv3264(i64 addrspace(1)* %out, i64 %x, i64 %y) {
 ;EG: RECIP_UINT
 ;EG-NOT: BFE_UINT
 
-;SI-NOT: s_bfe_u32
-;SI-NOT: v_mad_f32
-;SI-NOT: v_lshr_64
-;SI: s_endpgm
+;GCN-NOT: s_bfe_u32
+;GCN-NOT: v_mad_f32
+;SI-NOT: v_lshr_b64
+;VI-NOT: v_lshrrev_b64
+;GCN: s_endpgm
 define void @test_srem3264(i64 addrspace(1)* %out, i64 %x, i64 %y) {
   %1 = ashr i64 %x, 33
   %2 = ashr i64 %y, 33
@@ -186,10 +191,11 @@ define void @test_srem3264(i64 addrspace(1)* %out, i64 %x, i64 %y) {
 ;EG-NOT: RECIP_UINT
 ;EG-NOT: BFE_UINT
 
-;SI-NOT: s_bfe_u32
-;SI: v_mad_f32
-;SI-NOT: v_lshr_64
-;SI: s_endpgm
+;GCN-NOT: s_bfe_u32
+;GCN: v_mad_f32
+;SI-NOT: v_lshr_b64
+;VI-NOT: v_lshrrev_b64
+;GCN: s_endpgm
 define void @test_sdiv2464(i64 addrspace(1)* %out, i64 %x, i64 %y) {
   %1 = ashr i64 %x, 40
   %2 = ashr i64 %y, 40
@@ -205,10 +211,11 @@ define void @test_sdiv2464(i64 addrspace(1)* %out, i64 %x, i64 %y) {
 ;EG-NOT: RECIP_UINT
 ;EG-NOT: BFE_UINT
 
-;SI-NOT: s_bfe_u32
-;SI: v_mad_f32
-;SI-NOT: v_lshr_64
-;SI: s_endpgm
+;GCN-NOT: s_bfe_u32
+;GCN: v_mad_f32
+;SI-NOT: v_lshr_b64
+;VI-NOT: v_lshrrev_b64
+;GCN: s_endpgm
 define void @test_srem2464(i64 addrspace(1)* %out, i64 %x, i64 %y) {
   %1 = ashr i64 %x, 40
   %2 = ashr i64 %y, 40

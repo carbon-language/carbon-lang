@@ -1,7 +1,9 @@
-;RUN: llc < %s -march=amdgcn -mcpu=verde -verify-machineinstrs | FileCheck %s
+;RUN: llc < %s -march=amdgcn -mcpu=verde -verify-machineinstrs | FileCheck --check-prefix=SI --check-prefix=GCN %s
+;RUN: llc < %s -march=amdgcn -mcpu=tonga -verify-machineinstrs | FileCheck --check-prefix=VI --check-prefix=GCN %s
 
-;CHECK: v_mbcnt_lo_u32_b32_e64
-;CHECK: v_mbcnt_hi_u32_b32_e32
+;GCN: v_mbcnt_lo_u32_b32_e64
+;SI: v_mbcnt_hi_u32_b32_e32
+;VI: v_mbcnt_hi_u32_b32_e64
 
 define void @main(<16 x i8> addrspace(2)* inreg, <16 x i8> addrspace(2)* inreg, <32 x i8> addrspace(2)* inreg, i32 inreg) "ShaderType"="0" {
 main_body:

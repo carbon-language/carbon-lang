@@ -1,4 +1,5 @@
 ; RUN: llc -verify-machineinstrs -march=amdgcn -mcpu=SI < %s | FileCheck %s
+; RUN: llc -verify-machineinstrs -march=amdgcn -mcpu=tonga < %s | FileCheck %s
 
 ; When a frame index offset is more than 12-bits, make sure we don't store
 ; it in mubuf's offset field.

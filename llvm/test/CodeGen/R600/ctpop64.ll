@@ -1,4 +1,5 @@
-; RUN: llc -march=amdgcn -mcpu=SI -verify-machineinstrs < %s | FileCheck -check-prefix=SI -check-prefix=FUNC %s
+; RUN: llc -march=amdgcn -mcpu=SI -verify-machineinstrs < %s | FileCheck -check-prefix=SI -check-prefix=GCN -check-prefix=FUNC %s
+; RUN: llc -march=amdgcn -mcpu=tonga -verify-machineinstrs < %s | FileCheck -check-prefix=VI -check-prefix=GCN -check-prefix=FUNC %s
 
 declare i64 @llvm.ctpop.i64(i64) nounwind readnone
 declare <2 x i64> @llvm.ctpop.v2i64(<2 x i64>) nounwind readnone
@@ -8,10 +9,11 @@ declare <16 x i64> @llvm.ctpop.v16i64(<16 x i64>) nounwind readnone
 
 ; FUNC-LABEL: {{^}}s_ctpop_i64:
 ; SI: s_load_dwordx2 [[SVAL:s\[[0-9]+:[0-9]+\]]], s{{\[[0-9]+:[0-9]+\]}}, 0xb
-; SI: s_bcnt1_i32_b64 [[SRESULT:s[0-9]+]], [[SVAL]]
-; SI: v_mov_b32_e32 [[VRESULT:v[0-9]+]], [[SRESULT]]
-; SI: buffer_store_dword [[VRESULT]],
-; SI: s_endpgm
+; VI: s_load_dwordx2 [[SVAL:s\[[0-9]+:[0-9]+\]]], s{{\[[0-9]+:[0-9]+\]}}, 0x2c
+; GCN: s_bcnt1_i32_b64 [[SRESULT:s[0-9]+]], [[SVAL]]
+; GCN: v_mov_b32_e32 [[VRESULT:v[0-9]+]], [[SRESULT]]
+; GCN: buffer_store_dword [[VRESULT]],
+; GCN: s_endpgm
 define void @s_ctpop_i64(i32 addrspace(1)* noalias %out, i64 %val) nounwind {
   %ctpop = call i64 @llvm.ctpop.i64(i64 %val) nounwind readnone
   %truncctpop = trunc i64 %ctpop to i32
@@ -20,11 +22,12 @@ define void @s_ctpop_i64(i32 addrspace(1)* noalias %out, i64 %val) nounwind {
 }
 
 ; FUNC-LABEL: {{^}}v_ctpop_i64:
-; SI: buffer_load_dwordx2 v{{\[}}[[LOVAL:[0-9]+]]:[[HIVAL:[0-9]+]]{{\]}},
-; SI: v_bcnt_u32_b32_e64 [[MIDRESULT:v[0-9]+]], v[[LOVAL]], 0
+; GCN: buffer_load_dwordx2 v{{\[}}[[LOVAL:[0-9]+]]:[[HIVAL:[0-9]+]]{{\]}},
+; GCN: v_bcnt_u32_b32_e64 [[MIDRESULT:v[0-9]+]], v[[LOVAL]], 0
 ; SI-NEXT: v_bcnt_u32_b32_e32 [[RESULT:v[0-9]+]], v[[HIVAL]], [[MIDRESULT]]
-; SI: buffer_store_dword [[RESULT]],
-; SI: s_endpgm
+; VI-NEXT: v_bcnt_u32_b32_e64 [[RESULT:v[0-9]+]], v[[HIVAL]], [[MIDRESULT]]
+; GCN: buffer_store_dword [[RESULT]],
+; GCN: s_endpgm
 define void @v_ctpop_i64(i32 addrspace(1)* noalias %out, i64 addrspace(1)* noalias %in) nounwind {
   %val = load i64 addrspace(1)* %in, align 8
   %ctpop = call i64 @llvm.ctpop.i64(i64 %val) nounwind readnone
@@ -34,9 +37,9 @@ define void @v_ctpop_i64(i32 addrspace(1)* noalias %out, i64 addrspace(1)* noali
 }
 
 ; FUNC-LABEL: {{^}}s_ctpop_v2i64:
-; SI: s_bcnt1_i32_b64
-; SI: s_bcnt1_i32_b64
-; SI: s_endpgm
+; GCN: s_bcnt1_i32_b64
+; GCN: s_bcnt1_i32_b64
+; GCN: s_endpgm
 define void @s_ctpop_v2i64(<2 x i32> addrspace(1)* noalias %out, <2 x i64> %val) nounwind {
   %ctpop = call <2 x i64> @llvm.ctpop.v2i64(<2 x i64> %val) nounwind readnone
   %truncctpop = trunc <2 x i64> %ctpop to <2 x i32>
@@ -45,11 +48,11 @@ define void @s_ctpop_v2i64(<2 x i32> addrspace(1)* noalias %out, <2 x i64> %val)
 }
 
 ; FUNC-LABEL: {{^}}s_ctpop_v4i64:
-; SI: s_bcnt1_i32_b64
-; SI: s_bcnt1_i32_b64
-; SI: s_bcnt1_i32_b64
-; SI: s_bcnt1_i32_b64
-; SI: s_endpgm
+; GCN: s_bcnt1_i32_b64
+; GCN: s_bcnt1_i32_b64
+; GCN: s_bcnt1_i32_b64
+; GCN: s_bcnt1_i32_b64
+; GCN: s_endpgm
 define void @s_ctpop_v4i64(<4 x i32> addrspace(1)* noalias %out, <4 x i64> %val) nounwind {
   %ctpop = call <4 x i64> @llvm.ctpop.v4i64(<4 x i64> %val) nounwind readnone
   %truncctpop = trunc <4 x i64> %ctpop to <4 x i32>
@@ -58,11 +61,11 @@ define void @s_ctpop_v4i64(<4 x i32> addrspace(1)* noalias %out, <4 x i64> %val)
 }
 
 ; FUNC-LABEL: {{^}}v_ctpop_v2i64:
-; SI: v_bcnt_u32_b32
-; SI: v_bcnt_u32_b32
-; SI: v_bcnt_u32_b32
-; SI: v_bcnt_u32_b32
-; SI: s_endpgm
+; GCN: v_bcnt_u32_b32
+; GCN: v_bcnt_u32_b32
+; GCN: v_bcnt_u32_b32
+; GCN: v_bcnt_u32_b32
+; GCN: s_endpgm
 define void @v_ctpop_v2i64(<2 x i32> addrspace(1)* noalias %out, <2 x i64> addrspace(1)* noalias %in) nounwind {
   %val = load <2 x i64> addrspace(1)* %in, align 16
   %ctpop = call <2 x i64> @llvm.ctpop.v2i64(<2 x i64> %val) nounwind readnone
@@ -72,15 +75,15 @@ define void @v_ctpop_v2i64(<2 x i32> addrspace(1)* noalias %out, <2 x i64> addrs
 }
 
 ; FUNC-LABEL: {{^}}v_ctpop_v4i64:
-; SI: v_bcnt_u32_b32
-; SI: v_bcnt_u32_b32
-; SI: v_bcnt_u32_b32
-; SI: v_bcnt_u32_b32
-; SI: v_bcnt_u32_b32
-; SI: v_bcnt_u32_b32
-; SI: v_bcnt_u32_b32
-; SI: v_bcnt_u32_b32
-; SI: s_endpgm
+; GCN: v_bcnt_u32_b32
+; GCN: v_bcnt_u32_b32
+; GCN: v_bcnt_u32_b32
+; GCN: v_bcnt_u32_b32
+; GCN: v_bcnt_u32_b32
+; GCN: v_bcnt_u32_b32
+; GCN: v_bcnt_u32_b32
+; GCN: v_bcnt_u32_b32
+; GCN: s_endpgm
 define void @v_ctpop_v4i64(<4 x i32> addrspace(1)* noalias %out, <4 x i64> addrspace(1)* noalias %in) nounwind {
   %val = load <4 x i64> addrspace(1)* %in, align 32
   %ctpop = call <4 x i64> @llvm.ctpop.v4i64(<4 x i64> %val) nounwind readnone
@@ -94,11 +97,12 @@ define void @v_ctpop_v4i64(<4 x i32> addrspace(1)* noalias %out, <4 x i64> addrs
 
 ; FUNC-LABEL: {{^}}ctpop_i64_in_br:
 ; SI: s_load_dwordx2 s{{\[}}[[LOVAL:[0-9]+]]:[[HIVAL:[0-9]+]]{{\]}}, s[{{[0-9]+:[0-9]+}}], 0xd
-; SI: s_bcnt1_i32_b64 [[RESULT:s[0-9]+]], {{s\[}}[[LOVAL]]:[[HIVAL]]{{\]}}
-; SI: v_mov_b32_e32 v[[VLO:[0-9]+]], [[RESULT]]
-; SI: v_mov_b32_e32 v[[VHI:[0-9]+]], s[[HIVAL]]
-; SI: buffer_store_dwordx2 {{v\[}}[[VLO]]:[[VHI]]{{\]}}
-; SI: s_endpgm
+; VI: s_load_dwordx2 s{{\[}}[[LOVAL:[0-9]+]]:[[HIVAL:[0-9]+]]{{\]}}, s[{{[0-9]+:[0-9]+}}], 0x34
+; GCN: s_bcnt1_i32_b64 [[RESULT:s[0-9]+]], {{s\[}}[[LOVAL]]:[[HIVAL]]{{\]}}
+; GCN: v_mov_b32_e32 v[[VLO:[0-9]+]], [[RESULT]]
+; GCN: v_mov_b32_e32 v[[VHI:[0-9]+]], s[[HIVAL]]
+; GCN: buffer_store_dwordx2 {{v\[}}[[VLO]]:[[VHI]]{{\]}}
+; GCN: s_endpgm
 define void @ctpop_i64_in_br(i64 addrspace(1)* %out, i64 addrspace(1)* %in, i64 %ctpop_arg, i32 %cond) {
 entry:
   %tmp0 = icmp eq i32 %cond, 0

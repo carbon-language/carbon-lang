@@ -1,8 +1,10 @@
 ; RUN: llc -march=amdgcn -mcpu=verde -verify-machineinstrs < %s | FileCheck -check-prefix=SI -check-prefix=FUNC %s
+; RUN: llc -march=amdgcn -mcpu=tonga -verify-machineinstrs < %s | FileCheck -check-prefix=VI -check-prefix=FUNC %s
 ; RUN: llc -march=r600 -mcpu=redwood < %s | FileCheck -check-prefix=EG -check-prefix=FUNC %s
 
 ; FUNC-LABEL: {{^}}lshr_i32:
 ; SI: v_lshrrev_b32_e32 v{{[0-9]+, v[0-9]+, v[0-9]+}}
+; VI: v_lshrrev_b32_e32 v{{[0-9]+, v[0-9]+, v[0-9]+}}
 ; EG: LSHR {{\*? *}}T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
 define void @lshr_i32(i32 addrspace(1)* %out, i32 addrspace(1)* %in) {
   %b_ptr = getelementptr i32 addrspace(1)* %in, i32 1
@@ -16,6 +18,9 @@ define void @lshr_i32(i32 addrspace(1)* %out, i32 addrspace(1)* %in) {
 ; FUNC-LABEL: {{^}}lshr_v2i32:
 ; SI: v_lshr_b32_e32 v{{[0-9]+, v[0-9]+, v[0-9]+}}
 ; SI: v_lshr_b32_e32 v{{[0-9]+, v[0-9]+, v[0-9]+}}
+
+; VI: v_lshrrev_b32_e32 v{{[0-9]+, v[0-9]+, v[0-9]+}}
+; VI: v_lshrrev_b32_e32 v{{[0-9]+, v[0-9]+, v[0-9]+}}
 
 ; EG: LSHR {{\*? *}}T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
 ; EG: LSHR {{\*? *}}T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
@@ -34,6 +39,11 @@ define void @lshr_v2i32(<2 x i32> addrspace(1)* %out, <2 x i32> addrspace(1)* %i
 ; SI: v_lshr_b32_e32 v{{[0-9]+, v[0-9]+, v[0-9]+}}
 ; SI: v_lshr_b32_e32 v{{[0-9]+, v[0-9]+, v[0-9]+}}
 
+; VI: v_lshrrev_b32_e32 v{{[0-9]+, v[0-9]+, v[0-9]+}}
+; VI: v_lshrrev_b32_e32 v{{[0-9]+, v[0-9]+, v[0-9]+}}
+; VI: v_lshrrev_b32_e32 v{{[0-9]+, v[0-9]+, v[0-9]+}}
+; VI: v_lshrrev_b32_e32 v{{[0-9]+, v[0-9]+, v[0-9]+}}
+
 ; EG: LSHR {{\*? *}}T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
 ; EG: LSHR {{\*? *}}T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
 ; EG: LSHR {{\*? *}}T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
@@ -49,6 +59,7 @@ define void @lshr_v4i32(<4 x i32> addrspace(1)* %out, <4 x i32> addrspace(1)* %i
 
 ; FUNC-LABEL: {{^}}lshr_i64:
 ; SI: v_lshr_b64 {{v\[[0-9]+:[0-9]+\], v\[[0-9]+:[0-9]+\], v[0-9]+}}
+; VI: v_lshrrev_b64 {{v\[[0-9]+:[0-9]+\], v[0-9]+, v\[[0-9]+:[0-9]+\]}}
 
 ; EG: SUB_INT {{\*? *}}[[COMPSH:T[0-9]+\.[XYZW]]], {{literal.[xy]}}, [[SHIFT:T[0-9]+\.[XYZW]]]
 ; EG: LSHL {{\* *}}[[TEMP:T[0-9]+\.[XYZW]]], [[OPHI:T[0-9]+\.[XYZW]]], {{[[COMPSH]]|PV.[XYZW]}}
@@ -73,6 +84,9 @@ define void @lshr_i64(i64 addrspace(1)* %out, i64 addrspace(1)* %in) {
 ; FUNC-LABEL: {{^}}lshr_v2i64:
 ; SI: v_lshr_b64 {{v\[[0-9]+:[0-9]+\], v\[[0-9]+:[0-9]+\], v[0-9]+}}
 ; SI: v_lshr_b64 {{v\[[0-9]+:[0-9]+\], v\[[0-9]+:[0-9]+\], v[0-9]+}}
+
+; VI: v_lshrrev_b64 {{v\[[0-9]+:[0-9]+\], v[0-9]+, v\[[0-9]+:[0-9]+\]}}
+; VI: v_lshrrev_b64 {{v\[[0-9]+:[0-9]+\], v[0-9]+, v\[[0-9]+:[0-9]+\]}}
 
 ; EG-DAG: SUB_INT {{\*? *}}[[COMPSHA:T[0-9]+\.[XYZW]]], {{literal.[xy]}}, [[SHA:T[0-9]+\.[XYZW]]]
 ; EG-DAG: SUB_INT {{\*? *}}[[COMPSHB:T[0-9]+\.[XYZW]]], {{literal.[xy]}}, [[SHB:T[0-9]+\.[XYZW]]]
@@ -110,6 +124,11 @@ define void @lshr_v2i64(<2 x i64> addrspace(1)* %out, <2 x i64> addrspace(1)* %i
 ; SI: v_lshr_b64 {{v\[[0-9]+:[0-9]+\], v\[[0-9]+:[0-9]+\], v[0-9]+}}
 ; SI: v_lshr_b64 {{v\[[0-9]+:[0-9]+\], v\[[0-9]+:[0-9]+\], v[0-9]+}}
 ; SI: v_lshr_b64 {{v\[[0-9]+:[0-9]+\], v\[[0-9]+:[0-9]+\], v[0-9]+}}
+
+; VI: v_lshrrev_b64 {{v\[[0-9]+:[0-9]+\], v[0-9]+, v\[[0-9]+:[0-9]+\]}}
+; VI: v_lshrrev_b64 {{v\[[0-9]+:[0-9]+\], v[0-9]+, v\[[0-9]+:[0-9]+\]}}
+; VI: v_lshrrev_b64 {{v\[[0-9]+:[0-9]+\], v[0-9]+, v\[[0-9]+:[0-9]+\]}}
+; VI: v_lshrrev_b64 {{v\[[0-9]+:[0-9]+\], v[0-9]+, v\[[0-9]+:[0-9]+\]}}
 
 ; EG-DAG: SUB_INT {{\*? *}}[[COMPSHA:T[0-9]+\.[XYZW]]], {{literal.[xy]}}, [[SHA:T[0-9]+\.[XYZW]]]
 ; EG-DAG: SUB_INT {{\*? *}}[[COMPSHB:T[0-9]+\.[XYZW]]], {{literal.[xy]}}, [[SHB:T[0-9]+\.[XYZW]]]

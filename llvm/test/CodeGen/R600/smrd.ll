@@ -1,8 +1,10 @@
-; RUN: llc < %s -march=amdgcn -mcpu=SI -show-mc-encoding -verify-machineinstrs | FileCheck %s
+; RUN: llc < %s -march=amdgcn -mcpu=SI -show-mc-encoding -verify-machineinstrs | FileCheck --check-prefix=SI --check-prefix=GCN %s
+; RUN: llc < %s -march=amdgcn -mcpu=tonga -show-mc-encoding -verify-machineinstrs | FileCheck --check-prefix=VI --check-prefix=GCN %s
 
 ; SMRD load with an immediate offset.
-; CHECK-LABEL: {{^}}smrd0:
-; CHECK: s_load_dword s{{[0-9]}}, s[{{[0-9]:[0-9]}}], 0x1 ; encoding: [0x01
+; GCN-LABEL: {{^}}smrd0:
+; SI: s_load_dword s{{[0-9]}}, s[{{[0-9]:[0-9]}}], 0x1 ; encoding: [0x01
+; VI: s_load_dword s{{[0-9]}}, s[{{[0-9]:[0-9]}}], 0x4
 define void @smrd0(i32 addrspace(1)* %out, i32 addrspace(2)* %ptr) {
 entry:
   %0 = getelementptr i32 addrspace(2)* %ptr, i64 1
@@ -12,8 +14,9 @@ entry:
 }
 
 ; SMRD load with the largest possible immediate offset.
-; CHECK-LABEL: {{^}}smrd1:
-; CHECK: s_load_dword s{{[0-9]}}, s[{{[0-9]:[0-9]}}], 0xff ; encoding: [0xff
+; GCN-LABEL: {{^}}smrd1:
+; SI: s_load_dword s{{[0-9]}}, s[{{[0-9]:[0-9]}}], 0xff ; encoding: [0xff
+; VI: s_load_dword s{{[0-9]}}, s[{{[0-9]:[0-9]}}], 0x3fc
 define void @smrd1(i32 addrspace(1)* %out, i32 addrspace(2)* %ptr) {
 entry:
   %0 = getelementptr i32 addrspace(2)* %ptr, i64 255
@@ -23,10 +26,11 @@ entry:
 }
 
 ; SMRD load with an offset greater than the largest possible immediate.
-; CHECK-LABEL: {{^}}smrd2:
-; CHECK: s_movk_i32 s[[OFFSET:[0-9]]], 0x400
-; CHECK: s_load_dword s{{[0-9]}}, s[{{[0-9]:[0-9]}}], s[[OFFSET]] ; encoding: [0x0[[OFFSET]]
-; CHECK: s_endpgm
+; GCN-LABEL: {{^}}smrd2:
+; SI: s_movk_i32 s[[OFFSET:[0-9]]], 0x400
+; SI: s_load_dword s{{[0-9]}}, s[{{[0-9]:[0-9]}}], s[[OFFSET]] ; encoding: [0x0[[OFFSET]]
+; VI: s_load_dword s{{[0-9]}}, s[{{[0-9]:[0-9]}}], 0x400
+; GCN: s_endpgm
 define void @smrd2(i32 addrspace(1)* %out, i32 addrspace(2)* %ptr) {
 entry:
   %0 = getelementptr i32 addrspace(2)* %ptr, i64 256
@@ -36,17 +40,18 @@ entry:
 }
 
 ; SMRD load with a 64-bit offset
-; CHECK-LABEL: {{^}}smrd3:
+; GCN-LABEL: {{^}}smrd3:
 ; FIXME: There are too many copies here because we don't fold immediates
 ;        through REG_SEQUENCE
-; CHECK: s_mov_b32 s[[SLO:[0-9]+]], 0 ;
-; CHECK: s_mov_b32 s[[SHI:[0-9]+]], 4
-; CHECK: s_mov_b32 s[[SSLO:[0-9]+]], s[[SLO]]
-; CHECK-DAG: v_mov_b32_e32 v[[VLO:[0-9]+]], s[[SSLO]]
-; CHECK-DAG: v_mov_b32_e32 v[[VHI:[0-9]+]], s[[SHI]]
+; SI: s_mov_b32 s[[SLO:[0-9]+]], 0 ;
+; SI: s_mov_b32 s[[SHI:[0-9]+]], 4
+; SI: s_mov_b32 s[[SSLO:[0-9]+]], s[[SLO]]
+; SI-DAG: v_mov_b32_e32 v[[VLO:[0-9]+]], s[[SSLO]]
+; SI-DAG: v_mov_b32_e32 v[[VHI:[0-9]+]], s[[SHI]]
 ; FIXME: We should be able to use s_load_dword here
-; CHECK: buffer_load_dword v{{[0-9]+}}, v{{\[}}[[VLO]]:[[VHI]]{{\]}}, s[{{[0-9]+:[0-9]+}}], 0 addr64
-; CHECK: s_endpgm
+; SI: buffer_load_dword v{{[0-9]+}}, v{{\[}}[[VLO]]:[[VHI]]{{\]}}, s[{{[0-9]+:[0-9]+}}], 0 addr64
+; TODO: Add VI checks
+; GCN: s_endpgm
 define void @smrd3(i32 addrspace(1)* %out, i32 addrspace(2)* %ptr) {
 entry:
   %0 = getelementptr i32 addrspace(2)* %ptr, i64 4294967296 ; 2 ^ 32
@@ -56,8 +61,9 @@ entry:
 }
 
 ; SMRD load using the load.const intrinsic with an immediate offset
-; CHECK-LABEL: {{^}}smrd_load_const0:
-; CHECK: s_buffer_load_dword s{{[0-9]}}, s[{{[0-9]:[0-9]}}], 0x4 ; encoding: [0x04
+; GCN-LABEL: {{^}}smrd_load_const0:
+; SI: s_buffer_load_dword s{{[0-9]}}, s[{{[0-9]:[0-9]}}], 0x4 ; encoding: [0x04
+; VI: s_buffer_load_dword s{{[0-9]}}, s[{{[0-9]:[0-9]}}], 0x10
 define void @smrd_load_const0(<16 x i8> addrspace(2)* inreg, <16 x i8> addrspace(2)* inreg, <32 x i8> addrspace(2)* inreg, i32 inreg, <2 x i32>, <2 x i32>, <2 x i32>, <3 x i32>, <2 x i32>, <2 x i32>, <2 x i32>, float, float, float, float, float, float, float, float, float) #0 {
 main_body:
   %20 = getelementptr <16 x i8> addrspace(2)* %0, i32 0
@@ -69,8 +75,9 @@ main_body:
 
 ; SMRD load using the load.const intrinsic with the largest possible immediate
 ; offset.
-; CHECK-LABEL: {{^}}smrd_load_const1:
-; CHECK: s_buffer_load_dword s{{[0-9]}}, s[{{[0-9]:[0-9]}}], 0xff ; encoding: [0xff
+; GCN-LABEL: {{^}}smrd_load_const1:
+; SI: s_buffer_load_dword s{{[0-9]}}, s[{{[0-9]:[0-9]}}], 0xff ; encoding: [0xff
+; VI: s_buffer_load_dword s{{[0-9]}}, s[{{[0-9]:[0-9]}}], 0x3fc
 define void @smrd_load_const1(<16 x i8> addrspace(2)* inreg, <16 x i8> addrspace(2)* inreg, <32 x i8> addrspace(2)* inreg, i32 inreg, <2 x i32>, <2 x i32>, <2 x i32>, <3 x i32>, <2 x i32>, <2 x i32>, <2 x i32>, float, float, float, float, float, float, float, float, float) #0 {
 main_body:
   %20 = getelementptr <16 x i8> addrspace(2)* %0, i32 0
@@ -82,9 +89,10 @@ main_body:
 ; SMRD load using the load.const intrinsic with an offset greater than the
 ; largets possible immediate.
 ; immediate offset.
-; CHECK-LABEL: {{^}}smrd_load_const2:
-; CHECK: s_movk_i32 s[[OFFSET:[0-9]]], 0x400
-; CHECK: s_buffer_load_dword s{{[0-9]}}, s[{{[0-9]:[0-9]}}], s[[OFFSET]] ; encoding: [0x0[[OFFSET]]
+; GCN-LABEL: {{^}}smrd_load_const2:
+; SI: s_movk_i32 s[[OFFSET:[0-9]]], 0x400
+; SI: s_buffer_load_dword s{{[0-9]}}, s[{{[0-9]:[0-9]}}], s[[OFFSET]] ; encoding: [0x0[[OFFSET]]
+; VI: s_buffer_load_dword s{{[0-9]}}, s[{{[0-9]:[0-9]}}], 0x400
 define void @smrd_load_const2(<16 x i8> addrspace(2)* inreg, <16 x i8> addrspace(2)* inreg, <32 x i8> addrspace(2)* inreg, i32 inreg, <2 x i32>, <2 x i32>, <2 x i32>, <3 x i32>, <2 x i32>, <2 x i32>, <2 x i32>, float, float, float, float, float, float, float, float, float) #0 {
 main_body:
   %20 = getelementptr <16 x i8> addrspace(2)* %0, i32 0
