@@ -440,10 +440,11 @@ namespace llvm {
                                       StringRef UniqueIdentifier = StringRef());
 
     /// \brief Create a temporary forward-declared type.
-    DICompositeType createReplaceableForwardDecl(
+    DICompositeType createReplaceableCompositeType(
         unsigned Tag, StringRef Name, DIDescriptor Scope, DIFile F,
         unsigned Line, unsigned RuntimeLang = 0, uint64_t SizeInBits = 0,
-        uint64_t AlignInBits = 0, StringRef UniqueIdentifier = StringRef());
+        uint64_t AlignInBits = 0, unsigned Flags = DIDescriptor::FlagFwdDecl,
+        StringRef UniqueIdentifier = StringRef());
 
     /// retainType - Retain DIType in a module even if it is not referenced
     /// through debug info anchors.

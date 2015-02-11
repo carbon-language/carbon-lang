@@ -816,10 +816,10 @@ DIBuilder::createForwardDecl(unsigned Tag, StringRef Name, DIDescriptor Scope,
   return RetTy;
 }
 
-DICompositeType DIBuilder::createReplaceableForwardDecl(
+DICompositeType DIBuilder::createReplaceableCompositeType(
     unsigned Tag, StringRef Name, DIDescriptor Scope, DIFile F, unsigned Line,
     unsigned RuntimeLang, uint64_t SizeInBits, uint64_t AlignInBits,
-    StringRef UniqueIdentifier) {
+    unsigned Flags, StringRef UniqueIdentifier) {
   // Create a temporary MDNode.
   Metadata *Elts[] = {
       HeaderBuilder::get(Tag)
@@ -828,7 +828,7 @@ DICompositeType DIBuilder::createReplaceableForwardDecl(
           .concat(SizeInBits)
           .concat(AlignInBits)
           .concat(0) // Offset
-          .concat(DIDescriptor::FlagFwdDecl)
+          .concat(Flags)
           .concat(RuntimeLang)
           .get(VMContext),
       F.getFileNode(), DIScope(getNonCompileUnitScope(Scope)).getRef(), nullptr,
