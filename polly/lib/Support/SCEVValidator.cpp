@@ -326,6 +326,30 @@ public:
     return ValidatorResult(SCEVType::PARAM, Expr);
   }
 
+  ValidatorResult visitGenericInst(Instruction *I, const SCEV *S) {
+    if (R->contains(I)) {
+      DEBUG(dbgs() << "INVALID: UnknownExpr references an instruction "
+                      "within the region\n");
+      return ValidatorResult(SCEVType::INVALID);
+    }
+
+    return ValidatorResult(SCEVType::PARAM, S);
+  }
+
+  ValidatorResult visitSDivInstruction(Instruction *SDiv, const SCEV *S) {
+    assert(SDiv->getOpcode() == Instruction::SDiv &&
+           "Assumed SDiv instruction!");
+
+    auto *Divisor = SDiv->getOperand(1);
+    auto *CI = dyn_cast<ConstantInt>(Divisor);
+    if (!CI)
+      return visitGenericInst(SDiv, S);
+
+    auto *Dividend = SDiv->getOperand(0);
+    auto *DividendSCEV = SE.getSCEV(Dividend);
+    return visit(DividendSCEV);
+  }
+
   ValidatorResult visitUnknown(const SCEVUnknown *Expr) {
     Value *V = Expr->getValue();
 
@@ -339,16 +363,18 @@ public:
       return ValidatorResult(SCEVType::INVALID);
     }
 
-    if (Instruction *I = dyn_cast<Instruction>(Expr->getValue()))
-      if (R->contains(I)) {
-        DEBUG(dbgs() << "INVALID: UnknownExpr references an instruction "
-                        "within the region\n");
-        return ValidatorResult(SCEVType::INVALID);
-      }
-
     if (BaseAddress == V) {
       DEBUG(dbgs() << "INVALID: UnknownExpr references BaseAddress\n");
       return ValidatorResult(SCEVType::INVALID);
+    }
+
+    if (Instruction *I = dyn_cast<Instruction>(Expr->getValue())) {
+      switch (I->getOpcode()) {
+      case Instruction::SDiv:
+        return visitSDivInstruction(I, Expr);
+      default:
+        return visitGenericInst(I, Expr);
+      }
     }
 
     return ValidatorResult(SCEVType::PARAM, Expr);

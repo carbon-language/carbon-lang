@@ -98,6 +98,7 @@ private:
   __isl_give isl_pw_aff *visitSMaxExpr(const SCEVSMaxExpr *Expr);
   __isl_give isl_pw_aff *visitUMaxExpr(const SCEVUMaxExpr *Expr);
   __isl_give isl_pw_aff *visitUnknown(const SCEVUnknown *Expr);
+  __isl_give isl_pw_aff *visitSDivInstruction(Instruction *SDiv);
 
   friend struct SCEVVisitor<SCEVAffinator, isl_pw_aff *>;
 };
@@ -262,8 +263,34 @@ __isl_give isl_pw_aff *SCEVAffinator::visitUMaxExpr(const SCEVUMaxExpr *Expr) {
   llvm_unreachable("SCEVUMaxExpr not yet supported");
 }
 
+__isl_give isl_pw_aff *SCEVAffinator::visitSDivInstruction(Instruction *SDiv) {
+  assert(SDiv->getOpcode() == Instruction::SDiv && "Assumed SDiv instruction!");
+  auto *SE = S->getSE();
+
+  auto *Divisor = SDiv->getOperand(1);
+  auto *DivisorSCEV = SE->getSCEV(Divisor);
+  auto *DivisorPWA = visit(DivisorSCEV);
+  assert(isa<ConstantInt>(Divisor) &&
+         "SDiv is no parameter but has a non-constant RHS.");
+
+  auto *Dividend = SDiv->getOperand(0);
+  auto *DividendSCEV = SE->getSCEV(Dividend);
+  auto *DividendPWA = visit(DividendSCEV);
+  return isl_pw_aff_tdiv_q(DividendPWA, DivisorPWA);
+}
+
 __isl_give isl_pw_aff *SCEVAffinator::visitUnknown(const SCEVUnknown *Expr) {
-  llvm_unreachable("Unknowns are always parameters");
+  if (Instruction *I = dyn_cast<Instruction>(Expr->getValue())) {
+    switch (I->getOpcode()) {
+    case Instruction::SDiv:
+      return visitSDivInstruction(I);
+    default:
+      break; // Fall through.
+    }
+  }
+
+  llvm_unreachable(
+      "Unknowns SCEV was neither parameter nor a valid instruction.");
 }
 
 int SCEVAffinator::getLoopDepth(const Loop *L) {
