@@ -21,7 +21,7 @@ int safe_div(int numerator, int denominator, int *res) {
   return success;
 }
 // CHECK-LABEL: define i32 @safe_div(i32 %numerator, i32 %denominator, i32* %res)
-// CHECK: invoke void @try_body(i32 %{{.*}}, i32 %{{.*}}, i32* %{{.*}})
+// CHECK: invoke void @try_body(i32 %{{.*}}, i32 %{{.*}}, i32* %{{.*}}) #[[NOINLINE:[0-9]+]]
 // CHECK:       to label %{{.*}} unwind label %[[lpad:[^ ]*]]
 //
 // CHECK: [[lpad]]
@@ -51,7 +51,7 @@ int filter_expr_capture(void) {
 // CHECK-LABEL: define i32 @filter_expr_capture()
 // FIXMECHECK: %[[captures]] = call i8* @llvm.frameallocate(i32 4)
 // CHECK: store i32 42, i32* %[[r:[^ ,]*]]
-// CHECK: invoke void @j()
+// CHECK: invoke void @j() #[[NOINLINE]]
 //
 // CHECK: landingpad
 // CHECK-NEXT: catch i8* bitcast (i32 (i8*, i8*)* @"\01?filt$0@0@filter_expr_capture@@" to i8*)
@@ -81,7 +81,7 @@ int nested_try(void) {
 }
 // CHECK-LABEL: define i32 @nested_try()
 // CHECK: store i32 42, i32* %[[r:[^ ,]*]]
-// CHECK: invoke void @j()
+// CHECK: invoke void @j() #[[NOINLINE]]
 // CHECK:       to label %[[cont:[^ ]*]] unwind label %[[lpad:[^ ]*]]
 //
 // CHECK: [[cont]]
@@ -179,3 +179,5 @@ int except_return(void) {
 // CHECK: [[retbb]]
 // CHECK: %[[r:[^ ]*]] = load i32* %[[rv]]
 // CHECK: ret i32 %[[r]]
+
+// CHECK: attributes #[[NOINLINE]] = { {{.*noinline.*}} }

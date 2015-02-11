@@ -263,6 +263,9 @@ public:
   /// potentially set the return value.
   bool SawAsmBlock;
 
+  /// Codegen is currently inside an SEH try block.
+  bool IsSEHTryScope;
+
   const CodeGen::CGBlockInfo *BlockInfo;
   llvm::Value *BlockPointer;
 

@@ -58,7 +58,7 @@ extern "C" void use_seh() {
 // Make sure we use __C_specific_handler for SEH.
 
 // CHECK-LABEL: define void @use_seh()
-// CHECK: invoke void @might_throw()
+// CHECK: invoke void @might_throw() #[[NOINLINE:[0-9]+]]
 // CHECK:       to label %[[cont:[^ ]*]] unwind label %[[lpad:[^ ]*]]
 //
 // CHECK: [[cont]]
@@ -92,4 +92,7 @@ void use_seh_in_lambda() {
 // NOCXX: ret void
 
 // CHECK-LABEL: define internal void @"\01??R<lambda_0>@?use_seh_in_lambda@@YAXXZ@QEBAXXZ"(%class.anon* %this)
+// CHECK: invoke void @might_throw() #[[NOINLINE]]
 // CHECK: landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__C_specific_handler to i8*)
+
+// CHECK: attributes #[[NOINLINE]] = { {{.*noinline.*}} }
