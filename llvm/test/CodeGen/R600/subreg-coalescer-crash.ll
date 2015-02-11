@@ -1,10 +1,10 @@
 ; RUN: llc -march=amdgcn -mcpu=SI -verify-machineinstrs -o - %s
 ; RUN: llc -march=amdgcn -mcpu=tonga -verify-machineinstrs -o - %s
-; ModuleID = 'bugpoint-reduced-simplified.bc'
 
+; SI-LABEL:{{^}}row_filter_C1_D0:
 ; SI: s_endpgm
 ; Function Attrs: nounwind
-define void @row_filter_C1_D0() #0 {
+define void @row_filter_C1_D0() {
 entry:
   br i1 undef, label %for.inc.1, label %do.body.preheader
 
@@ -42,3 +42,68 @@ for.inc.1:                                        ; preds = %do.body.1562.prehea
   unreachable
 }
 
+; SI-LABEL: {{^}}foo:
+; SI: s_endpgm
+define void @foo() #0 {
+bb:
+  br i1 undef, label %bb2, label %bb1
+
+bb1:                                              ; preds = %bb
+  br i1 undef, label %bb4, label %bb6
+
+bb2:                                              ; preds = %bb4, %bb
+  %tmp = phi float [ %tmp5, %bb4 ], [ 0.000000e+00, %bb ]
+  br i1 undef, label %bb9, label %bb13
+
+bb4:                                              ; preds = %bb7, %bb6, %bb1
+  %tmp5 = phi float [ undef, %bb1 ], [ undef, %bb6 ], [ %tmp8, %bb7 ]
+  br label %bb2
+
+bb6:                                              ; preds = %bb1
+  br i1 undef, label %bb7, label %bb4
+
+bb7:                                              ; preds = %bb6
+  %tmp8 = fmul float undef, undef
+  br label %bb4
+
+bb9:                                              ; preds = %bb2
+  %tmp10 = call <4 x float> @llvm.SI.sample.v2i32(<2 x i32> undef, <32 x i8> undef, <16 x i8> undef, i32 2)
+  %tmp11 = extractelement <4 x float> %tmp10, i32 1
+  %tmp12 = extractelement <4 x float> %tmp10, i32 3
+  br label %bb14
+
+bb13:                                             ; preds = %bb2
+  br i1 undef, label %bb23, label %bb24
+
+bb14:                                             ; preds = %bb27, %bb24, %bb9
+  %tmp15 = phi float [ %tmp12, %bb9 ], [ undef, %bb27 ], [ 0.000000e+00, %bb24 ]
+  %tmp16 = phi float [ %tmp11, %bb9 ], [ undef, %bb27 ], [ %tmp25, %bb24 ]
+  %tmp17 = fmul float 10.5, %tmp16
+  %tmp18 = fmul float 11.5, %tmp15
+  call void @llvm.SI.export(i32 15, i32 1, i32 1, i32 0, i32 1, float %tmp18, float %tmp17, float %tmp17, float %tmp17)
+  ret void
+
+bb23:                                             ; preds = %bb13
+  br i1 undef, label %bb24, label %bb26
+
+bb24:                                             ; preds = %bb26, %bb23, %bb13
+  %tmp25 = phi float [ %tmp, %bb13 ], [ %tmp, %bb26 ], [ 0.000000e+00, %bb23 ]
+  br i1 undef, label %bb27, label %bb14
+
+bb26:                                             ; preds = %bb23
+  br label %bb24
+
+bb27:                                             ; preds = %bb24
+  br label %bb14
+}
+
+; Function Attrs: nounwind readnone
+declare <4 x float> @llvm.SI.sample.v2i32(<2 x i32>, <32 x i8>, <16 x i8>, i32) #1
+
+; Function Attrs: nounwind readnone
+declare i32 @llvm.SI.packf16(float, float) #1
+
+declare void @llvm.SI.export(i32, i32, i32, i32, i32, float, float, float, float)
+
+attributes #0 = { "ShaderType"="0" "enable-no-nans-fp-math"="true" "unsafe-fp-math"="true" }
+attributes #1 = { nounwind readnone }
