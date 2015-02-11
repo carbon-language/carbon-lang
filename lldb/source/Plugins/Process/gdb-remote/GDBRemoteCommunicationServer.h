@@ -12,6 +12,9 @@
 
 // C Includes
 // C++ Includes
+#include <functional>
+#include <map>
+
 // Other libraries and framework includes
 // Project includes
 #include "lldb/lldb-private-forward.h"
