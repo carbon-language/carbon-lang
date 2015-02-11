@@ -1,5 +1,4 @@
 ; RUN: opt %loadPolly -polly-scops -disable-polly-intra-scop-scalar-to-array -polly-model-phi-nodes -analyze < %s | FileCheck %s
-; XFAIL: *
 ;
 ;    void f(int *A, int c, int d) {
 ;      for (int i = 0; i < 1024; i++)
