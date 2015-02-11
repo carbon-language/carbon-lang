@@ -940,7 +940,8 @@ void WinCOFFObjectWriter::WriteObject(MCAssembler &Asm,
 
     if (IsPhysicalSection(Sec)) {
       // Align the section data to a four byte boundary.
-      Sec->Header.PointerToRawData = RoundUpToAlignment(offset, 4);
+      offset = RoundUpToAlignment(offset, 4);
+      Sec->Header.PointerToRawData = offset;
 
       offset += Sec->Header.SizeOfRawData;
     }
