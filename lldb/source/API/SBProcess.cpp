@@ -918,9 +918,9 @@ SBProcess::GetThreadByID (tid_t tid)
     ProcessSP process_sp(GetSP());
     if (process_sp)
     {
-        Mutex::Locker api_locker (process_sp->GetTarget().GetAPIMutex());
         Process::StopLocker stop_locker;
         const bool can_update = stop_locker.TryLock(&process_sp->GetRunLock());
+        Mutex::Locker api_locker (process_sp->GetTarget().GetAPIMutex());
         thread_sp = process_sp->GetThreadList().FindThreadByID (tid, can_update);
         sb_thread.SetThread (thread_sp);
     }
@@ -942,9 +942,9 @@ SBProcess::GetThreadByIndexID (uint32_t index_id)
     ProcessSP process_sp(GetSP());
     if (process_sp)
     {
-        Mutex::Locker api_locker (process_sp->GetTarget().GetAPIMutex());
         Process::StopLocker stop_locker;
         const bool can_update = stop_locker.TryLock(&process_sp->GetRunLock());
+        Mutex::Locker api_locker (process_sp->GetTarget().GetAPIMutex());
         thread_sp = process_sp->GetThreadList().FindThreadByIndexID (index_id, can_update);
         sb_thread.SetThread (thread_sp);
     }
