@@ -312,6 +312,9 @@ void DataLayout::parseSpecifier(StringRef Desc) {
         PrefAlign = inBytes(getInt(Tok));
       }
 
+      if (ABIAlign > PrefAlign)
+        report_fatal_error(
+            "Preferred alignment cannot be less than the ABI alignment");
       setAlignment(AlignType, ABIAlign, PrefAlign, Size);
 
       break;
