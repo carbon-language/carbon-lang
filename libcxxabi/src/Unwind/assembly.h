@@ -62,6 +62,10 @@
   SYMBOL_NAME(name):
 
 #if defined(__arm__)
+#if !defined(__ARM_ARCH)
+#define __ARM_ARCH 4
+#endif
+
 #if defined(__ARM_ARCH_4T__) || __ARM_ARCH >= 5
 #define ARM_HAS_BX
 #endif
