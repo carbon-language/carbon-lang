@@ -322,6 +322,173 @@ for.end:                                          ; preds = %for.body
   ret void
 }
 
+; void multi1(int *x) {
+;   y = foo(0)
+;   for (int i = 0; i < 500; ++i) {
+;     x[3*i] = y;
+;     x[3*i+1] = y;
+;     x[3*i+2] = y;
+;     x[3*i+6] = y;
+;     x[3*i+7] = y;
+;     x[3*i+8] = y;
+;   }
+; }
+
+; Function Attrs: nounwind uwtable
+define void @multi1(i32* nocapture %x) #0 {
+entry:
+  %call = tail call i32 @foo(i32 0) #1
+  br label %for.body
+
+for.body:                                         ; preds = %for.body, %entry
+  %indvars.iv = phi i64 [ 0, %entry ], [ %indvars.iv.next, %for.body ]
+  %0 = mul nsw i64 %indvars.iv, 3
+  %arrayidx = getelementptr inbounds i32* %x, i64 %0
+  store i32 %call, i32* %arrayidx, align 4
+  %1 = add nsw i64 %0, 1
+  %arrayidx4 = getelementptr inbounds i32* %x, i64 %1
+  store i32 %call, i32* %arrayidx4, align 4
+  %2 = add nsw i64 %0, 2
+  %arrayidx9 = getelementptr inbounds i32* %x, i64 %2
+  store i32 %call, i32* %arrayidx9, align 4
+  %3 = add nsw i64 %0, 6
+  %arrayidx6 = getelementptr inbounds i32* %x, i64 %3
+  store i32 %call, i32* %arrayidx6, align 4
+  %4 = add nsw i64 %0, 7
+  %arrayidx7 = getelementptr inbounds i32* %x, i64 %4
+  store i32 %call, i32* %arrayidx7, align 4
+  %5 = add nsw i64 %0, 8
+  %arrayidx8 = getelementptr inbounds i32* %x, i64 %5
+  store i32 %call, i32* %arrayidx8, align 4
+  %indvars.iv.next = add nuw nsw i64 %indvars.iv, 1
+  %exitcond = icmp eq i64 %indvars.iv.next, 500
+  br i1 %exitcond, label %for.end, label %for.body
+
+; CHECK-LABEL: @multi1
+
+; CHECK:for.body:
+; CHECK:  %indvars.iv = phi i64 [ 0, %entry ], [ %indvars.iv.next, %for.body ]
+; CHECK:  %0 = add i64 %indvars.iv, 6
+; CHECK:  %arrayidx = getelementptr inbounds i32* %x, i64 %indvars.iv
+; CHECK:  store i32 %call, i32* %arrayidx, align 4
+; CHECK:  %arrayidx6 = getelementptr inbounds i32* %x, i64 %0
+; CHECK:  store i32 %call, i32* %arrayidx6, align 4
+; CHECK:  %indvars.iv.next = add nuw nsw i64 %indvars.iv, 1
+; CHECK:  %exitcond2 = icmp eq i64 %0, 1505
+; CHECK:  br i1 %exitcond2, label %for.end, label %for.body
+
+for.end:                                          ; preds = %for.body
+  ret void
+}
+
+; void multi2(int *x) {
+;   y = foo(0)
+;   for (int i = 0; i < 500; ++i) {
+;     x[3*i] = y;
+;     x[3*i+1] = y;
+;     x[3*i+2] = y;
+;     x[3*(i+1)] = y;
+;     x[3*(i+1)+1] = y;
+;     x[3*(i+1)+2] = y;
+;   }
+; }
+
+; Function Attrs: nounwind uwtable
+define void @multi2(i32* nocapture %x) #0 {
+entry:
+  %call = tail call i32 @foo(i32 0) #1
+  br label %for.body
+
+for.body:                                         ; preds = %for.body, %entry
+  %indvars.iv = phi i64 [ 0, %entry ], [ %indvars.iv.next, %for.body ]
+  %0 = mul nsw i64 %indvars.iv, 3
+  %add = add nsw i64 %indvars.iv, 1
+  %newmul = mul nsw i64 %add, 3
+  %arrayidx = getelementptr inbounds i32* %x, i64 %0
+  store i32 %call, i32* %arrayidx, align 4
+  %1 = add nsw i64 %0, 1
+  %arrayidx4 = getelementptr inbounds i32* %x, i64 %1
+  store i32 %call, i32* %arrayidx4, align 4
+  %2 = add nsw i64 %0, 2
+  %arrayidx9 = getelementptr inbounds i32* %x, i64 %2
+  store i32 %call, i32* %arrayidx9, align 4
+  %arrayidx6 = getelementptr inbounds i32* %x, i64 %newmul
+  store i32 %call, i32* %arrayidx6, align 4
+  %3 = add nsw i64 %newmul, 1
+  %arrayidx7 = getelementptr inbounds i32* %x, i64 %3
+  store i32 %call, i32* %arrayidx7, align 4
+  %4 = add nsw i64 %newmul, 2
+  %arrayidx8 = getelementptr inbounds i32* %x, i64 %4
+  store i32 %call, i32* %arrayidx8, align 4
+  %indvars.iv.next = add nuw nsw i64 %indvars.iv, 1
+  %exitcond = icmp eq i64 %indvars.iv.next, 500
+  br i1 %exitcond, label %for.end, label %for.body
+
+; CHECK-LABEL: @multi2
+
+; CHECK:for.body:
+; CHECK:  %indvars.iv = phi i64 [ 0, %entry ], [ %indvars.iv.next, %for.body ]
+; CHECK:  %0 = add i64 %indvars.iv, 3
+; CHECK:  %arrayidx = getelementptr inbounds i32* %x, i64 %indvars.iv
+; CHECK:  store i32 %call, i32* %arrayidx, align 4
+; CHECK:  %arrayidx6 = getelementptr inbounds i32* %x, i64 %0
+; CHECK:  store i32 %call, i32* %arrayidx6, align 4
+; CHECK:  %indvars.iv.next = add nuw nsw i64 %indvars.iv, 1
+; CHECK:  %exitcond2 = icmp eq i64 %indvars.iv, 1499
+; CHECK:  br i1 %exitcond2, label %for.end, label %for.body
+
+for.end:                                          ; preds = %for.body
+  ret void
+}
+
+; void multi3(int *x) {
+;   y = foo(0)
+;   for (int i = 0; i < 500; ++i) {
+;     // Note: No zero index
+;     x[3*i+3] = y;
+;     x[3*i+4] = y;
+;     x[3*i+5] = y;
+;   }
+; }
+
+; Function Attrs: nounwind uwtable
+define void @multi3(i32* nocapture %x) #0 {
+entry:
+  %call = tail call i32 @foo(i32 0) #1
+  br label %for.body
+
+for.body:                                         ; preds = %for.body, %entry
+  %indvars.iv = phi i64 [ 0, %entry ], [ %indvars.iv.next, %for.body ]
+  %0 = mul nsw i64 %indvars.iv, 3
+  %x0 = add nsw i64 %0, 3
+  %add = add nsw i64 %indvars.iv, 1
+  %arrayidx = getelementptr inbounds i32* %x, i64 %x0
+  store i32 %call, i32* %arrayidx, align 4
+  %1 = add nsw i64 %0, 4
+  %arrayidx4 = getelementptr inbounds i32* %x, i64 %1
+  store i32 %call, i32* %arrayidx4, align 4
+  %2 = add nsw i64 %0, 5
+  %arrayidx9 = getelementptr inbounds i32* %x, i64 %2
+  store i32 %call, i32* %arrayidx9, align 4
+  %indvars.iv.next = add nuw nsw i64 %indvars.iv, 1
+  %exitcond = icmp eq i64 %indvars.iv.next, 500
+  br i1 %exitcond, label %for.end, label %for.body
+
+; CHECK-LABEL: @multi3
+; CHECK: for.body:
+; CHECK:   %indvars.iv = phi i64 [ 0, %entry ], [ %indvars.iv.next, %for.body ]
+; CHECK:   %0 = add i64 %indvars.iv, 3
+; CHECK:   %arrayidx = getelementptr inbounds i32* %x, i64 %0
+; CHECK:   store i32 %call, i32* %arrayidx, align 4
+; CHECK:   %indvars.iv.next = add nuw nsw i64 %indvars.iv, 1
+; CHECK:   %exitcond1 = icmp eq i64 %0, 1502
+; CHECK:   br i1 %exitcond1, label %for.end, label %for.body
+
+for.end:                                          ; preds = %for.body
+  ret void
+}
+
+
 attributes #0 = { nounwind uwtable }
 attributes #1 = { nounwind }
 
