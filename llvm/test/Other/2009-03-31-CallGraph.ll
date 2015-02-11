@@ -7,6 +7,8 @@ ok1:
     ret void
 
 lpad1:
+    landingpad {i8*, i32} personality i32 (...)* @__gxx_personality_v0
+            cleanup
     invoke void @f4()
         to label %ok2 unwind label %lpad2
 

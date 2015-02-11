@@ -2275,6 +2275,7 @@ static bool isCatchAll(EHPersonality Personality, Constant *TypeInfo) {
     return false;
   case EHPersonality::GNU_CXX:
   case EHPersonality::GNU_ObjC:
+  case EHPersonality::MSVC_X86SEH:
   case EHPersonality::MSVC_Win64SEH:
   case EHPersonality::MSVC_CXX:
     return TypeInfo->isNullValue();
@@ -2293,7 +2294,7 @@ Instruction *InstCombiner::visitLandingPadInst(LandingPadInst &LI) {
   // The logic here should be correct for any real-world personality function.
   // However if that turns out not to be true, the offending logic can always
   // be conditioned on the personality function, like the catch-all logic is.
-  EHPersonality Personality = ClassifyEHPersonality(LI.getPersonalityFn());
+  EHPersonality Personality = classifyEHPersonality(LI.getPersonalityFn());
 
   // Simplify the list of clauses, eg by removing repeated catch clauses
   // (these are often created by inlining).

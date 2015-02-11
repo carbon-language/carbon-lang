@@ -75,7 +75,7 @@ bool WinEHPrepare::runOnFunction(Function &Fn) {
     return false;
 
   // Classify the personality to see what kind of preparation we need.
-  EHPersonality Pers = ClassifyEHPersonality(LPads.back()->getPersonalityFn());
+  EHPersonality Pers = classifyEHPersonality(LPads.back()->getPersonalityFn());
 
   // Delegate through to the DWARF pass if this is unrecognized.
   if (!isMSVCPersonality(Pers))
