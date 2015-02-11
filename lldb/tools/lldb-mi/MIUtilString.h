@@ -66,6 +66,10 @@ class CMIUtilString : public std::string
     CMIUtilString StripCRAll(void) const;
     CMIUtilString Trim(void) const;
     CMIUtilString Trim(const MIchar vChar) const;
+    MIuint FindFirst(const CMIUtilString &vrPattern, const MIuint vnPos = 0) const;
+    MIuint FindFirst(const CMIUtilString &vrPattern, const bool vbSkipQuotedText, bool &vrwbNotFoundClosedQuote,
+                     const MIuint vnPos = 0) const;
+    MIuint FindFirstNot(const CMIUtilString &vrPattern, const MIuint vnPos = 0) const;
     //
     CMIUtilString &operator=(const MIchar *vpRhs);
     CMIUtilString &operator=(const std::string &vrRhs);
@@ -82,4 +86,5 @@ class CMIUtilString : public std::string
   private:
     bool ExtractNumberFromHexadecimal(MIint64 &vwrNumber) const;
     CMIUtilString RemoveRepeatedCharacters(const MIint vnPos, const MIchar vChar);
+    MIuint FindFirstQuote(const MIuint vnPos) const;
 };
