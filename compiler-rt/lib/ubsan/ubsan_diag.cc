@@ -66,38 +66,9 @@ class Decorator : public SanitizerCommonDecorator {
 };
 }
 
-Location __ubsan::getCallerLocation(uptr CallerPC) {
-  if (!CallerPC)
-    return Location();
-
-  return getFunctionLocation(StackTrace::GetPreviousInstructionPc(CallerPC), 0);
-}
-
-Location __ubsan::getFunctionLocation(uptr PC, const char **FName) {
-  if (!PC)
-    return Location();
+SymbolizedStack *__ubsan::getSymbolizedLocation(uptr PC) {
   InitIfNecessary();
-
-  SymbolizedStack *Frames = Symbolizer::GetOrInit()->SymbolizePC(PC);
-  const AddressInfo &Info = Frames->info;
-
-  if (!Info.module) {
-    Frames->ClearAll();
-    return Location(PC);
-  }
-
-  if (FName && Info.function)
-    *FName = internal_strdup(Info.function);
-
-  if (!Info.file) {
-    ModuleLocation MLoc(internal_strdup(Info.module), Info.module_offset);
-    Frames->ClearAll();
-    return MLoc;
-  }
-
-  SourceLocation SLoc(internal_strdup(Info.file), Info.line, Info.column);
-  Frames->ClearAll();
-  return SLoc;
+  return Symbolizer::GetOrInit()->SymbolizePC(PC);
 }
 
 Diag &Diag::operator<<(const TypeDescriptor &V) {
@@ -141,15 +112,22 @@ static void renderLocation(Location Loc) {
                            SLoc.getColumn(), common_flags()->strip_path_prefix);
     break;
   }
-  case Location::LK_Module: {
-    ModuleLocation MLoc = Loc.getModuleLocation();
-    RenderModuleLocation(&LocBuffer, MLoc.getModuleName(), MLoc.getOffset(),
-                         common_flags()->strip_path_prefix);
-    break;
-  }
   case Location::LK_Memory:
     LocBuffer.append("%p", Loc.getMemoryLocation());
     break;
+  case Location::LK_Symbolized: {
+    const AddressInfo &Info = Loc.getSymbolizedStack()->info;
+    if (Info.file) {
+      RenderSourceLocation(&LocBuffer, Info.file, Info.line, Info.column,
+                           common_flags()->strip_path_prefix);
+    } else if (Info.module) {
+      RenderModuleLocation(&LocBuffer, Info.module, Info.module_offset,
+                           common_flags()->strip_path_prefix);
+    } else {
+      LocBuffer.append("%p", Info.address);
+    }
+    break;
+  }
   case Location::LK_Null:
     LocBuffer.append("<unknown>");
     break;

@@ -16,77 +16,83 @@
 #include "ubsan_value.h"
 #include "sanitizer_common/sanitizer_stacktrace.h"
 #include "sanitizer_common/sanitizer_suppressions.h"
+#include "sanitizer_common/sanitizer_symbolizer.h"
 
 namespace __ubsan {
 
-/// \brief A location within a loaded module in the program. These are used when
-/// the location can't be resolved to a SourceLocation.
-class ModuleLocation {
-  const char *ModuleName;
-  uptr Offset;
+class SymbolizedStackHolder {
+  SymbolizedStack *Stack;
+
+  void clear() {
+    if (Stack)
+      Stack->ClearAll();
+  }
 
 public:
-  ModuleLocation() : ModuleName(0), Offset(0) {}
-  ModuleLocation(const char *ModuleName, uptr Offset)
-    : ModuleName(ModuleName), Offset(Offset) {}
-  const char *getModuleName() const { return ModuleName; }
-  uptr getOffset() const { return Offset; }
+  explicit SymbolizedStackHolder(SymbolizedStack *Stack = nullptr)
+      : Stack(Stack) {}
+  ~SymbolizedStackHolder() { clear(); }
+  void reset(SymbolizedStack *S) {
+    if (Stack != S)
+      clear();
+    Stack = S;
+  }
+  const SymbolizedStack *get() const { return Stack; }
 };
+
+SymbolizedStack *getSymbolizedLocation(uptr PC);
+
+inline SymbolizedStack *getCallerLocation(uptr CallerPC) {
+  CHECK(CallerPC);
+  uptr PC = StackTrace::GetPreviousInstructionPc(CallerPC);
+  return getSymbolizedLocation(PC);
+}
 
 /// A location of some data within the program's address space.
 typedef uptr MemoryLocation;
 
 /// \brief Location at which a diagnostic can be emitted. Either a
-/// SourceLocation, a ModuleLocation, or a MemoryLocation.
+/// SourceLocation, a MemoryLocation, or a SymbolizedStack.
 class Location {
 public:
-  enum LocationKind { LK_Null, LK_Source, LK_Module, LK_Memory };
+  enum LocationKind { LK_Null, LK_Source, LK_Memory, LK_Symbolized };
 
 private:
   LocationKind Kind;
   // FIXME: In C++11, wrap these in an anonymous union.
   SourceLocation SourceLoc;
-  ModuleLocation ModuleLoc;
   MemoryLocation MemoryLoc;
+  const SymbolizedStack *SymbolizedLoc;  // Not owned.
 
 public:
   Location() : Kind(LK_Null) {}
   Location(SourceLocation Loc) :
     Kind(LK_Source), SourceLoc(Loc) {}
-  Location(ModuleLocation Loc) :
-    Kind(LK_Module), ModuleLoc(Loc) {}
   Location(MemoryLocation Loc) :
     Kind(LK_Memory), MemoryLoc(Loc) {}
+  // SymbolizedStackHolder must outlive Location object.
+  Location(const SymbolizedStackHolder &Stack) :
+    Kind(LK_Symbolized), SymbolizedLoc(Stack.get()) {}
 
   LocationKind getKind() const { return Kind; }
 
   bool isSourceLocation() const { return Kind == LK_Source; }
-  bool isModuleLocation() const { return Kind == LK_Module; }
   bool isMemoryLocation() const { return Kind == LK_Memory; }
+  bool isSymbolizedStack() const { return Kind == LK_Symbolized; }
 
   SourceLocation getSourceLocation() const {
     CHECK(isSourceLocation());
     return SourceLoc;
   }
-  ModuleLocation getModuleLocation() const {
-    CHECK(isModuleLocation());
-    return ModuleLoc;
-  }
   MemoryLocation getMemoryLocation() const {
     CHECK(isMemoryLocation());
     return MemoryLoc;
   }
+  const SymbolizedStack *getSymbolizedStack() const {
+    CHECK(isSymbolizedStack());
+    return SymbolizedLoc;
+  }
 };
-
-/// Try to obtain a location for the caller. This might fail, and produce either
-/// an invalid location or a module location for the caller.
-Location getCallerLocation(uptr CallerPC);
-
-/// Try to obtain a location for the given function pointer. This might fail,
-/// and produce either an invalid location or a module location for the caller.
-/// If FName is non-null and the name of the function is known, set *FName to
-/// the function name, otherwise *FName is unchanged.
-Location getFunctionLocation(uptr PC, const char **FName);
 
 /// A diagnostic severity level.
 enum DiagLevel {

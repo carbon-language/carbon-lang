@@ -43,8 +43,11 @@ static void handleTypeMismatchImpl(TypeMismatchData *Data, ValueHandle Pointer,
   if (ignoreReport(Loc.getSourceLocation(), Opts))
     return;
 
-  if (Data->Loc.isInvalid())
-    Loc = getCallerLocation(Opts.pc);
+  SymbolizedStackHolder FallbackLoc;
+  if (Data->Loc.isInvalid()) {
+    FallbackLoc.reset(getCallerLocation(Opts.pc));
+    Loc = FallbackLoc;
+  }
 
   ScopedReport R(Opts, Loc);
 
@@ -288,7 +291,8 @@ void __ubsan::__ubsan_handle_vla_bound_not_positive_abort(VLABoundData *Data,
 static void handleFloatCastOverflow(FloatCastOverflowData *Data,
                                     ValueHandle From, ReportOptions Opts) {
   // TODO: Add deduplication once a SourceLocation is generated for this check.
-  Location Loc = getCallerLocation(Opts.pc);
+  SymbolizedStackHolder CallerLoc(getCallerLocation(Opts.pc));
+  Location Loc = CallerLoc;
   ScopedReport R(Opts, Loc);
 
   Diag(Loc, DL_Error,
@@ -343,8 +347,10 @@ static void handleFunctionTypeMismatch(FunctionTypeMismatchData *Data,
 
   ScopedReport R(Opts, CallLoc);
 
-  const char *FName = "(unknown)";
-  Location FLoc = getFunctionLocation(Function, &FName);
+  SymbolizedStackHolder FLoc(getSymbolizedLocation(Function));
+  const char *FName = FLoc.get()->info.function;
+  if (!FName)
+    FName = "(unknown)";
 
   Diag(CallLoc, DL_Error,
        "call to function %0 through pointer to incorrect function type %1")
