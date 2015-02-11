@@ -783,6 +783,9 @@ public:
     ClearAllWatchpointHitCounts ();
 
     bool
+    ClearAllWatchpointHistoricValues ();
+    
+    bool
     IgnoreAllWatchpoints (uint32_t ignore_count);
 
     bool

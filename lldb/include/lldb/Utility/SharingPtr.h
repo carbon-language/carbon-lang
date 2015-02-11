@@ -154,6 +154,7 @@ public:
     void swap(SharingPtr& r);
     void reset();
     template<class Y> void reset(Y* p);
+    void reset(std::nullptr_t);
 
     element_type* get() const {return ptr_;}
     element_type& operator*() const {return *ptr_;}
@@ -294,6 +295,14 @@ SharingPtr<T>::reset()
     SharingPtr().swap(*this);
 }
 
+template<class T>
+inline
+void
+SharingPtr<T>::reset (std::nullptr_t p)
+{
+    reset();
+}
+    
 template<class T>
 template<class Y>
 inline
@@ -547,7 +556,7 @@ public:
         if (cb_)
             cb_(baton_, *this, false);
     }
-
+    
     void SetCallback(Callback cb, void* baton)
     {
         cb_ = cb;

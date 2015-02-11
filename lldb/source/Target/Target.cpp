@@ -175,6 +175,7 @@ Target::CleanupProcess ()
     this->GetWatchpointList().GetListMutex(locker);
     DisableAllWatchpoints(false);
     ClearAllWatchpointHitCounts();
+    ClearAllWatchpointHistoricValues();
 }
 
 void
@@ -903,6 +904,26 @@ Target::ClearAllWatchpointHitCounts ()
             return false;
 
         wp_sp->ResetHitCount();
+    }
+    return true; // Success!
+}
+
+// Assumption: Caller holds the list mutex lock for m_watchpoint_list.
+bool
+Target::ClearAllWatchpointHistoricValues ()
+{
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_WATCHPOINTS));
+    if (log)
+        log->Printf ("Target::%s\n", __FUNCTION__);
+    
+    size_t num_watchpoints = m_watchpoint_list.GetSize();
+    for (size_t i = 0; i < num_watchpoints; ++i)
+    {
+        WatchpointSP wp_sp = m_watchpoint_list.GetByIndex(i);
+        if (!wp_sp)
+            return false;
+        
+        wp_sp->ResetHistoricValues();
     }
     return true; // Success!
 }
