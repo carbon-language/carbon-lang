@@ -117,10 +117,10 @@ bool LLParser::ValidateEndOfModule() {
     return Error(ForwardRefBlockAddresses.begin()->first.Loc,
                  "expected function name in blockaddress");
 
-  for (unsigned i = 0, e = NumberedTypes.size(); i != e; ++i)
-    if (NumberedTypes[i].second.isValid())
-      return Error(NumberedTypes[i].second,
-                   "use of undefined type '%" + Twine(i) + "'");
+  for (const auto &NT : NumberedTypes)
+    if (NT.second.second.isValid())
+      return Error(NT.second.second,
+                   "use of undefined type '%" + Twine(NT.first) + "'");
 
   for (StringMap<std::pair<Type*, LocTy> >::iterator I =
        NamedTypes.begin(), E = NamedTypes.end(); I != E; ++I)
@@ -149,9 +149,10 @@ bool LLParser::ValidateEndOfModule() {
                  Twine(ForwardRefMDNodes.begin()->first) + "'");
 
   // Resolve metadata cycles.
-  for (auto &N : NumberedMetadata)
-    if (N && !N->isResolved())
-      N->resolveCycles();
+  for (auto &N : NumberedMetadata) {
+    if (N.second && !N.second->isResolved())
+      N.second->resolveCycles();
+  }
 
   // Look for intrinsic functions and CallInst that need to be upgraded
   for (Module::iterator FI = M->begin(), FE = M->end(); FI != FE; )
@@ -303,9 +304,6 @@ bool LLParser::ParseUnnamedType() {
   if (ParseToken(lltok::equal, "expected '=' after name") ||
       ParseToken(lltok::kw_type, "expected 'type' after '='"))
     return true;
-
-  if (TypeID >= NumberedTypes.size())
-    NumberedTypes.resize(TypeID+1);
 
   Type *Result = nullptr;
   if (ParseStructDefinition(TypeLoc, "",
@@ -527,7 +525,7 @@ bool LLParser::ParseMDNodeID(MDNode *&Result) {
     return true;
 
   // If not a forward reference, just return it now.
-  if (MID < NumberedMetadata.size() && NumberedMetadata[MID] != nullptr) {
+  if (NumberedMetadata.count(MID)) {
     Result = NumberedMetadata[MID];
     return false;
   }
@@ -536,8 +534,6 @@ bool LLParser::ParseMDNodeID(MDNode *&Result) {
   auto &FwdRef = ForwardRefMDNodes[MID];
   FwdRef = std::make_pair(MDTuple::getTemporary(Context, None), Lex.getLoc());
 
-  if (NumberedMetadata.size() <= MID)
-    NumberedMetadata.resize(MID+1);
   Result = FwdRef.first.get();
   NumberedMetadata[MID].reset(Result);
   return false;
@@ -604,10 +600,7 @@ bool LLParser::ParseStandaloneMetadata() {
 
     assert(NumberedMetadata[MetadataID] == Init && "Tracking VH didn't work");
   } else {
-    if (MetadataID >= NumberedMetadata.size())
-      NumberedMetadata.resize(MetadataID+1);
-
-    if (NumberedMetadata[MetadataID] != nullptr)
+    if (NumberedMetadata.count(MetadataID))
       return TokError("Metadata id is already used");
     NumberedMetadata[MetadataID].reset(Init);
   }
@@ -1704,8 +1697,6 @@ bool LLParser::ParseType(Type *&Result, const Twine &Msg, bool AllowVoid) {
 
   case lltok::LocalVarID: {
     // Type ::= %4
-    if (Lex.getUIntVal() >= NumberedTypes.size())
-      NumberedTypes.resize(Lex.getUIntVal()+1);
     std::pair<Type*, LocTy> &Entry = NumberedTypes[Lex.getUIntVal()];
 
     // If the type hasn't been defined yet, create a forward definition and

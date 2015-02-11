@@ -108,9 +108,9 @@ namespace llvm {
     // Type resolution handling data structures.  The location is set when we
     // have processed a use of the type but not a definition yet.
     StringMap<std::pair<Type*, LocTy> > NamedTypes;
-    std::vector<std::pair<Type*, LocTy> > NumberedTypes;
+    std::map<unsigned, std::pair<Type*, LocTy> > NumberedTypes;
 
-    std::vector<TrackingMDNodeRef> NumberedMetadata;
+    std::map<unsigned, TrackingMDNodeRef> NumberedMetadata;
     std::map<unsigned, std::pair<TempMDTuple, LocTy>> ForwardRefMDNodes;
 
     // Global Value reference information.
