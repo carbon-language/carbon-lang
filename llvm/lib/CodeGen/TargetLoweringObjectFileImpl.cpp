@@ -224,21 +224,27 @@ const MCSection *TargetLoweringObjectFileELF::getExplicitSectionGlobal(
                                     /*EntrySize=*/0, Group);
 }
 
-/// getSectionPrefixForGlobal - Return the section prefix name used by options
-/// FunctionsSections and DataSections.
+/// Return the section prefix name used by options FunctionsSections and
+/// DataSections.
 static StringRef getSectionPrefixForGlobal(SectionKind Kind) {
-  if (Kind.isText())                 return ".text.";
-  if (Kind.isReadOnly())             return ".rodata.";
-  if (Kind.isBSS())                  return ".bss.";
-
-  if (Kind.isThreadData())           return ".tdata.";
-  if (Kind.isThreadBSS())            return ".tbss.";
-
-  if (Kind.isDataNoRel())            return ".data.";
-  if (Kind.isDataRelLocal())         return ".data.rel.local.";
-  if (Kind.isDataRel())              return ".data.rel.";
-  if (Kind.isReadOnlyWithRelLocal()) return ".data.rel.ro.local.";
-
+  if (Kind.isText())
+    return ".text.";
+  if (Kind.isReadOnly())
+    return ".rodata.";
+  if (Kind.isBSS())
+    return ".bss.";
+  if (Kind.isThreadData())
+    return ".tdata.";
+  if (Kind.isThreadBSS())
+    return ".tbss.";
+  if (Kind.isDataNoRel())
+    return ".data.";
+  if (Kind.isDataRelLocal())
+    return ".data.rel.local.";
+  if (Kind.isDataRel())
+    return ".data.rel.";
+  if (Kind.isReadOnlyWithRelLocal())
+    return ".data.rel.ro.local.";
   assert(Kind.isReadOnlyWithRel() && "Unknown section kind");
   return ".data.rel.ro.";
 }
