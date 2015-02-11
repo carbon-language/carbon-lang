@@ -743,8 +743,7 @@ llvm::BasicBlock *CodeGenFunction::getInvokeDestImpl() {
   if (!LO.Exceptions) {
     if (!LO.Borland && !LO.MicrosoftExt)
       return nullptr;
-    const auto *FD = dyn_cast_or_null<FunctionDecl>(CurCodeDecl);
-    if (!FD || !FD->usesSEHTry())
+    if (!currentFunctionUsesSEHTry())
       return nullptr;
   }
 

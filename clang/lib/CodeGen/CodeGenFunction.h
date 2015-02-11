@@ -1122,6 +1122,11 @@ public:
     return getInvokeDestImpl();
   }
 
+  bool currentFunctionUsesSEHTry() const {
+    const auto *FD = dyn_cast_or_null<FunctionDecl>(CurCodeDecl);
+    return FD && FD->usesSEHTry();
+  }
+
   const TargetInfo &getTarget() const { return Target; }
   llvm::LLVMContext &getLLVMContext() { return CGM.getLLVMContext(); }
 
