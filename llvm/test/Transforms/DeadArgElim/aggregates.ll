@@ -130,3 +130,33 @@ define i32 @test_ret_applies_to_all() {
   %ret = extractvalue {i32, i32} %val, 1
   ret i32 %ret
 }
+
+; Case 6: When considering @mid, the return instruciton has sub-value 0
+; unconditionally live, but 1 only conditionally live. Since at that level we're
+; applying the results to the whole of %res, this means %res is live and cannot
+; be reduced. There is scope for further optimisation here (though not visible
+; in this test-case).
+
+; CHECK-LABEL: define internal { i8*, i32 } @inner()
+
+define internal {i8*, i32} @mid() {
+  %res = call {i8*, i32} @inner()
+  %intval = extractvalue {i8*, i32} %res, 1
+  %tst = icmp eq i32 %intval, 42
+  br i1 %tst, label %true, label %true
+
+true:
+  ret {i8*, i32} %res
+}
+
+define internal {i8*, i32} @inner() {
+  ret {i8*, i32} {i8* null, i32 42}
+}
+
+define internal i8 @outer() {
+  %res = call {i8*, i32} @mid()
+  %resptr = extractvalue {i8*, i32} %res, 0
+
+  %val = load i8* %resptr
+  ret i8 %val
+}

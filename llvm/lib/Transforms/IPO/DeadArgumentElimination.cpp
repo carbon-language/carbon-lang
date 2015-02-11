@@ -449,12 +449,15 @@ DAE::Liveness DAE::SurveyUse(const Use *U,
         // We might be live, depending on the liveness of Use.
         return MarkIfNotLive(Use, MaybeLiveUses);
       } else {
-        DAE::Liveness Result;
+        DAE::Liveness Result = MaybeLive;
         for (unsigned i = 0; i < NumRetVals(F); ++i) {
           RetOrArg Use = CreateRet(F, i);
-          // We might be live, depending on the liveness of Use. All Results
-          // should be the same since they depend only on F.
-          Result = MarkIfNotLive(Use, MaybeLiveUses);
+          // We might be live, depending on the liveness of Use. If any
+          // sub-value is live, then the entire value is considered live. This
+          // is a conservative choice, and better tracking is possible.
+          DAE::Liveness SubResult = MarkIfNotLive(Use, MaybeLiveUses);
+          if (Result != Live)
+            Result = SubResult;
         }
         return Result;
       }
