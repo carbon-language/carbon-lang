@@ -324,7 +324,8 @@ _Unwind_Reason_Code _Unwind_VRS_Interpret(
             case 0xb3: {
               uint8_t v = getByte(data, offset++);
               _Unwind_VRS_Pop(context, _UVRSC_VFP,
-                              RegisterRange(v >> 4, v & 0x0f), _UVRSD_VFPX);
+                              RegisterRange(static_cast<uint8_t>(v >> 4),
+                                            v & 0x0f), _UVRSD_VFPX);
               break;
             }
             case 0xb4:
@@ -352,7 +353,7 @@ _Unwind_Reason_Code _Unwind_VRS_Interpret(
               break;
             case 0xc6: {
               uint8_t v = getByte(data, offset++);
-              uint8_t start = v >> 4;
+              uint8_t start = static_cast<uint8_t>(v >> 4);
               uint8_t count_minus_one = v & 0xf;
               if (start + count_minus_one >= 16)
                 return _URC_FAILURE;
@@ -371,7 +372,8 @@ _Unwind_Reason_Code _Unwind_VRS_Interpret(
             case 0xc8:
             case 0xc9: {
               uint8_t v = getByte(data, offset++);
-              uint8_t start = ((byte == 0xc8) ? 16 : 0) + (v >> 4);
+              uint8_t start =
+                  static_cast<uint8_t>(((byte == 0xc8) ? 16 : 0) + (v >> 4));
               uint8_t count_minus_one = v & 0xf;
               if (start + count_minus_one >= 32)
                 return _URC_FAILURE;
@@ -904,7 +906,7 @@ _Unwind_VRS_Result _Unwind_VRS_Pop(
         return _UVRSR_FAILED;
       }
       for (uint32_t i = 0; i < 16; ++i) {
-        if (!(discriminator & (1 << i)))
+        if (!(discriminator & static_cast<uint32_t>(1 << i)))
           continue;
         uint32_t value = *sp++;
         if (regclass == _UVRSC_CORE && i == 13)

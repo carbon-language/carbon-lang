@@ -736,8 +736,8 @@ bool UnwindCursor<A, R>::getInfoFromEHABISection(
   // in compact form (section 6.3 EHABI).
   if (exceptionTableData & 0x80000000) {
     // Grab the index of the personality routine from the compact form.
-    int choice = (exceptionTableData & 0x0f000000) >> 24;
-    int extraWords = 0;
+    uint32_t choice = (exceptionTableData & 0x0f000000) >> 24;
+    uint32_t extraWords = 0;
     switch (choice) {
       case 0:
         personalityRoutine = (unw_word_t) &__aeabi_unwind_cpp_pr0;
