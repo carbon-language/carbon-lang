@@ -278,7 +278,7 @@ void Module::eraseNamedMetadata(NamedMDNode *NMD) {
 }
 
 bool Module::isValidModFlagBehavior(Metadata *MD, ModFlagBehavior &MFB) {
-  if (ConstantInt *Behavior = mdconst::dyn_extract<ConstantInt>(MD)) {
+  if (ConstantInt *Behavior = mdconst::dyn_extract_or_null<ConstantInt>(MD)) {
     uint64_t Val = Behavior->getLimitedValue();
     if (Val >= ModFlagBehaviorFirstVal && Val <= ModFlagBehaviorLastVal) {
       MFB = static_cast<ModFlagBehavior>(Val);
@@ -298,7 +298,7 @@ getModuleFlagsMetadata(SmallVectorImpl<ModuleFlagEntry> &Flags) const {
     ModFlagBehavior MFB;
     if (Flag->getNumOperands() >= 3 &&
         isValidModFlagBehavior(Flag->getOperand(0), MFB) &&
-        isa<MDString>(Flag->getOperand(1))) {
+        dyn_cast_or_null<MDString>(Flag->getOperand(1))) {
       // Check the operands of the MDNode before accessing the operands.
       // The verifier will actually catch these failures.
       MDString *Key = cast<MDString>(Flag->getOperand(1));

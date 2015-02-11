@@ -869,7 +869,7 @@ Verifier::visitModuleFlag(const MDNode *Op,
   Module::ModFlagBehavior MFB;
   if (!Module::isValidModFlagBehavior(Op->getOperand(0), MFB)) {
     Assert1(
-        mdconst::dyn_extract<ConstantInt>(Op->getOperand(0)),
+        mdconst::dyn_extract_or_null<ConstantInt>(Op->getOperand(0)),
         "invalid behavior operand in module flag (expected constant integer)",
         Op->getOperand(0));
     Assert1(false,
