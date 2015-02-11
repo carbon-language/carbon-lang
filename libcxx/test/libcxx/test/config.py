@@ -48,7 +48,7 @@ class Configuration(object):
         self.config = config
         self.cxx = None
         self.libcxx_src_root = None
-        self.obj_root = None
+        self.libcxx_obj_root = None
         self.cxx_library_root = None
         self.env = {}
         self.use_target = False
@@ -146,12 +146,11 @@ class Configuration(object):
             'libcxx_src_root', os.path.dirname(self.config.test_source_root))
 
     def configure_obj_root(self):
-        self.obj_root = self.get_lit_conf('libcxx_obj_root',
-                                          self.libcxx_src_root)
+        self.libcxx_obj_root = self.get_lit_conf('libcxx_obj_root')
 
     def configure_cxx_library_root(self):
         self.cxx_library_root = self.get_lit_conf('cxx_library_root',
-                                                  self.obj_root)
+                                                  self.libcxx_obj_root)
 
     def configure_use_system_cxx_lib(self):
         # This test suite supports testing against either the system library or
@@ -403,7 +402,7 @@ class Configuration(object):
                     "with 'use_system_cxx_lib=true'")
             self.cxx.link_flags += ['-Wl,-rpath,' +
                                     os.path.dirname(libcxx_library)]
-        elif not self.use_system_cxx_lib:
+        elif not self.use_system_cxx_lib and self.cxx_library_root:
             self.cxx.link_flags += ['-L' + self.cxx_library_root,
                                     '-Wl,-rpath,' + self.cxx_library_root]
 
@@ -580,4 +579,5 @@ class Configuration(object):
                 cxx_library_root = os.path.dirname(libcxx_library)
             else:
                 cxx_library_root = self.cxx_library_root
-            self.env['DYLD_LIBRARY_PATH'] = cxx_library_root
+            if cxx_library_root:
+                self.env['DYLD_LIBRARY_PATH'] = cxx_library_root
