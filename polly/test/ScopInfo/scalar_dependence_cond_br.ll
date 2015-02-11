@@ -1,13 +1,18 @@
 ; RUN: opt %loadPolly -polly-scops -disable-polly-intra-scop-scalar-to-array -polly-model-phi-nodes -analyze < %s | FileCheck %s
 ; XFAIL: *
 ;
-; CHECK: Statements
-;
 ;    void f(int *A, int c, int d) {
 ;      for (int i = 0; i < 1024; i++)
 ;        if (c < i)
 ;          A[i]++;
 ;    }
+;
+; CHECK:      Stmt_for_cond
+; CHECK:            MustWriteAccess :=  [Reduction Type: NONE] [Scalar: 1]
+; CHECK:                [c] -> { Stmt_for_cond[i0] -> MemRef_cmp1[] };
+; CHECK:      Stmt_for_body
+; CHECK:            ReadAccess := [Reduction Type: NONE] [Scalar: 1]
+; CHECK:                [c] -> { Stmt_for_body[i0] -> MemRef_cmp1[] };
 ;
 target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
 

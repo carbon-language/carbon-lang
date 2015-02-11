@@ -70,6 +70,8 @@ Value *polly::getPointerOperand(Instruction &Inst) {
 Type *polly::getAccessInstType(Instruction *AccInst) {
   if (StoreInst *Store = dyn_cast<StoreInst>(AccInst))
     return Store->getValueOperand()->getType();
+  if (BranchInst *Branch = dyn_cast<BranchInst>(AccInst))
+    return Branch->getCondition()->getType();
   return AccInst->getType();
 }
 
