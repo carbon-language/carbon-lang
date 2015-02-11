@@ -3,4 +3,7 @@ add_llvm_library(LLVMOrcJIT
   IndirectionUtils.cpp
   OrcMCJITReplacement.cpp
   OrcTargetSupport.cpp
+
+  ADDITIONAL_HEADER_DIRS
+  ${LLVM_MAIN_INCLUDE_DIR}/llvm/ExecutionEngine/Orc
   )

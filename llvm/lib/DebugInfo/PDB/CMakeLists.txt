@@ -23,11 +23,11 @@ if(HAVE_DIA_SDK)
     DIA/DIASourceFile.cpp
     )
 
-    set(LIBPDB_ADDITIONAL_HEADER_DIRS "../../../include/llvm/DebugInfo/PDB/DIA/")
+    set(LIBPDB_ADDITIONAL_HEADER_DIRS "${LLVM_MAIN_INCLUDE_DIR}/llvm/DebugInfo/PDB/DIA")
 
 endif()
 
-list(APPEND LIBPDB_ADDITIONAL_HEADER_DIRS "../../../include/llvm/DebugInfo/PDB")
+list(APPEND LIBPDB_ADDITIONAL_HEADER_DIRS "${LLVM_MAIN_INCLUDE_DIR}/llvm/DebugInfo/PDB")
 
 add_llvm_library(LLVMDebugInfoPDB
   IPDBSourceFile.cpp

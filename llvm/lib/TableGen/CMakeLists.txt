@@ -7,4 +7,7 @@ add_llvm_library(LLVMTableGen
   TableGenBackend.cpp
   TGLexer.cpp
   TGParser.cpp
+
+  ADDITIONAL_HEADER_DIRS
+  ${LLVM_MAIN_INCLUDE_DIR}/llvm/TableGen
   )

@@ -124,6 +124,7 @@ add_llvm_library(LLVMSupport
   ADDITIONAL_HEADER_DIRS
   Unix
   Windows
+  ${LLVM_MAIN_INCLUDE_DIR}/llvm/Support
 
   LINK_LIBS ${system_libs}
   )

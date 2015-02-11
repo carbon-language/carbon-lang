@@ -46,6 +46,9 @@ add_llvm_library(LLVMMC
   WinCOFFObjectWriter.cpp
   WinCOFFStreamer.cpp
   YAML.cpp
+
+  ADDITIONAL_HEADER_DIRS
+  ${LLVM_MAIN_INCLUDE_DIR}/llvm/MC
   )
 
 add_subdirectory(MCParser)

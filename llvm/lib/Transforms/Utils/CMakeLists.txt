@@ -36,6 +36,10 @@ add_llvm_library(LLVMTransformUtils
   UnifyFunctionExitNodes.cpp
   Utils.cpp
   ValueMapper.cpp
+
+  ADDITIONAL_HEADER_DIRS
+  ${LLVM_MAIN_INCLUDE_DIR}/llvm/Transforms
+  ${LLVM_MAIN_INCLUDE_DIR}/llvm/Transforms/Utils
   )
 
 add_dependencies(LLVMTransformUtils intrinsics_gen)
