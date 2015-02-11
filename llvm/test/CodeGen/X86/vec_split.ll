@@ -1,6 +1,6 @@
-; RUN: llc -march=x86-64 -mcpu=corei7 < %s | FileCheck %s -check-prefix=SSE4
-; RUN: llc -march=x86-64 -mcpu=corei7-avx < %s | FileCheck %s -check-prefix=AVX1
-; RUN: llc -march=x86-64 -mcpu=core-avx2 < %s | FileCheck %s -check-prefix=AVX2
+; RUN: llc -march=x86-64 -mattr=sse4.1 < %s | FileCheck %s -check-prefix=SSE4
+; RUN: llc -march=x86-64 -mattr=avx < %s | FileCheck %s -check-prefix=AVX1
+; RUN: llc -march=x86-64 -mattr=avx2 < %s | FileCheck %s -check-prefix=AVX2
 
 define <16 x i16> @split16(<16 x i16> %a, <16 x i16> %b, <16 x i8> %__mask) {
 ; SSE4-LABEL: split16:
