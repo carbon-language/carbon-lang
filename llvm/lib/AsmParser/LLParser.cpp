@@ -4633,6 +4633,9 @@ int LLParser::ParseAlloc(Instruction *&Inst, PerFunctionState &PFS) {
 
   if (ParseType(Ty)) return true;
 
+  if (!PointerType::isValidElementType(Ty))
+    return TokError("pointer to this type is invalid");
+
   bool AteExtraComma = false;
   if (EatIfPresent(lltok::comma)) {
     if (Lex.getKind() == lltok::kw_align) {
