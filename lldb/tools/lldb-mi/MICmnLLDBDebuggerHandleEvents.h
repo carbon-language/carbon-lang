@@ -77,6 +77,7 @@ class CMICmnLLDBDebuggerHandleEvents : public CMICmnBase, public MI::ISingleton<
     bool HandleProcessEventStopReasonTrace(void);
     bool HandleProcessEventStopReasonBreakpoint(void);
     bool HandleProcessEventStopSignal(bool &vwrbShouldBrk);
+    bool HandleProcessEventStopException(void);
     bool HandleProcessEventStateSuspended(const lldb::SBEvent &vEvent);
     bool MiHelpGetCurrentThreadFrame(CMICmnMIValueTuple &vwrMiValueTuple);
     bool MiResultRecordToStdout(const CMICmnMIResultRecord &vrMiResultRecord);

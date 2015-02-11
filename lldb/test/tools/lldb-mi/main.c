@@ -11,7 +11,7 @@
 extern int a_MyFunction();
 extern int b_MyFunction();
 extern int infloop();
-int doloop;
+int doloop, dosegfault;
 int g_MyVar = 3;
 static int s_MyVar = 4;
 int main (int argc, char const *argv[])
@@ -24,6 +24,8 @@ int main (int argc, char const *argv[])
     //BP_localstest -- it must be at line #24 (or fix it in main*.micmds)
     if (doloop) // BP_doloop
         infloop();
+    if (dosegfault)
+        *(volatile int *)NULL = 1;
     if (argc > 1 && *argv[1] == 'l') {
         a++;
         printf("a=%d, argv[1]=%s\n", a, argv[1]); //BP_argtest

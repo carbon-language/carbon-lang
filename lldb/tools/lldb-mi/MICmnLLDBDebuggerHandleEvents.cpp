@@ -796,6 +796,7 @@ CMICmnLLDBDebuggerHandleEvents::HandleProcessEventStateStopped(bool &vwrbShouldB
             break;
         case lldb::eStopReasonException:
             pEventType = "eStopReasonException";
+            bOk = HandleProcessEventStopException();
             break;
         case lldb::eStopReasonExec:
             pEventType = "eStopReasonExec";
@@ -930,6 +931,44 @@ CMICmnLLDBDebuggerHandleEvents::HandleProcessEventStopSignal(bool &vwrbShouldBrk
             bOk = bOk && TextToStdout("(gdb)");
         }
     } // switch( nStopReason )
+
+    return bOk;
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details: Asynchronous event handler for LLDB Process stop exception.
+// Type:    Method.
+// Args:    None.
+// Return:  MIstatus::success - Functional succeeded.
+//          MIstatus::failure - Functional failed.
+// Throws:  None.
+//--
+bool
+CMICmnLLDBDebuggerHandleEvents::HandleProcessEventStopException(void)
+{
+    const lldb::SBProcess sbProcess = CMICmnLLDBDebugSessionInfo::Instance().GetProcess();
+    lldb::SBThread sbThread = sbProcess.GetSelectedThread();
+    const size_t nStopDescriptionLen = sbThread.GetStopDescription(nullptr, 0);
+    std::shared_ptr<char> spStopDescription(new char[nStopDescriptionLen]);
+    sbThread.GetStopDescription(spStopDescription.get(), nStopDescriptionLen);
+
+    // MI print "*stopped,reason=\"exception-received\",exception=\"%s\",thread-id=\"%d\",stopped-threads=\"all\""
+    const CMICmnMIValueConst miValueConst("exception-received");
+    const CMICmnMIValueResult miValueResult("reason", miValueConst);
+    CMICmnMIOutOfBandRecord miOutOfBandRecord(CMICmnMIOutOfBandRecord::eOutOfBand_Stopped, miValueResult);
+    const CMIUtilString strReason(spStopDescription.get());
+    const CMICmnMIValueConst miValueConst2(strReason);
+    const CMICmnMIValueResult miValueResult2("exception", miValueConst2);
+    bool bOk = miOutOfBandRecord.Add(miValueResult2);
+    const CMIUtilString strThreadId(CMIUtilString::Format("%d", sbThread.GetIndexID()));
+    const CMICmnMIValueConst miValueConst3(strThreadId);
+    const CMICmnMIValueResult miValueResult3("thread-id", miValueConst3);
+    bOk = bOk && miOutOfBandRecord.Add(miValueResult3);
+    const CMICmnMIValueConst miValueConst4("all");
+    const CMICmnMIValueResult miValueResult4("stopped-threads", miValueConst4);
+    bOk = bOk && miOutOfBandRecord.Add(miValueResult4);
+    bOk = bOk && MiOutOfBandRecordToStdout(miOutOfBandRecord);
+    bOk = bOk && TextToStdout("(gdb)");
 
     return bOk;
 }
