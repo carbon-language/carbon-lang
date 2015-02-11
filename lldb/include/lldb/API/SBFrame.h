@@ -157,6 +157,14 @@ public:
                   lldb::DynamicValueType  use_dynamic);
 
     lldb::SBValueList
+    GetVariables (bool arguments,
+                  bool locals,
+                  bool statics,
+                  bool in_scope_only,
+                  bool include_runtime_support_values,
+                  lldb::DynamicValueType  use_dynamic);
+    
+    lldb::SBValueList
     GetRegisters ();
 
     lldb::SBValue

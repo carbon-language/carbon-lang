@@ -314,6 +314,9 @@ public:
     
     bool
     MightHaveChildren ();
+             
+    bool
+    IsRuntimeSupportValue ();
 
     uint32_t
     GetNumChildren ();

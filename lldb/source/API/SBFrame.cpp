@@ -1080,11 +1080,30 @@ SBFrame::GetVariables (bool arguments,
     return value_list;
 }
 
+lldb::SBValueList
+SBFrame::GetVariables (bool arguments,
+                       bool locals,
+                       bool statics,
+                       bool in_scope_only,
+                       lldb::DynamicValueType  use_dynamic)
+{
+    ExecutionContext exe_ctx(m_opaque_sp.get());
+    Target *target = exe_ctx.GetTargetPtr();
+    bool include_runtime_support_values = target ? target->GetDisplayRuntimeSupportValues() : false;
+    return GetVariables(arguments,
+                        locals,
+                        statics,
+                        in_scope_only,
+                        include_runtime_support_values,
+                        use_dynamic);
+}
+
 SBValueList
 SBFrame::GetVariables (bool arguments,
                        bool locals,
                        bool statics,
                        bool in_scope_only,
+                       bool include_runtime_support_values,
                        lldb::DynamicValueType  use_dynamic)
 {
     Log *log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
@@ -1147,6 +1166,12 @@ SBFrame::GetVariables (bool arguments,
                                         continue;
 
                                     ValueObjectSP valobj_sp(frame->GetValueObjectForFrameVariable (variable_sp, eNoDynamicValues));
+                                    
+                                    if (false == include_runtime_support_values &&
+                                        valobj_sp &&
+                                        true == valobj_sp->IsRuntimeSupportValue())
+                                        continue;
+                                    
                                     SBValue value_sb;
                                     value_sb.SetSP(valobj_sp,use_dynamic);
                                     value_list.Append(value_sb);

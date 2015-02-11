@@ -189,6 +189,12 @@ public:
 
     void
     SetUserSpecifiedTrapHandlerNames (const Args &args);
+    
+    bool
+    GetDisplayRuntimeSupportValues () const;
+    
+    void
+    SetDisplayRuntimeSupportValues (bool b);
 };
 
 typedef std::shared_ptr<TargetProperties> TargetPropertiesSP;

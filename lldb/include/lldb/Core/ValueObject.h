@@ -992,6 +992,9 @@ public:
     //------------------------------------------------------------------
     virtual bool
     MightHaveChildren();
+    
+    virtual bool
+    IsRuntimeSupportValue ();
 
 protected:
     typedef ClusterManager<ValueObject> ValueObjectManager;

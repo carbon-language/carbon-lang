@@ -2889,8 +2889,10 @@ g_properties[] =
         "'minimal' is the fastest setting and will load section data with no symbols, but should rarely be used as stack frames in these memory regions will be inaccurate and not provide any context (fastest). " },
     { "display-expression-in-crashlogs"    , OptionValue::eTypeBoolean   , false, false,                      NULL, NULL, "Expressions that crash will show up in crash logs if the host system supports executable specific crash log strings and this setting is set to true." },
     { "trap-handler-names"                 , OptionValue::eTypeArray     , true,  OptionValue::eTypeString,   NULL, NULL, "A list of trap handler function names, e.g. a common Unix user process one is _sigtramp." },
+    { "display-runtime-support-values"     , OptionValue::eTypeBoolean   , false, false,                      NULL, NULL, "If true, LLDB will show variables that are meant to support the operation of a language's runtime support." },
     { NULL                                 , OptionValue::eTypeInvalid   , false, 0                         , NULL, NULL, NULL }
 };
+
 enum
 {
     ePropertyDefaultArch,
@@ -2923,7 +2925,8 @@ enum
     ePropertyLoadScriptFromSymbolFile,
     ePropertyMemoryModuleLoadLevel,
     ePropertyDisplayExpressionsInCrashlogs,
-    ePropertyTrapHandlerNames
+    ePropertyTrapHandlerNames,
+    ePropertyDisplayRuntimeSupportValues
 };
 
 
@@ -3356,6 +3359,20 @@ TargetProperties::SetUserSpecifiedTrapHandlerNames (const Args &args)
 {
     const uint32_t idx = ePropertyTrapHandlerNames;
     m_collection_sp->SetPropertyAtIndexFromArgs (NULL, idx, args);
+}
+
+bool
+TargetProperties::GetDisplayRuntimeSupportValues () const
+{
+    const uint32_t idx = ePropertyDisplayRuntimeSupportValues;
+    return m_collection_sp->GetPropertyAtIndexAsBoolean (NULL, idx, false);
+}
+
+void
+TargetProperties::SetDisplayRuntimeSupportValues (bool b)
+{
+    const uint32_t idx = ePropertyDisplayRuntimeSupportValues;
+    m_collection_sp->SetPropertyAtIndexAsBoolean (NULL, idx, b);
 }
 
 //----------------------------------------------------------------------

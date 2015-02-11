@@ -773,6 +773,10 @@ public:
     {
         DumpValueObjectOptions options(m_varobj_options.GetAsDumpOptions());
 
+        if (false == valobj_sp->GetTargetSP()->GetDisplayRuntimeSupportValues() &&
+            true == valobj_sp->IsRuntimeSupportValue())
+            return;
+        
         switch (var_sp->GetScope())
         {
             case eValueTypeVariableGlobal:

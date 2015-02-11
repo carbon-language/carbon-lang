@@ -2064,6 +2064,21 @@ ValueObject::IsPossibleDynamicType ()
 }
 
 bool
+ValueObject::IsRuntimeSupportValue ()
+{
+    Process *process(GetProcessSP().get());
+    if (process)
+    {
+        LanguageRuntime *runtime = process->GetLanguageRuntime(GetObjectRuntimeLanguage());
+        if (!runtime)
+            runtime = process->GetObjCLanguageRuntime();
+        if (runtime)
+            return runtime->IsRuntimeSupportValue(*this);
+    }
+    return false;
+}
+
+bool
 ValueObject::IsObjCNil ()
 {
     const uint32_t mask = eTypeIsObjC | eTypeIsPointer;
