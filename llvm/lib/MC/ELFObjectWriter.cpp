@@ -259,8 +259,7 @@ class ELFObjectWriter : public MCObjectWriter {
                           const RelMapTy &RelMap);
 
     void CreateMetadataSections(MCAssembler &Asm, MCAsmLayout &Layout,
-                                SectionIndexMapTy &SectionIndexMap,
-                                const RelMapTy &RelMap);
+                                SectionIndexMapTy &SectionIndexMap);
 
     // Create the sections that show up in the symbol table. Currently
     // those are the .note.GNU-stack section and the group sections.
@@ -1395,10 +1394,8 @@ void ELFObjectWriter::WriteRelocationsFragment(const MCAssembler &Asm,
   }
 }
 
-void ELFObjectWriter::CreateMetadataSections(MCAssembler &Asm,
-                                             MCAsmLayout &Layout,
-                                             SectionIndexMapTy &SectionIndexMap,
-                                             const RelMapTy &RelMap) {
+void ELFObjectWriter::CreateMetadataSections(
+    MCAssembler &Asm, MCAsmLayout &Layout, SectionIndexMapTy &SectionIndexMap) {
   MCContext &Ctx = Asm.getContext();
   MCDataFragment *F;
 
@@ -1737,8 +1734,7 @@ void ELFObjectWriter::WriteObject(MCAssembler &Asm,
 
   CreateMetadataSections(const_cast<MCAssembler&>(Asm),
                          const_cast<MCAsmLayout&>(Layout),
-                         SectionIndexMap,
-                         RelMap);
+                         SectionIndexMap);
 
   uint64_t NaturalAlignment = is64Bit() ? 8 : 4;
   uint64_t HeaderSize = is64Bit() ? sizeof(ELF::Elf64_Ehdr) :
