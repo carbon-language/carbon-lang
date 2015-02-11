@@ -30,7 +30,8 @@ entry:
 
 ; MUBUF load with an immediate byte offset that doesn't fit into 12-bits
 ; CHECK-LABEL: {{^}}mubuf_load2:
-; CHECK: buffer_load_dword v{{[0-9]}}, v[{{[0-9]+:[0-9]+}}], s[{{[0-9]+:[0-9]+}}], 0 addr64 ; encoding: [0x00,0x80,0x30,0xe0
+; CHECK: s_movk_i32 [[SOFFSET:s[0-9]+]], 0x1000
+; CHECK: buffer_load_dword v{{[0-9]}}, s[{{[0-9]+:[0-9]+}}], [[SOFFSET]] ; encoding: [0x00,0x00,0x30,0xe0
 define void @mubuf_load2(i32 addrspace(1)* %out, i32 addrspace(1)* %in) {
 entry:
   %0 = getelementptr i32 addrspace(1)* %in, i64 1024
@@ -85,12 +86,6 @@ main_body:
   ret void
 }
 
-declare i32 @llvm.SI.buffer.load.dword.i32.i32(<16 x i8>, i32, i32, i32, i32, i32, i32, i32, i32) #3
-declare void @llvm.SI.tbuffer.store.i32(<16 x i8>, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32)
-
-attributes #1 = { "ShaderType"="2" "unsafe-fp-math"="true" }
-attributes #3 = { nounwind readonly }
-
 ;;;==========================================================================;;;
 ;;; MUBUF STORE TESTS
 ;;;==========================================================================;;;
@@ -118,7 +113,8 @@ entry:
 
 ; MUBUF store with an immediate byte offset that doesn't fit into 12-bits
 ; CHECK-LABEL: {{^}}mubuf_store2:
-; CHECK: buffer_store_dword v{{[0-9]}}, v[{{[0-9]+:[0-9]+}}], s[{{[0-9]:[0-9]}}], 0 addr64 ; encoding: [0x00,0x80,0x70,0xe0
+; CHECK: s_movk_i32 [[SOFFSET:s[0-9]+]], 0x1000
+; CHECK: buffer_store_dword v{{[0-9]}}, s[{{[0-9]:[0-9]}}], [[SOFFSET]] ; encoding: [0x00,0x00,0x70,0xe0
 define void @mubuf_store2(i32 addrspace(1)* %out) {
 entry:
   %0 = getelementptr i32 addrspace(1)* %out, i64 1024
@@ -154,7 +150,8 @@ define void @store_sgpr_ptr_offset(i32 addrspace(1)* %out) #0 {
 }
 
 ; CHECK-LABEL: {{^}}store_sgpr_ptr_large_offset:
-; CHECK: buffer_store_dword v{{[0-9]+}}, v{{\[[0-9]+:[0-9]+\]}}, s{{\[[0-9]+:[0-9]+\]}}, 0 addr64
+; CHECK: s_mov_b32 [[SOFFSET:s[0-9]+]], 0x20000
+; CHECK: buffer_store_dword v{{[0-9]+}}, s{{\[[0-9]+:[0-9]+\]}}, [[SOFFSET]]
 define void @store_sgpr_ptr_large_offset(i32 addrspace(1)* %out) #0 {
   %out.gep = getelementptr i32 addrspace(1)* %out, i32 32768
   store i32 99, i32 addrspace(1)* %out.gep, align 4
@@ -169,3 +166,9 @@ define void @store_vgpr_ptr(i32 addrspace(1)* %out) #0 {
   store i32 99, i32 addrspace(1)* %out.gep, align 4
   ret void
 }
+
+declare i32 @llvm.SI.buffer.load.dword.i32.i32(<16 x i8>, i32, i32, i32, i32, i32, i32, i32, i32) #3
+declare void @llvm.SI.tbuffer.store.i32(<16 x i8>, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32)
+
+attributes #1 = { "ShaderType"="2" "unsafe-fp-math"="true" }
+attributes #3 = { nounwind readonly }

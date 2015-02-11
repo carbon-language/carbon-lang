@@ -925,26 +925,32 @@ void AMDGPUDAGToDAGISel::SelectMUBUF(SDValue Addr, SDValue &Ptr,
     SDValue N1 = Addr.getOperand(1);
     ConstantSDNode *C1 = cast<ConstantSDNode>(N1);
 
-    if (isLegalMUBUFImmOffset(C1)) {
-
-      if (N0.getOpcode() == ISD::ADD) {
-        // (add (add N2, N3), C1) -> addr64
-        SDValue N2 = N0.getOperand(0);
-        SDValue N3 = N0.getOperand(1);
-        Addr64 = CurDAG->getTargetConstant(1, MVT::i1);
-        Ptr = N2;
-        VAddr = N3;
-        Offset = CurDAG->getTargetConstant(C1->getZExtValue(), MVT::i16);
-        return;
-      }
+    if (N0.getOpcode() == ISD::ADD) {
+      // (add (add N2, N3), C1) -> addr64
+      SDValue N2 = N0.getOperand(0);
+      SDValue N3 = N0.getOperand(1);
+      Addr64 = CurDAG->getTargetConstant(1, MVT::i1);
+      Ptr = N2;
+      VAddr = N3;
+    } else {
 
       // (add N0, C1) -> offset
       VAddr = CurDAG->getTargetConstant(0, MVT::i32);
       Ptr = N0;
-      Offset = CurDAG->getTargetConstant(C1->getZExtValue(), MVT::i16);
+    }
+
+    if (isLegalMUBUFImmOffset(C1)) {
+        Offset = CurDAG->getTargetConstant(C1->getZExtValue(), MVT::i16);
+        return;
+    } else if (isUInt<32>(C1->getZExtValue())) {
+      // Illegal offset, store it in soffset.
+      Offset = CurDAG->getTargetConstant(0, MVT::i16);
+      SOffset = SDValue(CurDAG->getMachineNode(AMDGPU::S_MOV_B32, DL, MVT::i32,
+                   CurDAG->getTargetConstant(C1->getZExtValue(), MVT::i32)), 0);
       return;
     }
   }
+
   if (Addr.getOpcode() == ISD::ADD) {
     // (add N0, N1) -> addr64
     SDValue N0 = Addr.getOperand(0);
