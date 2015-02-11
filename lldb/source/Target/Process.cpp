@@ -3136,7 +3136,7 @@ Process::Launch (ProcessLaunchInfo &launch_info)
 
                         // Target was stopped at entry as was intended. Need to notify the listeners
                         // about it.
-                        if (launch_info.GetFlags().Test(eLaunchFlagStopAtEntry) == true)
+                        if (state == eStateStopped && launch_info.GetFlags().Test(eLaunchFlagStopAtEntry))
                             HandlePrivateEvent(event_sp);
                     }
                     else if (state == eStateExited)
