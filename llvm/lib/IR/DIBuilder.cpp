@@ -1229,12 +1229,12 @@ void DIBuilder::replaceVTableHolder(DICompositeType &T, DICompositeType VTableHo
   if (T != VTableHolder)
     return;
 
-  // Look for unresolved operands.  T has dropped RAUW support and is already
-  // marked resolved, orphaning any cycles underneath it.
-  assert(T->isResolved() && "Expected self-reference to be resolved");
-  for (const MDOperand &O : T->operands())
-    if (auto *N = dyn_cast_or_null<MDNode>(O))
-      trackIfUnresolved(N);
+  // Look for unresolved operands.  T will drop RAUW support, orphaning any
+  // cycles underneath it.
+  if (T->isResolved())
+    for (const MDOperand &O : T->operands())
+      if (auto *N = dyn_cast_or_null<MDNode>(O))
+        trackIfUnresolved(N);
 }
 
 void DIBuilder::replaceArrays(DICompositeType &T, DIArray Elements,
