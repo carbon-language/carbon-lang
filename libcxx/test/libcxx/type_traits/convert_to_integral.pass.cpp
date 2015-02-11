@@ -68,7 +68,7 @@ int main()
   check_integral_types<char, int>();
   check_integral_types<signed char, int>();
   check_integral_types<unsigned char, int>();
-  check_integral_types<wchar_t, int>();
+  check_integral_types<wchar_t, decltype(((wchar_t)1) + 1)>();
   check_integral_types<char16_t, int>();
   check_integral_types<char32_t, uint32_t>();
   check_integral_types<short, int>();
@@ -84,6 +84,8 @@ int main()
   check_integral_types<__uint128_t, __uint128_t>();
 #endif
     // TODO(ericwf): Not standard
-  check_enum_types<enum1, unsigned>();
-  check_enum_types<enum2, unsigned long>();
+  typedef std::underlying_type<enum1>::type Enum1UT;
+  check_enum_types<enum1, decltype(((Enum1UT)1) + 1)>();
+  typedef std::underlying_type<enum2>::type Enum2UT;
+  check_enum_types<enum2, decltype(((Enum2UT)1) + 1)>();
 }
