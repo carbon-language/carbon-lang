@@ -33,8 +33,9 @@
 #include "lldb/Host/OptionParser.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
 #include "lldb/Interpreter/CommandReturnObject.h"
-#include "Plugins/Process/gdb-remote/GDBRemoteCommunicationServer.h"
+#include "Plugins/Process/gdb-remote/GDBRemoteCommunicationServerPlatform.h"
 #include "Plugins/Process/gdb-remote/ProcessGDBRemoteLog.h"
+
 using namespace lldb;
 using namespace lldb_private;
 
@@ -115,7 +116,7 @@ main (int argc, char *argv[])
     debugger_sp->SetOutputFileHandle(stdout, false);
     debugger_sp->SetErrorFileHandle(stderr, false);
     
-    GDBRemoteCommunicationServer::PortMap gdbserver_portmap;
+    GDBRemoteCommunicationServerPlatform::PortMap gdbserver_portmap;
     int min_gdbserver_port = 0;
     int max_gdbserver_port = 0;
     uint16_t port_offset = 0;
@@ -246,14 +247,14 @@ main (int argc, char *argv[])
 
 
     do {
-        GDBRemoteCommunicationServer gdb_server (true);
+        GDBRemoteCommunicationServerPlatform platform;
         
         if (port_offset > 0)
-            gdb_server.SetPortOffset(port_offset);
+            platform.SetPortOffset(port_offset);
 
         if (!gdbserver_portmap.empty())
         {
-            gdb_server.SetPortMap(std::move(gdbserver_portmap));
+            platform.SetPortMap(std::move(gdbserver_portmap));
         }
 
         if (!listen_host_port.empty())
@@ -268,7 +269,7 @@ main (int argc, char *argv[])
                 if (conn_ap->Connect(connect_url.c_str(), &error) == eConnectionStatusSuccess)
                 {
                     printf ("Connection established.\n");
-                    gdb_server.SetConnection (conn_ap.release());
+                    platform.SetConnection (conn_ap.release());
                 }
                 else
                 {
@@ -276,16 +277,16 @@ main (int argc, char *argv[])
                 }
             }
 
-            if (gdb_server.IsConnected())
+            if (platform.IsConnected())
             {
                 // After we connected, we need to get an initial ack from...
-                if (gdb_server.HandshakeWithClient(&error))
+                if (platform.HandshakeWithClient(&error))
                 {
                     bool interrupt = false;
                     bool done = false;
                     while (!interrupt && !done)
                     {
-                        if (gdb_server.GetPacketAndSendResponse (UINT32_MAX, error, interrupt, done) != GDBRemoteCommunication::PacketResult::Success)
+                        if (platform.GetPacketAndSendResponse (UINT32_MAX, error, interrupt, done) != GDBRemoteCommunication::PacketResult::Success)
                             break;
                     }
                     

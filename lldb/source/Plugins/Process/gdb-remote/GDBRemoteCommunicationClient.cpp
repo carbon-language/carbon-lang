@@ -48,8 +48,8 @@ using namespace lldb_private;
 //----------------------------------------------------------------------
 // GDBRemoteCommunicationClient constructor
 //----------------------------------------------------------------------
-GDBRemoteCommunicationClient::GDBRemoteCommunicationClient(bool is_platform) :
-    GDBRemoteCommunication("gdb-remote.client", "gdb-remote.client.rx_packet", is_platform),
+GDBRemoteCommunicationClient::GDBRemoteCommunicationClient() :
+    GDBRemoteCommunication("gdb-remote.client", "gdb-remote.client.rx_packet"),
     m_supports_not_sending_acks (eLazyBoolCalculate),
     m_supports_thread_suffix (eLazyBoolCalculate),
     m_supports_threads_in_stop_reply (eLazyBoolCalculate),

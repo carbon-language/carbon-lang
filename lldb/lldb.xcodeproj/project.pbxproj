@@ -737,6 +737,9 @@
 		4CF3D80C15AF4DC800845BF3 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EDB919B414F6F10D008FF64B /* Security.framework */; };
 		4CF52AF51428291E0051E832 /* SBFileSpecList.h in Headers */ = {isa = PBXBuildFile; fileRef = 4CF52AF41428291E0051E832 /* SBFileSpecList.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		4CF52AF8142829390051E832 /* SBFileSpecList.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4CF52AF7142829390051E832 /* SBFileSpecList.cpp */; };
+		6D55B2901A8A806200A70529 /* GDBRemoteCommunicationServerCommon.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6D55B28D1A8A806200A70529 /* GDBRemoteCommunicationServerCommon.cpp */; };
+		6D55B2911A8A806200A70529 /* GDBRemoteCommunicationServerLLGS.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6D55B28E1A8A806200A70529 /* GDBRemoteCommunicationServerLLGS.cpp */; };
+		6D55B2921A8A806200A70529 /* GDBRemoteCommunicationServerPlatform.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6D55B28F1A8A806200A70529 /* GDBRemoteCommunicationServerPlatform.cpp */; };
 		8C2D6A53197A1EAF006989C9 /* MemoryHistory.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8C2D6A52197A1EAF006989C9 /* MemoryHistory.cpp */; };
 		8C2D6A5E197A250F006989C9 /* MemoryHistoryASan.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8C2D6A5A197A1FDC006989C9 /* MemoryHistoryASan.cpp */; };
 		8CCB017E19BA28A80009FD44 /* ThreadCollection.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8CCB017A19BA283D0009FD44 /* ThreadCollection.cpp */; };
@@ -2348,6 +2351,12 @@
 		69A01E1E1236C5D400C660B5 /* Mutex.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Mutex.cpp; sourceTree = "<group>"; };
 		69A01E1F1236C5D400C660B5 /* Symbols.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Symbols.cpp; sourceTree = "<group>"; };
 		69A01E201236C5D400C660B5 /* TimeValue.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = TimeValue.cpp; sourceTree = "<group>"; };
+		6D55B28D1A8A806200A70529 /* GDBRemoteCommunicationServerCommon.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = GDBRemoteCommunicationServerCommon.cpp; sourceTree = "<group>"; };
+		6D55B28E1A8A806200A70529 /* GDBRemoteCommunicationServerLLGS.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = GDBRemoteCommunicationServerLLGS.cpp; sourceTree = "<group>"; };
+		6D55B28F1A8A806200A70529 /* GDBRemoteCommunicationServerPlatform.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = GDBRemoteCommunicationServerPlatform.cpp; sourceTree = "<group>"; };
+		6D55B2931A8A808400A70529 /* GDBRemoteCommunicationServerCommon.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = GDBRemoteCommunicationServerCommon.h; sourceTree = "<group>"; };
+		6D55B2941A8A808400A70529 /* GDBRemoteCommunicationServerLLGS.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = GDBRemoteCommunicationServerLLGS.h; sourceTree = "<group>"; };
+		6D55B2951A8A808400A70529 /* GDBRemoteCommunicationServerPlatform.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = GDBRemoteCommunicationServerPlatform.h; sourceTree = "<group>"; };
 		8C2D6A52197A1EAF006989C9 /* MemoryHistory.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MemoryHistory.cpp; path = source/Target/MemoryHistory.cpp; sourceTree = "<group>"; };
 		8C2D6A54197A1EBE006989C9 /* MemoryHistory.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = MemoryHistory.h; path = include/lldb/Target/MemoryHistory.h; sourceTree = "<group>"; };
 		8C2D6A5A197A1FDC006989C9 /* MemoryHistoryASan.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = MemoryHistoryASan.cpp; sourceTree = "<group>"; };
@@ -4868,6 +4877,12 @@
 		4CEE62F71145F1C70064CF93 /* GDB Remote */ = {
 			isa = PBXGroup;
 			children = (
+				6D55B2931A8A808400A70529 /* GDBRemoteCommunicationServerCommon.h */,
+				6D55B2941A8A808400A70529 /* GDBRemoteCommunicationServerLLGS.h */,
+				6D55B2951A8A808400A70529 /* GDBRemoteCommunicationServerPlatform.h */,
+				6D55B28D1A8A806200A70529 /* GDBRemoteCommunicationServerCommon.cpp */,
+				6D55B28E1A8A806200A70529 /* GDBRemoteCommunicationServerLLGS.cpp */,
+				6D55B28F1A8A806200A70529 /* GDBRemoteCommunicationServerPlatform.cpp */,
 				2618EE5B1315B29C001D6D71 /* GDBRemoteCommunication.cpp */,
 				2618EE5C1315B29C001D6D71 /* GDBRemoteCommunication.h */,
 				26744EED1338317700EF765A /* GDBRemoteCommunicationClient.cpp */,
@@ -5496,7 +5511,7 @@
 		08FB7793FE84155DC02AAC07 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastUpgradeCheck = 0600;
+				LastUpgradeCheck = 0610;
 				TargetAttributes = {
 					2690CD161A6DC0D000E717C8 = {
 						CreatedOnToolsVersion = 6.3;
@@ -5820,6 +5835,7 @@
 				2689001513353DDE00698AC0 /* CommandObjectBreakpointCommand.cpp in Sources */,
 				2689001613353DDE00698AC0 /* CommandObjectCommands.cpp in Sources */,
 				AFEC3362194A8ABA00FF05C6 /* StructuredData.cpp in Sources */,
+				6D55B2901A8A806200A70529 /* GDBRemoteCommunicationServerCommon.cpp in Sources */,
 				26474CAC18D0CB070073DEBA /* RegisterContextFreeBSD_x86_64.cpp in Sources */,
 				2689001713353DDE00698AC0 /* CommandObjectDisassemble.cpp in Sources */,
 				2689001813353DDE00698AC0 /* CommandObjectExpression.cpp in Sources */,
@@ -6241,6 +6257,7 @@
 				260CC65015D0440D002BF2E0 /* OptionValueFormat.cpp in Sources */,
 				260CC65115D0440D002BF2E0 /* OptionValueSInt64.cpp in Sources */,
 				260CC65215D0440D002BF2E0 /* OptionValueString.cpp in Sources */,
+				6D55B2911A8A806200A70529 /* GDBRemoteCommunicationServerLLGS.cpp in Sources */,
 				260CC65315D0440D002BF2E0 /* OptionValueUInt64.cpp in Sources */,
 				260CC65415D0440D002BF2E0 /* OptionValueUUID.cpp in Sources */,
 				94BA8B6D176F8C9B005A91B5 /* Range.cpp in Sources */,
@@ -6251,6 +6268,7 @@
 				2640E19F15DC78FD00F23B50 /* Property.cpp in Sources */,
 				26491E3E15E1DB9F00CBFFC2 /* OptionValueRegex.cpp in Sources */,
 				2697A39315E404B1003E682C /* OptionValueArch.cpp in Sources */,
+				6D55B2921A8A806200A70529 /* GDBRemoteCommunicationServerPlatform.cpp in Sources */,
 				94EA1D5C15E6C9B400D4171A /* PythonDataObjects.cpp in Sources */,
 				94D6A0AC16CEB55F00833B6E /* NSSet.cpp in Sources */,
 				94CD704E16F8DDEA00CF1E42 /* Cocoa.cpp in Sources */,

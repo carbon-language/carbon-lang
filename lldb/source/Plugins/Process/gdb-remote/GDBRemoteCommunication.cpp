@@ -142,8 +142,7 @@ GDBRemoteCommunication::History::Dump (lldb_private::Log *log) const
 // GDBRemoteCommunication constructor
 //----------------------------------------------------------------------
 GDBRemoteCommunication::GDBRemoteCommunication(const char *comm_name, 
-                                               const char *listener_name, 
-                                               bool is_platform) :
+                                               const char *listener_name) :
     Communication(comm_name),
 #ifdef LLDB_CONFIGURATION_DEBUG
     m_packet_timeout (1000),
@@ -155,7 +154,6 @@ GDBRemoteCommunication::GDBRemoteCommunication(const char *comm_name,
     m_private_is_running (false),
     m_history (512),
     m_send_acks (true),
-    m_is_platform (is_platform),
     m_listen_url ()
 {
 }

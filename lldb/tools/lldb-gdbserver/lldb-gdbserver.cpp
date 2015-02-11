@@ -38,7 +38,7 @@
 #include "lldb/Host/ThreadLauncher.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
 #include "lldb/Interpreter/CommandReturnObject.h"
-#include "Plugins/Process/gdb-remote/GDBRemoteCommunicationServer.h"
+#include "Plugins/Process/gdb-remote/GDBRemoteCommunicationServerLLGS.h"
 #include "Plugins/Process/gdb-remote/ProcessGDBRemoteLog.h"
 
 #ifndef LLGS_PROGRAM_NAME
@@ -203,7 +203,7 @@ setup_platform (const std::string &platform_name)
 }
 
 void
-handle_attach_to_pid (GDBRemoteCommunicationServer &gdb_server, lldb::pid_t pid)
+handle_attach_to_pid (GDBRemoteCommunicationServerLLGS &gdb_server, lldb::pid_t pid)
 {
     Error error = gdb_server.AttachToProcess (pid);
     if (error.Fail ())
@@ -214,13 +214,13 @@ handle_attach_to_pid (GDBRemoteCommunicationServer &gdb_server, lldb::pid_t pid)
 }
 
 void
-handle_attach_to_process_name (GDBRemoteCommunicationServer &gdb_server, const std::string &process_name)
+handle_attach_to_process_name (GDBRemoteCommunicationServerLLGS &gdb_server, const std::string &process_name)
 {
     // FIXME implement.
 }
 
 void
-handle_attach (GDBRemoteCommunicationServer &gdb_server, const std::string &attach_target)
+handle_attach (GDBRemoteCommunicationServerLLGS &gdb_server, const std::string &attach_target)
 {
     assert (!attach_target.empty () && "attach_target cannot be empty");
 
@@ -236,7 +236,7 @@ handle_attach (GDBRemoteCommunicationServer &gdb_server, const std::string &atta
 }
 
 void
-handle_launch (GDBRemoteCommunicationServer &gdb_server, int argc, const char *const argv[])
+handle_launch (GDBRemoteCommunicationServerLLGS &gdb_server, int argc, const char *const argv[])
 {
     Error error;
     error = gdb_server.SetLaunchArguments (argv, argc);
@@ -326,7 +326,7 @@ writePortToPipe (const char *const named_pipe_path, const uint16_t port)
 }
 
 void
-ConnectToRemote (GDBRemoteCommunicationServer &gdb_server, bool reverse_connect, const char *const host_and_port, const char *const progname, const char *const named_pipe_path)
+ConnectToRemote (GDBRemoteCommunicationServerLLGS &gdb_server, bool reverse_connect, const char *const host_and_port, const char *const progname, const char *const named_pipe_path)
 {
     Error error;
 
@@ -663,11 +663,10 @@ main (int argc, char *argv[])
     // Run any commands requested.
     run_lldb_commands (debugger_sp, lldb_commands);
 
-    // Setup the platform that GDBRemoteCommunicationServer will use.
+    // Setup the platform that GDBRemoteCommunicationServerLLGS will use.
     lldb::PlatformSP platform_sp = setup_platform (platform_name);
 
-    const bool is_platform = false;
-    GDBRemoteCommunicationServer gdb_server (is_platform, platform_sp, debugger_sp);
+    GDBRemoteCommunicationServerLLGS gdb_server (platform_sp, debugger_sp);
 
     const char *const host_and_port = argv[0];
     argc -= 1;

@@ -63,8 +63,7 @@ public:
     // Constructors and Destructors
     //------------------------------------------------------------------
     GDBRemoteCommunication(const char *comm_name, 
-                           const char *listener_name,
-                           bool is_platform);
+                           const char *listener_name);
 
     virtual
     ~GDBRemoteCommunication();

@@ -27,7 +27,7 @@ public:
     //------------------------------------------------------------------
     // Constructors and Destructors
     //------------------------------------------------------------------
-    GDBRemoteCommunicationClient(bool is_platform);
+    GDBRemoteCommunicationClient();
 
     ~GDBRemoteCommunicationClient();
 

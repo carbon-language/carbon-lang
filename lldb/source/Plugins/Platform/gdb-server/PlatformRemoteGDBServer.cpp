@@ -194,8 +194,8 @@ PlatformRemoteGDBServer::GetFileWithUUID (const FileSpec &platform_file,
 /// Default Constructor
 //------------------------------------------------------------------
 PlatformRemoteGDBServer::PlatformRemoteGDBServer () :
-    Platform(false), // This is a remote platform
-    m_gdb_client(true)
+    Platform (false), // This is a remote platform
+    m_gdb_client ()
 {
 }
 

@@ -268,7 +268,7 @@ ProcessGDBRemote::CanDebug (Target &target, bool plugin_specified_by_name)
 ProcessGDBRemote::ProcessGDBRemote(Target& target, Listener &listener) :
     Process (target, listener),
     m_flags (0),
-    m_gdb_comm(false),
+    m_gdb_comm (),
     m_debugserver_pid (LLDB_INVALID_PROCESS_ID),
     m_last_stop_packet (),
     m_last_stop_packet_mutex (Mutex::eMutexTypeNormal),
