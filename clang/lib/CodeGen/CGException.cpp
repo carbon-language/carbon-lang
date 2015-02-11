@@ -1564,6 +1564,8 @@ static llvm::Constant *getClangCallTerminateFn(CodeGenModule &CGM) {
     // we don't want it to turn into an exported symbol.
     fn->setLinkage(llvm::Function::LinkOnceODRLinkage);
     fn->setVisibility(llvm::Function::HiddenVisibility);
+    if (CGM.supportsCOMDAT())
+      fn->setComdat(CGM.getModule().getOrInsertComdat(fn->getName()));
 
     // Set up the function.
     llvm::BasicBlock *entry =

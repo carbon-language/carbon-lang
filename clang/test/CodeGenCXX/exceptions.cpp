@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 %s -triple=x86_64-apple-darwin10 -emit-llvm -o - -fcxx-exceptions -fexceptions | FileCheck %s
+// RUN: %clang_cc1 %s -triple=x86_64-linux-gnu -emit-llvm -o - -fcxx-exceptions -fexceptions | FileCheck %s
 
 typedef typeof(sizeof(0)) size_t;
 
@@ -71,7 +71,7 @@ namespace test1 {
 
   //   rdar://11904428
   //   Terminate landing pads should call __cxa_begin_catch first.
-  // CHECK:      define linkonce_odr hidden void @__clang_call_terminate(i8*) [[NI_NR_NUW:#[0-9]+]]
+  // CHECK:      define linkonce_odr hidden void @__clang_call_terminate(i8*) [[NI_NR_NUW:#[0-9]+]] comdat
   // CHECK-NEXT:   [[T0:%.*]] = call i8* @__cxa_begin_catch(i8* %0) [[NUW:#[0-9]+]]
   // CHECK-NEXT:   call void @_ZSt9terminatev() [[NR_NUW:#[0-9]+]]
   // CHECK-NEXT:   unreachable
