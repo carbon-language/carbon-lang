@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mcpu=corei7-avx | FileCheck %s
+; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mattr=avx | FileCheck %s
 
 
 define <2 x double> @fabs_v2f64(<2 x double> %p)
