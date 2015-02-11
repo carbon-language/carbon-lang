@@ -11,4 +11,6 @@ LLDB_LEVEL := ../../..
 LIBRARYNAME := lldbHostWindows
 BUILD_ARCHIVE = 1
 
+SOURCES = $(notdir $(wildcard $(PROJ_SRC_DIR)/*.cpp )) $(PROJ_SRC_DIR)/../posix/ConnectionFileDescriptorPosix.cpp
+
 include $(LLDB_LEVEL)/Makefile

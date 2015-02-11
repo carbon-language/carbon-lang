@@ -11,6 +11,7 @@
 
 // C Includes
 #include <stdlib.h>
+#include <stdio.h>
 
 // C++ Includes
 // Other libraries and framework includes

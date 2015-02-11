@@ -209,7 +209,7 @@ lldb_private::Initialize ()
         //----------------------------------------------------------------------
         ProcessLinux::Initialize();
 #endif
-#if defined(_WIN32)
+#if defined(_MSC_VER)
         DynamicLoaderWindows::Initialize();
         ProcessWindows::Initialize();
 #endif
@@ -298,7 +298,7 @@ lldb_private::Terminate ()
 
     Debugger::SettingsTerminate ();
 
-#if defined (_WIN32)
+#if defined(_MSC_VER)
     DynamicLoaderWindows::Terminate();
 #endif
 

@@ -9,10 +9,13 @@
 
 #include "lldb/Host/SocketAddress.h"
 #include <stddef.h>
+#include <stdio.h>
 
 // C Includes
 #if !defined(_WIN32)
 #include <arpa/inet.h>
+#else
+#include "lldb/Host/windows/win32.h"
 #endif
 #include <assert.h>
 #include <string.h>
@@ -54,7 +57,7 @@ const char* inet_ntop(int af, const void * src,
             {
                 char tmp[INET6_ADDRSTRLEN] = {0};
                 const uint16_t* src16 = static_cast<const uint16_t*>(src);
-                int full_size = _snprintf(tmp, sizeof(tmp),
+                int full_size = ::snprintf(tmp, sizeof(tmp),
                                           "%x:%x:%x:%x:%x:%x:%x:%x",
                                           ntohs(src16[0]), ntohs(src16[1]), ntohs(src16[2]), ntohs(src16[3]),
                                           ntohs(src16[4]), ntohs(src16[5]), ntohs(src16[6]), ntohs(src16[7])
