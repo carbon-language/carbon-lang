@@ -95,9 +95,9 @@ private:
                    SDValue &Idxen, SDValue &Addr64, SDValue &GLC, SDValue &SLC,
                    SDValue &TFE) const;
   bool SelectMUBUFAddr64(SDValue Addr, SDValue &SRsrc, SDValue &VAddr,
-                         SDValue &Offset) const;
+                         SDValue &SOffset, SDValue &Offset) const;
   bool SelectMUBUFAddr64(SDValue Addr, SDValue &SRsrc,
-                         SDValue &VAddr, SDValue &Offset,
+                         SDValue &VAddr, SDValue &SOffset, SDValue &Offset,
                          SDValue &SLC) const;
   bool SelectMUBUFScratch(SDValue Addr, SDValue &RSrc, SDValue &VAddr,
                           SDValue &SOffset, SDValue &ImmOffset) const;
@@ -964,9 +964,9 @@ void AMDGPUDAGToDAGISel::SelectMUBUF(SDValue Addr, SDValue &Ptr,
 }
 
 bool AMDGPUDAGToDAGISel::SelectMUBUFAddr64(SDValue Addr, SDValue &SRsrc,
-                                           SDValue &VAddr,
+                                           SDValue &VAddr, SDValue &SOffset,
                                            SDValue &Offset) const {
-  SDValue Ptr, SOffset, Offen, Idxen, Addr64, GLC, SLC, TFE;
+  SDValue Ptr, Offen, Idxen, Addr64, GLC, SLC, TFE;
 
   SelectMUBUF(Addr, Ptr, VAddr, SOffset, Offset, Offen, Idxen, Addr64,
               GLC, SLC, TFE);
@@ -986,11 +986,12 @@ bool AMDGPUDAGToDAGISel::SelectMUBUFAddr64(SDValue Addr, SDValue &SRsrc,
 }
 
 bool AMDGPUDAGToDAGISel::SelectMUBUFAddr64(SDValue Addr, SDValue &SRsrc,
-                                           SDValue &VAddr, SDValue &Offset,
-                                           SDValue &SLC) const {
+                                           SDValue &VAddr, SDValue &SOffset,
+					   SDValue &Offset,
+					   SDValue &SLC) const {
   SLC = CurDAG->getTargetConstant(0, MVT::i1);
 
-  return SelectMUBUFAddr64(Addr, SRsrc, VAddr, Offset);
+  return SelectMUBUFAddr64(Addr, SRsrc, VAddr, SOffset, Offset);
 }
 
 bool AMDGPUDAGToDAGISel::SelectMUBUFScratch(SDValue Addr, SDValue &Rsrc,

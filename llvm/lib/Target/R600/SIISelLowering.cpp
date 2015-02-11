@@ -2124,6 +2124,7 @@ MachineSDNode *SITargetLowering::AdjustRegClass(MachineSDNode *N,
     SmallVector<SDValue, 8> Ops;
     Ops.push_back(SDValue(RSrc, 0));
     Ops.push_back(N->getOperand(0));
+    Ops.push_back(DAG.getTargetConstant(0, MVT::i32)); // soffset
 
     // The immediate offset is in dwords on SI and in bytes on VI.
     if (Subtarget->getGeneration() >= AMDGPUSubtarget::VOLCANIC_ISLANDS)

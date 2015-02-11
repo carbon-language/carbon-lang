@@ -1729,9 +1729,6 @@ void SIInstrInfo::legalizeOperands(MachineInstr *MI) const {
       MachineOperand *VData = getNamedOperand(*MI, AMDGPU::OpName::vdata);
       MachineOperand *Offset = getNamedOperand(*MI, AMDGPU::OpName::offset);
       MachineOperand *SOffset = getNamedOperand(*MI, AMDGPU::OpName::soffset);
-      assert(SOffset->isImm() && SOffset->getImm() == 0 && "Legalizing MUBUF "
-             "with non-zero soffset is not implemented");
-      (void)SOffset;
 
       // Create the new instruction.
       unsigned Addr64Opcode = AMDGPU::getAddr64Inst(MI->getOpcode());
@@ -1742,6 +1739,7 @@ void SIInstrInfo::legalizeOperands(MachineInstr *MI) const {
                   .addReg(AMDGPU::NoRegister) // Dummy value for vaddr.
                                               // This will be replaced later
                                               // with the new value of vaddr.
+                  .addOperand(*SOffset)
                   .addOperand(*Offset);
 
       MI->removeFromParent();
@@ -1920,6 +1918,7 @@ void SIInstrInfo::moveSMRDToVALU(MachineInstr *MI, MachineRegisterInfo &MRI) con
         MI->getOperand(2).ChangeToRegister(MI->getOperand(1).getReg(), false);
       }
       MI->getOperand(1).setReg(SRsrc);
+      MI->addOperand(*MBB->getParent(), MachineOperand::CreateImm(0));
       MI->addOperand(*MBB->getParent(), MachineOperand::CreateImm(ImmOffset));
 
       const TargetRegisterClass *NewDstRC =
