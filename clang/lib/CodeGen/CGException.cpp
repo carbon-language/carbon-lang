@@ -454,7 +454,8 @@ llvm::Value *CodeGenFunction::getSelectorFromSlot() {
 
 llvm::Value *CodeGenFunction::getAbnormalTerminationSlot() {
   if (!AbnormalTerminationSlot)
-    AbnormalTerminationSlot = CreateTempAlloca(Int8Ty, "abnormal.termination.slot");
+    AbnormalTerminationSlot =
+        CreateTempAlloca(Int8Ty, "abnormal.termination.slot");
   return AbnormalTerminationSlot;
 }
 
@@ -586,8 +587,9 @@ static void emitFilterDispatchBlock(CodeGenFunction &CGF,
 
     llvm::Value *zero = CGF.Builder.getInt32(0);
     llvm::Value *failsFilter =
-      CGF.Builder.CreateICmpSLT(selector, zero, "ehspec.fails");
-    CGF.Builder.CreateCondBr(failsFilter, unexpectedBB, CGF.getEHResumeBlock(false));
+        CGF.Builder.CreateICmpSLT(selector, zero, "ehspec.fails");
+    CGF.Builder.CreateCondBr(failsFilter, unexpectedBB,
+                             CGF.getEHResumeBlock(false));
 
     CGF.EmitBlock(unexpectedBB);
   }
