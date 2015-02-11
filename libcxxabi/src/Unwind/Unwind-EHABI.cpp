@@ -773,12 +773,10 @@ static uint64_t ValueAsBitPattern(_Unwind_VRS_DataRepresentation representation,
   return value;
 }
 
-_Unwind_VRS_Result _Unwind_VRS_Set(
-    _Unwind_Context *context,
-    _Unwind_VRS_RegClass regclass,
-    uint32_t regno,
-    _Unwind_VRS_DataRepresentation representation,
-    void *valuep) {
+_Unwind_VRS_Result
+_Unwind_VRS_Set(_Unwind_Context *context, _Unwind_VRS_RegClass regclass,
+                uint32_t regno, _Unwind_VRS_DataRepresentation representation,
+                void *valuep) {
   _LIBUNWIND_TRACE_API("_Unwind_VRS_Set(context=%p, regclass=%d, reg=%d, "
                        "rep=%d, value=0x%llX)\n",
                        static_cast<void *>(context), regclass, regno,
@@ -824,14 +822,14 @@ _Unwind_VRS_Result _Unwind_VRS_Set(
                  ? _UVRSR_OK
                  : _UVRSR_FAILED;
   }
+  _LIBUNWIND_ABORT("unsupported register class");
 }
 
-static _Unwind_VRS_Result _Unwind_VRS_Get_Internal(
-    _Unwind_Context *context,
-    _Unwind_VRS_RegClass regclass,
-    uint32_t regno,
-    _Unwind_VRS_DataRepresentation representation,
-    void *valuep) {
+static _Unwind_VRS_Result
+_Unwind_VRS_Get_Internal(_Unwind_Context *context,
+                         _Unwind_VRS_RegClass regclass, uint32_t regno,
+                         _Unwind_VRS_DataRepresentation representation,
+                         void *valuep) {
   unw_cursor_t *cursor = (unw_cursor_t *)context;
   switch (regclass) {
     case _UVRSC_CORE:
@@ -872,6 +870,7 @@ static _Unwind_VRS_Result _Unwind_VRS_Get_Internal(
                  ? _UVRSR_OK
                  : _UVRSR_FAILED;
   }
+  _LIBUNWIND_ABORT("unsupported register class");
 }
 
 _Unwind_VRS_Result _Unwind_VRS_Get(
@@ -891,11 +890,10 @@ _Unwind_VRS_Result _Unwind_VRS_Get(
   return result;
 }
 
-_Unwind_VRS_Result _Unwind_VRS_Pop(
-    _Unwind_Context *context,
-    _Unwind_VRS_RegClass regclass,
-    uint32_t discriminator,
-    _Unwind_VRS_DataRepresentation representation) {
+_Unwind_VRS_Result
+_Unwind_VRS_Pop(_Unwind_Context *context, _Unwind_VRS_RegClass regclass,
+                uint32_t discriminator,
+                _Unwind_VRS_DataRepresentation representation) {
   _LIBUNWIND_TRACE_API("_Unwind_VRS_Pop(context=%p, regclass=%d, "
                        "discriminator=%d, representation=%d)\n",
                        static_cast<void *>(context), regclass, discriminator,
@@ -958,6 +956,7 @@ _Unwind_VRS_Result _Unwind_VRS_Pop(
                              &sp);
     }
   }
+  _LIBUNWIND_ABORT("unsupported register class");
 }
 
 /// Called by personality handler during phase 2 to find the start of the
