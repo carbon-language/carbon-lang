@@ -182,6 +182,8 @@ static void RegisterGlobal(const Global *g) {
 
 static void UnregisterGlobal(const Global *g) {
   CHECK(asan_inited);
+  if (flags()->report_globals >= 2)
+    ReportGlobal(*g, "Removed");
   CHECK(flags()->report_globals);
   CHECK(AddrIsInMem(g->beg));
   CHECK(AddrIsAlignedByGranularity(g->beg));
