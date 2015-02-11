@@ -30,7 +30,7 @@ class LaunchInTerminalTestCase(TestBase):
         exe = "/bin/ls"
         target = self.dbg.CreateTarget(exe)
         launch_info = lldb.SBLaunchInfo(["-lAF", "/tmp/"])
-        launch_info.SetLaunchFlags(lldb.eLaunchFlagLaunchInTTY)
+        launch_info.SetLaunchFlags(lldb.eLaunchFlagLaunchInTTY | lldb.eLaunchFlagCloseTTYOnExit)
         error = lldb.SBError()
         process = target.Launch (launch_info, error)
         self.assertTrue(error.Success(), "Make sure launch happened successfully in a terminal window")

@@ -471,6 +471,8 @@ LaunchInNewTerminalWithAppleScript (const char *exe_path, ProcessLaunchInfo &lau
         command.Printf(" '%s'", exe_path);
     }
     command.PutCString (" ; echo Process exited with status $?");
+    if (launch_info.GetFlags().Test(lldb::eLaunchFlagCloseTTYOnExit))
+        command.PutCString (" ; exit");
     
     StreamString applescript_source;
 

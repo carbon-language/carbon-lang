@@ -52,6 +52,7 @@ namespace lldb {
         eLaunchFlagDetachOnError = (1u << 9),     ///< If set, then the client stub should detach rather than killing the debugee
                                                    ///< if it loses connection with lldb.
         eLaunchFlagGlobArguments  = (1u << 10),       ///< Glob arguments without going through a shell
+        eLaunchFlagCloseTTYOnExit = (1u << 11),    ///< Close the open TTY on exit
     } LaunchFlags;
         
     //----------------------------------------------------------------------
