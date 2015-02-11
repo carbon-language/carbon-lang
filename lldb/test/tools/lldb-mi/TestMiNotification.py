@@ -115,7 +115,6 @@ class MiNotificationTestCase(lldbmi_testcase.MiTestCaseBase):
 
             # Exit
             self.runCmd("-gdb-exit")
-            self.runCmd("") #FIXME lldb-mi hangs here on Linux; extra return is needed
             self.expect("\^exit")
 
         finally:
@@ -199,7 +198,6 @@ class MiNotificationTestCase(lldbmi_testcase.MiTestCaseBase):
 
             # Exit
             self.runCmd("-gdb-exit")
-            self.runCmd("") #FIXME lldb-mi hangs here on Linux; extra return is needed
             self.expect("\^exit")
 
         finally:
