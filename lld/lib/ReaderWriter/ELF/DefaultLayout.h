@@ -258,10 +258,6 @@ public:
 
   inline ELFHeader<ELFT> *getHeader() { return _elfHeader; }
 
-  inline ProgramHeader<ELFT> *getProgramHeader() {
-    return _programHeader;
-  }
-
   bool hasDynamicRelocationTable() const { return !!_dynamicRelocationTable; }
 
   bool hasPLTRelocationTable() const { return !!_pltRelocationTable; }
