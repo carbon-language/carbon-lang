@@ -764,13 +764,13 @@ public:
     
     lldb::SBBreakpoint
     BreakpointCreateBySourceRegex (const char *source_regex, 
-                                   const lldb::SBFileSpec &source_file, 
+                                   const SBFileSpec &source_file,
                                    const char *module_name = NULL);
 
     lldb::SBBreakpoint
-    BreakpointCreateBySourceRegex (const char *source_regex, 
-                                   const SBFileSpecList &module_list, 
-                                   const lldb::SBFileSpecList &source_file);
+    BreakpointCreateBySourceRegex (const char *source_regex,
+                                   const SBFileSpecList &module_list,
+                                   const SBFileSpecList &source_file);
     
     lldb::SBBreakpoint
     BreakpointCreateForException  (lldb::LanguageType language,

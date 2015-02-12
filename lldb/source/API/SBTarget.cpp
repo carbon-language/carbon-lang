@@ -1277,9 +1277,9 @@ SBTarget::BreakpointCreateBySourceRegex (const char *source_regex,
 }
 
 lldb::SBBreakpoint
-SBTarget::BreakpointCreateBySourceRegex (const char *source_regex, 
-                                         const SBFileSpecList &module_list,
-                                         const lldb::SBFileSpecList &source_file_list)
+SBTarget::BreakpointCreateBySourceRegex (const char *source_regex,
+                                                 const SBFileSpecList &module_list,
+                                                 const lldb::SBFileSpecList &source_file_list)
 {
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 

@@ -112,7 +112,8 @@ public:
             m_hardware (false),
             m_language (eLanguageTypeUnknown),
             m_skip_prologue (eLazyBoolCalculate),
-            m_one_shot (false)
+            m_one_shot (false),
+            m_all_files (false)
         {
         }
 
@@ -133,6 +134,10 @@ public:
                         ExecutionContext exe_ctx (m_interpreter.GetExecutionContext());
                         m_load_addr = Args::StringToAddress(&exe_ctx, option_arg, LLDB_INVALID_ADDRESS, &error);
                     }
+                    break;
+
+                case 'A':
+                    m_all_files = true;
                     break;
 
                 case 'b':
@@ -339,6 +344,7 @@ public:
             m_one_shot = false;
             m_use_dummy = false;
             m_breakpoint_names.clear();
+            m_all_files = false;
         }
     
         const OptionDefinition*
@@ -376,6 +382,7 @@ public:
         LazyBool m_skip_prologue;
         bool m_one_shot;
         bool m_use_dummy;
+        bool m_all_files;
 
     };
 
@@ -505,7 +512,7 @@ protected:
                 {
                     const size_t num_files = m_options.m_filenames.GetSize();
                     
-                    if (num_files == 0)
+                    if (num_files == 0 && !m_options.m_all_files)
                     {
                         FileSpec file;
                         if (!GetDefaultFile (target, file, result))
@@ -728,6 +735,9 @@ CommandObjectBreakpointSet::CommandOptions::g_option_table[] =
         "Set the breakpoint by specifying a regular expression which is matched against the source text in a source file or files "
         "specified with the -f option.  The -f option can be specified more than once.  "
         "If no source files are specified, uses the current \"default source file\"" },
+
+    { LLDB_OPT_SET_9, false, "all-files", 'A', OptionParser::eNoArgument,   NULL, NULL, 0, eArgTypeNone,
+        "All files are searched for source pattern matches." },
 
     { LLDB_OPT_SET_10, true, "language-exception", 'E', OptionParser::eRequiredArgument, NULL, NULL, 0, eArgTypeLanguage,
         "Set the breakpoint on exceptions thrown by the specified language (without options, on throw but not catch.)" },

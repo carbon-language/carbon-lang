@@ -48,6 +48,25 @@ class PythonBreakpointCommandSettingTestCase(TestBase):
         func_bkpt = self.target.BreakpointCreateBySourceRegex("Set break point at this line.", self.main_source_spec)
         self.assertTrue(func_bkpt, VALID_BREAKPOINT)
 
+        # Also test that setting a source regex breakpoint with an empty file spec list sets it on all files:
+        no_files_bkpt = self.target.BreakpointCreateBySourceRegex("Set a breakpoint here", lldb.SBFileSpecList(), lldb.SBFileSpecList())
+        self.assertTrue(no_files_bkpt, VALID_BREAKPOINT)
+        num_locations = no_files_bkpt.GetNumLocations()
+        self.assertTrue(num_locations >= 2, "Got at least two breakpoint locations")
+        got_one_in_A = False
+        got_one_in_B = False
+        for idx in range(0, num_locations):
+            comp_unit = no_files_bkpt.GetLocationAtIndex(idx).GetAddress().GetSymbolContext(lldb.eSymbolContextCompUnit).GetCompileUnit().GetFileSpec()
+            print "Got comp unit: ", comp_unit.GetFilename()
+            if comp_unit.GetFilename() == "a.c":
+                got_one_in_A = True
+            elif comp_unit.GetFilename() == "b.c":
+                got_one_in_B = True
+
+        self.assertTrue(got_one_in_A, "Failed to match the pattern in A")
+        self.assertTrue(got_one_in_B, "Failed to match the pattern in B")
+        self.target.BreakpointDelete(no_files_bkpt.GetID())
+
         PythonBreakpointCommandSettingTestCase.my_var = 10
         error = lldb.SBError()
         error = body_bkpt.SetScriptCallbackBody("\
