@@ -510,7 +510,7 @@ ABISysV_x86_64::GetArgumentValues (Thread &thread,
         if (clang_type.IsIntegerType (is_signed))
         {
             ReadIntegerArgument(value->GetScalar(),
-                                clang_type.GetBitSize(nullptr),
+                                clang_type.GetBitSize(&thread),
                                 is_signed,
                                 thread, 
                                 argument_register_ids, 
@@ -520,7 +520,7 @@ ABISysV_x86_64::GetArgumentValues (Thread &thread,
         else if (clang_type.IsPointerType ())
         {
             ReadIntegerArgument(value->GetScalar(),
-                                clang_type.GetBitSize(nullptr),
+                                clang_type.GetBitSize(&thread),
                                 false,
                                 thread,
                                 argument_register_ids, 
@@ -590,7 +590,7 @@ ABISysV_x86_64::SetReturnValueObject(lldb::StackFrameSP &frame_sp, lldb::ValueOb
             error.SetErrorString ("We don't support returning complex values at present");
         else
         {
-            size_t bit_width = clang_type.GetBitSize(nullptr);
+            size_t bit_width = clang_type.GetBitSize(frame_sp.get());
             if (bit_width <= 64)
             {
                 const RegisterInfo *xmm0_info = reg_ctx->GetRegisterInfoByName("xmm0", 0);
@@ -821,7 +821,7 @@ ABISysV_x86_64::GetReturnValueObjectImpl (Thread &thread, ClangASTType &return_c
     if (!reg_ctx_sp)
         return return_valobj_sp;
         
-    const size_t bit_width = return_clang_type.GetBitSize(nullptr);
+    const size_t bit_width = return_clang_type.GetBitSize(&thread);
     if (return_clang_type.IsAggregateType())
     {
         Target *target = exe_ctx.GetTargetPtr();
@@ -869,7 +869,7 @@ ABISysV_x86_64::GetReturnValueObjectImpl (Thread &thread, ClangASTType &return_c
                 uint32_t count;
                 
                 ClangASTType field_clang_type = return_clang_type.GetFieldAtIndex (idx, name, &field_bit_offset, NULL, NULL);
-                const size_t field_bit_width = field_clang_type.GetBitSize(nullptr);
+                const size_t field_bit_width = field_clang_type.GetBitSize(&thread);
 
                 // If there are any unaligned fields, this is stored in memory.
                 if (field_bit_offset % field_bit_width != 0)

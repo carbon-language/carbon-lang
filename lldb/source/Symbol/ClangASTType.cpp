@@ -2093,7 +2093,7 @@ ClangASTType::GetBasicTypeFromAST (lldb::BasicType basic_type) const
 //----------------------------------------------------------------------
 
 uint64_t
-ClangASTType::GetBitSize (ExecutionContext *exe_ctx) const
+ClangASTType::GetBitSize (ExecutionContextScope *exe_scope) const
 {
     if (GetCompleteType ())
     {
@@ -2102,9 +2102,12 @@ ClangASTType::GetBitSize (ExecutionContext *exe_ctx) const
         {
             case clang::Type::ObjCInterface:
             case clang::Type::ObjCObject:
-                if (exe_ctx && exe_ctx->GetProcessPtr())
+            {
+                ExecutionContext exe_ctx (exe_scope);
+                Process *process = exe_ctx.GetProcessPtr();
+                if (process)
                 {
-                    ObjCLanguageRuntime *objc_runtime = exe_ctx->GetProcessPtr()->GetObjCLanguageRuntime();
+                    ObjCLanguageRuntime *objc_runtime = process->GetObjCLanguageRuntime();
                     if (objc_runtime)
                     {
                         uint64_t bit_size = 0;
@@ -2121,11 +2124,12 @@ ClangASTType::GetBitSize (ExecutionContext *exe_ctx) const
                         s.Printf("warning: trying to determine the size of type ");
                         DumpTypeDescription(&s);
                         s.Printf("\n without a valid ExecutionContext. this is not reliable. please file a bug against LLDB.\nbacktrace:\n");
-                        Host::Backtrace(s, 10);
+                        Host::Backtrace(s, UINT32_MAX);
                         printf("%s\n", s.GetData());
                         g_printed = true;
                     }
                 }
+            }
                 // fallthrough
             default:
                 const uint32_t bit_size = m_ast->getTypeSize (qual_type);
@@ -2143,9 +2147,9 @@ ClangASTType::GetBitSize (ExecutionContext *exe_ctx) const
 }
 
 uint64_t
-ClangASTType::GetByteSize (ExecutionContext *exe_ctx) const
+ClangASTType::GetByteSize (ExecutionContextScope *exe_scope) const
 {
-    return (GetBitSize (exe_ctx) + 7) / 8;
+    return (GetBitSize (exe_scope) + 7) / 8;
 }
 
 size_t
@@ -3478,7 +3482,7 @@ ClangASTType::GetChildClangTypeAtIndex (ExecutionContext *exe_ctx,
                             child_byte_offset = bit_offset/8;
                             ClangASTType base_class_clang_type(m_ast, base_class->getType());
                             child_name = base_class_clang_type.GetTypeName().AsCString("");
-                            uint64_t base_class_clang_type_bit_size = base_class_clang_type.GetBitSize(nullptr);
+                            uint64_t base_class_clang_type_bit_size = base_class_clang_type.GetBitSize(exe_ctx ? exe_ctx->GetBestExecutionContextScope() : NULL);
                             
                             // Base classes bit sizes should be a multiple of 8 bits in size
                             assert (base_class_clang_type_bit_size % 8 == 0);
@@ -3506,7 +3510,7 @@ ClangASTType::GetChildClangTypeAtIndex (ExecutionContext *exe_ctx,
                         // alignment (field_type_info.second) from the AST context.
                         ClangASTType field_clang_type (m_ast, field->getType());
                         assert(field_idx < record_layout.getFieldCount());
-                        child_byte_size = field_clang_type.GetByteSize(exe_ctx);
+                        child_byte_size = field_clang_type.GetByteSize(exe_ctx ? exe_ctx->GetBestExecutionContextScope() : NULL);
                         
                         // Figure out the field offset within the current struct/union/class type
                         bit_offset = record_layout.getFieldOffset (field_idx);
@@ -3671,7 +3675,7 @@ ClangASTType::GetChildClangTypeAtIndex (ExecutionContext *exe_ctx,
                     // We have a pointer to an simple type
                     if (idx == 0 && pointee_clang_type.GetCompleteType())
                     {
-                        child_byte_size = pointee_clang_type.GetByteSize(exe_ctx);
+                        child_byte_size = pointee_clang_type.GetByteSize(exe_ctx ? exe_ctx->GetBestExecutionContextScope() : NULL);
                         child_byte_offset = 0;
                         return pointee_clang_type;
                     }
@@ -3692,7 +3696,7 @@ ClangASTType::GetChildClangTypeAtIndex (ExecutionContext *exe_ctx,
                         char element_name[64];
                         ::snprintf (element_name, sizeof (element_name), "[%zu]", idx);
                         child_name.assign(element_name);
-                        child_byte_size = element_type.GetByteSize(exe_ctx);
+                        child_byte_size = element_type.GetByteSize(exe_ctx ? exe_ctx->GetBestExecutionContextScope() : NULL);
                         child_byte_offset = (int32_t)idx * (int32_t)child_byte_size;
                         return element_type;
                     }
@@ -3713,7 +3717,7 @@ ClangASTType::GetChildClangTypeAtIndex (ExecutionContext *exe_ctx,
                         char element_name[64];
                         ::snprintf (element_name, sizeof (element_name), "[%zu]", idx);
                         child_name.assign(element_name);
-                        child_byte_size = element_type.GetByteSize(exe_ctx);
+                        child_byte_size = element_type.GetByteSize(exe_ctx ? exe_ctx->GetBestExecutionContextScope() : NULL);
                         child_byte_offset = (int32_t)idx * (int32_t)child_byte_size;
                         return element_type;
                     }
@@ -3763,7 +3767,7 @@ ClangASTType::GetChildClangTypeAtIndex (ExecutionContext *exe_ctx,
                     // We have a pointer to an simple type
                     if (idx == 0)
                     {
-                        child_byte_size = pointee_clang_type.GetByteSize(exe_ctx);
+                        child_byte_size = pointee_clang_type.GetByteSize(exe_ctx ? exe_ctx->GetBestExecutionContextScope() : NULL);
                         child_byte_offset = 0;
                         return pointee_clang_type;
                     }
@@ -3807,7 +3811,7 @@ ClangASTType::GetChildClangTypeAtIndex (ExecutionContext *exe_ctx,
                     // We have a pointer to an simple type
                     if (idx == 0)
                     {
-                        child_byte_size = pointee_clang_type.GetByteSize(exe_ctx);
+                        child_byte_size = pointee_clang_type.GetByteSize(exe_ctx ? exe_ctx->GetBestExecutionContextScope() : NULL);
                         child_byte_offset = 0;
                         return pointee_clang_type;
                     }
@@ -6913,7 +6917,7 @@ ClangASTType::ReadFromMemory (lldb_private::ExecutionContext *exe_ctx,
     if (!GetCompleteType())
         return false;
     
-    const uint64_t byte_size = GetByteSize(exe_ctx);
+    const uint64_t byte_size = GetByteSize(exe_ctx ? exe_ctx->GetBestExecutionContextScope() : NULL);
     if (data.GetByteSize() < byte_size)
     {
         lldb::DataBufferSP data_sp(new DataBufferHeap (byte_size, '\0'));
@@ -6963,7 +6967,7 @@ ClangASTType::WriteToMemory (lldb_private::ExecutionContext *exe_ctx,
     if (!GetCompleteType())
         return false;
 
-    const uint64_t byte_size = GetByteSize(exe_ctx);
+    const uint64_t byte_size = GetByteSize(exe_ctx ? exe_ctx->GetBestExecutionContextScope() : NULL);
 
     if (byte_size > 0)
     {

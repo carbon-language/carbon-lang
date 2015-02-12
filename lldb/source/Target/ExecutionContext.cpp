@@ -119,31 +119,42 @@ ExecutionContext::ExecutionContext (const lldb::StackFrameWP &frame_wp) :
 }
 
 ExecutionContext::ExecutionContext (Target* t, bool fill_current_process_thread_frame) :
-    m_target_sp (t->shared_from_this()),
+    m_target_sp (),
     m_process_sp (),
     m_thread_sp (),
     m_frame_sp ()
 {
-    if (t && fill_current_process_thread_frame)
+    if (t)
     {
-        m_process_sp = t->GetProcessSP();
-        if (m_process_sp)
+        m_target_sp = t->shared_from_this();
+        if (fill_current_process_thread_frame)
         {
-            m_thread_sp = m_process_sp->GetThreadList().GetSelectedThread();
-            if (m_thread_sp)
-                m_frame_sp = m_thread_sp->GetSelectedFrame();
+            m_process_sp = t->GetProcessSP();
+            if (m_process_sp)
+            {
+                m_thread_sp = m_process_sp->GetThreadList().GetSelectedThread();
+                if (m_thread_sp)
+                    m_frame_sp = m_thread_sp->GetSelectedFrame();
+            }
         }
     }
 }
 
 ExecutionContext::ExecutionContext(Process* process, Thread *thread, StackFrame *frame) :
     m_target_sp (),
-    m_process_sp (process->shared_from_this()),
-    m_thread_sp (thread->shared_from_this()),
-    m_frame_sp (frame->shared_from_this())
+    m_process_sp (),
+    m_thread_sp (),
+    m_frame_sp ()
 {
     if (process)
+    {
+        m_process_sp = process->shared_from_this();
         m_target_sp = process->GetTarget().shared_from_this();
+    }
+    if (thread)
+        m_thread_sp = thread->shared_from_this();
+    if (frame)
+        m_frame_sp = frame->shared_from_this();
 }
 
 ExecutionContext::ExecutionContext (const ExecutionContextRef &exe_ctx_ref) :

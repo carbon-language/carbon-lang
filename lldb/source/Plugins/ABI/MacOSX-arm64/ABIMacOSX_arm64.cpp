@@ -322,11 +322,11 @@ ABIMacOSX_arm64::GetArgumentValues (Thread &thread, ValueList &values) const
             size_t bit_width = 0;
             if (value_type.IsIntegerType (is_signed))
             {
-                bit_width = value_type.GetBitSize(nullptr);
+                bit_width = value_type.GetBitSize(&thread);
             }
             else if (value_type.IsPointerOrReferenceType ())
             {
-                bit_width = value_type.GetBitSize(nullptr);
+                bit_width = value_type.GetBitSize(&thread);
             }
             else
             {

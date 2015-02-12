@@ -69,14 +69,22 @@ public:
     // This function can return NULL.
     ExecutionContextScope *GetBestExecutionContextScope() const;
 
+    lldb::TargetSP
+    GetTarget ()
+    {
+        return m_target_wp.lock();
+    }
+
 protected:
     // This function should only be used if you know you are using the JIT.
     // Any other cases should use GetBestExecutionContextScope().
-    lldb::ProcessWP GetProcessWP ()
+
+    lldb::ProcessWP &
+    GetProcessWP ()
     {
         return m_process_wp;
     }
-    
+
 private:
     struct Allocation
     {

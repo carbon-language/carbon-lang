@@ -259,7 +259,7 @@ ValueObjectConstResult::GetByteSize()
     ExecutionContext exe_ctx(GetExecutionContextRef());
 
     if (m_byte_size == 0)
-        SetByteSize(GetClangType().GetByteSize(&exe_ctx));
+        SetByteSize(GetClangType().GetByteSize(exe_ctx.GetBestExecutionContextScope()));
     return m_byte_size;
 }
 

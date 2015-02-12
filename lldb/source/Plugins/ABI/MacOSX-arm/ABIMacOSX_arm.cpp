@@ -334,11 +334,11 @@ ABIMacOSX_arm::GetArgumentValues (Thread &thread,
             size_t bit_width = 0;
             if (clang_type.IsIntegerType (is_signed))
             {
-                bit_width = clang_type.GetBitSize(nullptr);
+                bit_width = clang_type.GetBitSize(&thread);
             }
             else if (clang_type.IsPointerOrReferenceType ())
             {
-                bit_width = clang_type.GetBitSize(nullptr);
+                bit_width = clang_type.GetBitSize(&thread);
             }
             else
             {
@@ -437,7 +437,7 @@ ABIMacOSX_arm::GetReturnValueObjectImpl (Thread &thread,
     const RegisterInfo *r0_reg_info = reg_ctx->GetRegisterInfoByName("r0", 0);
     if (clang_type.IsIntegerType (is_signed))
     {
-        size_t bit_width = clang_type.GetBitSize(nullptr);
+        size_t bit_width = clang_type.GetBitSize(&thread);
         
         switch (bit_width)
         {

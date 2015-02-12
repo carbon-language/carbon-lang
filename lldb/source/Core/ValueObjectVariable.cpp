@@ -112,7 +112,7 @@ ValueObjectVariable::GetByteSize()
     if (!type.IsValid())
         return 0;
     
-    return type.GetByteSize(&exe_ctx);
+    return type.GetByteSize(exe_ctx.GetBestExecutionContextScope());
 }
 
 lldb::ValueType

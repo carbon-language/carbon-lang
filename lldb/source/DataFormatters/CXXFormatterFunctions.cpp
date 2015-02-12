@@ -317,7 +317,7 @@ lldb_private::formatters::WCharStringSummaryProvider (ValueObject& valobj, Strea
         return false;
 
     ClangASTType wchar_clang_type = ClangASTContext::GetBasicType(ast, lldb::eBasicTypeWChar);
-    const uint32_t wchar_size = wchar_clang_type.GetBitSize(nullptr);
+    const uint32_t wchar_size = wchar_clang_type.GetBitSize(nullptr); // Safe to pass NULL for exe_scope here
 
     ReadStringAndDumpToStreamOptions options(valobj);
     options.SetLocation(data_addr);

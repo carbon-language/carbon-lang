@@ -351,10 +351,10 @@ public:
     //----------------------------------------------------------------------
 
     uint64_t
-    GetByteSize (ExecutionContext *exe_ctx) const;
+    GetByteSize (ExecutionContextScope *exe_scope) const;
 
     uint64_t
-    GetBitSize (ExecutionContext *exe_ctx) const;
+    GetBitSize (ExecutionContextScope *exe_scope) const;
 
     lldb::Encoding
     GetEncoding (uint64_t &count) const;

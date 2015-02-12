@@ -59,7 +59,8 @@ IRForTarget::FunctionValueCache::~FunctionValueCache()
 {
 }
 
-llvm::Value *IRForTarget::FunctionValueCache::GetValue(llvm::Function *function)
+llvm::Value *
+IRForTarget::FunctionValueCache::GetValue(llvm::Function *function)
 {
     if (!m_values.count(function))
     {
@@ -70,7 +71,8 @@ llvm::Value *IRForTarget::FunctionValueCache::GetValue(llvm::Function *function)
     return m_values[function];
 }
 
-lldb::addr_t IRForTarget::StaticDataAllocator::Allocate()
+lldb::addr_t
+IRForTarget::StaticDataAllocator::Allocate()
 {
     lldb_private::Error err;
 
@@ -85,7 +87,14 @@ lldb::addr_t IRForTarget::StaticDataAllocator::Allocate()
     return m_allocation;
 }
 
-static llvm::Value *FindEntryInstruction (llvm::Function *function)
+lldb::TargetSP
+IRForTarget::StaticDataAllocator::GetTarget()
+{
+    return m_execution_unit.GetTarget();
+}
+
+static llvm::Value *
+FindEntryInstruction (llvm::Function *function)
 {
     if (function->empty())
         return NULL;
@@ -590,7 +599,10 @@ IRForTarget::CreateResultVariable (llvm::Function &llvm_function)
                                                      &result_decl->getASTContext());
     }
 
-    if (m_result_type.GetBitSize(nullptr) == 0)
+
+    lldb::TargetSP target_sp (m_data_allocator.GetTarget());
+    lldb_private::ExecutionContext exe_ctx (target_sp.get(), true);
+    if (m_result_type.GetBitSize(exe_ctx.GetBestExecutionContextScope()) == 0)
     {
         lldb_private::StreamString type_desc_stream;
         m_result_type.DumpTypeDescription(&type_desc_stream);

@@ -640,6 +640,9 @@ private:
             return m_stream_string;
         }
         lldb::addr_t Allocate();
+
+        lldb::TargetSP
+        GetTarget();
     private:
         lldb_private::IRExecutionUnit  &m_execution_unit;
         lldb_private::StreamString      m_stream_string;
