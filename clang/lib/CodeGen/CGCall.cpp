@@ -3326,7 +3326,7 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
                            llvm::Attribute::AlwaysInline);
 
   // Disable inlining inside SEH __try blocks.
-  if (IsSEHTryScope)
+  if (isSEHTryScope())
     Attrs =
         Attrs.addAttribute(getLLVMContext(), llvm::AttributeSet::FunctionIndex,
                            llvm::Attribute::NoInline);

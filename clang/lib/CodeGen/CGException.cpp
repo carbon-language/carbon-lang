@@ -21,7 +21,6 @@
 #include "clang/AST/StmtObjC.h"
 #include "llvm/IR/CallSite.h"
 #include "llvm/IR/Intrinsics.h"
-#include "llvm/Support/SaveAndRestore.h"
 
 using namespace clang;
 using namespace CodeGen;
@@ -1708,17 +1707,15 @@ void CodeGenFunction::EmitSEHTryStmt(const SEHTryStmt &S) {
   EnterSEHTryStmt(S, FI);
   {
     JumpDest TryExit = getJumpDestInCurrentScope("__try.__leave");
-    SEHTryEpilogueStack.push_back(&TryExit);
 
-    // Disable inlining inside SEH __try scopes.
-    SaveAndRestore<bool> Saver(IsSEHTryScope, true);
+    SEHTryEpilogueStack.push_back(&TryExit);
     EmitStmt(S.getTryBlock());
+    SEHTryEpilogueStack.pop_back();
 
     if (!TryExit.getBlock()->use_empty())
       EmitBlock(TryExit.getBlock(), /*IsFinished=*/true);
     else
       delete TryExit.getBlock();
-    SEHTryEpilogueStack.pop_back();
   }
   ExitSEHTryStmt(S, FI);
 }
