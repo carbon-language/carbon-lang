@@ -10,9 +10,9 @@
 #ifndef LLVM_DEBUGINFO_PDB_IPDBSYMBOL_H
 #define LLVM_DEBUGINFO_PDB_IPDBSYMBOL_H
 
-#include <memory>
 #include <unordered_map>
 
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/Casting.h"
 
@@ -68,7 +68,7 @@ public:
   template <typename T>
   std::unique_ptr<ConcreteSymbolEnumerator<T>> findAllChildren() const {
     auto BaseIter = RawSymbol->findChildren(T::Tag);
-    return std::make_unique<ConcreteSymbolEnumerator<T>>(std::move(BaseIter));
+    return llvm::make_unique<ConcreteSymbolEnumerator<T>>(std::move(BaseIter));
   }
 
   std::unique_ptr<IPDBEnumSymbols> findAllChildren() const;
