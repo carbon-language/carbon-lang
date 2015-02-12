@@ -53,6 +53,9 @@ class SmallBitVector {
     SmallNumDataBits = SmallNumRawBits - SmallNumSizeBits
   };
 
+  static_assert(NumBaseBits == 64 || NumBaseBits == 32,
+                "Unsupported word size");
+
 public:
   typedef unsigned size_type;
   // Encapsulation of a single bit.
@@ -214,11 +217,7 @@ public:
       uintptr_t Bits = getSmallBits();
       if (Bits == 0)
         return -1;
-      if (NumBaseBits == 32)
-        return countTrailingZeros(Bits);
-      if (NumBaseBits == 64)
-        return countTrailingZeros(Bits);
-      llvm_unreachable("Unsupported!");
+      return countTrailingZeros(Bits);
     }
     return getPointer()->find_first();
   }
@@ -232,11 +231,7 @@ public:
       Bits &= ~uintptr_t(0) << (Prev + 1);
       if (Bits == 0 || Prev + 1 >= getSmallSize())
         return -1;
-      if (NumBaseBits == 32)
-        return countTrailingZeros(Bits);
-      if (NumBaseBits == 64)
-        return countTrailingZeros(Bits);
-      llvm_unreachable("Unsupported!");
+      return countTrailingZeros(Bits);
     }
     return getPointer()->find_next(Prev);
   }
@@ -560,7 +555,6 @@ public:
 private:
   template<bool AddBits, bool InvertMask>
   void applyMask(const uint32_t *Mask, unsigned MaskWords) {
-    assert((NumBaseBits == 64 || NumBaseBits == 32) && "Unsupported word size");
     if (NumBaseBits == 64 && MaskWords >= 2) {
       uint64_t M = Mask[0] | (uint64_t(Mask[1]) << 32);
       if (InvertMask) M = ~M;

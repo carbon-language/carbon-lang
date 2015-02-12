@@ -29,6 +29,9 @@ class BitVector {
 
   enum { BITWORD_SIZE = (unsigned)sizeof(BitWord) * CHAR_BIT };
 
+  static_assert(BITWORD_SIZE == 64 || BITWORD_SIZE == 32,
+                "Unsupported word size");
+
   BitWord  *Bits;        // Actual bits.
   unsigned Size;         // Size of bitvector in bits.
   unsigned Capacity;     // Size of allocated memory in BitWord.
@@ -157,13 +160,8 @@ public:
   /// of the bits are set.
   int find_first() const {
     for (unsigned i = 0; i < NumBitWords(size()); ++i)
-      if (Bits[i] != 0) {
-        if (sizeof(BitWord) == 4)
-          return i * BITWORD_SIZE + countTrailingZeros((uint32_t)Bits[i]);
-        if (sizeof(BitWord) == 8)
-          return i * BITWORD_SIZE + countTrailingZeros(Bits[i]);
-        llvm_unreachable("Unsupported!");
-      }
+      if (Bits[i] != 0)
+        return i * BITWORD_SIZE + countTrailingZeros(Bits[i]);
     return -1;
   }
 
@@ -180,23 +178,13 @@ public:
     // Mask off previous bits.
     Copy &= ~0UL << BitPos;
 
-    if (Copy != 0) {
-      if (sizeof(BitWord) == 4)
-        return WordPos * BITWORD_SIZE + countTrailingZeros((uint32_t)Copy);
-      if (sizeof(BitWord) == 8)
-        return WordPos * BITWORD_SIZE + countTrailingZeros(Copy);
-      llvm_unreachable("Unsupported!");
-    }
+    if (Copy != 0)
+      return WordPos * BITWORD_SIZE + countTrailingZeros(Copy);
 
     // Check subsequent words.
     for (unsigned i = WordPos+1; i < NumBitWords(size()); ++i)
-      if (Bits[i] != 0) {
-        if (sizeof(BitWord) == 4)
-          return i * BITWORD_SIZE + countTrailingZeros((uint32_t)Bits[i]);
-        if (sizeof(BitWord) == 8)
-          return i * BITWORD_SIZE + countTrailingZeros(Bits[i]);
-        llvm_unreachable("Unsupported!");
-      }
+      if (Bits[i] != 0)
+        return i * BITWORD_SIZE + countTrailingZeros(Bits[i]);
     return -1;
   }
 
@@ -559,7 +547,7 @@ private:
 
   template<bool AddBits, bool InvertMask>
   void applyMask(const uint32_t *Mask, unsigned MaskWords) {
-    assert(BITWORD_SIZE % 32 == 0 && "Unsupported BitWord size.");
+    static_assert(BITWORD_SIZE % 32 == 0, "Unsupported BitWord size.");
     MaskWords = std::min(MaskWords, (size() + 31) / 32);
     const unsigned Scale = BITWORD_SIZE / 32;
     unsigned i;
