@@ -57,6 +57,7 @@ add_lldb_library(lldbAPI
   SBTypeSynthetic.cpp
   SBValue.cpp
   SBValueList.cpp
+  SBVariablesOptions.cpp
   SBWatchpoint.cpp
   SBUnixSignals.cpp
   )

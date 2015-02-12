@@ -105,6 +105,7 @@ import os
 #include "lldb/API/SBTypeSynthetic.h"
 #include "lldb/API/SBValue.h"
 #include "lldb/API/SBValueList.h"
+#include "lldb/API/SBVariablesOptions.h"
 #include "lldb/API/SBWatchpoint.h"
 #include "lldb/API/SBUnixSignals.h"
 
@@ -180,6 +181,7 @@ import os
 %include "./Python/interface/SBTypeSynthetic.i"
 %include "./Python/interface/SBValue.i"
 %include "./Python/interface/SBValueList.i"
+%include "./Python/interface/SBVariablesOptions.i"
 %include "./Python/interface/SBWatchpoint.i"
 %include "./Python/interface/SBUnixSignals.i"
 
