@@ -43,6 +43,7 @@
 #include "llvm/Pass.h"
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include <algorithm>
 #include <cassert>
@@ -50,6 +51,8 @@
 #include <tuple>
 
 using namespace llvm;
+
+#define DEBUG_TYPE "cfl-aa"
 
 // Try to go from a Value* to a Function*. Never returns nullptr.
 static Optional<Function *> parentFunctionOfValue(Value *);
@@ -229,6 +232,7 @@ public:
     if (isa<Constant>(LocA.Ptr) && isa<Constant>(LocB.Ptr)) {
       return AliasAnalysis::alias(LocA, LocB);
     }
+
     AliasResult QueryResult = query(LocA, LocB);
     if (QueryResult == MayAlias)
       return AliasAnalysis::alias(LocA, LocB);
@@ -973,8 +977,10 @@ CFLAliasAnalysis::query(const AliasAnalysis::Location &LocA,
   auto MaybeFnA = parentFunctionOfValue(ValA);
   auto MaybeFnB = parentFunctionOfValue(ValB);
   if (!MaybeFnA.hasValue() && !MaybeFnB.hasValue()) {
-    llvm_unreachable("Don't know how to extract the parent function "
-                     "from values A or B");
+    // The only times this is known to happen are when globals + InlineAsm
+    // are involved
+    DEBUG(dbgs() << "CFLAA: could not extract parent function information.\n");
+    return AliasAnalysis::MayAlias;
   }
 
   if (MaybeFnA.hasValue()) {
@@ -1002,14 +1008,15 @@ CFLAliasAnalysis::query(const AliasAnalysis::Location &LocA,
   auto SetB = *MaybeB;
   auto AttrsA = Sets.getLink(SetA.Index).Attrs;
   auto AttrsB = Sets.getLink(SetB.Index).Attrs;
+
   // Stratified set attributes are used as markets to signify whether a member
-  // of a StratifiedSet (or a member of a set above the current set) has 
+  // of a StratifiedSet (or a member of a set above the current set) has
   // interacted with either arguments or globals. "Interacted with" meaning
-  // its value may be different depending on the value of an argument or 
+  // its value may be different depending on the value of an argument or
   // global. The thought behind this is that, because arguments and globals
   // may alias each other, if AttrsA and AttrsB have touched args/globals,
-  // we must conservatively say that they alias. However, if at least one of 
-  // the sets has no values that could legally be altered by changing the value 
+  // we must conservatively say that they alias. However, if at least one of
+  // the sets has no values that could legally be altered by changing the value
   // of an argument or global, then we don't have to be as conservative.
   if (AttrsA.any() && AttrsB.any())
     return AliasAnalysis::MayAlias;
