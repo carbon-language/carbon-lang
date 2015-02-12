@@ -4171,9 +4171,10 @@ def warn_missing_field_initializers : Warning<
   "missing field %0 initializer">,
   InGroup<MissingFieldInitializers>, DefaultIgnore;
 def warn_braces_around_scalar_init : Warning<
-  "braces around scalar initializer">;
+  "braces around scalar initializer">, InGroup<DiagGroup<"braced-scalar-init">>;
 def ext_many_braces_around_scalar_init : ExtWarn<
-  "too many braces around scalar initializer">;
+  "too many braces around scalar initializer">,
+  InGroup<DiagGroup<"many-braces-around-scalar-init">>;
 def ext_complex_component_init : Extension<
   "complex initialization specifying real and imaginary components "
   "is an extension">, InGroup<DiagGroup<"complex-component-init">>;

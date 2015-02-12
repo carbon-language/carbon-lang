@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -std=c++11 -fsyntax-only -verify %s
+// RUN: %clang_cc1 -std=c++11 -fsyntax-only -verify %s -pedantic-errors
 
 struct one { char c[1]; };
 struct two { char c[2]; };
@@ -55,7 +55,7 @@ namespace integral {
     int ar[10];
     (void) ar[{1}]; // expected-error {{array subscript is not an integer}}
 
-    return {1};
+    return {1}; // expected-warning {{braces around scalar init}}
   }
 
   void inline_init() {
@@ -70,15 +70,15 @@ namespace integral {
 
   void function_call() {
     void takes_int(int);
-    takes_int({1});
+    takes_int({1}); // expected-warning {{braces around scalar init}}
   }
 
   void overloaded_call() {
     one overloaded(int);
     two overloaded(double);
 
-    static_assert(sizeof(overloaded({0})) == sizeof(one), "bad overload");
-    static_assert(sizeof(overloaded({0.0})) == sizeof(two), "bad overload");
+    static_assert(sizeof(overloaded({0})) == sizeof(one), "bad overload"); // expected-warning {{braces around scalar init}}
+    static_assert(sizeof(overloaded({0.0})) == sizeof(two), "bad overload"); // expected-warning {{braces around scalar init}}
 
     void ambiguous(int, double); // expected-note {{candidate}}
     void ambiguous(double, int); // expected-note {{candidate}}

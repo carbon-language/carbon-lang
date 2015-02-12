@@ -31,4 +31,4 @@ struct explicit_ctor_tag {} ect;
 void *operator new[](size_t, explicit_ctor_tag, explicit_ctor);
 void *operator new(size_t, explicit_ctor_tag, int);
 void *t = new (ect, 0) int[4];
-void *u = new (ect, {0}) int[4];
+void *u = new (ect, {0}) int[4]; // expected-warning {{braces around scalar init}}

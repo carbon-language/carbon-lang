@@ -29,7 +29,7 @@ namespace dr1631 {  // dr1631: 3.7 c++11
   void f(int, A);
 
   void test() {
-    f({0}, {{1}});
+    f({0}, {{1}}); // expected-warning {{braces around scalar init}}
   }
 
   namespace with_error {

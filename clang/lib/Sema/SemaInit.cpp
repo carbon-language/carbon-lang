@@ -754,6 +754,68 @@ void InitListChecker::CheckImplicitInitList(const InitializedEntity &Entity,
   }
 }
 
+/// Warn that \p Entity was of scalar type and was initialized by a
+/// single-element braced initializer list.
+static void warnBracedScalarInit(Sema &S, const InitializedEntity &Entity,
+                                 SourceRange Braces) {
+  // Don't warn during template instantiation. If the initialization was
+  // non-dependent, we warned during the initial parse; otherwise, the
+  // type might not be scalar in some uses of the template.
+  if (!S.ActiveTemplateInstantiations.empty())
+    return;
+
+  unsigned DiagID = 0;
+
+  switch (Entity.getKind()) {
+  case InitializedEntity::EK_VectorElement:
+  case InitializedEntity::EK_ComplexElement:
+  case InitializedEntity::EK_ArrayElement:
+  case InitializedEntity::EK_Parameter:
+  case InitializedEntity::EK_Parameter_CF_Audited:
+  case InitializedEntity::EK_Result:
+    // Extra braces here are suspicious.
+    DiagID = diag::warn_braces_around_scalar_init;
+    break;
+
+  case InitializedEntity::EK_Member:
+    // Warn on aggregate initialization but not on ctor init list or
+    // default member initializer.
+    if (Entity.getParent())
+      DiagID = diag::warn_braces_around_scalar_init;
+    break;
+
+  case InitializedEntity::EK_Variable:
+  case InitializedEntity::EK_LambdaCapture:
+    // No warning, might be direct-list-initialization.
+    // FIXME: Should we warn for copy-list-initialization in these cases?
+    break;
+
+  case InitializedEntity::EK_New:
+  case InitializedEntity::EK_Temporary:
+  case InitializedEntity::EK_CompoundLiteralInit:
+    // No warning, braces are part of the syntax of the underlying construct.
+    break;
+
+  case InitializedEntity::EK_RelatedResult:
+    // No warning, we already warned when initializing the result.
+    break;
+
+  case InitializedEntity::EK_Exception:
+  case InitializedEntity::EK_Base:
+  case InitializedEntity::EK_Delegating:
+  case InitializedEntity::EK_BlockElement:
+    llvm_unreachable("unexpected braced scalar init");
+  }
+
+  if (DiagID) {
+    S.Diag(Braces.getBegin(), DiagID)
+      << Braces
+      << FixItHint::CreateRemoval(Braces.getBegin())
+      << FixItHint::CreateRemoval(Braces.getEnd());
+  }
+}
+
+
 /// Check whether the initializer \p IList (that was written with explicit
 /// braces) can be used to initialize an object of type \p T.
 ///
@@ -829,12 +891,9 @@ void InitListChecker::CheckExplicitInitList(const InitializedEntity &Entity,
     }
   }
 
-  if (!VerifyOnly && T->isScalarType() && IList->getNumInits() == 1 &&
-      !TopLevelObject)
-    SemaRef.Diag(IList->getLocStart(), diag::warn_braces_around_scalar_init)
-      << IList->getSourceRange()
-      << FixItHint::CreateRemoval(IList->getLocStart())
-      << FixItHint::CreateRemoval(IList->getLocEnd());
+  if (!VerifyOnly && T->isScalarType() &&
+      IList->getNumInits() == 1 && !isa<InitListExpr>(IList->getInit(0)))
+    warnBracedScalarInit(SemaRef, Entity, IList->getSourceRange());
 }
 
 void InitListChecker::CheckListElementTypes(const InitializedEntity &Entity,

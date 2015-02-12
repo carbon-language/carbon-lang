@@ -142,6 +142,7 @@ namespace objects {
 
     one ov2(int);
     two ov2(F<3>);
+    // expected-warning@+1 {{braces around scalar initializer}}
     static_assert(sizeof(ov2({1})) == sizeof(one), "bad overload"); // list -> int ranks as identity
     static_assert(sizeof(ov2({1, 2, 3})) == sizeof(two), "bad overload"); // list -> F only viable
   }

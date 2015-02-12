@@ -110,7 +110,7 @@ namespace inner_init {
   struct D { C &&r; };
   D d1 { 0 }; // ok, 0 implicitly converts to C
   D d2 { { 0 } }; // ok, { 0 } calls C(0)
-  D d3 { { { 0 } } }; // ok, { { 0 } } calls C({ 0 })
+  D d3 { { { 0 } } }; // ok, { { 0 } } calls C({ 0 }), expected-warning {{braces around scalar init}}
   D d4 { { { { 0 } } } }; // expected-error {{no matching constructor for initialization of 'inner_init::C &&'}}
 
   struct E { explicit E(int); }; // expected-note 2{{here}}
