@@ -594,7 +594,7 @@ Editline::GetCharacter (EditLineCharType * c)
                 return 1;
 #else
             *c = ch;
-            if(*c != EOF) 
+            if(ch != (char)EOF) 
                 return 1;
 #endif
         }
