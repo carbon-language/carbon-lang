@@ -1356,7 +1356,7 @@ public:
 
   /// \brief Count the number of leading one bits.
   ///
-  /// This function is an APInt version of the countLeadingOnes_{32,64}
+  /// This function is an APInt version of the countLeadingOnes
   /// functions in MathExtras.h. It counts the number of ones from the most
   /// significant bit to the first zero bit.
   ///
@@ -1372,7 +1372,7 @@ public:
 
   /// \brief Count the number of trailing zero bits.
   ///
-  /// This function is an APInt version of the countTrailingZeros_{32,64}
+  /// This function is an APInt version of the countTrailingZeros
   /// functions in MathExtras.h. It counts the number of zeros from the least
   /// significant bit to the first set bit.
   ///
@@ -1382,7 +1382,7 @@ public:
 
   /// \brief Count the number of trailing one bits.
   ///
-  /// This function is an APInt version of the countTrailingOnes_{32,64}
+  /// This function is an APInt version of the countTrailingOnes
   /// functions in MathExtras.h. It counts the number of ones from the least
   /// significant bit to the first zero bit.
   ///
@@ -1390,19 +1390,19 @@ public:
   /// of ones from the least significant bit to the first zero bit.
   unsigned countTrailingOnes() const {
     if (isSingleWord())
-      return CountTrailingOnes_64(VAL);
+      return llvm::countTrailingOnes(VAL);
     return countTrailingOnesSlowCase();
   }
 
   /// \brief Count the number of bits set.
   ///
-  /// This function is an APInt version of the countPopulation_{32,64} functions
+  /// This function is an APInt version of the countPopulation functions
   /// in MathExtras.h. It counts the number of 1 bits in the APInt value.
   ///
   /// \returns 0 if the value is zero, otherwise returns the number of set bits.
   unsigned countPopulation() const {
     if (isSingleWord())
-      return CountPopulation_64(VAL);
+      return llvm::countPopulation(VAL);
     return countPopulationSlowCase();
   }
 

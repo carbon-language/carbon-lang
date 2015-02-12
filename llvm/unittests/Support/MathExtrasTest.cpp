@@ -141,21 +141,18 @@ TEST(MathExtras, ByteSwap_64) {
   EXPECT_EQ(0x1100FFEEDDCCBBAAULL, ByteSwap_64(0xAABBCCDDEEFF0011LL));
 }
 
-TEST(MathExtras, CountLeadingOnes_32) {
+TEST(MathExtras, countLeadingOnes) {
   for (int i = 30; i >= 0; --i) {
     // Start with all ones and unset some bit.
-    EXPECT_EQ(31u - i, CountLeadingOnes_32(0xFFFFFFFF ^ (1 << i)));
+    EXPECT_EQ(31u - i, countLeadingOnes(0xFFFFFFFF ^ (1 << i)));
   }
-}
-
-TEST(MathExtras, CountLeadingOnes_64) {
   for (int i = 62; i >= 0; --i) {
     // Start with all ones and unset some bit.
-    EXPECT_EQ(63u - i, CountLeadingOnes_64(0xFFFFFFFFFFFFFFFFLL ^ (1LL << i)));
+    EXPECT_EQ(63u - i, countLeadingOnes(0xFFFFFFFFFFFFFFFFLL ^ (1LL << i)));
   }
   for (int i = 30; i >= 0; --i) {
     // Start with all ones and unset some bit.
-    EXPECT_EQ(31u - i, CountLeadingOnes_32(0xFFFFFFFF ^ (1 << i)));
+    EXPECT_EQ(31u - i, countLeadingOnes(0xFFFFFFFF ^ (1 << i)));
   }
 }
 

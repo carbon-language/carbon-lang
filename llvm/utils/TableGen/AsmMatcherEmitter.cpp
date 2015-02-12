@@ -2956,8 +2956,8 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
   OS << "      HadMatchOtherThanFeatures = true;\n";
   OS << "      uint64_t NewMissingFeatures = it->RequiredFeatures & "
         "~AvailableFeatures;\n";
-  OS << "      if (CountPopulation_64(NewMissingFeatures) <=\n"
-        "          CountPopulation_64(MissingFeatures))\n";
+  OS << "      if (countPopulation(NewMissingFeatures) <=\n"
+        "          countPopulation(MissingFeatures))\n";
   OS << "        MissingFeatures = NewMissingFeatures;\n";
   OS << "      continue;\n";
   OS << "    }\n";

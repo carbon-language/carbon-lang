@@ -237,15 +237,15 @@ static inline bool processLogicalImmediate(uint64_t Imm, unsigned RegSize,
   if (isShiftedMask_64(Imm)) {
     I = countTrailingZeros(Imm);
     assert(I < 64 && "undefined behavior");
-    CTO = CountTrailingOnes_64(Imm >> I);
+    CTO = countTrailingOnes(Imm >> I);
   } else {
     Imm |= ~Mask;
     if (!isShiftedMask_64(~Imm))
       return false;
 
-    unsigned CLO = CountLeadingOnes_64(Imm);
+    unsigned CLO = countLeadingOnes(Imm);
     I = 64 - CLO;
-    CTO = CLO + CountTrailingOnes_64(Imm) - (64 - Size);
+    CTO = CLO + countTrailingOnes(Imm) - (64 - Size);
   }
 
   // Encode in Immr the number of RORs it would take to get *from* 0^m 1^n

@@ -2523,7 +2523,7 @@ SDNode *PPCDAGToDAGISel::Select(SDNode *N) {
     if (isInt64Immediate(N->getOperand(1).getNode(), Imm64) &&
         isMask_64(Imm64)) {
       SDValue Val = N->getOperand(0);
-      MB = 64 - CountTrailingOnes_64(Imm64);
+      MB = 64 - countTrailingOnes(Imm64);
       SH = 0;
 
       // If the operand is a logical right shift, we can fold it into this

@@ -713,7 +713,7 @@ unsigned APInt::countLeadingZerosSlowCase() const {
 
 unsigned APInt::countLeadingOnes() const {
   if (isSingleWord())
-    return CountLeadingOnes_64(VAL << (APINT_BITS_PER_WORD - BitWidth));
+    return llvm::countLeadingOnes(VAL << (APINT_BITS_PER_WORD - BitWidth));
 
   unsigned highWordBits = BitWidth % APINT_BITS_PER_WORD;
   unsigned shift;
@@ -724,13 +724,13 @@ unsigned APInt::countLeadingOnes() const {
     shift = APINT_BITS_PER_WORD - highWordBits;
   }
   int i = getNumWords() - 1;
-  unsigned Count = CountLeadingOnes_64(pVal[i] << shift);
+  unsigned Count = llvm::countLeadingOnes(pVal[i] << shift);
   if (Count == highWordBits) {
     for (i--; i >= 0; --i) {
       if (pVal[i] == -1ULL)
         Count += APINT_BITS_PER_WORD;
       else {
-        Count += CountLeadingOnes_64(pVal[i]);
+        Count += llvm::countLeadingOnes(pVal[i]);
         break;
       }
     }
@@ -756,14 +756,14 @@ unsigned APInt::countTrailingOnesSlowCase() const {
   for (; i < getNumWords() && pVal[i] == -1ULL; ++i)
     Count += APINT_BITS_PER_WORD;
   if (i < getNumWords())
-    Count += CountTrailingOnes_64(pVal[i]);
+    Count += llvm::countTrailingOnes(pVal[i]);
   return std::min(Count, BitWidth);
 }
 
 unsigned APInt::countPopulationSlowCase() const {
   unsigned Count = 0;
   for (unsigned i = 0; i < getNumWords(); ++i)
-    Count += CountPopulation_64(pVal[i]);
+    Count += llvm::countPopulation(pVal[i]);
   return Count;
 }
 

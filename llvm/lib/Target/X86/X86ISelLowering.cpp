@@ -24629,7 +24629,7 @@ static SDValue PerformAndCombine(SDNode *N, SelectionDAG &DAG,
         uint64_t Mask = MaskNode->getZExtValue();
         uint64_t Shift = ShiftNode->getZExtValue();
         if (isMask_64(Mask)) {
-          uint64_t MaskSize = CountPopulation_64(Mask);
+          uint64_t MaskSize = countPopulation(Mask);
           if (Shift + MaskSize <= VT.getSizeInBits())
             return DAG.getNode(X86ISD::BEXTR, DL, VT, N0.getOperand(0),
                                DAG.getConstant(Shift | (MaskSize << 8), VT));

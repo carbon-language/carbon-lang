@@ -10858,11 +10858,7 @@ bool ARM::isBitFieldInvertedMask(unsigned v) {
 
   // there can be 1's on either or both "outsides", all the "inside"
   // bits must be 0's
-  unsigned TO = CountTrailingOnes_32(v);
-  unsigned LO = CountLeadingOnes_32(v);
-  v = (v >> TO) << TO;
-  v = (v << LO) >> LO;
-  return v == 0;
+  return isShiftedMask_32(~v);
 }
 
 /// isFPImmLegal - Returns true if the target can instruction select the

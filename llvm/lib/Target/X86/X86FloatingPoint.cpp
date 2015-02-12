@@ -898,7 +898,7 @@ void FPS::adjustLiveRegs(unsigned Mask, MachineBasicBlock::iterator I) {
 
   // Now we should have the correct registers live.
   DEBUG(dumpStack());
-  assert(StackTop == CountPopulation_32(Mask) && "Live count mismatch");
+  assert(StackTop == countPopulation(Mask) && "Live count mismatch");
 }
 
 /// shuffleStackTop - emit fxch instructions before I to shuffle the top
@@ -943,7 +943,7 @@ void FPS::handleCall(MachineBasicBlock::iterator &I) {
     }
   }
 
-  unsigned N = CountTrailingOnes_32(STReturns);
+  unsigned N = countTrailingOnes(STReturns);
 
   // FP registers used for function return must be consecutive starting at
   // FP0.
@@ -1420,14 +1420,14 @@ void FPS::handleSpecialFP(MachineBasicBlock::iterator &Inst) {
 
     if (STUses && !isMask_32(STUses))
       MI->emitError("fixed input regs must be last on the x87 stack");
-    unsigned NumSTUses = CountTrailingOnes_32(STUses);
+    unsigned NumSTUses = countTrailingOnes(STUses);
 
     // Defs must be contiguous from the stack top. ST0-STn.
     if (STDefs && !isMask_32(STDefs)) {
       MI->emitError("output regs must be last on the x87 stack");
       STDefs = NextPowerOf2(STDefs) - 1;
     }
-    unsigned NumSTDefs = CountTrailingOnes_32(STDefs);
+    unsigned NumSTDefs = countTrailingOnes(STDefs);
 
     // So must the clobbered stack slots. ST0-STm, m >= n.
     if (STClobbers && !isMask_32(STDefs | STClobbers))
@@ -1437,7 +1437,7 @@ void FPS::handleSpecialFP(MachineBasicBlock::iterator &Inst) {
     unsigned STPopped = STUses & (STDefs | STClobbers);
     if (STPopped && !isMask_32(STPopped))
       MI->emitError("implicitly popped regs must be last on the x87 stack");
-    unsigned NumSTPopped = CountTrailingOnes_32(STPopped);
+    unsigned NumSTPopped = countTrailingOnes(STPopped);
 
     DEBUG(dbgs() << "Asm uses " << NumSTUses << " fixed regs, pops "
                  << NumSTPopped << ", and defines " << NumSTDefs << " regs.\n");

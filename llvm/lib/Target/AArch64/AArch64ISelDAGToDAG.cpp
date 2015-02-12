@@ -1428,8 +1428,8 @@ static bool isBitfieldExtractOpFromAnd(SelectionDAG *CurDAG, SDNode *N,
          "bad amount in shift node!");
 
   LSB = Srl_imm;
-  MSB = Srl_imm + (VT == MVT::i32 ? CountTrailingOnes_32(And_imm)
-                                  : CountTrailingOnes_64(And_imm)) -
+  MSB = Srl_imm + (VT == MVT::i32 ? countTrailingOnes<uint32_t>(And_imm)
+                                  : countTrailingOnes<uint64_t>(And_imm)) -
         1;
   if (ClampMSB)
     // Since we're moving the extend before the right shift operation, we need
@@ -1473,7 +1473,7 @@ static bool isSeveralBitsExtractOpFromShr(SDNode *N, unsigned &Opc,
     return false;
 
   // Check whether we really have several bits extract here.
-  unsigned BitWide = 64 - CountLeadingOnes_64(~(And_mask >> Srl_imm));
+  unsigned BitWide = 64 - countLeadingOnes(~(And_mask >> Srl_imm));
   if (BitWide && isMask_64(And_mask >> Srl_imm)) {
     if (N->getValueType(0) == MVT::i32)
       Opc = AArch64::UBFMWri;
@@ -1872,7 +1872,7 @@ static bool isBitfieldPositioningOp(SelectionDAG *CurDAG, SDValue Op,
     return false;
 
   ShiftAmount = countTrailingZeros(NonZeroBits);
-  MaskWidth = CountTrailingOnes_64(NonZeroBits >> ShiftAmount);
+  MaskWidth = countTrailingOnes(NonZeroBits >> ShiftAmount);
 
   // BFI encompasses sufficiently many nodes that it's worth inserting an extra
   // LSL/LSR if the mask in NonZeroBits doesn't quite match up with the ISD::SHL

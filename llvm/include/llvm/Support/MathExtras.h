@@ -375,62 +375,78 @@ inline uint64_t ByteSwap_64(uint64_t Value) {
   return sys::SwapByteOrder_64(Value);
 }
 
-/// CountLeadingOnes_32 - this function performs the operation of
-/// counting the number of ones from the most significant bit to the first zero
-/// bit.  Ex. CountLeadingOnes_32(0xFF0FFF00) == 8.
-/// Returns 32 if the word is all ones.
-inline unsigned CountLeadingOnes_32(uint32_t Value) {
-  return countLeadingZeros(~Value);
+/// \brief Count the number of ones from the most significant bit to the first
+/// zero bit.
+///
+/// Ex. CountLeadingOnes(0xFF0FFF00) == 8.
+/// Only unsigned integral types are allowed.
+///
+/// \param ZB the behavior on an input of all ones. Only ZB_Width and
+/// ZB_Undefined are valid arguments.
+template <typename T>
+std::size_t countLeadingOnes(T Value, ZeroBehavior ZB = ZB_Width) {
+  static_assert(std::numeric_limits<T>::is_integer &&
+                    !std::numeric_limits<T>::is_signed,
+                "Only unsigned integral types are allowed.");
+  return countLeadingZeros(~Value, ZB);
 }
 
-/// CountLeadingOnes_64 - This function performs the operation
-/// of counting the number of ones from the most significant bit to the first
-/// zero bit (64 bit edition.)
-/// Returns 64 if the word is all ones.
-inline unsigned CountLeadingOnes_64(uint64_t Value) {
-  return countLeadingZeros(~Value);
+/// \brief Count the number of ones from the least significant bit to the first
+/// zero bit.
+///
+/// Ex. countTrailingOnes(0x00FF00FF) == 8.
+/// Only unsigned integral types are allowed.
+///
+/// \param ZB the behavior on an input of all ones. Only ZB_Width and
+/// ZB_Undefined are valid arguments.
+template <typename T>
+std::size_t countTrailingOnes(T Value, ZeroBehavior ZB = ZB_Width) {
+  static_assert(std::numeric_limits<T>::is_integer &&
+                    !std::numeric_limits<T>::is_signed,
+                "Only unsigned integral types are allowed.");
+  return countTrailingZeros(~Value, ZB);
 }
 
-/// CountTrailingOnes_32 - this function performs the operation of
-/// counting the number of ones from the least significant bit to the first zero
-/// bit.  Ex. CountTrailingOnes_32(0x00FF00FF) == 8.
-/// Returns 32 if the word is all ones.
-inline unsigned CountTrailingOnes_32(uint32_t Value) {
-  return countTrailingZeros(~Value);
-}
+namespace detail {
+template <typename T, std::size_t SizeOfT> struct PopulationCounter {
+  static unsigned count(T Value) {
+    // Generic version, forward to 32 bits.
+    static_assert(SizeOfT <= 4, "Not implemented!");
+#if __GNUC__ >= 4
+    return __builtin_popcount(Value);
+#else
+    uint32_t v = Value;
+    v = v - ((v >> 1) & 0x55555555);
+    v = (v & 0x33333333) + ((v >> 2) & 0x33333333);
+    return ((v + (v >> 4) & 0xF0F0F0F) * 0x1010101) >> 24;
+#endif
+  }
+};
 
-/// CountTrailingOnes_64 - This function performs the operation
-/// of counting the number of ones from the least significant bit to the first
-/// zero bit (64 bit edition.)
-/// Returns 64 if the word is all ones.
-inline unsigned CountTrailingOnes_64(uint64_t Value) {
-  return countTrailingZeros(~Value);
-}
+template <typename T> struct PopulationCounter<T, 8> {
+  static unsigned count(T Value) {
+#if __GNUC__ >= 4
+    return __builtin_popcountll(Value);
+#else
+    uint64_t v = Value;
+    v = v - ((v >> 1) & 0x5555555555555555ULL);
+    v = (v & 0x3333333333333333ULL) + ((v >> 2) & 0x3333333333333333ULL);
+    v = (v + (v >> 4)) & 0x0F0F0F0F0F0F0F0FULL;
+    return unsigned((uint64_t)(v * 0x0101010101010101ULL) >> 56);
+#endif
+  }
+};
+} // namespace detail
 
-/// CountPopulation_32 - this function counts the number of set bits in a value.
-/// Ex. CountPopulation(0xF000F000) = 8
+/// \brief Count the number of set bits in a value.
+/// Ex. countPopulation(0xF000F000) = 8
 /// Returns 0 if the word is zero.
-inline unsigned CountPopulation_32(uint32_t Value) {
-#if __GNUC__ >= 4
-  return __builtin_popcount(Value);
-#else
-  uint32_t v = Value - ((Value >> 1) & 0x55555555);
-  v = (v & 0x33333333) + ((v >> 2) & 0x33333333);
-  return ((v + (v >> 4) & 0xF0F0F0F) * 0x1010101) >> 24;
-#endif
-}
-
-/// CountPopulation_64 - this function counts the number of set bits in a value,
-/// (64 bit edition.)
-inline unsigned CountPopulation_64(uint64_t Value) {
-#if __GNUC__ >= 4
-  return __builtin_popcountll(Value);
-#else
-  uint64_t v = Value - ((Value >> 1) & 0x5555555555555555ULL);
-  v = (v & 0x3333333333333333ULL) + ((v >> 2) & 0x3333333333333333ULL);
-  v = (v + (v >> 4)) & 0x0F0F0F0F0F0F0F0FULL;
-  return unsigned((uint64_t)(v * 0x0101010101010101ULL) >> 56);
-#endif
+template <typename T>
+inline unsigned countPopulation(T Value) {
+  static_assert(std::numeric_limits<T>::is_integer &&
+                    !std::numeric_limits<T>::is_signed,
+                "Only unsigned integral types are allowed.");
+  return detail::PopulationCounter<T, sizeof(T)>::count(Value);
 }
 
 /// Log2_32 - This function returns the floor log base 2 of the specified value,

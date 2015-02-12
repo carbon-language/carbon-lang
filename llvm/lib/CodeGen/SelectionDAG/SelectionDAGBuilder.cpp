@@ -1956,7 +1956,7 @@ void SelectionDAGBuilder::visitBitTestCase(BitTestBlock &BB,
   SDValue ShiftOp = DAG.getCopyFromReg(getControlRoot(), getCurSDLoc(),
                                        Reg, VT);
   SDValue Cmp;
-  unsigned PopCount = CountPopulation_64(B.Mask);
+  unsigned PopCount = countPopulation(B.Mask);
   const TargetLowering &TLI = DAG.getTargetLoweringInfo();
   if (PopCount == 1) {
     // Testing for a single bit; just compare the shift count with what it
@@ -1968,7 +1968,7 @@ void SelectionDAGBuilder::visitBitTestCase(BitTestBlock &BB,
     // There is only one zero bit in the range, test for it directly.
     Cmp = DAG.getSetCC(
         getCurSDLoc(), TLI.getSetCCResultType(*DAG.getContext(), VT), ShiftOp,
-        DAG.getConstant(CountTrailingOnes_64(B.Mask), VT), ISD::SETNE);
+        DAG.getConstant(countTrailingOnes(B.Mask), VT), ISD::SETNE);
   } else {
     // Make desired shift
     SDValue SwitchVal = DAG.getNode(ISD::SHL, getCurSDLoc(), VT,
@@ -4595,7 +4595,7 @@ static SDValue ExpandPowI(SDLoc DL, SDValue LHS, SDValue RHS,
                                          Attribute::OptimizeForSize) ||
         // If optimizing for size, don't insert too many multiplies.  This
         // inserts up to 5 multiplies.
-        CountPopulation_32(Val)+Log2_32(Val) < 7) {
+        countPopulation(Val) + Log2_32(Val) < 7) {
       // We use the simple binary decomposition method to generate the multiply
       // sequence.  There are more optimal ways to do this (for example,
       // powi(x,15) generates one more multiply than it should), but this has

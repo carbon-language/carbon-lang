@@ -2292,7 +2292,7 @@ SDNode *ARMDAGToDAGISel::SelectV6T2BitfieldExtractOp(SDNode *N,
         assert(Srl_imm > 0 && Srl_imm < 32 && "bad amount in shift node!");
 
         // Note: The width operand is encoded as width-1.
-        unsigned Width = CountTrailingOnes_32(And_imm) - 1;
+        unsigned Width = countTrailingOnes(And_imm) - 1;
         unsigned LSB = Srl_imm;
 
         SDValue Reg0 = CurDAG->getRegister(0, MVT::i32);

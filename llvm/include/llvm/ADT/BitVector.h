@@ -121,12 +121,7 @@ public:
   size_type count() const {
     unsigned NumBits = 0;
     for (unsigned i = 0; i < NumBitWords(size()); ++i)
-      if (sizeof(BitWord) == 4)
-        NumBits += CountPopulation_32((uint32_t)Bits[i]);
-      else if (sizeof(BitWord) == 8)
-        NumBits += CountPopulation_64(Bits[i]);
-      else
-        llvm_unreachable("Unsupported!");
+      NumBits += countPopulation(Bits[i]);
     return NumBits;
   }
 

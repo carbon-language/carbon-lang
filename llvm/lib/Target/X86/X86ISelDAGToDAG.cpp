@@ -916,7 +916,7 @@ static bool FoldMaskAndShiftToScale(SelectionDAG &DAG, SDValue N,
   if (AMShiftAmt <= 0 || AMShiftAmt > 3) return true;
 
   // We also need to ensure that mask is a continuous run of bits.
-  if (CountTrailingOnes_64(Mask >> MaskTZ) + MaskTZ + MaskLZ != 64) return true;
+  if (countTrailingOnes(Mask >> MaskTZ) + MaskTZ + MaskLZ != 64) return true;
 
   // Scale the leading zero count down based on the actual size of the value.
   // Also scale it down based on the size of the shift.

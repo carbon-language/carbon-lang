@@ -147,9 +147,7 @@ SDValue XformMskToBitPosU3Imm(uint8_t Imm) {
 // Return true if there is exactly one bit set in V, i.e., if V is one of the
 // following integers: 2^0, 2^1, ..., 2^31.
 bool ImmIsSingleBit(uint32_t v) const {
-  uint32_t c = CountPopulation_64(v);
-  // Only return true if we counted 1 bit.
-  return c == 1;
+  return isPowerOf2_32(v);
 }
 
 // XformM5ToU5Imm - Return a target constant with the specified value, of type

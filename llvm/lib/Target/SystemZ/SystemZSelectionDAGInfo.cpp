@@ -103,7 +103,7 @@ EmitTargetCodeForMemset(SelectionDAG &DAG, SDLoc DL, SDValue Chain,
       // we can move at most 2 halfwords.
       uint64_t ByteVal = CByte->getZExtValue();
       if (ByteVal == 0 || ByteVal == 255 ?
-          Bytes <= 16 && CountPopulation_64(Bytes) <= 2 :
+          Bytes <= 16 && countPopulation(Bytes) <= 2 :
           Bytes <= 4) {
         unsigned Size1 = Bytes == 16 ? 8 : 1 << findLastSet(Bytes);
         unsigned Size2 = Bytes - Size1;

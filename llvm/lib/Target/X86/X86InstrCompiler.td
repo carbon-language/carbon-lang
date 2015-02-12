@@ -1563,8 +1563,12 @@ def : Pat<(shl GR32:$src1, (i8 1)), (ADD32rr GR32:$src1, GR32:$src1)>;
 def : Pat<(shl GR64:$src1, (i8 1)), (ADD64rr GR64:$src1, GR64:$src1)>;
 
 // Helper imms that check if a mask doesn't change significant shift bits.
-def immShift32 : ImmLeaf<i8, [{ return CountTrailingOnes_32(Imm) >= 5; }]>;
-def immShift64 : ImmLeaf<i8, [{ return CountTrailingOnes_32(Imm) >= 6; }]>;
+def immShift32 : ImmLeaf<i8, [{
+  return countTrailingOnes<uint64_t>(Imm) >= 5;
+}]>;
+def immShift64 : ImmLeaf<i8, [{
+  return countTrailingOnes<uint64_t>(Imm) >= 6;
+}]>;
 
 // Shift amount is implicitly masked.
 multiclass MaskedShiftAmountPats<SDNode frag, string name> {

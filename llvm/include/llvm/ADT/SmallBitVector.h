@@ -180,11 +180,7 @@ public:
   size_type count() const {
     if (isSmall()) {
       uintptr_t Bits = getSmallBits();
-      if (NumBaseBits == 32)
-        return CountPopulation_32(Bits);
-      if (NumBaseBits == 64)
-        return CountPopulation_64(Bits);
-      llvm_unreachable("Unsupported!");
+      return countPopulation(Bits);
     }
     return getPointer()->count();
   }
