@@ -111,7 +111,7 @@ class FlagHandlerKeepGoing : public FlagHandlerBase {
  public:
   explicit FlagHandlerKeepGoing(bool *halt_on_error)
       : halt_on_error_(halt_on_error) {}
-  bool Parse(const char *value) {
+  bool Parse(const char *value) final {
     bool tmp;
     FlagHandler<bool> h(&tmp);
     if (!h.Parse(value)) return false;

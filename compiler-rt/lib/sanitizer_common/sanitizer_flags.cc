@@ -51,7 +51,7 @@ class FlagHandlerInclude : public FlagHandlerBase {
 
  public:
   explicit FlagHandlerInclude(FlagParser *parser) : parser_(parser) {}
-  bool Parse(const char *value) {
+  bool Parse(const char *value) final {
     char *data;
     uptr data_mapped_size;
     int err;

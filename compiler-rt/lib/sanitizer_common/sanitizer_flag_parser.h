@@ -31,7 +31,7 @@ class FlagHandler : public FlagHandlerBase {
 
  public:
   explicit FlagHandler(T *t) : t_(t) {}
-  bool Parse(const char *value);
+  bool Parse(const char *value) final;
 };
 
 template <>
