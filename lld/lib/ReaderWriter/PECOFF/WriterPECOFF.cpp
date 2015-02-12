@@ -195,6 +195,10 @@ public:
       // We also need to reserve 4 bytes for the string table header.
       int size = sizeof(llvm::object::coff_symbol16) + 4;
       _stringTable.insert(_stringTable.begin(), size, 0);
+      // Set the name of the dummy symbol to the first string table entry.
+      // It's better than letting dumpbin print out a garabage as a symbol name.
+      char *off = _stringTable.data() + 4;
+      *reinterpret_cast<ulittle32_t *>(off) = 4;
     }
     uint32_t offset = _stringTable.size();
     _stringTable.insert(_stringTable.end(), sectionName.begin(),
