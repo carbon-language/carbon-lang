@@ -115,7 +115,7 @@ namespace lldb_private {
 
 #define EXTRACT_BITS(value, mask) \
         ( (value >> llvm::countTrailingZeros(static_cast<uint32_t>(mask), llvm::ZB_Width)) & \
-          (((1 << llvm::CountPopulation_32(static_cast<uint32_t>(mask))))-1) )
+          (((1 << llvm::countPopulation(static_cast<uint32_t>(mask))))-1) )
 
 
 
