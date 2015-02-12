@@ -133,7 +133,8 @@ define void @store0(i16* nocapture %a, float %val) nounwind {
 
 define void @store1(i16* nocapture %a, double %val) nounwind {
 ; CHECK-LABEL: store1:
-; CHECK-NEXT: fcvt h0, d0
+; CHECK-NEXT: fcvt s0, d0
+; CHECK-NEXT: fcvt h0, s0
 ; CHECK-NEXT: str  h0, [x0]
 ; CHECK-NEXT: ret
 
@@ -158,7 +159,8 @@ define void @store2(i16* nocapture %a, i32 %i, float %val) nounwind {
 
 define void @store3(i16* nocapture %a, i32 %i, double %val) nounwind {
 ; CHECK-LABEL: store3:
-; CHECK-NEXT: fcvt h0, d0
+; CHECK-NEXT: fcvt s0, d0
+; CHECK-NEXT: fcvt h0, s0
 ; CHECK-NEXT: str h0, [x0, w1, sxtw #1]
 ; CHECK-NEXT: ret
 
@@ -184,7 +186,8 @@ define void @store4(i16* nocapture %a, i64 %i, float %val) nounwind {
 
 define void @store5(i16* nocapture %a, i64 %i, double %val) nounwind {
 ; CHECK-LABEL: store5:
-; CHECK-NEXT: fcvt h0, d0
+; CHECK-NEXT: fcvt s0, d0
+; CHECK-NEXT: fcvt h0, s0
 ; CHECK-NEXT: str h0, [x0, x1, lsl #1]
 ; CHECK-NEXT: ret
 
@@ -209,7 +212,8 @@ define void @store6(i16* nocapture %a, float %val) nounwind {
 
 define void @store7(i16* nocapture %a, double %val) nounwind {
 ; CHECK-LABEL: store7:
-; CHECK-NEXT: fcvt h0, d0
+; CHECK-NEXT: fcvt s0, d0
+; CHECK-NEXT: fcvt h0, s0
 ; CHECK-NEXT: str h0, [x0, #20]
 ; CHECK-NEXT: ret
 
@@ -234,7 +238,8 @@ define void @store8(i16* nocapture %a, float %val) nounwind {
 
 define void @store9(i16* nocapture %a, double %val) nounwind {
 ; CHECK-LABEL: store9:
-; CHECK-NEXT: fcvt h0, d0
+; CHECK-NEXT: fcvt s0, d0
+; CHECK-NEXT: fcvt h0, s0
 ; CHECK-NEXT: stur h0, [x0, #-20]
 ; CHECK-NEXT: ret
 
