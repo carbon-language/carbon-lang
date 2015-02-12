@@ -159,9 +159,10 @@ g_reg_sets_powerpc[k_num_register_sets] =
     { "Altivec/VMX Registers",  "vmx", k_num_vmx_registers_powerpc, g_vmx_regnums },
 };
 
+static_assert(k_first_gpr_powerpc == 0, "GPRs must index starting at 0, or fix IsGPR()");
 bool RegisterContextPOSIX_powerpc::IsGPR(unsigned reg)
 {
-    return (reg >= k_first_gpr_powerpc) && (reg <= k_last_gpr_powerpc);   // GPR's come first.
+    return (reg <= k_last_gpr_powerpc);   // GPR's come first.
 }
 
 bool
