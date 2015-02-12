@@ -275,6 +275,24 @@ const MCSection *TargetLoweringObjectFile::getSectionForJumpTable(
   return getSectionForConstant(SectionKind::getReadOnly(), /*C=*/nullptr);
 }
 
+bool TargetLoweringObjectFile::shouldPutJumpTableInFunctionSection(
+    bool UsesLabelDifference, const Function &F) const {
+  // In PIC mode, we need to emit the jump table to the same section as the
+  // function body itself, otherwise the label differences won't make sense.
+  // FIXME: Need a better predicate for this: what about custom entries?
+  if (UsesLabelDifference)
+    return true;
+
+  // We should also do if the section name is NULL or function is declared
+  // in discardable section
+  // FIXME: this isn't the right predicate, should be based on the MCSection
+  // for the function.
+  if (F.isWeakForLinker())
+    return true;
+
+  return false;
+}
+
 /// getSectionForConstant - Given a mergable constant with the
 /// specified size and relocation information, return a section that it
 /// should be placed in.

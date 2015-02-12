@@ -3,6 +3,7 @@
 ; RUN: llc < %s -mtriple=i386-apple-darwin10 -relocation-model=static | FileCheck %s -check-prefix=DARWIN-STATIC
 ; RUN: llc < %s -mtriple=x86_64-apple-darwin10 | FileCheck %s -check-prefix=DARWIN64
 ; RUN: llc < %s -mtriple=i386-unknown-linux-gnu -data-sections -function-sections | FileCheck %s -check-prefix=LINUX-SECTIONS
+; RUN: llc < %s -mtriple=x86_64-pc-linux -data-sections -function-sections -relocation-model=pic | FileCheck %s -check-prefix=LINUX-SECTIONS-PIC
 ; RUN: llc < %s -mtriple=i686-pc-win32 -data-sections -function-sections | FileCheck %s -check-prefix=WIN32-SECTIONS
 
 define void @F1() {
@@ -40,6 +41,11 @@ bb5:
 ; LINUX-SECTIONS: .size   F2,
 ; LINUX-SECTIONS-NEXT: .cfi_endproc
 ; LINUX-SECTIONS-NEXT: .section        .rodata.F2,"a",@progbits
+
+; LINUX-SECTIONS-PIC: .section        .text.F2,"ax",@progbits
+; LINUX-SECTIONS-PIC: .size   F2,
+; LINUX-SECTIONS-PIC-NEXT: .cfi_endproc
+; LINUX-SECTIONS-PIC-NEXT: .section        .rodata.F2,"a",@progbits
 
 ; int G1;
 @G1 = common global i32 0
