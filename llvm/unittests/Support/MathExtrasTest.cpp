@@ -148,7 +148,7 @@ TEST(MathExtras, countLeadingOnes) {
   }
   for (int i = 62; i >= 0; --i) {
     // Start with all ones and unset some bit.
-    EXPECT_EQ(63u - i, countLeadingOnes(0xFFFFFFFFFFFFFFFFLL ^ (1LL << i)));
+    EXPECT_EQ(63u - i, countLeadingOnes(0xFFFFFFFFFFFFFFFFULL ^ (1LL << i)));
   }
   for (int i = 30; i >= 0; --i) {
     // Start with all ones and unset some bit.
