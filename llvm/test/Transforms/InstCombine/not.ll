@@ -52,3 +52,9 @@ entry:
 	%retval67 = zext i1 %tmp3 to i8		; <i8> [#uses=1]
 	ret i8 %retval67
 }
+
+define <2 x i1> @test7(<2 x i32> %A, <2 x i32> %B) {
+        %cond = icmp sle <2 x i32> %A, %B
+        %Ret = xor <2 x i1> %cond, <i1 true, i1 true>
+        ret <2 x i1> %Ret
+}

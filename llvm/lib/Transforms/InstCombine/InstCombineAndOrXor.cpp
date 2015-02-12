@@ -2604,15 +2604,16 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
     }
   }
 
-
-  if (ConstantInt *RHS = dyn_cast<ConstantInt>(Op1)) {
-    if (RHS->isOne() && Op0->hasOneUse())
+  if (Constant *RHS = dyn_cast<Constant>(Op1)) {
+    if (RHS->isAllOnesValue() && Op0->hasOneUse())
       // xor (cmp A, B), true = not (cmp A, B) = !cmp A, B
       if (CmpInst *CI = dyn_cast<CmpInst>(Op0))
         return CmpInst::Create(CI->getOpcode(),
                                CI->getInversePredicate(),
                                CI->getOperand(0), CI->getOperand(1));
+  }
 
+  if (ConstantInt *RHS = dyn_cast<ConstantInt>(Op1)) {
     // fold (xor(zext(cmp)), 1) and (xor(sext(cmp)), -1) to ext(!cmp).
     if (CastInst *Op0C = dyn_cast<CastInst>(Op0)) {
       if (CmpInst *CI = dyn_cast<CmpInst>(Op0C->getOperand(0))) {
