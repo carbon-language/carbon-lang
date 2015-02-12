@@ -52,13 +52,13 @@ public:
 
 template <class ELFT> class ARMELFFile : public ELFFile<ELFT> {
 public:
-  ARMELFFile(std::unique_ptr<MemoryBuffer> mb, bool atomizeStrings)
-      : ELFFile<ELFT>(std::move(mb), atomizeStrings) {}
+  ARMELFFile(std::unique_ptr<MemoryBuffer> mb, ARMLinkingContext &ctx)
+      : ELFFile<ELFT>(std::move(mb), ctx) {}
 
   static ErrorOr<std::unique_ptr<ARMELFFile>>
-  create(std::unique_ptr<MemoryBuffer> mb, bool atomizeStrings) {
+  create(std::unique_ptr<MemoryBuffer> mb, ARMLinkingContext &ctx) {
     return std::unique_ptr<ARMELFFile<ELFT>>(
-        new ARMELFFile<ELFT>(std::move(mb), atomizeStrings));
+        new ARMELFFile<ELFT>(std::move(mb), ctx));
   }
 
 private:

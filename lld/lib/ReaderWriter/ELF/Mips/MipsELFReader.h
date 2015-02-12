@@ -22,8 +22,8 @@ struct MipsELFFileCreateTraits {
 
   template <class ELFT>
   static result_type create(std::unique_ptr<llvm::MemoryBuffer> mb,
-                            bool atomizeStrings) {
-    return lld::elf::MipsELFFile<ELFT>::create(std::move(mb), atomizeStrings);
+                            MipsLinkingContext &ctx) {
+    return lld::elf::MipsELFFile<ELFT>::create(std::move(mb), ctx);
   }
 };
 
@@ -32,19 +32,21 @@ struct MipsDynamicFileCreateELFTraits {
 
   template <class ELFT>
   static result_type create(std::unique_ptr<llvm::MemoryBuffer> mb,
-                            bool useUndefines) {
-    return lld::elf::MipsDynamicFile<ELFT>::create(std::move(mb), useUndefines);
+                            MipsLinkingContext &ctx) {
+    return lld::elf::MipsDynamicFile<ELFT>::create(std::move(mb), ctx);
   }
 };
 
 template <class ELFT>
 class MipsELFObjectReader
-    : public ELFObjectReader<ELFT, MipsELFFileCreateTraits> {
-  typedef ELFObjectReader<ELFT, MipsELFFileCreateTraits> BaseReaderType;
+    : public ELFObjectReader<ELFT, MipsELFFileCreateTraits,
+                             MipsLinkingContext> {
+  typedef ELFObjectReader<ELFT, MipsELFFileCreateTraits, MipsLinkingContext>
+      BaseReaderType;
 
 public:
-  MipsELFObjectReader(MipsLinkingContext &ctx, bool atomizeStrings)
-      : BaseReaderType(atomizeStrings, llvm::ELF::EM_MIPS),
+  MipsELFObjectReader(MipsLinkingContext &ctx)
+      : BaseReaderType(ctx, llvm::ELF::EM_MIPS),
         _flagMerger(ctx.getELFFlagsMerger()) {}
 
   std::error_code
@@ -62,12 +64,14 @@ private:
 
 template <class ELFT>
 class MipsELFDSOReader
-    : public ELFDSOReader<ELFT, MipsDynamicFileCreateELFTraits> {
-  typedef ELFDSOReader<ELFT, MipsDynamicFileCreateELFTraits> BaseReaderType;
+    : public ELFDSOReader<ELFT, MipsDynamicFileCreateELFTraits,
+                          MipsLinkingContext> {
+  typedef ELFDSOReader<ELFT, MipsDynamicFileCreateELFTraits, MipsLinkingContext>
+      BaseReaderType;
 
 public:
-  MipsELFDSOReader(MipsLinkingContext &ctx, bool useUndefines)
-      : BaseReaderType(useUndefines, llvm::ELF::EM_MIPS),
+  MipsELFDSOReader(MipsLinkingContext &ctx)
+      : BaseReaderType(ctx, llvm::ELF::EM_MIPS),
         _flagMerger(ctx.getELFFlagsMerger()) {}
 
   std::error_code

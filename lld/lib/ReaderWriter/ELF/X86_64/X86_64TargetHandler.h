@@ -42,12 +42,12 @@ public:
     return *(_x86_64RelocationHandler.get());
   }
 
-  std::unique_ptr<Reader> getObjReader(bool atomizeStrings) override {
-    return std::unique_ptr<Reader>(new X86_64ELFObjectReader(atomizeStrings));
+  std::unique_ptr<Reader> getObjReader() override {
+    return std::unique_ptr<Reader>(new X86_64ELFObjectReader(_context));
   }
 
-  std::unique_ptr<Reader> getDSOReader(bool useShlibUndefines) override {
-    return std::unique_ptr<Reader>(new X86_64ELFDSOReader(useShlibUndefines));
+  std::unique_ptr<Reader> getDSOReader() override {
+    return std::unique_ptr<Reader>(new X86_64ELFDSOReader(_context));
   }
 
   std::unique_ptr<Writer> getWriter() override;

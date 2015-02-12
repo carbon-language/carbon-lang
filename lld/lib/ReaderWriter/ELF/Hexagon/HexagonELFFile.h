@@ -114,13 +114,13 @@ template <class ELFT> class HexagonELFFile : public ELFFile<ELFT> {
   typedef llvm::object::Elf_Shdr_Impl<ELFT> Elf_Shdr;
 
 public:
-  HexagonELFFile(std::unique_ptr<MemoryBuffer> mb, bool atomizeStrings)
-      : ELFFile<ELFT>(std::move(mb), atomizeStrings) {}
+  HexagonELFFile(std::unique_ptr<MemoryBuffer> mb, HexagonLinkingContext &ctx)
+      : ELFFile<ELFT>(std::move(mb), ctx) {}
 
   static ErrorOr<std::unique_ptr<HexagonELFFile>>
-  create(std::unique_ptr<MemoryBuffer> mb, bool atomizeStrings) {
+  create(std::unique_ptr<MemoryBuffer> mb, HexagonLinkingContext &ctx) {
     return std::unique_ptr<HexagonELFFile<ELFT>>(
-        new HexagonELFFile<ELFT>(std::move(mb), atomizeStrings));
+        new HexagonELFFile<ELFT>(std::move(mb), ctx));
   }
 
   bool isCommonSymbol(const Elf_Sym *symbol) const override {

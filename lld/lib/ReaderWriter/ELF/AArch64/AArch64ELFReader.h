@@ -23,9 +23,8 @@ struct AArch64DynamicFileCreateELFTraits {
 
   template <class ELFT>
   static result_type create(std::unique_ptr<llvm::MemoryBuffer> mb,
-                            bool useUndefines) {
-    return lld::elf::AArch64DynamicFile<ELFT>::create(std::move(mb),
-                                                      useUndefines);
+                            AArch64LinkingContext &ctx) {
+    return lld::elf::AArch64DynamicFile<ELFT>::create(std::move(mb), ctx);
   }
 };
 
@@ -34,26 +33,27 @@ struct AArch64ELFFileCreateELFTraits {
 
   template <class ELFT>
   static result_type create(std::unique_ptr<llvm::MemoryBuffer> mb,
-                            bool atomizeStrings) {
-    return lld::elf::AArch64ELFFile<ELFT>::create(std::move(mb),
-                                                  atomizeStrings);
+                            AArch64LinkingContext &ctx) {
+    return lld::elf::AArch64ELFFile<ELFT>::create(std::move(mb), ctx);
   }
 };
 
 class AArch64ELFObjectReader
-    : public ELFObjectReader<AArch64ELFType, AArch64ELFFileCreateELFTraits> {
+    : public ELFObjectReader<AArch64ELFType, AArch64ELFFileCreateELFTraits,
+                             AArch64LinkingContext> {
 public:
-  AArch64ELFObjectReader(bool atomizeStrings)
-      : ELFObjectReader<AArch64ELFType, AArch64ELFFileCreateELFTraits>(
-            atomizeStrings, llvm::ELF::EM_AARCH64) {}
+  AArch64ELFObjectReader(AArch64LinkingContext &ctx)
+      : ELFObjectReader<AArch64ELFType, AArch64ELFFileCreateELFTraits,
+                        AArch64LinkingContext>(ctx, llvm::ELF::EM_AARCH64) {}
 };
 
 class AArch64ELFDSOReader
-    : public ELFDSOReader<AArch64ELFType, AArch64DynamicFileCreateELFTraits> {
+    : public ELFDSOReader<AArch64ELFType, AArch64DynamicFileCreateELFTraits,
+                          AArch64LinkingContext> {
 public:
-  AArch64ELFDSOReader(bool useUndefines)
-      : ELFDSOReader<AArch64ELFType, AArch64DynamicFileCreateELFTraits>(
-            useUndefines, llvm::ELF::EM_AARCH64) {}
+  AArch64ELFDSOReader(AArch64LinkingContext &ctx)
+      : ELFDSOReader<AArch64ELFType, AArch64DynamicFileCreateELFTraits,
+                     AArch64LinkingContext>(ctx, llvm::ELF::EM_AARCH64) {}
 };
 
 } // namespace elf

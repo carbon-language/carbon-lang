@@ -25,8 +25,7 @@ class DynamicLibraryWriter;
 template<class ELFT>
 class DynamicLibraryWriter : public OutputELFWriter<ELFT> {
 public:
-  DynamicLibraryWriter(const ELFLinkingContext &context,
-                       TargetLayout<ELFT> &layout)
+  DynamicLibraryWriter(ELFLinkingContext &context, TargetLayout<ELFT> &layout)
       : OutputELFWriter<ELFT>(context, layout),
         _runtimeFile(new CRuntimeFile<ELFT>(context)) {}
 

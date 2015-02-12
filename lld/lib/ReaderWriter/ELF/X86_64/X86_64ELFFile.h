@@ -19,13 +19,13 @@ class X86_64LinkingContext;
 
 template <class ELFT> class X86_64ELFFile : public ELFFile<ELFT> {
 public:
-  X86_64ELFFile(std::unique_ptr<MemoryBuffer> mb, bool atomizeStrings)
-      : ELFFile<ELFT>(std::move(mb), atomizeStrings) {}
+  X86_64ELFFile(std::unique_ptr<MemoryBuffer> mb, X86_64LinkingContext &ctx)
+      : ELFFile<ELFT>(std::move(mb), ctx) {}
 
   static ErrorOr<std::unique_ptr<X86_64ELFFile>>
-  create(std::unique_ptr<MemoryBuffer> mb, bool atomizeStrings) {
+  create(std::unique_ptr<MemoryBuffer> mb, X86_64LinkingContext &ctx) {
     return std::unique_ptr<X86_64ELFFile<ELFT>>(
-        new X86_64ELFFile<ELFT>(std::move(mb), atomizeStrings));
+        new X86_64ELFFile<ELFT>(std::move(mb), ctx));
   }
 };
 

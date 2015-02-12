@@ -26,9 +26,9 @@ class DefaultTargetHandler : public TargetHandler<ELFT> {
 public:
   const TargetRelocationHandler &getRelocationHandler() const = 0;
 
-  virtual std::unique_ptr<Reader> getObjReader(bool atomizeStrings) = 0;
+  virtual std::unique_ptr<Reader> getObjReader() = 0;
 
-  virtual std::unique_ptr<Reader> getDSOReader(bool useShlibUndefines) = 0;
+  virtual std::unique_ptr<Reader> getDSOReader() = 0;
 
   virtual std::unique_ptr<Writer> getWriter() = 0;
 };

@@ -38,9 +38,9 @@ public:
   virtual ~TargetHandlerBase() {}
   virtual void registerRelocationNames(Registry &) = 0;
 
-  virtual std::unique_ptr<Reader> getObjReader(bool) = 0;
+  virtual std::unique_ptr<Reader> getObjReader() = 0;
 
-  virtual std::unique_ptr<Reader> getDSOReader(bool) = 0;
+  virtual std::unique_ptr<Reader> getDSOReader() = 0;
 
   virtual std::unique_ptr<Writer> getWriter() = 0;
 };

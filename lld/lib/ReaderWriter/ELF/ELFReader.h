@@ -18,13 +18,13 @@
 namespace lld {
 namespace elf {
 
-template <typename ELFT, typename ELFTraitsT>
+template <typename ELFT, typename ELFTraitsT, typename ContextT>
 class ELFObjectReader : public Reader {
 public:
   typedef llvm::object::Elf_Ehdr_Impl<ELFT> Elf_Ehdr;
 
-  ELFObjectReader(bool atomizeStrings, uint64_t machine)
-      : _atomizeStrings(atomizeStrings), _machine(machine) {}
+  ELFObjectReader(ContextT &ctx, uint64_t machine)
+      : _ctx(ctx), _machine(machine) {}
 
   bool canParse(file_magic magic, StringRef,
                 const MemoryBuffer &buf) const override {
@@ -39,7 +39,7 @@ public:
         1ULL << llvm::countTrailingZeros(uintptr_t(mb->getBufferStart()));
     auto f =
         createELF<ELFTraitsT>(llvm::object::getElfArchType(mb->getBuffer()),
-                              maxAlignment, std::move(mb), _atomizeStrings);
+                              maxAlignment, std::move(mb), _ctx);
     if (std::error_code ec = f.getError())
       return ec;
     result.push_back(std::move(*f));
@@ -53,17 +53,17 @@ public:
   }
 
 protected:
-  bool _atomizeStrings;
+  ContextT &_ctx;
   uint64_t _machine;
 };
 
-template <typename ELFT, typename ELFTraitsT>
+template <typename ELFT, typename ELFTraitsT, typename ContextT>
 class ELFDSOReader : public Reader {
 public:
   typedef llvm::object::Elf_Ehdr_Impl<ELFT> Elf_Ehdr;
 
-  ELFDSOReader(bool useUndefines, uint64_t machine)
-      : _useUndefines(useUndefines), _machine(machine) {}
+  ELFDSOReader(ContextT &ctx, uint64_t machine)
+      : _ctx(ctx), _machine(machine) {}
 
   bool canParse(file_magic magic, StringRef,
                 const MemoryBuffer &buf) const override {
@@ -78,7 +78,7 @@ public:
         1ULL << llvm::countTrailingZeros(uintptr_t(mb->getBufferStart()));
     auto f =
         createELF<ELFTraitsT>(llvm::object::getElfArchType(mb->getBuffer()),
-                              maxAlignment, std::move(mb), _useUndefines);
+                              maxAlignment, std::move(mb), _ctx);
     if (std::error_code ec = f.getError())
       return ec;
     result.push_back(std::move(*f));
@@ -92,7 +92,7 @@ public:
   }
 
 protected:
-  bool _useUndefines;
+  ContextT &_ctx;
   uint64_t _machine;
 };
 

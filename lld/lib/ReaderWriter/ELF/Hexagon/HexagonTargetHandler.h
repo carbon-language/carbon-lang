@@ -117,12 +117,14 @@ public:
     return *(_hexagonTargetLayout.get());
   }
 
-  std::unique_ptr<Reader> getObjReader(bool atomizeStrings) override {
-    return std::unique_ptr<Reader>(new HexagonELFObjectReader(atomizeStrings));
+  std::unique_ptr<Reader> getObjReader() override {
+    return std::unique_ptr<Reader>(
+        new HexagonELFObjectReader(_hexagonLinkingContext));
   }
 
-  std::unique_ptr<Reader> getDSOReader(bool useShlibUndefines) override {
-    return std::unique_ptr<Reader>(new HexagonELFDSOReader(useShlibUndefines));
+  std::unique_ptr<Reader> getDSOReader() override {
+    return std::unique_ptr<Reader>(
+        new HexagonELFDSOReader(_hexagonLinkingContext));
   }
 
   std::unique_ptr<Writer> getWriter() override;

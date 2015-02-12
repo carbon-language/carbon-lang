@@ -25,7 +25,7 @@ class ExecutableWriter;
 template<class ELFT>
 class ExecutableWriter : public OutputELFWriter<ELFT> {
 public:
-  ExecutableWriter(const ELFLinkingContext &context, TargetLayout<ELFT> &layout)
+  ExecutableWriter(ELFLinkingContext &context, TargetLayout<ELFT> &layout)
       : OutputELFWriter<ELFT>(context, layout),
         _runtimeFile(new CRuntimeFile<ELFT>(context)) {}
 

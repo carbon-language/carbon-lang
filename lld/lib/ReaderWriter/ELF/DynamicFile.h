@@ -22,7 +22,7 @@ namespace elf {
 template <class ELFT> class DynamicFile : public SharedLibraryFile {
 public:
   static ErrorOr<std::unique_ptr<DynamicFile>>
-  create(std::unique_ptr<llvm::MemoryBuffer> mb, bool useShlibUndefines);
+  create(std::unique_ptr<llvm::MemoryBuffer> mb, ELFLinkingContext &ctx);
 
   const SharedLibraryAtom *exports(StringRef name,
                                    bool dataSymbolOnly) const override {
@@ -84,9 +84,9 @@ protected:
   }
 
 private:
-  DynamicFile(std::unique_ptr<MemoryBuffer> mb, bool useShlibUndefines)
-      : SharedLibraryFile(mb->getBufferIdentifier()),
-        _mb(std::move(mb)), _useShlibUndefines(useShlibUndefines) {}
+  DynamicFile(std::unique_ptr<MemoryBuffer> mb, ELFLinkingContext &ctx)
+      : SharedLibraryFile(mb->getBufferIdentifier()), _mb(std::move(mb)),
+        _ctx(ctx), _useShlibUndefines(ctx.useShlibUndefines()) {}
 
   mutable llvm::BumpPtrAllocator _alloc;
   std::unique_ptr<llvm::object::ELFFile<ELFT>> _objFile;
@@ -100,6 +100,7 @@ private:
   };
 
   std::unique_ptr<MemoryBuffer> _mb;
+  ELFLinkingContext &_ctx;
   bool _useShlibUndefines;
   mutable std::unordered_map<StringRef, SymAtomPair> _nameToSym;
 };
@@ -107,9 +108,8 @@ private:
 template <class ELFT>
 ErrorOr<std::unique_ptr<DynamicFile<ELFT>>>
 DynamicFile<ELFT>::create(std::unique_ptr<llvm::MemoryBuffer> mb,
-                          bool useShlibUndefines) {
-  return std::unique_ptr<DynamicFile>(
-      new DynamicFile(std::move(mb), useShlibUndefines));
+                          ELFLinkingContext &ctx) {
+  return std::unique_ptr<DynamicFile>(new DynamicFile(std::move(mb), ctx));
 }
 
 } // end namespace elf

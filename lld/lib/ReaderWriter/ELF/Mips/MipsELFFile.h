@@ -80,13 +80,13 @@ public:
 
 template <class ELFT> class MipsELFFile : public ELFFile<ELFT> {
 public:
-  MipsELFFile(std::unique_ptr<MemoryBuffer> mb, bool atomizeStrings)
-      : ELFFile<ELFT>(std::move(mb), atomizeStrings) {}
+  MipsELFFile(std::unique_ptr<MemoryBuffer> mb, MipsLinkingContext &ctx)
+      : ELFFile<ELFT>(std::move(mb), ctx) {}
 
   static ErrorOr<std::unique_ptr<MipsELFFile>>
-  create(std::unique_ptr<MemoryBuffer> mb, bool atomizeStrings) {
+  create(std::unique_ptr<MemoryBuffer> mb, MipsLinkingContext &ctx) {
     return std::unique_ptr<MipsELFFile<ELFT>>(
-        new MipsELFFile<ELFT>(std::move(mb), atomizeStrings));
+        new MipsELFFile<ELFT>(std::move(mb), ctx));
   }
 
   bool isPIC() const {

@@ -23,8 +23,8 @@ struct X86DynamicFileCreateELFTraits {
 
   template <class ELFT>
   static result_type create(std::unique_ptr<llvm::MemoryBuffer> mb,
-                            bool useUndefines) {
-    return lld::elf::X86DynamicFile<ELFT>::create(std::move(mb), useUndefines);
+                            X86LinkingContext &ctx) {
+    return lld::elf::X86DynamicFile<ELFT>::create(std::move(mb), ctx);
   }
 };
 
@@ -33,25 +33,27 @@ struct X86ELFFileCreateELFTraits {
 
   template <class ELFT>
   static result_type create(std::unique_ptr<llvm::MemoryBuffer> mb,
-                            bool atomizeStrings) {
-    return lld::elf::X86ELFFile<ELFT>::create(std::move(mb), atomizeStrings);
+                            X86LinkingContext &ctx) {
+    return lld::elf::X86ELFFile<ELFT>::create(std::move(mb), ctx);
   }
 };
 
 class X86ELFObjectReader
-    : public ELFObjectReader<X86ELFType, X86ELFFileCreateELFTraits> {
+    : public ELFObjectReader<X86ELFType, X86ELFFileCreateELFTraits,
+                             X86LinkingContext> {
 public:
-  X86ELFObjectReader(bool atomizeStrings)
-      : ELFObjectReader<X86ELFType, X86ELFFileCreateELFTraits>(
-            atomizeStrings, llvm::ELF::EM_386) {}
+  X86ELFObjectReader(X86LinkingContext &ctx)
+      : ELFObjectReader<X86ELFType, X86ELFFileCreateELFTraits,
+                        X86LinkingContext>(ctx, llvm::ELF::EM_386) {}
 };
 
 class X86ELFDSOReader
-    : public ELFDSOReader<X86ELFType, X86DynamicFileCreateELFTraits> {
+    : public ELFDSOReader<X86ELFType, X86DynamicFileCreateELFTraits,
+                          X86LinkingContext> {
 public:
-  X86ELFDSOReader(bool useUndefines)
-      : ELFDSOReader<X86ELFType, X86DynamicFileCreateELFTraits>(
-            useUndefines, llvm::ELF::EM_386) {}
+  X86ELFDSOReader(X86LinkingContext &ctx)
+      : ELFDSOReader<X86ELFType, X86DynamicFileCreateELFTraits,
+                     X86LinkingContext>(ctx, llvm::ELF::EM_386) {}
 };
 
 } // namespace elf

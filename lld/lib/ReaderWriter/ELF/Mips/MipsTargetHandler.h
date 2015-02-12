@@ -79,7 +79,7 @@ private:
 template <class ELFType>
 class MipsRuntimeFile final : public CRuntimeFile<ELFType> {
 public:
-  MipsRuntimeFile(const MipsLinkingContext &ctx)
+  MipsRuntimeFile(MipsLinkingContext &ctx)
       : CRuntimeFile<ELFType>(ctx, "Mips runtime file") {}
 };
 
@@ -102,14 +102,12 @@ public:
 
   MipsTargetLayout<ELFT> &getTargetLayout() override { return *_targetLayout; }
 
-  std::unique_ptr<Reader> getObjReader(bool atomizeStrings) override {
-    return std::unique_ptr<Reader>(
-        new MipsELFObjectReader<ELFT>(_ctx, atomizeStrings));
+  std::unique_ptr<Reader> getObjReader() override {
+    return std::unique_ptr<Reader>(new MipsELFObjectReader<ELFT>(_ctx));
   }
 
-  std::unique_ptr<Reader> getDSOReader(bool useShlibUndefines) override {
-    return std::unique_ptr<Reader>(
-        new MipsELFDSOReader<ELFT>(_ctx, useShlibUndefines));
+  std::unique_ptr<Reader> getDSOReader() override {
+    return std::unique_ptr<Reader>(new MipsELFDSOReader<ELFT>(_ctx));
   }
 
   const TargetRelocationHandler &getRelocationHandler() const override {

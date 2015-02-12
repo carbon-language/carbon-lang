@@ -63,10 +63,10 @@ public:
   virtual const TargetRelocationHandler &getRelocationHandler() const = 0;
 
   /// How does the target deal with reading input files.
-  virtual std::unique_ptr<Reader> getObjReader(bool) = 0;
+  virtual std::unique_ptr<Reader> getObjReader() = 0;
 
   /// How does the target deal with reading dynamic libraries.
-  virtual std::unique_ptr<Reader> getDSOReader(bool) = 0;
+  virtual std::unique_ptr<Reader> getDSOReader() = 0;
 
   /// How does the target deal with writing ELF output.
   virtual std::unique_ptr<Writer> getWriter() = 0;

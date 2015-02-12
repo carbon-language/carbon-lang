@@ -45,12 +45,12 @@ public:
     return *(_armRelocationHandler.get());
   }
 
-  std::unique_ptr<Reader> getObjReader(bool atomizeStrings) override {
-    return std::unique_ptr<Reader>(new ARMELFObjectReader(atomizeStrings));
+  std::unique_ptr<Reader> getObjReader() override {
+    return std::unique_ptr<Reader>(new ARMELFObjectReader(_context));
   }
 
-  std::unique_ptr<Reader> getDSOReader(bool useShlibUndefines) override {
-    return std::unique_ptr<Reader>(new ARMELFDSOReader(useShlibUndefines));
+  std::unique_ptr<Reader> getDSOReader() override {
+    return std::unique_ptr<Reader>(new ARMELFDSOReader(_context));
   }
 
   std::unique_ptr<Writer> getWriter() override;

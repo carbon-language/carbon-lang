@@ -23,8 +23,8 @@ struct ARMDynamicFileCreateELFTraits {
 
   template <class ELFT>
   static result_type create(std::unique_ptr<llvm::MemoryBuffer> mb,
-                            bool useUndefines) {
-    return lld::elf::ARMDynamicFile<ELFT>::create(std::move(mb), useUndefines);
+                            ARMLinkingContext &ctx) {
+    return lld::elf::ARMDynamicFile<ELFT>::create(std::move(mb), ctx);
   }
 };
 
@@ -33,25 +33,27 @@ struct ARMELFFileCreateELFTraits {
 
   template <class ELFT>
   static result_type create(std::unique_ptr<llvm::MemoryBuffer> mb,
-                            bool atomizeStrings) {
-    return lld::elf::ARMELFFile<ELFT>::create(std::move(mb), atomizeStrings);
+                            ARMLinkingContext &ctx) {
+    return lld::elf::ARMELFFile<ELFT>::create(std::move(mb), ctx);
   }
 };
 
 class ARMELFObjectReader
-    : public ELFObjectReader<ARMELFType, ARMELFFileCreateELFTraits> {
+    : public ELFObjectReader<ARMELFType, ARMELFFileCreateELFTraits,
+                             ARMLinkingContext> {
 public:
-  ARMELFObjectReader(bool atomizeStrings)
-      : ELFObjectReader<ARMELFType, ARMELFFileCreateELFTraits>(
-            atomizeStrings, llvm::ELF::EM_ARM) {}
+  ARMELFObjectReader(ARMLinkingContext &ctx)
+      : ELFObjectReader<ARMELFType, ARMELFFileCreateELFTraits,
+                        ARMLinkingContext>(ctx, llvm::ELF::EM_ARM) {}
 };
 
 class ARMELFDSOReader
-    : public ELFDSOReader<ARMELFType, ARMDynamicFileCreateELFTraits> {
+    : public ELFDSOReader<ARMELFType, ARMDynamicFileCreateELFTraits,
+                          ARMLinkingContext> {
 public:
-  ARMELFDSOReader(bool useUndefines)
-      : ELFDSOReader<ARMELFType, ARMDynamicFileCreateELFTraits>(
-            useUndefines, llvm::ELF::EM_ARM) {}
+  ARMELFDSOReader(ARMLinkingContext &ctx)
+      : ELFDSOReader<ARMELFType, ARMDynamicFileCreateELFTraits,
+                     ARMLinkingContext>(ctx, llvm::ELF::EM_ARM) {}
 };
 
 } // namespace elf

@@ -26,20 +26,18 @@ namespace lld {
 // architectures to be pulled into the linker.  If we want to support making a
 // linker that only supports one ELF architecture, we'd need to change this
 // to have a different registration method for each architecture.
-void Registry::addSupportELFObjects(bool atomizeStrings,
-                                    TargetHandlerBase *handler) {
+void Registry::addSupportELFObjects(ELFLinkingContext &ctx) {
 
   // Tell registry about the ELF object file parser.
-  add(std::move(handler->getObjReader(atomizeStrings)));
+  add(std::move(ctx.targetHandler()->getObjReader()));
 
   // Tell registry about the relocation name to number mapping for this arch.
-  handler->registerRelocationNames(*this);
+  ctx.targetHandler()->registerRelocationNames(*this);
 }
 
-void Registry::addSupportELFDynamicSharedObjects(bool useShlibUndefines,
-                                                 TargetHandlerBase *handler) {
+void Registry::addSupportELFDynamicSharedObjects(ELFLinkingContext &ctx) {
   // Tell registry about the ELF dynamic shared library file parser.
-  add(handler->getDSOReader(useShlibUndefines));
+  add(ctx.targetHandler()->getDSOReader());
 }
 
 } // end namespace lld

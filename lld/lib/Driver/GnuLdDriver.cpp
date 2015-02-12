@@ -587,15 +587,12 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
   }
 
   // Register possible input file parsers.
-  ctx->registry().addSupportELFObjects(
-      ctx->mergeCommonStrings(),
-      ctx->targetHandler());
+  ctx->registry().addSupportELFObjects(*ctx);
   ctx->registry().addSupportArchives(ctx->logInputFiles());
   ctx->registry().addSupportYamlFiles();
   ctx->registry().addSupportNativeObjects();
   if (ctx->allowLinkWithDynamicLibraries())
-    ctx->registry().addSupportELFDynamicSharedObjects(
-        ctx->useShlibUndefines(), ctx->targetHandler());
+    ctx->registry().addSupportELFDynamicSharedObjects(*ctx);
 
   std::stack<int> groupStack;
   int numfiles = 0;

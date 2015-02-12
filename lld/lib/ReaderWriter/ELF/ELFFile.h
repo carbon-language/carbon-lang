@@ -115,17 +115,18 @@ template <class ELFT> class ELFFile : public File {
   typedef typename MergedSectionMapT::iterator MergedSectionMapIterT;
 
 public:
-  ELFFile(StringRef name)
-      : File(name, kindObject), _ordinal(0), _doStringsMerge(false) {
+  ELFFile(StringRef name, ELFLinkingContext &ctx)
+      : File(name, kindObject), _ordinal(0),
+        _doStringsMerge(ctx.mergeCommonStrings()), _ctx(ctx) {
     setLastError(std::error_code());
   }
 
-  ELFFile(std::unique_ptr<MemoryBuffer> mb, bool atomizeStrings = false)
+  ELFFile(std::unique_ptr<MemoryBuffer> mb, ELFLinkingContext &ctx)
       : File(mb->getBufferIdentifier(), kindObject), _mb(std::move(mb)),
-        _ordinal(0), _doStringsMerge(atomizeStrings) {}
+        _ordinal(0), _doStringsMerge(ctx.mergeCommonStrings()), _ctx(ctx) {}
 
   static ErrorOr<std::unique_ptr<ELFFile>>
-  create(std::unique_ptr<MemoryBuffer> mb, bool atomizeStrings);
+  create(std::unique_ptr<MemoryBuffer> mb, ELFLinkingContext &ctx);
 
   virtual Reference::KindArch kindArch();
 
@@ -360,6 +361,9 @@ protected:
 
   /// \brief the cached options relevant while reading the ELF File
   bool _doStringsMerge;
+
+  /// \brief The LinkingContext.
+  ELFLinkingContext &_ctx;
 };
 
 /// \brief All atoms are owned by a File. To add linker specific atoms
@@ -370,8 +374,8 @@ protected:
 template <class ELFT> class CRuntimeFile : public ELFFile<ELFT> {
 public:
   typedef llvm::object::Elf_Sym_Impl<ELFT> Elf_Sym;
-  CRuntimeFile(const ELFLinkingContext &context, StringRef name = "C runtime")
-      : ELFFile<ELFT>(name) {}
+  CRuntimeFile(ELFLinkingContext &context, StringRef name = "C runtime")
+      : ELFFile<ELFT>(name, context) {}
 
   /// \brief add a global absolute atom
   virtual Atom *addAbsoluteAtom(StringRef symbolName) {
@@ -411,9 +415,9 @@ public:
 
 template <class ELFT>
 ErrorOr<std::unique_ptr<ELFFile<ELFT>>>
-ELFFile<ELFT>::create(std::unique_ptr<MemoryBuffer> mb, bool atomizeStrings) {
-  std::unique_ptr<ELFFile<ELFT>> file(
-      new ELFFile<ELFT>(std::move(mb), atomizeStrings));
+ELFFile<ELFT>::create(std::unique_ptr<MemoryBuffer> mb,
+                      ELFLinkingContext &ctx) {
+  std::unique_ptr<ELFFile<ELFT>> file(new ELFFile<ELFT>(std::move(mb), ctx));
   return std::move(file);
 }
 

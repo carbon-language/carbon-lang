@@ -23,9 +23,8 @@ struct HexagonDynamicFileCreateELFTraits {
 
   template <class ELFT>
   static result_type create(std::unique_ptr<llvm::MemoryBuffer> mb,
-                            bool useUndefines) {
-    return lld::elf::HexagonDynamicFile<ELFT>::create(std::move(mb),
-                                                      useUndefines);
+                            HexagonLinkingContext &ctx) {
+    return lld::elf::HexagonDynamicFile<ELFT>::create(std::move(mb), ctx);
   }
 };
 
@@ -34,26 +33,27 @@ struct HexagonELFFileCreateELFTraits {
 
   template <class ELFT>
   static result_type create(std::unique_ptr<llvm::MemoryBuffer> mb,
-                            bool atomizeStrings) {
-    return lld::elf::HexagonELFFile<ELFT>::create(std::move(mb),
-                                                  atomizeStrings);
+                            HexagonLinkingContext &ctx) {
+    return lld::elf::HexagonELFFile<ELFT>::create(std::move(mb), ctx);
   }
 };
 
 class HexagonELFObjectReader
-    : public ELFObjectReader<HexagonELFType, HexagonELFFileCreateELFTraits> {
+    : public ELFObjectReader<HexagonELFType, HexagonELFFileCreateELFTraits,
+                             HexagonLinkingContext> {
 public:
-  HexagonELFObjectReader(bool atomizeStrings)
-      : ELFObjectReader<HexagonELFType, HexagonELFFileCreateELFTraits>(
-            atomizeStrings, llvm::ELF::EM_HEXAGON) {}
+  HexagonELFObjectReader(HexagonLinkingContext &ctx)
+      : ELFObjectReader<HexagonELFType, HexagonELFFileCreateELFTraits,
+                        HexagonLinkingContext>(ctx, llvm::ELF::EM_HEXAGON) {}
 };
 
 class HexagonELFDSOReader
-    : public ELFDSOReader<HexagonELFType, HexagonDynamicFileCreateELFTraits> {
+    : public ELFDSOReader<HexagonELFType, HexagonDynamicFileCreateELFTraits,
+                          HexagonLinkingContext> {
 public:
-  HexagonELFDSOReader(bool useUndefines)
-      : ELFDSOReader<HexagonELFType, HexagonDynamicFileCreateELFTraits>(
-            useUndefines, llvm::ELF::EM_HEXAGON) {}
+  HexagonELFDSOReader(HexagonLinkingContext &ctx)
+      : ELFDSOReader<HexagonELFType, HexagonDynamicFileCreateELFTraits,
+                     HexagonLinkingContext>(ctx, llvm::ELF::EM_HEXAGON) {}
 };
 
 } // namespace elf

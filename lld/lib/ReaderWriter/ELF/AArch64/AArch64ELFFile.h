@@ -19,13 +19,13 @@ class AArch64LinkingContext;
 
 template <class ELFT> class AArch64ELFFile : public ELFFile<ELFT> {
 public:
-  AArch64ELFFile(std::unique_ptr<MemoryBuffer> mb, bool atomizeStrings)
-      : ELFFile<ELFT>(std::move(mb), atomizeStrings) {}
+  AArch64ELFFile(std::unique_ptr<MemoryBuffer> mb, AArch64LinkingContext &ctx)
+      : ELFFile<ELFT>(std::move(mb), ctx) {}
 
   static ErrorOr<std::unique_ptr<AArch64ELFFile>>
-  create(std::unique_ptr<MemoryBuffer> mb, bool atomizeStrings) {
+  create(std::unique_ptr<MemoryBuffer> mb, AArch64LinkingContext &ctx) {
     return std::unique_ptr<AArch64ELFFile<ELFT>>(
-        new AArch64ELFFile<ELFT>(std::move(mb), atomizeStrings));
+        new AArch64ELFFile<ELFT>(std::move(mb), ctx));
   }
 };
 
