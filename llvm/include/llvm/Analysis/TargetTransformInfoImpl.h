@@ -421,8 +421,7 @@ public:
         return TTI::TCC_Free;
     }
 
-    // Otherwise delegate to the fully generic implementations.
-    return getOperationCost(
+    return static_cast<T *>(this)->getOperationCost(
         Operator::getOpcode(U), U->getType(),
         U->getNumOperands() == 1 ? U->getOperand(0)->getType() : nullptr);
   }
