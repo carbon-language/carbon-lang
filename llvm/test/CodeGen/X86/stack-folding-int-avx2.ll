@@ -1130,7 +1130,9 @@ define <8 x i32> @stack_fold_punpckhdq(<8 x i32> %a0, <8 x i32> %a1) {
   ;CHECK:       vpunpckhdq {{-?[0-9]*}}(%rsp), {{%ymm[0-9][0-9]*}}, {{%ymm[0-9][0-9]*}} {{.*#+}} 32-byte Folded Reload
   %1 = tail call <2 x i64> asm sideeffect "nop", "=x,~{xmm2},~{xmm3},~{xmm4},~{xmm5},~{xmm6},~{xmm7},~{xmm8},~{xmm9},~{xmm10},~{xmm11},~{xmm12},~{xmm13},~{xmm14},~{xmm15},~{flags}"()
   %2 = shufflevector <8 x i32> %a0, <8 x i32> %a1, <8 x i32> <i32 2, i32 10, i32 3, i32 11, i32 6, i32 14, i32 7, i32 15>
-  ret <8 x i32> %2
+  ; add forces execution domain
+  %3 = add <8 x i32> %2, <i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1>
+  ret <8 x i32> %3
 }
 
 define <4 x i64> @stack_fold_punpckhqdq(<4 x i64> %a0, <4 x i64> %a1) {
@@ -1138,7 +1140,9 @@ define <4 x i64> @stack_fold_punpckhqdq(<4 x i64> %a0, <4 x i64> %a1) {
   ;CHECK:       vpunpckhqdq {{-?[0-9]*}}(%rsp), {{%ymm[0-9][0-9]*}}, {{%ymm[0-9][0-9]*}} {{.*#+}} 32-byte Folded Reload
   %1 = tail call <2 x i64> asm sideeffect "nop", "=x,~{xmm2},~{xmm3},~{xmm4},~{xmm5},~{xmm6},~{xmm7},~{xmm8},~{xmm9},~{xmm10},~{xmm11},~{xmm12},~{xmm13},~{xmm14},~{xmm15},~{flags}"()
   %2 = shufflevector <4 x i64> %a0, <4 x i64> %a1, <4 x i32> <i32 1, i32 5, i32 3, i32 7>
-  ret <4 x i64> %2
+  ; add forces execution domain
+  %3 = add <4 x i64> %2, <i64 1, i64 1, i64 1, i64 1>
+  ret <4 x i64> %3
 }
 
 define <16 x i16> @stack_fold_punpckhwd(<16 x i16> %a0, <16 x i16> %a1) {
@@ -1162,7 +1166,9 @@ define <8 x i32> @stack_fold_punpckldq(<8 x i32> %a0, <8 x i32> %a1) {
   ;CHECK:       vpunpckldq {{-?[0-9]*}}(%rsp), {{%ymm[0-9][0-9]*}}, {{%ymm[0-9][0-9]*}} {{.*#+}} 32-byte Folded Reload
   %1 = tail call <2 x i64> asm sideeffect "nop", "=x,~{xmm2},~{xmm3},~{xmm4},~{xmm5},~{xmm6},~{xmm7},~{xmm8},~{xmm9},~{xmm10},~{xmm11},~{xmm12},~{xmm13},~{xmm14},~{xmm15},~{flags}"()
   %2 = shufflevector <8 x i32> %a0, <8 x i32> %a1, <8 x i32> <i32 0, i32 8, i32 1, i32 9, i32 4, i32 12, i32 5, i32 13>
-  ret <8 x i32> %2
+  ; add forces execution domain
+  %3 = add <8 x i32> %2, <i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1>
+  ret <8 x i32> %3
 }
 
 define <4 x i64> @stack_fold_punpcklqdq(<4 x i64> %a0, <4 x i64> %a1) {
@@ -1170,7 +1176,9 @@ define <4 x i64> @stack_fold_punpcklqdq(<4 x i64> %a0, <4 x i64> %a1) {
   ;CHECK:       vpunpcklqdq {{-?[0-9]*}}(%rsp), {{%ymm[0-9][0-9]*}}, {{%ymm[0-9][0-9]*}} {{.*#+}} 32-byte Folded Reload
   %1 = tail call <2 x i64> asm sideeffect "nop", "=x,~{xmm2},~{xmm3},~{xmm4},~{xmm5},~{xmm6},~{xmm7},~{xmm8},~{xmm9},~{xmm10},~{xmm11},~{xmm12},~{xmm13},~{xmm14},~{xmm15},~{flags}"()
   %2 = shufflevector <4 x i64> %a0, <4 x i64> %a1, <4 x i32> <i32 0, i32 4, i32 2, i32 6>
-  ret <4 x i64> %2
+  ; add forces execution domain
+  %3 = add <4 x i64> %2, <i64 1, i64 1, i64 1, i64 1>
+  ret <4 x i64> %3
 }
 
 define <16 x i16> @stack_fold_punpcklwd(<16 x i16> %a0, <16 x i16> %a1) {
