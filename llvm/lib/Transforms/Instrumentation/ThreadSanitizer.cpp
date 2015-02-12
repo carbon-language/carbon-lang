@@ -19,6 +19,8 @@
 // The rest is handled by the run-time library.
 //===----------------------------------------------------------------------===//
 
+#include "llvm/Analysis/CaptureTracking.h"
+#include "llvm/Analysis/ValueTracking.h"
 #include "llvm/Transforms/Instrumentation.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/SmallString.h"
@@ -68,6 +70,7 @@ STATISTIC(NumInstrumentedVtableReads, "Number of vtable ptr reads");
 STATISTIC(NumOmittedReadsFromConstantGlobals,
           "Number of reads from constant globals");
 STATISTIC(NumOmittedReadsFromVtable, "Number of vtable reads");
+STATISTIC(NumOmittedNonCaptured, "Number of accesses ignored due to capturing");
 
 namespace {
 
@@ -272,6 +275,7 @@ bool ThreadSanitizer::addrPointsToConstantData(Value *Addr) {
 // Instrumenting some of the accesses may be proven redundant.
 // Currently handled:
 //  - read-before-write (within same BB, no calls between)
+//  - not captured variables
 //
 // We do not handle some of the patterns that should not survive
 // after the classic compiler optimizations.
@@ -302,6 +306,17 @@ void ThreadSanitizer::chooseInstructionsToInstrument(
         // Addr points to some constant data -- it can not race with any writes.
         continue;
       }
+    }
+    Value *Addr = isa<StoreInst>(*I)
+        ? cast<StoreInst>(I)->getPointerOperand()
+        : cast<LoadInst>(I)->getPointerOperand();
+    if (isa<AllocaInst>(GetUnderlyingObject(Addr, nullptr)) &&
+        !PointerMayBeCaptured(Addr, true, true)) {
+      // The variable is addressable but not captured, so it cannot be
+      // referenced from a different thread and participate in a data race
+      // (see llvm/Analysis/CaptureTracking.h for details).
+      NumOmittedNonCaptured++;
+      continue;
     }
     All.push_back(I);
   }
