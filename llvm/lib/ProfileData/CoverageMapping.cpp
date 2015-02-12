@@ -363,10 +363,10 @@ static Optional<unsigned> findMainViewFileID(StringRef SourceFile,
 }
 
 static Optional<unsigned> findMainViewFileID(const FunctionRecord &Function) {
-  SmallBitVector IsNotExpandedFile(Function.Filenames.size(), false);
+  SmallBitVector IsNotExpandedFile(Function.Filenames.size(), true);
   for (const auto &CR : Function.CountedRegions)
     if (CR.Kind == CounterMappingRegion::ExpansionRegion)
-      IsNotExpandedFile[CR.ExpandedFileID] = true;
+      IsNotExpandedFile[CR.ExpandedFileID] = false;
   int I = IsNotExpandedFile.find_first();
   return I != -1 ? I : None;
 }
