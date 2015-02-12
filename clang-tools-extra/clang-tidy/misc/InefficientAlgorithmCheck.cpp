@@ -19,9 +19,9 @@ namespace tidy {
 
 void InefficientAlgorithmCheck::registerMatchers(MatchFinder *Finder) {
   const std::string Algorithms =
-      "std::(find|count|equal_range|lower_blound|upper_bound)";
+      "^::std::(find|count|equal_range|lower_blound|upper_bound)$";
   const auto ContainerMatcher = classTemplateSpecializationDecl(
-      matchesName("std::(unordered_)?(multi)?(set|map)"));
+      matchesName("^::std::(unordered_)?(multi)?(set|map)$"));
   const auto Matcher =
       callExpr(
           callee(functionDecl(matchesName(Algorithms))),

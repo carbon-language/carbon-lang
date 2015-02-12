@@ -32,6 +32,9 @@ template <typename FwIt, typename K> FwIt find(FwIt, FwIt, const K &);
 template <typename FwIt, typename K, typename Cmp>
 FwIt find(FwIt, FwIt, const K &, Cmp);
 
+template <typename FwIt, typename Pred>
+FwIt find_if(FwIt, FwIt, Pred);
+
 template <typename FwIt, typename K> FwIt count(FwIt, FwIt, const K &);
 
 template <typename FwIt, typename K> FwIt lower_bound(FwIt, FwIt, const K &);
@@ -58,6 +61,7 @@ int main() {
   auto c = count(s.begin(), s.end(), 43);
   // CHECK-MESSAGES: :[[@LINE-1]]:12: warning: this STL algorithm call should be
   // CHECK-FIXES: {{^  }}auto c = s.count(43);{{$}}
+  it = find_if(s.begin(), s.end(), [](int) { return false; });
 
   std::multiset<int> ms;
   find(ms.begin(), ms.end(), 46);
