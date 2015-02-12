@@ -33,8 +33,8 @@ void test ( const CharT *s ) {
     string_view_t sv1;
     string_t      str = (string_t) sv1;
 
+    assert ( sv1.size() ==  0);
     assert ( sv1.size() == str.size ());
-    assert ( std::char_traits<CharT>::compare ( sv1.data(), str.data(), sv1.size()) == 0 );
     }
 }
 
