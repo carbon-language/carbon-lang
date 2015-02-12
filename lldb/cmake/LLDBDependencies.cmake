@@ -25,6 +25,7 @@ set( LLDB_USED_LIBS
   lldbPluginObjectContainerMachOArchive
   lldbPluginProcessGDBRemote
   lldbPluginProcessUtility
+  lldbPluginPlatformAndroid
   lldbPluginPlatformGDB
   lldbPluginPlatformFreeBSD
   lldbPluginPlatformKalimba

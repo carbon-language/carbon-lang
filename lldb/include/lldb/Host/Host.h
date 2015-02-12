@@ -236,12 +236,16 @@ public:
     GetProcessInfo (lldb::pid_t pid, ProcessInstanceInfo &proc_info);
 
 #if defined (__APPLE__) || defined (__linux__) || defined (__FreeBSD__) || defined (__GLIBC__) || defined (__NetBSD__)
+#if !defined(__ANDROID__) && !defined(__ANDROID_NDK__)
+
     static short GetPosixspawnFlags(const ProcessLaunchInfo &launch_info);
 
     static Error LaunchProcessPosixSpawn(const char *exe_path, const ProcessLaunchInfo &launch_info, lldb::pid_t &pid);
 
     static bool AddPosixSpawnFileAction(void *file_actions, const FileAction *info, Log *log, Error &error);
-#endif
+
+#endif // !defined(__ANDROID__) && !defined(__ANDROID_NDK__)
+#endif // defined (__APPLE__) || defined (__linux__) || defined (__FreeBSD__) || defined (__GLIBC__) || defined(__NetBSD__)
 
     static const lldb_private::UnixSignalsSP&
     GetUnixSignals ();
