@@ -1707,9 +1707,18 @@ void CodeGenFunction::EmitSEHTryStmt(const SEHTryStmt &S) {
   SEHFinallyInfo FI;
   EnterSEHTryStmt(S, FI);
   {
+    JumpDest TryExit = getJumpDestInCurrentScope("__try.__leave");
+    SEHTryEpilogueStack.push_back(&TryExit);
+
     // Disable inlining inside SEH __try scopes.
     SaveAndRestore<bool> Saver(IsSEHTryScope, true);
     EmitStmt(S.getTryBlock());
+
+    if (!TryExit.getBlock()->use_empty())
+      EmitBlock(TryExit.getBlock(), /*IsFinished=*/true);
+    else
+      delete TryExit.getBlock();
+    SEHTryEpilogueStack.pop_back();
   }
   ExitSEHTryStmt(S, FI);
 }
@@ -1988,5 +1997,13 @@ void CodeGenFunction::ExitSEHTryStmt(const SEHTryStmt &S, SEHFinallyInfo &FI) {
 }
 
 void CodeGenFunction::EmitSEHLeaveStmt(const SEHLeaveStmt &S) {
-  CGM.ErrorUnsupported(&S, "SEH __leave");
+  // If this code is reachable then emit a stop point (if generating
+  // debug info). We have to do this ourselves because we are on the
+  // "simple" statement path.
+  if (HaveInsertPoint())
+    EmitStopPoint(&S);
+
+  assert(!SEHTryEpilogueStack.empty() &&
+         "sema should have rejected this __leave");
+  EmitBranchThroughCleanup(*SEHTryEpilogueStack.back());
 }
