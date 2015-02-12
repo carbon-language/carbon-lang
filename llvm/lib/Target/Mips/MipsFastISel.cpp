@@ -1,7 +1,6 @@
 //===-- MipsastISel.cpp - Mips FastISel implementation
 //---------------------===//
 
-#include "llvm/CodeGen/FunctionLoweringInfo.h"
 #include "MipsCCState.h"
 #include "MipsISelLowering.h"
 #include "MipsMachineFunction.h"
@@ -10,7 +9,9 @@
 #include "MipsTargetMachine.h"
 #include "llvm/Analysis/TargetLibraryInfo.h"
 #include "llvm/CodeGen/FastISel.h"
+#include "llvm/CodeGen/FunctionLoweringInfo.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
+#include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/IR/GlobalAlias.h"
 #include "llvm/IR/GlobalVariable.h"
 #include "llvm/Target/TargetInstrInfo.h"
@@ -984,14 +985,88 @@ bool MipsFastISel::fastLowerCall(CallLoweringInfo &CLI) {
 }
 
 bool MipsFastISel::selectRet(const Instruction *I) {
+  const Function &F = *I->getParent()->getParent();
   const ReturnInst *Ret = cast<ReturnInst>(I);
 
   if (!FuncInfo.CanLowerReturn)
     return false;
+
+  // Build a list of return value registers.
+  SmallVector<unsigned, 4> RetRegs;
+
   if (Ret->getNumOperands() > 0) {
-    return false;
+    CallingConv::ID CC = F.getCallingConv();
+    SmallVector<ISD::OutputArg, 4> Outs;
+    GetReturnInfo(F.getReturnType(), F.getAttributes(), Outs, TLI);
+    // Analyze operands of the call, assigning locations to each operand.
+    SmallVector<CCValAssign, 16> ValLocs;
+    MipsCCState CCInfo(CC, F.isVarArg(), *FuncInfo.MF, ValLocs,
+                       I->getContext());
+    CCAssignFn *RetCC = RetCC_Mips;
+    CCInfo.AnalyzeReturn(Outs, RetCC);
+
+    // Only handle a single return value for now.
+    if (ValLocs.size() != 1)
+      return false;
+
+    CCValAssign &VA = ValLocs[0];
+    const Value *RV = Ret->getOperand(0);
+
+    // Don't bother handling odd stuff for now.
+    if ((VA.getLocInfo() != CCValAssign::Full) &&
+        (VA.getLocInfo() != CCValAssign::BCvt))
+      return false;
+
+    // Only handle register returns for now.
+    if (!VA.isRegLoc())
+      return false;
+
+    unsigned Reg = getRegForValue(RV);
+    if (Reg == 0)
+      return false;
+
+    unsigned SrcReg = Reg + VA.getValNo();
+    unsigned DestReg = VA.getLocReg();
+    // Avoid a cross-class copy. This is very unlikely.
+    if (!MRI.getRegClass(SrcReg)->contains(DestReg))
+      return false;
+
+    EVT RVEVT = TLI.getValueType(RV->getType());
+    if (!RVEVT.isSimple())
+      return false;
+
+    if (RVEVT.isVector())
+      return false;
+
+    MVT RVVT = RVEVT.getSimpleVT();
+    if (RVVT == MVT::f128)
+      return false;
+
+    MVT DestVT = VA.getValVT();
+    // Special handling for extended integers.
+    if (RVVT != DestVT) {
+      if (RVVT != MVT::i1 && RVVT != MVT::i8 && RVVT != MVT::i16)
+        return false;
+
+      if (!Outs[0].Flags.isZExt() && !Outs[0].Flags.isSExt())
+        return false;
+
+      bool IsZExt = Outs[0].Flags.isZExt();
+      SrcReg = emitIntExt(RVVT, SrcReg, DestVT, IsZExt);
+      if (SrcReg == 0)
+        return false;
+    }
+
+    // Make the copy.
+    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc,
+            TII.get(TargetOpcode::COPY), DestReg).addReg(SrcReg);
+
+    // Add register to return instruction.
+    RetRegs.push_back(VA.getLocReg());
   }
-  emitInst(Mips::RetRA);
+  MachineInstrBuilder MIB = emitInst(Mips::RetRA);
+  for (unsigned i = 0, e = RetRegs.size(); i != e; ++i)
+    MIB.addReg(RetRegs[i], RegState::Implicit);
   return true;
 }
 
@@ -1116,7 +1191,8 @@ bool MipsFastISel::emitIntExt(MVT SrcVT, unsigned SrcReg, MVT DestVT,
 unsigned MipsFastISel::emitIntExt(MVT SrcVT, unsigned SrcReg, MVT DestVT,
                                   bool isZExt) {
   unsigned DestReg = createResultReg(&Mips::GPR32RegClass);
-  return emitIntExt(SrcVT, SrcReg, DestVT, DestReg, isZExt);
+  bool Success = emitIntExt(SrcVT, SrcReg, DestVT, DestReg, isZExt);
+  return Success ? DestReg : 0;
 }
 
 bool MipsFastISel::fastSelectInstruction(const Instruction *I) {
