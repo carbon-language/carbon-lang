@@ -27,19 +27,19 @@ public:
     return Enumerator->getChildCount();
   }
 
-  std::unique_ptr<ChildType> getChildAtIndex(uint32_t Index) const {
+  std::unique_ptr<ChildType> getChildAtIndex(uint32_t Index) const override {
     std::unique_ptr<PDBSymbol> Child = Enumerator->getChildAtIndex(Index);
     return make_concrete_child(std::move(Child));
   }
 
-  std::unique_ptr<ChildType> getNext() {
+  std::unique_ptr<ChildType> getNext() override {
     std::unique_ptr<PDBSymbol> Child = Enumerator->getNext();
     return make_concrete_child(std::move(Child));
   }
 
-  void reset() { Enumerator->reset(); }
+  void reset() override { Enumerator->reset(); }
 
-  ConcreteSymbolEnumerator<ChildType> *clone() const {
+  ConcreteSymbolEnumerator<ChildType> *clone() const override {
     std::unique_ptr<IPDBEnumSymbols> WrappedClone(Enumerator->clone());
     return new ConcreteSymbolEnumerator<ChildType>(std::move(WrappedClone));
   }
