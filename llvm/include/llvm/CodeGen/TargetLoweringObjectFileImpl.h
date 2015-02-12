@@ -56,6 +56,10 @@ public:
                                         SectionKind Kind, Mangler &Mang,
                                         const TargetMachine &TM) const override;
 
+  const MCSection *
+  getSectionForJumpTable(const Function &F, Mangler &Mang,
+                         const TargetMachine &TM) const override;
+
   /// Return an MCExpr to use for a reference to the specified type info global
   /// variable from exception handling information.
   const MCExpr *

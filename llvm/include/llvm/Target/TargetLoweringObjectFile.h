@@ -94,6 +94,10 @@ public:
     return SectionForGlobal(GV, getKindForGlobal(GV, TM), Mang, TM);
   }
 
+  virtual const MCSection *
+  getSectionForJumpTable(const Function &F, Mangler &Mang,
+                         const TargetMachine &TM) const;
+
   /// Targets should implement this method to assign a section to globals with
   /// an explicit section specfied. The implementation of this method can
   /// assume that GV->hasSection() is true.

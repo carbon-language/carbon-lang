@@ -1177,6 +1177,7 @@ void AsmPrinter::EmitJumpTableInfo() {
   // Pick the directive to use to print the jump table entries, and switch to
   // the appropriate section.
   const Function *F = MF->getFunction();
+  const TargetLoweringObjectFile &TLOF = getObjFileLowering();
   bool JTInDiffSection = false;
   if (// In PIC mode, we need to emit the jump table to the same section as the
       // function body itself, otherwise the label differences won't make sense.
@@ -1187,13 +1188,11 @@ void AsmPrinter::EmitJumpTableInfo() {
       // FIXME: this isn't the right predicate, should be based on the MCSection
       // for the function.
       F->isWeakForLinker()) {
-    OutStreamer.SwitchSection(
-        getObjFileLowering().SectionForGlobal(F, *Mang, TM));
+    OutStreamer.SwitchSection(TLOF.SectionForGlobal(F, *Mang, TM));
   } else {
     // Otherwise, drop it in the readonly section.
     const MCSection *ReadOnlySection =
-        getObjFileLowering().getSectionForConstant(SectionKind::getReadOnly(),
-                                                   /*C=*/nullptr);
+        TLOF.getSectionForJumpTable(*F, *Mang, TM);
     OutStreamer.SwitchSection(ReadOnlySection);
     JTInDiffSection = true;
   }

@@ -270,6 +270,11 @@ SectionForGlobal(const GlobalValue *GV, SectionKind Kind, Mangler &Mang,
   return SelectSectionForGlobal(GV, Kind, Mang, TM);
 }
 
+const MCSection *TargetLoweringObjectFile::getSectionForJumpTable(
+    const Function &F, Mangler &Mang, const TargetMachine &TM) const {
+  return getSectionForConstant(SectionKind::getReadOnly(), /*C=*/nullptr);
+}
+
 /// getSectionForConstant - Given a mergable constant with the
 /// specified size and relocation information, return a section that it
 /// should be placed in.

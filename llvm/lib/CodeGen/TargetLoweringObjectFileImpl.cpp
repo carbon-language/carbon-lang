@@ -334,6 +334,28 @@ SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
   return DataRelROSection;
 }
 
+const MCSection *TargetLoweringObjectFileELF::getSectionForJumpTable(
+    const Function &F, Mangler &Mang, const TargetMachine &TM) const {
+  // If the function can be removed, produce a unique section so that
+  // the table doesn't prevent the removal.
+  const Comdat *C = F.getComdat();
+  bool EmitUniqueSection = TM.getFunctionSections() || C;
+  if (!EmitUniqueSection)
+    return ReadOnlySection;
+
+  SmallString<128> Name(".rodata.");
+  TM.getNameWithPrefix(Name, &F, Mang, true);
+
+  unsigned Flags = ELF::SHF_ALLOC;
+  StringRef Group = "";
+  if (C) {
+    Flags |= ELF::SHF_GROUP;
+    Group = C->getName();
+  }
+
+  return getContext().getELFSection(Name, ELF::SHT_PROGBITS, Flags, 0, Group);
+}
+
 /// getSectionForConstant - Given a mergeable constant with the
 /// specified size and relocation information, return a section that it
 /// should be placed in.
