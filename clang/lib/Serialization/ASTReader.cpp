@@ -3435,6 +3435,13 @@ ASTReader::ReadModuleMapFileBlock(RecordData &Record, ModuleFile &F,
           << F.ModuleName << /*not new*/1 << ModMap->getName();
       return OutOfDate;
     }
+
+    // Check whether the 'IsSystem' bit changed.
+    if (M->IsSystem != static_cast<bool>(Record[Idx])) {
+      if ((ClientLoadCapabilities & ARR_OutOfDate) == 0)
+        Diag(diag::err_module_system_change) << F.ModuleName << M->IsSystem;
+      return OutOfDate;
+    }
   }
 
   if (Listener)

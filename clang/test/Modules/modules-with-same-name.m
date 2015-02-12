@@ -21,6 +21,14 @@
 // Confirm that we still have three pcm files, since DependsOnA will be rebuilt
 // RUN: find %t -name "*.pcm" | count 3
 
+// DependsOnA, using A from path 2, as a system path
+// RUN: %clang_cc1 -fmodules -fmodules-cache-path=%t -fmodules-ignore-macro=EXPECTED_PATH -fmodules-ignore-macro=DIRECT -fsyntax-only %s -I %S/Inputs/modules-with-same-name/DependsOnA -isystem %S/Inputs/modules-with-same-name/path2/A -DEXPECTED_PATH=2 -Rmodule-build 2> %t.log
+// Confirm that we built a new module for A
+// RUN: FileCheck %s < %t.log
+// CHECK: building module 'DependsOnA'
+// CHECK: building module 'A'
+// RUN: find %t -name "*.pcm" | count 4
+
 #ifdef DIRECT
 @import A;
 #else
