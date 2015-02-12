@@ -829,8 +829,8 @@ X86InstrInfo::X86InstrInfo(X86Subtarget &STI)
     // AES foldable instructions
     { X86::AESIMCrr,              X86::AESIMCrm,              TB_ALIGN_16 },
     { X86::AESKEYGENASSIST128rr,  X86::AESKEYGENASSIST128rm,  TB_ALIGN_16 },
-    { X86::VAESIMCrr,             X86::VAESIMCrm,             TB_ALIGN_16 },
-    { X86::VAESKEYGENASSIST128rr, X86::VAESKEYGENASSIST128rm, TB_ALIGN_16 }
+    { X86::VAESIMCrr,             X86::VAESIMCrm,             0 },
+    { X86::VAESKEYGENASSIST128rr, X86::VAESKEYGENASSIST128rm, 0 }
   };
 
   for (unsigned i = 0, e = array_lengthof(OpTbl1); i != e; ++i) {
