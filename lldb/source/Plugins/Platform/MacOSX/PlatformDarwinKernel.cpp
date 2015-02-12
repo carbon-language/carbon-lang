@@ -51,6 +51,8 @@ static uint32_t g_initialize_count = 0;
 void
 PlatformDarwinKernel::Initialize ()
 {
+    PlatformDarwin::Initialize ();
+
     if (g_initialize_count++ == 0)
     {
         PluginManager::RegisterPlugin (PlatformDarwinKernel::GetPluginNameStatic(),
@@ -70,6 +72,8 @@ PlatformDarwinKernel::Terminate ()
             PluginManager::UnregisterPlugin (PlatformDarwinKernel::CreateInstance);
         }
     }
+
+    PlatformDarwin::Terminate ();
 }
 
 PlatformSP

@@ -29,7 +29,9 @@
 
 using namespace lldb;
 using namespace lldb_private;
-    
+
+static uint32_t g_initialize_count = 0;
+
 // Use a singleton function for g_local_platform_sp to avoid init
 // constructors since LLDB is often part of a shared library
 static PlatformSP&
@@ -73,6 +75,25 @@ GetPlatformListMutex ()
 {
     static Mutex g_mutex(Mutex::eMutexTypeRecursive);
     return g_mutex;
+}
+
+void
+Platform::Initialize ()
+{
+    g_initialize_count++;
+}
+
+void
+Platform::Terminate ()
+{
+    if (g_initialize_count > 0)
+    {
+        if (--g_initialize_count == 0)
+        {
+            Mutex::Locker locker(GetPlatformListMutex ());
+            GetPlatformList().clear();
+        }
+    }
 }
 
 void

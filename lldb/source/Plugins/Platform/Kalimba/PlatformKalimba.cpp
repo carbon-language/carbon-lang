@@ -76,6 +76,8 @@ PlatformKalimba::GetPluginName()
 void
 PlatformKalimba::Initialize ()
 {
+    Platform::Initialize ();
+
     if (g_initialize_count++ == 0)
     {
         PluginManager::RegisterPlugin(PlatformKalimba::GetPluginNameStatic(false),
@@ -94,6 +96,8 @@ PlatformKalimba::Terminate ()
             PluginManager::UnregisterPlugin (PlatformKalimba::CreateInstance);
         }
     }
+
+    Platform::Terminate ();
 }
 
 Error

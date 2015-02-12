@@ -50,8 +50,14 @@ namespace lldb_private {
     {
     public:
 
+        static void
+        Initialize ();
+
+        static void
+        Terminate ();
+
         //------------------------------------------------------------------
-        /// Get the native host platform plug-in. 
+        /// Get the native host platform plug-in.
         ///
         /// There should only be one of these for each host that LLDB runs
         /// upon that should be statically compiled in and registered using

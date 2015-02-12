@@ -40,6 +40,8 @@ static uint32_t g_initialize_count = 0;
 void
 PlatformMacOSX::Initialize ()
 {
+    PlatformDarwin::Initialize ();
+
     if (g_initialize_count++ == 0)
     {
 #if defined (__APPLE__)
@@ -64,6 +66,8 @@ PlatformMacOSX::Terminate ()
             PluginManager::UnregisterPlugin (PlatformMacOSX::CreateInstance);
         }
     }
+
+    PlatformDarwin::Terminate ();
 }
 
 PlatformSP

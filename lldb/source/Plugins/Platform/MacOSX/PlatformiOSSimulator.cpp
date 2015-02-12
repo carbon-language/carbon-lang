@@ -41,6 +41,8 @@ static uint32_t g_initialize_count = 0;
 void
 PlatformiOSSimulator::Initialize ()
 {
+    PlatformDarwin::Initialize ();
+
     if (g_initialize_count++ == 0)
     {
         PluginManager::RegisterPlugin (PlatformiOSSimulator::GetPluginNameStatic(),
@@ -59,6 +61,8 @@ PlatformiOSSimulator::Terminate ()
             PluginManager::UnregisterPlugin (PlatformiOSSimulator::CreateInstance);
         }
     }
+
+    PlatformDarwin::Terminate ();
 }
 
 PlatformSP

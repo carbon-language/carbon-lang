@@ -242,6 +242,8 @@ PlatformLinux::GetPluginName()
 void
 PlatformLinux::Initialize ()
 {
+    PlatformPOSIX::Initialize ();
+
     if (g_initialize_count++ == 0)
     {
 #if defined(__linux__)
@@ -266,6 +268,8 @@ PlatformLinux::Terminate ()
             PluginManager::UnregisterPlugin (PlatformLinux::CreateInstance);
         }
     }
+
+    PlatformPOSIX::Terminate ();
 }
 
 Error

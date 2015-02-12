@@ -2825,7 +2825,19 @@ ScriptInterpreterPython::InitializePrivate ()
         }
     }
 
+    // Importing 'lldb' module calls SBDebugger::Initialize, which calls Debugger::Initialize, which increments a
+    // global debugger ref-count; therefore we need to check the ref-count before and after importing lldb, and if the
+    // ref-count increased we need to call Debugger::Terminate here to decrement the ref-count so that when the final 
+    // call to Debugger::Terminate is made, the ref-count has the correct value. 
+    
+    int old_count = Debugger::TestDebuggerRefCount ();
+
     PyRun_SimpleString ("sys.dont_write_bytecode = 1; import lldb.embedded_interpreter; from lldb.embedded_interpreter import run_python_interpreter; from lldb.embedded_interpreter import run_one_line");
+
+    int new_count = Debugger::TestDebuggerRefCount ();
+    
+    if (new_count > old_count)
+        Debugger::Terminate ();
 
     if (threads_already_initialized) {
         if (log)

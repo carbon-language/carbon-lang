@@ -118,6 +118,8 @@ static uint32_t g_initialize_count = 0;
 void
 PlatformFreeBSD::Initialize ()
 {
+    Platform::Initialize ();
+
     if (g_initialize_count++ == 0)
     {
 #if defined (__FreeBSD__)
@@ -137,6 +139,8 @@ PlatformFreeBSD::Terminate ()
 {
     if (g_initialize_count > 0 && --g_initialize_count == 0)
     	PluginManager::UnregisterPlugin (PlatformFreeBSD::CreateInstance);
+
+    Platform::Terminate ();
 }
 
 //------------------------------------------------------------------

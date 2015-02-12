@@ -40,6 +40,8 @@ static bool g_initialized = false;
 void
 PlatformRemoteGDBServer::Initialize ()
 {
+    Platform::Initialize ();
+
     if (g_initialized == false)
     {
         g_initialized = true;
@@ -57,6 +59,8 @@ PlatformRemoteGDBServer::Terminate ()
         g_initialized = false;
         PluginManager::UnregisterPlugin (PlatformRemoteGDBServer::CreateInstance);
     }
+
+    Platform::Terminate ();
 }
 
 PlatformSP

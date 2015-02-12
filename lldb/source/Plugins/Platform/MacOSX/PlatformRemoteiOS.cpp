@@ -63,6 +63,8 @@ static uint32_t g_initialize_count = 0;
 void
 PlatformRemoteiOS::Initialize ()
 {
+    PlatformDarwin::Initialize ();
+
     if (g_initialize_count++ == 0)
     {
         PluginManager::RegisterPlugin (PlatformRemoteiOS::GetPluginNameStatic(),
@@ -81,6 +83,8 @@ PlatformRemoteiOS::Terminate ()
             PluginManager::UnregisterPlugin (PlatformRemoteiOS::CreateInstance);
         }
     }
+
+    PlatformDarwin::Terminate ();
 }
 
 PlatformSP

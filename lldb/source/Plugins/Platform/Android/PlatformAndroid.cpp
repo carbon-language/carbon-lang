@@ -25,6 +25,8 @@ static uint32_t g_initialize_count = 0;
 void
 PlatformAndroid::Initialize ()
 {
+    PlatformLinux::Initialize ();
+
     if (g_initialize_count++ == 0)
     {
         PluginManager::RegisterPlugin (PlatformAndroid::GetPluginNameStatic(),
@@ -43,6 +45,8 @@ PlatformAndroid::Terminate ()
             PluginManager::UnregisterPlugin (PlatformAndroid::CreateInstance);
         }
     }
+
+    PlatformLinux::Terminate ();
 }
 
 PlatformSP

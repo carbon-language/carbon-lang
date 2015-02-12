@@ -313,6 +313,7 @@ lldb_private::Terminate ()
     ProcessFreeBSD::Terminate();
 #endif
 
+    PlatformRemoteGDBServer::Terminate();
     ProcessGDBRemote::Terminate();
     DynamicLoaderStatic::Terminate();
 

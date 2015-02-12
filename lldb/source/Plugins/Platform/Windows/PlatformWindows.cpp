@@ -146,6 +146,8 @@ PlatformWindows::GetPluginName(void)
 void
 PlatformWindows::Initialize(void)
 {
+    Platform::Initialize ();
+
     if (g_initialize_count++ == 0)
     {
 #if defined (_WIN32)
@@ -175,6 +177,8 @@ PlatformWindows::Terminate( void )
             PluginManager::UnregisterPlugin (PlatformWindows::CreateInstance);
         }
     }
+
+    Platform::Terminate ();
 }
 
 //------------------------------------------------------------------
