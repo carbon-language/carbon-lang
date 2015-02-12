@@ -146,7 +146,7 @@ class MiNotificationTestCase(lldbmi_testcase.MiTestCaseBase):
         self.expect("\^running")
 
         # Test that *stopped is printed
-        self.expect("\*stopped,reason=\"exception-received\",exception=\"EXC_BAD_ACCESS \(code=1, address=0x0\)\",thread-id=\"1\",stopped-threads=\"all\"")
+        self.expect("\*stopped,reason=\"exception-received\",exception=\"(EXC_BAD_ACCESS \(code=1, address=0x0\)|invalid address \(fault address: 0x0\))\",thread-id=\"1\",stopped-threads=\"all\"")
 
     @lldbmi_test
     @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
