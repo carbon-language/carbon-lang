@@ -41,13 +41,12 @@ void test ( const CharT *s ) {
     const std::experimental::basic_string_view<CharT> sv1;
     String                                            str1 = (String) sv1;
 
+    assert ( sv1.size() == 0);
     assert ( sv1.size() == str1.size ());
-    assert ( std::char_traits<CharT>::compare ( sv1.data(), str1.data(), sv1.size()) == 0 );
 
 #if __cplusplus >= 201103L
     auto str2 = sv1.to_string(min_allocator<CharT>());
     assert ( sv1.size() == str2.size ());
-    assert ( std::char_traits<CharT>::compare ( sv1.data(), str2.data(), sv1.size()) == 0 );
 #endif
     }
 }
