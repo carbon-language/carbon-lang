@@ -226,6 +226,12 @@ unsigned PPCTTIImpl::getMaxInterleaveFactor() {
   if (Directive == PPC::DIR_E500mc || Directive == PPC::DIR_E5500)
     return 1;
 
+  // For P7 and P8, floating-point instructions have a 6-cycle latency and
+  // there are two execution units, so unroll by 12x for latency hiding.
+  if (Directive == PPC::DIR_PWR7 ||
+      Directive == PPC::DIR_PWR8)
+    return 12;
+
   // For most things, modern systems have two execution units (and
   // out-of-order execution).
   return 2;
