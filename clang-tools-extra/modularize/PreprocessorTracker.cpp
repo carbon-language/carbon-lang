@@ -980,9 +980,12 @@ public:
     if (HeaderPath.startswith("<"))
       return;
     HeaderHandle H = findHeaderHandle(HeaderPath);
+    HeaderHandle TH;
     if (isHeaderHandleInStack(H)) {
-      while ((H != getCurrentHeaderHandle()) && (HeaderStack.size() != 0))
+      do {
+        TH = getCurrentHeaderHandle();
         popHeaderHandle();
+      } while ((TH != H) && (HeaderStack.size() != 0));
     }
     InNestedHeader = false;
   }
