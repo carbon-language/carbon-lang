@@ -24,6 +24,7 @@
 #include "llvm/Support/ELF.h"
 #include <map>
 #include <memory>
+#include <set>
 
 namespace lld {
 class DefinedAtom;
@@ -47,6 +48,7 @@ public:
 
 class ELFLinkingContext : public LinkingContext {
 public:
+  typedef std::set<StringRef>::iterator StringRefSetIterT;
 
   /// \brief The type of ELF executable that the linker
   /// creates.
@@ -305,7 +307,7 @@ public:
   // --wrap option.
   void addWrapForSymbol(StringRef);
 
-  StringRefVector wrapCalls() const;
+  range<std::set<StringRef>::iterator> wrapCalls() const;
 
 private:
   ELFLinkingContext() LLVM_DELETED_FUNCTION;
@@ -346,7 +348,7 @@ protected:
   StringRef _soname;
   StringRefVector _rpathList;
   StringRefVector _rpathLinkList;
-  StringRefVector _wrapCalls;
+  std::set<StringRef> _wrapCalls;
   std::map<std::string, uint64_t> _absoluteSymbols;
   llvm::StringSet<> _dynamicallyExportedSymbols;
   std::vector<std::unique_ptr<script::Parser>> _scripts;

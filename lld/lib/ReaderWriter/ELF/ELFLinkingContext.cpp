@@ -258,10 +258,11 @@ std::string ELFLinkingContext::demangle(StringRef symbolName) const {
 
 // Support --wrap option.
 void ELFLinkingContext::addWrapForSymbol(StringRef symbol) {
-  _wrapCalls.push_back(symbol);
+  _wrapCalls.insert(symbol);
 }
 
-ELFLinkingContext::StringRefVector ELFLinkingContext::wrapCalls() const {
+range<ELFLinkingContext::StringRefSetIterT>
+ELFLinkingContext::wrapCalls() const {
   return _wrapCalls;
 }
 
