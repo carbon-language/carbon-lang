@@ -98,11 +98,8 @@ namespace {
     size_t pos = str.find_last_of(separators, str.size() - 1);
 
 #ifdef LLVM_ON_WIN32
-    if (pos == StringRef::npos) {
-      // Skip the drive letter, if one exists.
-      if (str.size() >= 2 && str[1] == ':')
-        pos = 2;
-    }
+    if (pos == StringRef::npos)
+      pos = str.find_last_of(':', str.size() - 2);
 #endif
 
     if (pos == StringRef::npos ||
