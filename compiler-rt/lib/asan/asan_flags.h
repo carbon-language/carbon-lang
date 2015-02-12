@@ -41,8 +41,8 @@ extern Flags asan_flags_dont_use_directly;
 inline Flags *flags() {
   return &asan_flags_dont_use_directly;
 }
-void RegisterAsanFlags(FlagParser *parser, Flags *f);
-void InitializeFlags(Flags *f);
+
+void InitializeFlags();
 
 }  // namespace __asan
 

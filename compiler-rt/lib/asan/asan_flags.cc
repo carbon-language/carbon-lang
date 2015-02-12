@@ -46,14 +46,15 @@ void Flags::SetDefaults() {
 #undef ASAN_FLAG
 }
 
-void RegisterAsanFlags(FlagParser *parser, Flags *f) {
+static void RegisterAsanFlags(FlagParser *parser, Flags *f) {
 #define ASAN_FLAG(Type, Name, DefaultValue, Description) \
   RegisterFlag(parser, #Name, Description, &f->Name);
 #include "asan_flags.inc"
 #undef ASAN_FLAG
 }
 
-void InitializeFlags(Flags *f) {
+void InitializeFlags() {
+  Flags *f = flags();
   FlagParser parser;
   RegisterAsanFlags(&parser, f);
   RegisterCommonFlags(&parser);

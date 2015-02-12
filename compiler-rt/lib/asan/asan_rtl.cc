@@ -314,7 +314,7 @@ static void AsanInitInternal() {
 
   // Initialize flags. This must be done early, because most of the
   // initialization steps look at flags().
-  InitializeFlags(flags());
+  InitializeFlags();
 
   SetCanPoisonMemory(flags()->poison_heap);
   SetMallocContextSize(common_flags()->malloc_context_size);

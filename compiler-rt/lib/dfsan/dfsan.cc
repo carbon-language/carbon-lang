@@ -317,18 +317,18 @@ void Flags::SetDefaults() {
 #undef DFSAN_FLAG
 }
 
-void RegisterDfsanFlags(FlagParser *parser, Flags *f) {
+static void RegisterDfsanFlags(FlagParser *parser, Flags *f) {
 #define DFSAN_FLAG(Type, Name, DefaultValue, Description) \
   RegisterFlag(parser, #Name, Description, &f->Name);
 #include "dfsan_flags.inc"
 #undef DFSAN_FLAG
 }
 
-static void InitializeFlags(Flags &f, const char *env) {
+static void InitializeFlags() {
   FlagParser parser;
-  RegisterDfsanFlags(&parser, &f);
-  f.SetDefaults();
-  parser.ParseString(env);
+  RegisterDfsanFlags(&parser, &flags());
+  flags().SetDefaults();
+  parser.ParseString(GetEnv("DFSAN_OPTIONS"));
 }
 
 static void dfsan_fini() {
@@ -363,8 +363,7 @@ static void dfsan_init(int argc, char **argv, char **envp) {
   if (!(init_addr >= kUnusedAddr && init_addr < kAppAddr))
     Mprotect(kUnusedAddr, kAppAddr - kUnusedAddr);
 
-  InitializeFlags(flags(), GetEnv("DFSAN_OPTIONS"));
-
+  InitializeFlags();
   InitializeInterceptors();
 
   // Register the fini callback to run when the program terminates successfully
