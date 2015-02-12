@@ -91,7 +91,6 @@ set (ISL_FILES
     External/isl/print.c
     External/isl/imath/gmp_compat.c
     External/isl/imath/imath.c
-    External/isl/imath/imdrover.c
     External/isl/imath/imrat.c
     External/isl/imath/iprime.c
     External/isl/imath/pi.c
@@ -128,6 +127,18 @@ add_polly_library(Polly
   ${POLLY_PLUTO_FILES}
   ${ISL_FILES}
   )
+
+if (BUILD_SHARED_LIBS)
+  target_link_libraries(Polly
+    LLVMSupport
+    LLVMCore
+    LLVMScalarOpts
+    LLVMInstCombine
+    LLVMTransformUtils
+    LLVMAnalysis
+    LLVMipo
+  )
+endif()
 
 # Build a monolithic Polly.a and a thin module LLVMPolly.moduleext that links to
 # that static library.
