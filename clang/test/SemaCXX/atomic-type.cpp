@@ -71,6 +71,8 @@ namespace copy_init {
 #if __cplusplus >= 201103L
   _Atomic(X) e2{0}; // expected-error {{illegal initializer}}
   _Atomic(X) a{X(0)};
+  // FIXME: This does not seem like the right answer.
+  _Atomic(int) e3{0}; // expected-error {{illegal initializer}}
 #endif
 
   struct Y {
@@ -79,9 +81,14 @@ namespace copy_init {
   };
   Y y1 = { X(0), 4 };
   Y y2 = { 0, 4 }; // expected-error {{cannot initialize}}
+
   // FIXME: It's not really clear if we should allow these. Generally, C++11
-  // allows extraneous braces around initializers.
-  Y y3 = { { X(0) }, { 4 } }; // expected-error 2{{illegal initializer type}}
+  // allows extraneous braces around initializers. We should at least give the
+  // same answer in all these cases:
+  Y y3 = { X(0), { 4 } }; // expected-error {{illegal initializer type}}
+  Y y4 = { { X(0) }, 4 };
+  _Atomic(int) ai = { 4 }; // expected-error {{illegal initializer type}}
+  _Atomic(X) ax = { X(0) };
 }
 
 bool PR21836(_Atomic(int) *x) {

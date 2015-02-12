@@ -966,7 +966,7 @@ void InitListChecker::CheckSubElementType(const InitializedEntity &Entity,
                               StructuredList, StructuredIndex);
 
   if (InitListExpr *SubInitList = dyn_cast<InitListExpr>(expr)) {
-    if (!ElemType->isRecordType() || ElemType->isAggregateType()) {
+    if (!SemaRef.getLangOpts().CPlusPlus) {
       InitListExpr *InnerStructuredList
         = getStructuredSubobjectInit(IList, Index, ElemType,
                                      StructuredList, StructuredIndex,
@@ -977,8 +977,6 @@ void InitListChecker::CheckSubElementType(const InitializedEntity &Entity,
       ++Index;
       return;
     }
-    assert(SemaRef.getLangOpts().CPlusPlus &&
-           "non-aggregate records are only possible in C++");
     // C++ initialization is handled later.
   } else if (isa<ImplicitValueInitExpr>(expr)) {
     // This happens during template instantiation when we see an InitListExpr
@@ -991,15 +989,44 @@ void InitListChecker::CheckSubElementType(const InitializedEntity &Entity,
     return;
   }
 
-  // FIXME: Need to handle atomic aggregate types with implicit init lists.
-  if (ElemType->isScalarType() || ElemType->isAtomicType())
+  if (SemaRef.getLangOpts().CPlusPlus) {
+    // C++ [dcl.init.aggr]p2:
+    //   Each member is copy-initialized from the corresponding
+    //   initializer-clause.
+
+    // FIXME: Better EqualLoc?
+    InitializationKind Kind =
+      InitializationKind::CreateCopy(expr->getLocStart(), SourceLocation());
+    InitializationSequence Seq(SemaRef, Entity, Kind, expr,
+                               /*TopLevelOfInitList*/ true);
+
+    // C++14 [dcl.init.aggr]p13:
+    //   If the assignment-expression can initialize a member, the member is
+    //   initialized. Otherwise [...] brace elision is assumed
+    //
+    // Brace elision is never performed if the element is not an
+    // assignment-expression.
+    if (Seq || isa<InitListExpr>(expr)) {
+      if (!VerifyOnly) {
+        ExprResult Result =
+          Seq.Perform(SemaRef, Entity, Kind, expr);
+        if (Result.isInvalid())
+          hadError = true;
+
+        UpdateStructuredListElement(StructuredList, StructuredIndex,
+                                    Result.getAs<Expr>());
+      }
+      ++Index;
+      return;
+    }
+
+    // Fall through for subaggregate initialization
+  } else if (ElemType->isScalarType() || ElemType->isAtomicType()) {
+    // FIXME: Need to handle atomic aggregate types with implicit init lists.
     return CheckScalarType(Entity, IList, ElemType, Index,
                            StructuredList, StructuredIndex);
-
-  assert((ElemType->isRecordType() || ElemType->isVectorType() ||
-          ElemType->isArrayType()) && "Unexpected type");
-
-  if (const ArrayType *arrayType = SemaRef.Context.getAsArrayType(ElemType)) {
+  } else if (const ArrayType *arrayType =
+                 SemaRef.Context.getAsArrayType(ElemType)) {
     // arrayType can be incomplete if we're initializing a flexible
     // array member.  There's nothing we can do with the completed
     // type here, though.
@@ -1015,34 +1042,10 @@ void InitListChecker::CheckSubElementType(const InitializedEntity &Entity,
 
     // Fall through for subaggregate initialization.
 
-  } else if (SemaRef.getLangOpts().CPlusPlus) {
-    // C++ [dcl.init.aggr]p12:
-    //   All implicit type conversions (clause 4) are considered when
-    //   initializing the aggregate member with an initializer from
-    //   an initializer-list. If the initializer can initialize a
-    //   member, the member is initialized. [...]
-
-    // FIXME: Better EqualLoc?
-    InitializationKind Kind =
-      InitializationKind::CreateCopy(expr->getLocStart(), SourceLocation());
-    InitializationSequence Seq(SemaRef, Entity, Kind, expr);
-
-    if (Seq) {
-      if (!VerifyOnly) {
-        ExprResult Result =
-          Seq.Perform(SemaRef, Entity, Kind, expr);
-        if (Result.isInvalid())
-          hadError = true;
-
-        UpdateStructuredListElement(StructuredList, StructuredIndex,
-                                    Result.getAs<Expr>());
-      }
-      ++Index;
-      return;
-    }
-
-    // Fall through for subaggregate initialization
   } else {
+    assert((ElemType->isRecordType() || ElemType->isVectorType()) &&
+           "Unexpected type");
+
     // C99 6.7.8p13:
     //
     //   The initializer for a structure or union object that has
@@ -1052,10 +1055,8 @@ void InitListChecker::CheckSubElementType(const InitializedEntity &Entity,
     //   initial value of the object, including unnamed members, is
     //   that of the expression.
     ExprResult ExprRes = expr;
-    if ((ElemType->isRecordType() || ElemType->isVectorType()) &&
-        SemaRef.CheckSingleAssignmentConstraints(ElemType, ExprRes,
-                                                 !VerifyOnly)
-          != Sema::Incompatible) {
+    if (SemaRef.CheckSingleAssignmentConstraints(
+            ElemType, ExprRes, !VerifyOnly) != Sema::Incompatible) {
       if (ExprRes.isInvalid())
         hadError = true;
       else {
