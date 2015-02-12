@@ -3264,47 +3264,53 @@ void ASTReader::loadDeclUpdateRecords(serialization::DeclID ID, Decl *D) {
 }
 
 namespace {
-  /// \brief Module visitor class that finds all of the redeclarations of a 
-  /// 
+  /// \brief Module visitor class that finds all of the redeclarations of a
+  /// redeclarable declaration.
   class RedeclChainVisitor {
     ASTReader &Reader;
     SmallVectorImpl<DeclID> &SearchDecls;
     llvm::SmallPtrSetImpl<Decl *> &Deserialized;
     GlobalDeclID CanonID;
     SmallVector<Decl *, 4> Chain;
-    
+
   public:
     RedeclChainVisitor(ASTReader &Reader, SmallVectorImpl<DeclID> &SearchDecls,
                        llvm::SmallPtrSetImpl<Decl *> &Deserialized,
                        GlobalDeclID CanonID)
       : Reader(Reader), SearchDecls(SearchDecls), Deserialized(Deserialized),
-        CanonID(CanonID) { 
-      for (unsigned I = 0, N = SearchDecls.size(); I != N; ++I)
-        addToChain(Reader.GetDecl(SearchDecls[I]));
+        CanonID(CanonID) {
+      // Ensure that the canonical ID goes at the start of the chain.
+      addToChain(Reader.GetDecl(CanonID));
     }
-    
+
     static bool visit(ModuleFile &M, bool Preorder, void *UserData) {
       if (Preorder)
         return false;
-      
+
       return static_cast<RedeclChainVisitor *>(UserData)->visit(M);
     }
-    
+
     void addToChain(Decl *D) {
       if (!D)
         return;
-      
+
       if (Deserialized.erase(D))
         Chain.push_back(D);
     }
-    
+
     void searchForID(ModuleFile &M, GlobalDeclID GlobalID) {
       // Map global ID of the first declaration down to the local ID
       // used in this module file.
       DeclID ID = Reader.mapGlobalIDToModuleFileGlobalID(M, GlobalID);
       if (!ID)
         return;
-      
+
+      // If the search decl was from this module, add it to the chain before any
+      // of its redeclarations in this module or users of it, and after any from
+      // imported modules.
+      if (CanonID != GlobalID && Reader.isDeclIDFromModule(GlobalID, M))
+        addToChain(Reader.GetDecl(GlobalID));
+
       // Perform a binary search to find the local redeclarations for this
       // declaration (if any).
       const LocalRedeclarationsInfo Compare = { ID, 0 };

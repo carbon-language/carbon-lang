@@ -189,11 +189,11 @@ namespace Std {
 // CHECK-NAMESPACE-N-NEXT: `-FunctionTemplate {{.*}} 'f'
 
 // CHECK-DUMP:      ClassTemplateDecl {{.*}} <{{.*[/\\]}}cxx-templates-common.h:1:1, {{.*}}>  col:{{.*}} in cxx_templates_common SomeTemplate
-// CHECK-DUMP:        ClassTemplateSpecializationDecl {{.*}} prev [[CHAR2:[^ ]*]] {{.*}} SomeTemplate
+// CHECK-DUMP:        ClassTemplateSpecializationDecl {{.*}} prev {{.*}} SomeTemplate
 // CHECK-DUMP-NEXT:     TemplateArgument type 'char [2]'
-// CHECK-DUMP:        ClassTemplateSpecializationDecl [[CHAR2]] {{.*}} SomeTemplate definition
+// CHECK-DUMP:        ClassTemplateSpecializationDecl {{.*}} SomeTemplate definition
 // CHECK-DUMP-NEXT:     TemplateArgument type 'char [2]'
-// CHECK-DUMP:        ClassTemplateSpecializationDecl {{.*}} prev [[CHAR1:[^ ]*]] {{.*}} SomeTemplate
+// CHECK-DUMP:        ClassTemplateSpecializationDecl {{.*}} prev {{.*}} SomeTemplate
 // CHECK-DUMP-NEXT:     TemplateArgument type 'char [1]'
-// CHECK-DUMP:        ClassTemplateSpecializationDecl [[CHAR1]] {{.*}} SomeTemplate definition
+// CHECK-DUMP:        ClassTemplateSpecializationDecl {{.*}} SomeTemplate definition
 // CHECK-DUMP-NEXT:     TemplateArgument type 'char [1]'
