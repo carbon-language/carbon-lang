@@ -1,6 +1,7 @@
-// RUN: %clang_cc1 %s -fsyntax-only -verify -pedantic
+// RUN: %clang_cc1 %s -fsyntax-only -verify -pedantic -std=c11
 
-typedef struct S S; // expected-note 3 {{forward declaration of 'struct S'}}
+typedef struct S S; // expected-note 4 {{forward declaration of 'struct S'}}
+extern _Atomic(S*) e;
 void a(S* b, void* c) {
   void (*fp)(int) = 0;
   b++;       // expected-error {{arithmetic on a pointer to an incomplete type}}
@@ -18,4 +19,5 @@ void a(S* b, void* c) {
   d--;       // expected-warning {{arithmetic on a pointer to the function type 'void (S *, void *)' is a GNU extension}}
   d -= 1;    // expected-warning {{arithmetic on a pointer to the function type 'void (S *, void *)' is a GNU extension}}
   (void)(1 + d); // expected-warning {{arithmetic on a pointer to the function type 'void (S *, void *)' is a GNU extension}}
+  e++;       // expected-error {{arithmetic on a pointer to an incomplete type}}
 }
