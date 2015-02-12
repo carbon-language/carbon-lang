@@ -302,6 +302,11 @@ public:
     _scripts.push_back(std::move(script));
   }
 
+  // --wrap option.
+  void addWrapForSymbol(StringRef);
+
+  StringRefVector wrapCalls() const;
+
 private:
   ELFLinkingContext() LLVM_DELETED_FUNCTION;
 
@@ -341,6 +346,7 @@ protected:
   StringRef _soname;
   StringRefVector _rpathList;
   StringRefVector _rpathLinkList;
+  StringRefVector _wrapCalls;
   std::map<std::string, uint64_t> _absoluteSymbols;
   llvm::StringSet<> _dynamicallyExportedSymbols;
   std::vector<std::unique_ptr<script::Parser>> _scripts;

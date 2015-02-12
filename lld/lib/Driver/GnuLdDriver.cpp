@@ -586,6 +586,10 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
       ctx->addRpathLink(path);
   }
 
+  // Support --wrap option.
+  for (auto *arg : parsedArgs->filtered(OPT_wrap))
+    ctx->addWrapForSymbol(arg->getValue());
+
   // Register possible input file parsers.
   ctx->registry().addSupportELFObjects(*ctx);
   ctx->registry().addSupportArchives(ctx->logInputFiles());
