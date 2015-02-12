@@ -89,7 +89,7 @@ private:
 inline Registers_x86::Registers_x86(const void *registers) {
   static_assert(sizeof(Registers_x86) < sizeof(unw_context_t),
                     "x86 registers do not fit into unw_context_t");
-  _registers = *((GPRs *)registers);
+  memcpy(&_registers, registers, sizeof(_registers));
 }
 
 inline Registers_x86::Registers_x86() {
@@ -281,7 +281,7 @@ private:
 inline Registers_x86_64::Registers_x86_64(const void *registers) {
   static_assert(sizeof(Registers_x86_64) < sizeof(unw_context_t),
                     "x86_64 registers do not fit into unw_context_t");
-  _registers = *((GPRs *)registers);
+  memcpy(&_registers, registers, sizeof(_registers));
 }
 
 inline Registers_x86_64::Registers_x86_64() {
@@ -546,9 +546,19 @@ private:
 inline Registers_ppc::Registers_ppc(const void *registers) {
   static_assert(sizeof(Registers_ppc) < sizeof(unw_context_t),
                     "ppc registers do not fit into unw_context_t");
-  _registers = *((ppc_thread_state_t *)registers);
-  _floatRegisters = *((ppc_float_state_t *)((char *)registers + 160));
-  memcpy(_vectorRegisters, ((char *)registers + 424), sizeof(_vectorRegisters));
+  memcpy(&_registers, static_cast<const uint8_t *>(registers),
+         sizeof(_registers));
+  static_assert(sizeof(ppc_thread_state_t) == 160,
+                "expected float register offset to be 160");
+  memcpy(&_floatRegisters,
+         static_cast<const uint8_t *>(registers) + sizeof(ppc_thread_state_t),
+         sizeof(_floatRegisters));
+  static_assert(sizeof(ppc_thread_state_t) + sizeof(ppc_float_state_t) == 424,
+                "expected vector register offset to be 424 bytes");
+  memcpy(_vectorRegisters,
+         static_cast<const uint8_t *>(registers) + sizeof(ppc_thread_state_t) +
+             sizeof(ppc_float_state_t),
+         sizeof(_vectorRegisters));
 }
 
 inline Registers_ppc::Registers_ppc() {
@@ -1065,7 +1075,10 @@ inline Registers_arm64::Registers_arm64(const void *registers) {
   static_assert(sizeof(Registers_arm64) < sizeof(unw_context_t),
                     "arm64 registers do not fit into unw_context_t");
   memcpy(&_registers, registers, sizeof(_registers));
-  memcpy(_vectorHalfRegisters, (((char *)registers) + 0x110),
+  static_assert(sizeof(GPRs) == 0x110,
+                "expected VFP registers to be at offset 272");
+  memcpy(_vectorHalfRegisters,
+         static_cast<const uint8_t *>(registers) + sizeof(GPRs),
          sizeof(_vectorHalfRegisters));
 }
 
