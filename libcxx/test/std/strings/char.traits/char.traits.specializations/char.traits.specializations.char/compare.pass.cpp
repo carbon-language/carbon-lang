@@ -19,6 +19,7 @@
 int main()
 {
     assert(std::char_traits<char>::compare("", "", 0) == 0);
+    assert(std::char_traits<char>::compare(NULL, NULL, 0) == 0);
 
     assert(std::char_traits<char>::compare("1", "1", 1) == 0);
     assert(std::char_traits<char>::compare("1", "2", 1) < 0);

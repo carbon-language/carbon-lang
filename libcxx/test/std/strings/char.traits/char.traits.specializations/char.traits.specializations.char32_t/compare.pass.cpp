@@ -21,6 +21,7 @@ int main()
 #ifndef _LIBCPP_HAS_NO_UNICODE_CHARS
 #if __cplusplus >= 201103L
     assert(std::char_traits<char32_t>::compare(U"", U"", 0) == 0);
+    assert(std::char_traits<char32_t>::compare(NULL, NULL, 0) == 0);
 
     assert(std::char_traits<char32_t>::compare(U"1", U"1", 1) == 0);
     assert(std::char_traits<char32_t>::compare(U"1", U"2", 1) < 0);

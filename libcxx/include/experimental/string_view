@@ -375,7 +375,7 @@ _LIBCPP_BEGIN_NAMESPACE_LFTS
         _LIBCPP_CONSTEXPR_AFTER_CXX11 int compare(basic_string_view __sv) const _NOEXCEPT
         {
             size_type __rlen = _VSTD::min( size(), __sv.size());
-            int __retval = __rlen == 0 ? 0 : _Traits::compare(data(), __sv.data(), __rlen);
+            int __retval = _Traits::compare(data(), __sv.data(), __rlen);
             if ( __retval == 0 ) // first __rlen chars matched
                 __retval = size() == __sv.size() ? 0 : ( size() < __sv.size() ? -1 : 1 );
             return __retval;
