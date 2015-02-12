@@ -103,7 +103,8 @@ entry:
 ; NORMAL-NEXT: addl $16, %esp
 define void @test3(i32 %k) optsize {
 entry:
-  call void @good(i32 %k, i32 2, i32 3, i32 4)
+  %f = add i32 %k, 1
+  call void @good(i32 %f, i32 2, i32 3, i32 4)
   ret void
 }
 
@@ -200,21 +201,20 @@ entry:
   ret void
 }
 
-; But we don't want to fold stack-relative loads into the push,
-; because the offset will be wrong
+; Fold stack-relative loads into the push, with correct offset
+; In particular, at the second push, %b was at 12(%esp) and
+; %a wast at 8(%esp), but the second push bumped %esp, so %a
+; is now it at 12(%esp)
 ; NORMAL-LABEL: test8:
-; NORMAL-NOT: subl {{.*}} %esp
-; NORMAL: movl 4(%esp), [[EAX:%e..]]
-; NORMAL-NEXT: pushl   $4
-; NORMAL-NEXT: pushl   [[EAX]]
-; NORMAL-NEXT: pushl   $2
+; NORMAL: pushl   $4
+; NORMAL-NEXT: pushl   12(%esp)
+; NORMAL-NEXT: pushl   12(%esp)
 ; NORMAL-NEXT: pushl   $1
 ; NORMAL-NEXT: call
 ; NORMAL-NEXT: addl $16, %esp
-define void @test8(i32* %ptr) optsize {
+define void @test8(i32 %a, i32 %b) optsize {
 entry:
-  %val = ptrtoint i32* %ptr to i32
-  call void @good(i32 1, i32 2, i32 %val, i32 4)
+  call void @good(i32 1, i32 %a, i32 %b, i32 4)
   ret void
 }
 

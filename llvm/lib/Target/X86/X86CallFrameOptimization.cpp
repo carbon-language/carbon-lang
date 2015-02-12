@@ -469,12 +469,6 @@ MachineInstr *X86CallFrameOptimization::canFoldIntoRegPush(
       DefMI->getParent() != FrameSetup->getParent())
     return nullptr;
 
-  // Be careful with movs that load from a stack slot, since it may get
-  // resolved incorrectly.
-  // TODO: Again, we already have the infrastructure, so this should work.
-  if (!DefMI->getOperand(1).isReg())
-    return nullptr;
-
   // Now, make sure everything else up until the ADJCALLSTACK is a sequence
   // of MOVs. To be less conservative would require duplicating a lot of the
   // logic from PeepholeOptimizer.
