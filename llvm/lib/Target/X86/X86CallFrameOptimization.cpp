@@ -50,13 +50,11 @@ public:
   bool runOnMachineFunction(MachineFunction &MF) override;
 
 private:
-  bool shouldPerformTransformation(MachineFunction &MF);
-
   // Information we know about a particular call site
   struct CallContext {
     CallContext()
         : Call(nullptr), SPCopy(nullptr), ExpectedDist(0),
-          MovVector(4, nullptr), UsePush(false){};
+          MovVector(4, nullptr), NoStackParams(false), UsePush(false){};
 
     // Actuall call instruction
     MachineInstr *Call;
@@ -70,9 +68,18 @@ private:
     // The sequence of movs used to pass the parameters
     SmallVector<MachineInstr *, 4> MovVector;
 
-    // Whether this site should use push instructions
+    // True if this call site has no stack parameters
+    bool NoStackParams;
+
+    // True of this callsite can use push instructions
     bool UsePush;
   };
+
+  typedef DenseMap<MachineInstr *, CallContext> ContextMap;
+
+  bool isLegal(MachineFunction &MF);
+  
+  bool isProfitable(MachineFunction &MF, ContextMap &CallSeqMap);
 
   void collectCallInfo(MachineFunction &MF, MachineBasicBlock &MBB,
                        MachineBasicBlock::iterator I, CallContext &Context);
@@ -98,9 +105,10 @@ FunctionPass *llvm::createX86CallFrameOptimization() {
   return new X86CallFrameOptimization();
 }
 
-// This checks whether the transformation is legal and profitable
-bool X86CallFrameOptimization::shouldPerformTransformation(
-    MachineFunction &MF) {
+// This checks whether the transformation is legal. 
+// Also returns false in cases where it's potentially legal, but
+// we don't even want to try.
+bool X86CallFrameOptimization::isLegal(MachineFunction &MF) {
   if (NoX86CFOpt.getValue())
     return false;
 
@@ -140,21 +148,21 @@ bool X86CallFrameOptimization::shouldPerformTransformation(
       return false;
   }
 
-  // Now that we know the transformation is legal, check if it is
-  // profitable.
-  // TODO: Add a heuristic that actually looks at the function,
-  //       and enable this for more cases.
+  return true;
+}
 
-  // This transformation is always a win when we expected to have
+// Check whether this trasnformation is profitable for a particular
+// function - in terms of code size.
+bool X86CallFrameOptimization::isProfitable(MachineFunction &MF, 
+  ContextMap &CallSeqMap) {
+  // This transformation is always a win when we do not expect to have
   // a reserved call frame. Under other circumstances, it may be either
   // a win or a loss, and requires a heuristic.
-  // For now, enable it only for the relatively clear win cases.
   bool CannotReserveFrame = MF.getFrameInfo()->hasVarSizedObjects();
   if (CannotReserveFrame)
     return true;
 
-  // For now, don't even try to evaluate the profitability when
-  // not optimizing for size.
+  // Don't do this when not optimizing for size.
   AttributeSet FnAttrs = MF.getFunction()->getAttributes();
   bool OptForSize =
       FnAttrs.hasAttribute(AttributeSet::FunctionIndex,
@@ -164,29 +172,55 @@ bool X86CallFrameOptimization::shouldPerformTransformation(
   if (!OptForSize)
     return false;
 
-  // Stack re-alignment can make this unprofitable even in terms of size.
-  // As mentioned above, a better heuristic is needed. For now, don't do this
-  // when the required alignment is above 8. (4 would be the safe choice, but
-  // some experimentation showed 8 is generally good).
-  if (TFL->getStackAlignment() > 8)
-    return false;
 
-  return true;
+  unsigned StackAlign = TFL->getStackAlignment();
+  
+  int64_t Advantage = 0;
+  for (auto CC : CallSeqMap) {
+    // Call sites where no parameters are passed on the stack
+    // do not affect the cost, since there needs to be no
+    // stack adjustment.
+    if (CC.second.NoStackParams)
+      continue;
+
+    if (!CC.second.UsePush) {
+      // If we don't use pushes for a particular call site,
+      // we pay for not having a reserved call frame with an
+      // additional sub/add esp pair. The cost is ~3 bytes per instruction,
+      // depending on the size of the constant.
+      // TODO: Callee-pop functions should have a smaller penalty, because
+      // an add is needed even with a reserved call frame.
+      Advantage -= 6;
+    } else {
+      // We can use pushes. First, account for the fixed costs.
+      // We'll need a add after the call.
+      Advantage -= 3;
+      // If we have to realign the stack, we'll also need and sub before
+      if (CC.second.ExpectedDist % StackAlign)
+        Advantage -= 3;
+      // Now, for each push, we save ~3 bytes. For small constants, we actually,
+      // save more (up to 5 bytes), but 3 should be a good approximation.
+      Advantage += (CC.second.ExpectedDist / 4) * 3;
+    }
+  }
+
+  return (Advantage >= 0);
 }
+
 
 bool X86CallFrameOptimization::runOnMachineFunction(MachineFunction &MF) {
   TII = MF.getSubtarget().getInstrInfo();
   TFL = MF.getSubtarget().getFrameLowering();
   MRI = &MF.getRegInfo();
 
-  if (!shouldPerformTransformation(MF))
+  if (!isLegal(MF))
     return false;
 
   int FrameSetupOpcode = TII->getCallFrameSetupOpcode();
 
   bool Changed = false;
 
-  DenseMap<MachineInstr *, CallContext> CallSeqMap;
+  ContextMap CallSeqMap;
 
   for (MachineFunction::iterator BB = MF.begin(), E = MF.end(); BB != E; ++BB)
     for (MachineBasicBlock::iterator I = BB->begin(); I != BB->end(); ++I)
@@ -194,6 +228,9 @@ bool X86CallFrameOptimization::runOnMachineFunction(MachineFunction &MF) {
         CallContext &Context = CallSeqMap[I];
         collectCallInfo(MF, *BB, I, Context);
       }
+
+  if (!isProfitable(MF, CallSeqMap))
+    return false;
 
   for (auto CC : CallSeqMap)
     if (CC.second.UsePush)
@@ -217,6 +254,16 @@ void X86CallFrameOptimization::collectCallInfo(MachineFunction &MF,
   assert(I->getOpcode() == TII->getCallFrameSetupOpcode());
   MachineBasicBlock::iterator FrameSetup = I++;
 
+  // How much do we adjust the stack? This puts an upper bound on
+  // the number of parameters actually passed on it.
+  unsigned int MaxAdjust = FrameSetup->getOperand(0).getImm() / 4;  
+  
+  // A zero adjustment means no stack parameters
+  if (!MaxAdjust) {
+    Context.NoStackParams = true;
+    return;
+  }
+
   // For globals in PIC mode, we can have some LEAs here.
   // Ignore them, they don't bother us.
   // TODO: Extend this to something that covers more cases.
@@ -236,7 +283,6 @@ void X86CallFrameOptimization::collectCallInfo(MachineFunction &MF,
   // We only handle a simple case - a sequence of MOV32mi or MOV32mr
   // instructions, that push a sequence of 32-bit values onto the stack, with
   // no gaps between them.
-  unsigned int MaxAdjust = FrameSetup->getOperand(0).getImm() / 4;
   if (MaxAdjust > 4)
     Context.MovVector.resize(MaxAdjust, nullptr);
 
