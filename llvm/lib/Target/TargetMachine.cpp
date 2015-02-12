@@ -148,30 +148,6 @@ void TargetMachine::setOptLevel(CodeGenOpt::Level Level) const {
     CodeGenInfo->setOptLevel(Level);
 }
 
-bool TargetMachine::getAsmVerbosityDefault() const {
-  return Options.MCOptions.AsmVerbose;
-}
-
-void TargetMachine::setAsmVerbosityDefault(bool V) {
-  Options.MCOptions.AsmVerbose = V;
-}
-
-bool TargetMachine::getFunctionSections() const {
-  return Options.FunctionSections;
-}
-
-bool TargetMachine::getDataSections() const {
-  return Options.DataSections;
-}
-
-void TargetMachine::setFunctionSections(bool V) {
-  Options.FunctionSections = V;
-}
-
-void TargetMachine::setDataSections(bool V) {
-  Options.DataSections = V;
-}
-
 TargetIRAnalysis TargetMachine::getTargetIRAnalysis() {
   return TargetIRAnalysis(
       [this](Function &) { return TargetTransformInfo(getDataLayout()); });

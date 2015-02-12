@@ -179,7 +179,7 @@ LLVMTargetDataRef LLVMGetTargetMachineData(LLVMTargetMachineRef T) {
 
 void LLVMSetTargetMachineAsmVerbosity(LLVMTargetMachineRef T,
                                       LLVMBool VerboseAsm) {
-  unwrap(T)->setAsmVerbosityDefault(VerboseAsm);
+  unwrap(T)->Options.MCOptions.AsmVerbose = VerboseAsm;
 }
 
 static LLVMBool LLVMTargetMachineEmit(LLVMTargetMachineRef T, LLVMModuleRef M,
