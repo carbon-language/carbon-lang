@@ -2224,8 +2224,8 @@ public:
   /// Emit an l-value for an assignment (simple or compound) of complex type.
   LValue EmitComplexAssignmentLValue(const BinaryOperator *E);
   LValue EmitComplexCompoundAssignmentLValue(const CompoundAssignOperator *E);
-  LValue EmitScalarCompooundAssignWithComplex(const CompoundAssignOperator *E,
-                                              llvm::Value *&Result);
+  LValue EmitScalarCompoundAssignWithComplex(const CompoundAssignOperator *E,
+                                             llvm::Value *&Result);
 
   // Note: only available for agg return types
   LValue EmitBinaryOperatorLValue(const BinaryOperator *E);

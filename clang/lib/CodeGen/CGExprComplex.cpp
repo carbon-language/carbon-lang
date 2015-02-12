@@ -1086,8 +1086,8 @@ EmitComplexCompoundAssignmentLValue(const CompoundAssignOperator *E) {
 }
 
 LValue CodeGenFunction::
-EmitScalarCompooundAssignWithComplex(const CompoundAssignOperator *E,
-                                     llvm::Value *&Result) {
+EmitScalarCompoundAssignWithComplex(const CompoundAssignOperator *E,
+                                    llvm::Value *&Result) {
   CompoundFunc Op = getComplexOp(E->getOpcode());
   RValue Val;
   LValue Ret = ComplexExprEmitter(*this).EmitCompoundAssignLValue(E, Op, Val);

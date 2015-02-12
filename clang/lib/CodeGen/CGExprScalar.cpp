@@ -2056,7 +2056,7 @@ LValue ScalarExprEmitter::EmitCompoundAssignLValue(
   BinOpInfo OpInfo;
 
   if (E->getComputationResultType()->isAnyComplexType())
-    return CGF.EmitScalarCompooundAssignWithComplex(E, Result);
+    return CGF.EmitScalarCompoundAssignWithComplex(E, Result);
 
   // Emit the RHS first.  __block variables need to have the rhs evaluated
   // first, plus this should improve codegen a little.
