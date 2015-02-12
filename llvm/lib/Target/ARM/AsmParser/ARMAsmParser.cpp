@@ -4424,11 +4424,6 @@ ARMAsmParser::parseModImm(OperandVector &Operands) {
   if (CE) {
     // Immediate must fit within 32-bits
     Imm1 = CE->getValue();
-    if (Imm1 < INT32_MIN || Imm1 > UINT32_MAX) {
-      Error(Sx1, "immediate operand must be representable with 32 bits");
-      return MatchOperand_ParseFail;
-    }
-
     int Enc = ARM_AM::getSOImmVal(Imm1);
     if (Enc != -1 && Parser.getTok().is(AsmToken::EndOfStatement)) {
       // We have a match!

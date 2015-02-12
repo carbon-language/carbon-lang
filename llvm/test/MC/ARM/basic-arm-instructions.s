@@ -1509,6 +1509,7 @@ Lforward:
         mvn r3, $7
         mvn r3, 7
         mvn r3, -7
+        mvn r7, #~0xffffff00
         mvn r4, #0xff0
         mvn r5, #0xff0000
 	mvn r7, #(0xff << 16)
@@ -1526,6 +1527,7 @@ Lforward:
 @ CHECK: mvn	r3, #7                  @ encoding: [0x07,0x30,0xe0,0xe3]
 @ CHECK: mvn	r3, #7                  @ encoding: [0x07,0x30,0xe0,0xe3]
 @ CHECK: mov	r3, #6                  @ encoding: [0x06,0x30,0xa0,0xe3]
+@ CHECK: mvn    r7, #255                @ encoding: [0xff,0x70,0xe0,0xe3]
 @ CHECK: mvn	r4, #4080               @ encoding: [0xff,0x4e,0xe0,0xe3]
 @ CHECK: mvn	r5, #16711680           @ encoding: [0xff,0x58,0xe0,0xe3]
 @ CHECK: mvn	r7, #16711680           @ encoding: [0xff,0x78,0xe0,0xe3]
