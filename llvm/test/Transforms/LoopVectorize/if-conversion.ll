@@ -19,9 +19,9 @@ target triple = "x86_64-apple-macosx10.9.0"
 
 ;CHECK-LABEL: @function0(
 ;CHECK: load <4 x i32>
-;CHECK: icmp sgt <4 x i32>
 ;CHECK: mul <4 x i32>
 ;CHECK: add <4 x i32>
+;CHECK: icmp sle <4 x i32>
 ;CHECK: select <4 x i1>
 ;CHECK: ret i32
 define i32 @function0(i32* nocapture %a, i32* nocapture %b, i32 %start, i32 %end) nounwind uwtable ssp {
@@ -72,8 +72,8 @@ for.end:
 
 ;CHECK-LABEL: @reduction_func(
 ;CHECK: load <4 x i32>
-;CHECK: icmp sgt <4 x i32>
 ;CHECK: add <4 x i32>
+;CHECK: icmp sle <4 x i32>
 ;CHECK: select <4 x i1>
 ;CHECK: ret i32
 define i32 @reduction_func(i32* nocapture %A, i32 %n) nounwind uwtable readonly ssp {
