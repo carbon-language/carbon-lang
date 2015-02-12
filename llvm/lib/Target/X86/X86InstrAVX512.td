@@ -1813,7 +1813,7 @@ let Predicates = [HasBWI] in
 def : Pat<(xor VK64:$src1, (v64i1 immAllOnesV)), (KNOTQrr VK64:$src1)>;
 
 // KNL does not support KMOVB, 8-bit mask is promoted to 16-bit
-let Predicates = [HasAVX512] in {
+let Predicates = [HasAVX512, NoDQI] in {
 def : Pat<(xor VK8:$src1,  (v8i1 immAllOnesV)),
           (COPY_TO_REGCLASS (KNOTWrr (COPY_TO_REGCLASS VK8:$src1, VK16)), VK8)>;
 
@@ -1954,14 +1954,6 @@ multiclass avx512_mask_testop_w<bits<8> opc, string OpcodeStr, SDNode OpNode> {
 }
 
 defm KORTEST : avx512_mask_testop_w<0x98, "kortest", X86kortest>;
-
-def : Pat<(X86cmp VK1:$src1, (i1 0)),
-          (KORTESTWrr (COPY_TO_REGCLASS VK1:$src1, VK16),
-           (COPY_TO_REGCLASS VK1:$src1, VK16))>, Requires<[HasAVX512, NoDQI]>;
-
-def : Pat<(X86cmp VK1:$src1, (i1 0)),
-          (KORTESTBrr (COPY_TO_REGCLASS VK1:$src1, VK8),
-           (COPY_TO_REGCLASS VK1:$src1, VK8))>, Requires<[HasDQI]>;
 
 // Mask shift
 multiclass avx512_mask_shiftop<bits<8> opc, string OpcodeStr, RegisterClass KRC,
