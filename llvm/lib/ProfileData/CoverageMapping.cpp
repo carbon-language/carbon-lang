@@ -15,7 +15,7 @@
 #include "llvm/ProfileData/CoverageMapping.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/Optional.h"
-#include "llvm/ADT/SmallSet.h"
+#include "llvm/ADT/SmallBitVector.h"
 #include "llvm/ProfileData/CoverageMappingReader.h"
 #include "llvm/ProfileData/InstrProfReader.h"
 #include "llvm/Support/Debug.h"
@@ -340,42 +340,35 @@ std::vector<StringRef> CoverageMapping::getUniqueSourceFiles() const {
   return Filenames;
 }
 
-static Optional<unsigned> findMainViewFileID(StringRef SourceFile,
-                                             const FunctionRecord &Function) {
-  llvm::SmallVector<bool, 8> IsExpandedFile(Function.Filenames.size(), false);
-  llvm::SmallVector<bool, 8> FilenameEquivalence(Function.Filenames.size(),
-                                                 false);
+static SmallBitVector gatherFileIDs(StringRef SourceFile,
+                                    const FunctionRecord &Function) {
+  SmallBitVector FilenameEquivalence(Function.Filenames.size(), false);
   for (unsigned I = 0, E = Function.Filenames.size(); I < E; ++I)
     if (SourceFile == Function.Filenames[I])
       FilenameEquivalence[I] = true;
+  return FilenameEquivalence;
+}
+
+static Optional<unsigned> findMainViewFileID(StringRef SourceFile,
+                                             const FunctionRecord &Function) {
+  SmallBitVector IsNotExpandedFile(Function.Filenames.size(), true);
+  SmallBitVector FilenameEquivalence = gatherFileIDs(SourceFile, Function);
   for (const auto &CR : Function.CountedRegions)
     if (CR.Kind == CounterMappingRegion::ExpansionRegion &&
         FilenameEquivalence[CR.FileID])
-      IsExpandedFile[CR.ExpandedFileID] = true;
-  for (unsigned I = 0, E = Function.Filenames.size(); I < E; ++I)
-    if (FilenameEquivalence[I] && !IsExpandedFile[I])
-      return I;
-  return None;
+      IsNotExpandedFile[CR.ExpandedFileID] = false;
+  IsNotExpandedFile &= FilenameEquivalence;
+  int I = IsNotExpandedFile.find_first();
+  return I != -1 ? I : None;
 }
 
 static Optional<unsigned> findMainViewFileID(const FunctionRecord &Function) {
-  llvm::SmallVector<bool, 8> IsExpandedFile(Function.Filenames.size(), false);
+  SmallBitVector IsNotExpandedFile(Function.Filenames.size(), false);
   for (const auto &CR : Function.CountedRegions)
     if (CR.Kind == CounterMappingRegion::ExpansionRegion)
-      IsExpandedFile[CR.ExpandedFileID] = true;
-  for (unsigned I = 0, E = Function.Filenames.size(); I < E; ++I)
-    if (!IsExpandedFile[I])
-      return I;
-  return None;
-}
-
-static SmallSet<unsigned, 8> gatherFileIDs(StringRef SourceFile,
-                                           const FunctionRecord &Function) {
-  SmallSet<unsigned, 8> IDs;
-  for (unsigned I = 0, E = Function.Filenames.size(); I < E; ++I)
-    if (SourceFile == Function.Filenames[I])
-      IDs.insert(I);
-  return IDs;
+      IsNotExpandedFile[CR.ExpandedFileID] = true;
+  int I = IsNotExpandedFile.find_first();
+  return I != -1 ? I : None;
 }
 
 /// Sort a nested sequence of regions from a single file.
@@ -403,7 +396,7 @@ CoverageData CoverageMapping::getCoverageForFile(StringRef Filename) {
       continue;
     auto FileIDs = gatherFileIDs(Filename, Function);
     for (const auto &CR : Function.CountedRegions)
-      if (FileIDs.count(CR.FileID)) {
+      if (FileIDs.test(CR.FileID)) {
         Regions.push_back(CR);
         if (isExpansion(CR, *MainFileID))
           FileCoverage.Expansions.emplace_back(CR, Function);
