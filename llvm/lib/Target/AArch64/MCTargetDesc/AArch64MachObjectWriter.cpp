@@ -134,6 +134,10 @@ static bool canUseLocalRelocation(const MCSectionMachO &Section,
       RefSec.getSectionName() == "__cfstring")
     return false;
 
+  if (RefSec.getSegmentName() == "__DATA" &&
+      RefSec.getSectionName() == "__objc_classrefs")
+    return false;
+
   return true;
 }
 

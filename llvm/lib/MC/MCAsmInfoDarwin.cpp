@@ -33,6 +33,10 @@ bool MCAsmInfoDarwin::isSectionAtomizableBySymbols(
   if (SMO.getSegmentName() == "__DATA" && SMO.getSectionName() == "__cfstring")
     return false;
 
+  if (SMO.getSegmentName() == "__DATA" &&
+      SMO.getSectionName() == "__objc_classrefs")
+    return false;
+
   switch (SMO.getType()) {
   default:
     return true;
