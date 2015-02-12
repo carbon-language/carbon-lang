@@ -1348,10 +1348,8 @@ bool WinLinkDriver::parse(int argc, const char *argv[],
 
   // Add the input files to the linking context.
   for (std::unique_ptr<File> &file : files) {
-    if (isReadingDirectiveSection) {
-      File *f = file.get();
-      ctx.getTaskGroup().spawn([f] { f->parse(); });
-    }
+    if (isReadingDirectiveSection)
+      file.get()->parse();
     ctx.getNodes().push_back(llvm::make_unique<FileNode>(std::move(file)));
   }
 
@@ -1364,10 +1362,8 @@ bool WinLinkDriver::parse(int argc, const char *argv[],
   // Add the library files to the library group.
   for (std::unique_ptr<File> &file : libraries) {
     if (!hasLibrary(ctx, file.get())) {
-      if (isReadingDirectiveSection) {
-        File *f = file.get();
-        ctx.getTaskGroup().spawn([f] { f->parse(); });
-      }
+      if (isReadingDirectiveSection)
+        file.get()->parse();
       ctx.addLibraryFile(llvm::make_unique<FileNode>(std::move(file)));
     }
   }
