@@ -39,6 +39,8 @@ class MCSectionELF : public MCSection {
   /// below.
   unsigned Flags;
 
+  bool Unique;
+
   /// EntrySize - The size of each entry in this section. This size only
   /// makes sense for sections that contain fixed-sized entries. If a
   /// section does not contain fixed-sized entries 'EntrySize' will be 0.
@@ -48,10 +50,10 @@ class MCSectionELF : public MCSection {
 
 private:
   friend class MCContext;
-  MCSectionELF(StringRef Section, unsigned type, unsigned flags,
-               SectionKind K, unsigned entrySize, const MCSymbol *group)
-    : MCSection(SV_ELF, K), SectionName(Section), Type(type), Flags(flags),
-      EntrySize(entrySize), Group(group) {}
+  MCSectionELF(StringRef Section, unsigned type, unsigned flags, SectionKind K,
+               unsigned entrySize, const MCSymbol *group, bool Unique)
+      : MCSection(SV_ELF, K), SectionName(Section), Type(type), Flags(flags),
+        Unique(Unique), EntrySize(entrySize), Group(group) {}
   ~MCSectionELF();
 
   void setSectionName(StringRef Name) { SectionName = Name; }

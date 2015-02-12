@@ -207,6 +207,10 @@ FunctionSections("function-sections",
                  cl::desc("Emit functions into separate sections"),
                  cl::init(false));
 
+cl::opt<bool> UniqueSectionNames("unique-section-names",
+                                 cl::desc("Give unique names to every section"),
+                                 cl::init(true));
+
 cl::opt<llvm::JumpTable::JumpTableType>
 JTableType("jump-table-type",
           cl::desc("Choose the type of Jump-Instruction Table for jumptable."),
@@ -284,6 +288,7 @@ static inline TargetOptions InitTargetOptionsFromCodeGenFlags() {
   Options.UseInitArray = !UseCtors;
   Options.DataSections = DataSections;
   Options.FunctionSections = FunctionSections;
+  Options.UniqueSectionNames = UniqueSectionNames;
 
   Options.MCOptions = InitMCTargetOptionsFromFlags();
   Options.JTType = JTableType;

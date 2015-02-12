@@ -378,6 +378,8 @@ bool ELFAsmParser::ParseSectionArguments(bool IsPush, SMLoc loc) {
   unsigned Flags = 0;
   const MCExpr *Subsection = nullptr;
   bool UseLastGroup = false;
+  StringRef UniqueStr;
+  bool Unique = false;
 
   // Set the defaults first.
   if (SectionName == ".fini" || SectionName == ".init" ||
@@ -462,6 +464,14 @@ bool ELFAsmParser::ParseSectionArguments(bool IsPush, SMLoc loc) {
             return TokError("Linkage must be 'comdat'");
         }
       }
+      if (getLexer().is(AsmToken::Comma)) {
+        Lex();
+        if (getParser().parseIdentifier(UniqueStr))
+          return TokError("expected identifier in directive");
+        if (UniqueStr != "unique")
+          return TokError("expected 'unique'");
+        Unique = true;
+      }
     }
   }
 
@@ -509,8 +519,8 @@ EndStmt:
       }
   }
 
-  const MCSection *ELFSection =
-      getContext().getELFSection(SectionName, Type, Flags, Size, GroupName);
+  const MCSection *ELFSection = getContext().getELFSection(
+      SectionName, Type, Flags, Size, GroupName, Unique);
   getStreamer().SwitchSection(ELFSection, Subsection);
 
   if (getContext().getGenDwarfForAssembly()) {

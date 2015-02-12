@@ -171,6 +171,8 @@ public:
     return Options.MCOptions.AsmVerbose;
   }
 
+  bool getUniqueSectionNames() const { return Options.UniqueSectionNames; }
+
   /// Return true if data objects should be emitted into their own section,
   /// corresponds to -fdata-sections.
   bool getDataSections() const {
