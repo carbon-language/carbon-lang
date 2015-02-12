@@ -75,7 +75,7 @@ raw_ostream &llvm::operator<<(raw_ostream &OS, const PDB_RegisterId &Reg) {
     CASE_OUTPUT_ENUM_CLASS_NAME(PDB_RegisterId, R14, OS)
     CASE_OUTPUT_ENUM_CLASS_NAME(PDB_RegisterId, R15, OS)
   default:
-    OS << "Unknown";
+    OS << static_cast<int>(Reg);
   }
   return OS;
 }

@@ -63,11 +63,9 @@ static void dumpInput(StringRef Path) {
   outs().flush();
 
   if (opts::Compilands) {
-    auto Compilands = GlobalScope->findChildren(PDB_SymType::Compiland);
-    if (Compilands) {
-      while (auto Compiland = Compilands->getNext()) {
-        Compiland->dump(outs(), 0, PDB_DumpLevel::Normal);
-      }
+    auto Compilands = GlobalScope->findAllChildren<PDBSymbolCompiland>();
+    while (auto Compiland = Compilands->getNext()) {
+      Compiland->dump(outs(), 0, PDB_DumpLevel::Normal);
     }
   }
   outs().flush();

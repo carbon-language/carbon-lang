@@ -22,15 +22,13 @@ public:
   PDBSymbolUsingNamespace(const IPDBSession &PDBSession,
                           std::unique_ptr<IPDBRawSymbol> Symbol);
 
+  DECLARE_PDB_SYMBOL_CONCRETE_TYPE(PDB_SymType::UsingNamespace)
+
   void dump(raw_ostream &OS, int Indent, PDB_DumpLevel Level) const override;
 
   FORWARD_SYMBOL_METHOD(getLexicalParentId)
   FORWARD_SYMBOL_METHOD(getName)
   FORWARD_SYMBOL_METHOD(getSymIndexId)
-
-  static bool classof(const PDBSymbol *S) {
-    return S->getSymTag() == PDB_SymType::UsingNamespace;
-  }
 };
 
 } // namespace llvm

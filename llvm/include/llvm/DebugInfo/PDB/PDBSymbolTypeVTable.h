@@ -22,6 +22,8 @@ public:
   PDBSymbolTypeVTable(const IPDBSession &PDBSession,
                       std::unique_ptr<IPDBRawSymbol> VtblSymbol);
 
+  DECLARE_PDB_SYMBOL_CONCRETE_TYPE(PDB_SymType::VTable)
+
   void dump(raw_ostream &OS, int Indent, PDB_DumpLevel Level) const override;
 
   FORWARD_SYMBOL_METHOD(getClassParentId)
@@ -31,10 +33,6 @@ public:
   FORWARD_SYMBOL_METHOD(getTypeId)
   FORWARD_SYMBOL_METHOD(isUnalignedType)
   FORWARD_SYMBOL_METHOD(isVolatileType)
-
-  static bool classof(const PDBSymbol *S) {
-    return S->getSymTag() == PDB_SymType::VTable;
-  }
 };
 
 } // namespace llvm

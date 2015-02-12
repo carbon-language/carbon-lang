@@ -16,6 +16,7 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/Casting.h"
 
+#include "ConcreteSymbolEnumerator.h"
 #include "IPDBRawSymbol.h"
 #include "PDBExtras.h"
 #include "PDBTypes.h"
@@ -29,6 +30,10 @@ namespace llvm {
 
 class IPDBRawSymbol;
 class raw_ostream;
+
+#define DECLARE_PDB_SYMBOL_CONCRETE_TYPE(TagValue)                             \
+  static const PDB_SymType Tag = TagValue;                                     \
+  static bool classof(const PDBSymbol *S) { return S->getSymTag() == Tag; }
 
 /// PDBSymbol defines the base of the inheritance hierarchy for concrete symbol
 /// types (e.g. functions, executables, vtables, etc).  All concrete symbol
@@ -55,7 +60,18 @@ public:
 
   PDB_SymType getSymTag() const;
 
-  std::unique_ptr<IPDBEnumSymbols> findChildren(PDB_SymType Type) const;
+  template <typename T> std::unique_ptr<T> findOneChild() const {
+    auto Enumerator(findAllChildren<T>());
+    return Enumerator->getNext();
+  }
+
+  template <typename T>
+  std::unique_ptr<ConcreteSymbolEnumerator<T>> findAllChildren() const {
+    auto BaseIter = RawSymbol->findChildren(T::Tag);
+    return std::make_unique<ConcreteSymbolEnumerator<T>>(std::move(BaseIter));
+  }
+
+  std::unique_ptr<IPDBEnumSymbols> findAllChildren() const;
   std::unique_ptr<IPDBEnumSymbols>
   findChildren(PDB_SymType Type, StringRef Name,
                PDB_NameSearchFlags Flags) const;

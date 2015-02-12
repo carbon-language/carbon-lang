@@ -24,6 +24,8 @@ public:
   PDBSymbolExe(const IPDBSession &PDBSession,
                std::unique_ptr<IPDBRawSymbol> ExeSymbol);
 
+  DECLARE_PDB_SYMBOL_CONCRETE_TYPE(PDB_SymType::Exe)
+
   void dump(raw_ostream &OS, int Indent, PDB_DumpLevel Level) const override;
 
   FORWARD_SYMBOL_METHOD(getAge)
@@ -35,10 +37,6 @@ public:
   FORWARD_SYMBOL_METHOD(getSignature)
   FORWARD_SYMBOL_METHOD(getSymbolsFileName)
   FORWARD_SYMBOL_METHOD(getSymIndexId)
-
-  static bool classof(const PDBSymbol *S) {
-    return S->getSymTag() == PDB_SymType::Exe;
-  }
 };
 } // namespace llvm
 

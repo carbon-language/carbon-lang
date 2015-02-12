@@ -25,9 +25,11 @@ void PDBSymbolData::dump(raw_ostream &OS, int Indent,
   if (Level == PDB_DumpLevel::Compact) {
     PDB_LocType Loc = getLocationType();
     OS << Loc << " data [";
+    int Length;
     switch (Loc) {
     case PDB_LocType::Static:
       OS << format_hex(getRelativeVirtualAddress(), 10);
+      Length = getLength();
       break;
     case PDB_LocType::TLS:
       OS << getAddressSection() << ":" << format_hex(getAddressOffset(), 10);

@@ -23,6 +23,8 @@ public:
   PDBSymbolCompiland(const IPDBSession &PDBSession,
                      std::unique_ptr<IPDBRawSymbol> CompilandSymbol);
 
+  DECLARE_PDB_SYMBOL_CONCRETE_TYPE(PDB_SymType::Compiland)
+
   void dump(raw_ostream &OS, int Indent, PDB_DumpLevel Level) const override;
 
   FORWARD_SYMBOL_METHOD(isEditAndContinueEnabled)
@@ -31,10 +33,6 @@ public:
   FORWARD_SYMBOL_METHOD(getName)
   FORWARD_SYMBOL_METHOD(getSourceFileName)
   FORWARD_SYMBOL_METHOD(getSymIndexId)
-
-  static bool classof(const PDBSymbol *S) {
-    return S->getSymTag() == PDB_SymType::Compiland;
-  }
 };
 }
 

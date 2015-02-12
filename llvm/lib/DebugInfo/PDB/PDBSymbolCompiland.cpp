@@ -19,6 +19,7 @@
 #include "llvm/DebugInfo/PDB/PDBSymbolCompilandDetails.h"
 #include "llvm/DebugInfo/PDB/PDBSymbolCompilandEnv.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Support/Path.h"
 
 using namespace llvm;
 
@@ -28,9 +29,11 @@ PDBSymbolCompiland::PDBSymbolCompiland(const IPDBSession &PDBSession,
 
 void PDBSymbolCompiland::dump(raw_ostream &OS, int Indent,
                               PDB_DumpLevel Level) const {
-  std::string Name = getName();
-  OS << "---- [IDX: " << getSymIndexId() << "] Compiland: " << Name
-     << " ----\n";
+  std::string FullName = getName();
+  StringRef Name = llvm::sys::path::filename(StringRef(FullName.c_str()));
+
+  OS.indent(Indent);
+  OS << "Compiland: " << Name << "\n";
 
   std::string Source = getSourceFileName();
   std::string Library = getLibraryName();
@@ -54,11 +57,8 @@ void PDBSymbolCompiland::dump(raw_ostream &OS, int Indent,
     }
   }
 
-  std::unique_ptr<IPDBEnumSymbols> DetailsEnum(
-      findChildren(PDB_SymType::CompilandDetails));
-  if (auto DetailsPtr = DetailsEnum->getNext()) {
-    const auto *CD = dyn_cast<PDBSymbolCompilandDetails>(DetailsPtr.get());
-    assert(CD && "We only asked for compilands, but got something else!");
+  auto DetailsEnum(findAllChildren<PDBSymbolCompilandDetails>());
+  if (auto CD = DetailsEnum->getNext()) {
     VersionInfo FE;
     VersionInfo BE;
     CD->getFrontEndVersion(FE);

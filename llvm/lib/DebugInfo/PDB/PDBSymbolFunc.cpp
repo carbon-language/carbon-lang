@@ -27,35 +27,21 @@ void PDBSymbolFunc::dump(raw_ostream &OS, int Indent,
   if (Level == PDB_DumpLevel::Compact) {
     uint32_t FuncStart = getRelativeVirtualAddress();
     uint32_t FuncEnd = FuncStart + getLength();
-    auto DebugEndSymbol = findChildren(PDB_SymType::FuncDebugEnd);
     OS << stream_indent(Indent);
     OS << "[" << format_hex(FuncStart, 8);
-    if (auto DebugStartEnum = findChildren(PDB_SymType::FuncDebugStart)) {
-      if (auto StartSym = DebugStartEnum->getNext()) {
-        auto DebugStart = dyn_cast<PDBSymbolFuncDebugStart>(StartSym.get());
-        OS << "+" << DebugStart->getRelativeVirtualAddress() - FuncStart;
-      }
-    }
+    if (auto DebugStart = findOneChild<PDBSymbolFuncDebugStart>())
+      OS << "+" << DebugStart->getRelativeVirtualAddress() - FuncStart;
     OS << " - " << format_hex(FuncEnd, 8);
-    if (auto DebugEndEnum = findChildren(PDB_SymType::FuncDebugEnd)) {
-      if (auto DebugEndSym = DebugEndEnum->getNext()) {
-        auto DebugEnd = dyn_cast<PDBSymbolFuncDebugEnd>(DebugEndSym.get());
+    if (auto DebugEnd = findOneChild<PDBSymbolFuncDebugEnd>())
         OS << "-" << FuncEnd - DebugEnd->getRelativeVirtualAddress();
-      }
-    }
     OS << "] ";
     PDB_RegisterId Reg = getLocalBasePointerRegisterId();
     if (Reg == PDB_RegisterId::VFrame)
       OS << "(VFrame)";
-    else if (hasFramePointer()) {
-      if (Reg == PDB_RegisterId::EBP)
-        OS << "(EBP)";
-      else
-        OS << "(" << (int)Reg << ")";
-    } else {
+    else if (hasFramePointer())
+      OS << "(" << Reg << ")";
+    else
       OS << "(FPO)";
-    }
     OS << " " << getName() << "\n";
   }
-  OS.flush();
 }

@@ -25,11 +25,17 @@ void PDBSymbolThunk::dump(raw_ostream &OS, int Indent,
   if (Level == PDB_DumpLevel::Compact) {
     OS.indent(Indent);
     PDB_ThunkOrdinal Ordinal = getThunkOrdinal();
-    OS << "THUNK[" << Ordinal << "] ";
-    OS << "[" << format_hex(getRelativeVirtualAddress(), 10);
+    uint32_t RVA = getRelativeVirtualAddress();
+    if (Ordinal == PDB_ThunkOrdinal::TrampIncremental) {
+      OS << format_hex(RVA, 10);
+    } else {
+      OS << "[" << format_hex(RVA, 10);
+      OS << " - " << format_hex(RVA + getLength(), 10) << "]";
+    }
+    OS << " thunk(" << Ordinal << ")";
     if (Ordinal == PDB_ThunkOrdinal::TrampIncremental)
       OS << " -> " << format_hex(getTargetRelativeVirtualAddress(), 10);
-    OS << "] ";
+    OS << " ";
     std::string Name = getName();
     if (!Name.empty())
       OS << Name;

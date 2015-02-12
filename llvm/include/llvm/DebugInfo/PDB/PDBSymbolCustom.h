@@ -27,14 +27,12 @@ public:
   PDBSymbolCustom(const IPDBSession &PDBSession,
                   std::unique_ptr<IPDBRawSymbol> CustomSymbol);
 
+  DECLARE_PDB_SYMBOL_CONCRETE_TYPE(PDB_SymType::Custom)
+
   void dump(raw_ostream &OS, int Indent, PDB_DumpLevel Level) const override;
 
   void getDataBytes(llvm::SmallVector<uint8_t, 32> &bytes);
   FORWARD_SYMBOL_METHOD(getSymIndexId)
-
-  static bool classof(const PDBSymbol *S) {
-    return S->getSymTag() == PDB_SymType::Custom;
-  }
 };
 
 } // namespace llvm
