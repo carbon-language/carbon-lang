@@ -687,8 +687,10 @@ PPCTargetLowering::PPCTargetLowering(const PPCTargetMachine &TM,
 
   // With 32 condition bits, we don't need to sink (and duplicate) compares
   // aggressively in CodeGenPrep.
-  if (Subtarget.useCRBits())
+  if (Subtarget.useCRBits()) {
     setHasMultipleConditionRegisters();
+    setJumpIsExpensive();
+  }
 
   setMinFunctionAlignment(2);
   if (Subtarget.isDarwin())
