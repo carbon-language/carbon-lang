@@ -39,7 +39,7 @@ public:
 
   void reset() { Enumerator->reset(); }
 
-  IPDBEnumChildren<ChildType>::MyType *clone() const {
+  ConcreteSymbolEnumerator<ChildType> *clone() const {
     std::unique_ptr<IPDBEnumSymbols> WrappedClone(Enumerator->clone());
     return new ConcreteSymbolEnumerator<ChildType>(std::move(WrappedClone));
   }
