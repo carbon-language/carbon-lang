@@ -2,7 +2,8 @@
 Modularize Usage
 ================
 
-``modularize [<modularize-options>] <include-files-list> [<front-end-options>...]``
+``modularize [<modularize-options>] <include-files-list>[,<include-files-list>]*
+[<front-end-options>...]``
 
 ``<modularize-options>`` is a place-holder for options
 specific to modularize, which are described below in

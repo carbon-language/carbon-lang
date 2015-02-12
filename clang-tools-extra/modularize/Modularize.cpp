@@ -178,9 +178,10 @@ using namespace llvm::opt;
 using namespace Modularize;
 
 // Option to specify a file name for a list of header files to check.
-cl::opt<std::string>
-ListFileName(cl::Positional,
-             cl::desc("<name of file containing list of headers to check>"));
+cl::list<std::string>
+ListFileNames(cl::Positional, cl::value_desc("list"),
+              cl::desc("<list of one or more header list files>"),
+              cl::CommaSeparated);
 
 // Collect all other arguments, which will be passed to the front end.
 cl::list<std::string>
@@ -700,7 +701,7 @@ int main(int Argc, const char **Argv) {
   cl::ParseCommandLineOptions(Argc, Argv, "modularize.\n");
 
   // No go if we have no header list file.
-  if (ListFileName.size() == 0) {
+  if (ListFileNames.size() == 0) {
     cl::PrintHelpMessage();
     return 1;
   }
@@ -708,11 +709,14 @@ int main(int Argc, const char **Argv) {
   // Get header file names and dependencies.
   SmallVector<std::string, 32> Headers;
   DependencyMap Dependencies;
-  if (std::error_code EC = getHeaderFileNames(Headers, Dependencies,
-                                              ListFileName, HeaderPrefix)) {
-    errs() << Argv[0] << ": error: Unable to get header list '" << ListFileName
-           << "': " << EC.message() << '\n';
-    return 1;
+  typedef std::vector<std::string>::iterator Iter;
+  for (Iter I = ListFileNames.begin(), E = ListFileNames.end(); I != E; ++I) {
+    if (std::error_code EC = getHeaderFileNames(Headers, Dependencies,
+      *I, HeaderPrefix)) {
+      errs() << Argv[0] << ": error: Unable to get header list '" << *I
+        << "': " << EC.message() << '\n';
+      return 1;
+    }
   }
 
   // If we are in assistant mode, output the module map and quit.
