@@ -488,6 +488,63 @@ for.end:                                          ; preds = %for.body
   ret void
 }
 
+; int foo(int a);
+; void bar2(int *x, int y, int z) {
+;   for (int i = 0; i < 500; i += 3) {
+;     foo(i+y+i*z); // Slightly reordered instruction order
+;     foo(i+1+y+(i+1)*z);
+;     foo(i+2+y+(i+2)*z);
+;   }
+; }
+
+; Function Attrs: nounwind uwtable
+define void @bar2(i32* nocapture readnone %x, i32 %y, i32 %z) #0 {
+entry:
+  br label %for.body
+
+for.body:                                         ; preds = %for.body, %entry
+  %i.08 = phi i32 [ 0, %entry ], [ %add3, %for.body ]
+
+  %tmp1 = add i32 %i.08, %y
+  %tmp2 = mul i32 %i.08, %z
+  %tmp3 = add i32 %tmp2, %tmp1
+  %call = tail call i32 @foo(i32 %tmp3) #1
+
+  %add = add nsw i32 %i.08, 1
+  %tmp2a = mul i32 %add, %z
+  %tmp1a = add i32 %add, %y
+  %tmp3a = add i32 %tmp2a, %tmp1a
+  %calla = tail call i32 @foo(i32 %tmp3a) #1
+  
+  %add2 = add nsw i32 %i.08, 2
+  %tmp2b = mul i32 %add2, %z
+  %tmp1b = add i32 %add2, %y
+  %tmp3b = add i32 %tmp2b, %tmp1b
+  %callb = tail call i32 @foo(i32 %tmp3b) #1
+
+  %add3 = add nsw i32 %i.08, 3
+
+  %exitcond = icmp eq i32 %add3, 500
+  br i1 %exitcond, label %for.end, label %for.body
+
+; CHECK-LABEL: @bar2
+
+; CHECK: for.body:
+; CHECK: %indvar = phi i32 [ %indvar.next, %for.body ], [ 0, %entry ]
+; CHECK: %tmp1 = add i32 %indvar, %y
+; CHECK: %tmp2 = mul i32 %indvar, %z
+; CHECK: %tmp3 = add i32 %tmp2, %tmp1
+; CHECK: %call = tail call i32 @foo(i32 %tmp3) #1
+; CHECK: %indvar.next = add i32 %indvar, 1
+; CHECK: %exitcond1 = icmp eq i32 %indvar, 497
+; CHECK: br i1 %exitcond1, label %for.end, label %for.body
+
+; CHECK: ret
+
+for.end:                                          ; preds = %for.body
+  ret void
+}
+
 
 attributes #0 = { nounwind uwtable }
 attributes #1 = { nounwind }

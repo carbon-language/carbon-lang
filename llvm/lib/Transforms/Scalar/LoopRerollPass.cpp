@@ -45,6 +45,12 @@ static cl::opt<unsigned>
 MaxInc("max-reroll-increment", cl::init(2048), cl::Hidden,
   cl::desc("The maximum increment for loop rerolling"));
 
+static cl::opt<unsigned>
+NumToleratedFailedMatches("reroll-num-tolerated-failed-matches", cl::init(400),
+                          cl::Hidden,
+                          cl::desc("The maximum number of failures to tolerate"
+                                   " during fuzzy matching. (default: 400)"));
+
 // This loop re-rolling transformation aims to transform loops like this:
 //
 // int foo(int a);
@@ -394,9 +400,14 @@ namespace {
                                 const SmallInstructionSet &Final,
                                 DenseSet<Instruction *> &Users);
 
-      UsesTy::iterator nextInstr(int Val, UsesTy &In, UsesTy::iterator I);
+      UsesTy::iterator nextInstr(int Val, UsesTy &In,
+                                 const SmallInstructionSet &Exclude,
+                                 UsesTy::iterator *StartI=nullptr);
       bool isBaseInst(Instruction *I);
       bool isRootInst(Instruction *I);
+      bool instrDependsOn(Instruction *I,
+                          UsesTy::iterator Start,
+                          UsesTy::iterator End);
 
       LoopReroll *Parent;
 
@@ -941,10 +952,16 @@ bool LoopReroll::DAGRootTracker::collectUsedInstructions(SmallInstructionSet &Po
 
 }
 
+/// Get the next instruction in "In" that is a member of set Val.
+/// Start searching from StartI, and do not return anything in Exclude.
+/// If StartI is not given, start from In.begin().
 LoopReroll::DAGRootTracker::UsesTy::iterator
 LoopReroll::DAGRootTracker::nextInstr(int Val, UsesTy &In,
-                                      UsesTy::iterator I) {
-  while (I != In.end() && I->second.test(Val) == 0)
+                                      const SmallInstructionSet &Exclude,
+                                      UsesTy::iterator *StartI) {
+  UsesTy::iterator I = StartI ? *StartI : In.begin();
+  while (I != In.end() && (I->second.test(Val) == 0 ||
+                           Exclude.count(I->first) != 0))
     ++I;
   return I;
 }
@@ -961,6 +978,19 @@ bool LoopReroll::DAGRootTracker::isRootInst(Instruction *I) {
   for (auto &DRS : RootSets) {
     if (std::find(DRS.Roots.begin(), DRS.Roots.end(), I) != DRS.Roots.end())
       return true;
+  }
+  return false;
+}
+
+/// Return true if instruction I depends on any instruction between
+/// Start and End.
+bool LoopReroll::DAGRootTracker::instrDependsOn(Instruction *I,
+                                                UsesTy::iterator Start,
+                                                UsesTy::iterator End) {
+  for (auto *U : I->users()) {
+    for (auto It = Start; It != End; ++It)
+      if (U == It->first)
+        return true;
   }
   return false;
 }
@@ -1022,8 +1052,9 @@ bool LoopReroll::DAGRootTracker::validate(ReductionTracker &Reductions) {
     DenseMap<Value *, Value *> BaseMap;
 
     // Compare iteration Iter to the base.
-    auto BaseIt = nextInstr(0, Uses, Uses.begin());
-    auto RootIt = nextInstr(Iter, Uses, Uses.begin());
+    SmallInstructionSet Visited;
+    auto BaseIt = nextInstr(0, Uses, Visited);
+    auto RootIt = nextInstr(Iter, Uses, Visited);
     auto LastRootIt = Uses.begin();
 
     while (BaseIt != Uses.end() && RootIt != Uses.end()) {
@@ -1033,20 +1064,58 @@ bool LoopReroll::DAGRootTracker::validate(ReductionTracker &Reductions) {
       // Skip over the IV or root instructions; only match their users.
       bool Continue = false;
       if (isBaseInst(BaseInst)) {
-        BaseIt = nextInstr(0, Uses, ++BaseIt);
+        Visited.insert(BaseInst);
+        BaseIt = nextInstr(0, Uses, Visited);
         Continue = true;
       }
       if (isRootInst(RootInst)) {
         LastRootIt = RootIt;
-        RootIt = nextInstr(Iter, Uses, ++RootIt);
+        Visited.insert(RootInst);
+        RootIt = nextInstr(Iter, Uses, Visited);
         Continue = true;
       }
       if (Continue) continue;
 
+      if (!BaseInst->isSameOperationAs(RootInst)) {
+        // Last chance saloon. We don't try and solve the full isomorphism
+        // problem, but try and at least catch the case where two instructions
+        // *of different types* are round the wrong way. We won't be able to
+        // efficiently tell, given two ADD instructions, which way around we
+        // should match them, but given an ADD and a SUB, we can at least infer
+        // which one is which.
+        //
+        // This should allow us to deal with a greater subset of the isomorphism
+        // problem. It does however change a linear algorithm into a quadratic
+        // one, so limit the number of probes we do.
+        auto TryIt = RootIt;
+        unsigned N = NumToleratedFailedMatches;
+        while (TryIt != Uses.end() &&
+               !BaseInst->isSameOperationAs(TryIt->first) &&
+               N--) {
+          ++TryIt;
+          TryIt = nextInstr(Iter, Uses, Visited, &TryIt);
+        }
+
+        if (TryIt == Uses.end() || TryIt == RootIt ||
+            instrDependsOn(TryIt->first, RootIt, TryIt)) {
+          DEBUG(dbgs() << "LRR: iteration root match failed at " << *BaseInst <<
+                " vs. " << *RootInst << "\n");
+          return false;
+        }
+        
+        RootIt = TryIt;
+        RootInst = TryIt->first;
+      }
+
       // All instructions between the last root and this root
-      // belong to some other iteration. If they belong to a 
+      // may belong to some other iteration. If they belong to a 
       // future iteration, then they're dangerous to alias with.
-      for (; LastRootIt != RootIt; ++LastRootIt) {
+      // 
+      // Note that because we allow a limited amount of flexibility in the order
+      // that we visit nodes, LastRootIt might be *before* RootIt, in which
+      // case we've already checked this set of instructions so we shouldn't
+      // do anything.
+      for (; LastRootIt < RootIt; ++LastRootIt) {
         Instruction *I = LastRootIt->first;
         if (LastRootIt->second.find_first() < (int)Iter)
           continue;
@@ -1060,12 +1129,6 @@ bool LoopReroll::DAGRootTracker::validate(ReductionTracker &Reductions) {
             !isSafeToSpeculativelyExecute(I, DL))
           // Intervening instructions cause side effects.
           FutureSideEffects = true;
-      }
-
-      if (!BaseInst->isSameOperationAs(RootInst)) {
-        DEBUG(dbgs() << "LRR: iteration root match failed at " << *BaseInst <<
-              " vs. " << *RootInst << "\n");
-        return false;
       }
 
       // Make sure that this instruction, which is in the use set of this
@@ -1174,8 +1237,10 @@ bool LoopReroll::DAGRootTracker::validate(ReductionTracker &Reductions) {
       BaseMap.insert(std::make_pair(RootInst, BaseInst));
 
       LastRootIt = RootIt;
-      BaseIt = nextInstr(0, Uses, ++BaseIt);
-      RootIt = nextInstr(Iter, Uses, ++RootIt);
+      Visited.insert(BaseInst);
+      Visited.insert(RootInst);
+      BaseIt = nextInstr(0, Uses, Visited);
+      RootIt = nextInstr(Iter, Uses, Visited);
     }
     assert (BaseIt == Uses.end() && RootIt == Uses.end() &&
             "Mismatched set sizes!");
