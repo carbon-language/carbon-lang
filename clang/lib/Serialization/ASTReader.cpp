@@ -2543,7 +2543,7 @@ ASTReader::ReadControlBlock(ModuleFile &F,
     case INPUT_FILE_OFFSETS:
       NumInputs = Record[0];
       NumUserInputs = Record[1];
-      F.InputFileOffsets = (const uint32_t *)Blob.data();
+      F.InputFileOffsets = (const uint64_t *)Blob.data();
       F.InputFilesLoaded.resize(NumInputs);
       break;
     }
@@ -4350,7 +4350,7 @@ bool ASTReader::readASTFileControlBlock(StringRef Filename,
 
       unsigned NumInputFiles = Record[0];
       unsigned NumUserFiles = Record[1];
-      const uint32_t *InputFileOffs = (const uint32_t *)Blob.data();
+      const uint64_t *InputFileOffs = (const uint64_t *)Blob.data();
       for (unsigned I = 0; I != NumInputFiles; ++I) {
         // Go find this input file.
         bool isSystemFile = I >= NumUserFiles;
