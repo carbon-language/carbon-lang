@@ -615,7 +615,7 @@ AssemblyParse_x86::get_non_call_site_unwind_plan (UnwindPlan &unwind_plan)
 {
     UnwindPlan::RowSP row(new UnwindPlan::Row);
     m_cur_insn = m_func_bounds.GetBaseAddress ();
-    int current_func_text_offset = 0;
+    addr_t current_func_text_offset = 0;
     int current_sp_bytes_offset_from_cfa = 0;
     UnwindPlan::Row::RegisterLocation initial_regloc;
     Error error;
@@ -746,7 +746,7 @@ AssemblyParse_x86::get_non_call_site_unwind_plan (UnwindPlan &unwind_plan)
                 saved_registers[machine_regno] = false;
                 row->RemoveRegisterInfo (lldb_regno);
 
-                if (machine_regno == m_machine_fp_regnum)
+                if (machine_regno == (int)m_machine_fp_regnum)
                 {
                     row->SetCFARegister (m_lldb_sp_regnum);
                 }
