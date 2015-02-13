@@ -3,6 +3,8 @@
 
 target datalayout = "p:32:32-p1:32:32-p2:16:16"
 
+@global = global i8 0
+
 ; This shouldn't convert to getelementptr because the relationship
 ; between the arithmetic and the layout of allocated memory is
 ; entirely unknown.
@@ -47,10 +49,29 @@ define i1 @test2_as2_larger(i8 addrspace(2)* %a, i8 addrspace(2)* %b) {
   ret i1 %r
 }
 
+; These casts should not be folded away.
+; CHECK-LABEL: @test2_diff_as
+; CHECK: icmp sge i32 %i0, %i1
+define i1 @test2_diff_as(i8* %p, i8 addrspace(1)* %q) {
+  %i0 = ptrtoint i8* %p to i32
+  %i1 = ptrtoint i8 addrspace(1)* %q to i32
+  %r0 = icmp sge i32 %i0, %i1
+  ret i1 %r0
+}
+
+; These casts should not be folded away.
+; CHECK-LABEL: @test2_diff_as_global
+; CHECK: icmp sge i32 %i1
+define i1 @test2_diff_as_global(i8 addrspace(1)* %q) {
+  %i0 = ptrtoint i8* @global to i32
+  %i1 = ptrtoint i8 addrspace(1)* %q to i32
+  %r0 = icmp sge i32 %i1, %i0
+  ret i1 %r0
+}
+
 ; These casts should also be folded away.
 ; CHECK-LABEL: @test3(
 ; CHECK: icmp eq i8* %a, @global
-@global = global i8 0
 define i1 @test3(i8* %a) {
         %tmpa = ptrtoint i8* %a to i32
         %r = icmp eq i32 %tmpa, ptrtoint (i8* @global to i32)
