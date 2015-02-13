@@ -1126,7 +1126,7 @@ bool SIInstrInfo::verifyInstruction(const MachineInstr *MI,
 
     switch (Desc.OpInfo[i].OperandType) {
     case MCOI::OPERAND_REGISTER:
-      if (MI->getOperand(i).isImm() || MI->getOperand(i).isFPImm()) {
+      if (MI->getOperand(i).isImm()) {
         ErrInfo = "Illegal immediate value for operand.";
         return false;
       }
