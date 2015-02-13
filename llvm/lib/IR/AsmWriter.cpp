@@ -1748,11 +1748,39 @@ static void writeMDGlobalVariable(raw_ostream &Out, const MDGlobalVariable *N,
   Out << ")";
 }
 
-static void writeMDLocalVariable(raw_ostream &, const MDLocalVariable *,
-                                 TypePrinting *, SlotTracker *,
-                                 const Module *) {
-  llvm_unreachable("write not implemented");
+static void writeMDLocalVariable(raw_ostream &Out, const MDLocalVariable *N,
+                                 TypePrinting *TypePrinter,
+                                 SlotTracker *Machine, const Module *Context) {
+  Out << "!MDLocalVariable(";
+  FieldSeparator FS;
+  writeTag(Out, FS, N);
+  Out << FS << "scope: ";
+  writeMetadataAsOperand(Out, N->getScope(), TypePrinter, Machine, Context);
+  Out << FS << "name: \"" << N->getName() << "\"";
+  if (N->getFile()) {
+    Out << FS << "file: ";
+    writeMetadataAsOperand(Out, N->getFile(), TypePrinter, Machine,
+                           Context);
+  }
+  if (N->getLine())
+    Out << FS << "line: " << N->getLine();
+  if (N->getType()) {
+    Out << FS << "type: ";
+    writeMetadataAsOperand(Out, N->getType(), TypePrinter, Machine,
+                           Context);
+  }
+  if (N->getTag() == dwarf::DW_TAG_arg_variable || N->getArg())
+    Out << FS << "arg: " << N->getArg();
+  if (N->getFlags())
+    Out << FS << "flags: " << N->getFlags();
+  if (N->getInlinedAt()) {
+    Out << FS << "inlinedAt: ";
+    writeMetadataAsOperand(Out, N->getInlinedAt(), TypePrinter, Machine,
+                           Context);
+  }
+  Out << ")";
 }
+
 static void writeMDExpression(raw_ostream &, const MDExpression *,
                               TypePrinting *, SlotTracker *, const Module *) {
   llvm_unreachable("write not implemented");

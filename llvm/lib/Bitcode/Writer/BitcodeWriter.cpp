@@ -1072,11 +1072,26 @@ static void WriteMDGlobalVariable(const MDGlobalVariable *N,
   Record.clear();
 }
 
-static void WriteMDLocalVariable(const MDLocalVariable *,
-                                 const ValueEnumerator &, BitstreamWriter &,
-                                 SmallVectorImpl<uint64_t> &, unsigned) {
-  llvm_unreachable("write not implemented");
+static void WriteMDLocalVariable(const MDLocalVariable *N,
+                                 const ValueEnumerator &VE,
+                                 BitstreamWriter &Stream,
+                                 SmallVectorImpl<uint64_t> &Record,
+                                 unsigned Abbrev) {
+  Record.push_back(N->isDistinct());
+  Record.push_back(N->getTag());
+  Record.push_back(VE.getMetadataOrNullID(N->getScope()));
+  Record.push_back(VE.getMetadataOrNullID(N->getRawName()));
+  Record.push_back(VE.getMetadataOrNullID(N->getFile()));
+  Record.push_back(N->getLine());
+  Record.push_back(VE.getMetadataOrNullID(N->getType()));
+  Record.push_back(N->getArg());
+  Record.push_back(N->getFlags());
+  Record.push_back(VE.getMetadataOrNullID(N->getInlinedAt()));
+
+  Stream.EmitRecord(bitc::METADATA_LOCAL_VAR, Record, Abbrev);
+  Record.clear();
 }
+
 static void WriteMDExpression(const MDExpression *, const ValueEnumerator &,
                               BitstreamWriter &, SmallVectorImpl<uint64_t> &,
                               unsigned) {

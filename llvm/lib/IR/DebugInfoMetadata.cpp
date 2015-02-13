@@ -336,6 +336,12 @@ MDLocalVariable *MDLocalVariable::getImpl(
     LLVMContext &Context, unsigned Tag, Metadata *Scope, MDString *Name,
     Metadata *File, unsigned Line, Metadata *Type, unsigned Arg, unsigned Flags,
     Metadata *InlinedAt, StorageType Storage, bool ShouldCreate) {
+  // Truncate Arg to 8 bits.
+  //
+  // FIXME: This is gross (and should be changed to an assert or removed), but
+  // it matches historical behaviour for now.
+  Arg &= (1u << 8) - 1;
+
   assert(isCanonical(Name) && "Expected canonical MDString");
   DEFINE_GETIMPL_LOOKUP(MDLocalVariable, (Tag, Scope, getString(Name), File,
                                           Line, Type, Arg, Flags, InlinedAt));

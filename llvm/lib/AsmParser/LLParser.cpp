@@ -3575,9 +3575,30 @@ bool LLParser::ParseMDGlobalVariable(MDNode *&Result, bool IsDistinct) {
   return false;
 }
 
+/// ParseMDLocalVariable:
+///   ::= !MDLocalVariable(tag: DW_TAG_arg_variable, scope: !0, name: "foo",
+///                        file: !1, line: 7, type: !2, arg: 2, flags: 7,
+///                        inlinedAt: !3)
 bool LLParser::ParseMDLocalVariable(MDNode *&Result, bool IsDistinct) {
-  return TokError("unimplemented parser");
+#define VISIT_MD_FIELDS(OPTIONAL, REQUIRED)                                    \
+  REQUIRED(tag, DwarfTagField, );                                              \
+  OPTIONAL(scope, MDField, );                                                  \
+  OPTIONAL(name, MDStringField, );                                             \
+  OPTIONAL(file, MDField, );                                                   \
+  OPTIONAL(line, LineField, );                                                 \
+  OPTIONAL(type, MDField, );                                                   \
+  OPTIONAL(arg, MDUnsignedField, (0, UINT8_MAX));                              \
+  OPTIONAL(flags, MDUnsignedField, (0, UINT32_MAX));                           \
+  OPTIONAL(inlinedAt, MDField, );
+  PARSE_MD_FIELDS();
+#undef VISIT_MD_FIELDS
+
+  Result = GET_OR_DISTINCT(
+      MDLocalVariable, (Context, tag.Val, scope.Val, name.Val, file.Val,
+                        line.Val, type.Val, arg.Val, flags.Val, inlinedAt.Val));
+  return false;
 }
+
 bool LLParser::ParseMDExpression(MDNode *&Result, bool IsDistinct) {
   return TokError("unimplemented parser");
 }
