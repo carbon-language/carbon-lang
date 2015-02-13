@@ -21,6 +21,7 @@
 #ifndef LLVM_TOOLS_DSYMUTIL_DEBUGMAP_H
 #define LLVM_TOOLS_DSYMUTIL_DEBUGMAP_H
 
+#include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/ADT/iterator_range.h"
@@ -104,6 +105,8 @@ public:
         : ObjectAddress(ObjectAddress), BinaryAddress(BinaryAddress) {}
   };
 
+  typedef StringMapEntry<SymbolMapping> DebugMapEntry;
+
   /// \brief Adds a symbol mapping to this DebugMapObject.
   /// \returns false if the symbol was already registered. The request
   /// is discarded in this case.
@@ -112,7 +115,11 @@ public:
 
   /// \brief Lookup a symbol mapping.
   /// \returns null if the symbol isn't found.
-  const SymbolMapping *lookupSymbol(StringRef SymbolName) const;
+  const DebugMapEntry *lookupSymbol(StringRef SymbolName) const;
+
+  /// \brief Lookup an objectfile address.
+  /// \returns null if the address isn't found.
+  const DebugMapEntry *lookupObjectAddress(uint64_t Address) const;
 
   llvm::StringRef getObjectFilename() const { return Filename; }
 
@@ -127,6 +134,7 @@ private:
 
   std::string Filename;
   StringMap<SymbolMapping> Symbols;
+  DenseMap<uint64_t, DebugMapEntry *> AddressToMapping;
 };
 }
 }
