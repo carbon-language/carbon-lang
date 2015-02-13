@@ -468,12 +468,8 @@ public:
       if (CountedInstructions.insert(LI).second)
         NumberOfOptimizedInstructions += TTI.getUserCost(LI);
 
-      for (User *U : LI->users()) {
-        Instruction *UI = dyn_cast<Instruction>(U);
-        if (!UI)
-          continue;
-        Worklist.insert(UI);
-      }
+      for (User *U : LI->users())
+        Worklist.insert(cast<Instruction>(U));
     }
 
     // And then we try to simplify every user of every instruction from the
@@ -485,12 +481,8 @@ public:
         continue;
       if (!visit(I))
         continue;
-      for (User *U : I->users()) {
-        Instruction *UI = dyn_cast<Instruction>(U);
-        if (!UI)
-          continue;
-        Worklist.insert(UI);
-      }
+      for (User *U : I->users())
+        Worklist.insert(cast<Instruction>(U));
     }
     return NumberOfOptimizedInstructions;
   }
