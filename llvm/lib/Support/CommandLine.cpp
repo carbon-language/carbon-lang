@@ -190,6 +190,9 @@ public:
   }
 
   void printOptionValues();
+
+private:
+  Option *LookupOption(StringRef &Arg, StringRef &Value);
 };
 
 } // namespace
@@ -242,8 +245,7 @@ void OptionCategory::registerCategory() {
 /// LookupOption - Lookup the option specified by the specified option on the
 /// command line.  If there is a value specified (after an equal sign) return
 /// that as well.  This assumes that leading dashes have already been stripped.
-static Option *LookupOption(StringRef &Arg, StringRef &Value,
-                            const StringMap<Option *> &OptionsMap) {
+Option *CommandLineParser::LookupOption(StringRef &Arg, StringRef &Value) {
   // Reject all dashes.
   if (Arg.empty())
     return nullptr;
@@ -953,7 +955,7 @@ void CommandLineParser::ParseCommandLineOptions(int argc,
       while (!ArgName.empty() && ArgName[0] == '-')
         ArgName = ArgName.substr(1);
 
-      Handler = LookupOption(ArgName, Value, OptionsMap);
+      Handler = LookupOption(ArgName, Value);
       if (!Handler || Handler->getFormattingFlag() != cl::Positional) {
         ProvidePositionalOption(ActivePositionalArg, argv[i], i);
         continue; // We are done!
@@ -965,7 +967,7 @@ void CommandLineParser::ParseCommandLineOptions(int argc,
       while (!ArgName.empty() && ArgName[0] == '-')
         ArgName = ArgName.substr(1);
 
-      Handler = LookupOption(ArgName, Value, OptionsMap);
+      Handler = LookupOption(ArgName, Value);
 
       // Check to see if this "option" is really a prefixed or grouped argument.
       if (!Handler)
