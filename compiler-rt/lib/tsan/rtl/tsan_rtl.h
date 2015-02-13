@@ -550,14 +550,12 @@ void StatOutput(u64 *stat);
 
 void ALWAYS_INLINE StatInc(ThreadState *thr, StatType typ, u64 n = 1) {
 #ifdef TSAN_COLLECT_STATS
-  if (kCollectStats)
-    thr->stat[typ] += n;
+  thr->stat[typ] += n;
 #endif
 }
 void ALWAYS_INLINE StatSet(ThreadState *thr, StatType typ, u64 n) {
 #ifdef TSAN_COLLECT_STATS
-  if (kCollectStats)
-    thr->stat[typ] = n;
+  thr->stat[typ] = n;
 #endif
 }
 
