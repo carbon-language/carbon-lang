@@ -1,2 +1,2 @@
-# RUN: modularize NoProblems.modularize,NoProblemsAnonymous.modularize -x c++
+# RUN: modularize %S/NoProblems.modularize,%S/NoProblemsAnonymous.modularize -x c++
 # RUN: modularize -prefix=%p %S/NoProblems.modularize,%S/NoProblemsAnonymous.modularize -x c++
