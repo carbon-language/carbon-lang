@@ -149,7 +149,8 @@ namespace bitc {
     METADATA_ATTACHMENT    = 11,  // [m x [value, [n x [id, mdnode]]]
     METADATA_GENERIC_DEBUG = 12,  // [distinct, tag, vers, header, n x md num]
     METADATA_SUBRANGE      = 13,  // [distinct, count, lo]
-    METADATA_ENUMERATOR    = 14   // [distinct, value, name?]
+    METADATA_ENUMERATOR    = 14,  // [distinct, value, name?]
+    METADATA_BASIC_TYPE    = 15   // [distinct, tag, name, size, align, enc]
   };
 
   // The constants block (CONSTANTS_BLOCK_ID) describes emission for each

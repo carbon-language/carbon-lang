@@ -1371,6 +1371,17 @@ std::error_code BitcodeReader::ParseMetadata() {
                               NextMDValueNo++);
       break;
     }
+    case bitc::METADATA_BASIC_TYPE: {
+      if (Record.size() != 6)
+        return Error("Invalid record");
+
+      MDValueList.AssignValue(
+          GET_OR_DISTINCT(MDBasicType, Record[0],
+                          (Context, Record[1], getMDString(Record[2]),
+                           Record[3], Record[4], Record[5])),
+          NextMDValueNo++);
+      break;
+    }
     case bitc::METADATA_STRING: {
       std::string String(Record.begin(), Record.end());
       llvm::UpgradeMDStringConstant(String);

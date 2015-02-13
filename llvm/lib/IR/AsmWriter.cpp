@@ -1366,10 +1366,22 @@ static void writeMDEnumerator(raw_ostream &Out, const MDEnumerator *N,
   Out << ")";
 }
 
-static void writeMDBasicType(raw_ostream &, const MDBasicType *, TypePrinting *,
-                             SlotTracker *, const Module *) {
-  llvm_unreachable("write not implemented");
+static void writeMDBasicType(raw_ostream &Out, const MDBasicType *N,
+                             TypePrinting *, SlotTracker *, const Module *) {
+  Out << "!MDBasicType(";
+  FieldSeparator FS;
+  writeTag(Out, FS, N);
+  if (!N->getName().empty())
+    Out << FS << "name: \"" << N->getName() << "\"";
+  if (N->getSizeInBits())
+    Out << FS << "size: " << N->getSizeInBits();
+  if (N->getAlignInBits())
+    Out << FS << "align: " << N->getAlignInBits();
+  if (N->getEncoding())
+    Out << FS << "encoding: " << N->getEncoding();
+  Out << ")";
 }
+
 static void writeMDDerivedType(raw_ostream &, const MDDerivedType *,
                                TypePrinting *, SlotTracker *, const Module *) {
   llvm_unreachable("write not implemented");

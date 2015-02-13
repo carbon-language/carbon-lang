@@ -381,6 +381,8 @@ public:
   Metadata *getScope() const { return getOperand(1); }
   StringRef getName() const { return getStringOperand(2); }
 
+  MDString *getRawName() const { return getOperandAs<MDString>(2); }
+
   static bool classof(const Metadata *MD) {
     switch (MD->getMetadataID()) {
     default:

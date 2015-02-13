@@ -3194,9 +3194,23 @@ bool LLParser::ParseMDEnumerator(MDNode *&Result, bool IsDistinct) {
   return false;
 }
 
+/// ParseMDBasicType:
+///   ::= !MDBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32)
 bool LLParser::ParseMDBasicType(MDNode *&Result, bool IsDistinct) {
-  return TokError("unimplemented parser");
+#define VISIT_MD_FIELDS(OPTIONAL, REQUIRED)                                    \
+  REQUIRED(tag, DwarfTagField, );                                              \
+  OPTIONAL(name, MDStringField, );                                             \
+  OPTIONAL(size, MDUnsignedField, (0, UINT32_MAX));                            \
+  OPTIONAL(align, MDUnsignedField, (0, UINT32_MAX));                           \
+  OPTIONAL(encoding, MDUnsignedField, (0, UINT32_MAX));
+  PARSE_MD_FIELDS();
+#undef VISIT_MD_FIELDS
+
+  Result = GET_OR_DISTINCT(MDBasicType, (Context, tag.Val, name.Val, size.Val,
+                                         align.Val, encoding.Val));
+  return false;
 }
+
 bool LLParser::ParseMDDerivedType(MDNode *&Result, bool IsDistinct) {
   return TokError("unimplemented parser");
 }

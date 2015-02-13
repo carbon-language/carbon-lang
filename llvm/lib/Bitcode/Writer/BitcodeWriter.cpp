@@ -838,11 +838,21 @@ static void WriteMDEnumerator(const MDEnumerator *N, const ValueEnumerator &VE,
   Record.clear();
 }
 
-static void WriteMDBasicType(const MDBasicType *, const ValueEnumerator &,
-                             BitstreamWriter &, SmallVectorImpl<uint64_t> &,
-                             unsigned) {
-  llvm_unreachable("write not implemented");
+static void WriteMDBasicType(const MDBasicType *N, const ValueEnumerator &VE,
+                             BitstreamWriter &Stream,
+                             SmallVectorImpl<uint64_t> &Record,
+                             unsigned Abbrev) {
+  Record.push_back(N->isDistinct());
+  Record.push_back(N->getTag());
+  Record.push_back(VE.getMetadataOrNullID(N->getRawName()));
+  Record.push_back(N->getSizeInBits());
+  Record.push_back(N->getAlignInBits());
+  Record.push_back(N->getEncoding());
+
+  Stream.EmitRecord(bitc::METADATA_BASIC_TYPE, Record, Abbrev);
+  Record.clear();
 }
+
 static void WriteMDDerivedType(const MDDerivedType *, const ValueEnumerator &,
                                BitstreamWriter &, SmallVectorImpl<uint64_t> &,
                                unsigned) {
