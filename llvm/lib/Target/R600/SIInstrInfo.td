@@ -640,29 +640,10 @@ class getVOPSrc1ForVT<ValueType VT> {
   RegisterClass ret = !if(!eq(VT.Size, 32), VGPR_32, VReg_64);
 }
 
-// Returns the register classes for the source arguments of a VOP[12C]
-// instruction for the given SrcVTs.
-class getInRC32 <list<ValueType> SrcVT> {
-  list<DAGOperand> ret = [
-    getVOPSrc0ForVT<SrcVT[0]>.ret,
-    getVOPSrc1ForVT<SrcVT[1]>.ret
-  ];
-}
-
 // Returns the register class to use for sources of VOP3 instructions for the
 // given VT.
 class getVOP3SrcForVT<ValueType VT> {
   RegisterOperand ret = !if(!eq(VT.Size, 32), VCSrc_32, VCSrc_64);
-}
-
-// Returns the register classes for the source arguments of a VOP3
-// instruction for the given SrcVTs.
-class getInRC64 <list<ValueType> SrcVT> {
-  list<DAGOperand> ret = [
-    getVOP3SrcForVT<SrcVT[0]>.ret,
-    getVOP3SrcForVT<SrcVT[1]>.ret,
-    getVOP3SrcForVT<SrcVT[2]>.ret
-  ];
 }
 
 // Returns 1 if the source arguments have modifiers, 0 if they do not.
