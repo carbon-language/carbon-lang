@@ -470,11 +470,12 @@ unwind_phase1(unw_context_t *uc, _Unwind_Exception *exception_object) {
 
     // When tracing, print state information.
     if (_LIBUNWIND_TRACING_UNWINDING) {
-      char functionName[512];
+      char functionBuf[512];
+      const char *functionName = functionBuf;
       unw_word_t offset;
-      if ((unw_get_proc_name(&cursor1, functionName, 512, &offset) !=
+      if ((unw_get_proc_name(&cursor1, functionBuf, 512, &offset) !=
            UNW_ESUCCESS) || (frameInfo.start_ip + offset > frameInfo.end_ip))
-        strcpy(functionName, ".anonymous.");
+        functionName = ".anonymous.";
       unw_word_t pc;
       unw_get_reg(&cursor1, UNW_REG_IP, &pc);
       _LIBUNWIND_TRACE_UNWINDING(
@@ -600,11 +601,12 @@ static _Unwind_Reason_Code unwind_phase2(unw_context_t *uc,
 
     // When tracing, print state information.
     if (_LIBUNWIND_TRACING_UNWINDING) {
-      char functionName[512];
+      char functionBuf[512];
+      const char *functionName = functionBuf;
       unw_word_t offset;
-      if ((unw_get_proc_name(&cursor2, functionName, 512, &offset) !=
+      if ((unw_get_proc_name(&cursor2, functionBuf, 512, &offset) !=
            UNW_ESUCCESS) || (frameInfo.start_ip + offset > frameInfo.end_ip))
-        strcpy(functionName, ".anonymous.");
+        functionName = ".anonymous.";
       _LIBUNWIND_TRACE_UNWINDING(
           "unwind_phase2(ex_ojb=%p): start_ip=0x%llX, func=%s, sp=0x%llX, "
           "lsda=0x%llX, personality=0x%llX\n",

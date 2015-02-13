@@ -347,7 +347,7 @@ bool CFI_Parser<A>::parseFDEInstructions(A &addressSpace,
                                          const CIE_Info &cieInfo, pint_t upToPC,
                                          PrologInfo *results) {
   // clear results
-  bzero(results, sizeof(PrologInfo));
+  memset(results, '\0', sizeof(PrologInfo));
   PrologInfoStackEntry *rememberStack = NULL;
 
   // parse CIE then FDE instructions
