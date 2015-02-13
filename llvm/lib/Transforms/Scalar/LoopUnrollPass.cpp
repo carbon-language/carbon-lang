@@ -542,14 +542,10 @@ public:
         continue;
       if (DeadInstructions.count(I))
         continue;
-      bool AllUsersFolded = true;
-      for (User *U : I->users())
-        if (!DeadInstructions.count(cast<Instruction>(U))) {
-          AllUsersFolded = false;
-          break;
-        }
 
-      if (AllUsersFolded) {
+      if (std::all_of(I->user_begin(), I->user_end(), [&](User *U) {
+            return DeadInstructions.count(cast<Instruction>(U));
+          })) {
         NumberOfOptimizedInstructions += TTI.getUserCost(I);
         DeadInstructions.insert(I);
         EnqueueOperands(*I);
