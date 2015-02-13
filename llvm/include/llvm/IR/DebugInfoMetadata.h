@@ -844,6 +844,12 @@ public:
   Metadata *getGlobalVariables() const { return getOperand(7); }
   Metadata *getImportedEntities() const { return getOperand(8); }
 
+  MDString *getRawProducer() const { return getOperandAs<MDString>(1); }
+  MDString *getRawFlags() const { return getOperandAs<MDString>(2); }
+  MDString *getRawSplitDebugFilename() const {
+    return getOperandAs<MDString>(3);
+  }
+
   static bool classof(const Metadata *MD) {
     return MD->getMetadataID() == MDCompileUnitKind;
   }

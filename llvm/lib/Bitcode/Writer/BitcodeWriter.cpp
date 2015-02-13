@@ -925,11 +925,30 @@ static void WriteMDFile(const MDFile *N, const ValueEnumerator &VE,
   Record.clear();
 }
 
-static void WriteMDCompileUnit(const MDCompileUnit *, const ValueEnumerator &,
-                               BitstreamWriter &, SmallVectorImpl<uint64_t> &,
-                               unsigned) {
-  llvm_unreachable("write not implemented");
+static void WriteMDCompileUnit(const MDCompileUnit *N,
+                               const ValueEnumerator &VE,
+                               BitstreamWriter &Stream,
+                               SmallVectorImpl<uint64_t> &Record,
+                               unsigned Abbrev) {
+  Record.push_back(N->isDistinct());
+  Record.push_back(N->getSourceLanguage());
+  Record.push_back(VE.getMetadataID(N->getFile()));
+  Record.push_back(VE.getMetadataOrNullID(N->getRawProducer()));
+  Record.push_back(N->isOptimized());
+  Record.push_back(VE.getMetadataOrNullID(N->getRawFlags()));
+  Record.push_back(N->getRuntimeVersion());
+  Record.push_back(VE.getMetadataOrNullID(N->getRawSplitDebugFilename()));
+  Record.push_back(N->getEmissionKind());
+  Record.push_back(VE.getMetadataOrNullID(N->getEnumTypes()));
+  Record.push_back(VE.getMetadataOrNullID(N->getRetainedTypes()));
+  Record.push_back(VE.getMetadataOrNullID(N->getSubprograms()));
+  Record.push_back(VE.getMetadataOrNullID(N->getGlobalVariables()));
+  Record.push_back(VE.getMetadataOrNullID(N->getImportedEntities()));
+
+  Stream.EmitRecord(bitc::METADATA_COMPILE_UNIT, Record, Abbrev);
+  Record.clear();
 }
+
 static void WriteMDSubprogram(const MDSubprogram *, const ValueEnumerator &,
                               BitstreamWriter &, SmallVectorImpl<uint64_t> &,
                               unsigned) {

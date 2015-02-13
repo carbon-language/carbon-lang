@@ -3352,9 +3352,39 @@ bool LLParser::ParseMDFile(MDNode *&Result, bool IsDistinct) {
   return false;
 }
 
+/// ParseMDCompileUnit:
+///   ::= !MDCompileUnit(language: DW_LANG_C99, file: !0, producer: "clang",
+///                      isOptimized: true, flags: "-O2", runtimeVersion: 1,
+///                      splitDebugFilename: "abc.debug", emissionKind: 1,
+///                      enums: !1, retainedTypes: !2, subprograms: !3,
+///                      globals: !4, imports: !5)
 bool LLParser::ParseMDCompileUnit(MDNode *&Result, bool IsDistinct) {
-  return TokError("unimplemented parser");
+#define VISIT_MD_FIELDS(OPTIONAL, REQUIRED)                                    \
+  REQUIRED(language, DwarfLangField, );                                        \
+  REQUIRED(file, MDField, );                                                   \
+  OPTIONAL(producer, MDStringField, );                                         \
+  OPTIONAL(isOptimized, MDBoolField, );                                        \
+  OPTIONAL(flags, MDStringField, );                                            \
+  OPTIONAL(runtimeVersion, MDUnsignedField, (0, UINT32_MAX));                  \
+  OPTIONAL(splitDebugFilename, MDStringField, );                               \
+  OPTIONAL(emissionKind, MDUnsignedField, (0, UINT32_MAX));                    \
+  OPTIONAL(enums, MDField, );                                                  \
+  OPTIONAL(retainedTypes, MDField, );                                          \
+  OPTIONAL(subprograms, MDField, );                                            \
+  OPTIONAL(globals, MDField, );                                                \
+  OPTIONAL(imports, MDField, );
+  PARSE_MD_FIELDS();
+#undef VISIT_MD_FIELDS
+
+  Result = GET_OR_DISTINCT(MDCompileUnit,
+                           (Context, language.Val, file.Val, producer.Val,
+                            isOptimized.Val, flags.Val, runtimeVersion.Val,
+                            splitDebugFilename.Val, emissionKind.Val, enums.Val,
+                            retainedTypes.Val, subprograms.Val, globals.Val,
+                            imports.Val));
+  return false;
 }
+
 bool LLParser::ParseMDSubprogram(MDNode *&Result, bool IsDistinct) {
   return TokError("unimplemented parser");
 }

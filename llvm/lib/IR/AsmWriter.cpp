@@ -1505,10 +1505,58 @@ static void writeMDFile(raw_ostream &Out, const MDFile *N, TypePrinting *,
   Out << ")";
 }
 
-static void writeMDCompileUnit(raw_ostream &, const MDCompileUnit *,
-                               TypePrinting *, SlotTracker *, const Module *) {
-  llvm_unreachable("write not implemented");
+static void writeMDCompileUnit(raw_ostream &Out, const MDCompileUnit *N,
+                               TypePrinting *TypePrinter, SlotTracker *Machine,
+                               const Module *Context) {
+  Out << "!MDCompileUnit(";
+  FieldSeparator FS;
+  Out << FS << "language: ";
+  if (const char *Lang = dwarf::LanguageString(N->getSourceLanguage()))
+    Out << Lang;
+  else
+    Out << N->getSourceLanguage();
+  if (N->getFile()) {
+    Out << FS << "file: ";
+    writeMetadataAsOperand(Out, N->getFile(), TypePrinter, Machine,
+                           Context);
+  }
+  if (!N->getProducer().empty())
+    Out << FS << "producer: \"" << N->getProducer() << "\"";
+  Out << FS << "isOptimized: " << (N->isOptimized() ? "true" : "false");
+  if (!N->getFlags().empty())
+    Out << FS << "flags: \"" << N->getFlags() << "\"";
+  Out << FS << "runtimeVersion: " << N->getRuntimeVersion();
+  if (!N->getSplitDebugFilename().empty())
+    Out << FS << "splitDebugFilename: \"" << N->getSplitDebugFilename() << "\"";
+  Out << FS << "emissionKind: " << N->getEmissionKind();
+  if (N->getEnumTypes()) {
+    Out << FS << "enums: ";
+    writeMetadataAsOperand(Out, N->getEnumTypes(), TypePrinter, Machine,
+                           Context);
+  }
+  if (N->getRetainedTypes()) {
+    Out << FS << "retainedTypes: ";
+    writeMetadataAsOperand(Out, N->getRetainedTypes(), TypePrinter, Machine,
+                           Context);
+  }
+  if (N->getSubprograms()) {
+    Out << FS << "subprograms: ";
+    writeMetadataAsOperand(Out, N->getSubprograms(), TypePrinter, Machine,
+                           Context);
+  }
+  if (N->getGlobalVariables()) {
+    Out << FS << "globals: ";
+    writeMetadataAsOperand(Out, N->getGlobalVariables(), TypePrinter, Machine,
+                           Context);
+  }
+  if (N->getImportedEntities()) {
+    Out << FS << "imports: ";
+    writeMetadataAsOperand(Out, N->getImportedEntities(), TypePrinter, Machine,
+                           Context);
+  }
+  Out << ")";
 }
+
 static void writeMDSubprogram(raw_ostream &, const MDSubprogram *,
                               TypePrinting *, SlotTracker *, const Module *) {
   llvm_unreachable("write not implemented");
