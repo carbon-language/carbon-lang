@@ -188,15 +188,15 @@ void DwarfLinker::reportWarning(const Twine &Warning, const DWARFUnit *Unit,
 
 /// \brief Recursive helper to gather the child->parent relationships in the
 /// original compile unit.
-void GatherDIEParents(const DWARFDebugInfoEntryMinimal *DIE, unsigned ParentIdx,
-                      CompileUnit &CU) {
+static void gatherDIEParents(const DWARFDebugInfoEntryMinimal *DIE,
+                             unsigned ParentIdx, CompileUnit &CU) {
   unsigned MyIdx = CU.getOrigUnit().getDIEIndex(DIE);
   CU.getInfo(MyIdx).ParentIdx = ParentIdx;
 
   if (DIE->hasChildren())
     for (auto *Child = DIE->getFirstChild(); Child && !Child->isNULL();
          Child = Child->getSibling())
-      GatherDIEParents(Child, MyIdx, CU);
+      gatherDIEParents(Child, MyIdx, CU);
 }
 
 void DwarfLinker::startDebugObject(DWARFContext &Dwarf) {
@@ -329,7 +329,7 @@ bool DwarfLinker::link(const DebugMap &Map) {
         CUDie->dump(outs(), CU.get(), 0);
       }
       Units.emplace_back(*CU);
-      GatherDIEParents(CUDie, 0, Units.back());
+      gatherDIEParents(CUDie, 0, Units.back());
     }
 
     // Clean-up before starting working on the next object.
