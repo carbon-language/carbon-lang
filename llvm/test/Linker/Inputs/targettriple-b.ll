@@ -1,1 +1,1 @@
-target triple = "E"
+target triple = "i386-unknown-linux-gnu"
