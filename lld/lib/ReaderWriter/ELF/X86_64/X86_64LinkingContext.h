@@ -37,8 +37,7 @@ public:
     return _baseAddress;
   }
 
-  bool isDynamicRelocation(const DefinedAtom &,
-                           const Reference &r) const override {
+  bool isDynamicRelocation(const Reference &r) const override {
     if (r.kindNamespace() != Reference::KindNamespace::ELF)
       return false;
     assert(r.kindArch() == Reference::KindArch::x86_64);
@@ -63,8 +62,7 @@ public:
     return false;
   }
 
-  virtual bool isPLTRelocation(const DefinedAtom &,
-                               const Reference &r) const override {
+  virtual bool isPLTRelocation(const Reference &r) const override {
     if (r.kindNamespace() != Reference::KindNamespace::ELF)
       return false;
     assert(r.kindArch() == Reference::KindArch::x86_64);

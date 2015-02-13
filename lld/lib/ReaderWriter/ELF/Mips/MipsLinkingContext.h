@@ -50,10 +50,9 @@ public:
   StringRef getDefaultInterpreter() const override;
   void addPasses(PassManager &pm) override;
   bool isRelaOutputFormat() const override { return false; }
-  bool isDynamicRelocation(const DefinedAtom &,
-                           const Reference &r) const override;
+  bool isDynamicRelocation(const Reference &r) const override;
   bool isCopyRelocation(const Reference &r) const override;
-  bool isPLTRelocation(const DefinedAtom &, const Reference &r) const override;
+  bool isPLTRelocation(const Reference &r) const override;
 
 private:
   MipsELFFlagsMerger _flagsMerger;

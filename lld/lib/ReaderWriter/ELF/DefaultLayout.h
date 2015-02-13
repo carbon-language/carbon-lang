@@ -571,10 +571,10 @@ ErrorOr<const lld::AtomLayout &> DefaultLayout<ELFT>::addAtom(const Atom *atom) 
     // Add runtime relocations to the .rela section.
     for (const auto &reloc : *definedAtom) {
       bool isLocalReloc = true;
-      if (_context.isDynamicRelocation(*definedAtom, *reloc)) {
+      if (_context.isDynamicRelocation(*reloc)) {
         getDynamicRelocationTable()->addRelocation(*definedAtom, *reloc);
         isLocalReloc = false;
-      } else if (_context.isPLTRelocation(*definedAtom, *reloc)) {
+      } else if (_context.isPLTRelocation(*reloc)) {
         getPLTRelocationTable()->addRelocation(*definedAtom, *reloc);
         isLocalReloc = false;
       }

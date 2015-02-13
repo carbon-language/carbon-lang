@@ -26,8 +26,7 @@ public:
 
   void addPasses(PassManager &) override;
 
-  bool isDynamicRelocation(const DefinedAtom &,
-                           const Reference &r) const override {
+  bool isDynamicRelocation(const Reference &r) const override {
     if (r.kindNamespace() != Reference::KindNamespace::ELF)
       return false;
     switch (r.kindValue()) {
@@ -39,7 +38,7 @@ public:
     }
   }
 
-  bool isPLTRelocation(const DefinedAtom &, const Reference &r) const override {
+  bool isPLTRelocation(const Reference &r) const override {
     if (r.kindNamespace() != Reference::KindNamespace::ELF)
       return false;
     switch (r.kindValue()) {

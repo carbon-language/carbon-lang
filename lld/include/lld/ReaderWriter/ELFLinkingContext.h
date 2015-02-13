@@ -94,10 +94,7 @@ public:
   /// referenced by the DT_RELA{,ENT,SZ} entries in the dynamic table.
   /// Relocations that return true will be added to the dynamic relocation
   /// table.
-  virtual bool isDynamicRelocation(const DefinedAtom &,
-                                   const Reference &) const {
-    return false;
-  }
+  virtual bool isDynamicRelocation(const Reference &) const { return false; }
 
   /// \brief Is this a copy relocation?
   ///
@@ -129,9 +126,7 @@ public:
   /// by the DT_{JMPREL,PLTRELSZ} entries in the dynamic table.
   /// Relocations that return true will be added to the dynamic plt relocation
   /// table.
-  virtual bool isPLTRelocation(const DefinedAtom &, const Reference &) const {
-    return false;
-  }
+  virtual bool isPLTRelocation(const Reference &) const { return false; }
 
   /// \brief The path to the dynamic interpreter
   virtual StringRef getDefaultInterpreter() const {
