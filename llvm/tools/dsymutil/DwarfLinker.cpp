@@ -34,7 +34,7 @@ public:
     Info.resize(OrigUnit.getNumDIEs());
   }
 
-  DWARFUnit &getOrigUnit() { return OrigUnit; }
+  DWARFUnit &getOrigUnit() const { return OrigUnit; }
 
   DIEInfo &getInfo(unsigned Idx) { return Info[Idx]; }
   const DIEInfo &getInfo(unsigned Idx) const { return Info[Idx]; }
