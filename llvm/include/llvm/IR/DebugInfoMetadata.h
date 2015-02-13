@@ -1401,6 +1401,85 @@ public:
   element_iterator elements_begin() const { return getElements().begin(); }
   element_iterator elements_end() const { return getElements().end(); }
 
+  /// \brief A lightweight wrapper around an expression operand.
+  ///
+  /// TODO: Store arguments directly and change \a MDExpression to store a
+  /// range of these.
+  class ExprOperand {
+    const uint64_t *Op;
+
+  public:
+    explicit ExprOperand(const uint64_t *Op) : Op(Op) {}
+
+    const uint64_t *get() const { return Op; }
+
+    /// \brief Get the operand code.
+    uint64_t getOp() const { return *Op; }
+
+    /// \brief Get an argument to the operand.
+    ///
+    /// Never returns the operand itself.
+    uint64_t getArg(unsigned I) const { return Op[I + 1]; }
+
+    unsigned getNumArgs() const { return getSize() - 1; }
+
+    /// \brief Return the size of the operand.
+    ///
+    /// Return the number of elements in the operand (1 + args).
+    unsigned getSize() const;
+  };
+
+  /// \brief An iterator for expression operands.
+  class expr_op_iterator
+      : public std::iterator<std::input_iterator_tag, ExprOperand> {
+    ExprOperand Op;
+
+  public:
+    explicit expr_op_iterator(element_iterator I) : Op(I) {}
+
+    element_iterator getBase() const { return Op.get(); }
+    const ExprOperand &operator*() const { return Op; }
+    const ExprOperand *operator->() const { return &Op; }
+
+    expr_op_iterator &operator++() {
+      increment();
+      return *this;
+    }
+    expr_op_iterator operator++(int) {
+      expr_op_iterator T(*this);
+      increment();
+      return T;
+    }
+
+    bool operator==(const expr_op_iterator &X) const {
+      return getBase() == X.getBase();
+    }
+    bool operator!=(const expr_op_iterator &X) const {
+      return getBase() != X.getBase();
+    }
+
+  private:
+    void increment() { Op = ExprOperand(getBase() + Op.getSize()); }
+  };
+
+  /// \brief Visit the elements via ExprOperand wrappers.
+  ///
+  /// These range iterators visit elements through \a ExprOperand wrappers.
+  /// This is not guaranteed to be a valid range unless \a isValid() gives \c
+  /// true.
+  ///
+  /// \pre \a isValid() gives \c true.
+  /// @{
+  expr_op_iterator expr_op_begin() const {
+    return expr_op_iterator(elements_begin());
+  }
+  expr_op_iterator expr_op_end() const {
+    return expr_op_iterator(elements_end());
+  }
+  /// @}
+
+  bool isValid() const;
+
   static bool classof(const Metadata *MD) {
     return MD->getMetadataID() == MDExpressionKind;
   }

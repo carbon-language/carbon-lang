@@ -350,6 +350,38 @@ MDExpression *MDExpression::getImpl(LLVMContext &Context,
   DEFINE_GETIMPL_STORE_NO_OPS(MDExpression, (Elements));
 }
 
+unsigned MDExpression::ExprOperand::getSize() const {
+  switch (getOp()) {
+  case dwarf::DW_OP_bit_piece:
+    return 3;
+  case dwarf::DW_OP_plus:
+    return 2;
+  default:
+    return 1;
+  }
+}
+
+bool MDExpression::isValid() const {
+  for (auto I = expr_op_begin(), E = expr_op_end(); I != E; ++I) {
+    // Check that there's space for the operand.
+    if (I->get() + I->getSize() > E->get())
+      return false;
+
+    // Check that the operand is valid.
+    switch (I->getOp()) {
+    default:
+      return false;
+    case dwarf::DW_OP_bit_piece:
+      // Piece expressions must be at the end.
+      return I->get() + I->getSize() == E->get();
+    case dwarf::DW_OP_plus:
+    case dwarf::DW_OP_deref:
+      break;
+    }
+  }
+  return true;
+}
+
 MDObjCProperty *MDObjCProperty::getImpl(
     LLVMContext &Context, MDString *Name, Metadata *File, unsigned Line,
     MDString *GetterName, MDString *SetterName, unsigned Attributes,

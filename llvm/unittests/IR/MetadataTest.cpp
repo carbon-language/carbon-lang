@@ -1407,6 +1407,42 @@ TEST_F(MDExpressionTest, get) {
   EXPECT_EQ(0u, N->getElement(4));
 }
 
+TEST_F(MDExpressionTest, isValid) {
+#define EXPECT_VALID(...)                                                      \
+  do {                                                                         \
+    uint64_t Elements[] = {__VA_ARGS__};                                       \
+    EXPECT_TRUE(MDExpression::get(Context, Elements)->isValid());              \
+  } while (false)
+#define EXPECT_INVALID(...)                                                    \
+  do {                                                                         \
+    uint64_t Elements[] = {__VA_ARGS__};                                       \
+    EXPECT_FALSE(MDExpression::get(Context, Elements)->isValid());             \
+  } while (false)
+
+  // Empty expression should be valid.
+  EXPECT_TRUE(MDExpression::get(Context, None));
+
+  // Valid constructions.
+  EXPECT_VALID(dwarf::DW_OP_plus, 6);
+  EXPECT_VALID(dwarf::DW_OP_deref);
+  EXPECT_VALID(dwarf::DW_OP_bit_piece, 3, 7);
+  EXPECT_VALID(dwarf::DW_OP_plus, 6, dwarf::DW_OP_deref);
+  EXPECT_VALID(dwarf::DW_OP_deref, dwarf::DW_OP_plus, 6);
+  EXPECT_VALID(dwarf::DW_OP_deref, dwarf::DW_OP_bit_piece, 3, 7);
+  EXPECT_VALID(dwarf::DW_OP_deref, dwarf::DW_OP_plus, 6, dwarf::DW_OP_bit_piece, 3, 7);
+
+  // Invalid constructions.
+  EXPECT_INVALID(~0u);
+  EXPECT_INVALID(dwarf::DW_OP_plus);
+  EXPECT_INVALID(dwarf::DW_OP_bit_piece);
+  EXPECT_INVALID(dwarf::DW_OP_bit_piece, 3);
+  EXPECT_INVALID(dwarf::DW_OP_bit_piece, 3, 7, dwarf::DW_OP_plus, 3);
+  EXPECT_INVALID(dwarf::DW_OP_bit_piece, 3, 7, dwarf::DW_OP_deref);
+
+#undef EXPECT_VALID
+#undef EXPECT_INVALID
+}
+
 typedef MetadataTest MDObjCPropertyTest;
 
 TEST_F(MDObjCPropertyTest, get) {
