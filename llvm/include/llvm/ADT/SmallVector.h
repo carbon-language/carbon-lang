@@ -307,8 +307,11 @@ protected:
 
   /// Copy the range [I, E) onto the uninitialized memory
   /// starting with "Dest", constructing elements into it as needed.
-  template<typename T1, typename T2>
-  static void uninitialized_copy(T1 *I, T1 *E, T2 *Dest) {
+  template <typename T1, typename T2>
+  static void uninitialized_copy(
+      T1 *I, T1 *E, T2 *Dest,
+      typename std::enable_if<std::is_same<typename std::remove_const<T1>::type,
+                                           T2>::value>::type * = nullptr) {
     // Use memcpy for PODs iterated by pointers (which includes SmallVector
     // iterators): std::uninitialized_copy optimizes to memmove, but we can
     // use memcpy here.
@@ -414,9 +417,7 @@ public:
       this->grow(this->size()+NumInputs);
 
     // Copy the new elements over.
-    // TODO: NEED To compile time dispatch on whether in_iter is a random access
-    // iterator to use the fast uninitialized_copy.
-    std::uninitialized_copy(in_start, in_end, this->end());
+    this->uninitialized_copy(in_start, in_end, this->end());
     this->setEnd(this->end() + NumInputs);
   }
 
