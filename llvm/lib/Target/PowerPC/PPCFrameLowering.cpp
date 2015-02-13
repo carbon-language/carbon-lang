@@ -36,10 +36,17 @@ static const uint16_t VRRegNo[] = {
  PPC::V24, PPC::V25, PPC::V26, PPC::V27, PPC::V28, PPC::V29, PPC::V30, PPC::V31
 };
 
+static unsigned computeReturnSaveOffset(const PPCSubtarget &STI) {
+  if (STI.isDarwinABI())
+    return STI.isPPC64() ? 16 : 8;
+  // SVR4 ABI:
+  return STI.isPPC64() ? 16 : 4;
+}
+
 PPCFrameLowering::PPCFrameLowering(const PPCSubtarget &STI)
     : TargetFrameLowering(TargetFrameLowering::StackGrowsDown,
                           (STI.hasQPX() || STI.isBGQ()) ? 32 : 16, 0),
-      Subtarget(STI) {}
+      Subtarget(STI), ReturnSaveOffset(computeReturnSaveOffset(Subtarget)) {}
 
 // With the SVR4 ABI, callee-saved registers have fixed offsets on the stack.
 const PPCFrameLowering::SpillSlot *PPCFrameLowering::getCalleeSavedSpillSlots(
@@ -598,7 +605,7 @@ void PPCFrameLowering::emitPrologue(MachineFunction &MF) const {
   assert((isPPC64 || !isSVR4ABI || !(!FrameSize && (MustSaveLR || HasFP))) &&
          "FrameSize must be >0 to save/restore the FP or LR for 32-bit SVR4.");
 
-  int LROffset = PPCFrameLowering::getReturnSaveOffset(isPPC64, isDarwinABI);
+  int LROffset = getReturnSaveOffset();
 
   int FPOffset = 0;
   if (HasFP) {
@@ -936,7 +943,7 @@ void PPCFrameLowering::emitEpilogue(MachineFunction &MF,
   const MCInstrDesc& AddInst = TII.get( isPPC64 ? PPC::ADD8
                                                 : PPC::ADD4 );
 
-  int LROffset = PPCFrameLowering::getReturnSaveOffset(isPPC64, isDarwinABI);
+  int LROffset = getReturnSaveOffset();
 
   int FPOffset = 0;
   if (HasFP) {
