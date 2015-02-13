@@ -83,7 +83,8 @@ USEDLIBS = lldbAPI.a \
 	lldbPluginPlatformWindows.a \
 	lldbPluginPlatformFreeBSD.a \
 	lldbPluginPlatformPOSIX.a \
-	lldbPluginPlatformKalimba.a
+	lldbPluginPlatformKalimba.a \
+	lldbPluginPlatformAndroid.a
 
 # Because GCC requires RTTI enabled for lldbCore (see source/Core/Makefile) it is
 # necessary to also link the clang rewriter libraries so vtable references can
