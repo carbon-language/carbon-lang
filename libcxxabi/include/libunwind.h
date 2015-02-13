@@ -107,12 +107,13 @@ extern int unw_is_signal_frame(unw_cursor_t *) LIBUNWIND_AVAIL;
 extern int unw_get_proc_name(unw_cursor_t *, char *, size_t, unw_word_t *) LIBUNWIND_AVAIL;
 //extern int       unw_get_save_loc(unw_cursor_t*, int, unw_save_loc_t*);
 
+extern unw_addr_space_t unw_local_addr_space;
+
 #ifdef UNW_REMOTE
 /*
  * Mac OS X "remote" API for unwinding other processes on same machine
  *
  */
-extern unw_addr_space_t unw_local_addr_space;
 extern unw_addr_space_t unw_create_addr_space_for_task(task_t);
 extern void unw_destroy_addr_space(unw_addr_space_t);
 extern int unw_init_remote_thread(unw_cursor_t *, unw_addr_space_t, thread_t *);
