@@ -46,7 +46,7 @@ CMICmnStreamStdin::CMICmnStreamStdin(void)
     , m_pVisitor(nullptr)
     , m_strPromptCurrent("(gdb)")
     , m_bKeyCtrlCHit(false)
-    , m_bShowPrompt(false)
+    , m_bShowPrompt(true)
     , m_bRedrawPrompt(true)
     , m_pStdinReadHandler(nullptr)
 {
