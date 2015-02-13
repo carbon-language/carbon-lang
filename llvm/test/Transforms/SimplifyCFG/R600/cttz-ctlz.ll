@@ -1,11 +1,13 @@
-; RUN: opt -S -codegenprepare -mtriple=r600-unknown-unknown -mcpu=SI < %s | FileCheck -check-prefix=SI -check-prefix=ALL %s
-; RUN: opt -S -codegenprepare -mtriple=r600-unknown-unknown -mcpu=tonga < %s | FileCheck -check-prefix=SI -check-prefix=ALL %s
+; RUN: opt -S -simplifycfg -mtriple=r600-unknown-unknown -mcpu=SI < %s | FileCheck -check-prefix=SI -check-prefix=ALL %s
+; RUN: opt -S -simplifycfg -mtriple=r600-unknown-unknown -mcpu=tonga < %s | FileCheck -check-prefix=SI -check-prefix=ALL %s
 
 
 define i64 @test1(i64 %A) {
 ; ALL-LABEL: @test1(
-; SI: [[CTLZ:%[A-Za-z0-9]+]] = call i64 @llvm.ctlz.i64(i64 %A, i1 false)
-; SI-NEXT: ret i64 [[CTLZ]]
+; SI: [[ICMP:%[A-Za-z0-9]+]] = icmp eq i64 %A, 0
+; SI-NEXT: [[CTLZ:%[A-Za-z0-9]+]] = tail call i64 @llvm.ctlz.i64(i64 %A, i1 true)
+; SI-NEXT: [[SEL:%[A-Za-z0-9.]+]] = select i1 [[ICMP]], i64 64, i64 [[CTLZ]]
+; SI-NEXT: ret i64 [[SEL]]
 entry:
   %tobool = icmp eq i64 %A, 0
   br i1 %tobool, label %cond.end, label %cond.true
@@ -22,8 +24,10 @@ cond.end:                                         ; preds = %entry, %cond.true
 
 define i32 @test2(i32 %A) {
 ; ALL-LABEL: @test2(
-; SI: [[CTLZ:%[A-Za-z0-9]+]] = call i32 @llvm.ctlz.i32(i32 %A, i1 false)
-; SI-NEXT: ret i32 [[CTLZ]]
+; SI: [[ICMP:%[A-Za-z0-9]+]] = icmp eq i32 %A, 0
+; SI-NEXT: [[CTLZ:%[A-Za-z0-9]+]] = tail call i32 @llvm.ctlz.i32(i32 %A, i1 true)
+; SI-NEXT: [[SEL:%[A-Za-z0-9.]+]] = select i1 [[ICMP]], i32 32, i32 [[CTLZ]]
+; SI-NEXT: ret i32 [[SEL]]
 entry:
   %tobool = icmp eq i32 %A, 0
   br i1 %tobool, label %cond.end, label %cond.true
@@ -40,8 +44,10 @@ cond.end:                                         ; preds = %entry, %cond.true
 
 define signext i16 @test3(i16 signext %A) {
 ; ALL-LABEL: @test3(
-; SI: [[CTLZ:%[A-Za-z0-9]+]] = call i16 @llvm.ctlz.i16(i16 %A, i1 false)
-; SI-NEXT: ret i16 [[CTLZ]]
+; SI: [[ICMP:%[A-Za-z0-9]+]] = icmp eq i16 %A, 0
+; SI-NEXT: [[CTLZ:%[A-Za-z0-9]+]] = tail call i16 @llvm.ctlz.i16(i16 %A, i1 true)
+; SI-NEXT: [[SEL:%[A-Za-z0-9.]+]] = select i1 [[ICMP]], i16 16, i16 [[CTLZ]]
+; SI-NEXT: ret i16 [[SEL]]
 entry:
   %tobool = icmp eq i16 %A, 0
   br i1 %tobool, label %cond.end, label %cond.true
@@ -58,8 +64,10 @@ cond.end:                                         ; preds = %entry, %cond.true
 
 define i64 @test1b(i64 %A) {
 ; ALL-LABEL: @test1b(
-; SI: [[CTTZ:%[A-Za-z0-9]+]] = call i64 @llvm.cttz.i64(i64 %A, i1 false)
-; SI-NEXT: ret i64 [[CTTZ]]
+; SI: [[ICMP:%[A-Za-z0-9]+]] = icmp eq i64 %A, 0
+; SI-NEXT: [[CTTZ:%[A-Za-z0-9]+]] = tail call i64 @llvm.cttz.i64(i64 %A, i1 true)
+; SI-NEXT: [[SEL:%[A-Za-z0-9.]+]] = select i1 [[ICMP]], i64 64, i64 [[CTTZ]]
+; SI-NEXT: ret i64 [[SEL]]
 entry:
   %tobool = icmp eq i64 %A, 0
   br i1 %tobool, label %cond.end, label %cond.true
@@ -76,8 +84,10 @@ cond.end:                                         ; preds = %entry, %cond.true
 
 define i32 @test2b(i32 %A) {
 ; ALL-LABEL: @test2b(
-; SI: [[CTTZ:%[A-Za-z0-9]+]] = call i32 @llvm.cttz.i32(i32 %A, i1 false)
-; SI-NEXT: ret i32 [[CTTZ]]
+; SI: [[ICMP:%[A-Za-z0-9]+]] = icmp eq i32 %A, 0
+; SI-NEXT: [[CTTZ:%[A-Za-z0-9]+]] = tail call i32 @llvm.cttz.i32(i32 %A, i1 true)
+; SI-NEXT: [[SEL:%[A-Za-z0-9.]+]] = select i1 [[ICMP]], i32 32, i32 [[CTTZ]]
+; SI-NEXT: ret i32 [[SEL]]
 entry:
   %tobool = icmp eq i32 %A, 0
   br i1 %tobool, label %cond.end, label %cond.true
@@ -94,8 +104,10 @@ cond.end:                                         ; preds = %entry, %cond.true
 
 define signext i16 @test3b(i16 signext %A) {
 ; ALL-LABEL: @test3b(
-; SI: [[CTTZ:%[A-Za-z0-9]+]] = call i16 @llvm.cttz.i16(i16 %A, i1 false)
-; SI-NEXT: ret i16 [[CTTZ]]
+; SI: [[ICMP:%[A-Za-z0-9]+]] = icmp eq i16 %A, 0
+; SI-NEXT: [[CTTZ:%[A-Za-z0-9]+]] = tail call i16 @llvm.cttz.i16(i16 %A, i1 true)
+; SI-NEXT: [[SEL:%[A-Za-z0-9.]+]] = select i1 [[ICMP]], i16 16, i16 [[CTTZ]]
+; SI-NEXT: ret i16 [[SEL]]
 entry:
   %tobool = icmp eq i16 %A, 0
   br i1 %tobool, label %cond.end, label %cond.true
@@ -112,8 +124,10 @@ cond.end:                                         ; preds = %entry, %cond.true
 
 define i64 @test1c(i64 %A) {
 ; ALL-LABEL: @test1c(
-; ALL: icmp eq i64 %A, 0
-; ALL: call i64 @llvm.ctlz.i64(i64 %A, i1 true)
+; ALL: [[ICMP:%[A-Za-z0-9]+]] = icmp eq i64 %A, 0
+; ALL-NEXT: [[CTLZ:%[A-Za-z0-9]+]] = tail call i64 @llvm.ctlz.i64(i64 %A, i1 true)
+; ALL-NEXT: [[SEL:%[A-Za-z0-9.]+]] = select i1 [[ICMP]], i64 63, i64 [[CTLZ]]
+; ALL-NEXT: ret i64 [[SEL]]
 entry:
   %tobool = icmp eq i64 %A, 0
   br i1 %tobool, label %cond.end, label %cond.true
@@ -129,8 +143,10 @@ cond.end:                                         ; preds = %entry, %cond.true
 
 define i32 @test2c(i32 %A) {
 ; ALL-LABEL: @test2c(
-; ALL: icmp eq i32 %A, 0
-; ALL: call i32 @llvm.ctlz.i32(i32 %A, i1 true)
+; ALL: [[ICMP:%[A-Za-z0-9]+]] = icmp eq i32 %A, 0
+; ALL-NEXT: [[CTLZ:%[A-Za-z0-9]+]] = tail call i32 @llvm.ctlz.i32(i32 %A, i1 true)
+; ALL-NEXT: [[SEL:%[A-Za-z0-9.]+]] = select i1 [[ICMP]], i32 31, i32 [[CTLZ]]
+; ALL-NEXT: ret i32 [[SEL]]
 entry:
   %tobool = icmp eq i32 %A, 0
   br i1 %tobool, label %cond.end, label %cond.true
@@ -147,8 +163,10 @@ cond.end:                                         ; preds = %entry, %cond.true
 
 define signext i16 @test3c(i16 signext %A) {
 ; ALL-LABEL: @test3c(
-; ALL: icmp eq i16 %A, 0
-; ALL: call i16 @llvm.ctlz.i16(i16 %A, i1 true)
+; ALL: [[ICMP:%[A-Za-z0-9]+]] = icmp eq i16 %A, 0
+; ALL-NEXT: [[CTLZ:%[A-Za-z0-9]+]] = tail call i16 @llvm.ctlz.i16(i16 %A, i1 true)
+; ALL-NEXT: [[SEL:%[A-Za-z0-9.]+]] = select i1 [[ICMP]], i16 15, i16 [[CTLZ]]
+; ALL-NEXT: ret i16 [[SEL]]
 entry:
   %tobool = icmp eq i16 %A, 0
   br i1 %tobool, label %cond.end, label %cond.true
@@ -165,8 +183,10 @@ cond.end:                                         ; preds = %entry, %cond.true
 
 define i64 @test1d(i64 %A) {
 ; ALL-LABEL: @test1d(
-; ALL: icmp eq i64 %A, 0
-; ALL: call i64 @llvm.cttz.i64(i64 %A, i1 true)
+; ALL: [[ICMP:%[A-Za-z0-9]+]] = icmp eq i64 %A, 0
+; ALL-NEXT: [[CTTZ:%[A-Za-z0-9]+]] = tail call i64 @llvm.cttz.i64(i64 %A, i1 true)
+; ALL-NEXT: [[SEL:%[A-Za-z0-9.]+]] = select i1 [[ICMP]], i64 63, i64 [[CTTZ]]
+; ALL-NEXT: ret i64 [[SEL]]
 entry:
   %tobool = icmp eq i64 %A, 0
   br i1 %tobool, label %cond.end, label %cond.true
@@ -183,8 +203,10 @@ cond.end:                                         ; preds = %entry, %cond.true
 
 define i32 @test2d(i32 %A) {
 ; ALL-LABEL: @test2d(
-; ALL: icmp eq i32 %A, 0
-; ALL: call i32 @llvm.cttz.i32(i32 %A, i1 true)
+; ALL: [[ICMP:%[A-Za-z0-9]+]] = icmp eq i32 %A, 0
+; ALL-NEXT: [[CTTZ:%[A-Za-z0-9]+]] = tail call i32 @llvm.cttz.i32(i32 %A, i1 true)
+; ALL-NEXT: [[SEL:%[A-Za-z0-9.]+]] = select i1 [[ICMP]], i32 31, i32 [[CTTZ]]
+; ALL-NEXT: ret i32 [[SEL]]
 entry:
   %tobool = icmp eq i32 %A, 0
   br i1 %tobool, label %cond.end, label %cond.true
@@ -201,8 +223,10 @@ cond.end:                                         ; preds = %entry, %cond.true
 
 define signext i16 @test3d(i16 signext %A) {
 ; ALL-LABEL: @test3d(
-; ALL: icmp eq i16 %A, 0
-; ALL: call i16 @llvm.cttz.i16(i16 %A, i1 true)
+; ALL: [[ICMP:%[A-Za-z0-9]+]] = icmp eq i16 %A, 0
+; ALL-NEXT: [[CTTZ:%[A-Za-z0-9]+]] = tail call i16 @llvm.cttz.i16(i16 %A, i1 true)
+; ALL-NEXT: [[SEL:%[A-Za-z0-9.]+]] = select i1 [[ICMP]], i16 15, i16 [[CTTZ]]
+; ALL-NEXT: ret i16 [[SEL]]
 entry:
   %tobool = icmp eq i16 %A, 0
   br i1 %tobool, label %cond.end, label %cond.true
