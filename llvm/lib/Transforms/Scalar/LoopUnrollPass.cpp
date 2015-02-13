@@ -333,7 +333,7 @@ class UnrollAnalyzer : public InstVisitor<UnrollAnalyzer, bool> {
 
   DenseMap<Value *, Constant *> SimplifiedValues;
   DenseMap<LoadInst *, Value *> LoadBaseAddresses;
-  SmallPtrSet<Instruction *, 32> CountedInsns;
+  SmallPtrSet<Instruction *, 32> CountedInstructions;
 
   /// \brief Count the number of optimized instructions.
   unsigned NumberOfOptimizedInstructions;
@@ -362,7 +362,7 @@ class UnrollAnalyzer : public InstVisitor<UnrollAnalyzer, bool> {
     else
       SimpleV = SimplifyBinOp(I.getOpcode(), LHS, RHS);
 
-    if (SimpleV && CountedInsns.insert(&I).second)
+    if (SimpleV && CountedInstructions.insert(&I).second)
       NumberOfOptimizedInstructions += TTI.getUserCost(&I);
 
     if (Constant *C = dyn_cast_or_null<Constant>(SimpleV)) {
@@ -453,18 +453,18 @@ public:
   // Given a list of loads that could be constant-folded (LoadBaseAddresses),
   // estimate number of optimized instructions after substituting the concrete
   // values for the given Iteration.
-  // Fill in SimplifiedInsns map for future use in DCE-estimation.
-  unsigned estimateNumberOfSimplifiedInsns(unsigned Iteration) {
+  // Fill in SimplifiedValues map for future use in DCE-estimation.
+  unsigned estimateNumberOfSimplifiedInstructions(unsigned Iteration) {
     SmallVector<Instruction *, 8> Worklist;
     SimplifiedValues.clear();
-    CountedInsns.clear();
+    CountedInstructions.clear();
     NumberOfOptimizedInstructions = 0;
 
     // We start by adding all loads to the worklist.
     for (auto LoadDescr : LoadBaseAddresses) {
       LoadInst *LI = LoadDescr.first;
       SimplifiedValues[LI] = computeLoadValue(LI, Iteration);
-      if (CountedInsns.insert(LI).second)
+      if (CountedInstructions.insert(LI).second)
         NumberOfOptimizedInstructions += TTI.getUserCost(LI);
 
       for (auto U : LI->users()) {
@@ -498,24 +498,24 @@ public:
 
   // Given a list of potentially simplifed instructions, estimate number of
   // instructions that would become dead if we do perform the simplification.
-  unsigned estimateNumberOfDeadInsns() {
+  unsigned estimateNumberOfDeadInstructions() {
     NumberOfOptimizedInstructions = 0;
     SmallVector<Instruction *, 8> Worklist;
     SmallPtrSet<Instruction *, 16> DeadInstructions;
 
     // Start by initializing worklist with simplified instructions.
-    for (auto Folded : SimplifiedValues) {
-      if (auto FoldedInsn = dyn_cast<Instruction>(Folded.first)) {
-        Worklist.push_back(FoldedInsn);
-        DeadInstructions.insert(FoldedInsn);
+    for (auto Folded : SimplifiedValues)
+      if (auto FoldedInst = dyn_cast<Instruction>(Folded.first)) {
+        Worklist.push_back(FoldedInst);
+        DeadInstructions.insert(FoldedInst);
       }
-    }
+
     // If a definition of an insn is only used by simplified or dead
     // instructions, it's also dead. Check defs of all instructions from the
     // worklist.
     while (!Worklist.empty()) {
-      Instruction *FoldedInsn = Worklist.pop_back_val();
-      for (Value *Op : FoldedInsn->operands()) {
+      Instruction *FoldedInst = Worklist.pop_back_val();
+      for (Value *Op : FoldedInst->operands()) {
         if (auto I = dyn_cast<Instruction>(Op)) {
           if (!L->contains(I))
             continue;
@@ -566,8 +566,9 @@ approximateNumberOfOptimizedInstructions(const Loop *L, ScalarEvolution &SE,
       std::min<unsigned>(UnrollMaxIterationsCountToAnalyze, TripCount);
   unsigned NumberOfOptimizedInstructions = 0;
   for (unsigned i = 0; i < IterationsNumberForEstimate; ++i) {
-    NumberOfOptimizedInstructions += UA.estimateNumberOfSimplifiedInsns(i);
-    NumberOfOptimizedInstructions += UA.estimateNumberOfDeadInsns();
+    NumberOfOptimizedInstructions +=
+        UA.estimateNumberOfSimplifiedInstructions(i);
+    NumberOfOptimizedInstructions += UA.estimateNumberOfDeadInstructions();
   }
   NumberOfOptimizedInstructions *= TripCount / IterationsNumberForEstimate;
 
