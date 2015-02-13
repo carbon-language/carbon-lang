@@ -292,6 +292,33 @@ entry:
   ret i16 %cond
 }
 
+define i64 @select_bug1(i32 %x) {
+; CHECK-LABEL: @select_bug1(
+; CHECK: [[VAR1:%[a-zA-Z0-9]+]] = tail call i32 @llvm.cttz.i32(i32 %x, i1 false)
+; CHECK-NEXT: [[VAR2:%[a-zA-Z0-9]+]] = zext i32 [[VAR1]] to i64
+; CHECK-NEXT: ret i64 [[VAR2]]
+entry:
+  %0 = tail call i32 @llvm.cttz.i32(i32 %x, i1 false)
+  %conv = zext i32 %0 to i64
+  %tobool = icmp ne i32 %x, 0
+  %cond = select i1 %tobool, i64 %conv, i64 32
+  ret i64 %cond
+}
+
+define i16 @select_bug2(i32 %x) {
+; CHECK-LABEL: @select_bug2(
+; CHECK: [[VAR1:%[a-zA-Z0-9]+]] = tail call i32 @llvm.cttz.i32(i32 %x, i1 false)
+; CHECK-NEXT: [[VAR2:%[a-zA-Z0-9]+]] = trunc i32 [[VAR1]] to i16
+; CHECK-NEXT: ret i16 [[VAR2]]
+entry:
+  %0 = tail call i32 @llvm.cttz.i32(i32 %x, i1 false)
+  %conv = trunc i32 %0 to i16
+  %tobool = icmp ne i32 %x, 0
+  %cond = select i1 %tobool, i16 %conv, i16 32
+  ret i16 %cond
+}
+
+
 declare i16 @llvm.ctlz.i16(i16, i1)
 declare i32 @llvm.ctlz.i32(i32, i1)
 declare i64 @llvm.ctlz.i64(i64, i1)
