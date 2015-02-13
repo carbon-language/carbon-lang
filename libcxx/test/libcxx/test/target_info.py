@@ -31,7 +31,7 @@ class LocalTI(TargetInfo):
         return platform.system()
 
     def platform_name(self):
-        if platform() == 'linux':
+        if self.platform() == 'linux':
             name, _, _ = platform.linux_distribution()
             name = name.lower().strip()
             if name:
@@ -39,7 +39,7 @@ class LocalTI(TargetInfo):
         return None
 
     def platform_ver(self):
-        if platform() == 'linux':
+        if self.platform() == 'linux':
             _, ver, _ = platform.linux_distribution()
             ver = ver.lower().strip()
             if ver:
