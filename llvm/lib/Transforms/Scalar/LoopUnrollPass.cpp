@@ -330,11 +330,13 @@ class UnrollAnalyzer : public InstVisitor<UnrollAnalyzer, bool> {
   unsigned TripCount;
   ScalarEvolution &SE;
   const TargetTransformInfo &TTI;
-  unsigned NumberOfOptimizedInstructions;
 
   DenseMap<Value *, Constant *> SimplifiedValues;
   DenseMap<LoadInst *, Value *> LoadBaseAddresses;
   SmallPtrSet<Instruction *, 32> CountedInsns;
+
+  /// \brief Count the number of optimized instructions.
+  unsigned NumberOfOptimizedInstructions;
 
   // Provide base case for our instruction visit.
   bool visitInstruction(Instruction &I) { return false; };
@@ -456,8 +458,8 @@ public:
     SmallVector<Instruction *, 8> Worklist;
     SimplifiedValues.clear();
     CountedInsns.clear();
-
     NumberOfOptimizedInstructions = 0;
+
     // We start by adding all loads to the worklist.
     for (auto LoadDescr : LoadBaseAddresses) {
       LoadInst *LI = LoadDescr.first;
@@ -500,6 +502,7 @@ public:
     NumberOfOptimizedInstructions = 0;
     SmallVector<Instruction *, 8> Worklist;
     SmallPtrSet<Instruction *, 16> DeadInstructions;
+
     // Start by initializing worklist with simplified instructions.
     for (auto Folded : SimplifiedValues) {
       if (auto FoldedInsn = dyn_cast<Instruction>(Folded.first)) {
