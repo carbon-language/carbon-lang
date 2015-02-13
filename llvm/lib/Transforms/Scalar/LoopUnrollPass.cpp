@@ -543,13 +543,12 @@ public:
       if (DeadInstructions.count(I))
         continue;
       bool AllUsersFolded = true;
-      for (User *U : I->users()) {
-        Instruction *UI = dyn_cast<Instruction>(U);
-        if (!SimplifiedValues[UI] && !DeadInstructions.count(UI)) {
+      for (User *U : I->users())
+        if (!DeadInstructions.count(cast<Instruction>(U))) {
           AllUsersFolded = false;
           break;
         }
-      }
+
       if (AllUsersFolded) {
         NumberOfOptimizedInstructions += TTI.getUserCost(I);
         DeadInstructions.insert(I);
