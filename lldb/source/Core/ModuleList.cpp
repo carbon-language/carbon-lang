@@ -1162,3 +1162,15 @@ ModuleList::LoadScriptingResourcesInTarget (Target *target,
     }
     return errors.size() == 0;
 }
+
+void
+ModuleList::ForEach (std::function <bool (const ModuleSP &module_sp)> const &callback) const
+{
+    Mutex::Locker locker(m_modules_mutex);
+    for (const auto &module : m_modules)
+    {
+        // If the callback returns false, then stop iterating and break out
+        if (!callback (module))
+            break;
+    }
+}

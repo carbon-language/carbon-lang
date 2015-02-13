@@ -12,6 +12,7 @@
 
 #include <vector>
 #include <list>
+#include <functional>
 
 #include "lldb/lldb-private.h"
 #include "lldb/Host/Mutex.h"
@@ -561,6 +562,9 @@ public:
     
     static bool
     RemoveSharedModuleIfOrphaned (const Module *module_ptr);
+
+    void
+    ForEach (std::function <bool (const lldb::ModuleSP &module_sp)> const &callback) const;
 
 protected:
     //------------------------------------------------------------------
