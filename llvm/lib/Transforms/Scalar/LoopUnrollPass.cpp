@@ -472,8 +472,6 @@ public:
         Instruction *UI = dyn_cast<Instruction>(U);
         if (!UI)
           continue;
-        if (!L->contains(UI))
-          continue;
         Worklist.insert(UI);
       }
     }
@@ -483,13 +481,13 @@ public:
     // its users as well.
     while (!Worklist.empty()) {
       Instruction *I = Worklist.pop_back_val();
+      if (!L->contains(I))
+        continue;
       if (!visit(I))
         continue;
       for (User *U : I->users()) {
         Instruction *UI = dyn_cast<Instruction>(U);
         if (!UI)
-          continue;
-        if (!L->contains(UI))
           continue;
         Worklist.insert(UI);
       }
