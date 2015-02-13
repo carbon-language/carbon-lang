@@ -385,7 +385,8 @@ namespace llvm {
     bool ParseGlobalValueVector(SmallVectorImpl<Constant *> &Elts);
     bool parseOptionalComdat(StringRef GlobalName, Comdat *&C);
     bool ParseMetadataAsValue(Value *&V, PerFunctionState &PFS);
-    bool ParseValueAsMetadata(Metadata *&MD, PerFunctionState *PFS);
+    bool ParseValueAsMetadata(Metadata *&MD, const Twine &TypeMsg,
+                              PerFunctionState *PFS);
     bool ParseMetadata(Metadata *&MD, PerFunctionState *PFS);
     bool ParseMDTuple(MDNode *&MD, bool IsDistinct = false);
     bool ParseMDNode(MDNode *&MD);

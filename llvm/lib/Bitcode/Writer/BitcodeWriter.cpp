@@ -949,11 +949,35 @@ static void WriteMDCompileUnit(const MDCompileUnit *N,
   Record.clear();
 }
 
-static void WriteMDSubprogram(const MDSubprogram *, const ValueEnumerator &,
-                              BitstreamWriter &, SmallVectorImpl<uint64_t> &,
-                              unsigned) {
-  llvm_unreachable("write not implemented");
+static void WriteMDSubprogram(const MDSubprogram *N,
+                               const ValueEnumerator &VE,
+                               BitstreamWriter &Stream,
+                               SmallVectorImpl<uint64_t> &Record,
+                               unsigned Abbrev) {
+  Record.push_back(N->isDistinct());
+  Record.push_back(VE.getMetadataOrNullID(N->getScope()));
+  Record.push_back(VE.getMetadataOrNullID(N->getRawName()));
+  Record.push_back(VE.getMetadataOrNullID(N->getRawLinkageName()));
+  Record.push_back(VE.getMetadataOrNullID(N->getFile()));
+  Record.push_back(N->getLine());
+  Record.push_back(VE.getMetadataOrNullID(N->getType()));
+  Record.push_back(N->isLocalToUnit());
+  Record.push_back(N->isDefinition());
+  Record.push_back(N->getScopeLine());
+  Record.push_back(VE.getMetadataOrNullID(N->getContainingType()));
+  Record.push_back(N->getVirtuality());
+  Record.push_back(N->getVirtualIndex());
+  Record.push_back(N->getFlags());
+  Record.push_back(N->isOptimized());
+  Record.push_back(VE.getMetadataOrNullID(N->getFunction()));
+  Record.push_back(VE.getMetadataOrNullID(N->getTemplateParams()));
+  Record.push_back(VE.getMetadataOrNullID(N->getDeclaration()));
+  Record.push_back(VE.getMetadataOrNullID(N->getVariables()));
+
+  Stream.EmitRecord(bitc::METADATA_SUBPROGRAM, Record, Abbrev);
+  Record.clear();
 }
+
 static void WriteMDLexicalBlock(const MDLexicalBlock *, const ValueEnumerator &,
                                 BitstreamWriter &, SmallVectorImpl<uint64_t> &,
                                 unsigned) {

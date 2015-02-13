@@ -2969,6 +2969,9 @@ struct MDBoolField : public MDFieldImpl<bool> {
 struct MDField : public MDFieldImpl<Metadata *> {
   MDField() : ImplTy(nullptr) {}
 };
+struct MDConstant : public MDFieldImpl<ConstantAsMetadata *> {
+  MDConstant() : ImplTy(nullptr) {}
+};
 struct MDStringField : public MDFieldImpl<std::string> {
   MDStringField() : ImplTy(std::string()) {}
 };
@@ -3098,11 +3101,27 @@ bool LLParser::ParseMDField(LocTy Loc, StringRef Name, MDBoolField &Result) {
 
 template <>
 bool LLParser::ParseMDField(LocTy Loc, StringRef Name, MDField &Result) {
+  if (Lex.getKind() == lltok::kw_null) {
+    Lex.Lex();
+    Result.assign(nullptr);
+    return false;
+  }
+
   Metadata *MD;
   if (ParseMetadata(MD, nullptr))
     return true;
 
   Result.assign(MD);
+  return false;
+}
+
+template <>
+bool LLParser::ParseMDField(LocTy Loc, StringRef Name, MDConstant &Result) {
+  Metadata *MD;
+  if (ParseValueAsMetadata(MD, "expected constant", nullptr))
+    return true;
+
+  Result.assign(cast<ConstantAsMetadata>(MD));
   return false;
 }
 
@@ -3385,9 +3404,45 @@ bool LLParser::ParseMDCompileUnit(MDNode *&Result, bool IsDistinct) {
   return false;
 }
 
+/// ParseMDSubprogram:
+///   ::= !MDSubprogram(scope: !0, name: "foo", linkageName: "_Zfoo",
+///                     file: !1, line: 7, type: !2, isLocal: false,
+///                     isDefinition: true, scopeLine: 8, containingType: !3,
+///                     virtuality: 2, virtualIndex: 10, flags: 11,
+///                     isOptimized: false, function: void ()* @_Z3foov,
+///                     templateParams: !4, declaration: !5, variables: !6)
 bool LLParser::ParseMDSubprogram(MDNode *&Result, bool IsDistinct) {
-  return TokError("unimplemented parser");
+#define VISIT_MD_FIELDS(OPTIONAL, REQUIRED)                                    \
+  OPTIONAL(scope, MDField, );                                                  \
+  REQUIRED(name, MDStringField, );                                             \
+  OPTIONAL(linkageName, MDStringField, );                                      \
+  OPTIONAL(file, MDField, );                                                   \
+  OPTIONAL(line, LineField, );                                                 \
+  OPTIONAL(type, MDField, );                                                   \
+  OPTIONAL(isLocal, MDBoolField, );                                            \
+  OPTIONAL(isDefinition, MDBoolField, (true));                                 \
+  OPTIONAL(scopeLine, LineField, );                                            \
+  OPTIONAL(containingType, MDField, );                                         \
+  OPTIONAL(virtuality, MDUnsignedField, (0, dwarf::DW_VIRTUALITY_max));        \
+  OPTIONAL(virtualIndex, MDUnsignedField, (0, UINT32_MAX));                    \
+  OPTIONAL(flags, MDUnsignedField, (0, UINT32_MAX));                           \
+  OPTIONAL(isOptimized, MDBoolField, );                                        \
+  OPTIONAL(function, MDConstant, );                                            \
+  OPTIONAL(templateParams, MDField, );                                         \
+  OPTIONAL(declaration, MDField, );                                            \
+  OPTIONAL(variables, MDField, );
+  PARSE_MD_FIELDS();
+#undef VISIT_MD_FIELDS
+
+  Result = GET_OR_DISTINCT(
+      MDSubprogram, (Context, scope.Val, name.Val, linkageName.Val, file.Val,
+                     line.Val, type.Val, isLocal.Val, isDefinition.Val,
+                     scopeLine.Val, containingType.Val, virtuality.Val,
+                     virtualIndex.Val, flags.Val, isOptimized.Val, function.Val,
+                     templateParams.Val, declaration.Val, variables.Val));
+  return false;
 }
+
 bool LLParser::ParseMDLexicalBlock(MDNode *&Result, bool IsDistinct) {
   return TokError("unimplemented parser");
 }
@@ -3444,10 +3499,11 @@ bool LLParser::ParseMetadataAsValue(Value *&V, PerFunctionState &PFS) {
 ///  ::= i32 %local
 ///  ::= i32 @global
 ///  ::= i32 7
-bool LLParser::ParseValueAsMetadata(Metadata *&MD, PerFunctionState *PFS) {
+bool LLParser::ParseValueAsMetadata(Metadata *&MD, const Twine &TypeMsg,
+                                    PerFunctionState *PFS) {
   Type *Ty;
   LocTy Loc;
-  if (ParseType(Ty, "expected metadata operand", Loc))
+  if (ParseType(Ty, TypeMsg, Loc))
     return true;
   if (Ty->isMetadataTy())
     return Error(Loc, "invalid metadata-value-metadata roundtrip");
@@ -3480,7 +3536,7 @@ bool LLParser::ParseMetadata(Metadata *&MD, PerFunctionState *PFS) {
   // ValueAsMetadata:
   // <type> <value>
   if (Lex.getKind() != lltok::exclaim)
-    return ParseValueAsMetadata(MD, PFS);
+    return ParseValueAsMetadata(MD, "expected metadata operand", PFS);
 
   // '!'.
   assert(Lex.getKind() == lltok::exclaim && "Expected '!' here");

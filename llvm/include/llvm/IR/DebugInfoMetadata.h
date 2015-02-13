@@ -957,6 +957,9 @@ public:
   StringRef getDisplayName() const { return getStringOperand(3); }
   StringRef getLinkageName() const { return getStringOperand(4); }
 
+  MDString *getRawName() const { return getOperandAs<MDString>(2); }
+  MDString *getRawLinkageName() const { return getOperandAs<MDString>(4); }
+
   Metadata *getType() const { return getOperand(5); }
   Metadata *getContainingType() const { return getOperand(6); }
 

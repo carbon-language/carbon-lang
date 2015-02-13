@@ -1557,10 +1557,67 @@ static void writeMDCompileUnit(raw_ostream &Out, const MDCompileUnit *N,
   Out << ")";
 }
 
-static void writeMDSubprogram(raw_ostream &, const MDSubprogram *,
-                              TypePrinting *, SlotTracker *, const Module *) {
-  llvm_unreachable("write not implemented");
+static void writeMDSubprogram(raw_ostream &Out, const MDSubprogram *N,
+                              TypePrinting *TypePrinter, SlotTracker *Machine,
+                              const Module *Context) {
+  Out << "!MDSubprogram(";
+  FieldSeparator FS;
+  Out << FS << "scope: ";
+  writeMetadataAsOperand(Out, N->getScope(), TypePrinter, Machine, Context);
+  Out << FS << "name: \"" << N->getName() << "\"";
+  if (!N->getLinkageName().empty())
+    Out << FS << "linkageName: \"" << N->getLinkageName() << "\"";
+  if (N->getFile()) {
+    Out << FS << "file: ";
+    writeMetadataAsOperand(Out, N->getFile(), TypePrinter, Machine,
+                           Context);
+  }
+  if (N->getLine())
+    Out << FS << "line: " << N->getLine();
+  if (N->getType()) {
+    Out << FS << "type: ";
+    writeMetadataAsOperand(Out, N->getType(), TypePrinter, Machine,
+                           Context);
+  }
+  Out << FS << "isLocal: " << (N->isLocalToUnit() ? "true" : "false");
+  Out << FS << "isDefinition: " << (N->isDefinition() ? "true" : "false");
+  if (N->getScopeLine())
+    Out << FS << "scopeLine: " << N->getScopeLine();
+  if (N->getContainingType()) {
+    Out << FS << "containingType: ";
+    writeMetadataAsOperand(Out, N->getContainingType(), TypePrinter, Machine,
+                           Context);
+  }
+  if (N->getVirtuality())
+    Out << FS << "virtuality: " << N->getVirtuality();
+  if (N->getVirtualIndex())
+    Out << FS << "virtualIndex: " << N->getVirtualIndex();
+  if (N->getFlags())
+    Out << FS << "flags: " << N->getFlags();
+  Out << FS << "isOptimized: " << (N->isOptimized() ? "true" : "false");
+  if (N->getFunction()) {
+    Out << FS << "function: ";
+    writeMetadataAsOperand(Out, N->getFunction(), TypePrinter, Machine,
+                           Context);
+  }
+  if (N->getTemplateParams()) {
+    Out << FS << "templateParams: ";
+    writeMetadataAsOperand(Out, N->getTemplateParams(), TypePrinter, Machine,
+                           Context);
+  }
+  if (N->getDeclaration()) {
+    Out << FS << "declaration: ";
+    writeMetadataAsOperand(Out, N->getDeclaration(), TypePrinter, Machine,
+                           Context);
+  }
+  if (N->getVariables()) {
+    Out << FS << "variables: ";
+    writeMetadataAsOperand(Out, N->getVariables(), TypePrinter, Machine,
+                           Context);
+  }
+  Out << ")";
 }
+
 static void writeMDLexicalBlock(raw_ostream &, const MDLexicalBlock *,
                                 TypePrinting *, SlotTracker *, const Module *) {
   llvm_unreachable("write not implemented");
