@@ -69,10 +69,13 @@ get_temp_file_name()
     std::string Name;
     int FD = -1;
     do {
-      Name = "libcxx.XXXXXX";
-      FD = mkstemp(&Name[0]);
-      assert(errno != EINVAL && "Something is wrong with the mkstemp's argument");
-    } while (FD == -1 || errno == EEXIST);
+        Name = "libcxx.XXXXXX";
+        FD = mkstemp(&Name[0]);
+        if (FD == -1 && errno == EINVAL) {
+            perror("mkstemp");
+            abort();
+        }
+    } while (FD == -1);
     close(FD);
     return Name;
 #endif
