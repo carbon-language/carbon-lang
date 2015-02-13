@@ -461,13 +461,13 @@ public:
     NumberOfOptimizedInstructions = 0;
 
     // We start by adding all loads to the worklist.
-    for (auto LoadDescr : LoadBaseAddresses) {
+    for (auto &LoadDescr : LoadBaseAddresses) {
       LoadInst *LI = LoadDescr.first;
       SimplifiedValues[LI] = computeLoadValue(LI, Iteration);
       if (CountedInstructions.insert(LI).second)
         NumberOfOptimizedInstructions += TTI.getUserCost(LI);
 
-      for (auto U : LI->users()) {
+      for (User *U : LI->users()) {
         Instruction *UI = dyn_cast<Instruction>(U);
         if (!UI)
           continue;
@@ -484,7 +484,7 @@ public:
       Instruction *I = Worklist.pop_back_val();
       if (!visit(I))
         continue;
-      for (auto U : I->users()) {
+      for (User *U : I->users()) {
         Instruction *UI = dyn_cast<Instruction>(U);
         if (!UI)
           continue;
@@ -504,8 +504,8 @@ public:
     SmallPtrSet<Instruction *, 16> DeadInstructions;
 
     // Start by initializing worklist with simplified instructions.
-    for (auto Folded : SimplifiedValues)
-      if (auto FoldedInst = dyn_cast<Instruction>(Folded.first)) {
+    for (auto &FoldedKeyValue : SimplifiedValues)
+      if (auto *FoldedInst = dyn_cast<Instruction>(FoldedKeyValue.first)) {
         Worklist.push_back(FoldedInst);
         DeadInstructions.insert(FoldedInst);
       }
@@ -516,7 +516,7 @@ public:
     while (!Worklist.empty()) {
       Instruction *FoldedInst = Worklist.pop_back_val();
       for (Value *Op : FoldedInst->operands()) {
-        if (auto I = dyn_cast<Instruction>(Op)) {
+        if (auto *I = dyn_cast<Instruction>(Op)) {
           if (!L->contains(I))
             continue;
           if (SimplifiedValues[I])
@@ -524,7 +524,7 @@ public:
           if (I->getNumUses() == 0)
             continue;
           bool AllUsersFolded = true;
-          for (auto U : I->users()) {
+          for (User *U : I->users()) {
             Instruction *UI = dyn_cast<Instruction>(U);
             if (!SimplifiedValues[UI] && !DeadInstructions.count(UI)) {
               AllUsersFolded = false;
