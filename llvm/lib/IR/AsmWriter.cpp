@@ -1802,10 +1802,31 @@ static void writeMDExpression(raw_ostream &Out, const MDExpression *N,
   Out << ")";
 }
 
-static void writeMDObjCProperty(raw_ostream &, const MDObjCProperty *,
-                                TypePrinting *, SlotTracker *, const Module *) {
-  llvm_unreachable("write not implemented");
+static void writeMDObjCProperty(raw_ostream &Out, const MDObjCProperty *N,
+                                TypePrinting *TypePrinter, SlotTracker *Machine,
+                                const Module *Context) {
+  Out << "!MDObjCProperty(";
+  FieldSeparator FS;
+  Out << FS << "name: \"" << N->getName() << "\"";
+  if (N->getFile()) {
+    Out << FS << "file: ";
+    writeMetadataAsOperand(Out, N->getFile(), TypePrinter, Machine, Context);
+  }
+  if (N->getLine())
+    Out << FS << "line: " << N->getLine();
+  if (!N->getSetterName().empty())
+    Out << FS << "setter: \"" << N->getSetterName() << "\"";
+  if (!N->getGetterName().empty())
+    Out << FS << "getter: \"" << N->getGetterName() << "\"";
+  if (N->getAttributes())
+    Out << FS << "attributes: " << N->getAttributes();
+  if (N->getType()) {
+    Out << FS << "type: ";
+    writeMetadataAsOperand(Out, N->getType(), TypePrinter, Machine, Context);
+  }
+  Out << ")";
 }
+
 static void writeMDImportedEntity(raw_ostream &, const MDImportedEntity *,
                                   TypePrinting *, SlotTracker *,
                                   const Module *) {

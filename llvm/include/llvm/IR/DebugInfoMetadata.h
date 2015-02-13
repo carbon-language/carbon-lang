@@ -1570,6 +1570,10 @@ public:
   StringRef getSetterName() const { return getStringOperand(3); }
   Metadata *getType() const { return getOperand(4); }
 
+  MDString *getRawName() const { return getOperandAs<MDString>(0); }
+  MDString *getRawGetterName() const { return getOperandAs<MDString>(2); }
+  MDString *getRawSetterName() const { return getOperandAs<MDString>(3); }
+
   static bool classof(const Metadata *MD) {
     return MD->getMetadataID() == MDObjCPropertyKind;
   }

@@ -3637,9 +3637,27 @@ bool LLParser::ParseMDExpression(MDNode *&Result, bool IsDistinct) {
   return false;
 }
 
+/// ParseMDObjCProperty:
+///   ::= !MDObjCProperty(name: "foo", file: !1, line: 7, setter: "setFoo",
+///                       getter: "getFoo", attributes: 7, type: !2)
 bool LLParser::ParseMDObjCProperty(MDNode *&Result, bool IsDistinct) {
-  return TokError("unimplemented parser");
+#define VISIT_MD_FIELDS(OPTIONAL, REQUIRED)                                    \
+  REQUIRED(name, MDStringField, );                                             \
+  OPTIONAL(file, MDField, );                                                   \
+  OPTIONAL(line, LineField, );                                                 \
+  OPTIONAL(setter, MDStringField, );                                           \
+  OPTIONAL(getter, MDStringField, );                                           \
+  OPTIONAL(attributes, MDUnsignedField, (0, UINT32_MAX));                      \
+  OPTIONAL(type, MDField, );
+  PARSE_MD_FIELDS();
+#undef VISIT_MD_FIELDS
+
+  Result = GET_OR_DISTINCT(MDObjCProperty,
+                           (Context, name.Val, file.Val, line.Val, setter.Val,
+                            getter.Val, attributes.Val, type.Val));
+  return false;
 }
+
 bool LLParser::ParseMDImportedEntity(MDNode *&Result, bool IsDistinct) {
   return TokError("unimplemented parser");
 }

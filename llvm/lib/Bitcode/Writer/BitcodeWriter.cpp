@@ -1106,11 +1106,24 @@ static void WriteMDExpression(const MDExpression *N, const ValueEnumerator &,
   Record.clear();
 }
 
-static void WriteMDObjCProperty(const MDObjCProperty *, const ValueEnumerator &,
-                                BitstreamWriter &, SmallVectorImpl<uint64_t> &,
-                                unsigned) {
-  llvm_unreachable("write not implemented");
+static void WriteMDObjCProperty(const MDObjCProperty *N,
+                                 const ValueEnumerator &VE,
+                                 BitstreamWriter &Stream,
+                                 SmallVectorImpl<uint64_t> &Record,
+                                 unsigned Abbrev) {
+  Record.push_back(N->isDistinct());
+  Record.push_back(VE.getMetadataOrNullID(N->getRawName()));
+  Record.push_back(VE.getMetadataOrNullID(N->getFile()));
+  Record.push_back(N->getLine());
+  Record.push_back(VE.getMetadataOrNullID(N->getRawSetterName()));
+  Record.push_back(VE.getMetadataOrNullID(N->getRawGetterName()));
+  Record.push_back(N->getAttributes());
+  Record.push_back(VE.getMetadataOrNullID(N->getType()));
+
+  Stream.EmitRecord(bitc::METADATA_OBJC_PROPERTY, Record, Abbrev);
+  Record.clear();
 }
+
 static void WriteMDImportedEntity(const MDImportedEntity *,
                                   const ValueEnumerator &, BitstreamWriter &,
                                   SmallVectorImpl<uint64_t> &, unsigned) {
