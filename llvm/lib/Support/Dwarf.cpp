@@ -247,6 +247,13 @@ const char *llvm::dwarf::OperationEncodingString(unsigned Encoding) {
   }
 }
 
+unsigned llvm::dwarf::getOperationEncoding(StringRef OperationEncodingString) {
+  return StringSwitch<unsigned>(OperationEncodingString)
+#define HANDLE_DW_OP(ID, NAME) .Case("DW_OP_" #NAME, DW_OP_##NAME)
+#include "llvm/Support/Dwarf.def"
+      .Default(0);
+}
+
 const char *llvm::dwarf::AttributeEncodingString(unsigned Encoding) {
   switch (Encoding) {
   default: return nullptr;

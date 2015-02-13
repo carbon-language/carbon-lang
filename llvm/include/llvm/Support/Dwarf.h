@@ -590,6 +590,7 @@ const char *GDBIndexEntryLinkageString(GDBIndexEntryLinkage Linkage);
 ///
 /// @{
 unsigned getTag(StringRef TagString);
+unsigned getOperationEncoding(StringRef OperationEncodingString);
 unsigned getVirtuality(StringRef VirtualityString);
 unsigned getLanguage(StringRef LanguageString);
 unsigned getAttributeEncoding(StringRef EncodingString);

@@ -42,6 +42,20 @@ TEST(DwarfTest, getTag) {
   EXPECT_EQ(DW_TAG_invalid, getTag("DW_TAG_user_base"));
 }
 
+TEST(DwarfTest, getOperationEncoding) {
+  // Some valid ops.
+  EXPECT_EQ(DW_OP_deref, getOperationEncoding("DW_OP_deref"));
+  EXPECT_EQ(DW_OP_bit_piece, getOperationEncoding("DW_OP_bit_piece"));
+
+  // Invalid ops.
+  EXPECT_EQ(0u, getOperationEncoding("DW_OP_otherthings"));
+  EXPECT_EQ(0u, getOperationEncoding("other"));
+
+  // Markers shouldn't be recognized.
+  EXPECT_EQ(0u, getOperationEncoding("DW_OP_lo_user"));
+  EXPECT_EQ(0u, getOperationEncoding("DW_OP_hi_user"));
+}
+
 TEST(DwarfTest, LanguageStringOnInvalid) {
   // This is invalid, so it shouldn't be stringified.
   EXPECT_EQ(nullptr, LanguageString(0));
