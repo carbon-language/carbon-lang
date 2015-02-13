@@ -1042,6 +1042,7 @@ CMIDriver::InterpretCommandThisDriver(const CMIUtilString &vTextLine, bool &vwbC
     const CMICmnMIValueResult valueResult("msg", vconst);
     const CMICmnMIResultRecord miResultRecord(cmdData.strMiCmdToken, CMICmnMIResultRecord::eResultClass_Error, valueResult);
     m_rStdOut.WriteMIResponse(miResultRecord.GetString());
+    m_rStdOut.WriteMIResponse("(gdb)");
 
     // Proceed to wait for or execute next command
     return MIstatus::success;
