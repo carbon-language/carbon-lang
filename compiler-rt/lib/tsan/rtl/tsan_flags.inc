@@ -63,7 +63,7 @@ TSAN_FLAG(bool, stop_on_start, false,
 TSAN_FLAG(bool, running_on_valgrind, false,
           "Controls whether RunningOnValgrind() returns true or false.")
 TSAN_FLAG(
-    int, history_size, kGoMode ? 1 : 2, // There are a lot of goroutines in Go.
+    int, history_size, kGoMode ? 1 : 3, // There are a lot of goroutines in Go.
     "Per-thread history size, controls how many previous memory accesses "
     "are remembered per thread.  Possible values are [0..7]. "
     "history_size=0 amounts to 32K memory accesses.  Each next value doubles "
