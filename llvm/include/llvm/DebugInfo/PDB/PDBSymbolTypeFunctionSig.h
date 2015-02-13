@@ -24,7 +24,12 @@ public:
 
   DECLARE_PDB_SYMBOL_CONCRETE_TYPE(PDB_SymType::FunctionSig)
 
+  std::unique_ptr<PDBSymbol> getReturnType() const;
+  std::unique_ptr<IPDBEnumSymbols> getArguments() const;
+  std::unique_ptr<PDBSymbol> getClassParent() const;
+
   void dump(raw_ostream &OS, int Indent, PDB_DumpLevel Level) const override;
+  void dumpArgList(raw_ostream &OS) const;
 
   FORWARD_SYMBOL_METHOD(getCallingConvention)
   FORWARD_SYMBOL_METHOD(getClassParentId)

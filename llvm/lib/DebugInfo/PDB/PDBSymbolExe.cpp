@@ -47,6 +47,26 @@ void PDBSymbolExe::dump(raw_ostream &OS, int Indent,
   auto ChildrenEnum = getChildStats(Stats);
   OS << stream_indent(Indent + 2) << "Children: " << Stats << "\n";
   while (auto Child = ChildrenEnum->getNext()) {
+    // Skip uninteresting types.  These are useful to print as part of type
+    // hierarchies, but as general children of the global scope, they are
+    // not very interesting.
+    switch (Child->getSymTag()) {
+    case PDB_SymType::ArrayType:
+    case PDB_SymType::BaseClass:
+    case PDB_SymType::BuiltinType:
+    case PDB_SymType::CompilandEnv:
+    case PDB_SymType::CustomType:
+    case PDB_SymType::Dimension:
+    case PDB_SymType::Friend:
+    case PDB_SymType::ManagedType:
+    case PDB_SymType::VTableShape:
+    case PDB_SymType::PointerType:
+    case PDB_SymType::FunctionSig:
+    case PDB_SymType::FunctionArg:
+      continue;
+    default:
+      break;
+    }
     Child->dump(OS, Indent + 4, PDB_DumpLevel::Normal);
     OS << "\n";
   }

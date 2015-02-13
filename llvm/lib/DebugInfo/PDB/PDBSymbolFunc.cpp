@@ -23,6 +23,10 @@ PDBSymbolFunc::PDBSymbolFunc(const IPDBSession &PDBSession,
                              std::unique_ptr<IPDBRawSymbol> Symbol)
     : PDBSymbol(PDBSession, std::move(Symbol)) {}
 
+std::unique_ptr<PDBSymbolTypeFunctionSig> PDBSymbolFunc::getSignature() const {
+  return Session.getConcreteSymbolById<PDBSymbolTypeFunctionSig>(getTypeId());
+}
+
 void PDBSymbolFunc::dump(raw_ostream &OS, int Indent,
                          PDB_DumpLevel Level) const {
   OS << stream_indent(Indent);
@@ -30,7 +34,7 @@ void PDBSymbolFunc::dump(raw_ostream &OS, int Indent,
     uint32_t FuncStart = getRelativeVirtualAddress();
     uint32_t FuncEnd = FuncStart + getLength();
     if (FuncStart == 0 && FuncEnd == 0) {
-      OS << "func [???]";
+      OS << "func [???] ";
     } else {
       OS << "func ";
       OS << "[" << format_hex(FuncStart, 8);
@@ -52,21 +56,34 @@ void PDBSymbolFunc::dump(raw_ostream &OS, int Indent,
 
     OS << " ";
     uint32_t FuncSigId = getTypeId();
-    if (auto FuncSig = Session.getConcreteSymbolById<PDBSymbolTypeFunctionSig>(
-            FuncSigId)) {
-      OS << "(" << FuncSig->getCallingConvention() << ") ";
-    }
-
-    uint32_t ClassId = getClassParentId();
-    if (ClassId != 0) {
-      if (auto Class = Session.getSymbolById(ClassId)) {
-        if (auto UDT = dyn_cast<PDBSymbolTypeUDT>(Class.get()))
-          OS << UDT->getName() << "::";
-        else
-          OS << "{class " << Class->getSymTag() << "}::";
+    if (auto FuncSig = getSignature()) {
+      // If we have a signature, dump the name with the signature.
+      if (auto ReturnType = FuncSig->getReturnType()) {
+        ReturnType->dump(OS, 0, PDB_DumpLevel::Compact);
+        OS << " ";
       }
+
+      OS << FuncSig->getCallingConvention() << " ";
+
+      if (auto ClassParent = FuncSig->getClassParent()) {
+        ClassParent->dump(OS, 0, PDB_DumpLevel::Compact);
+        OS << "::";
+      }
+
+      OS << getName();
+      FuncSig->dumpArgList(OS);
+    } else {
+      uint32_t ClassId = getClassParentId();
+      if (ClassId != 0) {
+        if (auto Class = Session.getSymbolById(ClassId)) {
+          if (auto UDT = dyn_cast<PDBSymbolTypeUDT>(Class.get()))
+            OS << UDT->getName() << "::";
+          else
+            OS << "{class " << Class->getSymTag() << "}::";
+        }
+      }
+      OS << getName();
     }
-    OS << getName();
   } else {
     OS << getName();
   }
