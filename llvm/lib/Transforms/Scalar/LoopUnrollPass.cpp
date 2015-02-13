@@ -499,12 +499,12 @@ public:
   unsigned estimateNumberOfDeadInsns() {
     NumberOfOptimizedInstructions = 0;
     SmallVector<Instruction *, 8> Worklist;
-    DenseMap<Instruction *, bool> DeadInstructions;
+    SmallPtrSet<Instruction *, 16> DeadInstructions;
     // Start by initializing worklist with simplified instructions.
     for (auto Folded : SimplifiedValues) {
       if (auto FoldedInsn = dyn_cast<Instruction>(Folded.first)) {
         Worklist.push_back(FoldedInsn);
-        DeadInstructions[FoldedInsn] = true;
+        DeadInstructions.insert(FoldedInsn);
       }
     }
     // If a definition of an insn is only used by simplified or dead
@@ -523,7 +523,7 @@ public:
           bool AllUsersFolded = true;
           for (auto U : I->users()) {
             Instruction *UI = dyn_cast<Instruction>(U);
-            if (!SimplifiedValues[UI] && !DeadInstructions[UI]) {
+            if (!SimplifiedValues[UI] && !DeadInstructions.count(UI)) {
               AllUsersFolded = false;
               break;
             }
@@ -531,7 +531,7 @@ public:
           if (AllUsersFolded) {
             NumberOfOptimizedInstructions += TTI.getUserCost(I);
             Worklist.push_back(I);
-            DeadInstructions[I] = true;
+            DeadInstructions.insert(I);
           }
         }
       }
