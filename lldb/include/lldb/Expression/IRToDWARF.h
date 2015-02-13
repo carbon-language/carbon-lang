@@ -11,7 +11,7 @@
 #define liblldb_IRToDWARF_h_
 
 #include "llvm/Pass.h"
-#include "llvm/PassManager.h"
+#include "llvm/IR/LegacyPassManager.h"
 
 #include "lldb/lldb-public.h"
 
