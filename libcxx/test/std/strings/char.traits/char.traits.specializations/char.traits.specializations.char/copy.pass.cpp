@@ -24,4 +24,6 @@ int main()
     assert(s2[0] == char(1));
     assert(s2[1] == char(2));
     assert(s2[2] == char(3));
+    assert(std::char_traits<char>::copy(NULL, s1, 0) == NULL);
+    assert(std::char_traits<char>::copy(s1, NULL, 0) == s1);
 }

@@ -24,4 +24,5 @@ int main()
     assert(s2[0] == char(5));
     assert(s2[1] == char(5));
     assert(s2[2] == char(5));
+    assert(std::char_traits<char>::assign(NULL, 0, char(5)) == NULL);
 }

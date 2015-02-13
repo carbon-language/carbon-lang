@@ -28,4 +28,6 @@ int main()
     assert(s1[0] == char(2));
     assert(s1[1] == char(2));
     assert(s1[2] == char(3));
+    assert(std::char_traits<char>::move(NULL, s1, 0) == NULL);
+    assert(std::char_traits<char>::move(s1, NULL, 0) == s1);
 }

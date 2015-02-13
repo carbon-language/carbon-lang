@@ -24,4 +24,5 @@ int main()
     assert(s2[0] == wchar_t(5));
     assert(s2[1] == wchar_t(5));
     assert(s2[2] == wchar_t(5));
+    assert(std::char_traits<wchar_t>::assign(NULL, 0, wchar_t(5)) == NULL);
 }

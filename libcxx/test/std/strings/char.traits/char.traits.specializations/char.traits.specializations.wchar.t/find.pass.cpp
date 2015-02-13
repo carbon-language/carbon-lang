@@ -24,4 +24,5 @@ int main()
     assert(std::char_traits<wchar_t>::find(s1, 3, wchar_t(3)) == s1+2);
     assert(std::char_traits<wchar_t>::find(s1, 3, wchar_t(4)) == 0);
     assert(std::char_traits<wchar_t>::find(s1, 3, wchar_t(0)) == 0);
+    assert(std::char_traits<wchar_t>::find(NULL, 0, wchar_t(0)) == 0);
 }

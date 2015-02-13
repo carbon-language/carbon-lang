@@ -639,16 +639,16 @@ struct _LIBCPP_TYPE_VIS_ONLY char_traits<char>
         {return __n == 0 ? 0 : memcmp(__s1, __s2, __n);}
     static inline size_t length(const char_type* __s) {return strlen(__s);}
     static inline const char_type* find(const char_type* __s, size_t __n, const char_type& __a)
-        {return (const char_type*)memchr(__s, to_int_type(__a), __n);}
+        {return __n == 0 ? NULL : (const char_type*) memchr(__s, to_int_type(__a), __n);}
     static inline char_type* move(char_type* __s1, const char_type* __s2, size_t __n)
-        {return (char_type*)memmove(__s1, __s2, __n);}
+        {return __n == 0 ? __s1 : (char_type*) memmove(__s1, __s2, __n);}
     static inline char_type* copy(char_type* __s1, const char_type* __s2, size_t __n)
         {
             _LIBCPP_ASSERT(__s2 < __s1 || __s2 >= __s1+__n, "char_traits::copy overlapped range");
-            return (char_type*)memcpy(__s1, __s2, __n);
+            return __n == 0 ? __s1 : (char_type*)memcpy(__s1, __s2, __n);
         }
     static inline char_type* assign(char_type* __s, size_t __n, char_type __a)
-        {return (char_type*)memset(__s, to_int_type(__a), __n);}
+        {return __n == 0 ? __s : (char_type*)memset(__s, to_int_type(__a), __n);}
 
     static inline _LIBCPP_CONSTEXPR int_type  not_eof(int_type __c) _NOEXCEPT
         {return eq_int_type(__c, eof()) ? ~eof() : __c;}
@@ -685,16 +685,16 @@ struct _LIBCPP_TYPE_VIS_ONLY char_traits<wchar_t>
     static inline size_t length(const char_type* __s)
         {return wcslen(__s);}
     static inline const char_type* find(const char_type* __s, size_t __n, const char_type& __a)
-        {return (const char_type*)wmemchr(__s, __a, __n);}
+        {return __n == 0 ? NULL : (const char_type*)wmemchr(__s, __a, __n);}
     static inline char_type* move(char_type* __s1, const char_type* __s2, size_t __n)
-        {return (char_type*)wmemmove(__s1, __s2, __n);}
+        {return __n == 0 ? __s1 : (char_type*)wmemmove(__s1, __s2, __n);}
     static inline char_type* copy(char_type* __s1, const char_type* __s2, size_t __n)
         {
             _LIBCPP_ASSERT(__s2 < __s1 || __s2 >= __s1+__n, "char_traits::copy overlapped range");
-            return (char_type*)wmemcpy(__s1, __s2, __n);
+            return __n == 0 ? __s1 : (char_type*)wmemcpy(__s1, __s2, __n);
         }
     static inline char_type* assign(char_type* __s, size_t __n, char_type __a)
-        {return (char_type*)wmemset(__s, __a, __n);}
+        {return __n == 0 ? __s : (char_type*)wmemset(__s, __a, __n);}
 
     static inline _LIBCPP_CONSTEXPR int_type  not_eof(int_type __c) _NOEXCEPT
         {return eq_int_type(__c, eof()) ? ~eof() : __c;}

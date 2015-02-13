@@ -25,5 +25,6 @@ int main()
     assert(s2[0] == char32_t(5));
     assert(s2[1] == char32_t(5));
     assert(s2[2] == char32_t(5));
+    assert(std::char_traits<char32_t>::assign(NULL, 0, char32_t(5)) == NULL);
 #endif  // _LIBCPP_HAS_NO_UNICODE_CHARS
 }

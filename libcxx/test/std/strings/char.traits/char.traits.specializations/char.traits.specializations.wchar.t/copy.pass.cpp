@@ -24,4 +24,6 @@ int main()
     assert(s2[0] == wchar_t(1));
     assert(s2[1] == wchar_t(2));
     assert(s2[2] == wchar_t(3));
+    assert(std::char_traits<wchar_t>::copy(NULL, s1, 0) == NULL);
+    assert(std::char_traits<wchar_t>::copy(s1, NULL, 0) == s1);
 }

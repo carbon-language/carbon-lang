@@ -28,4 +28,6 @@ int main()
     assert(s1[0] == wchar_t(2));
     assert(s1[1] == wchar_t(2));
     assert(s1[2] == wchar_t(3));
+    assert(std::char_traits<wchar_t>::move(NULL, s1, 0) == NULL);
+    assert(std::char_traits<wchar_t>::move(s1, NULL, 0) == s1);
 }
