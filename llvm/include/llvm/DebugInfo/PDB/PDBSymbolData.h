@@ -49,7 +49,7 @@ public:
   FORWARD_SYMBOL_METHOD(getToken)
   FORWARD_SYMBOL_METHOD(getTypeId)
   FORWARD_SYMBOL_METHOD(isUnalignedType)
-  // FORWARD_SYMBOL_METHOD(getValue)
+  FORWARD_SYMBOL_METHOD(getValue)
   FORWARD_SYMBOL_METHOD(getVirtualAddress)
   FORWARD_SYMBOL_METHOD(isVolatileType)
 };

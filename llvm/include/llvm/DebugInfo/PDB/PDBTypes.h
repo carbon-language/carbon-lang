@@ -433,6 +433,44 @@ struct VersionInfo {
   uint32_t QFE;
 };
 
+enum PDB_VariantType {
+  Empty,
+  Unknown,
+  Int8,
+  Int16,
+  Int32,
+  Int64,
+  Single,
+  Double,
+  UInt8,
+  UInt16,
+  UInt32,
+  UInt64,
+  Bool,
+};
+
+struct Variant {
+  Variant()
+    : Type(PDB_VariantType::Empty) {
+  }
+
+  PDB_VariantType Type;
+  union {
+    bool Bool;
+    int8_t Int8;
+    int16_t Int16;
+    int32_t Int32;
+    int64_t Int64;
+    float Single;
+    double Double;
+    uint8_t UInt8;
+    uint16_t UInt16;
+    uint32_t UInt32;
+    uint64_t UInt64;
+    void* Pointer;
+  };
+};
+
 } // namespace llvm
 
 namespace std {

@@ -106,6 +106,7 @@ public:
   virtual std::string getUndecoratedName() const = 0;
   virtual uint32_t getUnmodifiedTypeId() const = 0;
   virtual uint32_t getUpperBoundId() const = 0;
+  virtual Variant getValue() const = 0;
   virtual uint32_t getVirtualBaseDispIndex() const = 0;
   virtual uint32_t getVirtualBaseOffset() const = 0;
   virtual uint32_t getVirtualTableShapeId() const = 0;
@@ -202,6 +203,8 @@ public:
   virtual bool isVirtualBaseClass() const = 0;
   virtual bool isVirtualInheritance() const = 0;
   virtual bool isVolatileType() const = 0;
+  virtual bool wasInlined() const = 0;
+  virtual std::string getUnused() const = 0;
 };
 
 } // namespace llvm

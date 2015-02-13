@@ -97,6 +97,7 @@ public:
   std::string getUndecoratedName() const override;
   uint32_t getUnmodifiedTypeId() const override;
   uint32_t getUpperBoundId() const override;
+  Variant getValue() const override;
   uint32_t getVirtualBaseDispIndex() const override;
   uint32_t getVirtualBaseOffset() const override;
   uint32_t getVirtualTableShapeId() const override;
@@ -193,6 +194,8 @@ public:
   bool isVirtualBaseClass() const override;
   bool isVirtualInheritance() const override;
   bool isVolatileType() const override;
+  bool wasInlined() const override;
+  std::string getUnused() const override;
 
 private:
   const DIASession &Session;

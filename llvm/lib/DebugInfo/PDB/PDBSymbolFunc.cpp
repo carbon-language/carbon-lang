@@ -10,10 +10,12 @@
 #include <utility>
 
 #include "llvm/DebugInfo/PDB/IPDBEnumChildren.h"
+#include "llvm/DebugInfo/PDB/IPDBSession.h"
 #include "llvm/DebugInfo/PDB/PDBSymbol.h"
 #include "llvm/DebugInfo/PDB/PDBSymbolFunc.h"
 #include "llvm/DebugInfo/PDB/PDBSymbolFuncDebugEnd.h"
 #include "llvm/DebugInfo/PDB/PDBSymbolFuncDebugStart.h"
+#include "llvm/DebugInfo/PDB/PDBSymbolTypeUDT.h"
 
 #include "llvm/Support/Format.h"
 
@@ -25,16 +27,23 @@ PDBSymbolFunc::PDBSymbolFunc(const IPDBSession &PDBSession,
 void PDBSymbolFunc::dump(raw_ostream &OS, int Indent,
                          PDB_DumpLevel Level) const {
   if (Level == PDB_DumpLevel::Compact) {
+    OS << stream_indent(Indent);
+
     uint32_t FuncStart = getRelativeVirtualAddress();
     uint32_t FuncEnd = FuncStart + getLength();
-    OS << stream_indent(Indent);
-    OS << "[" << format_hex(FuncStart, 8);
-    if (auto DebugStart = findOneChild<PDBSymbolFuncDebugStart>())
-      OS << "+" << DebugStart->getRelativeVirtualAddress() - FuncStart;
-    OS << " - " << format_hex(FuncEnd, 8);
-    if (auto DebugEnd = findOneChild<PDBSymbolFuncDebugEnd>())
+    if (FuncStart == 0 && FuncEnd == 0) {
+      OS << "func [???]";
+    } else {
+      OS << "func ";
+      OS << "[" << format_hex(FuncStart, 8);
+      if (auto DebugStart = findOneChild<PDBSymbolFuncDebugStart>())
+        OS << "+" << DebugStart->getRelativeVirtualAddress() - FuncStart;
+      OS << " - " << format_hex(FuncEnd, 8);
+      if (auto DebugEnd = findOneChild<PDBSymbolFuncDebugEnd>())
         OS << "-" << FuncEnd - DebugEnd->getRelativeVirtualAddress();
-    OS << "] ";
+      OS << "] ";
+    }
+
     PDB_RegisterId Reg = getLocalBasePointerRegisterId();
     if (Reg == PDB_RegisterId::VFrame)
       OS << "(VFrame)";
@@ -42,6 +51,18 @@ void PDBSymbolFunc::dump(raw_ostream &OS, int Indent,
       OS << "(" << Reg << ")";
     else
       OS << "(FPO)";
-    OS << " " << getName() << "\n";
+
+    OS << " ";
+    uint32_t ClassId = getClassParentId();
+    if (ClassId != 0) {
+      if (auto Class = Session.getSymbolById(ClassId)) {
+        if (auto UDT = dyn_cast<PDBSymbolTypeUDT>(Class.get()))
+          OS << UDT->getName() << "::";
+        else
+          OS << "{class " << Class->getSymTag() << "}::";
+      }
+    }
+    OS << getName();
+    OS << "\n";
   }
 }

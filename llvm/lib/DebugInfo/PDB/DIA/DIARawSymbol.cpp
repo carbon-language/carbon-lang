@@ -18,6 +18,60 @@
 using namespace llvm;
 
 namespace {
+Variant VariantFromVARIANT(const VARIANT &V) {
+  Variant Result;
+  switch (V.vt) {
+  case VT_I1:
+    Result.Int8 = V.cVal;
+    Result.Type = PDB_VariantType::Int8;
+    break;
+  case VT_I2:
+    Result.Int16 = V.iVal;
+    Result.Type = PDB_VariantType::Int16;
+    break;
+  case VT_I4:
+    Result.Int32 = V.intVal;
+    Result.Type = PDB_VariantType::Int32;
+    break;
+  case VT_I8:
+    Result.Int64 = V.llVal;
+    Result.Type = PDB_VariantType::Int64;
+    break;
+  case VT_UI1:
+    Result.UInt8 = V.bVal;
+    Result.Type = PDB_VariantType::UInt8;
+    break;
+  case VT_UI2:
+    Result.UInt16 = V.uiVal;
+    Result.Type = PDB_VariantType::UInt16;
+    break;
+  case VT_UI4:
+    Result.UInt32 = V.uintVal;
+    Result.Type = PDB_VariantType::UInt32;
+    break;
+  case VT_UI8:
+    Result.UInt64 = V.ullVal;
+    Result.Type = PDB_VariantType::UInt64;
+    break;
+  case VT_BOOL:
+    Result.Bool = (V.boolVal == VARIANT_TRUE) ? true : false;
+    Result.Type = PDB_VariantType::Bool;
+    break;
+  case VT_R4:
+    Result.Single = V.fltVal;
+    Result.Type = PDB_VariantType::Single;
+    break;
+  case VT_R8:
+    Result.Double = V.dblVal;
+    Result.Type = PDB_VariantType::Double;
+    break;
+  default:
+    Result.Type = PDB_VariantType::Unknown;
+    break;
+  }
+  return Result;
+}
+
 template <typename ArgType>
 ArgType PrivateGetDIAValue(IDiaSymbol *Symbol,
                            HRESULT (__stdcall IDiaSymbol::*Method)(ArgType *)) {
@@ -92,6 +146,18 @@ void DumpDIAValue(llvm::raw_ostream &OS, int Indent, StringRef Name,
     OS << Name << ": " << Result << "\n";
   }
   ::SysFreeString(Value);
+}
+
+void DumpDIAValue(llvm::raw_ostream &OS, int Indent, StringRef Name,
+                  IDiaSymbol *Symbol,
+                  HRESULT (__stdcall IDiaSymbol::*Method)(VARIANT *)) {
+  VARIANT Value;
+  Value.vt = VT_EMPTY;
+  if (S_OK != (Symbol->*Method)(&Value))
+    return;
+  Variant V = VariantFromVARIANT(Value);
+  OS.indent(Indent);
+  OS << V;
 }
 }
 
@@ -276,6 +342,9 @@ void DIARawSymbol::dump(raw_ostream &OS, int Indent,
   RAW_METHOD_DUMP(OS, get_virtualBaseClass)
   RAW_METHOD_DUMP(OS, get_isVirtualInheritance)
   RAW_METHOD_DUMP(OS, get_volatileType)
+  RAW_METHOD_DUMP(OS, get_wasInlined)
+  RAW_METHOD_DUMP(OS, get_unused)
+  RAW_METHOD_DUMP(OS, get_value)
 }
 
 std::unique_ptr<IPDBEnumSymbols>
@@ -609,6 +678,15 @@ uint32_t DIARawSymbol::getUnmodifiedTypeId() const {
 
 uint32_t DIARawSymbol::getUpperBoundId() const {
   return PrivateGetDIAValue(Symbol, &IDiaSymbol::get_upperBoundId);
+}
+
+Variant DIARawSymbol::getValue() const {
+  VARIANT Value;
+  Value.vt = VT_EMPTY;
+  if (S_OK != Symbol->get_value(&Value))
+    return Variant();
+
+  return VariantFromVARIANT(Value);
 }
 
 uint32_t DIARawSymbol::getVirtualBaseDispIndex() const {
@@ -1005,4 +1083,12 @@ bool DIARawSymbol::isVirtualInheritance() const {
 
 bool DIARawSymbol::isVolatileType() const {
   return PrivateGetDIAValue(Symbol, &IDiaSymbol::get_volatileType);
+}
+
+bool DIARawSymbol::wasInlined() const {
+  return PrivateGetDIAValue(Symbol, &IDiaSymbol::get_wasInlined);
+}
+
+std::string DIARawSymbol::getUnused() const {
+  return PrivateGetDIAValue(Symbol, &IDiaSymbol::get_unused);
 }

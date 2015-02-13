@@ -29,10 +29,6 @@ void PDBSymbolExe::dump(raw_ostream &OS, int Indent,
 
   OS << "Summary for " << FileName << "\n";
 
-  TagStats Stats;
-  auto ChildrenEnum = getChildStats(Stats);
-  OS << stream_indent(Indent + 2) << "Children: " << Stats << "\n";
-
   uint64_t FileSize = 0;
   if (!llvm::sys::fs::file_size(FileName, FileSize))
     OS << "  Size: " << FileSize << " bytes\n";
@@ -47,4 +43,11 @@ void PDBSymbolExe::dump(raw_ostream &OS, int Indent,
   if (hasPrivateSymbols())
     OS << "HasPrivateSymbols ";
   OS << "\n";
+
+  TagStats Stats;
+  auto ChildrenEnum = getChildStats(Stats);
+  OS << stream_indent(Indent + 2) << "Children: " << Stats << "\n";
+  while (auto Child = ChildrenEnum->getNext()) {
+    Child->dump(OS, Indent+2, PDB_DumpLevel::Compact);
+  }
 }
