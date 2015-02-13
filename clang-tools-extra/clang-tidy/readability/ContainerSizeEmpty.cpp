@@ -7,13 +7,11 @@
 //
 //===----------------------------------------------------------------------===//
 #include "ContainerSizeEmpty.h"
-
-#include "llvm/ADT/StringRef.h"
-#include "llvm/ADT/StringSet.h"
-
 #include "clang/AST/ASTContext.h"
 #include "clang/ASTMatchers/ASTMatchers.h"
 #include "clang/Lex/Lexer.h"
+#include "llvm/ADT/StringRef.h"
+#include "llvm/ADT/StringSet.h"
 
 using namespace clang::ast_matchers;
 
