@@ -3040,11 +3040,34 @@ protected:
 // TargetProperties
 //----------------------------------------------------------------------
 TargetProperties::TargetProperties (Target *target) :
-    Properties ()
+    Properties (),
+    m_launch_info ()
 {
     if (target)
     {
         m_collection_sp.reset (new TargetOptionValueProperties(target, Target::GetGlobalProperties()));
+
+        // Set callbacks to update launch_info whenever "settins set" updated any of these properties
+        m_collection_sp->SetValueChangedCallback(ePropertyArg0, TargetProperties::Arg0ValueChangedCallback, this);
+        m_collection_sp->SetValueChangedCallback(ePropertyRunArgs, TargetProperties::RunArgsValueChangedCallback, this);
+        m_collection_sp->SetValueChangedCallback(ePropertyEnvVars, TargetProperties::EnvVarsValueChangedCallback, this);
+        m_collection_sp->SetValueChangedCallback(ePropertyInputPath, TargetProperties::InputPathValueChangedCallback, this);
+        m_collection_sp->SetValueChangedCallback(ePropertyOutputPath, TargetProperties::OutputPathValueChangedCallback, this);
+        m_collection_sp->SetValueChangedCallback(ePropertyErrorPath, TargetProperties::ErrorPathValueChangedCallback, this);
+        m_collection_sp->SetValueChangedCallback(ePropertyDetachOnError, TargetProperties::DetachOnErrorValueChangedCallback, this);
+        m_collection_sp->SetValueChangedCallback(ePropertyDisableASLR, TargetProperties::DisableASLRValueChangedCallback, this);
+        m_collection_sp->SetValueChangedCallback(ePropertyDisableSTDIO, TargetProperties::DisableSTDIOValueChangedCallback, this);
+    
+        // Update m_launch_info once it was created
+        Arg0ValueChangedCallback(this, NULL);
+        RunArgsValueChangedCallback(this, NULL);
+        //EnvVarsValueChangedCallback(this, NULL); // FIXME: cause segfault in Target::GetPlatform()
+        InputPathValueChangedCallback(this, NULL);
+        OutputPathValueChangedCallback(this, NULL);
+        ErrorPathValueChangedCallback(this, NULL);
+        DetachOnErrorValueChangedCallback(this, NULL);
+        DisableASLRValueChangedCallback(this, NULL);
+        DisableSTDIOValueChangedCallback(this, NULL);
     }
     else
     {
@@ -3055,6 +3078,7 @@ TargetProperties::TargetProperties (Target *target) :
                                         true,
                                         Process::GetGlobalProperties()->GetValueProperties());
     }
+
 }
 
 TargetProperties::~TargetProperties ()
@@ -3177,6 +3201,13 @@ TargetProperties::GetEnvironmentAsArgs (Args &env) const
 {
     const uint32_t idx = ePropertyEnvVars;
     return m_collection_sp->GetPropertyAtIndexAsArgs (NULL, idx, env);
+}
+
+void
+TargetProperties::SetEnvironmentFromArgs (const Args &env)
+{
+    const uint32_t idx = ePropertyEnvVars;
+    m_collection_sp->SetPropertyAtIndexFromArgs (NULL, idx, env);
 }
 
 bool
@@ -3373,6 +3404,121 @@ TargetProperties::SetDisplayRuntimeSupportValues (bool b)
 {
     const uint32_t idx = ePropertyDisplayRuntimeSupportValues;
     m_collection_sp->SetPropertyAtIndexAsBoolean (NULL, idx, b);
+}
+
+const ProcessLaunchInfo &
+TargetProperties::GetProcessLaunchInfo () const
+{
+    return m_launch_info;
+}
+
+void
+TargetProperties::SetProcessLaunchInfo(const ProcessLaunchInfo &launch_info)
+{
+    m_launch_info = launch_info;
+    SetArg0(launch_info.GetArg0());
+    SetRunArguments(launch_info.GetArguments());
+    SetEnvironmentFromArgs(launch_info.GetEnvironmentEntries());
+    const FileAction *input_file_action = launch_info.GetFileActionForFD(STDIN_FILENO);
+    if (input_file_action)
+    {
+        const char *input_path = input_file_action->GetPath();
+        if (input_path)
+            SetStandardInputPath(input_path);
+    }
+    const FileAction *output_file_action = launch_info.GetFileActionForFD(STDOUT_FILENO);
+    if (output_file_action)
+    {
+        const char *output_path = output_file_action->GetPath();
+        if (output_path)
+            SetStandardOutputPath(output_path);
+    }
+    const FileAction *error_file_action = launch_info.GetFileActionForFD(STDERR_FILENO);
+    if (error_file_action)
+    {
+        const char *error_path = error_file_action->GetPath();
+        if (error_path)
+            SetStandardErrorPath(error_path);
+    }
+    SetDetachOnError(launch_info.GetFlags().Test(lldb::eLaunchFlagDetachOnError));
+    SetDisableASLR(launch_info.GetFlags().Test(lldb::eLaunchFlagDisableASLR));
+    SetDisableSTDIO(launch_info.GetFlags().Test(lldb::eLaunchFlagDisableSTDIO));
+}
+
+void
+TargetProperties::Arg0ValueChangedCallback(void *target_property_ptr, OptionValue *)
+{
+    TargetProperties *this_ = reinterpret_cast<TargetProperties *>(target_property_ptr);
+    this_->m_launch_info.SetArg0(this_->GetArg0());
+}
+
+void
+TargetProperties::RunArgsValueChangedCallback(void *target_property_ptr, OptionValue *)
+{
+    TargetProperties *this_ = reinterpret_cast<TargetProperties *>(target_property_ptr);
+    Args args;
+    if (this_->GetRunArguments(args))
+        this_->m_launch_info.GetArguments() = args;
+}
+
+void
+TargetProperties::EnvVarsValueChangedCallback(void *target_property_ptr, OptionValue *)
+{
+    TargetProperties *this_ = reinterpret_cast<TargetProperties *>(target_property_ptr);
+    Args args;
+    if (this_->GetEnvironmentAsArgs(args))
+        this_->m_launch_info.GetEnvironmentEntries() = args;
+}
+
+void
+TargetProperties::InputPathValueChangedCallback(void *target_property_ptr, OptionValue *)
+{
+    TargetProperties *this_ = reinterpret_cast<TargetProperties *>(target_property_ptr);
+    this_->m_launch_info.AppendOpenFileAction(STDIN_FILENO, this_->GetStandardInputPath().GetPath().c_str(), true, false);
+}
+
+void
+TargetProperties::OutputPathValueChangedCallback(void *target_property_ptr, OptionValue *)
+{
+    TargetProperties *this_ = reinterpret_cast<TargetProperties *>(target_property_ptr);
+    this_->m_launch_info.AppendOpenFileAction(STDOUT_FILENO, this_->GetStandardOutputPath().GetPath().c_str(), false, true);
+}
+
+void
+TargetProperties::ErrorPathValueChangedCallback(void *target_property_ptr, OptionValue *)
+{
+    TargetProperties *this_ = reinterpret_cast<TargetProperties *>(target_property_ptr);
+    this_->m_launch_info.AppendOpenFileAction(STDERR_FILENO, this_->GetStandardErrorPath().GetPath().c_str(), false, true);
+}
+
+void
+TargetProperties::DetachOnErrorValueChangedCallback(void *target_property_ptr, OptionValue *)
+{
+    TargetProperties *this_ = reinterpret_cast<TargetProperties *>(target_property_ptr);
+    if (this_->GetDetachOnError())
+        this_->m_launch_info.GetFlags().Set(lldb::eLaunchFlagDetachOnError);
+    else
+        this_->m_launch_info.GetFlags().Clear(lldb::eLaunchFlagDetachOnError);
+}
+
+void
+TargetProperties::DisableASLRValueChangedCallback(void *target_property_ptr, OptionValue *)
+{
+    TargetProperties *this_ = reinterpret_cast<TargetProperties *>(target_property_ptr);
+    if (this_->GetDisableASLR())
+        this_->m_launch_info.GetFlags().Set(lldb::eLaunchFlagDisableASLR);
+    else
+        this_->m_launch_info.GetFlags().Clear(lldb::eLaunchFlagDisableASLR);
+}
+
+void
+TargetProperties::DisableSTDIOValueChangedCallback(void *target_property_ptr, OptionValue *)
+{
+    TargetProperties *this_ = reinterpret_cast<TargetProperties *>(target_property_ptr);
+    if (this_->GetDisableSTDIO())
+        this_->m_launch_info.GetFlags().Set(lldb::eLaunchFlagDisableSTDIO);
+    else
+        this_->m_launch_info.GetFlags().Clear(lldb::eLaunchFlagDisableSTDIO);
 }
 
 //----------------------------------------------------------------------

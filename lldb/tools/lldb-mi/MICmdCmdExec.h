@@ -18,6 +18,7 @@
 //              CMICmdCmdExecStepInstruction    interface.
 //              CMICmdCmdExecFinish             interface.
 //              CMICmdCmdExecInterrupt          interface.
+//              CMICmdCmdExecArguments          interface.
 //
 //              To implement new MI commands derive a new command class from the command base
 //              class. To enable the new command for interpretation add the new command class
@@ -306,4 +307,36 @@ class CMICmdCmdExecInterrupt : public CMICmdBase
     // Attributes:
   private:
     lldb::SBCommandReturnObject m_lldbResult;
+};
+
+//++ ============================================================================
+// Details: MI command class. MI commands derived from the command base class.
+//          *this class implements MI command "exec-arguments".
+// Gotchas: None.
+// Authors: Ilia Kirianovskii 25/11/2014.
+// Changes: None.
+//--
+class CMICmdCmdExecArguments : public CMICmdBase
+{
+    // Statics:
+  public:
+    // Required by the CMICmdFactory when registering *this command
+    static CMICmdBase *CreateSelf(void);
+
+    // Methods:
+  public:
+    /* ctor */ CMICmdCmdExecArguments(void);
+
+    // Overridden:
+  public:
+    // From CMICmdInvoker::ICmd
+    virtual bool Execute(void);
+    virtual bool Acknowledge(void);
+    virtual bool ParseArgs(void);
+    // From CMICmnBase
+    /* dtor */ virtual ~CMICmdCmdExecArguments(void);
+
+    // Attributes:
+  private:
+    const CMIUtilString m_constStrArgArguments;
 };

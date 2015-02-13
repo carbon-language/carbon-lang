@@ -249,9 +249,7 @@ protected:
 
         if (launch_args.GetArgumentCount() == 0)
         {
-            Args target_setting_args;
-            if (target->GetRunArguments(target_setting_args))
-                m_options.launch_info.GetArguments().AppendArguments (target_setting_args);
+            m_options.launch_info.GetArguments() = target->GetProcessLaunchInfo().GetArguments();
         }
         else
         {

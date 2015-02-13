@@ -77,8 +77,10 @@ Error
 OptionValueArray::SetValueFromCString (const char *value, VarSetOperationType op)
 {
     Args args(value);
-    NotifyValueChanged();
-    return SetArgs (args, op);
+    Error error = SetArgs (args, op);
+    if (error.Success())
+        NotifyValueChanged();
+    return error;
 }
 
 
@@ -342,6 +344,8 @@ OptionValueArray::DeepCopy () const
 {
     OptionValueArray *copied_array = new OptionValueArray (m_type_mask, m_raw_value_dump);
     lldb::OptionValueSP copied_value_sp(copied_array);
+    *static_cast<OptionValue *>(copied_array) = *this;
+    copied_array->m_callback = m_callback;
     const uint32_t size = m_values.size();
     for (uint32_t i = 0; i<size; ++i)
     {

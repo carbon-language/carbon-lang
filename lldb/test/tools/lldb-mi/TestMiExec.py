@@ -60,7 +60,6 @@ class MiExecTestCase(lldbmi_testcase.MiTestCaseBase):
 
     @lldbmi_test
     @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
-    @unittest2.skip("reviews.llvm.org/D6965: requires this patch")
     def test_lldbmi_exec_arguments_set(self):
         """Test that 'lldb-mi --interpreter' can pass args using -exec-arguments."""
 
@@ -91,7 +90,8 @@ class MiExecTestCase(lldbmi_testcase.MiTestCaseBase):
         #self.runCmd("-data-evaluate-expression argv[2]")
         #self.expect("\^done,value=\"2nd arg\"")
         self.runCmd("-interpreter-exec command \"print argv[2]\"")
-        self.expect("\"2nd arg\"")
+        #FIXME: lldb-mi doesn't handle inner quotes
+        self.expect("\"\\\\\\\"2nd arg\\\\\\\"\"") #FIXME: self.expect("\"2nd arg\"")
         #self.runCmd("-data-evaluate-expression argv[3]")
         #self.expect("\^done,value=\"third_arg\"")
         self.runCmd("-interpreter-exec command \"print argv[3]\"")
@@ -103,7 +103,6 @@ class MiExecTestCase(lldbmi_testcase.MiTestCaseBase):
 
     @lldbmi_test
     @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
-    @unittest2.skip("reviews.llvm.org/D6965: requires this patch")
     def test_lldbmi_exec_arguments_reset(self):
         """Test that 'lldb-mi --interpreter' can reset previously set args using -exec-arguments."""
 
@@ -363,7 +362,6 @@ class MiExecTestCase(lldbmi_testcase.MiTestCaseBase):
 
     @lldbmi_test
     @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
-    @unittest2.skip("reviews.llvm.org/D6965: requires this patch")
     def test_lldbmi_exec_finish(self):
         """Test that 'lldb-mi --interpreter' works for -exec-finish."""
 

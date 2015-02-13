@@ -18,6 +18,7 @@
 //              CMICmdCmdExecStepInstruction    implementation.
 //              CMICmdCmdExecFinish             implementation.
 //              CMICmdCmdExecInterrupt          implementation.
+//              CMICmdCmdExecArguments          implementation.
 //
 // Environment: Compilers:  Visual C++ 12.
 //                          gcc (Ubuntu/Linaro 4.8.1-10ubuntu9) 4.8.1
@@ -90,10 +91,9 @@ CMICmdCmdExecRun::Execute(void)
     CMICmnLLDBDebugSessionInfo &rSessionInfo(CMICmnLLDBDebugSessionInfo::Instance());
     lldb::SBError error;
     lldb::SBStream errMsg;
-    uint32_t launch_flags = lldb::LaunchFlags::eLaunchFlagDebug;
-    lldb::SBProcess process = rSessionInfo.GetTarget().Launch(rSessionInfo.GetListener(), nullptr, nullptr, nullptr, nullptr,
-                                                              nullptr, nullptr, launch_flags, false, error);
-
+    lldb::SBLaunchInfo launchInfo = rSessionInfo.GetTarget().GetLaunchInfo();
+    launchInfo.SetListener(rSessionInfo.GetListener());
+    lldb::SBProcess process = rSessionInfo.GetTarget().Launch(launchInfo, error);
     if ((!process.IsValid()) || (error.Fail()))
     {
         SetError(CMIUtilString::Format(MIRSRC(IDS_CMD_ERR_INVALID_PROCESS), m_cmdData.strMiCmd.c_str(), errMsg.GetData()));
@@ -1015,4 +1015,124 @@ CMICmdBase *
 CMICmdCmdExecInterrupt::CreateSelf(void)
 {
     return new CMICmdCmdExecInterrupt();
+}
+
+//---------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------
+
+//++ ------------------------------------------------------------------------------------
+// Details: CMICmdCmdExecArguments constructor.
+// Type:    Method.
+// Args:    None.
+// Return:  None.
+// Throws:  None.
+//--
+CMICmdCmdExecArguments::CMICmdCmdExecArguments(void)
+    : m_constStrArgArguments("arguments")
+{
+    // Command factory matches this name with that received from the stdin stream
+    m_strMiCmd = "exec-arguments";
+
+    // Required by the CMICmdFactory when registering *this command
+    m_pSelfCreatorFn = &CMICmdCmdExecArguments::CreateSelf;
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details: CMICmdCmdExecArguments destructor.
+// Type:    Overrideable.
+// Args:    None.
+// Return:  None.
+// Throws:  None.
+//--
+CMICmdCmdExecArguments::~CMICmdCmdExecArguments(void)
+{
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details: The invoker requires this function. The parses the command line options
+//          arguments to extract values for each of those arguments.
+// Type:    Overridden.
+// Args:    None.
+// Return:  MIstatus::success - Function succeeded.
+//          MIstatus::failure - Function failed.
+// Throws:  None.
+//--
+bool
+CMICmdCmdExecArguments::ParseArgs(void)
+{
+    bool bOk = m_setCmdArgs.Add(
+        *(new CMICmdArgValListOfN(m_constStrArgArguments, false, true, CMICmdArgValListBase::eArgValType_StringAnything)));
+    return (bOk && ParseValidateCmdOptions());
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details: The invoker requires this function. The command does work in this function.
+//          The command is likely to communicate with the LLDB SBDebugger in here.
+// Type:    Overridden.
+// Args:    None.
+// Return:  MIstatus::success - Function succeeded.
+//          MIstatus::failure - Function failed.
+// Throws:  None.
+//--
+bool
+CMICmdCmdExecArguments::Execute(void)
+{
+    CMICMDBASE_GETOPTION(pArgArguments, ListOfN, m_constStrArgArguments);
+
+    CMICmnLLDBDebugSessionInfo &rSessionInfo(CMICmnLLDBDebugSessionInfo::Instance());
+    lldb::SBTarget sbTarget = rSessionInfo.GetTarget();
+    if (!sbTarget.IsValid())
+    {
+        SetError(CMIUtilString::Format(MIRSRC(IDS_CMD_ERR_INVALID_TARGET_CURRENT), m_cmdData.strMiCmd.c_str()));
+        return MIstatus::failure;
+    }
+
+    lldb::SBLaunchInfo sbLaunchInfo = sbTarget.GetLaunchInfo();
+    sbLaunchInfo.SetArguments(NULL, false);
+
+    CMIUtilString strArg;
+    size_t nArgIndex = 0;
+    while (pArgArguments->GetExpectedOption<CMICmdArgValString, CMIUtilString>(strArg, nArgIndex))
+    {
+        const char *argv[2] = { strArg.c_str(), NULL };
+        sbLaunchInfo.SetArguments(argv, true);
+        ++nArgIndex;
+    }
+
+    sbTarget.SetLaunchInfo(sbLaunchInfo);
+
+    return MIstatus::success;
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details: The invoker requires this function. The command prepares a MI Record Result
+//          for the work carried out in the Execute().
+// Type:    Overridden.
+// Args:    None.
+// Return:  MIstatus::success - Function succeeded.
+//          MIstatus::failure - Function failed.
+// Throws:  None.
+//--
+bool
+CMICmdCmdExecArguments::Acknowledge(void)
+{
+    const CMICmnMIResultRecord miRecordResult(m_cmdData.strMiCmdToken, CMICmnMIResultRecord::eResultClass_Done);
+    m_miResultRecord = miRecordResult;
+
+    return MIstatus::success;
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details: Required by the CMICmdFactory when registering *this command. The factory
+//          calls this function to create an instance of *this command.
+// Type:    Static method.
+// Args:    None.
+// Return:  CMICmdBase * - Pointer to a new command.
+// Throws:  None.
+//--
+CMICmdBase *
+CMICmdCmdExecArguments::CreateSelf(void)
+{
+    return new CMICmdCmdExecArguments();
 }

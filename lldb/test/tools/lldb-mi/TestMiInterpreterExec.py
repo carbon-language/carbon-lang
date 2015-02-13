@@ -49,9 +49,34 @@ class MiInterpreterExecTestCase(lldbmi_testcase.MiTestCaseBase):
 
     @lldbmi_test
     @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
-    @unittest2.skip("reviews.llvm.org/D6965: requires this patch")
-    def test_lldbmi_settings_set_target_run_args(self):
-        """Test that 'lldb-mi --interpreter' can set target arguments by 'setting set target.run-args' command."""
+    def test_lldbmi_settings_set_target_run_args_before(self):
+        """Test that 'lldb-mi --interpreter' can set target arguments by 'setting set target.run-args' command before than target was created."""
+
+        self.spawnLldbMi(args = None)
+
+        # Test that "settings set target.run-args" passes arguments to executable
+        #FIXME: "--arg1 \"2nd arg\" third_arg fourth=\"4th arg\"" causes an error
+        self.runCmd("-interpreter-exec console \"setting set target.run-args arg1\"")
+        self.expect("\^done")
+
+        # Load executable
+        self.runCmd("-file-exec-and-symbols %s" % self.myexe)
+        self.expect("\^done")
+
+        # Run to BP_argctest
+        line = line_number('main.c', '//BP_argctest')
+        self.runCmd("-break-insert --file main.c:%d" % line)
+        self.expect("\^done")
+        self.runCmd("-exec-run")
+        self.expect("\^running")
+
+        # Test that arguments were passed properly
+        self.expect("~\"argc=2\\\\r\\\\n\"")
+
+    @lldbmi_test
+    @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
+    def test_lldbmi_settings_set_target_run_args_after(self):
+        """Test that 'lldb-mi --interpreter' can set target arguments by 'setting set target.run-args' command after than target was created."""
 
         self.spawnLldbMi(args = None)
 

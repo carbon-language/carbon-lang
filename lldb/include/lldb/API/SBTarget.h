@@ -888,6 +888,12 @@ public:
 
     lldb::addr_t
     GetStackRedZoneSize();
+
+    lldb::SBLaunchInfo
+    GetLaunchInfo () const;
+
+    void
+    SetLaunchInfo (const lldb::SBLaunchInfo &launch_info);
     
 protected:
     friend class SBAddress;

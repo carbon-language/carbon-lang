@@ -2568,3 +2568,21 @@ SBTarget::GetStackRedZoneSize()
     }
     return 0;
 }
+
+lldb::SBLaunchInfo
+SBTarget::GetLaunchInfo () const
+{
+    lldb::SBLaunchInfo launch_info(NULL);
+    TargetSP target_sp(GetSP());
+    if (target_sp)
+        launch_info.ref() = m_opaque_sp->GetProcessLaunchInfo();
+    return launch_info;
+}
+
+void
+SBTarget::SetLaunchInfo (const lldb::SBLaunchInfo &launch_info)
+{
+    TargetSP target_sp(GetSP());
+    if (target_sp)
+        m_opaque_sp->SetProcessLaunchInfo(launch_info.ref());
+}

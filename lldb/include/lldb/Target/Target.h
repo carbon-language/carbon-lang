@@ -36,6 +36,7 @@
 #include "lldb/Target/ABI.h"
 #include "lldb/Target/ExecutionContextScope.h"
 #include "lldb/Target/PathMappingList.h"
+#include "lldb/Target/ProcessLaunchInfo.h"
 #include "lldb/Target/SectionLoadHistory.h"
 
 namespace lldb_private {
@@ -117,7 +118,10 @@ public:
     
     size_t
     GetEnvironmentAsArgs (Args &env) const;
-    
+
+    void
+    SetEnvironmentFromArgs (const Args &env);
+
     bool
     GetSkipPrologue() const;
     
@@ -195,6 +199,33 @@ public:
     
     void
     SetDisplayRuntimeSupportValues (bool b);
+
+    const ProcessLaunchInfo &
+    GetProcessLaunchInfo() const;
+
+    void
+    SetProcessLaunchInfo(const ProcessLaunchInfo &launch_info);
+
+private:
+    //------------------------------------------------------------------
+    // Callbacks for m_launch_info.
+    //------------------------------------------------------------------
+    static void Arg0ValueChangedCallback(void *target_property_ptr, OptionValue *);
+    static void RunArgsValueChangedCallback(void *target_property_ptr, OptionValue *);
+    static void EnvVarsValueChangedCallback(void *target_property_ptr, OptionValue *);
+    static void InheritEnvValueChangedCallback(void *target_property_ptr, OptionValue *);
+    static void InputPathValueChangedCallback(void *target_property_ptr, OptionValue *);
+    static void OutputPathValueChangedCallback(void *target_property_ptr, OptionValue *);
+    static void ErrorPathValueChangedCallback(void *target_property_ptr, OptionValue *);
+    static void DetachOnErrorValueChangedCallback(void *target_property_ptr, OptionValue *);
+    static void DisableASLRValueChangedCallback(void *target_property_ptr, OptionValue *);
+    static void DisableSTDIOValueChangedCallback(void *target_property_ptr, OptionValue *);
+
+private:
+    //------------------------------------------------------------------
+    // Member variables.
+    //------------------------------------------------------------------
+    ProcessLaunchInfo m_launch_info;
 };
 
 typedef std::shared_ptr<TargetProperties> TargetPropertiesSP;

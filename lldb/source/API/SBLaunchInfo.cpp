@@ -36,6 +36,12 @@ SBLaunchInfo::ref ()
     return *m_opaque_sp;
 }
 
+const lldb_private::ProcessLaunchInfo &
+SBLaunchInfo::ref () const
+{
+    return *m_opaque_sp;
+}
+
 lldb::pid_t
 SBLaunchInfo::GetProcessID()
 {

@@ -184,6 +184,9 @@ protected:
     lldb_private::ProcessLaunchInfo &
     ref ();
 
+    const lldb_private::ProcessLaunchInfo &
+    ref () const;
+
     ProcessLaunchInfoSP m_opaque_sp;
 };
 
