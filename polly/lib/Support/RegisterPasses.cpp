@@ -29,7 +29,7 @@
 #include "polly/ScopInfo.h"
 #include "polly/TempScopInfo.h"
 #include "llvm/Analysis/CFGPrinter.h"
-#include "llvm/PassManager.h"
+#include "llvm/IR/LegacyPassManager.h"
 #include "llvm/Transforms/IPO/PassManagerBuilder.h"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Transforms/Vectorize.h"
@@ -182,7 +182,7 @@ void initializePollyPasses(PassRegistry &Registry) {
 /// scheduling optimizer.
 ///
 /// Polly supports the isl internal code generator.
-void registerPollyPasses(llvm::PassManagerBase &PM) {
+void registerPollyPasses(llvm::legacy::PassManagerBase &PM) {
   registerCanonicalicationPasses(PM);
 
   PM.add(polly::createScopInfoPass());
@@ -245,7 +245,7 @@ static bool shouldEnablePolly() {
 
 static void
 registerPollyEarlyAsPossiblePasses(const llvm::PassManagerBuilder &Builder,
-                                   llvm::PassManagerBase &PM) {
+                                   llvm::legacy::PassManagerBase &PM) {
   if (!polly::shouldEnablePolly())
     return;
 

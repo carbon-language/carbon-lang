@@ -17,7 +17,7 @@
 #include "polly/ScopDetection.h"
 #include "polly/ScopInfo.h"
 
-#include "llvm/PassManager.h"
+#include "llvm/IR/LegacyPassManager.h"
 #include "llvm/ADT/SetVector.h"
 #include "llvm/Analysis/TargetLibraryInfo.h"
 #include "llvm/Support/Debug.h"

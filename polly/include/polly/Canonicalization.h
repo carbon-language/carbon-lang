@@ -10,7 +10,7 @@
 #ifndef POLLY_CANONICALIZATION_H
 #define POLLY_CANONICALIZATION_H
 
-#include "llvm/PassManager.h"
+#include "llvm/IR/LegacyPassManager.h"
 
 namespace polly {
 
@@ -21,7 +21,7 @@ namespace polly {
 /// into a canonical form that simplifies the analysis and optimization passes
 /// of Polly. The set of optimization passes scheduled here is probably not yet
 /// optimal. TODO: Optimize the set of canonicalization passes.
-void registerCanonicalicationPasses(llvm::PassManagerBase &PM);
+void registerCanonicalicationPasses(llvm::legacy::PassManagerBase &PM);
 }
 
 #endif
