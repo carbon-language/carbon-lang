@@ -46,6 +46,7 @@ public:
   void printOperand(const MCInst *MI, unsigned OpNo, raw_ostream &OS);
   void printMemReference(const MCInst *MI, unsigned Op, raw_ostream &OS);
   void printSSEAVXCC(const MCInst *MI, unsigned Op, raw_ostream &OS);
+  void printXOPCC(const MCInst *MI, unsigned Op, raw_ostream &OS);
   void printPCRelImm(const MCInst *MI, unsigned OpNo, raw_ostream &OS);
   void printSrcIdx(const MCInst *MI, unsigned OpNo, raw_ostream &OS);
   void printDstIdx(const MCInst *MI, unsigned OpNo, raw_ostream &OS);

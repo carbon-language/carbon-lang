@@ -158,30 +158,43 @@ defm VPMACSDQH  : xop4opm2<0x9F, "vpmacsdqh", int_x86_xop_vpmacsdqh>;
 defm VPMACSDD   : xop4opm2<0x9E, "vpmacsdd", int_x86_xop_vpmacsdd>;
 
 // Instruction where second source can be memory, third must be imm8
-multiclass xop4opimm<bits<8> opc, string OpcodeStr, Intrinsic Int> {
+multiclass xopvpcom<bits<8> opc, string Suffix, Intrinsic Int> {
   def ri : IXOPi8<opc, MRMSrcReg, (outs VR128:$dst),
-           (ins VR128:$src1, VR128:$src2, i8imm:$src3),
-           !strconcat(OpcodeStr,
-           "\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}"),
-           [(set VR128:$dst, (Int VR128:$src1, VR128:$src2, imm:$src3))]>,
+           (ins VR128:$src1, VR128:$src2, XOPCC:$cc),
+           !strconcat("vpcom${cc}", Suffix,
+           "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
+           [(set VR128:$dst, (Int VR128:$src1, VR128:$src2, i8immZExt3:$cc))]>,
            XOP_4V;
   def mi : IXOPi8<opc, MRMSrcMem, (outs VR128:$dst),
-           (ins VR128:$src1, i128mem:$src2, i8imm:$src3),
-           !strconcat(OpcodeStr,
-           "\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}"),
+           (ins VR128:$src1, i128mem:$src2, XOPCC:$cc),
+           !strconcat("vpcom${cc}", Suffix,
+           "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
            [(set VR128:$dst,
              (Int VR128:$src1, (bitconvert (loadv2i64 addr:$src2)),
-              imm:$src3))]>, XOP_4V;
+              i8immZExt3:$cc))]>, XOP_4V;
+  let isAsmParserOnly = 1, hasSideEffects = 0 in {
+    def ri_alt : IXOPi8<opc, MRMSrcReg, (outs VR128:$dst),
+                 (ins VR128:$src1, VR128:$src2, i8imm:$src3),
+                 !strconcat("vpcom", Suffix,
+                 "\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}"),
+                 []>, XOP_4V;
+    let mayLoad = 1 in
+    def mi_alt : IXOPi8<opc, MRMSrcMem, (outs VR128:$dst),
+                 (ins VR128:$src1, i128mem:$src2, i8imm:$src3),
+                 !strconcat("vpcom", Suffix,
+                 "\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}"),
+                 []>, XOP_4V;
+  }
 }
 
-defm VPCOMB  : xop4opimm<0xCC, "vpcomb", int_x86_xop_vpcomb>;
-defm VPCOMW  : xop4opimm<0xCD, "vpcomw", int_x86_xop_vpcomw>;
-defm VPCOMD  : xop4opimm<0xCE, "vpcomd", int_x86_xop_vpcomd>;
-defm VPCOMQ  : xop4opimm<0xCF, "vpcomq", int_x86_xop_vpcomq>;
-defm VPCOMUB : xop4opimm<0xEC, "vpcomub", int_x86_xop_vpcomub>;
-defm VPCOMUW : xop4opimm<0xED, "vpcomuw", int_x86_xop_vpcomuw>;
-defm VPCOMUD : xop4opimm<0xEE, "vpcomud", int_x86_xop_vpcomud>;
-defm VPCOMUQ : xop4opimm<0xEF, "vpcomuq", int_x86_xop_vpcomuq>;
+defm VPCOMB  : xopvpcom<0xCC, "b", int_x86_xop_vpcomb>;
+defm VPCOMW  : xopvpcom<0xCD, "w", int_x86_xop_vpcomw>;
+defm VPCOMD  : xopvpcom<0xCE, "d", int_x86_xop_vpcomd>;
+defm VPCOMQ  : xopvpcom<0xCF, "q", int_x86_xop_vpcomq>;
+defm VPCOMUB : xopvpcom<0xEC, "ub", int_x86_xop_vpcomub>;
+defm VPCOMUW : xopvpcom<0xED, "uw", int_x86_xop_vpcomuw>;
+defm VPCOMUD : xopvpcom<0xEE, "ud", int_x86_xop_vpcomud>;
+defm VPCOMUQ : xopvpcom<0xEF, "uq", int_x86_xop_vpcomuq>;
 
 // Instruction where either second or third source can be memory
 multiclass xop4op<bits<8> opc, string OpcodeStr, Intrinsic Int> {

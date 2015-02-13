@@ -2022,6 +2022,33 @@ bool X86AsmParser::ParseInstruction(ParseInstructionInfo &Info, StringRef Name,
     }
   }
 
+  // FIXME: Hack to recognize vpcom<comparison code>{ub,uw,ud,uq,b,w,d,q}.
+  if (PatchedName.startswith("vpcom") &&
+      (PatchedName.endswith("b") || PatchedName.endswith("w") ||
+       PatchedName.endswith("d") || PatchedName.endswith("q"))) {
+    unsigned XOPIdx = PatchedName.drop_back().endswith("u") ? 2 : 1;
+    unsigned XOPComparisonCode = StringSwitch<unsigned>(
+      PatchedName.slice(5, PatchedName.size() - XOPIdx))
+      .Case("lt",    0x0)
+      .Case("le",    0x1)
+      .Case("gt",    0x2)
+      .Case("ge",    0x3)
+      .Case("eq",    0x4)
+      .Case("neq",   0x5)
+      .Case("false", 0x6)
+      .Case("true",  0x7)
+      .Default(~0U);
+    if (XOPComparisonCode != ~0U) {
+      Operands.push_back(X86Operand::CreateToken("vpcom", NameLoc));
+
+      const MCExpr *ImmOp = MCConstantExpr::Create(XOPComparisonCode,
+                                                   getParser().getContext());
+      Operands.push_back(X86Operand::CreateImm(ImmOp, NameLoc, NameLoc));
+
+      PatchedName = PatchedName.substr(PatchedName.size() - XOPIdx);
+    }
+  }
+
   Operands.push_back(X86Operand::CreateToken(PatchedName, NameLoc));
 
   if (ExtraImmOp && !isParsingIntelSyntax())

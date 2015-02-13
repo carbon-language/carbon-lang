@@ -956,6 +956,7 @@ OperandType RecognizableInstr::typeFromString(const std::string &s,
   TYPE("i16imm_pcrel",        TYPE_REL16)
   TYPE("i32imm_pcrel",        TYPE_REL32)
   TYPE("SSECC",               TYPE_IMM3)
+  TYPE("XOPCC",               TYPE_IMM3)
   TYPE("AVXCC",               TYPE_IMM5)
   TYPE("AVX512ICC",           TYPE_AVX512ICC)
   TYPE("AVX512RC",            TYPE_IMM32)
@@ -1037,6 +1038,7 @@ RecognizableInstr::immediateEncodingFromString(const std::string &s,
   }
   ENCODING("i32i8imm",        ENCODING_IB)
   ENCODING("SSECC",           ENCODING_IB)
+  ENCODING("XOPCC",           ENCODING_IB)
   ENCODING("AVXCC",           ENCODING_IB)
   ENCODING("AVX512ICC",       ENCODING_IB)
   ENCODING("AVX512RC",        ENCODING_IB)

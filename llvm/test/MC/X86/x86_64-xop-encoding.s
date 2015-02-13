@@ -506,6 +506,70 @@
 // CHECK: encoding: [0x8f,0xe8,0x60,0xcc,0x50,0x08,0x38]
           vpcomb $56, 8(%rax), %xmm3, %xmm2
 
+// CHECK: vpcomltw %xmm2, %xmm3, %xmm4
+// CHECK: encoding: [0x8f,0xe8,0x60,0xcd,0xe2,0x00]
+          vpcomltw %xmm2, %xmm3, %xmm4
+
+// CHECK: vpcomlew %xmm2, %xmm3, %xmm4
+// CHECK: encoding: [0x8f,0xe8,0x60,0xcd,0xe2,0x01]
+          vpcomlew %xmm2, %xmm3, %xmm4
+
+// CHECK: vpcomgtw %xmm2, %xmm3, %xmm4
+// CHECK: encoding: [0x8f,0xe8,0x60,0xcd,0xe2,0x02]
+          vpcomgtw %xmm2, %xmm3, %xmm4
+
+// CHECK: vpcomgew %xmm2, %xmm3, %xmm4
+// CHECK: encoding: [0x8f,0xe8,0x60,0xcd,0xe2,0x03]
+          vpcomgew %xmm2, %xmm3, %xmm4
+
+// CHECK: vpcomeqw %xmm2, %xmm3, %xmm4
+// CHECK: encoding: [0x8f,0xe8,0x60,0xcd,0xe2,0x04]
+          vpcomeqw %xmm2, %xmm3, %xmm4
+
+// CHECK: vpcomneqw %xmm2, %xmm3, %xmm4
+// CHECK: encoding: [0x8f,0xe8,0x60,0xcd,0xe2,0x05]
+          vpcomneqw %xmm2, %xmm3, %xmm4
+
+// CHECK: vpcomfalsew %xmm2, %xmm3, %xmm4
+// CHECK: encoding: [0x8f,0xe8,0x60,0xcd,0xe2,0x06]
+          vpcomfalsew %xmm2, %xmm3, %xmm4
+
+// CHECK: vpcomtruew %xmm2, %xmm3, %xmm4
+// CHECK: encoding: [0x8f,0xe8,0x60,0xcd,0xe2,0x07]
+          vpcomtruew %xmm2, %xmm3, %xmm4
+
+
+// CHECK: vpcomltuw %xmm2, %xmm3, %xmm4
+// CHECK: encoding: [0x8f,0xe8,0x60,0xed,0xe2,0x00]
+          vpcomltuw %xmm2, %xmm3, %xmm4
+
+// CHECK: vpcomleuw %xmm2, %xmm3, %xmm4
+// CHECK: encoding: [0x8f,0xe8,0x60,0xed,0xe2,0x01]
+          vpcomleuw %xmm2, %xmm3, %xmm4
+
+// CHECK: vpcomgtuw %xmm2, %xmm3, %xmm4
+// CHECK: encoding: [0x8f,0xe8,0x60,0xed,0xe2,0x02]
+          vpcomgtuw %xmm2, %xmm3, %xmm4
+
+// CHECK: vpcomgeuw %xmm2, %xmm3, %xmm4
+// CHECK: encoding: [0x8f,0xe8,0x60,0xed,0xe2,0x03]
+          vpcomgeuw %xmm2, %xmm3, %xmm4
+
+// CHECK: vpcomequw %xmm2, %xmm3, %xmm4
+// CHECK: encoding: [0x8f,0xe8,0x60,0xed,0xe2,0x04]
+          vpcomequw %xmm2, %xmm3, %xmm4
+
+// CHECK: vpcomnequw %xmm2, %xmm3, %xmm4
+// CHECK: encoding: [0x8f,0xe8,0x60,0xed,0xe2,0x05]
+          vpcomnequw %xmm2, %xmm3, %xmm4
+
+// CHECK: vpcomfalseuw %xmm2, %xmm3, %xmm4
+// CHECK: encoding: [0x8f,0xe8,0x60,0xed,0xe2,0x06]
+          vpcomfalseuw %xmm2, %xmm3, %xmm4
+
+// CHECK: vpcomtrueuw %xmm2, %xmm3, %xmm4
+// CHECK: encoding: [0x8f,0xe8,0x60,0xed,0xe2,0x07]
+          vpcomtrueuw %xmm2, %xmm3, %xmm4
 
 // vpperm
 // CHECK: vpperm %xmm1, %xmm2, %xmm3, %xmm4
