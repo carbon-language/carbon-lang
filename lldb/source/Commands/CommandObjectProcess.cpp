@@ -249,7 +249,7 @@ protected:
 
         if (launch_args.GetArgumentCount() == 0)
         {
-            m_options.launch_info.GetArguments() = target->GetProcessLaunchInfo().GetArguments();
+            m_options.launch_info.GetArguments().AppendArguments (target->GetProcessLaunchInfo().GetArguments());
         }
         else
         {

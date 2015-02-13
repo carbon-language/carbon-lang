@@ -3407,8 +3407,9 @@ TargetProperties::SetDisplayRuntimeSupportValues (bool b)
 }
 
 const ProcessLaunchInfo &
-TargetProperties::GetProcessLaunchInfo () const
+TargetProperties::GetProcessLaunchInfo ()
 {
+    m_launch_info.SetArg0(GetArg0()); // FIXME: Arg0 callback doesn't work
     return m_launch_info;
 }
 

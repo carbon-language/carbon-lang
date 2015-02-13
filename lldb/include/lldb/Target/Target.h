@@ -201,7 +201,7 @@ public:
     SetDisplayRuntimeSupportValues (bool b);
 
     const ProcessLaunchInfo &
-    GetProcessLaunchInfo() const;
+    GetProcessLaunchInfo();
 
     void
     SetProcessLaunchInfo(const ProcessLaunchInfo &launch_info);
