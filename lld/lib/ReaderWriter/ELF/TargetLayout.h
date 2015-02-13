@@ -18,10 +18,10 @@ namespace elf {
 /// \brief The target can override certain functions in the DefaultLayout
 /// class so that the order, the name of the section and the segment type could
 /// be changed in the final layout
-template <class ELFT> class TargetLayout : public ScriptLayout<ELFT> {
+template <class ELFT> class TargetLayout : public DefaultLayout<ELFT> {
 public:
   TargetLayout(const ELFLinkingContext &context)
-      : ScriptLayout<ELFT>(context) {}
+      : DefaultLayout<ELFT>(context) {}
 };
 } // end namespace elf
 } // end namespace lld

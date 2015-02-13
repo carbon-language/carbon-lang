@@ -16,6 +16,4 @@ lib/ReaderWriter/ELF
 
 - Gnu linkonce sections.
 
-- ScriptLayout
-
 - Fix section flags as they appear in input (update content permissions)
