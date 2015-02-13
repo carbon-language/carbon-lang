@@ -159,7 +159,9 @@ namespace bitc {
     METADATA_SUBPROGRAM    = 21,  // [distinct, ...]
     METADATA_LEXICAL_BLOCK = 22,  // [distinct, scope, file, line, column]
     METADATA_LEXICAL_BLOCK_FILE=23,//[distinct, scope, file, discriminator]
-    METADATA_NAMESPACE     = 24   // [distinct, scope, file, name, line]
+    METADATA_NAMESPACE     = 24,  // [distinct, scope, file, name, line]
+    METADATA_TEMPLATE_TYPE = 25,  // [distinct, scope, name, type, ...]
+    METADATA_TEMPLATE_VALUE= 26   // [distinct, scope, name, type, value, ...]
   };
 
   // The constants block (CONSTANTS_BLOCK_ID) describes emission for each

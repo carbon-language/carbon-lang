@@ -1678,18 +1678,39 @@ static void writeMDNamespace(raw_ostream &Out, const MDNamespace *N,
   Out << ")";
 }
 
-static void writeMDTemplateTypeParameter(raw_ostream &,
-                                         const MDTemplateTypeParameter *,
-                                         TypePrinting *, SlotTracker *,
-                                         const Module *) {
-  llvm_unreachable("write not implemented");
+static void writeMDTemplateTypeParameter(raw_ostream &Out,
+                                         const MDTemplateTypeParameter *N,
+                                         TypePrinting *TypePrinter,
+                                         SlotTracker *Machine,
+                                         const Module *Context) {
+  Out << "!MDTemplateTypeParameter(";
+  FieldSeparator FS;
+  Out << FS << "scope: ";
+  writeMetadataAsOperand(Out, N->getScope(), TypePrinter, Machine, Context);
+  Out << FS << "name: \"" << N->getName() << "\"";
+  Out << FS << "type: ";
+  writeMetadataAsOperand(Out, N->getType(), TypePrinter, Machine, Context);
+  Out << ")";
 }
-static void writeMDTemplateValueParameter(raw_ostream &,
-                                          const MDTemplateValueParameter *,
-                                          TypePrinting *, SlotTracker *,
-                                          const Module *) {
-  llvm_unreachable("write not implemented");
+
+static void writeMDTemplateValueParameter(raw_ostream &Out,
+                                          const MDTemplateValueParameter *N,
+                                          TypePrinting *TypePrinter,
+                                          SlotTracker *Machine,
+                                          const Module *Context) {
+  Out << "!MDTemplateValueParameter(";
+  FieldSeparator FS;
+  writeTag(Out, FS, N);
+  Out << FS << "scope: ";
+  writeMetadataAsOperand(Out, N->getScope(), TypePrinter, Machine, Context);
+  Out << FS << "name: \"" << N->getName() << "\"";
+  Out << FS << "type: ";
+  writeMetadataAsOperand(Out, N->getType(), TypePrinter, Machine, Context);
+  Out << FS << "value: ";
+  writeMetadataAsOperand(Out, N->getValue(), TypePrinter, Machine, Context);
+  Out << ")";
 }
+
 static void writeMDGlobalVariable(raw_ostream &, const MDGlobalVariable *,
                                   TypePrinting *, SlotTracker *,
                                   const Module *) {

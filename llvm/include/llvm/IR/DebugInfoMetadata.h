@@ -1129,6 +1129,8 @@ public:
   StringRef getName() const { return getStringOperand(1); }
   Metadata *getType() const { return getOperand(2); }
 
+  MDString *getRawName() const { return getOperandAs<MDString>(1); }
+
   static bool classof(const Metadata *MD) {
     return MD->getMetadataID() == MDTemplateTypeParameterKind ||
            MD->getMetadataID() == MDTemplateValueParameterKind;
