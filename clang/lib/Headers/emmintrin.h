@@ -845,6 +845,9 @@ _mm_xor_si128(__m128i __a, __m128i __b)
                                    ((imm)&0xF0) ? 0 : 30 - ((imm)&0xF), \
                                    ((imm)&0xF0) ? 0 : 31 - ((imm)&0xF)); })
 
+#define _mm_bslli_si128(a, imm) \
+  _mm_slli_si128((a), (imm))
+
 static __inline__ __m128i __attribute__((__always_inline__, __nodebug__))
 _mm_slli_epi16(__m128i __a, int __count)
 {
@@ -924,6 +927,9 @@ _mm_sra_epi32(__m128i __a, __m128i __count)
                                    ((imm)&0xF0) ? 16 : ((imm)&0xF) + 13, \
                                    ((imm)&0xF0) ? 16 : ((imm)&0xF) + 14, \
                                    ((imm)&0xF0) ? 16 : ((imm)&0xF) + 15); })
+
+#define _mm_bsrli_si128(a, imm) \
+  _mm_srli_si128((a), (imm))
 
 static __inline__ __m128i __attribute__((__always_inline__, __nodebug__))
 _mm_srli_epi16(__m128i __a, int __count)
