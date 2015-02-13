@@ -1827,11 +1827,24 @@ static void writeMDObjCProperty(raw_ostream &Out, const MDObjCProperty *N,
   Out << ")";
 }
 
-static void writeMDImportedEntity(raw_ostream &, const MDImportedEntity *,
-                                  TypePrinting *, SlotTracker *,
-                                  const Module *) {
-  llvm_unreachable("write not implemented");
+static void writeMDImportedEntity(raw_ostream &Out, const MDImportedEntity *N,
+                                  TypePrinting *TypePrinter,
+                                  SlotTracker *Machine, const Module *Context) {
+  Out << "!MDImportedEntity(";
+  FieldSeparator FS;
+  writeTag(Out, FS, N);
+  Out << FS << "scope: ";
+  writeMetadataAsOperand(Out, N->getScope(), TypePrinter, Machine, Context);
+  if (N->getEntity()) {
+    Out << FS << "entity: ";
+    writeMetadataAsOperand(Out, N->getEntity(), TypePrinter, Machine, Context);
+  }
+  if (N->getLine())
+    Out << FS << "line: " << N->getLine();
+  Out << FS << "name: \"" << N->getName() << "\"";
+  Out << ")";
 }
+
 
 static void WriteMDNodeBodyInternal(raw_ostream &Out, const MDNode *Node,
                                     TypePrinting *TypePrinter,
