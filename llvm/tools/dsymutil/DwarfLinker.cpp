@@ -12,6 +12,7 @@
 #include "dsymutil.h"
 #include "llvm/DebugInfo/DWARF/DWARFContext.h"
 #include "llvm/DebugInfo/DWARF/DWARFDebugInfoEntry.h"
+#include "llvm/DebugInfo/DWARF/DWARFFormValue.h"
 #include "llvm/Object/MachO.h"
 #include <string>
 
@@ -112,6 +113,21 @@ private:
                             const object::MachOObjectFile &Obj,
                             const DebugMapObject &DMO);
   /// @}
+
+  /// \defgroup Helpers Various helper methods.
+  ///
+  /// @{
+  const DWARFDebugInfoEntryMinimal *
+  resolveDIEReference(DWARFFormValue &RefValue, const DWARFUnit &Unit,
+                      const DWARFDebugInfoEntryMinimal &DIE,
+                      CompileUnit *&ReferencedCU);
+
+  CompileUnit *getUnitForOffset(unsigned Offset);
+
+  void reportWarning(const Twine &Warning, const DWARFUnit *Unit = nullptr,
+                     const DWARFDebugInfoEntryMinimal *DIE = nullptr);
+  /// @}
+
 private:
   std::string OutputFilename;
   bool Verbose;
@@ -119,7 +135,56 @@ private:
 
   /// The units of the current debug map object.
   std::vector<CompileUnit> Units;
+
+  /// The debug map object curently under consideration.
+  DebugMapObject *CurrentDebugObject;
 };
+
+/// \brief Similar to DWARFUnitSection::getUnitForOffset(), but
+/// returning our CompileUnit object instead.
+CompileUnit *DwarfLinker::getUnitForOffset(unsigned Offset) {
+  auto CU =
+      std::upper_bound(Units.begin(), Units.end(), Offset,
+                       [](uint32_t LHS, const CompileUnit &RHS) {
+                         return LHS < RHS.getOrigUnit().getNextUnitOffset();
+                       });
+  return CU != Units.end() ? &*CU : nullptr;
+}
+
+/// \brief Resolve the DIE attribute reference that has been
+/// extracted in \p RefValue. The resulting DIE migh be in another
+/// CompileUnit which is stored into \p ReferencedCU.
+/// \returns null if resolving fails for any reason.
+const DWARFDebugInfoEntryMinimal *DwarfLinker::resolveDIEReference(
+    DWARFFormValue &RefValue, const DWARFUnit &Unit,
+    const DWARFDebugInfoEntryMinimal &DIE, CompileUnit *&RefCU) {
+  assert(RefValue.isFormClass(DWARFFormValue::FC_Reference));
+  uint64_t RefOffset = *RefValue.getAsReference(&Unit);
+
+  if ((RefCU = getUnitForOffset(RefOffset)))
+    if (const auto *RefDie = RefCU->getOrigUnit().getDIEForOffset(RefOffset))
+      return RefDie;
+
+  reportWarning("could not find referenced DIE", &Unit, &DIE);
+  return nullptr;
+}
+
+/// \brief Report a warning to the user, optionaly including
+/// information about a specific \p DIE related to the warning.
+void DwarfLinker::reportWarning(const Twine &Warning, const DWARFUnit *Unit,
+                                const DWARFDebugInfoEntryMinimal *DIE) {
+  if (CurrentDebugObject)
+    errs() << Twine("while processing ") +
+                  CurrentDebugObject->getObjectFilename() + ":\n";
+  errs() << Twine("warning: ") + Warning + "\n";
+
+  if (!Verbose || !DIE)
+    return;
+
+  errs() << "    in DIE:\n";
+  DIE->dump(errs(), const_cast<DWARFUnit *>(Unit), 0 /* RecurseDepth */,
+            6 /* Indent */);
+}
 
 /// \brief Recursive helper to gather the child->parent relationships in the
 /// original compile unit.
@@ -160,7 +225,7 @@ void DwarfLinker::findValidRelocsMachO(const object::SectionRef &Section,
     unsigned RelocSize = 1 << Obj.getAnyRelocationLength(MachOReloc);
     uint64_t Offset64;
     if ((RelocSize != 4 && RelocSize != 8) || Reloc.getOffset(Offset64)) {
-      errs() << "warning: unsupported relocation in debug_info section.\n";
+      reportWarning(" unsupported relocation in debug_info section.");
       continue;
     }
     uint32_t Offset = Offset64;
@@ -171,7 +236,7 @@ void DwarfLinker::findValidRelocsMachO(const object::SectionRef &Section,
     if (Sym != Obj.symbol_end()) {
       StringRef SymbolName;
       if (Sym->getName(SymbolName)) {
-        errs() << "warning: error getting relocation symbol name.\n";
+        reportWarning("error getting relocation symbol name.");
         continue;
       }
       if (const auto *Mapping = DMO.lookupSymbol(SymbolName))
@@ -194,8 +259,7 @@ bool DwarfLinker::findValidRelocs(const object::SectionRef &Section,
   if (auto *MachOObj = dyn_cast<object::MachOObjectFile>(&Obj))
     findValidRelocsMachO(Section, *MachOObj, DMO);
   else
-    errs() << "warning: unsupported object file type: " << Obj.getFileName()
-           << '\n';
+    reportWarning(Twine("unsupported object file type: ") + Obj.getFileName());
 
   if (ValidRelocs.empty())
     return false;
@@ -235,11 +299,13 @@ bool DwarfLinker::link(const DebugMap &Map) {
   }
 
   for (const auto &Obj : Map.objects()) {
+    CurrentDebugObject = Obj.get();
+
     if (Verbose)
       outs() << "DEBUG MAP OBJECT: " << Obj->getObjectFilename() << "\n";
     auto ErrOrObj = BinHolder.GetObjectFile(Obj->getObjectFilename());
     if (std::error_code EC = ErrOrObj.getError()) {
-      errs() << Obj->getObjectFilename() << ": " << EC.message() << "\n";
+      reportWarning(Twine(Obj->getObjectFilename()) + ": " + EC.message());
       continue;
     }
 
