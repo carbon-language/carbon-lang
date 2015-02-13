@@ -2291,9 +2291,9 @@ lowerEXTRACT_VECTOR_ELT(SDValue Op, SelectionDAG &DAG) const {
 static bool isConstantOrUndef(const SDValue Op) {
   if (Op->getOpcode() == ISD::UNDEF)
     return true;
-  if (dyn_cast<ConstantSDNode>(Op))
+  if (isa<ConstantSDNode>(Op))
     return true;
-  if (dyn_cast<ConstantFPSDNode>(Op))
+  if (isa<ConstantFPSDNode>(Op))
     return true;
   return false;
 }
