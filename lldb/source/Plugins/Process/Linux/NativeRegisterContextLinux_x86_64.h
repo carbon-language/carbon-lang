@@ -49,10 +49,10 @@ namespace lldb_private
         IsWatchpointVacant(uint32_t wp_index);
 
         bool
-        ClearHardwareWatchpoint(uint32_t wp_index);
+        ClearHardwareWatchpoint(uint32_t wp_index) override;
 
         Error
-        ClearAllHardwareWatchpoints ();
+        ClearAllHardwareWatchpoints () override;
 
         Error
         SetHardwareWatchpointWithIndex(lldb::addr_t addr, size_t size,
@@ -60,13 +60,13 @@ namespace lldb_private
 
         uint32_t
         SetHardwareWatchpoint(lldb::addr_t addr, size_t size,
-                uint32_t watch_flags);
+                uint32_t watch_flags) override;
 
         lldb::addr_t
         GetWatchpointAddress(uint32_t wp_index);
 
         uint32_t
-        NumSupportedHardwareWatchpoints();
+        NumSupportedHardwareWatchpoints() override;
 
     private:
 
