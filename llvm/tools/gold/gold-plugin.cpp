@@ -697,7 +697,7 @@ static void runLTOPasses(Module &M, TargetMachine &TM) {
   passes.add(new DataLayoutPass());
   passes.add(createTargetTransformInfoWrapperPass(TM.getTargetIRAnalysis()));
 
-  legacy::PassManagerBuilder PMB;
+  PassManagerBuilder PMB;
   PMB.LibraryInfo = new TargetLibraryInfoImpl(Triple(TM.getTargetTriple()));
   PMB.Inliner = createFunctionInliningPass();
   PMB.VerifyInput = true;
