@@ -14,6 +14,8 @@
 #include "llvm/DebugInfo/DWARF/DWARFDebugInfoEntry.h"
 #include "llvm/DebugInfo/DWARF/DWARFFormValue.h"
 #include "llvm/Object/MachO.h"
+#include "llvm/Support/Dwarf.h"
+#include "llvm/Support/LEB128.h"
 #include <string>
 
 namespace llvm {
@@ -28,7 +30,10 @@ class CompileUnit {
 public:
   /// \brief Information gathered about a DIE in the object file.
   struct DIEInfo {
-    uint32_t ParentIdx;
+    uint64_t Address;   ///< Linked address of the described entity.
+    uint32_t ParentIdx; ///< The index of this DIE's parent.
+    bool Keep;          ///< Is the DIE part of the linked output?
+    bool InDebugMap;    ///< Was this DIE's entity found in the map?
   };
 
   CompileUnit(DWARFUnit &OrigUnit) : OrigUnit(OrigUnit) {
@@ -114,6 +119,47 @@ private:
                             const DebugMapObject &DMO);
   /// @}
 
+  /// \defgroup FindRootDIEs Find DIEs corresponding to debug map entries.
+  ///
+  /// @{
+  /// \brief Recursively walk the \p DIE tree and look for DIEs to
+  /// keep. Store that information in \p CU's DIEInfo.
+  void lookForDIEsToKeep(const DWARFDebugInfoEntryMinimal &DIE,
+                         const DebugMapObject &DMO, CompileUnit &CU,
+                         unsigned Flags);
+
+  /// \brief Flags passed to DwarfLinker::lookForDIEsToKeep
+  enum TravesalFlags {
+    TF_Keep = 1 << 0,            ///< Mark the traversed DIEs as kept.
+    TF_InFunctionScope = 1 << 1, ///< Current scope is a fucntion scope.
+    TF_DependencyWalk = 1 << 2,  ///< Walking the dependencies of a kept DIE.
+    TF_ParentWalk = 1 << 3,      ///< Walking up the parents of a kept DIE.
+  };
+
+  /// \brief Mark the passed DIE as well as all the ones it depends on
+  /// as kept.
+  void keepDIEAndDenpendencies(const DWARFDebugInfoEntryMinimal &DIE,
+                               CompileUnit::DIEInfo &MyInfo,
+                               const DebugMapObject &DMO, CompileUnit &CU,
+                               unsigned Flags);
+
+  unsigned shouldKeepDIE(const DWARFDebugInfoEntryMinimal &DIE,
+                         CompileUnit &Unit, CompileUnit::DIEInfo &MyInfo,
+                         unsigned Flags);
+
+  unsigned shouldKeepVariableDIE(const DWARFDebugInfoEntryMinimal &DIE,
+                                 CompileUnit &Unit,
+                                 CompileUnit::DIEInfo &MyInfo, unsigned Flags);
+
+  unsigned shouldKeepSubprogramDIE(const DWARFDebugInfoEntryMinimal &DIE,
+                                   CompileUnit &Unit,
+                                   CompileUnit::DIEInfo &MyInfo,
+                                   unsigned Flags);
+
+  bool hasValidRelocation(uint32_t StartOffset, uint32_t EndOffset,
+                          CompileUnit::DIEInfo &Info);
+  /// @}
+
   /// \defgroup Helpers Various helper methods.
   ///
   /// @{
@@ -197,6 +243,21 @@ static void gatherDIEParents(const DWARFDebugInfoEntryMinimal *DIE,
     for (auto *Child = DIE->getFirstChild(); Child && !Child->isNULL();
          Child = Child->getSibling())
       gatherDIEParents(Child, MyIdx, CU);
+}
+
+static bool dieNeedsChildrenToBeMeaningful(uint32_t Tag) {
+  switch (Tag) {
+  default:
+    return false;
+  case dwarf::DW_TAG_subprogram:
+  case dwarf::DW_TAG_lexical_block:
+  case dwarf::DW_TAG_subroutine_type:
+  case dwarf::DW_TAG_structure_type:
+  case dwarf::DW_TAG_class_type:
+  case dwarf::DW_TAG_union_type:
+    return true;
+  }
+  llvm_unreachable("Invalid Tag");
 }
 
 void DwarfLinker::startDebugObject(DWARFContext &Dwarf) {
@@ -291,6 +352,255 @@ bool DwarfLinker::findValidRelocsInDebugInfo(const object::ObjectFile &Obj,
   return false;
 }
 
+/// \brief Checks that there is a relocation against an actual debug
+/// map entry between \p StartOffset and \p NextOffset.
+///
+/// This function must be called with offsets in strictly ascending
+/// order because it never looks back at relocations it already 'went past'.
+/// \returns true and sets Info.InDebugMap if it is the case.
+bool DwarfLinker::hasValidRelocation(uint32_t StartOffset, uint32_t EndOffset,
+                                     CompileUnit::DIEInfo &Info) {
+  assert(NextValidReloc == 0 ||
+         StartOffset > ValidRelocs[NextValidReloc - 1].Offset);
+  if (NextValidReloc >= ValidRelocs.size())
+    return false;
+
+  uint64_t RelocOffset = ValidRelocs[NextValidReloc].Offset;
+
+  // We might need to skip some relocs that we didn't consider. For
+  // example the high_pc of a discarded DIE might contain a reloc that
+  // is in the list because it actually corresponds to the start of a
+  // function that is in the debug map.
+  while (RelocOffset < StartOffset && NextValidReloc < ValidRelocs.size() - 1)
+    RelocOffset = ValidRelocs[++NextValidReloc].Offset;
+
+  if (RelocOffset < StartOffset || RelocOffset >= EndOffset)
+    return false;
+
+  const auto &ValidReloc = ValidRelocs[NextValidReloc++];
+  if (Verbose)
+    outs() << "Found valid debug map entry: " << ValidReloc.Mapping->getKey()
+           << " " << format("\t%016" PRIx64 " => %016" PRIx64,
+                            ValidReloc.Mapping->getValue().ObjectAddress,
+                            ValidReloc.Mapping->getValue().BinaryAddress);
+
+  Info.Address =
+      ValidReloc.Mapping->getValue().BinaryAddress + ValidReloc.Addend;
+  Info.InDebugMap = true;
+  return true;
+}
+
+/// \brief Get the starting and ending (exclusive) offset for the
+/// attribute with index \p Idx descibed by \p Abbrev. \p Offset is
+/// supposed to point to the position of the first attribute described
+/// by \p Abbrev.
+/// \return [StartOffset, EndOffset) as a pair.
+static std::pair<uint32_t, uint32_t>
+getAttributeOffsets(const DWARFAbbreviationDeclaration *Abbrev, unsigned Idx,
+                    unsigned Offset, const DWARFUnit &Unit) {
+  DataExtractor Data = Unit.getDebugInfoExtractor();
+
+  for (unsigned i = 0; i < Idx; ++i)
+    DWARFFormValue::skipValue(Abbrev->getFormByIndex(i), Data, &Offset, &Unit);
+
+  uint32_t End = Offset;
+  DWARFFormValue::skipValue(Abbrev->getFormByIndex(Idx), Data, &End, &Unit);
+
+  return std::make_pair(Offset, End);
+}
+
+/// \brief Check if a variable describing DIE should be kept.
+/// \returns updated TraversalFlags.
+unsigned DwarfLinker::shouldKeepVariableDIE(
+    const DWARFDebugInfoEntryMinimal &DIE, CompileUnit &Unit,
+    CompileUnit::DIEInfo &MyInfo, unsigned Flags) {
+  const auto *Abbrev = DIE.getAbbreviationDeclarationPtr();
+
+  // Global variables with constant value can always be kept.
+  if (!(Flags & TF_InFunctionScope) &&
+      Abbrev->findAttributeIndex(dwarf::DW_AT_const_value) != -1U) {
+    MyInfo.InDebugMap = true;
+    return Flags | TF_Keep;
+  }
+
+  uint32_t LocationIdx = Abbrev->findAttributeIndex(dwarf::DW_AT_location);
+  if (LocationIdx == -1U)
+    return Flags;
+
+  uint32_t Offset = DIE.getOffset() + getULEB128Size(Abbrev->getCode());
+  const DWARFUnit &OrigUnit = Unit.getOrigUnit();
+  uint32_t LocationOffset, LocationEndOffset;
+  std::tie(LocationOffset, LocationEndOffset) =
+      getAttributeOffsets(Abbrev, LocationIdx, Offset, OrigUnit);
+
+  // See if there is a relocation to a valid debug map entry inside
+  // this variable's location. The order is important here. We want to
+  // always check in the variable has a valid relocation, so that the
+  // DIEInfo is filled. However, we don't want a static variable in a
+  // function to force us to keep the enclosing function.
+  if (!hasValidRelocation(LocationOffset, LocationEndOffset, MyInfo) ||
+      (Flags & TF_InFunctionScope))
+    return Flags;
+
+  if (Verbose)
+    DIE.dump(outs(), const_cast<DWARFUnit *>(&OrigUnit), 0, 8 /* Indent */);
+
+  return Flags | TF_Keep;
+}
+
+/// \brief Check if a function describing DIE should be kept.
+/// \returns updated TraversalFlags.
+unsigned DwarfLinker::shouldKeepSubprogramDIE(
+    const DWARFDebugInfoEntryMinimal &DIE, CompileUnit &Unit,
+    CompileUnit::DIEInfo &MyInfo, unsigned Flags) {
+  const auto *Abbrev = DIE.getAbbreviationDeclarationPtr();
+
+  Flags |= TF_InFunctionScope;
+
+  uint32_t LowPcIdx = Abbrev->findAttributeIndex(dwarf::DW_AT_low_pc);
+  if (LowPcIdx == -1U)
+    return Flags;
+
+  uint32_t Offset = DIE.getOffset() + getULEB128Size(Abbrev->getCode());
+  const DWARFUnit &OrigUnit = Unit.getOrigUnit();
+  uint32_t LowPcOffset, LowPcEndOffset;
+  std::tie(LowPcOffset, LowPcEndOffset) =
+      getAttributeOffsets(Abbrev, LowPcIdx, Offset, OrigUnit);
+
+  uint64_t LowPc =
+      DIE.getAttributeValueAsAddress(&OrigUnit, dwarf::DW_AT_low_pc, -1ULL);
+  assert(LowPc != -1ULL && "low_pc attribute is not an address.");
+  if (LowPc == -1ULL ||
+      !hasValidRelocation(LowPcOffset, LowPcEndOffset, MyInfo))
+    return Flags;
+
+  if (Verbose)
+    DIE.dump(outs(), const_cast<DWARFUnit *>(&OrigUnit), 0, 8 /* Indent */);
+
+  return Flags | TF_Keep;
+}
+
+/// \brief Check if a DIE should be kept.
+/// \returns updated TraversalFlags.
+unsigned DwarfLinker::shouldKeepDIE(const DWARFDebugInfoEntryMinimal &DIE,
+                                    CompileUnit &Unit,
+                                    CompileUnit::DIEInfo &MyInfo,
+                                    unsigned Flags) {
+  switch (DIE.getTag()) {
+  case dwarf::DW_TAG_constant:
+  case dwarf::DW_TAG_variable:
+    return shouldKeepVariableDIE(DIE, Unit, MyInfo, Flags);
+  case dwarf::DW_TAG_subprogram:
+    return shouldKeepSubprogramDIE(DIE, Unit, MyInfo, Flags);
+  case dwarf::DW_TAG_module:
+  case dwarf::DW_TAG_imported_module:
+  case dwarf::DW_TAG_imported_declaration:
+  case dwarf::DW_TAG_imported_unit:
+    // We always want to keep these.
+    return Flags | TF_Keep;
+  }
+
+  return Flags;
+}
+
+
+/// \brief Mark the passed DIE as well as all the ones it depends on
+/// as kept.
+///
+/// This function is called by lookForDIEsToKeep on DIEs that are
+/// newly discovered to be needed in the link. It recursively calls
+/// back to lookForDIEsToKeep while adding TF_DependencyWalk to the
+/// TraversalFlags to inform it that it's not doing the primary DIE
+/// tree walk.
+void DwarfLinker::keepDIEAndDenpendencies(const DWARFDebugInfoEntryMinimal &DIE,
+                                          CompileUnit::DIEInfo &MyInfo,
+                                          const DebugMapObject &DMO,
+                                          CompileUnit &CU, unsigned Flags) {
+  const DWARFUnit &Unit = CU.getOrigUnit();
+  MyInfo.Keep = true;
+
+  // First mark all the parent chain as kept.
+  unsigned AncestorIdx = MyInfo.ParentIdx;
+  while (!CU.getInfo(AncestorIdx).Keep) {
+    lookForDIEsToKeep(*Unit.getDIEAtIndex(AncestorIdx), DMO, CU,
+                      TF_ParentWalk | TF_Keep | TF_DependencyWalk);
+    AncestorIdx = CU.getInfo(AncestorIdx).ParentIdx;
+  }
+
+  // Then we need to mark all the DIEs referenced by this DIE's
+  // attributes as kept.
+  DataExtractor Data = Unit.getDebugInfoExtractor();
+  const auto *Abbrev = DIE.getAbbreviationDeclarationPtr();
+  uint32_t Offset = DIE.getOffset() + getULEB128Size(Abbrev->getCode());
+
+  // Mark all DIEs referenced through atttributes as kept.
+  for (const auto &AttrSpec : Abbrev->attributes()) {
+    DWARFFormValue Val(AttrSpec.Form);
+
+    if (!Val.isFormClass(DWARFFormValue::FC_Reference)) {
+      DWARFFormValue::skipValue(AttrSpec.Form, Data, &Offset, &Unit);
+      continue;
+    }
+
+    Val.extractValue(Data, &Offset, &Unit);
+    CompileUnit *ReferencedCU;
+    if (const auto *RefDIE = resolveDIEReference(Val, Unit, DIE, ReferencedCU))
+      lookForDIEsToKeep(*RefDIE, DMO, *ReferencedCU,
+                        TF_Keep | TF_DependencyWalk);
+  }
+}
+
+/// \brief Recursively walk the \p DIE tree and look for DIEs to
+/// keep. Store that information in \p CU's DIEInfo.
+///
+/// This function is the entry point of the DIE selection
+/// algorithm. It is expected to walk the DIE tree in file order and
+/// (though the mediation of its helper) call hasValidRelocation() on
+/// each DIE that might be a 'root DIE' (See DwarfLinker class
+/// comment).
+/// While walking the dependencies of root DIEs, this function is
+/// also called, but during these dependency walks the file order is
+/// not respected. The TF_DependencyWalk flag tells us which kind of
+/// traversal we are currently doing.
+void DwarfLinker::lookForDIEsToKeep(const DWARFDebugInfoEntryMinimal &DIE,
+                                    const DebugMapObject &DMO, CompileUnit &CU,
+                                    unsigned Flags) {
+  unsigned Idx = CU.getOrigUnit().getDIEIndex(&DIE);
+  CompileUnit::DIEInfo &MyInfo = CU.getInfo(Idx);
+  bool AlreadyKept = MyInfo.Keep;
+
+  // If the Keep flag is set, we are marking a required DIE's
+  // dependencies. If our target is already marked as kept, we're all
+  // set.
+  if ((Flags & TF_DependencyWalk) && AlreadyKept)
+    return;
+
+  // We must not call shouldKeepDIE while called from keepDIEAndDenpendencies,
+  // because it would screw up the relocation finding logic.
+  if (!(Flags & TF_DependencyWalk))
+    Flags = shouldKeepDIE(DIE, CU, MyInfo, Flags);
+
+  // If it is a newly kept DIE mark it as well as all its dependencies as kept.
+  if (!AlreadyKept && (Flags & TF_Keep))
+    keepDIEAndDenpendencies(DIE, MyInfo, DMO, CU, Flags);
+
+  // The TF_ParentWalk flag tells us that we are currently walking up
+  // the parent chain of a required DIE, and we don't want to mark all
+  // the children of the parents as kept (consider for example a
+  // DW_TAG_namespace node in the parent chain). There are however a
+  // set of DIE types for which we want to ignore that directive and still
+  // walk their children.
+  if (dieNeedsChildrenToBeMeaningful(DIE.getTag()))
+    Flags &= ~TF_ParentWalk;
+
+  if (!DIE.hasChildren() || (Flags & TF_ParentWalk))
+    return;
+
+  for (auto *Child = DIE.getFirstChild(); Child && !Child->isNULL();
+       Child = Child->getSibling())
+    lookForDIEsToKeep(*Child, DMO, CU, Flags);
+}
+
 bool DwarfLinker::link(const DebugMap &Map) {
 
   if (Map.begin() == Map.end()) {
@@ -331,6 +641,15 @@ bool DwarfLinker::link(const DebugMap &Map) {
       Units.emplace_back(*CU);
       gatherDIEParents(CUDie, 0, Units.back());
     }
+
+    // Then mark all the DIEs that need to be present in the linked
+    // output and collect some information about them. Note that this
+    // loop can not be merged with the previous one becaue cross-cu
+    // references require the ParentIdx to be setup for every CU in
+    // the object file before calling this.
+    for (auto &CurrentUnit : Units)
+      lookForDIEsToKeep(*CurrentUnit.getOrigUnit().getCompileUnitDIE(), *Obj,
+                        CurrentUnit, 0);
 
     // Clean-up before starting working on the next object.
     endDebugObject();
