@@ -60,12 +60,21 @@ static unsigned computeFramePointerSaveOffset(const PPCSubtarget &STI) {
   return STI.isPPC64() ? -8U : -4U;
 }
 
+static unsigned computeLinkageSize(const PPCSubtarget &STI) {
+  if (STI.isDarwinABI() || STI.isPPC64())
+    return (STI.isELFv2ABI() ? 4 : 6) * (STI.isPPC64() ? 8 : 4);
+
+  // SVR4 ABI:
+  return 8;
+}
+
 PPCFrameLowering::PPCFrameLowering(const PPCSubtarget &STI)
     : TargetFrameLowering(TargetFrameLowering::StackGrowsDown,
                           (STI.hasQPX() || STI.isBGQ()) ? 32 : 16, 0),
       Subtarget(STI), ReturnSaveOffset(computeReturnSaveOffset(Subtarget)),
       TOCSaveOffset(computeTOCSaveOffset(Subtarget)),
-      FramePointerSaveOffset(computeFramePointerSaveOffset(Subtarget)) {}
+      FramePointerSaveOffset(computeFramePointerSaveOffset(Subtarget)),
+      LinkageSize(computeLinkageSize(Subtarget)) {}
 
 // With the SVR4 ABI, callee-saved registers have fixed offsets on the stack.
 const PPCFrameLowering::SpillSlot *PPCFrameLowering::getCalleeSavedSpillSlots(
@@ -441,9 +450,7 @@ unsigned PPCFrameLowering::determineFrameLayout(MachineFunction &MF,
   unsigned maxCallFrameSize = MFI->getMaxCallFrameSize();
 
   // Maximum call frame needs to be at least big enough for linkage area.
-  unsigned minCallFrameSize = getLinkageSize(Subtarget.isPPC64(),
-                                             Subtarget.isDarwinABI(),
-                                             Subtarget.isELFv2ABI());
+  unsigned minCallFrameSize = getLinkageSize();
   maxCallFrameSize = std::max(maxCallFrameSize, minCallFrameSize);
 
   // If we have dynamic alloca then maxCallFrameSize needs to be aligned so

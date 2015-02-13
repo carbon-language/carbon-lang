@@ -26,6 +26,7 @@ class PPCFrameLowering: public TargetFrameLowering {
   const unsigned ReturnSaveOffset;
   const unsigned TOCSaveOffset;
   const unsigned FramePointerSaveOffset;
+  const unsigned LinkageSize;
 
 public:
   PPCFrameLowering(const PPCSubtarget &STI);
@@ -94,14 +95,7 @@ public:
 
   /// getLinkageSize - Return the size of the PowerPC ABI linkage area.
   ///
-  static unsigned getLinkageSize(bool isPPC64, bool isDarwinABI,
-                                 bool isELFv2ABI) {
-    if (isDarwinABI || isPPC64)
-      return (isELFv2ABI ? 4 : 6) * (isPPC64 ? 8 : 4);
-
-    // SVR4 ABI:
-    return 8;
-  }
+  unsigned getLinkageSize() const { return LinkageSize; }
 
   const SpillSlot *
   getCalleeSavedSpillSlots(unsigned &NumEntries) const override;
