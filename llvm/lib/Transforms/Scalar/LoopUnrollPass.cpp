@@ -453,10 +453,17 @@ public:
 
   // Given a list of loads that could be constant-folded (LoadBaseAddresses),
   // estimate number of optimized instructions after substituting the concrete
-  // values for the given Iteration.
-  // Fill in SimplifiedValues map for future use in DCE-estimation.
-  unsigned estimateNumberOfSimplifiedInstructions(unsigned Iteration) {
+  // values for the given Iteration. Also track how many instructions become
+  // dead through this process.
+  unsigned estimateNumberOfOptimizedInstructions(unsigned Iteration) {
+    // We keep a set vector for the worklist so that we don't wast space in the
+    // worklist queuing up the same instruction repeatedly. This can happen due
+    // to multiple operands being the same instruction or due to the same
+    // instruction being an operand of lots of things that end up dead or
+    // simplified.
     SmallSetVector<Instruction *, 8> Worklist;
+
+    // Clear the simplified values and counts for this iteration.
     SimplifiedValues.clear();
     CountedInstructions.clear();
     NumberOfOptimizedInstructions = 0;
@@ -484,20 +491,10 @@ public:
       for (User *U : I->users())
         Worklist.insert(cast<Instruction>(U));
     }
-    return NumberOfOptimizedInstructions;
-  }
 
-  // Given a list of potentially simplifed instructions, estimate number of
-  // instructions that would become dead if we do perform the simplification.
-  unsigned estimateNumberOfDeadInstructions() {
-    NumberOfOptimizedInstructions = 0;
-
-    // We keep a set vector for the worklist so that we don't wast space in the
-    // worklist queuing up the same instruction repeatedly. This can happen due
-    // to multiple operands being the same instruction or due to the same
-    // instruction being an operand of lots of things that end up dead or
-    // simplified.
-    SmallSetVector<Instruction *, 8> Worklist;
+    // Now that we know the potentially simplifed instructions, estimate number
+    // of instructions that would become dead if we do perform the
+    // simplification.
 
     // The dead instructions are held in a separate set. This is used to
     // prevent us from re-examining instructions and make sure we only count
@@ -567,11 +564,10 @@ approximateNumberOfOptimizedInstructions(const Loop *L, ScalarEvolution &SE,
   unsigned IterationsNumberForEstimate =
       std::min<unsigned>(UnrollMaxIterationsCountToAnalyze, TripCount);
   unsigned NumberOfOptimizedInstructions = 0;
-  for (unsigned i = 0; i < IterationsNumberForEstimate; ++i) {
+  for (unsigned i = 0; i < IterationsNumberForEstimate; ++i)
     NumberOfOptimizedInstructions +=
-        UA.estimateNumberOfSimplifiedInstructions(i);
-    NumberOfOptimizedInstructions += UA.estimateNumberOfDeadInstructions();
-  }
+        UA.estimateNumberOfOptimizedInstructions(i);
+
   NumberOfOptimizedInstructions *= TripCount / IterationsNumberForEstimate;
 
   return NumberOfOptimizedInstructions;
