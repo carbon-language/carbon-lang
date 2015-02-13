@@ -3548,9 +3548,33 @@ bool LLParser::ParseMDTemplateValueParameter(MDNode *&Result, bool IsDistinct) {
   return false;
 }
 
+/// ParseMDGlobalVariable:
+///   ::= !MDGlobalVariable(scope: !0, name: "foo", linkageName: "foo",
+///                         file: !1, line: 7, type: !2, isLocal: false,
+///                         isDefinition: true, variable: i32* @foo,
+///                         declaration: !3)
 bool LLParser::ParseMDGlobalVariable(MDNode *&Result, bool IsDistinct) {
-  return TokError("unimplemented parser");
+#define VISIT_MD_FIELDS(OPTIONAL, REQUIRED)                                    \
+  OPTIONAL(scope, MDField, );                                                  \
+  REQUIRED(name, MDStringField, );                                             \
+  OPTIONAL(linkageName, MDStringField, );                                      \
+  OPTIONAL(file, MDField, );                                                   \
+  OPTIONAL(line, LineField, );                                                 \
+  OPTIONAL(type, MDField, );                                                   \
+  OPTIONAL(isLocal, MDBoolField, );                                            \
+  OPTIONAL(isDefinition, MDBoolField, (true));                                 \
+  OPTIONAL(variable, MDConstant, );                                            \
+  OPTIONAL(declaration, MDField, );
+  PARSE_MD_FIELDS();
+#undef VISIT_MD_FIELDS
+
+  Result = GET_OR_DISTINCT(MDGlobalVariable,
+                           (Context, scope.Val, name.Val, linkageName.Val,
+                            file.Val, line.Val, type.Val, isLocal.Val,
+                            isDefinition.Val, variable.Val, declaration.Val));
+  return false;
 }
+
 bool LLParser::ParseMDLocalVariable(MDNode *&Result, bool IsDistinct) {
   return TokError("unimplemented parser");
 }

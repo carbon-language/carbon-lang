@@ -1711,11 +1711,43 @@ static void writeMDTemplateValueParameter(raw_ostream &Out,
   Out << ")";
 }
 
-static void writeMDGlobalVariable(raw_ostream &, const MDGlobalVariable *,
-                                  TypePrinting *, SlotTracker *,
-                                  const Module *) {
-  llvm_unreachable("write not implemented");
+static void writeMDGlobalVariable(raw_ostream &Out, const MDGlobalVariable *N,
+                                  TypePrinting *TypePrinter,
+                                  SlotTracker *Machine, const Module *Context) {
+  Out << "!MDGlobalVariable(";
+  FieldSeparator FS;
+  Out << FS << "scope: ";
+  writeMetadataAsOperand(Out, N->getScope(), TypePrinter, Machine, Context);
+  Out << FS << "name: \"" << N->getName() << "\"";
+  if (!N->getLinkageName().empty())
+    Out << FS << "linkageName: \"" << N->getLinkageName() << "\"";
+  if (N->getFile()) {
+    Out << FS << "file: ";
+    writeMetadataAsOperand(Out, N->getFile(), TypePrinter, Machine,
+                           Context);
+  }
+  if (N->getLine())
+    Out << FS << "line: " << N->getLine();
+  if (N->getType()) {
+    Out << FS << "type: ";
+    writeMetadataAsOperand(Out, N->getType(), TypePrinter, Machine,
+                           Context);
+  }
+  Out << FS << "isLocal: " << (N->isLocalToUnit() ? "true" : "false");
+  Out << FS << "isDefinition: " << (N->isDefinition() ? "true" : "false");
+  if (N->getVariable()) {
+    Out << FS << "variable: ";
+    writeMetadataAsOperand(Out, N->getVariable(), TypePrinter, Machine,
+                           Context);
+  }
+  if (N->getStaticDataMemberDeclaration()) {
+    Out << FS << "declaration: ";
+    writeMetadataAsOperand(Out, N->getStaticDataMemberDeclaration(),
+                           TypePrinter, Machine, Context);
+  }
+  Out << ")";
 }
+
 static void writeMDLocalVariable(raw_ostream &, const MDLocalVariable *,
                                  TypePrinting *, SlotTracker *,
                                  const Module *) {

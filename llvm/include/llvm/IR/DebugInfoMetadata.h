@@ -1243,6 +1243,8 @@ public:
   Metadata *getFile() const { return getOperand(2); }
   Metadata *getType() const { return getOperand(3); }
 
+  MDString *getRawName() const { return getOperandAs<MDString>(1); }
+
   static bool classof(const Metadata *MD) {
     return MD->getMetadataID() == MDLocalVariableKind ||
            MD->getMetadataID() == MDGlobalVariableKind;
@@ -1314,6 +1316,8 @@ public:
   StringRef getLinkageName() const { return getStringOperand(5); }
   Metadata *getVariable() const { return getOperand(6); }
   Metadata *getStaticDataMemberDeclaration() const { return getOperand(7); }
+
+  MDString *getRawLinkageName() const { return getOperandAs<MDString>(5); }
 
   static bool classof(const Metadata *MD) {
     return MD->getMetadataID() == MDGlobalVariableKind;

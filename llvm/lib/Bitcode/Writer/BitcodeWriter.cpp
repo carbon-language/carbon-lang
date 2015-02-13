@@ -1051,11 +1051,27 @@ static void WriteMDTemplateValueParameter(const MDTemplateValueParameter *N,
   Record.clear();
 }
 
-static void WriteMDGlobalVariable(const MDGlobalVariable *,
-                                  const ValueEnumerator &, BitstreamWriter &,
-                                  SmallVectorImpl<uint64_t> &, unsigned) {
-  llvm_unreachable("write not implemented");
+static void WriteMDGlobalVariable(const MDGlobalVariable *N,
+                                  const ValueEnumerator &VE,
+                                  BitstreamWriter &Stream,
+                                  SmallVectorImpl<uint64_t> &Record,
+                                  unsigned Abbrev) {
+  Record.push_back(N->isDistinct());
+  Record.push_back(VE.getMetadataOrNullID(N->getScope()));
+  Record.push_back(VE.getMetadataOrNullID(N->getRawName()));
+  Record.push_back(VE.getMetadataOrNullID(N->getRawLinkageName()));
+  Record.push_back(VE.getMetadataOrNullID(N->getFile()));
+  Record.push_back(N->getLine());
+  Record.push_back(VE.getMetadataOrNullID(N->getType()));
+  Record.push_back(N->isLocalToUnit());
+  Record.push_back(N->isDefinition());
+  Record.push_back(VE.getMetadataOrNullID(N->getVariable()));
+  Record.push_back(VE.getMetadataOrNullID(N->getStaticDataMemberDeclaration()));
+
+  Stream.EmitRecord(bitc::METADATA_GLOBAL_VAR, Record, Abbrev);
+  Record.clear();
 }
+
 static void WriteMDLocalVariable(const MDLocalVariable *,
                                  const ValueEnumerator &, BitstreamWriter &,
                                  SmallVectorImpl<uint64_t> &, unsigned) {
