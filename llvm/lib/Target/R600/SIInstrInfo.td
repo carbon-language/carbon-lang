@@ -392,27 +392,26 @@ class SOP1_Real_vi <sop1 op, string opName, dag outs, dag ins, string asm> :
   SOP1e <op.VI>,
   SIMCInstr<opName, SISubtarget.VI>;
 
-multiclass SOP1_32 <sop1 op, string opName, list<dag> pattern> {
-  def "" : SOP1_Pseudo <opName, (outs SReg_32:$dst), (ins SSrc_32:$src0),
-    pattern>;
+multiclass SOP1_m <sop1 op, string opName, dag outs, dag ins, string asm,
+                   list<dag> pattern> {
 
-  def _si : SOP1_Real_si <op, opName, (outs SReg_32:$dst), (ins SSrc_32:$src0),
-    opName#" $dst, $src0">;
+  def "" : SOP1_Pseudo <opName, outs, ins, pattern>;
 
-  def _vi : SOP1_Real_vi <op, opName, (outs SReg_32:$dst), (ins SSrc_32:$src0),
-    opName#" $dst, $src0">;
+  def _si : SOP1_Real_si <op, opName, outs, ins, asm>;
+
+  def _vi : SOP1_Real_vi <op, opName, outs, ins, asm>;
+
 }
 
-multiclass SOP1_64 <sop1 op, string opName, list<dag> pattern> {
-  def "" : SOP1_Pseudo <opName, (outs SReg_64:$dst), (ins SSrc_64:$src0),
-    pattern>;
+multiclass SOP1_32 <sop1 op, string opName, list<dag> pattern> : SOP1_m <
+    op, opName, (outs SReg_32:$dst), (ins SSrc_32:$src0),
+    opName#" $dst, $src0", pattern
+>;
 
-  def _si : SOP1_Real_si <op, opName, (outs SReg_64:$dst), (ins SSrc_64:$src0),
-    opName#" $dst, $src0">;
-
-  def _vi : SOP1_Real_vi <op, opName, (outs SReg_64:$dst), (ins SSrc_64:$src0),
-    opName#" $dst, $src0">;
-}
+multiclass SOP1_64 <sop1 op, string opName, list<dag> pattern> : SOP1_m <
+    op, opName, (outs SReg_64:$dst), (ins SSrc_64:$src0),
+    opName#" $dst, $src0", pattern
+>;
 
 // no input, 64-bit output.
 multiclass SOP1_64_0 <sop1 op, string opName, list<dag> pattern> {
@@ -430,16 +429,10 @@ multiclass SOP1_64_0 <sop1 op, string opName, list<dag> pattern> {
 }
 
 // 64-bit input, 32-bit output.
-multiclass SOP1_32_64 <sop1 op, string opName, list<dag> pattern> {
-  def "" : SOP1_Pseudo <opName, (outs SReg_32:$dst), (ins SSrc_64:$src0),
-    pattern>;
-
-  def _si : SOP1_Real_si <op, opName, (outs SReg_32:$dst), (ins SSrc_64:$src0),
-    opName#" $dst, $src0">;
-
-  def _vi : SOP1_Real_vi <op, opName, (outs SReg_32:$dst), (ins SSrc_64:$src0),
-    opName#" $dst, $src0">;
-}
+multiclass SOP1_32_64 <sop1 op, string opName, list<dag> pattern> : SOP1_m <
+    op, opName, (outs SReg_32:$dst), (ins SSrc_64:$src0),
+    opName#" $dst, $src0", pattern
+>;
 
 class SOP2_Pseudo<string opName, dag outs, dag ins, list<dag> pattern> :
   SOP2<outs, ins, "", pattern>,
