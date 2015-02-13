@@ -18,6 +18,11 @@ class MiNotificationTestCase(lldbmi_testcase.MiTestCaseBase):
         # Test that lldb-mi is ready after startup
         self.expect(self.child_prompt, exactly = True)
 
+        # Test that lldb-mi is ready after unknown command
+        self.runCmd("-unknown-command")
+        self.expect("\^error,msg=\"Driver\. Received command '-unknown-command'\. It was not handled\. Command 'unknown-command' not in Command Factory\"")
+        self.expect(self.child_prompt, exactly = True)
+
         # Test that lldb-mi is ready after -file-exec-and-symbols
         self.runCmd("-file-exec-and-symbols %s" % self.myexe)
         self.expect("\^done")
