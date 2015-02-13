@@ -809,11 +809,23 @@ static void WriteGenericDebugNode(const GenericDebugNode *N,
   Record.clear();
 }
 
-static void WriteMDSubrange(const MDSubrange *, const ValueEnumerator &,
-                            BitstreamWriter &, SmallVectorImpl<uint64_t> &,
-                            unsigned) {
-  llvm_unreachable("write not implemented");
+static uint64_t rotateSign(int64_t I) {
+  uint64_t U = I;
+  return I < 0 ? ~(U << 1) : U << 1;
 }
+
+static void WriteMDSubrange(const MDSubrange *N, const ValueEnumerator &,
+                            BitstreamWriter &Stream,
+                            SmallVectorImpl<uint64_t> &Record,
+                            unsigned Abbrev) {
+  Record.push_back(N->isDistinct());
+  Record.push_back(N->getCount());
+  Record.push_back(rotateSign(N->getLo()));
+
+  Stream.EmitRecord(bitc::METADATA_SUBRANGE, Record, Abbrev);
+  Record.clear();
+}
+
 static void WriteMDEnumerator(const MDEnumerator *, const ValueEnumerator &,
                               BitstreamWriter &, SmallVectorImpl<uint64_t> &,
                               unsigned) {

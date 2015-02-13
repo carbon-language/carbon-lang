@@ -147,7 +147,8 @@ namespace bitc {
     METADATA_OLD_FN_NODE   = 9,   // OLD_FN_NODE:   [n x (type num, value num)]
     METADATA_NAMED_NODE    = 10,  // NAMED_NODE:    [n x mdnodes]
     METADATA_ATTACHMENT    = 11,  // [m x [value, [n x [id, mdnode]]]
-    METADATA_GENERIC_DEBUG = 12   // [distinct, tag, vers, header, n x md num]
+    METADATA_GENERIC_DEBUG = 12,  // [distinct, tag, vers, header, n x md num]
+    METADATA_SUBRANGE      = 13   // [distinct, count, lo]
   };
 
   // The constants block (CONSTANTS_BLOCK_ID) describes emission for each

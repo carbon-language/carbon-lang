@@ -2930,6 +2930,7 @@ template <class FieldTy> struct MDFieldImpl {
   explicit MDFieldImpl(FieldTy Default)
       : Val(std::move(Default)), Seen(false) {}
 };
+
 struct MDUnsignedField : public MDFieldImpl<uint64_t> {
   uint64_t Max;
 
@@ -2945,6 +2946,17 @@ struct ColumnField : public MDUnsignedField {
 struct DwarfTagField : public MDUnsignedField {
   DwarfTagField() : MDUnsignedField(0, dwarf::DW_TAG_hi_user) {}
 };
+
+struct MDSignedField : public MDFieldImpl<int64_t> {
+  int64_t Min;
+  int64_t Max;
+
+  MDSignedField(int64_t Default = 0)
+      : ImplTy(Default), Min(INT64_MIN), Max(INT64_MAX) {}
+  MDSignedField(int64_t Default, int64_t Min, int64_t Max)
+      : ImplTy(Default), Min(Min), Max(Max) {}
+};
+
 struct MDField : public MDFieldImpl<Metadata *> {
   MDField() : ImplTy(nullptr) {}
 };
@@ -2998,6 +3010,26 @@ bool LLParser::ParseMDField(LocTy Loc, StringRef Name, DwarfTagField &Result) {
   assert(Tag <= Result.Max && "Expected valid DWARF tag");
 
   Result.assign(Tag);
+  Lex.Lex();
+  return false;
+}
+
+template <>
+bool LLParser::ParseMDField(LocTy Loc, StringRef Name,
+                            MDSignedField &Result) {
+  if (Lex.getKind() != lltok::APSInt)
+    return TokError("expected signed integer");
+
+  auto &S = Lex.getAPSIntVal();
+  if (S < Result.Min)
+    return TokError("value for '" + Name + "' too small, limit is " +
+                    Twine(Result.Min));
+  if (S > Result.Max)
+    return TokError("value for '" + Name + "' too large, limit is " +
+                    Twine(Result.Max));
+  Result.assign(S.getExtValue());
+  assert(Result.Val >= Result.Min && "Expected value in range");
+  assert(Result.Val <= Result.Max && "Expected value in range");
   Lex.Lex();
   return false;
 }
@@ -3136,9 +3168,19 @@ bool LLParser::ParseGenericDebugNode(MDNode *&Result, bool IsDistinct) {
   return false;
 }
 
+/// ParseMDSubrange:
+///   ::= !MDSubrange(count: 30, lowerBound: 2)
 bool LLParser::ParseMDSubrange(MDNode *&Result, bool IsDistinct) {
-  return TokError("unimplemented parser");
+#define VISIT_MD_FIELDS(OPTIONAL, REQUIRED)                                    \
+  REQUIRED(count, MDUnsignedField, (0, UINT64_MAX >> 1));                      \
+  OPTIONAL(lowerBound, MDSignedField, );
+  PARSE_MD_FIELDS();
+#undef VISIT_MD_FIELDS
+
+  Result = GET_OR_DISTINCT(MDSubrange, (Context, count.Val, lowerBound.Val));
+  return false;
 }
+
 bool LLParser::ParseMDEnumerator(MDNode *&Result, bool IsDistinct) {
   return TokError("unimplemented parser");
 }

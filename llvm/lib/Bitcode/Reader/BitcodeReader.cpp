@@ -1173,6 +1173,8 @@ std::error_code BitcodeReader::ParseValueSymbolTable() {
   }
 }
 
+static int64_t unrotateSign(uint64_t U) { return U & 1 ? ~(U >> 1) : U >> 1; }
+
 std::error_code BitcodeReader::ParseMetadata() {
   unsigned NextMDValueNo = MDValueList.size();
 
@@ -1347,6 +1349,16 @@ std::error_code BitcodeReader::ParseMetadata() {
       MDValueList.AssignValue(GET_OR_DISTINCT(GenericDebugNode, Record[0],
                                               (Context, Tag, Header, DwarfOps)),
                               NextMDValueNo++);
+      break;
+    }
+    case bitc::METADATA_SUBRANGE: {
+      if (Record.size() != 3)
+        return Error("Invalid record");
+
+      MDValueList.AssignValue(
+          GET_OR_DISTINCT(MDSubrange, Record[0],
+                          (Context, Record[1], unrotateSign(Record[2]))),
+          NextMDValueNo++);
       break;
     }
     case bitc::METADATA_STRING: {

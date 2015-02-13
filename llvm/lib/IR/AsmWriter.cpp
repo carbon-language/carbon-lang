@@ -1347,10 +1347,16 @@ static void writeMDLocation(raw_ostream &Out, const MDLocation *DL,
   Out << ")";
 }
 
-static void writeMDSubrange(raw_ostream &, const MDSubrange *, TypePrinting *,
-                            SlotTracker *, const Module *) {
-  llvm_unreachable("write not implemented");
+static void writeMDSubrange(raw_ostream &Out, const MDSubrange *N,
+                            TypePrinting *, SlotTracker *, const Module *) {
+  Out << "!MDSubrange(";
+  FieldSeparator FS;
+  Out << FS << "count: " << N->getCount();
+  if (N->getLo())
+    Out << FS << "lowerBound: " << N->getLo();
+  Out << ")";
 }
+
 static void writeMDEnumerator(raw_ostream &, const MDEnumerator *,
                               TypePrinting *, SlotTracker *, const Module *) {
   llvm_unreachable("write not implemented");
