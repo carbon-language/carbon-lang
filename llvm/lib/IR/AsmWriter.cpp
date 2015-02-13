@@ -1387,15 +1387,97 @@ static void writeMDBasicType(raw_ostream &Out, const MDBasicType *N,
   Out << ")";
 }
 
-static void writeMDDerivedType(raw_ostream &, const MDDerivedType *,
-                               TypePrinting *, SlotTracker *, const Module *) {
-  llvm_unreachable("write not implemented");
+static void writeMDDerivedType(raw_ostream &Out, const MDDerivedType *N,
+                               TypePrinting *TypePrinter, SlotTracker *Machine,
+                               const Module *Context) {
+  Out << "!MDDerivedType(";
+  FieldSeparator FS;
+  writeTag(Out, FS, N);
+  if (!N->getName().empty())
+    Out << FS << "name: \"" << N->getName() << "\"";
+  if (N->getFile()) {
+    Out << FS << "file: ";
+    writeMetadataAsOperand(Out, N->getFile(), TypePrinter, Machine,
+                           Context);
+  }
+  if (N->getLine())
+    Out << FS << "line: " << N->getLine();
+  if (N->getScope()) {
+    Out << FS << "scope: ";
+    writeMetadataAsOperand(Out, N->getScope(), TypePrinter, Machine, Context);
+  }
+  Out << FS << "baseType: ";
+  writeMetadataAsOperand(Out, N->getBaseType(), TypePrinter, Machine, Context);
+  if (N->getSizeInBits())
+    Out << FS << "size: " << N->getSizeInBits();
+  if (N->getAlignInBits())
+    Out << FS << "align: " << N->getAlignInBits();
+  if (N->getOffsetInBits())
+    Out << FS << "offset: " << N->getOffsetInBits();
+  if (N->getFlags())
+    Out << FS << "flags: " << N->getFlags();
+  if (N->getExtraData()) {
+    Out << FS << "extraData: ";
+    writeMetadataAsOperand(Out, N->getExtraData(), TypePrinter, Machine,
+                           Context);
+  }
+  Out << ")";
 }
-static void writeMDCompositeType(raw_ostream &, const MDCompositeType *,
-                                 TypePrinting *, SlotTracker *,
-                                 const Module *) {
-  llvm_unreachable("write not implemented");
+
+static void writeMDCompositeType(raw_ostream &Out, const MDCompositeType *N,
+                                 TypePrinting *TypePrinter,
+                                 SlotTracker *Machine, const Module *Context) {
+  Out << "!MDCompositeType(";
+  FieldSeparator FS;
+  writeTag(Out, FS, N);
+  if (!N->getName().empty())
+    Out << FS << "name: \"" << N->getName() << "\"";
+  if (N->getFile()) {
+    Out << FS << "file: ";
+    writeMetadataAsOperand(Out, N->getFile(), TypePrinter, Machine,
+                           Context);
+  }
+  if (N->getLine())
+    Out << FS << "line: " << N->getLine();
+  if (N->getScope()) {
+    Out << FS << "scope: ";
+    writeMetadataAsOperand(Out, N->getScope(), TypePrinter, Machine, Context);
+  }
+  if (N->getBaseType()) {
+    Out << FS << "baseType: ";
+    writeMetadataAsOperand(Out, N->getBaseType(), TypePrinter, Machine,
+                           Context);
+  }
+  if (N->getSizeInBits())
+    Out << FS << "size: " << N->getSizeInBits();
+  if (N->getAlignInBits())
+    Out << FS << "align: " << N->getAlignInBits();
+  if (N->getOffsetInBits())
+    Out << FS << "offset: " << N->getOffsetInBits();
+  if (N->getFlags())
+    Out << FS << "flags: " << N->getFlags();
+  if (N->getElements()) {
+    Out << FS << "elements: ";
+    writeMetadataAsOperand(Out, N->getElements(), TypePrinter, Machine,
+                           Context);
+  }
+  if (N->getRuntimeLang())
+    Out << FS << "runtimeLang: " << N->getRuntimeLang();
+  if (N->getVTableHolder()) {
+    Out << FS << "vtableHolder: ";
+    writeMetadataAsOperand(Out, N->getVTableHolder(), TypePrinter, Machine,
+                           Context);
+  }
+  if (N->getTemplateParams()) {
+    Out << FS << "templateParams: ";
+    writeMetadataAsOperand(Out, N->getTemplateParams(), TypePrinter, Machine,
+                           Context);
+  }
+  if (!N->getIdentifier().empty())
+    Out << FS << "identifier: \"" << N->getIdentifier() << "\"";
+  Out << ")";
 }
+
 static void writeMDSubroutineType(raw_ostream &, const MDSubroutineType *,
                                   TypePrinting *, SlotTracker *,
                                   const Module *) {

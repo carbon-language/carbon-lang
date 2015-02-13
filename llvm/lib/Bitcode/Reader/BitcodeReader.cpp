@@ -1183,12 +1183,17 @@ std::error_code BitcodeReader::ParseMetadata() {
 
   SmallVector<uint64_t, 64> Record;
 
+  auto getMD =
+      [&](unsigned ID) -> Metadata *{ return MDValueList.getValueFwdRef(ID); };
+  auto getMDOrNull = [&](unsigned ID) -> Metadata *{
+    if (ID)
+      return getMD(ID - 1);
+    return nullptr;
+  };
   auto getMDString = [&](unsigned ID) -> MDString *{
     // This requires that the ID is not really a forward reference.  In
     // particular, the MDString must already have been resolved.
-    if (ID)
-      return cast<MDString>(MDValueList.getValueFwdRef(ID - 1));
-    return nullptr;
+    return cast_or_null<MDString>(getMDOrNull(ID));
   };
 
 #define GET_OR_DISTINCT(CLASS, DISTINCT, ARGS)                                 \
@@ -1379,6 +1384,36 @@ std::error_code BitcodeReader::ParseMetadata() {
           GET_OR_DISTINCT(MDBasicType, Record[0],
                           (Context, Record[1], getMDString(Record[2]),
                            Record[3], Record[4], Record[5])),
+          NextMDValueNo++);
+      break;
+    }
+    case bitc::METADATA_DERIVED_TYPE: {
+      if (Record.size() != 12)
+        return Error("Invalid record");
+
+      MDValueList.AssignValue(
+          GET_OR_DISTINCT(MDDerivedType, Record[0],
+                          (Context, Record[1], getMDString(Record[2]),
+                           getMDOrNull(Record[3]), Record[4],
+                           getMDOrNull(Record[5]), getMD(Record[6]), Record[7],
+                           Record[8], Record[9], Record[10],
+                           getMDOrNull(Record[11]))),
+          NextMDValueNo++);
+      break;
+    }
+    case bitc::METADATA_COMPOSITE_TYPE: {
+      if (Record.size() != 16)
+        return Error("Invalid record");
+
+      MDValueList.AssignValue(
+          GET_OR_DISTINCT(MDCompositeType, Record[0],
+                          (Context, Record[1], getMDString(Record[2]),
+                           getMDOrNull(Record[3]), Record[4],
+                           getMDOrNull(Record[5]), getMDOrNull(Record[6]),
+                           Record[7], Record[8], Record[9], Record[10],
+                           getMDOrNull(Record[11]), Record[12],
+                           getMDOrNull(Record[13]), getMDOrNull(Record[14]),
+                           getMDString(Record[15]))),
           NextMDValueNo++);
       break;
     }
