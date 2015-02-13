@@ -119,12 +119,11 @@ protected:
     PPC_ABI_ELFv1,
     PPC_ABI_ELFv2
   } TargetABI;
-
+  const PPCTargetMachine &TM;
   PPCFrameLowering FrameLowering;
   PPCInstrInfo InstrInfo;
   PPCTargetLowering TLInfo;
   PPCSelectionDAGInfo TSInfo;
-  const PPCTargetMachine &TM;
 
 public:
   /// This constructor initializes the data members to match that
