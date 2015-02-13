@@ -370,8 +370,155 @@ define <4 x float> @test_multiple_div_ss(<4 x float> %a, <4 x float> %b) {
   ret <4 x float> %3
 }
 
+; With SSE4.1 or greater, the shuffles in the following tests may
+; be lowered to X86Blendi nodes. 
+
+define <4 x float> @blend_add_ss(<4 x float> %a, float %b) {
+; SSE-LABEL: blend_add_ss:
+; SSE:       # BB#0:
+; SSE-NEXT:    addss %xmm1, %xmm0
+; SSE-NEXT:    retq
+;
+; AVX-LABEL: blend_add_ss:
+; AVX:       # BB#0:
+; AVX-NEXT:    vaddss %xmm1, %xmm0, %xmm0
+; AVX-NEXT:    retq
+
+  %ext = extractelement <4 x float> %a, i32 0
+  %op = fadd float %b, %ext
+  %ins = insertelement <4 x float> undef, float %op, i32 0
+  %shuf = shufflevector <4 x float> %ins, <4 x float> %a, <4 x i32> <i32 0, i32 5, i32 6, i32 7>
+  ret <4 x float> %shuf
+}
+
+define <4 x float> @blend_sub_ss(<4 x float> %a, float %b) {
+; SSE-LABEL: blend_sub_ss:
+; SSE:       # BB#0:
+; SSE-NEXT:    subss %xmm1, %xmm0
+; SSE-NEXT:    retq
+;
+; AVX-LABEL: blend_sub_ss:
+; AVX:       # BB#0:
+; AVX-NEXT:    vsubss %xmm1, %xmm0, %xmm0
+; AVX-NEXT:    retq
+
+  %ext = extractelement <4 x float> %a, i32 0
+  %op = fsub float %ext, %b
+  %ins = insertelement <4 x float> undef, float %op, i32 0
+  %shuf = shufflevector <4 x float> %ins, <4 x float> %a, <4 x i32> <i32 0, i32 5, i32 6, i32 7>
+  ret <4 x float> %shuf
+}
+
+define <4 x float> @blend_mul_ss(<4 x float> %a, float %b) {
+; SSE-LABEL: blend_mul_ss:
+; SSE:       # BB#0:
+; SSE-NEXT:    mulss %xmm1, %xmm0
+; SSE-NEXT:    retq
+;
+; AVX-LABEL: blend_mul_ss:
+; AVX:       # BB#0:
+; AVX-NEXT:    vmulss %xmm1, %xmm0, %xmm0
+; AVX-NEXT:    retq
+
+  %ext = extractelement <4 x float> %a, i32 0
+  %op = fmul float %b, %ext
+  %ins = insertelement <4 x float> undef, float %op, i32 0
+  %shuf = shufflevector <4 x float> %ins, <4 x float> %a, <4 x i32> <i32 0, i32 5, i32 6, i32 7>
+  ret <4 x float> %shuf
+}
+
+define <4 x float> @blend_div_ss(<4 x float> %a, float %b) {
+; SSE-LABEL: blend_div_ss:
+; SSE:       # BB#0:
+; SSE-NEXT:    divss %xmm1, %xmm0
+; SSE-NEXT:    retq
+;
+; AVX-LABEL: blend_div_ss:
+; AVX:       # BB#0:
+; AVX-NEXT:    vdivss %xmm1, %xmm0, %xmm0
+; AVX-NEXT:    retq
+
+  %ext = extractelement <4 x float> %a, i32 0
+  %op = fdiv float %ext, %b
+  %ins = insertelement <4 x float> undef, float %op, i32 0
+  %shuf = shufflevector <4 x float> %ins, <4 x float> %a, <4 x i32> <i32 0, i32 5, i32 6, i32 7>
+  ret <4 x float> %shuf
+}
+
+define <2 x double> @blend_add_sd(<2 x double> %a, double %b) {
+; SSE-LABEL: blend_add_sd:
+; SSE:       # BB#0:
+; SSE-NEXT:    addsd %xmm1, %xmm0
+; SSE-NEXT:    retq
+;
+; AVX-LABEL: blend_add_sd:
+; AVX:       # BB#0:
+; AVX-NEXT:    vaddsd %xmm1, %xmm0, %xmm0
+; AVX-NEXT:    retq
+
+  %ext = extractelement <2 x double> %a, i32 0
+  %op = fadd double %b, %ext
+  %ins = insertelement <2 x double> undef, double %op, i32 0
+  %shuf = shufflevector <2 x double> %ins, <2 x double> %a, <2 x i32> <i32 0, i32 3>
+  ret <2 x double> %shuf
+}
+
+define <2 x double> @blend_sub_sd(<2 x double> %a, double %b) {
+; SSE-LABEL: blend_sub_sd:
+; SSE:       # BB#0:
+; SSE-NEXT:    subsd %xmm1, %xmm0
+; SSE-NEXT:    retq
+;
+; AVX-LABEL: blend_sub_sd:
+; AVX:       # BB#0:
+; AVX-NEXT:    vsubsd %xmm1, %xmm0, %xmm0
+; AVX-NEXT:    retq
+
+  %ext = extractelement <2 x double> %a, i32 0
+  %op = fsub double %ext, %b
+  %ins = insertelement <2 x double> undef, double %op, i32 0
+  %shuf = shufflevector <2 x double> %ins, <2 x double> %a, <2 x i32> <i32 0, i32 3>
+  ret <2 x double> %shuf
+}
+
+define <2 x double> @blend_mul_sd(<2 x double> %a, double %b) {
+; SSE-LABEL: blend_mul_sd:
+; SSE:       # BB#0:
+; SSE-NEXT:    mulsd %xmm1, %xmm0
+; SSE-NEXT:    retq
+;
+; AVX-LABEL: blend_mul_sd:
+; AVX:       # BB#0:
+; AVX-NEXT:    vmulsd %xmm1, %xmm0, %xmm0
+; AVX-NEXT:    retq
+
+  %ext = extractelement <2 x double> %a, i32 0
+  %op = fmul double %b, %ext
+  %ins = insertelement <2 x double> undef, double %op, i32 0
+  %shuf = shufflevector <2 x double> %ins, <2 x double> %a, <2 x i32> <i32 0, i32 3>
+  ret <2 x double> %shuf
+}
+
+define <2 x double> @blend_div_sd(<2 x double> %a, double %b) {
+; SSE-LABEL: blend_div_sd:
+; SSE:       # BB#0:
+; SSE-NEXT:    divsd %xmm1, %xmm0
+; SSE-NEXT:    retq
+;
+; AVX-LABEL: blend_div_sd:
+; AVX:       # BB#0:
+; AVX-NEXT:    vdivsd %xmm1, %xmm0, %xmm0
+; AVX-NEXT:    retq
+
+  %ext = extractelement <2 x double> %a, i32 0
+  %op = fdiv double %ext, %b
+  %ins = insertelement <2 x double> undef, double %op, i32 0
+  %shuf = shufflevector <2 x double> %ins, <2 x double> %a, <2 x i32> <i32 0, i32 3>
+  ret <2 x double> %shuf
+}
+
 ; Ensure that the backend selects SSE/AVX scalar fp instructions
-; from a packed fp instrution plus a vector insert.
+; from a packed fp instruction plus a vector insert.
 
 define <4 x float> @insert_test_add_ss(<4 x float> %a, <4 x float> %b) {
 ; SSE-LABEL: insert_test_add_ss:
