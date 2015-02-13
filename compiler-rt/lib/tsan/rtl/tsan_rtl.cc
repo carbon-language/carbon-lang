@@ -394,8 +394,11 @@ int Finalize(ThreadState *thr) {
 
   failed = OnFinalize(failed);
 
+#ifdef TSAN_COLLECT_STATS
   StatAggregate(ctx->stat, thr->stat);
   StatOutput(ctx->stat);
+#endif
+
   return failed ? flags()->exitcode : 0;
 }
 

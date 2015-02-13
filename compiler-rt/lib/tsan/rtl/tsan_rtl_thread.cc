@@ -145,7 +145,9 @@ void ThreadContext::OnFinished() {
   AllocatorThreadFinish(thr);
 #endif
   thr->~ThreadState();
+#ifdef TSAN_COLLECT_STATS
   StatAggregate(ctx->stat, thr->stat);
+#endif
   thr = 0;
 }
 

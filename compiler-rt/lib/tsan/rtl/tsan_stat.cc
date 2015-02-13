@@ -15,6 +15,8 @@
 
 namespace __tsan {
 
+#ifdef TSAN_COLLECT_STATS
+
 void StatAggregate(u64 *dst, u64 *src) {
   if (!kCollectStats)
     return;
@@ -175,5 +177,7 @@ void StatOutput(u64 *stat) {
   for (int i = 0; i < StatCnt; i++)
     Printf("%s: %16zu\n", name[i], (uptr)stat[i]);
 }
+
+#endif
 
 }  // namespace __tsan

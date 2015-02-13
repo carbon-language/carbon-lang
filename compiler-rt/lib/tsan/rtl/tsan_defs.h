@@ -65,12 +65,6 @@ const bool kCollectHistory = false;
 const bool kCollectHistory = true;
 #endif
 
-#if defined(TSAN_COLLECT_STATS) && TSAN_COLLECT_STATS
-const bool kCollectStats = true;
-#else
-const bool kCollectStats = false;
-#endif
-
 // The following "build consistency" machinery ensures that all source files
 // are built in the same configuration. Inconsistent builds lead to
 // hard to debug crashes.
