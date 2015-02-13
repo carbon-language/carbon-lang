@@ -55,7 +55,6 @@ void PDBSymbolFunc::dump(raw_ostream &OS, int Indent,
       OS << "(FPO)";
 
     OS << " ";
-    uint32_t FuncSigId = getTypeId();
     if (auto FuncSig = getSignature()) {
       // If we have a signature, dump the name with the signature.
       if (auto ReturnType = FuncSig->getReturnType()) {
