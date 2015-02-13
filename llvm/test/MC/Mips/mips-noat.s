@@ -7,6 +7,8 @@
 # CHECK:  lui   $1, 1
 # CHECK:  addu  $1, $1, $2
 # CHECK:  lw    $2, 0($1)
+# CHECK-LABEL: test2:
+# CHECK:  .set noat
 test1:
         lw      $2, 65536($2)
 
@@ -20,6 +22,8 @@ test2:
 # CHECK:  lui   $1, 1
 # CHECK:  addu  $1, $1, $2
 # CHECK:  lw    $2, 0($1)
+# CHECK-LABEL: test4:
+# CHECK:  .set  at=$0
 test3:
         .set at
         lw      $2, 65536($2)

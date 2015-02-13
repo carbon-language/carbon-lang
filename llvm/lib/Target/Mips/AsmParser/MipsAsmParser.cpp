@@ -3276,67 +3276,84 @@ bool MipsAsmParser::reportParseError(SMLoc Loc, Twine ErrorMsg) {
 bool MipsAsmParser::parseSetNoAtDirective() {
   MCAsmParser &Parser = getParser();
   // Line should look like: ".set noat".
-  // set at reg to 0.
+
+  // Set the $at register to $0.
   AssemblerOptions.back()->setATReg(0);
-  // eat noat
-  Parser.Lex();
+
+  Parser.Lex(); // Eat "noat".
+
   // If this is not the end of the statement, report an error.
   if (getLexer().isNot(AsmToken::EndOfStatement)) {
     reportParseError("unexpected token, expected end of statement");
     return false;
   }
+
+  getTargetStreamer().emitDirectiveSetNoAt();
   Parser.Lex(); // Consume the EndOfStatement.
   return false;
 }
 
 bool MipsAsmParser::parseSetAtDirective() {
+  // Line can be: ".set at", which sets $at to $1
+  //          or  ".set at=$reg", which sets $at to $reg.
   MCAsmParser &Parser = getParser();
-  // Line can be .set at - defaults to $1
-  // or .set at=$reg
-  int AtRegNo;
-  getParser().Lex();
+  Parser.Lex(); // Eat "at".
+
   if (getLexer().is(AsmToken::EndOfStatement)) {
+    // No register was specified, so we set $at to $1.
     AssemblerOptions.back()->setATReg(1);
+
+    getTargetStreamer().emitDirectiveSetAt();
     Parser.Lex(); // Consume the EndOfStatement.
     return false;
-  } else if (getLexer().is(AsmToken::Equal)) {
-    getParser().Lex(); // Eat the '='.
-    if (getLexer().isNot(AsmToken::Dollar)) {
+  }
+
+  if (getLexer().isNot(AsmToken::Equal)) {
+    reportParseError("unexpected token, expected equals sign");
+    return false;
+  }
+  Parser.Lex(); // Eat "=".
+
+  if (getLexer().isNot(AsmToken::Dollar)) {
+    if (getLexer().is(AsmToken::EndOfStatement)) {
+      reportParseError("no register specified");
+      return false;
+    } else {
       reportParseError("unexpected token, expected dollar sign '$'");
       return false;
     }
-    Parser.Lex(); // Eat the '$'.
-    const AsmToken &Reg = Parser.getTok();
-    if (Reg.is(AsmToken::Identifier)) {
-      AtRegNo = matchCPURegisterName(Reg.getIdentifier());
-    } else if (Reg.is(AsmToken::Integer)) {
-      AtRegNo = Reg.getIntVal();
-    } else {
-      reportParseError("unexpected token, expected identifier or integer");
-      return false;
-    }
+  }
+  Parser.Lex(); // Eat "$".
 
-    if (AtRegNo < 0 || AtRegNo > 31) {
-      reportParseError("unexpected token in statement");
-      return false;
-    }
-
-    if (!AssemblerOptions.back()->setATReg(AtRegNo)) {
-      reportParseError("invalid register");
-      return false;
-    }
-    getParser().Lex(); // Eat the register.
-
-    if (getLexer().isNot(AsmToken::EndOfStatement)) {
-      reportParseError("unexpected token, expected end of statement");
-      return false;
-    }
-    Parser.Lex(); // Consume the EndOfStatement.
-    return false;
+  // Find out what "reg" is.
+  unsigned AtRegNo;
+  const AsmToken &Reg = Parser.getTok();
+  if (Reg.is(AsmToken::Identifier)) {
+    AtRegNo = matchCPURegisterName(Reg.getIdentifier());
+  } else if (Reg.is(AsmToken::Integer)) {
+    AtRegNo = Reg.getIntVal();
   } else {
-    reportParseError("unexpected token in statement");
+    reportParseError("unexpected token, expected identifier or integer");
     return false;
   }
+
+  // Check if $reg is a valid register. If it is, set $at to $reg.
+  if (!AssemblerOptions.back()->setATReg(AtRegNo)) {
+    reportParseError("invalid register");
+    return false;
+  }
+  Parser.Lex(); // Eat "reg".
+
+  // If this is not the end of the statement, report an error.
+  if (getLexer().isNot(AsmToken::EndOfStatement)) {
+    reportParseError("unexpected token, expected end of statement");
+    return false;
+  }
+
+  getTargetStreamer().emitDirectiveSetAtWithArg(AtRegNo);
+
+  Parser.Lex(); // Consume the EndOfStatement.
+  return false;
 }
 
 bool MipsAsmParser::parseSetReorderDirective() {

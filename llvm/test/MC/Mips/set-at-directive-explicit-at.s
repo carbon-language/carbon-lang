@@ -15,6 +15,16 @@ foo:
 # WARNINGS: :[[@LINE+2]]:11: warning: used $at without ".set noat"
     .set    at=$1
     jr    $1
+
+# CHECK:   jr    $1                      # encoding: [0x08,0x00,0x20,0x00]
+# WARNINGS: :[[@LINE+2]]:11: warning: used $at without ".set noat"
+    .set    at=$at
+    jr    $at
+
+# CHECK:   jr    $1                      # encoding: [0x08,0x00,0x20,0x00]
+# WARNINGS: :[[@LINE+2]]:11: warning: used $at without ".set noat"
+    .set    at=$at
+    jr    $1
 # WARNINGS-NOT: warning: used $at without ".set noat"
 
 # CHECK:   jr    $1                      # encoding: [0x08,0x00,0x20,0x00]

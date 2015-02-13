@@ -35,6 +35,7 @@ public:
   virtual void emitDirectiveSetMsa();
   virtual void emitDirectiveSetNoMsa();
   virtual void emitDirectiveSetAt();
+  virtual void emitDirectiveSetAtWithArg(unsigned RegNo);
   virtual void emitDirectiveSetNoAt();
   virtual void emitDirectiveEnd(StringRef Name);
 
@@ -145,6 +146,7 @@ public:
   void emitDirectiveSetMsa() override;
   void emitDirectiveSetNoMsa() override;
   void emitDirectiveSetAt() override;
+  void emitDirectiveSetAtWithArg(unsigned RegNo) override;
   void emitDirectiveSetNoAt() override;
   void emitDirectiveEnd(StringRef Name) override;
 

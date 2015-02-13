@@ -43,6 +43,9 @@ void MipsTargetStreamer::emitDirectiveSetNoMacro() { forbidModuleDirective(); }
 void MipsTargetStreamer::emitDirectiveSetMsa() { forbidModuleDirective(); }
 void MipsTargetStreamer::emitDirectiveSetNoMsa() { forbidModuleDirective(); }
 void MipsTargetStreamer::emitDirectiveSetAt() { forbidModuleDirective(); }
+void MipsTargetStreamer::emitDirectiveSetAtWithArg(unsigned RegNo) {
+  forbidModuleDirective();
+}
 void MipsTargetStreamer::emitDirectiveSetNoAt() { forbidModuleDirective(); }
 void MipsTargetStreamer::emitDirectiveEnd(StringRef Name) {}
 void MipsTargetStreamer::emitDirectiveEnt(const MCSymbol &Symbol) {}
@@ -142,6 +145,11 @@ void MipsTargetAsmStreamer::emitDirectiveSetNoMsa() {
 void MipsTargetAsmStreamer::emitDirectiveSetAt() {
   OS << "\t.set\tat\n";
   MipsTargetStreamer::emitDirectiveSetAt();
+}
+
+void MipsTargetAsmStreamer::emitDirectiveSetAtWithArg(unsigned RegNo) {
+  OS << "\t.set\tat=$" << Twine(RegNo) << "\n";
+  MipsTargetStreamer::emitDirectiveSetAtWithArg(RegNo);
 }
 
 void MipsTargetAsmStreamer::emitDirectiveSetNoAt() {
