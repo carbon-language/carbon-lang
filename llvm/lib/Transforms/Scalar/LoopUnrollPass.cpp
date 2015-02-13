@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Transforms/Scalar.h"
+#include "llvm/ADT/SetVector.h"
 #include "llvm/Analysis/AssumptionCache.h"
 #include "llvm/Analysis/CodeMetrics.h"
 #include "llvm/Analysis/LoopPass.h"
@@ -500,22 +501,25 @@ public:
   // instructions that would become dead if we do perform the simplification.
   unsigned estimateNumberOfDeadInstructions() {
     NumberOfOptimizedInstructions = 0;
-    SmallVector<Instruction *, 8> Worklist;
-    SmallPtrSet<Instruction *, 16> DeadInstructions;
 
-    // We keep a very small set of operands that we use to de-duplicate things
-    // when inserting into the worklist. This lets us handle duplicates within
-    // a single instruction's operands without buring lots of memory on the
-    // worklist.
-    SmallPtrSet<Instruction *, 4> OperandSet;
+    // We keep a set vector for the worklist so that we don't wast space in the
+    // worklist queuing up the same instruction repeatedly. This can happen due
+    // to multiple operands being the same instruction or due to the same
+    // instruction being an operand of lots of things that end up dead or
+    // simplified.
+    SmallSetVector<Instruction *, 8> Worklist;
+
+    // The dead instructions are held in a separate set. This is used to
+    // prevent us from re-examining instructions and make sure we only count
+    // the benifit once. The worklist's internal set handles insertion
+    // deduplication.
+    SmallPtrSet<Instruction *, 16> DeadInstructions;
 
     // Lambda to enque operands onto the worklist.
     auto EnqueueOperands = [&](Instruction &I) {
-      OperandSet.clear();
       for (auto *Op : I.operand_values())
         if (auto *OpI = dyn_cast<Instruction>(Op))
-          if (OperandSet.insert(OpI).second)
-            Worklist.push_back(OpI);
+          Worklist.insert(OpI);
     };
 
     // Start by initializing worklist with simplified instructions.
