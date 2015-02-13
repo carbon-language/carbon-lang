@@ -503,6 +503,12 @@ public:
     SmallVector<Instruction *, 8> Worklist;
     SmallPtrSet<Instruction *, 16> DeadInstructions;
 
+    // We keep a very small set of operands that we use to de-duplicate things
+    // when inserting into the worklist. This lets us handle duplicates within
+    // a single instruction's operands without buring lots of memory on the
+    // worklist.
+    SmallPtrSet<Instruction *, 4> OperandSet;
+
     // Start by initializing worklist with simplified instructions.
     for (auto &FoldedKeyValue : SimplifiedValues)
       if (auto *FoldedInst = dyn_cast<Instruction>(FoldedKeyValue.first)) {
@@ -510,9 +516,11 @@ public:
 
         // Add each instruction operand of this dead instruction to the
         // worklist.
+        OperandSet.clear();
         for (auto *Op : FoldedInst->operand_values())
           if (auto *OpI = dyn_cast<Instruction>(Op))
-            Worklist.push_back(OpI);
+            if (OperandSet.insert(OpI).second)
+              Worklist.push_back(OpI);
       }
 
     // If a definition of an insn is only used by simplified or dead
@@ -537,9 +545,11 @@ public:
       if (AllUsersFolded) {
         NumberOfOptimizedInstructions += TTI.getUserCost(I);
         DeadInstructions.insert(I);
+        OperandSet.clear();
         for (auto *Op : I->operand_values())
           if (auto *OpI = dyn_cast<Instruction>(Op))
-            Worklist.push_back(OpI);
+            if (OperandSet.insert(OpI).second)
+              Worklist.push_back(OpI);
       }
     }
     return NumberOfOptimizedInstructions;
