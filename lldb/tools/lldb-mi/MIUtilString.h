@@ -58,6 +58,7 @@ class CMIUtilString : public std::string
     bool ExtractNumber(MIint64 &vwrNumber) const;
     CMIUtilString FindAndReplace(const CMIUtilString &vFind, const CMIUtilString &vReplaceWith) const;
     bool IsNumber(void) const;
+    bool IsHexadecimalNumber(void) const;
     bool IsQuoted(void) const;
     CMIUtilString RemoveRepeatedCharacters(const MIchar vChar);
     MIuint Split(const CMIUtilString &vDelimiter, VecString_t &vwVecSplits) const;

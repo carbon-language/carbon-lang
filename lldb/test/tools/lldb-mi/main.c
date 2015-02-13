@@ -15,6 +15,8 @@ extern int local_test();
 int doloop, dosegfault;
 int g_MyVar = 3;
 static int s_MyVar = 4;
+//FIXME -data-evaluate-expression/print can't evaluate value of type "static char[]"
+const char s_RawData[] = "\x12\x34\x56\x78"; //FIXME static const char s_RawData[] = "\x12\x34\x56\x78";
 
 int main (int argc, char const *argv[])
 {

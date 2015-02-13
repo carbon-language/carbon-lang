@@ -40,10 +40,24 @@ class CMICmdArgContext;
 //--
 class CMICmdArgValNumber : public CMICmdArgValBaseTemplate<MIint64>
 {
+    // Enums:
+  public:
+    //++ ---------------------------------------------------------------------------------
+    // Details: CMICmdArgValNumber needs to know what format of argument to look for in
+    //          the command options text.
+    //--
+    enum ArgValNumberFormat_e
+    {
+        eArgValNumberFormat_Decimal     = (1u << 0),
+        eArgValNumberFormat_Hexadecimal = (1u << 1),
+        eArgValNumberFormat_Auto        = ((eArgValNumberFormat_Hexadecimal << 1) - 1u)  ///< Indicates to try and lookup everything up during a query.
+    };
+
     // Methods:
   public:
     /* ctor */ CMICmdArgValNumber(void);
-    /* ctor */ CMICmdArgValNumber(const CMIUtilString &vrArgName, const bool vbMandatory, const bool vbHandleByCmd);
+    /* ctor */ CMICmdArgValNumber(const CMIUtilString &vrArgName, const bool vbMandatory, const bool vbHandleByCmd,
+                                  const MIuint vnNumberFormatMask = eArgValNumberFormat_Decimal);
     //
     bool IsArgNumber(const CMIUtilString &vrTxt) const;
 
@@ -61,5 +75,6 @@ class CMICmdArgValNumber : public CMICmdArgValBaseTemplate<MIint64>
 
     // Attributes:
   private:
+    MIuint m_nNumberFormatMask;
     MIint64 m_nNumber;
 };

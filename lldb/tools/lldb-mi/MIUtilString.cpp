@@ -23,7 +23,7 @@
 #include <memory>   // std::unique_ptr
 #include <stdarg.h> // va_list, va_start, var_end
 #include <sstream>  // std::stringstream
-#include <string.h> // for strcpy
+#include <string.h> // for strncmp
 #include <limits.h> // for ULONG_MAX
 
 // In-house headers:
@@ -395,6 +395,28 @@ CMIUtilString::IsNumber(void) const
 }
 
 //++ ------------------------------------------------------------------------------------
+// Details: Check if *this string is a hexadecimal number.
+// Type:    Method.
+// Args:    None.
+// Return:  bool - True = yes number, false not a number.
+// Throws:  None.
+//--
+bool
+CMIUtilString::IsHexadecimalNumber(void) const
+{
+    // Compare '0x..' prefix
+    if ((strncmp(c_str(), "0x", 2) != 0) && (strncmp(c_str(), "0X", 2) != 0))
+        return false;
+
+    // Skip '0x..' prefix
+    const MIint nPos = find_first_not_of("01234567890ABCDEFabcedf", 2);
+    if (nPos != (MIint)std::string::npos)
+        return false;
+
+    return true;
+}
+
+//++ ------------------------------------------------------------------------------------
 // Details: Extract the number from the string. The number can be either a hexadecimal or
 //          natural number. It cannot contain other non-numeric characters.
 // Type:    Method.
@@ -433,16 +455,16 @@ CMIUtilString::ExtractNumberFromHexadecimal(MIint64 &vwrNumber) const
 {
     vwrNumber = 0;
 
-    const MIint nPos = find_first_not_of("x01234567890ABCDEFabcedf");
+    const MIint nPos = find_first_not_of("xX01234567890ABCDEFabcedf");
     if (nPos != (MIint)std::string::npos)
         return false;
 
-    const MIint64 nNum = ::strtoul(this->c_str(), nullptr, 16);
-    if (nNum != LONG_MAX)
-    {
-        vwrNumber = nNum;
-        return true;
-    }
+    errno = 0;
+    const MIuint64 nNum = ::strtoull(this->c_str(), nullptr, 16);
+    if (errno == ERANGE)
+        return false;
+
+    vwrNumber = static_cast<MIint64>(nNum);
 
     return true;
 }

@@ -568,7 +568,7 @@ CMICmdCmdDataReadMemoryBytes::ParseArgs(void)
     bOk =
         bOk &&
         m_setCmdArgs.Add(*(new CMICmdArgValOptionShort(m_constStrArgByteOffset, false, true, CMICmdArgValListBase::eArgValType_Number, 1)));
-    bOk = bOk && m_setCmdArgs.Add(*(new CMICmdArgValNumber(m_constStrArgAddrStart, true, true)));
+    bOk = bOk && m_setCmdArgs.Add(*(new CMICmdArgValNumber(m_constStrArgAddrStart, true, true, CMICmdArgValNumber::eArgValNumberFormat_Auto)));
     bOk = bOk && m_setCmdArgs.Add(*(new CMICmdArgValNumber(m_constStrArgNumBytes, true, true)));
     return (bOk && ParseValidateCmdOptions());
 }
@@ -640,13 +640,13 @@ bool
 CMICmdCmdDataReadMemoryBytes::Acknowledge(void)
 {
     // MI: memory=[{begin=\"0x%08x\",offset=\"0x%08x\",end=\"0x%08x\",contents=\" \" }]"
-    const CMICmnMIValueConst miValueConst(CMIUtilString::Format("0x%08x", m_nAddrStart));
+    const CMICmnMIValueConst miValueConst(CMIUtilString::Format("0x%08llx", m_nAddrStart));
     const CMICmnMIValueResult miValueResult("begin", miValueConst);
     CMICmnMIValueTuple miValueTuple(miValueResult);
-    const CMICmnMIValueConst miValueConst2(CMIUtilString::Format("0x%08x", m_nAddrOffset));
+    const CMICmnMIValueConst miValueConst2(CMIUtilString::Format("0x%08llx", m_nAddrOffset));
     const CMICmnMIValueResult miValueResult2("offset", miValueConst2);
     miValueTuple.Add(miValueResult2);
-    const CMICmnMIValueConst miValueConst3(CMIUtilString::Format("0x%08x", m_nAddrStart + m_nAddrNumBytesToRead));
+    const CMICmnMIValueConst miValueConst3(CMIUtilString::Format("0x%08llx", m_nAddrStart + m_nAddrNumBytesToRead));
     const CMICmnMIValueResult miValueResult3("end", miValueConst3);
     miValueTuple.Add(miValueResult3);
 
@@ -655,7 +655,7 @@ CMICmdCmdDataReadMemoryBytes::Acknowledge(void)
     strContent.reserve((m_nAddrNumBytesToRead << 1) + 1);
     for (MIuint64 i = 0; i < m_nAddrNumBytesToRead; i++)
     {
-        strContent += CMIUtilString::Format("%02x", m_pBufferMemory[i]);
+        strContent += CMIUtilString::Format("%02hhx", m_pBufferMemory[i]);
     }
     const CMICmnMIValueConst miValueConst4(strContent);
     const CMICmnMIValueResult miValueResult4("contents", miValueConst4);

@@ -31,21 +31,25 @@
 // Throws:  None.
 //--
 CMICmdArgValNumber::CMICmdArgValNumber(void)
-    : m_nNumber(0)
+    : m_nNumberFormatMask(CMICmdArgValNumber::eArgValNumberFormat_Decimal)
+    , m_nNumber(0)
 {
 }
 
 //++ ------------------------------------------------------------------------------------
 // Details: CMICmdArgValNumber constructor.
 // Type:    Method.
-// Args:    vrArgName       - (R) Argument's name to search by.
-//          vbMandatory     - (R) True = Yes must be present, false = optional argument.
-//          vbHandleByCmd   - (R) True = Command processes *this option, false = not handled.
+// Args:    vrArgName          - (R) Argument's name to search by.
+//          vbMandatory        - (R) True = Yes must be present, false = optional argument.
+//          vbHandleByCmd      - (R) True = Command processes *this option, false = not handled.
+//          vnNumberFormatMask - (R) Mask of the number formats. (Dflt = CMICmdArgValNumber::eArgValNumberFormat_Decimal)
 // Return:  None.
 // Throws:  None.
 //--
-CMICmdArgValNumber::CMICmdArgValNumber(const CMIUtilString &vrArgName, const bool vbMandatory, const bool vbHandleByCmd)
+CMICmdArgValNumber::CMICmdArgValNumber(const CMIUtilString &vrArgName, const bool vbMandatory, const bool vbHandleByCmd,
+                                       const MIuint vnNumberFormatMask /* = CMICmdArgValNumber::eArgValNumberFormat_Decimal*/)
     : CMICmdArgValBaseTemplate(vrArgName, vbMandatory, vbHandleByCmd)
+    , m_nNumberFormatMask(vnNumberFormatMask)
     , m_nNumber(0)
 {
 }
@@ -128,11 +132,20 @@ CMICmdArgValNumber::Validate(CMICmdArgContext &vwArgContext)
 bool
 CMICmdArgValNumber::IsArgNumber(const CMIUtilString &vrTxt) const
 {
+    const bool bFormatDecimal(m_nNumberFormatMask & CMICmdArgValNumber::eArgValNumberFormat_Decimal);
+    const bool bFormatHexadecimal(m_nNumberFormatMask & CMICmdArgValNumber::eArgValNumberFormat_Hexadecimal);
+
     // Look for --someLongOption
     if (std::string::npos != vrTxt.find("--"))
         return false;
 
-    return vrTxt.IsNumber();
+    if (bFormatDecimal && vrTxt.IsNumber())
+        return true;
+
+    if (bFormatHexadecimal && vrTxt.IsHexadecimalNumber())
+        return true;
+
+    return false;
 }
 
 //++ ------------------------------------------------------------------------------------
@@ -150,7 +163,7 @@ CMICmdArgValNumber::ExtractNumber(const CMIUtilString &vrTxt)
     bool bOk = vrTxt.ExtractNumber(nNumber);
     if (bOk)
     {
-        m_nNumber = static_cast<MIint>(nNumber);
+        m_nNumber = static_cast<MIint64>(nNumber);
     }
 
     return bOk;
