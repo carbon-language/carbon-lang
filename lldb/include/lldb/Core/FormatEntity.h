@@ -78,6 +78,8 @@ namespace lldb_private
                 FunctionAddrOffsetConcrete,
                 FunctionLineOffset,
                 FunctionPCOffset,
+                FunctionInitial,
+                FunctionChanged,
                 LineEntryFile,
                 LineEntryLineNumber,
                 LineEntryStartAddress,

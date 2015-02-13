@@ -161,6 +161,32 @@ public:
     ///
     /// @param[in] so_addr
     ///     The resolved section offset address.
+    ///
+    /// @param[in] show_fullpaths
+    ///     When printing file paths (with the Module), whether the
+    ///     base name of the Module should be printed or the full path.
+    ///     
+    /// @param[in] show_module
+    ///     Whether the module name should be printed followed by a 
+    ///     grave accent "`" character.
+    ///
+    /// @param[in] show_inlined_frames
+    ///     If a given pc is in inlined function(s), whether the inlined
+    ///     functions should be printed on separate lines in addition to
+    ///     the concrete function containing the pc.
+    ///
+    /// @param[in] show_function_arguments
+    ///     If false, this method will try to elide the function argument
+    ///     types when printing the function name.  This may be ambiguous
+    ///     for languages that have function overloading - but it may
+    ///     make the "function name" too long to include all the argument
+    ///     types.
+    ///
+    /// @param[in] show_function_name
+    ///     Normally this should be true - the function/symbol name should
+    ///     be printed.  In disassembly formatting, where we want a format
+    ///     like "<*+36>", this should be false and "*" will be printed
+    ///     instead.
     //------------------------------------------------------------------
     bool
     DumpStopContext (Stream *s,
@@ -169,7 +195,8 @@ public:
                      bool show_fullpaths,
                      bool show_module,
                      bool show_inlined_frames,
-                     bool show_function_arguments) const;
+                     bool show_function_arguments,
+                     bool show_function_name) const;
 
     //------------------------------------------------------------------
     /// Get the address range contained within a symbol context.

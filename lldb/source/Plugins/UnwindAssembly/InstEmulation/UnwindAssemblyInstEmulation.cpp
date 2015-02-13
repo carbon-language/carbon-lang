@@ -149,7 +149,7 @@ UnwindAssemblyInstEmulation::GetNonCallSiteUnwindPlanFromAssembly (AddressRange&
                             StreamString strm;
                             lldb_private::FormatEntity::Entry format;
                             FormatEntity::Parse("${frame.pc}: ", format);
-                            inst->Dump(&strm, inst_list.GetMaxOpcocdeByteSize (), show_address, show_bytes, NULL, NULL, NULL, &format);
+                            inst->Dump(&strm, inst_list.GetMaxOpcocdeByteSize (), show_address, show_bytes, NULL, NULL, NULL, &format, 0);
                             log->PutCString (strm.GetData());
                         }
 

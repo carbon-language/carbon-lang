@@ -590,7 +590,7 @@ BreakpointLocation::GetDescription (Stream *s, lldb::DescriptionLevel level)
                 s->PutCString ("re-exported target = ");
             else
                 s->PutCString("where = ");
-            sc.DumpStopContext (s, m_owner.GetTarget().GetProcessSP().get(), m_address, false, true, false, true);
+            sc.DumpStopContext (s, m_owner.GetTarget().GetProcessSP().get(), m_address, false, true, false, true, true);
         }
         else
         {

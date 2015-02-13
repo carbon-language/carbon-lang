@@ -129,15 +129,15 @@ SymbolContext::Clear(bool clear_target)
 }
 
 bool
-SymbolContext::DumpStopContext
-(
+SymbolContext::DumpStopContext (
     Stream *s,
     ExecutionContextScope *exe_scope,
     const Address &addr,
     bool show_fullpaths,
     bool show_module,
     bool show_inlined_frames,
-    bool show_function_arguments
+    bool show_function_arguments,
+    bool show_function_name
 ) const
 {
     bool dumped_something = false;
@@ -155,7 +155,12 @@ SymbolContext::DumpStopContext
     {
         SymbolContext inline_parent_sc;
         Address inline_parent_addr;
-        if (show_function_arguments == false && function->GetMangled().GetName(Mangled::ePreferDemangledWithoutArguments))
+        if (show_function_name == false)
+        {
+            s->Printf("<");
+            dumped_something = true;
+        }
+        else if (show_function_arguments == false && function->GetMangled().GetName(Mangled::ePreferDemangledWithoutArguments))
         {
             dumped_something = true;
             function->GetMangled().GetName(Mangled::ePreferDemangledWithoutArguments).Dump(s);
@@ -169,7 +174,13 @@ SymbolContext::DumpStopContext
         if (addr.IsValid())
         {
             const addr_t function_offset = addr.GetOffset() - function->GetAddressRange().GetBaseAddress().GetOffset();
-            if (function_offset)
+            if (show_function_name == false)
+            {
+                // Print +offset even if offset is 0
+                dumped_something = true;
+                s->Printf("+%" PRIu64 ">", function_offset);
+            }
+            else if (function_offset)
             {
                 dumped_something = true;
                 s->Printf(" + %" PRIu64, function_offset);
@@ -202,7 +213,8 @@ SymbolContext::DumpStopContext
             {
                 s->EOL();
                 s->Indent();
-                return inline_parent_sc.DumpStopContext (s, exe_scope, inline_parent_addr, show_fullpaths, show_module, show_inlined_frames, show_function_arguments);
+                const bool show_function_name = true;
+                return inline_parent_sc.DumpStopContext (s, exe_scope, inline_parent_addr, show_fullpaths, show_module, show_inlined_frames, show_function_arguments, show_function_name);
             }
         }
         else
@@ -218,7 +230,12 @@ SymbolContext::DumpStopContext
     }
     else if (symbol != nullptr)
     {
-        if (symbol->GetMangled().GetName())
+        if (show_function_name == false)
+        {
+            s->Printf("<");
+            dumped_something = true;
+        }
+        else if (symbol->GetMangled().GetName())
         {
             dumped_something = true;
             if (symbol->GetType() == eSymbolTypeTrampoline)
@@ -229,7 +246,13 @@ SymbolContext::DumpStopContext
         if (addr.IsValid() && symbol->ValueIsAddress())
         {
             const addr_t symbol_offset = addr.GetOffset() - symbol->GetAddress().GetOffset();
-            if (symbol_offset)
+            if (show_function_name == false)
+            {
+                // Print +offset even if offset is 0
+                dumped_something = true;
+                s->Printf("+%" PRIu64 ">", symbol_offset);
+            }
+            else if (symbol_offset)
             {
                 dumped_something = true;
                 s->Printf(" + %" PRIu64, symbol_offset);

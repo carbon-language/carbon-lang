@@ -690,13 +690,15 @@ protected:
                     bool show_module = true;
                     bool show_inlined_frames = true;
                     const bool show_function_arguments = true;
+                    const bool show_function_name = true;
                     sc.DumpStopContext(&result.GetOutputStream(),
                                        m_exe_ctx.GetBestExecutionContextScope(),
                                        sc.line_entry.range.GetBaseAddress(),
                                        show_fullpaths,
                                        show_module,
                                        show_inlined_frames,
-                                       show_function_arguments);
+                                       show_function_arguments,
+                                       show_function_name);
                     result.GetOutputStream().EOL();
 
                     if (m_options.num_lines == 0)

@@ -120,6 +120,12 @@ public:
     /// @param[in] disassembly_addr_format
     ///     The format specification for how addresses are printed.
     ///     Only needed if show_address is true.
+    ///
+    /// @param[in] max_address_text_size
+    ///     The length of the longest address string at the start of the
+    ///     disassembly line that will be printed (the Debugger::FormatDisassemblerAddress() string)
+    ///     so this method can properly align the instruction opcodes.
+    ///     May be 0 to indicate no indentation/alignment of the opcodes.
     //------------------------------------------------------------------
 
     virtual void
@@ -130,7 +136,8 @@ public:
           const ExecutionContext* exe_ctx,
           const SymbolContext *sym_ctx,
           const SymbolContext *prev_sym_ctx,
-          const FormatEntity::Entry *disassembly_addr_format);
+          const FormatEntity::Entry *disassembly_addr_format,
+          size_t max_address_text_size);
     
     virtual bool
     DoesBranch () = 0;

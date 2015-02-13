@@ -120,7 +120,7 @@ SBInstructionList::GetDescription (lldb::SBStream &description)
                     module_sp->ResolveSymbolContextForAddress(addr, eSymbolContextEverything, sc);
                 }
 
-                inst->Dump (&sref, max_opcode_byte_size, true, false, NULL, &sc, &prev_sc, &format);
+                inst->Dump (&sref, max_opcode_byte_size, true, false, NULL, &sc, &prev_sc, &format, 0);
                 sref.EOL();
             }
             return true;

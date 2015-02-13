@@ -175,6 +175,7 @@ Variable::DumpDeclaration (Stream *s, bool show_fullpaths, bool show_module)
         sc.line_entry.Clear();
         bool show_inlined_frames = false;
         const bool show_function_arguments = true;
+        const bool show_function_name = true;
     
         dumped_declaration_info = sc.DumpStopContext (s, 
                                                       nullptr,
@@ -182,7 +183,8 @@ Variable::DumpDeclaration (Stream *s, bool show_fullpaths, bool show_module)
                                                       show_fullpaths, 
                                                       show_module, 
                                                       show_inlined_frames,
-                                                      show_function_arguments);
+                                                      show_function_arguments,
+                                                      show_function_name);
         
         if (sc.function)
             s->PutChar(':');

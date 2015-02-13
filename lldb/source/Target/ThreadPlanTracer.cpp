@@ -220,7 +220,8 @@ ThreadPlanAssemblyTracer::Log ()
                                    NULL,
                                    NULL,
                                    NULL,
-                                   disassemble_format);
+                                   disassemble_format,
+                                   0);
             }
         }
     }

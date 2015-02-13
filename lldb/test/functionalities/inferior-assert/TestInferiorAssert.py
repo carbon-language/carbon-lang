@@ -186,7 +186,7 @@ class AssertingInferiorTestCase(TestBase):
             if frame.GetFrameID() == 0:
                 pc_backup_offset = 0
             self.expect("disassemble -a %s" % (frame.GetPC() - pc_backup_offset),
-                    substrs = ['<%s>:' % frame.GetFunctionName()])
+                    substrs = ['<+0>: '])
 
     def check_expr_in_main(self, thread):
         depth = thread.GetNumFrames()

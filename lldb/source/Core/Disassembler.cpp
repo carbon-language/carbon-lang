@@ -421,6 +421,47 @@ Disassembler::PrintInstructions
     }
     const uint32_t scope = eSymbolContextLineEntry | eSymbolContextFunction | eSymbolContextSymbol;
     const bool use_inline_block_range = false;
+
+    const FormatEntity::Entry *disassembly_format = NULL;
+    FormatEntity::Entry format;
+    if (exe_ctx.HasTargetScope())
+    {
+        disassembly_format = exe_ctx.GetTargetRef().GetDebugger().GetDisassemblyFormat ();
+    }
+    else
+    {
+        FormatEntity::Parse("${addr}: ", format);
+        disassembly_format = &format;
+    }
+
+    // First pass: step through the list of instructions, 
+    // find how long the initial addresses strings are, insert padding 
+    // in the second pass so the opcodes all line up nicely.
+    size_t address_text_size = 0;
+    for (size_t i = 0; i < num_instructions_found; ++i)
+    {
+        Instruction *inst = disasm_ptr->GetInstructionList().GetInstructionAtIndex (i).get();
+        if (inst)
+        {
+            const Address &addr = inst->GetAddress();
+            ModuleSP module_sp (addr.GetModule());
+            if (module_sp)
+            {
+                const uint32_t resolve_mask = eSymbolContextFunction | eSymbolContextSymbol;
+                uint32_t resolved_mask = module_sp->ResolveSymbolContextForAddress(addr, resolve_mask, sc);
+                if (resolved_mask)
+                {
+                    StreamString strmstr;
+                    Debugger::FormatDisassemblerAddress (disassembly_format, &sc, NULL, &exe_ctx, &addr, strmstr);
+                    size_t cur_line = strmstr.GetSizeOfLastLine();
+                    if (cur_line > address_text_size)
+                        address_text_size = cur_line;
+                }
+                sc.Clear(false);
+            }
+        }
+    }
+
     for (size_t i = 0; i < num_instructions_found; ++i)
     {
         Instruction *inst = disasm_ptr->GetInstructionList().GetInstructionAtIndex (i).get();
@@ -448,7 +489,7 @@ Disassembler::PrintInstructions
                                 if (offset != 0)
                                     strm.EOL();
                                 
-                                sc.DumpStopContext(&strm, exe_ctx.GetProcessPtr(), addr, false, true, false, false);
+                                sc.DumpStopContext(&strm, exe_ctx.GetProcessPtr(), addr, false, true, false, false, true);
                                 strm.EOL();
                                 
                                 if (sc.comp_unit && sc.line_entry.IsValid())
@@ -471,7 +512,7 @@ Disassembler::PrintInstructions
             }
 
             const bool show_bytes = (options & eOptionShowBytes) != 0;
-            inst->Dump (&strm, max_opcode_byte_size, true, show_bytes, &exe_ctx, &sc, &prev_sc, NULL);
+            inst->Dump (&strm, max_opcode_byte_size, true, show_bytes, &exe_ctx, &sc, &prev_sc, NULL, address_text_size);
             strm.EOL();            
         }
         else
@@ -561,7 +602,8 @@ Instruction::Dump (lldb_private::Stream *s,
                    const ExecutionContext* exe_ctx,
                    const SymbolContext *sym_ctx,
                    const SymbolContext *prev_sym_ctx,
-                   const FormatEntity::Entry *disassembly_addr_format)
+                   const FormatEntity::Entry *disassembly_addr_format,
+                   size_t max_address_text_size)
 {
     size_t opcode_column_width = 7;
     const size_t operand_column_width = 25;
@@ -573,6 +615,7 @@ Instruction::Dump (lldb_private::Stream *s,
     if (show_address)
     {
         Debugger::FormatDisassemblerAddress (disassembly_addr_format, sym_ctx, prev_sym_ctx, exe_ctx, &m_address, ss);
+        ss.FillLastLineToColumn (max_address_text_size, ' ');
     }
     
     if (show_bytes)
@@ -999,7 +1042,7 @@ InstructionList::Dump (Stream *s,
     {
         if (pos != begin)
             s->EOL();
-        (*pos)->Dump(s, max_opcode_byte_size, show_address, show_bytes, exe_ctx, NULL, NULL, disassembly_format);
+        (*pos)->Dump(s, max_opcode_byte_size, show_address, show_bytes, exe_ctx, NULL, NULL, disassembly_format, 0);
     }
 }
 

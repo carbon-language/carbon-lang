@@ -126,7 +126,21 @@ g_language_enumerators[] =
     FILE_AND_LINE\
     "\\n"
 
-#define DEFAULT_DISASSEMBLY_FORMAT "${current-pc-arrow}${addr-file-or-load}{ <${function.name-without-args}${function.concrete-only-addr-offset-no-padding}>}: "
+// Three parts to this disassembly format specification:
+//   1. If this is a new function/symbol (no previous symbol/function), print
+//      dylib`funcname:\n
+//   2. If this is a symbol context change (different from previous symbol/function), print
+//      dylib`funcname:\n
+//   3. print 
+//      address <+offset>: 
+#define DEFAULT_DISASSEMBLY_FORMAT "{${function.initial-function}{${module.file.basename}`}{${function.name-without-args}}:\n}{${function.changed}\n{${module.file.basename}`}{${function.name-without-args}}:\n}{${current-pc-arrow} }${addr-file-or-load}{ <${function.concrete-only-addr-offset-no-padding}>}: "
+
+// gdb's disassembly format can be emulated with
+// ${current-pc-arrow}${addr-file-or-load}{ <${function.name-without-args}${function.concrete-only-addr-offset-no-padding}>}: 
+
+// lldb's original format for disassembly would look like this format string -
+// {${function.initial-function}{${module.file.basename}`}{${function.name-without-args}}:\n}{${function.changed}\n{${module.file.basename}`}{${function.name-without-args}}:\n}{${current-pc-arrow} }{${addr-file-or-load}}: 
+
 
 static PropertyDefinition
 g_properties[] =
