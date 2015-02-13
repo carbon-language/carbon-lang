@@ -32,4 +32,10 @@ ifeq ($(HOST_OS),MingW)
 DIRS += windows
 endif
 
+ifeq ($(HOST_OS),Android)
+DIRS += posix
+DIRS += linux
+DIRS += android
+endif
+
 include $(LLDB_LEVEL)/Makefile
