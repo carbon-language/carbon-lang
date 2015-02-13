@@ -39,6 +39,7 @@ int toupper(int c);
 #include <ctype.h>
 #if defined(_LIBCPP_MSVCRT)
 #include "support/win32/support.h"
+#include "support/win32/locale_win32.h"
 #endif // _LIBCPP_MSVCRT
 
 #if !defined(_LIBCPP_HAS_NO_PRAGMA_SYSTEM_HEADER)
