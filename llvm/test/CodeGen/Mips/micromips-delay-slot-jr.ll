@@ -29,8 +29,7 @@ declare i32 @puts(i8* nocapture readonly) #1
 !3 = !{!"omnipotent char", !4, i64 0}
 !4 = !{!"Simple C/C++ TBAA"}
 
-; CHECK:      jr
-; CHECK-NEXT: nop
+; CHECK:      jrc
 
 %struct.foostruct = type { [3 x float] }
 %struct.barstruct = type { %struct.foostruct, float }
@@ -43,6 +42,5 @@ define float* @spooky(i32 signext %i) #0 {
 }
 
 ; CHECK:      spooky:
-; CHECK:      jr $ra
-; CHECK-NEXT: nop
+; CHECK:      jrc $ra
 

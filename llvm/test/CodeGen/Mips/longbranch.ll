@@ -126,8 +126,7 @@ end:
 ; MICROMIPS:        li16    $[[R2:[0-9]+]], 1
 ; MICROMIPS:        sw16    $[[R2]], 0($[[R1]])
 ; MICROMIPS:   $[[BB2]]:
-; MICROMIPS:        jr      $ra
-; MICROMIPS:        nop
+; MICROMIPS:        jrc      $ra
 
 
 ; Check the NaCl version.  Check that sp change is not in the branch delay slot

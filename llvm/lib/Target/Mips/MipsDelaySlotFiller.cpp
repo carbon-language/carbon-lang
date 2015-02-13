@@ -199,6 +199,9 @@ namespace {
     Iter replaceWithCompactBranch(MachineBasicBlock &MBB,
                                   Iter Branch, DebugLoc DL);
 
+    Iter replaceWithCompactJump(MachineBasicBlock &MBB,
+                                Iter Jump, DebugLoc DL);
+
     /// This function checks if it is valid to move Candidate to the delay slot
     /// and returns true if it isn't. It also updates memory and register
     /// dependence information.
@@ -515,6 +518,24 @@ Iter Filler::replaceWithCompactBranch(MachineBasicBlock &MBB,
   return Branch;
 }
 
+// Replace Jumps with the compact jump instruction.
+Iter Filler::replaceWithCompactJump(MachineBasicBlock &MBB,
+                                    Iter Jump, DebugLoc DL) {
+  const MipsInstrInfo *TII =
+      MBB.getParent()->getSubtarget<MipsSubtarget>().getInstrInfo();
+
+  const MCInstrDesc &NewDesc = TII->get(Mips::JRC16_MM);
+  MachineInstrBuilder MIB = BuildMI(MBB, Jump, DL, NewDesc);
+
+  MIB.addReg(Jump->getOperand(0).getReg());
+
+  Iter tmpIter = Jump;
+  Jump = std::prev(Jump);
+  MBB.erase(tmpIter);
+
+  return Jump;
+}
+
 // For given opcode returns opcode of corresponding instruction with short
 // delay slot.
 static int getEquivalentCallShort(int Opcode) {
@@ -582,17 +603,29 @@ bool Filler::runOnMachineBasicBlock(MachineBasicBlock &MBB) {
     // adding NOP replace this instruction with the corresponding compact
     // branch instruction, i.e. BEQZC or BNEZC.
     unsigned Opcode = I->getOpcode();
-    if (InMicroMipsMode &&
-        (Opcode == Mips::BEQ || Opcode == Mips::BNE) &&
-        ((unsigned) I->getOperand(1).getReg()) == Mips::ZERO) {
-
-      I = replaceWithCompactBranch(MBB, I, I->getDebugLoc());
-
-    } else {
-      // Bundle the NOP to the instruction with the delay slot.
-      BuildMI(MBB, std::next(I), I->getDebugLoc(), TII->get(Mips::NOP));
-      MIBundleBuilder(MBB, I, std::next(I, 2));
+    if (InMicroMipsMode) {
+      switch (Opcode) {
+        case Mips::BEQ:
+        case Mips::BNE:
+          if (((unsigned) I->getOperand(1).getReg()) == Mips::ZERO) {
+            I = replaceWithCompactBranch(MBB, I, I->getDebugLoc());
+            continue;
+          }
+          break;
+        case Mips::JR:
+        case Mips::PseudoReturn:
+        case Mips::PseudoIndirectBranch:
+          // For microMIPS the PseudoReturn and PseudoIndirectBranch are allways
+          // expanded to JR_MM, so they can be replaced with JRC16_MM.
+          I = replaceWithCompactJump(MBB, I, I->getDebugLoc());
+          continue;
+        default:
+          break;
+      }
     }
+    // Bundle the NOP to the instruction with the delay slot.
+    BuildMI(MBB, std::next(I), I->getDebugLoc(), TII->get(Mips::NOP));
+    MIBundleBuilder(MBB, I, std::next(I, 2));
   }
 
   return Changed;
