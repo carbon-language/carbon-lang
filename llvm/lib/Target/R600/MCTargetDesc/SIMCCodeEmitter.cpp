@@ -31,12 +31,6 @@ using namespace llvm;
 
 namespace {
 
-/// \brief Helper type used in encoding
-typedef union {
-  int64_t I;
-  double F;
-} IntFloatUnion;
-
 class SIMCCodeEmitter : public  AMDGPUMCCodeEmitter {
   SIMCCodeEmitter(const SIMCCodeEmitter &) LLVM_DELETED_FUNCTION;
   void operator=(const SIMCCodeEmitter &) LLVM_DELETED_FUNCTION;
@@ -217,19 +211,15 @@ void SIMCCodeEmitter::EncodeInstruction(const MCInst &MI, raw_ostream &OS,
       continue;
 
     // Yes! Encode it
-    IntFloatUnion Imm;
+    int64_t Imm = 0;
+
     if (Op.isImm())
-      Imm.I = Op.getImm();
-    else if (Op.isFPImm())
-      Imm.F = Op.getFPImm();
-    else {
-      assert(Op.isExpr());
-      // This will be replaced with a fixup value.
-      Imm.I = 0;
-    }
+      Imm = Op.getImm();
+    else if (!Op.isExpr()) // Exprs will be replaced with a fixup value.
+      llvm_unreachable("Must be immediate or expr");
 
     for (unsigned j = 0; j < 4; j++) {
-      OS.write((uint8_t) ((Imm.I >> (8 * j)) & 0xff));
+      OS.write((uint8_t) ((Imm >> (8 * j)) & 0xff));
     }
 
     // Only one literal value allowed
