@@ -3497,9 +3497,22 @@ bool LLParser::ParseMDLexicalBlockFile(MDNode *&Result, bool IsDistinct) {
   return false;
 }
 
+/// ParseMDNamespace:
+///   ::= !MDNamespace(scope: !0, file: !2, name: "SomeNamespace", line: 9)
 bool LLParser::ParseMDNamespace(MDNode *&Result, bool IsDistinct) {
-  return TokError("unimplemented parser");
+#define VISIT_MD_FIELDS(OPTIONAL, REQUIRED)                                    \
+  REQUIRED(scope, MDField, );                                                  \
+  OPTIONAL(file, MDField, );                                                   \
+  OPTIONAL(name, MDStringField, );                                             \
+  OPTIONAL(line, LineField, );
+  PARSE_MD_FIELDS();
+#undef VISIT_MD_FIELDS
+
+  Result = GET_OR_DISTINCT(MDNamespace,
+                           (Context, scope.Val, file.Val, name.Val, line.Val));
+  return false;
 }
+
 bool LLParser::ParseMDTemplateTypeParameter(MDNode *&Result, bool IsDistinct) {
   return TokError("unimplemented parser");
 }

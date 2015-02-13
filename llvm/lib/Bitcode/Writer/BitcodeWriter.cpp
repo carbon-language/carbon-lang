@@ -1007,11 +1007,20 @@ static void WriteMDLexicalBlockFile(const MDLexicalBlockFile *N,
   Record.clear();
 }
 
-static void WriteMDNamespace(const MDNamespace *, const ValueEnumerator &,
-                             BitstreamWriter &, SmallVectorImpl<uint64_t> &,
-                             unsigned) {
-  llvm_unreachable("write not implemented");
+static void WriteMDNamespace(const MDNamespace *N, const ValueEnumerator &VE,
+                             BitstreamWriter &Stream,
+                             SmallVectorImpl<uint64_t> &Record,
+                             unsigned Abbrev) {
+  Record.push_back(N->isDistinct());
+  Record.push_back(VE.getMetadataOrNullID(N->getScope()));
+  Record.push_back(VE.getMetadataOrNullID(N->getFile()));
+  Record.push_back(VE.getMetadataOrNullID(N->getRawName()));
+  Record.push_back(N->getLine());
+
+  Stream.EmitRecord(bitc::METADATA_NAMESPACE, Record, Abbrev);
+  Record.clear();
 }
+
 static void WriteMDTemplateTypeParameter(const MDTemplateTypeParameter *,
                                          const ValueEnumerator &,
                                          BitstreamWriter &,
