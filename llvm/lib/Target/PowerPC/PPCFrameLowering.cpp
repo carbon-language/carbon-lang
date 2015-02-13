@@ -47,11 +47,25 @@ static unsigned computeTOCSaveOffset(const PPCSubtarget &STI) {
   return STI.isELFv2ABI() ? 24 : 40;
 }
 
+static unsigned computeFramePointerSaveOffset(const PPCSubtarget &STI) {
+  // For the Darwin ABI:
+  // We cannot use the TOC save slot (offset +20) in the PowerPC linkage area
+  // for saving the frame pointer (if needed.)  While the published ABI has
+  // not used this slot since at least MacOSX 10.2, there is older code
+  // around that does use it, and that needs to continue to work.
+  if (STI.isDarwinABI())
+    return STI.isPPC64() ? -8U : -4U;
+
+  // SVR4 ABI: First slot in the general register save area.
+  return STI.isPPC64() ? -8U : -4U;
+}
+
 PPCFrameLowering::PPCFrameLowering(const PPCSubtarget &STI)
     : TargetFrameLowering(TargetFrameLowering::StackGrowsDown,
                           (STI.hasQPX() || STI.isBGQ()) ? 32 : 16, 0),
       Subtarget(STI), ReturnSaveOffset(computeReturnSaveOffset(Subtarget)),
-      TOCSaveOffset(computeTOCSaveOffset(Subtarget)) {}
+      TOCSaveOffset(computeTOCSaveOffset(Subtarget)),
+      FramePointerSaveOffset(computeFramePointerSaveOffset(Subtarget)) {}
 
 // With the SVR4 ABI, callee-saved registers have fixed offsets on the stack.
 const PPCFrameLowering::SpillSlot *PPCFrameLowering::getCalleeSavedSpillSlots(
@@ -620,8 +634,7 @@ void PPCFrameLowering::emitPrologue(MachineFunction &MF) const {
       assert(FPIndex && "No Frame Pointer Save Slot!");
       FPOffset = FFI->getObjectOffset(FPIndex);
     } else {
-      FPOffset =
-          PPCFrameLowering::getFramePointerSaveOffset(isPPC64, isDarwinABI);
+      FPOffset = getFramePointerSaveOffset();
     }
   }
 
@@ -958,8 +971,7 @@ void PPCFrameLowering::emitEpilogue(MachineFunction &MF,
       assert(FPIndex && "No Frame Pointer Save Slot!");
       FPOffset = FFI->getObjectOffset(FPIndex);
     } else {
-      FPOffset =
-          PPCFrameLowering::getFramePointerSaveOffset(isPPC64, isDarwinABI);
+      FPOffset = getFramePointerSaveOffset();
     }
   }
 
@@ -1159,7 +1171,7 @@ PPCFrameLowering::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
   // If the frame pointer save index hasn't been defined yet.
   if (!FPSI && needsFP(MF)) {
     // Find out what the fix offset of the frame pointer save area.
-    int FPOffset = getFramePointerSaveOffset(isPPC64, isDarwinABI);
+    int FPOffset = getFramePointerSaveOffset();
     // Allocate the frame index for frame pointer save area.
     FPSI = MFI->CreateFixedObject(isPPC64? 8 : 4, FPOffset, true);
     // Save the result.
