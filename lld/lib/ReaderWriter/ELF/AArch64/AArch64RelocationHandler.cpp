@@ -10,11 +10,17 @@
 #include "AArch64TargetHandler.h"
 #include "AArch64LinkingContext.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/MathExtras.h"
 
 using namespace lld;
 using namespace elf;
 
 #define PAGE(X) ((X) & ~0x0FFFL)
+
+/// \brief Check X is in the interval (-2^(bits-1), 2^bits]
+static bool withinSignedUnsignedRange(int64_t X, int bits) {
+  return isIntN(bits - 1, X) || isUIntN(bits, X);
+}
 
 /// \brief R_AARCH64_ABS64 - word64: S + A
 static void relocR_AARCH64_ABS64(uint8_t *location, uint64_t P, uint64_t S,
@@ -41,9 +47,11 @@ static void relocR_AARCH64_PREL32(uint8_t *location, uint64_t P, uint64_t S,
 }
 
 /// \brief R_AARCH64_ABS32 - word32:  S + A
-static void relocR_AARCH64_ABS32(uint8_t *location, uint64_t P, uint64_t S,
-                                 int64_t A) {
-  int32_t result = (int32_t)(S + A);
+static std::error_code relocR_AARCH64_ABS32(uint8_t *location, uint64_t P,
+                                            uint64_t S, int64_t A) {
+  int64_t result = S + A;
+  if (!withinSignedUnsignedRange(result, 32))
+    return make_out_of_range_reloc_error();
   DEBUG_WITH_TYPE(
       "AArch64", llvm::dbgs() << "\t\tHandle " << LLVM_FUNCTION_NAME << " -";
       llvm::dbgs() << " S: 0x" << Twine::utohexstr(S);
@@ -53,6 +61,7 @@ static void relocR_AARCH64_ABS32(uint8_t *location, uint64_t P, uint64_t S,
   *reinterpret_cast<llvm::support::ulittle32_t *>(location) =
       result |
       (int32_t) * reinterpret_cast<llvm::support::little32_t *>(location);
+  return std::error_code();
 }
 
 /// \brief R_AARCH64_ADR_PREL_PG_HI21 - Page(S+A) - Page(P)
@@ -385,8 +394,8 @@ std::error_code AArch64TargetRelocationHandler::applyRelocation(
                           ref.addend());
     break;
   case R_AARCH64_ABS32:
-    relocR_AARCH64_ABS32(location, relocVAddress, targetVAddress, ref.addend());
-    break;
+    return relocR_AARCH64_ABS32(location, relocVAddress, targetVAddress,
+                                ref.addend());
   // Runtime only relocations. Ignore here.
   case R_AARCH64_RELATIVE:
   case R_AARCH64_IRELATIVE:
