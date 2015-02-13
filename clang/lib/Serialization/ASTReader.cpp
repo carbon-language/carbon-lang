@@ -6483,13 +6483,16 @@ namespace {
     ArrayRef<const DeclContext *> Contexts;
     DeclarationName Name;
     SmallVectorImpl<NamedDecl *> &Decls;
+    llvm::SmallPtrSetImpl<NamedDecl *> &DeclSet;
 
   public:
     DeclContextNameLookupVisitor(ASTReader &Reader,
                                  ArrayRef<const DeclContext *> Contexts,
                                  DeclarationName Name,
-                                 SmallVectorImpl<NamedDecl *> &Decls)
-      : Reader(Reader), Contexts(Contexts), Name(Name), Decls(Decls) { }
+                                 SmallVectorImpl<NamedDecl *> &Decls,
+                                 llvm::SmallPtrSetImpl<NamedDecl *> &DeclSet)
+      : Reader(Reader), Contexts(Contexts), Name(Name), Decls(Decls),
+        DeclSet(DeclSet) { }
 
     static bool visit(ModuleFile &M, void *UserData) {
       DeclContextNameLookupVisitor *This
@@ -6538,7 +6541,8 @@ namespace {
 
         // Record this declaration.
         FoundAnything = true;
-        This->Decls.push_back(ND);
+        if (This->DeclSet.insert(ND).second)
+          This->Decls.push_back(ND);
       }
 
       return FoundAnything;
@@ -6578,6 +6582,7 @@ ASTReader::FindExternalVisibleDeclsByName(const DeclContext *DC,
   Deserializing LookupResults(this);
 
   SmallVector<NamedDecl *, 64> Decls;
+  llvm::SmallPtrSet<NamedDecl*, 64> DeclSet;
 
   // Compute the declaration contexts we need to look into. Multiple such
   // declaration contexts occur when two declaration contexts from disjoint
@@ -6595,7 +6600,7 @@ ASTReader::FindExternalVisibleDeclsByName(const DeclContext *DC,
   }
 
   auto LookUpInContexts = [&](ArrayRef<const DeclContext*> Contexts) {
-    DeclContextNameLookupVisitor Visitor(*this, Contexts, Name, Decls);
+    DeclContextNameLookupVisitor Visitor(*this, Contexts, Name, Decls, DeclSet);
 
     // If we can definitively determine which module file to look into,
     // only look there. Otherwise, look in all module files.
@@ -6644,6 +6649,7 @@ namespace {
     ASTReader &Reader;
     SmallVectorImpl<const DeclContext *> &Contexts;
     DeclsMap &Decls;
+    llvm::SmallPtrSet<NamedDecl *, 256> DeclSet;
     bool VisitAll;
 
   public:
@@ -6688,7 +6694,8 @@ namespace {
 
           // Record this declaration.
           FoundAnything = true;
-          This->Decls[ND->getDeclName()].push_back(ND);
+          if (This->DeclSet.insert(ND).second)
+            This->Decls[ND->getDeclName()].push_back(ND);
         }
       }
 
