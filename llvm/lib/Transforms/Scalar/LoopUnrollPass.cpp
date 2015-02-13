@@ -548,7 +548,7 @@ static unsigned
 approximateNumberOfOptimizedInstructions(const Loop *L, ScalarEvolution &SE,
                                          unsigned TripCount,
                                          const TargetTransformInfo &TTI) {
-  if (!TripCount)
+  if (!TripCount || !UnrollMaxIterationsCountToAnalyze)
     return 0;
 
   UnrollAnalyzer UA(L, TripCount, SE, TTI);
