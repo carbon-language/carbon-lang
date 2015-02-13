@@ -868,11 +868,18 @@ static void WriteMDSubroutineType(const MDSubroutineType *,
                                   SmallVectorImpl<uint64_t> &, unsigned) {
   llvm_unreachable("write not implemented");
 }
-static void WriteMDFile(const MDFile *, const ValueEnumerator &,
-                        BitstreamWriter &, SmallVectorImpl<uint64_t> &,
-                        unsigned) {
-  llvm_unreachable("write not implemented");
+
+static void WriteMDFile(const MDFile *N, const ValueEnumerator &VE,
+                        BitstreamWriter &Stream,
+                        SmallVectorImpl<uint64_t> &Record, unsigned Abbrev) {
+  Record.push_back(N->isDistinct());
+  Record.push_back(VE.getMetadataOrNullID(N->getRawFilename()));
+  Record.push_back(VE.getMetadataOrNullID(N->getRawDirectory()));
+
+  Stream.EmitRecord(bitc::METADATA_FILE, Record, Abbrev);
+  Record.clear();
 }
+
 static void WriteMDCompileUnit(const MDCompileUnit *, const ValueEnumerator &,
                                BitstreamWriter &, SmallVectorImpl<uint64_t> &,
                                unsigned) {

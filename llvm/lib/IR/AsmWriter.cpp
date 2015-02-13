@@ -1401,10 +1401,16 @@ static void writeMDSubroutineType(raw_ostream &, const MDSubroutineType *,
                                   const Module *) {
   llvm_unreachable("write not implemented");
 }
-static void writeMDFile(raw_ostream &, const MDFile *, TypePrinting *,
+
+static void writeMDFile(raw_ostream &Out, const MDFile *N, TypePrinting *,
                         SlotTracker *, const Module *) {
-  llvm_unreachable("write not implemented");
+  Out << "!MDFile(";
+  FieldSeparator FS;
+  Out << FS << "filename: \"" << N->getFilename() << "\"";
+  Out << FS << "directory: \"" << N->getDirectory() << "\"";
+  Out << ")";
 }
+
 static void writeMDCompileUnit(raw_ostream &, const MDCompileUnit *,
                                TypePrinting *, SlotTracker *, const Module *) {
   llvm_unreachable("write not implemented");

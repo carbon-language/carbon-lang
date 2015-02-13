@@ -733,14 +733,21 @@ public:
   MDTuple *getFileNode() const { return cast<MDTuple>(getOperand(0)); }
 
   StringRef getFilename() const {
-    if (auto *S = cast_or_null<MDString>(getFileNode()->getOperand(0)))
+    if (auto *S = getRawFilename())
       return S->getString();
     return StringRef();
   }
   StringRef getDirectory() const {
-    if (auto *S = cast_or_null<MDString>(getFileNode()->getOperand(1)))
+    if (auto *S = getRawDirectory())
       return S->getString();
     return StringRef();
+  }
+
+  MDString *getRawFilename() const {
+    return cast_or_null<MDString>(getFileNode()->getOperand(0));
+  }
+  MDString *getRawDirectory() const {
+    return cast_or_null<MDString>(getFileNode()->getOperand(1));
   }
 
   static bool classof(const Metadata *MD) {

@@ -3242,9 +3242,20 @@ bool LLParser::ParseMDCompositeType(MDNode *&Result, bool IsDistinct) {
 bool LLParser::ParseMDSubroutineType(MDNode *&Result, bool IsDistinct) {
   return TokError("unimplemented parser");
 }
+
+/// ParseMDFileType:
+///   ::= !MDFileType(filename: "path/to/file", directory: "/path/to/dir")
 bool LLParser::ParseMDFile(MDNode *&Result, bool IsDistinct) {
-  return TokError("unimplemented parser");
+#define VISIT_MD_FIELDS(OPTIONAL, REQUIRED)                                    \
+  REQUIRED(filename, MDStringField, );                                         \
+  REQUIRED(directory, MDStringField, );
+  PARSE_MD_FIELDS();
+#undef VISIT_MD_FIELDS
+
+  Result = GET_OR_DISTINCT(MDFile, (Context, filename.Val, directory.Val));
+  return false;
 }
+
 bool LLParser::ParseMDCompileUnit(MDNode *&Result, bool IsDistinct) {
   return TokError("unimplemented parser");
 }

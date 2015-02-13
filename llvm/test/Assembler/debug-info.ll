@@ -1,8 +1,8 @@
 ; RUN: llvm-as < %s | llvm-dis | llvm-as | llvm-dis | FileCheck %s
 ; RUN: verify-uselistorder %s
 
-; CHECK: !named = !{!0, !0, !1, !2, !3, !4, !5, !6, !7, !8, !8}
-!named = !{!0, !1, !2, !3, !4, !5, !6, !7, !8, !9, !10}
+; CHECK: !named = !{!0, !0, !1, !2, !3, !4, !5, !6, !7, !8, !8, !9, !10, !11, !12}
+!named = !{!0, !1, !2, !3, !4, !5, !6, !7, !8, !9, !10, !11, !12, !13, !14}
 
 ; CHECK:      !0 = !MDSubrange(count: 3)
 ; CHECK-NEXT: !1 = !MDSubrange(count: 3, lowerBound: 4)
@@ -27,3 +27,12 @@
 !8 = !MDBasicType(tag: DW_TAG_unspecified_type, name: "decltype(nullptr)")
 !9 = !MDBasicType(tag: DW_TAG_base_type)
 !10 = !MDBasicType(tag: DW_TAG_base_type, name: "", size: 0, align: 0, encoding: 0)
+
+; CHECK-NEXT: !9 = !{!"path/to/file", !"/path/to/dir"}
+; CHECK-NEXT: !10 = !MDFile(filename: "path/to/file", directory: "/path/to/dir")
+; CHECK-NEXT: !11 = !{null, null}
+; CHECK-NEXT: !12 = !MDFile(filename: "", directory: "")
+!11 = !{!"path/to/file", !"/path/to/dir"}
+!12 = !MDFile(filename: "path/to/file", directory: "/path/to/dir")
+!13 = !{null, null}
+!14 = !MDFile(filename: "", directory: "")
